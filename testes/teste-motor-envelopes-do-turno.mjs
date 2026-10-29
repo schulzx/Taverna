@@ -54,11 +54,14 @@
    que o descanso já resolveu e o teste que eu rolei.
    O 20.º, AS MAGIAS DE FUNÇÃO: reviver, a cura, a condição desfeita e a
    magia que fica ativa por turnos, na tabela dos poderes.
+   O 21.º, O CORPO NA LUTA: o revide, o fogo amigo, o ritual, as duas caudas
+   da retirada, a vitória, as três vezes que o corpo não caiu, o golpe
+   aguentado, a queda de altura e a raid que acabou.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente, ENVELOPES_DO_JOGADOR, oEnvelopeDoJogador } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente, ENVELOPES_DO_JOGADOR, oEnvelopeDoJogador, ENVELOPES_DO_CORPO, oEnvelopeDoCorpo } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -821,6 +824,64 @@ sec("25 · as magias de função: os casos percorrem o que o texto decide, e a p
     ["funcaoCondicao", "a condição sem a linha do módulo", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, linha: "" }) }],
     ["funcaoAtiva", "a magia ativa com um turno a mais", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, turnos: d.turnos + 1 }) }],
     ["funcaoAtiva", "a magia ativa sem a descrição", { oEnvelopeDosPoderes: (q, d) => P(q, { ...d, descricao: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("26 · o corpo na luta: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* os limiares (medidos em 29/10/2026 sobre os 275 casos, no App do 21.º grupo): cada um é
+     o maior entre o do molde e o piso de 90% do que os casos dão, para morder sem quebrar à
+     toa. O que os casos dão: o revide 46 · 23 · 92 · 137; o fogo amigo 46 · 20; o ritual 45 ·
+     139; os ataques de oportunidade 138 · 137 · 21; a vitória 92 nada · 183 ficou · 70 · 92
+     masmorra · 183 sem masmorra · 42 resumo vazio; a fuga 142 vazias · 45 · 88; a dádiva 23;
+     a queda segurada 137; a fúria 137; aguentei 92 · 183 · 27; a queda de altura 46 · 46; a
+     raid 69 · 46 · 91. Onde o molde já pedia mais de 90% (130 de 137, 180 de 183), ficou o do
+     molde. */
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const tx = (b) => HOJE[b].map((f) => f.texto);
+  const Rv = tx("corpoRevide");
+  t("o revide: o que acertou diz o dano e a vida que ficou (" + conta(Rv, "Meu contra-ataque acertou ") + "), o que errou passou de raspão (" + conta(Rv, "passou de raspão em ") + ")", conta(Rv, "Meu contra-ataque acertou Ogro: 6 de dano (ele está com ") >= 41 && conta(Rv, "acertou Lobo Cinzento: 11 de dano (ele está com 0 de 18).") >= 20 && conta(Rv, "Meu contra-ataque passou de raspão em ") >= 82 && conta(Rv, "[NOTA] já havia\n[REAÇÃO — REVIDE RESOLVIDO PELO SISTEMA] ") >= 130);
+  const Fa = tx("corpoFogoAmigo");
+  t("o fogo amigo: a área, quem ela pegou e quanto cada um pagou", conta(Fa, "A área de \"Bola de Fogo\" pegou Corvo, Sarna, do meu próprio grupo") >= 41 && conta(Fa, "pegou Corvo, do meu próprio grupo, e o sistema já cobrou 8 de dano de cada.") >= 18);
+  const Ri = tx("corpoRitual");
+  t("o ritual: a magia e os minutos que custou", conta(Ri, "Círculo de Proteção não estava preparada, então eu a conduzi como ritual: 60 minutos de preparo") >= 40 && conta(Ri, ": 10 minutos de preparo") >= 130);
+  const Op = tx("corpoOportunidade");
+  t("os ataques de oportunidade: cada golpe com quem o deu, o que acertou e o que errou, e o dano no total", Op.every((x) => x.startsWith(" [ATAQUES DE OPORTUNIDADE — ROLADOS PELO SISTEMA] Ao me afastar, dei as costas: ")) && conta(Op, "dei as costas: Lobo acertou (4). Levei ") >= 130 && conta(Op, "dei as costas: Lobo errou; Ogro acertou (7). Levei ") >= 130 && conta(Op, "Levei 12 de dano no total") >= 18);
+  const Vi = tx("corpoVitoria");
+  const nada = conta(Vi, " Nada de aproveitável ficou no chão — não invente achados."), ficou = conta(Vi, " FICOU CAÍDO no chão, entre os corpos: ");
+  t("a vitória: as moedas e o XP, o que ficou no chão (" + ficou + ") ou nada (" + nada + "), e a masmorra concluída quando foi", Vi.every((x) => /\[VITÓRIA — sistema já aplicou \+\d+ moedas e \+\d+ XP\] NÃO envie moedas nem xp\./.test(x)) && nada >= 82 && ficou >= 164 && conta(Vi, "entre os corpos: Adaga, Couro de Lobo.") >= 63 && conta(Vi, " A MASMORRA FOI CONCLUÍDA") >= 82 && Vi.filter((x) => !x.includes("A MASMORRA FOI CONCLUÍDA")).length >= 164);
+  t("a vitória diz que ficou algo mesmo quando o resumo vem vazio (" + conta(Vi, "entre os corpos: . ") + ")", conta(Vi, "entre os corpos: . Você pode MOSTRAR") >= 37);
+  const Fu = tx("corpoFuga");
+  t("o custo da fuga: nada sem resultado ou sem linha (" + Fu.filter((x) => x === "").length + "), e cada golpe e disparo quando houve", Fu.filter((x) => x === "").length >= 127 && conta(Fu, " [FUGA — CUSTO ROLADO PELO SISTEMA] Ao dar as costas: Ogro (golpe) acertou (5). Levei ") >= 40 && conta(Fu, "Ao dar as costas: Arqueiro (disparo) errou; Ogro (golpe) acertou (8). Levei ") >= 79 && Fu.every((x) => x === "" || x.endsWith("de dano no total e já está aplicado — NÃO recalcule.")));
+  const Da = tx("corpoDadiva"), Qs = tx("corpoQuedaSegurada"), Fr = tx("corpoFuria");
+  t("as três vezes que o corpo não caiu: a dádiva com a vida que voltou, quem me segurou, e a fúria", conta(Da, "voltei na mesma hora com 7 PV: é a dádiva") >= 20 && conta(Qs, "O golpe me levaria a 0 e \"Teimosia do Anão\" me segurou de pé com 1 PV.") >= 130 && Fr.every((x) => x.endsWith("[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA] O golpe me levaria a 0 e eu fiquei de pé com 1 PV: é o traço da minha origem, e ele só faz isso uma vez por descanso longo. NÃO me trate como caído. Narre o corpo que se recusa — o joelho que trava, o ar que volta pelos dentes —, e deixe claro que agora qualquer coisa me derruba.")) && conta(Fr, "[NOTA] já havia\n[FÚRIA") >= 130);
+  const Ag = tx("corpoAguentei");
+  t("aguentei o golpe: de quem (e do oponente sem nome, " + conta(Ag, "O golpe de meu oponente me pegou") + "), quanto seria e quanto custou", conta(Ag, "O golpe de Ogro me pegou de raspão: em vez de ") >= 82 && conta(Ag, "O golpe de meu oponente me pegou de raspão: ") >= 180 && conta(Ag, "em vez de 13, custou 6.") >= 24);
+  const Qa = tx("corpoQuedaAltura");
+  t("a queda de altura: a salvaguarda à frente, os metros, o motivo quando há (e o espaço quando não), o dano cobrado", Qa.every((x) => /^\[SALVAGUARDA (passou|falhou|nenhuma)\] A queda de (3|9|18) metros · (true|false) · \d+ → \d+\n\[QUEDA — RESOLVIDA PELO SISTEMA\] Eu caí (3|9|18) metros /.test(x)) && conta(Qa, "Eu caí 9 metros ao tentar escalar a muralha e o sistema já cobrou: ") >= 41 && conta(Qa, "Eu caí 3 metros  e o sistema já cobrou: ") >= 41);
+  const Rd = tx("corpoRaid");
+  t("a raid: o chefe que caiu ou o chamado que acabou, quem não voltou, e a dispersão", conta(Rd, "] o Wyrm de Cinza caiu, e caiu pela mão do herói. ") >= 62 && conta(Rd, "] O chamado acabou sem a coisa cair. Ninguém ficou para trás.") >= 41 && conta(Rd, "Não voltaram: Bran, Ísis — e não voltam mesmo.") >= 81);
+  t("as doze formas estão na tabela do corpo", Object.keys(ENVELOPES_DO_CORPO).length === 12 && ["revide", "fogoAmigo", "ritual", "ataquesDeOportunidade", "vitoria", "custoDaFuga", "dadivaDaRecuperacao", "quedaSegurada", "furiaPersistente", "aguenteiOGolpe", "quedaDeAltura", "raidEncerrada"].every((q) => Object.hasOwn(ENVELOPES_DO_CORPO, q)));
+  const P = oEnvelopeDoCorpo;
+  const m = (f) => ({ oEnvelopeDoCorpo: (q, d) => P(q, f(d)) });
+  const mordidas = [
+    ["corpoRevide", "o revide que esquece a vida que ficou", m((d) => ({ ...d, pv: 99 }))],
+    ["corpoFogoAmigo", "o fogo amigo que cobra outro tanto", m((d) => ({ ...d, meio: d.meio + 1 }))],
+    ["corpoRitual", "o ritual sem os minutos", m((d) => ({ ...d, minutos: 0 }))],
+    ["corpoOportunidade", "os ataques de oportunidade que perdem um golpe", m((d) => ({ ...d, ops: d.ops.slice(1) }))],
+    ["corpoVitoria", "a vitória que só olha o resumo", m((d) => ({ ...d, caidos: d.chao.length }))],
+    ["corpoVitoria", "a vitória que esquece a masmorra", m((d) => ({ ...d, masmorraConcluida: false }))],
+    ["corpoFuga", "o custo da fuga com outro dano", m((d) => ({ ...d, dano: d.dano + 1 }))],
+    ["corpoDadiva", "a dádiva que devolve outra vida", m((d) => ({ ...d, volta: d.volta + 1 }))],
+    ["corpoQuedaSegurada", "a queda segurada por ninguém", m((d) => ({ ...d, quemSegura: "" }))],
+    ["corpoFuria", "a fúria que diz outra coisa", { oEnvelopeDoCorpo: (q, d) => P(q, d).replace("descanso longo", "dia") }],
+    ["corpoAguentei", "aguentei o golpe sem o que devolvi", m((d) => ({ ...d, devolve: 0 }))],
+    ["corpoQuedaAltura", "a queda sem o motivo", m((d) => ({ ...d, motivo: "" }))],
+    ["corpoRaid", "a raid que esquece os mortos", m((d) => ({ ...d, mortos: [] }))],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

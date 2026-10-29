@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -9547,7 +9547,7 @@ export default function Taverna() {
           setCombate(combateRef.current);
         }
         pushMsgs([{ autor: "sistema", texto: rr.dano > 0 ? `${esc.icone} Revide em ${alvo.nome}: ${rr.dano} de dano (${pv}/${alvo.vidaMax})${pv <= 0 ? " ☠" : ""}` : `${esc.icone} Revide em ${alvo.nome}: errou` }]);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[REAÇÃO — REVIDE RESOLVIDO PELO SISTEMA] ${rr.dano > 0 ? `Meu contra-ataque acertou ${alvo.nome}: ${rr.dano} de dano (ele está com ${pv} de ${alvo.vidaMax}).` : `Meu contra-ataque passou de raspão em ${alvo.nome}.`} Narre o revide dentro do mesmo instante — não é um turno novo meu.`;
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("revide", { dano: rr.dano, alvo: alvo.nome, pv, vidaMax: alvo.vidaMax });
       }
     }
     return res;
@@ -13779,7 +13779,7 @@ export default function Taverna() {
              das maos — a ordem em que a cena acontece */
           for (const qbA of quebras.values()) linhasSis.push({ autor: "sistema", texto: qbA.linha });
           partes.push(`${lista} apanhou ${meio} da minha própria ${h.nome}`);
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FOGO AMIGO — APLICADO PELO SISTEMA] A área de "${h.nome}" pegou ${lista}, do meu próprio grupo, e o sistema já cobrou ${meio} de dano de cada. Narre isso: eles não são figurantes, e levar um golpe meu tem reação. Não desfaça, não conserte e não finja que eles se esquivaram.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("fogoAmigo", { habilidade: h.nome, lista, meio });
         }
         {
           const total = gradeH ? gradeH.largura * gradeH.altura : 0;
@@ -15067,7 +15067,7 @@ export default function Taverna() {
             pushMsgs([{ autor: "sistema", texto: `📖 ${lanc.aviso}` }]);
             const tx = avancarMinutos(lanc.minutos);
             if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RITUAL — RESOLVIDO PELO SISTEMA] ${h.nome} não estava preparada, então eu a conduzi como ritual: ${lanc.minutos} minutos de preparo, círculo, voz e paciência. O efeito é o mesmo; o custo foi o tempo. Narre a demora e o esforço, nunca a mecânica.`;
+            notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("ritual", { habilidade: h.nome, minutos: lanc.minutos });
           }
         }
         if (pers.mana < custo) { pushMsgs([{ autor: "sistema", texto: `Mana insuficiente para ${h.nome} — parei antes dela.` }]); break; }
@@ -15363,7 +15363,7 @@ export default function Taverna() {
         /* o abrigo pode ter comido a batida inteira: a ficha ja mudou (o efeito
            se gastou) e precisa ser publicada mesmo sem PV nenhum a tirar */
         else if (persG !== personagem) setPersonagem(persG);
-        notaOp = ` [ATAQUES DE OPORTUNIDADE — ROLADOS PELO SISTEMA] Ao me afastar, dei as costas: ${ops.map((o) => `${o.inimigo} ${o.r.dano > 0 ? `acertou (${o.r.dano})` : "errou"}`).join("; ")}. Levei ${dano} de dano no total e já está aplicado — NÃO recalcule. Narre o preço da retirada.`;
+        notaOp = oEnvelopeDoCorpo("ataquesDeOportunidade", { ops, dano });
       }
     }
     /* v9.13: em combate, até "recuo dois passos e observo" é um turno. É o que
@@ -15651,9 +15651,7 @@ export default function Taverna() {
     {
       const caiu = espolioNoChaoRef.current || [];
       espolioNoChaoRef.current = [];
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[VITÓRIA — sistema já aplicou +${esp.moedas} moedas e +${esp.xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${caiu.length
-        ? ` FICOU CAÍDO no chão, entre os corpos: ${resumoDoChao(caiu)}. Você pode MOSTRAR isso na cena — o brilho no cinto, o couro que dá para tirar —, mas NÃO me entregue nada e NÃO envie "adicionar_itens" nem "adicionar_equipamento": quem se abaixa e recolhe sou eu, pelo sistema.`
-        : " Nada de aproveitável ficou no chão — não invente achados."}${masmorraConcluida ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("vitoria", { moedas: esp.moedas, xp: esp.xp, caidos: caiu.length, chao: caiu.length ? resumoDoChao(caiu) : "", masmorraConcluida });
     }
     return personagemRef.current;
   };
@@ -15774,7 +15772,7 @@ export default function Taverna() {
         }
       }
       const notaGolpes = resultado && resultado.linhas.length
-        ? ` [FUGA — CUSTO ROLADO PELO SISTEMA] Ao dar as costas: ${custosRolados.map((c) => `${c.nome} (${c.tipo === "disparo" ? "disparo" : "golpe"}) ${c.r.dano > 0 ? `acertou (${c.r.dano})` : "errou"}`).join("; ")}. Levei ${resultado.dano} de dano no total e já está aplicado — NÃO recalcule.`
+        ? oEnvelopeDoCorpo("custoDaFuga", { custos: custosRolados, dano: resultado.dano })
         : "";
       /* OS GOLPES PODEM DERRUBAR O HEROI: a fuga nao acontece — segue o
          fluxo normal de hoje, com o revide da rodada e tudo. Um golpe que
@@ -16252,7 +16250,7 @@ export default function Taverna() {
       const volta = Math.max(1, Math.round((persAtual.vidaMax || 10) / 2));
       persAtual = gastarSegundoFolego({ ...persAtual, vida: volta, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
       pushMsgs([{ autor: "sistema", texto: `🌠 Dádiva da Recuperação — você cai e o corpo se recusa: +${volta} PV (uma vez por dia).` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[DÁDIVA DA RECUPERAÇÃO — APLICADA PELO SISTEMA] Eu cheguei a 0 PV e voltei na mesma hora com ${volta} PV: é a dádiva épica agindo, e ela só faz isso uma vez por dia. NÃO me trate como caído nem como moribundo, e narre o instante como o que é — o joelho que dobra e não chega ao chão.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("dadivaDaRecuperacao", { volta });
     }
     /* v9.45: a mesma habilidade de classe, no caminho do turno inimigo. */
     if (persAtual.vida <= 0) {
@@ -16260,7 +16258,7 @@ export default function Taverna() {
       if (quemSegura) {
         persAtual = gastarSegura({ ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } });
         pushMsgs([{ autor: "sistema", texto: `🛡 ${quemSegura} — você deveria cair, e não cai: fica com 1 PV (uma vez por luta).` }]);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[QUEDA — RESOLVIDA PELO SISTEMA] O golpe me levaria a 0 e "${quemSegura}" me segurou de pé com 1 PV. NÃO me trate como caído. Narre o corpo que se recusa, e deixe claro que agora qualquer coisa me derruba.`;
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("quedaSegurada", { quemSegura });
       }
     }
     /* ---- FÚRIA PERSISTENTE (v9.44) ----
@@ -16272,7 +16270,7 @@ export default function Taverna() {
     if (persAtual.vida <= 0 && firmeDisponivel(persAtual, diaRef.current)) {
       persAtual = gastarFirme({ ...persAtual, vida: 1, morrendo: false, morte: { sucessos: 0, falhas: 0 } }, diaRef.current);
       pushMsgs([{ autor: "sistema", texto: "🩸 Fúria persistente — você deveria cair, e não cai: fica com 1 PV (uma vez por descanso longo)." }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA] O golpe me levaria a 0 e eu fiquei de pé com 1 PV: é o traço da minha origem, e ele só faz isso uma vez por descanso longo. NÃO me trate como caído. Narre o corpo que se recusa — o joelho que trava, o ar que volta pelos dentes —, e deixe claro que agora qualquer coisa me derruba.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("furiaPersistente", {});
     }
     if (persConcQuebrada) persAtual = quebrarConcentracao(persAtual, persConcQuebrada);
     persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
@@ -17819,7 +17817,7 @@ export default function Taverna() {
       setPersonagem(p2); personagemRef.current = p2; salvar({ personagem: p2 });
       setHeroAberto(false);
       pushMsgs([{ autor: "sistema", texto: `🛡 Você aguenta: o golpe de ${golpe.dano} vira ${golpe.dano - devolve} — ${p2.vida}/${p2.vidaMax} PV. Restam ${g.restam} ponto(s).` }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[AGUENTEI O GOLPE — RESOLVIDO PELO SISTEMA] O golpe de ${golpe.nome || "meu oponente"} me pegou de raspão: em vez de ${golpe.dano}, custou ${golpe.dano - devolve}. Narre a diferença como corpo e vontade — o giro do ombro, a armadura que aparou, os dentes cerrados. Não mencione sistema, ponto nem número.`;
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("aguenteiOGolpe", { oponente: golpe.nome, dano: golpe.dano, devolve });
       return;
     }
 
@@ -19679,8 +19677,7 @@ export default function Taverna() {
     const r = sofrerNaPele({ dano: sofrido, motivo: `${q.metros} m de queda`, condicao: sofrido > 0 ? "caido" : "", porque: "a queda" });
     return {
       ...r, sv, cheio, sofrido, q,
-      envelope: `${envelopeDaSalvaguarda(sv, { oQue: `A queda de ${q.metros} metros`, meia: fonte.meia, danoCheio: cheio, danoFinal: r.dano })}
-[QUEDA — RESOLVIDA PELO SISTEMA] Eu caí ${q.metros} metros ${motivo ? `ao tentar ${motivo}` : ""} e o sistema já cobrou: ${r.dano} de dano, e estou no chão. Narre o tombo e o corpo — NÃO mude o número, NÃO me deixe de pé e NÃO invente que me segurei em alguma coisa no último instante.`,
+      envelope: envelopeDaSalvaguarda(sv, { oQue: `A queda de ${q.metros} metros`, meia: fonte.meia, danoCheio: cheio, danoFinal: r.dano }) + "\n" + oEnvelopeDoCorpo("quedaDeAltura", { metros: q.metros, motivo, dano: r.dano }),
     };
   };
 
@@ -20723,7 +20720,7 @@ export default function Taverna() {
     } else {
       pushMsgs([{ autor: "sistema", texto: `⚑ O chamado se desfez. Quem sobrou vai embora.` }]);
     }
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RAID — ENCERRADA PELO SISTEMA] ${venceu ? `${r0.chefe} caiu, e caiu pela mão do herói.` : `O chamado acabou sem a coisa cair.`} ${fim.mortos.length ? `Não voltaram: ${fim.mortos.join(", ")} — e não voltam mesmo.` : "Ninguém ficou para trás."} Quem sobreviveu se despede e volta para onde veio: eles NÃO seguem comigo depois desta cena. Narre a dispersão, sem discurso e sem promessa de reencontro.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("raidEncerrada", { venceu, chefe: r0.chefe, mortos: fim.mortos });
   };
 
   /* ---------------- A ARMADILHA QUE SE VE ANTES DE MORDER (13/10, v9.461) ----------------

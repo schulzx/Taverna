@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador", "oEnvelopeDoCorpo"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -91,9 +91,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "entradaDaMasmorra", "armadilhaSofridaNaMasmorra",
   "genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco", "genteRelacaoMudada",
   "vezPergunta", "vezEscrevi", "vezRolagem",
-  "funcaoReviver", "funcaoCura", "funcaoCondicao", "funcaoAtiva"];
+  "funcaoReviver", "funcaoCura", "funcaoCondicao", "funcaoAtiva",
+  "corpoRevide", "corpoFogoAmigo", "corpoRitual", "corpoDadiva", "corpoQuedaSegurada", "corpoFuria", "corpoAguentei", "corpoRaid", "corpoOportunidade", "corpoVitoria", "corpoFuga", "corpoQuedaAltura"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : /^funcao[A-Z]/.test(b) ? "funcao" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : /^funcao[A-Z]/.test(b) ? "funcao" : /^corpo[A-Z]/.test(b) ? "corpo" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -251,6 +252,19 @@ const ANCORAS = {
   funcaoCura: { antes: ["      enviar(`[${m.nome} — CURA APLICADA PELO SISTEMA]", FIM], hoje: ["      enviar(oEnvelopeDosPoderes(\"curaAplicada\"", FIM] },
   funcaoCondicao: { antes: ["        enviar(`[${m.nome} — JÁ APLICADA PELO SISTEMA]", FIM], hoje: ["        enviar(oEnvelopeDosPoderes(\"condicaoDesfeita\"", FIM] },
   funcaoAtiva: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[${m.nome.toUpperCase()} — ATIVO, CONTADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDosPoderes(\"magiaAtiva\"", FIM] },
+  /* o corpo na luta (21.º grupo): oito notas de uma linha; os ataques de oportunidade (a cauda que vai em notaOp); a vitória (quatro linhas antes, uma hoje, até ao fecho do bloco); o custo da fuga (o ternário de notaGolpes, até ao comentário que o segue — a âncora é a mesma nas duas pontas); a queda de altura (o campo envelope do objeto devolvido, corrido dentro de um objeto) */
+  corpoRevide: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[REAÇÃO — REVIDE RESOLVIDO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"revide\"", FIM] },
+  corpoFogoAmigo: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FOGO AMIGO — APLICADO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"fogoAmigo\"", FIM] },
+  corpoRitual: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[RITUAL — RESOLVIDO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"ritual\"", FIM] },
+  corpoDadiva: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[DÁDIVA DA RECUPERAÇÃO — APLICADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"dadivaDaRecuperacao\"", FIM] },
+  corpoQuedaSegurada: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[QUEDA — RESOLVIDA PELO SISTEMA] O golpe me levaria", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"quedaSegurada\"", FIM] },
+  corpoFuria: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"furiaPersistente\"", FIM] },
+  corpoAguentei: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[AGUENTEI O GOLPE — RESOLVIDO PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"aguenteiOGolpe\"", FIM] },
+  corpoRaid: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[RAID — ENCERRADA PELO SISTEMA]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"raidEncerrada\"", FIM] },
+  corpoOportunidade: { antes: ["        notaOp = ` [ATAQUES DE OPORTUNIDADE", FIM], hoje: ["        notaOp = oEnvelopeDoCorpo(\"ataquesDeOportunidade\"", FIM] },
+  corpoVitoria: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[VITÓRIA — sistema já aplicou", "\n    }"], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoCorpo(\"vitoria\"", "\n    }"] },
+  corpoFuga: { antes: ["      const notaGolpes = resultado && resultado.linhas.length", "\n      /* OS GOLPES PODEM"], hoje: ["      const notaGolpes = resultado && resultado.linhas.length", "\n      /* OS GOLPES PODEM"] },
+  corpoQuedaAltura: { antes: ["      envelope: `${envelopeDaSalvaguarda(sv, { oQue: `A queda", ",\n    };"], hoje: ["      envelope: envelopeDaSalvaguarda(sv, { oQue: `A queda", ",\n    };"], envolve: ["const o = {","};"] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -266,7 +280,8 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   entradaDaMasmorra: "envelopeDaEntrada", armadilhaSofridaNaMasmorra: "enviados",
   genteCompanheiro: "notaRef.current", genteMissaoPerdida: "notaRef.current", genteRelacaoFormal: "notaRef.current", genteNovoArco: "notaRef.current", genteRelacaoMudada: "env",
   vezPergunta: "enviados", vezEscrevi: "notaRef.current", vezRolagem: "enviados",
-  funcaoReviver: "notaRef.current", funcaoCura: "enviados", funcaoCondicao: "enviados", funcaoAtiva: "notaRef.current" };
+  funcaoReviver: "notaRef.current", funcaoCura: "enviados", funcaoCondicao: "enviados", funcaoAtiva: "notaRef.current",
+  corpoRevide: "notaRef.current", corpoFogoAmigo: "notaRef.current", corpoRitual: "notaRef.current", corpoDadiva: "notaRef.current", corpoQuedaSegurada: "notaRef.current", corpoFuria: "notaRef.current", corpoAguentei: "notaRef.current", corpoRaid: "notaRef.current", corpoOportunidade: "notaOp", corpoVitoria: "notaRef.current", corpoFuga: "notaGolpes", corpoQuedaAltura: "o.envelope" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -688,6 +703,38 @@ export function funcaoDoCaso(i) {
   };
 }
 
+/* O CORPO NA LUTA: a nota do turno vazia e já com outra; o revide que
+   acerta (e derruba) e o que erra; a área que pega um e dois do grupo; o
+   ritual curto e o longo; um e dois ataques de oportunidade, de quem acerta
+   e de quem erra; a vitória sem nada no chão, com uma e duas coisas, com o
+   resumo vazio, com a masmorra concluída e sem; a fuga sem custo (sem
+   resultado, ou sem linha) e com golpe e disparo; a dádiva, a habilidade
+   que segura e a fúria; o golpe aguentado de quem tem nome e de quem não
+   tem; a queda de cada altura, com e sem motivo, com salvaguarda passada,
+   falhada e nenhuma; a raid vencida e não, com e sem mortos. */
+export function corpoDoCaso(i) {
+  const golpeDano = 4 + (i % 10);
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    rr: { dano: [0, 6, 11][i % 3] }, alvo: { nome: ["Ogro", "Lobo Cinzento"][(i >> 1) % 2], vidaMax: [30, 18][(i >> 1) % 2] }, pv: [0, 12, 24][(i >> 2) % 3],
+    h: { nome: ["Bola de Fogo", "Chuva de Lâminas", "Círculo de Proteção"][i % 3] }, lista: ["Corvo", "Corvo, Sarna"][(i >> 1) % 2], meio: 2 + (i % 7),
+    lanc: { minutos: [10, 60][(i >> 2) % 2] },
+    /* `notaOp` é um `let` do App, declarado acima do sítio (a cauda que vai à minha frase): começa vazio */
+    notaOp: "",
+    ops: [[{ inimigo: "Lobo", r: { dano: 4 } }], [{ inimigo: "Lobo", r: { dano: 0 } }, { inimigo: "Ogro", r: { dano: 7 } }]][(i >> 1) % 2], dano: i % 13,
+    esp: { moedas: 10 + i, xp: 50 + (i % 5) * 10 }, caiu: [[], [{ nome: "Adaga" }], [{ nome: "Adaga" }, { nome: "Couro de Lobo" }]][i % 3],
+    resumoDoChao: (c) => ((i >> 3) % 4 === 3 ? "" : c.map((x) => x.nome).join(", ")), masmorraConcluida: (i >> 2) % 3 === 0,
+    resultado: (i >> 3) % 3 === 0 ? null : { linhas: (i >> 1) % 4 === 0 ? [] : [{ texto: "golpe" }], dano: 3 + (i % 9) },
+    custosRolados: [[{ nome: "Ogro", tipo: "golpe", r: { dano: 5 } }], [{ nome: "Arqueiro", tipo: "disparo", r: { dano: 0 } }, { nome: "Ogro", tipo: "golpe", r: { dano: 8 } }]][(i >> 2) % 2],
+    volta: 1 + (i % 12), quemSegura: ["Segurar a Linha", "Teimosia do Anão"][i % 2],
+    golpe: { nome: [undefined, "Ogro", ""][i % 3], dano: golpeDano }, devolve: Math.ceil(golpeDano / 2),
+    sv: [{ passou: true }, { passou: false }, null][i % 3], q: { metros: [3, 9, 18][(i >> 1) % 3] }, fonte: { meia: (i >> 2) % 2 === 0 },
+    cheio: 5 + (i % 8), r: { dano: 2 + (i % 8) }, motivo: ["", "escalar a muralha"][(i >> 1) % 2],
+    envelopeDaSalvaguarda: (sv, o) => "[SALVAGUARDA " + (sv ? (sv.passou ? "passou" : "falhou") : "nenhuma") + "] " + o.oQue + " · " + o.meia + " · " + o.danoCheio + " → " + o.danoFinal,
+    venceu: i % 2 === 0, r0: { chefe: ["o Wyrm de Cinza", "a Rainha-Aranha"][(i >> 1) % 2] }, fim: { mortos: [[], ["Bran"], ["Bran", "Ísis"]][(i >> 2) % 3] },
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -771,6 +818,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "gente") Object.assign(S, genteDoCaso(k.i));
     else if (g === "vez") Object.assign(S, vezDoCaso(k.i));
     else if (g === "funcao") Object.assign(S, funcaoDoCaso(k.i));
+    else if (g === "corpo") Object.assign(S, corpoDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

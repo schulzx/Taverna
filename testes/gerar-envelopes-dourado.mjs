@@ -36,7 +36,8 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   entradaDaMasmorra: "63dda7f", armadilhaSofridaNaMasmorra: "63dda7f",
   genteCompanheiro: "f496d78", genteMissaoPerdida: "f496d78", genteRelacaoFormal: "f496d78", genteNovoArco: "f496d78", genteRelacaoMudada: "f496d78",
   vezPergunta: "12cce5e", vezEscrevi: "12cce5e", vezRolagem: "12cce5e",
-  funcaoReviver: "9cf8d4d", funcaoCura: "9cf8d4d", funcaoCondicao: "9cf8d4d", funcaoAtiva: "9cf8d4d" };
+  funcaoReviver: "9cf8d4d", funcaoCura: "9cf8d4d", funcaoCondicao: "9cf8d4d", funcaoAtiva: "9cf8d4d",
+  corpoRevide: "029385d", corpoFogoAmigo: "029385d", corpoRitual: "029385d", corpoDadiva: "029385d", corpoQuedaSegurada: "029385d", corpoFuria: "029385d", corpoAguentei: "029385d", corpoRaid: "029385d", corpoOportunidade: "029385d", corpoVitoria: "029385d", corpoFuga: "029385d", corpoQuedaAltura: "029385d" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);

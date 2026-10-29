@@ -551,3 +551,36 @@ export const ENVELOPES_DO_JOGADOR = {
 export function oEnvelopeDoJogador(qual, dados) {
   return aFormaDe(ENVELOPES_DO_JOGADOR, qual, "do jogador")(dados || {});
 }
+
+/* ============================================================
+   21.º GRUPO — O CORPO NA LUTA: o que o sistema já rolou e já cobrou do
+   corpo, e o Narrador só conta — o revide, a minha área que pegou o meu
+   grupo, o ritual que custou tempo, o preço de dar as costas (os ataques
+   de oportunidade e o custo da fuga, as duas caudas da retirada, que o App
+   cola à minha frase), a vitória e o que ficou no chão, as três vezes que
+   o corpo não caiu (a dádiva, a habilidade que me segura, a fúria), o
+   golpe que aguentei, a queda de altura e a raid que acabou.
+   `ops` e `custos`: os golpes rolados como o sistema os deu (cada um com
+   o seu `r.dano`); `caidos`: quantas coisas ficaram no chão, e `chao`, o
+   resumo delas já dito (o texto diz que ficou algo mesmo com o resumo
+   vazio); a queda de altura vem depois da salvaguarda, que o App junta.
+   ============================================================ */
+export const ENVELOPES_DO_CORPO = {
+  revide: ({ dano, alvo, pv, vidaMax }) => `[REAÇÃO — REVIDE RESOLVIDO PELO SISTEMA] ${dano > 0 ? `Meu contra-ataque acertou ${alvo}: ${dano} de dano (ele está com ${pv} de ${vidaMax}).` : `Meu contra-ataque passou de raspão em ${alvo}.`} Narre o revide dentro do mesmo instante — não é um turno novo meu.`,
+  fogoAmigo: ({ habilidade, lista, meio }) => `[FOGO AMIGO — APLICADO PELO SISTEMA] A área de "${habilidade}" pegou ${lista}, do meu próprio grupo, e o sistema já cobrou ${meio} de dano de cada. Narre isso: eles não são figurantes, e levar um golpe meu tem reação. Não desfaça, não conserte e não finja que eles se esquivaram.`,
+  ritual: ({ habilidade, minutos }) => `[RITUAL — RESOLVIDO PELO SISTEMA] ${habilidade} não estava preparada, então eu a conduzi como ritual: ${minutos} minutos de preparo, círculo, voz e paciência. O efeito é o mesmo; o custo foi o tempo. Narre a demora e o esforço, nunca a mecânica.`,
+  ataquesDeOportunidade: ({ ops, dano }) => ` [ATAQUES DE OPORTUNIDADE — ROLADOS PELO SISTEMA] Ao me afastar, dei as costas: ${ops.map((o) => `${o.inimigo} ${o.r.dano > 0 ? `acertou (${o.r.dano})` : "errou"}`).join("; ")}. Levei ${dano} de dano no total e já está aplicado — NÃO recalcule. Narre o preço da retirada.`,
+  vitoria: ({ moedas, xp, caidos, chao, masmorraConcluida }) => `[VITÓRIA — sistema já aplicou +${moedas} moedas e +${xp} XP] NÃO envie moedas nem xp. Narre o desfecho em 2-3 frases.${caidos
+        ? ` FICOU CAÍDO no chão, entre os corpos: ${chao}. Você pode MOSTRAR isso na cena — o brilho no cinto, o couro que dá para tirar —, mas NÃO me entregue nada e NÃO envie "adicionar_itens" nem "adicionar_equipamento": quem se abaixa e recolhe sou eu, pelo sistema.`
+        : " Nada de aproveitável ficou no chão — não invente achados."}${masmorraConcluida ? " A MASMORRA FOI CONCLUÍDA e o tesouro do chefe já foi entregue pelo sistema — narre a saída triunfal e retome o mundo lá fora." : ""}`,
+  custoDaFuga: ({ custos, dano }) => ` [FUGA — CUSTO ROLADO PELO SISTEMA] Ao dar as costas: ${custos.map((c) => `${c.nome} (${c.tipo === "disparo" ? "disparo" : "golpe"}) ${c.r.dano > 0 ? `acertou (${c.r.dano})` : "errou"}`).join("; ")}. Levei ${dano} de dano no total e já está aplicado — NÃO recalcule.`,
+  dadivaDaRecuperacao: ({ volta }) => `[DÁDIVA DA RECUPERAÇÃO — APLICADA PELO SISTEMA] Eu cheguei a 0 PV e voltei na mesma hora com ${volta} PV: é a dádiva épica agindo, e ela só faz isso uma vez por dia. NÃO me trate como caído nem como moribundo, e narre o instante como o que é — o joelho que dobra e não chega ao chão.`,
+  quedaSegurada: ({ quemSegura }) => `[QUEDA — RESOLVIDA PELO SISTEMA] O golpe me levaria a 0 e "${quemSegura}" me segurou de pé com 1 PV. NÃO me trate como caído. Narre o corpo que se recusa, e deixe claro que agora qualquer coisa me derruba.`,
+  furiaPersistente: () => `[FÚRIA PERSISTENTE — APLICADA PELO SISTEMA] O golpe me levaria a 0 e eu fiquei de pé com 1 PV: é o traço da minha origem, e ele só faz isso uma vez por descanso longo. NÃO me trate como caído. Narre o corpo que se recusa — o joelho que trava, o ar que volta pelos dentes —, e deixe claro que agora qualquer coisa me derruba.`,
+  aguenteiOGolpe: ({ oponente, dano, devolve }) => `[AGUENTEI O GOLPE — RESOLVIDO PELO SISTEMA] O golpe de ${oponente || "meu oponente"} me pegou de raspão: em vez de ${dano}, custou ${dano - devolve}. Narre a diferença como corpo e vontade — o giro do ombro, a armadura que aparou, os dentes cerrados. Não mencione sistema, ponto nem número.`,
+  quedaDeAltura: ({ metros, motivo, dano }) => `[QUEDA — RESOLVIDA PELO SISTEMA] Eu caí ${metros} metros ${motivo ? `ao tentar ${motivo}` : ""} e o sistema já cobrou: ${dano} de dano, e estou no chão. Narre o tombo e o corpo — NÃO mude o número, NÃO me deixe de pé e NÃO invente que me segurei em alguma coisa no último instante.`,
+  raidEncerrada: ({ venceu, chefe, mortos }) => `[RAID — ENCERRADA PELO SISTEMA] ${venceu ? `${chefe} caiu, e caiu pela mão do herói.` : `O chamado acabou sem a coisa cair.`} ${mortos.length ? `Não voltaram: ${mortos.join(", ")} — e não voltam mesmo.` : "Ninguém ficou para trás."} Quem sobreviveu se despede e volta para onde veio: eles NÃO seguem comigo depois desta cena. Narre a dispersão, sem discurso e sem promessa de reencontro.`,
+};
+export function oEnvelopeDoCorpo(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_CORPO, qual, "do corpo")(dados || {});
+}
