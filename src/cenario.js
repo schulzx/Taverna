@@ -43,7 +43,12 @@
    criação, com o bônus, a frase do traço e o efeito que tracos.js lê; e,
    no `panteao`, os títulos dos cinco graus e o sinal de cada temperamento,
    que eram um caso escrito no código. A REGRA fica: os padrões do nome, a
-   escala de fiéis, o que cada efeito de raça faz). Os
+   escala de fiéis, o que cada efeito de raça faz); e, na 6.ª fatia, o que
+   ainda prendia gente ao código: os `prontos` (prontos.js — os oito do
+   roster, com a raça e o ofício do mundo; o feitio deles — classe, arma,
+   índole — é vocabulário do motor) e, nas `racas`, o povo do companheiro
+   (companheiros.js — a demografia com que o companheiro sorteado nasce, e
+   as formas com que o registo do mundo diz uma raça). Os
    ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
    secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
    ofícios não perca o léxico gerado.
@@ -67,7 +72,7 @@ import { DADOS_DO_CENARIO_PADRAO } from "./cenario-padrao.js";
    seu tipo (um nome de `TIPOS`, abaixo); `?` no fim é campo opcional. */
 export const ESQUEMA_DO_CENARIO = Object.freeze({
   formato: 1,
-  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto", gente: "objeto", panteao: "objeto", lugares: "objeto", racas: "objeto" }),
+  raiz: Object.freeze({ formato: "inteiro", id: "texto", nome: "texto", precos: "objeto", ocupacoes: "lista", generos: "objeto", bestiario: "objeto", gente: "objeto", panteao: "objeto", lugares: "objeto", racas: "objeto", prontos: "lista" }),
   precos: Object.freeze({ escala: "textos", raridade: "objeto", semRaridade: "preco", miudeza: "preco", comuns: "lista" }),
   /* as raridades do motor (loot.js RARIDADES): as cinco que se vendem têm
      preço obrigatório; a única não se compra em banca, e o preço é opcional */
@@ -130,7 +135,18 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      mundos que não são do futuro, `futuro` para os de `generos.futuristas`.
      O nome é o identificador — a ficha guarda-o, o léxico renomeia-o —, e é
      único nas duas listas juntas (sem olhar a caixa) */
-  racas: Object.freeze({ fantasia: "lista", futuro: "lista" }),
+  racas: Object.freeze({ fantasia: "lista", futuro: "lista", doCompanheiro: "lista", registo: "textosPorChave" }),
+  /* 6.ª fatia (companheiros.js): `doCompanheiro` é o povo de quem o
+     companheiro sorteado pode ser, com o peso de cada um — uma raça deste
+     mundo, pelo nome exato (é ele que a pintura procura); `registo` são as
+     palavras com que o registo do mundo diz uma raça que não é o nome do
+     catálogo ("anã" → "Anão"), comparadas sem acento e sem caixa */
+  povo: Object.freeze({ raca: "texto", peso: "nivel" }),
+  /* um pronto (prontos.js): a raça e o ofício são do mundo; a classe, a
+     subclasse, o antecedente, a arma, a armadura e a índole são vocabulário
+     do motor (o montador devolve null se um deles não existir) */
+  pronto: Object.freeze({ id: "texto", nome: "texto", papel: "texto", linha: "texto", sexo: "texto", raca: "texto", classe: "texto", subclasse: "texto", profissao: "texto", antecedente: "texto", atributos: "bonus", arma: "texto", armadura: "texto", escudo: "texto?", indole: "objeto", sementes: "textos", conceito: "texto" }),
+  indole: Object.freeze({ tracos: "nomes", proposito: "texto" }),
   raca: Object.freeze({ nome: "texto", desc: "texto", bonus: "bonus", traco: "texto", efeito: "objeto" }),
   /* o vocabulário do traço: cada campo tem UM leitor em tracos.js (a suíte
      confere que é o que ele lê, nem mais nem menos) */
@@ -146,12 +162,14 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   tiposDeHabilidade: Object.freeze(["ataque", "defesa", "suporte", "utilidade", "passiva"]),
   /* os cinco graus da escala divina (GD 0–4): o número é o de divindades.js,
      e o cenário dá um título a cada um, nem mais nem menos */
-  exato: Object.freeze({ titulos: 5 }),
+  exato: Object.freeze({ titulos: 5, prontos: 8 }),
   /* os mínimos: a criação abre na primeira ocupação, a rua mostra ao menos
      uma coisa, o encontro tem ao menos uma criatura para sortear, a gente
      ao menos um banco, o céu ao menos um domínio, e a criação ao menos uma
-     raça de fantasia (e uma do futuro, se o mundo tem gêneros do futuro) */
-  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1 }),
+     raça de fantasia (e uma do futuro, se o mundo tem gêneros do futuro); o
+     companheiro sorteado, ao menos um povo. E os prontos são OITO, nem mais
+     nem menos: as quartas do torneio e o rodízio da arena contam com oito */
+  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1, povo: 1 }),
 });
 
 const ehObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -332,6 +350,8 @@ export function validarCenario(dados) {
     if (ehObj(lu.tipos)) conferir(lu.tipos, Object.fromEntries(E.tiposDeLocal.map((tp) => [tp, "substantivos"])), "lugares.tipos", erros);
   }
   const ra = dados.racas;
+  /* os nomes exatos das raças deste mundo: o povo do companheiro, o registo e os prontos apontam para eles */
+  const nomesDeRaca = new Set();
   if (ehObj(ra)) {
     conferir(ra, E.racas, "racas", erros);
     if (Array.isArray(ra.fantasia) && ra.fantasia.length < E.minimo.racas) erros.push(`racas.fantasia: precisa de ao menos ${E.minimo.racas} raça`);
@@ -348,9 +368,36 @@ export function validarCenario(dados) {
           conferir(r.efeito, E.efeitoDeRaca, `${onde}.efeito`, erros);
           if (ehObj(r.efeito.dom)) conferir(r.efeito.dom, E.dom, `${onde}.efeito.dom`, erros);
         }
-        if (ehTexto(r.nome)) { const n = r.nome.toLowerCase(); if (nomes.has(n)) erros.push(`${onde}.nome: "${r.nome}" repetido`); nomes.add(n); }
+        if (ehTexto(r.nome)) { const n = r.nome.toLowerCase(); if (nomes.has(n)) erros.push(`${onde}.nome: "${r.nome}" repetido`); nomes.add(n); nomesDeRaca.add(r.nome); }
       });
     }
+    /* 6.ª fatia: o povo do companheiro e o registo só apontam para raças deste mundo */
+    if (Array.isArray(ra.doCompanheiro)) {
+      if (ra.doCompanheiro.length < E.minimo.povo) erros.push(`racas.doCompanheiro: precisa de ao menos ${E.minimo.povo} povo`);
+      ra.doCompanheiro.forEach((p, i) => {
+        const onde = `racas.doCompanheiro[${i}]`;
+        if (!ehObj(p)) { erros.push(`${onde}: devia ser objeto`); return; }
+        conferir(p, E.povo, onde, erros);
+        if (ehTexto(p.raca) && !nomesDeRaca.has(p.raca)) erros.push(`${onde}.raca: "${p.raca}" não é raça deste mundo (racas.fantasia ou racas.futuro, o nome exato)`);
+      });
+    }
+    if (ehObj(ra.registo)) for (const [forma, raca] of Object.entries(ra.registo)) if (ehTexto(raca) && !nomesDeRaca.has(raca)) erros.push(`racas.registo[${JSON.stringify(forma)}]: "${raca}" não é raça deste mundo`);
+  }
+  /* 6.ª fatia: os oito do roster, com a gente deste mundo */
+  const pp = dados.prontos;
+  if (Array.isArray(pp)) {
+    if (pp.length !== E.exato.prontos) erros.push(`prontos: são ${E.exato.prontos} (as quartas do torneio e o rodízio da arena contam com oito), e vieram ${pp.length}`);
+    const ofic = new Set(Array.isArray(oc) ? oc.filter(ehObj).map((o) => o.nome) : []);
+    const ids = new Set();
+    pp.forEach((p, i) => {
+      const onde = `prontos[${i}]`;
+      if (!ehObj(p)) { erros.push(`${onde}: devia ser objeto`); return; }
+      conferir(p, E.pronto, onde, erros);
+      if (ehObj(p.indole)) conferir(p.indole, E.indole, `${onde}.indole`, erros);
+      if (ehTexto(p.id)) { if (ids.has(p.id)) erros.push(`${onde}.id: "${p.id}" repetido`); ids.add(p.id); }
+      if (ehTexto(p.raca) && !nomesDeRaca.has(p.raca)) erros.push(`${onde}.raca: "${p.raca}" não é raça deste mundo`);
+      if (ehTexto(p.profissao) && !ofic.has(p.profissao)) erros.push(`${onde}.profissao: "${p.profissao}" não é ocupação deste mundo`);
+    });
   }
   return { ok: erros.length === 0, erros };
 }

@@ -17,7 +17,9 @@
    de mundo-base.js), as raças da criação (classes.js RACAS/ORIGENS, lexico.js
    GRUPOS_DE_RACA, e quem as lê: tracos.js, a ficha de criação, o companheiro,
    os prontos, o léxico que as renomeia) e as palavras do céu (a escala, o
-   DIVINDADE_PROMPT, os títulos, o sinal do temperamento). Não é suíte: é a
+   DIVINDADE_PROMPT, os títulos, o sinal do temperamento) e, na 6.ª, o roster
+   dos prontos (prontos.js PRONTOS, o montador) e o povo do companheiro
+   (companheiros.js: a demografia e o registo). Não é suíte: é a
    lista de perguntas que o `gerar-cenario-dourado.mjs` faz ao código de ANTES
    (lido do git) e que a `teste-cenario.mjs` refaz ao código de AGORA. As duas
    respostas têm de ser iguais byte a byte.
@@ -285,6 +287,14 @@ export async function fotografarOsCatalogos(raiz) {
   }
   caso("racas.companheiros", vezes(24, (i) => CP.racaDeCompanheiro({ nome: "Comp " + i, id: "c" + i })));
   caso("racas.prontos", SM.comSorte(G.rngDe("dourado-prontos"), () => R.PRONTOS.map((p) => R.montarPronto(p.id))));
+  /* 6.ª fatia: o roster e o povo do companheiro saíram de prontos.js e de companheiros.js */
+  caso("prontos.tabela", R.PRONTOS);
+  caso("prontos.porId", [...R.PRONTOS.map((p) => p.id), "MURALHA", "nada", "", null, undefined].map((id) => (R.prontoPorId(id) || {}).nome || null));
+  caso("prontos.batizados", R.PRONTOS.map((p) => R.montarPronto(p.id, { nome: "Iara Vento" })));
+  caso("prontos.lixo", ["nada", "", null, undefined, 7].map((id) => R.montarPronto(id)));
+  caso("companheiro.povo", { tabela: CP.RACAS_DO_COMPANHEIRO, registo: CP.RACA_DO_REGISTO });
+  caso("companheiro.sorteio", vezes(120, (i) => CP.racaDeCompanheiro({ nome: "Gente " + i })));
+  caso("companheiro.registo", ["humana", "Elfa", "ANA", "anã", "gnoma", "Draconata", "meio-elfa", "Meio-Elfa", "sintética", "elfo", "x", ""].map((r) => CP.racaDeCompanheiro({ nome: "Registo", raca: r })));
   /* o léxico que renomeia as raças: tudo, só a fantasia, uma a menos, uma intrusa, vazio, lixo */
   const bancoDeRacas = LX.RACAS_DO_SISTEMA.map((r, i) => ({ raca: i % 4 === 1 ? r.toUpperCase() : r, chamado: "Povo " + i }));
   const lexDeRacas = { todas: bancoDeRacas, soFantasia: bancoDeRacas.slice(0, LX.GRUPOS_DE_RACA.fantasia.length), semUma: bancoDeRacas.slice(1), intrusa: [...bancoDeRacas, { raca: "Goblin", chamado: "x" }], vazio: [], lixo: null };

@@ -33,108 +33,23 @@ import { periciasIniciais } from "./pericias.js";
 import { comDom } from "./tracos.js";
 import { MOEDAS_INICIAIS } from "./constantes.js";
 import { corpoDaFicha } from "./recalculo.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 /* o bolso de todo pronto — o mesmo para os oito, por desenho */
 export const MOEDAS_DO_PRONTO = MOEDAS_INICIAIS + 10;
 export const NIVEL_DO_PRONTO = 3;
 
 /* ---------------- OS OITO ----------------
-   `linha` é a frase de venda (vai à tela de escolha). `indole` é a
-   persona do rival quando a casa pilota: traços e propósito REAIS de
-   indole.js. `sementes` são 2 formas do Livro — o passado que pode
-   brotar até numa noite só. */
-const P = (o) => o;
-
-export const PRONTOS = [
-  P({
-    id: "muralha", nome: "A Muralha", papel: "tanque",
-    linha: "Fica na porta. Sempre ficou em alguma porta.",
-    sexo: "mulher", raca: "Goliath", classe: "Guerreiro", subclasse: "Cavaleiro",
-    profissao: "Ferreiro", antecedente: "soldado",
-    atributos: { forca: 2, destreza: 1, vigor: 3, intelecto: 0, presenca: 0, percepcao: 0 },
-    arma: "Espada Longa", armadura: "Cota de Malha", escudo: "Escudo Torre",
-    indole: { tracos: ["fiel", "teimoso"], proposito: "proteger" },
-    sementes: ["nome_na_lamina", "cova_sem_nome"],
-    conceito: "a que segura a linha quando todo mundo recua",
-  }),
-  P({
-    id: "sombra", nome: "A Sombra", papel: "furtivo",
-    linha: "Você não a contratou. Ela decidiu vir.",
-    sexo: "mulher", raca: "Elfo", classe: "Ladino", subclasse: "Assassino",
-    profissao: "Cartógrafo", antecedente: "ladrao",
-    atributos: { forca: 1, destreza: 2, vigor: 1, intelecto: 0, presenca: 0, percepcao: 2 },
-    arma: "Adaga", armadura: "Gibão de Couro",
-    indole: { tracos: ["calado", "desconfiado"], proposito: "vender_o_que_sabe" },
-    sementes: ["chave_sem_porta", "janela_as_pressas"],
-    conceito: "a que entra sem convite e sai sem despedida",
-  }),
-  P({
-    id: "chama", nome: "A Chama", papel: "conjurador",
-    linha: "Leu o livro errado até o fim.",
-    sexo: "mulher", raca: "Tiefling", classe: "Mago", subclasse: "Elementalista",
-    profissao: "Escriba", antecedente: "erudito",
-    atributos: { forca: 0, destreza: 2, vigor: 2, intelecto: 2, presenca: 0, percepcao: 0 },
-    arma: "Cajado de Carvalho", armadura: "Manto Encantado",
-    indole: { tracos: ["curioso", "orgulhoso"], proposito: "provar_ao_pai" },
-    sementes: ["margem_anotada", "duas_cronicas"],
-    conceito: "a que faz o fogo obedecer, quase sempre",
-  }),
-  P({
-    id: "remendo", nome: "O Remendo", papel: "curandeiro",
-    linha: "Já costurou gente demais para ter medo de sangue.",
-    sexo: "homem", raca: "Humano", classe: "Clérigo", subclasse: "Sacerdote",
-    profissao: "Médico de Campo", antecedente: "acolito",
-    atributos: { forca: 0, destreza: 0, vigor: 1, intelecto: 2, presenca: 1, percepcao: 2 },
-    arma: "Lança", armadura: "Brigantina",
-    indole: { tracos: ["compassivo", "pratico"], proposito: "redimir" },
-    sementes: ["santo_sem_festa", "negacao_nao_pedida"],
-    conceito: "o que remenda o corpo e cala o resto",
-  }),
-  P({
-    id: "voz", nome: "A Voz", papel: "social",
-    linha: "Conhece três saídas de toda conversa.",
-    sexo: "mulher", raca: "Halfling", classe: "Bardo", subclasse: "Encantador",
-    profissao: "Mercador", antecedente: "artista",
-    atributos: { forca: 0, destreza: 1, vigor: 1, intelecto: 0, presenca: 3, percepcao: 1 },
-    arma: "Rapieira", armadura: "Gibão de Couro",
-    indole: { tracos: ["tagarela", "vaidoso"], proposito: "nao_ser_esquecido" },
-    sementes: ["elogio_que_vigia", "moeda_estrangeira"],
-    conceito: "a que ganha a plateia antes de sacar a lâmina",
-  }),
-  P({
-    id: "flecha", nome: "A Flecha", papel: "distância",
-    linha: "Conta os passos entre ela e tudo.",
-    sexo: "mulher", raca: "Humano", classe: "Caçador", subclasse: "Arqueiro",
-    profissao: "Caçador de Recompensas", antecedente: "cacador",
-    atributos: { forca: 0, destreza: 2, vigor: 1, intelecto: 0, presenca: 0, percepcao: 3 },
-    arma: "Arco Curto", armadura: "Couro Batido",
-    indole: { tracos: ["frio", "rancoroso"], proposito: "divida_de_sangue" },
-    sementes: ["mao_que_treme", "posto_sem_guarda"],
-    conceito: "a que erra uma vez por década, e lembra de cada uma",
-  }),
-  P({
-    id: "punho", nome: "O Punho", papel: "fúria",
-    linha: "Briga desde antes de ter nome de briga.",
-    sexo: "homem", raca: "Anão", classe: "Guerreiro", subclasse: "Gladiador",
-    profissao: "Minerador", antecedente: "orfao",
-    atributos: { forca: 2, destreza: 2, vigor: 2, intelecto: 0, presenca: 0, percepcao: 0 },
-    arma: "Machado de Guerra", armadura: "Couro Batido", escudo: "Escudo de Placas",
-    indole: { tracos: ["corajoso", "brincalhao"], proposito: "desafiar" },
-    sementes: ["promessa_pequena", "sino_fora_de_hora"],
-    conceito: "o que sorri no primeiro soco e gargalha no segundo",
-  }),
-  P({
-    id: "voto", nome: "O Voto", papel: "juramento",
-    linha: "Jurou uma coisa só. Cumpre há vinte anos.",
-    sexo: "homem", raca: "Draconato", classe: "Clérigo", subclasse: "Paladino",
-    profissao: "Curtidor", antecedente: "ex_cultista",
-    atributos: { forca: 1, destreza: 0, vigor: 2, intelecto: 1, presenca: 2, percepcao: 0 },
-    arma: "Machadinha", armadura: "Cota de Malha",
-    indole: { tracos: ["humilde", "supersticioso"], proposito: "morrer_com_honra" },
-    sementes: ["brasao_limado", "presente_cedo"],
-    conceito: "o que carrega a culpa velha como quem carrega escudo",
-  }),
-];
+   T4-B (28/10, 6.ª fatia): os oito moram no cenário (`prontos`,
+   cenario-padrao.js), porque a raça e o ofício de cada um são do mundo — e
+   noutro mundo o montador devolvia null (o Goliath da Muralha não existe na
+   estação). `linha` é a frase de venda (vai à tela de escolha). `indole` é
+   a persona do rival quando a casa pilota: traços e propósito REAIS de
+   indole.js. `sementes` são 2 formas do Livro — o passado que pode brotar
+   até numa noite só. `export let`: a ligação viva do ESM faz quem importou
+   ver o roster do mundo em uso. */
+export let PRONTOS = [];
+aoTrocarDeCenario((c) => { PRONTOS = c.prontos; });
 
 export const prontoPorId = (id) => PRONTOS.find((p) => p.id === id) || null;
 

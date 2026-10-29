@@ -20,6 +20,7 @@ import { aflicaoDe } from "./aflicoes.js";
 import { guardaDe, guardasAtivas } from "./habilidades.js";
 import { aplicacaoDoBuff } from "./combos.js";
 import { ABSORCAO_DO_BUFF, efeitosDe } from "./efeitos.js";
+import { aoTrocarDeCenario } from "./cenario.js";
 
 /* ---------------- QUE CLASSE É ESSE COMPANHEIRO? ----------------
    Lido do conceito/descrição que a ficção já deu a ele. Determinístico:
@@ -79,26 +80,23 @@ export function classeDeCompanheiro(comp) {
    O sexo não sai daqui: sai de `feicoes` (semente.js), que o rosto
    desenhado e o pintado já leem juntos — e do `genero` da ficha, quando o
    registo o diz. */
-export const RACAS_DO_COMPANHEIRO = Object.freeze([
-  { raca: "Humano", peso: 2 },
-  { raca: "Elfo", peso: 2 },
-  { raca: "Anão", peso: 2 },
-  { raca: "Halfling", peso: 1 },
-  { raca: "Meio-orc", peso: 1 },
-  { raca: "Tiefling", peso: 1 },
-  { raca: "Gnomo", peso: 1 },
-  { raca: "Draconato", peso: 1 },
-]);
+export let RACAS_DO_COMPANHEIRO = [];
 
 /* As palavras com que o registo do mundo diz o povo de alguém (as formas
    de `RACAS_POR_GENERO`, nomes.js, nos dois géneros) → o nome do catálogo
    (`RACAS`, classes.js). O nome do catálogo em si casa sem estar aqui. */
-export const RACA_DO_REGISTO = Object.freeze({
-  humana: "Humano", elfa: "Elfo", ana: "Anão", gnoma: "Gnomo",
-  draconata: "Draconato", "meio-elfa": "Meio-elfo",
-});
+export let RACA_DO_REGISTO = {};
 
 const fioDaRaca = (s) => String(s == null ? "" : s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+/* T4-B (28/10, 6.ª fatia): as duas tabelas são do cenário (`racas.doCompanheiro`
+   e `racas.registo`) — o povo de um mundo é dado, não código. A forma do
+   registo entra pelo mesmo fio da comparação (sem acento, sem caixa), para
+   que o autor escreva "anã" e case. A assinatura fica DEPOIS de `fioDaRaca`:
+   `aoTrocarDeCenario` chama já com o mundo em uso. */
+aoTrocarDeCenario((c) => {
+  RACAS_DO_COMPANHEIRO = c.racas.doCompanheiro;
+  RACA_DO_REGISTO = Object.freeze(Object.fromEntries(Object.entries(c.racas.registo).map(([forma, raca]) => [fioDaRaca(forma), raca])));
+});
 /* T4-B (28/10, 5.ª fatia): as raças são do cenário, e o catálogo lê-se na
    hora — copiado no import, um mundo trocado no arranque ficaria com as de
    antes. Refaz-se só quando a tabela muda de mão. */

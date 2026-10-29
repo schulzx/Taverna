@@ -143,6 +143,10 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
 
   const d6 = copia(DADOS_DO_CENARIO_PADRAO);
   d6.ocupacoes[0].nome = "Ferreira";
+  /* 6.ª fatia: o pronto diz o ofício pelo nome, e o validador recusa o nome que
+     o mundo não tem — quem renomeia o ofício renomeia-o no roster também (a
+     asserção abaixo não mudou: o que ela prova continua a ser o léxico) */
+  d6.prontos.filter((p) => p.profissao === "Ferreiro").forEach((p) => { p.profissao = "Ferreira"; });
   CN.usarCenario(d6);
   const dif6 = diferentes(await fotografarOsCatalogos(SRC));
   t("o Ferreiro renomeado no cenário muda os ofícios do léxico (sem tocar em lexico.js)", dif6.includes("lexico.tabelas") && dif6.includes("lexico.oficios.completo") && dif6.includes("lexico.pedido.inteiro"), String(dif6.length));
@@ -227,7 +231,9 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
   /* "anao" sem acento acha o traço (tracos.js compara sem acento) mas não o
      bônus (a ficha de criação procura o nome exato): por isso só o Anão muda,
      e o pronto que nasce anão */
-  t("o Anão com +3 de vigor muda o Anão, o pronto anão, e mais nenhuma raça", dif19.join() === "racas.tabelas,racas.de.Anão,racas.prontos", dif19.join());
+  /* 6.ª fatia: o pronto anão também nasce batizado (`prontos.batizados`, a pergunta
+     nova do montador) — a mesma ficha com outro nome, e por isso muda junto */
+  t("o Anão com +3 de vigor muda o Anão, o pronto anão, e mais nenhuma raça", dif19.join() === "racas.tabelas,racas.de.Anão,racas.prontos,prontos.batizados", dif19.join());
   const d20 = copia(DADOS_DO_CENARIO_PADRAO);
   delete raca(d20, "Elfo").efeito.veNoEscuro;
   CN.usarCenario(d20);
@@ -235,6 +241,9 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
   t("o Elfo sem visão no escuro muda o traço do Elfo, e só", dif20.join() === "racas.tabelas,racas.de.Elfo", dif20.join());
   const d21 = copia(DADOS_DO_CENARIO_PADRAO);
   raca(d21, "Goliath").nome = "Golias";
+  /* 6.ª fatia: a Muralha diz a raça pelo nome, e o validador recusa a que o
+     mundo não tem — quem renomeia a raça renomeia-a no roster também */
+  d21.prontos.filter((p) => p.raca === "Goliath").forEach((p) => { p.raca = "Golias"; });
   CN.usarCenario(d21);
   const dif21 = diferentes(await fotografarOsCatalogos(SRC));
   t("o Goliath renomeado no cenário muda as raças do léxico e o pedido (sem tocar em lexico.js nem em classes.js)", dif21.includes("lexico.tabelas") && dif21.includes("lexico.pedido.inteiro") && dif21.includes("lexico.racas.todas") && /* o id do caso sai do nome da raça: renomeada, a pergunta passa a ser pelo Golias */ dif21.includes("racas.de.Golias") &&!dif21.includes("lexico.pedido.Cyberpunk."), String(dif21.length));
@@ -330,7 +339,18 @@ const ORBITA = {
       { nome: "Tripulante", desc: "Vive de turno em turno.", bonus: { intelecto: 2 }, traco: "Mão de bordo: a bancada fica 3 mais fácil, e sela uma escotilha (2 PM).", efeito: { oficio: 3, dom: { nome: "Selar Escotilha", nivel: 1, custo: 2, tipo: "defesa", descricao: "Fecha a passagem entre você e o perigo." } } },
       { nome: "Clone de Serviço", desc: "Feito para o trabalho que ninguém quer.", bonus: { forca: 1, vigor: 1 }, traco: "Sem medo de fábrica: imune a medo, resiste a raio e o frio tira 1 a menos.", efeito: { imune: ["amedrontado"], resistencia: ["raio"], reduzDano: { gelo: 1 } } },
     ],
+    /* 6.ª fatia: o companheiro sorteado na estação é quase sempre da tripulação,
+       e o registo dela diz as raças no feminino */
+    doCompanheiro: [{ raca: "Tripulante", peso: 3 }, { raca: "Nascido no Anel", peso: 1 }],
+    registo: { "tripulanta": "Tripulante", "Nascida no Anel": "Nascido no Anel" },
   },
+  /* 6.ª fatia: os oito da estação. O feitio (classe, arma, índole) é vocabulário
+     do motor, e fica o dos oito da Taverna; o mundo dá a gente — o id, o nome,
+     a raça e o ofício. */
+  prontos: copia(DADOS_DO_CENARIO_PADRAO.prontos).map((p, i) => ({
+    ...p, id: "o7-" + p.id, nome: p.nome + " da Doca",
+    raca: ["Tripulante", "Nascido no Anel", "Clone de Serviço"][i % 3], profissao: i % 2 ? "Piloto" : "Mecânico",
+  })),
 };
 
 sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
@@ -415,6 +435,17 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("o Tripulante ganha o dom dela como habilidade, e a bancada fica 3 mais fácil", TR.oficioDeTraco(trip) === 3 && TR.comDom(trip).habilidades.map((h) => h.nome).join() === "Selar Escotilha" && TR.domDe(trip).custo === 2);
   t("o clone (sem acento nem caixa) é imune a medo, resiste a raio e o gelo tira 1 a menos", TR.imuneDeTraco(clone, "amedrontado") && TR.resisteDeTraco(clone, "raio") && TR.reducaoDeTraco(clone, "gelo") === 1 && !TR.imuneDeTraco(clone, "cego"));
   t("a ficha de criação soma o bônus dela", AT.baseDeCriacao({ raca: "Tripulante", atributos: {} }).intelecto === 2 && AT.baseDeCriacao({ raca: "Elfo", atributos: {} }).destreza === 0);
+  /* 6.ª fatia: os prontos e o povo do companheiro são os dela */
+  t("o roster é o dela: oito, com os ids dela", R.PRONTOS.length === 8 && R.PRONTOS.every((p) => p.id.startsWith("o7-")) && R.prontoPorId("muralha") === null);
+  const muralha = R.montarPronto("o7-muralha");
+  const pMuralha = R.prontoPorId("o7-muralha");
+  t("o montador já não devolve null noutro mundo: a Muralha da Doca nasce Tripulante e Mecânico", !!muralha && muralha.raca === "Tripulante" && muralha.profissao === "Mecânico" && muralha.nome === "A Muralha da Doca", JSON.stringify(muralha && [muralha.raca, muralha.profissao]));
+  t("…com o bônus da raça dela e o dom dela (pelo mesmo comDom da criação)", !!muralha && muralha.atributos.intelecto === pMuralha.atributos.intelecto + 2 && muralha.habilidades.some((h) => h.nome === "Selar Escotilha"));
+  t("o clone e o nascido no anel também montam, e o pronto da Taverna já não", [1, 2].every((i) => !!R.montarPronto(R.PRONTOS[i].id)) && R.montarPronto("muralha") === null);
+  const povo = Array.from({ length: 200 }, (_, i) => CP.racaDeCompanheiro({ nome: "Tripulante " + i }));
+  const nTrip = povo.filter((r) => r === "Tripulante").length;
+  t("o companheiro sorteado nasce do povo dela, e pelo peso dela (3 tripulantes para 1 do anel)", povo.every((r) => r === "Tripulante" || r === "Nascido no Anel") && nTrip > 120 && nTrip < 180, String(nTrip));
+  t("o registo dela diz as raças no feminino (sem acento nem caixa), e o do padrão já não vale", CP.racaDeCompanheiro({ raca: "TRIPULANTA" }) === "Tripulante" && CP.racaDeCompanheiro({ raca: "nascida no anel" }) === "Nascido no Anel" && CP.racaDeCompanheiro({ raca: "elfa" }) === "elfa");
   t("o companheiro que se diz da estação acha a raça dela no catálogo (lido na hora, não no import)", CP.racaDeCompanheiro({ raca: "nascido no anel" }) === "Nascido no Anel");
   t("o pedido do léxico pede nome para as origens dela", LX.pedidoDoLexico({}).includes("<UM de: Tripulante, Clone de Serviço>"));
   const lexR = { racas: [{ raca: "tripulante", chamado: "Turno-Longo" }, { raca: "Clone de Serviço", chamado: "Cópia" }] };
@@ -436,6 +467,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   CN.usarCenario(CN.CENARIO_PADRAO);
   const p = banca("orbita|1");
   t("a mesma semente noutro mundo: as mesmas coisas, outros preços", a.estoque.map((x) => x.nome).join() === p.estoque.map((x) => x.nome).join() && a.estoque.map((x) => x.preco).join() !== p.estoque.map((x) => x.preco).join());
+  t("…o roster e o povo do companheiro também", R.PRONTOS.length === 8 && R.prontoPorId("muralha").raca === "Goliath" && R.montarPronto("o7-muralha") === null && CP.RACAS_DO_COMPANHEIRO.length === 8 && CP.racaDeCompanheiro({ raca: "elfa" }) === "Elfo");
   t("e de volta ao padrão, tudo como era", C.PROFISSOES.length === 12 && E.precoComum("caneca") === 1 && E.valorDeItem({ raridade: "raro" }) === 220);
   t("…o bestiário também", B.CRIATURAS_FANTASIA.length === 18 && B.ARQUETIPOS.length === 9 && B.completarInimigo({ nome: "Troll" }, 5).perfil.fraqueza.join() === "fogo");
   t("…a gente e o céu também (e a mesma semente dá outro nome noutro mundo)", NM.generosDisponiveis().length === 6 && NM.sexoDoNome("Aldric") === "masc" && NM.TRACOS_PESSOA.length === 26 && [NM.nomePessoa("Ópera de estação", "", G.rngDe("o7|a")), DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") }).nome].every((n, i) => n !== naOrbita[i]));
@@ -545,9 +577,25 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("visão no escuro negativa", (d) => { d.racas.fantasia[0].efeito.veNoEscuro = -9; }, "racas.fantasia[0].efeito.veNoEscuro: devia ser número ≥ 0");
   caso("um dom sem custo", (d) => { delete d.racas.futuro[0].efeito.dom.custo; }, "racas.futuro[0].efeito.dom.custo: falta");
   caso("um dom de um tipo que não existe", (d) => { d.racas.futuro[0].efeito.dom.tipo = "magia"; }, "racas.futuro[0].efeito.dom.tipo: devia ser um tipo de habilidade do motor");
+  /* 6.ª fatia: o roster e o povo apontam para a gente deste mundo */
+  caso("faltam os prontos", (d) => { delete d.prontos; }, "prontos: falta (lista)");
+  caso("sete prontos", (d) => { d.prontos.pop(); }, "prontos: são 8");
+  caso("um pronto de uma raça de outro mundo", (d) => { d.prontos[0].raca = "Goliath"; }, 'prontos[0].raca: "Goliath" não é raça deste mundo');
+  caso("um pronto de um ofício de outro mundo", (d) => { d.prontos[3].profissao = "Ferreiro"; }, 'prontos[3].profissao: "Ferreiro" não é ocupação deste mundo');
+  caso("dois prontos com o mesmo id", (d) => { d.prontos[5].id = d.prontos[4].id; }, "prontos[5].id");
+  caso("um pronto sem índole", (d) => { delete d.prontos[2].indole.proposito; }, "prontos[2].indole.proposito: falta");
+  caso("um pronto com atributo que o motor não tem", (d) => { d.prontos[1].atributos.sorte = 1; }, "prontos[1].atributos: devia ser objeto de atributos do motor");
+  caso("o companheiro sem povo", (d) => { d.racas.doCompanheiro = []; }, "racas.doCompanheiro: precisa de ao menos 1 povo");
+  caso("um povo de uma raça de outro mundo", (d) => { d.racas.doCompanheiro[0].raca = "Elfo"; }, 'racas.doCompanheiro[0].raca: "Elfo" não é raça deste mundo');
+  caso("um povo de peso zero", (d) => { d.racas.doCompanheiro[1].peso = 0; }, "racas.doCompanheiro[1].peso: devia ser número inteiro ≥ 1");
+  caso("o registo que diz uma raça de outro mundo", (d) => { d.racas.registo.elfa = "Elfo"; }, 'racas.registo["elfa"]: "Elfo" não é raça deste mundo');
   caso("uma origem com o nome de uma raça (sem olhar a caixa)", (d) => { d.racas.futuro[1].nome = "NASCIDO NO ANEL"; }, 'racas.futuro[1].nome: "NASCIDO NO ANEL" repetido');
   caso("um terceiro grupo de raças", (d) => { d.racas.magia = []; }, "racas.magia: campo desconhecido");
-  t("um mundo sem futuro pode vir sem origens", CN.validarCenario({ ...copia(ORBITA), generos: { ...copia(ORBITA.generos), futuristas: [] }, racas: { fantasia: copia(ORBITA.racas.fantasia), futuro: [] } }).ok);
+  /* 6.ª fatia: sem origens, o povo do companheiro e os oito só podem ser da
+     raça que sobra — o mundo sem futuro continua válido, com a gente dele */
+  const semFuturo = { ...copia(ORBITA), generos: { ...copia(ORBITA.generos), futuristas: [] }, racas: { fantasia: copia(ORBITA.racas.fantasia), futuro: [], doCompanheiro: [{ raca: "Nascido no Anel", peso: 1 }], registo: {} } };
+  semFuturo.prontos.forEach((p) => { p.raca = "Nascido no Anel"; });
+  t("um mundo sem futuro pode vir sem origens", CN.validarCenario(semFuturo).ok, CN.validarCenario(semFuturo).erros.join(" | "));
   const v = CN.validarCenario({ formato: 1, id: "x" });
   t("a validação devolve todos os erros de uma vez", !v.ok && v.erros.length >= 3 && v.erros.some((e) => e.startsWith("nome")) && v.erros.some((e) => e.startsWith("precos")) && v.erros.some((e) => e.startsWith("ocupacoes")));
   t("o padrão e o mundo de teste passam", CN.validarCenario(DADOS_DO_CENARIO_PADRAO).ok && CN.validarCenario(ORBITA).ok);
@@ -645,6 +693,10 @@ sec("6. o esquema lê de volta o que o motor consome");
   t("o padrão: seis bancos de lugares, os mesmos gêneros dos nomes", TP.generosDaToponimia().join() === NM.generosDisponiveis().join());
   const fonteTp = fs.readFileSync(path.join(SRC, "toponimia.js"), "utf8");
   t("nenhuma palavra de lugar ficou literal em toponimia.js (bancos, sinônimos, o padrão)", !["\"Javali|m\"", "\"Rachado|Rachada\"","\"das Cinzas\"", "\"Zepelim|m\"", "\"Praça|f\"", "\"Termas|fp\""].some((x) => fonteTp.includes(x)) && !/\|\| FANTASIA/.test(fonteTp));
+  const fontePr = fs.readFileSync(path.join(SRC, "prontos.js"), "utf8"), fonteCp = fs.readFileSync(path.join(SRC, "companheiros.js"), "utf8");
+  t("nenhum pronto ficou literal em prontos.js, nem o povo do companheiro em companheiros.js (6.ª fatia)", !["\"A Muralha\"", "\"Goliath\"", "\"Espada Longa\"", "nome_na_lamina"].some((x) => fontePr.includes(x)) && !["{ raca: \"Halfling\", peso", "elfa: \"Elfo\"", "\"meio-elfa\""].some((x) => fonteCp.includes(x)));
+  t("o roster do padrão tem os oito, e cada um monta (raça e ofício do mundo)", CN.CENARIO_PADRAO.prontos.length === EQ.exato.prontos && R.PRONTOS.every((p) => !!R.montarPronto(p.id) && R.profissaoValida(p.profissao)));
+  t("o povo do companheiro e o registo do padrão só dizem raças da criação", CN.CENARIO_PADRAO.racas.doCompanheiro.every((p) => !!C.racaPorNome(p.raca)) && Object.values(CN.CENARIO_PADRAO.racas.registo).every((r) => !!C.racaPorNome(r)));
   t("nenhuma raça ficou literal em classes.js nem em lexico.js", !["\"Goliath\"", "\"Meio-orc\"", "\"Colono Orbital\"", "\"Vagante\""].some((x) => fonteCla.includes(x) || fonteLex.includes(x)) && !fonteCla.includes("Sopro Ancestral"));
   t("nem os títulos da escala nem o sinal da tempestade em divindades.js", !["\"Semideus\"", "\"Herói Lendário\"", "Semideus (10k)", "\"colérica\"", "escrevem runas"].some((x) => fonteDv.includes(x)));
   t("a escala do cenário tem um título por grau da física", CN.CENARIO_PADRAO.panteao.titulos.length === DV.GRAUS.length && EQ.exato.titulos === DV.GRAUS.length && DV.GRAUS.every((g, i) => g.gd === i && g.titulo === CN.CENARIO_PADRAO.panteao.titulos[i].titulo));
