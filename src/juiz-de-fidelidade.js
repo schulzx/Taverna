@@ -931,9 +931,20 @@ export function julgarAProsa(prosa, estado) {
   const t = String(prosa == null ? "" : prosa);
   const e0 = estado && typeof estado === "object" ? estado : {};
   const ps = typeof e0.pauta === "string" ? oQueAPautaSabe(e0.pauta) : null;
+  /* A MESMA COISA, UMA VEZ SÓ (29/10, trilha B). A banca da foto e a ficha
+     do mercado na pauta dizem o mesmo item com o mesmo preço; somadas, eram
+     DUAS coisas, e a regra da soma («tochas e corda: tudo, sete») absolvia
+     o preço errado que caísse perto do dobro — «o Elixir de Destreza?
+     Trezentas» passava contra ◉ 145 + ◉ 145. Igual = o mesmo nome (sem
+     caixa nem acento) e o mesmo preço; o mesmo nome com outro preço fica,
+     que aí são duas etiquetas e a prosa tem de casar com uma. */
+  const umaVez = (xs) => {
+    const vistos = new Set();
+    return xs.filter((x) => { const k = `${semAcento(nomeDe(x)).trim()}|${Number(x && x.preco)}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
+  };
   const e = ps ? {
     ...e0,
-    mercado: [...lista(e0.mercado), ...ps.mercado],
+    mercado: umaVez([...lista(e0.mercado), ...ps.mercado]),
     distancias: [...lista(e0.distancias), ...ps.distancias],
     tempos: [...lista(e0.tempos), ...ps.tempos],
   } : e0;

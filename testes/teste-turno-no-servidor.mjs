@@ -29,6 +29,13 @@
       os do agir do cliente, e o cânone onde a foto do Juiz é outra), e na
       sessão do jogo é o do replay e o Juiz é o gravado; o eco do turno
       inteiro, reenviado, dá o pedido seguinte que o caminho do App daria.
+  §10 A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR (29/10): a foto do Juiz leva
+      as bancas e o balcão refeitos do estado (`aPracaDoJuiz`) — o mercado
+      do App onde o App o tinha, a praça que a pauta mostrou, e o preço
+      errado numa cidade com banca vira veto com o número certo (sem a praça
+      só se media); o Cronista só é chamado quando o gatilho acende, a fila
+      (`leituraDoCronista`) anda no save, e mede-se em quantos turnos o
+      servidor faria a 2.ª chamada de IA.
 
    Os estados das sessões s8–s10 são de um herói jogado em Node: o save
    guarda `null` onde o load do App põe o valor de partida, e a ficha não
@@ -159,6 +166,8 @@ sec("1. AS PORTAS E A SEMENTE");
 sec("2. A ROTA CONTRA O MOTOR EM NODE — o pedido byte a byte");
 const tempos = [];
 const tamanhos = [];
+/* a conta do custo, para o diário: o que a §10 mede do Cronista */
+const CUSTO = {};
 let casoGordo = null;
 {
   let casos = 0, iguais = 0, tamIguais = 0, ok200 = 0, comEco = 0, ecoMudou = 0, ecoVisto = 0, foraDoTeto = 0, semFrase = 0;
@@ -277,6 +286,16 @@ const temposDoTurno = [];
   const DA_MONTAGEM = new Set([...AINDA_DO_APP.map((d) => d.campo), "coracao", "postura", "conquistas"]);
   const DO_AGIR = new Set(["turnosDeMundo", "abertura", "lugar", "minuto"]);
   const DO_JUIZ = new Set(["canone"]);
+  /* MOVIDA (29/10, o gatilho no servidor): o servidor só chama o Cronista
+     quando `oGatilhoDoCronista` acende, como o App; as sessões de Node
+     gravaram um Cronista a CADA turno. Onde o gatilho não acende, o passo
+     dele corre com a resposta vazia (`{}`, a do App), e o que a proposta
+     gravada escrevia — a gente, o cânone, as promessas — é o preço da
+     chamada poupada, declarado: só nesses turnos, e só nos campos que o
+     aceito do Cronista escreve (os efeitos de oAceitoDoCronista). O cânone
+     desses turnos conta aqui, não no Juiz. */
+  const DO_CRONISTA = new Set(["npcs", "canone", "prometido", "relogios", "eventos", "quests", "missoes", "personagem", "lugar", "mural", "divindade"]);
+  let peloGatilho = 0, poupados = 0;
   let casos = 0, soDeclarados = 0, limpos = 0, porJuiz = 0, ecoIgual = 0, ecoMudouPeloJuiz = 0, comEco = 0, telaBoa = 0, imutavel = 0;
   let navTurnos = 0, navReplay = 0, navJuiz = 0, navGravado = 0;
   const fora = new Map();
@@ -309,9 +328,12 @@ const temposDoTurno = [];
       /* contra o replay inteiro (o mesmo estado de partida, a linha gravada) */
       const rc = correrOTurno(estado, L, { semente: A.semente, mundo: A.mundo || null });
       const d = difs(naRegua(sv.estadoDoFim), naRegua(rc.estado));
-      const resto = d.filter((k) => !DA_MONTAGEM.has(k) && !DO_AGIR.has(k) && !DO_JUIZ.has(k));
+      const poupado = !sv.cronista.corre;
+      if (poupado) poupados++;
+      const resto = d.filter((k) => !DA_MONTAGEM.has(k) && !DO_AGIR.has(k) && !DO_JUIZ.has(k) && !(poupado && DO_CRONISTA.has(k)));
       if (!resto.length) soDeclarados++; else for (const k of resto) fora.set(k, (fora.get(k) || 0) + 1);
-      if (d.some((k) => DO_JUIZ.has(k))) porJuiz++;
+      if (poupado && d.some((k) => DO_CRONISTA.has(k))) peloGatilho++;
+      else if (d.some((k) => DO_JUIZ.has(k))) porJuiz++;
       if (!d.length) limpos++;
       const tl = sv.tela || {};
       if (typeof tl.narrativa === "string" && Array.isArray(tl.linhas) && Array.isArray(tl.campos) && tl.campos.every((k) => k in sv.estadoDoFim) && tl.avulsos && typeof tl.avulsos === "object") telaBoa++;
@@ -329,6 +351,7 @@ const temposDoTurno = [];
   console.log(`      (${casos} turnos; fora do declarado: ${[...fora].map(([k, v]) => k + ":" + v).join(" ") || "nenhum"}; o cânone pelo Juiz em ${porJuiz})`);
   t(`o estado do fim só difere do replay nos campos declarados em todos (${soDeclarados}/${casos})`, casos >= 140 && soDeclarados === casos);
   t(`e o cânone que a foto do Juiz muda é exceção (${porJuiz} de ${casos})`, porJuiz <= 3);
+  t(`e o Cronista poupado pelo gatilho só muda os campos dele, em ${peloGatilho} dos ${poupados} turnos sem chamada`, peloGatilho <= poupados && poupados > 0);
   t(`na sessão do jogo, o Juiz do servidor é o gravado (${navJuiz}/${navTurnos})`, navTurnos === 3 && navJuiz === navTurnos);
   t(`e o estado do fim é o do replay fora da montagem e do agir (${navReplay}/${navTurnos}), e o do jogo (${navGravado}/${navTurnos}; a ficha leva os atributos que o load lhe põe)`, navReplay === navTurnos && navGravado === navTurnos);
   t(`o eco do turno inteiro, reenviado, dá o pedido do caminho do App (${ecoIgual}/${comEco})`, comEco > 100 && ecoIgual === comEco);
@@ -347,6 +370,157 @@ const temposDoTurno = [];
   temposDoTurno.sort((a, b) => a - b);
   console.log(`      o turno inteiro no servidor: mediana ${temposDoTurno[temposDoTurno.length >> 1].toFixed(1)} ms · p95 ${temposDoTurno[Math.floor(temposDoTurno.length * 0.95)].toFixed(1)} ms · máx ${temposDoTurno[temposDoTurno.length - 1].toFixed(1)} ms`);
   t("o turno inteiro cabe num segundo", temposDoTurno[temposDoTurno.length - 1] < 1000);
+}
+
+sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
+{
+  const { aPracaDoJuiz } = S;
+  const { julgarAProsa, oQueAPautaSabe } = await import("../src/juiz-de-fidelidade.js");
+  const { vetosDoVeredito } = await import("../src/motor/correcao-do-juiz.js");
+  const { CAMPOS } = await import("../src/estado.js");
+  const { CAMPOS_DO_SERVIDOR } = await import("../src/motor/eco-do-turno.js");
+  const { REDE_DO_CRONISTA } = await import("../src/gatilho-do-cronista.js");
+  const { nomeDaMoeda } = await import("../src/lexico.js");
+  const can = (x) => JSON.stringify(x);
+  const sem = (x) => String(x || "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+  /* (a) A SESSÃO DO JOGO: onde o App tinha a banca, o mercado da entrada do
+     Juiz é o do App, item a item; no toque de abertura o App não o tinha (o
+     render era o de antes da cidade) e o servidor tem a praça que a pauta viu */
+  {
+    const { A } = SESSOES.find((x) => x.s === "navegador");
+    let eco = null, comBanca = 0, igual = 0, abertura = "";
+    for (let i = 0; i < A.turnos.length; i++) {
+      const L = A.turnos[i];
+      const frase = L.entrada.frase || (L.entrada.toque && L.entrada.toque.conteudo) || "";
+      const sv = await oTurnoNoServidor({ estado: comoOLoadAbre(estadoNoTurno(A, i)), frase, ...(eco ? { eco } : {}), resposta: L.narrador }, { cronista: () => L.cronista.proposta });
+      eco = Object.keys(sv.eco).length ? sv.eco : null;
+      const g = L.juiz && L.juiz.entrada;
+      if (!g || !sv.entradaDoJuiz) continue;
+      if (g.mercado.length) { comBanca++; if (can(sv.entradaDoJuiz.mercado) === can(g.mercado)) igual++; }
+      else abertura = `turno ${i}: o App 0, o servidor ${sv.entradaDoJuiz.mercado.length}`;
+    }
+    console.log(`      (sem banca no App: ${abertura || "nenhum"})`);
+    t(`na sessão do jogo, o mercado do Juiz é o do App onde o App tinha a banca (${igual}/${comBanca}, 29 itens cada)`, comBanca === 2 && igual === comBanca);
+  }
+  /* (b) OS 146 TURNOS: a praça do instante e a do render dão o mesmo mercado
+     (a cidade, o dia, o mapa e a lei de antes do turno, como o App os lê no
+     desenho); e o que a pauta do turno pôs a preço (◉) e a praça também
+     vende tem lá o MESMO preço — a praça é a que a pauta mostrou ao
+     Narrador. (A pauta põe a preço também a rua — a caneca, o prato quente,
+     de precosDaRua —, que não é banca nem balcão: esses não se cruzam.) */
+  let comPraca = 0, instanteRender = 0, pautaComPreco = 0, pautaNaPraca = 0, precoAntes = 0, precoDepois = 0, vetoDepois = 0, nomeAntes = 0, nomeDepois = 0, casos = 0;
+  const foraDaPraca = [];
+  for (const { s, A } of SESSOES) {
+    let eco = null;
+    for (let i = 0; i < A.turnos.length; i++) {
+      const L = A.turnos[i], ent = L.entrada || {};
+      const frase = typeof ent.frase === "string" && ent.frase.trim() ? ent.frase : ent.toque && typeof ent.toque.conteudo === "string" ? ent.toque.conteudo : "";
+      if (!frase.trim() || frase.length > ROTA.fraseMax) continue;
+      const estado = comoOLoadAbre(estadoNoTurno(A, i));
+      const corpo = { estado, frase, ...(eco ? { eco } : {}) };
+      const e0 = oEstadoDoServidor(estado, { eco });
+      const fim = (await oPedidoNoServidor(corpo)).estadoDoFim;
+      const sv = await oTurnoNoServidor({ ...corpo, resposta: L.narrador }, { cronista: () => (L.cronista ? L.cronista.proposta : null) });
+      eco = Object.keys(sv.eco).length ? sv.eco : null;
+      casos++;
+      const pr = aPracaDoJuiz(e0, fim);
+      const doRender = aPracaDoJuiz(e0, { ...fim, cidadeAtual: e0.cidadeAtual, dia: e0.dia, mapa: e0.mapa, lei: e0.lei });
+      if (pr.bancas.length) comPraca++;
+      if (can(pr) === can(doRender)) instanteRender++;
+      const en = sv.entradaDoJuiz;
+      const precoNaPraca = new Map();
+      for (const x of en.mercado) { const k = sem(x.nome); if (!precoNaPraca.has(k)) precoNaPraca.set(k, new Set()); precoNaPraca.get(k).add(Number(x.preco)); }
+      const cruzados = oQueAPautaSabe(en.pauta).mercado.filter((x) => precoNaPraca.has(sem(x.nome)));
+      if (cruzados.length) {
+        pautaComPreco++;
+        const outros = cruzados.filter((x) => !precoNaPraca.get(sem(x.nome)).has(Number(x.preco)));
+        if (!outros.length) pautaNaPraca++; else if (foraDaPraca.length < 3) foraDaPraca.push(`${s}#${i}: ${outros.map((x) => x.nome + " ◉ " + x.preco).join(", ")}`);
+      }
+      /* o Juiz com a praça e sem ela (a foto de antes deste commit) */
+      const narr = L.narrador.narrativa || "";
+      const v1 = julgarAProsa(narr, en), v0 = julgarAProsa(narr, { ...en, mercado: [] });
+      precoAntes += v0.precosInventados.length; precoDepois += v1.precosInventados.length;
+      nomeAntes += v0.nomesNovos.length + v0.pessoasNovas.length; nomeDepois += v1.nomesNovos.length + v1.pessoasNovas.length;
+      vetoDepois += vetosDoVeredito(v1, { turno: 1, cidade: estado.cidadeAtual || "" }).filter((x) => x.especie === "preco-contra-a-mesa").length;
+    }
+  }
+  console.log(`      (${casos} turnos; praça na cena em ${comPraca}; preços apanhados ${precoAntes} sem a praça → ${precoDepois} com ela; gente e nomes novos ${nomeAntes} → ${nomeDepois}; vetos contra a mesa ${vetoDepois})`);
+  t(`a praça do instante é a do render em todos os turnos gravados (${instanteRender}/${casos})`, casos >= 140 && instanteRender === casos);
+  t(`e há praça em boa parte deles (${comPraca})`, comPraca >= 40);
+  t(`o que a pauta pôs a preço e a praça vende tem o mesmo preço nas duas (${pautaNaPraca}/${pautaComPreco} turnos)${foraDaPraca.length ? " — " + foraDaPraca.join(" · ") : ""}`, pautaComPreco > 0 && pautaNaPraca === pautaComPreco);
+  t(`com a praça o Juiz não acusa mais preços nas sessões (${precoAntes} → ${precoDepois}) e nenhum veto contra a mesa nasce do nada (${vetoDepois})`, precoDepois <= precoAntes && vetoDepois === 0);
+  /* (c) O CASO MONTADO: na Ponte do Martelo (a banca do boticário vende o
+     Elixir de Destreza a ◉ 145), o Narrador diz «Trezentas» num turno que
+     não falou de compra (a pauta não traz a ficha do mercado). Com a praça:
+     o veto, com o número certo. Sem ela (a foto de antes): só se media — e
+     o elixir saía como nome novo. */
+  {
+    const { A } = SESSOES.find((x) => x.s === "navegador");
+    const L = A.turnos[1];
+    const estado = comoOLoadAbre(estadoNoTurno(A, 1));
+    const moeda = nomeDaMoeda((estado.mundo || {}).lexico);
+    const narrativa = `A banca do boticário fica sob um toldo verde, e o homem atrás dela limpa um frasco com a manga antes de o pousar no balcão. — O Elixir de Destreza? Trezentas ${moeda}, e nem uma a menos — diz ele, sem levantar os olhos. A praça segue no seu murmúrio de sempre.`;
+    const sv = await oTurnoNoServidor({ estado, frase: L.entrada.frase, resposta: { narrativa, mudancas: {} } }, {});
+    const veto = (sv.eco.vetosDoJuiz || []).find((v) => v.especie === "preco-contra-a-mesa");
+    t("o preço errado numa cidade com banca vira veto com o número da banca", !!veto && /Elixir de Destreza/.test(can(veto)) && /145/.test(can(veto)));
+    const v0 = julgarAProsa(narrativa, { ...sv.entradaDoJuiz, mercado: [] });
+    t("e sem a praça (a foto de antes) não vetava: o preço só se media, e o elixir era nome novo", vetosDoVeredito(v0, { turno: 1, cidade: "" }).every((x) => x.especie !== "preco-contra-a-mesa") && v0.precosInventados.length === 1 && v0.nomesNovos.length + v0.pessoasNovas.length > 0);
+    /* (d) A MESMA COISA, UMA VEZ SÓ: quando a frase pergunta o preço, a pauta
+       traz a ficha do mercado com o mesmo item da banca; somados eram dois
+       elixires, e a regra da soma absolvia o «Trezentas» (≈ 145 + 145) */
+    const sv2 = await oTurnoNoServidor({ estado, frase: "Pergunto ao boticário quanto custa o Elixir de Destreza.", resposta: { narrativa, mudancas: {} } }, {});
+    const naPauta = oQueAPautaSabe(sv2.entradaDoJuiz.pauta).mercado.some((x) => /Elixir de Destreza/.test(x.nome));
+    t("com a ficha do mercado na pauta E a banca na foto, o mesmo preço errado é apanhado", naPauta && (sv2.eco.vetosDoJuiz || []).some((v) => v.especie === "preco-contra-a-mesa" && /145/.test(can(v))));
+    const dobro = julgarAProsa(`— O Elixir de Destreza? Trezentas ${moeda}.`, { moeda, mercado: [{ nome: "Elixir de Destreza", preco: 145 }], pauta: "MERCADO: Elixir de Destreza ◉ 145" });
+    t("o Juiz conta a coisa dita pela banca e pela pauta uma vez só (a soma não absolve o dobro)", dobro.precosInventados.length === 1);
+  }
+  /* (e) O CRONISTA: só com o gatilho aceso, e a fila anda no save */
+  {
+    t("a fila do Cronista é campo do save (estado.js), logo não viaja no eco", CAMPOS.some((c) => c.campo === "leituraDoCronista") && !("leituraDoCronista" in CAMPOS_DO_SERVIDOR));
+    t("e nenhum campo do eco, dos soltos ou dos bilhetes é do save (um valor, um canal)", Object.keys(CAMPOS_DO_SERVIDOR).every((k) => !CAMPOS.some((c) => c.campo === k)));
+    const fontes = [readFileSync(aqui("../src/App.jsx"), "utf8"), ...["cronista-do-turno", "fim-do-turno", "fecho-da-resposta"].map((n) => { try { return readFileSync(aqui(`../src/motor/${n}.js`), "utf8"); } catch { return ""; } })].join("\n");
+    t(`a narração mais curta que o Cronista lê é a do App (${TURNO_NO_SERVIDOR.cronistaMinimo})`, fontes.includes(`narrativa.length < ${TURNO_NO_SERVIDOR.cronistaMinimo}) return;`));
+    let casos = 0, perguntas = 0, acesos = 0, chamadas = 0, foraDoGatilho = 0, filaBoa = 0, comRede = 0, letras = 0;
+    const motivos = {};
+    for (const { A } of SESSOES) {
+      let eco = null, leitura = null;
+      for (let i = 0; i < A.turnos.length; i++) {
+        const L = A.turnos[i], ent = L.entrada || {};
+        const frase = typeof ent.frase === "string" && ent.frase.trim() ? ent.frase : ent.toque && typeof ent.toque.conteudo === "string" ? ent.toque.conteudo : "";
+        if (!frase.trim() || frase.length > ROTA.fraseMax) continue;
+        /* a fila do turno anterior, como o save a levaria */
+        const estado = { ...comoOLoadAbre(estadoNoTurno(A, i)), ...(leitura ? { leituraDoCronista: leitura } : {}) };
+        let pedidos = 0, pedidoBom = true;
+        const sv = await oTurnoNoServidor({ estado, frase, ...(eco ? { eco } : {}), resposta: L.narrador }, { cronista: (p) => { pedidos++; if (!p || typeof p.sys !== "string" || typeof p.user !== "string") pedidoBom = false; else letras += p.sys.length + p.user.length; return L.cronista ? L.cronista.proposta : null; } });
+        casos++;
+        const c = sv.cronista;
+        if (c.pergunta) perguntas++;
+        if (c.corre) acesos++;
+        chamadas += pedidos;
+        if (pedidos !== (c.corre ? 1 : 0) || c.chamado !== c.corre || !pedidoBom) foraDoGatilho++;
+        for (const k of c.motivos) motivos[k] = (motivos[k] || 0) + 1;
+        if (c.motivos.includes("rede")) comRede++;
+        /* a fila: lida, zera; pulada, cresce um e nunca passa do teto */
+        const l0 = estado.leituraDoCronista || { pulos: 0, fila: [] }, l1 = sv.estadoDoFim.leituraDoCronista;
+        const ok = !c.pergunta ? can(l1) === can(estado.leituraDoCronista) : c.corre && L.cronista && L.cronista.proposta ? l1.pulos === 0 && l1.fila.length === 0 : l1.pulos === Math.min((l0.pulos || 0) + 1, REDE_DO_CRONISTA.pulosMax) && l1.fila.length <= REDE_DO_CRONISTA.filaMax;
+        if (ok) filaBoa++;
+        leitura = l1 || null;
+        eco = Object.keys(sv.eco).length ? sv.eco : null;
+      }
+    }
+    CUSTO.cronista = { casos, acesos, letras: acesos ? Math.round(letras / acesos) : 0, motivos };
+    console.log(`      (o Cronista seria chamado em ${acesos} de ${casos} turnos — ${(100 * acesos / casos).toFixed(0)}% —; motivos: ${Object.entries(motivos).map(([k, v]) => k + " " + v).join(" · ")}; o pedido ao Cronista tem em média ${CUSTO.cronista.letras} caracteres)`);
+    t(`toda narração do turno passa pelo gatilho (${perguntas}/${casos})`, perguntas === casos);
+    t(`a porta do Cronista só é chamada quando o gatilho acende, uma vez, com o pedido inteiro (${chamadas} chamadas, ${acesos} acesos, fora da regra: ${foraDoGatilho})`, chamadas === acesos && foraDoGatilho === 0);
+    t(`e o gatilho poupa chamadas: acende em ${acesos} de ${casos}`, acesos > 0 && acesos < casos);
+    t(`a fila anda no save: lida zera, pulada cresce sem passar do teto (${filaBoa}/${casos})`, filaBoa === casos);
+    t(`e a rede de segurança acende depois de ${REDE_DO_CRONISTA.pulosMax} pulos (${comRede} turnos)`, comRede > 0);
+    /* a rota leva a decisão no ensaio */
+    const { A } = SESSOES.find((x) => x.s === "navegador");
+    const L = A.turnos[1];
+    const r = await rodar({ estado: comoOLoadAbre(estadoNoTurno(A, 1)), frase: L.entrada.frase, resposta: L.narrador, cronista: L.cronista.proposta });
+    t("a rota em ensaio diz o que o turno decidiu do Cronista", r.codigo === 200 && r.corpo.cronista && typeof r.corpo.cronista.corre === "boolean" && typeof r.corpo.cronista.chamado === "boolean" && Array.isArray(r.corpo.cronista.motivos));
+  }
 }
 
 sec("7. NENHUMA CHAMADA DE REDE, NENHUM NAVEGADOR");

@@ -136,9 +136,11 @@ export default async function handler(req, res) {
     calados: m.calados.length,
     montagemMs,
     /* o depois (só com `resposta`): o eco, os soltos e a tela; do estado do
-       fim só a impressão digital — o cliente do ensaio confere, não aplica */
+       fim só a impressão digital — o cliente do ensaio confere, não aplica.
+       E o que o turno decidiu do Cronista (`cronista.chamado`: houve uma
+       2.ª chamada de IA neste turno) — é a conta do custo, turno a turno */
     ...(resposta ? {
-      eco: m.eco, soltos: m.soltos, tela: m.tela,
+      eco: m.eco, soltos: m.soltos, tela: m.tela, cronista: m.cronista,
       estado: { hash: createHash(ENSAIO_DO_TURNO.hash).update(JSON.stringify(m.estadoDoFim)).digest("hex"), tamanho: JSON.stringify(m.estadoDoFim).length, calou: m.calou.length },
     } : {}),
     ...(licenca ? { licenca } : {}),

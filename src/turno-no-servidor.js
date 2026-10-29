@@ -87,7 +87,15 @@ import { cenarioAtivo } from "./cenario.js";
 import { moldePorId, MOLDE_PADRAO } from "./moldes.js";
 import { entradaDoJuiz } from "./motor/juiz-do-turno.js";
 import { vetosDoVeredito, andarOsVetos } from "./motor/correcao-do-juiz.js";
-import { oPedidoAoCronista } from "./motor/cronista-do-turno.js";
+import { oPedidoAoCronista, oGatilhoDoCronista } from "./motor/cronista-do-turno.js";
+import { garantirLeitura, pularALeitura, lerALeitura, blocoDaFila } from "./gatilho-do-cronista.js";
+import { balcaoDeMantimentos, mapasAVenda, mercadoresDaCidade } from "./mercado.js";
+import { regioesDoMapa } from "./geografia.js";
+import { fatorDePreco } from "./crime.js";
+import { fatorDaOficina } from "./dominios.js";
+import { garantirSuprimentos } from "./ermos.js";
+import { fatorDeMercado } from "./posturas.js";
+import { precoDeCompraPara } from "./profissoes.js";
 
 export const TURNO_NO_SERVIDOR = Object.freeze({
   /* o nome que a semente usa quando a campanha não tem nome (o mesmo do
@@ -95,6 +103,9 @@ export const TURNO_NO_SERVIDOR = Object.freeze({
   semNome: "aventura",
   /* quantos lugares onde o turno calou o ensaio guarda */
   caladosMax: 40,
+  /* a narração mais curta que o Cronista lê (o `cronistaDoTurno` do App:
+     abaixo disto, nem o gatilho corre, nem a fila anda) */
+  cronistaMinimo: 60,
 });
 
 /* AS PORTAS que o servidor dá às peças, e as que ele NÃO dá — a suíte lê
@@ -154,7 +165,10 @@ async function montar(corpo, opcoes) {
   const { agora } = ehObjeto(opcoes) ? opcoes : {};
   const e0 = oEstadoDoServidor(estado, { eco, bilhetes });
   const casa = aCasaDoTurno(e0);
-  const sorte = rng(hashSemente(`${SEMENTE_DA_CASA}|${casa}`));
+  const semente = hashSemente(`${SEMENTE_DA_CASA}|${casa}`);
+  const corrente = rng(semente);
+  let tirados = 0;
+  const sorte = () => { tirados++; return corrente(); };
   const calados = [];
   const adiados = [];
   /* a tela: cada setter do prelúdio guarda o último valor (o que é função
@@ -177,13 +191,76 @@ async function montar(corpo, opcoes) {
   for (const g of adiados.splice(0)) {
     try { comSorte(sorte, g); } catch (x) { portas.calou("o que o turno adiou", x); }
   }
-  return { pedido: r2.pedido, casa, calados, estadoDoFim: { ...e0, ...r1.escritas, ...r2.escritas }, e0, sorte, saida: r2.saida, avulsos, frase: typeof frase === "string" ? frase : "" };
+  /* a corrente onde a montagem a deixou, quantas vezes o depois a pedir */
+  const ate = tirados;
+  const retomar = () => { const g = rng(semente); for (let i = 0; i < ate; i++) g(); return g; };
+  return { pedido: r2.pedido, casa, calados, estadoDoFim: { ...e0, ...r1.escritas, ...r2.escritas }, e0, sorte, retomar, saida: r2.saida, avulsos, frase: typeof frase === "string" ? frase : "" };
 }
 
 const arr = (x) => (Array.isArray(x) ? x : []);
 const obj = (x) => (ehObjeto(x) ? x : {});
 const dado = (x) => { try { return x === undefined ? null : JSON.parse(JSON.stringify(x)); } catch { return null; } };
 const NOMES_DO_SAVE = new Set(CAMPOS.map((c) => c.campo));
+
+/* AS BANCAS E O BALCÃO DA FOTO DO JUIZ (29/10, trilha B). No App a foto
+   leva `bancasDaCena()` e `balcaoAqui()`, que leem `mercadoAqui` — um
+   const do RENDER, que o servidor não tem. Sem eles a foto ia sem mercado,
+   e o Juiz não tinha contra o que pôr um preço: um preço errado numa cidade
+   com banca saía «sem mesa» (só se mede) em vez de «contra a mesa» (o veto,
+   com o número certo, na pauta do turno seguinte).
+
+   Refaz-se aqui do estado, pela regra das peças da pauta e do pedido
+   (`mercadoAqui` de pauta-do-turno.js e pedido-do-turno.js, que refazem a
+   banca do instante desde 1409f0b): a cidade, o dia, o mapa, a lei, a
+   masmorra, a jornada e a postura do INSTANTE (o estado depois da
+   montagem, o dos refs na hora da foto); o herói, o mercado (os comprados,
+   o ambulante, as pressões, as pechinchas) e os governos do RENDER (o
+   estado de antes do turno, como o `enviar` os vê). É a praça que a pauta
+   do turno mostrou ao Narrador — e é contra ela que se julga o que ele
+   disse. O App ainda lê a praça do último render (a cidade e o dia do
+   desenho da tela); nos turnos gravados as duas dão o mesmo mercado
+   (a medida está na suíte), e onde diferirem a do instante é a que a
+   pauta viu. Só o que o Juiz lê sai daqui: o nome, o preço e o id de cada
+   coisa, e o tipo da banca (o caixa e a pechincha da tela ficam). */
+const cidadeDoMapa = (mapa, nome) => arr(obj(mapa).cidades).find((c) => c && String(c.nome || "").toLowerCase() === String(nome || "").toLowerCase()) || null;
+export function aPracaDoJuiz(antes, agora) {
+  const R = obj(antes), E = obj(agora);
+  const merc = obj(R.mercado), pers = R.personagem, cidade = cidadeDoMapa(E.mapa, E.cidadeAtual);
+  const comprados = obj(merc.comprados);
+  const semGasto = (m) => ({ ...m, estoque: arr(m.estoque).filter((it) => !arr(comprados[m.id]).includes(it.nome)) });
+  const lista = [];
+  const amb = merc.ambulante, j = E.jornada;
+  if (amb && j && (!amb.trecho || amb.trecho === (j.de || "") + ">" + (j.para || ""))) lista.push(semGasto(amb));
+  const lexico = obj(E.mundo || R.mundo).lexico;
+  if (cidade) lista.push(...mercadoresDaCidade(cidade, E.dia, (pers && pers.nivel) || 1, lexico, {
+    pressoes: merc.pressoes || {},
+    oficina: (g) => { const f = fatorDaOficina(obj(R.governos)[cidade.nome], g, cidade); return f === 1 ? null : { fator: f, porque: "a casa de ofício daqui fabrica isto" }; },
+  }).map(semGasto));
+  const ocultas = regioesDoMapa(E.mapa, { conhecidas: false });
+  if (ocultas.length) {
+    const porRegiao = {};
+    for (const c of arr(obj(E.mapa).cidades)) if (c && c.regiao) porRegiao[c.regiao] = (porRegiao[c.regiao] || 0) + 1;
+    const mapas = mapasAVenda(ocultas, porRegiao);
+    for (const l of lista) {
+      if (l.tipo !== "geral" && l.tipo !== "relicario") continue;
+      l.estoque = [...l.estoque, ...mapas.filter((mp) => !arr(comprados[l.id]).includes(mp.nome))];
+    }
+  }
+  const barg = obj(merc.pechinchas);
+  const todas = lista.map((l) => {
+    const b = barg[l.id];
+    const aj = (b && b.dia === E.dia && b.ajuste) || 1;
+    return { id: l.id, tipo: l.tipo, estoque: arr(l.estoque).map((it) => ({ ...it, preco: Math.max(1, Math.round(precoDeCompraPara(pers, it.preco) * aj * fatorDePreco(E.lei, cidade, E.dia))) })) };
+  });
+  /* bancasDaCena: na masmorra aberta nenhuma; na estrada só a carroça */
+  const bancas = E.masmorra && !E.masmorra.encerrada ? [] : E.jornada ? todas.filter((m) => m && m.tipo === "ambulante") : E.cidadeAtual ? todas : [];
+  const balcao = E.cidadeAtual && !E.jornada && !E.masmorra ? balcaoDeMantimentos(cidade, {
+    dia: E.dia, pressoes: obj(E.mercado).pressoes || {},
+    extra: fatorDeMercado(obj(E.postura).postura, { vendendo: false }),
+    temKit: garantirSuprimentos(obj(E.personagem || pers).suprimentos).kit,
+  }) : [];
+  return { bancas, balcao: arr(balcao) };
+}
 
 /* A LINHA DO TURNO, tirada do próprio turno (o que o replay lê do arquivo,
    o servidor lê do estado DEPOIS da montagem — os refs do App no instante
@@ -195,9 +272,10 @@ const NOMES_DO_SAVE = new Set(CAMPOS.map((c) => c.campo));
      nomes à mão (`nomesOferecidosRef`), a moeda do léxico do mundo;
    - a frase da bolsa: `lerOPedido(conteudo)`, só o que é do jogador;
    - o Juiz: a foto de ANTES de aplicar e o turno `turnoDeRegistro + 1`
-     (o `t` da última cena do registo). As bancas da cena e o balcão são
-     do render do App (`mercadoAqui`) e não estão no estado: a foto vai
-     sem eles (a medida está na suíte).
+     (o `t` da última cena do registo). As bancas da cena e o balcão
+     refazem-se do estado (`aPracaDoJuiz`: o render de antes do turno, a
+     cidade e o dia do instante); se a praça estourar, a foto vai sem elas,
+     como ia antes — o mercado nunca cala o Juiz.
    - o Cronista: a proposta que a porta deu, ou nenhuma. */
 function aLinhaDoServidor(m, resposta, proposta) {
   const e = m.estadoDoFim, conteudo = m.frase;
@@ -209,11 +287,13 @@ function aLinhaDoServidor(m, resposta, proposta) {
   try { moeda = nomeDaMoeda(mundo.lexico); } catch { moeda = ""; }
   const registro = arr(e.registro);
   const turnoJ = (registro.length && Number.isFinite(Number(obj(registro[registro.length - 1]).t)) ? Number(registro[registro.length - 1].t) : 0) + 1;
+  let praca = { bancas: [], balcao: [] };
+  try { praca = aPracaDoJuiz(m.e0, e); } catch { /* sem praça, o Juiz julga o resto */ }
   let genero = "", molde = null;
   try { genero = mundo.genero || cenarioAtivo().generos.padrao; molde = moldePorId(mundo.molde || MOLDE_PADRAO); } catch { /* o mundo torto cala a foto, não o turno */ }
   const foto = {
     personagem: e.personagem, npcs: e.npcs, mapa: e.mapa, base: e.baseMundo, cidadeAtual: e.cidadeAtual, lugar: e.lugar,
-    oferecidos: e.nomesOferecidos, missoes: e.missoes, bancas: [], balcao: [],
+    oferecidos: e.nomesOferecidos, missoes: e.missoes, bancas: praca.bancas, balcao: praca.balcao,
     narracoes: arr(e.mensagens).filter((x) => x && x.autor === "mestre").map((x) => x.texto),
     elenco: arr(obj(e.elencoCache).nomes), guildas: e.guildas, espinha: e.espinha,
     mundo: { semente: aSementeDoMundo(e), genero, molde, lexico: mundo.lexico },
@@ -234,25 +314,83 @@ function aLinhaDoServidor(m, resposta, proposta) {
   };
 }
 
+/* O CRONISTA DO TURNO, NO SERVIDOR (29/10, trilha B). No App o
+   `cronistaDoTurno` corre DEPOIS do Mestre (o aplicar, o códex, a chegada,
+   o Juiz): lê o estado assente (`estadoDoCronista()`), e o gatilho decide
+   se a narração vai à rede AGORA ou espera na fila (`leituraDoCronista`,
+   campo do save). Aqui, na mesma ordem e com as mesmas peças:
+   - narração abaixo de `cronistaMinimo`: o Cronista nem se pergunta — sem
+     passo, sem fila (o `return` do App);
+   - o gatilho (`oGatilhoDoCronista`) sobre o estado de depois do Mestre, a
+     frase da bolsa e as linhas do turno (a nota e o conteúdo);
+   - acende: o pedido leva a fila (`blocoDaFila`) e vai à porta; resposta
+     em objeto, a fila zera (`lerALeitura`); porta que falha, que falta ou
+     que não dá objeto: a narração entra na fila (`pularALeitura`) e o
+     turno fica sem Cronista, como no App quando ele não responde;
+   - não acende: a fila anda (`pularALeitura`) e o passo do Cronista corre
+     com a resposta vazia (`{}`), como no App — as secções que são só
+     código (o segredo revelado) correm igual, e é isso que poupa a chamada.
+   A FILA VIAJA NO SAVE, não no eco: `leituraDoCronista` é campo de
+   estado.js (o App grava-o e o load lê-o), e o eco é por definição o que o
+   load zera (eco-do-turno.js) — o mesmo valor por dois canais seriam duas
+   verdades, e a do eco passaria por cima da do save. */
+function oCronistaDoServidor(m, resposta, depoisDoMestre) {
+  const narrativa = String(obj(resposta).narrativa || "");
+  const leitura = garantirLeitura(obj(m.estadoDoFim).leituraDoCronista);
+  if (!narrativa || narrativa.length < TURNO_NO_SERVIDOR.cronistaMinimo) return { pergunta: false, corre: false, motivos: [], leitura: null, pedido: null };
+  const E = obj(depoisDoMestre);
+  const nota = obj(m.saida).nota == null ? "" : String(obj(m.saida).nota);
+  let frase = "";
+  try { const pb = lerOPedido(m.frase); frase = pb && pb.doJogador ? pb.texto : ""; } catch { frase = ""; }
+  let g = { corre: true, motivos: [] };
+  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem }, leitura); } catch { g = { corre: true, motivos: [] }; }
+  let pedido = null;
+  if (g.corre) {
+    let fila = "";
+    try { fila = blocoDaFila(leitura); } catch { fila = ""; }
+    pedido = oPedidoAoCronista({ ...E, npcs: obj(E.npcs) }, { narrativa, fila });
+  }
+  return { pergunta: true, corre: !!g.corre, motivos: arr(g.motivos), leitura, pedido, narrativa };
+}
+
 /* O TURNO INTEIRO NO SERVIDOR, sobre uma resposta já dada. `corpo`:
    `{ estado, frase, eco, bilhetes, resposta: { narrativa, mudancas } }`;
    `opcoes`: `{ agora, cronista }` — `cronista(pedido)` recebe o pedido ao
    Cronista (`{ sys, user }`, o de oPedidoAoCronista) e devolve a proposta
-   (ou null; pode ser async). Devolve `{ pedido, casa, calados, estadoDoFim,
-   eco, soltos, tela, juiz, juizo, calou }`. Lança onde a montagem lança. */
+   (ou null; pode ser async). Só é chamada quando o gatilho acende.
+   Devolve `{ pedido, casa, calados, estadoDoFim, eco, soltos, tela, juiz,
+   entradaDoJuiz, cronista, juizo, calou }` — `cronista` é o que o turno
+   decidiu do Cronista: `{ pergunta, corre, motivos, chamado }` (`chamado`:
+   a porta foi chamada, logo uma 2.ª chamada de IA neste turno). Lança onde
+   a montagem lança.
+
+   AS DUAS PASSAGENS. O Cronista lê o estado de DEPOIS do Mestre, e a
+   proposta dele entra no último passo do replay: a 1.ª passagem corre o
+   depois sem Cronista (o passo dele não corre sem proposta) e dá o estado
+   que ele lê; a 2.ª corre o depois inteiro com a proposta. As duas com a
+   MESMA função do replay e a corrente da sorte retomada onde a montagem a
+   deixou — a 2.ª é, passo a passo, a 1.ª mais o Cronista. Sem proposta
+   (não houve resposta), a 1.ª é o turno. */
 export async function oTurnoNoServidor(corpo, opcoes) {
   const op = obj(opcoes);
   const m = await montar(corpo, opcoes);
   const resposta = obj(obj(corpo).resposta);
-  let proposta = null;
-  if (typeof op.cronista === "function") {
-    try {
-      const e = m.estadoDoFim;
-      proposta = await op.cronista(oPedidoAoCronista({ ...e, npcs: obj(e.npcs) }, { narrativa: String(resposta.narrativa || ""), fila: "" }));
-    } catch (x) { m.calados.length < TURNO_NO_SERVIDOR.caladosMax && m.calados.push("o Cronista"); proposta = null; }
-  }
-  const L = aLinhaDoServidor(m, resposta, proposta);
-  const r = correrOTurno(m.estadoDoFim, L.linha, { semente: L.mundo.semente, mundo: L.mundo, so: "depois", casa: m.sorte });
+  const L0 = aLinhaDoServidor(m, resposta, null);
+  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar() });
+  const r0 = correrOTurno(m.estadoDoFim, L0.linha, contexto());
+  const cr = oCronistaDoServidor(m, resposta, r0.estado);
+  let proposta = null, chamado = false;
+  if (cr.pergunta && cr.corre) {
+    if (typeof op.cronista === "function") {
+      chamado = true;
+      try { proposta = await op.cronista(cr.pedido); } catch { m.calados.length < TURNO_NO_SERVIDOR.caladosMax && m.calados.push("o Cronista"); proposta = null; }
+    }
+    if (!ehObjeto(proposta)) proposta = null;
+  } else if (cr.pergunta) proposta = {};
+  let leitura;
+  try { leitura = !cr.pergunta ? null : cr.corre && proposta ? lerALeitura(cr.leitura, cr.narrativa) : pularALeitura(cr.leitura, cr.narrativa); } catch { leitura = null; }
+  const L = proposta ? aLinhaDoServidor(m, resposta, proposta) : L0;
+  const r = proposta ? correrOTurno(m.estadoDoFim, L.linha, contexto()) : r0;
   /* o eco: o do estado do fim, com os vetos que o Juiz deste turno deixou
      (`andarOsVetos` sobre os da véspera, como o App faz ao julgar) */
   const { eco, soltos } = aRespostaDoServidor({ ...m.estadoDoFim, ...r.estado });
@@ -263,6 +401,7 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   const doSave = new Set([...NOMES_DO_SAVE, ...Object.keys(obj(obj(corpo).estado))]);
   doSave.delete("soltos");
   const estadoDoFim = Object.fromEntries(Object.entries(r.estado).filter(([k]) => k === "versao" || doSave.has(k)));
+  if (leitura) estadoDoFim.leituraDoCronista = leitura;
   const antes = obj(obj(corpo).estado);
   const tela = {
     narrativa: obj(r.tela).narrativa || "",
@@ -270,5 +409,6 @@ export async function oTurnoNoServidor(corpo, opcoes) {
     campos: Object.keys(estadoDoFim).filter((k) => k !== "versao" && JSON.stringify(estadoDoFim[k]) !== JSON.stringify(antes[k])),
     avulsos: dado(Object.fromEntries(Object.entries(m.avulsos).filter(([k]) => !NOMES_DO_SAVE.has(k)))),
   };
-  return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim, eco: dado(eco), soltos: dado(soltos), tela, juiz: r.juiz, juizo: r.juizo, calou: r.calou };
+  const cronista = { pergunta: cr.pergunta, corre: cr.corre, motivos: cr.motivos, chamado };
+  return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim, eco: dado(eco), soltos: dado(soltos), tela, juiz: r.juiz, entradaDoJuiz: L.linha.juiz ? L.linha.juiz.entrada : null, cronista, juizo: r.juizo, calou: r.calou };
 }
