@@ -278,7 +278,7 @@ import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilenci
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, bonusEquip, bonusEfeito, atributoEfetivo, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { abrirOSave, aFichaAberta, comACidadePisada } from "./abrir-o-save.js";
-import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
+import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, comerODia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, resumoErmos } from "./ermos.js";
 
 /* ---------------- O SILÊNCIO QUE NÃO CUSTA O TURNO ----------------
    Vivia dentro do componente desde a v9.109, e por isso NENHUMA peça de
@@ -20479,19 +20479,17 @@ export default function Taverna() {
          `missoes` (ver mais abaixo) — a conta de secundárias ativas segue
          para lá também, senão o teto nunca via o que acabara de sortear. */
       const secundarias = (missoesRef.current || []).filter((m) => m && m.status === "ativa" && m.veiculo === VEICULO_DA_TAREFA_ANTIGA && m.intencao !== "principal").length;
-      /* ERMOS (v8.5): um dia se passou — o grupo come, bebe e se cansa. */
-      {
-        const bocas = 1 + (personagem.grupo || []).length;
-        const cd = consumirDia(personagem.suprimentos, bocas);
-        const comeuEBebeu = cd.faltaComida === 0 && cd.faltaAgua === 0;
-        setPersonagem((pp) => ({
-          ...pp,
-          suprimentos: cd.suprimentos,
-          exaustao: comeuEBebeu ? recuperarExaustao(pp.exaustao || 0, true) : Math.min(6, (pp.exaustao || 0) + cd.exaustao),
-        }));
-        if (cd.msgs.length) pushMsgs(cd.msgs.map((t) => ({ autor: "sistema", texto: t })));
-        else if ((personagem.exaustao || 0) > 0) pushMsgs([{ autor: "sistema", texto: "🍲 Comida quente e água limpa — um nível de exaustão vai embora." }]);
-      }
+      /* ERMOS (v8.5): um dia se passou — o grupo come, bebe e se cansa.
+         29/10 (a 13.ª): na `pers` que o resto do descanso grava. Era um
+         `setPersonagem((pp) => …)` que o `setPersonagem(pers)` da manhã,
+         abaixo, apagava: o botão cobrava «2 rações e 2 águas» e a mochila
+         acordava cheia. As bocas são as do veredito (`contasDoLongo`). */
+      try {
+        const comeu = comerODia(pers, 1 + (personagem.grupo || []).length);
+        pers = comeu.pers;
+        setPersonagem(pers);
+        if (comeu.msgs.length) pushMsgs(comeu.msgs.map((t) => ({ autor: "sistema", texto: t })));
+      } catch (e) { calou("o dia que se come no descanso", e); }
       const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias });
       eventosRef.current = r.eventos; setEventos(r.eventos);
       const partes = [];

@@ -10,6 +10,9 @@ import { BIOMA_ROTULO } from "./geografia.js";
 
 const d = (n) => 1 + Math.floor(sorteDaCasa() * n);
 
+/* o último degrau da exaustão: seis níveis, como no 5e (o sexto mata) */
+const EXAUSTAO_MAXIMA = 6;
+
 /* ---------------- SUPRIMENTOS ---------------- */
 export const SUPRIMENTOS = {
   racoes: { nome: "Rações de viagem", icone: "🥖", preco: 5, desc: "Comida seca para um dia." },
@@ -43,6 +46,27 @@ export function consumirDia(sup, tamanhoGrupo) {
       ...(faltaAgua > 0 ? [`💧 Água acabou — ${faltaAgua} boca(s) passam sede hoje.`] : []),
     ],
   };
+}
+
+/* O DIA QUE SE COME, NA FICHA (29/10, a 13.ª sessão). O botão do descanso
+   longo anunciava «2 rações e 2 águas» (`consumoDiario`) e a mochila
+   acordava com 10/10: o App descontava numa escrita funcional do estado
+   da ficha e, linhas abaixo, o mesmo descanso gravava a ficha inteira — a
+   de antes da comida —, e a última escrita ganhava. A conta passa a ser
+   uma só e a devolver a ficha: quem chama segue com ela.
+
+     comerODia(pers, bocas) → { pers, msgs, consumo } — os suprimentos
+       menos `consumoDiario(bocas)` (até zero), a exaustão (sobe na fome e
+       na sede, desce um degrau com comida e água), e as linhas do sistema.
+   Pura; a ficha recebida fica. */
+export function comerODia(pers, bocas) {
+  const p = pers && typeof pers === "object" ? pers : {};
+  const exAntes = Number(p.exaustao) || 0;
+  const cd = consumirDia(p.suprimentos, bocas);
+  const comeuEBebeu = cd.faltaComida === 0 && cd.faltaAgua === 0;
+  const exaustao = comeuEBebeu ? recuperarExaustao(exAntes, true) : Math.min(EXAUSTAO_MAXIMA, exAntes + cd.exaustao);
+  const msgs = cd.msgs.length ? cd.msgs : exAntes > 0 ? ["🍲 Comida quente e água limpa — um nível de exaustão vai embora."] : [];
+  return { pers: { ...p, suprimentos: cd.suprimentos, exaustao }, msgs, consumo: consumoDiario(bocas) };
 }
 
 /* ---------------- RITMO DE VIAGEM (5e) ---------------- */

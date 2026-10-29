@@ -9,6 +9,8 @@ import { BIOMAS } from "../src/geografia.js";
 import { RARIDADES, RARIDADES_FORJAVEIS, CUSTO_FORJA } from "../src/loot.js";
 import { PORTAS_DA_CENA, portasAbertas } from "../src/prompt.js";
 import { comEm, comDe } from "../src/lugar.js";
+import { comerODia, consumoDiario } from "../src/ermos.js";
+import fs from "node:fs";
 
 let falhas = 0;
 const ok = (c, t) => { if (!c) { falhas++; console.log("  FALHA:", t); } else console.log("  ok:", t); };
@@ -303,6 +305,36 @@ sec("11) A REGRA DO CORPO — o que cabe em seis segundos");
   /* slot desconhecido não pode travar a ficha */
   ok(podeTrocarAgora("bugiganga", { emCombate: true }).ok, "slot que não existe cai no permissivo, nunca trava o inventário");
   ok(trocaDeSlot(null) === TROCA_DE_SLOT.arma, "e o padrão é a arma");
+}
+
+sec("O DIA QUE SE COME (29/10, a 13.ª sessão): o que o botão cobra é o que a mochila perde");
+{
+  /* A 13.ª: o descanso longo dizia «2 rações e 2 águas» (a heroína e o
+     Dunstan) e a mochila acordava com 10/10. A conta do anúncio é
+     `consumoDiario(bocas)`; a da mochila tem de ser a mesma. */
+  const iara = { nome: "Iara", suprimentos: { racoes: 10, agua: 10, tochas: 5, kit: true }, exaustao: 0, grupo: [{ nome: "Dunstan" }] };
+  const bocas = 1 + iara.grupo.length;
+  const anuncio = consumoDiario(bocas);
+  const r = comerODia(iara, bocas);
+  ok(anuncio.racoes === 2 && anuncio.agua === 2, "o anúncio da Iara e do Dunstan: 2 rações e 2 águas");
+  ok(r.pers.suprimentos.racoes === 10 - anuncio.racoes && r.pers.suprimentos.agua === 10 - anuncio.agua && r.pers.suprimentos.tochas === 5 && r.pers.suprimentos.kit === true,
+    "e a mochila desce exatamente isso: 10/10 → 8/8, as tochas e o kit ficam");
+  ok(iara.suprimentos.racoes === 10 && r.pers !== iara, "a ficha recebida fica (imutável)");
+  ok(JSON.stringify(r.consumo) === JSON.stringify(anuncio) && r.msgs.length === 0, "devolve o consumo do anúncio, e calado quando nada falta");
+  const faminta = comerODia({ suprimentos: { racoes: 1, agua: 0 }, exaustao: 2 }, 2);
+  ok(faminta.pers.suprimentos.racoes === 0 && faminta.pers.suprimentos.agua === 0 && faminta.pers.exaustao === 4 && faminta.msgs.length === 2, "sem o bastante: zera, a exaustão sobe um por falta, e o sistema diz");
+  ok(comerODia({ suprimentos: {}, exaustao: 6 }, 1).pers.exaustao === 6, "e nunca passa do sexto degrau");
+  ok(comerODia({ suprimentos: { racoes: 3, agua: 3 }, exaustao: 2 }, 1).pers.exaustao === 1 && comerODia({ suprimentos: { racoes: 3, agua: 3 }, exaustao: 2 }, 1).msgs.length === 1, "com comida e água, um degrau de exaustão vai embora, e diz-se");
+  ok((() => { try { comerODia(null, 1); comerODia(undefined, undefined); return true; } catch { return false; } })(), "não lança com lixo");
+  /* a fiação: a comida desce na `pers` que o descanso grava depois — nunca
+     num `setPersonagem((pp) => …)` que o `setPersonagem(pers)` da manhã apaga */
+  const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const i0 = APP.indexOf("  const sairDoAcampamento = (tipo, extra) => {"), i1 = APP.indexOf("\n  };\n", i0);
+  const corpo = i0 > 0 && i1 > i0 ? APP.slice(i0, i1) : "";
+  const iCome = corpo.indexOf("const comeu = comerODia(pers, 1 + (personagem.grupo || []).length);");
+  const iManha = corpo.indexOf("pers = { ...pers, ultimoLongo: diaRef.current };");
+  ok(iCome > 0 && /pers = comeu\.pers;/.test(corpo) && iManha > iCome, "o descanso come na ficha que segue (antes da manhã gravar a dela)");
+  ok(!/setPersonagem\(\(pp\) => \(\{\s*\.\.\.pp,\s*suprimentos:/.test(corpo), "e não sobra a escrita funcional que a manhã apagava");
 }
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\ntudo verde");
