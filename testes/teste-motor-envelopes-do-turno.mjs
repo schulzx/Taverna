@@ -997,7 +997,7 @@ sec("29 · o desfecho das habilidades: os casos percorrem o que o texto decide, 
   t("a geminada e a área dizem o dano e o [CAIU] de quem caiu", conta(ult("desfechoGeminada"), "de dano pela magia GEMINADA [CAIU]") >= 130 && conta(ult("desfechoGeminada"), "pela magia GEMINADA") === 275 && conta(ult("desfechoArea"), "de dano pela área [CAIU]") >= 80 && conta(ult("desfechoArea"), "de dano pela área") === 275);
   t("o meu grupo na minha área: um e dois, com a metade e a habilidade", conta(ult("desfechoFogoAmigo"), "Corvo, Sarna apanhou ") >= 130 && ult("desfechoFogoAmigo").every((x, i) => x.includes(" apanhou " + (2 + (i % 7)) + " de ") && x.endsWith(", o meu próprio ataque"))); /* movida (29/10, o conserto do artigo): pedia " da minha própria ", o defeito à letra */
   const C = ult("desfechoCondicao");
-  t("a condição aplicada e a resistida, em minúsculas", conta(C, " ficou queimado") + conta(C, " ficou alento") + conta(C, " ficou cego") >= 130 && conta(C, " resistiu e não ficou ") >= 130 && !C.some((x) => /ficou [A-Z]|resistiu à /.test(x))); /* movida (29/10, o conserto do artigo): pedia " resistiu à ", o defeito à letra */
+  t("a condição aplicada e a resistida, em minúsculas", conta(C, " ficou queimad") + conta(C, " ficou alent") + conta(C, " ficou ceg") >= 130 && /* movida (29/10, o gênero do alvo): pedia o rótulo no masculino («ficou queimado»); com a Lina e a Quimera nos casos, metade vai no feminino — a raiz conta os dois, e a secção 30 prova qual */ conta(C, " resistiu e não ficou ") >= 130 && !C.some((x) => /ficou [A-Z]|resistiu à /.test(x))); /* movida (29/10, o conserto do artigo): pedia " resistiu à ", o defeito à letra */
   t("a drenagem, o imune de cada degrau e o erro desastroso", ult("desfechoDrenou").every((x, i) => x === "drenei " + (1 + (i % 9)) + " PV") && ult("desfechoImune").every((x, i) => x.includes("IMUNE (GD " + (3 + (i % 4)) + " contra meu GD " + (i % 3) + ":")) && conta(ult("desfechoErrou"), " — erro desastroso (d20=") >= 130 && conta(ult("desfechoErrou"), " — errou (d20=") >= 130);
   const K = L("desfechoColheita");
   t("a colheita de ninguém (" + conta(K, "NÃO derrubou ninguém") + "), de um e de dois, cada um com o seu [CAIU — …]", conta(K, "NÃO derrubou ninguém") >= 80 && conta(K, "Ogro [CAIU — estava abaixo de ") >= 150 && conta(K, "]; Lobo Cinzento [CAIU — estava abaixo de ") >= 80);
@@ -1041,6 +1041,62 @@ sec("29 · o desfecho das habilidades: os casos percorrem o que o texto decide, 
   }
   /* o lado do App: os [CAIU…] e as linhas de dano já não moram lá — a resolução chama a peça */
   t("o App não escreve mais nenhum [CAIU", !APP.includes("[CAIU"));
+}
+
+sec("30 · o gênero do alvo: «Lina ficou cega», e não «cego»");
+{
+  /* A condição é a única forma do desfecho que flexiona. O rótulo vai no gênero
+     de quem a condição pegou, e o gênero sai do que o sistema sabe, pela ordem
+     de GENERO_DO_ALVO; quem nenhuma fonte conhece fica no masculino genérico. */
+  const { GENERO_DO_ALVO, generoDoAlvo, naFlexaoDoAlvo } = await import("../src/motor/envelopes-do-turno.js");
+  const { CONDICOES: CAT, criarCondicao: criar } = await import("../src/condicoes.js");
+  const { CRIATURAS_FANTASIA, ARQUETIPOS } = await import("../src/bestiario.js");
+  const NPCS = { Lina: { nome: "Lina", genero_pessoa: "mulher" }, Iris: { nome: "Iris" }, Tomas: { genero: "homem" } };
+  const casosG = [
+    ["o campo do próprio alvo", { nome: "Lina", genero: "homem" }, NPCS, "homem"],
+    ["o campo do próprio alvo, pelo genero_pessoa", { nome: "Ogro", genero_pessoa: "mulher" }, null, "mulher"],
+    ["a pessoa do registo com o mesmo nome", { nome: "Lina" }, NPCS, "mulher"],
+    ["o registo pela chave, sem nome dentro", { nome: "Tomas" }, NPCS, "homem"],
+    ["o registo também como lista", { nome: "lina" }, [{ nome: "Lina", genero_pessoa: "mulher" }], "mulher"],
+    ["o primeiro nome nos bancos", { nome: "Mira" }, null, "mulher"],
+    ["a criatura feminina do bestiário", { nome: "Quimera de Três Cabeças" }, null, "mulher"],
+    ["o arquétipo feminino", { nome: "Sentinela Blindada" }, null, "mulher"],
+    ["a criatura masculina", { nome: "Ogro" }, NPCS, "homem"],
+    ["a terminação em -a não decide («Capanga»)", { nome: "Capanga" }, null, "homem"],
+    ["o nome que ninguém conhece, sem registo", { nome: "Lina" }, null, "homem"],
+    ["o nome solto em vez do objeto", "Lina", NPCS, "mulher"],
+  ];
+  const errados = casosG.filter(([, a, n, g]) => generoDoAlvo(a, n) !== g).map(([d]) => d);
+  t(`as ${GENERO_DO_ALVO.ordem.length} fontes pela ordem, e o masculino genérico (${casosG.length - errados.length}/${casosG.length})`, !errados.length && GENERO_DO_ALVO.ordem.length === 4 && GENERO_DO_ALVO.semSaber === "homem", errados.join(", "));
+  const lixo = [null, undefined, 0, "", [], {}, { nome: null }, { nome: 7 }, { nome: "Lina" }];
+  t("nada estoura com lixo: o masculino genérico", lixo.every((a) => generoDoAlvo(a, { Lina: null, x: 3 }) === "homem") && generoDoAlvo({ nome: "Lina" }, "registo") === "homem");
+  /* a tabela das criaturas é a do bestiário: cada entrada é cabeça de uma
+     criatura que existe, e as outras são masculinas */
+  const bichos = [...CRIATURAS_FANTASIA, ...ARQUETIPOS].map((c) => c.nome);
+  const cabeca = (n) => n.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().split(/\s+/)[0];
+  const fem = bichos.filter((n) => generoDoAlvo({ nome: n }, null) === "mulher");
+  t(`as criaturas femininas do bestiário são as da tabela (${fem.join(", ")}; ${bichos.length - fem.length} masculinas)`,
+    bichos.length === 27 && fem.length === GENERO_DO_ALVO.criaturasFemininas.length && GENERO_DO_ALVO.criaturasFemininas.every((c) => bichos.some((n) => cabeca(n) === c)));
+  /* o catálogo inteiro: 21 rótulos flexionam, os 2 gerúndios ficam */
+  const rot = Object.values(CAT).map((c) => criar(c.id).nome);
+  const delas = rot.map((nome) => oEnvelopeDoDesfecho("condicao", { alvo: "Lina", aplicou: true, condicao: nome, genero: "mulher" }));
+  const resistiu = rot.map((nome) => oEnvelopeDoDesfecho("condicao", { alvo: "Lina", aplicou: false, condicao: nome, genero: "mulher" }));
+  const mudam = rot.filter((nome, i) => delas[i] !== "Lina ficou " + nome.toLowerCase());
+  t(`as ${rot.length} condições no feminino: ${mudam.length} flexionam, os gerúndios ficam`,
+    rot.length === 23 && mudam.length === 21 && delas.includes("Lina ficou cega") && delas.includes("Lina ficou caída") && delas.includes("Lina ficou sangrando") && delas.includes("Lina ficou queimando")
+    && resistiu.includes("Lina resistiu e não ficou cega") && delas.every((x, i) => x.length === ("Lina ficou " + rot[i]).length));
+  t("sem gênero, ou de homem, a forma é a de antes", rot.every((nome) => oEnvelopeDoDesfecho("condicao", { alvo: "Ogro", aplicou: true, condicao: nome }) === "Ogro ficou " + nome.toLowerCase()
+    && oEnvelopeDoDesfecho("condicao", { alvo: "Ogro", aplicou: true, condicao: nome, genero: "homem" }) === "Ogro ficou " + nome.toLowerCase()) && naFlexaoDoAlvo(null, "mulher") === "");
+  /* os casos do dourado: a Lina e a Quimera no feminino, o Ogro e o Lobo no masculino */
+  const C = HOJE.desfechoCondicao.map((f) => f.texto).map((x) => (Array.isArray(x) ? x[x.length - 1] : x));
+  const delasNosCasos = C.filter((x) => /^(Lina|Quimera) /.test(x)), delesNosCasos = C.filter((x) => /^(Ogro|Lobo Cinzento) /.test(x));
+  t(`nos casos, ${delasNosCasos.length} delas no feminino e ${delesNosCasos.length} deles no masculino`,
+    delasNosCasos.length >= 130 && delasNosCasos.every((x) => / (queimada|alenta|cega)$/.test(x)) && delesNosCasos.length >= 130 && delesNosCasos.every((x) => / (queimado|alento|cego)$/.test(x)));
+  /* a mordida: o App que esquece o gênero muda os casos delas, e só esses */
+  const n = divergem("desfechoCondicao", fotosDeHoje("desfechoCondicao", { oEnvelopeDoDesfecho: (q, d) => oEnvelopeDoDesfecho(q, { ...d, genero: undefined }) }));
+  t(`o desfecho que esquece o gênero: ${n} casos mudam (os ${delasNosCasos.length} delas)`, n === delasNosCasos.length);
+  /* o lado do App: os dois sítios da condição passam o gênero do alvo */
+  t("os dois sítios da condição no App passam o gênero do alvo", (APP.match(/oEnvelopeDoDesfecho\("condicao", \{ alvo: alvo\.nome, aplicou: ap\.res\.aplicou, condicao: ap\.res\.cond\.nome, genero: generoDoAlvo\(alvo, npcsRef\.current\) \}\)/g) || []).length === 2);
 }
 
 sec("8 · a chave da tabela é da tabela, nunca do protótipo");

@@ -246,7 +246,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho } from "./motor/envelopes-do-turno.js";
+import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -11940,7 +11940,7 @@ export default function Taverna() {
             combateRef.current = { ...combateRef.current, inimigos: ap.lista }; setCombate(combateRef.current);
             linhas.push({ autor: "sistema", texto: ap.res.texto });
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ap.res.nota}`;
-            partesMeu.push(oEnvelopeDoDesfecho("condicao", { alvo: alvo.nome, aplicou: ap.res.aplicou, condicao: ap.res.cond.nome })); /* a mesma forma da aflição da habilidade (o conserto do artigo, 29/10) */
+            partesMeu.push(oEnvelopeDoDesfecho("condicao", { alvo: alvo.nome, aplicou: ap.res.aplicou, condicao: ap.res.cond.nome, genero: generoDoAlvo(alvo, npcsRef.current) })); /* a mesma forma da aflição da habilidade (o conserto do artigo, 29/10), no gênero do alvo (GENERO_DO_ALVO: nunca estoura) */
           }
         }
       }
@@ -12411,7 +12411,7 @@ export default function Taverna() {
           const ap = aplicarAflicaoEmInimigo(locais, alvo.nome, { fonte: port, nomeFonte: h.nome, atacante: pers.nome, critico: r.critico });
           if (ap.res) {
             locais = ap.lista;
-            partes.push(oEnvelopeDoDesfecho("condicao", { alvo: alvo.nome, aplicou: ap.res.aplicou, condicao: ap.res.cond.nome }));
+            partes.push(oEnvelopeDoDesfecho("condicao", { alvo: alvo.nome, aplicou: ap.res.aplicou, condicao: ap.res.cond.nome, genero: generoDoAlvo(alvo, npcsRef.current) }));
             linhasSis.push({ autor: "sistema", texto: ap.res.texto });
             notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${ap.res.nota}`;
           }

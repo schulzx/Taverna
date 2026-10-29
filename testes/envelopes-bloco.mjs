@@ -46,8 +46,11 @@ const NOMES = {
   lugar: ["comDe", "contrair"],
   divindades: ["tituloDe"],
   motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador", "oEnvelopeDoCorpo", "oEnvelopeDoDesfecho"],
+  /* o gênero do alvo (29/10, trilha A): o App de hoje chama generoDoAlvo; o conserto declarado do
+     gênero (gerar-envelopes-dourado.mjs) chama as duas no código de antes — por isso nos dois modos */
+  generoDoAlvo: ["generoDoAlvo", "naFlexaoDoAlvo"],
 };
-const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes, generoDoAlvo: motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
@@ -782,9 +785,12 @@ export function corpoDoCaso(i) {
    quem fica de pé (no golpe, na geminada e na área); um e dois do meu grupo
    na minha área; a condição aplicada e resistida; a drenagem; o imune de
    cada degrau; o erro e o erro desastroso; a colheita de ninguém, de um e
-   de dois, em três limiares; a execução de cada vida. */
+   de dois, em três limiares; a execução de cada vida.
+   O gênero do alvo (29/10, trilha A): a Lina, que o registo de pessoas diz
+   mulher, e a Quimera, criatura feminina do bestiário, ao lado do Ogro e
+   do Lobo Cinzento (masculinos). */
 export function desfechoDoCaso(i) {
-  const alvo = ["Ogro", "Lobo Cinzento"][(i >> 1) % 2];
+  const alvo = ["Ogro", "Lobo Cinzento", "Lina", "Quimera"][(i >> 1) % 4];
   const bonus = [0, 3, 5][(i >> 2) % 3], d20 = 1 + (i % 20);
   return {
     partes: [[], ["Corvo — 3 de dano pela área"]][i % 2],
@@ -800,6 +806,7 @@ export function desfechoDoCaso(i) {
     ap: { res: { aplicou: i % 2 === 0, cond: { nome: ["Queimado", "Alento", "Cego"][(i >> 1) % 3] } } },
     cura: 1 + (i % 9),
     gdAlvoH: 3 + (i % 4), gdJH: i % 3,
+    npcsRef: ref({ Iris: { nome: "Iris" }, Bruna: { nome: "Bruna" }, Lina: { nome: "Lina", genero_pessoa: "mulher" } }),
   };
 }
 

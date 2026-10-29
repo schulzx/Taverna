@@ -22,6 +22,8 @@ import { dataTxt, horaTxt, ehNoite, estacaoDe } from "../calendario.js";
 import { formaDaCidade } from "../geografia.js";
 import { MARCA_DO_RODAPE } from "../prompt.js";
 import { comDe, contrair } from "../lugar.js";
+/* o gênero de quem a condição pega no desfecho (29/10, trilha A): GENERO_DO_ALVO */
+import { generoDaPessoa } from "../nucleo.js";
 
 /* O «nA» (29/10/2026, trilha A). Os nomes do mundo nascem com artigo — as casas
    ("A Mão Cinzenta", "O Salão Manco"), as bancas ("A Bigorna Torta"), os lugares do
@@ -641,13 +643,66 @@ export function oEnvelopeDoCorpo(qual, dados) {
    habilidade única tem nome que nenhuma tabela conhece. Agora o nome vai
    sem artigo, e o «meu próprio» é do ataque: «apanhou 3 de Bola de Fogo, o
    meu próprio ataque». Nenhuma das duas depende do gênero do nome.
+   O GÊNERO DO ALVO (29/10, trilha A): a condição é a única forma do desfecho
+   que flexiona — «Lina ficou cego». O rótulo vai no gênero de quem a condição
+   pegou, e o gênero sai do que o sistema sabe (GENERO_DO_ALVO, abaixo).
    ============================================================ */
+/* O GÊNERO DO ALVO: de onde sai, pela ordem — a primeira fonte que sabe
+   decide. Nenhuma fonte é adivinhação pela letra final: «Luca» e «Capanga»
+   acabam em -a e são homens. */
+export const GENERO_DO_ALVO = Object.freeze({
+  ordem: Object.freeze([
+    "o campo do próprio alvo (genero, genero_pessoa)",
+    "a pessoa do registo com o mesmo nome (o campo dela, ou o primeiro nome dela nos bancos)",
+    "o primeiro nome do alvo nos bancos de nomes (sexoDoNome, por generoDaPessoa)",
+    "a criatura do bestiário cujo nome está no do alvo (criaturasFemininas)",
+  ]),
+  /* as criaturas do bestiário (cenario-padrao.js) de nome feminino: das 27,
+     estas duas; as outras 25 são masculinas, como o masculino genérico */
+  criaturasFemininas: Object.freeze(["quimera", "sentinela"]),
+  /* quem nenhuma fonte conhece: o masculino genérico, o que a forma dizia antes */
+  semSaber: "homem",
+  /* o rótulo no feminino: dos 23 de condicoes.js, os 21 particípios e
+     adjetivos em -o passam a -a; os 2 gerúndios (Sangrando, Queimando) ficam */
+  feminino: Object.freeze({ de: /(?<!nd)o$/, para: "a" }), /* o gerúndio acaba em -ndo, e não flexiona */
+});
+const semAcentoNoGenero = (s) => String(s == null ? "" : s).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+/* o gênero ("mulher" | "homem") de um alvo do desfecho: o inimigo (ou o nome
+   dele) e o registo de pessoas (npcsRef, por nome). Nunca estoura: no lixo,
+   o masculino genérico. */
+export function generoDoAlvo(alvo, npcs) {
+  try {
+    const a = alvo && typeof alvo === "object" ? alvo : { nome: alvo };
+    const proprio = semAcentoNoGenero(a.genero || a.genero_pessoa);
+    if (proprio === "mulher" || proprio === "homem") return proprio;
+    const nome = semAcentoNoGenero(a.nome);
+    if (!nome) return GENERO_DO_ALVO.semSaber;
+    const gente = !npcs || typeof npcs !== "object" ? []
+      : Array.isArray(npcs) ? npcs
+      : Object.entries(npcs).map(([k, v]) => (v && typeof v === "object" ? { ...v, nome: v.nome || k } : { nome: k }));
+    const pessoa = gente.find((p) => p && typeof p === "object" && semAcentoNoGenero(p.nome) === nome);
+    const doRegisto = pessoa ? generoDaPessoa(pessoa) : "";
+    if (doRegisto) return doRegisto;
+    const doNome = generoDaPessoa({ nome: a.nome });
+    if (doNome) return doNome;
+    const palavras = nome.split(/[\s,]+/);
+    if (GENERO_DO_ALVO.criaturasFemininas.some((c) => palavras.includes(c))) return "mulher";
+    return GENERO_DO_ALVO.semSaber;
+  } catch {
+    return GENERO_DO_ALVO.semSaber;
+  }
+}
+/* o rótulo (já em minúsculas) no gênero do alvo */
+export function naFlexaoDoAlvo(rotulo, genero) {
+  const r = String(rotulo == null ? "" : rotulo);
+  return genero === "mulher" ? r.replace(GENERO_DO_ALVO.feminino.de, GENERO_DO_ALVO.feminino.para) : r;
+}
 export const ENVELOPES_DO_DESFECHO = {
   golpe: ({ alvo, resultado, dano, d20, bonus, total, ca, caiu }) => `${alvo} — ${resultado === "critico" ? `CRÍTICO, ${dano} de dano` : resultado === "acerta" ? `${dano} de dano` : "resistiu parcialmente"} (d20=${d20}${bonus ? `+${bonus}` : ""}=${total} vs ${ca})${caiu ? " [CAIU]" : ""}`,
   geminada: ({ alvo, dano, caiu }) => `${alvo} — ${dano} de dano pela magia GEMINADA${caiu ? " [CAIU]" : ""}`,
   area: ({ alvo, dano, caiu }) => `${alvo} — ${dano} de dano pela área${caiu ? " [CAIU]" : ""}`,
   fogoAmigo: ({ lista, meio, habilidade }) => `${lista} apanhou ${meio} de ${habilidade}, o meu próprio ataque`,
-  condicao: ({ alvo, aplicou, condicao }) => (aplicou ? `${alvo} ficou ${condicao.toLowerCase()}` : `${alvo} resistiu e não ficou ${condicao.toLowerCase()}`),
+  condicao: ({ alvo, aplicou, condicao, genero }) => (aplicou ? `${alvo} ficou ${naFlexaoDoAlvo(condicao.toLowerCase(), genero)}` : `${alvo} resistiu e não ficou ${naFlexaoDoAlvo(condicao.toLowerCase(), genero)}`),
   drenou: ({ cura }) => `drenei ${cura} PV`,
   imune: ({ alvo, gdAlvo, gdMeu }) => `${alvo} — IMUNE (GD ${gdAlvo} contra meu GD ${gdMeu}: poder comum não fere divindade tão acima; preciso de artefato lendário, bênção ou enfraquecê-lo antes)`,
   errou: ({ alvo, desastre, d20, bonus, total, ca }) => `${alvo} — ${desastre ? "erro desastroso" : "errou"} (d20=${d20}${bonus ? `+${bonus}` : ""}=${total} vs ${ca})`,

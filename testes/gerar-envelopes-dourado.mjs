@@ -51,7 +51,13 @@ const apps = {};
    minha própria Raio» — o porquê e a conta do catálogo em ENVELOPES_DO_DESFECHO
    (src/motor/envelopes-do-turno.js). Os dois sítios trocam a frase no código de 44a4695 e só ela. */
 const CONSERTOS = {
-  desfechoCondicao: [["`${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`", "`${alvo.nome} resistiu e não ficou ${ap.res.cond.nome.toLowerCase()}`"]],
+  /* e O CONSERTO DECLARADO DO GÊNERO (29/10/2026, trilha A): «Lina ficou cego». O rótulo vai no
+     gênero do alvo (GENERO_DO_ALVO em src/motor/envelopes-do-turno.js), nos dois ramos; nos casos,
+     a Lina (mulher pelo registo) e a Quimera (feminina no bestiário) mudam 136 dos 275 pelo
+     conserto — os masculinos ficam iguais. Os dois nomes novos nos casos mudam também, sem
+     conserto nenhum, as fotos do golpe, da execução, do imune e do erro (que dizem o nome). */
+  desfechoCondicao: [["`${alvo.nome} resistiu à ${ap.res.cond.nome.toLowerCase()}`", "`${alvo.nome} resistiu e não ficou ${naFlexaoDoAlvo(ap.res.cond.nome.toLowerCase(), generoDoAlvo(alvo, npcsRef.current))}`"],
+    ["`${alvo.nome} ficou ${ap.res.cond.nome.toLowerCase()}`", "`${alvo.nome} ficou ${naFlexaoDoAlvo(ap.res.cond.nome.toLowerCase(), generoDoAlvo(alvo, npcsRef.current))}`"]],
   desfechoFogoAmigo: [["apanhou ${meio} da minha própria ${h.nome}`", "apanhou ${meio} de ${h.nome}, o meu próprio ataque`"]],
   correioCarta: [["Enviei a ${para}:", "Enviei ${contrair(\"a \" + para)}:"], ["a reação de ${para} agora.", "a reação ${contrair(\"de \" + para)} agora."]],
   correioPeticao: [["Narre a reação de ${p.de} e", "Narre a reação ${contrair(\"de \" + p.de)} e"]],
