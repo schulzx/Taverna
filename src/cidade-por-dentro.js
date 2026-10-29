@@ -535,16 +535,26 @@ function linhaDoHoje(f, h, { inteira = false } = {}) {
    jogador, a palavra de gíria que ele trouxe, seja daqui ou não */
 const TODAS_AS_GIRIAS = [...APELIDOS_DE_FORA.map((x) => x.a), ...APELIDOS_DE_OFICIO.map((x) => x.a), ...EXPRESSOES.map((x) => x.e)];
 
+/* A linha do pouso, de uma ficha (`fichaDaCidade`). Sai daqui para a
+   mesa que fecha o buraco (mesa-do-buraco.js) dizer o MESMO pouso quando a
+   frase pede "uma cama" — a palavra que PERGUNTAS_DA_CIDADE não ouvia.
+   `curta`: só a noite, o quarto bom e as camas — quem pede uma cama não
+   perguntou pela semana nem pelo estábulo, e numa pauta cheia a linha
+   inteira (~110 letras) não cabe onde a curta (~75) cabe. */
+export function linhaDoPouso(f, { curta = false } = {}) {
+  const p = f && f.pouso;
+  if (!p || !Number.isFinite(Number(p.comum))) return "";
+  if (curta) return `pouso: quarto comum ◉ ${p.comum} a noite${p.bom != null ? `, bom ◉ ${p.bom}` : ""}; ${p.camas} camas por quarto`;
+  /* MM14: mais curta (−40), os mesmos números. Na taverna cheia a segunda
+     resposta de uma frase que pergunta duas coisas não cabia atrás desta
+     (teste-mm14-perguntas §5) */
+  return `pouso: quarto comum ◉ ${p.comum} a noite (◉ ${p.semana} a semana)`
+    + (p.bom != null ? `, bom ◉ ${p.bom}` : ", não há quarto bom")
+    + `, estábulo ◉ ${p.estabulo} por animal; ${p.camas} camas por quarto`;
+}
+
 function resposta(id, f, h, frase = "") {
-  if (id === "pouso") {
-    const p = f.pouso;
-    /* MM14: mais curta (−40), os mesmos números. Na taverna cheia a segunda
-       resposta de uma frase que pergunta duas coisas não cabia atrás desta
-       (teste-mm14-perguntas §5) */
-    return `pouso: quarto comum ◉ ${p.comum} a noite (◉ ${p.semana} a semana)`
-      + (p.bom != null ? `, bom ◉ ${p.bom}` : ", não há quarto bom")
-      + `, estábulo ◉ ${p.estabulo} por animal; ${p.camas} camas por quarto`;
-  }
+  if (id === "pouso") return linhaDoPouso(f);
   if (id === "lingua") return linhaDaLingua(f);
   if (id === "magia") return `quem estuda ${f.palavras.magia}: ${f.instituicoes.magia}`;
   if (id === "cura") return `quem cura: ${f.instituicoes.cura}`;
@@ -625,7 +635,7 @@ function linhaDentroDosMuros(cidade, nome, aqui) {
   return `distância: ${nome}, dentro dos muros: ${formatarDistancia(km)}${r ? ` ${r.rotulo}` : ""} daqui, ${aPeEmTexto(min)}`;
 }
 
-function linhaDaDistancia(cidade, f, o, frase) {
+function pontosDaDistancia(cidade, f, o) {
   const semente = String(o.semente == null ? "" : o.semente);
   const mapa = o.mapa && typeof o.mapa === "object" ? o.mapa : {};
   const c0 = coordDe(cidade);
@@ -654,6 +664,12 @@ function linhaDaDistancia(cidade, f, o, frase) {
       pontos.push({ nome: c.nome, coord: q, km: kmEntre(c0, q), rumo: rumoEntre(c0, q), mais: dias ? `${dias} dia${dias > 1 ? "s" : ""} de estrada` : "", cidade: true });
     }
   }
+  return pontos;
+}
+
+function linhaDaDistancia(cidade, f, o, frase) {
+  const mapa = o.mapa && typeof o.mapa === "object" ? o.mapa : {};
+  const pontos = pontosDaDistancia(cidade, f, o);
   let alvo = null, onde = -1;
   for (const p of pontos) {
     const i = citaLugar(frase, p.nome);
@@ -675,6 +691,22 @@ function linhaDaDistancia(cidade, f, o, frase) {
     if (tempo) alvo = { ...alvo, tempo, mais: alvo.cidade ? "" : alvo.mais };
   }
   return `distância: ${linhaDePonto(alvo)}${alvo.mais ? ` — ${alvo.mais}` : ""}`;
+}
+
+/* OS LUGARES DE QUE O SISTEMA SABE A DISTÂNCIA, e a linha até um deles pelo
+   nome inteiro. Para a mesa que fecha o buraco (mesa-do-buraco.js): o
+   jogador diz "até Pedra Rasa" e o mapa chama-lhe "Cerco de Pedra Rasa"; ela
+   acha o nome inteiro pelo pedaço e pede a linha aqui — a MESMA conta e a
+   MESMA escrita de `linhaDaDistancia`, nunca uma segunda. */
+export function lugaresComDistancia(cidade, ctx = {}) {
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  if (!cidade || typeof cidade !== "object" || !cidade.nome || escalaDe(cidade) < 1) return [];
+  return pontosDaDistancia(cidade, fichaDaCidade(cidade, o), o).map((p) => p.nome).filter((n) => typeof n === "string" && n);
+}
+export function distanciaAte(cidade, nome, ctx = {}) {
+  const o = ctx && typeof ctx === "object" ? ctx : {};
+  if (!cidade || typeof cidade !== "object" || !cidade.nome || escalaDe(cidade) < 1 || typeof nome !== "string" || !nome.trim()) return "";
+  return linhaDaDistancia(cidade, fichaDaCidade(cidade, o), o, " " + norm(nome) + " ");
 }
 
 /* ---------------- O QUE SOBE À PAUTA ----------------

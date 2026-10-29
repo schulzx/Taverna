@@ -54,6 +54,7 @@ import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
 import { fichaDaCidade, fichaParaPauta } from "../cidade-por-dentro.js";
+import { oQueAMesaFecha } from "../mesa-do-buraco.js";
 import { consultarCobrador, envelopeDoMundo, linhaDoMundo } from "../cobrador.js";
 import { perfilCombate } from "../combate.js";
 import { envelopeDoComercio, podePagar } from "../comercio.js";
@@ -757,7 +758,25 @@ export function aPautaDoTurno(estado, entrada, portas) {
     try {
       pc = (!$ref.combate && $ref.cidadeAtual) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;
     } catch (e) { calou("precoComumParaPauta", e); }
-    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };
+    /* A MESA QUE FECHA O BURACO (29/10, trilha B): o segundo ouvido, depois
+       das fichas e com o que elas já disseram — a cama que é o pouso, o
+       pedaço de nome que é um sítio do mapa, a forja que é a casa de quem o
+       registo conhece, o verbo que é uma linha de PRECOS_COMUNS, a espada
+       procurada na oração de antes. Só onde a ficha da cidade fala (cidade,
+       fora da estrada, da masmorra e da luta); nenhum número nasce lá. */
+    let bf = null;
+    try {
+      if ($ref.cidadeAtual && !$ref.jornada && !$ref.masmorra && !$ref.combate) {
+        bf = oQueAMesaFecha(frase, {
+          cidade: cidadeDoMapa($ref.cidadeAtual), mapa: $ref.mapa, semente: sementeMundo(),
+          lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo(), aqui: meuPonto(),
+          gente: Object.values($ref.npcs || {}).filter(Boolean).map((n) => ({ nome: n.nome, local: n.local })),
+          bancas: bancasDaCena(), onde: $ref.cidadeAtual, moeda: moedaDoMundo(), fator: fatorDoPouso(),
+          ja: [fc, gp, mc, hz, pc],
+        });
+      }
+    } catch (e) { calou("oQueAMesaFecha", e); }
+    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc, buraco: bf };
   };
   /* ---------------- F2a · EM CENA: o que existe à volta do herói ----------------
      O contexto de `montarEmCena` (em-cena.js), um só para a pauta e para a
@@ -910,11 +929,11 @@ export function aPautaDoTurno(estado, entrada, portas) {
     /* MM14: as tres fichas da mesa (cidade, gente, mercado), pela mesma
        frase e o mesmo elenco desta cena — agora em fichasDaMesa, para que
        o sinal do oraculo tambem consiga perguntar. */
-    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);
+    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc, buraco: bf } = fichasDaMesa(acaoDoTurno, aqui);
     if (fc) p = porNaPauta(p, "cidade", fc.cidade);
     /* MM14: as três fichas juntam-se numa mesa só, pela ordem em que a
        frase pediu cada coisa — não pela ordem em que os módulos correram. */
-    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz, pc]));
+    p = porNaPauta(p, "pergunta", juntarRespostas([fc, gp, mc, hz, pc, bf]));
     /* E1 (o Narrador só narra): O PREÇO da rua — a cena mostra preços sem
        ninguém perguntar, e é melhor que os mostre certos. Só com rua. */
     try {

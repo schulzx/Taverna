@@ -208,7 +208,10 @@ if (process.argv[1] && process.argv[1].endsWith("gerar-pedido-dourado.mjs")) {
   const commit = process.argv[2] || "HEAD";
   const sha = execSync(`git rev-parse --short ${commit}`, { encoding: "utf8" }).trim();
   const app = execSync(`git show ${sha}:src/App.jsx`, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }).split(String.fromCharCode(13)).join("");
-  const r = recortarOPedido(app);
+  /* os consertos declarados da pauta (gerar-pauta-dourado.mjs): o pedido leva a
+     pautaDoTurno e as suas 50 dentro, e a troca é a mesma, à letra */
+  const { comOsConsertos } = await import("./gerar-pauta-dourado.mjs");
+  const r = recortarOPedido(comOsConsertos(app));
   const { correrOsCasos, fotoGuardada } = await import("./pedido-bloco.mjs");
   const dourado = { commit: sha, ...r, fotos: [] };
   const fotos = await correrOsCasos(dourado, { lado: "recorte" });

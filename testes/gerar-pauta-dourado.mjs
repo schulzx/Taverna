@@ -43,6 +43,36 @@ const DO_RENDER = ["cidadeMercado", "mercadoAqui"];
 /* o que é do módulo do App (fora do componente) e o recorte leva */
 const DO_MODULO = ["LEITURA_DA_CONVERSA", "falasDoMestre"];
 
+/* OS CONSERTOS DECLARADOS — a mesma troca no código de antes (o molde de
+   gerar-envelopes-dourado.mjs). A peça mudou de propósito, e o recorte do App
+   de antes muda com ela, à letra, para a prova continuar a ser a de sempre:
+   o resto da pauta igual, e só a troca a mexer.
+
+   A MESA QUE FECHA O BURACO (29/10/2026, trilha B): `fichasDaMesa` chama
+   `oQueAMesaFecha` (src/mesa-do-buraco.js) depois das fichas, com o que
+   elas já disseram, e a junta leva a resposta dela. Nos casos, mudam 3 das
+   287 — os três turnos gravados que perguntam pela cama ou pela espada da
+   oração de antes (a 9.ª e a 10.ª sessões); num deles a linha chega ao
+   texto, nos outros dois o teto corta-a (a pauta cheia, a 1370 e 1353). */
+const CONSERTOS = [
+  ["import { fichaParaPauta, fichaDaCidade } from \"./cidade-por-dentro.js\";\n",
+    "import { fichaParaPauta, fichaDaCidade } from \"./cidade-por-dentro.js\";\nimport { oQueAMesaFecha } from \"./mesa-do-buraco.js\";\n"],
+  ["    } catch (e) { calou(\"precoComumParaPauta\", e); }\n    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };",
+    "    } catch (e) { calou(\"precoComumParaPauta\", e); }\n    let bf = null;\n    try {\n      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {\n        bf = oQueAMesaFecha(frase, {\n          cidade: cidadeDoMapa(cidadeAtualRef.current), mapa: mapaRef.current, semente: sementeMundo(),\n          lex: (mundoAtual() || {}).lexico, genero: generoMundo(), molde: moldeMundo(), aqui: meuPonto(),\n          gente: Object.values(npcsRef.current || {}).filter(Boolean).map((n) => ({ nome: n.nome, local: n.local })),\n          bancas: bancasDaCena(), onde: cidadeAtualRef.current, moeda: moedaDoMundo(), fator: fatorDoPouso(),\n          ja: [fc, gp, mc, hz, pc],\n        });\n      }\n    } catch (e) { calou(\"oQueAMesaFecha\", e); }\n    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc, buraco: bf };"],
+  ["    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc } = fichasDaMesa(acaoDoTurno, aqui);",
+    "    const { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc, buraco: bf } = fichasDaMesa(acaoDoTurno, aqui);"],
+  ["    p = porNaPauta(p, \"pergunta\", juntarRespostas([fc, gp, mc, hz, pc]));",
+    "    p = porNaPauta(p, \"pergunta\", juntarRespostas([fc, gp, mc, hz, pc, bf]));"],
+];
+export function comOsConsertos(app) {
+  let a = app;
+  for (const [de, para] of CONSERTOS) {
+    if (a.split(de).length !== 2) throw new Error("o conserto declarado não bate uma vez: " + de.slice(0, 60));
+    a = a.replace(de, () => para);
+  }
+  return a;
+}
+
 export function recortarAPauta(app) {
   const ast = parser.parse(app, { sourceType: "module", plugins: ["jsx"] });
   const imports = new Map();
@@ -150,7 +180,7 @@ if (process.argv[1] && process.argv[1].endsWith("gerar-pauta-dourado.mjs")) {
   const commit = process.argv[2] || "55f7889";
   const sha = execSync(`git rev-parse --short ${commit}`, { encoding: "utf8" }).trim();
   const app = execSync(`git show ${sha}:src/App.jsx`, { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }).split(String.fromCharCode(13)).join("");
-  const r = recortarAPauta(app);
+  const r = recortarAPauta(comOsConsertos(app));
   const { correrOsCasos, fotoGuardada } = await import("./pauta-bloco.mjs");
   const dourado = { commit: sha, ...r, fotos: [] };
   const fotos = await correrOsCasos(dourado, { lado: "recorte" });
