@@ -30,7 +30,7 @@ import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SELOS_DO_RESOLVIDO, ehTurnoResolvido } from "../src/guardado.js";
-import { ENVELOPES_DA_MASMORRA } from "../src/motor/envelopes-do-turno.js";
+import { ENVELOPES_DA_MASMORRA, ENVELOPES_DA_FICHA } from "../src/motor/envelopes-do-turno.js";
 
 /* mesmo `chdir` de `rodar-tudo.mjs`: os `readFileSync` daqui resolvem
    pelo diretório de trabalho, e este varredor precisa dizer a mesma
@@ -173,30 +173,40 @@ console.log("\n1. nenhum envelope resolvido escapa do selo");
           resolvido entra na conta de candidatos (o total segue 9);
        2. o App continua a mandar cada um por `enviar(oEnvelopeDaMasmorra("<forma>"`;
        3. o envelope real é lido por `ehTurnoResolvido` (vai na conta de
-          `escapam` abaixo, como os outros). */
+          `escapam` abaixo, como os outros).
+
+     OS DOIS DA FICHA (T2-A, 28/10/2026, o 9.º grupo). O combate resolvido e a
+     volta dos mortos fizeram o mesmo caminho: saíram dos literais do App para
+     ENVELOPES_DA_FICHA, e o App manda `enviar(oEnvelopeDaFicha("…", …))`. A
+     conta do App caiu de 5 para 3 sem que nenhum envelope sumisse; a catraca
+     segue-os pelas mesmas três garantias, tabela a tabela (o total segue 9).
+     A amostra da ficha dá a cada forma os nomes que ela lê. */
   const doMotor = [];
   {
+    const AMOSTRA_FICHA = { desfecho: "três golpes", resumoInimigos: "", acao: "ataco o lobo", motivo: "pular o muro", dificuldade: 10, via: "fe", voltas: 1, cicatriz: "Mão Fria", descricao: "a mão não aquece", nome: "Iris", nivel: 2, vidaMax: 11, custo: 2, eraNova: false, classeNome: "Mago", classe: "Bardo", atributo: "Força", valor: 1, sub: "Campeão", esp: "Erudito" };
     const AMOSTRA = { pos: "Cripta dos Sussurros · camada 1 · 2/9 salas", nomeArmadilha: "Fosso de Estacas", salva: { passou: false }, alvo: "Iris", sofrido: 3, depois: "", minutos: 10, tempo: "", aviso: "", moedas: 30, item: null, cena: "um nicho de água limpa", masmorra: "Cripta dos Sussurros", total: 12, segredo: null, achou: false, achado: null };
-    for (const [forma, montar] of Object.entries(ENVELOPES_DA_MASMORRA)) {
-      const real = montar(AMOSTRA);
+    const TABELAS = [["ENVELOPES_DA_MASMORRA", ENVELOPES_DA_MASMORRA, "oEnvelopeDaMasmorra", AMOSTRA], ["ENVELOPES_DA_FICHA", ENVELOPES_DA_FICHA, "oEnvelopeDaFicha", AMOSTRA_FICHA]];
+    for (const [tabela, formas, porta, amostra] of TABELAS) for (const [forma, montar] of Object.entries(formas)) {
+      const real = montar(amostra);
       const cab = /^\s*\[([^\]]*)\]/.exec(real);
       const selo = cab ? cab[1] : "";
       if (!(ANUNCIA.some((r) => r.test(selo)) && !EXCLUI.some((r) => r.test(selo)))) continue;
-      doMotor.push({ linha: forma, arquivo: "src/motor/envelopes-do-turno.js#ENVELOPES_DA_MASMORRA", selo });
-      if (!APP.includes('enviar(oEnvelopeDaMasmorra("' + forma + '"')) {
-        falha(`o App deixou de mandar o envelope resolvido ` + forma + ` por enviar(oEnvelopeDaMasmorra("` + forma + `"`,
+      doMotor.push({ linha: forma, arquivo: "src/motor/envelopes-do-turno.js#" + tabela, selo });
+      if (!APP.includes("enviar(" + porta + '("' + forma + '"')) {
+        falha(`o App deixou de mandar o envelope resolvido ` + forma + ` por enviar(` + porta + `("` + forma + `"`,
           "a catraca conta este envelope como um dos 9 resolvidos. Se o App passou a mandá-lo por outro caminho, o caminho novo tem de entrar na conta — e este elo sai com o motivo escrito");
       }
     }
-    ok(`os envelopes resolvidos da tabela da masmorra (` + doMotor.map((e) => e.linha).join(", ") + `) seguem na conta, montados pela tabela`);
+    ok(`os envelopes resolvidos das tabelas da masmorra e da ficha (` + doMotor.map((e) => e.linha).join(", ") + `) seguem na conta, montados pela tabela`);
   }
   const candidatos = [...doApp, ...daMasmorra, ...doMotor];
 
   /* ---------------- A CATRACA ----------------
      O NÚMERO MEDIDO HOJE: 9 envelopes resolvidos saem por `enviar(` com
-     o selo escrito no literal (5 no App, 1 em `envelopeDaLuta`, de
-     src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima —, e 3 na
-     tabela da masmorra do motor — "OS TRÊS QUE MUDARAM DE CASA") — e o número conta os CANDIDATOS, não os
+     o selo escrito no literal (3 no App, 1 em `envelopeDaLuta`, de
+     src/masmorras.js — ver "O ENVELOPE QUE MUDOU DE CASA" acima —, 3 na
+     tabela da masmorra do motor — "OS TRÊS QUE MUDARAM DE CASA" — e 2 na da
+     ficha — "OS DOIS DA FICHA") — e o número conta os CANDIDATOS, não os
      aprovados. É de propósito: se ele contasse só quem casa um `padrao`,
      consertar a tabela de selos mexeria na catraca, e uma catraca que se
      move quando se conserta o que ela acusa não acusa nada.

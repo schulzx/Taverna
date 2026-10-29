@@ -454,7 +454,12 @@ sec("5. A TRAVA MORDE SÓ O NECESSÁRIO — envelopes reais do App.jsx");
      envelheceria sozinha no dia em que o App mudasse o selo. */
   const ROLOU = "[COMBATE — RESOLVIDO PELO SISTEMA]";
   const NAO_ROLOU = "[ABERTURA DE CAPÍTULO]";
-  t(`o App ainda manda \`${ROLOU}\``, APP.includes(ROLOU));
+  /* MOVIDA (28/10, T2-A, a ficha): o texto do combate resolvido saiu do App para
+     src/motor/envelopes-do-turno.js (ENVELOPES_DA_FICHA). Continua a ser o selo
+     real: o App manda o envelope do motor, e o envelope do motor abre com ele. */
+  const { oEnvelopeDaFicha } = await import("../src/motor/envelopes-do-turno.js");
+  const combateReal = oEnvelopeDaFicha("combateResolvido", { desfecho: "três golpes", resumoInimigos: "", acao: "ataco o lobo" });
+  t(`o App ainda manda \`${ROLOU}\``, APP.includes('enviar(oEnvelopeDaFicha("combateResolvido", ') && combateReal.startsWith(ROLOU + " "));
   /* MOVIDA (28/10, T2-A, a abertura): o texto da abertura do capítulo saiu do
      App para src/motor/envelopes-do-turno.js. Continua a ser o selo real (não
      uma cópia): o App manda o envelope do motor, e o envelope do motor abre
@@ -462,7 +467,8 @@ sec("5. A TRAVA MORDE SÓ O NECESSÁRIO — envelopes reais do App.jsx");
   const { oEnvelopeDaAbertura } = await import("../src/motor/envelopes-do-turno.js");
   t(`e ainda manda \`${NAO_ROLOU}\``, APP.includes('enviar(oEnvelopeDaAbertura("capitulo"), ') && oEnvelopeDaAbertura("capitulo").startsWith(NAO_ROLOU + " "));
 
-  const linhaCombate = APP.slice(APP.indexOf(ROLOU), APP.indexOf(ROLOU) + 240);
+  /* MOVIDA com o texto (T2-A, a ficha): o corpo do envelope real é o que o motor monta */
+  const linhaCombate = combateReal;
   /* MOVIDA (28/10, T1-B fatia 3): DE TEXTO PARA COMPORTAMENTO. O turno que
      ROLOU era montado com o recorte do App; a trava é de guardado.js, e o selo
      que ela reconhece mora na tabela dela (SELOS_DO_RESOLVIDO.medidos). A

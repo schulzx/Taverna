@@ -13378,7 +13378,7 @@ export default function Taverna() {
     const depoisDoRevide = (rv) => {
       const persAtual = rv.pers;
       const resumoInimigos = rv.texto;
-      enviar(`[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`, persAtual);
+      enviar(oEnvelopeDaFicha("combateResolvido", { desfecho, resumoInimigos, acao }), persAtual);
     };
     if (fechouNoMeuGolpe) depoisDoRevide({ pers: fichaViva() || personagem, texto: "" });
     else fecharMeuTurno(fichaViva() || personagem, depoisDoRevide);
@@ -17903,7 +17903,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     if (r.auto) {
       setDadoRolando(false); setRolagem(null);
       pushMsgs([{ autor: "sistema", texto: `✓ ${r.motivo || "Teste"}: trivial para seu patamar — sucesso sem rolagem` }]);
-      enviar(`[TESTE — SUCESSO AUTOMÁTICO] "${r.motivo || "ação"}": trivial para meu patamar (dificuldade ${r.dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.${SO_ISSO}`, personagem);
+      enviar(oEnvelopeDaFicha("sucessoAutomatico", { motivo: r.motivo, dificuldade: r.dificuldade }), personagem);
       return;
     }
     /* SORTE PEQUENA (v9.44). O traço do Halfling diz "transforma um 1 natural
@@ -19462,7 +19462,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setDesfechoMorte(null);
     pushMsgs([{ autor: "sistema", texto: `✨ Você volta — com ${np.vida}/${np.vidaMax} PV e uma marca que não sai: ${cic.nome} (${cic.descricao}).` }]);
     salvar({ personagem: np });
-    enviar(`[VOLTA DOS MORTOS — RESOLVIDA PELO SISTEMA] Eu morri e voltei${via === "fe" ? " pela minha própria fé — meus fiéis rezaram e desta vez alguém escutou" : " pagando o preço em ouro"}. Foi a ${np.voltas}ª vez. O que ficou em mim: ${cic.nome} — ${cic.descricao}. Narre a volta como ela é: nem milagre alegre, nem horror gratuito. Alguém que voltou do outro lado volta diferente, e o corpo demora a acreditar. Não invente outro custo além deste, e não desfaça a cicatriz.`, np);
+    enviar(oEnvelopeDaFicha("voltaDosMortos", { via, voltas: np.voltas, cicatriz: cic.nome, descricao: cic.descricao }), np);
   };
 
   const seguirComHerdeiro = (nome) => {
@@ -23154,7 +23154,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   };
 
   const notaDoRecrutamento = (comp) =>
-    `[RECRUTAMENTO — REGISTRO DO SISTEMA] ${comp.nome} agora FAZ PARTE do grupo do herói (nível ${comp.nivel}, ${comp.vidaMax} PV — ficha criada pelo sistema, você não precisa mandar "grupo_adicionar"). Trate-o como companheiro presente nas cenas: opina, ajuda em combate, viaja junto.`;
+    oEnvelopeDaFicha("recrutamento", { nome: comp.nome, nivel: comp.nivel, vidaMax: comp.vidaMax });
 
   const porNoGrupo = (nome0) => {
     const nome = String(nome0 || "").slice(0, 40).trim();

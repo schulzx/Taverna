@@ -23,7 +23,8 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   aberturaCampanha: "548a91a", aberturaCapitulo: "548a91a", aberturaCapituloNovo: "548a91a", aberturaRetomada: "548a91a",
   viagemPartidaMapa: "21f2857", viagemPartidaEscolha: "21f2857", viagemTrecho: "21f2857", viagemPassarOTempo: "21f2857", viagemErmos: "21f2857", viagemEmboscada: "21f2857",
   fioMarco: "fc27e4f", fioRumores: "fc27e4f", fioMundo: "fc27e4f", fioVirada: "fc27e4f", fioInterludio: "fc27e4f", fioLutaDaChave: "fc27e4f",
-  fichaNivel: "920bff6", fichaPericias: "920bff6", fichaAtributo: "920bff6", fichaHabilidade: "920bff6", fichaSubclasse: "920bff6", fichaEspecializacao: "920bff6", fichaRefazer: "920bff6" };
+  fichaNivel: "920bff6", fichaPericias: "920bff6", fichaAtributo: "920bff6", fichaHabilidade: "920bff6", fichaSubclasse: "920bff6", fichaEspecializacao: "920bff6", fichaRefazer: "920bff6",
+  fichaCombate: "8611243", fichaSucesso: "8611243", fichaVolta: "8611243", fichaRecrutamento: "8611243" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);

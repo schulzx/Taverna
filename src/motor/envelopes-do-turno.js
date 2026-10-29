@@ -264,6 +264,7 @@ export function oEnvelopeDoFio(qual, dados) {
    outra classe que ela abre), a especialização de subclasse e a de obsessão,
    o caminho refeito. É anotação, não cena: o efeito mecânico já está aplicado
    e o Narrador não abre treino, mestre nem viagem por causa disso.
+   O 9.º grupo junta-lhe o que o sistema resolveu e o Narrador só conta.
    Na habilidade, `eraNova` diz se ela abriu o caminho de outra classe
    (`classeNome`); `classe`, a de antes, só se lê quando abriu.
    ============================================================ */
@@ -275,6 +276,15 @@ export const ENVELOPES_DA_FICHA = {
   subclasse: ({ sub, classeNome }) => `[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${sub}" dentro de ${classeNome}. Isso é um marco da minha formação: mencione de passagem, quando couber, que meu jeito de lutar/agir mudou nessa direção. NÃO abra cena nova por causa disso nem invente mestres, rituais ou viagens — foi uma escolha minha de ficha.`,
   especializacao: ({ esp, classeNome }) => `[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${esp}" dentro de ${classeNome}: é a obsessão em que me tornei referência. Mencione de passagem, quando couber, que meu jeito de agir se estreitou nessa direção. NÃO abra cena, não invente mestre, ritual nem viagem — foi uma escolha minha de ficha.`,
   refazerCaminho: () => `[INFO] Passei por um treinamento longo e REFIZ meu caminho: desaprendi o que sabia de classe e vou reaprender diferente. Narre isso como semanas de treino/estudo ou um ritual, se couber na cena — mas o efeito mecânico já está aplicado.`,
+  /* o que o sistema já resolveu (9.º grupo): o combate, o teste que o patamar
+     decide sozinho, a volta dos mortos e o companheiro que entra no grupo. Os
+     três primeiros vão por enviar() e anunciam turno resolvido — o
+     check-guardado conta o combate e a volta pela tabela; o recrutamento é
+     a nota que notaDoRecrutamento devolve. */
+  combateResolvido: ({ desfecho, resumoInimigos, acao }) => `[COMBATE — RESOLVIDO PELO SISTEMA] Minha sequência de ${desfecho}. O dano já foi aplicado.${resumoInimigos} NÃO recalcule nem mude números — NARRE de forma vívida (2-4 frases) a sequência dos meus golpes e as decisões e reações dos inimigos: quem recuou, quem avançou, quem mudou de alvo. Ação declarada: ${acao}`,
+  sucessoAutomatico: ({ motivo, dificuldade }) => `[TESTE — SUCESSO AUTOMÁTICO] "${motivo || "ação"}": trivial para meu patamar (dificuldade ${dificuldade} vs minha competência). Narre o êxito com naturalidade, sem drama de dado.${SO_ISSO}`,
+  voltaDosMortos: ({ via, voltas, cicatriz, descricao }) => `[VOLTA DOS MORTOS — RESOLVIDA PELO SISTEMA] Eu morri e voltei${via === "fe" ? " pela minha própria fé — meus fiéis rezaram e desta vez alguém escutou" : " pagando o preço em ouro"}. Foi a ${voltas}ª vez. O que ficou em mim: ${cicatriz} — ${descricao}. Narre a volta como ela é: nem milagre alegre, nem horror gratuito. Alguém que voltou do outro lado volta diferente, e o corpo demora a acreditar. Não invente outro custo além deste, e não desfaça a cicatriz.`,
+  recrutamento: ({ nome, nivel, vidaMax }) => `[RECRUTAMENTO — REGISTRO DO SISTEMA] ${nome} agora FAZ PARTE do grupo do herói (nível ${nivel}, ${vidaMax} PV — ficha criada pelo sistema, você não precisa mandar "grupo_adicionar"). Trate-o como companheiro presente nas cenas: opina, ajuda em combate, viaja junto.`,
 };
 export function oEnvelopeDaFicha(qual, dados) {
   return aFormaDe(ENVELOPES_DA_FICHA, qual, "da ficha")(dados || {});

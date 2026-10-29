@@ -25,7 +25,9 @@
    chave, o mundo que vem buscar, a virada), o teto do interlúdio na pauta e
    a luta da chave que o sistema já abriu. O 8.º, A FICHA (A FORMAÇÃO): as
    sete notas do que o jogador mudou na própria ficha (o nível, as perícias,
-   o atributo, a habilidade, as duas especializações, o caminho refeito).
+   o atributo, a habilidade, as duas especializações, o caminho refeito). O
+   9.º junta-lhe o que o sistema resolveu: o combate, o sucesso automático, a
+   volta dos mortos e a nota do recrutamento.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
@@ -337,7 +339,9 @@ sec("12 · a ficha (a formação): os casos percorrem o que o texto decide, e a 
   t(`a habilidade que abre outro caminho (${conta(H, ", abrindo TAMBÉM o caminho de ")}), com o nome da classe vazio (${conta(H, "o caminho de  — sou ")}), e a que não abre (${H.filter((x) => !x.includes("abrindo")).length})`,
     conta(H, ", abrindo TAMBÉM o caminho de Mago — sou ") >= 20 && conta(H, "o caminho de  — sou ") >= 10 && H.filter((x) => !x.includes("abrindo")).length >= 100 && ["Guerreiro", "Clérigo", "Bardo"].every((c) => conta(H, "— sou " + c + " e ") >= 10));
   t("as duas especializações, de cada nome e classe", ["Campeão", "Domínio da Luz"].every((n) => conta(N("fichaSubclasse"), "especialização \"" + n + "\" dentro de ") >= 100) && ["Mestre de Armas", "Lâmina Gêmea", "Erudito"].every((n) => conta(N("fichaEspecializacao"), "\"" + n + "\"") >= 80) && conta(N("fichaSubclasse"), "dentro de .") >= 60);
-  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_FICHA).length === 7 && (() => { try { oEnvelopeDaFicha("nenhuma", {}); return false; } catch { return true; } })() && (() => { try { oEnvelopeDaFicha("constructor", {}); return false; } catch { return true; } })());
+  /* MOVIDA (28/10, o 9.º grupo): a tabela da ficha cresceu com o que o sistema resolveu (§13 conta
+     as onze); aqui fica a prova de que as sete da formação estão nela, pelo nome */
+  t("a forma de cada envelope está na tabela, e a que não está estoura", ["subiDeNivel", "pericias", "atributo", "habilidade", "subclasse", "especializacao", "refazerCaminho"].every((q) => Object.hasOwn(ENVELOPES_DA_FICHA, q)) && (() => { try { oEnvelopeDaFicha("nenhuma", {}); return false; } catch { return true; } })() && (() => { try { oEnvelopeDaFicha("constructor", {}); return false; } catch { return true; } })());
   const E = oEnvelopeDaFicha;
   const mordidas = [
     ["fichaNivel", "o nível de um degrau acima", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, nivel: d.nivel + 1 }) }],
@@ -348,6 +352,39 @@ sec("12 · a ficha (a formação): os casos percorrem o que o texto decide, e a 
     ["fichaSubclasse", "a especialização dentro de outra classe", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, classeNome: "Mago" }) }],
     ["fichaEspecializacao", "a especialização sem a obsessão", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(": é a obsessão em que me tornei referência.", ".") }],
     ["fichaRefazer", "o caminho refeito com o efeito por aplicar", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(" — mas o efeito mecânico já está aplicado", "") }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("13 · a ficha (o que o sistema resolveu): os casos percorrem o que o texto decide, e a prova morde");
+{
+  const M = (b) => HOJE[b].map((f) => f.texto[0][0]);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const C = M("fichaCombate");
+  t(`o combate com o resumo dos inimigos (${conta(C, "aplicado. Lobo caiu;")}) e sem (${conta(C, "aplicado. NÃO recalcule")}), de cada desfecho, e a ação declarada no fim`,
+    conta(C, "aplicado. Lobo caiu;") >= 100 && conta(C, "aplicado. NÃO recalcule") >= 100 && ["três golpes", "dois acertos e um erro", "um golpe só"].every((d) => conta(C, "sequência de " + d + ".") >= 80) && C.every((x) => x.endsWith("Ação declarada: ataco o lobo") || x.endsWith("Ação declarada: giro a lança e avanço")));
+  const S2 = M("fichaSucesso");
+  t(`o sucesso automático com o motivo (${conta(S2, "\"pular o muro\":")}) e sem ele ou vazio, que diz ação (${conta(S2, "\"ação\":")}); fecha com o escopo`,
+    conta(S2, "\"pular o muro\":") >= 60 && conta(S2, "\"ação\":") >= 130 && [8, 14].every((n) => conta(S2, "(dificuldade " + n + " vs") >= 30) && S2.every((x) => x.endsWith(SO_ISSO)));
+  const V = M("fichaVolta");
+  t(`a volta pela fé (${conta(V, "pela minha própria fé")}) e pelo ouro (${conta(V, "pagando o preço em ouro")}), da 1.ª à 4.ª vez, com a cicatriz e o que ela é`,
+    conta(V, "pela minha própria fé") >= 80 && conta(V, "pagando o preço em ouro") >= 160 && [1, 2, 3, 4].every((n) => conta(V, "Foi a " + n + "ª vez.") >= 60) && conta(V, "Mão Fria — a mão esquerda não aquece") >= 50);
+  const P = HOJE.fichaRecrutamento.map((f) => f.texto);
+  t("o recrutamento de cada companheiro, com o nível e os PV", ["Iris", "Bruna Ferro", "Noé"].every((n) => conta(P, "] " + n + " agora FAZ PARTE") >= 80) && conta(P, "(nível 6, ") >= 40 && conta(P, ", 20 PV — ") >= 40);
+  t("as quatro formas novas estão na tabela da ficha, que agora tem onze", Object.keys(ENVELOPES_DA_FICHA).length === 11 && ["combateResolvido", "sucessoAutomatico", "voltaDosMortos", "recrutamento"].every((q) => Object.hasOwn(ENVELOPES_DA_FICHA, q)));
+  const E = oEnvelopeDaFicha;
+  const mordidas = [
+    ["fichaCombate", "o combate sem o resumo dos inimigos", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, resumoInimigos: "" }) }],
+    ["fichaCombate", "o combate que deixa recalcular", { oEnvelopeDaFicha: (q, d) => E(q, d).replace("NÃO recalcule nem mude números — ", "") }],
+    ["fichaSucesso", "o sucesso sem o patamar", { oEnvelopeDaFicha: (q, d) => E(q, d).replace("trivial para meu patamar", "fácil") }],
+    ["fichaSucesso", "o sucesso sem o escopo", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(SO_ISSO, "") }],
+    ["fichaVolta", "a fé lida como ouro", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, via: "ouro" }) }],
+    ["fichaVolta", "a cicatriz sem o que ela é", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, descricao: "" }) }],
+    ["fichaRecrutamento", "o recrutamento sem os PV", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, vidaMax: 0 }) }],
+    ["fichaRecrutamento", "o recrutamento que manda pedir o grupo_adicionar", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(", você não precisa mandar \"grupo_adicionar\"", "") }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

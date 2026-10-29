@@ -674,8 +674,11 @@ console.log("\n11. a sessão A pelo eixo da frase — a fiação que ela modela"
      escrita aponta para o lugar errado */
   /* E3: 11864 -> 11500. Piso da busca, não endereço: a tela da batalha e as
      duas gavetas saíram do App.jsx e o `enviar` desceu para :11723. Um piso
-     que não desce junto procura o alvo DEPOIS de ele já ter passado. */
-  const iEnviar = LINHAS_APP.findIndex((l, i) => i > 11500 && /^\s*enviar\(`\[COMBATE — RESOLVIDO PELO SISTEMA\]/.test(l));
+     que não desce junto procura o alvo DEPOIS de ele já ter passado.
+     T2-A (28/10, o 9.º grupo): o texto do combate resolvido saiu para
+     ENVELOPES_DA_FICHA; o envio é o mesmo, na mesma linha, e procura-se pela
+     chamada que o App faz ao motor. */
+  const iEnviar = LINHAS_APP.findIndex((l, i) => i > 11500 && /^\s*enviar\(oEnvelopeDaFicha\("combateResolvido", /.test(l));
   if (iEnviar < 0) {
     falha("não achei o `enviar([COMBATE — RESOLVIDO PELO SISTEMA]…)` da porta única",
       "SESSAO_A_PELA_FRASE.ondeSai cita esse envio para explicar por que o Narrador não é chamado na recusa. Re-meça e atualize o campo em testes/acoes-do-jogador.mjs");
