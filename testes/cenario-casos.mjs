@@ -191,11 +191,17 @@ export async function fotografarOsCatalogos(raiz) {
   }
 
   /* ---- 3.ª fatia: o bestiário ---- */
-  caso("bestiario.tabelas", { fantasia: B.CRIATURAS_FANTASIA, arquetipos: B.ARQUETIPOS });
+  /* 29/10 (trilha B): a ficha e o inimigo completado ganharam `genero` (o gênero do
+     nome, bestiario.js GENERO_DA_FICHA). O código de antes não o tem, e o dourado
+     compara o que os dois sabem responder: as fichas e os inimigos sem o campo — como
+     o glifo dos cartões, abaixo. O gênero prova-se em teste-cenario.mjs (secção 7):
+     as 27 do padrão, a Rainha da Colmeia da Órbita, e a cabeça do nome. */
+  const semGenero = (x) => { if (!x || typeof x !== "object" || !("genero" in x)) return x; const { genero, ...resto } = x; return resto; };
+  caso("bestiario.tabelas", { fantasia: B.CRIATURAS_FANTASIA.map(semGenero), arquetipos: B.ARQUETIPOS.map(semGenero) });
   for (const g of GENEROS_DE_PROVA) caso("bestiario.genero." + String(g), B.criaturasDoGenero(g).map((c) => c.nome));
   const todas = [...B.CRIATURAS_FANTASIA, ...B.ARQUETIPOS].map((c) => c.nome);
   for (const n of [...todas, ...INIMIGOS_SOLTOS]) {
-    caso("bestiario.completar." + n, NIVEIS.map((nv) => [B.completarInimigo({ nome: n }, nv), B.completarInimigo({ nome: n, vidaMax: 999, ameaca: "elite" }, nv)]));
+    caso("bestiario.completar." + n, NIVEIS.map((nv) => [B.completarInimigo({ nome: n }, nv), B.completarInimigo({ nome: n, vidaMax: 999, ameaca: "elite" }, nv)].map(semGenero)));
   }
   caso("emboscada.naFrase", [...todas.map((n) => `vem aí um ${n.toLowerCase()} pela estrada`), ...todas.map((n) => `dois ${n}s e um capanga`), ...INIMIGOS_SOLTOS].map((f) => { const c = EM.criaturaNaFrase(f); return c ? c.nome : null; }));
   for (let i = 0; i < todas.length; i += 6) {

@@ -335,7 +335,8 @@ export function abrirOCombate(estado, ctx) {
   const crus = e0.jaNoRef
     ? ((e0.combateNoRef && e0.combateNoRef.inimigos) || [])
     : (e0.inimigosCrus || []).map((i) => {
-      const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca, nivel: i.nivel }, pers.nivel || 1);
+      /* 29/10 (trilha B): o gênero de quem a luta abre (a pessoa do registo) vai junto */
+      const comp = completarInimigo({ nome: i.nome, ameaca: i.ameaca, nivel: i.nivel, ...(i.genero ? { genero: i.genero } : {}) }, pers.nivel || 1);
       return { ...comp, derrotado: false, semente: `inimigo|${comp.nome}|${comp.ameaca || ""}` };
     });
   if (!crus.length) return { abriu: false, saida: { pers, msgs, nota: "" } };

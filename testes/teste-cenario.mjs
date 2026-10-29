@@ -305,13 +305,15 @@ const ORBITA = {
   bestiario: {
     generosDasCriaturas: ["Ópera de estação"],
     emprestados: 1,
+    /* 29/10 (trilha B): o gênero do nome de cada uma — e o Contrabandista, abaixo,
+       não declara, para provar que o campo é opcional */
     criaturas: [
-      { nome: "Rato de Duto", ameaca: "fraco", nivelRef: 1, des: 3, desc: "rói cabos e foge pela grelha" },
-      { nome: "Drone de Segurança", ameaca: "competente", nivelRef: 5, des: 1, desc: "segue o protocolo até ao fim", perfil: { ataque: "raio", resist: ["veneno"], fraqueza: ["raio"], imune: ["sombrio"] }, degrau: "bruto" },
-      { nome: "Rainha da Colmeia", ameaca: "lendario", nivelRef: 12, des: 2, desc: "o casco é o corpo dela", degrau: "brilhante", importante: true },
+      { nome: "Rato de Duto", ameaca: "fraco", nivelRef: 1, des: 3, desc: "rói cabos e foge pela grelha", genero: "homem" },
+      { nome: "Drone de Segurança", ameaca: "competente", nivelRef: 5, des: 1, desc: "segue o protocolo até ao fim", perfil: { ataque: "raio", resist: ["veneno"], fraqueza: ["raio"], imune: ["sombrio"] }, degrau: "bruto", genero: "homem" },
+      { nome: "Rainha da Colmeia", ameaca: "lendario", nivelRef: 12, des: 2, desc: "o casco é o corpo dela", degrau: "brilhante", importante: true, genero: "mulher" },
     ],
     arquetipos: [
-      { nome: "Capanga", ameaca: "fraco", nivelRef: 1, des: 0, desc: "músculo descartável" },
+      { nome: "Capanga", ameaca: "fraco", nivelRef: 1, des: 0, desc: "músculo descartável", genero: "homem" },
       { nome: "Contrabandista", ameaca: "comum", nivelRef: 3, des: 2, desc: "sabe onde o scanner não vê" },
     ],
   },
@@ -424,6 +426,8 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   const drone = B.completarInimigo({ nome: "Drone de Segurança Mk2" }, 5);
   t("o drone que o Narrador abre sai da ficha dela (ameaça, degrau, perfil com imunidade)", drone.ameaca === "competente" && drone.degrau === "bruto" && drone.perfil.ataque === "raio" && DN.multiplicadorDano("sombrio", drone.perfil).mult === 0, JSON.stringify(drone.perfil));
   t("a Rainha cai e rola contra a morte; o rato é ágil", B.completarInimigo({ nome: "Rainha da Colmeia" }, 12).importante === true && B.completarInimigo({ nome: "Rato de Duto" }, 1).agil === true);
+  /* 29/10 (trilha B): o gênero do nome é o dela, e quem não o declara vai sem ele */
+  t("a Rainha nasce mulher pela ficha dela, e o Contrabandista sem gênero", B.completarInimigo({ nome: "Rainha da Colmeia" }, 12).genero === "mulher" && !("genero" in B.completarInimigo({ nome: "Contrabandista" }, 3)) && EV.generoDoAlvo(B.completarInimigo({ nome: "Rainha da Colmeia" }, 12)) === "mulher");
   t("o Lobo já não é criatura deste mundo (o desconhecido não é rápido nem lento)", B.completarInimigo({ nome: "Lobo" }, 3).des === 0 && B.completarInimigo({ nome: "Lobo" }, 3).ameaca === "comum");
   t("a emboscada acha o rato na frase, e o goblin já não", (EM.criaturaNaFrase("há um rato de duto no teto") || {}).nome === "Rato de Duto" && EM.criaturaNaFrase("um goblin na estrada") === null);
   t("a ficha da masmorra lê a ameaça dela", MA.bichosDaFicha([{ nome: "Rainha da Colmeia" }])[0].ameaca === "lendario");
@@ -638,6 +642,7 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("emprestados negativo", (d) => { d.bestiario.emprestados = -1; }, "bestiario.emprestados: devia ser número inteiro ≥ 0");
   caso("o mesmo nome nas duas listas (sem olhar a caixa)", (d) => { d.bestiario.arquetipos[1].nome = "RATO DE DUTO"; }, 'bestiario.arquetipos[1].nome: "RATO DE DUTO" repetido');
   caso("o agil escrito à mão (é regra, sai de des)", (d) => { d.bestiario.criaturas[0].agil = true; }, "bestiario.criaturas[0].agil: campo desconhecido");
+  caso("um gênero do nome fora do vocabulário (29/10, trilha B)", (d) => { d.bestiario.criaturas[2].genero = "feminino"; }, "bestiario.criaturas[2].genero: devia ser o gênero do nome (mulher ou homem)");
   /* 4.ª fatia: a gente e o céu */
   const B0 = 'gente.bancos["Ópera de estação"]';
   caso("falta a gente", (d) => { delete d.gente; }, "gente: falta (objeto)");

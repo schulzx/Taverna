@@ -1046,7 +1046,10 @@ export function escolherLado(coracao, nucleo, nome, ladoId, ctx) {
     const alvo = alvoPrometido(contra, { presentes: o.presentes, mostrado: o.mostrado, sombra: e.contra === "{sombra}" });
     /* E1: a figura do arco tem nome desde a linha da crise — o cartão já não
        luta contra "Velho camarada" quando o registo e a prosa calam */
-    const comFigura = alvo.deOnde === "cartao" && inst.figura && inst.figura.nome ? { ...alvo, nome: inst.figura.nome, deOnde: "figura" } : alvo;
+    /* 29/10 (trilha B): e o gênero dela vai junto, no vocabulário da luta
+       ("ela"/"ele" da figura → "mulher"/"homem", bestiario.js GENERO_DA_FICHA) */
+    const generoDaFigura = inst.figura && inst.figura.genero === "ela" ? { genero: "mulher" } : inst.figura && inst.figura.genero === "ele" ? { genero: "homem" } : {};
+    const comFigura = alvo.deOnde === "cartao" && inst.figura && inst.figura.nome ? { ...alvo, nome: inst.figura.nome, deOnde: "figura", ...generoDaFigura } : alvo;
     out.luta = { ...comFigura, duelo: e.tipo === "duelo", contra };
   }
   return out;

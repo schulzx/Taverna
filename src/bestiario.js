@@ -37,8 +37,34 @@ import { aoTrocarDeCenario } from "./cenario.js";
    (`{ nome, ameaca, nivelRef, des, desc, perfil?, degrau?, importante? }`,
    o vocabulário em cenario.js ESQUEMA_DO_CENARIO.criatura); a ordem das
    chaves da ficha derivada é a de sempre, e o dourado do cenário prova-o. */
+/* 29/10 (trilha B): `genero` é o NONO campo e é OPCIONAL — o gênero do NOME
+   da criatura ("mulher" | "homem", o vocabulário da gente), com que a frase do
+   desfecho concorda: «a Quimera ficou cega». Antes dele, o desfecho sabia o
+   gênero de 2 das 27 por uma lista ao lado (envelopes-do-turno.js,
+   GENERO_DO_ALVO.criaturasFemininas), e de nenhuma criatura de outro mundo —
+   a Rainha da Colmeia da Estação Órbita Sete ficava «cego». Agora quem sabe
+   é a ficha, e o mundo que a escreve. Guardado só quando é um dos dois.
+
+   O GÊNERO VIAJA COM A FICHA — a quarta vez da mesma lição (o `perfil`, o
+   `degrau`, o `importante`): o gênero que a ficha sabe tem de chegar ao
+   inimigo, senão o desfecho volta a adivinhar. `completarInimigo` lê duas
+   fontes, pela ordem:
+     1. o que o inimigo já traz (`genero`: o da pessoa do registo de quem ele
+        nasceu, ou o que o Narrador declarou), se for um dos dois;
+     2. a ficha da base, mas SÓ quando ela é a CABEÇA do nome — o nome
+        começa por ela, depois de um artigo («Lobo Atroz», «a Quimera de
+        Três Cabeças»). A base casa por `includes`, e «Marta, chefe dos
+        bandidos» casa com o Bandido: herdar dali o masculino calaria a
+        Marta que o registo sabe mulher. Quem a cabeça não decide fica sem
+        campo, e o desfecho segue a ordem dele (o registo, o primeiro nome).
+   Sem nenhuma das duas, o objeto vai sem `genero`, como ia. */
+export const GENERO_DA_FICHA = Object.freeze({
+  generos: Object.freeze(["mulher", "homem"]),
+  artigos: Object.freeze(["o", "a", "os", "as", "um", "uma"]),
+  porque: "a ficha sabe o gênero do nome, e a frase do desfecho concorda com ele",
+});
 const AGIL_DESDE_DES = 2;
-const daFicha = ({ nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "", importante = false }) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= AGIL_DESDE_DES, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}), ...(importante === true ? { importante: true } : {}) });
+const daFicha = ({ nome, ameaca, nivelRef, des, desc, perfil = null, degrau = "", importante = false, genero = "" }) => ({ nome, ameaca, nivelRef, des: Number(des) || 0, agil: (Number(des) || 0) >= AGIL_DESDE_DES, desc, ...(perfil ? { perfil } : {}), ...(degrau ? { degrau } : {}), ...(importante === true ? { importante: true } : {}), ...(GENERO_DA_FICHA.generos.includes(genero) ? { genero } : {}) });
 /* T4-B (28/10, o cenário como arquivo, 3.ª fatia): as fichas moram no
    cenário (cenario-padrao.js `bestiario.criaturas`, com o motivo de cada
    declaração escrito em cima dela), e aqui só se derivam — com o mesmo
@@ -64,6 +90,18 @@ export function criaturasDoGenero(genero) {
   return CORTE.generosDasCriaturas.includes(genero) ? [...CRIATURAS_FANTASIA, ...ARQUETIPOS.slice(0, n)] : [...ARQUETIPOS, ...CRIATURAS_FANTASIA.slice(0, n)];
 }
 
+/* o gênero do inimigo: o que ele traz, ou o da base que é a cabeça do nome
+   (GENERO_DA_FICHA, no topo); "" quando nenhuma das duas decide */
+function generoDoInimigo(e, nome, base) {
+  const proprio = String(e.genero == null ? "" : e.genero).trim().toLowerCase();
+  if (GENERO_DA_FICHA.generos.includes(proprio)) return proprio;
+  if (!base || !base.genero) return "";
+  const palavras = nome.toLowerCase().trim().split(/\s+/);
+  const semArtigo = (GENERO_DA_FICHA.artigos.includes(palavras[0]) ? palavras.slice(1) : palavras).join(" ");
+  const cabeca = base.nome.toLowerCase();
+  return semArtigo === cabeca || semArtigo.startsWith(cabeca + " ") || semArtigo.startsWith(cabeca + ",") ? base.genero : "";
+}
+
 /* Preenche PV/defesa/nível de um inimigo pela tabela (o Mestre pode
    mandar só nome+ameaca; o resto o sistema resolve). */
 export function completarInimigo(e, nivelJogador) {
@@ -80,6 +118,7 @@ export function completarInimigo(e, nivelJogador) {
     .reduce((melhor, c) => (!melhor || c.nome.length > melhor.nome.length ? c : melhor), null) || undefined;
   const ameaca = e.ameaca || (base ? base.ameaca : "comum");
   const nivel = e.nivel || (base ? base.nivelRef : Math.max(1, nivelJogador || 1));
+  const genero = generoDoInimigo(e, nome, base);
   /* ---------------- O PV É SUGESTÃO, NÃO DECRETO (v9.154) ----------------
      Quando a IA mandava `vidaMax`, valia o que ela mandou — e o número ali
      decide se a luta dura duas rodadas ou doze. A janela é generosa (metade
@@ -133,6 +172,8 @@ export function completarInimigo(e, nivelJogador) {
        NÃO MUDA COMPORTAMENTO: é campo a mais no objeto, e ninguém o lê ainda
        — quem passa a decidir por ele é Q2, por `quedaAoChegarAZero`. */
     importante: ehImportante({ importante: base ? base.importante : false }),
+    /* 29/10 (trilha B): O GÊNERO VIAJA JUNTO (GENERO_DA_FICHA, no topo) */
+    ...(genero ? { genero } : {}),
   };
 }
 

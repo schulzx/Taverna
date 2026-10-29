@@ -38,6 +38,16 @@
 import { NAO_E_DECLARACAO, soODeclarado } from "./peneira.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* 29/10 (trilha B): O GÊNERO DA PESSOA VAI COM ELA PARA A LUTA. Quem nasce do
+   registo leva o campo dela (`genero`, ou o `genero_pessoa` do elenco), e o
+   inimigo que o combate cria guarda-o (bestiario.js GENERO_DA_FICHA): o
+   desfecho diz «Marta ficou cega» pelo que o sistema sabe da Marta, e não
+   pelo nome. Só o campo declarado, um dos dois; sem ele, nada — o desfecho
+   ainda procura no registo e no primeiro nome. */
+const generoDeclarado = (p) => {
+  const g = norm(p && typeof p === "object" ? p.genero || p.genero_pessoa : "");
+  return g === "mulher" || g === "homem" ? { genero: g } : {};
+};
 /* sem acento e SEM baixar a caixa: mesmo tamanho do `norm`, posição por
    posição — é por ela que o sistema vê a maiúscula de um nome próprio */
 const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -863,7 +873,7 @@ export function alvoPrometido(contra, opcoes) {
     const raiz = cabeca.replace(/(es|s)$/, "");
     const reg = (Array.isArray(o.presentes) ? o.presentes : []).filter((p) => p && p.nome && !p.doGrupo)
       .find((p) => palavrasDe(`${p.papel || ""} ${p.nome}`).some((w) => w === cabeca || w.replace(/(es|s)$/, "") === raiz));
-    if (reg) return { nome: String(reg.nome), ameaca: ameacaDoPapel(reg.papel || "").ameaca, deOnde: "registo" };
+    if (reg) return { nome: String(reg.nome), ameaca: ameacaDoPapel(reg.papel || "").ameaca, deOnde: "registo", ...generoDeclarado(reg) };
     const ts = textosDe(o.mostrado);
     for (const t of ts.slice().reverse()) {
       /* da prosa, um só nome de complemento: "camarada de Tônia", nunca
@@ -940,7 +950,7 @@ export function alvoDaAgressao(texto, opcoes) {
     : ehComigo(alvo.nome) && extra && extra.porPronome
       /* quem anda comigo nunca é o alvo de um pronome: recusa-se como o grupo */
       ? { nome: alvo.nome, doGrupo: true, comigo: true, ...extra }
-      : { nome: alvo.nome, papel: alvo.papel || "", relacao: alvo.relacao, doGrupo: false, ...(ehComigo(alvo.nome) ? { comigo: true } : {}), ...extra });
+      : { nome: alvo.nome, papel: alvo.papel || "", relacao: alvo.relacao, doGrupo: false, ...(ehComigo(alvo.nome) ? { comigo: true } : {}), ...extra, ...generoDeclarado(alvo) });
   /* o nome dito de quem anda comigo, ainda que o registo da cena não o
      tenha (a companheira de viagem não é "daqui"): abre, com o cartão */
   const comigoDito = listaComigo.find((n) => primeiro(n).length >= 3 && palavrasDe(oracoesDoGolpe(texto).join(" . ") || texto).includes(primeiro(n)));
@@ -1035,6 +1045,7 @@ export function lerAgressao(texto, opcoes) {
     /* 8.ª sessão: quem anda comigo, pelo nome — o cartão vem antes (crime.js) */
     ...(alvo.comigo ? { comigo: true } : {}),
     porque: alvo.comigo ? "eu declarei, pelo nome, o primeiro golpe contra quem anda comigo" : "eu declarei o primeiro golpe contra alguém que está aqui",
+    ...generoDeclarado(alvo),
   };
 }
 

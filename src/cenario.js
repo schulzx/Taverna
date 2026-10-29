@@ -117,7 +117,13 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      `completarInimigo` acha a ficha do inimigo que o Narrador abre. */
   bestiario: Object.freeze({ generosDasCriaturas: "textos", emprestados: "contagem", criaturas: "lista", arquetipos: "lista" }),
   /* uma ficha: os campos que bestiario.js daFicha copia, nem mais nem menos */
-  criatura: Object.freeze({ nome: "texto", ameaca: "ameaca", nivelRef: "nivel", des: "inteiro", desc: "texto", perfil: "objeto?", degrau: "degrau?", importante: "booleano?" }),
+  criatura: Object.freeze({ nome: "texto", ameaca: "ameaca", nivelRef: "nivel", des: "inteiro", desc: "texto", perfil: "objeto?", degrau: "degrau?", importante: "booleano?", genero: "generoDaFicha?" }),
+  /* o gênero de uma ficha (29/10, trilha B): o gênero GRAMATICAL do nome — o
+     de que a frase do desfecho concorda («a Quimera ficou cega») —, no
+     vocabulário da gente (nucleo.js generoDaPessoa). Não é o gênero do MUNDO
+     (`generos`, acima). Opcional: sem ele, o masculino genérico, como antes
+     de o campo existir — e um mundo escrito antes dele continua válido. */
+  generosDaFicha: Object.freeze(["mulher", "homem"]),
   /* o perfil de dano: os quatro campos que danos.js perfilDe lê */
   perfil: Object.freeze({ ataque: "elemento?", resist: "elementos?", fraqueza: "elementos?", imune: "elementos?" }),
   /* o vocabulário do motor que uma ficha pode usar: as ameaças (combate.js,
@@ -235,6 +241,7 @@ const TIPOS = {
   degrau: [(v) => ESQUEMA_DO_CENARIO.degraus.includes(v), `um degrau do motor (${ESQUEMA_DO_CENARIO.degraus.join(", ")})`],
   elemento: [(v) => ESQUEMA_DO_CENARIO.elementos.includes(v), `um tipo de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
   elementos: [(v) => Array.isArray(v) && v.every((x) => ESQUEMA_DO_CENARIO.elementos.includes(x)), `lista de tipos de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
+  generoDaFicha: [(v) => ESQUEMA_DO_CENARIO.generosDaFicha.includes(v), `o gênero do nome (${ESQUEMA_DO_CENARIO.generosDaFicha.join(" ou ")})`],
   /* 5.ª fatia */
   medida: [(v) => ehNum(v) && v >= 0, "número ≥ 0"],
   substantivos: [(v) => Array.isArray(v) && v.length > 0 && v.every(ehSubstantivo), "lista de substantivos (\"Palavra\" ou \"Palavra|g\", g = m, f, mp ou fp), com ao menos um"],
