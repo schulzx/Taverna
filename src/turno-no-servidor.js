@@ -52,7 +52,8 @@ import { SEMENTE_DA_CASA, comSorte, hashSemente, rng } from "./semente.js";
 import { pontoDaSorte } from "./motor/sorte-do-turno.js";
 import { oEstadoDoServidor } from "./motor/eco-do-turno.js";
 import { oPreludioDoTurno } from "./motor/preludio-do-turno.js";
-import { oPedidoDoTurno } from "./motor/pedido-do-turno.js";
+import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } from "./motor/pedido-do-turno.js";
+import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
 
 export const TURNO_NO_SERVIDOR = Object.freeze({
   /* o nome que a semente usa quando a campanha não tem nome (o mesmo do
@@ -82,6 +83,26 @@ export function aCasaDoTurno(estado) {
   return `${nome}|${(mundo && mundo.genero) || ""}|${pontoDaSorte({ dia: e.dia, minuto: e.minuto, falas })}`;
 }
 
+/* O ESTADO QUE O PEDIDO RECEBE, como o App o monta desde 1409f0b
+   (`estadoDoPedido` = `oEstadoDoPedido(refsDoPedido(), { personagem, mundo,
+   nomeCampanha, mercado, governos, historico })`): os refs das duas tabelas
+   (REFS_DA_PAUTA e REFS_DO_PEDIDO) com o valor DEPOIS do prelúdio — o que
+   o App lê nos refs no instante do pedido —, e do render só os seis do
+   React (RENDER_DO_PEDIDO), com o valor de ANTES do turno: o `enviar` do
+   App é do último render, e o estado React dele não vê o que o prelúdio
+   escreveu nos refs. Um campo fora das tabelas não chega ao pedido, como
+   no App. Medido: nos 146 turnos gravados e nos 335 casos do prelúdio dá o
+   mesmo pedido que o espalhar cru (`{ ...e0, ...escritas }`) de antes — em
+   26 desses o prelúdio reescreve a ficha, e o pedido não lê do render o
+   que mudou —, mas a regra é a do App, e é ela que se segue. */
+function oEstadoParaOPedido(antes, depois) {
+  const refs = {};
+  for (const tabela of [REFS_DA_PAUTA, REFS_DO_PEDIDO]) for (const [campo, r] of Object.entries(tabela)) refs[r.ref] = { current: depois[campo] };
+  const render = {};
+  for (const n of RENDER_DO_PEDIDO) if (antes[n] !== undefined) render[n] = antes[n];
+  return oEstadoDoPedido(refs, render);
+}
+
 /* O PEDIDO, MONTADO NO SERVIDOR. `corpo` é o que a rota recebeu
    (`{ estado, frase, eco, bilhetes }`); devolve `{ pedido, casa, calados,
    estadoDoFim }` — o pedido ao Narrador como a rede o receberia, a
@@ -102,7 +123,7 @@ export async function oPedidoNoServidor(corpo, opcoes) {
     agora: typeof agora === "function" ? agora : () => Date.now(),
   };
   const r1 = await oPreludioDoTurno(e0, { frase, sorte }, portas);
-  const r2 = oPedidoDoTurno({ ...e0, ...r1.escritas }, { ...r1.entradaDoPedido, sorte }, portas);
+  const r2 = oPedidoDoTurno(oEstadoParaOPedido(e0, { ...e0, ...r1.escritas }), { ...r1.entradaDoPedido, sorte }, portas);
   /* o adiado escreve pelo prelúdio (nas escritas dele): corre depois do
      pedido, e o estado do fim junta-o por baixo do que o pedido escreveu */
   for (const g of adiados.splice(0)) {

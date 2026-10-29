@@ -21,10 +21,10 @@
    bocas responde uma fala; a do Narrador é onde a foto para), o
    `setTimeout` (o que o App adia para depois do turno: corre no fim, e na
    cadeia depois do pedido, que é quando o App o vê correr com a rede no
-   ar) e o relógio (`Date.now`, fixo: só chaveia a faixa da chegada). E um
-   nome que o componente do App NÃO declara: `setHistoria` (é da
-   `TelaMundo`) — no App a chamada estoura com ReferenceError, e o dublê
-   estoura igual; o achado está no diário.
+   ar) e o relógio (`Date.now`, fixo: só chaveia a faixa da chegada). O
+   `setHistoria` que o componente do App não declarava (é da `TelaMundo`)
+   teve dublê que estourava igual até d2d1dcd tirar as chamadas do App;
+   agora não tem dublê nenhum, e se voltar ao recorte o Proxy acusa-o.
 
    Um nome que o recorte leia e nenhum dublê dê fica em `faltas`, e a suíte
    exige-o vazio. Sem Math.random: a sorte da casa é semeada por caso. */
@@ -82,6 +82,16 @@ const VIRADAS = [
 ];
 const aMissao = (j, virada, extra = {}) => ({ id: "mt" + j, titulo: "O que a ponte cobra", tipo: "trama", status: "ativa", dador: "Doran o Manco", descricao: "descobrir quem cobra a ponte",
   etapas: [{ tipo: "falar_com", alvo: "Doran o Manco", feito: true }, { tipo: "ir_a", alvo: "a ponte", feito: j % 2 === 1 }, { tipo: "falar_com", alvo: "o portageiro", feito: false }], virada, nivel: 2, dia: 3, ...extra });
+/* OS DOIS SÍTIOS DO `setHistoria` (d2d1dcd). A caminhada pela cidade à
+   meia-noite vira o dia, e o dia do vilão corre: (a) o passo dele casa o
+   arco (a revelação que leva a etapa da história atrás dele), (b) a queda
+   confirmada no registo de pessoas com o arco no último momento fecha o
+   capítulo (o epílogo, a linha, a porta). No App de antes os dois chamavam
+   um `setHistoria` que o componente não declara, e o turno inteiro
+   estourava; nenhum dos casos acima chegava lá. */
+const O_VILAO = { nome: "Morvane", titulo: "a Viúva do Sal", arquetipo: "arquiteto", corpo: "pessoa", conhecido: true, marcas: [], status: "ativa", ultimoPasso: -100, odio: 0,
+  crenca: "o mundo é mal construído, e consertá-lo exige derrubar antes", metodo: "não aparece: monta", quer: "que a peça final caia no lugar", assinatura: "coincidências boas demais" };
+const A_MEIA_NOITE = { minuto: 1439, combate: null, acampado: false, masmorra: null };
 const MONTADOS = [
   ...OFICINAS.flatMap((o, j) => [0, 1].map((x) => ({ base: 3 + j * 17 + x * 50, o: "oficina", estado: () => ({ oficina: o }) }))),
   ...MOVIMENTOS.map((m, j) => ({ base: 11 + j * 23, o: "compasso", estado: () => ({ compasso: { movimento: m, turnos: 6, alvo: 3, assunto: "" } }) })),
@@ -101,6 +111,9 @@ const MONTADOS = [
   } })),
   ...[0, 1, 2, 3, 4, 5].map((j) => ({ base: 6 + j * 19, o: "trama", frase: j === 5 ? FRASES_DO_SISTEMA[2] : null, estado: () => ({ combate: null, masmorra: null, acampado: false, raid: null, abertura: { legado: true, turnos: 40 },
     compasso: { movimento: MOVIMENTOS[j % 6], turnos: j % 2 ? 6 : 0, alvo: 3, assunto: "" }, missoes: [], dia: 20 + j }) })),
+  ...[19, 21, 23, 25].map((base) => ({ base, o: "o arco casa com o vilão", frase: "Vou até a taverna.", estado: () => ({ ...A_MEIA_NOITE, nemesis: { ...O_VILAO, passo: 4, fase: "mao" }, historia: { estrutura: "jornada", etapa: 0 } }) })),
+  ...[19, 21, 23, 25].map((base) => ({ base, o: "o fim do capítulo", frase: "Vou até a taverna.", estado: (k) => ({ ...A_MEIA_NOITE, nemesis: { ...O_VILAO, passo: 8, fase: "queda" }, historia: { estrutura: "jornada", etapa: 5 },
+    npcs: { ...(k.estado.npcs || {}), [O_VILAO.nome]: { nome: O_VILAO.nome, status: "morto", papel: "a vilã" } } }) })),
 ];
 export const N_MONTADOS = MONTADOS.length;
 export const N_PRELUDIO = N_CASOS + N_MONTADOS;
@@ -118,7 +131,6 @@ const falaDaBoca = (args) => JSON.stringify({ fala: `Digo ${sha(args).slice(0, 6
 const fotoDosRefs = (valores) => Object.fromEntries(Object.keys(valores).sort().map((k) => [k, sha(valores[k])]));
 export const NA_REDE = Symbol("na rede");
 class DataFixa extends Date { static now() { return AGORA; } }
-const SEM_SET_HISTORIA = () => { throw new ReferenceError("setHistoria is not defined"); };
 
 /* o escopo dos recortes: refs de verdade, as portas que registam, e o Proxy que acusa o nome sem dublê */
 function oEscopo(k, dourados, mods, padroes, log) {
@@ -146,7 +158,6 @@ function oEscopo(k, dourados, mods, padroes, log) {
   /* fora das portas da foto: a peça sem a porta adiar corre-os no fim, e a foto do fim é que diz */
   S.setTimeout = (f) => { log.nAdiados = (log.nAdiados || 0) + 1; log.adiados.push(f); return log.adiados.length; };
   S.Date = DataFixa;
-  S.setHistoria = SEM_SET_HISTORIA;
   const escopo = new Proxy(S, {
     has: (t, nome) => { if (typeof nome !== "string") return false; if (nome in t) return true; if (nome in globalThis) return false; log.faltas.push(nome); return true; },
     get: (t, nome) => { if (nome === Symbol.unscopables) return undefined; if (nome in t) return t[nome]; throw new ReferenceError("falta o dublê: " + String(nome)); },
@@ -234,8 +245,15 @@ export async function correrACadeiaDoRecorte(fabricas, k, dourados, mods, padroe
   semearACasa("preludio|" + k.i);
   let erro = null, saida = null;
   try {
-    const [fP, fD] = fabricas.map((f) => f(escopo));
+    /* o recorte do pedido compila DEPOIS do prelúdio: o que o render
+       calculava (a praça, `mercadoAqui`) sai dos refs do instante, como o
+       App faz desde 1409f0b (`oEstadoDoPedido`: do render só os seis do
+       React). Compilado antes, era a praça do último render — o defeito
+       que 2d95d33 e 1409f0b tiraram —, e o turno que vira o dia na
+       caminhada pedia ao Mestre as bancas de ontem. */
+    const fP = fabricas[0](escopo);
     const ent = await fP.montar(k.frase);
+    const fD = fabricas[1](escopo);
     const e = { ...ent, conteudo: k.frase, persAtual: copia(k.entrada.persAtual), histBase: copia(k.entrada.histBase) };
     saida = fD.montar(...dourados[1].entrada.map((n) => e[n]));
     try { await fD.chamarMestre(S.systemRef.current, saida.novoHist); } catch (x) { if (x !== NA_REDE) throw x; }

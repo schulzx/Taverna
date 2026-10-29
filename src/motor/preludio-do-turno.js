@@ -42,11 +42,14 @@
    de `comSorte`; sem ela, a da casa, como no App (que a semeia no envio).
    As bocas esperam a rede depois disso, e não sorteiam.
 
-   UM ACHADO, À LETRA: o componente do App NÃO declara `setHistoria` (é da
-   `TelaMundo`), e três funções deste fecho chamam-no — no App a chamada
-   estoura com ReferenceError (e o que vinha depois dela não corre). A peça
-   faz o mesmo, de propósito: consertar é da trilha A, no App, e a peça
-   segue-o no dia em que ele mudar.
+   O ACHADO QUE O APP CONSERTOU (d2d1dcd): o componente do App não
+   declarava `setHistoria` (é da `TelaMundo`), e três funções deste fecho
+   chamavam-no — a chamada estourava com ReferenceError e o que vinha
+   depois dela não corria (o marco cumprido sem gravar, o fim de capítulo
+   sem epílogo, a virada casada sem chegar ao Mestre). A peça reproduzia-o
+   à letra; o App tirou as chamadas (o arco vive em `historiaRef`), e a
+   peça, regenerada contra ele, segue-o. O escopo da prova acusa o nome
+   se ele voltar ao recorte.
 
    A prova é testes/teste-motor-preludio-do-turno.mjs: o recorte do App de
    HEAD (preludio-dourado.json) e esta peça sobre os casos, e a cadeia das
@@ -385,8 +388,6 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
     if (typeof $P.adiar === "function") $P.adiar(g); else $adiados.push(g);
     return $adiados.length;
   };
-  /* o componente do App não declara `setHistoria`: a chamada estoura lá, e aqui */
-  const setHistoria = () => { throw new ReferenceError("setHistoria is not defined"); };
 
   /* ---------------- A FICHA VIVA (v9.41) ----------------
      O espelho acima só é atualizado por um efeito — ou seja, na renderização
@@ -1196,7 +1197,7 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
         $ref.episodio = r.episodio;
         if (r.fechou) {
           /* aninha no ato: o episodio fechado avanca o arco */
-          try { const rr = registrarMarco($ref.historia, r.pesoNoArco || "missao", "episodio: " + $ref.episodio.id); $ref.historia = rr.historia; setHistoria($ref.historia); } catch (e) {}
+          try { const rr = registrarMarco($ref.historia, r.pesoNoArco || "missao", "episodio: " + $ref.episodio.id); $ref.historia = rr.historia; } catch (e) {}
           $ref.episodio = null;
         }
         return;
@@ -2336,7 +2337,7 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
        EPÍLOGO — não um resumo, e sem anunciar o próximo vilão. */
     if (capituloFechado($ref.historia, true)) {
       const fc = fecharCapitulo($ref.historia, { vilao: n, dia: $ref.dia, causa });
-      $ref.historia = fc.historia; setHistoria(fc.historia);
+      $ref.historia = fc.historia;
       pushMsgs([{ autor: "sistema", texto: linhaDoCapitulo(fc.registro) }]);
       $ref.nota = `${$ref.nota ? $ref.nota + "\n" : ""}${envelopeDoCapitulo(fc.registro)}`;
       /* e a porta aparece — DEPOIS do epílogo, nunca antes: o envelope
@@ -2443,7 +2444,7 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
        ANTAGONISTA andou. As duas peças passam a ser uma só. */
     const casou = casarComVilao($ref.historia, r.fase.ordem);
     if (casou.virou) {
-      $ref.historia = casou.historia; setHistoria(casou.historia);
+      $ref.historia = casou.historia;
       $ref.nota = `${$ref.nota ? $ref.nota + "\n" : ""}${envelopeDeVirada(casou)}`;
     }
   };
@@ -2848,6 +2849,12 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
      uma delacao de agora: acender `traicaoRevelada` nelas seria a Furia
      cobrando de um fato antigo o preco de uma facada recente. */
   const TRAICAO = Object.prototype.hasOwnProperty.call($render0, "TRAICAO") ? $render0.TRAICAO : ["aliado_agente", "informante_duplo", "trai_para_proteger"];
+  /* O cão de guarda da nêmesis na narração (morreu na cena sem registo? o
+     sistema encerra; apareceu depois de morta? o sistema corrige o Mestre)
+     mora em `aNemesisNaNarrativa` (src/motor/entrega-do-turno.js) desde a
+     8.ª fatia da T1-A; o `aplicarResposta` chama-o e aplica o que ele diz. */
+
+
   /* ---------------- O PLANO ANDA (v9.83) ----------------
      Era um contador: `odio` subia de dois a cinco por dia e, em quatro
      números fixos, disparava difamação, sabotagem, assassinos e confronto

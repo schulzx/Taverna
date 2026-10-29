@@ -67,7 +67,8 @@ const S = await import("../src/turno-no-servidor.js");
 const { TURNO_NO_SERVIDOR, PORTAS_DO_SERVIDOR, aCasaDoTurno, oPedidoNoServidor } = S;
 const { oEstadoDoServidor, aRespostaDoServidor } = await import("../src/motor/eco-do-turno.js");
 const { oPreludioDoTurno } = await import("../src/motor/preludio-do-turno.js");
-const { oPedidoDoTurno } = await import("../src/motor/pedido-do-turno.js");
+const { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } = await import("../src/motor/pedido-do-turno.js");
+const { REFS_DA_PAUTA } = await import("../src/motor/pauta-do-turno.js");
 const { pontoDaSorte } = await import("../src/motor/sorte-do-turno.js");
 const { semearACasa } = await import("../src/semente.js");
 const { BOCAS_POR_TURNO } = await import("../src/falas.js");
@@ -94,7 +95,15 @@ const rodar = async (corpo, { headers = ORIGEM, vars = {} } = {}) => {
 /* O CAMINHO DO APP, escrito daqui: a semente como `enviar` a faz
    (`${sementeMundo()}|${pontoDaSorte()}`, App: o semear do envio), a
    reserva da casa semeada e NENHUMA sorte explícita nas peças; o que o
-   turno adia corre depois do pedido. */
+   turno adia corre depois do pedido. E o estado do pedido como o App de
+   HEAD o monta (1409f0b): `oEstadoDoPedido` sobre os refs `{ current }`
+   das duas tabelas, pelo nome do ref, com o que o prelúdio deixou neles, e
+   o render com os seis do React de antes do turno (o `enviar` é do último
+   render). Até 1409f0b este caminho passava o espalhar cru ao pedido; com
+   o App mudado, o caminho muda com ele (a medida deu 0 de 146 pedidos
+   diferentes entre os dois). */
+const refsComoNoApp = (valores) => Object.fromEntries([REFS_DA_PAUTA, REFS_DO_PEDIDO].flatMap((tab) => Object.entries(tab).map(([c, r]) => [r.ref, { current: valores[c] }])));
+const renderComoNoApp = (antes) => Object.fromEntries(RENDER_DO_PEDIDO.filter((n) => antes[n] !== undefined).map((n) => [n, antes[n]]));
 const casaDoApp = (e) => `${e.nomeCampanha || "aventura"}|${(e.mundo && e.mundo.genero) || ""}|${pontoDaSorte({ dia: e.dia, minuto: e.minuto, falas: (e.mensagens || []).length })}`;
 async function peloCaminhoDoApp({ estado, frase, eco, bilhetes }) {
   const e0 = oEstadoDoServidor(estado, { eco, bilhetes });
@@ -102,7 +111,7 @@ async function peloCaminhoDoApp({ estado, frase, eco, bilhetes }) {
   const portas = { adiar: (g) => adiados.push(g) };
   semearACasa(casaDoApp(e0));
   const r1 = await oPreludioDoTurno(e0, { frase }, portas);
-  const r2 = oPedidoDoTurno({ ...e0, ...r1.escritas }, r1.entradaDoPedido, portas);
+  const r2 = oPedidoDoTurno(oEstadoDoPedido(refsComoNoApp({ ...e0, ...r1.escritas }), renderComoNoApp(e0)), r1.entradaDoPedido, portas);
   for (const g of adiados) { try { g(); } catch { /* como o setTimeout do App */ } }
   return { pedido: r2.pedido, fim: { ...e0, ...r1.escritas, ...r2.escritas } };
 }

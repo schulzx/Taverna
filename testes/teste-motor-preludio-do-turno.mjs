@@ -54,6 +54,14 @@ sec("2. O que os casos percorrem (medido; o mínimo é a régua)");
   for (const p of ["calou", "pushMsgs", "salvar", "setMissoes", "setRaid", "setCombate", "setPersonagem"]) t(`a porta ${p} é vista`, portas.includes(p));
   t(`o que o App adia (o setTimeout da luta que se abre) é visto em ${R.filter((f) => f.nAdiados).length} casos`, R.filter((f) => f.nAdiados).length >= 5);
   t(`com BOCAS_POR_TURNO a ${BOCAS_POR_TURNO}, a rede das bocas não é chamada em caso nenhum`, BOCAS_POR_TURNO === 0 && !portas.includes("chamarModelo"));
+  /* os dois sítios do setHistoria que d2d1dcd tirou do App: sem casos que
+     lá cheguem, a peça com ou sem o conserto dava as mesmas fotos (medido:
+     0 de 327 mudaram ao regenerar o dourado contra o App consertado) */
+  const doMontado = (o) => CASOS.map((k, i) => [k, R[i]]).filter(([k]) => k.montado === o);
+  const casados = doMontado("o arco casa com o vilão").filter(([k, f]) => !f.erro && f.valores.historia && f.valores.historia.etapa > k.estado.historia.etapa);
+  t(`o dia do vilão casa o arco (a etapa anda atrás dele) em ${casados.length} casos, sem estourar`, casados.length >= 4);
+  const fechados = doMontado("o fim do capítulo").filter(([, f]) => !f.erro && f.portas.some((p) => p[0] === "setOfertaCapitulo") && ((f.valores.historia || {}).capitulos || []).length === 1);
+  t(`a queda confirmada com o arco no fim fecha o capítulo (o registo e a porta) em ${fechados.length} casos, sem estourar`, fechados.length >= 4);
 }
 
 sec(`3. A peça contra o recorte: ${N_PRELUDIO}/${N_PRELUDIO}`);
@@ -101,6 +109,9 @@ const MORDIDAS_DO_RECORTE = [
   ["a postura parada", "    mexerNaPostura();\n", "    void 0;\n"],
   ["a reviravolta parada", "    mexerNaReviravolta();\n", "    void 0;\n"],
   ["as bocas pagas", "const escolhidos = bocasDoTurno(mov, { conteudo });", "const escolhidos = bocasDoTurno(mov, { conteudo, bocas: 2 });"],
+  /* o nome sem dono de volta (o defeito de antes de d2d1dcd): o escopo acusa-o, e o turno que lá chega estoura */
+  ["o setHistoria de volta no arco casado", "historiaRef.current = casou.historia;", "historiaRef.current = casou.historia; setHistoria(casou.historia);"],
+  ["o setHistoria de volta no fim do capítulo", "historiaRef.current = fc.historia;", "historiaRef.current = fc.historia; setHistoria(fc.historia);"],
 ];
 const MORDEU_R = {};
 for (const [nome, de, para] of MORDIDAS_DO_RECORTE) {

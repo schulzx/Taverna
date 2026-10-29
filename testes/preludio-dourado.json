@@ -1,5 +1,5 @@
 {
- "commit": "895686b",
+ "commit": "7e18e4a",
  "recortes": [
   {
    "nome": "fichaViva",
@@ -219,7 +219,7 @@
   {
    "nome": "mexerNoEpisodio",
    "de": "componente",
-   "texto": "  const mexerNoEpisodio = () => {\n    try {\n      if (modoRef.current === \"rapida\") return; /* a noite conduz o episodio (mexerNaNoite) */\n      const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);\n      if (episodioRef.current && episodioRef.current.aberto) {\n        const r = avancarEpisodio(episodioRef.current, { dia: diaRef.current });\n        episodioRef.current = r.episodio;\n        if (r.fechou) {\n          /* aninha no ato: o episodio fechado avanca o arco */\n          try { const rr = registrarMarco(historiaRef.current, r.pesoNoArco || \"missao\", \"episodio: \" + episodioRef.current.id); historiaRef.current = rr.historia; setHistoria(historiaRef.current); } catch (e) {}\n          episodioRef.current = null;\n        }\n        return;\n      }\n      /* nada aberto: talvez abrir */\n      const espinha = (historiaRef.current || {}).estrutura || \"jornada\";\n      const abre = episodioQueAbre(snapshotDoEpisodio(), { ativo: episodioRef.current, espinha });\n      if (!abre) return;\n      /* semeia no Livro ANTES de abrir */\n      let L = garantirLivro(promessasRef.current);\n      for (const spec of sementesDoEpisodio(abre, { ato, dia: diaRef.current })) {\n        L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;\n      }\n      promessasRef.current = L;\n      episodioRef.current = garantirEpisodio({ id: abre, marco: 0, aberto: true, desde: diaRef.current, avancouEm: diaRef.current });\n    } catch (e) { calou(\"mexerNoEpisodio\", e); }\n  };"
+   "texto": "  const mexerNoEpisodio = () => {\n    try {\n      if (modoRef.current === \"rapida\") return; /* a noite conduz o episodio (mexerNaNoite) */\n      const ato = Math.max(0, Number((historiaRef.current || {}).etapa) || 0);\n      if (episodioRef.current && episodioRef.current.aberto) {\n        const r = avancarEpisodio(episodioRef.current, { dia: diaRef.current });\n        episodioRef.current = r.episodio;\n        if (r.fechou) {\n          /* aninha no ato: o episodio fechado avanca o arco */\n          try { const rr = registrarMarco(historiaRef.current, r.pesoNoArco || \"missao\", \"episodio: \" + episodioRef.current.id); historiaRef.current = rr.historia; } catch (e) {}\n          episodioRef.current = null;\n        }\n        return;\n      }\n      /* nada aberto: talvez abrir */\n      const espinha = (historiaRef.current || {}).estrutura || \"jornada\";\n      const abre = episodioQueAbre(snapshotDoEpisodio(), { ativo: episodioRef.current, espinha });\n      if (!abre) return;\n      /* semeia no Livro ANTES de abrir */\n      let L = garantirLivro(promessasRef.current);\n      for (const spec of sementesDoEpisodio(abre, { ato, dia: diaRef.current })) {\n        L = semear(L, { forma: spec.forma, dona: spec.dona, peso: spec.peso, alvo: spec.alvo, ato: spec.ato, dia: spec.dia }).livro;\n      }\n      promessasRef.current = L;\n      episodioRef.current = garantirEpisodio({ id: abre, marco: 0, aberto: true, desde: diaRef.current, avancouEm: diaRef.current });\n    } catch (e) { calou(\"mexerNoEpisodio\", e); }\n  };"
   },
   {
    "nome": "fecharNoite",
@@ -419,7 +419,7 @@
   {
    "nome": "encerrarNemesis",
    "de": "componente",
-   "texto": "  /* ---------------- A MORTE DA NÊMESIS TEM UMA PORTA SÓ (v9.0) ----------------\n     Antes, ela só \"morria\" se o registro de pessoas dissesse morto num dia\n     que passasse. Um decreto cumprido pela cabeça dela, ou o próprio Mestre\n     narrando a morte, não desligavam nada — e ela continuava caçando um herói\n     que já a tinha enterrado. Agora tudo passa por aqui. */\n  const encerrarNemesis = (causa) => {\n    const n = garantirVilao(nemesisRef.current);\n    if (!n || n.status === \"derrotada\") return false;\n    /* ---------------- ELE NÃO CAI ANTES DA HORA (v9.83) ----------------\n       Vilão derrubado de primeira é monstro com nome. E a IA narra a morte\n       dele com a melhor das intenções — porque a cena pedia um desfecho, e\n       dar desfecho é o trabalho dela.\n\n       O sistema recusa, e a recusa não é \"nada aconteceu\": ele ESCAPA\n       custando alguma coisa. Uma peça dele fica para trás, um plano\n       atrasa, alguém que estava com ele morre no lugar. É o que\n       transforma cada encontro num degrau em vez de um empate. */\n    /* nexo (11/10): a nêmesis do fio é o chefe do confronto final; caída EM\n       COMBATE, quem decidiu foi o dado, e \"ele escapa\" seria mentira\n       (`caiuOFio`, saga.js). A morte só narrada passa pela porta de sempre. */\n    let caiuEmCombate = false;\n    try { caiuEmCombate = caiuOFio(n, mundoDasMissoes().derrotados); } catch (e) { calou(\"caiuOFio\", e); }\n    if (!podeCair(n) && !caiuEmCombate) {\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDaQuedaCedoDemais(n)}`;\n      return false;\n    }\n    nemesisRef.current = { ...n, status: \"derrotada\", odio: 0, mortaEm: diaRef.current, comoMorreu: causa || \"\" };\n    setNemesis(nemesisRef.current);\n    /* a semente do vilao se paga quando ele cai: a promessa da campanha\n       inteira, enfim colhida. So paga se madura — um vilao derrubado cedo\n       demais (o que podeCair impede) nao teria a maturidade, e o Livro\n       concorda com essa recusa sem precisar saber dela. */\n    try {\n      const Lv = garantirLivro(promessasRef.current);\n      const semV = Lv.sementes.find((x) => x.dona === \"vilao\" && x.alvo === (n.nome || \"\") && x.estado === \"madura\");\n      if (semV) promessasRef.current = pagar(Lv, semV.id, { dia: diaRef.current, colheita: \"a queda de \" + (n.nome || \"o vilao\") }).livro;\n    } catch (e) { /* pagar nunca pode custar a queda */ }\n    /* o registro de pessoas é a memória do Mestre: ela precisa constar morta lá */\n    const chave = Object.keys(npcsRef.current || {}).find((k) => k.toLowerCase() === (n.nome || \"\").toLowerCase());\n    if (chave && String(npcsRef.current[chave].status || \"\").toLowerCase() !== \"morto\") {\n      npcsRef.current = { ...npcsRef.current, [chave]: { ...npcsRef.current[chave], status: \"morto\", notas: `${npcsRef.current[chave].notas || \"\"} Morreu no dia ${diaRef.current}${causa ? ` — ${causa}` : \"\"}.`.trim() } };\n      setNpcs(npcsRef.current);\n    }\n    bumpCont(\"nemesisVencidas\"); checarConquistas();\n    marcarNoArco(\"nemesis\", `matei ${n.nome}, ${n.titulo}`);\n    pushMsgs([{ autor: \"sistema\", texto: linhaDaQueda(n) }]);\n    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDaQueda(n, causa)}`;\n\n    /* ---------------- E O CAPÍTULO FECHA (v9.84) ----------------\n       \"O sistema de vilão deve ser tão bem elaborado que o fim do arco\n       dele será o fim do capítulo.\"\n\n       As duas coisas se encontram aqui: o vilão caiu E o arco chegou ao\n       último momento. Uma sem a outra não fecha nada — matá-lo no meio o\n       sistema não deixa, e chegar ao fim sem derrubá-lo é o clímax por\n       acontecer.\n\n       O que o jogador lê é uma linha: \"Fim do capítulo 1\". Nada de nome\n       de etapa, nada de estrutura. E o Mestre recebe a ordem de fazer um\n       EPÍLOGO — não um resumo, e sem anunciar o próximo vilão. */\n    if (capituloFechado(historiaRef.current, true)) {\n      const fc = fecharCapitulo(historiaRef.current, { vilao: n, dia: diaRef.current, causa });\n      historiaRef.current = fc.historia; setHistoria(fc.historia);\n      pushMsgs([{ autor: \"sistema\", texto: linhaDoCapitulo(fc.registro) }]);\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoCapitulo(fc.registro)}`;\n      /* e a porta aparece — DEPOIS do epílogo, nunca antes: o envelope\n         acima proíbe perguntar o que o jogador quer fazer agora, porque o\n         silêncio depois do fim é parte do fim. O painel só renderiza no\n         turno seguinte a este, quando a narração já chegou. */\n      setOfertaCapitulo(fc.registro);\n    }\n    return true;\n  };"
+   "texto": "  /* ---------------- A MORTE DA NÊMESIS TEM UMA PORTA SÓ (v9.0) ----------------\n     Antes, ela só \"morria\" se o registro de pessoas dissesse morto num dia\n     que passasse. Um decreto cumprido pela cabeça dela, ou o próprio Mestre\n     narrando a morte, não desligavam nada — e ela continuava caçando um herói\n     que já a tinha enterrado. Agora tudo passa por aqui. */\n  const encerrarNemesis = (causa) => {\n    const n = garantirVilao(nemesisRef.current);\n    if (!n || n.status === \"derrotada\") return false;\n    /* ---------------- ELE NÃO CAI ANTES DA HORA (v9.83) ----------------\n       Vilão derrubado de primeira é monstro com nome. E a IA narra a morte\n       dele com a melhor das intenções — porque a cena pedia um desfecho, e\n       dar desfecho é o trabalho dela.\n\n       O sistema recusa, e a recusa não é \"nada aconteceu\": ele ESCAPA\n       custando alguma coisa. Uma peça dele fica para trás, um plano\n       atrasa, alguém que estava com ele morre no lugar. É o que\n       transforma cada encontro num degrau em vez de um empate. */\n    /* nexo (11/10): a nêmesis do fio é o chefe do confronto final; caída EM\n       COMBATE, quem decidiu foi o dado, e \"ele escapa\" seria mentira\n       (`caiuOFio`, saga.js). A morte só narrada passa pela porta de sempre. */\n    let caiuEmCombate = false;\n    try { caiuEmCombate = caiuOFio(n, mundoDasMissoes().derrotados); } catch (e) { calou(\"caiuOFio\", e); }\n    if (!podeCair(n) && !caiuEmCombate) {\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDaQuedaCedoDemais(n)}`;\n      return false;\n    }\n    nemesisRef.current = { ...n, status: \"derrotada\", odio: 0, mortaEm: diaRef.current, comoMorreu: causa || \"\" };\n    setNemesis(nemesisRef.current);\n    /* a semente do vilao se paga quando ele cai: a promessa da campanha\n       inteira, enfim colhida. So paga se madura — um vilao derrubado cedo\n       demais (o que podeCair impede) nao teria a maturidade, e o Livro\n       concorda com essa recusa sem precisar saber dela. */\n    try {\n      const Lv = garantirLivro(promessasRef.current);\n      const semV = Lv.sementes.find((x) => x.dona === \"vilao\" && x.alvo === (n.nome || \"\") && x.estado === \"madura\");\n      if (semV) promessasRef.current = pagar(Lv, semV.id, { dia: diaRef.current, colheita: \"a queda de \" + (n.nome || \"o vilao\") }).livro;\n    } catch (e) { /* pagar nunca pode custar a queda */ }\n    /* o registro de pessoas é a memória do Mestre: ela precisa constar morta lá */\n    const chave = Object.keys(npcsRef.current || {}).find((k) => k.toLowerCase() === (n.nome || \"\").toLowerCase());\n    if (chave && String(npcsRef.current[chave].status || \"\").toLowerCase() !== \"morto\") {\n      npcsRef.current = { ...npcsRef.current, [chave]: { ...npcsRef.current[chave], status: \"morto\", notas: `${npcsRef.current[chave].notas || \"\"} Morreu no dia ${diaRef.current}${causa ? ` — ${causa}` : \"\"}.`.trim() } };\n      setNpcs(npcsRef.current);\n    }\n    bumpCont(\"nemesisVencidas\"); checarConquistas();\n    marcarNoArco(\"nemesis\", `matei ${n.nome}, ${n.titulo}`);\n    pushMsgs([{ autor: \"sistema\", texto: linhaDaQueda(n) }]);\n    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDaQueda(n, causa)}`;\n\n    /* ---------------- E O CAPÍTULO FECHA (v9.84) ----------------\n       \"O sistema de vilão deve ser tão bem elaborado que o fim do arco\n       dele será o fim do capítulo.\"\n\n       As duas coisas se encontram aqui: o vilão caiu E o arco chegou ao\n       último momento. Uma sem a outra não fecha nada — matá-lo no meio o\n       sistema não deixa, e chegar ao fim sem derrubá-lo é o clímax por\n       acontecer.\n\n       O que o jogador lê é uma linha: \"Fim do capítulo 1\". Nada de nome\n       de etapa, nada de estrutura. E o Mestre recebe a ordem de fazer um\n       EPÍLOGO — não um resumo, e sem anunciar o próximo vilão. */\n    if (capituloFechado(historiaRef.current, true)) {\n      const fc = fecharCapitulo(historiaRef.current, { vilao: n, dia: diaRef.current, causa });\n      historiaRef.current = fc.historia;\n      pushMsgs([{ autor: \"sistema\", texto: linhaDoCapitulo(fc.registro) }]);\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoCapitulo(fc.registro)}`;\n      /* e a porta aparece — DEPOIS do epílogo, nunca antes: o envelope\n         acima proíbe perguntar o que o jogador quer fazer agora, porque o\n         silêncio depois do fim é parte do fim. O painel só renderiza no\n         turno seguinte a este, quando a narração já chegou. */\n      setOfertaCapitulo(fc.registro);\n    }\n    return true;\n  };"
   },
   {
    "nome": "sincronizarNemesis",
@@ -429,7 +429,7 @@
   {
    "nome": "processarNemesisDiaria",
    "de": "componente",
-   "texto": "  const processarNemesisDiaria = () => {\n    const v = garantirVilao(nemesisRef.current);\n    if (!v || v.status === \"derrotada\") return;\n    if (v !== nemesisRef.current) { nemesisRef.current = v; setNemesis(v); }\n    sincronizarNemesis();\n    if (nemesisRef.current.status === \"derrotada\") return;\n    if (!podeAvancar(nemesisRef.current, { dia: diaRef.current })) return;\n\n    const proximo = Math.min(TOTAL_DE_PASSOS - 1, (nemesisRef.current.passo || 0) + 1);\n    const alvo = escolherAlvo(CUSTO_DO_PASSO[proximo], {\n      pessoas: Object.values(npcsRef.current || {})\n        .filter((n) => n && n.nome && String(n.status || \"\").toLowerCase() !== \"morto\" && n.nome !== nemesisRef.current.nome)\n        .map((n) => n.nome),\n      lugares: [...dominiosDe(mapaRef.current).map((c) => c.nome), cidadeAtualRef.current].filter(Boolean),\n      promessas: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean),\n      /* as marcas vão junto: deduplicar na entrada não bastava, porque sem\n         isto ele continuaria SORTEANDO quem já levou e o passo não\n         registraria nada — um passo no vazio, que é pior que repetir,\n         porque some sem deixar rastro */\n    }, sorteDoTurno(\"alvo-do-vilao\"), nemesisRef.current.marcas || []);\n    const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });\n    if (!r) return;\n    /* nexo (11/10): a nêmesis do fio só mostra o rosto no último ato — é lá\n       que a espinha diz o nome (`oRostoEspera`, saga.js). O passo fica por\n       dar, e o plano tenta de novo amanhã. */\n    try { if (oRostoEspera(espinhaRef.current, (historiaRef.current || {}).etapa || 0, r)) return; } catch (e) { calou(\"oRostoEspera\", e); }\n    nemesisRef.current = r.vilao; setNemesis(r.vilao);\n\n    /* ---------------- O VILAO ESCREVE NO LIVRO (v9.199) ----------------\n       Cada degrau da escada de revelacao e uma insinuacao de quem ele e.\n       O Livro guarda essa progressao para que a catraca a enxergue: no\n       \"rosto\" (terceira rega) a semente amadurece, e so entao uma virada\n       sobre o vilao podera colher. A verdade fica no antagonista.js; aqui\n       mora so o rastro do que foi mostrado. */\n    try {\n      const L = garantirLivro(promessasRef.current);\n      const nomeVilao = r.vilao.nome || \"\";\n      const semVilao = L.sementes.find((x) => x.dona === \"vilao\" && x.alvo === nomeVilao && x.estado !== \"paga\" && x.estado !== \"murcha\");\n      const FORMA_DA_FASE = { rumor: \"aviso_do_bebado\", marca: \"brasao_limado\", mao: \"conserto_invisivel\", rosto: \"nome_na_lamina\", guerra: \"posto_sem_guarda\", queda: \"nome_na_lamina\" };\n      const faseId = (r.fase && r.fase.id) || \"rumor\";\n      if (!semVilao) {\n        promessasRef.current = semear(L, { forma: FORMA_DA_FASE[faseId] || \"aviso_do_bebado\", dona: \"vilao\", ato: 0, peso: \"pesado\", alvo: nomeVilao, material: \"um sinal de \" + (nomeVilao || \"quem move as sombras\") + \": \" + ((r.fase && r.fase.revela) || \"algo se aproxima\"), dia: diaRef.current }).livro;\n      } else {\n        promessasRef.current = regar(L, semVilao.id, { dia: diaRef.current, cena: faseId }).livro;\n      }\n    } catch (e) { /* o Livro nunca pode custar o passo do vilao */ }\n\n    /* A REVELAÇÃO é o ÚNICO momento em que o sistema fala em voz de sistema\n       sobre ele — porque é um marco da campanha, e o jogador precisa saber\n       que aquilo acabou de acontecer. Nas outras fases o sistema cala e\n       deixa a cena falar. */\n    const linha = linhaDoVilao(r);\n    if (linha) pushMsgs([{ autor: \"sistema\", texto: linha }]);\n    if (r.revelacao) {\n      npcsRef.current = { ...npcsRef.current, [r.vilao.nome]: criarNPC(r.vilao.nome, {\n        papel: r.vilao.titulo, relacao: \"inimigo\",\n        notas: `O VILÃO desta campanha. Acredita que ${r.vilao.crenca}. Quer ${r.vilao.quer}.`,\n        conhecidoEm: diaRef.current, ultimaVez: npcTurnoRef.current,\n      }) };\n      setNpcs(npcsRef.current);\n      marcarNoArco(\"nemesis\", `soube quem é ${r.vilao.nome}`);\n    }\n    /* ---------------- E A MESA SENTE (v9.89) ----------------\n       `processarNemesisDiaria` não tocava na mesa, e por isso o passo do\n       vilão — que é a maior pressão que este jogo produz — não esquentava\n       nada. A temperatura podia ler \"fria\" no turno seguinte a ele e\n       mandar o mundo puxar um fio da memória JUNTO, empilhando duas\n       pressões no mesmo envelope por não saber da primeira.\n\n       O passo entra como perigo, que é o que ele é. Não como luta: ele\n       ainda não veio em pessoa, e marcar luta faria o mestre parar de\n       conceder dado numa cena que não tem dado nenhum. */\n    texturaRef.current = { ...(texturaRef.current || {}), perigo: true };\n    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoAvanco(r)}${levaForma(r) ? formaDoMestre({ fio: \"vilao\" }) : \"\"}`;\n\n    /* ---------------- O ARCO ANDA COM ELE (v9.84) ----------------\n       Até aqui o arco andava por CONTAGEM: cada missão concluída, relógio\n       cheio ou ameaça abatida somava marcos, e a cada tanto o momento\n       virava. Era um termômetro de atividade — e um jogador que fizesse\n       vinte favores pequenos chegava ao momento mais escuro da história\n       sem nunca ter tido contra quem.\n\n       O arco de uma história não anda porque o herói andou: anda porque o\n       ANTAGONISTA andou. As duas peças passam a ser uma só. */\n    const casou = casarComVilao(historiaRef.current, r.fase.ordem);\n    if (casou.virou) {\n      historiaRef.current = casou.historia; setHistoria(casou.historia);\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDeVirada(casou)}`;\n    }\n  };"
+   "texto": "  const processarNemesisDiaria = () => {\n    const v = garantirVilao(nemesisRef.current);\n    if (!v || v.status === \"derrotada\") return;\n    if (v !== nemesisRef.current) { nemesisRef.current = v; setNemesis(v); }\n    sincronizarNemesis();\n    if (nemesisRef.current.status === \"derrotada\") return;\n    if (!podeAvancar(nemesisRef.current, { dia: diaRef.current })) return;\n\n    const proximo = Math.min(TOTAL_DE_PASSOS - 1, (nemesisRef.current.passo || 0) + 1);\n    const alvo = escolherAlvo(CUSTO_DO_PASSO[proximo], {\n      pessoas: Object.values(npcsRef.current || {})\n        .filter((n) => n && n.nome && String(n.status || \"\").toLowerCase() !== \"morto\" && n.nome !== nemesisRef.current.nome)\n        .map((n) => n.nome),\n      lugares: [...dominiosDe(mapaRef.current).map((c) => c.nome), cidadeAtualRef.current].filter(Boolean),\n      promessas: (missoesAtivas(missoesRef.current) || []).map((m) => m.titulo).filter(Boolean),\n      /* as marcas vão junto: deduplicar na entrada não bastava, porque sem\n         isto ele continuaria SORTEANDO quem já levou e o passo não\n         registraria nada — um passo no vazio, que é pior que repetir,\n         porque some sem deixar rastro */\n    }, sorteDoTurno(\"alvo-do-vilao\"), nemesisRef.current.marcas || []);\n    const r = avancarPlano(nemesisRef.current, { dia: diaRef.current, alvo });\n    if (!r) return;\n    /* nexo (11/10): a nêmesis do fio só mostra o rosto no último ato — é lá\n       que a espinha diz o nome (`oRostoEspera`, saga.js). O passo fica por\n       dar, e o plano tenta de novo amanhã. */\n    try { if (oRostoEspera(espinhaRef.current, (historiaRef.current || {}).etapa || 0, r)) return; } catch (e) { calou(\"oRostoEspera\", e); }\n    nemesisRef.current = r.vilao; setNemesis(r.vilao);\n\n    /* ---------------- O VILAO ESCREVE NO LIVRO (v9.199) ----------------\n       Cada degrau da escada de revelacao e uma insinuacao de quem ele e.\n       O Livro guarda essa progressao para que a catraca a enxergue: no\n       \"rosto\" (terceira rega) a semente amadurece, e so entao uma virada\n       sobre o vilao podera colher. A verdade fica no antagonista.js; aqui\n       mora so o rastro do que foi mostrado. */\n    try {\n      const L = garantirLivro(promessasRef.current);\n      const nomeVilao = r.vilao.nome || \"\";\n      const semVilao = L.sementes.find((x) => x.dona === \"vilao\" && x.alvo === nomeVilao && x.estado !== \"paga\" && x.estado !== \"murcha\");\n      const FORMA_DA_FASE = { rumor: \"aviso_do_bebado\", marca: \"brasao_limado\", mao: \"conserto_invisivel\", rosto: \"nome_na_lamina\", guerra: \"posto_sem_guarda\", queda: \"nome_na_lamina\" };\n      const faseId = (r.fase && r.fase.id) || \"rumor\";\n      if (!semVilao) {\n        promessasRef.current = semear(L, { forma: FORMA_DA_FASE[faseId] || \"aviso_do_bebado\", dona: \"vilao\", ato: 0, peso: \"pesado\", alvo: nomeVilao, material: \"um sinal de \" + (nomeVilao || \"quem move as sombras\") + \": \" + ((r.fase && r.fase.revela) || \"algo se aproxima\"), dia: diaRef.current }).livro;\n      } else {\n        promessasRef.current = regar(L, semVilao.id, { dia: diaRef.current, cena: faseId }).livro;\n      }\n    } catch (e) { /* o Livro nunca pode custar o passo do vilao */ }\n\n    /* A REVELAÇÃO é o ÚNICO momento em que o sistema fala em voz de sistema\n       sobre ele — porque é um marco da campanha, e o jogador precisa saber\n       que aquilo acabou de acontecer. Nas outras fases o sistema cala e\n       deixa a cena falar. */\n    const linha = linhaDoVilao(r);\n    if (linha) pushMsgs([{ autor: \"sistema\", texto: linha }]);\n    if (r.revelacao) {\n      npcsRef.current = { ...npcsRef.current, [r.vilao.nome]: criarNPC(r.vilao.nome, {\n        papel: r.vilao.titulo, relacao: \"inimigo\",\n        notas: `O VILÃO desta campanha. Acredita que ${r.vilao.crenca}. Quer ${r.vilao.quer}.`,\n        conhecidoEm: diaRef.current, ultimaVez: npcTurnoRef.current,\n      }) };\n      setNpcs(npcsRef.current);\n      marcarNoArco(\"nemesis\", `soube quem é ${r.vilao.nome}`);\n    }\n    /* ---------------- E A MESA SENTE (v9.89) ----------------\n       `processarNemesisDiaria` não tocava na mesa, e por isso o passo do\n       vilão — que é a maior pressão que este jogo produz — não esquentava\n       nada. A temperatura podia ler \"fria\" no turno seguinte a ele e\n       mandar o mundo puxar um fio da memória JUNTO, empilhando duas\n       pressões no mesmo envelope por não saber da primeira.\n\n       O passo entra como perigo, que é o que ele é. Não como luta: ele\n       ainda não veio em pessoa, e marcar luta faria o mestre parar de\n       conceder dado numa cena que não tem dado nenhum. */\n    texturaRef.current = { ...(texturaRef.current || {}), perigo: true };\n    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoAvanco(r)}${levaForma(r) ? formaDoMestre({ fio: \"vilao\" }) : \"\"}`;\n\n    /* ---------------- O ARCO ANDA COM ELE (v9.84) ----------------\n       Até aqui o arco andava por CONTAGEM: cada missão concluída, relógio\n       cheio ou ameaça abatida somava marcos, e a cada tanto o momento\n       virava. Era um termômetro de atividade — e um jogador que fizesse\n       vinte favores pequenos chegava ao momento mais escuro da história\n       sem nunca ter tido contra quem.\n\n       O arco de uma história não anda porque o herói andou: anda porque o\n       ANTAGONISTA andou. As duas peças passam a ser uma só. */\n    const casou = casarComVilao(historiaRef.current, r.fase.ordem);\n    if (casou.virou) {\n      historiaRef.current = casou.historia;\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDeVirada(casou)}`;\n    }\n  };"
   },
   {
    "nome": "avancarDiasReino",
@@ -489,7 +489,7 @@
   {
    "nome": "CUSTO_DO_PASSO",
    "de": "render",
-   "texto": "  /* ---------------- O PLANO ANDA (v9.83) ----------------\n     Era um contador: `odio` subia de dois a cinco por dia e, em quatro\n     números fixos, disparava difamação, sabotagem, assassinos e confronto\n     — sempre nessa ordem, sempre nesse ritmo, em toda campanha que este\n     jogo já teve. E enquanto o número corria, NADA acontecia no mundo.\n\n     Agora o que anda é um PLANO de nove passos, e cada passo tira alguma\n     coisa — escolhida entre o que o jogador tem de verdade: a pessoa cujo\n     nome ele escreveu, a cidade que ele tomou, a promessa que ele fez.\n     Ameaçar \"o reino\" é meteorologia; isto é vilania.\n\n     E anda devagar de propósito: um vilão que se move todo dia é barulho,\n     e barulho não assusta. */\n  const CUSTO_DO_PASSO = [\"sombra\", \"voz\", \"lugar\", \"esperanca\", \"gente\", \"lugar\", \"voz\", \"gente\", \"tudo\"];"
+   "texto": "  /* O cão de guarda da nêmesis na narração (morreu na cena sem registo? o\n     sistema encerra; apareceu depois de morta? o sistema corrige o Mestre)\n     mora em `aNemesisNaNarrativa` (src/motor/entrega-do-turno.js) desde a\n     8.ª fatia da T1-A; o `aplicarResposta` chama-o e aplica o que ele diz. */\n\n\n  /* ---------------- O PLANO ANDA (v9.83) ----------------\n     Era um contador: `odio` subia de dois a cinco por dia e, em quatro\n     números fixos, disparava difamação, sabotagem, assassinos e confronto\n     — sempre nessa ordem, sempre nesse ritmo, em toda campanha que este\n     jogo já teve. E enquanto o número corria, NADA acontecia no mundo.\n\n     Agora o que anda é um PLANO de nove passos, e cada passo tira alguma\n     coisa — escolhida entre o que o jogador tem de verdade: a pessoa cujo\n     nome ele escreveu, a cidade que ele tomou, a promessa que ele fez.\n     Ameaçar \"o reino\" é meteorologia; isto é vilania.\n\n     E anda devagar de propósito: um vilão que se move todo dia é barulho,\n     e barulho não assusta. */\n  const CUSTO_DO_PASSO = [\"sombra\", \"voz\", \"lugar\", \"esperanca\", \"gente\", \"lugar\", \"voz\", \"gente\", \"tudo\"];"
   }
  ],
  "trecho": "    /* O que EU pedi neste turno — só a minha frase distingue \"o Mestre me\n       devolveu à cidade\" de \"eu voltei\".\n\n       Turno do SISTEMA não é pedido meu, e a diferença é o colchete: todo\n       envelope começa por um cabeçalho entre colchetes, e o que eu digito\n       nunca começa assim. Sem essa distinção o cão de guarda se desarmava\n       sozinho — dentro do envelope de \"passar o tempo\" está escrito \"NÃO me\n       leve de volta à cidade\", e o detector lia a proibição como pedido. */\n    ultimoPedidoRef.current = String(conteudo || \"\").trimStart().startsWith(\"[\") ? \"\" : String(conteudo || \"\");\n    varrerChao();   // outro lugar, outro dia: o que ficou para trás fica para trás\n    /* v9.45: o trabalho de bastidor entra AQUI, junto do bilhete do sistema —\n       e só aqui. Cada poção fervida na bancada anotou uma linha e não acordou\n       o Mestre; agora todas viram um envelope só, colado à frente do que o\n       jogador de fato pediu. É o que separa \"ato na cena\" de \"trabalho de\n       mãos\": o primeiro merece um turno, o segundo merece uma frase. */\n    const oficina = bilheteDaOficina(oficinaRef.current);\n    if (oficina) oficinaRef.current = criarOficina();\n    talvezChegarSozinho();\n    talvezAndarNaCidade(conteudo);\n    /* ---------------- MM18: O MESTRE QUE ESCUTA ----------------\n       A frase lida uma vez, o fio da história, o degrau da escada (por\n       turnos sem tocar o fio). Numa pergunta, no degrau da escuta, o\n       compasso e a forma da cena SEGURAM pela porta que já têm: cortar o\n       envelope depois seria o sistema andar uma história que ninguém\n       contou. `pedidoEsc` nulo = a escuta não está (a Noite, ou um erro):\n       o turno segue como era. */\n    /* (T1-A, 8.ª fatia) a escuta lê o pedido e anda no motor\n       (`oPedidoDaEscuta`, `aEscutaAnda`, src/motor/antes-do-mestre.js) */\n    let pedidoEsc = null, fioEsc = [], segurarEsc = false;\n    try {\n      const doPedido = oPedidoDaEscuta({ modo: modoRef.current, abertura: aberturaMundoRef.current, missoes: missoesRef.current, escuta: escutaRef.current }, conteudo);\n      if (doPedido.erro) calou(\"a escuta lê o pedido\", doPedido.erro);\n      pedidoEsc = doPedido.pedido; fioEsc = doPedido.fio; segurarEsc = doPedido.segurar;\n    } catch (e) { calou(\"a escuta lê o pedido\", e); pedidoEsc = null; fioEsc = []; segurarEsc = false; }\n    const doCompasso = talvezAndarOCompasso(conteudo, { segurar: segurarEsc });\n    const formaDaCena = doCompasso || segurarEsc ? \"\" : talvezDarFormaACena(conteudo);\n    /* A FRENTE ANDA UMA RODADA POR TURNO MEU (v9.115), e anda aqui, no\n       mesmo lugar em que todo sistema de turno anda. Uma rodada por turno,\n       nunca um laço: se a frente resolvesse tudo de uma vez, o jogador\n       leria o desfecho da raid em vez de atravessá-lo. */\n    const daFrente = String(conteudo || \"\").trimStart().startsWith(\"[RAID\") ? \"\" : rodarAFrente();\n    /* A MISSÃO DO MESTRE E A VIRADA DELA (v9.117), no mesmo ponto em que\n       todo sistema de turno anda. A ordem importa: primeiro se VIRA o que\n       já estava em curso (a emboscada, a presa que aparece) e só depois se\n       dá missão nova — senão o turno em que a caçada acontece seria também\n       o turno em que uma trama nova chega, e as duas dividiriam a cena. */\n    /* A VIRADA NÃO TEM GUARDA DE COLCHETE, e a primeira versão tinha —\n       custou a prova na tela. O turno em que o jogador continua depois de\n       uma rolagem chega como \"[ROLAGEM] …\", e é exatamente o turno em que\n       ele acabou de PROCURAR a praga: com o guarda, a caçada não\n       disparava justamente na hora em que devia. Ela já é idempotente\n       (`cacadasFeitasRef`), então o guarda não protegia de nada. */\n    const daVirada = talvezVirar();\n    const daTrama = daVirada ? \"\" : (String(conteudo || \"\").trimStart().startsWith(\"[\") ? \"\" : talvezDarUmaTrama());\n    /* v9.104: A PAUTA VEM NA FRENTE. Ela é o que o SISTEMA decidiu, e o\n       Narrador precisa saber ONDE a cena acontece antes de ler qualquer\n       instrução sobre o que fazer nela — a ordem importa para quem lê.\n       Por ora ela carrega o Geógrafo; os outros sistemas se mudam para\n       dentro dela quando chegar a vez de cada um. */\n    /* v9.106: o ATO do herói, lido do que ele escreveu, ANTES da Pauta —\n       é o que a maioria dos movimentos do Intérprete consulta. */\n    atoDoTurnoRef.current = atoDoTexto(conteudo);\n    ultimaAcaoRef.current = String(conteudo || \"\").slice(0, 200);\n    /* ---------------- AS BOCAS (v9.135) ----------------\n       Antes da Pauta, porque a fala e conteudo dela. O Interprete decide o\n       que cada um FAZ; o ator diz o que ele DIZ, uma chamada pequena por\n       pessoa, em paralelo. Nao roda em envelope do sistema (o que comeca\n       por colchete nao e frase do jogador) nem sem gente na cena. */\n    interpreteRef.current = interpreteParaPauta(pessoasDaCena(), { elenco: elencoMemRef.current });\n    for (const m of interpreteRef.current.marcas) elencoMemRef.current = marcarMovimento(elencoMemRef.current, m.nome, m.id, m.gesto);\n    propositosDoTurnoRef.current = dispararPropositos(conteudo);\n    mexerNaReviravolta();\n    mexerNoEncalhe();\n    mexerNaPostura();\n    mexerNoEpisodio();\n    mexerNaNoite();\n    falasDoTurnoRef.current = await colherAsFalas(conteudo);",
@@ -4954,6 +4954,70 @@
    "nPortas": 1,
    "erro": null,
    "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "097a4d7f92cb5fc7",
+   "portas": "b1e6c7db92cd1d81",
+   "nPortas": 14,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "c86bb5bb20ef3cb0",
+   "portas": "0a2b053ccefc431d",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "ef9571392ab81b89",
+   "portas": "cd577fae07a04de7",
+   "nPortas": 14,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "88f3b7590495083c",
+   "portas": "156624f7feaac04f",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "69b44cdbf7954b14",
+   "portas": "749a3a85ce03ccda",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "df9be0d05685a3cf",
+   "portas": "80c53412caeb3594",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "315c4797f1fb9f98",
+   "portas": "4d2579306e67ae7e",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "saida": "243fcfbeced3ff23",
+   "refs": "4c7a57020ff713dc",
+   "portas": "170bd62f7b55e648",
+   "nPortas": 16,
+   "erro": null,
+   "faltas": []
   }
  ],
  "cadeias": [
@@ -8224,6 +8288,86 @@
    "refs": "73760904261fc8f7",
    "portas": "02b8b0fd6997825e",
    "nPortas": 1,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "b5c58136a6bea271",
+   "tamRede": 62855,
+   "saida": "f7665ceb5e8beeff",
+   "refs": "d946a06a1db04414",
+   "portas": "6f43834bf15e32b9",
+   "nPortas": 14,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "be900612e1edeae6",
+   "tamRede": 63122,
+   "saida": "d425190eb5ca261e",
+   "refs": "7b386d5fd2219191",
+   "portas": "4b28615310e67830",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "6f014bf4b088a5ef",
+   "tamRede": 66590,
+   "saida": "de9779cbb401c0e9",
+   "refs": "e27b9c67bbded8bc",
+   "portas": "3ca92629003d9941",
+   "nPortas": 14,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "3ba002c05c86f03e",
+   "tamRede": 62675,
+   "saida": "b8789f975012a575",
+   "refs": "55d97b2e8b41bdf0",
+   "portas": "cc967239a9776917",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "d64893bef3f0973b",
+   "tamRede": 61794,
+   "saida": "7aa38a9ab8c7c6f8",
+   "refs": "2d283b3f287bed13",
+   "portas": "5127d438ff5bfc23",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "fa352fe1c97d5be2",
+   "tamRede": 62609,
+   "saida": "6d2d06402d031ee5",
+   "refs": "a2d8f885de6b668e",
+   "portas": "cf293d4ee1ef92ae",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "a7738402cc082992",
+   "tamRede": 66133,
+   "saida": "07e59a94c413290c",
+   "refs": "cc091e42c44e157b",
+   "portas": "f74ac219bcf1a5ec",
+   "nPortas": 15,
+   "erro": null,
+   "faltas": []
+  },
+  {
+   "rede": "c6f5858c7d06cd29",
+   "tamRede": 61573,
+   "saida": "aaa0404de577fa9f",
+   "refs": "dd94fd81841e524a",
+   "portas": "c07b478733f093ad",
+   "nPortas": 16,
    "erro": null,
    "faltas": []
   }
