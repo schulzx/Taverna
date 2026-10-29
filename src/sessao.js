@@ -26,6 +26,14 @@
        origem?,        de onde veio, em texto livre
        inicio,         o save v2 ao abrir a sessão (`saveDoEstado`)
        turnos: [ a linha de cada turno, abaixo ]
+       virada?,        a página que esta é, quando o arquivo guardado virou
+                       a página (sessao-guardada.js): { pagina, turnosAntes,
+                       cortou } — o número dela (2, 3…), quantos turnos se
+                       gravaram nas páginas de antes e quantos desses já
+                       não estão em parte nenhuma. Sem ela, é a primeira.
+       anterior?       a página de antes, inteira (um arquivo destes, sem a
+                       `anterior` dela): o replay lê-a à parte. Um leitor
+                       antigo ignora os dois campos, e lê a página igual.
      }
 
    A LINHA DE UM TURNO:
@@ -226,6 +234,8 @@ export const CAMPOS_DA_SESSAO = Object.freeze({
     { campo: "mundo", tipo: "objetoOuNulo", obrigatorio: false },
     { campo: "origem", tipo: "texto", obrigatorio: false },
     { campo: "turnos", tipo: "lista", obrigatorio: true },
+    { campo: "virada", tipo: "objeto", obrigatorio: false },
+    { campo: "anterior", tipo: "objeto", obrigatorio: false },
   ],
   turno: [
     { campo: "n", tipo: "inteiro", obrigatorio: true },
@@ -430,6 +440,40 @@ export function gravarOTurno(arquivo, turno) {
   return { ...A, turnos: [...turnos, linha] };
 }
 
+/* A PÁGINA QUE VIRA LEVA O ÚLTIMO TURNO (29/10, a 13.ª sessão). Quem
+   decide QUANDO a página vira é sessao-guardada.js (o teto); o que é virar
+   diz-se aqui, porque é o arquivo: o último turno sai da página velha e é
+   o primeiro da nova, que começa no estado de antes dele. Até aqui a
+   página nova nascia vazia no fim do último turno, e o turno que provocara
+   a virada só existia na velha — que a fiação deitava fora (a 13.ª perdeu
+   o T22 assim). A linha que passa leva consigo as narrações que o Juiz lê
+   como eco: `antesDoArquivo` apontava para linhas da página velha, e na
+   nova volta a ser a lista inteira. A diferença do estado vale igual: a
+   base dela é a cabeça da página nova, byte a byte.
+
+     virarAPagina(arquivo) → { velha, nova } — a velha sem o último turno
+       (e sem a `anterior` dela), a nova com ele (n = 1); null quando a
+       página não tem turno a passar. Puro, e nunca lança. */
+export function virarAPagina(arquivo) {
+  try {
+    const A = obj(arquivo);
+    const ts = arr(A.turnos);
+    if (!ts.length) return null;
+    const i = ts.length - 1, L = obj(ts[i]);
+    let juiz = L.juiz;
+    if (ehObj(juiz) && Number.isInteger(juiz.antesDoArquivo)) {
+      const ja = narracoesDoArquivo(ts, i), k = juiz.antesDoArquivo;
+      const { antesDoArquivo, ...resto } = juiz;
+      juiz = { ...resto, entrada: { ...obj(resto.entrada), antes: k > 0 ? ja.slice(ja.length - k) : [] } };
+    }
+    const { anterior, ...cabeca } = A;
+    const velha = { ...cabeca, turnos: ts.slice(0, i) };
+    const { virada, ...semVirada } = cabeca;
+    const nova = { ...semVirada, inicio: estadoNoTurno(A, i), turnos: [{ ...L, n: 1, juiz }] };
+    return { velha, nova };
+  } catch { return null; }
+}
+
 /* ---------------- O VALIDADOR ---------------- */
 function conferir(o, tabela, caminho, erros) {
   if (!ehObj(o)) { erros.push({ caminho, motivo: "não é objeto" }); return false; }
@@ -449,6 +493,8 @@ export function validarASessao(arquivo) {
   const A = arquivo;
   if (A.formato !== FORMATO_DA_SESSAO.formato) erros.push({ caminho: "formato", motivo: `não é "${FORMATO_DA_SESSAO.formato}"` });
   if (Number.isInteger(A.versao) && (A.versao < 1 || A.versao > FORMATO_DA_SESSAO.versao)) erros.push({ caminho: "versao", motivo: `versão ${A.versao}: este leitor lê até a ${FORMATO_DA_SESSAO.versao}` });
+  /* a página de antes, quando vem junta, valida-se como o arquivo que é */
+  if (ehObj(A.anterior)) for (const x of validarASessao(A.anterior).erros) erros.push({ caminho: `anterior.${x.caminho}`, motivo: x.motivo });
   let e = ehObj(A.inicio) ? A.inicio : {};
   arr(A.turnos).forEach((t, i) => {
     const c = `turnos[${i}]`;
