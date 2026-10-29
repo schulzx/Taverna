@@ -11,7 +11,8 @@
        dia da morte. A régua mora em NOTAS_DO_SISTEMA.
 
    Falha antes: no código de ebe77a5, a mescla deixa só a nota nova. */
-import { criarNPC, mesclarNPC, NOTAS_DO_SISTEMA } from "../src/npcs.js";
+import { criarNPC, mesclarNPC, NOTAS_DO_SISTEMA, ESTADO_SEM_VOLTA, estadoSemVolta } from "../src/npcs.js";
+import { aplicarORegisto } from "../src/motor/aplicar.js";
 import { oBoatoDaChegada, FORMAS_DO_BOATO, BOATO } from "../src/boatos.js";
 import { O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
 import { oAceitoDoCronista } from "../src/motor/cronista-do-turno.js";
@@ -108,6 +109,37 @@ sec("1. as notas: o que o sistema escreveu nelas sobrevive à nota nova");
   const outraVez = { ...v.estado, npcs: { ...v.estado.npcs, Clarissa: { ...depois, dito: DITO } } };
   t("e a verdade revelada não se revela outra vez depois da nota nova (a marca de BOATO.marcas ficou)",
     depois.notas.includes("visto pelo herói") && oBoatoDaChegada(outraVez, null, "x").linhaDaPauta === "", depois.notas);
+}
+
+sec("2. o estado: a porta do cânone não ressuscita ninguém");
+{
+  const estadoCanone = (canone, npcs) => ({ personagem: { nome: "Ana" }, canone, mapa: { cidades: [], faccoes: [] }, npcs: npcs || {}, npcTurno: 0, espinha: null, abertura: null, lugar: null, missoes: [], dia: 5 });
+  /* o homónimo: «Clarissa do Posto Velho» do cânone é a «Clarissa» do registo (id.chave) */
+  const CTX = { mundo: null, baseDoNome: { importantes: [{ nome: "Clarissa", onde: "Posto Velho" }], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Ana" } };
+  const OUTRA = { narrativa: "x", mudancas: { canone: { Forja: { tipo: "lugar", descricao: "a forja velha" } } } };
+  const pela = (status, canone, resp = OUTRA) => {
+    const reg = { Clarissa: criarNPC("Clarissa", { papel: "curandeira", status, ultimaVez: 1, conhecidoEm: 2 }) };
+    const r = aplicarORegisto(estadoCanone({ ...canone, ...(resp.mudancas.canone || {}) }, reg), resp, CTX);
+    return Object.values(r.estado.npcs).find((n) => /^Clarissa/.test(n.nome)) || {};
+  };
+  const SEM = { "Clarissa do Posto Velho": { tipo: "pessoa", papel: "curandeira" } };
+  t("a tabela diz «nunca existiu» como o boato o escreve", ESTADO_SEM_VOLTA.finais.includes(BOATO.nuncaExistiu) && ESTADO_SEM_VOLTA.finais.includes("morto"));
+  t("(a porta acha-a pelo homónimo e mescla, não cria outra)", (() => { const r = aplicarORegisto(estadoCanone(SEM, { Clarissa: criarNPC("Clarissa", { papel: "curandeira" }) }), OUTRA, CTX); return Object.keys(r.estado.npcs).length === 1 && !!r.estado.npcs.Clarissa; })());
+  /* FALHA NO HEAD DE ANTES: o cânone sem estado mandava «vivo» */
+  t("quem o boato revelou como «nunca existiu» não volta a «vivo» pelo cânone que não diz estado", pela(BOATO.nuncaExistiu, SEM).status === BOATO.nuncaExistiu, pela(BOATO.nuncaExistiu, SEM).status);
+  t("nem o morto", pela("morto", SEM).status === "morto");
+  t("nem a desaparecida (o cânone que cala não diz «vivo»)", pela("desaparecida", SEM).status === "desaparecida");
+  const VELHO_VIVO = { "Clarissa do Posto Velho": { tipo: "pessoa", papel: "curandeira", status: "vivo" } };
+  /* FALHA NO HEAD DE ANTES: o «vivo» relido de há muitos turnos escrevia-se por cima */
+  t("o «vivo» de um cânone antigo, relido, não ressuscita o morto", pela("morto", VELHO_VIVO).status === "morto");
+  t("nem o que nunca existiu", pela(BOATO.nuncaExistiu, VELHO_VIVO).status === BOATO.nuncaExistiu);
+  const DISSE = { narrativa: "x", mudancas: { canone: { "Clarissa do Posto Velho": { tipo: "pessoa", papel: "curandeira", status: "vivo" } } } };
+  t("mas o Narrador que o diz NESTE turno, no cânone que mandou, é ouvido", pela("morto", {}, DISSE).status === "vivo", pela("morto", {}, DISSE).status);
+  t("o estado que não é final troca-se pelo que o cânone diz, como antes", pela("desaparecida", { "Clarissa do Posto Velho": { tipo: "pessoa", status: "exilada" } }).status === "exilada");
+  t("e caminhar para o final também (o cânone que diz «morto»)", pela("vivo", { "Clarissa do Posto Velho": { tipo: "pessoa", status: "morto" } }).status === "morto");
+  const nova = aplicarORegisto(estadoCanone({ Zeferino: { tipo: "pessoa", papel: "moleiro" } }), OUTRA, CTX).estado.npcs.Zeferino;
+  t("quem não tem ficha nasce «vivo», como sempre", nova && nova.status === "vivo", Js(nova));
+  t("a tabela lê sem acento e sem caixa; lixo não é final", estadoSemVolta("Nunca Existiu") && estadoSemVolta("MORTA") && ![null, 3, {}, "", "vivo"].some((x) => estadoSemVolta(x)));
 }
 
 console.log(`\n${ok} ok, ${mal} mal`);

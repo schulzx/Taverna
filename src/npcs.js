@@ -458,6 +458,26 @@ function notasComAsMarcas(velhas, nova) {
   return ficam.length ? [n, ...ficam].join(NOTAS_DO_SISTEMA.junta) : nova;
 }
 
+/* O ESTADO QUE NÃO VOLTA (29/10, trilha B)
+
+   A porta do cânone (motor/aplicar.js#aplicarORegisto) relê o cânone
+   INTEIRO a cada turno com mudanças, e mescla a pessoa do cânone na ficha
+   do registo quando a acha pelo homónimo («Delfina» ↔ «Delfina da
+   Névoa»). Mandava `status: f.status || "vivo"`: o cânone que não dizia
+   estado nenhum dizia «vivo», e a mescla escrevia-o. Foi por aí que quem o
+   boato revelou como «nunca existiu» (boatos.js, BOATO.nuncaExistiu) e
+   quem o combate matou voltavam a «vivo» no turno seguinte, sem ninguém o
+   ter dito — e o elenco punha-os em cena outra vez.
+
+   A régua: o cânone sem estado não diz estado nenhum; e o estado final do
+   registo (`finais`) só se troca quando o Narrador o diz NESTE turno, no
+   próprio cânone que mandou — um «vivo» de há vinte turnos, relido, não é
+   uma ressurreição. Os outros estados (desaparecido, exilado…) trocam-se
+   como antes. A suíte prova que «nunca existiu» é o do boato
+   (teste-o-que-a-mescla-guarda §2). */
+export const ESTADO_SEM_VOLTA = Object.freeze({ finais: Object.freeze(["morto", "morta", "nunca existiu"]) });
+export const estadoSemVolta = (status) => typeof status === "string" && ESTADO_SEM_VOLTA.finais.includes(semAc(status).trim());
+
 /* Mescla uma atualização numa ficha existente: campos novos sobrescrevem,
    nunca apagam o que já existia (blindagem contra perda de memória).
    As notas sobrescrevem a prosa, nunca o que o sistema escreveu nelas

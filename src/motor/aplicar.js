@@ -56,7 +56,7 @@ import { itemConsumivel } from "../pocoes.js";
 import { peneirarCanone } from "../segredo-guardado.js";
 import { criarCidade } from "../mapa.js";
 import { garantirGeografia } from "../geografia.js";
-import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo, retomarContador } from "../npcs.js";
+import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo, retomarContador, estadoSemVolta } from "../npcs.js";
 import { aindaSoUmNome } from "../abertura.js";
 import { dadivasConcedidas, aplicarOMapa, aplicarAsMissoes, aplicarOsSinais } from "./meio-do-turno.js";
 
@@ -557,7 +557,12 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
            sem isto, este mesmo cânone recriaria "Delfina" do zero a cada
            turno, porque a chave literal "Delfina da Névoa" nunca entra no
            registo e o `continue` de cima não a barra de novo). */
-        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status: f.status || "vivo", notas: f.notas || "", ultimaVez: npcTurno, conhecidoEm: e0.dia,
+        /* o estado (29/10): o cânone sem estado não diz «vivo» a quem já tem
+           ficha, e o estado final dela só se troca pelo que o Narrador disse
+           neste turno (npcs.js#ESTADO_SEM_VOLTA) */
+        const disseAgora = !!(resp.mudancas.canone && resp.mudancas.canone[nome] && typeof resp.mudancas.canone[nome] === "object" && resp.mudancas.canone[nome].status);
+        const status = !chave ? (f.status || "vivo") : (f.status && (disseAgora || !estadoSemVolta((reg[chave] || {}).status)) ? f.status : "");
+        const dadosCanone = { papel: f.papel || "", genero: f.genero || "", local: f.local || "", status, notas: f.notas || "", ultimaVez: npcTurno, conhecidoEm: e0.dia,
           /* a marca do que só se ouviu (trilha B, 28/10): a pessoa do cânone que o Cronista
              marcou entra marcada — sem isto esta porta a criava como fato. A mescla não a
              copia para quem já é fato (npcs.js#mesclarNPC). */
