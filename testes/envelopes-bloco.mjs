@@ -41,7 +41,7 @@ const NOMES = {
   subtramas: ["fraseDaManha"],
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, motorEnvelopes };
 function osModulos({ novo }) {
@@ -74,9 +74,10 @@ const corteDe = (app) => (de, ate) => {
 export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "masmorraAVista", "masmorraTesouro", "masmorraSantuario", "masmorraBusca", "masmorraFuga", "correioDecreto", "correioCarta", "correioPeticao",
   "acampSemDescanso", "acampDescansado", "fogoSentar", "fogoDecisao", "fogoFicar", "coracaoResposta", "coracaoDecisao",
   "aberturaCampanha", "aberturaCapitulo", "aberturaCapituloNovo", "aberturaRetomada",
-  "viagemPartidaMapa", "viagemPartidaEscolha", "viagemTrecho", "viagemPassarOTempo", "viagemErmos", "viagemEmboscada"];
+  "viagemPartidaMapa", "viagemPartidaEscolha", "viagemTrecho", "viagemPassarOTempo", "viagemErmos", "viagemEmboscada",
+  "fioMarco", "fioRumores", "fioMundo", "fioVirada", "fioInterludio", "fioLutaDaChave"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -113,8 +114,17 @@ const ANCORAS = {
   viagemPassarOTempo: { antes: ["    const ondeEspero = lugarRef.current", "\n  };"], hoje: ['    enviar(oEnvelopeDaViagem("passarOTempo", ', "\n  };"] },
   viagemErmos: { antes: ["    enviar(`[ERMOS — FORRAGEAMENTO]", FIM], hoje: ['    enviar(oEnvelopeDaViagem("forrageamento", ', FIM] },
   viagemEmboscada: { antes: ["    return `[FUGA — TERRITÓRIO DO SISTEMA]", FIM], hoje: ['    return oEnvelopeDaViagem("emboscadaDaFuga", ', FIM] },
+  /* o fio da história: quatro notas de uma linha (o sítio devolve a nota do turno), o interlúdio
+     dentro da pauta (devolve a pauta) e a luta da chave, que se envia */
+  fioMarco: { antes: ['          notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + "[O MARCO EMPURRA]', FIM], hoje: ['          notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + oEnvelopeDoFio("marcoEmpurra")', FIM] },
+  fioRumores: { antes: ["          if (fora.rumores.length) notaRef.current = ", FIM], hoje: ["          if (fora.rumores.length) notaRef.current = ", FIM] },
+  fioMundo: { antes: ['        notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + "[O MUNDO VAI BUSCAR', FIM], hoje: ['        notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + oEnvelopeDoFio("oMundoVaiBuscar"', FIM] },
+  fioVirada: { antes: ['    notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + "[A VIRADA — "', FIM], hoje: ['    notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + oEnvelopeDoFio("virada"', FIM] },
+  fioInterludio: { antes: ['      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current)', FIM], hoje: ['      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current)', FIM] },
+  fioLutaDaChave: { antes: ["                  enviar(`[A LUTA DA CHAVE COMECA]", FIM], hoje: ['                  enviar(oEnvelopeDoFio("lutaDaChave", ', FIM] },
 };
-const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem" };
+const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
+  fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -271,6 +281,21 @@ export function viagemDoCaso(i) {
   };
 }
 
+/* O FIO DA HISTÓRIA: a nota do turno vazia e já com outra nota à frente;
+   os rumores da chave nenhum, um e dois; o degrau da escada e o que o mundo
+   diz; a virada de cada forma, com nenhum, um e dois passos; a luta da chave
+   com a ficha viva e sem ela. */
+export function fioDoCaso(i) {
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    fora: { rumores: [["Brann venceu Iolanda"], ["a Garra caiu", "o Rubro sangra"], []][i % 3] },
+    r: { escada: { degrau: 1 + (i % 4) }, intervencao: { diz: ["um mensageiro bate à porta", "a ponte cai"][i % 2] } },
+    rev: { forma: ["traidor", "herdeiro", "pacto"][i % 3] }, passos: [[], ["Iris some"], ["Iris some", "a guarda chega"]][(i >> 1) % 3],
+    p: [], porNaPauta: (p, k, txt) => [...p, [k, txt]], torneioRef: { current: { chave: i % 3 } },
+    f: { nome: ["Brann", "Iolanda da Garra"][i % 2] }, fichaViva: () => (i % 5 === 0 ? null : { nome: "Vera viva" }),
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -285,7 +310,7 @@ const PECAS = [
   "resumoDaqui", "chefesDoFio", "resumoCenaPrompt", "resumoProficienciaPrompt", "resumoPericiasPrompt",
   "resumoHeroismoPrompt", "resumoDescansoPrompt", "resumoRelogiosPrompt", "resumoMagiasPrompt", "resumoSintoniaPrompt",
   "resumoLegadoPrompt", "resumoMissoesPrompt", "resumoGrimorioPrompt", "resumoDadivasPrompt", "resumoTracosPrompt",
-  "resumoInvocacoesPrompt", "envelopeDoQueFicou", "resumoAscensao", "envelopeDaRetomada",
+  "resumoInvocacoesPrompt", "envelopeDoQueFicou", "resumoAscensao", "envelopeDaRetomada", "revelacaoDe", "envelopeDaChave", "provocacaoDoRival",
 ];
 export function dublesDosEnvelopes(k, { novo, bloco }) {
   const log = { chamadas: [], calados: [], faltas: [] };
@@ -340,6 +365,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "acampamento") Object.assign(S, acampamentoDoCaso(k.i), { personagem: { nome: "Vera do render" }, fecharANoite: (manha, txt) => { enviados.push([txt, seguro(manha)]); } });
     else if (g === "abertura") Object.assign(S, aberturaDoCaso(k.i));
+    else if (g === "fio") Object.assign(S, fioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "viagem") Object.assign(S, viagemDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;

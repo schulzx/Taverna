@@ -139,7 +139,10 @@ sec("7. ligado ao jogo");
     /mexerNaReviravolta/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP) && /diasEntreRegasDe\(rev\.forma\)/.test(APP));
   t("e a revelação sai de UMA pergunta, não de uma por virada",
     /quemPodeRevelar\(/.test(APP) && !/podeRevelar\(rev\.forma/.test(APP));
-  t("a virada cai pelo Livro (paga as sementes da forma)", /A VIRADA/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
+  /* movida na T2-A (o fio da história, 28/10/2026): o texto da virada saiu do App para
+     src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
+     teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
+  t("a virada cai pelo Livro (paga as sementes da forma)", /oEnvelopeDoFio\("virada", \{ revelacao: revelacaoDe\(rev\.forma\), passos \}\)/.test(APP) && /sementesDaReviravolta\(rev\.forma/.test(APP));
   /* v9.228 (R2) — A ÂNCORA MUDOU, E O MOTIVO FICA ESCRITO. A asserção
      antiga era `/alvoDaReviravolta/ && /"heranca_roubada"/`: ela guardava
      que o App tinha detector, e media isso pelo id de forma CRAVADO na
@@ -1135,7 +1138,10 @@ sec("9k. LEI 7 — o Narrador descobre junto: nada de bloco novo no prompt");
   t("e ela só é chamada no ramo de quem tem a vez",
     !!handler && antesDeCada.length >= 2 && antesDeCada.every((antes) => /vez\.quem === "(?:menor|maior)"/.test(antes)),
     `${antesDeCada.length} chamadas no handler`);
-  t("a verdade eleita entra no prompt num lugar só, pela nota do turno", (APP.match(/\[A VIRADA/g) || []).length === 1, String((APP.match(/\[A VIRADA/g) || []).length));
+  /* movida na T2-A (o fio da história, 28/10/2026): o texto da virada saiu do App para
+     src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
+     teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
+  t("a verdade eleita entra no prompt num lugar só, pela nota do turno", (APP.match(/oEnvelopeDoFio\("virada"/g) || []).length === 1 && !/\[A VIRADA/.test(APP), String((APP.match(/oEnvelopeDoFio\("virada"/g) || []).length));
   /* o `motivo` da arbitragem é BASTIDOR — a suíte o lê, a tela nunca. Se
      ele aparecer na nota do turno ou num texto de tela, o sistema passou
      a falar de si mesmo. */

@@ -234,3 +234,25 @@ Descreva o trecho sob esse clima e desenvolva o encontro acima, costurando com a
 export function oEnvelopeDaViagem(qual, dados) {
   return aFormaDe(ENVELOPES_DA_VIAGEM, qual, "da viagem")(dados || {});
 }
+
+/* ============================================================
+   7.º GRUPO — O FIO DA HISTÓRIA: as notas com que o diretor de histórias
+   empurra a cena (o marco cujo orçamento acabou, o encalhe que o mundo vem
+   buscar, a virada eleita — a nota do turno é por onde o Narrador descobre
+   a verdade, no mesmo instante que o jogador; o motivo da arbitragem nunca
+   sai do bastidor) e as três do torneio de Uma Noite (os rumores da chave,
+   o teto do interlúdio, a luta que o sistema já abriu). Sem acentos onde o
+   App não os tinha: o texto vai à letra.
+   ============================================================ */
+export const ENVELOPES_DO_FIO = {
+  marcoEmpurra: () => "[O MARCO EMPURRA] O orcamento desta parte acabou: RESOLVA a pendencia em uma frase e ENTRE no proximo marco agora, na mesma resposta.",
+  rumoresDaChave: ({ rumores }) => "[RUMORES DA CHAVE — chegam como conversa de acampamento] " + rumores.join("; ") + ".",
+  oMundoVaiBuscar: ({ degrau, diz }) => "[O MUNDO VAI BUSCAR — encalhe, degrau " + degrau + "] " + diz + ".",
+  /* `revelacao`: o nome da forma da virada (revelacaoDe, no App); `passos`: o dia seguinte */
+  virada: ({ revelacao, passos }) => "[A VIRADA — " + revelacao + "] Encene como consequencia do que ja foi semeado: " + passos.join("; ") + ".",
+  interludioDoTorneio: () => "[INTERLUDIO DE ACAMPAMENTO — curto: em ate DUAS cenas o sino da proxima chave toca. Nao invente lutas: a luta acontece quando o jogador entrar nela.]",
+  lutaDaChave: ({ quem }) => `[A LUTA DA CHAVE COMECA] ${quem} entra na arena contra o heroi. Narre a abertura da luta — o publico, o terreno, o primeiro olhar. O SISTEMA ja abriu o combate.`,
+};
+export function oEnvelopeDoFio(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_FIO, qual, "do fio")(dados || {});
+}

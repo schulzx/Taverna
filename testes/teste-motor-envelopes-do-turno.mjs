@@ -20,11 +20,15 @@
    O CORREIO E O DOMÍNIO: o decreto pregado, a carta enviada e a petição
    respondida. O 4.º, O ACAMPAMENTO E A FOGUEIRA: o fim do acampamento com e
    sem descanso, as três da noite à volta do fogo e as duas portas do coração.
+   O 5.º, A ABERTURA; o 6.º, A VIAGEM. O 7.º, O FIO DA HISTÓRIA: as quatro
+   notas do turno com que o diretor empurra a cena (o marco, os rumores da
+   chave, o mundo que vem buscar, a virada), o teto do interlúdio na pauta e
+   a luta da chave que o sistema já abriu.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -274,6 +278,43 @@ sec("10 · a viagem: os casos percorrem o que o texto decide, e a prova morde");
     ["viagemErmos", "o forrageamento sempre achado", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, achou: true }) }],
     ["viagemErmos", "as colheitas sem a descrição", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, colhidos: d.colhidos.map((c) => ({ ...c, desc: "?" })) }) }],
     ["viagemEmboscada", "a emboscada sem a nota", { oEnvelopeDaViagem: (q, d) => E(q, { ...d, nota: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("11 · o fio da história: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  /* as quatro notas: a nota do turno vazia e já com outra à frente (a nova entra na linha de baixo) */
+  const notas = ["fioMarco", "fioRumores", "fioMundo", "fioVirada"];
+  t("as quatro notas entram sozinhas e abaixo da que já havia", notas.every((b) => { const X = N(b); return conta(X, "[NOTA] já havia\n[") >= 80 && X.filter((x) => x && !x.startsWith("[NOTA]")).length >= 60; }));
+  const R = N("fioRumores");
+  t(`os rumores nenhum (${R.filter((x) => x === "" || x === "[NOTA] já havia").length}), um (${conta(R, "] Brann venceu Iolanda.")}) e dois (${conta(R, "] a Garra caiu; o Rubro sangra.")})`,
+    R.filter((x) => x === "" || x === "[NOTA] já havia").length >= 60 && conta(R, "] Brann venceu Iolanda.") >= 60 && conta(R, "] a Garra caiu; o Rubro sangra.") >= 60);
+  const M = N("fioMundo");
+  t("o mundo vai buscar em cada degrau da escada, com o que o mundo diz", [1, 2, 3, 4].every((d) => conta(M, "degrau " + d + "] ") >= 40) && conta(M, "] a ponte cai.") >= 100 && conta(M, "] um mensageiro bate à porta.") >= 100);
+  const V = N("fioVirada");
+  t(`a virada com nenhum (${conta(V, "semeado: .")}), um (${conta(V, "semeado: Iris some.")}) e dois passos (${conta(V, "Iris some; a guarda chega.")}), e o nome da forma`,
+    conta(V, "semeado: .") >= 60 && conta(V, "semeado: Iris some.") >= 60 && conta(V, "Iris some; a guarda chega.") >= 60 && conta(V, "[A VIRADA — <revelacaoDe ") >= 100);
+  const I = HOJE.fioInterludio.map((f) => f.texto);
+  t("o interlúdio entra na pauta como momento, depois da chave e do rival", I.every((p) => p.length === 1 && p[0][0] === "momento" && p[0][1].endsWith(" " + oEnvelopeDoFio("interludioDoTorneio"))));
+  const L = HOJE.fioLutaDaChave.map((f) => f.texto[0]);
+  t("a luta da chave com o nome do rival, para a ficha viva e (sem ela) a do render", conta(L.map((x) => x[0]), "] Iolanda da Garra entra na arena") >= 100 && conta(L.map((x) => x[0]), "] Brann entra na arena") >= 100 && new Set(L.map((x) => x[1])).size === 2);
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DO_FIO).length === 6 && (() => { try { oEnvelopeDoFio("nenhuma", {}); return false; } catch { return true; } })() && (() => { try { oEnvelopeDoFio("constructor", {}); return false; } catch { return true; } })());
+  const E = oEnvelopeDoFio;
+  const mordidas = [
+    ["fioMarco", "o marco que não manda resolver a pendência", { oEnvelopeDoFio: (q, d) => E(q, d).replace("RESOLVA a pendencia em uma frase e ", "") }],
+    ["fioRumores", "os rumores separados por vírgula", { oEnvelopeDoFio: (q, d) => E(q, d).replace("; ", ", ") }],
+    ["fioMundo", "o degrau da escada perdido", { oEnvelopeDoFio: (q, d) => E(q, { ...d, degrau: 1 }) }],
+    ["fioVirada", "a virada sem os passos do dia seguinte", { oEnvelopeDoFio: (q, d) => E(q, { ...d, passos: [] }) }],
+    ["fioVirada", "a virada que dá o nome cru da forma", { oEnvelopeDoFio: (q, d) => E(q, { ...d, revelacao: "traidor" }) }],
+    ["fioInterludio", "o interlúdio que deixa inventar lutas", { oEnvelopeDoFio: (q, d) => E(q, d).replace(" Nao invente lutas: a luta acontece quando o jogador entrar nela.", "") }],
+    ["fioLutaDaChave", "a luta da chave sem o nome do rival", { oEnvelopeDoFio: (q, d) => E(q, { ...d, quem: "o rival" }) }],
+    ["fioLutaDaChave", "a luta que manda abrir o combate", { oEnvelopeDoFio: (q, d) => E(q, d).replace(" O SISTEMA ja abriu o combate.", "") }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

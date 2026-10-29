@@ -81,9 +81,15 @@ sec("6. ligado ao jogo (M6)");
   t("o botão da luta existe, e só entre lutas", /A PROXIMA LUTA/.test(APP) && /minhaLuta\(torneioRef\.current\)/.test(APP));
   t("o rival entra com a defesa DE HERÓI explícita e a vida real", /defesa: defesaDe\(f, false\)/.test(APP) && /vida: f\.vidaMax/.test(APP));
   t("a luta real só se REGISTRA na chave", /registrarMinhaLuta\(T, venci\)/.test(APP));
-  t("as chaves correm sozinhas e viram rumor", /correrForaDeTela\(T\)/.test(APP) && /RUMORES DA CHAVE/.test(APP));
+  /* movida na T2-A (o fio da história, 28/10/2026): o texto dos rumores da chave saiu do App para
+     src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
+     teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
+  t("as chaves correm sozinhas e viram rumor", /correrForaDeTela\(T\)/.test(APP) && /oEnvelopeDoFio\("rumoresDaChave", \{ rumores: fora\.rumores \}\)/.test(APP));
   t("eliminado tem epílogo; campeão tem cinto", /epilogar\(avancarFaseTorneio\(T\)\)/.test(APP) && /O cinto e seu/.test(APP));
-  t("a pauta leva a chave e o teto do interlúdio", /envelopeDaChave\(torneioRef\.current\)/.test(APP) && /INTERLUDIO DE ACAMPAMENTO/.test(APP));
+  /* movida na T2-A (o fio da história, 28/10/2026): o texto do teto do interlúdio saiu do App para
+     src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
+     teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
+  t("a pauta leva a chave e o teto do interlúdio", /envelopeDaChave\(torneioRef\.current\)/.test(APP) && /oEnvelopeDoFio\("interludioDoTorneio"\)/.test(APP));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

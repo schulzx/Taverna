@@ -81,7 +81,10 @@ sec("5. ligado ao jogo");
   t("há um ref da escada e ele entra no save", /escadaRef/.test(APP) && /escada: escadaRef\.current/.test(APP));
   t("o snapshot lê missões abertas e diário parado", /missoesAbertas/.test(APP) && /diasSemDiario/.test(APP));
   t("a escada sobe no turno", /subirEscada\(escadaRef\.current/.test(APP));
-  t("o mundo vai buscar quando sobe um degrau", /O MUNDO VAI BUSCAR/.test(APP));
+  /* movida na T2-A (o fio da história, 28/10/2026): o texto da nota do encalhe saiu do App para
+     src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
+     teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
+  t("o mundo vai buscar quando sobe um degrau", /oEnvelopeDoFio\("oMundoVaiBuscar", \{ degrau: r\.escada\.degrau, diz: r\.intervencao\.diz \}\)/.test(APP));
   t("resumoDoEncalhe condensa para o autor", E.resumoDoEncalhe({ missoesAbertas: 20, diasSemDiario: 9 }).encalhado === true && E.resumoDoEncalhe({}).encalhado === false);
 }
 

@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -7406,7 +7406,7 @@ export default function Taverna() {
     /* a Noite-torneio fala pelo mesmo canal: a chave, o rival, o teto do
        interludio — instrucao de mesa, nunca nome de sistema */
     if (modoRef.current === "rapida" && noiteRef.current && noiteRef.current.prato === "torneio" && torneioRef.current && !combateRef.current) {
-      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current) + " " + provocacaoDoRival(torneioRef.current) + " [INTERLUDIO DE ACAMPAMENTO — curto: em ate DUAS cenas o sino da proxima chave toca. Nao invente lutas: a luta acontece quando o jogador entrar nela.]");
+      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current) + " " + provocacaoDoRival(torneioRef.current) + " " + oEnvelopeDoFio("interludioDoTorneio"));
     }
     /* MM13: o prenúncio do sino é um aviso de UM turno — a pauta o consome
        e apaga, para não repeti-lo enquanto ele espera para encher de vez. */
@@ -11113,7 +11113,7 @@ export default function Taverna() {
         const r = avancarEpisodio(episodioRef.current, { ritmo: "cena", teto, dia: diaRef.current });
         episodioRef.current = r.episodio;
         if (r.avancou) {
-          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[O MARCO EMPURRA] O orcamento desta parte acabou: RESOLVA a pendencia em uma frase e ENTRE no proximo marco agora, na mesma resposta.";
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoFio("marcoEmpurra");
         }
         if (r.fechou) {
           const L = garantirLivro(promessasRef.current);
@@ -11165,7 +11165,7 @@ export default function Taverna() {
           }
           const fora = correrForaDeTela(T);
           torneioRef.current = fora.torneio;
-          if (fora.rumores.length) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[RUMORES DA CHAVE — chegam como conversa de acampamento] " + fora.rumores.join("; ") + ".";
+          if (fora.rumores.length) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoFio("rumoresDaChave", { rumores: fora.rumores });
           return;
         }
         torneioRef.current = T;
@@ -11203,7 +11203,7 @@ export default function Taverna() {
       const r = subirEscada(escadaRef.current, snapshotDoEncalhe(), { dia: diaRef.current });
       escadaRef.current = r.escada;
       if (r.intervencao) {
-        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[O MUNDO VAI BUSCAR — encalhe, degrau " + r.escada.degrau + "] " + r.intervencao.diz + ".";
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoFio("oMundoVaiBuscar", { degrau: r.escada.degrau, diz: r.intervencao.diz });
       }
     } catch (e) { calou("mexerNoEncalhe", e); }
   };
@@ -11293,7 +11293,7 @@ export default function Taverna() {
        verdade eleita, no mesmo instante que o jogador. Nada disto vira bloco
        no prompt, e o `motivo` da arbitragem nunca sai do bastidor. */
     const passos = oDiaSeguinte(rev.forma, { alvo: rev.alvo, vilao: (nemesisRef.current || {}).nome || "" });
-    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + "[A VIRADA — " + revelacaoDe(rev.forma) + "] Encene como consequencia do que ja foi semeado: " + passos.join("; ") + ".";
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoFio("virada", { revelacao: revelacaoDe(rev.forma), passos });
     return { ...rev, revelada: true, reveladaEm: diaRef.current };
   };
 
@@ -27112,7 +27112,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   noiteRef.current = { ...noiteRef.current, lutaEmCurso: true };
                   const r = abrirCombate(null, { jaNoRef: true });
                   if (r && r.msgs && r.msgs.length) pushMsgs(r.msgs);
-                  enviar(`[A LUTA DA CHAVE COMECA] ${f.nome} entra na arena contra o heroi. Narre a abertura da luta — o publico, o terreno, o primeiro olhar. O SISTEMA ja abriu o combate.`, fichaViva() || personagem, []);
+                  enviar(oEnvelopeDoFio("lutaDaChave", { quem: f.nome }), fichaViva() || personagem, []);
                 }} className="w-full tv-display text-lg py-2.5 rounded-lg mb-2" style={{ background: T.amber, color: T.onAccent }}>
                   ⚔ A PROXIMA LUTA — {(meuRival(torneioRef.current) || {}).nome}
                 </button>

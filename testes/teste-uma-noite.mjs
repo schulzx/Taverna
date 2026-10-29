@@ -103,7 +103,10 @@ sec("8. ligada ao jogo (M6)");
   t("iniciarNoite prepara o terreno: sementes do episódio E do pronto", /sementesDoEpisodio\(episodioId/.test(APP) && /dona: "pronto"/.test(APP));
   t("a postura da noite é declarada, não derivada", /posturaDaNoite\(episodioId\)/.test(APP));
   t("os quatro motores de campanha dormem na noite", (APP.match(/modoRef\.current === "rapida"\) return;/g) || []).length >= 4);
-  t("o relógio-contrato vive: cena conta e o marco empurra", /cenaResolvida\(episodioRef\.current\)/.test(APP) && /tetoDoMarco\(/.test(APP) && /O MARCO EMPURRA/.test(APP));
+  /* movida na T2-A (o fio da história, 28/10/2026): o texto do marco que empurra saiu do App para
+     src/motor/envelopes-do-turno.js e é provado byte a byte contra o App de antes em
+     teste-motor-envelopes-do-turno §11; aqui fica o que é do App: pedir a nota ao motor, com os dados */
+  t("o relógio-contrato vive: cena conta e o marco empurra", /cenaResolvida\(episodioRef\.current\)/.test(APP) && /tetoDoMarco\(/.test(APP) && /oEnvelopeDoFio\("marcoEmpurra"\)/.test(APP));
   t("o fim fecha em veredito com as contas do Livro", /vereditoDaNoite\(\{/.test(APP) && /fecharNoite\(/.test(APP));
   t("a conversão pula a criação: o herói já existe", /convertidoRef\.current/.test(APP) && /converterParaCampanha\(fichaViva\(\)/.test(APP));
   /* v9.356 (MM17 B): a criação passou a escolher região ou continente
