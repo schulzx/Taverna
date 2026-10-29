@@ -586,17 +586,13 @@ sec("8. a voz — o sistema não fala de si mesmo");
    ============================================================ */
 sec("9. ligado ao jogo — a fila do App e os leitores da tabela");
 {
-  /* A ORDEM NO APP. A seção 3 prova a ordem CHAMANDO as três funções; isto
-     confere que o `App.jsx` as chama na mesma ordem — uma coisa é a fila
-     estar certa, outra é a mesa usar essa fila. */
-  const APP = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-  const iAmort = APP.indexOf("amortecerDano(persTracos");
-  t("o App amortece o golpe do herói pela porta de `tracos.js`", iAmort > 0);
-  const bloco = APP.slice(iAmort, iAmort + 4000);
-  const iRep = bloco.indexOf("repartirDano(");
-  const iAbr = bloco.indexOf("passarPeloAbrigo(persTracos");
-  t("e reparte com a invocação DEPOIS de amortecer", iRep > 0);
-  t("e o abrigo vem por último", iAbr > iRep, `repartir em ${iRep}, abrigo em ${iAbr}`);
+  /* MOVIDAS (28/10, T2-A, o oficial): A ORDEM NO APP. As três (o App
+     amortece, reparte DEPOIS, o abrigo por último) mediam por indexOf o
+     texto da fila na rodada do herói. A fila saiu do App para
+     src/motor/golpe-no-corpo.js#aFilaDoGolpeNoHeroi, e a mesma intenção —
+     a mesa usa a fila da seção 3, nesta ordem — prova-se CORRENDO-a em
+     teste-motor-golpe-no-corpo §4 e §8 (275/275 contra o recorte de c494a04,
+     com a mordida da fila de abrigo à frente). Não há mais texto a medir. */
 
   /* A CATRACA (`teste-ligacao`): todo export precisa de ≥2 leitores, e uma
      regra nova sem leitor quebra a suíte no dia em que nasce. Esta suíte é

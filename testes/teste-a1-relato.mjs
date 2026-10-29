@@ -89,28 +89,22 @@ const corpoPush = (() => {
    vazio — ficavam fora da dobra. A luta que FECHOU e cujo turno ainda
    corre (`fechoDaLutaRef`) também carimba. A intenção é a mesma; a régua
    passou a ser o turno, não o instante. */
-t("pushMsgs carimba com a luta aberta ou com a luta a fechar",
-  /if \(\(combateRef\.current \|\| fechoDaLutaRef\.current\) && Array\.isArray\(novas\)\) novas = novas\.map\(/.test(corpoPush));
+/* MOVIDAS (28/10, T2-A, o oficial): o carimbo saiu do App para
+   src/motor/carimbo-da-luta.js#carimbarALuta, e o que a regra FAZ (a luta
+   aberta ou a fechar, o eco e a linha marcados, a cópia imutável, o lixo
+   intacto, a já marcada sem cópia) prova-se lá, chamando-a, em
+   teste-motor-carimbo-da-luta §4 — 275/275 contra o recorte à letra de c494a04.
+   Saíram daqui as seis que corriam a expressão lida do App por new Function
+   (legível, o eco, a linha, imutável, lixo, a já marcada): a função existe e
+   corre-se, já não há expressão para ler. Ficam as TRÊS de fiação — o que só
+   o App pode provar: que a chamada lhe passa as duas luzes, que o acompanhar
+   corre antes e que a marca entra antes da retenção do portão. */
+t("pushMsgs carimba com a luta aberta ou com a luta a fechar, pela peça do motor",
+  /novas = carimbarALuta\(novas, combateRef\.current \|\| fechoDaLutaRef\.current\);/.test(corpoPush));
 t("e quem vê abrir e fechar a luta corre ANTES do carimbo, em try/calou",
-  /try \{ acompanharALuta\(\); \} catch \(e\) \{ calou\("acompanhar a luta", e\); \}\s*\n\s*try \{\s*\n\s*if \(\(combateRef/.test(corpoPush));
+  /try \{ acompanharALuta\(\); \} catch \(e\) \{ calou\("acompanhar a luta", e\); \}\s*\n\s*try \{\s*\n\s*novas = carimbarALuta\(/.test(corpoPush));
 t("o carimbo está em try/calou, ANTES da retenção do portão (a mensagem retida também leva a marca)",
-  /try \{[\s\S]*?naLuta: true[\s\S]*?\} catch \(e\) \{ calou\("carimbar naLuta na mensagem", e\); \}\s*\n\s*if \(seguraRef\.current\)/.test(corpoPush));
-
-/* A PROVA QUE VALE: a expressão do carimbo é lida do App e corrida aqui,
-   não copiada à mão. */
-const expr = (corpoPush.match(/novas = (novas\.map\(\(m\) => \(.*?\)\));/) || [])[1];
-t("a expressão do carimbo é legível do App", !!expr);
-if (expr) {
-  const carimbar = new Function("novas", `return ${expr};`);
-  const jog = { autor: "jogador", texto: "golpeio" }, sis = { autor: "sistema", texto: "⚔ 6" };
-  const out = carimbar([jog, sis, null]);
-  t("o eco do jogador leva a marca", out[0].naLuta === true && out[0].autor === "jogador" && out[0].texto === "golpeio");
-  t("a linha do sistema leva a marca", out[1].naLuta === true);
-  t("imutável: a mensagem original não foi tocada", jog.naLuta === undefined && sis.naLuta === undefined && out[0] !== jog);
-  t("e lixo passa intacto", out[2] === null);
-  const ja = { autor: "mestre", texto: "x", naLuta: true };
-  t("a que já tem a marca não é copiada outra vez", carimbar([ja])[0] === ja);
-}
+  /try \{\s*\n\s*novas = carimbarALuta\([^\n]*\n\s*\} catch \(e\) \{ calou\("carimbar naLuta na mensagem", e\); \}\s*\n\s*if \(seguraRef\.current\)/.test(corpoPush));
 const acompanhar = corpoDe("const acompanharALuta = () => {", "\n  };");
 t("a luta que fecha FORA de um turno não fica a carimbar: encerra-se no próximo tique",
   /if \(!turnoDoReciboRef\.current\) \{[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?encerrarOFechoDaLuta\(f, fichaViva\(\)\)/.test(acompanhar));

@@ -6,7 +6,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas, saidasDeUmPassoPrompt } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, testeConcentracao, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher, bandoAoVoltar, relogioDoTerritorio } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 /* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
@@ -326,19 +326,21 @@ function horaCheiaFalada(hora) {
 import { bonusProficiencia, ehProficiente, MOD_MAX_5E, xpDoProximoNivel, XP_POR_DADIVA, TEMPO, minutosDoContexto, DADIVAS_EPICAS, resumoEpico } from "./regras.js";
 import { TIPOS_CARTA, CUSTO_CARTA, garantirCorreio, chanceResposta, criarCarta, resolverPeticao, leituraDaPeticao, processarDiaCorreio } from "./correio.js";
 import { todasAsLinhas as linhasDeDadivas, ataquesExtras, danoExtraDeDadiva, descontoDePM, bonusSocialDeDadiva, temVantagemMental, dobraMovimento, ignoraTerrenoDificil, criticoMinimo, imuneA, vantagemDeItem, refazerDisponivel, gastarRefazer, repousarDadivas, segundoFolegoDisponivel, gastarSegundoFolego, resumoDadivasPrompt, DADIVAS_PROMPT } from "./dadivas.js";
-import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, amortecerDano, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
+import { comDom, vantagemDeTraco, vantagemMentalDeTraco, imuneDeTraco, ignoraDificilPorTraco, oficioDeTraco, refazerDeTracoDisponivel, gastarRefazerDeTraco, sorteDisponivel, gastarSorte, firmeDisponivel, gastarFirme, repousarTracos, textoDoTraco, resumoTracosPrompt } from "./tracos.js";
 import { bonusDeBancada, componentesExtras, bonusDeNavegacao, despojosExtras, bonusDeTeste, precoDeVenda, precoDeCompraPara, moedasDeEspolio, resumoProfissaoPrompt } from "./profissoes.js";
 import { criarOficina, anotar as anotarOficina, bilheteDaOficina, OFICINA_PROMPT } from "./oficina.js";
 import { gatilhosDe, romperPorGatilho, estaInvisivel, seguraEmPe, gastarSegura, GATILHOS_PROMPT } from "./gatilhos.js";
 import { controleDe, aplicarControle, expirarControles, estaProvocando, CONTROLE_PROMPT } from "./controle.js";
-import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, repartirDano, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
+import { invocacaoDe, criarInvocacoes, limiteDeInvocacoes, conjuracoesAtivas, invocacoesDe, expirarInvocacoes, expirarPorMinuto, dispensarTodas, sacrificarInvocacao, temVozDeComando, temComandoAtacar, resumoInvocacoesPrompt, INVOCACOES_PROMPT } from "./invocacoes.js";
 import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, ehGemea, assumirForma, desfazerForma, expirarForma, estaEmForma, danoDaForma, magiaTravadaPelaForma, reerguer, temRegraPropria, erguerGuarda, expirarGuardas, ehReescrever, reescreverInstante, limiarDe, abaixoDoLimiar, colherPorLimiar, ignoraDoGolpe, linhaDoIgnorar, notaDoIgnorar, apressar, expirarPressa, acoesPorRodada, HABILIDADES_PROMPT } from "./habilidades.js";
 /* v9.265 (H1): SO `aplicarPoder`. `poder-de-classe.js` tambem exporta um
    `poderDe`, e o nome ja esta ocupado aqui desde a v9.x pelo de `poder.js`,
    que e outra coisa (o INDICE de poder de uma ficha). Importar os dois
    trocaria um pelo outro calado. */
 import { aplicarPoder } from "./poder-de-classe.js";
-import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMagia, efeitoEmConcentracao, quebrarConcentracao, notaDosBuffs, absorverDano } from "./efeitos.js";
+import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMagia, quebrarConcentracao, notaDosBuffs } from "./efeitos.js";
+import { carimbarALuta } from "./motor/carimbo-da-luta.js";
+import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi } from "./motor/golpe-no-corpo.js";
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
@@ -7907,13 +7909,9 @@ export default function Taverna() {
           regressao fora da familia fica em zero sem ninguem precisar lembrar.
      UMA porta para os sete sitios: sete try/catch soltos sao sete chances de
      um deles nascer diferente, que e a forma de bug que esta casa ja pagou. */
-  const passarPeloAbrigo = (quem, dano, nome = "") => {
-    try {
-      const ab = absorverDano(quem, dano);
-      if (!ab || !(ab.absorvido > 0)) return { pers: quem, dano, linha: "" };
-      return { pers: ab.pers, dano: ab.dano, linha: nome ? String(ab.linha).replace("🛡 ", "🛡 " + nome + " — ") : ab.linha };
-    } catch (e) { calou("abrigo", e); return { pers: quem, dano, linha: "" }; }
-  };
+  /* T2-A (28/10): o corpo da porta mora em src/motor/golpe-no-corpo.js#oAbrigoDoGolpe,
+     a letra igual (275/275 contra c494a04); daqui sai so o `calou` da casa. */
+  const passarPeloAbrigo = (quem, dano, nome = "") => oAbrigoDoGolpe(quem, dano, nome, { calou });
 
   /* ------------- O QUE ELE SEGURAVA CAI AQUI (v9.236 · C2b) -------------
      A irma de `passarPeloAbrigo`, e nasce pelo mesmo motivo: sao TRES sitios
@@ -7949,20 +7947,8 @@ export default function Taverna() {
      `linha` VAZIA E O UNICO SINAL de que nada aconteceu — sem magia segurada,
      sem dano ou com o teste aguentado, o sitio nem toca na ficha. E assim que
      a regressao de quem nao conjura fica em zero sem ninguem precisar lembrar. */
-  const segurarOuPerder = (quem, dano, nome = "") => {
-    try {
-      if (!quem || !(dano > 0)) return { pers: quem, linha: "" };
-      const segurada = efeitoEmConcentracao(quem);
-      if (!segurada) return { pers: quem, linha: "" };
-      const tc = testeConcentracao(dano, atributoEfetivo(quem, "vigor"), segurada.nome);
-      if (tc.manteve) return { pers: quem, linha: "" };
-      return {
-        pers: quebrarConcentracao(quem, segurada.nome),
-        magia: segurada.nome,
-        linha: nome ? String(tc.linha).replace("💢 ", "💢 " + nome + " — ") : tc.linha,
-      };
-    } catch (e) { calou("concentracaoDoCompanheiro", e); return { pers: quem, linha: "" }; }
-  };
+  /* T2-A (28/10): o corpo mora em src/motor/golpe-no-corpo.js#aConcentracaoDoGolpe. */
+  const segurarOuPerder = (quem, dano, nome = "") => aConcentracaoDoGolpe(quem, dano, nome, { calou });
 
   /* ----------- E O QUE ELE JA SEGURAVA CEDE AQUI (v9.237 - C3) -----------
      A terceira irma de `passarPeloAbrigo` e de `segurarOuPerder`, e nasce
@@ -9096,7 +9082,7 @@ export default function Taverna() {
        vazio. */
     try { acompanharALuta(); } catch (e) { calou("acompanhar a luta", e); }
     try {
-      if ((combateRef.current || fechoDaLutaRef.current) && Array.isArray(novas)) novas = novas.map((m) => (m && typeof m === "object" && !m.naLuta ? { ...m, naLuta: true } : m));
+      novas = carimbarALuta(novas, combateRef.current || fechoDaLutaRef.current); /* T2-A (28/10): a regra mora em src/motor/carimbo-da-luta.js */
     } catch (e) { calou("carimbar naLuta na mensagem", e); }
     if (seguraRef.current) { seguraRef.current = [...seguraRef.current, ...novas]; return; }
     mensagensRef.current = [...mensagensRef.current, ...novas];
@@ -16144,39 +16130,18 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
              redução anã a veneno e fogo e a Pele de Pedra do Goliath agem
              sobre o GOLPE, não sobre a ficha depois — e este é o único ponto
              em que o dano do inimigo vira PV do herói. */
-          const amort = amortecerDano(persTracos, a.r.dano, a.r.tipoDano || "fisico");
-          if (amort.linhas.length) {
-            persTracos = amort.pers;
-            a.r.dano = amort.dano;
-            amort.linhas.forEach((t) => linhasSis.push({ autor: "sistema", texto: t }));
-          }
-          /* v9.46: ELO VITAL e FUSÃO ESPIRITUAL. As duas dizem, desde
-             sempre, que a invocação leva o golpe pelo dono — e as duas
-             dependiam de uma invocação que nunca existia. Fica DEPOIS do
-             amortecimento de origem porque a criatura recebe o golpe como
-             ele chega ao herói, já aparado pelo corpo dele. */
-          /* `grupoAtual` é a autoridade sobre o grupo dentro deste laço —
-             o dano em companheiro já foi escrito nele. Entra e sai por ele,
-             senão a invocação apanharia numa cópia que ninguém lê. */
-          const rep = repartirDano({ ...persTracos, grupo: grupoAtual }, a.r.dano);
-          if (rep.linhas.length) {
-            grupoAtual = rep.pers.grupo || grupoAtual;
-            a.r.dano = rep.dano;
-            rep.linhas.forEach((t) => linhasSis.push({ autor: "sistema", texto: t }));
-          }
-          /* v9.233: O ABRIGO ENCONTRA O GOLPE, e encontra por ULTIMO nesta
-             fila de proposito: origem (amortecer), invocacao (repartir) e so
-             entao o abrigo, porque ele se gasta contra o que de fato chega ao
-             corpo — o mesmo lugar que `arena.js` lhe deu. `persTracos` e a
-             autoridade sobre a ficha dentro deste laco, e escrever nele e o
-             que GASTA a protecao: sem isso ela pararia um golpe por rodada,
-             para sempre. */
-          const abrH = passarPeloAbrigo(persTracos, a.r.dano);
-          if (abrH.linha) {
-            persTracos = abrH.pers;
-            a.r.dano = abrH.dano;
-            linhasSis.push({ autor: "sistema", texto: abrH.linha });
-          }
+          /* T2-A (28/10): A FILA mora em src/motor/golpe-no-corpo.js#aFilaDoGolpeNoHeroi,
+             na ordem de sempre: a ORIGEM (amortecer: a Pele de Pedra, a resistência,
+             a redução anã) age sobre o golpe; a INVOCAÇÃO (repartir: o Elo Vital, a
+             Fusão) recebe-o como ele chega ao herói; o ABRIGO por último, contra o
+             que de facto chega ao corpo. `persTracos` e `grupoAtual` são as
+             autoridades deste laço: entram e saem por ela, e escrever neles é o que
+             GASTA a proteção. */
+          const fila = aFilaDoGolpeNoHeroi(persTracos, grupoAtual, a.r.dano, a.r.tipoDano, { calou });
+          persTracos = fila.pers;
+          grupoAtual = fila.grupo;
+          a.r.dano = fila.dano;
+          linhasSis.push(...fila.mensagens);
           danoNoJogador += a.r.dano;
         }
         /* v9.54: A MARIONETE BATE E O PV CAI. Este `else` tratava tudo o que
@@ -16256,28 +16221,13 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
          PM e um turno por uma magia tem de ler o que a derrubou.
          O try/catch é a lei "nunca pode custar o turno": se o teste estourar,
          a rodada segue e a magia fica de pé — o recuo que não inventa perda. */
+      /* T2-A (28/10): o teste, a 🎲 de quem pediu, a linha sem prefixo e a nota ao
+         Narrador SÓ no turno da queda (o canal por turno, nunca o prompt estático)
+         moram em src/motor/golpe-no-corpo.js#aQuebraDoHeroi. */
       try {
-        const concentrando = efeitoEmConcentracao(persBase);
-        if (concentrando) {
-          const tc = testeConcentracao(danoNoJogador, atributoEfetivo(persBase, "vigor"), concentrando.nome);
-          const extra = [];
-          if (mostrarRolagensRef.current) extra.push({ autor: "sistema", texto: `🎲 ${tc.texto}` });
-          if (!tc.manteve) {
-            /* `tc.linha` já chega com emoji e pontuação, no molde do 🛡 do
-               abrigo: prefixar qualquer coisa aqui seria escrever a cena duas
-               vezes. E ela é vazia quando a magia aguenta — por isso só entra
-               deste lado do `if`. */
-            extra.push({ autor: "sistema", texto: tc.linha });
-            persConcQuebrada = concentrando.nome;
-            /* A NOTA AO NARRADOR, e só no turno da queda. `ECONOMIA_ACAO_PROMPT`
-               promete há versões "quando quebrar, narre o efeito se desfazendo
-               na hora" — promessa sem sinal: o Mestre nunca ficava sabendo que
-               a magia tinha caído. Vai pela nota dinâmica, que é o canal por
-               turno; somar isto ao prompt estático é o que o teto proíbe. */
-            notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[CONCENTRAÇÃO — QUEBRADA PELO SISTEMA] O golpe me fez perder "${concentrando.nome}": a magia se desfez agora e o sistema já a tirou da minha ficha. Narre o efeito se desmanchando no instante do impacto e trate a cena sem ele daqui em diante — não a devolva, não a recalcule e não cobre outro preço por ela.`;
-          }
-          if (extra.length) pushMsgs(extra);
-        }
+        const qc = aQuebraDoHeroi(persBase, danoNoJogador, { mostrarRolagens: mostrarRolagensRef.current, nota: notaRef.current, calou });
+        if (qc.quebrada) { persConcQuebrada = qc.quebrada; notaRef.current = qc.nota; }
+        if (qc.mensagens.length) pushMsgs(qc.mensagens);
       } catch (e) { calou("quebraDaConcentracao", e); }
     }
     let persAtual = { ...persTracos, vida: Math.max(0, persTracos.vida - danoNoJogador), mana: Math.max(0, (persTracos.mana || 0) - pmReacaoRef.current), grupo: grupoAtual };
