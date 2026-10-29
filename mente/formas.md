@@ -12387,3 +12387,180 @@ chega a ele fora de cena). Em `pauta-desenho.md`, *Para a pessoa decidir*.
   da vista. E na sessão as fichas deram **14 ações contra 4** do «Aceitar». Agora o grupo começa em
   **x = 50** e a oferta em **x = 479**, ainda à vista. **Para o `desenho` confirmar** (a decisão foi
   minha, com o número, por ordem do `regente`); voltar é trocar a tabela.
+
+## T3 · o mundo que outra mesa escreve: o glifo que falta e o tom da cena (`desenho`, 29/10)
+
+A trilha A (84e5bc1) tirou o glifo do cartão de gênero da chave do nome e deixou
+duas perguntas para esta mesa (`mente/diario.md`, bloco v9.556–v9.558, «não soube»).
+A pessoa disse «pode fazer» (29/10). As duas respostas seguem a mesma lei: **o mundo
+diz um NOME de um vocabulário fechado; a tela tem a tabela que desenha cada nome; e
+o que o mundo não diz cai num valor escrito, nunca no vazio.**
+
+Figma: página **`T3 · o tom da cena e o glifo do mundo`** (`260:82`, quadro `260:83`)
+com o par antes/depois; coleção **`Tom da cena (TOM_DA_CENA)`**
+(`VariableCollectionId:260:67`, 14 cores `<tom>/topo` · `<tom>/pe`, escopo
+`FRAME_FILL`, code syntax `TOM_DA_CENA.<tom>.<parada>`), e as paradas dos sete
+ladrilhos *depois* estão ligadas a elas; **`Glifo/globo`** (`261:258`) na família de
+`V3 · os ícones` (`226:68`), e os cartões *depois* usam instâncias dele.
+
+### 1 · O gênero sem glifo leva o globo
+
+**Decisão:** um cartão de gênero sem `glifo` desenha **`globo`** — um glifo NOVO na
+família `GLIFOS` (Lucide `globe`, ISC, grelha 24, traço `TRACO_DO_GLIFO`), e não um
+dos sete que já existem.
+
+**Porquê este, e não outro da lista** (a regra da família, §V3: *um glifo, uma coisa*;
+*o glifo nomeia o assunto, nunca o veredito*):
+
+| candidato | o que já quer dizer | porque não |
+|---|---|---|
+| nenhum (hoje) | — | o cartão de um mundo novo fica **mudo** ao lado de seis com ícone: lê-se como defeito, ou como «este não conta» |
+| `faiscas` / `faisca` | Universo próprio **e** a magia | dois cartões vizinhos com a mesma cara = a mesma ação com duas caras; e diz «magia» de um mundo que pode não ter |
+| `castelo`, `foguete`… | um gênero concreto | o mundo novo parece fantasia (ou ficção) disfarçada |
+| `mapa` (bússola) | viajar — e é o Steampunk | idem |
+| `desconhecido` (`?`) | «o que ainda não viste» | é o sistema a falar de si: «falta-me um ícone». O jogador lê mistério onde só há omissão |
+| `estrela` (a runa) | o ornamento dos fios | ornamento é `aria-hidden` por lei; não pode carregar um sentido |
+| **`globo`** | **um mundo** | diz exatamente o que o cartão é — um mundo — sem dizer qual. Verdadeiro para qualquer gênero |
+
+**O nome também entra no vocabulário:** `ESQUEMA_DO_CENARIO.glifos` passa de 7 a **8**
+(`globo` no fim); um autor pode escolhê-lo de propósito. O recuo é da TELA, não do
+mundo: `glifoDoGenero(nome)` devolve o componente do nome, e o do `globo` quando o nome
+falta **ou** não está na tabela (defesa; o validador já recusa o nome de fora).
+
+**A prova (medida):** o globo veste as mesmas tintas dos sete cartões de hoje — repouso
+`inkDim` sobre `panel` **6,00:1**, escolhido `amberSoft` sobre `panel` **12,27:1**
+(WCAG 2.2, 1.4.11 pede 3:1 para objeto gráfico). Nenhum número muda; muda o cartão que
+era mudo. Par no Figma: *ANTES — sem ícone* · *DEPOIS — repouso* · *DEPOIS — escolhido*,
+com «Ópera espacial» de exemplo.
+
+### 2 · O fundo da cena sai de um tom do mundo
+
+**Antes:** `ModalCena` (App ~808) guarda `climaFundo`, **sete gradientes literais**
+chaveados pelo `label` do gênero (`"Fantasia medieval"`…) mais o recuo — catorze cores
+fora de `T`, e um mundo novo cai sempre no recuo, por mais escuro que seja o seu horror.
+
+**Depois:** cada cartão de `generos.criacao[]` ganha **`tom`** opcional, um nome de
+`ESQUEMA_DO_CENARIO.tons` (fechado, **7**); a cor vive em **`TOM_DA_CENA`** (`estilo.js`),
+e o fundo da cena é `fundoDaCena(tom)`. **Os sete gradientes de hoje viram os sete
+tons, com os mesmos hex, escritos com a mesma caixa** — o mundo padrão sai ao byte.
+
+Os nomes são de **tom**, não de gênero, para que outra mesa os reuse sem mentir (um
+mundo de piratas pode querer `aco`; um de deuses mortos, `breu`):
+
+| tom | topo → pé (160deg) | no mundo padrão | pior caso (contra as duas paradas) |
+|---|---|---|---|
+| `crepusculo` | `#2A2036` → `#1a1420` | Fantasia medieval | amberSoft 10,78 · ink 12,20 · danger 5,57 |
+| `aco` | `#16232e` → `#0e1620` | Ficção científica | 11,14 · 12,61 · 5,76 |
+| `magenta` | `#2a1030` → `#10121e` | Cyberpunk | 12,05 · 13,63 · 6,23 |
+| `breu` | `#1a1420` → `#0a0a10` | Horror cósmico | 12,57 · 14,22 · 6,50 |
+| `poeira` | `#2b2418` → `#161208` | Pós-apocalíptico | 10,70 · 12,11 · **5,53** |
+| `cobre` | `#2a2018` → `#15100a` | Steampunk | 11,11 · 12,57 · 5,74 |
+| `noite` | `#241C33` → `#12101a` | Universo próprio, **e o recuo** | 11,36 · 12,85 · 5,87 |
+
+**A prova (medida, WCAG 2.2 1.4.3):** as três tintas de texto do modal — o cabeçalho
+`amberSoft` (mono 10), os nomes `ink` (12) e o «⚔ contra» `danger` (mono 9) — medidas
+contra **as duas paradas** de cada tom; o pior de todos é `danger` sobre o topo de
+`poeira`, **5,53:1**, acima de 4,5 (AA para texto pequeno). O anel `violet` dos
+aliados (objeto, 3:1) tem o pior em **4,87:1**. **Temas: o jogo tem um só** — `T` é
+escuro e não há folha clara nem `prefers-color-scheme` em `src/`; medi o que existe e
+não inventei um segundo. Nada destes números é novo: são os gradientes de hoje,
+medidos pela primeira vez.
+
+**A catraca que isto compra:** um tom só entra em `TOM_DA_CENA` se `ink`, `amberSoft`
+e `danger` passarem de **4,5:1 contra as duas paradas**. Uma outra mesa escolhe o tom
+pelo nome; quem escolhe a cor é esta mesa, e a suíte guarda a porta.
+
+**O que o recuo faz:** sem `tom`, com um `tom` fora da tabela, ou com um `mundo.genero`
+que não é cartão da criação (o save antigo, o Universo próprio de texto livre), o fundo
+é `noite` — exatamente o recuo de hoje.
+
+### 3 · O pedido de construção
+
+Ordem: o motor primeiro (é o que a suíte lê), depois as peças, por fim o App. **Nenhum
+bump de `VERSAO`** — é de quem sobe.
+
+**a) `src/cenario.js` (motor — `backend` ou `oficial`, fora do App)**
+- `ESQUEMA_DO_CENARIO.glifos`: acrescentar `"globo"` no fim (7 → 8).
+- `ESQUEMA_DO_CENARIO.tons`: NOVO, `Object.freeze(["crepusculo", "aco", "magenta",
+  "breu", "poeira", "cobre", "noite"])`, com o comentário do glifo (o JSON não leva
+  cor; a tela tem a tabela — `estilo.js` `TOM_DA_CENA`; fechado).
+- `generoDaCriacao`: `{ id, label, dica, glifo: "glifo?", tom: "tom?" }`.
+- `TIPOS.tom`: o mesmo molde do `TIPOS.glifo` — `includes` em
+  `ESQUEMA_DO_CENARIO.tons`, e a mensagem «um tom da cena (…)» com a lista. O erro diz o
+  caminho (`generos.criacao[i].tom`).
+- `export function tomDoGenero(rotulo, cenario = cenarioAtivo())` — pura: devolve o
+  `tom` do cartão cujo `label === rotulo`, ou `undefined`. Leitores: o App e a suíte.
+
+**b) `src/cenario-padrao.js` (motor)**
+- os sete cartões ganham `tom`: fantasia `crepusculo` · scifi `aco` · cyberpunk
+  `magenta` · horror `breu` · posapoc `poeira` · steampunk `cobre` · livre `noite`.
+- o cabeçalho (linhas ~42–47) diz o `tom` ao lado do `glifo`.
+- **o mundo padrão continua com glifo explícito nos sete** — o globo não aparece nele.
+
+**c) `src/estilo.js` (`aprendiz`)**
+- `export const TOM_DA_CENA = { crepusculo: { topo: "#2A2036", pe: "#1a1420" }, … }` com
+  os sete pares da tabela acima, **na caixa de hoje** (é o que deixa o texto igual).
+- `export function fundoDaCena(tom)` devolve `linear-gradient(160deg,<topo>,<pe>)` —
+  sem espaço depois da vírgula, como hoje; tom ausente ou fora da tabela → `noite`. O
+  ângulo e o nome do recuo são constantes do módulo, não literais na função.
+  *(A lei de 24/09: se algum comentário for para dentro de um template-literal, sem
+  crase.)*
+
+**d) `src/glifos.js` + `src/ui.jsx` (`aprendiz`)**
+- `GLIFOS.globo`: `{ de: "lucide:globe", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M12 2a14.5 14.5 0 0 0 0 20a14.5 14.5 0 0 0 0-20M2 12h20" }`,
+  com o comentário «um mundo, sem dizer qual: o cartão de gênero cujo mundo não diz o seu».
+- `GLIFO_DO_GENERO` **sai do App para `ui.jsx`** (mover vale mais que remendar), com a
+  oitava entrada `globo: IconeGlobo` (`IconeGlobo` = `<Glifo nome="globo">`, padrão
+  `tamanho 20`, `cor T.amberSoft`, como os irmãos), e
+  `export function glifoDoGenero(nome)` → o componente, recuo `IconeGlobo`.
+
+**e) `src/App.jsx` (`oficial`, com o bastão)**
+- apagar `GLIFO_DO_GENERO` (~4024–4037) e importar `glifoDoGenero` de `ui.jsx`; as duas
+  linhas do `LinhaDoCartao` (~4093, ~4099) passam a `Glifo={glifoDoGenero(g.glifo)}`.
+- `ModalCena` (~808–815): o objeto `climaFundo` morre; fica
+  `const climaFundo = fundoDaCena(tomDoGenero((mundo || {}).genero));` (importa de
+  `estilo.js` e de `cenario.js`). `calou(...)` não é preciso: as duas são puras e não
+  estouram com `undefined` — **que a suíte o prove** com `null`, `undefined` e `{}`.
+
+**f) A prova (`testes`, em `teste-genero-no-app.mjs` ou suíte irmã)**
+1. os dois vocabulários batem com as duas tabelas, **nos dois sentidos**:
+   `ESQUEMA_DO_CENARIO.glifos` ≡ chaves de `GLIFO_DO_GENERO`; `ESQUEMA_DO_CENARIO.tons`
+   ≡ chaves de `TOM_DA_CENA` (um nome sem cor, ou uma cor sem nome, é vermelho);
+2. **ao byte:** para cada um dos sete labels do mundo padrão,
+   `fundoDaCena(tomDoGenero(label))` é igual à string de hoje (escritas literais na
+   suíte, tiradas de `git show HEAD:src/App.jsx`), e `fundoDaCena(tomDoGenero("Ópera
+   espacial"))` é o recuo de hoje;
+3. `glifoDoGenero(undefined)` e `glifoDoGenero("nao-existe")` são `IconeGlobo`;
+4. o validador recusa `tom: "roxo"` e `glifo: "nuvem"` com o caminho, e aceita um
+   cartão sem os dois;
+5. **a catraca do contraste:** para cada tom de `TOM_DA_CENA`, `T.ink`, `T.amberSoft` e
+   `T.danger` ≥ 4,5:1 contra `topo` e contra `pe` (a fórmula de luminância já está na
+   casa — usar a dela);
+6. `App.jsx` não tem mais `#2A2036` nem `#241C33` (o literal saiu de verdade);
+7. **movidas, com o motivo:** o caso `criacao.generos` do dourado do cenário fotografa os
+   cartões sem `tom` (como fez com o glifo); a contagem da família `GLIFOS` (+1) e D5h.3
+   (o `globo` tem leitor pelo `glifoDoGenero`);
+8. **o prompt:** `prova-prompt.mjs` entre HEAD e HEAD + os arquivos — 24/24 iguais ao
+   char. Se `GENEROS` levar o `tom` a algum bloco do Narrador, para: o tom é tela, não
+   voz.
+
+**Visto vivo (o `desenho` confere no navegador, não no diff):** a criação com os sete
+cartões como hoje; um cenário de prova com um oitavo gênero sem glifo nem tom mostra o
+globo no cartão e o fundo `noite` na cena; o ModalCena de cada um dos seis gêneros com o
+mesmo fundo de antes (aba nova — o HMR mente depois de mover `GLIFO_DO_GENERO`).
+
+**Peso:** médio de design (criar uma peça; cor literal virando tabela). Nada a
+reaprender: o jogador do mundo padrão vê o mesmo; o de outro mundo vê o que lhe faltava.
+
+### 4 · A proposta ambiciosa — o tom é a assinatura do mundo, não só do modal
+
+Hoje o tom vive numa janela que quase ninguém abre. **Proponho que o `tom` do gênero
+escolhido tinja a mesa inteira por baixo da prosa**: o ponto do meio de `LUZ_AMBIENTE`
+(o gradiente âmbar → mundo → rosa do cabeçalho, `estilo.js` ~980) passa a vir de
+`TOM_DA_CENA[tom].topo`, e o cartão escolhido na criação mostra o seu tom como chão no
+instante do toque — quem escolhe Horror cósmico **vê** o mundo escurecer antes de
+escrever uma linha. É o que Sunless Skies faz por região, e o que um mestre de mesa faz
+com a luz da sala. A porta da prova é a mesma desta secção: a prosa (`ink` sobre
+`pagina`) não pode perder um centésimo de contraste — a luz é por baixo do poço, nunca
+dentro dele — e o `jogo` joga o antes e o depois. Vai para a fila do desenho; não está
+neste pedido.
