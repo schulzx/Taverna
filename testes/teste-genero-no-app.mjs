@@ -10,8 +10,9 @@
 
    O que esta suíte guarda:
    1. os 13 recuos do App são o gênero padrão do mundo em uso, sítio a
-      sítio (a âncora de cada um), e o literal só sobrevive onde é CHAVE de
-      uma tabela da tela (o fundo do ModalCena) — nunca como recuo;
+      sítio (a âncora de cada um), e o literal não sobrevive nem como recuo
+      nem como chave (desde T3, 29/10, o fundo do ModalCena sai do tom do
+      cartão, e a última chave pelo nome morreu);
    2. no mundo padrão o recuo é o mesmo texto de antes, ao char (o mundo
       padrão não muda), e noutro mundo é o padrão dele;
    3. o glifo do cartão é dado do mundo, e a tela desenha o vocabulário;
@@ -59,14 +60,19 @@ sec("1 · os recuos do App são o gênero padrão do mundo em uso");
   /* e o que saiu do App está na peça do load: o recuo das tarefas antigas e o das casas (que no App era o generoMundo()) */
   const PECA_DO_LOAD = readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8");
   t("os recuos do load estão na peça dele (as tarefas antigas e as casas)", conta(PECA_DO_LOAD, "genero: mw.genero || " + P + ",") === 1 && conta(PECA_DO_LOAD, "mundo.genero || " + P + ", mundo.lexico") === 1);
-  t("o App importa o mundo em uso", /import \{ cenarioAtivo \} from "\.\/cenario\.js";/.test(APP));
+  /* MOVIDA (29/10, T3): o App importa também tomDoGenero do mesmo módulo, na mesma linha —
+     o fundo do ModalCena pede o tom do gênero ao mundo em uso */
+  t("o App importa o mundo em uso", /import \{ cenarioAtivo, tomDoGenero \} from "\.\/cenario\.js";/.test(APP));
   /* o literal que fica: chave de tabela da tela, não recuo. O fundo do
      ModalCena (um gradiente por gênero) é cor, logo tabela do desenho; o
      glifo do cartão de gênero é o terceiro item desta leva. */
   /* 2 → 1 no item seguinte da mesma leva: o GLIFO_DO_GENERO deixou de ser chaveado pelo
      nome do gênero (secção 3), e só o fundo do ModalCena segue como chave */
-  const LITERAL_NO_APP = 1;
-  t("o literal \"Fantasia medieval\" só fica como chave (" + LITERAL_NO_APP + ")", conta(APP, "\"Fantasia medieval\"") === LITERAL_NO_APP, "achei " + conta(APP, "\"Fantasia medieval\""));
+  /* 1 → 0 em T3 (29/10): o fundo do ModalCena deixou de ser um objeto chaveado pelo rótulo
+     do gênero — sai de fundoDaCena(tomDoGenero(...)), e a cor mora em estilo.js. A última
+     chave pelo nome morreu; o literal não tem mais onde ficar no App. */
+  const LITERAL_NO_APP = 0;
+  t("o literal \"Fantasia medieval\" saiu do App (" + LITERAL_NO_APP + ")", conta(APP, "\"Fantasia medieval\"") === LITERAL_NO_APP, "achei " + conta(APP, "\"Fantasia medieval\""));
   t("e nenhum recuo literal sobrou (|| \"Fantasia medieval\" e { genero: \"Fantasia medieval\" })", !/\|\|\s*"Fantasia medieval"|genero:\s*"Fantasia medieval"|=\s*"Fantasia medieval"/.test(APP));
 }
 
@@ -91,7 +97,11 @@ sec("3 · o glifo do cartão de gênero é dado do mundo, e a tela desenha o voc
   const tab = /\nconst GLIFO_DO_GENERO = \{([\s\S]*?)\n\};/.exec(UI);
   const desenha = tab ? [...tab[1].matchAll(/^\s+(\w+): Icone\w+,$/gm)].map((m) => m[1]) : [];
   t("a tela desenha cada nome do vocabulário, e só eles (" + desenha.length + ")", desenha.length > 0 && [...desenha].sort().join() === [...EQ.glifos].sort().join(), desenha.join());
-  t("o cartão pede o glifo pelo nome que o mundo deu, nos dois sítios", conta(APP, "<LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null}") === 2 && !APP.includes("GLIFO_DO_GENERO[g.label]"));
+  /* MOVIDA (29/10, T3): a tabela saiu do App para ui.jsx, e o cartão pede o componente a
+     glifoDoGenero — que dá o globo quando o glifo falta, em vez do cartão mudo de antes.
+     A intenção é a mesma: o glifo pelo nome que o mundo deu, nos dois sítios, nunca pelo rótulo. */
+  t("o cartão pede o glifo pelo nome que o mundo deu, nos dois sítios", conta(APP, "<LinhaDoCartao Glifo={glifoDoGenero(g.glifo)}") === 2 && !APP.includes("GLIFO_DO_GENERO[") && !/\nconst GLIFO_DO_GENERO\b/.test(APP) && !APP.includes("glifoDoGenero(g.label)"));
+  t("e o App importa glifoDoGenero de ui.jsx", /LinhaDoCartao, glifoDoGenero, duasColunas,[^\n]*\} from "\.\/ui\.jsx";/.test(APP));
   /* o mundo padrão sai igual: o ícone de cada cartão é o que a chave pelo nome dava antes */
   const ANTES = { "Fantasia medieval": "IconeCastelo", "Ficção científica": "IconeFoguete", Cyberpunk: "IconeTerminal", "Horror cósmico": "IconeOlho", "Pós-apocalíptico": "IconeCaveira", Steampunk: "IconeBussola", "Universo próprio": "IconeFaiscas" };
   const icone = (nome) => { const m = new RegExp("^\\s+" + nome + ": (Icone\\w+),$", "m").exec(tab ? tab[1] : ""); return m ? m[1] : null; };
@@ -217,6 +227,12 @@ sec("5 · as tabelas da tela: o tom da cena ao byte, o globo de recuo, a porta d
     if (rr < PORTA) abaixo.push(tinta + " sobre " + n + "." + parada + " = " + rr.toFixed(2));
   }
   t("nenhum tom com texto abaixo de 4,5:1 (o pior: " + pior.onde + ", " + pior.r.toFixed(2) + ":1)", abaixo.length === 0, abaixo.join(" · "));
+  /* 6. o App: o literal saiu de verdade, e o fundo é a conta */
+  const HEX = tons.flatMap((n) => [E.TOM_DA_CENA[n].topo, E.TOM_DA_CENA[n].pe]);
+  const ficaram = [...new Set(HEX)].filter((h) => APP.toLowerCase().includes(h.toLowerCase()));
+  t("o App não tem mais nenhum hex dos tons (" + new Set(HEX).size + " distintos; #2A2036 e #241C33 entre eles)", ficaram.length === 0 && !APP.includes("#2A2036") && !APP.includes("#241C33"), ficaram.join(" "));
+  t("o ModalCena pinta o fundo pela conta, e o App importa fundoDaCena de estilo.js",
+    conta(APP, "const climaFundo = fundoDaCena(tomDoGenero((mundo || {}).genero));") === 1 && /, fundoDaCena \} from "\.\/estilo\.js";/.test(APP) && !/linear-gradient\(160deg/.test(APP));
 }
 
 console.log("\n" + ok + " ok, " + falhas + " falhas");

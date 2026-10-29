@@ -71,9 +71,9 @@ import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } 
 import { tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
-import { cenarioAtivo } from "./cenario.js";
+import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa, fundoDaCena } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -224,7 +224,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, SINAIS_ABERTOS } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeCaveira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, IconeOlho, IconeCastelo, IconeTerminal, IconeFoguete, IconeBussola, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -805,14 +805,10 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
 function ModalCena({ personagem, combate, mundo, nomeCampanha, fechar }) {
   const aliados = [personagem, ...(personagem.grupo || [])];
   const inimigos = (combate?.inimigos || []).filter((e) => !e.derrotado);
-  const climaFundo = {
-    "Fantasia medieval": "linear-gradient(160deg,#2A2036,#1a1420)",
-    "Ficção científica": "linear-gradient(160deg,#16232e,#0e1620)",
-    "Cyberpunk": "linear-gradient(160deg,#2a1030,#10121e)",
-    "Horror cósmico": "linear-gradient(160deg,#1a1420,#0a0a10)",
-    "Pós-apocalíptico": "linear-gradient(160deg,#2b2418,#161208)",
-    "Steampunk": "linear-gradient(160deg,#2a2018,#15100a)",
-  }[(mundo || {}).genero] || "linear-gradient(160deg,#241C33,#12101a)";
+  /* T3 (29/10): o fundo sai do tom do cartão do gênero (cenario.js tomDoGenero) e da
+     tabela da tela (estilo.js TOM_DA_CENA); sem tom, ou com um gênero que não é
+     cartão, é a noite de sempre. As duas são puras e não estouram com undefined. */
+  const climaFundo = fundoDaCena(tomDoGenero((mundo || {}).genero));
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.92)", backdropFilter: "blur(4px)" }} onClick={fechar}>
       <div className="tv-fade w-full max-w-lg rounded-2xl overflow-hidden" style={{ border: `1px solid ${T.amber}` }} onClick={(e) => e.stopPropagation()}>
@@ -4021,20 +4017,8 @@ function PainelExame({ itens = [], raio = 0, aoPegar, aoFechar }) {
    ele abre por dentro) foram inteiros para `src/painel-habilidades.jsx`.
    Nada as prendia aqui: são tela pura, não tocam em estado do jogo e
    todas as regras que leem vêm de `magias.js` e `regras-jogo.js`. */
-/* O GLIFO DO CARTÃO DE GÊNERO (29/10, trilha A). Era chaveado pelo nome do gênero, e
-   um gênero de outro mundo nascia sem ícone até alguém mexer aqui. O cartão diz agora
-   o NOME do seu glifo (generos.criacao[].glifo, do vocabulário fechado
-   ESQUEMA_DO_CENARIO.glifos), e esta tabela desenha cada nome. Fora do componente:
-   não muda de render em render. */
-const GLIFO_DO_GENERO = {
-  castelo: IconeCastelo,
-  foguete: IconeFoguete,
-  terminal: IconeTerminal,
-  olho: IconeOlho,
-  caveira: IconeCaveira,
-  bussola: IconeBussola,
-  faiscas: IconeFaiscas,
-};
+/* O GLIFO DO CARTÃO DE GÊNERO mudou de casa (T3, 29/10): a tabela e o recuo do globo
+   moram em ui.jsx (glifoDoGenero), ao lado dos ícones que desenham. */
 
 function TelaMundo({ concluir }) {
   const [nome, setNome] = useState("");
@@ -4090,13 +4074,13 @@ function TelaMundo({ concluir }) {
           diz="Isso dita as tabelas geradoras do Mestre, os arquétipos e as ameaças que habitam a escuridão." />
         {duasColunas(GENEROS.filter((g) => g.id !== "livre"), (g) => (
           <CartaoDeEscolha key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
-            <LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null} titulo={g.label} ativo={genero && genero.id === g.id} />
+            <LinhaDoCartao Glifo={glifoDoGenero(g.glifo)} titulo={g.label} ativo={genero && genero.id === g.id} />
             <DescricaoCurta>{g.dica}</DescricaoCurta>
           </CartaoDeEscolha>
         ))}
         {GENEROS.filter((g) => g.id === "livre").map((g) => (
           <CartaoDeEscolha key={g.id} ativo={genero && genero.id === g.id} aoClicar={() => setGenero(g)}>
-            <LinhaDoCartao Glifo={g.glifo ? GLIFO_DO_GENERO[g.glifo] : null} titulo={g.label} ativo={genero && genero.id === g.id} />
+            <LinhaDoCartao Glifo={glifoDoGenero(g.glifo)} titulo={g.label} ativo={genero && genero.id === g.id} />
             <DescricaoCurta>{g.dica}</DescricaoCurta>
           </CartaoDeEscolha>
         ))}
