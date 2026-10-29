@@ -12563,9 +12563,9 @@ escrever uma linha. É o que Sunless Skies faz por região, e o que um mestre de
 com a luz da sala. A porta da prova é a mesma desta secção: a prosa (`ink` sobre
 `pagina`) não pode perder um centésimo de contraste — a luz é por baixo do poço, nunca
 dentro dele — e o `jogo` joga o antes e o depois. Vai para a fila do desenho; não está
-neste pedido.
+neste pedido. *(Decidida em §4b: vale, mas não como está escrita — o topo do tom não se vê a 0,09; entra a luz por token.)*
 
-### 5 · A pergunta ao `desenho`: a janela que ninguém abre (o `oficial`, 29/10 — não decidida)
+### 5 · A pergunta ao `desenho`: a janela que ninguém abre (o `oficial`, 29/10 — decidida em §5b: a janela aposenta-se)
 
 **O achado, medido:** o `ModalCena` (App ~805) **não abre em sítio nenhum**. `verCena`
 nasce `false` (App ~5563) e o único leitor é a montagem (App ~25368); nenhum
@@ -12591,3 +12591,180 @@ de «quadro da cena» (aí a aposentadoria não tira nada), e se a 🎭 saiu de 
 25/07 ou caiu numa reescrita do cabeçalho (o commit é um *upload*, sem motivo escrito).
 **Não decidi nem construí nada** — a forma é do `desenho`, o momento é do `jogo`; o
 `oficial` executa o que vier escrito aqui.
+
+### 5b · A decisão do `jogo`: a janela aposenta-se (29/10, por experiência jogada)
+
+**Joguei** (Vite à parte, Narrador falso, saves vazios): criei *A Prova do Tom* em
+**Horror cósmico**, entrei, desci à cripta, abri uma luta (`/combate`) e fechei-a.
+Procurei, em cada tela, o que o `ModalCena` mostrava:
+
+| o que a janela mostra | onde já está, sem clique |
+|---|---|
+| o herói e os companheiros, com o estado da vida | **a cinta** (Ilsa 18/18 PV · Hiram 12/12 PV) e *À vista* (Hiram, anda com você) |
+| os inimigos de pé, com retrato, sob «⚔ contra» | **a batalha**: *PARTICIPANTES* (retratos na ordem de iniciativa), *NESTA BATALHA* (retrato, PV em barra, distância «6 m», o caído riscado), e os mesmos retratos **no tabuleiro**, na casa onde estão |
+| aliados e inimigos lado a lado, como um quadro | **a grade**: lado a lado de verdade, com posição — o que a janela nunca soube |
+| o nome da campanha · o gênero | em nenhum sítio do jogo; e nenhum dos dois é entrada de decisão |
+
+**Veredito: o tabuleiro de hoje JÁ é o quadro da cena**, e é melhor do que a janela
+era: tem posição, distância, iniciativa e o caído, e está à vista. A janela é um
+subconjunto dele.
+
+**Contado:** ver o grupo e a vida hoje custa **0 cliques**; a porta de volta custaria
+**2** (abrir, fechar) por **menos** informação, mais um controle num cabeçalho que já
+é denso — e seria a mesma informação com duas caras (lei da casa: defeito).
+Aposentar custa ao jogador **nada**: ele não a abre desde 72ba827 (25/07); três meses
+sem porta são a prova jogada de que não lhe falta.
+
+**Decisão: o `ModalCena` aposenta-se** (sai a função, o `verCena` e a montagem). O que
+ela tinha de único — **o tom do mundo** — não morre com ela: passa a servir §4b, que
+o põe onde o jogador olha 90% do tempo. Peso: médio (aposentar uma forma que existe;
+nada a reaprender: não há porta). Reverter é pescar o commit da saída.
+
+### 4b · A decisão do `jogo` sobre §4: vale — mas não como estava escrita
+
+**A §4 como estava RISCA-SE, pelo número.** Ela punha `TOM_DA_CENA[tom].topo` no meio da
+`LUZ_AMBIENTE`. Os topos são **chãos escuros** (L muito baixo), não luzes: a 0,09 sobre
+`T.pagina` o meio fica a **ΔE 0,38 (breu) – 1,78 (magenta)** da página, abaixo do limiar
+perceptível da própria casa (`AMBIENTE.pisos.corpoContraMesa` = 2,3, Sharma). Não
+tingiria nada — e **apagaria** o ciano de hoje (ΔE 9,31), deixando os sete mundos
+iguais entre si e mais apagados do que o de agora. Seria uma regressão com nome de
+proposta.
+
+**O que vale, e entra:** o mundo troca **o token do meio** da luz — por nome, de `T`,
+como as outras paradas (`AMBIENTE` já aponta para `T` por nome). **Nenhum hex novo,
+nenhum alfa novo, nenhuma posição nova**: âmbar 0,063 · *luz do mundo* 0,09 a 55 % ·
+rosa 0,072. As pontas continuam a ser o herói (âmbar) e a mão do jogador (rosa); o
+meio, que sempre foi «o mundo», passa a ser **este** mundo.
+
+| gênero | tom | luz do meio | prosa `ink`, pior (piso 7) | `inkMeio`/`inkDim`, pior (4,5) | corpo × mesa, ΔE mín (2,3) | o meio contra o de hoje, ΔE |
+|---|---|---|---|---|---|---|
+| Fantasia medieval | `crepusculo` | `mundo` | 13,59 | 8,72 / 5,88 | 3,60 | **0 — igual a hoje** |
+| Ficção científica | `aco` | `mundoSoft` | 13,05 | 8,37 / **5,64** | 4,33 | 3,36 |
+| Cyberpunk | `magenta` | `rosa` | 13,87 | 8,89 / 6,00 | 6,57 | 12,79 |
+| Horror cósmico | `breu` | `lineStrong` | 13,95 | 8,94 / 6,03 | 2,75 | 6,96 |
+| Pós-apocalíptico | `poeira` | `inkMeio` | 13,30 | 8,53 / 5,75 | 5,24 | 8,46 |
+| Steampunk | `cobre` | `amber` | 13,28 | 8,51 / 5,74 | 6,35 | 15,37 |
+| Universo próprio **e o recuo** | `noite` | `mundo` | 13,59 | 8,72 / 5,88 | 3,60 | **0 — igual a hoje** |
+
+Medido com a conta de `teste-v1-folha.mjs` (sRGB pré-multiplicado, varrido de 0 a 100 %
+em passos de 1 %, o pior ponto e nunca a média). **Todas passam os três pisos de
+`AMBIENTE` e o piso 10 da prosa que o `jogo` pôs em V1c.** O mundo padrão e o recuo saem
+**ao byte** — regressão zero para quem não escolhe outro mundo.
+
+**O caso que mudou a tabela, e é a lição dela:** para o Horror eu quis o meio
+**apagado** (alfa 0 — «breu», o mundo que não dá luz). A catraca recusou: o corpo desce
+a **ΔE 2,18** da mesa e deixa de se distinguir dela. O `lineStrong` (cinza-violeta) a
+0,09 passa (2,75) e diz o mesmo melhor: **a luz do horror não falta — é sem cor.**
+
+**Joguei o antes e o depois** (a luz trocada à mão no navegador, só para ver, nada
+gravado), na mesma cena de cripta: com o ciano de hoje, *«a pele cai-lhe em tiras»* lê-se
+sobre uma luz alegre de aquário — o mundo desmente a prosa. Com a cinza, a sala
+esvazia-se de cor e a frase pesa; com o rosa do Cyberpunk a mesma sala vira néon. **É
+luz, não decoração:** não se lê, sente-se — exatamente o que a casa pede («o sistema
+não fala de si mesmo»; ninguém lê «tom»). E a prosa nunca desce de 13,05:1.
+
+**O momento que ensina a luz — a criação.** Joguei-a: escolhi Horror cósmico e a tela
+respondeu com uma borda âmbar e um ponto, **igual** à de qualquer outro gênero; o passo 2
+diz «Mundo: Horror cósmico» por escrito sobre a mesma taverna de fantasia. A escolha
+mais identitária da campanha sente-se como um formulário. Com a luz: **no clique do
+cartão, a página da criação troca o meio da sua luz para a do mundo escolhido** — quem
+escolhe Horror vê a sala perder a cor antes de escrever uma linha, e reconhece essa luz
+quando a página da história abrir. Medido sobre `T.bg` (o chão da criação), o pior texto
+solto é `inkDim` **5,40** (`mundoSoft`, a 55 %); `violetSoft` 7,06; `amberSoft` 11,04.
+
+**Movimento: nenhum, e é de propósito.** A troca é um corte no clique (um gradiente
+não interpola em CSS sem `@property`, e a 9 % de alfa o corte é suave por natureza).
+Não há o que pular nem acelerar, `prefers-reduced-motion` não tem trabalho, e nada
+custa o turno: é uma string de fundo, calculada uma vez por mundo. No jogo a luz nunca
+muda — o gênero é da campanha.
+
+**Com V1c (a luz da hora), se um dia voltar:** compõem-se sem se pisar — a hora mexe no
+**peso e no lugar** das paradas; o mundo, só na **cor** do meio.
+
+Figma: quadro **`T3 §4 · a luz do mundo (jogo, 29/10)`** (`263:69`, na página `260:82`,
+ao lado do par `260:83`): as sete luzes sobre `pagina` com a mesma prosa, os números
+de cada uma, e a linha **RISCADA** da §4 como estava. As paradas são literais com alfa
+(ligar a variável apaga o alfa no Figma); o token de cada uma está no nome da camada.
+
+**Peso:** médio de design (trocar a cor de uma tabela por nome; aposentar uma forma sem
+porta). Nada a reaprender. Um commit revertido desfaz tudo; o save não é tocado.
+
+### 4c · O pedido de construção (arquivo a arquivo)
+
+Ordem: a tabela, a prova, o App. **Nenhum bump de `VERSAO`** — é de quem sobe.
+
+**a) `src/estilo.js` (`aprendiz`)**
+- `TOM_DA_CENA` passa a `{ crepusculo: { luz: "mundo" }, aco: { luz: "mundoSoft" },
+  magenta: { luz: "rosa" }, breu: { luz: "lineStrong" }, poeira: { luz: "inkMeio" },
+  cobre: { luz: "amber" }, noite: { luz: "mundo" } }` — **nomes de `T`, nenhum hex**.
+  Os catorze hex `topo`/`pe` **saem com a janela** (sem leitor de tela, seriam cor de
+  uma tela fantasma; pescam-se do git se uma tela os quiser). O comentário diz porquê.
+- `export function luzAmbiente(tom)`: o gradiente de `AMBIENTE`, com o `token` da parada
+  do meio trocado por `TOM_DA_CENA[tom].luz`; tom ausente, fora da tabela ou nome de
+  `Object` → o recuo `noite`. A `const LUZ_AMBIENTE` passa a ser `luzAmbiente()` — **a
+  folha sai igual ao byte** (`.tv-esbate-topo` continua a ter a luz de hoje como padrão,
+  e é a luz de quem não tem mundo: o menu, um save sem gênero).
+- `fundoDaCena` e `ANGULO_DA_CENA` saem (o único leitor era o `ModalCena`); `TOM_DE_RECUO`
+  fica, agora para a luz. *(Lei de 24/09: comentário que vá para dentro de
+  `SUPERFICIES_CSS`, sem crase.)*
+
+**b) `src/App.jsx` (`oficial`, com o bastão, por âncora)**
+- **sai** `function ModalCena` (~805–851), o `useState` `verCena` (~5563) e a montagem
+  `{verCena && personagem && <ModalCena …/>}` (~25368); sai `fundoDaCena` do import de
+  `estilo.js` (~76), entra `luzAmbiente`.
+- o poço da história (~24323, o `div` com `tv-esbate-topo`): ganha
+  `style={{ backgroundImage: luzDoMundo }}`, com
+  `const luzDoMundo = useMemo(() => luzAmbiente(tomDoGenero((mundo || {}).genero)), [mundo])`
+  junto dos outros derivados do mundo. A máscara do esbatimento fica na classe, e em
+  `forced-colors` o navegador descarta o fundo sozinho (como hoje).
+- a criação (~4042, o `div` raiz `tv-fade w-full overflow-y-auto tv-scroll`): ganha
+  `style={{ backgroundImage: luzAmbiente(genero && genero.tom) }}`. Sem gênero escolhido
+  é o recuo (= a luz de hoje). Sem animação.
+- `calou(...)` não é preciso: as duas funções são puras e não estouram com
+  `undefined`/`null`/`{}` — **que a suíte o prove**.
+
+**c) A prova (`testes`, em `teste-genero-no-app.mjs`, com o motivo escrito em cada
+asserção movida)**
+1. os vocabulários batem nos dois sentidos: `ESQUEMA_DO_CENARIO.tons` ≡ chaves de
+   `TOM_DA_CENA` (fica); e **toda `luz` é um token que existe em `T`** (nova);
+2. **ao byte:** `luzAmbiente()`, `luzAmbiente("crepusculo")`, `luzAmbiente("noite")` e
+   `luzAmbiente("roxo")` são iguais à `LUZ_AMBIENTE` de HEAD (string literal tirada de
+   `git show HEAD:src/estilo.js` montada), e a folha `.tv-esbate-topo` sai igual;
+3. `luzAmbiente(null)`, `(undefined)`, `({})`, `("constructor")` são o recuo e não
+   estouram;
+4. **a catraca, para cada tom de `TOM_DA_CENA`** (a conta de `teste-v1-folha.mjs`, a
+   mesma função — não uma segunda): prosa `ink` no pior ponto ≥ `AMBIENTE.pisos.prosa`;
+   `inkMeio` e `inkDim` ≥ 4,5; ΔE corpo × mesa ≥ `AMBIENTE.pisos.corpoContraMesa`; e,
+   sobre `T.bg` (a criação), `inkDim`, `violetSoft`, `amberSoft`, `ink` ≥ 4,5 no pior
+   ponto;
+5. **movidas, com o motivo («a janela aposentou-se em T3 §5b; o tom serve a luz»):** o
+   «ao byte» de `fundoDaCena` dos sete gêneros, o contraste `ink`/`amberSoft`/`danger`
+   contra `topo`/`pe`, e o `conta(APP, "const climaFundo = …")` — trocados pelos casos 2–4;
+   e uma nova: `App.jsx` não tem `ModalCena` nem `verCena` nem `fundoDaCena`;
+6. `check-formas.mjs`: o teto de literais de `estilo.js` desce 14 (os `topo`/`pe`); a linha
+   de `TOM_DA_CENA` na lista das tabelas de cor muda de nota (agora são nomes, não hex) —
+   a mexida leva o motivo;
+7. `teste-ligacao`: `luzAmbiente` tem dois leitores (App + suíte); `fundoDaCena` saiu;
+8. **o prompt:** `prova-prompt.mjs` entre HEAD e HEAD + os arquivos — iguais ao char. O
+   tom é tela, não voz; se algum bloco do Narrador mudar, pára.
+
+**d) O `desenho` (Figma)** — a coleção `Tom da cena (TOM_DA_CENA)` (`260:67`) ganha
+«— APOSENTADA em T3 §5b» no nome, como a `LUZ_DA_CENA` de V5a, e o quadro `263:69` passa
+a ser a fonte; se ele discordar de um token da tabela (o mais fraco é a ficção
+científica, a ΔE 3,36 do de hoje), a discordância escreve-se aqui antes do código.
+
+**Visto vivo (o `jogo` joga, não lê o diff):** em aba nova, criar um mundo de cada um
+dos sete gêneros e conferir: a criação troca a luz no clique; a página da história abre
+com a luz do mundo; Fantasia e Universo próprio idênticos a hoje; o menu e a criação
+sem gênero com a luz de hoje; uma luta e o fim dela sem `ModalCena` em sítio nenhum
+(nunca houve porta — confere-se só que nada partiu).
+
+### 6 · A proposta ambiciosa desta etapa — o mundo nos três sítios para onde se olha
+
+A luz do mundo chega à **página**; o jogador olha também para o **horizonte** (a faixa
+de silhuetas, violeta em todos os mundos) e para a **grade da batalha** (o chão é o mesmo
+em todos os mundos). Proponho que o céu do horizonte e o chão da grade **bebam a mesma
+`luz`**, pelo mesmo nome e pela mesma catraca — e que uma luta num mundo de Horror
+aconteça numa grade que já não tem a cor da taverna. Fica para a fila do desenho, com
+uma condição escrita: só depois de 4c no ar e jogado, para a prova desta ler **uma**
+superfície e a dela ler **três**.
