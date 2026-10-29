@@ -209,10 +209,14 @@ function promptDaDivindade() { return `ASCENSÃO E DIVINDADES (parâmetros do si
 - PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis — você nunca concede PF. Para gastar, mande "milagre:<id>" (bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar): o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se o jogador pedir um milagre que ele ainda não pode pagar ou cujo grau não alcançou, o sistema recusa e você narra o silêncio do domínio.
 - FÉ MÍNGUA: devoção exige presença. A fé some sozinha, dia a dia, em toda cidade onde não há templo do herói nem ele em pessoa — e mesmo o clero de um templo prega com menos convicção depois de meses sem sinal dele. O sistema faz essa conta por cidade; use o resultado na ficção (templos vazios, profetas desanimados, altar coberto de pó).
 - PRESENÇA DIVINA (com moderação!): perto de uma divindade GD 3+ manifesta, mortais podem tremer — o SISTEMA rola a resistência e aplica o efeito; você narra. NUNCA aplique efeitos de presença por conta própria, e fora de combate use o pavor divino só como tempero, nunca como rotina — o jogador e o grupo íntimo dele estão protegidos pela convivência.
-- ASCENSÃO É NARRATIVA: os três estágios (Servo Escolhido → ${GRAUS[2].titulo}/Receptáculo → Nova Divindade) avançam por FEITOS na ficção (acúmulo de fé, ritual do vazio, deicídio), guiados pelos números do sistema. Quando o jogador atingir um marco, celebre à altura — virar deus deve doer, custar e mudar o jogo.`; }
+- ASCENSÃO É NARRATIVA: os três estágios (${CEU.estagios[0]} → ${GRAUS[2].titulo}/${CEU.estagios[1]} → ${CEU.estagios[2]}) avançam por FEITOS na ficção (acúmulo de fé, ritual do vazio, deicídio), guiados pelos números do sistema. Quando o jogador atingir um marco, celebre à altura — virar deus deve doer, custar e mudar o jogo.`; }
 
+/* 6.ª fatia: as palavras que só a fé dá (`panteao.palavrasDivinas`) — o
+   prompt do Narrador lista-as na regra das três medidas (prompt.js) */
+export let PALAVRAS_DIVINAS = [];
 aoTrocarDeCenario((c) => {
   CEU = c.panteao;
+  PALAVRAS_DIVINAS = c.panteao.palavrasDivinas;
   GRAUS = Object.freeze(FIEIS_DO_GRAU.map((fieis, gd) => Object.freeze({ gd, titulo: c.panteao.titulos[gd].titulo, fieis, desc: c.panteao.titulos[gd].desc })));
   DIVINDADE_PROMPT = promptDaDivindade();
 });

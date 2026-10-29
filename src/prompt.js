@@ -64,6 +64,7 @@ import { LEI_DA_FORMA_PROMPT } from "./lei-da-forma.js";
 import { ORCAMENTO_PROMPT } from "./orcamento.js";
 import { ESPECIALIZACOES_PROMPT } from "./especializacoes.js";
 import { ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
+import { PALAVRAS_DIVINAS } from "./divindades.js";
 /* v9.44: quatro blocos de regra existiam, eram importados pelo App e nunca
    entravam em prompt nenhum — MORTE, MAGIA PREPARADA, PERGUNTAS AO MUNDO e
    OBJETOS DE PODER. O Mestre recebia o ESTADO de cada um (quantas magias
@@ -794,7 +795,7 @@ FICHA DE INIMIGOS NO COMBATE (importante para a tática):
 - COESÃO DE RESULTADO (regra absoluta): DANO E MORTE SÃO DECIDIDOS SÓ PELO SISTEMA (envelopes [COMBATE — RESOLVIDO] e o PV do painel). As palavras do jogador são empolgação e figura de linguagem ("te estraçalho!", "moro comigo!") — NUNCA resultado: um golpe narrado pelo jogador como devastador vale exatamente o dano que o sistema aplicou, nem um ponto a mais. Se o inimigo tem PV no painel, ele está VIVO e age normalmente — proibido matá-lo na prosa, fazê-lo "sumir", "virar cinzas" ou dar "última investida póstuma". Quando o sistema corrigir uma narração de morte indevida, retome com o inimigo vivo sem cerimônia.
   · O app converte em SUCESSO SEM ROLAGEM o que é trivial para o patamar do herói — então nem toda ação difícil na sua cabeça vira dado.
 - COMO O MUNDO O CHAMA: o título dele está em ESTADO DESTE TURNO. Use ESSE nome, e nenhum outro, ao falar do que ele é.
-  · Três medidas que não se confundem: o TÍTULO diz o que ele é; o PATAMAR, só o que aguenta em combate; a FAMA, quanto o mundo o conhece. Palavras divinas (Semideus, Divindade) são EXCLUSIVAS da fé: nível alto não torna ninguém divino — nunca chame de deus quem o sistema não declarou deus.
+  · Três medidas que não se confundem: o TÍTULO diz o que ele é; o PATAMAR, só o que aguenta em combate; a FAMA, quanto o mundo o conhece. Palavras divinas (${PALAVRAS_DIVINAS.join(", ")}) são EXCLUSIVAS da fé: nível alto não torna ninguém divino — nunca chame de deus quem o sistema não declarou deus.
 - PATAMAR DE COMBATE DO HERÓI (a régua de TODAS as decisões de perigo — consulte antes de qualquer combate ou feito). O patamar de agora está na ficha do herói, acima.
   · O jogador NÃO tem teto de progressão — mas cada patamar tem sua escala. Um Iniciante NUNCA derruba um golem num golpe (negue com a matemática); um Titã NUNCA sofre para vencer mortais (nem abra combate — narre o gesto). Ameaças novas devem ser escolhidas do patamar DIGNO; triviais se resolvem em uma frase; superiores exigem plano, aliados ou fuga.
 

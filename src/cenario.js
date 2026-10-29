@@ -48,7 +48,10 @@
    roster, com a raça e o ofício do mundo; o feitio deles — classe, arma,
    índole — é vocabulário do motor) e, nas `racas`, o povo do companheiro
    (companheiros.js — a demografia com que o companheiro sorteado nasce, e
-   as formas com que o registo do mundo diz uma raça). Os
+   as formas com que o registo do mundo diz uma raça) e, no `panteao`, as
+   palavras do céu que o Narrador ainda lia escritas no código: os três
+   estágios da ascensão (divindades.js DIVINDADE_PROMPT) e as palavras que só
+   a fé dá (prompt.js, a linha "Palavras divinas"). Os
    ofícios que o léxico renomeia (lexico.js PROFISSOES_DO_SISTEMA) não são
    secção: derivam dos nomes de `ocupacoes`, para que um mundo com outros
    ofícios não perca o léxico gerado.
@@ -116,7 +119,7 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   /* o panteão (divindades.js): o nome de um deus é `inicio` + `fim`, o
      domínio traz o ícone e os temperamentos possíveis, e o culto é
      "<culto> de <nome>" */
-  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes", titulos: "lista" }),
+  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes", titulos: "lista", estagios: "nomes", palavrasDivinas: "nomes" }),
   nomeDivino: Object.freeze({ inicio: "nomes", fim: "nomes" }),
   /* `sinais` (5.ª fatia): o sinal impossível que o evento divino descreve,
      por temperamento — só dos temperamentos do próprio domínio */
@@ -162,7 +165,9 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   tiposDeHabilidade: Object.freeze(["ataque", "defesa", "suporte", "utilidade", "passiva"]),
   /* os cinco graus da escala divina (GD 0–4): o número é o de divindades.js,
      e o cenário dá um título a cada um, nem mais nem menos */
-  exato: Object.freeze({ titulos: 5, prontos: 8 }),
+  /* os três estágios da ascensão (o servo, o receptáculo, a divindade nova):
+     o Narrador lê "os três estágios", e o número é o da trilha do motor */
+  exato: Object.freeze({ titulos: 5, prontos: 8, estagios: 3 }),
   /* os mínimos: a criação abre na primeira ocupação, a rua mostra ao menos
      uma coisa, o encontro tem ao menos uma criatura para sortear, a gente
      ao menos um banco, o céu ao menos um domínio, e a criação ao menos uma
@@ -332,6 +337,7 @@ export function validarCenario(dados) {
       if (pa.titulos.length !== E.exato.titulos) erros.push(`panteao.titulos: são ${E.exato.titulos}, um por grau (GD 0 a ${E.exato.titulos - 1}), e vieram ${pa.titulos.length}`);
       pa.titulos.forEach((x, i) => { const onde = `panteao.titulos[${i}]`; if (!ehObj(x)) { erros.push(`${onde}: devia ser objeto`); return; } conferir(x, E.titulo, onde, erros); });
     }
+    if (Array.isArray(pa.estagios) && pa.estagios.length !== E.exato.estagios) erros.push(`panteao.estagios: são ${E.exato.estagios} (o servo, o receptáculo e a divindade nova), e vieram ${pa.estagios.length}`);
   }
   const lu = dados.lugares;
   if (ehObj(lu)) {

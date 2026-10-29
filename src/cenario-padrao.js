@@ -72,6 +72,10 @@
                         ao GD 4 (cinco, na ordem): a escala em si — os fiéis de
                         cada grau, a Regra do Degrau — é física e fica em
                         divindades.js; o mundo dá só as palavras
+     panteao.estagios   os três estágios da ascensão, na ordem (o do meio o
+                        Narrador lê ao lado do título do GD 2: "Semideus/Receptáculo")
+     panteao.palavrasDivinas  as palavras que só a fé dá — o Narrador nunca as
+                        usa para quem o sistema não declarou divino
      panteao.dominios[].sinais  opcional: o sinal impossível que o deus daquele
                         temperamento manda (o evento divino); o temperamento sem
                         sinal manda o fenômeno que ninguém explica
@@ -331,6 +335,10 @@ export const DADOS_DO_CENARIO_PADRAO = {
       { titulo: "Divindade Menor", desc: "Um domínio responde quando você chama." },
       { titulo: "Divindade Maior", desc: "Força cósmica — o mundo se curva." },
     ],
+    /* 6.ª fatia: o que o Narrador lia escrito no código — os três estágios da
+       ascensão (divindades.js) e as palavras que só a fé dá (prompt.js) */
+    estagios: ["Servo Escolhido", "Receptáculo", "Nova Divindade"],
+    palavrasDivinas: ["Semideus", "Divindade"],
   },
   /* 5.ª fatia: os lugares (toponimia.js). Três padrões sobre bancos de algumas
      dezenas de palavras dão milhares de nomes por tipo de lugar; o tamanho

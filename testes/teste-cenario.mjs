@@ -73,6 +73,7 @@ const AT = await import(S + "atributos.js");
 const CP = await import(S + "companheiros.js");
 const MB = await import(S + "mundo-base.js");
 const CD = await import(S + "condicoes.js");
+const PR = await import(S + "prompt.js");
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -263,6 +264,12 @@ sec("2. e a prova morde — um número mexido no cenário aparece nos casos");
   t("de volta ao padrão, o dourado fecha outra vez", diferentes(await fotografarOsCatalogos(SRC)).length === 0);
 }
 
+/* 6.ª fatia: a ficha mínima com que a suíte pede o prompt do Narrador inteiro */
+const FICHA_DO_PROMPT = Object.freeze({
+  nome: "Iara", raca: "Humano", classe: "Guerreiro", nivel: 3, vida: 20, vidaMax: 20, mana: 5, manaMax: 5,
+  atributos: { forca: 2, vigor: 1 }, moedas: 10, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], equipados: {},
+});
+
 /* ---------------- um mundo que não é a Taverna ---------------- */
 const ORBITA = {
   formato: 1,
@@ -321,6 +328,9 @@ const ORBITA = {
       { titulo: "Voz do Vácuo", desc: "Um anel inteiro reza na sua frequência." },
       { titulo: "A Própria Estação", desc: "Você é o ar que eles respiram." },
     ],
+    /* 6.ª fatia: a trilha da ascensão e as palavras que só a fé dá, na língua da estação */
+    estagios: ["Escolhido do Turno", "Casco Vivo", "A Estação Desperta"],
+    palavrasDivinas: ["Eco do Casco", "Voz do Vácuo"],
   },
   lugares: {
     bancos: {
@@ -451,7 +461,12 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   const lexR = { racas: [{ raca: "tripulante", chamado: "Turno-Longo" }, { raca: "Clone de Serviço", chamado: "Cópia" }] };
   t("o léxico gerado para as origens dela não se perde, e a ficha diz o nome do mundo", LX.garantirLexico(lexR).racas.length === 2 && LX.racaNaFicha(lexR, "Tripulante", true) === "Turno-Longo (Tripulante)");
   t("os títulos do céu são os dela, com a física de sempre", DV.tituloDe(2) === "Eco do Casco" && DV.GRAUS[2].fieis === 10000 && DV.GRAUS[2].desc.startsWith("O metal") && DV.grauDe({ ehJogador: true, despertar: true, fieis: 12000 }) === 2);
-  t("…e o Narrador lê a escala dela, nas duas linhas que a diziam", DV.DIVINDADE_PROMPT.includes("GD 0–4: Passageiro, Lenda da Doca (1k fiéis), Eco do Casco (10k), Voz do Vácuo (100k), A Própria Estação (1M+).") && DV.DIVINDADE_PROMPT.includes("Servo Escolhido → Eco do Casco/Receptáculo") && !DV.DIVINDADE_PROMPT.includes("Semideus"));
+  t("…e o Narrador lê a escala dela, nas duas linhas que a diziam", DV.DIVINDADE_PROMPT.includes("GD 0–4: Passageiro, Lenda da Doca (1k fiéis), Eco do Casco (10k), Voz do Vácuo (100k), A Própria Estação (1M+).") && /* 6.ª fatia: era "Servo Escolhido → Eco do Casco/Receptáculo" — o título já era
+     dela e os estágios eram do código; agora a linha inteira é dela */ DV.DIVINDADE_PROMPT.includes("Escolhido do Turno → Eco do Casco/Casco Vivo → A Estação Desperta") && !DV.DIVINDADE_PROMPT.includes("Semideus"));
+  /* 6.ª fatia: as palavras do céu que o Narrador lia escritas no código */
+  t("…e os três estágios já não são os da Taverna", !DV.DIVINDADE_PROMPT.includes("Servo Escolhido") && !DV.DIVINDADE_PROMPT.includes("Receptáculo") && !DV.DIVINDADE_PROMPT.includes("Nova Divindade"));
+  const sysO = PR.montarSystemPrompt("Órbita", { genero: "Ópera de estação" }, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null);
+  t("o prompt do Narrador diz as palavras divinas dela, na regra das três medidas", DV.PALAVRAS_DIVINAS.join() === "Eco do Casco,Voz do Vácuo" && sysO.includes("Palavras divinas (Eco do Casco, Voz do Vácuo) são EXCLUSIVAS da fé") && !sysO.includes("(Semideus, Divindade)"));
   const fria = { nome: "Vera", dominio: "do Vácuo e do Silêncio", icone: "🌌", temperamento: "fria", culto: "a Tripulação de Vera" };
   const sinais = Array.from({ length: 40 }, (_, i) => DV.gerarEventoDivino({}, i, [fria], G.rngDe("orbita|sinal|" + i))).filter((e) => e && e.texto.includes("sinal impossível"));
   t("o deus frio manda o sinal que o domínio dela escreveu", sinais.length > 0 && sinais.every((e) => e.texto.includes("a geada que escreve nomes")), String(sinais.length));
@@ -467,6 +482,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   CN.usarCenario(CN.CENARIO_PADRAO);
   const p = banca("orbita|1");
   t("a mesma semente noutro mundo: as mesmas coisas, outros preços", a.estoque.map((x) => x.nome).join() === p.estoque.map((x) => x.nome).join() && a.estoque.map((x) => x.preco).join() !== p.estoque.map((x) => x.preco).join());
+  t("…o céu do prompt também (os estágios e as palavras divinas)", DV.DIVINDADE_PROMPT.includes("(Servo Escolhido → Semideus/Receptáculo → Nova Divindade)") && PR.montarSystemPrompt("x", null, FICHA_DO_PROMPT, [], null, "", "", "", "", "", "", "", null).includes("Palavras divinas (Semideus, Divindade) são"));
   t("…o roster e o povo do companheiro também", R.PRONTOS.length === 8 && R.prontoPorId("muralha").raca === "Goliath" && R.montarPronto("o7-muralha") === null && CP.RACAS_DO_COMPANHEIRO.length === 8 && CP.racaDeCompanheiro({ raca: "elfa" }) === "Elfo");
   t("e de volta ao padrão, tudo como era", C.PROFISSOES.length === 12 && E.precoComum("caneca") === 1 && E.valorDeItem({ raridade: "raro" }) === 220);
   t("…o bestiário também", B.CRIATURAS_FANTASIA.length === 18 && B.ARQUETIPOS.length === 9 && B.completarInimigo({ nome: "Troll" }, 5).perfil.fraqueza.join() === "fogo");
@@ -578,6 +594,8 @@ sec("4. o cenário inválido é recusado, e diz onde");
   caso("um dom sem custo", (d) => { delete d.racas.futuro[0].efeito.dom.custo; }, "racas.futuro[0].efeito.dom.custo: falta");
   caso("um dom de um tipo que não existe", (d) => { d.racas.futuro[0].efeito.dom.tipo = "magia"; }, "racas.futuro[0].efeito.dom.tipo: devia ser um tipo de habilidade do motor");
   /* 6.ª fatia: o roster e o povo apontam para a gente deste mundo */
+  caso("dois estágios na ascensão", (d) => { d.panteao.estagios.pop(); }, "panteao.estagios: são 3");
+  caso("as palavras divinas vazias", (d) => { d.panteao.palavrasDivinas = []; }, "panteao.palavrasDivinas: devia ser lista de textos, com ao menos um");
   caso("faltam os prontos", (d) => { delete d.prontos; }, "prontos: falta (lista)");
   caso("sete prontos", (d) => { d.prontos.pop(); }, "prontos: são 8");
   caso("um pronto de uma raça de outro mundo", (d) => { d.prontos[0].raca = "Goliath"; }, 'prontos[0].raca: "Goliath" não é raça deste mundo');
@@ -698,6 +716,8 @@ sec("6. o esquema lê de volta o que o motor consome");
   t("o roster do padrão tem os oito, e cada um monta (raça e ofício do mundo)", CN.CENARIO_PADRAO.prontos.length === EQ.exato.prontos && R.PRONTOS.every((p) => !!R.montarPronto(p.id) && R.profissaoValida(p.profissao)));
   t("o povo do companheiro e o registo do padrão só dizem raças da criação", CN.CENARIO_PADRAO.racas.doCompanheiro.every((p) => !!C.racaPorNome(p.raca)) && Object.values(CN.CENARIO_PADRAO.racas.registo).every((r) => !!C.racaPorNome(r)));
   t("nenhuma raça ficou literal em classes.js nem em lexico.js", !["\"Goliath\"", "\"Meio-orc\"", "\"Colono Orbital\"", "\"Vagante\""].some((x) => fonteCla.includes(x) || fonteLex.includes(x)) && !fonteCla.includes("Sopro Ancestral"));
+  const fontePrm = fs.readFileSync(path.join(SRC, "prompt.js"), "utf8");
+  t("nem os três estágios em divindades.js, nem as palavras divinas em prompt.js (6.ª fatia)", !["Servo Escolhido", "Nova Divindade", "/Receptáculo"].some((x) => fonteDv.includes(x)) && !fontePrm.includes("(Semideus, Divindade)"));
   t("nem os títulos da escala nem o sinal da tempestade em divindades.js", !["\"Semideus\"", "\"Herói Lendário\"", "Semideus (10k)", "\"colérica\"", "escrevem runas"].some((x) => fonteDv.includes(x)));
   t("a escala do cenário tem um título por grau da física", CN.CENARIO_PADRAO.panteao.titulos.length === DV.GRAUS.length && EQ.exato.titulos === DV.GRAUS.length && DV.GRAUS.every((g, i) => g.gd === i && g.titulo === CN.CENARIO_PADRAO.panteao.titulos[i].titulo));
   t("o sinal da tempestade é do domínio das Tempestades, e de um temperamento dele", CN.CENARIO_PADRAO.panteao.dominios.filter((x) => x.sinais).map((x) => x.dominio + ":" + Object.keys(x.sinais).join()).join() === "das Tempestades:colérica");
