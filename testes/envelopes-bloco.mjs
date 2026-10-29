@@ -41,7 +41,7 @@ const NOMES = {
   subtramas: ["fraseDaManha"],
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, motorEnvelopes };
 function osModulos({ novo }) {
@@ -75,9 +75,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "acampSemDescanso", "acampDescansado", "fogoSentar", "fogoDecisao", "fogoFicar", "coracaoResposta", "coracaoDecisao",
   "aberturaCampanha", "aberturaCapitulo", "aberturaCapituloNovo", "aberturaRetomada",
   "viagemPartidaMapa", "viagemPartidaEscolha", "viagemTrecho", "viagemPassarOTempo", "viagemErmos", "viagemEmboscada",
-  "fioMarco", "fioRumores", "fioMundo", "fioVirada", "fioInterludio", "fioLutaDaChave"];
+  "fioMarco", "fioRumores", "fioMundo", "fioVirada", "fioInterludio", "fioLutaDaChave",
+  "fichaNivel", "fichaPericias", "fichaAtributo", "fichaHabilidade", "fichaSubclasse", "fichaEspecializacao", "fichaRefazer"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^ficha/.test(b) ? "ficha" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -122,9 +123,18 @@ const ANCORAS = {
   fioVirada: { antes: ['    notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + "[A VIRADA — "', FIM], hoje: ['    notaRef.current = (notaRef.current ? notaRef.current + "\\n" : "") + oEnvelopeDoFio("virada"', FIM] },
   fioInterludio: { antes: ['      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current)', FIM], hoje: ['      p = porNaPauta(p, "momento", envelopeDaChave(torneioRef.current)', FIM] },
   fioLutaDaChave: { antes: ["                  enviar(`[A LUTA DA CHAVE COMECA]", FIM], hoje: ['                  enviar(oEnvelopeDoFio("lutaDaChave", ', FIM] },
+  /* a ficha (a formação): sete notas de uma linha; o sítio devolve a nota do turno */
+  fichaNivel: { antes: ["    notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível", FIM], hoje: ["    notaRef.current = oEnvelopeDaFicha(\"subiDeNivel\"", FIM] },
+  fichaPericias: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FICHA — REGISTRO DO SISTEMA] Ajustei meus treinos", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"pericias\"", FIM] },
+  fichaAtributo: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FICHA — REGISTRO DO SISTEMA] Fortaleci", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"atributo\"", FIM] },
+  fichaHabilidade: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[FICHA — REGISTRO DO SISTEMA] Aprendi a habilidade", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"habilidade\"", FIM] },
+  fichaSubclasse: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização \"${subNome}\"", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"subclasse\"", FIM] },
+  fichaEspecializacao: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização \"${espNome}\"", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"especializacao\"", FIM] },
+  fichaRefazer: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Passei por um treinamento longo e REFIZ meu caminho", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"refazerCaminho\"", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
-  fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p" };
+  fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
+  fichaNivel: "notaRef.current", fichaPericias: "notaRef.current", fichaAtributo: "notaRef.current", fichaHabilidade: "notaRef.current", fichaSubclasse: "notaRef.current", fichaEspecializacao: "notaRef.current", fichaRefazer: "notaRef.current" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -296,6 +306,21 @@ export function fioDoCaso(i) {
   };
 }
 
+/* A FICHA (A FORMAÇÃO): a nota do turno vazia e já com outra à frente; o
+   nível de cada degrau; o atributo de cada nome e valor; a habilidade que
+   abre o caminho de outra classe e a que não (com o nome da classe vazio
+   também); a especialização de subclasse e a de obsessão de cada classe. */
+export function fichaDoCaso(i) {
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    personagem: { nome: "Vera do render", nivel: 2 + (i % 9), classe: ["Guerreiro", "Clérigo", "Bardo"][i % 3] },
+    nomeAttr: ["Força", "Sabedoria", "Carisma", "Destreza"][i % 4], r: { valor: 1 + (i % 5) },
+    hab: { nome: ["Golpe Feroz", "Bênção", "Passo Sombrio"][i % 3], custo: (i % 4) * 2, descricao: ["dano +1d6", "cura 1d8", "teleporta 9 m"][(i >> 1) % 3] },
+    eraNova: [false, true, 0, "sim"][(i >> 2) % 4], classeNome: ["Mago", "Ladino", ""][(i >> 1) % 3],
+    subNome: ["Campeão", "Domínio da Luz"][i % 2], espNome: ["Mestre de Armas", "Lâmina Gêmea", "Erudito"][i % 3],
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -365,6 +390,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "acampamento") Object.assign(S, acampamentoDoCaso(k.i), { personagem: { nome: "Vera do render" }, fecharANoite: (manha, txt) => { enviados.push([txt, seguro(manha)]); } });
     else if (g === "abertura") Object.assign(S, aberturaDoCaso(k.i));
+    else if (g === "ficha") Object.assign(S, fichaDoCaso(k.i));
     else if (g === "fio") Object.assign(S, fioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "viagem") Object.assign(S, viagemDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else throw new Error("bloco sem grupo: " + bloco);

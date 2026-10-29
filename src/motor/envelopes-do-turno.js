@@ -256,3 +256,26 @@ export const ENVELOPES_DO_FIO = {
 export function oEnvelopeDoFio(qual, dados) {
   return aFormaDe(ENVELOPES_DO_FIO, qual, "do fio")(dados || {});
 }
+
+/* ============================================================
+   8.º GRUPO — A FICHA (A FORMAÇÃO): as notas do turno que dizem ao Narrador
+   o que o jogador mudou na própria ficha — o nível que subiu, as perícias
+   ajustadas, o atributo fortalecido, a habilidade aprendida (e o caminho de
+   outra classe que ela abre), a especialização de subclasse e a de obsessão,
+   o caminho refeito. É anotação, não cena: o efeito mecânico já está aplicado
+   e o Narrador não abre treino, mestre nem viagem por causa disso.
+   Na habilidade, `eraNova` diz se ela abriu o caminho de outra classe
+   (`classeNome`); `classe`, a de antes, só se lê quando abriu.
+   ============================================================ */
+export const ENVELOPES_DA_FICHA = {
+  subiDeNivel: ({ nivel }) => `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${nivel}. É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento e sem descrever poderes novos — o que eu de fato aprendi só existe depois que eu gastar os pontos.`,
+  pericias: () => `[FICHA — REGISTRO DO SISTEMA] Ajustei meus treinos de perícia. É anotação de ficha: não abra cena, não invente mestre nem treinamento por causa disso.`,
+  atributo: ({ atributo, valor }) => `[FICHA — REGISTRO DO SISTEMA] Fortaleci ${atributo} (agora +${valor}). É anotação de ficha: não abra cena, não invente treinamento nem mestre por causa disso.`,
+  habilidade: ({ nome, custo, descricao, eraNova, classeNome, classe }) => `[FICHA — REGISTRO DO SISTEMA] Aprendi a habilidade "${nome}" (${custo} PM: ${descricao})${eraNova ? `, abrindo TAMBÉM o caminho de ${classeNome} — sou ${classe} e ${classeNome} agora` : ""}. Isso é só uma anotação de ficha: NÃO abra cena, não invente treinamento, mestre nem viagem por causa disso. Se couber naturalmente numa cena futura, deixe transparecer.`,
+  subclasse: ({ sub, classeNome }) => `[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${sub}" dentro de ${classeNome}. Isso é um marco da minha formação: mencione de passagem, quando couber, que meu jeito de lutar/agir mudou nessa direção. NÃO abra cena nova por causa disso nem invente mestres, rituais ou viagens — foi uma escolha minha de ficha.`,
+  especializacao: ({ esp, classeNome }) => `[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${esp}" dentro de ${classeNome}: é a obsessão em que me tornei referência. Mencione de passagem, quando couber, que meu jeito de agir se estreitou nessa direção. NÃO abra cena, não invente mestre, ritual nem viagem — foi uma escolha minha de ficha.`,
+  refazerCaminho: () => `[INFO] Passei por um treinamento longo e REFIZ meu caminho: desaprendi o que sabia de classe e vou reaprender diferente. Narre isso como semanas de treino/estudo ou um ritual, se couber na cena — mas o efeito mecânico já está aplicado.`,
+};
+export function oEnvelopeDaFicha(qual, dados) {
+  return aFormaDe(ENVELOPES_DA_FICHA, qual, "da ficha")(dados || {});
+}

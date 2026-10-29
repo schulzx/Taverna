@@ -23,12 +23,14 @@
    O 5.º, A ABERTURA; o 6.º, A VIAGEM. O 7.º, O FIO DA HISTÓRIA: as quatro
    notas do turno com que o diretor empurra a cena (o marco, os rumores da
    chave, o mundo que vem buscar, a virada), o teto do interlúdio na pauta e
-   a luta da chave que o sistema já abriu.
+   a luta da chave que o sistema já abriu. O 8.º, A FICHA (A FORMAÇÃO): as
+   sete notas do que o jogador mudou na própria ficha (o nível, as perícias,
+   o atributo, a habilidade, as duas especializações, o caminho refeito).
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -315,6 +317,37 @@ sec("11 · o fio da história: os casos percorrem o que o texto decide, e a prov
     ["fioInterludio", "o interlúdio que deixa inventar lutas", { oEnvelopeDoFio: (q, d) => E(q, d).replace(" Nao invente lutas: a luta acontece quando o jogador entrar nela.", "") }],
     ["fioLutaDaChave", "a luta da chave sem o nome do rival", { oEnvelopeDoFio: (q, d) => E(q, { ...d, quem: "o rival" }) }],
     ["fioLutaDaChave", "a luta que manda abrir o combate", { oEnvelopeDoFio: (q, d) => E(q, d).replace(" O SISTEMA ja abriu o combate.", "") }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("12 · a ficha (a formação): os casos percorrem o que o texto decide, e a prova morde");
+{
+  const N = (b) => HOJE[b].map((f) => f.texto);
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const B = ["fichaNivel", "fichaPericias", "fichaAtributo", "fichaHabilidade", "fichaSubclasse", "fichaEspecializacao", "fichaRefazer"];
+  /* o nível troca a nota do turno inteira (a de antes não fica); as outras seis entram abaixo da que já havia */
+  t("o nível troca a nota; as outras seis entram sozinhas e abaixo da que já havia", N("fichaNivel").every((x) => x.startsWith("[FICHA — ")) && B.slice(1).every((b) => { const X = N(b); return conta(X, "[NOTA] já havia\n[") >= 100 && X.filter((x) => !x.startsWith("[NOTA]")).length >= 100; }));
+  t("o nível de cada degrau", [2, 3, 4, 5, 6, 7, 8, 9, 10].every((n) => conta(N("fichaNivel"), "Subi para o nível " + n + ".") >= 20));
+  t("o atributo de cada nome, com o valor", ["Força", "Sabedoria", "Carisma", "Destreza"].every((a) => conta(N("fichaAtributo"), "Fortaleci " + a + " (agora +") >= 50) && [1, 2, 3, 4, 5].every((v) => conta(N("fichaAtributo"), "(agora +" + v + ")") >= 40));
+  const H = N("fichaHabilidade");
+  t(`a habilidade que abre outro caminho (${conta(H, ", abrindo TAMBÉM o caminho de ")}), com o nome da classe vazio (${conta(H, "o caminho de  — sou ")}), e a que não abre (${H.filter((x) => !x.includes("abrindo")).length})`,
+    conta(H, ", abrindo TAMBÉM o caminho de Mago — sou ") >= 20 && conta(H, "o caminho de  — sou ") >= 10 && H.filter((x) => !x.includes("abrindo")).length >= 100 && ["Guerreiro", "Clérigo", "Bardo"].every((c) => conta(H, "— sou " + c + " e ") >= 10));
+  t("as duas especializações, de cada nome e classe", ["Campeão", "Domínio da Luz"].every((n) => conta(N("fichaSubclasse"), "especialização \"" + n + "\" dentro de ") >= 100) && ["Mestre de Armas", "Lâmina Gêmea", "Erudito"].every((n) => conta(N("fichaEspecializacao"), "\"" + n + "\"") >= 80) && conta(N("fichaSubclasse"), "dentro de .") >= 60);
+  t("a forma de cada envelope está na tabela, e a que não está estoura", Object.keys(ENVELOPES_DA_FICHA).length === 7 && (() => { try { oEnvelopeDaFicha("nenhuma", {}); return false; } catch { return true; } })() && (() => { try { oEnvelopeDaFicha("constructor", {}); return false; } catch { return true; } })());
+  const E = oEnvelopeDaFicha;
+  const mordidas = [
+    ["fichaNivel", "o nível de um degrau acima", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, nivel: d.nivel + 1 }) }],
+    ["fichaPericias", "as perícias que deixam abrir cena", { oEnvelopeDaFicha: (q, d) => E(q, d).replace("não abra cena, ", "") }],
+    ["fichaAtributo", "o atributo sem o sinal do valor", { oEnvelopeDaFicha: (q, d) => E(q, d).replace("(agora +", "(agora ") }],
+    ["fichaHabilidade", "a habilidade que nunca abre caminho", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, eraNova: false }) }],
+    ["fichaHabilidade", "a classe de antes trocada pela nova", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, classe: d.classeNome }) }],
+    ["fichaSubclasse", "a especialização dentro de outra classe", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, classeNome: "Mago" }) }],
+    ["fichaEspecializacao", "a especialização sem a obsessão", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(": é a obsessão em que me tornei referência.", ".") }],
+    ["fichaRefazer", "o caminho refeito com o efeito por aplicar", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(" — mas o efeito mecânico já está aplicado", "") }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

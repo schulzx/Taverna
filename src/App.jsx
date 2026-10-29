@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -19413,7 +19413,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       pontosAtr: (typeof p.pontosAtr === "number" ? p.pontosAtr : pontosAtributoDisponiveis(p)) + ganhoAtr,
       nivelPendentes: Math.max(0, p.nivelPendentes - 1),
     }));
-    notaRef.current = `[FICHA — REGISTRO DO SISTEMA] Subi para o nível ${personagem.nivel}. É anotação de ficha: mencione o crescimento de passagem se couber, sem abrir cena de treinamento e sem descrever poderes novos — o que eu de fato aprendi só existe depois que eu gastar os pontos.`;
+    notaRef.current = oEnvelopeDaFicha("subiDeNivel", { nivel: personagem.nivel });
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
   };
 
@@ -20329,7 +20329,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const p = { ...personagem, pericias: { treinadas: nt, especialistas: ne } };
     setPersonagem(p); salvar({ personagem: p });
     pushMsgs([{ autor: "sistema", texto: msg }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FICHA — REGISTRO DO SISTEMA] Ajustei meus treinos de perícia. É anotação de ficha: não abra cena, não invente mestre nem treinamento por causa disso.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("pericias");
   };
 
   /* ---------------- ATRIBUTOS (v9.6) ---------------- */
@@ -20340,7 +20340,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     setPersonagem(r.pers);
     salvar({ personagem: r.pers });
     pushMsgs([{ autor: "sistema", texto: `✦ ${nomeAttr} → +${r.valor} (−${r.custo} ponto${r.custo > 1 ? "s" : ""}, restam ${r.pers.pontosAtr})` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FICHA — REGISTRO DO SISTEMA] Fortaleci ${nomeAttr} (agora +${r.valor}). É anotação de ficha: não abra cena, não invente treinamento nem mestre por causa disso.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("atributo", { atributo: nomeAttr, valor: r.valor });
   };
 
   const redistribuirAtributosFicha = () => {
@@ -20368,7 +20368,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     };
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: `✦ Nova habilidade: ${hab.nome} (${hab.custo} PM) — ${classeNome}${hab.subclasse ? ` · ${hab.subclasse}` : ""}${eraNova ? " · segunda classe aberta!" : ""} — ${custoEmPontos(hab)} ponto(s)` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[FICHA — REGISTRO DO SISTEMA] Aprendi a habilidade "${hab.nome}" (${hab.custo} PM: ${hab.descricao})${eraNova ? `, abrindo TAMBÉM o caminho de ${classeNome} — sou ${personagem.classe} e ${classeNome} agora` : ""}. Isso é só uma anotação de ficha: NÃO abra cena, não invente treinamento, mestre nem viagem por causa disso. Se couber naturalmente numa cena futura, deixe transparecer.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("habilidade", { nome: hab.nome, custo: hab.custo, descricao: hab.descricao, eraNova, classeNome, classe: eraNova ? personagem.classe : "" });
     salvar({ personagem: p });
     checarConquistas(p);
   };
@@ -20382,7 +20382,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       subclasse: classeNome === personagem.classe ? subNome : personagem.subclasse };
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: `✦ Caminho escolhido: ${subNome} (${classeNome}). Quatro habilidades exclusivas abrem nos degraus 3, 5, 7 e 9.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${subNome}" dentro de ${classeNome}. Isso é um marco da minha formação: mencione de passagem, quando couber, que meu jeito de lutar/agir mudou nessa direção. NÃO abra cena nova por causa disso nem invente mestres, rituais ou viagens — foi uma escolha minha de ficha.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("subclasse", { sub: subNome, classeNome });
     salvar({ personagem: p });
     checarConquistas(p);
   };
@@ -20395,7 +20395,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     const p = { ...personagem, especializacoes: { ...(personagem.especializacoes || {}), [classeNome]: espNome } };
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: `★ Especialização: ${espNome} (${classeNome}). Três habilidades exclusivas abrem nos degraus ${DEGRAUS_ESPECIALIZACAO.join(", ")}.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[MARCO DE CAMINHO — REGISTRO DO SISTEMA] Escolhi a especialização "${espNome}" dentro de ${classeNome}: é a obsessão em que me tornei referência. Mencione de passagem, quando couber, que meu jeito de agir se estreitou nessa direção. NÃO abra cena, não invente mestre, ritual nem viagem — foi uma escolha minha de ficha.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("especializacao", { esp: espNome, classeNome });
     salvar({ personagem: p });
     checarConquistas(p);
   };
@@ -20419,7 +20419,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
     };
     setPersonagem(p);
     pushMsgs([{ autor: "sistema", texto: `⟲ Redistribuição feita (−◉ ${custo}): ${devolvidos} ponto(s) de volta. Escolha de novo na árvore.` }]);
-    notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[INFO] Passei por um treinamento longo e REFIZ meu caminho: desaprendi o que sabia de classe e vou reaprender diferente. Narre isso como semanas de treino/estudo ou um ritual, se couber na cena — mas o efeito mecânico já está aplicado.`;
+    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaFicha("refazerCaminho");
     salvar({ personagem: p });
   };
 
