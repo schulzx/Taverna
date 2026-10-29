@@ -17,7 +17,11 @@ const S = "../src/";
 const { readFileSync } = await import("node:fs");
 const C = await import(S + "custo.js");
 const APP = readFileSync("../src/App.jsx", "utf8");
-const API = readFileSync("../api/narrador.js", "utf8");
+/* MOVIDA (29/10, Fase 4, trilha B): o caminho ao provedor saiu à letra de
+   api/narrador.js para api/_provedor.js, porque o /api/turno passou a
+   chamar o Narrador pela mesma via. O que esta suíte guarda no texto da
+   rota mora agora nos dois arquivos, e lê-se os dois juntos. */
+const API = readFileSync("../api/narrador.js", "utf8") + "\n" + readFileSync("../api/_provedor.js", "utf8");
 const GOD = readFileSync("../src/godmode.js", "utf8");
 
 let bons = 0, maus = 0;

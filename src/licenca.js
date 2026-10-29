@@ -41,6 +41,18 @@
    chamada autenticada conta, a recusada também: um laço que bate no teto
    não fica a bater de graça.
 
+   UM TURNO, UM USO (29/10, o /api/turno joga de verdade). A rota autoriza
+   uma vez por pedido, e o pedido é o turno inteiro: o Narrador, a segunda
+   escrita dele quando a primeira vem sem narrativa, e o Cronista do mesmo
+   turno contam UM. A conta é feita ANTES da rede, e de propósito: contar
+   no fim deixava vinte pedidos em paralelo passarem todos por baixo do
+   teto. E O TURNO QUE O PROVEDOR NÃO DEU DEVOLVE-SE (`devolverOUso`): se a
+   fila inteira de modelos caiu, ou nem a segunda escrita trouxe narrativa,
+   o licenciante não recebeu turno nenhum, e a culpa é do lado de cá — o
+   uso volta ao contador. O que NÃO se devolve é o que é do pedido: o corpo
+   inválido (400) e o estado que não monta (422) contam, como contavam,
+   porque não gastaram um centavo de IA e um laço deles não pode ser grátis.
+
    ---------------- FALHA FECHADA, AO CONTRÁRIO DO PORTÃO ----------------
 
    O portão deixa passar quando o Redis cai, e tem razão: ali o contador é
@@ -201,14 +213,34 @@ export async function autorizar(entrada) {
   if (!reg || !selosIguais(reg.selo, seloDaChave(chave, segredoDoServidor))) return recusa(401, "chave-recusada", "chave recusada");
   if (!reg.ativa) return recusa(403, "licenca-suspensa", "esta licença está suspensa");
   const { indice, reabreEm } = janelaDe(agora, reg.janela);
+  const contador = `${QUOTA.contador}${lida.licenciante}:${reg.janela}:${indice}`, validade = reg.janela + QUOTA.folga;
   let usos;
-  try { usos = Number(await armazem.somar(`${QUOTA.contador}${lida.licenciante}:${reg.janela}:${indice}`, reg.janela + QUOTA.folga)); } catch {
+  try { usos = Number(await armazem.somar(contador, validade)); } catch {
     return recusa(503, "armazem-fora", "o armazém das licenças não respondeu");
   }
   if (!Number.isFinite(usos)) return recusa(503, "armazem-fora", "o armazém das licenças respondeu sem número");
   const conta = { licenciante: lida.licenciante, usos, teto: reg.teto, restam: Math.max(0, reg.teto - usos), reabreEm };
   if (usos > reg.teto) return recusa(429, "quota-esgotada", `quota esgotada (${reg.teto} por janela); reabre em ${Math.ceil(reabreEm / 1000)} s`, conta);
-  return { ok: true, ...conta };
+  /* o contador e a validade dele vão junto, para quem quiser devolver o
+     uso (devolverOUso) — são do servidor: a rota não os põe na resposta */
+  return { ok: true, ...conta, contador, validade };
+}
+
+/* DEVOLVER O USO: o turno que o provedor não deu volta ao contador (o
+   porquê está no cabeçalho, «um turno, um uso»). Recebe o que `autorizar`
+   devolveu e o armazém; o armazém precisa de `descontar(chave, validade)`.
+   Nunca lança e nunca custa o turno: sem armazém que desconte, ou com ele
+   fora, devolve `null` e o uso fica gasto — falha para o lado da casa, como
+   a licença falha (fechada), nunca para um contador negativo. Devolve os
+   usos depois da devolução, ou null. */
+export async function devolverOUso(conta, armazem) {
+  const c = conta && typeof conta === "object" ? conta : {};
+  if (!c.ok || !ehTexto(c.contador) || !c.contador.startsWith(QUOTA.contador)) return null;
+  if (!armazem || typeof armazem.descontar !== "function") return null;
+  try {
+    const n = Number(await armazem.descontar(c.contador, Number(c.validade) || QUOTA.janelaPadrao + QUOTA.folga));
+    return Number.isFinite(n) ? Math.max(0, n) : null;
+  } catch { return null; }
 }
 
 /* O ARMAZÉM DO UPSTASH: o mesmo REST que `_portao.js` e `sala.js` usam,
@@ -231,6 +263,12 @@ export function armazemDoUpstash(ligacao) {
     ler: async (chave) => { const d = await ir("", ["GET", chave]); return d && d.result !== undefined ? d.result : null; },
     somar: async (chave, validade) => {
       const d = await ir("/pipeline", [["INCR", chave], ["EXPIRE", chave, validade]]);
+      return Number(d && d[0] && d[0].result);
+    },
+    /* a devolução: DECR com a mesma validade (um contador que a janela já
+       apagou renasceria em -1 sem prazo; com o EXPIRE, morre como os outros) */
+    descontar: async (chave, validade) => {
+      const d = await ir("/pipeline", [["DECR", chave], ["EXPIRE", chave, validade]]);
       return Number(d && d[0] && d[0].result);
     },
   };

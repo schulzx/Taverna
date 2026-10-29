@@ -84,6 +84,24 @@
    deixam ao turno seguinte, que o App junta à nota e o servidor perdia. O
    aviso sai no turno seguinte, depois da narração da abordagem, nas
    linhas da tela.
+
+   O NARRADOR DE VERDADE (29/10, trilha B: «pode fazer o recomendado»).
+   Com a porta `chamar` — o caminho ao provedor, o mesmo do /api/narrador
+   (api/_provedor.js), que a rota injeta e a suíte espia —, o turno deixa de
+   receber a resposta e vai buscá-la: `oNarradorDoServidor` é o
+   `chamarMestre` do App à letra (o pedido com a ficha do cache, o JSON
+   extraído, a SEGUNDA escrita quando a primeira vem sem narrativa, o turno
+   que não acontece quando nem ela a traz, a fala do herói podada), e o
+   Cronista, quando o gatilho acende, vai pela mesma porta com o pedido do
+   App (900 de teto, JSON, a tarefa leve, a resposta lida com tolerância).
+   A falha que é do provedor sai MARCADA (`motivo: IA_DO_TURNO.falhou`):
+   a rota distingue «o provedor não deu o turno» (devolve o uso da quota)
+   de «este estado não monta» (o uso fica). O Cronista que falha não marca
+   nada: o turno aconteceu, sem ele, como no App.
+
+   O servidor continua sem conhecer provedor nenhum pelo nome: quem sabe
+   qual modelo responde e com que chave é o módulo da rota. Sem `chamar`
+   (o ensaio, a suíte), tudo é como era.
    ============================================================ */
 import { SEMENTE_DA_CASA, comSorte, hashSemente, rng } from "./semente.js";
 import { pontoDaSorte } from "./motor/sorte-do-turno.js";
@@ -111,6 +129,9 @@ import { fatorDaOficina } from "./dominios.js";
 import { garantirSuprimentos } from "./ermos.js";
 import { fatorDeMercado } from "./posturas.js";
 import { precoDeCompraPara } from "./profissoes.js";
+import { extrairJSON, parseObjetoTolerante } from "./json.js";
+import { semFalaInventada } from "./fala-do-heroi.js";
+import { narrativaFaltou, MOTIVO_SEM_NARRATIVA } from "./guardado.js";
 
 export const TURNO_NO_SERVIDOR = Object.freeze({
   /* o nome que a semente usa quando a campanha não tem nome (o mesmo do
@@ -133,6 +154,22 @@ export const PORTAS_DO_SERVIDOR = Object.freeze({
 });
 
 const ehObjeto = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
+
+/* A IA DO TURNO, os números e as frases do `chamarMestre` e do
+   `cronistaDoTurno` do App (os dois chamam `chamarModelo`): o que cada
+   chamada pede à porta. A suíte lê-a de volta. */
+export const IA_DO_TURNO = Object.freeze({
+  /* o Cronista: `chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve")` */
+  cronista: Object.freeze({ maxTokens: 900, formato: "json", tarefa: "leve" }),
+  /* a segunda escrita: `chamarModelo(system, reforco, 3600, "json")` — sem a ficha do cache */
+  reforco: Object.freeze({ maxTokens: 3600, formato: "json", tarefa: "narrador" }),
+  textoDoReforco: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê).",
+  /* a narrativa que pede a segunda escrita (a régua do App, antes da de guardado.js) */
+  vazia: "…",
+  hesita: "O Mestre hesita",
+  /* a marca da falha que é do provedor: a rota devolve o uso por ela */
+  falhou: "provedor-falhou",
+});
 
 /* A SEMENTE DO TURNO, do estado: a conta de `enviar` no App —
    `${sementeMundo()}|${pontoDaSorte()}`. */
@@ -372,16 +409,85 @@ function oCronistaDoServidor(m, resposta, depoisDoMestre) {
   return { pergunta: true, corre: !!g.corre, motivos: arr(g.motivos), leitura, pedido, narrativa };
 }
 
+/* a falha do provedor, marcada: a rota lê `motivo` para devolver o uso */
+const falhaDoProvedor = (erro) => Object.assign(new Error(String((erro && erro.message) || erro || IA_DO_TURNO.falhou)), { motivo: IA_DO_TURNO.falhou });
+const pedeOutraEscrita = (r) => !r.narrativa || r.narrativa === IA_DO_TURNO.vazia || String(r.narrativa).startsWith(IA_DO_TURNO.hesita);
+/* o que a porta devolve, e o uso que ela diz ter gasto (o da resposta e o
+   das tentativas que falharam antes dela — as duas a casa paga) */
+const colherUso = (usos, r) => {
+  for (const u of arr(obj(r).perdidos)) if (ehObjeto(u)) usos.push(u);
+  if (ehObjeto(obj(r).uso)) usos.push(obj(r).uso);
+};
+
+/* O NARRADOR, PELA PORTA: o `chamarMestre` do App sobre `chamar` —
+   `chamar(corpo)` recebe o corpo do /api/narrador (`{ system, messages,
+   maxTokens, formato, tarefa, cache? }`) e devolve `{ texto, cache?, uso?,
+   perdidos? }`, ou lança. `opcoes`: `{ cache, calou }` — `cache` é a
+   ficha do cache explícito que o cliente guardou do turno anterior.
+   Devolve `{ resposta, cache, chamadas, usos }` (`cache`: a ficha nova,
+   null quando morreu, undefined quando o pedido não leva cache); lança
+   MARCADO (`motivo: IA_DO_TURNO.falhou`) quando a porta falha ou quando
+   nem a segunda escrita traz narrativa — o turno não aconteceu. */
+export async function oNarradorDoServidor(pedido, chamar, opcoes) {
+  const p = obj(pedido);
+  const { cache, calou } = obj(opcoes);
+  const msgs = arr(p.messages);
+  const usos = [];
+  let chamadas = 0;
+  const ir = async (corpo) => {
+    chamadas++;
+    let r;
+    try { r = await chamar(corpo); } catch (e) { throw falhaDoProvedor(e); }
+    colherUso(usos, r);
+    return obj(r);
+  };
+  const r1 = await ir({ system: p.system, messages: msgs, maxTokens: p.maxTokens, formato: p.formato, tarefa: p.tarefa, ...(p.comCache ? { cache: ehObjeto(cache) ? cache : {} } : {}) });
+  const ficha = p.comCache ? (ehObjeto(r1.cache) ? r1.cache : null) : undefined;
+  let resp = extrairJSON(String(r1.texto || ""));
+  if (pedeOutraEscrita(resp)) {
+    const reforco = [...msgs, { role: "user", content: IA_DO_TURNO.textoDoReforco }];
+    const r2 = await ir({ system: p.system, messages: reforco, ...IA_DO_TURNO.reforco });
+    const resp2 = extrairJSON(String(r2.texto || ""));
+    if (!pedeOutraEscrita(resp2)) {
+      if (!resp2.mudancas && resp.mudancas) resp2.mudancas = resp.mudancas;
+      resp = resp2;
+    }
+    if (narrativaFaltou(resp)) throw falhaDoProvedor(MOTIVO_SEM_NARRATIVA);
+  }
+  try {
+    const ultima = msgs[msgs.length - 1];
+    const podada = semFalaInventada(resp.narrativa, ultima && ultima.content);
+    if (podada.cortadas.length) resp = { ...resp, narrativa: podada.narrativa };
+  } catch { if (typeof calou === "function") calou("a fala do herói"); }
+  return { resposta: resp, cache: ficha, chamadas, usos };
+}
+
+/* O CRONISTA, PELA PORTA: o pedido do App (`{ sys, user }`) no corpo do
+   /api/narrador, e a resposta lida com tolerância (`parseObjetoTolerante`,
+   como o App) — o que não for objeto o turno trata como «não respondeu». */
+const oCronistaPelaPorta = (chamar, conta) => async (pedido) => {
+  const q = obj(pedido);
+  conta.chamadas++;
+  const r = obj(await chamar({ system: q.sys, messages: [{ role: "user", content: q.user }], ...IA_DO_TURNO.cronista }));
+  colherUso(conta.usos, r);
+  return parseObjetoTolerante(String(r.texto || ""));
+};
+
 /* O TURNO INTEIRO NO SERVIDOR, sobre uma resposta já dada. `corpo`:
    `{ estado, frase, eco, bilhetes, resposta: { narrativa, mudancas } }`;
-   `opcoes`: `{ agora, cronista }` — `cronista(pedido)` recebe o pedido ao
+   `opcoes`: `{ agora, cronista, chamar, cache }` — com `chamar` (a porta
+   do provedor, ver oNarradorDoServidor) a resposta do corpo é ignorada e o
+   Narrador é chamado; `cache` é a ficha do cache que o cliente guardou. E
+   `cronista(pedido)` recebe o pedido ao
    Cronista (`{ sys, user }`, o de oPedidoAoCronista) e devolve a proposta
    (ou null; pode ser async). Só é chamada quando o gatilho acende.
    Devolve `{ pedido, casa, calados, estadoDoFim, eco, soltos, tela, juiz,
    entradaDoJuiz, cronista, juizo, calou }` — `cronista` é o que o turno
    decidiu do Cronista: `{ pergunta, corre, motivos, chamado }` (`chamado`:
-   a porta foi chamada, logo uma 2.ª chamada de IA neste turno). Lança onde
-   a montagem lança.
+   a porta foi chamada, logo uma 2.ª chamada de IA neste turno); com
+   `chamar`, mais `narrativa` e `ia: { chamadas, usos, cache }` (quantas
+   idas à porta, o uso que cada uma disse, a ficha nova do cache). Lança
+   onde a montagem lança, e lança marcado onde o Narrador não deu o turno.
 
    AS DUAS PASSAGENS. O Cronista lê o estado de DEPOIS do Mestre, e a
    proposta dele entra no último passo do replay: a 1.ª passagem corre o
@@ -393,16 +499,29 @@ function oCronistaDoServidor(m, resposta, depoisDoMestre) {
 export async function oTurnoNoServidor(corpo, opcoes) {
   const op = obj(opcoes);
   const m = await montar(corpo, opcoes);
-  const resposta = obj(obj(corpo).resposta);
+  /* COM A PORTA `chamar`, o turno é de verdade: a resposta é a do
+     Narrador, nunca a do corpo (quem mandasse a resposta escolhia o turno),
+     e o Cronista vai pela mesma porta se ninguém der outro */
+  const deVerdade = typeof op.chamar === "function";
+  const ia = deVerdade ? { chamadas: 0, usos: [], cache: undefined } : null;
+  let resposta = obj(obj(corpo).resposta);
+  if (deVerdade) {
+    const n = await oNarradorDoServidor(m.pedido, op.chamar, { cache: op.cache, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } });
+    resposta = obj(n.resposta);
+    ia.chamadas += n.chamadas;
+    ia.usos.push(...n.usos);
+    ia.cache = n.cache;
+  }
+  const portaDoCronista = typeof op.cronista === "function" ? op.cronista : deVerdade ? oCronistaPelaPorta(op.chamar, ia) : null;
   const L0 = aLinhaDoServidor(m, resposta, null);
   const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar(), servidor: true });
   const r0 = correrOTurno(m.estadoDoFim, L0.linha, contexto());
   const cr = oCronistaDoServidor(m, resposta, r0.estado);
   let proposta = null, chamado = false;
   if (cr.pergunta && cr.corre) {
-    if (typeof op.cronista === "function") {
+    if (portaDoCronista) {
       chamado = true;
-      try { proposta = await op.cronista(cr.pedido); } catch { m.calados.length < TURNO_NO_SERVIDOR.caladosMax && m.calados.push("o Cronista"); proposta = null; }
+      try { proposta = await portaDoCronista(cr.pedido); } catch { m.calados.length < TURNO_NO_SERVIDOR.caladosMax && m.calados.push("o Cronista"); proposta = null; }
     }
     if (!ehObjeto(proposta)) proposta = null;
   } else if (cr.pergunta) proposta = {};
@@ -435,5 +554,5 @@ export async function oTurnoNoServidor(corpo, opcoes) {
     ...(obj(r.tela).morreu ? { morreu: true } : {}),
   };
   const cronista = { pergunta: cr.pergunta, corre: cr.corre, motivos: cr.motivos, chamado };
-  return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim, eco: dado(eco), soltos: dado(soltos), tela, juiz: r.juiz, entradaDoJuiz: L.linha.juiz ? L.linha.juiz.entrada : null, cronista, juizo: r.juizo, calou: r.calou };
+  return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim, eco: dado(eco), soltos: dado(soltos), tela, narrativa: String(resposta.narrativa || ""), juiz: r.juiz, entradaDoJuiz: L.linha.juiz ? L.linha.juiz.entrada : null, cronista, juizo: r.juizo, calou: r.calou, ...(ia ? { ia } : {}) };
 }

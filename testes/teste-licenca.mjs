@@ -108,6 +108,8 @@ sec("5. AUTORIZAR");
   const r1 = await vai();
   t("a chave boa entra", r1.ok && r1.licenciante === "casa");
   t("e conta 1 de 3", r1.usos === 1 && r1.teto === 3 && r1.restam === 2);
+  /* 29/10: e diz que contador contou, para a rota poder devolver o uso (devolverOUso) */
+  t("e diz o contador e a validade dele", r1.contador === `${QUOTA.contador}casa:3600:${L.janelaDe(AGORA, 3600).indice}` && r1.validade === 3600 + QUOTA.folga && arm.m.get(r1.contador) === "1");
   const r2 = await vai(), r3 = await vai(), r4 = await vai();
   t("a 3.ª ainda entra, com 0 a restar", r2.ok && r3.ok && r3.restam === 0);
   t("a 4.ª é recusada com 429", !r4.ok && r4.status === 429 && r4.motivo === "quota-esgotada");
@@ -184,6 +186,10 @@ sec("7. O ARMAZÉM DO UPSTASH");
   t("na raiz, sem barra dobrada", vistos[0].url === "https://redis.exemplo");
   t("com o token no cabeçalho", vistos[0].op.headers.authorization === "Bearer tk");
   t("somar é INCR + EXPIRE no pipeline", (await a.somar("quota:x", 99)) === 7 && vistos[1].url === "https://redis.exemplo/pipeline" && JSON.stringify(vistos[1].corpo) === JSON.stringify([["INCR", "quota:x"], ["EXPIRE", "quota:x", 99]]));
+  /* 29/10, o turno de verdade: a devolução do uso (devolverOUso) é DECR com a
+     mesma validade, no pipeline — um contador que a janela apagou não renasce
+     em -1 sem prazo */
+  t("descontar é DECR + EXPIRE no pipeline", (await a.descontar("quota:x", 99)) === 7 && vistos[2].url === "https://redis.exemplo/pipeline" && JSON.stringify(vistos[2].corpo) === JSON.stringify([["DECR", "quota:x"], ["EXPIRE", "quota:x", 99]]));
   const mau = L.armazemDoUpstash({ url: "https://r", token: "t", buscar: async () => ({ ok: false, status: 500 }) });
   t("resposta ruim lança", await mau.ler("k").then(() => false, () => true));
   t("sem credenciais lança", await L.armazemDoUpstash({}).ler("k").then(() => false, () => true));

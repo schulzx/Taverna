@@ -17,7 +17,9 @@
       estado cru da sessão sintética (os nulos que o load nunca deixa)
       estoura igual nos dois lados e a rota diz 422 sem a pilha;
    §5 o segredo não sai: a resposta não leva o prompt nem a frase;
-   §6 com chave: o licenciante ouve o ensaio com a conta da licença;
+   §6 com chave: a rota joga de verdade (teste-turno-de-verdade.mjs prova
+      o turno com o provedor falso); aqui, sem chave de provedor nenhuma, o
+      turno cai no provedor antes da rede, diz 502 e devolve o uso;
    §7 NENHUMA CHAMADA DE REDE: o `fetch` espiado do começo ao fim, e nenhum
       `window`, `document` ou `localStorage` tocado;
    §8 o tamanho da função (o bundle do esbuild, para a Vercel) e o tempo
@@ -67,7 +69,7 @@ globalThis.fetch = async (url, op) => {
   if (String(url).endsWith("/pipeline")) {
     const out = [];
     for (const [cmd, k] of corpo) {
-      if (cmd === "INCR") { const n = (Number(redis.get(k)) || 0) + 1; redis.set(k, String(n)); out.push({ result: n }); } else out.push({ result: 1 });
+      if (cmd === "INCR" || cmd === "DECR") { const n = (Number(redis.get(k)) || 0) + (cmd === "INCR" ? 1 : -1); redis.set(k, String(n)); out.push({ result: n }); } else out.push({ result: 1 });
     }
     return { ok: true, status: 200, json: async () => out };
   }
@@ -91,7 +93,9 @@ const L = await import("../src/licenca.js");
 
 const sha = (x) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
 const ORIGEM = { origin: "http://localhost:5173" };
-const LIMPAR = ["VERCEL_URL", "ORIGENS_EXTRA", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "LICENCA_SEGREDO"];
+/* 29/10: e as chaves do provedor — a rota com chave chama o Narrador, e
+   uma chave que viesse do ambiente de quem corre a suíte abriria a rede */
+const LIMPAR = ["VERCEL_URL", "ORIGENS_EXTRA", "KV_REST_API_URL", "KV_REST_API_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "LICENCA_SEGREDO", "GEMINI_API_KEY", "DEEPSEEK_API_KEY", "OPENROUTER_API_KEY"];
 const guardado = { ...process.env };
 /* a rota como a Vercel a chama: o corpo passa por JSON (o que não viaja
    num JSON não chega ao servidor) */
@@ -275,10 +279,20 @@ sec("6. COM CHAVE — o licenciante");
   const vars = { KV_REST_API_URL: "https://redis.falso", KV_REST_API_TOKEN: "tk", LICENCA_SEGREDO: SEGREDO };
   const r = await rodar(casoGordo, { headers: { authorization: `Bearer ${e.chave}` }, vars });
   const ref = await peloCaminhoDoApp(casoGordo);
-  t("com chave boa: 200 em ensaio, o mesmo hash", r.codigo === 200 && r.corpo.ensaio === true && r.corpo.pedido.hash === sha(ref.pedido));
-  t("e a conta da licença vem junto", r.corpo.licenca && r.corpo.licenca.licenciante === "casa-de-ensaio" && r.corpo.licenca.usos === 1 && r.corpo.licenca.restam === 4);
+  /* MOVIDA (29/10, o /api/turno joga de verdade): com chave a rota já não
+     responde em ensaio — chama o Narrador. Sem chave de provedor no
+     ambiente o caminho ao provedor recusa antes de abrir a rede («nenhuma
+     chave configurada»), o turno não aconteceu e o uso VOLTA ao contador.
+     O pedido que se montou é o mesmo do ensaio (o ensaio sem chave, logo
+     abaixo, dá o hash do caminho do App). */
+  t("com chave boa e sem provedor: 502, o turno não aconteceu", r.codigo === 502 && r.corpo.motivo === "provedor-falhou" && !("estadoDoFim" in r.corpo));
+  t("e o uso foi devolvido: a conta diz 0 de 5", r.corpo.devolvido === true && r.corpo.licenca && r.corpo.licenca.licenciante === "casa-de-ensaio" && r.corpo.licenca.usos === 0 && r.corpo.licenca.restam === 5);
+  const ensaio = await rodar(casoGordo);
+  t("sem chave, o mesmo corpo é ensaio com o hash do caminho do App", ensaio.codigo === 200 && ensaio.corpo.ensaio === true && ensaio.corpo.pedido.hash === sha(ref.pedido));
   const lixo = await rodar({ estado: { ...estadoNoTurno(SESSOES[0].A, 1), mensagens: { torto: true } }, frase: "x" }, { headers: { authorization: `Bearer ${e.chave}` }, vars });
-  t("o 422 de um licenciante também leva a conta (o turno contou)", lixo.codigo === 422 && lixo.corpo.licenca && lixo.corpo.licenca.usos === 2);
+  /* MOVIDA com a de cima: o 422 conta (o estado que não monta não gastou IA,
+     e não se devolve), e o 502 de antes já tinha devolvido o seu — logo 1 */
+  t("o 422 de um licenciante leva a conta, e conta (1: o 502 devolveu o seu)", lixo.codigo === 422 && lixo.corpo.licenca && lixo.corpo.licenca.usos === 1);
 }
 
 sec("9. O DEPOIS DA RESPOSTA — o resto do turno no servidor, sobre a resposta gravada");
@@ -643,8 +657,11 @@ sec("7. NENHUMA CHAMADA DE REDE, NENHUM NAVEGADOR");
   const fora = chamados.filter((u) => !u.startsWith("https://redis.falso"));
   t(`NENHUM PROVEDOR FOI CHAMADO (${chamados.length} idas, todas ao Redis falso)`, fora.length === 0 && chamados.length > 0);
   t(`nenhum window, document, localStorage ou sessionStorage tocado${tocados.size ? " — tocados: " + [...tocados].join(", ") : ""}`, tocados.size === 0);
+  /* 29/10: a rota passou a chamar o Narrador, e continua sem conhecer
+     provedor nenhum pelo nome — quem sabe qual modelo responde e com que
+     chave é api/_provedor.js, o mesmo do /api/narrador, um sítio só */
   const src = readFileSync(aqui("../api/turno.js"), "utf8") + readFileSync(aqui("../src/turno-no-servidor.js"), "utf8");
-  t("e a rota nem conhece os provedores", !/googleapis|deepseek|openrouter|GEMINI_API_KEY|DEEPSEEK_API_KEY|OPENROUTER_API_KEY/i.test(src));
+  t("e a rota nem conhece os provedores pelo nome (chama-os pelo módulo do narrador)", !/googleapis|deepseek|openrouter|GEMINI_API_KEY|DEEPSEEK_API_KEY|OPENROUTER_API_KEY/i.test(src));
 }
 
 sec("8. O TAMANHO DA FUNÇÃO E O TEMPO");

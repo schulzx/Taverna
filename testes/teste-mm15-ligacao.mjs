@@ -36,7 +36,11 @@ const { extrairJSON } = await import("../src/json.js");
 const { MINUTOS_POR_TURNO, horaTxt } = await import("../src/calendario.js");
 const APP = readFileSync("../src/App.jsx", "utf8");
 const PORTAO = readFileSync("../api/_portao.js", "utf8");
-const NARRADOR = readFileSync("../api/narrador.js", "utf8");
+/* MOVIDA (29/10, Fase 4, trilha B): o caminho ao provedor saiu à letra de
+   api/narrador.js para api/_provedor.js, porque o /api/turno passou a
+   chamar o Narrador pela mesma via. O que esta suíte guarda no texto da
+   rota mora agora nos dois arquivos, e lê-se os dois juntos. */
+const NARRADOR = readFileSync("../api/narrador.js", "utf8") + "\n" + readFileSync("../api/_provedor.js", "utf8");
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => {
