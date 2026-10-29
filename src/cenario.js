@@ -103,13 +103,19 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      os bancos, o bestiário e o corte do futuro o chamam), `dica` a linha do
      cartão, `id` a chave da tela (o "livre" é o Universo próprio, que a tela
      põe à parte). O gênero padrão e os do futuro são gêneros da criação. */
-  generoDaCriacao: Object.freeze({ id: "texto", label: "texto", dica: "texto", glifo: "glifo?" }),
+  generoDaCriacao: Object.freeze({ id: "texto", label: "texto", dica: "texto", glifo: "glifo?", tom: "tom?" }),
   /* o glifo do cartão (29/10, trilha A): o JSON de um mundo não leva componente,
      então o cartão diz o NOME de um ícone deste vocabulário, e a tela (App.jsx,
      GLIFO_DO_GENERO) desenha cada um. Fechado: um nome fora daqui seria um ícone
      que nenhuma tela sabe desenhar. Sem glifo, o cartão vai sem ícone — como ia
      o gênero que a tabela da tela não conhecia. */
   glifos: Object.freeze(["castelo", "foguete", "terminal", "olho", "caveira", "bussola", "faiscas"]),
+  /* o tom da cena (T3, 29/10): o fundo do ModalCena do gênero. Como o glifo, o
+     JSON de um mundo não leva cor — o cartão diz o NOME de um tom deste
+     vocabulário, e a tela (estilo.js, TOM_DA_CENA) tem a cor de cada um. Os nomes
+     são de tom, não de gênero, para outra mesa os reusar sem mentir. Fechado: um
+     nome fora daqui seria uma cor que nenhuma tela tem. Sem tom, a cena é `noite`. */
+  tons: Object.freeze(["crepusculo", "aco", "magenta", "breu", "poeira", "cobre", "noite"]),
   /* o bestiário (bestiario.js): `generosDasCriaturas` veem as criaturas do
      mundo e os `emprestados` primeiros arquétipos; os outros gêneros, os
      arquétipos e as `emprestados` primeiras criaturas. Os nomes são únicos
@@ -237,6 +243,7 @@ const TIPOS = {
   nivel: [(v) => Number.isInteger(v) && v >= 1, "número inteiro ≥ 1"],
   contagem: [(v) => Number.isInteger(v) && v >= 0, "número inteiro ≥ 0"],
   glifo: [(v) => ESQUEMA_DO_CENARIO.glifos.includes(v), `um glifo da tela (${ESQUEMA_DO_CENARIO.glifos.join(", ")})`],
+  tom: [(v) => ESQUEMA_DO_CENARIO.tons.includes(v), `um tom da cena (${ESQUEMA_DO_CENARIO.tons.join(", ")})`],
   ameaca: [(v) => ESQUEMA_DO_CENARIO.ameacas.includes(v), `uma ameaça do motor (${ESQUEMA_DO_CENARIO.ameacas.join(", ")})`],
   degrau: [(v) => ESQUEMA_DO_CENARIO.degraus.includes(v), `um degrau do motor (${ESQUEMA_DO_CENARIO.degraus.join(", ")})`],
   elemento: [(v) => ESQUEMA_DO_CENARIO.elementos.includes(v), `um tipo de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")})`],
@@ -514,6 +521,16 @@ let ativo = CENARIO_PADRAO;
 const ouvintes = [];
 
 export function cenarioAtivo() { return ativo; }
+
+/* o tom da cena do gênero (T3, 29/10): o `tom` do cartão da criação cujo `label`
+   é o rótulo, ou undefined — o gênero que não é cartão (o save antigo, o Universo
+   próprio de texto livre), o cartão sem tom, o rótulo que não veio. Pura, e não
+   estoura com nada: quem escolhe o recuo é a tela (estilo.js, fundoDaCena). */
+export function tomDoGenero(rotulo, cenario = cenarioAtivo()) {
+  const criacao = cenario && cenario.generos && Array.isArray(cenario.generos.criacao) ? cenario.generos.criacao : [];
+  const g = typeof rotulo === "string" ? criacao.find((c) => c && c.label === rotulo) : undefined;
+  return g ? g.tom : undefined;
+}
 
 /* o catálogo assina e recebe já o mundo em uso */
 export function aoTrocarDeCenario(fn) {

@@ -310,7 +310,11 @@ export async function fotografarOsCatalogos(raiz) {
      de antes não o tem, e o dourado compara o que os dois sabem responder: os cartões sem o
      glifo. O glifo prova-se em teste-genero-no-app.mjs (secção 3): cada cartão do padrão
      com o ícone que a chave pelo nome dava antes. */
-  caso("criacao.generos", K.GENEROS.map(({ glifo, ...g }) => g));
+  /* MOVIDA (29/10, T3): o cartão ganhou também `tom`, o nome do fundo da cena que a tela
+     pinta (estilo.js TOM_DA_CENA). Pelo mesmo motivo do glifo, o dourado fotografa os
+     cartões sem os dois; o tom prova-se em teste-genero-no-app.mjs (secção 4): o fundo de
+     cada cartão do padrão igual ao byte ao gradiente que a chave pelo nome dava antes. */
+  caso("criacao.generos", K.GENEROS.map(({ glifo, tom, ...g }) => g));
   caso("companheiro.registo", ["humana", "Elfa", "ANA", "anã", "gnoma", "Draconata", "meio-elfa", "Meio-Elfa", "sintética", "elfo", "x", ""].map((r) => CP.racaDeCompanheiro({ nome: "Registo", raca: r })));
   /* o léxico que renomeia as raças: tudo, só a fantasia, uma a menos, uma intrusa, vazio, lixo */
   const bancoDeRacas = LX.RACAS_DO_SISTEMA.map((r, i) => ({ raca: i % 4 === 1 ? r.toUpperCase() : r, chamado: "Povo " + i }));

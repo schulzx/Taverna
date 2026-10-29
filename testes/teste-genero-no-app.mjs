@@ -13,7 +13,11 @@
       sítio (a âncora de cada um), e o literal só sobrevive onde é CHAVE de
       uma tabela da tela (o fundo do ModalCena) — nunca como recuo;
    2. no mundo padrão o recuo é o mesmo texto de antes, ao char (o mundo
-      padrão não muda), e noutro mundo é o padrão dele. */
+      padrão não muda), e noutro mundo é o padrão dele;
+   3. o glifo do cartão é dado do mundo, e a tela desenha o vocabulário;
+   4. o tom da cena (T3, 29/10) é dado do mundo pelo mesmo molde: o cartão diz
+      o NOME de um tom de um vocabulário fechado, e tomDoGenero o devolve pelo
+      rótulo do gênero — sem estourar com o que não veio. */
 import { readFileSync } from "node:fs";
 const CN = await import("../src/cenario.js");
 const { DADOS_DO_CENARIO_PADRAO } = await import("../src/cenario-padrao.js");
@@ -99,6 +103,42 @@ sec("3 · o glifo do cartão de gênero é dado do mundo, e a tela desenha o voc
   d.generos.criacao.unshift({ id: "opera", label: "Ópera de estação", glifo: "foguete", dica: "Docas, turnos longos e o vácuo do lado de fora" });
   const v = CN.validarCenario(d);
   t("um gênero novo nasce com o glifo que o mundo lhe deu", v.ok && icone(CN.carregarCenario(d).generos.criacao[0].glifo) === "IconeFoguete", v.erros.join(" | "));
+}
+
+sec("4 · o tom da cena é dado do mundo, pelo molde do glifo (T3, 29/10)");
+{
+  const EQ = CN.ESQUEMA_DO_CENARIO;
+  t("o vocabulário dos tons é fechado e tem os sete (" + EQ.tons.length + ")", Object.isFrozen(EQ.tons) && EQ.tons.join() === "crepusculo,aco,magenta,breu,poeira,cobre,noite", EQ.tons.join());
+  t("o cartão da criação aceita tom, opcional", EQ.generoDaCriacao.tom === "tom?");
+  /* o mundo padrão: cada cartão com o tom que o seu gradiente de antes tinha */
+  const ESPERADO = { "Fantasia medieval": "crepusculo", "Ficção científica": "aco", Cyberpunk: "magenta", "Horror cósmico": "breu", "Pós-apocalíptico": "poeira", Steampunk: "cobre", "Universo próprio": "noite" };
+  const cartoes = CN.CENARIO_PADRAO.generos.criacao;
+  t("no mundo padrão, os sete cartões dizem o seu tom", cartoes.length === 7 && cartoes.every((g) => g.tom === ESPERADO[g.label]), cartoes.map((g) => g.label + "=" + g.tom).join());
+  t("e tomDoGenero devolve-o pelo rótulo", Object.entries(ESPERADO).every(([rot, tom]) => CN.tomDoGenero(rot) === tom));
+  /* o que não é cartão, ou não veio: undefined, e nada estoura (a tela escolhe o recuo) */
+  const nada = [undefined, null, "", "Ópera espacial", 7, {}, []];
+  let estourou = null;
+  const r = nada.map((x) => { try { return CN.tomDoGenero(x); } catch (e) { estourou = e; return "ESTOUROU"; } });
+  t("rótulo de fora, vazio, null, undefined, número, objeto: undefined, sem estourar", r.every((x) => x === undefined), estourou ? String(estourou) : JSON.stringify(r));
+  let estourou2 = null;
+  const r2 = [null, undefined, {}, { generos: null }, { generos: { criacao: null } }, { generos: { criacao: [null, { label: "Cyberpunk" }] } }].map((c) => { try { return CN.tomDoGenero("Cyberpunk", c); } catch (e) { estourou2 = e; return "ESTOUROU"; } });
+  /* o recuo do parâmetro: undefined explícito é o mundo em uso (o padrão do JS), null e o resto não estouram */
+  t("com um cenário torto, também não estoura", !estourou2 && r2[1] === "magenta" && [0, 2, 3, 4, 5].every((i) => r2[i] === undefined), estourou2 ? String(estourou2) : JSON.stringify(r2));
+  /* o validador, no molde do glifo */
+  const com = (f) => { const d = structuredClone(DADOS_DO_CENARIO_PADRAO); f(d); return CN.validarCenario(d); };
+  const fora = com((d) => { d.generos.criacao[2].tom = "roxo"; });
+  t("um tom fora do vocabulário é recusado, com o caminho e a lista", !fora.ok && fora.erros.some((e) => e.startsWith("generos.criacao[2].tom: devia ser um tom da cena (crepusculo, aco,")), fora.erros.join(" | "));
+  const torto = com((d) => { d.generos.criacao[0].tom = 3; });
+  t("um tom que não é texto também", !torto.ok && torto.erros.some((e) => e.startsWith("generos.criacao[0].tom:")));
+  const sem = com((d) => { for (const g of d.generos.criacao) { delete g.tom; delete g.glifo; } });
+  t("um mundo sem tom nem glifo segue válido", sem.ok, sem.erros.join(" | "));
+  /* outro mundo escolhe o tom pelo nome, sem mentir sobre o gênero */
+  const d = structuredClone(DADOS_DO_CENARIO_PADRAO);
+  d.generos.criacao.unshift({ id: "piratas", label: "Mares de ferro", glifo: "bussola", tom: "aco", dica: "Couraçados, motins e portos sem lei" });
+  CN.usarCenario(d);
+  t("um gênero novo diz o seu tom, e o mundo em uso responde", CN.tomDoGenero("Mares de ferro") === "aco" && CN.tomDoGenero("Cyberpunk") === "magenta");
+  CN.usarCenario(DADOS_DO_CENARIO_PADRAO);
+  t("e o mundo padrão volta sem ele", CN.tomDoGenero("Mares de ferro") === undefined);
 }
 
 console.log("\n" + ok + " ok, " + falhas + " falhas");

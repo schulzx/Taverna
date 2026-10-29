@@ -44,7 +44,9 @@
                         linha do cartão, `id` a chave da tela ("livre" é o
                         Universo próprio, que a tela põe à parte); o padrão e
                         os do futuro têm de estar aqui. `glifo` (opcional) é o
-                        nome do ícone do cartão, de ESQUEMA_DO_CENARIO.glifos
+                        nome do ícone do cartão, de ESQUEMA_DO_CENARIO.glifos;
+                        `tom` (opcional) é o nome do fundo da cena do gênero,
+                        de ESQUEMA_DO_CENARIO.tons (sem ele, `noite`)
      generos.marcasProprias  as marcas, na descrição, de um mundo que não é a
                         fantasia clássica (a obra citada, o tempo moderno ou
                         futuro): texto de regex, comparado SEM acento e sem
@@ -248,13 +250,13 @@ export const DADOS_DO_CENARIO_PADRAO = {
     ],
     /* 6.ª fatia (constantes.js GENEROS): os cartões da criação, na ordem da tela */
     criacao: [
-      { id: "fantasia", label: "Fantasia medieval", glifo: "castelo", dica: "Reinos, magia antiga, criaturas lendárias" },
-      { id: "scifi", label: "Ficção científica", glifo: "foguete", dica: "Naves, colônias estelares, IAs e alienígenas" },
-      { id: "cyberpunk", label: "Cyberpunk", glifo: "terminal", dica: "Megacorporações, implantes, ruas de neon" },
-      { id: "horror", label: "Horror cósmico", glifo: "olho", dica: "Segredos proibidos, sanidade em risco" },
-      { id: "posapoc", label: "Pós-apocalíptico", glifo: "caveira", dica: "Ruínas, facções, sobrevivência" },
-      { id: "steampunk", label: "Steampunk", glifo: "bussola", dica: "Vapor, engrenagens, impérios voadores" },
-      { id: "livre", label: "Universo próprio", glifo: "faiscas", dica: "Você descreve tudo do zero" },
+      { id: "fantasia", label: "Fantasia medieval", glifo: "castelo", tom: "crepusculo", dica: "Reinos, magia antiga, criaturas lendárias" },
+      { id: "scifi", label: "Ficção científica", glifo: "foguete", tom: "aco", dica: "Naves, colônias estelares, IAs e alienígenas" },
+      { id: "cyberpunk", label: "Cyberpunk", glifo: "terminal", tom: "magenta", dica: "Megacorporações, implantes, ruas de neon" },
+      { id: "horror", label: "Horror cósmico", glifo: "olho", tom: "breu", dica: "Segredos proibidos, sanidade em risco" },
+      { id: "posapoc", label: "Pós-apocalíptico", glifo: "caveira", tom: "poeira", dica: "Ruínas, facções, sobrevivência" },
+      { id: "steampunk", label: "Steampunk", glifo: "bussola", tom: "cobre", dica: "Vapor, engrenagens, impérios voadores" },
+      { id: "livre", label: "Universo próprio", glifo: "faiscas", tom: "noite", dica: "Você descreve tudo do zero" },
     ],
   },
   /* 4.ª fatia: a gente (nomes.js). Cada gênero tem o seu banco; o gênero que
