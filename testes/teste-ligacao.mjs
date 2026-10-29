@@ -333,8 +333,16 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      `enviar`. Credor: o `oficial` da trilha A, que tem o bastão do App. A
      troca está no diário (a âncora, a chamada, as portas); a entrada sai
      quando o App a importar. */
+  /* 29/10 (Fase 4, trilha B): `pedido-do-turno.js` nasce no backend — o
+     trecho de `enviar` que vai da pauta ao system, e a arrumação de
+     `chamarMestre` antes da rede, à letra, como
+     `oPedidoDoTurno(estado, entrada, portas)`. Credor: o `oficial` da
+     trilha A. A troca está no diário; a entrada sai quando o App a
+     importar (e a da pauta pode sair junto: a peça do pedido já chama a
+     da pauta). */
   const ESPERA_DO_MOTOR = {
     "pauta-do-turno.js": "trilha A (oficial): enviar chama aPautaDoTurno no lugar de pautaDoTurno",
+    "pedido-do-turno.js": "trilha A (oficial): enviar chama oPedidoDoTurno no lugar do trecho da pauta ao system",
   };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));

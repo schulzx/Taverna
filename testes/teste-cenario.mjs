@@ -805,7 +805,10 @@ sec("6. o esquema lê de volta o que o motor consome");
   const importados = (mod) => doMotor.flatMap((src) => [...src.matchAll(new RegExp("import \\{([^}]*)\\} from \"\\.\\./" + mod + "\\.js\"", "g"))].flatMap((m) => m[1].split(",").map((x) => x.trim()).filter(Boolean)));
   const doNm = importados("nomes"), doDv = importados("divindades");
   t("o motor lê nomes.js só por funções", doNm.length > 0 && doNm.every((n) => typeof NM[n] === "function"), doNm.join());
-  t("…e de divindades.js só funções e as tabelas da regra (nenhum dado do céu)", doDv.length > 0 && doDv.every((n) => typeof DV[n] === "function" || ["GRAUS", "MAGNITUDE_FE", "MILAGRES", "CAMINHOS_ASCENSAO"].includes(n)), doDv.join());
+  /* CAMINHOS_PROMPT e DIVINDADE_PROMPT entram na lista (29/10, a peça do pedido, src/motor/pedido-do-turno.js):
+     são texto de regra que o pedido ao Narrador leva, não dado do céu; DIVINDADE_PROMPT é `let`, refeito
+     quando o cenário muda (e036f1f), e o import é vivo — a peça lê sempre o do cenário em uso. */
+  t("…e de divindades.js só funções e as tabelas da regra (nenhum dado do céu)", doDv.length > 0 && doDv.every((n) => typeof DV[n] === "function" || ["GRAUS", "MAGNITUDE_FE", "MILAGRES", "CAMINHOS_ASCENSAO", "CAMINHOS_PROMPT", "DIVINDADE_PROMPT"].includes(n)), doDv.join());
   t("o padrão: seis bancos, na ordem da criação (o Universo próprio cai no do padrão), e o do gênero padrão entre eles", NM.generosDisponiveis().length === 6 && NM.generosDisponiveis().every((g, i) => g === rotulos[i]) && !NM.generosDisponiveis().includes("Universo próprio") && rotulos.includes(CN.CENARIO_PADRAO.generos.padrao));
   t("o céu do padrão: 16 × 14 nomes, 12 domínios, 7 cultos", CN.CENARIO_PADRAO.panteao.nomes.inicio.length === 16 && CN.CENARIO_PADRAO.panteao.nomes.fim.length === 14 && CN.CENARIO_PADRAO.panteao.dominios.length === 12 && CN.CENARIO_PADRAO.panteao.cultos.length === 7);
   t("os campos de um banco são os que nomes.js lê (b.campo), nem mais nem menos", [...new Set([...fonteNm.matchAll(/\b(?:b|bancoDe\(g\))\.(\w+)/g)].map((m) => m[1]))].sort().join() === Object.keys(CN.ESQUEMA_DO_CENARIO.banco).sort().join(), [...new Set([...fonteNm.matchAll(/\b(?:b|bancoDe\(g\))\.(\w+)/g)].map((m) => m[1]))].sort().join());
