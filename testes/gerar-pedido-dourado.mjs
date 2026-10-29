@@ -42,7 +42,9 @@ const PORTAS_DO_MODULO = ["calou", "chamarModelo"];
 /* o que é do módulo e o recorte leva mesmo sem o trecho o ler (a rede começa ali) */
 const RAIZES_DO_MODULO = ["chamarMestre"];
 
-export function recortarOPedido(app, { pautaEPorta = false } = {}) {
+/* As âncoras e as portas são as do pedido; o trecho de `enviar` que vem
+   ANTES dele (gerar-antes-dourado.mjs) usa a mesma ferramenta com as suas. */
+export function recortarOPedido(app, { pautaEPorta = false, de = DE, ate = ATE, portas = PORTAS, portasDoModulo = PORTAS_DO_MODULO, raizes = RAIZES_DO_MODULO } = {}) {
   const ast = parser.parse(app, { sourceType: "module", plugins: ["jsx"] });
   const imports = new Map();
   for (const n of ast.program.body) if (n.type === "ImportDeclaration") for (const s of n.specifiers) imports.set(s.local.name, { de: n.source.value, nome: s.type === "ImportSpecifier" ? (s.imported.name || s.imported.value) : s.type === "ImportDefaultSpecifier" ? "default" : "*" });
@@ -76,19 +78,19 @@ export function recortarOPedido(app, { pautaEPorta = false } = {}) {
   if (!env) throw new Error("enviar não está onde estava");
   const fn = env.get("init.arguments.0");
   const corpo = fn.get("body.body");
-  const ini = corpo.findIndex((s) => app.slice(s.node.start, s.node.end).startsWith(DE));
-  const fim = corpo.findIndex((s) => app.slice(s.node.start, s.node.end).startsWith(ATE));
+  const ini = corpo.findIndex((s) => app.slice(s.node.start, s.node.end).startsWith(de));
+  const fim = corpo.findIndex((s) => app.slice(s.node.start, s.node.end).startsWith(ate));
   if (ini < 0 || fim < ini) throw new Error(`as âncoras do trecho não batem (${ini}, ${fim})`);
   const trechoSt = corpo.slice(ini, fim + 1);
   const depois = corpo.slice(fim + 1);
 
   /* o fecho */
   const fila = [], visto = new Set(), refs = new Map(), render = new Set(), setters = new Set(), usados = new Set(), doModulo = new Set(), entrada = new Set(), doRender = new Set();
-  const filaM = [...RAIZES_DO_MODULO];
-  RAIZES_DO_MODULO.forEach((n) => doModulo.add(n));
+  const filaM = [...raizes];
+  raizes.forEach((n) => doModulo.add(n));
   const naPrograma = (n) => {
     if (imports.has(n)) { usados.add(n); return; }
-    if (PORTAS_DO_MODULO.includes(n)) return;
+    if (portasDoModulo.includes(n)) return;
     if (modulo.has(n)) { if (!doModulo.has(n)) { doModulo.add(n); filaM.push(n); } return; }
     throw new Error(`lê ${n}, do módulo do App, sem declaração`);
   };
@@ -108,7 +110,7 @@ export function recortarOPedido(app, { pautaEPorta = false } = {}) {
         if (pai.isMemberExpression() && pai.parentPath.isAssignmentExpression() && pai.parentPath.node.left === pai.node) r.escreve = true;
         refs.set(n, r);
       } else if (d.tipo === "funcao") {
-        if (PORTAS.includes(n)) return;
+        if (portas.includes(n)) return;
         if (pautaEPorta && n === "pautaDoTurno") return;
         if (!visto.has(n)) { visto.add(n); fila.push(n); }
       } else if (d.tipo === "setter") setters.add(n);

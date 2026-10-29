@@ -343,8 +343,18 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
   /* Paga a da pauta no mesmo dia (29/10, trilha A, o oficial): `enviar`
      chama `aPautaDoTurno` e o App já não tem a `pautaDoTurno`. A do pedido
      fica para a mão seguinte. */
+  /* 29/10 (Fase 4, trilha B): mais dois que nascem antes do importador.
+     `preludio-do-turno.js` é o trecho de `enviar` ANTES do pedido (da
+     frase às bocas) — o que produz as onze entradas do pedido —, à letra,
+     como `oPreludioDoTurno(estado, entrada, portas)`; credor o `oficial`
+     da trilha A (a troca está no diário). `eco-do-turno.js` é a tabela do
+     que o `/api/turno` recebe e devolve além de { estado, frase } (o eco,
+     os soltos, os bilhetes); credores a trilha A (o App manda e guarda) e o
+     servidor (`api/turno.js`). Saem quando o primeiro os importar. */
   const ESPERA_DO_MOTOR = {
     "pedido-do-turno.js": "trilha A (oficial): enviar chama oPedidoDoTurno no lugar do trecho da pauta ao system",
+    "preludio-do-turno.js": "trilha A (oficial): enviar chama oPreludioDoTurno no lugar do trecho da frase às bocas",
+    "eco-do-turno.js": "trilha A e o servidor: o App manda o eco e os bilhetes e guarda os soltos; api/turno.js monta o estado e a resposta",
   };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
