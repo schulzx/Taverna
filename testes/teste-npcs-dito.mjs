@@ -80,6 +80,48 @@ t("e nunca sobe em quem já é fato (o boato sobre a Lia não a torna boato)", !
 t("a mescla não muta o recebido", (() => { const a = { ...so }; mesclarNPC(a, { local: "x" }); return a.dito === so.dito; })());
 t("mescla com null não quebra e não tira nada que não devia", mesclarNPC(fato, null).nome === "Lia");
 
+sec("3b. quem contou não se perde na mescla (29/10, o «fica em aberto» de 97d7c05)");
+/* O juízo do Cronista põe o nome de quem contou na marca («dito por Brom,
+   não fato»), e boatos.js é que o lê para pedir contas a quem mentiu. A
+   mescla guardava sempre a marca velha: a pessoa ouvida primeiro sem dono
+   («alguém em cena») e depois contada por Brom ficava sem o Brom. A régua
+   agora: a marca com nome não cede à sem nome, a sem nome cede à com nome,
+   entre duas com nome fica a primeira (quem repete não contou), e a marca
+   cai inteira quando a pessoa chega como fato. As marcas saem do próprio
+   Cronista (fatos.marca), para a forma de npcs.js não se descolar da dele. */
+const M = O_QUE_O_CRONISTA_PODE.fatos.marca;
+const deBrom = criarNPC("Clarissa", { papel: "guia", dito: M("Brom") });
+const semDono = criarNPC("Clarissa", { papel: "guia", dito: M("") });
+t("a marca sem dono do Cronista é a do «alguém em cena» (a forma que a mescla lê)", M("") === `dito por ${O_QUE_O_CRONISTA_PODE.fatos.semQuem}, não fato`, M(""));
+t("o «alguém em cena» de uma leitura seguinte não apaga o «dito por Brom»", mesclarNPC(deBrom, { local: "Vau Seco", dito: M("") }).dito === M("Brom"));
+t("nem a marca curta da casa (MARCA_DO_DITO, sem dono)", mesclarNPC(deBrom, { dito: MARCA_DO_DITO }).dito === M("Brom"));
+/* FALHA NO HEAD DE ANTES (d947805): a mescla guardava a marca velha, e o Brom nunca chegava */
+t("a marca sem dono cede à que diz quem contou", mesclarNPC(semDono, { dito: M("Brom") }).dito === M("Brom"), Js(mesclarNPC(semDono, { dito: M("Brom") }).dito));
+t("e a curta da casa também cede", mesclarNPC(criarNPC("Clarissa", { dito: MARCA_DO_DITO }), { dito: M("Brom") }).dito === M("Brom"));
+t("entre duas com dono fica a primeira (quem repete não contou)", mesclarNPC(deBrom, { dito: M("Sari") }).dito === M("Brom"));
+t("o dono escrito com outra caixa ou acento de «alguém em cena» não conta como dono", mesclarNPC(semDono, { dito: "dito por Alguem em cena, não fato" }).dito === M(""));
+t("a marca com dono cai inteira quando a pessoa chega como fato (a regra de antes)", !("dito" in mesclarNPC(deBrom, { local: "a praça" })));
+t("e a com dono nunca sobe em quem já é fato", !("dito" in mesclarNPC(fato, { dito: M("Brom") })));
+t("lixo de save na marca velha (não-texto) não vira marca nova — fica como estava", (() => { const r = mesclarNPC({ ...fato, dito: 5 }, { dito: M("Brom") }); return r.dito === 5; })());
+t("a mescla não muta o recebido", (() => { const a = { ...semDono }; mesclarNPC(a, { dito: M("Brom") }); return a.dito === M(""); })());
+/* ponta a ponta, pela porta do Cronista: duas leituras do mesmo nome */
+{
+  let E2 = { personagem: { nome: "Íris" }, npcs: {}, canone: {}, dia: 3, npcTurno: 5, cidadeAtual: "" };
+  const ap = (efs) => { for (const ef of efs) if (ef.tipo === "npcs") E2 = { ...E2, npcs: ef.npcs }; };
+  const ler = (pessoa) => oAceitoDoCronista({ pessoas: [pessoa] }, [], { pessoas: [pessoa] }, {
+    ler: () => E2, aplicar: ap, pers: E2.personagem, narrativa: "x",
+    mundoDaBase: () => null, registrarLugar: () => null, contextoDoNome: () => ({}),
+  });
+  ler({ nome: "Clarissa", papel: "guia", local: "Vau Seco", dito: M("Brom") });
+  ler({ nome: "Clarissa", papel: "guia", dito: M("") });
+  t("pela porta do Cronista: a 2.ª leitura sem dono deixa o Brom na ficha", E2.npcs.Clarissa && E2.npcs.Clarissa.dito === M("Brom"), Js(E2.npcs.Clarissa));
+  E2 = { ...E2, npcs: {} };
+  ler({ nome: "Clarissa", papel: "guia", dito: M("") });
+  ler({ nome: "Clarissa", papel: "guia", dito: M("Brom") });
+  /* FALHA NO HEAD DE ANTES (d947805) */
+  t("e a 2.ª leitura que acha o Brom dá-lho", E2.npcs.Clarissa && E2.npcs.Clarissa.dito === M("Brom"), Js(E2.npcs.Clarissa));
+}
+
 sec("4. o cânone que tem a marca não se cala pela linha que não a tem (MM8d)");
 const can = { Clarissa: { tipo: "pessoa", papel: "guia", dito: "x" } };
 const semMarca = linhasJaDitas("• Clarissa (guia)");

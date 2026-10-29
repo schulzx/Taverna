@@ -282,6 +282,23 @@ function diaDoEncontro(v) {
 export const MARCA_DO_DITO = "só dito em cena, não fato";
 const marcaDoDito = (v) => (typeof v === "string" && v.trim() ? v.trim() : "");
 
+/* QUEM CONTOU, NA MARCA (29/10, trilha B). O juízo do Cronista escreve
+   «dito por Brom, não fato» quando acha o dono da fala, e «dito por alguém
+   em cena, não fato» quando não acha (motor/cronista.js, `fatos.marca` e
+   `fatos.semQuem`; boatos.js lê o nome pela mesma forma). A marca com nome
+   vale mais que a sem nome: é a ela que o herói vai pedir contas quando o
+   boato se revelar. Por isso a mescla nunca a troca por uma mais pobre, e
+   troca a pobre pela que tem nome quando ela chega. Entre duas com nome
+   fica a primeira — quem repete não contou (a régua de `quemDisse`).
+   A forma e o «sem quem» são os do Cronista; a suíte prova que batem
+   (teste-npcs-dito §3b), sem import: o Cronista é que lê daqui. */
+const QUEM_NA_MARCA = { forma: /^dito por (.+?), não fato$/, semQuem: "alguém em cena" };
+const quemDoDito = (v) => {
+  const m = marcaDoDito(v).match(QUEM_NA_MARCA.forma);
+  const quem = m ? m[1].trim() : "";
+  return quem && semAc(quem) !== semAc(QUEM_NA_MARCA.semQuem) ? quem : "";
+};
+
 export function criarNPC(nome, dados0 = {}) {
   const dados = dados0 && typeof dados0 === "object" ? dados0 : {};
   const encontro = diaDoEncontro(dados.conhecidoEm);
@@ -423,8 +440,15 @@ export function mesclarNPC(ficha, dados0 = {}) {
   if (dados.ultimaVez) out.ultimaVez = dados.ultimaVez;
   if (conflito) out._papelConflito = conflito;
   /* o que só foi dito (trilha B, 28/10): a marca fica enquanto só se ouve,
-     cai quando a pessoa chega sem ela, e nunca sobe em quem já é fato */
-  if ("dito" in out && !marcaDoDito(dados.dito)) delete out.dito;
+     cai quando a pessoa chega sem ela, e nunca sobe em quem já é fato.
+     Enquanto fica, a que diz quem contou não cede à que não diz (29/10:
+     o «alguém em cena» de uma leitura seguinte não apaga o «dito por
+     Brom»), e a que não diz cede à que diz (ver QUEM_NA_MARCA). */
+  if ("dito" in out) {
+    const nova = marcaDoDito(dados.dito);
+    if (!nova) delete out.dito;
+    else if (marcaDoDito(out.dito) && !quemDoDito(out.dito) && quemDoDito(nova)) out.dito = nova;
+  }
   return out;
 }
 
