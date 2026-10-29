@@ -208,7 +208,9 @@ sec("9. lixo");
   const i = app.indexOf("try { const r = promoverNoDia(");
   const linhaDoDia = i >= 0 ? app.slice(i, app.indexOf("\n", i)) : "";
   t("o elenco age ao virar o dia, depois da promoção", linhaDoDia.includes("agirForaDeCena(sementeMundo()") && linhaDoDia.indexOf("agirForaDeCena") > linhaDoDia.indexOf("promoverNoDia"));
-  t("o boato de longe vai pelo canal de rumor", linhaDoDia.includes("boatoDoForaDeCena(") && linhaDoDia.includes("Corre a boca miúda") && linhaDoDia.includes("[RUMOR]"));
+  /* MOVIDA (28/10, T2-A, 11.º grupo dos envelopes): o texto [RUMOR] saiu para ENVELOPES_DO_MUNDO
+     (rumorDeLonge, provado byte a byte em teste-motor-envelopes-do-turno); na linha fica a chamada */
+  t("o boato de longe vai pelo canal de rumor", linhaDoDia.includes("boatoDoForaDeCena(") && linhaDoDia.includes("Corre a boca miúda") && linhaDoDia.includes('oEnvelopeDoMundo("rumorDeLonge", { boato: boatoDoMundo })'));
   t("e em try, sem poder custar o dia", linhaDoDia.includes("calou(\"agirForaDeCena\", e)"));
   const j = app.indexOf("porNaPauta(p, \"foraDeCena\", foraDeCenaParaPauta(");
   t("o que toca a cena entra na pauta, na secção ENTRETANTO", j >= 0);

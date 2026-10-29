@@ -28,12 +28,15 @@
    o atributo, a habilidade, as duas especializações, o caminho refeito). O
    9.º junta-lhe o que o sistema resolveu: o combate, o sucesso automático, a
    volta dos mortos e a nota do recrutamento. O 10.º, as doze notas [INFO] do
-   inventário, do grupo e do save.
+   inventário, do grupo e do save. O 11.º, O MUNDO QUE ANDA: o festival, os
+   dois boatos, os eventos de reino e o que o descanso longo acorda (o arco
+   global e a etapa, o fio local e o que expirou, a quest, a divindade e o
+   evento divino).
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -424,6 +427,48 @@ sec("14 · a ficha (as notas [INFO]): os casos percorrem o que o texto decide, e
     ["infoRecalFicha", "a recalibração sem as dádivas", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, dadivas: 0 }) }],
     ["infoRecalMundo", "a recalibração do mundo que não é verdade", { oEnvelopeDaFicha: (q, d) => E(q, d).replace(" Trate os registros atuais como verdade.", "") }],
     ["infoTransferiu", "a transferência ao contrário", { oEnvelopeDaFicha: (q, d) => E(q, { ...d, de: d.para, para: d.de }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(`${nome}: ${n} casos mudam`, n > 0);
+  }
+}
+
+sec("15 · o mundo que anda: os casos percorrem o que o texto decide, e a prova morde");
+{
+  /* o festival e as partes do descanso devolvem a lista; os boatos, a nota; o reino, o envelope */
+  const N = (b) => HOJE[b].flatMap((f) => (Array.isArray(f.texto) ? f.texto : [f.texto]));
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  t("os dois boatos entram abaixo da nota que já havia, e cada um com a sua cauda", ["mundoRumor", "mundoRumorDeLonge"].every((b) => conta(N(b), "[NOTA] já havia\n[RUMOR] ") >= 130 && N(b).filter((x) => x.startsWith("[RUMOR] ")).length >= 130) && conta(N("mundoRumor"), "— e decida se ele é só fumaça") === 275 && conta(N("mundoRumorDeLonge"), "— e decida") === 0);
+  const F = N("mundoFestival");
+  t(`o festival de cada nome, em maiúsculas na marca (${conta(F, "[FESTIVAL — NOITE DAS LANTERNAS]")})`, F.length === 275 && conta(F, "[FESTIVAL — DIA DO SAL] ") >= 80 && conta(F, "[FESTIVAL — FESTA DA COLHEITA] ") >= 80 && conta(F, "é festa da colheita: ") >= 80);
+  const R = HOJE.mundoReino.map((f) => f.texto);
+  const linhasR = R.flatMap((x) => x.split("\n")).filter((x) => x.startsWith("[EVENTO DE REINO"));
+  t(`o reino sem evento (${R.filter((x) => !x.includes("[EVENTO DE REINO")).length}), com um e com dois, e o correio do dia atrás`, R.filter((x) => !x.includes("[EVENTO DE REINO")).length >= 80 && R.filter((x) => x.split("[EVENTO DE REINO").length === 3).length >= 80 && conta(R, "\n[CORREIO] a\n[CORREIO] b") >= 80 && R.filter((x) => x === "").length >= 20);
+  t(`cada delta com o sinal (${conta(linhasR, "felicidade -8")} negativos), e o zero não ocupa lugar`, conta(linhasR, "felicidade +5") >= 40 && conta(linhasR, "felicidade -8") >= 40 && conta(linhasR, "população -12") >= 40 && conta(linhasR, "cofre +40") >= 30 && linhasR.every((x) => !/(felicidade|população|cofre) \+?0\b/.test(x) && !x.includes(", ,") && !x.includes("(, ")) && conta(linhasR, "sistema () —") >= 5);
+  t(`o povo à beira da revolta (${conta(linhasR, "à beira da revolta")}) e não`, conta(linhasR, ". ATENÇÃO: o povo está à beira da revolta") >= 40 && linhasR.filter((x) => x.endsWith("narre como vida do reino.")).length >= 100);
+  const Q = N("mundoLocalExpirado");
+  t(`nenhum, um e dois fios expirados (${Q.length} linhas em 275 casos)`, HOJE.mundoLocalExpirado.filter((f) => f.texto.length === 0).length >= 80 && HOJE.mundoLocalExpirado.filter((f) => f.texto.length === 2).length >= 80);
+  const G = N("mundoGlobalAvancou");
+  t("a etapa do arco que escalou é a de cada degrau, contada de 1", conta(G, "· ETAPA 1/3] A situação regional ESCALOU: os campeões chegam ") >= 80 && conta(G, "· ETAPA 3/3] A situação regional ESCALOU: a final ") >= 80 && conta(N("mundoGlobalNovo"), "ETAPA 1/2 agora: o primeiro porto fecha ") >= 120);
+  const V = N("mundoDivindade");
+  t(`a divindade com o lugar forte (${conta(V, ", forte em o Vau.")}) e sem, de cada grau`, conta(V, ", forte em o Vau.") >= 80 && V.filter((x) => !x.includes("forte em")).length >= 170 && [3, 7, 12, 18].every((g) => conta(V, "— GD " + g + " (") >= 60));
+  t("a quest de cada fase do arco, e o fio local com o dia em que expira", ["abertura", "meio", "climax"].every((f) => conta(N("mundoQuest"), "[QUEST GERADA PELO SISTEMA — fase \"" + f + "\" do arco]") >= 90) && conta(N("mundoLocalNovo"), "até o dia 11, o fio") >= 25);
+  t("as onze formas estão na tabela do mundo", Object.keys(ENVELOPES_DO_MUNDO).length === 11 && ["festival", "rumor", "rumorDeLonge", "eventoDeReino", "globalNovo", "globalAvancou", "localNovo", "localExpirado", "questGerada", "divindadeSeRevela", "eventoDivino"].every((q) => Object.hasOwn(ENVELOPES_DO_MUNDO, q)));
+  const E = oEnvelopeDoMundo;
+  const mordidas = [
+    ["mundoFestival", "o festival com a descrição no lugar do nome", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, nome: d.descricao }) }],
+    ["mundoRumor", "o boato do dia com a cauda do de longe", { oEnvelopeDoMundo: (q, d) => E("rumorDeLonge", d) }],
+    ["mundoRumorDeLonge", "o boato de longe com a cauda do do dia", { oEnvelopeDoMundo: (q, d) => E("rumor", d) }],
+    ["mundoReino", "o reino que perde o sinal da felicidade", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, felDelta: Math.abs(d.felDelta || 0) }) }],
+    ["mundoReino", "o reino que esquece a revolta", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, soSeInfeliz: false }) }],
+    ["mundoGlobalNovo", "o arco global que começa na 2.ª etapa", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, etapas: d.etapas.slice(1).concat("?") }) }],
+    ["mundoGlobalAvancou", "a etapa que escalou contada de 0", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, etapa: d.etapa - 1 }) }],
+    ["mundoLocalNovo", "o fio local sem o dia em que expira", { oEnvelopeDoMundo: (q, d) => E(q, d).replace(/ O jogador pode ignorar.*$/, "") }],
+    ["mundoLocalExpirado", "o fio expirado que se resolveu com o herói", { oEnvelopeDoMundo: (q, d) => E(q, d).replace(" SEM a minha intervenção", "") }],
+    ["mundoQuest", "a quest da fase errada", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, fase: "abertura" }) }],
+    ["mundoDivindade", "a divindade sem o lugar forte", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, lugar: undefined }) }],
+    ["mundoEventoDivino", "o evento divino sem o gancho", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, gancho: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

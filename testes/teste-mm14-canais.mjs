@@ -328,8 +328,11 @@ sec("7. a fiação — App.jsx");
   t("nunca custa o descanso", app.includes('catch (e) { calou("o fio do descanso", e); }'));
   t("e o fio NÃO entra mais na lista antiga (o push direto em questsRef sumiu)",
     !app.includes('questsRef.current = [...questsRef.current, { titulo: r.questNova.titulo, descricao: r.questNova.descricao'));
+  /* MOVIDA (28/10, T2-A, 11.º grupo dos envelopes): o texto da quest gerada saiu do App para
+     ENVELOPES_DO_MUNDO (provado byte a byte em teste-motor-envelopes-do-turno); o App pede-o
+     pela chamada, e a linha do diário fica no App */
   t("o envelope para o Narrador e a linha do diário continuam de pé",
-    app.includes('[QUEST GERADA PELO SISTEMA — fase "${ctx.fase}" do arco]') && app.includes("📜 Fio de história: ${r.questNova.titulo}"));
+    app.includes('partes.push(oEnvelopeDoMundo("questGerada", { fase: ctx.fase, ') && app.includes("📜 Fio de história: ${r.questNova.titulo}"));
 
   /* ---- e) o fecho paga a fé e o heroísmo da lista antiga, sem repetir moeda/XP ---- */
   const iLinhas = app.indexOf("const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA:");

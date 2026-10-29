@@ -307,3 +307,32 @@ export const ENVELOPES_DA_FICHA = {
 export function oEnvelopeDaFicha(qual, dados) {
   return aFormaDe(ENVELOPES_DA_FICHA, qual, "da ficha")(dados || {});
 }
+
+/* ============================================================
+   11.º GRUPO — O MUNDO QUE ANDA: o que o sistema sorteou e aplicou fora da
+   cena e o Narrador só traz para a ficção — o festival do dia, os dois
+   boatos (o do dia e o do elenco que agiu longe), os eventos de reino (os
+   efeitos já aplicados, sem número na ficção), e o que o descanso longo
+   acorda: o arco global novo e a etapa que escalou, o fio local novo e o
+   que expirou sem o herói, a quest gerada, a divindade que se revela e o
+   evento divino. Os FATOS são fixos; o Narrador escolhe só a voz.
+   No reino o App passa `texto` já dito pela cidade (o `txt` do evento) e
+   os três deltas; o zero não ocupa lugar na lista dos efeitos. Na
+   divindade, `titulo` é o do grau (`tituloDe`, de divindades.js).
+   ============================================================ */
+export const ENVELOPES_DO_MUNDO = {
+  festival: ({ nome, descricao, data }) => `[FESTIVAL — ${nome.toUpperCase()}] Hoje (${data}) é ${nome}: ${descricao}. Nos meus domínios o povo celebra (a felicidade já subiu por código). Traga a festa para a ficção se couber na cena.`,
+  rumor: ({ boato }) => `[RUMOR] Um boato chegou aos meus ouvidos: "${boato}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado) — e decida se ele é só fumaça ou o rastro de algo real.`,
+  rumorDeLonge: ({ boato }) => `[RUMOR] Um boato chegou aos meus ouvidos: "${boato}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado).`,
+  eventoDeReino: ({ titulo, cidade, texto, felDelta, popDelta, cofreDelta, soSeInfeliz }) => `[EVENTO DE REINO — ${titulo.toUpperCase()} em ${cidade}] ${texto} Os efeitos JÁ foram aplicados pelo sistema (${[felDelta ? `felicidade ${felDelta > 0 ? "+" : ""}${felDelta}` : "", popDelta ? `população ${popDelta > 0 ? "+" : ""}${popDelta}` : "", cofreDelta ? `cofre ${cofreDelta > 0 ? "+" : ""}${cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`,
+  globalNovo: ({ nome, semente, etapas }) => `[EVENTO GLOBAL — NOVO ARCO MAIOR: ${nome.toUpperCase()}] O SISTEMA sorteou um acontecimento que abalará a região: ${semente} ETAPA 1/${etapas.length} agora: ${etapas[0]} Teça isso na ficção aos poucos — é um arco longo de fundo, coerente com o arco atual, NÃO uma quest para resolver hoje.`,
+  globalAvancou: ({ nome, etapa, etapas }) => `[EVENTO GLOBAL — ${nome.toUpperCase()} · ETAPA ${etapa + 1}/${etapas.length}] A situação regional ESCALOU: ${etapas[etapa]} Mostre a escalada na ficção (notícias, medo, preços, movimentação de facções) sem resolvê-la ainda.`,
+  localNovo: ({ icone, texto, gancho, expiraEm }) => `[EVENTO LOCAL — FIO DO MUNDO] ${icone} ${texto} Gancho: ${gancho} Apresente naturalmente (um grito, um boato, algo à vista). O jogador pode ignorar — se ignorar até o dia ${expiraEm}, o fio se resolve sem ele.`,
+  localExpirado: ({ texto }) => `[EVENTO LOCAL — EXPIRADO] O fio "${texto}" se resolveu SEM a minha intervenção (o mundo seguiu sem mim). Mencione o desfecho como notícia de passagem, se couber.`,
+  questGerada: ({ fase, titulo, descricao, objetivo }) => `[QUEST GERADA PELO SISTEMA — fase "${fase}" do arco] Nova missão secundária JÁ REGISTRADA no diário (NÃO envie "quest_nova" duplicando-a): "${titulo}" — ${descricao} Objetivo: ${objetivo}. Apresente-a na ficção com liberdade total de execução (quem procura, como, com que voz); os FATOS acima são fixos.`,
+  divindadeSeRevela: ({ icone, nome, dominio, gd, titulo, temperamento, culto, lugar }) => `[DIVINDADE SE REVELA — FATOS FIXOS DO SISTEMA] Uma entidade antes imperceptível agora se mostra ao herói desperto: ${icone} ${nome} ${dominio} — GD ${gd} (${titulo}), ${temperamento}, culto: ${culto}${lugar ? `, forte em ${lugar}` : ""}. Ela SEMPRE existiu — só agora ele a percebe. Introduza-a na ficção com sutileza (um símbolo num templo, uma prece ouvida, um sinal). NÃO mude os fatos acima.`,
+  eventoDivino: ({ icone, texto, gancho }) => `[EVENTO DIVINO — FATOS FIXOS DO SISTEMA] ${icone} ${texto} Gancho: ${gancho}. Apresente naturalmente; o jogador pode ignorar. NÃO force resolução hoje.`,
+};
+export function oEnvelopeDoMundo(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_MUNDO, qual, "do mundo")(dados || {});
+}

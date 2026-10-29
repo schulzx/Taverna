@@ -25,7 +25,8 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   fioMarco: "fc27e4f", fioRumores: "fc27e4f", fioMundo: "fc27e4f", fioVirada: "fc27e4f", fioInterludio: "fc27e4f", fioLutaDaChave: "fc27e4f",
   fichaNivel: "920bff6", fichaPericias: "920bff6", fichaAtributo: "920bff6", fichaHabilidade: "920bff6", fichaSubclasse: "920bff6", fichaEspecializacao: "920bff6", fichaRefazer: "920bff6",
   fichaCombate: "8611243", fichaSucesso: "8611243", fichaVolta: "8611243", fichaRecrutamento: "8611243",
-  infoDescarteItem: "9f45d0f", infoDescarteEquip: "9f45d0f", infoEquipou: "9f45d0f", infoForjou: "9f45d0f", infoContrato: "9f45d0f", infoDecreto: "9f45d0f", infoAgoraE: "9f45d0f", infoSaiu: "9f45d0f", infoGuilda: "9f45d0f", infoRecalFicha: "9f45d0f", infoRecalMundo: "9f45d0f", infoTransferiu: "9f45d0f" };
+  infoDescarteItem: "9f45d0f", infoDescarteEquip: "9f45d0f", infoEquipou: "9f45d0f", infoForjou: "9f45d0f", infoContrato: "9f45d0f", infoDecreto: "9f45d0f", infoAgoraE: "9f45d0f", infoSaiu: "9f45d0f", infoGuilda: "9f45d0f", infoRecalFicha: "9f45d0f", infoRecalMundo: "9f45d0f", infoTransferiu: "9f45d0f",
+  mundoFestival: "a81a438", mundoRumor: "a81a438", mundoRumorDeLonge: "a81a438", mundoReino: "a81a438", mundoGlobalNovo: "a81a438", mundoGlobalAvancou: "a81a438", mundoLocalNovo: "a81a438", mundoLocalExpirado: "a81a438", mundoQuest: "a81a438", mundoDivindade: "a81a438", mundoEventoDivino: "a81a438" };
 const apps = {};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);

@@ -30,6 +30,7 @@ import { TIPOS_CARTA } from "../src/correio.js";
 import * as subtramas from "../src/subtramas.js";
 import * as arquivo from "../src/arquivo.js";
 import * as lugar from "../src/lugar.js";
+import * as divindades from "../src/divindades.js";
 
 const NOMES = {
   calendario: ["dataTxt", "horaTxt", "ehNoite", "estacaoDe"],
@@ -41,9 +42,10 @@ const NOMES = {
   subtramas: ["fraseDaManha"],
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha"],
+  divindades: ["tituloDe"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo"],
 };
-const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, motorEnvelopes };
+const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
@@ -78,9 +80,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "fioMarco", "fioRumores", "fioMundo", "fioVirada", "fioInterludio", "fioLutaDaChave",
   "fichaNivel", "fichaPericias", "fichaAtributo", "fichaHabilidade", "fichaSubclasse", "fichaEspecializacao", "fichaRefazer",
   "fichaCombate", "fichaSucesso", "fichaVolta", "fichaRecrutamento",
-  "infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu"];
+  "infoDescarteItem", "infoDescarteEquip", "infoEquipou", "infoForjou", "infoContrato", "infoDecreto", "infoAgoraE", "infoSaiu", "infoGuilda", "infoRecalFicha", "infoRecalMundo", "infoTransferiu",
+  "mundoFestival", "mundoRumor", "mundoRumorDeLonge", "mundoReino", "mundoGlobalNovo", "mundoGlobalAvancou", "mundoLocalNovo", "mundoLocalExpirado", "mundoQuest", "mundoDivindade", "mundoEventoDivino"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -152,11 +155,25 @@ const ANCORAS = {
   infoRecalFicha: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Recalibração de save: meus números", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"recalibrouAFicha\"", FIM] },
   infoRecalMundo: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Recalibração de save: o estado do mundo", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"recalibrouOMundo\"", FIM] },
   infoTransferiu: { antes: ["    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[INFO] Transferi \"", FIM], hoje: ["    notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaFicha(\"transferiu\"", FIM] },
+  /* o mundo que anda: o festival e os eventos de reino ao virar o dia, os dois boatos, e o que o descanso
+     longo acorda (global, local, quest, divindade); o reino é a função inteira (devolve o envelope) */
+  mundoFestival: { antes: ["        extras.push(`[FESTIVAL — ", FIM], hoje: ["        extras.push(oEnvelopeDoMundo(\"festival\", ", FIM] },
+  mundoRumor: { antes: ["        notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[RUMOR] Um boato chegou aos meus ouvidos: \"${boato}\"", FIM], hoje: ["        notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMundo(\"rumor\"", FIM] },
+  mundoRumorDeLonge: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[RUMOR] Um boato chegou aos meus ouvidos: \"${boatoDoMundo}\"", " } } catch (e) { calou(\"agirForaDeCena\""], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoMundo(\"rumorDeLonge\"", " } } catch (e) { calou(\"agirForaDeCena\""] },
+  mundoReino: { antes: ["  const envelopeEventosReino = (evs) => {", "\n\n  /* CORREIO (v7.0)"], hoje: ["  const envelopeEventosReino = (evs) => {", "\n\n  /* CORREIO (v7.0)"] },
+  mundoGlobalNovo: { antes: ["        partes.push(`[EVENTO GLOBAL — NOVO ARCO MAIOR: ", FIM], hoje: ["        partes.push(oEnvelopeDoMundo(\"globalNovo\", ", FIM] },
+  mundoGlobalAvancou: { antes: ["        partes.push(`[EVENTO GLOBAL — ${g.nome", FIM], hoje: ["        partes.push(oEnvelopeDoMundo(\"globalAvancou\", ", FIM] },
+  mundoLocalNovo: { antes: ["        partes.push(`[EVENTO LOCAL — FIO DO MUNDO]", FIM], hoje: ["        partes.push(oEnvelopeDoMundo(\"localNovo\", ", FIM] },
+  mundoLocalExpirado: { antes: ["      r.expirados.forEach((l) => partes.push(`[EVENTO LOCAL — EXPIRADO]", FIM], hoje: ["      r.expirados.forEach((l) => partes.push(oEnvelopeDoMundo(\"localExpirado\", ", FIM] },
+  mundoQuest: { antes: ["        partes.push(`[QUEST GERADA PELO SISTEMA — fase", FIM], hoje: ["        partes.push(oEnvelopeDoMundo(\"questGerada\", ", FIM] },
+  mundoDivindade: { antes: ["          partes.push(`[DIVINDADE SE REVELA", FIM], hoje: ["          partes.push(oEnvelopeDoMundo(\"divindadeSeRevela\", ", FIM] },
+  mundoEventoDivino: { antes: ["            partes.push(`[EVENTO DIVINO", FIM], hoje: ["            partes.push(oEnvelopeDoMundo(\"eventoDivino\", ", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
   fichaNivel: "notaRef.current", fichaPericias: "notaRef.current", fichaAtributo: "notaRef.current", fichaHabilidade: "notaRef.current", fichaSubclasse: "notaRef.current", fichaEspecializacao: "notaRef.current", fichaRefazer: "notaRef.current", fichaRecrutamento: "notaDoRecrutamento(comp)",
-  infoDescarteItem: "notaRef.current", infoDescarteEquip: "notaRef.current", infoEquipou: "notaRef.current", infoForjou: "notaRef.current", infoContrato: "notaRef.current", infoDecreto: "notaRef.current", infoAgoraE: "notaRef.current", infoSaiu: "notaRef.current", infoGuilda: "notaRef.current", infoRecalFicha: "notaRef.current", infoRecalMundo: "notaRef.current", infoTransferiu: "notaRef.current" };
+  infoDescarteItem: "notaRef.current", infoDescarteEquip: "notaRef.current", infoEquipou: "notaRef.current", infoForjou: "notaRef.current", infoContrato: "notaRef.current", infoDecreto: "notaRef.current", infoAgoraE: "notaRef.current", infoSaiu: "notaRef.current", infoGuilda: "notaRef.current", infoRecalFicha: "notaRef.current", infoRecalMundo: "notaRef.current", infoTransferiu: "notaRef.current",
+  mundoFestival: "extras", mundoRumor: "notaRef.current", mundoRumorDeLonge: "notaRef.current", mundoReino: "envelopeEventosReino(evs)", mundoGlobalNovo: "partes", mundoGlobalAvancou: "partes", mundoLocalNovo: "partes", mundoLocalExpirado: "partes", mundoQuest: "partes", mundoDivindade: "partes", mundoEventoDivino: "partes" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -359,6 +376,41 @@ export function fichaDoCaso(i) {
   };
 }
 
+/* O MUNDO QUE ANDA: a nota do turno vazia e já com outra à frente; o
+   festival de cada nome e dia; os dois boatos; o reino sem evento, com um e
+   com dois, cada delta positivo, negativo e zero (o zero não entra), o povo
+   à beira da revolta e não, e o correio do dia vazio e cheio; o arco global
+   novo e a etapa de cada degrau; o fio local e nenhum, um e dois expirados;
+   a quest de cada fase; a divindade com e sem o lugar forte, de cada grau.
+   No reino, um evento em cada sete é sem efeito nenhum (os três deltas zero:
+   a lista dos efeitos fica vazia, e é o que o texto de antes dizia). */
+export function mundoDoCaso(i) {
+  const ev = (j) => {
+    const nada = (i + j) % 7 === 3;
+    return {
+      evento: { titulo: ["Colheita farta", "Peste nos currais", "Feira de inverno"][(i + j) % 3], txt: (c) => ["o trigo transborda em " + c, c + " enterra os bois", "mercadores enchem " + c][(i + j) % 3], soSeInfeliz: (i + j) % 4 === 1 },
+      cidade: ["Vau", "Porto Sal", "Corvo"][(i >> 1 + j) % 3], felDelta: nada ? 0 : [0, 5, -8, 3][(i + j) % 4], popDelta: nada ? 0 : [0, -12, 30][(i + 2 * j) % 3], cofreDelta: nada ? 0 : [0, 40, 0, -15, 7][(i + 3 * j) % 5],
+    };
+  };
+  return {
+    extras: [], partes: [], notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    fest: { nome: ["Dia do Sal", "Noite das Lanternas", "festa da colheita"][i % 3], descricao: ["o povo enfeita as portas com sal", "lanternas sobem o rio"][(i >> 1) % 2] },
+    boato: ["o marquês fugiu de noite", "há luz na cripta", "Iris deve ao Corvo"][i % 3], boatoDoMundo: ["Brann tomou o Vau", "a Garra perdeu a ponte"][(i >> 1) % 2],
+    evs: [[], [ev(0)], [ev(0), ev(1)]][i % 3],
+    correioMsgsDiaRef: { current: [[], ["[CORREIO] carta de Iris"], ["[CORREIO] a", "[CORREIO] b"]][(i >> 1) % 3] },
+    r: {
+      globalNovo: { nome: ["O Torneio das Coroas", "a peste cinzenta"][i % 2], semente: ["O maior torneio foi anunciado.", "Uma tosse corre os portos."][(i >> 1) % 2], etapas: [["os campeões chegam", "a chave sai", "a final"], ["o primeiro porto fecha", "a quarentena"]][i % 2] },
+      localNovo: { icone: ["🔥", "🐺"][i % 2], texto: ["O celeiro arde.", "Lobos rondam a cerca."][(i >> 1) % 2], gancho: ["quem pôs o fogo?", "o pastor sumiu."][i % 2], expiraEm: 3 + (i % 9) },
+      expirados: [[], [{ texto: "o celeiro arde" }], [{ texto: "os lobos" }, { texto: "o pastor" }]][(i >> 1) % 3],
+      questNova: { titulo: ["O pedido de Ondine", "A ponte caída"][i % 2], descricao: ["Ondine procura ajuda.", "A ponte do Vau caiu."][(i >> 1) % 2], objetivo: ["achar o anel", "reerguer a ponte", "falar com o barqueiro"][i % 3] },
+    },
+    g: { nome: ["O Torneio das Coroas", "a peste cinzenta"][i % 2], etapa: i % 3, etapas: ["os campeões chegam", "a chave sai", "a final"] },
+    ctx: { fase: ["abertura", "meio", "climax"][i % 3] },
+    nova: { icone: ["☀", "🌑"][i % 2], nome: ["Solenne", "Mórdia"][(i >> 1) % 2], dominio: ["da Aurora", "das Marés"][i % 2], gd: [3, 7, 12, 18][i % 4], temperamento: ["benevolente", "ciumenta"][(i >> 2) % 2], culto: ["pequeno", "antigo"][i % 2], lugar: [undefined, "o Vau", ""][i % 3] },
+    evd: { icone: ["⚡", "🕯"][i % 2], texto: ["Um raio parte o carvalho sagrado.", "As velas do templo apagam juntas."][(i >> 1) % 2], gancho: ["o sacerdote quer respostas", "alguém viu um vulto"][i % 2] },
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -431,6 +483,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "ficha") Object.assign(S, fichaDoCaso(k.i));
     else if (g === "fio") Object.assign(S, fioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "viagem") Object.assign(S, viagemDoCaso(k.i), { personagem: { nome: "Vera do render" } });
+    else if (g === "mundo") Object.assign(S, mundoDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

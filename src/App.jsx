@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -8720,7 +8720,7 @@ export default function Taverna() {
         const r = Object.fromEntries(Object.entries(reinoRef.current || {}).map(([k, v]) => [k, { ...v, felicidade: Math.min(100, (v.felicidade || 0) + fest.fel) }]));
         reinoRef.current = r; setReino(r);
         pushMsgs([{ autor: "sistema", texto: `${fest.icone} Hoje é ${fest.nome}: ${fest.descricao}.` }]);
-        extras.push(`[FESTIVAL — ${fest.nome.toUpperCase()}] Hoje (${dataTxt(diaRef.current)}) é ${fest.nome}: ${fest.descricao}. Nos meus domínios o povo celebra (a felicidade já subiu por código). Traga a festa para a ficção se couber na cena.`);
+        extras.push(oEnvelopeDoMundo("festival", { nome: fest.nome, descricao: fest.descricao, data: dataTxt(diaRef.current) }));
       }
     }
     minutoRef.current = rel.minuto;
@@ -21982,11 +21982,11 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       checarFama();
       tentarSurgirNemesis();
       processarNemesisDiaria();
-      try { const r = promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], dia: diaRef.current - (n - 1 - i) }); elencoSaveRef.current = r.estado; } catch (e) { calou("promoverNoDia", e); } /* MM8f: o elenco age fora de cena, e o que é de longe corre como boato */ try { const diaDaVolta = diaRef.current - (n - 1 - i); const r2 = agirForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [] }); elencoSaveRef.current = r2.estado; const boatoDoMundo = boatoDoForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); if (boatoDoMundo) { pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boatoDoMundo}…` }]); notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RUMOR] Um boato chegou aos meus ouvidos: "${boatoDoMundo}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado).`; } } catch (e) { calou("agirForaDeCena", e); }
+      try { const r = promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [], dia: diaRef.current - (n - 1 - i) }); elencoSaveRef.current = r.estado; } catch (e) { calou("promoverNoDia", e); } /* MM8f: o elenco age fora de cena, e o que é de longe corre como boato */ try { const diaDaVolta = diaRef.current - (n - 1 - i); const r2 = agirForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, npcs: npcsRef.current, grupo: (personagemRef.current || personagem || {}).grupo || [] }); elencoSaveRef.current = r2.estado; const boatoDoMundo = boatoDoForaDeCena(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current, { dia: diaDaVolta, cidade: cidadeAtualRef.current, npcs: npcsRef.current }); if (boatoDoMundo) { pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boatoDoMundo}…` }]); notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMundo("rumorDeLonge", { boato: boatoDoMundo }); } } catch (e) { calou("agirForaDeCena", e); }
       if (sorteDoTurno("rumor")() < 0.25) {
         const boato = rumorDoDia({ ...contRef.current, cicatrizes: (personagem.cicatrizes || []).length, quaseMorte: contRef.current.quaseMorte || 0 }, personagem.nome, patamarFama(famaAtual()), !!(nemesisRef.current && nemesisRef.current.status !== "derrotada"));
         pushMsgs([{ autor: "sistema", texto: `🗞 Corre a boca miúda: ${boato}…` }]);
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[RUMOR] Um boato chegou aos meus ouvidos: "${boato}". Se couber, deixe-o circular na ficção (taverna, estrada, mercado) — e decida se ele é só fumaça ou o rastro de algo real.`;
+        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMundo("rumor", { boato });
       }
     }
     return eventos;
@@ -21994,7 +21994,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
   const envelopeEventosReino = (evs) => {
     const correioEnv = correioMsgsDiaRef.current.length ? "\n" + correioMsgsDiaRef.current.join("\n") : "";
     correioMsgsDiaRef.current = [];
-    const base = !evs.length ? "" : "\n" + evs.map((ev) => `[EVENTO DE REINO — ${ev.evento.titulo.toUpperCase()} em ${ev.cidade}] ${ev.evento.txt(ev.cidade)} Os efeitos JÁ foram aplicados pelo sistema (${[ev.felDelta ? `felicidade ${ev.felDelta > 0 ? "+" : ""}${ev.felDelta}` : "", ev.popDelta ? `população ${ev.popDelta > 0 ? "+" : ""}${ev.popDelta}` : "", ev.cofreDelta ? `cofre ${ev.cofreDelta > 0 ? "+" : ""}${ev.cofreDelta}` : ""].filter(Boolean).join(", ")}) — NÃO os repita como números na ficção; narre como vida do reino${ev.evento.soSeInfeliz ? ". ATENÇÃO: o povo está à beira da revolta — isso é um problema REAL que exige resposta minha ou consequências" : ""}.`).join("\n");
+    const base = !evs.length ? "" : "\n" + evs.map((ev) => oEnvelopeDoMundo("eventoDeReino", { titulo: ev.evento.titulo, cidade: ev.cidade, texto: ev.evento.txt(ev.cidade), felDelta: ev.felDelta, popDelta: ev.popDelta, cofreDelta: ev.cofreDelta, soSeInfeliz: ev.evento.soSeInfeliz })).join("\n");
     return base + correioEnv;
   };
 
@@ -22534,19 +22534,19 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
       eventosRef.current = r.eventos; setEventos(r.eventos);
       const partes = [];
       if (r.globalNovo) {
-        partes.push(`[EVENTO GLOBAL — NOVO ARCO MAIOR: ${r.globalNovo.nome.toUpperCase()}] O SISTEMA sorteou um acontecimento que abalará a região: ${r.globalNovo.semente} ETAPA 1/${r.globalNovo.etapas.length} agora: ${r.globalNovo.etapas[0]} Teça isso na ficção aos poucos — é um arco longo de fundo, coerente com o arco atual, NÃO uma quest para resolver hoje.`);
+        partes.push(oEnvelopeDoMundo("globalNovo", r.globalNovo));
         pushMsgs([{ autor: "sistema", texto: `🌍 Evento global: ${r.globalNovo.nome} — a região começa a mudar.` }]);
       }
       if (r.globalAvancou && r.eventos.global) {
         const g = r.eventos.global;
-        partes.push(`[EVENTO GLOBAL — ${g.nome.toUpperCase()} · ETAPA ${g.etapa + 1}/${g.etapas.length}] A situação regional ESCALOU: ${g.etapas[g.etapa]} Mostre a escalada na ficção (notícias, medo, preços, movimentação de facções) sem resolvê-la ainda.`);
+        partes.push(oEnvelopeDoMundo("globalAvancou", g));
         pushMsgs([{ autor: "sistema", texto: `🌍 ${g.nome}: a situação escalou (etapa ${g.etapa + 1}/${g.etapas.length}).` }]);
       }
       if (r.localNovo) {
-        partes.push(`[EVENTO LOCAL — FIO DO MUNDO] ${r.localNovo.icone} ${r.localNovo.texto} Gancho: ${r.localNovo.gancho} Apresente naturalmente (um grito, um boato, algo à vista). O jogador pode ignorar — se ignorar até o dia ${r.localNovo.expiraEm}, o fio se resolve sem ele.`);
+        partes.push(oEnvelopeDoMundo("localNovo", r.localNovo));
         pushMsgs([{ autor: "sistema", texto: `${r.localNovo.icone} Um fio do mundo à vista.` }]);
       }
-      r.expirados.forEach((l) => partes.push(`[EVENTO LOCAL — EXPIRADO] O fio "${l.texto}" se resolveu SEM a minha intervenção (o mundo seguiu sem mim). Mencione o desfecho como notícia de passagem, se couber.`));
+      r.expirados.forEach((l) => partes.push(oEnvelopeDoMundo("localExpirado", l)));
       if (r.questNova) {
         /* MM14 (30/09): o fio não entra mais na lista antiga — nasce direto
            como missão do sistema, com etapas que se conferem. O envelope
@@ -22558,7 +22558,7 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
             setMissoes(missoesRef.current);
           }
         } catch (e) { calou("o fio do descanso", e); }
-        partes.push(`[QUEST GERADA PELO SISTEMA — fase "${ctx.fase}" do arco] Nova missão secundária JÁ REGISTRADA no diário (NÃO envie "quest_nova" duplicando-a): "${r.questNova.titulo}" — ${r.questNova.descricao} Objetivo: ${r.questNova.objetivo}. Apresente-a na ficção com liberdade total de execução (quem procura, como, com que voz); os FATOS acima são fixos.`);
+        partes.push(oEnvelopeDoMundo("questGerada", { fase: ctx.fase, titulo: r.questNova.titulo, descricao: r.questNova.descricao, objetivo: r.questNova.objetivo }));
         pushMsgs([{ autor: "sistema", texto: `📜 Fio de história: ${r.questNova.titulo}` }]);
       }
       /* EVENTOS DIVINOS (v7.4): só DEPOIS do despertar — o mundo vai
@@ -22571,12 +22571,12 @@ REGRA DESTE ENVELOPE (obrigatória): trate o resto da minha frase normalmente �
           const nova = gerarDivindade(ctx, diaRef.current, { sorte: sorteDoTurno("divindade") });
           dv.panteao = [...dv.panteao, nova];
           divindadeRef.current = dv; setDivindade(dv);
-          partes.push(`[DIVINDADE SE REVELA — FATOS FIXOS DO SISTEMA] Uma entidade antes imperceptível agora se mostra ao herói desperto: ${nova.icone} ${nova.nome} ${nova.dominio} — GD ${nova.gd} (${tituloDe(nova.gd)}), ${nova.temperamento}, culto: ${nova.culto}${nova.lugar ? `, forte em ${nova.lugar}` : ""}. Ela SEMPRE existiu — só agora ele a percebe. Introduza-a na ficção com sutileza (um símbolo num templo, uma prece ouvida, um sinal). NÃO mude os fatos acima.`);
+          partes.push(oEnvelopeDoMundo("divindadeSeRevela", { icone: nova.icone, nome: nova.nome, dominio: nova.dominio, gd: nova.gd, titulo: tituloDe(nova.gd), temperamento: nova.temperamento, culto: nova.culto, lugar: nova.lugar }));
           pushMsgs([{ autor: "sistema", texto: `${nova.icone} Uma divindade se revela: ${nova.nome} ${nova.dominio} (GD ${nova.gd}) — veja Ascensão.` }]);
         } else {
           const evd = gerarEventoDivino(ctx, diaRef.current, dv.panteao, sorteDoTurno("evento-divino"));
           if (evd) {
-            partes.push(`[EVENTO DIVINO — FATOS FIXOS DO SISTEMA] ${evd.icone} ${evd.texto} Gancho: ${evd.gancho}. Apresente naturalmente; o jogador pode ignorar. NÃO force resolução hoje.`);
+            partes.push(oEnvelopeDoMundo("eventoDivino", evd));
             pushMsgs([{ autor: "sistema", texto: `${evd.icone} O céu se mexe — um evento divino em curso.` }]);
           }
         }

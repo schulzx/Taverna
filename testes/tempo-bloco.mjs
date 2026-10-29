@@ -23,6 +23,7 @@ import * as calendario from "../src/calendario.js";
 import * as invocacoes from "../src/invocacoes.js";
 import * as condicoes from "../src/condicoes.js";
 import * as motorTempo from "../src/motor/tempo-do-turno.js";
+import * as motorEnvelopes from "../src/motor/envelopes-do-turno.js";
 
 const NOMES = {
   lugar: ["pontoDoLugar", "definirLugar", "comEm", "comDe"],
@@ -30,12 +31,14 @@ const NOMES = {
   invocacoes: ["expirarPorMinuto"],
   condicoes: ["criarCondicao"],
   motorTempo: ["osMinutosAndam", "oCorpoNoRelogio", "comAExaustao", "oPassoNaCidade", "aCidadeSobOsPes"],
+  /* o festival do dia (11.º grupo dos envelopes, 28/10/2026): o relógio de hoje pede o texto ao motor */
+  motorEnvelopes: ["oEnvelopeDoMundo"],
 };
-const MODULOS = { lugar, calendario, invocacoes, condicoes, motorTempo };
+const MODULOS = { lugar, calendario, invocacoes, condicoes, motorTempo, motorEnvelopes };
 function osModulos({ novo }) {
   const o = {};
   for (const [mod, lista] of Object.entries(NOMES)) {
-    if (!novo && mod === "motorTempo") continue;
+    if (!novo && (mod === "motorTempo" || mod === "motorEnvelopes")) continue;
     for (const n of lista) {
       if (!(n in MODULOS[mod])) throw new Error(`${mod} não exporta ${n}`);
       o[n] = MODULOS[mod][n];
