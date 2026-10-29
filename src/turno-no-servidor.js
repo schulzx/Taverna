@@ -92,7 +92,7 @@ import { oPreludioDoTurno } from "./motor/preludio-do-turno.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } from "./motor/pedido-do-turno.js";
 import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
 import { PORTAS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
-import { aRespostaDoServidor } from "./motor/eco-do-turno.js";
+import { aRespostaDoServidor, CAMPOS_DO_SERVIDOR } from "./motor/eco-do-turno.js";
 import { correrOTurno } from "./sessao.js";
 import { CAMPOS } from "./estado.js";
 import { lerOPedido } from "./escuta.js";
@@ -415,6 +415,9 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   /* o save: os campos de estado.js e o que o save de entrada já trazia */
   const doSave = new Set([...NOMES_DO_SAVE, ...Object.keys(obj(obj(corpo).estado))]);
   doSave.delete("soltos");
+  /* o que viaja no eco, nos soltos ou nos bilhetes nunca é do save, nem
+     quando o estado de entrada o trazia solto (um canal por valor) */
+  for (const campo of Object.keys(CAMPOS_DO_SERVIDOR)) doSave.delete(campo);
   const estadoDoFim = Object.fromEntries(Object.entries(r.estado).filter(([k]) => k === "versao" || doSave.has(k)));
   if (leitura) estadoDoFim.leituraDoCronista = leitura;
   const antes = obj(obj(corpo).estado);
@@ -423,6 +426,8 @@ export async function oTurnoNoServidor(corpo, opcoes) {
     linhas: arr(obj(r.tela).linhas),
     campos: Object.keys(estadoDoFim).filter((k) => k !== "versao" && JSON.stringify(estadoDoFim[k]) !== JSON.stringify(antes[k])),
     avulsos: dado(Object.fromEntries(Object.entries(m.avulsos).filter(([k]) => !NOMES_DO_SAVE.has(k)))),
+    /* a queda a zero que acabou em morte: o desfecho que o App abre */
+    ...(obj(r.tela).morreu ? { morreu: true } : {}),
   };
   const cronista = { pergunta: cr.pergunta, corre: cr.corre, motivos: cr.motivos, chamado };
   return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim, eco: dado(eco), soltos: dado(soltos), tela, juiz: r.juiz, entradaDoJuiz: L.linha.juiz ? L.linha.juiz.entrada : null, cronista, juizo: r.juizo, calou: r.calou };

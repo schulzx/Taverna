@@ -128,8 +128,12 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
      MOVIDA A QUARTA VEZ (29/10, Fase 4, trilha B: o 1.º órgão do depois no
      servidor): entre a chegada e o Cronista entrou o trabalho daqui — no
      App, `oferecerTrabalhoDaqui` corre depois do Juiz e do conferente e
-     antes do Cronista. Só corre com `servidor: true` (secção 4c). */
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "o trabalho daqui", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+     antes do Cronista. Só corre com `servidor: true` (secção 4c).
+     MOVIDA A QUINTA VEZ (29/10, Fase 4, trilha B: o 2.º órgão do depois):
+     entre a chegada e o trabalho daqui entrou o conferente das missões —
+     no App, `pers = conferirAsMissoes(pers)` corre depois do Juiz e ANTES
+     de `oferecerTrabalhoDaqui`. Corre no replay também (secção 4d). */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o turno do Mestre", "o códex", "a chegada", "as missões", "o trabalho daqui", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
   t("e a porta do App diz que é do App, e é a única", /^App /.test(PASSOS_DO_REPLAY.find((p) => p.passo === "o passo antes do Mestre").de) && PASSOS_DO_REPLAY.filter((p) => /^App /.test(p.de)).length === 1);
   t("e o passo do motor antes do Mestre não leva o nome da porta (o `calou` e o oráculo dizem-na por ele)", PASSOS_DO_REPLAY.filter((p) => /antes do Mestre/.test(p.passo)).length === 1);
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);
@@ -311,6 +315,50 @@ sec("4c. O MURAL NO REPLAY E NO SERVIDOR — a porta do Cronista e o trabalho da
   const recados = String(rs.estado.nota || "").split(/\r?\n/).filter((l) => /TRABALHO PREGADO NO MURAL/.test(l));
   t("e a nota leva os dois recados ao Narrador, o do mundo primeiro", recados.length === 2 && recados[0].includes(oferecido && oferecido.dador) && recados[1].includes("Varek Duro"), J(rs.estado.nota));
   t("o servidor corre duas vezes igual", J(correrOTurno(Em, Lm, { semente: "teste|mural", servidor: true })) === J(rs));
+}
+
+sec("4d. O CONFERENTE DAS MISSÕES, A FÉ E O ARCO NO REPLAY — e a queda a zero (29/10, Fase 4, trilha B)");
+{
+  /* O 2.º órgão do depois (motor/depois-do-turno.js#conferirAsMissoes, a
+     peça da trilha A) corre no passo «as missões», no sítio do App — depois
+     da chegada, antes do trabalho daqui —, no replay e no servidor; e as
+     portas do Cronista ganharFe, marcarNoArco e conferirCom são as da mesma
+     fábrica. Nos 194 turnos das sessões de prova nenhuma missão anda e
+     ninguém cai a zero (a medida fica 176/194 e 172 — secção 4); aqui, um
+     turno montado: uma missão que a chegada cumpre e uma conversa que o
+     Cronista viu. */
+  const passo = PASSOS_DO_REPLAY.find((p) => p.passo === "as missões");
+  t("o passo «as missões» diz que corre a peça do conferente", !!passo && /conferirAsMissoes/.test(passo.de));
+  t("e as três portas do Cronista são do motor, sem campos de dívida", ["ganharFe", "marcarNoArco", "conferirCom"].every((n) => PORTAS_DO_CRONISTA_NO_REPLAY[n].de === "motor" && !PORTAS_DO_CRONISTA_NO_REPLAY[n].campos.length));
+  const Eq = estadoDoSave({ personagem: { nome: "Íris Vantel", nivel: 1, moedas: 10, xp: 0, vida: 9, vidaMax: 9, grupo: [] }, cidadeAtual: "Monte Rasa", mapa: { cidades: [{ nome: "Monte Rasa", populacao: 800 }] }, npcs: {}, canone: {}, dia: 4,
+    missoes: [
+      { id: "m1", titulo: "A carta do moinho", tipo: "favor", dador: "Varek Duro", status: "ativa", etapas: [{ tipo: "ir_a", alvo: "Monte Rasa" }], recompensa: { moedas: 30, xp: 50 } },
+      { id: "m2", titulo: "Falar com a moleira", tipo: "favor", dador: "Varek Duro", status: "ativa", etapas: [{ tipo: "falar_com", alvo: "Odete Moleira" }], recompensa: { moedas: 5, xp: 10 } },
+    ] });
+  const narr = "A praça de Monte Rasa murmura ao fim da tarde. Odete Moleira acena da porta do moinho e diz que a farinha chegou molhada outra vez este mês.";
+  const Lq = { n: 1, entrada: { frase: "Falo com a moleira." }, sorte: { ponto: "4|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: narr, mudancas: {} } };
+  const st = (e) => (e.missoes || []).map((m) => m.status).join(",");
+  const r1 = correrOTurno(Eq, Lq, { semente: "teste|missoes" });
+  t("no replay, a chegada cumpre a missão: concluída, a paga na ficha (◉ 10 → 40, 0 → 50 XP), o contrato contado, o arco marcado", st(r1.estado) === "concluida,ativa" && r1.estado.personagem.moedas === 40 && r1.estado.personagem.xp === 50 && r1.estado.contadores.contratosConcluidos === 1 && r1.estado.historia.feitos.some((f) => /A carta do moinho/.test(f)), J([st(r1.estado), r1.estado.personagem, r1.estado.historia]));
+  t("e as linhas do conferente vão à tela, na ordem do App (o avanço, a paga)", J(r1.tela.linhas.slice(-2)) === J(["🧭 A carta do moinho: Chegar a Monte Rasa ✓ (1/1)", "🤝 MISSÃO CONCLUÍDA: A carta do moinho — +30 moedas · +50 XP"]), J(r1.tela.linhas));
+  t("no replay a nota ao Narrador fica de fora, e nada que não seja do save entra (a contagem da sorte, a conversa)", !("nota" in r1.estado) && !("contagemDaSorte" in r1.estado) && !("falouCom" in r1.estado) && !r1.calou.length && !r1.calouDoDepois.length);
+  const r1s = correrOTurno(Eq, Lq, { semente: "teste|missoes", servidor: true, so: "depois" });
+  t("no servidor, o mesmo, e a nota leva o recado da missão paga ao turno seguinte", st(r1s.estado) === "concluida,ativa" && /MISSÃO CONCLUÍDA — RECONHECIDA E PAGA PELO SISTEMA/.test(String(r1s.estado.nota || "")), J(r1s.estado.nota));
+  /* a conversa que o Cronista viu: a porta conferirCom, da fábrica */
+  const Lc2 = { ...Lq, cronista: { proposta: { pessoas: [{ nome: "Odete Moleira", papel: "moleira", genero: "ela" }], falou_com: ["Odete Moleira"] } } };
+  const r2 = correrOTurno(Eq, Lc2, { semente: "teste|missoes" });
+  t("a conversa do Cronista confere a missão de falar (conferirCom do motor; a dublê devolvia a ficha e não conferia)", st(r2.estado) === "concluida,concluida" && r2.estado.personagem.moedas === 45 && !r2.portas.some((p) => p.porta === "conferirCom"), J([st(r2.estado), r2.portas]));
+  t("e as linhas do Cronista voltam na tela, depois das do turno", J(r2.tela.linhas.slice(-2)) === J(["💬 Falar com a moleira: Encontrar Odete Moleira ✓ (1/1)", "🤝 MISSÃO CONCLUÍDA: Falar com a moleira — +5 moedas · +10 XP"]), J(r2.tela.linhas));
+  t("o conferente corre duas vezes igual, e o estado recebido não muda", J(correrOTurno(Eq, Lc2, { semente: "teste|missoes" })) === J(r2) && st(Eq) === "ativa,ativa");
+  /* a queda a zero (motor/entrega-do-turno.js#aQueda): o herói chega ao
+     fim do turno a 0 PV (o golpe que a cena deu); no App, `resolverQueda`
+     logo depois da chegada. Antes, o servidor devolvia-o a 0 PV, de pé. */
+  const Lz = { ...Lq, narrador: { narrativa: "O golpe do salteador entra fundo e Íris cai de joelhos na lama da praça, sem fôlego, o mundo a girar.", mudancas: {} } };
+  const Ez = { ...Eq, missoes: [], personagem: { ...Eq.personagem, vida: 0 } };
+  const rz = correrOTurno(Ez, Lz, { semente: "teste|queda", servidor: true, so: "depois" });
+  const pz = rz.estado.personagem;
+  t("a 0 PV o herói cai e rola o teste de morte (morrendo, com a rolagem); a linha vai à tela e o recado à nota", pz.vida === 0 && pz.morrendo === true && pz.morte && Array.isArray(pz.morte.rolagens) && pz.morte.rolagens.length === 1 && /QUEDA — RESOLVIDA PELO SISTEMA|morte|caído/i.test(String(rz.estado.nota || "")) && rz.tela.linhas.length > 0, J([pz, rz.tela.linhas, rz.estado.nota]));
+  t("e a queda corre duas vezes igual (a sorte do turno, o evento «morte»)", J(correrOTurno(Ez, Lz, { semente: "teste|queda", servidor: true, so: "depois" })) === J(rz));
 }
 
 sec("5. DETERMINISMO — o mesmo arquivo dá o mesmo replay");
@@ -509,24 +557,35 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   t("a gente entra pela ficha do jogo: o gênero do registo («ele» → «homem») e o turno em que se viu", !!Ef.npcs["Varek Duro"] && Ef.npcs["Varek Duro"].genero === "homem" && Number.isInteger(Ef.npcs["Varek Duro"].ultimaVez), J(Ef.npcs["Varek Duro"]));
   t("e o descritor não vira nome (nomeComDono, como no jogo; a miniatura registava-o)", !Ef.npcs["Homem da carroça"], J(Object.keys(Ef.npcs)));
   t("a promessa dita entra no Livro (guardarSementes: a miniatura não tinha o Livro)", ehLista(Ef.prometido && Ef.prometido.sementes) && Ef.prometido.sementes.some((x) => /Berço/.test(x.texto)), J(Ef.prometido));
-  t("a fé chamou o dublê, e o dublê não contou (a divindade fica como estava)", J(rc.portas.filter((x) => x.porta === "ganharFe")) === J([{ porta: "ganharFe", campos: ["divindade"] }]) && J(Ef.divindade) === J(Ec.divindade), J(rc.portas));
+  /* MOVIDA (29/10, Fase 4, trilha B): a fé era dublê e não contava; passou
+     a ser a porta da fábrica dos órgãos do depois (ganharFe, à letra do
+     App), e conta. A intenção — o que a porta faz no replay é o que se diz
+     dela na tabela — fica: agora a tabela diz «motor», e a divindade anda. */
+  t("a fé chama a porta do motor, e a fé conta (os fiéis do deus desperto; nenhuma dublê da fé)", !rc.portas.some((x) => x.porta === "ganharFe") && PORTAS_DO_CRONISTA_NO_REPLAY.ganharFe.de === "motor" && Number(Ef.divindade.fieis) > Number(Ec.divindade.fieis || 0), J([rc.portas, Ef.divindade]));
   t("nenhuma secção calou, nenhum passo estourou", !rc.calou.length && !rc.calouDoCronista.length, J([rc.calou, rc.calouDoCronista]));
   t("e corre duas vezes igual (determinismo)", J(correrOTurno(Ec, Lc, { semente: "teste|cronista" })) === J(rc));
 
-  /* a dívida da porta: o que o App escreveu pela fé, no turno em que a fé foi chamada */
+  /* a dívida da porta: o que o App escreveu por uma porta-dublê, no turno
+     em que ela foi chamada.
+     MOVIDA (29/10, Fase 4, trilha B): a porta era a fé, que deixou de ser
+     dublê; a régua prova-se agora com a que resta chamada nestes turnos —
+     sincronizarNemesis, que o Cronista chama quando a gente do registo muda
+     (os 13 chamados das sessões de prova). A intenção é a mesma: o campo que
+     o App escreveu pela porta é dívida dela, e sem a porta é defeito. */
   const juizo = rc.juizo;
   const arqDe = (proposta, estado) => {
     let a = abrirASessao({ semente: "teste|cronista", estado: Ec, origem: "a suíte" });
     return gravarOTurno(a, { ...Lc, cronista: { proposta, juizo: proposta === Lc.cronista.proposta ? juizo : correrOTurno(Ec, { ...Lc, cronista: { proposta } }, { semente: "teste|cronista" }).juizo }, juiz: null, estado });
   };
-  const comFe = { ...Ef, divindade: { ...Ef.divindade, fieis: 21, pf: 1 } };
-  const rp = reproduzirASessao(arqDe(Lc.cronista.proposta, comFe));
+  const nemDoApp = { nome: "Varek Duro", status: "derrotada" };
+  const comNem = { ...Ef, nemesis: nemDoApp };
+  const rp = reproduzirASessao(arqDe(Lc.cronista.proposta, comNem));
   const d1 = rp.turnos[0];
-  t("o que o App escreveu pela porta da fé é dívida «a porta», não defeito", rp.valido && !rp.defeitos.length && d1.divida.some((d) => d.de === "a porta" && d.campo === "divindade") && d1.porque.some((x) => /ganharFe/.test(x) && /\bApp\b/.test(x)), J(d1 && [d1.diferencas, d1.divida, d1.porque]));
-  t("e o turno guarda as portas que o Cronista chamou", !!d1.portas && d1.portas.some((x) => x.porta === "ganharFe"));
-  const semFe = { ...Lc.cronista.proposta }; delete semFe.fe;
-  const rq = reproduzirASessao(arqDe(semFe, { ...correrOTurno(Ec, { ...Lc, cronista: { proposta: semFe } }, { semente: "teste|cronista" }).estado, divindade: comFe.divindade }));
-  t("sem a porta chamada, a mesma divergência é defeito do motor", J(rq.defeitos) === J([1]) && rq.turnos[0].diferencas.some((d) => d.caminho.startsWith("divindade")), J(rq.turnos[0] && rq.turnos[0].diferencas));
+  t("o que o App escreveu por uma porta-dublê (a nêmesis) é dívida «a porta», não defeito", rp.valido && !rp.defeitos.length && d1.divida.some((d) => d.de === "a porta" && d.campo === "nemesis") && d1.porque.some((x) => /sincronizarNemesis/.test(x) && /\bApp\b/.test(x)), J(d1 && [d1.diferencas, d1.divida, d1.porque]));
+  t("e o turno guarda as portas que o Cronista chamou", !!d1.portas && d1.portas.some((x) => x.porta === "sincronizarNemesis"));
+  const semGente = { ...Lc.cronista.proposta }; delete semGente.pessoas;
+  const rq = reproduzirASessao(arqDe(semGente, { ...correrOTurno(Ec, { ...Lc, cronista: { proposta: semGente } }, { semente: "teste|cronista" }).estado, nemesis: nemDoApp }));
+  t("sem a porta chamada, a mesma divergência é defeito do motor", J(rq.defeitos) === J([1]) && rq.turnos[0].diferencas.some((d) => d.caminho.startsWith("nemesis")), J(rq.turnos[0] && rq.turnos[0].diferencas));
 
   /* O JUIZ CORRIGE NO REPLAY (v9.531): o App passa o aceito por
      canoneSemInvencao antes da peça; a linha grava o juízo CRU, e o replay

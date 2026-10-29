@@ -32,7 +32,8 @@
    pauta, o pedido, o prelúdio, ou `depois` — os órgãos do depois). O
    campo é o das peças (o nome do ref sem `Ref`). As funções só movem
    valores entre as três formas e nunca os validam: quem lê é a peça, com
-   as guardas do App.
+   as guardas do App. A única exceção é o `null` do save, que o servidor lê
+   como o load do App o abre (`NULO_QUE_O_LOAD_REFAZ`, mais abaixo).
 
    O `juizDoTurno` do inventário NÃO viaja: o turno zera-o antes de o
    escrever (o Juiz de cada turno é novo), logo não é memória entre turnos.
@@ -40,6 +41,11 @@
    Não liga nada: o `/api/turno` e o App chamam isto quando a trilha A e o
    servidor o ligarem (a ligação está no diário).
    ============================================================ */
+
+import { CAMPOS } from "../estado.js";import { REFS_DA_PAUTA } from "./pauta-do-turno.js";
+import { REFS_DO_PEDIDO } from "./pedido-do-turno.js";
+import { REFS_DO_PRELUDIO } from "./preludio-do-turno.js";
+import { REFS_DO_DEPOIS } from "./depois-do-turno.js";
 
 const C = (via, chave, de, escreve, le) => Object.freeze({ via, chave, de, escreve, le: Object.freeze(le) });
 
@@ -53,7 +59,7 @@ export const CAMPOS_DO_SERVIDOR = Object.freeze({
   adiadosEscuta: C("eco", "adiadosEscuta", "os envelopes que a escuta cortou e adiou", "o pedido (a escuta que corta)", ["pedido"]),
   fecho: C("eco", "fecho", "o fecho do pedido (a frase que vai por último)", "a pauta", ["pauta"]),
   vetosDoJuiz: C("eco", "vetosDoJuiz", "o que o Juiz vetou na resposta da véspera", "o Juiz, depois da resposta", ["pauta"]),
-  derrotadosDaSessao: C("eco", "derrotadosDaSessao", "os mortos desta sessão (até 120)", "o fim da luta", ["pauta", "preludio"]),
+  derrotadosDaSessao: C("eco", "derrotadosDaSessao", "os mortos desta sessão (até 120)", "o fim da luta", ["pauta", "preludio", "depois"]),
   criaturaAVista: C("eco", "criaturaAVista", "a fera vista na estrada", "a estrada (a viagem)", ["pauta"]),
   /* o trabalho que o mundo oferece (motor/depois-do-turno.js, 29/10): o dia
      do último (no máximo um por dia — sem ele o servidor ofereceria em todo
@@ -75,20 +81,65 @@ export const CAMPOS_DO_SERVIDOR = Object.freeze({
   intencao: C("bilhete", "intencao", "a intenção declarada na luta", "a luta (a tela)", ["pauta"]),
 });
 
+/* ---------------- O NULO DO SAVE, COMO O LOAD O ABRE ----------------
+   (29/10, trilha B). O save guarda `null` onde o campo falta (estado.js:
+   o padrão de quase todo campo é `null`, de propósito — o LEITOR do App é
+   que decide o que a ausência quer dizer). O load do App (`continuar`)
+   nunca entrega esse `null` às peças: passa-o pelo `garantirX` de cada
+   campo (`elencoSaveRef.current = garantirElencoDoSave(sv.elenco)`), e o
+   ref sai com o valor de partida. As peças do turno fazem o mesmo com o
+   campo AUSENTE (o `padrao()` de cada ref nas tabelas delas, o mesmo
+   `useRef(...)` do App) — mas o `null` passava-lhes cru, e o estado do fim
+   do servidor traz `null` em todo campo que o save de entrada não tinha
+   (o replay abre-o por `estadoDoSave`). Reenviado tal como veio, o turno
+   seguinte estourava na peça do pedido (`$ref.elenco.vistos` de `null`).
+
+   A regra: num campo do save que uma peça lê e cujo valor de partida não é
+   `null`, o servidor lê o `null` como a ausência — o `padrao()` da peça.
+   Em quase todos é EXATAMENTE o que o load dá ao `null` (a suíte avalia a
+   expressão do load do App campo a campo e compara). Os que ficam de fora
+   dessa igualdade estão na tabela abaixo: o load refá-los a partir de
+   OUTRO campo (gera o mapa, as guildas, migra as quests…), e o servidor
+   ainda não o faz — nem para o `null`, nem para a ausência, que já eram o
+   `padrao()` da peça no 1.º turno. O `null` passa a ser lido como esse 1.º
+   turno o leu; o resto é dívida escrita, com o porquê de cada um. */
+export const NULO_QUE_O_LOAD_REFAZ = Object.freeze({
+  mapa: "sem cidades, o load gera a geografia inteira (garantirGeografia, semeada pelo nome do herói)",
+  guildas: "vazias, o load gera as guildas do mundo (guildasDoMundo: a semente, o mapa, o gênero, o léxico)",
+  missoes: "fora de lista, o load migra as quests antigas (v9.27: a ausência é o sinal)",
+  historia: "sem estrutura, o load parte da estrutura do mundo (sv.mundo.estrutura)",
+  governos: "o load completa-os pelo mapa (garantirGovernos)",
+  reino: "o load completa-o pelo mapa (garantirReino)",
+  devocao: "o load completa-a pelo mapa e pela divindade (garantirDevocao)",
+  acordouAbs: "o load refá-lo pelo relógio da máquina (o descanso de mais de 48 horas)",
+});
+
+/* os campos do save que as peças leem com partida não nula: o 1.º que os
+   declara dá o `padrao` (as quatro tabelas saem do mesmo `useRef` do App) */
+const NOMES_DO_SAVE = new Set(CAMPOS.map((c) => c.campo));
+const PARTIDA_DO_NULO = (() => {
+  const p = {};
+  for (const tab of [REFS_DA_PAUTA, REFS_DO_PEDIDO, REFS_DO_PRELUDIO, REFS_DO_DEPOIS]) for (const [campo, r] of Object.entries(tab)) {
+    if (campo in p || !r || !r.salvo || !NOMES_DO_SAVE.has(campo) || CAMPOS_DO_SERVIDOR[campo] || typeof r.padrao !== "function") continue;
+    if (r.padrao() !== null) p[campo] = r.padrao;
+  }
+  return Object.freeze(p);
+})();
+
 const ehObjeto = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
 const tem = (o, k) => Object.prototype.hasOwnProperty.call(o, k) && o[k] !== undefined;
 const daVia = (via) => Object.entries(CAMPOS_DO_SERVIDOR).filter(([, c]) => c.via === via);
 
-/* O estado que as peças recebem no servidor: o save, com os soltos
-   espalhados nos campos delas, o eco e os bilhetes por cima. Só entra o
-   que a tabela conhece; o resto do eco e dos bilhetes fica de fora. O save
-   e a entrada não mudam. */
+/* O estado que as peças recebem no servidor: o save, com o `null` lido
+   como a ausência (acima), os soltos espalhados nos campos delas, o eco e
+   os bilhetes por cima. Só entra o que a tabela conhece; o resto do eco e
+   dos bilhetes fica de fora. O save e a entrada não mudam. */
 export function oEstadoDoServidor(save, entrada) {
   const sv = ehObjeto(save) ? save : {};
   const ent = ehObjeto(entrada) ? entrada : {};
   const e = { ...sv };
   delete e.soltos;
-  const soltos = ehObjeto(sv.soltos) ? sv.soltos : {};
+  for (const [campo, padrao] of Object.entries(PARTIDA_DO_NULO)) if (sv[campo] === null) e[campo] = padrao();  const soltos = ehObjeto(sv.soltos) ? sv.soltos : {};
   for (const [campo, c] of daVia("solto")) if (tem(soltos, c.chave)) e[campo] = soltos[c.chave];
   for (const [via, de] of [["eco", ent.eco], ["bilhete", ent.bilhetes]]) {
     const o = ehObjeto(de) ? de : {};

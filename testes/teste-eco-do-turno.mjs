@@ -22,7 +22,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
-import { CAMPOS_DO_SERVIDOR, oEstadoDoServidor, aRespostaDoServidor, oSaveComOsSoltos } from "../src/motor/eco-do-turno.js";
+import { CAMPOS_DO_SERVIDOR, NULO_QUE_O_LOAD_REFAZ, oEstadoDoServidor, aRespostaDoServidor, oSaveComOsSoltos } from "../src/motor/eco-do-turno.js";
 import { REFS_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
 import { REFS_DO_PEDIDO, oPedidoDoTurno } from "../src/motor/pedido-do-turno.js";
 import { REFS_DO_PRELUDIO } from "../src/motor/preludio-do-turno.js";
@@ -167,6 +167,92 @@ sec("5. O eco serve: o turno seguinte com ele não é o turno seguinte sem ele")
   }
   t(`o pedido devolve eco em ${devolveu} de ${n} turnos`, n >= 10 && devolveu === n);
   t(`e o turno seguinte muda com ele em ${comEco} de ${n} (o QUEM É, o fecho, os nomes à mão)`, comEco > 0);
+}
+
+sec("6. O nulo do save, como o load do App o abre");
+{
+  /* O defeito (29/10): o estado do fim do servidor traz `null` em todo
+     campo que o save de entrada não tinha, e reenviado tal como veio o
+     pedido seguinte estourava (`$ref.elenco.vistos` de null). O load do App
+     passa o nulo pelo `garantirX` de cada campo; o servidor passa-o agora ao
+     `padrao()` da peça. A PROVA DA REGRA lê o load de HEAD (`continuar`):
+     a 1.ª atribuição de cada ref é a leitura do save, e avaliada com
+     `sv = { campo: null }` sobre os imports do App tem de dar o `padrao()`
+     da peça — salvo os campos de NULO_QUE_O_LOAD_REFAZ, cujo load lê outro
+     campo ou outro ref (as atribuições seguintes migram conteúdo, e um
+     campo nulo não tem conteúdo; a de `missoes` é o `else` da leitura, e
+     por isso ela está na tabela). */
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const linhas = app.split(/\r?\n/);
+  const ini = linhas.findIndex((l) => l.includes("const continuar = (comResumo"));
+  const fim = linhas.findIndex((l, i) => i > ini && /^ {2}const \w+ = /.test(l));
+  const corpo = ini >= 0 && fim > ini ? linhas.slice(ini, fim).join("\n") : "";
+  t(`o load do App é achado (continuar, ${corpo.length} letras)`, corpo.length > 10000);
+  const imp = {};
+  for (const m of app.matchAll(/import\s*\{([^}]*)\}\s*from\s*"\.\/([\w\-/]+)\.js"/g)) for (const n of m[1].split(",")) {
+    const [a, b] = n.trim().split(/\s+as\s+/);
+    if (a) imp[(b || a).trim()] = { mod: m[2], nome: a.trim() };
+  }
+  const LIVRES_DE_JS = new Set(["sv", "null", "true", "false", "typeof", "Array", "Number", "Object", "String", "undefined", "object", "string", "number"]);
+  /* os nomes livres da expressão: sem as aspas, com o espalhar (`...X`)
+     como nome, e sem as chaves dos literais (`{ nivel: …, cofre: … }`) */
+  const livres = (ex) => {
+    const s = ex.replace(/"[^"]*"|`[^`]*`/g, '""').replace(/\.\.\./g, " ").replace(/([{,]\s*)[A-Za-z_$][\w$]*\s*:(?!:)/g, "$1");
+    return [...new Set([...s.matchAll(/(?<![.\w$])([A-Za-z_$][\w$]*)(?![\w$])/g)].map((m) => m[1]))].filter((n) => !LIVRES_DE_JS.has(n));
+  };
+  const { CAMPOS } = await import("../src/estado.js");
+  const NOMES = new Set(CAMPOS.map((c) => c.campo));
+  const partida = {};
+  for (const tab of [REFS_DA_PAUTA, REFS_DO_PEDIDO, REFS_DO_PRELUDIO, REFS_DO_DEPOIS]) for (const [c, r] of Object.entries(tab)) {
+    if (c in partida || !r.salvo || !NOMES.has(c) || CAMPOS_DO_SERVIDOR[c]) continue;
+    if (r.padrao() !== null) partida[c] = r;
+  }
+  /* o acampado não tem `ref.current =` no load: é o `definirAcampado` */
+  const OUTRA_LEITURA = { acampado: "definirAcampado(!!sv.acampado)" };
+  const iguais = [], refeitos = [], tortos = [];
+  for (const [c, r] of Object.entries(partida)) {
+    const re = new RegExp("\\b" + r.ref + "\\.current\\s*=(?!=)\\s*([^;]{0,400})", "g");
+    const todas = [...corpo.matchAll(re)].map((m) => m[1].replace(/\s+/g, " ").trim());
+    if (!todas.length && OUTRA_LEITURA[c] && corpo.includes(OUTRA_LEITURA[c])) todas.push(OUTRA_LEITURA[c].replace(/^definirAcampado\((.*)\)$/, "$1"));
+    const leOutro = (ex) => livres(ex).some((n) => !imp[n]) || [...ex.matchAll(/\bsv\.(\w+)/g)].some((m) => m[1] !== c);
+    if (NULO_QUE_O_LOAD_REFAZ[c]) { if (todas.some(leOutro)) refeitos.push(c); else tortos.push(c + " (na tabela, e o load não lê outro)"); continue; }
+    if (!todas.length) { tortos.push(c + " (sem leitura no load)"); continue; }
+    const ex = todas[0];
+    if (leOutro(ex)) { tortos.push(`${c} (o load lê outro: ${ex.slice(0, 60)})`); continue; }
+    const args = {};
+    for (const n of livres(ex)) { const { mod, nome } = imp[n]; args[n] = (await import(`../src/${mod}.js`))[nome]; }
+    let v;
+    try { v = new Function("sv", ...Object.keys(args), `return (${ex});`)({ [c]: null }, ...Object.values(args)); } catch (x) { v = "estourou: " + x.message; }
+    (J(v) === J(r.padrao()) ? iguais : tortos).push(J(v) === J(r.padrao()) ? c : `${c} (load ${J(v).slice(0, 40)} ≠ partida ${J(r.padrao()).slice(0, 40)})`);
+  }
+  const n = Object.keys(partida).length;
+  t(`dos ${n} campos do save que as peças leem com partida não nula, ${iguais.length} têm no load do App, para o nulo, EXATAMENTE a partida da peça`, iguais.length > 40 && !tortos.length, tortos.join("; "));
+  t(`e os ${refeitos.length} da tabela (${refeitos.join(", ")}) leem mesmo outro campo ou outro ref no load`, refeitos.length === Object.keys(NULO_QUE_O_LOAD_REFAZ).length);
+  t("cada um da tabela diz o porquê", Object.values(NULO_QUE_O_LOAD_REFAZ).every((s) => typeof s === "string" && s.length > 20));
+
+  /* A MORDIDA, sobre os casos do pedido: o save com todos esses campos
+     nulos. Cru (o espalhar de antes) o pedido estoura; pelo servidor dá o
+     MESMO pedido, byte a byte, que o save sem os campos (a ausência). */
+  let estouraCru = 0, igualAusente = 0, casos = 0;
+  for (const i of [0, 9, 18, 27, 36, 45, 54, 63]) {
+    const k = casoDoPedido(i);
+    const est = { ...JSON.parse(JSON.stringify(k.estado)), render: k.render };
+    const ent = { frase: k.entrada.conteudo, histBase: k.entrada.histBase, pedidoEsc: k.entrada.pedidoEsc, fioEsc: k.entrada.fioEsc, oficina: k.entrada.oficina, doCompasso: k.entrada.doCompasso, formaDaCena: k.entrada.formaDaCena, daFrente: k.entrada.daFrente, daVirada: k.entrada.daVirada, daTrama: k.entrada.daTrama };
+    const nulo = { ...est }, ausente = { ...est };
+    for (const c of Object.keys(partida)) { nulo[c] = null; delete ausente[c]; }
+    const pedir = (e) => oPedidoDoTurno(e, { ...ent, sorte: rng(hashSemente("nulo-" + i)) }, {}).pedido;
+    let a;
+    try { a = pedir(ausente); } catch { continue; }
+    casos++;
+    try { pedir(nulo); } catch { estouraCru++; }
+    try { if (J(pedir(oEstadoDoServidor(nulo, {}))) === J(a)) igualAusente++; } catch { /* conta como diferente */ }
+  }
+  t(`o save com os nulos, cru, estoura o pedido em ${estouraCru} de ${casos} casos (o defeito)`, casos >= 6 && estouraCru === casos);
+  t(`e pelo servidor dá o pedido da ausência, byte a byte, em ${igualAusente} de ${casos}`, igualAusente === casos);
+  const sv = { elenco: null, dia: null, mapa: null, combate: null };
+  const e = oEstadoDoServidor(sv, {});
+  t("o nulo vira a partida (o elenco com vistos, o dia 1, o mapa vazio); o nulo de partida nula fica nulo; o save não muda", e.elenco && typeof e.elenco.vistos === "object" && e.dia === 1 && J(e.mapa) === J({ cidades: [], faccoes: [] }) && e.combate === null && sv.elenco === null);
+  t("e a partida é nova a cada estado (nunca o mesmo objeto)", oEstadoDoServidor(sv, {}).elenco !== e.elenco);
 }
 
 console.log(`\n${ok} ok, ${mal} mal`);

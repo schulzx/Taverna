@@ -79,7 +79,7 @@ const { default: turno } = await import("../api/turno.js");
 const importMs = performance.now() - t0;
 const S = await import("../src/turno-no-servidor.js");
 const { TURNO_NO_SERVIDOR, PORTAS_DO_SERVIDOR, aCasaDoTurno, oPedidoNoServidor, oTurnoNoServidor } = S;
-const { oEstadoDoServidor, aRespostaDoServidor } = await import("../src/motor/eco-do-turno.js");
+const { oEstadoDoServidor, aRespostaDoServidor, NULO_QUE_O_LOAD_REFAZ, CAMPOS_DO_SERVIDOR } = await import("../src/motor/eco-do-turno.js");
 const { oPreludioDoTurno } = await import("../src/motor/preludio-do-turno.js");
 const { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } = await import("../src/motor/pedido-do-turno.js");
 const { REFS_DA_PAUTA } = await import("../src/motor/pauta-do-turno.js");
@@ -295,6 +295,15 @@ const temposDoTurno = [];
      aceito do Cronista escreve (os efeitos de oAceitoDoCronista). O cânone
      desses turnos conta aqui, não no Juiz. */
   const DO_CRONISTA = new Set(["npcs", "canone", "prometido", "relogios", "eventos", "quests", "missoes", "personagem", "lugar", "mural", "divindade"]);
+  /* MOVIDA (29/10, o nulo do save como o load o abre): o trabalho daqui só
+     corre no servidor, e até aqui não pregava em nenhum dos 146 — o dia das
+     sessões de Node é nulo, e o «um por dia» fechava-o (0 ≥ null). Mas o
+     load do App abre o dia nulo como 1 (`sv.dia || 1`), e a fábrica passou
+     a recebê-lo assim (oEstadoDoServidor): onde o App, com o dia 1, ofereceria
+     trabalho, o servidor oferece. O mural desse turno é o preço declarado do
+     órgão que só o servidor corre — só nos turnos em que ele pregou (o aviso
+     ficou no eco). */
+  let pregados = 0;
   let peloGatilho = 0, poupados = 0;
   let casos = 0, soDeclarados = 0, limpos = 0, porJuiz = 0, ecoIgual = 0, ecoMudouPeloJuiz = 0, comEco = 0, telaBoa = 0, imutavel = 0;
   let navTurnos = 0, navReplay = 0, navJuiz = 0, navGravado = 0;
@@ -330,7 +339,9 @@ const temposDoTurno = [];
       const d = difs(naRegua(sv.estadoDoFim), naRegua(rc.estado));
       const poupado = !sv.cronista.corre;
       if (poupado) poupados++;
-      const resto = d.filter((k) => !DA_MONTAGEM.has(k) && !DO_AGIR.has(k) && !DO_JUIZ.has(k) && !(poupado && DO_CRONISTA.has(k)));
+      const pregou = Array.isArray(sv.eco.trabalhoPendente) && sv.eco.trabalhoPendente.length > 0;
+      if (pregou) pregados++;
+      const resto = d.filter((k) => !DA_MONTAGEM.has(k) && !DO_AGIR.has(k) && !DO_JUIZ.has(k) && !(poupado && DO_CRONISTA.has(k)) && !(pregou && k === "mural"));
       if (!resto.length) soDeclarados++; else for (const k of resto) fora.set(k, (fora.get(k) || 0) + 1);
       if (poupado && d.some((k) => DO_CRONISTA.has(k))) peloGatilho++;
       else if (d.some((k) => DO_JUIZ.has(k))) porJuiz++;
@@ -348,7 +359,7 @@ const temposDoTurno = [];
       }
     }
   }
-  console.log(`      (${casos} turnos; fora do declarado: ${[...fora].map(([k, v]) => k + ":" + v).join(" ") || "nenhum"}; o cânone pelo Juiz em ${porJuiz})`);
+  console.log(`      (${casos} turnos; fora do declarado: ${[...fora].map(([k, v]) => k + ":" + v).join(" ") || "nenhum"}; o cânone pelo Juiz em ${porJuiz}; o mundo pregou no mural em ${pregados})`);
   t(`o estado do fim só difere do replay nos campos declarados em todos (${soDeclarados}/${casos})`, casos >= 140 && soDeclarados === casos);
   t(`e o cânone que a foto do Juiz muda é exceção (${porJuiz} de ${casos})`, porJuiz <= 3);
   t(`e o Cronista poupado pelo gatilho só muda os campos dele, em ${peloGatilho} dos ${poupados} turnos sem chamada`, peloGatilho <= poupados && poupados > 0);
@@ -529,8 +540,9 @@ sec("11. O TRABALHO QUE O MUNDO OFERECE, NO SERVIDOR (o 1.º órgão do depois)"
      passo «o trabalho daqui» (sessao.js, `servidor: true`). O caso é o da
      suíte da peça (`umaCidadeQuePrega`: a cidade, o dia novo, o diário
      vazio, o herói orientado), sem o dia do último trabalho — o save não o
-     guarda. Nas sessões gravadas o órgão não prega: o dia delas é nulo (os
-     registos não o guardavam), e o «um por dia» fecha-o, como no App. */
+     guarda. Nas sessões gravadas o dia é nulo (os registos não o
+     guardavam), e o load do App abre-o como 1: o órgão prega em 1 dos 146
+     (a §9 declara-o). */
   const { umaCidadeQuePrega } = await import("./depois-bloco.mjs");
   const { oSaveComOsSoltos } = await import("../src/motor/eco-do-turno.js");
   const base = umaCidadeQuePrega();
@@ -551,6 +563,26 @@ sec("11. O TRABALHO QUE O MUNDO OFERECE, NO SERVIDOR (o 1.º órgão do depois)"
   const t2 = await umTurno(e2, t1.eco, "Espero um pouco.");
   t("DOIS TURNOS SEGUIDOS NO MESMO DIA NÃO OFERECEM DOIS TRABALHOS (com o eco reenviado)", t2.estadoDoFim.mural.length === 1 && t2.eco.ultimoTrabalhoDia === base.dia);
   t("e o aviso sai no turno seguinte, depois da narração da abordagem, uma vez só", t2.tela.linhas.filter((l) => l === aviso).length === 1 && JSON.stringify(t2.eco.trabalhoPendente) === "[]");
+  /* o defeito de 289f852: o estado do fim reenviado TAL COMO VEIO (com o
+     `null` de todo campo que o save de entrada não tinha — o elenco, o dia,
+     o mapa…) estourava o pedido seguinte; o servidor lê agora o nulo como o
+     load do App (eco-do-turno.js, NULO_QUE_O_LOAD_REFAZ e a §6 da suíte do
+     eco). O turno cru dá o mesmo pedido que o turno pelo load; o save do
+     fim só difere onde o caminho de cima (que tira os nulos) volta a gravar
+     `null` e o cru grava a partida — que é o que o App gravaria, porque o
+     load dele já pôs a partida no ref. */
+  const cru = oSaveComOsSoltos(t1.estadoDoFim, t1.soltos);
+  const nulosNoFim = Object.keys(cru).filter((k) => cru[k] === null);
+  let t2cru = null, erroCru = "";
+  try { t2cru = await umTurno(cru, t1.eco, "Espero um pouco."); } catch (x) { erroCru = x.message; }
+  t(`O ESTADO DO FIM REENVIADO CRU (${nulosNoFim.length} campos nulos, o elenco entre eles) NÃO ESTOURA O TURNO SEGUINTE`, !erroCru && nulosNoFim.includes("elenco"), erroCru);
+  /* o mesmo save aberto «como o load» (sem os nulos), sem o `base` por baixo:
+     o cru só leva o que o save leva */
+  const t2l = await umTurno(oSaveComOsSoltos(comoOLoadAbre(t1.estadoDoFim), t1.soltos), t1.eco, "Espero um pouco.");
+  const difFim = t2cru ? [...new Set([...Object.keys(t2cru.estadoDoFim), ...Object.keys(t2l.estadoDoFim)])].filter((k) => JSON.stringify(t2cru.estadoDoFim[k]) !== JSON.stringify(t2l.estadoDoFim[k])) : ["?"];
+  const soPartida = difFim.every((k) => t2l.estadoDoFim[k] == null && t2cru.estadoDoFim[k] != null);
+  t(`e dá o pedido do turno pelo load, byte a byte; o save só difere em ${difFim.length} campos, todos nulo de um lado e a partida do load do outro`, !!t2cru && sha(t2cru.pedido) === sha(t2l.pedido) && difFim.length > 0 && soPartida && !t2cru.calados.length);
+  t("e o save do fim não leva o que viaja no eco, nos soltos ou nos bilhetes, nem quando o estado de entrada o trazia", Object.keys(CAMPOS_DO_SERVIDOR).every((c) => !(c in t1.estadoDoFim) && !(c in t2cru.estadoDoFim)) && ["golpesDaRodada", "crimeDoTurno"].some((c) => c in base));
   const p2 = await oPedidoNoServidor({ estado: e2, frase: "Espero um pouco.", eco: t1.eco });
   t("o pedido do turno seguinte leva o recado ao Narrador (a nota que o load trouxe nos soltos)", recado.test(JSON.stringify(p2.pedido)));
   /* o porquê do eco: com o mural vazio no mesmo dia, só o dia do último
