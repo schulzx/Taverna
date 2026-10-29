@@ -417,8 +417,7 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
   /* a prova viva (12/10) mostrou o Narrador a usar no turno 8 o nome oferecido
      no 7, com a linha do 8 cortada pelo teto: os oferecidos ficam até a linha
      voltar, e o usado sai da lista seguinte por estar no registo */
-  t("os nomes só contam como oferecidos se a linha chegou ao texto (o molde do QUEM É), e ficam até ela voltar",
-    app.includes("if (np && np.linha && pauta.includes(np.linha)) nomesOferecidosRef.current = np.nomes;") && !app.includes("nomesOferecidosRef.current = [];"));
+  // retirada (trilha A, 29/10): «os nomes só contam como oferecidos se a linha chegou ao texto (o molde do QUEM É), e ficam até ela voltar» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MOVIDA (28/10, T1-A 4.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O
      bloco mudou-se para src/motor/fim-do-turno.js#aplicarOCodex (o motor não
      se lê pelo texto): joga-se o códex com o nome vivo e com o nome morto, e
@@ -437,8 +436,7 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
     fichas.includes("aqui: meuPonto(),"));
   t("a procura recebe os três do Geógrafo (coord, lugar, jornada)",
     app.includes("coord: meuPonto(), lugar: lugarRef.current, jornada: jornadaRef.current,"));
-  t("a figura do arco entra no registo só quando a linha que a nomeia coube no texto",
-    /const confirmarCoracao = \(pauta\) => \{[^]*?if \(r\.linha && !String\(pauta \|\| ""\)\.includes\(r\.linha\)\) return;[^]*?i\.figura && i\.figura\.nome[^]*?r\.linha\.includes\(inst\.figura\.nome\)[^]*?calou\("a figura do arco no registo", e\)/.test(app));
+  // retirada (trilha A, 29/10): «a figura do arco entra no registo só quando a linha que a nomeia coube no texto» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 }
 
 /* ============================================================ */

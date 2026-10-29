@@ -351,8 +351,10 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      que o `/api/turno` recebe e devolve além de { estado, frase } (o eco,
      os soltos, os bilhetes); credores a trilha A (o App manda e guarda) e o
      servidor (`api/turno.js`). Saem quando o primeiro os importar. */
+  /* Paga a do pedido (29/10, trilha A, o oficial): `enviar` chama
+     `oPedidoDoTurno` no lugar do trecho da pauta ao system, e o App
+     importa a peça. */
   const ESPERA_DO_MOTOR = {
-    "pedido-do-turno.js": "trilha A (oficial): enviar chama oPedidoDoTurno no lugar do trecho da pauta ao system",
     "preludio-do-turno.js": "trilha A (oficial): enviar chama oPreludioDoTurno no lugar do trecho da frase às bocas",
     "eco-do-turno.js": "trilha A e o servidor: o App manda o eco e os bilhetes e guarda os soltos; api/turno.js monta o estado e a resposta",
   };

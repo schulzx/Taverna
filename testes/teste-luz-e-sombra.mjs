@@ -398,7 +398,8 @@ sec("9. a fiação no App, lida pelo texto do código");
   t("…e ANTES do veredito do esconder (a mesma frase baixa e esconde)", iGesto > 0 && iVeredito > iGesto);
   t("o veredito do esconder recebe a luz", /vereditoDoEsconder\(fichaViva\(\) \|\| personagem, \{[\s\S]{0,300}?luz: luzDaLutaAgora\(combH\)/.test(app));
   t("o nascer recebe o mesmo mapa", /nascerEscondido\(baseEsc, \{[\s\S]{0,200}?luz: combEsc \? luzDaLutaAgora\(combEsc\) : null/.test(app));
-  t("quem me vê e o achar na vez do mundo também", /quemMeVe\(p, \{[^}]*luz: luzDaLutaAgora\(\) \}\)/.test(app) && /revisarEscondido\(persBase, \{[^\n]*luz: luzDaLutaAgora\(/.test(app));
+  /* (movida, trilha A, 29/10) o quem-me-vê da linha da luta saiu do App com o rodapé: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno), provado byte a byte contra o recorte do App em teste-motor-pedido-do-turno.mjs. Fica o achar na vez do mundo. */
+  t("o achar na vez do mundo também", /revisarEscondido\(persBase, \{[^\n]*luz: luzDaLutaAgora\(/.test(app));
   // retirada (trilha A, 29/10): «a linha da luz entra na pauta só na luta, em try/calou» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("o campo novo do save é só combate.tochaDoHeroi (o combate já vai inteiro no save), e o App só o escreve pelo gesto",
     /combate: combateRef\.current, registro:/.test(app) && !/tochaDoHeroi\s*=[^=]|tochaDoHeroi: (?!c\.tochaDoHeroi)/.test(app) && /combateRef\.current = gl\.combate; setCombate\(gl\.combate\)/.test(app));

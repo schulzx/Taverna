@@ -259,11 +259,18 @@ sec("3. chega — a função de via é CHAMADA no caminho até o Narrador");
 {
   const chegam = CASOS.filter((c) => c.veredito === "chega");
   t(`há casos chega (${chegam.length})`, chegam.length > 0);
+  /* (trilha A, 29/10) onze vias chegam ao Narrador pelo pedido do turno, que
+     saiu de `enviar`: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno), provado byte a byte contra o recorte do App em teste-motor-pedido-do-turno.mjs — o texto do motor não se lê
+     (teste-assercoes-de-texto), e o pedido à rede é comparado inteiro. A lista
+     é catraca: o nome que voltar a ser chamado no caminho do App sai dela. */
+  const NO_PEDIDO_DO_MOTOR = ["resumoCenaPrompt", "resumoComodosPrompt", "resumoCondicoesPrompt", "quemMeVe", "resumoGridPrompt", "resumoHeroismoPrompt", "resumoInvocacoesPrompt", "resumoLugarPrompt", "resumoMercadoPrompt", "resumoDaqui", "resumoNPCsParaPrompt"];
   const semChamada = [];
   for (const c of chegam) {
     const nome = c.via.split("#")[1];
-    if (!apareceNoCaminho(nome, CAMINHO_CHEGA)) semChamada.push(`#${c.n} (${c.via})`);
+    if (!apareceNoCaminho(nome, CAMINHO_CHEGA) && !NO_PEDIDO_DO_MOTOR.includes(nome)) semChamada.push(`#${c.n} (${c.via})`);
   }
+  const voltaram = NO_PEDIDO_DO_MOTOR.filter((n) => apareceNoCaminho(n, CAMINHO_CHEGA));
+  t("e a lista do pedido no motor não guarda quem o caminho do App ainda chama", voltaram.length === 0, voltaram.join(", "));
   t(`todo caso "chega" tem sua função de via chamada em PAUTA+ENVIAR+HELPERS+GOLPE+REVIDE+ADJUDICA+ROLAGEM`,
     semChamada.length === 0, semChamada.join(", "));
 }

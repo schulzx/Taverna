@@ -141,7 +141,8 @@ sec("5. O PEDIDO NA ORDEM DO CACHE (v9.465) — o histórico deixa de pagar chei
   t("a marca da zona é a do texto montado", s1.includes(MARCA_DA_CENA_ABERTA));
   /* MOVIDA NA T2-A (28/10), com o motivo: o texto do rodapé saiu do App para src/motor/envelopes-do-turno.js; a
      intenção é a mesma — o rodapé que o App monta abre pela marca —, jogada na peça e não lida no texto */
-  t("e o App abre o rodapé por ela (sem isto o corte cai no fallback calado)", APP.includes("const rodape = oRodapeDoTurno(") && aCabecaDoRodape({ dia: 3, minuto: 600, local: "aqui", ascensao: false }).startsWith(MARCA_DO_RODAPE + " Agora: "));
+  /* (movida, trilha A, 29/10) quem abre o rodapé pela marca já não é o App: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno), provado byte a byte contra o recorte do App em teste-motor-pedido-do-turno.mjs. Fica a metade que prova a peça. */
+  t("e a cabeça do rodapé abre por ela (sem isto o corte cai no fallback calado)", aCabecaDoRodape({ dia: 3, minuto: 600, local: "aqui", ascensao: false }).startsWith(MARCA_DO_RODAPE + " Agora: "));
   const p1 = pedidoNaOrdemDoCache(s1, [...hist, turno(1, "peço uma cerveja")]);
   const p2 = pedidoNaOrdemDoCache(s2, [...hist, { role: "user", content: "x" }, { role: "assistant", content: "y" }, turno(2, "saco a espada")]);
   t("o system viaja sem a zona nem o ESTADO", !p1.system.includes(MARCA_DA_CENA_ABERTA) && !p1.system.includes("ESTADO DESTE TURNO ═"));

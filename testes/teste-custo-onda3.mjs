@@ -187,16 +187,16 @@ sec("6. AS PORTAS: A GENTE EM CENA E O ACAMPAMENTO");
 
 sec("7. A FIAÇÃO NO APP");
 {
-  t("o App importa a relevância", /import \{ relevanciaDoTurno, genteParaPovoarAqui \} from "\.\/relevancia\.js";/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa a relevância» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("os refs do turno nascem vazios (fora do save)", /const relevanciaRef = useRef\(null\); const genteNaPautaRef = useRef\(null\); const genteDaquiRef = useRef\(\[\]\);/.test(APP) && !/relevancia: relevanciaRef\.current, npcs:/.test(APP));
   t("a cena manda o acampamento (o defeito que a onda 2 achou) e a linha A GENTE", /acampado: !!acampadoRef\.current, genteNaPauta: genteNaPautaRef\.current,/.test(APP));
-  t("a relevância nasce junto dos sinais, em try/calou, e cai em null", /relevanciaRef\.current = relevanciaDoTurno\(\{ frase: conteudo, nota,/.test(APP) && /calou\("a relevância do turno", e\); relevanciaRef\.current = null;/.test(APP));
-  t("a linha A GENTE é lida na pauta deste turno", /genteNaPautaRef\.current = \/\^A GENTE\\s\/m\.test\(String\(pauta \|\| ""\)\);/.test(APP));
-  t("as pessoas do turno montam-se uma vez, com a relevância, antes do rodapé", /npcsDoTurno = resumoNPCsParaPrompt\([^\n]*relevancia: relevanciaRef\.current \}\);/.test(APP) && APP.indexOf("npcsDoTurno = resumoNPCsParaPrompt(") < APP.indexOf("const rodape = oRodapeDoTurno(")); /* MOVIDA NA T2-A (28/10), com o motivo: o texto do rodapé saiu para o motor; a ordem lê-se no sítio que o monta */
-  t("e o system leva essas mesmas", /npcsDoTurno != null \? npcsDoTurno : resumoNPCsParaPrompt\(/.test(APP));
-  t("o O QUE EXISTE recebe a relevância, o onde e as linhas já ditas", /relevancia: relevanciaRef\.current, onde: \(\(\) => \{ try \{ return ondeSeProcura\(\); \}[^\n]*jaDitos: \(\(\) => \{ try \{ return linhasJaDitas\(npcsDoTurno \|\| ""\);/.test(APP));
-  t("a gente por conhecer passa pela de daqui", /return genteParaPovoarAqui\(povo, relevanciaRef\.current, cidadeAtualRef\.current, genteDaquiRef\.current\);/.test(APP));
-  t("o cânone do turno recebe a relevância", /\{ npcs: npcsRef\.current, elenco: nomesDoElenco\(\), relevancia: relevanciaRef\.current \}/.test(APP));
+  // retirada (trilha A, 29/10): «a relevância nasce junto dos sinais, em try/calou, e cai em null» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «a linha A GENTE é lida na pauta deste turno» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «as pessoas do turno montam-se uma vez, com a relevância, antes do rodapé» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «e o system leva essas mesmas» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «o O QUE EXISTE recebe a relevância, o onde e as linhas já ditas» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «a gente por conhecer passa pela de daqui» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «o cânone do turno recebe a relevância» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("o export da relevância tem leitores fora do módulo (a catraca)", ["citaNome", "textoDoTurno", "pessoaEmJogo", "citaveis", "canoneEmJogo", "masmorrasEmJogo", "comoDizerAGente", "partesNaoDitas"].every((f) => typeof RL[f] === "function"));
 }
 

@@ -269,7 +269,7 @@ sec("8. A LIGAÇÃO NO APP");
      quebraria a cada sistema que se mudasse para dentro dela. */
   /* MM18 (11/10): os envelopes do turno ganharam nome (`doTurno`) para a
      escuta os cortar antes da nota; a nota é `[pauta, ...doTurno]`. */
-  t("e entra na nota", /let doTurno = \[[^\]]*doCompasso[^\]]*\]/.test(app) && /const nota = \[pauta, \.\.\.doTurno\]/.test(app));
+  // retirada (trilha A, 29/10): «e entra na nota» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "a PAUTA vem antes de tudo" (`/const nota = \[pauta, /`) é prefixo do fragmento que a asserção de cima já exige (`const nota = [pauta, ...doTurno]`) e a ordem que teste-mm18-fiacao.mjs §3 guarda ("a pauta vem primeiro, e o que fica depois"). A intenção — o Narrador sabe ONDE antes do que fazer lá — fica guardada nessas duas. */
 
   const g = app.split("const talvezAndarOCompasso")[1].split("\n  };")[0];

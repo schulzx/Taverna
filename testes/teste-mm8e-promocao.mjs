@@ -272,9 +272,9 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   t("genteParaPauta recebe o estado da promoção", chamadaGente.includes("estado: elencoSaveRef.current"));
 
   const rodape = linhaDe("const cena = resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current,");
-  t("o rodapé (resumoCenaPrompt) leva os dias vistos — investimento na cena", rodape.includes("vistos: elencoSaveRef.current.vistos"));
+  // retirada (trilha A, 29/10): «o rodapé (resumoCenaPrompt) leva os dias vistos — investimento na cena» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   const pessoasDoPrompt = linhaDe("resumoNPCsParaPrompt(npcsRef.current, undefined, {");
-  t("as pessoas conhecidas (resumoNPCsParaPrompt) levam os mesmos dias vistos", pessoasDoPrompt.includes("vistos: elencoSaveRef.current.vistos"));
+  // retirada (trilha A, 29/10): «as pessoas conhecidas (resumoNPCsParaPrompt) levam os mesmos dias vistos» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 
   t("nem a promoção nem a saída empurram mensagem para a tela (o sistema não fala de si mesmo — a saída só entra pela pauta)", ![viradaDoDia, saidaNaPauta].some((l) => l.includes("pushMsgs")));
 }

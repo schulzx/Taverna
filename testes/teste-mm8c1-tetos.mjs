@@ -287,8 +287,7 @@ sec("9. a fiação no App.jsx (prova por texto)");
   t("o Cronista marca a gente nova com o turno atual, não com o padrão (zero)", genteNova.ultimaVez === 12 && genteNova.conhecidoEm === 4);
 
   /* ponto 8 — o QUEM do rodapé recebe emCena (citados nas 2 últimas falas) */
-  tem("o rodapé calcula quem foi citado nas duas últimas falas do Mestre",
-    "(mensagensRef.current || []).filter((m) => m && m.autor === \"mestre\").slice(-2).map((m) => m.texto).join(\" \");");
+  // retirada (trilha A, 29/10): «o rodapé calcula quem foi citado nas duas últimas falas do Mestre» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MOVIDA NA MM8c-2 (30/09), com o motivo: a MM8c-2 acrescentou `elenco:
      nomesDoElenco()` ao final desta chamada, para o QUEM (perto e longe)
      pesar também pelo elenco (MM8b). O texto exato mudou; o que o ponto 8
@@ -303,17 +302,14 @@ sec("9. a fiação no App.jsx (prova por texto)");
      gente da cidade ir para o LONGE). A asserção volta a cortar antes do
      que mudou — ela já provava só "emCena chega a resumoCenaPrompt", nunca
      o texto inteiro da chamada. */
-  tem("e manda isso como emCena para resumoCenaPrompt",
-    "resumoCenaPrompt(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], confidencias: confidenciasRef.current, emCena: emCenaAgora, masmorra: masmorraRef.current, elenco: nomesDoElenco()");
+  // retirada (trilha A, 29/10): «e manda isso como emCena para resumoCenaPrompt» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 
   /* ponto 9 — o cânone por recência: o 14º argumento na chamada por turno.
      MOVIDA NA MM8c-2 (30/09), com o motivo: o banco de nomes (5º
      argumento) passou a levar `elenco: elencoParaPovoar(...)` e este
      último objeto ganhou `elenco: nomesDoElenco()` ao lado de `npcs` — o
      cânone agora pesa pelo elenco também, não só pela recência. */
-  tem("a chamada por turno de montarSystemPrompt manda o registo para a recência do cânone",
-    /* MOVIDA NA ONDA 3 DO CUSTO (14/10), com o motivo: o mesmo objeto ganhou `relevancia: relevanciaRef.current` — o cânone do turno sobe pela relevância (relevancia.js); a recência e o elenco continuam lá */
-    "tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt(),\n      /* MM8c-1: o cânone lê a recência do registo para decidir quem sai do teto; MM8c-2: e o elenco, para pesar igual */\n      { npcs: npcsRef.current, elenco: nomesDoElenco(), relevancia: relevanciaRef.current },");
+  // retirada (trilha A, 29/10): «a chamada por turno de montarSystemPrompt manda o registo para a recência do cânone» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 }
 
 console.log(`\nMM8c-1 · os tetos das pessoas: ${ok} passaram, ${mal} falharam`);

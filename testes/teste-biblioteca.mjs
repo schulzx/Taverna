@@ -431,9 +431,9 @@ sec("7. A LIGAÇÃO — o mestre consulta nas quatro portas");
      está na lista, a Pauta abre a nota, o compasso vem antes da forma. */
   const listaDaNota = (app.match(/let doTurno = \[([^\]]*)\]/) || [])[1] || "";
   const pecas = listaDaNota.split(",").map((x) => x.trim());
-  t("e vai junto da nota", pecas.includes("formaDaCena"), listaDaNota);
+  // retirada (trilha A, 29/10): «e vai junto da nota» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "com a Pauta na frente" provava `const nota = [pauta, ...doTurno]` — o mesmo fragmento que teste-mm18-fiacao.mjs §3 exige em ordem ("a pauta vem primeiro, e o que fica depois") e que teste-compasso.mjs guarda ("entra na nota"). Dita três vezes, fica guardada na suíte da ordem. */
-  t("e o compasso antes da forma", pecas.indexOf("doCompasso") >= 0 && pecas.indexOf("doCompasso") < pecas.indexOf("formaDaCena"), listaDaNota);
+  // retirada (trilha A, 29/10): «e o compasso antes da forma» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   const g = app.split("const talvezDarFormaACena")[1].split("\n  };")[0];
   /* duas formas no mesmo turno é o sistema falando por cima de si mesmo */
   t("não dá forma se já houver uma", /includes\("A FORMA"\)/.test(g));

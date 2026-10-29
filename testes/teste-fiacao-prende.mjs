@@ -157,11 +157,11 @@ sec("6. os fios das viagens");
   /* em enviar: antes da escuta, e o que fica seguro volta à nota */
   const iFio = pos("const fe = fiosNovosNaEstrada([oficina, ...separarEnvelopes(daNota)");
   const iEsc = pos("const rEsc = escutarOTurno({");
-  t("em enviar, o fio novo é filtrado antes da escuta", iFio > 0 && iEsc > iFio);
-  t("na estrada = em viagem ou acampado", /const naEstrada = !!jornadaRef\.current \|\| !!acampadoRef\.current;/.test(APP));
+  // retirada (trilha A, 29/10): «em enviar, o fio novo é filtrado antes da escuta» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «na estrada = em viagem ou acampado» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   const iZera = pos("notaRef.current = \"\";\n    if (adiadosEsc)");
   const iVolta = pos("if (seguraEstrada.length) notaRef.current =");
-  t("o que fica seguro volta à nota depois de ela ser zerada", iZera > 0 && iVolta > iZera);
+  // retirada (trilha A, 29/10): «o que fica seguro volta à nota depois de ela ser zerada» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* a forma do argumento que o App passa */
   const prom = PR.guardarSementes(PR.garantirPrometido(null), [{ tipo: "volta", texto: "a mulher de capa verde volta pelo óleo de mirra", quem: "a mulher de capa verde" }]).estado;
   const fe = FI.fiosNovosNaEstrada(["[TRABALHO PREGADO NO MURAL] o torneio das coroas", "[QUEST GERADA PELO SISTEMA] a mulher de capa verde pede o óleo de mirra", "[CLIMA] chove"], { naEstrada: true, fio: [], prometido: prom, nomes: [] });
@@ -222,7 +222,8 @@ sec("9. o laço da história chega ao App (v9.396 e v9.401 do backend, ligados n
     /^const chefesDoFio = \(soOAntagonista = false\) => \{\s*try \{ return resumoChefesPrompt\(/.test(C)
       && C.includes("(mundoAtual() || {}).lexico, { espinha: espinhaRef.current, soOAntagonista }); }")
       && C.includes('catch (e) { calou("os chefes do fio", e); return resumoChefesPrompt('));
-  t("o prompt e o /chefes leem por ela", /const chefes = chefesDoFio\(!\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.chefeEmJogo\);/.test(APP) && /const t = chefesDoFio\(\);\s*godLinha\(t \|\| "⚡ Nenhum chefe vivo neste mundo\."\)/.test(APP));
+  /* (movida, trilha A, 29/10) a metade do prompt saiu do App: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno), provado byte a byte contra o recorte do App em teste-motor-pedido-do-turno.mjs. Fica a do /chefes, que mora aqui. */
+  t("o /chefes lê por ela", /const t = chefesDoFio\(\);\s*godLinha\(t \|\| "⚡ Nenhum chefe vivo neste mundo\."\)/.test(APP));
   t("e nenhuma chamada a resumoChefesPrompt fica sem a espinha fora do recuo", (APP.match(/resumoChefesPrompt\(/g) || []).length === 2);
 }
 

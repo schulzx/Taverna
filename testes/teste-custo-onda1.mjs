@@ -183,7 +183,7 @@ sec("7. O VÍNCULO DIZ O MARCO PELO NOME");
 sec("8. A FIAÇÃO NO App.jsx");
 {
   t("o histórico guarda a memória do turno, com o corpo de rede", APP.includes("memoriaDoJogador = memoriaDoTurno(conteudo, nota) || corpo") && APP.includes('{ role: "user", content: memoriaDoJogador }'));
-  t("o turno de agora continua com a pauta inteira e a frase por último (MM18)", APP.includes('const novoHist = [...base, { role: "user", content: pedidoFinal }];'));
+  // retirada (trilha A, 29/10): «o turno de agora continua com a pauta inteira e a frase por último (MM18)» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("a leitura do Cronista vai ao save e volta no load", APP.includes("leituraDoCronista: leituraDoCronistaRef.current,") && APP.includes("garantirLeitura(sv.leituraDoCronista)"));
   /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o gatilho (e o pedido, com a fila) saiu do
      cronistaDoTurno do App para src/motor/cronista-do-turno.js (o pedido em

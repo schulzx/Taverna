@@ -312,8 +312,7 @@ sec("6. a fiação — App.jsx");
   // retirada (trilha A, 29/10): «pautaDoTurno lê o elenco com a masmorra aberta» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("pessoasDaCena (A GENTE do Intérprete) idem",
     app.includes("const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current });"));
-  t("o rodapé (resumoCenaPrompt) idem",
-    app.includes("emCena: emCenaAgora, masmorra: masmorraRef.current, elenco: nomesDoElenco(),"));
+  // retirada (trilha A, 29/10): «o rodapé (resumoCenaPrompt) idem» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 
   /* ---- 9b: viuAntes em pessoasDaCena ---- */
   t("pessoasDaCena manda viuAntes a jaMeViuAntes, com o dia e os vistos do elenco — e nunca custa o turno",

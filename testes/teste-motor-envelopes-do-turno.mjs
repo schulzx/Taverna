@@ -84,7 +84,14 @@ const casos = casosDosEnvelopes(N_CASOS);
    aliado que vai embora em 5, com a nota nos refs do fim). O dourado dos dois
    fica (o lado de ANTES continua a gerá-lo); o lado de HOJE corre os outros. */
 const NA_PAUTA_DO_MOTOR = ["fioInterludio", "genteCompanheiro"];
-const BLOCOS_DE_HOJE = BLOCOS.filter((b) => !NA_PAUTA_DO_MOTOR.includes(b));
+/* (trilha A, 29/10, o pedido no motor) o RODAPÉ foi pelo mesmo caminho: o
+   sítio era o trecho de `enviar` da pauta ao system, que é hoje
+   src/motor/pedido-do-turno.js, à letra — provado byte a byte contra o recorte
+   do App (o rodapé inteiro dentro do pedido à rede, e a mordida «o rodapé à
+   meia-noite») em teste-motor-pedido-do-turno.mjs, 275 casos. O dourado dele
+   fica; o lado de HOJE já não tem o que recortar. */
+const NO_PEDIDO_DO_MOTOR = ["rodape"];
+const BLOCOS_DE_HOJE = BLOCOS.filter((b) => !NA_PAUTA_DO_MOTOR.includes(b) && !NO_PEDIDO_DO_MOTOR.includes(b));
 const recorte = Object.assign({}, ...BLOCOS_DE_HOJE.map((b) => recorteDosEnvelopes(APP, { novo: true, so: b })));
 const hoje = Object.fromEntries(BLOCOS_DE_HOJE.map((b) => [b, blocoComoFuncao(recorte[b])]));
 const fotosDeHoje = (bloco, troca) => casos.map((k) => fotoDoEnvelope(correrOBloco(hoje[bloco], k, { novo: true, troca, bloco })));
@@ -118,28 +125,13 @@ for (const bloco of BLOCOS_DE_HOJE) {
   t(`${bloco}: nenhum char a mais (o maior: ${maior(fotos)} antes, ${maior(novas)} hoje)`, maior(novas) <= maior(fotos) && novas.every((f, i) => tam(f) === tam(fotos[i])));
 }
 
-sec("2 · o rodapé: os casos percorrem o que o texto decide");
-{
-  const R = HOJE.rodape;
-  const conta = (fn) => R.filter(fn).length;
-  const noite = conta((f) => f.texto.includes(RODAPE_DO_SISTEMA.noite + ","));
-  const desperto = conta((f, i) => casos[i].divindade && casos[i].divindade.despertar);
-  const ascVazia = conta((f) => f.texto.includes("já estava. \n") || / $/.test(f.texto.split("\n")[0]));
-  const forma = conta((f) => f.texto.includes(A_FORMA_DAQUI.abre));
-  const agua = conta((f) => f.texto.includes(A_FORMA_DAQUI.agua));
-  const aperto = conta((f) => f.texto.includes(A_FORMA_DAQUI.aperto));
-  const semMuro = conta((f) => f.texto.includes(A_FORMA_DAQUI.semMuro));
-  const comMuro = conta((f) => f.texto.includes("A defesa é "));
-  const luta = conta((f) => f.texto.includes("<resumoGridPrompt"));
-  const calados = conta((f) => f.calados.length);
-  const linhas = R.map((f) => f.texto.split("\n").length);
-  t(`a noite (${noite}) e o dia (${N_CASOS - noite})`, noite >= 40 && N_CASOS - noite >= 40);
-  t(`quem despertou (${desperto}), e o resumo vazio com o espaço à frente (${ascVazia})`, desperto >= 60 && ascVazia >= 5);
-  t(`a forma daqui (${forma}): sem muro ${semMuro}, com muro ${comMuro}, a água ${agua}, o aperto ${aperto}`, forma >= 30 && semMuro >= 5 && comMuro >= 10 && agua >= 3 && aperto >= 3);
-  t(`o tabuleiro só na luta (${luta})`, luta >= 10 && R.every((f, i) => !f.texto.includes("<resumoGridPrompt") || casos[i].combate));
-  t(`o calou do "onde se procura" (${calados})`, calados >= 5);
-  t(`peças vazias não ocupam linha: de ${Math.min(...linhas)} a ${Math.max(...linhas)} linhas`, Math.min(...linhas) < Math.max(...linhas) && R.every((f) => !f.texto.endsWith("\n")));
-}
+/* retirada (trilha A, 29/10): a secção 2, «o rodapé: os casos percorrem o que o
+   texto decide» (a noite e o dia, quem despertou, a forma daqui, o tabuleiro só
+   na luta, o calou do onde se procura, as peças vazias), contava sobre as fotos
+   de HOJE do rodapé, e o sítio mudou-se com o pedido para o motor
+   (NO_PEDIDO_DO_MOTOR, acima): o mesmo texto vai inteiro no pedido à rede que
+   teste-motor-pedido-do-turno.mjs compara byte a byte; as peças continuam
+   provadas direto na secção 3. */
 
 sec("3 · as peças, direto (o que o motor exporta)");
 {
@@ -154,24 +146,13 @@ sec("3 · as peças, direto (o que o motor exporta)");
   t("a forma da aldeia: sem muralha", aFormaDaqui(aldeia) === `${A_FORMA_DAQUI.abre}Vau é ${formaDaCidade(aldeia).nota}. ${A_FORMA_DAQUI.semMuro}`);
 }
 
-sec("4 · a prova morde");
-{
-  const B = "rodape";
-  const juntar = (cab, P, ordem) => aCabecaDoRodape(cab) + ordem.map((k) => (P[k] ? `\n${P[k]}` : "")).join("");
-  const trocadas = [...ORDEM_DO_RODAPE]; [trocadas[3], trocadas[4]] = [trocadas[4], trocadas[3]];
-  const mordidas = [
-    ["a ordem das peças trocada (a cena depois da proficiência)", { oRodapeDoTurno: (c, P) => juntar(c, P || {}, trocadas) }],
-    ["a peça vazia ocupa linha", { oRodapeDoTurno: (c, P) => aCabecaDoRodape(c) + ORDEM_DO_RODAPE.map((k) => `\n${(P || {})[k] || ""}`).join("") }],
-    ["o espaço da ascensão vazia perdido", { oRodapeDoTurno: (c, P) => oRodapeDoTurno({ ...c, ascensao: c.ascensao || false }, P) }],
-    ["a noite esquecida", { oRodapeDoTurno: (c, P) => oRodapeDoTurno(c, P).replace(RODAPE_DO_SISTEMA.noite + ",", ",") }],
-    ["a forma da cidade sem a água", { aFormaDaqui: (c) => aFormaDaqui(c).replace(A_FORMA_DAQUI.agua, "") }],
-    ["a forma da cidade sem o aperto", { aFormaDaqui: (c) => aFormaDaqui(c).replace(A_FORMA_DAQUI.aperto, "") }],
-  ];
-  for (const [nome, troca] of mordidas) {
-    const n = divergem(B, fotosDeHoje(B, troca));
-    t(`${nome}: ${n} casos mudam`, n > 0);
-  }
-}
+/* retirada (trilha A, 29/10): a secção 4, «a prova morde» — seis mordidas das
+   peças do rodapé (a ordem trocada, a peça vazia com linha, o espaço da
+   ascensão, a noite, a água e o aperto da forma) dentro do sítio de HOJE do
+   App; o sítio mudou-se com o pedido para o motor (NO_PEDIDO_DO_MOTOR, acima).
+   O que as mordidas guardavam — que o rodapé é o das peças, na ordem da tabela
+   — guardam-no a secção 3 (as 25 peças na ordem, sem peças só a cabeça, a forma
+   da aldeia) e o pedido byte a byte da suíte do pedido. */
 
 sec("5 · a masmorra: os casos percorrem o que o texto decide, e a prova morde");
 {

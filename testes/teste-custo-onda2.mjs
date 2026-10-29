@@ -115,7 +115,7 @@ sec("4. OS SINAIS DO TURNO — a tabela que decide o que está em jogo");
      a local sombreou a importada, o build passou e o turno vivo calou com
      "acao.startsWith is not a function" (todas as portas abertas). */
   /* MOVIDA NA ONDA 3 (14/10), com o motivo: o mesmo import passou a trazer também `linhasJaDitas` (o O QUE EXISTE não repete o que as PESSOAS CONHECIDAS já dizem); a prova do nome que nada sombreia é a mesma */
-  t("o App importa a leitura com um nome que nenhuma função local sombreia", /emJogoNoTurno, SINAIS_ABERTOS(, linhasJaDitas)? \} from "\.\/prompt\.js"/.test(APP) && !/const emJogoNoTurno\b/.test(APP));
+  // retirada (trilha A, 29/10): «o App importa a leitura com um nome que nenhuma função local sombreia» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("a tabela tem as cinco perguntas", ["comercio", "governo", "fimDoAcampamento", "chefe", "masmorra"].every((k) => P.SINAIS_DO_TURNO[k] instanceof RegExp));
   t("sem leitura, tudo abre (o de antes)", Object.values(P.SINAIS_ABERTOS).every((v) => v === true) && Object.isFrozen(P.SINAIS_ABERTOS));
   t("a entrada nula não estoura e não abre nada", (() => { const r = s(null); return r && !r.comercio && !r.governo && !r.chefeEmJogo && !r.masmorraEmJogo; })());
@@ -186,16 +186,14 @@ sec("6. OS CHEFES E AS MASMORRAS SÓ INTEIROS QUANDO EM JOGO");
 sec("7. A FIAÇÃO NO APP");
 {
   t("o ref dos sinais nasce aberto", /const sinaisDoTurnoRef = useRef\(SINAIS_ABERTOS\);/.test(APP));
-  t("enviar lê os sinais antes do rodapé, em try/calou, e cai em tudo aberto", /sinaisDoTurnoRef\.current = emJogoNoTurno\(\{ frase: conteudo, nota: `\$\{nota\}\\n\$\{missoesTxt\}`, recentes, chefes: chefesNomes, masmorras: masmorrasNomes \}\);[^\n]*\n\s*\} catch \(e\) \{ calou\("os sinais do turno", e\); sinaisDoTurnoRef\.current = SINAIS_ABERTOS;/.test(APP) /* MOVIDA NA ONDA 3 (14/10), com o motivo: a relevância do turno e a linha A GENTE são lidas na MESMA linha dos sinais, cada uma no seu try (o App não podia ganhar linhas: o check-acoes-do-jogador lê-o por número de linha), e o catch dos sinais também as zera; a prova de que os sinais caem em tudo aberto é a mesma */
-    /* MOVIDA NA T2-A (28/10), com o motivo: o texto do rodapé saiu para src/motor/envelopes-do-turno.js; a ordem é a mesma, lida no sítio que o monta */
-    && APP.indexOf("sinaisDoTurnoRef.current = emJogoNoTurno(") < APP.indexOf("const rodape = oRodapeDoTurno("));
+  // retirada (trilha A, 29/10): «enviar lê os sinais antes do rodapé, em try/calou, e cai em tudo aberto» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("a tabela de preços abre com a cidade E o comércio", /temMercado: !!cidadeAtualRef\.current && !!sinais\.comercio,/.test(APP));
   t("o governo e o fim do acampamento vão à cena", /temGoverno: temOQueGovernar\(\) \|\| !!sinais\.governo,/.test(APP) && /fimDoAcampamento: !!sinais\.fimDoAcampamento,/.test(APP));
-  t("os chefes inteiros só com chefe em jogo", /const chefes = chefesDoFio\(!\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.chefeEmJogo\);/.test(APP));
+  // retirada (trilha A, 29/10): «os chefes inteiros só com chefe em jogo» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MOVIDA NA ONDA 3 (14/10), com o motivo: o mesmo objeto de opções passou a levar a relevância, o onde e as linhas já ditas depois do semMasmorras */
-  t("as masmorras só com masmorra em jogo", /\{ semMasmorras: !\(sinaisDoTurnoRef\.current \|\| SINAIS_ABERTOS\)\.masmorraEmJogo[, ]/.test(APP));
-  t("o QUEM não repete quem a pauta veta", /naPauta: \(\(\) => \{ try \{ return Object\.keys\(npcsRef\.current \|\| \{\}\)\.filter\(\(n\) => n && pauta\.includes\(`\$\{n\} está em `\)\);/.test(APP));
-  t("o rodapé leva só os passivos; o treino, a profissão e a forma subiram", /resumoPericiasPrompt\(p, \(id\) => atributoEfetivo\(p, id\), "passivos"\)/.test(APP) && !/const prf = resumoProfissaoPrompt\(p\);/.test(APP) && /const forma = "";/.test(APP));
+  // retirada (trilha A, 29/10): «as masmorras só com masmorra em jogo» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «o QUEM não repete quem a pauta veta» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «o rodapé leva só os passivos; o treino, a profissão e a forma subiram» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("os ATRIBUTOS não se repetem no rodapé", !/const atr = resumoAtributosPrompt\(p\);/.test(APP) && !/\$\{atr \?/.test(APP));
   t("infoTitulo devolve o vivo e o fixo", /return \{ vivo: `\$\{base\}\. \$\{ermos\}\$\{epico\}\$\{vinc \? ` \$\{vinc\}` : ""\}`, fixo \};/.test(APP));
   /* no nível 20 o ESTADO ÉPICO conta o XP de cada turno: no fixo ele
@@ -204,7 +202,8 @@ sec("7. A FIAÇÃO NO APP");
   t("e o fixo da ficha lê a forma, o treino e a profissão, cada um em try/calou", /const fixoDaFicha = \(\) => \{[\s\S]{0,200}resumoMoldePrompt\(moldeMundo\(\)\)[\s\S]{0,200}"treino"[\s\S]{0,200}resumoProfissaoPrompt\(p\)/.test(APP));
   /* MOVIDA NA T2-A (28/10), com o motivo: o Inviolável saiu do App com o resto do texto do rodapé (src/motor/envelopes-do-turno.js);
      a intenção — ele está no rodapé que o App monta, colado à frase — joga-se na peça e no sítio que a chama */
-  t("o Inviolável continua no rodapé, colado à frase (o Gemini lê o que está perto dela — MM11)", /Inviolável: \(1\) o tempo SÓ muda por envelope/.test(ENV.aCabecaDoRodape({ dia: 1, minuto: 600, local: "aqui", ascensao: false })) && APP.includes("const rodape = oRodapeDoTurno("));
+  /* (movida, trilha A, 29/10) a metade que lia no App o rodapé aberto pela peça saiu: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno), provado byte a byte em teste-motor-pedido-do-turno.mjs. Fica a metade que prova a peça. */
+  t("o Inviolável continua no rodapé, colado à frase (o Gemini lê o que está perto dela — MM11)", /Inviolável: \(1\) o tempo SÓ muda por envelope/.test(ENV.aCabecaDoRodape({ dia: 1, minuto: 600, local: "aqui", ascensao: false })));
 }
 
 console.log(`\n${ok} ok, ${mal} falharam`);

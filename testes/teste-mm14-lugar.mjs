@@ -286,7 +286,7 @@ sec("4. lixo, null e a imutabilidade");
     const dito = (cidades) => registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades }, dia: 2, ultimoPedido: "" }, local.nome, "mestre", { mundo }).lugar;
     t("fiação: a distância de um lugar novo decide-se por distanciaNaCidade", !!local && dito([cid]).distancia === "dentro" && dito([]).distancia === L.distanciaPorTexto(local.nome));
   }
-  t("fiação: a nota do turno passa por umSoLugar", app.includes("umSoLugar(notaRef.current)"));
+  // retirada (trilha A, 29/10): «fiação: a nota do turno passa por umSoLugar» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO
      (uma das duas cópias) e de texto para texto (a outra). O sinal masmorra
      do Narrador mudou-se para src/motor/meio-do-turno.js#aplicarOsSinais (o

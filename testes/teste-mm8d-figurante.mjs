@@ -165,15 +165,15 @@ sec("6. lixo");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   const i = app.indexOf("resumoNPCsParaPrompt(npcsRef.current, undefined, {");
   const pessoas = i >= 0 ? app.slice(i, app.indexOf("\n", i)) : "";
-  t("as pessoas conhecidas recebem quem a cena cita", pessoas.includes("emCena:"));
-  t("as pessoas conhecidas recebem quem a missão ativa procura", pessoas.includes("missao:") && pessoas.includes("m.status === \"ativa\""));
+  // retirada (trilha A, 29/10): «as pessoas conhecidas recebem quem a cena cita» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «as pessoas conhecidas recebem quem a missão ativa procura» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MOVIDA NA MM14 · 9a (30/09), com o motivo: a masmorra aberta entrou
      entre `emCena` e `elenco` nesta mesma chamada (resumoCenaPrompt). A
      âncora segue por `emCena: emCenaAgora,` sozinho — é o pedaço que esta
      asserção sempre quis achar, e o que vem depois dele pode crescer de novo. */
   const j = app.indexOf("emCena: emCenaAgora,");
   const rodape = j >= 0 ? app.slice(j, app.indexOf("\n", j)) : "";
-  t("o rodapé recebe a missão ativa", rodape.includes("missao:"));
+  // retirada (trilha A, 29/10): «o rodapé recebe a missão ativa» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 }
 
 console.log(`\nMM8d · o figurante é de passagem: ${ok} passaram, ${mal} falharam`);

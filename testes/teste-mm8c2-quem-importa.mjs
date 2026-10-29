@@ -213,16 +213,16 @@ sec("6. as duas contradições antigas, pelo que o código faz");
 {
   const { readFileSync } = await import("node:fs");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  t("o App importa o elenco", /import \{[^}]*elencoParaPovoar[^}]*\} from "\.\/elenco\.js"/.test(app));
+  // retirada (trilha A, 29/10): «o App importa o elenco» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   t("o banco de nomes já não sorteia a gente (sem elencoDiverso no App)", !app.includes("elencoDiverso("));
-  t("as pessoas conhecidas recebem o grupo e o elenco", app.includes("resumoNPCsParaPrompt(npcsRef.current, undefined, { grupo: ") && app.includes("||| [], elenco: nomesDoElenco()".replace("|||", "{}).grupo ||")) /* MM8d: a chamada ganhou emCena e missao depois do elenco; prova-se o que esta asserção sempre quis (o grupo e o elenco chegam), sem o fecho da linha */);
+  // retirada (trilha A, 29/10): «as pessoas conhecidas recebem o grupo e o elenco» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MM17 C2 (06/10): a gente por conhecer é a da cidade, e cala dentro de uma
      masmorra aberta (`calaNaMasmorra("povoar", …)`, masmorra-sem-cidade.js)
      — a chamada ganhou essa guarda antes do `return`. Fora da masmorra, a
      mesma chamada de sempre: prova-se que ela continua lá, depois da guarda. */
-  t("o prompt do turno leva a gente por conhecer (calada só dentro da masmorra)", app.includes("elenco: (() => { try { if (calaNaMasmorra(\"povoar\", masmorraRef.current)) return []; /* MM17 C2: a gente por conhecer é a da cidade */ const povo = elencoParaPovoar(") && app.includes("return genteParaPovoarAqui(povo, relevanciaRef.current, cidadeAtualRef.current, genteDaquiRef.current)"));
+  // retirada (trilha A, 29/10): «o prompt do turno leva a gente por conhecer (calada só dentro da masmorra)» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* MOVIDA NA ONDA 3 DO CUSTO (14/10), com o motivo: o objeto do cânone ganhou a relevância do turno ao lado do elenco, e a gente por conhecer passa por `genteParaPovoarAqui` (só a daqui, sem repetir a gente da cidade) — a chamada ao elencoParaPovoar e a masmorra que a cala são as mesmas */
-  t("o cânone recebe o elenco", app.includes("{ npcs: npcsRef.current, elenco: nomesDoElenco(), relevancia: relevanciaRef.current }"));
+  // retirada (trilha A, 29/10): «o cânone recebe o elenco» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 }
 
 console.log(`\nMM8c-2 · quem importa: ${ok} passaram, ${mal} falharam`);

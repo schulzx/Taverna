@@ -51,9 +51,10 @@ sec("1. o App importa a escuta e as duas peças novas do mural");
      `andarAEscuta`, `contarOAvanco` e `seguraOMundo` já não são do App — quem os chama é o motor,
      e o App chama `oPedidoDaEscuta` e `aEscutaAnda`. As onze peças chegam, as três pelo motor) */
   /* (trilha A, 29/10) seis no App: a pauta do turno mudou-se para src/motor/pauta-do-turno.js e levou consigo o `degrauDaEscuta` e a `linhaDoRumo` (a linha do RUMO é dela) */
-  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta", "escutarOTurno", "separarEnvelopes", "fechoDoPedido"];
+  /* (trilha A, 29/10) três no App: o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js e levou o `escutarOTurno`, o `separarEnvelopes`, o `fechoDoPedido` e o `aEscutaAnda` (a escuta que corta e a que anda são dele) */
+  const pecas = ["lerOPedido", "fioDaHistoria", "garantirEscuta"];
   const im2 = APP.match(/import \{([^}]*)\} from "\.\/motor\/antes-do-mestre\.js";/);
-  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])) && !!im2 && /\boPedidoDaEscuta\b/.test(im2[1]) && /\baEscutaAnda\b/.test(im2[1]), imp ? "" : "sem import");
+  t("escuta.js é importado, com as onze peças do mapa de chamada", !!imp && pecas.every((p) => new RegExp(`\\b${p}\\b`).test(imp[1])) && !!im2 && /\boPedidoDaEscuta\b/.test(im2[1]), imp ? "" : "sem import");
   const of = APP.match(/import \{([^}]*)\} from "\.\/ofertas\.js";/);
   t("ofertas.js entrega genteDaHistoria e cartazVencido", !!of && /\bgenteDaHistoria\b/.test(of[1]) && /\bcartazVencido\b/.test(of[1]));
 }
@@ -75,25 +76,25 @@ sec("3. a ordem em enviar: ler, segurar, cortar, andar, e a frase por último");
   t("numa pergunta segura, a forma da cena também não sai", ENVIAR.includes("doCompasso || segurarEsc ? \"\" : talvezDarFormaACena(conteudo)"));
   t("o compasso aceita o segurar de quem chama, pela porta de sempre", /segurar: segurarExtra \|\| !!combateRef\.current/.test(APP));
   // retirada (trilha A, 29/10): «a nota passa pela escuta, envelope a envelope, com os adiados de antes» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
-  t("a pauta vem primeiro, e o que fica depois", ord("doTurno = rEsc.ficam;", "const nota = [pauta, ...doTurno]"));
-  t("o que espera volta à nota do turno seguinte", ord("notaRef.current = \"\";", "notaRef.current = adiadosEsc.join(\"\\n\")"));
+  // retirada (trilha A, 29/10): «a pauta vem primeiro, e o que fica depois» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+  // retirada (trilha A, 29/10): «o que espera volta à nota do turno seguinte» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* (movido, T1-A 8.ª fatia: a escuta anda em aEscutaAnda, no motor; a ordem é a do App, e a
      pausa da luta prova-se jogando a peça, não lendo o texto dela) */
-  t("a escada anda DEPOIS da pauta (o degrau do turno é o de antes)", ord("escutarOTurno({", "const anda = aEscutaAnda({ escuta: escutaRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });"));
+  // retirada (trilha A, 29/10): «a escada anda DEPOIS da pauta (o degrau do turno é o de antes)» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   {
     const { aEscutaAnda, oPedidoDaEscuta } = await import("../src/motor/antes-do-mestre.js");
     const pe = oPedidoDaEscuta({ modo: "historia", escuta: { semAvanco: 2 } }, "ando pela praça");
     /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava em `&& ENVIAR.includes("combate: combateRef.current }, { pedido: pedidoEsc")` — o App passa a luta à escada. Esse fragmento é parte do que a asserção da ORDEM, acima ("a escada anda DEPOIS da pauta"), já exige à letra (`const anda = aEscutaAnda({ … combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });`): dita duas vezes, guardada uma. Fica o comportamento: a luta pausa a escada. */
     t("a luta pausa a escada", aEscutaAnda({ escuta: { semAvanco: 2 }, combate: { rodada: 1 } }, pe).escuta.semAvanco === 2 && aEscutaAnda({ escuta: { semAvanco: 2 }, combate: null }, pe).escuta.semAvanco === 3);
   }
-  t("a frase do jogador fecha o pedido, depois do rodapé", ord("fechoDoPedido(pedidoEsc)", "pedidoFinal = `${nota ? nota + \"\\n\" : \"\"}${rodape}\\n${fecho}`", "content: pedidoFinal"));
+  // retirada (trilha A, 29/10): «a frase do jogador fecha o pedido, depois do rodapé» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   /* onda 1 do custo (13/10): a asserção mudou. O histórico guardava o corpo
      (a pauta + a frase) e passou a guardar só a memória do turno (a frase e a
      marca do que o sistema decidiu): a pauta velha era 73% do que se relia.
      O que a MM18 protegia continua: nem rodapé nem etiqueta no histórico, e
      a frase por último no turno de agora (as asserções acima). */
   t("o histórico guarda a memória do turno (sem pauta, rodapé nem etiqueta)", /\{ role: "user", content: memoriaDoJogador \}, \{ role: "assistant"/.test(APP) && APP.includes("memoriaDoJogador = memoriaDoTurno(conteudo, nota) || corpo"));
-  t("se a escuta estoura, a nota é a de antes, inteira", ENVIAR.includes("let doTurno = [oficina, daNota, doCompasso, formaDaCena, daFrente, daVirada, daTrama], adiadosEsc = null;"));
+  // retirada (trilha A, 29/10): «se a escuta estoura, a nota é a de antes, inteira» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   const calados = ["a escuta lê o pedido", "a escuta do turno", "a escuta anda", "a frase do jogador por último", "o rumo na pauta", "a gente da história", "o cartaz vencido"];
   // retirada (trilha A, 29/10): «toda peça nova cala o próprio erro (nunca custa o turno)» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
 }

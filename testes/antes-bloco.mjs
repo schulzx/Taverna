@@ -63,6 +63,13 @@ const FIM_DO_PASSO = "    const corpo = nota ? ";
 export const BLOCOS = ["mundo", "porta", "chao", "escuta"];
 const CHAMADAS = {
   mundo: "marcarTurnoDoMundo();",
+  /* (trilha A, 29/10, o pedido no motor) a escuta que ANDA saiu de `enviar`
+     com o trecho da pauta ao system: é src/motor/pedido-do-turno.js, provada
+     byte a byte contra o recorte do App em teste-motor-pedido-do-turno.mjs
+     (com a mordida «a escuta que não corta»). O bloco de hoje leva a mesma
+     chamada, à letra do App de 60128a3, para a escuta continuar inteira aqui
+     (o pedido do App + o passo do motor) contra o dourado de aac1912. */
+  escutaAnda: "    try {\n      const anda = aEscutaAnda({ escuta: escutaRef.current, missoes: missoesRef.current, espinha: espinhaRef.current, combate: combateRef.current }, { pedido: pedidoEsc, fio: fioEsc });\n      escutaRef.current = anda.escuta;\n      if (anda.erro) calou(\"a escuta anda\", anda.erro);\n    } catch (e) { calou(\"a escuta anda\", e); }\n",
   chao: "const c1 = varrerChao(); const c2 = porNoChaoAqui(novosNoChao); voltou.chao = { mesmo: c1 === chaoAntes, c1, c2 };",
 };
 export function recorteDeAntes(app) {
@@ -80,7 +87,7 @@ export function recorteDeHoje(app) {
     mundo: { orgaos: corte(...MUNDO), bloco: CHAMADAS.mundo },
     porta: { orgaos: "", bloco: corte("    /* (T1-A, 8.ª fatia) a pergunta \"o mundo anda neste turno?\"", FIM_DA_PORTA) },
     chao: { orgaos: corte(...CHAO), bloco: CHAMADAS.chao },
-    escuta: { orgaos: "", bloco: corte("    /* (T1-A, 8.ª fatia) a escuta lê o pedido e anda no motor", FIM_DO_PEDIDO) + corte("    try {\n      const anda = aEscutaAnda(", FIM_DO_PASSO) },
+    escuta: { orgaos: "", bloco: corte("    /* (T1-A, 8.ª fatia) a escuta lê o pedido e anda no motor", FIM_DO_PEDIDO) + CHAMADAS.escutaAnda },
   };
 }
 /* um recorte vira uma função () → o que o bloco deixou nas variáveis dele, com os dublês no escopo */

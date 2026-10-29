@@ -235,9 +235,7 @@ sec("8. a fiação no App.jsx");
   t("8.8 a nota entra no envelope antes do custo e antes de ir ao Mestre", iEnv > iNotaMal && iEnv < iCusto && iCusto < iEnvia);
 
   /* o rodapé lê a ficha do turno */
-  t("8.9 o rodapé lê a ficha deste turno (persAtual / ref), não a do render",
-    APP.includes("const p = persAtual || personagemRef.current || personagem || {};\n      const cond = resumoCondicoesPrompt(p, p.grupo || []);")
-    && !APP.includes("const p = personagem || personagemRef.current || {};\n      const cond = resumoCondicoesPrompt("));
+  // retirada (trilha A, 29/10): «8.9 o rodapé lê a ficha deste turno (persAtual / ref), não a do render» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
 }
 
 console.log(`\nesconder na luta: ${ok} passaram, ${mal} falharam`);

@@ -473,9 +473,8 @@ sec("12. a fiação no App.jsx");
     const iQmv = APP.indexOf('qmvLuta = combateRef.current ? quemMeVe(p, { grade: combateRef.current.grade, heroi: combateRef.current.heroi, inimigos: combateRef.current.inimigos || [], luz: luzDaLutaAgora() }) : null;');
     const iGrid = APP.indexOf("const zon = combateRef.current ? resumoGridPrompt(combateRef.current.grade, {");
     const iCampo = APP.indexOf("quemMeVe: qmvLuta,");
-    t("7. quemMeVe é calculado dentro do calou (null se estourar)", iQmv > 0 && /calou\("quemMeVe-na-luta"/.test(APP));
-    t("7. …e entra como campo de resumoGridPrompt, junto de heroi/inimigos/grupo/ordem",
-      iCampo > 0 && iCampo > iGrid && iCampo < APP.indexOf("}) : \"\";", iGrid));
+    // retirada (trilha A, 29/10): «7. quemMeVe é calculado dentro do calou (null se estourar)» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
+    // retirada (trilha A, 29/10): «7. …e entra como campo de resumoGridPrompt, junto de heroi/inimigos/grupo/ordem» — o trecho de `enviar` da pauta ao system mudou-se para src/motor/pedido-do-turno.js (oPedidoDoTurno); o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-pedido-do-turno.mjs (275 casos)
   }
 
   /* 8. A PAUTA FORA DA LUTA — em pautaDoTurno, antes do fim. */

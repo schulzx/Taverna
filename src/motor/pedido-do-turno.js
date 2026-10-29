@@ -114,7 +114,7 @@ import { linhaDaViagem, pausarViagem, resumoViagemPrompt, trechoAtual } from "..
 import { resumoVilaoPrompt } from "../vilao.js";
 import { VINCULO_INICIAL, linhaDoVinculo } from "../vinculos.js";
 import { comSorte } from "../semente.js";
-import { aPautaDoTurno } from "./pauta-do-turno.js";
+import { aPautaDoTurno, oEstadoDaPauta } from "./pauta-do-turno.js";
 
 /* OS REFS QUE A MONTAGEM TOCA — um por campo, como na pauta: o nome do ref no
    App, se o save o guarda (o campo é o do save; senão é o do ref), se a
@@ -200,6 +200,27 @@ export const ENTRADA_DO_PEDIDO = Object.freeze(["frase","daFrente","daTrama","da
 /* O PEDIDO À REDE: o que `chamarMestre` passa a `chamarModelo` (o teto de
    3600 é de rede, não de meta: com 2600 o JSON truncava). */
 export const PEDIDO_AO_NARRADOR = Object.freeze({ maxTokens: 3600, formato: "json", tarefa: "narrador", comCache: true });
+
+/* O ESTADO QUE O APP DÁ AO PEDIDO (trilha A, 29/10) — o da pauta e mais o do
+   pedido. A peça do pedido entrega o estado à da pauta, logo leva os campos
+   das duas tabelas (REFS_DA_PAUTA e REFS_DO_PEDIDO), cada um lido do ref do
+   nome dele (`refs` é o dicionário { nomeDoRef: { current } } do App).
+
+   Do render passam só os seis do React (RENDER_DO_PEDIDO, que contém os cinco
+   da pauta). A banca da praça (`cidadeMercado`, `mercadoAqui`) NÃO passa,
+   pelo motivo de `oEstadoDaPauta`: a do render é a do último desenho da
+   tela, e um turno que muda de cidade antes do pedido vendia a praça de antes
+   — na pauta e no MERCADO do rodapé, que a lia direto do render. Sem ela, a
+   peça refá-la do estado do instante, que é o que o recorte do App provado
+   em pedido-dourado.json sempre fez. */
+export function oEstadoDoPedido(refs, render) {
+  const R = refs && typeof refs === "object" ? refs : {};
+  const V = render && typeof render === "object" ? render : {};
+  const e = oEstadoDaPauta(R, V);
+  for (const [c, r] of Object.entries(REFS_DO_PEDIDO)) if (!(c in e)) e[c] = R[r.ref] && typeof R[r.ref] === "object" ? R[r.ref].current : undefined;
+  for (const n of RENDER_DO_PEDIDO) if (Object.prototype.hasOwnProperty.call(V, n)) e.render[n] = V[n];
+  return e;
+}
 
 /* ---------------- o que é do módulo do App, à letra ---------------- */
 
