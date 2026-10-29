@@ -62,6 +62,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { marcoAtual } from "./saga.js";
 import { estruturaPorId } from "./historia.js";
 import { oQueExisteAqui, masmorrasDoMundo, chefesDoMundo, chaveDoLugar, locaisDaCidade, genteDoLocal } from "./mundo-base.js";
@@ -482,7 +485,7 @@ function historiaDoLugar(semente, mapa, cidade, genero, lex) {
 export function abrirAbertura(ctx) {
   const o = obj(ctx);
   const semente = String(o.semente == null ? "" : o.semente);
-  const genero = txt(o.genero, 40) || "Fantasia medieval";
+  const genero = txt(o.genero, 40) || cenarioAtivo().generos.padrao;
   const nomeCidade = txt(o.cidade, 60);
   if (!nomeCidade) return null;
   let q = null;

@@ -64,6 +64,9 @@
    um save antigo não tem batidas, e o envelope dela continua o de sempre.
    ============================================================ */
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { locaisDaCidade, genteDoLocal, chefesDoMundo, segredosDaCidade, SEGREDOS } from "./mundo-base.js";
 import { ANTECEDENTES } from "./antecedentes.js";
 import { PASSOS_DO_PLANO, FASE_DO_PASSO, FASES, DIAS_POR_PASSO } from "./vilao.js";
@@ -267,7 +270,7 @@ export function marcarBatidas(espinha, ctx) {
   if (!e || !Array.isArray(e.atos) || !e.atos.length) return e;
   const o = ctx && typeof ctx === "object" ? ctx : {};
   const semente = String(o.semente != null ? o.semente : e.semente || "");
-  const genero = o.genero || "Fantasia medieval", molde = o.molde || null, lex = o.lex || null;
+  const genero = o.genero || cenarioAtivo().generos.padrao, molde = o.molde || null, lex = o.lex || null;
   const cidades = (o.mapa && Array.isArray(o.mapa.cidades) ? o.mapa.cidades : []).filter((c) => c && c.nome);
   const ant = antecedenteDe(o.antecedente != null && o.antecedente !== "" ? o.antecedente : e.fio && e.fio.antecedente);
   const coisas = EM_JOGO.coisas[ant || "sem"];

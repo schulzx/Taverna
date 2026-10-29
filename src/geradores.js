@@ -6,6 +6,9 @@
    Os atores já vêm com nome, raça e ofício sorteados — a diversidade do
    mundo deixa de depender da memória da IA. */
 import { sorteDaCasa, comSorte } from "./semente.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { elencoDiverso } from "./nomes.js";
 
 const pick = (arr) => arr[Math.floor(sorteDaCasa() * arr.length)];
@@ -42,7 +45,7 @@ export function rolarGatilho(rotulo, alvo, { vantagem = false, garantido = false
 
 /* ---------------- contexto comum ---------------- */
 export function ctxMundo({ mundo, mapa, dia }) {
-  const genero = (mundo && mundo.genero) || "Fantasia medieval";
+  const genero = (mundo && mundo.genero) || cenarioAtivo().generos.padrao;
   const elenco = elencoDiverso(genero, 4);
   const cidades = ((mapa && mapa.cidades) || []).map((c) => c.nome);
   const faccoes = ((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador).map((f) => f.nome);

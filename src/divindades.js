@@ -161,14 +161,36 @@ function sinalDe(d) {
   return dar(CEU.dominios.find((x) => x.dominio === d.dominio)) || CEU.dominios.map(dar).find(Boolean) || SINAL_SEM_NOME;
 }
 
-const EVENTOS_DIVINOS = [
-  (c, d) => ({ icone: "⛈", texto: `${d.icone} ${d.nome} ${d.dominio} manifesta-se: um sinal impossível (${sinalDe(d)}) é visto ${c.lugar ? `perto de ${c.lugar}` : "na região"}. O culto ${d.culto} interpreta como ${sorteDaCasa() < 0.5 ? "aviso" : "promessa"}.`, gancho: "investigar o sinal pode render favor — ou inimizade — da divindade" }),
-  (c, d) => ({ icone: "🕯", texto: `Paladinos d${d.culto} chegam ${c.lugar ? `a ${c.lugar}` : "à região"} caçando um relicário roubado d${d.nome === "relicário" ? "e" : `e ${d.nome}`}. Oferecem recompensa em bênçãos (PF) a quem ajudar.`, gancho: "relicário pode estar à venda no mercado negro — ou nas mãos de alguém do círculo do herói" }),
-  (c, d, d2) => (d2 ? { icone: "⚡", texto: `Guerra de fé: ${d.nome} ${d.icone} e ${d2.nome} ${d2.icone} disputam um mesmo domínio nas orações do povo. Templos rivais se provocam ${c.lugar ? `em ${c.lugar}` : "na região"} — e cada lado busca campeões mortais.`, gancho: "escolher um lado muda sua relação com os dois deuses" } : null),
-  (c, d) => ({ icone: "📿", texto: `Um profeta menor d${d.culto} prega que ${d.nome} ${d.dominio} "escolherá um novo receptáculo entre os mortais desta geração". Multidões se agitam; olhares começam a medir os heróis conhecidos — inclusive você.`, gancho: "o culto pode vir testar (ou recrutar) o herói" }),
-  (c, d) => ({ icone: "🌑", texto: `As orações a ${d.nome} ficaram sem resposta por três noites seguidas. O culto ${d.culto} entra em pânico discreto: algo enfraquece a divindade — ou a distraiu.`, gancho: "uma divindade vulnerável é oportunidade rara (e perigosa)" }),
-  (c, d) => ({ icone: "🩸", texto: `Um milagre brutal atribuído a ${d.nome}: ${sorteDaCasa() < 0.5 ? "um ímpio foi consumido por dentro pela própria sombra em praça pública" : "uma criança condenada acordou curada falando na língua dos deuses"}. A fé da região oscila.`, gancho: "testemunhas do milagre podem ter visto mais do que deviam" }),
-];
+/* 29/10 (T4-B, 7.ª fatia) · A PROSA É DO MUNDO, A SORTE É DO MOTOR. Os seis
+   eventos eram funções com o texto dentro (os paladinos, o relicário, os
+   templos): um mundo sem cavaleiros contava a mesma história. Agora são
+   moldes de `panteao.eventos`, e este é o único que os lê. As marcas
+   (cenario.js marcasDoEvento) preenchem-se da esquerda para a direita, e
+   cada {sorte:...} gasta UM número da sorte do evento — a mesma conta de
+   antes: com duas formas, `floor(r * 2)` é 0 exatamente quando `r < 0.5`.
+   Com o mundo padrão, a frase sai byte a byte a de antes (o dourado do
+   cenário tem 144 eventos e os sinais de cada deus). Uma diferença, e é de
+   propósito: o código tinha um caso para o deus chamado "relicário" (a
+   frase ficava "roubado de."); o gerador não faz esse nome, e o caso não
+   passou para o molde. */
+let EVENTOS_DIVINOS = [];
+function preencherMolde(molde, c, d, d2) {
+  return molde.replace(/\{([^{}]*)\}/g, (_, dentro) => {
+    const i = dentro.indexOf(":");
+    const k = i < 0 ? dentro : dentro.slice(0, i);
+    const formas = i < 0 ? [] : dentro.slice(i + 1).split("|");
+    if (k === "lugar") return c && c.lugar ? formas[0].split("@").join(c.lugar) : formas[1];
+    if (k === "sorte") return formas[Math.floor(sorteDaCasa() * formas.length)];
+    if (k === "sinal") return sinalDe(d);
+    if (k === "nome2") return d2.nome;
+    if (k === "icone2") return d2.icone;
+    return d[k];
+  });
+}
+function eventoDoMolde(ev, c, d, d2) {
+  if (ev.dois && !d2) return null;
+  return { icone: ev.icone, texto: preencherMolde(ev.texto, c, d, d2), gancho: preencherMolde(ev.gancho, c, d, d2) };
+}
 
 export function gerarEventoDivino(ctx, dia, panteao, sorte = null) { return comSorte(sorte, () => {
   const lista = (panteao || []).filter((d) => d && d.nome);
@@ -176,7 +198,7 @@ export function gerarEventoDivino(ctx, dia, panteao, sorte = null) { return comS
   const d = lista[Math.floor(sorteDaCasa() * lista.length)];
   const d2 = lista.length > 1 ? lista.filter((x) => x.nome !== d.nome)[Math.floor(sorteDaCasa() * (lista.length - 1))] : null;
   for (let tent = 0; tent < 6; tent++) {
-    const ev = EVENTOS_DIVINOS[Math.floor(sorteDaCasa() * EVENTOS_DIVINOS.length)](ctx, d, d2);
+    const ev = eventoDoMolde(EVENTOS_DIVINOS[Math.floor(sorteDaCasa() * EVENTOS_DIVINOS.length)], ctx, d, d2);
     if (ev) return { id: `ed${dia}-${Math.floor(sorteDaCasa() * 1e6)}`, ...ev, criadoEm: dia };
   }
   return null;
@@ -217,6 +239,7 @@ export let PALAVRAS_DIVINAS = [];
 aoTrocarDeCenario((c) => {
   CEU = c.panteao;
   PALAVRAS_DIVINAS = c.panteao.palavrasDivinas;
+  EVENTOS_DIVINOS = c.panteao.eventos;
   GRAUS = Object.freeze(FIEIS_DO_GRAU.map((fieis, gd) => Object.freeze({ gd, titulo: c.panteao.titulos[gd].titulo, fieis, desc: c.panteao.titulos[gd].desc })));
   DIVINDADE_PROMPT = promptDaDivindade();
 });

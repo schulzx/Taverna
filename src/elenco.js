@@ -42,6 +42,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { locaisDaCidade, genteDoLocal, chefesDoMundo, estaMorto } from "./mundo-base.js";
 import { indoleDe, tracoPorId, garantirConvivio } from "./indole.js";
 import { nomePessoa } from "./nomes.js";
@@ -173,7 +176,7 @@ function nomeDaCasa(cabeca, r, usadas, genero, lex) {
 export function elencoDoMundo(semente, mapa, ctx) {
   const o = obj(ctx);
   const s = String(semente == null ? "" : semente);
-  const genero = typeof o.genero === "string" && o.genero ? o.genero : "Fantasia medieval";
+  const genero = typeof o.genero === "string" && o.genero ? o.genero : cenarioAtivo().generos.padrao;
   const vazio = { pessoas: [], lacos: [], casas: [] };
   const todas = Array.isArray(obj(mapa).cidades) ? mapa.cidades.filter((c) => c && typeof c === "object" && c.nome) : [];
   const cidades = todas.slice(0, CIDADES_DO_ELENCO);

@@ -70,7 +70,11 @@ console.log("\n== 2. O LÉXICO CHEGA ATÉ AS OFERTAS ==");
    de fora. */
 {
   const fonte = String(fs.readFileSync("../src/ofertas.js", "utf8"));
-  t("ofertasDaqui recebe molde e lex", /ofertasDaqui\(\{[^)]*molde = null, lex = null/.test(fonte));
+  /* 29/10 (T4-B): `[^)]*` virou `[^}]*` — o padrão do gênero passou a ser
+     `cenarioAtivo().generos.padrao`, e o parêntese da chamada parava a
+     busca antes de `molde`. A intenção é a mesma: a assinatura (até ao `}`
+     do destructuring) recebe molde e lex. */
+  t("ofertasDaqui recebe molde e lex", /ofertasDaqui\(\{[^}]*molde = null, lex = null/.test(fonte));
   t("e os passa a oQueExisteAqui", /oQueExisteAqui\(semente, mapa, cidade, base, genero, molde, lex\)/.test(fonte));
   t("e adiante, a ofertaDePessoa", /ofertaDePessoa\(\{ semente, pessoa: p, aqui, mapa, genero, nivel, molde, lex \}\)/.test(fonte));
   t("quem SUMIU também nasce com nome daqui", /sumido: nomePessoa\(genero, undefined, rnd, lex\)/.test(fonte),

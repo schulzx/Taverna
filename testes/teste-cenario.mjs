@@ -350,6 +350,12 @@ const ORBITA = {
     /* 6.ª fatia: a trilha da ascensão e as palavras que só a fé dá, na língua da estação */
     estagios: ["Escolhido do Turno", "Casco Vivo", "A Estação Desperta"],
     palavrasDivinas: ["Eco do Casco", "Voz do Vácuo"],
+    /* 7.ª fatia: o que um deus faz na estação — sem paladino, sem relicário */
+    eventos: [
+      { icone: "📡", texto: "{icone} {nome} {dominio} fala pelo casco: um sinal impossível ({sinal}) aparece nos sensores {lugar:de @|do anel}. Os fiéis d{culto} leem nele {sorte:um aviso|uma promessa}.", gancho: "rastrear o sinal até à fonte, antes da manutenção" },
+      { icone: "🛰", dois: true, texto: "Disputa de frequência: {nome} {icone} e {nome2} {icone2} brigam pelo mesmo canal de prece {lugar:em @|no anel}.", gancho: "sintonizar um lado silencia o outro" },
+      { icone: "🔧", texto: "Os fiéis d{culto} selam as escotilhas {lugar:de @|da doca}: o ar reciclado já não responde a {nome}.", gancho: "alguém sabotou o altar do respirador" },
+    ],
   },
   lugares: {
     bancos: {
@@ -440,6 +446,55 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("…e a física é a do motor: o panteão inicial é GD 2, 3 e 4, com os fiéis da escala", pan.map((d) => d.gd).join() === "2,3,4" && pan.every((d) => d.fieis >= DV.GRAUS[d.gd].fieis / 2 && d.pf === Math.floor(d.fieis / 1000)) && DV.grauDe({ ehJogador: true, despertar: true, fieis: 12000 }) === 2);
   const ev = DV.gerarEventoDivino({ lugar: "Anel-7" }, 3, pan, G.rngDe("orbita|evento"));
   t("o evento divino fala de um deus dela", ev && pan.some((d) => ev.texto.includes(d.nome)), ev && ev.texto);
+  /* 7.ª fatia: a prosa do evento é a dela — os moldes de `panteao.eventos` */
+  {
+    const evs = Array.from({ length: 80 }, (_, i) => DV.gerarEventoDivino({ lugar: i % 2 ? "Anel-7" : "" }, i, pan, G.rngDe("orbita|eventos|" + i))).filter(Boolean);
+    const juntos = evs.map((e) => e.texto + " " + e.gancho).join(" ");
+    t("os eventos divinos são os três dela, e nenhum é da Taverna", evs.length === 80 && evs.every((e) => ["📡", "🛰", "🔧"].includes(e.icone)) && ["📡", "🛰", "🔧"].every((ic) => evs.some((e) => e.icone === ic)) && !/Paladinos|relicário|Templos|profeta|milagre/.test(juntos), [...new Set(evs.map((e) => e.icone))].join());
+    t("…com o lugar e sem ele, nas duas formas que ela escreveu", evs.filter((e, i) => e.icone === "🔧").every((e) => e.texto.includes("de Anel-7:") || e.texto.includes("da doca:")) && juntos.includes("de Anel-7") && juntos.includes("da doca"));
+    t("…a sorte escolhe entre as formas dela", juntos.includes("leem nele um aviso") && juntos.includes("leem nele uma promessa"));
+    const disputa = evs.find((e) => e.icone === "🛰");
+    t("…o evento de dois deuses diz os dois, e nenhuma marca sobra no texto", disputa && pan.filter((d) => disputa.texto.includes(d.nome)).length === 2 && !/[{}]/.test(juntos), disputa && disputa.texto);
+    const sos = Array.from({ length: 60 }, (_, i) => DV.gerarEventoDivino({}, i, pan.slice(0, 1), G.rngDe("orbita|so|" + i))).filter(Boolean);
+    t("…e com um deus só, a disputa nunca sai (sorteia-se outro)", sos.length === 60 && !sos.some((e) => e.icone === "🛰"));
+  }
+  /* 29/10 (T4-B) · O GÊNERO DE RECUO É O DO MUNDO. 36 sítios em 18 módulos
+     caíam em "Fantasia medieval" quando quem chama não dizia o gênero; agora
+     caem em `generos.padrao`. A régua: com a Órbita em uso, a chamada SEM
+     gênero responde o mesmo que a chamada com o gênero dela — e a prova
+     morde, porque o bestiário corta por gênero: o mesmo pedido com
+     "Fantasia medieval" explícito dá outras criaturas. Os sítios de
+     `o.genero || …` usam a MESMA expressão que estes parâmetros; a catraca da
+     §6 conta-os no código. */
+  {
+    const { MOLDES } = await import(S + "moldes.js");
+    const GU = await import(S + "guildas.js"), CM = await import(S + "comodos.js"), OF = await import(S + "ofertas.js"), RA = await import(S + "raids.js"), SA = await import(S + "saga.js");
+    const mapa = G.gerarGeografia("o7|mapa", MOLDES[0]);
+    const cid = mapa.cidades[0], reg = mapa.regioes[0];
+    const local = MB.locaisDaCidade("o7", cid, "Ópera de estação")[0];
+    const RECUOS = [
+      ["mundo-base locaisDaCidade", (g) => MB.locaisDaCidade("o7", cid, g)],
+      ["mundo-base genteDoLocal", (g) => MB.genteDoLocal("o7", local, g)],
+      ["mundo-base segredosDaCidade", (g) => MB.segredosDaCidade("o7", cid, g)],
+      ["mundo-base criaturasDaRegiao", (g) => MB.criaturasDaRegiao("o7", reg, g)],
+      ["mundo-base chefesDoMundo", (g) => MB.chefesDoMundo("o7", mapa, g)],
+      ["mundo-base oQueExisteAqui", (g) => MB.oQueExisteAqui("o7", mapa, cid.nome, null, g)],
+      ["mundo-base chaveDoLugar", (g) => MB.chaveDoLugar("o7", mapa, cid.nome, g === undefined ? {} : { genero: g })],
+      ["guildas guildasDoMundo", (g) => GU.guildasDoMundo("o7", mapa, g)],
+      ["comodos comodosDoLocal", (g) => CM.comodosDoLocal("o7", local, g)],
+      ["ofertas ofertasDaqui", (g) => OF.ofertasDaqui({ semente: "o7", mapa, cidade: cid.nome, base: null, genero: g })],
+      ["raids convocar", (g) => RA.convocar({ semente: "o7", genero: g })],
+      ["raids abrirRaid", (g) => RA.abrirRaid({ semente: "o7", genero: g })],
+      ["saga estenderEspinha", (g) => SA.estenderEspinha({ semente: "o7", mapa, genero: g, cidadeInicial: cid.nome })],
+    ];
+    const resp = (fn) => { try { return JSON.stringify(fn()); } catch (e) { return "ESTOUROU: " + e.message; } };
+    const r = (f, g) => resp(() => f(g));
+    for (const [nome, f] of RECUOS) {
+      const sem = r(f, undefined), dela = r(f, "Ópera de estação");
+      t(`recuo: ${nome} sem gênero é o padrão da Órbita`, !sem.startsWith("ESTOUROU") && sem === dela, sem.slice(0, 160));
+    }
+    t("…e a prova morde: o bestiário da Fantasia medieval explícita é outro", r(RECUOS[3][1], undefined) !== r(RECUOS[3][1], "Fantasia medieval") && r(RECUOS[4][1], undefined) !== r(RECUOS[4][1], "Fantasia medieval"));
+  }
   const nomeDe = (sem) => NM.nomePessoa("Ópera de estação", "", G.rngDe(sem));
   t("mesma semente, mesmo mundo: o mesmo nome e o mesmo deus", nomeDe("o7|a") === nomeDe("o7|a") && JSON.stringify(DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") })) === JSON.stringify(DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") })));
   const naOrbita = [nomeDe("o7|a"), DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") }).nome];
@@ -526,6 +581,7 @@ sec("3. outro mundo — a Estação Órbita Sete, sem tocar em módulo");
   t("…o bestiário também", B.CRIATURAS_FANTASIA.length === 18 && B.ARQUETIPOS.length === 9 && B.completarInimigo({ nome: "Troll" }, 5).perfil.fraqueza.join() === "fogo");
   t("…a gente e o céu também (e a mesma semente dá outro nome noutro mundo)", NM.generosDisponiveis().length === 6 && NM.sexoDoNome("Aldric") === "masc" && NM.TRACOS_PESSOA.length === 26 && [NM.nomePessoa("Ópera de estação", "", G.rngDe("o7|a")), DV.gerarDivindade({}, 1, { sorte: G.rngDe("o7|d") }).nome].every((n, i) => n !== naOrbita[i]));
   t("…os lugares, as raças e o céu também", TP.generosDaToponimia().length === 6 && C.RACAS.length === 10 && C.ORIGENS.length === 6 && LX.RACAS_DO_SISTEMA.length === 16 && DV.tituloDe(2) === "Semideus" && DV.DIVINDADE_PROMPT.includes("Semideus (10k)") && TR.veNoEscuroDeTraco({ raca: "Elfo" }) === 18 && CP.racaDeCompanheiro({ raca: "elfo" }) === "Elfo");
+  t("…os eventos divinos também (os paladinos e o relicário voltam)", Array.from({ length: 40 }, (_, i) => DV.gerarEventoDivino({ lugar: "Coroa" }, i, [{ nome: "Vela", dominio: "da Lua e dos Segredos", icone: "🌙", temperamento: "gentil", culto: "a Ordem de Vela" }], G.rngDe("padrao|ev|" + i))).some((e) => e && e.texto === "Paladinos da Ordem de Vela chegam a Coroa caçando um relicário roubado de Vela. Oferecem recompensa em bênçãos (PF) a quem ajudar."));
   t("…o léxico também (os doze, o corte do futuro, o gênero padrão)", LX.PROFISSOES_DO_SISTEMA.length === 12 && LX.GENEROS_FUTURISTAS.includes("Cyberpunk") && LX.generoProprio({ descricao: "um anime" }) && LX.pedidoDoLexico({}).includes("· Gênero: Fantasia medieval"));
 }
 
@@ -601,6 +657,18 @@ sec("4. o cenário inválido é recusado, e diz onde");
      escala em si continua do motor — por isso `graus` continua recusado */
   caso("a escala de graus no cenário (é regra, fica no motor)", (d) => { d.panteao.graus = [{ gd: 0, titulo: "Tripulante" }]; }, "panteao.graus: campo desconhecido");
   caso("faltam os títulos dos graus", (d) => { delete d.panteao.titulos; }, "panteao.titulos: falta (lista)");
+  /* 7.ª fatia: os eventos divinos e o molde de cada frase */
+  caso("faltam os eventos divinos", (d) => { delete d.panteao.eventos; }, "panteao.eventos: falta (lista)");
+  caso("um céu sem evento", (d) => { d.panteao.eventos = []; }, "panteao.eventos: precisa de ao menos 1 evento");
+  caso("um evento sem gancho", (d) => { delete d.panteao.eventos[2].gancho; }, "panteao.eventos[2].gancho: falta");
+  caso("um evento com campo que o motor não lê", (d) => { d.panteao.eventos[0].peso = 2; }, "panteao.eventos[0].peso: campo desconhecido");
+  caso("uma marca que o motor não conhece", (d) => { d.panteao.eventos[0].texto += " {templo}"; }, "panteao.eventos[0].texto: marca desconhecida {templo}");
+  caso("o lugar sem o @", (d) => { d.panteao.eventos[2].texto = "Selam {lugar:a doca|o anel}."; }, "panteao.eventos[2].texto: {lugar} leva duas formas");
+  caso("a sorte com uma forma só", (d) => { d.panteao.eventos[0].gancho = "{sorte:sempre}"; }, "panteao.eventos[0].gancho: {sorte} leva duas formas ou mais");
+  caso("o segundo deus num evento de um só", (d) => { d.panteao.eventos[2].texto += " E {nome2} ri."; }, "panteao.eventos[2].texto: {nome2} é do segundo deus");
+  caso("uma forma numa marca que não leva", (d) => { d.panteao.eventos[2].texto = "{nome:o deus}"; }, "panteao.eventos[2].texto: {nome} não leva formas");
+  caso("uma chave solta", (d) => { d.panteao.eventos[2].texto = "As escotilhas de {nome se fecham."; }, "panteao.eventos[2].texto: chave solta");
+  caso("o evento de dois que não é booleano", (d) => { d.panteao.eventos[1].dois = "sim"; }, "panteao.eventos[1].dois: devia ser verdadeiro ou falso");
   caso("quatro títulos para cinco graus", (d) => { d.panteao.titulos.pop(); }, "panteao.titulos: são 5, um por grau (GD 0 a 4), e vieram 4");
   caso("um título sem frase", (d) => { delete d.panteao.titulos[2].desc; }, "panteao.titulos[2].desc: falta");
   caso("os fiéis do grau no título (é física)", (d) => { d.panteao.titulos[1].fieis = 500; }, "panteao.titulos[1].fieis: campo desconhecido");
@@ -768,6 +836,24 @@ sec("6. o esquema lê de volta o que o motor consome");
   t("o sinal da tempestade é do domínio das Tempestades, e de um temperamento dele", CN.CENARIO_PADRAO.panteao.dominios.filter((x) => x.sinais).map((x) => x.dominio + ":" + Object.keys(x.sinais).join()).join() === "das Tempestades:colérica");
   const doTp = importados("toponimia"), doCl = importados("classes"), doLx = importados("lexico"), doTr = importados("tracos");
   t("o motor não copia lugar nem raça no import (só funções, se as importa)", [[doTp, TP], [doCl, C], [doLx, LX], [doTr, TR]].every(([nomes, mod]) => nomes.every((n) => typeof mod[n] === "function")), [...doTp, ...doCl, ...doLx, ...doTr].join());
+
+  /* 29/10 (T4-B) · A CATRACA DO RECUO. Os 36 sítios que caíam no literal
+     contam-se aqui, arquivo a arquivo, e o literal só pode morar onde é DADO
+     ou memória: o cenário padrão; a chave do TOM das tavernas e dois
+     comentários (nomes.js, lexico.js); o comentário do caminho (cenario.js);
+     e o generoPadrao dos três moldes de fantasia (moldes.js), que só o
+     App lê — é da trilha A, e fica dito no diário. */
+  {
+    const RECUO_POR_ARQUIVO = { "abertura.js": 1, "batidas.js": 1, "cidade-por-dentro.js": 1, "comodos.js": 1, "companheiro-inicial.js": 1, "elenco.js": 1, "gente-por-dentro.js": 6, "geradores.js": 1, "guildas.js": 1, "mundo-base.js": 7, "nucleo.js": 1, "ofertas.js": 2, "raids.js": 2, "regiao.js": 6, "saga.js": 1, "subtramas.js": 1, "tarefas-antigas.js": 1, "motor/combate-do-turno.js": 1 };
+    const LITERAL_PERMITIDO = { "cenario-padrao.js": 5, "nomes.js": 2, "lexico.js": 1, "cenario.js": 1, "moldes.js": 3 };
+    const conta = (txt, x) => txt.split(x).length - 1;
+    const arquivos = [...fs.readdirSync(SRC).filter((n) => n.endsWith(".js")), ...fs.readdirSync(path.join(SRC, "motor")).filter((n) => n.endsWith(".js")).map((n) => "motor/" + n)];
+    const fora = arquivos.filter((n) => conta(fs.readFileSync(path.join(SRC, n), "utf8"), '"Fantasia medieval"') !== (LITERAL_PERMITIDO[n] || 0));
+    t("nenhum recuo \"Fantasia medieval\" literal em src/*.js (só dado e memória)", fora.length === 0, fora.join());
+    const torto = Object.entries(RECUO_POR_ARQUIVO).filter(([n, k]) => conta(fs.readFileSync(path.join(SRC, n), "utf8"), "cenarioAtivo().generos.padrao") !== k);
+    t("…e os 36 recuos são o gênero padrão do mundo em uso, arquivo a arquivo", torto.length === 0 && Object.values(RECUO_POR_ARQUIVO).reduce((a, b) => a + b, 0) === 36, torto.map(([n]) => n).join());
+    t("nem a prosa dos eventos divinos em divindades.js (7.ª fatia)", !["Paladinos", "relicário roubado", "Templos rivais", "profeta menor", "três noites seguidas", "praça pública"].some((x) => fonteDv.includes(x)) && CN.CENARIO_PADRAO.panteao.eventos.length === 6);
+  }
 
   /* um catálogo que estoura a meio da troca não deixa meio mundo de cada lado */
   CN.aoTrocarDeCenario((c) => { if (c.id === "explode") throw new Error("catálogo de teste"); });

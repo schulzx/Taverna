@@ -43,6 +43,9 @@
    dele.
    ============================================================ */
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
 import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
@@ -206,7 +209,7 @@ export function garantirEspinha(e) {
    Uma vez só, na criação do mundo. Determinística: a mesma semente estende
    a mesma espinha, sempre — é o que permite dizer que a história ESTAVA ali
    antes de o jogador perguntar. */
-export function estenderEspinha({ semente = "", mapa = null, genero = "Fantasia medieval", molde = null, lex = null, estrutura = "jornada", cidadeInicial = "", antecedente = "", dia = null } = {}) {
+export function estenderEspinha({ semente = "", mapa = null, genero = cenarioAtivo().generos.padrao, molde = null, lex = null, estrutura = "jornada", cidadeInicial = "", antecedente = "", dia = null } = {}) {
   const est = estruturaPorId(estrutura);
   const cidades = (mapa && mapa.cidades) || [];
   const regioes = (mapa && mapa.regioes) || [];

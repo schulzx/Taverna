@@ -39,6 +39,9 @@
    mundo precisa apelidar, o nome esta errado na origem.
    ============================================================ */
 import { sorteDaCasa } from "./semente.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { rngDe } from "./geografia.js";
 import { nomePessoa } from "./nomes.js";
 import { nomeDeLocal } from "./toponimia.js";
@@ -249,7 +252,7 @@ export function garantirGuilda(g) {
 /* ---------------- AS GUILDAS DO MUNDO ----------------
    Nascem com ele, da mesma semente, e ficam onde há gente para sustentá-las:
    uma Companhia das Rotas numa aldeia de trinta almas seria enfeite. */
-export function guildasDoMundo(semente, mapa, genero = "Fantasia medieval", lex = null) {
+export function guildasDoMundo(semente, mapa, genero = cenarioAtivo().generos.padrao, lex = null) {
   const cidades = ((mapa && mapa.cidades) || []).filter((c) => c && c.nome);
   if (!cidades.length) return [];
   const rnd = rngDe(`${semente}|guildas`);

@@ -21,6 +21,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { pessoaDiversa, nomeTaverna, nomePessoa, oficioNoGenero } from "./nomes.js";
 /* v9.103: o léxico nomeia lugar e bicho. O TIPO e a AMEAÇA continuam
    sendo do código — o que vem daqui é só a palavra. */
@@ -94,7 +97,7 @@ const NOME_LOCAL = {
    não tem docas nem taverna — tem fogueira, feira do degrau e o portal. O
    parâmetro é o último e tem padrão, então quem ainda não passa molde
    continua gerando o sobremundo de sempre. */
-export function locaisDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null, lex = null) {
+export function locaisDaCidade(semente, cidade, genero = cenarioAtivo().generos.padrao, molde = null, lex = null) {
   if (!cidade || !cidade.nome) return [];
   const M = moldePorId(molde && molde.id ? molde.id : molde);
   const TABELA = M.locais || LOCAIS;
@@ -172,7 +175,7 @@ const MODOS = [
    família de funções — do mesmo jeito que `molde` entrou antes dele. É
    quem faz a gente da base ter nome, povo e ofício DAQUI: sem ele, um
    mundo de caçadores ficava povoado por Aldric, o ferreiro. */
-export function genteDoLocal(semente, local, genero = "Fantasia medieval", molde = null, lex = null) {
+export function genteDoLocal(semente, local, genero = cenarioAtivo().generos.padrao, molde = null, lex = null) {
   if (!local) return [];
   const VONT = moldePorId(molde && molde.id ? molde.id : molde).vontades || VONTADES;
   const rnd = rngDe(`${semente}|gente|${local.id}`);
@@ -213,7 +216,7 @@ export const SEGREDOS = [
   { tipo: "relicario", icone: "📿", o: "um relicário guardado longe dos olhos", acha: "percepcao", dc: 17 },
 ];
 
-export function segredosDaCidade(semente, cidade, genero = "Fantasia medieval", molde = null, lex = null) {
+export function segredosDaCidade(semente, cidade, genero = cenarioAtivo().generos.padrao, molde = null, lex = null) {
   const locais = locaisDaCidade(semente, cidade, genero, molde, lex);
   if (!locais.length) return [];
   const rnd = rngDe(`${semente}|segredos|${cidade.nome}`);
@@ -241,7 +244,7 @@ const COMPORTAMENTOS = [
   "dorme meses e acorda faminta", "tem medo de sinos", "cheira sangue a quilômetros",
 ];
 
-export function criaturasDaRegiao(semente, regiao, genero = "Fantasia medieval", lex = null) {
+export function criaturasDaRegiao(semente, regiao, genero = cenarioAtivo().generos.padrao, lex = null) {
   if (!regiao || !regiao.nome) return [];
   const rnd = rngDe(`${semente}|bichos|${regiao.nome}`);
   const banco = criaturasDoGenero(genero);
@@ -352,7 +355,7 @@ export function especieProibida(especie, lex) {
   return !!proibidas.size && raizesDe(especie).some((r) => proibidas.has(r));
 }
 
-export function chefesDoMundo(semente, mapa, genero = "Fantasia medieval", lex = null) {
+export function chefesDoMundo(semente, mapa, genero = cenarioAtivo().generos.padrao, lex = null) {
   const regioes = (mapa && mapa.regioes) || [];
   const cidades = (mapa && mapa.cidades) || [];
   if (!regioes.length && !cidades.length) return [];
@@ -756,7 +759,7 @@ function cidadeSintetica(semente, nome) {
   return { nome, porte: pick(rnd, portes), tipo: "cidade", bioma: pick(rnd, biomas), regiao: "", avulsa: true };
 }
 
-export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = "Fantasia medieval", molde = null, lex = null) {
+export function oQueExisteAqui(semente, mapa, nomeCidade, base, genero = cenarioAtivo().generos.padrao, molde = null, lex = null) {
   const cidade = ((mapa && mapa.cidades) || []).find((c) => c.nome === nomeCidade) || cidadeSintetica(semente, nomeCidade);
   if (!cidade) return null;
   const locais = locaisDaCidade(semente, cidade, genero, molde, lex);
@@ -874,7 +877,7 @@ export const idDaGente = (cidade, p) => `${cidade}|gente|${(p && p.nome) || ""}`
    a base guarda `Cidade|tipo` — sem esta ponte as duas pontas nunca se
    encontravam. A cidade de `cidade` é procurada primeiro; depois o mapa
    inteiro, pela ordem dele. Nome que não é local de lugar nenhum: "". */
-export function chaveDoLugar(semente, mapa, nome, { genero = "Fantasia medieval", molde = null, lex = null, cidade = "" } = {}) {
+export function chaveDoLugar(semente, mapa, nome, { genero = cenarioAtivo().generos.padrao, molde = null, lex = null, cidade = "" } = {}) {
   const alvo = semAcento(String(nome || "")).trim();
   if (!alvo) return "";
   const cs = ((mapa && mapa.cidades) || []).filter((c) => c && c.nome);

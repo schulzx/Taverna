@@ -43,6 +43,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { nomePessoa } from "./nomes.js";
 import { arredoresDaCidade } from "./arredores.js";
 import { oQueExisteAqui, idDaGente, genteDoLocal } from "./mundo-base.js";
@@ -313,7 +316,7 @@ export function precoDaOferta({ tipo, nivel, etapas, risco }) {
 /* ---------------- A OFERTA DE UMA PESSOA ----------------
    Determinística pelo NOME dela: a mesma pessoa oferece o mesmo
    trabalho hoje, amanhã e no save do mês que vem. */
-export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = "Fantasia medieval", nivel = 1, molde: moldeDoMundo = null, lex = null }) {
+export function ofertaDePessoa({ semente, pessoa, aqui, mapa, genero = cenarioAtivo().generos.padrao, nivel = 1, molde: moldeDoMundo = null, lex = null }) {
   if (!pessoa || !pessoa.nome || !aqui || !aqui.cidade) return null;
   const rnd = rngDe(`${semente}|oferta|${idDaGente(aqui.cidade.nome, pessoa)}`);
   const mat = materialDe({ rnd, semente, pessoa, aqui, mapa, genero, nivel, molde: moldeDoMundo, lex });
@@ -465,7 +468,7 @@ export function ehDaHistoria(nome, opcoes) {
 /* ---------------- O QUE ESTA CIDADE TEM PARA OFERECER ----------------
    Uma volta pela base do mundo, uma oferta por pessoa. Não é o mural:
    é o estoque de que o mural (e o Mestre) tiram. */
-export function ofertasDaqui({ semente, mapa, cidade, base, genero = "Fantasia medieval", nivel = 1, quantas = 3, evitar = [], molde = null, lex = null, historia = [] }) {
+export function ofertasDaqui({ semente, mapa, cidade, base, genero = cenarioAtivo().generos.padrao, nivel = 1, quantas = 3, evitar = [], molde = null, lex = null, historia = [] }) {
   /* v9.113: `molde` e `lex` chegam aqui, e a falta deles era visível na
      primeira cena do jogo: num mundo de caçadores modernos o mural
      oferecia "Jarl Mata-Lobos" mandando o herói a "Pedra da Serpente".

@@ -52,6 +52,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 /* E1 (12/10): a figura que o arco põe em cena nasce com nome */
 import { nomePessoa } from "./nomes.js";
 import { alvoPrometido } from "./agressao.js";
@@ -544,7 +547,7 @@ function figuraDo(f, p, semente, o, pessoas) {
   const rnd = rngDe(`${semente}|figura|${p.nome}`);
   let nome = "";
   for (let i = 0; i < FIGURA_TENTATIVAS && !nome; i++) {
-    const n = nomePessoa(String(o.genero || "Fantasia medieval"), f.sexo, rnd, o.lex || null);
+    const n = nomePessoa(String(o.genero || cenarioAtivo().generos.padrao), f.sexo, rnd, o.lex || null);
     if (!ocupados.has(norm(n).split(/\s+/)[0])) nome = n;
   }
   if (!nome) return null;

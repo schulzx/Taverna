@@ -55,6 +55,9 @@
    ============================================================ */
 
 import { gerarGeografia, gerarRotas, rngDe, populacaoDe, TERRENO_VIAGEM, KM_POR_UNIDADE } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { moldePorId } from "./moldes.js";
 import { HORAS_MARCHA_POR_DIA } from "./viagem.js";
 import { kmEntre, rumoEntre } from "./coordenadas.js";
@@ -235,7 +238,7 @@ export function gerarRegiao(opcoes) {
   const semente = String(o.semente == null ? "" : o.semente);
   const m = moldePorId(o.molde && o.molde.id ? o.molde.id : o.molde);
   if (m.topologia !== "continental") return null;
-  const genero = typeof o.genero === "string" && o.genero ? o.genero : "Fantasia medieval";
+  const genero = typeof o.genero === "string" && o.genero ? o.genero : cenarioAtivo().generos.padrao;
   const lex = o.lex && typeof o.lex === "object" ? o.lex : null;
   const rnd = rngDe(`${semente}|regiao`);
 
@@ -479,7 +482,7 @@ export function amarrarEspinha(mapa, espinha, ctx) {
 
   const locais = {};
   const locaisDe = (c) => {
-    if (!locais[c.nome]) { try { locais[c.nome] = locaisDaCidade(String(o.semente || ""), c, o.genero || "Fantasia medieval", o.molde || null, o.lex || null); } catch { locais[c.nome] = []; } }
+    if (!locais[c.nome]) { try { locais[c.nome] = locaisDaCidade(String(o.semente || ""), c, o.genero || cenarioAtivo().generos.padrao, o.molde || null, o.lex || null); } catch { locais[c.nome] = []; } }
     return locais[c.nome];
   };
   /* onde fica um nome: uma cidade da região, um local de uma delas, ou um
@@ -526,7 +529,7 @@ export function amarrarEspinha(mapa, espinha, ctx) {
   const fecho = marcos.filter((x) => x.feitio === "confronto").pop() || null;
   let alvo = "";
   try {
-    const ch = chefesDoMundo(String(o.semente || ""), mapa, o.genero || "Fantasia medieval", o.lex || null);
+    const ch = chefesDoMundo(String(o.semente || ""), mapa, o.genero || cenarioAtivo().generos.padrao, o.lex || null);
     const p = ch.find((c) => c.linha === "principal");
     alvo = p ? p.nome : "";
   } catch { alvo = ""; }
@@ -584,13 +587,13 @@ export function espinhaNaRegiao(mapa, espinha, ctx) {
   const quens = new Set(e.atos.flatMap((x) => x.marcos).map((m) => norm(m.quem)).filter(Boolean));
   const genteDe = (c) => {
     try {
-      return locaisDaCidade(String(o.semente || ""), c, o.genero || "Fantasia medieval", o.molde || null, o.lex || null)
-        .flatMap((loc) => genteDoLocal(String(o.semente || ""), loc, o.genero || "Fantasia medieval", o.molde || null, o.lex || null));
+      return locaisDaCidade(String(o.semente || ""), c, o.genero || cenarioAtivo().generos.padrao, o.molde || null, o.lex || null)
+        .flatMap((loc) => genteDoLocal(String(o.semente || ""), loc, o.genero || cenarioAtivo().generos.padrao, o.molde || null, o.lex || null));
     } catch { return []; }
   };
   const bichosDoChao = {};
   const doChao = (reg) => {
-    if (!bichosDoChao[reg.nome]) { try { bichosDoChao[reg.nome] = criaturasDaRegiao(String(o.semente || ""), reg, o.genero || "Fantasia medieval", o.lex || null); } catch { bichosDoChao[reg.nome] = []; } }
+    if (!bichosDoChao[reg.nome]) { try { bichosDoChao[reg.nome] = criaturasDaRegiao(String(o.semente || ""), reg, o.genero || cenarioAtivo().generos.padrao, o.lex || null); } catch { bichosDoChao[reg.nome] = []; } }
     return bichosDoChao[reg.nome];
   };
   const bichosDe = (l) => {

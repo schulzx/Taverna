@@ -65,6 +65,9 @@
    ============================================================ */
 
 import { sorteDaCasa } from "./semente.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { PESO_AMEACA, multiplicadorDeGrupo } from "./orcamento.js";
 import { nomePessoa } from "./nomes.js";
 import { rngDe } from "./geografia.js";
@@ -203,7 +206,7 @@ function nivelDoConvocado(rnd, nivelHeroi) {
    rosto por ter dado F5. */
 export function convocar({
   semente = "raid", porte = "regional", pers = null, npcs = {}, faccoes = [],
-  genero = "Fantasia medieval", lex = null,
+  genero = cenarioAtivo().generos.padrao, lex = null,
 } = {}) {
   const p = typeof porte === "string" ? portePorId(porte) : porte;
   const rnd = rngDe(`${semente}|convocacao`);
@@ -326,7 +329,7 @@ export function garantirRaid(r) {
   };
 }
 
-export function abrirRaid({ semente = "raid", pers = null, npcs = {}, faccoes = [], genero = "Fantasia medieval", lex = null, chefe = "", nome = "" } = {}) {
+export function abrirRaid({ semente = "raid", pers = null, npcs = {}, faccoes = [], genero = cenarioAtivo().generos.padrao, lex = null, chefe = "", nome = "" } = {}) {
   const chk = podeAbrirRaid(pers);
   if (!chk.pode) return { ok: false, motivo: chk.motivo };
   const p = chk.porte;

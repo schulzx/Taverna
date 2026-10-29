@@ -62,6 +62,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { elencoDoMundo, AGENDA, registrarVisto, garantirElencoDoSave } from "./elenco.js";
 import { criarNPC, garantirLaco, tipoDeLacoPorId, RELACOES_NPC, primeiroNome } from "./npcs.js";
 import { garantirFichaCompanheiro, racaDeCompanheiro } from "./companheiros.js";
@@ -317,7 +320,7 @@ export function companheiroInicial(ctx) {
   let pool = pool0;
   if (QUEM_PODE_SER.semXara) {
     let daPartida = [];
-    try { daPartida = (obj(oQueExisteAqui(semente, o.mapa, String(o.cidade || ""), o.base, o.genero || "Fantasia medieval", o.molde, o.lex)).gente || []); } catch { daPartida = []; }
+    try { daPartida = (obj(oQueExisteAqui(semente, o.mapa, String(o.cidade || ""), o.base, o.genero || cenarioAtivo().generos.padrao, o.molde, o.lex)).gente || []); } catch { daPartida = []; }
     const outros = [...daPartida, ...el.pessoas].filter((p) => p && p.nome);
     const xara = (p) => outros.some((x) => norm(x.nome) !== norm(p.nome) && primeiroNome(x.nome) === primeiroNome(p.nome));
     const livres = pool0.filter((p) => !xara(p));

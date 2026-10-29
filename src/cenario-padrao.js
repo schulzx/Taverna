@@ -354,6 +354,21 @@ export const DADOS_DO_CENARIO_PADRAO = {
        ascensão (divindades.js) e as palavras que só a fé dá (prompt.js) */
     estagios: ["Servo Escolhido", "Receptáculo", "Nova Divindade"],
     palavrasDivinas: ["Semideus", "Divindade"],
+    /* 7.ª fatia: o que um deus faz no mundo depois do despertar — os seis
+       eventos que divindades.js escrevia no código (os paladinos, o
+       relicário, a guerra de fé, o profeta, o silêncio, o milagre). As marcas
+       entre chaves são o vocabulário do motor (cenario.js marcasDoEvento):
+       {nome} {dominio} {icone} {culto} {sinal} do deus; {nome2} {icone2} do
+       segundo, só no evento com `dois`; {lugar:com @|sem} a frase com e sem
+       o lugar; {sorte:a|b} uma das formas, pela sorte do evento. */
+    eventos: [
+      { icone: "⛈", texto: "{icone} {nome} {dominio} manifesta-se: um sinal impossível ({sinal}) é visto {lugar:perto de @|na região}. O culto {culto} interpreta como {sorte:aviso|promessa}.", gancho: "investigar o sinal pode render favor — ou inimizade — da divindade" },
+      { icone: "🕯", texto: "Paladinos d{culto} chegam {lugar:a @|à região} caçando um relicário roubado de {nome}. Oferecem recompensa em bênçãos (PF) a quem ajudar.", gancho: "relicário pode estar à venda no mercado negro — ou nas mãos de alguém do círculo do herói" },
+      { icone: "⚡", dois: true, texto: "Guerra de fé: {nome} {icone} e {nome2} {icone2} disputam um mesmo domínio nas orações do povo. Templos rivais se provocam {lugar:em @|na região} — e cada lado busca campeões mortais.", gancho: "escolher um lado muda sua relação com os dois deuses" },
+      { icone: "📿", texto: "Um profeta menor d{culto} prega que {nome} {dominio} \"escolherá um novo receptáculo entre os mortais desta geração\". Multidões se agitam; olhares começam a medir os heróis conhecidos — inclusive você.", gancho: "o culto pode vir testar (ou recrutar) o herói" },
+      { icone: "🌑", texto: "As orações a {nome} ficaram sem resposta por três noites seguidas. O culto {culto} entra em pânico discreto: algo enfraquece a divindade — ou a distraiu.", gancho: "uma divindade vulnerável é oportunidade rara (e perigosa)" },
+      { icone: "🩸", texto: "Um milagre brutal atribuído a {nome}: {sorte:um ímpio foi consumido por dentro pela própria sombra em praça pública|uma criança condenada acordou curada falando na língua dos deuses}. A fé da região oscila.", gancho: "testemunhas do milagre podem ter visto mais do que deviam" },
+    ],
   },
   /* 5.ª fatia: os lugares (toponimia.js). Três padrões sobre bancos de algumas
      dezenas de palavras dão milhares de nomes por tipo de lugar; o tamanho

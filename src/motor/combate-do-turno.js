@@ -22,6 +22,9 @@
    ============================================================ */
 
 import { gerarHabilidadeUnica, chanceUnica } from "../unicas.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "../cenario.js";
 import { patamarFama } from "../fama.js";
 import { recompensaChefe } from "../masmorras.js";
 import { essenciaDoChefe, RARIDADE_ROTULO } from "../loot.js";
@@ -218,7 +221,7 @@ export function surgirANemesis(estado, ctx) {
   if (e0.fama < 20) return nada;
   if (sorteDoTurno("nemesis")() > 0.35) return nada;
   const n0 = gerarVilao({ sorte: sorteDoTurno("vilao"),
-    nome: nomePessoa(e0.genero || "Fantasia medieval", undefined, sorteDoTurno("nome"), e0.lexico),
+    nome: nomePessoa(e0.genero || cenarioAtivo().generos.padrao, undefined, sorteDoTurno("nome"), e0.lexico),
     cont: e0.contadores,
     stats: {
       dominios: dominiosDe(e0.mapa).length,

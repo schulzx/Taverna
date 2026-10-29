@@ -51,7 +51,9 @@
    as formas com que o registo do mundo diz uma raça) e, no `panteao`, as
    palavras do céu que o Narrador ainda lia escritas no código: os três
    estágios da ascensão (divindades.js DIVINDADE_PROMPT) e as palavras que só
-   a fé dá (prompt.js, a linha "Palavras divinas"); e, nos `generos`, os
+   a fé dá (prompt.js, a linha "Palavras divinas") — e, na 7.ª fatia, a
+   prosa do que um deus faz no mundo (divindades.js, os eventos divinos:
+   os paladinos e o relicário eram texto do código); e, nos `generos`, os
    que a criação oferece (constantes.js GENEROS: o cartão, o rótulo e a dica
    de cada um), de que o gênero padrão é o de recuo do códex e do prompt
    quando o mundo não diz o seu. Os
@@ -128,7 +130,17 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
   /* o panteão (divindades.js): o nome de um deus é `inicio` + `fim`, o
      domínio traz o ícone e os temperamentos possíveis, e o culto é
      "<culto> de <nome>" */
-  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes", titulos: "lista", estagios: "nomes", palavrasDivinas: "nomes" }),
+  panteao: Object.freeze({ nomes: "objeto", dominios: "lista", cultos: "nomes", titulos: "lista", estagios: "nomes", palavrasDivinas: "nomes", eventos: "lista" }),
+  /* 7.ª fatia (divindades.js gerarEventoDivino): o que um deus faz no mundo
+     depois do despertar. `texto` e `gancho` são moldes com as marcas de
+     `marcasDoEvento`; `dois` é o evento que precisa de um segundo deus (a
+     guerra de fé) — sem ele no panteão, o evento não acontece e sorteia-se
+     outro. QUAL evento sai é a sorte do motor; a prosa é do mundo. */
+  eventoDivino: Object.freeze({ icone: "texto", texto: "texto", gancho: "texto", dois: "booleano?" }),
+  /* as marcas que o molde de um evento pode usar, e o que cada uma diz:
+     as do deus; as do segundo deus (só com `dois`); `lugar` leva duas formas
+     ("com @|sem" — o @ é o lugar); `sorte` leva duas ou mais, e sorteia uma */
+  marcasDoEvento: Object.freeze(["nome", "dominio", "icone", "culto", "sinal", "nome2", "icone2", "lugar", "sorte"]),
   nomeDivino: Object.freeze({ inicio: "nomes", fim: "nomes" }),
   /* `sinais` (5.ª fatia): o sinal impossível que o evento divino descreve,
      por temperamento — só dos temperamentos do próprio domínio */
@@ -183,7 +195,7 @@ export const ESQUEMA_DO_CENARIO = Object.freeze({
      raça de fantasia (e uma do futuro, se o mundo tem gêneros do futuro); o
      companheiro sorteado, ao menos um povo. E os prontos são OITO, nem mais
      nem menos: as quartas do torneio e o rodízio da arena contam com oito */
-  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1, povo: 1, generos: 1 }),
+  minimo: Object.freeze({ ocupacoes: 1, comuns: 1, escala: 1, criaturas: 1, bancos: 1, dominios: 1, racas: 1, povo: 1, generos: 1, eventos: 1 }),
 });
 
 const ehObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
@@ -227,6 +239,27 @@ const TIPOS = {
   reducao: [(v) => ehObj(v) && Object.entries(v).every(([k, x]) => ESQUEMA_DO_CENARIO.elementos.includes(k) && ehNum(x)), `objeto de tipos de dano do motor (${ESQUEMA_DO_CENARIO.elementos.join(", ")}) com números`],
   tipoDeHabilidade: [(v) => ESQUEMA_DO_CENARIO.tiposDeHabilidade.includes(v), `um tipo de habilidade do motor (${ESQUEMA_DO_CENARIO.tiposDeHabilidade.join(", ")})`],
 };
+
+/* 7.ª fatia: o molde de um evento divino. Devolve os erros de UMA frase:
+   a marca que o motor não conhece, a forma que falta, o segundo deus num
+   evento de um só, e a chave solta (que sairia escrita no ecrã). */
+function errosDoMolde(molde, onde, dois) {
+  const erros = [];
+  if (typeof molde !== "string") return erros;
+  const sobra = molde.replace(/\{([^{}]*)\}/g, (_, dentro) => {
+    const i = dentro.indexOf(":");
+    const k = i < 0 ? dentro : dentro.slice(0, i);
+    const formas = i < 0 ? null : dentro.slice(i + 1).split("|");
+    if (!ESQUEMA_DO_CENARIO.marcasDoEvento.includes(k)) erros.push(`${onde}: marca desconhecida {${dentro}} (as do motor: ${ESQUEMA_DO_CENARIO.marcasDoEvento.join(", ")})`);
+    else if (k === "lugar") { if (!formas || formas.length !== 2 || !formas[0].includes("@")) erros.push(`${onde}: {lugar} leva duas formas, com e sem o lugar ({lugar:perto de @|na região})`); }
+    else if (k === "sorte") { if (!formas || formas.length < 2 || !formas.every((x) => x.trim())) erros.push(`${onde}: {sorte} leva duas formas ou mais ({sorte:aviso|promessa})`); }
+    else if (formas) erros.push(`${onde}: {${k}} não leva formas`);
+    else if ((k === "nome2" || k === "icone2") && dois !== true) erros.push(`${onde}: {${k}} é do segundo deus, e o evento não tem \`dois\``);
+    return "";
+  });
+  if (/[{}]/.test(sobra)) erros.push(`${onde}: chave solta (uma marca é {nome}, entre chaves)`);
+  return erros;
+}
 
 /* só o que o JSON tem — o arquivo de um autor não carrega código */
 function foraDoJSON(v, onde, erros) {
@@ -361,6 +394,16 @@ export function validarCenario(dados) {
       pa.titulos.forEach((x, i) => { const onde = `panteao.titulos[${i}]`; if (!ehObj(x)) { erros.push(`${onde}: devia ser objeto`); return; } conferir(x, E.titulo, onde, erros); });
     }
     if (Array.isArray(pa.estagios) && pa.estagios.length !== E.exato.estagios) erros.push(`panteao.estagios: são ${E.exato.estagios} (o servo, o receptáculo e a divindade nova), e vieram ${pa.estagios.length}`);
+    /* 7.ª fatia: os eventos divinos, e o molde de cada frase */
+    if (Array.isArray(pa.eventos)) {
+      if (pa.eventos.length < E.minimo.eventos) erros.push(`panteao.eventos: precisa de ao menos ${E.minimo.eventos} evento`);
+      pa.eventos.forEach((ev, i) => {
+        const onde = `panteao.eventos[${i}]`;
+        if (!ehObj(ev)) { erros.push(`${onde}: devia ser objeto`); return; }
+        conferir(ev, E.eventoDivino, onde, erros);
+        for (const campo of ["texto", "gancho"]) erros.push(...errosDoMolde(ev[campo], `${onde}.${campo}`, ev.dois));
+      });
+    }
   }
   const lu = dados.lugares;
   if (ehObj(lu)) {

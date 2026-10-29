@@ -33,6 +33,9 @@
         ativo. A concluída e a falhada ficam como estão.
    ============================================================ */
 import { criarMissao, garantirMissoes, recompensaDe } from "./missoes.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { locaisDaCidade, idDoLocal } from "./mundo-base.js";
 import { arredoresDaCidade } from "./arredores.js";
 import { rngDe } from "./geografia.js";
@@ -139,7 +142,7 @@ function lugarDaCidade(mundo, cidade, chave) {
   const c = cidadeDoMapa(m, cidade);
   if (!c) return null;
   let locais = [];
-  try { locais = locaisDaCidade(String(m.semente || ""), c, m.genero || "Fantasia medieval", m.molde || null, m.lex || null) || []; } catch { locais = []; }
+  try { locais = locaisDaCidade(String(m.semente || ""), c, m.genero || cenarioAtivo().generos.padrao, m.molde || null, m.lex || null) || []; } catch { locais = []; }
   if (!locais.length) return null;
   const l = locais[Math.floor(rngDe(`${m.semente || ""}|tarefa|${chave}`)() * locais.length)];
   return { nome: l.nome, chave: idDoLocal(c.nome, l) };

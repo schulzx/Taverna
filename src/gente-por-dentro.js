@@ -62,6 +62,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { tracos, feicoes, CABELO } from "./semente.js";
 import { indoleDe, RELEVANTE, tracoPorId } from "./indole.js";
 import { oQueExisteAqui, locaisDaCidade, genteDoLocal, chefesDoMundo, criaturasDaRegiao, estaMorto, situacaoDe, ondeEsta, SITUACOES } from "./mundo-base.js";
@@ -381,16 +384,16 @@ function oQueOMundoTem(semente, cidade, ctx, rnd) {
   const regiao = cidade ? regioes.find((r) => r && r.nome === cidade.regiao) : null;
   let chefe = null, criatura = null;
   try {
-    const cs = chefesDoMundo(semente, mapa, ctx.genero || "Fantasia medieval", ctx.lex).filter((c) => c.linha !== "principal");
+    const cs = chefesDoMundo(semente, mapa, ctx.genero || cenarioAtivo().generos.padrao, ctx.lex).filter((c) => c.linha !== "principal");
     if (cs.length) chefe = pick(rnd, cs);
   } catch { chefe = null; }
   try {
-    const bs = regiao ? criaturasDaRegiao(semente, regiao, ctx.genero || "Fantasia medieval", ctx.lex) : [];
+    const bs = regiao ? criaturasDaRegiao(semente, regiao, ctx.genero || cenarioAtivo().generos.padrao, ctx.lex) : [];
     if (bs.length) criatura = pick(rnd, bs);
   } catch { criatura = null; }
   const outras = (Array.isArray(mapa.cidades) ? mapa.cidades : []).filter((c) => c && c.nome && (!cidade || c.nome !== cidade.nome));
   const outra = outras.length ? pick(rnd, outras).nome : "";
-  const rival = nomePessoa(ctx.genero || "Fantasia medieval", undefined, rnd, ctx.lex);
+  const rival = nomePessoa(ctx.genero || cenarioAtivo().generos.padrao, undefined, rnd, ctx.lex);
   return { chefe, criatura, outra, rival, regiao: regiao ? regiao.nome : "", perto: regiao ? regiao.nome : (cidade ? cidade.nome : "a região") };
 }
 
@@ -554,7 +557,7 @@ function linhaDaRotina(f) {
    porque é quem o jogador já viu. */
 function linhaDaCasa(semente, local, o, conhecidos = []) {
   let gente = [];
-  try { gente = genteDoLocal(semente, local, o.genero || "Fantasia medieval", o.molde, o.lex); } catch { gente = []; }
+  try { gente = genteDoLocal(semente, local, o.genero || cenarioAtivo().generos.padrao, o.molde, o.lex); } catch { gente = []; }
   const alvo = norm(semArtigo(local.nome));
   const daqui = (Array.isArray(conhecidos) ? conhecidos : [])
     .filter((p) => p && p.nome && [p.casa, p.local].some((x) => txt(x) && norm(semArtigo(x)) === alvo));
@@ -912,12 +915,12 @@ export function genteParaPauta(ctx) {
   let q = null, locais = [];
   try {
     if (txt(o.cidade)) {
-      q = oQueExisteAqui(s, o.mapa, o.cidade, o.base, o.genero || "Fantasia medieval", o.molde, o.lex);
+      q = oQueExisteAqui(s, o.mapa, o.cidade, o.base, o.genero || cenarioAtivo().generos.padrao, o.molde, o.lex);
       locais = (q && q.locais) || [];
     }
   } catch { q = null; locais = []; }
   if (!locais.length && q && q.cidade) {
-    try { locais = locaisDaCidade(s, q.cidade, o.genero || "Fantasia medieval", o.molde, o.lex); } catch { locais = []; }
+    try { locais = locaisDaCidade(s, q.cidade, o.genero || cenarioAtivo().generos.padrao, o.molde, o.lex); } catch { locais = []; }
   }
   const gente = juntarGente(o, q);
   /* a segunda leitura, com os nomes que a cidade tem: a gente, as casas e

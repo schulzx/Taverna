@@ -54,6 +54,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { elencoDoMundo } from "./elenco.js";
 import { indoleDe } from "./indole.js";
 import { antecedenteDe, EM_JOGO, REVIRAVOLTA_DO_ATO0, RELOGIO_DO_FIO } from "./batidas.js";
@@ -816,7 +819,7 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
     if (!cidade) return [];
     if (!genteDe.has(cidade)) {
       let g = [];
-      try { g = arr(obj(oQueExisteAqui(s, mapa, cidade, o.base, o.genero || "Fantasia medieval", o.molde, o.lex)).gente); } catch { g = []; }
+      try { g = arr(obj(oQueExisteAqui(s, mapa, cidade, o.base, o.genero || cenarioAtivo().generos.padrao, o.molde, o.lex)).gente); } catch { g = []; }
       genteDe.set(cidade, g.map((x) => x && x.nome).filter(Boolean));
     }
     return genteDe.get(cidade);

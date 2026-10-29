@@ -57,6 +57,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 import { vocacaoDe } from "./comercio.js";
 import { festivalDe, ehNoite } from "./calendario.js";
 import { locaisDaCidade, masmorrasDoMundo } from "./mundo-base.js";
@@ -381,7 +384,7 @@ export function fichaDaCidade(cidade, ctx = {}) {
   /* as instituições — a biblioteca, o templo e o quartel que a cidade TEM
      são os que o Narrador já conhece pelo resumo do lugar; a ficha os
      nomeia em vez de inventar um segundo prédio para a mesma coisa */
-  const locais = nome ? locaisDaCidade(semente, c, genero || "Fantasia medieval", o.molde || null, lex) : [];
+  const locais = nome ? locaisDaCidade(semente, c, genero || cenarioAtivo().generos.padrao, o.molde || null, lex) : [];
   const localDo = (tipo) => (locais.find((l) => l.tipo === tipo) || {}).nome || "";
   const esc = (tab) => trocar(pick(rnd, tab[militar ? 3 : escala] || tab[escala]), lex);
   const magia = esc(INSTITUICOES.magia);

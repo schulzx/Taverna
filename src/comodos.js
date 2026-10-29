@@ -43,6 +43,9 @@
    ============================================================ */
 
 import { rngDe } from "./geografia.js";
+/* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
+   padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
+import { cenarioAtivo } from "./cenario.js";
 
 const pick = (rnd, arr) => arr[Math.floor(rnd() * arr.length)];
 
@@ -157,7 +160,7 @@ const PLANTAS = {
    cabe numa aldeia, e uma capital não tem uma taverna de um cômodo só. */
 const EXTRAS_POR_PORTE = { aldeia: 1, vila: 2, cidade: 3, fortaleza: 2, capital: 3 };
 
-export function comodosDoLocal(semente, local, genero = "Fantasia medieval", molde = null) {
+export function comodosDoLocal(semente, local, genero = cenarioAtivo().generos.padrao, molde = null) {
   if (!local || !local.tipo) return [];
   const planta = PLANTAS[local.tipo];
   if (!planta) return [];
