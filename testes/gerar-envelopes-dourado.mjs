@@ -39,11 +39,34 @@ export const ANTES = { rodape: "2137ae7", masmorraArmadilha: "d3d6f60", masmorra
   funcaoReviver: "9cf8d4d", funcaoCura: "9cf8d4d", funcaoCondicao: "9cf8d4d", funcaoAtiva: "9cf8d4d",
   corpoRevide: "029385d", corpoFogoAmigo: "029385d", corpoRitual: "029385d", corpoDadiva: "029385d", corpoQuedaSegurada: "029385d", corpoFuria: "029385d", corpoAguentei: "029385d", corpoRaid: "029385d", corpoOportunidade: "029385d", corpoVitoria: "029385d", corpoFuga: "029385d", corpoQuedaAltura: "029385d" };
 const apps = {};
+/* O CONSERTO DECLARADO DO «nA» (29/10/2026, trilha A): os nomes do mundo nascem com artigo, e
+   o molde dava "Fui aceito nA Mão Cinzenta", "forte em o Vau", "dentro de a praça". O motor
+   passou a encaixar a preposição pela peça de lugar.js (`contrair`); o dourado faz a mesma troca
+   no código de antes, e só ela — o resto é à letra. São os seis sítios em que os casos trazem
+   nome com artigo: 806 dos 275 × 6 casos mudam (a carta 92, a petição 92, passar o tempo 163, a
+   divindade 92, a guilda 92, o deslocamento 275). Os outros catorze sítios do conserto (ver
+   o diário de 29/10) não têm caso com artigo, e a secção 27 da suíte prova-os direto. */
+const CONSERTOS = {
+  correioCarta: [["Enviei a ${para}:", "Enviei ${contrair(\"a \" + para)}:"], ["a reação de ${para} agora.", "a reação ${contrair(\"de \" + para)} agora."]],
+  correioPeticao: [["Narre a reação de ${p.de} e", "Narre a reação ${contrair(\"de \" + p.de)} e"]],
+  viagemPassarOTempo: [["EU CONTINUO EM ${lugarRef.current.nome.toUpperCase()}", "EU CONTINUO ${contrair(\"em \" + lugarRef.current.nome).toUpperCase()}"]],
+  mundoDivindade: [[", forte em ${nova.lugar}", ", forte ${contrair(\"em \" + nova.lugar)}"]],
+  feGuilda: [["Fui aceito n${nova.nome.startsWith(\"A \") ? \"\" : \"a \"}${nova.nome} como", "Fui aceito ${contrair(\"em \" + (/^(o|a|os|as)\\s/i.test(nova.nome) ? nova.nome : \"a \" + nova.nome))} como"]],
+  caminhoMovResolvido: [["`dentro de ${nomePara}`", "`dentro ${contrair(\"de \" + nomePara)}`"], ["`de ${nomeDe} para", "`${contrair(\"de \" + nomeDe)} para"]],
+};
+const consertado = (bloco, r) => {
+  let orgaos = r.orgaos;
+  for (const [de, para] of CONSERTOS[bloco] || []) {
+    if (orgaos.split(de).length !== 2) throw new Error("o conserto declarado não bate uma vez em " + bloco + ": " + de.slice(0, 60));
+    orgaos = orgaos.replace(de, () => para);
+  }
+  return { ...r, orgaos };
+};
 const appDe = (c) => (apps[c] ||= execSync(`git show ${c}:src/App.jsx`, { cwd: path.join(AQUI, ".."), maxBuffer: 1 << 28 }).toString().replace(/\r\n/g, "\n"));
 const casos = casosDosEnvelopes(N_CASOS);
 const saida = { antes: ANTES, casos: N_CASOS, blocos: {} };
 for (const bloco of BLOCOS) {
-  const fn = blocoComoFuncao(recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false, so: bloco })[bloco]);
+  const fn = blocoComoFuncao(consertado(bloco, recorteDosEnvelopes(appDe(ANTES[bloco]), { novo: false, so: bloco })[bloco]));
   /* o hash e o comprimento por caso; o texto inteiro só na amostra (ver fotoGuardada) */
   const fotos = casos.map((k, i) => fotoGuardada(fotoDoEnvelope(correrOBloco(fn, k, { novo: false, bloco })), i));
   /* o dicionário (ver douradoGuardado): a volta tem de ser a ida, byte a byte */

@@ -17041,7 +17041,7 @@ export default function Taverna() {
        nada: custo de lixo não gasta, custo maior que o saldo não vira
        dívida, meia casa não some na conta. */
     const sobra = passoAposAndar(eco && eco.movM, passo.metros, chk.custoM);
-    const linhas = [{ autor: "sistema", texto: `👣 Você vai ${nomeDe === nomePara ? `${metrosTxt(chk.custoM)} m dentro de ${nomePara}` : `de ${nomeDe} para ${nomePara}`}${passo.voando ? " (voando)" : ""} — ${metrosTxt(chk.custoM)} m gastos, ${sobra > 0 ? `restam ${metrosTxt(sobra)} m` : "acabou o passo desta rodada"}.` }];
+    const linhas = [{ autor: "sistema", texto: `👣 Você vai ${nomeDe === nomePara ? `${metrosTxt(chk.custoM)} m dentro ${comDe(nomePara)}` : `${comDe(nomeDe)} para ${nomePara}`}${passo.voando ? " (voando)" : ""} — ${metrosTxt(chk.custoM)} m gastos, ${sobra > 0 ? `restam ${metrosTxt(sobra)} m` : "acabou o passo desta rodada"}.` }];
     if (colados.length) {
       const ops = oportunidadesContraOJogador(colados, pers, grauDe(divindadeRef.current));
       let dano = 0;

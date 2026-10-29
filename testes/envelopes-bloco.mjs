@@ -41,7 +41,8 @@ const NOMES = {
   decretos: ["tipoDecreto"],
   subtramas: ["fraseDaManha"],
   arquivo: ["nomeDaCampanha"],
-  lugar: ["comDe"],
+  /* contrair: o conserto declarado do «nA» (gerar-envelopes-dourado.mjs) chama-o no código de antes */
+  lugar: ["comDe", "contrair"],
   divindades: ["tituloDe"],
   motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador", "oEnvelopeDoCorpo"],
 };

@@ -294,8 +294,10 @@ sec("10 · a viagem: os casos percorrem o que o texto decide, e a prova morde");
   t(`com meio (${conta(V, "(seguimos de ")}) e sem; as notas do fim na ordem`, conta(V, "(seguimos de ") >= 100 && conta(V, "(seguimos de ") < N_CASOS
     && V.every((x) => { const p = ["[MARCHA]", "[ERMOS]", "[AMBULANTE]", "[TEMPO +1h]"].map((s) => x.indexOf(s)).filter((n) => n >= 0); return p.every((n, j) => !j || n > p[j - 1]); }));
   const P = M("viagemPassarOTempo");
-  t(`passar o tempo dentro de um lugar (${conta(P, "EU CONTINUO EM ")}) e fora, com o clima (${conta(P, "[CLIMA]")}) e o reino (${conta(P, "[REINO]")}) cheios e vazios`,
-    conta(P, "EU CONTINUO EM O MOINHO VELHO") >= 20 && conta(P, "EU CONTINUO EM ") < N_CASOS && ["[CLIMA]", "[REINO]"].every((s) => conta(P, s) >= 60 && conta(P, s) < N_CASOS));
+  /* movida (29/10/2026, o «nA»): pedia "EU CONTINUO EM O MOINHO VELHO", o defeito à letra; o
+     conserto declarado contrai o artigo do lugar ("NO MOINHO VELHO") */
+  t(`passar o tempo dentro de um lugar (${conta(P, "EU CONTINUO ")}) e fora, com o clima (${conta(P, "[CLIMA]")}) e o reino (${conta(P, "[REINO]")}) cheios e vazios`,
+    conta(P, "EU CONTINUO NO MOINHO VELHO") >= 20 && conta(P, "EU CONTINUO ") < N_CASOS && !P.some((x) => /EU CONTINUO EM (O|A|OS|AS) /.test(x)) && ["[CLIMA]", "[REINO]"].every((s) => conta(P, s) >= 60 && conta(P, s) < N_CASOS));
   const E2 = M("viagemErmos");
   t(`o forrageamento que achou (${conta(E2, "Consegui ")}) e o que não; nada colhido (${conta(E2, "bolsa:  —")}), uma e duas colheitas (${conta(E2, "; ")}); fecha com o escopo`,
     conta(E2, "Consegui ") >= 100 && conta(E2, "Não encontrei") >= 60 && conta(E2, "bolsa:  —") >= 60 && conta(E2, "Musgo (pavio); Pedra-ume (tinta)") >= 60 && E2.every((x) => x.endsWith(SO_ISSO)));
@@ -483,7 +485,9 @@ sec("15 · o mundo que anda: os casos percorrem o que o texto decide, e a prova 
   const G = N("mundoGlobalAvancou");
   t("a etapa do arco que escalou é a de cada degrau, contada de 1", conta(G, "· ETAPA 1/3] A situação regional ESCALOU: os campeões chegam ") >= 80 && conta(G, "· ETAPA 3/3] A situação regional ESCALOU: a final ") >= 80 && conta(N("mundoGlobalNovo"), "ETAPA 1/2 agora: o primeiro porto fecha ") >= 120);
   const V = N("mundoDivindade");
-  t(`a divindade com o lugar forte (${conta(V, ", forte em o Vau.")}) e sem, de cada grau`, conta(V, ", forte em o Vau.") >= 80 && V.filter((x) => !x.includes("forte em")).length >= 170 && [3, 7, 12, 18].every((g) => conta(V, "— GD " + g + " (") >= 60));
+  /* movida (29/10/2026, o «nA»): pedia ", forte em o Vau.", o defeito à letra; o conserto
+     declarado contrai o artigo do lugar (", forte no Vau.") */
+  t(`a divindade com o lugar forte (${conta(V, ", forte no Vau.")}) e sem, de cada grau`, conta(V, ", forte no Vau.") >= 80 && V.filter((x) => !/, forte (em|no|na|nos|nas) /.test(x)).length >= 170 && [3, 7, 12, 18].every((g) => conta(V, "— GD " + g + " (") >= 60));
   t("a quest de cada fase do arco, e o fio local com o dia em que expira", ["abertura", "meio", "climax"].every((f) => conta(N("mundoQuest"), "[QUEST GERADA PELO SISTEMA — fase \"" + f + "\" do arco]") >= 90) && conta(N("mundoLocalNovo"), "até o dia 11, o fio") >= 25);
   t("as onze formas estão na tabela do mundo", Object.keys(ENVELOPES_DO_MUNDO).length === 11 && ["festival", "rumor", "rumorDeLonge", "eventoDeReino", "globalNovo", "globalAvancou", "localNovo", "localExpirado", "questGerada", "divindadeSeRevela", "eventoDivino"].every((q) => Object.hasOwn(ENVELOPES_DO_MUNDO, q)));
   const E = oEnvelopeDoMundo;
@@ -660,7 +664,11 @@ sec("20 · a fé e as casas: os casos percorrem o que o texto decide, e a prova 
   const FE = ["feGuilda", "feGuildaFundada", "feNaGeografia", "feTemplo", "feAscensao"];
   t("as cinco notas entram abaixo da que já havia", FE.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
   const G = N("feGuilda");
-  t("a guilda: o «a » só diante do nome que não abre por «A » (" + conta(G, "Fui aceito nA Mão Cinzenta como") + "), com o posto e o mestre", conta(G, "Fui aceito nA Mão Cinzenta como Aprendiz.") >= 80 && conta(G, "Fui aceito na Casa do Sal como Aprendiz.") >= 80 && conta(G, "Velho Brann me recebeu.") >= 130);
+  /* movida (29/10/2026, o «nA»): pedia «Fui aceito nA Mão Cinzenta», o texto do App de antes
+     à letra — era o defeito, e o dourado o guardava. O conserto foi declarado (a secção 27 e o
+     gerador do dourado, que faz a mesma troca no código de lá): o artigo do nome contrai com o
+     «em», e o nome sem artigo segue com o «a » de sempre ("na Casa do Sal") */
+  t("a guilda: o artigo do nome contrai com o «em» (" + conta(G, "Fui aceito na Mão Cinzenta como") + "), o nome sem artigo ganha o «a », com o posto e o mestre", conta(G, "Fui aceito na Mão Cinzenta como Aprendiz.") >= 80 && !G.some((x) => x.includes("nA ")) && conta(G, "Fui aceito na Casa do Sal como Aprendiz.") >= 80 && conta(G, "Velho Brann me recebeu.") >= 130);
   const F = N("feGuildaFundada");
   t("a guilda fundada diz o nome, o ofício e a sede", conta(F, "de escribas, com sede em ") >= 130 && conta(F, "Abri a minha propria casa: Ordem da Ponte, de ") >= 80 && conta(F, ", com sede em Porto Sal.") >= 130);
   const Geo = N("feNaGeografia");
@@ -694,7 +702,9 @@ sec("21 · o caminho: os casos percorrem o que o texto decide, e a prova morde")
   const R = N("caminhoMovRegistrado");
   t("o regresso diz de onde saí, com a preposição, e a cidade", conta(R, "Eu saí do moinho velho e AGORA estou de volta às ruas de ") >= 50 && conta(R, "às ruas de Agulha de Sal.") >= 130 && new Set(R.map((x) => x.match(/Eu saí (.*) e AGORA/)[1])).size >= 3);
   const M = N("caminhoMovResolvido");
-  t("o deslocamento dentro do mesmo lugar (" + conta(M, "Eu me desloquei dentro de a praça") + ") e de um para outro, e quem tentou me acertar (" + conta(M, "tentou me acertar na saída") + ")", conta(M, "Eu me desloquei dentro de a praça") >= 50 && conta(M, "Eu me desloquei de o beco para a ponte") >= 50 && conta(M, ", e o Corvo, Greta tentou me acertar na saída.") >= 80 && M.filter((x) => !x.includes("tentou me acertar")).length >= 80);
+  /* movida (29/10/2026, o «nA»): pedia "dentro de a praça" e "de o beco", o defeito à letra; o
+     conserto declarado contrai o artigo dos lugares da cena */
+  t("o deslocamento dentro do mesmo lugar (" + conta(M, "Eu me desloquei dentro da praça") + ") e de um para outro, e quem tentou me acertar (" + conta(M, "tentou me acertar na saída") + ")", conta(M, "Eu me desloquei dentro da praça") >= 50 && conta(M, "Eu me desloquei do beco para a ponte") >= 50 && conta(M, ", e o Corvo, Greta tentou me acertar na saída.") >= 80 && M.filter((x) => !x.includes("tentou me acertar")).length >= 80);
   const C = N("caminhoChegada");
   t("a chegada diz os dias e o destino", C.every((x, i) => x.includes("A estrada acabou: " + [0.5, 1, 3.5, 12][(i >> 1) % 4] + " dias de marcha") && x.includes("eu ESTOU em " + ["Vau", "Torre Funda"][i % 2] + ", dentro dela.")));
   const Dn = N("caminhoDestino");
@@ -887,6 +897,33 @@ sec("26 · o corpo na luta: os casos percorrem o que o texto decide, e a prova m
     const n = divergem(b, fotosDeHoje(b, troca));
     t(nome + ": " + n + " casos mudam", n > 0);
   }
+}
+
+sec("27 · o «nA»: a preposição diante do nome que abre por artigo");
+{
+  /* O conserto declarado (29/10/2026). Os nomes do mundo nascem com artigo — as casas de
+     guildas.js (420 em 420), as bancas de mercado.js (NOMES_LOJA_A), os lugares do mapa e da
+     cena, uma cidade em 420 ("A Fronteira") — e o molde dava "Fui aceito nA Mão Cinzenta",
+     "Comprei de A Bigorna Torta", "fugir de A Cripta Funda", "A A Mão Cinzenta reivindicou".
+     Esta secção chama as formas com esses nomes: com o motor de antes do conserto ela fica
+     vermelha (provado nesse dia), com o de hoje fica verde. A última linha guarda o outro lado:
+     o nome sem artigo passa igual, e o indefinido não contrai. */
+  const guilda = (nome) => oEnvelopeDaFe("guilda", { nome, posto: "Aprendiz", mestre: "Velho Brann" });
+  t("a guilda: na Mão Cinzenta, no Salão Manco, nos Punhos de Sal — e na Casa do Sal, como antes", guilda("A Mão Cinzenta").includes("Fui aceito na Mão Cinzenta como Aprendiz.") && guilda("O Salão Manco").includes("Fui aceito no Salão Manco como") && guilda("Os Punhos de Sal").includes("Fui aceito nos Punhos de Sal como") && guilda("Casa do Sal").includes("Fui aceito na Casa do Sal como"), guilda("A Mão Cinzenta").slice(0, 90));
+  const reiv = (casa) => oEnvelopeDoDominio("reivindicacao", { casa, cidade: "Vau", dias: 3 });
+  t("a casa que reivindica abre a frase com o artigo dela (e «A» quando o nome não o traz)", reiv("O Salão Manco").includes("] O Salão Manco reivindicou Vau;") && reiv("A Mão Cinzenta").includes("] A Mão Cinzenta reivindicou Vau;") && reiv("Casa do Sal").includes("] A Casa do Sal reivindicou Vau;"), reiv("A Mão Cinzenta").slice(0, 90));
+  const compra = oEnvelopeDoMercado("compra", { item: "Corda", vendedor: "A Bigorna Torta", preco: 3 });
+  const mapa = oEnvelopeDoMercado("mapaComprado", { regiao: "as Terras Altas", vendedor: "O Cálice Dourado", preco: 9, novas: [] });
+  t("a banca e a região: da Bigorna Torta, das Terras Altas do Cálice Dourado", compra.includes("Comprei \"Corda\" da Bigorna Torta por") && mapa.includes("Comprei o mapa das Terras Altas do Cálice Dourado por"), compra.slice(0, 90));
+  const obra = (cidade) => oEnvelopeDoDominio("obraConcluida", { cidade, obra: "a muralha" });
+  t("a cidade que abre por artigo: Na Fronteira (a maiúscula da preposição passa), na Fronteira", obra("A Fronteira").includes("] Na Fronteira ficou pronta:") && oEnvelopeDoDominio("imposto", { imposto: "leve", cidade: "A Fronteira" }).includes("Mandei cobrar imposto leve na Fronteira.") && oEnvelopeDaFe("templo", { templo: "Santuário", cidade: "A Fronteira", custo: 50, fe: 30 }).includes("foi construído na Fronteira,"), obra("A Fronteira").slice(0, 90));
+  const mov = (nomeDe, nomePara) => oEnvelopeDoCaminho("movimentoResolvido", { nomeDe, nomePara, colados: [] });
+  t("a masmorra do mapa, os lugares da cena e a chegada", oEnvelopeDaMasmorra("fuga", { masmorra: "A Cripta Funda" }).includes("fugir da Cripta Funda antes do fim") && mov("o salão", "a cozinha").includes("Eu me desloquei do salão para a cozinha") && mov("o salão", "o salão").includes("Eu me desloquei dentro do salão") && oEnvelopeDoCaminho("chegada", { dias: 2, destino: "A Fronteira" }).includes("eu ESTOU na Fronteira, dentro dela."), mov("o salão", "a cozinha").slice(0, 90));
+  const carta = oEnvelopeDoCorreio("carta", { para: "A Ordem do Vácuo", icone: "✉", nome: "Carta", oferta: 0, mensagem: "" });
+  t("a carta à facção: Enviei à Ordem do Vácuo, a reação da Ordem do Vácuo", carta.includes("Enviei à Ordem do Vácuo:") && carta.includes("a reação da Ordem do Vácuo agora."), carta.slice(0, 90));
+  const fundada = oEnvelopeDaFe("guildaFundada", { nome: "Ordem da Ponte", oficio: "o que se faz sem testemunha", sede: "A Fronteira" });
+  t("o ofício e a sede: do que se faz sem testemunha, com sede na Fronteira", fundada.includes("Ordem da Ponte, do que se faz sem testemunha, com sede na Fronteira."), fundada.slice(0, 120));
+  t("e o texto que já estava certo não muda: o nome sem artigo passa igual, o indefinido não contrai", obra("Thornhaven").includes("] Em Thornhaven ficou pronta:") && oEnvelopeDoCaminho("chegada", { dias: 2, destino: "uma estalagem em Vau" }).includes("eu ESTOU em uma estalagem em Vau, dentro dela.") && mov("Ponte", "Vau").includes("Eu me desloquei de Ponte para Vau") && oEnvelopeDoMercado("compra", { item: "Corda", vendedor: "Ondina", preco: 3 }).includes("\"Corda\" de Ondina por"));
 }
 
 sec("8 · a chave da tabela é da tabela, nunca do protótipo");
