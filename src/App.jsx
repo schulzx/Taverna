@@ -248,7 +248,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oChaoDaCena, oPedidoDaEscuta, aEscutaAnda, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
-import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente } from "./motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aFormaDaqui, SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador } from "./motor/envelopes-do-turno.js";
 import { abrirASessao, gravarOTurno } from "./sessao.js";
 import { SESSAO_GUARDADA, chaveDaSessao, gravaNesteModo, estadoParaASessao, turnoParaASessao, guardarASessao, cederAoSave } from "./sessao-guardada.js";
 import { despertarUnica, aFamaDoFeito, concluirAMasmorra, aMorteDoAlvo, surgirANemesis, abrirOCombate, economiaNova, temAcaoBonus, somarAoContador, osVinculos, notarOFecho, limparAsConjuracoes, oRitoDoDeicidio } from "./motor/combate-do-turno.js";
@@ -14814,7 +14814,7 @@ export default function Taverna() {
       if (combateRef.current && soPergunta(acao).soPergunta) {
         setEntrada(""); apagarORascunho();
         pushMsgs([{ autor: "jogador", texto: acao }]);
-        enviar(`${acao} [PERGUNTA AO MESTRE — não é ação: a vez continua minha e ninguém se move; responda pelo que o tabuleiro diz]`, fichaViva() || personagem);
+        enviar(oEnvelopeDoJogador("perguntaAoMestre", { acao }), fichaViva() || personagem);
         return;
       }
     } catch (e) { calou("soPergunta na luta", e); }
@@ -14953,7 +14953,7 @@ export default function Taverna() {
         pushMsgs([{ autor: "jogador", texto: acao }]);
         if (!acampadoRef.current) acampar({ calado: true });
         if (acampadoRef.current) {
-          notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}[O QUE EU ESCREVI] "${acao}" — o descanso já foi resolvido pelo sistema; a frase acontece dentro dele.`;
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoJogador("oQueEuEscrevi", { acao });
           if (dsc.tipo === "longo") descansoLongo(); else sairDoAcampamento("curto");
           return;
         }
@@ -17928,7 +17928,6 @@ export default function Taverna() {
         }
       }
     }
-    const notaVant = r.vantagem ? " (com vantagem)" : r.desvantagem ? " (com desvantagem)" : "";
     /* v9.16: quando houve refazer, o Mestre recebe a história do segundo
        fôlego junto do resultado — nunca a palavra "ponto" nem "sistema". */
     const preRefazer = dadoAnterior != null
@@ -18228,7 +18227,7 @@ export default function Taverna() {
       if (provaAsc) resolverProvaAscensao(provaAsc, passou);
       return;
     }
-    enviar(`${preRefazer}[ROLAGEM] Teste de ${r.atributo || "sorte"} (${r.motivo})${notaVant}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado. O nome entre parênteses é o RÓTULO do painel, não é fala de ninguém: narre o gesto que ele nomeia e não repita essas palavras — muito menos na boca de um personagem.`, personagemRef.current || personagem);
+    enviar(preRefazer + oEnvelopeDoJogador("rolagem", { atributo: r.atributo, motivo: r.motivo, vantagem: r.vantagem, desvantagem: r.desvantagem, valor, mod, notaBuff, total, dc, resultado }), personagemRef.current || personagem);
   };
 
   /* ---------------- A AÇÃO ADJUDICADA (v9.59) ----------------

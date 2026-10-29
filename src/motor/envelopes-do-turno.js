@@ -523,3 +523,22 @@ export const ENVELOPES_DA_GENTE = {
 export function oEnvelopeDaGente(qual, dados) {
   return aFormaDe(ENVELOPES_DA_GENTE, qual, "da gente")(dados || {});
 }
+
+/* ============================================================
+   19.º GRUPO — O TURNO DO JOGADOR: o que o sistema diz ao Narrador à volta
+   da minha própria frase — a pergunta que fiz no meio da luta (não é
+   ação: a vez continua minha), a frase que escrevi e que o descanso já
+   resolveu, e o teste que eu rolei, com o resultado à letra.
+   A pergunta e a rolagem vão no `enviar` (o App põe à frente da rolagem o
+   segundo fôlego do refazer, quando houve); o que escrevi é nota do turno.
+   `notaBuff`: os buffs já ditos pelo App (notaDosBuffs); `vantagem` e
+   `desvantagem`: os dois sinais do teste (a forma diz qual pesou).
+   ============================================================ */
+export const ENVELOPES_DO_JOGADOR = {
+  perguntaAoMestre: ({ acao }) => `${acao} [PERGUNTA AO MESTRE — não é ação: a vez continua minha e ninguém se move; responda pelo que o tabuleiro diz]`,
+  oQueEuEscrevi: ({ acao }) => `[O QUE EU ESCREVI] "${acao}" — o descanso já foi resolvido pelo sistema; a frase acontece dentro dele.`,
+  rolagem: ({ atributo, motivo, vantagem, desvantagem, valor, mod, notaBuff, total, dc, resultado }) => `[ROLAGEM] Teste de ${atributo || "sorte"} (${motivo})${vantagem ? " (com vantagem)" : desvantagem ? " (com desvantagem)" : ""}: rolei ${valor}, modificador +${mod}${notaBuff}, total ${total}${dc != null ? `, dificuldade ${dc}` : ""}. Resultado: ${resultado}. Narre as consequências de forma coerente com o resultado. O nome entre parênteses é o RÓTULO do painel, não é fala de ninguém: narre o gesto que ele nomeia e não repita essas palavras — muito menos na boca de um personagem.`,
+};
+export function oEnvelopeDoJogador(qual, dados) {
+  return aFormaDe(ENVELOPES_DO_JOGADOR, qual, "do jogador")(dados || {});
+}

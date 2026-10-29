@@ -43,7 +43,7 @@ const NOMES = {
   arquivo: ["nomeDaCampanha"],
   lugar: ["comDe"],
   divindades: ["tituloDe"],
-  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente"],
+  motorEnvelopes: ["oRodapeDoTurno", "aFormaDaqui", "SO_ISSO", "oEnvelopeDaMasmorra", "oEnvelopeDoCorreio", "oEnvelopeDoAcampamento", "oEnvelopeDaAbertura", "oEnvelopeDaViagem", "oEnvelopeDoFio", "oEnvelopeDaFicha", "oEnvelopeDoMundo", "oEnvelopeDosPoderes", "oEnvelopeDoMercado", "oEnvelopeDoDominio", "oEnvelopeDoTempo", "oEnvelopeDaFe", "oEnvelopeDoCaminho", "oEnvelopeDaGente", "oEnvelopeDoJogador"],
 };
 const MODULOS = { calendario, geografia, semCidade, prompt, chao, decretos, subtramas, arquivo, lugar, divindades, motorEnvelopes };
 function osModulos({ novo }) {
@@ -89,9 +89,10 @@ export const BLOCOS = ["rodape", "masmorraArmadilha", "masmorraContornada", "mas
   "feGuilda", "feGuildaFundada", "feNaGeografia", "feTemplo", "feAscensao",
   "caminhoMovRegistrado", "caminhoMovResolvido", "caminhoChegada", "caminhoDestino",
   "entradaDaMasmorra", "armadilhaSofridaNaMasmorra",
-  "genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco", "genteRelacaoMudada"];
+  "genteCompanheiro", "genteMissaoPerdida", "genteRelacaoFormal", "genteNovoArco", "genteRelacaoMudada",
+  "vezPergunta", "vezEscrevi", "vezRolagem"];
 /* o grupo de cada bloco: é ele que diz que dados o caso dá ao sítio */
-const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : null);
+const GRUPO = (b) => (b === "rodape" ? "rodape" : /^masmorra/.test(b) ? "masmorra" : /^correio/.test(b) ? "correio" : /^(acamp|fogo|coracao)/.test(b) ? "acampamento" : /^abertura/.test(b) ? "abertura" : /^viagem/.test(b) ? "viagem" : /^fio/.test(b) ? "fio" : /^(ficha|info)/.test(b) ? "ficha" : /^mundo/.test(b) ? "mundo" : /^poder/.test(b) ? "poderes" : /^mercado/.test(b) ? "mercado" : /^dominio/.test(b) ? "dominio" : /^tempo/.test(b) ? "tempo" : /^fe[A-Z]/.test(b) ? "fe" : /^caminho/.test(b) ? "caminho" : /^(entradaDaMasmorra|armadilhaSofridaNaMasmorra)$/.test(b) ? "masmorraNova" : /^gente/.test(b) ? "gente" : /^vez[A-Z]/.test(b) ? "vez" : null);
 const FIM = "\n";
 const ANCORAS = {
   rodape: { antes: ["    const rodape = ", "    const base = histBase ?? historico;"], hoje: ["    const rodape = ", "    const base = histBase ?? historico;"] },
@@ -240,6 +241,10 @@ const ANCORAS = {
   genteRelacaoFormal: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[RELAÇÃO FORMAL — CANON ABSOLUTO]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaGente(\"relacaoFormal\"", FIM] },
   genteNovoArco: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[NOVO ARCO ESCOLHIDO PELO JOGADOR: ", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaGente(\"novoArco\"", FIM] },
   genteRelacaoMudada: { antes: ["env = `${env}\\n[RELAÇÃO — MUDADA PELO SISTEMA]", FIM], hoje: ["env = env + \"\\n\" + oEnvelopeDaGente(\"relacaoMudada\"", FIM] },
+  /* o turno do jogador (19.º grupo): a pergunta ao Mestre na luta (o enviar), o que eu escrevi dentro do descanso (a nota) e a rolagem (o enviar; o App de antes lia o notaVant de um const ~300 linhas acima, que saiu: a forma diz a vantagem) */
+  vezPergunta: { antes: ["enviar(`${acao} [PERGUNTA AO MESTRE", FIM], hoje: ["enviar(oEnvelopeDoJogador(\"perguntaAoMestre\"", FIM] },
+  vezEscrevi: { antes: ["notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}[O QUE EU ESCREVI]", FIM], hoje: ["notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDoJogador(\"oQueEuEscrevi\"", FIM] },
+  vezRolagem: { antes: ["    enviar(`${preRefazer}[ROLAGEM]", FIM], hoje: ["    enviar(preRefazer + oEnvelopeDoJogador(\"rolagem\"", FIM], antesDe: ["    const notaVant = r.vantagem", FIM] },
 };
 const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", viagemTrecho: "textoDaViagem",
   fioMarco: "notaRef.current", fioRumores: "notaRef.current", fioMundo: "notaRef.current", fioVirada: "notaRef.current", fioInterludio: "p",
@@ -253,7 +258,8 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
   feGuilda: "notaRef.current", feGuildaFundada: "notaRef.current", feNaGeografia: "notaRef.current", feTemplo: "notaRef.current", feAscensao: "notaRef.current",
   caminhoMovRegistrado: "notaRef.current", caminhoMovResolvido: "notaRef.current", caminhoChegada: "notaRef.current", caminhoDestino: "notaRef.current",
   entradaDaMasmorra: "envelopeDaEntrada", armadilhaSofridaNaMasmorra: "enviados",
-  genteCompanheiro: "notaRef.current", genteMissaoPerdida: "notaRef.current", genteRelacaoFormal: "notaRef.current", genteNovoArco: "notaRef.current", genteRelacaoMudada: "env" };
+  genteCompanheiro: "notaRef.current", genteMissaoPerdida: "notaRef.current", genteRelacaoFormal: "notaRef.current", genteNovoArco: "notaRef.current", genteRelacaoMudada: "env",
+  vezPergunta: "enviados", vezEscrevi: "notaRef.current", vezRolagem: "enviados" };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -638,6 +644,25 @@ export function genteDoCaso(i) {
   };
 }
 
+/* O TURNO DO JOGADOR: a frase de cada jeito (com aspas dentro); a ficha
+   viva e nenhuma; a nota do turno vazia e já com outra; o teste de cada
+   atributo (e de nenhum: a sorte), com e sem o refazer à frente, com
+   vantagem, desvantagem, as duas e nenhuma, com e sem os buffs, com e
+   sem dificuldade, de cada resultado. */
+export function vezDoCaso(i) {
+  const valor = 1 + (i % 20), mod = i % 5;
+  return {
+    notaRef: { current: ["", "[NOTA] já havia"][i % 2] },
+    acao: ["Quem está mais perto de mim?", "o \"chefe\" ainda respira?", "dormir até o sol nascer"][i % 3],
+    fichaViva: () => ((i >> 1) % 3 ? { nome: "Vera viva" } : null), personagem: { nome: "Vera do render" },
+    personagemRef: { current: (i >> 2) % 2 ? { nome: "Vera do ref" } : null },
+    preRefazer: ["", "[SEGUNDO FÔLEGO] refiz o dado.\n"][(i >> 1) % 2],
+    r: { atributo: [undefined, "Força", "Percepção"][i % 3], motivo: ["arrombar a porta", "ler os vestígios"][(i >> 1) % 2], vantagem: (i >> 2) % 3 === 1 || (i >> 4) % 3 === 2, desvantagem: (i >> 2) % 3 === 2 || (i >> 3) % 4 === 3 },
+    valor, mod, notaBuff: ["", " (+2 de Bênção)"][(i >> 3) % 2], total: valor + mod,
+    dc: [null, 12, 15][(i >> 1) % 3], resultado: ["sucesso", "falha", "sucesso crítico"][i % 3],
+  };
+}
+
 /* ---------------- OS DUBLÊS ---------------- */
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
@@ -719,6 +744,7 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
     else if (g === "caminho") Object.assign(S, caminhoDoCaso(k.i));
     else if (g === "masmorraNova") Object.assign(S, masmorraNovaDoCaso(k.i));
     else if (g === "gente") Object.assign(S, genteDoCaso(k.i));
+    else if (g === "vez") Object.assign(S, vezDoCaso(k.i));
     else throw new Error("bloco sem grupo: " + bloco);
     S.enviados = enviados;
     S.enviar = (txt, p) => { enviados.push([txt, p && p.nome]); };

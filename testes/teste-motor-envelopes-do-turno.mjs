@@ -50,11 +50,13 @@
    na tabela da masmorra.
    O 18.º, A GENTE E A HISTÓRIA: o companheiro que foi embora, a missão
    perdida, a relação formal e a que o meu jeito mudou, e o arco novo.
+   O 19.º, O TURNO DO JOGADOR: a pergunta ao Mestre no meio da luta, a frase
+   que o descanso já resolveu e o teste que eu rolei.
    ============================================================ */
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDosEnvelopes, blocoComoFuncao, correrOBloco, fotoDoEnvelope, fotoGuardada, douradoGuardado, douradoLido, AMOSTRA, casosDosEnvelopes, BLOCOS } from "./envelopes-bloco.mjs";
-import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente } from "../src/motor/envelopes-do-turno.js";
+import { oRodapeDoTurno, aCabecaDoRodape, aFormaDaqui, ORDEM_DO_RODAPE, RODAPE_DO_SISTEMA, A_FORMA_DAQUI, SO_ISSO, ENVELOPES_DA_MASMORRA, oEnvelopeDaMasmorra, ENVELOPES_DO_CORREIO, oEnvelopeDoCorreio, ENVELOPES_DO_ACAMPAMENTO, oEnvelopeDoAcampamento, ENVELOPES_DA_ABERTURA, oEnvelopeDaAbertura, ENVELOPES_DA_VIAGEM, oEnvelopeDaViagem, ENVELOPES_DO_FIO, oEnvelopeDoFio, ENVELOPES_DA_FICHA, oEnvelopeDaFicha, ENVELOPES_DO_MUNDO, oEnvelopeDoMundo, ENVELOPES_DOS_PODERES, oEnvelopeDosPoderes, ENVELOPES_DO_MERCADO, oEnvelopeDoMercado, ENVELOPES_DO_DOMINIO, oEnvelopeDoDominio, ENVELOPES_DO_TEMPO, oEnvelopeDoTempo, ENVELOPES_DA_FE, oEnvelopeDaFe, ENVELOPES_DO_CAMINHO, oEnvelopeDoCaminho, ENVELOPES_DA_GENTE, oEnvelopeDaGente, ENVELOPES_DO_JOGADOR, oEnvelopeDoJogador } from "../src/motor/envelopes-do-turno.js";
 import { formaDaCidade } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -752,6 +754,40 @@ sec("23 · a gente e a história: os casos percorrem o que o texto decide, e a p
     ["genteRelacaoFormal", "a relação formal que casa todo mundo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, relacao: "conjuge" }) }],
     ["genteRelacaoMudada", "a relação mudada que esquece o rótulo", { oEnvelopeDaGente: (q, d) => P(q, { ...d, rotulo: "Aliado" }) }],
     ["genteNovoArco", "o arco novo sem a direção", { oEnvelopeDaGente: (q, d) => P(q, { ...d, instrucao: "" }) }],
+  ];
+  for (const [b, nome, troca] of mordidas) {
+    const n = divergem(b, fotosDeHoje(b, troca));
+    t(nome + ": " + n + " casos mudam", n > 0);
+  }
+}
+
+sec("24 · o turno do jogador: os casos percorrem o que o texto decide, e a prova morde");
+{
+  const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  /* a pergunta e a rolagem devolvem o que enviaram; o que escrevi, a nota */
+  const Pg = HOJE.vezPergunta.map((f) => f.texto[0]);
+  t("a pergunta: a minha frase à frente, o aviso atrás, e vai para a ficha viva quando há (" + Pg.filter((x) => x[1] === "Vera viva").length + ")", Pg.every((x, i) => x[0] === ["Quem está mais perto de mim?", "o \"chefe\" ainda respira?", "dormir até o sol nascer"][i % 3] + " [PERGUNTA AO MESTRE — não é ação: a vez continua minha e ninguém se move; responda pelo que o tabuleiro diz]") && Pg.filter((x) => x[1] === "Vera viva").length >= 150 && Pg.filter((x) => x[1] === "Vera do render").length >= 60);
+  const E = HOJE.vezEscrevi.map((f) => f.texto);
+  t("o que escrevi entra abaixo da nota que já havia, com a frase entre aspas", conta(E, "[NOTA] já havia\n[O QUE EU ESCREVI] \"") >= 130 && E.filter((x) => x.startsWith("[O QUE EU ESCREVI] \"")).length >= 130 && conta(E, "\"o \"chefe\" ainda respira?\" — o descanso já foi resolvido pelo sistema; a frase acontece dentro dele.") >= 80);
+  const Ro = HOJE.vezRolagem.map((f) => f.texto[0]);
+  const T = Ro.map((x) => x[0]);
+  t("a rolagem com o refazer à frente (" + conta(T, "[SEGUNDO FÔLEGO] refiz o dado.\n[ROLAGEM]") + ") e sem, para o ref ou para quem renderiza", conta(T, "[SEGUNDO FÔLEGO] refiz o dado.\n[ROLAGEM] Teste de ") >= 130 && T.filter((x) => x.startsWith("[ROLAGEM] Teste de ")).length >= 130 && Ro.filter((x) => x[1] === "Vera do ref").length >= 130 && Ro.filter((x) => x[1] === "Vera do render").length >= 130);
+  t("a sorte quando não há atributo, e o motivo entre parênteses", conta(T, "Teste de sorte (") >= 80 && conta(T, "Teste de Força (arrombar a porta)") >= 40 && conta(T, "Teste de Percepção (ler os vestígios)") >= 40);
+  /* os casos com as duas (a mesma conta de vezDoCaso): a vantagem tem de pesar */
+  const ambas = (i) => ((i >> 2) % 3 === 1 || (i >> 4) % 3 === 2) && ((i >> 2) % 3 === 2 || (i >> 3) % 4 === 3);
+  const comV = conta(T, ") (com vantagem): rolei"), comD = conta(T, ") (com desvantagem): rolei");
+  /* sem nenhuma das duas o teste vai sem marca: 48 dos 275 casos (a conta de vezDoCaso) */
+  const semMarca = T.filter((x) => /\): rolei /.test(x) && !/\((com vantagem|com desvantagem)\): rolei/.test(x)).length;
+  t("a vantagem pesa sobre a desvantagem quando há as duas (" + comV + " com, " + comD + " contra), e sem nenhuma o teste vai sem marca (" + semMarca + ")", comV >= 60 && comD >= 40 && semMarca >= 40 &&HOJE.vezRolagem.filter((f, i) => ambas(i)).length >= 10 && HOJE.vezRolagem.every((f, i) => !ambas(i) || f.texto[0][0].includes("(com vantagem): rolei")));
+  t("os buffs e a dificuldade só quando há (" + conta(T, ", dificuldade ") + ")", conta(T, " (+2 de Bênção), total ") >= 130 && conta(T, ", dificuldade 12. Resultado: ") >= 60 && conta(T, ", dificuldade 15. Resultado: ") >= 60 && T.filter((x) => !x.includes(", dificuldade ")).length >= 60);
+  t("as três formas estão na tabela do jogador", Object.keys(ENVELOPES_DO_JOGADOR).length === 3 && ["perguntaAoMestre", "oQueEuEscrevi", "rolagem"].every((q) => Object.hasOwn(ENVELOPES_DO_JOGADOR, q)));
+  const P = oEnvelopeDoJogador;
+  const mordidas = [
+    ["vezPergunta", "a pergunta que perde a minha frase", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, acao: "" }) }],
+    ["vezEscrevi", "o que escrevi com a frase de outro", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, acao: "nada" }) }],
+    ["vezRolagem", "a rolagem que esquece a desvantagem", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, desvantagem: false }) }],
+    ["vezRolagem", "a rolagem sem a dificuldade", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, dc: null }) }],
+    ["vezRolagem", "a rolagem que esquece os buffs", { oEnvelopeDoJogador: (q, d) => P(q, { ...d, notaBuff: "" }) }],
   ];
   for (const [b, nome, troca] of mordidas) {
     const n = divergem(b, fotosDeHoje(b, troca));

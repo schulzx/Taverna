@@ -433,8 +433,16 @@ sec("7. a fiação — App.jsx (perguntar é de graça)");
     && (() => { const r = oMundoAndaNoTurno({}, { toString() { throw new Error("frase torta"); } }); return r.anda === true && !!r.erro; })());
 
   /* ---- 3. a vez na luta: perguntar não é o turno ---- */
+  /* movida (29/10, Fase T2, trilha A, 19.º grupo): o aviso saiu do App para
+     ENVELOPES_DO_JOGADOR (src/motor/envelopes-do-turno.js), e o App manda
+     oEnvelopeDoJogador("perguntaAoMestre", { acao }). A intenção é a mesma — na luta
+     só pergunta vai ao Narrador com o aviso e o turno para ali —, e por isso a
+     asserção exige a chamada no mesmo lugar (antes do return) e segue o aviso até
+     ao motor, chamado (não lido como texto). */
+  const { oEnvelopeDoJogador } = await import("../src/motor/envelopes-do-turno.js");
   t("na luta, só pergunta não chega ao despachante — enviar leva o aviso, e o turno para aqui (return)",
-    /if\s*\(combateRef\.current\s*&&\s*soPergunta\(acao\)\.soPergunta\)\s*\{[^]*?enviar\(`\$\{acao\} \[PERGUNTA AO MESTRE[^]*?\);\s*return;\s*\}/.test(agir));
+    /if\s*\(combateRef\.current\s*&&\s*soPergunta\(acao\)\.soPergunta\)\s*\{[^]*?enviar\(oEnvelopeDoJogador\("perguntaAoMestre", \{ acao \}\)[^]*?\);\s*return;\s*\}/.test(agir)
+    && oEnvelopeDoJogador("perguntaAoMestre", { acao: "Quem é Doran?" }).startsWith("Quem é Doran? [PERGUNTA AO MESTRE — não é ação: a vez continua minha"));
   t("guardado por calou (\"soPergunta na luta\")", /calou\("soPergunta na luta", e\);/.test(agir));
   {
     const iCaiu = agir.indexOf('calou("turno-de-quem-caiu", e);');

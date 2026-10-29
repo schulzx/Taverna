@@ -212,7 +212,7 @@ export const ACOES_DO_JOGADOR = [
      apontar a mesma linha que apontavam no HEAD, e essa linha continua a
      não ser a função nomeada ao lado. Re-medi-los é do `testes`, não desta
      etapa — fica escrito em vez de arrumado por fora.
-     `onClick` (`src/App.jsx:22738`) → `declararAcaoRapida` (`:15919`)
+     `onClick` (`src/App.jsx:22737`) → `declararAcaoRapida` (`:15919`)
      → `adjudicarAcao` (`:15668`) → dado.
      Nenhuma é de combate — é o achado que pôs a Fase X na frente. */
   { id: "rapida_buscar", rotulo: "Vasculhar", fonte: "ACOES_RAPIDAS", combate: false,
@@ -252,12 +252,12 @@ export const ACOES_DO_JOGADOR = [
   /* ---------------- FORA DO PAINEL ----------------
      Os cliques que chegam ao motor sem passar pela caixa de texto. */
   { id: "grid_mover", rotulo: "Mover no grid", fonte: "grid", combate: true,
-    onde: "src/App.jsx:22896 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:15543)",
+    onde: "src/App.jsx:22895 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:15543)",
     texto: null,
     cliqueChega: "motor", textoFora: null, textoLuta: null,
     alcanca: "muda x,y do herói (src/App.jsx:15976) e gasta o movimento da economia" },
   { id: "bolsa_consumivel", rotulo: "Beber da bolsa", fonte: "bolsa", combate: true,
-    onde: "src/App.jsx:21408", handler: "clique em `usar` → usarConsumivelUI",
+    onde: "src/App.jsx:21407", handler: "clique em `usar` → usarConsumivelUI",
     texto: null,
     cliqueChega: "motor", textoFora: null, textoLuta: null,
     alcanca: "rola o dado da poção, aplica a cura e tira o item da bolsa" },
@@ -1404,9 +1404,9 @@ export const FUNIL_DO_COMBATE = [
      crime nenhum, porque a vítima já lia como inimigo declarado) cresceu 3
      linhas na mesma função, ACIMA deste ponto. Re-medido por esta própria
      catraca; nada somado de cabeça. */
-  { fn: "virarChefeSePreciso", onde: "src/App.jsx:21031", anel: "nucleo",
+  { fn: "virarChefeSePreciso", onde: "src/App.jsx:21030", anel: "nucleo",
     linhas: [
-      { onde: "src/App.jsx:21045", evento: "o chefe da masmorra vira de fase",
+      { onde: "src/App.jsx:21044", evento: "o chefe da masmorra vira de fase",
         voz: "frase", nasce: "src/masmorras.js:722 (falaDaViradaDoChefe)" },
     ] },
 ];
