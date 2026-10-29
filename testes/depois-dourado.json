@@ -2,9 +2,17 @@
  "commit": "fa0a5e0",
  "raizes": [
   "oferecerTrabalhoDaqui",
-  "pregarNoMural"
+  "pregarNoMural",
+  "conferirAsMissoes",
+  "ganharFe",
+  "marcarNoArco"
  ],
  "recortes": [
+  {
+   "nome": "fichaViva",
+   "de": "componente",
+   "texto": "  /* ---------------- A FICHA VIVA (v9.41) ----------------\n     O espelho acima só é atualizado por um efeito — ou seja, na renderização\n     SEGUINTE. Só que um turno de combate inteiro roda dentro de UM clique:\n     eu ataco, o sistema fecha a luta, credita os espólios, e a linha de baixo\n     manda ao Mestre a cópia da ficha que quem chamou tinha em mão antes de\n     tudo isso. A cópia velha chega ao `aplicarResposta` e volta por cima.\n\n     Foi exatamente assim que \"+21 moedas e +90 XP\" apareceu na tela e não\n     apareceu na bolsa: o crédito existiu por três linhas. `fichaViva` lê o\n     estado mais recente e `mudarFicha` grava nos dois lugares de uma vez, de\n     modo que o próximo a ler nunca receba o passado. */\n  const fichaViva = () => personagemRef.current || personagem;"
+  },
   {
    "nome": "mundoAtual",
    "de": "componente",
@@ -14,6 +22,16 @@
    "nome": "sementeMundo",
    "de": "componente",
    "texto": "  const sementeMundo = () => `${nomeCampanhaRef.current || nomeCampanha || \"aventura\"}|${(mundoAtual() && mundoAtual().genero) || \"\"}`;"
+  },
+  {
+   "nome": "pontoDaSorte",
+   "de": "componente",
+   "texto": "  const pontoDaSorte = () => pontoDaSorteDe({ dia: diaRef.current, minuto: minutoRef.current, falas: (mensagensRef.current || []).length });"
+  },
+  {
+   "nome": "sorteDoTurno",
+   "de": "componente",
+   "texto": "  const sorteDoTurno = (evento) => {\n    try {\n      const r = sorteNoPonto(contagemDaSorteRef.current, sementeMundo(), pontoDaSorte(), evento);\n      contagemDaSorteRef.current = r.contagem;\n      return r.sorte;\n    } catch (e) { calou(\"sorteDoTurno\", e); return sorteDaCasa; }\n  };"
   },
   {
    "nome": "generoMundo",
@@ -26,9 +44,104 @@
    "texto": "  /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar\n     recebe isto ao lado do gênero — um decide o sabor, o outro a forma. */\n  const moldeMundo = () => moldePorId((mundoAtual() && mundoAtual().molde) || MOLDE_PADRAO);"
   },
   {
+   "nome": "infoDivindade",
+   "de": "componente",
+   "texto": "  /* O que o Mestre recebe sobre o cosmos: regras só após o despertar (custo zero antes) */\n  const infoDivindade = () => {\n    const dv = divindadeRef.current;\n    if (!dv || !dv.despertar) return \"\";\n    const fe = resumoFePrompt(mapaRef.current, devocaoRef.current, dv);\n    return `${DIVINDADE_PROMPT}\\n${CAMINHOS_PROMPT}\\n${DEVOCAO_PROMPT}\\nEstado atual do jogador: ${resumoAscensao(dv, 0)}${dv.panteao.length ? `\\nPanteão conhecido: ${dv.panteao.map((d) => `${d.icone} ${d.nome} ${d.dominio} — GD ${d.gd} (${tituloDe(d.gd)}), culto: ${d.culto}`).join(\"; \")}.` : \"\"}${fe ? `\\n${fe}` : \"\"}`;\n  };"
+  },
+  {
    "nome": "semNome",
    "de": "componente",
    "texto": "  /* ---------------- ANDAR DENTRO DA CIDADE (v9.55) ----------------\n     \"Vou até o Javali Cambaleante.\" O Mestre narrou a travessia da praça e\n     a porta da taverna, e o sistema deixou o herói no centro — o marcador\n     do mapa não saiu do lugar.\n\n     O Mestre estava certo em não registrar nada: o prompt lhe diz que\n     `lugar_atual` é o que fica FORA da cidade. A taverna não é fora da\n     cidade. O modelo tinha dois estados — dentro e fora — e a cidade\n     inteira cabia no primeiro.\n\n     Quem move, então, é o CÓDIGO, e move ANTES de o Mestre responder: o\n     jogador escreveu o nome de um lugar que o sistema conhece, com um\n     verbo de deslocamento. Não há o que interpretar, e é justamente o\n     tipo de coisa que esta casa não delega.\n\n     Vale para os dois lados do muro: um local de dentro vira `dentro` (sair\n     dele leva minutos); um do cinturão vira `arredores` (leva horas), que é\n     o que já era. E o Mestre recebe o fato pronto, não um pedido. */\n  const semNome = (s) => String(s || \"\").toLowerCase().normalize(\"NFD\").replace(/[̀-ͯ]/g, \"\").trim();"
+  },
+  {
+   "nome": "pessoasDaCena",
+   "de": "componente",
+   "texto": "  const pessoasDaCena = () => {\n    try {\n      const p0 = fichaViva() || personagem || {};\n      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current });\n      const quantos = aqui.length;\n      const daBase = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);\n      const confid = confidenciasRef.current || [];\n      return aqui.map((x) => {\n        const nome = typeof x === \"string\" ? x : x.nome;\n        const n = npcsRef.current[nome] || {};\n        const l = garantirLaco(n.laco);\n        const daBaseEla = ((daBase && daBase.gente) || []).find((g) => g.nome === nome) || {};\n        const noGrupo = (p0.grupo || []).some((g) => (g.nome || \"\") === nome);\n        return {\n          nome,\n          papel: n.papel || daBaseEla.papel || \"\",\n          temperamento: n.traco || daBaseEla.traco || \"\",\n          quer: daBaseEla.vontade || n.notas || \"\",\n          teme: n.segredo || \"\",\n          relacao: n.relacao || \"desconhecido\",\n          laco: (l && l.tipo) || \"\",\n          forcaDoLaco: (l && !l.rompido && l.forca) || 0,\n          rompido: !!(l && l.rompido),\n          euDevo: /d[íi]vida|devo|prometi/i.test(String(n.notas || \"\")) || (l && l.tipo === \"divida\"),\n          /* 11/10 (MM11 · 5.ª sessão, M35): quem recebeu de mim sem que eu\n             pedisse nada fica a dever (`registarABolsaDaFrase`) — o sinal\n             que o Intérprete e a índole já liam e ninguém acendia */\n          meDeve: !!n.meDeve,\n          sabeDeMim: confid.some((c) => (c.ouvintes || []).includes(nome)),\n          euSeiDela: !!n.segredo,\n          primeiraVez: n.conhecidoEm == null && !noGrupo, /* v9.315: dia 0 é conhecido, não \"nunca vi\" (!n.conhecidoEm tratava os dois igual) */\n          viuAntes: (() => { try { return jaMeViuAntes(n, { hoje: diaRef.current, vistos: (elencoSaveRef.current || {}).vistos }); } catch (e) { calou(\"viuAntes\", e); return false; } })(),\n          ato: atoDoTurnoRef.current,\n          quantosEscutam: Math.max(0, quantos - 1),\n          aSos: quantos <= 1,\n          emPerigo: !!combateRef.current || (personagemRef.current || personagem || {}).vida < ((personagemRef.current || personagem || {}).vidaMax || 1) * 0.35,\n          emCombate: !!combateRef.current,\n          noLugarDela: !!(lugarRef.current && daBaseEla.local && lugarRef.current.nome === daBaseEla.local),\n          tocaramNoSegredo: !!n.segredo && /segredo|verdade|passado|de onde|quem [ée]/i.test(atoDoTurnoRef.current === \"pedi\" ? \"pergunta\" : \"\"),\n          ehCompanheiro: noGrupo,\n          fama: Math.round(famaAtual()),\n          noite: ehNoite(minutoRef.current),\n        };\n      });\n    } catch (e) { return calou(\"pessoasDaCena\", e); }\n  };"
+  },
+  {
+   "nome": "temOQueGovernar",
+   "de": "componente",
+   "texto": " /* ONDA 3 DO CUSTO (14/10): a relevância do turno (relevancia.js: o que o turno cita pelo nome, quem a cena tem, onde o herói está), lida pela gente, pelo cânone, pelas masmorras e pelos esconderijos; se a pauta trouxe a linha A GENTE (a porta do bloco que a ensina); e os nomes da gente da cidade (a GENTE POR CONHECER não os repete). Montados em enviar, junto dos sinais; fora de um turno ou se estourarem, null — e tudo vai como antes. Não vão ao save. */\n  /* o herói tem o que governar: facção, cidade sua, governo, cidade a ser\n     tomada, ou uma casa de que é membro (a guilda do painel de Gestão) */\n  const temOQueGovernar = () => {\n    try {\n      return !!faccaoJogadorRef.current\n        || ((mapaRef.current || {}).cidades || []).some((c) => c && c.relacao === \"jogador\")\n        || Object.keys(governosRef.current || {}).length > 0\n        || !!tomandoRef.current\n        || (guildasRef.current || []).some((g) => g && g.membro);\n    } catch (e) { calou(\"o herói tem o que governar\", e); return true; }\n  };"
+  },
+  {
+   "nome": "cenaDoPrompt",
+   "de": "componente",
+   "texto": "  const cenaDoPrompt = () => {\n    const p = fichaViva() || personagem || {};\n    const sinais = sinaisDoTurnoRef.current || SINAIS_ABERTOS;\n    const mm = masmorraRef.current;\n    const cena = {\n      emCombate: !!combateRef.current,\n      emMasmorra: !!(mm && !mm.encerrada),\n      /* v9.115: há um chamado em curso? É a porta da raid. */\n      emRaid: !!(raidRef.current && raidRef.current.fase === \"luta\"),\n      /* v9.117: há uma missão DO SISTEMA aberta? É a porta da trama. */\n      temTrama: (missoesRef.current || []).some((m) => m && m.status === \"ativa\" && m.tipo === \"trama\"),\n      /* v9.120: a porta da mesa de dois abre quando há de fato duas\n         cadeiras ocupadas — não quando há uma sala aberta e vazia. */\n      emSala: ocupadosDaSala(salaRef.current).length >= LUGARES,\n      /* v9.106: há alguém em cena? É a porta do Intérprete. */\n      temGente: pessoasDaCena().length > 0,\n      temVilao: !!(nemesisRef.current && nemesisRef.current.nome),\n      /* v9.112: a Pauta deste turno traz uma cobrança do mundo? */\n      temCobranca: !!cobrouAgoraRef.current,\n      temChao: (chaoRef.current || []).length > 0,\n      emCidade: !!cidadeAtualRef.current,\n      /* dentro de um PRÉDIO da cidade — não nos arredores. A régua é a\n         distância, que já sabe distinguir uma escada de uma caminhada. */\n      dentroDeUmLocal: !!(lugarRef.current && lugarRef.current.distancia === \"dentro\" && cidadeAtualRef.current),\n      /* cidade tem mercador; ermo não tem. É a mesma pergunta, e é honesta:\n         a regra de compra e venda importa onde há de quem comprar. */\n      /* ONDA 2 DO CUSTO: e a tabela de preços só abre quando o turno fala de\n         comércio — na cidade ela abria em 96% dos turnos e é de onde vinham\n         os preços inventados; o preço de verdade chega por PERGUNTOU e O PREÇO */\n      temMercado: !!cidadeAtualRef.current && !!sinais.comercio,\n      temGoverno: temOQueGovernar() || !!sinais.governo,\n      fimDoAcampamento: !!sinais.fimDoAcampamento,\n      temBancada: ((p.inventario || []).some((it) => !!comoComponente(it))),\n      temMissao: !!resumoMissoesPrompt(missoesRef.current),\n      conjura: perfilCombate(p.classe).tipo === \"conjurador\" || temCaderno(p)\n        || (p.habilidades || []).some((h) => ehMagiaDoGrimorio(h && h.nome)),\n      temGrupo: ((p.grupo || []).length > 0),\n      temLegado: !!resumoLegadoPrompt(p),\n      temSintonia: !!resumoSintoniaPrompt(p),\n      temEspecializacao: !!p.especializacao,\n      despertou: !!(divindadeRef.current && divindadeRef.current.despertar),\n      invoca: (p.habilidades || []).some((h) => !!invocacaoDe(h)) || invocacoesDe(p).length > 0,\n      /* o bloco explica como narrar um efeito que ACABA por acontecimento —\n         sem efeito assim ativo, não há o que narrar */\n      temGatilho: (p.efeitos || []).some((e) => gatilhosDe(e).length > 0),\n      temDadiva: ((p.dadivas || []).length > 0) || (p.nivel || 1) >= 20,\n      temRegraPropria: temRegraPropria(p),\n      emViagem: !!jornadaRef.current, acampado: !!acampadoRef.current, genteNaPauta: genteNaPautaRef.current, /* onda 3 do custo: `acampado` nunca vinha, e a porta do acampamento (ACAMPAMENTO_PROMPT) nunca abria — o defeito que a onda 2 achou; `genteNaPauta` abre o bloco da GENTE EM CENA só com a linha A GENTE na pauta (null fora de um turno = a porta de antes) */\n    };\n    /* MM17 C2: lá dentro fecham o mercado, a cidade, a estrada e o prédio\n       (PORTAS_NA_MASMORRA): 2.768 car. de regras de compra e venda por\n       turno numa cripta. Fora dela, a mesma cena (o mesmo objeto). */\n    try { return cenaNaMasmorra(cena); } catch (e) { calou(\"cenaNaMasmorra\", e); return cena; }\n  };"
+  },
+  {
+   "nome": "famaAtual",
+   "de": "componente",
+   "texto": "  /* o nível é o da ficha VIVA (o ref, 4.ª fatia): o `personagem` do render\n     é nulo nas closures que nascem no primeiro render (o aplicarResposta é\n     uma delas), e a fama caía no nível 1 — o defeito 4 de 28/10 */\n  const famaAtual = () => calcularFama(contRef.current, ((personagemRef.current || personagem || {}).nivel) || 1, dominiosDe(mapaRef.current).length);"
+  },
+  {
+   "nome": "tempoInfoPrompt",
+   "de": "componente",
+   "texto": "  const tempoInfoPrompt = () => {\n    const est = estacaoDe(diaRef.current);\n    return `TEMPO DA CAMPANHA: hoje é ${dataTxt(diaRef.current)} — dia ${diaRef.current} da campanha —, ${horaTxt(minutoRef.current)}${ehNoite(minutoRef.current) ? \" (NOITE)\" : \"\"}, ${est.nome.toLowerCase()} ${est.icone} (${est.nota}). O app controla o relógio e o calendário: NUNCA estime datas ou horas por conta própria; use estas.`;\n  };"
+  },
+  {
+   "nome": "aplicarOsEfeitos",
+   "de": "componente",
+   "texto": "  /* OS EFEITOS DO MOTOR, NUM LUGAR SÓ (T1-A, 27/10). O motor (`aplicar`)\n     não escreve em ref nem chama setX: devolve o estado novo e descreve o\n     resto. Aqui é onde isso vira tela — cada um em `calou`, porque um\n     efeito que estoura não pode levar o turno. A nota cresce como sempre\n     cresceu (`notaComOTurno`); as travas voltam aos refs; a luta vai ao\n     ref e à tela; os erros que o motor engoliu chegam ao `calou` com o nome\n     de sempre. */\n  const aplicarOsEfeitos = (saida) => {\n    if (!saida || !saida.estado) return;\n    /* as travas voltam aos refs só quando o estado as traz: o registo (e\n       o mapa, e o lugar dito) não as levam, e escrever `undefined` nelas\n       desarmava a trava do dano que o aplicar deixou armada para o turno\n       seguinte (o achado de 28/10, na 3.ª fatia) */\n    try { if (\"danoJaAplicado\" in saida.estado) danoJaAplicadoRef.current = saida.estado.danoJaAplicado; } catch (e) { calou(\"aplicarOsEfeitos/danoJaAplicado\", e); }\n    try { if (\"habUsada\" in saida.estado) habUsadaRef.current = saida.estado.habUsada; } catch (e) { calou(\"aplicarOsEfeitos/habUsada\", e); }\n    try { notaRef.current = notaComOTurno(notaRef.current, saida.paraOCronista); } catch (e) { calou(\"aplicarOsEfeitos/nota\", e); }\n    for (const ef of saida.efeitos || []) {\n      try {\n        if (ef.tipo === \"combate\") { combateRef.current = ef.combate; setCombate(ef.combate); }\n        else if (ef.tipo === \"textura\") texturaRef.current = { ...texturaRef.current, ganho: true };\n        else if (ef.tipo === \"calou\") calou(ef.onde, ef.erro);\n        /* o registo (T1-A, 2.ª fatia): o cânone, o mapa, a gente, e o prompt\n           remontado com tudo isso já no lugar — o próximo turno enxerga */\n        else if (ef.tipo === \"canone\") canoneRef.current = ef.canone;\n        else if (ef.tipo === \"mapa\") { mapaRef.current = ef.mapa; setMapa(ef.mapa); }\n        else if (ef.tipo === \"npcTurno\") npcTurnoRef.current = ef.npcTurno;\n        else if (ef.tipo === \"npcs\") { npcsRef.current = ef.npcs; setNpcs(ef.npcs); }\n        /* o mapa e o lugar (T1-A, 3.ª fatia): a cidade em que estou, o lugar\n           dito, a jornada, a facção, a devoção, e a cerimónia da chegada —\n           a faixa ganha aqui a chave do instante, que não é estado do jogo */\n        else if (ef.tipo === \"cidadeAtual\") cidadeAtualRef.current = ef.cidade;\n        else if (ef.tipo === \"lugar\") { lugarRef.current = ef.lugar; setLugar(ef.lugar); }\n        else if (ef.tipo === \"jornada\") { jornadaRef.current = ef.jornada; setJornada(ef.jornada); }\n        else if (ef.tipo === \"faccaoJogador\") faccaoJogadorRef.current = ef.faccao;\n        else if (ef.tipo === \"devocao\") { devocaoRef.current = ef.devocao; setDevocao(ef.devocao); }\n        else if (ef.tipo === \"lugarNovo\") setLugarNovo(ef.cidade);\n        else if (ef.tipo === \"chegada\") setChegada({ ...ef.chegada, chave: Date.now() });\n        /* as missões e os sinais (T1-A, 3.ª fatia): o deus, a ficha que o\n           milagre muda (o ref, a tela e o save juntos, v9.32), os eventos, o\n           arco, a lista das missões redesenhada, as portas que os sinais\n           pedem, e a revelação do achado. O achado em si já não é efeito\n           (4.ª fatia): entrava por uma função atualizadora, e o\n           `setPersonagem(pers)` do fim do turno apagava-o; agora vem dentro\n           da ficha do turno, que é a que se grava. */\n        else if (ef.tipo === \"divindade\") { divindadeRef.current = ef.divindade; setDivindade(ef.divindade); }\n        else if (ef.tipo === \"ficha\") { personagemRef.current = ef.personagem; setPersonagem(ef.personagem); salvar({ personagem: ef.personagem }); }\n        else if (ef.tipo === \"eventos\") { eventosRef.current = ef.eventos; setEventos(ef.eventos); }\n        else if (ef.tipo === \"historia\") historiaRef.current = ef.historia;\n        else if (ef.tipo === \"quests\") setQuests([...questsRef.current]);\n        else if (ef.tipo === \"sinalViagem\") sinalViagemRef.current = ef.destino;\n        else if (ef.tipo === \"sinalMasmorra\") sinalMasmorraRef.current = ef.nome;\n        else if (ef.tipo === \"sinalRaid\") sinalRaidRef.current = ef.nome;\n        else if (ef.tipo === \"espolio\") setEspolioRevelado(ef.item);\n        /* o fim do turno (T1-A, 4.ª fatia): a base do mundo com o que a\n           narração revelou — o ref e a tela juntos, como no registrarRevelacao */\n        else if (ef.tipo === \"base\") { baseMundoRef.current = ef.base; setBaseMundo(ef.base); }\n        /* o portão: o contexto que o conserto reusa (só quando chegou a ser\n           montado) e as violações do turno */\n        else if (ef.tipo === \"portao\") { if (\"contexto\" in ef) portaoCtxRef.current = ef.contexto; portaoRef.current = ef.violacoes; }\n        else if (ef.tipo === \"remontarPrompt\") systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), ef.personagem || personagemRef.current, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + \"\\n\" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());\n      } catch (e) { calou(\"aplicarOsEfeitos/\" + (ef && ef.tipo), e); }\n    }\n  };"
+  },
+  {
+   "nome": "mundoDasMissoes",
+   "de": "componente",
+   "texto": "  /* CRONISTA DO TURNO (v7.4.2): fusão do Fiscal de Missões com o Escriba —\n     UMA única chamada leve por turno (antes eram duas: metade do custo e da\n     latência) julga o turno inteiro de uma vez e devolve um JSON por seções.\n     O CÓDIGO aplica cada seção ISOLADAMENTE: se uma vier quebrada, as outras\n     ainda valem. Conservador de propósito: seções vazias são comuns. */\n  /* O estado que as etapas consultam. Serve ao conferente (a cada turno) e à\n     porta de entrada das ofertas — é ele que impede uma etapa de nascer\n     cumprida, como \"encontre Ubba\" com Ubba na sua frente. */\n  const mundoDasMissoes = (persAtual) => {\n    const p = persAtual || personagemRef.current || personagem || {};\n    return {\n      cidadeAtual: cidadeAtualRef.current,\n      /* v9.117: e ONDE dentro dela. Uma etapa que manda a uma cabana, a\n         uma torre caída ou a uma boca de mina não tem como ser conferida\n         por `cidadeAtual` — o herói chegava e o diário não sabia. */\n      lugarAtual: lugarRef.current || null,\n      /* 11/10: com quem falei neste turno — só na conferência que o\n         Cronista dispara (`falouComRef`); fora dela, vazio */\n      falouCom: falouComRef.current || [],\n      /* MM-C · C0: o marco com cena fecha pelo FATO (saga.js, fatosQueFecham)\n         — o segredo revelado, a conversa — e não por o herói lá estar. Os\n         segredos revelados só existem na conferência que o Cronista dispara. */\n      soPeloFato: (() => { try { return fatosQueFecham(espinhaRef.current); } catch (e) { calou(\"os fatos que fecham\", e); return null; } })(),\n      segredosRevelados: segredosReveladosRef.current || [],\n      derrotados: [...((baseMundoRef.current || {}).mortos || []), ...(derrotadosDaSessaoRef.current || [])],\n      inventario: p.inventario || [], equipamento: p.equipamento || [],\n      npcs: npcsRef.current, dia: diaRef.current, relogios: relogiosRef.current, emLuta: !!combateRef.current,\n      /* v9.129: o que já foi apresentado em cena. É o que a etapa `revelar`\n         lê — descobrir é diferente de passar pela porta. */\n      revelados: (baseMundoRef.current || {}).revelados || [],\n      /* v9.132: a base inteira, porque a etapa de resgate pergunta a\n         SITUACAO de alguem — e quem sabe normalizar nome e ela. */\n      base: baseMundoRef.current,\n      /* MM13 (defeito A): a ponte do \"descobrir\" — a etapa antiga guarda o\n         NOME do lugar, e a base grava a chave \"Cidade|tipo\" quando revela.\n         Sem isto, nenhuma missão de descobrir fechava sozinha. */\n      chaveDoLugar: (n) => chaveDoLugar(sementeMundo(), mapaRef.current, n, { genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, cidade: cidadeAtualRef.current }),\n      /* 11/10 (MM, o laço da história 1/6, v9.396 do backend): o fio é um só —\n         a missão fecha pelo marco que a espinha já fechou. Sem isto \"O rasto\n         de Edric\" (sessão 5) ficava em 0/2 com o marco caído. Ler um ref não\n         lança; quem lê o campo (`conferirMissoes`) é que o trata. */\n      espinha: espinhaRef.current,\n      /* MM-C · 7.ª sessão (M51): a cidade a que só se chegou por inferência\n         — ir_a/levar_a esperam a confirmação (CHEGADA_INFERIDA) */\n      chegadaInferida: chegadaInferidaRef.current || \"\",\n    };\n  };"
+  },
+  {
+   "nome": "infoVinculos",
+   "de": "componente",
+   "texto": "  /* A TABELA DE FÉ (v7.5) mudou-se para o motor (T1-B, 27/10):\n     motor/cronista.js#TABELA_DA_FE, com a população lida do mapa por\n     `feDaTabela`. O juízo do Cronista entrega a conta feita. */\n\n  /* TÍTULO ÚNICO (v7.6): resolve o nome que a ficha mostra e que o Mestre usa.\n     Fé tem precedência (é o que o herói É); sem fé, vale a fama. */\n  /* VÍNCULOS (v7.8): o Mestre não sabia se um companheiro te adora ou te\n     tolera — então a intimidade das falas era chute. Agora ele sabe. */\n  const infoVinculos = () => {\n    const g = ((personagem || personagemRef.current || {}).grupo || []).filter((x) => x && x.nome);\n    if (!g.length) return \"\";\n    const linhas = g.map((c) => {\n      const v = typeof c.vinculo === \"number\" ? c.vinculo : VINCULO_INICIAL;\n      return linhaDoVinculo(c.nome, v);\n    });\n    return `VÍNCULOS DO GRUPO (trate cada um com a intimidade certa — quem tem vínculo baixo NÃO faz confidências nem se sacrifica; quem tem vínculo alto puxa assunto pessoal, discorda com liberdade e arrisca a pele por mim): ${linhas.join(\"; \")}.`;\n  };"
+  },
+  {
+   "nome": "infoRegras",
+   "de": "componente",
+   "texto": "  const infoRegras = () => {\n    const p = personagem || personagemRef.current || {};\n    const nv = p.nivel || 1;\n    const prof = bonusProficiencia(nv);\n    const chave = ATRIBUTOS.find((a) => ehProficiente(p.classe, a.id));\n    /* ONDA 2 DO CUSTO: o ESTADO ÉPICO conta o XP de cada turno no nível 20 —\n       saiu daqui (que vai ao texto fixo, em cache) para `infoEpico`, que vai\n       ao ESTADO com o título */\n    return `REGRAS DE PROGRESSÃO (o sistema calcula — não recalibre): proficiência +${prof} (nível ${nv}), somada automaticamente ao atributo que a classe domina${chave ? ` (${chave.nome})` : \"\"}. Um herói experiente rola alto no que é a especialidade dele — isso é esperado, não infle dificuldades para compensar. ESCALAS DE TEMPO (5e): uma rodada de combate dura 6 segundos; um turno de exploração de masmorra, 10 minutos; viagens contam em horas. Nunca descreva o tempo de forma incompatível com isso.`;\n  };"
+  },
+  {
+   "nome": "infoEpico",
+   "de": "componente",
+   "texto": "  const infoEpico = () => {\n    const ep = resumoEpico(personagem || personagemRef.current || {});\n    return ep ? ` ESTADO ÉPICO: ${ep} — no ápice mortal o herói não sobe mais de nível; acumula XP e recebe dádivas épicas concedidas pelo sistema.` : \"\";\n  };"
+  },
+  {
+   "nome": "fixoDaFicha",
+   "de": "componente",
+   "texto": "  /* ONDA 2 DO CUSTO (13/10): o que o rodapé mandava a cada turno e só muda\n     por campanha ou por nível — a forma do mundo, o treino das perícias, o\n     que a profissão abre — sobe para o texto fixo, junto da ficha (o `fixo`\n     de infoTitulo). Medido em 201 pedidos das 8.ª a 10.ª sessões: ~1,2 mil\n     caracteres que não mudaram uma vez de um turno para o seguinte. Os\n     PASSIVOS (somam bênção e equipamento), o traço (diz o que já foi gasto)\n     e o deslocamento ficam no rodapé: mudam com o turno. */\n  const fixoDaFicha = () => {\n    const p = personagemRef.current || personagem || {};\n    const partes = [];\n    try { partes.push(resumoMoldePrompt(moldeMundo())); } catch (e) { calou(\"a forma do mundo no fixo\", e); }\n    try { partes.push(resumoPericiasPrompt(p, (id) => atributoEfetivo(p, id), \"treino\")); } catch (e) { calou(\"as perícias no fixo\", e); }\n    try { partes.push(resumoProfissaoPrompt(p)); } catch (e) { calou(\"a profissão no fixo\", e); }\n    return partes.filter(Boolean).join(\"\\n\");\n  };"
+  },
+  {
+   "nome": "infoTitulo",
+   "de": "componente",
+   "texto": "  const infoTitulo = () => {\n    /* usa o espelho: no carregamento do save o estado ainda não chegou */\n    const p = personagem || personagemRef.current || {};\n    const t = tituloDoHeroi(divindadeRef.current, patamarFama(famaAtual()).rotulo, patamarDe(p.nivel || 1).nome);\n    const base = t.divino\n      ? `${t.titulo} (GD ${t.gd} — título DIVINO, conquistado por fé, não por nível)`\n      : `${t.titulo} (mortal — reconhecimento do mundo; NÃO é título divino)`;\n    const acao = resumoAcaoDeTurno(p.classe, p.nivel || 1);\n    const vinc = infoVinculos();\n    const bocas = 1 + (p.grupo || []).length;\n    const ermos = resumoErmos(p.suprimentos, p.exaustao, p.ritmoViagem, bocas);\n    const bonus = acoesBonusDe(p.classe, p.nivel || 1);\n    /* ONDA 2 DO CUSTO: o título, os suprimentos e os vínculos mudam com o\n       jogo e vão ao ESTADO (`vivo`); a economia de ação, a ação de turno e a\n       progressão só mudam com o nível e vão ao texto fixo (`fixo`), em cache */\n    const regras = `${ECONOMIA_ACAO_PROMPT}${bonus.length ? ` AÇÕES BÔNUS DESTA CLASSE: ${bonus.map((b) => `${b.nome} (${b.desc})`).join(\"; \")}.` : \" Esta classe não tem ação bônus própria — usa só a ação principal.\"} AÇÃO DE TURNO EM COMBATE: ${acao.texto} (${perfilCombate(p.classe).nota}). ${infoRegras()}`;\n    let fixo = regras;\n    try { const f = fixoDaFicha(); if (f) fixo = `${regras}\\n${f}`; } catch (e) { calou(\"o fixo da ficha\", e); }\n    let epico = \"\";\n    try { epico = infoEpico(); } catch (e) { calou(\"o estado épico\", e); }\n    return { vivo: `${base}. ${ermos}${epico}${vinc ? ` ${vinc}` : \"\"}`, fixo };\n  };"
+  },
+  {
+   "nome": "ganharFe",
+   "de": "componente",
+   "texto": "  /* FÉ COM ENDEREÇO (v8.9): ganhar fiéis é ganhar DEVOÇÃO em algum lugar.\n     O local vem do acontecimento (o Mestre diz onde) ou, na falta dele, de\n     onde o herói está. Sem cidade nenhuma, vira andarilho — vale menos e\n     míngua mais rápido, que é exatamente o incentivo certo. */\n  /* A FÉ QUE SE GANHA: a regra mora no motor (`ganhoDeFe`,\n     src/motor/meio-do-turno.js, T1-A 3.ª fatia) — a fé cai no mapa, o número\n     é recontado, a virada de patamar e a ascensão vão ao Mestre. Aqui só a\n     fiação. O nível sai da ficha do ref: o `personagem` do render, que\n     esta função lia, é `null` dentro do aplicarResposta (nasce no primeiro\n     render), e todo sinal \"fe:\" com o deus desperto derrubava o turno. */\n  const ganharFe = (fieis, pf, motivo, local) => {\n    const r = ganhoDeFe({ divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, dia: diaRef.current, nivel: (personagemRef.current || personagem || {}).nivel }, fieis, pf, motivo, local);\n    aplicarOsEfeitos({ estado: {}, efeitos: r.efeitos, paraOCronista: r.notas });\n    return r.msgs;\n  };"
+  },
+  {
+   "nome": "motorDoArco",
+   "de": "componente",
+   "texto": "  /* ---------------- O ARCO CASADO COM O MOTOR (v9.28) ----------------\n     O arco corria por opinião do Mestre (\"historia_avancar\") e o motor corria\n     por fato. Os dois descolavam: o jogador ficava em \"O Abismo\", com o Mestre\n     instruído a narrar a derrota mais escura da campanha, enquanto o motor\n     mostrava um mundo onde nada tinha acontecido ainda. O Mestre inventava o\n     abismo do nada, e a história saía sem saber que rumo tomar.\n\n     Agora o arco anda por MARCO, e marco é fato do motor: missão concluída,\n     relógio que encheu, evento global encerrado, nêmesis abatida. As mesmas\n     coisas que o jogador já viveu. */\n\n  /* O retrato do motor que o arco enxerga. Só refs — é chamado de dentro de\n     callbacks antigos, e ler estado aqui traria o valor do primeiro render. */\n  /* `sobre.eventos` (T1-A 3.ª fatia): o bloco das missões, no motor,\n     encerra o evento global ANTES de o marco virar o arco — e o ref ainda\n     não o sabe; o motor passa o de agora */\n  const motorDoArco = (sobre = {}) => {\n    const n = nemesisRef.current;\n    const g = ((sobre && \"eventos\" in sobre ? sobre.eventos : eventosRef.current) || {}).global;\n    const ms = missoesAtivas(missoesRef.current);\n    return { marcosPendentes: (() => { try { const pa = progressoDoAto(espinhaRef.current, (historiaRef.current || {}).etapa || 0); return Math.max(0, pa.total - pa.feitos); } catch (e) { return undefined; } })(),\n      /* nexo (11/10): o nome da nêmesis só sobe DEPOIS do rosto. Esta linha\n         vai ao prompt em todo turno, e levava o nome desde o dia em que ela\n         nascia — e a nêmesis agora é o antagonista da espinha (`vilaoDoFio`),\n         cujo nome o fio guarda para o último ato. Antes do rosto ela já está\n         na mesa como SOMBRA (`resumoVilaoPrompt`), sem nome. */\n      nemesis: n && n.status !== \"derrotada\" && n.nome && n.conhecido ? n.nome : null,\n      global: g && g.nome ? g.nome : null,\n      /* nexo (11/10, contradição 7): a história principal abre as peças do\n         arco, e o evento global corre ao lado dela (`resumoHistoria`). Sai\n         de `impostas` para não ir duas vezes à mesma linha. */\n      principal: (() => { try { return (ms.find((m) => m.tipo === \"principal\") || {}).titulo; } catch (e) { calou(\"a principal do arco\", e); return undefined; } })(),\n      impostas: ms.filter((m) => tipoMissao(m.tipo).forcada && m.tipo !== \"principal\").map((m) => `\"${m.titulo}\"`).slice(0, 3),\n      relogios: (relogiosRef.current || []).map((r) => `${r.nome} ${barraDe(r)}`).slice(0, 3),\n    };\n  };"
+  },
+  {
+   "nome": "resumoDoRitmo",
+   "de": "componente",
+   "texto": "  /* o RITMO sobe junto do arco: uma linha, e ela não diz o movimento nem\n     o assunto — diz só a tensão, que é o que a IA precisa para escolher o\n     tamanho da própria voz. Saber que se está na véspera é saber que o\n     clímax vem no turno seguinte, e isso apaga a única coisa que a véspera\n     existe para dar. */\n  const resumoDoRitmo = () => { try { return resumoCompasso(compassoRef.current); } catch { return \"\"; } };"
+  },
+  {
+   "nome": "resumoDoArco",
+   "de": "componente",
+   "texto": "  /* v9.91: o RITMO vai junto do arco, e num lugar so. `resumoDoArco` e\n     passado a montarSystemPrompt em seis chamadas diferentes; acrescentar\n     um parametro seria seis lugares para esquecer dele na setima. */\n  const resumoDoArco = () => [resumoHistoria(historiaRef.current, motorDoArco()), resumoDoRitmo()].filter(Boolean).join(\"\\n\");"
+  },
+  {
+   "nome": "marcarNoArco",
+   "de": "componente",
+   "texto": "  /* Um acontecimento do motor empurra o arco. Se o empurrão bastar, o momento\n     vira — em SILÊNCIO para o jogador: dizer \"a história avança: Provações\"\n     entrega o que ainda vem, e ele passa a esperar o abismo em vez de vivê-lo.\n     Quem recebe a virada é o Mestre, por envelope, e só como mudança de tom. */\n  const marcarNoArco = (tipo, rotulo) => {\n    /* a regra mora em `arcoComOMarco` (src/motor/meio-do-turno.js, T1-A 3.ª\n       fatia). Sem salvar aqui de propósito: quem chamou está no meio de um\n       turno e vai gravar no fim dele, e `salvar` já leva historiaRef. */\n    try {\n      const a = arcoComOMarco(historiaRef.current, tipo, rotulo, motorDoArco);\n      if (!a.mudou) return;\n      aplicarOsEfeitos({ estado: {}, efeitos: [{ tipo: \"historia\", historia: a.historia }, ...(a.remontar ? [{ tipo: \"remontarPrompt\" }] : [])], paraOCronista: a.notas });\n    } catch { /* o arco nunca pode derrubar o turno */ }\n  };"
+  },
+  {
+   "nome": "conferirAsMissoes",
+   "de": "componente",
+   "texto": "  const conferirAsMissoes = (persAtual) => {\n    const p = persAtual || personagemRef.current || personagem || {};\n    /* ---------------- A ESPINHA CONFERE PELA MESMA PORTA (v9.129) ----------------\n       Mesmo mundo, mesmo `ver()` das etapas. Dois jeitos de dizer \"cumprido\"\n       seriam dois jeitos de discordar — e o que a espinha promete e que o\n       marco cai pelo mesmo fato que faria uma missao andar. */\n    {\n      const mundoAgora = mundoDasMissoes(p);\n      /* MM-C · C0: na ordem do ato — marco de ato posterior não fecha */\n      const ce = conferirEspinha(espinhaRef.current, mundoAgora, (cond, m) => etapaDef(cond.tipo).ver(cond, m), { ato: (historiaRef.current || {}).etapa });\n      if (ce.cumpridos.length) {\n        espinhaRef.current = ce.espinha;\n        for (const m of ce.cumpridos) {\n          /* o marco empurra o ARCO pelo peso do proprio feitio: e assim que\n             a espinha e a forma dramatica andam casadas em vez de cada uma\n             contar a sua historia */\n          marcarNoArco(feitioDe(m.feitio).peso, m.titulo); /* MM14: gravava {historia, ganhou} no lugar do arco, e cada marco cumprido reiniciava o arco */\n          pushMsgs([{ autor: \"sistema\", texto: `✦ ${linhaDoMarco(m)}` }]);\n        }\n        salvar({ espinha: espinhaRef.current, historia: historiaRef.current });\n      }\n    }\n    const r = conferirMissoes(missoesRef.current, mundoDasMissoes(p));\n    /* ---------------- A FALHA DESCRITA (v9.132) — fase 3 ----------------\n       Ate aqui so o PRAZO fazia uma missao fracassar. Uma missao de resgate\n       cuja pessoa morreu ficava ativa para sempre, esperando um resgate que\n       nao pode mais acontecer — e o jogador nunca sabia que tinha perdido. */\n    if ((r.falhadas || []).length) {\n      missoesRef.current = r.missoes; setMissoes(r.missoes);\n      for (const f of r.falhadas) {\n        pushMsgs([{ autor: \"sistema\", texto: `✖ ${f.missao.titulo} — ${f.motivo}.` }]);\n        notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaGente(\"missaoPerdida\", { titulo: f.missao.titulo, motivo: f.motivo });\n      }\n      salvar({ missoes: missoesRef.current });\n    }\n    if (!r.avancos.length) return p;\n    missoesRef.current = r.missoes; setMissoes(r.missoes);\n    pushMsgs(r.avancos.map((a) => ({ autor: \"sistema\", texto: linhaEtapa(a) })));\n    for (const a of r.avancos) {\n      if (a.missao.status !== \"concluida\") {\n        notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDeAvanco(a)}`;\n      }\n    }\n    let pers = p;\n    for (const m of r.concluidas) {\n      const rec = m.recompensa || recompensaDe({ tipo: m.tipo, nivel: pers.nivel || 1, etapas: m.etapas.length });\n      pers = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + rec.moedas, xp: (pers.xp || 0) + rec.xp });\n      const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — ${rec.moedas ? `+${rec.moedas} moedas · ` : \"o pagamento não era em moedas · \"}+${rec.xp} XP`];\n      /* MM14 (30/09): a missão que veio da lista antiga (um fio do\n         descanso, ou um contrato de save de antes da v9.27) paga a MESMA\n         fé e o MESMO heroísmo que a lista antiga pagava — moedas e XP já\n         saíram das duas linhas acima, `pagaDoFecho` não repete. */\n      try {\n        const pf = pagaDoFecho(m, { despertar: !!(divindadeRef.current && divindadeRef.current.despertar) });\n        if (pf.fe) linhas.push(...ganharFe(pf.fe.fieis, pf.fe.pf, \"seu feito corre de boca em boca\"));\n        if (pf.heroismo) { const rh = ganharHeroismo(pers, pf.heroismo); pers = rh.pers; if (rh.msg) linhas.push(rh.msg); }\n      } catch (e) { calou(\"a paga da tarefa antiga\", e); }\n      if (rec.item) {\n        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno(\"loot\") });\n        pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };\n        linhas.push(`✦ Recompensa: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})`);\n      }\n      if (m.guilda) {\n        const casa = (guildasRef.current || []).find((g) => g.id === m.guilda && g.membro);\n        if (casa) {\n          const d = dizimoDe(casa, rec.moedas);\n          if (d > 0) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - d) }; linhas.push(`◉ ${d} de dizimo para o cofre de ${casa.nome}`); }\n          const rc = contribuirNaCasa({ ...casa, cofre: casa.cofre + d }, m.contribui || 0, m.titulo);\n          /* a prova cumprida e o que transforma candidato em membro */\n          const virou = !!(casa.emProva && m.prova);\n          trocarCasa(virou ? { ...rc.guilda, emProva: false } : rc.guilda);\n          if (virou) linhas.push(`✋ ${casa.nome} aceitou você — ${postoDaCasa(casa, casa.posto)} de verdade agora.`);\n          if (rc.subiu) linhas.push(`⬆ ${rc.subiu.nome} em ${casa.nome} — ${rc.subiu.o}`);\n        }\n      }\n      pushMsgs(linhas.map((t) => ({ autor: \"sistema\", texto: t })));\n      notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDeConclusao(m, rec)}`;\n      bumpCont(\"contratosConcluidos\");\n      /* v9.28: é aqui que o arco anda. Uma missão que o mundo impôs pesa três\n         vezes o que pesa um favor — não pelo trabalho que deu, mas pelo tanto\n         que virou a história. */\n      marcarNoArco(tipoMissao(m.tipo).forcada ? \"missao_forcada\" : \"missao\", `concluí \"${m.titulo}\"`);\n      /* o relógio de prazo morre junto com a missão que ele vigiava */\n      if (m.relogioId) {\n        const semRel = (relogiosRef.current || []).filter((x) => x.fonte !== `missao:${m.id}`);\n        if (semRel.length !== (relogiosRef.current || []).length) { relogiosRef.current = semRel; setRelogios(semRel); }\n      }\n    }\n    if (pers !== p) { setPersonagem(pers); personagemRef.current = pers; }\n    return pers;\n  };"
   },
   {
    "nome": "historiaDoMural",
@@ -41,9 +154,24 @@
    "texto": "  const oferecerTrabalhoDaqui = () => {\n    /* MM13: nenhuma oferta avulsa antes de o herói estar orientado. */\n    if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;\n    if (combateRef.current || masmorraRef.current) return;\n    if (!cidadeAtualRef.current) return;\n    if (ultimoTrabalhoDiaRef.current >= diaRef.current) return;\n    const abertas = garantirMissoes(missoesRef.current).filter((q) => [\"ativa\", \"oferecida\"].includes(q.status));\n    if (abertas.length >= 3) return;\n    const p = personagemRef.current || personagem || {};\n    const candidatas = ofertasDaqui({\n      semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,\n      base: baseMundoRef.current, genero: generoMundo(), nivel: p.nivel || 1, quantas: 6,\n      molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,\n      evitar: abertas.flatMap((q) => [q.titulo, q.dador]),\n      historia: historiaDoMural(),\n    });\n    if (!candidatas.length) return;\n    const conhecidos = new Set(Object.keys(npcsRef.current || {}).map((n) => n.toLowerCase()));\n    const of = candidatas.find((c) => conhecidos.has(String(c.dador).toLowerCase())) || candidatas[0];\n    /* v9.119: O TRABALHO VAI PARA O MURAL, NÃO PARA O DIÁRIO. Antes ele\n       virava missão \"oferecida\" ali mesmo, com duas linhas no log e um\n       aceita/recusa no diário — uma segunda fonte de missões, opcional,\n       disputando as mesmas vagas com a trama da história, que não é\n       opcional. Agora quem quer o herói num serviço prega o papel e\n       menciona; o herói vai ao mural se quiser. */\n    if (!pregarNoMural({ ...of, oferecido: true })) return;\n    ultimoTrabalhoDiaRef.current = diaRef.current;\n    /* o aviso espera a cena: quem o solta é `aplicarResposta`, depois da\n       narração em que o Mestre encena a menção. Uma linha, e só: o log é a\n       cena, e o cartaz já diz o resto quando o jogador abrir o mural. */\n    trabalhoPendenteRef.current = [`📋 ${of.dador} tem um trabalho no mural.`];\n    notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoRecado(of)}`;\n  };"
   },
   {
+   "nome": "guardarCasas",
+   "de": "componente",
+   "texto": "  const guardarCasas = (lista) => {\n    guildasRef.current = lista; setGuildasMundo(lista);\n    salvar({ guildas: lista });\n  };"
+  },
+  {
+   "nome": "trocarCasa",
+   "de": "componente",
+   "texto": "  const trocarCasa = (nova) => guardarCasas((guildasRef.current || []).map((g) => (g.id === nova.id ? nova : g)));"
+  },
+  {
    "nome": "pregarNoMural",
    "de": "componente",
    "texto": "  /* Prega um cartaz no mural. Uma porta só, para o trabalho que o sistema\n     sorteia e o que a ficção inventa nunca discordarem sobre a forma nem\n     sobre quando o papel já está lá. */\n  const pregarNoMural = (cartaz) => {\n    if (!cartaz || !cartaz.titulo) return false;\n    const chave = (c) => `${semNome(c.dador || \"\")}|${semNome(c.titulo || \"\")}`;\n    const atual = muralRef.current || [];\n    if (atual.some((c) => chave(c) === chave(cartaz))) return false;\n    /* ---------------- UMA PESSOA, UM TRABALHO (achado na tela) ----------------\n       Zulmira do Sino apareceu DUAS vezes no mural no mesmo turno: uma pelo\n       trabalho que o sistema escolheu pregar por ela (🏹) e outra pelo que o\n       Mestre relatou da própria cena (📋). Títulos diferentes, mesma pessoa,\n       mesmo serviço — e duas linhas iguais no log.\n\n       A regra que resolve isso não é nova: `ofertas.js` a escreve desde a\n       v9.37 na terceira decisão dele, \"cada pessoa tem UM trabalho, para\n       sempre\". Faltava valer também para o que a ficção prega. */\n    if (cartaz.dador && atual.some((c) => c.oferecido && semNome(c.dador || \"\") === semNome(cartaz.dador))) return false;\n    /* o que já está no diário não volta ao mural: seria oferecer de novo o\n       serviço que o herói já pegou */\n    const jaNoDiario = garantirMissoes(missoesRef.current)\n      .filter((q) => [\"ativa\", \"oferecida\", \"concluida\"].includes(q.status))\n      .some((q) => semNome(q.titulo) === semNome(cartaz.titulo));\n    if (jaNoDiario) return false;\n    /* A1 · B4 (10/10): QUEM JÁ TEM TRABALHO COMIGO NÃO PREGA OUTRO. O título\n       muda de um turno para o outro (\"O que há no Oratório\" / \"Encontrar a\n       guarda do portão\") e a régua acima, que compara títulos, deixava\n       passar — no ANTES (T7) o mural anunciou o trabalho que eu tinha\n       aceite no turno anterior. É a lei de `ofertas.js` (\"cada pessoa tem\n       UM trabalho\"), que até aqui valia só para o que estava no mural e não\n       para o que já estava na mão. */\n    try {\n      const comigo = !!cartaz.dador && garantirMissoes(missoesRef.current)\n        .some((q) => q && q.status === \"ativa\" && q.dador && semNome(q.dador) === semNome(cartaz.dador));\n      if (comigo) return false;\n    } catch (e) { calou(\"o mural e quem já trabalha comigo\", e); }\n    const doMundo = atual.filter((c) => !c.oferecido);\n    /* MM18: o papel nasce com data — vence ao fim de CARTAZ_ESPERA */\n    const oferecidos = [...atual.filter((c) => c.oferecido), { ...cartaz, pregadoEm: cartaz.pregadoEm != null ? cartaz.pregadoEm : diaRef.current }].slice(-TETO_OFERECIDOS);\n    muralRef.current = [...doMundo, ...oferecidos];\n    setMural(muralRef.current);\n    return true;\n  };"
+  },
+  {
+   "nome": "bumpCont",
+   "de": "componente",
+   "texto": "  /* ---------------- CONQUISTAS E VÍNCULOS (100% por código, zero tokens) ---------------- */\n  /* T1-A, 6.ª fatia: a conta mora em `somarAoContador` (src/motor/combate-do-turno.js) */\n  const bumpCont = (campo, n = 1) => { contRef.current = somarAoContador(contRef.current, campo, n); };"
   },
   {
    "nome": "TETO_OFERECIDOS",
@@ -58,22 +186,106 @@
    "escreve": false,
    "salvo": true
   },
+  "acampadoRef": {
+   "campo": "acampado",
+   "padrao": "false",
+   "escreve": false,
+   "salvo": true
+  },
+  "atoDoTurnoRef": {
+   "campo": "atoDoTurno",
+   "padrao": "\"nada\"",
+   "escreve": false,
+   "salvo": false
+  },
+  "bancoNomesRef": {
+   "campo": "bancoNomes",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
   "baseMundoRef": {
    "campo": "baseMundo",
    "padrao": "garantirBase(null)",
+   "escreve": true,
+   "salvo": true
+  },
+  "canoneRef": {
+   "campo": "canone",
+   "padrao": "{}",
+   "escreve": true,
+   "salvo": true
+  },
+  "chaoRef": {
+   "campo": "chao",
+   "padrao": "criarChao()",
    "escreve": false,
    "salvo": true
+  },
+  "chegadaInferidaRef": {
+   "campo": "chegadaInferida",
+   "padrao": "\"\"",
+   "escreve": false,
+   "salvo": false
   },
   "cidadeAtualRef": {
    "campo": "cidadeAtual",
    "padrao": "\"\"",
-   "escreve": false,
+   "escreve": true,
    "salvo": true
+  },
+  "cobrouAgoraRef": {
+   "campo": "cobrouAgora",
+   "padrao": "false",
+   "escreve": false,
+   "salvo": false
   },
   "combateRef": {
    "campo": "combate",
    "padrao": "null",
+   "escreve": true,
+   "salvo": true
+  },
+  "compassoRef": {
+   "campo": "compasso",
+   "padrao": "garantirCompasso(null)",
    "escreve": false,
+   "salvo": true
+  },
+  "confidenciasRef": {
+   "campo": "confidencias",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "contagemDaSorteRef": {
+   "campo": "contagemDaSorte",
+   "padrao": "CONTAGEM_VAZIA",
+   "escreve": true,
+   "salvo": false
+  },
+  "contRef": {
+   "campo": "contadores",
+   "padrao": "{ ...CONTADORES_INICIAIS }",
+   "escreve": true,
+   "salvo": true
+  },
+  "danoJaAplicadoRef": {
+   "campo": "danoJaAplicado",
+   "padrao": "false",
+   "escreve": true,
+   "salvo": false
+  },
+  "derrotadosDaSessaoRef": {
+   "campo": "derrotadosDaSessao",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": false
+  },
+  "devocaoRef": {
+   "campo": "devocao",
+   "padrao": "{ cidades: {}, andarilhos: 0 }",
+   "escreve": true,
    "salvo": true
   },
   "diaRef": {
@@ -82,16 +294,88 @@
    "escreve": false,
    "salvo": true
   },
+  "divindadeRef": {
+   "campo": "divindade",
+   "padrao": "garantirDivindade(null)",
+   "escreve": true,
+   "salvo": true
+  },
+  "elencoSaveRef": {
+   "campo": "elenco",
+   "padrao": "garantirElencoDoSave(null)",
+   "escreve": false,
+   "salvo": true
+  },
   "espinhaRef": {
    "campo": "espinha",
    "padrao": "garantirEspinha(null)",
+   "escreve": true,
+   "salvo": true
+  },
+  "eventosRef": {
+   "campo": "eventos",
+   "padrao": "{ locais: [], global: null, semGlobalDesde: 0, seq: 1 }",
+   "escreve": true,
+   "salvo": true
+  },
+  "faccaoJogadorRef": {
+   "campo": "faccaoJogador",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": true
+  },
+  "falouComRef": {
+   "campo": "falouCom",
+   "padrao": "[]",
    "escreve": false,
+   "salvo": false
+  },
+  "genteNaPautaRef": {
+   "campo": "genteNaPauta",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": false
+  },
+  "governosRef": {
+   "campo": "governos",
+   "padrao": "{}",
+   "escreve": false,
+   "salvo": true
+  },
+  "guildasRef": {
+   "campo": "guildas",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": true
+  },
+  "habUsadaRef": {
+   "campo": "habUsada",
+   "padrao": "false",
+   "escreve": true,
+   "salvo": false
+  },
+  "historiaRef": {
+   "campo": "historia",
+   "padrao": "garantirHistoria({ estrutura: \"jornada\", etapa: 0 })",
+   "escreve": true,
+   "salvo": true
+  },
+  "jornadaRef": {
+   "campo": "jornada",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": true
+  },
+  "lugarRef": {
+   "campo": "lugar",
+   "padrao": "null",
+   "escreve": true,
    "salvo": true
   },
   "mapaRef": {
    "campo": "mapa",
    "padrao": "{ cidades: [], faccoes: [] }",
-   "escreve": false,
+   "escreve": true,
    "salvo": true
   },
   "masmorraRef": {
@@ -100,10 +384,22 @@
    "escreve": false,
    "salvo": true
   },
+  "mensagensRef": {
+   "campo": "mensagens",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "minutoRef": {
+   "campo": "minuto",
+   "padrao": "AMANHECER + 60",
+   "escreve": false,
+   "salvo": true
+  },
   "missoesRef": {
    "campo": "missoes",
    "padrao": "[]",
-   "escreve": false,
+   "escreve": true,
    "salvo": true
   },
   "mundoRef": {
@@ -116,6 +412,12 @@
    "campo": "mural",
    "padrao": "[]",
    "escreve": true,
+   "salvo": true
+  },
+  "nemesisRef": {
+   "campo": "nemesis",
+   "padrao": "null",
+   "escreve": false,
    "salvo": true
   },
   "nomeCampanhaRef": {
@@ -133,14 +435,104 @@
   "npcsRef": {
    "campo": "npcs",
    "padrao": "{}",
-   "escreve": false,
+   "escreve": true,
    "salvo": true
+  },
+  "npcTurnoRef": {
+   "campo": "npcTurno",
+   "padrao": "0",
+   "escreve": true,
+   "salvo": false
   },
   "personagemRef": {
    "campo": "personagem",
    "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "portaoCtxRef": {
+   "campo": "portaoCtx",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "portaoRef": {
+   "campo": "portao",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "questsRef": {
+   "campo": "quests",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": true
+  },
+  "raidRef": {
+   "campo": "raid",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
+  },
+  "relogiosRef": {
+   "campo": "relogios",
+   "padrao": "[]",
+   "escreve": true,
+   "salvo": true
+  },
+  "salaRef": {
+   "campo": "sala",
+   "padrao": "null",
    "escreve": false,
    "salvo": false
+  },
+  "segredosReveladosRef": {
+   "campo": "segredosRevelados",
+   "padrao": "[]",
+   "escreve": false,
+   "salvo": false
+  },
+  "sinaisDoTurnoRef": {
+   "campo": "sinaisDoTurno",
+   "padrao": "SINAIS_ABERTOS",
+   "escreve": false,
+   "salvo": false
+  },
+  "sinalMasmorraRef": {
+   "campo": "sinalMasmorra",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "sinalRaidRef": {
+   "campo": "sinalRaid",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "sinalViagemRef": {
+   "campo": "sinalViagem",
+   "padrao": "null",
+   "escreve": true,
+   "salvo": false
+  },
+  "systemRef": {
+   "campo": "system",
+   "padrao": "\"\"",
+   "escreve": true,
+   "salvo": false
+  },
+  "texturaRef": {
+   "campo": "textura",
+   "padrao": "{}",
+   "escreve": true,
+   "salvo": false
+  },
+  "tomandoRef": {
+   "campo": "tomando",
+   "padrao": "null",
+   "escreve": false,
+   "salvo": true
   },
   "trabalhoPendenteRef": {
    "campo": "trabalhoPendente",
@@ -166,20 +558,201 @@
   "personagem": "null"
  },
  "setters": [
-  "setMural"
+  "setBaseMundo",
+  "setChegada",
+  "setCombate",
+  "setDevocao",
+  "setDivindade",
+  "setEspolioRevelado",
+  "setEventos",
+  "setGuildasMundo",
+  "setJornada",
+  "setLugar",
+  "setLugarNovo",
+  "setMapa",
+  "setMissoes",
+  "setMural",
+  "setNpcs",
+  "setPersonagem",
+  "setQuests",
+  "setRelogios"
  ],
  "imports": {
+  "AMANHECER": {
+   "de": "./calendario.js",
+   "nome": "AMANHECER"
+  },
+  "ATRIBUTOS": {
+   "de": "./constantes.js",
+   "nome": "ATRIBUTOS"
+  },
+  "CAMINHOS_PROMPT": {
+   "de": "./divindades.js",
+   "nome": "CAMINHOS_PROMPT"
+  },
+  "CONTADORES_INICIAIS": {
+   "de": "./conquistas.js",
+   "nome": "CONTADORES_INICIAIS"
+  },
+  "CONTAGEM_VAZIA": {
+   "de": "./motor/sorte-do-turno.js",
+   "nome": "CONTAGEM_VAZIA"
+  },
+  "DEVOCAO_PROMPT": {
+   "de": "./devocao.js",
+   "nome": "DEVOCAO_PROMPT"
+  },
+  "DIVINDADE_PROMPT": {
+   "de": "./divindades.js",
+   "nome": "DIVINDADE_PROMPT"
+  },
+  "ECONOMIA_ACAO_PROMPT": {
+   "de": "./combate.js",
+   "nome": "ECONOMIA_ACAO_PROMPT"
+  },
+  "LUGARES": {
+   "de": "./sala.js",
+   "nome": "LUGARES"
+  },
   "MOLDE_PADRAO": {
    "de": "./moldes.js",
    "nome": "MOLDE_PADRAO"
+  },
+  "RARIDADE_ROTULO": {
+   "de": "./loot.js",
+   "nome": "RARIDADE_ROTULO"
+  },
+  "SINAIS_ABERTOS": {
+   "de": "./prompt.js",
+   "nome": "SINAIS_ABERTOS"
+  },
+  "VINCULO_INICIAL": {
+   "de": "./vinculos.js",
+   "nome": "VINCULO_INICIAL"
+  },
+  "acoesBonusDe": {
+   "de": "./combate.js",
+   "nome": "acoesBonusDe"
+  },
+  "aplicarNivel": {
+   "de": "./regras-jogo.js",
+   "nome": "aplicarNivel"
+  },
+  "arcoComOMarco": {
+   "de": "./motor/meio-do-turno.js",
+   "nome": "arcoComOMarco"
+  },
+  "atributoEfetivo": {
+   "de": "./regras-jogo.js",
+   "nome": "atributoEfetivo"
+  },
+  "barraDe": {
+   "de": "./relogios.js",
+   "nome": "barraDe"
+  },
+  "bonusProficiencia": {
+   "de": "./regras.js",
+   "nome": "bonusProficiencia"
+  },
+  "calcularFama": {
+   "de": "./fama.js",
+   "nome": "calcularFama"
+  },
+  "cenaNaMasmorra": {
+   "de": "./masmorra-sem-cidade.js",
+   "nome": "cenaNaMasmorra"
   },
   "cenarioAtivo": {
    "de": "./cenario.js",
    "nome": "cenarioAtivo"
   },
+  "chaveDoLugar": {
+   "de": "./mundo-base.js",
+   "nome": "chaveDoLugar"
+  },
+  "comoComponente": {
+   "de": "./craft.js",
+   "nome": "comoComponente"
+  },
+  "conferirEspinha": {
+   "de": "./saga.js",
+   "nome": "conferirEspinha"
+  },
+  "conferirMissoes": {
+   "de": "./missoes.js",
+   "nome": "conferir"
+  },
+  "contribuirNaCasa": {
+   "de": "./guildas.js",
+   "nome": "contribuirNaCasa"
+  },
+  "criarChao": {
+   "de": "./chao.js",
+   "nome": "criarChao"
+  },
+  "dataTxt": {
+   "de": "./calendario.js",
+   "nome": "dataTxt"
+  },
+  "dizimoDe": {
+   "de": "./guildas.js",
+   "nome": "dizimoDe"
+  },
+  "dominiosDe": {
+   "de": "./gestao.js",
+   "nome": "dominiosDe"
+  },
+  "ehMagiaDoGrimorio": {
+   "de": "./grimorio.js",
+   "nome": "ehMagiaDoGrimorio"
+  },
+  "ehNoite": {
+   "de": "./calendario.js",
+   "nome": "ehNoite"
+  },
+  "ehProficiente": {
+   "de": "./regras.js",
+   "nome": "ehProficiente"
+  },
+  "elencoDaCena": {
+   "de": "./cena.js",
+   "nome": "elencoDaCena"
+  },
+  "envelopeDeAvanco": {
+   "de": "./missoes.js",
+   "nome": "envelopeDeAvanco"
+  },
+  "envelopeDeConclusao": {
+   "de": "./missoes.js",
+   "nome": "envelopeDeConclusao"
+  },
   "envelopeDoRecado": {
    "de": "./ofertas.js",
    "nome": "envelopeDoRecado"
+  },
+  "estacaoDe": {
+   "de": "./calendario.js",
+   "nome": "estacaoDe"
+  },
+  "etapaDef": {
+   "de": "./missoes.js",
+   "nome": "etapaDef"
+  },
+  "fatosQueFecham": {
+   "de": "./saga.js",
+   "nome": "fatosQueFecham"
+  },
+  "feitioDe": {
+   "de": "./saga.js",
+   "nome": "feitioDe"
+  },
+  "ganharHeroismo": {
+   "de": "./heroismo.js",
+   "nome": "ganharHeroismo"
+  },
+  "ganhoDeFe": {
+   "de": "./motor/meio-do-turno.js",
+   "nome": "ganhoDeFe"
   },
   "garantirAbertura": {
    "de": "./abertura.js",
@@ -189,29 +762,242 @@
    "de": "./mundo-base.js",
    "nome": "garantirBase"
   },
+  "garantirCompasso": {
+   "de": "./compasso.js",
+   "nome": "garantirCompasso"
+  },
+  "garantirDivindade": {
+   "de": "./divindades.js",
+   "nome": "garantirDivindade"
+  },
+  "garantirElencoDoSave": {
+   "de": "./elenco.js",
+   "nome": "garantirElencoDoSave"
+  },
   "garantirEspinha": {
    "de": "./saga.js",
    "nome": "garantirEspinha"
+  },
+  "garantirHistoria": {
+   "de": "./historia.js",
+   "nome": "garantirHistoria"
+  },
+  "garantirLaco": {
+   "de": "./npcs.js",
+   "nome": "garantirLaco"
   },
   "garantirMissoes": {
    "de": "./missoes.js",
    "nome": "garantirMissoes"
   },
+  "gatilhosDe": {
+   "de": "./gatilhos.js",
+   "nome": "gatilhosDe"
+  },
   "genteDaHistoria": {
    "de": "./ofertas.js",
    "nome": "genteDaHistoria"
+  },
+  "gerarLoot": {
+   "de": "./loot.js",
+   "nome": "gerarLoot"
+  },
+  "horaTxt": {
+   "de": "./calendario.js",
+   "nome": "horaTxt"
+  },
+  "invocacaoDe": {
+   "de": "./invocacoes.js",
+   "nome": "invocacaoDe"
+  },
+  "invocacoesDe": {
+   "de": "./invocacoes.js",
+   "nome": "invocacoesDe"
+  },
+  "jaMeViuAntes": {
+   "de": "./interprete.js",
+   "nome": "jaMeViuAntes"
+  },
+  "linhaDoMarco": {
+   "de": "./saga.js",
+   "nome": "linhaDoMarco"
+  },
+  "linhaDoVinculo": {
+   "de": "./vinculos.js",
+   "nome": "linhaDoVinculo"
+  },
+  "linhaEtapa": {
+   "de": "./missoes.js",
+   "nome": "linhaDoAvanco"
+  },
+  "missoesAtivas": {
+   "de": "./missoes.js",
+   "nome": "ativas"
   },
   "moldePorId": {
    "de": "./moldes.js",
    "nome": "moldePorId"
   },
+  "montarSystemPrompt": {
+   "de": "./prompt.js",
+   "nome": "montarSystemPrompt"
+  },
   "muralLiberado": {
    "de": "./abertura.js",
    "nome": "muralLiberado"
   },
+  "notaComOTurno": {
+   "de": "./motor/aplicar.js",
+   "nome": "notaComOTurno"
+  },
+  "oEnvelopeDaGente": {
+   "de": "./motor/envelopes-do-turno.js",
+   "nome": "oEnvelopeDaGente"
+  },
+  "oQueExisteAqui": {
+   "de": "./mundo-base.js",
+   "nome": "oQueExisteAqui"
+  },
+  "ocupadosDaSala": {
+   "de": "./sala.js",
+   "nome": "ocupados"
+  },
   "ofertasDaqui": {
    "de": "./ofertas.js",
    "nome": "ofertasDaqui"
+  },
+  "pagaDoFecho": {
+   "de": "./tarefas-antigas.js",
+   "nome": "pagaDoFecho"
+  },
+  "patamarDe": {
+   "de": "./combate.js",
+   "nome": "patamarDe"
+  },
+  "patamarFama": {
+   "de": "./fama.js",
+   "nome": "patamarFama"
+  },
+  "perfilCombate": {
+   "de": "./combate.js",
+   "nome": "perfilCombate"
+  },
+  "pontoDaSorteDe": {
+   "de": "./motor/sorte-do-turno.js",
+   "nome": "pontoDaSorte"
+  },
+  "postoDaCasa": {
+   "de": "./guildas.js",
+   "nome": "nomeDoPosto"
+  },
+  "progressoDoAto": {
+   "de": "./saga.js",
+   "nome": "progressoDoAto"
+  },
+  "recompensaDe": {
+   "de": "./missoes.js",
+   "nome": "recompensaDe"
+  },
+  "resumoAcaoDeTurno": {
+   "de": "./combate.js",
+   "nome": "resumoAcaoDeTurno"
+  },
+  "resumoAscensao": {
+   "de": "./divindades.js",
+   "nome": "resumoAscensao"
+  },
+  "resumoCompasso": {
+   "de": "./compasso.js",
+   "nome": "resumoCompasso"
+  },
+  "resumoDiplomacia": {
+   "de": "./mapa.js",
+   "nome": "resumoDiplomacia"
+  },
+  "resumoEpico": {
+   "de": "./regras.js",
+   "nome": "resumoEpico"
+  },
+  "resumoErmos": {
+   "de": "./ermos.js",
+   "nome": "resumoErmos"
+  },
+  "resumoFePrompt": {
+   "de": "./devocao.js",
+   "nome": "resumoFePrompt"
+  },
+  "resumoHistoria": {
+   "de": "./historia.js",
+   "nome": "resumoHistoria"
+  },
+  "resumoLegadoPrompt": {
+   "de": "./legado.js",
+   "nome": "resumoLegadoPrompt"
+  },
+  "resumoMapaParaPrompt": {
+   "de": "./mapa.js",
+   "nome": "resumoMapaParaPrompt"
+  },
+  "resumoMissoesPrompt": {
+   "de": "./missoes.js",
+   "nome": "resumoMissoesPrompt"
+  },
+  "resumoMoldePrompt": {
+   "de": "./moldes.js",
+   "nome": "resumoMoldePrompt"
+  },
+  "resumoNPCsParaPrompt": {
+   "de": "./npcs.js",
+   "nome": "resumoNPCsParaPrompt"
+  },
+  "resumoPericiasPrompt": {
+   "de": "./pericias.js",
+   "nome": "resumoPericiasPrompt"
+  },
+  "resumoProfissaoPrompt": {
+   "de": "./profissoes.js",
+   "nome": "resumoProfissaoPrompt"
+  },
+  "resumoQuests": {
+   "de": "./historia.js",
+   "nome": "resumoQuests"
+  },
+  "resumoSintoniaPrompt": {
+   "de": "./sintonia.js",
+   "nome": "resumoSintoniaPrompt"
+  },
+  "somarAoContador": {
+   "de": "./motor/combate-do-turno.js",
+   "nome": "somarAoContador"
+  },
+  "sorteDaCasa": {
+   "de": "./semente.js",
+   "nome": "sorteDaCasa"
+  },
+  "sorteNoPonto": {
+   "de": "./motor/sorte-do-turno.js",
+   "nome": "sorteNoPonto"
+  },
+  "temCaderno": {
+   "de": "./magias.js",
+   "nome": "temCaderno"
+  },
+  "temRegraPropria": {
+   "de": "./habilidades.js",
+   "nome": "temRegraPropria"
+  },
+  "tipoMissao": {
+   "de": "./missoes.js",
+   "nome": "tipoDef"
+  },
+  "tituloDe": {
+   "de": "./divindades.js",
+   "nome": "tituloDe"
+  },
+  "tituloDoHeroi": {
+   "de": "./divindades.js",
+   "nome": "tituloDoHeroi"
   }
- }
+ },
+ "conferirCom": "(pc, o) => {\n      const ref = o && o.segredos ? segredosReveladosRef : falouComRef;\n      ref.current = (o && (o.segredos || o.falouCom)) || [];\n      try { return conferirAsMissoes(pc) || pc; } finally { ref.current = []; }\n    }"
 }

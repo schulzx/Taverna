@@ -15,6 +15,13 @@
    espaço, a cidade, o dia novo, o mural já com papel, a gente conhecida —,
    e os cartazes que o `pregarNoMural` recebe (o repetido, o da mesma
    pessoa, o que já está no diário, o de quem já trabalha comigo, o novo).
+   E o conferente das missões (2.º órgão): as missões que o estado cumpre
+   — a que conclui e paga, a que só avança, a que falha, a forçada que
+   empurra o arco, a da casa (o dízimo, a prova), a de prazo (o relógio que
+   morre com ela), a da lista antiga (a fé, o heroísmo), a grande que dá
+   item (a sorte do turno) —, o marco da espinha que cai pela mesma porta, e
+   as três portas do Cronista que ele traz (`conferirCom` com a conversa e
+   o segredo, `ganharFe`, `marcarNoArco`).
    A prova tem de morder (cada mordida no recorte muda ao menos um caso), e
    o escopo do recorte acusa todo nome sem dublê. A suíte não lê o texto de
    src/motor/ (a catraca teste-assercoes-de-texto): a peça prova-se jogando.
@@ -84,14 +91,55 @@ const MURAIS = [
 ];
 const PREGAR = CARTAZES.flatMap((c, j) => MURAIS.map((m, x) => ({ base: 2 + j * 23 + x * 5, o: "pregar", cartaz: c, estado: () => ({ mural: copia(m), missoes: x % 2 ? [aMissao(1), aMissao(2, { status: "concluida" })] : [] }) })));
 
+/* ---------------- as missões (o 2.º órgão) ---------------- */
+const aqui = (k) => k.estado.cidadeAtual || "Rio Cinzento";
+const ETAPA = {
+  chegar: (k) => ({ tipo: "ir_a", alvo: aqui(k), feito: false }),
+  longe: () => ({ tipo: "ir_a", alvo: "Uma Cidade Que Não Há", feito: false }),
+  derrotar: () => ({ tipo: "derrotar", alvo: "Lobo Cinzento", quantos: 1, feito: false }),
+  falar: (k) => ({ tipo: "falar_com", alvo: "Ana do Poço", onde: aqui(k), feito: false }),
+  resgatar: () => ({ tipo: "resgatar", alvo: "Levi Grimshaw", feito: false }),
+};
+const umaMissao = (k, j, etapas, extra = {}) => ({ id: "mc" + j, titulo: "A tarefa " + j, tipo: "contrato", status: "ativa", dador: "Dador " + j, etapas: etapas.map((e) => e(k)), ...extra });
+const A_CASA = (emProva) => ({ id: "g1", nome: "A Ordem do Vau", membro: true, emProva, cofre: 10, posto: 0, xp: 0 });
+const MISSOES = [
+  { o: "conclui e paga", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { recompensa: { moedas: 20, xp: 50 } })] },
+  { o: "conclui sem moedas", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { recompensa: { moedas: 0, xp: 30 } })] },
+  { o: "só avança", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar, ETAPA.longe])] },
+  { o: "a grande dá item", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { tipo: "principal", recompensa: { moedas: 30, xp: 60, item: j % 2 ? "raro" : "incomum" } })], e: () => ({ derrotadosDaSessao: ["Lobo Cinzento"] }) },
+  { o: "forçada empurra o arco", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { tipo: "trama" })] },
+  { o: "da casa (dízimo)", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { guilda: "g1", contribui: 5, recompensa: { moedas: 40, xp: 20 } })], e: () => ({ guildas: [A_CASA(false)] }) },
+  { o: "da casa (a prova)", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { guilda: "g1", prova: true, contribui: 3, recompensa: { moedas: 10, xp: 20 } })], e: () => ({ guildas: [A_CASA(true)] }) },
+  { o: "de prazo", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { relogioId: "rel-mc" + j })], e: (k, j) => ({ relogios: [{ id: "rel-mc" + j, fonte: "missao:mc" + j, nome: "O prazo", tipo: "prazo", casas: 4, marcadas: 1 }, { id: "outro", fonte: "x", nome: "Outro", tipo: "ameaca", casas: 6, marcadas: 2 }] }) },
+  { o: "da lista antiga", m: (k, j) => [umaMissao(k, j, [ETAPA.chegar], { veiculo: "tarefa_antiga", intencao: j % 2 ? "principal" : "favor", recompensa: { moedas: 5, xp: 10 } })], e: (k, j) => ({ divindade: j % 2 ? { despertar: true, nome: "Aurel", fieis: 3, pf: 1 } : null }) },
+  { o: "derrota", m: (k, j) => [umaMissao(k, j, [ETAPA.derrotar])], e: () => ({ derrotadosDaSessao: ["o Lobo Cinzento"] }) },
+  { o: "falha", m: (k, j) => [umaMissao(k, j, [ETAPA.resgatar])], e: (k) => ({ baseMundo: { ...(k.estado.baseMundo || {}), mortos: ["Levi Grimshaw"] } }) },
+  { o: "o marco da espinha", m: () => [], e: (k, j) => ({ historia: { estrutura: "jornada", etapa: 0, marcos: j }, espinha: { atos: [{ ato: 0, marcos: [{ id: "mk" + j, titulo: "Chegar ao vau", feitio: j % 2 ? "procurar" : "chegar", onde: aqui(k), condicao: { tipo: "ir_a", alvo: aqui(k) }, feito: false }] }] } }) },
+  { o: "nada a conferir", m: (k, j) => [umaMissao(k, j, [ETAPA.longe])] },
+];
+const CONFERIR = MISSOES.flatMap((x, j) => [0, 1, 2].map((v) => ({ base: 4 + j * 17 + v * 31, o: x.o, orgao: "conferirAsMissoes",
+  estado: (k) => ({ combate: null, masmorra: null, cidadeAtual: aqui(k), missoes: x.m(k, j * 3 + v), ...(x.e ? x.e(k, j * 3 + v) : {}) }), args: (k, e) => [e.personagem || null] })));
+/* as portas do Cronista que o conferente traz */
+const COM = [null, { falouCom: ["Ana do Poço"] }, { falouCom: ["Outra Pessoa"] }, { segredos: ["o nome verdadeiro"] }].flatMap((o, j) => [0, 1].map((v) => ({ base: 6 + j * 29 + v * 13, o: "conferirCom", orgao: "conferirCom",
+  estado: (k) => ({ combate: null, masmorra: null, cidadeAtual: aqui(k), missoes: [umaMissao(k, j, [ETAPA.falar], { recompensa: { moedas: 7, xp: 7 } })] }), args: (k, e) => [e.personagem || null, o] })));
+const FE = [[3, 1, "o feito corre"], [0, 2, "a prece"], [12, 0, "a cidade inteira"]].flatMap((a, j) => [null, { despertar: true, nome: "Aurel", fieis: 2, pf: 0 }, { despertar: false }].map((dv, v) => ({ base: 8 + j * 23 + v * 7, o: "ganharFe", orgao: "ganharFe",
+  estado: () => ({ divindade: dv }), args: () => a })));
+const ARCO = ["missao", "missao_forcada", "nada", "vilao"].flatMap((tipo, j) => [0, 3, 7, 12].map((m, v) => ({ base: 10 + j * 19 + v * 11, o: "marcarNoArco", orgao: "marcarNoArco",
+  estado: () => ({ historia: { estrutura: "jornada", etapa: v % 3, marcos: m } }), args: () => [tipo, "concluí algo " + j] })));
+const OUTROS = [...CONFERIR, ...COM, ...FE, ...ARCO];
+
 const N_MONTADOS = MONTADOS.length;
 function oCaso(i) {
   if (i < N_CASOS) return { ...casoDoPedido(i), i, orgao: "oferecerTrabalhoDaqui", args: [] };
   if (i < N_CASOS + N_MONTADOS) { const m = MONTADOS[i - N_CASOS]; const k = casoDoPedido(m.base % BASES); return { ...k, i, montado: m.o, orgao: "oferecerTrabalhoDaqui", args: [], estado: { ...k.estado, ...m.estado(k) } }; }
-  const m = PREGAR[i - N_CASOS - N_MONTADOS]; const k = casoDoPedido(m.base % BASES); const estado = { ...k.estado, ...m.estado(k) };
-  return { ...k, i, montado: m.o, orgao: "pregarNoMural", args: [m.cartaz({ ...k, estado })], estado };
+  if (i < N_CASOS + N_MONTADOS + PREGAR.length) {
+    const m = PREGAR[i - N_CASOS - N_MONTADOS]; const k = casoDoPedido(m.base % BASES); const estado = { ...k.estado, ...m.estado(k) };
+    return { ...k, i, montado: m.o, orgao: "pregarNoMural", args: [m.cartaz({ ...k, estado })], estado };
+  }
+  const m = OUTROS[i - N_CASOS - N_MONTADOS - PREGAR.length]; const k = casoDoPedido(m.base % BASES); const estado = { ...k.estado, ...m.estado(k) };
+  return { ...k, i, montado: m.o, orgao: m.orgao, args: m.args(k, estado), estado };
 }
-const N_TODOS = N_CASOS + N_MONTADOS + PREGAR.length;
+const N_TODOS = N_CASOS + N_MONTADOS + PREGAR.length + OUTROS.length;
 const CASOS = Array.from({ length: N_TODOS }, (_, i) => oCaso(i));
 
 /* ---------------- os dois lados ---------------- */
@@ -100,23 +148,30 @@ const partidaDe = (k) => Object.fromEntries(Object.entries(D.refs).map(([ref, in
 
 export function compilarORecorte(trocas = []) {
   const ordem = ["modulo", "componente", "render"];
-  let corpo = ordem.flatMap((de) => D.recortes.filter((r) => r.de === de).map((r) => r.texto)).join("\n");
+  let corpo = ordem.flatMap((de) => D.recortes.filter((r) => r.de === de).map((r) => r.texto)).join("\n") + "\nconst $conferirCom = " + D.conferirCom + ";";
   for (const [de, para] of trocas) {
     const n = corpo.split(de).length - 1;
     if (n !== 1) throw new Error(`a mordida bate ${n} vezes: ${de.slice(0, 70)}`);
     corpo = corpo.replace(de, para);
   }
-  return new Function("S", `with (S) {\n${corpo}\nreturn { ${D.raizes.join(", ")} };\n}`);
+  return new Function("S", `with (S) {\n${corpo}\nreturn { ${D.raizes.join(", ")}, conferirCom: $conferirCom };\n}`);
 }
-function correrORecorte(fabrica, k) {
+/* `naPorta`: { porta, campo, valor } — a porta do App que, além do que
+   faz, escreve um campo (um setter que embrulhe, o salvar que poda e
+   avisa). Hoje nenhuma das do App o faz (os 18 setters são os do useState);
+   o caso existe para provar que a peça, com a releitura, segue o App se
+   alguma vier a fazê-lo. */
+const refDoCampo = (c) => Object.entries(D.refs).find(([, i]) => i.campo === c)[0];
+function correrORecorte(fabrica, k, { naPorta = null } = {}) {
   const log = { portas: [], faltas: [] };
   const S = { ...MODS };
   for (const [ref, info] of Object.entries(D.refs)) S[ref] = { current: k.estado[info.campo] !== undefined ? copia(k.estado[info.campo]) : PADROES[ref]() };
   const valores = () => Object.fromEntries(Object.entries(D.refs).map(([ref, info]) => [info.campo, S[ref].current]));
   for (const n of D.render) S[n] = copia(k.render && k.render[n] !== undefined ? k.render[n] : k.estado[n] !== undefined ? k.estado[n] : new Function("M", `with (M) { return (${D.renderPadrao[n]}); }`)(S));
-  for (const n of D.setters) S[n] = (v) => { log.portas.push([n, sha(typeof v === "function" ? "∅função" : v)]); };
+  for (const n of D.setters) S[n] = (v) => { log.portas.push([n, sha(typeof v === "function" ? "∅função" : v)]); if (naPorta && naPorta.porta === n) S[refDoCampo(naPorta.campo)].current = naPorta.valor; };
   S.calou = (onde) => { log.portas.push(["calou", onde]); return []; };
-  S.pushMsgs = (novas) => { log.portas.push(["pushMsgs", sha(novas), fotoDosRefs(valores())]); };
+  /* como o do App: junta as novas às mensagens do ref */
+  S.pushMsgs = (novas) => { log.portas.push(["pushMsgs", sha(novas), fotoDosRefs(valores())]); S.mensagensRef.current = [...(S.mensagensRef.current || []), ...novas]; };
   S.salvar = (extra) => { log.portas.push(["salvar", sha(extra === undefined ? {} : extra), fotoDosRefs(valores())]); };
   const escopo = new Proxy(S, {
     has: (alvo, nome) => { if (typeof nome !== "string") return false; if (nome in alvo) return true; if (nome in globalThis) return false; log.faltas.push(nome); return true; },
@@ -128,22 +183,28 @@ function correrORecorte(fabrica, k) {
   try { ret = fabrica(escopo)[k.orgao](...copia(k.args)); } catch (x) { erro = String(x && x.message); }
   return { ret, erro, valores: valores(), log };
 }
-function correrAPeca(k, { portasExtra = {} } = {}) {
+function correrAPeca(k, { portasExtra = {}, naPorta = null, semReler = false } = {}) {
   const log = { portas: [], faltas: [], aplicar: 0 };
   let loja = partidaDe(k);
   const portas = {
     calou: (onde) => { log.portas.push(["calou", onde]); },
-    pushMsgs: (novas) => { log.portas.push(["pushMsgs", sha(novas), fotoDosRefs(loja)]); return []; },
+    /* como o do App: junta as novas e devolve a lista */
+    pushMsgs: (novas) => { log.portas.push(["pushMsgs", sha(novas), fotoDosRefs(loja)]); loja = { ...loja, mensagens: [...(loja.mensagens || []), ...novas] }; return loja.mensagens; },
+    /* como o do App: os refs de agora */
+    ...(semReler ? {} : { reler: () => loja }),
     salvar: (extra) => { log.portas.push(["salvar", sha(extra === undefined ? {} : extra), fotoDosRefs(loja)]); },
     aplicar: (x) => { log.aplicar++; loja = { ...loja, ...x }; },
   };
-  for (const n of D.setters) portas[n] = (v) => { log.portas.push([n, sha(typeof v === "function" ? "∅função" : v)]); };
+  for (const n of D.setters) portas[n] = (v) => { log.portas.push([n, sha(typeof v === "function" ? "∅função" : v)]); if (naPorta && naPorta.porta === n) loja = { ...loja, [naPorta.campo]: naPorta.valor }; };
   const estado = { ...copia(k.estado), render: copia(k.render) };
+  /* como o App (osOrgaosAgora): cada campo do estado que entra é o objeto
+     que está no ref, o mesmo que a releitura devolve */
+  for (const c of CAMPOS) estado[c] = loja[c];
   const antes = JSON.stringify(estado);
   semearACasa("depois|" + k.i);
   let ret, erro = null, o = null;
   try { o = osOrgaosDoDepois(estado, { ...portas, ...portasExtra }); ret = o[k.orgao](...copia(k.args)); } catch (x) { erro = String(x && x.message); }
-  return { ret, erro, valores: loja, log, intacto: JSON.stringify(estado) === antes, escritas: o ? o.escritas : null };
+  return { ret, erro, valores: loja, log, intacto: JSON.stringify(estado) === antes, escritas: o ? o.escritas : null, relidos: o ? o.relidos : null };
 }
 const foto = (f) => ({ ret: sha(f.ret === undefined ? "∅undefined" : f.ret), erro: f.erro, refs: fotoDosRefs(f.valores), portas: sha(f.log.portas), faltas: f.log.faltas });
 const mesma = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -152,15 +213,15 @@ const FABRICA = compilarORecorte();
 const LADO = CASOS.map((k) => ({ k, r: correrORecorte(FABRICA, k), p: correrAPeca(k) }));
 
 sec("1. O dourado: o recorte à letra, e as tabelas da peça são as dele");
-t(`o recorte é de um commit (${D.commit}), com as raízes ${D.raizes.join(", ")}`, /^[0-9a-f]{7,}$/.test(D.commit) && D.raizes.length === 2);
-t(`as raízes são os órgãos da fábrica`, mesma([...ORGAOS_DO_DEPOIS], D.raizes));
+t(`o recorte é de um commit (${D.commit}), com as raízes ${D.raizes.join(", ")}`, /^[0-9a-f]{7,}$/.test(D.commit) && D.raizes.length === 5);
+t(`os órgãos da fábrica são as raízes e a porta do Cronista (conferirCom)`, mesma([...ORGAOS_DO_DEPOIS], [...D.raizes, "conferirCom"]) && typeof D.conferirCom === "string" && D.conferirCom.includes("conferirAsMissoes(pc)"));
 t(`os ${Object.keys(D.refs).length} refs da tabela são os do recorte (o campo, o ref, se escreve, se é salvo)`,
   mesma(Object.keys(REFS_DO_DEPOIS).sort(), CAMPOS) && Object.entries(D.refs).every(([ref, i]) => REFS_DO_DEPOIS[i.campo].ref === ref && REFS_DO_DEPOIS[i.campo].escreve === i.escreve && REFS_DO_DEPOIS[i.campo].salvo === i.salvo));
 t(`o valor de partida de cada ref é o do App`, Object.entries(D.refs).every(([ref, i]) => JSON.stringify(REFS_DO_DEPOIS[i.campo].padrao()) === JSON.stringify(PADROES[ref]())));
 t(`o render que ela lê é o do recorte (${D.render.join(", ")})`, mesma([...RENDER_DO_DEPOIS], D.render));
 t(`as portas são as do recorte (os ${D.setters.length} setters, a tela, o disco, o aplicar, a sorte)`, D.setters.every((n) => PORTAS_DO_DEPOIS.includes(n)) && ["aplicar", "calou", "pushMsgs", "salvar", "sorte"].every((n) => PORTAS_DO_DEPOIS.includes(n)));
 
-sec(`2. Os ${N_TODOS} casos: ${N_CASOS} gravados, ${N_MONTADOS} montados, ${PREGAR.length} cartazes`);
+sec(`2. Os ${N_TODOS} casos: ${N_CASOS} gravados, ${N_MONTADOS} montados, ${PREGAR.length} cartazes, ${OUTROS.length} das missões e das portas do Cronista`);
 const faltasR = [...new Set(LADO.flatMap((x) => x.r.log.faltas))];
 t(`o recorte não lê nome sem dublê (faltas: ${faltasR.join(", ") || "nenhuma"})`, faltasR.length === 0);
 t(`nenhum caso estoura no recorte`, LADO.every((x) => !x.r.erro), LADO.filter((x) => x.r.erro).slice(0, 2).map((x) => x.k.i + ": " + x.r.erro).join(" | "));
@@ -168,6 +229,14 @@ const prega = LADO.filter((x) => x.k.orgao === "oferecerTrabalhoDaqui" && x.r.lo
 t(`o órgão prega em ${prega.length} casos (≥ 20), ${prega.filter((x) => x.k.i < N_CASOS).length} deles gravados`, prega.length >= 20);
 const pregou = LADO.filter((x) => x.k.orgao === "pregarNoMural");
 t(`o cartaz: ${pregou.filter((x) => x.r.ret === true).length} pregados e ${pregou.filter((x) => x.r.ret === false).length} recusados`, pregou.some((x) => x.r.ret === true) && pregou.filter((x) => x.r.ret === false).length >= 8);
+const cobre = (o, cond) => LADO.filter((x) => x.k.montado === o && cond(x));
+const doConf = (x) => x.r.log.portas.map((p) => p[0]);
+t(`as missões: conclui e paga (${cobre("conclui e paga", (x) => doConf(x).includes("setPersonagem")).length}), só avança (${cobre("só avança", (x) => doConf(x).includes("setMissoes") && !doConf(x).includes("setPersonagem")).length}), a grande dá item (${cobre("a grande dá item", (x) => (((x.r.ret || {}).equipamento) || []).length > ((x.k.estado.personagem || {}).equipamento || []).length).length}), falha (${cobre("falha", (x) => doConf(x).includes("salvar")).length}), o marco (${cobre("o marco da espinha", (x) => doConf(x).includes("salvar")).length}), o prazo (${cobre("de prazo", (x) => doConf(x).includes("setRelogios")).length}), a casa (${cobre("da casa (a prova)", (x) => doConf(x).includes("setGuildasMundo")).length})`,
+  [cobre("conclui e paga", (x) => doConf(x).includes("setPersonagem")), cobre("só avança", (x) => doConf(x).includes("setMissoes") && !doConf(x).includes("setPersonagem")), cobre("a grande dá item", (x) => (((x.r.ret || {}).equipamento) || []).length > ((x.k.estado.personagem || {}).equipamento || []).length), cobre("falha", (x) => doConf(x).includes("salvar")), cobre("o marco da espinha", (x) => doConf(x).includes("salvar")), cobre("de prazo", (x) => doConf(x).includes("setRelogios")), cobre("da casa (a prova)", (x) => doConf(x).includes("setGuildasMundo"))].every((xs) => xs.length > 0));
+t(`a conversa do turno fecha a missão de falar só com quem se falou (o conferirCom), e a porta limpa a conversa`,
+  LADO.some((x) => x.k.orgao === "conferirCom" && doConf(x).includes("setMissoes")) && LADO.some((x) => x.k.orgao === "conferirCom" && !doConf(x).includes("setMissoes")) && LADO.filter((x) => x.k.orgao === "conferirCom").every((x) => mesma(x.r.valores.falouCom, []) && mesma(x.r.valores.segredosRevelados, [])));
+t(`o arco vira em ao menos um caso (marcarNoArco), e a fé conta em ao menos um (ganharFe)`,
+  LADO.some((x) => x.k.orgao === "marcarNoArco" && !mesma(x.r.valores.historia, x.k.estado.historia)) && LADO.some((x) => x.k.orgao === "ganharFe" && (x.r.ret || []).length > 0));
 t(`a gente conhecida muda quem prega em ao menos um caso`, LADO.some((x) => x.k.montado === "conhecido" && x.r.valores.trabalhoPendente && x.r.valores.trabalhoPendente.length));
 
 sec("3. A peça é o recorte, caso a caso");
@@ -181,6 +250,19 @@ t(`sem aplicar, a peça corre igual e guarda o que escreveu em escritas`, (() =>
   semearACasa("depois|" + x.k.i); o.oferecerTrabalhoDaqui();
   return mesma(o.escritas.mural, x.r.valores.mural) && o.escritas.ultimoTrabalhoDia === x.r.valores.ultimoTrabalhoDia;
 })());
+const relidosEm = LADO.filter((x) => x.p.relidos && Object.keys(x.p.relidos).length);
+t(`as portas que imitam as do App não escrevem campo: a releitura depois de cada porta não acha nada em nenhum dos ${N_TODOS} casos`, relidosEm.length === 0, relidosEm.slice(0, 2).map((x) => x.k.i + ": " + Object.keys(x.p.relidos).join(",")).join(" | "));
+/* A RELEITURA MORDE: a falha descrita chama setMissoes e depois escreve a
+   nota por cima da que lê. Uma porta que, no App, escrevesse a nota faria a
+   peça sem releitura juntar o recado à nota velha, e perder o que a porta
+   escreveu. Com a releitura, é o recorte. */
+const casosDaFalha = LADO.filter((x) => x.k.montado === "falha");
+const naPorta = { porta: "setMissoes", campo: "nota", valor: "a porta escreveu" };
+const comPorta = casosDaFalha.map((x) => ({ r: correrORecorte(FABRICA, x.k, { naPorta }), p: correrAPeca(x.k, { naPorta }), s: correrAPeca(x.k, { naPorta, semReler: true }) }));
+t(`a porta que escreve um campo no App: com a releitura a peça é o recorte (${comPorta.length} casos da falha, a nota da porta fica e leva o recado)`,
+  comPorta.length > 0 && comPorta.every((y) => mesma(foto(y.r), foto(y.p)) && String(y.r.valores.nota).startsWith("a porta escreveu" + String.fromCharCode(10)) && y.p.relidos && "nota" in y.p.relidos));
+t(`e sem a releitura a peça leria a cópia velha: a nota da porta perde-se nos ${comPorta.filter((y) => !mesma(foto(y.r), foto(y.s))).length} casos (a mordida)`,
+  comPorta.length > 0 && comPorta.every((y) => !mesma(foto(y.r), foto(y.s)) && !String(y.s.valores.nota).includes("a porta escreveu")));
 t(`um estado nulo não derruba a fábrica`, (() => { try { const o = osOrgaosDoDepois(null, null); o.oferecerTrabalhoDaqui(); return o.pregarNoMural(null) === false; } catch { return false; } })());
 
 sec("4. A prova morde: cada troca no recorte muda ao menos um caso");
@@ -195,6 +277,17 @@ const MORDIDAS = [
   ["quem já trabalha comigo", "if (comigo) return false;", ""],
   ["uma pessoa, um trabalho", "if (cartaz.dador && atual.some((c) => c.oferecido && semNome(c.dador || \"\") === semNome(cartaz.dador))) return false;", ""],
   ["a data do papel", "cartaz.pregadoEm != null ? cartaz.pregadoEm : diaRef.current", "diaRef.current"],
+  ["a espinha pela mesma porta", "if (ce.cumpridos.length) {", "if (false) {"],
+  ["a falha descrita", "if ((r.falhadas || []).length) {", "if (false) {"],
+  ["o envelope do avanço", "if (a.missao.status !== \"concluida\") {", "if (false) {"],
+  ["a paga da missão", "moedas: (pers.moedas || 0) + rec.moedas,", "moedas: (pers.moedas || 0),"],
+  ["o item da grande", "if (rec.item) {", "if (false) {"],
+  ["o dízimo", "if (d > 0) {", "if (false) {"],
+  ["a prova da casa", "const virou = !!(casa.emProva && m.prova);", "const virou = false;"],
+  ["o arco que a forçada empurra", "tipoMissao(m.tipo).forcada ? \"missao_forcada\" : \"missao\"", "\"missao\""],
+  ["o relógio que morre com a missão", "if (m.relogioId) {", "if (false) {"],
+  ["a paga da lista antiga", "if (pf.heroismo) {", "if (false) {"],
+  ["a conversa limpa", "try { return conferirAsMissoes(pc) || pc; } finally { ref.current = []; }", "return conferirAsMissoes(pc) || pc;"],
   ["o recado ao Mestre", "notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoRecado(of)}`;", ""],
 ];
 for (const [nome, de, para] of MORDIDAS) {
