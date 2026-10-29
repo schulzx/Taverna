@@ -50,7 +50,7 @@ import { garantirMissoes } from "../missoes.js";
 import { formatarCanone } from "../prompt.js";
 import { muralLiberado } from "../abertura.js";
 import { cartazDaProposta, envelopeDoRecado } from "../ofertas.js";
-import { nomeComDono, fichaDoCronista, mesclarNPC, criarNPC, notaDoHomonimo } from "../npcs.js";
+import { nomeComDono, fichaDoCronista, mesclarNPC, criarNPC, notaDoHomonimo, aMarcaQueFica } from "../npcs.js";
 import { favorJaPedido } from "../subtramas.js";
 import { aceitarProposta, tipoDe, barraDe, envelopeNovo } from "../relogios.js";
 import { segredosReveladosNoTurno } from "../saga.js";
@@ -371,6 +371,7 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
       const E = ler();
       const c = { ...E.canone };
       const novos = [];
+      let subiuAMarca = false;
       /* MM15 (4): a mesma peneira da porta do Narrador — nenhum segredo
          que a espinha ainda guarda vira cânone pela boca do Cronista.
          Se a peneira estourar, segue o comportamento de hoje (nunca
@@ -389,10 +390,17 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
           for (const [k, v] of Object.entries(ficha)) {
             if (v && (alvo[k] === undefined || alvo[k] === "")) alvo[k] = v;
           }
+          /* salvo a marca do que só se ouviu (29/10): a que diz quem contou
+             vence a que não diz, e entre duas com nome fica a primeira
+             (npcs.js#aMarcaQueFica, a régua da mescla da gente) */
+          if (typeof alvo.dito === "string" && alvo.dito.trim()) {
+            const fica = aMarcaQueFica(alvo.dito, ficha.dito);
+            if (fica !== alvo.dito) { alvo.dito = fica; subiuAMarca = true; }
+          }
           c[chaveExistente] = alvo;
         }
       }
-      if (novos.length) { fazer({ tipo: "canone", canone: c }); tocouCanone = true; }
+      if (novos.length || subiuAMarca) { fazer({ tipo: "canone", canone: c }); tocouCanone = true; }
     }
   } catch { /* seção quebrada não derruba as outras */ }
   /* ---- SEÇÃO grupo: RECRUTAMENTO REAL (v7.5) ----

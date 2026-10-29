@@ -298,6 +298,16 @@ const quemDoDito = (v) => {
   const quem = m ? m[1].trim() : "";
   return quem && semAc(quem) !== semAc(QUEM_NA_MARCA.semQuem) ? quem : "";
 };
+/* A marca que fica quando as duas existem: a velha, salvo quando ela não
+   diz quem contou e a nova diz. Lixo na velha fica como estava (quem chama
+   decide o que fazer com a falta de uma). Lê-a a mescla daqui de baixo e o
+   cânone do Cronista (motor/cronista-do-turno.js), que só preenchia o
+   vazio — e o «alguém em cena» que chegou primeiro bloqueava o «dito por
+   Brom» para sempre, o mesmo espelho que ebe77a5 consertou aqui. */
+export function aMarcaQueFica(velha, nova) {
+  const n = marcaDoDito(nova);
+  return n && marcaDoDito(velha) && !quemDoDito(velha) && quemDoDito(n) ? n : velha;
+}
 
 export function criarNPC(nome, dados0 = {}) {
   const dados = dados0 && typeof dados0 === "object" ? dados0 : {};
@@ -525,7 +535,7 @@ export function mesclarNPC(ficha, dados0 = {}) {
   if ("dito" in out) {
     const nova = marcaDoDito(dados.dito);
     if (!nova) delete out.dito;
-    else if (marcaDoDito(out.dito) && !quemDoDito(out.dito) && quemDoDito(nova)) out.dito = nova;
+    else out.dito = aMarcaQueFica(out.dito, nova);
   }
   return out;
 }

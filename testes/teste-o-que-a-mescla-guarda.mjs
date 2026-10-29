@@ -11,7 +11,7 @@
        dia da morte. A régua mora em NOTAS_DO_SISTEMA.
 
    Falha antes: no código de ebe77a5, a mescla deixa só a nota nova. */
-import { criarNPC, mesclarNPC, NOTAS_DO_SISTEMA, ESTADO_SEM_VOLTA, estadoSemVolta } from "../src/npcs.js";
+import { criarNPC, mesclarNPC, NOTAS_DO_SISTEMA, ESTADO_SEM_VOLTA, estadoSemVolta, aMarcaQueFica, MARCA_DO_DITO } from "../src/npcs.js";
 import { aplicarORegisto } from "../src/motor/aplicar.js";
 import { oBoatoDaChegada, FORMAS_DO_BOATO, BOATO } from "../src/boatos.js";
 import { O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
@@ -140,6 +140,37 @@ sec("2. o estado: a porta do cânone não ressuscita ninguém");
   const nova = aplicarORegisto(estadoCanone({ Zeferino: { tipo: "pessoa", papel: "moleiro" } }), OUTRA, CTX).estado.npcs.Zeferino;
   t("quem não tem ficha nasce «vivo», como sempre", nova && nova.status === "vivo", Js(nova));
   t("a tabela lê sem acento e sem caixa; lixo não é final", estadoSemVolta("Nunca Existiu") && estadoSemVolta("MORTA") && ![null, 3, {}, "", "vivo"].some((x) => estadoSemVolta(x)));
+}
+
+sec("3. o cânone do Cronista: a marca com nome vence a sem nome");
+{
+  const SEM_QUEM = O_QUE_O_CRONISTA_PODE.fatos.marca("");
+  const DO_BROM = O_QUE_O_CRONISTA_PODE.fatos.marca("Brom"), DA_LIA = O_QUE_O_CRONISTA_PODE.fatos.marca("Lia");
+  const corre = (canone0, aceito) => {
+    let E = { personagem: { nome: "Aela" }, npcs: {}, canone: copia(canone0), dia: 5, npcTurno: 3, espinha: null };
+    const efs = [];
+    const aplicar = (lista) => { for (const ef of lista) { efs.push(ef.tipo); if (ef.tipo === "canone") E = { ...E, canone: ef.canone }; } };
+    oAceitoDoCronista({ canone: aceito }, [], { canone: aceito }, {
+      ler: () => E, aplicar, pers: E.personagem, narrativa: "x",
+      mundoDaBase: () => null, registrarLugar: () => null, contextoDoNome: () => ({}),
+    });
+    return { canone: E.canone, efs };
+  };
+  const FORJA = (dito) => ({ Forja: { tipo: "lugar", descricao: "a forja velha", ...(dito ? { dito } : {}) } });
+  /* FALHA NO HEAD DE ANTES: só preenchia o vazio, e nem gravava */
+  const sobe = corre(FORJA(SEM_QUEM), FORJA(DO_BROM));
+  t("a marca sem nome que chegou primeiro cede à que diz quem contou", sobe.canone.Forja.dito === DO_BROM, Js(sobe.canone.Forja));
+  t("e a troca grava-se (sem nome novo no cânone)", sobe.efs.includes("canone"), Js(sobe.efs));
+  t("a com nome não cede à sem nome", corre(FORJA(DO_BROM), FORJA(SEM_QUEM)).canone.Forja.dito === DO_BROM);
+  t("entre duas com nome fica a primeira (quem repete não contou)", corre(FORJA(DO_BROM), FORJA(DA_LIA)).canone.Forja.dito === DO_BROM);
+  const igual = corre(FORJA(DO_BROM), FORJA(DO_BROM));
+  t("a mesma marca não grava nada", igual.canone.Forja.dito === DO_BROM && !igual.efs.includes("canone"), Js(igual.efs));
+  t("lixo na marca que chega não troca nada", [5, {}, null, "  "].every((x) => corre(FORJA(SEM_QUEM), FORJA(x)).canone.Forja.dito === SEM_QUEM));
+  t("a régua é a da mescla da gente (uma só)", aMarcaQueFica(SEM_QUEM, DO_BROM) === DO_BROM && aMarcaQueFica(DO_BROM, SEM_QUEM) === DO_BROM && aMarcaQueFica(DO_BROM, DA_LIA) === DO_BROM && aMarcaQueFica(MARCA_DO_DITO, DO_BROM) === DO_BROM
+    && mesclarNPC(criarNPC("C", { dito: SEM_QUEM }), { dito: DO_BROM }).dito === DO_BROM);
+  const congelado = FORJA(SEM_QUEM); const antes = Js(congelado);
+  corre(congelado, FORJA(DO_BROM));
+  t("não muta o cânone recebido", Js(congelado) === antes);
 }
 
 console.log(`\n${ok} ok, ${mal} mal`);
