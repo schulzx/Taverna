@@ -116,7 +116,21 @@ sec("4. a fiação no App");
   t("a resposta é lida numa seção isolada, com calou", (() => { const j1 = jogarFalou({ falou_com: ["Inocência Bordão"] }, { falou_com: ["Outro"] }); const j2 = jogarFalou({ falou_com: ["Inocência"] }, {}, () => { throw new Error("torta"); });
     return j1.visto.length === 1 && j1.visto[0].falouCom[0] === "Inocência Bordão" && jogarFalou({}, { falou_com: ["Outro"] }).visto.length === 0 && j2.efs.some((e) => e.tipo === "calou" && e.onde === "falou_com do Cronista"); })());
   /* a porta do App (portasDoCronista.conferirCom) põe a lista no ref, confere e tira-a no finally */
-  t("a conferência corre ali, e a lista esvazia no finally", app.includes("ref.current = (o && (o.segredos || o.falouCom)) || [];") && app.includes("try { return conferirAsMissoes(pc) || pc; } finally { ref.current = []; }") && app.includes("const ref = o && o.segredos ? segredosReveladosRef : falouComRef;"));
+  /* MOVIDA NA FASE 4, trilha A (29/10), com o motivo: a porta conferirCom
+     saiu do App para src/motor/depois-do-turno.js (a fábrica dos órgãos do
+     depois; o App só a chama), e o texto do motor não se lê (a catraca de
+     teste-assercoes-de-texto). A intenção prova-se jogando a peça
+     (depois-bloco.mjs) numa cena gravada: com a conversa do turno a missão
+     de falar fecha, com outro nome não, e depois a lista fica vazia — a
+     conversa do falou_com, e o segredo na lista dele. O finally num órgão
+     que estoura é o do App à letra, provado lado a lado contra o recorte em
+     teste-motor-depois-do-turno.mjs. */
+  const { jogarODepois, aCenaQueConfere, aqui } = await import("./depois-bloco.mjs");
+  const falarComAna = { id: "mf", titulo: "Falar com Ana", tipo: "contrato", status: "ativa", dador: "Dador", etapas: [{ tipo: "falar_com", alvo: "Ana do Poço", onde: aqui(aCenaQueConfere()), feito: false }], recompensa: { moedas: 7, xp: 7 } };
+  const conferiuCom = (o) => { const est = aCenaQueConfere({ missoes: [falarComAna] }); return jogarODepois("conferirCom", { estado: est, args: [est.personagem, o] }).escritas; };
+  const comAna = conferiuCom({ falouCom: ["Ana do Poço"] }), comOutra = conferiuCom({ falouCom: ["Outra Pessoa"] }), comSegredo = conferiuCom({ segredos: ["o nome verdadeiro"] });
+  t("a conferência corre ali, e a lista esvazia no finally", (comAna.missoes || [])[0].status === "concluida" && !comOutra.missoes
+    && JSON.stringify(comAna.falouCom) === "[]" && JSON.stringify(comOutra.falouCom) === "[]" && JSON.stringify(comSegredo.segredosRevelados) === "[]" && !("falouCom" in comSegredo));
   t("o que a conferência mudou se grava (marca o turno para salvar)", jogarFalou({ falou_com: ["A"] }, {}, null, ["depois"]).fim.tocouElenco === true && jogarFalou({ falou_com: ["A"] }, {}).fim.tocouElenco === false);
   const mundo = corpoApos("const mundoDasMissoes = (persAtual) => {");
   t("o mundo das missões leva a conversa", /falouCom: falouComRef\.current \|\| \[\]/.test(mundo));

@@ -103,7 +103,20 @@ sec("5. LIGADA AO JOGO");
   t("a base chega ao conferidor", /base: baseMundoRef\.current,/.test(APP));
   t("o cativeiro pedido pela missão é aplicado", /for \(const c2 of \(r\.cativeiros \|\| \[\]\)\)/.test(APP));
   t("com a situação e o lugar", /porSituacao\(baseMundoRef\.current, c2\.nome, c2\.situacao, \{ onde: c2\.onde \}\)/.test(APP));
-  t("a falha chega ao jogador", /✖ \$\{f\.missao\.titulo\} — \$\{f\.motivo\}/.test(APP));
+  /* MOVIDAS NA FASE 4, trilha A (29/10), com o motivo: o conferente das
+     missões saiu do App para src/motor/depois-do-turno.js, e o texto do
+     motor não se lê (teste-assercoes-de-texto). A intenção é a mesma, e
+     prova-se jogando a peça (depois-bloco.mjs): numa cena gravada, a pessoa
+     a resgatar morre, a missão falha, o jogador lê o ✖ com o título e o
+     motivo, e o Narrador recebe o envelope da missão perdida na nota. */
+  const { jogarODepois, aCenaQueConfere } = await import("./depois-bloco.mjs");
+  const aCena = aCenaQueConfere();
+  const oResgate = { id: "mr", titulo: "Tirar Ione de lá", tipo: "favor", status: "ativa", dador: "Dador", etapas: [{ tipo: "resgatar", alvo: "Ione", feito: false }] };
+  const comIoneMorta = aCenaQueConfere({ missoes: [oResgate], baseMundo: B.matar(aCena.baseMundo || null, "Ione"), nota: "" });
+  const falhou = jogarODepois("conferirAsMissoes", { estado: comIoneMorta, args: [comIoneMorta.personagem] });
+  const oMotivo = "Ione morreu antes do resgate";
+  const lido = falhou.portas.filter((p) => p[0] === "pushMsgs").flatMap((p) => p[1].map((x) => x.texto));
+  t("a falha chega ao jogador", (falhou.escritas.missoes || [])[0].status === "falhada" && lido.includes("✖ Tirar Ione de lá — " + oMotivo + "."));
   /* movidas (29/10, Fase T2, trilha A, 18.º grupo): o envelope da missão perdida saiu
      do App para ENVELOPES_DA_GENTE (src/motor/envelopes-do-turno.js), e o App manda
      oEnvelopeDaGente("missaoPerdida", …). A intenção é a mesma — a falha chega ao
@@ -111,7 +124,9 @@ sec("5. LIGADA AO JOGO");
      envelope até ao motor, chamado (não lido como texto), e exigem que o App chame
      aquela forma com o título e o motivo da falha. */
   const perdida = oEnvelopeDaGente("missaoPerdida", { titulo: "O selo", motivo: "o prazo venceu" });
-  const chama = APP.includes("oEnvelopeDaGente(\"missaoPerdida\", { titulo: f.missao.titulo, motivo: f.motivo })");
+  /* (e o envelope que chega é o desta falha, com o título e o motivo: a
+     peça chama a forma de ENVELOPES_DA_GENTE, não a escreve à mão) */
+  const chama = String(falhou.escritas.nota || "").includes(oEnvelopeDaGente("missaoPerdida", { titulo: oResgate.titulo, motivo: oMotivo }));
   t("e ao Narrador como fato consumado", /\[MISSAO PERDIDA — RESOLVIDO PELO SISTEMA\]/.test(perdida) && chama);
   t("sem segunda chance", /nao ofereca uma segunda chance/.test(perdida) && chama);
 }

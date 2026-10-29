@@ -251,6 +251,20 @@ export function dublesDoCronista(k, { novo }) {
       }
       return k.i % 2 ? pc : null;
     },
+    /* A FÁBRICA DOS ÓRGÃOS DO DEPOIS (dublê de osOrgaosAgora, Fase 4,
+       trilha A, 29/10): a porta conferirCom saiu do literal das portas do App
+       para src/motor/depois-do-turno.js, e o App chama-a pela fábrica. O
+       dublê é a porta de lá à letra (a conversa ou o segredo no ref só
+       enquanto se confere, e fora no finally), sobre o dublê da conferência
+       acima: o que a peça faz com a conferência de verdade prova-se lado a
+       lado em teste-motor-depois-do-turno.mjs. */
+    osOrgaosAgora: () => ({
+      conferirCom: (pc, o) => {
+        const r = o && o.segredos ? S.segredosReveladosRef : S.falouComRef;
+        r.current = (o && (o.segredos || o.falouCom)) || [];
+        try { return S.conferirAsMissoes(pc) || pc; } finally { r.current = []; }
+      },
+    }),
     mundoDaBase: () => { P("mundoDaBase"); return { semente: "s", mapa: S.mapaRef.current, genero: "fantasia", molde: null, lex: null, base: null }; },
     fichaDeCompanheiro: (nome, p) => { P("fichaDeCompanheiro", nome); return { nome, conceito: "", nivel: Math.max(1, ((p && p.nivel) || 1) - 2), vida: 10, vidaMax: 10, habilidades: [], vinculo: 0, marcos: [] }; },
     notaDoRecrutamento: (comp) => `[RECRUTAMENTO] ${comp.nome} nível ${comp.nivel}`,

@@ -300,8 +300,12 @@ sec("7. a fiação — App.jsx");
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 
   /* ---- a) o import ---- */
-  t("App.jsx importa as quatro peças de tarefas-antigas.js",
-    app.includes('import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";'));
+  /* MOVIDA NA FASE 4, trilha A (29/10), com o motivo: a paga do fecho
+     (pagaDoFecho) é lida pelo conferente, que saiu do App para
+     src/motor/depois-do-turno.js. O App importa as três peças que ainda lê;
+     a quarta prova-se jogando a peça, em e), abaixo. */
+  t("App.jsx importa as três peças de tarefas-antigas.js que ainda lê",
+    app.includes('import { migrarTarefasAntigas, tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";'));
 
   /* ---- b) o mundo da conversão ---- */
   t("mundoDasTarefas existe, ao lado de mundoDasMissoes",
@@ -335,15 +339,32 @@ sec("7. a fiação — App.jsx");
     app.includes('partes.push(oEnvelopeDoMundo("questGerada", { fase: ctx.fase, ') && app.includes("📜 Fio de história: ${r.questNova.titulo}"));
 
   /* ---- e) o fecho paga a fé e o heroísmo da lista antiga, sem repetir moeda/XP ---- */
-  const iLinhas = app.indexOf("const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA:");
-  const iPf = app.indexOf('const pf = pagaDoFecho(m, { despertar: !!(divindadeRef.current && divindadeRef.current.despertar) });');
+  /* MOVIDAS NA FASE 4, trilha A (29/10), com o motivo: o conferente das
+     missões (e com ele o fecho) saiu do App para src/motor/depois-do-turno.js,
+     e o texto do motor não se lê (teste-assercoes-de-texto). As quatro
+     intenções provam-se jogando a peça (depois-bloco.mjs) numa cena gravada:
+     uma missão da lista antiga fecha, e o fecho paga moedas e XP UMA vez, a
+     fé com o deus desperto, o heroísmo com o pers que segue no laço — e uma
+     paga que estoura não custa o fecho. */
+  const { jogarODepois, aCenaQueConfere, aqui } = await import("./depois-bloco.mjs");
+  const oFio = (intencao, extra = {}) => ({ id: "ma", titulo: "O fio antigo", tipo: "contrato", status: "ativa", dador: "Dador", etapas: [{ tipo: "ir_a", alvo: aqui(aCenaQueConfere()), feito: false }], veiculo: TA.VEICULO_DA_TAREFA_ANTIGA, intencao, recompensa: { moedas: 5, xp: 10 }, ...extra });
+  const AUREL = { despertar: true, nome: "Aurel", fieis: 3, pf: 1 };
+  const fechar = (sobre, o = {}) => { const est = aCenaQueConfere(sobre); const j = jogarODepois("conferirAsMissoes", { estado: est, args: [est.personagem], ...o }); const lido = j.portas.filter((p) => p[0] === "pushMsgs").flatMap((p) => p[1].map((x) => x.texto)); return { ...j, lido, antes: est.personagem }; };
+  const daPrincipal = fechar({ missoes: [oFio("principal")], divindade: AUREL });
+  const doFavor = fechar({ missoes: [oFio("favor")], divindade: null });
+  const semVeiculo = fechar({ missoes: [oFio("favor", { veiculo: undefined })], divindade: AUREL });
+  const iLinhas = daPrincipal.lido.findIndex((l) => l.includes("MISSÃO CONCLUÍDA: O fio antigo — +5 moedas · +10 XP"));
+  const iPf = daPrincipal.lido.findIndex((l) => l.includes("fiéis") && l.includes("seu feito corre de boca em boca"));
+
   t("conferirAsMissoes chama pagaDoFecho logo depois de calcular a recompensa normal",
-    iLinhas >= 0 && iPf >= 0 && iPf > iLinhas && iPf - iLinhas < 600);
+    iLinhas >= 0 && iPf === iLinhas + 1 && daPrincipal.ret.moedas === (daPrincipal.antes.moedas || 0) + 5);
   t("a fé do fecho usa ganharFe com o que pagaDoFecho devolveu",
-    app.includes('if (pf.fe) linhas.push(...ganharFe(pf.fe.fieis, pf.fe.pf, "seu feito corre de boca em boca"));'));
+    daPrincipal.lido[iPf].includes("+" + TA.PAGA_DA_LISTA_ANTIGA.feDaPrincipal + " fiéis") && !!daPrincipal.escritas.divindade && !doFavor.lido.some((l) => l.includes("fiéis")));
   t("o heroísmo do fecho usa ganharHeroismo, e pers segue mutável no laço",
-    app.includes('if (pf.heroismo) { const rh = ganharHeroismo(pers, pf.heroismo); pers = rh.pers; if (rh.msg) linhas.push(rh.msg); }'));
-  t("nunca custa o fecho", app.includes('catch (e) { calou("a paga da tarefa antiga", e); }'));
+    daPrincipal.ret.heroismo === 1 && doFavor.ret.heroismo === 1 && doFavor.ret.moedas === (doFavor.antes.moedas || 0) + 5 && semVeiculo.ret.heroismo === undefined && daPrincipal.lido.some((l) => l.startsWith("✧ +1 ponto de heroísmo")));
+  /* (um mapa torto faz a fé estourar dentro da paga: o fecho segue) */
+  const torto = fechar({ missoes: [oFio("principal")], divindade: AUREL, mapa: { cidades: 5 } });
+  t("nunca custa o fecho", torto.portas.some((p) => p[0] === "calou" && p[1] === "a paga da tarefa antiga") && torto.escritas.missoes[0].status === "concluida" && torto.ret.moedas === (torto.antes.moedas || 0) + 5);
 
   /* ---- f) os dois canais — idos de vez ---- */
   t("o Narrador não tem mais `quest_atualizar` fechando nada (o nome só sobrevive em comentário)",

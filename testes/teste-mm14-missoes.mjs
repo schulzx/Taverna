@@ -406,7 +406,17 @@ sec("4. lixo, null e a imutabilidade");
 {
   const { readFileSync } = await import("node:fs");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
-  t("o marco da espinha passa pelo arco (sem gravar {historia, ganhou} no lugar dele)", app.includes("marcarNoArco(feitioDe(m.feitio).peso, m.titulo);") && !app.includes("historiaRef.current = registrarMarco(historiaRef.current, feitioDe(m.feitio).peso"));
+  /* MOVIDA NA FASE 4, trilha A (29/10), com o motivo: o conferente (e o
+     marco da espinha nele) saiu do App para src/motor/depois-do-turno.js, e
+     o texto do motor não se lê (teste-assercoes-de-texto). A intenção
+     prova-se jogando a peça (depois-bloco.mjs): numa cena gravada, o marco
+     cumprido SOMA ao arco que já ia em 2 (procurar pesa 1), e o arco gravado
+     é uma história (estrutura, etapa, marcos), não o {historia, ganhou}. */
+  const { jogarODepois, aCenaQueConfere, aqui } = await import("./depois-bloco.mjs");
+  const ondeEstou = aqui(aCenaQueConfere());
+  const comOMarco = aCenaQueConfere({ historia: { estrutura: "jornada", etapa: 0, marcos: 2 }, espinha: { atos: [{ ato: 0, marcos: [{ id: "mk", titulo: "O marco", feitio: "procurar", onde: ondeEstou, condicao: { tipo: "ir_a", alvo: ondeEstou }, feito: false }] }] } });
+  const oArco = jogarODepois("conferirAsMissoes", { estado: comOMarco }).escritas.historia || {};
+  t("o marco da espinha passa pelo arco (sem gravar {historia, ganhou} no lugar dele)", oArco.estrutura === "jornada" && oArco.marcos === 3 && !("ganhou" in oArco) && !("historia" in oArco));
   t("as missões sabem quando há luta", app.includes("relogios: relogiosRef.current, emLuta: !!combateRef.current,"));
   t("o arco sabe os marcos por cumprir do ato", app.includes("marcosPendentes: (() => { try { const pa = progressoDoAto(espinhaRef.current"));
 }

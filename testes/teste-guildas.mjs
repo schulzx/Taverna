@@ -231,8 +231,21 @@ sec("11. LIGADA AO JOGO");
   t("e viajam no save", /guildas: guildasRef\.current/.test(APP));
   t("save antigo reestende as casas da semente", /Array\.isArray\(sv\.guildas\) && sv\.guildas\.length/.test(APP));
   t("a minha casa é a que tem `membro`", /\(guildasRef\.current \|\| \[\]\)\.find\(\(g\) => g\.membro\)/.test(APP));
-  t("o dízimo é cobrado quando a missão da casa fecha", /const d = dizimoDe\(casa, rec\.moedas\)/.test(APP));
-  t("e o serviço feito rende posto", /contribuirNaCasa\(\{ \.\.\.casa, cofre: casa\.cofre \+ d \}, m\.contribui/.test(APP));
+  /* MOVIDAS NA FASE 4, trilha A (29/10), com o motivo: o conferente das
+     missões saiu do App para src/motor/depois-do-turno.js, e o texto do
+     motor não se lê (teste-assercoes-de-texto). A intenção prova-se jogando
+     a peça (depois-bloco.mjs): a missão da casa fecha numa cena gravada, o
+     dízimo sai da paga e entra no cofre, e o serviço rende o que o
+     contribuirNaCasa dá. */
+  const { jogarODepois, aCenaQueConfere, aqui } = await import("./depois-bloco.mjs");
+  const aCasa = { id: "g1", nome: "A Ordem do Vau", membro: true, emProva: false, cofre: 10, posto: 0, xp: 0 };
+  const daCasa = { id: "mc", titulo: "A tarefa da casa", tipo: "contrato", status: "ativa", dador: "Dador", etapas: [{ tipo: "ir_a", alvo: aqui(aCenaQueConfere()), feito: false }], guilda: "g1", contribui: 5, recompensa: { moedas: 40, xp: 20 } };
+  const naCasa = aCenaQueConfere({ guildas: [aCasa], missoes: [daCasa] });
+  const fechou = jogarODepois("conferirAsMissoes", { estado: naCasa, args: [naCasa.personagem] });
+  const oDizimo = G.dizimoDe(aCasa, 40);
+  const casaDepois = (fechou.escritas.guildas || [])[0] || {};
+  t("o dízimo é cobrado quando a missão da casa fecha", oDizimo > 0 && casaDepois.cofre === aCasa.cofre + oDizimo && fechou.ret.moedas === (naCasa.personagem.moedas || 0) + 40 - oDizimo);
+  t("e o serviço feito rende posto", JSON.stringify(casaDepois) === JSON.stringify(G.contribuirNaCasa({ ...aCasa, cofre: aCasa.cofre + oDizimo }, daCasa.contribui).guilda));
   t("a lei corre por dia", /conferirLeisDaCasa\(casaAgora, \{ dia: diaRef\.current/.test(APP));
   t("as tarefas voltam por dia", /resolverTarefaDaCasa\(t\)/.test(APP));
   t("o sangue entre casas também", /sangueEntreCasas\(c3, guildasRef\.current/.test(APP));

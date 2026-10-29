@@ -68,7 +68,7 @@ import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
-import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
+import { migrarTarefasAntigas, tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo } from "./cenario.js";
@@ -153,7 +153,7 @@ import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, riv
 import { garantirMesa, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
 import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
-import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, etapaDef, tipoDef as tipoMissao, conferir as conferirMissoes, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, linhaDoAvanco as linhaEtapa, envelopeDeAvanco, envelopeDeConclusao, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
+import { garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, tipoDef as tipoMissao, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
 import { identificarDivindadeAbatida, provaAtual, registrarProva, cancelarRito, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { resolverPresenca, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { arredoresDaCidade } from "./arredores.js";
@@ -184,7 +184,7 @@ import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao }
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, conferirEspinha, feitioDe, linhaDoMarco, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
+import { garantirEspinha, estenderEspinha, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
 import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
@@ -192,7 +192,7 @@ import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
    passo. Substitui a abertura forçada de uma linha só. */
 import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
-import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, dizimoDe, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
+import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
@@ -235,7 +235,7 @@ import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRo
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { oGatilhoDoCronista, oPedidoAoCronista, oAceitoDoCronista } from "./motor/cronista-do-turno.js";
-import { registrarOLugar, dadivasConcedidas, arcoComOMarco, ganhoDeFe, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
+import { registrarOLugar, dadivasConcedidas, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correcao-do-juiz.js";
@@ -7357,24 +7357,44 @@ export default function Taverna() {
   };
   /* OS ÓRGÃOS DO DEPOIS (Fase 4, trilha A, 29/10): o que o turno corre
      depois do aplicar e que é órgão com nome — o trabalho que o mundo
-     oferece, a porta do mural — é a peça src/motor/depois-do-turno.js, à
+     oferece, a porta do mural, o conferente das missões (e a fé e o arco
+     que ele move, portas também do Cronista) — é a peça src/motor/depois-do-turno.js, à
      letra e provada contra o recorte deste arquivo (testes/depois-dourado.json).
      A fábrica nasce a cada chamada, com os refs do instante (REFS_DO_DEPOIS:
      o campo e o nome do ref aqui) e o render, e devolve pelo aplicar o que
-     escreveu — antes de cada porta e no fim do órgão. */
+     escreveu — antes de cada porta e no fim do órgão; depois de cada porta
+     relê os refs (reler), e o que a porta lá tiver escrito vale. */
   const refsDoDepois = () => ({
-    aberturaMundoRef, baseMundoRef, cidadeAtualRef, combateRef, diaRef, espinhaRef,
-    mapaRef, masmorraRef, missoesRef, mundoRef, muralRef, nomeCampanhaRef,
-    notaRef, npcsRef, personagemRef, trabalhoPendenteRef, ultimoTrabalhoDiaRef,
+    aberturaMundoRef, acampadoRef, atoDoTurnoRef, bancoNomesRef, baseMundoRef, canoneRef,
+    chaoRef, chegadaInferidaRef, cidadeAtualRef, cobrouAgoraRef, combateRef, compassoRef,
+    confidenciasRef, contagemDaSorteRef, contRef, danoJaAplicadoRef, derrotadosDaSessaoRef, devocaoRef,
+    diaRef, divindadeRef, elencoSaveRef, espinhaRef, eventosRef, faccaoJogadorRef,
+    falouComRef, genteNaPautaRef, governosRef, guildasRef, habUsadaRef, historiaRef,
+    jornadaRef, lugarRef, mapaRef, masmorraRef, mensagensRef, minutoRef,
+    missoesRef, mundoRef, muralRef, nemesisRef, nomeCampanhaRef, notaRef,
+    npcsRef, npcTurnoRef, personagemRef, portaoCtxRef, portaoRef, questsRef,
+    raidRef, relogiosRef, salaRef, segredosReveladosRef, sinaisDoTurnoRef, sinalMasmorraRef,
+    sinalRaidRef, sinalViagemRef, systemRef, texturaRef, tomandoRef, trabalhoPendenteRef,
+    ultimoTrabalhoDiaRef,
   });
+  const agoraDosRefs = (refs) => {
+    const e = {};
+    for (const [c, r] of Object.entries(REFS_DO_DEPOIS)) if (refs[r.ref]) e[c] = refs[r.ref].current;
+    return e;
+  };
   const osOrgaosAgora = () => {
     const refs = refsDoDepois();
-    const e = { render: { mundo, nomeCampanha, personagem } };
-    for (const [c, r] of Object.entries(REFS_DO_DEPOIS)) if (refs[r.ref]) e[c] = refs[r.ref].current;
+    const e = { ...agoraDosRefs(refs), render: { mundo, nomeCampanha, personagem } };
     return osOrgaosDoDepois(e, {
       aplicar: (x) => { for (const [c, v] of Object.entries(x || {})) { const r = REFS_DO_DEPOIS[c]; if (r && refs[r.ref]) refs[r.ref].current = v; } },
-      calou, salvar, setMural,
+      calou, salvar, agora: () => Date.now(),
+      setBaseMundo, setChegada, setCombate, setDevocao, setDivindade, setEspolioRevelado, setEventos, setGuildasMundo,
+      setJornada, setLugar, setLugarNovo, setMapa, setMissoes, setMural, setNpcs, setPersonagem,
+      setQuests, setRelogios,
       pushMsgs: (novas) => { pushMsgs(novas); return mensagensRef.current; },
+      /* os refs de agora: a peça relê-os depois de cada porta, para nunca
+         ler a cópia velha de um ref que a porta tenha escrito aqui */
+      reler: () => agoraDosRefs(refs),
     });
   };
 
@@ -10037,12 +10057,8 @@ export default function Taverna() {
     aplicar: (efeitos) => { for (const ef of efeitos) aplicarEfeitoDoCronista(ef); },
     registrarLugar, historiaDoMural, contextoDoNome, nucleoAgora, pregarNoMural, marcarNoArco, ganharFe, sincronizarNemesis, mundoDaBase, fichaDeCompanheiro, notaDoRecrutamento,
     /* a conversa e o segredo do turno ficam nos refs só enquanto as missões
-       se conferem (conferirAsMissoes lê-os dali), e saem mesmo se estourar */
-    conferirCom: (pc, o) => {
-      const ref = o && o.segredos ? segredosReveladosRef : falouComRef;
-      ref.current = (o && (o.segredos || o.falouCom)) || [];
-      try { return conferirAsMissoes(pc) || pc; } finally { ref.current = []; }
-    },
+       se conferem, e saem mesmo se estourar: src/motor/depois-do-turno.js */
+    conferirCom: (pc, o) => osOrgaosAgora().conferirCom(pc, o),
   });
 
   const cronistaDoTurno = async (pers, narrativa, doTurno) => {
@@ -10214,11 +10230,7 @@ export default function Taverna() {
      fiação. O nível sai da ficha do ref: o `personagem` do render, que
      esta função lia, é `null` dentro do aplicarResposta (nasce no primeiro
      render), e todo sinal "fe:" com o deus desperto derrubava o turno. */
-  const ganharFe = (fieis, pf, motivo, local) => {
-    const r = ganhoDeFe({ divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, dia: diaRef.current, nivel: (personagemRef.current || personagem || {}).nivel }, fieis, pf, motivo, local);
-    aplicarOsEfeitos({ estado: {}, efeitos: r.efeitos, paraOCronista: r.notas });
-    return r.msgs;
-  };
+  const ganharFe = (fieis, pf, motivo, local) => osOrgaosAgora().ganharFe(fieis, pf, motivo, local);
 
   /* MILAGRE (v7.6): gasta PF e o SISTEMA aplica o efeito. Serve tanto ao
      botão do jogador quanto ao sinal "milagre:<id>" vindo do Mestre. */
@@ -15720,16 +15732,7 @@ export default function Taverna() {
      vira — em SILÊNCIO para o jogador: dizer "a história avança: Provações"
      entrega o que ainda vem, e ele passa a esperar o abismo em vez de vivê-lo.
      Quem recebe a virada é o Mestre, por envelope, e só como mudança de tom. */
-  const marcarNoArco = (tipo, rotulo) => {
-    /* a regra mora em `arcoComOMarco` (src/motor/meio-do-turno.js, T1-A 3.ª
-       fatia). Sem salvar aqui de propósito: quem chamou está no meio de um
-       turno e vai gravar no fim dele, e `salvar` já leva historiaRef. */
-    try {
-      const a = arcoComOMarco(historiaRef.current, tipo, rotulo, motorDoArco);
-      if (!a.mudou) return;
-      aplicarOsEfeitos({ estado: {}, efeitos: [{ tipo: "historia", historia: a.historia }, ...(a.remontar ? [{ tipo: "remontarPrompt" }] : [])], paraOCronista: a.notas });
-    } catch { /* o arco nunca pode derrubar o turno */ }
-  };
+  const marcarNoArco = (tipo, rotulo) => osOrgaosAgora().marcarNoArco(tipo, rotulo);
 
   /* ---------------- MISSÕES (v9.27) ----------------
      O conferente roda a cada turno e custa zero: é comparação com estado que
@@ -15902,97 +15905,12 @@ export default function Taverna() {
     });
   };
 
-  const conferirAsMissoes = (persAtual) => {
-    const p = persAtual || personagemRef.current || personagem || {};
-    /* ---------------- A ESPINHA CONFERE PELA MESMA PORTA (v9.129) ----------------
-       Mesmo mundo, mesmo `ver()` das etapas. Dois jeitos de dizer "cumprido"
-       seriam dois jeitos de discordar — e o que a espinha promete e que o
-       marco cai pelo mesmo fato que faria uma missao andar. */
-    {
-      const mundoAgora = mundoDasMissoes(p);
-      /* MM-C · C0: na ordem do ato — marco de ato posterior não fecha */
-      const ce = conferirEspinha(espinhaRef.current, mundoAgora, (cond, m) => etapaDef(cond.tipo).ver(cond, m), { ato: (historiaRef.current || {}).etapa });
-      if (ce.cumpridos.length) {
-        espinhaRef.current = ce.espinha;
-        for (const m of ce.cumpridos) {
-          /* o marco empurra o ARCO pelo peso do proprio feitio: e assim que
-             a espinha e a forma dramatica andam casadas em vez de cada uma
-             contar a sua historia */
-          marcarNoArco(feitioDe(m.feitio).peso, m.titulo); /* MM14: gravava {historia, ganhou} no lugar do arco, e cada marco cumprido reiniciava o arco */
-          pushMsgs([{ autor: "sistema", texto: `✦ ${linhaDoMarco(m)}` }]);
-        }
-        salvar({ espinha: espinhaRef.current, historia: historiaRef.current });
-      }
-    }
-    const r = conferirMissoes(missoesRef.current, mundoDasMissoes(p));
-    /* ---------------- A FALHA DESCRITA (v9.132) — fase 3 ----------------
-       Ate aqui so o PRAZO fazia uma missao fracassar. Uma missao de resgate
-       cuja pessoa morreu ficava ativa para sempre, esperando um resgate que
-       nao pode mais acontecer — e o jogador nunca sabia que tinha perdido. */
-    if ((r.falhadas || []).length) {
-      missoesRef.current = r.missoes; setMissoes(r.missoes);
-      for (const f of r.falhadas) {
-        pushMsgs([{ autor: "sistema", texto: `✖ ${f.missao.titulo} — ${f.motivo}.` }]);
-        notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDaGente("missaoPerdida", { titulo: f.missao.titulo, motivo: f.motivo });
-      }
-      salvar({ missoes: missoesRef.current });
-    }
-    if (!r.avancos.length) return p;
-    missoesRef.current = r.missoes; setMissoes(r.missoes);
-    pushMsgs(r.avancos.map((a) => ({ autor: "sistema", texto: linhaEtapa(a) })));
-    for (const a of r.avancos) {
-      if (a.missao.status !== "concluida") {
-        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeAvanco(a)}`;
-      }
-    }
-    let pers = p;
-    for (const m of r.concluidas) {
-      const rec = m.recompensa || recompensaDe({ tipo: m.tipo, nivel: pers.nivel || 1, etapas: m.etapas.length });
-      pers = aplicarNivel({ ...pers, moedas: (pers.moedas || 0) + rec.moedas, xp: (pers.xp || 0) + rec.xp });
-      const linhas = [`${tipoMissao(m.tipo).icone} MISSÃO CONCLUÍDA: ${m.titulo} — ${rec.moedas ? `+${rec.moedas} moedas · ` : "o pagamento não era em moedas · "}+${rec.xp} XP`];
-      /* MM14 (30/09): a missão que veio da lista antiga (um fio do
-         descanso, ou um contrato de save de antes da v9.27) paga a MESMA
-         fé e o MESMO heroísmo que a lista antiga pagava — moedas e XP já
-         saíram das duas linhas acima, `pagaDoFecho` não repete. */
-      try {
-        const pf = pagaDoFecho(m, { despertar: !!(divindadeRef.current && divindadeRef.current.despertar) });
-        if (pf.fe) linhas.push(...ganharFe(pf.fe.fieis, pf.fe.pf, "seu feito corre de boca em boca"));
-        if (pf.heroismo) { const rh = ganharHeroismo(pers, pf.heroismo); pers = rh.pers; if (rh.msg) linhas.push(rh.msg); }
-      } catch (e) { calou("a paga da tarefa antiga", e); }
-      if (rec.item) {
-        const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
-        pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };
-        linhas.push(`✦ Recompensa: ${it.nome} (${RARIDADE_ROTULO[it.raridade] || it.raridade})`);
-      }
-      if (m.guilda) {
-        const casa = (guildasRef.current || []).find((g) => g.id === m.guilda && g.membro);
-        if (casa) {
-          const d = dizimoDe(casa, rec.moedas);
-          if (d > 0) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - d) }; linhas.push(`◉ ${d} de dizimo para o cofre de ${casa.nome}`); }
-          const rc = contribuirNaCasa({ ...casa, cofre: casa.cofre + d }, m.contribui || 0, m.titulo);
-          /* a prova cumprida e o que transforma candidato em membro */
-          const virou = !!(casa.emProva && m.prova);
-          trocarCasa(virou ? { ...rc.guilda, emProva: false } : rc.guilda);
-          if (virou) linhas.push(`✋ ${casa.nome} aceitou você — ${postoDaCasa(casa, casa.posto)} de verdade agora.`);
-          if (rc.subiu) linhas.push(`⬆ ${rc.subiu.nome} em ${casa.nome} — ${rc.subiu.o}`);
-        }
-      }
-      pushMsgs(linhas.map((t) => ({ autor: "sistema", texto: t })));
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${envelopeDeConclusao(m, rec)}`;
-      bumpCont("contratosConcluidos");
-      /* v9.28: é aqui que o arco anda. Uma missão que o mundo impôs pesa três
-         vezes o que pesa um favor — não pelo trabalho que deu, mas pelo tanto
-         que virou a história. */
-      marcarNoArco(tipoMissao(m.tipo).forcada ? "missao_forcada" : "missao", `concluí "${m.titulo}"`);
-      /* o relógio de prazo morre junto com a missão que ele vigiava */
-      if (m.relogioId) {
-        const semRel = (relogiosRef.current || []).filter((x) => x.fonte !== `missao:${m.id}`);
-        if (semRel.length !== (relogiosRef.current || []).length) { relogiosRef.current = semRel; setRelogios(semRel); }
-      }
-    }
-    if (pers !== p) { setPersonagem(pers); personagemRef.current = pers; }
-    return pers;
-  };
+  /* O CONFERENTE (v9.27, v9.129, v9.132, MM14, MM-C): a espinha confere
+     pela mesma porta, a falha descrita, o avanço, a paga, o item das
+     grandes, a casa (o dízimo, a prova), o arco que a missão empurra e o
+     relógio de prazo que morre com ela moram em src/motor/depois-do-turno.js,
+     à letra. Devolve a ficha do herói depois da paga. */
+  const conferirAsMissoes = (persAtual) => osOrgaosAgora().conferirAsMissoes(persAtual);
 
   /* ---------------- O PRAZO COMEÇA A CORRER (v9.38) ----------------
      Uma missão com pressa ganha um relógio de "noite": uma casa por noite

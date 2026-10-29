@@ -316,6 +316,14 @@ const DEVOLVE = { rodape: "rodape", aberturaCampanha: "abrirACampanha(pers)", vi
    em `envelopes-sitios-do-preludio.json` (o texto do motor não se lê:
    teste-assercoes-de-texto). */
 export const SITIOS_DO_PRELUDIO = JSON.parse(fs.readFileSync(new URL("./envelopes-sitios-do-preludio.json", import.meta.url), "utf8"));
+/* (trilha A, 29/10, o conferente no motor) O SÍTIO QUE FOI COM O CONFERENTE:
+   o envelope da missão perdida (genteMissaoPerdida) morava no
+   conferirAsMissoes, que saiu do App para src/motor/depois-do-turno.js (à
+   letra e lado a lado contra o recorte do App, teste-motor-depois-do-turno.mjs).
+   Como os seis do prelúdio, o lado de HOJE corre o sítio guardado, o texto do
+   App de 9e06960 em envelopes-sitios-do-depois.json. */
+export const SITIOS_DO_DEPOIS = JSON.parse(fs.readFileSync(new URL("./envelopes-sitios-do-depois.json", import.meta.url), "utf8"));
+const SITIOS_GUARDADOS = { ...SITIOS_DO_PRELUDIO.sitios, ...SITIOS_DO_DEPOIS.sitios };
 export function recorteDosEnvelopes(app, { novo, so } = {}) {
   const corte = corteDe(app);
   const r = {};
@@ -323,7 +331,7 @@ export function recorteDosEnvelopes(app, { novo, so } = {}) {
     const A = ANCORAS[b];
     const fora = !novo && A.antesDe ? corte(...A.antesDe) + "\n" : "";
     /* `envolve`: o sítio que é um campo de objeto (nota: `...`,) corre dentro de um objeto, nas duas pontas */
-    const cerne = novo && Object.hasOwn(SITIOS_DO_PRELUDIO.sitios, b) ? SITIOS_DO_PRELUDIO.sitios[b] : corte(...(novo ? A.hoje : A.antes));
+    const cerne = novo && Object.hasOwn(SITIOS_GUARDADOS, b) ? SITIOS_GUARDADOS[b] : corte(...(novo ? A.hoje : A.antes));
     r[b] = { orgaos: fora + (A.envolve ? A.envolve[0] + "\n" + cerne + "\n" + A.envolve[1] : cerne), devolve: DEVOLVE[b] || "enviados" };
   }
   return r;

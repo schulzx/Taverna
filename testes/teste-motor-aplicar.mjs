@@ -402,7 +402,21 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
   /* a fiação */
   /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
   t("o App chama as missões e os sinais e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { evento_global_encerrar: true, sinais: ["fe:feito"] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.eventos.global === null && s.msgs.some((m) => /fiéis/.test(m)); })());
-  t("as quatro regras do App são fiação do motor", /const r = ganhoDeFe\(\{/.test(APP) && /const r = milagreInvocado\(\{/.test(APP) && /const d = dadivasConcedidas\(pers, divindadeRef\.current\);/.test(APP) && /const a = arcoComOMarco\(historiaRef\.current, tipo, rotulo, motorDoArco\);/.test(APP));
+  /* MOVIDA NA FASE 4, trilha A (29/10), com o motivo: a fé (ganharFe) e o
+     arco (marcarNoArco) saíram do App para a fábrica dos órgãos do depois
+     (src/motor/depois-do-turno.js, portas também do Cronista), e o texto do
+     motor não se lê (teste-assercoes-de-texto). As duas regras que ficam
+     no App seguem pelo texto; as duas que saíram provam-se pela fiação do App
+     (uma linha sobre osOrgaosAgora) e jogando a peça (depois-bloco.mjs): a
+     fé da fábrica é a do ganhoDeFe, à letra, e o marco grande vira o arco
+     como o arcoComOMarco o vira. */
+  const { jogarODepois } = await import("./depois-bloco.mjs");
+  const feDaFabrica = jogarODepois("ganharFe", { estado: { divindade: dv, devocao: { cidades: {}, andarilhos: 0 }, mapa: mapaF, cidadeAtual: "Vau Alto", dia: 2, personagem: { nivel: 15 } }, args: [300, 2, "um feito"] });
+  const arcoDaFabrica = jogarODepois("marcarNoArco", { estado: { historia: { estrutura: "jornada", etapa: 0, marcos: 3 } }, args: ["global", "a praga acabou"] });
+  t("as quatro regras do App são fiação do motor", /const r = milagreInvocado\(\{/.test(APP) && /const d = dadivasConcedidas\(pers, divindadeRef\.current\);/.test(APP)
+    && APP.includes("const ganharFe = (fieis, pf, motivo, local) => osOrgaosAgora().ganharFe(fieis, pf, motivo, local);") && APP.includes("const marcarNoArco = (tipo, rotulo) => osOrgaosAgora().marcarNoArco(tipo, rotulo);")
+    && JSON.stringify(feDaFabrica.ret) === JSON.stringify(g.msgs) && JSON.stringify(feDaFabrica.escritas.divindade) === JSON.stringify(g.divindade)
+    && JSON.stringify(arcoDaFabrica.escritas.historia) === JSON.stringify(arco.historia));
   t("o motor do arco do App aceita o evento de agora", /const motorDoArco = \(sobre = \{\}\) => \{/.test(APP));
 }
 

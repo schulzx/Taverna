@@ -64,7 +64,11 @@ sec("2 · a prova morde");
   /* os efeitos aplicados fora da ordem em que nasceram: as linhas da nota trocam de lugar */
   const foraDeOrdem = divergem(await fotosDe(trocado("for (const ef of efeitos) aplicarEfeitoDoCronista(ef);", "for (const ef of [...efeitos].reverse()) aplicarEfeitoDoCronista(ef);")));
   t(`os efeitos fora de ordem: ${foraDeOrdem} fotos divergem`, foraDeOrdem > 20);
-  const semConversa = divergem(await fotosDe(trocado("ref.current = (o && (o.segredos || o.falouCom)) || [];", "ref.current = [];")));
+  /* MOVIDA NA FASE 4, trilha A (29/10), com o motivo: a porta conferirCom
+     saiu do literal das portas do App para a fábrica dos órgãos do depois
+     (src/motor/depois-do-turno.js), e o App passa-lhe a conversa e o
+     segredo. A mesma mordida é agora o App que não os passa. */
+  const semConversa = divergem(await fotosDe(trocado("conferirCom: (pc, o) => osOrgaosAgora().conferirCom(pc, o),", "conferirCom: (pc, o) => osOrgaosAgora().conferirCom(pc, null),")));
   t(`a conferência sem a conversa nem o segredo: ${semConversa} fotos divergem`, semConversa > 20);
   const semFila = divergem(await fotosDe(trocado("{ narrativa, fila: filaDoCronista }", "{ narrativa, fila: \"\" }")));
   t(`o pedido sem a fila das narrações não lidas: ${semFila} fotos divergem`, semFila > 20);

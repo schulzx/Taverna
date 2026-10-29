@@ -200,14 +200,29 @@ sec("9. LIGADA AO JOGO");
      a intenção (o `ver` das etapas), e a chamada ganhou o 4.º argumento —
      `{ ato }`, a ordem do ato: marco de ato posterior não fecha. A regex
      antiga exigia o `)` logo depois do `ver(cond, m)`. */
-  t("o marco confere pela MESMA porta das missões", /conferirEspinha\(espinhaRef\.current, mundoAgora, \(cond, m\) => etapaDef\(cond\.tipo\)\.ver\(cond, m\)(, \{ ato: [^}]+\})?\)/.test(APP));
-  t("e na ordem do ato (MM-C · C0)", /conferirEspinha\(espinhaRef\.current, mundoAgora, [^\n]*\{ ato: \(historiaRef\.current \|\| \{\}\)\.etapa \}\)/.test(APP));
+  /* MOVIDAS NA FASE 4, trilha A (29/10), com o motivo: o conferente saiu
+     do App para src/motor/depois-do-turno.js (a fábrica dos órgãos do
+     depois), e o texto do motor não se lê (teste-assercoes-de-texto). A
+     intenção é a mesma, e prova-se jogando a peça (depois-bloco.mjs) numa
+     cena gravada: o marco fecha pela porta das missões (o ver da etapa:
+     estar onde o ir_a manda fecha, estar noutro sítio não) e na ordem do
+     ato (marco de ato posterior ao da história não fecha). */
+  const { jogarODepois, aCenaQueConfere, aqui } = await import("./depois-bloco.mjs");
+  const ondeEstou = aqui(aCenaQueConfere());
+  const comUmMarco = (feitio, ato, etapa, alvo) => ({ historia: { estrutura: "jornada", etapa, marcos: 0 }, espinha: { atos: [{ ato, marcos: [{ id: "mk", titulo: "O marco", feitio, onde: ondeEstou, condicao: { tipo: "ir_a", alvo: alvo || ondeEstou }, feito: false }] }] } });
+  const conferido = (sobre) => jogarODepois("conferirAsMissoes", { estado: aCenaQueConfere(sobre) }).escritas;
+  const fechou = (sobre) => { const e = conferido(sobre).espinha; return !!(e && e.atos[0].marcos[0].feito); };
+  t("o marco confere pela MESMA porta das missões", fechou(comUmMarco("procurar", 0, 0)) && !fechou(comUmMarco("procurar", 0, 0, "Uma Cidade Que Não Há")));
+  t("e na ordem do ato (MM-C · C0)", !fechou(comUmMarco("procurar", 2, 0)) && fechou(comUmMarco("procurar", 2, 2)));
   /* MOVIDA NA MM14 (30/09), com o motivo: a linha que esta asserção guardava
      era o defeito — gravava o retorno de registrarMarco ({historia, ganhou})
      no lugar do arco, e cada marco cumprido reiniciava o arco. O marco passa
      pelo marcarNoArco, que desembrulha o retorno; o que se prova continua a
      ser "empurra o arco pelo peso do próprio feitio". */
-  t("e empurra o arco pelo peso do próprio feitio", /marcarNoArco\(feitioDe\(m\.feitio\)\.peso, m\.titulo\)/.test(APP));
+  /* e MOVIDA outra vez na Fase 4 (29/10), pelo motivo das duas de cima: o
+     arco ganha, por marco cumprido, o peso do feitio dele (1 a procurar, 3 a
+     enfrentar e a descer). */
+  t("e empurra o arco pelo peso do próprio feitio", ["procurar", "enfrentar", "descer"].every((f) => { const h = conferido(comUmMarco(f, 0, 0)).historia; return !!h && h.marcos === pesoDe(feitioDe(f).peso); }));
   t("`revelados` chega ao conferidor", /revelados: \(baseMundoRef\.current \|\| \{\}\)\.revelados \|\| \[\]/.test(APP));
 }
 

@@ -121,6 +121,11 @@ sec("1 · cada grupo, byte a byte contra o App de antes");
   const guardados = Object.keys(SITIOS_DO_PRELUDIO.sitios);
   const voltaram = guardados.filter((b) => APP.includes(SITIOS_DO_PRELUDIO.sitios[b]));
   t(`os ${guardados.length} sítios guardados do prelúdio (${SITIOS_DO_PRELUDIO.commit}) já não estão no App${voltaram.length ? " — voltaram: " + voltaram.join(", ") : ""}`, guardados.length === 6 && voltaram.length === 0);
+  /* e o da missão perdida, que foi com o conferente (SITIOS_DO_DEPOIS) */
+  const { SITIOS_DO_DEPOIS } = await import("./envelopes-bloco.mjs");
+  const doDepois = Object.keys(SITIOS_DO_DEPOIS.sitios);
+  const voltou = doDepois.filter((b) => APP.includes(SITIOS_DO_DEPOIS.sitios[b]));
+  t(`o sítio guardado do conferente (${SITIOS_DO_DEPOIS.commit}) já não está no App${voltou.length ? " — voltou: " + voltou.join(", ") : ""}`, doDepois.length === 1 && voltou.length === 0);
 }
 t(`o dourado tem ${N_CASOS} casos em cada grupo, e o commit de antes de cada um`, BLOCOS.every((b) => (D.blocos[b] || []).length === N_CASOS && D.antes[b]));
 t(`o dourado guarda o hash e o comprimento de cada caso, e o texto só nos ${AMOSTRA} primeiros`, BLOCOS.every((b) => D.blocos[b].every((f, i) => /^[0-9a-f]{32}$/.test(f.h) && Number.isInteger(f.n) && ("texto" in f) === (i < AMOSTRA))));

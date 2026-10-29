@@ -1,0 +1,7 @@
+{
+ "commit": "9e06960",
+ "porque": "o sítio de envelope que saiu do App com o conferente das missões (src/motor/depois-do-turno.js, trilha A, 29/10): o texto do App de 9e06960, recortado pelas âncoras de HOJE de envelopes-bloco.mjs; o lado de hoje de teste-motor-envelopes-do-turno corre-o daqui",
+ "sitios": {
+  "genteMissaoPerdida": "notaRef.current = (notaRef.current ? notaRef.current + \"\\n\" : \"\") + oEnvelopeDaGente(\"missaoPerdida\", { titulo: f.missao.titulo, motivo: f.motivo });"
+ }
+}
