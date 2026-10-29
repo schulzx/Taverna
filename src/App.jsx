@@ -70,6 +70,8 @@ import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, 
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
 import { migrarTarefasAntigas, tarefaParaMissao, pagaDoFecho, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
+/* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
+import { cenarioAtivo } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
 import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
@@ -2067,7 +2069,7 @@ function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, de
 }
 
 function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar }) {
-  mundo = mundo || { genero: "Fantasia medieval" };
+  mundo = mundo || { genero: cenarioAtivo().generos.padrao };
   const racasDisp = racasDoGenero(mundo.genero);
   const ehFuturista = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero);
   const [raca, setRaca] = React.useState(atual.raca || racasDisp[0].nome);
@@ -2649,7 +2651,7 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = "Fantasia medieval", lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2688,7 +2690,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   }, [abaPedida]); // eslint-disable-line
   const aba = abaPedida || abaVista;
   const al = alforje || {};
-  mundo = mundo || { genero: "Fantasia medieval" };
+  mundo = mundo || { genero: cenarioAtivo().generos.padrao };
   if (!aba) return null;
   const equipados = personagem.equipados || {};
   const equipDisponivel = (personagem.equipamento || []).filter((e) => !Object.values(equipados).some((x) => x?.nome === e.nome));
@@ -5335,7 +5337,7 @@ class LimiteErro extends React.Component {
    era enviada; ela só passa a ser deste mundo em vez de ser do gênero.
    Sem léxico, cai nos bancos de sempre, linha por linha. */
 function gerarBancoNomes(mundo) {
-  const g = (mundo && mundo.genero) || mundo || "Fantasia medieval";
+  const g = (mundo && mundo.genero) || mundo || cenarioAtivo().generos.padrao;
   const lex = mundo && mundo.lexico;
   const cidades = cidadesDo(lex) || (() => { const a = []; for (let i = 0; i < 8; i++) a.push(nomeCidade(g)); return a; })();
   const tavernas = tavernasDo(lex) || (() => { const a = []; for (let i = 0; i < 4; i++) a.push(nomeTaverna(g)); return a; })();
@@ -6151,7 +6153,7 @@ export default function Taverna() {
      rodada, mesmo dado. `comb` é o combate (ref ou estado — os dois têm
      `.rodada`); sem rodada, 1 (nunca undefined dentro do hash). */
   const sementeDaFuga = (comb) => `${sementeMundo()}|${diaRef.current}|${(comb && comb.rodada) || 1}`;
-  const generoMundo = () => (mundoAtual() && mundoAtual().genero) || "Fantasia medieval";
+  const generoMundo = () => (mundoAtual() && mundoAtual().genero) || cenarioAtivo().generos.padrao;
   /* v9.40: a FORMA do mundo desta campanha. Todo gerador que fala de lugar
      recebe isto ao lado do gênero — um decide o sabor, o outro a forma. */
   const moldeMundo = () => moldePorId((mundoAtual() && mundoAtual().molde) || MOLDE_PADRAO);
@@ -11052,7 +11054,7 @@ export default function Taverna() {
     torneioRef.current = null;
     const pers = montarPronto(prontoId);
     if (!pers) return;
-    const m = { genero: "Fantasia medieval", molde: MOLDE_PADRAO, estrutura: "jornada", voz: VOZ_PADRAO, apresentacao: "estrita" };
+    const m = { genero: cenarioAtivo().generos.padrao, molde: MOLDE_PADRAO, estrutura: "jornada", voz: VOZ_PADRAO, apresentacao: "estrita" };
     mundoRef.current = m; setMundo(m);
     setNomeCampanha(`Uma Noite — ${pers.nome}`); nomeCampanhaRef.current = `Uma Noite — ${pers.nome}`;
     geoDaNoiteRef.current = mundoDaNoite(semente);
@@ -12646,7 +12648,7 @@ export default function Taverna() {
       aplicarRetrato(sv);
       const pers = migrarPersonagem(sv.personagem);
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
-      setMundo(sv.mundo || { genero: "Fantasia medieval" }); setNomeCampanha(nomeDaCampanha(sv)); setPersonagem(pers);
+      setMundo(sv.mundo || { genero: cenarioAtivo().generos.padrao }); setNomeCampanha(nomeDaCampanha(sv)); setPersonagem(pers);
       try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (save carregado)", e); }
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
@@ -12947,7 +12949,7 @@ export default function Taverna() {
           semente: `${nomeDaCampanha(sv) || "aventura"}|${mw.genero || ""}`,
           mapa: mapaRef.current,
           cidadeAtual: sv.cidadeAtual || "",
-          genero: mw.genero || "Fantasia medieval",
+          genero: mw.genero || cenarioAtivo().generos.padrao,
           molde: moldePorId(mw.molde || MOLDE_PADRAO),
           lex: mw.lexico || null,
           nivel: (pers && pers.nivel) || 1,
@@ -12961,7 +12963,7 @@ export default function Taverna() {
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);
-      systemRef.current = montarSystemPrompt(nomeDaCampanha(sv), sv.mundo || { genero: "Fantasia medieval" }, pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+      systemRef.current = montarSystemPrompt(nomeDaCampanha(sv), sv.mundo || { genero: cenarioAtivo().generos.padrao }, pers, canoneRef.current, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
       setFase("jogo");
       /* DESPERTAR NO CARREGAMENTO (v7.4.1): save veterano nível ≥15 nunca
          disparava o despertar (ele só checava DEPOIS de um turno). */
@@ -20553,7 +20555,7 @@ export default function Taverna() {
       if (!doMapa) return null;
       try { return quemDoLugar(mapaRef.current, doMapa.id); } catch (e) { calou("quemDoLugar", e); return null; }
     })();
-    const mmBase = gerarMasmorra((mundo && mundo.genero) || "Fantasia medieval", nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null, quem: quemDaFicha, sorte: sorteDoTurno("masmorra") });
+    const mmBase = gerarMasmorra((mundo && mundo.genero) || cenarioAtivo().generos.padrao, nivelDaMasmorra, "", { salas: doMapa ? doMapa.salas : null, quem: quemDaFicha, sorte: sorteDoTurno("masmorra") });
     /* LUZ DE VERDADE (v9.26): a masmorra inventava as próprias tochas, e as
        que o jogador comprava no mercado não serviam para nada. Agora a luz
        da expedição É a da mochila: as tochas saem dos suprimentos ao entrar
@@ -21423,7 +21425,7 @@ export default function Taverna() {
     const atualizados = [];
     for (const d of decretosRef.current) {
       if (d.status === "pregado") {
-        const grupo = tentarAceite(d, { genero: (mundo && mundo.genero) || "Fantasia medieval", nivel: p.nivel || 1, fama: famaJogador() });
+        const grupo = tentarAceite(d, { genero: (mundo && mundo.genero) || cenarioAtivo().generos.padrao, nivel: p.nivel || 1, fama: famaJogador() });
         if (grupo) {
           const nd = { ...d, status: "aceito", grupo, dias: 0 };
           atualizados.push(nd);
@@ -21499,7 +21501,7 @@ export default function Taverna() {
     const r = surgirANemesis({
       nemesis: nemesisRef.current, fama: famaAtual(), contadores: contRef.current, mapa: mapaRef.current,
       moedas: (personagemRef.current || {}).moedas || 0, dia: diaRef.current, espinha: espinhaRef.current,
-      derrotados: () => mundoDasMissoes().derrotados, genero: (mundo && mundo.genero) || "Fantasia medieval", lexico: (mundoAtual() || {}).lexico,
+      derrotados: () => mundoDasMissoes().derrotados, genero: (mundo && mundo.genero) || cenarioAtivo().generos.padrao, lexico: (mundoAtual() || {}).lexico,
     }, { sorteDoTurno });
     for (const ef of r.efeitos) if (ef.tipo === "calou") calou(ef.onde, ef.erro);
     if (!r.nemesis) return;
@@ -23824,7 +23826,7 @@ export default function Taverna() {
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
-    const enc = rolarEncontro((mundo && mundo.genero) || "Fantasia medieval", personagem.nivel || 1, null, sorteDoTurno("encontro-qual"));
+    const enc = rolarEncontro((mundo && mundo.genero) || cenarioAtivo().generos.padrao, personagem.nivel || 1, null, sorteDoTurno("encontro-qual"));
     /* a campanha que prende (item 3): o encontro de CENA ganha o tema da
        história; o perigo e o achado ficam com a tabela. `enc.tipo` conta. */
     let encV = enc;
