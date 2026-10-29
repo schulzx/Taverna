@@ -130,10 +130,18 @@ async function peloCaminhoDoApp({ estado, frase, eco, bilhetes }) {
   return { pedido: r2.pedido, fim: { ...e0, ...r1.escritas, ...r2.escritas } };
 }
 
-/* os estados das sessões gravadas, como o load os abre */
+/* os estados das sessões gravadas, como o load os abre. MOVIDA (29/10,
+   trilha B), com o motivo: até aqui «como o load abre» era só tirar os
+   nulos e dar atributos à ficha; o servidor passou a abrir o save pela regra
+   do load (abrir-o-save.js: a ficha migrada, o nome da campanha, o mapa, as
+   guildas, as missões…), e o caminho do App — que É o App depois de um
+   load — abre-o pela mesma peça. Sem isto o App daqui seria um App que
+   nunca carregou um save, e a medida compararia duas aberturas. */
 const FICHA = { atributos: { forca: 2, destreza: 1, constituicao: 2, inteligencia: 0, sabedoria: 1, carisma: 0 }, conceito: "Andarilha sem nome" };
+const { abrirOSave } = await import("../src/abrir-o-save.js");
+const { pisarNaCidade } = await import("../src/geografia.js");
 const comoOLoadAbre = (e) => {
-  const x = Object.fromEntries(Object.entries(e).filter(([, v]) => v != null));
+  const x = Object.fromEntries(Object.entries(abrirOSave(e, { naSentada: false })).filter(([, v]) => v != null));
   const p = x.personagem || {};
   x.personagem = { ...p, atributos: p.atributos || FICHA.atributos, conceito: p.conceito || FICHA.conceito };
   return x;
@@ -233,11 +241,14 @@ sec("4. O LIXO E OS ESTOUROS");
   t("eco null passa (é o mesmo que sem eco)", (await rodar({ ...bom, eco: null })).corpo.pedido.hash === sha((await peloCaminhoDoApp({ estado: bom.estado, frase: bom.frase })).pedido));
   t("eco gordo: 413", (await rodar({ ...bom, eco: { quemE: "x".repeat(200 * 1024) } })).codigo === 413);
   const { s, A } = SESSOES[0];
-  const cru = estadoNoTurno(A, 1);
+  /* MOVIDA (29/10): o estado cru (com os nulos) já não estoura — o servidor
+     abre-o como o load —; o que estoura agora é o que estouraria no App: um
+     relato que não é lista */
+  const cru = { ...estadoNoTurno(A, 1), mensagens: { torto: true } };
   let refEstourou = false;
   try { await peloCaminhoDoApp({ estado: cru, frase: "Abro a porta." }); } catch { refEstourou = true; }
   const r = await rodar({ estado: cru, frase: "Abro a porta." });
-  t(`o estado cru de ${s} (com os nulos) estoura no motor em Node e a rota diz 422`, refEstourou && r.codigo === 422 && r.corpo.motivo === "montagem-estourou");
+  t(`o estado torto de ${s} (o relato fora de lista) estoura no motor em Node e a rota diz 422`, refEstourou && r.codigo === 422 && r.corpo.motivo === "montagem-estourou");
   t("e o 422 não leva a pilha nem a mensagem do motor", Object.keys(r.corpo).sort().join(",") === "erro,motivo" && !/Cannot|undefined|null/.test(r.corpo.erro));
   const vazio = await rodar({ estado: {}, frase: "Olho em volta." });
   t(`o estado vazio não derruba a rota (${vazio.codigo})`, vazio.codigo === 200 || vazio.codigo === 422);
@@ -266,7 +277,7 @@ sec("6. COM CHAVE — o licenciante");
   const ref = await peloCaminhoDoApp(casoGordo);
   t("com chave boa: 200 em ensaio, o mesmo hash", r.codigo === 200 && r.corpo.ensaio === true && r.corpo.pedido.hash === sha(ref.pedido));
   t("e a conta da licença vem junto", r.corpo.licenca && r.corpo.licenca.licenciante === "casa-de-ensaio" && r.corpo.licenca.usos === 1 && r.corpo.licenca.restam === 4);
-  const lixo = await rodar({ estado: estadoNoTurno(SESSOES[0].A, 1), frase: "x" }, { headers: { authorization: `Bearer ${e.chave}` }, vars });
+  const lixo = await rodar({ estado: { ...estadoNoTurno(SESSOES[0].A, 1), mensagens: { torto: true } }, frase: "x" }, { headers: { authorization: `Bearer ${e.chave}` }, vars });
   t("o 422 de um licenciante também leva a conta (o turno contou)", lixo.codigo === 422 && lixo.corpo.licenca && lixo.corpo.licenca.usos === 2);
 }
 
@@ -355,7 +366,14 @@ const temposDoTurno = [];
         if (L.juiz && can(sv.juiz) === can(L.juiz.resumo)) navJuiz++;
         if (d.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k))) navReplay++;
         const g = difs(naRegua(sv.estadoDoFim), naRegua(estadoNoTurno(A, i + 1)));
-        if (g.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k) || k === "personagem")) navGravado++;
+        /* MOVIDA (29/10, o save aberto como o load), com o motivo: o servidor
+           abre o save em todo turno, e o load pisa a cidade onde o save parou
+           (v9.54) — o App, na 1.ª sentada de uma campanha nova, ainda não a
+           pisou (só o faz no 1.º load). O mapa do servidor é o do jogo com a
+           cidade atual pisada, e mais nada. */
+        const gs = estadoNoTurno(A, i + 1);
+        const soAPisada = (k) => k === "mapa" && can(sv.estadoDoFim.mapa) === can(pisarNaCidade(gs.mapa, gs.cidadeAtual));
+        if (g.every((k) => DA_MONTAGEM.has(k) || DO_AGIR.has(k) || k === "personagem" || soAPisada(k))) navGravado++;
       }
     }
   }
@@ -364,7 +382,7 @@ const temposDoTurno = [];
   t(`e o cânone que a foto do Juiz muda é exceção (${porJuiz} de ${casos})`, porJuiz <= 3);
   t(`e o Cronista poupado pelo gatilho só muda os campos dele, em ${peloGatilho} dos ${poupados} turnos sem chamada`, peloGatilho <= poupados && poupados > 0);
   t(`na sessão do jogo, o Juiz do servidor é o gravado (${navJuiz}/${navTurnos})`, navTurnos === 3 && navJuiz === navTurnos);
-  t(`e o estado do fim é o do replay fora da montagem e do agir (${navReplay}/${navTurnos}), e o do jogo (${navGravado}/${navTurnos}; a ficha leva os atributos que o load lhe põe)`, navReplay === navTurnos && navGravado === navTurnos);
+  t(`e o estado do fim é o do replay fora da montagem e do agir (${navReplay}/${navTurnos}), e o do jogo (${navGravado}/${navTurnos}; a ficha e a cidade pisada são as que o load lhes dá)`, navReplay === navTurnos && navGravado === navTurnos);
   t(`o eco do turno inteiro, reenviado, dá o pedido do caminho do App (${ecoIgual}/${comEco})`, comEco > 100 && ecoIgual === comEco);
   t(`e o Juiz deste turno muda o eco (os vetos) em ${ecoMudouPeloJuiz} de ${casos}`, ecoMudouPeloJuiz > 0);
   t(`a tela tem a forma mínima em todos (${telaBoa}/${casos}): a narração, as linhas, os campos do save, os avulsos`, telaBoa === casos);
@@ -407,11 +425,19 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
       eco = Object.keys(sv.eco).length ? sv.eco : null;
       const g = L.juiz && L.juiz.entrada;
       if (!g || !sv.entradaDoJuiz) continue;
-      if (g.mercado.length) { comBanca++; if (can(sv.entradaDoJuiz.mercado) === can(g.mercado)) igual++; }
+      /* MOVIDA (29/10, o save aberto como o load), com o motivo: o herói
+         novo do App não passa por migrarPersonagem até ao 1.º load — na 1.ª
+         sentada não tem suprimentos, e o balcão vende-lhe o Kit de viagem; o
+         servidor abre a ficha como o load, que lhe dá o kit (regras-jogo.js),
+         e o balcão já não o oferece. O mercado é o do App, item a item, menos
+         o que a ficha aberta já tem. */
+      const temKit = !!(((comoOLoadAbre(estadoNoTurno(A, i)).personagem || {}).suprimentos || {}).kit);
+      const doApp = g.mercado.filter((x) => !(temKit && x.id === "kit"));
+      if (g.mercado.length) { comBanca++; if (can(sv.entradaDoJuiz.mercado) === can(doApp)) igual++; }
       else abertura = `turno ${i}: o App 0, o servidor ${sv.entradaDoJuiz.mercado.length}`;
     }
     console.log(`      (sem banca no App: ${abertura || "nenhum"})`);
-    t(`na sessão do jogo, o mercado do Juiz é o do App onde o App tinha a banca (${igual}/${comBanca}, 29 itens cada)`, comBanca === 2 && igual === comBanca);
+    t(`na sessão do jogo, o mercado do Juiz é o do App onde o App tinha a banca (${igual}/${comBanca}, 29 itens do App, menos o kit que a ficha aberta já tem)`, comBanca === 2 && igual === comBanca);
   }
   /* (b) OS 146 TURNOS: a praça do instante e a do render dão o mesmo mercado
      (a cidade, o dia, o mapa e a lei de antes do turno, como o App os lê no
@@ -419,8 +445,8 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
      vende tem lá o MESMO preço — a praça é a que a pauta mostrou ao
      Narrador. (A pauta põe a preço também a rua — a caneca, o prato quente,
      de precosDaRua —, que não é banca nem balcão: esses não se cruzam.) */
-  let comPraca = 0, instanteRender = 0, pautaComPreco = 0, pautaNaPraca = 0, precoAntes = 0, precoDepois = 0, vetoDepois = 0, nomeAntes = 0, nomeDepois = 0, casos = 0;
-  const foraDaPraca = [];
+  let comPraca = 0, instanteRender = 0, pautaComPreco = 0, pautaNaPraca = 0, precoAntes = 0, precoDepois = 0, vetoDepois = 0, vetoVisto = 0, nomeAntes = 0, nomeDepois = 0, casos = 0;
+  const foraDaPraca = [], vetosNaoVistos = [];
   for (const { s, A } of SESSOES) {
     let eco = null;
     for (let i = 0; i < A.turnos.length; i++) {
@@ -452,14 +478,28 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
       const v1 = julgarAProsa(narr, en), v0 = julgarAProsa(narr, { ...en, mercado: [] });
       precoAntes += v0.precosInventados.length; precoDepois += v1.precosInventados.length;
       nomeAntes += v0.nomesNovos.length + v0.pessoasNovas.length; nomeDepois += v1.nomesNovos.length + v1.pessoasNovas.length;
-      vetoDepois += vetosDoVeredito(v1, { turno: 1, cidade: estado.cidadeAtual || "" }).filter((x) => x.especie === "preco-contra-a-mesa").length;
+      const vs = vetosDoVeredito(v1, { turno: 1, cidade: estado.cidadeAtual || "" }).filter((x) => x.especie === "preco-contra-a-mesa");
+      vetoDepois += vs.length;
+      /* o veto contra uma mesa que o Narrador daquele turno VIU (a pauta
+         gravada dava preço À MESMA COISA): é esse que não pode nascer do nada */
+      const viu = new Set(oQueAPautaSabe(String((L.pedido || {}).pauta || "")).mercado.map((x) => sem(x.nome)));
+      vetoVisto += vs.filter((x) => x.toques.some((k) => viu.has(sem(k)))).length;
+      if (vs.length && vetosNaoVistos.length < 4) vetosNaoVistos.push(`${s}#${i}: ${vs.map((x) => x.toques[0]).join(", ")}`);
     }
   }
   console.log(`      (${casos} turnos; praça na cena em ${comPraca}; preços apanhados ${precoAntes} sem a praça → ${precoDepois} com ela; gente e nomes novos ${nomeAntes} → ${nomeDepois}; vetos contra a mesa ${vetoDepois})`);
   t(`a praça do instante é a do render em todos os turnos gravados (${instanteRender}/${casos})`, casos >= 140 && instanteRender === casos);
   t(`e há praça em boa parte deles (${comPraca})`, comPraca >= 40);
   t(`o que a pauta pôs a preço e a praça vende tem o mesmo preço nas duas (${pautaNaPraca}/${pautaComPreco} turnos)${foraDaPraca.length ? " — " + foraDaPraca.join(" · ") : ""}`, pautaComPreco > 0 && pautaNaPraca === pautaComPreco);
-  t(`com a praça o Juiz não acusa mais preços nas sessões (${precoAntes} → ${precoDepois}) e nenhum veto contra a mesa nasce do nada (${vetoDepois})`, precoDepois <= precoAntes && vetoDepois === 0);
+  /* MOVIDA (29/10, o save aberto como o load), com o motivo: até aqui as
+     cidades das sessões de Node eram só um nome, e uma cidade sem porte não
+     tem banca; abertas como o load as abre, ganham a geografia (o porte, o
+     bioma) e a banca que ela dá — e na 10.ª, em Monte Rasa (gelo), o couro
+     batido a ◉ 15 e as rações a ◉ 8 contra os 20 e 3 que o Narrador disse.
+     Esse Narrador nunca viu a mesa: a pauta gravada da 10.ª é a do registo,
+     sem mercado. A intenção fica, e fica mais exata: nenhum veto contra uma
+     mesa que o Narrador do turno VIU. */
+  t(`com a praça o Juiz não acusa mais preços nas sessões (${precoAntes} → ${precoDepois}), e nenhum veto contra a mesa nasce de uma mesa que o Narrador viu (${vetoVisto} de ${vetoDepois}${vetosNaoVistos.length ? ": " + vetosNaoVistos.join(" · ") : ""})`, precoDepois <= precoAntes && vetoVisto === 0 && vetoDepois <= 2);
   /* (c) O CASO MONTADO: na Ponte do Martelo (a banca do boticário vende o
      Elixir de Destreza a ◉ 145), o Narrador diz «Trezentas» num turno que
      não falou de compra (a pauta não traz a ficha do mercado). Com a praça:

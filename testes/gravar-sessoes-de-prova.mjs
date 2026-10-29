@@ -51,6 +51,9 @@ const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").rep
 
 const { montarEmCena, EM_CENA_NA_PAUTA } = await import("../src/em-cena.js");
 const { estadoDoSave } = await import("../src/estado.js");
+const { abrirOSave, aSementeDoSave } = await import("../src/abrir-o-save.js");
+const { moldePorId, MOLDE_PADRAO } = await import("../src/moldes.js");
+const { cenarioAtivo } = await import("../src/cenario.js");
 const { pontoDaSorte } = await import("../src/motor/sorte-do-turno.js");
 const { abrirASessao, gravarOTurno, correrOTurno, validarASessao } = await import("../src/sessao.js");
 const { entradaDoJuiz, julgarOTurno } = await import("../src/motor/juiz-do-turno.js");
@@ -114,11 +117,26 @@ const cidades = [...new Set(R.pautas.map((p) => p.cidade))];
 const PLANTA = {};
 for (const p of R.pautas) { const d = lerOnde(p.onde); if (d.lugar && d.cidade && !(PLANTA[d.cidade] || []).some((l) => l.nome === d.lugar)) PLANTA[d.cidade] = [...(PLANTA[d.cidade] || []), { nome: d.lugar, onde: "dentro" }]; }
 
+/* O SAVE DE PARTIDA, COMO O LOAD O ABRE (29/10, Fase 4, trilha B). Até aqui
+   o início era o save mínimo, cru: o jogo nunca joga isso — o `continuar`
+   migra a ficha, dá nome à campanha, gera a geografia e as guildas, abre a
+   história, as missões, o reino, os governos, a fé e o relógio do sono — e o
+   servidor passou a abrir cada estado assim (abrir-o-save.js). O arquivo é o
+   dourado do replay e da rota: gravado cru, o servidor e o replay
+   divergiam em todo turno nos dez campos que o load reescreve. */
+const comoOLoadAbre = (sv) => estadoDoSave(abrirOSave(estadoDoSave(sv)));
+/* e o MUNDO da cabeça, o que a fiação do App entrega (sessao.js, «o que a
+   fiação do App tem de entregar»): a semente do save aberto — «A saga de X»,
+   o nome que o jogo deu a estas campanhas sem nome —, o gênero, o molde. Sem
+   ele o replay corria o códex sem mundo, e a gente da base que a narração
+   pôs em cena (o Godfrey de Monte Rasa, na 10.ª) não entrava. */
+const oMundoDe = (E) => ({ semente: aSementeDoSave(E), genero: (E.mundo && E.mundo.genero) || cenarioAtivo().generos.padrao, molde: moldePorId((E.mundo && E.mundo.molde) || MOLDE_PADRAO), lex: (E.mundo && E.mundo.lexico) || null });
+
 /* o save de partida da 10.ª: o herói e a companheira, a cidade de chegada,
    o mapa das cidades que a sessão pisou; a ficha SEM as listas da bolsa e
    das habilidades, de propósito (27/10, T1-B fatia 2: um save mínimo tem de
    jogar — teste-ficha-incompleta.mjs) */
-const inicio10 = () => estadoDoSave({
+const inicio10 = () => comoOLoadAbre({
   personagem: { nome: R.heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, condicoes: [], equipado: {}, grupo: [{ nome: "Saoirse", vida: 10, vidaMax: 10 }] },
   cidadeAtual: R.pautas[0].cidade, lugar: null, jornada: null,
   mapa: { cidades: cidades.map((nome) => ({ nome })) },
@@ -149,7 +167,7 @@ const gravarA10 = () => {
   let E = inicio10();
   let antes = null;
   const regua = [];
-  let sessao = abrirASessao({ semente: "s10", estado: E, origem: "registo-s10-cena.json (a 10.ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
+  let sessao = abrirASessao({ semente: "s10", estado: E, mundo: oMundoDe(E), origem: "registo-s10-cena.json (a 10.ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
   for (let i = 0; i < turnos; i++) {
     const P = R.pautas[i];
     const resposta = R.respostas[i];
@@ -182,7 +200,25 @@ const gravarA10 = () => {
       noMestre = F;
       return F;
     };
-    const r = correrOTurno(E, linha, { semente: "s10", doApp: { antesDoMestre } });
+    const r = correrOTurno(E, linha, { semente: "s10", mundo: sessao.mundo, doApp: { antesDoMestre } });
+    /* O QUE A VIAGEM DO APP MUDOU NO RESTO DO TURNO (29/10): com o mundo na
+       cabeça, o códex revela a gente da base da cidade onde o herói ESTÁ — e
+       quem o pôs lá foi o oráculo (o viajar do App). O turno corre também sem
+       ele, e o que difere vai à mesma declaração: é obra da viagem, não do
+       motor (na 10.ª, a Helga de Nova Profundo e a Saoirse de Nova clara) */
+    const daViagem = app.find((a) => /^(viajar|moverParaLocal)/.test(a.orgao));
+    if (daViagem) {
+      const semOraculo = correrOTurno(E, linha, { semente: "s10", mundo: sessao.mundo });
+      const caminhos = [];
+      for (const k of [...new Set([...Object.keys(r.estado), ...Object.keys(semOraculo.estado)])].sort()) {
+        if (daViagem.campos.includes(k) || J(r.estado[k]) === J(semOraculo.estado[k])) continue;
+        const a = r.estado[k], b = semOraculo.estado[k];
+        if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a)) {
+          for (const c of [...new Set([...Object.keys(a), ...Object.keys(b)])].sort()) if (J(a[c]) !== J(b[c])) caminhos.push(k + "." + c);
+        } else caminhos.push(k);
+      }
+      daViagem.campos = [...daViagem.campos, ...caminhos];
+    }
     if (r.calou.length) regua.push(`M${i + 1}: ${r.calou.map((c) => c.passo + " estourou: " + c.erro).join(" · ")}`);
     const Em = noMestre || E;
     /* a régua do registo: a gente que a pauta nomeia, o estado conhece */
@@ -213,13 +249,13 @@ const gravarDoCronista = (ses) => {
   const L = RC.turnos.filter((x) => x.ses === ses);
   const c0 = [...new Set(L[0].conhecidos)];
   const heroi = c0[c0.length - 1], companheira = c0[0];
-  let E = estadoDoSave({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, mapa: { cidades: [] }, npcs: {}, canone: {}, combate: null });
+  let E = comoOLoadAbre({ personagem: { nome: heroi, classe: "Guerreiro", nivel: 1, xp: 0, vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25, grupo: [{ nome: companheira, vida: 10, vidaMax: 10 }] }, cidadeAtual: "", lugar: null, mapa: { cidades: [] }, npcs: {}, canone: {}, combate: null });
   const conhecidos = (e) => new Set([e.personagem.nome, ...(e.personagem.grupo || []).map((g) => g.nome), ...Object.keys(e.npcs || {}), ...Object.keys(e.canone || {})].map(sem));
   const regua = [];
   /* OS COMBATENTES SÃO DA LUTA, NÃO DO REGISTO DE GENTE: o registo conhece o
      Zumbi enquanto a luta dura e esquece-o quando ela acaba */
   let daLuta = new Set();
-  let sessao = abrirASessao({ semente: ses, estado: E, origem: "registo-s8-s10-cronista.json (a " + ses.slice(1) + ".ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
+  let sessao = abrirASessao({ semente: ses, estado: E, mundo: oMundoDe(E), origem: "registo-s8-s10-cronista.json (a " + ses.slice(1) + ".ª sessão de prova), jogado por testes/jogar-em-node.mjs" });
   for (let i = 0; i < L.length - 1; i++) {
     const a = L[i], b = L[i + 1];
     const linha = {
@@ -232,7 +268,7 @@ const gravarDoCronista = (ses) => {
     const juiz = vereditoDoJuiz(E, a.narrativa, { narracoes: L.slice(0, i).map((x) => x.narrativa), oferecidos: [], frase: a.frase, pauta: "", turno: i + 1 });
     /* a proposta lê o estado DEPOIS do Mestre e ANTES do Cronista: o turno
        corre uma vez sem o Cronista para a refazer, e outra com ela */
-    const meio = correrOTurno(E, { ...linha, cronista: null }, { semente: ses });
+    const meio = correrOTurno(E, { ...linha, cronista: null }, { semente: ses, mundo: sessao.mundo });
     const ja = conhecidos(meio.estado);
     const novos = [...new Set(b.conhecidos)].filter((x) => !ja.has(sem(x)));
     const doCronista = a.util.includes("pessoa") || a.util.includes("canone");
@@ -241,7 +277,7 @@ const gravarDoCronista = (ses) => {
       if (a.util.includes("pessoa") && !a.util.includes("canone")) prop.pessoas = novos.map((nome) => ({ nome, genero: "" }));
       else prop.canone = Object.fromEntries(novos.map((n) => [n, { tipo: "artefato", descricao: "—" }]));
     }
-    const r = correrOTurno(E, { ...linha, cronista: { proposta: prop, juizo: null } }, { semente: ses });
+    const r = correrOTurno(E, { ...linha, cronista: { proposta: prop, juizo: null } }, { semente: ses, mundo: sessao.mundo });
     if (r.calou.length) regua.push(`#${a.k}: ${r.calou.map((c) => c.passo + " estourou: " + c.erro).join(" · ")}`);
     const rec = oNomeRecusado(meio.estado, r.juizo, r.estado);
     let Ef = rec.estado;

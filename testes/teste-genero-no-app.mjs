@@ -36,7 +36,8 @@ sec("1 · os recuos do App são o gênero padrão do mundo em uso");
     ["o gênero do mundo, no turno", "const generoMundo = () => (mundoAtual() && mundoAtual().genero) || " + P + ";", 1],
     ["o mundo da partida rápida", "const m = { genero: " + P + ", molde: MOLDE_PADRAO,", 1],
     ["o save sem mundo, na tela", "setMundo(sv.mundo || { genero: " + P + " });", 1],
-    ["as tarefas antigas migradas", "genero: mw.genero || " + P + ",", 1],
+    /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — este recuo foi com a migração das tarefas antigas para a peça do load (a 1.ª secção conta-o lá). Os do App passam de 13 a 12. */
+    ["as tarefas antigas migradas (agora na peça do load)", "genero: mw.genero || " + P + ",", 0],
     ["o save sem mundo, no pedido ao Narrador", "montarSystemPrompt(nomeDaCampanha(sv), sv.mundo || { genero: " + P + " }, pers,", 1],
     ["a masmorra", "gerarMasmorra((mundo && mundo.genero) || " + P + ",", 1],
     ["o aceite da missão", "tentarAceite(d, { genero: (mundo && mundo.genero) || " + P + ",", 1],
@@ -45,7 +46,10 @@ sec("1 · os recuos do App são o gênero padrão do mundo em uso");
   ];
   for (const [nome, ancora, n] of SITIOS) t(nome + " (" + n + ")", conta(APP, ancora) === n, "achei " + conta(APP, ancora));
   const total = SITIOS.reduce((a, s) => a + s[2], 0);
-  t("são " + total + " recuos, e nenhum outro sítio lê o padrão por fora da conta", total === 13 && conta(APP, P) === total, "no App: " + conta(APP, P));
+  t("são " + total + " recuos, e nenhum outro sítio lê o padrão por fora da conta", total === 12 && conta(APP, P) === total, "no App: " + conta(APP, P));
+  /* e o que saiu do App está na peça do load: o recuo das tarefas antigas e o das casas (que no App era o generoMundo()) */
+  const PECA_DO_LOAD = readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8");
+  t("os recuos do load estão na peça dele (as tarefas antigas e as casas)", conta(PECA_DO_LOAD, "genero: mw.genero || " + P + ",") === 1 && conta(PECA_DO_LOAD, "mundo.genero || " + P + ", mundo.lexico") === 1);
   t("o App importa o mundo em uso", /import \{ cenarioAtivo \} from "\.\/cenario\.js";/.test(APP));
   /* o literal que fica: chave de tabela da tela, não recuo. O fundo do
      ModalCena (um gradiente por gênero) é cor, logo tabela do desenho; o

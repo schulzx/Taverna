@@ -237,8 +237,14 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
      está, na 8.ª e na 9.ª só a gente do registo, e o motor sem defeito. */
   const raiz = (r) => [...new Set(r.turnos.filter((x) => !x.igual).flatMap((x) => x.divida.flatMap((d) => d.caminhos.map((c) => c.split(/[.[]/)[0]))))].sort();
   /* MOVIDA (28/10, a peça do Cronista): na 10.ª também a gente — os dois
-     nomes que o Cronista de então registou e o de hoje recusa (s10#43, #57) */
-  t("na 10.ª, o que diverge é onde o herói está (a cidade, o sítio, a estrada) e o nome que o Cronista de então registou", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada", "npcs"].includes(c)) && R10.turnos.filter((x) => x.divida.some((d) => d.campo.startsWith("npcs"))).every((x) => x.app.some((a) => /Cronista do jogo de então/.test(a.orgao))), J(raiz(R10)));
+     nomes que o Cronista de então registou e o de hoje recusa (s10#43, #57).
+     MOVIDA (29/10, o save aberto como o load): com o mundo na cabeça o códex
+     revela a gente da base da cidade onde o herói está, e nos dois turnos em
+     que o viajar do App o pôs noutra cidade (s10#23, #57) a gente revelada
+     muda com ela — a linha declara-o na viagem (baseMundo.revelados, e a
+     Saoirse de Nova clara em npcs). A intenção fica: só onde o herói está e
+     o que isso arrasta. */
+  t("na 10.ª, o que diverge é onde o herói está (a cidade, o sítio, a estrada), a gente da base que a cidade revela, e o nome que o Cronista de então registou", raiz(R10).length > 0 && raiz(R10).every((c) => ["cidadeAtual", "lugar", "jornada", "npcs", "baseMundo"].includes(c)) && R10.turnos.filter((x) => x.divida.some((d) => d.campo.startsWith("npcs"))).every((x) => x.app.some((a) => /Cronista do jogo de então/.test(a.orgao))), J(raiz(R10)));
   t("na 8.ª e na 9.ª, só a gente do registo", J(raiz(R8)) === J(["npcs"]) && J(raiz(R9)) === J(["npcs"]), J([raiz(R8), raiz(R9)]));
   /* MOVIDA (28/10): o M69 diverge também em «lugar.coord», que a tabela dá
      a moverParaLocal — o órgão que a linha do M69 já declara */

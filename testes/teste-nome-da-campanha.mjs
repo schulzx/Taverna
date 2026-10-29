@@ -93,7 +93,8 @@ t("e a razão da armadilha continua verdadeira: largarASala não limpa o ref",
 sec("A LEITURA — o load parou de inventar, nos quatro sítios");
 t("[ANTES:X] nenhum sítio do App escreve `|| \"Aventura\"`",
   !/nomeCampanha \|\| "Aventura"/.test(APP));
-t("o estado vem da função", APP.includes("setNomeCampanha(nomeDaCampanha(sv))"));
+/* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — o nome aberto sai de nomeDaCampanha nela, e o load põe-no no estado. */
+t("o estado vem da função", APP.includes("setNomeCampanha(ab.nomeCampanha)") && readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8").includes("e.nomeCampanha = nomeDaCampanha(sv);"));
 t("o system prompt da retomada vem da função",
   APP.includes("montarSystemPrompt(nomeDaCampanha(sv),"));
 t("o recap vem da função", APP.includes("nomeCampanha: nomeDaCampanha(sv), desdeODia:"));

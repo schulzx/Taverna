@@ -304,21 +304,24 @@ sec("7. a fiação — App.jsx");
      (pagaDoFecho) é lida pelo conferente, que saiu do App para
      src/motor/depois-do-turno.js. O App importa as três peças que ainda lê;
      a quarta prova-se jogando a peça, em e), abaixo. */
-  t("App.jsx importa as três peças de tarefas-antigas.js que ainda lê",
-    app.includes('import { migrarTarefasAntigas, tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";'));
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — a migração das tarefas antigas é lida por ela; o App importa as duas peças que ainda lê. */
+  const peca = fs.readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  t("App.jsx importa as duas peças de tarefas-antigas.js que ainda lê, e a peça do load a migração",
+    app.includes('import { tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";') && peca.includes('import { migrarTarefasAntigas } from "./tarefas-antigas.js";'));
 
   /* ---- b) o mundo da conversão ---- */
   t("mundoDasTarefas existe, ao lado de mundoDasMissoes",
     app.includes('const mundoDasTarefas = () => ({ semente: sementeMundo(), mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, nivel: ((personagemRef.current || personagem || {}).nivel) || 1, dia: diaRef.current });'));
 
   /* ---- c) a migração no load, ANTES de a tela fixar quests/missoes ---- */
-  const iMigra = app.indexOf("const mg = migrarTarefasAntigas(questsRef.current, missoesRef.current, {");
-  t("o load chama a migração", iMigra >= 0);
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — a migração corre dentro dela (asMissoes), e o load lê as quests e as missões abertas. */
+  const iMigra = app.indexOf("const ab = abrirOSave(sv);");
+  t("o load chama a migração (pela peça do load)", iMigra >= 0 && peca.includes("const mg = migrarTarefasAntigas(quests, missoes, {") && app.includes("questsRef.current = ab.quests;") && app.includes("missoesRef.current = ab.missoes;"));
   t("lê a semente e o mundo do save que acabou de entrar (sv), não do estado antigo",
-    app.includes('semente: `${nomeDaCampanha(sv) || "aventura"}|${mw.genero || ""}`,') && app.includes("cidadeAtual: sv.cidadeAtual || \"\","));
+    peca.includes("semente: aSementeDoSave(sv),") && peca.includes("cidadeAtual: sv.cidadeAtual || \"\","));
   t("os migrados substituem quests e missoes só se algo migrou",
-    app.includes("if (mg.migradas.length) {") && app.includes("questsRef.current = mg.quests;") && app.includes("missoesRef.current = mg.missoes;"));
-  t("a migração nunca custa o load", app.includes('catch (e) { calou("a migração das tarefas antigas", e); }'));
+    peca.includes("if (mg.migradas.length) { quests = mg.quests; missoes = mg.missoes; }"));
+  t("a migração nunca custa o load", /\} catch \{ \/\* o calou do App: a migração nunca custa a abertura \*\/ \}/.test(peca));
   const iFixaTela = app.indexOf("setMissoes(missoesRef.current);\n      setQuests([...questsRef.current]);\n      bancoNomesRef.current = gerarBancoNomes(sv.mundo);");
   t("e isso acontece ANTES de a tela fixar quests/missoes", iFixaTela >= 0 && iMigra >= 0 && iMigra < iFixaTela);
 
@@ -360,8 +363,14 @@ sec("7. a fiação — App.jsx");
     iLinhas >= 0 && iPf === iLinhas + 1 && daPrincipal.ret.moedas === (daPrincipal.antes.moedas || 0) + 5);
   t("a fé do fecho usa ganharFe com o que pagaDoFecho devolveu",
     daPrincipal.lido[iPf].includes("+" + TA.PAGA_DA_LISTA_ANTIGA.feDaPrincipal + " fiéis") && !!daPrincipal.escritas.divindade && !doFavor.lido.some((l) => l.includes("fiéis")));
+  /* MOVIDA (29/10, trilha A, a ligação do load): as sessões de prova regravaram-se
+     abertas como o load as abre, e a ficha da cena (casoDoPedido(4)) passou por
+     migrarPersonagem — chega com 1 ponto de heroísmo, e não sem o campo. A
+     régua passa a medir o que o fecho SOMA: +1 com o veículo da lista antiga,
+     +0 sem ele. */
+  const hAntes = (j) => Number(j.antes.heroismo) || 0;
   t("o heroísmo do fecho usa ganharHeroismo, e pers segue mutável no laço",
-    daPrincipal.ret.heroismo === 1 && doFavor.ret.heroismo === 1 && doFavor.ret.moedas === (doFavor.antes.moedas || 0) + 5 && semVeiculo.ret.heroismo === undefined && daPrincipal.lido.some((l) => l.startsWith("✧ +1 ponto de heroísmo")));
+    daPrincipal.ret.heroismo === hAntes(daPrincipal) + 1 && doFavor.ret.heroismo === hAntes(doFavor) + 1 && doFavor.ret.moedas === (doFavor.antes.moedas || 0) + 5 && (Number(semVeiculo.ret.heroismo) || 0) === hAntes(semVeiculo) && daPrincipal.lido.some((l) => l.startsWith("✧ +1 ponto de heroísmo")));
   /* (um mapa torto faz a fé estourar dentro da paga: o fecho segue) */
   const torto = fechar({ missoes: [oFio("principal")], divindade: AUREL, mapa: { cidades: 5 } });
   t("nunca custa o fecho", torto.portas.some((p) => p[0] === "calou" && p[1] === "a paga da tarefa antiga") && torto.escritas.missoes[0].status === "concluida" && torto.ret.moedas === (torto.antes.moedas || 0) + 5);

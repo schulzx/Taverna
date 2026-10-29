@@ -76,7 +76,14 @@ const DA_PRACA = /^PERGUNTOU|banca|balc[aã]o|à venda|◉/;
 const comPraca = mudam.filter((j) => { const v = linhas(antes[j]); return linhas(agora[j]).some((l) => !v.includes(l) && DA_PRACA.test(l)); });
 t(`a diferença é a praça: nos ${comPraca.length} a pauta do instante diz da banca o que a velha não diz`, comPraca.length > 0 && comPraca.length === mudam.length, mudam.filter((j) => !comPraca.includes(j)).slice(0, 5).join(","));
 /* o caso 182 («Entro em Nova clara com Saoirse e procuro a ferraria. Quero comprar uma espada longa de aço»): com a banca velha a pauta calava a praça, e o Narrador ficava livre para inventar o ferreiro */
-t("o da ferraria: a pauta do instante diz que nenhuma banca daqui vende armas, e a velha não diz nada", linhas(agora[182]).some((l) => /^PERGUNTOU .*nenhuma banca daqui vende armas/.test(l)) && !linhas(antes[182]).some((l) => /^PERGUNTOU/.test(l)));
+/* MOVIDA (29/10, trilha A, a ligação do load): as sessões de Node passaram a
+   abrir como o load do App as abre, e o mapa de Nova clara ganhou a geografia
+   do save (porte «cidade», 12 880 almas) — e, com ela, a banca que vende uma
+   espada. A pauta do instante deixou de dizer «nenhuma banca daqui vende
+   armas» para dizer O QUE se vende e A QUE PREÇO (Espada Curta ◉ 75, no
+   Cálice de Ferro). A intenção fica: a pauta do instante diz da praça o que a
+   velha cala, e o Narrador não fica livre para inventar o ferreiro. */
+t("o da ferraria: a pauta do instante diz o que a banca daqui vende e a que preço, e a velha não diz nada", linhas(agora[182]).some((l) => /^PERGUNTOU à venda em Nova clara: .+◉ \d+/.test(l)) && !linhas(antes[182]).some((l) => /^PERGUNTOU/.test(l)));
 
 console.log(`\n${ok} ok, ${mal} falhas`);
 if (mal) process.exit(1);

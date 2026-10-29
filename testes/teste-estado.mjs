@@ -239,7 +239,8 @@ await (async () => {
     const tocados = [...AR.matchAll(/r\.(\w+) !== undefined/g)].map((m) => m[1]);
     const iChamada = CONT.indexOf("aplicarRetrato(sv);");
     const depois = CONT.slice(iChamada + 20);
-    const naoRepostos = [...new Set(tocados)].filter((k) => !new RegExp("sv\\." + k + "\\b").test(depois));
+    /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — um campo reposto pela peça lê-se `ab.X`, e `ab` nasce do `sv` depois de `aplicarRetrato` (a história, por exemplo). */
+    const naoRepostos = [...new Set(tocados)].filter((k) => !new RegExp("(?:sv|ab)\\." + k + "\\b").test(depois));
     t(`os ${new Set(tocados).size} campos que \`aplicarRetrato\` lê por \`!== undefined\` são todos repostos depois em \`continuar\``,
       tocados.length > 10 && naoRepostos.length === 0, naoRepostos.join(","));
     /* (c) as garantias dos módulos: garantirX(null) === garantirX(undefined) */

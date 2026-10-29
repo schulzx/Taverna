@@ -187,7 +187,8 @@ sec("9. LIGADO AO JOGO");
 {
   t("o governo tem estado próprio", /const governosRef = useRef\(\{\}\)/.test(APP));
   t("e é salvo", /governos: governosRef\.current/.test(APP));
-  t("e volta do save", /garantirGovernos\(sv\.governos, mapaRef\.current\)/.test(APP));
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — os governos voltam do save por ela, sobre o mapa aberto, e o load lê o campo aberto. */
+  t("e volta do save", /garantirGovernos\(sv\.governos, e\.mapa\)/.test(readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8")) && /governosRef\.current = ab\.governos;/.test(APP));
   t("campanha nova começa sem governo", /governosRef\.current = \{\}; setGovernos\(\{\}\)/.test(APP));
   /* o alvo da felicidade passou a responder ao governo */
   t("o alvo lê o equilíbrio do governo", /equilibrioDe\(\{ semente: sementeMundo\(\), gov: g \}\)/.test(APP));
@@ -240,7 +241,8 @@ sec("A FELICIDADE DIZ O QUE ELA FAZ (v9.189)");
   t("e no meio da escada também", R.fatorFelicidade(64) === 1.14);
   t("lixo cai dentro da escada", R.fatorFelicidade(-40) === 0.5 && R.fatorFelicidade(400) === 1.5);
   t("a tela diz o fator", /×\{fatorFelicidade\(fel\)\.toLocaleString\("pt-BR", \{ minimumFractionDigits: 2 \}\)\} na renda/.test(APP));
-  t("lendo da tabela e não de conta própria", /import \{ garantirReino, fatorMedioReino, fatorFelicidade/.test(APP));
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — o garantirReino saiu do import do App (lê-o a peça); a tela continua a ler o fator da tabela de reino.js. */
+  t("lendo da tabela e não de conta própria", /import \{ fatorMedioReino, fatorFelicidade[^}]*\} from "\.\/reino\.js"/.test(APP));
 
   /* E O PENHASCO TEM NOME. O aviso de revolta existia, mas só depois de a
      fúria começar: entre 25 e 40 o jogador via amarelo e nenhuma noção de

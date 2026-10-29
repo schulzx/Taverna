@@ -217,7 +217,14 @@ sec("6. O nulo do save, como o load do App o abre");
     const leOutro = (ex) => livres(ex).some((n) => !imp[n]) || [...ex.matchAll(/\bsv\.(\w+)/g)].some((m) => m[1] !== c);
     if (NULO_QUE_O_LOAD_REFAZ[c]) { if (todas.some(leOutro)) refeitos.push(c); else tortos.push(c + " (na tabela, e o load não lê outro)"); continue; }
     if (!todas.length) { tortos.push(c + " (sem leitura no load)"); continue; }
-    const ex = todas[0];
+    /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` passou a abrir
+       os dez campos que refaz por `const ab = abrirOSave(sv)`, e o que a peça
+       arrasta junto vem dela também — aqui, as quests (`questsRef.current =
+       ab.quests`). A régua continua a pedir o mesmo: o nulo, pelo load, dá
+       exatamente a partida. Para a leitura `ab.X` de um campo fora da tabela
+       dos refeitos, avalia-se a peça com o save do nulo (`abrirOSave(sv).X`);
+       os da tabela continuam a contar como «lê outro», que é o que `ab` é. */
+    const ex = /^ab\.\w+$/.test(todas[0]) ? todas[0].replace(/^ab\./, "abrirOSave(sv).") : todas[0];
     if (leOutro(ex)) { tortos.push(`${c} (o load lê outro: ${ex.slice(0, 60)})`); continue; }
     const args = {};
     for (const n of livres(ex)) { const { mod, nome } = imp[n]; args[n] = (await import(`../src/${mod}.js`))[nome]; }

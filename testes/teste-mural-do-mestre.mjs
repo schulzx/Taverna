@@ -16,6 +16,8 @@ const O = await import(S + "ofertas.js");
 const M = await import(S + "missoes.js");
 const { readFileSync } = await import("node:fs");
 const APP = readFileSync("../src/App.jsx", "utf8");
+/* a peça do load (src/abrir-o-save.js), que leva desde 29/10 a migração da oferta parada */
+const PECA_DO_LOAD = readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8");
 
 let ok = 0, mau = 0;
 const t = (nome, cond, extra = "") => {
@@ -103,7 +105,8 @@ sec("4. o que o código de verdade faz com a proposta");
 {
   /* Provas sobre a FONTE, porque a ligação mora no App e nenhuma delas
      sobrevive a alguém religar o caminho antigo por engano. */
-  t("o App transforma missao_oferecida em cartaz", /cartazDaProposta\(/.test(APP));
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — a oferta parada vira cartaz dentro dela (asMissoes), na sentada. */
+  t("o App transforma missao_oferecida em cartaz", /cartazDaProposta\(/.test(PECA_DO_LOAD) && /abrirOSave\(sv\)/.test(APP));
   /* 28/10 (T1-A, 9.ª fatia), MUDADA E O MOTIVO: o cartaz da proposta do Cronista saiu do
      cronistaDoTurno do App para src/motor/cronista-do-turno.js
      (oAceitoDoCronista), e o motor não se lê pelo texto (a catraca de
@@ -184,10 +187,11 @@ sec("6. o save que já tinha ofertas paradas no diário");
   t("e cai na pilha dos oferecidos", c.oferecido === true);
   t("levando o preço que já estava combinado", c.paga === velha.recompensa.moedas, String(c.paga) + " vs " + String(velha.recompensa.moedas));
   t("e o nível do trabalho, não o de quem carrega o save", c.nivel === 3);
-  t("o App faz a migração ao carregar", /a oferta parada no diário vai para o mural/.test(APP));
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — e o load põe no mural o que ela converteu. */
+  t("o App faz a migração ao carregar", /na sentada, a oferta parada vai ao mural \(v9\.119\)/.test(PECA_DO_LOAD) && /if \(ab\.mural\) \{ muralRef\.current = ab\.mural; setMural\(muralRef\.current\); \}/.test(APP));
   /* migração que perde alguma coisa em silêncio é pior do que migração
      nenhuma: o que não converter continua no diário, com o botão de sempre */
-  t("e o que não converter fica onde está", /ficam\.includes\(q\.titulo\)/.test(APP));
+  t("e o que não converter fica onde está", /ficam\.includes\(q\.titulo\)/.test(PECA_DO_LOAD)); /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — o filtro do que fica é dela. */
   t("por isso a saída antiga não pode sumir", /responderOferta/.test(APP));
 }
 

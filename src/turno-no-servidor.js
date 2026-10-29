@@ -88,6 +88,7 @@
 import { SEMENTE_DA_CASA, comSorte, hashSemente, rng } from "./semente.js";
 import { pontoDaSorte } from "./motor/sorte-do-turno.js";
 import { oEstadoDoServidor } from "./motor/eco-do-turno.js";
+import { abrirOSave } from "./abrir-o-save.js";
 import { oPreludioDoTurno } from "./motor/preludio-do-turno.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO, RENDER_DO_PEDIDO } from "./motor/pedido-do-turno.js";
 import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
@@ -177,7 +178,11 @@ export async function oPedidoNoServidor(corpo, opcoes) {
 async function montar(corpo, opcoes) {
   const { estado, frase, eco, bilhetes } = ehObjeto(corpo) ? corpo : {};
   const { agora } = ehObjeto(opcoes) ? opcoes : {};
-  const e0 = oEstadoDoServidor(estado, { eco, bilhetes });
+  /* o save como o load do App o abre (abrir-o-save.js): a ficha migrada, o
+     nome da campanha, o mapa, as guildas, as missões… — fora o que é só da
+     sentada (o teto do sono, a oferta que vai ao mural), porque o servidor
+     abre o save em todo turno e o App só ao carregar */
+  const e0 = oEstadoDoServidor(ehObjeto(estado) ? abrirOSave(estado, { naSentada: false }) : estado, { eco, bilhetes });
   const casa = aCasaDoTurno(e0);
   const semente = hashSemente(`${SEMENTE_DA_CASA}|${casa}`);
   const corrente = rng(semente);

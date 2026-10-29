@@ -4,7 +4,7 @@ import { elencoDoMundo, garantirElencoDoSave, promoverNoDia, agirForaDeCena, boa
 import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
-import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, pisarNaCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
+import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, ECONOMIA_ACAO_PROMPT } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher } from "./fuga.js";
@@ -24,11 +24,11 @@ import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
 import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
-import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
+import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO, ditosDoBando } from "./decretos.js";
-import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
-import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
+import { fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
+import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
 import { perfilDeCriatura, perfilDe, elementoDaArma, iconeDano, resistenciasEquipadas } from "./danos.js";
 import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HORAS_AVISO_SONO, HORAS_EXAUSTO, MINUTOS_POR_TURNO, MINUTOS_VIAGEM, MINUTOS_SALA_MASMORRA, MINUTOS_RODADA_COMBATE, AMANHECER } from "./calendario.js";
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
@@ -68,7 +68,7 @@ import { custoDaFalhaCritica, linhaDoCusto, notaDoCusto } from "./consequencias.
 import { garantirDevocao, processarDiaFe, resumoFePrompt, DEVOCAO_PROMPT, fieisTotais, depositarFieis, espalharFieis, erguerTemplo, podeErguerTemplo, temploDaCidade, temploDe, feDaCidade, estadoFe, alvosFelicidade } from "./devocao.js";
 import { NIVEL_DESPERTAR, GRAUS, grauDe, tituloDe, proximoPatamar, bonusDivino, imunePorEscopo, garantirDivindade, gerarDivindade, gerarPanteaoInicial, gerarEventoDivino, resumoAscensao, DIVINDADE_PROMPT, tituloDoHeroi, gdMaximoPorNivel, pfPorDia, pfMaximo, MILAGRES, milagresDisponiveis, milagrePorId, CAMINHOS_ASCENSAO, caminhoPorId, CAMINHOS_PROMPT } from "./divindades.js";
 import { ctxMundo, faseDoArco, garantirEventos, processarDescansoLongoEventos } from "./geradores.js";
-import { migrarTarefasAntigas, tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
+import { tarefaParaMissao, VEICULO_DA_TAREFA_ANTIGA } from "./tarefas-antigas.js";
 import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt, MOLDES_PROMPT } from "./moldes.js";
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo } from "./cenario.js";
@@ -192,7 +192,7 @@ import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
    passo. Substitui a abertura forçada de uma linha só. */
 import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
-import { guildasDoMundo, garantirGuilda, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
+import { guildasDoMundo, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
@@ -277,7 +277,7 @@ import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assento
 import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilencio, SEM_GUARDADO, narrativaFaltou, MOTIVO_SEM_NARRATIVA, fotografarOTurno, destinoDaFalha, turnoNaoAconteceu } from "./guardado.js";
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, bonusEquip, bonusEfeito, atributoEfetivo, processarCombate, migrarPersonagem } from "./regras-jogo.js";
-import { aFichaAberta, comACidadePisada } from "./abrir-o-save.js";
+import { abrirOSave, aFichaAberta, comACidadePisada } from "./abrir-o-save.js";
 import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, consumirDia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, recuperarExaustao, resumoErmos } from "./ermos.js";
 
 /* ---------------- O SILÊNCIO QUE NÃO CUSTA O TURNO ----------------
@@ -11268,9 +11268,15 @@ export default function Taverna() {
          (mapa, missões, jornada…), que a sobrescreve. O que ela poupa são
          os campos simples, que não tinham migração nenhuma. */
       aplicarRetrato(sv);
-      const pers = migrarPersonagem(sv.personagem);
+      /* Fase 4, trilha A (29/10): os DEZ campos que o load refaz — a ficha,
+         o nome, o mapa, as guildas, as missões, a história, os governos, o
+         reino, a fé e o relógio do sono — abrem pela regra que o servidor
+         também usa, src/abrir-o-save.js. Cada linha abaixo lê o campo já
+         aberto; a regra de cada um, e o porquê dela, moram lá. */
+      const ab = abrirOSave(sv);
+      const pers = ab.personagem;
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
-      setMundo(sv.mundo || { genero: cenarioAtivo().generos.padrao }); setNomeCampanha(nomeDaCampanha(sv)); setPersonagem(pers);
+      setMundo(sv.mundo || { genero: cenarioAtivo().generos.padrao }); setNomeCampanha(ab.nomeCampanha); setPersonagem(pers);
       try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (save carregado)", e); }
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
@@ -11295,31 +11301,14 @@ export default function Taverna() {
          a noite renderia o padrão, não o que o painel prometeu. */
       sitioRef.current = (sv.acampado && sv.sitio && typeof sv.sitio === "object") ? sv.sitio : null;
       setSitio(sitioRef.current);
-      if (sv.mapa && sv.mapa.cidades && sv.mapa.cidades.length) {
-        mapaRef.current = sv.mapa;
-        mapaRef.current = garantirGeografia(mapaRef.current, `taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`);
-      } else {
-        /* save antigo sem mapa: gera o mundo inteiro por código (v7.5) */
-        const geo = gerarGeografia(`taverna|${sv.personagem && sv.personagem.nome ? sv.personagem.nome : "save"}`, moldePorId((sv.mundo && sv.mundo.molde) || MOLDE_PADRAO), sv.mundo && sv.mundo.lexico);
-        mapaRef.current = { cidades: geo.cidades, faccoes: (sv.mapa && sv.mapa.faccoes) || [], continente: geo.continente, regioes: geo.regioes, rotas: geo.rotas };
-      }
-      /* MIGRAÇÃO DA NÉVOA (v9.14). O mapa passou a nascer no escuro, mas
-         quem já jogou conhece o mundo dele: esconder cidades que o jogador
-         já visitou seria roubar o que ele conquistou. Save sem a marca de
-         versão tem TUDO revelado de uma vez; a névoa só vale para mundos
-         criados daqui em diante. */
-      if (!sv.nevoaVersao) {
-        mapaRef.current = { ...mapaRef.current, cidades: (mapaRef.current.cidades || []).map((c) => ({ ...c, descoberta: true })) };
-      }
+      /* o mapa aberto: a geografia do save, ou o mundo inteiro gerado (v7.5);
+         a névoa dos saves de antes da v9.14 (tudo revelado); e a cidade onde
+         o save parou, pisada (v9.54) — abrir-o-save.js */
+      mapaRef.current = ab.mapa;
       nevoaVersaoRef.current = 1;
       faccaoJogadorRef.current = sv.faccaoJogador || "";
       cidadeAtualRef.current = sv.cidadeAtual || "";
       backupEmRef.current = sv.backupEm || null;
-      /* v9.54: a marca `pisada` nasce nesta versão, e sem esta linha a cidade
-         onde o save parou nunca a ganharia — o herói sairia dela e veria o
-         cinturão que ele acabou de percorrer sumir do pergaminho, que é
-         exatamente o bug que esta versão veio consertar. */
-      if (cidadeAtualRef.current) mapaRef.current = pisarNaCidade(mapaRef.current, cidadeAtualRef.current);
       setMapa(mapaRef.current);
       guildaRef.current = sv.guilda && typeof sv.guilda === "object" ? { nivel: sv.guilda.nivel || 1, cofre: sv.guilda.cofre || 0 } : { nivel: 1, cofre: 0 }; setGuilda(guildaRef.current);
       climaRef.current = sv.clima && sv.clima.id ? sv.clima : null; setClima(climaRef.current);
@@ -11361,11 +11350,7 @@ export default function Taverna() {
          início de campanha), o que fazia o herói "estar acordado há 250 horas"
          e ficar exausto no meio de qualquer cena. Nada além de dois dias sem
          dormir é plausível: acima disso, tratamos como descansado. */
-      {
-        const agoraAbs = (diaRef.current - 1) * 1440 + minutoRef.current;
-        const bruto = sv.acordouAbs != null ? sv.acordouAbs : agoraAbs;
-        acordouAbsRef.current = (agoraAbs - bruto) > 48 * 60 ? agoraAbs : bruto;
-      }
+      acordouAbsRef.current = ab.acordouAbs; /* o teto das 48 horas: abrir-o-save.js */
       nemesisRef.current = sv.nemesis && typeof sv.nemesis === "object" ? sv.nemesis : null; setNemesis(nemesisRef.current);
       correioRef.current = garantirCorreio(sv.correio); setCorreio(correioRef.current);
       /* v9.29: jornada que discorda da cidade atual é resto de save — o herói
@@ -11389,7 +11374,7 @@ export default function Taverna() {
       /* MIGRAÇÃO (v8.9): save antigo tem fiéis sem endereço — a fé é
          DISTRIBUÍDA pelo mapa (proporcional à população) em vez de sumir.
          Depois disso, o número da ascensão passa a ser a soma do mapa. */
-      devocaoRef.current = garantirDevocao(sv.devocao, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
+      devocaoRef.current = ab.devocao; setDevocao(devocaoRef.current);
       baseMundoRef.current = garantirBase(sv.baseMundo); setBaseMundo(baseMundoRef.current);
       /* v9.165: save de antes da lei da forma não tem `forma` — e a garantia
          devolve o vazio, que para o porteiro quer dizer "nenhum andar vencido
@@ -11455,8 +11440,8 @@ export default function Taverna() {
         setDivindade(divindadeRef.current);
       }
       famaPatamarRef.current = sv.famaPatamar || 0;
-      reinoRef.current = garantirReino(sv.reino && typeof sv.reino === "object" ? sv.reino : {}, mapaRef.current) || {}; setReino(reinoRef.current);
-      governosRef.current = garantirGovernos(sv.governos, mapaRef.current); setGovernos(governosRef.current);
+      reinoRef.current = ab.reino; setReino(reinoRef.current);
+      governosRef.current = ab.governos; setGovernos(governosRef.current);
       /* o acumulado de custo atravessa a recarga da página: sem isto ele
          mediria a aba aberta, e não a campanha. */
       custoRef.atual = sv.custo && typeof sv.custo === "object" && typeof sv.custo.chamadas === "number" ? sv.custo : CUSTO_ZERO();
@@ -11488,7 +11473,7 @@ export default function Taverna() {
       /* v9.28: o save antigo não tem contador de marcos. `garantirHistoria` o
          cria zerado — o arco continua exatamente no momento em que estava e
          passa a andar pelo motor daqui em diante. */
-      historiaRef.current = garantirHistoria(sv.historia && sv.historia.estrutura ? sv.historia : { estrutura: (sv.mundo && sv.mundo.estrutura) || "jornada", etapa: 0 });
+      historiaRef.current = ab.historia;
       /* save antigo nao tem espinha: ela fica vazia e o jogo segue como
          sempre seguiu. Estender no meio de uma campanha ja em curso
          inventaria um passado que ninguem viveu. */
@@ -11499,89 +11484,20 @@ export default function Taverna() {
       /* save antigo nao tem casas: elas sao derivadas da semente, entao
          basta reestende-las — o que ele NAO tem e a filiacao, e sem ela o
          heroi volta sem casa, que e onde ele estava mesmo. */
-      guildasRef.current = Array.isArray(sv.guildas) && sv.guildas.length
-        ? sv.guildas.map(garantirGuilda)
-        : guildasDoMundo(sementeMundo(), mapaRef.current, generoMundo(), (sv.mundo || {}).lexico);
+      /* e a semente das casas é a DO SAVE (o nome e o gênero dele): o
+         `sementeMundo()` daqui lia a campanha que a aba abrira antes, porque
+         os efeitos do React só trocam o nome depois deste clique. */
+      guildasRef.current = ab.guildas;
       setGuildasMundo(guildasRef.current);
       tarefasCasaRef.current = Array.isArray(sv.tarefasCasa) ? sv.tarefasCasa : [];
       setTarefasCasa(tarefasCasaRef.current);
-      questsRef.current = Array.isArray(sv.quests) ? sv.quests : [];
-      /* MIGRAÇÃO (v9.27): a quest antiga era um título e uma descrição, sem
-         etapas — não dá para inventar retroativamente onde o jogador estava
-         no meio dela. Então ela entra como missão de UMA etapa aberta ("levar
-         isto ao fim"), ativa, com recompensa: encerrar o que já estava em
-         curso passa a valer alguma coisa, que é mais do que valia antes. */
-      if (Array.isArray(sv.missoes)) {
-        missoesRef.current = garantirMissoes(sv.missoes);
-      } else {
-        missoesRef.current = garantirMissoes((sv.quests || [])
-          .filter((q) => q && q.titulo && q.status === "ativa")
-          .map((q) => ({
-            titulo: q.titulo, tipo: q.tipo === "principal" ? "principal" : "favor",
-            descricao: q.descricao || q.objetivo || "", status: "ativa",
-            /* a etapa fica num dia inalcançável DE PROPÓSITO. A quest antiga
-               não tem etapa verificável — não dá para inventar retroativamente
-               onde o jogador estava no meio dela. Se eu usasse o dia de hoje,
-               ela se completaria sozinha no primeiro turno e PAGARIA
-               recompensa por algo que ninguém fez (foi o que aconteceu no
-               primeiro teste). Fica aberta, marcada como legado, e o próprio
-               jogador a encerra pelo botão do diário — ele sabe se terminou;
-               o sistema não tem como saber. */
-            etapas: [{ tipo: "aguentar", dia: 999999, rotulo: q.objetivo || q.titulo, feito: false }],
-            legado: true,
-            recompensa: recompensaDe({ tipo: q.tipo === "principal" ? "principal" : "favor", nivel: (pers && pers.nivel) || 1, etapas: 1 }),
-            criadaEm: sv.dia || 0,
-          })));
-      }
-      /* ---- MIGRAÇÃO (v9.119): a oferta parada no diário vai para o mural ----
-         Quem estava jogando quando esta versão chegou tinha ofertas penduradas
-         no diário esperando um sim ou um não. Deixá-las ali seria manter na
-         tela exatamente a coisa que saiu de cena — e o jogador continuaria com
-         três "aceitar/recusar" num lugar que não é mais o de decidir isso.
-
-         Converte o que dá: uma oferta tem os mesmos campos de que o cartaz
-         precisa. O que NÃO converter fica onde está, com o botão de sempre —
-         é por isso que `responderOferta` continua de pé. Migração que perde
-         alguma coisa em silêncio é pior do que migração nenhuma. */
-      {
-        const oferecidas = missoesRef.current.filter((q) => q.status === "oferecida");
-        if (oferecidas.length) {
-          const jaNoMural = new Set((muralRef.current || []).map((c) => semNome(c.titulo)));
-          const novos = [], ficam = [];
-          for (const q of oferecidas) {
-            const c = jaNoMural.has(semNome(q.titulo)) ? null : cartazDaProposta(
-              { ...q, paga: (q.recompensa && q.recompensa.moedas) != null ? q.recompensa.moedas : q.moedasPrometidas },
-              { cidade: sv.cidadeAtual || "", nivel: (pers && pers.nivel) || 1 });
-            if (c) novos.push(c); else ficam.push(q.titulo);
-          }
-          if (novos.length) {
-            muralRef.current = [...(muralRef.current || []), ...novos];
-            setMural(muralRef.current);
-            missoesRef.current = missoesRef.current.filter((q) => q.status !== "oferecida" || ficam.includes(q.titulo));
-          }
-        }
-      }
-      /* MM14 (30/09, os canais): a lista antiga vira missão do sistema ao
-         carregar — os refs do mundo já estão do save que acabou de entrar
-         (mapa, cidade), mas o estado React ainda não virou; por isso lê-se
-         de `sv`, não de `mundoAtual()`. */
-      try {
-        const mw = sv.mundo || {};
-        const mg = migrarTarefasAntigas(questsRef.current, missoesRef.current, {
-          semente: `${nomeDaCampanha(sv) || "aventura"}|${mw.genero || ""}`,
-          mapa: mapaRef.current,
-          cidadeAtual: sv.cidadeAtual || "",
-          genero: mw.genero || cenarioAtivo().generos.padrao,
-          molde: moldePorId(mw.molde || MOLDE_PADRAO),
-          lex: mw.lexico || null,
-          nivel: (pers && pers.nivel) || 1,
-          dia: sv.dia || 0,
-        });
-        if (mg.migradas.length) {
-          questsRef.current = mg.quests;
-          missoesRef.current = mg.missoes;
-        }
-      } catch (e) { calou("a migração das tarefas antigas", e); }
+      /* as missões abertas: a lista do save, ou as quests antigas ativas como
+         missão de uma etapa num dia inalcançável (v9.27); a oferta parada no
+         diário vai para o mural (v9.119); e a lista antiga vira missão do
+         sistema (MM14) — abrir-o-save.js */
+      questsRef.current = ab.quests;
+      missoesRef.current = ab.missoes;
+      if (ab.mural) { muralRef.current = ab.mural; setMural(muralRef.current); }
       setMissoes(missoesRef.current);
       setQuests([...questsRef.current]);
       bancoNomesRef.current = gerarBancoNomes(sv.mundo);

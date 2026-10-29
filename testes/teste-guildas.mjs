@@ -229,7 +229,8 @@ sec("11. LIGADA AO JOGO");
 {
   t("as casas nascem com o mundo", /guildasRef\.current = guildasDoMundo\(sementeMundo\(\)/.test(APP));
   t("e viajam no save", /guildas: guildasRef\.current/.test(APP));
-  t("save antigo reestende as casas da semente", /Array\.isArray\(sv\.guildas\) && sv\.guildas\.length/.test(APP));
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — e a semente das casas passou a ser a do save (aSementeDoSave), e não a da aba aberta. */
+  t("save antigo reestende as casas da semente", /Array\.isArray\(sv\.guildas\) && sv\.guildas\.length[\s\S]{0,120}guildasDoMundo\(aSementeDoSave\(sv\)/.test(readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8")) && /guildasRef\.current = ab\.guildas;/.test(APP));
   t("a minha casa é a que tem `membro`", /\(guildasRef\.current \|\| \[\]\)\.find\(\(g\) => g\.membro\)/.test(APP));
   /* MOVIDAS NA FASE 4, trilha A (29/10), com o motivo: o conferente das
      missões saiu do App para src/motor/depois-do-turno.js, e o texto do

@@ -527,9 +527,12 @@ sec("13. a fiação no App — um ponto só, na criação, com rede");
   t("dentro de try, com calou e o continente de reserva", /catch \(e\) \{ calou\("a região na criação do mundo", e\); geo = null; \}/.test(trecho) && /if \(!geo \|\| !Array\.isArray\(geo\.cidades\) \|\| !geo\.cidades\.length\) geo = gerarGeografia\(/.test(trecho));
   t("o modo vai junto (só Uma Vida ganha região)", /modo: modoRef\.current/.test(trecho));
   t("o mapaRef da campanha nova sai de mapaDaCampanhaNova", conta("mapaRef.current = mapaDaCampanhaNova(geo);") === 1);
-  const l0 = APP.indexOf("if (sv.mapa && sv.mapa.cidades && sv.mapa.cidades.length) {");
-  const l1 = l0 >= 0 ? APP.indexOf("MIGRAÇÃO DA NÉVOA", l0) : -1;
-  const load = l0 >= 0 && l1 > l0 ? APP.slice(l0, l1) : "";
+  /* MOVIDA (29/10, trilha A, a ligação do load): o `continuar` abre os dez campos que refaz por `const ab = abrirOSave(sv)`, e a regra mora agora em src/abrir-o-save.js — o mapa do save abre na função oMapa dela, e o load do App só lê o aberto; a régua lê as duas. */
+  const PECA_DO_LOAD = readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const l0 = PECA_DO_LOAD.indexOf("function oMapa(sv) {");
+  const l1 = l0 >= 0 ? PECA_DO_LOAD.indexOf("\n}\n", l0) : -1;
+  const iCont = APP.indexOf("const continuar = (comResumo"), CONT_DO_LOAD = iCont >= 0 ? APP.slice(iCont, APP.indexOf("\n  const continuarGolpeDoJogador", iCont)) : "";
+  const load = l0 >= 0 && l1 > l0 && CONT_DO_LOAD.includes("mapaRef.current = ab.mapa;") && !/mapaDaCriacao|gerarRegiao|mapaDaCampanhaNova/.test(CONT_DO_LOAD) ? PECA_DO_LOAD.slice(l0, l1) : "";
   t("o load lê o mapa gravado com garantirGeografia, e não chama a região", !!load && load.includes("garantirGeografia(") && !load.includes("mapaDaCriacao") && !load.includes("gerarRegiao") && !load.includes("mapaDaCampanhaNova"));
 }
 

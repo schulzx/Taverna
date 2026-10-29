@@ -177,6 +177,16 @@ sec("7 · a praça do Juiz no App é a da pauta (Fase 4, trilha A, 29/10)");
   const FICHA = { atributos: { forca: 2, destreza: 1, constituicao: 2, inteligencia: 0, sabedoria: 1, carisma: 0 }, conceito: "Andarilha sem nome" };
   const comoOLoadAbre = (e) => { const x = Object.fromEntries(Object.entries(e).filter(([, v]) => v != null)); const p = x.personagem || {}; x.personagem = { ...p, atributos: p.atributos || FICHA.atributos, conceito: p.conceito || FICHA.conceito }; return x; };
   const can = (x) => JSON.stringify(x);
+  /* MOVIDA (29/10, trilha A, a ligação do load): o servidor abre agora o save
+     como o load do App o abre (abrirOSave), e a ficha da sessão do navegador
+     — gravada por um herói que ainda não tinha passado pela migração —
+     ganha a mochila de 10/10/5 E O KIT. Com o kit na mão, o balcão deixa de
+     lho vender: a praça é a de antes MENOS o «Kit de viagem» (◉35), nos dois
+     turnos com banca, e no toque de abertura 28 itens e não 29. O veredito do
+     Juiz não muda em nenhum. É o defeito do herói novo, consertado na v9.572:
+     a 1.ª sentada vendia ao herói um kit que o load lhe dava. */
+  const KIT = "Kit de viagem";
+  const semOKit = (m) => m.filter((x) => x.nome !== KIT);
   let comBanca = 0, igualMerc = 0, igualVer = 0, abertura = null;
   for (let i = 0; i < A.turnos.length; i++) {
     const L = A.turnos[i], ent = L.entrada || {}, g = L.juiz && L.juiz.entrada;
@@ -188,12 +198,12 @@ sec("7 · a praça do Juiz no App é a da pauta (Fase 4, trilha A, 29/10)");
     const merc = entradaDoJuiz({ bancas: pr.bancas, balcao: pr.balcao }, {}).mercado;
     if (!g.mercado.length) { abertura = { i, g, merc, L }; continue; }
     comBanca++;
-    if (can(merc) === can(g.mercado)) igualMerc++;
+    if (can(merc) === can(semOKit(g.mercado)) && merc.length === g.mercado.length - 1) igualMerc++;
     const narr = (L.narrador && L.narrador.narrativa) || "";
     if (can(julgarOTurno(narr, { ...g, mercado: merc }, { turno: i + 1, dia: 1 }).veredito) === can(julgarOTurno(narr, g, { turno: i + 1, dia: 1 }).veredito)) igualVer++;
   }
-  t(`onde o render tinha a banca, o mercado e o veredito do Juiz são os de antes (${igualMerc}/${comBanca} · ${igualVer}/${comBanca})`, comBanca === 2 && igualMerc === comBanca && igualVer === comBanca);
-  t(`o toque de abertura passa a ver a banca (0 → ${abertura ? abertura.merc.length : "?"} itens)`, !!abertura && abertura.i === 0 && abertura.merc.length === 29);
+  t(`onde o render tinha a banca, o mercado é o de antes menos o kit, e o veredito do Juiz é o de antes (${igualMerc}/${comBanca} · ${igualVer}/${comBanca})`, comBanca === 2 && igualMerc === comBanca && igualVer === comBanca);
+  t(`o toque de abertura passa a ver a banca (0 → ${abertura ? abertura.merc.length : "?"} itens)`, !!abertura && abertura.i === 0 && abertura.merc.length === 28 && !abertura.merc.some((x) => x.nome === KIT));
   /* a mordida: no toque de abertura, o Narrador cobra o triplo do 1.º item
      da praça. Sem a praça (a foto de antes), o Juiz não tem com que o
      comparar e toma o item por gente nova; com ela, acusa com o preço da mesa */

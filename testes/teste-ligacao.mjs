@@ -256,8 +256,13 @@ sec("1. NENHUM MÓDULO MUDO");
        Node — e com elas os casos de que os dourados da pauta, do pedido e do
        prelúdio são fotos, que são da trilha A regenerar. A ligação inteira
        está pronta e medida (diário de 29/10). `teste-abrir-o-save.mjs` é o
-       primeiro leitor. A entrada sai quando o App ou o servidor o importar. */
-    "abrir-o-save.js": "29/10/2026 — o continuar do App e a montagem do servidor (trilha A, com os dourados regenerados)",
+       primeiro leitor. A entrada sai quando o App ou o servidor o importar.
+       — 29/10 (Fase 4, trilha A): o oficial ligou-a — o `continuar` abre os
+       dez campos por `abrirOSave(sv)`, o `iniciar` abre o herói novo pelas
+       duas regras dela (`aFichaAberta`, `comACidadePisada`), e a montagem
+       do servidor abre o save por ela; as sessões de prova regravaram-se e
+       os dourados da pauta, do pedido e do prelúdio regeneraram-se no mesmo
+       commit. A entrada saiu, e a lista voltou a ficar VAZIA. */
   };
   const mudos = [];
   for (const f of arqs) {
