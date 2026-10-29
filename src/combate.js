@@ -838,8 +838,15 @@ export function severidadeDano(dano, alvoVidaMax, vidaDepois, critico) {
   return { rotulo: critico ? `${s.rotulo} (crítico)` : s.rotulo, guia: s.guia, pct: Math.round(frac * 100) };
 }
 
-/* Linha pronta para o envelope do Mestre: número + intensidade + estado. */
-export function linhaParaMestre(atacante, alvoNome, r, alvoVidaMax, vidaDepois) {
+/* o possessivo do percentual, no gênero do alvo (29/10, a 13.ª sessão: a
+   Iara levava «10% da vida dele»). O gênero é o de `generoDoAlvo`
+   (motor/envelopes-do-turno.js): "mulher" | "homem"; sem ele, o masculino
+   genérico — o que a linha dizia antes. */
+const DA_VIDA_DO_ALVO = Object.freeze({ mulher: "dela", homem: "dele" });
+
+/* Linha pronta para o envelope do Mestre: número + intensidade + estado.
+   `genero` (opcional) é o do alvo. */
+export function linhaParaMestre(atacante, alvoNome, r, alvoVidaMax, vidaDepois, genero) {
   if (!r || r.dano <= 0) {
     const como = r && r.resultado === "desastre" ? "erro desastroso" : "errou";
     return `${atacante}→${alvoNome}: ${como}`;
@@ -848,7 +855,8 @@ export function linhaParaMestre(atacante, alvoNome, r, alvoVidaMax, vidaDepois) 
   const estado = vidaDepois !== undefined
     ? (vidaDepois <= 0 ? "CAIU" : `de pé com ${vidaDepois}/${alvoVidaMax}`)
     : "";
-  return `${atacante}→${alvoNome}: ${r.dano} de dano = ${sev.rotulo}${sev.pct ? ` (${sev.pct}% da vida dele)` : ""}${estado ? `, ${estado}` : ""} [narre como: ${sev.guia}]`;
+  const dele = DA_VIDA_DO_ALVO[genero] || DA_VIDA_DO_ALVO.homem;
+  return `${atacante}→${alvoNome}: ${r.dano} de dano = ${sev.rotulo}${sev.pct ? ` (${sev.pct}% da vida ${dele})` : ""}${estado ? `, ${estado}` : ""} [narre como: ${sev.guia}]`;
 }
 
 /* ═══════════ v7.8 — PERFIL DE COMBATE POR CLASSE (fiel ao D&D 5e) ═══════════

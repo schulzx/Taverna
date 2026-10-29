@@ -786,7 +786,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:16102 → veredictoDaAcao — MM3b,
+     adjudicador usa (src/App.jsx:16107 → veredictoDaAcao — MM3b,
      frontend, 29/09: re-medido por busca direta no arquivo, não por soma
      de delta, porque a referência já vinha desatualizada de antes desta
      etapa; MM8c-1, frontend, 29/09: 17762 -> 17782, +20 — o mesmo delta

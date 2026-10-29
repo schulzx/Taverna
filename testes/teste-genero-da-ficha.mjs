@@ -128,5 +128,31 @@ sec("5. o lixo, a imutabilidade e o determinismo");
   t("os artigos e os gêneros saem da tabela (GENERO_DA_FICHA), não de literal na função", /GENERO_DA_FICHA\.artigos/.test(fonte) && /GENERO_DA_FICHA\.generos\.includes\(proprio\)/.test(fonte));
 }
 
+sec("6. o percentual do golpe no gênero de quem o leva (29/10, a 13.ª sessão)");
+{
+  /* A 13.ª: «golpe leve (10% da vida dele)» para a Iara. A frase do
+     desfecho já saía no gênero do alvo (v9.571); o percentual de
+     `linhaParaMestre` (combate.js) não. Nenhum dourado corre esta linha (os
+     quatro sítios dela moram no App, fora dos recortes de combate-bloco e
+     envelopes-bloco): a conta de casos do dourado não muda — 0 casos —, e a
+     prova é esta. */
+  const CBT = await import(S + "combate.js");
+  const r = { dano: 2, critico: false };
+  const iara = { nome: "Iara", genero: "mulher" };
+  const ela = CBT.linhaParaMestre("Rato Gigante 1", "Iara", r, 20, 18, EV.generoDoAlvo(iara, null));
+  t("a Iara leva «10% da vida dela»", /\(10% da vida dela\)/.test(ela), ela);
+  const ele = CBT.linhaParaMestre("Iara", "Rato Gigante 1", { dano: 3 }, 12, 9, EV.generoDoAlvo({ nome: "Rato Gigante 1" }, null));
+  t("o rato, «da vida dele»", /\(25% da vida dele\)/.test(ele), ele);
+  t("sem gênero, o masculino genérico de antes (nenhuma linha antiga muda)", CBT.linhaParaMestre("A", "B", r, 20, 18) === CBT.linhaParaMestre("A", "B", r, 20, 18, "homem") && /da vida dele/.test(CBT.linhaParaMestre("A", "B", r, 20, 18)));
+  t("e o lixo também cai no masculino", /da vida dele/.test(CBT.linhaParaMestre("A", "B", r, 20, 18, { x: 1 })) && /da vida dele/.test(CBT.linhaParaMestre("A", "B", r, 20, 18, null)));
+  t("o erro e o abate não têm percentual a flexionar", CBT.linhaParaMestre("A", "Iara", { dano: 0 }, 20, 20, "mulher") === "A→Iara: errou" && !/vida del/.test(CBT.linhaParaMestre("A", "Iara", { dano: 30 }, 20, 0, "mulher")));
+  /* a fiação: os quatro sítios do App passam o gênero do alvo */
+  const APP = fs.readFileSync(path.join(AQUI, "..", "src", "App.jsx"), "utf8").replace(/\r\n/g, "\n");
+  const chamadas = (APP.match(/linhaParaMestre\(/g) || []).length;
+  const comGenero = (APP.match(/linhaParaMestre\((?:(?!linhaParaMestre\()[^;])*?(?:undefined|alvoDepois), generoDoAlvo\(/g) || []).length;
+  t("as cinco chamadas do App levam o gênero do alvo", chamadas === 5 && comGenero === 5, chamadas + " chamadas, " + comGenero + " com o gênero");
+  t("o golpe do inimigo lê o herói, o companheiro ou o inimigo que o leva", /const quemLeva = a\.alvoRef === "jogador" \? persBase/.test(APP) && /alvoMax, alvoDepois, generoDoAlvo\(quemLeva, npcsRef\.current\)\)\);/.test(APP));
+}
+
 console.log(`\ngênero da ficha: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

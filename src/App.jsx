@@ -11826,8 +11826,8 @@ export default function Taverna() {
       partesMeu.push(r.escopoImune
         ? `${alvo.nome} — IMUNE (GD ${alvo.gd} vs meu GD ${gdJ}; dano comum não fere divindades — preciso de artefato lendário, bênção ou enfraquecê-lo)`
         : poupadoAgora
-        ? `${linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined)} — mas foi poupado: cai desacordado, vivo, sem golpe fatal`
-        : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined));
+        ? `${linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined, generoDoAlvo(alvo, npcsRef.current))} — mas foi poupado: cai desacordado, vivo, sem golpe fatal`
+        : linhaParaMestre(personagem.nome, alvo.nome, r, alvo.vidaMax || alvo.vida, r.dano > 0 ? pvDepois : undefined, generoDoAlvo(alvo, npcsRef.current)));
       /* MM6: a frase do Ataque Furtivo cola na mesma linha do golpe — nunca
          quando o corpo era imune (o furtivo nao atravessa o que o golpe
          comum nao atravessa). */
@@ -14683,7 +14683,12 @@ export default function Taverna() {
           : a.alvoRef === "inimigo" ? Math.max(0, doCampo(a.alvoNome).vida || 0)
           : Math.max(0, ((grupoAtual.find((g) => g.nome === a.alvoNome) || {}).vida || 0)))
         : undefined;
-      partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois));
+      /* 29/10 (a 13.ª): o percentual no gênero de quem leva o golpe — a
+         Iara levava «10% da vida dele». generoDoAlvo nunca estoura. */
+      const quemLeva = a.alvoRef === "jogador" ? persBase
+        : a.alvoRef === "inimigo" ? doCampo(a.alvoNome)
+        : (grupoAtual.find((g) => g.nome === a.alvoNome) || { nome: a.alvoNome });
+      partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois, generoDoAlvo(quemLeva, npcsRef.current)));
     }
     if (linhasSis.length) pushMsgs(linhasSis);
     /* v9.16: guarda o golpe da rodada para o gasto "Aguentar". Vale a rodada
@@ -14857,7 +14862,7 @@ export default function Taverna() {
           combPos.inimigos = aflicaoDeCompanheiro(combPos.inimigos, ac, persAtual);
         }
         pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? (poupadoAgoraComp ? " (poupado)" : " ☠") : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
-        partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined) + (poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""));
+        partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined, generoDoAlvo(combPos.inimigos.find((e) => e.nome === ac.alvoNome) || { nome: ac.alvoNome }, npcsRef.current)) + (poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""));
       } else if (ac.tipo === "habilidade" && ac.r) {
         logDadoCombate(resumoDoAtaque(ac.r));
         if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: "🎲 " + resumoDoAtaque(ac.r) }]);
@@ -14887,7 +14892,7 @@ export default function Taverna() {
         }
         persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
         pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? (poupadoAgoraComp ? " (poupado)" : " ☠") : ""}` : "errou"}` }]);
-        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined)}${poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""}`);
+        partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined, generoDoAlvo(combPos.inimigos.find((e) => e.nome === ac.alvoNome) || { nome: ac.alvoNome }, npcsRef.current))}${poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""}`);
       } else if (ac.tipo === "cura") {
         const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
         persAtual = gastarManaComp(r2.pers, ac.companheiro, ac.custo);
