@@ -26,7 +26,7 @@ import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, ge
 import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, envelopeDoRecado, cartazDaProposta, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
 import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
-import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO } from "./decretos.js";
+import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO, ditosDoBando } from "./decretos.js";
 import { garantirReino, fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGovernos, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
 import { perfilDeCriatura, perfilDe, elementoDaArma, iconeDano, resistenciasEquipadas } from "./danos.js";
@@ -165,7 +165,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, linhaDaCelula
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
 import { garantirForma, travaDaPartida, chaveDaMorte, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
-import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar } from "./lugar.js";
+import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, contrair } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, COMODOS_PROMPT } from "./comodos.js";
 import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
@@ -20639,13 +20639,15 @@ export default function Taverna() {
       if (d.status === "pregado") {
         const grupo = tentarAceite(d, { genero: (mundo && mundo.genero) || cenarioAtivo().generos.padrao, nivel: p.nivel || 1, fama: famaJogador() });
         if (grupo) {
+          /* o nome do bando tem gênero (29/10): «a Bando do Javali» era um decreto em cinco */
+          const db = ditosDoBando(grupo.bando);
           const nd = { ...d, status: "aceito", grupo, dias: 0 };
           atualizados.push(nd);
-          msgs.push(`📣 Seu decreto sobre "${d.alvo}" foi aceito: a ${grupo.bando} (liderada por ${grupo.lider}, força ${grupo.forca}) partiu para o serviço.`);
+          msgs.push(`📣 Seu decreto sobre "${d.alvo}" foi aceito: ${db.oNome} (${db.liderado} por ${grupo.lider}, força ${grupo.forca}) partiu para o serviço.`);
           notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoAceito", { alvo: d.alvo, bando: grupo.bando, membros: grupo.membros, forca: grupo.forca, descricao: d.descricao, recompensa: d.recompensa });
           /* o líder vira uma pessoa conhecida */
           if (!npcsRef.current[grupo.lider]) {
-            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder da ${grupo.bando}`, genero: "", notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current } };
+            npcsRef.current = { ...npcsRef.current, [grupo.lider]: { nome: grupo.lider, relacao: "aliado", papel: `líder ${contrair("de " + db.oNome)}`, genero: "", notas: `Aceitou seu decreto sobre "${d.alvo}".`, ultimaVez: npcTurnoRef.current, conhecidoEm: diaRef.current } };
             setNpcs(npcsRef.current);
           }
         } else {
@@ -20657,24 +20659,25 @@ export default function Taverna() {
         const r = resolverDecreto(d);
         const t = tipoDecreto(d.tipo);
         const grupo = d.grupo;
+        const db = ditosDoBando(grupo.bando);
         if (r.desfecho === "dizimado") {
           p = { ...p, moedas: (p.moedas || 0) + d.recompensa };
-          msgs.push(`☠ A ${grupo.bando} não voltou de "${d.alvo}". ◉ ${d.recompensa} devolvidas — ninguém sobrou para cobrá-las.`);
+          msgs.push(`☠ ${db.ONome} não voltou de "${d.alvo}". ◉ ${d.recompensa} devolvidas — ninguém sobrou para cobrá-las.`);
           notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoDizimado", { bando: grupo.bando, alvo: d.alvo });
         } else if (r.desfecho === "fracasso") {
           p = { ...p, moedas: (p.moedas || 0) + d.recompensa };
-          msgs.push(`✖ A ${grupo.bando} fracassou em "${d.alvo}" e voltou de rabo entre as pernas. ◉ ${d.recompensa} devolvidas.`);
+          msgs.push(`✖ ${db.ONome} fracassou em "${d.alvo}" e voltou de rabo entre as pernas. ◉ ${d.recompensa} devolvidas.`);
           notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoFracasso", { bando: grupo.bando, alvo: d.alvo });
         } else {
           const baixas = r.desfecho === "sucesso_baixas";
           const sBx = sorteDoTurno("baixas"); const mortos = baixas ? grupo.membros.filter(() => sBx() < 0.4).map((m) => m.nome) : [];
-          msgs.push(`${baixas ? "⚑" : "✅"} A ${grupo.bando} cumpriu seu decreto sobre "${d.alvo}"${mortos.length ? ` — mas ${mortos.join(", ")} não voltaram` : ""}! ◉ ${d.recompensa} pagas.`);
+          msgs.push(`${baixas ? "⚑" : "✅"} ${db.ONome} cumpriu seu decreto sobre "${d.alvo}"${mortos.length ? ` — mas ${mortos.join(", ")} não voltaram` : ""}! ◉ ${d.recompensa} pagas.`);
           bumpCont("decretosCumpridos");
           /* v9.0: "cumprido" tem consequência no mundo. Um decreto pela CABEÇA
              de alguém que o sistema conhece mata essa pessoa de verdade — no
              registro e, se for a nêmesis, na perseguição inteira. Antes o
              serviço era pago e o alvo continuava vivo caçando o herói. */
-          if (d.tipo === "cabeca") registrarMorteDeAlvo(d.alvo, `abatido(a) pela ${grupo.bando}, a mando do seu decreto`, { aproximado: true });
+          if (d.tipo === "cabeca") registrarMorteDeAlvo(d.alvo, `abatido(a) ${contrair("por " + db.oNome)}, a mando do seu decreto`, { aproximado: true });
           notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoDominio("decretoCumprido", { baixas, alvo: d.alvo, bando: grupo.bando, mortos, descricao: d.descricao, recompensa: d.recompensa, tipo: d.tipo });
         }
         atualizados.push({ ...d, status: "resolvido", desfecho: r.desfecho });

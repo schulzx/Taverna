@@ -212,7 +212,7 @@ export const ACOES_DO_JOGADOR = [
      apontar a mesma linha que apontavam no HEAD, e essa linha continua a
      não ser a função nomeada ao lado. Re-medi-los é do `testes`, não desta
      etapa — fica escrito em vez de arrumado por fora.
-     `onClick` (`src/App.jsx:21891`) → `declararAcaoRapida` (`:15919`)
+     `onClick` (`src/App.jsx:21894`) → `declararAcaoRapida` (`:15919`)
      → `adjudicarAcao` (`:15668`) → dado.
      Nenhuma é de combate — é o achado que pôs a Fase X na frente. */
   { id: "rapida_buscar", rotulo: "Vasculhar", fonte: "ACOES_RAPIDAS", combate: false,
@@ -252,7 +252,7 @@ export const ACOES_DO_JOGADOR = [
   /* ---------------- FORA DO PAINEL ----------------
      Os cliques que chegam ao motor sem passar pela caixa de texto. */
   { id: "grid_mover", rotulo: "Mover no grid", fonte: "grid", combate: true,
-    onde: "src/App.jsx:22049 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:14758)",
+    onde: "src/App.jsx:22052 (onMover)", handler: "clique no quadrado → moverPara (src/App.jsx:14758)",
     texto: null,
     cliqueChega: "motor", textoFora: null, textoLuta: null,
     alcanca: "muda x,y do herói (src/App.jsx:15189) e gasta o movimento da economia" },

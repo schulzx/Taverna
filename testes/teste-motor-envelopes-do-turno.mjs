@@ -588,6 +588,7 @@ sec("18 · o domínio: os casos percorrem o que o texto decide, e a prova morde"
   /* as onze são notas do turno: o sítio devolve a nota */
   const N = (b) => HOJE[b].map((f) => f.texto);
   const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
+  const P0 = oEnvelopeDoDominio;
   const DOMINIO = ["dominioDecretoAceito", "dominioDizimado", "dominioFracasso", "dominioCumprido", "dominioObraPronta", "dominioRevolta", "dominioImposto", "dominioObraIniciada", "dominioGovernador", "dominioReivindicacao", "dominioTratado"];
   t("as onze notas entram abaixo da que já havia", DOMINIO.every((b) => conta(N(b), "[NOTA] já havia\n[") >= 130 && N(b).filter((x) => /^\[[A-ZÀ-Ú]/.test(x)).length >= 130));
   const A = N("dominioDecretoAceito");
@@ -596,6 +597,22 @@ sec("18 · o domínio: os casos percorrem o que o texto decide, e a prova morde"
   t("o cumprido sem baixas e com (" + conta(C, "CUMPRIDO COM BAIXAS]") + "), com os mortos ditos e o retorno ensanguentado", conta(C, "CUMPRIDO COM BAIXAS]") >= 80 && conta(C, "[DECRETO — DESFECHO: CUMPRIDO] ") >= 150 && conta(C, " (Kael, Sef morreram no serviço)") >= 80 && conta(C, "Narre o retorno ensanguentado") >= 150 && conta(C, "Narre o retorno triunfal") >= 80);
   t("o de mandar matar traz a represália (" + conta(C, "mandei matar alguém") + "), o de outro tipo não", conta(C, "mandei matar alguém") >= 80 && C.filter((x) => !x.includes("mandei matar")).length >= 150);
   t("os dois desfechos que devolvem a recompensa dizem o bando e o alvo", ["dominioDizimado", "dominioFracasso"].every((b) => conta(N(b), "A Garra Cinza ") >= 130 && conta(N(b), "sobre \"Mestre Ulm\"") >= 80 && conta(N(b), "A recompensa voltou ao meu bolso.") === 275));
+  /* O BANDO TEM GÊNERO (29/10/2026, trilha A). Os casos do dourado só têm «Companhia do
+     Sal» e «Garra Cinza», ambas no feminino — a troca não muda nenhuma foto e lá não se
+     prova. Prova-se aqui, chamando as quatro formas com um nome de cada lado: com o motor
+     de antes (o «A ${bando}» à letra) as duas primeiras ficam vermelhas — «A Bando do
+     Javali inteira morreu», «pela Bando» —, com o de hoje verdes. A terceira guarda o
+     outro lado: o feminino e o nome que a tabela não conhece dizem o que sempre disseram. */
+  const dec = (bando) => ({ aceito: P0("decretoAceito", { alvo: "Mestre Ulm", bando, membros: [{ nome: "Brann" }], forca: 4, descricao: "Tragam-no.", recompensa: 30 }), dizimado: P0("decretoDizimado", { bando, alvo: "Mestre Ulm" }), fracasso: P0("decretoFracasso", { bando, alvo: "Mestre Ulm" }), cumprido: P0("decretoCumprido", { baixas: false, alvo: "Mestre Ulm", bando, mortos: [], descricao: "Tragam-no.", recompensa: 30, tipo: "limpar" }) });
+  const bj = dec("Bando do Javali");
+  t("o Bando do Javali no masculino: «O Bando do Javali (», «inteiro morreu», «voltou vivo, envergonhado»", bj.aceito.includes("] O Bando do Javali (Brann, força 4)") && bj.dizimado.includes("] O Bando do Javali inteiro morreu") && bj.fracasso.includes("] O Bando do Javali não conseguiu") && bj.fracasso.includes("e voltou vivo, envergonhado ("), bj.dizimado.slice(0, 90));
+  t("o cumprido «pelo Bando do Javali», e nenhum «A Bando» nem «pela Bando» nas quatro", bj.cumprido.includes("foi CUMPRIDO pelo Bando do Javali.") && Object.values(bj).every((x) => !/\bA Bando\b|pela Bando|inteira morreu|viva, envergonhada/.test(x)), bj.cumprido.slice(40, 120));
+  const cs = dec("Companhia do Sal"), gc = dec("Garra Cinza");
+  t("e o feminino de sempre não muda: a Companhia do Sal e a Garra Cinza (que a tabela não conhece)", [[cs, "Companhia do Sal"], [gc, "Garra Cinza"]].every(([x, n]) => x.aceito.includes("] A " + n + " (Brann,") && x.dizimado.includes("] A " + n + " inteira morreu") && x.fracasso.includes("e voltou viva, envergonhada (") && x.cumprido.includes("foi CUMPRIDO pela " + n + ".")));
+  /* o lado do App: a tela dos decretos (o aceito, o líder, os três desfechos, a morte do
+     alvo) diz o bando pela mesma peça — nenhum «a ${grupo.bando}» de artigo fixo sobra */
+  const DECRETOS_APP = APP.slice(APP.indexOf("const processarDecretos = (pers, msgs) => {"), APP.indexOf("const processarDecretos = (pers, msgs) => {") + 6000);
+  t("o App diz o bando pela peça: ditosDoBando no laço, e nenhum artigo fixo à frente de grupo.bando", DECRETOS_APP.includes("const db = ditosDoBando(grupo.bando);") && !/(\b[AaO]|da|pela|do|pelo) \$\{grupo\.bando\}/.test(DECRETOS_APP));
   t("a obra iniciada diz o efeito e o prazo, e a pronta o nome", N("dominioObraIniciada").every((x, i) => x.includes(" Leva " + (4 + (i % 11)) + " dias.")) && conta(N("dominioObraIniciada"), ": +5% de fé. Leva") >= 130 && conta(N("dominioObraPronta"), "ficou pronta: a muralha.") >= 130);
   t("a revolta, a reivindicação e o tratado dizem os seus números e nomes", N("dominioRevolta").every((x, i) => x.includes("depois de " + (3 + (i % 6)) + " dias de fúria")) && conta(N("dominioReivindicacao"), "A Casa Funda reivindicou ") >= 130 && conta(N("dominioTratado"), "a Liga do Norte firmou ") >= 130);
   t("as onze formas estão na tabela do domínio", Object.keys(ENVELOPES_DO_DOMINIO).length === 11 && ["decretoAceito", "decretoDizimado", "decretoFracasso", "decretoCumprido", "obraConcluida", "revolta", "imposto", "obraIniciada", "governador", "reivindicacao", "tratado"].every((q) => Object.hasOwn(ENVELOPES_DO_DOMINIO, q)));
