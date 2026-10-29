@@ -22,15 +22,55 @@ export const tipoDecreto = (id) => TIPOS_DECRETO.find((t) => t.id === id) || TIP
 /* Recompensa "justa" mínima: abaixo disso ninguém sério se interessa. */
 export const recompensaJusta = (tipoId, nivel) => Math.round((tipoDecreto(tipoId).dificuldade * 40 + (nivel || 1) * 10) / 5) * 5;
 
-const BANDOS = ["Companhia", "Irmandade", "Bando", "Liga", "Ordem Menor"];
+/* O NOME DO BANDO TEM GÊNERO (29/10). Os decretos diziam «A ${bando}»,
+   «pela ${bando}», «líder da ${bando}» para todo nome — e um em cada cinco
+   é masculino: o Narrador lia «A Bando do Javali inteira morreu». O gênero
+   mora na tabela, ao lado do nome; o artigo e as palavras que concordam com
+   o bando (as que os envelopes do domínio e as mensagens do decreto usam)
+   moram em `CONCORDANCIA_DO_BANDO`. O sorteio continua a sortear um item da
+   lista com a mesma sorte de antes — o gênero não gasta dado, e todo grupo
+   semeado tem o nome e a gente que tinha. */
+export const BANDOS = [
+  { nome: "Companhia", genero: "f" },
+  { nome: "Irmandade", genero: "f" },
+  { nome: "Bando", genero: "m" },
+  { nome: "Liga", genero: "f" },
+  { nome: "Ordem Menor", genero: "f" },
+];
 const BANDOS_ADJ = ["do Javali", "das Cinzas", "do Corvo", "da Estrada", "do Punho Cerrado", "das Três Luas", "do Sal", "dos Desalmados", "da Aurora", "do Carvalho"];
+
+export const CONCORDANCIA_DO_BANDO = {
+  f: { o: "a", O: "A", inteiro: "inteira", vivo: "viva", envergonhado: "envergonhada", liderado: "liderada" },
+  m: { o: "o", O: "O", inteiro: "inteiro", vivo: "vivo", envergonhado: "envergonhado", liderado: "liderado" },
+};
+
+/* Nome que a tabela não conhece fica no feminino — é o que todo texto do
+   decreto dizia até hoje, logo não muda nada que estivesse certo. Sem nome
+   nenhum (save torto, grupo sem `bando`), fala-se de «o bando». */
+const BANDO_SEM_NOME = { nome: "bando", genero: "m" };
+const GENERO_DE_RECUO = "f";
+
+/* `ditosDoBando(bando)` → { genero, oNome, ONome, o, O, inteiro, vivo, … }.
+   O gênero sai da PRIMEIRA palavra do nome contra a tabela, e não de um
+   campo do grupo: o save antigo só guardou a string, e tem de ler certo
+   sem mudar de forma. `oNome` é o nome com o artigo («o Bando do Javali»),
+   pronto para a peça de contração de lugar.js («pelo», «do»); `ONome` é o
+   mesmo a abrir frase. */
+export function ditosDoBando(bando) {
+  const s = typeof bando === "string" ? bando.trim() : "";
+  const nome = s || BANDO_SEM_NOME.nome;
+  const achado = s ? BANDOS.find((b) => s === b.nome || s.startsWith(b.nome + " ")) : BANDO_SEM_NOME;
+  const genero = achado ? achado.genero : GENERO_DE_RECUO;
+  const c = CONCORDANCIA_DO_BANDO[genero];
+  return { ...c, genero, oNome: `${c.o} ${nome}`, ONome: `${c.O} ${nome}` };
+}
 
 export function gerarGrupoAventureiros(genero, nivel, sorte = null) { return comSorte(sorte, () => {
   const n = 2 + Math.floor(sorteDaCasa() * 3); // 2–4 aventureiros
   const membros = [];
   for (let i = 0; i < n; i++) membros.push({ nome: nomePessoa(genero), vivo: true });
   const forca = Math.max(1, Math.min(20, (nivel || 1) + Math.floor(sorteDaCasa() * 5) - 2)); // ±2 do seu nível
-  return { bando: `${sortear(BANDOS)} ${sortear(BANDOS_ADJ)}`, lider: membros[0].nome, membros, forca };
+  return { bando: `${sortear(BANDOS).nome} ${sortear(BANDOS_ADJ)}`, lider: membros[0].nome, membros, forca };
   });
 }
 
