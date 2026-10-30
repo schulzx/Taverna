@@ -842,16 +842,39 @@ function ondeEstaAqui(aqui, onde) {
   return !!lugar && a.includes(` ${lugar.replace(/[^a-z0-9]+/g, " ").trim()} `);
 }
 
+/* O ENCONTRO QUE O REGISTO JÁ VIU (a 13.ª sessão, 29/10). O herói achou o
+   Corrado no Largo da Liça no T2, e o passo «falar com Corrado» ficou
+   `feito: false` até ao fim da sessão — a conferência da missão não o
+   fechou. A pauta continuou a dizer «Corrado, empresário da arena daqui,
+   que diz ao herói o próprio nome logo que lhe fala», e o Corrado
+   apresentou-se quatro vezes ao mesmo herói. O registo sabia: `registro[t]`
+   tem o sítio (`onde`) e quem estava (`quem`). A pessoa da etapa no
+   sítio da etapa é o encontro — no sítio dela, o nome é presença
+   (`aindaSoUmNome`), e fora dele não conta (o T1 nomeia o Corrado no Porto
+   das Pedras). Com o encontro no registo, o passo está dado: a etapa dá a
+   vez à seguinte, se há; se não há, quem já se apresentou está aqui, e não
+   diz o nome outra vez (PASSO_AQUI.pessoa). Sem registo, o de sempre. */
+function encontrouNoRegisto(registro, alvo, onde) {
+  if (!Array.isArray(registro) || !alvo || !onde) return false;
+  const n = norm(alvo);
+  return registro.some((r) => r && typeof r === "object" && typeof r.onde === "string" && Array.isArray(r.quem)
+    && r.quem.some((q) => typeof q === "string" && norm(q) === n) && ondeEstaAqui(r.onde, onde));
+}
+
 export function proximoPasso(estado) {
   const e = obj(estado);
   const a = garantirAbertura(e.abertura);
   const m = principalDe(a, e.missoes);
   if (!m || m.status !== "ativa") return "";
-  const et = etapaAtual(m);
-  if (!et) return "";
   const daAbertura = !a.legado && m.id === a.principalId;
+  const viu = (x) => !!x && x.tipo === "falar_com"
+    && encontrouNoRegisto(e.registro, x.alvo, x.onde || (daAbertura && norm(x.alvo) === norm(a.pista.nome) ? a.pista.local : ""));
+  const et0 = etapaAtual(m);
+  if (!et0) return "";
+  const et = m.etapas.find((x) => x && !x.feito && !viu(x)) || et0;
   const aqui = txt(e.aqui, 200);
   if (aqui && daAbertura && et.tipo === "falar_com" && norm(et.alvo) === norm(a.pista.nome) && ondeEstaAqui(aqui, et.onde || a.pista.local)) {
+    if (viu(et)) return contrair(PASSO_AQUI.pessoa.replace("{nome}", et.alvo));
     const papel = txt(a.pista.papel, 40);
     return contrair((papel ? PASSO_AQUI.pista : PASSO_AQUI.pistaSemPapel).replace("{nome}", a.pista.nome).replace("{papel}", papel));
   }

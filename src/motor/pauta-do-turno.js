@@ -1177,7 +1177,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
         const rumo = linhaDoRumo({
           pedido: lerOPedido(acaoDoTurno),
           degrau: degrauDaEscuta(garantirEscuta($ref.escuta).semAvanco),
-          passo: proximoPasso({ abertura: $ref.abertura, missoes: $ref.missoes }),
+          passo: proximoPasso({ abertura: $ref.abertura, missoes: $ref.missoes, registro: $ref.registro }),
           semente: $ref.dia,
           /* MM19 (v9.394, o backend): o mundo que o degrau do encalhe precisa
              para virar cena com nome e lugar — onde estou, o fio aberto, a
@@ -1185,7 +1185,9 @@ export function aPautaDoTurno(estado, entrada, portas) {
           mundo: { aqui: (g.onde || [])[0] || "", abertura: $ref.abertura, missoes: $ref.missoes,
                    espinha: $ref.espinha, ato: $ref.historia.etapa, dia: $ref.dia, vilao: $ref.nemesis,
                    /* 12.ª sessão: quem o Mestre já nomeou está em cena, e não se apresenta de novo */
-                   mostrado: falasDoMestre($ref.mensagens) },
+                   mostrado: falasDoMestre($ref.mensagens),
+                   /* a 13.ª (29/10): quem o herói já encontrou, e onde — o passo dado não se pede outra vez */
+                   registro: $ref.registro },
         });
         if (rumo) p = porNaPauta(p, "rumo", rumo);
       }

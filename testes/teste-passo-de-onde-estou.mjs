@@ -119,5 +119,38 @@ sec("4. lixo, determinismo");
   t("a missão não é mutada", J(PRINCIPAL) === c);
 }
 
+sec("5. o encontro que o registo já viu (a 13.ª sessão, 29/10)");
+{
+  /* O Corrado apresentou-se quatro vezes: a heroína achou-o no Largo da Liça
+     no T2, o passo «falar com Corrado» ficou `feito: false` até ao fim, e a
+     pauta pediu-lhe o nome em cada turno lá (PASSO_AQUI.pista). O registo
+     sabia — `registro[t]` com o sítio e quem estava. FALHA antes deste
+     commit: `proximoPasso` não lia o registo. */
+  const F = JSON.parse(fs.readFileSync(new URL("./sessao-s13-fenda.json", import.meta.url), "utf8"));
+  const NO_LARGO = "no Largo da Liça, em Porto das Pedras";
+  const p13 = (t, aqui = NO_LARGO) => A.proximoPasso({ abertura: F.abertura, missoes: F.missoes, aqui, registro: F.registro.filter((r) => r.t < t) });
+  const seApresenta = [2, 3, 4, 5].filter((t) => /o próprio nome/.test(p13(t)));
+  t(`no Largo, do T2 ao T5, o Corrado diz o nome uma vez só (${seApresenta.length}; o jogo deu 4)`, seApresenta.length === 1 && seApresenta[0] === 2, seApresenta.join());
+  t("no T2 (a chegada: o registo só o tem nomeado no Porto) ainda é a pista que se apresenta", p13(2) === A.PASSO_AQUI.pista.replace("{nome}", "Corrado").replace("{papel}", F.abertura.pista.papel));
+  t("do T3 em diante, quem já se apresentou está aqui (PASSO_AQUI.pessoa)", [3, 4, 5].every((t) => p13(t) === A.PASSO_AQUI.pessoa.replace("{nome}", "Corrado")), p13(3));
+  const rumo = E.linhaDoRumo({ pedido: E.lerOPedido("\"É com quem, Corrado?\""), degrau: E.degrauDaEscuta(0), passo: "", semente: 1,
+    mundo: { aqui: NO_LARGO, abertura: F.abertura, missoes: F.missoes, registro: F.registro.filter((r) => r.t < 4) } });
+  t("e o rumo da escuta lê o registo do mundo (o T4: «É com quem, Corrado?»)", /que está aqui/.test(rumo) && !/o próprio nome/.test(rumo), rumo);
+  t("dentro da Fenda (T18), o passo é o de sempre — o registo não o inventa", p13(18, "dentro de Fenda de Silêncio, à entrada") === A.proximoPasso({ abertura: F.abertura, missoes: F.missoes, aqui: "dentro de Fenda de Silêncio, à entrada" }));
+  /* a régua, no mundo montado desta suíte (o Osric na Candeia, depois o Edric na Ponte) */
+  const comReg = (registro, aqui) => A.proximoPasso({ abertura: ABERTURA, missoes: [PRINCIPAL], aqui, registro });
+  const viuOsric = [{ t: 3, onde: "A Candeia Faiscante", quem: ["Osric Pé-Leve"] }];
+  t("o Osric encontrado na Candeia: o passo dá a vez ao Edric, mesmo longe dos dois", comReg(viuOsric, "em Vau Seco") === "Procurar Edric na Ponte Lenta, em Rio Profundo", comReg(viuOsric, "em Vau Seco"));
+  t("e sem `aqui` também (o passo da pauta)", comReg(viuOsric) === comReg(viuOsric, "em Vau Seco"));
+  t("o nome dito noutro sítio não é encontro (menção não é presença)", comReg([{ t: 1, onde: "Casa da Fonte", quem: ["Osric Pé-Leve"] }]) === "Procurar Osric Pé-Leve na Candeia Faiscante");
+  t("a Candeia sem o Osric também não", comReg([{ t: 2, onde: "A Candeia Faiscante", quem: ["Brom"] }]) === "Procurar Osric Pé-Leve na Candeia Faiscante");
+  for (const lixo of [null, 7, "x", {}, [null, 3, "x", { quem: "Osric Pé-Leve", onde: 5 }, { onde: "A Candeia Faiscante", quem: "Osric Pé-Leve" }]]) {
+    t(`registo lixo (${J(lixo)}) dá o passo de sempre`, tenta(() => comReg(lixo), "x") === "Procurar Osric Pé-Leve na Candeia Faiscante");
+  }
+  const antes = J(F.registro) + J(F.missoes);
+  p13(5);
+  t("o registo e a missão não são mutados", J(F.registro) + J(F.missoes) === antes);
+}
+
 console.log(`\no passo de onde estou: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

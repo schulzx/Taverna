@@ -304,7 +304,8 @@ export const RUMOS = {
    vilao } — o lugar onde o herói está (a 1.ª linha do ONDE da pauta) e o
    fio. Com ele, o degrau da escada deixa de ser uma forma ("um NPC procura
    o herói na taverna") e passa a ser a CENA de `cenaDoDegrau`, ali onde o
-   herói está; sem ele, a linha é a de antes. */
+   herói está; sem ele, a linha é a de antes. `registro` (a 13.ª, 29/10): o
+   registo de pessoas, para o passo saber quem o herói já encontrou e onde. */
 export function linhaDoRumo(opcoes) {
   const { pedido = null, degrau = null, passo = "", semente = 0, mundo = null } = obj(opcoes);
   const p = obj(pedido);
@@ -316,7 +317,8 @@ export function linhaDoRumo(opcoes) {
      (`abertura.js#proximoPasso`). Sem mundo, o passo que veio. */
   const mu = mundo && typeof mundo === "object" ? mundo : {};
   if (mu.aqui && mu.abertura) {
-    try { const daqui = proximoPasso({ abertura: mu.abertura, missoes: mu.missoes, aqui: mu.aqui }); if (daqui) ps = daqui; } catch { /* fica o passo que veio */ }
+    /* a 13.ª (29/10): e o registo, que sabe quem o herói já encontrou e onde */
+    try { const daqui = proximoPasso({ abertura: mu.abertura, missoes: mu.missoes, aqui: mu.aqui, registro: mu.registro }); if (daqui) ps = daqui; } catch { /* fica o passo que veio */ }
   }
   if (!p.doJogador && !(d.n > 0)) return "";
   const abre = p.doJogador ? (p.le ? RUMOS.ler : p.pergunta ? RUMOS.pergunta : RUMOS.ato) : "";

@@ -53,8 +53,19 @@ const DO_MODULO = ["LEITURA_DA_CONVERSA", "falasDoMestre"];
    elas já disseram, e a junta leva a resposta dela. Nos casos, mudam 3 das
    287 — os três turnos gravados que perguntam pela cama ou pela espada da
    oração de antes (a 9.ª e a 10.ª sessões); num deles a linha chega ao
-   texto, nos outros dois o teto corta-a (a pauta cheia, a 1370 e 1353). */
+   texto, nos outros dois o teto corta-a (a pauta cheia, a 1370 e 1353).
+
+   O ENCONTRO QUE O REGISTO JÁ VIU (29/10/2026, a 13.ª sessão): o rumo passa
+   o `registro` a `proximoPasso` (abertura.js), no passo e no mundo da
+   escuta — a pista que já se encontrou no sítio dela não volta a dizer o
+   nome (o Corrado apresentou-se quatro vezes). Nos casos, nenhuma das
+   287 fotos muda (nenhum tem a pista já encontrada no registo): a prova do
+   encontro é a 13.ª, em teste-passo-de-onde-estou.mjs. */
 const CONSERTOS = [
+  ["passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),",
+    "passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, registro: registroRef.current }),"],
+  ["                   mostrado: falasDoMestre(mensagensRef.current) },",
+    "                   mostrado: falasDoMestre(mensagensRef.current),\n                   registro: registroRef.current },"],
   ["import { fichaParaPauta, fichaDaCidade } from \"./cidade-por-dentro.js\";\n",
     "import { fichaParaPauta, fichaDaCidade } from \"./cidade-por-dentro.js\";\nimport { oQueAMesaFecha } from \"./mesa-do-buraco.js\";\n"],
   ["    } catch (e) { calou(\"precoComumParaPauta\", e); }\n    return { cidade: fc, gente: gp, mercado: mc, horizonte: hz, preco: pc };",
