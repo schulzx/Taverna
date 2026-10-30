@@ -178,6 +178,14 @@ const RESPOSTA_AO_CORACAO = {
   recusou: (nome) => "Eu recuso o que " + nome + " me pede.",
   porque: (nome) => "Pergunto a " + nome + " porquê.",
 };
+/* a 13.ª sessão (29/10): "Eu aceito o que Corrado me pede" foi sem o quê, e
+   o Narrador inventou o pedido. Com a fala que o sistema tem (`pede`, de
+   `opcoesDoPedido`), o aceite e a recusa dizem-na; sem ela, o texto de
+   sempre. */
+const PEDIDO_NA_RESPOSTA = {
+  aceitou: (pede) => " O pedido é este, e não outro: \"" + pede + "\"",
+  recusou: (pede) => " O pedido é este, e não outro: \"" + pede + "\"",
+};
 export const ENVELOPES_DO_ACAMPAMENTO = {
   levantarSemDescanso: ({ minutos, recibo, reino }) =>
     `[FIM DO ACAMPAMENTO — SEM DESCANSO] Levantei acampamento SEM dormir e SEM descansar: parei só o tempo de arrumar as coisas (${minutos} minutos). NÃO houve sono nem noite. ${recibo} Não me pergunte como foi a noite, porque não houve noite. Passaram-se MINUTOS: nada de amanhecer, nada de eventos grandes, nada de tempo correndo. O mundo volta a andar de onde parou; retome a cena AQUI MESMO, no mesmo lugar, e me convide a agir.${reino}`,
@@ -195,8 +203,8 @@ export const ENVELOPES_DO_ACAMPAMENTO = {
   /* a resposta que o jogador deu ao pedido do coração; a que não está na
      tabela vai sem frase, como no App — e a herdada também (no App ia o
      texto do protótipo: conserto declarado, ver a suíte, secção 8) */
-  respostaAoCoracao: ({ nome, resposta }) =>
-    "[RESPOSTA A " + nome + " — DADA POR MIM] " + (daTabela(RESPOSTA_AO_CORACAO, resposta) ? RESPOSTA_AO_CORACAO[resposta](nome) : "") + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
+  respostaAoCoracao: ({ nome, resposta, pede }) =>
+    "[RESPOSTA A " + nome + " — DADA POR MIM] " + (daTabela(RESPOSTA_AO_CORACAO, resposta) ? RESPOSTA_AO_CORACAO[resposta](nome) : "") + (pede && typeof pede === "string" && daTabela(PEDIDO_NA_RESPOSTA, resposta) ? PEDIDO_NA_RESPOSTA[resposta](pede.trim()) : "") + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
   decisaoDoCoracao: ({ nome, verbo, preco }) =>
     "[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + verbo + " — " + preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.",
 };

@@ -443,6 +443,9 @@ export function acampamentoDoCaso(i) {
     naLuta: i % 3 ? { nome: "Vera paga" } : { nome: "Vera na luta" },
     f: { quem: ["Iris", "Noé Laminado", "Greta"][i % 3], genero: ["f", "m", ""][i % 3], recibo: "recibo " + (i % 4) },
     resposta: ["aceitou", "recusou", "porque", "outra"][i % 4],
+    /* a fala do pedido (13.ª sessão): vazia nos casos, que assim provam o texto
+       de sempre; o envelope COM a fala prova-se na secção 31 da suíte */
+    pede: "",
     fichaViva: () => (i % 5 === 0 ? null : { nome: "Vera viva" }),
   };
 }

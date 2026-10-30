@@ -701,5 +701,42 @@ sec("12. a voz presa ao nome e o género na linha (a prova viva da v9.414)");
   t("temGenero: o lixo não estoura", [null, undefined, 7].every((x) => temGenero(x, "mulher") === false) && temGenero("x", "") === true && comGenero(null, null) === "");
 }
 
+sec("13. o cartão do pedido diz O QUE se aceita (a 13.ª sessão, 29/10)");
+{
+  /* A 13.ª: "Aceitar o que Corrado pede · Corrado conta com você" — sem o
+     objeto. Aceitei às cegas; o envelope levou "Eu aceito o que Corrado me
+     pede" e nada mais; o Narrador inventou outro pedido (um devedor da liça)
+     e o Cronista gravou o irmão da heroína como esse devedor. O sistema tinha
+     o pedido (a fala da pauta do T2: "É meio dia de desvio…"). A regra: o
+     cartão escreve o objeto; sem objeto escrito, não há cartão. */
+  const SUB = await import("../src/subtramas.js");
+  const OE = SUB.OBJETO_DO_ELO || {}, OP = SUB.OBJETO_DO_PEDIDO || {};
+  const max = Number(OP.max) || 0;
+  t("o teto do objeto é tabela (OBJETO_DO_PEDIDO.max)", max > 0);
+  const semElo = ARCOS.filter((a) => a.id !== "a_revelacao");
+  t("todo arco escreve o objeto do pedido (o elo, à parte)", semElo.every((a) => typeof a.pedido.objeto === "string" && a.pedido.objeto.length > 0), semElo.filter((a) => !a.pedido.objeto).map((a) => a.id).join());
+  t("o elo tem um objeto por desejo, os mesmos de PEDIDO_DO_ELO", Object.keys(PEDIDO_DO_ELO).join() === Object.keys(OE).join() && Object.values(OE).every((x) => x && x.length <= max));
+  const cartoes = [], longos = [], sem = [], cegos = [];
+  for (const w of MUNDOS) for (const s of w.subs) {
+    if (s.papel === "vilao") continue;
+    const op = opcoesDoPedido(s);
+    const ac = op.find((o) => o.id === "aceitou"), rc = op.find((o) => o.id === "recusou");
+    if (!ac) { sem.push(s.nome + "/" + s.arco); continue; }
+    cartoes.push(ac.oferta);
+    if (s.pedido.objeto.length > max) longos.push(s.pedido.objeto);
+    if (ac.oferta !== "Aceitar: " + s.pedido.objeto || rc.oferta !== "Recusar: " + s.pedido.objeto || /[{}]/.test(ac.oferta)) cegos.push(ac.oferta);
+    if (!ac.pede || ac.pede !== s.pedido.fala) cegos.push("sem fala: " + s.nome);
+  }
+  t(`nos 120 mundos, todo pedido tem cartão com o objeto (${cartoes.length} cartões)`, cartoes.length > 200 && sem.length === 0 && cegos.length === 0, [...sem, ...cegos].slice(0, 3).join(" ‖ "));
+  t(`e o objeto cabe no teto, cheio (${max} letras)`, longos.length === 0, longos.slice(0, 3).join(" ‖ "));
+  t("o perguntar porquê fica como era: «Perguntar a X porquê»", MUNDOS.every((w) => w.subs.filter((s) => s.papel !== "vilao").every((s) => (opcoesDoPedido(s).find((o) => o.id === "porque") || {}).oferta === "Perguntar a " + s.nome + " porquê")));
+  /* o caso da 13.ª: o Corrado, a culpa que chega tarde */
+  const corrado = { nome: "Corrado", papel: "voz", genero: "homem", arco: "a_culpa_tarde", pedido: { fala: "É meio dia de desvio. Há uma campa que não visito há seis anos.", objeto: ARCOS.find((a) => a.id === "a_culpa_tarde").pedido.objeto } };
+  const oc = opcoesDoPedido(corrado);
+  t("o Corrado da 13.ª: «Aceitar: meio dia de desvio a uma campa», e a fala vai com o clique", (oc[0] || {}).oferta === "Aceitar: meio dia de desvio a uma campa" && /campa/.test((oc[0] || {}).pede || ""), (oc[0] || {}).oferta);
+  t("sem objeto escrito, não há cartão — o pedido não se aceita às cegas", opcoesDoPedido({ nome: "Corrado", papel: "voz", pedido: { fala: "x" } }).length === 0 && opcoesDoPedido({ nome: "Corrado", papel: "voz", pedido: { fala: "x", objeto: "{lugar}" } }).length === 0 && opcoesDoPedido({ nome: "Corrado", papel: "voz", pedido: null }).length === 0);
+  t("os objetos dizem você, não tu", !/(?<![\p{L}])(tua|teu|tuas|teus|contigo)(?![\p{L}])|-te(?![\p{L}])/iu.test(JSON.stringify(OE) + JSON.stringify(ARCOS.map((a) => a.pedido.objeto))));
+}
+
 console.log(`\n${ok} ok, ${mal} mal`);
 process.exit(mal ? 1 : 0);

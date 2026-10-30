@@ -1116,5 +1116,21 @@ sec("8 · a chave da tabela é da tabela, nunca do protótipo");
     ["constructor", "toString"].every((q) => estoura(() => oEnvelopeDaMasmorra(q, {})) && estoura(() => oEnvelopeDoCorreio(q, {})) && estoura(() => E(q, {}))));
 }
 
+sec("31 · o aceite leva o pedido (a 13.ª sessão, 29/10)");
+{
+  /* "Eu aceito o que Corrado me pede" foi ao Narrador sem o quê, e ele
+     inventou um pedido que o Cronista canonizou. Com a fala que o sistema
+     tem, o envelope di-la; sem ela, o texto é o de sempre (os dourados não
+     levam `pede`, logo não se mexem). */
+  const E = oEnvelopeDoAcampamento;
+  const pede = "É meio dia de desvio. Há uma campa que não visito há seis anos.";
+  const ac = E("respostaAoCoracao", { nome: "Corrado", resposta: "aceitou", pede });
+  const rc = E("respostaAoCoracao", { nome: "Corrado", resposta: "recusou", pede });
+  t("aceitar leva a fala do pedido, inteira", ac.includes(pede) && ac.includes("Eu aceito o que Corrado me pede"), ac.slice(0, 200));
+  t("recusar também (o Narrador tem de saber o que se recusou)", rc.includes(pede));
+  t("perguntar porquê não repete o pedido", !E("respostaAoCoracao", { nome: "Corrado", resposta: "porque", pede }).includes(pede));
+  t("sem a fala, o envelope é o de antes", E("respostaAoCoracao", { nome: "Corrado", resposta: "aceitou" }) === E("respostaAoCoracao", { nome: "Corrado", resposta: "aceitou", pede: "" }) && !/undefined|null/.test(E("respostaAoCoracao", { nome: "Corrado", resposta: "aceitou", pede: null })));
+}
+
 console.log(`\n${ok} ok, ${mal} falhas`);
 if (mal) process.exit(1);

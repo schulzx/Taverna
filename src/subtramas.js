@@ -194,7 +194,7 @@ export const FIGURA_TENTATIVAS = 16;
 export const ARCOS = [
   {
     id: "a_carta", chave: ["c_carta", "d_moribundo"],
-    pedido: { tom: ["emoção"], fala: "Leve esta carta a {destino}. Eu não posso entrar lá." },
+    pedido: { tom: ["emoção"], fala: "Leve esta carta a {destino}. Eu não posso entrar lá.", objeto: "levar uma carta a outra cidade" },
     crise: { tom: ["suspense"], o: "o destinatário da carta de {nome} morreu — ou é gente de {sombra}; a carta é o que {sombra} procura", pior: "a carta de {nome} foi roubada, e é o que {sombra} procura" },
     escolha: {
       tom: ["provação"], contexto: "a carta de {nome} está nas mãos do herói, e {sombra} quere-a",
@@ -207,7 +207,7 @@ export const ARCOS = [
   },
   {
     id: "a_divida_volta", chave: ["d_agiota", "d_guilda", "e_jogo", "c_corda_nos"],
-    pedido: { tom: ["alívio"], fala: "Faltam-me {preco} moedas. Treze dias." },
+    pedido: { tom: ["alívio"], fala: "Faltam-me {preco} moedas. Treze dias.", objeto: "achar {preco} moedas em treze dias" },
     crise: { tom: ["suspense"], o: "o credor de {nome} leva alguém como penhor", pior: "o credor leva {nome} como penhor" },
     escolha: {
       tom: ["batalha", "provação"], contexto: "o credor tem o penhor e quer {preco} moedas",
@@ -220,7 +220,7 @@ export const ARCOS = [
   },
   {
     id: "a_nome_falso", chave: ["e_nome_morto", "e_dado_morto", "e_titulo"],
-    pedido: { tom: ["suspense"], fala: "Nesta cidade não diga o meu nome. Nenhum dos dois." },
+    pedido: { tom: ["suspense"], fala: "Nesta cidade não diga o meu nome. Nenhum dos dois.", objeto: "calar o nome verdadeiro" },
     crise: { tom: ["emoção"], o: "alguém reconhece {nome} e chama-{o} pelo nome verdadeiro, em público", pior: "alguém reconhece {nome}, chama-{o} pelo nome verdadeiro, e a praça inteira ouve" },
     escolha: {
       tom: ["provação"], contexto: "chamaram {nome} pelo nome verdadeiro, e a praça espera a resposta",
@@ -233,7 +233,7 @@ export const ARCOS = [
   },
   {
     id: "a_irmao_do_outro_lado", chave: ["e_irmao_lado"],
-    pedido: { tom: ["suspense"], fala: "Se vir um homem com {assinatura} no braço, não o mate. Deixe-o para mim." },
+    pedido: { tom: ["suspense"], fala: "Se vir um homem com {assinatura} no braço, não o mate. Deixe-o para mim.", objeto: "poupar um homem marcado" },
     crise: { tom: ["batalha"], o: "{figura}, o irmão de {nome}, está entre os servos de {sombra}, na luta — e rende-se em vez de cair", pior: "{figura}, o irmão de {nome}, está entre os servos de {sombra}, na luta, e não sabe que é ele", efeitos: [{ tipo: "combate", rendido: "o irmão" }] },
     escolha: {
       tom: ["emoção"], contexto: "{figura}, o irmão de {nome}, está rendido aos pés do herói",
@@ -246,7 +246,7 @@ export const ARCOS = [
   },
   {
     id: "a_culpa_tarde", chave: ["u_tarde", "u_deixou", "u_mae", "u_irmao_lugar"],
-    pedido: { tom: ["emoção"], fala: "É meio dia de desvio. Há uma campa que não visito há seis anos." },
+    pedido: { tom: ["emoção"], fala: "É meio dia de desvio. Há uma campa que não visito há seis anos.", objeto: "meio dia de desvio a uma campa" },
     crise: { tom: ["provação"], o: "lá, quem {nome} deixou para trás está vivo, e não perdoa", pior: "lá, quem {nome} deixou para trás está vivo, não perdoa, e diz porquê diante de todos" },
     escolha: {
       tom: ["provação"], contexto: "quem {nome} deixou para trás está ali, vivo, e não perdoa",
@@ -259,7 +259,7 @@ export const ARCOS = [
   },
   {
     id: "a_juramento", chave: ["d_voto", "q_juramento", "l_palavra"],
-    pedido: { tom: ["provação"], fala: "Prometi rezar onde ele caiu. É no caminho." },
+    pedido: { tom: ["provação"], fala: "Prometi rezar onde ele caiu. É no caminho.", objeto: "parar para rezar no caminho" },
     crise: { tom: ["suspense"], o: "cumprir o voto obriga {nome} a cruzar a linha de {outro}", pior: "cumprir o voto obriga {nome} a cruzar a linha de {outro}, e {outro} já o sabe" },
     escolha: {
       tom: ["emoção"], contexto: "o voto de {nome} e {outro} puxam para lados contrários",
@@ -272,7 +272,7 @@ export const ARCOS = [
   },
   {
     id: "a_amor_proibido", chave: ["e_ama_proibido"],
-    pedido: { tom: ["romance"], fala: "Leve isto à {casa}. Não pergunte a quem." },
+    pedido: { tom: ["romance"], fala: "Leve isto à {casa}. Não pergunte a quem.", objeto: "levar um embrulho sem perguntar" },
     crise: { tom: ["suspense"], o: "{nome} e quem ama foram descobertos; a {casa} exige reparação", pior: "{nome} e quem ama foram descobertos diante de todos; a {casa} exige reparação" },
     escolha: {
       tom: ["provação"], contexto: "a {casa} exige reparação pelo amor de {nome}",
@@ -285,7 +285,7 @@ export const ARCOS = [
   },
   {
     id: "a_guerra", chave: ["e_fugiu", "e_desertor", "u_ordem", "t_guerra_volta"],
-    pedido: { tom: ["suspense"], fala: "Se alguém do regimento perguntar, você nunca me viu." },
+    pedido: { tom: ["suspense"], fala: "Se alguém do regimento perguntar, você nunca me viu.", objeto: "negar ao regimento que se viram" },
     crise: { tom: ["provação"], o: "{figura}, velho camarada de {nome}, aparece e acusa-{o} em voz alta", pior: "{figura}, velho camarada de {nome}, aparece com mais dois, e acusa-{o} em voz alta" },
     escolha: {
       tom: ["emoção", "batalha"], contexto: "{figura}, o velho camarada, acusa {nome} diante de todos",
@@ -298,7 +298,7 @@ export const ARCOS = [
   },
   {
     id: "a_crianca", chave: ["q_crianca", "c_dente", "c_retrato"],
-    pedido: { tom: ["emoção"], fala: "Há uma criança em {lugar}. Ninguém pode saber dela." },
+    pedido: { tom: ["emoção"], fala: "Há uma criança em {lugar}. Ninguém pode saber dela.", objeto: "o segredo de uma criança" },
     crise: { tom: ["suspense"], o: "alguém procura a criança de {lugar} — servos de {sombra}, ou a família verdadeira", pior: "alguém procura a criança de {lugar}, e já sabe onde ela dorme" },
     escolha: {
       tom: ["provação"], contexto: "procuram a criança que {nome} esconde",
@@ -311,7 +311,7 @@ export const ARCOS = [
   },
   {
     id: "a_oferta", chave: ["vilao"],
-    pedido: { tom: ["suspense"], fala: "Deixe {cidade} e nenhum dos seus sofre — nem {alvo}." },
+    pedido: { tom: ["suspense"], fala: "Deixe {cidade} e nenhum dos seus sofre — nem {alvo}.", objeto: "deixar a cidade" },
     crise: { tom: ["provação"], o: "o herói descobre de {sombra} uma coisa que não faz: {linha} — e que a pode usar", pior: "o herói descobre de {sombra} uma coisa que não faz: {linha} — e que a pode usar" },
     escolha: {
       tom: ["batalha", "emoção"], contexto: "{sombra} está diante do herói, e o herói conhece o que {ele} não faz",
@@ -324,7 +324,7 @@ export const ARCOS = [
   },
   {
     id: "a_revelacao", chave: ["elo"],
-    pedido: { tom: ["alívio", "emoção"], fala: "" },
+    pedido: { tom: ["alívio", "emoção"], fala: "", objeto: "" },
     crise: { tom: ["suspense"], o: "", pior: "" },
     escolha: {
       tom: ["emoção", "provação"], contexto: "{nome} disse a verdade, e espera o que o herói faz dela",
@@ -354,6 +354,34 @@ export const PEDIDO_DO_ELO = {
   q_razao_guerra: "Me diga se a culpa foi minha. Ninguém mais me diz.",
   outro: "Me pague um copo e me ouça um pouco. É só isso.",
 };
+
+/* O QUE O PEDIDO É, EM POUCAS PALAVRAS — a 13.ª sessão (29/10): o cartão
+   dizia "Aceitar o que Corrado pede · Corrado conta com você" e NÃO dizia o
+   quê. O jogador aceitou às cegas, o envelope levou "Eu aceito o que Corrado
+   me pede" sem o objeto, o Narrador inventou outro pedido (um devedor da
+   liça) e o Cronista gravou o irmão da heroína como esse devedor. O sistema
+   TINHA o pedido (a fala, "É meio dia de desvio…") e não o punha no clique:
+   o veredito antes do clique sem o objeto. Cada arco diz agora, em
+   `pedido.objeto`, o que se aceita — curto, para caber no verbo da
+   soleira ("Aceitar: meio dia de desvio a uma campa"); o elo, aqui, um por
+   desejo, na mesma ordem de PEDIDO_DO_ELO. `max` é o teto do objeto já
+   cheio, medido contra a regra R5d da `Oferta` (o verbo de 40 letras
+   quebra a duas linhas a 375 px; o objeto mais o "Recusar: " fica abaixo). */
+export const OBJETO_DO_ELO = {
+  q_comprar: "ajudar a juntar o que falta",
+  q_divida_fim: "ajudar a pagar o homem do porto",
+  q_cadeira: "uma palavra a quem manda aqui",
+  q_esquecer: "vigiar o sono, sem perguntar",
+  q_juramento: "levar um cordão a um templo",
+  q_aldeia: "levar mantas à aldeia do vale",
+  q_mestria: "ver um trabalho e julgá-lo",
+  q_partir: "guardar algo até a partida",
+  q_reconstruir: "ajudar a erguer uma parede",
+  q_segredo_outro: "um silêncio por outro",
+  q_razao_guerra: "dizer de quem foi a culpa",
+  outro: "um copo e um pouco de ouvido",
+};
+export const OBJETO_DO_PEDIDO = { max: 34 };
 
 /* quando nenhum id da ficha casa com um arco: o tipo do que a pessoa
    carrega escolhe (a C1 dá a toda a gente um `carrega`). Decisão desta
@@ -521,10 +549,11 @@ export function subtramasDoNucleo(nucleo, ctx) {
       const ench = (t) => noGenero(encher(t, vars), genero);
       const enchEf = (l) => arr(l).map((e) => Object.fromEntries(Object.entries(e).map(([k, v]) => [k, typeof v === "string" ? ench(v) : v])));
       const lado = (l) => ({ id: l.id, diz: ench(l.diz), verbo: ench(l.verbo), preco: ench(l.preco), efeitos: enchEf(l.efeitos) });
-      let pedido = { tom: A.pedido.tom, fala: ench(A.pedido.fala) };
+      let pedido = { tom: A.pedido.tom, fala: ench(A.pedido.fala), objeto: ench(A.pedido.objeto) };
       let crise = { tom: A.crise.tom, o: ench(A.crise.o), pior: ench(A.crise.pior), efeitos: enchEf(A.crise.efeitos) };
       if (id === "a_revelacao") {
-        pedido = { ...pedido, fala: PEDIDO_DO_ELO[obj(f.quer).id] || PEDIDO_DO_ELO.outro };
+        const q = PEDIDO_DO_ELO[obj(f.quer).id] ? obj(f.quer).id : "outro";
+        pedido = { ...pedido, fala: PEDIDO_DO_ELO[q], objeto: OBJETO_DO_ELO[q] };
         const rev = obj(f.esconde).revela || "";
         crise = { ...crise, o: rev, pior: rev };
       }
@@ -977,15 +1006,23 @@ export function escolhasAbertas(coracao, nucleo, ctx) {
 
 /* o pedido como opções (aceitar, recusar, perguntar porquê) — ignorar é
    não responder, e o relógio corre */
+/* `oferta` é o que a soleira escreve — o verbo COM o objeto, na forma que a
+   missão já usa ("Aceitar: <o quê>"): uma ação, uma forma. `pede` é a fala
+   inteira, que o clique leva ao Narrador. SEM OBJETO, SEM CARTÃO: um pedido
+   que o sistema não sabe dizer não se aceita às cegas (13.ª sessão). */
 export const RESPOSTAS_AO_PEDIDO = [
-  { id: "aceitou", verbo: "Aceitar", preco: "{nome} conta com você" },
-  { id: "recusou", verbo: "Recusar", preco: "{nome} fica {sozinho} com isto" },
-  { id: "porque", verbo: "Perguntar porquê", preco: "{nome} lhe diz o que quer, sem custo" },
+  { id: "aceitou", verbo: "Aceitar", oferta: "Aceitar: {objeto}", preco: "{nome} conta com você" },
+  { id: "recusou", verbo: "Recusar", oferta: "Recusar: {objeto}", preco: "{nome} fica {sozinho} com isto" },
+  { id: "porque", verbo: "Perguntar porquê", oferta: "Perguntar a {nome} porquê", preco: "{nome} lhe diz o que quer, sem custo" },
 ];
 export function opcoesDoPedido(inst) {
   const i = obj(inst);
   if (!i.nome || i.papel === "vilao") return [];
-  return RESPOSTAS_AO_PEDIDO.map((r) => ({ id: r.id, verbo: r.verbo, preco: noGenero(encher(r.preco, { nome: i.nome }), i.genero) }));
+  const p = obj(i.pedido);
+  const objeto = String(p.objeto || "").trim();
+  if (!objeto || /[{}]/.test(objeto)) return [];
+  const pede = String(p.fala || "").trim();
+  return RESPOSTAS_AO_PEDIDO.map((r) => ({ id: r.id, verbo: r.verbo, oferta: encher(r.oferta, { nome: i.nome, objeto }), preco: noGenero(encher(r.preco, { nome: i.nome }), i.genero), pede }));
 }
 
 /* o jogador respondeu ao pedido. "porque" não fecha nada: abre o `quer` e

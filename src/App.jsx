@@ -20124,7 +20124,7 @@ export default function Taverna() {
   };
   /* O herói responde ao que alguém lhe pede: aceitar, recusar, perguntar
      porquê (que não fecha nada e traz a razão, na secção PERGUNTOU). */
-  const responderAoCoracao = (nome, resposta) => {
+  const responderAoCoracao = (nome, resposta, pede) => {
     try {
       if (carregando) return;
       const nucleo = nucleoAgora();
@@ -20133,7 +20133,7 @@ export default function Taverna() {
       if (JSON.stringify(r.coracao) === antes) return;
       coracaoRef.current = r.coracao;
       coracaoFalaRef.current = { secao: "pergunta", linha: r.linha || "", proprio: true };
-      enviar(oEnvelopeDoAcampamento("respostaAoCoracao", { nome, resposta }), fichaViva() || personagem);
+      enviar(oEnvelopeDoAcampamento("respostaAoCoracao", { nome, resposta, pede }), fichaViva() || personagem);
     } catch (e) { calou("responder ao coração", e); }
   };
   /* O herói decide pela pessoa. Irreversível: os dois lados estavam na tela
@@ -20211,8 +20211,8 @@ export default function Taverna() {
       if (!ctx.emCena.includes(inst.nome) && a.pedido !== ctx.dia) continue;
       for (const o of opcoesDoPedido(inst)) {
         if (o.id === "porque" && a.porque) continue;
-        const verbo = o.id === "aceitou" ? "Aceitar o que " + inst.nome + " pede" : o.id === "recusou" ? "Recusar o que " + inst.nome + " pede" : "Perguntar a " + inst.nome + " porquê";
-        out.push({ id: "coracao|" + inst.nome + "|" + o.id, verbo, preco: [o.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => responderAoCoracao(inst.nome, o.id) });
+        /* 13.ª sessão: o verbo é o do motor, COM o objeto («Aceitar: meio dia de desvio a uma campa»); sem objeto, não há cartão; a fala vai ao envelope */
+        out.push({ id: "coracao|" + inst.nome + "|" + o.id, verbo: o.oferta, preco: [o.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => responderAoCoracao(inst.nome, o.id, o.pede) });
       }
     }
     return out;
