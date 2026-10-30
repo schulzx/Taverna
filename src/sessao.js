@@ -459,18 +459,48 @@ export function virarAPagina(arquivo) {
     const A = obj(arquivo);
     const ts = arr(A.turnos);
     if (!ts.length) return null;
-    const i = ts.length - 1, L = obj(ts[i]);
-    let juiz = L.juiz;
-    if (ehObj(juiz) && Number.isInteger(juiz.antesDoArquivo)) {
-      const ja = narracoesDoArquivo(ts, i), k = juiz.antesDoArquivo;
-      const { antesDoArquivo, ...resto } = juiz;
-      juiz = { ...resto, entrada: { ...obj(resto.entrada), antes: k > 0 ? ja.slice(ja.length - k) : [] } };
-    }
+    const i = ts.length - 1;
     const { anterior, ...cabeca } = A;
     const velha = { ...cabeca, turnos: ts.slice(0, i) };
-    const { virada, ...semVirada } = cabeca;
-    const nova = { ...semVirada, inicio: estadoNoTurno(A, i), turnos: [{ ...L, n: 1, juiz }] };
+    const { virada, ...nova } = paginaDesde(A, i);
     return { velha, nova };
+  } catch { return null; }
+}
+
+/* A PÁGINA A PARTIR DO TURNO k (29/10, o teto da chave). Os turnos antes
+   de k saem; a cabeça fica (a semente, o mundo, a origem, a `virada`), e o
+   início passa a ser o estado gravado ao fim do turno k — a base da
+   diferença da primeira linha que fica, byte a byte. As linhas renumeram-se
+   de 1. A linha que deixa de ter as narrações de eco no arquivo (a
+   primeira, sempre; e as seguintes cujo `antesDoArquivo` apontava para uma
+   linha que saiu) volta a levá-las inteiras — é o que a virada fazia à
+   linha que passa, e a virada é o caso k = último. Sem a `anterior` (a
+   página é uma só). null quando k não deixa nenhum turno. Puro, e nunca
+   lança.
+
+     paginaDesde(arquivo, k) → arquivo de sessão válido com os turnos k.. */
+export function paginaDesde(arquivo, k) {
+  try {
+    const A = obj(arquivo);
+    const ts = arr(A.turnos);
+    if (!Number.isInteger(k) || k < 0 || k >= ts.length) return null;
+    const { anterior, ...cabeca } = A;
+    const turnos = [];
+    for (let j = 0; j < ts.length - k; j++) {
+      const L = obj(ts[k + j]);
+      let juiz = L.juiz;
+      if (ehObj(juiz) && Number.isInteger(juiz.antesDoArquivo)) {
+        const ja = narracoesDoArquivo(ts, k + j), q = juiz.antesDoArquivo;
+        const antes = q > 0 ? ja.slice(ja.length - q) : [];
+        const aqui = narracoesDoArquivo(turnos, j);
+        if (j === 0 || q > aqui.length || J(antes) !== J(q > 0 ? aqui.slice(aqui.length - q) : [])) {
+          const { antesDoArquivo, ...resto } = juiz;
+          juiz = { ...resto, entrada: { ...obj(resto.entrada), antes } };
+        }
+      }
+      turnos.push(j === 0 ? { ...L, n: 1, juiz } : juiz === L.juiz ? { ...L, n: j + 1 } : { ...L, n: j + 1, juiz });
+    }
+    return { ...cabeca, inicio: estadoNoTurno(A, k), turnos };
   } catch { return null; }
 }
 

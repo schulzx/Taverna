@@ -18,12 +18,16 @@
       PÁGINA VIRA: uma página nova começa do estado de antes do último
       turno, e leva-o (sessao.js#virarAPagina). A página velha NÃO SE PERDE
       (29/10, a 13.ª sessão: virou aos 21 turnos e deitou-os fora sem
-      aviso): vai inteira no campo `anterior` da nova, com teto próprio, e
-      a cabeça da nova diz que página é e quantos turnos ficaram para trás
+      aviso): vai no campo `anterior` da nova, com teto próprio, e a
+      cabeça da nova diz que página é e quantos turnos ficaram para trás
       (`virada`: { pagina, turnosAntes, cortou }). Só uma página de antes
-      se guarda; a de antes dela, e uma anterior que não caiba no teto
-      dela, contam-se em `cortou` — o corte está escrito, nunca é calado.
-      Se nem a cabeça cabe, não se guarda nada.
+      se guarda. Se ela não cabe no teto dela, PODA-SE PELA FRENTE: ficam
+      a cabeça e os últimos turnos que cabem, inteiros (nunca uma linha a
+      meio), e o início passa ao estado de antes do primeiro que fica
+      (sessao.js#paginaDesde) — é o fim da sessão que se quer rever. A de
+      antes dela, e os turnos podados, contam-se em `cortou` — o corte
+      está escrito, nunca é calado. Se nem a cabeça cabe, não se guarda
+      nada.
    4. Não pode custar o turno: tudo aqui é puro e nunca lança; a fiação
       embrulha a escrita em `calou`, e uma escrita que falha apaga a chave
       da sessão — o save fica intocado. A página de antes mora DENTRO da
@@ -41,7 +45,7 @@
    (os últimos 24 vereditos com os trechos: 7 mil caracteres por turno na
    13.ª, um quarto da linha) e outra vez na cabeça.
    ============================================================ */
-import { abrirASessao, estadoNoTurno, virarAPagina } from "./sessao.js";
+import { abrirASessao, estadoNoTurno, virarAPagina, paginaDesde } from "./sessao.js";
 
 export const SESSAO_GUARDADA = Object.freeze({
   /* a chave: o espaço do save do modo, mais isto */
@@ -52,14 +56,31 @@ export const SESSAO_GUARDADA = Object.freeze({
      a capital): a cabeça 96,8 mil e o turno 28,1 mil — dos quais 7,1 mil
      da `fidelidade` e 3,8 mil das narrações de eco que a primeira linha
      de uma página leva inteiras. Sem a fidelidade, a mesma página pesa
-     90,1 mil de cabeça e 17,2 mil por turno: ~29 turnos por página. */
-  teto: 600000,
-  /* caracteres da página de antes, que vai dentro da mesma chave: a
-     página que vira já cabia no teto um turno antes, e é isso que passa.
-     A chave fica abaixo de 1,2 milhão de caracteres — ~2,4 MB num
-     localStorage que conta em UTF-16, a metade do que um navegador dá a
-     uma origem (5 MB) — e cede ao save antes de ele perder um byte. */
-  tetoDaAnterior: 600000,
+     90,1 mil de cabeça e 17,2 mil por turno: ~29 turnos por página a 600
+     mil.
+     O TETO DA CHAVE (29/10, o coordenador): a página e a de antes moram na
+     mesma chave, e com 600 mil cada uma ela chegava a 1,19 milhão de
+     caracteres (medido: a 13.ª repetida até virar três vezes) — ~2,4 MB
+     num localStorage que conta em UTF-16, perto da metade dos ~5 MB que
+     um navegador dá a uma origem, e o save divide esse espaço. A chave
+     cheia passa a ~800 mil (~1,6 MB). A DIVISÃO É AO MEIO, e não 600 +
+     200, porque o que se quer rever é a janela de turnos que a chave tem
+     SEMPRE, e ela é mínima logo depois de uma virada: um turno na página,
+     mais o que a de antes guarda. Com 600 + 200 a de antes guardava ~6
+     turnos (a cabeça come 90 mil dos 200): janela de 7 a 35. Ao meio, a
+     de antes vai inteira (~17 turnos, ela cabia no teto um turno antes):
+     janela de 18 a 34. O máximo é quase o mesmo (são as mesmas 800 mil
+     menos duas cabeças); o mínimo mais que duplica. O custo: a página vira
+     a cada ~17 turnos em vez de ~29, e virar é só isto. */
+  teto: 400000,
+  /* caracteres da página de antes, que vai dentro da mesma chave. Igual
+     ao teto: a página que vira já cabia nele um turno antes, e passa
+     inteira. Quando não cabe (o turno que vira não cabia nem sozinho com a
+     cabeça, e a velha vai com ele; ou a tabela mudou), poda-se pela
+     frente até caber — ver a regra 3. A chave fica abaixo de teto + este
+     (+ a costura `,"anterior":`), e cede ao save antes de ele perder um
+     byte. */
+  tetoDaAnterior: 400000,
   /* os modos que gravam: o beta é Uma Vida (a ordem de 28/09) */
   modos: Object.freeze(["historia"]),
   /* o que o estado da sessão não leva: o relato, que é da tela, e a conta
@@ -77,8 +98,9 @@ export function chaveDaSessao(espacoDoSave, cfg = SESSAO_GUARDADA) {
 }
 
 /* A SESSÃO CEDE AO SAVE (28/10, o orquestrador). O arquivo da sessão
-   pode chegar ao teto (600 mil caracteres, ~1,2 MB num localStorage que
-   conta em UTF-16), e o save é quem não pode perder espaço (a regra 3).
+   pode chegar ao teto da chave (a página e a de antes: 800 mil caracteres,
+   ~1,6 MB num localStorage que conta em UTF-16), e o save é quem não pode
+   perder espaço (a regra 3).
    Quando a gravação do save falha, a primeira coisa que se larga é a
    sessão — antes de podar o histórico do jogador. Apaga só a chave da
    sessão deste espaço; devolve true se havia o que largar. Nunca lança. */
@@ -153,6 +175,37 @@ const comAAnterior = (pagina, anterior) => {
 };
 const quantos = (x) => (Array.isArray(obj(x).turnos) ? x.turnos.length : 0);
 
+/* A PÁGINA DE ANTES, NO TETO DELA: inteira se cabe; senão os últimos
+   turnos que cabem, com a cabeça (a virada dela soma os que se podaram).
+   Devolve { pagina, fora } — pagina null quando nem um turno cabe, e fora
+   é quantos turnos dela não vão. A conta parte do peso das linhas (sem
+   escrever a página a cada tentativa) e confirma-se no texto: o início
+   muda com o corte, e é o texto que vai para a chave. */
+const caberNoTeto = (velha, tetoDaAnt) => {
+  const n = quantos(velha);
+  if (textoDe(velha).length <= tetoDaAnt) return { pagina: velha, fora: 0 };
+  if (n < 2) return { pagina: null, fora: n };
+  const vj = obj(velha.virada);
+  const podada = (k) => {
+    const p = paginaDesde(velha, k);
+    if (!p) return null;
+    return { ...p, virada: {
+      pagina: Number.isInteger(vj.pagina) ? vj.pagina : 1,
+      turnosAntes: (Number.isInteger(vj.turnosAntes) ? vj.turnosAntes : 0) + k,
+      cortou: (Number.isInteger(vj.cortou) ? vj.cortou : 0) + k,
+    } };
+  };
+  const cabe = (k) => { const p = podada(k); return p && JSON.stringify(p).length <= tetoDaAnt ? p : null; };
+  const pesos = velha.turnos.map((L) => JSON.stringify(L).length + 1);
+  let resto = JSON.stringify({ ...velha, turnos: [] }).length + pesos.reduce((a, b) => a + b, 0), k = 0;
+  while (k < n - 1 && resto > tetoDaAnt) resto -= pesos[k++];
+  k = Math.max(1, k);
+  let p = cabe(k);
+  if (p) { for (let q; k > 1 && (q = cabe(k - 1)); ) { p = q; k--; } return { pagina: p, fora: k }; }
+  for (k++; k < n; k++) if ((p = cabe(k))) return { pagina: p, fora: k };
+  return { pagina: null, fora: n };
+};
+
 /* O QUE SE ESCREVE NA CHAVE. Devolve { arquivo, texto, virou }: o arquivo
    que a fiação passa a segurar, o texto a guardar (null = apagar a chave)
    e se a página virou. O teto mede a página; a de antes tem o seu
@@ -167,7 +220,7 @@ export function guardarASessao(arquivo, cfg = SESSAO_GUARDADA) {
     if (JSON.stringify(pagina).length <= teto) return { arquivo: A, texto: comAAnterior(pagina, ant), virou: false };
     /* a página vira. O último turno passa à página nova (virarAPagina); se
        nem ele cabe com a cabeça, a nova nasce vazia no fim dele, e ele fica
-       na velha. A velha vai inteira como a de antes, se couber no teto dela. */
+       na velha. A velha vai como a de antes, no teto dela (caberNoTeto). */
     const v = virarAPagina(pagina);
     let velha, nova;
     if (v && JSON.stringify(v.nova).length <= teto) ({ velha, nova } = v);
@@ -176,18 +229,18 @@ export function guardarASessao(arquivo, cfg = SESSAO_GUARDADA) {
       velha = pagina;
       nova = { ...abrirASessao({ semente: cab.semente, mundo: cab.mundo, origem: cab.origem, estado: {} }), inicio: estadoNoTurno(pagina, quantos(pagina)) };
     }
-    const cabeVelha = textoDe(velha).length <= tetoDaAnt;
+    const { pagina: aDeAntes, fora } = caberNoTeto(velha, tetoDaAnt);
     const ja = obj(pagina.virada);
     const virada = {
       pagina: (Number.isInteger(ja.pagina) ? ja.pagina : 1) + 1,
       turnosAntes: (Number.isInteger(ja.turnosAntes) ? ja.turnosAntes : 0) + quantos(velha),
-      cortou: (Number.isInteger(ja.cortou) ? ja.cortou : 0) + quantos(ant) + (cabeVelha ? 0 : quantos(velha)),
+      cortou: (Number.isInteger(ja.cortou) ? ja.cortou : 0) + quantos(ant) + fora,
     };
     const { turnos: tsNova, ...cabNova } = nova;
     const paginaNova = { ...cabNova, turnos: tsNova, virada };
     if (JSON.stringify(paginaNova).length > teto) return { arquivo: paginaNova, texto: null, virou: true };
-    const novo = cabeVelha ? { ...paginaNova, anterior: velha } : paginaNova;
-    return { arquivo: novo, texto: comAAnterior(paginaNova, cabeVelha ? velha : null), virou: true };
+    const novo = aDeAntes ? { ...paginaNova, anterior: aDeAntes } : paginaNova;
+    return { arquivo: novo, texto: comAAnterior(paginaNova, aDeAntes), virou: true };
   } catch {
     return { arquivo: null, texto: null, virou: false };
   }
