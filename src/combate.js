@@ -292,9 +292,37 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
    O `2` que sobrou do antigo `4` é o piso que mantém o dano total na mesma
    faixa de antes — sem ele, trocar a fórmula seria também nerfar todo
    mundo, e uma coisa de cada vez. */
+/* ---------------- O DANO DA AMEAÇA (29/10, a 13.ª sessão de prova) ----------------
+   Esta tabela vivia cravada dentro de `danoDe`, sem nome — a primeira lei
+   da casa, e foi lá que o defeito se escondeu. Na 13.ª sessão três Ratos
+   Gigantes («fraco», 4 PV cada) deixaram a Iara, guerreira de 20 PV, a 0 e
+   sangrando, na primeira luta da vida dela.
+
+   O DEFEITO: O «FRACO» NÃO ENCOLHIA O DANO NA ESCALA DELE. Toda a casa mede
+   a ameaça na mesma régua — `PESO_AMEACA` (orcamento.js) e o PV de
+   `pvEsperadoInimigo`, logo abaixo: o fraco vale METADE de um comum (0,35
+   contra 0,7). O dano não seguia: o golpe médio do fraco era 3 + d4 − 1 =
+   4,5 contra 6,5 do comum, 69% dele. Um fraco tinha metade da vida e da
+   conta do orçamento e dois terços da mordida — e três deles, que o
+   orçamento chama «médio» ao lado de um companheiro (razão 0,98), batiam
+   mais do que dois Bandidos, que ele chama «médio» mais pesado (1,13).
+
+   O CONSERTO É UM NÚMERO: fraco 3 → 2 (golpe médio 3,5, 54% do comum, no
+   meio da escala). Os outros degraus ficam: competente, elite e lendário
+   batem ABAIXO da proporção do peso deles (e os dois de cima compensam no
+   multiataque), e mexer neles era rebalancear lutas que ninguém acusou.
+
+   Medido (1000 lutas por semente, a Iara do save + o Dunstan, sem andar):
+     3 ratos (médio 0,98)    cai 7,6% → 2,7%   dano sofrido 7,47 → 5,73
+     4 ratos (difícil 1,31)  cai 30,2% → 15,9%
+     2 bandidos (médio 1,13) 5,6% · 3 bandidos (mortal 2,03) 29,6% — iguais
+   Antes, 4 ratos (difícil) derrubavam tanto quanto 3 bandidos (mortal), e
+   3 ratos mais que 2 bandidos: o perigo não seguia a faixa que o jogo diz.
+   Depois, segue. A catraca é `testes/teste-dano-da-ameaca.mjs`. */
+export const DANO_DA_AMEACA = Object.freeze({ fraco: 2, comum: 5, competente: 7, elite: 10, lendario: 14 });
 export function danoDe(ent, ehInimigo = false, rolar) {
   if (ehInimigo) {
-    const base = { fraco: 3, comum: 5, competente: 7, elite: 10, lendario: 14 }[ent.ameaca] || 5;
+    const base = DANO_DA_AMEACA[ent.ameaca] || DANO_DA_AMEACA.comum;
     return base + d(4, rolar) - 1;
   }
   const arma = ent.equipados?.arma || null;

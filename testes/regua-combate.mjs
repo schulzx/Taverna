@@ -661,9 +661,13 @@ export function comSorteTravada(semente, fn) {
    3. A MESA — montar as fichas do cenário
    ============================================================ */
 
+/* `vidaMax` (29/10, a 13.ª sessão): o cenário PODE dizer o PV de quem luta,
+   quando mede uma ficha de verdade — a Iara nasceu com 20, e a régua dava-lhe
+   os 14 de `pvEsperadoJogador`. Ausente, é a conta de sempre: os três
+   cenários da casa não o declaram, e medem byte a byte o que mediam. */
 function fichaDoHeroi(cen) {
   const h = cen.heroi;
-  const vidaMax = pvEsperadoJogador(h.nivel, h.vigor);
+  const vidaMax = Number(h.vidaMax) > 0 ? Number(h.vidaMax) : pvEsperadoJogador(h.nivel, h.vigor);
   const peca = (nome, tipo) => (nome ? { nome, tipo, ...(tipo === "arma" ? {} : { atributos: { defesa: DEFESA_DA_ARMADURA[nome] || 1 } }) } : null);
   const equipados = {};
   if (h.arma) equipados.arma = peca(h.arma, "arma");
@@ -680,7 +684,7 @@ function fichaDoHeroi(cen) {
 
 function fichaDoGrupo(cen) {
   return cen.grupo.map((g) => {
-    const vidaMax = pvEsperadoJogador(g.nivel, g.vigor);
+    const vidaMax = Number(g.vidaMax) > 0 ? Number(g.vidaMax) : pvEsperadoJogador(g.nivel, g.vigor);
     return garantirFichaCompanheiro({
       nome: g.nome, classe: g.classe, nivel: g.nivel,
       atributos: { ...g.atributos },
