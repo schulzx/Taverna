@@ -1,0 +1,1181 @@
+{
+ "_de": "a 13.ª sessão de prova (29/10/2026), do save exportado no fim dela: só o que o boato da Fenda e o passo do Corrado leem. O cânone vai sem o «Rumor de Fenda de Silêncio» (o que o T19 escreveu), para o estado ser o de antes da revelação; as mensagens são só as do Mestre que nomeiam a Fenda (o boato lê as últimas 60); o registo, só o turno, o dia, o sítio e quem estava.",
+ "nomeCampanha": "A Estrada do Sal",
+ "genero": "Fantasia medieval",
+ "heroi": "Iara",
+ "dia": 2,
+ "cidadeAtual": "Porto das Pedras",
+ "lugar": {
+  "nome": "Fenda de Silêncio",
+  "cidade": "Porto das Pedras",
+  "dentroDe": "",
+  "distancia": "perto",
+  "desde": 1,
+  "coord": {
+   "x": 49.61,
+   "y": 50.22,
+   "z": 0,
+   "mx": 0,
+   "my": 0
+  }
+ },
+ "masmorra": {
+  "nome": "Fenda de Silêncio",
+  "nivel": 4
+ },
+ "mapa": {
+  "cidades": [
+   {
+    "nome": "Porto das Pedras",
+    "tipo": "capital",
+    "porte": "capital",
+    "populacao": 64200,
+    "regiao": "Colinas Altos",
+    "continente": "Terras Brutas de Alvernia",
+    "bioma": "colina",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 50,
+    "y": 50,
+    "descoberta": true,
+    "pisada": true
+   },
+   {
+    "nome": "Val das Pedras",
+    "tipo": "vila",
+    "porte": "vila",
+    "populacao": 1390,
+    "regiao": "Fronteiras do Sal",
+    "continente": "Terras Brutas de Alvernia",
+    "bioma": "colina",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 49.74,
+    "y": 50.27,
+    "descoberta": false
+   },
+   {
+    "nome": "Burgo da Prata",
+    "tipo": "fortaleza",
+    "porte": "fortaleza",
+    "populacao": 1660,
+    "regiao": "Colinas Altos",
+    "continente": "Terras Brutas de Alvernia",
+    "bioma": "colina",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 49.72,
+    "y": 49.34,
+    "descoberta": false
+   },
+   {
+    "nome": "Porto dos Barões",
+    "tipo": "cidade",
+    "porte": "cidade",
+    "populacao": 7660,
+    "regiao": "Fronteiras do Sal",
+    "continente": "Terras Brutas de Alvernia",
+    "bioma": "colina",
+    "faccao": null,
+    "relacao": "neutra",
+    "locais": [],
+    "sede": false,
+    "notas": "",
+    "x": 50.69,
+    "y": 50.22,
+    "descoberta": false
+   }
+  ],
+  "faccoes": [],
+  "continente": "Terras Brutas de Alvernia",
+  "regioes": [
+   {
+    "nome": "Colinas Altos",
+    "continente": "Terras Brutas de Alvernia",
+    "bioma": "colina",
+    "cx": 49.87,
+    "cy": 50.01
+   },
+   {
+    "nome": "Fronteiras do Sal",
+    "continente": "Terras Brutas de Alvernia",
+    "bioma": "montanha",
+    "cx": 50.07,
+    "cy": 50.06
+   }
+  ],
+  "rotas": [
+   {
+    "de": "Porto das Pedras",
+    "para": "Val das Pedras",
+    "terreno": "colina",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Porto das Pedras",
+    "para": "Burgo da Prata",
+    "terreno": "colina",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Val das Pedras",
+    "para": "Burgo da Prata",
+    "terreno": "colina",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Porto dos Barões",
+    "para": "Porto das Pedras",
+    "terreno": "colina",
+    "km": 20,
+    "dias": 1
+   },
+   {
+    "de": "Porto dos Barões",
+    "para": "Val das Pedras",
+    "terreno": "colina",
+    "km": 20,
+    "dias": 1
+   }
+  ],
+  "continentes": [
+   {
+    "nome": "Terras Brutas de Alvernia",
+    "regioes": [
+     "Colinas Altos",
+     "Fronteiras do Sal"
+    ]
+   }
+  ],
+  "regiao": {
+   "versao": 2,
+   "nomes": 1,
+   "nome": "Colinas Altos",
+   "base": {
+    "nome": "Porto das Pedras",
+    "ato": "inicio"
+   },
+   "povoados": [
+    {
+     "nome": "Val das Pedras",
+     "porte": "vila",
+     "horas": 8,
+     "km": 20,
+     "terreno": "colina",
+     "rumo": "a sudoeste"
+    },
+    {
+     "nome": "Burgo da Prata",
+     "porte": "fortaleza",
+     "horas": 8,
+     "km": 20,
+     "terreno": "colina",
+     "rumo": "a noroeste"
+    },
+    {
+     "nome": "Porto dos Barões",
+     "porte": "cidade",
+     "horas": 8,
+     "km": 20,
+     "terreno": "colina",
+     "rumo": "a leste"
+    }
+   ],
+   "lugares": [
+    {
+     "id": "masmorra|Colinas Altos|0",
+     "nome": "A Boca de Sangue Velho",
+     "tipo": "caverna",
+     "icone": "🕳",
+     "regiao": "Colinas Altos",
+     "bioma": "colina",
+     "cidadeProxima": "Val das Pedras",
+     "nivel": 9,
+     "salas": 12,
+     "rumor": "dizem que ninguém que entrou de noite voltou",
+     "x": 49.65,
+     "y": 50.9,
+     "ato": "fim",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Javali de Espinho Farpado",
+        "nivel": 3,
+        "ameaca": "comum"
+       },
+       {
+        "nome": "Rato das Valas",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "alto",
+      "perigoRotulo": "perigo alto",
+      "horas": 8,
+      "km": 24,
+      "modo": "estrada",
+      "rumo": "ao sul",
+      "vizinhos": [
+       {
+        "id": "Val das Pedras",
+        "nome": "Val das Pedras",
+        "horas": 4,
+        "rumo": "ao norte"
+       },
+       {
+        "id": "masmorra|Fronteiras do Sal|0",
+        "nome": "Fenda de Silêncio",
+        "horas": 8,
+        "rumo": "ao norte"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Fronteiras do Sal|0",
+     "nome": "Fenda de Silêncio",
+     "tipo": "caverna",
+     "icone": "🕳",
+     "regiao": "Fronteiras do Sal",
+     "bioma": "montanha",
+     "cidadeProxima": "Val das Pedras",
+     "nivel": 4,
+     "salas": 7,
+     "rumor": "um pastor jura ter visto luz lá dentro",
+     "x": 49.61,
+     "y": 50.22,
+     "ato": "meio",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Capitão de Salteadores",
+        "nivel": 5,
+        "ameaca": "competente"
+       },
+       {
+        "nome": "Vípera da Charneca",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 4,
+      "km": 11,
+      "modo": "estrada",
+      "rumo": "a sudoeste",
+      "vizinhos": [
+       {
+        "id": "Val das Pedras",
+        "nome": "Val das Pedras",
+        "horas": 1.72,
+        "rumo": "a leste"
+       },
+       {
+        "id": "masmorra|Colinas Altos|1",
+        "nome": "Covil de Espinhos",
+        "horas": 4,
+        "rumo": "a noroeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Colinas Altos|1",
+     "nome": "Covil de Espinhos",
+     "tipo": "acampamento",
+     "icone": "⛺",
+     "regiao": "Colinas Altos",
+     "bioma": "colina",
+     "cidadeProxima": "Val das Pedras",
+     "nivel": 4,
+     "salas": 6,
+     "rumor": "há uma recompensa antiga por notícias do lugar",
+     "x": 49.22,
+     "y": 49.95,
+     "ato": "meio",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Javali de Espinho Farpado",
+        "nivel": 3,
+        "ameaca": "comum"
+       },
+       {
+        "nome": "Rato das Valas",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 8,
+      "km": 20,
+      "modo": "estrada",
+      "rumo": "a oeste",
+      "vizinhos": [
+       {
+        "id": "masmorra|Fronteiras do Sal|0",
+        "nome": "Fenda de Silêncio",
+        "horas": 4,
+        "rumo": "a sudeste"
+       },
+       {
+        "id": "Val das Pedras",
+        "nome": "Val das Pedras",
+        "horas": 4,
+        "rumo": "a sudeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Fronteiras do Sal|1",
+     "nome": "Ossuário Silêncio",
+     "tipo": "cripta",
+     "icone": "⚰",
+     "regiao": "Fronteiras do Sal",
+     "bioma": "montanha",
+     "cidadeProxima": "Burgo da Prata",
+     "nivel": 6,
+     "salas": 6,
+     "rumor": "a guarda proibiu a estrada que leva até lá",
+     "x": 49.76,
+     "y": 49.5,
+     "ato": "meio",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Capitão de Salteadores",
+        "nivel": 5,
+        "ameaca": "competente"
+       },
+       {
+        "nome": "Guarda de Tumba Antiga",
+        "nivel": 8,
+        "ameaca": "elite"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 8,
+      "km": 14,
+      "modo": "estrada",
+      "rumo": "a noroeste",
+      "vizinhos": [
+       {
+        "id": "Burgo da Prata",
+        "nome": "Burgo da Prata",
+        "horas": 2.03,
+        "rumo": "ao norte"
+       },
+       {
+        "id": "masmorra|Colinas Altos|2",
+        "nome": "Ruínas de Sal",
+        "horas": 4,
+        "rumo": "a sudeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Colinas Altos|2",
+     "nome": "Ruínas de Sal",
+     "tipo": "ruína",
+     "icone": "🏚",
+     "regiao": "Colinas Altos",
+     "bioma": "colina",
+     "cidadeProxima": "Porto das Pedras",
+     "nivel": 5,
+     "salas": 6,
+     "rumor": "a guarda proibiu a estrada que leva até lá",
+     "x": 50.12,
+     "y": 49.7,
+     "ato": "paralelo",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Javali de Espinho Farpado",
+        "nivel": 3,
+        "ameaca": "comum"
+       },
+       {
+        "nome": "Rato das Valas",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 2.58,
+      "km": 8.1,
+      "modo": "a_pe",
+      "rumo": "ao norte",
+      "vizinhos": [
+       {
+        "id": "masmorra|Fronteiras do Sal|2",
+        "nome": "Mina de Vidro",
+        "horas": 3.03,
+        "rumo": "a sudeste"
+       },
+       {
+        "id": "masmorra|Fronteiras do Sal|1",
+        "nome": "Ossuário Silêncio",
+        "horas": 4,
+        "rumo": "a noroeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Fronteiras do Sal|2",
+     "nome": "Mina de Vidro",
+     "tipo": "mina",
+     "icone": "⛏",
+     "regiao": "Fronteiras do Sal",
+     "bioma": "montanha",
+     "cidadeProxima": "Porto das Pedras",
+     "nivel": 6,
+     "salas": 5,
+     "rumor": "um pastor jura ter visto luz lá dentro",
+     "x": 50.34,
+     "y": 49.81,
+     "ato": "paralelo",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Capitão de Salteadores",
+        "nivel": 5,
+        "ameaca": "competente"
+       },
+       {
+        "nome": "Guarda de Tumba Antiga",
+        "nivel": 8,
+        "ameaca": "elite"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 4,
+      "km": 10,
+      "modo": "estrada",
+      "rumo": "a nordeste",
+      "vizinhos": [
+       {
+        "id": "masmorra|Colinas Altos|2",
+        "nome": "Ruínas de Sal",
+        "horas": 3.03,
+        "rumo": "a noroeste"
+       },
+       {
+        "id": "masmorra|Colinas Altos|3",
+        "nome": "Cripta dos Cinzas",
+        "horas": 4,
+        "rumo": "a sudeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Colinas Altos|3",
+     "nome": "Cripta dos Cinzas",
+     "tipo": "cripta",
+     "icone": "⚰",
+     "regiao": "Colinas Altos",
+     "bioma": "colina",
+     "cidadeProxima": "Porto dos Barões",
+     "nivel": 1,
+     "salas": 6,
+     "rumor": "um pastor jura ter visto luz lá dentro",
+     "x": 50.52,
+     "y": 50.2,
+     "ato": "paralelo",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Rato das Valas",
+        "nivel": 1,
+        "ameaca": "fraco"
+       },
+       {
+        "nome": "Morcego dos Fojos",
+        "nivel": 1,
+        "ameaca": "fraco"
+       }
+      ],
+      "perigo": "baixo",
+      "perigoRotulo": "perigo baixo",
+      "horas": 4,
+      "km": 14,
+      "modo": "estrada",
+      "rumo": "a leste",
+      "vizinhos": [
+       {
+        "id": "Porto dos Barões",
+        "nome": "Porto dos Barões",
+        "horas": 1.37,
+        "rumo": "a leste"
+       },
+       {
+        "id": "masmorra|Fronteiras do Sal|3",
+        "nome": "Agulha de Mil Bocas",
+        "horas": 3.2,
+        "rumo": "a sudoeste"
+       }
+      ]
+     }
+    },
+    {
+     "id": "masmorra|Fronteiras do Sal|3",
+     "nome": "Agulha de Mil Bocas",
+     "tipo": "torre",
+     "icone": "🗼",
+     "regiao": "Fronteiras do Sal",
+     "bioma": "montanha",
+     "cidadeProxima": "Porto dos Barões",
+     "nivel": 6,
+     "salas": 5,
+     "rumor": "um pastor jura ter visto luz lá dentro",
+     "x": 50.29,
+     "y": 50.32,
+     "ato": "paralelo",
+     "ficha": {
+      "quem": [
+       {
+        "nome": "Capitão de Salteadores",
+        "nivel": 5,
+        "ameaca": "competente"
+       },
+       {
+        "nome": "Guarda de Tumba Antiga",
+        "nivel": 8,
+        "ameaca": "elite"
+       }
+      ],
+      "perigo": "medio",
+      "perigoRotulo": "perigo médio",
+      "horas": 4,
+      "km": 11,
+      "modo": "estrada",
+      "rumo": "a sudeste",
+      "vizinhos": [
+       {
+        "id": "masmorra|Colinas Altos|3",
+        "nome": "Cripta dos Cinzas",
+        "horas": 3.2,
+        "rumo": "a nordeste"
+       },
+       {
+        "id": "Porto dos Barões",
+        "nome": "Porto dos Barões",
+        "horas": 4,
+        "rumo": "a leste"
+       }
+      ]
+     }
+    }
+   ],
+   "horizonte": [
+    {
+     "nome": "Ponte dos Barões",
+     "tipo": "cidade",
+     "boato": "os soldados que passam falam dela"
+    },
+    {
+     "nome": "Abadia do Lobo",
+     "tipo": "cidade",
+     "boato": "é de lá que vêm os cobradores"
+    },
+    {
+     "nome": "Belênia",
+     "tipo": "terra",
+     "boato": "os mercadores falam dela como de um sonho caro"
+    },
+    {
+     "nome": "Terras do Vento",
+     "tipo": "regiao",
+     "boato": "as caravanas que vêm de lá chegam com semanas de pó"
+    },
+    {
+     "nome": "Terras da Serpente",
+     "tipo": "regiao",
+     "boato": "de lá vêm o sal e as más notícias"
+    },
+    {
+     "nome": "Vales do Corvo",
+     "tipo": "regiao",
+     "boato": "as caravanas que vêm de lá chegam com semanas de pó"
+    }
+   ],
+   "quadro": {
+    "x0": 48.72,
+    "y0": 48.84,
+    "x1": 51.19,
+    "y1": 51.4
+   }
+  }
+ },
+ "npcs": {
+  "Dunstan Machado Torto": {
+   "conhecidoEm": 0,
+   "nome": "Dunstan Machado Torto",
+   "papel": "companheiro de estrada, Caçador",
+   "relacao": "amigo",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "companheiro de estrada do herói; conhecem-se há 4 anos — há anos que os dois andam pela mesma estrada, e não ia ser esta a separá-los · antes de andar com o herói: taverneiro(a)",
+   "laco": {
+    "tipo": "amizade",
+    "forca": 2,
+    "desde": -1439,
+    "rompido": false,
+    "rompidoEm": 0
+   },
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 0,
+   "semente": "npc|Dunstan Machado Torto|taverneiro(a)"
+  },
+  "Corrado": {
+   "conhecidoEm": 1,
+   "nome": "Corrado",
+   "papel": "Organizador de lutas",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "Organiza lutas no Largo da Liça.",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 1,
+   "semente": "npc|Corrado|Organizador de lutas"
+  },
+  "Anselmo": {
+   "conhecidoEm": 1,
+   "nome": "Anselmo",
+   "papel": "apostador",
+   "relacao": "desconhecido",
+   "genero": "",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "leal; quer quer ver o mar uma vez, só uma",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 3,
+   "semente": "npc|Anselmo|apostador"
+  },
+  "Anselmo Machado Torto": {
+   "conhecidoEm": 1,
+   "nome": "Anselmo Machado Torto",
+   "papel": "",
+   "relacao": "desconhecido",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 3,
+   "semente": "npc|Anselmo Machado Torto|"
+  },
+  "Otília Machado Torto": {
+   "conhecidoEm": 1,
+   "nome": "Otília Machado Torto",
+   "papel": "",
+   "relacao": "desconhecido",
+   "genero": "mulher",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 3,
+   "semente": "npc|Otília Machado Torto|"
+  },
+  "Beraldo Pés-de-Lama": {
+   "conhecidoEm": 1,
+   "nome": "Beraldo Pés-de-Lama",
+   "papel": "informante da vala",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "sabe quem entra e sai",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 6,
+   "semente": "npc|Beraldo Pés-de-Lama|"
+  },
+  "Tobias": {
+   "conhecidoEm": 1,
+   "nome": "Tobias",
+   "papel": "devedor da liça",
+   "relacao": "neutro",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "procurado por Corrado",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 6,
+   "semente": "npc|Tobias|devedor da liça"
+  },
+  "Osric": {
+   "conhecidoEm": 1,
+   "nome": "Osric",
+   "papel": "aprendiz",
+   "relacao": "desconhecido",
+   "genero": "",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "ambicioso; quer promete todo ano que vai embora na primavera",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 13,
+   "semente": "npc|Osric|aprendiz"
+  },
+  "Radulfo Milhano": {
+   "conhecidoEm": 1,
+   "nome": "Radulfo Milhano",
+   "papel": "",
+   "relacao": "desconhecido",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 13,
+   "semente": "npc|Radulfo Milhano|"
+  },
+  "Matilde": {
+   "conhecidoEm": 1,
+   "nome": "Matilde",
+   "papel": "",
+   "relacao": "desconhecido",
+   "genero": "mulher",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 13,
+   "semente": "npc|Matilde|"
+  },
+  "Tibério Vigia-de-Portão": {
+   "conhecidoEm": 2,
+   "nome": "Tibério Vigia-de-Portão",
+   "papel": "",
+   "relacao": "desconhecido",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 16,
+   "semente": "npc|Tibério Vigia-de-Portão|"
+  },
+  "Balduíno do Prado Salgado": {
+   "conhecidoEm": 2,
+   "nome": "Balduíno do Prado Salgado",
+   "papel": "",
+   "relacao": "desconhecido",
+   "genero": "homem",
+   "local": "Porto das Pedras",
+   "status": "vivo",
+   "segredo": "",
+   "notas": "",
+   "laco": null,
+   "entre": {},
+   "consultas": 0,
+   "ultimaVez": 18,
+   "semente": "npc|Balduíno do Prado Salgado|"
+  }
+ },
+ "canone": {
+  "Corrado": {
+   "tipo": "pessoa",
+   "descricao": "Organizador das lutas no Largo da Liça ligado à família do herói.",
+   "detalhes": "Alvo da carta sem assinatura.",
+   "local": "Porto das Pedras",
+   "registradoDia": 1
+  },
+  "Largo da Liça": {
+   "tipo": "lugar",
+   "descricao": "Local onde se organizam lutas em Porto das Pedras.",
+   "detalhes": "Arena ou praça controlada por Corrado.",
+   "local": "Porto das Pedras",
+   "registradoDia": 1
+  },
+  "Tobias": {
+   "tipo": "pessoa",
+   "descricao": "homem que desceu a estrada sem pagar a cota da liça",
+   "detalhes": "procurado por Corrado",
+   "local": "Porto das Pedras",
+   "registradoDia": 1
+  },
+  "Lâmina de Osric": {
+   "tipo": "artefato",
+   "descricao": "Uma lâmina curta e gasta com a mesma marca no cabo que a faca do herói.",
+   "detalhes": "Pegue de um tropeiro na cancela do burgo.",
+   "local": "a fenda na rocha",
+   "registradoDia": 1
+  }
+ },
+ "revelado": {
+  "Rumor de Fenda de Silêncio": {
+   "tipo": "boato",
+   "descricao": "um pastor jura ter visto luz lá dentro",
+   "local": "Fenda de Silêncio",
+   "notas": "mentira: era isca: alguém quis o herói aqui",
+   "registradoDia": 2
+  }
+ },
+ "mensagens": [
+  {
+   "autor": "mestre",
+   "texto": "O cheiro de gordura rançosa e pedra úmida bate antes mesmo da cancela. Porto das Pedras não foi feita para acolher ninguém: foi erguida para aguentar marreta e aríete, com cortiços entupidos contra a muralha de calcário e fuligem de turfa descendo pesada pelas ventas. Quem manda aqui são os burgomestres e o meirinho-mor, e tudo se compra — até um prato ralo de ensopado de nabo custa seus 2 estalos de prata.\n\nVocê bate a poeira da estrada na altura das coxas enquanto para na fila da entrada. Ao seu lado, Dunstan Machado Torto larga o peso do arco nas costas e solta um escarro grosso no chão; quatro anos comendo poeira com você pela mesma estrada ensinaram ao sujeito a não ter pressa. Na barreira de vigas, um meirinho de cara amarrada confere a folha de salvo-conduto de um carreteiro, virando o carimbo de ferro contra a luz da manhã antes de cobrar o cobre da passagem e mandar a carroça avançar.\n\nO burgo não planta nada: come o que vem de fora e engole o que os mercadores trazem. Pelas conversas na fila, corre o boato torto de que a quatro horas de marcha a sudoeste, na Fenda de Silêncio, um pastor jura ter visto luz brotando do fundo da pedra — conversa de velho, ou problema que ainda não achou dono.\n\nMas você não veio por pastor. A carta sem assinatura que queimava na sua algibeira dava um rumo só: o sujeito se chama Corrado, organiza as lutas no Largo da Liça e carrega na boca um nome que quase racha a sua memória — a última ponta viva da família que você perdeu. Dunstan senta num mourão de pedra ao seu lado sem pedir licença, mascando um talo seco, enquanto olha a muralha.\n\nVocê tem no bolso quinze moedas de prata e o rastro de Corrado pela frente: gastar o que resta para comprar a língua desse agenciador da arena ou guardar o metal para garantir o pão e o teto dos próximos dias."
+  },
+  {
+   "autor": "mestre",
+   "texto": "Beraldo limpa a manga suja de caliça na coxa, olhando de rabo de olho para a plateia que berra em volta da areia. \n\n— O poço fundo fica a sudeste, coisa de cinco quilômetros e pouco, bate uma hora e vinte de marcha a pé — resmunga ele, baixando a voz. — Já essa tal Fenda de Silêncio fica pro outro lado, a sudoeste, e é chão de quatro horas. O que tem lá dentro, ninguém daqui sabe; só o pastor que viu luz e quase borrou as calças.\n\nUm sujeito de gibão gasto empurra a passagem na tábua, quase esbarrando no seu ombro ao tentar espiar as jaulas.\n\nCorrado pigarreia forte, dá meio passo à frente na lama e encara você sem erguer a cabeça até a altura dos olhos:\n\n— Eu me chamo Corrado, empresário desta liça, e se você pensa que vai sair batendo perna atrás de cova sem..."
+  },
+  {
+   "autor": "mestre",
+   "texto": "Você vira as costas para a ladainha de Corrado e pega a saída sudoeste com Dunstan sob uma chuva fria que transforma a estrada em barro puro. Quatro horas de marcha pesada deixam o fôlego curto e a bota empastada, até que o corte bruto da Fenda de Silêncio rasga a encosta à frente: uma goela de pedra escura ladeada por cinzas velhas de fogueira e rastros fundos de solas que entraram e não voltaram. Dunstan cospe a água do bigode e puxa a conversa sem rodeios: — Caçar luz de pastor com a barriga roncando não enche algibeira, Iara. Mas o chão nem dá tempo de resposta. Três abominações do tamanho de mastins, pelagem sarnenta e dentes amarelos, irrompem da vala na beirada da rocha a passos curtos de você; o primeiro já salta faminto mirando a sua garganta com a boca aberta."
+  },
+  {
+   "autor": "mestre",
+   "texto": "A névoa espessa da quase-morte se desfaz com um puxão seco de ar que queima a sua garganta. Você abre os olhos: o teto de pedra bruta da Fenda de Silêncio pinga água fria na sua testa, mas o latejo cego na coxa virou apenas uma cicatriz repuxada e rígida sob a calça rasgada. O sangue parou; a carne fechou na marra enquanto a noite inteira corria lá fora. O ar da manhã de primavera entra gelado pela goela da caverna, batendo nas cinzas molhadas da fogueira morta.\n\n— Olha ela aí — resmunga Dunstan, escorado na saída com o arco no ombro e um graveto entre os dentes. — Achei que ia ter que te enterrar no barro antes do galo cantar.\n\nRadulfo Milhano bate o queixo de frio num canto, tremendo sob a lã encharcada, enquanto um sujeito troncudo que veio na esteira da chuva, Tibério Vigia-de-Portão, ajeita a correia de um bornal no ombro sem dar bom-dia a ninguém. Logo adiante, na trilha batida que desce em direção ao acampamento de Val das Pedras, uma gritaria fina corta a cerração: gente tossindo grosso, gemendo com febre que vem e volta no lodo das barracas, e o boato corre na boca de um halfling aos berros jurando saber que veneno é esse.\n\nMas Osric nem pisca para a balbúrdia lá fora. O rapaz continua ajoelhado bem na sua frente, a respiração curta fumegando no ar cinzento, segurando a faca gasta com a marca idêntica à sua estendida na palma aberta.\n\n— O tropeiro não mentiu, Iara — diz Osric, a voz apressada quase atropelando as palavras. — Essa lâmina era dele. Mas enquanto você dormia no lodo, passou um carreteiro na estrada do burgo recrutando desvalidos a moeda por cabeça pra fechar uma carga fechada... e Corrado tá lá no Largo da Liça agora, decidindo se vende o paradeiro de Tobias pro meirinho-mor ou se ainda espera pela tua cara.\n\nO rastro do seu irmão queima nos dois extremos da estrada: descer quatro horas de marcha a pé de volta a Porto das Pedras para calar a boca de Corrado antes que a carroça suma com os recrutas, ou seguir a pista da lâmina que Osric segura e arrancar a verdade das mãos do garoto aqui na pedra fria."
+  }
+ ],
+ "abertura": {
+  "v": 1,
+  "principalId": "mis_principal",
+  "cidade": "Porto das Pedras",
+  "chegada": "à porta de Porto das Pedras, com a poeira da estrada ainda na roupa",
+  "razao": "uma carta sem assinatura chamou-o a Porto das Pedras, e a única coisa que dizia com clareza era Corrado, e um nome parecido com o da família que perdeu anda ligado a isto",
+  "sabe": "Corrado, empresário da arena, é o único nome que traz, e trabalha em Largo da Liça",
+  "historia": "Porto das Pedras vive do que os outros trazem para vender aqui; a 4 horas de marcha dela, a sudoeste, fica Fenda de Silêncio, e um pastor jura ter visto luz lá dentro",
+  "titulo": "O rasto de Corrado",
+  "pista": {
+   "nome": "Corrado",
+   "papel": "empresário da arena",
+   "local": "Largo da Liça"
+  },
+  "alvo": {
+   "feitio": "procurar",
+   "quem": "Corrado",
+   "onde": "Largo da Liça",
+   "alvo": "",
+   "objeto": "Corrado",
+   "origem": "Fenda de Silêncio"
+  },
+  "sinal": "o sino",
+  "porta": "um salvo-conduto com selo e nome, pedido na porta e cobrado nas pontes",
+  "turnos": 3,
+  "semAvanco": 3,
+  "feitas": 0,
+  "conhecidos": 7,
+  "visitados": [
+   "Largo da Liça",
+   "Mercado da Farinha"
+  ],
+  "cheios": 7,
+  "prenunciado": true,
+  "tocou": false,
+  "prenunciadoEm": {
+   "dia": 1,
+   "minuto": 505
+  },
+  "tocouEm": null,
+  "oQueTocou": ""
+ },
+ "missoes": [
+  {
+   "id": "mis_principal",
+   "titulo": "O rasto de Corrado",
+   "tipo": "principal",
+   "descricao": "uma carta sem assinatura chamou-o a Porto das Pedras, e a única coisa que dizia com clareza era Corrado, e um nome parecido com o da família que perdeu anda ligado a isto",
+   "dador": "",
+   "status": "ativa",
+   "etapas": [
+    {
+     "tipo": "falar_com",
+     "alvo": "Corrado",
+     "item": "",
+     "quantos": 1,
+     "dia": 0,
+     "relogioId": "",
+     "rotulo": "",
+     "dias": 0,
+     "onde": "Largo da Liça",
+     "lugar": false,
+     "feito": false
+    }
+   ],
+   "prazo": 0,
+   "nivel": 1,
+   "intencao": "",
+   "veiculo": "",
+   "virada": null,
+   "recompensa": {
+    "moedas": 69,
+    "xp": 108,
+    "item": null,
+    "fama": 6,
+    "combinada": false
+   },
+   "legado": false,
+   "guilda": "",
+   "contribui": 0,
+   "prova": false,
+   "relogioId": null,
+   "criadaEm": 1
+  }
+ ],
+ "registro": [
+  {
+   "t": 1,
+   "dia": 1,
+   "onde": "Porto das Pedras",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado"
+   ]
+  },
+  {
+   "t": 2,
+   "dia": 1,
+   "onde": "Largo da Liça",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 3,
+   "dia": 1,
+   "onde": "Largo da Liça",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 4,
+   "dia": 1,
+   "onde": "Largo da Liça",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 5,
+   "dia": 1,
+   "onde": "Largo da Liça",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 6,
+   "dia": 1,
+   "onde": "Mercado da Farinha",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 7,
+   "dia": 1,
+   "onde": "Mercado da Farinha",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 8,
+   "dia": 1,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 9,
+   "dia": 1,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 10,
+   "dia": 1,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 11,
+   "dia": 1,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 12,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 13,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 14,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 15,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 16,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 17,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 18,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  },
+  {
+   "t": 19,
+   "dia": 2,
+   "onde": "Fenda de Silêncio",
+   "quem": [
+    "Dunstan Machado Torto",
+    "Corrado",
+    "Anselmo",
+    "Anselmo Machado Torto"
+   ]
+  }
+ ]
+}

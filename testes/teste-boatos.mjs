@@ -20,12 +20,12 @@
    a secção `boato` e o elenco punha em cena quem «nunca existiu». */
 import fs from "node:fs";
 import {
-  oBoatoDaChegada, oBoatoQueChegou, CHANCES_DO_BOATO, CONFIANCA_DE_QUEM_CONTOU, FORMAS_DO_BOATO, QUEM_CONTOU, BOATO,
+  oBoatoDaChegada, oBoatoQueChegou, oVetoDoBoato, CHANCES_DO_BOATO, CONFIANCA_DE_QUEM_CONTOU, FORMAS_DO_BOATO, QUEM_CONTOU, BOATO,
 } from "../src/boatos.js";
 import { FORA_DE_CENA, elencoDaCena } from "../src/cena.js";
 import { masmorrasDoMundo } from "../src/mundo-base.js";
 import { MARCA_DO_DITO, criarNPC } from "../src/npcs.js";
-import { SECOES, SECOES_QUE_CEDEM, secaoPorId, porNaPauta, textoDaPauta, cederNaCena, prioDaLinha, TETO_DA_PAUTA } from "../src/pauta.js";
+import { SECOES, SECOES_QUE_CEDEM, FICA_NA_PERGUNTA, secaoPorId, porNaPauta, textoDaPauta, cederNaCena, prioDaLinha, TETO_DA_PAUTA } from "../src/pauta.js";
 import { O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
 import { oPedidoDoTurno } from "../src/motor/pedido-do-turno.js";
 import { lerODourado, casosDoPedido, correrAPeca, osModulos, osPadroes } from "./pedido-bloco.mjs";
@@ -74,7 +74,13 @@ sec("1. As tabelas");
   t("a pauta tem a secção O BOATO, a 2,472 (depois do coração e do que volta, antes da batida), e na leitura antes do que volta e do rumo", !!s && s.rotulo === "O BOATO" && s.prio === 2.472
     && s.prio > secaoPorId("volta").prio && s.prio < prioDaLinha(secaoPorId("momento"), 0)
     && SECOES.findIndex((x) => x.id === "boato") < SECOES.findIndex((x) => x.id === "volta") && SECOES.findIndex((x) => x.id === "volta") < SECOES.findIndex((x) => x.id === "rumo"));
-  t("e cede na luta e na pergunta", SECOES_QUE_CEDEM.luta.includes("boato") && SECOES_QUE_CEDEM.pergunta.includes("boato"));
+  /* MOVIDA (29/10, a 13.ª): cede na luta e na pergunta, mas na pergunta FICA
+     pela marca, que é o fim do fecho (como o coração) — a pergunta pode ser
+     o próprio boato («vê alguma luz?», T18). A §11 prova o caso. */
+  t("e cede na luta e na pergunta — e na pergunta fica pela marca, que é o fim do fecho", SECOES_QUE_CEDEM.luta.includes("boato") && SECOES_QUE_CEDEM.pergunta.includes("boato")
+    && !!FICA_NA_PERGUNTA.marcas.boato && BOATO.fecho.endsWith(FICA_NA_PERGUNTA.marcas.boato + "."));
+  t("o fecho diz onde o veredito mora e quem não o diz (a 13.ª: «Mostre, não anuncie.» chegou, e a prosa anunciou)", BOATO.fecho === "Mostre-o no que o herói vê e acha: ninguém o anuncia.");
+  t("o rumor da masmorra abre à boca dela, e o veto tem o nome a encher", BOATO.naBoca === true && BOATO.veto.includes("{nome}"));
   t("o sítio pelo pedaço usa a tabela de cabeças da mesa do buraco (uma tabela só)", fs.readFileSync(new URL("../src/boatos.js", import.meta.url), "utf8").includes("MESA_DO_BURACO.cabecas"));
 }
 
@@ -275,35 +281,123 @@ sec(`10. O teto — as 204 pautas cheias da 5.ª à 7.ª (TETO_DA_PAUTA ${TETO_D
   /* o que é de uma vez ou é ordem: o boato nunca o tira (a régua da prio, em pauta.js) */
   const NUNCA = ["rumo", "fecho", "naoPode", "vetoDoDesfecho", "desfecho", "vetoDoJuiz", "masmorra", "coracao", "volta", "peso", "fala", "acabou"];
   for (const [nome, linha] of [["a longa", longa], ["a curta", curta]]) {
-    let n = 0, entrou = 0, passou = 0;
-    const cortou = {}, proibidos = [];
+    let n = 0, entrou = 0, passou = 0, nP = 0, entrouP = 0, respostaSaiu = 0;
+    const cortou = {}, cortouP = {}, proibidos = [];
     for (const f of ["registo-s5-pauta.json", "registo-s6-s7-pauta.json"]) {
       const R = ler(f);
       for (const tt of R.turnos) {
         const p0 = {};
         for (const [s, ids] of Object.entries(tt.secoes)) p0[s] = ids.map((i) => R.linhas[i]);
         const c0 = cederNaCena(p0, { luta: tt.luta, masmorra: tt.masmorra });
-        /* na luta e na pergunta o boato cede (espera): não são turnos dele */
-        if (tt.luta || (c0.pergunta || []).length) continue;
+        /* na luta o boato cede (espera): não é turno dele.
+           MOVIDA (29/10, a 13.ª): os turnos de PERGUNTA entram na conta — o
+           boato fica nela pela marca (FICA_NA_PERGUNTA.marcas.boato), pelo
+           mesmo caminho da peça do pedido (porNaPauta e cederNaCena com a
+           pergunta na pauta); antes eram saltados porque ali ele cedia sempre */
+        if (tt.luta) continue;
+        const naPergunta = (c0.pergunta || []).length > 0;
         const antes = textoDaPauta(c0);
         const depoisT = textoDaPauta(cederNaCena(porNaPauta(c0, "boato", linha), {}));
-        n++;
+        if (naPergunta) {
+          nP++;
+          if (depoisT.includes(linha)) entrouP++;
+          if (c0.pergunta.some((l) => antes.includes(l) && !depoisT.includes(l))) respostaSaiu++;
+        } else {
+          n++;
+          if (depoisT.includes(linha)) entrou++;
+        }
         if (depoisT.length > TETO_DA_PAUTA) passou++;
-        if (depoisT.includes(linha)) entrou++;
         for (const [s, xs] of Object.entries(c0)) xs.forEach((x, i) => {
           if (!antes.includes(x) || depoisT.includes(x)) return;
-          cortou[s] = (cortou[s] || 0) + 1;
+          const conta = naPergunta ? cortouP : cortou;
+          conta[s] = (conta[s] || 0) + 1;
           if (NUNCA.includes(s) || prioDaLinha(secaoPorId(s), i) < secaoPorId("boato").prio) proibidos.push(`${tt.sessao || f}#${tt.turno} ${s}`);
         });
       }
     }
     console.log(`     ${nome} (${linha.length} letras): ${n} pautas; entra em ${entrou}; o que tira: ${Js(cortou)}`);
+    console.log(`     ${nome}, nos turnos de pergunta: ${nP} pautas; entra em ${entrouP}; o que tira: ${Js(cortouP)}`);
     t(`${nome}: nunca passa do teto`, passou === 0);
     t(`${nome}: nunca tira o que é de uma vez ou é ordem (os vetos, o rumo, o fecho, o lugar, a planta, o coração, o que volta)`, proibidos.length === 0, proibidos.slice(0, 5).join(", "));
-    /* MEDIDA (29/10): a longa (155) entra em 130 de 169, a curta (89) em 138 */
-    t(`${nome}: entra em mais de três quartos das pautas cheias (${entrou} de ${n}) — no resto, espera pelo turno seguinte`, entrou * 4 > n * 3);
+    /* MEDIDA (29/10): a longa (155) entra em 130 de 169, a curta (89) em 138.
+       MOVIDA (29/10, a 13.ª): de «mais de três quartos» para «mais de 70%». O
+       fecho cresceu 33 letras («Mostre, não anuncie.» → «Mostre-o no que o
+       herói vê e acha: ninguém o anuncia.»): na 13.ª a ordem curta chegou e a
+       prosa anunciou o veredito, e a que diz onde ele mora é a que se paga.
+       Medido com o fecho novo: a longa (188, a pior — a mentira com quem
+       contou) entra em 122 de 169 (72%), a curta (122) em 135 (80%). No resto
+       espera, e volta no turno seguinte; o que tira continua a ser só o que
+       vale menos (a régua de cima). */
+    t(`${nome}: entra em mais de 70% das pautas cheias (${entrou} de ${n}) — no resto, espera pelo turno seguinte`, entrou * 10 > n * 7);
+    /* MEDIDA (29/10, a 13.ª): 14 pautas de pergunta; a longa (188) entra em 12, a
+       curta (122) em 13 — antes da marca, em 0. O que tiram é sobretudo a cauda
+       do ONDE (a decoração do sítio dá lugar ao fato, FICA_NA_PERGUNTA.daLugar;
+       12 e 13 linhas) e, a longa, 4 da gente — nada que valha mais do que ele
+       (a régua de cima conta estes turnos também) */
+    t(`${nome}: nos turnos de pergunta, a resposta nunca sai por ele (${respostaSaiu} de ${nP})`, nP >= 10 && respostaSaiu === 0);
+    t(`${nome}: e nos de pergunta entra em mais de três quartos (${entrouP} de ${nP}), e quem dá lugar é a cauda do sítio`, entrouP * 4 > nP * 3 && (cortouP[FICA_NA_PERGUNTA.daLugar] || 0) >= entrouP - 1, Js(cortouP));
   }
   t("a linha não é bloco estático: o system prompt não ganhou nada (só a pauta, e só no turno em que bate)", !fs.readFileSync(new URL("../src/prompt.js", import.meta.url), "utf8").includes("O BOATO"));
+}
+
+sec("11. A 13.ª sessão: a Fenda de Silêncio — a boca, a pergunta «vê alguma luz?», e o veto antes da revelação");
+{
+  /* o save da 13.ª (sessao-s13-fenda.json, só o que o boato lê): a heroína
+     chegou à Fenda no T10 em luta, acampou à boca três turnos (T14–T16) sem
+     linha nenhuma, entrou (T17), perguntou «vê alguma luz?» (T18) — e o
+     Narrador decidiu sozinho, «luz nenhuma… conversa mole de pastor». O
+     boato só chegou no T19, e a prosa anunciou-o. FALHA antes deste commit:
+     à boca não abria, na pergunta cedia, e veto não havia. */
+  const F = JSON.parse(fs.readFileSync(new URL("./sessao-s13-fenda.json", import.meta.url), "utf8"));
+  const sem = `${F.nomeCampanha}|${F.genero}`;   /* a sementeMundo da peça do pedido */
+  const mm = masmorrasDoMundo(sem, F.mapa).find((m) => m && m.nome === F.masmorra.nome);
+  t("o mundo da 13.ª: a Fenda de Silêncio tem o rumor do pastor", !!mm && mm.rumor === "um pastor jura ter visto luz lá dentro", mm && mm.rumor);
+  const E = { canone: F.canone, npcs: F.npcs, cidadeAtual: F.cidadeAtual, mapa: F.mapa, dia: F.dia, mensagens: F.mensagens, heroi: F.heroi };
+  const boca = { ...E, lugar: F.lugar, masmorra: null };
+  const rb = oBoatoDaChegada(boca, null, sem);
+  t("T14–T16, acampada à boca (o lugar com o nome dela, sem masmorra): o rumor abre", rb.linhaDaPauta.startsWith("Fenda de Silêncio, «um pastor jura ter visto luz lá dentro» —") && !!rb.nota && rb.nota.onde === "Fenda de Silêncio", rb.linhaDaPauta || "(nada)");
+  t("o veredito é o do jogo (a mesma semente: MENTIRA, a isca), e o cânone novo é o que o T19 escreveu", !!rb.nota && rb.nota.veredito === "mentira" && rb.nota.forma === "isca"
+    && Js(rb.estado.canone["Rumor de Fenda de Silêncio"]) === Js(F.revelado["Rumor de Fenda de Silêncio"]), Js(rb.estado.canone["Rumor de Fenda de Silêncio"]));
+  t("e o fecho mostra: «no que o herói vê e acha», e ninguém o anuncia", rb.linhaDaPauta.endsWith(" " + BOATO.fecho) && !rb.linhaDaPauta.includes("Mostre, não anuncie"));
+  t("na luta da chegada (T10) não abre: a luta não é turno dele", !oBoatoDaChegada({ ...boca, combate: { ativo: true } }, null, sem).linhaDaPauta);
+  /* T18: lá dentro, a pergunta que É o boato — pelo caminho da peça do pedido
+     (porNaPauta e cederNaCena, com a pergunta na pauta) */
+  const rd = oBoatoDaChegada({ ...E, lugar: F.lugar, masmorra: F.masmorra }, null, sem);
+  const P18 = {
+    onde: ["dentro de Fenda de Silêncio, à entrada", "uma ruína selada, de pedra que sua", "o vento entra pela fenda e assobia", "há marcas de botas antigas no pó"],
+    masmorra: ["camada 0/3, 1 de 7 salas; 5 tochas na mão"],
+    pergunta: ["PERGUNTOU se vê alguma luz lá dentro: o que está nesta pauta responde; o resto, quem responde diz que não sabe"],
+  };
+  const t18 = textoDaPauta(cederNaCena(porNaPauta(P18, "boato", rd.linhaDaPauta), {}));
+  t("T18, «vê alguma luz?»: a linha do boato fica na pergunta (antes cedia, e a resposta saía da imaginação)", !!rd.linhaDaPauta && t18.includes(rd.linhaDaPauta), t18);
+  t("e a pergunta continua respondida (a linha dela não sai)", t18.includes(P18.pergunta[0]));
+  /* o veto: sem a revelação no turno, quem toca o boato não o decide */
+  const v = (est, frase) => oVetoDoBoato(est, frase, sem);
+  const VETO = BOATO.veto.replace("{nome}", "Fenda de Silêncio");
+  t("o veto: na luta à boca (T10), o Mestre não decide a luz", v({ ...boca, combate: { ativo: true } }, "ataco o lobo") === VETO, v({ ...boca, combate: { ativo: true } }, "ataco o lobo"));
+  t("o veto: no Largo, a frase que pergunta pela Fenda também", v({ ...E, lugar: { nome: "Largo da Liça" } }, "essa luz na Fenda de Silêncio é verdade?") === VETO);
+  t("longe e sem a frase tocar o boato, nada", v({ ...E, lugar: { nome: "Largo da Liça" } }, "compro pão e um odre") === "");
+  t("sem ninguém ter dito o nome da Fenda, o herói não sabe do rumor: nada", v({ ...boca, mensagens: [], combate: { ativo: true } }, "ataco") === "");
+  t("depois da revelação (o «Rumor de» no cânone), nunca mais", v({ ...boca, canone: { ...F.canone, ...F.revelado }, combate: { ativo: true } }, "a luz?") === "");
+  const comTomas = (local) => ({ ...E, lugar: { nome: "Largo da Liça" }, npcs: { ...F.npcs, Tomas: criarNPC("Tomas", { papel: "ferreiro", ...(local ? { local } : {}), dito: DITO, conhecidoEm: 1 }) } });
+  t("a pessoa dita com sítio, nomeada na frase longe dele: veto", v(comTomas("Mercado da Farinha"), "vou à forja do Tomas") === BOATO.veto.replace("{nome}", "Tomas"));
+  t("a pessoa dita sem sítio: nada — a resposta é do lugar, e não há lugar (seria um veto para sempre)", v(comTomas(""), "vou à forja do Tomas") === "");
+  for (const [nome, args] of [["tudo nulo", [null, null, null]], ["nada", []], ["lixo", [{ npcs: 5, canone: "x", mensagens: {}, mapa: 3 }, 7, {}]]]) {
+    let r = null, erro = "";
+    try { r = oVetoDoBoato(...args); } catch (e) { erro = e.message; }
+    t(`o veto com ${nome}: "" sem estourar`, r === "" && !erro, erro);
+  }
+  /* pela peça do pedido: o veto chega ao NÃO PODE, e o estado não muda */
+  const D = lerODourado();
+  const padroes = osPadroes(D, await osModulos(D.imports));
+  const k = casosDoPedido().find((x) => x.estado && x.estado.cidadeAtual && !x.estado.combate && !x.estado.masmorra && !x.estado.jornada && !/\?/.test(String(x.frase || "")));
+  const outra = ((k.estado.mapa || {}).cidades || []).map((c) => c.nome).find((n) => n && n !== k.estado.cidadeAtual) || "Lugar Nenhum";
+  const kv = { ...k, entrada: { ...k.entrada, conteudo: "pergunto ao taberneiro se a Clarissa cura mesmo febres" },
+    estado: { ...k.estado, npcs: { ...(k.estado.npcs || {}), Clarissa: criarNPC("Clarissa", { papel: "curandeira", local: outra, dito: DITO, conhecidoEm: 0 }) } } };
+  const a = correrAPeca(oPedidoDoTurno, kv, D, padroes);
+  const pa = String((a.out || {}).pauta || "");
+  t(`pela peça do pedido (o caso ${k.i}): a frase que nomeia a Clarissa, longe dela, leva o veto ao NÃO PODE`, pa.includes(BOATO.veto.replace("{nome}", "Clarissa")) && !pa.includes("O BOATO"), pa.split("\n").filter((l) => /NÃO PODE|BOATO/.test(l)).join(" | ") || a.erro);
+  t("e o registo não muda: ela segue «dito»", !!a.valores.npcs.Clarissa && a.valores.npcs.Clarissa.dito === DITO);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

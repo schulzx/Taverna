@@ -95,7 +95,7 @@ import { chefesDoMundo, garantirBase, locaisDaCidade, oQueExisteAqui, resumoChef
 import { afrouxarLaco, criarNPC, firmarLaco, garantirLaco, resumoNPCsParaPrompt, romperLaco } from "../npcs.js";
 import { garantirCoracaoDoSave, nucleoDaCampanha } from "../nucleo.js";
 import { cederNaCena, porNaPauta, textoDaPauta } from "../pauta.js";
-import { oBoatoDaChegada, oBoatoQueChegou } from "../boatos.js";
+import { oBoatoDaChegada, oBoatoQueChegou, oVetoDoBoato } from "../boatos.js";
 import { resumoPericiasPrompt } from "../pericias.js";
 import { precoDeCompraPara, resumoProfissaoPrompt } from "../profissoes.js";
 import { garantirLivro, pagar, regar, semear } from "../promessas.js";
@@ -310,14 +310,21 @@ export function oPedidoDoTurno(estado, entrada, portas) {
      boato fica como estava e volta no turno seguinte. Antes da chegada,
      nada: nem a pauta nem o pedido levam o veredito. */
   let boatoDoTurno = null;
-  const comOBoato = (p) => {
+  /* E O VETO ANTES DELA (a 13.ª, 29/10): sem revelação neste turno, se a
+     frase ou a cena tocam um boato que o herói conhece, o Mestre não o decide
+     (boatos.js#oVetoDoBoato, uma linha no NÃO PODE). */
+  const comOBoato = (p, frase) => {
     boatoDoTurno = null;
     try {
-      const r = oBoatoDaChegada({
+      const eb = {
         canone: $ref.canone, npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, masmorra: $ref.masmorra, mapa: $ref.mapa,
         combate: $ref.combate, jornada: $ref.jornada, dia: $ref.dia, mensagens: $ref.mensagens, heroi: (fichaViva() || {}).nome,
-      }, null, sementeMundo());
-      if (!r.linhaDaPauta) return p;
+      };
+      const r = oBoatoDaChegada(eb, null, sementeMundo());
+      if (!r.linhaDaPauta) {
+        const veto = oVetoDoBoato(eb, frase, sementeMundo());
+        return veto ? porNaPauta(p, "naoPode", veto) : p;
+      }
       boatoDoTurno = r;
       return cederNaCena(porNaPauta(p, "boato", r.linhaDaPauta), {});
     } catch (e) { calou("o boato da chegada", e); return p; }
@@ -904,7 +911,7 @@ export function oPedidoDoTurno(estado, entrada, portas) {
   const oficina = $in.oficina;
   const pedidoEsc = $in.pedidoEsc;
   const persAtual = $in.persAtual;
-    const pauta = textoDaPauta(comOBoato(pautaDoTurno(conteudo)), { turno: $ref.turnoDeRegistro + 1 }); try { const b = oBoatoQueChegou(boatoDoTurno, pauta); boatoDoTurno = null; if (b) { $ref.canone = b.canone; if (b.npcs !== $ref.npcs) { $ref.npcs = b.npcs; setNpcs(b.npcs); } } } catch (e) { calou("o boato da chegada", e); } try { const q = $ref.quemE || {}; const pq = q.pendente; if (pq) $ref.quemE = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = $ref.nomesPendentes; $ref.nomesPendentes = null; if (np && np.linha && pauta.includes(np.linha)) $ref.nomesOferecidos = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
+    const pauta = textoDaPauta(comOBoato(pautaDoTurno(conteudo), conteudo), { turno: $ref.turnoDeRegistro + 1 }); try { const b = oBoatoQueChegou(boatoDoTurno, pauta); boatoDoTurno = null; if (b) { $ref.canone = b.canone; if (b.npcs !== $ref.npcs) { $ref.npcs = b.npcs; setNpcs(b.npcs); } } } catch (e) { calou("o boato da chegada", e); } try { const q = $ref.quemE || {}; const pq = q.pendente; if (pq) $ref.quemE = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = $ref.nomesPendentes; $ref.nomesPendentes = null; if (np && np.linha && pauta.includes(np.linha)) $ref.nomesOferecidos = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!$ref.combate;

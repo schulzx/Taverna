@@ -163,7 +163,26 @@ export const BOATO = Object.freeze({
   /* a marca da verdade e da meia nas notas (o que impede a 2.ª revelação
      quando o Cronista voltar a marcar `dito` no mesmo nome) */
   marcas: Object.freeze(["visto pelo herói", "meia-verdade", "partiu de "]),
-  fecho: "Mostre, não anuncie.",
+  /* O FECHO MOSTRA (a 13.ª, T19). «Mostre, não anuncie.» chegou e a prosa
+     anunciou («o boato do pastor foi só corda para puxar você»): a ordem
+     dizia o que não fazer e não o que fazer. Agora diz onde o veredito mora —
+     no que o herói vê e acha — e quem não o diz. O fim da frase («ninguém o
+     anuncia») é também a marca que a deixa ficar numa pergunta
+     (pauta.js#FICA_NA_PERGUNTA). */
+  fecho: "Mostre-o no que o herói vê e acha: ninguém o anuncia.",
+  /* A CHEGADA À BOCA (a 13.ª, T14–T16). O rumor da masmorra só se abria lá
+     dentro: a heroína acampou três turnos à boca da Fenda, e nada. Chegar ao
+     sítio é chegar à boca — o rumor abre-se no lugar com o nome dela, e o
+     primeiro turno calmo ali é o dele (na luta cede: SECOES_QUE_CEDEM.luta). */
+  naBoca: true,
+  /* O VETO ANTES DA REVELAÇÃO (a 13.ª, T18: «Luz nenhuma… conversa mole de
+     pastor», a verdade do boato decidida pela prosa nove turnos antes de o
+     sistema a dar). Do momento em que o herói sabe do boato até à revelação,
+     quando a frase o nomeia ou a cena está no sítio dele, a pauta veta
+     decidi-lo (NÃO PODE, uma linha, só nesses turnos). O herói sabe do rumor
+     da masmorra quando o nome dela já foi dito por alguém (as últimas
+     QUEM_CONTOU.mensagens falas do Mestre) ou por ele. */
+  veto: "decidir se é verdade o que se diz de {nome}: quem fala conta o que ouviu, e a resposta é do lugar, que ainda não a deu",
   /* o que a mentira nega, por fonte, antes da forma */
   negaA: Object.freeze({ pessoa: "ninguém com esse nome existe", coisa: "não está aqui, nem nunca esteve", masmorra: "" }),
 });
@@ -280,11 +299,13 @@ function abertos(e, onde, semente) {
       /* o nome é o próprio sítio, e nada mais se afirma: não pode ter mentido */
       soOSitio: !String(f.descricao || "").replace(/[—–\s.-]/g, "") && [onde.lugar, onde.masmorra, onde.cidade].some((s) => s && mesmoSitio(nome, s)) });
   }
-  if (onde.masmorra) {
+  /* o rumor da masmorra: dentro dela, ou à boca (o lugar com o nome dela, BOATO.naBoca) */
+  const boca = !onde.masmorra && BOATO.naBoca ? onde.lugar : "";
+  if (onde.masmorra || boca) {
     let mms = [];
     try { mms = masmorrasDoMundo(semente, e.mapa); } catch { mms = []; }
-    const mm = arr(mms).find((m) => m && m.nome && mesmoSitio(m.nome, onde.masmorra));
-    if (mm && mm.rumor && !chaves.has(norm(BOATO.rumorDe + mm.nome))) out.push({ fonte: "masmorra", onde: "rumor", nome: mm.nome, chave: mm.nome, ficha: mm, nivel: 1 });
+    const mm = arr(mms).find((m) => m && m.nome && mesmoSitio(m.nome, onde.masmorra || boca));
+    if (mm && mm.rumor && !chaves.has(norm(BOATO.rumorDe + mm.nome))) out.push({ fonte: "masmorra", onde: "rumor", nome: mm.nome, chave: mm.nome, ficha: mm, nivel: onde.masmorra ? 1 : 0 });
   }
   /* do mais fino ao mais largo; no empate, a pessoa antes da coisa, e o nome */
   const ordem = { pessoa: 0, coisa: 1, masmorra: 2 };
@@ -369,6 +390,54 @@ export function oBoatoDaChegada(estado, chegada, sorte) {
     };
   } catch {
     return vazio;
+  }
+}
+
+/* ---------------- o veto antes da revelação (a 13.ª, 29/10) ----------------
+   oVetoDoBoato(estado, frase, sorte) → a linha do NÃO PODE, ou "". Só para
+   quem chama quando a revelação NÃO vai neste turno (a linha do boato e o
+   veto não andam juntos: um diz a verdade, o outro proíbe-a). Os boatos
+   abertos são os de sempre (o `dito` sem revelação, o rumor sem «Rumor de»);
+   toca-os a frase que nomeia o sítio ou o nome, ou a cena no sítio (o lugar
+   ou a masmorra onde se está — a cidade inteira não: seria um veto em todo
+   turno de cidade). Do rumor da masmorra o herói só sabe depois de o nome
+   ter sido dito. E só se veta o que o sistema pode revelar: o boato com
+   sítio (`local`) — a resposta «é do lugar», e o que se disse sem dizer
+   onde nunca chega a lugar nenhum (medido nos 287 pedidos do dourado: o
+   Tomas «dito por alguém em cena», sem sítio, levaria o veto a 12 turnos
+   em que o herói só lhe dizia o nome, e para sempre). Lixo dá "". */
+const contem = (texto, nome) => pedacos(nome).some((p) => p.length >= MESA_DO_BURACO.minimo && posicoes(texto, p).length > 0);
+export function oVetoDoBoato(estado, frase, sorte) {
+  try {
+    const e = obj(estado);
+    const f = norm(frase);
+    const onde = ondeEsta(e, null);
+    const canone = obj(e.canone);
+    const chaves = new Set(Object.keys(canone).map(norm));
+    const noSitio = (s) => !!s && [onde.lugar, onde.masmorra].some((x) => x && mesmoSitio(s, x));
+    const toca = (sitios) => sitios.some((s) => s && (noSitio(s) || contem(f, s)));
+    const cands = [];
+    for (const [nome, p] of Object.entries(obj(e.npcs))) {
+      if (!p || typeof p !== "object" || typeof p.dito !== "string" || !p.dito.trim() || jaRevelado(p)) continue;
+      if (FORA_DE_CENA.some((s) => norm(p.status).includes(s))) continue;
+      if (typeof p.local === "string" && p.local.trim() && toca([p.local, p.nome || nome])) cands.push(p.nome || nome);
+    }
+    for (const [nome, x] of Object.entries(canone)) {
+      if (!x || typeof x !== "object" || typeof x.dito !== "string" || !x.dito.trim() || jaRevelado(x)) continue;
+      if (chaves.has(norm(BOATO.boatoDe + nome))) continue;
+      if (typeof x.local === "string" && x.local.trim() && toca([x.local, nome])) cands.push(nome);
+    }
+    let mms = [];
+    try { mms = masmorrasDoMundo(typeof sorte === "string" ? sorte : "", e.mapa); } catch { mms = []; }
+    const ditas = norm(arr(e.mensagens).filter((m) => m && m.autor === "mestre" && typeof m.texto === "string").slice(-QUEM_CONTOU.mensagens).map((m) => m.texto).join("\n"));
+    for (const mm of arr(mms)) {
+      if (!mm || !mm.nome || !mm.rumor || chaves.has(norm(BOATO.rumorDe + mm.nome))) continue;
+      if (!contem(ditas, mm.nome) && !contem(f, mm.nome)) continue;
+      if (toca([mm.nome])) cands.push(mm.nome);
+    }
+    return cands.length ? encher(BOATO.veto, { nome: cands[0] }) : "";
+  } catch {
+    return "";
   }
 }
 

@@ -521,7 +521,14 @@ export const SECOES_QUE_CEDEM = {
    volta no turno seguinte). Medido: a resposta não sai em nenhuma das 500,
    nem veto, nem rumo, nem fecho, nem o lugar; e o fato entra em 396 (a C2
    deixava-o em 0). */
-export const FICA_NA_PERGUNTA = { marcas: { coracao: "é fato: entra nesta resposta" }, daLugar: "onde" };
+/* E O BOATO FICA NA PERGUNTA (a 13.ª, 29/10). Cedia («numa pergunta
+   responde-se; a revelação espera»), e a 13.ª mostrou o caso em que a
+   pergunta É o boato: dentro da Fenda, «você vê alguma luz?» (T18) — a
+   linha cedeu, e o Narrador respondeu da imaginação («luz nenhuma»). A
+   revelação é um acontecimento de uma vez; fica pela mesma porta do coração
+   (a cauda do ONDE dá-lhe lugar, e se a resposta não coubesse com ela, cede
+   como antes). A marca é o fim do fecho do boato (boatos.js#BOATO.fecho). */
+export const FICA_NA_PERGUNTA = { marcas: { coracao: "é fato: entra nesta resposta", boato: "ninguém o anuncia" }, daLugar: "onde" };
 
 /* A porta: devolve uma pauta NOVA sem as seções que cedem na cena dada.
    `cena` é `{ luta, masmorra, arredores }` (verdadeiros soltos); lixo ou
