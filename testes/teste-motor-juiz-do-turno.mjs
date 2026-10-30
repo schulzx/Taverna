@@ -217,5 +217,27 @@ sec("7 · a praça do Juiz no App é a da pauta (Fase 4, trilha A, 29/10)");
   }
 }
 
+sec("8 · o que o mapa e o registo sabem entram na entrada (a 13.ª sessão, 29/10)");
+{
+  /* A 13.ª acusou «quatro horas» até à Fenda quatro vezes, e o mapa diz 4 h:
+     a entrada só levava a distância que a pauta do turno repetia. E «Corrado,
+     o Organizador de lutas» saía como gente quando o EM CENA não chegava. */
+  const mapa = { cidades: [{ nome: "Vila A", x: 50, y: 50, bioma: "colina" }, { nome: "Vila B", x: 50.5, y: 50, bioma: "campo" }],
+    regiao: { versao: 2, base: { nome: "Vila A" }, lugares: [{ nome: "Gruta Funda", x: 49.7, y: 50.1, bioma: "colina" }] } };
+  const e = entradaDoJuiz({ mapa, cidadeAtual: "Vila A", npcs: { Rui: { nome: "Rui", papel: "ferreiro da vila" }, Ana: { nome: "Ana" } } }, {});
+  const d = e.distancias || [];
+  t("a entrada leva a marcha do mapa de onde o herói está até cada sítio da região, marcada doMapa", d.length === 2 && d.every((x) => x.doMapa === true && x.horas > 0) && d.some((x) => x.para === "Gruta Funda") && !d.some((x) => x.para === "Vila A"), JSON.stringify(d));
+  t("e a do lugar onde se está parte dele (a heroína dentro da Gruta mede até à Vila A)", (entradaDoJuiz({ mapa, cidadeAtual: "Vila A", lugar: { nome: "Gruta Funda" } }, {}).distancias || []).some((x) => x.para === "Vila A"));
+  t(`no máximo JUIZ_NO_TURNO.distancias (${JUIZ_NO_TURNO.distancias}) sítios`, Number.isInteger(JUIZ_NO_TURNO.distancias) && JUIZ_NO_TURNO.distancias > 0);
+  t("o papel de quem o registo conhece vai em outros", Array.isArray(e.outros) && e.outros.length === 1 && e.outros[0] === "ferreiro da vila");
+  const sem = entradaDoJuiz({ mapa: { cidades: mapa.cidades }, cidadeAtual: "Vila A" }, {});
+  t("sem região no mapa e sem papéis, a entrada sai como saía (nem distancias nem outros)", !("distancias" in sem) && !("outros" in sem));
+  t("o mapa torto não derruba a entrada", (() => { try { entradaDoJuiz({ mapa: { regiao: { versao: 2, lugares: [null, { nome: 3 }] }, cidades: [null] }, cidadeAtual: null, npcs: { x: null } }, null); return true; } catch { return false; } })());
+  /* e o veredito usa-as: «quatro horas até a Gruta» contra a marcha do mapa */
+  const h = (d.find((x) => x.para === "Gruta Funda") || {}).horas;
+  const v = julgarOTurno("Dizem que são doze horas de marcha até a Gruta Funda.", e, { turno: 1, dia: 1 }).veredito;
+  t(`a distância errada até a um sítio NOMEADO é acusada contra o mapa (${h} h)`, v.distanciasFora.length === 1 && /Gruta Funda/.test(v.distanciasFora[0].sistema || ""));
+}
+
 console.log(`\nmotor · juiz do turno: ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

@@ -91,5 +91,616 @@
   { "id": "s11-M24-duas-horas", "ses": "s11", "M": 24, "frase": "Subo a escada com Gualtério e vou até o batedor de Bela do Rio. Pergunto o que ele viu.", "prosa": "\"a coisa que brotou do salitre… em bando… faz pouco mais de duas horas\"", "estado": { "gente": [ "Gualtério" ], "lugares": [ "Bela do Rio", "Alto das Pedras" ], "tempos": [] }, "rotulos": [ { "classe": "distanciasFora", "trecho": "duas horas" } ], "fonte": "11.ª M24: 'faz pouco mais de duas horas' (do Mestre)", "recorte": "só o que o relatório cita entre aspas (o registo bruto desta sessão não está no disco)" },
   { "id": "s11-M43-tres-pedras", "ses": "s11", "M": 43, "frase": "", "prosa": "\"As Três Pedras — lajes imensas fincadas desde antes da Guerra dos Sete Príncipes\"", "estado": { "gente": [ "Gualtério" ], "lugares": [ "Alto das Pedras", "Bela do Rio" ] }, "rotulos": [ { "classe": "lugaresNovos", "trecho": "Três Pedras" } ], "fonte": "11.ª M43 e Medidas: 'As Três Pedras' (lore inventada) (turno de toque: sem frase do jogador)", "recorte": "só o que o relatório cita entre aspas (o registo bruto desta sessão não está no disco)" },
   { "id": "s11-M63-quatro-horas", "ses": "s11", "M": 63, "frase": "Pergunto o preço de um pouso e de uma ração e a distância até o Santuário.", "prosa": "\"quatro horas de marcha batida pro sul\"", "estado": { "moeda": "pratas", "lugares": [ "Alto das Pedras", "Bela do Rio", "Vila Funda", "Alto Velho", "Santuário Cego de Sal" ], "mercado": [ { "nome": "ração", "preco": 3 } ], "distancias": [ { "para": "Bela do Rio", "horas": 4 }, { "para": "Vila Funda", "horas": 8 }, { "para": "Alto Velho", "horas": 8 } ] }, "rotulos": [ { "classe": "distanciasFora", "trecho": "quatro horas de marcha" } ], "fonte": "11.ª M63: `PERGUNTOU ração ◉ 3` ✓ e 'quatro horas de marcha batida pro sul' — que o mapa desmente (Por perto: Bela do Rio 4 h, Vila Funda 8 h, Alto Velho 8 h; o Santuário nem aparece)", "recorte": "só o que o relatório cita entre aspas (o registo bruto desta sessão não está no disco)" }
- ]
+ ],
+ "s13": {
+  "origem": "A 13.ª sessão (29/10/2026, mente/sessao-13.md, commit a9a5d4f), jogada contra a IA real: as 23 respostas do Narrador saem do save exportado (mensagens do «mestre», na ordem dos 23 vereditos de `fidelidade`); a frase é a última fala do jogador antes de cada uma (vazia nos cliques). O que o SISTEMA SABIA: a gente, os lugares, os papéis, a moeda e o que se carrega são os da entrada real do Juiz no T23 (a página da sessão gravada que sobrou) — o fim da sessão, porque as entradas dos 22 primeiros turnos se perderam com a página (defeito 1); a bolsa é a da ficha (15 até ao saque, 29 depois); os papéis da gente (`outros`) são os do registo do save — o que a entrada passou a levar (juiz-do-turno.js); as distâncias do mapa são as de `horasEntre` (marcha.js) sobre o mapa do save, a partir de onde a heroína estava; e a pauta é só a das linhas que o relatório e as notas citam palavra por palavra (T2, T7, T8) mais a pauta inteira do T23. As pautas dos outros turnos não estão no disco: ficam vazias, e o Juiz julga-os sem elas.",
+  "criterio": "Rótulo VERDADEIRO = o relatório (§2) o deu por verdadeiro e a prosa o confirma contra o que o sistema sabia: o ensopado a 2 (T1: a mesa não trouxe refeição) e as «duas noites» (T6: o sistema não sabe há quanto tempo). FALSO = o jogo acusou e o relatório, lido contra a prosa, desmente — escritos em `falsosDoJogo` com o porquê, para a suíte provar que deixaram de ser acusados. A régua: precisão = achados verdadeiros / achados, ≥ 80% sem perder os 2; no corpus antigo, não piorar (53/55 apanhados, 2/158 falsos). O que o Juiz não mede (o pedido trocado, «a cova úmida do poço fundo», «os homens do conselho», a verdade do boato decidida pela prosa) fica em `foraDoAlcance`, contado à parte.",
+  "moeda": "estalos de prata",
+  "heroi": [
+   "Iara"
+  ],
+  "grupo": [
+   "Dunstan Machado Torto"
+  ],
+  "gente": [
+   "Dunstan Machado Torto",
+   "Corrado",
+   "Anselmo",
+   "Anselmo Machado Torto",
+   "Otília Machado Torto",
+   "Beraldo Pés-de-Lama",
+   "Tobias",
+   "Osric",
+   "Radulfo Milhano",
+   "Matilde",
+   "Tibério Vigia-de-Portão",
+   "Balduíno do Prado Salgado",
+   "Margarida do Forno Velho",
+   "Guilhermina do Prado Salgado, o Braço Forte da Sé",
+   "Wulfric, a Espada sem Senhor",
+   "Aldara",
+   "Eloísa Vigia-de-Portão",
+   "Basília Pés-de-Lama",
+   "Constança do Prado Salgado",
+   "Astride Pés-de-Lama",
+   "Eloísa Ferreiro",
+   "Sibila Milhano",
+   "Bruna Vigia-de-Portão",
+   "Guilhermina do Prado Salgado",
+   "Constança Vigia-de-Portão",
+   "Eustáquio",
+   "Helena do Prado Salgado",
+   "Wulfric",
+   "Arnulfo do Espinheiro",
+   "Wulfric Braço-de-Freixo",
+   "Eustáquio do Prado Salgado",
+   "Godofredo do Forno Velho",
+   "Astride",
+   "Dragão Jovem o Lobo da Várzea",
+   "Osric Vigia-de-Portão",
+   "Helena",
+   "Corrado Pés-de-Lama",
+   "Basília Braço-de-Freixo",
+   "Eustáquio do Forno Velho",
+   "Aldara Ferreiro",
+   "Corrado da Ribeira",
+   "Eloísa do Prado Salgado",
+   "Basília",
+   "Constança da Ribeira",
+   "Balduíno",
+   "Tibério",
+   "Arnulfo",
+   "Constança do Forno Velho",
+   "Sibila",
+   "Dunstan",
+   "Sibila do Espinheiro",
+   "Corrado do Prado Salgado",
+   "Dunstan da Ribeira",
+   "Corrado da Colina Seca",
+   "Beraldo",
+   "Bruna",
+   "Tibério do Forno Velho",
+   "Eustáquio Vigia-de-Portão",
+   "Guilhermina do Espinheiro",
+   "Eustáquio Milhano",
+   "Wulfric Vigia-de-Portão",
+   "Sibila Vigia-de-Portão",
+   "Arnulfo Machado Torto",
+   "Constança"
+  ],
+  "outros": [
+   "companheiro de estrada, Caçador",
+   "Organizador de lutas",
+   "apostador",
+   "informante da vala",
+   "devedor da liça",
+   "aprendiz"
+  ],
+  "lugares": [
+   "A Casa da Névoa",
+   "A Liga da Espada",
+   "A Companhia da Cabra",
+   "Porto das Pedras",
+   "Colinas Altos",
+   "Terras Brutas de Alvernia",
+   "Val das Pedras",
+   "Fronteiras do Sal",
+   "Terras Brutas de Alvernia",
+   "Burgo da Prata",
+   "Colinas Altos",
+   "Terras Brutas de Alvernia",
+   "Porto dos Barões",
+   "Fronteiras do Sal",
+   "Terras Brutas de Alvernia",
+   "Colinas Altos",
+   "Fronteiras do Sal",
+   "Cripta dos Cinzas",
+   "Fenda de Silêncio",
+   "Covil de Espinhos",
+   "Ruínas de Sal",
+   "Ossuário Silêncio",
+   "Mina de Vidro",
+   "Agulha de Mil Bocas",
+   "A Boca de Sangue Velho",
+   {
+    "nome": "O Javali Empalhado",
+    "tipo": "taverna"
+   },
+   "Estalagem da Estrada",
+   {
+    "nome": "Mercado da Farinha",
+    "tipo": "mercado"
+   },
+   "Praça das Feiras",
+   {
+    "nome": "Ferro Santo",
+    "tipo": "forja"
+   },
+   "Ferraria Comunal",
+   {
+    "nome": "Irmandade da Fita Vermelha",
+    "tipo": "guilda"
+   },
+   "Confraria dos Mestres de Ofício",
+   {
+    "nome": "Arquivo de Pedra Branca",
+    "tipo": "biblioteca"
+   },
+   "Scriptorium da Sé",
+   {
+    "nome": "Largo da Liça",
+    "tipo": "arena"
+   },
+   "Pátio das Justas",
+   {
+    "nome": "Covas da Colina Seca",
+    "tipo": "cemitério"
+   },
+   "Campo Santo Paroquial",
+   "Porto das Pedras",
+   "Fenda de Silêncio"
+  ],
+  "papeis": [
+   "taverneiro(a)",
+   "serviçal",
+   "mercador(a)",
+   "vendedor de ervas",
+   "ferreiro(a)",
+   "aprendiz",
+   "mestre de guilda",
+   "recrutador",
+   "veterano aposentado",
+   "arquivista",
+   "estudante",
+   "empresário da arena",
+   "campeão local",
+   "apostador",
+   "coveiro(a)",
+   "carpideira",
+   "visitante silencioso"
+  ],
+  "inventario": [
+   "Faca herdada",
+   "Retalho de Couro",
+   "Espada Longa",
+   "Arco Curto"
+  ],
+  "nomesAMao": [
+   "Balduíno do Prado Salgado"
+  ],
+  "mapa": {
+   "Porto das Pedras": [
+    {
+     "para": "Val das Pedras",
+     "horas": 8
+    },
+    {
+     "para": "Burgo da Prata",
+     "horas": 8
+    },
+    {
+     "para": "Porto dos Barões",
+     "horas": 8
+    },
+    {
+     "para": "A Boca de Sangue Velho",
+     "horas": 8
+    },
+    {
+     "para": "Fenda de Silêncio",
+     "horas": 4
+    },
+    {
+     "para": "Covil de Espinhos",
+     "horas": 8
+    },
+    {
+     "para": "Ossuário Silêncio",
+     "horas": 8
+    },
+    {
+     "para": "Ruínas de Sal",
+     "horas": 2.58
+    },
+    {
+     "para": "Mina de Vidro",
+     "horas": 4
+    },
+    {
+     "para": "Cripta dos Cinzas",
+     "horas": 4
+    },
+    {
+     "para": "Agulha de Mil Bocas",
+     "horas": 4
+    }
+   ],
+   "Fenda de Silêncio": [
+    {
+     "para": "Porto das Pedras",
+     "horas": 4
+    },
+    {
+     "para": "Val das Pedras",
+     "horas": 1.72
+    },
+    {
+     "para": "Burgo da Prata",
+     "horas": 9.72
+    },
+    {
+     "para": "Porto dos Barões",
+     "horas": 9.72
+    },
+    {
+     "para": "A Boca de Sangue Velho",
+     "horas": 8
+    },
+    {
+     "para": "Covil de Espinhos",
+     "horas": 4
+    },
+    {
+     "para": "Ossuário Silêncio",
+     "horas": 9.72
+    },
+    {
+     "para": "Ruínas de Sal",
+     "horas": 8
+    },
+    {
+     "para": "Mina de Vidro",
+     "horas": 8
+    },
+    {
+     "para": "Cripta dos Cinzas",
+     "horas": 8
+    },
+    {
+     "para": "Agulha de Mil Bocas",
+     "horas": 8
+    }
+   ]
+  },
+  "turnos": [
+   {
+    "v": 0,
+    "M": 1,
+    "frase": "",
+    "prosa": "O cheiro de gordura rançosa e pedra úmida bate antes mesmo da cancela. Porto das Pedras não foi feita para acolher ninguém: foi erguida para aguentar marreta e aríete, com cortiços entupidos contra a muralha de calcário e fuligem de turfa descendo pesada pelas ventas. Quem manda aqui são os burgomestres e o meirinho-mor, e tudo se compra — até um prato ralo de ensopado de nabo custa seus 2 estalos de prata.\n\nVocê bate a poeira da estrada na altura das coxas enquanto para na fila da entrada. Ao seu lado, Dunstan Machado Torto larga o peso do arco nas costas e solta um escarro grosso no chão; quatro anos comendo poeira com você pela mesma estrada ensinaram ao sujeito a não ter pressa. Na barreira de vigas, um meirinho de cara amarrada confere a folha de salvo-conduto de um carreteiro, virando o carimbo de ferro contra a luz da manhã antes de cobrar o cobre da passagem e mandar a carroça avançar.\n\nO burgo não planta nada: come o que vem de fora e engole o que os mercadores trazem. Pelas conversas na fila, corre o boato torto de que a quatro horas de marcha a sudoeste, na Fenda de Silêncio, um pastor jura ter visto luz brotando do fundo da pedra — conversa de velho, ou problema que ainda não achou dono.\n\nMas você não veio por pastor. A carta sem assinatura que queimava na sua algibeira dava um rumo só: o sujeito se chama Corrado, organiza as lutas no Largo da Liça e carrega na boca um nome que quase racha a sua memória — a última ponta viva da família que você perdeu. Dunstan senta num mourão de pedra ao seu lado sem pedir licença, mascando um talo seco, enquanto olha a muralha.\n\nVocê tem no bolso quinze moedas de prata e o rastro de Corrado pela frente: gastar o que resta para comprar a língua desse agenciador da arena ou guardar o metal para garantir o pão e o teto dos próximos dias.",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": [
+     {
+      "classe": "precosInventados",
+      "trecho": "custa seus 2 estalos",
+      "fonte": "13.ª §2 T1: «ensopado de nabo custa 2 estalos» — a mesa não tinha refeição (disse ◉ 3 no T23)"
+     }
+    ],
+    "falsosDoJogo": [
+     {
+      "trecho": "quinze moedas de prata",
+      "porque": "é a bolsa da heroína (15)"
+     }
+    ]
+   },
+   {
+    "v": 1,
+    "M": 5,
+    "frase": "Passo a cancela e pergunto ao meirinho onde fica uma estalagem decente e quanto custa uma cama por noite aqui no Porto das Pedras.",
+    "prosa": "O meirinho nem levanta a vista do carimbo. — Estalagem da Estrada é descendo a rua reta: quarto comum sai por seis estalos a noite, trinta e seis a semana. Quarto bom é quinze. Se tiver bicho, dois estalos no estábulo, duas camas por quarto. O resto, não sei. Anda logo, mulher, tem fila.\n\nUm pastor de ovelhas, apoiado no cajado de freixo logo atrás de você, pigarreia e aponta a ponta do dedo para o pátio de terra batida mais adiante: — Se procura gente que mexe com prata e sangue, o Corrado tá no Largo da Liça batendo aposta desde as oito. Folga um dia só na semana, mas hoje ele tá lá até as seis da tarde.\n\nVocê mal dá três passos na poeira e o sujeito de chapéu de couro na cancela da arena já vem vindo, jurando pela saúde da própria mula: — É meio dia de desvio. Há uma campa que não visito há seis anos, mas se você quiser saber do seu sangue...",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "pauta": "PERGUNTOU pouso: quarto comum ◉ 6 a noite (◉ 36 a semana), bom ◉ 15, estábulo ◉ 2 por animal; 2 camas por quarto\n          Corrado: no que faz em Largo da Liça das 08h às 18h, folga um dia por semana; agora: no que faz em Largo da Liça\nQUEM CARREGA Corrado pede, e diz: «É meio dia de desvio. Há uma campa que não visito há seis anos»",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "trinta e seis a semana",
+      "porque": "a própria pauta dá «◉ 36 a semana»"
+     },
+     {
+      "trecho": "meio dia de desvio",
+      "porque": "é a fala do PEDE da pauta; e o «8 h» do Largo é o horário, não distância"
+     },
+     {
+      "trecho": "pauta: o horário do Corrado",
+      "porque": "«desde as oito… até as seis da tarde… folga um dia» — paráfrase"
+     }
+    ]
+   },
+   {
+    "v": 2,
+    "M": 10,
+    "frase": "Vou com o Dunstan até o Largo da Liça procurar o Corrado. Quando o achar, digo que recebi a carta e pergunto o que ele sabe do meu irmão.",
+    "prosa": "O cheiro de sangue pisado e caliça sobe do fosso do Largo da Liça antes mesmo de você descer os degraus. No cercado de madeira, Anselmo se inclina sobre o parapeito gritando uma aposta que morre pela metade quando Otília lhe puxa a manga com raiva. Você encontra o homem sem rodeios: Corrado está encostado numa viga lascada, contando fitas de aposta com dedos grossos e sem erguer os olhos para ninguém. Quando você larga a menção à carta e o nome do seu irmão, as mãos dele congelam no ar. Ele guarda as fitas devagar, ajeita o gibão de couro ensebado e crava a vista no chão, fugindo do seu rosto: — Sou Corrado. E se essa conversa vazar daqui, meu pescoço vai pro cepo antes do meio-dia. Quem mandou você vir atrás desse rastro com meia dúzia de pratas furadas no bolso?",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "meia dúzia de pratas furadas",
+      "porque": "figura de fala sobre a bolsa (e meia dúzia são 6, não 12)"
+     }
+    ]
+   },
+   {
+    "v": 3,
+    "M": 14,
+    "frase": "Ninguém me mandou, a carta veio sem assinatura. Baixo a voz: \"Não quero o seu pescoço, quero o nome do meu irmão, Tobias. Quanto custa a sua língua, Corrado?\"",
+    "prosa": "— A língua de todo mundo aqui é a comum dos andejos, mulher, e ouve-se de tudo nesta terra — resmunga Corrado, limpando o suor da testa na manga esfiapada sem desgrudar a vista do chão batido. — Mas o que eu sei, não sei por moeda rala de forasteiro. Eu sou o Corrado, empresário desta liça, e você fala alto demais num burgo onde até os mourões têm ouvidos.\n\nAo lado, Anselmo se espreme no parapeito da arena, balançando um punhado de fitas velhas e soltando para a multidão:\n\n— Três pratas no cão da várzea antes que o outro… — ele corta a frase no seco, engolindo o resto da aposta quando vê a cara do empresário virar em brasa.\n\nCorrado dá meio passo para trás, escorando a espinha na madeira grossa do cercado. Ele abre a boca para cortar a conversa, pigarreia grosso e começa:\n\n— Se você quer mesmo desenterrar a carcaça desse teu Tobias, a conversa não é aqui na poeira, é com…",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": []
+   },
+   {
+    "v": 4,
+    "M": 17,
+    "frase": "\"É com quem, Corrado? Diga o nome e onde encontro essa pessoa.\"",
+    "prosa": "— Comigo é que não é, mulher — corta o sujeito, cravando as unhas no tabuado do cercado. — Eu sou Corrado, organizador das lutas deste pátio, e não balcão de queixas de quem vem da estrada. O nome do teu irmão não me rende um tostão furado, e eu não sei onde ele foi parar depois da última leva.\n\nEle nem ergue a vista; olha fixo para a lama pisada entre as botas, recusando encarar você de frente. Do outro lado da vala, Anselmo esmurra o parapeito de tábuas e berra fino:\n\n— Três pratas no cão da várzea! Três pratas antes que o ferro bata na carcaça!\n\nCorrado pigarreia grosso com o alvoroço, ajeita o casaco ensebado e dá um passo de lado, abrindo distância de você e de Dunstan como quem se livra de sarna. Ele fecha a cara e aponta o queixo para a saída do fosso.",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": []
+   },
+   {
+    "v": 5,
+    "M": 18,
+    "frase": "",
+    "prosa": "Corrado passa a manga pelo nariz, jurando baixo por um botão torto do próprio gibão enquanto mede as suas mãos. Ele não olha nos seus olhos — crava a vista na fivela gasta do seu cinturão e solta o ar pelos dentes:\n\n— Pois que seja, pelos três pregos da forca. Eu não fico devendo favor a andejo nenhum. Mas você vai ter que me tirar um espinho da carne primeiro: tem um sujeito que desceu a estrada sem me pagar a cota da liça, e eu preciso desse rasto achado antes que o meirinho-mor sinta o cheiro da falta. Quer ouvir de Tobias? Acha quem me deve.\n\nAntes que você responda, a mão pesada de Dunstan cai no seu ombro. Ele não espera: dá dois passos largos na lama do fosso, estica o braço e puxa Beraldo Pés-de-Lama pela gola do casaco puído, arrancando o homem do meio da roda de apostas e largando-o de frente para vocês.\n\n— Esse daqui sabe quem entra e quem sai da vala — resmunga Dunstan, com a voz rouca de quem mastiga poeira desde a aurora. — Abre a goela, Beraldo.\n\nBeraldo engole em seco, olhando do empresário para você, com os dedos sujos tremendo na altura da cintura:\n\n— O sujeito que o Corrado procura cruzou a cancela do burgo faz duas noites, jurando que ia desovar o lote nas colinas. Mas se você quer sangue do seu sangue... o rapaz que chamavam por esse nome não foi pras colinas. Desceu amarrado pr'aquela cova úmida do poço fundo a mando dos homens do conselho, e a cota dele vence no cair da tarde.\n\nAs palavras caem na lama e não se misturam. Corrado fecha a cara e cruza os braços, exigindo o devedor na cidade para abrir a boca sobre o passado, enquanto o rastro vivo de Tobias puxa você para fora dos muros antes que a tarde feche a terra.",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": [
+     {
+      "classe": "distanciasFora",
+      "trecho": "faz duas noites",
+      "fonte": "13.ª §2 T6: «faz duas noites» — o sistema não sabe (verdadeiro, menor)"
+     }
+    ]
+   },
+   {
+    "v": 6,
+    "M": 20,
+    "frase": "Pergunto ao Beraldo: \"Esse poço fundo, onde fica? E a Fenda de Silêncio, de que falavam na fila, qual é o caminho e quanto tempo de marcha?\"",
+    "prosa": "Beraldo limpa a manga suja de caliça na coxa, olhando de rabo de olho para a plateia que berra em volta da areia. \n\n— O poço fundo fica a sudeste, coisa de cinco quilômetros e pouco, bate uma hora e vinte de marcha a pé — resmunga ele, baixando a voz. — Já essa tal Fenda de Silêncio fica pro outro lado, a sudoeste, e é chão de quatro horas. O que tem lá dentro, ninguém daqui sabe; só o pastor que viu luz e quase borrou as calças.\n\nUm sujeito de gibão gasto empurra a passagem na tábua, quase esbarrando no seu ombro ao tentar espiar as jaulas.\n\nCorrado pigarreia forte, dá meio passo à frente na lama e encara você sem erguer a cabeça até a altura dos olhos:\n\n— Eu me chamo Corrado, empresário desta liça, e se você pensa que vai sair batendo perna atrás de cova sem...",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "pauta": "PERGUNTOU distância: o poço fundo (a sudeste, 5,2 km, 1,3 h a pé)",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "uma hora e vinte",
+      "porque": "«vinte» são minutos, não preço"
+     },
+     {
+      "trecho": "cinco quilômetros e pouco",
+      "porque": "«5 km»: a pauta deu «PERGUNTOU distância: o poço fundo (5,2 km, 1,3 h)»"
+     },
+     {
+      "trecho": "bate uma hora e vinte de marcha",
+      "porque": "«1 hora»: a mesma linha da pauta (1,3 h)"
+     },
+     {
+      "trecho": "chão de quatro horas",
+      "porque": "o mapa diz Fenda de Silêncio 4 h"
+     },
+     {
+      "trecho": "pauta: a distância do poço",
+      "porque": "5,2 km e 1,3 h ditos «cinco quilômetros e pouco, uma hora e vinte»"
+     }
+    ]
+   },
+   {
+    "v": 7,
+    "M": 24,
+    "frase": "Digo ao Corrado que volto com notícias. Saio do Largo e procuro uma banca no mercado: quero comprar uma corda e pergunto quanto custa um escudo de madeira.",
+    "prosa": "O chão do Mercado da Farinha fede a farelo azedo e suor de carregador. O caixeiro atrás da tábua larga um rolo de cânhamo de lado e aponta para a sua própria trouxa: — Corda você já tem enrolada aí no lombo, mulher, e escudo não tem nenhum à venda neste burgo; ferro e tábua vão tudo pra conserto de carroça ou pra muralha.\n\nVocê mal recolhe a mão e vê Corrado escorado numa pilha de sacaria logo adiante. O sujeito não tirou os olhos de você desde o fosso, mastigando a língua e limpando a poeira da manga sem encarar seu rosto. Ele dá um passo arrastado pelo corredor de tábuas e solta entre os dentes:\n\n— Vai mesmo bater perna atrás daquele desgraçado no Largo da Liça ou vai ficar gastando sola entre os sacos de farinha?",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "pauta": "PERGUNTOU não há escudo à venda em Porto das Pedras, e nenhuma banca daqui vende escudos\n          a corda: já a carrego no kit",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "pauta: o escudo",
+      "porque": "«escudo não tem nenhum à venda neste burgo»"
+     }
+    ]
+   },
+   {
+    "v": 8,
+    "M": 26,
+    "frase": "Ignoro o Corrado por um momento e pergunto ao caixeiro: \"Tem alguma poção de cura ou unguento para feridas? Quanto custa? Se o preço for justo, levo um.\"",
+    "prosa": "O caixeiro bate a pá de madeira num saco de grãos, levantando uma nuvem fina e branca que faz Dunstan tossir. — Unguento nenhum aqui, mulher. Isso é farelo e aveia; coisa de mezinha e frasco você não acha nesta praça, só quem mexe com folha e garrafa saberia dizer, e eu não sei o preço nem se tem. \n\nUm sujeito de gibão encosta num fardo de trigo, cuspindo uma casca no chão, enquanto Beraldo Pés-de-Lama se espreme por trás das bancas para não trombar na patrulha. Corrado, o Organizador de lutas, dá um passo pesado sobre as tábuas do chão; o sujeito escapou de Burgo da Prata com a roupa do corpo há oito invernos e conhece cheiro de gente encurralada. Ele aponta o polegar curto na direção da saída do mercado, cortando a conversa:\n\n— Vai perder o dia com farinha? O que eu tenho pra falar tá lá no chão batido do Largo da Liça, e se você quer que eu desenrole a língua sobre o…",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": []
+   },
+   {
+    "v": 9,
+    "M": 39,
+    "frase": "Deixo o Corrado falando sozinho. Chamo o Dunstan e partimos pela estrada para a Fenda de Silêncio, a sudoeste, ver com os próprios olhos essa luz de que o pastor falou.",
+    "prosa": "Você vira as costas para a ladainha de Corrado e pega a saída sudoeste com Dunstan sob uma chuva fria que transforma a estrada em barro puro. Quatro horas de marcha pesada deixam o fôlego curto e a bota empastada, até que o corte bruto da Fenda de Silêncio rasga a encosta à frente: uma goela de pedra escura ladeada por cinzas velhas de fogueira e rastros fundos de solas que entraram e não voltaram. Dunstan cospe a água do bigode e puxa a conversa sem rodeios: — Caçar luz de pastor com a barriga roncando não enche algibeira, Iara. Mas o chão nem dá tempo de resposta. Três abominações do tamanho de mastins, pelagem sarnenta e dentes amarelos, irrompem da vala na beirada da rocha a passos curtos de você; o primeiro já salta faminto mirando a sua garganta com a boca aberta.",
+    "bolsa": 15,
+    "de": "Porto das Pedras",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "Quatro horas de marcha",
+      "porque": "o mapa diz Fenda de Silêncio 4 h"
+     }
+    ]
+   },
+   {
+    "v": 10,
+    "M": 56,
+    "frase": "Ataco Rato Gigante 1",
+    "prosa": "Você desce a espada longa com o peso do corpo e racha o primeiro rato do focinho ao peito, partindo a carcaça imunda contra a lama da estrada. A segunda besta avança em rasteira por baixo, mas você gira o aço a tempo e apara a investida no ferro; a pancada morde a sua perna de raspão, tirando apenas um fiapo de sangue. Dunstan solta a corda do arco ao seu lado, mas a flecha canta na chuva e crava no barro vazio. Nisso, o terceiro rato salta num talho profundo: as presas rasgam o seu gibão com violência, abrindo um talho pesado que faz a sua postura vacilar e o sangue quente escorrer pela coxa, mas o seu corpo aguenta o tranco sem fraquejar. As duas alimárias continuam a dois passos de você, bufando na água.",
+    "bolsa": 15,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 11,
+    "M": 67,
+    "frase": "Ataco Rato Gigante 2",
+    "prosa": "Você gira a espada num arco curto e fende o segundo bicho de ponta a ponta, pregando a carcaça partida na lama antes mesmo que o ganido termine. Mas a terceira abominação não recua: salta com fúria cega e você mal tem tempo de torcer a lâmina para aparar as presas; o ferro amortece a pancada, mas o peso da mordida ainda rasga a sua carne num talho violento que faz seu joelho vacilar na pedra, abrindo um rasgo largo de onde o sangue escorre quente, empapando a perna da calça e caindo ritmado na chuva. Dunstan solta um palavrão entre os dentes e dispara outra flecha com pressa, mas a ponta de ferro assobia no vazio e vai se perder nas cinzas da encosta. O último rato segue plantado a dois passos, com os olhos vidrados em você e o focinho lambuzado de sangue pronto para abocanhar o resto.",
+    "bolsa": 15,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 12,
+    "M": 75,
+    "frase": "Ataco Rato Gigante 3",
+    "prosa": "Você crava a ponta da lâmina na goela da última abominação com o peso do próprio corpo; o aço range contra o osso do bicho e ele desaba inerte na lama, espalhando uma poça escura que a chuva fria lava aos poucos. A dor da mordida sobe quente pela sua coxa, latejando num pulso cego que drena o fôlego da sua carcaça enquanto o sangue escorre pelas pernas da calça e empapa o couro da bota. Dunstan abaixa o arco, bufando contra a água que desce pelo nariz, e chuta a carcaça de lado, revelando dois retalhos grossos de couro jogados no barro perto das cinzas da fogueira fria.\n\n— Carniça brava — resmunga o caçador, limpando a lâmina de caça na manga encharcada sem tirar os olhos da abertura escura da rocha. — Mas a gente não tá sozinho aqui fora.\n\nPassos arrastados quebram gravetos na beirada da fenda. Do meio do capim alto surgem Radulfo Milhano e Matilde, encolhidos sob mantos surrados de lã que mal seguram a chuva, seguidos de perto por um rapaz novo de queixo quadrado que você quase toma por outro: Osric. O rapaz larga o fardo no chão com pressa, encarando as suas feridas abertas com olhos arregalados, e solta sem rodeios: — Me ajude a juntar o que falta. Depois disso, sou livre.\n\nDunstan dá um passo à frente e cospe no barro.",
+    "bolsa": 15,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 13,
+    "M": 82,
+    "frase": "",
+    "prosa": "O sangue escorre quente pela perna da sua calça, empapando o couro da bota até o chão ceder sob o seu peso. O ferro da espada escapa dos seus dedos dormentes, batendo surdo na lama, e o céu cinzento de Brumal gira antes de apagar de vez. Você tomba de lado contra a rocha, o peito mal erguendo o ar, os olhos vidrados na chuva fina enquanto a vista se fecha num breu completo.\n\n— Caralho, Iara! Segura essa carcaça! — a voz de Dunstan estoura abafada, distante como se viesse do fundo de um poço. \n\nMãos grossas agarram seus ombros e arrastam seu corpo inerte para debaixo da saliência de pedra da fenda, tirando você da água gelada. Dunstan rasga tiras de pano, xingando baixo entre os dentes, e aperta o tecido contra o talho aberto na sua coxa com força bruta até estancar a sangria que quase levou o resto do seu fôlego. Radulfo e Matilde ficam amontoados rente à parede úmida da rocha, de olhos arregalados, enquanto o tal Osric larga o fardo pesado no chão e passa a mão trêmula pelo queixo molhado, sem saber para onde olhar. O teto baixo de pedra segura a chuva, mas o chão de cascalho frio gela os ossos de quem para.\n\nCom as feridas amarradas e a respiração pesada voltando aos poucos, Dunstan bate a pederneira sobre as cinzas velhas da fogueira fria que já estava ali. A faísca pega numa fumaça rala. Ele cospe de lado, larga o arco no colo e encara o fogo tímido com a cara fechada de quem mastiga pedra há quatro invernos ao seu lado.\n\n— Aquele desgraçado do Corrado... — solta o caçador, a voz rouca cortando o estalo da lenha molhada. — Ele falou grosso demais sobre o meirinho-mor achar o teu irmão primeiro. Conheço tipo como ele: se a coroa pagar dois estalos a mais pela cabeça do Tobias do que você tem no bolso, o Corrado entrega até a cova onde a mãe dele foi enterrada. Eu não boto fé naquela língua nem com juramento em osso de santo.\n\nDunstan cutuca as cinzas com a ponta de uma adaga sem olhar para você. O corpo estropiado na pedra cobra cada légua andada sob chuva; do outro lado da fogueira, o rapaz novo estende as mãos sujas na brasa, esperando a sua carcaça acordar para cobrar o fardo que jogou no chão, enquanto o rastro de Tobias na boca suja daquele agenciador da liça queima mais rápido do que a prata que sobrou na sua bolsa. Se você fecha o olho para a carne não arrebentar, o tempo engole o nome do seu irmão nos dentes do meirinho; se força a perna aberta na lama para voltar batendo boca na arena, o corpo tomba de vez antes da primeira cancela.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "dois estalos a mais",
+      "porque": "hipótese de fala, comparação («a mais… do que você tem no bolso»)"
+     },
+     {
+      "trecho": "Brumal",
+      "porque": "Brumal é o mês (o calendário)"
+     }
+    ]
+   },
+   {
+    "v": 14,
+    "M": 85,
+    "frase": "",
+    "prosa": "Você jaz deitada de costas no cascalho úmido, a respiração curta chiando no peito a cada arfada fraca. A vista não abre: há só uma névoa espessa e o peso chumbo nos membros estendidos na lama fria da fenda, com o sangue estancado a duras penas pela tira de pano que aperta a sua coxa ferida. Perto de onde o seu corpo descansa inerte contra a rocha, o estalo tímido da lenha molhada divide o ar com a chuva fina que desaba do lado de fora do abrigo.\n\nRadulfo Milhano e Matilde continuam encolhidos rente à parede de pedra, de olhos fixos no chão, enquanto Dunstan sopra as brasas para a fumaça rala não morrer. Osric permanece sentado logo ao lado do seu corpo prostrado, as pernas cruzadas junto ao calor rasteiro do fogo. O rapaz puxa o ar com força, mexe nos panos da própria trouxa e saca do cinto uma lâmina curta e gasta, baixando a cabeça em direção ao seu rosto imóvel.\n\n— Eu não pedi pra carregar isso aqui — solta Osric, com a voz corrida de quem tem pressa até na hora errada, virando o ferro perto da brasa. — Me veio das mãos de um tropeiro na cancela do burgo, faz duas luas. Ele jurou que pegou de um sujeito amarrado que gritava por socorro antes de ser jogado numa carroça da liça... olha a marca batida na virola do cabo. É a mesma cunha da faca que tá caída aí na sua bainha, talhada igualzinha no chifre escuro.\n\nO ferro faisca fraco contra a cinza da fogueira.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 15,
+    "M": 89,
+    "frase": "",
+    "prosa": "A névoa espessa da quase-morte se desfaz com um puxão seco de ar que queima a sua garganta. Você abre os olhos: o teto de pedra bruta da Fenda de Silêncio pinga água fria na sua testa, mas o latejo cego na coxa virou apenas uma cicatriz repuxada e rígida sob a calça rasgada. O sangue parou; a carne fechou na marra enquanto a noite inteira corria lá fora. O ar da manhã de primavera entra gelado pela goela da caverna, batendo nas cinzas molhadas da fogueira morta.\n\n— Olha ela aí — resmunga Dunstan, escorado na saída com o arco no ombro e um graveto entre os dentes. — Achei que ia ter que te enterrar no barro antes do galo cantar.\n\nRadulfo Milhano bate o queixo de frio num canto, tremendo sob a lã encharcada, enquanto um sujeito troncudo que veio na esteira da chuva, Tibério Vigia-de-Portão, ajeita a correia de um bornal no ombro sem dar bom-dia a ninguém. Logo adiante, na trilha batida que desce em direção ao acampamento de Val das Pedras, uma gritaria fina corta a cerração: gente tossindo grosso, gemendo com febre que vem e volta no lodo das barracas, e o boato corre na boca de um halfling aos berros jurando saber que veneno é esse.\n\nMas Osric nem pisca para a balbúrdia lá fora. O rapaz continua ajoelhado bem na sua frente, a respiração curta fumegando no ar cinzento, segurando a faca gasta com a marca idêntica à sua estendida na palma aberta.\n\n— O tropeiro não mentiu, Iara — diz Osric, a voz apressada quase atropelando as palavras. — Essa lâmina era dele. Mas enquanto você dormia no lodo, passou um carreteiro na estrada do burgo recrutando desvalidos a moeda por cabeça pra fechar uma carga fechada... e Corrado tá lá no Largo da Liça agora, decidindo se vende o paradeiro de Tobias pro meirinho-mor ou se ainda espera pela tua cara.\n\nO rastro do seu irmão queima nos dois extremos da estrada: descer quatro horas de marcha a pé de volta a Porto das Pedras para calar a boca de Corrado antes que a carroça suma com os recrutas, ou seguir a pista da lâmina que Osric segura e arrancar a verdade das mãos do garoto aqui na pedra fria.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "quatro horas de marcha a pé de volta a Porto das Pedras",
+      "porque": "o mapa diz Porto das Pedras 4 h"
+     }
+    ]
+   },
+   {
+    "v": 16,
+    "M": 92,
+    "frase": "Guardo a faca de Osric comigo por enquanto. Acendo uma tocha e entro com o Dunstan mais fundo na fenda, procurando a luz que o pastor jurou ter visto lá dentro.",
+    "prosa": "Você enfia a lâmina gasta no cinturão, risca a pederneira e ergue uma das cinco tochas. O fogo estala contra o teto abobadado e desmoronado deste velho forte soterrado, lambendo paredes tomadas por silvas grossas e lodo fétido. A chuva fica para trás na boca da ruína selada, mas o chão de pedra partida é estreito demais: não dá para correr nem manobrar de lado sem bater ombro com Dunstan.\n\nMais à frente, a escuridão se parte em passagens distintas. Por uma brecha funda, entre caixotes arrebentados onde algo valioso parece ter sido guardado às pressas, o reflexo do ferro denuncia o vulto largo de um capitão armado; de outra fresta úmida, uma respiração pesada sopra na cerração subterrânea, denunciando o rastejo escamoso de uma vípera da charneca. O lugar é grande e hostil demais para duas lâminas cansadas, e cada sombra que range sob o fogo lembra que as respostas fáceis sobre Tobias ficaram para trás, amarradas na língua de Corrado lá no Largo da Liça.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 17,
+    "M": 94,
+    "frase": "Sussurro ao Dunstan que fique longe do capitão. Pergunto baixo: \"Você vê alguma luz que não seja a da nossa tocha?\" e sigo pela fresta úmida, devagar, com a espada pronta.",
+    "prosa": "— Luz nenhuma, Iara. Se tinha brilho de milagre aqui, foi conversa mole de pastor — murmura Dunstan, colando as costas na pedra molhada e puxando o ar devagar. — Só tem cheiro de mofo e esse bafo podre aí na frente.\n\nVocê avança pela fresta estreita, sentindo a água gelada escorrer pelo vão da armadura. O chão de cascalho range sob as botas. Do breu da passagem, um homem de pele curtida e trapos amarrados com barbante, Balduíno do Prado Salgado, encolhe-se contra uma coluna rachada. Ele arregala os olhos para o fogo da sua tocha, engole em seco e solta num fiapo de voz:\n\n— Não crava esse ferro em mim... eu não sei de luz nenhuma! Mas se você veio atrás daquele tal de Corrado lá no Largo da Liça, ele...",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 18,
+    "M": 97,
+    "frase": "",
+    "prosa": "Você arrasta a sola da bota pelo lodo e vira cada caixote podre da entrada, erguendo a tocha até a fuligem bater no teto baixo. Nada além de terra molhada, pregos tortos e a certeza fria de que ninguém deixou prata nem luz milagrosa aqui: o boato do pastor foi só corda para puxar você para longe do burgo.\n\nDunstan encosta o ombro largo na pedra úmida da passagem, a ponta do arco apontada para o chão estreito.\n\n— Falei que era conversa fiada, Iara — resmunga ele, cuspindo de lado. — Esse buraco só tem mofo, bicho rastejando e gente armada esperando no breu.\n\nVocê baixa a tocha.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 19,
+    "M": 102,
+    "frase": "",
+    "prosa": "Ao ouvir o baque oco do caixote podre, o rastejo cessa na hora: assustada pelo clarão da tocha e pelo estrondo, a vípera da charneca recua meio palmo no vão da porta, bufando contra a cobertura de pedras com os olhos fixos na fresta de saída, querendo apenas se esgueirar para longe de vocês. Dunstan percebe a hesitação antes de você e já puxa a corda do arco até a orelha, com o tiro armado contra o bicho encurralado.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 20,
+    "M": 117,
+    "frase": "Ataco Vípera da Charneca",
+    "prosa": "Você avança até o vão da porta e desce a lâmina com força, mas a ponta raspa na quina de pedra sem achar carne; a vípera tenta o bote com um golpe pesado de presas que só morde o ar úmido ao lado da sua coxa. Dunstan não dá espaço: a corda do arco canta no estreito e a flecha vara a cabeça do bicho de lado a lado, pregando a carcaça inerte contra a alvenaria rachada.\n\nO silêncio desce pesado com o cheiro de lodo e carniça fresca. Dunstan arranca a flecha da parede com um puxão seco, limpa a ponta na perna da calça e aponta com o queixo para a poeira parada na frente das caixas:\n\n— Vai querer forçar passagem por esse entulho ou a gente dá meia-volta pra entrada?",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 21,
+    "M": 119,
+    "frase": "Já vi o bastante: aquilo era isca. Saio da fenda com o Dunstan e voltamos pela estrada a Porto das Pedras. Lá, entro no Javali Empalhado e pergunto ao taverneiro quanto custa um prato quente e uma cama para esta noite.",
+    "prosa": "Dunstan não sabe o que há atrás do entulho, e este buraco não deixa ninguém correr sem tropeçar no lodo. A fumaça da tocha lambe a abóbada baixa enquanto o caçador puxa a gola úmida: — Entulho é pedra cega, Iara. Quem armou essa farsa de luz queria a gente longe do Largo da Liça, comendo barro enquanto o Corrado…\n\nA frase morre na metade quando o eco de cascalho solto estala nas costas de vocês, vindo da goela escura da ruína.",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "rotulos": []
+   },
+   {
+    "v": 22,
+    "M": 121,
+    "frase": "Saio da fenda com o Dunstan e voltamos pela estrada a Porto das Pedras. Lá, entro no Javali Empalhado e pergunto ao taverneiro quanto custa um prato quente e uma cama para esta noite.",
+    "prosa": "Dunstan limpa o sangue da ponta da flecha e apaga a tocha contra a umidade da pedra, bufando com o cheiro azedo do lodo. — Prato quente lá no burgo sai por três estalos de prata, Iara, mas cama nessa espelunca eu não sei quanto cobram e nem sei se tem palha limpa. E a gente ainda tá enfiado até o pescoço nessa ruína selada; pra pisar em Porto das Pedras e cobrar a cama de taverneiro, primeiro a gente tem que vencer a boca dessa furna e bater perna na lama.\n\nEle aponta a coronha do arco para o corredor estreito de cascalho solto por onde vocês entraram, onde a água fria goteja ritmada sobre as lajes partidas. Com as sombras engolindo o rastro da vípera morta e o silêncio pesado pesando nos ouvidos, o caçador ajeita a aljava no ombro e solta:\n\n— Vai meter o pé na chuva agora pra caçar o Corrado no Largo da Liça ou tem mais pedra pra chutar nesse buraco?",
+    "bolsa": 29,
+    "de": "Fenda de Silêncio",
+    "pauta": "[PAUTA DO TURNO 19 — decidido pelo SISTEMA. Abra pelo que eu fiz ou perguntei e conte COMO; daqui vem o QUE e o COM QUEM, e não se discute. É ETIQUETA DE SISTEMA: nenhuma palavra daqui entra na narrativa nem na boca de ninguém.]\nONDE      dentro de Fenda de Silêncio, numa sala de luta · chuva · (aqui isto é um ruína selada)\n          ⌖ J11 49,6 · 50,2\nMASMORRA  camada 1 de 3 · 2 das 7 salas da planta já vistas · 4 tochas na mão\nPERGUNTOU o preço daqui: refeição quente ◉ 3 estalos\nNÃO PODE  o lugar não comporta: cercar por vários lados, correr, recuar sem virar as costas; ter certeza de quem é quem do outro lado do lugar; recuar sem olhar onde se pisa\n          narrar a marcha, a estrada ou a chegada a Porto das Pedras: o sistema não abriu viagem nenhuma — de dentro da masmorra só se sai pela boca, e sair é escolha minha, à porta; a cena continua em Fenda de Silêncio, e a frase vira o passo que se dá daqui\n          ninguém oferece trabalho avulso ao herói nesta cena\nO RUMO    responda primeiro ao que perguntei, com o que está nesta pauta; o que ninguém aqui sabe, quem responde diz que não sabe; depois, e por dentro da resposta, uma coisa só aponta para: Procurar Corrado em Largo da Liça\nO FECHO   termine em alguém em cena faz-me uma pergunta direta, e acaba nela; sem cuspe, braços cruzados, olhar fixo, ninguém à espera nem o ar a pressagiar",
+    "rotulos": [],
+    "falsosDoJogo": [
+     {
+      "trecho": "três estalos",
+      "porque": "a pauta deu «PERGUNTOU o preço daqui: refeição quente ◉ 3»"
+     }
+    ]
+   }
+  ],
+  "artefactos": [
+   {
+    "v": 3,
+    "trecho": "Três pratas no cão da várzea",
+    "porque": "o jogo NÃO o acusou (0 achados no T4): a entrada real deste turno perdeu-se com a página (defeito 1) e sabia um 3 que a reconstrução não tem (o preço da rua, ou o valor de uma missão). Não entra na precisão; a suíte conta-o à parte"
+   }
+  ],
+  "foraDoAlcance": [
+   {
+    "v": 5,
+    "classe": "consequencia",
+    "trecho": "tem um sujeito que desceu a estrada sem me pagar a cota da liça",
+    "porque": "13.ª T6: o pedido da pauta (a campa, meio dia de desvio) trocado por outro — pede o que a história é"
+   },
+   {
+    "v": 5,
+    "classe": "lugaresNovos",
+    "trecho": "cova úmida do poço fundo",
+    "porque": "13.ª T6: sítio sem nome próprio nem estabelecimento — o detector de lugar não o alcança"
+   },
+   {
+    "v": 5,
+    "classe": "consequencia",
+    "trecho": "homens do conselho",
+    "porque": "13.ª T6: gente sem nome"
+   },
+   {
+    "v": 17,
+    "classe": "consequencia",
+    "trecho": "Luz nenhuma",
+    "porque": "13.ª T18: a verdade do boato decidida pela prosa — não tem classe (a TAREFA 2 veta-a na pauta)"
+   }
+  ]
+ }
 }

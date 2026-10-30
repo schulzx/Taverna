@@ -48,6 +48,7 @@
 
 import { julgarAProsa } from "../juiz-de-fidelidade.js";
 import { oQueExisteAqui, masmorrasDoMundo } from "../mundo-base.js";
+import { horasEntre, origemDoHeroi } from "../marcha.js";
 
 /* Se é número, é tabela. */
 export const JUIZ_NO_TURNO = {
@@ -56,7 +57,37 @@ export const JUIZ_NO_TURNO = {
   trecho: 120,             // caracteres de cada trecho e de cada motivo
   narracoesAntes: 6,       // as respostas anteriores que o Juiz lê como eco
   itens: 60,               // os nomes do que o herói e o grupo carregam, na entrada
+  distancias: 24,          // os sítios do mapa com a marcha desde onde o herói está
 };
+
+/* ---------------- O QUE O MAPA SABE (29/10, a 13.ª sessão) ----------------
+   A 13.ª acusou quatro vezes «quatro horas» até à Fenda de Silêncio — e o
+   mapa diz 4 h. O Juiz só lia as distâncias que a pauta DAQUELE turno
+   repetia, e o mapa é verdade do sistema mesmo fora da pauta. A entrada leva
+   agora a marcha (horasEntre, marcha.js: a conta da região, com o chão) de
+   onde o herói está até cada povoação e cada lugar da região, marcada
+   `doMapa` — o Juiz só a usa quando a prosa NOMEIA o sítio. Fora da região
+   (mapa sem `regiao`), ou sem ponto de partida, nada: a chave só vai à
+   entrada quando há distância. */
+function distanciasDoMapa(f) {
+  const mapa = obj(f.mapa);
+  if (!obj(mapa.regiao) || !Object.keys(obj(mapa.regiao)).length) return [];
+  const de = origemDoHeroi(mapa, { cidadeAtual: f.cidadeAtual, lugar: f.lugar, ...(f.jornada ? { jornada: f.jornada } : {}) });
+  if (!de) return [];
+  const daqui = semAc(typeof de === "string" ? de : nome(de));
+  const nomes = [...arr(mapa.cidades).map(nome), ...arr(obj(mapa.regiao).lugares).map(nome)].filter((n) => n && semAc(n) !== daqui);
+  const out = [];
+  for (const n of [...new Set(nomes)]) {
+    const h = horasEntre(mapa, de, n);
+    if (Number.isFinite(Number(h)) && h > 0) out.push({ para: n, horas: Math.round(h * 100) / 100, doMapa: true });
+  }
+  return out.slice(0, JUIZ_NO_TURNO.distancias);
+}
+
+/* E O PAPEL DE QUEM O REGISTO CONHECE (29/10): «Corrado, o Organizador de
+   lutas» saía como gente nova quando o EM CENA da pauta não chegava — o papel
+   está no registo (`npcs[x].papel`), e é do sistema. Vai em `outros`. */
+const papeisDoRegisto = (npcs) => [...new Set(Object.values(obj(npcs)).map((n) => (n && typeof n.papel === "string" ? n.papel.trim() : "")).filter(Boolean))];
 
 /* ---------------- O QUE O HERÓI CARREGA (28/10, trilha B) ----------------
    A entrada levava a bolsa em moedas e não os itens: um item do inventário
@@ -99,6 +130,7 @@ export const CLASSES_DO_JUIZ = [
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
 const nome = (x) => (x == null ? "" : typeof x === "string" ? x : String(x.nome || ""));
+const semAc = (s) => String(s == null ? "" : s).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
 const corta = (s, n) => { const t = String(s == null ? "" : s).replace(/\s+/g, " ").trim(); return t.length > n ? t.slice(0, n - 1) + "…" : t; };
 
 export function entradaDoJuiz(foto, ctx) {
@@ -149,6 +181,9 @@ export function entradaDoJuiz(foto, ctx) {
   }
   const limpa = (xs) => xs.filter((x) => (typeof x === "string" ? x.trim() : x && nome(x).trim()));
   const carrega = oQueCarrega(p);
+  let doMapa = [];
+  try { doMapa = distanciasDoMapa(f); } catch { /* o mapa torto nunca derruba a medida */ }
+  const papeisR = papeisDoRegisto(f.npcs);
   return {
     frase: String(c.frase || ""),
     antes: arr(f.narracoes).map((x) => String(x == null ? "" : x)).filter((x) => x.trim()).slice(-JUIZ_NO_TURNO.narracoesAntes),
@@ -164,6 +199,8 @@ export function entradaDoJuiz(foto, ctx) {
     ...(Number.isFinite(Number(p.moedas)) ? { bolsa: Number(p.moedas) } : {}),
     pauta: typeof c.pauta === "string" ? c.pauta : "",
     ...(carrega.length ? { inventario: carrega } : {}),
+    ...(doMapa.length ? { distancias: doMapa } : {}),
+    ...(papeisR.length ? { outros: papeisR } : {}),
   };
 }
 

@@ -55,6 +55,7 @@ import { NUMERO_POR_EXTENSO } from "./cobranca.js";
 import { PERGUNTA_DE_PRECO } from "./mercado.js";
 import { KMH_A_PE } from "./coordenadas.js";
 import { HORAS_MARCHA_POR_DIA } from "./viagem.js";
+import { MESES, ESTACOES, FESTIVAIS } from "./calendario.js";
 
 /* ---------------- A TAXONOMIA (as doze sessões) ----------------
    As classes que as sessões 6–12 contaram, cada uma com o que o Juiz
@@ -94,6 +95,9 @@ export const TOLERANCIAS_DO_JUIZ = {
   tempo: { relativa: 0.35, absolutaHoras: 1 },
   janela: 1,
   nomeMinimo: 3,
+  /* a hora do relógio que a pauta escreve em 24 h («às 18h») e a prosa diz
+     em 12 («às seis da tarde»): o mesmo número, menos meio dia (a 13.ª, T2) */
+  meioDia: 12,
 };
 
 /* ---------------- O LÉXICO ----------------
@@ -241,6 +245,25 @@ export const LEXICO_DO_JUIZ = {
   apresentacao: [/\b(?:se chama|se chamava|chamava-se|me chamo|chamam-me|me chamam(?: de)?|chamavam(?: de)?|meu nome e|o nome dele e|o nome dela e|o nome e|sou o|sou a|sou)\s+$/],
   /* o fato que a pauta manda entrar */
   marcaDoFato: /\(e fato[^)]*\)/,
+  /* ---- A 13.ª SESSÃO (29/10): o que ela acusou e não era invenção ----
+     O DINHEIRO QUE SE TEM não é preço: «você tem no bolso quinze moedas» é a
+     bolsa (T1), «meia dúzia de pratas furadas no bolso» é insulto (T3). O
+     valor numa oração com uma destas palavras não afirma o preço de nada. */
+  daBolsa: ["bolso", "bolsos", "bolsa", "algibeira", "alforje", "bornal"],
+  /* A COMPARAÇÃO não é preço: «se a coroa pagar dois estalos a mais pela
+     cabeça dele do que você tem no bolso» (T14) — o que vem logo depois do valor */
+  comparacao: /^\s*a\s+(?:mais|menos)\b[^.!?…]*\bdo\s+que\b/,
+  /* OS MINUTOS DA HORA: «uma hora e vinte» (T7) — o número depois de «hora e» é minuto, não preço */
+  aposAHora: ["hora", "horas"],
+  /* A HORA DO RELÓGIO NA PAUTA: «das 08h às 18h» é a agenda de alguém, não a
+     distância até ao sítio dele (T2: «o mapa diz Largo da Liça 8 h») */
+  horaNaPauta: /(?<![\p{L}])(?:das|as|às|ate as|até as|ate às|até às|desde as|desde às)\s+\d{1,2}\s*h(?:\d{2})?(?![\p{L}\d])/giu,
+  /* O SÍTIO DA LINHA DE DISTÂNCIA: «distância: o poço fundo (a sudeste, 5,2 km,
+     1,3 h a pé)» (cidade-por-dentro.js) — o nome antes do parêntese ou da vírgula */
+  linhaDeDistancia: /^distância:\s*([^(,:]+?)\s*[(,:]/i,
+  /* O CALENDÁRIO não é gente: «o céu cinzento de Brumal» (T14) é o mês. Os
+     meses, as estações e os festivais do calendário (calendario.js) */
+  calendario: [...MESES, ...ESTACOES.map((x) => x.nome), ...FESTIVAIS.map((x) => x.nome)],
 };
 
 /* ---------------- O CHÃO: texto sem acento, com as mesmas posições ---------------- */
@@ -326,6 +349,8 @@ function lerNumero(ws, i) {
   const N = LEXICO_DO_JUIZ.numeros;
   const w = ws[i] && ws[i].w;
   if (!w) return null;
+  /* «meia dúzia» é metade da dúzia, não a dúzia (a 13.ª, T3: «nenhum valor da mesa é 12») */
+  if (w === "meia" && ws[i + 1] && (ws[i + 1].w === "duzia" || ws[i + 1].w === "duzias")) return { valor: N.duzia / 2, ate: i + 1 };
   if (/^\d+$/.test(w)) {
     // "6,6 km": a vírgula decimal fica fora das palavras; junta-se aqui
     const prox = ws[i + 1];
@@ -378,6 +403,8 @@ function dinheiroDe(t, { moeda = "", eco = false, perguntou = false } = {}) {
     const n = lerNumero(ws, i);
     if (!n) continue;
     const prox = ws[n.ate + 1], ant = ws[i - 1];
+    // "uma hora e VINTE": o número depois de "hora e" é minuto
+    if (ant && ant.w === "e" && ws[i - 2] && LEXICO_DO_JUIZ.aposAHora.includes(ws[i - 2].w)) { i = n.ate; continue; }
     // "afio POR uma moeda", "vende PELO triplo": o por diante do número já é preço
     const porQuanto = !!ant && LEXICO_DO_JUIZ.porDoPreco.includes(ant.w);
     const entre = prox ? p.slice(ws[n.ate].fim, prox.ini) : "";
@@ -465,6 +492,16 @@ function oQuePaga(t, p, ws, frases, d, mercado) {
   return { chave: "" };
 }
 
+/* as palavras da oração do valor (o corte é o de oQuePaga: vírgula, ponto e vírgula, dois pontos, travessão) */
+function naOracaoDe(t, frases, d) {
+  const f = frases[d.k] || { ini: 0, fim: t.length };
+  const corte = /[,;:—–()]/;
+  let a = d.ini, b = d.fim;
+  while (a > f.ini && !corte.test(t[a - 1])) a--;
+  while (b < f.fim && !corte.test(t[b])) b++;
+  return palavras(plano(t.slice(a, b))).map((x) => x.w);
+}
+
 /* O preço. A ordem da decisão é a da mesa:
    1. o jogador disse o valor, ou uma resposta anterior já o dissera da
       mesma coisa → eco, não invenção nova;
@@ -516,6 +553,9 @@ function julgarPrecos(t, estado) {
     if (vistos.has(d.valor)) continue;
     vistos.add(d.valor);
     if (ecos.has(d.valor)) continue;
+    /* a 13.ª (29/10): o dinheiro que se TEM e o que se compara não são preço */
+    if (LEXICO_DO_JUIZ.comparacao.test(t.slice(d.fim, (frases[d.k] || { fim: t.length }).fim))) continue;
+    if (naOracaoDe(t, frases, d).some((w) => LEXICO_DO_JUIZ.daBolsa.includes(w))) continue;
     const q = oQuePaga(t, p, ws, frases, d, mercado);
     if (ditos.has((q.chave || "?") + "|" + d.valor)) continue;
     const trecho = trechoDe(t, frases, d.k);
@@ -587,11 +627,20 @@ function julgarDistancias(t, estado) {
   const dist = lista(estado.distancias).filter((d) => d && typeof d === "object").map((d) => ({
     para: nomeDe(d),
     horas: Number.isFinite(Number(d.horas)) ? Number(d.horas) : Number.isFinite(Number(d.km)) ? Number(d.km) / KMH_A_PE : null,
+    doMapa: d.doMapa === true,
   })).filter((d) => d.horas != null);
+  /* AS DISTÂNCIAS DO MAPA (a 13.ª, 29/10). A entrada do turno leva-as todas,
+     de onde o herói está (juiz-do-turno.js) — «a Fenda, quatro horas» é do
+     mapa mesmo quando a pauta daquele turno não a repetiu. Mas só servem a
+     prosa que NOMEIA o sítio: um «vinte minutos» sem destino não se absolve
+     por haver, algures no mapa, um sítio a vinte minutos. */
+  const semNome = dist.filter((d) => !d.doMapa);
   const tempos = lista(estado.tempos).map((x) => (typeof x === "number" ? { o: "", horas: x } : x && typeof x === "object" ? { o: nomeDe(x), horas: Number(x.horas) } : null)).filter((x) => x && Number.isFinite(x.horas));
   // o eco da distância é o do jogador e o da ÚLTIMA resposta: "há dois dias" de outra pessoa, dez turnos atrás, é outra afirmação
   const ultima = lista(estado.antes).slice(-1).map((x) => String(x == null ? "" : x)).join("");
-  const ecos = [...medidasDe(estado.frase || ""), ...medidasDe(ultima)];
+  /* e o que a própria pauta disse por extenso («É meio dia de desvio», a fala
+     do PEDE — a 13.ª, T2) é do sistema: a prosa que o repete não inventa */
+  const ecos = [...medidasDe(estado.frase || ""), ...medidasDe(ultima), ...medidasDe(typeof estado.pauta === "string" ? estado.pauta : "")];
   const perto = (v, alvo, tol) => Math.abs(v - alvo) <= Math.max(tol.absolutaHoras, tol.relativa * alvo);
   const achados = [], vistos = new Set();
   for (const m of medidasDe(t)) {
@@ -607,7 +656,7 @@ function julgarDistancias(t, estado) {
       const pedido = !nomeada.length && L.perguntaDeDistancia.test(semAcento(estado.frase || ""))
         ? nomesDe(estado.frase || "").map((n) => n.nome).filter((n) => !L.naoSaoNome.includes(semAcento(n))) : [];
       const doPedido = pedido.length ? dist.filter((d) => d.para && pedido.some((n) => semAcento(d.para).includes(semAcento(n)) || semAcento(n).includes(semAcento(d.para)))) : null;
-      const alvo = nomeada.length ? nomeada : doPedido && pedido.length ? doPedido : dist;
+      const alvo = nomeada.length ? nomeada : doPedido && pedido.length ? doPedido : semNome;
       ok = alvo.some((d) => perto(m.horasViagem, d.horas, T.distancia));
       // o "solto" pode ser também um tempo do relógio que o sistema deu
       if (!ok && m.tipo === "solto" && m.horasRelogio != null) ok = tempos.some((x) => perto(m.horasRelogio, x.horas, T.tempo));
@@ -668,6 +717,7 @@ function julgarNomes(t, estado) {
   const pautaSabe = typeof estado.pauta === "string" ? oQueAPautaSabe(estado.pauta) : null;
   if (pautaSabe) conhecidos.push(...pautaSabe.gente, ...pautaSabe.lugares);
   if (estado.moeda) conhecidos.push(String(estado.moeda));
+  conhecidos.push(...LEXICO_DO_JUIZ.calendario);
   const conhecidas = new Set(conhecidos.flatMap(tokensDoNome));
   /* O QUE ESTÁ À VENDA É DO SISTEMA (28/10, a prova viva da v9.531): o
      «Elixir de Destreza» da banca da cena saía como gente nova, e a correção
@@ -840,14 +890,27 @@ export function oQueAPautaSabe(texto) {
     const linha = m ? m[2] : linha0.trim();
     if (!linha || /^\[/.test(linha)) continue;
     // o mercado: "nome ◉ N" (o nome é o pedaço antes do ◉, depois do último separador)
+    const daLinha = [];
     for (const mm of linha.matchAll(/([^◉·:;,()\]]{2,60}?)\s*◉\s*(\d+)/g)) {
       const nome = mm[1].replace(/^.*?(?:\bà venda|\bna rua|\bpor)\b[:,]?\s*/i, "").replace(/^\s*(?:\d+\s*×\s*)?/, "").trim();
-      out.mercado.push({ nome, preco: Number(mm[2]) });
+      /* a comida comum da pauta leva o id dela (economia.js): «refeição quente
+         ◉ 3» é o mesmo «prato quente» da prosa (a 13.ª, T23) */
+      const comum = PRECOS_COMUNS.find((c) => c.rx.test(semAcento(nome)));
+      daLinha.push({ ini: mm.index, item: { nome, preco: Number(mm[2]), ...(comum ? { id: comum.id } : {}) } });
     }
-    // a distância: "(..., 25 km)", "4 h de marcha", "(6,6 km, 2,1 h)"
-    const km = linha.match(/(\d+(?:[.,]\d+)?)\s*km\b/), h = linha.match(/(\d+(?:[.,]\d+)?)\s*h\b(?!\w)/);
+    /* o ◉ entre parênteses é outro preço da MESMA coisa: «quarto comum ◉ 6 a
+       noite (◉ 36 a semana)» (a 13.ª, T2: «a mesa diz ◉ 6, e a prosa diz 36») */
+    for (const mm of linha.matchAll(/\(\s*◉\s*(\d+)/g)) {
+      const dono = daLinha.filter((x) => x.ini < mm.index).pop();
+      if (dono) daLinha.push({ ini: mm.index, item: { ...dono.item, preco: Number(mm[1]) } });
+    }
+    out.mercado.push(...daLinha.map((x) => x.item));
+    // a distância: "(..., 25 km)", "4 h de marcha", "(6,6 km, 2,1 h)" — e nunca a hora da agenda ("das 08h às 18h")
+    const semHora = linha.replace(LEXICO_DO_JUIZ.horaNaPauta, " ");
+    const km = semHora.match(/(\d+(?:[.,]\d+)?)\s*km\b/), h = semHora.match(/(\d+(?:[.,]\d+)?)\s*h\b(?!\w)/);
     if (km || h) {
-      const lugar = (linha.match(/(?:em|DAQUI|daqui|até|para)\s+(\p{Lu}[\p{L}'’-]*(?:\s+(?:(?:da|do|de|dos|das)\s+)?\p{Lu}[\p{L}'’-]*)*)/u) || [])[1] || "";
+      const ld = linha.match(LEXICO_DO_JUIZ.linhaDeDistancia);
+      const lugar = (ld && ld[1].trim()) || (linha.match(/(?:em|DAQUI|daqui|até|para)\s+(\p{Lu}[\p{L}'’-]*(?:\s+(?:(?:da|do|de|dos|das)\s+)?\p{Lu}[\p{L}'’-]*)*)/u) || [])[1] || "";
       out.distancias.push({ para: lugar, km: km ? Number(km[1].replace(",", ".")) : undefined, horas: h ? Number(h[1].replace(",", ".")) : undefined });
     }
     // o tempo do desfecho: "acorda em 3 horas"
@@ -891,14 +954,23 @@ function julgarPauta(t, estado) {
   const p = plano(t);
   const faltaram = [];
   let cumpridos = 0;
+  /* a 13.ª (29/10), os três «pedidos esquecidos» que a prosa cumpriu: «5,2 km,
+     1,3 h» dito «cinco quilômetros e pouco, uma hora e vinte» (o decimal entra
+     arredondado); «das 08h às 18h» dito «desde as oito… até as seis da tarde»
+     (a hora em 12); «não há escudo à venda em Porto das Pedras» dito «neste
+     burgo» (o sítio onde se está não é ninguém que tenha de ser nomeado) */
+  const temNumero = (n) => nums.has(n) || (!Number.isInteger(n) && [Math.floor(n), Math.round(n), Math.ceil(n)].some((x) => nums.has(x)))
+    || (Number.isInteger(n) && n > TOLERANCIAS_DO_JUIZ.meioDia && n < 2 * TOLERANCIAS_DO_JUIZ.meioDia && nums.has(n - TOLERANCIAS_DO_JUIZ.meioDia));
+  const sitios = new Set([...lista(estado.lugares), ...(pautaSabe ? pautaSabe.lugares : [])].map((x) => semAcento(tokensDoNome(nomeDe(x)).join(" "))).filter(Boolean));
+  const ehSitio = (n) => LEXICO_DO_JUIZ.nomesDeLugar.includes(tokensDoNome(n)[0] || "") || sitios.has(semAcento(tokensDoNome(n).join(" ")));
   for (const f of fatos) {
     const sem = f.replace(/\(é fato[^)]*\)/, "");
     // o preço tem de entrar COMO preço (◉ 2 não se cumpre com "dois nomes");
     // os dias e as horas, como número
     const precos = [...sem.matchAll(/◉\s*(\d+)|(\d+)\s*moedas?\b/g)].map((m) => Number(m[1] || m[2]));
-    const ns = [...sem.matchAll(/(\d+)\s*(?:dias|horas|km|h)\b/g)].map((m) => Number(m[1]));
-    const quem = nomesDe(sem).map((n) => tokensDoNome(n.nome).filter((w) => w.length >= 3 && !LEXICO_DO_JUIZ.naoSaoNome.includes(w))).filter((x) => x.length);
-    const faltaN = [...precos.filter((n) => !dinheiro.has(n)), ...ns.filter((n) => !nums.has(n))];
+    const ns = [...sem.matchAll(/(\d+(?:,\d+)?)\s*(?:dias|horas|km|h)\b/g)].map((m) => Number(m[1].replace(",", ".")));
+    const quem = nomesDe(sem).filter((n) => !ehSitio(n.nome)).map((n) => tokensDoNome(n.nome).filter((w) => w.length >= 3 && !LEXICO_DO_JUIZ.naoSaoNome.includes(w))).filter((x) => x.length);
+    const faltaN = [...precos.filter((n) => !dinheiro.has(n)), ...ns.filter((n) => !temNumero(n))];
     const faltaQ = quem.length && !quem.some((ts) => ts.some((w) => new RegExp("\\b" + w + "\\b").test(p))) ? quem[0].join(" ") : "";
     if (!faltaN.length && !faltaQ) { cumpridos++; continue; }
     faltaram.push({ fato: f, falta: [...faltaN.map((n) => "◉ " + n), ...(faltaQ ? [faltaQ] : [])].join(" · "), motivo: `a pauta mandou entrar "${f.slice(0, 80)}", e a prosa não diz ${faltaN.length ? faltaN.join(", ") : faltaQ}` });

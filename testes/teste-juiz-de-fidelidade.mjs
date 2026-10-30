@@ -22,7 +22,8 @@
 import { julgarAProsa, oQueAPautaSabe, TAXONOMIA_DO_JUIZ, TOLERANCIAS_DO_JUIZ, LEXICO_DO_JUIZ } from "../src/juiz-de-fidelidade.js";
 /* o corpus (os casos e o que o sistema sabia em cada um) mora em
    corpus-do-juiz.mjs desde 28/10: a suíte da correção mede sobre ele também */
-import { sem, J, RC, H9, casos, CLASSES, apanhou } from "./corpus-do-juiz.mjs";
+import { sem, J, RC, H9, casos, CLASSES, apanhou, casos13 } from "./corpus-do-juiz.mjs";
+import { vetosDoVeredito } from "../src/motor/correcao-do-juiz.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome); } };
@@ -157,6 +158,78 @@ sec("5. A META: o corpus rotulado das sessões 6–11");
   const cego = casos.filter((c) => c.limpo).filter((c) => !julgarAProsa(c.prosa, { frase: c.estado.frase, antes: c.estado.antes, moeda: c.estado.moeda }).limpa).length;
   console.log(`     as mesmas limpas, sem o estado do sistema: ${cego} de ${limpas} acusadas`);
   t(`sem o estado do sistema, o Juiz acusa ao menos cinco vezes mais (${cego} contra ${sujas})`, cego >= 5 * Math.max(1, sujas));
+}
+
+sec("6. FORA DO CORPUS: a 13.ª sessão (29/10), 23 respostas que o Juiz nunca viu");
+{
+  /* No jogo, 18 achados e 2 verdadeiros (precisão 11%, mente/sessao-13.md §2).
+     As cinco causas, uma prova cada — falham no Juiz de antes, passam neste: */
+  const v = (prosa, estado) => julgarAProsa(prosa, estado);
+  const precos = (x) => x.precosInventados.map((a) => a.valor);
+  /* 1. a bolsa e a comparação não são preço */
+  t("«você tem no bolso quinze moedas» é a bolsa, não o preço do pão", precos(v("Você tem no bolso quinze moedas de prata: gastar o que resta ou guardar para o pão.", { bolsa: 15 })).length === 0);
+  t("«meia dúzia de pratas furadas no bolso» não é preço (e meia dúzia não é doze)", precos(v("Quem te mandou com meia dúzia de pratas furadas no bolso?", { bolsa: 15 })).length === 0);
+  t("«dois estalos a mais… do que você tem» é comparação, não preço", precos(v("Se a coroa pagar dois estalos a mais pela cabeça dele do que você tem, ele entrega.", {})).length === 0);
+  t("«uma hora e vinte de marcha» não tem preço 20", !precos(v("O poço fica a uma hora e vinte de marcha a pé — coisa de cinco quilômetros, e não custa nada.", { frase: "quanto tempo de marcha?" })).includes(20));
+  t("mas «o ensopado custa seus 2 estalos», sem a refeição na mesa, continua inventado", precos(v("Aqui tudo se compra — até um prato ralo de ensopado de nabo custa seus 2 estalos de prata.", { bolsa: 15, moeda: "estalos de prata" })).includes(2));
+  /* 2. a pauta lida: PERGUNTOU, a cauda do pouso, a hora da agenda, o sítio da distância */
+  const pq = oQueAPautaSabe("PERGUNTOU o preço daqui: refeição quente ◉ 3 estalos");
+  t("«refeição quente ◉ 3» da pauta leva o id da comida comum, e o «prato quente a três» é dela", pq.mercado.some((x) => x.id === "refeicao" && x.preco === 3)
+    && precos(v("Prato quente lá no burgo sai por três estalos de prata.", { pauta: "PERGUNTOU o preço daqui: refeição quente ◉ 3 estalos" })).length === 0);
+  const pp = oQueAPautaSabe("PERGUNTOU pouso: quarto comum ◉ 6 a noite (◉ 36 a semana), bom ◉ 15");
+  t("«(◉ 36 a semana)» é outro preço do quarto comum, e o «trinta e seis a semana» passa", pp.mercado.some((x) => x.nome === "quarto comum" && x.preco === 36)
+    && precos(v("Quarto comum sai por seis estalos a noite, trinta e seis a semana.", { pauta: "PERGUNTOU pouso: quarto comum ◉ 6 a noite (◉ 36 a semana), bom ◉ 15" })).length === 0);
+  t("«das 08h às 18h» é a agenda, não a distância até ao Largo", oQueAPautaSabe("PERGUNTOU Corrado: no que faz em Largo da Liça das 08h às 18h, folga um dia por semana").distancias.length === 0);
+  const pd = oQueAPautaSabe("PERGUNTOU distância: o poço fundo (a sudeste, 5,2 km, 1,3 h a pé)");
+  t("«distância: o poço fundo (…)» dá a distância COM o sítio", pd.distancias.length === 1 && pd.distancias[0].para === "o poço fundo" && pd.distancias[0].km === 5.2);
+  t("e a prosa que a diz por alto («cinco quilômetros e pouco, uma hora e vinte») cumpre-a e não é acusada", (() => {
+    const x = v("— O poço fundo fica a sudeste, coisa de cinco quilômetros e pouco, bate uma hora e vinte de marcha a pé.", { pauta: "PERGUNTOU distância: o poço fundo (a sudeste, 5,2 km, 1,3 h a pé)", frase: "Esse poço fundo, onde fica? quanto tempo de marcha?" });
+    return x.distanciasFora.length === 0 && !!x.pautaCumprida && x.pautaCumprida.faltaram.length === 0;
+  })());
+  t("a fala que a pauta pôs na boca de alguém («É meio dia de desvio») não é distância inventada", v("— É meio dia de desvio, jura ele.", { pauta: "QUEM CARREGA Corrado pede, e diz: «É meio dia de desvio»" }).distanciasFora.length === 0);
+  /* 3. o mapa é verdade mesmo fora da pauta — mas só para o sítio nomeado */
+  const mapa = [{ para: "Fenda de Silêncio", horas: 4, doMapa: true }];
+  t("«a Fenda, quatro horas» passa com a distância do mapa", v("Quatro horas de marcha até a Fenda de Silêncio.", { distancias: mapa }).distanciasFora.length === 0);
+  t("e «a Fenda, um dia e meio de marcha» contra o mapa de 4 h é acusado", v("Um dia e meio de marcha até a Fenda de Silêncio.", { distancias: mapa }).distanciasFora.length === 1);
+  t("mas a distância do mapa não absolve a medida sem destino («quatro horas de estrada»)", v("São quatro horas de estrada, dizem.", { distancias: mapa }).distanciasFora.length === 1);
+  /* 4. o calendário não é gente */
+  t("«o céu cinzento de Brumal» é o mês, não alguém em cena", LEXICO_DO_JUIZ.calendario.includes("Brumal") && v("O ferro escapa dos seus dedos, e o céu cinzento de Brumal gira antes de apagar.", {}).pessoasNovas.length === 0);
+  /* 5. o pedido cumprido por paráfrase */
+  t("«das 08h às 18h» cumpre-se com «desde as oito… até as seis da tarde»", v("O Corrado tá no Largo batendo aposta desde as oito; hoje fica até as seis da tarde.", { pauta: "PERGUNTOU Corrado: no que faz em Largo da Liça das 08h às 18h, folga um dia por semana" }).pautaCumprida.faltaram.length === 0);
+  t("«não há escudo à venda em Porto das Pedras» cumpre-se com «neste burgo» (o sítio não é «quem»)", v("— Escudo não tem nenhum à venda neste burgo.", { pauta: "PERGUNTOU não há escudo à venda em Porto das Pedras, e nenhuma banca daqui vende escudos" }).pautaCumprida.faltaram.length === 0);
+  t("mas o fato que nomeia alguém e a prosa cala continua por cumprir", v("Ninguém responde.", { pauta: "PERGUNTOU Corrado: no que faz em Largo da Liça das 08h às 18h" }).pautaCumprida.faltaram.length === 1);
+
+  /* A RÉGUA, sobre as 23 respostas reais (testes/juiz-rotulado.json#s13) */
+  let achados = 0, verdadeiros = 0, artef = 0, falsosDoJogo = 0, aindaAcusados = 0;
+  const falsosVivos = [], verdFaltam = [];
+  for (const c of casos13) {
+    const x = julgarAProsa(c.prosa, c.estado);
+    const todos = [...CLASSES.flatMap((cl) => x[cl].map((a) => ({ cl, a }))), ...(x.pautaCumprida ? x.pautaCumprida.faltaram.map((f) => ({ cl: "pautaCumprida", a: { trecho: f.fato } })) : [])];
+    for (const { cl, a } of todos) {
+      if (c.artefactos.some((r) => sem(a.trecho).includes(sem(r.trecho)))) { artef++; continue; }
+      achados++;
+      if (c.rotulos.some((r) => r.classe === cl && sem(a.trecho).includes(sem(r.trecho)))) verdadeiros++;
+      else falsosVivos.push(`${c.id} ${cl}: ${String(a.trecho).slice(0, 60)}`);
+    }
+    for (const r of c.rotulos) if (!apanhou(x, r)) verdFaltam.push(`${c.id} «${r.trecho}»`);
+    /* cada falso do jogo, pelo trecho da prosa: já não é acusado */
+    for (const f of c.falsos) {
+      falsosDoJogo++;
+      if (!/^pauta:/.test(f.trecho) && todos.some(({ a }) => sem(a.trecho).includes(sem(f.trecho)))) aindaAcusados++;
+    }
+  }
+  const precisao = verdadeiros / Math.max(1, achados);
+  console.log(`     na 13.ª: ${achados} achados, ${verdadeiros} verdadeiros (precisão ${(precisao * 100).toFixed(0)}%) · ${artef} artefacto(s) da reconstrução à parte · no jogo eram 18 e 2 (11%)`);
+  if (VER || falsosVivos.length) console.log("       falsos: " + (falsosVivos.join(" | ") || "nenhum"));
+  t(`os 2 verdadeiros da 13.ª continuam apanhados (${verdFaltam.length ? "faltam " + verdFaltam.join(", ") : "os dois"})`, verdFaltam.length === 0 && J.s13.turnos.flatMap((x) => x.rotulos).length === 2);
+  t(`os ${falsosDoJogo} falsos que o jogo acusou já não são acusados (${aindaAcusados} ainda)`, falsosDoJogo === 16 && aindaAcusados === 0);
+  t(`e a precisão na 13.ª passa de 11% a ≥ 80% (${(precisao * 100).toFixed(0)}%)`, precisao >= 0.8);
+  /* O VETO (§2 do relatório: «fica por provar em Node»). No Juiz de antes, o
+     filtro (especieDoAchado) deixava passar DOIS dos 16 falsos — os do T2,
+     «36 contra ◉ 6» e «0,5 dia contra o Largo 8 h» — e teria vetado dois
+     números certos. Neste Juiz, a resposta do T2 não deixa veto nenhum. */
+  const t2 = casos13.find((c) => c.id === "s13#1");
+  t("a resposta do T2 da 13.ª já não deixa veto nenhum (no Juiz de antes deixava 2, ambos sobre números certos)", vetosDoVeredito(julgarAProsa(t2.prosa, t2.estado), { turno: 2 }).length === 0);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

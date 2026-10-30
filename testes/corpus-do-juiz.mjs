@@ -117,3 +117,26 @@ export const apanhou = (v, r) => {
   const alvo = sem(r.trecho);
   return (r.aceita || [r.classe]).some((cl) => (v[cl] || []).some((a) => sem(a.trecho).includes(alvo) || alvo.includes(sem(a.nome || "")) && a.nome));
 };
+
+/* ---------------- a 13.ª, fora do corpus (29/10/2026) ----------------
+   A primeira sessão julgada pelo Juiz DEPOIS de ele existir: 23 respostas,
+   18 achados no jogo, 2 verdadeiros (mente/sessao-13.md §2). Fica à parte
+   dos `casos` de propósito — a régua de lá (≥ 90% apanhados, ≤ 5% de
+   falsos) é a das sessões 6–11, e esta mede outra coisa: a PRECISÃO num
+   corpus que o Juiz nunca viu (≥ 80% dos achados verdadeiros, os 2
+   apanhados). O estado de cada turno é o de J.s13 (o `origem` diz de onde
+   vem cada campo); `semMapa` tira as distâncias do mapa, que a entrada do
+   jogo ainda não levava — é assim que se refaz o que o jogo acusou. */
+export function estadoDe13(v, { semMapa = false } = {}) {
+  const S = J.s13, tt = S.turnos[v];
+  return {
+    frase: tt.frase || "",
+    antes: S.turnos.slice(Math.max(0, v - 6), v).map((x) => x.prosa),
+    moeda: S.moeda, heroi: S.heroi, grupo: S.grupo,
+    gente: S.gente, outros: S.outros, lugares: S.lugares, papeis: S.papeis, inventario: S.inventario, nomesAMao: S.nomesAMao,
+    mercado: [], valores: [], bolsa: tt.bolsa,
+    ...(semMapa ? {} : { distancias: (S.mapa[tt.de] || []).map((d) => ({ ...d, doMapa: true })) }),
+    pauta: tt.pauta || "",
+  };
+}
+export const casos13 = J.s13.turnos.map((tt) => ({ id: `s13#${tt.v}`, prosa: tt.prosa, estado: estadoDe13(tt.v), rotulos: tt.rotulos, falsos: tt.falsosDoJogo || [], artefactos: J.s13.artefactos.filter((a) => a.v === tt.v) }));
