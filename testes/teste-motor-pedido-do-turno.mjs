@@ -24,6 +24,7 @@ import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto, N_C
 import { N_DA_PAUTA } from "./pauta-bloco.mjs";
 import { oPedidoDoTurno, REFS_DO_PEDIDO, RENDER_DO_PEDIDO, ENTRADA_DO_PEDIDO, PEDIDO_AO_NARRADOR } from "../src/motor/pedido-do-turno.js";
 import { rng, hashSemente } from "../src/semente.js";
+import { morderEmParalelo } from "./mordidas-em-paralelo.mjs";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -36,7 +37,14 @@ const conta = (fotos) => fotos.reduce((a, f, i) => a + (mesmaFoto(fotoGuardada(f
    histórico-base e os da estrada): o recorte leva ~50 ms por caso, e o
    rodar-tudo dá 120 s a cada suíte */
 const PARA_MORDER = CASOS.filter((k) => k.i % 3 === 0 || k.i % 11 === 4 || k.i % 9 === 4);
-const diferem = (fotos) => fotos.reduce((a, f, j) => a + (mesmaFoto(fotoGuardada(f, PARA_MORDER[j].i), D.fotos[PARA_MORDER[j].i]) ? 0 : 1), 0);
+/* MOVIDA (29/10, a 13.ª): as dezasseis mordidas (as treze do recorte e as
+   três da chamada, secções 4 e 5) correm juntas, repartidas por
+   trabalhadores (mordidas-em-paralelo.mjs) — os mesmos casos, a mesma conta
+   de fotos que mudam, mordida a mordida; a suíte passava dos 120 s do
+   corredor (~166 s numa linha só). */
+const IDX = PARA_MORDER.map((k) => k.i);
+const ONDE = { bloco: new URL("./pedido-bloco.mjs", import.meta.url).href, caso: "casoDoPedido",
+  peca: new URL("../src/motor/pedido-do-turno.js", import.meta.url).href, nomeDaPeca: "oPedidoDoTurno" };
 
 sec("1. O dourado: o recorte à letra, e o recorte de novo dá as mesmas fotos");
 const R = await correrOsCasos(D, { lado: "recorte" });
@@ -90,23 +98,24 @@ const MORDIDAS_DO_RECORTE = [
   ["a rede fora da ordem do cache", "pedido = pedidoNaOrdemDoCache(system, pedido.messages);", "pedido = pedido;"],
   ["a rede sem a janela ancorada", "messages: janelaAncorada(historico)", "messages: historico"],
 ];
+/* a chamada mordida (secção 5): o App sem `aplicar`, a entrada sem a escuta, o histórico-base vazio */
+const DA_CHAMADA = [{ semAplicar: true }, { entradaExtra: { pedidoEsc: null } }, { entradaExtra: { histBase: [] } }];
+const CONTAS = await morderEmParalelo(ONDE, [
+  ...MORDIDAS_DO_RECORTE.map(([, de, para]) => ({ lado: "recorte", trocas: [[de, para]], casos: IDX })),
+  ...DA_CHAMADA.map((opcoes) => ({ lado: "peca", opcoes, casos: IDX })),
+]);
 const MORDEU_R = {};
-for (const [nome, de, para] of MORDIDAS_DO_RECORTE) {
-  const fotos = await correrOsCasos(D, { lado: "recorte", trocas: [[de, para]], casos: PARA_MORDER });
-  const d = diferem(fotos);
+MORDIDAS_DO_RECORTE.forEach(([nome], j) => {
+  const d = CONTAS[j];
   MORDEU_R[nome] = d;
   t(`mordida: ${nome} — muda ${d} fotos`, d > 0);
-}
+});
 
 sec("5. A prova vê o que a peça promete (chamada e escopo, sem ler o texto dela)");
 {
-  const casos = PARA_MORDER;
-  const com = async (opcoes) => diferem(await correrOsCasos(D, { lado: "peca", peca: oPedidoDoTurno, casos, opcoes }));
-  const semAplicar = await com({ semAplicar: true });
+  const [semAplicar, semEscuta, semHist] = CONTAS.slice(MORDIDAS_DO_RECORTE.length);
   t(`o App sem \`aplicar\` não vê o que a montagem escreveu — muda ${semAplicar} fotos`, semAplicar > 0);
-  const semEscuta = await com({ entradaExtra: { pedidoEsc: null } });
   t(`a entrada manda: sem o pedido da escuta, muda ${semEscuta} fotos`, semEscuta > 0);
-  const semHist = await com({ entradaExtra: { histBase: [] } });
   t(`o histórico-base manda: vazio, muda ${semHist} fotos`, semHist > 0);
   /* o escopo do recorte acusa o nome que nenhum dublê dá */
   const [f] = await correrOsCasos(D, { lado: "recorte", trocas: [["const grp = resumoGrupoPrompt(p.grupo || []);", "const grp = resumoGrupoDeOutroNome(p.grupo || []);"]], casos: [CASOS[1]] });

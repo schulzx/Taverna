@@ -26,6 +26,7 @@ import { lerODourado, correrOsCasos, casosDaPauta, fotoGuardada, mesmaFoto, osMo
 import { aPautaDoTurno, REFS_DA_PAUTA, RENDER_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
 import { SECOES, TETO_DA_PAUTA } from "../src/pauta.js";
 import { semearACasa, rng, hashSemente } from "../src/semente.js";
+import { morderEmParalelo } from "./mordidas-em-paralelo.mjs";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -34,10 +35,15 @@ const sec = (s) => console.log("\n" + s);
 const D = lerODourado();
 const CASOS = casosDaPauta();
 const conta = (fotos) => fotos.reduce((a, f, i) => a + (mesmaFoto(fotoGuardada(f, i), D.fotos[i]) ? 1 : 0), 0);
-/* as mordidas correm sobre 193 dos 275 (os pares, os do aliado que vai embora e as lutas com golpes da rodada):
-   a suíte inteira corre ~17 vezes os casos, e o rodar-tudo dá 120 s a cada uma */
+/* as mordidas correm sobre 201 dos 287 (os pares, os do aliado que vai embora e as lutas com golpes da rodada):
+   a suíte inteira corre ~17 vezes os casos, e o rodar-tudo dá 120 s a cada uma.
+   MOVIDA (29/10, a 13.ª): as quinze mordidas (secções 4 e 5) correm juntas,
+   repartidas por trabalhadores (mordidas-em-paralelo.mjs) — os mesmos casos,
+   a mesma conta de fotos que mudam, mordida a mordida; a suíte passou de
+   ~139 s numa linha só para menos de metade. */
 const PARA_MORDER = CASOS.filter((k) => k.i % 2 === 0 || k.i % 10 === 1 || k.i % 10 === 7);
-const diferem = (fotos) => fotos.reduce((a, f, j) => a + (mesmaFoto(fotoGuardada(f, PARA_MORDER[j].i), D.fotos[PARA_MORDER[j].i]) ? 0 : 1), 0);
+const ONDE = { bloco: new URL("./pauta-bloco.mjs", import.meta.url).href, caso: "casoDaPauta",
+  peca: new URL("../src/motor/pauta-do-turno.js", import.meta.url).href, nomeDaPeca: "aPautaDoTurno" };
 
 sec("1. O dourado: o recorte à letra, e o recorte de novo dá as mesmas fotos");
 /* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
@@ -89,7 +95,6 @@ t(`ENTRETANTO em ${vivos.foraDeCena || 0} casos e O QUE VOLTA em ${vivos.volta |
 t(`o pushMsgs (o aliado que vai embora) em ${comPush} casos, a ficha em ${comFicha}, o calou em ${comCalou}`, comPush >= 4 && comFicha >= 4 && comCalou >= 5);
 t("o texto nunca passa do teto da pauta (TETO_DA_PAUTA, que não mexeu: 1400)", TETO_DA_PAUTA === 1400 && D.fotos.every((f) => f.tam <= TETO_DA_PAUTA));
 
-sec(`4. A prova morde: o recorte mordido muda fotos (em ${PARA_MORDER.length} casos)`);
 const MORDIDAS_DO_RECORTE = [
   ["o sino que não se apaga", `p = porNaPauta(p, "momento", sinoDoTurnoRef.current); sinoDoTurnoRef.current = "";`, `p = porNaPauta(p, "momento", sinoDoTurnoRef.current);`],
   ["o veto do juiz no turno de agora (sem o +1)", `vetosParaAPauta(vetosDoJuizRef.current, { turno: turnoDeRegistroRef.current + 1,`, `vetosParaAPauta(vetosDoJuizRef.current, { turno: turnoDeRegistroRef.current,`],
@@ -102,14 +107,7 @@ const MORDIDAS_DO_RECORTE = [
   ["a vista da luta sem os golpes da rodada", `golpes: gR && gR.rodada === (cV.rodada || 1) - 1 ? gR.golpes : [] });`, `golpes: [] });`],
   ["quem é: a ficha que não espera a vez", `ultimas: q.ultimas, cenas: q.cenas,`, `ultimas: {}, cenas: {},`],
 ];
-const MORDEU_R = {};
-for (const [nome, de, para] of MORDIDAS_DO_RECORTE) {
-  const n = diferem(await correrOsCasos(D, { lado: "recorte", trocas: [[de, para]], casos: PARA_MORDER }));
-  MORDEU_R[nome] = n;
-  t(`${nome}: ${n} fotos mudam`, n > 0);
-}
 
-sec("5. A prova vê o que a peça promete (sem ler o texto dela: chamada e recorte mordido)");
 /* a catraca teste-assercoes-de-texto proíbe suíte que leia src/motor/: o que
    a peça promete morde-se pelo lado de fora — o recorte mordido no mesmo
    ponto, ou a peça chamada com a porta/o estado de outro jeito */
@@ -122,13 +120,27 @@ const MORDIDAS_DO_CONTRATO = [
   ["o render que não vem (vale o do estado)", "peca", (e, en, p) => aPautaDoTurno({ ...e, render: {} }, en, p)],
   ["o campo ausente que chega nulo em vez do valor de partida", "peca", (e, en, p) => aPautaDoTurno({ ...Object.fromEntries(Object.keys(REFS_DA_PAUTA).map((c) => [c, null])), ...Object.fromEntries(Object.entries(e).filter(([, v]) => v !== undefined)) }, en, p)],
 ];
+/* as quinze de uma vez (as do recorte e as do contrato), e as asserções na ordem de sempre */
+const IDX = PARA_MORDER.map((k) => k.i);
+const CONTAS = await morderEmParalelo(ONDE, [
+  ...MORDIDAS_DO_RECORTE.map(([, de, para]) => ({ lado: "recorte", trocas: [[de, para]], casos: IDX })),
+  ...MORDIDAS_DO_CONTRATO.map(([, lado, x]) => (lado === "recorte" ? { lado, trocas: x, casos: IDX } : { lado, peca: x, casos: IDX })),
+]);
+sec(`4. A prova morde: o recorte mordido muda fotos (em ${PARA_MORDER.length} casos)`);
+const MORDEU_R = {};
+MORDIDAS_DO_RECORTE.forEach(([nome], j) => {
+  const n = CONTAS[j];
+  MORDEU_R[nome] = n;
+  t(`${nome}: ${n} fotos mudam`, n > 0);
+});
+
+sec("5. A prova vê o que a peça promete (sem ler o texto dela: chamada e recorte mordido)");
 const MORDEU_P = {};
-for (const [nome, lado, x] of MORDIDAS_DO_CONTRATO) {
-  const fotos = lado === "recorte" ? await correrOsCasos(D, { lado, trocas: x, casos: PARA_MORDER }) : await correrOsCasos(D, { lado, peca: x, casos: PARA_MORDER });
-  const n = diferem(fotos);
+MORDIDAS_DO_CONTRATO.forEach(([nome], j) => {
+  const n = CONTAS[MORDIDAS_DO_RECORTE.length + j];
   MORDEU_P[nome] = n;
   t(`${nome}: ${n} fotos mudam`, n > 0);
-}
+});
 
 sec("6. O estado não se muta");
 const fundo = (x) => { if (x && typeof x === "object" && !Object.isFrozen(x)) { Object.freeze(x); for (const v of Object.values(x)) fundo(v); } return x; };

@@ -39,12 +39,24 @@ const suites = readdirSync(".").filter((f) => /^(teste-.*|jogar-em-node)\.mjs$/.
    cego, e ninguém o via. */
 const varredores = readdirSync(".").filter((f) => /^(check|varredura)-.*\.mjs$/.test(f)).sort();
 
+/* O RELÓGIO DE CADA PROGRAMA (29/10, a 13.ª): 120 s. Duas suítes do motor
+   passaram dele (139 s e 166 s) e o vermelho saía igual ao de um defeito —
+   as últimas linhas do que ela imprimiu, sem dizer que fora o relógio a
+   matá-la. O conserto foi torná-las rápidas (mordidas-em-paralelo.mjs, as
+   mordidas repartidas por trabalhadores: 69 s e 81 s); isto é só para que,
+   da próxima vez, o vermelho diga o nome certo. */
+const RELOGIO = Object.freeze({ ms: 120000 });
+
 const rodar = (arqs, rotulo) => {
   let ok = 0; const ruins = [];
   for (const a of arqs) {
-    const r = spawnSync(process.execPath, [a], { encoding: "utf8", timeout: 120000 });
+    const r = spawnSync(process.execPath, [a], { encoding: "utf8", timeout: RELOGIO.ms });
     if (r.status === 0) ok++;
-    else { ruins.push(a); console.log(`\n✗ ${a}\n${(r.stdout || "").split("\n").slice(-14).join("\n")}${(r.stderr || "").slice(0, 900)}`); }
+    else {
+      ruins.push(a);
+      const relogio = r.error && r.error.code === "ETIMEDOUT" ? `  (o relógio: passou dos ${RELOGIO.ms / 1000} s e foi parado — não é veredito da suíte)\n` : "";
+      console.log(`\n✗ ${a}\n${relogio}${(r.stdout || "").split("\n").slice(-14).join("\n")}${(r.stderr || "").slice(0, 900)}`);
+    }
   }
   console.log(`\n${ok}/${arqs.length} ${rotulo}` + (ruins.length ? ` · FALHARAM: ${ruins.join(" ")}` : ""));
   return ruins.length;
