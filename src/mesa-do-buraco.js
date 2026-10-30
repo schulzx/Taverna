@@ -87,6 +87,10 @@ const semArtigo = (s) => String(s).replace(/^(o|a|os|as)\s+/, "").trim();
    `minimo`: o pedaço de nome mais curto que conta (letras). */
 export const MESA_DO_BURACO = Object.freeze({
   pedePreco: /\b(quanto|quantos|qual (e )?o preco|que preco|o preco|a quanto|por quanto|cobra|cobras|cobram|cobraria|custa|custam|custaria|sai por|pago|pagar|peco|pedimos|quero|queremos)\b/,
+  /* «onde fica X?» não abre a porta sozinho (é o portão de `perguntaCaminho`),
+     mas faz do X um sítio perguntado quando a frase pede o caminho — a 13.ª,
+     T7: «Esse poço fundo, onde fica? E a Fenda… quanto tempo de marcha?» */
+  ondeFica: /\b(onde (e que )?fica(m)?|onde (e|sao)( que)? (o|a|os|as))\b/,
   perguntaCaminho: /\b(quanto tempo|a que distancia|que distancia|distancia (ate|de|daqui|ao|a|para|pra)|como se chega|como (eu )?chego|como (a gente|nos) chega|que caminho|qual (o )?caminho|quanto falta|quao longe|(fica|e|esta) (longe|perto)|longe daqui|perto daqui|quantos dias|quantas horas|a quantos (passos|metros|km|quilometros|dias|horas|minutos|leguas))\b/,
   pouso: Object.freeze({
     rx: /\b(camas?|pouso|quartos?|dormir|pernoitar|pernoite|estalagem|hospedagem|pousada|diaria)\b/,
@@ -130,37 +134,70 @@ function pedacosDoNome(nome) {
   return out;
 }
 
-/* o sítio de que a frase pergunta o caminho: o nome (ou o pedaço dele), a
-   cabeça sozinha quando um só nome a tem ("o santuário"), ou a casa de uma
-   pessoa do registo ("a forja do Tomas" → o local do Tomas) */
-function oDestino(t, nomes, gente) {
-  let melhor = null;
+/* OS SÍTIOS de que a frase pergunta o caminho — TODOS, pela ordem da frase.
+   Até à 13.ª sessão era UM: «Esse poço fundo, onde fica? E a Fenda de
+   Silêncio… qual é o caminho e quanto tempo de marcha?» (T7) levou a
+   distância do poço e deixou a Fenda à imaginação do Mestre, que disse
+   «quatro horas» de cabeça. Cada sítio sai por uma de três vias:
+     1. o nome (ou o pedaço dele, sem a cabeça genérica);
+     2. a cabeça sozinha, quando um só nome a tem («o santuário»);
+     3. a casa de uma pessoa do registo («a forja do Tomas» → o local dele).
+   Um trecho da frase só serve a um sítio: o que um nome já cobriu não volta
+   pela cabeça nem pela casa, e o NOME DA CIDADE ONDE SE ESTÁ não é destino
+   — «saindo de Porto das Pedras» não pergunta por Porto dos Barões, mesmo
+   que «porto» seja a cabeça só dele. A cabeça seguida de «de/do/da» é
+   OUTRO nome («o santuário do vau» que o mapa não tem): não se troca pelo
+   único santuário que ele tem. */
+function osDestinos(t, nomes, gente, aqui) {
+  const achados = [];
+  const tapados = [];
+  const tapa = (i, tam) => tapados.push([i, i + tam]);
+  const tapado = (i, tam) => tapados.some(([a, b]) => i < b && i + tam > a);
+  /* onde se está não é para onde se vai */
+  const casa = semArtigo(norm(aqui || "").replace(/\s+/g, " ").trim());
+  if (casa.length >= 3) {
+    for (let i = t.indexOf(casa); i >= 0; i = t.indexOf(casa, i + 1)) {
+      const antes = i > 0 ? t[i - 1] : " ", depois = t[i + casa.length] || " ";
+      if (!/[a-z0-9]/.test(antes) && !/[a-z0-9]/.test(depois)) tapa(i, casa.length);
+    }
+  }
   const ver = (nome, i, tam) => {
-    if (i < 0) return;
-    if (!melhor || i < melhor.i || (i === melhor.i && tam > melhor.tam)) melhor = { nome, i, tam };
+    if (i < 0 || tapado(i, tam) || achados.some((a) => norm(a.nome) === norm(nome))) return;
+    achados.push({ nome, i, tam }); tapa(i, tam);
   };
-  for (const nome of nomes) for (const p of pedacosDoNome(nome)) ver(nome, citado(t, p), p.length);
-  if (!melhor) {
-    const porCabeca = new Map();
-    for (const nome of nomes) {
-      const c = semArtigo(norm(nome)).split(/\s+/)[0];
-      if (!MESA_DO_BURACO.cabecas.includes(c)) continue;
-      /* o mesmo nome por duas fontes (a povoação e a masmorra) é um só */
-      const ja = porCabeca.get(c);
-      porCabeca.set(c, ja === undefined || (ja && norm(ja) === norm(nome)) ? nome : null);
-    }
-    for (const [c, nome] of porCabeca) if (nome) ver(nome, citado(t, c), c.length);
+  /* 1. pelo nome: em cada nome, o pedaço que aparece primeiro (o maior no empate);
+     os nomes pelos maiores primeiro, para «Lobo Atroz» tapar «Lobo» */
+  const porNome = [];
+  for (const nome of nomes) {
+    let m = null;
+    for (const p of pedacosDoNome(nome)) { const i = citado(t, p); if (i >= 0 && (!m || i < m.i || (i === m.i && p.length > m.tam))) m = { nome, i, tam: p.length }; }
+    if (m) porNome.push(m);
   }
-  if (!melhor) {
-    for (const g of gente) {
-      const primeiro = norm(g.nome).split(/\s+/)[0];
-      if (primeiro.length < 3) continue;
-      const i = citado(t, primeiro);
-      if (i < 0) continue;
-      if (MESA_DO_BURACO.casaDe.test(t.slice(Math.max(0, i - 30), i))) ver(g.local, i, primeiro.length);
-    }
+  porNome.sort((a, b) => b.tam - a.tam || a.i - b.i).forEach((m) => ver(m.nome, m.i, m.tam));
+  /* 2. pela cabeça única */
+  const porCabeca = new Map();
+  for (const nome of nomes) {
+    const c = semArtigo(norm(nome)).split(/\s+/)[0];
+    if (!MESA_DO_BURACO.cabecas.includes(c)) continue;
+    /* o mesmo nome por duas fontes (a povoação e a masmorra) é um só */
+    const ja = porCabeca.get(c);
+    porCabeca.set(c, ja === undefined || (ja && norm(ja) === norm(nome)) ? nome : null);
   }
-  return melhor;
+  for (const [c, nome] of porCabeca) {
+    if (!nome) continue;
+    const i = citado(t, c);
+    if (i >= 0 && /^\s+d[oae]s?\s/.test(t.slice(i + c.length))) continue;
+    ver(nome, i, c.length);
+  }
+  /* 3. pela casa de quem o registo conhece */
+  for (const g of gente) {
+    const primeiro = norm(g.nome).split(/\s+/)[0];
+    if (primeiro.length < 3) continue;
+    const i = citado(t, primeiro);
+    if (i < 0) continue;
+    if (MESA_DO_BURACO.casaDe.test(t.slice(Math.max(0, i - 30), i))) ver(g.local, i, primeiro.length);
+  }
+  return achados.sort((a, b) => a.i - b.i);
 }
 
 const jaDisse = (ja, rx) => ja.some((l) => rx.test(String(l)));
@@ -188,14 +225,34 @@ export function oQueAMesaFecha(frase, ctx) {
       poe("pouso", f ? linhaDoPouso(f, { curta: true }) : "", m.index);
     }
   }
-  /* 2. o caminho até um sítio que o sistema conhece, pelo nome ou pelo pedaço */
+  /* 2. o caminho até cada sítio que o sistema conhece, pelo nome ou pelo
+     pedaço — todos os que a frase pergunta, menos os que uma ficha já disse
+     (a 13.ª, T7: o poço E a Fenda). O teto é o da peça (`porTurno`). */
   const caminho = t.match(MESA_DO_BURACO.perguntaCaminho);
-  if (cidade && caminho && !jaDisse(ja, /^distância:/)) {
+  if (cidade && caminho) {
     let nomes = [];
     try { nomes = lugaresComDistancia(cidade, opc); } catch { nomes = []; }
     const gente = arr(o.gente).filter((g) => g && typeof g.nome === "string" && typeof g.local === "string" && g.local.trim());
-    const d = oDestino(t, nomes, gente);
-    if (d) {
+    const disse = ja.filter((l) => /^distância:/.test(l)).map((l) => norm(l));
+    /* o sítio vale quando a oração dele pergunta o caminho — ou quando a
+       pergunta vem logo a seguir sem sítio próprio («Vou à Fenda. Quanto
+       tempo leva?»). «Olho em volta na praça. … quanto tempo até a Cabra
+       Trêmula?» não pergunta pela praça (o corpus, s10#1). */
+    const oracoes = [];
+    for (const m of t.matchAll(/[^.!?;]+[.!?;]*/g)) oracoes.push({ a: m.index, b: m.index + m[0].length, pede: MESA_DO_BURACO.perguntaCaminho.test(m[0]) || MESA_DO_BURACO.ondeFica.test(m[0]) });
+    const destinos = osDestinos(t, nomes, gente, cidade.nome);
+    const kDe = (i) => oracoes.findIndex((x) => i >= x.a && i < x.b);
+    const pedido = (d) => {
+      const k = kDe(d.i);
+      if (k < 0) return false;
+      if (oracoes[k].pede) return true;
+      const prox = oracoes[k + 1];
+      return !!prox && prox.pede && !destinos.some((e) => kDe(e.i) === k + 1);
+    };
+    for (const d of destinos) {
+      if (!pedido(d)) continue;
+      const quem = semArtigo(norm(d.nome).replace(/\s+/g, " ").trim());
+      if (disse.some((l) => l.includes(quem))) continue;
       let l = "";
       try { l = distanciaAte(cidade, d.nome, opc); } catch { l = ""; }
       poe("distancia", l, d.i);

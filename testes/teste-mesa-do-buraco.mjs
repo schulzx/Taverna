@@ -29,7 +29,7 @@ import { PRECOS_COMUNS, precoComum } from "../src/economia.js";
 import { balcaoParaPauta } from "../src/bolsa-da-frase.js";
 import { nomeDaMoeda } from "../src/cobranca.js";
 import { SECOES_QUE_CEDEM, secaoPorId, porNaPauta, textoDaPauta, cederNaCena, prioDaLinha, TETO_DA_PAUTA } from "../src/pauta.js";
-import { RESPOSTAS_DA_MESA } from "../src/perguntas.js";
+import { RESPOSTAS_DA_MESA, juntarRespostas } from "../src/perguntas.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -235,6 +235,59 @@ sec("5. O TETO — as 204 pautas cheias da 5.ª à 7.ª");
      que sai é o que corta depois da resposta (a gente, a mesa, o daqui) e
      a cor que cede a toda pergunta respondida */
   t(`e entra na maior parte das pautas cheias (${entrou} de ${turnos})`, entrou >= turnos / 2);
+}
+
+sec("6. AS DUAS PERGUNTAS DA MESMA FRASE — a 13.ª sessão (o mundo dela: sessao-s13.json)");
+{
+  /* O DEFEITO (relatório da 13.ª, defeito 10): «Esse poço fundo, onde fica?
+     E a Fenda de Silêncio… qual é o caminho e quanto tempo de marcha?» (T7)
+     levou a distância do poço e deixou a Fenda sem número — o Mestre disse
+     «quatro horas» de cabeça. A mesa achava UM sítio por frase. Falha antes:
+     no HEAD de antes, a 2.ª linha não existe. O T23 («prato quente e uma
+     cama») NÃO é desta peça: a heroína ainda estava dentro da Fenda, e a
+     mesa cala na masmorra de propósito (o pouso não é dali) — quem falou fora
+     de sítio foi o preço comum, que não olha a masmorra (pauta-do-turno). */
+  const S13 = ler("sessao-s13.json");
+  const e = S13.inicio;
+  const cidade = e.mapa.cidades.find((c) => c.nome === e.cidadeAtual);
+  const lex = (e.mundo || {}).lexico;
+  const opc = { semente: S13.semente, mapa: e.mapa, lex, genero: (e.mundo || {}).genero, molde: (e.mundo || {}).molde };
+  const fator = fichaDaCidade(cidade, opc).pouso.fator, moeda = nomeDaMoeda(lex), bancas = mercadoresDaCidade(cidade, 1, 3, lex);
+  const gente = Object.values(e.npcs || {}).filter(Boolean).map((n) => ({ nome: n.nome, local: n.local }));
+  const mesa = (frase) => {
+    const hoje = [fichaParaPauta(cidade, { ...opc, frase }), precoComumParaPauta(frase, { fator, moeda }), mercadoParaPauta(bancas, frase, { onde: cidade.nome, moeda })];
+    const nova = oQueAMesaFecha(frase, { cidade, ...opc, gente, bancas, moeda, fator, onde: cidade.nome, ja: hoje });
+    return { nova, junta: juntarRespostas([...hoje, nova]) };
+  };
+  const t7 = mesa("Pergunto ao Beraldo: \"Esse poço fundo, onde fica? E a Fenda de Silêncio, de que falavam na fila, qual é o caminho e quanto tempo de marcha?\"");
+  t("T7: as duas distâncias, pela ordem da frase (o poço, depois a Fenda)", t7.junta.length === 2 && /^distância: o poço fundo .*km/.test(t7.junta[0]) && /^distância: Fenda de Silêncio .*km/.test(t7.junta[1]), t7.junta.join(" | "));
+  t("e cada uma é a linha da ficha, letra a letra (nenhum número nasce na mesa)", t7.junta[0] === distanciaAte(cidade, "o poço fundo", opc) && t7.junta[1] === distanciaAte(cidade, "Fenda de Silêncio", opc));
+  const dupla = mesa("Quanto custa a cama e a que distância fica o poço?");
+  t("«quanto custa a cama e a que distância fica o poço?»: o pouso E o poço (pela cabeça única)", dupla.junta.length === 2 && /^pouso: quarto comum ◉ \d+ a noite/.test(dupla.junta[0]) && /^distância: o poço fundo/.test(dupla.junta[1]), dupla.junta.join(" | "));
+  const umaJa = mesa("A que distância fica o poço fundo e quanto tempo até a Fenda de Silêncio?");
+  t("quando a ficha da cidade já deu uma distância, a mesa dá a OUTRA (e não repete a primeira)", umaJa.junta.length === 2 && umaJa.nova.pergunta.length === 1 && /^distância: Fenda de Silêncio/.test(umaJa.nova.pergunta[0]), umaJa.junta.join(" | "));
+  t("onde se está não é destino: «saindo de Porto das Pedras» não pergunta por Porto dos Barões", !mesa("Quanto tempo até a Fenda de Silêncio, saindo de Porto das Pedras?").junta.some((l) => /Bar[õo]es/.test(l)));
+  /* a mesa sozinha (sem fichas à frente): a ficha da cidade tem a régua
+     dela, que não é desta peça */
+  t("o sítio de uma oração que não pergunta o caminho não leva distância da mesa («Olho o poço fundo. Quanto tempo até a Fenda?»)", (() => { const r = oQueAMesaFecha("Olho o poço fundo. Quanto tempo até a Fenda de Silêncio?", { cidade, ...opc, gente }); return r.pergunta.length === 1 && /^distância: Fenda de Silêncio/.test(r.pergunta[0]); })());
+  /* O TETO: as duas linhas mais compridas (a Fenda leva o «— caverna, perigo
+     de nível 4, 7 salas») entram no PERGUNTOU das 204 pautas cheias sem passar
+     do teto — a junta corta em RESPOSTAS_DA_MESA, e a pauta pela prioridade */
+  let passou = 0, entrou = 0, n = 0;
+  for (const f of ["registo-s5-pauta.json", "registo-s6-s7-pauta.json"]) {
+    const R = ler(f);
+    for (const tt of R.turnos) {
+      const p0 = {};
+      for (const [s, ids] of Object.entries(tt.secoes)) p0[s] = ids.map((i) => R.linhas[i]);
+      const p1 = { ...p0, pergunta: [...t7.junta, ...(p0.pergunta || [])].slice(0, RESPOSTAS_DA_MESA) };
+      const txt = textoDaPauta(cederNaCena(p1, { luta: tt.luta, masmorra: tt.masmorra }));
+      n++;
+      if (txt.length > TETO_DA_PAUTA) passou++;
+      if (t7.junta.every((l) => txt.includes(l))) entrou++;
+    }
+  }
+  console.log(`     as duas distâncias do T7 (${t7.junta.map((l) => l.length).join(" + ")} letras) entram inteiras em ${entrou} de ${n} pautas cheias`);
+  t(`as duas nunca passam do teto (${TETO_DA_PAUTA}) e entram na maior parte das pautas cheias`, passou === 0 && entrou >= n / 2);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);
