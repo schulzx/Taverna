@@ -128,13 +128,25 @@ const PESSOAS = [
 ];
 const ENTRARAM = [[], ["Ilka"], ["Doran o Manco", "Sava"], [HEROI], ["Desconhecido Total"], ["Ilka", "Sava", "Doran o Manco"]];
 const TESTES = ["Presença", "Força", "Intelecto", "Nada"];
+/* O ACEITE DO TURNO (31/10, a 13.ª sessão): um caso em onze é o turno em que
+   o herói aceitou o pedido de Doran — metade com um objeto que nenhuma
+   narração diz (a prosa trocou o pedido), metade com um que a primeira diz —,
+   e a proposta traz a pessoa nova que o pedido inventado amarra a ele (o
+   «Tobias, devedor da liça» da 13.ª). Os outros casos não mudam um byte. */
+const comAceite = (i) => i % 11 === 6;
+const ACEITES = [
+  { de: "Doran o Manco", objeto: "levar a carta ao moinho", pede: "Leva esta carta ao moinho velho, antes da chuva." },
+  { de: "Doran o Manco", objeto: "erguer a caneca na estalagem", pede: "" },
+];
+const aceiteDoCaso = (i) => ACEITES[Math.floor(i / 11) % 2];
+const TOBIAS = { nome: "Tobias", papel: "devedor da liça", relacao: "neutro", genero: "ele", local: "Ponte do Martelo", notas: "procurado por Doran o Manco" };
 function propostaDoCaso(i) {
   return {
     lugar: [null, "a fazenda de Jessa", "cidade", "Agulha de Sal", "a estalagem em Agulha de Sal", "", 42, "o moinho velho"][i % 8],
     ...(i % 3 === 0 ? { missoes: { global_encerrado: true } } : i % 3 === 1 ? { missoes: { global_encerrado: false } } : {}),
     ...(i % 4 === 0 ? { canone: { "Lâmina de Orvalho": { tipo: "artefato", descricao: "uma lâmina fina", local: "" }, "Coroa Partida": { tipo: "artefato", descricao: "", detalhes: "de ouro velho" } } }
       : i % 4 === 1 ? { canone: { "coroa partida": { detalhes: "de prata", local: "a cripta" }, "Vazio": null } } : {}),
-    pessoas: PESSOAS[i % PESSOAS.length],
+    pessoas: comAceite(i) ? [...(PESSOAS[i % PESSOAS.length] || []), TOBIAS] : PESSOAS[i % PESSOAS.length],
     falou_com: i % 5 === 1 ? ["Doran o Manco"] : i % 5 === 2 ? ["Ilka", " "] : [],
     fe: i % 6 === 0 ? { fieis: 30, pf: 2, local: "Ponte do Martelo", motivo: "um gesto de bondade" }
       : i % 6 === 3 ? { fieis: 0, pf: 0, acontecimento: { tipo: "milagre_publico", local: "Agulha de Sal" } }
@@ -158,7 +170,7 @@ export function casoDoCronista(i) {
     i,
     personagem, pers: i % 29 === 0 ? undefined : personagem,
     narrativa: i % 23 === 0 ? "curto demais" : NARR[i % NARR.length] + (i % 2 ? " A noite cai." : ""),
-    doTurno: { frase: ["vou à estalagem", "falo com Doran o Manco", "ataco o lobo", "", "convido Ilka a vir comigo"][i % 5], envelopes: i % 7 === 0 ? ["[COMBATE — RESOLVIDO PELO SISTEMA] Lobo Grande caiu"] : i % 7 === 1 ? ["[ABERTURA DA CAMPANHA] o começo"] : [], ...(i % 2 ? { paraASessao: {} } : {}) },
+    doTurno: { frase: ["vou à estalagem", "falo com Doran o Manco", "ataco o lobo", "", "convido Ilka a vir comigo"][i % 5], envelopes: i % 7 === 0 ? ["[COMBATE — RESOLVIDO PELO SISTEMA] Lobo Grande caiu"] : i % 7 === 1 ? ["[ABERTURA DA CAMPANHA] o começo"] : [], ...(i % 2 ? { paraASessao: {} } : {}), ...(comAceite(i) ? { aceite: aceiteDoCaso(i) } : {}) },
     combate: i % 4 === 1 ? { inimigos: [{ nome: "Lobo Grande", vida: i % 8 === 1 ? 0 : 7, derrotado: false }, { nome: "Vespa", vida: 3 }] } : null,
     npcs: Object.fromEntries(nomesNpcs.map((n) => [n, npcs.criarNPC(n, { papel: "gente da cidade", ultimaVez: 1, conhecidoEm: 1 })])),
     canone: i % 3 === 0 ? { "Coroa Partida": { tipo: "artefato", descricao: "uma coroa" } } : {},

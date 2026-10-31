@@ -131,8 +131,12 @@ t("só o `aceitar` sobe — a soleira não é um formulário com duas caixas",
    (com o objeto), e o clique leva a fala ao envelope. */
 t("o pedido do coração escreve o objeto: o verbo é `o.oferta`, do motor",
   /verbo: o\.oferta,/.test(APP) && !/"Aceitar o que " \+ inst\.nome/.test(APP));
+/* MUDADA A 31/10 (aceite-13), e o motivo: o clique passou a levar também o
+   objeto do pedido (o 4.º argumento), que o App guarda para o Cronista do
+   mesmo turno (teste-cronista-contra-o-pedido); a fala continua a ir ao
+   envelope, à letra */
 t("e o clique leva a fala do pedido ao envelope",
-  /responderAoCoracao\(inst\.nome, o\.id, o\.pede\)/.test(APP) && /"respostaAoCoracao", \{ nome, resposta, pede \}/.test(APP));
+  /responderAoCoracao\(inst\.nome, o\.id, o\.pede, \(inst\.pedido \|\| \{\}\)\.objeto\)/.test(APP) && /"respostaAoCoracao", \{ nome, resposta, pede \}/.test(APP));
 
 sec("4. a janela é `O selo de prazo`, não texto — e o motor conta as noites");
 t("a oferta da petição leva janela", /janela: \{ quanto: noites, conta: "noites" \}/.test(R));

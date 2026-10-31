@@ -8295,6 +8295,9 @@ export default function Taverna() {
   const portaoRef = useRef(null);      // violações do turno à espera de conserto
   const portaoCtxRef = useRef(null);   // o mesmo contexto, para a re-checagem
   const ultimoPedidoRef = useRef("");  // a última fala do jogador, crua
+  /* 31/10 (a 13.ª): o pedido do sistema que o herói ACEITOU neste clique ({ de,
+     objeto, pede }), para o Cronista do mesmo turno; o envio o leva e o limpa */
+  const aceiteDoTurnoRef = useRef(null);
   const entregaRef = useRef(null);     // as linhas do turno, prontas menos o texto
 
   /* ---------------- A1 · B2 (10/10): O ANTES DA FICHA ----------------
@@ -10019,7 +10022,7 @@ export default function Taverna() {
     try {
       /* o pedido inteiro (o que o Cronista é e o que ele lê) é do motor:
          PEDIDO_DO_CRONISTA e oPedidoAoCronista, src/motor/cronista-do-turno.js */
-      const pedido = oPedidoAoCronista(estadoDoCronista(), { narrativa, fila: filaDoCronista });
+      const pedido = oPedidoAoCronista(estadoDoCronista(), { narrativa, fila: filaDoCronista, aceite: doTurno && doTurno.aceite });
       if (pedido.erro) calou(pedido.erro.onde, pedido.erro.erro);
       const sys = pedido.sys, user = pedido.user;
       /* sem leitura, a resposta é a vazia que o próprio pedido diz ser válida:
@@ -10043,7 +10046,7 @@ export default function Taverna() {
       let juizo = null;
       try {
         const aceitariam = ((r.grupo && Array.isArray(r.grupo.entraram)) ? r.grupo.entraram : []).filter((n) => { try { return vereditoDoConvite(String(n || "")).resposta === "aceita"; } catch { return false; } });
-        juizo = julgarOCronista({ ...retratoDoJogo(), personagem: pers || personagemRef.current || personagem, combate: combateRef.current, masmorra: masmorraRef.current, lugar: lugarRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, npcs: npcsRef.current, divindade: divindadeRef.current, eventos: eventosRef.current, espinha: espinhaRef.current }, r, { narrativa, pedido: ultimoPedidoRef.current, envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam });
+        juizo = julgarOCronista({ ...retratoDoJogo(), personagem: pers || personagemRef.current || personagem, combate: combateRef.current, masmorra: masmorraRef.current, lugar: lugarRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, npcs: npcsRef.current, divindade: divindadeRef.current, eventos: eventosRef.current, espinha: espinhaRef.current }, r, { narrativa, pedido: ultimoPedidoRef.current, envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam, aceite: doTurno && doTurno.aceite });
       } catch (e) { calou("o juízo do Cronista", e); juizo = null; }
       try { if (doTurno && doTurno.paraASessao) doTurno.paraASessao.cronista = { proposta: r, juizo: juizo ? { aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor } : null }; } catch (e) { calou("a sessão (o Cronista)", e); }
       let ac = (juizo && juizo.aceito) || {};
@@ -10371,6 +10374,7 @@ export default function Taverna() {
   };
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
     setCarregando(true); setFalha(null);
+    const aceiteDesteTurno = aceiteDoTurnoRef.current; aceiteDoTurnoRef.current = null;
     /* MM15 (3): A FOTO DO ENVIO — antes de qualquer coisa que este turno
        ainda vai mexer (a caminhada da cidade, a frente, a virada). Se o
        Mestre calar mais adiante, é a este instante que o desfeito volta
@@ -10649,7 +10653,7 @@ export default function Taverna() {
       } catch (e) { calou("o recibo do turno (a espera)", e); }
       try {
         let doTurnoCr = null;
-        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
+        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current, aceite: aceiteDesteTurno }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
         const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
         /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila */
@@ -20110,7 +20114,7 @@ export default function Taverna() {
   };
   /* O herói responde ao que alguém lhe pede: aceitar, recusar, perguntar
      porquê (que não fecha nada e traz a razão, na secção PERGUNTOU). */
-  const responderAoCoracao = (nome, resposta, pede) => {
+  const responderAoCoracao = (nome, resposta, pede, objeto) => {
     try {
       if (carregando) return;
       const nucleo = nucleoAgora();
@@ -20119,6 +20123,7 @@ export default function Taverna() {
       if (JSON.stringify(r.coracao) === antes) return;
       coracaoRef.current = r.coracao;
       coracaoFalaRef.current = { secao: "pergunta", linha: r.linha || "", proprio: true };
+      aceiteDoTurnoRef.current = resposta === "aceitou" && objeto ? { de: nome, objeto, pede: pede || "" } : null;
       enviar(oEnvelopeDoAcampamento("respostaAoCoracao", { nome, resposta, pede }), fichaViva() || personagem);
     } catch (e) { calou("responder ao coração", e); }
   };
@@ -20198,7 +20203,7 @@ export default function Taverna() {
       for (const o of opcoesDoPedido(inst)) {
         if (o.id === "porque" && a.porque) continue;
         /* 13.ª sessão: o verbo é o do motor, COM o objeto («Aceitar: meio dia de desvio a uma campa»); sem objeto, não há cartão; a fala vai ao envelope */
-        out.push({ id: "coracao|" + inst.nome + "|" + o.id, verbo: o.oferta, preco: [o.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => responderAoCoracao(inst.nome, o.id, o.pede) });
+        out.push({ id: "coracao|" + inst.nome + "|" + o.id, verbo: o.oferta, preco: [o.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => responderAoCoracao(inst.nome, o.id, o.pede, (inst.pedido || {}).objeto) });
       }
     }
     return out;

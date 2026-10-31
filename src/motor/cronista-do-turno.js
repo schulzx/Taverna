@@ -12,7 +12,7 @@
 
      oGatilhoDoCronista(ler, { narrativa, doTurno, pers }, leitura)
        → o `decidirOCronista` com os nomes que o sistema já conhece
-     oPedidoAoCronista(ler, { narrativa, fila })
+     oPedidoAoCronista(ler, { narrativa, fila, aceite })
        → { sys, user, erro }     (o pedido inteiro; `erro` vai ao `calou`)
      oAceitoDoCronista(aceito, recusado, proposta, ctx)
        → { p, msgs, tocouCanone, tocouElenco }
@@ -81,7 +81,7 @@ export function oGatilhoDoCronista(ler, turno, leitura) {
     ...(((E.mapa || {}).cidades || []).map((c) => c && c.nome)),
     E.cidadeAtual, (E.lugar || {}).nome,
   ].filter((x) => typeof x === "string" && x);
-  return decidirOCronista({ narrativa, frase: dt.frase, envelopes: dt.envelopes, conhecidos, emLuta: deEmLuta.length > 0, fe: !!(E.divindade && E.divindade.despertar) }, leitura);
+  return decidirOCronista({ narrativa, frase: dt.frase, envelopes: dt.envelopes, conhecidos, emLuta: deEmLuta.length > 0, fe: !!(E.divindade && E.divindade.despertar), aceite: dt.aceite }, leitura);
 }
 
 /* ---------------- O PEDIDO ----------------
@@ -121,9 +121,24 @@ export const PEDIDO_DO_CRONISTA = [
   "REGRA GERAL: na dúvida, NÃO marque — {\"missoes\":{\"global_encerrado\":false},\"canone\":{},\"pessoas\":[],\"fe\":{\"fieis\":0,\"pf\":0}} é resposta válida e frequente.",
 ].join("\n");
 
+/* O PEDIDO ACEITO NESTE TURNO (31/10, a 13.ª sessão). O herói aceitou «meio
+   dia de desvio a uma campa», o Narrador inventou outro pedido (achar um
+   devedor da cota da liça), e o Cronista, que só lia a prosa, gravou o irmão
+   da heroína como esse devedor. O sistema TINHA o pedido (`pedido.objeto` do
+   arco, 045b26b) e não lho dava. Agora, no turno do aceite, dá — e diz-lhe
+   que o outro pedido é palavra, não fato. Só existe nesse turno: sem aceite
+   (ou sem objeto), o pedido é byte a byte o de antes. */
+function oAceiteParaOCronista(aceite) {
+  const a = aceite && typeof aceite === "object" ? aceite : {};
+  const objeto = typeof a.objeto === "string" ? a.objeto.trim() : "";
+  if (!objeto) return "";
+  const de = typeof a.de === "string" && a.de.trim() ? a.de.trim() : "alguém em cena";
+  const pede = typeof a.pede === "string" && a.pede.trim() ? ` — "${a.pede.trim()}"` : "";
+  return `PEDIDO QUE O HERÓI ACEITOU NESTE TURNO (é o do sistema; se a narrativa puser na boca de alguém OUTRO pedido, isso é palavra de quem fala, não fato — não dê papel a ninguém por ele):\n- ${de} pede: ${objeto}${pede}\n\n`;
+}
 export function oPedidoAoCronista(ler, turno) {
   const E = ler || {};
-  const { narrativa, fila } = turno || {};
+  const { narrativa, fila, aceite } = turno || {};
   let erro = null;
   const sys = PEDIDO_DO_CRONISTA;
   const evG = E.eventos && E.eventos.global;
@@ -131,7 +146,7 @@ export function oPedidoAoCronista(ler, turno) {
   const jaNoDiario = garantirMissoes(E.missoes)
     .filter((q) => ["ativa", "oferecida"].includes(q.status))
     .map((q) => `- "${q.titulo}"${q.dador ? ` (de ${q.dador})` : ""} — ${q.descricao || "—"}`).join("\n");
-  const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(E.canone) || "(vazio)"}\n\n${(() => { try { const ab = abertasParaOCronista(E.prometido); return ab ? ab + "\n\n" : ""; } catch (e) { erro = { onde: "as abertas ao Cronista", erro: e }; return ""; } })()}ELENCO (pessoas já registradas):\n${Object.keys(E.npcs).join(", ") || "(ninguém)"}\n\n${fila}NARRATIVA DO TURNO:\n${narrativa}`;
+  const user = `MISSÕES DO SISTEMA JÁ ABERTAS (não proponha nenhuma que seja o mesmo serviço que uma destas):\n${jaNoDiario || "(nenhuma)"}\n\nEVENTO GLOBAL ATIVO:\n${evG ? `- "${evG.nome}" — ${(evG.etapas || [])[evG.etapa] || evG.descricao || "—"}` : "(nenhum)"}\n\nCOMBATENTES AINDA DE PÉ (nome — PV):\n${combatentes.map((e) => `- ${e.nome} — ${e.vida} PV`).join("\n") || "(sem combate aberto)"}\n\nCÂNONE ATUAL:\n${formatarCanone(E.canone) || "(vazio)"}\n\n${(() => { try { const ab = abertasParaOCronista(E.prometido); return ab ? ab + "\n\n" : ""; } catch (e) { erro = { onde: "as abertas ao Cronista", erro: e }; return ""; } })()}ELENCO (pessoas já registradas):\n${Object.keys(E.npcs).join(", ") || "(ninguém)"}\n\n${fila}${oAceiteParaOCronista(aceite)}NARRATIVA DO TURNO:\n${narrativa}`;
   return { sys, user, erro };
 }
 

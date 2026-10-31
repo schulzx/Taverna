@@ -104,6 +104,16 @@ export const O_QUE_O_CRONISTA_PODE = Object.freeze({
     recusa: { semNome: "sem nome", heroi: "é o próprio herói" },
     /* quem diz o próprio nome está ali: "Sou Wystan" é presença, não boato */
     apresenta: /(?:^|[^a-z])(?:sou|me chamo|meu nome e|chamam-me|chamam me)\s+(?:o |a )?$/,
+    /* O PEDIDO QUE A PROSA TROCOU (31/10, a 13.ª): no turno em que o herói
+       aceitou um pedido do sistema (`ctx.aceite`, o `pedido.objeto` do arco),
+       a prosa que não diz o pedido diz outro — o que o Narrador inventou. A
+       prosa "diz o pedido" quando ao menos `fracao` das palavras do objeto
+       (`letras` ou mais, comparadas pelas `raiz` primeiras) moram nela. A
+       pessoa NOVA que esse pedido inventado envolve (a primeira fala que lhe
+       diz o nome é de quem pediu, ou o Cronista a amarra a ele no papel ou
+       nas notas) entra como palavra de quem pediu e sem o papel que ele lhe
+       deu: o «Tobias, devedor da liça» era o irmão da heroína. */
+    contraOPedido: { letras: 4, raiz: 5, fracao: 0.5 },
   },
   fatos: {
     quem: "dito",
@@ -584,10 +594,26 @@ function julgarGrupo(entraram, E, c, R) {
   return ok;
 }
 
+/* a prosa diz o pedido aceito? (`contraOPedido`, na tabela). Sem aceite, ou
+   sem palavra que conte no objeto, não há o que comparar: diz. */
+function prosaDizOPedido(aceite, narrativa) {
+  const T = O_QUE_O_CRONISTA_PODE.gente.contraOPedido;
+  const objeto = texto(obj(aceite).objeto, 120);
+  const raizes = [...new Set(norm(objeto).split(/[^a-z0-9]+/).filter((w) => w.length >= T.letras).map((w) => w.slice(0, T.raiz)))];
+  if (!raizes.length) return true;
+  const prosa = " " + norm(narrativa).replace(/[^a-z0-9]+/g, " ");
+  const ditas = raizes.filter((r) => prosa.includes(" " + r)).length;
+  return ditas / raizes.length >= T.fracao;
+}
+
 function julgarGente(pessoas, E, c, R, D, cena, ondeE) {
   const T = O_QUE_O_CRONISTA_PODE.gente;
   const heroi = norm(obj(E.personagem).nome);
   const falou = new Set(lista(c.falouCom).map(norm));
+  /* o pedido que a prosa trocou: quem pediu, e quem o registo já conhece */
+  const dador = texto(obj(c.aceite).de, 60);
+  const trocado = !!dador && !prosaDizOPedido(c.aceite, c.narrativa);
+  const conhecidos = trocado ? new Set([...Object.keys(obj(E.npcs)), ...Object.values(obj(E.npcs)).map((n) => n && n.nome)].map(norm).filter(Boolean)) : null;
   const ok = [];
   for (const p0 of lista(pessoas).slice(0, T.max)) {
     const p = obj(p0);
@@ -611,6 +637,15 @@ function julgarGente(pessoas, E, c, R, D, cena, ondeE) {
       const quem = quemDisse(nome, c.narrativa, cena);
       ficha = { ...ficha, local, dito: O_QUE_O_CRONISTA_PODE.fatos.marca(quem) };
       D.push({ secao: "gente", o: nome, quem, marca: ficha.dito });
+    }
+    if (trocado && !conhecidos.has(norm(nome)) && norm(nome) !== norm(dador)) {
+      const quem = quemDisse(nome, c.narrativa, cena);
+      const amarrada = norm(quem) === norm(dador) || norm(`${papel} ${texto(p.notas, 120)}`).includes(norm(dador));
+      if (amarrada) {
+        const marca = O_QUE_O_CRONISTA_PODE.fatos.marca(dador);
+        if (!ficha.dito) D.push({ secao: "gente", o: nome, quem: dador, marca, porque: "contraOPedido" });
+        ficha = { ...ficha, papel: "", dito: ficha.dito || marca };
+      }
     }
     ok.push(ficha);
   }
@@ -672,7 +707,9 @@ function julgarGlobal(m, E, R) {
                  (os textos/títulos que o sistema mandou ao Narrador neste
                  turno), aceitariam (nomes que o convite do sistema
                  aceitaria agora: vereditoDoConvite(n).resposta === "aceita"),
-                 falouCom (se o App já tem a lista; senão a da proposta) }.
+                 falouCom (se o App já tem a lista; senão a da proposta),
+                 aceite (o pedido do sistema que o herói aceitou neste
+                 turno: { de, objeto, pede }; ver `contraOPedido`) }.
 
    Devolve { aceito, recusado, ditoPor }. Nunca muta o recebido; lixo
    (`null`, string, lista) vira proposta vazia, e a proposta vazia é a

@@ -24,7 +24,10 @@
    · a LUTA — com combatentes de pé, a guarda de coesão (o morto que o
      sistema mantém vivo) não pode chegar atrasada;
    · a FÉ — de um herói desperto, que se mede por turno;
-   · o GRUPO, o TRABALHO OFERECIDO, a PROMESSA DITA em voz alta.
+   · o GRUPO, o TRABALHO OFERECIDO, a PROMESSA DITA em voz alta;
+   · o PEDIDO ACEITO (31/10, a 13.ª) — o turno em que o herói aceitou um
+     pedido do sistema: o juízo compara o pedido com a narração DESSE turno,
+     e o aceite só existe nele. Na fila, perdia-se.
 
    O que pode esperar dois turnos sem mentir: a semente que o Narrador
    plantou numa fala (cobrada dez turnos depois), o objeto que vira
@@ -174,6 +177,13 @@ export function decidirOCronista(turno, estado) {
   if (novos.length) motivos.push("nome");
   if (o.emLuta) motivos.push("luta");
   if (o.fe) motivos.push("fe");
+  /* o pedido aceito neste turno (`{ de, objeto, pede }`, o clique na soleira):
+     o Cronista lê-o AGORA, porque o aceite não viaja na fila — o bloco do
+     pedido e o juízo (`contraOPedido`, motor/cronista.js) leem a narração do
+     turno do clique, e na leitura seguinte já seria outra. Sem objeto escrito
+     não há aceite (é a mesma porta do cartão: sem objeto, sem cartão). */
+  const aceite = o.aceite && typeof o.aceite === "object" ? o.aceite : null;
+  if (aceite && typeof aceite.objeto === "string" && aceite.objeto.trim()) motivos.push("aceite");
   if (leitura.pulos >= REDE_DO_CRONISTA.pulosMax) motivos.push("rede");
   return { corre: motivos.length > 0, motivos, novos };
 }

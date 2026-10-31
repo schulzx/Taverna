@@ -70,7 +70,11 @@ sec("2 · a prova morde");
      segredo. A mesma mordida é agora o App que não os passa. */
   const semConversa = divergem(await fotosDe(trocado("conferirCom: (pc, o) => osOrgaosAgora().conferirCom(pc, o),", "conferirCom: (pc, o) => osOrgaosAgora().conferirCom(pc, null),")));
   t(`a conferência sem a conversa nem o segredo: ${semConversa} fotos divergem`, semConversa > 20);
-  const semFila = divergem(await fotosDe(trocado("{ narrativa, fila: filaDoCronista }", "{ narrativa, fila: \"\" }")));
+  /* MOVIDA A 31/10 (a 13.ª), com o motivo: o pedido ao Cronista passou a
+     levar também o aceite do turno (`{ narrativa, fila: filaDoCronista,
+     aceite: … }`), e a âncora antiga (o objeto inteiro) deixou de bater. A
+     mordida é a mesma — a fila esquecida —, ancorada só na fila. */
+  const semFila = divergem(await fotosDe(trocado("fila: filaDoCronista, aceite", "fila: \"\", aceite")));
   t(`o pedido sem a fila das narrações não lidas: ${semFila} fotos divergem`, semFila > 20);
   /* o gatilho sem os nomes que o sistema já conhece: o elenco, o cânone e o mapa acendem o "nome novo", e a narração que ia para a fila é lida */
   const semConhecidos = divergem(await fotosDe(trocado("gatilho = oGatilhoDoCronista(estadoDoCronista(), { narrativa, doTurno, pers }", "gatilho = oGatilhoDoCronista({}, { narrativa, doTurno, pers: null }")));
@@ -79,6 +83,13 @@ sec("2 · a prova morde");
   t(`o teste da concessão com a rolagem esquecida: ${semRolagem} fotos divergem`, semRolagem > 2);
   const semFicha = divergem(await fotosDe(trocado("    else if (ef.tipo === \"ficha\") setPersonagem(ef.personagem);\n", "")));
   t(`a ficha que não redesenha: ${semFicha} fotos divergem`, semFicha > 20);
+  /* 31/10 (a 13.ª): o aceite do turno chega ao pedido e ao juízo do Cronista
+     (o segundo conserto declarado em gerar-cronista-dourado.mjs); o App que o
+     esquece, numa ponta ou na outra, diverge nos casos com aceite */
+  const semAceiteNoPedido = divergem(await fotosDe(trocado("fila: filaDoCronista, aceite: doTurno && doTurno.aceite }", "fila: filaDoCronista, aceite: null }")));
+  t(`o pedido ao Cronista sem o aceite do turno: ${semAceiteNoPedido} fotos divergem`, semAceiteNoPedido > 10);
+  const semAceiteNoJuizo = divergem(await fotosDe(trocado("aceitariam, aceite: doTurno && doTurno.aceite }", "aceitariam }")));
+  t(`o juízo sem o aceite do turno (a pessoa do pedido trocado entra como fato): ${semAceiteNoJuizo} fotos divergem`, semAceiteNoJuizo > 3);
 }
 
 sec("3 · as peças, sozinhas");

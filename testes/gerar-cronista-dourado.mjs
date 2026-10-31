@@ -26,8 +26,27 @@ const cru = execSync(`git show ${COMMIT}:src/App.jsx`, { cwd: path.join(AQUI, ".
    do pedido em todo caso que chama o Cronista (256 das 275 fotos, pelo hash
    do que se mandou); nada mais muda — provado trocando só esta chave no motor
    de HEAD: as 275 batem com o dourado de antes. */
+/* O SEGUNDO CONSERTO DECLARADO (31/10/2026, a 13.ª sessão): o aceite do turno
+   chega ao Cronista. No turno em que o herói aceitou um pedido do sistema
+   (`doTurno.aceite`, { de, objeto, pede } — o `pedido.objeto` do arco, 045b26b),
+   o pedido ao Cronista ganha, antes da narrativa, o bloco do pedido aceito
+   (o texto é o de src/motor/cronista-do-turno.js#oPedidoAoCronista), e o juízo
+   recebe o aceite (`ctx.aceite`: a pessoa nova que o pedido trocado pela prosa
+   amarra a quem pediu entra como palavra dele e sem o papel). Sem aceite, o
+   pedido e o juízo são os de antes. Muda só os casos com aceite (`comAceite`
+   em cronista-bloco.mjs, um em onze); provado: as outras fotos são as do
+   dourado de antes, byte a byte.
+   E o gatilho (o mesmo conserto, a outra ponta): o turno do aceite LÊ —
+   `decidirOCronista` acende "aceite" quando o turno traz um com objeto
+   (gatilho-do-cronista.js), porque o aceite não viaja na fila. O App de antes
+   não passava o aceite ao gatilho; o conserto passa-o (`aceite: dt.aceite`). */
+const ACEITE_NO_PEDIDO = "const __aceiteParaOCronista = (aceite) => { const a = aceite && typeof aceite === \"object\" ? aceite : {}; const objeto = typeof a.objeto === \"string\" ? a.objeto.trim() : \"\"; if (!objeto) return \"\"; const de = typeof a.de === \"string\" && a.de.trim() ? a.de.trim() : \"alguém em cena\"; const pede = typeof a.pede === \"string\" && a.pede.trim() ? \" — \\\"\" + a.pede.trim() + \"\\\"\" : \"\"; return \"PEDIDO QUE O HERÓI ACEITOU NESTE TURNO (é o do sistema; se a narrativa puser na boca de alguém OUTRO pedido, isso é palavra de quem fala, não fato — não dê papel a ninguém por ele):\\n- \" + de + \" pede: \" + objeto + pede + \"\\n\\n\"; };";
 const CONSERTOS = [
   ['notas\\":\\"máx. 8 palavras\\"}],\\"fe\\"', 'notas\\":\\"máx. 8 palavras\\"}],\\"falou_com\\":[],\\"fe\\"'],
+  ["  const cronistaDoTurno = async (pers, narrativa, doTurno) => {\n", "  const cronistaDoTurno = async (pers, narrativa, doTurno) => {\n    " + ACEITE_NO_PEDIDO + "\n"],
+  ["${filaDoCronista}NARRATIVA DO TURNO:", "${filaDoCronista}${__aceiteParaOCronista(doTurno && doTurno.aceite)}NARRATIVA DO TURNO:"],
+  ["envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam });", "envelopes: (doTurno && Array.isArray(doTurno.envelopes)) ? doTurno.envelopes : [], aceitariam, aceite: doTurno && doTurno.aceite });"],
+  ["fe: !!(divindadeRef.current && divindadeRef.current.despertar) }, leituraDoCronistaRef.current);", "fe: !!(divindadeRef.current && divindadeRef.current.despertar), aceite: dt.aceite }, leituraDoCronistaRef.current);"],
 ];
 let app = cru;
 for (const [de, para] of CONSERTOS) {

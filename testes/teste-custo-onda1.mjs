@@ -193,7 +193,10 @@ sec("8. A FIAÇÃO NO App.jsx");
   const iG = APP.indexOf("gatilho = oGatilhoDoCronista("), iC = APP.indexOf('txt = await chamarModelo(sys, [{ role: "user", content: user }], 900, "json", "leve")');
   t("o gatilho decide antes da chamada, e a chamada só corre com ele", iG > 0 && iC > iG && APP.includes("if (gatilho.corre) {"));
   const pedidoComFila = CT.oPedidoAoCronista({ npcs: {}, missoes: [], canone: {} }, { narrativa: "AGORA", fila: G.blocoDaFila({ fila: ["uma narração antiga"] }) }).user;
-  t("a fila entra no pedido ao Cronista, antes da narração do turno", APP.includes("oPedidoAoCronista(estadoDoCronista(), { narrativa, fila: filaDoCronista })") && pedidoComFila.endsWith("(1) uma narração antiga\n\nNARRATIVA DO TURNO:\nAGORA"));
+  /* MUDADA A 31/10 (a 13.ª), e o motivo: o pedido ao Cronista passou a levar
+     também o aceite do turno (teste-cronista-contra-o-pedido), e a chamada do
+     App ganhou o campo depois da fila; a fila continua lá, à letra */
+  t("a fila entra no pedido ao Cronista, antes da narração do turno", APP.includes("oPedidoAoCronista(estadoDoCronista(), { narrativa, fila: filaDoCronista, aceite: doTurno && doTurno.aceite })") &&pedidoComFila.endsWith("(1) uma narração antiga\n\nNARRATIVA DO TURNO:\nAGORA"));
   t("o turno entrega a frase e os envelopes ao gatilho", APP.includes("cronistaDoTurno(pers, narrativaFinal, doTurnoCr)"));
   const calados = ["a memória do turno", "o gatilho do Cronista", "a fila do Cronista", "o pulo do Cronista", "a leitura do Cronista", "a leitura do Cronista no load", "o turno para o gatilho do Cronista"];
   t("toda peça nova cala o próprio erro (nunca custa o turno)", calados.every((c) => APP.includes(`calou("${c}"`)), calados.filter((c) => !APP.includes(`calou("${c}"`)).join(", "));
