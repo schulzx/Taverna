@@ -70,13 +70,26 @@ export function d20(vantagem = false, desvantagem = false, rolar) {
 }
 
 /* competência -> bônus de ataque (usado por NPCs, do "fraco" ao "lendário") */
-const BONUS_AMEACA = { fraco: 1, comum: 3, competente: 4, elite: 5, lendario: 6 };
-export function bonusDeAmeaca(ameaca) { return BONUS_AMEACA[ameaca] || 3; }
+export const BONUS_AMEACA = Object.freeze({ fraco: 1, comum: 3, competente: 4, elite: 5, lendario: 6 });
+
+/* O DEGRAU QUE A TABELA TEM (29/10, a 13.ª sessão). As três leituras por
+   ameaça — o bónus aqui, a defesa em `defesaDe` e o dano em `danoDe` — eram `TABELA[a] || padrão`,
+   e o `||` mente de dois lados: um degrau que valesse 0 viraria o padrão
+   (nenhum vale hoje — o menor é o fraco, 1 de bónus e 2 de dano —, mas a
+   tabela é para ser rebalanceada, e um 0 ali seria apagado sem aviso), e uma
+   ameaça com nome de coisa herdada do objeto atravessava: `bonusDeAmeaca
+   ("toString")` devolvia uma FUNÇÃO, e a defesa e o dano davam NaN. Agora só conta o
+   que a tabela tem de seu e é número; o resto é o comum, por nome — o 3
+   solto que estava aqui era o comum escrito à mão.
+   A tabela entra por argumento só para a suíte provar o degrau zero
+   (`teste-dano-da-ameaca.mjs`, §3); o jogo nunca a passa. */
+const doDegrau = (tabela, ameaca) => (Object.hasOwn(tabela, ameaca) && Number.isFinite(tabela[ameaca]) ? tabela[ameaca] : tabela.comum);
+export function bonusDeAmeaca(ameaca, tabela = BONUS_AMEACA) { return doDegrau(tabela, ameaca); }
 
 /* Defesa de um combatente. Base 10 + destreza + bônus de escudo/armadura.
    Para inimigos, usamos a "defesa" declarada ou derivamos da ameaça. */
 export function defesaDe(ent, ehInimigo = false) {
-  if (ehInimigo) return ent.defesa || (10 + Math.floor((BONUS_AMEACA[ent.ameaca] || 3) / 2) + (ent.agil ? 3 : 0));
+  if (ehInimigo) return ent.defesa || (10 + Math.floor(doDegrau(BONUS_AMEACA, ent.ameaca) / 2) + (ent.agil ? 3 : 0));
   const dex = (ent.atributos?.destreza || 0);
   /* v9.44: SINTONIA TAMBÉM AQUI. `bonusEquip` (regras-jogo) já respeitava a
      sintonia desde a v9.23 — item dormente não empresta atributo. Esta soma
@@ -322,7 +335,7 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
 export const DANO_DA_AMEACA = Object.freeze({ fraco: 2, comum: 5, competente: 7, elite: 10, lendario: 14 });
 export function danoDe(ent, ehInimigo = false, rolar) {
   if (ehInimigo) {
-    const base = DANO_DA_AMEACA[ent.ameaca] || DANO_DA_AMEACA.comum;
+    const base = doDegrau(DANO_DA_AMEACA, ent && ent.ameaca);
     return base + d(4, rolar) - 1;
   }
   const arma = ent.equipados?.arma || null;

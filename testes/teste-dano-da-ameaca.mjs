@@ -21,7 +21,7 @@
      3 bandidos, com o companheiro    73,0%            73,0%
    Falha antes: no HEAD de antes, `DANO_DA_AMEACA` não existe (a tabela era
    anónima) e 3 ratos derrubam a heroína acompanhada em 10,8% das lutas. */
-import { DANO_DA_AMEACA, danoDe, pvEsperadoInimigo } from "../src/combate.js";
+import { DANO_DA_AMEACA, BONUS_AMEACA, bonusDeAmeaca, danoDe, defesaDe, pvEsperadoInimigo } from "../src/combate.js";
 import { PESO_AMEACA, avaliarEncontro } from "../src/orcamento.js";
 import { completarInimigo } from "../src/bestiario.js";
 import { simularCombate, sorteDaSemente } from "./regua-combate.mjs";
@@ -93,6 +93,28 @@ const pct = (x) => (x * 100).toFixed(1) + "%";
   t(`quatro ratos («difícil») ainda a derrubam em mais de 10% (${pct(r4.cai)})`, r4.cai > 0.1);
   t(`e o que o conserto não tocou continua onde estava: dois Bandidos (médio) 15–35% (${pct(b2.cai)}), três (mortal) acima de 60% (${pct(b3.cai)})`, b2.cai >= 0.15 && b2.cai <= 0.35 && b3.cai > 0.6);
   t("o perigo segue a faixa: 3 ratos < 4 ratos < 3 bandidos", a.cai < r4.cai && r4.cai < b3.cai);
+}
+
+sec("3. O DEGRAU QUE A TABELA TEM — o «ou» que apagava o zero");
+{
+  /* 29/10 (a 13.ª, item 4 do que ficou): `bonusDeAmeaca` era
+     `BONUS_AMEACA[a] || 3`. Um degrau que valesse 0 virava 3 — nenhum vale
+     hoje (o menor é o fraco, 1) —, e uma ameaça com nome de coisa herdada do
+     objeto atravessava: "toString" devolvia uma função, e `defesaDe` e `danoDe`
+     davam NaN.
+     Falha antes: a tabela não era exportada, o segundo argumento não
+     existia (o 0 virava 3), "toString" era uma função e o dano era NaN. */
+  t("a tabela do bónus é exportada, congelada, com as cinco ameaças, crescente", Object.isFrozen(BONUS_AMEACA) && Object.keys(BONUS_AMEACA).join() === ORDEM.join() && ORDEM.every((a, i) => i === 0 || BONUS_AMEACA[a] > BONUS_AMEACA[ORDEM[i - 1]]));
+  t("nenhum degrau real é 0 hoje (o menor, o fraco, é 1)", ORDEM.every((a) => BONUS_AMEACA[a] > 0) && BONUS_AMEACA.fraco === 1);
+  t("cada ameaça lê o seu degrau", ORDEM.every((a) => bonusDeAmeaca(a) === BONUS_AMEACA[a]));
+  const comZero = { ...BONUS_AMEACA, fraco: 0 };
+  t("um degrau 0 na tabela vale 0, não o comum", bonusDeAmeaca("fraco", comZero) === 0, String(bonusDeAmeaca("fraco", comZero)));
+  t("o que a tabela não tem é o comum, por nome", [undefined, null, "", "???", 7].every((a) => bonusDeAmeaca(a) === BONUS_AMEACA.comum));
+  t("o que o objeto herda não é degrau: «toString» e «constructor» são o comum", bonusDeAmeaca("toString") === BONUS_AMEACA.comum && bonusDeAmeaca("constructor") === BONUS_AMEACA.comum, typeof bonusDeAmeaca("toString"));
+  const r = sorteDaSemente("dano|herdado");
+  const g = Array.from({ length: 200 }, () => danoDe({ ameaca: "toString" }, true, r));
+  t("e o dano do inimigo também: «toString» bate como o comum (5 a 8), não NaN", g.every(Number.isFinite) && Math.min(...g) === 5 && Math.max(...g) === 8);
+  t("e a defesa: «toString» defende como o comum (11), não NaN", defesaDe({ ameaca: "toString" }, true) === 11 && defesaDe({ ameaca: "fraco" }, true) === 10 && defesaDe({ ameaca: "lendario" }, true) === 13, String(defesaDe({ ameaca: "toString" }, true)));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);
