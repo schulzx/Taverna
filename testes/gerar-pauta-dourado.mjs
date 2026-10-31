@@ -60,8 +60,18 @@ const DO_MODULO = ["LEITURA_DA_CONVERSA", "falasDoMestre"];
    escuta — a pista que já se encontrou no sítio dela não volta a dizer o
    nome (o Corrado apresentou-se quatro vezes). Nos casos, nenhuma das
    287 fotos muda (nenhum tem a pista já encontrada no registo): a prova do
-   encontro é a 13.ª, em teste-passo-de-onde-estou.mjs. */
+   encontro é a 13.ª, em teste-passo-de-onde-estou.mjs.
+
+   O PREÇO SÓ ONDE HÁ RUA (31/10/2026, a 13.ª sessão, T23): o preço comum
+   (precoComumParaPauta) passa a ter o portão da mesa que fecha o buraco —
+   cidade, fora da estrada, da masmorra e da luta. Dentro da Fenda, o prato
+   quente tinha o preço da rua de cima. Nos casos, as únicas fotos que
+   podem mudar são as que perguntam um preço comum na estrada ou na
+   masmorra (a conta está no diário de 31/10); a prova do T23 é
+   teste-preco-so-na-rua.mjs. */
 const CONSERTOS = [
+  ["      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(",
+    "      pc = (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) ? precoComumParaPauta("],
   ["passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),",
     "passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current, registro: registroRef.current }),"],
   ["                   mostrado: falasDoMestre(mensagensRef.current) },",

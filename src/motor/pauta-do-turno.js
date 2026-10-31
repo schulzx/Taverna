@@ -753,10 +753,18 @@ export function aPautaDoTurno(estado, entrada, portas) {
     } catch (e) { calou("horizonteDaPergunta", e); }
     /* E1 (o Narrador só narra): o preço COMUM perguntado (a caneca, o prato
        quente, o pão) — a tabela pelo porte da terra. A banca não os vende e
-       a pauta ia vazia: o Mestre inventava o número. */
+       a pauta ia vazia: o Mestre inventava o número.
+       SÓ ONDE HÁ RUA (31/10, a 13.ª sessão, T23): o portão era «fora da
+       luta e com cidade», e a cidade fica marcada na estrada e dentro da
+       masmorra — dentro da Fenda, «quanto custa um prato quente e uma
+       cama?» recebia o preço do prato da rua lá de cima, ao lado de um NÃO
+       PODE que proíbe narrar a chegada. O portão é agora o da mesa que fecha
+       o buraco, logo abaixo: cidade, fora da estrada, da masmorra e da luta.
+       Fora da rua o preço cala, e a pergunta fica com o que a masmorra ou a
+       estrada têm para dizer (teste-preco-so-na-rua.mjs). */
     let pc = null;
     try {
-      pc = (!$ref.combate && $ref.cidadeAtual) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;
+      pc = ($ref.cidadeAtual && !$ref.jornada && !$ref.masmorra && !$ref.combate) ? precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() }) : null;
     } catch (e) { calou("precoComumParaPauta", e); }
     /* A MESA QUE FECHA O BURACO (29/10, trilha B): o segundo ouvido, depois
        das fichas e com o que elas já disseram — a cama que é o pouso, o
