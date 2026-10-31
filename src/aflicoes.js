@@ -227,6 +227,50 @@ function modDoAlvo(alvo, attr) {
   return (Number(base) || 0) + porNivel;
 }
 
+/* ---------------- A FORÇA DE QUEM AFLIGE (31/10, a 13.ª sessão) ----------------
+   O «Talho profundo» de um Rato Gigante de 4 PV sangrava 3 por turno, por três
+   turnos — 9 PV, mais do que duas mordidas do próprio rato —, e o de um elite
+   sangrava exatamente o mesmo: a condição vem do catálogo (`CONDICOES`,
+   condicoes.js), e o catálogo não sabe quem a pôs. Medido na régua com as
+   aflições ligadas (teste-intensidade-da-aflicao.mjs), o sangue de três ratos
+   era boa parte das quedas da guerreira nova.
+
+   No 5e o veneno de uma aranha pequena e o de uma aranha gigante não são o
+   mesmo veneno: a CD (8 + proficiência + atributo) e o dano que fica crescem
+   com a criatura. Aqui, pela ameaça de quem CAUSA a aflição:
+     dano — o fator sobre o dano por turno do catálogo (o comum é o catálogo,
+            1). O fraco é 0,4, a MESMA razão do golpe dele para o do comum em
+            `DANO_DA_AMEACA` (2 / 5, combate.js) — a suíte confere as duas,
+            para não se afastarem caladas. Arredonda, e nunca desce de 1: quem
+            sangra, sangra.
+     dif  — soma na dificuldade do teste de entrada (o 12 do catálogo).
+   O fraco sangra 1 em vez de 3 e pega num 10 em vez de 12; o elite sangra 5
+   (4,5) e pega num 14. Sem ameaça (o herói a afligir um inimigo, a
+   habilidade, o item, quem chama sem dizer), é o catálogo de sempre: a
+   chamada antiga não muda num caractere.
+   A instância leva o número dela (`danoTurno`) só quando difere do catálogo,
+   e o texto do efeito diz esse número — é ele que o relógio (`tickCondicoes`)
+   cobra e que o Narrador lê. Campo novo de save, que a versão de antes ignora
+   (lê o catálogo): um commit revertido desfaz. */
+export const INTENSIDADE_DA_AFLICAO = Object.freeze({
+  fraco: Object.freeze({ dano: 0.4, dif: -2 }),
+  comum: Object.freeze({ dano: 1, dif: 0 }),
+  competente: Object.freeze({ dano: 1.2, dif: 1 }),
+  elite: Object.freeze({ dano: 1.5, dif: 2 }),
+  lendario: Object.freeze({ dano: 2, dif: 3 }),
+});
+const forcaDe = (ameaca) => (typeof ameaca === "string" && Object.hasOwn(INTENSIDADE_DA_AFLICAO, ameaca) ? INTENSIDADE_DA_AFLICAO[ameaca] : null);
+
+/* A instância com o dano por turno de quem a causou (ou a mesma, quando o
+   catálogo já é o número certo, ou a condição não cobra dano). */
+function comAForca(cond, cat, forca) {
+  if (!cond || !forca || !cat || !(cat.danoTurno > 0)) return cond;
+  const n = Math.max(1, Math.round(cat.danoTurno * forca.dano));
+  if (n === cat.danoTurno) return cond;
+  const efeito = String(cond.efeito || "").replace(cat.danoTurno + " de dano", n + " de dano");
+  return { ...cond, danoTurno: n, efeito };
+}
+
 /* ---------------- O DADO QUE DECIDE ----------------
    Um só ponto de verdade: quem tenta afligir, quem resiste, e o texto
    pronto para o jogador e para o Mestre. Devolve null quando a fonte
@@ -237,8 +281,11 @@ function modDoAlvo(alvo, attr) {
    herói, o App passa o bônus de salvaguarda de verdade (com a proficiência
    da classe) e o nome dela, e a linha na tela deixa de dizer "o golpe
    tentou" para dizer o que de fato aconteceu. Sem os dois, o comportamento
-   é o de antes — que é o que vale para inimigos, que não têm classe. */
-export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoNome = "", critico = false, sempre = false, bonusResistir = null, rotuloResistir = "", vantagem = false, desvantagem = false, sorte = null }) { return comSorte(sorte, () => {
+   é o de antes — que é o que vale para inimigos, que não têm classe.
+   `ameaca` (31/10): a de quem causa — `INTENSIDADE_DA_AFLICAO`, acima. Só pesa
+   na aflição que vai a um alvo (o buff de si mesmo não tem força de inimigo).
+   Tem de ser texto: um objeto ou um número ali é o catálogo de sempre. */
+export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoNome = "", critico = false, sempre = false, bonusResistir = null, rotuloResistir = "", vantagem = false, desvantagem = false, sorte = null, ameaca = null }) { return comSorte(sorte, () => {
   const port = typeof fonte === "object" && fonte ? fonte : aflicaoDe(fonte);
   if (!port) return null;
   const cat = CONDICOES[port.cond];
@@ -247,7 +294,8 @@ export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoN
   /* já está sob a mesma condição? não empilha */
   if ((alvo && (alvo.condicoes || []).some((c) => c.id === port.cond))) return null;
 
-  const cond = criarCondicao(port.cond, { origem: nomeFonte || atacante });
+  const forca = port.alvo === "alvo" ? forcaDe(ameaca) : null;
+  const cond = comAForca(criarCondicao(port.cond, { origem: nomeFonte || atacante }), cat, forca);
   if (!cond) return null;
 
   /* buffs não têm resistência: quem se abençoa, se abençoa */
@@ -259,7 +307,7 @@ export function rolarAflicao({ fonte, nomeFonte = "", atacante = "", alvo, alvoN
     };
   }
 
-  const dif = ((cat.resistir && cat.resistir.dif) || 12) + (port.dif || 0) + (critico ? 2 : 0);
+  const dif = ((cat.resistir && cat.resistir.dif) || 12) + (port.dif || 0) + (critico ? 2 : 0) + (forca ? forca.dif : 0);
   const attr = (cat.resistir && cat.resistir.attr) || "vigor";
   const mod = bonusResistir != null ? Number(bonusResistir) || 0 : modDoAlvo(alvo, attr);
   /* vantagem é DOIS DADOS, não um bônus fixo — o Gnomo e o Sintético

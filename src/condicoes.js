@@ -372,6 +372,13 @@ export function criarCondicao(idOuNome, { turnos, origem } = {}) {
   };
 }
 
+/* O DANO POR TURNO DA INSTÂNCIA (31/10, a 13.ª sessão): a aflição de um
+   inimigo traz o número de quem a causou (`INTENSIDADE_DA_AFLICAO`,
+   aflicoes.js) — o sangue de um rato não é o de um elite. Só a condição que
+   o catálogo diz que cobra dano pode cobrá-lo (uma instância não inventa dano
+   em quem não o tem), e sem número próprio é o do catálogo, como sempre. */
+const danoDaInstancia = (inst, c) => (inst && Number.isFinite(inst.danoTurno) && inst.danoTurno >= 0 ? inst.danoTurno : c.danoTurno);
+
 /* ---------------- A MECÂNICA (fonte única) ----------------
    Combate, rolagens e HUD leem daqui — ninguém mais adivinha por
    substring o que "Congelado" faz. */
@@ -383,7 +390,7 @@ export function mecanicaDe(condicoes = []) {
     if (c.vantagem) { m.vantagem = true; m.motivos.push(`${c.rotulo}: vantagem`); }
     if (c.desvantagem) { m.desvantagem = true; m.motivos.push(`${c.rotulo}: desvantagem`); }
     if (c.perdeAcao) { m.perdeAcao = true; m.motivos.push(`${c.rotulo}: perde a ação`); }
-    if (c.danoTurno) { m.danoTurno += c.danoTurno; }
+    if (c.danoTurno) { m.danoTurno += danoDaInstancia(inst, c); }
     if (c.danoExtra) { m.danoExtra += c.danoExtra; }
     if (c.danoReduzido) { m.danoReduzido += c.danoReduzido; }
     if (c.danoRecebidoExtra) { m.danoRecebidoExtra += c.danoRecebidoExtra; }
@@ -409,7 +416,7 @@ export function tickCondicoes(condicoes = []) {
   const fontes = [];
   for (const inst of condicoes || []) {
     const c = condicaoPorId(inst.id) || normalizarCondicao(inst.nome || "");
-    if (c && c.danoTurno) { dano += c.danoTurno; fontes.push(c.rotulo); }
+    if (c && c.danoTurno) { dano += danoDaInstancia(inst, c); fontes.push(c.rotulo); }
     if (inst.turnos == null || isNaN(Number(inst.turnos))) { vivas.push({ ...inst, turnos: null }); continue; }
     const t = Number(inst.turnos) - 1;
     if (t <= 0) expiradas.push(inst);

@@ -224,6 +224,8 @@ import { DEFESA_DA_ARMADURA } from "../src/prontos.js";
 import { testeConcentracao, perfilCombate } from "../src/combate.js";
 import { intencaoDaVez, menteDaCriatura } from "../src/adversario.js";
 import { PESO_AMEACA } from "../src/orcamento.js";
+import { salvaDoGolpe, bonusDeSalvaguarda } from "../src/salvaguardas.js";
+import { atributoEfetivo } from "../src/regras-jogo.js";
 
 /* ============================================================
    1. AS TABELAS — se é número, é tabela
@@ -773,7 +775,17 @@ function aplicarBuffDeCompanheiro(heroi, grupo, ac) {
 
 /* Devolve o retrato de UM combate. `semente` é o único árbitro: a mesma
    semente dá o mesmo combate em qualquer máquina. */
-export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao } = {}) {
+/* `comAflicoes` (31/10, a 13.ª sessão): o golpe do inimigo que acerta o
+   herói carrega a aflição dele, como no App (`aplicarCondicoesDosGolpes`):
+   a salvaguarda da classe (`salvaDoGolpe`, `bonusDeSalvaguarda`), o nome do
+   golpe como fonte, e a ameaça de quem bate — salvo com `{ forca: false }`, o catálogo de antes —
+   (`INTENSIDADE_DA_AFLICAO`). Os dados da aflição saem de uma corrente própria
+   (a semente mais «|aflicao», como o `sorteDoTurno("aflicao")` do App): a luta
+   rola os mesmos dados com e sem elas, e a diferença medida é só a aflição.
+   Desligado por omissão: as catracas de sempre mediam sem ele. A vantagem
+   mental (Gnomo, Sintético) fica de fora: o herói da régua não tem raça. */
+export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comAflicoes = null } = {}) {
+  const sorteDaAflicao = comAflicoes ? sorteDaSemente(String(semente) + "|aflicao") : null;
   const caminhada = Math.max(0, Math.floor(Number(rodadasDeCaminhada) || 0));
   const cen = typeof cenario === "string" ? CENARIOS_DA_REGUA[cenario] : cenario;
   if (!cen) throw new Error("cenário desconhecido: " + cenario);
@@ -959,6 +971,13 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
           if (ab.absorvido > 0) { absorvido += ab.absorvido; abrigos++; heroi = ab.pers; }
           heroi = { ...heroi, vida: Math.max(0, (heroi.vida || 0) - ab.dano) };
           danoSofrido += ab.dano;
+          if (sorteDaAflicao) {
+            const qual = salvaDoGolpe(a.golpeNome || a.inimigo);
+            const b = bonusDeSalvaguarda(heroi, qual, (x) => atributoEfetivo(heroi, x));
+            const quem = inimigos.find((e) => e.nome === a.inimigo);
+            const res = rolarAflicao({ sorte: sorteDaAflicao, fonte: a.golpeNome || a.inimigo, nomeFonte: a.golpeNome || "", atacante: a.inimigo, alvo: heroi, critico: a.r.critico, bonusResistir: b.total, rotuloResistir: "salvaguarda", ameaca: comAflicoes.forca !== false && quem ? quem.ameaca : null });
+            if (res && res.aplicou) heroi = { ...heroi, condicoes: [...(heroi.condicoes || []).filter((x) => x.id !== res.cond.id), res.cond] };
+          }
         } else if (a.alvoRef === "grupo") {
           const dono = grupo.find((g) => g.nome === a.alvoNome);
           /* O DESPERDÍCIO EM CORPO CAÍDO. `turnoDosInimigos` decide os alvos
