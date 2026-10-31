@@ -444,265 +444,15 @@ sec("4. a definição operacional de 'número que muda'");
   const relogio = NAO_CONTA_COMO_NUMERO.find((x) => /relógio/.test(x.o));
   t("o relógio de 45 min está excluído", !!relogio);
   t("e o porquê da exclusão está escrito", !!relogio && /por construção/.test(relogio.porque));
-  /* O NÚMERO DA LINHA MUDOU DE NOVO, A EXCLUSÃO NÃO. Era `12959` em X1,
-     `13161` em X2 e `13290` até a v9.262; hoje o
-     `avancarMinutos(MINUTOS_POR_TURNO)` está em `13330`, porque H1 abriu a
-     porta das habilidades de classe e somou linhas acima dele — o App
-     cresceu por baixo dele outra vez. Trocado aqui pela
-     mesma razão de sempre (uma régua que aponta a linha errada ensina a
-     desconfiar dela) e, DESTA VEZ, com catraca: o dente 8 de
-     `check-acoes-do-jogador.mjs` passou a re-derivar a linha do código,
-     então a próxima mudança de endereço morde em vez de apodrecer calada.
-     O que esta asserção guarda nunca foi o número, e sim que a exclusão
-     venha com ENDEREÇO — é por ele que X4 confere que o relógio ainda
-     avança sozinho antes de repetir a conta. */
-  /* v9.273 (K4): 13502 -> 13499. v9.273 (K4): -3 linhas. A fila de pilulas da ficha (1993-2003) passou a consumir a peca `PilulaDeEscolha` e encolheu 3 linhas; o codigo abaixo dela andou junto e nada mais mudou.
-     O relogio nao andou por vontade propria: o que ele guarda — que o turno
-     fora de combate avanca MINUTOS_POR_TURNO faca o jogador o que fizer —
-     continua palavra por palavra o mesmo. Endereco re-medido, assercao intacta. */
-  /* E3: 13499 -> 13084. O turno fora de combate continua a avançar
-     MINUTOS_POR_TURNO faça o jogador o que fizer; só o endereço andou. */
-  /* R3: 13098 -> 13200, pelas 102 linhas do redesenho da tela principal
-     (A soleira, A voz, o gesto do campo, a porta das linhas de sistema),
-     das quais 95 entram acima do corpo do componente. O turno fora de
-     combate continua a avançar MINUTOS_POR_TURNO faça o jogador o que
-     fizer: mesma asserção, mesmo relógio, endereço re-medido. */
-  /* E4: 13084 -> 13098, pelas treze linhas da chave `economia` em
-     :4929. Mesma asserção, mesmo relógio, endereço re-medido. */
-  /* R4b: 13200 → 13207. Motivo: a tabela dos doze verbos e o despachante
-     das oito ações rápidas saíram do App acima desta linha, e o relógio
-     desceu com o resto. O endereço foi re-medido pelo mapa do diff (é o
-     `check-acoes-do-jogador.mjs`, bloco 8, quem o re-deriva a cada rodada);
-     a asserção não mudou de sentido nem de força. */
-  /* R13: 13207 -> 13784, pelo mesmo deslocamento das peças novas do topo do
-     módulo — primeiro `A cinta` e `O painel do tempo` (etapa A), depois
-     `O topo do papel` (etapa B). São duas etapas e um só motivo: componente
-     dentro do render mata o foco do input, logo tudo o que se pinta nasce
-     ao nível do módulo, e tudo o que vem depois desce.
-     (comentário antigo, que fica pelo rasto:) pelo deslocamento do topo do
-     módulo. O `check-acoes-do-jogador.mjs`, bloco 8, re-deriva este endereço
-     a cada rodada e confirma-o; a asserção não mudou de sentido nem de força
-     — continua a guardar que o porquê da exclusão vem com ENDEREÇO, para que
-     a próxima medição o possa conferir. */
-  /* R15: 13784 -> 13820, +36, pelo comentário que o conserto do nome da
-     campanha pôs dentro de `salvar`. Conferido por CONTEÚDO — é o mesmo
-     `extraTempo = avancarMinutos(MINUTOS_POR_TURNO)`. A asserção continua a
-     guardar que o porquê da exclusão venha com ENDEREÇO; o que mudou foi
-     onde a linha mora no arquivo, não o que ela faz.
-     R17: 13820 -> 13931, +111 (a lápide de `VinhetaDaCena`/`IconeBalao`, a
-     fiação do veredito do cartaz e o `partirOTurno` novo nascem acima).
-     Conferido por conteúdo — é o mesmo `avancarMinutos(MINUTOS_POR_TURNO)`.
-     A FUGA (frontend): 13931 -> 13933, +2 (o import de `fuga.js` e do
-     rótulo do verbo Fugir, no topo do arquivo). Mesmo
-     `avancarMinutos(MINUTOS_POR_TURNO)`. */
-  /* R21 (oficial): o alforje no telefone - os imports do painel e da marca, a porta na cinta, o trilho so na larga e a fiacao do alforje entram ANTES destas linhas; tudo abaixo andou junto. Endereco re-medido pelo diff, conteudo identico; asserção intacta. 13933 -> 14025. */
-  /* R21 (oficial, 2.º passe): a partida da marca da porta (a missão da chegada acende o Diário) entrou antes destas linhas. Endereço re-medido pelo diff, conteúdo idêntico; asserção intacta. 14025 -> 14036; 12630 -> 12641; 12580 -> 12591; 12646 -> 12657. */
-  /* A FUGA (frontend, segunda volta — R21): 14036 -> 14051, +15 (o fôlego
-     da fuga entrou acima, em `combateRef`/`aplicarResposta`). Conferido
-     por conteúdo — é o mesmo `avancarMinutos(MINUTOS_POR_TURNO)`. */
-  /* O TURNO DE QUEM CAIU (frontend, 24/09): 14051 -> 14078, +27 (o guarda
-     que converte texto em turno de quem está inconsciente,
-     `convertePraTurnoDoCaido`, entrou no topo de `agirInterno`, acima
-     deste ponto). Conferido por conteúdo — é o mesmo
-     `avancarMinutos(MINUTOS_POR_TURNO)`, e `check-acoes-do-jogador.mjs`
-     (dente 8) confirma sozinho a cada corrida.
-     A FUGA COBRA (frontend, R22): 14078 -> 14089, +11 (`sementeMundo` +
-     `abrirCombate`, acima deste ponto). Conferido por conteúdo — é o
-     mesmo `avancarMinutos(MINUTOS_POR_TURNO)`; o dente 8 confirma.
-     O GOLPE FINAL (frontend, 29/09, MM3): 14089 -> 14239, +150 — o mesmo
-     delta que `FUNIL_DO_COMBATE` registra a partir de `declararGolpe` no
-     cabeçalho dele (a divisão de `aplicarGolpeDoJogador` em três, bem
-     acima deste ponto). Conferido pelo próprio dente 8, que re-deriva a
-     linha do código; o relógio não mudou de comportamento, só de linha.
-     Mesmo dia, segunda medição: 14239 -> 14241, +2. Duas linhas de
-     `console.warn("[MM3-DEBUG] ...")` entraram dentro de `aplicarGolpe-
-     DoJogador` — depuração do próprio MM3, acima deste ponto — entre a
-     minha primeira e a minha segunda corrida do varredor nesta etapa; é
-     a prova de que o `App.jsx` seguiu em edição por outra mão enquanto
-     eu reconciliava a tabela (duas mentes, mesma árvore). Re-medido pelo
-     dente 8.
-     Mesmo dia, terceira medição: 14241 -> 14239, -2. O `frontend` fechou o
-     diagnóstico e removeu as 4 linhas de debug que chegaram a existir (as
-     2 de cima, mais 2 que tinham nascido depois em `continuarGolpeDo-
-     Jogador`/`responderGolpeFinal`) — o relógio volta ao endereço de antes
-     de qualquer debug. Re-medido pelo dente 8; o comportamento guardado
-     (o turno fora de combate avança MINUTOS_POR_TURNO faça o jogador o
-     que fizer) não mudou em nenhuma das três medições de hoje.
-     A peneira da agressão (frontend, MM, 29/09): 14239 -> 14257, +18 —
-     ver o motivo completo junto do campo `porque`, em
-     testes/acoes-do-jogador.mjs.
-     O escondido entra na fiação (frontend, MM6, 29/09): 14257 -> 14326,
-     +69 — mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs.
-     O golpe final é do grupo (frontend, 29/09, MM3b): 14326 -> 14357,
-     +31 — o estado novo do cartão do grupo mais a função
-     `responderGolpeFinalComp` (perto do estado e logo depois de
-     `responderGolpeFinal`), ambos ANTES deste ponto no arquivo — mesmo
-     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     A cidade por dentro (frontend, MM12, 29/09): 14357 -> 14371, +14 —
-     a fiação de `fichaParaPauta` em `pautaDoTurno`, acima no arquivo —
-     mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs.
-     A gente por dentro (frontend, MM8a, 29/09): 14371 -> 14388, +17 —
-     a fiação de `genteParaPauta` em `pautaDoTurno`, logo depois de
-     `fichaParaPauta`, acima no arquivo — mesmo motivo, mesmo lugar: o
-     campo `porque` em testes/acoes-do-jogador.mjs.
-     Os tetos das pessoas (frontend, MM8c-1, 29/09): 14388 -> 14408, +20 —
-     a recência do registo de NPCs, acima no arquivo — mesmo motivo, mesmo
-     lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     O mundo puxa o herói (frontend, MM13, 30/09): 14408 -> 14482, +74 —
-     mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs.
-     A fiação do primeiro dia (frontend, MM13b, 30/09): 14482 -> 14493,
-     +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-     entraram acima, dentro de `aplicarResposta` — mesmo motivo, mesmo
-     lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     A gente que pesa (frontend, MM8c-2, 30/09): 14493 -> 14499, +6 —
-     o import de elenco.js e o contexto/nomes do elenco, mesmo motivo,
-     mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
-     14499 -> 14509, +10 — o cache por identidade (elencoCacheRef), mesmo
-     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     A promoção (frontend, MM8e, 30/09): 14509 -> 14512, +3 — quatro
-     pontos novos acima deste (o ref do save, os vistos, a promoção ao
-     virar o dia, a saída na pauta), mesmo motivo, mesmo lugar: o campo
-     `porque` em testes/acoes-do-jogador.mjs.
-     A luta sem espada (frontend, MM9, 30/09): 14512 -> 14528, +16 —
-     mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs.
-     O crime (frontend, MM10, 30/09): 14528 -> 14546, +18 — mesmo motivo,
-     mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     As perguntas ao Mestre (frontend, MM14, 30/09): 14546 -> 14584, +38 —
-     mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs.
-     Os dois canais antigos (frontend, MM14, 30/09): 14584 -> 14559, -25.
-     A migração das tarefas antigas para missão do sistema (o load, o fio
-     do descanso, a paga no fecho) entrou ACIMA deste ponto, mas a remoção
-     dos dois canais que fechavam a lista antiga pelo título (o `forEach`
-     do Narrador e o `casar` do Cronista) tirou mais linhas do que a
-     migração somou — o líquido é -25. Re-medido pelo próprio dente 8 de
-     check-acoes-do-jogador.mjs, com o diff de App.jsx contra HEAD
-     conferindo cada endereço; nada somado de cabeça.
-     A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
-     30/09): 14559 -> 14615, +56 — o `viuAntes` de `pessoasDaCena`, o
-     helper `contextoDoNome`, e as três portas do registo (mais o mural)
-     decidindo `nomeCerto` por `nomeComDono`, todas ACIMA deste ponto;
-     mesmo motivo, mesmo lugar: o campo `porque` em
-     testes/acoes-do-jogador.mjs.
-     A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6, 30/09):
-     14615 -> 14633, +18 — o cálculo das três fichas mudou-se de
-     `pautaDoTurno` para `fichasDaMesa`, ACIMA do relógio no arquivo; mesmo
-     motivo, mesmo lugar: o campo `porque` em testes/acoes-do-jogador.mjs.
-     O lugar pelo Cronista (frontend, MM15 (1), 30/09): 14633 -> 14638, +5 —
-     `registrarLugar` passou a decidir pelo `lerLugarDito` (lugar.js), cinco
-     linhas ACIMA do relógio no arquivo; mesmo motivo, mesmo lugar.
-     As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 14638 ->
-     14640, +2 — `colherAsFalas` trocou o `.slice` por `bocasDoTurno` mais
-     uma saída antecipada, duas linhas ACIMA do relógio; mesmo motivo,
-     mesmo lugar.
-     A ligação não é o Mestre (frontend, MM15 (3), 30/09): 14640 -> 14808,
-     +168 — a foto do início do turno em `agirInterno` nasce ACIMA do
-     relógio no arquivo; mesmo motivo, mesmo lugar.
-     O segredo guardado (frontend, MM15 (4), 30/09): 14808 -> 14829, +21 —
-     os cinco pontos de O SEGREDO GUARDADO nascem ACIMA do relógio no
-     arquivo; mesmo motivo, mesmo lugar.
-     Os nomes que se fundem (frontend, MM15 (5), 30/09): 14829 -> 14833,
-     +4 — `contextoDoNome` ganha `conhecidos`/`recentes` ACIMA do relógio
-     no arquivo; mesmo motivo, mesmo lugar.
-     O companheiro de antes (frontend, 01/10): 14833 -> 14858, +25 — a
-     fiação do companheiro nasce dentro de `iniciar`, ACIMA do relógio no
-     arquivo; mesmo motivo, mesmo lugar.
-     A MASMORRA QUE SE ACABA (v9.348, 05/10): 14858 -> 14846, -12. O bloco do
-     chefe saiu do ramo do Narrador e virou `concluirMasmorraDoChefe` (mais
-     abaixo no arquivo, ABAIXO do relógio), e o ramo ficou 12 linhas mais
-     curto ACIMA dele. Só o endereço andou — a asserção continua a exigir que
-     a exclusão do relógio venha com a linha certa; re-medido pelo bloco 8 de
-     check-acoes-do-jogador.mjs. */
-  /* (v9.350 · o como chega) 14846 -> 14859, +13: a economia na seção dela e o
-     `cederNaCena` no fim de `pautaDoTurno` nascem ACIMA do relógio. Só o
-     endereço andou; re-medido pelo bloco 8 de check-acoes-do-jogador.mjs. */
-  /* (v9.351 · a Nave como destino) MM16 nº 2, 05/10: 14859 -> 14951, +92: os
-     +27 acima do combate (o import de boca.js, a guarda da ida em
-     `alvoLocalPedido`, a chegada à boca em `talvezChegarSozinho`) e os +65 de
-     `interceptarMovimento` e `ctxDoRastro` (uma frase, uma resposta; a ida até
-     à boca), todos ACIMA do relógio. Só o endereço andou; re-medido pelo diff
-     de App.jsx contra o de antes da etapa e pelo bloco 8 de
-     check-acoes-do-jogador.mjs. */
-  /* (v9.352 · a masmorra na pauta) MM16 nº 4, 06/10: 14951 -> 14985, +34: 
-     a seção MASMORRA em `pautaDoTurno` (+6), o Local do rodapé que lá dentro diz a boca e não a estrada (+5), a recusa de combate que saiu de `registrarLugar` (-1), a guarda do `lugar_atual` no turno que abre a masmorra pelo sinal (+21) e o ONDE EU ESTOU calado lá dentro (+3),
-     todos ACIMA do relógio. Só o endereço andou; re-medido pelo diff de
-     App.jsx contra o de antes da etapa e pelo bloco 8 de
-     check-acoes-do-jogador.mjs. */
-  /* (v9.353 · esconder-se na luta) MM16 nº 6, 06/10: 14985 -> 14990, +5 —
-     o rodapé de `enviar` passou a ler a ficha do turno (+5), ACIMA disto no
-     arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra o
-     HEAD, e conferido pelo varredor. */
-  /* (v9.354 · a luz e a sombra) 06/10: 14990 -> 15028, +38 — o import de
-     luz.js (+1), o mapa de luz junto de `fichaViva` (+23), a seção A LUZ em
-     `pautaDoTurno` (+5) e o gesto da tocha depois do ato que revela (+9),
-     todos ACIMA do relógio. Só o endereço andou; re-medido pelo diff de
-     App.jsx contra o HEAD, e conferido pelo varredor. */
-  /* (v9.356 · a região na criação) MM17 B, 06/10: 15028 -> 15048, +20 — o
-     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
-     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
-     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-  /* (v9.357 · a história amarrada à região) MM17 C1, 06/10: 15048 -> 15057,
-     +9 — a espinha amarrada à região logo depois de `estenderEspinha`, em
-     `iniciar`, ACIMA disto no arquivo. Só o endereço andou; re-medido pelo
-     diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-  /* (v9.358 · a masmorra sem a cidade) MM17 C2, 06/10: 15057 -> 15083,
-     +26 — a ficha, o horizonte, a cena do system e o "aqui" por tabela,
-     ACIMA disto no arquivo. Só o endereço andou; re-medido pelo diff de
-     App.jsx contra o HEAD, e conferido pelo varredor. */
-  /* (v9.359 · a Bolsa em duas linhas) 06/10: 15083 -> 15092, +9 — a
-     linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
-     disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
-     contra o HEAD, e conferido pelo varredor. */
-  /* (A1 · B1 · o relato sai do App) 10/10: 15092 -> 14990, -102 — o relato
-     saiu para `painel-relato.jsx` (-118) e `pushMsgs` ganhou o carimbo
-     `naLuta` (+11) e a mensagem do Mestre a reserva do `recibo` (+5), tudo
-     ACIMA disto. Só o endereço andou; re-medido pelo diff de App.jsx
-     contra o HEAD, e conferido pelo varredor. */
-  /* (A1 · B2–B9 · o recibo e o fim da luta) 10/10: 14990 -> 15315, +325 —
-     o recibo (as puras no topo, os refs acima de `pushMsgs`, a foto no
-     envio e a espera do Cronista em `enviar`) e as frases de B8 que
-     ganharam linhas, tudo ACIMA disto. Só o endereço andou; re-medido pelo
-     diff de App.jsx contra a árvore de B1, e conferido pelo varredor. */
-  /* (A1 · as pontas, o oficial) 10/10: 15315 -> 15407, +92 — as puras do
-     fim da luta e da hora falada no topo, e o que a tela mostrou (a marca
-     da porta) acima de `pushMsgs` e no envio, tudo ACIMA disto. Só o
-     endereço andou; re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (v9.371 · a marcha única, a fiação) 10/10: 15407 -> 15408, +1 — o
-     import de `partidaNaRegiao` (marcha.js) na linha 156, acima de tudo.
-     Só o endereço andou. */
-  /* (MM18 · a fiação da escuta e do mural, o frontend) 11/10: 15408 ->
-     15481, +73 — o import de escuta.js, os refs da escuta, o rumo em
-     pautaDoTurno e a escuta em enviar, tudo acima. Só o endereço andou;
-     re-medido pelo diff de App.jsx contra o HEAD (7452e3a). */
-  /* (nexo · as três fiações, o frontend) 11/10: 15481 -> 15505, +24 — o
-     ref da conversa, a mente da ameaça, o mundo das missões e o Cronista
-     (falou_com), tudo acima. Só o endereço andou; re-medido pelo diff de
-     App.jsx contra o HEAD (ecc0346). */
-  /* (v9.393 · a fiação da campanha que prende) 15505 -> 15581, +76: o degrau todo acima do relógio */
-  /* (MM (a luta tem saída, o frontend) 11/10) 15581 -> 15622, +41: o mesmo degrau de cima do enviar, todo acima do relógio. Re-medido pelo diff contra o HEAD (e5b6736; o App.jsx é o mesmo de c3de7af). */
-  /* (MM11 #5, a bolsa da frase, 11/10) 15622 -> 15654, +32: o import, o ref do veto, o preço do balcão, o veto na pauta, o meDeve e o gancho da bolsa no agirInterno, todos acima do relógio. Re-medido pelo diff contra o HEAD. */
-  /* (MM11 #5, a leitura de pessoa, 11/10) 15654 -> 15655, +1: o import de leitura-de-pessoa.js. Re-medido pelo diff contra o HEAD. */
-  /* (MM, o laço da história ligado, 11/10: a espinha em mundoDasMissoes e chefesDoFio, acima, +12) 15655 -> 15667. Re-medido pelo diff contra o HEAD. */
-  /* (MM-C · C0, as mãos do coração, o frontend, 11/10: o alvo do golpe, o veto da luta sem painel, a ordem do ato, os fatos e o segredo no mundo das missões, o sítio do marco, o herói no registo e a frase anterior da bolsa) 15667 -> 15731, +64. Re-medido pelo diff contra o HEAD. */
-  /* (MM-C · C1, o núcleo, o frontend, 11/10: o import de nucleo.js, os três refs, nucleoAgora/nucleoEmCena, a linha QUEM É na pauta e o reset do coração em iniciar, acima) 15731 -> 15788, +57. Re-medido pelo diff contra o HEAD. */
-  /* (MM-C · C2, as subtramas, o frontend, 11/10: o import de subtramas.js, os quatro refs, subtramasAgora/contextoDoCoracao, a mão do vilão, QUEM CARREGA na pauta, a confirmação no envio e o coração em aplicarRetrato, acima) 15788 -> 15852, +64. Re-medido pelo diff contra o HEAD. */
-  /* (MM-C · C6, a fogueira ligada, o oficial, 11/10: o import, o LimiteDaFogueira, o estado da noite e a ficha do envio em aplicarResposta, acima) 15852 -> 15882, +30. Re-medido pelo diff contra o HEAD. */
-  /* (MM-C · 7.ª sessão de prova, a fiação, o frontend, 12/10: os imports, os dois refs da chegada inferida, o querPartir, o porteiro do mural, o naoParte do resolver e a chegada confirmada no turno, acima) 15882 -> 15918, +36. Re-medido pelo diff contra o HEAD. */
-  /* (o Narrador só narra, E1 — a fiação, o frontend, 12/10: os imports, os dois refs dos nomes à mão, o fatorDoPouso, o preço comum em fichasDaMesa, fichasDoOraculo, a rua e os nomes em pautaDoTurno, tudo ACIMA) 15918 -> 15991, +73. Re-medido pelo diff contra o HEAD. */
-  /* (o Narrador só narra, E3 — a fiação, o frontend, 12/10: o achado já na bolsa e o gênero do Cronista, ACIMA) o relógio desceu de :15991 para :16003, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (a frase que paga, 12/10: +9 em enviar, ACIMA) o relógio desceu de 16003 para 16012; só o endereço andou. */
-  /* (os consertos de motor da 8.ª sessão, a fiação, o frontend, 12/10: a jornada sem destino e o destino do seguir viagem, ACIMA) o relógio desceu de 16012 para 16018, +6; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (o Narrador só narra, E4 — a fiação, o frontend, 12/10: a guarda podarONarrador no topo de aplicarResposta, acima) o relógio desceu de :16018 para :16027, +9; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (35c92c3). */
-  /* (os consertos de motor da 9.ª sessão, a fiação, o frontend, 12/10: a moeda do mundo, a cidade de contextoDoCoracao e as bancas da cena, acima) o relógio desceu de :16027 para :16039, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (7419ced). */
-  /* (F2a · EM CENA, a fiação, o frontend, 12/10: o import de em-cena.js e o contexto da lista antes de pautaDoTurno, acima) o relógio desceu de :16039 para :16087, +48; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (e6edf61). */
-  /* (trilha A, o caminho no motor, o oficial, 29/10: o destino não reconhecido, de duas linhas, virou uma, ACIMA; o relógio desceu de :14999 para :14998, -1; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 63dda7f) */
-  /* (trilha A, os recuos do gênero, o oficial, 29/10: o import de cenario.js, duas linhas, ACIMA; o relógio desceu de :14998 para :15000, +2; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD a7497e3) */
-  t("e aponta a linha que avança o relógio", !!relogio && /13474/.test(relogio.porque) /* (31/10, o oficial, aceite-13: o ref aceiteDoTurnoRef, +3, e o enviar que o lê e o limpa, +1, os dois ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 67cefe8: 13470 -> 13474) */ /* (31/10, o oficial, a 13.ª: a aflição dos golpes saiu do App para motor/golpe-no-corpo.js#aAflicaoDosGolpes, -14 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD de9540f) */ /* (T3 §4c, a janela da cena aposenta-se, o oficial, 29/10: a função ModalCena e o estado verCena saíram ACIMA, e a luz do mundo entrou no lugar, -36; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 6d84aa7): 13520 -> 13484. */ /* (T3, o tom da cena e o glifo do gênero, o oficial, 29/10: o climaFundo de oito linhas virou uma conta comentada, -4, e o GLIFO_DO_GENERO saiu do App para ui.jsx, -12, ACIMA (-16); só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD, à mão): 13536 -> 13520. */ /* (trilha A, a ligação do load, o oficial, 29/10: o continuar abre os dez campos por abrirOSave, -84 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 90af402, à mão): 13620 -> 13536. */ /* (trilha A, o herói novo como o load, o oficial, 29/10: o import de abrir-o-save.js, +1, e a ficha aberta e a cidade pisada no iniciar, +7, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 1d9082c, à mão): 13612 -> 13620. */ /* (trilha A, a praça do Juiz, o oficial, 29/10: o import de aPracaDoJuiz, +2, e a foto do Juiz pela praça do instante, +6, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 5e2a272, à mão): 13604 -> 13612. */ /* (trilha A, o conferente no motor, o oficial, 29/10: os 61 refs, os 18 setters e a releitura em osOrgaosAgora, +20 ACIMA, e a fé e o conferirCom em uma linha cada, -8, também ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 9e06960, à mão): 13592 -> 13604. */ /* (trilha A, o trabalho daqui no motor, o oficial, 29/10: o estado dos órgãos do depois, +23 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD fa0a5e0, à mão): 13569 -> 13592. */ /* (trilha A, o prelúdio no motor, o oficial, 29/10: o estado e o aplicar do prelúdio, ACIMA, e o trecho de enviar da frase às bocas com os 92 nomes (funções e imports) que só ele lia, que saíram; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 374ddca, à mão): 14211 -> 13569. */ /* (trilha A, o desfecho das habilidades, o oficial, 29/10: as dez linhas de cada alvo viraram chamadas à tabela do motor, e a colheita de duas linhas virou uma, -2 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 44a4695): 14213 -> 14211. */ /* (trilha A, o pedido no motor, o oficial, 29/10: o estado e o aplicar do pedido, +9 ACIMA, e o trecho de enviar da pauta ao system, que saiu, -263; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 78caaa9) */ /* (trilha A, a praça do instante, o oficial, 29/10: o estadoDaPauta passou a uma linha, -2 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 895686b) */ /* (trilha A, a pauta no motor, o oficial, 29/10: a pautaDoTurno e as oito que só ela chamava saíram do App, -545 no saldo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD f281a2c) */ /* (trilha A, o glifo do gênero, o oficial, 29/10: GLIFO_DO_GENERO saiu de TelaMundo para o módulo com o comentário, +5 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD df17ea4) */ /* (T2-A, o golpe no corpo no motor, o oficial, 28/10: as duas portas viraram uma linha cada, -49 no saldo ACIMA ou entre; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 5917ac8, à mão): 15013 -> 14999. */ /* (trilha A, T2-A, a abertura no motor, o oficial, 28/10: o pedido da abertura antiga saiu do App, −12 linhas ACIMA; −8 no saldo destas; só o endereço andou) */); /* (trilha A, T2-A, o rodapé no motor, o oficial, 28/10: +1 import no topo e −1 linha no rodapé; re-medido pelo diff contra 2137ae7) */ /* (trilha A, o tempo do turno no motor, o oficial, 28/10: o relógio e o passo na cidade saíram para src/motor/tempo-do-turno.js, −28 linhas acima; re-medido pelo diff contra 7a0d8b2) */ /* (trilha A, o Juiz que corrige, o oficial, 28/10: o import de motor/correcao-do-juiz.js e os refs do veredito e do livro de vetos, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 49cbd29): 15018 -> 15050. */ /* (T1-A 9.ª fatia, o oficial, 28/10: o gatilho, o pedido e o aceito do Cronista foram para motor/cronista-do-turno.js, e o import dele, ACIMA ou dentro; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 760fe1b): 15286 -> 15018. */ /* (T1-A 8.ª fatia, 2, o oficial, 28/10: o turno do mundo, o sino, o chão e a escuta foram para motor/antes-do-mestre.js, e o import dele, +2 no saldo; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD aac1912) — e a linha do avanço mudou de sítio, para dentro do `if (doMundo.anda)`, o que o remedir não segue (à mão): 15276 -> 15286. */ /* (T1-A 8.ª fatia, 1, o oficial, 28/10: a nêmesis, os vistos, o trabalho, a queda e a entrega saíram do aplicarResposta para motor/entrega-do-turno.js, -83 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD a9ef8cf): 15338 -> 15276. */ /* (a sessão cede ao save, o orquestrador, 28/10: +3 em salvar, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 110b959): 15335 -> 15338. */ /* (T1-A 7.ª fatia, 1, o oficial, 28/10: a mesa e o fôlego saíram do aplicarResposta para motor/fecho-da-resposta.js, e nove imports sem leitor, -11 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cbb7134): 15346 -> 15335. */ /* (T1-A 7.ª fatia, 2, o oficial, 28/10: a sessão como arquivo — os imports e os refs da sessão, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD c866d6a): 15288 -> 15346. */ /* (T1-A 7.ª fatia, defeito, o oficial, 28/10: as linhas da emboscada vão à tela, +5 no aplicarResposta, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cfcd8b8): 15283 -> 15288. */ /* (T1-A 7.ª fatia, 1, o oficial, 28/10: o perigo e a quase-morte saíram do aplicarResposta para motor/fecho-da-resposta.js, e o import dele, +1, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 3ec3364): 15316 -> 15283. */ /* (T1-A 3.ª fatia, 5, o oficial, 28/10: a frase do grupo cheio pela régua do motor, +1 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD aeeabdc) */ /* (T1-A 3.ª fatia, 3, o oficial, 28/10: o turno fundido — uma chamada a aplicarOTurno no lugar das seis peças — e a base do nome com o estado de agora, -59 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 48579a9) */ /* (T1-A 3.ª fatia, 2, o oficial, 28/10: as missões, os sinais, a fé, o milagre e as dádivas saíram do App para motor/meio-do-turno.js, -241 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD bd9e60f) */ /* (T1-A 3.ª fatia, 1, o oficial, 28/10: o registrarLugar e o bloco do mapa saíram do App para motor/meio-do-turno.js, -119 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD d776408) */ /* (T1-A 2.ª fatia, 3, o oficial, 27/10: o d20 da salvaguarda pela sorte do turno, +3 no comentário do aplicarResposta e +4 na frase do grupo cheio do Cronista, +7, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 2fdb7e4): :16212 -> :16219. */ /* (T1-A 2.ª fatia, 2, o oficial, 27/10: o cânone e a gente saíram do aplicarResposta para motor/aplicar.js#aplicarORegisto, -56 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD e9c0851): :16268 -> :16212. */ /* (T1-A 2.ª fatia, o oficial, 27/10: o juízo do Cronista, -4 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 4617715): :16272 -> :16268. */ /* (T0-A 3/3, o oficial, 27/10: o comentário do relógio que lê do estado, +2, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra a cópia de antes da etapa): o relógio desceu de :16500 para :16502, +2. */ /* (T0-A 2/3, o oficial, 27/10: o gancho useVistaDoEstado fora do componente e o estadoRef no topo de Taverna(), +24, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra a cópia de antes da etapa): o relógio desceu de :16476 para :16500, +24. */ /* (T0-A, o oficial, 27/10: o import de estado.js, +2, o lerSave fora do componente, +9, a versão no retrato e o v2 na gravação, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra a cópia de antes da etapa): o relógio desceu de :16458 para :16476, +18. */ /* (a 12.ª sessão no motor, o backend, 19/10: o custo das tentativas falhadas em chamarModelo, +4, o mostrado do rumo, +2, e o veto da viagem que não houve, +7, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 806ef83): 16445 -> 16458, +13 */ /* (onda 2 do custo, o frontend, 14/10: os sinais do turno, o fixo da ficha, o estado épico e as portas em cenaDoPrompt, ACIMA) 16373 -> 16445, +72; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (2b9e82b). */ /* (v9.470, onda 1 do custo, o frontend, 13/10: o ref e o gatilho do Cronista e a memória do turno, ACIMA) 16329 -> 16373, +44; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (4b72a82). */ /* (v9.465, o frontend, 13/10: o pedido na ordem do cache em chamarMestre, ACIMA) 16321 -> 16329, +8; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (842adc7). */ /* (v9.463, o oficial, 13/10: o apontado da agressão e a planta pelo lugar, ACIMA) 16315 -> 16321, +6; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (d299d6c). */ /* (v9.461 ligada, o oficial, 13/10: elencoDoCoracao e cidadeDoCoracao, +13, o QUEM É, e a espinha e os sítios do EM CENA, +5, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 69ad49f): 16296 -> 16315, +19. */ /* (S10b · a abertura por situação e o kit inicial, o oficial, 13/10: o import de kit-inicial.js, +2, a criação, +3, e equiparCombate/montarGrid, +10, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 341e2cd): 16281 -> 16296, +15. */ /* (a 10.ª sessão ligada, o oficial, 13/10: o sinal da procura de gente, +6, o longe do EM CENA, +4, e o objeto do teste em ctxDesafio, ACIMA ou entre estes; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cc0770a): 16254 -> 16281, +27. */ /* (os pendentes ligados, o oficial, 13/10: o import de chegadaDaViagem, +1, e a reserva do LimiteDasFichas, +3, ACIMA; o contexto do paradeiro no Cronista, +6, também acima destes): 16244 -> 16254, +10. */ /* (MM17 · o mapa vivo ligado, o oficial, 12/10: os imports de mapa-vivo.js e painel-mapa-vivo.jsx, o LimiteDoMapa e a aba Mapa que abre o mapa vivo, tudo ACIMA) 16219 -> 16244, +25; só o endereço andou, re-medido pelo diff contra o HEAD (f058d3a). */ /* (F2b · F2c · F2d, a fiação, o oficial, 12/10: os imports de fichas.js e painel-fichas.jsx, o LimiteDasFichas e a altura da janela, o estado das fichas ao lado de entrada, o ref da memória, e as fichas da cena antes de pautaDoTurno, tudo ACIMA) 16087 -> 16219, +132; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (7a890f3). */
+  /* O ENDEREÇO DO RELÓGIO SAIU DA TABELA (31/10/2026, Fase 2 do plano do motor),
+     e é o motivo desta asserção ter mudado de forma: ela exigia que a exclusão
+     citasse o NÚMERO da linha que avança o relógio (`/13474/`), e esse número
+     andou dezenas de vezes — cada uma com uma nota de «re-medido» aqui. O que
+     ela guarda nunca foi o número: é que a exclusão venha com ENDEREÇO, para o
+     X4 poder conferir que o relógio ainda avança sozinho antes de repetir a
+     conta. O endereço agora é a FUNÇÃO (`src/App.jsx#agirInterno`), e o dente 8
+     de `check-acoes-do-jogador.mjs` confere que o avanço mora mesmo nela. */
+  t("e aponta a função que avança o relógio", !!relogio && /src\/App\.jsx#agirInterno/.test(relogio.porque));
 }
 
 sec("5. a abertura fora de alcance — o achado central");
@@ -759,8 +509,8 @@ sec("5. a abertura fora de alcance — o achado central");
     /nunca roda/.test(F.recusaDeGraca.logo));
   t("o par de suítes que nunca foi composto está citado",
     F.parQueNuncaFoiComposto.length === 2
-    && F.parQueNuncaFoiComposto.some((x) => /teste-grid\.mjs:198/.test(x))
-    && F.parQueNuncaFoiComposto.some((x) => /teste-alcance-e-achado\.mjs:45/.test(x)));
+    && F.parQueNuncaFoiComposto.some((x) => /teste-grid\.mjs/.test(x))
+    && F.parQueNuncaFoiComposto.some((x) => /teste-alcance-e-achado\.mjs/.test(x)));
 }
 
 sec("6. as duas travas do ataque por texto");
@@ -786,21 +536,7 @@ sec("6. as duas travas do ataque por texto");
 sec("7. os seis literais do painel que não casam leitor nenhum");
 {
   /* medido contra o catálogo real: `lerAcao` é o mesmo leitor que o
-     adjudicador usa (src/App.jsx:16097 → veredictoDaAcao — MM3b,
-     frontend, 29/09: re-medido por busca direta no arquivo, não por soma
-     de delta, porque a referência já vinha desatualizada de antes desta
-     etapa; MM8c-1, frontend, 29/09: 17762 -> 17782, +20 — o mesmo delta
-     desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE, re-medido por
-     busca direta; MM8c-2, frontend, 30/09: 17782 -> 17788, +6, depois
-     17788 -> 17798, +10 (o cache por identidade, elencoCacheRef) — o mesmo
-     delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE; MM9,
-     frontend, 30/09: 17798 -> 17856, +58 — a palavra dobra o bando
-     (dentro de `concluirRolagem`, ANTES deste ponto) somou 28 linhas ao
-     mesmo delta já acumulado de FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE;
-     MM10, frontend, 30/09: 17856 -> 17994, re-medido por busca direta —
-     a referência já não seguia o delta uniforme de FUNIL_DO_COMBATE/
-     RECUSAS_DO_COMBATE antes desta etapa (era uma prova solta, não uma
-     asserção), e o crime some +18 igual às outras duas tabelas) */
+     adjudicador usa (src/App.jsx#veredictoDaAcao) */
   const ctx = { personagem: { nivel: 3, atributos: {}, pericias: {} }, semente: "x1", lugar: "taverna",
     emCombate: false, tentativas: {}, dia: 1, pessoaDe: () => null, fama: 0,
     ehPessoaConhecida: () => false, achadoDe: () => null };
@@ -835,7 +571,7 @@ sec("8. o motor que nenhum clique chama");
   /* o achado duro: um export sem NENHUM leitor, que passa pela catraca
      porque a catraca conta o import como leitor */
   t("gastarRecurso está registrado como morto", M.morto.some((x) => x.nome === "gastarRecurso"));
-  t("e o lugar dele está anotado", M.morto.some((x) => /combate\.js:745/.test(x.onde)));
+  t("e o lugar dele está anotado", M.morto.some((x) => /combate\.js#gastarRecurso/.test(x.onde)));
   t("de fato o App importa gastarRecurso", /\bgastarRecurso\b/.test(APP));
   t("e nunca o chama", !/\bgastarRecurso\s*\(/.test(APP));
   /* combate.recursos: escrito toda luta, nunca consumido */
@@ -920,146 +656,34 @@ sec("9. o funil do combate — quem chama pushMsgs, e com que voz");
      contá-los juntos apagaria a única distinção que a etapa deixou. */
   t("frase de mesa e telegrama estão separados e ambos existem",
     f.voz.frase > 0 && f.voz.telegrama > 0, JSON.stringify(f.voz));
+  /* (MM3, 29/09) a linha do golpe do jogador mora em `continuarGolpeDoJogador`,
+     e não em `aplicarGolpeDoJogador`: a divisão em três (cabeçalho do bloco)
+     mudou a linha de FUNÇÃO — a voz (`telegrama`) e o conteúdo (dano, PV, aflição
+     da arma) são os de sempre. Desde 31/10 ela se acha pela âncora
+     `pushMsgs(linhas)`, e não pelo número da linha. */
   t("o telegrama do golpe do jogador está declarado como telegrama",
-    /* MM3 (frontend, 29/09): esta asserção apontava para `aplicarGolpe-
-       DoJogador`, e passa a apontar para `continuarGolpeDoJogador` — não
-       porque a régua afrouxou, mas porque a LINHA mudou de função: é a
-       mesma divisão em três descrita no cabeçalho do bloco. A voz
-       (`telegrama`) e o conteúdo da linha (dano, PV, aflição da arma) são
-       exatamente os de sempre; só o corpo que a chama tem nome novo. O
-       histórico de deslocamentos anterior (K3, K4, E3, R15, R17, R21, R22)
-       rastreava esta MESMA linha dentro de `aplicarGolpeDoJogador`, onde
-       ela não mora mais — por isso sai daqui: continuar a acumulá-lo sob
-       um `fn` que já não é o dela confundiria o próximo re-medidor.
-       Mesmo dia, segunda medição: 12804 -> 12806, +2 (as duas linhas de
-       depuração do próprio MM3 dentro de `aplicarGolpeDoJogador`, acima —
-       ver a nota do relógio de 45 min, bloco 4).
-       Mesmo dia, terceira medição: 12806 -> 12804, -2 (as 4 linhas de
-       debug que chegaram a existir foram removidas ao fim do diagnóstico
-       — mesma nota do bloco 4).
-       A peneira da agressão (frontend, MM, 29/09): 12804 -> 12818, +14 —
-       o mesmo degrau que `aplicarGolpeDoJogador` leva no cabeçalho de
-       FUNIL_DO_COMBATE (a peneira em `resolverAtaqueJogador`, acima desta
-       função no arquivo).
-       O escondido entra na fiação (frontend, MM6, 29/09): 12818 -> 12876,
-       +58 — o mesmo degrau que `continuarGolpeDoJogador` leva no
-       cabeçalho de FUNIL_DO_COMBATE.
-       O golpe final é do grupo (frontend, 29/09, MM3b): 12876 -> 12883,
-       +7 — o estado novo do cartão do grupo (`golpeFinalCompPendente`/
-       `golpeFinalCompCtxRef`) nasce perto do estado do cartão do jogador,
-       ANTES de `aplicarGolpeDoJogador` no arquivo, e empurra tudo abaixo
-       — o mesmo degrau que `aplicarGolpeDoJogador`/`continuarGolpeDoJogador`
-       levam no cabeçalho de FUNIL_DO_COMBATE nesta etapa.
-       A gente por dentro (frontend, MM8a, 29/09): 12897 -> 12914, +17 — o
-       mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       fiação de `genteParaPauta` em `pautaDoTurno`, acima no arquivo).
-       Os tetos das pessoas (frontend, MM8c-1, 29/09): 12914 -> 12934, +20 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       recência do registo de NPCs, acima no arquivo).
-       O mundo puxa o herói (frontend, MM13, 30/09): 12934 -> 13008, +74 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       A fiação do primeiro dia (frontend, MM13b, 30/09): 13008 -> 13019,
-       +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-       entraram acima, dentro de `aplicarResposta`.
-       A gente que pesa (frontend, MM8c-2, 30/09): 13019 -> 13025, +6 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
-       13025 -> 13035, +10 — o mesmo degrau desta etapa em
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
-       elencoCacheRef).
-       A promoção (frontend, MM8e, 30/09): 13035 -> 13038, +3 — o mesmo
-       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       A luta sem espada (frontend, MM9, 30/09): 13038 -> 13054, +16 — a
-       rodada que impressiona (dentro desta própria função, ANTES desta
-       linha) somou 4 linhas ao mesmo degrau já acumulado de
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       O crime (frontend, MM10, 30/09): 13054 -> 13072, +18 — o mesmo
-       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       As perguntas ao Mestre (frontend, MM14, 30/09): 13072 -> 13093, +21 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Os dois canais antigos (frontend, MM14, 30/09): 13093 -> 13068, -25
-       — o mesmo líquido desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE
-       (a migração das tarefas antigas soma menos do que a remoção dos
-       dois canais tira). Re-medido pelo diff de App.jsx contra HEAD.
-       A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
-       30/09): 13068 -> 13124, +56 — o mesmo delta desta etapa em
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido pelo diff de App.jsx
-       contra HEAD.
-       A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6,
-       30/09): 13124 -> 13142, +18 — o mesmo delta desta etapa em
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido por
-       check-acoes-do-jogador.mjs.
-       O lugar pelo Cronista (frontend, MM15 (1), 30/09): 13142 -> 13147,
-       +5 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido por check-acoes-do-jogador.mjs.
-       As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 13147 ->
-       13149, +2 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/
-       RECUSAS_DO_COMBATE (colherAsFalas trocou o `.slice` por
-       `bocasDoTurno` mais uma saída antecipada). Re-medido por
-       check-acoes-do-jogador.mjs.
-       A ligação não é o Mestre (frontend, MM15 (3), 30/09): 13149 ->
-       13311, +162 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa
-       (a foto do turno nasce ACIMA dela no arquivo). Re-medido por
-       check-acoes-do-jogador.mjs.
-       O segredo guardado (frontend, MM15 (4), 30/09): 13311 -> 13332,
-       +21 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa. Re-medido
-       por check-acoes-do-jogador.mjs.
-       Os nomes que se fundem (frontend, MM15 (5), 30/09): 13332 -> 13336,
-       +4 — o mesmo delta uniforme do cabeçalho de FUNIL_DO_COMBATE nesta
-       etapa (`contextoDoNome` ganha `conhecidos`/`recentes` ACIMA dela no
-       arquivo). Re-medido por check-acoes-do-jogador.mjs.
-       O companheiro de antes (frontend, 01/10): 13336 -> 13361, +25 — o
-       mesmo delta de `aplicarGolpeDoJogador` nesta etapa (a fiação do
-       companheiro nasce dentro de `iniciar`, ACIMA dela no arquivo).
-       Re-medido por check-acoes-do-jogador.mjs.
-       A masmorra que se acaba (v9.348, 05/10): 13361 -> 13349, -12 — o bloco
-       do chefe encolheu 12 linhas ACIMA de `continuarGolpeDoJogador` (virou
-       `concluirMasmorraDoChefe`, mais abaixo). Mesma linha, mesma voz;
-       só o endereço andou. */
-    /* (v9.350 · o como chega) 13349 -> 13362, +13: a fiação de `pautaDoTurno`
-       cresceu ACIMA. Mesma linha, mesma voz. */
     FUNIL_DO_COMBATE.find((x) => x.fn === "continuarGolpeDoJogador")
-    /* (v9.353 · esconder-se na luta) 13423 -> 13428, +5 —
-     o rodapé de `enviar` passou a ler a ficha do turno (+5), ACIMA disto no
-     arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra o
-     HEAD, e conferido pelo varredor. */
-    /* (v9.354 · a luz e a sombra) 13428 -> 13457, +29 — o import de luz.js
-     (+1), o mapa de luz junto de `fichaViva` (+23) e a seção A LUZ em
-     `pautaDoTurno` (+5), ACIMA disto no arquivo. Só o endereço andou;
-     re-medido pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-    /* (v9.356 · a região na criação) 13457 -> 13477, +20 — o
-     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
-     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
-     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-    /* (v9.357 · a história amarrada à região) MM17 C1: 13477 -> 13486, +9 —
-     a espinha amarrada à região depois de `estenderEspinha`, em `iniciar`,
-     ACIMA disto no arquivo. Só o endereço andou; re-medido pelo diff de
-     App.jsx contra o HEAD, e conferido pelo varredor. */
-    /* (v9.358 · a masmorra sem a cidade) MM17 C2: 13486 -> 13512, +26 — a
-     ficha, o horizonte, a cena do system e o "aqui" por tabela, ACIMA disto
-     no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra
-     o HEAD, e conferido pelo varredor. */
-    /* (v9.359 · a Bolsa em duas linhas) 06/10: 13512 -> 13521, +9 — a
-       linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
-       disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
-       contra o HEAD, e conferido pelo varredor. */
-      .linhas.find((l) => l.onde === "src/App.jsx:11829" /* (T1-A 3.ª fatia, 5, o oficial, 28/10: a frase do grupo cheio pela régua do motor, +1 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD aeeabdc) */ /* (T1-A 3.ª fatia, 3, o oficial, 28/10: o turno fundido — uma chamada a aplicarOTurno no lugar das seis peças — e a base do nome com o estado de agora, -59 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 48579a9) */ /* (T1-A 3.ª fatia, 2, o oficial, 28/10: as missões, os sinais, a fé, o milagre e as dádivas saíram do App para motor/meio-do-turno.js, -241 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD bd9e60f) */ /* (T1-A 3.ª fatia, 1, o oficial, 28/10: o registrarLugar e o bloco do mapa saíram do App para motor/meio-do-turno.js, -119 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD d776408) */ /* (onda 2 do custo, o frontend, 14/10: os sinais do turno, o fixo da ficha, o estado épico e as portas em cenaDoPrompt, ACIMA) 14736 -> 14808, +72; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (2b9e82b). */ /* (v9.463, o oficial, 13/10: o apontado da agressão e a planta pelo lugar, ACIMA) 14678 -> 14684, +6; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (d299d6c). */ /* (v9.461 ligada, o oficial, 13/10: elencoDoCoracao e cidadeDoCoracao, +13, o QUEM É, e a espinha e os sítios do EM CENA, +5, tudo ACIMA) 14659 -> 14678, +19; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (69ad49f). */ /* (F2b · F2c · F2d, a fiação, o oficial, 12/10: os imports de fichas.js e painel-fichas.jsx, o LimiteDasFichas e a altura da janela, o estado das fichas ao lado de entrada, o ref da memória, e as fichas da cena antes de pautaDoTurno, tudo ACIMA) 14479 -> 14605, +126; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (7a890f3). */ /* (F2a · EM CENA, a fiação, o frontend, 12/10: o import de em-cena.js e o contexto da lista antes de pautaDoTurno, acima) 14431 -> 14479, +48; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (e6edf61). */ /* (os consertos de motor da 9.ª sessão, a fiação, o frontend, 12/10: a moeda do mundo, a cidade de contextoDoCoracao e as bancas da cena, acima) 14419 -> 14431, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (7419ced). */ /* (o Narrador só narra, E4 — a fiação, o frontend, 12/10: a guarda podarONarrador no topo de aplicarResposta, acima) 14410 -> 14419, +9; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */ /* (os consertos de motor da 8.ª sessão, a fiação, 12/10: a jornada sem destino em talvezChegarSozinho, acima) 14407 -> 14410, +3; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */ /* (a frase que paga, 12/10: a frase do jogador e a moeda do mundo para a bolsa, em enviar, acima) 14398 -> 14407, +9; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */ /* (o Narrador só narra, E3 — a fiação, o frontend, 12/10: o achado já na bolsa na cobrança e o gênero do Cronista, acima) 14386 -> 14398, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */ /* (MM-C · C1, o núcleo, o frontend, 11/10: o import de nucleo.js, os três refs, nucleoAgora/nucleoEmCena e a linha QUEM É em pautaDoTurno, acima) 14141 -> 14198, +57; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */).voz === "telegrama"); /* (A1 · as pontas) 13741 -> 13833, +92: o mesmo degrau do relógio, todo acima. (v9.371 · a marcha única, a fiação) 13833 -> 13834, +1: o import de marcha.js no topo. (MM18 · a fiação da escuta) 13834 -> 13907, +73: o import, os refs, o rumo e a escuta em enviar, todos acima. (nexo · as três fiações, o frontend) 11/10: 13907 -> 13931, +24: o ref da conversa e o Cronista, acima; re-medido pelo diff. */ /* (v9.393 · a fiação da campanha que prende) 13931 -> 14007, +76: o degrau todo acima */ /* (MM · a luta tem saída, o frontend) 11/10: 14007 -> 14048, +41: o mesmo degrau, todo acima. */
+      .linhas.find((l) => l.ancora === "pushMsgs(linhas)").voz === "telegrama");
   /* MM7: +1 — o golpe de oportunidade do recuo (ao lado do da fuga). */
   t("a maior boca do funil é `resolverRevide`, com 31 chamadas",
     FUNIL_DO_COMBATE.find((x) => x.fn === "resolverRevide").linhas.length === 31);
-  t("toda função do funil declara anel, endereço e ao menos uma linha",
-    FUNIL_DO_COMBATE.every((x) => /^src\/App\.jsx:\d+$/.test(x.onde)
+  /* (31/10) o «endereço» da função é o NOME dela (`fn`), e o da linha é a
+     âncora — um trecho que começa na chamada de pushMsgs. Nenhum número. */
+  t("toda função do funil declara nome, anel e ao menos uma linha",
+    FUNIL_DO_COMBATE.every((x) => typeof x.fn === "string" && x.fn.length > 0
       && (x.anel === "nucleo" || x.anel === "borda") && x.linhas.length > 0));
-  t("e toda linha declara onde sai, o evento e onde a frase nasce",
+  t("e toda linha declara a âncora da chamada, o evento e onde a frase nasce",
     FUNIL_DO_COMBATE.every((x) => x.linhas.every((l) =>
-      /^src\/App\.jsx:\d+$/.test(l.onde) && l.evento && l.nasce)));
+      typeof l.ancora === "string" && l.ancora.split("pushMsgs(").length === 2 && l.evento && l.nasce)));
+  t("e nenhuma linha do funil traz número de linha do App",
+    !/App\.jsx:\d/.test(JSON.stringify(FUNIL_DO_COMBATE)) && FUNIL_DO_COMBATE.every((x) => !("onde" in x) && x.linhas.every((l) => !("onde" in l))));
 
   /* a coluna `nasce` é a que diz quanto da voz já é testável em Node */
   const n = vozQueNasceNoModulo();
   /* (T1-A 6.ª fatia): 23 -> 20 — as quatro linhas do fim da luta que nasciam
      em habilidades.js são agora uma (veja o bloco 9 acima); continuam fora do React */
   /* MUDADA A 31/10 (aceite-13), e o motivo: a linha «recusa do golpe» dizia
-     nascer em src/App.jsx:1316 (recusaDoGolpe), mas a função mudou-se para
+     nascer em src/App.jsx (recusaDoGolpe), mas a função mudou-se para
      src/golpe.js há muito (o App só a importa: o comentário em App.jsx ~1250
      di-lo); o endereço foi corrigido para onde ela vive, e a linha passa a
      contar fora do React. 20 -> 21, e o App 37 -> 36, abaixo. */
@@ -1085,8 +709,8 @@ sec("10. as recusas, contadas à parte — a correção de escopo de X3b");
   t("  e as duas que a pauta NÃO nomeia também", !!fam.conjuracao && !!fam.condicao);
   t("alcance é a maior família, como a Fase X toda previa",
     fam.alcance.formas === Math.max(...Object.values(fam).map((x) => x.formas)), JSON.stringify(fam.alcance));
-  t("toda recusa declara família, endereço, literal, formas e anel",
-    RECUSAS_DO_COMBATE.every((x) => x.familia && /^src\/App\.jsx:\d+$/.test(x.onde)
+  t("toda recusa declara família, âncora, literal, formas e anel",
+    RECUSAS_DO_COMBATE.every((x) => x.familia && typeof x.ancora === "string" && x.ancora.split("pushMsgs(").length === 2 && !("onde" in x)
       && x.literal && x.formas >= 1 && x.anel && x.fn && x.nasce));
 
   /* A LIGAÇÃO ENTRE AS DUAS TABELAS: as recusas que o funil conta e as que
@@ -1136,270 +760,27 @@ sec("11. a sessão A pelo eixo da frase — as duas taxas lado a lado");
   t("as duas taxas não são a mesma — 100% estéril contra 0% mudo",
     S.semNumero / S.turnos === 1 && S.semLinha / S.turnos === 0);
   t("e a recusa da sessão A é da família `alcance`", S.familiaDaRecusa === "alcance");
+  /* (31/10) era o endereço (número) da recusa; hoje é função +
+     família. A recusa por alcance do golpe do jogador é a única `alcance` de
+     `aplicarGolpeDoJogador`, e a âncora dela é a do funil (o dente 10 do
+     varredor confere). Mudou de linha dezenas de vezes; nunca mudou de função. */
   t("a família `alcance` tem literal declarado em aplicarGolpeDoJogador",
-    /* MM3 (frontend, 29/09): 12617 -> 12679, +62 — o mesmo delta que
-       `FUNIL_DO_COMBATE` registra no cabeçalho dele até `aplicarGolpe-
-       DoJogador` (hooks novos do estado do cartão do golpe final, acima
-       desta função). A família da recusa (`alcance`) é o que se guarda
-       aqui, e ela é a mesma — a recusa por alcance não mudou de função,
-       só de linha. O histórico anterior (K4, E3, R15, R17, R21, R22) fica
-       resumido: cada um re-mediu por conteúdo o mesmo `pushMsgs([...
-       📏 ${ataque.motivo}])`, nunca por soma de delta.
-       A peneira da agressão (frontend, MM, 29/09): 12679 -> 12693, +14 —
-       o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
-       FUNIL_DO_COMBATE.
-       (os deltas de MM6/MM7 entre 12693 e 12747 já vinham re-medidos na
-       tabela antes desta etapa.)
-       O golpe final é do grupo (frontend, 29/09, MM3b): 12747 -> 12754,
-       +7 — o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
-       FUNIL_DO_COMBATE nesta etapa (o estado novo do cartão do grupo,
-       antes dela no arquivo).
-       A cidade por dentro (frontend, MM12, 29/09): 12754 -> 12768, +14 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE
-       (a fiação de `fichaParaPauta` em `pautaDoTurno`, acima no arquivo).
-       A gente por dentro (frontend, MM8a, 29/09): 12768 -> 12785, +17 — o
-       mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       fiação de `genteParaPauta` em `pautaDoTurno`, logo depois de
-       `fichaParaPauta`, acima no arquivo).
-       Os tetos das pessoas (frontend, MM8c-1, 29/09): 12785 -> 12805, +20 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-       recência do registo de NPCs, acima no arquivo).
-       O mundo puxa o herói (frontend, MM13, 30/09): 12805 -> 12879, +74 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       A fiação do primeiro dia (frontend, MM13b, 30/09): 12879 -> 12890,
-       +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-       entraram acima, dentro de `aplicarResposta`.
-       A gente que pesa (frontend, MM8c-2, 30/09): 12890 -> 12896, +6 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
-       12896 -> 12906, +10 — o mesmo degrau desta etapa em
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
-       elencoCacheRef).
-       A promoção (frontend, MM8e, 30/09): 12906 -> 12909, +3 — o mesmo
-       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       A luta sem espada (frontend, MM9, 30/09): 12909 -> 12921, +12 — o
-       import de sem-espada.js (+5) e o ref/helper da impressão (+7)
-       nascem acima deste ponto. Re-medido por check-acoes-do-jogador.mjs.
-       O crime (frontend, MM10, 30/09): 12921 -> 12939, +18 — o mesmo
-       degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido
-       por check-acoes-do-jogador.mjs.
-       As perguntas ao Mestre (frontend, MM14, 30/09): 12939 -> 12960, +21 —
-       o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido por check-acoes-do-jogador.mjs.
-       Os dois canais antigos (frontend, MM14, 30/09): 12960 -> 12935, -25
-       — o mesmo líquido desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido pelo diff de App.jsx contra HEAD.
-       A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
-       30/09): 12935 -> 12991, +56 — o mesmo delta desta etapa em
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido pelo diff de App.jsx
-       contra HEAD.
-       A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6,
-       30/09): 12991 -> 13009, +18 — o mesmo delta desta etapa em
-       FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE. Re-medido por
-       check-acoes-do-jogador.mjs.
-       O lugar pelo Cronista (frontend, MM15 (1), 30/09): 13009 -> 13014,
-       +5 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-       Re-medido por check-acoes-do-jogador.mjs.
-       As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 13014 ->
-       13016, +2 — o mesmo delta desta etapa em FUNIL_DO_COMBATE/
-       RECUSAS_DO_COMBATE. Re-medido por check-acoes-do-jogador.mjs.
-       A ligação não é o Mestre (frontend, MM15 (3), 30/09): 13016 ->
-       13178, +162 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa.
-       Re-medido por check-acoes-do-jogador.mjs.
-       O segredo guardado (frontend, MM15 (4), 30/09): 13178 -> 13199,
-       +21 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa (os cinco
-       pontos de O SEGREDO GUARDADO, no cabeçalho de FUNIL_DO_COMBATE,
-       nascem ACIMA dela no arquivo). Re-medido por
-       check-acoes-do-jogador.mjs.
-       Os nomes que se fundem (frontend, MM15 (5), 30/09): 13199 -> 13203,
-       +4 — o mesmo delta uniforme do cabeçalho de FUNIL_DO_COMBATE nesta
-       etapa. Re-medido por check-acoes-do-jogador.mjs.
-       O companheiro de antes (frontend, 01/10): 13203 -> 13228, +25 — o
-       mesmo delta de `aplicarGolpeDoJogador` nesta etapa. Re-medido por
-       check-acoes-do-jogador.mjs.
-       A masmorra que se acaba (v9.348, 05/10): 13228 -> 13216, -12 — o mesmo
-       delta de `aplicarGolpeDoJogador` (o bloco do chefe encolheu ACIMA
-       dela). A recusa por alcance é a mesma, na mesma função; só mudou de
-       linha. A família continua a ser o que a asserção guarda. */
-    /* (v9.350 · o como chega) 13216 -> 13229, +13, o mesmo degrau. */
-    /* (v9.353 · esconder-se na luta) 13290 -> 13295, +5 —
-     o rodapé de `enviar` passou a ler a ficha do turno (+5), ACIMA disto no
-     arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra o
-     HEAD, e conferido pelo varredor. */
-    /* (v9.354 · a luz e a sombra) 13295 -> 13324, +29 — o import de luz.js
-     (+1), o mapa de luz junto de `fichaViva` (+23) e a seção A LUZ em
-     `pautaDoTurno` (+5), ACIMA disto no arquivo. Só o endereço andou;
-     re-medido pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-    /* (v9.356 · a região na criação) 13324 -> 13344, +20 — o
-     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
-     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
-     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-    /* (v9.357 · a história amarrada à região) MM17 C1: 13344 -> 13353, +9 —
-     a espinha amarrada à região depois de `estenderEspinha`, em `iniciar`,
-     ACIMA disto no arquivo. Só o endereço andou; re-medido pelo diff de
-     App.jsx contra o HEAD, e conferido pelo varredor. */
-    /* (v9.358 · a masmorra sem a cidade) MM17 C2: 13353 -> 13379, +26 — a
-     ficha, o horizonte, a cena do system e o "aqui" por tabela, ACIMA disto
-     no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra
-     o HEAD, e conferido pelo varredor. */
-    /* (v9.359 · a Bolsa em duas linhas) 06/10: 13379 -> 13388, +9 — a
-       linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
-       disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
-       contra o HEAD, e conferido pelo varredor. */
-    RECUSAS_DO_COMBATE.some((x) => x.onde === "src/App.jsx:11696" /* (T1-A 3.ª fatia, 5, o oficial, 28/10: a frase do grupo cheio pela régua do motor, +1 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD aeeabdc) */ /* (T1-A 3.ª fatia, 3, o oficial, 28/10: o turno fundido — uma chamada a aplicarOTurno no lugar das seis peças — e a base do nome com o estado de agora, -59 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 48579a9) */ /* (T1-A 3.ª fatia, 2, o oficial, 28/10: as missões, os sinais, a fé, o milagre e as dádivas saíram do App para motor/meio-do-turno.js, -241 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD bd9e60f) */ /* (T1-A 3.ª fatia, 1, o oficial, 28/10: o registrarLugar e o bloco do mapa saíram do App para motor/meio-do-turno.js, -119 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD d776408) */ /* (onda 2 do custo, o frontend, 14/10, ACIMA) 14603 -> 14675, +72; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (2b9e82b). */ /* (v9.463, o oficial, 13/10: o apontado da agressão e a planta pelo lugar, ACIMA) 14545 -> 14551, +6; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (d299d6c). */ /* (v9.461 ligada, o oficial, 13/10: elencoDoCoracao e cidadeDoCoracao, +13, o QUEM É, e a espinha e os sítios do EM CENA, +5, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 69ad49f): 14526 -> 14545, +19. */ /* (F2b · F2c · F2d, a fiação, o oficial, 12/10: os imports de fichas.js e painel-fichas.jsx, o LimiteDasFichas e a altura da janela, o estado das fichas ao lado de entrada, o ref da memória, e as fichas da cena antes de pautaDoTurno, tudo ACIMA) 14346 -> 14472, +126; só o endereço andou. */ /* (F2a · EM CENA, a fiação, o frontend, 12/10: o import de em-cena.js e o contexto da lista antes de pautaDoTurno, acima) 14298 -> 14346, +48; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (e6edf61). */ /* (os consertos de motor da 9.ª sessão, a fiação, o frontend, 12/10: a moeda do mundo, a cidade de contextoDoCoracao e as bancas da cena, acima) 14286 -> 14298, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (7419ced). */ /* (o Narrador só narra, E4 — a fiação, o frontend, 12/10: a guarda podarONarrador no topo de aplicarResposta, acima) 14277 -> 14286, +9; só o endereço andou. */ /* (os consertos de motor da 8.ª sessão, a fiação, 12/10, acima) 14274 -> 14277, +3; só o endereço andou. */ /* (a frase que paga, 12/10, acima) 14265 -> 14274, +9; só o endereço andou. */ /* (o Narrador só narra, E3 — a fiação, o frontend, 12/10: o achado já na bolsa na cobrança e o gênero do Cronista, acima) 14253 -> 14265, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */ /* (MM-C · C1, o núcleo, o frontend, 11/10: o import de nucleo.js, os três refs, nucleoAgora/nucleoEmCena e a linha QUEM É em pautaDoTurno, acima) 14008 -> 14065, +57; só o endereço andou. */ && x.familia === "alcance")); /* (A1 · as pontas) 13608 -> 13700, +92: o mesmo degrau, todo acima. (v9.371 · a marcha única, a fiação) 13700 -> 13701, +1: o mesmo import. (MM18 · a fiação da escuta) 13701 -> 13774, +73: o mesmo degrau. (nexo · as três fiações, o frontend) 11/10: 13774 -> 13798, +24: o mesmo degrau. */ /* (v9.393 · a fiação da campanha que prende) 13798 -> 13874, +76: o degrau todo acima */ /* (MM · a luta tem saída, o frontend) 11/10: 13874 -> 13915, +41: o mesmo degrau, todo acima. */
+    RECUSAS_DO_COMBATE.some((x) => x.fn === "aplicarGolpeDoJogador" && x.familia === "alcance"));
 
   /* o Mestre também se cala, e isso é do CÓDIGO: o `return true` da recusa
      antecede o `enviar`. Sem esta linha a sessão A pareceria um turno em
      que a IA teve chance de narrar e não narrou. */
   t("o Narrador não é chamado nos sete turnos", S.chamadasAoNarrador === 0);
-  /* MM3 (frontend, 29/09): o `enviar` MUDOU DE FORMA, não só de linha — pela
-     primeira vez desde que este dente existe. Ele não fica mais dentro de
-     `aplicarGolpeDoJogador`: a divisão em três (cabeçalho do bloco 9) moveu
-     a chamada para dentro de `depoisDoRevide`, uma função interna nova de
-     `continuarGolpeDoJogador`. `aplicarGolpeDoJogador` continua a mesma
-     função que a sessão A percorre (o `return true` da recusa por alcance
-     não mudou de corpo nenhum), mas o `enviar` que ele NÃO chama passou a
-     morar um nível de indireção adiante. Novo endereço: 12820, e mesmo dia,
-     segunda medição: 12820 -> 12822, +2 (as duas linhas de depuração do
-     próprio MM3 em `aplicarGolpeDoJogador` — ver a nota do relógio de 45
-     min, bloco 4), e terceira medição no MESMO dia: 12822 -> 12820, -2 (as
-     4 linhas de debug que chegaram a existir foram removidas ao fim do
-     diagnóstico). O histórico anterior (H1, K4, E4, R3/R4b/R13/R15/R17/
-     R21/R22 — dezenove cobranças desta mesma catraca por deslocamento
-     simples) traçava a linha dentro de `aplicarGolpeDoJogador`; sai daqui
-     porque essa linha já não mora lá.
-     A peneira da agressão (frontend, MM, 29/09): 12820 -> 12834, +14 — o
-     mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
-     FUNIL_DO_COMBATE.
-     (os deltas de MM6/MM7 entre 12834 e 12892 já vinham re-medidos na
-     tabela antes desta etapa.)
-     O golpe final é do grupo (frontend, 29/09, MM3b): 12892 -> 12899,
-     +7 — o mesmo degrau de `aplicarGolpeDoJogador` no cabeçalho de
-     FUNIL_DO_COMBATE nesta etapa (o estado novo do cartão do grupo,
-     antes dela no arquivo).
-     A cidade por dentro (frontend, MM12, 29/09): 12899 -> 12913, +14 — o
-     mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-     fiação de `fichaParaPauta` em `pautaDoTurno`, acima no arquivo).
-     A gente por dentro (frontend, MM8a, 29/09): 12913 -> 12930, +17 — o
-     mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-     fiação de `genteParaPauta` em `pautaDoTurno`, logo depois de
-     `fichaParaPauta`, acima no arquivo).
-     Os tetos das pessoas (frontend, MM8c-1, 29/09): 12930 -> 12950, +20 —
-     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (a
-     recência do registo de NPCs, acima no arquivo).
-     O mundo puxa o herói (frontend, MM13, 30/09): 12950 -> 13024, +74 —
-     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-     A fiação do primeiro dia (frontend, MM13b, 30/09): 13024 -> 13035,
-     +11 — `ondeSeProcura`/`achavelAqui` e o débito de cobranca.js
-     entraram acima, dentro de `aplicarResposta`.
-     A gente que pesa (frontend, MM8c-2, 30/09): 13035 -> 13041, +6 —
-     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-     A gente que pesa, medida e cacheada (frontend, MM8c-2, 30/09):
-     13041 -> 13051, +10 — o mesmo degrau desta etapa em
-     FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE (o cache por identidade,
-     elencoCacheRef).
-     A promoção (frontend, MM8e, 30/09): 13051 -> 13054, +3 — o mesmo
-     degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-     A luta sem espada (frontend, MM9, 30/09): 13054 -> 13070, +16 — o
-     mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-     O crime (frontend, MM10, 30/09): 13070 -> 13088, +18 — o mesmo
-     degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-     As perguntas ao Mestre (frontend, MM14, 30/09): 13088 -> 13109, +21 —
-     o mesmo degrau desta etapa em FUNIL_DO_COMBATE/RECUSAS_DO_COMBATE.
-     Os dois canais antigos (frontend, MM14, 30/09): 13109 -> 13084, -25 —
-     o mesmo líquido desta etapa (a migração das tarefas antigas soma
-     menos do que a remoção dos dois canais tira), re-medido pelo diff de
-     App.jsx contra HEAD.
-     A gente no lugar certo, com o nome certo (frontend, MM14 · 9b/10a,
-     30/09): 13084 -> 13140, +56 — o mesmo delta desta etapa, re-medido
-     pelo diff de App.jsx contra HEAD.
-     A extração de fichasDaMesa (frontend, MM14 · o resto do nº 6, 30/09):
-     13140 -> 13158, +18 — o mesmo delta desta etapa, re-medido por
-     check-acoes-do-jogador.mjs.
-     O lugar pelo Cronista (frontend, MM15 (1), 30/09): 13158 -> 13163, +5 —
-     o mesmo delta desta etapa, re-medido por check-acoes-do-jogador.mjs.
-     As falas pagas e deitadas fora (frontend, MM15 (2), 30/09): 13163 ->
-     13165, +2 — o mesmo delta desta etapa, re-medido por
-     check-acoes-do-jogador.mjs.
-     A ligação não é o Mestre (frontend, MM15 (3), 30/09): 13165 -> 13327,
-     +162 — o mesmo delta de `aplicarGolpeDoJogador` nesta etapa (a foto do
-     turno nasce ACIMA dela no arquivo), re-medido por
-     check-acoes-do-jogador.mjs.
-     O segredo guardado (frontend, MM15 (4), 30/09): 13327 -> 13348, +21 —
-     o mesmo delta de `aplicarGolpeDoJogador` nesta etapa (os cinco pontos
-     de O SEGREDO GUARDADO nascem ACIMA dela no arquivo), re-medido por
-     check-acoes-do-jogador.mjs.
-     Os nomes que se fundem (frontend, MM15 (5), 30/09): 13348 -> 13352,
-     +4 — o mesmo delta uniforme do cabeçalho de FUNIL_DO_COMBATE nesta
-     etapa, re-medido por check-acoes-do-jogador.mjs.
-     O companheiro de antes (frontend, 01/10): 13352 -> 13377, +25 — o
-     mesmo delta de `aplicarGolpeDoJogador` nesta etapa, re-medido por
-     check-acoes-do-jogador.mjs. */
-  /* A masmorra que se acaba (v9.348, 05/10): 13377 -> 13365, -12 — o mesmo
-     delta do funil (o bloco do chefe encolheu ACIMA do `enviar`). Só o
-     endereço andou; a asserção segue exigindo o `return true` e o endereço. */
-  /* (v9.350 · o como chega) 13365 -> 13378, +13 — o mesmo degrau do funil (a fiação
-     de `pautaDoTurno` cresceu ACIMA do `enviar`). Só o endereço andou. */
-  /* (v9.351 · a Nave como destino) MM16 nº 2, 05/10: 13378 -> 13405, +27 — o
-     import de boca.js no topo (+1), a guarda da ida em `alvoLocalPedido` (+7)
-     e a chegada à boca em `talvezChegarSozinho` (+19), todos ACIMA do
-     `enviar`. Só o endereço andou; re-medido pelo diff de App.jsx contra o
-     de antes da etapa, e conferido pelo varredor. */
-  /* (v9.352 · a masmorra na pauta) MM16 nº 4, 06/10: 13405 -> 13439, +34 —
-     o mesmo degrau do relógio, todo ACIMA do `enviar`. Só o endereço andou;
-     re-medido pelo diff de App.jsx contra o de antes da etapa, e conferido
-     pelo varredor. */
-  /* (v9.353 · esconder-se na luta) MM16 nº 6, 06/10: 13439 -> 13444, +5 —
-     o rodapé de `enviar` passou a ler a ficha do turno (+5), ACIMA disto no
-     arquivo. Só o endereço andou; re-medido pelo diff de App.jsx contra o
-     HEAD, e conferido pelo varredor. */
-  /* (v9.354 · a luz e a sombra) 06/10: 13444 -> 13473, +29 — o import de
-     luz.js (+1), o mapa de luz junto de `fichaViva` (+23) e a seção A LUZ
-     em `pautaDoTurno` (+5), ACIMA disto no arquivo. Só o endereço andou;
-     re-medido pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-  /* (v9.356 · a região na criação) MM17 B, 06/10: 13473 -> 13493, +20 — o
-     import de regiao.js (+1) e a escolha região ou continente em `iniciar`
-     (+19 líquidos), ACIMA disto no arquivo. Só o endereço andou; re-medido
-     pelo diff de App.jsx contra o HEAD, e conferido pelo varredor. */
-  /* (v9.357 · a história amarrada à região) o enviar andou +9 com a espinha
-     amarrada na criação (acoes-do-jogador.mjs, o cabeçalho da re-medida) */
-  /* (v9.358 · a masmorra sem a cidade) o enviar andou +26 (13502 -> 13528)
-     com a masmorra sem a cidade (acoes-do-jogador.mjs, o cabeçalho da
-     re-medida) */
-  /* (v9.359 · a Bolsa em duas linhas) 06/10: 13528 -> 13537, +9 — a
-     linha dos equipamentos e a do item da Bolsa, no PainelLateral, ACIMA
-     disto no arquivo. Só o endereço andou; re-medido pelo diff de App.jsx
-     contra o HEAD, e conferido pelo varredor. */
-  /* (A1 · B1 · o relato sai do App) 10/10: 13537 -> 13435, -102 — o mesmo
-     degrau do relógio, todo ACIMA do `enviar`. Só o endereço andou. */
-  /* (A1 · B2–B9) 10/10: 13435 -> 13757, +322 — o mesmo degrau do relógio,
-     todo ACIMA do `enviar` da recusa. Só o endereço andou. */
-  /* (A1 · as pontas, o oficial) 10/10: 13757 -> 13849, +92 — o mesmo
-     degrau do relógio, todo ACIMA do `enviar` da recusa. Só o endereço andou. */
-  /* (v9.371 · a marcha única, a fiação) 10/10: 13849 -> 13850, +1 — o
-     mesmo import, no topo. Só o endereço andou. */
-  /* (MM18 · a fiação da escuta e do mural) 11/10: 13850 -> 13923, +73 — o
-     mesmo degrau, todo acima. Só o endereço andou. */
-  /* (nexo · as três fiações, o frontend) 11/10: 13923 -> 13947, +24 — o mesmo
-     degrau, todo acima (o ref da conversa e o Cronista). Só o endereço andou. */
-  /* v9.393: o enviar desceu de :13947 para :14023 (a fiação da campanha que prende acima dele, +76) — o mesmo endereço, re-medido */
-  /* (MM (a luta tem saída, o frontend) 11/10) o enviar desceu de :14023 para :14064, +41: o import da saída da luta (+3), os dois refs (+6), a vista da luta na pauta (+17), o mundo do rumo (+5, MM19), o fecho com a frase (+3), o estável que não rola de novo (+6) e o load do fim sem saída (+1), tudo acima. Só o endereço andou; re-medido pelo diff de App.jsx contra o HEAD (e5b6736; o App.jsx é o mesmo de c3de7af). */
-  /* (MM11 #5, a bolsa da frase, 11/10: o import, o ref do veto, o preço do balcão, o veto na pauta e o meDeve, acima) o enviar desceu de :14064 para :14089, +25; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (MM11 #5, a leitura de pessoa, 11/10: o import de leitura-de-pessoa.js, acima) o enviar desceu de :14089 para :14090, +1; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (MM, o laço da história ligado, 11/10: a espinha em mundoDasMissoes e chefesDoFio, acima, +12) o enviar desceu de :14090 para :14102; só o endereço andou. */
-  /* (MM-C · C0, as mãos do coração, o frontend, 11/10: o alvo do golpe, o veto da luta sem painel, a ordem do ato, os fatos e o segredo no mundo das missões, o sítio do marco, o herói no registo e a frase anterior da bolsa) o enviar desceu de :14102 para :14157, +55; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (MM-C · C1, o núcleo, o frontend, 11/10: o import de nucleo.js, os três refs, nucleoAgora/nucleoEmCena e a linha QUEM É em pautaDoTurno, acima) o enviar desceu de :14157 para :14214, +57; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (a frase que paga, MM11 · 8.ª sessão, o frontend, 12/10: a frase do jogador e a moeda do mundo para a bolsa, em enviar, ACIMA) o enviar desceu de :14414 para :14423, +9; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (os consertos de motor da 8.ª sessão, a fiação, o frontend, 12/10: a jornada sem destino em talvezChegarSozinho, ACIMA) o enviar desceu de :14423 para :14426, +3; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (o Narrador só narra, E4 — a fiação, o frontend, 12/10: a guarda podarONarrador no topo de aplicarResposta, acima) o enviar desceu de :14426 para :14435, +9; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD (35c92c3). */
-  /* (9.ª sessão, a fiação, 12/10): o enviar desceu de :14435 para :14447, +12, pelo diff de App.jsx contra o HEAD (7419ced); só o endereço andou */
-  /* (F2a · EM CENA, a fiação, 12/10): o enviar desceu de :14447 para :14495, +48, pelo diff de App.jsx contra o HEAD (e6edf61); só o endereço andou */
-  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai) && /* (trilha A, o prelúdio no motor, o oficial, 29/10: o estado e o aplicar do prelúdio, ACIMA, e o trecho de enviar da frase às bocas com os 92 nomes (funções e imports) que só ele lia, que saíram; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 374ddca, à mão): 12582 -> 11940. */ /* (trilha A, os recuos do gênero, o oficial, 29/10: o import de cenario.js, duas linhas, ACIMA; +2, só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD a7497e3) */ /* (trilha A, o glifo do gênero, o oficial, 29/10: GLIFO_DO_GENERO saiu de TelaMundo para o módulo com o comentário, +5 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD df17ea4) */ /* (trilha A, a praça do Juiz, o oficial, 29/10: o import de aPracaDoJuiz, +2, e a foto do Juiz pela praça do instante, +6, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 5e2a272, à mão): 11975 -> 11983. */ /* (trilha A, o herói novo como o load, o oficial, 29/10: o import de abrir-o-save.js, +1, e a ficha aberta e a cidade pisada no iniciar, +7, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 1d9082c, à mão): 11983 -> 11991. */ /* (trilha A, a ligação do load, o oficial, 29/10: o continuar abre os dez campos por abrirOSave, -84 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 90af402, à mão): 11991 -> 11907. */ /11845/ /* (31/10, o oficial, aceite-13: o ref aceiteDoTurnoRef, +3, e o enviar que o lê e o limpa, +1, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 67cefe8): 11841 -> 11845 */ /* (31/10, o oficial, a 13.ª: a aflição dos golpes saiu do App para motor/golpe-no-corpo.js#aAflicaoDosGolpes, -14 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD de9540f) */ /* (T3 §4c, a janela da cena aposenta-se, o oficial, 29/10: a função ModalCena e o estado verCena saíram ACIMA, e a luz do mundo entrou no lugar, -36; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 6d84aa7): 11891 -> 11855. */ /* (T3, o tom da cena e o glifo do gênero, o oficial, 29/10: o climaFundo de oito linhas virou uma conta comentada, -4, e o GLIFO_DO_GENERO saiu do App para ui.jsx, -12, ACIMA (-16); só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD, à mão): :11907 -> :11891. */ /* (trilha A, o conferente no motor, o oficial, 29/10: os 61 refs, os 18 setters e a releitura em osOrgaosAgora, +20 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 9e06960, à mão): 11963 -> 11975. */ /* (trilha A, o trabalho daqui no motor, o oficial, 29/10: o estado dos órgãos do depois, +23 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD fa0a5e0, à mão): 11940 -> 11963. */ /* (trilha A, o pedido no motor, o oficial, 29/10: o estado e o aplicar do pedido, +9 ACIMA, e o trecho de enviar da pauta ao system, que saiu, -263; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 78caaa9) */.test(S.ondeSai) /* (trilha A, a praça do instante, o oficial, 29/10: o estadoDaPauta passou a uma linha, -2 ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 895686b) */ /* (trilha A, a pauta no motor, o oficial, 29/10: a pautaDoTurno e as oito que só ela chamava saíram do App, -545 no saldo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD f281a2c) */ /* (T2-A, o golpe no corpo no motor, o oficial, 28/10: as duas portas viraram uma linha cada, -49 no saldo ACIMA ou entre; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 5917ac8, à mão): 13381 -> 13367. */ /* (trilha A, T2-A, a abertura no motor, o oficial, 28/10: o pedido da abertura antiga saiu do App, −12 linhas ACIMA; −8 no saldo destas; só o endereço andou) */ /* (trilha A, T2-A, o rodapé no motor, o oficial, 28/10: +1 import no topo e −1 linha no rodapé; re-medido pelo diff contra 2137ae7) */ /* (trilha A, o Juiz que corrige, o oficial, 28/10: o import de motor/correcao-do-juiz.js e os refs do veredito e do livro de vetos, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 49cbd29): 13386 -> 13418. */ /* (T1-A 9.ª fatia, o oficial, 28/10: o gatilho, o pedido e o aceito do Cronista foram para motor/cronista-do-turno.js, e o import dele, ACIMA ou dentro; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 760fe1b): 13654 -> 13386. */ /* (T1-A 8.ª fatia, 2, o oficial, 28/10: o turno do mundo, o sino, o chão e a escuta foram para motor/antes-do-mestre.js, e o import dele, +2 no saldo; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD aac1912): 13648 -> 13654. */ /* (T1-A 8.ª fatia, 1, o oficial, 28/10: a nêmesis, os vistos, o trabalho, a queda e a entrega saíram do aplicarResposta para motor/entrega-do-turno.js, e o import dele, +1 ACIMA e -83 no saldo; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD a9ef8cf): 13710 -> 13648. */ /* (a sessão cede ao save, o orquestrador, 28/10: +3 em salvar, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 110b959): 13707 -> 13710. */ /* (T1-A 7.ª fatia, 1, o oficial, 28/10: a mesa e o fôlego saíram do aplicarResposta para motor/fecho-da-resposta.js, e nove imports sem leitor, -11 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cbb7134): 13718 -> 13707. */ /* (T1-A 7.ª fatia, 2, o oficial, 28/10: a sessão como arquivo — os imports e os refs da sessão, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD c866d6a): 13660 -> 13718. */ /* (T1-A 7.ª fatia, defeito, o oficial, 28/10: as linhas da emboscada vão à tela, +5 no aplicarResposta, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cfcd8b8): 13655 -> 13660. */ /* (T1-A 7.ª fatia, 1, o oficial, 28/10: o perigo e a quase-morte saíram do aplicarResposta para motor/fecho-da-resposta.js, e o import dele, +1, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 3ec3364): 13688 -> 13655. */ /* (T1-A 3.ª fatia, 5, o oficial, 28/10: a frase do grupo cheio pela régua do motor, +1 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD aeeabdc) */ /* (T1-A 3.ª fatia, 3, o oficial, 28/10: o turno fundido — uma chamada a aplicarOTurno no lugar das seis peças — e a base do nome com o estado de agora, -59 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 48579a9) */ /* (T1-A 3.ª fatia, 2, o oficial, 28/10: as missões, os sinais, a fé, o milagre e as dádivas saíram do App para motor/meio-do-turno.js, -241 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD bd9e60f) */ /* (T1-A 3.ª fatia, 1, o oficial, 28/10: o registrarLugar e o bloco do mapa saíram do App para motor/meio-do-turno.js, -119 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD d776408) */ /* (T1-A 2.ª fatia, 3, o oficial, 27/10: o d20 da salvaguarda pela sorte do turno, +3 no comentário do aplicarResposta e +4 na frase do grupo cheio do Cronista, +7, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 2fdb7e4) */ /* (T1-A 2.ª fatia, 2, o oficial, 27/10: o cânone e a gente saíram do aplicarResposta para motor/aplicar.js#aplicarORegisto, -56 no saldo, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD e9c0851) */ /* (T1-A 2.ª fatia, o oficial, 27/10: o import do juízo do Cronista, +1, ACIMA, e o cronistaDoTurno a ler o aceito com a tabela da fé fora do App, -4 no saldo; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 4617715) */ /* (T1-A 2, o aplicar sai do App, o oficial, 27/10: a primeira fatia do aplicarResposta foi para src/motor/aplicar.js, -290 linhas, e os efeitos num lugar só, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD) */ /* (T1-A 1, a semente no App, o oficial, 27/10: a sorte do turno e o dado da tela, ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD) */ /* (T0-A 3/3, o oficial, 27/10: o comentário do relógio que lê do estado, +2, ACIMA; só o endereço andou): o enviar desceu de :14872 para :14874, +2. */ /* (T0-A 2/3, o oficial, 27/10: o gancho useVistaDoEstado fora do componente e o estadoRef no topo de Taverna(), +24, tudo ACIMA; só o endereço andou): o enviar desceu de :14848 para :14872, +24. */ /* (T0-A, o oficial, 27/10: o import de estado.js, +2, o lerSave fora do componente, +9, a versão no retrato e o v2 na gravação, tudo ACIMA; só o endereço andou): o enviar desceu de :14830 para :14848, +18. */ /* (a 12.ª sessão no motor, o backend, 19/10: o custo das tentativas falhadas em chamarModelo, +4, o mostrado do rumo, +2, e o veto da viagem que não houve, +7, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 806ef83): o enviar desceu de :14824 para :14830 */ /* (onda 2 do custo, o frontend, 14/10: os sinais do turno, o fixo da ficha, o estado épico e as portas em cenaDoPrompt, tudo ACIMA; o enviar desceu de :14752 para :14824, só o endereço andou, re-medido pelo diff contra o HEAD 2b9e82b) */ /* (v9.470, onda 1 do custo, o frontend, 13/10: o ref e o gatilho do Cronista e a memória do turno, +44, tudo ACIMA; o enviar desceu de :14708 para :14752, só o endereço andou, re-medido pelo diff contra o HEAD 4b72a82) */ /* (v9.465, o frontend, 13/10: o pedido na ordem do cache em chamarMestre, +8, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 842adc7): 14700 -> 14708 */); /* (v9.463, o oficial, 13/10: o apontado da agressão e a planta pelo lugar, +6, tudo ACIMA) */ /* (v9.461 ligada, o oficial, 13/10: elencoDoCoracao e cidadeDoCoracao, +13, o QUEM É, e a espinha e os sítios do EM CENA, +5, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 69ad49f): 14675 -> 14694, +19. */ /* (S10b · a abertura por situação e o kit inicial, o oficial, 13/10: o import de kit-inicial.js, +2, a criação, +3, e equiparCombate/montarGrid, +10, tudo ACIMA; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD 341e2cd): 14660 -> 14675, +15. */ /* (a 10.ª sessão ligada, o oficial, 13/10: o sinal da procura de gente, +6, o longe do EM CENA, +4, e o objeto do teste em ctxDesafio, ACIMA ou entre estes; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD cc0770a): 14656 -> 14660, +4. */ /* (os pendentes ligados, o oficial, 13/10: o import de chegadaDaViagem, +1, e a reserva do LimiteDasFichas, +3, ACIMA; o contexto do paradeiro no Cronista, +6, também acima destes): 14646 -> 14656, +10. */ /* (MM17 · o mapa vivo ligado, o oficial, 12/10: 14621 -> 14646, +25, os imports, o LimiteDoMapa e a aba Mapa que abre o mapa vivo entraram ACIMA; conteúdo idêntico, asserção intacta.) */ /* (F2b · F2c · F2d, a fiação, o oficial, 12/10: os imports de fichas.js e painel-fichas.jsx, o LimiteDasFichas e a altura da janela, o estado das fichas ao lado de entrada, o ref da memória, e as fichas da cena antes de pautaDoTurno, tudo ACIMA) 14495 -> 14621, +126; só o endereço andou. */
-  /* (o Narrador só narra, E3 — a fiação, o frontend, 12/10: o achado já na bolsa na cobrança e o gênero do Cronista, tudo ACIMA) o enviar desceu de :14402 para :14414, +12; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (o Narrador só narra, E1 — a fiação, o frontend, 12/10: os imports, os dois refs dos nomes à mão, o fatorDoPouso, o preço comum em fichasDaMesa, fichasDoOraculo, a rua e os nomes em pautaDoTurno, tudo ACIMA) o enviar desceu de :14329 para :14402, +73; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (MM-C · 7.ª sessão de prova, a fiação, o frontend, 12/10: os imports, os dois refs da chegada inferida, a régua do querPartir, o naoParte do resolver e o porteiro do mural, tudo ACIMA) o enviar desceu de :14305 para :14329, +24; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (MM-C · C6, a fogueira ligada, o oficial, 11/10: o import do painel e dos cinco do motor, o LimiteDaFogueira, o estado da noite e a ficha do envio em aplicarResposta, tudo ACIMA) o enviar desceu de :14278 para :14305, +27; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
-  /* (MM-C · C2, as subtramas, o frontend, 11/10: o import de subtramas.js, os quatro refs, subtramasAgora/contextoDoCoracao, a mão do vilão e QUEM CARREGA em pautaDoTurno, acima, e o coração em aplicarRetrato) o enviar desceu de :14214 para :14278, +64; só o endereço andou, re-medido pelo diff de App.jsx contra o HEAD. */
+  /* (MM3, 29/09) o `enviar` MUDOU DE FORMA, não só de linha: não fica mais
+     dentro de `aplicarGolpeDoJogador`, mora em `continuarGolpeDoJogador` (a
+     divisão em três, cabeçalho do bloco 9). A sessão A percorre
+     `aplicarGolpeDoJogador`, cujo `return true` da recusa antecede o `enviar`
+     que ele NÃO chama. Desde 31/10 a asserção exige que o `ondeSai` diga o
+     `return true` E cite as duas funções por nome; o varredor (bloco 11)
+     confere que elas moram mesmo lá. Antes era o número da linha do `enviar`,
+     re-medido a cada patch no App. */
+  t("e o porquê está escrito com endereço", /return true/.test(S.ondeSai)
+    && /src\/App\.jsx#aplicarGolpeDoJogador/.test(S.ondeSai) && /src\/App\.jsx#continuarGolpeDoJogador/.test(S.ondeSai));
 
   t("a fórmula do eixo novo está escrita para ser repetida",
     /turnos_sem_frase_de_evento \/ turnos_totais/.test(S.formula));

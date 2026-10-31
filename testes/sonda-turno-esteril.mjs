@@ -79,7 +79,7 @@ let estereis = 0, rolagens = 0;
 for (let turno = 1; turno <= P.turnos; turno++) {
   const r = G.alcanca(grade, eu, inim, { alcanceM: G.alcanceNatural(eu) });
   if (r.ok) { rolagens++; L(`  turno ${turno}  FÉRTIL   rola o d20, aplica dano, revide`); }
-  else { estereis++; L(`  turno ${turno}  estéril  ${r.motivo} → recusa sem custo (App.jsx:11754)`); }
+  else { estereis++; L(`  turno ${turno}  estéril  ${r.motivo} → recusa sem custo (App.jsx#aplicarGolpeDoJogador)`); }
 }
 L(`\n  ${TURNO_ESTERIL.formula}`);
 L(`  taxa_esteril = ${estereis} / ${P.turnos} = ${pct(estereis, P.turnos)}`);
@@ -173,10 +173,10 @@ let linhasTotais = 0, ecos = 0, recusasDaSessao = 0, narracoes = 0;
 for (let turno = 1; turno <= P.turnos; turno++) {
   const r = G.alcanca(grade, eu, inim, { alcanceM: G.alcanceNatural(eu) });
   /* A FIAÇÃO MODELADA, e ela é uma só: sem alcance, `resolverAtaqueJogador`
-     devolve `semAlcance` (App.jsx:11783-11787) e `aplicarGolpeDoJogador`
-     sai em :11869-11872 empurrando DUAS linhas — o eco do jogador e a
-     recusa — e devolvendo `true` ANTES do `enviar(...)` de :11932. Com
-     alcance, a mesma função desce até :11920 e empurra o telegrama do
+     devolve `semAlcance` (App.jsx#resolverAtaqueJogador) e `aplicarGolpeDoJogador`
+     sai empurrando DUAS linhas — o eco do jogador e a
+     recusa — e devolvendo `true` ANTES do `enviar(...)` de
+     `continuarGolpeDoJogador`. Com alcance, a chamada segue até lá e empurra o telegrama do
      golpe, que é narração de evento. */
   const eco = 1;
   const recusa = r.ok ? 0 : 1;
@@ -186,7 +186,7 @@ for (let turno = 1; turno <= P.turnos; turno++) {
   if (!r.ok) semNumero++;
   if (nLinhas === 0) semLinha++;
   if (narracao === 0) semNarracao++;
-  L(`  turno ${turno}  sem número: ${r.ok ? "não" : "sim "}  ·  linhas: ${nLinhas} (${eco} eco + ${recusa} recusa + ${narracao} narração)  ·  ${r.ok ? "o golpe sai" : "recusa por alcance (App.jsx:11870)"}`);
+  L(`  turno ${turno}  sem número: ${r.ok ? "não" : "sim "}  ·  linhas: ${nLinhas} (${eco} eco + ${recusa} recusa + ${narracao} narração)  ·  ${r.ok ? "o golpe sai" : "recusa por alcance (App.jsx#aplicarGolpeDoJogador)"}`);
 }
 L(`\n  ${TURNO_ESTERIL.formula}`);
 L(`  taxa_esteril      = ${semNumero} / ${P.turnos} = ${pct(semNumero, P.turnos)}   (o eixo de X1)`);
@@ -203,7 +203,7 @@ L(`  e o Mestre também se cala: ${SESSAO_A_PELA_FRASE.chamadasAoNarrador} chama
    O FUNIL DO COMBATE — quem tem voz, e de que tipo
    ============================================================ */
 barra();
-L("O FUNIL DO COMBATE — os chamadores de pushMsgs (App.jsx:7504)");
+L("O FUNIL DO COMBATE — os chamadores de pushMsgs (App.jsx#pushMsgs)");
 barra();
 const fun = contarFunil(), rec = contarRecusas(), nasce = vozQueNasceNoModulo();
 L(`\n  funções que falam no turno de combate: ${fun.funcoes}`);
