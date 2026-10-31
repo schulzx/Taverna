@@ -90,9 +90,18 @@ export function oGatilhoDoCronista(ler, turno, leitura) {
    outro nome, que foi exatamente o bug do gado), o evento global, quem
    está de pé na luta, o cânone, as promessas abertas, o elenco, a fila das
    narrações ainda não lidas e a narrativa do turno. */
+/* A 13.ª SESSÃO (29/10): "Encontrar Corrado" ficou por fechar a sessão
+   inteira, com quatro turnos de conversa com ele no Largo da Liça. O marco é
+   da espinha e guarda o Corrado pelo FATO (`fatosQueFecham`), logo só a
+   conversa que o Cronista viu (`falou_com`) o fecha — e o molde JSON abaixo
+   não tinha a chave. A SEÇÃO pedia-a em prosa; o modelo responde pelo molde,
+   e a proposta crua do T19 trouxe exatamente as dez chaves dele. Desde a
+   v9.385 (8f72c54), onde a secção nasceu, a conversa nunca chegou: a chave
+   está agora no molde, e `teste-falar-com-em-cena` §5 prende que toda SEÇÃO
+   de lista esteja lá. */
 export const PEDIDO_DO_CRONISTA = [
   "Você é o CRONISTA de um RPG. Você NÃO narra: lê a narrativa do turno e julga, por seções, o que o SISTEMA deve registrar. Responda APENAS em JSON:",
-  "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"genero\":\"ele|ela\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]},\"promessas\":[],\"promessas_pagas\":[]}",
+  "{\"lugar\":null,\"missoes\":{\"global_encerrado\":false},\"canone\":{\"Nome\":{\"tipo\":\"artefato|pessoa|lugar|promessa|segredo|organizacao\",\"descricao\":\"o que é, 1 frase factual\",\"detalhes\":\"aparência/origem/dono\",\"local\":\"\"}},\"pessoas\":[{\"nome\":\"\",\"papel\":\"\",\"relacao\":\"aliado|amigo|romance|familia|neutro|rival|inimigo\",\"genero\":\"ele|ela\",\"local\":\"\",\"notas\":\"máx. 8 palavras\"}],\"falou_com\":[],\"fe\":{\"fieis\":0,\"pf\":0,\"motivo\":\"\",\"acontecimento\":null},\"grupo\":{\"entraram\":[]},\"teste_sugerido\":null,\"combate\":{\"mortes_narradas\":[]},\"promessas\":[],\"promessas_pagas\":[]}",
   "SEÇÃO missoes: \"global_encerrado\": true SÓ se o EVENTO GLOBAL (se listado) foi RESOLVIDO de fato — a ameaça central derrotada/desfeita, não um avanço.",
   "SEÇÃO canone: fatos DURÁVEIS — artefatos e objetos relevantes que o herói ganhou/achou/descobriu (com o que o objeto É de fato; saque comum não entra), lugares importantes, promessas, segredos. NÃO reescreva nem contradiga o CÂNONE ATUAL — só crie novo ou acrescente campo novo.",
   "SEÇÃO pessoas: pessoas COM NOME e papel durável (aliados recorrentes, rivais, contatos) que ainda não estão no ELENCO — figurantes de cena única ficam de fora. \"genero\": \"ele\" ou \"ela\", pelo que a narrativa diz da pessoa (o pronome, o artigo, senhor/senhora); se a cena não deixa saber, \"\" — nunca chute.",

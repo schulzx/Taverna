@@ -137,6 +137,33 @@ sec("4. a fiação no App");
   t("o ref nasce vazio e não vai ao save", /const falouComRef = useRef\(\[\]\);/.test(app) && !/falouCom: falouComRef\.current, /.test(corpoApos("const salvar = useCallback((extra = {}) => {")));
 }
 
+sec("5. o molde do Cronista pede a conversa (a 13.ª sessão, 29/10)");
+{
+  /* «Encontrar Corrado» ficou feito: false a 13.ª inteira, com a heroína a
+     falar com ele do T2 ao T5. A prova, com o save da sessão
+     (`testes/sessao-s13-fecho.json`, o recorte que importa): o marco da
+     espinha guarda o Corrado pelo fato, então só `falouCom` fecha a etapa —
+     e o Cronista nunca o mandou, porque o molde JSON do pedido não tinha a
+     chave (a proposta crua do T19 trouxe as dez chaves do molde, e só elas). */
+  const CT = await import("../src/motor/cronista-do-turno.js");
+  const linhas = String(CT.PEDIDO_DO_CRONISTA).split("\n");
+  const molde = tenta(() => JSON.parse(linhas.find((l) => l.startsWith("{"))), {});
+  t("o molde JSON do Cronista tem a chave falou_com, como lista", Array.isArray(molde.falou_com), Object.keys(molde).join(","));
+  /* a catraca da classe: toda SEÇÃO do pedido está no molde, salvo as que são
+     objeto-ou-nada (ausente = "nenhum"); uma lista que o código lê e o molde
+     não pede é uma secção que nunca responde */
+  const OBJETO_OU_NADA = ["missao_oferecida", "relogio_novo"];
+  const secoes = [...new Set([...String(CT.PEDIDO_DO_CRONISTA).matchAll(/SEÇÃO ([a-z_]+)/g)].map((x) => x[1]))];
+  const fora = secoes.filter((x) => !(x in molde) && !OBJETO_OU_NADA.includes(x));
+  t(`toda SEÇÃO do pedido está no molde (${secoes.length} secções, ${OBJETO_OU_NADA.length} objeto-ou-nada)`, secoes.length >= 12 && fora.length === 0, fora.join(","));
+  /* o save da 13.ª: com a conversa, a etapa fecha; sem ela, não */
+  const s = JSON.parse(readFileSync(new URL("./sessao-s13-fecho.json", import.meta.url), "utf8"));
+  const mundo = (extra) => ({ cidadeAtual: s.cidadeAtual, lugarAtual: { nome: "Largo da Liça", cidade: s.cidadeAtual }, npcs: s.npcs, dia: 1, soPeloFato: S.fatosQueFecham(s.espinha), falouCom: [], segredosRevelados: [], derrotados: [], inventario: [], equipamento: [], revelados: [], ...extra });
+  const etapa = s.missoes[0].etapas[0];
+  t("na 13.ª, o Corrado é guardado pelo fato: estar no Largo não fecha", S.fatosQueFecham(s.espinha).pessoas.includes("Corrado") && M.etapaDef("falar_com").ver(etapa, mundo()) === false);
+  t("e a conversa vista fecha a principal", M.conferir(s.missoes, mundo({ falouCom: ["Corrado"] })).concluidas.length === 1);
+}
+
 function tenta(f, d) { try { return f(); } catch { return d; } }
 
 console.log(`\nfalar com em cena: ${ok} passaram, ${mal} falharam`);
