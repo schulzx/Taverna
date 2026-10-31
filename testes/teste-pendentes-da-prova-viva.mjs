@@ -65,7 +65,16 @@ sec("b. QUEM O MESTRE APRESENTOU SEM ARMA");
   t("a lista da cena tem a Freya e os três, todos à vista", gente.length === 4 && gente.every((x) => x.aqui) && ["Guarda de elmo", "Mulher das enguias", "Mercador de mulas"].every((n) => gente.some((x) => x.nome === n && x.deOnde === "prosa")), J(gente.map((x) => x.nome)));
   t("…e a frase os acha: «falo com o guarda» aponta o guarda", (() => { const q = EC.quemNaFrase("falo com o guarda", lista); const alvo = (Array.isArray(q) ? q[0] : q) || {}; return (alvo.nome || (alvo.item || {}).nome || "") === "Guarda de elmo"; })(), J(EC.quemNaFrase("falo com o guarda", lista)));
   const fichas = FI.fichasDaCena(lista, { grupo: [{ nome: "Freya" }] });
-  t("…e viram fichas na fileira (até o teto da fileira)", Array.isArray(fichas) && fichas.length >= 2 && fichas.some((f) => /Guarda|Mulher|Mercador/.test(f.nome)), J((fichas || []).map((f) => f.nome)));
+  /* MUDADA EM 29/10, E O MOTIVO (a 13.ª sessão): esta linha pedia que a gente
+     que a prosa apresentou virasse ficha na fileira. Na 13.ª a mesma porta pôs
+     na faixa seis fantasmas (o cão de uma aposta, «o bicho de ponta a ponta»,
+     o caçador que era o Dunstan, o homem que a frase chamou Balduíno…): das 29
+     coisas que os leitores da prosa acharam nas 23 respostas, só 4 eram gente
+     à vista. A faixa passou a mostrar só o que o sistema sabe
+     (fichas.js, FORA_DA_FAIXA). A intenção que fica: o guarda, a mulher e o
+     mercador continuam na LISTA e a frase acha-os (as duas linhas acima);
+     a fileira mostra a Freya, que o sistema conhece. */
+  t("…e a fileira mostra quem o sistema conhece (a Freya), não os três da prosa", Array.isArray(fichas) && fichas.some((f) => f.nome === "Freya") && !fichas.some((f) => /Guarda|Mulher|Mercador/.test(f.nome)), J((fichas || []).map((f) => f.nome)));
   const nada = EC.apresentadosNaProsa("Ele fala como um mercador. Nenhum guarda aparece. Um velho barco range no cais. Um estranho silêncio cai. É um tipo de lugar.", []);
   t("comparação, negação e a cabeça-adjectivo não fazem nascer ninguém", nada.length === 0, J(nada));
   const dois = EC.apresentadosNaProsa("Dois guardas observam do muro.", []);

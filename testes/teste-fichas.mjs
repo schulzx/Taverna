@@ -342,5 +342,39 @@ sec("7. O TETO É UM SÓ (o motor e a folha de estilo)");
   t("FICHAS.max (a tela) === FICHAS_NA_FILEIRA.max (o motor)", FICHAS && FICHAS.max === FI.FICHAS_NA_FILEIRA.max, String(FICHAS && FICHAS.max) + " × " + FI.FICHAS_NA_FILEIRA.max);
 }
 
+sec("8. A FAIXA DA 13.ª: só quem o sistema sabe (29/10)");
+{
+  /* As frases da 13.ª sessão, à letra (respostas do Mestre dos T5, T13, T17 e
+     T19): cada uma punha na faixa alguém que não existe — o cão de uma aposta
+     dita numa fala, o «bicho de ponta a ponta», o caçador que era o Dunstan,
+     o vulto e as tochas de duas orações diferentes, o homem que a mesma frase
+     chamou Balduíno. Os leitores da prosa continuam a vê-los (a frase do
+     jogador acha-os na lista); a faixa já não os oferece. */
+  const F13 = [
+    ["Cão da várzea", "Do outro lado da vala, Anselmo esmurra o parapeito de tábuas e berra fino:\n\n— Três pratas no cão da várzea! Três pratas antes que o ferro bata na carcaça!"],
+    ["Bicho de ponta", "Você gira a espada num arco curto e fende o segundo bicho de ponta a ponta, pregando a carcaça partida na lama antes mesmo que o ganido termine."],
+    ["Cacador da lâmina", "— Carniça brava — resmunga o caçador, limpando a lâmina de caça na manga encharcada sem tirar os olhos da abertura escura da rocha."],
+    ["Vulto", "Por uma brecha funda, entre caixotes arrebentados onde algo valioso parece ter sido guardado às pressas, o reflexo do ferro denuncia o vulto largo de um capitão armado. Você enfia a lâmina gasta no cinturão, risca a pederneira e ergue uma das cinco tochas."],
+    ["Homem de pele", "Do breu da passagem, um homem de pele curtida e trapos amarrados com barbante, Balduíno do Prado Salgado, encolhe-se contra uma coluna rachada."],
+  ];
+  const DUNSTAN = { nome: "Dunstan Machado Torto", papel: "Caçador" };
+  const vistos = [], naFaixa = [], semDunstan = [];
+  for (const [fantasma, frase] of F13) {
+    const l = montarEmCena({ semente: "s13", turno: 5, cidade: "Porto das Pedras", grupo: [DUNSTAN], mostrado: [frase], lugar: { nome: "Largo da Liça" } });
+    if (l.some((x) => x.deOnde === "prosa" && x.nome.startsWith(fantasma))) vistos.push(fantasma);
+    const f = fichasDaCena(l, { mostrado: [frase], grupo: [DUNSTAN] });
+    if (f.some((x) => String(x.nome).startsWith(fantasma))) naFaixa.push(fantasma);
+    if (!f.some((x) => x.nome === DUNSTAN.nome)) semDunstan.push(fantasma);
+  }
+  t(`a prosa da 13.ª ainda os vê na lista (${vistos.length} de ${F13.length}: a frase do jogador acha-os)`, vistos.length === F13.length, J(vistos));
+  t("…e a faixa não mostra nenhum deles", naFaixa.length === 0, J(naFaixa));
+  t("…e quem o sistema conhece continua na faixa (o Dunstan, em todas)", semDunstan.length === 0, J(semDunstan));
+  t("a regra é tabela: FORA_DA_FAIXA.deOnde é a prosa", J((FI.FORA_DA_FAIXA || {}).deOnde) === J(["prosa"]));
+  /* e não se cala o que o sistema sabe: o bicho da luta, o da estrada, a banca */
+  const lutaEstrada = montarEmCena({ semente: "s13", turno: 6, combate: { inimigos: [{ nome: "Rato Gigante", vida: 5 }] }, encontro: { criatura: "Lobo", quantos: 2 }, mostrado: ["Você fende o segundo bicho de ponta a ponta."] });
+  const fl = fichasDaCena(lutaEstrada, { mostrado: ["Você fende o segundo bicho de ponta a ponta."] }).map((x) => x.nome);
+  t("o rato da luta e o lobo da estrada ficam; o «bicho de ponta» não", fl.some((n) => /Rato/.test(n)) && fl.some((n) => /Lobo/.test(n)) && !fl.some((n) => /ponta/.test(n)), J(fl));
+}
+
 console.log(`\nfichas (F2b · F2c · F2d): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

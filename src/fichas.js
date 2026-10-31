@@ -62,6 +62,25 @@ const PROIBIDAS = new Set(["__proto__", "constructor", "prototype"]);
    do telefone (62 % da altura) sem rolar a cabeça para fora. */
 export const FICHAS_NA_FILEIRA = { max: 4, verbos: 3, sabe: 5, lembra: 4 };
 
+/* ---------------- A FAIXA MOSTRA SÓ O QUE O SISTEMA SABE (a 13.ª, 29/10) ----------------
+   Na 13.ª sessão a faixa da cena teve gente fantasma: «Cão da várzea ·
+   sozinha» (o cão da aposta, numa fala), «Bicho de ponta» («fende o bicho de
+   ponta a ponta»), «Cacador da lâmina» (era o Dunstan, «limpando a lâmina de
+   caça»), «Vulto de tochas», «Vulto de lâminas», «Homem de pele» (o Balduíno,
+   que a mesma frase nomeou). Quem as punha ali não era o intérprete nem o
+   registo: eram os leitores da prosa do `montarEmCena` (em-cena.js §4, §4b
+   e §5 — `vistosNaProsa` e `apresentadosNaProsa`), tudo com
+   `deOnde: "prosa"`, e a faixa mostrava-os como a quem o sistema conhece.
+   Medido nas 23 respostas do Mestre da 13.ª: 29 achados da prosa, e só 4 eram
+   gente à vista que o sistema não tinha (o pastor de ovelhas, o sujeito de
+   gibão duas vezes, o halfling); os bichos de verdade já vinham da luta,
+   e os outros 25 eram falas, anáforas e frases feitas. A faixa é o que o
+   sistema SABE que está ali — o registo, o grupo, o núcleo, a luta, a sala, a estrada, a banca, o chão, o lugar.
+   O que a prosa mostrou fica na LISTA (a frase do jogador acha-o:
+   «falo com o pastor»), e o Cronista regista quem ganhou nome; a faixa não
+   o oferece ao toque. */
+export const FORA_DA_FAIXA = { deOnde: ["prosa"] };
+
 /* ---------------- A FRASE DO TOQUE ----------------
    O que o primeiro toque escreve no campo — editável, nunca mandada. Na
    1.ª pessoa do jogador. `{o}` é a coisa com o artigo ("as ataduras de
@@ -561,7 +580,7 @@ export function fichasDaCena(lista, ctx) {
   const ultima = palavras(falas[falas.length - 1] || "");
   const todas = palavras(falas.join(" "));
   const vistos = new Set();
-  const L = arr(lista).filter((x) => x && typeof x === "object" && x.id && x.nome && x.aqui && !vistos.has(x.id) && vistos.add(x.id));
+  const L = arr(lista).filter((x) => x && typeof x === "object" && x.id && x.nome && x.aqui && !FORA_DA_FAIXA.deOnde.includes(x.deOnde) && !vistos.has(x.id) && vistos.add(x.id));
   const fundo = (x) => (x.tipo === "pessoa" && x.comigo) || (x.tipo === "lugar" && x.deOnde === "lugar");
   const chave = (x, i) => {
     const p = posicaoNaProsa(x, ultima);
