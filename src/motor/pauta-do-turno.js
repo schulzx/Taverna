@@ -736,9 +736,16 @@ export function aPautaDoTurno(estado, entrada, portas) {
     /* 11/10 (MM11 · 5.ª sessão, J9): o preço do BALCÃO de mantimentos — as
        rações, as tochas, a corda do kit. A banca não os vende, e a pauta
        ia vazia: o Mestre inventou "dez cunhas, mais uma pela corda boa".
-       Entra na mesma ficha do mercado (é ela que cala o oráculo). */
+       Entra na mesma ficha do mercado (é ela que cala o oráculo).
+       SÓ ONDE HÁ RUA (31/10, resto da 13.ª): o portão era o velho do preço
+       comum — «fora da luta e com cidade» —, e a cidade fica marcada na
+       estrada e dentro da masmorra; dentro da Cripta do Corvo, «quanto custa
+       uma tocha?» recebia o preço do balcão da rua lá de cima. O portão é
+       agora o do preço comum (69573b7) e o da mesa que fecha o buraco:
+       cidade, fora da estrada, da masmorra e da luta
+       (teste-balcao-so-na-rua.mjs). */
     try {
-      if (!$ref.combate && $ref.cidadeAtual) {
+      if ($ref.cidadeAtual && !$ref.jornada && !$ref.masmorra && !$ref.combate) {
         const p0 = $ref.personagem || $render.personagem || {};
         const bc = balcaoParaPauta(frase, { balcao: balcaoAqui(cidadeDoMapa($ref.cidadeAtual)), temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });
         if (bc.pergunta.length) mc = { pergunta: [...((mc && mc.pergunta) || []), ...bc.pergunta], em: [...((mc && mc.em) || []), ...bc.em] };

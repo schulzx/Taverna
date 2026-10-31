@@ -68,8 +68,18 @@ const DO_MODULO = ["LEITURA_DA_CONVERSA", "falasDoMestre"];
    quente tinha o preço da rua de cima. Nos casos, as únicas fotos que
    podem mudar são as que perguntam um preço comum na estrada ou na
    masmorra (a conta está no diário de 31/10); a prova do T23 é
-   teste-preco-so-na-rua.mjs. */
+   teste-preco-so-na-rua.mjs.
+
+   O BALCÃO SÓ ONDE HÁ RUA (31/10/2026, resto da 13.ª): o preço do balcão
+   de mantimentos (balcaoParaPauta) ganha o mesmo portão — cidade, fora da
+   estrada, da masmorra e da luta. Dentro da Cripta do Corvo, a tocha tinha
+   o preço do balcão da rua de cima. Nos casos, as únicas fotos que podem
+   mudar são as que perguntam o preço de um mantimento na estrada ou na
+   masmorra (a conta está no diário de 31/10); a prova é
+   teste-balcao-so-na-rua.mjs. */
 const CONSERTOS = [
+  ["      if (!combateRef.current && cidadeAtualRef.current) {\n        const p0 = personagemRef.current || personagem || {};\n        const bc = balcaoParaPauta(",
+    "      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {\n        const p0 = personagemRef.current || personagem || {};\n        const bc = balcaoParaPauta("],
   ["      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(",
     "      pc = (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) ? precoComumParaPauta("],
   ["passo: proximoPasso({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }),",

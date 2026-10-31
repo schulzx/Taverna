@@ -6408,10 +6408,10 @@
    "faltas": []
   },
   {
-   "rede": "d65a888d0a974f0c",
-   "tamRede": 59121,
-   "saida": "b738aba9cb32675e",
-   "refs": "73f865b2e9f834f9",
+   "rede": "243a534b954666ad",
+   "tamRede": 59190,
+   "saida": "bed0cf237215bdbc",
+   "refs": "adcc902a7d1a531c",
    "portas": "5485796285729a35",
    "nPortas": 1,
    "erro": null,
@@ -8088,10 +8088,10 @@
    "faltas": []
   },
   {
-   "rede": "d65a888d0a974f0c",
-   "tamRede": 59121,
-   "saida": "b738aba9cb32675e",
-   "refs": "4c4bf95b2f0fc17f",
+   "rede": "243a534b954666ad",
+   "tamRede": 59190,
+   "saida": "bed0cf237215bdbc",
+   "refs": "ef52acffa8a3ffc7",
    "portas": "5485796285729a35",
    "nPortas": 1,
    "erro": null,
