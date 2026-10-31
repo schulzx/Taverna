@@ -212,6 +212,7 @@
 import { trocarACasa } from "../src/semente.js";
 import { turnoDosInimigos, turnoDosCompanheiros, resolverAtaque, danoDe, danoDaClasse, ataquesPorTurno, pvEsperadoJogador, testeDeMorte, aplicarTesteMorte } from "../src/combate.js";
 import { garantirFichaCompanheiro } from "../src/companheiros.js";
+import { equiparKitInicial } from "../src/kit-inicial.js";
 import { completarInimigo } from "../src/bestiario.js";
 import { absorverDano, efeitoDeBuff, firmarEfeito, efeitoEmConcentracao, quebrarConcentracao } from "../src/efeitos.js";
 import { tickEfeitos } from "../src/regras-jogo.js";
@@ -244,10 +245,18 @@ export const CENARIOS_DA_REGUA = {
        (`PRONTOS`, prontos.js) e os números da armadura saem de
        `DEFESA_DA_ARMADURA`, a tabela da casa: nenhum valor nasce aqui. */
     heroi: { nome: "Herói", classe: "Guerreiro", nivel: 5, vigor: 3, atributos: { forca: 3, destreza: 2, vigor: 3, intelecto: 0, presenca: 1, percepcao: 1 }, arma: "Espada Longa", armadura: "Cota de Malha", escudo: "Escudo Torre" },
+    /* O GRUPO DA CASA VAI NU, e de propósito (31/10): `semKit`. Desde 31/10 a
+       régua veste o companheiro como o jogo o veste (`fichaDoGrupo`, abaixo),
+       mas estes três são o grupo dos retratos históricos — P3, T1, N1b, X4 —,
+       todos medidos com eles nus, e as catracas de teste-regua reproduzem
+       esses números byte a byte. Vesti-los é outra medida (com o Adversário
+       desligado, o molde passaria de 54,7% a 63,3% de vitória), e mexer no
+       retrato da casa não é de um resto da 13.ª: fica escrito no diário de
+       31/10 para quem rever a régua da casa. */
     grupo: [
-      { nome: "Mago", classe: "Mago", nivel: 5, vigor: 4, atributos: { forca: 0, destreza: 2, vigor: 4, intelecto: 3, presenca: 1, percepcao: 1 } },
-      { nome: "Clériga", classe: "Clérigo", nivel: 5, vigor: 4, atributos: { forca: 2, destreza: 1, vigor: 4, intelecto: 1, presenca: 3, percepcao: 1 } },
-      { nome: "Engenheiro", classe: "Engenheiro", nivel: 5, vigor: 4, atributos: { forca: 1, destreza: 3, vigor: 4, intelecto: 3, presenca: 0, percepcao: 1 } },
+      { nome: "Mago", classe: "Mago", nivel: 5, vigor: 4, atributos: { forca: 0, destreza: 2, vigor: 4, intelecto: 3, presenca: 1, percepcao: 1 }, semKit: true },
+      { nome: "Clériga", classe: "Clérigo", nivel: 5, vigor: 4, atributos: { forca: 2, destreza: 1, vigor: 4, intelecto: 1, presenca: 3, percepcao: 1 }, semKit: true },
+      { nome: "Engenheiro", classe: "Engenheiro", nivel: 5, vigor: 4, atributos: { forca: 1, destreza: 3, vigor: 4, intelecto: 3, presenca: 0, percepcao: 1 }, semKit: true },
     ],
     inimigos: { quantos: 4, ameaca: "elite", nivel: 9, base: "Adversário" },
     tetoDeRodadas: 20,
@@ -684,16 +693,31 @@ function fichaDoHeroi(cen) {
   };
 }
 
-function fichaDoGrupo(cen) {
-  return cen.grupo.map((g) => {
+/* O COMPANHEIRO VAI VESTIDO COMO O JOGO O VESTE (31/10, resto da 13.ª).
+   Até aqui a régua montava cada companheiro com `equipados: {}`: sem arma
+   e sem armadura. O jogo não: todo companheiro que entra no grupo passa por
+   `equiparKitInicial` (kit-inicial.js) — o da criação
+   (companheiro-inicial.js), o recrutado (regras-jogo.js e o App) —, e desde
+   o kit de 13/10 nasce com a arma da classe na mão e, desde 90de3f4, com a
+   armadura dela no corpo. O Dunstan da 13.ª, Caçador, luta de Arco Curto e
+   Couro Batido; a régua media-o nu. É a lição de N1b outra vez: um
+   instrumento que difere do jogo em silêncio é pior que nenhum. A ficha é
+   a mesma chamada do jogo, pela mesma ordem (a ficha do companheiro, e o kit
+   por cima); a classe que o kit não arma (o Mago só leva o cajado) fica como
+   o jogo a deixaria. Só quem o cenário declara `semKit` vai nu — o grupo dos
+   retratos históricos da casa (`CENARIOS_DA_REGUA.duro`, e o porquê está
+   lá). Medido no diário de 31/10 e na §6 de teste-kit-inicial.mjs. */
+export function fichaDoGrupo(cen) {
+  return ((cen && cen.grupo) || []).map((g) => {
     const vidaMax = Number(g.vidaMax) > 0 ? Number(g.vidaMax) : pvEsperadoJogador(g.nivel, g.vigor);
-    return garantirFichaCompanheiro({
+    const ficha = garantirFichaCompanheiro({
       nome: g.nome, classe: g.classe, nivel: g.nivel,
       atributos: { ...g.atributos },
       vida: vidaMax, vidaMax,
       condicoes: [], efeitos: [], guardas: [], inventario: [],
       equipados: {}, morrendo: false,
     });
+    return g.semKit === true ? ficha : equiparKitInicial(ficha);
   });
 }
 

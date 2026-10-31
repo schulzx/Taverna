@@ -27,6 +27,8 @@ import * as KI from "../src/kit-inicial.js";
 import { defesaDe } from "../src/combate.js";
 import { aFichaAberta } from "../src/abrir-o-save.js";
 import { simularCombate } from "./regua-combate.mjs";
+import * as RC from "./regua-combate.mjs";
+import { garantirFichaCompanheiro } from "../src/companheiros.js";
 const { KIT_INICIAL, armaInicial, equiparKitInicial } = KI;
 const armaduraInicial = KI.armaduraInicial || (() => null);
 import { CLASSES } from "../src/classes.js";
@@ -159,6 +161,33 @@ sec("5. a armadura da classe (31/10, a 13.ª: a Guerreira nascia com defesa 11)"
   t(`na régua: três ratos com o companheiro derrubam-na em menos de 3,5% (${pc(r[1])}; nua, ${pc(r[0])})`, r[1] < 0.035 && r[1] < r[0]);
   t(`sozinha, em menos de 15% (${pc(r[3])}; nua, ${pc(r[2])})`, r[3] < 0.15 && r[3] < r[2]);
   t(`e o mortal continua mortal: três Bandidos derrubam-na em mais de 60% (${pc(r[5])})`, r[5] > 0.6);
+}
+
+/* 6. A RÉGUA VESTE O COMPANHEIRO COMO O JOGO (31/10, resto da 13.ª). A §5
+   mediu a Guerreira com o Dunstan NU: a régua montava o companheiro com
+   `equipados: {}`, e o jogo veste-o com o kit da classe (arma e, desde a §5,
+   armadura). FALHA ANTES: `fichaDoGrupo` não era exportada, e montava-o nu. */
+sec("6. a régua veste o companheiro como o jogo o veste");
+{
+  const fichaDoGrupo = RC.fichaDoGrupo || null;
+  t("a régua mostra a ficha do grupo que monta (fichaDoGrupo)", typeof fichaDoGrupo === "function");
+  const DUN = { nome: "Dunstan", classe: "Caçador", nivel: 1, vidaMax: 12, vigor: 2, atributos: { forca: 1, destreza: 3, vigor: 2, intelecto: 0, presenca: 0, percepcao: 2 } };
+  const doJogo = (g) => equiparKitInicial(garantirFichaCompanheiro({ nome: g.nome, classe: g.classe, nivel: g.nivel, atributos: { ...g.atributos }, vida: g.vidaMax, vidaMax: g.vidaMax, inventario: [] }));
+  const daRegua = (g) => (fichaDoGrupo ? fichaDoGrupo({ grupo: [g] })[0] : null);
+  const pecas = (p) => JSON.stringify(Object.entries((p && p.equipados) || {}).sort(([a], [b]) => a.localeCompare(b)));
+  const d = daRegua(DUN);
+  t("o Dunstan da 13.ª na régua: Arco Curto na mão e Couro Batido no corpo", !!d && d.equipados.arma && d.equipados.arma.nome === "Arco Curto" && d.equipados.armadura && d.equipados.armadura.nome === "Couro Batido", d ? pecas(d) : "sem ficha");
+  t("…as mesmas peças do recrutado do jogo (equiparKitInicial sobre a ficha do companheiro)", !!d && pecas(d) === pecas(doJogo(DUN)), d ? pecas(d) + " ≠ " + pecas(doJogo(DUN)) : "");
+  t(`…e a mesma defesa (${d ? defesaDe(d) : "?"}; nu, ${defesaDe(garantirFichaCompanheiro({ ...DUN, vida: 12, equipados: {} }))})`, !!d && defesaDe(d) === defesaDe(doJogo(DUN)) && defesaDe(d) > defesaDe(garantirFichaCompanheiro({ ...DUN, vida: 12, equipados: {} })));
+  const diferem = Object.keys(KIT_INICIAL).filter((c) => { const g = { ...DUN, nome: "X " + c, classe: c }; return pecas(daRegua(g)) !== pecas(doJogo(g)); });
+  t("toda classe do kit: o companheiro da régua leva o que o do jogo leva", diferem.length === 0, diferem.join(", "));
+  const mago = daRegua({ ...DUN, nome: "Mago", classe: "Mago" });
+  t("o Mago leva só o cajado (a classe não veste armadura)", !!mago && !!mago.equipados.arma && !mago.equipados.armadura);
+  /* a classe que não existe: a ficha do companheiro dá-lhe uma (no jogo e na
+     régua, a mesma), e o kit veste-a por cima — o que conta é ser o mesmo */
+  const semKit = { ...DUN, nome: "Ninguém", classe: "Ferreiro" };
+  t(`a classe que não existe sai como o jogo a deixaria (${daRegua(semKit) && daRegua(semKit).classe}, ${pecas(daRegua(semKit)).length > 2 ? "com o kit dela" : "sem nada"})`, !!fichaDoGrupo && daRegua(semKit).classe === doJogo(semKit).classe && pecas(daRegua(semKit)) === pecas(doJogo(semKit)));
+  t("lixo: o cenário sem grupo é um grupo vazio", !!fichaDoGrupo && fichaDoGrupo({ grupo: null }).length === 0 && fichaDoGrupo(null).length === 0);
 }
 
 console.log(`\n${ok} ok, ${mal} falhas`);

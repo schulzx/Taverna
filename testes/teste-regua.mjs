@@ -918,8 +918,10 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
      parâmetro da caminhada) entraram, e os dois têm leitor na seção 10. O
      número sobe aqui porque ele é a prova de que nenhum export nasceu sem
      leitor. Subir a contagem sem que o leitor exista seria afrouxar a única
-     catraca que a régua tem — `teste-ligacao` varre `src/`, não `testes/`. */
-  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 16 && semLeitor.length === 0, semLeitor.join(", "));
+     catraca que a régua tem — `teste-ligacao` varre `src/`, não `testes/`.
+     SÃO 17 DESDE 31/10: `fichaDoGrupo` (o companheiro vestido como o jogo),
+     com leitor na seção 11 e em teste-kit-inicial §6. */
+  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 17 && semLeitor.length === 0, semLeitor.join(", "));
 
   /* E A RÉGUA COMPÕE O ADVERSÁRIO DE VERDADE, pelo mesmo motivo que compõe o
      combate: uma régua que reimplementasse `intencaoDaVez` mediria um segundo
@@ -1177,6 +1179,27 @@ sec("10. X4 — O TABULEIRO QUE FALTA, E O PREÇO DA CAMINHADA");
     /App\.jsx:\d+/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno) && /moverPara/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno));
   pendente("o intervalo honesto do preço da caminhada",
     `entre ZERO (o App de hoje: quem anda não cede o turno, e a recusa por alcance é de graça) e −${porRodada.toFixed(1)} pontos por rodada (esta escada)  [medir o meio exige grade dentro da régua — órgão novo, não etapa de medição]`);
+}
+
+sec("11. O COMPANHEIRO VESTIDO — a régua monta o grupo como o jogo, e o retrato da casa vai nu declarado");
+{
+  /* 31/10, resto da 13.ª: `fichaDoGrupo` passa o companheiro pelo kit da
+     classe (`equiparKitInicial`), como o jogo faz a todo companheiro que
+     entra no grupo. O grupo dos retratos históricos declara `semKit`, e é
+     por isso que as catracas das secções 4 a 8 continuam a reproduzir os
+     números deles. Este dente guarda as duas metades: se o grupo da casa
+     perder a declaração, os retratos mudam em silêncio; se a régua deixar
+     de vestir, o Dunstan da 13.ª volta a lutar nu. */
+  const { fichaDoGrupo, CENARIOS_DA_REGUA: C } = R;
+  const casa = fichaDoGrupo(C.duro);
+  t("o grupo da casa declara-se nu (semKit) e vai nu — os retratos históricos mediram-no assim",
+    C.duro.grupo.every((g) => g.semKit === true) && casa.every((g) => !g.equipados.arma && !g.equipados.armadura) && C.justo.grupo === C.duro.grupo && C.brando.grupo === C.duro.grupo);
+  const vestidos = fichaDoGrupo({ grupo: C.duro.grupo.map(({ semKit, ...g }) => g) });
+  t("o mesmo grupo sem a declaração vai vestido como o jogo: o Mago de cajado, a Clériga de Lança e Brigantina, o Engenheiro de Besta Leve e Couro Batido",
+    vestidos[0].equipados.arma && vestidos[0].equipados.arma.nome === "Cajado de Carvalho" && !vestidos[0].equipados.armadura
+    && vestidos[1].equipados.arma.nome === "Lança" && vestidos[1].equipados.armadura.nome === "Brigantina"
+    && vestidos[2].equipados.arma.nome === "Besta Leve" && vestidos[2].equipados.armadura.nome === "Couro Batido");
+  t("não muta o cenário: a declaração e o grupo ficam como vieram", C.duro.grupo.every((g) => !g.equipados));
 }
 
 console.log(`\n(medição: ${(CUSTO_DA_MEDIDA / 1000).toFixed(1)}s · suíte inteira: ${((Date.now() - T0 + 0) / 1000).toFixed(1)}s)`);
