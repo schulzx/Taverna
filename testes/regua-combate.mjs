@@ -80,7 +80,7 @@
        "954/159" que P3 registrou como sua PRIMEIRA medição
        (`mente/diario.md`, no bloco de P3). Ou seja: o número perdido é
        alcançável, e o molde que o alcança é o que o App CONTRADIZ
-       (`resolverRevide` roda `turnoDosInimigos` em App.jsx:13591 e só então
+       (`resolverRevide` roda `turnoDosInimigos` em App.jsx e só então
        `turnoDosCompanheiros` em :13830). O molde errado é o de lá.
 
    E ESTA RÉGUA É MAIS NOVA QUE P3, o que fecha a conta pelo outro lado: ela
@@ -109,7 +109,7 @@
    1,790 quedas, a escada do bônus ofensivo, as duas sondas fora da faixa, o
    custo da absorção — foi medido com `prioridade: ""` no `turnoDosInimigos`,
    isto é, com a oposição SEM VONTADE. O jogo passa a intenção
-   (App.jsx:13606), e `combate.js:279` só consulta `escolherAlvo` quando ela
+   (App.jsx#resolverRevide), e `combate.js#turnoDosInimigos` só consulta `escolherAlvo` quando ela
    existe. O porquê inteiro, e o parâmetro que reproduz a medida antiga, estão
    em `ADVERSARIO_NA_REGUA`, mais abaixo. Leia aqueles números como a HISTÓRIA
    de B1/B1b/B2/T1 (`comAdversario: false`), nunca como o retrato de hoje.
@@ -127,23 +127,23 @@
    `CAMINHADA_NA_REGUA` e na seção 10 da suíte.
 
    A ordem da rodada, e de onde cada passo veio:
-     1. o herói ataca            (App.jsx:11566-11645 — `ataquesPorTurno`
+     1. o herói ataca            (App.jsx — `ataquesPorTurno`
                                   golpes de `danoDaClasse`)
      2. os inimigos atacam       (a intenção da vez decide em quem — v. o
                                   bloco N1b dentro de `simularCombate`;
                                   `turnoDosInimigos`; o dano passa pelo
-                                  abrigo antes do PV, App.jsx:13653/13684,
+                                  abrigo antes do PV, App.jsx,
                                   e a concentração do companheiro cai
-                                  depois, App.jsx:13701)
+                                  depois, App.jsx)
      3. o grupo age              (`turnoDosCompanheiros`, e o buff nasce
                                   pelo molde de `buffDeCompanheiro`,
-                                  App.jsx:7942)
+                                  App.jsx)
      4. o herói caído rola morte (`testeDeMorte`/`aplicarTesteMorte`; é
-                                  `resolverQueda`, App.jsx:13940, e ela roda
+                                  `resolverQueda`, App.jsx, e ela roda
                                   DEPOIS do turno dos companheiros —
-                                  App.jsx:13830 —, não antes)
+                                  App.jsx —, não antes)
      5. os relógios andam        (`tickEfeitos` no herói e no grupo,
-                                  App.jsx:8246-8277; `tickCondicoes` —
+                                  App.jsx; `tickCondicoes` —
                                   com dano no herói e nos inimigos, SEM
                                   dano no grupo, que é a fronteira que T1
                                   decidiu e escreveu)
@@ -415,11 +415,11 @@ export const CATRACA_DE_UMA_VIDA = {
 
    O DEFEITO, ESCRITO INTEIRO PORQUE ELE É A LIÇÃO. Até N1b esta régua
    passava `prioridade: ""` ao `turnoDosInimigos`. O jogo real NÃO passa: em
-   `App.jsx:13606` a chamada carrega
+   `App.jsx#resolverRevide` a chamada carrega
    `prioridade: (intencaoPorId(intencaoRef.current) || {}).alvo || ""`, e do
-   outro lado `combate.js:279` só consulta `escolherAlvo` QUANDO a prioridade
+   outro lado `combate.js#turnoDosInimigos` só consulta `escolherAlvo` QUANDO a prioridade
    existe — sem ela, o alvo cai no sorteio de sempre (35% de chance de bater
-   num companheiro qualquer, `combate.js:286`). Ou seja: a régua media um
+   num companheiro qualquer, `combate.js#turnoDosInimigos`). Ou seja: a régua media um
    combate em que a oposição não tem vontade, e o jogo tem. B1, B1b, B2 e T1
    mediram Uma Vida com o Adversário FORA DO CIRCUITO — quatro etapas de
    número contra um motor que o jogador nunca jogou.
@@ -433,8 +433,8 @@ export const CATRACA_DE_UMA_VIDA = {
    ligado e desligado têm de dar resultados DIFERENTES na mesma semente.
 
    O CAMINHO, IGUAL AO DO APP: `lutaDaMesa()` (o bloco termina em
-   `App.jsx:6155`) monta a situação a partir do combate de verdade, e
-   `intencaoDaLuta()` (`App.jsx:6160-6168`) chama
+   `App.jsx`) monta a situação a partir do combate de verdade, e
+   `intencaoDaLuta()` (`App.jsx`) chama
    `intencaoDaVez(s, { antes: intencaoRef.current })` — com MEMÓRIA POR
    COMBATE: `antes` é o id da intenção da rodada anterior, e sem ela a
    oposição troca de plano toda vez que um número oscila, que é exatamente o
@@ -508,7 +508,7 @@ export const ADVERSARIO_NA_REGUA = {
 
    E HÁ UMA SEGUNDA CAMADA, que é por que o custo da caminhada NÃO é medível
    por subtração. No App de hoje a caminhada não gasta rodada nenhuma: `moverPara`
-   (App.jsx:14500-14568) nunca chama `fecharMeuTurno`, e o comentário do sítio
+   (App.jsx) nunca chama `fecharMeuTurno`, e o comentário do sítio
    diz a regra com todas as letras — "o que fecha o turno é AGIR". Quem anda
    não cede o turno; quem tenta golpear fora de alcance é recusado DE GRAÇA
    (X1), e a rodada também não vira. Ou seja: enquanto o herói se aproxima, a
@@ -549,7 +549,7 @@ export const TABULEIRO_NA_REGUA = {
     plantasQueRecusamNoTurno1: 10,
   },
   /* e o sítio que faz a caminhada não custar rodada no jogo de hoje */
-  aCaminhadaNaoFechaOTurno: "App.jsx:14500-14568 (moverPara nunca chama fecharMeuTurno)",
+  aCaminhadaNaoFechaOTurno: "App.jsx#moverPara (nunca chama fecharMeuTurno)",
 };
 
 /* ---------------- A CAMINHADA, COMO PARÂMETRO (X4) ----------------
@@ -594,8 +594,8 @@ export const CAMINHADA_NA_REGUA = {
   familias: ["umavida", "aa", "bb", "cc"],
 };
 
-/* AS CLASSES QUE CURAM, do jeito que `lutaDaMesa` as lê (App.jsx:6134). A
-   lista existe em `combate.js:202` (`CURAM`) e não é exportada de lá; copiá-la
+/* AS CLASSES QUE CURAM, do jeito que `lutaDaMesa` as lê (App.jsx). A
+   lista existe em `combate.js` (`CURAM`) e não é exportada de lá; copiá-la
    aqui é o mesmo que o App faz, e ela fica nomeada em vez de literal no meio
    da conta — se é número, é tabela. */
 const CLASSES_QUE_CURAM = ["Clérigo", "Druida", "Bardo"];
@@ -748,7 +748,7 @@ function fichasDosInimigos(cen) {
    4. AS PORTAS — as mesmas do App, uma por sítio
    ============================================================ */
 
-/* O abrigo come o golpe antes do PV (App.jsx:13653 e :13684). Devolve a
+/* O abrigo come o golpe antes do PV (App.jsx e :13684). Devolve a
    ficha nova, o dano que sobrou e quanto foi parado. */
 function passarPeloAbrigo(quem, dano) {
   const ab = absorverDano(quem, dano);
@@ -756,7 +756,7 @@ function passarPeloAbrigo(quem, dano) {
   return { pers: ab.pers, dano: ab.dano, absorvido: ab.absorvido };
 }
 
-/* E a magia que ele segurava cai depois (App.jsx:13701, `segurarOuPerder`).
+/* E a magia que ele segurava cai depois (App.jsx, `segurarOuPerder`).
    Com o dano que SOBROU do abrigo, e só em quem ficou de pé. */
 function segurarOuPerder(quem, dano) {
   if (!quem || !(dano > 0)) return quem;
@@ -766,7 +766,7 @@ function segurarOuPerder(quem, dano) {
   return tc.manteve ? quem : quebrarConcentracao(quem, segurada.nome);
 }
 
-/* O BUFF DO COMPANHEIRO, pelo molde de `buffDeCompanheiro` (App.jsx:7942):
+/* O BUFF DO COMPANHEIRO, pelo molde de `buffDeCompanheiro` (App.jsx):
    a condição pela aflição, e o efeito (onde mora `absorve`) firmado em
    quem conjurou. Devolve {grupo, heroi} novos — nunca muta. */
 function aplicarBuffDeCompanheiro(heroi, grupo, ac) {
@@ -874,10 +874,10 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
 
     /* ---------------- A INTENÇÃO DO ADVERSÁRIO (N1b) ----------------
        AQUI NASCE A PRIORIDADE, e é o sítio que não existia. O App monta a
-       situação em `lutaDaMesa()` (o bloco fecha em App.jsx:6155), chama
-       `intencaoDaVez(s, { antes })` em `intencaoDaLuta()` (App.jsx:6160-6168)
-       e entrega o alvo da intenção ao motor em App.jsx:13606. Do outro lado,
-       `combate.js:279` SÓ consulta `escolherAlvo` quando a prioridade existe:
+       situação em `lutaDaMesa()` (o bloco fecha em App.jsx), chama
+       `intencaoDaVez(s, { antes })` em `intencaoDaLuta()` (App.jsx)
+       e entrega o alvo da intenção ao motor em App.jsx#resolverRevide. Do outro lado,
+       `combate.js#turnoDosInimigos` SÓ consulta `escolherAlvo` quando a prioridade existe:
        com `prioridade: ""` o inimigo cai no sorteio de 35% e a oposição perde
        a vontade inteira. Era isso que a régua media antes desta etapa, em
        silêncio, e é por isso que este bloco vem com o porquê escrito e não só
@@ -899,11 +899,11 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
       const dePe = grupoDePe();
       const somaVida = vivos.reduce((s, x) => s + (x.vida || 0), 0);
       const somaMax = vivos.reduce((s, x) => s + (x.vidaMax || x.vida || 1), 0) || 1;
-      /* quem fala pela oposição é o mais forte de pé — App.jsx:6115, com o
+      /* quem fala pela oposição é o mais forte de pé — App.jsx, com o
          mesmo PESO_AMEACA de `orcamento.js` que o App importa. */
       const voz = vivos.reduce((a, b) => ((b.nivel || 0) + PESO_AMEACA[b.ameaca] * 10 > (a.nivel || 0) + PESO_AMEACA[a.ameaca] * 10 ? b : a), vivos[0]);
       /* ehBicho/ehMorto/pensa saem de `menteDaCriatura` sobre o NOME, como
-         App.jsx:6116-6122 faz. Sem léxico: a régua não tem mundo. */
+         App.jsx faz. Sem léxico: a régua não tem mundo. */
       const mente = menteDaCriatura(voz.nome, voz.desc || "", null);
       const todos = [heroi, ...dePe];
       return {
@@ -941,7 +941,7 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
     for (; rodada <= cen.tetoDeRodadas; rodada++) {
       if (!vivosInimigos().length) break;
 
-      /* ---- 1. O HERÓI (App.jsx:11566-11645) ----
+      /* ---- 1. O HERÓI (App.jsx) ----
          E AQUI ESTAVA O PONTO CEGO QUE X4 ACHOU (v. `TABULEIRO_NA_REGUA`):
          esta condição pergunta se o herói está DE PÉ e nunca se ele ALCANÇA.
          `caminhada` é a única porta que o faz calar, e ela é 0 por padrão —
@@ -1075,9 +1075,9 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
       /* ---- 4. O HERÓI CAÍDO ROLA A MORTE ----
          DEPOIS DO GRUPO, E NÃO ANTES (conserto de B1b). Este passo rolava
          entre os inimigos e o grupo, e o App faz o contrário: `resolverQueda`
-         é chamada em `App.jsx:13940`, DEPOIS do turno dos companheiros
-         (`App.jsx:13830`) — e o cabeçalho de `resolverRevide` diz a ordem com
-         todas as letras (`App.jsx:13497`: "os companheiros agem, o teste de
+         é chamada em `App.jsx`, DEPOIS do turno dos companheiros
+         (`App.jsx`) — e o cabeçalho de `resolverRevide` diz a ordem com
+         todas as letras (`App.jsx`: "os companheiros agem, o teste de
          morte roda").
 
          E A DIFERENÇA NÃO É COSMÉTICA, porque o teste de morte MEXE NA FICHA
@@ -1096,7 +1096,7 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
         };
       }
 
-      /* ---- 5. OS RELÓGIOS (App.jsx:8246-8332) ---- */
+      /* ---- 5. OS RELÓGIOS (App.jsx) ---- */
       const te = tickEfeitos(heroi);
       heroi = { ...heroi, efeitos: te.efeitos };
       grupo = grupo.map((g) => (((g.efeitos || []).filter(Boolean).length) ? { ...g, efeitos: tickEfeitos(g).efeitos } : g));

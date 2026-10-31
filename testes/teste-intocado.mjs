@@ -247,7 +247,7 @@ sec("4. a régua da escada — o prazo sai do custo, e a suíte o lê de volta")
   }
   /* NENHUMA DAS CINCO NOVAS É ABSOLUTA, e este é o dente que guarda a
      decisão da etapa. Um absoluto barato é a única coisa que, entregue
-     errada, acaba com o combate (combate.js:105-111). */
+     errada, acaba com o combate (combate.js). */
   for (const nome of CHEGARAM) {
     const h = doAcervo(nome);
     t(`"${nome}" (${h.custo} PM) NÃO é absoluta — o absoluto custa 8 PM nesta casa`,

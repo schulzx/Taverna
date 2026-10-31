@@ -6,7 +6,7 @@
    `src/` — 93 só no `App.jsx`, dos quais 44 são, byte a byte, uma cor que
    já tem nome em `T`. Um `#E8A33D` colado no meio de um `style={{}}` não
    é uma cor: é uma cópia que ninguém sabe que existe, e que não muda no
-   dia em que o âmbar mudar. Pior: o `#fff` de `App.jsx:2642`, sobre
+   dia em que o âmbar mudar. Pior: o `#fff` de `App.jsx`, sobre
    `T.danger`, dá 3,42:1 e reprova o AA — uma cor que nunca passou por
    decisão nenhuma, porque nunca passou por tabela nenhuma.
    (Endereço conferido em 16/09/K4: a citação original dizia `:2541`,
@@ -55,7 +55,7 @@
      nomes de variável e palavras de português/inglês. Fica aberto, com
      o número escrito para quem quiser fechá-lo.
    - `transition` fora do `estilo.js`: 18 (a barra de vida 500 ms em
-     `App.jsx:21828`, PV/PM 300 ms em `:3182`/`:3189`, a cor do dado
+     `App.jsx`, PV/PM 300 ms em `:3182`/`:3189`, a cor do dado
      400 ms em `:540`/`:553`). D5c vigia `animation`, e `transition`
      NÃO é alcançável pelo `@media` da folha — é atributo inline.
      (`:21828` conferido em 16/09/K4 — a citação original dizia
@@ -63,7 +63,7 @@
      na barra de PV/PM do cabeçalho da ficha, não texto "500ms" literal.)
    - CONTRASTE: 3 tintas de texto-sobre-vermelho no projeto, e nenhum
      dos três dentes vê uma delas. `#fff` sobre `T.danger` dá 3,42:1 e
-     reprova o AA (`App.jsx:2642`); `#1A0F0D` sobre o mesmo fundo dá
+     reprova o AA (`App.jsx`); `#1A0F0D` sobre o mesmo fundo dá
      5,48:1 (`painel-talentos.jsx:112` e `:417`, `painel-ascensao.jsx:72`).
      `T.onAccent` sobre `danger` daria 5,34:1 e resolvia as três.
      POR QUE NÃO É DENTE HOJE, e não é timidez: contraste é conta de COR,
@@ -77,7 +77,7 @@
      qualquer passa verde. · paga: "uma forma para o destrutivo — e o
      contraste que reprova sai"
    - ANIMADORES EM JS: 2 (o d20 cuspindo 17 números por segundo,
-     `App.jsx:486`; a ficha andando 55–110 ms por passo,
+     `App.jsx`; a ficha andando 55–110 ms por passo,
      `grade-de-batalha.jsx:265`). `prefers-reduced-motion` não toca em
      `setInterval`. A casa JÁ TEM o padrão e o usa uma vez só:
      `ui.jsx:589`, `CampoDeBrasas`, com
@@ -333,7 +333,7 @@ const ZONAS_DE_TABELA = [
    estritamente PIOR que a animação.
 
    (`.tv-agonia` é INOCENTE, ao contrário do que a pauta suspeitava:
-   quando `grave`, `App.jsx:1502`/`:1504` já põe borda estática de
+   quando `grave`, `App.jsx`/`:1504` já põe borda estática de
    `T.danger`, o anel do retrato, o rosto e a barra de PV rotulada com o
    número (esta última em `:21812`). Quatro afirmações paradas de "você
    está morrendo"; o pulso é a quinta. Parado, o jogador ainda sabe.
@@ -357,7 +357,7 @@ const SEM_SAIDA_DE_MOVIMENTO = {
   ".tv-slide":    "a entrada lateral · .25s",
   /* A CULPADA, e foi pega na tela: a troca de número do d20 é
      JavaScript (`setInterval` a cada 70 ms por 1200 ms,
-     `App.jsx:486`) e `prefers-reduced-motion` não a toca. O `tv-dice`
+     `App.jsx`) e `prefers-reduced-motion` não a toca. O `tv-dice`
      era a ÚNICA coisa a dizer "ainda rolando"; e numa falha com
      `dc != null` o fundo do resultado é `T.panelSoft` com borda âmbar,
      IDÊNTICO ao fundo do rolando. O `jogo` fotografou um hexágono
@@ -432,7 +432,7 @@ const TETO_DE_CONTADOR_DE_QUADRO = {
    nasce com uma colisão, não com zero.
 
    E ELA É COINCIDÊNCIA, NÃO CÓPIA: `tvGlow 1s` é o brilho do d20 a rolar
-   (`App.jsx:486`), existe desde muito antes de haver relógio de reação, e
+   (`App.jsx`), existe desde muito antes de haver relógio de reação, e
    não desenha nada que o trilho meça. Mas o dente não distingue
    coincidência de cópia — é a sua natureza declarada, a mesma de D5a — e
    por isso a coincidência fica ESCRITA, com data e razão, em vez de
@@ -467,7 +467,7 @@ const COLISAO_DE_RELOGIO_ESCRITA = {
 
 /* D5f · O ALVO DE TOQUE SAI DE TABELA, NUNCA DE ARITMÉTICA DE PADDING.
 
-   A DOENÇA, com endereço e data: `App.jsx:1998` (16/09) media 27,5 px de
+   A DOENÇA, com endereço e data: `App.jsx` (16/09) media 27,5 px de
    alvo onde o desenho dizia 48, e NENHUM DOS DOIS NÚMEROS EXISTIA NO
    TEXTO. D5a apanha cor nova, D5b apanha cor copiada, D5c e D5e apanham
    o relógio — e os quatro ficaram cegos a uma medida de alvo, porque uma
@@ -591,7 +591,7 @@ const RX_FUNCAO = new RegExp(
      o oposto do defeito. O regex estrito já as recusa; está escrito aqui
      para que a recusa seja deliberada e não acidental.
    · `#fff` (3 dígitos) CONTA: 2 ocorrências, e uma delas é o pior achado
-     de D1 (`App.jsx:2541`, `#fff` sobre `T.danger`, 3,42:1, reprova AA). */
+     de D1 (`App.jsx`, `#fff` sobre `T.danger`, 3,42:1, reprova AA). */
 const mascararComentarios = (texto, ext) => {
   const brancos = (s) => s.replace(/[^\n]/g, " "); /* o comprimento tem de sobreviver: as zonas são medidas por deslocamento */
   let s = texto.replace(/\/\*[\s\S]*?\*\//g, brancos);

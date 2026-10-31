@@ -142,7 +142,7 @@ sec("1. as duas línguas: o que se CAUSA e o que se RECEBE");
 sec("2. a inversão da Maldição do Patrono (o bug com teste que prova)");
 {
   /* A FÓRMULA VELHA, refeita aqui à mão. Ela não vem de `src/` — vem do
-     que `combate.js:127` fazia até a v9.275, e está escrita para que a
+     que `combate.js` fazia até a v9.275, e está escrita para que a
      asserção seja sobre um COMPORTAMENTO e não sobre um texto. Se alguém
      a repuser no motor, a seção inteira fica vermelha. */
   const antes = (danoBase, modAtk, modAlvo) => Math.max(0, Math.round(danoBase + modAtk.danoExtra - modAlvo.danoReduzido));

@@ -81,9 +81,9 @@ const ordemDe = (g, i) => (g && typeof g.ordem === "number" ? g.ordem : i);
    O MODELO DO MUNDO DE HOJE — a reimplementação literal
 
    ENDEREÇO CONFERIDO EM 16/09/2026, contra `VERSAO = "v9.266"` de
-   `src/constantes.js`: o laço da rodada está em `src/App.jsx:14556-13990`
+   `src/constantes.js`: o laço da rodada está em `src/App.jsx`
    (`for (const a of acoes)` … `if (rc && rc.danoFinal != null) a.r.dano =
-   rc.danoFinal;`), e `tentarReacaoNoGolpe` em `src/App.jsx:8248-7707`. O
+   rc.danoFinal;`), e `tentarReacaoNoGolpe` em `src/App.jsx`. O
    `k2-jogo.md` cita `:13972-13982`; o fecho do `if (a.alvoRef ===
    "jogador")` é a linha 13983, e é a única diferença.
 
@@ -170,7 +170,7 @@ const FICHAS = [guerreiro, ladino, mago, clerigo, bardo];
 
 const DANO = 20;
 /* O `gatilho` vai ESCRITO no golpe porque é assim que `ritmoDaRodada` o
-   lê; e o valor é o que `App.jsx:7666` deriva — acertou dói, errou abre a
+   lê; e o valor é o que `App.jsx` deriva — acertou dói, errou abre a
    guarda. As duas metades do módulo têm de ver o mesmo gatilho no mesmo
    golpe, senão a pergunta e a resolução falam de rodadas diferentes. */
 const golpe = (ordem, extra) => {
@@ -386,9 +386,9 @@ sec("07. A ORDEM DO LOG — a linha da reação vem ANTES de toda linha de ataqu
 {
   /* HOJE A LINHA DA REAÇÃO APARECE NO CHAT ANTES DAS LINHAS DE ATAQUE DA
      RODADA, e é um defeito de leitura, e é antigo: `tentarReacaoNoGolpe`
-     chama `pushMsgs` imediatamente (`App.jsx:7673`), enquanto `linhasSis`
+     chama `pushMsgs` imediatamente (`App.jsx`), enquanto `linhasSis`
      — que carrega «🛡 Ogro → você: 9 de dano» — só é despejada depois de o
-     laço fechar (`App.jsx:14083`). O jogador lê «⚔ REAÇÃO — Aparar: 4 de
+     laço fechar (`App.jsx`). O jogador lê «⚔ REAÇÃO — Aparar: 4 de
      dano evitado» e só a seguir lê o golpe que a causou.
 
      É O JOGO DE HOJE, BYTE A BYTE, E K2 NÃO É A ETAPA QUE O CONSERTA. A
@@ -418,10 +418,10 @@ sec("07. A ORDEM DO LOG — a linha da reação vem ANTES de toda linha de ataqu
    ============================================================ */
 sec("08. A FICHA É `persBase` — a do INÍCIO da rodada, nunca a já gasta");
 {
-  /* `App.jsx:13981` passa `persBase`, não `persTracos`. A diferença é
+  /* `App.jsx` passa `persBase`, não `persTracos`. A diferença é
      real: `persTracos` carrega a Pele de Pedra já gasta e o PM noutro
      número, e o PM da reação só sai da ficha no FIM da rodada
-     (`App.jsx:14126`). Chamar `escolherReacao` com a ficha a meio da
+     (`App.jsx`). Chamar `escolherReacao` com a ficha a meio da
      rodada é a porta 16 de §5, e ela abre-se sem uma linha mal escrita:
      basta passar a variável que está à mão. */
   const golpes = rodadaDe(4);
@@ -438,7 +438,7 @@ sec("08. A FICHA É `persBase` — a do INÍCIO da rodada, nunca a já gasta");
     const b = reacaoDoSilencio({ golpes, heroi: persBase, rolar: mulberry32(7) });
     return JSON.stringify(a.reacao && a.reacao.id) === JSON.stringify(b.reacao && b.reacao.id) && a.rolos === b.rolos;
   })());
-  t("o débito de PM é o da tabela, e a resolução não o aplica à ficha (isso é o fim da rodada, `App.jsx:14126`)",
+  t("o débito de PM é o da tabela, e a resolução não o aplica à ficha (isso é o fim da rodada, `App.jsx`)",
     persBase.mana === 2 && comBase.reacao.pm === 2);
 }
 
@@ -737,7 +737,7 @@ sec("17. O LIXO E A IMUTABILIDADE — `= {}` no destructuring NÃO cobre `null`"
   t("entrada `undefined` não estoura", (() => { const r = reacaoDoSilencio(); return r.reacao === null; })());
   t("rodada vazia não estoura", (() => { const r = reacaoDoSilencio({ golpes: [], heroi: guerreiro }); return r.reacao === null; })());
   /* Golpe sem `dano` nem `gatilho`: a resolução deriva `inimigo_erra` (é o
-     que `App.jsx:7666` faz com `dano 0`), e o guerreiro tem Contra-ataque.
+     que `App.jsx` faz com `dano 0`), e o guerreiro tem Contra-ataque.
      A asserção é sobre a FORMA da resposta, não sobre o rolo — com o
      rolador a devolver 0 a `chance` 0,55 passa sempre. */
   t("golpe sem dano nem gatilho cai em `inimigo_erra`, e a resposta é bem formada", (() => {

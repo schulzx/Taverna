@@ -18,10 +18,10 @@
        função do funil, e reflowar as quebras de linha DENTRO das âncoras não
        acende nada — que é o ponto de a linha ter saído da prova.
 
-   E fica uma catraca no fim: nenhum desses arquivos volta a ter número de
+   E fica uma catraca no fim: nenhum arquivo de testes/ volta a ter número de
    linha do App. */
 
-import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, rmSync, readdirSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -278,13 +278,17 @@ function todasAsAncoras() {
 /* ============================================================
    5. A CATRACA — o endereço de linha não volta
    ============================================================ */
-sec("5. nenhum número de linha do App volta às provas da Fase X");
+sec("5. nenhum número de linha do App volta às provas");
 {
-  const ARQUIVOS = ["acoes-do-jogador.mjs", "check-acoes-do-jogador.mjs", "teste-acoes-do-jogador.mjs", "sonda-turno-esteril.mjs", "ancoras-do-app.mjs"];
+  /* TODO arquivo de testes/ — as provas da Fase X e as outras que citavam o
+     App em prosa (a régua, a trava da reação, o cartaz…). O padrão é montado
+     em pedaços para este arquivo não se acusar a si mesmo. */
   const padrao = new RegExp("App\\.jsx" + ":" + "\\d");
-  for (const a of ARQUIVOS) {
-    const txt = readFileSync(join(AQUI, a), "utf8");
-    t(`${a} não cita endereço de linha do App`, !padrao.test(txt), (txt.match(new RegExp("[^\\n]*" + padrao.source + "[^\\n]*")) || [""])[0].slice(0, 120));
+  const todos = readdirSync(AQUI).filter((f) => /\.mjs$/.test(f));
+  const sujos = todos.filter((f) => padrao.test(readFileSync(join(AQUI, f), "utf8")));
+  t(`nenhum dos ${todos.length} arquivos de testes/ cita endereço de linha do App`, sujos.length === 0, sujos.join(", "));
+  for (const a of ["acoes-do-jogador.mjs", "check-acoes-do-jogador.mjs", "teste-acoes-do-jogador.mjs", "sonda-turno-esteril.mjs", "ancoras-do-app.mjs"]) {
+    t(`${a} existe e está limpo`, todos.includes(a) && !sujos.includes(a));
   }
   const tabelas = await import("./acoes-do-jogador.mjs");
   const nasTabelas = JSON.stringify(Object.values(tabelas).filter((v) => typeof v !== "function"));

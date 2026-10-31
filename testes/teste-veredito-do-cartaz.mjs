@@ -16,7 +16,7 @@ console.log("\n[1. A QUEIXA, EM FORMA DE TESTE — dois títulos, o mesmo servi�
 /* O caso real que `missoes.js:503` documenta (v9.43): Osric ofereceu a
    mesma caçada duas vezes com nomes diferentes — uma pelo gerador
    estrutural, outra pela proposta do Mestre. O filtro por TÍTULO EXATO
-   que hoje decide o que aparece no mural (`App.jsx:21905`) deixaria
+   que hoje decide o que aparece no mural (`App.jsx`) deixaria
    este cartaz passar, porque os dois títulos não têm uma letra em
    comum. É exatamente essa divergência — quem desenha vs quem executa —
    que `vereditoDoCartaz` fecha: uma conta só, e é a de `aceitarProposta`. */
@@ -31,7 +31,7 @@ const cartazOsric = {
   prazo: 0, etapas: [{ tipo: "derrotar", alvo: "o atirador do mercado", quantos: 1 }],
 };
 const passariaNoFiltroDeTitulo = !diario1.some((q) => q.titulo.trim().toLowerCase() === cartazOsric.titulo.trim().toLowerCase());
-ok(passariaNoFiltroDeTitulo, "os dois títulos não batem — o filtro de hoje (App.jsx:21905) deixaria isto passar");
+ok(passariaNoFiltroDeTitulo, "os dois títulos não batem — o filtro de hoje (App.jsx) deixaria isto passar");
 const vOsric = vereditoDoCartaz(cartazOsric, diario1);
 ok(vOsric.pode === false, "mas o aceite recusa: é o mesmo serviço, dito com outras palavras — a queixa da pessoa, provada");
 ok(vOsric.chave === "mesma-pessoa", `a legenda é "mesma-pessoa" (recebi "${vOsric.chave}")`);

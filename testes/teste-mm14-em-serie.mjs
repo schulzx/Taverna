@@ -11,19 +11,19 @@
    casarão", "Chegar a o casarão" e "vivo" para a Anya.
 
    As causas, com a linha (HEAD 92875d0, v9.338):
-     · a trama forçada (`talvezDarUmaTrama`, App.jsx:16715) só tinha três
+     · a trama forçada (`talvezDarUmaTrama`, App.jsx) só tinha três
        portas: nenhuma trama ativa (16719), o mural liberado (16723) e o
        compasso fora do respiro (16732). O mural liberta-se também por seis
        turnos (`MURAL.turnos`, abertura.js), e com ele a trama nascia antes
        do primeiro passo; e "uma por vez" fazia nascer a seguinte no turno a
        seguir a uma fechar — nada media o espaço entre elas;
-     · quem pede é `conhecidos[0]` (App.jsx:16675), o mais antigo do
+     · quem pede é `conhecidos[0]` (App.jsx), o mais antigo do
        registo de pessoas, que não recusa o nome do próprio herói;
      · o molde `tirar_de_la` (tramas.js) escrevia "de ${ermo}" e "vivo", e a
        etapa `ir_a` (missoes.js) "Chegar a ${alvo}" — com os nomes da base,
        que nascem com artigo;
-     · a promessa do fio da memória (App.jsx:19440) e a das tramas
-       (App.jsx:16708) eram "há uma missão ativa" — e as ativas eram as que
+     · a promessa do fio da memória (App.jsx) e a das tramas
+       (App.jsx) eram "há uma missão ativa" — e as ativas eram as que
        o sistema forçou.
 
    As secções:

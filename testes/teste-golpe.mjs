@@ -154,7 +154,7 @@ sec("2. A 36 M — três continuam recusando, e é a PAREDE");
 sec("3. `alcanceDoGolpe` — a linha de hoje, agora provável");
 {
   const A = GOLPE.ALCANCES;
-  /* a linha de App.jsx:11608-11610, reproduzida aqui como referência viva:
+  /* a linha de App.jsx, reproduzida aqui como referência viva:
      armaLonge ? 36 : alcanceNatural({nome,tamanho}) + (temAlcance ? 1,5 : 0) */
   const hoje = (armaLonge, temAlcance, nome, tamanho) => (armaLonge
     ? 36

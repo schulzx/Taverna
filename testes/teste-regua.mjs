@@ -27,7 +27,7 @@
    E O QUE ESTA SUÍTE DESCOBRIU AO LIGÁ-LO É O ACHADO DO CICLO, então ele fica
    escrito no alto e não numa nota de rodapé. Até N1b a régua passava
    `prioridade: ""` ao `turnoDosInimigos`; o jogo passa a intenção da luta
-   (App.jsx:13606), e `combate.js:279` só consulta `escolherAlvo` quando ela
+   (App.jsx#resolverRevide), e `combate.js#turnoDosInimigos` só consulta `escolherAlvo` quando ela
    existe. B1, B1b, B2 e T1 mediram Uma Vida com a oposição SEM VONTADE — e
    nenhuma linha desta suíte ficou vermelha por isso, porque ela provava o
    instrumento contra ele mesmo. A asserção que faltava está na seção 4 e é
@@ -351,8 +351,8 @@ sec("4. UM COMBATE — determinismo byte a byte e a forma do retrato");
    ============================================================
    ESTE É O DENTE QUE TERIA PEGO O BUG DE N1b, e ele existe porque nenhum dos
    outros pegou. A régua passava `prioridade: ""` ao `turnoDosInimigos`
-   enquanto o jogo passa a intenção da luta (App.jsx:13606) — e como
-   `combate.js:279` só consulta `escolherAlvo` QUANDO a prioridade existe, o
+   enquanto o jogo passa a intenção da luta (App.jsx#resolverRevide) — e como
+   `combate.js#turnoDosInimigos` só consulta `escolherAlvo` QUANDO a prioridade existe, o
    resultado era um combate em que a oposição sorteia o alvo a 35% e nada
    mais. Quatro etapas mediram Uma Vida assim, em silêncio.
 
@@ -379,7 +379,7 @@ sec("4b. O ADVERSÁRIO CHEGA AO MOTOR — o dente que teria pego o bug de N1b");
   t("sem Adversário, nenhuma — o rastro vazio é a assinatura do molde antigo", sem.intencoes.length === 0);
   t("as intenções eleitas são ids de verdade do acervo",
     (() => { const ADV = readFileSync("../src/adversario.js", "utf8"); return com.intencoes.every((id) => ADV.includes(`id: "${id}"`)); })());
-  /* A MEMÓRIA POR COMBATE (App.jsx:6160-6168, `antes: intencaoRef.current`):
+  /* A MEMÓRIA POR COMBATE (App.jsx, `antes: intencaoRef.current`):
      a intenção ADERE — só a quebra a desfaz. Se a régua derivasse do zero a
      cada rodada, o rastro trocaria de plano toda vez que um número oscila, e
      a oposição voltaria a não ter plano. A prova possível sem espiar estado:
@@ -930,8 +930,9 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
      B1, B1b, B2 e T1. */
   t("a régua importa o Adversário de produção (não uma cópia da decisão)",
     FONTE.includes('from "../src/adversario.js"') && FONTE.includes("intencaoDaVez") && FONTE.includes("menteDaCriatura"));
-  t("e cita os dois sítios do jogo que ela reproduz — App.jsx:13606 e combate.js:279",
-    FONTE.includes("App.jsx:13606") && FONTE.includes("combate.js:279"));
+  /* (31/10, Fase 2 do plano do motor) os dois sítios agora são citados por NOME: o número de linha andava a cada patch e esta asserção cobrava o comentário a cada vez */
+  t("e cita os dois sítios do jogo que ela reproduz — App.jsx#resolverRevide e combate.js#turnoDosInimigos",
+    FONTE.includes("App.jsx#resolverRevide") && FONTE.includes("combate.js#turnoDosInimigos"));
 }
 
 /* ============================================================
@@ -987,7 +988,7 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
 
    O QUE ESTA SEÇÃO NÃO AFIRMA. Não afirma "a caminhada custa 9,7 pontos no
    jogo". No App de hoje a caminhada não gasta rodada nenhuma — `moverPara`
-   (App.jsx:14500-14568) nunca chama `fecharMeuTurno`, e o próprio sítio diz
+   (App.jsx) nunca chama `fecharMeuTurno`, e o próprio sítio diz
    "o que fecha o turno é AGIR"; e a recusa por alcance é de graça (X1), então
    a rodada não vira por ali tampouco. Enquanto o herói se aproxima, a oposição
    também não age. O preço real está ENTRE zero e o que esta escada mede, e a
@@ -1176,7 +1177,7 @@ sec("10. X4 — O TABULEIRO QUE FALTA, E O PREÇO DA CAMINHADA");
      inventar. O dente guarda a confissão: se ela sumir da tabela, a seção
      inteira volta a mentir com autoridade. */
   t("a régua declara que a caminhada não fecha o turno no App de hoje — a escada é a ponta CARA",
-    /App\.jsx:\d+/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno) && /moverPara/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno));
+    /App\.jsx#moverPara/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno) && /moverPara/.test(TABULEIRO_NA_REGUA.aCaminhadaNaoFechaOTurno));
   pendente("o intervalo honesto do preço da caminhada",
     `entre ZERO (o App de hoje: quem anda não cede o turno, e a recusa por alcance é de graça) e −${porRodada.toFixed(1)} pontos por rodada (esta escada)  [medir o meio exige grade dentro da régua — órgão novo, não etapa de medição]`);
 }

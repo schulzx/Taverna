@@ -2,7 +2,7 @@
    aritmética de padding?
 
    A DOENÇA, com endereço: a fila de quatro pílulas da ficha
-   (`App.jsx:1994-2002`, hoje) media 27,5 px onde `formas.md` desenha
+   (`App.jsx`, hoje) media 27,5 px onde `formas.md` desenha
    *A escolha* `Forma=Pílula` a 47/48 — e a causa não era enchimento, era
    que a peça NUNCA EXISTIU EM CÓDIGO. A fila copiou a pílula vizinha à
    mão e herdou com ela três defeitos de gramática (`mente/k4-desenho.md`

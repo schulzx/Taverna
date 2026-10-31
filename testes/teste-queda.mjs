@@ -99,7 +99,7 @@ sec("1. OS OITO NOMES, E A FORMA DAS TABELAS");
   t("e o padrão seguro é morrer, não cair", DESFECHO_PADRAO !== DESFECHO_DE_QUEM_CAI, `${DESFECHO_PADRAO} vs ${DESFECHO_DE_QUEM_CAI}`);
 
   /* OS APELIDOS: toda tradução tem de pousar num lado que existe, senão o
-     `ref: "grupo"` que a mesa já usa (`combate.js:246-260`) cairia no
+     `ref: "grupo"` que a mesa já usa (`combate.js`) cairia no
      desconhecido e o companheiro morreria direto sem ninguém escrever isso. */
   t("todo apelido aponta para um lado declarado",
     Object.values(APELIDOS_DO_LADO).every((l) => !!DONOS_DA_QUEDA[l]),
