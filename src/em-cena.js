@@ -66,6 +66,22 @@ const semS = (w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w);
 export const EM_CENA_MAX = { pessoa: 12, criatura: 4, coisa: 40, lugar: 8 };
 export const EM_CENA_NA_PAUTA = { pessoa: 3, criatura: 2, coisa: 3, papel: 3 };
 
+/* ---------------- O QUE SÓ A PROSA TROUXE (31/10, a 13.ª sessão) ----------------
+   Os leitores da prosa (§4, §4b e §5 de `montarEmCena`: `vistosNaProsa`,
+   `apresentadosNaProsa`) põem na lista, com `deOnde: "prosa"`, o que o
+   Mestre mostrou e o sistema não tinha. Medido nas 23 respostas do Mestre da
+   13.ª: 29 achados, e só 4 eram gente à vista que o sistema não conhecia — o
+   resto eram falas («três pratas no cão da várzea»), anáforas («o caçador»,
+   que era o Dunstan) e frases feitas («de ponta a ponta»). A faixa da cena
+   deixou de os mostrar a 29/10 (8a629e5, `fichasDaCena`); a linha EM CENA
+   da pauta continuava a dá-los ao Narrador como gente em cena — «Dunstan
+   Machado Torto (com você); Cão da várzea» —, e o Narrador lê a pauta como
+   verdade. A regra é uma só, e as duas a leem: o que vem só da prosa não é
+   gente em cena, nem na faixa nem para o Mestre. A LISTA continua a vê-lo
+   (a frase do jogador acha-o em `quemNaFrase`, «falo com o pastor»), e o
+   Cronista regista quem ganhou nome. */
+export const SO_DA_PROSA = Object.freeze({ deOnde: Object.freeze(["prosa"]) });
+
 /* ---------------- A MEMÓRIA DO QUE A PROSA MOSTROU ----------------
    O que o Mestre mostrou e ninguém registou só está nas últimas falas
    dele — e a cena anda. Na 8.ª, a que levava a corrente apareceu no M37, o
@@ -647,7 +663,7 @@ function contradiz(frase, nome) {
    ============================================================ */
 function escolher(lista, jaDito) {
   const dito = norm(jaDito);
-  const visto = (x) => x.aqui && !(dito && dito.includes(norm(x.nome)));
+  const visto = (x) => x.aqui && !SO_DA_PROSA.deOnde.includes(x.deOnde) && !(dito && dito.includes(norm(x.nome)));
   const ids = new Set();
   const L = arr(lista).filter((x) => x && x.id && x.nome && visto(x) && !ids.has(x.id) && ids.add(x.id));
   /* a gente que a cena é: a que a prosa e o núcleo trazem, depois o grupo */

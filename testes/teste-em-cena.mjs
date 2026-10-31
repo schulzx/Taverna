@@ -421,5 +421,49 @@ sec("5. o jogo trata o jogador por você (a linha EM CENA, 120 mundos)");
   t("…e a varredura tem o que varrer: a linha em todos os mundos, o companheiro com «(com você)» na maioria", linhas === 120 && comGrupo >= 60, `${linhas}/${comGrupo}`);
 }
 
+sec("6. OS FANTASMAS NÃO CHEGAM AO NARRADOR: a linha EM CENA lê a mesma lista que a faixa (31/10, a 13.ª)");
+{
+  /* A 13.ª sessão (29/10): a faixa deixou de mostrar a gente que só a prosa
+     trouxe (8a629e5, FORA_DA_FAIXA em fichas.js) — nas 23 respostas do Mestre,
+     29 achados da prosa e só 4 eram gente à vista que o sistema não tinha. A
+     linha EM CENA da pauta continuava a dá-los ao Narrador como gente em
+     cena: «Dunstan Machado Torto (com você); Cão da várzea», «Homem de pele ·
+     Dunstan…», «Cacador da lâmina · Dunstan…». O Narrador lê a pauta como
+     verdade, e a pauta dizia-lhe que o cão de uma aposta estava à frente do
+     herói. Agora a regra é uma só, numa tabela (SO_DA_PROSA, em-cena.js), e
+     as duas leem-na: o que vem só da prosa não é gente em cena, nem na faixa
+     nem para o Mestre. A lista continua a vê-los (a frase do jogador acha-os
+     em quemNaFrase). As frases são as de teste-fichas.mjs §8, à letra.
+     FALHA ANTES: as cinco linhas levavam o fantasma, e SO_DA_PROSA não existia. */
+  const F13 = [
+    ["Cão da várzea", "Do outro lado da vala, Anselmo esmurra o parapeito de tábuas e berra fino:\n\n— Três pratas no cão da várzea! Três pratas antes que o ferro bata na carcaça!"],
+    ["Bicho de ponta", "Você gira a espada num arco curto e fende o segundo bicho de ponta a ponta, pregando a carcaça partida na lama antes mesmo que o ganido termine."],
+    ["Cacador da lâmina", "— Carniça brava — resmunga o caçador, limpando a lâmina de caça na manga encharcada sem tirar os olhos da abertura escura da rocha."],
+    ["Vulto", "Por uma brecha funda, entre caixotes arrebentados onde algo valioso parece ter sido guardado às pressas, o reflexo do ferro denuncia o vulto largo de um capitão armado. Você enfia a lâmina gasta no cinturão, risca a pederneira e ergue uma das cinco tochas."],
+    ["Homem de pele", "Do breu da passagem, um homem de pele curtida e trapos amarrados com barbante, Balduíno do Prado Salgado, encolhe-se contra uma coluna rachada."],
+  ];
+  const DUNSTAN = { nome: "Dunstan Machado Torto", papel: "Caçador" };
+  const vistos = [], naLinha = [], naPauta = [], semDunstan = [];
+  for (const [fantasma, frase] of F13) {
+    const l = montarEmCena({ semente: "s13", turno: 5, cidade: "Porto das Pedras", grupo: [DUNSTAN], mostrado: [frase], lugar: { nome: "Largo da Liça" } });
+    if (l.some((x) => x.deOnde === "prosa" && x.nome.startsWith(fantasma))) vistos.push(fantasma);
+    const linha = emCenaParaPauta(l, {});
+    if (linha.includes(fantasma)) naLinha.push(fantasma);
+    if (!linha.includes(DUNSTAN.nome)) semDunstan.push(fantasma);
+    const tx = PA.textoDaPauta(pautaComEmCena(PA.garantirPauta({ onde: ["no Largo da Liça, em Porto das Pedras"] }), l, { turno: 5 }), { turno: 5 });
+    if (tx.includes(fantasma)) naPauta.push(fantasma);
+  }
+  t(`a prosa da 13.ª ainda os vê na lista (${vistos.length} de ${F13.length}: a frase do jogador acha-os)`, vistos.length === F13.length, J(vistos));
+  t("…e a linha EM CENA não dá nenhum deles ao Narrador", naLinha.length === 0, J(naLinha));
+  t("…nem o texto da pauta que vai ao Mestre", naPauta.length === 0, J(naPauta));
+  t("…e quem o sistema conhece continua na linha (o Dunstan, «com você», em todas)", semDunstan.length === 0, J(semDunstan));
+  t("a regra é tabela, e uma só: SO_DA_PROSA.deOnde é a prosa, e a faixa lê a mesma", J((EC.SO_DA_PROSA || {}).deOnde) === J(["prosa"]) && (await import(S + "fichas.js")).FORA_DA_FAIXA === EC.SO_DA_PROSA);
+  /* e não se cala o que o sistema sabe: o bicho da luta, o da estrada */
+  const le = montarEmCena({ semente: "s13", turno: 6, encontro: { criatura: "Lobo", quantos: 2 }, mostrado: ["Você fende o segundo bicho de ponta a ponta."] });
+  const ll = emCenaParaPauta(le, {});
+  t("o lobo da estrada fica na linha; o «bicho de ponta» não", /Lobo/.test(ll) && !/ponta/.test(ll), ll);
+  t("e a frase do jogador ainda acha o fantasma na lista (quemNaFrase lê a lista inteira)", quemNaFrase("falo com o homem de pele", montarEmCena({ semente: "s13", turno: 5, mostrado: [F13[4][1]] })).length > 0);
+}
+
 console.log(`\nem cena (F2a): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

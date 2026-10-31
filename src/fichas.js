@@ -37,7 +37,7 @@
    O jogador é tratado por você; a frase do toque é dele, na 1.ª pessoa.
    ============================================================ */
 
-import { quemNaFrase } from "./em-cena.js";
+import { quemNaFrase, SO_DA_PROSA } from "./em-cena.js";
 import { veredictoDoCrime } from "./crime.js";
 import { garantirLaco, tipoDeLacoPorId } from "./npcs.js";
 import { cabecaDaCoisa } from "./economia.js";
@@ -79,7 +79,8 @@ export const FICHAS_NA_FILEIRA = { max: 4, verbos: 3, sabe: 5, lembra: 4 };
    O que a prosa mostrou fica na LISTA (a frase do jogador acha-o:
    «falo com o pastor»), e o Cronista regista quem ganhou nome; a faixa não
    o oferece ao toque. */
-export const FORA_DA_FAIXA = { deOnde: ["prosa"] };
+/* a mesma tabela da linha EM CENA da pauta (em-cena.js, 31/10): uma regra, dois leitores */
+export const FORA_DA_FAIXA = SO_DA_PROSA;
 
 /* ---------------- A FRASE DO TOQUE ----------------
    O que o primeiro toque escreve no campo — editável, nunca mandada. Na
