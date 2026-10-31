@@ -172,7 +172,7 @@ import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, en
    a ação e aplica o que ele devolve. */
 import { tipoDaPalavra, vereditoDaPalavra, ouvirAPalavra, envelopeDaPalavra, envelopeDosPrisioneiros } from "./sem-espada.js";
 import { lerCrime, consequenciaDoCrime, garantirLei, registrarCrime, agravarParaMorte, fatorDePreco, servicoRecusado, guardaQueVem, envelopeDaGuarda, veredictoDoCrime, reacaoDoElenco } from "./crime.js";
-import { SALVAGUARDAS, salvaguardaPorId, nomeDaSalva, salvasDaClasse, ehProficienteNaSalva, bonusDeSalvaguarda, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, salvaDoGolpe, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
+import { SALVAGUARDAS, salvaguardaPorId, salvasDaClasse, ehProficienteNaSalva, fonteDaSalvaguarda, condicaoDaFonte, danoDoPerigo, ehSalvaMental, dcDaFonte, rolarSalvaguarda, linhaDaSalvaguarda, envelopeDaSalvaguarda, SALVAGUARDAS_PROMPT } from "./salvaguardas.js";
 import { locaisDaCidade, garantirBase, porSituacao, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, resumoDaqui, resumoChefesPrompt, chefesDoMundo, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
@@ -343,7 +343,7 @@ import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO } from "./motor/pedido-do-turno.js";
 import { oPreludioDoTurno, REFS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
 import { osOrgaosDoDepois, REFS_DO_DEPOIS } from "./motor/depois-do-turno.js";
-import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi } from "./motor/golpe-no-corpo.js";
+import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi, aAflicaoDosGolpes } from "./motor/golpe-no-corpo.js";
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
@@ -8978,35 +8978,21 @@ export default function Taverna() {
     return res;
   };
 
-  const aplicarCondicoesDosGolpes = (acoes, persBase) => {
-    let p = persBase;
-    for (const a of (acoes || []).filter((x) => x.r && x.r.dano > 0 && x.alvoRef === "jogador")) {
-      /* ---------------- QUEM RESISTE É A CLASSE (v9.60) ----------------
-         Esta resistência sempre existiu e sempre foi uma salvaguarda sem
-         nome: atributo cru mais nível/4, igual para o Mago e para o
-         Guerreiro. Agora é a salvaguarda de verdade, com a proficiência
-         das duas que a classe garante — e o Gnomo e o Sintético finalmente
-         cobram a vantagem contra o mental que as fichas deles prometiam
-         desde sempre e que nada, em lugar nenhum, lia. */
-      const qual = salvaDoGolpe(a.golpeNome || a.inimigo);
-      const b = bonusDeSalvaguarda(p, qual, (x) => atributoEfetivo(p, x));
-      const res = rolarAflicao({ sorte: sorteDoTurno("aflicao"),
-        /* só o NOME DO GOLPE decide a aflição — o nome da criatura entraria
-           por engano ("Rato Gigante" viraria "fortalecido" por causa de
-           "gigante"). O elemento dela já escolheu o golpe lá atrás. */
-        fonte: a.golpeNome || a.inimigo,
-        nomeFonte: a.golpeNome ? `${a.golpeNome} (${a.inimigo})` : `golpe de ${a.inimigo}`,
-        atacante: a.inimigo, alvo: p, alvoNome: "você", critico: a.r.critico,
-        bonusResistir: b.total,
-        rotuloResistir: `Salvaguarda de ${nomeDaSalva(qual)}${b.proficiente ? " ★" : ""}`,
-        vantagem: ehSalvaMental(qual) && (temVantagemMental(p) || vantagemMentalDeTraco(p)),
-      });
-      if (!res) continue;
-      pushMsgs([{ autor: "sistema", texto: res.texto }]);
-      notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${res.nota}`;
-      if (res.aplicou) p = { ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== res.cond.id), res.cond] };
-    }
-    return p;
+  /* 31/10 (a 13.ª): o corpo mora em src/motor/golpe-no-corpo.js#aAflicaoDosGolpes,
+     à letra (contra de9540f, teste-motor-aflicao-dos-golpes), com a FORÇA de
+     quem bateu: a ameaça do inimigo, achada pelo nome na lista da luta
+     (`inimigos`, a da rodada; sem ela, a do combate aberto). Daqui sai só a
+     sorte do turno, a tela e a nota; o órgão que estoura não leva o turno. */
+  const aplicarCondicoesDosGolpes = (acoes, persBase, inimigos = null) => {
+    try {
+      const lista = Array.isArray(inimigos) ? inimigos : ((combateRef.current || {}).inimigos || []);
+      const r = aAflicaoDosGolpes(acoes, persBase, { sorte: () => sorteDoTurno("aflicao"), inimigos: lista });
+      for (const d of r.ditas) {
+        pushMsgs([{ autor: "sistema", texto: d.texto }]);
+        notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${d.nota}`;
+      }
+      return r.pers;
+    } catch (e) { calou("aflicaoDosGolpes", e); return persBase; }
   };
 
   /* Aflição que o HERÓI (ou um companheiro) impõe a um inimigo. Devolve a
@@ -14764,7 +14750,7 @@ export default function Taverna() {
       notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("furiaPersistente", {});
     }
     if (persConcQuebrada) persAtual = quebrarConcentracao(persAtual, persConcQuebrada);
-    persAtual = aplicarCondicoesDosGolpes(acoes, persAtual);
+    persAtual = aplicarCondicoesDosGolpes(acoes, persAtual, combPos && combPos.inimigos);
 
     /* TURNO DOS COMPANHEIROS: atacam inimigos ou socorrem quem caiu.
        v9.46: as invocações estão no grupo e entram aqui sem caso especial —

@@ -24,6 +24,12 @@
      (`repartirDano`) e só então o abrigo, porque ele se gasta contra o que
      de facto chega. A ordem era uma regra escrita em comentário e provada
      por `indexOf`; aqui é uma função, e a prova corre-a.
+   - `aAflicaoDosGolpes` (31/10, a 13.ª sessão) — a aflição que os golpes
+     do inimigo deixam no herói (`aplicarCondicoesDosGolpes` no App, v9.60):
+     a salvaguarda da classe, o rótulo com a ★ da proficiência, a vantagem
+     mental do Gnomo e do Sintético — à letra —, e agora a FORÇA de quem bateu
+     (`ameaca`, `INTENSIDADE_DA_AFLICAO` em aflicoes.js), que o App não
+     passava: o talho do rato sangrava como o do elite.
 
    O NOME DO DONO é coisa de tela (o módulo do efeito não sabe de quem é a
    mesa), e entra pelo mesmo molde nas três linhas do companheiro — o 🛡 do
@@ -44,6 +50,10 @@ import { atributoEfetivo } from "../regras-jogo.js";
 import { amortecerDano } from "../tracos.js";
 import { repartirDano } from "../invocacoes.js";
 import { comSorte } from "../semente.js";
+import { rolarAflicao } from "../aflicoes.js";
+import { salvaDoGolpe, bonusDeSalvaguarda, nomeDaSalva, ehSalvaMental } from "../salvaguardas.js";
+import { temVantagemMental } from "../dadivas.js";
+import { vantagemMentalDeTraco } from "../tracos.js";
 
 /* o molde do dono: o ícone com que a linha do módulo começa, e a juntura
    entre o nome e o resto da frase ("🛡 Bruna — Escudo encontra o golpe…") */
@@ -157,4 +167,59 @@ export function aFilaDoGolpeNoHeroi(pers, grupo, dano, tipo, opcoes) {
     mensagens.push({ autor: "sistema", texto: abr.linha });
   }
   return { pers: p, grupo: g, dano: d, mensagens };
+}
+
+/* ---------------- A AFLIÇÃO QUE O GOLPE DEIXA NO HERÓI (31/10, a 13.ª) ----------------
+   Era `aplicarCondicoesDosGolpes` no App, e vem à letra (provado contra o
+   recorte de de9540f, `aflicao-dourado.json`, em
+   teste-motor-aflicao-dos-golpes.mjs). Só os golpes que acertaram o herói
+   com dano tentam afligir; cada um rola a sua salvaguarda.
+
+   QUEM RESISTE É A CLASSE (v9.60): esta resistência sempre existiu e sempre
+   foi uma salvaguarda sem nome — atributo cru mais nível/4, igual para o
+   Mago e para o Guerreiro. É a salvaguarda de verdade, com a proficiência
+   das duas que a classe garante, e o Gnomo e o Sintético cobram a vantagem
+   contra o mental que as fichas deles prometiam.
+
+   SÓ O NOME DO GOLPE decide a aflição — o nome da criatura entraria por
+   engano ("Rato Gigante" viraria "fortalecido" por causa de "gigante"). O
+   elemento dela já escolheu o golpe lá atrás.
+
+   A FORÇA DE QUEM BATEU (31/10): a ameaça do inimigo que deu o golpe, achada
+   pelo nome em `opcoes.inimigos` (a lista da luta). Sem lista, sem nome que
+   case, ou com ameaça que a tabela não tem, é o catálogo de sempre — a
+   chamada de antes, byte a byte.
+
+   `opcoes.sorte` é uma FUNÇÃO chamada uma vez por golpe que tenta (no App,
+   `sorteDoTurno("aflicao")`, que avança o ponto da sorte), na mesma ordem
+   de antes. → { pers, ditas: [{ texto, nota }] }: o MESMO `pers` quando
+   nada pegou; as ditas, uma por golpe que rolou, na ordem, para quem chama
+   as levar à tela e à nota. */
+const ameacaDoAtacante = (nome, inimigos) => {
+  const e = inimigos.find((x) => x && typeof x === "object" && x.nome === nome);
+  return e && typeof e.ameaca === "string" ? e.ameaca : null;
+};
+export function aAflicaoDosGolpes(acoes, persBase, opcoes) {
+  const op = opcoesDe(opcoes);
+  const sorteDaVez = typeof op.sorte === "function" ? op.sorte : () => null;
+  const inimigos = Array.isArray(op.inimigos) ? op.inimigos : [];
+  let p = persBase;
+  const ditas = [];
+  for (const a of (acoes || []).filter((x) => x.r && x.r.dano > 0 && x.alvoRef === "jogador")) {
+    const qual = salvaDoGolpe(a.golpeNome || a.inimigo);
+    const b = bonusDeSalvaguarda(p, qual, (x) => atributoEfetivo(p, x));
+    const res = rolarAflicao({ sorte: sorteDaVez(),
+      fonte: a.golpeNome || a.inimigo,
+      nomeFonte: a.golpeNome ? `${a.golpeNome} (${a.inimigo})` : `golpe de ${a.inimigo}`,
+      atacante: a.inimigo, alvo: p, alvoNome: "você", critico: a.r.critico,
+      bonusResistir: b.total,
+      rotuloResistir: `Salvaguarda de ${nomeDaSalva(qual)}${b.proficiente ? " ★" : ""}`,
+      vantagem: ehSalvaMental(qual) && (temVantagemMental(p) || vantagemMentalDeTraco(p)),
+      ameaca: ameacaDoAtacante(a.inimigo, inimigos),
+    });
+    if (!res) continue;
+    ditas.push({ texto: res.texto, nota: res.nota });
+    if (res.aplicou) p = { ...p, condicoes: [...(p.condicoes || []).filter((x) => x.id !== res.cond.id), res.cond] };
+  }
+  return { pers: p, ditas };
 }
