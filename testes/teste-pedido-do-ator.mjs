@@ -46,6 +46,8 @@ import { FICHA_DE_ATOR, verificarAFicha } from "../src/motor/ficha-de-ator.js";
 import { PEDIDO_AO_NARRADOR, oPedidoDoTurno } from "../src/motor/pedido-do-turno.js";
 import { oPesoPeloSistema, portaAberta } from "../src/motor/portas-do-narrador.js";
 import { osVistosDaNarrativa } from "../src/motor/entrega-do-turno.js";
+import { diasVistosDe } from "../src/elenco.js";
+import { envelopeDoTeste } from "../src/testes.js";
 import { TAMANHO_DA_NARRATIVA } from "../src/escuta.js";
 import { MOTIVO_SEM_NARRATIVA } from "../src/guardado.js";
 import { REDE_DE_SAIDA } from "../api/_provedor.js";
@@ -305,8 +307,30 @@ sec("§9 as duas pontas: o peso da linha e a recência do elenco");
   const vA0 = osVistosDaNarrativa(ler, prosa, "ator");
   const vVazio = osVistosDaNarrativa(ler, "", "mestre");
   t("no `ator` sem ninguém dito, fica como um turno sem narração", vistos(vA0.elenco) === vistos(vVazio.elenco));
+  /* 03/11: os nomes juntos («A · B») herdavam o defeito da prosa — «Godfrey
+     da Foz» dava recência também ao «Godfrey» do registo. O mais longo ganha. */
+  const godos = { ...npcs, Godfrey: { papel: "carcereiro" }, "Godfrey da Foz": { papel: "taverneiro" } };
+  const vG = osVistosDaNarrativa({ elenco: null, npcs: godos, dia: 4 }, prosa, "ator", ["Dunstan Machado Torto", "Godfrey da Foz"]);
+  t("no `ator`, «Godfrey da Foz» na lista não conta o «Godfrey»", diasVistosDe(vG.elenco, "Godfrey da Foz") === 1 && diasVistosDe(vG.elenco, "Godfrey") === 0 && diasVistosDe(vG.elenco, "Dunstan Machado Torto") === 1);
+  const vG2 = osVistosDaNarrativa({ elenco: null, npcs: godos, dia: 4 }, prosa, "ator", ["Godfrey", "Godfrey da Foz"]);
+  t("e os dois na lista contam os dois", diasVistosDe(vG2.elenco, "Godfrey da Foz") === 1 && diasVistosDe(vG2.elenco, "Godfrey") === 1);
   const quem = oPedidoDoAtor({ nota: "", frase: "olho", estado: { personagem: { nome: "Iara", grupo: [{ nome: "Dunstan Machado Torto", vinculo: 30 }] }, npcs } }).ficha.falam;
   t("a ficha dá o `falam` que o App passa ao elenco", Array.isArray(quem));
+}
+
+sec("§10 o dado que já rolou, pelo servidor");
+{
+  /* 03/11: no App o dado rola na tela e só depois o envelope do teste vai a
+     `enviar` como a frase do turno — é a que o servidor recebe no corpo. A
+     pauta montada sobre ela traz A APOSTA, e a ficha lê o dado da frase:
+     o mesmo caminho nos dois lados, sem campo novo no corpo. */
+  const A = SESSOES.s8;
+  const env = envelopeDoTeste({ tipo: "forca", pericia: "atletismo", nivelTreino: "treinada", motivo: "saltar a fenda", valor: 5, mod: 3, total: 8, dc: 12, resultado: "falha" });
+  const mA = await oPedidoNoServidor({ estado: estadoNoTurno(A, 10), frase: env }, { agora: () => 0, modoDoNarrador: "ator" });
+  const mM = await oPedidoNoServidor({ estado: estadoNoTurno(A, 10), frase: env }, { agora: () => 0 });
+  t("a pauta desse turno traz A APOSTA (o pedido do Mestre a tem)", /A APOSTA/.test(mM.pedido.messages[mM.pedido.messages.length - 1].content));
+  t("e a ficha do ator diz o resultado em palavras, com só o ramo que o dado deu", /tentou saltar a fenda, e não conseguiu\./.test(mA.ficha.partes.ACONTECEU) && /O dado decidiu: pendurado na borda/.test(mA.ficha.partes.ACONTECEU) && !/Em jogo, numa tentativa/.test(mA.ficha.texto));
+  t("sem d20, dificuldade nem a ordem do envelope", !/d20|dificuldade|REGRA|Revele/.test(mA.ficha.texto) && verificarAFicha(mA.ficha.texto).length === 0);
 }
 
 console.log(`\n${bons} ok, ${maus} falharam`);

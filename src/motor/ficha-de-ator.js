@@ -21,7 +21,8 @@
                        que quer agora; o que sabe e o que não sabe
      O QUE SE DIZ      o conteúdo que o sistema decidiu (o pedido, a ameaça,
                        o boato, a chegada) — ou «livre», e o ator põe a cor
-     A ÚLTIMA PALAVRA  de quem é e de que forma acaba, sem o «ou»
+     A ÚLTIMA PALAVRA  de quem é, e o que essa pessoa quer — nunca a forma
+                       (nem a fala a meio, nem a pergunta, nem o dilema)
      O TOM             o peso da cena, quando a cena o tem
      AS FRONTEIRAS     quem pode falar, os nomes à mão, os lugares, o que
                        não existe
@@ -49,8 +50,10 @@
                 npcs, nucleoCache, cidadeAtual, lugar, minuto, mundo,
                 mensagens
        rolagem: opcional — o que o dado deu quando a pauta trouxe A APOSTA
-                ("passa" | "falha" | "fio"); sem ela, a aposta fica como o
-                que está em jogo
+                ("passa" | "falha" | "fio"); sem ela, o dado lê-se da
+                própria frase (O_DADO_NA_FRASE: o envelope do teste que o
+                App manda depois de rolar, e que o servidor recebe igual);
+                sem dado nenhum, a aposta fica como o que está em jogo
      → { texto, partes, pessoas, falam, rastro, cobertura, trocas }
 
    Sem sorte: o que se escolhe (o exemplo do registo) sai do hash do nome —
@@ -273,6 +276,26 @@ export const FRASE_DO_SISTEMA = Object.freeze({
   ergueu: /(\S[^—]*?) ergueu ([^—]+) — ([^.]+)\./gu,
   envelope: /\[(\p{Lu}[\p{Lu} ]{2,}[^\]]*)\]\s*((?:[^[]|\[(?!\p{Lu}[\p{Lu} ]{2,}))*)/gu,
 });
+/* O DADO NA FRASE (03/11, antes do teste às cegas). Quando é que o dado já
+   rolou? No App, o jogador declara, o sistema pede o teste, o dado rola na
+   tela, e só então `concluirRolagem` chama `enviar` — com o ENVELOPE do
+   teste como frase do turno («[TESTE PEDIDO POR MIM — ROLADO PELO SISTEMA]
+   … Resultado: SUCESSO.», o «POR UM FIO» quando passou pagando, o social, a
+   busca vazia). A pauta desse turno monta-se sobre essa frase, e é aí que A
+   APOSTA pode vir com o dado já decidido. O servidor recebe a mesma frase
+   no corpo. Logo o resultado não precisa de outra via: lê-se da frase, pela
+   mesma regra nos dois lados. A primeira que bate ganha (o fio antes do
+   sucesso, porque o fio também diz SUCESSO). */
+export const O_DADO_NA_FRASE = Object.freeze([
+  { de: /\bPOR UM FIO\b/u, ramo: "fio" },
+  { de: /Resultado: (?:SUCESSO|sucesso)\b|\[TESTE — SUCESSO AUTOMÁTICO\]|\[SOCIAL — [^\]]*\][^[]*? e CONSEGUI\b|\[BUSCA CONCLUÍDA/u, ramo: "passa" },
+  { de: /Resultado: (?:FALHA|falha)\b|\[SOCIAL — [^\]]*\][^[]*? e NÃO consegui\b/u, ramo: "falha" },
+]);
+export function oDadoDaFrase(frase) {
+  const t = str(frase);
+  const r = O_DADO_NA_FRASE.find((x) => x.de.test(t));
+  return r ? r.ramo : null;
+}
 function aFraseDoTurno(frase) {
   const t = limpo(frase);
   const i = t.search(FRASE_DO_SISTEMA.corte);
@@ -359,12 +382,14 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     { de: /^O (.+?) cobra (\d+) moedas, não \d+\.?$/, vai: "pessoa", como: (m) => ({ papel: m[1], sabe: `o preço é ${m[2]} moedas` }) },
   ],
   "O RUMO": [ { de: /^(.*)$/, vai: "rumo", como: (m) => m[1] } ],
+  /* o fecho do Mestre diz a FORMA da última frase; a ficha só guarda DE
+     QUEM ela é (A_ULTIMA_PALAVRA): alguém em cena, ou a cena */
   "O FECHO": [
-    { de: /^termine em alguém em cena faz-me uma pergunta direta/, vai: "ultima", como: () => ({ forma: "uma pergunta direta a {H}, uma só, e acaba nela" }) },
-    { de: /^termine em alguém em cena deixa uma fala a meio/, vai: "ultima", como: () => ({ forma: "uma fala que fica a meio, e acaba nela" }) },
-    { de: /^termine em um corte seco/, vai: "ultima", como: () => ({ forma: "um corte seco: um fato ou um gesto, numa frase curta", ninguem: true }) },
-    { de: /^termine em a consequência do que eu fiz/, vai: "ultima", como: () => ({ forma: "a consequência do que {H} fez, à vista", ninguem: true }) },
-    { de: /^termine em a ficção põe-me nas mãos duas coisas que não cabem juntas/, vai: "ultima", como: () => ({ forma: "{H} fica com duas coisas nas mãos que não cabem juntas, e as duas custam", ninguem: true }) },
+    { de: /^termine em alguém em cena faz-me uma pergunta direta/, vai: "ultima", como: () => ({ de: "gente" }) },
+    { de: /^termine em alguém em cena deixa uma fala a meio/, vai: "ultima", como: () => ({ de: "gente" }) },
+    { de: /^termine em um corte seco/, vai: "ultima", como: () => ({ de: "cena" }) },
+    { de: /^termine em a consequência do que eu fiz/, vai: "ultima", como: () => ({ de: "consequencia" }) },
+    { de: /^termine em a ficção põe-me nas mãos duas coisas que não cabem juntas/, vai: "ultima", como: () => ({ de: "cena" }) },
   ],
   "MOMENTO": [
     { de: /^ESPINHA — [^:]*: (?:\S+ )?(.+?)\. EM JOGO: (.+?)(?: A PERGUNTA: .*)?$/, vai: "cena", como: (m) => `${ponto(maiuscula(m[1].replace(/, (n[oa]s? |à guarda )/, " está $1")))} O que está em jogo: ${ponto(m[2])}` },
@@ -400,6 +425,27 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
   "O VILÃO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m, c) => ponto(maiuscula(doHeroi(m[1], c.H))) } ],
 });
 
+/* A ÚLTIMA PALAVRA (03/11, antes do teste às cegas; decidido pelo
+   coordenador). A ficha traduzia o O FECHO à letra, e o fecho do Mestre é
+   uma FORMA: dos 434 casos, 44 pediam «uma fala que fica a meio» (o tique
+   maior da voz: diagnóstico 1.1, causa 1), 29 «duas coisas nas
+   mãos que não cabem juntas» (o dilema que o ofício proíbe, causa 3) e 142
+   «uma pergunta direta» (o «Vai X… ou Y?», causa 2). A forma é do ator; a
+   ficha diz só DE QUEM é a última palavra e o que essa pessoa quer — o fato
+   ou a vontade. A pergunta só entra quando o SISTEMA decidiu que alguém
+   pergunta uma coisa concreta ao herói (o que se diz, com o «?»), e então é
+   a pergunta dela, nunca a forma «Vai X ou Y?». {Q} é quem, {O} o que quer,
+   {H} o herói. `querMax`: o querer mais longo corta-se na primeira pausa. */
+export const A_ULTIMA_PALAVRA = Object.freeze({
+  cena: "É da cena: o que acabou de acontecer.",
+  consequencia: "É da cena: a consequência do que {H} fez, à vista.",
+  pergunta: "É de {Q}, e é a pergunta que tem a fazer a {H}.",
+  diz: "É de {Q}, e é o que tem a dizer a {H}.",
+  quer: "É de {Q}, que quer {O}.",
+  so: "É de {Q}.",
+  querMax: 140,
+});
+
 /* as cláusulas do RUMO (juntas por «; » na pauta) */
 const RUMO = [
   { de: /^reaja primeiro ao que eu fiz/, cai: "oficio" },
@@ -426,7 +472,29 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^A LUTA VIROU/, vai: "aconteceu", como: (t) => ponto(t.split(". Mostre")[0]) },
   { tipo: /^O COMPANHEIRO FOI EMBORA/, vai: "aconteceu", como: (t) => ponto(t.split(". Narre")[0]) },
   { tipo: /^MOVIMENTO/, vai: "aconteceu", como: (t, c) => { const m = t.match(/AGORA estou (n[ao]s? .+?)\./); return m ? `${c.H} chegou: está agora ${m[1]}.` : `${c.H} mudou de lugar.`; } },
+  /* O TESTE QUE JÁ ROLOU (03/11): a frase do turno é o envelope do dado
+     (O_DADO_NA_FRASE). O ator recebe o resultado em palavras — o que o
+     herói tentou e se conseguiu —, nunca o d20, a dificuldade ou a ordem.
+     O «SEM TESTE» (o veredito sem dado, sete formas em desafios.js e
+     social.js) ainda não tem regra: fica «sem tradução», e a suíte di-lo
+     no dia em que chegar. */
+  { tipo: /^TESTE PEDIDO POR MIM/, vai: "aconteceu", como: (t, c) => oTesteEmPalavras(t, c, (t.match(/Pedi um teste de .+? para (.+?)\.(?= Sou| NÃO tenho| O sistema)/u) || [])[1]) },
+  { tipo: /^ROLAGEM/, vai: "aconteceu", como: (t, c) => oTesteEmPalavras(t, c, (t.match(/^Teste de [^(]*\(([^)]+)\)/u) || [])[1]) },
+  { tipo: /^TESTE$/, vai: "aconteceu", como: (t, c) => `${c.H} faz ${(t.match(/^"(.+?)"/u) || [])[1] || "o que quis"} sem dificuldade.` },
+  { tipo: /^SOCIAL/, vai: "aconteceu", como: (t, c) => { const m = t.match(/Tentei (.+?) e (CONSEGUI|NÃO consegui)/u); const pedia = (t.match(/O que eu pedia era (.+?), e a resposta é não/u) || [])[1]; return m ? `${c.H} tentou ${m[1]}, e ${m[2] === "CONSEGUI" ? "conseguiu" : "não conseguiu"}${pedia ? `: pedia ${pedia}, e a resposta é não` : ""}.` : `${c.H} tentou a conversa.`; } },
+  { tipo: /^BUSCA CONCLUÍDA/, vai: "aconteceu", como: (t, c) => `${c.H} revistou o lugar do chão ao teto, e aqui não há nada escondido.` },
 ]);
+/* o teste em palavras: o que se tentou, e o que o dado deu (a mesma régua
+   da aposta, O_DADO_NA_FRASE, sobre o texto do envelope) */
+function oTesteEmPalavras(t, c, motivo) {
+  const o = motivo ? motivo.trim() : "o que quis";
+  const ramo = oDadoDaFrase(t);
+  const preco = (t.match(/E o preço, que o sistema já cobrou: (.+?)\.(?= NÃO|$)/u) || [])[1];
+  if (ramo === "fio") return `${c.H} tentou ${o}, e conseguiu por um fio${preco ? `, pagando: ${preco}` : ", e pagou por isso"}.`;
+  if (ramo === "passa") return `${c.H} tentou ${o}, e conseguiu.`;
+  if (ramo === "falha") return `${c.H} tentou ${o}, e não conseguiu.`;
+  return `${c.H} tentou ${o}.`;
+}
 
 /* ---------------- quem está ---------------- */
 const SEP_NOME = /\s*·\s*/;
@@ -587,8 +655,11 @@ export function aFichaDeAtor(entrada) {
 
   /* a aposta: o ramo que o dado deu, ou o que está em jogo */
   if (aposta.length) {
-    const qual = { passa: "passa", falha: "falha", fio: "passa por um fio" }[str(ent.rolagem)];
-    const ramo = qual && aposta.find((a) => a.ramo === qual);
+    /* o dado: o que veio dito, senão o que a frase do turno traz */
+    const dado = str(ent.rolagem) || oDadoDaFrase(ent.frase);
+    const qual = { passa: "passa", falha: "falha", fio: "passa por um fio" }[dado];
+    /* o fio sem versão própria (a situação sem raspão) é o sim */
+    const ramo = qual && (aposta.find((a) => a.ramo === qual) || (dado === "fio" ? aposta.find((a) => a.ramo === "passa") : null));
     if (ramo) aconteceu.push(`O dado decidiu: ${ponto(ramo.o)}`);
     else aconteceu.push(`Em jogo, numa tentativa: ${aposta.map((a) => `se ${a.ramo}, ${a.o.replace(/[.\s]+$/, "")}`).join("; ")}.`);
   }
@@ -652,12 +723,20 @@ export function aFichaDeAtor(entrada) {
     if (prim.length >= 3 && new RegExp(`(^|[^a-z])${prim}([^a-z]|$)`).test(sem(frase))) longe.push(`${nome} não está aqui${reg.local ? `: vive em ${reg.local}, fora desta cena` : ""}.`);
   }
 
-  /* a última palavra: de quem é */
+  /* a última palavra: de quem é, e o que essa pessoa quer (A_ULTIMA_PALAVRA) */
   let ultimaTxt = "";
   if (ultima) {
-    const dono = ultima.ninguem ? null : (diz.find((d) => d.quem) && pessoas.get([...pessoas.keys()].find((k) => mesmo(k, diz.find((d) => d.quem).quem)))) || responde;
-    const forma = ultima.forma.replace(/\{H\}/g, H);
-    ultimaTxt = dono ? `É de ${dono.nome}: ${forma}.` : `${maiuscula(forma)}.`;
+    const U = A_ULTIMA_PALAVRA;
+    const dela = ultima.de === "gente" ? diz.find((d) => d.quem) : null;
+    const dono = ultima.de !== "gente" ? null : (dela && pessoas.get([...pessoas.keys()].find((k) => mesmo(k, dela.quem)))) || responde;
+    const oDono = dono ? diz.find((d) => d.quem && mesmo(d.quem, dono.nome)) : null;
+    const querer = dono ? str(dono.queroAgora || dono.quer) : "";
+    const curto = querer.length > U.querMax ? querer.split(/;\s+|,\s+(?=e |mas )/)[0] : querer;
+    const modelo = !dono ? (ultima.de === "consequencia" ? U.consequencia : U.cena)
+      : oDono ? (/\?/.test(oDono.o) ? U.pergunta : U.diz)
+      : curto && curto.length <= U.querMax ? U.quer
+      : U.so;
+    ultimaTxt = modelo.replace(/\{Q\}/g, dono ? dono.nome : "").replace(/\{O\}/g, curto.replace(/[.\s]+$/, "")).replace(/\{H\}/g, H);
   }
 
   /* ---------------- o texto ---------------- */

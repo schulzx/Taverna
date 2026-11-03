@@ -29,8 +29,11 @@ import fs from "node:fs";
 import {
   aFichaDeAtor, verificarAFicha, FICHA_DE_ATOR, MOTIVOS_DO_CORTE, CORPO_FALADO, DISTANCIA_FALADA, PERIODO_DO_DIA,
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
-  TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES,
+  TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase,
 } from "../src/motor/ficha-de-ator.js";
+import { osTiquesDoOficio } from "../src/motor/pedido-do-ator.js";
+import { envelopeDoTeste } from "../src/testes.js";
+import { apostas, situacaoQueCasa } from "../src/mesa-posta.js";
 import { SECOES } from "../src/pauta.js";
 import { COMO_FALA } from "../src/nucleo.js";
 import { oPedidoNoServidor } from "../src/turno-no-servidor.js";
@@ -66,6 +69,13 @@ t(`toda secção da pauta (SECOES) tem tradução${semRegra.length ? " — falta
 t("cada regra de tradução ou cai com um motivo da lista, ou vai a um destino", Object.values(TRADUCAO_DA_PAUTA).flat().every((r) => r.de instanceof RegExp && (r.cai ? r.cai in MOTIVOS_DO_CORTE : typeof r.como === "function")));
 t("cada envelope ou cai com um motivo da lista, ou vai a um destino", TRADUCAO_DOS_ENVELOPES.every((r) => r.tipo instanceof RegExp && (r.cai ? r.cai in MOTIVOS_DO_CORTE : typeof r.como === "function")));
 
+/* 03/11, antes do teste às cegas: a última palavra diz DE QUEM é e o que
+   quer, nunca a forma — a tabela não pode trazer nenhum dos fechos que o
+   diagnóstico da voz (§2, causas 1 a 3) deu como causa de tique */
+const formasDaTabela = Object.values(A_ULTIMA_PALAVRA).filter((x) => typeof x === "string").flatMap((x) => osTiquesDoOficio(x));
+t(`a tabela da última palavra não pede forma (fala a meio, pergunta direta, dilema)${formasDaTabela.length ? " — " + formasDaTabela.map((x) => x.id).join(", ") : ""}`, formasDaTabela.length === 0);
+t("o dado na frase: o fio antes do sucesso (o fio também diz SUCESSO)", O_DADO_NA_FRASE[0].ramo === "fio" && O_DADO_NA_FRASE.every((r) => r.de instanceof RegExp && ["passa", "falha", "fio"].includes(r.ramo)));
+
 sec("§2 o verificador");
 const MAUS = [
   ["caixaAlta", "Ninguém sai: NÃO PODE sair."], ["sistema", "o sistema decidiu isto."], ["sistema", "está na pauta."],
@@ -80,6 +90,8 @@ t("o «mestre» de guilda, minúsculo, passa", verificarAFicha("Rhogar — mestr
 t("o cabeçalho da própria ficha passa", verificarAFicha(FICHA_DE_ATOR.partes.join("\n")).length === 0);
 t("o verificador diz a linha e o trecho", (() => { const v = verificarAFicha("CENA\nok.\no sistema."); return v.length === 1 && v[0].linha === 3 && v[0].trecho === "sistema"; })());
 t("a tabela do verificador tem ids únicos", new Set(ROTULOS_PROIBIDOS.map((r) => r.id)).size === ROTULOS_PROIBIDOS.length);
+
+function APOSTA0() { return "A APOSTA  Se passa: saltar a fenda com corrida — dê o resultado limpo, sem custo escondido.\n          Se falha: pendurado na borda: segunda decisão, agora pior. A moeda é posição — a cena anda."; }
 
 sec("§3 o lixo, a imutabilidade, o determinismo");
 for (const [nome, e] of [["null", null], ["undefined", undefined], ["{}", {}], ["tipos errados", { nota: 5, frase: {}, estado: [], rolagem: 9 }], ["estado com nulos", { nota: "ONDE      em Monte Rasa", estado: { personagem: null, npcs: null, nucleoCache: { nucleo: null }, mensagens: null } }]]) {
@@ -124,7 +136,12 @@ t("o Corrado, que não tem tique, fala pelo registo do ofício e trata a foraste
 t("o vínculo de 30 dá ao Dunstan o trato de confiança", /Dunstan[\s\S]*?pelo nome, com confiança/.test(L));
 t("o que o Corrado faz (A GENTE) é o seu «Agora», dito do herói", /Agora: deixa claro que sabe de uma coisa, e que a coisa tem preço\./.test(L));
 t("o longe vira fronteira, com os dias por extenso e sem as 48h", /Anselmo está longe, em Vau Seco, a dois dias daqui\./.test(L) && !/48h/.test(L));
-t("a última palavra é de quem responde, sem o veto do gesto", /É de Corrado: uma fala que fica a meio/.test(L) && !/cuspe|braços cruzados/.test(L));
+/* MOVIDA em 03/11 (antes do teste às cegas): esta asserção pedia «É de
+   Corrado: uma fala que fica a meio» — a ficha traduzia a FORMA do fecho do
+   Mestre, e a fala a meio é o tique maior da voz (diagnóstico §1.1, §2 causa
+   1). Decidido: a ficha diz só de quem é a última palavra e o que quer. O
+   Corrado do caso não tem querer na ficha, e a última palavra é só dele. */
+t("a última palavra é de quem responde, sem a forma e sem o veto do gesto", /A ÚLTIMA PALAVRA\nÉ de Corrado\.\n/.test(L) && !/a meio|cuspe|braços cruzados/.test(L));
 t("os nomes à mão vão às fronteiras, e só a gente da ficha fala", /À mão, para quem ainda não tem nome: Bruna, Telmo\./.test(L) && r1.falam.join("|") === "Dunstan Machado Torto|Corrado");
 t("a hora é dita em palavras, e o tempo junta-se ao lugar", L.includes("De manhã.") && L.includes("Em Largo da Liça, dentro de Porto das Pedras, com chuva fina."));
 t("o que o lugar comporta cai como regra, e a moldura como moldura", r1.cobertura.caidos.regra === 1 && r1.cobertura.caidos.moldura === 1 && r1.rastro.every((x) => x.vai || x.cai in MOTIVOS_DO_CORTE));
@@ -133,10 +150,41 @@ t("as duas últimas trocas vêm tal qual, para a continuidade", r1.trocas.length
 
 const comPedido = aFichaDeAtor({ ...CASO, nota: CASO.nota + "\nQUEM CARREGA Corrado (quem pôs o herói no caminho; é fato: vem ter com o herói e entra nesta resposta, dito por ele): PEDE ao herói: \"Meio dia de desvio até uma campa.\"" });
 t("o pedido do QUEM CARREGA vai inteiro ao que o Corrado diz, e a última palavra passa a ser dele", /O QUE SE DIZ\nCorrado: pede: "Meio dia de desvio até uma campa\."/.test(comPedido.texto) && /É de Corrado/.test(comPedido.texto) && verificarAFicha(comPedido.texto).length === 0);
+/* a última palavra com um querer, e com uma pergunta que o SISTEMA decidiu */
+const comQuerer = aFichaDeAtor({ frase: "olho a estrada", nota: "O FECHO   termine em alguém em cena faz-me uma pergunta direta, e acaba nela; sem cuspe", estado: CASO.estado });
+t("sem conteúdo decidido, o fecho de pergunta vira o querer de quem fica com a palavra — e nenhuma pergunta", /A ÚLTIMA PALAVRA\nÉ de Dunstan Machado Torto, que quer ter um teto seu\./.test(comQuerer.texto) && !/pergunt/i.test(comQuerer.partes["A ÚLTIMA PALAVRA"]));
+const comPergunta = aFichaDeAtor({ ...CASO, nota: CASO.nota + "\nQUEM CARREGA Corrado (quem pôs o herói no caminho; é fato: vem ter com o herói e entra nesta resposta, dito por ele): PEDE ao herói: \"Levas esta carta ao Burgo da Prata antes da lua nova?\"" });
+t("a pergunta só entra quando o sistema a decidiu, e é a dele (o conteúdo, não a forma)", /É de Corrado, e é a pergunta que tem a fazer a Iara\./.test(comPergunta.texto) && /O QUE SE DIZ\nCorrado: pede: "Levas esta carta ao Burgo da Prata antes da lua nova\?"/.test(comPergunta.texto) && osTiquesDoOficio(comPergunta.partes["A ÚLTIMA PALAVRA"]).length === 0);
+const daCena = (fecho) => aFichaDeAtor({ ...CASO, nota: CASO.nota.replace(/O FECHO .*$/m, "O FECHO   termine em " + fecho) }).partes["A ÚLTIMA PALAVRA"];
+t("o corte e o dilema ficam com a cena, sem as duas coisas que não cabem juntas", daCena("um corte seco: um facto ou uma ação, numa frase curta") === A_ULTIMA_PALAVRA.cena && daCena("a ficção põe-me nas mãos duas coisas que não cabem juntas, e as duas custam (sem lista de opções)") === A_ULTIMA_PALAVRA.cena);
+t("a consequência fica com a cena, e com o herói pelo nome", daCena("a consequência do que eu fiz, visível agora") === "É da cena: a consequência do que Iara fez, à vista.");
+
 const APOSTA = "A APOSTA  Se passa: saltar a fenda com corrida — dê o resultado limpo, sem custo escondido.\n          Se falha: pendurado na borda: segunda decisão, agora pior. A moeda é posição — a cena anda.";
 const ap = (rolagem) => aFichaDeAtor({ nota: APOSTA, frase: "salto", rolagem }).texto;
 t("o dado que falhou deixa só o ramo da falha", /O dado decidiu: pendurado na borda: segunda decisão, agora pior\./.test(ap("falha")) && !/saltar a fenda/.test(ap("falha")));
 t("sem dado, a aposta fica como o que está em jogo, os dois ramos", /Em jogo, numa tentativa: se passa, saltar a fenda com corrida; se falha, pendurado na borda/.test(ap()) && verificarAFicha(ap()).length === 0);
+/* O DADO NA FRASE: no App o dado rola na tela, e só depois o envelope do
+   teste vai a `enviar` como a frase do turno; o servidor recebe a mesma
+   frase. A pauta desse turno é a que pode trazer A APOSTA com o dado já
+   decidido — e a ficha lê-o dali, sem argumento a mais. */
+const sitFenda = situacaoQueCasa("salto a fenda"), apFenda = apostas(sitFenda);
+const notaFenda = ["A APOSTA  Se " + apFenda.sePassa, "          Se " + apFenda.seFalha, "          Se " + apFenda.noMeio].join("\n");
+const tiro = { tipo: "forca", pericia: "atletismo", nivelTreino: "treinada", motivo: "saltar a fenda", valor: 14, mod: 3, total: 17, dc: 12 };
+const envPassa = envelopeDoTeste({ ...tiro, resultado: "sucesso" });
+const envFalha = envelopeDoTeste({ ...tiro, valor: 5, total: 8, resultado: "falha" });
+const envFio = envelopeDoTeste({ ...tiro, valor: 8, total: 11, resultado: "sucesso", meio: { porPouco: true, faixa: "por", faltou: 1, diz: "torce o tornozelo na borda" } });
+t("o dado sai do envelope: passa, falha, por um fio", oDadoDaFrase(envPassa) === "passa" && oDadoDaFrase(envFalha) === "falha" && oDadoDaFrase(envFio) === "fio" && oDadoDaFrase("salto a fenda") === null && oDadoDaFrase(null) === null);
+const fenda = (frase) => aFichaDeAtor({ nota: notaFenda, frase, estado: { personagem: { nome: "Iara" } } });
+const fP = fenda(envPassa), fF = fenda(envFalha), fR = fenda(envFio);
+t("A APOSTA com o dado que passou: o resultado em palavras, e só o ramo do sim", /Iara tentou saltar a fenda, e conseguiu\./.test(fP.texto) && /O dado decidiu: saltar a fenda com corrida\./.test(fP.texto) && !/pendurado|Em jogo/.test(fP.texto));
+t("A APOSTA com o dado que falhou: só o ramo da falha", /Iara tentou saltar a fenda, e não conseguiu\./.test(fF.texto) && /O dado decidiu: pendurado na borda/.test(fF.texto) && !/com corrida|Em jogo/.test(fF.texto));
+t("A APOSTA por um fio: o raspão e o preço que o sistema cobrou", /conseguiu por um fio, pagando: torce o tornozelo na borda\./.test(fR.texto) && /O dado decidiu: alcança o outro lado, e o corpo bate na borda\./.test(fR.texto));
+t("e nenhum d20, dificuldade, ordem ou rótulo chega ao ator, nem fica linha sem tradução", [fP, fF, fR].every((f) => verificarAFicha(f.texto).length === 0 && !/d20|dificuldade|\b1[47]\b|REGRA|Revele/.test(f.texto) && f.rastro.every((x) => x.cai !== "semTraducao")));
+t("a rolagem dita por argumento ainda manda sobre a frase", /O dado decidiu: pendurado na borda/.test(aFichaDeAtor({ nota: notaFenda, frase: envPassa, rolagem: "falha" }).texto));
+const semFio = aFichaDeAtor({ nota: APOSTA0(), frase: envFio }).texto;
+t("o fio numa situação sem raspão é o sim", /O dado decidiu: saltar a fenda com corrida\./.test(semFio));
+const social = aFichaDeAtor({ frase: "[SOCIAL — RESOLVIDO PELO SISTEMA] Tentei convencer o guarda e NÃO consegui. O que eu pedia era passar o portão, e a resposta é não.", estado: { personagem: { nome: "Iara" } } });
+t("o social que falhou: o que se pediu, e o não", /Iara tentou convencer o guarda, e não conseguiu: pedia passar o portão, e a resposta é não\./.test(social.texto) && oDadoDaFrase("[SOCIAL — RESOLVIDO PELO SISTEMA] Tentei convencer o guarda e NÃO consegui.") === "falha" && oDadoDaFrase("[SOCIAL — RESOLVIDO PELO SISTEMA] Tentei convencer o guarda e CONSEGUI.") === "passa");
 const golpe = aFichaDeAtor({ frase: "Seguro a ação e observo Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): Falk (Golpe pesado)→Freya: 8 de dano = golpe devastador (57% da vida dele), de pé com 6/14 [narre como: brutal — quase o derruba de uma vez].", estado: { personagem: { nome: "Marga", grupo: [{ nome: "Freya" }] } } });
 t("o golpe resolvido na frase vira fato, com o corpo em palavras e sem o número", /Falk acerta Freya \(golpe pesado\): golpe devastador — brutal — quase o derruba de uma vez; Freya fica mal, a sangrar\./.test(golpe.texto) && !/6\/14|57%|narre/.test(golpe.texto));
 t("e a frase do herói fica só com o que ele disse", golpe.texto.includes("Marga: «Seguro a ação e observo»"));
@@ -201,6 +249,14 @@ t("e nenhum tique aparece em quem não o tem", tiqueAlheio.length === 0);
 const s13 = res.find(({ k }) => k.de === "s13#0");
 t("o Dunstan da 13.ª (T22) fala como marinheiro, e o querer não lhe tirou a voz", s13 && s13.r.texto.includes("fala como marinheiro em terra firme") && /Dunstan Machado Torto[\s\S]*?Quer: /.test(s13.r.texto));
 t("só falam os da ficha: cada nome das fronteiras tem o seu bloco ou a sua linha", res.every(({ r }) => r.falam.every((n) => r.texto.split("\n").some((l) => l.startsWith(n + " — ") || (l.startsWith("Também aqui:") && l.includes(n))))));
+/* 03/11, antes do teste às cegas: A ÚLTIMA PALAVRA não pede forma em
+   nenhum dos casos reais — 0 falas a meio, 0 dilemas, 0 «pergunta direta»
+   (eram 44, 29 e 142); a pergunta só aparece com o «?» do que o sistema
+   decidiu que alguém diz */
+const formaNoFim = res.flatMap(({ k, r }) => osTiquesDoOficio(r.partes["A ÚLTIMA PALAVRA"]).filter((x) => ["falaAMeio", "perguntaDireta", "dilema"].includes(x.id)).map((x) => `${k.de} ${x.id}`));
+t(`a última palavra não pede forma em nenhuma das ${res.length} fichas${formaNoFim.length ? " — " + formaNoFim.slice(0, 4).join("; ") : ""}`, formaNoFim.length === 0);
+t("a pergunta, quando há, é a que o sistema pôs na boca de alguém", res.every(({ r }) => !/pergunt/i.test(r.partes["A ÚLTIMA PALAVRA"]) || /\?/.test(r.partes["O QUE SE DIZ"])));
+t("toda última palavra é de alguém que está, ou da cena", res.every(({ r }) => !r.partes["A ÚLTIMA PALAVRA"] || /^É da cena: /.test(r.partes["A ÚLTIMA PALAVRA"]) || r.falam.some((n) => r.partes["A ÚLTIMA PALAVRA"].startsWith(`É de ${n}`))));
 t("a mesma corrida dá as mesmas fichas (determinismo sobre o corpus)", res.slice(0, 60).every(({ k, r }) => aFichaDeAtor({ nota: k.nota, frase: k.frase, estado: k.estado }).texto === r.texto));
 
 sec("§6 o modo `mestre` não muda um byte");

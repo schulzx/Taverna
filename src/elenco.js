@@ -481,14 +481,26 @@ export function registrarVisto(estado, nome, dia) {
   return garantirElencoDoSave({ ...e, vistos: { ...e.vistos, [k]: [...(e.vistos[k] || []), d] } });
 }
 
-/* quem do registo a narração cita pelo nome inteiro, como palavra */
+/* quem do registo a narração cita pelo nome inteiro, como palavra.
+   O NOME MAIS LONGO GANHA (03/11, o Narrador ator): «Godfrey» e «Godfrey da
+   Foz» são duas pessoas do registo (s10), e «Godfrey da Foz» no texto dava
+   recência às duas — o defeito vinha da prosa e o ator herdou-o (a lista
+   dos que a ficha pôs a falar, juntos por « · », também o contém). Agora
+   cada nome, do mais longo ao mais curto, consome o trecho onde aparece: o
+   mais curto só conta quando aparece sozinho, fora do nome maior. */
 export function vistosDaNarrativa(estado, npcs, narrativa, dia) {
-  const texto = ` ${norm(narrativa).replace(/[^a-z0-9]+/g, " ")} `;
+  let texto = ` ${norm(narrativa).replace(/[^a-z0-9]+/g, " ")} `;
   let e = garantirElencoDoSave(estado);
   if (!texto.trim()) return e;
-  for (const nome of Object.keys(obj(npcs))) {
-    const alvo = norm(nome).replace(/[^a-z0-9]+/g, " ").trim();
-    if (alvo.length >= 3 && texto.includes(` ${alvo} `)) e = registrarVisto(e, nome, dia);
+  const nomes = Object.keys(obj(npcs))
+    .map((nome) => ({ nome, alvo: norm(nome).replace(/[^a-z0-9]+/g, " ").trim() }))
+    .filter((x) => x.alvo.length >= 3)
+    .sort((a, b) => b.alvo.length - a.alvo.length);
+  for (const { nome, alvo } of nomes) {
+    if (!texto.includes(` ${alvo} `)) continue;
+    e = registrarVisto(e, nome, dia);
+    /* o trecho fica marcado (o «#» não é palavra): um nome contido não o lê */
+    texto = texto.split(` ${alvo} `).join(" # ").split(` ${alvo} `).join(" # ");
   }
   return e;
 }

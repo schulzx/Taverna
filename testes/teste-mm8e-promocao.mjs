@@ -183,6 +183,18 @@ sec("6. os vistos, e o 'voltou' da MM8d");
   t("visto em 2 dias é investimento (fecha a MM8d)", investimentoDe(npcs["Mira Vasconcelos"], { vistos: dois.vistos }).includes("voltou"));
   t("visto num só, não", !investimentoDe(npcs["Mira Vasconcelos"], { vistos: e.vistos }).includes("voltou"));
   t("lixo nos vistos não derruba", [null, "x", 3].every((x) => Array.isArray(investimentoDe(npcs.Bram, { vistos: x }))));
+  /* 03/11, o Narrador ator: «Godfrey» e «Godfrey da Foz» são duas pessoas
+     (s10). O nome mais longo ganha o trecho; o curto só conta sozinho — na
+     prosa do Mestre e na lista dos que a ficha pôs a falar («A · B»). */
+  const godos = { Godfrey: criarNPC("Godfrey", {}), "Godfrey da Foz": criarNPC("Godfrey da Foz", {}) };
+  const soOLongo = vistosDaNarrativa(null, godos, "Godfrey da Foz enche a caneca.", 7);
+  t("«Godfrey da Foz» no texto conta o Godfrey da Foz, e não o Godfrey", diasVistosDe(soOLongo, "Godfrey da Foz") === 1 && diasVistosDe(soOLongo, "Godfrey") === 0);
+  const osDois = vistosDaNarrativa(null, godos, "Godfrey da Foz enche a caneca, e Godfrey, o carcereiro, bebe.", 7);
+  t("e o curto, sozinho noutro trecho, conta também", diasVistosDe(osDois, "Godfrey da Foz") === 1 && diasVistosDe(osDois, "Godfrey") === 1);
+  const naLista = vistosDaNarrativa(null, godos, ["Dunstan", "Godfrey da Foz"].join(" · "), 7);
+  t("na lista do ator («Dunstan · Godfrey da Foz»), só o nome inteiro", diasVistosDe(naLista, "Godfrey da Foz") === 1 && diasVistosDe(naLista, "Godfrey") === 0);
+  const repetido = vistosDaNarrativa(null, godos, "Godfrey da Foz, Godfrey da Foz Godfrey da Foz.", 7);
+  t("o nome longo repetido colado não deixa sobrar o curto", diasVistosDe(repetido, "Godfrey") === 0 && diasVistosDe(repetido, "Godfrey da Foz") === 1);
 }
 
 /* ============================================================ */

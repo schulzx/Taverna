@@ -74,7 +74,7 @@ export const OFICIO_DO_ATOR = Object.freeze({
     "- ACONTECEU: a frase do herói e o que dela resultou. É coisa feita: conte a consequência, nunca a desdiga, e não repita a fala do herói.",
     "- QUEM ESTÁ: cada pessoa, com a sua «Fala:» (o vocabulário, o ritmo, o trato com o herói), o que faz «Agora», o que «Sabe» e o que «Quer». O «Teme, e não o diz» aparece no comportamento, nunca em palavras. «Não sabe responder a» é uma pergunta para a qual essa pessoa não tem resposta: ela mostra-o à sua maneira, e não inventa a resposta.",
     "- O QUE SE DIZ: o conteúdo que tem de chegar ao herói, na boca de quem está indicado. Diga-o inteiro e com as palavras da pessoa, sem mudar nome, número, preço ou condição. «Livre:» quer dizer que nada de novo precisa ser dito: a conversa é cor, ambiente, gente a ser gente, e não promete, não cobra, não revela, não oferece.",
-    "- A ÚLTIMA PALAVRA: quem fecha a cena, e de que forma. Siga-a.",
+    "- A ÚLTIMA PALAVRA: de quem é a última palavra da cena, e o que essa pessoa quer. O jeito de a dizer é seu.",
     "- O TOM: quando vem, é a temperatura da cena.",
     "- AS FRONTEIRAS: só falam os que estão ali. Quem não tem nome usa um dos nomes à mão, se precisar de um. Não existe mais ninguém com nome, nem outro lugar, item ou moeda: não os crie, nem de passagem.",
     "",
