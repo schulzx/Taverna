@@ -17,6 +17,12 @@
       (e nunca a frase pronta), o dado escolhe o ramo da aposta, o golpe
       resolvido na frase vira corpo dito em palavras, quem a frase chama e
       não está é fronteira, e A VOZ NUNCA CAI — nem com a ficha a transbordar;
+      A LUTA INTEIRA (03/11, depois do teste às cegas): cada forma que o App
+      monta para a luta — o golpe de quem quer que seja, o companheiro, a
+      fuga, o herói que cai, o golpe e as habilidades do herói, as aflições,
+      o golpe nas costas, a luta sem saída — sai das peças que a produzem e
+      chega ao ACONTECEU como fato, sem número nem rótulo; e a mesma pessoa
+      com dois nomes é uma linha só nas FRONTEIRAS;
    §5 A PROVA sobre os casos reais: as 147 frases das sessões gravadas pelo
       caminho do servidor (oPedidoNoServidor) e os 287 de pedido-bloco.mjs —
       0 rótulos, 0 linhas sem tradução, todo motivo da lista, os nomes e os
@@ -29,8 +35,12 @@ import fs from "node:fs";
 import {
   aFichaDeAtor, verificarAFicha, FICHA_DE_ATOR, MOTIVOS_DO_CORTE, CORPO_FALADO, DISTANCIA_FALADA, PERIODO_DO_DIA,
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
-  TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase,
+  TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase, A_LUTA_DITA,
 } from "../src/motor/ficha-de-ator.js";
+import { linhaParaMestre, SEVERIDADES } from "../src/combate.js";
+import { oEnvelopeDaFicha, oEnvelopeDosPoderes, oEnvelopeDoDesfecho, oEnvelopeDoCorpo } from "../src/motor/envelopes-do-turno.js";
+import { rolarAflicao } from "../src/aflicoes.js";
+import { aplicarSemSaida, DESFECHOS_SEM_SAIDA } from "../src/saida-da-luta.js";
 import { osTiquesDoOficio } from "../src/motor/pedido-do-ator.js";
 import { envelopeDoTeste } from "../src/testes.js";
 import { apostas, situacaoQueCasa } from "../src/mesa-posta.js";
@@ -75,6 +85,12 @@ t("cada envelope ou cai com um motivo da lista, ou vai a um destino", TRADUCAO_D
 const formasDaTabela = Object.values(A_ULTIMA_PALAVRA).filter((x) => typeof x === "string").flatMap((x) => osTiquesDoOficio(x));
 t(`a tabela da última palavra não pede forma (fala a meio, pergunta direta, dilema)${formasDaTabela.length ? " — " + formasDaTabela.map((x) => x.id).join(", ") : ""}`, formasDaTabela.length === 0);
 t("o dado na frase: o fio antes do sucesso (o fio também diz SUCESSO)", O_DADO_NA_FRASE[0].ramo === "fio" && O_DADO_NA_FRASE.every((r) => r.de instanceof RegExp && ["passa", "falha", "fio"].includes(r.ramo)));
+/* 03/11, depois do teste às cegas: A LUTA DITA. Cada modelo, preenchido,
+   passa no verificador; e a força de cada golpe que combate.js mede chega
+   ao ator como vem (o rótulo e o guia), menos o abate, que a tabela diz */
+const preenchido = (x) => x.replace(/\{A\}/g, "Falk").replace(/\{B\}/g, "Freya").replace(/\{C\}/g, " (golpe pesado)").replace(/\{S\}/g, "golpe sólido").replace(/\{F\}/g, "mal, a sangrar").replace(/\{[XY]\}/g, "Bênção").replace(/\{L\}/g, "Falk, Freya").replace(/\{H\}/g, "Iara");
+t("a luta dita: cada modelo é texto, e nenhum, preenchido, traz rótulo, ordem ou número", Object.values(A_LUTA_DITA).every((x) => typeof x === "string" && x.length > 0) && Object.values(A_LUTA_DITA).every((x) => verificarAFicha(preenchido(x)).length === 0 && !/\d|\{/.test(preenchido(x))));
+t("a força de cada golpe (SEVERIDADES, combate.js) passa no verificador tal como vem — o abate e o erro a tabela é que dizem", SEVERIDADES.every((x) => verificarAFicha(`${x.rotulo} — ${x.guia.split(";")[0]}`).length === 0));
 
 sec("§2 o verificador");
 const MAUS = [
@@ -192,6 +208,60 @@ const ausente = aFichaDeAtor({ frase: "Pergunto a Helga quem eram eles.", estado
 t("quem a frase chama e não está aqui é fronteira, com onde vive", /Helga não está aqui: vive em Monte Rasa, fora desta cena\./.test(ausente.texto) && !ausente.falam.includes("Helga"));
 t("«Godfrey» e «Godfrey da Foz» são duas pessoas (o primeiro nome não basta)", aFichaDeAtor({ nota: "EM CENA   Godfrey (carcereiro) · Godfrey da Foz (taverneiro)" }).falam.length === 2);
 
+/* A LUTA INTEIRA (03/11, depois do teste às cegas). A frase gravada de
+   s10#58: o turno dos inimigos vazio e o golpe falhado da companheira —
+   a ficha cortava os dois sem dizer nada, e nenhum narrador narrou a luta */
+const s58 = aFichaDeAtor({ frase: "Seguro a ação e observo, pronto para responder Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): . Meus companheiros agiram: Saoirse→Capanga da faca: errou.", estado: { personagem: { nome: "Hilda Barbaforte", grupo: [{ nome: "Saoirse" }] } } });
+t("s10#58: o golpe falhado da companheira é fato de cena, e quem ficou de pé também", s58.partes.ACONTECEU === "Hilda Barbaforte: «Seguro a ação e observo, pronto para responder»\nSaoirse ataca Capanga da faca, e falha.\nAinda de pé: Saoirse, Capanga da faca.");
+/* UMA PESSOA, UMA LINHA: em cena «Godfrey» e «Godfrey da Foz» são dois
+   (acima); longe, no mesmo lugar e com a mesma linha, são um, e fica o
+   nome mais longo (a regra de vistosDaNarrativa, elenco.js) */
+const longeDuplo = aFichaDeAtor({ nota: "NÃO PODE  Godfrey está em Monte Rasa, a 2 dias daqui — não entra nesta cena sem 48h de estrada narradas\n          Godfrey da Foz está em Monte Rasa, a 2 dias daqui — não entra nesta cena sem 48h de estrada narradas\n          Helga está em Alto Serena, a 1 dia daqui — não entra nesta cena sem 24h de estrada narradas", frase: "Pergunto pelo Godfrey." , estado: { npcs: { Godfrey: { nome: "Godfrey", local: "Monte Rasa" }, "Godfrey da Foz": { nome: "Godfrey da Foz", local: "Monte Rasa" } } } });
+t("o longe repetido: uma pessoa, uma linha, com o nome mais longo (e o «não está aqui» da mesma pessoa também cai)", (longeDuplo.partes["AS FRONTEIRAS"].match(/Godfrey/g) || []).length === 1 && longeDuplo.texto.includes("Godfrey da Foz está longe, em Monte Rasa, a dois dias daqui.") && longeDuplo.texto.includes("Helga está longe, em Alto Serena, a um dia daqui."));
+t("e lugares diferentes são duas pessoas: ficam as duas linhas", (aFichaDeAtor({ nota: "NÃO PODE  Godfrey está em Monte Rasa, a 2 dias daqui — não entra nesta cena\n          Godfrey da Foz está em Ponte Velha, a 3 dias daqui — não entra nesta cena" }).partes["AS FRONTEIRAS"].match(/Godfrey/g) || []).length === 2);
+
+/* cada forma da luta, montada pelas peças que a produzem no App */
+const IARA = { personagem: { nome: "Iara", grupo: [{ nome: "Freya" }] } };
+const TI = " Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ";
+const rodada = TI + [linhaParaMestre("Lobo (Mordida)", "Iara", { dano: 3 }, 20, 17), linhaParaMestre("Corvo", "Freya", { dano: 0, resultado: "desastre" }, 10)].join("; ") + ". Meus companheiros agiram: " + [
+  linhaParaMestre("Freya", "Corvo", { dano: 9 }, 8, 0) + " — mas foi poupado: cai desacordado, vivo, sem golpe fatal",
+  "Freya lançou Cura Menor em Iara (+4 PV, agora 18/20) — o PV JÁ subiu, narre o gesto",
+  "Freya usou Poção de Cura em mim — o efeito JÁ está aplicado; narre o gesto, não o número",
+  "Freya usou Bênção e deixou no grupo inteiro abençoado — já aplicado, narre o gesto",
+  "Freya reforçou uma guarda que já estava de pé — nada mudou na ficha; narre o gesto e não invente efeito novo",
+  "Freya usou Canto (efeito de apoio, sem números novos)",
+].join("; ") + ".";
+const meuGolpe = aFichaDeAtor({ frase: oEnvelopeDaFicha("combateResolvido", { desfecho: `2 ataques: ${linhaParaMestre("Iara", "Lobo", { dano: 5, critico: true }, 20, 12)} — o Ataque Furtivo soma — o golpe sai com vantagem; ${oEnvelopeDoDesfecho("condicao", { alvo: "Lobo", aplicou: true, condicao: "Envenenado" })}; ${linhaParaMestre("Iara", "Lobo", { dano: 0 }, 20)}`, resumoInimigos: rodada, acao: "Avanço sobre o lobo com a adaga" }), estado: IARA });
+const A1 = meuGolpe.partes.ACONTECEU;
+t("o golpe do herói (COMBATE): a fala é a ação declarada, e cada golpe dele é fato", A1.startsWith("Iara: «Avanço sobre o lobo com a adaga»\nIara acerta Lobo: golpe sólido, em cheio — dói de verdade e o alvo recua um passo; Lobo fica com sangue à vista; Lobo não viu o golpe chegar.\nLobo fica envenenado.\nIara ataca Lobo, e falha."));
+t("o turno dos inimigos: o acerto com o corpo que fica, e o erro feio", A1.includes("Lobo acerta Iara (mordida): golpe sólido — dói de verdade e o alvo recua um passo; Iara fica com sangue à vista.") && A1.includes("Corvo ataca Freya, e falha feio."));
+t("os companheiros: quem é poupado, a cura, a poção, a bênção, a guarda e o apoio", ["Freya derruba Corvo, mas poupa-lhe a vida: Corvo cai sem sentidos.", "Freya usa Cura Menor em Iara, e as feridas fecham; Iara fica com sangue à vista.", "Freya dá Poção de Cura a Iara.", "Freya usa Bênção, e o grupo inteiro fica abençoado.", "Freya firma de novo a guarda que já sustenta.", "Freya usa Canto."].every((x) => A1.includes(x)));
+t("e no fim, quem ficou de pé e quem caiu", A1.endsWith("Ainda de pé: Iara, Lobo, Freya.\nNo chão: Corvo."));
+const hab = aFichaDeAtor({ frase: oEnvelopeDosPoderes("habilidadesResolvidas", { lista: `"Bola de Fogo" (5 PM — explode) e depois "Toque Vampírico" (3 PM)`, desfechos: [
+  `"Bola de Fogo": ${[oEnvelopeDoDesfecho("golpe", { alvo: "Lobo", resultado: "critico", dano: 12, d20: 18, bonus: 4, total: 22, ca: 13, caiu: true }), oEnvelopeDoDesfecho("area", { alvo: "Corvo", dano: 6 }), oEnvelopeDoDesfecho("fogoAmigo", { lista: "Freya", meio: 3, habilidade: "Bola de Fogo" }), oEnvelopeDoDesfecho("condicao", { alvo: "Corvo", aplicou: false, condicao: "Queimando" })].join("; ")}`,
+  `"Toque Vampírico": ${[oEnvelopeDoDesfecho("errou", { alvo: "Corvo", desastre: true, d20: 1, bonus: 2, total: 3, ca: 12 }), oEnvelopeDoDesfecho("drenou", { cura: 4 })].join("; ")}`,
+  `"Colheita Final": ${oEnvelopeDoDesfecho("colheita", { nomes: ["Rato"], fracaoTxt: "1/3", habilidade: "Colheita Final" })}`,
+  `"Golpe de Misericórdia": ${oEnvelopeDoDesfecho("execucao", { alvo: "Sapo", habilidade: "Golpe de Misericórdia", fracaoTxt: "1/4", vida: 2, vidaMax: 10 })}`,
+  `"Raio Geminado": ${[oEnvelopeDoDesfecho("geminada", { alvo: "Corvo", dano: 4 }), oEnvelopeDoDesfecho("golpe", { alvo: "Corvo", resultado: "parcial", dano: 2, d20: 9, bonus: 1, total: 10, ca: 12 }), oEnvelopeDoDesfecho("imune", { alvo: "Dragão", gdAlvo: 9, gdMeu: 2 })].join("; ")}`,
+], depois: rodada, acao: "Queimo tudo à minha frente" }), estado: IARA });
+t("as habilidades do herói (HABILIDADES): cada parte do desfecho é fato, e a rodada segue depois", ["Iara: «Queimo tudo à minha frente»", "Iara acerta Lobo com Bola de Fogo, em cheio: Lobo cai.", "Bola de Fogo apanha também Corvo.", "Bola de Fogo apanha também Freya, do lado de Iara.", "Corvo resiste, e não fica queimando.", "Iara tenta Toque Vampírico contra Corvo, e falha feio.", "Iara bebe a vida que tira", "Colheita Final derruba Rato.", "Golpe de Misericórdia acaba com Sapo: Sapo cai.", "Raio Geminado salta também para Corvo.", "Corvo aguenta parte de Raio Geminado.", "Raio Geminado não fere Dragão", "Lobo acerta Iara (mordida)"].every((x) => hab.partes.ACONTECEU.includes(x)) && /No chão: [^\n]*Lobo[^\n]*Rato[^\n]*Sapo/.test(hab.partes.ACONTECEU));
+const declaradas = aFichaDeAtor({ frase: oEnvelopeDosPoderes("habilidadesDeclaradas", { lista: `"Escudo Arcano" (2 PM — protege)`, mana: 7, acao: "Ergo o escudo e recuo", depois: "", extraTempo: "" }), estado: IARA });
+t("as habilidades só declaradas: a fala é o como, e o fato é o que se usou", declaradas.partes.ACONTECEU === "Iara: «Ergo o escudo e recuo»\nIara usa Escudo Arcano.");
+const fugaFim = aFichaDeAtor({ frase: "Seguro a ação e observo, pronto para responder Capanga da faca FUGIU da luta levando 4 de dano ao dar as costas; Rato tentou fugir e CAIU com o golpe de oportunidade (6). Com isso a luta ACABOU — narre a debandada e o silêncio depois.", estado: IARA });
+t("a fuga que acaba a luta: quem foge, quem cai ao fugir, e a luta acabou (o nome com «da» inteiro)", fugaFim.partes.ACONTECEU === "Iara: «Seguro a ação e observo, pronto para responder»\nCapanga da faca foge da luta, golpeado ao dar as costas.\nRato tenta fugir, e cai, golpeado ao dar as costas.\nA luta acaba ali.\nNo chão: Rato.\nFugiram da luta: Capanga da faca.");
+const queda = aFichaDeAtor({ frase: "Recuo para a porta. Lobo Cinzento FUGIU da luta ileso (rolado pelo sistema — narre a fuga, não a impeça). Corvo recuou para disparar e CAIU com o golpe de oportunidade (5) (rolado pelo sistema — narre o golpe, não o impeça)." + TI + linhaParaMestre("Urso", "Iara", { dano: 9 }, 20, 0) + ". ATENÇÃO: eu caí a 0 PV e estou inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar.", estado: IARA });
+t("a fuga e o recuo no meio da rodada, e o herói que cai a zero", ["Iara: «Recuo para a porta.»", "Lobo Cinzento foge da luta.", "Corvo recua para disparar, e cai, golpeado ao sair.", "Urso derruba Iara: Iara cai.", "Iara cai sem sentidos, entre a vida e a morte"].every((x) => queda.partes.ACONTECEU.includes(x)));
+const costas = aFichaDeAtor({ frase: "Afasto-me do lobo" + oEnvelopeDoCorpo("ataquesDeOportunidade", { ops: [{ inimigo: "Lobo", r: { dano: 3 } }, { inimigo: "Corvo", r: { dano: 0 } }], dano: 3 }) + TI + ".", estado: IARA });
+const custo = aFichaDeAtor({ frase: "Fujo" + oEnvelopeDoCorpo("custoDaFuga", { custos: [{ nome: "Lobo", tipo: "golpe", r: { dano: 2 } }, { nome: "Arqueiro", tipo: "disparo", r: { dano: 0 } }], dano: 2 }), estado: IARA });
+t("o golpe nas costas ao recuar e o custo da fuga: quem acerta e quem falha", costas.partes.ACONTECEU.includes("Ao recuar, Iara dá as costas: Lobo acerta Iara; Corvo falha.") && custo.partes.ACONTECEU.includes("Ao fugir, Iara dá as costas: Lobo acerta Iara; Arqueiro falha."));
+const semSaida = Object.keys(DESFECHOS_SEM_SAIDA).map((k) => aplicarSemSaida({ heroi: { nome: "Iara", vida: 0, vidaMax: 20, grupo: [{ nome: "Freya", vida: 0, vidaMax: 10 }], moedas: 30 }, inimigos: [{ nome: "Bandido", vida: 5, vidaMax: 10 }], decisao: { desfecho: k, quem: "Bandido", motivo: "caidos" }, rolar: () => 0.5 })).filter(Boolean).map((r) => aFichaDeAtor({ frase: TI + ". " + r.envelope, estado: IARA }));
+t(`a luta sem saída (${semSaida.length} desfechos de saida-da-luta.js): dita na terceira pessoa, e acaba`, semSaida.length >= 6 && semSaida.every((f) => /Bandido|O grupo/.test(f.partes.ACONTECEU) && f.partes.ACONTECEU.endsWith("A luta acaba ali.") && !/-me\b|-nos\b|\bacordo\b|\bmeu\b|\bPV\b/.test(f.partes.ACONTECEU)));
+const aflicoes = [() => 0.99, () => 0.01].map((sorte) => rolarAflicao({ fonte: "mordida venenosa", nomeFonte: "Mordida", atacante: "Lobo", alvo: { nome: "Iara", condicoes: [] }, alvoNome: "Iara", sempre: true, sorte })).filter(Boolean).map((a) => aFichaDeAtor({ nota: a.nota, frase: "Seguro a ação", estado: IARA }).partes.ACONTECEU);
+t("a aflição do golpe inimigo, na nota: a que pegou e a que se resistiu (aflicoes.js)", aflicoes.length === 2 && aflicoes.some((x) => x.includes("Mordida de Lobo deixa Iara envenenado.")) && aflicoes.some((x) => x.includes("Mordida de Lobo podia deixar Iara envenenado, mas Iara resiste.")));
+const todasDaLuta = [s58, meuGolpe, hab, declaradas, fugaFim, queda, costas, custo, ...semSaida];
+t(`em todas as ${todasDaLuta.length + aflicoes.length} fichas da luta: 0 rótulos, 0 números de jogo, 0 entradas sem tradução`, todasDaLuta.every((f) => verificarAFicha(f.texto).length === 0 && f.rastro.every((x) => x.cai !== "semTraducao") && !/\d/.test(f.partes.ACONTECEU)));
+t("a forma que a régua não conhece fica no rastro como «sem tradução» (a suíte di-lo no dia em que o App mudar)", aFichaDeAtor({ frase: "Espero" + TI + ". Meus companheiros agiram: Freya dançou uma giga." }).rastro.some((x) => x.rotulo === "a luta" && x.cai === "semTraducao"));
+
 /* A VOZ NUNCA CAI: uma ficha que transborda corta tudo o resto antes */
 const cheia = aFichaDeAtor({ ...CASO, nota: CASO.nota + "\n" + Array.from({ length: 30 }, (_, i) => `PERGUNTOU Corrado sabe a coisa ${i}: uma resposta comprida sobre o que se passou na liça há muitos anos, com nomes e lugares e tudo`).join("\n") });
 t("a ficha cheia passa do teto e corta (o rastro diz o quê)", cheia.cobertura.cortados.length > 0);
@@ -236,7 +306,11 @@ for (const { k, r } of res) for (const x of r.rastro) {
 t(`A COBERTURA: os nomes de quem fala e os preços que cada linha da pauta trazia estão na ficha (${marcas} marcas${faltam.length ? "; faltam " + faltam.slice(0, 4).join(", ") : ""})`, marcas > 1000 && faltam.length === 0);
 const tam = res.map(({ r }) => r.texto.length);
 const media = Math.round(tam.reduce((a, b) => a + b, 0) / tam.length), pior = Math.max(...tam);
-/* medido em 03/11: média 1 349, pior 1 989 — a catraca fica um pouco acima */
+/* medido em 03/11: média 1 349, pior 1 989 — a catraca fica um pouco acima.
+   Depois da luta inteira e do longe sem repetição (03/11, ainda): média
+   1 305 → 1 300, pior 1 996 → 1 990; nas 14 fichas com luta 1 429 → 1 468
+   (+95 no máximo), nas 61 com o longe repetido 1 348 → 1 306. A catraca
+   não se mexeu */
 t(`o tamanho: média ${media} (até 1 500), pior ${pior} (até o teto de ${FICHA_DE_ATOR.teto})`, media <= 1500 && pior <= FICHA_DE_ATOR.teto);
 const comTrocas = res.map(({ r }) => r.texto.length + r.trocas.reduce((a, x) => a + x.jogador.length + x.mestre.length, 0));
 t(`com as duas trocas o pior caso fica longe dos ~6 mil do pedido do ator (pior ${Math.max(...comTrocas)})`, Math.max(...comTrocas) <= 4500);
@@ -248,6 +322,16 @@ for (const { k, r } of res) for (const f of COMO_FALA) if (r.texto.includes(f.o)
 t("e nenhum tique aparece em quem não o tem", tiqueAlheio.length === 0);
 const s13 = res.find(({ k }) => k.de === "s13#0");
 t("o Dunstan da 13.ª (T22) fala como marinheiro, e o querer não lhe tirou a voz", s13 && s13.r.texto.includes("fala como marinheiro em terra firme") && /Dunstan Machado Torto[\s\S]*?Quer: /.test(s13.r.texto));
+/* 03/11, depois do teste às cegas: a luta que a frase traz chega toda ao
+   ACONTECEU (cada nome à volta de cada seta), e ninguém fica longe duas
+   vezes com dois nomes */
+const perdidosDaLuta = [];
+for (const { k, r } of res) for (const m of String(k.frase || "").matchAll(/([^:;.]+?)(?: \([^)]*\))?→([^:]+):/g)) for (const n of [m[1].replace(/^.* usou [^:]*$/, "").trim(), m[2].trim()]) if (n && !r.partes.ACONTECEU.includes(n)) perdidosDaLuta.push(`${k.de} «${n}»`);
+t(`a luta da frase chega toda ao ACONTECEU nos casos reais${perdidosDaLuta.length ? " — faltam " + perdidosDaLuta.slice(0, 4).join(", ") : ""}`, perdidosDaLuta.length === 0 && res.filter(({ k }) => /→/.test(k.frase)).length >= 8);
+const r58 = res.find(({ k }) => k.de === "s10#58");
+t("s10#58, o turno gravado: a luta é fato, e o Godfrey está longe uma vez só, pelo nome mais longo", r58 && r58.r.partes.ACONTECEU.includes("Saoirse ataca Capanga da faca, e falha.") && (r58.r.partes["AS FRONTEIRAS"].match(/Godfrey/g) || []).length === 1 && r58.r.partes["AS FRONTEIRAS"].includes("Godfrey da Foz está longe"));
+const longeDobrado = res.filter(({ r }) => { const nomes = (r.partes["AS FRONTEIRAS"] || "").split("\n").map((l) => (l.match(/^(.+?) (?:está longe, em|não está aqui)/) || [])[1]).filter(Boolean); return nomes.some((a) => nomes.some((b) => b !== a && b.startsWith(a + " "))); }).map(({ k }) => k.de);
+t(`ninguém está longe por dois nomes em nenhuma das ${res.length} fichas${longeDobrado.length ? " — " + longeDobrado.slice(0, 4).join(", ") : ""}`, longeDobrado.length === 0);
 t("só falam os da ficha: cada nome das fronteiras tem o seu bloco ou a sua linha", res.every(({ r }) => r.falam.every((n) => r.texto.split("\n").some((l) => l.startsWith(n + " — ") || (l.startsWith("Também aqui:") && l.includes(n))))));
 /* 03/11, antes do teste às cegas: A ÚLTIMA PALAVRA não pede forma em
    nenhum dos casos reais — 0 falas a meio, 0 dilemas, 0 «pergunta direta»

@@ -266,16 +266,122 @@ function crivo(t) {
    inimigos com o dano e o «[narre como: …]», o que os companheiros
    fizeram, a fuga. É o resultado mecânico do turno: vai ao ACONTECEU dito
    em palavras (o corpo, nunca a fração), e a frase do herói fica só com o
-   que ele disse. */
+   que ele disse.
+
+   A LUTA INTEIRA (03/11, depois do teste às cegas). Em s10#58 a frase
+   trazia «Turno dos inimigos (…): . Meus companheiros agiram:
+   Saoirse→Capanga da faca: errou.» — e a ficha cortava-a do ACONTECEU sem
+   a dizer: só lia o golpe que acerta com nome de golpe, e o do companheiro
+   que «usou» alguma coisa. Nenhum dos três narradores narrou a luta. As
+   fontes, todas montadas no App (resolverRevide, o golpe do herói, as
+   habilidades) e todas lidas aqui pela mesma régua:
+     · o golpe de quem quer que seja (`linhaParaMestre`, combate.js): o
+       acerto, o erro, o erro feio, quem cai, quem é poupado, o furtivo;
+     · o que o companheiro fez: o golpe, a habilidade, a cura, a guarda, a
+       poção, o apoio que deixa alguém de pé com outra força;
+     · a fuga e o recuo de quem dá as costas ao herói;
+     · o herói que cai a zero;
+     · o golpe do próprio herói (o envelope COMBATE) e as habilidades dele
+       (HABILIDADES, resolvidas e declaradas), com as aflições que deixam;
+     · as aflições do golpe inimigo e a salvaguarda (na nota, como
+       envelopes), os golpes de oportunidade, o custo da fuga, e a luta que
+       acaba sem saída.
+   Cada entrada vira um fato na língua do ator (A_LUTA_DITA); a que a régua
+   não conhece fica «sem tradução» no rastro — a suíte di-lo no dia em que
+   o App mudar a forma. */
 export const FRASE_DO_SISTEMA = Object.freeze({
-  corte: /\s*(?:Turno dos inimigos \(|Meus companheiros agiram:|\[[\p{Lu}][\p{Lu} ]{2,})/u,
+  corte: /\s*(?:Turno dos inimigos \(|Meus companheiros agiram:|ATENÇÃO: eu caí|\[(?!CAIU\b)[\p{Lu}][\p{Lu} ]{2,})/u,
   inimigos: /Turno dos inimigos \([^)]*\):\s*/u,
   companheiros: /Meus companheiros agiram:\s*/u,
-  golpe: /([^:→.;·]+?) \(([^)]+)\)→([^:]+): \d+ de dano = ([^(,[\]]+?)(?: \([^)]*\))?(?:, (?:de pé com (\d+)\/(\d+)|CAIU))?(?: \[narre como: ([^\];]+)[^\]]*\])?(?=[.;]|$)/gu,
-  usou: /(\S[^:]*?) usou ([^:]+): \S+→([^:]+): \d+ de dano = ([^,[\]]+?)(?:, CAIU)?(?: \[narre como: ([^\];]+)[^\]]*\])?(?: — mas foi poupado: ([^.]+))?(?=\.|$)/gu,
-  ergueu: /(\S[^—]*?) ergueu ([^—]+) — ([^.]+)\./gu,
-  envelope: /\[(\p{Lu}[\p{Lu} ]{2,}[^\]]*)\]\s*((?:[^[]|\[(?!\p{Lu}[\p{Lu} ]{2,}))*)/gu,
+  /* onde começa cada pedaço do que o sistema resolveu */
+  marca: /Turno dos inimigos \([^)]*\):|Meus companheiros agiram:|ATENÇÃO: (?=eu caí)|\[(?!CAIU\b)(\p{Lu}[\p{Lu} ]{2,}[^\]]*)\]/gu,
+  /* quem dá as costas (resolverRevide): a fuga, e o recuo que custa a queda */
+  fuga: / (FUGIU da luta(?: levando \d+ de dano ao dar as costas| ileso)|tentou fugir e CAIU com o golpe de oportunidade \(\d+\)|recuou para disparar e CAIU com o golpe de oportunidade \(\d+\))/u,
+  fimDaFuga: /^(?:; |\s*\(rolado pelo sistema — [^)]*\)\.|\. Com isso a luta ACABOU — [^.]*\.|\.)/u,
+  acabou: /^\. Com isso a luta ACABOU/u,
+  /* as cabeças: o golpe do herói e as habilidades dele */
+  combate: /^\[COMBATE — RESOLVIDO PELO SISTEMA\] Minha sequência de [^:]*: ([\s\S]*?)\. O dano já foi aplicado\.([\s\S]*?)(?: NÃO recalcule nem mude números[\s\S]*?Ação declarada: ([\s\S]*))?$/u,
+  habilidades: /^\[HABILIDADES — RESOLVIDAS PELO SISTEMA\] No MESMO turno usei ([\s\S]*?)\. O SISTEMA já rolou o acerto, calculou e APLICOU tudo: ([\s\S]*?)(?: Narre a sequência inteira como UM só turno meu[\s\S]*?Minha intenção: ([\s\S]*))?$/u,
+  declaradas: /^\[HABILIDADES\] No MESMO turno uso ([\s\S]*?) \(PM já descontados; tenho \d+\)\. COMO eu as uso: ([\s\S]*?)(?: Narre a sequência conforme minha intenção[\s\S]*)?$/u,
+  nomeDaHabilidade: /"([^"]+)"(?: \[[^\]]*\])?/gu,
+  /* o golpe: «A (Golpe)→B: errou | erro desastroso | N de dano = …» */
+  seta: /^(.+?)(?: \(([^)]+)\))?→(.+?): (.+)$/u,
+  dano: /^\d+ de dano = ([^(,[\]—]+)/u,
+  dePe: /, de pé com (\d+)\/(\d+)/u,
+  caiu: /, CAIU\b/u,
+  guia: /\[narre como: ([^\];\]]+)/u,
+  poupado: / — mas foi poupado\b/u,
+  furtivo: / — o Ataque Furtivo soma\b/u,
+  critico: /\(crítico\)/u,
+  heroiCaiu: /^eu caí a 0 PV e estou (à beira da morte|inconsciente)/u,
 });
+
+/* A LUTA DITA: cada coisa que o sistema resolveu, como fato de cena. {A}
+   quem age, {B} quem leva, {C} com quê (o golpe, entre parênteses), {S} a
+   força do golpe, {F} o corpo que fica, {X}/{Y} a coisa (habilidade, item,
+   condição), {L} uma lista, {H} o herói. Nenhum número: o corpo vai em
+   palavras (CORPO_FALADO), o dano pela força que o sistema já mediu. */
+export const A_LUTA_DITA = Object.freeze({
+  erra: "{A} ataca {B}{C}, e falha",
+  erraFeio: "{A} ataca {B}{C}, e falha feio",
+  acerta: "{A} acerta {B}{C}: {S}",
+  emCheio: "em cheio",
+  fica: "; {B} fica {F}",
+  furtivo: "; {B} não viu o golpe chegar",
+  derruba: "{A} derruba {B}{C}: {B} cai",
+  poupa: "{A} derruba {B}{C}, mas poupa-lhe a vida: {B} cai sem sentidos",
+  imune: "{A} acerta {B}, e o golpe atravessa sem encontrar carne: aquele corpo não cede a arma comum",
+  aflige: "{B} fica {X}",
+  resiste: "{B} resiste, e não fica {X}",
+  cura: "{A} usa {X} em {B}, e as feridas fecham",
+  ergue: "{A} ergue {X} — {Y}",
+  reforca: "{A} firma de novo a guarda que já sustenta",
+  daItem: "{A} dá {X} a {B}",
+  apoio: "{A} usa {X}",
+  deixa: "{A} usa {X}, e {B} fica {Y}",
+  foge: "{A} foge da luta",
+  fogeFerido: "{A} foge da luta, golpeado ao dar as costas",
+  fogeECai: "{A} tenta fugir, e cai, golpeado ao dar as costas",
+  recuaECai: "{A} recua para disparar, e cai, golpeado ao sair",
+  acabou: "A luta acaba ali",
+  heroiBeira: "{H} cai, e está à beira da morte",
+  heroiCai: "{H} cai sem sentidos, entre a vida e a morte; um aliado ainda pode erguer {H}",
+  dePe: "Ainda de pé: {L}",
+  noChao: "No chão: {L}",
+  fugiram: "Fugiram da luta: {L}",
+  habUsa: "{H} usa {X}",
+  habAcerta: "{H} acerta {B} com {X}",
+  habCritico: "{H} acerta {B} com {X}, em cheio",
+  habCai: ": {B} cai",
+  habParcial: "{B} aguenta parte de {X}",
+  habSalta: "{X} salta também para {B}",
+  habArea: "{X} apanha também {B}",
+  habFogoAmigo: "{X} apanha também {B}, do lado de {H}",
+  habDrena: "{H} bebe a vida que tira, e as feridas fecham um pouco",
+  habImune: "{X} não fere {B}: aquele corpo não cede a poder comum",
+  habErra: "{H} tenta {X} contra {B}, e falha",
+  habErraFeio: "{H} tenta {X} contra {B}, e falha feio",
+  habColhe: "{X} derruba {B}",
+  habNinguem: "{X} passa pelo campo, e não derruba ninguém",
+  habExecuta: "{X} acaba com {B}: {B} cai",
+  oportunidade: "Ao recuar, {H} dá as costas: {L}",
+  custoDaFuga: "Ao fugir, {H} dá as costas: {L}",
+  acertaOHeroi: "{A} acerta {H}",
+  falhaOHeroi: "{A} falha",
+});
+/* a luta que acaba sem saída (saida-da-luta.js) vem na primeira pessoa do
+   herói: aqui ela passa à terceira, forma a forma */
+const A_LUTA_NA_TERCEIRA = [
+  [/deixou-nos no chão/g, "deixou {H} e o grupo no chão"], [/deixou-me no chão/g, "deixou {H} no chão"],
+  [/deu-nos as costas/g, "deu as costas a {H} e ao grupo"], [/deu-me as costas/g, "deu as costas a {H}"],
+  [/o que carregávamos/g, "o que levavam"], [/o que eu carregava/g, "o que {H} levava"],
+  [/amarrou-nos, levou a bolsa e levou-nos consigo: acordamos presos, nas mãos dele/g, "amarrou {H} e o grupo, levou a bolsa e levou-os consigo: acordam presos, nas mãos dele"],
+  [/atou-me as mãos, levou a bolsa e levou-me consigo: acordo preso, nas mãos dele/g, "atou as mãos a {H}, levou a bolsa e levou {H} consigo: acorda preso, nas mãos dele"],
+  [/recolheu o meu corpo e recuou/g, "recolheu o corpo de {H} e recuou"],
+  [/Ninguém me acudiu, e o corpo não aguentou: morri no chão onde caí/g, "Ninguém acudiu {H}, e o corpo não aguentou: {H} morreu no chão onde caiu"],
+  [/Levou \d+ moedas — a bolsa está vazia/g, "Levou as moedas todas: a bolsa está vazia"],
+  [/(\d+) (horas?) depois acordo com \d+ PV(, e quem caiu comigo também)?/g, (_, n, h, comigo) => `${maiuscula(n === "1" ? "uma" : porExtenso(Number(n)))} ${h} depois, {H} acorda, a custo${comigo ? ", e quem caiu com {H} também" : ""}`],
+];
 /* O DADO NA FRASE (03/11, antes do teste às cegas). Quando é que o dado já
    rolou? No App, o jogador declara, o sistema pede o teste, o dado rola na
    tela, e só então `concluirRolagem` chama `enviar` — com o ENVELOPE do
@@ -296,24 +402,207 @@ export function oDadoDaFrase(frase) {
   const r = O_DADO_NA_FRASE.find((x) => x.de.test(t));
   return r ? r.ramo : null;
 }
-function aFraseDoTurno(frase) {
-  const t = limpo(frase);
-  const i = t.search(FRASE_DO_SISTEMA.corte);
-  const fala = i < 0 ? t : t.slice(0, i).trim();
-  const resto = i < 0 ? "" : t.slice(i);
-  const fatos = [], envelopes = [];
-  if (!resto) return { fala, fatos, envelopes };
-  const [ini, comp = ""] = resto.split(FRASE_DO_SISTEMA.companheiros);
-  if (FRASE_DO_SISTEMA.inimigos.test(ini)) {
-    for (const m of ini.replace(FRASE_DO_SISTEMA.inimigos, "").matchAll(FRASE_DO_SISTEMA.golpe)) {
-      const fica = m[5] ? `; ${m[3].trim()} fica ${corpo(Number(m[5]), Number(m[6]))}` : "";
-      fatos.push(`${m[1].trim()} acerta ${m[3].trim()} (${m[2].toLowerCase()}): ${m[4].trim()}${m[7] ? ` — ${m[7].trim()}` : ""}${fica}.`);
-    }
+const tpl = (s, v) => str(s).replace(/\{([A-Z])\}/g, (_, k) => (v[k] != null ? v[k] : ""));
+/* parte em «;» fora de parênteses e colchetes (o «[narre como: a; b]» e o
+   «(GD 5 vs meu GD 2; …)» são de uma entrada só); um pedaço que não
+   começa outra entrada (sem seta nem verbo de quem age) cola ao anterior;
+   no desfecho de uma habilidade cada parte é uma entrada (`colar` falso) */
+const COMECA_ENTRADA = /→| usou | lançou | ergueu | reforçou | deu | ficou | resistiu e não ficou | — IMUNE|^drenei |^ninguém estava abaixo|\[CAIU/u;
+function partir(s, colar = true) {
+  const out = []; let d = 0, cur = "";
+  for (const ch of str(s)) {
+    if (ch === "(" || ch === "[") d++;
+    else if ((ch === ")" || ch === "]") && d > 0) d--;
+    if (ch === ";" && d === 0) { out.push(cur); cur = ""; } else cur += ch;
   }
-  for (const m of comp.matchAll(FRASE_DO_SISTEMA.usou)) fatos.push(`${m[1].trim()} usa ${m[2].trim()} contra ${m[3].trim()}: ${m[4].trim()}${m[5] ? ` — ${m[5].trim()}` : ""}${m[6] ? `; mas poupa-o: ${m[6].trim()}` : ""}.`);
-  for (const m of comp.matchAll(FRASE_DO_SISTEMA.ergueu)) fatos.push(`${m[1].trim()} ergue ${m[2].trim()} — ${m[3].trim()}.`);
-  for (const m of resto.matchAll(FRASE_DO_SISTEMA.envelope)) envelopes.push({ tipo: m[1].split("—")[0].trim(), texto: m[2].trim() });
-  return { fala, fatos, envelopes };
+  out.push(cur);
+  const fica = [];
+  for (const p of out.map((x) => limpo(x).replace(/[.\s]+$/, "")).filter(Boolean)) {
+    if (colar && fica.length && !COMECA_ENTRADA.test(p)) fica[fica.length - 1] += "; " + p; else fica.push(p);
+  }
+  return fica;
+}
+/* quem dá as costas: o nome é o que vem antes do verbo, desde a última
+   pausa — palavras com maiúscula, e as ligadas por «da/de/do» («Capanga
+   da faca») */
+const LIGA = /^d[aeo]s?$/u;
+function nomeNoFim(antes) {
+  const pal = str(antes).split(/\s+/);
+  let ini = -1;
+  for (let i = pal.length - 1; i >= 0; i--) {
+    const p = pal[i];
+    if (!p || /[.,;:!?»\])]$/.test(p)) break;
+    if (/^\p{Lu}/u.test(p)) { ini = i; continue; }
+    if (LIGA.test(p) && i > 0 && /^\p{Lu}/u.test(pal[i - 1])) continue;
+    if (ini < 0 && i > 0 && LIGA.test(pal[i - 1])) continue;
+    break;
+  }
+  if (ini < 0) return null;
+  const nome = pal.slice(ini).join(" ");
+  return { nome, ini: str(antes).lastIndexOf(nome) };
+}
+/* um golpe («A (Golpe)→B: …», linhaParaMestre) → o fato, ou null */
+function oGolpe(txt, c, poe, com) {
+  const S = FRASE_DO_SISTEMA, D = A_LUTA_DITA;
+  const m = str(txt).match(S.seta);
+  if (!m) return null;
+  const A = m[1].trim(), B = m[3].trim(), r = m[4];
+  const golpe = com || m[2];
+  const v = { A, B, C: golpe ? ` (${golpe.toLowerCase()})` : "" };
+  poe(A, "de pé");
+  if (/^erro desastroso/u.test(r)) { poe(B, "de pé"); return tpl(D.erraFeio, v); }
+  if (/^errou/u.test(r)) { poe(B, "de pé"); return tpl(D.erra, v); }
+  const d = r.match(S.dano);
+  if (!d) return null;
+  const rotulo = d[1].trim();
+  if (S.caiu.test(r) || rotulo === "abate") { poe(B, "no chão", true); return tpl(S.poupado.test(r) ? D.poupa : D.derruba, v); }
+  const pe = r.match(S.dePe), g = r.match(S.guia);
+  poe(B, "de pé", true);
+  return tpl(D.acerta, { ...v, S: S.critico.test(r) ? `${rotulo}, ${D.emCheio}` : rotulo })
+    + (g ? ` — ${g[1].trim()}` : "")
+    + (pe ? tpl(D.fica, { B, F: corpo(Number(pe[1]), Number(pe[2])) }) : "")
+    + (S.furtivo.test(r) ? tpl(D.furtivo, { B }) : "");
+}
+/* o que o companheiro (e o herói) faz na luta, primeiro o mais estreito */
+const LINHAS_DA_LUTA = [
+  { de: /^(.+?) usou (.+?): (.+?→.+)$/u, o: (m, c, poe) => oGolpe(m[3], c, poe, m[2]) },
+  { de: /→/u, o: (m, c, poe) => oGolpe(m.input, c, poe) },
+  { de: /^(.+?) lançou (.+?) em (.+?) \(\+\d+ PV, agora ([^)]*)\)/u, o: (m, c, poe) => { poe(m[3], "de pé", true); const pv = m[4].match(/(\d+)\/(\d+)/); return tpl(A_LUTA_DITA.cura, { A: m[1], X: m[2], B: m[3] }) + (pv ? tpl(A_LUTA_DITA.fica, { B: m[3], F: corpo(Number(pv[1]), Number(pv[2])) }) : ""); } },
+  { de: /^(.+?) ergueu (.+?) — ([^.]+)/u, o: (m) => tpl(A_LUTA_DITA.ergue, { A: m[1], X: m[2], Y: m[3].trim() }) },
+  { de: /^(.+?) reforçou uma guarda/u, o: (m) => tpl(A_LUTA_DITA.reforca, { A: m[1] }) },
+  { de: /^(.+?) usou (.+?) em mim\b/u, o: (m, c) => tpl(A_LUTA_DITA.daItem, { A: m[1], X: m[2], B: c.H }) },
+  { de: /^(.+?) deu (.+?) a (.+?) — /u, o: (m) => tpl(A_LUTA_DITA.daItem, { A: m[1], X: m[2], B: m[3] }) },
+  { de: /^(.+?) usou (.+?) e deixou (no grupo inteiro|em (.+?)) (\S.*?) — /u, o: (m) => tpl(A_LUTA_DITA.deixa, { A: m[1], X: m[2], B: m[4] || "o grupo inteiro", Y: m[5] }) },
+  { de: /^(.+?) usou ([^(]+?)(?: \(efeito de apoio[^)]*\))?$/u, o: (m) => tpl(A_LUTA_DITA.apoio, { A: m[1], X: m[2] }) },
+  { de: /^(.+?) resistiu e não ficou (.+)$/u, o: (m) => tpl(A_LUTA_DITA.resiste, { B: m[1], X: m[2] }) },
+  { de: /^(.+?) ficou (.+)$/u, o: (m) => tpl(A_LUTA_DITA.aflige, { B: m[1], X: m[2] }) },
+  { de: /^(.+?) — IMUNE\b/u, o: (m, c, poe) => { poe(m[1], "de pé"); return tpl(A_LUTA_DITA.imune, { A: c.H, B: m[1] }); } },
+];
+/* uma parte do desfecho de uma habilidade (ENVELOPES_DO_DESFECHO); `cai`
+   diz onde a parte marca a queda (o grupo do «[CAIU]», ou 0: sempre) */
+const PARTES_DA_HABILIDADE = [
+  { de: /^(.+?) — CRÍTICO, \d+ de dano \([^)]*\)( \[CAIU\])?$/u, o: (m, v) => tpl(A_LUTA_DITA.habCritico, { ...v, B: m[1] }) + (m[2] ? tpl(A_LUTA_DITA.habCai, { B: m[1] }) : ""), cai: 2 },
+  { de: /^(.+?) — \d+ de dano \([^)]*\)( \[CAIU\])?$/u, o: (m, v) => tpl(A_LUTA_DITA.habAcerta, { ...v, B: m[1] }) + (m[2] ? tpl(A_LUTA_DITA.habCai, { B: m[1] }) : ""), cai: 2 },
+  { de: /^(.+?) — resistiu parcialmente \([^)]*\)( \[CAIU\])?$/u, o: (m, v) => tpl(A_LUTA_DITA.habParcial, { ...v, B: m[1] }) + (m[2] ? tpl(A_LUTA_DITA.habCai, { B: m[1] }) : ""), cai: 2 },
+  { de: /^(.+?) — \d+ de dano pela magia GEMINADA( \[CAIU\])?$/u, o: (m, v) => tpl(A_LUTA_DITA.habSalta, { ...v, B: m[1] }) + (m[2] ? tpl(A_LUTA_DITA.habCai, { B: m[1] }) : ""), cai: 2 },
+  { de: /^(.+?) — \d+ de dano pela área( \[CAIU\])?$/u, o: (m, v) => tpl(A_LUTA_DITA.habArea, { ...v, B: m[1] }) + (m[2] ? tpl(A_LUTA_DITA.habCai, { B: m[1] }) : ""), cai: 2 },
+  { de: /^(.+?) apanhou \d+ de (.+?), o meu próprio ataque$/u, o: (m, v) => tpl(A_LUTA_DITA.habFogoAmigo, { ...v, B: m[1] }) },
+  { de: /^(.+?) resistiu e não ficou (.+)$/u, o: (m) => tpl(A_LUTA_DITA.resiste, { B: m[1], X: m[2] }) },
+  { de: /^(.+?) ficou (.+)$/u, o: (m) => tpl(A_LUTA_DITA.aflige, { B: m[1], X: m[2] }) },
+  { de: /^drenei \d+ PV$/u, o: (m, v) => tpl(A_LUTA_DITA.habDrena, v) },
+  { de: /^(.+?) — IMUNE\b/u, o: (m, v) => tpl(A_LUTA_DITA.habImune, { ...v, B: m[1] }) },
+  { de: /^(.+?) — (errou|erro desastroso) \(/u, o: (m, v) => tpl(m[2] === "errou" ? A_LUTA_DITA.habErra : A_LUTA_DITA.habErraFeio, { ...v, B: m[1] }) },
+  { de: /^(.+?) \[CAIU — estava abaixo de [^\]]*\]$/u, o: (m, v) => tpl(A_LUTA_DITA.habColhe, { ...v, B: m[1] }), cai: 0 },
+  { de: /^ninguém estava abaixo de .*NÃO derrubou ninguém$/u, o: (m, v) => tpl(A_LUTA_DITA.habNinguem, v) },
+  { de: /^(.+?) \[CAIU — .+? executa quem está abaixo de [^\]]*\]$/u, o: (m, v) => tpl(A_LUTA_DITA.habExecuta, { ...v, B: m[1] }), cai: 0 },
+];
+/* a frase do turno: o que o herói disse, e cada coisa que o sistema já
+   resolveu, em fato. `luta` é quem esteve na luta e como ficou (para o
+   «ainda de pé»); `soltas`, o que a régua não conhece. */
+function aFraseDoTurno(frase, c) {
+  const S = FRASE_DO_SISTEMA, D = A_LUTA_DITA, H = c.H;
+  let t = limpo(frase);
+  const fatos = [], envelopes = [], soltas = [], luta = new Map();
+  const poe = (n, e, forte) => { const k = limpo(n); if (k && (forte || !luta.has(k))) luta.set(k, e); };
+  const entrada = (p, regras, extra) => {
+    for (const r of regras) {
+      const m = p.match(r.de);
+      if (!m) continue;
+      const o = r.o(m, extra || c, poe);
+      if (!o) continue;
+      if (r.cai != null) poe(m[1], r.cai === 0 || m[r.cai] ? "no chão" : "de pé", true);
+      return o;
+    }
+    soltas.push(p);
+    return null;
+  };
+  /* 0. quem deu as costas (a fuga e o recuo) sai primeiro: vem colado à
+     fala do herói, sem marca nenhuma antes */
+  const fugas = []; let acabou = false;
+  for (let guarda = 0; guarda < 20; guarda++) {
+    const m = t.match(S.fuga);
+    if (!m) break;
+    const nm = nomeNoFim(t.slice(0, m.index));
+    const ini = nm ? nm.ini : m.index;
+    let fim = m.index + m[0].length;
+    const f = t.slice(fim).match(S.fimDaFuga);
+    if (f) { if (S.acabou.test(f[0])) acabou = true; fim += f[0].length; }
+    if (nm) fugas.push({ A: nm.nome, como: m[1] }); else soltas.push(m[1]);
+    t = limpo(`${t.slice(0, ini)} ${t.slice(fim)}`);
+  }
+  /* 1. a cabeça: o golpe do herói, as habilidades, ou a fala e o resto */
+  let fala, rodada = "", mc;
+  const heroi = [];
+  const aoCorte = (s) => { const i = str(s).search(S.corte); return i < 0 ? [str(s), ""] : [s.slice(0, i), s.slice(i)]; };
+  if ((mc = t.match(S.combate))) {
+    fala = limpo(mc[3] || "");
+    for (const p of partir(mc[1])) { const o = entrada(p, LINHAS_DA_LUTA); if (o) heroi.push(o); }
+    rodada = mc[2];
+  } else if ((mc = t.match(S.habilidades))) {
+    fala = limpo(mc[3] || "");
+    const [desf, depois] = aoCorte(mc[2]);
+    for (const d of limpo(desf).replace(/\.$/, "").split(/\s·\s/)) {
+      const hm = d.match(/^"([^"]+)"(?: \[[^\]]*\])?: ([\s\S]+)$/u);
+      if (!hm) { soltas.push(d); continue; }
+      for (const p of partir(hm[2], false)) { const o = entrada(p, PARTES_DA_HABILIDADE, { H, X: hm[1] }); if (o) heroi.push(o); }
+    }
+    rodada = depois;
+  } else if ((mc = t.match(S.declaradas))) {
+    const [acao, depois] = aoCorte(mc[2]);
+    fala = limpo(acao).replace(/\.$/, "");
+    const nomes = [...mc[1].matchAll(S.nomeDaHabilidade)].map((x) => x[1]);
+    if (nomes.length) heroi.push(tpl(D.habUsa, { H, X: nomes.join(" e depois ") }));
+    rodada = depois;
+  } else {
+    const i = t.search(S.corte);
+    fala = i < 0 ? t : t.slice(0, i).trim();
+    rodada = i < 0 ? "" : t.slice(i);
+  }
+  fatos.push(...heroi);
+  for (const f of fugas) {
+    const q = /^FUGIU da luta levando/u.test(f.como) ? D.fogeFerido : /^FUGIU/u.test(f.como) ? D.foge : /^tentou fugir/u.test(f.como) ? D.fogeECai : D.recuaECai;
+    poe(f.A, /^FUGIU/u.test(f.como) ? "fugiu" : "no chão", true);
+    fatos.push(tpl(q, { A: f.A }));
+  }
+  if (acabou) fatos.push(D.acabou);
+  /* 2. a rodada, pedaço a pedaço */
+  const marcas = [...str(rodada).matchAll(S.marca)];
+  marcas.forEach((m, k) => {
+    const txt = rodada.slice(m.index + m[0].length, k + 1 < marcas.length ? marcas[k + 1].index : rodada.length).trim();
+    if (m[1]) { envelopes.push({ tipo: m[1].split("—")[0].trim(), texto: txt }); return; }
+    if (/^ATENÇÃO/u.test(m[0])) {
+      const a = txt.match(S.heroiCaiu);
+      if (!a) { soltas.push(txt); return; }
+      poe(H, "no chão", true);
+      fatos.push(tpl(a[1] === "à beira da morte" ? D.heroiBeira : D.heroiCai, { H }));
+      return;
+    }
+    for (const p of partir(txt)) { const o = entrada(p, LINHAS_DA_LUTA); if (o) fatos.push(o); }
+  });
+  return { fala, fatos: fatos.map((f) => ponto(maiuscula(f))), envelopes, soltas, luta };
+}
+/* quem esteve na luta e como ficou, quando a pauta não o disse */
+function oQueFicouDaLuta(luta) {
+  const de = (e) => [...luta].filter(([, x]) => x === e).map(([n]) => n);
+  const out = [];
+  if (de("de pé").length) out.push(tpl(A_LUTA_DITA.dePe, { L: de("de pé").join(", ") }));
+  if (de("no chão").length) out.push(tpl(A_LUTA_DITA.noChao, { L: de("no chão").join(", ") }));
+  if (de("fugiu").length) out.push(tpl(A_LUTA_DITA.fugiram, { L: de("fugiu").join(", ") }));
+  return out.map(ponto);
+}
+/* UMA PESSOA, UMA LINHA (03/11, depois do teste às cegas): em s10#58 as
+   FRONTEIRAS disseram «Godfrey está longe, em Monte Rasa» e «Godfrey da Foz
+   está longe, em Monte Rasa» — o registo tem os dois nomes, e a mesma
+   linha para os dois. Quando o nome curto é o começo do longo e o lugar é o
+   mesmo, fica o mais longo (a regra que `vistosDaNarrativa`, elenco.js, já
+   segue desde 92c17be); a linha igual também conta uma vez, e o «não
+   está aqui» sem lugar (s9: «Brina» e «Brina Pedra») também. Lugares
+   diferentes são duas pessoas, e ficam as duas. */
+const LONGE_DITO = /^(.+?) (?:está longe, em (.+?)(?:, a .+ daqui)?|não está aqui(?:: vive em (.+?)(?:, fora desta cena)?)?)\.?$/u;
+function umaPessoaUmaLinha(longe) {
+  const lidos = longe.map((l) => { const m = limpo(l).match(LONGE_DITO); return { l, nome: m ? m[1] : null, onde: m ? m[2] || m[3] || "" : null }; });
+  const fica = lidos.filter((x, i) => !lidos.some((y, j) => j !== i && x.nome && y.nome && y.onde === x.onde && (y.nome.startsWith(x.nome + " ") || (y.nome === x.nome && j < i))));
+  return [...new Set(fica.map((x) => x.l))];
 }
 
 /* ---------------- a primeira pessoa da pauta, dita do herói ---------------- */
@@ -464,7 +753,17 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^OFICINA/, vai: "aconteceu", como: (t, c) => `Já feito por ${c.H}: «${ponto(t)}»` },
   { tipo: /^(AGORA|O MUNDO SE MEXE|EVENTO GLOBAL)/, vai: "aconteceu", como: (t) => ponto(t) },
   { tipo: /^A FORMA DESTA CENA/, vai: "cena", como: (t) => ponto(t.split(/\.\s+E nesta:/)[0].replace(/^A cena pede (um|uma) /, "Há $1 ")) },
-  { tipo: /^(FUGA|CRIME|PROPÓSITO CUMPRIDO)/, vai: "aconteceu", como: (t) => ponto(t.replace(/\bdo herói\b/g, "de {H}").replace(/\bo herói\b/g, "{H}")) },
+  /* o custo da fuga (oEnvelopeDoCorpo «custoDaFuga») é FUGA também: os
+     golpes de quem ficou, ditos um a um */
+  { tipo: /^FUGA$/, vai: "aconteceu", como: (t, c) => (/^Ao dar as costas:/.test(t) ? osGolpesNasCostas(t, c, A_LUTA_DITA.custoDaFuga) : ponto(t.replace(/\bdo herói\b/g, "de {H}").replace(/\bo herói\b/g, "{H}"))) },
+  { tipo: /^(CRIME|PROPÓSITO CUMPRIDO)/, vai: "aconteceu", como: (t) => ponto(t.replace(/\bdo herói\b/g, "de {H}").replace(/\bo herói\b/g, "{H}")) },
+  /* A LUTA NA NOTA E NA FRASE (03/11): o golpe nas costas, a aflição que o
+     golpe deixou ou que se resistiu (aflicoes.js), e a luta que acaba sem
+     saída (saida-da-luta.js) */
+  { tipo: /^ATAQUES DE OPORTUNIDADE/, vai: "aconteceu", como: (t, c) => osGolpesNasCostas(t, c, A_LUTA_DITA.oportunidade) },
+  { tipo: /^(AFLIÇÃO APLICADA|SALVAGUARDA|AFLIÇÃO RESISTIDA)/, vai: "aconteceu", como: (t) => { const a = t.match(/^(.+?) deixou (.+?): falhou\b/u); if (a) return `${a[1]} deixa ${a[2]}.`; const r = t.match(/^(.+?) carregava (.+?); (.+?) passou\b/u); return r ? `${r[1]} podia deixar ${r[3]} ${r[2]}, mas ${r[3]} resiste.` : ponto(t.split(/ \(| Narre/u)[0]); } },
+  { tipo: /^EFEITO APLICADO/, vai: "aconteceu", como: (t) => { const a = t.match(/^(.+?) deixou (.+?) \(/u); return a ? `${a[1]} deixa ${a[2]}.` : ponto(t.split(/ \(| Já está/u)[0]); } },
+  { tipo: /^A LUTA ACABOU/, vai: "aconteceu", como: (t, c) => { let o = t.split(/ A luta NÃO continua\b/u)[0]; for (const [de, para] of A_LUTA_NA_TERCEIRA) o = o.replace(de, para); return `${ponto(o.replace(/\{H\}/g, c.H))} ${A_LUTA_DITA.acabou}.`; } },
   { tipo: /^QUEST GERADA/, vai: "diz", como: (t) => ({ o: `chega agora: ${t}` }) },
   { tipo: /^RUMOR/, vai: "diz", como: (t) => ({ o: `corre um boato: ${t}` }) },
   { tipo: /^TRABALHO PREGADO NO MURAL/, vai: "cena", como: (t) => `No mural: ${ponto(t)}` },
@@ -484,6 +783,12 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^SOCIAL/, vai: "aconteceu", como: (t, c) => { const m = t.match(/Tentei (.+?) e (CONSEGUI|NÃO consegui)/u); const pedia = (t.match(/O que eu pedia era (.+?), e a resposta é não/u) || [])[1]; return m ? `${c.H} tentou ${m[1]}, e ${m[2] === "CONSEGUI" ? "conseguiu" : "não conseguiu"}${pedia ? `: pedia ${pedia}, e a resposta é não` : ""}.` : `${c.H} tentou a conversa.`; } },
   { tipo: /^BUSCA CONCLUÍDA/, vai: "aconteceu", como: (t, c) => `${c.H} revistou o lugar do chão ao teto, e aqui não há nada escondido.` },
 ]);
+/* os golpes nas costas: «X acertou (3); Y errou» → quem acerta, quem falha */
+function osGolpesNasCostas(t, c, modelo) {
+  const m = t.match(/(?:dei as costas|Ao dar as costas): (.+?)\. Levei\b/u);
+  const L = m ? m[1].split(/;\s*/).map((x) => { const g = x.match(/^(.+?)(?: \((?:golpe|disparo)\))? (acertou|errou)\b/u); return g ? tpl(g[2] === "acertou" ? A_LUTA_DITA.acertaOHeroi : A_LUTA_DITA.falhaOHeroi, { A: g[1], H: c.H }) : ""; }).filter(Boolean) : [];
+  return L.length ? ponto(tpl(modelo, { H: c.H, L: L.join("; ") })) : `${c.H} dá as costas à luta.`;
+}
 /* o teste em palavras: o que se tentou, e o que o dado deu (a mesma régua
    da aposta, O_DADO_NA_FRASE, sobre o texto do envelope) */
 function oTesteEmPalavras(t, c, motivo) {
@@ -548,14 +853,14 @@ export function aFichaDeAtor(entrada) {
   const G = aGente(estado);
   const H = limpo(G.pers.nome) || "o herói";
   const c = { H, procurado: false };
-  const daFrase = aFraseDoTurno(ent.frase);
+  const daFrase = aFraseDoTurno(ent.frase, c);
   const frase = daFrase.fala;
   const { secoes, envelopes: envNota } = lerANota(ent.nota);
   const envelopes = [...daFrase.envelopes, ...envNota];
   const rastro = [];
   const cena = [], cenaExtra = [], aconteceu = [], diz = [], tom = [], fronteira = [], longe = [];
   const pessoas = new Map();
-  let ultima = null, naoSabe = false, aponta = "", nomesAMao = [], venda = [], aposta = [];
+  let ultima = null, naoSabe = false, aponta = "", nomesAMao = [], venda = [], aposta = [], temLuta = false;
   const pessoa = (nome, base = {}) => {
     const n = limpo(nome);
     if (!n) return null;
@@ -571,6 +876,8 @@ export function aFichaDeAtor(entrada) {
 
   aconteceu.push(...daFrase.fatos);
   for (const f of daFrase.fatos) marca("a frase", f, "aconteceu");
+  /* o que a régua da luta não conhece é defeito à vista, nunca silêncio */
+  for (const x of daFrase.soltas) marca("a luta", x, null, "semTraducao");
   /* o fato que a regra traduziu ainda passa no crivo (a ordem colada cai) */
   const crivado = (rotulo, v) => {
     if (typeof v !== "string") return v;
@@ -618,6 +925,7 @@ export function aFichaDeAtor(entrada) {
       else if (r.vai === "ultima") ultima = v;
       else if (r.vai === "aposta") aposta.push(v);
       else if (r.vai === "luta") {
+        temLuta = true;
         for (const grupoTxt of str(v).split(/\s·\s/)) {
           const chao = /^no chão:/.test(grupoTxt);
           for (const it of grupoTxt.replace(/^(de pé|no chão):\s*/, "").split(/;\s*/)) {
@@ -652,6 +960,10 @@ export function aFichaDeAtor(entrada) {
     marca(`[${e.tipo}]`, e.texto, r.vai);
     if (r.vai === "cena") cena.push(crivado(`[${e.tipo}]`, v)); else if (r.vai === "aconteceu") aconteceu.push(crivado(`[${e.tipo}]`, v)); else if (r.vai === "diz") diz.push(v);
   }
+
+  /* quem ficou de pé na luta, quando a pauta não traz a linha dela (a da
+     pauta já põe o corpo em cada pessoa) */
+  if (!temLuta) aconteceu.splice(daFrase.fatos.length, 0, ...oQueFicouDaLuta(daFrase.luta));
 
   /* a aposta: o ramo que o dado deu, ou o que está em jogo */
   if (aposta.length) {
@@ -777,7 +1089,7 @@ export function aFichaDeAtor(entrada) {
     L.push(falam.length ? `Falam só: ${falam.join(", ")}.` : `Ninguém fala além de ${H}.`);
     const nm = [...new Set(nomesAMao.map(limpo).filter(Boolean))];
     if (nm.length) L.push(`À mão, para quem ainda não tem nome: ${nm.join(", ")}.`);
-    L.push(...longe.map(ponto));
+    L.push(...umaPessoaUmaLinha(longe).map(ponto));
     L.push("Não há mais ninguém com nome, nem outro lugar, item ou moeda além dos que aqui estão.");
     return L.map((x) => oHeroiPeloNome(x, H).replace(/\s+$/, "")).join("\n");
   };
