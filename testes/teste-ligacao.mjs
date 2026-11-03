@@ -372,7 +372,12 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      importa a peça. */
   /* Pagas pelo servidor (29/10, trilha B): `src/turno-no-servidor.js` importa o
      prelúdio e o eco (e o pedido) para o `/api/turno` montar o pedido em ensaio. */
-  const ESPERA_DO_MOTOR = {};
+  /* 03/11 (o Narrador ator, etapa 1, backend): `ficha-de-ator.js` nasce
+     antes do importador — a ficha que traduz a pauta em fatos e vontades,
+     provada em Node sobre os 434 casos (teste-ficha-de-ator.mjs). Credor: a
+     etapa 2 do plano (mente/plano-narrador-ator.md), o pedido do ator, que a
+     lê no modo `ator` de MODO_DO_NARRADOR. Sai quando ela a importar. */
+  const ESPERA_DO_MOTOR = { "ficha-de-ator.js": "a etapa 2 do Narrador ator (o pedido do ator), 03/11" };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
   t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);
