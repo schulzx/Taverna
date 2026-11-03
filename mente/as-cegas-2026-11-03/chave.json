@@ -1,0 +1,102 @@
+{
+ "s8#1": {
+  "A": "mestre",
+  "B": "ator:gemini-3.8-flash",
+  "C": "ator:gemini-3.5-flash-lite"
+ },
+ "s8#8": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "mestre",
+  "C": "ator:gemini-3.5-flash-lite"
+ },
+ "s8#18": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "ator:gemini-3.5-flash-lite",
+  "C": "mestre"
+ },
+ "s8#27": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "mestre",
+  "C": "ator:gemini-3.8-flash"
+ },
+ "s8#39": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "ator:gemini-3.8-flash",
+  "C": "mestre"
+ },
+ "s8#47": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "mestre",
+  "C": "ator:gemini-3.5-flash-lite"
+ },
+ "s8#59": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "mestre",
+  "C": "ator:gemini-3.8-flash"
+ },
+ "s9#3": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "mestre",
+  "C": "ator:gemini-3.8-flash"
+ },
+ "s9#11": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "ator:gemini-3.8-flash",
+  "C": "mestre"
+ },
+ "s9#20": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "ator:gemini-3.5-flash-lite",
+  "C": "mestre"
+ },
+ "s9#28": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "ator:gemini-3.8-flash",
+  "C": "mestre"
+ },
+ "s9#37": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "ator:gemini-3.5-flash-lite",
+  "C": "mestre"
+ },
+ "s9#46": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "ator:gemini-3.8-flash",
+  "C": "mestre"
+ },
+ "s10#7": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "ator:gemini-3.5-flash-lite",
+  "C": "mestre"
+ },
+ "s10#16": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "mestre",
+  "C": "ator:gemini-3.5-flash-lite"
+ },
+ "s10#25": {
+  "A": "mestre",
+  "B": "ator:gemini-3.5-flash-lite",
+  "C": "ator:gemini-3.8-flash"
+ },
+ "s10#33": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "mestre",
+  "C": "ator:gemini-3.5-flash-lite"
+ },
+ "s10#43": {
+  "A": "ator:gemini-3.5-flash-lite",
+  "B": "mestre",
+  "C": "ator:gemini-3.8-flash"
+ },
+ "s10#58": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "mestre",
+  "C": "ator:gemini-3.5-flash-lite"
+ },
+ "s10#67": {
+  "A": "ator:gemini-3.8-flash",
+  "B": "mestre",
+  "C": "ator:gemini-3.5-flash-lite"
+ }
+}

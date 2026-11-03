@@ -14,3 +14,6 @@ mente/painel/
 # as matrizes 1024 dos retratos (~243 MB): a fonte do corte, e o Figma guarda
 # o original; ficam no disco para cortar de novo sem baixar (lista.mjs)
 mente/figma/matrizes/
+
+# o teste às cegas grava aqui (pedidos.json tem 1,2 MB); o que se guarda vai para mente/as-cegas-<data>/
+/as-cegas-*/

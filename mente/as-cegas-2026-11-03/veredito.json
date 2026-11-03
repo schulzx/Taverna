@@ -1,0 +1,302 @@
+[
+  {
+    "turno": "s8#1",
+    "notas": {
+      "A": {"voz":4,"peso":3,"fidelidade":4,"tiques":2,"resposta":4},
+      "B": {"voz":5,"peso":5,"fidelidade":5,"tiques":5,"resposta":5},
+      "C": {"voz":2,"peso":3,"fidelidade":3,"tiques":2,"resposta":3}
+    },
+    "preferido": "B",
+    "porque": "B corrige, não sabe, trata Marga pelo nome e fecha guardando o segredo de Fendrel sem o nomear; A fecha com 'Vai X ou Y?' e chama-a de 'criatura'; C diz 'não sei' seco, não corrige ninguém e põe o nome de Fendrel na boca de quem o quer esconder.",
+    "invencoes": {
+      "A": [],
+      "B": [],
+      "C": ["uma instrução de Fendrel o Manco ('disse apenas para andarmos'), que não está nos fatos e expõe o segredo"]
+    }
+  },
+  {
+    "turno": "s8#8",
+    "notas": {
+      "A": {"voz":5,"peso":4,"fidelidade":5,"tiques":4,"resposta":5},
+      "B": {"voz":3,"peso":3,"fidelidade":2,"tiques":2,"resposta":3},
+      "C": {"voz":1,"peso":2,"fidelidade":4,"tiques":1,"resposta":2}
+    },
+    "preferido": "A",
+    "porque": "A dá a cada um uma fala própria (Rurik do ofício, Freya com a concordância certa, Orla sem saber o preço e com a última palavra); B dá a fala e a última palavra a Halvard, que não pode falar; C copia o exemplo 'Fugimos, não fugimos' sem sentido nenhum.",
+    "invencoes": {
+      "A": [],
+      "B": ["Halvard o Exilado fala, e é dele a última palavra (só Freya, Orla e Rurik podem falar)"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s8#18",
+    "notas": {
+      "A": {"voz":5,"peso":4,"fidelidade":4,"tiques":4,"resposta":4},
+      "B": {"voz":2,"peso":2,"fidelidade":3,"tiques":1,"resposta":2},
+      "C": {"voz":3,"peso":3,"fidelidade":2,"tiques":2,"resposta":3}
+    },
+    "preferido": "A",
+    "porque": "A deixa Rurik sem saber e com a última palavra, numa voz seca de forasteiro; B repete o exemplo da ficha e responde com um provérbio solto; C põe Nyla na cena e dá a fala final a Wren, com pergunta X ou Y.",
+    "invencoes": {
+      "A": [],
+      "B": ["Falk aparece a gemer no chão, e os fatos não o põem na cena"],
+      "C": ["Nyla presente e a agir (não está nos fatos)", "Wren fala e fica com a última palavra (só Freya e Rurik podem falar)"]
+    }
+  },
+  {
+    "turno": "s8#27",
+    "notas": {
+      "A": {"voz":2,"peso":3,"fidelidade":4,"tiques":2,"resposta":3},
+      "B": {"voz":4,"peso":4,"fidelidade":3,"tiques":4,"resposta":4},
+      "C": {"voz":5,"peso":5,"fidelidade":5,"tiques":4,"resposta":5}
+    },
+    "preferido": "C",
+    "porque": "Em C estão os silêncios de Rurik e Orla, Brannoc repara numa coisa do lugar e Freya corrige o próprio Brannoc, o que é a mania dela viva e nova; A cola o exemplo 'Fugimos' sem sentido, e B esquece os três habitantes.",
+    "invencoes": {
+      "A": ["é Freya quem acende a tocha, e foi o jogador que a acendeu"],
+      "B": ["uma frase de Marga que ela não disse ('adentrar à')", "um carrinho de minério tombado a cinco metros"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s8#39",
+    "notas": {
+      "A": {"voz":1,"peso":2,"fidelidade":4,"tiques":1,"resposta":2},
+      "B": {"voz":4,"peso":4,"fidelidade":5,"tiques":3,"resposta":3},
+      "C": {"voz":4,"peso":5,"fidelidade":4,"tiques":4,"resposta":5}
+    },
+    "preferido": "C",
+    "porque": "C narra a fuga, o fôlego e o vulto de Ursa que dá meia-volta no horizonte, exatamente o que o sistema pediu; B tem o elenco inteiro mas quase não deixa sinal de Ursa; A é uma lista de fichas com o exemplo copiado.",
+    "invencoes": {
+      "A": [],
+      "B": [],
+      "C": []
+    }
+  },
+  {
+    "turno": "s8#47",
+    "notas": {
+      "A": {"voz":3,"peso":3,"fidelidade":3,"tiques":4,"resposta":3},
+      "B": {"voz":3,"peso":3,"fidelidade":3,"tiques":3,"resposta":3},
+      "C": {"voz":2,"peso":2,"fidelidade":3,"tiques":3,"resposta":3}
+    },
+    "preferido": "A",
+    "porque": "A tem o elenco inteiro a fazer o seu 'Agora' e uma fala de Freya com o nome de Marga; erra por inventar 'Ponte Brumoso'. B deixa o nome de Fendrel aparecer na narração, e C dá uma fala a Wren e deixa Freya sem a sua mania.",
+    "invencoes": {
+      "A": ["o lugar 'Ponte Brumoso'"],
+      "B": ["a narração nomeia Fendrel como 'aquele coxo', o que entrega o segredo que Freya guarda"],
+      "C": ["Wren fala (só Freya, Rurik, Brannoc e Orla podem falar)"]
+    }
+  },
+  {
+    "turno": "s8#59",
+    "notas": {
+      "A": {"voz":1,"peso":2,"fidelidade":5,"tiques":1,"resposta":2},
+      "B": {"voz":5,"peso":5,"fidelidade":1,"tiques":4,"resposta":4},
+      "C": {"voz":4,"peso":4,"fidelidade":5,"tiques":4,"resposta":4}
+    },
+    "preferido": "C",
+    "porque": "C deixa a acusação cair no vento, sem Petra ali, com os silêncios e o comentário de Brannoc; B é a cena mais forte mas põe Petra a falar e inventa o que o Sem-Rosto faz; A é a ficha lida em voz alta.",
+    "invencoes": {
+      "A": [],
+      "B": ["Petra presente e a falar, com o sobrenome 'Guarda-Portão'", "o que o Sem-Rosto faz ('pega o que precisa')", "a cota de malha, a lâmina embainhada e o distintivo riscado de breu, descritos como se ela estivesse ali"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s9#3",
+    "notas": {
+      "A": {"voz":2,"peso":3,"fidelidade":2,"tiques":2,"resposta":3},
+      "B": {"voz":3,"peso":3,"fidelidade":2,"tiques":3,"resposta":4},
+      "C": {"voz":5,"peso":4,"fidelidade":5,"tiques":4,"resposta":4}
+    },
+    "preferido": "C",
+    "porque": "C nega o pão sem inventar padeira: Tomas segue no ofício, Halden pede um favor, Sari cita mal a avó com frase própria, e a consequência é a barriga vazia; A faz a compra acontecer, e B põe uma padeira a falar com a mania da avó, que é de Sari.",
+    "invencoes": {
+      "A": ["o pão comprado, uma compra que os fatos não dão", "o preço da chapa de ferro ('o dobro fora da tenda')"],
+      "B": ["uma padeira sem nome que fala (só Sari, Tomas e Halden podem falar) e tem a mania da avó, que é de Sari"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s9#11",
+    "notas": {
+      "A": {"voz":3,"peso":3,"fidelidade":4,"tiques":2,"resposta":3},
+      "B": {"voz":5,"peso":4,"fidelidade":5,"tiques":4,"resposta":5},
+      "C": {"voz":3,"peso":3,"fidelidade":4,"tiques":2,"resposta":3}
+    },
+    "preferido": "B",
+    "porque": "B tira graça do defeito (Brina já está ali e não sabe dizer mais), Sari cita mal e sabe que cita mal, e Brina tem a última palavra; em A Brina diz que está ali e manda andar mais, o que não fecha, e C acaba numa fala cortada de Tomas sem Brina falar.",
+    "invencoes": {
+      "A": [],
+      "B": [],
+      "C": []
+    }
+  },
+  {
+    "turno": "s9#20",
+    "notas": {
+      "A": {"voz":4,"peso":4,"fidelidade":5,"tiques":3,"resposta":5},
+      "B": {"voz":2,"peso":2,"fidelidade":1,"tiques":2,"resposta":3},
+      "C": {"voz":5,"peso":4,"fidelidade":4,"tiques":3,"resposta":4}
+    },
+    "preferido": "A",
+    "porque": "A cumpre tudo: Tomas aponta, Halden enrijece, e Dara fecha sem saber e com voz própria; C tem a Dara mais viva mas deixa a última palavra a Sari, com uma frase cortada a meio; B dá na narração a resposta que ninguém sabe.",
+    "invencoes": {
+      "A": [],
+      "B": ["a resposta que Dara não sabe: a guilda não anda por aqui e quem mexeu na forja foi o próprio Tomas, bêbado"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s9#28",
+    "notas": {
+      "A": {"voz":2,"peso":3,"fidelidade":4,"tiques":2,"resposta":3},
+      "B": {"voz":5,"peso":4,"fidelidade":4,"tiques":4,"resposta":4},
+      "C": {"voz":4,"peso":4,"fidelidade":4,"tiques":4,"resposta":5}
+    },
+    "preferido": "B",
+    "porque": "Em B cada um faz o seu 'Agora' com voz própria (o silêncio de Tomas, Halden a chamar Ilar, Ilar no ofício com uma fala seca) e Sari tem um provérbio novo; o alçapão que dá no campo é estranho. C fica mais perto do que o jogador fez, mas confunde quem Halden chama; A é uma lista.",
+    "invencoes": {
+      "A": [],
+      "B": [],
+      "C": []
+    }
+  },
+  {
+    "turno": "s9#37",
+    "notas": {
+      "A": {"voz":3,"peso":3,"fidelidade":2,"tiques":4,"resposta":3},
+      "B": {"voz":2,"peso":4,"fidelidade":4,"tiques":2,"resposta":4},
+      "C": {"voz":4,"peso":5,"fidelidade":3,"tiques":4,"resposta":5}
+    },
+    "preferido": "C",
+    "porque": "C é a única com tensão de cena (o ferrolho, a fresta, a mão na faca) e responde ao bater, mas traz a mulher do manto, que os fatos não põem ali, e esquece Tomas, Halden e Ilar; B é fiel mas a citação vem colada do exemplo; A inventa 'Cão Prateado' e quebra o silêncio de Tomas.",
+    "invencoes": {
+      "A": ["o lugar 'Cão Prateado'", "Tomas fala primeiro, e devia esperar Rufo falar"],
+      "B": [],
+      "C": ["a mulher do manto cinza presente à porta (ela não está nos fatos)"]
+    }
+  },
+  {
+    "turno": "s9#46",
+    "notas": {
+      "A": {"voz":3,"peso":3,"fidelidade":3,"tiques":2,"resposta":4},
+      "B": {"voz":5,"peso":4,"fidelidade":5,"tiques":4,"resposta":4},
+      "C": {"voz":4,"peso":3,"fidelidade":3,"tiques":2,"resposta":3}
+    },
+    "preferido": "B",
+    "porque": "B tem o silêncio de Tomas, Halden a chamar alguém com humor, e Tomas fecha sem saber, numa voz fria de quem tem pouca cortesia; A põe a cena dentro de uma taverna que os fatos não dão e faz de Tomas o taverneiro; em C quem fecha é Gwynn, que não pode falar, e a fala fica cortada.",
+    "invencoes": {
+      "A": ["a taverna O Machado e a Rosa como lugar da cena, e Tomas como taverneiro"],
+      "B": [],
+      "C": ["Gwynn fala e fica com a última palavra (só Sari, Tomas e Halden podem falar)"]
+    }
+  },
+  {
+    "turno": "s10#7",
+    "notas": {
+      "A": {"voz":5,"peso":5,"fidelidade":5,"tiques":4,"resposta":4},
+      "B": {"voz":2,"peso":2,"fidelidade":1,"tiques":1,"resposta":2},
+      "C": {"voz":3,"peso":3,"fidelidade":2,"tiques":2,"resposta":3}
+    },
+    "preferido": "A",
+    "porque": "A barra a saída com o Godfrey da ficha (ordens curtas, quer ver e contar as moedas à frente dela) e Saoirse com números novos, sem fazer existir a ferraria; B faz a compra numa ferraria que não existe e diz 'a última palavra é de Godfrey'; C mistura os dois Godfreys e acaba numa pergunta de Nyla.",
+    "invencoes": {
+      "A": [],
+      "B": ["a ferraria A Bigorna do Sul e a compra das botas", "o comentário de bastidor 'A última palavra é de Godfrey'"],
+      "C": ["o lugar 'Torre do Barqueiro'", "Godfrey carcereiro com escamas e com o segredo à venda, que são de Godfrey da Foz"]
+    }
+  },
+  {
+    "turno": "s10#16",
+    "notas": {
+      "A": {"voz":5,"peso":5,"fidelidade":5,"tiques":5,"resposta":5},
+      "B": {"voz":4,"peso":3,"fidelidade":2,"tiques":2,"resposta":4},
+      "C": {"voz":1,"peso":2,"fidelidade":4,"tiques":1,"resposta":2}
+    },
+    "preferido": "A",
+    "porque": "A usa o cheiro, o couro e a madeira do lugar, Saoirse conta passos e rastos com números novos, e fecha no assento vazio, que é o desejo dela, sem o dizer; B põe Quilla e Wystan a falar e fecha numa pergunta X ou Y; C repete os exemplos da ficha duas vezes.",
+    "invencoes": {
+      "A": [],
+      "B": ["Quilla e Wystan falam (só Saoirse pode falar)"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s10#25",
+    "notas": {
+      "A": {"voz":4,"peso":4,"fidelidade":2,"tiques":3,"resposta":3},
+      "B": {"voz":1,"peso":1,"fidelidade":2,"tiques":1,"resposta":2},
+      "C": {"voz":5,"peso":5,"fidelidade":5,"tiques":4,"resposta":4}
+    },
+    "preferido": "C",
+    "porque": "C dá a cada um o seu (Godfrey da Foz serve e some, Godfrey mede e manda parar, Helga fecha com o preço por trás) e escreve as falas por cima dos exemplos em vez de os copiar; A faz de Nyla 'mestre da Fivela'; B empilha os exemplos e diz que a última palavra é de Helga.",
+    "invencoes": {
+      "A": ["Nyla como 'a mestre da Fivela', com um ofício de ferro"],
+      "B": ["o paradeiro de Nyla ('mora subindo o monte, o portão só abre com prata')", "o comentário de bastidor 'A última palavra é de Helga'"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s10#33",
+    "notas": {
+      "A": {"voz":5,"peso":5,"fidelidade":5,"tiques":5,"resposta":5},
+      "B": {"voz":4,"peso":4,"fidelidade":1,"tiques":2,"resposta":3},
+      "C": {"voz":2,"peso":3,"fidelidade":5,"tiques":2,"resposta":2}
+    },
+    "preferido": "A",
+    "porque": "Em A, Nyla diz o que os fatos lhe dão (Helga não está, herdou o posto há um ano, a marca de giz) numa voz de quem manda, e com a última palavra; B põe Helga ali, contra os fatos, e dá-lhe o que Nyla sabe; C é fiel mas copia os exemplos de Saoirse e não diz que Helga não está.",
+    "invencoes": {
+      "A": [],
+      "B": ["Helga presente e a falar (os fatos dizem que ela não está)", "o motivo de ela ter chamado Hilda de sargenta"],
+      "C": []
+    }
+  },
+  {
+    "turno": "s10#43",
+    "notas": {
+      "A": {"voz":1,"peso":1,"fidelidade":4,"tiques":1,"resposta":1},
+      "B": {"voz":4,"peso":4,"fidelidade":1,"tiques":3,"resposta":2},
+      "C": {"voz":5,"peso":4,"fidelidade":4,"tiques":4,"resposta":5}
+    },
+    "preferido": "C",
+    "porque": "C faz o taverneiro responder que Perrin não está, com o preço por trás de tudo, e Saoirse conta com números novos; B põe Perrin atrás do balcão, contra os fatos; A só tem os exemplos da ficha, colados.",
+    "invencoes": {
+      "A": ["o taverneiro com escamas de cobre (os fatos não dão raça)"],
+      "B": ["Perrin presente e a falar (os fatos dizem que ele não está)", "uma mulher alta sem nome que interrompe a conversa"],
+      "C": ["o taverneiro com escamas (os fatos não dão raça)", "um paradeiro vago para Perrin ('dorme onde o mato fecha')"]
+    }
+  },
+  {
+    "turno": "s10#58",
+    "notas": {
+      "A": {"voz":4,"peso":4,"fidelidade":4,"tiques":5,"resposta":2},
+      "B": {"voz":4,"peso":3,"fidelidade":3,"tiques":3,"resposta":3},
+      "C": {"voz":3,"peso":4,"fidelidade":3,"tiques":2,"resposta":2}
+    },
+    "preferido": "B",
+    "porque": "B é o único que narra a ação segurada e o golpe errado de Saoirse, e ela pede o pão de uma moeda; mas troca o capanga por sombras e deixa um símbolo solto ('◉'). A tem a melhor fala, o favor e a cadeira, e ignora a luta. C copia os exemplos e erra o preço do prato.",
+    "invencoes": {
+      "A": [],
+      "B": ["Kaelith como 'coveira'", "o golpe de Saoirse contra 'as próprias sombras', quando foi contra o Capanga da faca"],
+      "C": ["a expulsão de Saoirse da cadeira 'na véspera'", "o prato quente por uma moeda (a rua diz duas)"]
+    }
+  },
+  {
+    "turno": "s10#67",
+    "notas": {
+      "A": {"voz":4,"peso":4,"fidelidade":5,"tiques":3,"resposta":5},
+      "B": {"voz":4,"peso":3,"fidelidade":3,"tiques":2,"resposta":4},
+      "C": {"voz":1,"peso":1,"fidelidade":1,"tiques":1,"resposta":1}
+    },
+    "preferido": "A",
+    "porque": "A diz que não há machado, que só está à venda a espada curta por 75, e deixa o ferreiro fechar, apesar do 'Quer levar ou vai ficar olhando?'; B inventa quanto Hilda tem na bolsa e deixa a última palavra a Saoirse; C vende um machado que não existe e diz de quem é a última palavra.",
+    "invencoes": {
+      "A": [],
+      "B": ["Hilda tem quinze moedas na algibeira"],
+      "C": ["o machado de batalha à venda por quarenta e cinco", "o comentário de bastidor 'A última palavra é do ferreiro tiefling'"]
+    }
+  }
+]

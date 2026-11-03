@@ -1,0 +1,1133 @@
+[
+ {
+  "de": "s8#1",
+  "frase": "Antes de ir à cadeia: quanto custa uma caneca de cerveja aqui na praça? E quanto tempo leva a pé daqui até as Celas Trêmulas?",
+  "gravada": "Um taverneiro que enxugava canecas do lado de fora da Serpente & o Elmo levanta a cabeça e responde sem parar o serviço: \"Cerveja aqui na praça? Duas. E nem adianta chorar, o imposto já vem junto.\" Ele aponta com o queixo para a rua sul. \"As Celas? Vinte minutos, se a guarda não te parar de novo. Mas por esse caminho, passam pelo pelourinho.\"\n\nFreya fica calada ao seu lado, os braços cruzados, e a frase fica no ar — ela espera, sem pressa, que você decida se a cerveja pode esperar ou se a sede é parte da desculpa para demorar um pouco mais.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "— Praça? Cadeia? — Freya ajeita o manto puído, torcendo o nariz com um suspiro irritado. — Em primeiro lugar, diz-se 'quanto tempo se leva', e não 'leva'. Em segundo, nós estamos no meio do nada, criatura. Não tem taverna, não tem praça e não tem cerveja nenhuma por perto. Se quer beber, vai ter que se contentar com água morna do odre.\n\nUm pouco adiante, onde o capim rasteiro dá lugar à terra batida da estrada vazia, Halvard o Exilado mastiga um pedaço de fumo seco, enquanto Wren aperta as correias do próprio surrão, os dois fingindo não prestar atenção na conversa alheia.\n\nFreya dá um passo à frente, ajeita a alça do alaúde no ombro e emenda sem rodeios:\n\n— Vai continuar inventando parada de descanso ou a gente segue logo?",
+    "uso": {
+     "entrada": 14955,
+     "saida": 227,
+     "cache": 12914,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0033505500000000003,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O capim alto estala sob as botas, molhado pelo orvalho da manhã. Não há vivalma por léguas, apenas o zumbido fino dos moscardos no vento aberto. \n\nFreya aperta a correia da algibeira contra o peito, os nós dos dedos brancos. Olha para os lados, depois para você, crispando a boca.\n\n— «Leva», não; «demora-se». E como haveria eu de saber o preço de uma caneca numa praça onde nem sequer entramos, Marga Pedrafria? — Ela empertiga o queixo, a voz rápida demais. — Nem o preço, nem as léguas até essas celas. Anda-se o que for preciso andar. Há assuntos que morrem na língua de quem os carrega, e certos nomes não carecem de pressa nem de taberna para continuarem sepultados.",
+    "uso": {
+     "entrada": 1553,
+     "saida": 192,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00188475,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Freya cruza os braços sob o couro grosso do peito, fitando as nuvens baixas que arrastam pela relva rasteira. Marga Pedrafria ouve o resfolegar curto da companheira antes de qualquer resposta. \n\n— Não sei o preço do malte e também não sei contar os passos na poeira — diz Freya. \n\nA meia-orc desvia os olhos para o horizonte vazio, onde a cerração da manhã ainda engole a linha do chão, e puxa a aba do capuz com força. \n\n— Não me olhe assim, Marga Pedrafria. Fendrel o Manco disse apenas para andarmos, e é o que fazemos.",
+    "uso": {
+     "entrada": 1553,
+     "saida": 154,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008509,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "naoSei",
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s8#8",
+  "frase": "Vinte é demais pra mim. E os Sapatos de andejo, quanto saem? Se for barato eu levo.",
+  "gravada": "O ferreiro do Martelo Velho puxa os sapatos de andejo de uma prateleira baixa e bate a palma da mão no couro. \"Vinte e um. São bons, mas fedem a cabra molhada até amaciarem.\" Ele os segura na sua frente, entre dois dedos, como quem não tem pressa. Ao fundo, Freya aponta para a porta dos fundos da banca e depois para a rua, indicando a Vigia da Garça. \"Mas se quer andar ligeiro, tem outros caminhos.\"",
+  "respostas": {
+   "mestre": {
+    "narrativa": "— Sapatos de quê? Não sei do que você 'tá falando, criatura. Aqui no mato não tem loja, não tem balcão e muito menos andejo — resmunga Halvard, ajeitando o fardo nas costas sem paciência. Ao lado, Wren ri baixinho, conferindo a correia de uma bota gasta.\n\nFreya bufa, limpando a poeira da manga com dois tapas secos. \n\n— 'Se fossem baratos', Marga. Se fossem. O subjuntivo existe por um motivo, sabia? E pare de sonhar com quinquilharia antes da hora.\n\nMais à frente, entre as pedras da orla, Rurik continua curvado sobre a terra fofa, arrancando raízes fibrosas e enfiando-as na algibeira de couro, sem dar a mínima para a conversa fiada. Halvard dá dois passos largos na sua direção, para e pergunta:\n\n— Vai ficar aí regateando com o vento ou vai dizer de uma vez para onde a gente marcha?",
+    "uso": {
+     "entrada": 15288,
+     "saida": 253,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01241475,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "naoSei",
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O capim alto estala sob o vento da manhã. Rurik bate uma cavilha de ferro na borda da carroça com pancadas secas, sem largar o malho de madeira. \n\n— Não vendo sola — diz Rurik, sem erguer os olhos da madeira gasta. — Vendo ferragem e o que verga. \n\nFreya ajeita a correia do alaúde no ombro e estala a língua. \n\n— Se *forem* baratos, Marga Pedrafria. O plural não se perde na pechincha. \n\nOrla da Urze aperta a capa verde contra o peito e dá meio passo de lado, olhando para o chão pedregoso como se procurasse as próprias pegadas. Ela ergue o queixo para você, seca.\n\n— Não olho preço de couro. Mas quem anda muito por aqui costuma gastar a sola antes de achar abrigo.",
+    "uso": {
+     "entrada": 1742,
+     "saida": 195,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00203775,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "O capim rasteiro balança com o vento seco da manhã neste campo aberto. Rurik bate o martelo na bigorna improvisada no tronco, ignorando a poeira que sobe. Freya corrige, ajeitando o cinto: Fugimos, não fugimos. Corra, Marga Pedrafria. Rurik não levanta os olhos do ferro torto. Orla da Urze cruza os braços sob a capa verde, olhando a distância, e diz que o caminho não é da sua conta.",
+    "uso": {
+     "entrada": 1742,
+     "saida": 111,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008001,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s8#18",
+  "frase": "Deixo Falk respirando e me volto para Nyla, a mão ainda no cabo da arma: \"Agora sem recruta no meio. De quem é o nome que termina em elia?\"",
+  "gravada": "Nyla continua parada junto à banqueta, os olhos firmes, as mãos abaixadas devagar. O suor escorre da têmpora, mas ela sorri de canto, sem pressa. \"Falk acorda daqui a pouco, e quem vem atrás de mim não é recruta.\" Ela aponta com o queixo para a placa de mármore. \"O nome é Ylva. Ylva Filho da Névoa. Mas se você descer para ver o que ela esconde, não vai mais subir do poço.\"\n\nEla cruza os braços e fica calada, esperando.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Nyla dá um estalo seco com o metal das suas juntas, apoiada no chão duro do ermo, sem responder de pronto. Quem bufa primeiro é Freya, limpando a terra da manga com um muxoxo irritado.\n\n— Primeiro que é 'com o qual', não 'que'. Segundo que se você acha que eu sei de quem é essa desgraça de nome, achou errado. Não conheço ninguém com esse final de batismo.\n\nMais ao lado, Halvard o Exilado mal tira os olhos do horizonte aberto, mas a jovem Wren dá um passo vacilante na sua direção, os dedos inquietos no gibão surrado.\n\n— Você tá procurando gente nossa ou só caçando motivo pra sacar esse ferro contra nós?",
+    "uso": {
+     "entrada": 15279,
+     "saida": 181,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.012138,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O vento da manhã bate raso no capim seco. Freya apoia a mão na costela machucada, solta o ar pelos dentes e cospe de lado.\n\n— Termina «por», não «em» — diz Freya, a voz áspera, sem encarar você de frente. — Se vai cobrar a mulher, Marga Pedrafria, use a regência certa antes que ela invente outra mentira.\n\nRurik nem ergue a cabeça. Continua limpando a correia de couro com um seixo chato, o movimento seco e ritmado como quem amola ferramenta no início da lida. \n\n— Pergunte à terra, se tiver pressa — diz Rurik, sem parar o braço. — Gente com esse pedaço no nome não deitou aqui hoje, e forasteiro que grita no ermo só gasta saliva.",
+    "uso": {
+     "entrada": 1510,
+     "saida": 188,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0018375,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Freya endireita o corpo trêmulo e olha para você com a testa franzida. — Fugimos, não fugimos. Corra. — Rurik continua a amolar a lâmina gasta na pedra de graxa, sem olhar para o chão onde Falk geme baixo. — O boi não anda se a canga aperta demais, Marga Pedrafria — diz Rurik, cuspindo na grama seca.",
+    "uso": {
+     "entrada": 1510,
+     "saida": 89,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0006755,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s8#27",
+  "frase": "Acendo a tocha e entro na mina com Freya, pé ante pé.",
+  "gravada": "A tocha chia e estala, e a boca da mina engole a luz. Você entra com Freya, pé ante pé, as sombras recuando pelas paredes de pedra cortada. O chão desce em rampa, escorregadio de calcário, e as correntes penduradas balançam sem vento, friccionando umas nas outras. Ao fundo, duas passagens: uma à esquerda, de onde o silêncio é bom demais para ser natural, e uma à direita, bloqueada por correntes soltas que quase tocam o chão. O ar aqui dentro é parado, frio, e cheira a pedra molhada e a cinza antiga.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "A pederneira estala três vezes antes do fogo pegar no pano ensebado. A fumaça preta sobe espessa, cheirando a sebo e fuligem, e revela a goela de pedra escavada à sua frente. Freya dá um passo atrás na terra batida do ermo, ajeitando o alaúde às costas com um esgar de desgosto pela poeira.\n\n— Entrar na mina, Marga. Não \"adentrar à\" mina, como você resmungou agorinha — ela diz, a voz baixa, limpando a garganta. — Se vamos morrer soterradas num buraco qualquer, que pelo menos seja com o regente certo.\n\nLá dentro não há abrigo fácil nem curva suave: o vão é reto, a rocha é nua e o chão desce em declive seco. Cinco metros adiante, um carrinho de minério tombado bloqueia metade da passagem.",
+    "uso": {
+     "entrada": 15289,
+     "saida": 224,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01230675,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "A tocha chia, e o breu da mina recua um palmo. O ar fede a mofo antigo e pedra suada.\n\nTrês figuras estão abrigadas sob as escoras partidas: Rurik, Orla da Urze e Brannoc. Ficam imóveis. Rurik não se mexe, e Orla sustenta o seu olhar sem piscar, deixando o silêncio pesar até a chama estalar alto demais.\n\nBrannoc cospe de lado, os olhos no teto baixo.\n\n— O líquen secou do lado leste do vigamento. Fazia sete invernos que não via isso.\n\n— Vigamento não tem lado, tem face — diz Freya, baixo, ajeitando a alça no ombro.\n\nRurik continua quieto, esperando. A fumaça da sua tocha sobe em espiral e se perde entre as tábuas podres.",
+    "uso": {
+     "entrada": 1728,
+     "saida": 196,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.002031,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Freya acende a tocha, o fogo chia contra a umidade da terra. Rurik e Orla da Urze ficam parados na penumbra, sem pressa, esperando você dizer qualquer coisa. Brannoc aponta para uma viga de sustentação com um risco fundo na madeira.\n\n— O caruncho comeu essa escora de ponta a ponta na primavera passada.\n\n— Fugimos, não fugimos. Corra, Marga Pedrafria — diz Freya, a voz baixa ecoando nas paredes de pedra.\n\nA fumaça da tocha sobe em fio fino e se perde na escuridão da galeria.",
+    "uso": {
+     "entrada": 1728,
+     "saida": 139,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008659,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto",
+     "razaoDoMestre"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s8#39",
+  "frase": "Viro as costas e fujo da luta, correndo o quanto posso [FUGA — RESOLVIDA PELO SISTEMA] Marga Pedrafria saiu da luta em disparada; a luta ACABOU. Ficaram para trás, VIVOS e ainda no mundo: Ursa. Nesta cena, quem ficou para trás não morre nem o alcança. Narre a fuga e o fôlego depois dela. [FUGA — CONSEQUÊNCIA DO SISTEMA] Ursa não desiste: vai reagrupar e vir atrás do herói mais tarde, mais forte. Deixe sinais disso (rastros, boatos, um vulto ao longe), sem dizer quando.",
+  "gravada": "Você recua alguns passos e então se vira, correndo pela estrada, a lama pesada nos pés. A chuva engole o som de Ursa, e o posto some na neblina. Só depois de um bom trecho você para, com as mãos nos joelhos, o ar queimando. Mais adiante, na escuridão, uma sombra parada observa da beira da estrada. Imóvel. Depois recua e se mistura às árvores.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Você gira nos calcanhares e dispara pelo cascalho ralo. O baque surdo das passadas pesadas de Ursa ainda vibra no chão por uns instantes, mas vai murchando até sobrar só o chiado do seu próprio fôlego rasgando a garganta. Freya corre logo atrás, praguejando baixo sem perder o compasso dos pés. \n\nQuando vocês finalmente desaceleram em uma baixada aberta, a barda apoia as mãos nos joelhos, a cara vermelha de esforço. Ela cospe de lado, ajeita a gola de couro e solta: \n\n— Corremos *muito*, não *bastante*, se você pretendia usar a norma culta enquanto salvava a nossa pele.\n\nLá atrás, na crista da elevação, a poeira baixa devagar. Entre os arbustos secos, um vulto maciço para contra o horizonte, observa a descida e dá meia-volta com calma.",
+    "uso": {
+     "entrada": 15327,
+     "saida": 237,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.012384,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O vento da manhã corta o pasto rasteiro, arrastando o cheiro de terra molhada. Você para, o peito ardendo da corrida. \n\nFreya apoia as mãos nos joelhos, recuperando o ar com esforço, os dentes trincados. \n\n\"Fugimos, não fugemos\", ela diz, a voz entrecortada, sem erguer os olhos para você. \"Marga Pedrafria, da próxima vez escolha uma direção plana.\"\n\nMais à frente, junto a uma cerca caída, três figuras observam a chegada de vocês. Rurik dá um passo para o lado na trilha, abrindo passagem com uma inclinação mínima de cabeça, o olhar descendo até as suas botas enlameadas antes de se fixar no horizonte de onde vocês vieram.\n\n\"O trevo-bravo abriu torto este ano\", comenta Brannoc para ninguém em particular, mascando uma folha seca. \"Sempre dá geada cedo quando nasce assim.\"\n\nOrla da Urze fica parada no meio do caminho, os braços cruzados dentro das mangas grossas de lã. Ela não se move, nem pergunta nada; apenas encara você, esperando que quem correu sem fôlego se justifique primeiro. O silêncio se estica, pesado e frio sob a luz cinzenta do pasto.",
+    "uso": {
+     "entrada": 1677,
+     "saida": 287,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.002334,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Freya puxa o fôlego e arruma a gola encharcada. Fugimos, não fugimos. Corra, Marga Pedrafria. Rurik cospe na lama e aperta o cabo da foice sem olhar para você. O mato aqui não dá flor nem no verão. Brannoc aponta o calcanhar para a encosta onde a relva é mais escura do que graxa. Orla da Urze cruza os braços grossos e espera no meio do vento que raspa os campos, sem piscar os olhos miúdos. A lama suga as botas de todos, a chuva fina engole as pegadas e a neblina fecha o horizonte de vez.",
+    "uso": {
+     "entrada": 1677,
+     "saida": 150,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008780999999999999,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s8#47",
+  "frase": "Pago as oito escamas, subo com Freya para o quarto, tiro as botas molhadas e durmo até o sol.",
+  "gravada": "Você paga as oito escamas e a mulher do xale entrega uma vela acesa. \"Último quarto à esquerda. O gato se deita no pé da cama da janela. Não acorde ele com o barulho das botas.\"\n\nO quarto é estreito, com duas camas de palha e um cheiro de alho seco no ar. Freya senta na beirada, desamarra as botas com paciência, e o gato, cinzento, observa de uma cama sem se mover. Você tira as botas molhadas e as deixa perto da porta. A vela chia e a luz oscila no teto baixo.\n\nFreya deita de costas, os olhos abertos no escuro. \"Amanhã a gente procura a gnoma. Mas dorme, caçadora. Ninguém foge com chuva essa.\"",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Não há quarto, nem estalagem, nem teto sobre a sua cabeça. Você cospe o cansaço no descampado e tenta fechar os olhos na terra nua, mas Halvard o Exilado e Wren estão logo ali, amarrando arreios com cara de poucos amigos. Freya bufa ao seu lado, cruzando os braços finos: — 'Até o sol', não. 'Até o sol raiar', se você pretendia usar a regência certa antes de cair estatelada. Ela morde o lábio, os olhos fugindo tensos como se guardasse a sete chaves cada passo daquele coxo, Fendrel. O vento corta o vazio das planícies. Rurik aponta um dedo ossudo para o horizonte aberto, sem dar explicação de estrada. Um corvo pousa na pedra seca.",
+    "uso": {
+     "entrada": 15272,
+     "saida": 199,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01220025,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O sol da manhã bate na grama alta e seca o barro das suas botas. O quarto e a noite em Ponte Brumoso ficaram para trás; o campo aberto cheira a terra fria e vento rasteiro.\n\nBrannoc passa o sebo numa tira de couro cru, puxando o fio sem erguer os olhos da lida. \n\nRurik estende o braço grosso para o norte, apontando o recorte cinzento de uma colina baixa. \"Ali\", diz. \n\nOrla da Urze dá dois passos à frente, o queixo empinado para o mesmo rumo ermo, marcando com a mão aberta o declive onde a vegetação racha em pedra. \n\nFreya ajeita o alaúde às costas, com o olhar fito na relva. \"Diz-se 'dormi', Marga Pedrafria. Quem paga é você; eu apenas acompanhei.\"\n\nUm pássaro cinzento parte do capim com um bater seco de asas.",
+    "uso": {
+     "entrada": 1673,
+     "saida": 214,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00205725,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Freya sacode a capa antes de entrar, o capuz ainda úmido. \n\n— Chegamos antes do meio-dia — diz Freya. \n\nRurik aponta o monte de casacos velhos num canto. Brannoc continua batendo o malho no ferro frio, sem olhar para cima. Orla da Urze acena para a esteira no chão, longe do vento. \n\n— Não há cobertores para quem vem de fora — diz Wren. \n\nAs botas molhadas de Marga Pedrafria secam perto da cinza fria.",
+    "uso": {
+     "entrada": 1673,
+     "saida": 124,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008119,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   }
+  }
+ },
+ {
+  "de": "s8#59",
+  "frase": "Não aceito o álibi, Petra. O posto antigo com que você me chamou e a cera preta riscada no seu distintivo dizem outra coisa. Foi você quem recrutou para o Sem-Rosto e deu o meu nome. Fale a verdade.",
+  "gravada": "Petra Guarda-Portão segura o distintivo com força, e por um instante a mão dela treme sobre a cera preta riscada. \"Você não entende.\", diz, e a voz sai mais baixa que a feira. \"Eu não dei o seu nome. Eu o guardei. Só que quem guarda nome em Ponte Brumoso vira o dono dele. E o Sem-Rosto cobra aluguel.\"\n\nAo lado, uma mulher puxa a amiga pelo braço, falando alto sobre peixe podre — alguém responde qualquer coisa, e as vozes se sobrepõem como lençóis no vento.\n\nPetra avança meio passo. \"Eu não sou recrutadora. Sou a que ficou com o nome de quem não morria. E se você quer saber por que a cera está raspada... é porque um morto me obrigou a raspar.\" Ela se interrompe quando um mercador esbarra nela e se desculpa, e a frase morre sem terminar. Petra volta a te encarar, imóvel, esperando.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "— \"A mim\", Marga. Recrutou a mim, não \"para o\" — Freya corta, limpando a terra das unhas sem erguer a cabeça, o tom impassível de quem prefere corrigir regência a encarar o próprio couro em risco.\n\nPetra Guarda-Portão nem pisca. O distintivo riscado de breu pende no peito da cota de malha gasta, firme contra o vento da manhã que varre as pedras soltas do descampado. A mão dela desce, pesada e aberta, pousando no pomo da lâmina embainhada.\n\n— Você late alto demais para quem não tem onde cair morta — diz Petra, cravando os olhos nos seus. — O Sem-Rosto pega o que precisa. Se o seu nome foi parar na boca dele, agradeça por ainda ter uma língua no lugar.\n\nEla dá um passo à frente.",
+    "uso": {
+     "entrada": 15335,
+     "saida": 218,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01231875,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O capim seco estala sob as botas, batido por um vento frio que não traz cheiro de fumo nem de bicho. \n\nRurik e Orla da Urze olham para você de braços caídos, sem dar um passo à frente, esperando o ar parar de zumbir depois das suas palavras. O silêncio estica-se até incomodar. \n\nBrannoc cospe de lado, os olhos no chão ralo. \"A folha da giesta virou para o norte cedo demais este ano. Chuva brava antes da tarde.\"\n\nFreya ajeita o alaúde a tiracolo e pigarreia para quebrar a mudez, mirando você de esguelha: \"Diz-se 'disseste a verdade', Marga Pedrafria, e não 'fale a verdade', quando se exige o que já passou.\"\n\nNinguém mais se move no descampado. A acusação ficou no vento, sem Petra ali para responder.",
+    "uso": {
+     "entrada": 1878,
+     "saida": 213,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00220725,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "O vento seco levanta a poeira da charneca onde o mato mal medra, longe de qualquer teto ou chaminé. Brannoc aponta o horizonte vazio com o queixo, murmurando que a geada de ontem ainda teima em não derreter na sombra daquela laje. Rurik cruza os braços pesados e aguarda sem pressa, o silêncio esticando-se mais do que o confortável entre as pedras. Orla da Urze mantém os olhos firmes no chão de terra batida, esperando que Marga Pedrafria fale primeiro. Freya ajeita a aljava no ombro e corrige com um murmúrio seco: fugimos, não fugimos, corra.",
+    "uso": {
+     "entrada": 1878,
+     "saida": 158,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0009584,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s9#3",
+  "frase": "Quero comprar um pão dela.",
+  "gravada": "A mulher do pão olha para você, depois para Sari, depois para um velho que se aproxima mancando com um saco de farinha nas costas. 'Esse aí é o Ilar, dono da taverna', diz ela, fazendo um gesto vago. 'Ele vai te cobrar o dobro se souber que você é de fora.' Ilar para ao lado dela, fungando. 'O pão tá duro como pedra e ela vai te vender mesmo assim', comenta, sem olhar para você. 'Dois a moeda, e se estiver mofado, é porque a farinha era barata.' Sari aproxima-se e apoia o cajado no chão, com um meio-sorriso. 'Em toda cidade tem um assim', diz ela. A mulher do pão entrega o pão e pergunta, seca: 'Vai querer também um gole de vinho para descer?'",
+  "respostas": {
+   "mestre": {
+    "narrativa": "A mulher olha para a sua mão estendida e franze a testa, com a farinha marcando a dobra funda entre as sobrancelhas. — Comprar? Não vendo pão na beira de estrada, criatura. Minha avó sempre dizia que quem vende o farnel antes do meio-dia morre com a barriga roncando antes da lua. Tomas continua agachado logo atrás, ocupado demais passando sebo no couro gasto de uma correia para prestar atenção na sua conversa. Perto da carroça, Halden Caldeira coça a barba rala e pigarreia na sua direção: — Ô, patrão... já que 'tá de pé aí, alcança aquele nó de corda ali na ponta do varal pra mim? Meus quartos tão travados hoje. Você fica ali com a mão vazia, sem pão nenhum na frente.",
+    "uso": {
+     "entrada": 14836,
+     "saida": 206,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0118995,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O capim alto estala sob as botas no descampado frio da manhã. Não há sombra de teto nem sinal de padeira por perto; só a poeira baixa e o vento largo. \n\nTomas segue vergando a barra de ferro no cepo portátil, martelando com pancadas secas que ecoam no ermo. Ele nem ergue os olhos: \n\n— Pão longe da praça custa perna, forasteiro. \n\nHalden Caldeira, ajeitando as correias da carga, vira-se para você: \n\n— Segura esse tirante aqui um segundo, faz o favor. Firme. \n\nSari bufa pelo focinho escamado e ajeita o manto: \n\n— A minha avó dizia: barriga cheia não caça lebre, Rufo Tamanqueiro. \n\nO estômago ronca no vazio da estrada, sem migalha nem resposta.",
+    "uso": {
+     "entrada": 1686,
+     "saida": 205,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00203325,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "O campo aberto cheira a capim seco. Sari guarda o cajado e lembra, a voz arrastada: «A minha avó dizia: quem cala, come.» Tomas bate o martelo na bigorna de campanha, o metal tinindo alto, e diz a Rufo Tamanqueiro que a chapa de ferro custa o dobre fora da tenda. Halden Caldeira acende o cachimbo, cospe na terra e pede ao forasteiro que lhe segure o fole por um instante. O pão que você comprou esfarela na palma da mão, duro como pedra velha.",
+    "uso": {
+     "entrada": 1686,
+     "saida": 130,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008307999999999999,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s9#11",
+  "frase": "Respondo que vai me custar o que eu ainda não sei. Pergunto onde encontro Brina Pedra, a aprendiz, e vou procurá-la com Sari.",
+  "gravada": "Tomas assente devagar, como quem aprova a pergunta sem responder de graça. 'Brina Pedra? Tenta no Mercado das Sombras. Ela vive lá, entre as barracas, vendendo o que sobra e ouvindo o que não devia.' Ele abaixa a voz, só o suficiente para a forja continuar falando por cima: 'Essa aí trata todo mundo por \"criança\", até velho. Não estranha.' Sari ajeita o cajado no ombro e já se volta para a porta, como quem conhece o caminho mesmo sem nunca ter pisado ali. 'Então vamos', diz ela, 'antes que a criança suma.' Lá fora, o dia começa a esquentar sobre a rua de terra batida, e um vendedor de ervas grita que tem unguento para queimadura de forja. Tomas não responde a ele; apenas cruza os braços, com o rosto sujo de fuligem, e pergunta de novo, sem pressa: 'Você ao menos sabe o que ela quer em troca?'",
+  "respostas": {
+   "mestre": {
+    "narrativa": "— Custar sempre custa, meu filho. Minha finada avó dizia que até vento contra cobra pedágio no lombo — Sari resmunga, puxando a alça do bornal antes de emendar: — Mas onde essa tal de Brina Pedra enffiou a cara? Disso eu não sei patavina.\n\nO vento bate aberto no descampado, espalhando cheiro de mato verde e poeira fina. Ali perto, Tomas nem se dá ao trabalho de erguer o tronco: continua curvado, as mãos calejadas remexendo a terra com uma pá curta, limpando raiz como se você nem tivesse aberto a boca.\n\n— Quer a menina? — Tomas solta, sem largar a ferramenta e apontando o cabo de madeira gasto na direção de umas pedras largas logo adiante. — Ela tava agachada ali catando cascalho, mas se você não correr...",
+    "uso": {
+     "entrada": 14936,
+     "saida": 219,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01202325,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "naoSei",
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O capim rasteiro estala sob as botas na amplidão vazia da manhã. Tomas bate o martelo na cunha de ferro, sem levantar a cabeça para você. \n\n— Não precisa andar muito — diz Tomas. — Ela veio atrás feito carrapato.\n\nA moça sentada numa pedra larga larga o graveto com que limpava as solas. Sari ajeita o manto e bufa:\n\n— A minha avó dizia: quem corre cansa, quem senta espera o caldo. Não era assim, mas serve, Rufo Tamanqueiro.\n\nBrina Pedra olha para você como se mede um fardo pesado demais para a carroça.\n\n— O senhor pergunta onde me acha — diz Brina, cruzando os braços de couro cru. — Mas eu já tô aqui. Agora, o que você quer saber além disso, nem eu sei dizer.",
+    "uso": {
+     "entrada": 1497,
+     "saida": 186,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00182025,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "O vento choca-se contra a capim-bravo e traz o cheiro de geada e fumaça fria. \n\nSari ajeita a capa pesada sobre os ombros e diz: \n\n— A minha avó dizia: quem cala, come. \n\nTomas limpa a fuligem das mãos num trapo encardido, sem erguer os olhos do chão revolvido. A poucos passos, uma jovem de avental remendado espicha o pescoço sobre a cerca baixa de estacas secas, encarando vocês com o cenho franzido. \n\n— Procurando a Brina? Sou eu mesma — diz ela, cuspindo na terra e cruzando os braços. — E se quer saber o caminho, vai ter que andar mais do que já andou.",
+    "uso": {
+     "entrada": 1497,
+     "saida": 174,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008840999999999999,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto",
+     "imagem"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s9#20",
+  "frase": "Pago a taxa das duas moedas. Depois pergunto a Dara quem, nesta cidade, entrega os recados da guilda dos dedos, e quem andou mexendo na forja do Tomas.",
+  "gravada": "Dara recebe as duas moedas e as faz desaparecer num cofre de madeira sem disfarce nenhum. 'Quem entrega recado da guilda? Ninguém, Tamanqueiro. Eles vêm buscar. Mas se você quer quem sabe dos mexericos, a Brina Pedra vendeu o nome errado para você.' Ela se inclina sobre a balança, os olhos estreitos. 'Quem andou mexendo na forja do Tomas foi alguém com olho em livro de contas. E essa pessoa, criança, não é de Buraco Norte. Saiu ontem pela porta leste, como se fosse para Rio do Rio, e levava um embornal debaixo do braço.' Dara para de falar e encara você. 'Mas me diz uma coisa: você veio atrás dela, ou atrás do que ela carregava?'",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Dara nem pisca ao recolher o metal. Guarda tudo sob o couro surrado do gibão antes de soltar um riso seco pela venta. — Se eu soubesse quem leva recado de dedo cortado por aqui, Rufo, eu cobrava dez vezes isso pra ficar calada. Não sei quem mexe na forja de ninguém não.\n\nTomas, encostado num esteio de carroça a poucos passos, nem se dá ao trabalho de gastar saliva: estica o braço magro e aponta direto com o queixo em direção a um telheiro baixo, perto de onde Jarl e Gwynn descarregam feno. Mais adiante, Halden Caldeira finge que examina o fundo de uma panela de ferro, mas a cabeça dura dela inclina pro lado — todo mundo vê que ela não perdeu uma sílaba.\n\nSari ajeita a alça da trouxa no ombro, pigarreia e cospe pro lado:\n\n— Minha velha sempre dizia: quem procura ferro quente sem tenaz...",
+    "uso": {
+     "entrada": 15251,
+     "saida": 250,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01237575,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "naoSei",
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O vento da manhã varre a erva rasteira, aberta a perder de vista. Dara guarda as duas moedas na dobra do cinto e entrega os cobres miúdos.\n\n— A minha avó dizia: quem cala, come — murmura Sari, olhando a distância vazia.\n\nHalden Caldeira aperta o passo e vira o rosto para o horizonte, mas a postura enrijece de imediato ao som da pergunta. Tomas não responde nada: apenas aponta com o queixo e um braço estendido para uma curva seca na terra batida, indicando o rumo sem soltar palavra.\n\nDara cruza os braços e cospe no chão seco.\n\n— Não sei quem leva papel de dedo sujo, nem quem põe a mão no carvão alheio. Para saber disso, forasteiro, veio bater na porta errada.",
+    "uso": {
+     "entrada": 1658,
+     "saida": 188,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0019485,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "naoSei",
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Dara empilha as duas moedas e guarda a prata na algibeira sem pressa. A guilda dos dedos não anda por aqui, e quem mexeu na forja do Tomas foi o próprio Tomas, que bebe mais do que aguenta. Tomas cospe no chão de terra seca e aponta com o queixo o caminho da forja apagada. Halden Caldeira finge que limpa um caldeirão com areia grossa, ignorando a poeira que voa com o vento da manhã. Sari balança a cabeça, desconfiado, e diz que a minha avó dizia: quem cala, come. Dara puxa o pano de novo sobre a madeira gasta e diz que quem quer saber demais acaba pagando a conta duas vezes.",
+    "uso": {
+     "entrada": 1658,
+     "saida": 163,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0009048999999999999,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s9#28",
+  "frase": "Pego uma tocha, acendo, e desço a escada do alçapão com Sari logo atrás de mim.",
+  "gravada": "Você pega uma tocha que Tomas aponta, acende-a numa das brasas da fornalha e desce a escada do alçapão. O ar fica frio de uma vez, e o cheiro de pedra molhada engole o de fumaça. Sari desce atrás, o cajado tocando os degraus. A escada é curta, e a tocha revela um porão baixo, com as paredes de terra firme e prateleiras tombadas. No chão, uma corrente partida e uma lâmina cega. Sari inclina a cabeça para a sombra: 'Alguém desceu aqui antes de nós.' A tocha estala.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "A chama estala na ponta da tocha e a fumaça de breu bate direto na sua cara antes de descer pelo alçapão. No fundo da escada, Tomas está encostado numa viga de escoramento; ele cruza os braços, olha para a sua descida e não diz uma palavra. O silêncio estica, pesado, até Halden Caldeira largar uma marreta enferrujada no chão e apontar com o queixo na direção da mulher ali sentada. — Jarl, Gwynn, chega aqui. O sujeito desceu — chama Halden, sem rodeios. Mais ao canto, Ilar mal levanta os olhos: continua raspando a argamassa podre da parede, focada na colher de pedreiro. Sari ajeita a alça da bolsa e resmunga baixo, citando a própria avó: — \"Toca de toupeira não dá fruto, mas quem cava primeiro escolhe a cova\". A luz da sua tocha revela o barro batido sob as botas e três pares de olhos cravados em você.",
+    "uso": {
+     "entrada": 14920,
+     "saida": 253,
+     "cache": 12879,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0034454250000000002,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "A madeira range sob as suas botas. O fundo da escada não dá numa adega: desemboca num rasgo de terra batida sob o sol frio da manhã, fora dos muros, onde o capim alto estala com o vento.\n\nSari desce logo atrás, farejando o ar aberto.\n\n— Minha avó dizia: buraco cavado é meia cova feita — murmura ele, ajeitando o cajado.\n\nTomas já estava do lado de fora, parado junto a um mourão torto. Não diz nada; apenas encara você, deixando o silêncio pesar enquanto o vento agita a ponta do capim.\n\nHalden Caldeira cospe de lado e ergue a voz:\n\n— Ilar! Anda ver o que desceu da forja.\n\nA mulher nem larga o couro que raspa com a faca curva.\n\n— Se não trouxeram comida, podem dar meia-volta — diz ela, sem erguer a cabeça.\n\nAtrás de você, a boca do alçapão solta um fiapo de fumaça cinzenta contra o céu limpo.",
+    "uso": {
+     "entrada": 1667,
+     "saida": 242,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00215775,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Sari abaixa a tocha que você ergueu e a fumaça de enxofre sobe pelo buraco. A minha avó dizia: quem cala, come, Tamanqueiro. Tomas cruza os braços grossos e cospe na grama rala. Halden Caldeira acena para Jarl, que traz um feixe de achas secas amarradas com corda podre. Ilar continua batendo o martelo na enxada velha, sem olhar para o poço que o fogo abriu na terra. A luz da manhã bate nas costas de Gwynn, que vigia a estrada vazia onde nenhum cavalo passa há três dias. A tocha que você segura ilumina apenas degraus de pedra verdejantes de umidade e o lodo que escorre para o fundo.",
+    "uso": {
+     "entrada": 1667,
+     "saida": 178,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0009450999999999999,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s9#37",
+  "frase": "Subo a escada com Sari e bato à porta do quarto da mulher do manto cinza.",
+  "gravada": "Você sobe a escada com Sari atrás, os passos abafados pela madeira gasta. No corredor estreito, a porta do primeiro quarto à direita está fechada, sem luz por baixo. Você bate duas vezes. Silêncio. Depois, uma voz de mulher, cansada e baixa: 'Quem é?' Sari inclina a cabeça para a porta e segura o cajado com as duas mãos, respirando devagar.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "A madeira range sob os nós dos seus dedos. Ninguém responde de pronto, mas a tábua estremece; do outro lado, um ferrolho pesado corre devagar, raspando ferrugem. \n\nA porta abre só um palmo. A fresta revela pano escuro e o brilho fosco de um par de olhos fundos que descem até as suas botas antes de subir pro seu queixo. Sari dá meio passo atrás, ajeitando a alça da trouxa no ombro com uma careta tensa. \n\n— Minha velha sempre dizia: quem bate em porta fechada de manhã cedo ou traz dívida cobrada ou notícia de enterro — resmunga a garota, baixo demais pra mulher ouvir, mas alto o bastante pra você notar a mão dela encostando no cabo da faquinha.\n\nA mulher de cinza não pisca. O vão da porta continua estreito, e a respiração dela vem curta, esperando você dizer o que veio buscar.",
+    "uso": {
+     "entrada": 14874,
+     "saida": 233,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01202925,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "A madeira cede ao nó dos seus dedos e abre para o vazio: o quarto não tem teto nem parede, só o capim alto sob o sol da manhã e o vento frio da campina. \n\nTomas está encostado numa pedra grande, mascando uma haste seca. Olha para você, sustenta a vista e não solta uma palavra; o tempo corre esticado demais entre vocês. \n\nMais adiante, Ilar continua raspando o couro estendido numa armação de varas, o ferro chiando rasteiro sem que ela levante os olhos.\n\n— Halden Caldeira — diz Tomas, sem se mexer.\n\nHalden Caldeira cospe no chão e aponta com o cotovelo para Ilar. \n\n— Fala com ela, se quer conversa de graça.\n\nSari dá um passo à frente, segurando o cajado com força.\n\n— A minha avó dizia: porta que não range não guarda farinha, Rufo Tamanqueiro.\n\nA porta do Cão Prateado ficou para trás, em lugar nenhum, e ao redor só há a relva aberta.",
+    "uso": {
+     "entrada": 1667,
+     "saida": 239,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0021465,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "A porta cede ao empurrão e o quarto cheira a mofo e a cinza fria. A cama está desfeita, o lençol emaranhado como um bicho morto, mas não há ninguém. A janela range com o vento de fora. A minha avó dizia: quem cala, come. Tomas cruza os braços na ombreira, olhando para o chão vazio. Halden Caldeira assobia uma nota curta e chama Gwynn para vir ver o estrado. Ilar nem levanta os olhos do remendo que faz na sela. A única marca na poeira da mesa é o sulco fundo de uma faca que alguém cravou e levou.",
+    "uso": {
+     "entrada": 1667,
+     "saida": 149,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008726,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s9#46",
+  "frase": "Cresci na guilda dos dedos. Procuro meu antigo mestre de recados, que devia estar aqui em Buraco Norte. Vou à taverna O Machado e a Rosa perguntar por ele ao taverneiro.",
+  "gravada": "A neblina da rua fica para trás quando você empurra a porta do Machado e a Rosa. O salão está quente e cheio do cheiro de cerveja rala e sebo queimado. Um homem magro, de avental manchado, encara você de trás do balcão. 'Tá procurando alguém, Tamanqueiro? Aqui quem pergunta paga, e quem responde cobra o dobro.' Ele seca um caneco com um pano sujo e morde a ponta de um pão dormido. 'Mas se for o velho que carregava recados, ele não pisa aqui faz três noites. Dizem que foi pra Vau de Pedra antes da ponte cair. Dizem também que ele deixou um nome pra quem viesse perguntar.'",
+  "respostas": {
+   "mestre": {
+    "narrativa": "— Buraco Norte? — Sari cospe de lado, ajeitando a trouxa no ombro. — Minha avó dizia que quem procura mestre em terra aberta acaba achando é cova rasa antes das primeiras neves. Não tem guilda aqui, Rufo, e nem taverna nenhuma. É só mato, vento e essa poeira de capim.\n\nTomas finca os pés na terra batida e não diz uma palavra. Fica ali, mastigando o silêncio até a coisa pesar nos dentes.\n\nHalden Caldeira é quem perde a paciência primeiro. Ele vira o pescoço e berra pro sujeito mais próximo na trilha:\n\n— Ô, Jarl! Chega aqui, porra! O sujeito tá caçando um tal Machado e a Rosa no meio do nada!\n\nJarl nem para o passo. Gwynn vem logo atrás, carregando uma vara de freixo, e solta:\n\n— Se tem machado por essas bandas, é pra rachar lenha de quem morrer de fome antes do...",
+    "uso": {
+     "entrada": 15242,
+     "saida": 253,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01238025,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O vento da manhã corta o pasto ralo, longe dos muros e de qualquer teto. Tomas mastiga um talo seco, os olhos postos em você, esperando. O silêncio estica até cansar.\n\nSari ajusta a manta no ombro e resmunga:\n\n— A minha avó dizia: sapato vazio não corre atrás de lebre.\n\nHalden Caldeira cospe no chão e vira o pescoço na direção de um sujeito encostado numa pedra:\n\n— Ô Gwynn, chega aqui. Tem gente querendo saber de balcão no meio do capim.\n\nTomas não se mexe. Olha de cima a baixo, frio:\n\n— Taverna boa é a que tem teto, viajante. Aqui só tem geada e bicho do mato. Não conheço esse seu homem, e se conhecesse, não ia gastar saliva à toa.",
+    "uso": {
+     "entrada": 1564,
+     "saida": 196,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.001908,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "A luz da manhã entra pela porta escoras abertas de O Machado e a Rosa, varrendo o pó do chão de terra batida. Tomas limpa o balcão com um pano cinzento, sem tirar os olhos das suas botas, e o silêncio pesa entre as mesas vazias. Halden Caldeira aponta o queixo para a entrada e chama Jarl para mais perto do fogo. \n\nSari cruza os braços, o peso do cajado contra o ombro, e murmura para o vazio. A minha avó dizia: quem cala, come, Rufo Tamanqueiro. \n\nTomas ergue finalmente a cabeça, o rosto duro como carvalho seco. Não sei de mestre nenhum, forasteiro.",
+    "uso": {
+     "entrada": 1564,
+     "saida": 161,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0008717,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "naoSei",
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s10#7",
+  "frase": "Termino a cerveja, deixo Godfrey com a pergunta e saio com Saoirse até a ferraria A Bigorna do Sul. Compro as botas de couro e pago o que o ferreiro pedir.",
+  "gravada": "A pergunta de Godfrey fica no ar como fumaça de cachimbo, e você a corta com o fundo da caneca batendo no balcão. Sem responder, você empurra a caneca de volta e acena para Saoirse, que já estava meio de pé, alimentando a pressa com os dedos tamborilando na mesa.\nOs dois saem da Cabra Trêmula, e a rua de Monte Rasa os recebe com o cheiro de peixe seco e o ruído de carroças. A Bigorna do Sul fica a duas esquinas: um galpão escuro, aberto na frente, com um ferreiro de bigode chamuscado ajeitando uma pilha de botas. Ele ergue os olhos, e o ofício dele reconhece o seu: mãos calejadas, do mesmo trato com o metal.\n— Botas de couro. Vinte e um cobres. — O homem cruza os braços, sem pressa, como quem já viu todo tipo de perna entrar naquela loja.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Você vira o resto da caneca de cerveja — rala, azeda e que custou 1 moeda —, mas a porta do cômodo da Cabra Trêmula não abre fácil com gente na frente. Não dá para sair de mansinho nem sumir no vento quando o espaço está apinhado e todo mundo repara em quem se mexe.\n\nGodfrey estica o braço escamoso contra o batente, travando a passagem com o peso do corpo. Ele para no meio da frase, pigarreia grosso e recomeça:\n\n— Calma lá, guerreira. Quer sair batendo bota sem me ouvir? Eu não negocio no escuro, mostro o serviço antes de pedir o cobre. Sei de uma coisa quente sobre quem anda rondando a Torre do Barqueiro... mas boca fechada custa caro.\n\nAo lado dele, Nyla Punho-de-Pedra cospe no chão, olhando torto para você e medindo Saoirse dos pés à cabeça, com um sorriso seco nos lábios:\n\n— Vai dar as costas para o carcereiro na frente de todo mundo, Barbaforte, ou vai pagar pra ver o que ele sabe?",
+    "uso": {
+     "entrada": 16687,
+     "saida": 276,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01355025,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O fundo da caneca bate seco na tábua. Você dá as costas ao balcão e ganha a luz da manhã de Monte Rasa, com Saoirse colada ao seu calcanhar. \n\n— Vinte e dois passos até à lama da rua — diz a anã, os olhos cravados no chão batido. — Oito homens passaram aqui desde a alvorada.\n\nNem chegam a virar a esquina para a forja. Godfrey barra o caminho com o braço estendido, o cinto largo rangendo. Ele não dá espaço.\n\n— Alto. Parada aí.\n\nEle olha para você, para Saoirse e depois para a algibeira à sua cinta. \n\n— Não se anda com pressa aqui. Primeiro eu vejo o que você traz. Põe as moedas na mão, conta aberta, antes de dar outro passo em Monte Rasa.",
+    "uso": {
+     "entrada": 2043,
+     "saida": 188,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00223725,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "O sol bate torto nas telhas de Monte Rasa quando você deixa o balcão. Saoirse conta passos ao seu lado. Trinta e sete passos até à porta. A calçada cheira a poeira e bosta de cabra. A Bigorna do Sul range com o fole que o ferreiro puxa, o metal vermelho cuspindo fagulhas na penumbra da tenda. Você joga as moedas na bancada de carvalho escuro, o ferreiro recolhe o couro batido sem dizer obrigado e enfia o troco no bolso do avental de raspa. A bota aperta o calcanhar, firme e grossa, cheirando a graxa nova. Saoirse olha o rasto na lama da rua, o olho estreito medindo a distância. A última palavra é de Godfrey, que grita da porta da taverna: «Volta antes que o sol caia, forasteiro.»",
+    "uso": {
+     "entrada": 2043,
+     "saida": 198,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0011079,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s10#16",
+  "frase": "Respondo que viemos falar com Nyla Punho-de-Pedra, a guardiã do Rossio Torto. Sigo com Saoirse para o sul, até o Rossio Torto, e procuro por ela.",
+  "gravada": "A chuva aperta quando vocês deixam o alpendre do cachimbo e seguem para o sul. A rua de Nova Profundo vira um filete de lama, e o mar, à direita, lambe as pedras do cais com uma língua cinzenta. O Rossio Torto surge no fim do largo: um mercado a céu aberto, coberto por lonas remendadas que pingam em ritmo desigual. Não há muralha nem portão — a aldeia se abre para o mundo, e o mundo entra nela como a chuva entra nas barracas.\n\nSaoirse anda ao seu lado, o capuz baixo, mas os olhos vivos. Ela aponta para uma banca de madeira torta, onde uma draconato de escamas verde-musgo separa moedas sobre um pano sujo.\n— É ela. Nyla Punho-de-Pedra. — A voz de Saoirse é baixa, mas segura.\n\nA mulher ergue a cabeça como se tivesse ouvido o próprio nome carregado pelo vento. Ela não sorri. Apenas pousa as moedas numa caixa e endireita as costas, o olhar de quem mede visitantes como quem mede facas.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "— Nyla? Aqui não, criatura — retruca Quilla, batendo a poeira de um fardo de peles secas com um estalo seco. O cheiro de resina fresca e couro curtido toma o ar da sala entulhada de pranchas de pinho. Do outro lado da bancada, Wystan o Exilado raspa uma tira de sebo com uma faquinha cega e nem se dá ao trabalho de erguer o queixo.\n\n— A guardiã não pisa neste chão faz tempo — resmunga Wystan, apontando com a ponta da lâmina na direção do norte. — Tá em Monte Rasa, a dois dias de marcha pela geada. Aqui só sobrou a madeira e quem carrega ela.\n\nSaoirse dá um passo à frente, a aljava batendo na anca, impaciente com a perda de tempo. Quilla larga o couro, limpa as palmas na calça e pergunta:\n\n— Vai querer um prato quente por duas moedas ou vai dar meia-volta pro frio?",
+    "uso": {
+     "entrada": 16562,
+     "saida": 255,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01337775,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O Rossio Torto abre-se num largo irregular de terra batida, cercado por galpões baixos de tora bruta. O cheiro de resina fresca e serragem tapa o ar da manhã, e sob os beirais pendem peles esticadas em varais de freixo.\n\nVocê procura pela guardiã, mas não há guarda nem trono à vista. Apenas pilhas de lenha talhada e o vaivém de gente carregando fardos de couro cru. \n\nSaoirse para rente a um cepo largo, os olhos cravados na lama batida.\n\n— Cento e quarenta passos do alpendre até aqui. Cinco rastos de bota pesada, mas nenhum recente.\n\nEla corre a mão calejada pelo espaldar de um assento alto de carvalho, posto sob a cobertura de um dos galpões, vazio.\n\n— Nyla não pisa este chão, Hilda Barbaforte. Mas aquele assento ainda vai ter dono direito.",
+    "uso": {
+     "entrada": 1747,
+     "saida": 218,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00212775,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "A serragem gruda na bota encharcada e o cheiro de resina pesa no ar da manhã. A rua cheira a bicho e pinho cortado. Trinta e sete passos até à porta. Saoirse olha o chão de terra batida sob a chuva miúda, com o machado balançando na cinta. Rasto fresco. Dois. Ela cospe um fiapo de palha e segue você de perto, os olhos miúdos colados na lama da travessa. Ninguém fala de Nyla. O couro é barato nas bancas de tábua tosca ao lado, mas ninguém vende o metal que falta. A mão dela aperta o cabo da arma, tesa. \n\n— Trinta e sete passos até à porta. Rasto fresco. Dois.",
+    "uso": {
+     "entrada": 1747,
+     "saida": 167,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0009416,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto",
+     "imagem"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s10#25",
+  "frase": "Procuro Nyla Punho-de-Pedra",
+  "gravada": "O vento forte chicoteia a muralha e faz as lanternas do portão balançarem. Enquanto você procura Nyla, o mundo não espera.  \nUm homem de elmo torto empurra uma mulher contra a parede. Ela bate com o ombro, cospe no chão e avança. Os dois se agarram ali mesmo, rolando na lama diante da guarita.  \nO guarda de lança grita “Sai da frente!”, mas a briga já cresceu, atropelando um vendedor de peixe, que emenda um soco na orelha de quem estiver mais perto.  \nHelga dá um passo para trás, os olhos fixos no portão. — Nunca chega sozinha comigo... — A fala dela se desfaz num grito curto, engolido pelo barulho. As mãos dela apertam as mangas como se segurassem correntes invisíveis.  \nNesse instante, a mulher da briga é arremessada para o chão, quase aos seus pés. Ela ergue o rosto, o lábio rachado, e cospe sangue antes de rosnar: “Sai do caminho, forasteira.”",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Você solta o nome de Nyla Punho-de-Pedra logo ao passar da porta, cortando o bafo morno da lenha úmida. Godfrey da Foz nem pisca: põe duas canecas lascadas no balcão de tábua grossa, olha de rabo de olho para Saoirse — medindo a postura da caçadora e a adaga gasta no cinto dela —, não responde porra nenhuma e se enfia direto pela cortina dos fundos.\n\nSaoirse puxa o ar entre os dentes, com aquela cara de quem queria estar mandando no lugar. \n\n— Trinta passos daqui até a praça, se não me engano nas contas — ela murmura.\n\nMas é Helga quem se apoia na madeira, limpando as mãos num avental ensebado, e te encara de cima a baixo, sem pressa:\n\n— A mestre da Fivela não atende qualquer boca torta que entra da rua pedindo prosa. O que você quer com o ferro dela?",
+    "uso": {
+     "entrada": 15240,
+     "saida": 249,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01236375,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O cheiro a gordura fria e cerveja choca pesa na sala baixa. Godfrey da Foz pousa duas canecas de barro sobre o carvalho manchado, recolhe as mãos escamosas para o avental e recua para a sombra dos fundos sem soltar um sopro.\n\n— Três passos até à viga. Lama seca nas botas daquele ali — diz Saoirse, a voz raspada rente à mesa, sem tirar os olhos do chão.\n\nJunto à grade dos fundos, Godfrey não descansa a mão que segura o cinto. Mede a caçadora dos pés à cabeça, depois crava os olhos em você.\n\n— Alto aí. Quem entra aqui dá o nome e o que veio caçar. Sem rodeio.\n\nHelga puxa a caneca para si, os dedos roçando no rebordo lascado.\n\n— De graça, só a poeira da soleira, Hilda. Nomes custam cobre, e paradeiros custam prata.",
+    "uso": {
+     "entrada": 1583,
+     "saida": 214,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00198975,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Trinta e sete passos até à porta. Rasto fresco. Dois.\n\nAlto. Nome e ofício.\n\nDe graça, só o conselho. Nyla Punho-de-Pedra mora subindo o monte, mas o portão só abre com prata.\n\nIsso sai caro. Tudo sai.\n\nA última palavra é de Helga, e ela quer que você pague a passagem antes de subir.",
+    "uso": {
+     "entrada": 1583,
+     "saida": 87,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0006924,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   }
+  }
+ },
+ {
+  "de": "s10#33",
+  "frase": "Viro-me para Helga e peço que me diga o que é o círculo de sal riscado no distintivo dela, e por que ela me chamou de sargenta quando ninguém aqui conhece o meu posto.",
+  "gravada": "Helga sustenta seu olhar um segundo a mais do que o necessário, depois desvia para a lona que bate no vão da porta. — Círculo de sal? Isso é coisa antiga de beira-mar. Gente de lá risca assim pra lembrar que todo mar tem fundo. — Ela enfia as mãos nas mangas, escondendo os punhos. — E eu te chamei de sargenta porque você nunca deixou de ser. Posto não se tira da gente, Hilda. Só se enterra com a gente.\nAtrás de vocês, Nyla observa a troca como quem conta moedas. O vento sacode as tendas da Alfândega, e uma balança de prato range solta. — Você sempre fez as perguntas certas tarde demais. — A fala de Helga se mistura ao ruído, e a última palavra some quando ela se volta para a praça.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Helga bate com a ponta de um toco de giz na madeira gasta da bancada. Ela herdou esse balcão faz um ano de quem a criou, e não tem paciência para rodeios.\n\n— Círculo de sal é o caralho, forasteira. Isso aqui é giz puro — ela bufa, apontando o pedaço esbranquiçado. — A lei manda marcar o manto na entrada. É assim que a guarda sabe quem é bem-vindo por essas bandas até a lua virar. E chamei de sargenta pela cara de pau e a coluna dura, que soldado raso anda frouxo.\n\nGodfrey, sentado no banco ao lado, crava as escamas do focinho numa mudez incômoda. O silêncio dele pesa, longo demais para uma alfândega apinhada de gente de olho na sua trouxa. Saoirse dá um passo perto de você. Helga inclina o corpo sobre as tábuas e solta, seca:\n\n— Vai deixar o manto logo pra marcar ou veio caçar conversa fiada?",
+    "uso": {
+     "entrada": 16578,
+     "saida": 256,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0133935,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O vento ainda sopra pó de pedra pela fresta da porta. No banco de trás, Godfrey firma as duas mãos sobre o cinturão e não se mexe, a cara fechada esperando uma palavra sua que justifique você estar ali plantada. \n\nSaoirse cospe de lado, o olhar pregado nas tábuas do chão. \n\n— Três passos até a mesa vazia — diz a anã, num murmúrio seco. — E nenhum rasto de quem você procura.\n\nNyla bate com a palma na madeira do balcão, chamando a sua atenção de volta para si. \n\n— Tá falando com a poeira, forasteira? A menina não tá aqui. Faz um ano que ela cuida daquele canto por herança, mas agora sou eu que dou passagem. Se quer andar por Monte Rasa sem levar ferro nas costelas, precisa da marca de giz no manto. É a lei até a lua virar.",
+    "uso": {
+     "entrada": 1958,
+     "saida": 202,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.002226,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Trinta e sete passos até à porta.\n\nNyla Punho-de-Pedra limpa as unhas com a ponta de um estilete e não levanta os olhos quando você se vira.\n\n— Rasto fresco. Dois. — Saoirse bate com o calcanhar na laje e cospe no canto, longe do sal.\n\nGodfrey aperta o cabo da chave com força suficiente para branquear os nós dos dedos, sem tirar os olhos da madeira gasta do balcão.\n\n— A lei é a do giz no manto, Hilda — diz Nyla, guardando o estilete com um estalido seco.",
+    "uso": {
+     "entrada": 1958,
+     "saida": 138,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0009324,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "gesto"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s10#43",
+  "frase": "Falo com Perrin",
+  "gravada": "Você chama por Perrin, e a voz atravessa o salão úmido. O taverneiro draconato atrás do balcão ergue a cabeça, as escamas cor de cobre velho brilhando à luz fraca da vela. Ele deixa a caneca de lado e seca as mãos no avental, sem pressa.\n— Perrin não está. Saiu antes da chuva apertar. Mas deixou um recado, se é você a forasteira da estrada. — Ele inclina a cabeça, e a chama da vela estremece. — Disse que faltam vinte e três moedas. Treze dias. E que você saberia o que isso quer dizer.\nSaoirse, ao seu lado, cruza os braços. A chuva chicoteia as janelas, e lá fora a tempestade engole a rua. — Vai dizer que isso não é uma armadilha? — ela pergunta baixo, e a voz dela se perde no vento.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Perrin esfrega a bancada com um trapo ensebado que só espalha a gordura de carneiro pela tábua de pinho. O ar cheira a serragem úmida e resina fresca da mata lá fora. No canto, Saoirse não tira os olhos da cadeira de espaldar alto onde um sujeito de gibão surrado bebeu de graça ontem, mascando a ponta de uma tira de couro.\n\n— Fala baixo, que a lenha aqui tem ouvido e o povo tem a língua solta — resmunga Perrin, batendo uma caneca lascada na frente das suas mãos sem perguntar o que você quer beber. Uma mulher alta, de braço marcado por arranhão de silva, para a conversa com Wystan perto do barril para prestar atenção em vocês. — Se veio atrás de ferro, perdeu a viagem: até prego tá custando os olhos da cara nessa primavera. Mas se tem braço pra serviço na mata, o assunto muda. O que você sabe fazer além de carregar essa lâmina pesada?",
+    "uso": {
+     "entrada": 15546,
+     "saida": 248,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0125895,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O cheiro de serragem molhada e resina vem colado às suas roupas. Saoirse não larga o olhar do chão de tábuas batidas, medindo a distância até os fundos.\n\n— Vinte passos até o canto escuro — diz o anão, baixo. — Chão seco, Hilda. Três bancos vazios.\n\nO taverneiro larga o trapo cinzento sobre o cepo de pinho, as escamas de cobre estalando quando ele se apoia nas duas mãos. O olhar dele desce para o couro encharcado da sua capa antes de subir para o seu rosto.\n\n— Falar não paga lenha, forasteira — diz ele. — Perrin dorme onde o mato fecha, e ninguém aponta a vereda sem ver a cor do cobre primeiro. O silêncio dele custa caro, mas a minha conversa também tem tabela.",
+    "uso": {
+     "entrada": 1717,
+     "saida": 190,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.00200025,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Saoirse ajusta o arco nas costas e aponta para as botas de Hilda Barbaforte. Trinta e sete passos até à porta. Rasto fresco. Dois.\n\nO taverneiro larga a caneca, o escamado de cobre velho limpando o suor da testa com o pulso sujo. De graça, só o conselho. \n\nA chama da vela estala na madeira grossa do balcão.",
+    "uso": {
+     "entrada": 1717,
+     "saida": 91,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0007426,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "razaoDoMestre"
+    ]
+   }
+  }
+ },
+ {
+  "de": "s10#58",
+  "frase": "Seguro a ação e observo, pronto para responder Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): . Meus companheiros agiram: Saoirse→Capanga da faca: errou.",
+  "gravada": "Saoirse avança, o punho erguido, e o golpe corta a chuva. O capanga da faca se esquiva, meio corpo virando de lado, a lâmina erguida, rindo por entre os dentes. A lama espirra sob as botas dela, e ela recua um passo, o rosto duro, sem tirar os olhos dele. Você segura a respiração, a mão no cabo da arma, pronta para o que vier.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "Você firma as botas na terra batida da praça de Nova clara e segura o fôlego, a lâmina pronta para rebater qualquer estocada, mas a rua só devolve poeira e o burburinho matinal do comércio abrindo as lonas. Hakon Punho-de-Pedra descarrega um caixote pesado perto da forja, enquanto a coveira Kaelith passa arrastando uma pá gasta, de cabeça baixa e passos apressados em direção aos portões.\n\nAo seu lado, Saoirse solta um xingamento seco entre os dentes, guardando a adaga que quase escapuliu da manga num bote estabanado contra as próprias sombras. Ela esfrega os nós dos dedos, ajeita o gibão e olha de soslaio para o seu cinturão.\n\n— Barbaforte, me adianta ◉ 1 moeda pra um pão seco antes que minha barriga cole nas costas?",
+    "uso": {
+     "entrada": 16378,
+     "saida": 226,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.013131,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "A chuva da serra ficou para trás, mas o barro ainda seca nas botas. A manhã de Nova clara cheira a fumaça de lenha verde e a gordura velha que sobe dos balcões. Um prato quente sai por duas moedas; a caneca custa uma, e o peixe seco na palha também. \n\nSaoirse não olha para as bancas. Os olhos dela correm a taberna aberta do outro lado da travessa: quatro mesas ocupadas, um cão deitado na sombra e aquele assento de espaldar alto junto à lareira, largo, talhado em carvalho escuro, vazio desde que o dono saiu.\n\nEla puxa o ar, medindo o vão entre as carroças. \n\n— Guarda o meu lugar na calçada, Hilda. É um segundo só. Eu quero sentar naquela cadeira.",
+    "uso": {
+     "entrada": 1498,
+     "saida": 184,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0018135,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "A lama de Nova Clara ainda pinga do capuz quando a manhã abre em cinza sobre os barracos de tábua e os telhados tortos de palha. \n\n— Trinta e sete passos até à porta — diz Saoirse, apontando o queixo magro para o balcão onde fumega a caldeira de peixe seco. A capa dela está rija de sal seco e a bota range no cascalho. — Não fui eu, e não vi quem foi. Me empresta uma moeda para o prato quente, Hilda? \n\nO cheiro de gordura velha e mato podre sobe da calha. Os olhos de Saoirse correm para a cadeira vazia de encosto alto, de onde a expulsaram na véspera, e os dedos finos cravam-se na madeira da mesa. \n\n— Só pra ver se eles ainda acham que eu fico em pé — diz Saoirse.",
+    "uso": {
+     "entrada": 1498,
+     "saida": 202,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0009544,
+    "status": 200,
+    "erro": null,
+    "tiques": []
+   }
+  }
+ },
+ {
+  "de": "s10#67",
+  "frase": "Digo ao ferreiro que a espada longa é cara demais. Compro então o machado de batalha afiado que está ali na prateleira e pago os quarenta e cinco cobres.",
+  "gravada": "O ferreiro assente, sem ofensa. — Cem cobres é preço de oficial, sargenta. Mas se é pra abrir cabeça, até o machado serve. — Ele puxa o machado de batalha da prateleira, o cabo de madeira gasta e a lâmina escura com fio recente. — Afiei ontem. Segura firme, pesa na queda. — Estende-o para você, e os quarenta e cinco cobres somem no bolso do avental dele num gesto seco. — Se quiser a espada um dia, ela vai continuar aqui. Espada não foge. Só muda de dono.\n\nA tempestade ronca do lado de fora, e uma rajada sacode a tenda da forja. O ferreiro vira o rosto para a rua por um instante, e se ouve, entre o vento, alguém gritando o nome de Godfrey da Foz. — Dizem que ele está na Cabra Trêmula. E tem mais gente procurando por ele. — O ferreiro desvia os olhos de volta, e a voz baixa. — Mas ande com calma naquelas bandas. A Cabra não é pra quem só quer beber.",
+  "respostas": {
+   "mestre": {
+    "narrativa": "O ferreiro tiefling nem pisca os olhos amarelados; ele só puxa o fôlego pesado de cinzas e bate com a ponta da tenaz na bancada de pedra. — 'Tá louca, mulher? Não tem machado nenhum aqui, e ferro meu não sai por cobre de mendigo. O que tem de corte pronto é essa espada curta bem aí: setenta e cinco moedas redondas, nem uma a menos. Se não tem a prata, não me faz gastar saliva.'\n\nAo seu lado, Saoirse estala a língua, os olhos miúdos cravados na lâmina curta e limpa exposta no balcão de madeira crua. Ela cutuca suas costelas com o cotovelo e murmura, rápida:\n— 'Setenta e cinco moedas inteiras, Hilda. Cê tem quinze na algibeira. Vai tentar arranjar o resto como, metendo a mão na bolsa alheia ou batendo na porta de quem manda nessa terra?'",
+    "uso": {
+     "entrada": 16262,
+     "saida": 235,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.01307775,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "vocativo",
+     "verboDeDizer",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.8-flash": {
+    "narrativa": "O tiefling recolhe o aço cinzento sem pressa e olha para a prateleira onde você aponta. Não há machado nenhum ali. Só descansa, sobre o couro surrado, uma espada curta de gume limpo.\n\nSaoirse encosta o ombro num mourão, o olhar correndo quatro passos até a saída da tenda.\n— Quarenta e cinco não compram nem o cabo, Hilda Barbaforte.\n\nO ferreiro solta o ar pelo nariz, pesado de fuligem. Ele passa o polegar na lâmina curta e bate duas vezes com o nó dos dedos na madeira nua do balcão.\n\n— O que está aí custa setenta e cinco — diz o tiefling. — O resto é vento da baía. Quer levar ou vai ficar olhando?",
+    "uso": {
+     "entrada": 1684,
+     "saida": 172,
+     "cache": 0,
+     "modelo": "gemini-3.8-flash",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.001908,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "verboDeDizer",
+     "gesto",
+     "imagem"
+    ]
+   },
+   "ator:gemini-3.5-flash-lite": {
+    "narrativa": "Saoirse aperta os dedos contra a madeira fria do batente e conta baixo — Trinta e sete passos até à porta. \n\nO ferreiro tiefling recolhe o aço pesado e joga o machado sobre a bancada áspera. — Sobe para quarenta e cinco, Hilda. Negócio fechado é negócio limpo. \n\nA última palavra é do ferreiro tiefling, e ele quer apenas ver o cobre na mão.",
+    "uso": {
+     "entrada": 1684,
+     "saida": 94,
+     "cache": 0,
+     "modelo": "gemini-3.5-flash-lite",
+     "tarefa": "narrador"
+    },
+    "dolares": 0.0007402,
+    "status": 200,
+    "erro": null,
+    "tiques": [
+     "imagem"
+    ]
+   }
+  }
+ }
+]
