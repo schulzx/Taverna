@@ -4,8 +4,8 @@
    A pintura que escala. Até aqui todo rosto do jogo era desenhado pela
    semente (`rosto.jsx`): de graça, sem um byte de arquivo, e igual para o
    troll e para o taverneiro. A mesa pintou no Figma as 18 feras de
-   `CRIATURAS_FANTASIA` (F1) e 164 dos 240 heróis raça × classe × sexo (F2,
-   parados no limite dos créditos) — e ESCOLHER qual pintura vai para quem é
+   `CRIATURAS_FANTASIA` (F1) e os 240 heróis raça × classe × sexo (F2: 164
+   a 12/10, as 76 que faltavam a 03/11) — e ESCOLHER qual pintura vai para quem é
    regra, e regra prova-se em Node, não na tela.
 
    Três peças, todas puras:
@@ -31,10 +31,11 @@
        em px onde pôr a imagem dentro do disco. Recortes, limiares e centros
        saem de `RETRATO` — nenhum literal no componente.
 
-   Os 76 heróis por pintar (Tiefling 10, Gnomo 22, Meio-elfo 22, Goliath
-   22) simplesmente não têm entrada: `retratoDe` devolve `null` e o herói
-   fica com o rosto desenhado. Quando a renovação dos créditos os pintar,
-   entram aqui como linhas novas, e nenhuma função muda.
+   Desde 03/11 as 240 células raça × sexo × classe têm pintura: as 76 que
+   o limite dos créditos deixou por pintar a 12/10 (Tiefling 10, Gnomo 22,
+   Meio-elfo 22, Goliath 22) entraram como linhas novas, e nenhuma função
+   mudou. Quem não tem entrada (a gente sem classe, o bicho que a tabela
+   não conhece) continua a receber `null` e o rosto desenhado.
 
    A variante sai da semente da pessoa (hoje toda célula tem uma só, a 1);
    o sexo sai de `feicoes` (semente.js), a MESMA conta que desenha o rosto
@@ -70,11 +71,13 @@ export const SINAIS_DE_GENTE = ["papel", "relacao", "oficio", "raca"];
    Feras: [espécie, arquivo, cx, olhos], na ordem de CRIATURAS_FANTASIA.
    Heróis: por raça, [arquivo, cx, olhos]; o arquivo diz raça-sexo-classe
    e a variante é a 1 (`public/retratos/gente/<arquivo>-1.webp`). Os valores
-   são os MEDIDOS (`mente/figma/retratos-medidos.json`, 12/10): 144 matrizes
-   pela malha do rosto do MediaPipe (olhos = as duas íris; cx = o meio da
-   malha), 38 à régua onde a malha não acha rosto (13 feras, os Draconatos, o
-   Anão Invocador). A estimativa à mão de §11/§13 errava 0,012 nos olhos e
-   0,016 no cx (máx. 0,043) — no chip de 32 px, até 3,4 px de rosto torto.
+   são os MEDIDOS (`mente/figma/retratos-medidos.json`, 12/10 e 03/11): 219
+   matrizes pela malha do rosto do MediaPipe (olhos = as duas íris; cx = o
+   meio da malha), 39 à régua onde a malha não acha rosto (13 feras, os
+   Draconatos, o Anão Invocador, o Goliath Bardo de barba branca). A
+   estimativa à mão de §11/§13 errava 0,012 nos olhos e 0,016 no cx (máx.
+   0,043) a 12/10, e 0,013 e 0,021 (máx. 0,060) nas 76 de 03/11 — no chip
+   de 32 px, até 4,8 px de rosto torto.
    Mudar um número aqui pede corte novo (`mente/figma/corte`): o arquivo
    foi recortado com este cx, e `teste-rosto-pintado` fica vermelho se os
    dois discordarem. */
@@ -152,16 +155,33 @@ const HEROIS = {
     ["tiefling-m-guerreiro", 0.46, 0.36], ["tiefling-f-guerreiro", 0.47, 0.39], ["tiefling-m-mago", 0.45, 0.40], ["tiefling-f-mago", 0.44, 0.41],
     ["tiefling-m-ladino", 0.47, 0.41], ["tiefling-f-ladino", 0.44, 0.39], ["tiefling-m-clerigo", 0.46, 0.34], ["tiefling-f-clerigo", 0.45, 0.34],
     ["tiefling-m-cacador", 0.42, 0.36], ["tiefling-f-cacador", 0.48, 0.35], ["tiefling-m-bardo", 0.46, 0.38], ["tiefling-f-bardo", 0.45, 0.39],
-    ["tiefling-m-monge", 0.44, 0.41], ["tiefling-f-bruxo", 0.45, 0.39],
+    ["tiefling-m-monge", 0.44, 0.41], ["tiefling-f-monge", 0.46, 0.35], ["tiefling-m-druida", 0.48, 0.36], ["tiefling-f-druida", 0.45, 0.39],
+    ["tiefling-m-feiticeiro", 0.47, 0.36], ["tiefling-f-feiticeiro", 0.45, 0.40], ["tiefling-m-bruxo", 0.45, 0.37], ["tiefling-f-bruxo", 0.45, 0.39],
+    ["tiefling-m-engenheiro", 0.47, 0.34], ["tiefling-f-engenheiro", 0.46, 0.36], ["tiefling-m-invocador", 0.48, 0.36], ["tiefling-f-invocador", 0.47, 0.34],
   ],
   "Gnomo": [
-    ["gnomo-m-mago", 0.46, 0.42], ["gnomo-f-mago", 0.46, 0.44],
+    ["gnomo-m-guerreiro", 0.47, 0.40], ["gnomo-f-guerreiro", 0.44, 0.42], ["gnomo-m-mago", 0.46, 0.42], ["gnomo-f-mago", 0.46, 0.44],
+    ["gnomo-m-ladino", 0.44, 0.39], ["gnomo-f-ladino", 0.46, 0.38], ["gnomo-m-clerigo", 0.47, 0.40], ["gnomo-f-clerigo", 0.46, 0.38],
+    ["gnomo-m-cacador", 0.47, 0.40], ["gnomo-f-cacador", 0.46, 0.39], ["gnomo-m-bardo", 0.46, 0.43], ["gnomo-f-bardo", 0.46, 0.47],
+    ["gnomo-m-monge", 0.45, 0.41], ["gnomo-f-monge", 0.46, 0.42], ["gnomo-m-druida", 0.46, 0.41], ["gnomo-f-druida", 0.45, 0.43],
+    ["gnomo-m-feiticeiro", 0.46, 0.44], ["gnomo-f-feiticeiro", 0.47, 0.38], ["gnomo-m-bruxo", 0.47, 0.41], ["gnomo-f-bruxo", 0.45, 0.37],
+    ["gnomo-m-engenheiro", 0.47, 0.39], ["gnomo-f-engenheiro", 0.46, 0.39], ["gnomo-m-invocador", 0.46, 0.41], ["gnomo-f-invocador", 0.45, 0.40],
   ],
   "Meio-elfo": [
-    ["meio-elfo-m-clerigo", 0.46, 0.33], ["meio-elfo-f-clerigo", 0.46, 0.34],
+    ["meio-elfo-m-guerreiro", 0.45, 0.33], ["meio-elfo-f-guerreiro", 0.45, 0.38], ["meio-elfo-m-mago", 0.47, 0.32], ["meio-elfo-f-mago", 0.45, 0.39],
+    ["meio-elfo-m-ladino", 0.44, 0.39], ["meio-elfo-f-ladino", 0.43, 0.37], ["meio-elfo-m-clerigo", 0.46, 0.33], ["meio-elfo-f-clerigo", 0.46, 0.34],
+    ["meio-elfo-m-cacador", 0.47, 0.39], ["meio-elfo-f-cacador", 0.44, 0.34], ["meio-elfo-m-bardo", 0.44, 0.36], ["meio-elfo-f-bardo", 0.44, 0.34],
+    ["meio-elfo-m-monge", 0.47, 0.33], ["meio-elfo-f-monge", 0.46, 0.31], ["meio-elfo-m-druida", 0.47, 0.36], ["meio-elfo-f-druida", 0.47, 0.37],
+    ["meio-elfo-m-feiticeiro", 0.45, 0.34], ["meio-elfo-f-feiticeiro", 0.45, 0.33], ["meio-elfo-m-bruxo", 0.46, 0.37], ["meio-elfo-f-bruxo", 0.47, 0.31],
+    ["meio-elfo-m-engenheiro", 0.47, 0.38], ["meio-elfo-f-engenheiro", 0.46, 0.33], ["meio-elfo-m-invocador", 0.45, 0.33], ["meio-elfo-f-invocador", 0.46, 0.35],
   ],
   "Goliath": [
-    ["goliath-m-guerreiro", 0.46, 0.32], ["goliath-f-guerreiro", 0.45, 0.34],
+    ["goliath-m-guerreiro", 0.46, 0.32], ["goliath-f-guerreiro", 0.45, 0.34], ["goliath-m-mago", 0.46, 0.35], ["goliath-f-mago", 0.44, 0.37],
+    ["goliath-m-ladino", 0.46, 0.36], ["goliath-f-ladino", 0.46, 0.38], ["goliath-m-clerigo", 0.47, 0.31], ["goliath-f-clerigo", 0.47, 0.34],
+    ["goliath-m-cacador", 0.46, 0.28], ["goliath-f-cacador", 0.46, 0.35], ["goliath-m-bardo", 0.46, 0.37], ["goliath-f-bardo", 0.46, 0.38],
+    ["goliath-m-monge", 0.47, 0.34], ["goliath-f-monge", 0.46, 0.35], ["goliath-m-druida", 0.48, 0.35], ["goliath-f-druida", 0.46, 0.35],
+    ["goliath-m-feiticeiro", 0.45, 0.38], ["goliath-f-feiticeiro", 0.45, 0.31], ["goliath-m-bruxo", 0.44, 0.30], ["goliath-f-bruxo", 0.46, 0.31],
+    ["goliath-m-engenheiro", 0.47, 0.33], ["goliath-f-engenheiro", 0.45, 0.32], ["goliath-m-invocador", 0.48, 0.34], ["goliath-f-invocador", 0.45, 0.29],
   ],
 };
 

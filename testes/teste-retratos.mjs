@@ -4,14 +4,15 @@
    regra prova-se aqui. Esta suíte prova:
 
      1. o manifesto (`RETRATOS`): as 18 feras de CRIATURAS_FANTASIA e os
-        164 heróis pintados, cada chave com os nomes EXACTOS do código,
-        arquivos únicos, centros dentro do quadro; os 76 por pintar ausentes;
+        240 heróis pintados (164 a 12/10, as 76 restantes a 03/11), cada
+        chave com os nomes EXACTOS do código, arquivos únicos, centros dentro
+        do quadro; as 240 células raça × sexo × classe todas com rosto;
      2. `retratoDe`: gente pela classe (raça × sexo × classe, o sexo pela
         mesma conta do rosto desenhado), espécie pelo nome MAIS LONGO, por
         palavra inteira; pessoa sem classe nunca vira bicho; lixo → null;
         determinismo e imutabilidade;
      3. `recorteDoRetrato`: os três tamanhos pelos limiares da tabela, a
-        imagem cobre SEMPRE o disco (nenhum buraco), nas 182 entradas e nos
+        imagem cobre SEMPRE o disco (nenhum buraco), nas 258 entradas e nos
         tamanhos de hoje do jogo;
      4. R7: o Lobo Atroz luta com a ficha DELE (comum, 3), e nenhuma base do
         bestiário perde para um nome mais curto que ela contém;
@@ -41,18 +42,24 @@ sec("1. O MANIFESTO");
 {
   const feras = RETRATOS.filter((r) => r.chave.startsWith("especie:"));
   const gente = RETRATOS.filter((r) => r.chave.startsWith("gente:"));
-  t("182 entradas: 18 feras + 164 heróis (§11, §13)", RETRATOS.length === 182 && feras.length === 18 && gente.length === 164, `${RETRATOS.length}/${feras.length}/${gente.length}`);
+  /* MOVIDA (03/11): 182 → 258, 164 → 240 — as 76 por pintar entraram */
+  t("258 entradas: 18 feras + 240 heróis (§11, §13)", RETRATOS.length === 258 && feras.length === 18 && gente.length === 240, `${RETRATOS.length}/${feras.length}/${gente.length}`);
   t("as 18 feras são exactamente CRIATURAS_FANTASIA, na mesma ordem", J(feras.map((r) => r.chave.slice(8))) === J(CRIATURAS_FANTASIA.map((c) => c.nome)));
   const racas = new Set(RACAS.map((r) => r.nome)), classes = new Set(CLASSES.map((c) => c.nome));
   const tortas = gente.filter((r) => { const [raca, sexo, classe, v] = r.chave.slice(6).split("|"); return !racas.has(raca) || !["m", "f"].includes(sexo) || !classes.has(classe) || v !== "1"; });
   t("toda chave de gente usa os nomes exactos de RACAS e CLASSES, sexo m|f, variante 1", tortas.length === 0, J(tortas.slice(0, 3)));
-  t("chaves e arquivos únicos", new Set(RETRATOS.map((r) => r.chave)).size === 182 && new Set(RETRATOS.map((r) => r.arquivo)).size === 182);
+  t("chaves e arquivos únicos", new Set(RETRATOS.map((r) => r.chave)).size === 258 && new Set(RETRATOS.map((r) => r.arquivo)).size === 258);
   t("arquivos no padrão de §12 (minúsculas, sem acento, hífen, .webp)", RETRATOS.every((r) => /^\/retratos\/(especie\/[a-z-]+|gente\/[a-z-]+-[mf]-[a-z]+-\d+)\.webp$/.test(r.arquivo)), J(RETRATOS.find((r) => !/^\/retratos\/(especie\/[a-z-]+|gente\/[a-z-]+-[mf]-[a-z]+-\d+)\.webp$/.test(r.arquivo))));
   t("o Dragão Ancião vira dragao-anciao; o Meio-orc ladina vira meio-orc-f-ladino-1", RETRATOS.some((r) => r.arquivo === "/retratos/especie/dragao-anciao.webp") && RETRATOS.some((r) => r.chave === "gente:Meio-orc|f|Ladino|1" && r.arquivo === "/retratos/gente/meio-orc-f-ladino-1.webp"));
   t("cx e olhos dentro de (0, 1) em todas", RETRATOS.every((r) => r.cx > 0 && r.cx < 1 && r.olhos > 0 && r.olhos < 1));
   const porRaca = (n) => gente.filter((r) => r.chave.startsWith(`gente:${n}|`)).length;
-  t("Humano, Elfo, Anão, Halfling, Meio-orc e Draconato completos (24 cada)", ["Humano", "Elfo", "Anão", "Halfling", "Meio-orc", "Draconato"].every((n) => porRaca(n) === 24));
-  t("Tiefling 14, Gnomo 2, Meio-elfo 2, Goliath 2 (os 76 por pintar ausentes)", porRaca("Tiefling") === 14 && porRaca("Gnomo") === 2 && porRaca("Meio-elfo") === 2 && porRaca("Goliath") === 2);
+  /* MOVIDA (03/11): eram seis raças completas e quatro pela metade (Tiefling 14,
+     Gnomo 2, Meio-elfo 2, Goliath 2). Com as 76 pintadas, a intenção — cada raça
+     tem exactamente as células que a tabela promete, nem uma a mais — fica, e
+     agora são as dez com 24, e cada célula raça × sexo × classe uma só vez */
+  t("as dez raças completas (24 cada)", RACAS.every((r) => porRaca(r.nome) === 24), J(RACAS.map((r) => r.nome + ":" + porRaca(r.nome))));
+  const celulas = new Set(gente.map((r) => r.chave.slice(0, r.chave.lastIndexOf("|"))));
+  t("as 240 células raça × sexo × classe, cada uma com rosto", celulas.size === RACAS.length * 2 * CLASSES.length && RACAS.every((r) => ["m", "f"].every((x) => CLASSES.every((c) => celulas.has(`gente:${r.nome}|${x}|${c.nome}`)))));
   const semRosto = [];
   for (const r of RACAS) for (const s of ["m", "f"]) if (!gente.some((g) => g.chave.startsWith(`gente:${r.nome}|${s}|`))) semRosto.push(r.nome + s);
   t("todas as 20 raça × sexo têm ao menos um rosto (a volta 1)", semRosto.length === 0, J(semRosto));
@@ -64,10 +71,12 @@ sec("1. O MANIFESTO");
      com os números da medida. */
   t("os três de olhos fora dos 35–43 % estão como a medida os achou (Ogro 0,32 · Quimera 0,46 · Dragão Ancião 0,47)", ["Ogro:0.32", "Quimera:0.46", "Dragão Ancião:0.47"].every((p) => { const [n, o] = p.split(":"); const r = RETRATOS.find((x) => x.chave === "especie:" + n); return r && r.olhos === Number(o); }));
   /* a tabela é a medida: cada cx/olhos é o de retratos-medidos.json, e
-     nenhum valor estimado sobrou (12/10: 161 das 182 entradas mudaram) */
+     nenhum valor estimado sobrou (12/10: 161 das 182 entradas mudaram;
+     03/11: 74 das 76 novas diferiam da estimativa de §13) */
   const medidos = JSON.parse(readFileSync(new URL("../mente/figma/retratos-medidos.json", import.meta.url), "utf8"));
   const foraDaMedida = RETRATOS.filter((r) => { const a = r.arquivo.match(/\/retratos\/(especie|gente)\/([a-z0-9-]+)\.webp$/); const v = a && medidos[a[1] + "/" + a[2]]; return !v || v.cx !== r.cx || v.olhos !== r.olhos; });
-  t("as 182 entradas têm o cx e os olhos MEDIDOS (mente/figma/retratos-medidos.json)", RETRATOS.length === 182 && foraDaMedida.length === 0, J(foraDaMedida.slice(0, 3).map((r) => r.chave)));
+  /* MOVIDA (03/11): 182 → 258 entradas, todas medidas (75 pela malha, 1 à régua) */
+  t("as 258 entradas têm o cx e os olhos MEDIDOS (mente/figma/retratos-medidos.json)", RETRATOS.length === 258 && foraDaMedida.length === 0, J(foraDaMedida.slice(0, 3).map((r) => r.chave)));
   t("o manifesto é congelado (ninguém muda a tabela em tempo de jogo)", Object.isFrozen(RETRATOS) && Object.isFrozen(RETRATOS[0]));
 }
 
@@ -83,8 +92,11 @@ sec("2. retratoDe — QUEM RECEBE QUAL PINTURA");
   t("quem tem classe é gente: Anã clériga → anao-f-clerigo-1", ch({ nome: "Brunhilde", classe: "Clérigo", raca: "Anão", genero: "mulher" }) === "gente:Anão|f|Clérigo|1");
   t("…e o nome de bicho não manda em quem tem classe (Lobo, o Elfo Ladino)", ch({ nome: "Lobo", classe: "Ladino", raca: "Elfo", genero: "homem" }) === "gente:Elfo|m|Ladino|1");
   t("raça e classe sem acento ou em minúsculas acham a célula", ch({ classe: "clerigo", raca: "anao", genero: "mulher" }) === "gente:Anão|f|Clérigo|1");
-  t("os 76 por pintar → null sem estourar (Goliath Mago, Gnomo Bardo, Tiefling f Monge)", ch({ classe: "Mago", raca: "Goliath", genero: "homem" }) === null && ch({ classe: "Bardo", raca: "Gnomo", genero: "mulher" }) === null && ch({ classe: "Monge", raca: "Tiefling", genero: "mulher" }) === null);
-  t("…e o par pintado da mesma raça responde (Tiefling m Monge)", ch({ classe: "Monge", raca: "Tiefling", genero: "homem" }) === "gente:Tiefling|m|Monge|1");
+  /* MOVIDA (03/11): os três eram a prova de que célula sem pintura dá null sem
+     estourar; foram pintados, e agora respondem com a SUA célula. O null de quem
+     não tem célula continua provado logo abaixo (classe sem raça, Terrano) */
+  t("as que eram por pintar respondem com a sua célula (Goliath Mago, Gnomo Bardo, Tiefling f Monge)", ch({ classe: "Mago", raca: "Goliath", genero: "homem" }) === "gente:Goliath|m|Mago|1" && ch({ classe: "Bardo", raca: "Gnomo", genero: "mulher" }) === "gente:Gnomo|f|Bardo|1" && ch({ classe: "Monge", raca: "Tiefling", genero: "mulher" }) === "gente:Tiefling|f|Monge|1");
+  t("…e o par que já era pintado continua (Tiefling m Monge)", ch({ classe: "Monge", raca: "Tiefling", genero: "homem" }) === "gente:Tiefling|m|Monge|1");
   t("classe sem raça, ou raça de outro género (Terrano) → null, nunca o rosto de outra coisa", ch({ classe: "Mago" }) === null && ch({ classe: "Mago", raca: "Terrano" }) === null);
   t("pessoa sem classe nem matriz de ofício → null, mesmo com nome de bicho (o Velho Lobo taverneiro)", ch({ nome: "Velho Lobo", papel: "taverneiro" }) === null && ch({ nome: "Lobo", oficio: "taverna", raca: "Humano" }) === null && SINAIS_DE_GENTE.includes("papel"));
   t("lixo → null: null, undefined, {}, número, string, mundo null", [null, undefined, {}, 3, "Lobo", { nome: null }, { nome: "" }].every((e) => retratoDe(e, null) === null) && ch({ nome: "Troll" }, null) === "especie:Troll");
@@ -123,7 +135,7 @@ sec("3. recorteDoRetrato — A CONTA DO DISCO");
     const q = recorteDoRetrato(r, lado);
     if (!q || q.esquerda > 1e-9 || q.topo > 1e-9 || q.esquerda + q.largura < lado - 1e-9 || q.topo + q.largura < lado - 1e-9) buracos.push(`${r.chave}@${lado}`);
   }
-  t("a imagem cobre o disco inteiro nas 182 entradas × 13 tamanhos (nenhum buraco)", buracos.length === 0, J(buracos.slice(0, 4)));
+  t("a imagem cobre o disco inteiro nas 258 entradas × 13 tamanhos (nenhum buraco)", buracos.length === 0, J(buracos.slice(0, 4)));
   t("lixo → null: entrada null, sem cx, lado 0/negativo/NaN/null", [recorteDoRetrato(null, 32), recorteDoRetrato({}, 32), recorteDoRetrato(lobo, 0), recorteDoRetrato(lobo, -4), recorteDoRetrato(lobo, NaN), recorteDoRetrato(lobo, null)].every((x) => x === null));
   t("o chip mostra o olhar: o centro do disco cai a menos de 0,1 do rosto (cx, olhos+0,06)", (() => { const q = recorteDoRetrato(lobo, 32), s = 32 / 0.40, xf = (lobo.cx + 0.5) / 2 - 0.44, yf = 0.03; const cx = xf + (16 - q.esquerda) / s, cy = yf + (16 - q.topo) / s; return Math.abs(cx - lobo.cx) < 0.1 && Math.abs(cy - (lobo.olhos + 0.06)) < 0.1; })());
 }

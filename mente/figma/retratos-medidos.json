@@ -1,5 +1,5 @@
 {
- "_como": "cx e olhos de cada matriz 1024, em fração do lado. origem medido = Face Landmarker do MediaPipe (olhos = média da altura das duas íris, pontos 468/473; cx = meio da caixa da malha do rosto), na ferramenta mente/figma/corte/cortar.html; origem regua = matriz onde a malha não achou rosto (13 feras, os 24 Draconatos, o Anão Invocador), lida à mão numa folha ampliada com régua de 0,02 (olhos medidos; cx do manifesto salvo onde a cabeça mostrava outro centro). Os arquivos public/retratos/*.webp foram cortados com ESTES cx: a tabela do jogo tem de os ter iguais, ou o chip sai torto. Chave: <tipo>/<arquivo sem .webp>.",
+ "_como": "cx e olhos de cada matriz 1024, em fração do lado. origem medido = Face Landmarker do MediaPipe (olhos = média da altura das duas íris, pontos 468/473; cx = meio da caixa da malha do rosto), na ferramenta mente/figma/corte/cortar.html; origem regua = matriz onde a malha não achou rosto (13 feras, os 24 Draconatos, o Anão Invocador; a 03/11, o Goliath Bardo, de chapéu e barba branca), lida à mão numa folha ampliada com régua de 0,02 (olhos medidos; cx do manifesto salvo onde a cabeça mostrava outro centro). Os arquivos public/retratos/*.webp foram cortados com ESTES cx: a tabela do jogo tem de os ter iguais, ou o chip sai torto. Chave: <tipo>/<arquivo sem .webp>. 182 matrizes a 12/10 (144 medidas, 38 à régua); as 76 de 03/11 (75 medidas, 1 à régua) somam 258.",
  "especie/bandido": {
   "cx": 0.44,
   "olhos": 0.39,
@@ -450,9 +450,114 @@
   "olhos": 0.34,
   "origem": "medido"
  },
+ "gente/gnomo-f-bardo-1": {
+  "cx": 0.46,
+  "olhos": 0.47,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-bruxo-1": {
+  "cx": 0.45,
+  "olhos": 0.37,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-cacador-1": {
+  "cx": 0.46,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-clerigo-1": {
+  "cx": 0.46,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-druida-1": {
+  "cx": 0.45,
+  "olhos": 0.43,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-engenheiro-1": {
+  "cx": 0.46,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-feiticeiro-1": {
+  "cx": 0.47,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-guerreiro-1": {
+  "cx": 0.44,
+  "olhos": 0.42,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-invocador-1": {
+  "cx": 0.45,
+  "olhos": 0.4,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-ladino-1": {
+  "cx": 0.46,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
  "gente/gnomo-f-mago-1": {
   "cx": 0.46,
   "olhos": 0.44,
+  "origem": "medido"
+ },
+ "gente/gnomo-f-monge-1": {
+  "cx": 0.46,
+  "olhos": 0.42,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-bardo-1": {
+  "cx": 0.46,
+  "olhos": 0.43,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-bruxo-1": {
+  "cx": 0.47,
+  "olhos": 0.41,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-cacador-1": {
+  "cx": 0.47,
+  "olhos": 0.4,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-clerigo-1": {
+  "cx": 0.47,
+  "olhos": 0.4,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-druida-1": {
+  "cx": 0.46,
+  "olhos": 0.41,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-engenheiro-1": {
+  "cx": 0.47,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-feiticeiro-1": {
+  "cx": 0.46,
+  "olhos": 0.44,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-guerreiro-1": {
+  "cx": 0.47,
+  "olhos": 0.4,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-invocador-1": {
+  "cx": 0.46,
+  "olhos": 0.41,
+  "origem": "medido"
+ },
+ "gente/gnomo-m-ladino-1": {
+  "cx": 0.44,
+  "olhos": 0.39,
   "origem": "medido"
  },
  "gente/gnomo-m-mago-1": {
@@ -460,14 +565,129 @@
   "olhos": 0.42,
   "origem": "medido"
  },
+ "gente/gnomo-m-monge-1": {
+  "cx": 0.45,
+  "olhos": 0.41,
+  "origem": "medido"
+ },
+ "gente/goliath-f-bardo-1": {
+  "cx": 0.46,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/goliath-f-bruxo-1": {
+  "cx": 0.46,
+  "olhos": 0.31,
+  "origem": "medido"
+ },
+ "gente/goliath-f-cacador-1": {
+  "cx": 0.46,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
+ "gente/goliath-f-clerigo-1": {
+  "cx": 0.47,
+  "olhos": 0.34,
+  "origem": "medido"
+ },
+ "gente/goliath-f-druida-1": {
+  "cx": 0.46,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
+ "gente/goliath-f-engenheiro-1": {
+  "cx": 0.45,
+  "olhos": 0.32,
+  "origem": "medido"
+ },
+ "gente/goliath-f-feiticeiro-1": {
+  "cx": 0.45,
+  "olhos": 0.31,
+  "origem": "medido"
+ },
  "gente/goliath-f-guerreiro-1": {
   "cx": 0.45,
   "olhos": 0.34,
   "origem": "medido"
  },
+ "gente/goliath-f-invocador-1": {
+  "cx": 0.45,
+  "olhos": 0.29,
+  "origem": "medido"
+ },
+ "gente/goliath-f-ladino-1": {
+  "cx": 0.46,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/goliath-f-mago-1": {
+  "cx": 0.44,
+  "olhos": 0.37,
+  "origem": "medido"
+ },
+ "gente/goliath-f-monge-1": {
+  "cx": 0.46,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
+ "gente/goliath-m-bardo-1": {
+  "cx": 0.46,
+  "olhos": 0.37,
+  "origem": "regua"
+ },
+ "gente/goliath-m-bruxo-1": {
+  "cx": 0.44,
+  "olhos": 0.3,
+  "origem": "medido"
+ },
+ "gente/goliath-m-cacador-1": {
+  "cx": 0.46,
+  "olhos": 0.28,
+  "origem": "medido"
+ },
+ "gente/goliath-m-clerigo-1": {
+  "cx": 0.47,
+  "olhos": 0.31,
+  "origem": "medido"
+ },
+ "gente/goliath-m-druida-1": {
+  "cx": 0.48,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
+ "gente/goliath-m-engenheiro-1": {
+  "cx": 0.47,
+  "olhos": 0.33,
+  "origem": "medido"
+ },
+ "gente/goliath-m-feiticeiro-1": {
+  "cx": 0.45,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
  "gente/goliath-m-guerreiro-1": {
   "cx": 0.46,
   "olhos": 0.32,
+  "origem": "medido"
+ },
+ "gente/goliath-m-invocador-1": {
+  "cx": 0.48,
+  "olhos": 0.34,
+  "origem": "medido"
+ },
+ "gente/goliath-m-ladino-1": {
+  "cx": 0.46,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
+ "gente/goliath-m-mago-1": {
+  "cx": 0.46,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
+ "gente/goliath-m-monge-1": {
+  "cx": 0.47,
+  "olhos": 0.34,
   "origem": "medido"
  },
  "gente/halfling-f-bardo-1": {
@@ -710,13 +930,123 @@
   "olhos": 0.33,
   "origem": "medido"
  },
+ "gente/meio-elfo-f-bardo-1": {
+  "cx": 0.44,
+  "olhos": 0.34,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-bruxo-1": {
+  "cx": 0.47,
+  "olhos": 0.31,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-cacador-1": {
+  "cx": 0.44,
+  "olhos": 0.34,
+  "origem": "medido"
+ },
  "gente/meio-elfo-f-clerigo-1": {
   "cx": 0.46,
   "olhos": 0.34,
   "origem": "medido"
  },
+ "gente/meio-elfo-f-druida-1": {
+  "cx": 0.47,
+  "olhos": 0.37,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-engenheiro-1": {
+  "cx": 0.46,
+  "olhos": 0.33,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-feiticeiro-1": {
+  "cx": 0.45,
+  "olhos": 0.33,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-guerreiro-1": {
+  "cx": 0.45,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-invocador-1": {
+  "cx": 0.46,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-ladino-1": {
+  "cx": 0.43,
+  "olhos": 0.37,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-mago-1": {
+  "cx": 0.45,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-f-monge-1": {
+  "cx": 0.46,
+  "olhos": 0.31,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-bardo-1": {
+  "cx": 0.44,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-bruxo-1": {
+  "cx": 0.46,
+  "olhos": 0.37,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-cacador-1": {
+  "cx": 0.47,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
  "gente/meio-elfo-m-clerigo-1": {
   "cx": 0.46,
+  "olhos": 0.33,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-druida-1": {
+  "cx": 0.47,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-engenheiro-1": {
+  "cx": 0.47,
+  "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-feiticeiro-1": {
+  "cx": 0.45,
+  "olhos": 0.34,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-guerreiro-1": {
+  "cx": 0.45,
+  "olhos": 0.33,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-invocador-1": {
+  "cx": 0.45,
+  "olhos": 0.33,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-ladino-1": {
+  "cx": 0.44,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-mago-1": {
+  "cx": 0.47,
+  "olhos": 0.32,
+  "origem": "medido"
+ },
+ "gente/meio-elfo-m-monge-1": {
+  "cx": 0.47,
   "olhos": 0.33,
   "origem": "medido"
  },
@@ -860,9 +1190,29 @@
   "olhos": 0.34,
   "origem": "medido"
  },
+ "gente/tiefling-f-druida-1": {
+  "cx": 0.45,
+  "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/tiefling-f-engenheiro-1": {
+  "cx": 0.46,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
+ "gente/tiefling-f-feiticeiro-1": {
+  "cx": 0.45,
+  "olhos": 0.4,
+  "origem": "medido"
+ },
  "gente/tiefling-f-guerreiro-1": {
   "cx": 0.47,
   "olhos": 0.39,
+  "origem": "medido"
+ },
+ "gente/tiefling-f-invocador-1": {
+  "cx": 0.47,
+  "olhos": 0.34,
   "origem": "medido"
  },
  "gente/tiefling-f-ladino-1": {
@@ -875,9 +1225,19 @@
   "olhos": 0.41,
   "origem": "medido"
  },
+ "gente/tiefling-f-monge-1": {
+  "cx": 0.46,
+  "olhos": 0.35,
+  "origem": "medido"
+ },
  "gente/tiefling-m-bardo-1": {
   "cx": 0.46,
   "olhos": 0.38,
+  "origem": "medido"
+ },
+ "gente/tiefling-m-bruxo-1": {
+  "cx": 0.45,
+  "olhos": 0.37,
   "origem": "medido"
  },
  "gente/tiefling-m-cacador-1": {
@@ -890,8 +1250,28 @@
   "olhos": 0.34,
   "origem": "medido"
  },
+ "gente/tiefling-m-druida-1": {
+  "cx": 0.48,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
+ "gente/tiefling-m-engenheiro-1": {
+  "cx": 0.47,
+  "olhos": 0.34,
+  "origem": "medido"
+ },
+ "gente/tiefling-m-feiticeiro-1": {
+  "cx": 0.47,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
  "gente/tiefling-m-guerreiro-1": {
   "cx": 0.46,
+  "olhos": 0.36,
+  "origem": "medido"
+ },
+ "gente/tiefling-m-invocador-1": {
+  "cx": 0.48,
   "olhos": 0.36,
   "origem": "medido"
  },

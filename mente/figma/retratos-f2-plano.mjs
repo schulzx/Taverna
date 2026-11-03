@@ -79,7 +79,7 @@ const celula = (ri, raca, sexo, ci, classe) => {
   if (idade === "young" && traco.startsWith("old,")) traco = "prematurely white hair";
   if (idade === "young" && traco === "young and wary") traco = "a wary look";
   if (r === "Draconato") traco = traco.replace("in the hair", "in the frills").replace("streak in the hair", "streak in the frills").replace("freckles across the cheeks", "speckled scales across the cheeks").replace("weathered sun-lined skin", "weathered sun-worn scales").replace("a notched ear", "a notched frill").replace("old, with white hair", "pale age-bleached scales on the snout").replace("crooked once-broken nose", "crooked once-broken snout");
-  if (r === "Goliath" && s === "m") traco = traco.replace("beads braided into the hair", "beads strung from one ear").replace("a grey streak in the hair", "a grey-flecked brow");
+  if (r === "Goliath" && s === "m") traco = traco.replace("beads braided into the hair", "beads strung from one ear").replace("a grey streak in the hair", "a grey-flecked brow").replace("old, with white hair", "old, with a white beard");
   const sujeito = `${idade ? idade + " " : ""}${quem}, ${CLASSE[c]}, ${traco}`;
   const chave = `${r}|${s}|${c}`;
   const arquivo = `${semAcento(r)}-${s}-${semAcento(c)}-1`;

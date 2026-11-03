@@ -11902,11 +11902,12 @@ da matriz. Contorno âmbar = a classe típica da raça (a volta 1). Célula escu
 com «por pintar» = ainda sem matriz. A linha `Estado` (`236:6137`) diz o
 contador.
 
-**O feito: 164 de 240** — 158 novas + 6 da amostra de 11/10 reaproveitadas (h1
-`humano-f-guerreiro`, h2 `elfo-m-mago`, h3 `anao-f-clerigo`, h4
-`meio-orc-m-ladino`, h5 `tiefling-f-bruxo`, h6 `draconato-m-cacador`, com o
-`cx`/`olhos` do *ledger* de 11/10). **Faltam 76**, e são exactamente as 4 raças
-do fim da volta 2: Tiefling 10, Gnomo 22, Meio-elfo 22, Goliath 22.
+**O feito: 240 de 240** — 234 novas (158 a 12/10, 76 a 03/11) + 6 da amostra de
+11/10 reaproveitadas (h1 `humano-f-guerreiro`, h2 `elfo-m-mago`, h3
+`anao-f-clerigo`, h4 `meio-orc-m-ladino`, h5 `tiefling-f-bruxo`, h6
+`draconato-m-cacador`, com o `cx`/`olhos` do *ledger* de 11/10). **Não falta
+nenhuma**: as 76 de 03/11 eram as 4 raças do fim da volta 2 (Tiefling 10, Gnomo
+22, Meio-elfo 22, Goliath 22).
 
 **A ordem foi a de a mesa ficar usável se o crédito acabasse:** volta 1 = a
 classe típica de cada raça × sexo (20; não há dado de escolha no jogo, então
@@ -11950,19 +11951,20 @@ traje — o que §4 pede.
 - **Halfling** (24/24): `halfling-m-guerreiro` 0,45·0,39 · `halfling-f-guerreiro` 0,43·0,39 · `halfling-m-mago` 0,45·0,40 · `halfling-f-mago` 0,45·0,41 · `halfling-m-ladino` 0,42·0,41 · `halfling-f-ladino` 0,44·0,41 · `halfling-m-clerigo` 0,43·0,40 · `halfling-f-clerigo` 0,43·0,36 · `halfling-m-cacador` 0,45·0,40 · `halfling-f-cacador` 0,43·0,40 · `halfling-m-bardo` 0,45·0,41 · `halfling-f-bardo` 0,43·0,40 · `halfling-m-monge` 0,45·0,38 · `halfling-f-monge` 0,43·0,37 · `halfling-m-druida` 0,47·0,37 · `halfling-f-druida` 0,45·0,39 · `halfling-m-feiticeiro` 0,45·0,39 · `halfling-f-feiticeiro` 0,43·0,37 · `halfling-m-bruxo` 0,45·0,38 · `halfling-f-bruxo` 0,43·0,40 · `halfling-m-engenheiro` 0,45·0,37 · `halfling-f-engenheiro` 0,43·0,40 · `halfling-m-invocador` 0,45·0,38 · `halfling-f-invocador` 0,47·0,39
 - **Meio-orc** (24/24): `meio-orc-m-guerreiro` 0,41·0,33 · `meio-orc-f-guerreiro` 0,43·0,35 · `meio-orc-m-mago` 0,45·0,38 · `meio-orc-f-mago` 0,45·0,37 · `meio-orc-m-ladino` 0,43·0,38 (h4) · `meio-orc-f-ladino` 0,43·0,39 · `meio-orc-m-clerigo` 0,45·0,33 · `meio-orc-f-clerigo` 0,43·0,35 · `meio-orc-m-cacador` 0,43·0,34 · `meio-orc-f-cacador` 0,43·0,36 · `meio-orc-m-bardo` 0,45·0,38 · `meio-orc-f-bardo` 0,45·0,39 · `meio-orc-m-monge` 0,45·0,36 · `meio-orc-f-monge` 0,43·0,35 · `meio-orc-m-druida` 0,45·0,35 · `meio-orc-f-druida` 0,43·0,37 · `meio-orc-m-feiticeiro` 0,45·0,35 · `meio-orc-f-feiticeiro` 0,43·0,35 · `meio-orc-m-bruxo` 0,45·0,35 · `meio-orc-f-bruxo` 0,43·0,36 · `meio-orc-m-engenheiro` 0,45·0,35 · `meio-orc-f-engenheiro` 0,43·0,36 · `meio-orc-m-invocador` 0,45·0,35 · `meio-orc-f-invocador` 0,45·0,35
 - **Draconato** (24/24): `draconato-m-guerreiro` 0,40·0,29 · `draconato-f-guerreiro` 0,40·0,33 · `draconato-m-mago` 0,43·0,35 · `draconato-f-mago` 0,42·0,31 · `draconato-m-ladino` 0,42·0,33 · `draconato-f-ladino` 0,42·0,33 · `draconato-m-clerigo` 0,42·0,28 · `draconato-f-clerigo` 0,42·0,32 · `draconato-m-cacador` 0,45·0,35 (h6) · `draconato-f-cacador` 0,42·0,31 · `draconato-m-bardo` 0,42·0,34 · `draconato-f-bardo` 0,45·0,35 · `draconato-m-monge` 0,43·0,32 · `draconato-f-monge` 0,43·0,30 · `draconato-m-druida` 0,42·0,33 · `draconato-f-druida` 0,42·0,31 · `draconato-m-feiticeiro` 0,42·0,27 · `draconato-f-feiticeiro` 0,43·0,32 · `draconato-m-bruxo` 0,42·0,31 · `draconato-f-bruxo` 0,42·0,29 · `draconato-m-engenheiro` 0,42·0,30 · `draconato-f-engenheiro` 0,42·0,27 · `draconato-m-invocador` 0,45·0,28 · `draconato-f-invocador` 0,42·0,31
-- **Tiefling** (14/24): `tiefling-m-guerreiro` 0,45·0,35 · `tiefling-f-guerreiro` 0,45·0,35 · `tiefling-m-mago` 0,43·0,39 · `tiefling-f-mago` 0,43·0,39 · `tiefling-m-ladino` 0,45·0,39 · `tiefling-f-ladino` 0,43·0,38 · `tiefling-m-clerigo` 0,45·0,34 · `tiefling-f-clerigo` 0,45·0,34 · `tiefling-m-cacador` 0,43·0,35 · `tiefling-f-cacador` 0,45·0,35 · `tiefling-m-bardo` 0,43·0,36 · `tiefling-f-bardo` 0,43·0,36 · `tiefling-m-monge` 0,43·0,38 · `tiefling-f-bruxo` 0,41·0,39 (h5) — **falta:** f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
-- **Gnomo** (2/24): `gnomo-m-mago` 0,44·0,41 · `gnomo-f-mago` 0,44·0,42 — **falta:** m Guerreiro, f Guerreiro, m Ladino, f Ladino, m Clérigo, f Clérigo, m Caçador, f Caçador, m Bardo, f Bardo, m Monge, f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, f Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
-- **Meio-elfo** (2/24): `meio-elfo-m-clerigo` 0,46·0,35 · `meio-elfo-f-clerigo` 0,45·0,36 — **falta:** m Guerreiro, f Guerreiro, m Mago, f Mago, m Ladino, f Ladino, m Caçador, f Caçador, m Bardo, f Bardo, m Monge, f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, f Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
-- **Goliath** (2/24): `goliath-m-guerreiro` 0,45·0,36 · `goliath-f-guerreiro` 0,43·0,33 — **falta:** m Mago, f Mago, m Ladino, f Ladino, m Clérigo, f Clérigo, m Caçador, f Caçador, m Bardo, f Bardo, m Monge, f Monge, m Druida, f Druida, m Feiticeiro, f Feiticeiro, m Bruxo, f Bruxo, m Engenheiro, f Engenheiro, m Invocador, f Invocador
+- **Tiefling** (24/24): `tiefling-m-guerreiro` 0,45·0,35 · `tiefling-f-guerreiro` 0,45·0,35 · `tiefling-m-mago` 0,43·0,39 · `tiefling-f-mago` 0,43·0,39 · `tiefling-m-ladino` 0,45·0,39 · `tiefling-f-ladino` 0,43·0,38 · `tiefling-m-clerigo` 0,45·0,34 · `tiefling-f-clerigo` 0,45·0,34 · `tiefling-m-cacador` 0,43·0,35 · `tiefling-f-cacador` 0,45·0,35 · `tiefling-m-bardo` 0,43·0,36 · `tiefling-f-bardo` 0,43·0,36 · `tiefling-m-monge` 0,43·0,38 · `tiefling-f-monge` 0,42·0,34 · `tiefling-m-druida` 0,43·0,38 · `tiefling-f-druida` 0,42·0,39 · `tiefling-m-feiticeiro` 0,44·0,36 · `tiefling-f-feiticeiro` 0,42·0,40 · `tiefling-m-bruxo` 0,42·0,35 · `tiefling-f-bruxo` 0,41·0,39 (h5) · `tiefling-m-engenheiro` 0,44·0,34 · `tiefling-f-engenheiro` 0,44·0,36 · `tiefling-m-invocador` 0,44·0,35 · `tiefling-f-invocador` 0,44·0,34
+- **Gnomo** (24/24): `gnomo-m-guerreiro` 0,45·0,39 · `gnomo-f-guerreiro` 0,41·0,40 · `gnomo-m-mago` 0,44·0,41 · `gnomo-f-mago` 0,44·0,42 · `gnomo-m-ladino` 0,43·0,39 · `gnomo-f-ladino` 0,43·0,39 · `gnomo-m-clerigo` 0,44·0,39 · `gnomo-f-clerigo` 0,42·0,39 · `gnomo-m-cacador` 0,44·0,39 · `gnomo-f-cacador` 0,42·0,39 · `gnomo-m-bardo` 0,43·0,41 · `gnomo-f-bardo` 0,45·0,46 · `gnomo-m-monge` 0,44·0,40 · `gnomo-f-monge` 0,43·0,41 · `gnomo-m-druida` 0,45·0,41 · `gnomo-f-druida` 0,44·0,43 · `gnomo-m-feiticeiro` 0,45·0,42 · `gnomo-f-feiticeiro` 0,43·0,39 · `gnomo-m-bruxo` 0,43·0,39 · `gnomo-f-bruxo` 0,41·0,36 · `gnomo-m-engenheiro` 0,45·0,39 · `gnomo-f-engenheiro` 0,43·0,39 · `gnomo-m-invocador` 0,45·0,40 · `gnomo-f-invocador` 0,43·0,39
+- **Meio-elfo** (24/24): `meio-elfo-m-guerreiro` 0,44·0,36 · `meio-elfo-f-guerreiro` 0,43·0,36 · `meio-elfo-m-mago` 0,44·0,33 · `meio-elfo-f-mago` 0,44·0,38 · `meio-elfo-m-ladino` 0,44·0,39 · `meio-elfo-f-ladino` 0,42·0,36 · `meio-elfo-m-clerigo` 0,46·0,35 · `meio-elfo-f-clerigo` 0,45·0,36 · `meio-elfo-m-cacador` 0,45·0,38 · `meio-elfo-f-cacador` 0,42·0,33 · `meio-elfo-m-bardo` 0,43·0,37 · `meio-elfo-f-bardo` 0,41·0,35 · `meio-elfo-m-monge` 0,45·0,36 · `meio-elfo-f-monge` 0,44·0,33 · `meio-elfo-m-druida` 0,45·0,38 · `meio-elfo-f-druida` 0,45·0,39 · `meio-elfo-m-feiticeiro` 0,44·0,34 · `meio-elfo-f-feiticeiro` 0,44·0,35 · `meio-elfo-m-bruxo` 0,44·0,34 · `meio-elfo-f-bruxo` 0,43·0,34 · `meio-elfo-m-engenheiro` 0,44·0,39 · `meio-elfo-f-engenheiro` 0,44·0,33 · `meio-elfo-m-invocador` 0,44·0,33 · `meio-elfo-f-invocador` 0,45·0,36
+- **Goliath** (24/24): `goliath-m-guerreiro` 0,45·0,36 · `goliath-f-guerreiro` 0,43·0,33 · `goliath-m-mago` 0,45·0,36 · `goliath-f-mago` 0,43·0,39 · `goliath-m-ladino` 0,44·0,36 · `goliath-f-ladino` 0,43·0,37 · `goliath-m-clerigo` 0,46·0,33 · `goliath-f-clerigo` 0,46·0,34 · `goliath-m-cacador` 0,46·0,31 · `goliath-f-cacador` 0,44·0,36 · `goliath-m-bardo` 0,45·0,39 · `goliath-f-bardo` 0,43·0,41 · `goliath-m-monge` 0,45·0,36 · `goliath-f-monge` 0,45·0,35 · `goliath-m-druida` 0,46·0,39 · `goliath-f-druida` 0,44·0,38 · `goliath-m-feiticeiro` 0,44·0,38 · `goliath-f-feiticeiro` 0,43·0,37 · `goliath-m-bruxo` 0,44·0,34 · `goliath-f-bruxo` 0,44·0,34 · `goliath-m-engenheiro` 0,46·0,33 · `goliath-f-engenheiro` 0,46·0,31 · `goliath-m-invocador` 0,46·0,35 · `goliath-f-invocador` 0,44·0,34
 
-**Para terminar na renovação:** 76 chamadas, os sujeitos já escritos (`mente/figma/retratos-f2-plano.mjs`, a partir de `tiefling-f-monge`; o gerador já faz sozinho as trocas que nesta sessão se fizeram à mão — o «jovem … velho», o cabelo do Draconato e do Goliath careca); a ordem continua a da volta 2. **Peso:** médio de design, como §9 — e custa créditos, que é da pessoa.
+**O que se fez na renovação (03/11, `desenho`):** a pessoa liberou os créditos (*"os créditos do Figma já devem estar de volta, faça as imagens restantes"*) e as 76 saíram numa sessão, na ordem da volta 2, a partir de `tiefling-f-monge`. **78 chamadas** a `gemini-3.1-flash-image` (nó de destino = a própria matriz da grelha, que a ferramenta preenche sem redimensionar): **76 aproveitadas**, **1 erro** do servidor (520, em `meio-elfo-m-guerreiro`; a segunda tentativa saiu), **1 refeita** — `goliath-f-monge` saiu à primeira de pele castanha humana, a raça não se lia; a segunda tem a pele de pedra e as manchas. **Nenhuma recusa** por limite de uso. O enquadramento das 76 caiu dentro à primeira, como o das 158: olhos com **mediana 0,37** (0,31–0,46; 20 das 76 fora dos 35–43 %), o Goliath alto outra vez (0,31 no Caçador m e no Engenheiro f) e o Gnomo baixo (0,46 na Bardo f, o chapéu empurra a cabeça para baixo). `cx`·`olhos` estimados à mão na miniatura de 256 px, como os de 12/10 — a ferramenta de corte mede e corrige. **Duas saídas do plano, onde ele se contradizia:** `meio-elfo-m-feiticeiro` (*seasoned … young and wary* → *a wary look*) e `goliath-m-bardo` (*bald … old, with white hair* → *old, with a white beard*); a segunda entrou no gerador (só toca essa célula), a primeira não — a mesma regra mudaria o texto de `tiefling-m-bardo`, já pintado a 12/10 com a contradição. As 76 matrizes estão em `mente/figma/matrizes/<arquivo>.png` (1024, PNG), ao lado das 182, onde `corte/lista.mjs` as acha; cada uma tem o seu chip 32 recortado na grelha, e a linha `Estado` (`236:6137`) diz 240 de 240. **Falta só o código:** o corte para WebP e as 76 entradas novas em `RETRATOS` (§12/§14), por outra mão, a partir deste manifesto. *(Feito a 03/11 pelo `aprendiz`: §14.)*
 
-### 14 · A troca feita (`aprendiz`, 12/10)
+### 14 · A troca feita (`aprendiz`, 12/10 e 03/11)
 
-**No jogo: 182 pinturas** (18 feras + 164 heróis), `public/retratos/especie/*.webp` e
+**No jogo: 258 pinturas** (18 feras + **240 heróis**, a F2 inteira), `public/retratos/especie/*.webp` e
 `public/retratos/gente/*-1.webp`, WebP 320 × 320 q 0,75 cortados pelo contrato de §12 —
-**1 641 KB no todo, 9,0 KB de média (5,0–13,4)**; §6 previa 8,4. Sob demanda: o jogo só
-pede os rostos que desenha.
+**2 363 KB no todo, 9,2 KB de média (5,1–14,3)**; §6 previa 8,4. As 182 de 12/10 somavam
+1 641 KB (9,0 de média); as **76 de 03/11 somam 709 KB, 9,3 de média (6,3–14,3)**. Sob
+demanda: o jogo só pede os rostos que desenha.
 
 **A ferramenta de corte** é `mente/figma/corte/` (fora de `src/`, sem dependência no
 `package.json`): `lista.mjs` lê os manifestos de §11 e §13 e acha as matrizes 1024 no
@@ -11983,9 +11985,28 @@ Draconato Clérigo tinha os olhos a 0,28 e estão a 0,26; o Anão Invocador 0,30
 o `backend` puser os medidos em `RETRATOS`, corta-se de novo (um botão) e a catraca
 confirma.
 
+**As 76 de 03/11 (`aprendiz`)** seguiram a ordem certa desde o início: medir → a tabela →
+cortar. **75 medidas pela malha, 1 à régua** — `goliath-m-bardo`, onde o chapéu e a barba
+branca esconderam o rosto do Face Landmarker (lido 0,46·0,37 na folha ampliada; o
+manifesto dizia 0,45·0,39). Os 258 valores estão em `retratos-medidos.json` e em
+`RETRATOS`; o manifesto de §13 fica como foi escrito — é o registo da estimativa, e a
+lista só o usa onde a tabela não tem entrada. A estimativa errou **0,021 de média no
+`cx` e 0,013 nos olhos** (máx. 0,060), mais que a de 12/10, e **para o mesmo lado**: o
+`cx` à mão saiu baixo em 71 das 75 medidas (o rosto está ~0,02 mais à direita do que a
+miniatura de 256 parecia — Tiefling 0,42–0,44 → 0,45–0,48). Os olhos que mais andaram
+foram os do Goliath, que já era o alto: `goliath-f-feiticeiro` 0,37 → **0,31**,
+`goliath-f-invocador` 0,34 → **0,29**, `goliath-m-bruxo` 0,34 → 0,30, `goliath-m-druida`
+0,39 → 0,35, `goliath-m-cacador` 0,31 → **0,28**; e o `meio-elfo-f-bruxo` 0,34 → 0,31.
+A folha (cruz âmbar = manifesto, verde = medida) pôs a verde no olhar nas 76, conferidas
+uma a uma (as folhas ficam em `mente/figma/corte/folhas/`, fora do repositório).
+**A ferramenta ganhou uma coisa:** `servir.cjs` passou a
+**somar** em `cortados.json` em vez de o reescrever — o corte de 03/11 foi parcial (só as
+76 na `lista.json`, para não recodificar as 182 que já estavam no jogo), e o registo
+antigo teria sumido.
+
 **Onde aparece:** todo `Rosto` com entrada em `retratoDe` — a bolinha (`Retrato`: grupo,
 cabeçalho, ficha do herói, fogueira, batalha), a casa da grade e a carta de tarô (no
-nicho, um disco). Quem não tem matriz (as 76 células por pintar, a gente sem classe, o
+nicho, um disco). Quem não tem matriz (desde 03/11 nenhuma célula de herói; a gente sem classe, o
 bicho que a tabela não conhece) fica com o rosto de antes; a imagem que falha também.
 Nas **Fichas**, a fera com pintura mostra o recorte de **cartão** mesmo a 32 (o recorte
 do olhar cortava o focinho), e a pata fica para quem não tem.

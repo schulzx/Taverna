@@ -83,7 +83,12 @@ http.createServer(async (req, res) => {
     if (req.method === "POST" && url === "/cortados") {
       /* o `cx` com que cada arquivo foi cortado: `teste-rosto-pintado` compara-o
          com a tabela do jogo, e fica vermelho se ela mudar sem novo corte */
-      const dado = JSON.parse((await corpo(req)).toString("utf8"));
+      /* SOMA ao que já lá está (03/11): um corte parcial — só as matrizes
+         novas na `lista.json` — não pode apagar o registo dos arquivos que
+         ficaram como estavam */
+      const p = path.join(AQUI, "cortados.json");
+      const antes = fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, "utf8")) : {};
+      const dado = { ...antes, ...JSON.parse((await corpo(req)).toString("utf8")) };
       const ordenado = {};
       for (const k of Object.keys(dado).sort()) ordenado[k] = dado[k];
       fs.writeFileSync(path.join(AQUI, "cortados.json"), JSON.stringify(ordenado, null, 1) + "\n");

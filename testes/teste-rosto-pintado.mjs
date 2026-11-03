@@ -1,7 +1,7 @@
 /* O ROSTO PINTADO (Retratos §11–13 de `mente/formas.md`, 12/10)
 
    Até 12/10 todo rosto do jogo era a xilogravura da semente. A mesa pintou no
-   Figma 18 feras e 164 heróis; a tabela de quem recebe qual pintura é do motor
+   Figma 18 feras e 164 heróis (a 03/11, os 240); a tabela de quem recebe qual pintura é do motor
    (`src/retratos.js`, provada em `teste-retratos.mjs`). Esta suíte prova o lado
    da TELA e dos ARQUIVOS — o que nenhuma das duas metades vê sozinha:
 
@@ -57,15 +57,24 @@ for (const r of RETRATOS) {
   total += b.length;
   const lado = ladoDoWebp(b);
   if (!lado || lado[0] !== 320 || lado[1] !== 320) tortos.push(r.arquivo + " " + JSON.stringify(lado));
-  /* §6 mediu 6,3–10,8 KB por ficha a q 0,75; o corte de 12/10 deu 5,0–13,4. O teto
-     de 16 KB pega um arquivo cortado noutra qualidade ou noutro tamanho */
+  /* §6 mediu 6,3–10,8 KB por ficha a q 0,75; o corte de 12/10 deu 5,0–13,4, o das 76
+     de 03/11 6,3–14,3. O teto de 16 KB pega um arquivo cortado noutra qualidade ou
+     noutro tamanho */
   if (b.length > 16 * 1024) pesados.push(r.arquivo + " " + Math.round(b.length / 1024) + " KB");
 }
 t(`os ${RETRATOS.length} arquivos da tabela existem`, faltam.length === 0, faltam.slice(0, 5).join(", "));
 t("todos são WebP de 320 × 320 (§12)", tortos.length === 0, tortos.slice(0, 5).join(", "));
 t("nenhum passa de 16 KB", pesados.length === 0, pesados.join(", "));
-t(`o todo cabe em 2 MB (hoje ${Math.round(total / 1024)} KB, ${(total / RETRATOS.length / 1024).toFixed(1)} KB em média)`, total > 0 && total <= 2 * 1024 * 1024);
-t("são as 18 feras e os 164 heróis", RETRATOS.filter((r) => r.chave.startsWith("especie:")).length === 18 && RETRATOS.filter((r) => r.chave.startsWith("gente:")).length === 164);
+/* MOVIDA (03/11): o teto era 2 MB no todo, escrito para as 182 de 12/10 (1 641 KB).
+   Com as 76 que faltavam o todo vai a 2 363 KB, e o número fixo ficaria vermelho
+   por a F2 estar completa, não por um arquivo pesado. A intenção — o acervo é
+   leve, ~o que §6 mediu por ficha — passa a ser a MÉDIA, que não depende de
+   quantas pinturas há: no máximo 10 KB por arquivo (§6 previa 8,4; 12/10 deu 9,0;
+   hoje 9,2). O arquivo solto continua preso pelos 16 KB acima. */
+t(`a média cabe em 10 KB por arquivo (hoje ${Math.round(total / 1024)} KB, ${(total / RETRATOS.length / 1024).toFixed(1)} KB em média)`, total > 0 && total <= RETRATOS.length * 10 * 1024);
+/* MOVIDA (03/11): 164 → 240 heróis — as 76 células por pintar (Tiefling 10,
+   Gnomo 22, Meio-elfo 22, Goliath 22) foram pintadas e cortadas; a F2 fechou */
+t("são as 18 feras e os 240 heróis", RETRATOS.filter((r) => r.chave.startsWith("especie:")).length === 18 && RETRATOS.filter((r) => r.chave.startsWith("gente:")).length === 240);
 t("os nomes são os do contrato (minúsculas, sem acento, hífen)", RETRATOS.every((r) => /^\/retratos\/(especie|gente)\/[a-z0-9-]+\.webp$/.test(r.arquivo)));
 
 sec("2. O corte e a tabela concordam no canto (cx)");
