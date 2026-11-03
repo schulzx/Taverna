@@ -42,6 +42,7 @@ import { folegoSegura } from "../fuga.js";
 import { sortearCicatriz, CICATRIZ_MAX } from "../danos.js";
 import { anotarTurno } from "../mestria.js";
 import { folegoDepoisDoTurno } from "../fuga.js";
+import { portaAberta } from "./portas-do-narrador.js";
 
 /* os efeitos pendentes de uma peça: aplicados antes de cada porta, e no fim */
 function pendentes(ctx) {
@@ -194,7 +195,9 @@ export function aMesaDoTurno(estado) {
   let mesa = e0.mesa, folego = e0.folego, erroFolego = null;
   try {
     const tx = e0.textura || {};
-    const mud = e0.mudancas || {};
+    /* a porta da mesa (portas-do-narrador.js, um achado de 03/11): no modo
+       que a fecha, o que o Narrador declarou não conta o turno como ganho */
+    const mud = (portaAberta("mesa", e0.modoDoNarrador) && e0.mudancas) || {};
     const ganhou = !!tx.ganho || Number(mud.moedas) > 0 || Number(mud.xp) > 0
       || (Array.isArray(mud.adicionar_itens) && mud.adicionar_itens.length > 0);
     mesa = anotarTurno(e0.mesa, {

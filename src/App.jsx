@@ -244,6 +244,7 @@ import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correc
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
+import { portaAberta } from "./motor/portas-do-narrador.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -10015,7 +10016,10 @@ export default function Taverna() {
     } catch (e) { calou("o gatilho do Cronista", e); gatilho = { corre: true, motivos: [] }; }
     let filaDoCronista = "";
     if (gatilho.corre) { try { filaDoCronista = blocoDaFila(leituraDoCronistaRef.current); } catch (e) { calou("a fila do Cronista", e); filaDoCronista = ""; } }
-    else { try { leituraDoCronistaRef.current = pularALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("o pulo do Cronista", e); } }
+    /* o gatilho CALADO (o Narrador ator, 03/11: src/motor/portas-do-narrador.js)
+       é o modo em que o Cronista não lê: a narração não entra na fila, que
+       ninguém vai ler. As secções que são só código correm igual, abaixo. */
+    else if (!gatilho.calado) { try { leituraDoCronistaRef.current = pularALeitura(leituraDoCronistaRef.current, narrativa); } catch (e) { calou("o pulo do Cronista", e); } }
     /* MM-C · C0: o teste deste turno, lido ANTES da espera — o jogador pode
        agir de novo enquanto o Cronista pensa, e o turno seguinte limpa-o */
     const testeDoTurno = testeDoTurnoRef.current;
@@ -10590,7 +10594,14 @@ export default function Taverna() {
          a narração é do Narrador e muda a cada leitura; a ação é do
          jogador e é o que ele vai lembrar de ter feito. */
       try {
-        const houveDado = !!(resp && resp.rolagem) || /🎲/.test(String(narrativaFinal || ""));
+        /* A PORTA DO PESO (o Narrador ator, 03/11: src/motor/portas-do-narrador.js):
+           a morte e o dado que só a prosa diz pesam a linha no modo `mestre`;
+           no `ator` a prosa não entra no livro-razão. Se a porta estourar, a
+           linha pesa como sempre pesou. */
+        let prosaPesa = true;
+        try { prosaPesa = portaAberta("pesoDaLinha"); } catch (e) { calou("a porta do peso da linha", e); prosaPesa = true; }
+        const prosaDoPeso = prosaPesa ? String(narrativaFinal || "") : "";
+        const houveDado = !!(resp && resp.rolagem) || /🎲/.test(prosaDoPeso);
         const acabouLuta = !!(combateAntes && !combateRef.current);
         const noClimax = /AGORA ACONTECE|está acontecendo/i.test(String(doCompasso || ""));
         /* v9.113: A MORTE PRECISA SER DE ALGUÉM.
@@ -10603,9 +10614,9 @@ export default function Taverna() {
 
            Agora: verbo inequívoco, ou `morre/morreu` com sujeito animado
            colado. "Ele morreu" e "Vera morreu" ficam; "a luz morre" sai. */
-        const alguemCaiu = /\b(matei|matou|matamos|assassin\w+|caiu mort[oa]|caíram mort[oa]s|mort[oa] no ch[ãa]o|est[áa] mort[oa]|foi mort[oa]|sangrou at[ée] morrer)\b/i.test(String(narrativaFinal || "").slice(0, 600))
-          || /\b(ele|ela|eles|elas|voc[êe]|[A-ZÁÉÍÓÚÂÊÔÃÕ][a-zà-ÿ]+)\s+(morre|morreu|morreram)\b/.test(String(narrativaFinal || "").slice(0, 600))
-          || /\bmorreu (nos|no|na|em|ali|aqui|antes|depois|logo|sem|com)\b/i.test(String(narrativaFinal || "").slice(0, 600));
+        const alguemCaiu = /\b(matei|matou|matamos|assassin\w+|caiu mort[oa]|caíram mort[oa]s|mort[oa] no ch[ãa]o|est[áa] mort[oa]|foi mort[oa]|sangrou at[ée] morrer)\b/i.test(prosaDoPeso.slice(0, 600))
+          || /\b(ele|ela|eles|elas|voc[êe]|[A-ZÁÉÍÓÚÂÊÔÃÕ][a-zà-ÿ]+)\s+(morre|morreu|morreram)\b/.test(prosaDoPeso.slice(0, 600))
+          || /\bmorreu (nos|no|na|em|ali|aqui|antes|depois|logo|sem|com)\b/i.test(prosaDoPeso.slice(0, 600));
         const { aqui } = elencoDaOnda();
         const peso = alguemCaiu ? 3 : (noClimax || acabouLuta) ? 2 : (houveDado || aqui.length) ? 1 : 0;
         /* O QUE O JOGADOR FEZ, e não o que o sistema escreveu. Quando um

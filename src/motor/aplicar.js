@@ -59,6 +59,7 @@ import { garantirGeografia } from "../geografia.js";
 import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo, retomarContador, estadoSemVolta } from "../npcs.js";
 import { aindaSoUmNome } from "../abertura.js";
 import { dadivasConcedidas, aplicarOMapa, aplicarAsMissoes, aplicarOsSinais } from "./meio-do-turno.js";
+import { aRespostaPelaPorta, portaAberta } from "./portas-do-narrador.js";
 
 /* a nota do turno cresce como sempre cresceu no App: uma linha por vez,
    separadas por quebra, sem quebra na frente da primeira */
@@ -96,6 +97,12 @@ export function aplicar(estado, resposta, ctx = {}) {
      face é a mesma conta de `rolarSalvaguarda` (salvaguardas.js) */
   const sorteDoTurno = typeof op.sorte === "function" ? op.sorte : null;
   const d20DoTurno = sorteDoTurno ? () => 1 + Math.floor(sorteDoTurno() * 20) : null;
+    /* AS PORTAS DO NARRADOR (o Narrador ator, etapa 3, 03/11): o modo diz o
+       que da resposta pode virar estado (src/motor/portas-do-narrador.js).
+       No `mestre`, a de hoje, a resposta é a mesma, o mesmo objeto; no
+       `ator`, `mudancas` sai e a cobrança e o débito não leem a prosa. */
+    const modoDoNarrador = op.modoDoNarrador;
+    resp = aRespostaPelaPorta(resp, modoDoNarrador);
     /* E4 do "o Narrador só narra" (a fiação): A PORTA DA LUTA É DO SISTEMA.
        Antes de qualquer coisa ler a resposta, a guarda tira dela o que o
        Narrador já não decide — o perigo, abrir luta (salvo o pedido do golpe
@@ -367,7 +374,7 @@ export function aplicar(estado, resposta, ctx = {}) {
        "o ar quente preso na garganta" virou dois turnos de Agarrado. Por
        isso aqui só entram QUANTIA e ITEM DE CATÁLOGO, com verbo de aquisição
        e o herói como sujeito — nunca um estado, nunca uma metáfora. */
-    try {
+    if (portaAberta("oQueFaltaCreditar", modoDoNarrador)) try {
       /* E3 (a fiação): o achado da estrada já entrou na bolsa no rolar, e o
          envelope di-lo com uma marca (encontros.js); o que ela diz conta como
          declarado, para a narração do achado não o pagar outra vez.
@@ -404,7 +411,7 @@ export function aplicar(estado, resposta, ctx = {}) {
        neste turno (a pauta, os avisos do sistema): se ele já disse "já
        registrada pelo sistema", a compra já saiu da bolsa por outro
        caminho, e debitar de novo cobraria duas vezes. */
-    try {
+    if (portaAberta("oQueFaltaDebitar", modoDoNarrador)) try {
       const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "", pedido: typeof op.pedido === "string" ? op.pedido : "", moeda: typeof op.moeda === "string" ? op.moeda : "" });
       if (deb.temAlgo && !deb.semFundos) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - deb.moedas) }; msgs.push(falaDoDebito(deb)); }
       if (deb.temAlgo) notas.push(envelopeDoDebito(deb));
@@ -462,7 +469,8 @@ export function contextoDoNomeCom(base, n) {
 export function aplicarORegisto(estado, resposta, ctx = {}) {
   const e0 = estado && typeof estado === "object" ? estado : {};
   const op = ctx && typeof ctx === "object" ? ctx : {};
-  const resp = resposta && typeof resposta === "object" ? resposta : {};
+  /* as portas do cânone e da gente (portas-do-narrador.js) */
+  const resp = aRespostaPelaPorta(resposta && typeof resposta === "object" ? resposta : {}, op.modoDoNarrador);
   const pers = e0.personagem;
   const msgs = [], notas = [], efeitosDoTurno = [];
   const calou = (onde, erro) => { efeitosDoTurno.push({ tipo: "calou", onde, erro }); };

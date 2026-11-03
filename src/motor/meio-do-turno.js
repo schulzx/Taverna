@@ -48,6 +48,7 @@ import { empilhar, efeitoDeMilagre } from "../efeitos.js";
 import { calcularFama } from "../fama.js";
 import { dominiosDe } from "../gestao.js";
 import { MAX_COMPANHEIROS } from "../constantes.js";
+import { aRespostaPelaPorta } from "./portas-do-narrador.js";
 
 const objeto = (x) => (x && typeof x === "object" ? x : {});
 const mundoDe = (op) => objeto(typeof op.mundo === "function" ? op.mundo() : op.mundo);
@@ -165,7 +166,8 @@ export function nevoaDaVizinhanca(mapa, nomeCidade) {
 export function aplicarOMapa(estado, resposta, ctx = {}) {
   const e0 = objeto(estado);
   const op = objeto(ctx);
-  const resp = objeto(resposta);
+  /* as portas do mapa (portas-do-narrador.js): no modo que as fecha, `mudancas` não entra */
+  const resp = objeto(aRespostaPelaPorta(resposta, op.modoDoNarrador));
   const msgs = [], notas = [], efeitosDoTurno = [];
   const ef = (x) => { efeitosDoTurno.push(x); };
   const calou = (onde, erro) => { ef({ tipo: "calou", onde, erro }); };
@@ -517,7 +519,8 @@ export function milagreInvocado(estado, id, origem = "jogador") {
 export function aplicarAsMissoes(estado, resposta, ctx = {}) {
   const e0 = objeto(estado);
   const op = objeto(ctx);
-  const resp = objeto(resposta);
+  /* a porta do evento global (portas-do-narrador.js): no modo que as fecha, `mudancas` não entra */
+  const resp = objeto(aRespostaPelaPorta(resposta, op.modoDoNarrador));
   const msgs = [], notas = [], efeitosDoTurno = [];
   const ef = (x) => { efeitosDoTurno.push(x); };
   let eventos = e0.eventos, historia = e0.historia;
@@ -559,7 +562,8 @@ export function aplicarAsMissoes(estado, resposta, ctx = {}) {
 export function aplicarOsSinais(estado, resposta, ctx = {}) {
   const e0 = objeto(estado);
   const op = objeto(ctx);
-  const resp = objeto(resposta);
+  /* as portas dos sinais (portas-do-narrador.js): no modo que as fecha, `mudancas` não entra */
+  const resp = objeto(aRespostaPelaPorta(resposta, op.modoDoNarrador));
   const msgs = [], notas = [], efeitosDoTurno = [];
   const ef = (x) => { efeitosDoTurno.push(x); };
   /* a ficha do TURNO anda com os sinais (4.ª fatia): o milagre e o achado

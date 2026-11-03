@@ -30,6 +30,7 @@ import { seguraEmPe, gastarSegura } from "../gatilhos.js";
 import { testeDeMorte, aplicarTesteMorte } from "../combate.js";
 import { ganharHeroismo } from "../heroismo.js";
 import { vistosDaNarrativa } from "../elenco.js";
+import { portaAberta } from "./portas-do-narrador.js";
 
 /* ---------------- A NÊMESIS NA NARRAÇÃO ----------------
    Cão de guarda da nêmesis na narração: ela morreu na cena sem ninguém
@@ -37,8 +38,11 @@ import { vistosDaNarrativa } from "../elenco.js";
    corrige o Mestre — como já faz com mortes de inimigos em combate.
    → { paraOCronista, encerrar }: a correção (quando ela está morta e foi
    citada) ou o motivo de a encerrar (quando a prosa a matou). */
-export function aNemesisNaNarrativa(nemesis, narrativa) {
+export function aNemesisNaNarrativa(nemesis, narrativa, modoDoNarrador) {
   const nada = { paraOCronista: [], encerrar: null };
+  /* a porta (portas-do-narrador.js): no modo que a fecha, a prosa não
+     encerra a nêmesis; a correção da nêmesis morta é guarda, e fica */
+  const aberta = portaAberta("aNemesisNaNarrativa", modoDoNarrador);
   const n = nemesis;
   if (!n || !n.nome) return nada;
   const txt = String(narrativa || "");
@@ -56,7 +60,7 @@ export function aNemesisNaNarrativa(nemesis, narrativa) {
   for (const f of frases) {
     if (!semAc(f).includes(alvo)) continue;
     if (negado.test(f)) continue;
-    if (morte.test(f)) return { paraOCronista: [], encerrar: "morta na cena narrada pelo Mestre" };
+    if (morte.test(f)) return aberta ? { paraOCronista: [], encerrar: "morta na cena narrada pelo Mestre" } : nada;
   }
   return nada;
 }
@@ -65,9 +69,12 @@ export function aNemesisNaNarrativa(nemesis, narrativa) {
    Quem a narração pôs em cena conta como visto hoje — é a recência que o
    elenco lê para promover e para dizer "já te vi antes". O erro volta com
    o estado de antes, e o App entrega-o ao `calou` com o nome de sempre. */
-export function osVistosDaNarrativa(ler, narrativa) {
+export function osVistosDaNarrativa(ler, narrativa, modoDoNarrador) {
   const { elenco, npcs, dia } = ler || {};
-  try { return { elenco: vistosDaNarrativa(elenco, npcs, narrativa, dia), erro: null }; }
+  /* a porta (portas-do-narrador.js): no modo que a fecha, o elenco lê a
+     prosa vazia — fica como ficaria num turno sem narração */
+  const lida = portaAberta("osVistosDaNarrativa", modoDoNarrador) ? narrativa : "";
+  try { return { elenco: vistosDaNarrativa(elenco, npcs, lida, dia), erro: null }; }
   catch (e) { return { elenco, erro: e }; }
 }
 

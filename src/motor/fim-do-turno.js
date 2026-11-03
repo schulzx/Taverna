@@ -28,6 +28,7 @@ import { presencaDoHeroi } from "../presenca-divina.js";
 import { detectarChegada, descobrirCidade, notaDaChegada } from "../geografia.js";
 import { violacoesDoTurno } from "../portao.js";
 import { elencoDaCena } from "../cena.js";
+import { aRespostaPelaPorta, portaAberta } from "./portas-do-narrador.js";
 
 const objeto = (x) => (x && typeof x === "object" ? x : {});
 const mundoDe = (op) => objeto(typeof op.mundo === "function" ? op.mundo() : op.mundo);
@@ -69,7 +70,9 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
        no registo. Sem semente não há base a ratificar: esta metade cala, e
        os nomes à mão e o peso do deus, que não precisam dela, seguem. */
     let m = { locais: [], gente: [] };
-    if (mu.semente) {
+    /* as portas da prosa (portas-do-narrador.js): no modo que as fecha, a
+       base não se revela nem a gente nasce pelo que a narração citou */
+    if (mu.semente && portaAberta("mencionadosNaCena", op.modoDoNarrador)) {
     m = mencionadosNaCena(mu.semente, e0.mapa, e0.cidadeAtual, base, mu.genero, resp.narrativa, mu.molde, mu.lex, { grupo: (e0.fichaDoRef || pers || {}).grupo || [] });
     /* MM13: a menção não é presença — a pista (ou o alvo) da abertura não
        conta como revelada nem entra no registo só por ser citada. */
@@ -100,7 +103,7 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
     /* E1 (o Narrador só narra): o NOME À MÃO que a narração usou vira
        gente do registo — e morto, se a oração o pôs morto. Sai da lista
        do turno seguinte por estar no registo. */
-    try {
+    if (portaAberta("nomesAMaoNaProsa", op.modoDoNarrador)) try {
       /* não se limpa: o usado sai da lista seguinte por estar no registo */
       const usados = nomesAMaoNaProsa(resp.narrativa, e0.oferecidos || []);
       if (usados.length) {
@@ -143,7 +146,7 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
 /* ============================================================
    A CHEGADA — CHEGUEI E NINGUÉM ANOTOU (v9.43)
 
-     aplicarAChegada(estado, resposta) → { estado, efeitos, paraOCronista, msgs, minutos }
+     aplicarAChegada(estado, resposta, ctx) → { estado, efeitos, paraOCronista, msgs, minutos }
 
    O Mestre narrou a travessia do portal com todas as letras e esqueceu
    de mandar `cidade_atual`: a ficção subiu para o Andar 2, o mapa ficou
@@ -159,15 +162,17 @@ export function aplicarOCodex(estado, resposta, ctx = {}) {
    pela travessia (o App o faz andar, ANTES de a nota da chegada entrar —
    como fazia); 0 quando não houve chegada.
    ============================================================ */
-export function aplicarAChegada(estado, resposta) {
+export function aplicarAChegada(estado, resposta, ctx = {}) {
   const e0 = objeto(estado);
-  const resp = objeto(resposta);
+  /* as portas (portas-do-narrador.js): `cidade_atual` e a chegada lida na prosa */
+  const modoDoNarrador = objeto(ctx).modoDoNarrador;
+  const resp = objeto(aRespostaPelaPorta(resposta, modoDoNarrador));
   const msgs = [], notas = [], efeitosDoTurno = [];
   const ef = (x) => { efeitosDoTurno.push(x); };
   let cidadeAtual = e0.cidadeAtual, lugar = e0.lugar, mapa = e0.mapa, minutos = 0;
   try {
     const jaVeio = !!(resp.mudancas && resp.mudancas.cidade_atual);
-    if (!jaVeio && !e0.combate && !e0.jornada) {
+    if (!jaVeio && !e0.combate && !e0.jornada && portaAberta("detectarChegada", modoDoNarrador)) {
       const ch = detectarChegada(resp.narrativa, { mapa, cidade: cidadeAtual });
       if (ch) {
         const de = cidadeAtual;

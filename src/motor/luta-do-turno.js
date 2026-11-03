@@ -65,6 +65,7 @@ import { despojosDe, itemComponente } from "../craft.js";
 import { identificarDivindadeAbatida } from "../ascensao.js";
 import { MINUTOS_POS_COMBATE } from "../calendario.js";
 import { temAcaoBonus } from "./combate-do-turno.js";
+import { aRespostaPelaPorta } from "./portas-do-narrador.js";
 
 /* O RETRATO DO FIM, COM OS FINAIS. A vitória que a resposta do Mestre
    declara chega com o retrato de ANTES da resposta (`combateAntes`) e a
@@ -73,6 +74,8 @@ import { temAcaoBonus } from "./combate-do-turno.js";
    PV cheio. Junta-se aqui: cada inimigo do retrato leva a vida e o
    `derrotado` da lista final (pelo nome, como `regras-jogo.js` os casa);
    quem não está nela fica como estava. (Morava no topo do App.) */
+/* (as portas da luta, `combate_iniciar` e `combate_encerrar`, fecham à
+   entrada de aLutaDaResposta: src/motor/portas-do-narrador.js) */
 export function retratoComOsFinais(antes, finais) {
   if (!antes || typeof antes !== "object") return antes || null;
   const lista = Array.isArray(finais) ? finais.filter((f) => f && f.nome) : [];
@@ -101,7 +104,7 @@ export function aLutaDaResposta(estado, ctx) {
   const nota = (texto) => fazer({ tipo: "nota", linhas: [texto] });
 
   let pers = e0.pers;
-  const m = { ...(e0.mudancas || {}) };
+  const m = { ...((aRespostaPelaPorta({ mudancas: e0.mudancas }, c && c.modoDoNarrador) || {}).mudancas || {}) };
   const msgs = [];
   let R = ler();
   const combateAntes = R.combate;

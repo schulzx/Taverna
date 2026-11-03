@@ -200,6 +200,7 @@ import { julgarOTurno, JUIZ_NO_TURNO, CLASSES_DO_JUIZ, somarAFidelidade } from "
 import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao, juizCego } from "./motor/correcao-do-juiz.js";
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
 import { oBoatoDaChegada, oBoatoQueChegou } from "./boatos.js";
+import { oCronistaChama } from "./motor/portas-do-narrador.js";
 
 /* ---------------- O FORMATO (se é número, é tabela) ---------------- */
 export const FORMATO_DA_SESSAO = Object.freeze({
@@ -684,7 +685,7 @@ function oAceitoNoReplay(E0, juizo, proposta, ctx) {
   const dubles = Object.fromEntries(Object.keys(NEUTRO_DO_DUBLE).map((k) => [k, duble(k)]));
   const fim = oAceitoDoCronista(juizo.aceito, juizo.recusado, proposta, {
     ...doMotor, ...dubles, ler: () => E, aplicar,
-    pers: obj(E.personagem), narrativa: ctx.resposta.narrativa, testeDoTurno: null, rolagem: E.rolagem || null,
+    pers: obj(E.personagem), narrativa: ctx.resposta.narrativa, testeDoTurno: null, rolagem: E.rolagem || null, modoDoNarrador: ctx.modoDoNarrador,
   });
   if (fim && ehObj(fim.p) && fim.p !== E.personagem && canonico(fim.p) !== canonico(E.personagem)) E = { ...E, personagem: fim.p };
   /* as linhas do Cronista no relato (o `pushMsgs(msgs)` do App, depois da
@@ -785,14 +786,14 @@ export const PASSOS_DO_REPLAY = Object.freeze([
          a metade da base cala e os nomes à mão seguem (o conserto de
          66afe15 — antes, sem mundo, refazia a cidade pela semente vazia, e
          o replay corria aqui uma cópia só dos nomes à mão) */
-      const r = aplicarOCodex({ ...E, oferecidos, base: E.baseMundo }, ctx.resposta, { mundo: ctx.mundo });
+      const r = aplicarOCodex({ ...E, oferecidos, base: E.baseMundo }, ctx.resposta, { mundo: ctx.mundo, modoDoNarrador: ctx.modoDoNarrador });
       return naTelaENaNota({ ...E, npcs: r.estado.npcs, baseMundo: r.estado.base === undefined ? E.baseMundo : r.estado.base }, r, ctx, nota);
     },
   },
   {
     passo: "a chegada", de: "motor/fim-do-turno.js#aplicarAChegada (o relógio da travessia é do App)",
     faz: (E, L, ctx, nota) => {
-      const r = aplicarAChegada(E, ctx.resposta);
+      const r = aplicarAChegada(E, ctx.resposta, { modoDoNarrador: ctx.modoDoNarrador });
       let E1 = naTelaENaNota({ ...E, cidadeAtual: r.estado.cidadeAtual, lugar: r.estado.lugar, mapa: r.estado.mapa }, r, ctx, nota);
       /* O TRABALHO QUE ESPERAVA ESTA CENA (v9.37, motor/entrega-do-turno.js):
          o aviso que o mundo deixou no turno de antes sai DEPOIS da narração
@@ -862,7 +863,8 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     passo: "o Cronista", de: "motor/cronista.js#julgarOCronista e motor/cronista-do-turno.js#oAceitoDoCronista (as portas do App: PORTAS_DO_CRONISTA_NO_REPLAY)",
     faz: (E, L, ctx, nota) => {
       if (!ehObj(L.cronista)) return E;
-      const juizo = julgarOCronista(E, L.cronista.proposta, { narrativa: ctx.resposta.narrativa, pedido: ctx.frase, envelopes: ctx.envelopes });
+      const proposta = oCronistaChama(ctx.modoDoNarrador) ? L.cronista.proposta : {};
+      const juizo = julgarOCronista(E, proposta, { narrativa: ctx.resposta.narrativa, pedido: ctx.frase, envelopes: ctx.envelopes });
       nota.juizo = dado({ aceito: juizo.aceito, recusado: juizo.recusado, ditoPor: juizo.ditoPor });
       /* O JUIZ CORRIGE (v9.531, o App desde 088ba92): o nome que o Juiz deu
          por inventado NESTE turno não entra no cânone. A linha grava o juízo
@@ -876,7 +878,7 @@ export const PASSOS_DO_REPLAY = Object.freeze([
         aceito = cj.aceito;
         if (cj.tirados.length) nota.tirados = cj.tirados;
       }
-      const r = oAceitoNoReplay(E, { ...juizo, aceito }, L.cronista.proposta, ctx);
+      const r = oAceitoNoReplay(E, { ...juizo, aceito }, proposta, ctx);
       nota.portas = r.portas;
       nota.calouDoCronista = r.calou;
       if (nota.tela && r.linhas.length) nota.tela.linhas.push(...r.linhas);
@@ -1042,9 +1044,13 @@ export function correrOTurno(antes, linha, contexto) {
   const frase = typeof obj(L.entrada).frase === "string" ? L.entrada.frase : "";
   const envelopes = pe.envelopes == null ? "" : pe.envelopes;
   const resposta = { narrativa: String(na.narrativa || ""), mudancas: dado(obj(na.mudancas)) };
+  /* O MODO DO NARRADOR (o Narrador ator, 03/11: src/motor/portas-do-narrador.js):
+     quem corre o turno pode dizê-lo (`contexto.modoDoNarrador`), e ele viaja
+     até cada peça que tem uma porta. Sem ele, as peças leem o padrão da tabela. */
+  const modo = typeof c.modoDoNarrador === "string" ? { modoDoNarrador: c.modoDoNarrador } : {};
   const ctx = {
-    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp), servidor, semente,
-    doMestre: { envelopes: Array.isArray(envelopes) ? envelopes.join("\n") : envelopes, pedido: frase, ...(pe.moeda ? { moeda: pe.moeda } : {}), sorte: s0.sorte, sorteDoTurno, mundo: mundo || null, baseDoNome: { heroi: obj(E0.personagem).nome } },
+    resposta, frase, envelopes, mundo: mundo || null, doApp: obj(c.doApp), servidor, semente, ...modo,
+    doMestre: { envelopes: Array.isArray(envelopes) ? envelopes.join("\n") : envelopes, pedido: frase, ...(pe.moeda ? { moeda: pe.moeda } : {}), sorte: s0.sorte, sorteDoTurno, mundo: mundo || null, baseDoNome: { heroi: obj(E0.personagem).nome }, ...modo },
   };
   let E = estadoDoSave(obj(dado(E0)));
   const nota = {}, calou = [];

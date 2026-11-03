@@ -536,7 +536,11 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   const { casosDoCronista } = await import("./cronista-bloco.mjs");
   const { julgarOCronista } = await import("../src/motor/cronista.js");
   const { oAceitoDoCronista } = await import("../src/motor/cronista-do-turno.js");
-  const VALORES = new Set(["ler", "aplicar", "pers", "narrativa", "testeDoTurno", "rolagem"]);
+  /* MUDADA A 03/11 (o Narrador ator, etapa 3), e o motivo: a peça passou a ler
+     também o modo do Narrador (`modoDoNarrador`, src/motor/portas-do-narrador.js),
+     que fecha a pista do segredo lida na prosa. É um valor do turno, como a
+     narrativa — não uma porta do App —, e por isso não tem linha na tabela */
+  const VALORES = new Set(["ler", "aplicar", "pers", "narrativa", "testeDoTurno", "rolagem", "modoDoNarrador"]);
   const pedidas = new Set(), semLinha = new Set();
   for (const k of casosDoCronista(275)) {
     let E = { ...k };

@@ -56,6 +56,7 @@ import { aceitarProposta, tipoDe, barraDe, envelopeNovo } from "../relogios.js";
 import { segredosReveladosNoTurno } from "../saga.js";
 import { peneirarCanone } from "../segredo-guardado.js";
 import { frasesDoGrupoCheio } from "./meio-do-turno.js";
+import { portaAberta, oCronistaChama } from "./portas-do-narrador.js";
 import { MAX_COMPANHEIROS, ATRIBUTOS } from "../constantes.js";
 import { pesarCompanheiro } from "../dificuldade.js";
 import { formatarPoder } from "../poder.js";
@@ -71,7 +72,12 @@ import { dificuldadePorPerfil } from "../bestiario.js";
    Estoura como estourava: o App lê, que é o comportamento de antes. */
 export function oGatilhoDoCronista(ler, turno, leitura) {
   const E = ler || {};
-  const { narrativa, doTurno, pers } = turno || {};
+  const { narrativa, doTurno, pers, modoDoNarrador } = turno || {};
+  /* AS PORTAS (o Narrador ator, 03/11): no modo em que o Cronista não lê, o
+     gatilho cala — `calado` diz ao App que nem a fila anda (a narração do
+     ator não espera leitura nenhuma). As secções que são só código correm
+     igual, com a resposta vazia. */
+  if (!oCronistaChama(modoDoNarrador)) return { corre: false, motivos: [], novos: [], calado: true };
   const dt = doTurno && typeof doTurno === "object" ? doTurno : {};
   const pc = pers || E.personagem || {};
   const deEmLuta = ((E.combate && E.combate.inimigos) || []).filter((e) => e && !e.derrotado && e.vida > 0);
@@ -348,7 +354,8 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   try {
     let seg = [];
     const E = ler();
-    try { seg = segredosReveladosNoTurno(E.espinha, { lugar: E.lugar && E.lugar.nome, teste: testeDoTurno, narrativa }); } catch (e) { calou("segredosReveladosNoTurno", e); seg = []; }
+    /* a porta da pista na prosa (portas-do-narrador.js): fechada, só o teste que passou revela */
+    try { seg = segredosReveladosNoTurno(E.espinha, { lugar: E.lugar && E.lugar.nome, teste: testeDoTurno, narrativa: portaAberta("segredosReveladosNoTurno", ctx.modoDoNarrador) ? narrativa : "" }); } catch (e) { calou("segredosReveladosNoTurno", e); seg = []; }
     if (Array.isArray(seg) && seg.length) {
       const antes = ler();
       p = porta("conferirCom", p, { segredos: seg }) || p;
