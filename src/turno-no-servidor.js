@@ -102,6 +102,15 @@
    O servidor continua sem conhecer provedor nenhum pelo nome: quem sabe
    qual modelo responde e com que chave é o módulo da rota. Sem `chamar`
    (o ensaio, a suíte), tudo é como era.
+
+   O NARRADOR ATOR (03/11, etapa 2 do plano: mente/plano-narrador-ator.md).
+   `opcoes.modoDoNarrador` diz o modo (MODO_DO_NARRADOR, motor/portas-do-
+   narrador.js); sem ele, o padrão da tabela, e nada aqui muda um byte. No
+   `ator`, o pedido à rede é o do ator (motor/pedido-do-ator.js: o ofício,
+   as duas trocas e a ficha da nota e do estado do fim da montagem — antes
+   do que o turno adia, como no App), a resposta é só prosa, o replay corre
+   com as portas do modo, e o gatilho do Cronista cala. Se a ficha estourar,
+   o pedido é o do Mestre e as portas continuam as do modo, como no App.
    ============================================================ */
 import { SEMENTE_DA_CASA, comSorte, hashSemente, rng } from "./semente.js";
 import { pontoDaSorte } from "./motor/sorte-do-turno.js";
@@ -132,6 +141,8 @@ import { precoDeCompraPara } from "./profissoes.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { semFalaInventada } from "./fala-do-heroi.js";
 import { narrativaFaltou, MOTIVO_SEM_NARRATIVA } from "./guardado.js";
+import { oModoDoNarrador } from "./motor/portas-do-narrador.js";
+import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 
 export const TURNO_NO_SERVIDOR = Object.freeze({
   /* o nome que a semente usa quando a campanha não tem nome (o mesmo do
@@ -209,12 +220,13 @@ function oEstadoParaOPedido(antes, depois) {
    peça estoura: onde o App estouraria, o servidor também. */
 export async function oPedidoNoServidor(corpo, opcoes) {
   const m = await montar(corpo, opcoes);
-  return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim: m.estadoDoFim };
+  return { pedido: m.pedido, casa: m.casa, calados: m.calados, estadoDoFim: m.estadoDoFim, ...(m.ficha ? { ficha: m.ficha } : {}) };
 }
 
 async function montar(corpo, opcoes) {
   const { estado, frase, eco, bilhetes } = ehObjeto(corpo) ? corpo : {};
-  const { agora } = ehObjeto(opcoes) ? opcoes : {};
+  const { agora, modoDoNarrador } = ehObjeto(opcoes) ? opcoes : {};
+  const modo = oModoDoNarrador(modoDoNarrador);
   /* o save como o load do App o abre (abrir-o-save.js): a ficha migrada, o
      nome da campanha, o mapa, as guildas, as missões… — fora o que é só da
      sentada (o teto do sono, a oferta que vai ao mural), porque o servidor
@@ -244,13 +256,20 @@ async function montar(corpo, opcoes) {
   const r2 = oPedidoDoTurno(oEstadoParaOPedido(e0, { ...e0, ...r1.escritas }), { ...r1.entradaDoPedido, sorte }, portas);
   /* o adiado escreve pelo prelúdio (nas escritas dele): corre depois do
      pedido, e o estado do fim junta-o por baixo do que o pedido escreveu */
+  /* O PEDIDO DO ATOR, no modo que o pede: sobre o estado ANTES do adiado
+     (no App o temporizador só dispara com o pedido já montado) */
+  let pedido = r2.pedido, ficha = null;
+  if (modo === "ator") {
+    try { const pa = oPedidoDoAtor({ nota: obj(r2.saida).nota, frase, estado: { ...e0, ...r1.escritas, ...r2.escritas } }); pedido = pa.pedido; ficha = pa.ficha; }
+    catch (x) { portas.calou("o pedido do ator", x); pedido = r2.pedido; ficha = null; }
+  }
   for (const g of adiados.splice(0)) {
     try { comSorte(sorte, g); } catch (x) { portas.calou("o que o turno adiou", x); }
   }
   /* a corrente onde a montagem a deixou, quantas vezes o depois a pedir */
   const ate = tirados;
   const retomar = () => { const g = rng(semente); for (let i = 0; i < ate; i++) g(); return g; };
-  return { pedido: r2.pedido, casa, calados, estadoDoFim: { ...e0, ...r1.escritas, ...r2.escritas }, e0, sorte, retomar, saida: r2.saida, avulsos, frase: typeof frase === "string" ? frase : "" };
+  return { pedido, casa, calados, estadoDoFim: { ...e0, ...r1.escritas, ...r2.escritas }, e0, sorte, retomar, saida: r2.saida, avulsos, frase: typeof frase === "string" ? frase : "", modo, ficha };
 }
 
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -399,14 +418,14 @@ function oCronistaDoServidor(m, resposta, depoisDoMestre) {
   let frase = "";
   try { const pb = lerOPedido(m.frase); frase = pb && pb.doJogador ? pb.texto : ""; } catch { frase = ""; }
   let g = { corre: true, motivos: [] };
-  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem }, leitura); } catch { g = { corre: true, motivos: [] }; }
+  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem, ...(m.modo === "ator" ? { modoDoNarrador: m.modo } : {}) }, leitura); } catch { g = { corre: true, motivos: [] }; }
   let pedido = null;
   if (g.corre) {
     let fila = "";
     try { fila = blocoDaFila(leitura); } catch { fila = ""; }
     pedido = oPedidoAoCronista({ ...E, npcs: obj(E.npcs) }, { narrativa, fila });
   }
-  return { pergunta: true, corre: !!g.corre, motivos: arr(g.motivos), leitura, pedido, narrativa };
+  return { pergunta: true, corre: !!g.corre, motivos: arr(g.motivos), leitura, pedido, narrativa, ...(g.calado ? { calado: true } : {}) };
 }
 
 /* a falha do provedor, marcada: a rota lê `motivo` para devolver o uso */
@@ -505,7 +524,16 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   const deVerdade = typeof op.chamar === "function";
   const ia = deVerdade ? { chamadas: 0, usos: [], cache: undefined } : null;
   let resposta = obj(obj(corpo).resposta);
-  if (deVerdade) {
+  const ator = m.modo === "ator";
+  if (deVerdade && m.ficha) {
+    /* O ATOR PELA PORTA: a mesma peça do App (aRespostaDoAtor), sobre a
+       porta do provedor; a falha sai marcada, como a do Mestre */
+    const porta = async (c) => { ia.chamadas++; let r; try { r = await op.chamar(c); } catch (e) { throw falhaDoProvedor(e); } colherUso(ia.usos, r); return obj(r); };
+    let n;
+    try { n = await aRespostaDoAtor(m.pedido, porta, { frase: m.frase, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } }); }
+    catch (e) { throw e && e.motivo ? e : falhaDoProvedor(e); }
+    resposta = obj(n.resposta);
+  } else if (deVerdade) {
     const n = await oNarradorDoServidor(m.pedido, op.chamar, { cache: op.cache, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } });
     resposta = obj(n.resposta);
     ia.chamadas += n.chamadas;
@@ -514,7 +542,7 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   }
   const portaDoCronista = typeof op.cronista === "function" ? op.cronista : deVerdade ? oCronistaPelaPorta(op.chamar, ia) : null;
   const L0 = aLinhaDoServidor(m, resposta, null);
-  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar(), servidor: true });
+  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar(), servidor: true, ...(ator ? { modoDoNarrador: m.modo } : {}) });
   const r0 = correrOTurno(m.estadoDoFim, L0.linha, contexto());
   const cr = oCronistaDoServidor(m, resposta, r0.estado);
   let proposta = null, chamado = false;
@@ -526,7 +554,8 @@ export async function oTurnoNoServidor(corpo, opcoes) {
     if (!ehObjeto(proposta)) proposta = null;
   } else if (cr.pergunta) proposta = {};
   let leitura;
-  try { leitura = !cr.pergunta ? null : cr.corre && proposta ? lerALeitura(cr.leitura, cr.narrativa) : pularALeitura(cr.leitura, cr.narrativa); } catch { leitura = null; }
+  /* o gatilho CALADO (o `ator`): a narração não entra na fila, que ninguém vai ler — como no App */
+  try { leitura = !cr.pergunta || cr.calado ? null : cr.corre && proposta ? lerALeitura(cr.leitura, cr.narrativa) : pularALeitura(cr.leitura, cr.narrativa); } catch { leitura = null; }
   const L = proposta ? aLinhaDoServidor(m, resposta, proposta) : L0;
   const r = proposta ? correrOTurno(m.estadoDoFim, L.linha, contexto()) : r0;
   for (const onde of arr(r.calouDoDepois)) if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde);

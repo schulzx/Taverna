@@ -377,9 +377,17 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      provada em Node sobre os 434 casos (teste-ficha-de-ator.mjs). Credor: a
      etapa 2 do plano (mente/plano-narrador-ator.md), o pedido do ator, que a
      lê no modo `ator` de MODO_DO_NARRADOR. Sai quando ela a importar. */
-  const ESPERA_DO_MOTOR = { "ficha-de-ator.js": "a etapa 2 do Narrador ator (o pedido do ator), 03/11" };
+  /* Paga a da ficha (03/11, etapa 2, o oficial): `motor/pedido-do-ator.js`
+     importa-a, e o App e o servidor importam o pedido do ator. */
+  const ESPERA_DO_MOTOR = {};
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
-  const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)));
+  /* 03/11 (etapa 2 do Narrador ator), MUDADA E O MOTIVO: a régua só via o
+     import por `/motor/x.js"` (o do App, do servidor, de src/), e uma peça
+     do motor importada SÓ por outra peça do motor (`./x.js"`) contava como
+     muda. É o caso da ficha de ator, que só o pedido do ator lê. O import de
+     dentro do motor passa a contar — mas só o de OUTRA peça, nunca o próprio. */
+  const doMotorPorDentro = (f) => motor.some((g) => g !== f && fonteM[g].includes(`"./${f}"`));
+  const mudosM = motor.filter((f) => !ESPERA_DO_MOTOR[f] && !todos.some((g) => g.includes(`/motor/${f}"`)) && !doMotorPorDentro(f));
   t(`todo módulo de src/motor/ está ligado a alguém${mudosM.length ? " — mudos: " + mudosM.join(", ") : ""}`, mudosM.length === 0);
   const pagos = Object.keys(ESPERA_DO_MOTOR).filter((f) => !motor.includes(f) || todos.some((g) => g.includes(`/motor/${f}"`)));
   t(`e a espera do motor não guarda quem já foi ligado${pagos.length ? " — já ligados: " + pagos.join(", ") : ""}`, pagos.length === 0);

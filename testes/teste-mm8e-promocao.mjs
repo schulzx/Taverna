@@ -250,7 +250,10 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
      a gente e o dia, guarda o elenco que volta e entrega o erro ao calou com
      o nome de sempre; a regra em si é provada byte a byte em teste-motor-entrega) */
   const vistoDoTurno = blocoDe("const dosVistos = osVistosDaNarrativa(", 300);
-  t("uma vez por turno, o que a narração citou vira dia visto — calado se estourar", vistoDoTurno.includes("osVistosDaNarrativa({ elenco: elencoSaveRef.current, npcs: npcsRef.current, dia: diaRef.current }, resp.narrativa)") && vistoDoTurno.includes("elencoSaveRef.current = dosVistos.elenco;") && vistoDoTurno.includes('calou("vistosDaNarrativa", dosVistos.erro)'));
+  /* 03/11 (o Narrador ator, etapa 2), MUDADA E O MOTIVO: a chamada ganhou o modo
+     da mesa e quem a ficha pôs a falar depois da narração; a régua deixa de
+     exigir o «)» logo a seguir. O que guarda — a narração do turno, uma vez — é o mesmo. */
+  t("uma vez por turno, o que a narração citou vira dia visto — calado se estourar", vistoDoTurno.includes("osVistosDaNarrativa({ elenco: elencoSaveRef.current, npcs: npcsRef.current, dia: diaRef.current }, resp.narrativa") && vistoDoTurno.includes("elencoSaveRef.current = dosVistos.elenco;") && vistoDoTurno.includes('calou("vistosDaNarrativa", dosVistos.erro)'));
 
   const viradaDoDia = statementDe("try { const r = promoverNoDia(", 'calou("promoverNoDia", e); }');
   t("ao virar o dia, a promoção roda por dia passado — calada se estourar, nenhuma linha na tela", viradaDoDia.includes("promoverNoDia(sementeMundo(), mapaRef.current, contextoDoElenco(), elencoSaveRef.current,") && viradaDoDia.includes("elencoSaveRef.current = r.estado;") && viradaDoDia.includes('calou("promoverNoDia", e)') && !/pushMsgs/.test(viradaDoDia));

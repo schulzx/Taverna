@@ -45,6 +45,7 @@
 
    Puro, sem React. Provado em `testes/teste-nada-entra-pelo-ator.mjs`.
    ============================================================ */
+import { caidosDaLuta } from "../recibo-da-luta.js";
 
 /* ---------------- AS PORTAS ----------------
    `canal`: "mudancas" (um campo), "sinal" (um sinal de `mudancas.sinais`,
@@ -151,6 +152,24 @@ export function aRespostaPelaPorta(resp, modo) {
   if (abreTudo(m)) return resp;
   if (!resp || typeof resp !== "object" || Array.isArray(resp)) return resp;
   try { return filtrada(resp, m); } catch { return { narrativa: resp.narrativa, mudancas: null }; }
+}
+
+/* O PESO DA LINHA PELO SISTEMA (o Narrador ator, etapa 2, 03/11). A porta
+   `pesoDaLinha` fechada tira a prosa do livro-razão, e com ela o «rolou
+   dado» e o «alguém morreu» que só a prosa dizia. O sistema sabe os dois
+   por ele: o teste do turno (o App guarda-o em `testeDoTurnoRef`, a
+   rolagem da resposta quando a houver) e quem caiu na luta DESTE turno —
+   caído na luta de depois (ou no fecho dela, quando ela acabou) e não
+   caído na luta do início do turno. `lutaAntes` é a da foto do início (o
+   golpe do herói resolve-se antes de o Narrador ser chamado, e a luta do
+   envio já o traz caído).
+   → { houveDado, alguemCaiu, caidos } */
+export function oPesoPeloSistema(entrada) {
+  const e = entrada && typeof entrada === "object" ? entrada : {};
+  const antes = new Set(caidosDaLuta(e.lutaAntes));
+  const agora = [...caidosDaLuta(e.lutaDepois), ...(Array.isArray(e.caidosDoFecho) ? e.caidosDoFecho : [])];
+  const caidos = [...new Set(agora.filter((n) => typeof n === "string" && n && !antes.has(n)))];
+  return { houveDado: !!(e.teste || e.rolagem), alguemCaiu: caidos.length > 0, caidos };
 }
 
 function filtrada(resp, m) {

@@ -82,7 +82,11 @@ t("sem a moeda do mundo, «escamas» não é dinheiro (a cota de escamas não sa
 
 sec("a fiação no App");
 const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-t("o App passa a frase do jogador por nome à bolsa", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo \+ "\\n" \+ nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa \}\)/.test(app));
+/* 03/11 (o Narrador ator, etapa 2), MUDADA E O MOTIVO: a chamada ganhou
+   `quemFalou` (quem a ficha do ator pôs a falar, para a recência do elenco)
+   DEPOIS da moeda. O que esta asserção guarda — a frase e a moeda por nome —
+   continua igual; a régua aceita o que vier depois de `moeda`. */
+t("o App passa a frase do jogador por nome à bolsa", /aplicarResposta\(resp, persAtual, \{ envelopes: conteudo \+ "\\n" \+ nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa(?:, [^}]*)? \}\)/.test(app));
 t("a frase é a que a escuta lê como do jogador (nunca um envelope)", /lerOPedido\(conteudo\); pedidoDaBolsa = pb && pb\.doJogador \? pb\.texto : ""/.test(app));
 /* MOVIDA (20/10, o Léxico vira camada de cor): a palavra continua a ser a do
    léxico, mas passa por `nomeDaMoeda` — o nome único da campanha, o mesmo da

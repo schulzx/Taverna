@@ -285,6 +285,10 @@ export function dublesDoCronista(k, { novo }) {
     resumoMapaParaPrompt: () => "MAPA", resumoDiplomacia: () => "DIPLOMACIA", resumoDoArco: () => "ARCO",
     resumoQuests: (q) => "QUESTS " + (q || []).length, tempoInfoPrompt: () => "TEMPO " + S.diaRef.current,
     infoDivindade: () => JSON.stringify(S.divindadeRef.current), infoTitulo: () => "TITULO", cenaDoPrompt: () => "CENA",
+    /* 03/11 (o Narrador ator, etapa 2): o gatilho e o aceito do Cronista
+       recebem o modo da mesa (MODO_DA_MESA do App, o padrão fora do Vite).
+       O dublê é o do jogo de hoje: o `mestre`. */
+    MODO_DA_MESA: "mestre",
   };
   /* um nome que nenhum dublê dá e que não é do JavaScript fica em `faltas` */
   const escopo = new Proxy(S, {

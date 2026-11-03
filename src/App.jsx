@@ -244,7 +244,8 @@ import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correc
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
-import { portaAberta } from "./motor/portas-do-narrador.js";
+import { portaAberta, oModoDoNarrador, oPesoPeloSistema } from "./motor/portas-do-narrador.js";
+import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -455,6 +456,22 @@ async function chamarMestre(system, historico) {
   /* A FALA DO HERÓI É DO JOGADOR (11.ª sessão: o Mestre a escreveu em 16 de 62) — só sai o que é seguro; a régua mora em fala-do-heroi.js */
   try { const ultima = pedido.messages[pedido.messages.length - 1]; const podada = semFalaInventada(resp.narrativa, ultima && ultima.content); if (podada.cortadas.length) resp = { ...resp, narrativa: podada.narrativa }; } catch (e) { calou("a fala do herói", e); }
   return resp;
+}
+
+/* O MODO DO NARRADOR DESTA MESA (o Narrador ator, etapa 2, 03/11): o padrão
+   da tabela (MODO_DO_NARRADOR, src/motor/portas-do-narrador.js). Só o
+   dev-server de prova o troca (VITE_MODO_DO_NARRADOR=ator); o build de
+   produção nunca o lê, porque lá `import.meta.env.DEV` é falso. Fora do
+   Vite (as provas em Node), é o padrão. */
+const MODO_DA_MESA = (() => { try { return oModoDoNarrador(import.meta.env && import.meta.env.DEV ? import.meta.env.VITE_MODO_DO_NARRADOR : undefined); } catch { return oModoDoNarrador(); } })();
+
+/* O ATOR PELA PORTA DO APP: o pedido do ator (src/motor/pedido-do-ator.js)
+   sobre chamarModelo, com a forma do pedido dele (PEDIDO_AO_ATOR: texto, sem
+   a ficha do cache). A segunda escrita, a resposta sem prosa e a guarda da
+   fala do herói moram na peça — as mesmas do servidor. */
+async function chamarOAtor(pedido, frase) {
+  const r = await aRespostaDoAtor(pedido, (c) => chamarModelo(c.system, c.messages, c.maxTokens, c.formato, c.tarefa, false), { frase, calou });
+  return r.resposta;
 }
 
 /* v9.105: O LIVRO DA CAMPANHA MORREU AQUI, e a razão vale ficar.
@@ -9721,7 +9738,7 @@ export default function Taverna() {
       canone: canoneRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current, abertura: aberturaMundoRef.current, missoes: missoesRef.current,
     }, resp, {
       envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda, sorte: sorteDoTurno("salvaguarda"),
-      mundo: mundoDaBase, baseDoNome, motorDoArco, sorteDoTurno,
+      mundo: mundoDaBase, baseDoNome, motorDoArco, sorteDoTurno, modoDoNarrador: MODO_DA_MESA,
     });
     aplicarOsEfeitos(saida);
     if (saida.semFicha) return null;
@@ -9756,14 +9773,16 @@ export default function Taverna() {
        guarda da nêmesis (`aNemesisNaNarrativa`) e quem a prosa pôs em cena
        (`osVistosDaNarrativa`, MM8e) moram em src/motor/entrega-do-turno.js.
        Daqui sai a fiação: a nota, a porta que a encerra, o estado do elenco.
-       Provado byte a byte contra as duas linhas de antes (teste-motor-entrega). */
+       Provado byte a byte contra as duas linhas de antes (teste-motor-entrega).
+       O Narrador ator (etapa 2, 03/11): as duas recebem o modo da mesa, e no
+       `ator` a recência é de quem a ficha pôs a falar (`op.quemFalou`). */
     try {
-      const daNemesis = aNemesisNaNarrativa(nemesisRef.current, resp.narrativa);
+      const daNemesis = aNemesisNaNarrativa(nemesisRef.current, resp.narrativa, MODO_DA_MESA);
       notaRef.current = notaComOTurno(notaRef.current, daNemesis.paraOCronista);
       if (daNemesis.encerrar) encerrarNemesis(daNemesis.encerrar);
     } catch (e) { calou("a nêmesis na narração", e); }
     {
-      const dosVistos = osVistosDaNarrativa({ elenco: elencoSaveRef.current, npcs: npcsRef.current, dia: diaRef.current }, resp.narrativa);
+      const dosVistos = osVistosDaNarrativa({ elenco: elencoSaveRef.current, npcs: npcsRef.current, dia: diaRef.current }, resp.narrativa, MODO_DA_MESA, op.quemFalou);
       elencoSaveRef.current = dosVistos.elenco;
       if (dosVistos.erro) calou("vistosDaNarrativa", dosVistos.erro);
     }
@@ -9781,7 +9800,7 @@ export default function Taverna() {
         personagem: pers, fichaDoRef: personagemRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, base: baseMundoRef.current,
         abertura: aberturaMundoRef.current, lugar: lugarRef.current, missoes: missoesRef.current, npcs: npcsRef.current, npcTurno: npcTurnoRef.current,
         dia: diaRef.current, oferecidos: nomesOferecidosRef.current, divindade: divindadeRef.current,
-      }, resp, { mundo: mundoDaBase });
+      }, resp, { mundo: mundoDaBase, modoDoNarrador: MODO_DA_MESA });
       msgs.push(...doCodex.msgs);
       aplicarOsEfeitos(doCodex);
     } catch (e) { calou("o códex do turno", e); }
@@ -9797,7 +9816,7 @@ export default function Taverna() {
     try {
       const daChegada = aplicarAChegada({
         cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, mapa: mapaRef.current, combate: combateRef.current, jornada: jornadaRef.current,
-      }, resp);
+      }, resp, { modoDoNarrador: MODO_DA_MESA });
       aplicarOsEfeitos({ estado: {}, efeitos: daChegada.efeitos, paraOCronista: [] });
       msgs.push(...daChegada.msgs);
       if (daChegada.minutos) { const rel = avancarOsMinutos(daChegada.minutos, pers); pers = rel.ficha || pers; if (rel.texto) msgs.push(rel.texto); }
@@ -10012,7 +10031,7 @@ export default function Taverna() {
     try {
       /* os nomes que o sistema já conhece não acendem o "nome novo"
          (oGatilhoDoCronista, src/motor/cronista-do-turno.js) */
-      gatilho = oGatilhoDoCronista(estadoDoCronista(), { narrativa, doTurno, pers }, leituraDoCronistaRef.current);
+      gatilho = oGatilhoDoCronista(estadoDoCronista(), { narrativa, doTurno, pers, modoDoNarrador: MODO_DA_MESA }, leituraDoCronistaRef.current);
     } catch (e) { calou("o gatilho do Cronista", e); gatilho = { corre: true, motivos: [] }; }
     let filaDoCronista = "";
     if (gatilho.corre) { try { filaDoCronista = blocoDaFila(leituraDoCronistaRef.current); } catch (e) { calou("a fila do Cronista", e); filaDoCronista = ""; } }
@@ -10073,7 +10092,7 @@ export default function Taverna() {
          moram em oAceitoDoCronista, na mesma ordem e cada uma isolada. O
          que é do App entra pelas portas; o resto volta como efeito. */
       let fim = null;
-      try { fim = oAceitoDoCronista(ac, recusadoDoCronista, r, { ...portasDoCronista(), pers, narrativa, testeDoTurno, rolagem }); }
+      try { fim = oAceitoDoCronista(ac, recusadoDoCronista, r, { ...portasDoCronista(), pers, narrativa, testeDoTurno, rolagem, modoDoNarrador: MODO_DA_MESA }); }
       catch (e) { calou("o aceito do Cronista", e); return; }
       const msgs = fim.msgs, tocouCanone = fim.tocouCanone, tocouElenco = fim.tocouElenco;
       const p = fim.p;
@@ -10448,9 +10467,16 @@ export default function Taverna() {
        (o system incluído) volta aos refs pelo aplicar. Fora de try, como o
        trecho era: estoura onde estourava. */
     const { saida: { pauta, nota, combateAntes, corpo, novoHist, base } } = oPedidoDoTurno(estadoDoPedido(), { frase: conteudo, persAtual, histBase, oficina, doCompasso, formaDaCena, daFrente, daVirada, daTrama, pedidoEsc, fioEsc }, { calou, pushMsgs, setNpcs, setPersonagem, aplicar: aplicarDoPedido });
+    /* O NARRADOR ATOR (etapa 2, 03/11: src/motor/pedido-do-ator.js): no modo
+       `ator` o pedido é o do ator — o ofício, as duas últimas trocas e a
+       ficha do turno, montada da nota e do estado do fim da montagem —, e a
+       resposta é só prosa. No `mestre`, o de sempre. Se a ficha estourar, o
+       turno vai pelo Mestre, e as portas continuam as do modo. */
+    let pedidoDoAtor = null;
+    if (MODO_DA_MESA === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido() }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
     let respondeu = false;
     try {
-      const resp = await chamarMestre(systemRef.current, novoHist);
+      const resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist);
       /* MM15 (3): O MESTRE FALOU — a partir daqui, se algo estourar, o
          tropeço é nosso, não da ligação: `destinoDaFalha` usa esta
          marca para diferençar isto de uma chamada que nunca voltou. */
@@ -10506,7 +10532,7 @@ export default function Taverna() {
           narrador: JSON.parse(JSON.stringify({ narrativa: resp.narrativa || "", mudancas: resp.mudancas || {} })),
         });
       } catch (e) { calou("a sessão (o pedido)", e); turnoDaSessao = null; }
-      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa }) || personagemRef.current || personagem;
+      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa, quemFalou: pedidoDoAtor ? pedidoDoAtor.ficha.falam : null }) || personagemRef.current || personagem;
       juizDoTurnoRef.current = null; /* um turno sem juízo não empresta o veredito da véspera ao Cronista */
       try {
         if (fotoDoJuiz) {
@@ -10599,9 +10625,14 @@ export default function Taverna() {
            no `ator` a prosa não entra no livro-razão. Se a porta estourar, a
            linha pesa como sempre pesou. */
         let prosaPesa = true;
-        try { prosaPesa = portaAberta("pesoDaLinha"); } catch (e) { calou("a porta do peso da linha", e); prosaPesa = true; }
+        try { prosaPesa = portaAberta("pesoDaLinha", MODO_DA_MESA); } catch (e) { calou("a porta do peso da linha", e); prosaPesa = true; }
         const prosaDoPeso = prosaPesa ? String(narrativaFinal || "") : "";
-        const houveDado = !!(resp && resp.rolagem) || /🎲/.test(prosaDoPeso);
+        /* com a porta fechada, o «rolou dado» e o «alguém morreu» são do
+           SISTEMA (etapa 2, 03/11: oPesoPeloSistema): o teste do turno, e
+           quem caiu na luta deste turno — contra a luta da foto do início */
+        let pesoDoSistema = null;
+        if (!prosaPesa) { try { pesoDoSistema = oPesoPeloSistema({ teste: testeDoTurnoRef.current, rolagem: resp && resp.rolagem, lutaAntes: ((fotoInicio || fotoEnvio || {}).retrato || {}).combate, lutaDepois: combateRef.current, caidosDoFecho: (fechoDaLutaRef.current || {}).caidos }); } catch (e) { calou("o peso pelo sistema", e); pesoDoSistema = null; } }
+        const houveDado = !!(resp && resp.rolagem) || /🎲/.test(prosaDoPeso) || !!(pesoDoSistema && pesoDoSistema.houveDado);
         const acabouLuta = !!(combateAntes && !combateRef.current);
         const noClimax = /AGORA ACONTECE|está acontecendo/i.test(String(doCompasso || ""));
         /* v9.113: A MORTE PRECISA SER DE ALGUÉM.
@@ -10614,7 +10645,7 @@ export default function Taverna() {
 
            Agora: verbo inequívoco, ou `morre/morreu` com sujeito animado
            colado. "Ele morreu" e "Vera morreu" ficam; "a luz morre" sai. */
-        const alguemCaiu = /\b(matei|matou|matamos|assassin\w+|caiu mort[oa]|caíram mort[oa]s|mort[oa] no ch[ãa]o|est[áa] mort[oa]|foi mort[oa]|sangrou at[ée] morrer)\b/i.test(prosaDoPeso.slice(0, 600))
+        const alguemCaiu = !!(pesoDoSistema && pesoDoSistema.alguemCaiu) || /\b(matei|matou|matamos|assassin\w+|caiu mort[oa]|caíram mort[oa]s|mort[oa] no ch[ãa]o|est[áa] mort[oa]|foi mort[oa]|sangrou at[ée] morrer)\b/i.test(prosaDoPeso.slice(0, 600))
           || /\b(ele|ela|eles|elas|voc[êe]|[A-ZÁÉÍÓÚÂÊÔÃÕ][a-zà-ÿ]+)\s+(morre|morreu|morreram)\b/.test(prosaDoPeso.slice(0, 600))
           || /\bmorreu (nos|no|na|em|ali|aqui|antes|depois|logo|sem|com)\b/i.test(prosaDoPeso.slice(0, 600));
         const { aqui } = elencoDaOnda();

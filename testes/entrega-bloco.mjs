@@ -198,6 +198,11 @@ export function dublesDaEntrega(k, { novo, sorte, extras }) {
     /* o relógio do desfecho: guarda o atraso e corre já (a tela que abre) */
     setTimeout: (fn, ms) => { log.relogio.push(ms); fn(); return 0; },
     abrirDesfechoDaMorte: () => { log.desfechos++; },
+    /* 03/11 (o Narrador ator, etapa 2): o recorte de hoje passa o modo da mesa
+       (MODO_DA_MESA, o padrão fora do Vite) e quem a ficha pôs a falar
+       (`op.quemFalou`, do aplicarResposta) às peças da nêmesis e dos vistos.
+       O dublê é o do jogo de hoje: o `mestre`, e nenhum nome do sistema. */
+    MODO_DA_MESA: "mestre", op: {},
     ...(extras || {}),
   };
   return { S, log };

@@ -68,12 +68,16 @@ export function aNemesisNaNarrativa(nemesis, narrativa, modoDoNarrador) {
 /* ---------------- OS VISTOS DO ELENCO (MM8e) ----------------
    Quem a narração pôs em cena conta como visto hoje — é a recência que o
    elenco lê para promover e para dizer "já te vi antes". O erro volta com
-   o estado de antes, e o App entrega-o ao `calou` com o nome de sempre. */
-export function osVistosDaNarrativa(ler, narrativa, modoDoNarrador) {
+   o estado de antes, e o App entrega-o ao `calou` com o nome de sempre.
+   `doSistema` (o Narrador ator, etapa 2, 03/11): quem o SISTEMA pôs em
+   cena — no `ator`, a gente que a ficha pôs a falar (`ficha.falam`). */
+export function osVistosDaNarrativa(ler, narrativa, modoDoNarrador, doSistema) {
   const { elenco, npcs, dia } = ler || {};
-  /* a porta (portas-do-narrador.js): no modo que a fecha, o elenco lê a
-     prosa vazia — fica como ficaria num turno sem narração */
-  const lida = portaAberta("osVistosDaNarrativa", modoDoNarrador) ? narrativa : "";
+  /* a porta (portas-do-narrador.js): no modo que a fecha, o elenco não lê a
+     prosa — lê só os nomes que o sistema deu (sem eles, fica como ficaria
+     num turno sem narração) */
+  const lida = portaAberta("osVistosDaNarrativa", modoDoNarrador) ? narrativa
+    : (Array.isArray(doSistema) ? doSistema : []).filter((n) => typeof n === "string" && n.trim()).join(" · ");
   try { return { elenco: vistosDaNarrativa(elenco, npcs, lida, dia), erro: null }; }
   catch (e) { return { elenco, erro: e }; }
 }

@@ -78,6 +78,9 @@ const montar = ({ acordouAbs = 470, expira = 500 } = {}) => {
     aplicarAChegada: () => ({ estado: {}, efeitos: [], paraOCronista: [], msgs: ["🧭 Você está em Vila do Sul."], minutos: 30 }),
     aplicarOsEfeitos: () => {}, calou: (onde, e) => { S.calados.push(onde + ": " + (e && e.message)); },
     resolverQueda: (p) => p,
+    /* 03/11 (o Narrador ator, etapa 2): a chegada recebe o modo da mesa
+       (MODO_DA_MESA do App, o padrão fora do Vite); o dublê é o de hoje */
+    MODO_DA_MESA: "mestre",
     resp: { narrativa: "Chegamos a Vila do Sul." }, pers: doTurno, msgs: [], calados: [],
   };
   return S;

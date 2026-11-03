@@ -717,14 +717,19 @@ export function aFichaDeAtor(entrada) {
 
 /* AS DUAS ÚLTIMAS TROCAS, tal qual (a continuidade do ator: o plano, §4).
    Do relato do save (`mensagens`: { autor, texto }), as duas últimas
-   frases do jogador com a resposta que veio depois de cada uma. */
+   frases do jogador com a resposta que veio depois de cada uma.
+   SÓ AS RESPONDIDAS (03/11, etapa 2): no App a frase do turno já está no
+   relato quando `enviar` monta o pedido (a tela empurra-a antes), e sem
+   resposta ela não é memória — contá-la gastava uma das duas trocas na
+   própria frase que a ficha já diz em ACONTECEU. */
 function asUltimasTrocas(estado) {
   const ms = arr(ehObj(estado) ? estado.mensagens : null).filter((m) => ehObj(m) && (m.autor === "jogador" || m.autor === "mestre") && typeof m.texto === "string");
   const out = [];
   for (let i = ms.length - 1; i >= 0 && out.length < FICHA_DE_ATOR.trocas; i--) {
     if (ms[i].autor !== "jogador") continue;
     const resp = ms.slice(i + 1).find((m) => m.autor === "mestre");
-    out.unshift({ jogador: ms[i].texto.slice(0, FICHA_DE_ATOR.trocaMax), mestre: resp ? resp.texto.slice(0, FICHA_DE_ATOR.trocaMax) : "" });
+    if (!resp) continue;
+    out.unshift({ jogador: ms[i].texto.slice(0, FICHA_DE_ATOR.trocaMax), mestre: resp.texto.slice(0, FICHA_DE_ATOR.trocaMax) });
   }
   return out;
 }

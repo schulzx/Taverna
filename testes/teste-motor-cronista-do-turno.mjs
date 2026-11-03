@@ -77,9 +77,12 @@ sec("2 · a prova morde");
   const semFila = divergem(await fotosDe(trocado("fila: filaDoCronista, aceite", "fila: \"\", aceite")));
   t(`o pedido sem a fila das narrações não lidas: ${semFila} fotos divergem`, semFila > 20);
   /* o gatilho sem os nomes que o sistema já conhece: o elenco, o cânone e o mapa acendem o "nome novo", e a narração que ia para a fila é lida */
-  const semConhecidos = divergem(await fotosDe(trocado("gatilho = oGatilhoDoCronista(estadoDoCronista(), { narrativa, doTurno, pers }", "gatilho = oGatilhoDoCronista({}, { narrativa, doTurno, pers: null }")));
+  /* 03/11 (o Narrador ator, etapa 2), MUDADA E O MOTIVO: o turno do gatilho e o
+     contexto do aceito ganharam `modoDoNarrador` no fim; a âncora deixa de
+     incluir o fecho «}» para continuar a bater, e a mordida é a mesma. */
+  const semConhecidos = divergem(await fotosDe(trocado("gatilho = oGatilhoDoCronista(estadoDoCronista(), { narrativa, doTurno, pers", "gatilho = oGatilhoDoCronista({}, { narrativa, doTurno, pers: null")));
   t(`o gatilho sem os nomes conhecidos: ${semConhecidos} fotos divergem`, semConhecidos > 5);
-  const semRolagem = divergem(await fotosDe(trocado("pers, narrativa, testeDoTurno, rolagem }", "pers, narrativa, testeDoTurno, rolagem: null }")));
+  const semRolagem = divergem(await fotosDe(trocado("pers, narrativa, testeDoTurno, rolagem,", "pers, narrativa, testeDoTurno, rolagem: null,")));
   t(`o teste da concessão com a rolagem esquecida: ${semRolagem} fotos divergem`, semRolagem > 2);
   const semFicha = divergem(await fotosDe(trocado("    else if (ef.tipo === \"ficha\") setPersonagem(ef.personagem);\n", "")));
   t(`a ficha que não redesenha: ${semFicha} fotos divergem`, semFicha > 20);
