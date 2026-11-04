@@ -89,10 +89,12 @@ sec("§6 o dado falso não pousa");
 sec("§7 o teto e os nomes");
 {
   const muitos = lancamentoDaSerie("Marcha forçada", Array.from({ length: 9 }, (_, i) => ({ rolo: i + 2, cd: 10, passou: true })));
-  t(`no máximo ${A_BANDEJA.tetoDeDados} dados à vista; o resto é «+N»`, muitos.dados.length === A_BANDEJA.tetoDeDados && muitos.alem === 3 && aLinhaDoLancamento(muitos).includes("(+3)"), aLinhaDoLancamento(muitos));
+  /* MOVIDA em 04/11 (a spec da bandeja, Mesa C): o teto desceu de 6 para 5, o que cabe na faixa a 48 px; a intenção fica — o resto é «+N» */
+  t(`no máximo ${A_BANDEJA.tetoDeDados} dados à vista; o resto é «+N»`, muitos.dados.length === A_BANDEJA.tetoDeDados && muitos.alem === 9 - A_BANDEJA.tetoDeDados && aLinhaDoLancamento(muitos).includes(`(+${9 - A_BANDEJA.tetoDeDados})`), aLinhaDoLancamento(muitos));
   t("cada desfecho tem nome, e o livre é calado", NOME_DO_DESFECHO.critico === "crítico" && NOME_DO_DESFECHO.falha === "falhou" && NOME_DO_DESFECHO.livre === "");
   t("a linha não fala do sistema (nem «rolagem», nem «sistema»)", !/rolagem|sistema|bandeja/i.test(aLinhaDoLancamento(lancamentoDoTeste({ valor: 5, dc: 9, rotulo: "Escalar" }))));
-  t("os tempos da tabela são números", Number.isFinite(A_BANDEJA.rolarMs) && Number.isFinite(A_BANDEJA.pousoMs));
+  /* MOVIDA em 04/11 (a spec da bandeja, Mesa C): o tempo do movimento saiu do motor para MOVIMENTO_DO_DADO (estilo.js) — é forma, não lance; a suíte da mesa C prende-o */
+  t("o motor não guarda tempo de animação", A_BANDEJA.rolarMs === undefined && A_BANDEJA.pousoMs === undefined);
 }
 
 console.log(`\na bandeja: ${bons} ok · ${maus} falhas`);

@@ -24,6 +24,19 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · a casca, 3.ª etapa · a bandeja na spec do desenho
+- **feito:**
+  - `FORMAS_DO_DADO`, `PAPEL_DO_DADO`, `BANDEJA` e `MOVIMENTO_DO_DADO` em estilo.js;
+  - `painel-bandeja.jsx` lê-as, e as formas provisórias saíram. Há as sete faces com facetas, e o d100 em dois d10.
+  - Cada estado tem forma além da cor: anel contínuo com ✓, tracejado com ✕ e o dado apagado, raios com ✦ no crítico, a racha com ! no desastre.
+  - O número troca enquanto rola, sem sortear: o resultado já veio da semente.
+  - O movimento sai com reduce: o dado aparece pousado, com um esmaecer de 120 ms.
+- **suítes:**
+  - `teste-mesa-c` ganhou o §5 (49/49);
+  - `teste-a-bandeja` mudou duas asserções, com o motivo: o teto desceu de 6 para 5, e o tempo saiu do motor, porque é forma e não lance.
+- **decisão média, contra a spec:** a bandeja **recolhe** no turno seguinte em vez de esvaziar. A mesa lembra o que saiu numa fileira de 20 px, sem tirar altura à página.
+- **prova viva (5199):** «Olhar à volta» → «Rolar» → o d20 de hexágono com o anel verde e o selo ✓, e a frase «Percepção · 13 + 2 = 15 · precisa de 13 · ✓ passou». A consola está limpa.
+
 ## 04/11 · a casca, 2.ª etapa · a resposta do Mestre numa folha de pergaminho
 - **feito:**
   - a `Prosa` (ui.jsx) mora numa folha de pergaminho (`.tv-folha`): tinta escura sobre papel, a vinheta da borda e a fibra em CSS, pousada no couro com sombra;

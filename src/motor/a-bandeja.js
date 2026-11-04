@@ -27,11 +27,10 @@ export const A_BANDEJA = Object.freeze({
      encostados — mais do que isto é registo, e o registo já existe */
   ficam: 3,
   /* quantos dados cabem num lançamento só (a marcha de oito horas não
-     enche a mesa de oito dados: o resto é «+N») */
-  tetoDeDados: 6,
-  /* o tempo do lançamento, em ms — o dado rola, pousa, e o número fica */
-  rolarMs: 700,
-  pousoMs: 220,
+     enche a mesa de oito dados: o resto é «+N»). Cinco é o que cabe na
+     faixa a 48 px (a spec do `desenho`, BANDEJA em estilo.js). O tempo do
+     movimento é da forma, não do lance: mora em MOVIMENTO_DO_DADO. */
+  tetoDeDados: 5,
 });
 
 const FACES = new Set(A_BANDEJA.faces);

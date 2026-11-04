@@ -944,6 +944,58 @@ export const ABERTURA = {
    `peso` é a Spectral 400 que o `desenho` pediu para a folha clara (a 300
    da página escura afina demais sobre o papel).
    ============================================================ */
+/* ============================================================
+   A BANDEJA E OS SETE DADOS (Mesa C · 04/11/2026) — a forma do dado
+
+   A spec é do `desenho` (formas.md §«A mesa à luz de vela (C)» §4–§5;
+   Figma `243:46` o Dado, `243:72` a Marca, `244:613` a Bandeja). O
+   motor (`src/motor/a-bandeja.js`) decide o lance; isto é só a cara dele.
+
+   viewBox 48×48 (o d100 é dois d10). `corpo` é o polígono, `facetas` são
+   traços finos, `numero` é o centro da letra e `tam` o corpo dela.
+   ============================================================ */
+export const FORMAS_DO_DADO = {
+  4:  { corpo: "24,4 45,41 3,41", facetas: [], numero: [24, 30], tam: 16 },
+  6:  { retangulo: { x: 6, y: 6, lado: 36, raio: 6 }, facetas: [], numero: [24, 24], tam: 18 },
+  8:  { corpo: "24,3 45,24 24,45 3,24", facetas: ["M13.5 13.5 L34.5 13.5"], numero: [24, 26], tam: 18 },
+  10: { corpo: "24,3 44,21 24,45 4,21", facetas: ["M4 21 L24 29 L44 21", "M24 29 L24 45"], numero: [24, 19], tam: 16 },
+  12: { corpo: "24,4 43.97,18.51 36.34,41.99 11.66,41.99 4.03,18.51",
+        facetas: ["M24 14 L34.46 21.6 L30.47 33.9 L17.53 33.9 L13.54 21.6 Z", "M24 4 L24 14", "M43.97 18.51 L34.46 21.6", "M36.34 41.99 L30.47 33.9", "M11.66 41.99 L17.53 33.9", "M4.03 18.51 L13.54 21.6"],
+        numero: [24, 25], tam: 16 },
+  20: { corpo: "24,3 42.19,13.5 42.19,34.5 24,45 5.81,34.5 5.81,13.5",
+        facetas: ["M24 11 L36.5 32.5 L11.5 32.5 Z", "M24 3 L24 11", "M42.19 34.5 L36.5 32.5", "M5.81 34.5 L11.5 32.5", "M42.19 13.5 L24 11", "M5.81 13.5 L24 11", "M24 45 L36.5 32.5", "M24 45 L11.5 32.5"],
+        numero: [24, 25], tam: 16 },
+  /* o d100: dois d10 lado a lado — as dezenas («00»–«90», letra 14) e as unidades */
+  100: { de: 10, tamDezenas: 14 },
+};
+
+/* A cor é do papel, por NOME de T (a mesma lei da runa): o corpo e o número */
+export const PAPEL_DO_DADO = {
+  teste: { corpo: "amber",   numero: "onAccent" },  /* 8,68 */
+  dano:  { corpo: "danger",  numero: "onAccent" },  /* 5,77 */
+  cura:  { corpo: "ok",      numero: "onAccent" },  /* 9,69 */
+  sorte: { corpo: "violet",  numero: "onSecond" },  /* 7,75 — o oráculo */
+  uso:   { corpo: "inkMeio", numero: "onAccent" },  /* 10,32 — o osso */
+};
+
+/* A faixa: 64 na mesa, 56 no telefone; o dado a 48; até 5 à vista */
+export const BANDEJA = {
+  altura: { mesa: 64, telefone: 56 },
+  dado: 48, dadoPequeno: 20, espaco: 8, raio: 12,
+  traco: 1.5, alfaDoTraco: 0.55, alfaDaFaceta: 0.28,
+  anel: 2, anelForte: 2.5, selo: 18,
+  falhaApagada: 0.5,
+};
+
+/* O movimento (formas.md §5): rolar com o ressalto do pouso, pousar, o
+   veredito; o número troca a cada `troca` ms enquanto rola — teatro, nunca
+   sorteio: o resultado já veio da semente. Com reduce, tudo é `semMovimento`. */
+export const MOVIMENTO_DO_DADO = {
+  rolar: 520, curva: "cubic-bezier(.22,1.2,.36,1)",
+  pousar: 140, veredito: 180, troca: 60, entreDados: 90,
+  semMovimento: 120,
+};
+
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
@@ -2218,19 +2270,27 @@ export const MOVIMENTO_CSS = `
    este bloco consegue desligar a animacao de quem pediu menos
    movimento. Subir esta caixa nao da erro: da um acessivel que nao
    funciona, calado. */
-/* ---------------- A BANDEJA (04/11) ----------------
-   O dado que rola: dá voltas no ar e cai na mesa; o que pousa dá um
-   ressalto curto. A duração vem de A_BANDEJA (rolarMs, pousoMs), posta
-   pela peça no próprio elemento — aqui só mora a forma do movimento. */
-@keyframes tvDadoRola { 0% { transform: translateY(-10px) rotate(-200deg) scale(.7); } 60% { transform: translateY(2px) rotate(20deg) scale(1.05); } 100% { transform: none; } }
-@keyframes tvDadoPousa { 0% { transform: scale(1.18); } 100% { transform: none; } }
-.tv-dado-rola { animation: tvDadoRola ease-out both; transform-origin: 50% 50%; }
-.tv-dado-pousa { animation: tvDadoPousa ease-out both; transform-origin: 50% 50%; }
+/* ---------------- A BANDEJA (Mesa C · 04/11) ----------------
+   O dado que rola entra da esquerda a dar voltas e cai com o ressalto do
+   pouso; o que pousa dá um ressalto curto; o veredito (o anel, o selo, a
+   palavra) aparece por cima. Os tempos e a curva são de MOVIMENTO_DO_DADO,
+   postos aqui e pela peça — esta caixa só tem a forma do movimento. */
+@keyframes tvDadoRola { from { transform: translateX(-24px) rotate(-200deg); } to { transform: none; } }
+@keyframes tvDadoPousa { from { transform: scale(1.06); } to { transform: none; } }
+@keyframes tvDadoVeredito { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+.tv-dado-rola { animation: tvDadoRola ${MOVIMENTO_DO_DADO.rolar}ms ${MOVIMENTO_DO_DADO.curva} both; transform-origin: 50% 50%; }
+.tv-dado-pousa { animation: tvDadoPousa ${MOVIMENTO_DO_DADO.pousar}ms ease-out both; transform-origin: 50% 50%; }
+.tv-dado-veredito { animation: tvDadoVeredito ease-out both; transform-origin: 50% 50%; }
+.tv-bandeja { min-height: ${BANDEJA.altura.telefone}px; }
+@media (min-width: 768px) { .tv-bandeja { min-height: ${BANDEJA.altura.mesa}px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
-  /* a bandeja parada: o dado pousa já com o número, sem voltas */
-  .tv-dado-rola, .tv-dado-pousa { animation: none; }
+  /* a bandeja parada: o dado aparece já pousado, com o número final; só
+     um esmaecer curto (MOVIMENTO_DO_DADO.semMovimento) — o estado final é
+     que é a saída, nunca um none que deixasse o veredito invisível */
+  .tv-dado-rola, .tv-dado-pousa { animation: tvFade ${MOVIMENTO_DO_DADO.semMovimento}ms ease both; }
+  .tv-dado-veredito { animation: none; opacity: 1; }
   /* O D20 ROLANDO, PARADO (V6, um defeito anterior apanhado na prova jogada): a
      linha da espera, o veu do dado e a lenda rodavam sem fim com reduced-motion.
      A saida nao e so none: parado, o d20 fica escurecido, e e isso que separa o
