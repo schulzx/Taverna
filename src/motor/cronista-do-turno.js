@@ -39,7 +39,9 @@
    sincronizarNemesis, conferirCom (as missões conferidas com a conversa
    ou o segredo do turno), mundoDaBase, fichaDeCompanheiro,
    notaDoRecrutamento; e os valores do turno: pers, narrativa,
-   testeDoTurno, rolagem.
+   testeDoTurno, rolagem — e, no modo `ator` (03/11, a 14.ª), fichaDoAtor
+   (a ficha do turno) e aceite (o pedido aceite), de onde o sistema regista
+   a gente e a conversa sem ler a prosa (registo-da-cena.js).
 
    Provado byte a byte contra o App de antes (760fe1b, o bloco inteiro
    recortado à letra) em `teste-motor-cronista-do-turno.mjs`.
@@ -57,6 +59,7 @@ import { segredosReveladosNoTurno } from "../saga.js";
 import { peneirarCanone } from "../segredo-guardado.js";
 import { frasesDoGrupoCheio } from "./meio-do-turno.js";
 import { portaAberta, oCronistaChama } from "./portas-do-narrador.js";
+import { oQueACenaRegista } from "./registo-da-cena.js";
 import { MAX_COMPANHEIROS, ATRIBUTOS } from "../constantes.js";
 import { pesarCompanheiro } from "../dificuldade.js";
 import { formatarPoder } from "../poder.js";
@@ -177,7 +180,7 @@ function pendentes(ctx) {
    derruba as outras (as que calavam, calam; as que diziam ao `calou`,
    dizem). */
 export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
-  const ac = aceito || {};
+  let ac = aceito || {};
   const recusadoDoCronista = Array.isArray(recusado) ? recusado : [];
   const r = proposta || {};
   const narrativa = ctx.narrativa;
@@ -196,6 +199,24 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   const msgs = [];
   let p = ctx.pers;
   let tocouElenco = false;
+  /* ---- SEÇÃO o que a cena regista (o Narrador ator, a 14.ª sessão) ----
+     No modo em que o Cronista não lê, quem está na ficha e falou com o
+     herói entra pelas MESMAS secções que o Cronista alimentava (`pessoas`
+     e `falou_com`, abaixo), e o pedido aceite que entrega uma coisa
+     põe-na no inventário. Tudo do que o sistema sabe — a ficha do turno
+     (`ctx.fichaDoAtor`), o toque (`ctx.aceite`) —, nunca da prosa
+     (registo-da-cena.js). Sem ficha, ou no modo `mestre`, não corre. */
+  try {
+    if (!oCronistaChama(ctx.modoDoNarrador) && ctx.fichaDoAtor && typeof ctx.fichaDoAtor === "object") {
+      const dc = oQueACenaRegista({ ficha: ctx.fichaDoAtor, aceite: ctx.aceite, estado: { ...ler(), personagem: p } });
+      if (dc.pessoas.length || dc.falou_com.length) ac = { ...ac, pessoas: [...(Array.isArray(ac.pessoas) ? ac.pessoas : []), ...dc.pessoas], falou_com: [...(Array.isArray(ac.falou_com) ? ac.falou_com : []), ...dc.falou_com] };
+      if (dc.itens.length && p && typeof p === "object") {
+        p = { ...p, inventario: [...(Array.isArray(p.inventario) ? p.inventario : []), ...dc.itens] };
+        fazer({ tipo: "ficha", personagem: p });
+        msgs.push(...dc.itens.map((i) => `Item obtido: ${i.nome}`));
+      }
+    }
+  } catch (e) { calou("o que a cena regista", e); }
   /* ---- SEÇÃO lugar (v9.39) ----
      O Cronista lê a narração e diz onde o herói ficou. É a rede que
      apanha o caso em que o Mestre esqueceu de mandar "lugar_atual" —

@@ -36,7 +36,17 @@ import {
   aFichaDeAtor, verificarAFicha, FICHA_DE_ATOR, MOTIVOS_DO_CORTE, CORPO_FALADO, DISTANCIA_FALADA, PERIODO_DO_DIA,
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
   TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase, A_LUTA_DITA,
+  O_QUE_A_FRASE_FAZ, A_INTENCAO_DITA, A_VOZ_DO_NUMERO, O_COMBINADO, A_CONVERSA_DA_FRASE, A_RESPOSTA_DITA,
 } from "../src/motor/ficha-de-ator.js";
+import { oEnvelopeDoAcampamento, oEnvelopeDoJogador, oEnvelopeDoTempo } from "../src/motor/envelopes-do-turno.js";
+import { compraNaFrase, envelopeDaCompra, vetoDaCompra, dadivaNaFrase, envelopeDaDadiva } from "../src/bolsa-da-frase.js";
+import { balcaoDeMantimentos } from "../src/mercado.js";
+import { garantirCoracaoDoSave } from "../src/nucleo.js";
+import { LINHA_DO_CORACAO } from "../src/subtramas.js";
+import { VOZ_PRESA } from "../src/nucleo.js";
+import { BOATO } from "../src/boatos.js";
+const tpl = (s, v) => String(s).replace(/{([A-Z])}/g, (_, k) => (v[k] != null ? v[k] : ""));
+const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 import { linhaParaMestre, SEVERIDADES } from "../src/combate.js";
 import { oEnvelopeDaFicha, oEnvelopeDosPoderes, oEnvelopeDoDesfecho, oEnvelopeDoCorpo } from "../src/motor/envelopes-do-turno.js";
 import { rolarAflicao } from "../src/aflicoes.js";
@@ -65,7 +75,12 @@ t("o corpo vai do inteiro ao chão, sem buraco", CORPO_FALADO[0].desde === 1 && 
 t("a distância cobre qualquer número de metros", DISTANCIA_FALADA[DISTANCIA_FALADA.length - 1].ate === Infinity && DISTANCIA_FALADA.every((d, i) => i === 0 || d.ate > DISTANCIA_FALADA[i - 1].ate));
 t("a hora cobre o dia inteiro (0 a 1440 minutos)", PERIODO_DO_DIA[PERIODO_DO_DIA.length - 1].ate === 1440 && PERIODO_DO_DIA.every((p, i) => i === 0 || p.ate > PERIODO_DO_DIA[i - 1].ate));
 t("o registo de fala: ids únicos, cada um com o jeito e uma expressão que lê o ofício", new Set(REGISTOS_DE_FALA.map((r) => r.id)).size === REGISTOS_DE_FALA.length && REGISTOS_DE_FALA.every((r) => r.de instanceof RegExp && r.o.length > 10));
-t("a fera não fala, e não tem exemplo de fala", REGISTOS_DE_FALA[0].id === "fera" && REGISTOS_DE_FALA[0].exemplos.length === 0);
+/* MOVIDA (03/11, a 14.ª sessão, conserto 2): dizia «a fera não tem exemplo
+   de fala» (`exemplos.length === 0`). Nenhum registo tem exemplo agora — a
+   frase pronta copiava-se («De graça, só o conselho.» em 5 de 29 respostas)
+   —, e a intenção da asserção (a fera não fala) fica, com a nova ao lado */
+t("a fera não fala", REGISTOS_DE_FALA[0].id === "fera" && /não fala/.test(REGISTOS_DE_FALA[0].o));
+t("e nenhum registo traz frase pronta: só o jeito descrito, sem aspas", REGISTOS_DE_FALA.every((r) => !("exemplos" in r) && !/["“«]/.test(r.o)));
 t("o trato do herói acaba num que serve a toda a gente", TRATO_DO_HEROI[TRATO_DO_HEROI.length - 1].quando({}) === true);
 t("o vínculo do grupo sobe o trato: 10 estrada, 30 confiança, 60 amizade, 80 lealdade",
   ["estrada", "confianca", "amizade", "lealdade"].every((id, i) => TRATO_DO_HEROI.find((x) => x.quando({ vinculo: [10, 30, 60, 80][i] })).id === id));
@@ -147,7 +162,11 @@ const L = r1.texto;
 t("o «não sei» do RUMO é um fato de quem responde, com a pergunta que ficou sem resposta", /Corrado — [\s\S]*?Não sabe responder a: «Onde encontro essa pessoa\?»/.test(L));
 t("e a frase pronta da pauta («diz que não sabe») não entra", !/diz que não sabe/.test(L));
 t("quem responde é quem a frase chama (o Corrado), não o companheiro", r1.pessoas.find((p) => p.nome === "Corrado").naoSabe && !r1.pessoas.find((p) => p.nome === "Dunstan Machado Torto").naoSabe);
-t("a voz do Dunstan sai do núcleo inteira — o tique e o exemplo", L.includes("fala como marinheiro em terra firme") && L.includes("Amarre isso, que vem vento."));
+/* MOVIDA (03/11, a 14.ª sessão, conserto 2): pedia «o tique e o exemplo»
+   («Amarre isso, que vem vento.»). O exemplo era uma frase pronta, e a
+   sessão mediu que o ator a copia; a voz inteira é o tique (o jeito), e a
+   intenção — a voz do núcleo chega sem cortes — fica */
+t("a voz do Dunstan sai do núcleo inteira — o tique, e nenhuma frase pronta para copiar", L.includes("fala como marinheiro em terra firme") && !L.includes("Amarre isso, que vem vento."));
 t("o Corrado, que não tem tique, fala pelo registo do ofício e trata a forasteira como forasteira", /Corrado — [^\n]*\n  Fala: frase de negociante/.test(L) && /Corrado[\s\S]*?como a forasteiro/.test(L) && !/Corrado — [^\n]*\n  Fala: [^\n]*(jura|marinheiro)/.test(L));
 t("o vínculo de 30 dá ao Dunstan o trato de confiança", /Dunstan[\s\S]*?pelo nome, com confiança/.test(L));
 t("o que o Corrado faz (A GENTE) é o seu «Agora», dito do herói", /Agora: deixa claro que sabe de uma coisa, e que a coisa tem preço\./.test(L));
@@ -347,6 +366,99 @@ sec("§6 o modo `mestre` não muda um byte");
 t(`as ${fotosBatem.length} fotos do pedido de hoje batem com o dourado, com a ficha a correr no mesmo processo`, fotosBatem.length === N_DA_PAUTA && fotosBatem.every(Boolean));
 const pecas = ["pauta-do-turno.js", "pedido-do-turno.js", "preludio-do-turno.js"].map((f) => fs.readFileSync(new URL(`../src/motor/${f}`, import.meta.url), "utf8"));
 t("nenhuma peça do pedido de hoje lê a ficha (ela não tem consumidor até a etapa 2)", pecas.every((s) => !s.includes("ficha-de-ator")) && !fs.readFileSync(new URL("../src/turno-no-servidor.js", import.meta.url), "utf8").includes("ficha-de-ator"));
+
+sec("§7 a 14.ª sessão (03/11): os três consertos que o Narrador ator pedia para passar a padrão");
+/* mente/sessao-14.md, a tabela de defeitos e «O ator: passa a padrão?».
+   Cada caso é o turno da sessão refeito com as peças que o produzem (os
+   envelopes do App, o coração do save, a linha da pauta), e o banco da
+   sessão (mente/sessao-14-dados/pedidos-ator-s14.json: a ficha e a resposta
+   de cada um dos 29 turnos) é a medida de antes. */
+const BRAM = { personagem: { nome: "Bram Pedra-Alta", grupo: [{ nome: "Leonor", vinculo: 30, classe: "Engenheiro" }], habilidades: [{ nome: "Cura Leve" }, { nome: "Luz Sagrada" }] } };
+const POCA = "ONDE      Na Poça da Foz, dentro de Monte da Forca\nEM CENA   Inez do Prado Baixo (atendente) · Leonor (com você)";
+const ac = (f) => f.partes.ACONTECEU;
+
+/* conserto 1 — a frase não é o resultado */
+const sopa = aFichaDeAtor({ frase: "Pago a sopa, como depressa e vou com a Leonor até ao templo procurar a Inez.", nota: POCA, estado: BRAM });
+t("T5 «Pago a sopa» sem cobrança: a frase entra como o que Bram QUER, e a ficha diz que ainda não pagou", ac(sopa).startsWith("Bram Pedra-Alta quer: «Pago a sopa") && ac(sopa).includes(tpl(A_INTENCAO_DITA.porFazer, { H: "Bram Pedra-Alta", L: "pagou" })));
+const notaDoSono = oEnvelopeDoJogador("oQueEuEscrevi", { acao: "Pago um quarto comum para esta noite, subo e durmo até de manhã. Amanhã apanho a Inez no turno dela." });
+const sono = aFichaDeAtor({ frase: oEnvelopeDoAcampamento("levantarDescansado", { antes: "Dormiu-se sem conversa à volta do fogo.", tipo: "longo", dur: "uma noite inteira", recibo: "PV e PM já foram restaurados.", cauda: [oEnvelopeDoTempo("climaDaNoite", { rotulo: "nublado", nota: "céu baixo" })] }), nota: `${POCA}\n${notaDoSono}`, estado: BRAM });
+t("T9 «pago um quarto… durmo» (o sono escrito): o ACONTECEU deixa de vir vazio — a frase, o descanso feito, a noite e o tempo", ac(sono).includes("Bram Pedra-Alta quer: «Pago um quarto comum") && ac(sono).includes("Bram Pedra-Alta descansou uma noite inteira") && ac(sono).includes("Dormiu-se sem conversa") && sono.partes.CENA.includes("agora está nublado"));
+t("…e o que o sistema fez resolve o seu ato: «ainda não pagou», e não «ainda não descansou»", ac(sono).includes("ainda não pagou.") && !ac(sono).includes("descansou."));
+t("…e nenhuma linha do sono fica sem tradução", sono.rastro.every((x) => x.cai !== "semTraducao"));
+const cura = aFichaDeAtor({ frase: "Ajoelho-me junto da Leonor, ponho as mãos sobre as costelas dela e rezo a Cura Leve.", nota: POCA, estado: BRAM });
+t("T25 «rezo a Cura Leve» em texto livre: ainda não usou Cura Leve (a habilidade lida do herói)", ac(cura).includes("Só a intenção, por agora: Bram Pedra-Alta ainda não usou Cura Leve."));
+const curaPeloBotao = aFichaDeAtor({ frase: oEnvelopeDosPoderes("habilidadesDeclaradas", { lista: `"Cura Leve" (3 PM — cura)`, mana: 5, acao: "Ponho as mãos nas costelas da Leonor", depois: "", extraTempo: "" }), nota: POCA, estado: BRAM });
+t("T26 a mesma cura pelo botão (o sistema a fez): é fato, sem «Só a intenção»", ac(curaPeloBotao).includes("usa Cura Leve") && !/Só a intenção/.test(curaPeloBotao.texto));
+const balcao = balcaoDeMantimentos({ nome: "Monte da Forca" }, {});
+const compra = compraNaFrase("Compro duas rações e pago.", { balcao, bolsa: 50, temKit: false, anterior: "", bancas: [] });
+const comprou = aFichaDeAtor({ frase: "Compro duas rações e pago.", nota: `${POCA}\n${envelopeDaCompra(compra)}`, estado: BRAM });
+t("a compra que a bolsa da frase fechou (COMPRA): fato, com o preço, e sem «Só a intenção»", ac(comprou).includes("Bram Pedra-Alta comprou 2 Rações de viagem por 8 moedas") && !/Só a intenção/.test(comprou.texto) && verificarAFicha(comprou.texto).length === 0);
+const semFundos = compraNaFrase("Compro duas rações e pago.", { balcao, bolsa: 1, temKit: false, anterior: "", bancas: [] });
+const naoFechou = aFichaDeAtor({ frase: "Compro duas rações e pago.", nota: `${POCA}\nNÃO PODE  ${vetoDaCompra(semFundos)[0]}`, estado: BRAM });
+t("a compra que não fechou (o veto da bolsa): a ficha diz porquê, na terceira pessoa e sem glifo", ac(naoFechou).includes("A compra de 2× Rações de viagem não fechou (custa 8 e Bram Pedra-Alta tem 1)") && verificarAFicha(naoFechou.texto).length === 0 && naoFechou.rastro.every((x) => x.cai !== "semTraducao"));
+const deu = aFichaDeAtor({ frase: "Dou duas rações a Inez.", nota: `${POCA}\n${envelopeDaDadiva(dadivaNaFrase("Dou duas rações a Inez.", { pessoas: [{ nome: "Inez do Prado Baixo" }], suprimentos: { racoes: 5 } }))}`, estado: BRAM });
+t("a dádiva da frase (DÁDIVA): fato, dito do herói", ac(deu).includes("Bram Pedra-Alta deu a Inez do Prado Baixo 2 rações; saíram da mochila de Bram Pedra-Alta."));
+t("a frase que só pergunta o preço não paga nada («Quanto custa? Se eu pagar…»)", !/Só a intenção/.test(aFichaDeAtor({ frase: "Quanto custa o quarto? Se eu pagar agora, fico com o bom?", nota: POCA, estado: BRAM }).texto));
+t("a tabela dos atos: ids únicos, cada um com o que ainda não fez e o que o resolve", new Set(O_QUE_A_FRASE_FAZ.map((a) => a.id)).size === O_QUE_A_FRASE_FAZ.length && O_QUE_A_FRASE_FAZ.every((a) => a.feito && a.resolve.length && (a.rx instanceof RegExp || a.id === "poder")));
+const resolveVivo = new Set([...TRADUCAO_DOS_ENVELOPES.map((r) => r.resultado), ...Object.values(TRADUCAO_DA_PAUTA).flat().map((r) => r.resultado), "golpe", "poder", "luta", "teste"].filter(Boolean));
+t("cada marca que resolve um ato tem quem a ponha (uma regra de envelope, de pauta, a luta ou o dado)", O_QUE_A_FRASE_FAZ.every((a) => a.resolve.every((r) => resolveVivo.has(r))));
+t("a intenção dita passa no verificador", verificarAFicha(tpl(A_INTENCAO_DITA.quer, { H: "Bram", F: "Pago a sopa." }) + "\n" + tpl(A_INTENCAO_DITA.porFazer, { H: "Bram", L: "pagou" })).length === 0);
+
+/* conserto 2 — a voz que pede número só diz os da ficha; nenhuma frase pronta */
+const LEONOR = { ...BRAM, nucleoCache: { nucleo: { pessoas: [{ nome: "Leonor", papel: "companheiro", ficha: { fala: COMO_FALA.find((f) => f.id === "f_numeros"), quer: { o: "ser chamada mestra por quem lho negou" } } }] } } };
+LEONOR.personagem = { ...BRAM.personagem, grupo: [{ nome: "Leonor", vinculo: 30, classe: "Engenheiro", conceito: "mestra de ofício, comerciante de ferragens" }] };
+const falaDe = (f, n) => (f.texto.match(new RegExp(`^${n} — [^\\n]*\\n  Fala: ([^\\n]*)`, "m")) || [])[1] || "";
+const semNum = aFichaDeAtor({ frase: "Olho a estrada.", nota: "ONDE      na estrada de Serra dos Frades", estado: LEONOR });
+const comNum = aFichaDeAtor({ frase: "Pergunto quanto custa a sopa.", nota: "ONDE      Na Poça da Foz\nPERGUNTOU o preço daqui: refeição quente 3 estalos\nO RUMO    responda primeiro ao que perguntei", estado: LEONOR });
+t("T0–T29: sem número na ficha, a Leonor não «diz os números exatos» nem tem «um preço por trás» — outra marca dela", !/números exatos|preço por trás/.test(falaDe(semNum, "Leonor")) && falaDe(semNum, "Leonor").includes(A_VOZ_DO_NUMERO.find((v) => v.id === "numeros").semNumero) && falaDe(semNum, "Leonor").includes(A_VOZ_DO_NUMERO.find((v) => v.id === "venda").semNumero));
+t("…e com o preço na ficha, o traço volta, preso ao que ela sabe", falaDe(comNum, "Leonor").includes("diz os números exatos do que sabe") && falaDe(comNum, "Leonor").includes("com o preço que sabe por trás") && comNum.texto.includes("3 estalos"));
+t("nenhum exemplo de fala na ficha: nem o do tique do núcleo, nem o do registo", !/\("/.test(semNum.texto) && !COMO_FALA.some((f) => f.exemplo && semNum.texto.includes(f.exemplo)));
+t("a tabela da voz do número: cada traço com as duas formas, e a de sem-número sem dígito", A_VOZ_DO_NUMERO.every((v) => v.de instanceof RegExp && v.comNumero && v.semNumero && !/\d/.test(v.semNumero) && verificarAFicha(v.semNumero).length === 0));
+const exemplosNoCorpus = res.reduce((a, { r }) => a + (r.texto.match(/\("[^"]+"\)/g) || []).length, 0);
+const numeroSemNumero = res.filter(({ r }) => r.pessoas.some((p) => /números exatos|preço por trás|conta tudo em dias/.test(str(p.tique) + str(p.registo)) && !/\d/.test(r.texto)));
+t(`nos ${res.length} casos: 0 exemplos de fala (eram 764 em 410 fichas), e nenhum traço de número numa ficha sem número`, exemplosNoCorpus === 0 && numeroSemNumero.length === 0);
+const BANCO = JSON.parse(fs.readFileSync(new URL("../mente/sessao-14-dados/pedidos-ator-s14.json", import.meta.url), "utf8")).map((x) => { const c = JSON.parse(x.body).messages.map((m) => m.content).join("\n"); let r = ""; try { r = JSON.parse(x.resp).texto || ""; } catch { r = ""; } return { ficha: c.slice(c.lastIndexOf("\nCENA\n") + 1), resp: r }; });
+const semAc = (x) => str(x).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+const copiados = BANCO.reduce((a, b) => a + [...b.ficha.matchAll(/\("([^"]+)"\)/g)].filter((m) => semAc(b.resp).includes(semAc(m[1]))).length, 0);
+t(`o banco da 14.ª (a medida de antes): ${BANCO.length} turnos, todas as fichas com exemplo de fala, e ${copiados} saíram copiados na resposta`, BANCO.length === 29 && BANCO.every((b) => /\("/.test(b.ficha)) && copiados === 5);
+
+/* os rótulos que o verificador achou nas 29 fichas da sessão (3 de voz e marca, 2 do boato) */
+const voz = VOZ_PRESA.modelo.replace("{marcador}", VOZ_PRESA.marcador.mulher).replace("{nome}", "Inez do Prado Baixo").replace("{tique}", "fala de si na terceira pessoa");
+const linhaPede = LINHA_DO_CORACAO.pedido.replace("{nome}", "Inez do Prado Baixo").replace("{ele}", "ela").replace("{fala}", "Prometi rezar onde ele caiu. É no caminho.");
+const linhaPorque = LINHA_DO_CORACAO.porque.replace("{nome}", "Inez do Prado Baixo").replace("{ele}", "ela").replace("{quer}", "que a aldeia onde nasceu passe o inverno");
+const boato = `Forte Abandonado de Raízes, «a guarda proibiu a estrada que leva até lá» — ${BOATO.vereditos.verdade}: é verdade, e o lugar mostra-o. ${BOATO.fecho}`;
+const rot = aFichaDeAtor({ frase: "Pergunto à Inez porquê.", nota: `${POCA}\nQUEM CARREGA ${linhaPede} ${voz}\nPERGUNTOU ${linhaPorque}\nO BOATO   ${boato}`, estado: BRAM });
+t("T1, T3, T16: a voz colada, a marca «é fato» e o veredito do boato saem — 0 rótulos, e o fato fica", verificarAFicha(rot.texto).length === 0 && rot.texto.includes("Prometi rezar onde ele caiu") && rot.texto.includes("que a aldeia onde nasceu passe o inverno") && rot.texto.includes("a guarda proibiu a estrada") && rot.texto.includes("é verdade, e o lugar mostra-o"));
+const rumor = aFichaDeAtor({ frase: "olho em volta", nota: `${POCA}\n[RUMOR] Um boato chegou aos meus ouvidos: "ouvi que o inverno deste ano virá cedo e cruel". Se couber, deixe-o circular na ficção (taverna, estrada, mercado) — e decida se ele é só fumaça ou o rastro de algo real.`, estado: BRAM });
+t("T11 o RUMOR: fica o boato entre aspas, e o «decida se é fumaça» (a ordem ao ator) cai", rumor.partes["O QUE SE DIZ"].includes("«ouvi que o inverno deste ano virá cedo e cruel»") && !/decida|deixe-o/.test(rumor.texto));
+
+/* conserto 3 — o que ficou combinado volta à ficha de quem o tem */
+const CORACAO = (resposta) => garantirCoracaoDoSave({ arcos: { "Inez do Prado Baixo": { pedido: 1, resposta } } });
+const SUBTRAMAS = { lista: [{ nome: "Inez do Prado Baixo", pedido: { fala: "Prometi rezar onde ele caiu. É no caminho.", objeto: "parar para rezar no caminho" } }] };
+const T13 = (resposta, extra = "") => aFichaDeAtor({ frase: "Pergunto à Inez se é longe o sítio onde rezar.", nota: POCA + extra, estado: { ...BRAM, coracao: CORACAO(resposta), subtramasCache: SUBTRAMAS } });
+const bloco = (f, n) => (f.texto.split("\n").reduce((o, l) => { if (/^\S/.test(l)) o.cur = l.startsWith(n + " — ") ? n : null; if (o.cur) o.out.push(l); return o; }, { cur: null, out: [] })).out.join("\n");
+t("T13: o pedido aceite volta à linha da Inez — «Pediu a Bram: …; e Bram aceitou»", bloco(T13("aceitou"), "Inez do Prado Baixo").includes(tpl(O_COMBINADO.aceitou, { H: "Bram Pedra-Alta", F: "Prometi rezar onde ele caiu. É no caminho.", O: "parar para rezar no caminho" })));
+t("…e a recusa e o pedido por responder também se dizem", bloco(T13("recusou"), "Inez do Prado Baixo").includes("e Bram Pedra-Alta recusou.") && bloco(T13(""), "Inez do Prado Baixo").includes("ainda não respondeu."));
+t("…e quem não tem pedido não ganha linha nenhuma (a Leonor)", !/Pediu a/.test(bloco(T13("aceitou"), "Leonor")));
+t("o combinado passa no verificador", verificarAFicha(T13("aceitou").texto).length === 0);
+const gesto = "\nA GENTE   Leonor chama a conversa de volta para o que ficou combinado";
+const t17 = aFichaDeAtor({ frase: "Sigo pela estrada.", nota: POCA + gesto, estado: BRAM });
+t("T17: «chama a conversa para o que ficou combinado» sem combinado nenhum cai (semConteudo), e o ator não tem o que inventar", !/ficou combinado/.test(t17.texto) && t17.rastro.some((x) => x.cai === "semConteudo") && "semConteudo" in MOTIVOS_DO_CORTE);
+const comCombinado = T13("aceitou", "\nA GENTE   Inez do Prado Baixo chama a conversa de volta para o que ficou combinado");
+t("…e com o combinado aceite, o gesto diz o quê", bloco(comCombinado, "Inez do Prado Baixo").includes("o que ficou combinado: parar para rezar no caminho"));
+const aceite = aFichaDeAtor({ frase: oEnvelopeDoAcampamento("respostaAoCoracao", { nome: "Inez do Prado Baixo", resposta: "aceitou", pede: "Prometi rezar onde ele caiu. É no caminho." }), nota: POCA, estado: { ...BRAM, coracao: CORACAO("aceitou"), subtramasCache: SUBTRAMAS } });
+t("T4: o «Aceitar» tocado entra no ACONTECEU do turno em que acontece, com o pedido", ac(aceite).includes("Bram Pedra-Alta aceita o que Inez do Prado Baixo lhe pede: «Prometi rezar onde ele caiu. É no caminho.»") && aceite.rastro.every((x) => x.cai !== "semTraducao"));
+const porque = aFichaDeAtor({ frase: oEnvelopeDoAcampamento("respostaAoCoracao", { nome: "Inez do Prado Baixo", resposta: "porque" }), nota: POCA, estado: BRAM });
+t("T3: o «Perguntar porquê» tocado também", ac(porque).includes("Bram Pedra-Alta pergunta a Inez do Prado Baixo porquê."));
+t("a resposta dita passa no verificador, nos três toques", ["aceitou", "recusou", "porque"].every((q) => verificarAFicha(tpl(A_RESPOSTA_DITA[q], { H: "Bram", N: "Inez" }) + tpl(A_RESPOSTA_DITA.pedido, { P: "É no caminho." })).length === 0));
+/* a conversa: com quem o herói falou, do que o sistema sabe */
+const conv = (frase, nota = POCA) => aFichaDeAtor({ frase, nota, estado: BRAM }).conversa;
+t("T1 «pergunto à Inez quanto custa um quarto», com a Inez em cena: falou com a Inez", conv("Vou ao balcão e pergunto à Inez quanto custa um quarto por uma noite.").includes("Inez do Prado Baixo"));
+t("T2 «— Quem é ele? E onde caiu?», sem nome, com só a Inez de fora do grupo: falou com a Inez", conv("— Quem é ele? E onde foi que caiu?").includes("Inez do Prado Baixo"));
+t("T5 «pergunto se a Inez passou por aqui», sem a Inez em cena: não falou com ela", !conv("Pergunto a um devoto se a Inez passou por aqui hoje.", "ONDE      Em Claustro do Primeiro Prego\nEM CENA   Leonor (com você)").includes("Inez do Prado Baixo"));
+t("T4 o toque «Aceitar»: falou com quem pediu", aceite.conversa.includes("Inez do Prado Baixo"));
+t("olhar a estrada não é conversa com ninguém", conv("Olho a estrada.").length === 0);
+t("a conversa nos casos reais: só gente da ficha", res.every(({ r }) => r.conversa.every((n) => r.pessoas.some((p) => p.nome === n))));
 
 console.log(`\nficha de ator: ${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

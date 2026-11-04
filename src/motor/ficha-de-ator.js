@@ -56,13 +56,36 @@
                 sem dado nenhum, a aposta fica como o que está em jogo
      → { texto, partes, pessoas, falam, rastro, cobertura, trocas }
 
-   Sem sorte: o que se escolhe (o exemplo do registo) sai do hash do nome —
-   a mesma pessoa fala sempre do mesmo jeito, em qualquer máquina.
+   Sem sorte: a ficha não escolhe nada ao acaso — a mesma entrada dá a
+   mesma ficha, byte a byte, em qualquer máquina.
+
+   OS TRÊS CONSERTOS DA 14.ª SESSÃO (03/11, mente/sessao-14.md §2). A
+   sessão leu a ficha de cada turno ao lado da prosa, e quase todo defeito
+   era da ficha, não do ator:
+     1. A FRASE NÃO É O RESULTADO. «Pago a sopa» entrava em ACONTECEU
+        como coisa feita, e o ator contava as moedas na tábua com a bolsa
+        intacta. Agora o que a frase quer fazer e o sistema não fez (pagar,
+        descansar, usar um poder, atacar — O_QUE_A_FRASE_FAZ) entra como
+        intenção («quer»), com a linha do que ainda não aconteceu
+        (A_INTENCAO_DITA). E o que o sistema fez fora da frase — o
+        descanso, a compra, a dádiva, o sim ao pedido — chega como fato.
+     2. A VOZ QUE PEDE NÚMERO SÓ DIZ OS DA FICHA. «Diz os números exatos»
+        e «sempre com um preço por trás» faziam a Leonor inventar um número
+        em toda fala. Com números na ficha, o traço diz os dela; sem eles,
+        cai para outra marca da mesma pessoa (A_VOZ_DO_NUMERO). E nenhum
+        exemplo de fala vai à ficha: a voz é o jeito descrito, nunca a frase
+        pronta («De graça, só o conselho» saiu copiado 5 vezes em 29).
+     3. O QUE FICOU COMBINADO VOLTA. O pedido que alguém fez ao herói (e a
+        resposta) volta à linha dessa pessoa em todo turno em que ela está
+        em cena (O_COMBINADO); o gesto que cobra «o que ficou combinado» só
+        sai com o combinado dito, e sem ele cai («semConteudo»); e a ficha
+        diz com quem o herói falou (`conversa`), que é o que o sistema
+        regista no lugar do Cronista (registo-da-cena.js).
+
    O VERIFICADOR (`verificarAFicha`) é a catraca: nenhum rótulo de sistema,
    nenhuma ordem, nenhuma razão, nenhum número que não se diz em voz alta.
    ============================================================ */
 import { SECOES } from "../pauta.js";
-import { hashSemente } from "../semente.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -100,6 +123,7 @@ export const MOTIVOS_DO_CORTE = Object.freeze({
   pergunta: "a pergunta dramática da batida: quem a responde é o jogo, não a fala",
   mecanismo: "o tipo do lugar entre parênteses («aqui isto é um ruína selada»): o ator vê a coisa, não a categoria",
   ordem: "a instrução ao Mestre colada ao fato («Narre…», «Isto é FATO. Use…»): o fato fica, a ordem cai",
+  semConteudo: "o gesto que cobra o que ficou combinado, sem combinado nenhum que o sistema saiba: cai, para o ator não o inventar (a 14.ª, T17)",
   semTraducao: "sem tradução: a tabela ainda não sabe dizer esta linha como fato",
 });
 
@@ -140,19 +164,24 @@ const periodo = (min) => { const m = ((Number(min) % 1440) + 1440) % 1440; retur
 /* O REGISTO DE FALA — o jeito de falar do ofício, para quem não tem tique
    (e também para quem o tem: o tique é um traço, o registo é a música). Lê
    o papel, a profissão, o conceito, a classe e as notas da pessoa; a
-   primeira linha que bate ganha. O exemplo vai DENTRO da fala, e escolhe-se
-   pelo hash do nome (sempre o mesmo para a mesma pessoa). */
+   primeira linha que bate ganha.
+   SEM EXEMPLO (03/11, a 14.ª sessão, conserto 2). Cada registo trazia duas
+   frases prontas, e a do hash do nome ia dentro da fala: «De graça, só o
+   conselho.» saiu tal qual em 5 das 29 respostas da sessão. Uma frase pronta
+   na ficha é uma frase que o ator copia; o jeito descrito é uma música que
+   ele toca com palavras dele. A voz continua inteira — o jeito, o tique, o
+   trato —, e nunca cai (ORDEM_DO_CORTE). */
 export const REGISTOS_DE_FALA = Object.freeze([
-  { id: "fera", de: /\b(lobo|ogro|urso|vibora|aranha|rato|besta|fera|criatura|javali|serpente|morto-vivo|esqueleto|zumbi|goblin|troll|warg)\b/, o: "não fala: rosna, bufa, investe", exemplos: [] },
-  { id: "mar", de: /\b(marinheir|pescador|barqueir|capitao de navio|pirata|estivador|marujo)/, o: "fala de marinheiro: o tempo, o vento e a amarra", exemplos: ["\"Amarre isso, que vem vento.\"", "\"Mar calmo não faz marinheiro.\""] },
-  { id: "venda", de: /\b(taverneir|mercador|vendedor|negociante|atendente|estalajadeir|comerciante|lojista|boticari|ferreir|armeir|cambista|encomendante|organiza as lutas|apostador)/, o: "frase de negociante: curta, sempre com um preço por trás", exemplos: ["\"Isso sai caro. Tudo sai.\"", "\"De graça, só o conselho.\""] },
-  { id: "ordem", de: /\b(guarda|capita|soldado|sentinela|carcereir|meirinho|recruta|cavaleir|sargento|patrulh)/, o: "fala de quem manda parar: ordens curtas, nunca explica", exemplos: ["\"Alto. Nome e ofício.\"", "\"Aqui não. Ande.\""] },
-  { id: "rua", de: /\b(ladr|batedor de carteiras|contrabandist|mendig|vigarist|prisioneir|bandid|assassin)/, o: "fala de rua: meias palavras, olho na porta", exemplos: ["\"Não fui eu, e não vi quem foi.\"", "\"Isso custa. Silêncio custa mais.\""] },
-  { id: "pulpito", de: /\b(sacerdot|clerig|monge|frei|freira|sacristao|profeta|devot|paladin|templo)/, o: "fala de púlpito: devagar, com a mão no peito", exemplos: ["\"Que os deuses vejam o que eu vejo.\"", "\"Há perdão. Não há esquecimento.\""] },
-  { id: "livro", de: /\b(sabio|escriba|arquivist|bibliotecari|erudit|mago|feiticeir|alquimist|curandeir|herbalista|vendedor de ervas)/, o: "fala de quem lê: palavras compridas, cita quem escreveu", exemplos: ["\"Está escrito, e mal escrito.\"", "\"Há três hipóteses. Duas são tolas.\""] },
-  { id: "mato", de: /\b(cacador|batedor|rastreador|guia|patrulheir|lenhador|pastor|druida)/, o: "fala de mato: pouca palavra, olho no chão", exemplos: ["\"Rasto fresco. Dois.\"", "\"Choveu ontem. Passaram depois.\""] },
-  { id: "corte", de: /\b(nobre|conde|condessa|baro|duque|senhor de|senhora de|conselheir|embaixador|regente|rei|rainha|principe|princesa)/, o: "fala de corte: cortês, e a cortesia corta", exemplos: ["\"Que encantador. Saia.\"", "\"Sou toda ouvidos, por um momento.\""] },
-  { id: "campo", de: /\b(campones|lavrador|moleir|serviçal|servical|aprendiz|criad|aldea|carroceir)/, o: "fala da roça: simples, com o tempo e a colheita na boca", exemplos: ["\"Se Deus quiser e a chuva deixar.\"", "\"Isso é coisa de gente da cidade.\""] },
+  { id: "fera", de: /\b(lobo|ogro|urso|vibora|aranha|rato|besta|fera|criatura|javali|serpente|morto-vivo|esqueleto|zumbi|goblin|troll|warg)\b/, o: "não fala: rosna, bufa, investe" },
+  { id: "mar", de: /\b(marinheir|pescador|barqueir|capitao de navio|pirata|estivador|marujo)/, o: "fala de marinheiro: o tempo, o vento e a amarra" },
+  { id: "venda", de: /\b(taverneir|mercador|vendedor|negociante|atendente|estalajadeir|comerciante|lojista|boticari|ferreir|armeir|cambista|encomendante|organiza as lutas|apostador)/, o: "frase de negociante: curta, sempre com um preço por trás" },
+  { id: "ordem", de: /\b(guarda|capita|soldado|sentinela|carcereir|meirinho|recruta|cavaleir|sargento|patrulh)/, o: "fala de quem manda parar: ordens curtas, nunca explica" },
+  { id: "rua", de: /\b(ladr|batedor de carteiras|contrabandist|mendig|vigarist|prisioneir|bandid|assassin)/, o: "fala de rua: meias palavras, olho na porta" },
+  { id: "pulpito", de: /\b(sacerdot|clerig|monge|frei|freira|sacristao|profeta|devot|paladin|templo)/, o: "fala de púlpito: devagar, com a mão no peito" },
+  { id: "livro", de: /\b(sabio|escriba|arquivist|bibliotecari|erudit|mago|feiticeir|alquimist|curandeir|herbalista|vendedor de ervas)/, o: "fala de quem lê: palavras compridas, cita quem escreveu" },
+  { id: "mato", de: /\b(cacador|batedor|rastreador|guia|patrulheir|lenhador|pastor|druida)/, o: "fala de mato: pouca palavra, olho no chão" },
+  { id: "corte", de: /\b(nobre|conde|condessa|baro|duque|senhor de|senhora de|conselheir|embaixador|regente|rei|rainha|principe|princesa)/, o: "fala de corte: cortês, e a cortesia corta" },
+  { id: "campo", de: /\b(campones|lavrador|moleir|serviçal|servical|aprendiz|criad|aldea|carroceir)/, o: "fala da roça: simples, com o tempo e a colheita na boca" },
 ]);
 
 /* COMO TRATA O HERÓI — da relação que o sistema guarda. O grupo tem o
@@ -173,6 +202,88 @@ export const TRATO_DO_HEROI = Object.freeze([
 /* O QUE CAI PRIMEIRO quando a ficha passa do teto — a voz (o tique, o
    registo e o trato) não está na lista: nunca cai. */
 export const ORDEM_DO_CORTE = Object.freeze(["teme", "cenaExtra", "tambem", "agora", "sabe", "quer"]);
+
+/* A VOZ QUE PEDE NÚMERO (03/11, a 14.ª sessão, conserto 2). A Leonor tinha
+   «diz os números exatos» (o tique do núcleo, COMO_FALA f_numeros) e «frase
+   de negociante, sempre com um preço por trás» (o registo `venda`); o ator
+   está proibido de inventar número; e a ficha quase nunca lhe dava um. Ela
+   disse um número em toda fala, e quando não havia nenhum inventou-o: oito
+   moedas que não existem no mundo, a mesma costela a três preços, «a Inez
+   prometeu quarenta moedas». O traço manda; o que lhe falta é o material.
+   Por isso cada traço que pede número tem duas formas: `comNumero`, quando a
+   ficha dá números a essa pessoa (o que ela Sabe, o que diz, a mesa de
+   preços, o que está à venda, as distâncias da cena) — e então são esses que
+   diz —, e `semNumero`, outra marca da MESMA pessoa (a precisão, o tempo, a
+   troca), sem número nenhum para dizer. `de` lê o traço como vem (o tique do
+   núcleo, a voz da pauta, o registo). */
+export const A_VOZ_DO_NUMERO = Object.freeze([
+  { id: "numeros", de: /^diz os números exatos$/u, comNumero: "diz os números exatos do que sabe", semNumero: "fala como quem confere um trabalho: precisa, de poucas palavras, de olho no que está torto" },
+  { id: "dias", de: /^conta tudo em dias$/u, comNumero: "conta tudo em dias, os que sabe", semNumero: "fala do tempo como coisa que se gasta: o que já passou e o que ainda falta" },
+  { id: "venda", de: /^frase de negociante: curta, sempre com um preço por trás$/u, comNumero: "frase de negociante: curta, com o preço que sabe por trás", semNumero: "frase de negociante: curta, e tudo é troca: o que se dá e o que se leva" },
+]);
+/* um traço com a forma que o material dele pede */
+const vozComNumero = (traco, temNumero) => { const v = A_VOZ_DO_NUMERO.find((x) => x.de.test(str(traco).trim())); return v ? (temNumero ? v.comNumero : v.semNumero) : traco; };
+
+/* A FRASE NÃO É O RESULTADO (03/11, a 14.ª sessão, conserto 1). Três vezes
+   a frase do herói virou fato na prosa sem o sistema a ter resolvido: «Pago
+   a sopa» (a bolsa 15 → 15) e a Leonor viu «três estalos na tábua»; «pago um
+   quarto comum… durmo» e dormiu de graça; «rezo a Cura Leve» em texto livre,
+   e a prosa fechou a ferida com a faixa a dizer 2/12. O ofício dizia que o
+   ACONTECEU é coisa feita, e a ficha punha lá a frase crua.
+   Cada ato desta tabela é uma coisa que a frase pode querer fazer e que tem
+   consequência no estado; `rx` lê-o na frase (só numa oração que declara: a
+   que pergunta ou supõe não conta, ATO_QUE_SO_PERGUNTA); `feito` diz o que
+   ainda não aconteceu; `resolve` são as marcas do que o sistema fez neste
+   turno e que o resolvem (o golpe, o poder, o descanso, a compra, o teste —
+   o `resultado` das regras de envelope). `poder` não tem `rx`: lê os nomes
+   das habilidades do herói, ao pé de um verbo de usar (VERBO_DO_PODER). */
+export const O_QUE_A_FRASE_FAZ = Object.freeze([
+  { id: "pagar", rx: /\b(pago|paguei|pagamos|compro|comprei|compramos|alugo|arremato|deixo (?:\S+ ){0,3}(?:moedas|estalos|cobres|pratas))\b/u, feito: "pagou", resolve: Object.freeze(["pagar", "teste"]) },
+  { id: "descansar", rx: /\b(durmo|dormimos|vou dormir|adorme[cç]o|deito-me para dormir|descanso|descansamos|acampo|acampamos|monto (?:o )?acampamento)\b/u, feito: "descansou", resolve: Object.freeze(["descansar", "teste"]) },
+  { id: "poder", rx: null, feito: "usou {X}", resolve: Object.freeze(["poder", "golpe", "teste"]) },
+  { id: "curar", rx: /\b(curo|trato (?:d?as )?feridas|fa[cç]o um curativo|ligo a ferida|estanco o sangue)\b/u, feito: "curou ninguém", resolve: Object.freeze(["poder", "teste"]) },
+  { id: "atacar", rx: /\b(ataco|golpeio|esfaqueio|apunhalo|degolo|disparo contra|atiro contra|avan[cç]o sobre)\b/u, feito: "acertou golpe nenhum", resolve: Object.freeze(["golpe", "poder", "luta", "teste"]) },
+]);
+const ATO_QUE_SO_PERGUNTA = /\?|\b(se|caso|talvez|quanto|quantos|quantas|posso|podemos|poderia|pergunto|quero saber|antes de)\b/u;
+const VERBO_DO_PODER = /\b(rezo|oro|lan[cç]o|conjuro|invoco|evoco|uso|recito|chamo|ergo|aplico|fa[cç]o)\b/u;
+/* a frase com o ato por fazer: a intenção, e a linha do que não aconteceu
+   ({H} o herói, {F} a frase, {L} os atos por fazer, juntos por «nem») */
+export const A_INTENCAO_DITA = Object.freeze({
+  quer: "{H} quer: «{F}»",
+  porFazer: "Só a intenção, por agora: {H} ainda não {L}.",
+  nem: " nem ",
+});
+
+/* O QUE FICOU COMBINADO (03/11, a 14.ª sessão, conserto 3). A Inez pediu no
+   T1 («Prometi rezar onde ele caiu. É no caminho.»), o herói aceitou no T4,
+   e no T13 a mesma Inez disse que não tinha pedido nada: o ator tem um turno
+   de memória, e o pedido aceite não voltava à ficha. O coração do save
+   (`coracao.arcos`, nucleo.js) guarda o pedido e a resposta, e as
+   subtramas (`subtramasCache.lista`) guardam a fala e o objeto; a linha
+   volta a quem pediu em todo turno em que a pessoa está em cena. {H} o
+   herói, {F} a fala do pedido, {O} o que é. */
+export const O_COMBINADO = Object.freeze({
+  aceitou: "Pediu a {H}: «{F}» ({O}); e {H} aceitou.",
+  recusou: "Pediu a {H}: «{F}» ({O}); e {H} recusou.",
+  aberto: "Pediu a {H}: «{F}» ({O}); {H} ainda não respondeu.",
+  /* o gesto que cobra o combinado (interprete.js, `cobra_a_promessa`)
+     ganha o combinado dito; sem ele, cai («semConteudo») */
+  gesto: /\bo que ficou combinado\b/u,
+  dito: "{G}: {O}",
+});
+
+/* A CONVERSA (03/11, a 14.ª sessão, conserto 3). Com quem o herói falou
+   neste turno, pelo que o SISTEMA sabe — quem está em QUEM ESTÁ, o que a
+   frase do herói diz e o toque que ele deu —, nunca pela prosa. Era o
+   Cronista que o lia da narração, e com ele fora a missão principal não
+   andou («Encontrar Inez do Prado Baixo» em falso depois de três conversas).
+   Conta: quem a frase nomeia; ou, numa frase de fala (`fala`) que não nomeia
+   ninguém, o único que está ali e não anda com o herói; ou quem recebeu a
+   resposta do herói a um pedido. */
+export const A_CONVERSA_DA_FRASE = Object.freeze({
+  fala: /^\s*[—–"«“-]|\?|\b(pergunto|digo|falo|conto|pe[cç]o|respondo|cumprimento|agrade[cç]o|explico|aceito|recuso|prometo|juro|despe[cç]o-me|chamo)\b/u,
+  nomeMin: 3,
+});
 
 /* ---------------- o verificador ---------------- */
 /* O QUE NENHUMA LINHA DA FICHA PODE TER. `onde: "fora"` só olha o que está
@@ -516,6 +627,12 @@ function aFraseDoTurno(frase, c) {
     soltas.push(p);
     return null;
   };
+  /* o que o sistema resolveu, como marca (O_QUE_A_FRASE_FAZ.resolve) */
+  const resultados = new Set();
+  /* a frase da manhã (subtramas.js#fraseDaManha) vem À FRENTE do envelope
+     do descanso: é fato da noite, dito pelo sistema — nunca a fala do herói */
+  const iManha = t.search(/\[FIM DO ACAMPAMENTO/u);
+  if (iManha > 0 && !/^\[/u.test(t)) { const manha = limpo(t.slice(0, iManha)); if (manha) fatos.push(manha); t = t.slice(iManha); }
   /* 0. quem deu as costas (a fuga e o recuo) sai primeiro: vem colado à
      fala do herói, sem marca nenhuma antes */
   const fugas = []; let acabou = false;
@@ -535,10 +652,12 @@ function aFraseDoTurno(frase, c) {
   const heroi = [];
   const aoCorte = (s) => { const i = str(s).search(S.corte); return i < 0 ? [str(s), ""] : [s.slice(0, i), s.slice(i)]; };
   if ((mc = t.match(S.combate))) {
+    resultados.add("golpe");
     fala = limpo(mc[3] || "");
     for (const p of partir(mc[1])) { const o = entrada(p, LINHAS_DA_LUTA); if (o) heroi.push(o); }
     rodada = mc[2];
   } else if ((mc = t.match(S.habilidades))) {
+    resultados.add("poder");
     fala = limpo(mc[3] || "");
     const [desf, depois] = aoCorte(mc[2]);
     for (const d of limpo(desf).replace(/\.$/, "").split(/\s·\s/)) {
@@ -548,6 +667,7 @@ function aFraseDoTurno(frase, c) {
     }
     rodada = depois;
   } else if ((mc = t.match(S.declaradas))) {
+    resultados.add("poder");
     const [acao, depois] = aoCorte(mc[2]);
     fala = limpo(acao).replace(/\.$/, "");
     const nomes = [...mc[1].matchAll(S.nomeDaHabilidade)].map((x) => x[1]);
@@ -559,6 +679,7 @@ function aFraseDoTurno(frase, c) {
     rodada = i < 0 ? "" : t.slice(i);
   }
   fatos.push(...heroi);
+  if (fugas.length) resultados.add("golpe");
   for (const f of fugas) {
     const q = /^FUGIU da luta levando/u.test(f.como) ? D.fogeFerido : /^FUGIU/u.test(f.como) ? D.foge : /^tentou fugir/u.test(f.como) ? D.fogeECai : D.recuaECai;
     poe(f.A, /^FUGIU/u.test(f.como) ? "fugiu" : "no chão", true);
@@ -579,7 +700,27 @@ function aFraseDoTurno(frase, c) {
     }
     for (const p of partir(txt)) { const o = entrada(p, LINHAS_DA_LUTA); if (o) fatos.push(o); }
   });
-  return { fala, fatos: fatos.map((f) => ponto(maiuscula(f))), envelopes, soltas, luta };
+  return { fala, fatos: fatos.map((f) => ponto(maiuscula(f))), envelopes, soltas, luta, resultados };
+}
+/* O QUE A FRASE QUER E O SISTEMA NÃO FEZ (O_QUE_A_FRASE_FAZ): oração a
+   oração (a que pergunta ou supõe não conta), cada ato uma vez, e só os que
+   nenhuma marca do turno resolveu. `poderes`: os nomes das habilidades do
+   herói. → [o que ainda não fez] */
+function osAtosPorFazer(frase, feitos, poderes) {
+  const out = [];
+  const vistos = new Set();
+  for (const m of str(frase).matchAll(/[^.!?;]+[.!?;]*/gu)) {
+    const or = m[0].toLowerCase();
+    if (ATO_QUE_SO_PERGUNTA.test(or)) continue;
+    for (const a of O_QUE_A_FRASE_FAZ) {
+      if (vistos.has(a.id) || a.resolve.some((r) => feitos.has(r))) continue;
+      let feito = "";
+      if (a.rx) { if (a.rx.test(or)) feito = a.feito; }
+      else if (VERBO_DO_PODER.test(or)) { const n = poderes.find((x) => sem(x).length >= 4 && sem(or).includes(sem(x))); if (n) feito = tpl(a.feito, { X: n }); }
+      if (feito) { vistos.add(a.id); out.push(feito); }
+    }
+  }
+  return out;
 }
 /* quem esteve na luta e como ficou, quando a pauta não o disse */
 function oQueFicouDaLuta(luta) {
@@ -624,6 +765,18 @@ const doHeroi = (t, H) => { let s = str(t); for (const [de, para] of EU_DO_HEROI
    pessoa ({ quem, campo, o }). A primeira que bate ganha; nenhuma bate →
    «sem tradução». */
 const FECHO_GESTO = /[;,]\s*(sem cuspe|nunca o cheiro).*$/;
+/* A VOZ COLADA E A MARCA DO FATO (03/11, a 14.ª sessão). A linha do coração
+   chega com a voz presa no fim («… "É no caminho." (voz só da Inez do Prado
+   Baixo: fala de si na terceira pessoa)», nucleo.js#vozPresa) e com a marca
+   de Mestre no meio («(é fato: entra nesta resposta, dito por ela)»): a voz
+   já está na «Fala:» da pessoa, e a marca é ordem — as duas saem antes da
+   regra (3 das 5 marcas que o verificador achou nas 29 fichas da sessão) */
+const VOZ_COLADA = /\s*\(voz só d[aoe]s? [^)]*\)\.?$/u;
+const MARCA_DO_FATO = /\s*\(é fato:[^)]*\)/u;
+/* o veredito do boato (boatos.js): «— VERDADE: é verdade, e o lugar
+   mostra-o. Mostre-o no que o herói vê…» — o veredito em caixa alta e a
+   ordem que o segue saem; fica o fato dito (as outras 2 das 5 marcas) */
+const VEREDITO_DO_BOATO = /\s+—\s+(?:VERDADE|MEIA-VERDADE|MENTIRA):\s+(.+?)\.(?:\s+Mostre-o\b.*)?$/u;
 /* o tipo do lugar entre parênteses («aqui isto é um ruína selada»): o ator
    vê a ruína, não a categoria (diagnóstico da voz, §4) */
 const MECANISMO_NO_LUGAR = /\s*·?\s*\(aqui isto é [^)]*\)/u;
@@ -650,11 +803,11 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
   "A GENTE": [ { de: /^(.*)$/, vai: "pessoa", como: (m) => ({ agora: m[1] }) } ],
   "QUEM CARREGA": [
     { de: /^(.+?) decide ficar, e diz porquê\.?$/, vai: "diz", como: (m) => ({ quem: m[1], o: "decide ficar, e diz porquê" }) },
-    { de: /^(.+?) \((.*?)(?:; é fato:[^)]*)?\): PEDE ao herói: (".*")$/, vai: "diz", como: (m) => ({ quem: m[1], oque: m[2], chega: true, o: `pede: ${m[3]}` }) },
+    { de: /^(.+?) \((.*?)(?:; é fato:[^)]*)?\): PEDE ao herói: (".*")$/, vai: "diz", como: (m) => ({ quem: m[1], oque: /^é fato\b/u.test(m[2]) ? undefined : m[2], chega: true, o: `pede: ${m[3]}` }) },
     { de: /^(Um servo d[oa] .+?) \(é fato:[^)]*\): diz ao herói (".*")$/, vai: "diz", como: (m) => ({ quem: m[1], chega: true, o: `traz a mensagem: ${m[2]}`, semNome: true }) },
     { de: /^(.+?) \((.*?)\): (.*)$/, vai: "diz", como: (m) => ({ quem: m[1], o: m[3].replace(/^PEDE/, "pede") }) },
   ],
-  "PERGUNTOU": [ { de: /^(.+)$/, vai: "pessoa", como: (m) => ({ sabe: m[1] }) } ],
+  "PERGUNTOU": [ { de: /^(.+)$/, vai: "pessoa", como: (m) => ({ sabe: m[1].replace(MARCA_DO_FATO, "") }) } ],
   "NÃO PODE": [
     { de: /^o lugar não comporta:/, cai: "regra" },
     { de: /^(.+?) está em (.+?), a (\d+) dias? daqui — .*$/, vai: "fronteira", como: (m) => `${m[1]} está longe, em ${m[2]}, a ${porExtenso(Number(m[3]))} dia${m[3] === "1" ? "" : "s"} daqui.` },
@@ -669,6 +822,10 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     { de: /^CENA DE PESO \((.+?)\)/, vai: "tom", como: () => "Ninguém fala de negócio agora; quem tem laço com isto está aqui." },
     { de: /^ninguém oferece trabalho avulso ao herói nesta cena$/, vai: "cena", como: () => "Aqui ninguém tem trabalho avulso para oferecer." },
     { de: /^O (.+?) cobra (\d+) moedas, não \d+\.?$/, vai: "pessoa", como: (m) => ({ papel: m[1], sabe: `o preço é ${m[2]} moedas` }) },
+    /* os vetos da bolsa da frase (bolsa-da-frase.js, vetoDaCompra e
+       vetoDaDadiva): o sistema decidiu que não fechou, e isso é o resultado */
+    { de: /^entregar-me (.+?) ou receber moedas por isso: a compra não fechou \((.+?)\)/, vai: "aconteceu", resultado: "pagar", como: (m, c) => `A compra de ${m[1]} não fechou (${doHeroi(m[2], c.H).replace(/◉\s*/g, "").replace(/\bdisse\b/g, "ofereceu").replace(/\btenho\b/g, "tem").replace(/\bcarrego\b/g, "carrega").replace(/\bfechei\b/g, "fechou")}): quem vende diz o preço e espera.` },
+    { de: /^pôr nas mãos de (.+?) o que eu não tenho: (.+?) — /, vai: "aconteceu", resultado: "dar", como: (m, c) => `${c.H} não tem o que queria dar a ${m[1]}: ${m[2].replace(/\btenho\b/g, "tem")}.` },
   ],
   "O RUMO": [ { de: /^(.*)$/, vai: "rumo", como: (m) => m[1] } ],
   /* o fecho do Mestre diz a FORMA da última frase; a ficha só guarda DE
@@ -705,7 +862,7 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
   "A FALA": [ { de: /^(.+?) disse: (".+?")\.? Estas falas/, vai: "aconteceu", como: (m) => `${m[1]} já disse, com estas palavras: ${m[2]}` } ],
   "NOMES À MÃO": [ { de: /^(.+)$/, vai: "fronteira", como: (m) => ({ nomes: m[1] }) } ],
   "DAQUI": [ { de: /^(.+)$/, vai: "cena", como: (m) => `Daqui se alcança: ${ponto(m[1])}`, extra: true } ],
-  "O BOATO": [ { de: /^(.+)$/, vai: "diz", como: (m) => ({ o: `corre um boato: ${m[1]}` }) } ],
+  "O BOATO": [ { de: /^(.+)$/, vai: "diz", como: (m) => ({ o: `corre um boato: ${m[1].replace(VEREDITO_DO_BOATO, ", e $1.")}` }) } ],
   /* as três que nenhum dos 434 casos trouxe: o fato cru, com o herói pelo
      nome e o crivo à porta (se um dia chegarem com ordem, o crivo corta-a
      e a suíte acusa o que sobrar) */
@@ -746,9 +903,47 @@ const RUMO = [
   { de: /^e alguém vem até mim, com motivo próprio, por causa de (.+?): (.+)$/, vai: "motivo" },
 ];
 
-/* os envelopes que vêm depois da pauta */
+/* A RESPOSTA DO HERÓI A UM PEDIDO (03/11, a 14.ª sessão, defeito 7). O
+   toque «Aceitar» manda o envelope «RESPOSTA A <nome>» (envelopes-do-turno.js,
+   respostaAoCoracao), e a ficha não o conhecia: o ACONTECEU do aceite foi um
+   evento de mundo sem relação, e ninguém reagiu a ser ajudado. {H} o herói,
+   {N} quem pediu, {P} o pedido como o sistema o tem. */
+export const A_RESPOSTA_DITA = Object.freeze({
+  aceitou: "{H} aceita o que {N} lhe pede",
+  recusou: "{H} recusa o que {N} lhe pede",
+  porque: "{H} pergunta a {N} porquê",
+  pedido: ": «{P}»",
+});
+const aRespostaAoPedido = (t, c, tipo) => {
+  const N = limpo(str(tipo).replace(/^RESPOSTA A /u, ""));
+  const qual = /\bEu aceito o que\b/u.test(t) ? "aceitou" : /\bEu recuso o que\b/u.test(t) ? "recusou" : /\bPergunto a .+ porquê/u.test(t) ? "porque" : "";
+  if (!qual || !N) return `${c.H} responde a ${N || "quem lhe pediu"}.`;
+  const P = qual === "porque" ? "" : (t.match(/O pedido é este, e não outro: "(.+?)"/u) || [])[1] || "";
+  c.conversa.push(N);
+  return ponto(tpl(A_RESPOSTA_DITA[qual], { H: c.H, N }) + (P ? tpl(A_RESPOSTA_DITA.pedido, { P }) : ""));
+};
+/* o descanso que o sistema fez (oEnvelopeDoAcampamento, levantarDescansado
+   e levantarSemDescanso): a duração dita, nunca o recibo em números */
+const oDescanso = (t, c) => {
+  if (/SEM dormir/u.test(t)) return `${c.H} levanta acampamento sem dormir: passaram só minutos.`;
+  const dur = (t.match(/após (.+?) de descanso/u) || [])[1];
+  return `${c.H} descansou${dur ? ` ${dur}` : ""}, e o corpo sente-o.`;
+};
+/* os envelopes que vêm depois da pauta. `resultado`: a marca do que o
+   sistema fez neste turno, que resolve um ato da frase (O_QUE_A_FRASE_FAZ) */
 export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^(PAUTA DO TURNO|NOTA DE ANTES)/, cai: "moldura" },
+  /* A 14.ª SESSÃO (03/11): o que o sistema já fez fora da frase — o sim ao
+     pedido, o descanso (e a frase que o pediu, que vem na nota), a compra e
+     a dádiva da frase (bolsa-da-frase.js), o tempo e o sonho da noite */
+  { tipo: /^RESPOSTA A /, vai: "aconteceu", como: aRespostaAoPedido },
+  { tipo: /^FIM DO ACAMPAMENTO/, vai: "aconteceu", como: oDescanso, resultado: "descansar" },
+  { tipo: /^O QUE EU ESCREVI$/, vai: "frase", como: (t) => (t.match(/^"(.+)" — /u) || [])[1] || "", resultado: "descansar" },
+  { tipo: /^COMPRA/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^Comprei (.+?) por ◉ (\d+)/u); return m ? `${c.H} comprou ${m[1].replace(/(\d+)× /gu, "$1 ")} por ${m[2]} moedas; as moedas já saíram da bolsa.` : `${c.H} comprou o que quis, e pagou.`; }, resultado: "pagar" },
+  { tipo: /^DÁDIVA/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^Dei a (.+?) (.+?); saíram da minha mochila\./u); return m ? `${c.H} deu a ${m[1]} ${m[2]}; saíram da mochila de ${c.H}.` : `${c.H} deu o que quis dar.`; }, resultado: "dar" },
+  { tipo: /^CLIMA$/, vai: "cena", como: (t) => { const m = t.match(/agora está (.+?) — /u); return m ? `O tempo virou: agora está ${m[1]}.` : "O tempo virou."; } },
+  { tipo: /^SONHO$/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^O sonho desta noite: "(.+?)"/u); return m ? `${c.H} sonhou esta noite: «${m[1]}».` : `${c.H} sonhou esta noite.`; } },
+  { tipo: /^ONDE ACORDO$/, vai: "aconteceu", como: (t, c) => `${c.H} acorda onde dormiu, ainda na estrada.` },
   { tipo: /^ABERTURA DA CAMPANHA/, cai: "oficio" },
   { tipo: /^OFICINA/, vai: "aconteceu", como: (t, c) => `Já feito por ${c.H}: «${ponto(t)}»` },
   { tipo: /^(AGORA|O MUNDO SE MEXE|EVENTO GLOBAL)/, vai: "aconteceu", como: (t) => ponto(t) },
@@ -763,9 +958,12 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^ATAQUES DE OPORTUNIDADE/, vai: "aconteceu", como: (t, c) => osGolpesNasCostas(t, c, A_LUTA_DITA.oportunidade) },
   { tipo: /^(AFLIÇÃO APLICADA|SALVAGUARDA|AFLIÇÃO RESISTIDA)/, vai: "aconteceu", como: (t) => { const a = t.match(/^(.+?) deixou (.+?): falhou\b/u); if (a) return `${a[1]} deixa ${a[2]}.`; const r = t.match(/^(.+?) carregava (.+?); (.+?) passou\b/u); return r ? `${r[1]} podia deixar ${r[3]} ${r[2]}, mas ${r[3]} resiste.` : ponto(t.split(/ \(| Narre/u)[0]); } },
   { tipo: /^EFEITO APLICADO/, vai: "aconteceu", como: (t) => { const a = t.match(/^(.+?) deixou (.+?) \(/u); return a ? `${a[1]} deixa ${a[2]}.` : ponto(t.split(/ \(| Já está/u)[0]); } },
-  { tipo: /^A LUTA ACABOU/, vai: "aconteceu", como: (t, c) => { let o = t.split(/ A luta NÃO continua\b/u)[0]; for (const [de, para] of A_LUTA_NA_TERCEIRA) o = o.replace(de, para); return `${ponto(o.replace(/\{H\}/g, c.H))} ${A_LUTA_DITA.acabou}.`; } },
+  { tipo: /^A LUTA ACABOU/, vai: "aconteceu", resultado: "golpe", como: (t, c) => { let o = t.split(/ A luta NÃO continua\b/u)[0]; for (const [de, para] of A_LUTA_NA_TERCEIRA) o = o.replace(de, para); return `${ponto(o.replace(/\{H\}/g, c.H))} ${A_LUTA_DITA.acabou}.`; } },
   { tipo: /^QUEST GERADA/, vai: "diz", como: (t) => ({ o: `chega agora: ${t}` }) },
-  { tipo: /^RUMOR/, vai: "diz", como: (t) => ({ o: `corre um boato: ${t}` }) },
+  /* o boato do RUMOR é a fala entre aspas; o resto («Se couber, deixe-o
+     circular… e decida se ele é só fumaça») era ordem ao Mestre, e mandava o
+     ator decidir (a 14.ª, defeito 12) */
+  { tipo: /^RUMOR/, vai: "diz", como: (t) => { const m = t.match(/"(.+?)"/u); return { o: `corre um boato: ${m ? `«${m[1]}»` : t}` }; } },
   { tipo: /^TRABALHO PREGADO NO MURAL/, vai: "cena", como: (t) => `No mural: ${ponto(t)}` },
   { tipo: /^O MUNDO LEMBROU/, vai: "aconteceu", como: (t) => { const m = t.match(/alguém ainda comenta — por (".+?"), (.+?)\. Isto/); return m ? `No lugar onde aconteceu, alguém ainda comenta ${m[1]} (${m[2]}).` : ponto(t.split(". Isto não")[0]); } },
   { tipo: /^A LUTA VIROU/, vai: "aconteceu", como: (t) => ponto(t.split(". Mostre")[0]) },
@@ -777,11 +975,11 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
      O «SEM TESTE» (o veredito sem dado, sete formas em desafios.js e
      social.js) ainda não tem regra: fica «sem tradução», e a suíte di-lo
      no dia em que chegar. */
-  { tipo: /^TESTE PEDIDO POR MIM/, vai: "aconteceu", como: (t, c) => oTesteEmPalavras(t, c, (t.match(/Pedi um teste de .+? para (.+?)\.(?= Sou| NÃO tenho| O sistema)/u) || [])[1]) },
-  { tipo: /^ROLAGEM/, vai: "aconteceu", como: (t, c) => oTesteEmPalavras(t, c, (t.match(/^Teste de [^(]*\(([^)]+)\)/u) || [])[1]) },
-  { tipo: /^TESTE$/, vai: "aconteceu", como: (t, c) => `${c.H} faz ${(t.match(/^"(.+?)"/u) || [])[1] || "o que quis"} sem dificuldade.` },
-  { tipo: /^SOCIAL/, vai: "aconteceu", como: (t, c) => { const m = t.match(/Tentei (.+?) e (CONSEGUI|NÃO consegui)/u); const pedia = (t.match(/O que eu pedia era (.+?), e a resposta é não/u) || [])[1]; return m ? `${c.H} tentou ${m[1]}, e ${m[2] === "CONSEGUI" ? "conseguiu" : "não conseguiu"}${pedia ? `: pedia ${pedia}, e a resposta é não` : ""}.` : `${c.H} tentou a conversa.`; } },
-  { tipo: /^BUSCA CONCLUÍDA/, vai: "aconteceu", como: (t, c) => `${c.H} revistou o lugar do chão ao teto, e aqui não há nada escondido.` },
+  { tipo: /^TESTE PEDIDO POR MIM/, vai: "aconteceu", resultado: "teste", como: (t, c) => oTesteEmPalavras(t, c, (t.match(/Pedi um teste de .+? para (.+?)\.(?= Sou| NÃO tenho| O sistema)/u) || [])[1]) },
+  { tipo: /^ROLAGEM/, vai: "aconteceu", resultado: "teste", como: (t, c) => oTesteEmPalavras(t, c, (t.match(/^Teste de [^(]*\(([^)]+)\)/u) || [])[1]) },
+  { tipo: /^TESTE$/, vai: "aconteceu", resultado: "teste", como: (t, c) => `${c.H} faz ${(t.match(/^"(.+?)"/u) || [])[1] || "o que quis"} sem dificuldade.` },
+  { tipo: /^SOCIAL/, vai: "aconteceu", resultado: "teste", como: (t, c) => { const m = t.match(/Tentei (.+?) e (CONSEGUI|NÃO consegui)/u); const pedia = (t.match(/O que eu pedia era (.+?), e a resposta é não/u) || [])[1]; return m ? `${c.H} tentou ${m[1]}, e ${m[2] === "CONSEGUI" ? "conseguiu" : "não conseguiu"}${pedia ? `: pedia ${pedia}, e a resposta é não` : ""}.` : `${c.H} tentou a conversa.`; } },
+  { tipo: /^BUSCA CONCLUÍDA/, vai: "aconteceu", resultado: "teste", como: (t, c) => `${c.H} revistou o lugar do chão ao teto, e aqui não há nada escondido.` },
 ]);
 /* os golpes nas costas: «X acertou (3); Y errou» → quem acerta, quem falha */
 function osGolpesNasCostas(t, c, modelo) {
@@ -825,9 +1023,7 @@ function lerQuemE(t) {
 function registoDe(p) {
   const alvo = sem([p.papel, p.profissao, p.conceito, p.classe, p.oque, p.notas, p.raca].filter(Boolean).join(" "));
   const r = REGISTOS_DE_FALA.find((x) => x.de.test(alvo));
-  if (!r) return null;
-  const ex = r.exemplos.length ? r.exemplos[hashSemente("registo|" + p.nome) % r.exemplos.length] : "";
-  return ex ? `${r.o} (${ex})` : r.o;
+  return r ? r.o : null;
 }
 const tratoDe = (p, H) => (TRATO_DO_HEROI.find((t) => t.quando(p)) || TRATO_DO_HEROI[TRATO_DO_HEROI.length - 1]).o.replace(/\{H\}/g, H);
 
@@ -852,9 +1048,12 @@ export function aFichaDeAtor(entrada) {
   const estado = ehObj(ent.estado) ? ent.estado : {};
   const G = aGente(estado);
   const H = limpo(G.pers.nome) || "o herói";
-  const c = { H, procurado: false };
+  const c = { H, procurado: false, conversa: [] };
   const daFrase = aFraseDoTurno(ent.frase, c);
-  const frase = daFrase.fala;
+  /* a frase do herói: a da fala, ou a que a nota traz quando o turno é
+     um envelope do sistema («O QUE EU ESCREVI», o sono escrito) */
+  let frase = daFrase.fala;
+  const resultados = new Set(daFrase.resultados);
   const { secoes, envelopes: envNota } = lerANota(ent.nota);
   const envelopes = [...daFrase.envelopes, ...envNota];
   const rastro = [];
@@ -894,13 +1093,14 @@ export function aFichaDeAtor(entrada) {
     if (extras.length) secoes.splice(secoes.indexOf(s0) + 1, 0, ...extras);
     const regras = TRADUCAO_DA_PAUTA[s.rotulo];
     for (const linha0 of s.linhas) {
-      const linha = linha0.replace(FECHO_GESTO, "");
+      const linha = s.rotulo === "QUEM CARREGA" ? linha0.replace(FECHO_GESTO, "").replace(VOZ_COLADA, "") : linha0.replace(FECHO_GESTO, "");
       if (!regras) { marca(s.rotulo, linha0, null, "semTraducao"); continue; }
       const r = regras.find((x) => x.de.test(linha));
       if (!r) { marca(s.rotulo, linha0, null, "semTraducao"); continue; }
       if (r.cai) { marca(s.rotulo, linha0, null, r.cai); continue; }
       const m = linha.match(r.de);
       const v = r.como(m, c);
+      if (r.resultado) resultados.add(r.resultado);
       if (r.vai === "rumo") {
         for (const cl of str(v).split(/;\s+(?=reaja|responda|o que ninguém|depois,|e o mundo|e alguém)/)) {
           const q = RUMO.find((x) => x.de.test(cl.trim()));
@@ -926,6 +1126,7 @@ export function aFichaDeAtor(entrada) {
       else if (r.vai === "aposta") aposta.push(v);
       else if (r.vai === "luta") {
         temLuta = true;
+        resultados.add("luta");
         for (const grupoTxt of str(v).split(/\s·\s/)) {
           const chao = /^no chão:/.test(grupoTxt);
           for (const it of grupoTxt.replace(/^(de pé|no chão):\s*/, "").split(/;\s*/)) {
@@ -956,9 +1157,11 @@ export function aFichaDeAtor(entrada) {
     const r = TRADUCAO_DOS_ENVELOPES.find((x) => x.tipo.test(e.tipo));
     if (!r) { marca(`[${e.tipo}]`, e.texto, null, "semTraducao"); continue; }
     if (r.cai) { marca(`[${e.tipo}]`, e.texto, null, r.cai); continue; }
-    const v = r.como(limpo(e.texto), c);
+    const v = r.como(limpo(e.texto), c, e.tipo);
     marca(`[${e.tipo}]`, e.texto, r.vai);
+    if (r.resultado) resultados.add(r.resultado);
     if (r.vai === "cena") cena.push(crivado(`[${e.tipo}]`, v)); else if (r.vai === "aconteceu") aconteceu.push(crivado(`[${e.tipo}]`, v)); else if (r.vai === "diz") diz.push(v);
+    else if (r.vai === "frase") { if (!frase && v) frase = limpo(v); }
   }
 
   /* quem ficou de pé na luta, quando a pauta não traz a linha dela (a da
@@ -972,7 +1175,7 @@ export function aFichaDeAtor(entrada) {
     const qual = { passa: "passa", falha: "falha", fio: "passa por um fio" }[dado];
     /* o fio sem versão própria (a situação sem raspão) é o sim */
     const ramo = qual && (aposta.find((a) => a.ramo === qual) || (dado === "fio" ? aposta.find((a) => a.ramo === "passa") : null));
-    if (ramo) aconteceu.push(`O dado decidiu: ${ponto(ramo.o)}`);
+    if (ramo) { aconteceu.push(`O dado decidiu: ${ponto(ramo.o)}`); resultados.add("teste"); }
     else aconteceu.push(`Em jogo, numa tentativa: ${aposta.map((a) => `se ${a.ramo}, ${a.o.replace(/[.\s]+$/, "")}`).join("; ")}.`);
   }
 
@@ -984,13 +1187,15 @@ export function aFichaDeAtor(entrada) {
     if (reg) { p.papel = p.papel || reg.papel; p.relacao = reg.relacao; p.notas = reg.notas; p.profissao = reg.profissao; if (!p.oque && reg.papel) p.oque = reg.papel; }
     if (nu) {
       const f = ehObj(nu.ficha) ? nu.ficha : {};
-      if (f.fala && f.fala.o) p.tique = `${f.fala.o}${f.fala.exemplo ? ` (${f.fala.exemplo})` : ""}`;
+      /* o jeito, sem a frase pronta (o conserto 2 da 14.ª: o exemplo copiava-se) */
+      if (f.fala && f.fala.o) p.tique = str(f.fala.o);
       if (!p.quer && f.quer && f.quer.o) p.quer = f.quer.o;
       if (!p.teme && f.teme && f.teme.o) p.teme = f.teme.o;
       if (!p.oque && nu.papel && !p.comVoce) p.oque = nu.papel;
+      if (!p.genero && (nu.genero || nu.genero_pessoa)) p.genero = sem(nu.genero || nu.genero_pessoa);
       p.nucleoPapel = nu.papel;
     }
-    if (!p.tique && p.vozDaPauta) p.tique = p.vozDaPauta;
+    if (!p.tique && p.vozDaPauta) p.tique = str(p.vozDaPauta).replace(/,\s*como em\s*["“«].*$/u, "");
     if (p.comVoce && !p.oque) p.oque = [p.raca, p.classe].filter(Boolean).join(", ").toLowerCase();
     if (c.procurado && !p.comVoce) p.procurado = true;
     if (p.fera) p.registo = REGISTOS_DE_FALA[0].o;
@@ -1021,6 +1226,57 @@ export function aFichaDeAtor(entrada) {
     const o = faltam.length ? `não sabe responder a: ${faltam.map((q) => `«${q}»`).join(" ")}` : sabes.length ? `do que ${H} perguntou, não sabe mais do que isto` : `do que ${H} perguntou, não sabe a resposta`;
     if (o) { if (quem) quem.naoSabe = o; else cena.push(`Aqui ninguém sabe ${o.replace(/^não sabe /, "")}.`); }
   }
+  /* A VOZ QUE PEDE NÚMERO (A_VOZ_DO_NUMERO): os números que a ficha dá a
+     esta pessoa — o que ela sabe, o que diz, e a mesa da cena (os preços, o
+     que está à venda, as distâncias) */
+  const numerosDaCena = /\d/.test([...cena, ...cenaExtra, ...venda].join(" "));
+  for (const p of pessoas.values()) {
+    const temNumero = numerosDaCena || /\d/.test([...p.sabe, ...diz.filter((d) => d.quem && mesmo(d.quem, p.nome)).map((d) => d.o)].join(" "));
+    if (p.tique) p.tique = vozComNumero(p.tique, temNumero);
+    if (p.registo) p.registo = vozComNumero(p.registo, temNumero);
+  }
+  /* O QUE FICOU COMBINADO (O_COMBINADO): o pedido de cada pessoa em cena,
+     do coração do save, e a resposta do herói */
+  const arcos = ehObj(estado.coracao) && ehObj(estado.coracao.arcos) ? estado.coracao.arcos : {};
+  const instancias = arr(ehObj(estado.subtramasCache) ? estado.subtramasCache.lista : null).filter(ehObj);
+  for (const p of pessoas.values()) {
+    if (p.fera) continue;
+    const k = Object.keys(arcos).find((x) => mesmo(x, p.nome));
+    const a = k ? arcos[k] : null;
+    if (!ehObj(a) || a.pedido == null) continue;
+    const inst = instancias.find((i) => mesmo(i.nome, p.nome));
+    const ped = inst && ehObj(inst.pedido) ? inst.pedido : {};
+    const F = limpo(ped.fala), O = limpo(ped.objeto);
+    if (!F || !O || /[{}]/.test(F + O)) continue;
+    const qual = a.resposta === "aceitou" ? "aceitou" : a.resposta === "recusou" ? "recusou" : "aberto";
+    /* o pedido que se diz AGORA (O QUE SE DIZ) não se repete como aberto */
+    if (qual === "aberto" && diz.some((d) => d.quem && mesmo(d.quem, p.nome))) continue;
+    p.combinado = tpl(O_COMBINADO[qual], { H, F, O });
+    if (qual === "aceitou") p.combinadoObjeto = O;
+  }
+  /* o gesto que cobra o combinado: com o combinado dito, ou cai */
+  for (const p of pessoas.values()) {
+    p.agora = p.agora.flatMap((g) => {
+      if (!O_COMBINADO.gesto.test(g)) return [g];
+      if (p.combinadoObjeto) return [tpl(O_COMBINADO.dito, { G: str(g).replace(/[.\s]+$/u, ""), O: p.combinadoObjeto })];
+      marca("A GENTE", `${p.nome} ${g}`, null, "semConteudo");
+      return [];
+    });
+  }
+  /* A CONVERSA (A_CONVERSA_DA_FRASE): com quem o herói falou neste turno */
+  const conversa = new Set();
+  const falaSem = sem(frase);
+  const comEscape = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const p of lista) {
+    const prim = sem(p.nome).split(/[ ,]/)[0];
+    if (prim.length >= A_CONVERSA_DA_FRASE.nomeMin && new RegExp(`(^|[^a-z])${comEscape(prim)}([^a-z]|$)`).test(falaSem)) conversa.add(p.nome);
+  }
+  if (!conversa.size && frase && A_CONVERSA_DA_FRASE.fala.test(frase.toLowerCase())) { const fora = lista.filter((p) => !p.comVoce); if (fora.length === 1) conversa.add(fora[0].nome); }
+  for (const n of c.conversa) { const p = lista.find((x) => mesmo(x.nome, n)); if (p) conversa.add(p.nome); }
+  /* A FRASE NÃO É O RESULTADO (O_QUE_A_FRASE_FAZ): o que ela quer e o
+     sistema não fez */
+  const poderes = arr(G.pers.habilidades).map((h) => limpo(typeof h === "string" ? h : ehObj(h) ? h.nome : "")).filter(Boolean);
+  const porFazer = frase ? osAtosPorFazer(frase, resultados, poderes) : [];
   if (aponta) {
     const comp = lista.find((p) => p.comVoce) || responde;
     const t = `${aponta.charAt(0).toLowerCase()}${aponta.slice(1)}`;
@@ -1062,8 +1318,10 @@ export function aFichaDeAtor(entrada) {
     const tira = (k) => corta.includes(k);
     L.push("CENA", ...[...cabCena, ...cena.map(ponto), quando, ...(tira("cenaExtra") ? [] : cenaExtra.map(ponto))].filter(Boolean).map((x) => x.slice(0, FICHA_DE_ATOR.linhaMax)));
     L.push("ACONTECEU");
-    if (frase) L.push(`${H}: «${frase.length > FICHA_DE_ATOR.fraseMax ? frase.slice(0, FICHA_DE_ATOR.fraseMax).replace(/\s+\S*$/, "") + "…" : frase}»`);
+    const F = frase.length > FICHA_DE_ATOR.fraseMax ? frase.slice(0, FICHA_DE_ATOR.fraseMax).replace(/\s+\S*$/, "") + "…" : frase;
+    if (frase) L.push(porFazer.length ? tpl(A_INTENCAO_DITA.quer, { H, F }) : `${H}: «${F}»`);
     L.push(...aconteceu.map(ponto));
+    if (porFazer.length) L.push(tpl(A_INTENCAO_DITA.porFazer, { H, L: porFazer.join(A_INTENCAO_DITA.nem) }));
     L.push("QUEM ESTÁ");
     const todos = [...pessoas.values()];
     const bloco = todos.slice(0, FICHA_DE_ATOR.pessoasMax), resto = todos.slice(FICHA_DE_ATOR.pessoasMax);
@@ -1072,6 +1330,7 @@ export function aFichaDeAtor(entrada) {
       L.push(`${p.nome} — ${[p.oque, p.comVoce ? `anda com ${H}` : "", p.chega, p.estado].filter(Boolean).join("; ") || "está aqui"}.`);
       const voz = [p.tique ? `${p.tique}` : "", p.registo || ""].filter(Boolean).join("; ");
       if (voz || p.trato) L.push(`  Fala: ${[voz, p.trato ? `trata ${H} ${p.trato}` : ""].filter(Boolean).join("; ")}.`);
+      if (p.combinado) L.push(`  ${p.combinado}`);
       if (!tira("agora") && p.agora.length) L.push(`  Agora: ${ponto(p.agora.join("; "))}`);
       if (!tira("sabe") && p.sabe.length) L.push(`  Sabe: ${ponto(p.sabe.join("; "))}`);
       if (p.naoSabe) L.push(`  ${maiuscula(ponto(p.naoSabe))}`);
@@ -1103,7 +1362,7 @@ export function aFichaDeAtor(entrada) {
   const partes = Object.fromEntries(FICHA_DE_ATOR.partes.map((p) => [p, ""]));
   let cur = null;
   for (const l of texto.split("\n")) { if (FICHA_DE_ATOR.partes.includes(l)) { cur = l; continue; } if (cur) partes[cur] += (partes[cur] ? "\n" : "") + l; }
-  return { texto, partes, pessoas: [...pessoas.values()].map((p) => ({ ...p })), falam, rastro, cobertura, trocas: asUltimasTrocas(estado) };
+  return { texto, partes, pessoas: [...pessoas.values()].map((p) => ({ ...p })), falam, rastro, cobertura, trocas: asUltimasTrocas(estado), conversa: [...conversa] };
 }
 
 /* AS DUAS ÚLTIMAS TROCAS, tal qual (a continuidade do ator: o plano, §4).

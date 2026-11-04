@@ -63,7 +63,11 @@ export const PEDIDO_AO_ATOR = Object.freeze({ maxTokens: 1200, formato: "texto",
 /* ---------------- O OFÍCIO ----------------
    O system do ator. `{min}`/`{max}` saem de TAMANHO_DA_NARRATIVA (escuta.js),
    o mesmo tamanho que o Mestre de hoje pede. `teto` é a meta do plano
-   (~3–4 mil caracteres): a suíte prova que o ofício cabe nele. */
+   (~3–4 mil caracteres): a suíte prova que o ofício cabe nele.
+   A 14.ª SESSÃO (03/11): o ACONTECEU dizia «é coisa feita» e a ficha punha
+   lá a frase crua — «pago a sopa» virou moedas na tábua com a bolsa
+   intacta. A ficha passou a separar o que o herói quer do que resultou
+   (ficha-de-ator.js, O_QUE_A_FRASE_FAZ), e o ofício diz como se lê isso. */
 export const OFICIO_DO_ATOR = Object.freeze({
   teto: 4000,
   texto: [
@@ -71,7 +75,7 @@ export const OFICIO_DO_ATOR = Object.freeze({
     "",
     "COMO LER A FICHA",
     "- CENA: onde e quando. Uma ou duas pinceladas do que se vê, ouve ou cheira; nunca um inventário.",
-    "- ACONTECEU: a frase do herói e o que dela resultou. É coisa feita: conte a consequência, nunca a desdiga, e não repita a fala do herói.",
+    "- ACONTECEU: a frase do herói e o que dela resultou. O que resultou é coisa feita: conte a consequência, nunca a desdiga, e não repita a fala do herói. O que vem como «Só a intenção» ainda não aconteceu: mostre a tentativa, nunca o resultado.",
     "- QUEM ESTÁ: cada pessoa, com a sua «Fala:» (o vocabulário, o ritmo, o trato com o herói), o que faz «Agora», o que «Sabe» e o que «Quer». O «Teme, e não o diz» aparece no comportamento, nunca em palavras. «Não sabe responder a» é uma pergunta para a qual essa pessoa não tem resposta: ela mostra-o à sua maneira, e não inventa a resposta.",
     "- O QUE SE DIZ: o conteúdo que tem de chegar ao herói, na boca de quem está indicado. Diga-o inteiro e com as palavras da pessoa, sem mudar nome, número, preço ou condição. «Livre:» quer dizer que nada de novo precisa ser dito: a conversa é cor, ambiente, gente a ser gente, e não promete, não cobra, não revela, não oferece.",
     "- A ÚLTIMA PALAVRA: de quem é a última palavra da cena, e o que essa pessoa quer. O jeito de a dizer é seu.",
