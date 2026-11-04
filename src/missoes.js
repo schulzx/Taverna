@@ -535,6 +535,10 @@ export function garantirMissoes(lista, sorte = null) { return comSorte(sorte, ()
          existe quando quem criou a etapa o sabia, e só viaja quando existe,
          para a missão antiga sair daqui byte a byte igual */
       ...(e.chave ? { chave: String(e.chave).slice(0, 80) } : {}),
+      /* 04/11 (a pista como cartão, a-pista-como-cartao.js): o herói já
+         perguntou por este passo a quem o sabe — o cartão não volta. Só
+         viaja quando existe, como a chave: a missão antiga sai igual */
+      ...(e.perguntada ? { perguntada: true } : {}),
       feito: !!e.feito,
     })).slice(0, 5),
     /* v9.38: em NOITES, não em dias — o relógio de prazo tem gatilho "noite",

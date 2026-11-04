@@ -207,6 +207,12 @@ export const ENVELOPES_DO_ACAMPAMENTO = {
     "[RESPOSTA A " + nome + " — DADA POR MIM] " + (daTabela(RESPOSTA_AO_CORACAO, resposta) ? RESPOSTA_AO_CORACAO[resposta](nome) : "") + (pede && typeof pede === "string" && daTabela(PEDIDO_NA_RESPOSTA, resposta) ? PEDIDO_NA_RESPOSTA[resposta](pede.trim()) : "") + " Narre só a reação de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
   decisaoDoCoracao: ({ nome, verbo, preco }) =>
     "[A DECISÃO SOBRE " + nome + " — TOMADA POR MIM] " + verbo + " — " + preco + ". Narre a reação de " + nome + " e o que isto custa, aqui mesmo.",
+  /* A PISTA COMO CARTÃO (04/11, a-pista-como-cartao.js): o herói tocou em
+     «Perguntar a X por Y». `sobre` é Y como o mundo o diz; `sabe`, o que a
+     pessoa sabe do passo (o «Sabe» dela). A pergunta é minha, e a resposta é
+     a do sistema — os dois modos a leem daqui */
+  perguntaPelaPista: ({ nome, sobre, sabe }) =>
+    "[PERGUNTA A " + nome + " — FEITA POR MIM] " + contrair("Pergunto a " + nome + " por " + sobre + ".") + (sabe && typeof sabe === "string" ? " O que " + nome + " sabe, e me diz agora, é isto e não outra coisa: \"" + sabe.trim() + "\"." : "") + " Narre só a resposta de " + nome + ", em fala direta (—), aqui mesmo." + SO_ISSO,
 };
 export function oEnvelopeDoAcampamento(qual, dados) {
   return aFormaDe(ENVELOPES_DO_ACAMPAMENTO, qual, "do acampamento")(dados || {});

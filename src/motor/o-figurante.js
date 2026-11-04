@@ -93,6 +93,19 @@ export const O_FIGURANTE = Object.freeze({
   }),
 });
 
+/* O MASCATE TEM O QUE VENDE (04/11; a 14.ª, defeito 9). No mercado, a
+   pergunta do preço é ao lugar, e o sistema tem a resposta: a banca de hoje
+   (mercado.js, mercadoParaPauta — a mesma do painel Mercado) vem no
+   PERGUNTOU. A ficha dava-a ao companheiro, e o mascate ficava sem saber o
+   preço da própria banca. Quem vende é a gente sem nome destes sítios; o
+   que tem à venda é o que está a fazer, não um «Sabe» — continua sem saber
+   nada além da banca. {V} o que há e quanto custa, como a banca o diz. */
+export const O_FIGURANTE_VENDE = Object.freeze({
+  tipos: Object.freeze(["mercado"]),
+  de: /^à venda(?: em [^:]+| aqui)?: (.+)$/u,
+  diz: "tem à venda, e diz o preço a quem pergunta: {V}",
+});
+
 /* A GENTE SEM NOME DE CADA SÍTIO, pelo tipo do lugar (os tipos da base,
    mundo-base.js LOCAIS, e os do cinturão de fora, lugar.js PALAVRAS_DO_TIPO;
    `rua` é a cidade sem sítio). `ele`/`ela`: o papel, com o artigo; `agora`:

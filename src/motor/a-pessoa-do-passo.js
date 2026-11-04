@@ -39,7 +39,7 @@
      aPessoaDoPasso(estado)
        estado: o do instante (abertura, missoes, lugar, cidadeAtual, npcs,
                mapa, baseMundo, mundo, nomeCampanha, dia, minuto, personagem)
-     → [{ nome, papel, onde, de, aqui, agora, ausente, voz, quer, sabe }]
+     → [{ nome, papel, onde, de, aqui, agora, ausente, voz, quer, sabe, genero, missao, seguinte }]
        de:      "pista" | "alvo" | "dador" | "etapa"
        aqui:    está em cena agora (a rotina diz que é a hora dela, ou o
                 jogo não sabe a hora)
@@ -348,6 +348,9 @@ export function aPessoaDoPasso(estado) {
         nome, papel, onde, de,
         aqui, agora, ausente, voz: pb ? limpo(pb.modo) : "", quer, sabe,
         genero: pb ? sem(pb.genero_pessoa) : reg ? sem(reg.genero) : "",
+        /* de que missão, e o índice do passo que ela sabe (a pista como
+           cartão, a-pista-como-cartao.js); -1 quando não há passo a seguir */
+        missao: m.id, seguinte: ehObj(prox) ? k + 1 : -1,
       });
     }
   }

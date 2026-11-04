@@ -129,7 +129,9 @@
    ============================================================ */
 import { SECOES } from "../pauta.js";
 import { aPessoaDoPasso, oQueOSitioEsconde, oSitioDoRegisto } from "./a-pessoa-do-passo.js";
-import { oFigurante, O_FIGURANTE } from "./o-figurante.js";
+import { oFigurante, O_FIGURANTE, O_FIGURANTE_VENDE } from "./o-figurante.js";
+import { A_PISTA_COMO_CARTAO } from "./a-pista-como-cartao.js";
+import { contrair } from "../lugar.js";
 import { moradaDe } from "../missoes.js";
 import { QUER } from "../nucleo.js";
 import { ESTADOS as ESTADOS_DA_VIAGEM } from "../viagem.js";
@@ -1072,6 +1074,21 @@ const aRespostaAoPedido = (t, c, tipo) => {
   c.conversa.push(N);
   return ponto(tpl(A_RESPOSTA_DITA[qual], { H: c.H, N }) + (P ? tpl(A_RESPOSTA_DITA.pedido, { P }) : ""));
 };
+/* A PISTA COMO CARTÃO (04/11, a-pista-como-cartao.js): o toque «Perguntar a
+   X por Y» manda o envelope «PERGUNTA A <nome>» (envelopes-do-turno.js,
+   perguntaPelaPista). A pergunta é fato; o que a pessoa sabe vai a
+   `c.pista`, e é ela que o diz, se estiver em cena (o quem está decide-se
+   depois, com a pessoa do passo). {H} o herói, {N} quem, {Y} o porquê dito */
+const aPerguntaPelaPista = (t, c, tipo) => {
+  const N = limpo(str(tipo).replace(/^PERGUNTA A /u, ""));
+  const pre = contrair(`Pergunto a ${N} `);
+  const corpo = t.startsWith(pre) ? t.slice(pre.length) : "";
+  const Y = (corpo.match(/^(.+?)\.(?:\s|$)/u) || [])[1] || "";
+  const S = (t.match(/ é isto e não outra coisa: "(.+?)"\./u) || [])[1] || "";
+  c.conversa.push(N);
+  if (S) c.pista = { N, S };
+  return ponto(tpl(Y ? A_PISTA_COMO_CARTAO.dito : A_PISTA_COMO_CARTAO.semObjeto, { H: c.H, N, Y }));
+};
 /* o descanso que o sistema fez (oEnvelopeDoAcampamento, levantarDescansado
    e levantarSemDescanso): a duração dita, nunca o recibo em números */
 const oDescanso = (t, c) => {
@@ -1087,6 +1104,7 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
      pedido, o descanso (e a frase que o pediu, que vem na nota), a compra e
      a dádiva da frase (bolsa-da-frase.js), o tempo e o sonho da noite */
   { tipo: /^RESPOSTA A /, vai: "aconteceu", como: aRespostaAoPedido },
+  { tipo: /^PERGUNTA A /, vai: "aconteceu", como: aPerguntaPelaPista },
   { tipo: /^FIM DO ACAMPAMENTO/, vai: "aconteceu", como: oDescanso, resultado: "descansar" },
   { tipo: /^O QUE EU ESCREVI$/, vai: "frase", como: (t) => (t.match(/^"(.+)" — /u) || [])[1] || "", resultado: "descansar" },
   { tipo: /^COMPRA/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^Comprei (.+?) por ◉ (\d+)/u); return m ? `${c.H} comprou ${m[1].replace(/(\d+)× /gu, "$1 ")} por ${m[2]} moedas; as moedas já saíram da bolsa.` : `${c.H} comprou o que quis, e pagou.`; }, resultado: "pagar" },
@@ -1385,6 +1403,19 @@ export function aFichaDeAtor(entrada) {
   /* o rumo que aponta para a pessoa do passo já não é vontade da
      companheira: a pessoa está em cena, ou a cena diz porque não está */
   if (aponta && passo.some((x) => sem(aponta).startsWith(sem(`falar com ${x.nome}`)))) aponta = "";
+  /* A PISTA COMO CARTÃO (a-pista-como-cartao.js): quem o toque perguntou, e
+     está em cena, responde com o que sabe — é o que diz (O QUE SE DIZ), e
+     não se repete no «Sabe». A pergunta do turno é essa, e está respondida:
+     o «não sabe» não entra. Fora de cena, a cena já diz porquê (ausentes) */
+  if (c.pista) {
+    const k = [...pessoas.keys()].find((n) => mesmo(n, c.pista.N));
+    const p = k ? pessoas.get(k) : null;
+    if (p) {
+      p.sabe = p.sabe.filter((s) => !limpo(c.pista.S).includes(limpo(s)));
+      diz.push({ quem: p.nome, o: tpl(A_PISTA_COMO_CARTAO.responde, { H, S: c.pista.S }) });
+      naoSabe = false;
+    }
+  }
   /* O SÍTIO QUE ESCONDE (a 16.ª, defeito 3): o «revelar» tem porta — a
      cena diz que o sítio esconde e como se acha; e, com o teste do turno a
      passar ali, o que se achou é fato */
@@ -1478,7 +1509,12 @@ export function aFichaDeAtor(entrada) {
   const lista = [...pessoas.values()].filter((p) => !p.fera && !/no chão/.test(str(p.estado)));
   const chamado = lista.find((p) => !p.comVoce && sem(frase).includes(sem(p.nome).split(/[ ,]/)[0])) || lista.find((p) => sem(frase).includes(sem(p.nome).split(/[ ,]/)[0]));
   const responde = chamado || lista.find((p) => !p.comVoce) || lista[0] || null;
+  /* O MASCATE TEM O QUE VENDE (O_FIGURANTE_VENDE): a pergunta ao lugar,
+     no mercado, é dele, e o preço da banca também — já não do companheiro */
+  const figVende = !!fig && O_FIGURANTE_VENDE.tipos.includes(fig.tipo) && !chamado && (!responde || responde.comVoce);
   for (const s of sabes) {
+    const mv = figVende ? s.o.match(O_FIGURANTE_VENDE.de) : null;
+    if (mv) { fig.vende = [...arr(fig.vende), mv[1]]; continue; }
     const porPapel = s.papel && lista.find((p) => sem(p.oque).includes(sem(s.papel)));
     const alvo = porPapel || responde;
     if (alvo) alvo.sabe.push(s.o); else cena.push(`Sabe-se aqui: ${ponto(s.o)}`);
@@ -1509,7 +1545,9 @@ export function aFichaDeAtor(entrada) {
        com quem o sabe */
     const peloFig = fig && !chamado && (!responde || responde.comVoce) ? oNaoSabe(fig) : null;
     if (peloFig && !peloFig.cobre) fig.naoSabe = peloFig.o;
-    else {
+    /* a banca respondeu (o mascate tem o preço, O_FIGURANTE_VENDE): ninguém
+       mais tem de não saber */
+    else if (!(peloFig && arr(fig.vende).length)) {
       const quem = responde || null;
       const { o } = oNaoSabe(quem);
       if (o) { if (quem) quem.naoSabe = o; else cena.push(`Aqui ninguém sabe ${o.replace(/^não sabe /, "")}.`); }
@@ -1527,8 +1565,9 @@ export function aFichaDeAtor(entrada) {
   /* a voz do figurante passa pelas mesmas formas (ele não sabe nada: o
      número que pode dizer é só o da mesa da cena) */
   if (fig) {
-    if (fig.tique) fig.tique = vozSemMarca(vozSemPergunta(vozComNumero(fig.tique, numerosDaCena)));
-    if (fig.registo) fig.registo = vozComNumero(fig.registo, numerosDaCena);
+    const figNumero = numerosDaCena || /d/.test(arr(fig.vende).join(" "));
+    if (fig.tique) fig.tique = vozSemMarca(vozSemPergunta(vozComNumero(fig.tique, figNumero)));
+    if (fig.registo) fig.registo = vozComNumero(fig.registo, figNumero);
   }
   /* O QUE FICOU COMBINADO (O_COMBINADO): o pedido de cada pessoa em cena,
      do coração do save, e a resposta do herói */
@@ -1654,7 +1693,8 @@ export function aFichaDeAtor(entrada) {
       L.push(`${maiuscula(fig.papel)} — ${F.semNome}.`);
       const voz = [fig.tique, fig.registo].filter(Boolean).join("; ");
       L.push(`  Fala: ${[voz, fig.trato ? `trata ${H} ${fig.trato}` : ""].filter(Boolean).join("; ")}.`);
-      if (!tira("agora") && fig.agora) L.push(`  Agora: ${ponto(fig.agora)}`);
+      const figAgora = [fig.agora, arr(fig.vende).length ? tpl(O_FIGURANTE_VENDE.diz, { V: fig.vende.join("; ") }) : ""].filter(Boolean).join("; ");
+      if (!tira("agora") && figAgora) L.push(`  Agora: ${ponto(figAgora)}`);
       if (fig.naoSabe) L.push(`  ${maiuscula(ponto(fig.naoSabe))}`);
       L.push(`  ${tpl(F.responde, { H, ...pr })} ${F.limite}`);
     }
