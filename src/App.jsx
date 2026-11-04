@@ -25,7 +25,7 @@ import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ga
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
 import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
-import { vereditoDoCartaz } from "./veredito-do-cartaz.js";
+import { vereditoDoCartaz, etapaDoDador } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO, ditosDoBando } from "./decretos.js";
 import { fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
 import { OBRAS, IMPOSTOS, FURIA_ABAIXO_DE, impostoPorId, obraPorId, garantirGoverno, equilibrioDe, contaDoDominio, podeErguer, comecarObra, obraPronta, terminarObra, pulsoDaFuria, revoltaAgora, bonusDeObras, fatorDaOficina, oQueAOficinaFaz, podeTomarCidade, comecarATomar, tomadaPronta, humorAoTomar, envelopeDaTomada, diasDeTomar } from "./dominios.js";
@@ -10473,7 +10473,7 @@ export default function Taverna() {
        resposta é só prosa. No `mestre`, o de sempre. Se a ficha estourar, o
        turno vai pelo Mestre, e as portas continuam as do modo. */
     let pedidoDoAtor = null;
-    if (MODO_DA_MESA === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido() }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
+    if (MODO_DA_MESA === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido(), teste: testeDoTurnoRef.current }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
     let respondeu = false;
     try {
       const resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist);
@@ -19348,7 +19348,7 @@ export default function Taverna() {
        jogador VIU, para a busca pelo dador não inflar a paga. */
     const r = ofertaDoMestre(missoesRef.current, {
       ...prop,
-      etapas: [{ tipo: "falar_com", alvo: c.dador }, ...prop.etapas],
+      etapas: [etapaDoDador(c), ...prop.etapas],
     }, {
       nivel: (personagem && personagem.nivel) || 1, dia: diaRef.current,
       mundo: mundoDasMissoes(personagemRef.current || personagem),
