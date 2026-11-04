@@ -246,6 +246,7 @@ import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-r
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
 import { portaAberta, oModoDoNarrador, oPesoPeloSistema } from "./motor/portas-do-narrador.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
+import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -20250,6 +20251,25 @@ export default function Taverna() {
     }
     return out;
   };
+  /* A PISTA COMO CARTÃO (16.ª sessão, aprovada a 03/11): com a pessoa do
+     passo em cena, «Perguntar a X por Y» — a pergunta certa sem adivinha, e a
+     resposta é o que o sistema sabe (a-pista-como-cartao.js). Nos dois modos:
+     o envelope leva o que ela sabe à letra. O toque marca a etapa
+     (`perguntada`), e o cartão não volta para o mesmo passo. */
+  const perguntarAPista = (c) => {
+    try {
+      if (carregando) return;
+      const ms = perguntarPelaPista(missoesRef.current, c.id);
+      if (ms === missoesRef.current) return;
+      missoesRef.current = ms; setMissoes(ms);
+      enviar(oEnvelopeDoAcampamento("perguntaPelaPista", { nome: c.nome, sobre: c.sobre, sabe: c.sabe }), fichaViva() || personagem);
+    } catch (e) { calou("perguntar pela pista", e); }
+  };
+  const pistasDoPasso = () => {
+    let cs = [];
+    try { cs = asPistasDoPasso(estadoDoPedido()); } catch (e) { calou("a pista do passo", e); cs = []; }
+    return cs.map((c) => ({ id: c.id, verbo: c.oferta, preco: [c.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => perguntarAPista(c) }));
+  };
   /* a peça é a VerboComPreco que a fogueira já usa (ui.jsx): o verbo e o
      preço em mundo, nunca "lado A". Chama-se como função, nunca como
      componente definido aqui dentro (o foco). */
@@ -22908,6 +22928,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       /* MM-C C2: o que alguém do núcleo, em cena, pede ao herói — aceitar,
          perguntar porquê, recusar (ignorar é não responder, e o relógio dela corre) */
       try { for (const o of pedidosDoCoracao()) lista.push(o); } catch (e) { calou("o pedido na soleira", e); }
+      try { for (const o of pistasDoPasso()) lista.push(o); } catch (e) { calou("a pista na soleira", e); }
 
       /* 1 · A MISSÃO QUE PEDE RESPOSTA. Alguém propôs cara a cara e está à
          espera: é a oferta mais perecível que o jogo tem. */
