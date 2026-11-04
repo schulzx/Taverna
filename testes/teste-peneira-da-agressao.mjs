@@ -346,8 +346,9 @@ sec("7. a fiação no App.jsx — a peneira chegou ao golpe em combate, e o pron
      Seção 5 prova o módulo puro; aqui se prova que o App de fato entrega
      as últimas falas, e não um `undefined` que faria o pronome nunca
      resolver nada em jogo. */
-  const iniAgr = APP.indexOf("const declararAgressao = (acao) => {");
-  t("declararAgressao foi encontrado no App", iniAgr >= 0);
+  /* MOVIDA em 04/11 (a proposta da frase, 2.ª leva): a leitura da frase da agressão saiu de dentro de `declararAgressao` para `leituraDaAgressao`, para a proposta e a porta lerem a mesma coisa; a intenção fica: é lá que a chamada de lerAgressao leva `recentes` */
+  const iniAgr = APP.indexOf("const leituraDaAgressao = (acao) => {");
+  t("a leitura da agressão foi encontrada no App", iniAgr >= 0);
   const fimAgr = APP.indexOf("\n  };", iniAgr);
   const corpoAgr = APP.slice(iniAgr, fimAgr);
   t("a chamada de lerAgressao leva `recentes`",

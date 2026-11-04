@@ -218,10 +218,13 @@ sec("8. lixo");
   t("campanha nova começa sem procurado", app.includes("elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }"));
 
   const agressao = corpo("const declararAgressao = (acao) => {", 8000);
-  t("(a) o veredito é pedido antes de abrir a luta, fora de combate", agressao.includes("veredictoDoCrime(a, crimeCtx, mundoCtx)") && agressao.includes("!jaConfirmado && !combateRef.current"));
+  /* MOVIDA em 04/11 (a proposta da frase, 2.ª leva): o veredito monta-se em `vereditoDoCrimeDe`, que a proposta também chama — o cartão da proposta e o do crime dizem o mesmo; a intenção fica: pedido antes de abrir a luta, fora de combate */
+  const doVeredito = corpo("const vereditoDoCrimeDe = (a, elenco, p) => {", 1500);
+  t("(a) o veredito é pedido antes de abrir a luta, fora de combate", doVeredito.includes("veredictoDoCrime(a, crimeCtx, mundoCtx)") && agressao.includes("const veredito = vereditoDoCrimeDe(a, elenco, p);") && agressao.includes("!jaConfirmado && !combateRef.current"));
   t("(a) com veredito, o cartão nasce e a luta NÃO abre neste turno", /if \(veredito\) \{\s*pushMsgs/.test(agressao) && agressao.includes("setCrimeVereditoPendente({"));
   t("(a) confirmar marca o ref e volta à mesma função; deixar não gasta turno", agressao.includes("crimeConfirmadoRef.current = true; declararAgressao(acao);") && agressao.includes("aoDeixar: () => { setCrimeVereditoPendente(null); pushMsgs("));
-  t("(a) a confirmação não duplica a fala do jogador no log", agressao.includes("...(jaConfirmado ? [] : [{ autor: \"jogador\", texto: acao }]),"));
+  /* MOVIDA em 04/11: a confirmação pode vir do cartão do crime (`jaNoCartao`, que já pôs a fala no log) ou do cartão da proposta (que não a pôs) — só a primeira cala a fala; a intenção fica: não duplica */
+  t("(a) a confirmação não duplica a fala do jogador no log", agressao.includes("...(jaNoCartao ? [] : [{ autor: \"jogador\", texto: acao }]),") && agressao.includes("const jaConfirmado = jaNoCartao || vistoNaProposta;"));
   t("(b) o crime em si: legítima defesa não conta (hostis vazio é quem já me atacou)", agressao.includes('lerCrime(a, { npcs: npcsRef.current, presentes: elenco.aqui || [], grupo: p.grupo || [], hostis: [], elenco: nomesDoElenco() })'));
   t("(b) crime conhecido registra a lei e o elenco reage", agressao.includes("leiRef.current = registrarCrime(leiRef.current, cons, crime, diaRef.current);") && agressao.includes("elencoSaveRef.current = reacaoDoElenco(elencoSaveRef.current, crime, cons, diaRef.current);") && agressao.includes("crimeDoTurnoRef.current = cons.linhas;"));
   /* O BUG ACHADO NO JOGO VIVO (frontend, MM10, 30/09): "ataco Ivo" → "atacar

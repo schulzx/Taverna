@@ -359,7 +359,8 @@ sec("4. o Narrador limitado à lista");
   /* 12/10: a fiação chegou (frontend, F2a). A asserção de espera ("o App
      ainda não importa") virou a prova da fiação, ponto a ponto. */
   const pdt = (app.split("const pautaDoTurno = ")[1] || "").split("\n  };\n")[0];
-  const decl = (app.split("const declararAgressao = ")[1] || "").split("const a = lerAgressao(")[0];
+  /* MOVIDA em 04/11 (a proposta da frase, 2.ª leva): a leitura da frase da agressão saiu de dentro de `declararAgressao` para `leituraDaAgressao`, para a proposta e a porta lerem a mesma coisa; a intenção fica: a frase lê-se contra a lista, e o bicho do golpe vai em conhecidas */
+  const decl = (app.split("const leituraDaAgressao = ")[1] || "").split("const a = lerAgressao(")[0];
   // retirada (trilha A, 29/10): «fiação · o App importa as três de em-cena.js» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   // retirada (trilha A, 29/10): «fiação · pautaDoTurno monta a lista DEPOIS do cederNaCena, guarda-a e põe a linha, num calou próprio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   t("fiação · a lista de antes vai de um turno ao outro (antes: emCenaRef.current)", /antes: emCenaRef\.current/.test(app));
