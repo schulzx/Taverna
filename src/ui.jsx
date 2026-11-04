@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, VERBO_COM_PRECO, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, FOLHA_DO_MESTRE, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, VERBO_COM_PRECO, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
 import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase, ESTADOS_DO_DADO, reciboQueCabe, horaNaCinta } from "./glifos.js";
@@ -715,15 +715,18 @@ export function Prosa({ texto = "", abertura = "nenhuma" }) {
     const longa = frase.length > ABERTURA.tetoDeCaracteres;
     partes.splice(0, 1, ...(resto ? [resto] : []));
     return (
-      <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.ink }}>
+      <div className="tv-body tv-folha flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
         <p className="whitespace-pre-wrap" data-abertura="cerimonia"
           style={{ fontSize: longa ? ABERTURA.letraLonga : ABERTURA.letra, lineHeight: ABERTURA.entrelinha, fontWeight: ABERTURA.peso, margin: 0 }}>{frase}</p>
         {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
       </div>
     );
   }
+  /* MESA C (04/11): a resposta do Mestre é uma folha de pergaminho pousada
+     no couro — tinta escura sobre papel (FOLHA, e a regra «na folha só há
+     tinta»: nada com caixa mora aqui dentro) */
   return (
-    <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.ink }}>
+    <div className="tv-body tv-folha flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
       {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
     </div>
   );

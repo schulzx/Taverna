@@ -929,6 +929,35 @@ export const ABERTURA = {
 };
 
 /* ============================================================
+   A FOLHA DO MESTRE (Mesa C · 04/11/2026) — a resposta num pergaminho
+
+   A ordem da pessoa: «precisa ser chamativo e gostoso de ver, tem que ser um
+   jogo». A narração deixa de ser letra clara sobre o poço escuro e passa a
+   ser tinta sobre uma folha de pergaminho pousada no couro da página — uma
+   folha por resposta, como as notas que o Mestre passa por cima da mesa.
+
+   NA FOLHA SÓ HÁ TINTA (formas.md §«A mesa à luz de vela (C)» §1): as linhas
+   do sistema, os ladrilhos e as falas do jogador ficam na paleta da mesa,
+   fora dela. A prosa mede 12,15:1 no centro e 8,74:1 no pior ponto da
+   vinheta (`teste-mesa-c.mjs` prende os dois).
+
+   `peso` é a Spectral 400 que o `desenho` pediu para a folha clara (a 300
+   da página escura afina demais sobre o papel).
+   ============================================================ */
+export const FOLHA_DO_MESTRE = {
+  cima: 18, baixo: 20,
+  lado: 26,            /* na mesa */
+  ladoTelefone: 18,    /* no telefone */
+  raio: 4,
+  peso: 400,
+  vinheta: 0.75,       /* a borda do papel, no máximo (o pior ponto da conta) */
+  fibra: 0.06,         /* a fibra do papel: não mexe no contraste */
+  sombra: 0.55,        /* a folha pousada no couro */
+  luzDaVela: 0.16,     /* a vela sobre a madeira, no topo da mesa */
+  cantoDaMesa: 0.55,   /* a vinheta escura da madeira */
+};
+
+/* ============================================================
    V5e · A CHEGADA — onde a vista pousa quando o Mestre responde.
 
    ESTAR NO FIM é estar a no máximo UM QUARTO da área do fundo, medido no
@@ -2668,6 +2697,34 @@ export const SUPERFICIES_CSS = `
   padding: ${PAGINA.cima}px ${PAGINA.ladoTelefone}px ${PAGINA.baixo}px;
 }
 .tv-pagina > * + * { margin-top: ${PAGINA.entreBlocos}px; }
+/* A FOLHA (Mesa C): o pergaminho, a vinheta da borda e a fibra do papel. A
+   cor vem de T e o alfa de FOLHA; a fibra vai a 0,06 e a conta da prosa
+   ignora-a, e mesmo assim sobra 8,74 no pior ponto. */
+.tv-folha {
+  background-color: ${T.pergaminho};
+  background-image:
+    radial-gradient(75% 75% at 50% 50%, transparent 60%, ${alfa(T.pergaminhoBorda, FOLHA_DO_MESTRE.vinheta)} 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 ${FOLHA_DO_MESTRE.fibra} 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  color: ${T.tintaDoPergaminho};
+  border-radius: ${FOLHA_DO_MESTRE.raio}px;
+  padding: ${FOLHA_DO_MESTRE.cima}px ${FOLHA_DO_MESTRE.ladoTelefone}px ${FOLHA_DO_MESTRE.baixo}px;
+  box-shadow: 0 2px 10px ${sombra(FOLHA_DO_MESTRE.sombra)};
+}
+@media (min-width: 768px) {
+  .tv-folha { padding-inline: ${FOLHA_DO_MESTRE.lado}px; }
+}
+/* A MADEIRA (Mesa C): o veio (feTurbulence esticado em x), a luz da vela no
+   topo e a vinheta dos cantos. Só fundo: nada de leiaute. */
+.tv-mesa {
+  background-color: ${T.bg};
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, ${alfa(T.amber, FOLHA_DO_MESTRE.luzDaVela)}, transparent 70%),
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, ${sombra(FOLHA_DO_MESTRE.cantoDaMesa)} 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0 0.06 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+}
+@media (forced-colors: active) {
+  .tv-folha, .tv-mesa { background-image: none; }
+}
 @media (min-width: 768px) {
   .tv-pagina { padding-inline: ${PAGINA.lado}px; }
 }

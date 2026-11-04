@@ -24,6 +24,15 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · a casca, 2.ª etapa · a resposta do Mestre numa folha de pergaminho
+- **feito:**
+  - a `Prosa` (ui.jsx) mora numa folha de pergaminho (`.tv-folha`): tinta escura sobre papel, a vinheta da borda e a fibra em CSS, pousada no couro com sombra;
+  - a tela do jogo tem o chão de madeira (`.tv-mesa`): o veio, a luz da vela no topo, a vinheta dos cantos;
+  - os números saem da tabela nova `FOLHA_DO_MESTRE`, porque o nome `FOLHA` já era a folha de estilo.
+- **decisão média, contra o §10.2 de formas:** a folha é por resposta, e não a página inteira. A página inteira obrigaria a recolorir umas dez peças que assumem tinta clara (ladrilhos, recibo, dobra, voz, a fala do jogador). Uma folha por resposta cumpre a regra do próprio `desenho` («na folha só há tinta») e é o esboço C que a pessoa aprovou, as notas do Mestre pousadas na mesa.
+- **bastão:** tomado e devolvido para uma linha do `App.jsx`, o chão `tv-mesa` na raiz da tela.
+- **prova viva (5199):** uma resposta posta no save com o jogo desmontado. A 1280 e a 375 a folha lê-se clara, sem nada cortado. As suítes da página passam: `teste-v5-pagina` 58/58, `teste-mesa-c` 43/43, `teste-v1-folha` 9/9.
+
 ## 04/11 · a casca, 1.ª etapa · a paleta da vela (Mesa C)
 - **o desenho (agente `desenho`, ~250 mil tokens):** a página «Mesa C · 04/11» no Figma (`241:37`), com a tela a 1280 e a 375, o par antes/depois contra a v3, as peças (os sete dados, a bandeja, a proposta com dado, o recurso, o selo) e a coleção de variáveis `T · Mesa C (vela)`. A spec está em `formas.md` §«A mesa à luz de vela (C)».
 - **a escolha do pergaminho, por número:** pergaminho claro 12,15:1 (pior ponto 8,74) contra o couro 11,16:1. O couro contra a mesa dava 1,34:1, abaixo do piso de 3, e reprovou. Há estudo citado para a polaridade positiva (Piepenbrock 2013; Buchner & Baumgartner 2007). A linha passa de ~101 para 64 caracteres (Bringhurst; WCAG 1.4.8).

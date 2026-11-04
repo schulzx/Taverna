@@ -24491,7 +24491,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
   return (
     <AjusteDoRetrato.Provider value={ajusteRetrato}>
-    <div className="flex flex-col" style={{ background: T.bg, height: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
+    <div className="flex flex-col tv-mesa" style={{ backgroundColor: T.bg, height: "100dvh", maxHeight: "100dvh", overflow: "hidden" }}>
       <style>{FOLHA}</style>
       {/* a vinheta é a última camada e não recebe toque nenhum: escurece o
           canto da tela para o meio, onde a narração acontece, parecer
