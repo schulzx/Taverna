@@ -12858,3 +12858,348 @@ nenhum ato antes do toque; «Pagar · ◉ 2» tirou 2 da bolsa e mandou o recibo
 «Esperar · 3 h» levou o relógio das 8h05 às 11h.
 
 **Por passar:** o par no Figma das três variantes (a dívida da 1.ª leva cresce, escrita aqui).
+
+
+## A mesa à luz de vela (C) · 04/11/2026
+
+**A ordem, nas palavras dela:** *«o que temos hoje ainda não é um jogo, apenas um sistema
+interativo, precisa ser um jogo… o que vende é a impressão… precisamos de uma casca pro
+nosso rpg.»* Nem a v3 (`126:5`) nem o «grimório premium» lhe deram sensação de jogo; ela
+escolheu a direção **C — a mesa**: a tela é uma mesa de madeira à luz de vela, a história é
+um livro aberto em cima dela, os recursos são peças, e o risco é um dado que se vê.
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página `241:37` «Mesa C · 04/11»):
+
+| quadro | id |
+|---|---|
+| a tela principal · 1280×912 (pergaminho) | `246:499` |
+| a alternativa medida · 1280×912 (couro) | `246:635` |
+| a tela principal · 375×812 | `246:763` |
+| **o par** antes (v3 `126:5`, clonada) / depois | `246:880` |
+| `Dado` (7 formas) | `243:46` |
+| `Marca do dado` (6 estados) | `243:72` |
+| a bandeja · 7 dados × 6 estados + os 5 papéis | `244:2` |
+| `Bandeja` (a peça) | `244:613` |
+| `Proposta da frase` (6 variantes, com dado) | `245:610` |
+| `Peça de recurso` (PV, PM, Moedas, Destino, Tochas) | `245:636` |
+| `Selo da missão` | `245:637` |
+| variáveis: coleção `T · Mesa C (vela)`, modo `Vela` (34 cores, `codeSyntax` = `T.<chave>`) | `VariableCollectionId:241:2` |
+
+### 1 · A folha é de pergaminho — e o couro perdeu por número
+
+Medi as duas, com a mesma prosa, no mesmo leiaute (`246:499` contra `246:635`):
+
+| | pergaminho `#E9DCC0` · tinta `#2A1C11` | couro `#3B2A1E` · tinta `#F2E7D2` |
+|---|---|---|
+| a prosa sobre a folha | **12,15:1** | 11,16:1 |
+| a prosa no **pior ponto** da vinheta (borda a 0,75) | **8,74:1** | — (sem vinheta) |
+| a folha contra a mesa (figura e fundo; a 1.4.11 pede 3) | **13,50:1** | **1,34:1** — reprova |
+| o perigo como letra na folha | 6,60 (`perigoNoPergaminho`) | **4,30** (`danger`) — reprova AA |
+
+As duas passam o piso de 7 da prosa. O que decide são as outras linhas: o couro repete **a
+doença que R2 diagnosticou** (*«a tela não tinha figura e fundo»*, 1,039:1) — um livro
+castanho-escuro numa mesa castanho-escura a 1,34:1 é outra vez uma borda à volta de nada, e o
+perigo deixa de se ler nele. O pergaminho é a única coisa clara da tela: **o olho cai na
+história primeiro**, que é o que a casa sempre disse que a prosa é.
+
+**Estudo citado, não gosto:** a polaridade positiva (tinta escura sobre fundo claro) dá melhor
+leitura e revisão de texto do que a negativa, em jovens e em idosos — Piepenbrock, Mayr, Mund
+& Buchner, *Ergonomics* 56(7), 2013, 1116–1124; Buchner & Baumgartner, *Ergonomics* 50(7),
+2007. E a nota de R2 (`estilo.js`, «texto claro sobre escuro IRRADIA») **inverte-se a nosso
+favor**: o peso 300 da Spectral foi a defesa contra a irradiação; na folha clara não há
+irradiação, e **a prosa volta a 400** (o 300 fica fino demais sobre papel).
+
+**E não é papel branco:** `#E9DCC0` tem L 0,71 — é o degrau mais claro da rampa da Baldur's
+Gate 3 (`#E6DBC2`) que esta casa já citava, não um ecrã a acender a sala às três da manhã.
+
+**O comprimento da linha**, medido no Figma e não estimado: a prosa da v3 é Cormorant 20 numa
+caixa de **1086 px = ~101 caracteres por linha** (202 caracteres em duas linhas). A folha nova
+tem **504 px de Spectral 17 = 64 caracteres** (largura média medida: 7,855 px por caractere).
+A régua: 45–75, com 66 como o ideal (Bringhurst, *The Elements of Typographic Style*, §2.1.2),
+e ≤ 80 para AAA (WCAG 1.4.8). **A v3 estava fora das duas.** No telefone a folha mede 311 px,
+~40 caracteres, dentro do mínimo.
+
+**A LEI QUE NASCE DAQUI — na folha só há tinta.** Tudo o que tem caixa (um cartão da ficha, o
+ladrilho do assunto, um chip, a `Oferta`) é **peça da mesa pousada na folha** e continua com a
+paleta da mesa (`panel`, `ink`…) — não se inverte peça nenhuma. Só a **letra solta** sobre o
+pergaminho (a prosa, a fala do jogador, o cabeçalho da página, a capitular, a frase de uma
+linha do sistema) lê as chaves `*DoPergaminho` / `*NoPergaminho`. É isto que deixa a troca
+caber num commit: a folha é uma superfície nova, não uma segunda paleta para cada peça.
+
+**O livro tem duas camadas:** o couro (`T.pagina`, a moldura de 8 px na mesa e 4 no telefone,
+raio 10, fio `lineStrong` a 0,45, sombra `0 10px 28px` preto a 0,6) e a folha dentro dele
+(raio 4). O que hoje vive na página e não é prosa — o cabeçalho de V5a, a runa, o floreado —
+passa para a folha com tinta: o lugar em `brasaNoPergaminho`, o ato em
+`tintaDoPergaminhoDim`. **A runa de três pontos não cabe na folha** (o âmbar mede 1,9 sobre o
+pergaminho): na folha ela vira **um fio de `brasaNoPergaminho` a 0,35**, como está no quadro;
+os três pontos continuam onde o chão é escuro.
+
+### 2 · O mapa dos tokens (pronto a colar em `src/estilo.js:144-186`)
+
+Os nomes de sempre ficam (o código inteiro lê-os). O contraste vai ao lado, pela fórmula de
+`testes/conta-da-luz.mjs`. **A prova foi feita antes de entregar:** espelhei `src/` e
+`testes/` no rascunho, troquei só este bloco e corri as 32 suítes que leem `estilo.js` — os
+37 pares de `teste-v1-folha` passam todos, a prosa no pior ponto do ambiente passa, os sete
+tons de `TOM_DA_CENA` passam (o pior: `aco`, 12,88), `check-formas` passa. O que fica
+vermelho é **só byte fixado** da paleta antiga (a lista está em §8).
+
+```js
+export const T = {
+  /* A MESA — madeira escura e quente (h≈25). Recua: cinta, trilho, bastidor. */
+  bg:         "#1B130D",   /* a madeira — ink 14,96 · inkDim 6,75 */
+  panel:      "#251A12",   /* a cinta, o trilho, o campo — ink 13,87 · inkDim 6,26 · danger 5,35 */
+  panelSoft:  "#33251A",   /* o erguido — ink 12,07 · inkDim 5,45 · lineStrong 3,65 */
+  line:       "#4D3A29",   /* divisória decorativa — 1,70 contra a madeira */
+  lineStrong: "#96795A",   /* a borda de CONTROLO — 4,52 bg · 4,19 panel · 3,65 panelSoft · 4,64 pagina */
+
+  /* O LIVRO — o couro da capa e o chão da bandeja */
+  pagina:     "#1A0F0B",   /* o couro — ink 15,60 · inkMeio 10,58 · amber 8,89 · danger 5,91 */
+  paginaAlta: "#33251A",   /* = panelSoft, de propósito (teste-v1-folha §6 prende) */
+
+  /* A TINTA CLARA — a letra sobre madeira e couro */
+  ink:        "#F2E7D2",   /* 15,60 pagina · 13,87 panel */
+  inkMeio:    "#D2C0A4",   /* a segunda voz — 10,76 pagina · 8,32 panelSoft; e o OSSO do dado de uso */
+  inkDim:     "#AE9A80",   /* o rótulo — 5,45 panelSoft (o pior) · 7,04 pagina */
+
+  /* OS ACENTOS — a brasa, o arcano, o frio, o lacre */
+  amber:      "#F0A23B",   /* a brasa: a decisão e o herói — 8,67 bg · 8,04 panel */
+  amberSoft:  "#F8CB85",   /* o âmbar em letra — 11,23 panel · 9,77 panelSoft */
+  onAccent:   "#1E1207",   /* sobre o âmbar 8,68 · danger 5,77 · ok 9,69 · osso 10,32 · mundo 8,60 */
+  violet:     "#A89FE3",   /* a magia — lilás de vela, saturação caída: 7,62 bg · 6,15 panelSoft */
+  violetSoft: "#CBC5F2",   /* a magia em letra — 10,37 panel */
+  onSecond:   "#141022",   /* sobre o violeta 7,75 */
+  mundo:      "#7DB9DC",   /* o azul frio: a informação e o convite — 7,97 panel · 6,93 panelSoft · 8,96 pagina */
+  mundoSoft:  "#B5DAEE",   /* a voz do mundo — 11,52 panel */
+  onMundo:    "#0A1620",   /* sobre o azul 8,57 */
+  rosa:       "#C9737E",   /* o lacre, a tua mão — marca, nunca chão de letra: 5,44 bg · 4,39 panelSoft (≥3) */
+
+  danger:     "#E86A4F",   /* o vermelho queimado — 5,35 panel · 6,01 pagina · 4,65 panelSoft */
+  ok:         "#A6C77E",   /* o verde musgo: o sucesso e a cura — 8,98 panel */
+  okFundo:    "#1F2A15",   /* ok sobre ele 7,92 */
+  perigoFundo:"#3A1A12",   /* danger sobre ele 4,94 */
+
+  /* NOVO · A FOLHA — só letra solta mora aqui (§1, «na folha só há tinta») */
+  pergaminho:            "#E9DCC0",   /* 13,50 contra a madeira */
+  pergaminhoBorda:       "#C7AE84",   /* a vinheta da borda (só gradiente, nunca chão de letra) */
+  tintaDoPergaminho:     "#2A1C11",   /* a prosa — 12,15 · pior ponto 8,74 */
+  tintaDoPergaminhoMeio: "#4F3B28",   /* a fala do jogador — 7,78 · pior 5,60 */
+  tintaDoPergaminhoDim:  "#5A4632",   /* o rótulo na folha — 6,56 · pior 4,72 */
+  brasaNoPergaminho:     "#7A3307",   /* o lugar, a capitular — 6,71 · pior 4,83 */
+  perigoNoPergaminho:    "#8A2414",   /* 6,60 · pior 4,75 */
+  musgoNoPergaminho:     "#33521C",   /* 6,54 · pior 4,71 */
+  azulNoPergaminho:      "#1F4872",   /* 6,94 · pior 4,99 */
+  lacreNoPergaminho:     "#7E2A3C",   /* a cera do selo — o glifo em pergaminho sobre ela 6,77 */
+};
+```
+
+«Pior ponto» é o pergaminho com a vinheta no máximo (`pergaminhoBorda` a 0,75 = `#D0BA93`).
+A letra nunca chega lá (o enchimento da folha é 48, e 20 no telefone), e mesmo assim passa: é
+esse o piso que a suíte nova tem de provar (§8).
+
+**Os daltonismos** ficam com a defesa de V1, que é regra e não paleta: `rosa` nunca ao lado
+de `danger`; `danger` e `ok` nunca sem glifo (✕ / ✓); o papel do dado diz-se pela forma do
+selo e pela frase da bandeja, nunca só pela cor do corpo.
+
+### 3 · A letra — Cinzel para o título, medida
+
+Medido no Figma (o «H» vetorizado a 100 px): **a Cinzel Bold tem altura de maiúscula de
+0,70 em**, a Cormorant SemiBold 0,625 em — **+12 % de letra ao mesmo corpo**. A Cinzel só tem
+maiúsculas (versaletes no lugar da minúscula), e é por isso que **lê bem em pouca palavra e
+mal numa frase**. A regra: Cinzel **só** em título (`TIPOS.titulo` e `display`), no nome do
+herói na cinta, no título da missão e na capitular da folha, e **nunca em mais de quatro
+palavras**. A prosa continua Spectral (**400** na folha); os números e comandos continuam
+JetBrains Mono. Entra no mesmo `@import` (`estilo.js:1864`): `&family=Cinzel:wght@700` (OFL,
+Google Fonts). A Cormorant fica com a primeira frase da cena (22/1,3 na mesa, 19 no
+telefone), como na v3.
+
+### 4 · A bandeja e os sete dados
+
+**Onde:** entre a folha e o campo, por cima da `PropostaDaFrase`. **0 px sem dados**; com
+dados, **64** na mesa e **56** no telefone (o dado 48 + 8 ou 4 de cada lado). O chão é
+`T.pagina` (o couro), com sombra interior `inset 0 2px 6px` preto a 0,6, fio `line`, raio 12.
+Cabem **5 dados**; o sexto em diante vira `+N`. A bandeja **esvazia** quando o jogador envia
+o turno seguinte. **Ao lado do dado vai sempre a frase** — `d20 13 + 2 = 15 · precisa de 13`
+e, por baixo, `✓ passa — …` em `ok` ou `✕ falha — …` em `danger`: a conta e o veredito em
+letra. No telefone a frase encurta (`13 + 2 = 15 · precisa 13` / `✓ passa`).
+
+**A tabela da forma** (`viewBox 0 0 48 48`; o d100 é `0 0 100 48`). `corpo` é o polígono
+(fill = a cor do papel, traço `onAccent` a 0,55 de 1,5 px, junta redonda), `facetas` são
+linhas de 1 px a `onAccent` 0,28, `numero` é o centro da letra (JetBrains Mono Bold, `tam`):
+
+```js
+export const FORMAS_DO_DADO = {
+  d4:  { corpo: "24,4 45,41 3,41", facetas: [], numero: [24, 30], tam: 16 },
+  d6:  { retangulo: { x: 6, y: 6, lado: 36, raio: 6 }, facetas: [], numero: [24, 24], tam: 18 },
+  d8:  { corpo: "24,3 45,24 24,45 3,24", facetas: ["M13.5 13.5 L34.5 13.5"], numero: [24, 26], tam: 18 },
+  d10: { corpo: "24,3 44,21 24,45 4,21", facetas: ["M4 21 L24 29 L44 21", "M24 29 L24 45"], numero: [24, 19], tam: 16 },
+  d12: { corpo: "24,4 43.97,18.51 36.34,41.99 11.66,41.99 4.03,18.51",
+         facetas: ["M24 14 L34.46 21.6 L30.47 33.9 L17.53 33.9 L13.54 21.6 Z", "M24 4 L24 14",
+                   "M43.97 18.51 L34.46 21.6", "M36.34 41.99 L30.47 33.9", "M11.66 41.99 L17.53 33.9", "M4.03 18.51 L13.54 21.6"],
+         numero: [24, 25], tam: 16 },
+  d20: { corpo: "24,3 42.19,13.5 42.19,34.5 24,45 5.81,34.5 5.81,13.5",   /* o hexágono */
+         facetas: ["M24 11 L36.5 32.5 L11.5 32.5 Z",                       /* o triângulo da face */
+                   "M24 3 L24 11", "M42.19 34.5 L36.5 32.5", "M5.81 34.5 L11.5 32.5",
+                   "M42.19 13.5 L24 11", "M5.81 13.5 L24 11", "M24 45 L36.5 32.5", "M24 45 L11.5 32.5"],
+         numero: [24, 25], tam: 16 },
+  /* d100 = dois d10, o segundo deslocado 52 em x: DEZENAS ("00"–"90", tam 14) · UNIDADES ("0"–"9", tam 16) */
+  d100: { de: "d10", deslocamento: 52, largura: 100, numeros: [[24, 19, 14], [76, 19, 16]] },
+};
+```
+
+O d4 leva o número mais abaixo (o triângulo é estreito em cima); o d12 é o pentágono regular
+de raio 21 centrado em (24, 25), com o pentágono interior de raio 11 como faceta; o d20 é o
+hexágono de raio 21 com o triângulo da face inscrito.
+
+**A cor é do papel, por NOME de `T`** (a mesma lei da runa):
+
+```js
+export const PAPEL_DO_DADO = {
+  teste: { corpo: "amber",   numero: "onAccent" },  /* 8,68 */
+  dano:  { corpo: "danger",  numero: "onAccent" },  /* 5,77 */
+  cura:  { corpo: "ok",      numero: "onAccent" },  /* 9,69 */
+  sorte: { corpo: "violet",  numero: "onSecond" },  /* 7,75 — o oráculo */
+  uso:   { corpo: "inkMeio", numero: "onAccent" },  /* 10,32 — o osso */
+};
+```
+
+Todo corpo mede ≥ 5,9 contra o couro da bandeja (amber 8,89 · danger 5,91 · ok 9,93 · violet
+7,82 · osso 10,58).
+
+**Os estados** (`Marca do dado`: um quadro de 64 com o dado a 8,8; o anel tem raio 30, 2 px):
+
+| estado | o dado | o anel | o selo (20 px, canto de cima à direita, contorno `pagina` 2 px) |
+|---|---|---|---|
+| `rolando` | rodado −18°, opacidade 0,85, o número a trocar | nenhum; três riscos de rasto à esquerda | — |
+| `pousado` | normal | nenhum | — |
+| `sucesso` | normal | `ok`, contínuo | `ok` com **✓** em `okFundo` |
+| `falha` | opacidade 0,5 | `danger`, **tracejado 4·3** | `danger` com **✕** |
+| `critico` (20 natural) | normal | `amber` 2,5 px + brilho `0 0 14px` âmbar a 0,6 + **oito raios** (de r 34 a 40) | `amber` com **✦** |
+| `desastre` (1 natural) | normal + **a racha** (`M30 10 L26 22 L33 28 L27 40 L31 52`, `perigoFundo` 2 px) | `danger` 2,5 px, contínuo | `danger` com **!** |
+
+Cada estado tem **uma forma própria além da cor** (nada, contínuo, tracejado, raios, racha):
+quem não vê cor lê-o. No d100 o anel é uma **elipse de 112×60** à volta dos dois dados.
+
+### 5 · O movimento — e a saída
+
+| fase | duração | curva | o que mexe |
+|---|---|---|---|
+| a rolar | **520 ms** | `cubic-bezier(.22,1.2,.36,1)` (o ressalto leve do pouso) | `translateX(-24px → 0)` + `rotate(-200deg → 0)`; o número troca a cada **60 ms**, por JavaScript — **o resultado já está decidido pela semente**: a troca é teatro, nunca sorteio |
+| pousar | **140 ms** | `ease-out` | `scale(1.06 → 1)` |
+| o veredito | **180 ms** | `ease-out` | o anel e o selo: `opacity 0 → 1`, `scale(.9 → 1)` |
+| crítico | **2 × 280 ms** | `ease-in-out` | o brilho pulsa duas vezes e fica a 0,35 |
+| desastre | **200 ms** + **180 ms** | `linear` | a racha desenha-se (`stroke-dashoffset`) e o dado treme ±2 px, três vezes |
+| vários dados | **+90 ms** cada | — | escalonados, da esquerda para a direita |
+
+**Nunca custa o turno:** a bandeja **não bloqueia nada** — o campo, a proposta e a página
+continuam vivos enquanto o dado rola; o veredito em letra aparece no pouso (660 ms), e
+**tocar na bandeja salta para o fim**. O pior caso (o crítico) acaba em 1,22 s.
+
+**`prefers-reduced-motion: reduce`:** nada roda, nada treme, nada pulsa. O dado aparece já
+`pousado`, com `opacity 0 → 1` em **120 ms**; o número é o final desde o primeiro quadro; o
+brilho do crítico fica parado a 0,35; a racha já vem desenhada. (A lição de D5c: a saída do
+dado a rolar não pode ser só `none` — aqui o estado final é que é a saída.)
+
+### 6 · A textura, em CSS (sem imagem)
+
+```css
+/* A MESA — o veio da madeira (feTurbulence esticado em x), a vela e a vinheta.
+   Isto mora dentro de SUPERFICIES_CSS, que é um template-literal: nada de crase. */
+.tv-mesa {
+  background-color: T.bg;
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(240,162,59,.16), rgba(240,162,59,.04) 55%, transparent 75%),
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0 0.06 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+}
+/* A FOLHA — o pergaminho, a vinheta da borda e a fibra do papel */
+.tv-folha {
+  background-color: T.pergaminho;
+  background-image:
+    radial-gradient(75% 75% at 50% 50%, transparent 60%, rgba(199,174,132,.75) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  color: T.tintaDoPergaminho;
+}
+```
+
+Os `rgba()` são cores de `T` (o âmbar `240,162,59`; `pergaminhoBorda` `199,174,132`): saem
+por `alfa(T.amber, .16)` e `alfa(T.pergaminhoBorda, .75)`, nunca escritos à mão. A fibra do
+papel vai a 0,06 e **não mexe no contraste** (a conta da prosa ignora-a e ainda sobra 8,74
+no pior ponto). `AMBIENTE` (a luz de V1 sobre `T.pagina`) continua a valer para o couro e
+para a criação (`T.bg`); **na folha, a luz é a vinheta acima**.
+
+### 7 · As peças
+
+- **`Proposta da frase` ganha `Tipo=comDado`** (`245:610`): o contorno em `amber` (a decisão
+  com risco), o mini-d20 de 24 no lugar do glifo, a conta à direita em `amberSoft`
+  (`d20+2 · 13`). **Aberta**, as linhas são a conta e **os dois lados com marca** — `✓ passar:
+  …` em `ok` e `✕ falhar: … · 1d6` em `danger`, com o mini-dado do custo — e os botões
+  «Reescrever» e «**Lançar o d20**» (primário âmbar, com o d20 dentro). `semVolta` leva o selo
+  de letra «sem volta» em `danger` sobre `perigoFundo` e o primário em `danger` («Atacar ·
+  d20»). `escolhas` e `impedido` são as da 2.ª leva, recoloridas. As medidas da peça não
+  mudam (fechada a `ALVOS.piso`, botões a 48).
+- **`Peça de recurso`** (`245:636`): cinta de 32, ficha redonda de 24 em `pagina` com o glifo
+  vetorial na cor do recurso (PV: coração `danger` + barra 40×4; PM: losango `violet`; moedas:
+  ◉ `amber`; **Destino: três ✦**, cheios em `amber`, vazios em `lineStrong`; tochas: chama
+  `amberSoft`), e o número em mono 13 Bold. **Não se tocam**: o alvo é a cinta inteira (48).
+  No telefone ficam o PV e as moedas; Destino e tochas vão para a ficha do herói.
+- **`Selo da missão`** (`245:637`): a cera de 52 (estrela de 18 pontas, raio interior 0,86) em
+  `lacreNoPergaminho`, o anel `rosa` a 0,7, o glifo em `pergaminho`; ao lado, «MISSÃO · 3
+  dias» (mono 12, `tintaDoPergaminhoDim`) e o título em Cinzel 17. Mora no canto de baixo da
+  folha, na mesa; no telefone vira uma ficha de lacre de 32 na cinta.
+
+### 8 · As suítes que o mapa obriga a mudar — todas por byte fixado, nenhuma por contraste
+
+| suíte | a asserção | o que passa a dizer |
+|---|---|---|
+| `teste-v1-folha.mjs` §6b | `alfa(T.rosa, .15) === "rgba(241,91,181,0.15)"` | `"rgba(201,115,126,0.15)"` |
+| `teste-v1-folha.mjs` §8 | a regex da folha com `rgba(255,176,58,0\.063)` | `rgba\(240,162,59,0\.063\)` |
+| `teste-v5a-cabecalho.mjs` | `#FFB03A,#00BBF9,#F15BB5`; `rgba(255,176,58,0.2)`; `T.pagina === "#0F0C18"` e `T.inkDim === "#9B93AC"` | `#F0A23B,#7DB9DC,#C9737E`; `rgba(240,162,59,0.2)`; `#1A0F0B` e `#AE9A80` — **com o motivo no comentário**: o nó que ela prendia é a v3, que esta direção substitui |
+| `teste-painel-fogueira.mjs` | `FOGUEIRA.lugarAceso === "#31252D"` | `"#392816"` (o mesmo `panel` + 10 % de âmbar, refeito) |
+| `teste-genero-no-app.mjs` | «a luz de antes, ao byte» (6 asserções) | `linear-gradient(to right, rgba(240,162,59,0.063) 0%, rgba(125,185,220,0.09) 55%, rgba(201,115,126,0.072) 100%)` |
+
+**E uma suíte nova** (`teste-mesa-c.mjs`, para nascer com a peça): os pares da folha — a
+prosa ≥ 7 no pior ponto da vinheta; `tintaDoPergaminhoMeio` e as cinco tintas de acento
+≥ 4,5 no pior ponto; a folha contra a madeira ≥ 3 —; os cinco corpos do dado ≥ 3 contra
+`pagina`; o número de cada papel ≥ 4,5 sobre o seu corpo; e que `PAPEL_DO_DADO` só nomeia
+chaves que existem em `T`. (`teste-rosto-pintado` e `check-tela-de-batalha` falharam no
+espelho só por lá não haver `public/` nem `mente/` — não são de cor.)
+
+### 9 · O «superior», por dois caminhos escritos
+
+- **Medida:** a folha contra a mesa passa de 1,04:1 (o poço da v3 contra a mesa da v3) a
+  **13,50:1**; a linha da prosa passa de ~101 a **64 caracteres** (para dentro de Bringhurst
+  e da 1.4.8, de onde a v3 estava fora); os 37 pares da catraca passam todos; `danger` mede
+  ≥ 4,65 em toda superfície escura (foi o par mais apertado da casa, 4,49 em R2).
+- **Estudo citado:** a polaridade positiva (Piepenbrock et al. 2013; Buchner & Baumgartner
+  2007) para a folha; Bringhurst e a WCAG 1.4.8 para a medida.
+- **Experiência jogada:** **falta** — o `jogo` não jogou o antes e o depois. Fica como
+  condição: com a folha no ar, uma sessão de 15 turnos no telefone, à noite, com o brilho do
+  ecrã a meio, para ver se a folha clara cansa. Se cansar, a saída é a tabela —
+  `pergaminho` desce um degrau (`#DCCBA8`, a prosa ainda a 10,33) —, não a direção.
+
+### 10 · O que fica por construir (é do maestro)
+
+1. Trocar o bloco `T` pelo mapa (§2), mais as cinco suítes de §8 e a suíte nova.
+2. `.tv-mesa` no chão da tela e `.tv-folha` + a moldura de couro na página (§6); a prosa
+   volta a Spectral **400** e lê `tintaDoPergaminho`; o cabeçalho da página e a fala do
+   jogador leem as tintas da folha; a runa da folha vira o fio de `brasaNoPergaminho`.
+3. A medida: a folha a **616 px** na mesa (504 de letra + 2 × 48 + 2 × 8 de couro), centrada
+   na madeira; no telefone, a largura toda menos 8.
+4. `FORMAS_DO_DADO`, `PAPEL_DO_DADO`, `BANDEJA` (`altura: { mesa: 64, telefone: 56 }, dado:
+   48, espaco: 8, teto: 5, raio: 12`) e `MOVIMENTO_DO_DADO` (§5) em `estilo.js`; o
+   `painel-bandeja.jsx` lê-as, e as formas provisórias saem.
+5. `PropostaDaFrase` com `tom: "comDado"` (§7).
+6. `Peça de recurso` na cinta e o `Selo da missão` na folha.
+7. A Cinzel no `@import` e nos quatro lugares de §3.
+8. `MATERIAIS` (a cortiça, o cartaz, o percevejo roxo) ainda são da noite fria — reaquecer
+   num passo seguinte, com o mesmo espelho de prova.
+
+### 11 · A proposta ambiciosa — o grupo de pé na mesa
+
+Na mesa sobram **296 px de madeira de cada lado** do livro. É ali que o grupo devia estar:
+**miniaturas de pé** (o retrato de `08 · Retratos` recortado sobre uma base redonda de
+latão), à esquerda do livro, com os corações do PV gravados na base e o dado de cada um
+pousado à frente dele quando rola. O jogador deixava de *ler* que o Gideon está a 14/55 —
+via a miniatura dele com a base quase vazia. É a diferença entre uma ficha e uma mesa, e
+é o que nenhum RPG de texto tem. No telefone as miniaturas viram a fila de fichas da cinta.
+Depende do `jogo` (quando a miniatura reage) e do motor (o PV por membro, que já existe).

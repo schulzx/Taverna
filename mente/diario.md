@@ -24,6 +24,21 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · a casca, 1.ª etapa · a paleta da vela (Mesa C)
+- **o desenho (agente `desenho`, ~250 mil tokens):** a página «Mesa C · 04/11» no Figma (`241:37`), com a tela a 1280 e a 375, o par antes/depois contra a v3, as peças (os sete dados, a bandeja, a proposta com dado, o recurso, o selo) e a coleção de variáveis `T · Mesa C (vela)`. A spec está em `formas.md` §«A mesa à luz de vela (C)».
+- **a escolha do pergaminho, por número:** pergaminho claro 12,15:1 (pior ponto 8,74) contra o couro 11,16:1. O couro contra a mesa dava 1,34:1, abaixo do piso de 3, e reprovou. Há estudo citado para a polaridade positiva (Piepenbrock 2013; Buchner & Baumgartner 2007). A linha passa de ~101 para 64 caracteres (Bringhurst; WCAG 1.4.8).
+- **feito (eu):**
+  - o bloco `T` trocado pelo mapa: madeira, brasa, musgo, azul frio e lacre, com os nomes de sempre e as tintas da folha novas;
+  - a Cinzel no `@import`, com a classe `.tv-titulo`;
+  - quatro suítes que prendiam bytes da v3 mudaram, com o motivo escrito (`teste-v1-folha` §6b e §8, `teste-v5a-cabecalho`, `teste-painel-fogueira`, `teste-genero-no-app`). Nenhuma falhou por contraste;
+  - a suíte nova `teste-mesa-c.mjs` (43/43): a folha no pior ponto, a mesa escura, os corpos e números dos dados, e a noite fria fora de `T`.
+- **o que fica (a ordem do §10 de formas):**
+  - a página vira folha de pergaminho (`.tv-mesa`, `.tv-folha`), com a prosa em Spectral 400 e na tinta;
+  - a bandeja na spec (`FORMAS_DO_DADO`, `PAPEL_DO_DADO`, `BANDEJA`, os estados com forma);
+  - a proposta com dado; as peças de recurso e o selo; a Cinzel nos quatro lugares;
+  - `MATERIAIS` e o horizonte ainda frios;
+  - **a experiência jogada falta:** uma sessão no telefone, à noite, para ver se a folha clara cansa.
+
 ## 04/11 · o dado e a casca · a bandeja e o Mestre que pede o dado
 - **a palavra (a ordem de 04/11, em CLAUDE.md):** «o que temos hoje ainda não é um jogo, apenas um sistema interativo… precisamos de uma forma de o sistema acionar o dado mais vezes… são diferentes dados jogados» — e depois: «o que vende é a impressão… precisamos de uma casca pro nosso rpg, confio em você».
 - **o diagnóstico, medido:** o dado só nascia quando a frase batia no catálogo (`DESAFIOS`, ~40 entradas). Desde a v9.64 o jogador não pede teste, e o Narrador ator também não pede. Nas sessões 14–17 o dado quase não aparece. O d100 do oráculo, o dado de vida, a busca e a marcha rolavam e só deixavam uma linha «🎲 …» no registo.

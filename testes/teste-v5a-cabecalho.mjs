@@ -53,11 +53,12 @@ sec("1. as medidas do 129:4, em tabela, e a soma que o nó mede");
   t("os três pontos cabem nos 40 px do imgFrame do nó", RUNA.passo * (RUNA.pontos.length - 1) + RUNA.ponto === 40 && RUNA.ponto === 8);
   t("o traço curto é 40 e o espaço entre as partes é 12", RUNA.fio === 40 && RUNA.espaco === 12);
   t("os pontos são âmbar · mundo · rosa, por NOME de T", RUNA.pontos.join() === "amber,mundo,rosa" && RUNA.pontos.every((n) => typeof T[n] === "string"));
-  t("e são as cores do nó (#FFB03A · #00BBF9 · #F15BB5)",
-    [T.amber, T.mundo, T.rosa].map((c) => c.toUpperCase()).join() === "#FFB03A,#00BBF9,#F15BB5");
-  t("o traço é âmbar a 0,2 — o rgba(255,176,58,0.2) do nó", alfa(T.amber, RUNA.alfaDoFio) === "rgba(255,176,58,0.2)");
-  t("o chão do cabeçalho é o poço (#0F0C18) e as etiquetas são T.amber e T.inkDim (#9B93AC)",
-    T.pagina.toUpperCase() === "#0F0C18" && T.inkDim.toUpperCase() === "#9B93AC");
+  /* MOVIDA em 04/11 (a Mesa C, a ordem da pessoa: «precisamos de uma casca pro nosso rpg»): a paleta da v3 saiu para a da vela, desenhada no Figma «Mesa C · 04/11» e medida em mente/formas.md §«A mesa à luz de vela (C)» §2. Os bytes mudam; a intenção fica: o nó que esta asserção prendia é a v3 (`126:5`), que a Mesa C substitui; o cabeçalho continua a ler os três acentos de T, que agora são a brasa, o azul frio e o lacre */
+  t("e são as cores da mesa (#F0A23B · #7DB9DC · #C9737E)",
+    [T.amber, T.mundo, T.rosa].map((c) => c.toUpperCase()).join() === "#F0A23B,#7DB9DC,#C9737E");
+  t("o traço é âmbar a 0,2 — o rgba(240,162,59,0.2) da vela", alfa(T.amber, RUNA.alfaDoFio) === "rgba(240,162,59,0.2)");
+  t("o chão do cabeçalho é o couro (#1A0F0B) e as etiquetas são T.amber e T.inkDim (#AE9A80)",
+    T.pagina.toUpperCase() === "#1A0F0B" && T.inkDim.toUpperCase() === "#AE9A80");
   /* O FLOREADO do 129:40: barras de 4 com 4 entre elas, pousadas pela base. */
   t("o floreado são quatro barras de 4 px de cada lado, com as alturas do nó",
     FLOREADO.barra === 4 && FLOREADO.espaco === 4

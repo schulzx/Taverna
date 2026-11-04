@@ -182,7 +182,8 @@ sec("5 · as tabelas da tela: a luz do mundo ao byte, a porta do contraste, o gl
      gradientes 160deg do ModalCena). A janela aposentou-se em T3 §5b; o tom serve a luz, e o que
      não pode mudar agora é a luz de quem não escolheu outro mundo. A string é a LUZ_AMBIENTE de
      6d84aa7 (git show 6d84aa7:src/estilo.js, montada), escrita à mão aqui. */
-  const LUZ_DE_ANTES = "linear-gradient(to right, rgba(255,176,58,0.063) 0%, rgba(0,187,249,0.09) 55%, rgba(241,91,181,0.072) 100%)";
+  /* MOVIDA em 04/11 (a Mesa C, a ordem da pessoa: «precisamos de uma casca pro nosso rpg»): a paleta da v3 saiu para a da vela, desenhada no Figma «Mesa C · 04/11» e medida em mente/formas.md §«A mesa à luz de vela (C)» §2. Os bytes mudam; a intenção fica: «a luz de antes» é a mesma fórmula (âmbar · azul · lacre), sobre os acentos novos */
+  const LUZ_DE_ANTES = "linear-gradient(to right, rgba(240,162,59,0.063) 0%, rgba(125,185,220,0.09) 55%, rgba(201,115,126,0.072) 100%)";
   t("sem tom, a luz é a de antes, ao byte", E.luzAmbiente() === LUZ_DE_ANTES, E.luzAmbiente());
   t("a Fantasia medieval (crepusculo) tem a luz de antes, ao byte", E.luzAmbiente("crepusculo") === LUZ_DE_ANTES && E.luzAmbiente(CN.tomDoGenero("Fantasia medieval")) === LUZ_DE_ANTES);
   t("o Universo próprio (noite, o recuo) tem a luz de antes, ao byte", E.luzAmbiente("noite") === LUZ_DE_ANTES && E.luzAmbiente(CN.tomDoGenero("Universo próprio")) === LUZ_DE_ANTES);

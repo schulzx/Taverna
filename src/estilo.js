@@ -142,47 +142,64 @@
    acima.)
    ============================================================ */
 export const T = {
-  /* A MESA — fria (h≈250). Recua: cabeçalho, trilho, HUD, bastidor. */
-  bg:         "#12101F",   /* V1: a mesa da v3 (L 0,60 = a régua do Material) */
-  panel:      "#1A162B",   /* V1: a cinta, o trilho, o compositor */
-  panelSoft:  "#241F3C",   /* V1: o erguido — pílula, aba ativa */
-  line:       "#352F54",   /* V1: divisória — decorativa (1,51 contra a mesa) */
-  lineStrong: "#7A719A",   /* fica — a borda de CONTROLO */
+  /* ============================================================
+     A MESA À LUZ DE VELA (C) — 04/11/2026, a ordem da pessoa: «o que temos
+     hoje ainda não é um jogo… precisamos de uma casca pro nosso rpg». A
+     noite fria da v3 (#12101F, o ciano, o rosa neon) sai; entra a madeira
+     quente, a brasa, o musgo, o azul frio e o lacre. Os nomes ficam — o
+     código inteiro os lê. Desenhado pelo `desenho` no Figma («Mesa C ·
+     04/11», a coleção `T · Mesa C (vela)`), com o contraste de cada par
+     em `mente/formas.md` §«A mesa à luz de vela (C)» §2. A v3 continua no
+     backup e no Figma (`126:5`), se a pessoa a quiser de volta.
+     ============================================================ */
+  /* A MESA — madeira escura e quente (h≈25). Recua: cinta, trilho, bastidor. */
+  bg:         "#1B130D",   /* a madeira — ink 14,96 · inkDim 6,75 */
+  panel:      "#251A12",   /* a cinta, o trilho, o campo — ink 13,87 · danger 5,35 */
+  panelSoft:  "#33251A",   /* o erguido — ink 12,07 · inkDim 5,45 · lineStrong 3,65 */
+  line:       "#4D3A29",   /* divisória decorativa — 1,70 contra a madeira */
+  lineStrong: "#96795A",   /* a borda de CONTROLO — 4,52 bg · 4,19 panel · 3,65 panelSoft */
 
-  /* A PÁGINA — quente (h≈30). É o que está aceso: só onde a prosa mora. */
-  pagina:     "#0F0C18",   /* V1: o POÇO da história — a página castanha morreu */
-  paginaAlta: "#241F3C",   /* V1: = panelSoft, de propósito (a suíte prende) */
-  /* `paginaFio` APOSENTOU-SE em V1b (25/09): fazia dois trabalhos — o fio
-     decorativo do cartão e a borda dos chips que são botões. Separados,
-     o primeiro é `line` e o segundo `lineStrong`, e ele ficou sem nenhum. */
+  /* O LIVRO — o couro da capa e o chão da bandeja */
+  pagina:     "#1A0F0B",   /* o couro — ink 15,60 · amber 8,89 · danger 5,91 */
+  paginaAlta: "#33251A",   /* = panelSoft, de propósito (a suíte prende) */
 
-  /* A TINTA */
-  ink:        "#EAE4D6",   /* V1: a prosa — o da v3 (13,59–14,15 no corpo) */
-  inkMeio:    "#C3B7A3",   /* fica — a segunda voz */
-  inkDim:     "#9B93AC",   /* V1: o rótulo da máquina — o da v3 */
+  /* A TINTA CLARA — a letra sobre madeira e couro */
+  ink:        "#F2E7D2",   /* 15,60 pagina · 13,87 panel */
+  inkMeio:    "#D2C0A4",   /* a segunda voz — e o OSSO do dado de uso */
+  inkDim:     "#AE9A80",   /* o rótulo — 5,45 panelSoft (o pior) */
 
-  /* OS TRÊS ACENTOS, cada um com UM trabalho */
-  amber:      "#FFB03A",   /* V1: a luz e o herói */
-  amberSoft:  "#FFD08A",   /* V1: o âmbar que se lê em letra */
-  onAccent:   "#1A1408",   /* fica — 10,04 sobre o âmbar novo */
-  violet:     "#AC79E9",   /* V1: a magia — o #9B5DE5 da v3 ERGUIDO no mesmo matiz */
-  violetSoft: "#C29DEF",   /* V1: a magia em letra (7,00 sobre o erguido) */
-  onSecond:   "#14101F",   /* fica — 5,93 sobre o violeta novo */
-  mundo:      "#00BBF9",   /* V1: o mundo — o ciano da v3 */
-  mundoSoft:  "#71DCFF",   /* V1: a voz do mundo */
-  onMundo:    "#03131C",   /* V1: tinta sobre o ciano (8,51) */
-  rosa:       "#F15BB5",   /* NOVO (V1) — a tua mão: o escolhido, marca, nunca chão de letra */
+  /* OS ACENTOS — a brasa, o arcano, o frio, o lacre; cada um com UM trabalho */
+  amber:      "#F0A23B",   /* a brasa: a decisão e o herói — 8,04 panel */
+  amberSoft:  "#F8CB85",   /* o âmbar em letra — 9,77 panelSoft */
+  onAccent:   "#1E1207",   /* sobre o âmbar 8,68 · danger 5,77 · ok 9,69 · osso 10,32 */
+  violet:     "#A89FE3",   /* a magia — lilás de vela, saturação caída: 6,15 panelSoft */
+  violetSoft: "#CBC5F2",   /* a magia em letra — 10,37 panel */
+  onSecond:   "#141022",   /* sobre o violeta 7,75 */
+  mundo:      "#7DB9DC",   /* o azul frio: a informação e o convite — 6,93 panelSoft */
+  mundoSoft:  "#B5DAEE",   /* a voz do mundo — 11,52 panel */
+  onMundo:    "#0A1620",   /* sobre o azul 8,57 */
+  rosa:       "#C9737E",   /* o lacre, a tua mão — marca, nunca chão de letra */
 
-  danger:     "#FF6B6B",   /* V1: o da v3 */
-  ok:         "#8FE0A2",   /* fica */
-  /* O CHÃO DE UM SELO DE ESTADO — o verde e o vermelho muito escuros
-     por baixo de `ok` e de `danger`. Estavam escritos à mão CINCO vezes no
-     mesmo bloco do HUD (as condições, os efeitos, a rolagem, a ação
-     perdida, o dano por turno) e em lado nenhum mais — cinco cópias de
-     dois números que ninguém podia mudar num sítio só. A primeira lei
-     desta casa vale para o visual: cor é número, logo é tabela. */
-  okFundo:             "#17301C",   /* era #1f3320 */
-  perigoFundo:         "#331A16",   /* era #33201f */
+  danger:     "#E86A4F",   /* o vermelho queimado — 4,65 panelSoft (o pior) */
+  ok:         "#A6C77E",   /* o verde musgo: o sucesso e a cura — 8,98 panel */
+  /* O CHÃO DE UM SELO DE ESTADO — o verde e o vermelho muito escuros por
+     baixo de `ok` e de `danger` (cor é número, logo é tabela). */
+  okFundo:             "#1F2A15",   /* ok sobre ele 7,92 */
+  perigoFundo:         "#3A1A12",   /* danger sobre ele 4,94 */
+
+  /* NOVO (Mesa C) · A FOLHA — o pergaminho onde a narração mora. Na folha
+     só há tinta: cartões, chips e ofertas ficam na paleta da mesa, pousados
+     por cima. Todas ≥ 4,5 mesmo no pior ponto da vinheta. */
+  pergaminho:            "#E9DCC0",   /* 13,50 contra a madeira */
+  pergaminhoBorda:       "#C7AE84",   /* a vinheta da borda — só gradiente, nunca chão de letra */
+  tintaDoPergaminho:     "#2A1C11",   /* a prosa — 12,15 · pior 8,74 */
+  tintaDoPergaminhoMeio: "#4F3B28",   /* a fala do jogador — 7,78 · pior 5,60 */
+  tintaDoPergaminhoDim:  "#5A4632",   /* o rótulo na folha — 6,56 · pior 4,72 */
+  brasaNoPergaminho:     "#7A3307",   /* o lugar, a capitular — 6,71 · pior 4,83 */
+  perigoNoPergaminho:    "#8A2414",   /* 6,60 · pior 4,75 */
+  musgoNoPergaminho:     "#33521C",   /* 6,54 · pior 4,71 */
+  azulNoPergaminho:      "#1F4872",   /* 6,94 · pior 4,99 */
+  lacreNoPergaminho:     "#7E2A3C",   /* a cera do selo */
 };
 
 /* O PRETO E O BRANCO DE SEMPRE. Sombra e brilho não são cor do tema:
@@ -1486,7 +1503,7 @@ export const FOGUEIRA = {
   lenha: T.panelSoft,
   lenhaFio: T.lineStrong,
   escolhido: T.rosa,
-  lugarAceso: misturar(T.panel, T.amber, 10),   /* = #31252D (11,56:1 com ink) */
+  lugarAceso: misturar(T.panel, T.amber, 10),   /* = #392816 na Mesa C (era #31252D na v3) */
   claraoCentro: 0.2,
   /* as paragens do gradiente radial do clarão: [onde, opacidade] (nó `197:34`) */
   claraoParadas: [[0, 1], [0.55, 0.35], [1, 0]],
@@ -1861,10 +1878,11 @@ export const MAPA_VIVO = {
    erro, nenhum aviso, e as três fontes do jogo simplesmente não chegam.
    ============================================================ */
 export const FONT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;600&family=Cinzel:wght@700&display=swap');
 .tv-display { font-family: 'Cormorant Garamond', Georgia, serif; }
 .tv-body { font-family: 'Spectral', Georgia, serif; }
 .tv-mono { font-family: 'JetBrains Mono', monospace; }
+.tv-titulo { font-family: 'Cinzel', 'Cormorant Garamond', Georgia, serif; font-weight: 700; letter-spacing: .02em; }
 `;
 
 /* ============================================================

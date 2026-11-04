@@ -41,7 +41,8 @@ sec("1. A tabela: o que é igual a T é T, e uma cor nova só");
   t("escolhido = T.rosa (a tua mão)", FOGUEIRA.escolhido === T.rosa);
   /* a receita do desenho (panel + 10 % de âmbar) feita conta: se o âmbar ou
      o panel mudarem, ESTA linha é a que avisa que o nó do Figma ficou para trás */
-  t("lugarAceso = #31252D (panel + 10 % de âmbar, a cor do nó)", FOGUEIRA.lugarAceso === "#31252D", FOGUEIRA.lugarAceso);
+  /* MOVIDA em 04/11 (a Mesa C, a ordem da pessoa: «precisamos de uma casca pro nosso rpg»): a paleta da v3 saiu para a da vela, desenhada no Figma «Mesa C · 04/11» e medida em mente/formas.md §«A mesa à luz de vela (C)» §2. Os bytes mudam; a intenção fica: a conta é a mesma (panel + 10 % de âmbar), refeita sobre a madeira */
+  t("lugarAceso = #392816 (panel + 10 % de âmbar)", FOGUEIRA.lugarAceso === "#392816", FOGUEIRA.lugarAceso);
   t("claraoCentro = 0,2 (o código guarda 0,2; a variável do Figma guarda 20)", FOGUEIRA.claraoCentro === 0.2);
   /* a Baixa era 56 (o nó 198:79) e desceu ao piso do alvo na 7.ª sessão de
      prova: com o cabeçalho de página de 69 do jogo (o Figma tinha 41) a roda

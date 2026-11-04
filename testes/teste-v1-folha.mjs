@@ -103,7 +103,8 @@ t("o ambiente só usa tokens de T", AMBIENTE.paradas.every((p) => typeof T[p.tok
 t("paginaAlta = panelSoft, e paginaFio aposentado (V1b)", T.paginaAlta === T.panelSoft && T.paginaFio === undefined);
 /* 6b. `alfa` é pública desde V1b e é a conta que se espera: a rosa a 0,15 do
        "Continuar aventura" sai daqui, e não de um rgba() escrito à mão. */
-t("alfa(T.rosa, 0.15) é a rosa a 0,15", alfa(T.rosa, 0.15) === "rgba(241,91,181,0.15)", alfa(T.rosa, 0.15));
+/* MOVIDA em 04/11 (a Mesa C, a ordem da pessoa: «precisamos de uma casca pro nosso rpg»): a paleta da v3 saiu para a da vela, desenhada no Figma «Mesa C · 04/11» e medida em mente/formas.md §«A mesa à luz de vela (C)» §2. Os bytes mudam; a intenção fica: alfa() escreve a cor de T com o alfa dado */
+t("alfa(T.rosa, 0.15) é a rosa a 0,15", alfa(T.rosa, 0.15) === "rgba(201,115,126,0.15)", alfa(T.rosa, 0.15));
 
 /* ============================================================
    7. ESBATIMENTO.alfaAA É A CONTA DE HOJE (±0,01) — o alfa em que
@@ -123,6 +124,7 @@ t(`ESBATIMENTO.alfaAA é a conta de hoje (${aAA.toFixed(3)} ≈ ${ESBATIMENTO.al
       certa não existir, ou a ordem das propriedades mudar, o gradiente
       nunca chega à tela e as seis contas acima ficam provando um
       número que ninguém vê. */
-t("a folha pinta o ambiente no corpo da história", /\.tv-esbate-topo \{\s*background-image: linear-gradient\(to right, rgba\(255,176,58,0\.063\) 0%/.test(FOLHA));
+/* MOVIDA em 04/11 (a Mesa C, a ordem da pessoa: «precisamos de uma casca pro nosso rpg»): a paleta da v3 saiu para a da vela, desenhada no Figma «Mesa C · 04/11» e medida em mente/formas.md §«A mesa à luz de vela (C)» §2. Os bytes mudam; a intenção fica: a folha pinta o ambiente, agora com o âmbar da vela */
+t("a folha pinta o ambiente no corpo da história", /\.tv-esbate-topo \{\s*background-image: linear-gradient\(to right, rgba\(240,162,59,0\.063\) 0%/.test(FOLHA));
 
 console.log(`\nv1-folha: ${ok} passaram, ${mal} falharam`); process.exit(mal ? 1 : 0);
