@@ -24,6 +24,31 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · a proposta da frase, 2.ª leva · atacar, usar, esperar, falar, pagar, vender
+- **a palavra:** «Pode seguir para a segunda leva».
+- **motor:**
+  - `a-espera-da-frase.js` (`aEsperaDaFrase`; suíte 27/27): «até às onze», «uma hora», «até anoitecer». Sem dizer quanto, dá as escolhas da tabela.
+  - `o-pagamento-da-frase.js` (`oPagamentoDaFrase`; 18/18): a quantia dita; o que se pede numa taverna, pelos `PRECOS_COMUNS` com o fator do porte; o quarto, pelo pouso da cidade.
+  - `a-proposta-da-frase.js` ganhou atacar, habilidade, quem não está aqui (`aPessoaChamada`, `oQueSeSabeDaPessoa`), esperar, pagar e vender (suíte 53/53).
+  - `ficha-de-ator.js` traduz o «PASSAR O TEMPO»: o relógio e a espera eram cortados da ficha, e o ator não sabia que as horas tinham corrido. Isto vale também para o botão do relógio, que já existia.
+- **fiação (com o bastão, devolvido no mesmo ciclo):**
+  - a leitura da agressão saiu de dentro da porta (`leituraDaAgressao`, `vereditoDoCrimeDe`), para a proposta e a porta lerem a mesma coisa;
+  - `passarTempo` aceita a frase e diz «2,9 h» na gramática da casa;
+  - o que a proposta paga ou vende corre dentro do turno, depois da foto do início (`ladoDaPropostaRef`).
+- **um defeito meu, achado no navegador e consertado antes de subir:** o pagamento corria antes da foto do turno, e um Mestre que calasse não devolvia a moeda.
+- **decisões médias:**
+  - (1) quem não está aqui e a espera só valem sozinhos; juntos de outro ato, o turno é desse ato;
+  - (2) a habilidade nomeada com outro verbo («Rezo a Cura Leve») vai pela porta da ficha como «Uso Cura Leve: …»;
+  - (3) os envelopes são os que já existem (o `envelopeDaCompra` e o `passarOTempo`), para a ficha do ator os saber dizer.
+- **prova viva (5199, sem IA):**
+  - Saíram certos «Fico à espera dele até às onze» (Esperar até as onze da manhã · 3 h), «Espero pelo Gareth» (1 h / 2 h / 4 h), «Pago uma caneca» (Pagar caneca · ◉ 2), «Falo com o Gareth» (Ir até a Espada do Enforcado · «Gareth não está aqui» · a missão), «Vendo a faca herdada» (Vender Faca herdada · ◉ +9) e «Uso Golpe Poderoso» (Usar · 2 PM · PM 8 → 6).
+  - «Ataco o primeiro que passar» não tem alvo e foi direto, como antes.
+  - O save de teste foi apagado com o jogo desmontado.
+- **o que ficou:**
+  - o cartão do ataque a um alvo nomeado não foi visto vivo (o mundo de teste não tinha ninguém atacável à vista); a leitura é a da porta, refatorada sem mudar o comportamento, e a suíte da agressão está verde;
+  - o par no Figma;
+  - uma sessão com IA.
+
 ## 04/11 · a proposta da frase · a ordem da pessoa: a frase que ia agir vira um cartão
 - **a ordem:** *"para toda ação que o sistema ainda tem dúvidas ou falhas, vamos fazer um botão… só aparecem informações que sei, e necessárias"*. A pessoa também apontou o defeito dos cartões da soleira da v9.594: diziam «Godfrey está lá, de folga», que a heroína não tem como saber. **A v9.594 não subiu**: a prova limpa dela saiu verde, mas os cartões saíram antes do push.
 - **inventário (um agente de leitura):** 23 portas leem a frase. As que falharam nas sessões 14–17 são o passo, o sono, a compra/pagar, o teste e a habilidade. Esperar, falar, vender e pagar sem balcão não têm porta.

@@ -1182,6 +1182,9 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^DÁDIVA/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^Dei a (.+?) (.+?); saíram da minha mochila\./u); return m ? `${c.H} deu a ${m[1]} ${m[2]}; saíram da mochila de ${c.H}.` : `${c.H} deu o que quis dar.`; }, resultado: "dar" },
   { tipo: /^CLIMA$/, vai: "cena", como: (t) => { const m = t.match(/agora está (.+?) — /u); return m ? `O tempo virou: agora está ${m[1]}.` : "O tempo virou."; } },
   { tipo: /^SONHO$/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^O sonho desta noite: "(.+?)"/u); return m ? `${c.H} sonhou esta noite: «${m[1]}».` : `${c.H} sonhou esta noite.`; } },
+  /* 04/11 (a proposta da frase): o tempo que passa pelo relógio ou pela frase de esperar era
+     cortado da ficha, e o ator não sabia que as horas tinham corrido */
+  { tipo: /^PASSAR O TEMPO/, vai: "aconteceu", como: (t, c) => { const h = Number((t.match(/passagem de ([0-9.]+) horas/u) || [])[1]); const x = !(h > 0) ? "o tempo" : h < 1 ? `${Math.round(h * 60)} minutos` : h === 1 ? "uma hora" : `${String(h).replace(".", ",")} horas`; return `${c.H} deixou passar ${x}; as horas correram aqui.`; } },
   { tipo: /^ONDE ACORDO$/, vai: "aconteceu", como: (t, c) => `${c.H} acorda onde dormiu, ainda na estrada.` },
   /* a abertura diz o que o herói traz e o que sabe (a 15.ª, defeito 5): o
      resto do envelope, as quatro partes e o tamanho, é ofício */

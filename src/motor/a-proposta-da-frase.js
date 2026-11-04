@@ -52,7 +52,8 @@
 import { garantirMissoes, etapaAtual, moradaDe } from "../missoes.js";
 import { garantirAbertura } from "../abertura.js";
 import { aPeEmTexto } from "../coordenadas.js";
-import { oSitioDoRegisto } from "./a-pessoa-do-passo.js";
+import { oSitioDoRegisto, aHoraDita } from "./a-pessoa-do-passo.js";
+import { contrair } from "../lugar.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -72,9 +73,17 @@ const minutosDe = (x) => (Number.isFinite(Number(x)) && Number(x) > 0 ? Math.rou
 export const A_PROPOSTA_DA_FRASE = Object.freeze({
   /* a ordem em que a proposta se titula: o movimento manda (é o que muda a
      cena), depois o sono, depois a moeda; os outros efeitos vão nas linhas */
-  ordem: Object.freeze(["masmorra", "seguir", "viagem", "passo", "sono", "compra"]),
+  /* a 2.ª leva (04/11): a luta e a habilidade vêm à frente (são o ato
+     inteiro da frase); quem não está aqui e a espera só valem sozinhos */
+  ordem: Object.freeze(["agressao", "habilidade", "masmorra", "seguir", "viagem", "passo", "ausente", "espera", "sono", "pagar", "compra", "venda"]),
   /* o glifo de cada um (ui.jsx; a forma é a da casa) */
-  glifo: Object.freeze({ passo: "alfinete", viagem: "mapa", seguir: "mapa", masmorra: "mapa", sono: "ampulheta", compra: "bolsa" }),
+  glifo: Object.freeze({ agressao: "espada", habilidade: "faiscas", passo: "alfinete", ausente: "alfinete", viagem: "mapa", seguir: "mapa", masmorra: "mapa", espera: "ampulheta", sono: "ampulheta", pagar: "bolsa", compra: "bolsa", venda: "bolsa" }),
+  /* o que o botão faz, no App: «turno» é a frase pelo turno de sempre; os
+     outros têm executor próprio (o veredito do crime já visto, a habilidade
+     pela porta da ficha, o relógio, o «ir» da planta) */
+  faz: Object.freeze({ agressao: "atacar", habilidade: "habilidade", ausente: "ir", espera: "esperar" }),
+  /* a luta é sem volta: a cor do perigo, não a do convite */
+  semVolta: Object.freeze(["agressao"]),
   verbo: Object.freeze({
     /* «até» não pede o artigo que o nome não traz («Catedral da Cinza») */
     passo: "Ir até {L}",
@@ -84,9 +93,19 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     masmorraSemNome: "Entrar",
     sono: Object.freeze({ longo: "Dormir", curto: "Descansar um pouco" }),
     compra: "Comprar {I}",
+    agressao: "Atacar {N}",
+    habilidade: "Usar {N}",
+    ausente: "Ir até {L}",
+    ausenteSemSitio: "{N} não está aqui",
+    espera: "Esperar",
+    esperaAte: "Esperar até {H}",
+    pagar: "Pagar {I}",
+    pagarQuantia: "Pagar ◉ {T}",
+    venda: "Vender {I}",
   }),
   /* o botão que confirma — curto, o verbo de mesa */
-  confirmar: Object.freeze({ passo: "Ir", viagem: "Partir", seguir: "Seguir", masmorra: "Ir", sono: Object.freeze({ longo: "Dormir", curto: "Descansar" }), compra: "Comprar" }),
+  confirmar: Object.freeze({ passo: "Ir", viagem: "Partir", seguir: "Seguir", masmorra: "Ir", sono: Object.freeze({ longo: "Dormir", curto: "Descansar" }), compra: "Comprar",
+    agressao: "Atacar", habilidade: "Usar", ausente: "Ir", ausenteSemSitio: "Dizer na mesma", espera: "Esperar", pagar: "Pagar", venda: "Vender" }),
   linhas: Object.freeze({
     /* {M} é a gramática do «▸ ir» (aPeEmTexto, coordenadas.js): «5 min a pé» */
     dentro: "dentro dos muros, a {M}",
@@ -97,7 +116,24 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     compraTotal: "◉ {T} · a bolsa fica com ◉ {B}",
     /* um efeito que vem junto, dito depois do título */
     junto: "e {I}",
+    abreALuta: "abre a luta",
+    pm: "PM {A} → {B}",
+    semPM: "falta PM: tem {A}, custa {B}",
+    ausente: "{N} não está aqui",
+    pagarTotal: "a bolsa fica com ◉ {B}",
+    pagarNaoChega: "a bolsa só tem ◉ {B}",
+    /* {N} já com a preposição contraída: «à Vela Silenciosa», «a Joric» */
+    venda: "{N}: a bolsa fica com ◉ {B}",
   }),
+  /* O QUE SE SABE DE ONDE ANDA UMA PESSOA — o mesmo critério do sítio */
+  sabeDaPessoa: Object.freeze({
+    /* {L} já com a preposição: «no Descanso do Carroceiro», «em Catedral da Cinza» */
+    procurar: "«{T}»: procurar {N} {L}",
+    trabalha: "{N} trabalha {L}",
+    viu: "você conheceu {N} {L}",
+  }),
+  /* os verbos de ter com alguém (o «procuro» é da porta da procura) */
+  chama: /\b(falo|falar|converso|conversar|pergunto|perguntar|chamo|chamar|digo|dizer|peco|pedir|aproximo-me|cumprimento|saudo|vou ter com|interpelo)\b/,
   /* O QUE SE SABE DO SÍTIO — só o que o herói ouviu ou viu */
   sabe: Object.freeze({
     trabalha: "{N}{P} trabalha aqui",
@@ -161,6 +197,66 @@ export function oQueSeSabeDoSitio(estado, sitio) {
   return out;
 }
 
+/* «em» + o nome, contraído («no Descanso», «na Catedral»); sem artigo, «em» */
+const emLugar = (nome) => contrair(`em ${artigoMinusculo(nome)}`);
+
+/* ONDE O HERÓI SABE QUE A PESSOA ANDA: a missão que a manda procurar num
+   sítio, a abertura que disse onde trabalha, o registo de onde a conheceu.
+     → [{ linha, lugar, cidade }] */
+export function oQueSeSabeDaPessoa(estado, nome) {
+  const e = ehObj(estado) ? estado : {};
+  const N = limpo(nome);
+  if (!N) return [];
+  const S = A_PROPOSTA_DA_FRASE.sabeDaPessoa;
+  const out = [];
+  const poe = (modelo, v, onde, cidadeDaFonte) => {
+    const md = moradaDe(onde);
+    if (!limpo(md.lugar)) return;
+    const linha = tpl(modelo, { ...v, N, L: emLugar(md.lugar) });
+    out.push({ linha, lugar: limpo(md.lugar), cidade: limpo(md.cidade) || limpo(cidadeDaFonte) });
+  };
+  let a = null;
+  try { a = garantirAbertura(e.abertura); } catch { a = null; }
+  const daAbertura = !!(a && !a.legado);
+  let ms = [];
+  try { ms = garantirMissoes(e.missoes).filter((m) => ehObj(m) && m.status === "ativa"); } catch { ms = []; }
+  for (const m of ms) {
+    const et = etapaAtual(m);
+    if (ehObj(et) && et.tipo === "falar_com" && mesmaPessoa(et.alvo, N) && limpo(et.onde)) poe(S.procurar, { T: limpo(m.titulo) }, et.onde, daAbertura && m.id === a.principalId ? a.cidade : "");
+  }
+  if (!out.length && daAbertura && ehObj(a.pista) && mesmaPessoa(a.pista.nome, N) && limpo(a.pista.local)) poe(S.trabalha, {}, a.pista.local, a.cidade);
+  if (!out.length) {
+    const npcs = ehObj(e.npcs) ? e.npcs : {};
+    const k = Object.keys(npcs).find((x) => mesmaPessoa(x, N) || (ehObj(npcs[x]) && mesmaPessoa(npcs[x].nome, N)));
+    const r = k ? npcs[k] : null;
+    if (ehObj(r) && !r.morto && limpo(r.local)) poe(S.viu, {}, oSitioDoRegisto(r.local, e), "");
+  }
+  return out;
+}
+
+/* QUEM A FRASE CHAMA: um nome que o herói conhece, depois de um verbo de ter
+   com alguém. `conhecidos`: os nomes; `presentes`: quem está à vista. Só
+   devolve quem NÃO está — quem está, a conversa segue sem cartão.
+     → { nome } | null */
+export function aPessoaChamada(frase, ctx) {
+  const c = ehObj(ctx) ? ctx : {};
+  const t = sem(frase);
+  const P = A_PROPOSTA_DA_FRASE;
+  const mv = t.match(P.chama);
+  if (!t || t.startsWith("[") || !mv) return null;
+  const depois = t.slice(mv.index);
+  const presentes = arr(c.presentes).map(limpo).filter(Boolean);
+  let achado = null;
+  for (const n of arr(c.conhecidos).map(limpo).filter(Boolean)) {
+    const inteiro = sem(n), primeiro = inteiro.split(/[\s,]+/)[0];
+    const casa = depois.includes(inteiro) ? inteiro.length : primeiro.length >= 4 && new RegExp(`\\b${primeiro}\\b`).test(depois) ? primeiro.length : 0;
+    if (casa && (!achado || casa > achado.casa)) achado = { nome: n, casa };
+  }
+  if (!achado) return null;
+  if (presentes.some((p) => mesmaPessoa(p, achado.nome) || sem(p).split(/[\s,]+/)[0] === sem(achado.nome).split(/[\s,]+/)[0])) return null;
+  return { nome: achado.nome };
+}
+
 /* os efeitos da leitura, cada um com o verbo, o botão, o preço e as linhas */
 function osEfeitos(l, e) {
   const P = A_PROPOSTA_DA_FRASE;
@@ -200,6 +296,55 @@ function osEfeitos(l, e) {
     const bolsa = Number(compras[0].bolsa) || 0;
     ef.compra = { verbo: tpl(V.compra, { I: itens.join(", ") }), confirmar: C.compra, preco: `◉ ${total}`, minutos: null, linhas: [tpl(LN.compraTotal, { T: total, B: bolsa - total })] };
   }
+  /* A 2.ª LEVA (04/11) */
+  if (ehObj(l.agressao) && limpo(l.agressao.nome)) {
+    const veredito = limpo(l.agressao.veredito);
+    ef.agressao = { verbo: tpl(V.agressao, { N: limpo(l.agressao.nome) }), confirmar: C.agressao, preco: "", minutos: null, linhas: [veredito || LN.abreALuta] };
+  }
+  if (ehObj(l.habilidade) && limpo(l.habilidade.nome)) {
+    const h = l.habilidade;
+    const custo = Number(h.custo) || 0, pm = Number(h.pm) || 0;
+    const linhas = [];
+    if (limpo(h.falta)) linhas.push(limpo(h.falta));
+    else if (custo > 0) linhas.push(tpl(LN.pm, { A: pm, B: pm - custo }));
+    if (limpo(h.efeito)) linhas.push(limpo(h.efeito));
+    ef.habilidade = { verbo: tpl(V.habilidade, { N: limpo(h.nome) }), confirmar: C.habilidade, preco: custo > 0 ? `${custo} PM` : "", minutos: null, linhas, impedido: limpo(h.falta) };
+  }
+  if (ehObj(l.ausente) && limpo(l.ausente.nome)) {
+    const N = limpo(l.ausente.nome);
+    let sabe = [];
+    try { sabe = oQueSeSabeDaPessoa(e, N); } catch { sabe = []; }
+    const aqui = limpo(e.cidadeAtual);
+    const sitios = arr(l.ausente.sitios).filter((x) => ehObj(x) && limpo(x.nome));
+    const daqui = sabe.find((x) => (!x.cidade || !aqui || mesmoNome(x.cidade, aqui)) && sitios.some((q) => mesmoNome(q.nome, x.lugar)));
+    const alvo = daqui ? sitios.find((q) => mesmoNome(q.nome, daqui.lugar)) : null;
+    ef.ausente = alvo
+      ? { verbo: tpl(V.ausente, { L: artigoMinusculo(alvo.nome) }), confirmar: C.ausente, preco: "", minutos: minutosDe(alvo.minutos), linhas: [tpl(LN.ausente, { N }), ...sabe.map((x) => x.linha)], alvo }
+      : { verbo: tpl(V.ausenteSemSitio, { N }), confirmar: C.ausenteSemSitio, preco: "", minutos: null, linhas: sabe.map((x) => x.linha), semSitio: true };
+  }
+  if (ehObj(l.espera) && (Number(l.espera.minutos) > 0 || arr(l.espera.opcoes).length)) {
+    const min = minutosDe(l.espera.minutos);
+    const ate = Number.isFinite(Number(l.espera.ate)) && l.espera.ate !== null && l.espera.ate !== undefined ? Number(l.espera.ate) : null;
+    ef.espera = { verbo: ate !== null ? tpl(V.esperaAte, { H: aHoraDita(ate) }) : V.espera, confirmar: C.espera, preco: "", minutos: min, linhas: [],
+      opcoes: min ? null : arr(l.espera.opcoes).map(minutosDe).filter(Boolean) };
+  }
+  if (ehObj(l.pagar) && Number(l.pagar.total) > 0) {
+    const total = Number(l.pagar.total), bolsa = Number(l.pagar.bolsa) || 0;
+    const nomes = arr(l.pagar.itens).map((x) => (ehObj(x) && limpo(x.nome) ? `${Number(x.quantos) > 1 ? `${x.quantos} × ` : ""}${limpo(x.nome)}` : "")).filter(Boolean);
+    const chega = total <= bolsa;
+    ef.pagar = { verbo: nomes.length ? tpl(V.pagar, { I: nomes.join(", ") }) : tpl(V.pagarQuantia, { T: total }), confirmar: C.pagar, preco: `◉ ${total}`, minutos: null,
+      linhas: [chega ? tpl(LN.pagarTotal, { B: bolsa - total }) : tpl(LN.pagarNaoChega, { B: bolsa })], impedido: chega ? "" : tpl(LN.pagarNaoChega, { B: bolsa }) };
+  }
+  if (ehObj(l.venda) && limpo(l.venda.item)) {
+    const v = l.venda;
+    const valor = Number(v.valor) || 0, bolsa = Number(v.bolsa) || 0;
+    /* `rotulo`: o nome como se diz (sem o aposto); `item`, o da bolsa, é o do executor */
+    ef.venda = { verbo: tpl(V.venda, { I: limpo(v.rotulo) || limpo(v.item) }), confirmar: C.venda, preco: valor > 0 ? `◉ +${valor}` : "", minutos: null,
+      linhas: limpo(v.motivo) ? [limpo(v.motivo)] : [tpl(LN.venda, { N: contrair(`a ${artigoMinusculo(v.quem)}`), B: bolsa + valor })], impedido: limpo(v.motivo) };
+  }
+  /* quem não está aqui e a espera só valem sozinhos: juntos de outro ato,
+     o turno é desse ato (e a frase vai inteira ao Narrador) */
+  for (const so of ["ausente", "espera"]) if (ef[so] && Object.keys(ef).some((k) => k !== so)) delete ef[so];
   /* a estrada e o passo não andam juntos: quem parte não passeia antes */
   if (ef.masmorra || ef.seguir || ef.viagem) delete ef.passo;
   if (ef.masmorra) { delete ef.seguir; delete ef.viagem; }
@@ -220,10 +365,22 @@ export function aPropostaDaFrase(leitura, estado) {
   if (!tipos.length) return null;
   const [t0, ...resto] = tipos;
   const cabeca = ef[t0];
-  const junto = resto.map((k) => tpl(P.linhas.junto, { I: ef[k].verbo.charAt(0).toLowerCase() + ef[k].verbo.slice(1) + (ef[k].preco ? ` (${ef[k].preco})` : ef[k].minutos ? ` (${aPeEmTexto(ef[k].minutos)})` : "") }));
+  const juntos = resto.filter((k) => !ef[k].linhaPropria);
+  const junto = juntos.map((k) => tpl(P.linhas.junto, { I: ef[k].verbo.charAt(0).toLowerCase() + ef[k].verbo.slice(1) + (ef[k].preco ? ` (${ef[k].preco})` : ef[k].minutos ? ` (${aPeEmTexto(ef[k].minutos)})` : "") }));
   const linhas = [...cabeca.linhas, ...junto].filter(Boolean).slice(0, P.tetoDeLinhas);
+  /* o que impede: o primeiro efeito que não pode (a bolsa, o PM) */
+  const imp = tipos.map((k) => ef[k].impedido).find((x) => limpo(x)) || "";
+  /* o que o App precisa para executar: o que a leitura trouxe de cada efeito */
+  const dados = {};
+  for (const k of tipos) if (["agressao", "habilidade", "pagar", "venda", "espera"].includes(k)) dados[k] = l[k];
+  if (ef.ausente && ef.ausente.alvo) dados.ausente = { nome: limpo(l.ausente.nome), alvo: ef.ausente.alvo };
   return {
     id: aChave(frase), frase, tipo: t0, glifo: P.glifo[t0],
     verbo: cabeca.verbo, confirmar: cabeca.confirmar, preco: cabeca.preco, minutos: cabeca.minutos, linhas, efeitos: tipos,
+    faz: ef.ausente && ef.ausente.semSitio ? "turno" : P.faz[t0] || "turno",
+    tom: P.semVolta.includes(t0) ? "semVolta" : "convite",
+    opcoes: cabeca.opcoes || null,
+    impedido: imp,
+    dados,
   };
 }

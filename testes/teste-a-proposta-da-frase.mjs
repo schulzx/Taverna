@@ -15,8 +15,12 @@
    §4 cada efeito: o passo, a estrada, o seguir, a masmorra, o sono, a compra;
    §5 dois efeitos: o título é do movimento e o outro vai «e …»; a estrada
       cala o passo; a compra que não fecha não propõe;
-   §6 a mesma leitura dá o mesmo; o teto das linhas. */
-import { aPropostaDaFrase, oQueSeSabeDoSitio, A_PROPOSTA_DA_FRASE } from "../src/motor/a-proposta-da-frase.js";
+   §6 a mesma leitura dá o mesmo; o teto das linhas.
+   A 2.ª leva: §7 atacar (o veredito do crime no cartão), §8 a habilidade
+   (o PM; a falta impede), §9 quem não está aqui (só com o verbo de ter com
+   alguém; o «ir» só para o sítio desta cidade), §10 esperar, §11 pagar (o
+   quarto e a noite), §12 vender. */
+import { aPropostaDaFrase, oQueSeSabeDoSitio, oQueSeSabeDaPessoa, aPessoaChamada, A_PROPOSTA_DA_FRASE } from "../src/motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "../src/motor/a-pessoa-do-passo.js";
 import { verificarAFicha } from "../src/motor/ficha-de-ator.js";
 import { garantirAbertura } from "../src/abertura.js";
@@ -120,6 +124,54 @@ t("a mesma leitura dá o mesmo", J(aPropostaDaFrase(L1, BASE)) === J(aPropostaDa
 const MUITAS = { ...BASE, npcs: Object.fromEntries(["Ana", "Bruno", "Carla", "Duarte", "Eva"].map((n) => [n, { nome: n, local: "O Descanso do Carroceiro, Torre Alto", conhecidoEm: 1 }])) };
 const cheio = aPropostaDaFrase(L1, MUITAS);
 t(`com muito que dizer, ficam ${P.tetoDeLinhas} linhas, e a distância é a primeira`, cheio.linhas.length === P.tetoDeLinhas && cheio.linhas[0].startsWith("dentro dos muros"), J(cheio.linhas));
+
+/* ---------------- A 2.ª LEVA (04/11) ---------------- */
+sec("§7 atacar");
+const pA = aPropostaDaFrase({ frase: "Ataco o guarda da porta", agressao: { nome: "o guarda", veredito: "Atacar um guarda à vista: a guarda da cidade responde." } }, BASE);
+t("«Atacar o guarda», «Atacar», a cor do perigo, e o veredito do crime nas linhas", !!pA && pA.verbo === "Atacar o guarda" && pA.confirmar === "Atacar" && pA.tom === "semVolta" && pA.faz === "atacar" && pA.linhas[0].startsWith("Atacar um guarda"), J(pA));
+const pA2 = aPropostaDaFrase({ frase: "Ataco o bandido", agressao: { nome: "o bandido", veredito: null } }, BASE);
+t("sem crime: «abre a luta»", !!pA2 && pA2.linhas[0] === P.linhas.abreALuta);
+t("a luta manda no título, mesmo com um sítio na frase", (aPropostaDaFrase({ frase: "Vou ao Descanso e ataco o Godfrey", agressao: { nome: "Godfrey Pescador" }, passo: DESC }, BASE) || {}).tipo === "agressao");
+
+sec("§8 a habilidade");
+const pH = aPropostaDaFrase({ frase: "Rezo a Cura Leve sobre a Yvete", habilidade: { nome: "Cura Leve", custo: 2, pm: 8, efeito: "cura 1d8+2 PV" } }, BASE);
+t("14.ª T25 «Rezo a Cura Leve» → «Usar Cura Leve · 2 PM», «PM 8 → 6»", !!pH && pH.verbo === "Usar Cura Leve" && pH.preco === "2 PM" && pH.linhas[0] === "PM 8 → 6" && pH.faz === "habilidade" && !pH.impedido, J(pH));
+const pH2 = aPropostaDaFrase({ frase: "Rezo a Cura Leve", habilidade: { nome: "Cura Leve", custo: 2, pm: 1, falta: "falta PM: tem 1, custa 2" } }, BASE);
+t("sem PM: o cartão diz a falta e o botão fica impedido", !!pH2 && pH2.impedido === "falta PM: tem 1, custa 2" && pH2.linhas[0] === "falta PM: tem 1, custa 2");
+
+sec("§9 quem não está aqui");
+const conhecidos = ["Godfrey Pescador", "Theron do Brejo", "Kendra Cabelo Ruivo"];
+t("«Falo com o Godfrey…» com o Godfrey fora de vista → Godfrey Pescador", J(aPessoaChamada("Falo com o Godfrey sobre a carta", { conhecidos, presentes: ["Gareth"] })) === J({ nome: "Godfrey Pescador" }));
+t("…e com ele à vista, nada (a conversa segue sem cartão)", aPessoaChamada("Falo com o Godfrey sobre a carta", { conhecidos, presentes: ["Godfrey Pescador"] }) === null);
+t("sem verbo de ter com alguém, nada («o Godfrey é estranho»)", aPessoaChamada("O Godfrey é estranho", { conhecidos, presentes: [] }) === null);
+t("o nome mais longo ganha («Theron do Brejo» e não outro que comece igual)", (aPessoaChamada("Pergunto ao Theron do Brejo pelo sino", { conhecidos: ["Theron", "Theron do Brejo"], presentes: [] }) || {}).nome === "Theron do Brejo");
+const pF = aPropostaDaFrase({ frase: "Falo com o Godfrey", ausente: { nome: "Godfrey Pescador", sitios: [{ ...DESC }] } }, BASE);
+t("o cartão: «Ir até o Descanso do Carroceiro», «Godfrey Pescador não está aqui», e porquê lá (a missão)", !!pF && pF.verbo === "Ir até o Descanso do Carroceiro" && pF.faz === "ir" && pF.linhas[0] === "Godfrey Pescador não está aqui" && pF.linhas[1] === "«O Sino de Cinza»: procurar Godfrey Pescador no Descanso do Carroceiro" && pF.dados.ausente.alvo.nome === DESC.nome, J(pF));
+const pF2 = aPropostaDaFrase({ frase: "Falo com Theron do Brejo", ausente: { nome: "Theron do Brejo", sitios: [{ ...CAT }] } }, { ...BASE, missoes: DADO });
+t("o Theron é de Vale Verde: em Torre Alto não há «ir» (a catedral daqui não é a dele) — «Theron do Brejo não está aqui», «Dizer na mesma»", !!pF2 && pF2.verbo === "Theron do Brejo não está aqui" && pF2.faz === "turno" && pF2.confirmar === P.confirmar.ausenteSemSitio && /em Catedral da Cinza|na Catedral da Cinza/.test(pF2.linhas[0] || ""), J(pF2));
+t("o que se sabe da pessoa sem nada: nada", oQueSeSabeDaPessoa(BASE, "Ninguém").length === 0 && oQueSeSabeDaPessoa(null, null).length === 0);
+t("quem não está aqui não propõe junto de outro ato (o turno é desse ato)", (aPropostaDaFrase({ frase: "Vou ao bazar falar com o Godfrey", passo: BAZ, ausente: { nome: "Godfrey Pescador", sitios: [DESC] } }, BASE) || {}).tipo === "passo");
+
+sec("§10 esperar");
+const pE = aPropostaDaFrase({ frase: "Fico à espera dele até às onze", espera: { minutos: 80, ate: 660 } }, BASE);
+t("«Esperar até as onze da manhã», 80 min, pelo relógio", !!pE && pE.verbo === "Esperar até as onze da manhã" && pE.minutos === 80 && pE.faz === "esperar", J(pE));
+const pE2 = aPropostaDaFrase({ frase: "Espero por ela", espera: { opcoes: [60, 120, 240] } }, BASE);
+t("sem dizer quanto: «Esperar» com as escolhas", !!pE2 && pE2.verbo === "Esperar" && J(pE2.opcoes) === J([60, 120, 240]));
+
+sec("§11 pagar");
+const pG = aPropostaDaFrase({ frase: "Pago a sopa", pagar: { itens: [{ nome: "prato quente", quantos: 1, preco: 2 }], total: 2, bolsa: 15 } }, BASE);
+t("«Pagar prato quente · ◉ 2», «a bolsa fica com ◉ 13»", !!pG && pG.verbo === "Pagar prato quente" && pG.preco === NB("◉ 2") && pG.linhas[0] === NB("a bolsa fica com ◉ 13") && !pG.impedido, J(pG));
+const pG2 = aPropostaDaFrase({ frase: "Pago 3 moedas", pagar: { itens: [{ nome: "", quantos: 1, preco: 3 }], total: 3, bolsa: 1, dito: true } }, BASE);
+t("a quantia sem nome: «Pagar ◉ 3»; a bolsa não chega: impedido", !!pG2 && pG2.verbo === NB("Pagar ◉ 3") && pG2.impedido === NB("a bolsa só tem ◉ 1"), J(pG2));
+const pG3 = aPropostaDaFrase({ frase: "Pago um quarto e durmo", sono: { tipo: "longo", preco: "uma noite", retorno: "PV e PM cheios" }, pagar: { itens: [{ nome: "quarto comum", quantos: 1, preco: 4 }], total: 4, bolsa: 15 } }, BASE);
+t("14.ª T9 «Pago um quarto e durmo»: «Dormir» e «e pagar quarto comum (◉ 4)» — o quarto é pago e a noite dormida", !!pG3 && pG3.tipo === "sono" && pG3.linhas.includes(NB("e pagar quarto comum (◉ 4)")) && !!pG3.dados.pagar, J(pG3));
+
+sec("§12 vender");
+const pV2 = aPropostaDaFrase({ frase: "Vendo a adaga ao ferreiro", venda: { item: "Adaga", valor: 6, quem: "Joric, o ferreiro", bolsa: 15, origem: "inventario" } }, BASE);
+t("«Vender Adaga · ◉ +6», «a Joric, o ferreiro: a bolsa fica com ◉ 21»", !!pV2 && pV2.verbo === "Vender Adaga" && pV2.preco === NB("◉ +6") && pV2.linhas[0] === NB("a Joric, o ferreiro: a bolsa fica com ◉ 21") && !!pV2.dados.venda, J(pV2));
+const pV3 = aPropostaDaFrase({ frase: "Vendo a adaga", venda: { item: "Adaga", motivo: "ninguém aqui compra armas" } }, BASE);
+t("sem quem compre: o motivo, e impedido", !!pV3 && pV3.impedido === "ninguém aqui compra armas");
+t("o glifo de cada efeito novo está na tabela", ["agressao", "habilidade", "ausente", "espera", "pagar", "venda"].every((k) => P.glifo[k] && P.verbo[k] && P.confirmar[k]));
 
 console.log(`\na proposta da frase: ${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

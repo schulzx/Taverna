@@ -12831,3 +12831,30 @@ indo. (Os cartões da soleira da v9.594 diziam-no, e saíram antes de subir.)
 **Por passar:** o par no Figma (página `10 · Fichas`, ao lado do cartão da ficha, que é
 a forma-irmã) — a peça nasceu com os tokens e as primitivas da casa, e o Figma fica em
 dívida, escrita aqui, para o `desenho`.
+
+
+### A proposta da frase — a 2.ª leva (04/11/2026, «Pode seguir para a segunda leva»)
+
+Seis efeitos novos, a mesma peça (`PropostaDaFrase`), três variantes de forma:
+
+- **A luta (`tom: semVolta`):** o contorno, o glifo (a espada) e o preço em `T.danger` — a
+  cor do perigo da `Oferta` semVolta. A linha é o **veredito do crime** (o mesmo texto que o
+  cartão do crime mostrava), ou «abre a luta». Confirmar dá a luta **sem o segundo cartão**: o
+  veredito já foi visto (`crimeVistoNaPropostaRef`). Uma pergunta, não duas.
+- **As escolhas (esperar sem dizer quanto):** «Reescrever» e um botão por escolha (`1 h`,
+  `2 h`, `4 h` — `A_ESPERA_DA_FRASE.opcoes`), na mesma fila, `flex-wrap`.
+- **O impedido (a bolsa, o PM):** o botão fica calado e a razão é a primeira linha («a bolsa
+  só tem ◉ 1», «falta PM: tem 1, custa 2»). O jogador vê porquê antes de tocar.
+
+Os outros três são a forma de sempre: **usar** uma habilidade («Usar Golpe Poderoso · 2 PM»,
+«PM 8 → 6», o efeito em meia linha), **pagar** («Pagar caneca · ◉ 2», «a bolsa fica com ◉ 13»),
+**vender** («Vender Faca herdada · ◉ +9», «à Vela Silenciosa: a bolsa fica com ◉ 24»), e
+**quem não está aqui** («Ir até a Espada do Enforcado», «Gareth não está aqui», e o porquê de
+lá: a missão, a abertura, ou onde o herói o conheceu). Sem sítio nesta cidade, o verbo é a
+própria falta («Theron do Brejo não está aqui») e o botão é «Dizer na mesma».
+
+**Medido no navegador (5199, 04/11):** os sete casos deram cartão com a frase do jogador e
+nenhum ato antes do toque; «Pagar · ◉ 2» tirou 2 da bolsa e mandou o recibo ao Mestre;
+«Esperar · 3 h» levou o relógio das 8h05 às 11h.
+
+**Por passar:** o par no Figma das três variantes (a dívida da 1.ª leva cresce, escrita aqui).
