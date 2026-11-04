@@ -134,6 +134,15 @@ function chaveDaRecusa(motivo, { atual, proposta, dador }) {
      sem pontuação à direita) — é `A Consequência`, não esta função, quem
      cerca `contra` com «» e o tinge de `T.inkMeio`; ver a nota em `TEXTOS`.
    - saida  — `null`, ou `{ rotulo, vai:"diario" }`. */
+/* A ETAPA DE QUEM ASSINOU: procurá-lo no sítio dele, quando o cartaz o
+   diz (`dadorLocal`); sem ele, como sempre foi. A mesma peça para o ensaio
+   seco e para o aceite de verdade (`aceitarContrato`, App.jsx). */
+export function etapaDoDador(cartaz) {
+  const c = cartaz && typeof cartaz === "object" ? cartaz : {};
+  const onde = String(c.dadorLocal || "").trim();
+  return { tipo: "falar_com", alvo: c.dador, ...(onde ? { onde } : {}) };
+}
+
 export function vereditoDoCartaz(cartaz, missoes, { nivel = 1, dia = 0, mundo = null } = {}) {
   if (!cartaz) return { pode: false, chave: "", texto: "", contra: "", saida: null };
 
@@ -148,9 +157,14 @@ export function vereditoDoCartaz(cartaz, missoes, { nivel = 1, dia = 0, mundo = 
      sem a busca por quem assinou inflando o XP — ver o comentário lá. Aqui
      o resultado nunca é lido (`vereditoDoCartaz` só quer `ok`/`motivo`),
      mas as duas chamadas continuam byte a byte a mesma conta. */
+  /* A 16.ª SESSÃO (03/11, defeito 5): a busca por quem assinou leva o sítio
+     dele (`dadorLocal`, o que o cartaz já mostra). Nascia com `onde: ""`, e
+     o Gwynn, aceite e no seu sítio, nunca entrou em cena no modo `ator`
+     (a-pessoa-do-passo.js lê o `onde` da etapa primeiro). `etapaDoDador` é
+     a mesma montagem que `aceitarContrato` tem de usar, byte a byte. */
   const r = aceitarProposta(missoes, {
     ...prop,
-    etapas: [{ tipo: "falar_com", alvo: cartaz.dador }, ...(Array.isArray(prop.etapas) ? prop.etapas : [])],
+    etapas: [etapaDoDador(cartaz), ...(Array.isArray(prop.etapas) ? prop.etapas : [])],
   }, { nivel, dia, mundo, dadorPresente: false, etapasPrometidas: (Array.isArray(prop.etapas) ? prop.etapas.length : 0) });
 
   if (r.ok) return { pode: true, chave: "", texto: "", contra: "", saida: null };

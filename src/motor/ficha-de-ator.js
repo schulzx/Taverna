@@ -94,6 +94,24 @@
      4. O PAGAR diz-se de toda a gente: «ninguém pagou ainda».
      5. A ABERTURA diz o que o herói traz e sabe (A_ABERTURA_DITA): o
         primeiro passo chega ao primeiro turno.
+
+   O QUE A 16.ª SESSÃO AINDA ACHOU (03/11, mente/sessao-16.md):
+     1. QUEM DEU O PASSO FICA, e sabe o passo de agora com conteúdo (o onde,
+        o quem, o quê); quem guarda o sítio do «revelar» entra em cena, e o
+        sítio diz que esconde e como se acha — e o que se achou, quando o
+        teste do turno passou ali (a-pessoa-do-passo.js). A pergunta sem
+        conteúdo («O que sabe?») responde-se pelo que a pessoa sabe.
+     2. O SÍTIO DO REGISTO lê-se com a cidade («A Lanterna da Bruma, Ponto
+        da Fonte»): quem vive aqui já não «vive em» aqui.
+     3. A ESTRADA É FATO: com a jornada aberta pelo sistema, a frase de ir
+        não é intenção (A_ESTRADA_DITA), e quem ficou na cidade não vem na
+        estrada.
+     4. O GESTO DE PAGAR («ponho duas moedas no balcão») é pagar.
+     5. A VOZ QUE MARCA TODA FALA («fala de si na terceira pessoa») ganha a
+        forma de coisa que aparece às vezes (A_VOZ_QUE_MARCA); e o
+        companheiro credor quer receber, não pagar.
+     6. O teste sem dado (o SEM DADO) e o que o herói já achou (o JÁ SE
+        SABE do momento) chegam como fato.
      6. A FORMA DA CENA cai (é como narrar), e a obra que corre agora não
         «já aconteceu».
 
@@ -101,13 +119,17 @@
    nenhuma ordem, nenhuma razão, nenhum número que não se diz em voz alta.
    ============================================================ */
 import { SECOES } from "../pauta.js";
-import { aPessoaDoPasso } from "./a-pessoa-do-passo.js";
+import { aPessoaDoPasso, oQueOSitioEsconde, oSitioDoRegisto } from "./a-pessoa-do-passo.js";
+import { moradaDe } from "../missoes.js";
+import { QUER } from "../nucleo.js";
+import { ESTADOS as ESTADOS_DA_VIAGEM } from "../viagem.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
 const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 const sem = (x) => str(x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const limpo = (x) => str(x).replace(/\s+/g, " ").trim();
+const semArtigo = (x) => sem(x).trim().replace(/^(o|a|os|as)\s+/, "");
 const ponto = (x) => { const t = limpo(x).replace(/[;,:\s—-]+$/, ""); return t && !/[.!?»"”]$/.test(t) ? t + "." : t; };
 const maiuscula = (x) => { const t = limpo(x); return t ? t[0].toUpperCase() + t.slice(1) : t; };
 
@@ -257,6 +279,39 @@ export const A_VOZ_QUE_PERGUNTA = Object.freeze([
 ]);
 const vozSemPergunta = (traco) => { const v = A_VOZ_QUE_PERGUNTA.find((x) => x.de.test(str(traco).trim())); return v ? v.o : traco; };
 
+/* A VOZ QUE MARCA TODA FALA (a 16.ª sessão, defeito 7). O Alaric tinha
+   «Fala: fala de si na terceira pessoa», e «o Barba-Ruiva» apareceu em 15
+   das 15 respostas, 21 vezes: o traço manda, e o ator põe-no em cada fala —
+   o tique da 15.ª («responde com outra pergunta») outra vez, de outra
+   família. São os traços de COMO_FALA (nucleo.js) que deixam a MESMA marca
+   em toda frase — o nome próprio, a avó, o santo, o provérbio, a jura, o
+   «criança», a comida —, ao contrário dos que são um jeito (curto, preciso,
+   de marinheiro) ou que só valem num momento (antes da má notícia, na
+   primeira frase). Cada um ganha a forma de coisa que aparece às vezes, com
+   a ocasião dita, e o resto da fala como a de toda a gente. `de` lê o traço
+   como vem. */
+export const A_VOZ_QUE_MARCA = Object.freeze([
+  { id: "terceira", de: /^fala de si na terceira pessoa$/u, o: "uma vez por outra fala de si na terceira pessoa, quando o assunto lhe pesa; no resto, diz «eu»" },
+  { id: "avo", de: /^cita a avó, e cita mal$/u, o: "de vez em quando cita a avó, e cita mal; não a cada fala" },
+  { id: "santos", de: /^reza a meio da frase a um santo de cada coisa$/u, o: "quando a coisa aperta, reza a meio da frase a um santo dela" },
+  { id: "jura", de: /^jura por coisas pequenas$/u, o: "quando jura, jura por coisas pequenas; e não jura a toda a hora" },
+  { id: "proverbio", de: /^inventa provérbios$/u, o: "de vez em quando remata com um provérbio inventado" },
+  { id: "crianca", de: /^trata toda a gente por "criança", até velhos$/u, o: "quando quer mandar, chama «criança» a quem lhe fala, até a velhos" },
+  { id: "comida", de: /^põe comida em toda a metáfora$/u, o: "quando compara, compara com comida" },
+]);
+const vozSemMarca = (traco) => { const v = A_VOZ_QUE_MARCA.find((x) => x.de.test(str(traco).trim())); return v ? v.o : traco; };
+
+/* O QUE O COMPANHEIRO CREDOR QUER (a 16.ª, defeito 7). O Alaric é o
+   credor — o herói deve-lhe (CARREGA `d_heroi`, ao contrário) —, e o
+   «Quer» dele era «pagar a última prestação de uma dívida que herdou»: a
+   prosa fê-lo devedor. Num save já gravado o núcleo traz o texto velho; a
+   ficha lê a mesma linha da tabela (QUER, `aoContrario`) pelos ids. */
+const querDoCredor = (f) => {
+  if (!ehObj(f) || !ehObj(f.quer) || !ehObj(f.carrega) || f.carrega.id !== "d_heroi") return "";
+  const q = QUER.find((x) => x.id === f.quer.id);
+  return q && q.aoContrario ? q.aoContrario : "";
+};
+
 /* A FRASE NÃO É O RESULTADO (03/11, a 14.ª sessão, conserto 1). Três vezes
    a frase do herói virou fato na prosa sem o sistema a ter resolvido: «Pago
    a sopa» (a bolsa 15 → 15) e a Leonor viu «três estalos na tábua»; «pago um
@@ -271,7 +326,10 @@ const vozSemPergunta = (traco) => { const v = A_VOZ_QUE_PERGUNTA.find((x) => x.d
    o `resultado` das regras de envelope). `poder` não tem `rx`: lê os nomes
    das habilidades do herói, ao pé de um verbo de usar (VERBO_DO_PODER). */
 export const O_QUE_A_FRASE_FAZ = Object.freeze([
-  { id: "pagar", rx: /\b(pago|paguei|pagamos|compro|comprei|compramos|alugo|arremato|deixo (?:\S+ ){0,3}(?:moedas|estalos|cobres|pratas))\b/u, feito: "pagou", porOutro: "pagou", resolve: Object.freeze(["pagar", "teste"]) },
+  /* o GESTO de pagar também paga (a 16.ª, defeito 6): «Ponho duas moedas no
+     balcão pela caneca» entrou cru, e a prosa pôs o metal a bater no
+     carvalho com a bolsa em 15 → 15 */
+  { id: "pagar", rx: /\b(pago|paguei|pagamos|compro|comprei|compramos|alugo|arremato|(?:deixo|ponho|pouso|poiso|coloco|largo|atiro|estendo|conto) (?:\S+ ){0,3}(?:moedas?|estalos?|cobres?|pratas?|ouros?|dinheiro))\b/u, feito: "pagou", porOutro: "pagou", resolve: Object.freeze(["pagar", "teste"]) },
   { id: "descansar", rx: /\b(durmo|dormimos|vou dormir|adorme[cç]o|deito-me para dormir|descanso|descansamos|acampo|acampamos|monto (?:o )?acampamento)\b/u, feito: "descansou", resolve: Object.freeze(["descansar", "teste"]) },
   { id: "poder", rx: null, feito: "usou {X}", resolve: Object.freeze(["poder", "golpe", "teste"]) },
   { id: "curar", rx: /\b(curo|trato (?:d?as )?feridas|fa[cç]o um curativo|ligo a ferida|estanco o sangue)\b/u, feito: "curou ninguém", resolve: Object.freeze(["poder", "teste"]) },
@@ -286,6 +344,7 @@ export const O_QUE_A_FRASE_FAZ = Object.freeze([
      anda no tabuleiro. */
   { id: "ir", caso: true, rx: /(?:^|[^\p{L}])(?:(?:vou|vamos|sigo|seguimos|volto|voltamos|regresso|regressamos|parto|partimos|caminho|caminhamos|corro|ando|subo|des[cç]o|atravesso|dirijo-me|me dirijo)(?![\p{L}])[^.!?;]{0,40}?(?:^|[^\p{L}])(?:para|at[eé]|rumo a|em dire[cç][aã]o a|à|ao|aos|às|a)|(?:deixo|deixamos|saio|sa[ií]mos|abandono)(?![\p{L}])\s+(?:d[aoe]s?))\s+(?:(?:o|a|os|as|um|uma)\s+)?(?:\p{Lu}|(?:[\p{Ll}-]+\s+){0,2}(?:templo|pra[cç]a|porto|cais|mercado|sede|estalagem|taverna|igreja|capela|castelo|forte|guilda|quartel|torre|port[aã]o|muralha|cidade|vila|aldeia|estrada|ponte|feira|biblioteca|arquivo|ferraria|docas?|bairro|po[cç]o|sa[ií]da|arena|li[cç]a|mina|floresta|bosque|colina|ru[ií]nas?|cripta|caverna|gruta|est[aá]bulo|estaleiro)(?![\p{L}]))|(?:^|[^\p{L}])(?:deixo|deixamos|abandono)\s+(?:o|a|os|as)\s+\p{Lu}/u, feito: "saiu daqui", resolve: Object.freeze(["mover", "luta", "golpe"]) },
 ]);
+const IR_FEITO = O_QUE_A_FRASE_FAZ.find((a) => a.id === "ir").feito;
 const ATO_QUE_SO_PERGUNTA = /\?|\b(se|caso|talvez|quanto|quantos|quantas|posso|podemos|poderia|pergunto|quero saber|antes de)\b/u;
 const VERBO_DO_PODER = /\b(rezo|oro|lan[cç]o|conjuro|invoco|evoco|uso|recito|chamo|ergo|aplico|fa[cç]o)\b/u;
 /* a frase com o ato por fazer: a intenção, e a linha do que não aconteceu
@@ -303,6 +362,24 @@ export const A_INTENCAO_DITA = Object.freeze({
      deixa porta a ninguém. {X} o que não se fez. */
   ninguem: "ninguém {X} ainda",
   e: ", e ",
+});
+
+/* A ESTRADA É FATO (a 16.ª sessão, defeito 4). «Saio de Ponto da Fonte
+   pela estrada, a caminho de Rio Profundo»: o sistema abriu a `jornada`,
+   tirou o herói do `lugar` e passou quatro horas — e a ficha disse «Bento
+   quer…» e «ainda não saiu daqui», porque o IR só olhava para o envelope do
+   MOVIMENTO. A prosa obedeceu à intenção e deixou-o nas Termas. Com a
+   jornada em curso, ir é o que o sistema já fez: a frase é fato, e a linha
+   diz de onde e para onde ({H} o herói, {D} de onde, {P} para onde). E quem
+   tem morada na cidade (o registo) não vem na estrada: o Loras continuava
+   em QUEM ESTÁ. `emCurso`: os estados da jornada que são estar na estrada
+   (viagem.js, ESTADOS; o vazio é a jornada de um save antigo). */
+export const A_ESTRADA_DITA = Object.freeze({
+  emCurso: Object.freeze(["", ESTADOS_DA_VIAGEM.emCurso]),
+  /* as palavras que fazem da frase a da viagem (lidas sem acento) */
+  palavras: /\b(estrada|caminho|viagem|marcha|trilha|jornada)\b/u,
+  saiu: "{H} já vai na estrada: saiu de {D}, a caminho de {P}",
+  semDe: "{H} já vai na estrada, a caminho de {P}",
 });
 
 /* O QUE FICOU COMBINADO (03/11, a 14.ª sessão, conserto 3). A Inez pediu no
@@ -762,11 +839,15 @@ function osAtosPorFazer(frase, feitos, poderes) {
   const vistos = new Set();
   for (const m of str(frase).matchAll(/[^.!?;]+[.!?;]*/gu)) {
     const or = m[0].toLowerCase();
+    /* a oração como veio, com a primeira letra em minúscula: a maiúscula que
+       conta é a do sítio, não a do começo da frase («Saio de Ponto da Fonte»
+       não se lia — a 16.ª, T10) */
+    const comoVeio = m[0].replace(/^(\s*)(\p{Lu})/u, (_, a, b) => a + b.toLowerCase());
     if (ATO_QUE_SO_PERGUNTA.test(or)) continue;
     for (const a of O_QUE_A_FRASE_FAZ) {
       if (vistos.has(a.id) || a.resolve.some((r) => feitos.has(r))) continue;
       let feito = "";
-      if (a.rx) { if (a.rx.test(a.caso ? m[0] : or)) feito = a.feito; }
+      if (a.rx) { if (a.rx.test(a.caso ? comoVeio : or)) feito = a.feito; }
       else if (VERBO_DO_PODER.test(or)) { const n = poderes.find((x) => sem(x).length >= 4 && sem(or).includes(sem(x))); if (n) feito = tpl(a.feito, { X: n }); }
       if (feito) { vistos.add(a.id); out.push(feito); }
     }
@@ -896,6 +977,9 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
        15.ª, defeito 6): chegam primeiro ao que o herói procura */
     { de: /^(?:A|O|UM|UMA) [\p{Lu} ]+ DEL[EA] \(corre agora[^)]*\): (.+?)(; se o herói tardar, chegam primeiro)?\.?$/u, vai: "aconteceu", como: (m, c) => `Está a acontecer agora: ${m[1]}${m[2] ? `; e, se ${c.H} tardar, chegam primeiro ao que ${c.H} procura` : ""}.` },
     { de: /^(?:A|O|UM|UMA) [\p{Lu} ]+ DEL[EA] \([^)]*\): (.+)$/u, vai: "aconteceu", como: (m) => `Já aconteceu: ${ponto(m[1])}` },
+    /* o que o herói achou no marco que acabou de cair (saga.js,
+       momentoDoFio): é o que o sistema sabe, e o herói também (a 16.ª) */
+    { de: /^JÁ SE SABE \([^)]*\):\s*(.+)$/u, vai: "aconteceu", como: (m, c) => `${c.H} já sabe o que achou: ${ponto(m[1])}` },
     { de: /^A PERGUNTA/, cai: "pergunta" },
     { de: /^(?!\p{Lu}{2,})(.+)$/u, vai: "cena", como: (m) => ponto(m[1]) },
   ],
@@ -1042,6 +1126,11 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^TESTE$/, vai: "aconteceu", resultado: "teste", como: (t, c) => `${c.H} faz ${(t.match(/^"(.+?)"/u) || [])[1] || "o que quis"} sem dificuldade.` },
   { tipo: /^SOCIAL/, vai: "aconteceu", resultado: "teste", como: (t, c) => { const m = t.match(/Tentei (.+?) e (CONSEGUI|NÃO consegui)/u); const pedia = (t.match(/O que eu pedia era (.+?), e a resposta é não/u) || [])[1]; return m ? `${c.H} tentou ${m[1]}, e ${m[2] === "CONSEGUI" ? "conseguiu" : "não conseguiu"}${pedia ? `: pedia ${pedia}, e a resposta é não` : ""}.` : `${c.H} tentou a conversa.`; } },
   { tipo: /^BUSCA CONCLUÍDA/, vai: "aconteceu", resultado: "teste", como: (t, c) => `${c.H} revistou o lugar do chão ao teto, e aqui não há nada escondido.` },
+  /* O TESTE QUE O SISTEMA CONCEDEU (mestria.js, envelopeDaConcessao): no
+     App a frase do jogador fica na tela e o pedido leva SÓ este envelope —
+     sem tradução, a ficha não dizia o que o herói fez (a 16.ª, T13: ele
+     examinou o Largo e «nada se achou») */
+  { tipo: /^SEM DADO/, vai: "aconteceu", resultado: "teste", como: (t, c) => { const m = t.match(/^Isto que eu fiz \((.+?)\) deu certo/u); return m ? `${c.H} tentou ${m[1].charAt(0).toLowerCase()}${m[1].slice(1)}, e conseguiu.` : `${c.H} fez o que quis, e conseguiu.`; } },
 ]);
 /* A ABERTURA DITA (a 15.ª sessão, defeito 5). O envelope da abertura
    (abertura.js, pedidoDaAbertura) caía inteiro como ofício, e a ficha do
@@ -1242,7 +1331,17 @@ export function aFichaDeAtor(entrada) {
       }
     }
   }
+  /* O TESTE DO TURNO, para o sítio que esconde (a-pessoa-do-passo.js,
+     oQueOSitioEsconde): o que o App diz (`teste`: { pericia, sucesso }, o
+     testeDoTurno), senão o que o envelope do dado diz («Teste de Percepção
+     (…) … Resultado: SUCESSO») */
+  let testeDoTurno = ehObj(ent.teste) ? ent.teste : null;
   for (const e of envelopes) {
+    if (!testeDoTurno && /^ROLAGEM/.test(e.tipo)) {
+      const m = str(e.texto).match(/^Teste de ([^(]+?) \(/u);
+      const ramo = oDadoDaFrase(`[ROLAGEM] ${e.texto}`);
+      if (m && ramo) testeDoTurno = { pericia: sem(m[1]).trim(), sucesso: ramo !== "falha" };
+    }
     const r = TRADUCAO_DOS_ENVELOPES.find((x) => x.tipo.test(e.tipo));
     if (!r) { marca(`[${e.tipo}]`, e.texto, null, "semTraducao"); continue; }
     if (r.cai) { marca(`[${e.tipo}]`, e.texto, null, r.cai); continue; }
@@ -1276,6 +1375,38 @@ export function aFichaDeAtor(entrada) {
   /* o rumo que aponta para a pessoa do passo já não é vontade da
      companheira: a pessoa está em cena, ou a cena diz porque não está */
   if (aponta && passo.some((x) => sem(aponta).startsWith(sem(`falar com ${x.nome}`)))) aponta = "";
+  /* O SÍTIO QUE ESCONDE (a 16.ª, defeito 3): o «revelar» tem porta — a
+     cena diz que o sítio esconde e como se acha; e, com o teste do turno a
+     passar ali, o que se achou é fato */
+  let sitio = null;
+  try { sitio = oQueOSitioEsconde(estado, testeDoTurno); } catch { sitio = null; }
+  if (sitio && sitio.achou) aconteceu.push(ponto(sitio.achou));
+  else if (sitio && sitio.cena) ausentes.push(ponto(sitio.cena));
+
+  /* A ESTRADA (A_ESTRADA_DITA, a 16.ª, defeito 4): com a jornada em curso,
+     a frase de ir é o que o sistema já fez, e quem tem morada (o registo
+     guarda-lhe o sítio) ficou nela — a luta, quem chega e a pessoa do passo
+     ficam como vêm */
+  const jor = ehObj(estado.jornada) ? estado.jornada : null;
+  /* na estrada é sem sítio: a jornada que um save antigo deixou pendurada
+     ({ destino }) com o herói num lugar da cidade não é estrada (s10#21) */
+  const naEstrada = !!jor && !(ehObj(estado.lugar) && limpo(estado.lugar.nome)) && A_ESTRADA_DITA.emCurso.includes(str(jor.estado));
+  if (naEstrada) {
+    /* a frase é a da viagem: diz a estrada, ou de onde ou para onde a
+       jornada vai («vou à taverna», no meio da estrada, não é — bloco#256) */
+    const fs0 = sem(frase);
+    const daViagem = [jor.para, jor.de].some((x) => limpo(x) && fs0.includes(sem(x))) || A_ESTRADA_DITA.palavras.test(fs0);
+    if (frase && daViagem && !resultados.has("mover") && osAtosPorFazer(frase, resultados, []).includes(IR_FEITO)) {
+      resultados.add("mover");
+      const P = limpo(jor.para), D = limpo(jor.de);
+      if (P) aconteceu.push(ponto(tpl(D ? A_ESTRADA_DITA.saiu : A_ESTRADA_DITA.semDe, { H, D, P })));
+    }
+    for (const [k, p] of [...pessoas]) {
+      if (p.comVoce || p.chega || p.estado || p.fera || p.doPasso) continue;
+      const n = Object.keys(G.npcs).find((x) => mesmo(x, p.nome));
+      if (n && ehObj(G.npcs[n]) && limpo(G.npcs[n].local)) pessoas.delete(k);
+    }
+  }
 
   /* quem ficou de pé na luta, quando a pauta não traz a linha dela (a da
      pauta já põe o corpo em cada pessoa) */
@@ -1303,6 +1434,9 @@ export function aFichaDeAtor(entrada) {
       /* o jeito, sem a frase pronta (o conserto 2 da 14.ª: o exemplo copiava-se) */
       if (f.fala && f.fala.o) p.tique = str(f.fala.o);
       if (!p.quer && f.quer && f.quer.o) p.quer = f.quer.o;
+      /* o credor quer receber (querDoCredor): o texto velho do núcleo dizia o contrário */
+      const qc = querDoCredor(f);
+      if (qc) p.quer = qc;
       if (!p.teme && f.teme && f.teme.o) p.teme = f.teme.o;
       if (!p.oque && nu.papel && !p.comVoce) p.oque = nu.papel;
       if (!p.genero && (nu.genero || nu.genero_pessoa)) p.genero = sem(nu.genero || nu.genero_pessoa);
@@ -1335,10 +1469,18 @@ export function aFichaDeAtor(entrada) {
     const indiretas = [...frase.matchAll(/\bpergunt[oa]\s+(?:(?:a|ao|à|aos|às)\s+[^,.?]+?\s+)?((?:quanto|quem|onde|como|qual|quais|quando|o que|se|por que)\b[^.?!]*)(?=[.!]|$)/giu)].map((m) => limpo(m[1]));
     const perguntas = [...diretas, ...indiretas].filter(Boolean);
     const chaves = (t) => sem(t).split(/[^a-z0-9]+/).filter((w) => w.length >= 5);
-    const ditos = chaves(sabes.map((s) => s.o).join(" "));
-    const faltam = perguntas.filter((q) => !chaves(q).some((w) => ditos.includes(w)));
+    /* o que a pessoa sabe também responde (a pessoa do passo, a 16.ª,
+       defeito 2): «O que sabe?» não tem palavra de conteúdo nenhuma, e com
+       a Astrid a saber o passo seguinte a ficha dizia «Não sabe responder
+       a: «O que sabe?»». A pergunta sem conteúdo responde-a quem sabe
+       alguma coisa */
     const quem = responde || null;
-    const o = faltam.length ? `não sabe responder a: ${faltam.map((q) => `«${q}»`).join(" ")}` : sabes.length ? `do que ${H} perguntou, não sabe mais do que isto` : `do que ${H} perguntou, não sabe a resposta`;
+    const sabido = [...sabes.map((s) => s.o), ...(quem ? arr(quem.sabe) : [])];
+    const ditos = chaves(sabido.join(" "));
+    /* o nome de quem se chama («Doran o Manco, o que sabe?») não é conteúdo */
+    const dosNomes = new Set(chaves(lista.map((p) => p.nome).join(" ")));
+    const faltam = perguntas.filter((q) => { const k = chaves(q).filter((w) => !dosNomes.has(w)); return k.length ? !k.some((w) => ditos.includes(w)) : !sabido.length; });
+    const o = faltam.length ? `não sabe responder a: ${faltam.map((q) => `«${q}»`).join(" ")}` : sabido.length ? `do que ${H} perguntou, não sabe mais do que isto` : `do que ${H} perguntou, não sabe a resposta`;
     if (o) { if (quem) quem.naoSabe = o; else cena.push(`Aqui ninguém sabe ${o.replace(/^não sabe /, "")}.`); }
   }
   /* A VOZ QUE PEDE NÚMERO (A_VOZ_DO_NUMERO): os números que a ficha dá a
@@ -1347,7 +1489,7 @@ export function aFichaDeAtor(entrada) {
   const numerosDaCena = /\d/.test([...cena, ...cenaExtra, ...venda].join(" "));
   for (const p of pessoas.values()) {
     const temNumero = numerosDaCena || /\d/.test([...p.sabe, ...diz.filter((d) => d.quem && mesmo(d.quem, p.nome)).map((d) => d.o)].join(" "));
-    if (p.tique) p.tique = vozSemPergunta(vozComNumero(p.tique, temNumero));
+    if (p.tique) p.tique = vozSemMarca(vozSemPergunta(vozComNumero(p.tique, temNumero)));
     if (p.registo) p.registo = vozComNumero(p.registo, temNumero);
   }
   /* O QUE FICOU COMBINADO (O_COMBINADO): o pedido de cada pessoa em cena,
@@ -1398,12 +1540,18 @@ export function aFichaDeAtor(entrada) {
     if (comp) comp.queroAgora = t; else cena.push(`Há um rasto à frente: ${ponto(t)}`);
   }
   if (venda.length) cenaExtra.push(`À venda à vista: ${ponto(venda.join("; "))}`);
+  const eL0 = ehObj(estado.lugar) ? estado.lugar : {};
   /* quem a frase chama e não está aqui: o registo sabe onde a pessoa vive
      (s10 #35: «Pergunto a Helga…», e a Helga não estava na cena) */
   for (const [nome, reg] of Object.entries(G.npcs)) {
     if (!ehObj(reg) || [...pessoas.keys()].some((k) => mesmo(k, nome)) || passo.some((x) => mesmo(x.nome, nome))) continue;
     const prim = sem(nome).split(/[ ,]/)[0];
-    if (prim.length >= 3 && new RegExp(`(^|[^a-z])${prim}([^a-z]|$)`).test(sem(frase))) longe.push(`${nome} não está aqui${reg.local ? `: vive em ${reg.local}, fora desta cena` : ""}.`);
+    if (!(prim.length >= 3 && new RegExp(`(^|[^a-z])${prim}([^a-z]|$)`).test(sem(frase)))) continue;
+    /* o sítio do registo com a cidade (oSitioDoRegisto): quem vive AQUI não
+       «vive em» aqui — a Astrid, com o herói na Lanterna (a 16.ª, defeito 1) */
+    const sitio = oSitioDoRegisto(reg.local, estado);
+    const aquiMesmo = !!sitio && !!limpo(eL0.nome) && semArtigo(moradaDe(sitio).lugar) === semArtigo(eL0.nome);
+    longe.push(`${nome} não está aqui${aquiMesmo ? " agora" : reg.local ? `: vive em ${reg.local}, fora desta cena` : ""}.`);
   }
 
   /* a última palavra: de quem é, e o que essa pessoa quer (A_ULTIMA_PALAVRA) */

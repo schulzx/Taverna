@@ -358,7 +358,15 @@ export const ETAPAS = {
        como era: não é um sítio onde se esteja. */
     ver: (e, m) => {
       /* MM-C · C0: o lugar cujo segredo a história guarda só cai pelo fato */
-      if (guardaPeloFato(m, "lugares", moradaDe(e.alvo).lugar || e.alvo) && !segredoRevelado(e, m)) return false;
+      const peloFato = guardaPeloFato(m, "lugares", moradaDe(e.alvo).lugar || e.alvo);
+      if (peloFato && !segredoRevelado(e, m)) return false;
+      /* A 16.ª SESSÃO (03/11, defeito 3): o segredo revelado neste turno É
+         o fato — o teste passou com o herói NO lugar (segredosRevelados
+         NoTurno, saga.js, já o confere). Pedir também que o lugar esteja em
+         `revelados` era pedir que a prosa o nomeasse (mencionadosNaCena), e
+         no modo `ator` essa porta está fechada: o Bento examinou o Largo do
+         Cardo e a etapa ficou em falso para sempre. */
+      if (peloFato) return estaEm(m, e.onde || e.alvo, { cidade: String(e.chave || "").includes("|") ? String(e.chave).split("|")[0] : "" });
       const ids = (m.revelados || []).map(norm);
       let achado = ids.find((id) => !!norm(e.alvo) && id.includes(norm(e.alvo))) || "";
       if (!achado) {

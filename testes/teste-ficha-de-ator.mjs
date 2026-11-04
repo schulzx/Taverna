@@ -37,8 +37,10 @@ import {
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
   TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase, A_LUTA_DITA,
   O_QUE_A_FRASE_FAZ, A_INTENCAO_DITA, A_VOZ_DO_NUMERO, O_COMBINADO, A_CONVERSA_DA_FRASE, A_RESPOSTA_DITA,
-  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA,
+  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA, A_VOZ_QUE_MARCA, A_ESTRADA_DITA,
 } from "../src/motor/ficha-de-ator.js";
+import { abrirViagem, ESTADOS as ESTADOS_DA_VIAGEM } from "../src/viagem.js";
+import { QUER, nucleoDaCampanha } from "../src/nucleo.js";
 import { oPassoNaCidade } from "../src/motor/tempo-do-turno.js";
 import { garantirAbertura, pedidoDaAbertura } from "../src/abertura.js";
 import { envelopeDaCena } from "../src/biblioteca.js";
@@ -517,6 +519,50 @@ t("T3 a forma da cena («Gaste a primeira frase na coisa pequena…») cai como 
 const obra = marcaDaEtapa({ fase: "rumor", como: "travada", passo: 0, gente: "os sem-casa", cidade: "Cimo Negro", onde: "A Casa da Ponte", diz: "" }, "");
 const t8o = aFichaDeAtor({ frase: "Olho em volta.", nota: `${BARRIL}\nMOMENTO   ${obra}`, estado: IRENE });
 t("T8 a obra que corre agora (batidas.js) não «já aconteceu», e o «chegam primeiro» diz a quê", ac(t8o).includes("Está a acontecer agora:") && ac(t8o).includes("se Irene tardar, chegam primeiro ao que Irene procura") && !/Já aconteceu/.test(ac(t8o)) && verificarAFicha(t8o.texto).length === 0);
+
+sec("§9 a 16.ª sessão (03/11): a estrada, o gesto de pagar, a voz que marca, o credor");
+/* mente/sessao-16.md. A pessoa do passo, o «revelar» e o sítio do registo
+   têm suíte própria (teste-a-pessoa-do-passo.mjs, §5–§6); aqui, o resto. */
+const ALARIC = { nome: "Alaric Barba-Ruiva", papel: "companheiro", ficha: { fala: COMO_FALA.find((f) => f.id === "f_terceira"), quer: { ...QUER.find((q) => q.id === "q_divida_fim") }, carrega: { tipo: "divida", id: "d_heroi", o: "o herói deve-lhe, e não deixa que o esqueça" } } };
+const BENTO = { personagem: { nome: "Bento", grupo: [{ nome: "Alaric Barba-Ruiva", vinculo: 25, classe: "Ladino", raca: "Humano" }] }, nucleoCache: { nucleo: { pessoas: [ALARIC] } } };
+/* defeito 4 — a viagem começada por frase: o sistema abriu a jornada
+   (viagem.js, abrirViagem; quatro horas andadas), tirou o herói do lugar,
+   e o Loras (registado com o sítio na cidade) vinha pela pauta */
+const LORAS = { "Loras Rompe-Escudos": { nome: "Loras Rompe-Escudos", papel: "aprendiz", local: "As Termas da Fivela, Ponto da Fonte", conhecidoEm: 1 } };
+const JOR = { ...abrirViagem({ de: "Ponto da Fonte", para: "Rio Profundo", dia: 1 }), andadoMin: 240 };
+const NA_ESTRADA = "ONDE      A caminho de Rio Profundo\nEM CENA   Alaric Barba-Ruiva (com você) · Loras Rompe-Escudos (aprendiz)";
+const F10 = "Saio de Ponto da Fonte pela estrada, a caminho de Rio Profundo.";
+const t10 = aFichaDeAtor({ frase: F10, nota: NA_ESTRADA, estado: { ...BENTO, npcs: LORAS, lugar: null, jornada: JOR } });
+t("T10 com a jornada aberta: a frase é fato, e a linha diz de onde e para onde — sem «Só a intenção»", ac(t10).startsWith(`Bento: «${F10}»`) && ac(t10).includes(tpl(A_ESTRADA_DITA.saiu, { H: "Bento", D: "Ponto da Fonte", P: "Rio Profundo" })) && !/Só a intenção|quer: «/.test(t10.texto) && verificarAFicha(t10.texto).length === 0);
+t("…e quem ficou na cidade (o Loras) não vem em QUEM ESTÁ na estrada; o companheiro vem", !t10.falam.includes("Loras Rompe-Escudos") && t10.falam.includes("Alaric Barba-Ruiva"));
+const t10sem = aFichaDeAtor({ frase: F10, nota: NA_ESTRADA, estado: { ...BENTO, npcs: LORAS } });
+t("sem jornada, a mesma frase é intenção — e a maiúscula do começo («Saio») já não a esconde do IR", ac(t10sem).startsWith("Bento quer:") && ac(t10sem).includes("ainda não saiu daqui"));
+t("no meio da estrada, «vou à taverna» não é a viagem: fica intenção", /ainda não saiu daqui/.test(aFichaDeAtor({ frase: "Vou à taverna e peço uma caneca.", nota: NA_ESTRADA, estado: { ...BENTO, lugar: null, jornada: JOR } }).texto));
+t("a jornada parada ou concluída não é estrada, nem a que um save antigo deixou com o herói num lugar ({ destino })", [{ ...JOR, estado: ESTADOS_DA_VIAGEM.pausada }, { ...JOR, estado: ESTADOS_DA_VIAGEM.concluida }].every((j) => /ainda não saiu daqui/.test(aFichaDeAtor({ frase: F10, nota: NA_ESTRADA, estado: { ...BENTO, lugar: null, jornada: j } }).texto)) && aFichaDeAtor({ frase: "Olho em volta.", nota: "ONDE      n'O Rossio\nEM CENA   Loras Rompe-Escudos (aprendiz)", estado: { ...BENTO, npcs: LORAS, lugar: { nome: "O Rossio" }, jornada: { destino: "Rio Profundo" } } }).falam.includes("Loras Rompe-Escudos"));
+t("a tabela da estrada: os estados são os de viagem.js, e as linhas passam no verificador", A_ESTRADA_DITA.emCurso.includes(ESTADOS_DA_VIAGEM.emCurso) && [A_ESTRADA_DITA.saiu, A_ESTRADA_DITA.semDe].every((x) => verificarAFicha(tpl(x, { H: "Bento", D: "Ponto da Fonte", P: "Rio Profundo" })).length === 0));
+/* defeito 6 — o gesto de pagar */
+const t4 = aFichaDeAtor({ frase: "Ponho duas moedas no balcão pela caneca.", nota: BARRIL, estado: IRENE });
+t("T4 «Ponho duas moedas no balcão pela caneca», sem cobrança: «ninguém pagou ainda»", ac(t4).includes(tpl(A_INTENCAO_DITA.porFazer, { L: tpl(A_INTENCAO_DITA.ninguem, { X: "pagou" }) })));
+t("…e o gesto com moeda («deixo uma moeda», «pouso três estalos») também; pôr a caneca no balcão não", ["Deixo uma moeda na mesa.", "Pouso três estalos no balcão."].every((f) => /ninguém pagou ainda/.test(aFichaDeAtor({ frase: f, nota: BARRIL, estado: IRENE }).texto)) && !/pagou/.test(aFichaDeAtor({ frase: "Ponho a caneca no balcão.", nota: BARRIL, estado: IRENE }).texto));
+/* defeito 7 — a voz que marca toda fala, e o credor */
+const t1 = aFichaDeAtor({ frase: "Olho para o Alaric.", nota: "ONDE      n'A Lanterna da Bruma\nEM CENA   Alaric Barba-Ruiva (com você)", estado: BENTO });
+const falaA = falaDe(t1, "Alaric Barba-Ruiva");
+t("T0–T14: a voz do Alaric já não manda a terceira pessoa a cada fala — aparece às vezes, com a ocasião dita", falaA.includes(A_VOZ_QUE_MARCA.find((v) => v.id === "terceira").o) && !falaA.startsWith("fala de si na terceira pessoa"));
+const queMarcam = COMO_FALA.filter((f) => A_VOZ_QUE_MARCA.some((v) => v.de.test(f.o)));
+t(`a tabela das vozes (COMO_FALA): ${queMarcam.length} de ${COMO_FALA.length} deixam a mesma marca em toda fala (${queMarcam.map((f) => f.id).join(", ")}), e cada uma tem forma de às vezes`, queMarcam.length === A_VOZ_QUE_MARCA.length && queMarcam.length === 7 && A_VOZ_QUE_MARCA.every((v) => verificarAFicha(v.o).length === 0));
+/* medido em 03/11 com as fichas dos 434 de antes deste conserto: 124 das 940
+   vozes traziam um traço que marca toda fala (a avó, 105; a comida, 19); o
+   banco da 14.ª (40 vozes) não tinha nenhuma */
+const marcaToda = (txts) => txts.reduce((a, x) => a + x.split("\n").filter((l) => /^\s+Fala: /.test(l) && l.replace(/^\s+Fala: /, "").replace(/\.$/, "").split(/;\s+/).some((p) => A_VOZ_QUE_MARCA.some((v) => v.de.test(p.trim())))).length, 0);
+t(`no banco da 14.ª, ${marcaToda(BANCO.map((b) => b.ficha))} vozes marcavam toda fala; nos ${res.length} casos, agora, ${marcaToda(res.map(({ r }) => r.texto))} (eram 124 de 940)`, marcaToda(res.map(({ r }) => r.texto)) === 0 && marcaToda(BANCO.map((b) => b.ficha)) === 0);
+t("o credor quer receber: num save gravado com o texto velho, a ficha lê o «Quer» ao contrário (o herói deve-lhe)", /\n  Quer: ver paga, até à última prestação, a dívida que Bento lhe deve\./.test(bloco(t1, "Alaric Barba-Ruiva")) && !/pagar a última prestação/.test(t1.texto));
+const nc = nucleoDaCampanha("A Lanterna do Brejo|Fantasia medieval", null, { grupo: [{ nome: "Alaric Barba-Ruiva", ligacao: "credor" }], elenco: { pessoas: [] } }).pessoas.find((p) => p.papel === "companheiro");
+t("…e o núcleo novo já nasce assim, sem guardar a outra forma no save", nc && nc.ficha.quer.id === "q_divida_fim" && nc.ficha.quer.o === QUER.find((q) => q.id === "q_divida_fim").aoContrario && !("aoContrario" in nc.ficha.quer));
+/* o teste sem dado, e o que o herói já achou */
+const tSD = aFichaDeAtor({ frase: "[SEM DADO — DECISÃO DO SISTEMA] Isto que eu fiz (Vasculhar) deu certo, sem rolagem: é pequeno, não faz barulho.", nota: BARRIL, estado: IRENE });
+t("o teste que o sistema concedeu (SEM DADO) chega como fato, e não fica sem tradução", ac(tSD).includes("Irene tentou vasculhar, e conseguiu.") && tSD.rastro.every((x) => x.cai !== "semTraducao"));
+const tJS = aFichaDeAtor({ frase: "Olho em volta.", nota: `${BARRIL}\nMOMENTO   JÁ SE SABE (do sistema — o herói achou-o em O Largo do Cardo; se a cena ainda não o mostrou, mostre-o agora): um túnel com pegadas de poucas noites.`, estado: IRENE });
+t("o JÁ SE SABE do momento (o que o herói achou no marco) chega como fato, sem a ordem", ac(tJS).includes("Irene já sabe o que achou: um túnel com pegadas de poucas noites.") && !/mostre-o/.test(tJS.texto) && verificarAFicha(tJS.texto).length === 0);
 
 console.log(`\nficha de ator: ${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

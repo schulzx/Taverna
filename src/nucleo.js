@@ -106,7 +106,10 @@ export const QUER = [
   { id: "q_aldeia", cat: "proteger", o: "que a aldeia onde nasceu passe o inverno", briga: [] },
   { id: "q_segredo_outro", cat: "proteger", o: "guardar o segredo de {outro} até ao fim", briga: ["tagarela"] },
   { id: "q_amor_vivo", cat: "proteger", o: "manter vivo quem ama, custe o que custar", briga: ["frio"] },
-  { id: "q_divida_fim", cat: "libertar", o: "pagar a última prestação de uma dívida que herdou", briga: [] },
+  /* `aoContrario`: o do companheiro credor (a 16.ª sessão, defeito 7) — é o
+     herói que lhe deve (CARREGA d_heroi), e «pagar a dívida que herdou»
+     fazia-o devedor na prosa */
+  { id: "q_divida_fim", cat: "libertar", o: "pagar a última prestação de uma dívida que herdou", aoContrario: "ver paga, até à última prestação, a dívida que o herói lhe deve", briga: [] },
   { id: "q_juramento", cat: "libertar", o: "ver-se livre de um juramento que fez novo demais", briga: [] },
   { id: "q_comprar", cat: "libertar", o: "comprar a liberdade de alguém", briga: ["ganancioso"] },
   { id: "q_esquecer", cat: "libertar", o: "esquecer uma noite — e não consegue", briga: [] },
@@ -926,7 +929,7 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
     const gen = generoDaPessoa(p);
     const ng = (x) => noGenero(x, gen);
     const fil = (x) => (x ? {
-      ...x, o: ng(encher(x.o, v)),
+      ...(({ aoContrario, ...r }) => r)(x), o: ng(encher(x.o, v)),
       ...(typeof x.revela === "string" ? { revela: ng(encher(x.revela, v)) } : {}),
       ...(Array.isArray(x.pistas) ? { pistas: x.pistas.map((pi) => ({ ...pi, o: ng(encher(pi.o, v)) })) } : {}),
     } : null);
@@ -957,6 +960,9 @@ export function nucleoDaCampanha(semente, mapa, ctx) {
       const doProp = QUER.find((x) => x.id === QUER_DO_PROPOSITO[prop]);
       const inclQuer = [...(doProp ? [doProp.id] : []), ...arr(incl.quer)];
       ficha.quer = fil(sortear("quer", p, QUER, { estrita: true, inclina: inclQuer }));
+      /* o credor quer receber, não pagar (QUER, `aoContrario`) */
+      const qRow = ficha.quer && p.papel === "companheiro" && ligacao === "credor" ? QUER.find((x) => x.id === ficha.quer.id) : null;
+      if (qRow && qRow.aoContrario) ficha.quer = { ...ficha.quer, o: ng(encher(qRow.aoContrario, v)) };
       ficha.teme = fil(sortear("teme", p, TEME, { estrita: true, inclina: arr(incl.teme) }));
       /* o esconde: a máscara, quando é ele; senão nunca com sombra */
       if (p.papel === "companheiro" && mascara) {
