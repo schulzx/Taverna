@@ -82,10 +82,26 @@
         diz com quem o herói falou (`conversa`), que é o que o sistema
         regista no lugar do Cronista (registo-da-cena.js).
 
+   O QUE A 15.ª SESSÃO AINDA ACHOU (03/11, mente/sessao-15.md):
+     1. A PESSOA DO PASSO entra em cena. Quem a missão manda procurar, com o
+        herói no sítio dela, está em QUEM ESTÁ à hora dela — ou a cena diz
+        onde anda e quando volta (a-pessoa-do-passo.js). O rumo que apontava
+        para ela deixa de ser vontade da companheira.
+     2. IR é ato por fazer: a frase de sair para um sítio que o sistema não
+        moveu entra como intenção, como o pagar.
+     3. A VOZ QUE EMPURRA A PERGUNTA («responde com outra pergunta») ganha
+        forma sem ponto de interrogação (A_VOZ_QUE_PERGUNTA).
+     4. O PAGAR diz-se de toda a gente: «ninguém pagou ainda».
+     5. A ABERTURA diz o que o herói traz e sabe (A_ABERTURA_DITA): o
+        primeiro passo chega ao primeiro turno.
+     6. A FORMA DA CENA cai (é como narrar), e a obra que corre agora não
+        «já aconteceu».
+
    O VERIFICADOR (`verificarAFicha`) é a catraca: nenhum rótulo de sistema,
    nenhuma ordem, nenhuma razão, nenhum número que não se diz em voz alta.
    ============================================================ */
 import { SECOES } from "../pauta.js";
+import { aPessoaDoPasso } from "./a-pessoa-do-passo.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -124,6 +140,7 @@ export const MOTIVOS_DO_CORTE = Object.freeze({
   mecanismo: "o tipo do lugar entre parênteses («aqui isto é um ruína selada»): o ator vê a coisa, não a categoria",
   ordem: "a instrução ao Mestre colada ao fato («Narre…», «Isto é FATO. Use…»): o fato fica, a ordem cai",
   semConteudo: "o gesto que cobra o que ficou combinado, sem combinado nenhum que o sistema saiba: cai, para o ator não o inventar (a 14.ª, T17)",
+  forma: "a forma da cena (estante.js): como narrar este turno, sem fato nenhum; lida pelo ator é ordem de Mestre (a 15.ª, defeito 6)",
   semTraducao: "sem tradução: a tabela ainda não sabe dizer esta linha como fato",
 });
 
@@ -224,6 +241,22 @@ export const A_VOZ_DO_NUMERO = Object.freeze([
 /* um traço com a forma que o material dele pede */
 const vozComNumero = (traco, temNumero) => { const v = A_VOZ_DO_NUMERO.find((x) => x.de.test(str(traco).trim())); return v ? (temNumero ? v.comNumero : v.semNumero) : traco; };
 
+/* A VOZ QUE EMPURRA A PERGUNTA (a 15.ª sessão, caso 7). A Yvete tinha
+   «Fala: responde com outra pergunta», e em 12 turnos as 12 falas dela
+   foram perguntas, cinco delas em alternativa («come o caldo ou a
+   fumaça?») — o «Vai X ou Y?» que a última palavra já tinha deixado de
+   pedir voltou pela voz. O traço manda, e o ator obedece-lhe em cada fala.
+   Cada traço que empurra a pergunta (o do núcleo, COMO_FALA; o da base,
+   MODOS de mundo-base.js) ganha a mesma marca da pessoa dita sem ponto de
+   interrogação: o jeito de fugir, de se dar razão, de pôr tudo em troca.
+   `de` lê o traço como vem. */
+export const A_VOZ_QUE_PERGUNTA = Object.freeze([
+  { id: "pergunta", de: /^responde com outra pergunta$/u, o: "responde de viés, numa afirmação curta" },
+  { id: "razao", de: /^acaba tudo a pedir razão$/u, o: "acaba as frases a dar-se razão" },
+  { id: "preco", de: /^pergunta o preço de tudo, até do silêncio$/u, o: "põe tudo em troca, até o silêncio" },
+]);
+const vozSemPergunta = (traco) => { const v = A_VOZ_QUE_PERGUNTA.find((x) => x.de.test(str(traco).trim())); return v ? v.o : traco; };
+
 /* A FRASE NÃO É O RESULTADO (03/11, a 14.ª sessão, conserto 1). Três vezes
    a frase do herói virou fato na prosa sem o sistema a ter resolvido: «Pago
    a sopa» (a bolsa 15 → 15) e a Leonor viu «três estalos na tábua»; «pago um
@@ -238,11 +271,20 @@ const vozComNumero = (traco, temNumero) => { const v = A_VOZ_DO_NUMERO.find((x) 
    o `resultado` das regras de envelope). `poder` não tem `rx`: lê os nomes
    das habilidades do herói, ao pé de um verbo de usar (VERBO_DO_PODER). */
 export const O_QUE_A_FRASE_FAZ = Object.freeze([
-  { id: "pagar", rx: /\b(pago|paguei|pagamos|compro|comprei|compramos|alugo|arremato|deixo (?:\S+ ){0,3}(?:moedas|estalos|cobres|pratas))\b/u, feito: "pagou", resolve: Object.freeze(["pagar", "teste"]) },
+  { id: "pagar", rx: /\b(pago|paguei|pagamos|compro|comprei|compramos|alugo|arremato|deixo (?:\S+ ){0,3}(?:moedas|estalos|cobres|pratas))\b/u, feito: "pagou", porOutro: "pagou", resolve: Object.freeze(["pagar", "teste"]) },
   { id: "descansar", rx: /\b(durmo|dormimos|vou dormir|adorme[cç]o|deito-me para dormir|descanso|descansamos|acampo|acampamos|monto (?:o )?acampamento)\b/u, feito: "descansou", resolve: Object.freeze(["descansar", "teste"]) },
   { id: "poder", rx: null, feito: "usou {X}", resolve: Object.freeze(["poder", "golpe", "teste"]) },
   { id: "curar", rx: /\b(curo|trato (?:d?as )?feridas|fa[cç]o um curativo|ligo a ferida|estanco o sangue)\b/u, feito: "curou ninguém", resolve: Object.freeze(["poder", "teste"]) },
   { id: "atacar", rx: /\b(ataco|golpeio|esfaqueio|apunhalo|degolo|disparo contra|atiro contra|avan[cç]o sobre)\b/u, feito: "acertou golpe nenhum", resolve: Object.freeze(["golpe", "poder", "luta", "teste"]) },
+  /* IR (a 15.ª sessão, defeito 2): «Deixo o Barril e vou à sede da
+     Companhia Tortuoso» entrou crua, e o sistema deixou o herói no Barril.
+     Ir é sair daqui para um sítio com nome (a maiúscula) ou para um sítio
+     que se diz pelo que é (o templo, a praça, o portão); andar dentro da
+     sala («vou ao balcão», «volto à mesa») não é. Lê-se na oração como
+     veio (`caso`), porque o nome do sítio é a maiúscula. Resolve-o o
+     movimento que o sistema registou (o envelope MOVIMENTO) ou a luta, que
+     anda no tabuleiro. */
+  { id: "ir", caso: true, rx: /(?:^|[^\p{L}])(?:(?:vou|vamos|sigo|seguimos|volto|voltamos|regresso|regressamos|parto|partimos|caminho|caminhamos|corro|ando|subo|des[cç]o|atravesso|dirijo-me|me dirijo)(?![\p{L}])[^.!?;]{0,40}?(?:^|[^\p{L}])(?:para|at[eé]|rumo a|em dire[cç][aã]o a|à|ao|aos|às|a)|(?:deixo|deixamos|saio|sa[ií]mos|abandono)(?![\p{L}])\s+(?:d[aoe]s?))\s+(?:(?:o|a|os|as|um|uma)\s+)?(?:\p{Lu}|(?:[\p{Ll}-]+\s+){0,2}(?:templo|pra[cç]a|porto|cais|mercado|sede|estalagem|taverna|igreja|capela|castelo|forte|guilda|quartel|torre|port[aã]o|muralha|cidade|vila|aldeia|estrada|ponte|feira|biblioteca|arquivo|ferraria|docas?|bairro|po[cç]o|sa[ií]da|arena|li[cç]a|mina|floresta|bosque|colina|ru[ií]nas?|cripta|caverna|gruta|est[aá]bulo|estaleiro)(?![\p{L}]))|(?:^|[^\p{L}])(?:deixo|deixamos|abandono)\s+(?:o|a|os|as)\s+\p{Lu}/u, feito: "saiu daqui", resolve: Object.freeze(["mover", "luta", "golpe"]) },
 ]);
 const ATO_QUE_SO_PERGUNTA = /\?|\b(se|caso|talvez|quanto|quantos|quantas|posso|podemos|poderia|pergunto|quero saber|antes de)\b/u;
 const VERBO_DO_PODER = /\b(rezo|oro|lan[cç]o|conjuro|invoco|evoco|uso|recito|chamo|ergo|aplico|fa[cç]o)\b/u;
@@ -250,8 +292,17 @@ const VERBO_DO_PODER = /\b(rezo|oro|lan[cç]o|conjuro|invoco|evoco|uso|recito|ch
    ({H} o herói, {F} a frase, {L} os atos por fazer, juntos por «nem») */
 export const A_INTENCAO_DITA = Object.freeze({
   quer: "{H} quer: «{F}»",
-  porFazer: "Só a intenção, por agora: {H} ainda não {L}.",
+  porFazer: "Só a intenção, por agora: {L}.",
+  dele: "{H} ainda não {L}",
   nem: " nem ",
+  /* O QUE NINGUÉM FEZ POR ELE (a 15.ª sessão, caso 3a): na sopa por pagar,
+     a companheira pôs três estalos no balcão — a linha dizia só que o
+     herói não pagou. O ato que outro podia fazer por ele (o `porOutro` do
+     ato) diz-se de toda a gente: «ninguém pagou ainda» — o herói, a
+     companheira, quem estiver. É mais curto que a linha de antes, e não
+     deixa porta a ninguém. {X} o que não se fez. */
+  ninguem: "ninguém {X} ainda",
+  e: ", e ",
 });
 
 /* O QUE FICOU COMBINADO (03/11, a 14.ª sessão, conserto 3). A Inez pediu no
@@ -715,7 +766,7 @@ function osAtosPorFazer(frase, feitos, poderes) {
     for (const a of O_QUE_A_FRASE_FAZ) {
       if (vistos.has(a.id) || a.resolve.some((r) => feitos.has(r))) continue;
       let feito = "";
-      if (a.rx) { if (a.rx.test(or)) feito = a.feito; }
+      if (a.rx) { if (a.rx.test(a.caso ? m[0] : or)) feito = a.feito; }
       else if (VERBO_DO_PODER.test(or)) { const n = poderes.find((x) => sem(x).length >= 4 && sem(or).includes(sem(x))); if (n) feito = tpl(a.feito, { X: n }); }
       if (feito) { vistos.add(a.id); out.push(feito); }
     }
@@ -839,6 +890,11 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
   ],
   "MOMENTO": [
     { de: /^ESPINHA — [^:]*: (?:\S+ )?(.+?)\. EM JOGO: (.+?)(?: A PERGUNTA: .*)?$/, vai: "cena", como: (m) => `${ponto(maiuscula(m[1].replace(/, (n[oa]s? |à guarda )/, " está $1")))} O que está em jogo: ${ponto(m[2])}` },
+    /* a obra do outro lado que CORRE AGORA (batidas.js, marcaDaEtapa) não
+       «já aconteceu»; e o «se o herói tardar, chegam primeiro» chegava sem
+       dizer a quê, e o ator completou-o com uma carroça para Cova Negro (a
+       15.ª, defeito 6): chegam primeiro ao que o herói procura */
+    { de: /^(?:A|O|UM|UMA) [\p{Lu} ]+ DEL[EA] \(corre agora[^)]*\): (.+?)(; se o herói tardar, chegam primeiro)?\.?$/u, vai: "aconteceu", como: (m, c) => `Está a acontecer agora: ${m[1]}${m[2] ? `; e, se ${c.H} tardar, chegam primeiro ao que ${c.H} procura` : ""}.` },
     { de: /^(?:A|O|UM|UMA) [\p{Lu} ]+ DEL[EA] \([^)]*\): (.+)$/u, vai: "aconteceu", como: (m) => `Já aconteceu: ${ponto(m[1])}` },
     { de: /^A PERGUNTA/, cai: "pergunta" },
     { de: /^(?!\p{Lu}{2,})(.+)$/u, vai: "cena", como: (m) => ponto(m[1]) },
@@ -944,10 +1000,16 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^CLIMA$/, vai: "cena", como: (t) => { const m = t.match(/agora está (.+?) — /u); return m ? `O tempo virou: agora está ${m[1]}.` : "O tempo virou."; } },
   { tipo: /^SONHO$/, vai: "aconteceu", como: (t, c) => { const m = t.match(/^O sonho desta noite: "(.+?)"/u); return m ? `${c.H} sonhou esta noite: «${m[1]}».` : `${c.H} sonhou esta noite.`; } },
   { tipo: /^ONDE ACORDO$/, vai: "aconteceu", como: (t, c) => `${c.H} acorda onde dormiu, ainda na estrada.` },
-  { tipo: /^ABERTURA DA CAMPANHA/, cai: "oficio" },
+  /* a abertura diz o que o herói traz e o que sabe (a 15.ª, defeito 5): o
+     resto do envelope, as quatro partes e o tamanho, é ofício */
+  { tipo: /^ABERTURA DA CAMPANHA/, vai: "abertura", como: (t, c) => aAberturaDita(t, c) },
   { tipo: /^OFICINA/, vai: "aconteceu", como: (t, c) => `Já feito por ${c.H}: «${ponto(t)}»` },
   { tipo: /^(AGORA|O MUNDO SE MEXE|EVENTO GLOBAL)/, vai: "aconteceu", como: (t) => ponto(t) },
-  { tipo: /^A FORMA DESTA CENA/, vai: "cena", como: (t) => ponto(t.split(/\.\s+E nesta:/)[0].replace(/^A cena pede (um|uma) /, "Há $1 ")) },
+  /* A FORMA DA CENA (biblioteca.js, envelopeDaCena) é como narrar, e não
+     traz fato nenhum — o próprio envelope o diz («Isto NÃO é um
+     acontecimento»). Lida pelo ator é ordem: «Gaste a primeira frase na
+     coisa pequena e deixe ela inacabada» passou à ficha na 15.ª (defeito 6) */
+  { tipo: /^A FORMA DESTA CENA/, cai: "forma" },
   /* o custo da fuga (oEnvelopeDoCorpo «custoDaFuga») é FUGA também: os
      golpes de quem ficou, ditos um a um */
   { tipo: /^FUGA$/, vai: "aconteceu", como: (t, c) => (/^Ao dar as costas:/.test(t) ? osGolpesNasCostas(t, c, A_LUTA_DITA.custoDaFuga) : ponto(t.replace(/\bdo herói\b/g, "de {H}").replace(/\bo herói\b/g, "{H}"))) },
@@ -968,7 +1030,7 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^O MUNDO LEMBROU/, vai: "aconteceu", como: (t) => { const m = t.match(/alguém ainda comenta — por (".+?"), (.+?)\. Isto/); return m ? `No lugar onde aconteceu, alguém ainda comenta ${m[1]} (${m[2]}).` : ponto(t.split(". Isto não")[0]); } },
   { tipo: /^A LUTA VIROU/, vai: "aconteceu", como: (t) => ponto(t.split(". Mostre")[0]) },
   { tipo: /^O COMPANHEIRO FOI EMBORA/, vai: "aconteceu", como: (t) => ponto(t.split(". Narre")[0]) },
-  { tipo: /^MOVIMENTO/, vai: "aconteceu", como: (t, c) => { const m = t.match(/AGORA estou (n[ao]s? .+?)\./); return m ? `${c.H} chegou: está agora ${m[1]}.` : `${c.H} mudou de lugar.`; } },
+  { tipo: /^MOVIMENTO/, vai: "aconteceu", resultado: "mover", como: (t, c) => { const m = t.match(/AGORA estou (n[ao]s? .+?)\./); return m ? `${c.H} chegou: está agora ${m[1]}.` : `${c.H} mudou de lugar.`; } },
   /* O TESTE QUE JÁ ROLOU (03/11): a frase do turno é o envelope do dado
      (O_DADO_NA_FRASE). O ator recebe o resultado em palavras — o que o
      herói tentou e se conseguiu —, nunca o d20, a dificuldade ou a ordem.
@@ -981,6 +1043,33 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
   { tipo: /^SOCIAL/, vai: "aconteceu", resultado: "teste", como: (t, c) => { const m = t.match(/Tentei (.+?) e (CONSEGUI|NÃO consegui)/u); const pedia = (t.match(/O que eu pedia era (.+?), e a resposta é não/u) || [])[1]; return m ? `${c.H} tentou ${m[1]}, e ${m[2] === "CONSEGUI" ? "conseguiu" : "não conseguiu"}${pedia ? `: pedia ${pedia}, e a resposta é não` : ""}.` : `${c.H} tentou a conversa.`; } },
   { tipo: /^BUSCA CONCLUÍDA/, vai: "aconteceu", resultado: "teste", como: (t, c) => `${c.H} revistou o lugar do chão ao teto, e aqui não há nada escondido.` },
 ]);
+/* A ABERTURA DITA (a 15.ª sessão, defeito 5). O envelope da abertura
+   (abertura.js, pedidoDaAbertura) caía inteiro como ofício, e a ficha do
+   primeiro turno ficava sem o que o herói traz: a Yvete abriu a falar «se a
+   velha não estiver onde disseram» — a Isolda, o segundo passo, que o
+   MOMENTO dava —, e o Godofredo e o Barril Rachado, o primeiro, que estão
+   em `abertura.sabe`, não chegaram. Do envelope ficam os fatos (onde chegou,
+   a regra da porta, a pequena história, porque veio, o que sabe, onde ainda
+   não está); a forma (as quatro partes, as palavras, o fecho) é ofício.
+   `de` lê cada pedaço do texto do envelope (numa linha só: o envelope chega
+   com os espaços juntos); `o` diz como entra. {H} o
+   herói, {A}/{B} o que se leu. */
+export const A_ABERTURA_DITA = Object.freeze([
+  { id: "chegada", vai: "cena", de: /\bChegou agora (.+?)\. O que se vê/u, o: "{H} chegou agora {A}." },
+  { id: "porta", vai: "cena", de: /\bÀ porta vale já a regra daqui: (.+?) — /u, o: "À porta vale a regra daqui: {A}." },
+  { id: "historia", vai: "extra", de: /A PEQUENA HISTÓRIA DO LUGAR\. (.+?)\.\s+4\)/u, o: "{A}." },
+  { id: "razao", vai: "aconteceu", de: /não como pedido de ninguém: (.+?)\. O que sabe: /u, o: "O que traz {H} aqui: {A}." },
+  { id: "sabe", vai: "aconteceu", de: /\. O que sabe: (.+?)\.\s+Já decidido/u, o: "O que {H} sabe: {A}." },
+  { id: "aindaNao", vai: "aconteceu", de: /\bEle ainda NÃO está (.+?) nem diante de (.+?)\. /u, o: "{H} ainda não está {A}, nem diante de {B}." },
+]);
+function aAberturaDita(t, c) {
+  const out = { cena: [], extra: [], aconteceu: [] };
+  for (const x of A_ABERTURA_DITA) {
+    const m = str(t).match(x.de);
+    if (m) out[x.vai].push(ponto(tpl(x.o, { H: c.H, A: limpo(m[1]), B: limpo(m[2]) })));
+  }
+  return out;
+}
 /* os golpes nas costas: «X acertou (3); Y errou» → quem acerta, quem falha */
 function osGolpesNasCostas(t, c, modelo) {
   const m = t.match(/(?:dei as costas|Ao dar as costas): (.+?)\. Levei\b/u);
@@ -1161,8 +1250,32 @@ export function aFichaDeAtor(entrada) {
     marca(`[${e.tipo}]`, e.texto, r.vai);
     if (r.resultado) resultados.add(r.resultado);
     if (r.vai === "cena") cena.push(crivado(`[${e.tipo}]`, v)); else if (r.vai === "aconteceu") aconteceu.push(crivado(`[${e.tipo}]`, v)); else if (r.vai === "diz") diz.push(v);
+    else if (r.vai === "abertura") { cena.push(...v.cena); cenaExtra.push(...v.extra); aconteceu.push(...v.aconteceu); }
     else if (r.vai === "frase") { if (!frase && v) frase = limpo(v); }
   }
+
+  /* A PESSOA DO PASSO (a 15.ª sessão, defeito 1): quem a missão manda
+     procurar, com o herói no sítio dela, está em cena se a hora é a dela
+     (a-pessoa-do-passo.js); fora da hora, a cena diz onde anda e quando
+     volta. Quem a pauta já pôs em cena fica como está, e ganha o que o
+     passo sabe dela. */
+  let passo = [];
+  try { passo = aPessoaDoPasso(estado); } catch { passo = []; }
+  const ausentes = [];
+  for (const x of passo) {
+    const ja = [...pessoas.keys()].find((k) => mesmo(k, x.nome));
+    if (!x.aqui && !ja) { ausentes.push(x.ausente); continue; }
+    const p = ja ? pessoas.get(ja) : pessoa(x.nome, { oque: x.papel || undefined });
+    p.doPasso = x.onde;
+    if (x.voz) p.vozDaBase = x.voz;
+    if (x.genero && !p.genero) p.genero = x.genero;
+    for (const s of x.sabe) if (!p.sabe.includes(s)) p.sabe.push(s);
+    p.agora.push(...x.agora);
+    if (x.quer && !p.quer) p.quer = x.quer;
+  }
+  /* o rumo que aponta para a pessoa do passo já não é vontade da
+     companheira: a pessoa está em cena, ou a cena diz porque não está */
+  if (aponta && passo.some((x) => sem(aponta).startsWith(sem(`falar com ${x.nome}`)))) aponta = "";
 
   /* quem ficou de pé na luta, quando a pauta não traz a linha dela (a da
      pauta já põe o corpo em cada pessoa) */
@@ -1196,6 +1309,8 @@ export function aFichaDeAtor(entrada) {
       p.nucleoPapel = nu.papel;
     }
     if (!p.tique && p.vozDaPauta) p.tique = str(p.vozDaPauta).replace(/,\s*como em\s*["“«].*$/u, "");
+    /* a pessoa do passo que não é do núcleo fala com o jeito que a base lhe deu */
+    if (!p.tique && p.vozDaBase) p.tique = p.vozDaBase;
     if (p.comVoce && !p.oque) p.oque = [p.raca, p.classe].filter(Boolean).join(", ").toLowerCase();
     if (c.procurado && !p.comVoce) p.procurado = true;
     if (p.fera) p.registo = REGISTOS_DE_FALA[0].o;
@@ -1232,7 +1347,7 @@ export function aFichaDeAtor(entrada) {
   const numerosDaCena = /\d/.test([...cena, ...cenaExtra, ...venda].join(" "));
   for (const p of pessoas.values()) {
     const temNumero = numerosDaCena || /\d/.test([...p.sabe, ...diz.filter((d) => d.quem && mesmo(d.quem, p.nome)).map((d) => d.o)].join(" "));
-    if (p.tique) p.tique = vozComNumero(p.tique, temNumero);
+    if (p.tique) p.tique = vozSemPergunta(vozComNumero(p.tique, temNumero));
     if (p.registo) p.registo = vozComNumero(p.registo, temNumero);
   }
   /* O QUE FICOU COMBINADO (O_COMBINADO): o pedido de cada pessoa em cena,
@@ -1286,7 +1401,7 @@ export function aFichaDeAtor(entrada) {
   /* quem a frase chama e não está aqui: o registo sabe onde a pessoa vive
      (s10 #35: «Pergunto a Helga…», e a Helga não estava na cena) */
   for (const [nome, reg] of Object.entries(G.npcs)) {
-    if (!ehObj(reg) || [...pessoas.keys()].some((k) => mesmo(k, nome))) continue;
+    if (!ehObj(reg) || [...pessoas.keys()].some((k) => mesmo(k, nome)) || passo.some((x) => mesmo(x.nome, nome))) continue;
     const prim = sem(nome).split(/[ ,]/)[0];
     if (prim.length >= 3 && new RegExp(`(^|[^a-z])${prim}([^a-z]|$)`).test(sem(frase))) longe.push(`${nome} não está aqui${reg.local ? `: vive em ${reg.local}, fora desta cena` : ""}.`);
   }
@@ -1316,12 +1431,18 @@ export function aFichaDeAtor(entrada) {
   const montar = (corta) => {
     const L = [];
     const tira = (k) => corta.includes(k);
-    L.push("CENA", ...[...cabCena, ...cena.map(ponto), quando, ...(tira("cenaExtra") ? [] : cenaExtra.map(ponto))].filter(Boolean).map((x) => x.slice(0, FICHA_DE_ATOR.linhaMax)));
+    L.push("CENA", ...[...cabCena, ...cena.map(ponto), ...ausentes, quando, ...(tira("cenaExtra") ? [] : cenaExtra.map(ponto))].filter(Boolean).map((x) => x.slice(0, FICHA_DE_ATOR.linhaMax)));
     L.push("ACONTECEU");
     const F = frase.length > FICHA_DE_ATOR.fraseMax ? frase.slice(0, FICHA_DE_ATOR.fraseMax).replace(/\s+\S*$/, "") + "…" : frase;
     if (frase) L.push(porFazer.length ? tpl(A_INTENCAO_DITA.quer, { H, F }) : `${H}: «${F}»`);
     L.push(...aconteceu.map(ponto));
-    if (porFazer.length) L.push(tpl(A_INTENCAO_DITA.porFazer, { H, L: porFazer.join(A_INTENCAO_DITA.nem) }));
+    if (porFazer.length) {
+      const I = A_INTENCAO_DITA;
+      const deTodos = O_QUE_A_FRASE_FAZ.filter((a) => a.porOutro && porFazer.includes(a.feito));
+      const dele = porFazer.filter((f) => !deTodos.some((a) => a.feito === f));
+      const partes = [...deTodos.map((a) => tpl(I.ninguem, { X: a.porOutro })), ...(dele.length ? [tpl(I.dele, { H, L: dele.join(I.nem) })] : [])];
+      L.push(tpl(I.porFazer, { L: partes.join(I.e) }));
+    }
     L.push("QUEM ESTÁ");
     const todos = [...pessoas.values()];
     const bloco = todos.slice(0, FICHA_DE_ATOR.pessoasMax), resto = todos.slice(FICHA_DE_ATOR.pessoasMax);

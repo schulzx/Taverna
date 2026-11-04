@@ -37,7 +37,13 @@ import {
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
   TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase, A_LUTA_DITA,
   O_QUE_A_FRASE_FAZ, A_INTENCAO_DITA, A_VOZ_DO_NUMERO, O_COMBINADO, A_CONVERSA_DA_FRASE, A_RESPOSTA_DITA,
+  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA,
 } from "../src/motor/ficha-de-ator.js";
+import { oPassoNaCidade } from "../src/motor/tempo-do-turno.js";
+import { garantirAbertura, pedidoDaAbertura } from "../src/abertura.js";
+import { envelopeDaCena } from "../src/biblioteca.js";
+import { JOGADAS as estante } from "../src/estante.js";
+import { marcaDaEtapa } from "../src/batidas.js";
 import { oEnvelopeDoAcampamento, oEnvelopeDoJogador, oEnvelopeDoTempo } from "../src/motor/envelopes-do-turno.js";
 import { compraNaFrase, envelopeDaCompra, vetoDaCompra, dadivaNaFrase, envelopeDaDadiva } from "../src/bolsa-da-frase.js";
 import { balcaoDeMantimentos } from "../src/mercado.js";
@@ -379,11 +385,20 @@ const ac = (f) => f.partes.ACONTECEU;
 
 /* conserto 1 — a frase não é o resultado */
 const sopa = aFichaDeAtor({ frase: "Pago a sopa, como depressa e vou com a Leonor até ao templo procurar a Inez.", nota: POCA, estado: BRAM });
-t("T5 «Pago a sopa» sem cobrança: a frase entra como o que Bram QUER, e a ficha diz que ainda não pagou", ac(sopa).startsWith("Bram Pedra-Alta quer: «Pago a sopa") && ac(sopa).includes(tpl(A_INTENCAO_DITA.porFazer, { H: "Bram Pedra-Alta", L: "pagou" })));
+/* MOVIDA (03/11, a 15.ª sessão, caso 3a e defeito 2): pedia a linha
+   «Bram ainda não pagou.». A frase também diz «vou com a Leonor até ao
+   templo», e o sistema não moveu o Bram — ir é ato por fazer (defeito 2); e
+   na 15.ª a companheira pagou a sopa que o herói não pagou, por isso o pagar
+   diz-se de toda a gente («ninguém pagou ainda»). A intenção da asserção
+   fica: a frase entra como o que Bram quer, e a ficha diz que não se pagou */
+t("T5 «Pago a sopa» sem cobrança: a frase entra como o que Bram QUER, e a ficha diz que ninguém pagou ainda, e que Bram ainda não saiu dali", ac(sopa).startsWith("Bram Pedra-Alta quer: «Pago a sopa") && ac(sopa).includes(tpl(A_INTENCAO_DITA.porFazer, { L: [tpl(A_INTENCAO_DITA.ninguem, { X: "pagou" }), tpl(A_INTENCAO_DITA.dele, { H: "Bram Pedra-Alta", L: "saiu daqui" })].join(A_INTENCAO_DITA.e) })));
 const notaDoSono = oEnvelopeDoJogador("oQueEuEscrevi", { acao: "Pago um quarto comum para esta noite, subo e durmo até de manhã. Amanhã apanho a Inez no turno dela." });
 const sono = aFichaDeAtor({ frase: oEnvelopeDoAcampamento("levantarDescansado", { antes: "Dormiu-se sem conversa à volta do fogo.", tipo: "longo", dur: "uma noite inteira", recibo: "PV e PM já foram restaurados.", cauda: [oEnvelopeDoTempo("climaDaNoite", { rotulo: "nublado", nota: "céu baixo" })] }), nota: `${POCA}\n${notaDoSono}`, estado: BRAM });
 t("T9 «pago um quarto… durmo» (o sono escrito): o ACONTECEU deixa de vir vazio — a frase, o descanso feito, a noite e o tempo", ac(sono).includes("Bram Pedra-Alta quer: «Pago um quarto comum") && ac(sono).includes("Bram Pedra-Alta descansou uma noite inteira") && ac(sono).includes("Dormiu-se sem conversa") && sono.partes.CENA.includes("agora está nublado"));
-t("…e o que o sistema fez resolve o seu ato: «ainda não pagou», e não «ainda não descansou»", ac(sono).includes("ainda não pagou.") && !ac(sono).includes("descansou."));
+/* MOVIDA (03/11, a 15.ª sessão, caso 3a): pedia «ainda não pagou.»; o
+   pagar diz-se agora de toda a gente («ninguém pagou ainda»). A intenção
+   fica: o descanso que o sistema fez resolve o seu ato, e o pagar não */
+t("…e o que o sistema fez resolve o seu ato: «ninguém pagou ainda», e não «ainda não descansou»", ac(sono).includes("ninguém pagou ainda.") && !ac(sono).includes("descansou."));
 t("…e nenhuma linha do sono fica sem tradução", sono.rastro.every((x) => x.cai !== "semTraducao"));
 const cura = aFichaDeAtor({ frase: "Ajoelho-me junto da Leonor, ponho as mãos sobre as costelas dela e rezo a Cura Leve.", nota: POCA, estado: BRAM });
 t("T25 «rezo a Cura Leve» em texto livre: ainda não usou Cura Leve (a habilidade lida do herói)", ac(cura).includes("Só a intenção, por agora: Bram Pedra-Alta ainda não usou Cura Leve."));
@@ -459,6 +474,49 @@ t("T5 «pergunto se a Inez passou por aqui», sem a Inez em cena: não falou com
 t("T4 o toque «Aceitar»: falou com quem pediu", aceite.conversa.includes("Inez do Prado Baixo"));
 t("olhar a estrada não é conversa com ninguém", conv("Olho a estrada.").length === 0);
 t("a conversa nos casos reais: só gente da ficha", res.every(({ r }) => r.conversa.every((n) => r.pessoas.some((p) => p.nome === n))));
+
+sec("§8 a 15.ª sessão (03/11): o que ainda impedia o ator de ser o padrão");
+/* mente/sessao-15.md. A pessoa do passo (o caso 1) tem suíte própria
+   (teste-a-pessoa-do-passo.mjs); aqui, o resto, cada um com a peça que o
+   produz no jogo. */
+const IRENE = { personagem: { nome: "Irene", grupo: [{ nome: "Yvete Perna-Seca", vinculo: 10, classe: "Monge" }] }, nucleoCache: { nucleo: { pessoas: [{ nome: "Yvete Perna-Seca", papel: "companheiro", ficha: { fala: COMO_FALA.find((f) => f.id === "f_pergunta") } }] } } };
+const BARRIL = "ONDE      n'O Barril Rachado, dentro de Cimo Negro\nEM CENA   Yvete Perna-Seca (com você)";
+/* defeito 2 — o movimento que o sistema não resolveu */
+const t8 = aFichaDeAtor({ frase: "Deixo o Barril e vou à sede da Companhia Tortuoso.", nota: BARRIL, estado: IRENE });
+t("T8 «Deixo o Barril e vou à sede da Companhia Tortuoso», e o sistema deixou-a no Barril: entra como o que Irene quer, e ainda não saiu dali", ac(t8).startsWith("Irene quer: «Deixo o Barril") && ac(t8).includes(tpl(A_INTENCAO_DITA.porFazer, { L: tpl(A_INTENCAO_DITA.dele, { H: "Irene", L: "saiu daqui" }) })));
+const passo = oPassoNaCidade({ cidadeAtual: "Cimo Negro", lugar: { nome: "O Barril Rachado" }, dia: 1 }, { nome: "A Sede da Companhia", onde: "dentro" });
+const t8mov = aFichaDeAtor({ frase: "Vou à Sede da Companhia.", nota: `${BARRIL}\n${passo.nota}`, estado: IRENE });
+t("…e com o movimento que o sistema registou (oPassoNaCidade), é fato: chegou, sem «Só a intenção»", ac(t8mov).includes("Irene chegou: está agora na Sede da Companhia.") && !/Só a intenção/.test(t8mov.texto));
+t("andar dentro da sala não é ir («vou ao balcão», «volto à mesa»), nem o que só se pergunta («se eu for ao templo…?»)", ["Vou ao balcão e peço uma caneca.", "Volto à mesa e sento-me.", "Se eu for ao templo, quem encontro?"].every((f) => !/Só a intenção/.test(aFichaDeAtor({ frase: f, nota: BARRIL, estado: IRENE }).texto)));
+const irNoCorpus = res.filter(({ r }) => r.texto.includes("ainda não saiu daqui"));
+t(`nos ${res.length} casos: ${irNoCorpus.length} frases de ir que o sistema não resolveu entram como intenção, e nenhuma tinha movimento registado`, irNoCorpus.length >= 20 && irNoCorpus.every(({ k }) => !/\[MOVIMENTO/.test(k.nota)));
+/* caso 3a — a companheira pagou o que ninguém pagou */
+const t3 = aFichaDeAtor({ frase: "Pago a sopa.", nota: BARRIL, estado: IRENE });
+t("T3 «Pago a sopa» sem cobrança: «ninguém pagou ainda» — nem Irene, nem a Yvete", ac(t3).includes(tpl(A_INTENCAO_DITA.porFazer, { L: tpl(A_INTENCAO_DITA.ninguem, { X: "pagou" }) })) && verificarAFicha(t3.texto).length === 0);
+t("a tabela: só o pagar se diz de toda a gente, e a linha passa no verificador", O_QUE_A_FRASE_FAZ.filter((a) => a.porOutro).map((a) => a.id).join() === "pagar" && verificarAFicha(tpl(A_INTENCAO_DITA.porFazer, { L: [tpl(A_INTENCAO_DITA.ninguem, { X: "pagou" }), tpl(A_INTENCAO_DITA.dele, { H: "Irene", L: "saiu daqui" })].join(A_INTENCAO_DITA.e) })).length === 0);
+/* caso 7 — a voz que empurra a pergunta */
+const falaY = falaDe(t3, "Yvete Perna-Seca");
+t("T1–T12: a voz da Yvete já não é «responde com outra pergunta» — é o jeito dela dito sem ponto de interrogação", !/pergunt/.test(falaY) && falaY.includes(A_VOZ_QUE_PERGUNTA.find((v) => v.id === "pergunta").o));
+const quePergunta = COMO_FALA.filter((f) => A_VOZ_QUE_PERGUNTA.some((v) => v.de.test(f.o)));
+t(`a tabela das vozes (COMO_FALA): ${quePergunta.length} de ${COMO_FALA.length} empurram a pergunta (${quePergunta.map((f) => f.id).join(", ")}), e cada uma tem forma sem pergunta`, quePergunta.length === 3 && A_VOZ_QUE_PERGUNTA.every((v) => !/\?|pergunt/.test(v.o) && verificarAFicha(v.o).length === 0));
+const vozesQuePerguntam = (txts) => txts.reduce((a, x) => a + x.split("\n").filter((l) => /^\s+Fala: /.test(l) && A_VOZ_QUE_PERGUNTA.some((v) => l.includes(v.de.source.replace(/^\^|\$$/g, "")))).length, 0);
+/* medido em 03/11: nos 434, 83 das 940 vozes empurravam a pergunta antes
+   deste conserto; o banco da 14.ª (29 fichas, 40 vozes) não tinha nenhuma —
+   a voz da Yvete era da 15.ª */
+t(`no banco da 14.ª, ${vozesQuePerguntam(BANCO.map((b) => b.ficha))} de ${BANCO.reduce((a, b) => a + b.ficha.split("\n").filter((l) => /^\s+Fala: /.test(l)).length, 0)} vozes empurravam a pergunta; nos ${res.length} casos, agora, ${vozesQuePerguntam(res.map(({ r }) => r.texto))}`, vozesQuePerguntam(res.map(({ r }) => r.texto)) === 0);
+/* defeito 5 — a abertura escondia o primeiro passo */
+const AB = garantirAbertura({ principalId: "mis_principal", cidade: "Cimo Negro", chegada: "à porta de Cimo Negro, com a poeira da estrada ainda na roupa", razao: "alguém a quem devia a vida pediu-lhe que fosse a Cimo Negro atrás de Isolda", sabe: "Godofredo, taverneiro, é quem, nesta cidade, sabe mais de Isolda; encontra-se n'O Barril Rachado", historia: "Cimo Negro vive do carvão que desce da serra", pista: { nome: "Godofredo", papel: "taverneiro", local: "O Barril Rachado" }, alvo: { feitio: "procurar", quem: "Isolda", onde: "A Casa da Ponte" } });
+const t0 = aFichaDeAtor({ frase: pedidoDaAbertura(AB, { habilidades: ["Cura Leve"], moeda: "estalos" }), nota: "ONDE      à porta de Cimo Negro\nEM CENA   Yvete Perna-Seca (com você)", estado: IRENE });
+t("T0 a abertura: o que Irene sabe chega à ficha — o Godofredo e o Barril Rachado, o primeiro passo (era tudo «ofício»)", ac(t0).includes("O que Irene sabe: Godofredo, taverneiro, é quem, nesta cidade, sabe mais de Isolda; encontra-se n'O Barril Rachado.") && ac(t0).includes("Irene ainda não está no Barril Rachado, nem diante de Godofredo."));
+t("…e onde chegou, a pequena história do lugar e porque veio; nada sem tradução, e passa no verificador", t0.partes.CENA.includes("Irene chegou agora à porta de Cimo Negro") && t0.partes.CENA.includes("vive do carvão") && ac(t0).includes("O que traz Irene aqui:") && t0.rastro.every((x) => x.cai !== "semTraducao") && verificarAFicha(t0.texto).length === 0);
+t("a tabela da abertura: ids únicos, cada um com um destino e uma frase que passa no verificador", new Set(A_ABERTURA_DITA.map((x) => x.id)).size === A_ABERTURA_DITA.length && A_ABERTURA_DITA.every((x) => ["cena", "extra", "aconteceu"].includes(x.vai) && verificarAFicha(x.o.replace(/\{[A-Z]\}/g, "Irene")).length === 0));
+/* defeito 6 — as ordens de Mestre que ainda passavam */
+const forma = estante.find((f) => f.id === "no_meio_do_pequeno");
+const t3f = aFichaDeAtor({ frase: "Pago a sopa.", nota: `${BARRIL}\n${envelopeDaCena(forma)}`, estado: IRENE });
+t("T3 a forma da cena («Gaste a primeira frase na coisa pequena…») cai como forma: é como narrar, não fato", !/Gaste|interrompe uma coisa/.test(t3f.texto) && t3f.cobertura.caidos.forma === 1 && "forma" in MOTIVOS_DO_CORTE);
+const obra = marcaDaEtapa({ fase: "rumor", como: "travada", passo: 0, gente: "os sem-casa", cidade: "Cimo Negro", onde: "A Casa da Ponte", diz: "" }, "");
+const t8o = aFichaDeAtor({ frase: "Olho em volta.", nota: `${BARRIL}\nMOMENTO   ${obra}`, estado: IRENE });
+t("T8 a obra que corre agora (batidas.js) não «já aconteceu», e o «chegam primeiro» diz a quê", ac(t8o).includes("Está a acontecer agora:") && ac(t8o).includes("se Irene tardar, chegam primeiro ao que Irene procura") && !/Já aconteceu/.test(ac(t8o)) && verificarAFicha(t8o.texto).length === 0);
 
 console.log(`\nficha de ator: ${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

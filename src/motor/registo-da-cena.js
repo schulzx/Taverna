@@ -38,7 +38,8 @@
        aceite:  o pedido aceite neste turno ({ de, objeto, pede }), ou nada
        estado:  o de agora (personagem, npcs) — o herói não se regista, e o
                 item que já está na mochila não entra duas vezes
-     → { pessoas: [{ nome, papel, genero? }], falou_com: [nome], itens: [{ nome, descricao }] }
+     → { pessoas: [{ nome, papel, genero?, local? }], falou_com: [nome], itens: [{ nome, descricao }] }
+       (local: o sítio da pessoa do passo, a-pessoa-do-passo.js)
 
    Puro, sem React. Provado em `testes/teste-registo-da-cena.mjs`.
    ============================================================ */
@@ -89,7 +90,8 @@ export function oQueACenaRegista(entrada) {
     const papel0 = limpo(p.oque || p.papel || "");
     const papelEGenero = /^(ele|ela)$/u.test(papel0);
     const g = sem(papelEGenero ? papel0 : p.genero || "");
-    out.pessoas.push({ nome: limpo(p.nome).slice(0, 40), papel: papelEGenero || /^voz\b/u.test(papel0) ? "" : papel0, ...(/^(ela|mulher)$/u.test(g) ? { genero: "ela" } : /^(ele|homem)$/u.test(g) ? { genero: "ele" } : {}) });
+    /* a pessoa do passo (a 15.ª sessão) entra com o sítio onde o passo a pôs */
+    out.pessoas.push({ nome: limpo(p.nome).slice(0, 40), papel: papelEGenero || /^voz\b/u.test(papel0) ? "" : papel0, ...(/^(ela|mulher)$/u.test(g) ? { genero: "ela" } : /^(ele|homem)$/u.test(g) ? { genero: "ele" } : {}), ...(limpo(p.doPasso) ? { local: limpo(p.doPasso).slice(0, 60) } : {}) });
   }
   /* o que o pedido aceite põe na mão do herói */
   const a = ehObj(ent.aceite) ? ent.aceite : null;
