@@ -40,7 +40,13 @@ sec("1. a tábua existe, e é desenho");
   /* NENHUM ARQUIVO: a cortiça é gradiente, o percevejo é gradiente, a
      moldura é borda. Um url() aqui seria a primeira imagem do repositório
      entrando pela porta dos fundos. */
-  t("nenhuma imagem externa na folha", !/url\((?!['"]?https:\/\/fonts\.googleapis)/.test(FOLHA));
+  /* MOVIDA em 04/11 (a Mesa C): a madeira e o papel da casca são ruído SVG
+     ESCRITO na folha (data:image/svg+xml, um feTurbulence) — nem arquivo,
+     nem rede. A intenção fica: nenhuma imagem de fora entra pela folha; só
+     o SVG gerado ali mesmo passa (com o url(#…) de dentro dele, que aponta
+     para o próprio filtro), e nenhum outro data: (png, jpg). */
+  t("nenhuma imagem externa na folha", !/url\((?!['"]?(?:https:\/\/fonts\.googleapis|data:image\/svg\+xml|%23))/.test(FOLHA));
+  t("e nenhuma imagem de mapa de bits embutida (png, jpg, webp)", !/data:image\/(?:png|jpe?g|webp|gif)/.test(FOLHA));
   t("a cortiça é feita de gradiente", /\.tv-cortica[\s\S]{0,700}?radial-gradient/.test(CSS));
   t("o percevejo também", /\.tv-percevejo[\s\S]{0,300}?radial-gradient/.test(CSS));
   t("e a moldura é borda de verdade", /\.tv-cortica[\s\S]{0,700}?border: 7px solid/.test(CSS));
