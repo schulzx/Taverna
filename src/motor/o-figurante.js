@@ -63,6 +63,7 @@ import { cenarioAtivo } from "../cenario.js";
 import { tiposPedidos } from "../lugar.js";
 import { rngDe } from "../geografia.js";
 import { COMO_FALA } from "../nucleo.js";
+import { mercadoresDaCidade, ITENS_POR_RESPOSTA, MERCADORIAS } from "../mercado.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -100,11 +101,92 @@ export const O_FIGURANTE = Object.freeze({
    preço da própria banca. Quem vende é a gente sem nome destes sítios; o
    que tem à venda é o que está a fazer, não um «Sabe» — continua sem saber
    nada além da banca. {V} o que há e quanto custa, como a banca o diz. */
+/* A 17.ª (04/11, defeito 5) achou as duas portas que ainda falhavam. No T8
+   («o que vende e quanto custa») a pauta não trouxe linha nenhuma — a frase
+   não nomeia mercadoria, e mercadoParaPauta só responde à coisa nomeada —, e
+   a mascate recebeu «Não sabe responder a». No T9 («Qual é o preço de uma
+   ração… aqui na banca?») as linhas vieram, mas com outra forma («não há …
+   à venda…; … à venda: …», «no balcão de mantimentos: …»), e foram para o
+   Gareth. Agora: toda linha de preço da banca e do balcão (`de`, um molde
+   por forma, o que se diz no grupo 1) é do mascate; e a pergunta do preço
+   ao lugar sem linha nenhuma (`pergunta`, lida sem acento) é respondida
+   pela banca do dia — as primeiras `itens` coisas das bancas da cidade
+   (mercado.js, mercadoresDaCidade: as mesmas do painel Mercado), sem o que
+   já se comprou. */
 export const O_FIGURANTE_VENDE = Object.freeze({
   tipos: Object.freeze(["mercado"]),
-  de: /^à venda(?: em [^:]+| aqui)?: (.+)$/u,
+  de: /^(?:à venda(?: em [^:]+| aqui)?: (.+)|(não há .+ à venda.*)|no balcão de mantimentos: (.+))$/u,
+  pergunta: /\b(o que (vende|vendem|tem|tens|ha)( a venda| para vender)?|quanto (custa|custam|e|sao|vale|valem|cobra|pede)|qual (e )?o preco|que preco|os precos|a quanto|a venda)\b/,
+  itens: ITENS_POR_RESPOSTA,
   diz: "tem à venda, e diz o preço a quem pergunta: {V}",
 });
+/* o que a linha de preço diz, da forma que vier (O_FIGURANTE_VENDE.de) */
+export function oQueALinhaVende(linha) {
+  const m = str(linha).match(O_FIGURANTE_VENDE.de);
+  if (!m) return "";
+  /* o que a banca TEM, sem a palavra do jogador sem acento («não há pocao à
+     venda…; poções e frascos à venda: …») nem a conta que o balcão faz */
+  if (m[2]) { const r = m[2].match(/^não há .+? à venda(?: em [^;]+)?; (.+)$/u); return limpo(r ? r[1] : m[2]); }
+  return limpo(m[1] || str(m[3]).split(" — ")[0]);
+}
+/* A BANCA DO DIA, para a pergunta ao lugar que não nomeia mercadoria: as
+   primeiras coisas das bancas da cidade, com o preço («Corda de Cânhamo 12
+   (Armazém da Praça)»), na forma da linha da pauta. A cidade do mapa; sem
+   ela, nada (o mascate continua a não saber). */
+export function aBancaDoDia(estado, frase) {
+  const e = ehObj(estado) ? estado : {};
+  /* a frase que nomeia uma mercadoria («uma maça de ferro») é pergunta por
+     ela, e responde-a a pauta (mercadoParaPauta): a banca do dia não fala
+     por cima — só a pergunta que não nomeia nada */
+  const f = sem(frase);
+  if (MERCADORIAS.some((m) => m.rx.test(f))) return [];
+  const nome = limpo(e.cidadeAtual);
+  if (!nome || ehObj(e.jornada) || ehObj(e.masmorra)) return [];
+  const cid = arr(ehObj(e.mapa) ? e.mapa.cidades : null).find((c) => ehObj(c) && sem(c.nome) === sem(nome));
+  if (!cid) return [];
+  const r = ehObj(e.render) ? e.render : {};
+  const mc = ehObj(e.mercado) ? e.mercado : ehObj(r.mercado) ? r.mercado : {};
+  const pers = ehObj(e.personagem) ? e.personagem : ehObj(r.personagem) ? r.personagem : {};
+  const W = oMundo(e);
+  let bancas = [];
+  try { bancas = mercadoresDaCidade(cid, Number(e.dia) || 1, Number(pers.nivel) || 1, W.lex, { pressoes: ehObj(mc.pressoes) ? mc.pressoes : {} }); } catch { bancas = []; }
+  const comprados = ehObj(mc.comprados) ? mc.comprados : {};
+  const out = [];
+  for (const b of arr(bancas)) for (const it of arr(ehObj(b) ? b.estoque : null)) {
+    if (out.length >= O_FIGURANTE_VENDE.itens) break;
+    if (!ehObj(it) || !limpo(it.nome) || !Number.isFinite(Number(it.preco)) || arr(comprados[b.id]).includes(it.nome)) continue;
+    out.push(`${limpo(it.nome)} ${Number(it.preco)} (${limpo(b.nome || b.rotulo) || "uma banca"})`);
+  }
+  return out;
+}
+
+/* O FIGURANTE SABE O CAMINHO (04/11, a 17.ª sessão, defeito 12). No T1 a
+   passante de Torre Alto, uma capital de sessenta mil almas, recebeu «Não
+   sabe responder a: onde fica o Descanso do Carroceiro», e a prosa fez dela
+   quem diz «onde ficaria, se acaso cá houvesse» — negou o mundo. O
+   figurante não sabe segredos, mas sabe onde fica um sítio público da
+   cidade dele: a pergunta pelo caminho (`pergunta`, lida sem acento) que
+   nomeia um sítio que o sistema conhece (a base da cidade, mundo-base.js)
+   tem a direção, e nada mais (`dentro`, `fora`: {L} o sítio, {C} a cidade).
+   Fica no «Agora» dele, como o que o mascate vende: sem «Sabe». */
+export const O_FIGURANTE_SABE_O_CAMINHO = Object.freeze({
+  pergunta: /\b(onde (fica|e|esta|ha|anda)|como (vou|chego|se vai|se chega)|o caminho (para|ate|d[aeo]s?)|para que lado|por onde se vai)\b/,
+  dentro: "{L} fica cá dentro dos muros de {C}",
+  diz: "sabe o caminho, e só isso: {X}",
+});
+/* o sítio da cidade que a frase pergunta onde fica, com a direção — ou "" */
+export function oCaminhoQueSabe(estado, frase) {
+  const e = ehObj(estado) ? estado : {};
+  const f = sem(frase);
+  const cid = limpo(e.cidadeAtual);
+  if (!cid || !f || !O_FIGURANTE_SABE_O_CAMINHO.pergunta.test(f)) return "";
+  const W = oMundo(e);
+  let locais = [];
+  try { const q = oQueExisteAqui(W.semente, e.mapa, cid, e.baseMundo, W.genero, W.molde, W.lex); locais = arr(q && q.locais); } catch { locais = []; }
+  const aqui = ehObj(e.lugar) ? semArtigo(e.lugar.nome) : "";
+  const l = locais.find((x) => ehObj(x) && semArtigo(x.nome).length >= 4 && semArtigo(x.nome) !== aqui && ` ${f.replace(/[^a-z0-9]+/g, " ")} `.includes(` ${semArtigo(x.nome).replace(/[^a-z0-9]+/g, " ").trim()} `));
+  return l ? O_FIGURANTE_SABE_O_CAMINHO.diz.replace("{X}", O_FIGURANTE_SABE_O_CAMINHO.dentro.replace("{L}", limpo(l.nome)).replace("{C}", cid)) : "";
+}
 
 /* A GENTE SEM NOME DE CADA SÍTIO, pelo tipo do lugar (os tipos da base,
    mundo-base.js LOCAIS, e os do cinturão de fora, lugar.js PALAVRAS_DO_TIPO;

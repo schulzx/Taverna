@@ -836,10 +836,27 @@ export const PASSO_AQUI = {
 /* `aqui` é a frase do ONDE ("na Candeia Faiscante, dentro de Casa da
    Fonte"): o lugar está nela pelo nome inteiro, sem o artigo */
 const semArtigoA = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "");
+/* O MESMO NOME NOUTRA CIDADE (04/11, a 17.ª sessão, defeito 2). Torre Alto
+   tem uma «Catedral da Cinza», e o segundo passo é «Catedral da Cinza, em
+   Vale Verde»: dentro da de Torre Alto, o rumo dizia «falar com Theron do
+   Brejo, que está aqui», e o companheiro chamou Theron a um vulto do altar
+   três vezes. O sítio e a cidade: quando o `onde` diz a cidade e a frase do
+   ONDE também diz uma («…, dentro de Torre Alto» — lugar.js, linhaDeLugar),
+   as duas têm de ser a mesma. Sem cidade num dos lados, o de sempre. */
+export const O_SITIO_E_A_CIDADE = Object.freeze({
+  /* as palavras com que a linha do ONDE diz a cidade (DISTANCIAS, lugar.js) */
+  marca: /,\s*dentro\s+de\s+([^,·—(]+?)\s*(?=[,·—(.]|$)/giu,
+});
 function ondeEstaAqui(aqui, onde) {
-  const lugar = semArtigoA(String(onde || "").replace(/\s*,\s*(em|no|na|nos|nas)\s+.+$/i, ""));
+  const md = String(onde || "").match(/^(.*?)\s*,\s*(?:em|no|na|nos|nas)\s+(.+)$/i);
+  const lugar = semArtigoA(md ? md[1] : String(onde || ""));
   const a = ` ${norm(aqui).replace(/[^a-z0-9]+/g, " ")} `;
-  return !!lugar && a.includes(` ${lugar.replace(/[^a-z0-9]+/g, " ").trim()} `);
+  if (!lugar || !a.includes(` ${lugar.replace(/[^a-z0-9]+/g, " ").trim()} `)) return false;
+  /* a cidade é a última marca («no Quarto, dentro do Sino, dentro de Torre
+     Alto»: o «dentro do» do prédio não é cidade, e não casa «de» sozinho) */
+  const marcas = [...String(aqui || "").matchAll(O_SITIO_E_A_CIDADE.marca)];
+  const cAqui = marcas.length ? marcas[marcas.length - 1][1] : "";
+  return !md || !cAqui || semArtigoA(cAqui) === semArtigoA(md[2]);
 }
 
 /* O ENCONTRO QUE O REGISTO JÁ VIU (a 13.ª sessão, 29/10). O herói achou o

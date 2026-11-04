@@ -469,6 +469,18 @@ export const PARTE_DO_LUGAR = {
 const RX_PARTE_DO_LUGAR = new RegExp(`\\b(${PARTE_DO_LUGAR.palavras.join("|")})\\b`, "g");
 const semAsPartes = (t) => String(t || "").replace(RX_PARTE_DO_LUGAR, (m) => " ".repeat(m.length));
 
+/* VOLTAR TAMBÉM É IR (04/11, a 17.ª sessão, defeito 6). «Volto ao templo à
+   procura do Godfrey» e «Volto à estalagem onde trabalha o Godfrey» ficaram
+   em «Só a intenção»: RX_VOU só conhecia «volto para» e «retorno a», e a
+   língua diz «volto ao», «volto à», «regresso à». O verbo de voltar seguido
+   da preposição do destino é ir; o sítio ainda tem de casar pelo nome ou
+   pelo tipo, como em qualquer ida. Só aqui, no passo a pé: as outras portas
+   que leem RX_VOU (a estrada, o marco) ficam como estavam. Serve aos dois
+   modos: é o leitor da frase. */
+export const VOLTAR_A = Object.freeze({
+  rx: /\b(volto|voltamos|regresso|regressamos|retorno|retornamos|torno|tornamos)\s+(a|ao|aos|as|para|pra)\b/,
+  porque: "voltar a um sítio é ir a ele — o herói que «volta ao templo» sai daqui",
+});
 export function lugarPedido(texto, lugares = []) {
   /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
   const t = soODeclarado(texto, NAO_E_IDA);
@@ -476,7 +488,7 @@ export function lugarPedido(texto, lugares = []) {
   const sai = SAIDA_DOS_MUROS.rx.test(t);
   /* MM15: a origem sai da disputa (ver `ORIGEM_DO_PASSO`, acima) */
   const alvo = semAOrigem(t);
-  const vai = RX_VOU.test(alvo) || RX_ATE.test(alvo) || (alvo !== t && rumoA(alvo, (Array.isArray(lugares) ? lugares : []).map((l) => l && l.nome)));
+  const vai = RX_VOU.test(alvo) || RX_ATE.test(alvo) || VOLTAR_A.rx.test(alvo) || (alvo !== t && rumoA(alvo, (Array.isArray(lugares) ? lugares : []).map((l) => l && l.nome)));
   if (!sai && !vai) return null;
   /* MM14: na frase de saída só concorre o que fica lá fora */
   lugares = (Array.isArray(lugares) ? lugares : []).filter((l) => !sai || (l && l.onde === "arredores"));

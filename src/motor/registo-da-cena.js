@@ -81,8 +81,12 @@ export function oQueACenaRegista(entrada) {
     if (!n || (heroi && mesmo(n, heroi)) || out.falou_com.some((x) => mesmo(x, n))) continue;
     out.falou_com.push(n.slice(0, 60));
   }
-  /* quem entra no registo: quem falou com o herói e é gente da cena */
-  for (const n of out.falou_com) {
+  /* quem entra no registo: quem falou com o herói e é gente da cena — e a
+     pessoa de um passo que veio ter com ele (a 17.ª, defeito 4: o Theron
+     chegou com um pedido e saiu de cena no turno seguinte; a ficha marca-a
+     `veioTer`, com o sítio onde o herói a viu, e é aí que o registo a guarda) */
+  const quem = [...out.falou_com, ...pessoas.filter((p) => p.veioTer && limpo(p.doPasso) && !out.falou_com.some((n) => mesmo(n, p.nome))).map((p) => limpo(p.nome))];
+  for (const n of quem) {
     const p = pessoas.find((x) => mesmo(x.nome, n));
     if (!p || naoSeRegista(p)) continue;
     /* o EM CENA diz o género no lugar do papel («Inez do Prado Baixo (ela)»):

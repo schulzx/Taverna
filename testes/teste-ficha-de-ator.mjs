@@ -37,7 +37,7 @@ import {
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
   TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase, A_LUTA_DITA,
   O_QUE_A_FRASE_FAZ, A_INTENCAO_DITA, A_VOZ_DO_NUMERO, O_COMBINADO, A_CONVERSA_DA_FRASE, A_RESPOSTA_DITA,
-  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA, A_VOZ_QUE_MARCA, A_ESTRADA_DITA,
+  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA, A_VOZ_QUE_MARCA, A_VEZ_DA_MARCA, A_ESTRADA_DITA,
 } from "../src/motor/ficha-de-ator.js";
 import { abrirViagem, ESTADOS as ESTADOS_DA_VIAGEM } from "../src/viagem.js";
 import { QUER, nucleoDaCampanha } from "../src/nucleo.js";
@@ -555,7 +555,11 @@ t("…e o gesto com moeda («deixo uma moeda», «pouso três estalos») também
 /* defeito 7 — a voz que marca toda fala, e o credor */
 const t1 = aFichaDeAtor({ frase: "Olho para o Alaric.", nota: "ONDE      n'A Lanterna da Bruma\nEM CENA   Alaric Barba-Ruiva (com você)", estado: BENTO });
 const falaA = falaDe(t1, "Alaric Barba-Ruiva");
-t("T0–T14: a voz do Alaric já não manda a terceira pessoa a cada fala — aparece às vezes, com a ocasião dita", falaA.includes(A_VOZ_QUE_MARCA.find((v) => v.id === "terceira").o) && !falaA.startsWith("fala de si na terceira pessoa"));
+/* MOVIDA em 04/11 (a 17.ª, defeito 10): a forma «uma vez por outra…» já não
+   vai em todo turno — é a semente que decide, por turno, se a marca entra
+   (A_VEZ_DA_MARCA); nos outros turnos a voz cai para a outra marca dele
+   («diz «eu», como toda a gente»). A intenção fica: nunca a ordem crua. */
+t("T0–T14: a voz do Alaric já não manda a terceira pessoa a cada fala — aparece às vezes, com a ocasião dita, ou cai para a outra marca", (falaA.includes(A_VOZ_QUE_MARCA.find((v) => v.id === "terceira").o) || falaA.includes(A_VEZ_DA_MARCA.fora.terceira)) && !falaA.startsWith("fala de si na terceira pessoa"));
 const queMarcam = COMO_FALA.filter((f) => A_VOZ_QUE_MARCA.some((v) => v.de.test(f.o)));
 t(`a tabela das vozes (COMO_FALA): ${queMarcam.length} de ${COMO_FALA.length} deixam a mesma marca em toda fala (${queMarcam.map((f) => f.id).join(", ")}), e cada uma tem forma de às vezes`, queMarcam.length === A_VOZ_QUE_MARCA.length && queMarcam.length === 7 && A_VOZ_QUE_MARCA.every((v) => verificarAFicha(v.o).length === 0));
 /* medido em 03/11 com as fichas dos 434 de antes deste conserto: 124 das 940

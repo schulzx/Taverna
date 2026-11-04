@@ -300,6 +300,36 @@ export const DESCANSO_DA_FRASE = {
   naoE: /\b(finj\w*|fingindo|antes de|depois de|sem) (que )?(durm\w*|dorm\w*|descans\w*)|\bdeix\w* (ele|ela|eles|elas|\w+) (dormir|descansar)\b|\b(nao|nunca|nem) (durmo|dormimos|descanso|descansamos|vou dormir|consigo dormir)\b|\bpasso a noite (em claro|acordad|de vigia|vigiando)|\bdescanso (a mao|o braco|os olhos|o peso|a cabeca|a lamina|a arma|a espada)\b/,
   porque: "a frase que dorme chega ao mesmo descanso do botão — senão o Mestre narra a manhã e o relógio fica na noite",
 };
+/* O NOME DO SÍTIO GANHA DA PALAVRA COMUM (04/11, a 17.ª sessão, defeito 1).
+   «Vou ao Descanso do Carroceiro procurar Godfrey Pescador» abriu o
+   acampamento e um descanso curto de uma hora, sem passo nenhum: o nome da
+   estalagem do primeiro passo tem a palavra «descanso», e é a primeira frase
+   que quem joga escreve (a abertura e o diário dão-lhe esse nome). O nome de
+   um sítio não é o verbo: sai da frase antes de se procurar o sono. Dois
+   caminhos, os dois do que o sistema sabe:
+     · `sitios` (ctx): os nomes dos sítios daqui, quando quem chama os tem
+       (o App: os lugares a pé); sai cada um, sem o artigo e sem a caixa;
+     · o nome próprio composto, no texto cru: duas palavras ou mais com
+       maiúscula, ligadas por «de/do/da/dos/das/e» ou seguidas
+       («Descanso do Carroceiro», «Pouso da Velha Ponte»). A palavra solta
+       com maiúscula no começo da frase («Descanso um pouco.») não é nome.
+   Serve aos dois modos: é o leitor da frase, antes de qualquer porta. */
+export const O_SITIO_NA_FRASE = Object.freeze({
+  liga: Object.freeze(["de", "do", "da", "dos", "das", "e"]),
+  porque: "o nome de um sítio não é o verbo: «vou ao Descanso do Carroceiro» é ir, não descansar",
+});
+const RX_NOME_COMPOSTO = new RegExp(`\\p{Lu}[\\p{L}'-]*(?:\\s+(?:(?:${O_SITIO_NA_FRASE.liga.join("|")})\\s+)?\\p{Lu}[\\p{L}'-]*)+`, "gu");
+export function semOsSitios(texto, sitios) {
+  let s = String(texto == null ? "" : texto);
+  const tira = (m) => " ".repeat(m.length);
+  for (const n0 of Array.isArray(sitios) ? sitios : []) {
+    const n = String(typeof n0 === "string" ? n0 : n0 && typeof n0 === "object" ? n0.nome || "" : "").replace(/^\s*(o|a|os|as)\s+/i, "").trim();
+    if (n.length < 4) continue;
+    const esc = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    s = s.replace(new RegExp(`(^|[^\\p{L}])(${esc})(?![\\p{L}])`, "giu"), (m, a, b) => a + tira(b));
+  }
+  return s.replace(RX_NOME_COMPOSTO, tira);
+}
 const semAcentoD = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const listaRx = (l) => new RegExp(`\\b(?:${l.map((x) => x.replace(/ /g, "\\s+")).join("|")})\\b`);
 const RX_LONGO = listaRx(DESCANSO_DA_FRASE.longo);
@@ -309,8 +339,9 @@ const RX_BREVE = listaRx(DESCANSO_DA_FRASE.breve);
 export function descansoDaFrase(texto, ctx = {}) {
   const c = ctx && typeof ctx === "object" ? ctx : {};
   if (c.emCombate) return null;
-  const cru = String(texto == null ? "" : texto);
-  if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
+  const cru0 = String(texto == null ? "" : texto);
+  if (!cru0.trim() || cru0.trimStart().startsWith("[")) return null;
+  const cru = semOsSitios(cru0, c.sitios);
   let t = "";
   try { t = soODeclarado(cru); } catch { t = semAcentoD(cru); }
   if (!t.trim()) return null;

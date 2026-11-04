@@ -70,8 +70,18 @@
        régua de `segredosReveladosNoTurno`, saga.js, que o Cronista usa para
        fechar o marco).
 
+   A 17.ª SESSÃO (mente/sessao-17.md): a principal de dois passos parou no
+   segundo por lugar e presença.
+     · DE FOLGA «NO TEMPLO» É NUM TEMPLO (defeito 3, O_FORA_COM_SITIO): o
+       sítio da rotina é um sítio desta cidade, dito pelo nome, e com o
+       herói lá a pessoa está em cena, fora do posto.
+     · QUEM VEIO TER COM O HERÓI FICA (defeito 4, O_QUE_VEIO_TER): a pessoa
+       do passo que chegou com um pedido fica no sítio onde o herói a viu —
+       a rua da cidade incluída, no mesmo dia —, e `osDoPasso` diz à ficha
+       quem os passos procuram, para que ninguém «chegue» a meio da estrada.
+
    Sem sorte: tudo sai do estado e da semente do mundo. Puro, sem React.
-   Provado em `testes/teste-a-pessoa-do-passo.mjs`.
+   Provado em `testes/teste-a-pessoa-do-passo.mjs` e `testes/teste-sessao-17.mjs`.
    ============================================================ */
 import { garantirMissoes, estaEm, moradaDe, etapaAtual, textoDaEtapa, ETAPAS_DE_CAMINHO } from "../missoes.js";
 import { GUARDA_NA_CENA } from "../batidas.js";
@@ -141,6 +151,30 @@ export const A_PESSOA_DO_PASSO = Object.freeze({
      «cadê?». Voltar atrás para um tipo (a pista da abertura, por exemplo)
      é tirá-lo daqui. */
   aHoraConta: Object.freeze(["pista", "alvo", "dador", "etapa", "guarda"]),
+});
+
+/* ONDE ANDA QUEM NÃO ESTÁ NO POSTO (04/11, a 17.ª sessão, defeito 3). A
+   ficha dizia do Godfrey «de folga hoje, no templo», e na catedral de Torre
+   Alto ele não estava, nem às 9h20 nem às 12h05: a rotina
+   (gente-por-dentro.js, FORA_DO_TURNO) dá um TIPO de sítio, e ninguém o
+   punha lá. O primeiro passo só se cumpriu no dia seguinte, por quem achou o
+   botão de esperar 24 h. Agora a verdade é inteira: o «no templo» é um
+   templo desta cidade (o primeiro da base com esse tipo, que é a mesma
+   ordem em qualquer máquina; o «numa taverna» é uma que não é a dele), a
+   frase diz-lhe o nome, e com o herói lá a pessoa está em cena, fora do
+   posto. O que não é sítio que se visite («em casa», «a tratar de família»)
+   fica como vem; o que é sítio e a cidade não tem perde o sítio na frase
+   (`semSitio`) — a ficha não diz «no templo» se o sistema não a põe lá.
+   `tipos`: os tipos da base que valem por cada sítio de FORA_DO_TURNO;
+   `agoraAqui`: o que está a fazer, quando o herói a encontra lá. */
+export const O_FORA_COM_SITIO = Object.freeze({
+  tipos: Object.freeze({
+    "no templo": Object.freeze(["templo", "capela"]),
+    "numa taverna da cidade": Object.freeze(["taverna"]),
+    "na praça": Object.freeze([]),
+  }),
+  semSitio: "pela cidade",
+  agoraAqui: Object.freeze({ folga: "de folga hoje, aqui por conta própria", fora: "fora do turno, aqui por conta própria" }),
 });
 
 /* COMO SE ACHA O QUE O SÍTIO ESCONDE — a perícia do segredo (`segredo.acha`,
@@ -243,9 +277,70 @@ function oQueSabeDe(et, H, guarda, aqui, jaLa) {
   return t ? tpl(P.oQueHa, { A: minuscula(t) }) : "";
 }
 
+/* ONDE O HERÓI ESTÁ, numa frase só: o sítio com a cidade («Catedral da
+   Cinza, em Vale Verde»), ou a cidade sem sítio (a rua, à chegada). Na
+   estrada, nada. É o que a ficha grava como o sítio de quem VEIO TER com o
+   herói (O_QUE_VEIO_TER), e o que se compara depois. */
+export function ondeOHeroiEsta(estado) {
+  const e = ehObj(estado) ? estado : {};
+  const cid = limpo(e.cidadeAtual);
+  const L = ehObj(e.lugar) ? limpo(e.lugar.nome) : "";
+  if (L) return limpo(e.lugar.cidade) || cid ? `${L}, em ${limpo(e.lugar.cidade) || cid}` : L;
+  if (ehObj(e.jornada) || ehObj(e.masmorra)) return "";
+  return cid;
+}
+const mesmoSitio = (x, y) => {
+  const a = moradaDe(x), b = moradaDe(y);
+  return !!semArtigo(a.lugar) && semArtigo(a.lugar) === semArtigo(b.lugar) && (!a.cidade || !b.cidade || semArtigo(a.cidade) === semArtigo(b.cidade));
+};
+
+/* QUEM VEIO TER COM O HERÓI FICA (04/11, a 17.ª sessão, defeito 4). À
+   chegada a Vale Verde o Theron do Brejo, a pessoa do segundo passo, veio
+   ter com a Inês com um pedido; no turno seguinte tinha saído de QUEM ESTÁ,
+   com o botão do nome dele ainda na tela, e «Falo com Theron do Brejo…» foi
+   respondido por uma passante. A pessoa do passo que entrou em cena não sai
+   no turno seguinte: a ficha grava-a no sítio onde o herói a viu (o registo,
+   `npcs[nome].local`, pela mesma porta da conversa — registo-da-cena.js), e
+   enquanto o herói lá estiver ela está em cena — até ao fim da conversa (o
+   passo cumprido deixa-a no sítio dela, como sempre) ou até ele sair. Na
+   rua (a cidade sem sítio), só no mesmo dia: o encontro à porta da cidade
+   não fica à espera dele para sempre.
+     `agora`: o que está a fazer, quando ficou. */
+export const O_QUE_VEIO_TER = Object.freeze({
+  agora: "ficou com {H} desde que lhe veio falar",
+});
+
+/* QUEM OS PASSOS PROCURAM, esteja o herói onde estiver: o nome e o onde do
+   `falar_com` de agora de cada missão ativa, e dos que se lhe seguem por
+   cima de caminho só (a mesma régua de aPessoaDoPasso). É por aqui que a
+   ficha sabe que quem chega com um pedido é a pessoa de um passo — e que,
+   na estrada, ela não chega (O_QUE_VEIO_TER).
+     → [{ nome, onde, missao, etapa }] */
+export function osDoPasso(estado) {
+  const e = ehObj(estado) ? estado : {};
+  let ms = [];
+  try { ms = garantirMissoes(e.missoes).filter((m) => ehObj(m) && m.status === "ativa"); } catch { ms = []; }
+  const out = [];
+  for (const m of ms) {
+    const et0 = etapaAtual(m);
+    if (!et0) continue;
+    const i0 = m.etapas.indexOf(et0);
+    for (let k = i0; k < m.etapas.length; k++) {
+      if (k > i0 && !ETAPAS_DE_CAMINHO.includes(m.etapas[k - 1].tipo)) break;
+      const et = m.etapas[k];
+      if (ehObj(et) && !et.feito && et.tipo === "falar_com" && limpo(et.alvo) && !out.some((x) => mesmo(x.nome, et.alvo))) out.push({ nome: limpo(et.alvo), onde: limpo(et.onde), missao: m.id, etapa: k });
+    }
+  }
+  return out;
+}
+
 export function aPessoaDoPasso(estado) {
   const e = ehObj(estado) ? estado : {};
-  if (!ehObj(e.lugar) || !limpo(e.lugar.nome)) return [];
+  /* sem sítio, só a rua da cidade (a chegada, defeito 4 da 17.ª): lá só
+     está quem veio ter com o herói. Na estrada e na masmorra, ninguém */
+  const semLugar = !ehObj(e.lugar) || !limpo(e.lugar.nome);
+  if (semLugar && !ondeOHeroiEsta(e)) return [];
+  const aquiAgora = ondeOHeroiEsta(e);
   let ms = [];
   try { ms = garantirMissoes(e.missoes).filter((m) => ehObj(m) && m.status === "ativa"); } catch { ms = []; }
   if (!ms.length) return [];
@@ -256,13 +351,22 @@ export function aPessoaDoPasso(estado) {
   const grupo = arr(pers.grupo).filter((g) => ehObj(g) && g.nome);
   const W = oMundo(e);
   /* a gente da base desta cidade, só se for preciso (é a conta mais cara) */
-  let base = null;
+  let base = null, locais = [];
   const aBase = () => {
     if (base === null) {
       base = [];
-      try { const q = oQueExisteAqui(W.semente, e.mapa, str(e.cidadeAtual), e.baseMundo, W.genero, W.molde, W.lex); base = arr(q && q.gente); } catch { base = []; }
+      try { const q = oQueExisteAqui(W.semente, e.mapa, str(e.cidadeAtual), e.baseMundo, W.genero, W.molde, W.lex); base = arr(q && q.gente); locais = arr(q && q.locais).filter((l) => ehObj(l) && limpo(l.nome)); } catch { base = []; locais = []; }
     }
     return base;
+  };
+  /* o sítio desta cidade aonde a rotina manda quem está fora do posto
+     (O_FORA_COM_SITIO): o primeiro da base com o tipo, que não é o posto */
+  const oSitioDoFora = (fora, posto) => {
+    const tipos = O_FORA_COM_SITIO.tipos[str(fora)];
+    if (!tipos) return null;
+    aBase();
+    const l = locais.find((x) => tipos.includes(str(x.tipo)) && semArtigo(x.nome) !== semArtigo(moradaDe(posto).lugar));
+    return l ? { nome: limpo(l.nome) } : { nome: "" };
   };
   const daBase = (nome) => aBase().find((p) => ehObj(p) && mesmo(p.nome, nome)) || null;
   /* quem guarda o sítio: o que a cena da batida diz, senão o primeiro da
@@ -294,7 +398,7 @@ export function aPessoaDoPasso(estado) {
       let nome = "", onde = "";
       if (ehGuarda) {
         onde = limpo(et.onde) || limpo(et.alvo);
-        if (!estaAqui(e, onde)) continue;
+        if (semLugar || !estaAqui(e, onde)) continue;
         nome = oGuarda(et.alvo, true);
         if (!nome) continue;
       } else nome = limpo(et.alvo);
@@ -304,11 +408,18 @@ export function aPessoaDoPasso(estado) {
       const ehDador = !ehGuarda && limpo(m.dador) && mesmo(nome, m.dador) && m.tipo !== "principal";
       const regK = Object.keys(npcs).find((x) => mesmo(x, nome));
       const reg = regK && ehObj(npcs[regK]) ? npcs[regK] : null;
-      let pb = null;
+      let pb = null, noPosto = ehGuarda, veio = false;
       if (!ehGuarda) {
         onde = limpo(et.onde) || (ehPista ? a.pista.local : "") || (ehAlvo ? a.alvo.onde : "") || (reg ? oSitioDoRegisto(reg.local, e) : "");
         if (!onde) { pb = daBase(nome); onde = pb ? limpo(pb.local) : ""; }
-        if (!onde || !estaAqui(e, onde)) continue;
+        if (!onde) continue;
+        noPosto = !semLugar && estaAqui(e, onde);
+        /* quem veio ter com o herói e ficou (O_QUE_VEIO_TER): o registo
+           guarda-o onde o herói o viu, e o herói ainda lá está */
+        veio = !noPosto && !!reg && !!limpo(reg.local) && mesmoSitio(oSitioDoRegisto(reg.local, e), aquiAgora)
+          && (!semLugar || Number(reg.conhecidoEm) === Number(e.dia));
+        /* na rua só está quem veio ter com o herói */
+        if (semLugar && !veio) continue;
       }
       if (!pb) pb = daBase(nome);
       const papel = (ehPista && limpo(a.pista.papel)) || (reg && limpo(reg.papel)) || (pb && limpo(oficioNoGenero(pb.papel, pb.genero_pessoa))) || "";
@@ -321,7 +432,17 @@ export function aPessoaDoPasso(estado) {
       } catch { rot = null; }
       const de = ehGuarda ? "guarda" : ehPista ? "pista" : ehAlvo ? "alvo" : ehDador ? "dador" : "etapa";
       const sabeAHora = !!(rot && rot.agora && rot.agora !== "morreu") && A_PESSOA_DO_PASSO.aHoraConta.includes(de);
-      const aqui = !sabeAHora || !!rot.noTurno;
+      /* fora do posto, o sítio aonde a rotina a manda (O_FORA_COM_SITIO) —
+         só para quem trabalha numa casa DESTA cidade: a gente de outra terra
+         não folga no templo daqui */
+      const foraAgora = sabeAHora && !rot.noTurno && !!str(rot.fora) && str(rot.agora).endsWith(str(rot.fora));
+      const posteDaqui = foraAgora && (aBase(), locais.some((l) => semArtigo(l.nome) === semArtigo(moradaDe(onde).lugar)))
+        && (!moradaDe(onde).cidade || semArtigo(moradaDe(onde).cidade) === semArtigo(e.cidadeAtual));
+      const sf = posteDaqui ? oSitioDoFora(rot.fora, onde) : null;
+      const ondeAnda = sf ? `${str(rot.agora).slice(0, -str(rot.fora).length)}${sf.nome ? comEm(sf.nome) : O_FORA_COM_SITIO.semSitio}` : rot ? str(rot.agora) : "";
+      const laFora = !!(sf && sf.nome) && !semLugar && estaAqui(e, sf.nome);
+      if (!noPosto && !veio && !laFora) continue;
+      const aqui = veio || laFora || !sabeAHora || !!rot.noTurno;
       /* o que sabe: o passo que vem depois do dela — com o onde, o quem e o
          quê (a 16.ª, defeito 2). A frase da pista («mais do que ninguém…
          sobre…») só fica quando não há passo a dizer: vaga, ela não é pista */
@@ -338,14 +459,16 @@ export function aPessoaDoPasso(estado) {
          que faz», A_PESSOA_DO_PASSO.semPosto) não diz nada a quem o vê. O
          nome dito só a quem ainda não o conhece (o registo: a 16.ª, defeito
          10 — repetia-se a cada ficha) */
-      const posto = rot && rot.noTurno && rot.turno && !A_PESSOA_DO_PASSO.semPosto.includes(familia) ? rot.turno : "";
+      const posto = veio ? tpl(O_QUE_VEIO_TER.agora, { H })
+        : laFora ? O_FORA_COM_SITIO.agoraAqui[rot.deFolga ? "folga" : "fora"]
+          : rot && rot.noTurno && rot.turno && !A_PESSOA_DO_PASSO.semPosto.includes(familia) ? rot.turno : "";
       const agora = [ehGuarda ? tpl(A_PESSOA_DO_PASSO.agoraDoGuarda, { L: limpo(moradaDe(onde).lugar) }) : posto, ehPista && !reg ? tpl(A_PESSOA_DO_PASSO.oNome, { H }) : ""].filter(Boolean);
       const ausente = aqui ? "" : tpl(A_PESSOA_DO_PASSO.ausente, {
-        N: nome, P: papel ? `, ${papel},` : "", G: rot.agora,
+        N: nome, P: papel ? `, ${papel},` : "", G: ondeAnda,
         R: rot.turno, I: `${A_PESSOA_DO_PASSO.horas.de} ${aHoraDita(rot.de)}`, F: `${A_PESSOA_DO_PASSO.horas.ate} ${aHoraDita(rot.ate)}`,
       });
       out.push({
-        nome, papel, onde, de,
+        nome, papel, onde: veio ? aquiAgora : onde, de,
         aqui, agora, ausente, voz: pb ? limpo(pb.modo) : "", quer, sabe,
         genero: pb ? sem(pb.genero_pessoa) : reg ? sem(reg.genero) : "",
         /* de que missão, e o índice do passo que ela sabe (a pista como

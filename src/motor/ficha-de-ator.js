@@ -128,13 +128,15 @@
    nenhuma ordem, nenhuma razão, nenhum número que não se diz em voz alta.
    ============================================================ */
 import { SECOES } from "../pauta.js";
-import { aPessoaDoPasso, oQueOSitioEsconde, oSitioDoRegisto } from "./a-pessoa-do-passo.js";
-import { oFigurante, O_FIGURANTE, O_FIGURANTE_VENDE } from "./o-figurante.js";
+import { aPessoaDoPasso, oQueOSitioEsconde, oSitioDoRegisto, osDoPasso, ondeOHeroiEsta } from "./a-pessoa-do-passo.js";
+import { oFigurante, O_FIGURANTE, O_FIGURANTE_VENDE, oQueALinhaVende, aBancaDoDia, oCaminhoQueSabe } from "./o-figurante.js";
 import { A_PISTA_COMO_CARTAO } from "./a-pista-como-cartao.js";
 import { contrair } from "../lugar.js";
 import { moradaDe } from "../missoes.js";
 import { QUER } from "../nucleo.js";
 import { ESTADOS as ESTADOS_DA_VIAGEM } from "../viagem.js";
+import { semOsSitios } from "../descanso.js";
+import { rngDe } from "../geografia.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -175,6 +177,7 @@ export const MOTIVOS_DO_CORTE = Object.freeze({
   ordem: "a instrução ao Mestre colada ao fato («Narre…», «Isto é FATO. Use…»): o fato fica, a ordem cai",
   semConteudo: "o gesto que cobra o que ficou combinado, sem combinado nenhum que o sistema saiba: cai, para o ator não o inventar (a 14.ª, T17)",
   forma: "a forma da cena (estante.js): como narrar este turno, sem fato nenhum; lida pelo ator é ordem de Mestre (a 15.ª, defeito 6)",
+  estrada: "a pessoa de um passo não chega a meio da estrada: ela está na cidade dela, e o herói ainda não lá chegou (a 17.ª, defeito 4)",
   semTraducao: "sem tradução: a tabela ainda não sabe dizer esta linha como fato",
 });
 
@@ -247,7 +250,7 @@ export const TRATO_DO_HEROI = Object.freeze([
   { id: "confianca", quando: (p) => p.vinculo != null && p.vinculo >= 25, o: "pelo nome, com confiança, sem confidências" },
   { id: "estrada", quando: (p) => p.vinculo != null, o: "pelo nome, sem intimidade ainda: ninguém se confessa a quem conhece há pouco" },
   { id: "aliado", quando: (p) => /aliad|amig|companheir/.test(sem(p.relacao)), o: "pelo nome, com boa vontade" },
-  { id: "forasteiro", quando: () => true, o: "como a forasteiro: cortesia pouca, e só a que custa nada" },
+  { id: "forasteiro", quando: () => true, o: "como a forasteiro: cortesia pouca, e só a que custa nada", dela: "como a forasteira: cortesia pouca, e só a que custa nada" },
 ]);
 
 /* O QUE CAI PRIMEIRO quando a ficha passa do teto — a voz (o tique, o
@@ -311,7 +314,60 @@ export const A_VOZ_QUE_MARCA = Object.freeze([
   { id: "crianca", de: /^trata toda a gente por "criança", até velhos$/u, o: "quando quer mandar, chama «criança» a quem lhe fala, até a velhos" },
   { id: "comida", de: /^põe comida em toda a metáfora$/u, o: "quando compara, compara com comida" },
 ]);
-const vozSemMarca = (traco) => { const v = A_VOZ_QUE_MARCA.find((x) => x.de.test(str(traco).trim())); return v ? v.o : traco; };
+/* O «ÀS VEZES» É O SISTEMA QUE O DECIDE (04/11, a 17.ª sessão, defeito 10).
+   A forma «de vez em quando» da tabela acima não segurou o traço: o Gareth
+   tinha «de vez em quando remata com um provérbio inventado», e houve
+   provérbio em 17 das 19 respostas dele. Escrito no texto, o «às vezes» é
+   uma ordem que o ator cumpre em cada fala. Agora é a semente que decide,
+   por turno e por pessoa, se o traço que marca entra na ficha desse turno:
+   `vez` em `em` turnos (pela semente do mundo, o nome, o dia, a hora e as
+   falas do Narrador já ditas — a mesma em qualquer máquina); nos outros, a
+   voz cai para outra marca da mesma pessoa (`fora`, por traço), sem a
+   marca. Os traços que são um jeito (curto, preciso, de marinheiro) não
+   passam por aqui. */
+export const A_VEZ_DA_MARCA = Object.freeze({
+  vez: 1,
+  em: 3,
+  fora: Object.freeze({
+    terceira: "diz «eu», como toda a gente",
+    avo: "fala por conta própria, sem chamar ninguém à conversa",
+    santos: "fala direito, sem invocar ninguém",
+    jura: "afirma sem jurar",
+    proverbio: "diz as coisas pelo nome, sem sentença no fim",
+    crianca: "trata quem lhe fala sem o diminuir",
+    comida: "compara pouco, e com coisas do ofício",
+  }),
+});
+/* a marca entra nesta ficha? `chave`: a da pessoa neste turno */
+export function aMarcaEntra(chave) {
+  const r = rngDe(`voz|${str(chave)}`);
+  return r() * A_VEZ_DA_MARCA.em < A_VEZ_DA_MARCA.vez;
+}
+const vozSemMarca = (traco, chave) => {
+  const v = A_VOZ_QUE_MARCA.find((x) => x.de.test(str(traco).trim()));
+  if (!v) return traco;
+  if (chave == null) return v.o;
+  return aMarcaEntra(chave) ? v.o : A_VEZ_DA_MARCA.fora[v.id] || v.o;
+};
+
+/* OS TRAÇOS QUE SE SOMAM NUMA FÓRMULA (a 17.ª, defeito 11). A moça do
+   balcão tinha «três palavras, nunca quatro» e o registo de negociante sem
+   número («curta, e tudo é troca: o que se dá e o que se leva»): as quatro
+   falas dela foram «X ou Y» — «Bebida ou cama?», «Paga ou sai», «Moeda ou
+   rua», «Bebe ou anda». Cada traço é bom sozinho; juntos, a única frase de
+   três palavras que é troca é a alternativa. O mesmo com «põe tudo em
+   troca, até o silêncio» por cima do registo da troca. Quando a voz e o
+   registo se encontram assim, o registo perde a troca e fica com o que a
+   pessoa tem para dizer (`registo`). `voz` e `de` leem as formas já
+   passadas pelas tabelas acima. */
+export const OS_TRACOS_QUE_SE_SOMAM = Object.freeze([
+  { id: "curtoETroca", voz: /^três palavras, nunca quatro$/u, de: /^frase de negociante: curta, e tudo é troca/u, registo: "frase de negociante: curta, a dizer o que há e o que custa, sem dar a escolher entre duas coisas" },
+  { id: "silencioETroca", voz: /^põe tudo em troca, até o silêncio$/u, de: /^frase de negociante: curta, e tudo é troca/u, registo: "frase de negociante: curta, a dizer o que há e o que custa, sem dar a escolher entre duas coisas" },
+]);
+const registoQueSeSoma = (voz, registo) => {
+  const v = OS_TRACOS_QUE_SE_SOMAM.find((x) => x.voz.test(str(voz).trim()) && x.de.test(str(registo).trim()));
+  return v ? v.registo : registo;
+};
 
 /* O QUE O COMPANHEIRO CREDOR QUER (a 16.ª, defeito 7). O Alaric é o
    credor — o herói deve-lhe (CARREGA `d_heroi`, ao contrário) —, e o
@@ -342,7 +398,14 @@ export const O_QUE_A_FRASE_FAZ = Object.freeze([
      balcão pela caneca» entrou cru, e a prosa pôs o metal a bater no
      carvalho com a bolsa em 15 → 15 */
   { id: "pagar", rx: /\b(pago|paguei|pagamos|compro|comprei|compramos|alugo|arremato|(?:deixo|ponho|pouso|poiso|coloco|largo|atiro|estendo|conto) (?:\S+ ){0,3}(?:moedas?|estalos?|cobres?|pratas?|ouros?|dinheiro))\b/u, feito: "pagou", porOutro: "pagou", resolve: Object.freeze(["pagar", "teste"]) },
-  { id: "descansar", rx: /\b(durmo|dormimos|vou dormir|adorme[cç]o|deito-me para dormir|descanso|descansamos|acampo|acampamos|monto (?:o )?acampamento)\b/u, feito: "descansou", resolve: Object.freeze(["descansar", "teste"]) },
+  /* o nome do sítio não é o verbo (a 17.ª, defeito 1): «Vou ao Descanso do
+     Carroceiro» lê-se sem o nome (`semSitio`: descanso.js, semOsSitios) */
+  { id: "descansar", semSitio: true, rx: /\b(durmo|dormimos|vou dormir|adorme[cç]o|deito-me para dormir|descanso|descansamos|acampo|acampamos|monto (?:o )?acampamento)\b/u, feito: "descansou", resolve: Object.freeze(["descansar", "teste"]) },
+  /* ESPERAR (a 17.ª, defeito 7): «fico à espera dele até às onze» não tem
+     porta — o relógio foi de 9h40 a 9h50, e a prosa escreveu que «as horas
+     da manhã vão caindo». Fica intenção, e a linha diz que as horas não
+     passaram; resolve-o o tempo que o sistema passou (o descanso, a estrada) */
+  { id: "esperar", rx: /\b(?:espero|esperamos|aguardo|aguardamos)\b(?!\s+(?:que|bem|nao|não)\b)|\b(?:fico|ficamos) (?:[àa] espera|a esperar|esperando|aguardando)\b/u, feito: "deixou passar as horas", resolve: Object.freeze(["descansar", "mover"]) },
   { id: "poder", rx: null, feito: "usou {X}", resolve: Object.freeze(["poder", "golpe", "teste"]) },
   { id: "curar", rx: /\b(curo|trato (?:d?as )?feridas|fa[cç]o um curativo|ligo a ferida|estanco o sangue)\b/u, feito: "curou ninguém", resolve: Object.freeze(["poder", "teste"]) },
   { id: "atacar", rx: /\b(ataco|golpeio|esfaqueio|apunhalo|degolo|disparo contra|atiro contra|avan[cç]o sobre)\b/u, feito: "acertou golpe nenhum", resolve: Object.freeze(["golpe", "poder", "luta", "teste"]) },
@@ -392,6 +455,11 @@ export const A_ESTRADA_DITA = Object.freeze({
   palavras: /\b(estrada|caminho|viagem|marcha|trilha|jornada)\b/u,
   saiu: "{H} já vai na estrada: saiu de {D}, a caminho de {P}",
   semDe: "{H} já vai na estrada, a caminho de {P}",
+  /* O QUE AINDA FALTA (a 17.ª, defeito 8): com a jornada a 240 de 480
+     minutos, a prosa pôs a Inês à porta da catedral de Vale Verde. A cena
+     diz, em horas faladas, quanto falta — e que ainda não se chegou ({F}) */
+  falta: "{P} ainda fica a {F} de caminho: ainda não se chegou lá",
+  menos: "menos de uma hora",
 });
 
 /* O QUE FICOU COMBINADO (03/11, a 14.ª sessão, conserto 3). A Inez pediu no
@@ -859,7 +927,7 @@ function osAtosPorFazer(frase, feitos, poderes) {
     for (const a of O_QUE_A_FRASE_FAZ) {
       if (vistos.has(a.id) || a.resolve.some((r) => feitos.has(r))) continue;
       let feito = "";
-      if (a.rx) { if (a.rx.test(a.caso ? comoVeio : or)) feito = a.feito; }
+      if (a.rx) { if (a.rx.test(a.caso ? comoVeio : a.semSitio ? semOsSitios(m[0]).toLowerCase() : or)) feito = a.feito; }
       else if (VERBO_DO_PODER.test(or)) { const n = poderes.find((x) => sem(x).length >= 4 && sem(or).includes(sem(x))); if (n) feito = tpl(a.feito, { X: n }); }
       if (feito) { vistos.add(a.id); out.push(feito); }
     }
@@ -1096,6 +1164,9 @@ const oDescanso = (t, c) => {
   const dur = (t.match(/após (.+?) de descanso/u) || [])[1];
   return `${c.H} descansou${dur ? ` ${dur}` : ""}, e o corpo sente-o.`;
 };
+/* onde acaba o fato de um envelope e começa a ordem ao Mestre (compasso.js,
+   vilao.js: «REGRA DESTE ENVELOPE (obrigatória): …») */
+export const A_REGRA_DO_ENVELOPE = /\s*REGRA DESTE ENVELOPE\b/iu;
 /* os envelopes que vêm depois da pauta. `resultado`: a marca do que o
    sistema fez neste turno, que resolve um ato da frase (O_QUE_A_FRASE_FAZ) */
 export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
@@ -1116,7 +1187,11 @@ export const TRADUCAO_DOS_ENVELOPES = Object.freeze([
      resto do envelope, as quatro partes e o tamanho, é ofício */
   { tipo: /^ABERTURA DA CAMPANHA/, vai: "abertura", como: (t, c) => aAberturaDita(t, c) },
   { tipo: /^OFICINA/, vai: "aconteceu", como: (t, c) => `Já feito por ${c.H}: «${ponto(t)}»` },
-  { tipo: /^(AGORA|O MUNDO SE MEXE|EVENTO GLOBAL)/, vai: "aconteceu", como: (t) => ponto(t) },
+  /* O envelope do compasso traz o fato e, depois, a REGRA DESTE ENVELOPE
+     — instrução para o Mestre («aconteça com o que JÁ está na mesa… quem
+     abre o combate é o sistema»), que na 17.ª (T15, defeito 9) chegou crua à
+     ficha. O fato fica; a regra cai (A_REGRA_DO_ENVELOPE) */
+  { tipo: /^(AGORA|O MUNDO SE MEXE|EVENTO GLOBAL)/, vai: "aconteceu", como: (t) => ponto(t.split(A_REGRA_DO_ENVELOPE)[0].replace(/\s*[—–-]\s*DECISÃO DO SISTEMA\]?\s*$/u, "")) },
   /* A FORMA DA CENA (biblioteca.js, envelopeDaCena) é como narrar, e não
      traz fato nenhum — o próprio envelope o diz («Isto NÃO é um
      acontecimento»). Lida pelo ator é ordem: «Gaste a primeira frase na
@@ -1179,11 +1254,25 @@ export const A_ABERTURA_DITA = Object.freeze([
   { id: "sabe", vai: "aconteceu", de: /\. O que sabe: (.+?)\.\s+Já decidido/u, o: "O que {H} sabe: {A}." },
   { id: "aindaNao", vai: "aconteceu", de: /\bEle ainda NÃO está (.+?) nem diante de (.+?)\. /u, o: "{H} ainda não está {A}, nem diante de {B}." },
 ]);
+/* A HEROÍNA DITA NO FEMININO (a 17.ª, defeito 13). As frases da abertura
+   nasceram no masculino («uma carta sem assinatura chamou-o a…», «Gareth…
+   vem com ele…; a razão que o trouxe»), e a Inês recebeu-as assim em todas
+   as fichas. Com a heroína (`personagem.genero`, o sexo escolhido na
+   criação), a abertura dita na ficha troca as formas que falam dela. Só na
+   ficha: o texto do mundo fica como está. */
+export const A_HEROINA_DITA = Object.freeze({
+  dela: /^(mulher|ela|fem|feminino)$/u,
+  trocas: Object.freeze([
+    [/\bchamou-o\b/gu, "chamou-a"], [/\bvem com ele\b/gu, "vem com ela"], [/\bque o trouxe\b/gu, "que a trouxe"],
+    [/\bEle ainda\b/gu, "Ela ainda"],
+  ]),
+});
+const naHeroina = (t, c) => (c.dela ? A_HEROINA_DITA.trocas.reduce((s, [de, para]) => s.replace(de, para), str(t)) : str(t));
 function aAberturaDita(t, c) {
   const out = { cena: [], extra: [], aconteceu: [] };
   for (const x of A_ABERTURA_DITA) {
     const m = str(t).match(x.de);
-    if (m) out[x.vai].push(ponto(tpl(x.o, { H: c.H, A: limpo(m[1]), B: limpo(m[2]) })));
+    if (m) out[x.vai].push(ponto(naHeroina(tpl(x.o, { H: c.H, A: limpo(m[1]), B: limpo(m[2]) }), c)));
   }
   return out;
 }
@@ -1231,7 +1320,8 @@ function registoDe(p) {
   const r = REGISTOS_DE_FALA.find((x) => x.de.test(alvo));
   return r ? r.o : null;
 }
-const tratoDe = (p, H) => (TRATO_DO_HEROI.find((t) => t.quando(p)) || TRATO_DO_HEROI[TRATO_DO_HEROI.length - 1]).o.replace(/\{H\}/g, H);
+/* a heroína é forasteira (a 17.ª, defeito 13): a forma `dela`, quando a há */
+const tratoDe = (p, H, dela) => { const t = TRATO_DO_HEROI.find((x) => x.quando(p)) || TRATO_DO_HEROI[TRATO_DO_HEROI.length - 1]; return ((dela && t.dela) || t.o).replace(/\{H\}/g, H); };
 
 /* a pessoa por nome, do grupo, do registo e do núcleo */
 function aGente(estado) {
@@ -1254,7 +1344,7 @@ export function aFichaDeAtor(entrada) {
   const estado = ehObj(ent.estado) ? ent.estado : {};
   const G = aGente(estado);
   const H = limpo(G.pers.nome) || "o herói";
-  const c = { H, procurado: false, conversa: [] };
+  const c = { H, procurado: false, conversa: [], dela: A_HEROINA_DITA.dela.test(sem(G.pers.genero)) };
   const daFrase = aFraseDoTurno(ent.frase, c);
   /* a frase do herói: a da fala, ou a que a nota traz quando o turno é
      um envelope do sistema («O QUE EU ESCREVI», o sono escrito) */
@@ -1400,6 +1490,29 @@ export function aFichaDeAtor(entrada) {
     p.agora.push(...x.agora);
     if (x.quer && !p.quer) p.quer = x.quer;
   }
+  /* QUEM VEIO TER COM O HERÓI (a 17.ª, defeito 4; a-pessoa-do-passo.js,
+     O_QUE_VEIO_TER): a pessoa de um passo que chega com um pedido ou com um
+     recado (o QUEM CARREGA, o RUMO) fica gravada no sítio onde o herói a
+     viu — o registo a guarda (registo-da-cena.js, `veioTer`) e no turno
+     seguinte ela continua em cena. Na estrada não chega: quem o passo
+     procura está na cidade dele, e não a meio da viagem (o Theron que
+     chegou a 50% da jornada puxou a prosa para Vale Verde — defeito 8) */
+  {
+    let osDele = [];
+    try { osDele = osDoPasso(estado); } catch { osDele = []; }
+    const aquiAgora = (() => { try { return ondeOHeroiEsta(estado); } catch { return ""; } })();
+    for (const [k, p] of [...pessoas]) {
+      if (!p.chega || p.comVoce || p.doPasso || !osDele.some((x) => mesmo(x.nome, p.nome))) continue;
+      if (!aquiAgora) {
+        pessoas.delete(k);
+        for (let i = diz.length - 1; i >= 0; i--) if (diz[i].quem && mesmo(diz[i].quem, p.nome)) diz.splice(i, 1);
+        marca("a pessoa do passo", p.nome, null, "estrada");
+        continue;
+      }
+      p.doPasso = aquiAgora;
+      p.veioTer = true;
+    }
+  }
   /* o rumo que aponta para a pessoa do passo já não é vontade da
      companheira: a pessoa está em cena, ou a cena diz porque não está */
   if (aponta && passo.some((x) => sem(aponta).startsWith(sem(`falar com ${x.nome}`)))) aponta = "";
@@ -1441,6 +1554,14 @@ export function aFichaDeAtor(entrada) {
       resultados.add("mover");
       const P = limpo(jor.para), D = limpo(jor.de);
       if (P) aconteceu.push(ponto(tpl(D ? A_ESTRADA_DITA.saiu : A_ESTRADA_DITA.semDe, { H, D, P })));
+    }
+    {
+      const P = limpo(jor.para), total = Number(jor.totalMin), andado = Number(jor.andadoMin) || 0;
+      if (P && Number.isFinite(total) && total > andado) {
+        const h = Math.round((total - andado) / 60);
+        const F = h < 1 ? A_ESTRADA_DITA.menos : `${porExtenso(h)} hora${h === 1 ? "" : "s"}`.replace(/^um hora$/u, "uma hora").replace(/^dois horas$/u, "duas horas");
+        cena.push(ponto(tpl(A_ESTRADA_DITA.falta, { P, F })));
+      }
     }
     for (const [k, p] of [...pessoas]) {
       if (p.comVoce || p.chega || p.estado || p.fera || p.doPasso) continue;
@@ -1490,7 +1611,7 @@ export function aFichaDeAtor(entrada) {
     if (c.procurado && !p.comVoce) p.procurado = true;
     if (p.fera) p.registo = REGISTOS_DE_FALA[0].o;
     else p.registo = registoDe(p);
-    p.trato = p.fera ? "" : tratoDe(p, H);
+    p.trato = p.fera ? "" : tratoDe(p, H, c.dela);
   }
 
   /* O FIGURANTE QUE FALA (o-figurante.js, a decisão 6 do plano): sem gente
@@ -1501,7 +1622,7 @@ export function aFichaDeAtor(entrada) {
   if (!temLuta && !naEstrada && !resultados.has("luta")) { try { fig = oFigurante(estado, { comNome }); } catch { fig = null; } }
   if (fig) {
     const rg = REGISTOS_DE_FALA.find((r) => r.id === fig.registo);
-    fig = { ...fig, registo: rg ? rg.o : null, trato: tratoDe({ procurado: c.procurado }, H), sabe: [] };
+    fig = { ...fig, registo: rg ? rg.o : null, trato: tratoDe({ procurado: c.procurado }, H, c.dela), sabe: [] };
   }
 
   /* o PERGUNTOU vai a quem responde: quem a frase chama, senão quem está
@@ -1513,12 +1634,22 @@ export function aFichaDeAtor(entrada) {
      no mercado, é dele, e o preço da banca também — já não do companheiro */
   const figVende = !!fig && O_FIGURANTE_VENDE.tipos.includes(fig.tipo) && !chamado && (!responde || responde.comVoce);
   for (const s of sabes) {
-    const mv = figVende ? s.o.match(O_FIGURANTE_VENDE.de) : null;
-    if (mv) { fig.vende = [...arr(fig.vende), mv[1]]; continue; }
+    const mv = figVende ? oQueALinhaVende(s.o) : "";
+    if (mv) { fig.vende = [...arr(fig.vende), mv]; continue; }
     const porPapel = s.papel && lista.find((p) => sem(p.oque).includes(sem(s.papel)));
     const alvo = porPapel || responde;
     if (alvo) alvo.sabe.push(s.o); else cena.push(`Sabe-se aqui: ${ponto(s.o)}`);
   }
+  /* a pergunta do preço ao lugar, sem linha nenhuma na pauta (a 17.ª, T8:
+     «o que vende e quanto custa»): responde-a a banca do dia */
+  if (figVende && !arr(fig.vende).length && frase && O_FIGURANTE_VENDE.pergunta.test(sem(frase))) {
+    let b = [];
+    try { b = aBancaDoDia(estado, frase); } catch { b = []; }
+    if (b.length) fig.vende = [b.join(", ")];
+  }
+  /* o figurante sabe o caminho de um sítio público (O_FIGURANTE_SABE_O_CAMINHO,
+     a 17.ª, defeito 12): a pergunta ao lugar pelo onde tem a direção */
+  if (fig && !chamado && (!responde || responde.comVoce) && frase) { let cm = ""; try { cm = oCaminhoQueSabe(estado, frase); } catch { cm = ""; } if (cm) fig.caminho = cm; }
   if (naoSabe) {
     /* as perguntas: as que acabam em «?» e as indiretas («pergunto ao
        taverneiro quanto custa um prato quente») */
@@ -1534,7 +1665,7 @@ export function aFichaDeAtor(entrada) {
     /* o nome de quem se chama («Doran o Manco, o que sabe?») não é conteúdo */
     const dosNomes = new Set(chaves(lista.map((p) => p.nome).join(" ")));
     const oNaoSabe = (quem) => {
-      const sabido = [...sabes.map((s) => s.o), ...(quem ? arr(quem.sabe) : [])];
+      const sabido = [...sabes.map((s) => s.o), ...(quem ? arr(quem.sabe) : []), ...(quem && quem.caminho ? [quem.caminho] : [])];
       const ditos = chaves(sabido.join(" "));
       const faltam = perguntas.filter((q) => { const k = chaves(q).filter((w) => !dosNomes.has(w)); return k.length ? !k.some((w) => ditos.includes(w)) : !sabido.length; });
       const o = faltam.length ? `não sabe responder a: ${faltam.map((q) => `«${q}»`).join(" ")}` : sabido.length ? `do que ${H} perguntou, não sabe mais do que isto` : `do que ${H} perguntou, não sabe a resposta`;
@@ -1544,10 +1675,13 @@ export function aFichaDeAtor(entrada) {
        figurante — salvo quando o que se sabe já a responde toda: aí fica
        com quem o sabe */
     const peloFig = fig && !chamado && (!responde || responde.comVoce) ? oNaoSabe(fig) : null;
-    if (peloFig && !peloFig.cobre) fig.naoSabe = peloFig.o;
+    /* (a 17.ª, T8) a banca que respondeu à pergunta do preço é a resposta:
+       o mascate não «não sabe» o que tem à venda */
+    if (peloFig && arr(fig.vende).length && O_FIGURANTE_VENDE.pergunta.test(sem(frase))) { /* respondeu a banca */ }
+    else if (peloFig && !peloFig.cobre) fig.naoSabe = peloFig.o;
     /* a banca respondeu (o mascate tem o preço, O_FIGURANTE_VENDE): ninguém
        mais tem de não saber */
-    else if (!(peloFig && arr(fig.vende).length)) {
+    else if (!(peloFig && (arr(fig.vende).length || (fig.caminho && peloFig.cobre)))) {
       const quem = responde || null;
       const { o } = oNaoSabe(quem);
       if (o) { if (quem) quem.naoSabe = o; else cena.push(`Aqui ninguém sabe ${o.replace(/^não sabe /, "")}.`); }
@@ -1557,17 +1691,24 @@ export function aFichaDeAtor(entrada) {
      esta pessoa — o que ela sabe, o que diz, e a mesa da cena (os preços, o
      que está à venda, as distâncias) */
   const numerosDaCena = /\d/.test([...cena, ...cenaExtra, ...venda].join(" "));
+  /* a vez da marca (A_VEZ_DA_MARCA): a semente do mundo, a pessoa e o turno */
+  const vezDoTurno = (() => {
+    const r = ehObj(estado.render) ? estado.render : {};
+    const mundo = ehObj(estado.mundo) ? estado.mundo : ehObj(r.mundo) ? r.mundo : {};
+    const ditas = arr(estado.mensagens).filter((m) => ehObj(m) && m.autor === "mestre").length;
+    return `${limpo(estado.nomeCampanha) || limpo(r.nomeCampanha)}|${limpo(mundo.genero)}|${Number(estado.dia) || 0}|${Number(estado.minuto) || 0}|${ditas}`;
+  })();
   for (const p of pessoas.values()) {
     const temNumero = numerosDaCena || /\d/.test([...p.sabe, ...diz.filter((d) => d.quem && mesmo(d.quem, p.nome)).map((d) => d.o)].join(" "));
-    if (p.tique) p.tique = vozSemMarca(vozSemPergunta(vozComNumero(p.tique, temNumero)));
-    if (p.registo) p.registo = vozComNumero(p.registo, temNumero);
+    if (p.tique) p.tique = vozSemMarca(vozSemPergunta(vozComNumero(p.tique, temNumero)), `${vezDoTurno}|${sem(p.nome)}`);
+    if (p.registo) p.registo = registoQueSeSoma(p.tique, vozComNumero(p.registo, temNumero));
   }
   /* a voz do figurante passa pelas mesmas formas (ele não sabe nada: o
-     número que pode dizer é só o da mesa da cena) */
+     número que pode dizer é só o da mesa da cena — e o que tem à venda) */
   if (fig) {
-    const figNumero = numerosDaCena || /d/.test(arr(fig.vende).join(" "));
-    if (fig.tique) fig.tique = vozSemMarca(vozSemPergunta(vozComNumero(fig.tique, figNumero)));
-    if (fig.registo) fig.registo = vozComNumero(fig.registo, figNumero);
+    const figNumero = numerosDaCena || /\d/.test(arr(fig.vende).join(" "));
+    if (fig.tique) fig.tique = vozSemMarca(vozSemPergunta(vozComNumero(fig.tique, figNumero)), `${vezDoTurno}|${sem(fig.papel)}`);
+    if (fig.registo) fig.registo = registoQueSeSoma(fig.tique, vozComNumero(fig.registo, figNumero));
   }
   /* O QUE FICOU COMBINADO (O_COMBINADO): o pedido de cada pessoa em cena,
      do coração do save, e a resposta do herói */
@@ -1693,7 +1834,7 @@ export function aFichaDeAtor(entrada) {
       L.push(`${maiuscula(fig.papel)} — ${F.semNome}.`);
       const voz = [fig.tique, fig.registo].filter(Boolean).join("; ");
       L.push(`  Fala: ${[voz, fig.trato ? `trata ${H} ${fig.trato}` : ""].filter(Boolean).join("; ")}.`);
-      const figAgora = [fig.agora, arr(fig.vende).length ? tpl(O_FIGURANTE_VENDE.diz, { V: fig.vende.join("; ") }) : ""].filter(Boolean).join("; ");
+      const figAgora = [fig.agora, arr(fig.vende).length ? tpl(O_FIGURANTE_VENDE.diz, { V: fig.vende.join("; ") }) : "", fig.caminho || ""].filter(Boolean).join("; ");
       if (!tira("agora") && figAgora) L.push(`  Agora: ${ponto(figAgora)}`);
       if (fig.naoSabe) L.push(`  ${maiuscula(ponto(fig.naoSabe))}`);
       L.push(`  ${tpl(F.responde, { H, ...pr })} ${F.limite}`);
