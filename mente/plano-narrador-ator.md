@@ -36,9 +36,12 @@ escrita como frase de ator; todos falam com a mesma voz).
      o jogador tem o cartão «Perguntar a X por Y», em vez de adivinhar a pergunta.
 
 7. **Aprovados depois da 17.ª (04/11/2026, «Pode fazer os sítios como cartões»):**
-   o sítio aonde o passo manda é coisa que se toca na soleira, com quem lá
-   está à hora da chegada (`src/motor/os-sitios-como-cartoes.js`); o toque é
-   o «ir» da planta.
+   feitos e retirados no mesmo dia, antes de subir: diziam quem lá está, e o
+   herói não tem como o saber. Substituídos pela decisão 8.
+8. **A proposta da frase (04/11/2026, ordem da pessoa):** a frase que o
+   sistema lê como ato que gasta tempo, estrada ou moeda vira um cartão que,
+   tocado, mostra só o que o herói sabe e o botão (`src/motor/a-proposta-da-frase.js`,
+   `src/painel-proposta.jsx`). Vale para os dois modos do Narrador.
 
 ## As etapas
 
