@@ -247,6 +247,7 @@ import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aE
 import { portaAberta, oModoDoNarrador, oPesoPeloSistema } from "./motor/portas-do-narrador.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
+import { osSitiosComoCartoes } from "./motor/os-sitios-como-cartoes.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -20270,6 +20271,16 @@ export default function Taverna() {
     try { cs = asPistasDoPasso(estadoDoPedido()); } catch (e) { calou("a pista do passo", e); cs = []; }
     return cs.map((c) => ({ id: c.id, verbo: c.oferta, preco: [c.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => perguntarAPista(c) }));
   };
+  /* OS SÍTIOS COMO CARTÕES (04/11, a 17.ª sessão): o sítio aonde o passo
+     manda, com quem lá está à hora da chegada (os-sitios-como-cartoes.js).
+     O toque é o «ir» da planta — o mesmo passo, a mesma frase, o mesmo
+     tempo; o preço é o da caminhada, que é o que o passo cobra. */
+  const sitiosDoPasso = () => {
+    if (combate || acampado || jornada || masmorra) return [];
+    let cs = [];
+    try { cs = osSitiosComoCartoes(estadoDoPedido(), lugaresDaqui()); } catch (e) { calou("os sítios do passo", e); cs = []; }
+    return cs.map((c) => ({ id: c.id, verbo: c.oferta, preco: emTempo(c.minutos), retorno: c.diz, tom: "convite", precisaDoNarrador: true, aoClicar: () => { try { irAoLugarPeloMapa(c.alvo); } catch (e) { calou("ir pelo cartão do sítio", e); } } }));
+  };
   /* a peça é a VerboComPreco que a fogueira já usa (ui.jsx): o verbo e o
      preço em mundo, nunca "lado A". Chama-se como função, nunca como
      componente definido aqui dentro (o foco). */
@@ -22929,6 +22940,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          perguntar porquê, recusar (ignorar é não responder, e o relógio dela corre) */
       try { for (const o of pedidosDoCoracao()) lista.push(o); } catch (e) { calou("o pedido na soleira", e); }
       try { for (const o of pistasDoPasso()) lista.push(o); } catch (e) { calou("a pista na soleira", e); }
+      try { for (const o of sitiosDoPasso()) lista.push(o); } catch (e) { calou("o sítio na soleira", e); }
 
       /* 1 · A MISSÃO QUE PEDE RESPOSTA. Alguém propôs cara a cara e está à
          espera: é a oferta mais perecível que o jogo tem. */

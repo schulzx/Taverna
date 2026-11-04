@@ -35,6 +35,11 @@ escrita como frase de ator; todos falam com a mesma voz).
    - **A pista como cartão** (`mente/sessao-16.md`): com a pessoa do passo em cena,
      o jogador tem o cartão «Perguntar a X por Y», em vez de adivinhar a pergunta.
 
+7. **Aprovados depois da 17.ª (04/11/2026, «Pode fazer os sítios como cartões»):**
+   o sítio aonde o passo manda é coisa que se toca na soleira, com quem lá
+   está à hora da chegada (`src/motor/os-sitios-como-cartoes.js`); o toque é
+   o «ir» da planta.
+
 ## As etapas
 
 1. **A ficha de ator** (motor): o que aconteceu (decidido), quem está (cada um com a

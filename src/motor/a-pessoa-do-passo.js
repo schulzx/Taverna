@@ -408,12 +408,20 @@ export function aPessoaDoPasso(estado) {
       const ehDador = !ehGuarda && limpo(m.dador) && mesmo(nome, m.dador) && m.tipo !== "principal";
       const regK = Object.keys(npcs).find((x) => mesmo(x, nome));
       const reg = regK && ehObj(npcs[regK]) ? npcs[regK] : null;
-      let pb = null, noPosto = ehGuarda, veio = false;
+      let pb = null, noPosto = ehGuarda, veio = false, ondeVe = onde;
       if (!ehGuarda) {
         onde = limpo(et.onde) || (ehPista ? a.pista.local : "") || (ehAlvo ? a.alvo.onde : "") || (reg ? oSitioDoRegisto(reg.local, e) : "");
         if (!onde) { pb = daBase(nome); onde = pb ? limpo(pb.local) : ""; }
         if (!onde) continue;
-        noPosto = !semLugar && estaAqui(e, onde);
+        /* O POSTO SEM CIDADE É NA CIDADE DA ABERTURA (04/11, os sítios como
+           cartões). A pista mora «n'O Descanso do Carroceiro», sem cidade, e
+           Vale Verde também tem um Descanso do Carroceiro: lido assim, o
+           Godfrey estava atrás dos dois balcões. A pista é gente da cidade
+           onde a abertura começa (PASSO_AQUI, abertura.js); a comparação
+           leva-lhe a cidade, e o `onde` dito continua como veio. */
+        if (ehPista && !moradaDe(onde).cidade && limpo(a.cidade)) ondeVe = `${limpo(moradaDe(onde).lugar)}, em ${limpo(a.cidade)}`;
+        else ondeVe = onde;
+        noPosto = !semLugar && estaAqui(e, ondeVe);
         /* quem veio ter com o herói e ficou (O_QUE_VEIO_TER): o registo
            guarda-o onde o herói o viu, e o herói ainda lá está */
         veio = !noPosto && !!reg && !!limpo(reg.local) && mesmoSitio(oSitioDoRegisto(reg.local, e), aquiAgora)
@@ -437,7 +445,7 @@ export function aPessoaDoPasso(estado) {
          não folga no templo daqui */
       const foraAgora = sabeAHora && !rot.noTurno && !!str(rot.fora) && str(rot.agora).endsWith(str(rot.fora));
       const posteDaqui = foraAgora && (aBase(), locais.some((l) => semArtigo(l.nome) === semArtigo(moradaDe(onde).lugar)))
-        && (!moradaDe(onde).cidade || semArtigo(moradaDe(onde).cidade) === semArtigo(e.cidadeAtual));
+        && (!moradaDe(ondeVe).cidade || semArtigo(moradaDe(ondeVe).cidade) === semArtigo(e.cidadeAtual));
       const sf = posteDaqui ? oSitioDoFora(rot.fora, onde) : null;
       const ondeAnda = sf ? `${str(rot.agora).slice(0, -str(rot.fora).length)}${sf.nome ? comEm(sf.nome) : O_FORA_COM_SITIO.semSitio}` : rot ? str(rot.agora) : "";
       const laFora = !!(sf && sf.nome) && !semLugar && estaAqui(e, sf.nome);
@@ -474,6 +482,15 @@ export function aPessoaDoPasso(estado) {
         /* de que missão, e o índice do passo que ela sabe (a pista como
            cartão, a-pista-como-cartao.js); -1 quando não há passo a seguir */
         missao: m.id, seguinte: ehObj(prox) ? k + 1 : -1,
+        /* o mesmo porquê, em peças (os sítios como cartões,
+           os-sitios-como-cartoes.js): onde anda e a que horas volta, quando
+           não está; a folga ou o fora do turno, quando está lá por conta
+           própria; se é dia de folga; e se é quem já deu o passo (`dado`) */
+        anda: aqui ? "" : ondeAnda,
+        volta: !aqui && rot && !rot.deFolga && Number.isFinite(rot.de) ? rot.de : null,
+        fora: laFora ? (rot.deFolga ? "folga" : "fora") : "",
+        deFolga: !!(rot && rot.deFolga),
+        dado,
       });
     }
   }
