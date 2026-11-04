@@ -12789,3 +12789,45 @@ em todos os mundos). Proponho que o céu do horizonte e o chão da grade **bebam
 aconteça numa grade que já não tem a cor da taverna. Fica para a fila do desenho, com
 uma condição escrita: só depois de 4c no ar e jogado, para a prova desta ler **uma**
 superfície e a dela ler **três**.
+
+
+## A proposta da frase — a frase que ia agir vira um cartão (04/11/2026)
+
+**A ordem da pessoa, 04/11:** *"para toda ação que o sistema ainda tem dúvidas ou falhas,
+vamos fazer um botão, mesmo quando ele reconheça a ação… aparece um card 'ir até o
+mercado…', e quando se aperta nele, daí aparece as informações necessárias e o botão
+'ir'… somente informações que sei… sem encher a tela de botões, tem que ser funcional e
+bonito, jogável e atrativo."*
+
+**A peça:** `PropostaDaFrase` (`src/painel-proposta.jsx`); quem a compõe é o motor
+(`src/motor/a-proposta-da-frase.js`), quem a liga é o App (`lancarODado` → `proporAFrase`).
+
+- **Onde:** no pé da página, **no lugar da soleira**, como o veredito do crime: as duas
+  disputam a mesma decisão do turno. Uma de cada vez. Some quando qualquer turno parte.
+- **Fechada (uma linha de toque, `ALVOS.piso`):** o glifo do efeito, o verbo («Ir até o
+  Armazém do Andarilho»), por baixo a frase do jogador entre aspas e truncada (é a dele, e
+  ele vê que é), o tempo ou a moeda à direita e o chevron. **Não age: abre.**
+- **Aberta:** as linhas do que o herói **sabe** (no máximo `tetoDeLinhas` = 4, a
+  distância primeiro) e dois botões lado a lado: «Reescrever» (devolve a frase ao campo) e
+  o verbo de mesa com o preço («Ir · 5 min», «Dormir · uma noite»).
+- **Cor:** o convite (`T.mundo` no contorno, `T.mundoSoft` no glifo e no preço), a mesma
+  da `Oferta` — é o mundo a pôr uma porta na mesa, não um aviso.
+- **O sistema não se nomeia:** não há «proposta», «confirmar» nem «ação reconhecida».
+- **Medido no navegador (5199, 04/11):** a 375 px o cartão aberto com dois efeitos tem
+  ~200 px, o verbo em duas linhas, os botões de 48 px; a 800 px, uma linha por campo. A
+  moeda e o número ligam-se por espaço que não quebra (o «(◉ 14)» partia-se no telefone).
+
+**O que entra (1.ª leva):** o passo na cidade, a estrada (partir, seguir, a masmorra), o
+sono e a compra — as portas que gastam tempo, estrada ou moeda e que falharam por texto
+nas sessões 14–17. **O que não entra, e porquê:** o teste já tem o seu botão (o dado, com
+o risco escrito e o desistir); a luta, a magia, o frasco e a relíquia ficam com as portas
+deles (2.ª leva, com a luta a fundir-se com o veredito do crime para não pedir duas vezes).
+
+**O que o cartão diz de um sítio** (`oQueSeSabeDoSitio`): a distância; o que uma missão
+ativa manda lá fazer; quem a abertura disse que lá trabalha; quem o herói lá conheceu,
+com «hoje». **Nunca** se alguém está lá agora, de folga, ou a que horas — isso só se sabe
+indo. (Os cartões da soleira da v9.594 diziam-no, e saíram antes de subir.)
+
+**Por passar:** o par no Figma (página `10 · Fichas`, ao lado do cartão da ficha, que é
+a forma-irmã) — a peça nasceu com os tokens e as primitivas da casa, e o Figma fica em
+dívida, escrita aqui, para o `desenho`.

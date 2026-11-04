@@ -24,6 +24,21 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · a proposta da frase · a ordem da pessoa: a frase que ia agir vira um cartão
+- **a ordem:** *"para toda ação que o sistema ainda tem dúvidas ou falhas, vamos fazer um botão… só aparecem informações que sei, e necessárias"*. A pessoa também apontou o defeito dos cartões da soleira da v9.594: diziam «Godfrey está lá, de folga», que a heroína não tem como saber. **A v9.594 não subiu**: a prova limpa dela saiu verde, mas os cartões saíram antes do push.
+- **inventário (um agente de leitura):** 23 portas leem a frase. As que falharam nas sessões 14–17 são o passo, o sono, a compra/pagar, o teste e a habilidade. Esperar, falar, vender e pagar sem balcão não têm porta.
+- **motor:** `src/motor/a-proposta-da-frase.js`. `aPropostaDaFrase(leitura, estado)` compõe o cartão; `oQueSeSabeDoSitio` diz só o que o herói ouviu ou viu: a missão, a abertura, o registo, e nunca a presença nem a hora. Suíte `teste-a-proposta-da-frase.mjs`, 32 de 32. O conserto do homónimo da pessoa do passo fica (o posto da pista sem cidade era de qualquer cidade), com a sua prova nesta suíte. Os campos novos de `aPessoaDoPasso` saíram, porque ficaram sem leitor; `os-sitios-como-cartoes.js` e a suíte dele também saíram.
+- **tela:** `src/painel-proposta.jsx`, fechado e aberto (a forma em `formas.md`, «A proposta da frase»).
+- **fiação (com o bastão, devolvido no mesmo ciclo):** `proporAFrase` em `lancarODado`, só para a frase do campo; o mapa, a soleira, a sala e a batalha entram direto. `leituraDaFrase` usa os mesmos detectores e as mesmas contas das portas. «Ir» manda a MESMA frase por `partirOTurno`, sem caminho paralelo. O sono escrito passou a ler os sítios (`descansoDaFrase` com `sitios`) nos dois lados, para a proposta e o turno dizerem o mesmo.
+- **decisões médias:** (1) o teste não ganha cartão: o dado já é o botão, com o risco e o desistir. (2) A luta fica para a 2.ª leva, porque o veredito do crime já pede confirmação e duas seguidas seria pior. (3) A estrada cala o passo («vou ao Descanso e parto» é partir).
+- **prova viva (5199, sem IA, sem gasto):**
+  - «Vou ao mercado ver o que vendem» virou «Ir até o Armazém do Andarilho · 5 min», e a heroína não se mexeu. Aberto, o cartão disse «dentro dos muros, a 5 min a pé». «Ir · 5 min» mandou ao Mestre «[MOVIMENTO — REGISTRADO PELO SISTEMA] … AGORA estou no Armazém do Andarilho», com a frase inteira.
+  - «Durmo até de manhã» virou «Dormir · uma noite · PV e PM cheios». «Reescrever» devolveu a frase ao campo sem dormir.
+  - «Olho à volta» foi direto ao Mestre.
+  - No telefone (375 px), com o passo e a compra juntos, o cartão ficou legível.
+  - O save de teste foi apagado com o jogo desmontado.
+- **o que ficou:** a 2.ª leva (a luta fundida com o crime; a habilidade; esperar, falar, vender e pagar, que hoje não têm porta e precisam de nascer); o par no Figma; uma sessão com IA para ver a proposta a ser jogada.
+
 ## 04/11 · os sítios como cartões · a proposta da 17.ª, aprovada pela pessoa
 - **estado inicial:** v9.593 no ar. A pessoa disse «Pode fazer os sítios como cartões» (`mente/sessao-17.md` §3, a proposta do `jogo`).
 - **motor:** `src/motor/os-sitios-como-cartoes.js` (`osSitiosComoCartoes`, `OS_SITIOS_COMO_CARTOES`). Para cada sítio a que se vai a pé, a peça monta a chegada (o mesmo `oPassoNaCidade` que o toque dá, com os minutos) e pergunta a `aPessoaDoPasso` quem lá está. É a mesma conta da ficha do turno seguinte. A ordem dos cartões: onde está agora quem um passo procura, depois o sítio de um `revelar` desta cidade, por fim o posto de quem não está, com a hora. Cada pessoa tem um cartão, até três. O sítio onde o herói já está fica de fora, e na estrada, na masmorra e na luta não há cartões. A resposta guarda-se pela chave do que lê, porque a soleira monta-se a cada render (~10 ms por pergunta sem a chave).

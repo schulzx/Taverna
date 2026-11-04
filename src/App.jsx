@@ -247,7 +247,8 @@ import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aE
 import { portaAberta, oModoDoNarrador, oPesoPeloSistema } from "./motor/portas-do-narrador.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
-import { osSitiosComoCartoes } from "./motor/os-sitios-como-cartoes.js";
+import { aPropostaDaFrase } from "./motor/a-proposta-da-frase.js";
+import { PropostaDaFrase } from "./painel-proposta.jsx";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -5429,6 +5430,9 @@ export default function Taverna() {
   /* v9.5: marca as respostas que NÃO fecham a rodada (meu turno continua) —
      nelas o relógio dos buffs e das condições fica parado. */
   const [entrada, setEntrada] = useState("");
+  /* A PROPOSTA DA FRASE (04/11): o que a frase ia fazer, à espera do toque */
+  const [propostaDaFrase, setPropostaDaFrase] = useState(null);
+  const [propostaAberta, setPropostaAberta] = useState(false);
   /* F2b · F2c: as fichas do pé da página (trocam a cada resposta do Mestre,
      ficam durante a espera), a ficha cuja frase está no campo — `{ id, ids,
      texto, ficha, verbo }`, NUNCA no save — e a do cartão aberto. O ref
@@ -12679,6 +12683,8 @@ export default function Taverna() {
   };
 
   const agir = (texto) => {
+    /* um turno que parte por qualquer porta leva a proposta que esperava */
+    try { setPropostaDaFrase(null); setPropostaAberta(false); } catch (e) { calou("a proposta sai com o turno", e); }
     /* v9.42: morto não age. A tela de tombamento cobre tudo, mas cobrir não é
        impedir — e um caminho que ainda funciona por baixo do pano é o mesmo
        que não existir regra. Quem tombou escolhe voltar ou passar o fio. */
@@ -13468,7 +13474,7 @@ export default function Taverna() {
        MESMO caminho do botão — acampar e sair pelo descanso que ela diz —,
        antes das portas de movimento. A frase sobe ao Mestre na nota do turno. */
     try {
-      const dsc = (!acao.startsWith("/") && !escolhaPendenteRef.current) ? descansoDaFrase(acao, { emCombate: !!combateRef.current }) : null;
+      const dsc = (!acao.startsWith("/") && !escolhaPendenteRef.current) ? descansoDaFrase(acao, { emCombate: !!combateRef.current, sitios: sitiosDaFrase() }) : null;
       if (dsc && (dsc.tipo === "longo" || dsc.tipo === "curto")) {
         pushMsgs([{ autor: "jogador", texto: acao }]);
         if (!acampadoRef.current) acampar({ calado: true });
@@ -20271,16 +20277,6 @@ export default function Taverna() {
     try { cs = asPistasDoPasso(estadoDoPedido()); } catch (e) { calou("a pista do passo", e); cs = []; }
     return cs.map((c) => ({ id: c.id, verbo: c.oferta, preco: [c.preco, emTempo(MINUTOS_POR_TURNO)].filter(Boolean).join(" · "), tom: "convite", precisaDoNarrador: true, aoClicar: () => perguntarAPista(c) }));
   };
-  /* OS SÍTIOS COMO CARTÕES (04/11, a 17.ª sessão): o sítio aonde o passo
-     manda, com quem lá está à hora da chegada (os-sitios-como-cartoes.js).
-     O toque é o «ir» da planta — o mesmo passo, a mesma frase, o mesmo
-     tempo; o preço é o da caminhada, que é o que o passo cobra. */
-  const sitiosDoPasso = () => {
-    if (combate || acampado || jornada || masmorra) return [];
-    let cs = [];
-    try { cs = osSitiosComoCartoes(estadoDoPedido(), lugaresDaqui()); } catch (e) { calou("os sítios do passo", e); cs = []; }
-    return cs.map((c) => ({ id: c.id, verbo: c.oferta, preco: emTempo(c.minutos), retorno: c.diz, tom: "convite", precisaDoNarrador: true, aoClicar: () => { try { irAoLugarPeloMapa(c.alvo); } catch (e) { calou("ir pelo cartão do sítio", e); } } }));
-  };
   /* a peça é a VerboComPreco que a fogueira já usa (ui.jsx): o verbo e o
      preço em mundo, nunca "lado A". Chama-se como função, nunca como
      componente definido aqui dentro (o foco). */
@@ -22940,7 +22936,6 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          perguntar porquê, recusar (ignorar é não responder, e o relógio dela corre) */
       try { for (const o of pedidosDoCoracao()) lista.push(o); } catch (e) { calou("o pedido na soleira", e); }
       try { for (const o of pistasDoPasso()) lista.push(o); } catch (e) { calou("a pista na soleira", e); }
-      try { for (const o of sitiosDoPasso()) lista.push(o); } catch (e) { calou("o sítio na soleira", e); }
 
       /* 1 · A MISSÃO QUE PEDE RESPOSTA. Alguém propôs cara a cara e está à
          espera: é a oferta mais perecível que o jogo tem. */
@@ -23428,6 +23423,109 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     try { document.addEventListener("visibilitychange", aoEsconder); window.addEventListener("pagehide", guardarORascunho); } catch (e) { calou("ouvir a página se esconder", e); }
     return () => { try { document.removeEventListener("visibilitychange", aoEsconder); window.removeEventListener("pagehide", guardarORascunho); } catch { /* nada a desligar */ } };
   }, []); // eslint-disable-line
+  /* ---------------- A PROPOSTA DA FRASE (04/11/2026) ----------------
+     A ordem da pessoa: a frase que o sistema lê como ato que gasta tempo,
+     estrada ou moeda NÃO AGE — vira um cartão (painel-proposta.jsx) que,
+     tocado, mostra só o que o herói sabe e o botão. Quem compõe é o motor
+     (a-proposta-da-frase.js); aqui LÊ-SE, com os mesmos detectores, as
+     mesmas contas e na mesma ordem das portas do turno. Confirmar é mandar
+     a MESMA frase pelo turno de sempre (partirOTurno): não há caminho
+     paralelo, e o que o cartão diz é o que o turno faz.
+     Só a frase do campo propõe: o mapa, a soleira, a sala e a batalha já
+     são toques, e entram direto. */
+  const sitiosDaFrase = () => { try { return lugaresDaqui().map((l) => l && l.nome).filter(Boolean); } catch (e) { calou("os sítios da frase", e); return []; } };
+  const leituraDaFrase = (acao) => {
+    const L = { frase: acao };
+    const s = sinaisDoTurno(acao);
+    /* a frase que acorda outra porta (a luta, a magia, o frasco, a relíquia,
+       a pergunta do sistema) fica com ela: a 2.ª leva */
+    if (s.ehComando || s.temEscolhaPendente || s.declarouPoderQueNaoTem || s.vaiConsumir || s.vaiAcionarReliquia || s.ehConjuracao || s.ehPortal || s.ehAgressao || s.temHabilidadesSelecionadas || s.temMilagreArmado || s.emCombate || s.bloqueado) return { ...L, acorda: true };
+    const ctx = ctxDoRastro();
+    try {
+      if (s.ehIdaAMasmorra || s.ehEntradaEmMasmorra) {
+        const m = s.ehIdaAMasmorra ? idaAMasmorra(acao, ctx) : null;
+        L.masmorra = { nome: (m && m.nome) || "", linhas: m && Array.isArray(m.linhas) ? m.linhas : [] };
+      }
+    } catch (e) { calou("a proposta: a masmorra", e); }
+    try {
+      const j = jornadaRef.current;
+      if (s.ehSeguirViagem && j && j.para) { const pr = progressoDaViagem(j); L.seguir = { para: j.para, minutos: minutosPorAvanco(j), faltam: pr ? pr.turnosRestantes : null }; }
+    } catch (e) { calou("a proposta: seguir", e); }
+    try {
+      const d = s.ehPartidaPorNome ? detectarPartida(acao, ctx) : null;
+      if (d && d.destino) {
+        const p = personagemRef.current || personagem;
+        const rota = ((mapaRef.current || {}).rotas || []).find((r) =>
+          (semNome(r.de) === semNome(cidadeAtualRef.current) && semNome(r.para) === semNome(d.destino)) ||
+          (semNome(r.para) === semNome(cidadeAtualRef.current) && semNome(r.de) === semNome(d.destino)));
+        const dias = (rota && Number(rota.dias)) || null;
+        let falta = null;
+        try { falta = faltaComidaParaPartir(p.suprimentos, 1 + ((p.grupo || []).length), dias || 1); } catch (e) { calou("a proposta: a comida da estrada", e); }
+        L.viagem = { destino: d.destino, dias, falta };
+      }
+    } catch (e) { calou("a proposta: a estrada", e); }
+    try {
+      const alvo = s.temAlvoLocal ? alvoLocalPedido(acao) : null;
+      const passo = alvo ? oPassoNaCidade({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current, mapa: mapaRef.current }, alvo) : null;
+      if (passo) L.passo = { nome: alvo.nome, onde: alvo.onde, minutos: passo.minutos, cidade: cidadeAtualRef.current };
+    } catch (e) { calou("a proposta: o passo", e); }
+    try {
+      const dsc = descansoDaFrase(acao, { emCombate: false, sitios: sitiosDaFrase() });
+      if (dsc && (dsc.tipo === "longo" || dsc.tipo === "curto")) {
+        const V = VEREDITO_DO_DESCANSO;
+        const of = dsc.tipo === "longo" ? ofertaDoAcampamento(personagemRef.current || personagem, diaRef.current, {}) : null;
+        L.sono = of ? { tipo: of.tipo, preco: of.preco, retorno: of.retorno } : { tipo: dsc.tipo, preco: dsc.tipo === "curto" ? V.curto.preco : "", retorno: "" };
+      }
+    } catch (e) { calou("a proposta: o sono", e); }
+    /* a compra: as mesmas duas leituras da bolsa da frase (registarABolsaDaFrase) */
+    try {
+      const txt = acao, compras = [];
+      const p = personagemRef.current || personagem;
+      const cid = cidadeAtualRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
+      if (cid && !jornadaRef.current && !masmorraRef.current) {
+        const sup = garantirSuprimentos(p.suprimentos);
+        const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit, anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "", bancas: bancasDaCena() });
+        if (c) compras.push({ fecha: !!c.fecha, total: c.total, bolsa: p.moedas || 0, itens: (c.itens || []).map((x) => ({ nome: x.nome || x.id, quantos: x.quantos })) });
+      }
+      const bancas = bancasDaCena();
+      if (bancas.length) {
+        let bancasDaCompra = bancas;
+        try { const ae = alvoDoEnvio(txt, emCenaRef.current); bancasDaCompra = bancasDoToque(ae.alvo, ae.lista, bancas); } catch (e) { bancasDaCompra = bancas; }
+        const c = compraNaBanca(txt, { bancas: bancasDaCompra, bolsa: p.moedas || 0 });
+        if (c) compras.push({ fecha: !!c.fecha, total: c.total, bolsa: p.moedas || 0, itens: (c.itens || []).map((x) => ({ nome: (x.item && x.item.nome) || x.nome || "", quantos: x.quantos || 1 })) });
+      }
+      if (compras.length) L.compras = compras;
+    } catch (e) { calou("a proposta: a compra", e); }
+    return L;
+  };
+  /* devolve true quando a frase virou proposta (e o turno não parte) */
+  const proporAFrase = (texto) => {
+    try {
+      const acao = String(texto || "").trim();
+      if (!acao || acao.startsWith("/") || acao.startsWith("[")) return false;
+      if (salaRef.current || combateRef.current || carregando || rolagem) return false;
+      const pm = fichaViva();
+      if (pm && pm.morto) return false;
+      const p = aPropostaDaFrase(leituraDaFrase(acao), estadoDoPedido());
+      if (!p) { setPropostaDaFrase(null); setPropostaAberta(false); return false; }
+      setPropostaDaFrase(p); setPropostaAberta(false);
+      setEntrada("");
+      try { setCampoFocado(false); const foco = typeof document !== "undefined" ? document.activeElement : null; if (foco && typeof foco.blur === "function") foco.blur(); } catch (e) { calou("o campo descansa com a proposta", e); }
+      return true;
+    } catch (e) { calou("a proposta da frase", e); return false; }
+  };
+  const confirmarAProposta = () => {
+    const p = propostaDaFrase;
+    if (!p || carregando || rolagem) return;
+    setPropostaDaFrase(null); setPropostaAberta(false);
+    try { partirOTurno(p.frase); } catch (e) { calou("confirmar a proposta", e); }
+  };
+  const reescreverAProposta = () => {
+    const p = propostaDaFrase;
+    setPropostaDaFrase(null); setPropostaAberta(false);
+    try { if (p && p.frase) { setEntrada(p.frase); setCampoFocado(true); } } catch (e) { calou("a frase volta ao campo", e); }
+  };
+
   /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
      texto fica intacto e o dado dá um pulso (nenhum com reduce). */
   const lancarODado = () => {
@@ -23437,6 +23535,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       setLancado(true);
       setTimeout(() => { try { setLancado(false); } catch (e) { calou("o dado assenta", e); } }, DADO.lancado);
     } catch (e) { calou("o quarto de volta do dado", e); }
+    /* a frase que ia agir vira proposta, e o turno espera o toque */
+    if (proporAFrase(entrada)) return;
     partirOTurno(entrada);
   };
   /* O TOQUE NO DADO — Repouso foca o campo (pegar no dado é começar a jogada);
@@ -24870,6 +24970,19 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                  (painel-golpe-final.jsx: painel âmbar, `Botao` corpo e
                  primário) — sem peça nova. Nunca coexiste com a soleira:
                  os dois disputam a mesma decisão do turno. */
+              /* A PROPOSTA DA FRASE (04/11): no lugar da soleira — as duas
+                 disputam a mesma decisão do turno */
+              if (propostaDaFrase) {
+                let precoDaProposta = "";
+                try { precoDaProposta = [propostaDaFrase.preco, emTempo(propostaDaFrase.minutos)].filter(Boolean).join(" · "); } catch (e) { calou("o preço da proposta", e); }
+                return (
+                  <PeDaPagina>
+                    <PropostaDaFrase proposta={propostaDaFrase} preco={precoDaProposta} aberta={propostaAberta} impedida={bloqueado}
+                      onAbrir={() => setPropostaAberta(true)} onFechar={() => setPropostaAberta(false)}
+                      onConfirmar={confirmarAProposta} onReescrever={reescreverAProposta} />
+                  </PeDaPagina>
+                );
+              }
               if (crimeVereditoPendente) {
                 return (
                   <PeDaPagina>

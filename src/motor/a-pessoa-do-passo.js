@@ -482,15 +482,6 @@ export function aPessoaDoPasso(estado) {
         /* de que missão, e o índice do passo que ela sabe (a pista como
            cartão, a-pista-como-cartao.js); -1 quando não há passo a seguir */
         missao: m.id, seguinte: ehObj(prox) ? k + 1 : -1,
-        /* o mesmo porquê, em peças (os sítios como cartões,
-           os-sitios-como-cartoes.js): onde anda e a que horas volta, quando
-           não está; a folga ou o fora do turno, quando está lá por conta
-           própria; se é dia de folga; e se é quem já deu o passo (`dado`) */
-        anda: aqui ? "" : ondeAnda,
-        volta: !aqui && rot && !rot.deFolga && Number.isFinite(rot.de) ? rot.de : null,
-        fora: laFora ? (rot.deFolga ? "folga" : "fora") : "",
-        deFolga: !!(rot && rot.deFolga),
-        dado,
       });
     }
   }
