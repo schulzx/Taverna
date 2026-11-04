@@ -24,6 +24,26 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · o dado e a casca · a bandeja e o Mestre que pede o dado
+- **a palavra (a ordem de 04/11, em CLAUDE.md):** «o que temos hoje ainda não é um jogo, apenas um sistema interativo… precisamos de uma forma de o sistema acionar o dado mais vezes… são diferentes dados jogados» — e depois: «o que vende é a impressão… precisamos de uma casca pro nosso rpg, confio em você».
+- **o diagnóstico, medido:** o dado só nascia quando a frase batia no catálogo (`DESAFIOS`, ~40 entradas). Desde a v9.64 o jogador não pede teste, e o Narrador ator também não pede. Nas sessões 14–17 o dado quase não aparece. O d100 do oráculo, o dado de vida, a busca e a marcha rolavam e só deixavam uma linha «🎲 …» no registo.
+- **motor:**
+  - `src/motor/a-bandeja.js` (suíte 40/40): o lançamento de qualquer dado (d4–d20, d100) com o número que o sistema já rolou; a bandeja não rola nada;
+  - `src/motor/o-mestre-pede.js` (suíte 29/29): o Mestre pede uma frase que o catálogo já julga — ler as intenções de quem acabou de falar contigo, ou olhar à volta no sítio onde chegaste. Uma por turno do jogador, nunca duas vezes a mesma coisa no mesmo dia, nunca em luta, estrada, masmorra ou com a mesa à espera do Mestre.
+- **tela:**
+  - `src/painel-bandeja.jsx`: os dados com forma (provisória até a spec do `desenho`), a rolar e a pousar, fresca logo depois do lance e recolhida no turno seguinte;
+  - o cartão da proposta ganhou a variante do pedido: já aberto, na cor do dado, «Agora não» e «Rolar · d20 + 2»;
+  - o movimento sai com `prefers-reduced-motion`.
+- **fiação (com o bastão):** a bandeja recebe o d20 do teste (com o dado refeito pelo Destino posto de lado), o d100 do oráculo, o dado de vida, a busca na sala e a marcha forçada. Fica fora do save.
+- **um defeito do catálogo, achado ao escrever o pedido:** «leio as intenções dele» nunca rolava. O `\b` depois de «intenç» exigia uma fronteira a meio da palavra. Consertado, e provado na §5 da suíte nova.
+- **decisões médias:**
+  - (1) o pedido é um cartão, não um teste à espera: o jogador pode dizer «Agora não», e um pedido recusado não faz nascer outro no mesmo turno;
+  - (2) o d20 do teste chega à bandeja já pousado (`jaRolou`), porque o Véu já o rolou;
+  - (3) a bandeja recolhe em vez de sumir: a mesa lembra o que saiu sem tirar altura à página.
+- **prova viva (5199, sem IA):** um mundo novo abriu com «Olhar à volta · Percepção · precisa de 13 · d20 + 2». «Rolar» deu o teste de Percepção, o Véu rolou 17, e a bandeja disse «Percepção · 17 + 2 = 19 · precisa de 13 · passou». O «Escalo o muro do pátio» deu «Atletismo · 20 + 6 = 26 · crítico».
+- **em paralelo:** o `desenho` desenha no Figma a casca da mesa (C): a paleta da vela, a página de pergaminho, as peças e a spec da bandeja.
+- **o que fica:** a spec visual da bandeja (do `desenho`); os dados de uso (tochas, rações, flechas); o dano à vista; a medida de um dado a cada dois ou três turnos numa sessão com IA.
+
 ## 04/11 · a proposta da frase, 2.ª leva · atacar, usar, esperar, falar, pagar, vender
 - **a palavra:** «Pode seguir para a segunda leva».
 - **motor:**

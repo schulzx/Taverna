@@ -407,7 +407,7 @@ export const DESAFIOS = [
   },
   {
     id: "mentira",
-    rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]|tento saber se|desconfio|sinto se|percebo se mente)\b/,
+    rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]\w*|tento saber se|desconfio|sinto se|percebo se mente)\b/,
     pericia: "intuicao", alvo: "intuicao", minutos: 0, barulho: false,
     rotulo: "ler a intenção", dcPadrao: DC("incomum"), lePergunta: true,
     /* v9.65: rolar Intuição sem o mundo ter decidido se HÁ mentira é

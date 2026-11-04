@@ -165,7 +165,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, linhaDaCelula
 import { garantirForma, travaDaPartida, chaveDaMorte, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
 import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, contrair } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, COMODOS_PROMPT } from "./comodos.js";
-import { lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
+import { naoPedeDado, lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
    A palavra como AÇÃO dentro da luta — dobra o bando, ou não há com quem
    falar. Tudo por tabela em `sem-espada.js`; o App só lê o veredito, cobra
@@ -252,6 +252,9 @@ import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase } from "./painel-proposta.jsx";
+import { Bandeja } from "./painel-bandeja.jsx";
+import { oQueOMestrePede, oCartaoDoPedido } from "./motor/o-mestre-pede.js";
+import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie } from "./motor/a-bandeja.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -5435,6 +5438,22 @@ export default function Taverna() {
   const [entrada, setEntrada] = useState("");
   /* A PROPOSTA DA FRASE (04/11): o que a frase ia fazer, à espera do toque */
   const [propostaDaFrase, setPropostaDaFrase] = useState(null);
+  /* A BANDEJA (04/11): os últimos dados lançados, à vista entre a página e o
+     campo. Não vai ao save: é a mesa do momento, e um jogo recarregado
+     começa com a mesa limpa. `bandejaVista` é o número do lance que o
+     jogador já viu antes de mandar outro turno — a bandeja recolhe. */
+  const [bandeja, setBandeja] = useState([]);
+  const [bandejaVista, setBandejaVista] = useState(0);
+  const bandejaRef = useRef([]);
+  /* O MESTRE PEDE O DADO (04/11): a última fala do jogador (para saber com
+     quem ele conversa), as chaves já pedidas (não se pede duas vezes a mesma
+     coisa no mesmo dia) e a fala em que o último pedido nasceu (um pedido
+     por turno do jogador — recusar um não faz nascer outro). Fora do save:
+     recarregar o jogo pode pedir de novo, e isso é inofensivo. */
+  const ultimaFalaRef = useRef("");
+  const pedidosFeitosRef = useRef([]);
+  const falaDoPedidoRef = useRef(null);
+  const aBandeja = (l) => { try { if (!l) return; const b = naBandeja(bandejaRef.current, l); bandejaRef.current = b; setBandeja(b); } catch (err) { calou("a bandeja", err); } };
   const [propostaAberta, setPropostaAberta] = useState(false);
   /* F2b · F2c: as fichas do pé da página (trocam a cada resposta do Mestre,
      ficam durante a espera), a ficha cuja frase está no campo — `{ id, ids,
@@ -11158,7 +11177,7 @@ export default function Taverna() {
     diplomaciaRef.current = garantirDiplomacia(null); setDiploState(diplomaciaRef.current);
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null);
+    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0);
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     setCombate(null); combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
@@ -11274,7 +11293,7 @@ export default function Taverna() {
       try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (save carregado)", e); }
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
-      setRolagem(sv.rolagem || null);
+      setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0);
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       try { fimSemSaidaRef.current = garantirFimSemSaida(sv.fimSemSaida); } catch (e) { calou("o fim sem saída no load", e); fimSemSaidaRef.current = null; }
       registroRef.current = garantirRegistro(sv.registro);
@@ -12693,6 +12712,9 @@ export default function Taverna() {
   const agir = (texto) => {
     /* um turno que parte por qualquer porta leva a proposta que esperava */
     try { setPropostaDaFrase(null); setPropostaAberta(false); } catch (e) { calou("a proposta sai com o turno", e); }
+    /* a bandeja recolhe: o dado que estava fresco já foi visto */
+    try { const b = bandejaRef.current; setBandejaVista(b.length ? b[0].n : 0); } catch (e) { calou("a bandeja recolhe", e); }
+    try { ultimaFalaRef.current = String(texto || ""); } catch (e) { calou("a última fala", e); }
     /* v9.42: morto não age. A tela de tombamento cobre tudo, mas cobrir não é
        impedir — e um caminho que ainda funciona por baixo do pano é o mesmo
        que não existir regra. Quem tombou escolhe voltar ou passar o fio. */
@@ -16209,6 +16231,7 @@ export default function Taverna() {
     if (desastre) tiquear("falha", { porque: "você falhou feio" });
     else if (dc != null && (critico || total >= dc)) tiquear("sucesso", { porque: "você conseguiu o que queria" });
     const notaBuff = notaDosBuffs(personagem, r.atributo);
+    aBandeja(lancamentoDoTeste({ valor, mod, dc, rotulo: r.rotulo || r.motivo || "", anterior: dadoAnterior }));
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
     /* ---------------- O PREÇO DE FALHAR (v9.49) ----------------
        A terceira e última fonte de condição do jogo, agora que o Mestre
@@ -17818,6 +17841,7 @@ export default function Taverna() {
     if (!r.reusado) fatosRef.current = registrarFato(fatosRef.current, r.chave, r, { dia: diaRef.current, cena: turnosDeMundoRef.current });
     pushMsgs([
       { autor: "jogador", texto: r.pergunta },
+      ...((() => { aBandeja(lancamentoDoOraculo(r)); return []; })()),
       { autor: "sistema", texto: linhaDaConsulta(r) + (!r.reusado && r.porque.length ? `\n   ${r.porque.join(" · ")}` : "") },
     ]);
     enviar(envelopeDoOraculo(r), p);
@@ -19286,6 +19310,7 @@ export default function Taverna() {
     const total = rolo + mod;
     const r = resultadoBusca(sala, total);
     avancarMinutos(custoBusca());
+    aBandeja(lancamento({ rotulo: "Vasculhar a sala", dados: [{ faces: 20, valor: rolo }], mod, papel: "teste" }));
     if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🎲 Busca: d20=${rolo}+${mod}=${total}` }]);
     pushMsgs([{ autor: "sistema", texto: `🔎 ${r.texto}` }]);
     if (r.achou) {
@@ -20515,6 +20540,7 @@ export default function Taverna() {
     const r = gastarDadoDeVida(p0, { lados: dadoDeVida(cls.vidaBase), modVigor: atributoEfetivo(p0, "vigor") });
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
     setPersonagem(r.pers); personagemRef.current = r.pers; salvar({ personagem: r.pers });
+    { const mv = atributoEfetivo(p0, "vigor"); aBandeja(lancamentoDoDadoDeVida(r, Math.max(1, r.rolado + mv) - r.rolado)); }
     pushMsgs([{ autor: "sistema", texto: r.texto }]);
   };
 
@@ -21995,6 +22021,7 @@ export default function Taverna() {
       marchouForcado = true;
       const horasExtras = 3;
       const mf = marchaForcada(horasExtras, atributoEfetivo(personagem, "vigor"));
+      aBandeja(lancamentoDaSerie("Marcha forçada", mf.testes));
       if (mostrarRolagensRef.current) pushMsgs(mf.testes.map((t) => ({ autor: "sistema", texto: `🎲 Marcha forçada (hora ${t.hora}): ${t.rolo} vs CD ${t.cd} · ${t.passou ? "aguenta" : "cede"}` })));
       avancarMinutos(horasExtras * 60);
       if (mf.exaustao > 0) {
@@ -23684,8 +23711,47 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const reescreverAProposta = () => {
     const p = propostaDaFrase;
     setPropostaDaFrase(null); setPropostaAberta(false);
+    if (p && p.pedido) return;
     try { if (p && p.frase) { setEntrada(p.frase); setCampoFocado(true); } } catch (e) { calou("a frase volta ao campo", e); }
   };
+
+  /* ---------------- O MESTRE PEDE O DADO (04/11) ----------------
+     Quando a mesa assenta (o Mestre calou, nada à espera, nenhum cartão),
+     o Mestre pode pedir UM dado: ler a pessoa com quem o herói acabou de
+     falar, ou olhar à volta no sítio onde chegou. O que se pede é uma
+     frase que o catálogo já julga; o cartão mostra a perícia, o bónus e a
+     CD antes do toque, e «Rolar» manda a frase pelo caminho de sempre. */
+  useEffect(() => {
+    try {
+      if (fase !== "jogo" || carregando || rolagem || propostaDaFrase || dadoRolando || salaRef.current) return;
+      /* a mesa que espera o Mestre contar o turno anterior não pede dado novo:
+         o «Rolar» bateria na mesma trava e o jogador leria só a espera */
+      if (travaODeclarar(guardadoRef.current)) return;
+      const pv = fichaViva() || personagem;
+      if (!pv || pv.morto) return;
+      const fala = ultimaFalaRef.current || "";
+      if (falaDoPedidoRef.current === fala) return;
+      let falouCom = "";
+      try {
+        if (fala && naoPedeDado(fala)) {
+          const presentes = (elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: [] }).aqui || []).map((x) => x && x.nome).filter(Boolean);
+          const ch = aPessoaChamada(fala, { conhecidos: [], presentes });
+          if (ch && ch.nome && presentes.includes(ch.nome)) falouCom = ch.nome;
+        }
+      } catch (e) { calou("o pedido: com quem fala", e); }
+      const onde = (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "";
+      const p = oQueOMestrePede({ emCombate: !!combateRef.current, naEstrada: !!jornadaRef.current, naMasmorra: !!masmorraRef.current, onde, falouCom, dia: diaRef.current || 0, jaPedidos: pedidosFeitosRef.current });
+      if (!p) return;
+      falaDoPedidoRef.current = fala;
+      pedidosFeitosRef.current = [...pedidosFeitosRef.current, p.chave].slice(-60);
+      const v = veredictoDaAcao(p.frase);
+      if (!v || v.tipo !== "teste") return;
+      const mod = modDoTeste(pv, v.atributo, v.pericia).total;
+      const per = periciaPorId(v.pericia);
+      const c = oCartaoDoPedido(p, v, { mod, pericia: per && per.nome });
+      if (c) { setPropostaDaFrase(c); setPropostaAberta(true); }
+    } catch (e) { calou("o mestre pede o dado", e); }
+  }, [fase, carregando, rolagem, propostaDaFrase, dadoRolando, mensagens.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
      texto fica intacto e o dado dá um pulso (nenhum com reduce). */
@@ -25511,6 +25577,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   `onPointerDown` com `preventDefault` continua segurando o foco
                   do campo ao tocar nela (e no dado). A borda da pílula continua
                   semântica: violeta com habilidade armada, âmbar com milagre. */}
+              {!emBatalha && bandeja.length > 0 && (
+                <div className="pt-2"><LimiteDasFichas key="bandeja"><Bandeja lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas></div>
+              )}
               <div className="pt-2">
               {linhaDoCampo || !vereditoDaFicha
                 ? (podeDesistirDoTeste

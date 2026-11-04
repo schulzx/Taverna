@@ -40,6 +40,13 @@ const GLIFOS = {
   bolsa: (c) => <IconeBolsa tamanho={16} cor={c} />,
   espada: (c) => <IconeEspada tamanho={16} cor={c} />,
   faiscas: (c) => <IconeFaiscas tamanho={16} cor={c} />,
+  /* O MESTRE PEDE O DADO (04/11): o d20, na forma da bandeja */
+  dado: (c) => (
+    <svg width={20} height={20} viewBox="0 0 48 48" aria-hidden="true">
+      <polygon points="24,1 45,12.5 45,35.5 24,47 3,35.5 3,12.5" fill={c} />
+      <polygon points="24,9 38,34 10,34" fill="none" stroke={T.onAccent} strokeOpacity=".45" strokeWidth="2.5" />
+    </svg>
+  ),
 };
 
 export function PropostaDaFrase({ proposta, preco = "", aberta = false, onAbrir, onFechar, onConfirmar, onReescrever, impedida = false, rotuloDoTempo = (m) => `${m} min` }) {
@@ -49,8 +56,14 @@ export function PropostaDaFrase({ proposta, preco = "", aberta = false, onAbrir,
      o que o motor impede (a bolsa, o PM) cala o botão e diz porquê; a espera
      sem quanto dá as escolhas, um botão cada */
   const semVolta = proposta.tom === "semVolta";
-  const cor = semVolta ? T.danger : T.mundo;
-  const corSoft = semVolta ? T.danger : T.mundoSoft;
+  /* O MESTRE PEDE O DADO: o cartão chega já aberto (é o Mestre a dizer
+     «rola»), na cor da decisão e do dado, e sem a frase entre aspas — a
+     frase não é do jogador. O recuo é «Agora não», e não «Reescrever». */
+  const pedido = !!proposta.pedido;
+  const cor = semVolta ? T.danger : pedido ? T.amber : T.mundo;
+  const corSoft = semVolta ? T.danger : pedido ? T.amberSoft : T.mundoSoft;
+  const abertaDeFacto = aberta || pedido;
+  const recuo = proposta.recuo || "Reescrever";
   const impedido = String(proposta.impedido || "");
   const bloqueia = impedida || !!impedido;
   const opcoes = Array.isArray(proposta.opcoes) && proposta.opcoes.length ? proposta.opcoes : null;
@@ -59,22 +72,24 @@ export function PropostaDaFrase({ proposta, preco = "", aberta = false, onAbrir,
   return (
     <div className="tv-chamado-entra" role="group" aria-label={proposta.verbo}
       style={{ width: "100%", background: T.panel, border: `1px solid ${cor}`, borderRadius: 12, overflow: "hidden" }}>
-      <button type="button" onClick={alternar} aria-expanded={aberta}
+      <button type="button" onClick={pedido ? undefined : alternar} aria-expanded={abertaDeFacto}
         className="tv-anel-foco w-full flex items-center gap-3 text-left"
         style={{ minHeight: ALVOS.piso, padding: "6px 12px", background: "transparent", border: "none", cursor: "pointer" }}>
         <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0 }}>{glifo(corSoft)}</span>
         <span className="flex-1" style={{ minWidth: 0 }}>
           <span className="tv-body block" style={{ color: T.ink, fontSize: TIPOS.corpo, lineHeight: 1.25 }}>{proposta.verbo}</span>
-          <span className="tv-mono block truncate" style={{ color: T.inkMeio, fontSize: TIPOS.rotulo }}>«{proposta.frase}»</span>
+          <span className="tv-mono block truncate" style={{ color: T.inkMeio, fontSize: TIPOS.rotulo }}>{pedido ? (linhas[0] || "") : `«${proposta.frase}»`}</span>
         </span>
         {preco ? <span className="tv-mono" style={{ color: corSoft, fontSize: TIPOS.rotulo, flexShrink: 0 }}>{preco}</span> : null}
-        <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0, transform: `rotate(${aberta ? 90 : -90}deg)`, transition: "transform 120ms ease" }}>
-          <IconeChevronEsq tamanho={14} cor={T.inkMeio} />
-        </span>
+        {pedido ? null : (
+          <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0, transform: `rotate(${aberta ? 90 : -90}deg)`, transition: "transform 120ms ease" }}>
+            <IconeChevronEsq tamanho={14} cor={T.inkMeio} />
+          </span>
+        )}
       </button>
-      {aberta ? (
+      {abertaDeFacto ? (
         <div style={{ padding: "0 12px 12px" }}>
-          {linhas.length ? (
+          {linhas.length && !pedido ? (
             <ul className="tv-mono" style={{ listStyle: "none", margin: "2px 0 10px", padding: 0, color: T.ink, fontSize: TIPOS.rotulo, lineHeight: 1.5 }}>
               {linhas.map((l, i) => (
                 <li key={i} style={{ display: "flex", gap: 8 }}>
@@ -85,7 +100,7 @@ export function PropostaDaFrase({ proposta, preco = "", aberta = false, onAbrir,
             </ul>
           ) : null}
           <div className="flex gap-2 flex-wrap">
-            <Botao corpo className="flex-1" onClick={onReescrever}>Reescrever</Botao>
+            <Botao corpo className="flex-1" onClick={onReescrever}>{recuo}</Botao>
             {opcoes ? opcoes.map((m) => (
               <Botao key={m} corpo primario className="flex-1" desativado={bloqueia} onClick={bloqueia ? undefined : () => onConfirmar && onConfirmar(m)}>
                 {rotuloDoTempo(m)}

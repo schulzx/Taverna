@@ -283,6 +283,33 @@ A ordem de 23/09 continua a valer para o que diz do desenho (a liberdade, o
 backup, a régua do melhor RPG de mesa do mundo). O que ela dizia da fila do
 sistema parada foi substituído por esta.
 
+## A ordem de 04/11 — a casca e o dado
+
+A pessoa, depois de ver três caras para a mesa: *"o que temos hoje ainda não
+é um jogo, apenas um sistema interativo, precisa ser um jogo, inclusive
+precisamos de uma forma de o sistema acionar o dado mais vezes… um rpg precisa
+de constantes rolagens pra ter o sentimento que você está jogando e arriscando
+algo, além de que são diferentes dados jogados."* E logo a seguir: *"temos um
+sistema que está ficando maravilhoso, mas isso não vende, o que vende é a
+impressão, e ao olhar pela primeira vez, precisa ser chamativo e gostoso de
+ver, tem que ser um jogo, se parecer com um jogo e agir como um jogo,
+precisamos de uma casca pro nosso rpg, confio em você."*
+
+**1. A fila do desenho reabre**, e reabre com um tema só: **a casca**. A
+direção é a «C — a mesa»: a tela é uma mesa de jogo à luz de vela, a narração
+numa página, os recursos como peças, e cada ação arriscada mostra o dado, o
+número a bater e o preço de falhar. A paleta fria da v3 pode sair. Vale a
+liberdade da ordem de 23/09, e o backup dela continua a ser a rede.
+
+**2. O dado é do sistema, e aparece.** O Mestre pede rolagens (o pedido é uma
+frase que o catálogo já julga), e todo dado lançado pousa à vista, com a forma
+dele. A régua: **um dado a cada dois ou três turnos fora da luta**, medido numa
+sessão. Os dados de uso (tochas, rações, flechas) estão aprovados, e são campo
+novo de save, aditivo e ignorado pela versão antiga.
+
+**3. A impressão é critério.** Entre duas formas que jogam igual, ganha a que
+faz quem abre o jogo pela primeira vez querer jogá-lo.
+
 ## A fila pode ser pausada
 
 A pessoa para as duas filas com uma frase, e parou em **16/09/2026** para

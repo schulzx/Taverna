@@ -2171,8 +2171,19 @@ export const MOVIMENTO_CSS = `
    este bloco consegue desligar a animacao de quem pediu menos
    movimento. Subir esta caixa nao da erro: da um acessivel que nao
    funciona, calado. */
+/* ---------------- A BANDEJA (04/11) ----------------
+   O dado que rola: dá voltas no ar e cai na mesa; o que pousa dá um
+   ressalto curto. A duração vem de A_BANDEJA (rolarMs, pousoMs), posta
+   pela peça no próprio elemento — aqui só mora a forma do movimento. */
+@keyframes tvDadoRola { 0% { transform: translateY(-10px) rotate(-200deg) scale(.7); } 60% { transform: translateY(2px) rotate(20deg) scale(1.05); } 100% { transform: none; } }
+@keyframes tvDadoPousa { 0% { transform: scale(1.18); } 100% { transform: none; } }
+.tv-dado-rola { animation: tvDadoRola ease-out both; transform-origin: 50% 50%; }
+.tv-dado-pousa { animation: tvDadoPousa ease-out both; transform-origin: 50% 50%; }
+
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
+  /* a bandeja parada: o dado pousa já com o número, sem voltas */
+  .tv-dado-rola, .tv-dado-pousa { animation: none; }
   /* O D20 ROLANDO, PARADO (V6, um defeito anterior apanhado na prova jogada): a
      linha da espera, o veu do dado e a lenda rodavam sem fim com reduced-motion.
      A saida nao e so none: parado, o d20 fica escurecido, e e isso que separa o
