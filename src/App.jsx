@@ -10092,7 +10092,7 @@ export default function Taverna() {
          moram em oAceitoDoCronista, na mesma ordem e cada uma isolada. O
          que é do App entra pelas portas; o resto volta como efeito. */
       let fim = null;
-      try { fim = oAceitoDoCronista(ac, recusadoDoCronista, r, { ...portasDoCronista(), pers, narrativa, testeDoTurno, rolagem, modoDoNarrador: MODO_DA_MESA }); }
+      try { fim = oAceitoDoCronista(ac, recusadoDoCronista, r, { ...portasDoCronista(), pers, narrativa, testeDoTurno, rolagem, modoDoNarrador: MODO_DA_MESA, fichaDoAtor: doTurno && doTurno.fichaDoAtor, aceite: doTurno && doTurno.aceite }); }
       catch (e) { calou("o aceito do Cronista", e); return; }
       const msgs = fim.msgs, tocouCanone = fim.tocouCanone, tocouElenco = fim.tocouElenco;
       const p = fim.p;
@@ -10695,7 +10695,7 @@ export default function Taverna() {
       } catch (e) { calou("o recibo do turno (a espera)", e); }
       try {
         let doTurnoCr = null;
-        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current, aceite: aceiteDesteTurno }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
+        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current, aceite: aceiteDesteTurno, fichaDoAtor: pedidoDoAtor ? pedidoDoAtor.ficha : null }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
         const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
         /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila */
