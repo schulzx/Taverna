@@ -21,13 +21,17 @@
       aviso): vai no campo `anterior` da nova, com teto próprio, e a
       cabeça da nova diz que página é e quantos turnos ficaram para trás
       (`virada`: { pagina, turnosAntes, cortou }). Só uma página de antes
-      se guarda. Se ela não cabe no teto dela, PODA-SE PELA FRENTE: ficam
+      vai inteira. Se ela não cabe no teto dela, PODA-SE PELA FRENTE: ficam
       a cabeça e os últimos turnos que cabem, inteiros (nunca uma linha a
       meio), e o início passa ao estado de antes do primeiro que fica
-      (sessao.js#paginaDesde) — é o fim da sessão que se quer rever. A de
-      antes dela, e os turnos podados, contam-se em `cortou` — o corte
-      está escrito, nunca é calado. Se nem a cabeça cabe, não se guarda
-      nada.
+      (sessao.js#paginaDesde) — é o fim da sessão que se quer rever.
+      AS PÁGINAS MAIS VELHAS NÃO SE PERDEM (03/11, a 14.ª sessão): a de
+      antes da de antes, e os turnos podados, vão APERTADOS (compressao.js,
+      um LZW sem perdas) no campo `antigas` — da mais velha para a mais
+      nova, cada uma { como, turnos, z }, com teto próprio. Só quando nem
+      apertadas cabem é que a mais velha sai, e conta-se em `cortou` — o
+      corte está escrito, nunca é calado. Se nem a cabeça cabe, não se
+      guarda nada.
    4. Não pode custar o turno: tudo aqui é puro e nunca lança; a fiação
       embrulha a escrita em `calou`, e uma escrita que falha apaga a chave
       da sessão — o save fica intocado. A página de antes mora DENTRO da
@@ -46,6 +50,7 @@
    13.ª, um quarto da linha) e outra vez na cabeça.
    ============================================================ */
 import { abrirASessao, estadoNoTurno, virarAPagina, paginaDesde } from "./sessao.js";
+import { COMPRESSAO, comprimir, descomprimir } from "./compressao.js";
 
 export const SESSAO_GUARDADA = Object.freeze({
   /* a chave: o espaço do save do modo, mais isto */
@@ -81,6 +86,18 @@ export const SESSAO_GUARDADA = Object.freeze({
      (+ a costura `,"anterior":`), e cede ao save antes de ele perder um
      byte. */
   tetoDaAnterior: 400000,
+  /* caracteres das páginas mais velhas, apertadas (`antigas`: o JSON da
+     lista). Medida de 03/11 na 14.ª (IA real, modo ator, 30 turnos): a
+     cabeça pesa 84 mil e o turno 14 a 20 mil (média 17 mil); a página de
+     antes, 399.655 caracteres e 22 turnos, aperta-se em 71.760 (18%). Com
+     só a de antes, a SEGUNDA virada deitava fora a primeira página: a
+     sessão perdia o princípio a partir do turno ~37. Duzentos mil levam
+     ~2,7 páginas destas, ~60 turnos: com a página e a de antes, a chave
+     guarda ~95 turnos sem perder nenhum, e o que passa disso corta-se da
+     frente, contado. A chave cheia fica em ~1 milhão de caracteres (~2 MB
+     num localStorage que conta em UTF-16, dos ~5 MB da origem; o save da
+     14.ª, ao T30, pesa 138 mil) — e cede ao save inteira, como antes. */
+  tetoDasAntigas: 200000,
   /* os modos que gravam: o beta é Uma Vida (a ordem de 28/09) */
   modos: Object.freeze(["historia"]),
   /* o que o estado da sessão não leva: o relato, que é da tela, e a conta
@@ -98,8 +115,9 @@ export function chaveDaSessao(espacoDoSave, cfg = SESSAO_GUARDADA) {
 }
 
 /* A SESSÃO CEDE AO SAVE (28/10, o orquestrador). O arquivo da sessão
-   pode chegar ao teto da chave (a página e a de antes: 800 mil caracteres,
-   ~1,6 MB num localStorage que conta em UTF-16), e o save é quem não pode
+   pode chegar ao teto da chave (a página, a de antes e as antigas: ~1
+   milhão de caracteres desde 03/11, ~2 MB num localStorage que conta em
+   UTF-16), e o save é quem não pode
    perder espaço (a regra 3).
    Quando a gravação do save falha, a primeira coisa que se larga é a
    sessão — antes de podar o histórico do jogador. Apaga só a chave da
@@ -159,7 +177,7 @@ export function turnoParaASessao(juntado) {
 }
 
 /* O texto da página de antes não muda enquanto ela é a de antes: escreve-se
-   uma vez e reaproveita-se a cada turno (são até 600 mil caracteres). A
+   uma vez e reaproveita-se a cada turno (são até 400 mil caracteres). A
    memória é do objeto — o arquivo que a fiação segura passa-o de turno em
    turno sem o copiar (e o estado nunca se muta) —, guarda um só, o último,
    e não muda o que sai. */
@@ -168,12 +186,35 @@ const textoDe = (o) => {
   if (textoDaAnterior.de !== o) textoDaAnterior = { de: o, texto: JSON.stringify(o) };
   return textoDaAnterior.texto;
 };
-/* a página e, se houver, a de antes, no fim da mesma chave */
-const comAAnterior = (pagina, anterior) => {
+/* e o das antigas, pela mesma razão (a lista só muda quando a página vira) */
+let textoDasAntigas = { de: null, texto: "" };
+const textoDeAntigas = (l) => {
+  if (textoDasAntigas.de !== l) textoDasAntigas = { de: l, texto: JSON.stringify(l) };
+  return textoDasAntigas.texto;
+};
+/* a página e, se houver, a de antes e as antigas, no fim da mesma chave */
+const comAAnterior = (pagina, anterior, antigas) => {
   const tp = JSON.stringify(pagina);
-  return anterior ? `${tp.slice(0, -1)},"anterior":${textoDe(anterior)}}` : tp;
+  const mais = (anterior ? ",\"anterior\":" + textoDe(anterior) : "") + (antigas && antigas.length ? ",\"antigas\":" + textoDeAntigas(antigas) : "");
+  return mais && tp.length > 2 ? tp.slice(0, -1) + mais + "}" : tp;
 };
 const quantos = (x) => (Array.isArray(obj(x).turnos) ? x.turnos.length : 0);
+
+/* AS ANTIGAS: as que vieram e se leem (as tortas caem — nunca foram
+   escritas por este módulo); uma página apertada; e a lista no teto dela,
+   cortada pela frente (a mais velha sai primeiro), com os turnos que se
+   perderam contados */
+const antigasDe = (x) => (Array.isArray(x) ? x.filter((e) => obj(e) === e && typeof e.z === "string" && Number.isInteger(e.turnos) && e.turnos >= 0) : []);
+const apertada = (pagina) => {
+  const z = comprimir(JSON.stringify(pagina));
+  return z == null ? null : { como: COMPRESSAO.como, turnos: quantos(pagina), z };
+};
+const antigasNoTeto = (lista, teto) => {
+  const pesos = lista.map((e) => JSON.stringify(e).length + 1);
+  let total = pesos.reduce((a, b) => a + b, 1), i = 0, perdidos = 0;
+  while (i < lista.length && total > teto) { total -= pesos[i]; perdidos += lista[i].turnos; i++; }
+  return { antigas: lista.slice(i), perdidos };
+};
 
 /* A PÁGINA DE ANTES, NO TETO DELA: inteira se cabe; senão os últimos
    turnos que cabem, com a cabeça (a virada dela soma os que se podaram).
@@ -192,7 +233,8 @@ const caberNoTeto = (velha, tetoDaAnt) => {
     return { ...p, virada: {
       pagina: Number.isInteger(vj.pagina) ? vj.pagina : 1,
       turnosAntes: (Number.isInteger(vj.turnosAntes) ? vj.turnosAntes : 0) + k,
-      cortou: (Number.isInteger(vj.cortou) ? vj.cortou : 0) + k,
+      /* os k da frente não se perdem: vão apertados nas antigas (03/11) */
+      cortou: Number.isInteger(vj.cortou) ? vj.cortou : 0,
     } };
   };
   const cabe = (k) => { const p = podada(k); return p && JSON.stringify(p).length <= tetoDaAnt ? p : null; };
@@ -213,11 +255,13 @@ const caberNoTeto = (velha, tetoDaAnt) => {
 export function guardarASessao(arquivo, cfg = SESSAO_GUARDADA) {
   const teto = Number.isFinite(obj(cfg).teto) ? cfg.teto : SESSAO_GUARDADA.teto;
   const tetoDaAnt = Number.isFinite(obj(cfg).tetoDaAnterior) ? cfg.tetoDaAnterior : SESSAO_GUARDADA.tetoDaAnterior;
+  const tetoDasAnt = Number.isFinite(obj(cfg).tetoDasAntigas) ? cfg.tetoDasAntigas : SESSAO_GUARDADA.tetoDasAntigas;
   try {
     const A = obj(arquivo);
-    const { anterior, ...pagina } = A;
+    const { anterior, antigas, ...pagina } = A;
     const ant = obj(anterior) === anterior ? anterior : null;
-    if (JSON.stringify(pagina).length <= teto) return { arquivo: A, texto: comAAnterior(pagina, ant), virou: false };
+    const ants = antigasDe(antigas);
+    if (JSON.stringify(pagina).length <= teto) return { arquivo: A, texto: comAAnterior(pagina, ant, ants), virou: false };
     /* a página vira. O último turno passa à página nova (virarAPagina); se
        nem ele cabe com a cabeça, a nova nasce vazia no fim dele, e ele fica
        na velha. A velha vai como a de antes, no teto dela (caberNoTeto). */
@@ -230,29 +274,43 @@ export function guardarASessao(arquivo, cfg = SESSAO_GUARDADA) {
       nova = { ...abrirASessao({ semente: cab.semente, mundo: cab.mundo, origem: cab.origem, estado: {} }), inicio: estadoNoTurno(pagina, quantos(pagina)) };
     }
     const { pagina: aDeAntes, fora } = caberNoTeto(velha, tetoDaAnt);
+    /* o que deixa de ser a de antes vai apertado: a de antes que havia, e
+       os turnos da frente que a nova de antes podou (uma página por si, do
+       início da velha até ao corte). Só o que nem apertado cabe se conta
+       como cortado. */
+    const vaoApertar = [...(ant ? [ant] : []), ...(fora > 0 ? [{ ...velha, turnos: velha.turnos.slice(0, fora) }] : [])];
+    const apertadas = vaoApertar.map(apertada);
+    const naoApertou = vaoApertar.reduce((soma, p, i) => soma + (apertadas[i] ? 0 : quantos(p)), 0);
+    const { antigas: antigasNovas, perdidos } = antigasNoTeto([...ants, ...apertadas.filter(Boolean)], tetoDasAnt);
     const ja = obj(pagina.virada);
     const virada = {
       pagina: (Number.isInteger(ja.pagina) ? ja.pagina : 1) + 1,
       turnosAntes: (Number.isInteger(ja.turnosAntes) ? ja.turnosAntes : 0) + quantos(velha),
-      cortou: (Number.isInteger(ja.cortou) ? ja.cortou : 0) + quantos(ant) + fora,
+      cortou: (Number.isInteger(ja.cortou) ? ja.cortou : 0) + naoApertou + perdidos,
     };
     const { turnos: tsNova, ...cabNova } = nova;
     const paginaNova = { ...cabNova, turnos: tsNova, virada };
     if (JSON.stringify(paginaNova).length > teto) return { arquivo: paginaNova, texto: null, virou: true };
-    const novo = aDeAntes ? { ...paginaNova, anterior: aDeAntes } : paginaNova;
-    return { arquivo: novo, texto: comAAnterior(paginaNova, aDeAntes), virou: true };
+    const novo = { ...paginaNova, ...(aDeAntes ? { anterior: aDeAntes } : {}), ...(antigasNovas.length ? { antigas: antigasNovas } : {}) };
+    return { arquivo: novo, texto: comAAnterior(paginaNova, aDeAntes, antigasNovas), virou: true };
   } catch {
     return { arquivo: null, texto: null, virou: false };
   }
 }
 
-/* AS PÁGINAS DA CHAVE, para quem as lê (o replay, a suíte): [a de antes,
-   se veio, e a de agora], cada uma um arquivo de sessão por si, sem a
-   `anterior`. Nunca lança. */
+/* AS PÁGINAS DA CHAVE, para quem as lê (o replay, a suíte): da mais velha
+   para a de agora — as antigas, desapertadas; a de antes, se veio; e a de
+   agora —, cada uma um arquivo de sessão por si, sem a `anterior` nem as
+   `antigas`. Uma antiga que não se desaperta (de outro formato, ou
+   estragada) não vem. Nunca lança. */
 export function paginasDaSessao(arquivo) {
   try {
     const A = obj(arquivo);
-    const { anterior, ...pagina } = A;
-    return [...(obj(anterior) === anterior ? [anterior] : []), pagina];
+    const { anterior, antigas, ...pagina } = A;
+    const velhas = antigasDe(antigas).map((e) => {
+      if (e.como !== COMPRESSAO.como) return null;
+      try { const p = JSON.parse(descomprimir(e.z)); return obj(p) === p ? p : null; } catch { return null; }
+    }).filter(Boolean);
+    return [...velhas, ...(obj(anterior) === anterior ? [anterior] : []), pagina];
   } catch { return []; }
 }

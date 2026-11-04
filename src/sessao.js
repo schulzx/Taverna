@@ -34,6 +34,11 @@
        anterior?       a página de antes, inteira (um arquivo destes, sem a
                        `anterior` dela): o replay lê-a à parte. Um leitor
                        antigo ignora os dois campos, e lê a página igual.
+       antigas?        as páginas mais velhas, apertadas (03/11, a 14.ª):
+                       [{ como, turnos, z }], da mais velha para a mais
+                       nova — `z` é o JSON da página por compressao.js.
+                       sessao-guardada.js#paginasDaSessao desaperta-as.
+                       Um leitor antigo ignora-as como à `anterior`.
      }
 
    A LINHA DE UM TURNO:
@@ -237,6 +242,7 @@ export const CAMPOS_DA_SESSAO = Object.freeze({
     { campo: "turnos", tipo: "lista", obrigatorio: true },
     { campo: "virada", tipo: "objeto", obrigatorio: false },
     { campo: "anterior", tipo: "objeto", obrigatorio: false },
+    { campo: "antigas", tipo: "lista", obrigatorio: false },
   ],
   turno: [
     { campo: "n", tipo: "inteiro", obrigatorio: true },
@@ -461,7 +467,7 @@ export function virarAPagina(arquivo) {
     const ts = arr(A.turnos);
     if (!ts.length) return null;
     const i = ts.length - 1;
-    const { anterior, ...cabeca } = A;
+    const { anterior, antigas, ...cabeca } = A;
     const velha = { ...cabeca, turnos: ts.slice(0, i) };
     const { virada, ...nova } = paginaDesde(A, i);
     return { velha, nova };
@@ -485,7 +491,7 @@ export function paginaDesde(arquivo, k) {
     const A = obj(arquivo);
     const ts = arr(A.turnos);
     if (!Number.isInteger(k) || k < 0 || k >= ts.length) return null;
-    const { anterior, ...cabeca } = A;
+    const { anterior, antigas, ...cabeca } = A;
     const turnos = [];
     for (let j = 0; j < ts.length - k; j++) {
       const L = obj(ts[k + j]);

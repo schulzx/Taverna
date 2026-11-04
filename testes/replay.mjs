@@ -10,7 +10,7 @@
    `AINDA_DO_APP`, ou o que a linha diz que o App fez naquele turno), que se
    conta à parte.
 
-   uso: node testes/replay.mjs <arquivo.json> [--encadeado] [--ver] [--resumo] [--anterior]
+   uso: node testes/replay.mjs <arquivo.json> [--encadeado] [--ver] [--resumo] [--anterior] [--pagina=N]
      --encadeado  parte só do save inicial e nunca se ressincroniza (a
                   corrida inteira; por omissão cada turno parte do estado
                   gravado do anterior, e cada divergência diz a sua culpa)
@@ -22,6 +22,10 @@
      --anterior   corre a página de antes, a que o arquivo guardado leva
                   dentro quando virou a página (sessao-guardada.js,
                   paginasDaSessao); sem a flag, a de agora
+     --pagina=N   corre a N-ésima página que a chave guarda, da mais velha
+                  (1) para a de agora: as antigas vêm apertadas e saem
+                  desapertadas (03/11). A primeira linha diz quantas há, e
+                  quantos turnos tem cada uma
 
    sai com 0 quando o motor não tem defeito (a dívida do App não conta: ela
    diverge sempre, e é a tabela que a vigia), 2 quando tem, 1 quando o
@@ -37,7 +41,8 @@ import { paginasDaSessao } from "../src/sessao-guardada.js";
 const args = process.argv.slice(2);
 const caminho = args.find((a) => !a.startsWith("--"));
 const ENCADEADO = args.includes("--encadeado"), VER = args.includes("--ver"), RESUMO = args.includes("--resumo"), ANTERIOR = args.includes("--anterior");
-if (!caminho) { console.log("uso: node testes/replay.mjs <arquivo.json> [--encadeado] [--ver] [--resumo] [--anterior]"); process.exit(1); }
+const PAGINA = (() => { const a = args.find((x) => x.startsWith("--pagina=")); const n = a ? Number(a.slice(9)) : null; return Number.isInteger(n) && n > 0 ? n : null; })();
+if (!caminho) { console.log("uso: node testes/replay.mjs <arquivo.json> [--encadeado] [--ver] [--resumo] [--anterior] [--pagina=N]"); process.exit(1); }
 
 let arquivo;
 try { arquivo = JSON.parse(fs.readFileSync(caminho, "utf8")); } catch (e) { console.log(`não abre ${caminho}: ${e.message}`); process.exit(1); }
@@ -45,9 +50,16 @@ try { arquivo = JSON.parse(fs.readFileSync(caminho, "utf8")); } catch (e) { cons
   /* a página que virou diz que página é, e o que ficou para trás */
   const paginas = paginasDaSessao(arquivo), v = arquivo && arquivo.virada;
   if (v) console.log(`página ${v.pagina} da sessão: ${v.turnosAntes} turnos gravados antes dela, ${paginas.length > 1 ? "a de antes vem junta" : "a de antes não veio"}${v.cortou ? `, e ${v.cortou} já não estão em parte nenhuma` : ""}.`);
-  if (ANTERIOR) {
+  /* 03/11 (a 14.ª): quem leu a página de agora contou 8 turnos e deu os 22
+     da de antes por perdidos — estavam no arquivo. A conta das páginas vai
+     escrita, para nenhum leitor ter de a adivinhar */
+  if (paginas.length > 1) console.log(`a chave guarda ${paginas.length} páginas (${paginas.map((p, i) => `${i + 1}: ${Array.isArray(p.turnos) ? p.turnos.length : 0} turnos`).join(", ")}) — esta corrida lê a ${PAGINA || (ANTERIOR ? paginas.length - 1 : paginas.length)}.`);
+  if (PAGINA) {
+    if (PAGINA > paginas.length) { console.log(`${caminho}: não traz a página ${PAGINA} (traz ${paginas.length})`); process.exit(1); }
+    arquivo = paginas[PAGINA - 1];
+  } else if (ANTERIOR) {
     if (paginas.length < 2) { console.log(`${caminho}: não traz a página de antes`); process.exit(1); }
-    arquivo = paginas[0];
+    arquivo = paginas[paginas.length - 2];
   } else arquivo = paginas[paginas.length - 1] || arquivo;
 }
 

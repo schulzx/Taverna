@@ -5,7 +5,8 @@
    teto; o App grava-o turno a turno. Aqui: a tabela lida de volta, as
    quatro regras da casa (chave nova, o espaço do modo historia, o teto, e
    nunca lançar), a forma do turno que a fiação junta, a página que vira,
-   e o arquivo que o jogo gravou de verdade — três turnos no 5199 com o
+   as páginas mais velhas apertadas (4d: quarenta turnos do peso da 14.ª,
+   nenhum perdido), e o arquivo que o jogo gravou de verdade — três turnos no 5199 com o
    Narrador falso (`sessao-navegador.json`) — lido pelo replay: válido, e
    tudo o que é do motor reproduz; o que diverge é só do App, e diz-se.
    ============================================================ */
@@ -89,15 +90,32 @@ sec("4 · a página vira, e a de antes não se perde");
     const inteira = reproduzirASessao(A, {}), nova = reproduzirASessao(paginasDaSessao(N)[1], {});
     t("o turno que passou reproduz igual na página nova e na inteira", nova.valido && JSON.stringify(nova.turnos[0].juiz) === JSON.stringify(inteira.turnos[2].juiz) && JSON.stringify(nova.turnos[0].diferencas) === JSON.stringify(inteira.turnos[2].diferencas));
   }
-  /* a segunda virada: a página de antes da de antes é que se corta, e conta-se */
+  /* a segunda virada.
+     MUDOU EM 03/11 (a 14.ª sessão). A asserção dizia "a de antes passa a
+     ser a página 2, e a 1 conta-se como cortada": guardava-se uma página
+     de antes só, e numa sessão do peso da 14.ª a segunda virada (~T37)
+     deitava fora a primeira inteira. A intenção que fica: a de antes é a
+     página 2, inteira, e a cabeça diz o que ficou para trás. O que muda: a
+     1 vai APERTADA no campo novo `antigas` e não se corta nada (4d prova-o
+     com quarenta turnos). O corte contado continua a existir, e prova-se
+     abaixo, quando nem apertadas as velhas cabem. */
   let B = N;
   for (let i = 4; i <= 6; i++) B = gravarOTurno(B, turnoDe(i, null));
   const v2 = guardarASessao(B, { ...SESSAO_GUARDADA, teto });
   const N2 = v2.arquivo;
-  t("na segunda virada, a de antes passa a ser a página 2, e a 1 conta-se como cortada", v2.virou && N2.virada.pagina === 3 && N2.virada.turnosAntes === 5 && N2.virada.cortou === 2
-    && N2.anterior.turnos.length === 3 && N2.anterior.virada.pagina === 2 && N2.turnos.length === 1 && N2.turnos[0].entrada.frase === "turno 6");
+  const frases = (a) => paginasDaSessao(a).flatMap((p) => p.turnos.map((x) => x.entrada.frase));
+  t("na segunda virada, a de antes passa a ser a página 2, e a 1 vai apertada, sem corte", v2.virou && N2.virada.pagina === 3 && N2.virada.turnosAntes === 5 && N2.virada.cortou === 0
+    && N2.anterior.turnos.length === 3 && N2.anterior.virada.pagina === 2 && N2.turnos.length === 1 && N2.turnos[0].entrada.frase === "turno 6"
+    && N2.antigas.length === 1 && N2.antigas[0].turnos === 2 && JSON.stringify(frases(N2)) === JSON.stringify([1, 2, 3, 4, 5, 6].map((i) => "turno " + i)));
+  t("o texto guardado leva as três, e relê-se igual", JSON.stringify(JSON.parse(v2.texto)) === JSON.stringify(N2) && validarASessao(N2).ok);
+  /* MUDOU EM 03/11: dizia "uma de antes que não cabe no teto dela não vai,
+     e conta-se no corte" (2 + 3). A intenção que fica: a que não cabe não
+     vai como a de antes. O que muda: vai apertada, e nada se corta. */
   const semLugar = guardarASessao(B, { ...SESSAO_GUARDADA, teto, tetoDaAnterior: 100 });
-  t("uma de antes que não cabe no teto dela não vai, e conta-se no corte", semLugar.virou && !("anterior" in semLugar.arquivo) && semLugar.arquivo.virada.cortou === 2 + 3 && validarASessao(semLugar.arquivo).ok);
+  t("uma de antes que não cabe no teto dela não vai como a de antes: vai apertada, sem corte", semLugar.virou && !("anterior" in semLugar.arquivo) && semLugar.arquivo.virada.cortou === 0 && validarASessao(semLugar.arquivo).ok
+    && JSON.stringify(frases(semLugar.arquivo)) === JSON.stringify([1, 2, 3, 4, 5, 6].map((i) => "turno " + i)));
+  const semNada = guardarASessao(B, { ...SESSAO_GUARDADA, teto, tetoDaAnterior: 100, tetoDasAntigas: 10 });
+  t("e quando nem apertadas cabem, saem, e contam-se no corte (2 + 3)", semNada.virou && !("anterior" in semNada.arquivo) && !("antigas" in semNada.arquivo) && semNada.arquivo.virada.cortou === 2 + 3 && validarASessao(semNada.arquivo).ok);
   const nem = guardarASessao(A, { ...SESSAO_GUARDADA, teto: 50 });
   t("se nem a cabeça cabe, não se guarda nada (a fiação apaga a chave)", nem.texto === null && nem.virou);
   t("virarAPagina não lança com lixo, e uma página sem turnos não tem o que passar", virarAPagina(null) === null && virarAPagina({ turnos: [] }) === null && Array.isArray(paginasDaSessao(null)));
@@ -173,13 +191,22 @@ sec("4c · o teto da chave: a página e a de antes, juntas (29/10)");
   t("a tabela divide a chave em ~800 mil: a página e a de antes", SESSAO_GUARDADA.teto + SESSAO_GUARDADA.tetoDaAnterior <= 800000 && SESSAO_GUARDADA.tetoDaAnterior >= SESSAO_GUARDADA.teto);
   const r = jogar(48, SESSAO_GUARDADA);
   console.log("      a chave cheia: " + r.maior + " caracteres em " + r.viradas + " viradas (era 1,19 milhão com 600 + 600); a linha " + pesoDaLinha);
-  t("a chave cheia, medida com a linha da 13.ª, fica abaixo de 800 mil caracteres", r.viradas >= 2 && r.maior <= SESSAO_GUARDADA.teto + SESSAO_GUARDADA.tetoDaAnterior + 64 && r.maior <= 800064, String(r.maior));
-  const [ant, ag] = paginasDaSessao(r.A);
-  t("e a de antes vai inteira: cabia no teto um turno antes", ant && ag && r.A.virada.turnosAntes - r.A.virada.cortou === ant.turnos.length && J(ant) <= SESSAO_GUARDADA.tetoDaAnterior);
+  /* MUDOU EM 03/11 (a 14.ª): dizia "fica abaixo de 800 mil caracteres", a
+     página e a de antes. A intenção que fica: a chave cheia não passa do
+     teto que a tabela escreve. O que muda: as páginas mais velhas já não se
+     deitam fora, vão apertadas com teto próprio (`tetoDasAntigas`), e a
+     chave é a soma dos três tetos (~1 milhão; o porquê está na tabela). */
+  t("a chave cheia, medida com a linha da 13.ª, fica no teto da tabela (a página, a de antes e as antigas)", r.viradas >= 2 && r.maior <= SESSAO_GUARDADA.teto + SESSAO_GUARDADA.tetoDaAnterior + SESSAO_GUARDADA.tetoDasAntigas + 64, String(r.maior));
+  /* MUDOU EM 03/11: a de antes era a primeira das páginas da chave, e o
+     que não estava nela estava cortado. Agora as antigas vêm antes dela:
+     a de antes é a penúltima, e o que não está nela está nas antigas. */
+  const todasR = paginasDaSessao(r.A), [ant, ag] = todasR.slice(-2);
+  t("e a de antes vai inteira: cabia no teto um turno antes", ant && ag && r.A.virada.cortou === 0 && r.A.virada.turnosAntes === todasR.slice(0, -1).reduce((a, p) => a + p.turnos.length, 0) && J(ant) <= SESSAO_GUARDADA.tetoDaAnterior);
   {
     /* a janela que a chave tem SEMPRE é a de logo depois de uma virada:
        um turno na página e a de antes inteira */
-    const porPagina = Math.floor((SESSAO_GUARDADA.teto - J({ ...r.A, turnos: [], virada: undefined, anterior: undefined })) / pesoDaLinha);
+    /* (03/11) a cabeça mede-se sem as antigas, que moram fora da página */
+    const porPagina = Math.floor((SESSAO_GUARDADA.teto - J({ ...r.A, turnos: [], virada: undefined, anterior: undefined, antigas: undefined })) / pesoDaLinha);
     t("e a janela mínima, depois de virar, é de mais de dez turnos", ant.turnos.length >= porPagina - 1 && porPagina >= 10, porPagina + " por página");
   }
   /* A PODA, no caminho em que a de antes não cabe: a tabela 600 + 200 (a
@@ -187,9 +214,11 @@ sec("4c · o teto da chave: a página e a de antes, juntas (29/10)");
      virada */
   const cfgPoda = { ...SESSAO_GUARDADA, teto: 600000, tetoDaAnterior: 200000 };
   const p = jogar(30, cfgPoda);
-  const [pa, pg] = paginasDaSessao(p.A);
+  const todasP = paginasDaSessao(p.A), [pa, pg] = todasP.slice(-2);
   const desde = p.A.virada.turnosAntes - pa.turnos.length;
-  t("a de antes que não cabe poda-se pela frente, e cabe no teto dela", p.viradas >= 1 && pa.turnos.length >= 1 && J(pa) <= cfgPoda.tetoDaAnterior && p.maior <= cfgPoda.teto + cfgPoda.tetoDaAnterior + 64);
+  /* MUDOU EM 03/11: a chave media-se na página mais a de antes; os podados
+     vão agora apertados nas antigas, e a chave mede-se nos três tetos */
+  t("a de antes que não cabe poda-se pela frente, e cabe no teto dela", p.viradas >= 1 && pa.turnos.length >= 1 && J(pa) <= cfgPoda.tetoDaAnterior && p.maior <= cfgPoda.teto + cfgPoda.tetoDaAnterior + SESSAO_GUARDADA.tetoDasAntigas + 64);
   t("ficam os últimos turnos, colados à página de agora", desde > 0 && pa.turnos[pa.turnos.length - 1].narrador.narrativa === p.F.turnos[p.A.virada.turnosAntes - 1].narrador.narrativa
     && pg.turnos[0].narrador.narrativa === p.F.turnos[p.A.virada.turnosAntes].narrador.narrativa);
   t("e quantos cabem: mais um não caberia", J(pa) + pesoDaLinha > cfgPoda.tetoDaAnterior - 64);
@@ -200,7 +229,13 @@ sec("4c · o teto da chave: a página e a de antes, juntas (29/10)");
   }));
   t("a cabeça dela fica, e o início é o estado de antes do primeiro que ficou", pa.semente === S13.semente && JSON.stringify(pa.mundo) === JSON.stringify(S13.mundo) && pa.origem === S13.origem
     && JSON.stringify(pa.inicio) === JSON.stringify(estadoNoTurno(p.F, desde)));
-  t("a virada dela soma o que se podou, e a de agora conta-o no corte", pa.virada.turnosAntes === desde && pa.virada.cortou === desde && p.A.virada.cortou === desde);
+  /* MUDOU EM 03/11 (a 14.ª): dizia "a de agora conta-o no corte" — os
+     podados iam-se. A intenção que fica: a virada da podada diz quantos
+     ficaram à frente dela. O que muda: não se cortam, vão apertados nas
+     antigas, e são os mesmos turnos, pela ordem. */
+  t("a virada dela soma o que se podou, e os podados vão apertados, sem corte", pa.virada.turnosAntes === desde && pa.virada.cortou === 0 && p.A.virada.cortou === 0
+    && todasP.slice(0, -2).reduce((a, x) => a + x.turnos.length, 0) === desde
+    && todasP.slice(0, -2).flatMap((x) => x.turnos).every((x, j) => x.narrador.narrativa === p.F.turnos[j].narrador.narrativa));
   t("a podada é válida, e reproduz igual aos mesmos turnos sem corte", validarASessao(pa).ok && (() => {
     const rp = reproduzirASessao(pa, {}), rf = reproduzirASessao({ ...p.F, turnos: p.F.turnos.slice(0, desde + pa.turnos.length) }, {});
     return rp.valido && rp.turnos.every((x, j) => JSON.stringify([x.igual, x.diferencas, x.juiz]) === JSON.stringify([rf.turnos[desde + j].igual, rf.turnos[desde + j].diferencas, rf.turnos[desde + j].juiz]));
@@ -215,6 +250,108 @@ sec("4c · o teto da chave: a página e a de antes, juntas (29/10)");
   }
   t("paginaDesde não lança com lixo, e um corte que não deixa turno é null", paginaDesde(null, 0) === null && paginaDesde({ turnos: [] }, 0) === null && paginaDesde(p.F, p.F.turnos.length) === null && paginaDesde(p.F, -1) === null && paginaDesde(p.F, 1.5) === null);
   t("e paginaDesde(0) é a página inteira, renumerada igual", JSON.stringify(paginaDesde(p.F, 0).turnos.map((x) => x.narrador.narrativa)) === JSON.stringify(p.F.turnos.map((x) => x.narrador.narrativa)) && validarASessao(paginaDesde(p.F, 0)).ok);
+}
+
+sec("4d · quarenta turnos do peso da 14.ª: virar a página nunca perde um turno (03/11)");
+{
+  /* A 14.ª (IA real, modo ator) mediu-se na chave que o jogo deixou: a
+     cabeça pesa 84 mil caracteres e o turno 14 a 20 mil (média 17 mil); a
+     página leva ~18 turnos. Com só a página de antes guardada, a SEGUNDA
+     virada (~T37) deitava fora a primeira página inteira — contada em
+     `cortou`, mas fora. Aqui: uma sessão sintética desse peso, gravada
+     como a fiação a grava (gravarOTurno, guardarASessao, o texto guardado
+     relido), com texto que se aperta PIOR do que o do jogo (palavras ao
+     acaso de um gerador semeado, não JSON repetido). */
+  let semente = 1403;
+  const sorte = () => (semente = (semente * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const SILABAS = ["ra", "ve", "lo", "dor", "ran", "mi", "nas", "fo", "z", "in", "ez", "bra", "m", "leo", "nor", "ca", "sa", "pe", "dra", "al", "ta", "ri", "o", "u"];
+  const palavra = () => Array.from({ length: 1 + Math.floor(sorte() * 3) }, () => SILABAS[Math.floor(sorte() * SILABAS.length)]).join("");
+  const texto = (n) => { let s = ""; while (s.length < n) s += palavra() + (sorte() < 0.1 ? ". " : " "); return s.slice(0, n); };
+  const J = (x) => JSON.stringify(x).length;
+  const inicio = { personagem: { nome: "Bram Pedra-Alta", vida: 18, pm: 8 }, espinha: { texto: texto(57000) }, mapa: { texto: texto(9000) }, registro: [], dia: 1, minuto: 480 };
+  const turnoDe = (i, narr, e) => ({
+    ...turnoParaASessao({
+      frase: i % 3 ? "Bram faz a coisa " + i + ": " + texto(380) : "",
+      conteudo: "[MASMORRA — sala " + i + "] " + texto(380),
+      ponto: e.dia + "|" + e.minuto + "|" + i,
+      pauta: texto(5500), envelopes: texto(3500), nomesAMao: [{ nome: "Leonor", genero: "ela" }], moeda: "estalos",
+      narrador: { narrativa: "(" + i + ") " + texto(700), mudancas: {} },
+      cronista: null,
+      juiz: { resumo: { turno: i, dia: e.dia, achados: i % 4, por: {} }, entrada: { frase: "f" + i, gente: texto(1000), lugares: texto(800), distancias: texto(600), pauta: texto(1300), antes: narr.slice(-6) } },
+    }),
+    estado: e,
+  });
+  const jogar = (n, cfg) => {
+    let A = abrirASessao({ semente: "As Minas de Vel Dorran|Fantasia medieval", mundo: { semente: "x", genero: "Fantasia medieval", lex: { texto: texto(16000) } }, origem: "prova", estado: inicio });
+    let F = A, maior = 0, viradas = 0, texto_ = null, e = inicio;
+    const narr = [];
+    for (let i = 1; i <= n; i++) {
+      e = { ...e, minuto: e.minuto + 37, personagem: { ...e.personagem, vida: 18 - (i % 7) }, registro: [...e.registro, { t: i, onde: texto(220) }].slice(-18) };
+      const tu = turnoDe(i, narr, e);
+      narr.push(tu.narrador.narrativa);
+      F = gravarOTurno(F, tu);
+      const g = guardarASessao(gravarOTurno(A, tu), cfg);
+      A = g.arquivo;
+      if (g.texto) { maior = Math.max(maior, g.texto.length); texto_ = g.texto; }
+      if (g.virou) viradas++;
+    }
+    return { A, F, maior, viradas, lido: JSON.parse(texto_) };
+  };
+  t("a tabela dá às páginas mais velhas um teto próprio, e a chave inteira fica abaixo de 1 milhão e cem mil", Number.isInteger(SESSAO_GUARDADA.tetoDasAntigas) && SESSAO_GUARDADA.tetoDasAntigas > 0
+    && SESSAO_GUARDADA.teto + SESSAO_GUARDADA.tetoDaAnterior + SESSAO_GUARDADA.tetoDasAntigas <= 1100000);
+  const r = jogar(40, SESSAO_GUARDADA);
+  const cab = J({ ...r.F, turnos: [] }), linhas = r.F.turnos.map(J), media = Math.round(linhas.reduce((a, b) => a + b, 0) / linhas.length);
+  console.log("      a sintética: cabeça " + cab + ", linha " + Math.min(...linhas) + "–" + Math.max(...linhas) + " (média " + media + "); " + r.viradas + " viradas; a chave cheia " + r.maior);
+  t("tem o peso da 14.ª: cabeça de 80 a 90 mil, linha média de 15 a 19 mil, e vira duas vezes", cab >= 80000 && cab <= 90000 && media >= 15000 && media <= 19000 && r.viradas >= 2, cab + " / " + media + " / " + r.viradas);
+  const ps = paginasDaSessao(r.lido);
+  console.log("      apertadas: " + (r.lido.antigas || []).map((x, j) => Math.round(100 * x.z.length / J(ps[j])) + "%").join(", ") + " do texto da página");
+  const todas = ps.flatMap((p) => p.turnos);
+  t("as páginas da chave, relidas do texto guardado, somam os 40 turnos, pela ordem", todas.length === 40 && todas.every((x, j) => x.narrador.narrativa === r.F.turnos[j].narrador.narrativa), ps.map((p) => p.turnos.length).join("+"));
+  t("e nada se cortou: a cabeça diz que página é, e quantos ficaram para trás", r.lido.virada.cortou === 0 && r.lido.virada.turnosAntes === 40 - r.lido.turnos.length && r.lido.virada.pagina === ps.length);
+  t("as mais velhas vão apertadas, no campo novo (antigas), e cada uma diz quantos turnos leva", Array.isArray(r.lido.antigas) && r.lido.antigas.length >= 1
+    && r.lido.antigas.every((x, j) => x.como === "lzw15" && typeof x.z === "string" && x.turnos === ps[j].turnos.length));
+  t("cada página é válida, e começa onde a de antes acabou", ps.every((p) => validarASessao(p).ok && !("anterior" in p) && !("antigas" in p))
+    && JSON.stringify(ps[0].inicio) === JSON.stringify(r.F.inicio)
+    && ps.slice(1).every((p, j) => JSON.stringify(p.inicio) === JSON.stringify(estadoNoTurno(ps[j], ps[j].turnos.length))));
+  t("nenhuma linha muda a não ser o número e o eco do Juiz", todas.every((x, j) => {
+    const sem = (y) => JSON.stringify({ ...y, n: 0, juiz: { ...y.juiz, antesDoArquivo: 0, entrada: { ...y.juiz.entrada, antes: 0 } } });
+    return sem(x) === sem(r.F.turnos[j]);
+  }));
+  t("o replay corre cada página como a sessão inteira corre os mesmos turnos", (() => {
+    const rf = reproduzirASessao(r.F, {});
+    let j = 0;
+    for (const p of ps) {
+      const rp = reproduzirASessao(p, {});
+      if (!rp.valido || rp.turnos.length !== p.turnos.length) return false;
+      for (const x of rp.turnos) { const y = rf.turnos[j++]; if (JSON.stringify([x.igual, x.diferencas, x.juiz]) !== JSON.stringify([y.igual, y.diferencas, y.juiz])) return false; }
+    }
+    return rf.valido && j === 40;
+  })());
+  t("a chave cheia fica no teto: a página, a de antes e as antigas", r.maior <= SESSAO_GUARDADA.teto + SESSAO_GUARDADA.tetoDaAnterior + SESSAO_GUARDADA.tetoDasAntigas + 64, String(r.maior));
+  t("e uma página apertada pesa menos de metade da de antes inteira", Array.isArray(r.lido.antigas) && r.lido.antigas.every((x) => x.z.length * 2 < SESSAO_GUARDADA.tetoDaAnterior));
+  {
+    /* o replay lê as páginas pelo número, da mais velha para a de agora */
+    const tmp = path.join(os.tmpdir(), "taverna-sessao-40-" + process.pid + ".json");
+    fs.writeFileSync(tmp, JSON.stringify(r.lido));
+    const cli = spawnSync(process.execPath, [fileURLToPath(new URL("./replay.mjs", import.meta.url)), tmp, "--pagina=1", "--resumo"], { encoding: "utf8" });
+    try { fs.unlinkSync(tmp); } catch { /* o tmp é do sistema */ }
+    t("o replay lê a primeira página, que vinha apertada (--pagina=1), e diz quantas há", cli.status !== 1 && String(cli.stdout).includes("· " + ps[0].turnos.length + " turnos ·") && String(cli.stdout).includes("a chave guarda " + ps.length + " páginas"), String(cli.stdout).slice(0, 300) + String(cli.stderr).slice(0, 200));
+  }
+  /* MAIS DO QUE CABE: a sessão longa corta pela frente, e diz quanto */
+  const longa = jogar(130, SESSAO_GUARDADA);
+  const pl = paginasDaSessao(longa.lido), tl = pl.flatMap((p) => p.turnos), v = longa.lido.virada;
+  console.log("      a longa: 130 turnos, " + pl.length + " páginas na chave, " + tl.length + " turnos guardados, " + v.cortou + " cortados; a chave cheia " + longa.maior);
+  t("numa sessão longa a chave continua no teto", longa.maior <= SESSAO_GUARDADA.teto + SESSAO_GUARDADA.tetoDaAnterior + SESSAO_GUARDADA.tetoDasAntigas + 64, String(longa.maior));
+  /* aqui as linhas tardias pesam ~20 mil (o registo que rola vai inteiro
+     na diferença de cada turno): 15 turnos por página, e cada página
+     apertada em ~62 mil (16%). Na 14.ª a página de antes leva 22 turnos em
+     72 mil: a chave guarda ~95 turnos, contra os 65 daqui */
+  t("guarda mais de 60 turnos destes, e o que sai é só o princípio, contado", tl.length > 60 && v.cortou > 0 && tl.length + v.cortou === 130 && v.turnosAntes + longa.lido.turnos.length === 130
+    && tl.every((x, j) => x.narrador.narrativa === longa.F.turnos[v.cortou + j].narrador.narrativa));
+  t("as antigas que se leem e as que vieram tortas: uma de outro formato ou estragada não vem, e nada lança", (() => {
+    const torto = { ...r.lido, antigas: [{ como: "outro", turnos: 3, z: "x" }, { como: "lzw15", turnos: 2, z: "Ā" }, null, 7, ...(r.lido.antigas || [])] };
+    return paginasDaSessao(torto).length === ps.length && guardarASessao(torto).texto !== null && Array.isArray(paginasDaSessao({ antigas: "x" }));
+  })());
 }
 
 sec("5 · o arquivo que o jogo gravou (5199, Narrador falso, 28/10)");
