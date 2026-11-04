@@ -54,7 +54,7 @@
                 própria frase (O_DADO_NA_FRASE: o envelope do teste que o
                 App manda depois de rolar, e que o servidor recebe igual);
                 sem dado nenhum, a aposta fica como o que está em jogo
-     → { texto, partes, pessoas, falam, rastro, cobertura, trocas }
+     → { texto, partes, pessoas, falam, rastro, cobertura, trocas, conversa, figurante }
 
    Sem sorte: a ficha não escolhe nada ao acaso — a mesma entrada dá a
    mesma ficha, byte a byte, em qualquer máquina.
@@ -115,11 +115,21 @@
      6. A FORMA DA CENA cai (é como narrar), e a obra que corre agora não
         «já aconteceu».
 
+   O FIGURANTE QUE FALA (a decisão 6 do plano, aprovada em 03/11 depois das
+   sessões 14–16): sem gente com nome em cena além do grupo, o sítio dá uma
+   pessoa sem nome que responde ao herói (o-figurante.js) — em QUEM ESTÁ e
+   em «Falam só», com voz, sem Sabe nem Quer, e com o limite dito. A
+   pergunta ao lugar passa a ser dele, nem que seja para não saber. Fica
+   FORA de `pessoas`, `falam` e `conversa` (vem em `figurante`): o registo
+   da cena e o elenco nunca o veem. O teto mede a ficha sem ele, para ele
+   nunca tirar o lugar a um fato.
+
    O VERIFICADOR (`verificarAFicha`) é a catraca: nenhum rótulo de sistema,
    nenhuma ordem, nenhuma razão, nenhum número que não se diz em voz alta.
    ============================================================ */
 import { SECOES } from "../pauta.js";
 import { aPessoaDoPasso, oQueOSitioEsconde, oSitioDoRegisto } from "./a-pessoa-do-passo.js";
+import { oFigurante, O_FIGURANTE } from "./o-figurante.js";
 import { moradaDe } from "../missoes.js";
 import { QUER } from "../nucleo.js";
 import { ESTADOS as ESTADOS_DA_VIAGEM } from "../viagem.js";
@@ -1452,6 +1462,17 @@ export function aFichaDeAtor(entrada) {
     p.trato = p.fera ? "" : tratoDe(p, H);
   }
 
+  /* O FIGURANTE QUE FALA (o-figurante.js, a decisão 6 do plano): sem gente
+     com nome bastante em cena, o sítio dá uma pessoa sem nome que responde.
+     Fica fora de `pessoas`, `falam` e `conversa`: não deixa rasto */
+  const comNome = [...pessoas.values()].filter((p) => !p.comVoce && !p.fera && !/no chão/.test(str(p.estado))).length;
+  let fig = null;
+  if (!temLuta && !naEstrada && !resultados.has("luta")) { try { fig = oFigurante(estado, { comNome }); } catch { fig = null; } }
+  if (fig) {
+    const rg = REGISTOS_DE_FALA.find((r) => r.id === fig.registo);
+    fig = { ...fig, registo: rg ? rg.o : null, trato: tratoDe({ procurado: c.procurado }, H), sabe: [] };
+  }
+
   /* o PERGUNTOU vai a quem responde: quem a frase chama, senão quem está
      e não é do grupo, senão o companheiro */
   const lista = [...pessoas.values()].filter((p) => !p.fera && !/no chão/.test(str(p.estado)));
@@ -1474,14 +1495,25 @@ export function aFichaDeAtor(entrada) {
        a Astrid a saber o passo seguinte a ficha dizia «Não sabe responder
        a: «O que sabe?»». A pergunta sem conteúdo responde-a quem sabe
        alguma coisa */
-    const quem = responde || null;
-    const sabido = [...sabes.map((s) => s.o), ...(quem ? arr(quem.sabe) : [])];
-    const ditos = chaves(sabido.join(" "));
     /* o nome de quem se chama («Doran o Manco, o que sabe?») não é conteúdo */
     const dosNomes = new Set(chaves(lista.map((p) => p.nome).join(" ")));
-    const faltam = perguntas.filter((q) => { const k = chaves(q).filter((w) => !dosNomes.has(w)); return k.length ? !k.some((w) => ditos.includes(w)) : !sabido.length; });
-    const o = faltam.length ? `não sabe responder a: ${faltam.map((q) => `«${q}»`).join(" ")}` : sabido.length ? `do que ${H} perguntou, não sabe mais do que isto` : `do que ${H} perguntou, não sabe a resposta`;
-    if (o) { if (quem) quem.naoSabe = o; else cena.push(`Aqui ninguém sabe ${o.replace(/^não sabe /, "")}.`); }
+    const oNaoSabe = (quem) => {
+      const sabido = [...sabes.map((s) => s.o), ...(quem ? arr(quem.sabe) : [])];
+      const ditos = chaves(sabido.join(" "));
+      const faltam = perguntas.filter((q) => { const k = chaves(q).filter((w) => !dosNomes.has(w)); return k.length ? !k.some((w) => ditos.includes(w)) : !sabido.length; });
+      const o = faltam.length ? `não sabe responder a: ${faltam.map((q) => `«${q}»`).join(" ")}` : sabido.length ? `do que ${H} perguntou, não sabe mais do que isto` : `do que ${H} perguntou, não sabe a resposta`;
+      return { o, cobre: !faltam.length && sabido.length > 0 };
+    };
+    /* a pergunta ao lugar (ninguém chamado, e só o grupo em cena) é do
+       figurante — salvo quando o que se sabe já a responde toda: aí fica
+       com quem o sabe */
+    const peloFig = fig && !chamado && (!responde || responde.comVoce) ? oNaoSabe(fig) : null;
+    if (peloFig && !peloFig.cobre) fig.naoSabe = peloFig.o;
+    else {
+      const quem = responde || null;
+      const { o } = oNaoSabe(quem);
+      if (o) { if (quem) quem.naoSabe = o; else cena.push(`Aqui ninguém sabe ${o.replace(/^não sabe /, "")}.`); }
+    }
   }
   /* A VOZ QUE PEDE NÚMERO (A_VOZ_DO_NUMERO): os números que a ficha dá a
      esta pessoa — o que ela sabe, o que diz, e a mesa da cena (os preços, o
@@ -1491,6 +1523,12 @@ export function aFichaDeAtor(entrada) {
     const temNumero = numerosDaCena || /\d/.test([...p.sabe, ...diz.filter((d) => d.quem && mesmo(d.quem, p.nome)).map((d) => d.o)].join(" "));
     if (p.tique) p.tique = vozSemMarca(vozSemPergunta(vozComNumero(p.tique, temNumero)));
     if (p.registo) p.registo = vozComNumero(p.registo, temNumero);
+  }
+  /* a voz do figurante passa pelas mesmas formas (ele não sabe nada: o
+     número que pode dizer é só o da mesa da cena) */
+  if (fig) {
+    if (fig.tique) fig.tique = vozSemMarca(vozSemPergunta(vozComNumero(fig.tique, numerosDaCena)));
+    if (fig.registo) fig.registo = vozComNumero(fig.registo, numerosDaCena);
   }
   /* O QUE FICOU COMBINADO (O_COMBINADO): o pedido de cada pessoa em cena,
      do coração do save, e a resposta do herói */
@@ -1576,7 +1614,11 @@ export function aFichaDeAtor(entrada) {
   const cabCena = [cena.length ? "" : [eL.nome, estado.cidadeAtual].filter(Boolean).join(", ")].filter(Boolean).map(ponto);
   const falam = [...pessoas.values()].filter((p) => !p.fera && !/no chão/.test(str(p.estado))).map((p) => p.nome);
 
-  const montar = (corta) => {
+  /* `comFig`: o corte mede a ficha SEM o figurante (o-figurante.js) — ele vai
+     por cima do teto, com o seu (O_FIGURANTE.teto), e nunca tira o lugar a
+     um fato de quem tem nome (a prova dos 434: sem isto, três fichas perdiam
+     o «Teme» ou o «Quer» da companheira) */
+  const montar = (corta, comFig = true) => {
     const L = [];
     const tira = (k) => corta.includes(k);
     L.push("CENA", ...[...cabCena, ...cena.map(ponto), ...ausentes, quando, ...(tira("cenaExtra") ? [] : cenaExtra.map(ponto))].filter(Boolean).map((x) => x.slice(0, FICHA_DE_ATOR.linhaMax)));
@@ -1594,7 +1636,7 @@ export function aFichaDeAtor(entrada) {
     L.push("QUEM ESTÁ");
     const todos = [...pessoas.values()];
     const bloco = todos.slice(0, FICHA_DE_ATOR.pessoasMax), resto = todos.slice(FICHA_DE_ATOR.pessoasMax);
-    if (!todos.length) L.push(`Só ${H}.`);
+    if (!todos.length && !(fig && comFig)) L.push(`Só ${H}.`);
     for (const p of bloco) {
       L.push(`${p.nome} — ${[p.oque, p.comVoce ? `anda com ${H}` : "", p.chega, p.estado].filter(Boolean).join("; ") || "está aqui"}.`);
       const voz = [p.tique ? `${p.tique}` : "", p.registo || ""].filter(Boolean).join("; ");
@@ -1607,6 +1649,15 @@ export function aFichaDeAtor(entrada) {
       if (quer.length) L.push(`  Quer: ${ponto(quer.join("; e "))}`);
       if (!tira("teme") && p.teme) L.push(`  Teme, e não o diz: ${ponto(p.teme)}`);
     }
+    if (fig && comFig) {
+      const F = O_FIGURANTE, pr = F.pronomes[fig.genero] || F.pronomes.ele;
+      L.push(`${maiuscula(fig.papel)} — ${F.semNome}.`);
+      const voz = [fig.tique, fig.registo].filter(Boolean).join("; ");
+      L.push(`  Fala: ${[voz, fig.trato ? `trata ${H} ${fig.trato}` : ""].filter(Boolean).join("; ")}.`);
+      if (!tira("agora") && fig.agora) L.push(`  Agora: ${ponto(fig.agora)}`);
+      if (fig.naoSabe) L.push(`  ${maiuscula(ponto(fig.naoSabe))}`);
+      L.push(`  ${tpl(F.responde, { H, ...pr })} ${F.limite}`);
+    }
     if (resto.length && !tira("tambem")) L.push(`Também aqui: ${ponto(resto.map((p) => p.oque ? `${p.nome} (${p.oque})` : p.nome).join(", "))}`);
     L.push("O QUE SE DIZ");
     if (diz.length) for (const d of diz) L.push(ponto(d.quem ? `${d.quem}: ${d.o}` : maiuscula(d.o)));
@@ -1614,15 +1665,17 @@ export function aFichaDeAtor(entrada) {
     if (ultimaTxt) L.push("A ÚLTIMA PALAVRA", ultimaTxt);
     if (tom.length) L.push("O TOM", ...tom.map(ponto));
     L.push("AS FRONTEIRAS");
-    L.push(falam.length ? `Falam só: ${falam.join(", ")}.` : `Ninguém fala além de ${H}.`);
+    const falamTxt = [...falam, ...(fig && comFig ? [tpl(O_FIGURANTE.falam, { F: fig.papel })] : [])];
+    L.push(falamTxt.length ? `Falam só: ${falamTxt.join(", ")}.` : `Ninguém fala além de ${H}.`);
     const nm = [...new Set(nomesAMao.map(limpo).filter(Boolean))];
     if (nm.length) L.push(`À mão, para quem ainda não tem nome: ${nm.join(", ")}.`);
     L.push(...umaPessoaUmaLinha(longe).map(ponto));
     L.push("Não há mais ninguém com nome, nem outro lugar, item ou moeda além dos que aqui estão.");
     return L.map((x) => oHeroiPeloNome(x, H).replace(/\s+$/, "")).join("\n");
   };
-  let corta = [], texto = montar(corta);
-  for (const k of ORDEM_DO_CORTE) { if (texto.length <= FICHA_DE_ATOR.teto) break; corta = [...corta, k]; texto = montar(corta); }
+  let corta = [], medida = montar(corta, false);
+  for (const k of ORDEM_DO_CORTE) { if (medida.length <= FICHA_DE_ATOR.teto) break; corta = [...corta, k]; medida = montar(corta, false); }
+  const texto = fig ? montar(corta) : medida;
 
   const fatos = rastro.filter((r) => !r.cai || r.cai === "semTraducao");
   const caidos = {};
@@ -1631,7 +1684,7 @@ export function aFichaDeAtor(entrada) {
   const partes = Object.fromEntries(FICHA_DE_ATOR.partes.map((p) => [p, ""]));
   let cur = null;
   for (const l of texto.split("\n")) { if (FICHA_DE_ATOR.partes.includes(l)) { cur = l; continue; } if (cur) partes[cur] += (partes[cur] ? "\n" : "") + l; }
-  return { texto, partes, pessoas: [...pessoas.values()].map((p) => ({ ...p })), falam, rastro, cobertura, trocas: asUltimasTrocas(estado), conversa: [...conversa] };
+  return { texto, partes, pessoas: [...pessoas.values()].map((p) => ({ ...p })), falam, rastro, cobertura, trocas: asUltimasTrocas(estado), conversa: [...conversa], figurante: fig ? { ...fig } : null };
 }
 
 /* AS DUAS ÚLTIMAS TROCAS, tal qual (a continuidade do ator: o plano, §4).

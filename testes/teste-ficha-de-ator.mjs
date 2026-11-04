@@ -331,7 +331,14 @@ for (const { k, r } of res) for (const x of r.rastro) {
   for (const m of [...r.falam.filter((n) => x.linha.includes(n)), ...[...x.linha.matchAll(/◉\s*(\d+)/g)].map((q) => q[1])]) { marcas++; if (!r.texto.includes(m)) faltam.push(`${k.de} ${x.rotulo} «${m}»`); }
 }
 t(`A COBERTURA: os nomes de quem fala e os preços que cada linha da pauta trazia estão na ficha (${marcas} marcas${faltam.length ? "; faltam " + faltam.slice(0, 4).join(", ") : ""})`, marcas > 1000 && faltam.length === 0);
-const tam = res.map(({ r }) => r.texto.length);
+/* MOVIDA (03/11, o figurante que fala, o-figurante.js): media o texto
+   inteiro. O figurante vai POR CIMA do teto — o corte mede a ficha sem
+   ele, para ele nunca tirar o lugar a um fato (sem isto, três fichas dos
+   434 perdiam o «Teme» ou o «Quer» da companheira). A intenção fica: a
+   ficha de quem tem nome cabe no teto; o que o figurante soma mede-se em
+   teste-o-figurante §6 (≤ 600, e o pedido inteiro nos ~6 mil) */
+const semOFigurante = (r) => { if (!r.figurante) return r.texto; const cab = r.figurante.papel[0].toUpperCase() + r.figurante.papel.slice(1) + " — "; let dentro = false; return r.texto.split("\n").filter((l) => { if (/^\S/.test(l)) dentro = l.startsWith(cab); return !dentro; }).join("\n").replace(`, ${r.figurante.papel} sem nome.`, "."); };
+const tam = res.map(({ r }) => semOFigurante(r).length);
 const media = Math.round(tam.reduce((a, b) => a + b, 0) / tam.length), pior = Math.max(...tam);
 /* medido em 03/11: média 1 349, pior 1 989 — a catraca fica um pouco acima.
    Depois da luta inteira e do longe sem repetição (03/11, ainda): média
@@ -345,7 +352,8 @@ const semVoz = [];
 for (const { k, r } of res) for (const p of r.pessoas.slice(0, FICHA_DE_ATOR.pessoasMax)) if (p.tique && !r.texto.includes(p.tique)) semVoz.push(`${k.de} ${p.nome}`);
 t(`a voz do núcleo chega a toda pessoa que tem bloco (${res.reduce((a, { r }) => a + r.pessoas.filter((p) => p.tique).length, 0)} vozes${semVoz.length ? "; caem: " + semVoz.slice(0, 4).join(", ") : ""})`, semVoz.length === 0);
 const tiqueAlheio = [];
-for (const { k, r } of res) for (const f of COMO_FALA) if (r.texto.includes(f.o) && !r.pessoas.some((p) => p.tique && p.tique.includes(f.o))) tiqueAlheio.push(`${k.de} ${f.id}`);
+/* o figurante tem voz sua (o-figurante.js): o tique dele é dele, não alheio */
+for (const { k, r } of res) for (const f of COMO_FALA) if (r.texto.includes(f.o) && !r.pessoas.some((p) => p.tique && p.tique.includes(f.o)) && !(r.figurante && str(r.figurante.tique).includes(f.o))) tiqueAlheio.push(`${k.de} ${f.id}`);
 t("e nenhum tique aparece em quem não o tem", tiqueAlheio.length === 0);
 const s13 = res.find(({ k }) => k.de === "s13#0");
 t("o Dunstan da 13.ª (T22) fala como marinheiro, e o querer não lhe tirou a voz", s13 && s13.r.texto.includes("fala como marinheiro em terra firme") && /Dunstan Machado Torto[\s\S]*?Quer: /.test(s13.r.texto));
