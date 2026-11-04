@@ -27,6 +27,14 @@ escrita como frase de ator; todos falam com a mesma voz).
    resposta ou a prosa muda o estado; o Cronista sai do turno.
 5. **O gasto aprovado:** o teste às cegas (~US$ 1–2) e a 14.ª sessão com o ator.
 
+6. **Aprovadas depois das sessões 14–16 (03/11/2026, «Aprovo as duas sugestões»):**
+   - **O figurante que fala** (`mente/sessao-14.md` §7): por cena e por tabela, o
+     sistema elege um figurante do «À mão», com uma voz sorteada, sem Sabe nem Quer,
+     proibido de prometer, cobrar ou revelar; responde ao herói, nem que seja para
+     não saber, e não deixa rasto no estado.
+   - **A pista como cartão** (`mente/sessao-16.md`): com a pessoa do passo em cena,
+     o jogador tem o cartão «Perguntar a X por Y», em vez de adivinhar a pergunta.
+
 ## As etapas
 
 1. **A ficha de ator** (motor): o que aconteceu (decidido), quem está (cada um com a
