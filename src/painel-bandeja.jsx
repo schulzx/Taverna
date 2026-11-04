@@ -24,9 +24,13 @@
    ============================================================ */
 import { useEffect, useState } from "react";
 import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO } from "./estilo.js";
+import { Glifo } from "./ui.jsx";
 import { aLinhaDoLancamento, NOME_DO_DESFECHO } from "./motor/a-bandeja.js";
 
-const SELO = { sucesso: "✓", falha: "✕", critico: "✦", desastre: "!" };
+/* o crítico não tem letra: a faísca desenha-se (FAISCA), a casa não pede glifo à fonte */
+const SELO = { sucesso: "✓", falha: "✕", critico: "", desastre: "!" };
+const TEM_SELO = { sucesso: true, falha: true, critico: true, desastre: true };
+const FAISCA = "M0 -1 L0.28 -0.28 L1 0 L0.28 0.28 L0 1 L-0.28 0.28 L-1 0 L-0.28 -0.28 Z";
 const corDoSelo = (d) => (d === "sucesso" ? T.ok : d === "critico" ? T.amber : T.danger);
 const RACHA = "M30 6 L26 18 L33 24 L27 36 L31 46";
 const RAIOS = [0, 45, 90, 135, 180, 225, 270, 315];
@@ -59,7 +63,7 @@ function Corpo({ faces, legenda, papel, tam, desfecho = "livre", rolando = false
 /* A marca do desfecho por cima do dado: o anel (contínuo, tracejado, forte),
    os raios do crítico e o selo do canto. */
 function Marca({ desfecho, tam, largura = tam }) {
-  if (!SELO[desfecho]) return null;
+  if (!TEM_SELO[desfecho]) return null;
   const cor = desfecho === "critico" ? T.amber : desfecho === "sucesso" ? T.ok : T.danger;
   const forte = desfecho === "critico" || desfecho === "desastre";
   const cx = largura / 2, cy = tam / 2, rx = largura / 2 + 4, ry = tam / 2 + 4;
@@ -74,7 +78,9 @@ function Marca({ desfecho, tam, largura = tam }) {
       })}
       <g transform={`translate(${largura - BANDEJA.selo / 2 + 2} ${-BANDEJA.selo / 2 + 4})`}>
         <circle cx={BANDEJA.selo / 2} cy={BANDEJA.selo / 2} r={BANDEJA.selo / 2} fill={corDoSelo(desfecho)} stroke={T.pagina} strokeWidth="2" />
-        <text x={BANDEJA.selo / 2} y={BANDEJA.selo / 2} textAnchor="middle" dominantBaseline="central" fontSize={BANDEJA.selo * 0.62} fontWeight="700" fill={T.onAccent}>{SELO[desfecho]}</text>
+        {desfecho === "critico"
+          ? <path d={FAISCA} transform={`translate(${BANDEJA.selo / 2} ${BANDEJA.selo / 2}) scale(${BANDEJA.selo * 0.32})`} fill={T.onAccent} />
+          : <text x={BANDEJA.selo / 2} y={BANDEJA.selo / 2} textAnchor="middle" dominantBaseline="central" fontSize={BANDEJA.selo * 0.62} fontWeight="700" fill={T.onAccent}>{SELO[desfecho]}</text>}
       </g>
     </svg>
   );
@@ -116,7 +122,8 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
   useEffect(() => {
     if (!ultimo || ultimo.jaRolou || semMovimento()) { setRolandoN(0); return undefined; }
     setRolandoN(n); setTroca(0);
-    const passo = setInterval(() => setTroca((x) => x + 1), MOVIMENTO_DO_DADO.troca);
+    const inicio = Date.now();
+    const passo = setInterval(() => setTroca(Math.floor((Date.now() - inicio) / MOVIMENTO_DO_DADO.troca)), MOVIMENTO_DO_DADO.troca);
     const fim = setTimeout(() => { clearInterval(passo); setRolandoN(0); }, MOVIMENTO_DO_DADO.rolar);
     return () => { clearInterval(passo); clearTimeout(fim); };
   }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -144,7 +151,7 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
   return (
     <div className="tv-fade tv-bandeja" role="group" aria-label="Os dados na mesa"
       style={{ display: "flex", alignItems: "center", gap: BANDEJA.espaco + 4, padding: `0 ${BANDEJA.espaco + 6}px`, borderRadius: BANDEJA.raio,
-        border: `1px solid ${T.line}`, background: T.pagina, boxShadow: "inset 0 2px 6px rgba(0,0,0,.6)" }}>
+        border: `1px solid ${T.line}`, background: T.pagina, boxShadow: BANDEJA.sombraInterior }}>
       <span style={{ display: "inline-flex", gap: BANDEJA.espaco + 4, alignItems: "center", padding: "6px 0" }}>
         {ultimo.dados.map((d, i) => <DadoDoLance key={`${n}-${i}`} d={d} tam={tam} rolando={rolando && !d.posto} desfecho={ultimo.desfecho} troca={troca + i} />)}
       </span>
@@ -154,7 +161,7 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
         </span>
         {!rolando && desfecho && (
           <span className="tv-dado-veredito" style={{ display: "block", fontSize: TIPOS.corpo, fontWeight: 700, color: corD, animationDuration: `${MOVIMENTO_DO_DADO.veredito}ms` }}>
-            {SELO[ultimo.desfecho] ? `${SELO[ultimo.desfecho]} ` : ""}{desfecho}
+            {ultimo.desfecho === "critico" ? <><Glifo nome="faisca" tamanho={14} cor={corD} />{" "}</> : SELO[ultimo.desfecho] ? `${SELO[ultimo.desfecho]} ` : ""}{desfecho}
           </span>
         )}
       </span>

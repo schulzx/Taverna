@@ -226,7 +226,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
                     {!h.dominada && h.pode && (
                       <button onClick={() => onAprender && onAprender(abaClasse, h.nome)}
                         className="w-full tv-mono text-[10px] px-3 py-1.5 rounded-lg mt-2"
-                        style={{ background: T.violet, color: "#14101F", fontWeight: 600 }}>
+                        style={{ background: T.violet, color: T.onSecond, fontWeight: 600 }}>
                         aprender · {h.custoPontos} ponto{h.custoPontos > 1 ? "s" : ""}
                       </button>
                     )}
@@ -326,7 +326,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
               className="tv-mono text-[10px] px-2.5 py-1.5 rounded-full"
               style={{
                 background: abaClasse === n ? T.violet : T.panelSoft,
-                color: abaClasse === n ? "#14101F" : nova ? T.inkDim : T.ink,
+                color: abaClasse === n ? T.onSecond : nova ? T.inkDim : T.ink,
                 border: `1px solid ${abaClasse === n ? T.violet : T.line}`,
                 fontWeight: 600, opacity: nova && abaClasse !== n ? 0.6 : 1,
               }}>

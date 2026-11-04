@@ -24,6 +24,20 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · a prova da v9.598 saiu vermelha, e não subiu
+- **o vermelho:** 428/428 suítes verdes, mas o `check-formas` falhou num só ponto (D5e.2). A classe nova `.tv-dado-rola` declarava animação sem duração no CSS, porque a duração ia inline, e o varredor não a podia colher.
+- **o conserto, e o que ele arrastou na árvore da casca:**
+  - as durações passaram para o CSS, de `MOVIMENTO_DO_DADO`;
+  - a saída com reduce é `none`, como a casa exige (D5c), e o esmaecer de 120 ms da spec fica de fora;
+  - a sombra da bandeja passou para `BANDEJA.sombraInterior`;
+  - o ✦ de fonte do crítico deu lugar à faísca desenhada e ao `<Glifo nome="faisca">`;
+  - o número que troca lê o relógio (`Date.now() - inicio`), e o teto do contador está escrito com a razão;
+  - `index.html` pinta o primeiro píxel com a madeira (`#1B130D`) e não com a noite;
+  - as quatro tintas soltas `#14101F` sobre o violeta viraram `T.onSecond` (App 2, talentos 2);
+  - os tetos que desceram foram descidos, e as entradas mortas saíram com o motivo.
+- **decisão:** a v9.598 não sobe. A próxima subida é a v9.599, com o dado, a casca e este conserto juntos.
+- **bastão:** tomado e devolvido para as duas tintas do `App.jsx`.
+
 ## 04/11 · a casca, 3.ª etapa · a bandeja na spec do desenho
 - **feito:**
   - `FORMAS_DO_DADO`, `PAPEL_DO_DADO`, `BANDEJA` e `MOVIMENTO_DO_DADO` em estilo.js;

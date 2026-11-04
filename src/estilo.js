@@ -985,6 +985,8 @@ export const BANDEJA = {
   traco: 1.5, alfaDoTraco: 0.55, alfaDaFaceta: 0.28,
   anel: 2, anelForte: 2.5, selo: 18,
   falhaApagada: 0.5,
+  /* o chão afundado da bandeja: o couro com a sombra por dentro */
+  sombraInterior: `inset 0 2px 6px ${sombra(".6")}`,
 };
 
 /* O movimento (formas.md §5): rolar com o ressalto do pouso, pousar, o
@@ -2280,16 +2282,16 @@ export const MOVIMENTO_CSS = `
 @keyframes tvDadoVeredito { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 .tv-dado-rola { animation: tvDadoRola ${MOVIMENTO_DO_DADO.rolar}ms ${MOVIMENTO_DO_DADO.curva} both; transform-origin: 50% 50%; }
 .tv-dado-pousa { animation: tvDadoPousa ${MOVIMENTO_DO_DADO.pousar}ms ease-out both; transform-origin: 50% 50%; }
-.tv-dado-veredito { animation: tvDadoVeredito ease-out both; transform-origin: 50% 50%; }
+.tv-dado-veredito { animation: tvDadoVeredito ${MOVIMENTO_DO_DADO.veredito}ms ease-out both; transform-origin: 50% 50%; }
 .tv-bandeja { min-height: ${BANDEJA.altura.telefone}px; }
 @media (min-width: 768px) { .tv-bandeja { min-height: ${BANDEJA.altura.mesa}px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
-  /* a bandeja parada: o dado aparece já pousado, com o número final; só
-     um esmaecer curto (MOVIMENTO_DO_DADO.semMovimento) — o estado final é
-     que é a saída, nunca um none que deixasse o veredito invisível */
-  .tv-dado-rola, .tv-dado-pousa { animation: tvFade ${MOVIMENTO_DO_DADO.semMovimento}ms ease both; }
+  /* a bandeja parada: o dado aparece já pousado, com o número final, e o
+     veredito à vista. A saída é none, como a casa exige (check-formas D5c):
+     as três classes pousam no estado final porque nenhuma começa invisível */
+  .tv-dado-rola, .tv-dado-pousa { animation: none; }
   .tv-dado-veredito { animation: none; opacity: 1; }
   /* O D20 ROLANDO, PARADO (V6, um defeito anterior apanhado na prova jogada): a
      linha da espera, o veu do dado e a lenda rodavam sem fim com reduced-motion.

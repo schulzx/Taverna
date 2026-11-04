@@ -3442,7 +3442,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                           {alvo ? (
                             <button onClick={() => onErguerTemplo && onErguerTemplo(c.nome)} disabled={!chk.pode}
                               className="w-full tv-mono text-[10px] px-3 py-2 rounded-lg"
-                              style={{ background: chk.pode ? T.violet : T.panel, color: chk.pode ? "#14101F" : T.inkDim, border: `1px solid ${chk.pode ? T.violet : T.line}`, fontWeight: 600, opacity: chk.pode ? 1 : 0.55 }}>
+                              style={{ background: chk.pode ? T.violet : T.panel, color: chk.pode ? T.onSecond : T.inkDim, border: `1px solid ${chk.pode ? T.violet : T.line}`, fontWeight: 600, opacity: chk.pode ? 1 : 0.55 }}>
                               {alvo.icone} erguer {alvo.nome.toLowerCase()} · ◉ {alvo.custo} do cofre{chk.pode ? "" : ` — ${chk.motivo}`}
                             </button>
                           ) : (
@@ -3814,7 +3814,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-1.5" style={{ paddingLeft: "22px" }}>
                         {cons && onUsarConsumivel && (
-                          <button onClick={() => onUsarConsumivel(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.violet, color: "#14101F", fontWeight: 600 }} title={descricaoCurta(cons)}>usar</button>
+                          <button onClick={() => onUsarConsumivel(it.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.violet, color: T.onSecond, fontWeight: 600 }} title={descricaoCurta(cons)}>usar</button>
                         )}
                         {(() => {
                           /* a Reforma dos Itens em ato: se o item tem verbo, o botao
