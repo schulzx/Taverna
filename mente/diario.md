@@ -24,6 +24,34 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · a fase AAA fecha · a mesa do Mestre, a cerimónia do nível, o boneco e a ficha-carta
+- **a palavra:** «Pode continuar com a próxima etapa da fase aaa, prossiga até finalizar a fase aaa».
+- **o esqueleto do HUD B (agente `oficial`, ~280 mil tokens):** `src/painel-mesa-do-mestre.jsx` e `HUD_DA_MESA`.
+  - em cima, o ecrã do Mestre (LUGAR e HORA em couro e ouro), com a vela: apagada às 8h, acesa às 20h, fumo ao amanhecer, e a luz a cair sobre a folha;
+  - em baixo, as cartas do grupo com a moldura viva; o livro, o mapa e a bolsa como objetos na borda da mesa;
+  - a cinta e o trilho saíram, e cada porta antiga abre a mesma gaveta pela porta nova (todas clicadas);
+  - oito suítes mudaram, com o motivo escrito.
+- **os painéis (agente `aprendiz`, ~345 mil tokens):**
+  - a cerimónia da subida de nível (`painel-subida-de-nivel.jsx`, `subida-de-nivel.js`);
+  - o boneco do equipamento com a gaveta e a comparação (`painel-equipamento.jsx`, `comparar-item.js`);
+  - a ficha-carta (`painel-ficha-carta.jsx`);
+  - as peças `Encaixe`, `Disco` e `IconeDeAtributo`;
+  - suítes 40, 37 e 45, todas verdes.
+- **a ligação (agente `oficial` novo, ~167 mil tokens):**
+  - a subida de nível abre a cerimónia, com estado próprio e o `ModalNivel` de rede;
+  - a sub-aba Ficha mostra a carta, com a ficha antiga em «Mais detalhes»;
+  - consertou o `gastarPontoAtributo`, que lia a ficha da função e não a atual: vários pontos num clique apagavam-se uns aos outros.
+- **um defeito que já existia, consertado por mim antes de subir:** largar ou trocar a peça do kit inicial apagava-a, porque nasce vestida e fora da mochila. A regra nova é que toda a peça que sai do corpo volta à mochila (`devolverAMochila`, em `comparar-item.js`, suíte 44/44).
+- **o que fica para a mesa de design e para o sistema:**
+  - **o veredito antes do clique:** a gaveta não diz que o montante tira o escudo;
+  - **as telas a 1024:** a tela «O herói» corta o boneco;
+  - **o painel da AMEAÇA:** espera o número do motor (pedido escrito);
+  - **a gema de Destino nos companheiros;**
+  - **o Códex e a Ascensão como objetos, e a assinatura dos três objetos da mesa;**
+  - **os companheiros na cinta antiga sem moldura** (já não há cinta: as cartas resolvem);
+  - **o par antes/depois** em fotografia.
+- **a seguir (ordem da pessoa):** a Fase SQ, as missões que se ganham.
+
 ## 05/11 · a ordem AAA, 2.ª e 3.ª peças · o feltro, as molduras vivas e as marcas no aro
 - **as palavras:** a pessoa escolheu o HUD «B · a mesa do Mestre» e o feltro verde («não gostei muito do novo design da parte de madeira»), e aprovou as marcas da moldura («Gostei da proposta, aprovada»).
 - **o desenho (agente `desenho`, ~320 mil tokens):** a página «AAA · 05/11» no Figma (`250:2`) e a secção «## AAA» em `formas.md` (§1–§14), com as tabelas, a geometria e o HUD B.

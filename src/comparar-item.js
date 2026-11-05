@@ -154,3 +154,21 @@ export function rotuloDoEquipar(linhas, verbo = "Equipar") {
   const partes = ls.map((l) => (l.id === "ca" ? `CA ${l.depois}` : l.id === "dano" ? `dano ${l.depois}` : `${l.curto} ${sinal(l.delta)}`));
   return `${verbo} · ${partes.join(", ")}`;
 }
+
+/* ---------------- A PEÇA QUE SAI DO CORPO VOLTA À MOCHILA (05/11) ----------------
+   O equipar e o desequipar do App assumiam que toda a peça vestida também mora
+   na mochila (`equipamento`) — "volta pra mochila automaticamente". O kit
+   inicial nasce VESTIDO e fora dela: largar a espada do primeiro dia, ou
+   trocá-la, apagava-a do jogo. Achado pelo `oficial` ao ligar o boneco.
+   A regra: toda a peça que sai do corpo entra na mochila, se lá não estiver
+   (pelo nome — depois de um load já não é o mesmo objeto). Imutável. */
+export function devolverAMochila(equipamento, saem) {
+  const bolsa = Array.isArray(equipamento) ? equipamento : [];
+  const nomes = new Set(bolsa.map((e) => e && e.nome));
+  const novos = [];
+  for (const x of (Array.isArray(saem) ? saem : [])) {
+    if (!x || typeof x !== "object" || !x.nome || nomes.has(x.nome)) continue;
+    nomes.add(x.nome); novos.push(x);
+  }
+  return novos.length ? [...bolsa, ...novos] : bolsa;
+}

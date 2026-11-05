@@ -7,7 +7,7 @@
    inventar regra, e que cada item só cabe no encaixe que o seu `tipo` diz. */
 import {
   ENCAIXES_DO_CORPO, RARIDADES, raridadeDoItem, iconeDoItem, encaixeDoItem, cabeNoEncaixe,
-  itensParaEncaixe, compararItem, rotuloDoEquipar, fraseDaTroca,
+  itensParaEncaixe, compararItem, rotuloDoEquipar, fraseDaTroca, devolverAMochila,
 } from "../src/comparar-item.js";
 import { TROCA_DE_SLOT } from "../src/itens.js";
 import { defesaDe } from "../src/combate.js";
@@ -105,6 +105,19 @@ sec("7. o que pede sintonia e não a tem dorme — e a comparação di-lo");
   const s = compararItem({ ...heroi, sintonizados: ["Elmo Rúnico"] }, raro, "elmo");
   t("sintonizado, conta e já não dorme", s.dorme === false && s.linhas.some((l) => l.id === "ca"));
   t("o incomum nunca dorme", compararItem(heroi, elmoNovo, "elmo").dorme === false);
+}
+
+/* A PEÇA QUE SAI DO CORPO VOLTA À MOCHILA (05/11): o kit inicial nasce vestido
+   e fora da mochila; largá-lo ou trocá-lo apagava-o */
+{
+  const espada = { nome: "Espada longa", tipo: "arma" };
+  const escudo = { nome: "Escudo de madeira", tipo: "escudo" };
+  const b0 = [];
+  const b1 = devolverAMochila(b0, [espada]);
+  if (b1.length === 1 && b1[0] === espada && b0.length === 0) ok++; else { mal++; console.log("  XX  a espada largada entra na mochila, sem mexer na de antes"); }
+  if (devolverAMochila(b1, [{ nome: "Espada longa", tipo: "arma" }]) === b1) ok++; else { mal++; console.log("  XX  a que já lá está não entra duas vezes"); }
+  if (devolverAMochila(b1, [escudo, null, { tipo: "x" }]).length === 2) ok++; else { mal++; console.log("  XX  o lixo não entra, o escudo sim"); }
+  if (devolverAMochila(null, [espada]).length === 1 && devolverAMochila(b1, null) === b1) ok++; else { mal++; console.log("  XX  mochila nula e lista nula não estouram"); }
 }
 
 console.log(`\n${ok} ok · ${mal} falhas`);

@@ -73,7 +73,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -254,6 +254,7 @@ import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase } from "./painel-proposta.jsx";
 import { Bandeja } from "./painel-bandeja.jsx";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
+import { devolverAMochila } from "./comparar-item.js";
 import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
 import { oQueOMestrePede, oCartaoDoPedido } from "./motor/o-mestre-pede.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie } from "./motor/a-bandeja.js";
@@ -269,6 +270,9 @@ import { gestoDoCampo } from "./campo-do-turno.js";
    ficou de pé decide o que faz com os caídos — por tabela. */
 import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, garantirFimSemSaida, SAIDA_DA_LUTA } from "./saida-da-luta.js";
 import { FichaVisual } from "./painel-ficha.jsx";
+/* AAA · 05/11: a ficha como carta (com o boneco do equipamento) e a cerimónia da subida */
+import { PainelFichaCarta } from "./painel-ficha-carta.jsx";
+import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
@@ -2427,6 +2431,13 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
   const [confirmarRemover, setConfirmarRemover] = React.useState(null);
   const [subEscolhida, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
+  /* AAA · na mesa, «O herói» é uma tela só (formas.md §AAA §2, 1280): as três
+     colunas não cabem no alforje, então a carta abre por cima de tudo ao
+     entrar na Ficha; o «Fechar» dela devolve à sub-aba, onde fica a ficha
+     antiga. No telefone a carta vive dentro da sub-aba, com as duas abas. */
+  const heroiNaMesa = useMesa();
+  const [heroiDispensado, setHeroiDispensado] = React.useState(false);
+  React.useEffect(() => { setHeroiDispensado(false); }, [abaPedida, subEscolhida]);
   /* R3: o pedido que vem da linha do sistema. Depende do SELO e não do
      nome — pedir "mural" duas vezes seguidas são dois pedidos, e um efeito
      que dependesse do nome só atenderia o primeiro. */
@@ -2463,6 +2474,11 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   if (!aba) return null;
   const equipados = personagem.equipados || {};
   const equipDisponivel = (personagem.equipamento || []).filter((e) => !Object.values(equipados).some((x) => x?.nome === e.nome));
+  /* AAA · a carta lê a mochila em `inventario`, mas o que se veste mora em
+     `equipamento` (o saco das peças, que guarda também as vestidas). A
+     carta vê os dois: as peças por vestir primeiro (a gaveta do encaixe só
+     pega estas), e o resto da mochila depois. Só leitura; o save não muda. */
+  const heroiDaCarta = { ...personagem, inventario: [...equipDisponivel, ...(Array.isArray(personagem.inventario) ? personagem.inventario : [])] };
   return (
     <>
       {/* R21 · A MOLDURA É O ALFORJE (`painel-alforje.jsx`). No telefone é
@@ -2490,6 +2506,37 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
 
         {aba === "gestao" && subGestao === "ficha" && (
           <>
+            {/* AAA · O HERÓI COMO CARTA: a carta, os discos e o boneco do
+                equipamento. O equipar é o do App (duas mãos, regra do
+                corpo, proficiência); o ponto é o gastarPontoAtributo. */}
+            <LimiteDasFichas key={heroiNaMesa ? "heroi-na-mesa" : "carta-do-heroi"}>
+              {heroiNaMesa ? (
+                heroiDispensado ? (
+                  <Botao corpo onClick={() => setHeroiDispensado(false)}>O herói</Botao>
+                ) : (
+                  <div role="dialog" aria-modal="true" aria-label="O herói" className="fixed inset-0 z-50 tv-scroll overflow-y-auto" style={{ background: T.bg }}>
+                    <div className="mx-auto max-w-6xl" style={{ padding: FICHA_CARTA.mesa.folga }}>
+                      <PainelFichaCarta personagem={heroiDaCarta} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
+                        aoEquipar={(item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } }}
+                        aoDesequipar={(slot) => { try { desequipar(slot); } catch (e) { calou("desequipar na carta", e); } }}
+                        aoSubirAtributo={onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("ponto na carta", e); } } : null}
+                        aoFechar={() => setHeroiDispensado(true)} lex={lexicoMundo} />
+                    </div>
+                  </div>
+                )
+              ) : (
+              <PainelFichaCarta personagem={heroiDaCarta} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
+                aoEquipar={(item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } }}
+                aoDesequipar={(slot) => { try { desequipar(slot); } catch (e) { calou("desequipar na carta", e); } }}
+                aoSubirAtributo={onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("ponto na carta", e); } } : null}
+                lex={lexicoMundo} />
+              )}
+            </LimiteDasFichas>
+            {/* a ficha antiga continua: perícias, poder, condições e
+                passivos que a carta não mostra */}
+            <details className="rounded-lg" style={{ border: `1px solid ${T.line}` }}>
+              <summary className="tv-anel-foco tv-mono cursor-pointer px-3 flex items-center" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, color: T.inkDim }}>Mais detalhes</summary>
+              <div className="p-2">
             <FichaVisual
               personagem={personagem} mundo={mundo} divindade={divindade} tituloAtivo={tituloAtivo}
               tituloInfo={tituloDoHeroi(divindade, (famaInfo && famaInfo.pf && famaInfo.pf.rotulo) || "", patamarDe(personagem.nivel).nome)}
@@ -2504,6 +2551,8 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
               proficiencias={proficienciasDoHeroi(personagem, ranksDoPersonagem(personagem))}
               onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0} onAlternarPericia={onAlternarPericia}
             />
+              </div>
+            </details>
             <div className="flex items-center gap-2 flex-wrap">
               {/* ---------------- A LINHA DA NÊMESIS SAIU DAQUI (v9.83) ----------------
                   "Ele não aparecerá mais na ficha do jogador — o jogador não
@@ -5043,6 +5092,17 @@ class LimiteDaFogueira extends React.Component {
    render, ela cala-se (null) e o pé fica com a soleira, como antes. O
    LimiteErro de baixo tapa a tela inteira, e uma fileira não vale isso. A
    chave muda a cada resposta, e a fileira tenta outra vez. */
+/* AAA · A CERIMÓNIA NUNCA CUSTA O TURNO: se o painel da subida estoura a
+   pintar, cala-se e avisa quem o abriu — o nível já foi confirmado (os
+   pontos estão no bolso, como no ModalNivel de sempre) e as próximas
+   subidas voltam ao aviso antigo, que é a rede. */
+class LimiteDaCerimonia extends React.Component {
+  constructor(props) { super(props); this.state = { erro: null }; }
+  static getDerivedStateFromError(erro) { return { erro }; }
+  componentDidCatch(erro) { try { console.error("Taverna · a cerimónia calou:", erro); if (this.props.aoEstourar) this.props.aoEstourar(erro); } catch (e) { /* nada mais a fazer */ } }
+  render() { return this.state.erro ? null : this.props.children; }
+}
+
 class LimiteDasFichas extends React.Component {
   constructor(props) { super(props); this.state = { erro: null }; }
   static getDerivedStateFromError(erro) { return { erro }; }
@@ -5325,6 +5385,12 @@ export default function Taverna() {
   const [espolioRevelado, setEspolioRevelado] = useState(null);
   const [chegada, setChegada] = useState(null);
   const [lugarNovo, setLugarNovo] = useState(null);
+  /* AAA · a cerimónia da subida tem estado próprio: abri-la confirma o nível
+     (baixa nivelPendentes), e o aviso que a abria fecharia a festa a meio.
+     { nivel, antes, depois, pontos } — ou null. cerimoniaCalou: o painel
+     estourou uma vez, e daí em diante a subida volta ao ModalNivel. */
+  const [cerimoniaDoNivel, setCerimoniaDoNivel] = useState(null);
+  const [cerimoniaCalou, setCerimoniaCalou] = useState(false);
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
@@ -17508,7 +17574,35 @@ export default function Taverna() {
     }));
     notaRef.current = oEnvelopeDaFicha("subiDeNivel", { nivel: personagem.nivel });
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
+    /* AAA: o que a cerimónia precisa saber (o ModalNivel ignora o retorno) */
+    return { nivelNovo, pontosDepois: (typeof personagem.pontosAtr === "number" ? personagem.pontosAtr : pontosAtributoDisponiveis(personagem)) + ganhoAtr };
   };
+
+  /* AAA · A CERIMÓNIA DA SUBIDA. Abri-la confirma o nível (os mesmos pontos,
+     o mesmo heroísmo, as mesmas mensagens do confirmarNivel) e guarda o
+     antes e o depois para a tela. Com dois níveis pendentes, a primeira
+     fecha e a segunda abre. Os PV/PM máx. de antes/depois descontam os
+     níveis ainda por confirmar: a ficha já os somou todos (aplicarNivel). */
+  const abrirCerimoniaDoNivel = () => {
+    try {
+      const p = personagemRef.current || personagem;
+      const pend = Math.max(1, p.nivelPendentes || 1);
+      const heroiAntes = garantirHeroismo(p);
+      const info = confirmarNivel() || {};
+      const nivelNovo = info.nivelNovo || ((p.nivel || 1) - pend + 1);
+      const vMax = (p.vidaMax || 0) - PV_POR_NIVEL * (pend - 1), mMax = (p.manaMax || 0) - PM_POR_NIVEL * (pend - 1);
+      const depois = { ...p, nivel: nivelNovo, vidaMax: vMax, manaMax: mMax, heroismo: garantirHeroismo(personagemRef.current || p), pontosAtr: info.pontosDepois };
+      const antes = { ...p, nivel: Math.max(1, nivelNovo - 1), vidaMax: vMax - PV_POR_NIVEL, manaMax: mMax - PM_POR_NIVEL, heroismo: heroiAntes };
+      setCerimoniaDoNivel({ nivel: nivelNovo, antes, depois, pontos: info.pontosDepois });
+    } catch (e) { calou("cerimonia do nivel", e); setCerimoniaCalou(true); }
+  };
+  useEffect(() => {
+    try {
+      if (fase !== "jogo" || cerimoniaDoNivel || cerimoniaCalou || carregando || dadoRolando) return;
+      if ((personagem?.nivelPendentes || 0) > 0) abrirCerimoniaDoNivel();
+    } catch (e) { calou("cerimonia do nivel", e); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase, personagem?.nivelPendentes, cerimoniaDoNivel, cerimoniaCalou, carregando, dadoRolando]);
 
   /* ---------------- DEPOIS DO ÚLTIMO DADO (v9.25) ----------------
      Duas saídas, e as duas custam. Voltar cobra ouro (ou fé, para quem tem
@@ -18277,9 +18371,12 @@ export default function Taverna() {
 
   /* ---------------- ATRIBUTOS (v9.6) ---------------- */
   const gastarPontoAtributo = (attrId) => {
-    const r = subirAtributoFicha(personagem, attrId);
+    /* AAA: lê e escreve o ref — a cerimónia chama isto N vezes no mesmo
+       clique, e com o `personagem` do fecho cada ponto apagava o anterior */
+    const r = subirAtributoFicha(personagemRef.current || personagem, attrId);
     if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${(ATRIBUTOS.find((a) => a.id === attrId) || {}).nome || attrId}: ${r.motivo}.` }]); return; }
     const nomeAttr = (ATRIBUTOS.find((a) => a.id === attrId) || {}).nome || attrId;
+    personagemRef.current = r.pers;
     setPersonagem(r.pers);
     salvar({ personagem: r.pers });
     pushMsgs([{ autor: "sistema", texto: `✦ ${nomeAttr} → +${r.valor} (−${r.custo} ponto${r.custo > 1 ? "s" : ""}, restam ${r.pers.pontosAtr})` }]);
@@ -18386,15 +18483,18 @@ export default function Taverna() {
     setPersonagem((p) => {
       const slot = item.tipo || (av.ficha && av.ficha.familia === "arma" ? "arma" : "arma");
       const equipados = { ...(p.equipados || {}) };
-      equipados[slot] = item; // substitui o que estiver no mesmo slot (volta pra mochila automaticamente)
+      /* 05/11: o que estava no encaixe volta à mochila de verdade (o kit
+         inicial não morava lá, e a troca apagava-o) */
+      const saem = [equipados[slot]];
+      equipados[slot] = item;
       const duasMaos = (f) => !!(f && (f.props || []).includes("duas mãos"));
       if (slot === "arma" && duasMaos(av.ficha) && equipados.escudo) {
-        largou.push(equipados.escudo.nome); delete equipados.escudo;
+        largou.push(equipados.escudo.nome); saem.push(equipados.escudo); delete equipados.escudo;
       }
       if (slot === "escudo" && duasMaos(fichaDoItem(equipados.arma))) {
-        largou.push(equipados.arma.nome); delete equipados.arma;
+        largou.push(equipados.arma.nome); saem.push(equipados.arma); delete equipados.arma;
       }
-      return { ...p, equipados };
+      return { ...p, equipados, equipamento: devolverAMochila(p.equipamento, saem.filter((x) => x && x !== item && x.nome !== item.nome)) };
     });
     const combTxt = fichaDeCombateTexto(item);
     const linhas = [{ autor: "sistema", texto: `⚔ Equipou: ${item.nome}${av.ficha ? ` (${av.ficha.rotulo})` : ""}${combTxt ? ` — ${combTxt}` : ""}` }];
@@ -18413,8 +18513,11 @@ export default function Taverna() {
     if (!agora.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${agora.motivo}.` }]); return; }
     setPersonagem((p) => {
       const equipados = { ...(p.equipados || {}) };
+      const saiu = equipados[slot];
       delete equipados[slot];
-      return { ...p, equipados };
+      /* 05/11: a peça que sai do corpo volta à mochila (o kit inicial nascia
+         vestido e fora dela, e largá-lo apagava-o) */
+      return { ...p, equipados, equipamento: devolverAMochila(p.equipamento, [saiu]) };
     });
   };
 
@@ -25646,7 +25749,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}
       {fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo lugar={lugarNovo} fechar={() => setLugarNovo(null)} />}
-      {fase === "jogo" && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
+      {fase === "jogo" && cerimoniaDoNivel && (
+        <LimiteDaCerimonia aoEstourar={() => { setCerimoniaDoNivel(null); setCerimoniaCalou(true); }}>
+          <PainelSubidaDeNivel nivel={cerimoniaDoNivel.nivel} antes={cerimoniaDoNivel.antes} depois={cerimoniaDoNivel.depois} pontos={cerimoniaDoNivel.pontos}
+            aoEscolher={(attr) => { try { gastarPontoAtributo(attr); } catch (e) { calou("ponto da cerimonia", e); } }}
+            aoFechar={() => setCerimoniaDoNivel(null)} aoGastarDepois={() => setCerimoniaDoNivel(null)}
+            lex={(mundoAtual() || {}).lexico} />
+        </LimiteDaCerimonia>
+      )}
+      {fase === "jogo" && cerimoniaCalou && !cerimoniaDoNivel && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
       )}
 
