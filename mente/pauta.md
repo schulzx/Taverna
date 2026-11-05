@@ -99,6 +99,42 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase SQ — as missões que se ganham (a ordem de 05/11 · DEPOIS da fase AAA)
+
+**A palavra da pessoa (05/11/2026), na íntegra do que pede:** *«precisamos mudar o sistema de quests,
+pelo menos o de quests secundárias, ele não deve ser disponibilizado no começo do jogo pra não poluir a
+experiência, o jogador tem que ser introduzido na missão e na história sem ruídos, e as quests
+secundárias também devem ser planejadas assim como uma quest de história, claro que com sua devida
+proporção, então teremos menos quests secundárias mas bem elaboradas, e isso vai resolver o problema de
+toda hora aparecer alguém oferecendo trabalho e poluindo a tela do jogo, o mural pode continuar em
+funcionamento gerando mini quests pra caso o player deseje upar ou algo do tipo, mas também tem que ser
+liberado a partir de um certo lvl… primeiro vamos resolver o que já estamos fazendo, mas já deixe
+planejado essa situação pra quando terminarmos a fase AAA».*
+
+**A ordem: só começa quando a fase AAA fechar** (`mente/formas.md` §AAA §11). Aprovada pela pessoa
+como direção. Os números (níveis, quantas) decide a mesa, com o motivo no diário.
+
+**As etapas (uma por versão):**
+- [ ] **SQ1 · o censo** (`conselheiro` + `backend`, leve): medir, numa campanha nova e em 20 turnos,
+  quantas ofertas de trabalho aparecem (o mural, o pedido da pessoa em cena, a soleira, o figurante que
+  oferece), em que turno, e quantas o jogador nem tinha como entender ainda. É a régua do antes.
+- [ ] **SQ2 · o portão da introdução** (`backend`, médio): nenhuma missão secundária e nenhum mural
+  até o herói estar dentro da história — por tabela (`PORTAO_DAS_SECUNDARIAS`: o primeiro marco da
+  espinha cumprido OU um nível mínimo, o que vier antes). Até lá, quem oferece trabalho cala-se e a
+  soleira não o mostra. A missão principal e a abertura ficam como estão.
+- [ ] **SQ3 · a secundária planeada** (`backend`, pesado do motor — aprovado): a missão secundária
+  deixa de ser «alguém oferece um trabalho» e passa a ter a forma de uma história pequena, como a
+  espinha em ponto pequeno: o gancho (quem, porquê agora), dois ou três atos com uma reviravolta, um
+  custo de falhar e um fecho que muda o mundo (um laço, um lugar, uma porta). Menos e melhores: um
+  teto de secundárias vivas ao mesmo tempo (`TETO_DAS_SECUNDARIAS`), e cada uma nasce de um fio que o
+  mundo já tem (uma pessoa do elenco, um lugar, uma facção), nunca do nada.
+- [ ] **SQ4 · o mural depois da porta** (`backend` + `frontend`, médio): o mural continua, como
+  fonte de mini-missões para quem quer subir de nível, mas abre só depois do portão de SQ2
+  (`NIVEL_DO_MURAL`), e é o jogador que vai a ele — o mural não chama ninguém.
+- [ ] **SQ5 · a prova jogada**: uma campanha nova, 20 turnos, contra o censo de SQ1 — quantas ofertas
+  apareceram antes de o herói entender a história (o alvo é zero), e quantas secundárias planeadas
+  nasceram até ao nível 5.
+
 ### Fase MM — o Mestre à Matt Mercer (a fase do beta · ordem de 28/09)
 
 **De onde vem.** A pessoa leu duas sessões do Critical Role contra o Taverna
