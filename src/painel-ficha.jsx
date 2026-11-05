@@ -27,6 +27,7 @@ import { PERICIAS, garantirPericias, bonusDePericia, passivoDe, limiteTreinadas,
 import { garantirDadosVida } from "./descanso.js";
 import { racaNaFicha, generoProprio } from "./lexico.js";
 import { fichaDoItem } from "./itens.js";
+import { marcaDe } from "./marca-da-subclasse.js";
 /* v9.159: os leitores dos escudos do corpo e do passo. Nenhum deles decide
    nada aqui — tracos.js, dadivas.js, danos.js e movimento.js já calculavam
    tudo isto para o combate; a ficha só passou a MOSTRAR o que sempre valeu. */
@@ -232,6 +233,18 @@ export function FichaVisual({
             {/* 20/10: o nome do sistema ganha — o do mundo só entre parênteses, num mundo de gênero próprio */}
             {[p.raca ? racaNaFicha((mundo || {}).lexico, p.raca, generoProprio(mundo)) : "", p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"}
           </div>
+          {/* 05/11 · A MARCA DA SUBCLASSE: o que ela dá desde o primeiro dia */}
+          {(() => {
+            let m = null;
+            try { m = marcaDe(p); } catch (e) { m = null; }
+            if (!m) return null;
+            const per = PERICIAS.find((x) => x.id === m.pericia);
+            return (
+              <div className="tv-body text-[12px] italic" style={{ color: T.inkMeio }}>
+                {m.subclasse}: {m.diz}{per ? <span className="tv-mono not-italic" style={{ color: T.amberSoft }}> · {per.nome}</span> : null}
+              </div>
+            );
+          })()}
           {tituloInfo && (
             <div className="tv-mono text-[10px] truncate" style={{ color: tituloInfo.divino ? T.violetSoft : T.inkDim }}>
               {tituloInfo.divino ? <><Glifo nome="ascensao" tamanho={14} /> {tituloInfo.titulo} · GD {tituloInfo.gd}</> : tituloInfo.titulo}

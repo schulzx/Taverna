@@ -253,6 +253,7 @@ import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase } from "./painel-proposta.jsx";
 import { Bandeja } from "./painel-bandeja.jsx";
+import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { oQueOMestrePede, oCartaoDoPedido } from "./motor/o-mestre-pede.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie } from "./motor/a-bandeja.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
@@ -4378,7 +4379,15 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
                 </select>
                 {(() => {
                   const sObj = (cObj?.subclasses || []).find((x) => x.nome === subclasse);
-                  return sObj ? <DescricaoCurta>{sObj.desc}</DescricaoCurta> : null;
+                  /* 05/11 · A MARCA: o que a subclasse dá desde o primeiro dia, antes
+                     do clique — a escolha daqui é a da árvore, e já pesa no nível 1 */
+                  let marca = null;
+                  try {
+                    const m = MARCA_DA_SUBCLASSE[subclasse];
+                    const per = m ? periciaPorId(m.pericia) : null;
+                    marca = m && per ? `Desde o primeiro dia: ${m.diz} — treino em ${per.nome}.` : null;
+                  } catch (e) { calou("a marca da subclasse na criação", e); }
+                  return sObj ? <>{marca ? <DescricaoCurta>{marca}</DescricaoCurta> : null}<DescricaoCurta>{sObj.desc}</DescricaoCurta></> : null;
                 })()}
               </CampoRotulado>
             </div>

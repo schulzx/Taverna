@@ -40,6 +40,7 @@ export { habilidadesDaEspecializacao, especializacaoDaHabilidade, RANK_PARA_ESPE
    o ciclo entre os dois catálogos. */
 import { magiaPorNome, magiasDisponiveis, classesDaMagia } from "./grimorio.js";
 import { aoTrocarDeCenario } from "./cenario.js";
+import { subclasseDoHeroi } from "./marca-da-subclasse.js";
 
 const HAB = (nome, nivel, custo, tipo, descricao) => ({ nome, nivel, custo, tipo, descricao });
 
@@ -482,8 +483,11 @@ export function custoEmPontos(hab) {
 
 /* Qual subclasse o herói seguiu em cada classe (uma só por classe, para
    sempre — trocar exige redistribuir tudo). */
+/* 05/11 (a pessoa: «a primeira decisão foi em vão»): a subclasse da
+   criação vale na classe de origem enquanto a árvore não tiver outra
+   (marca-da-subclasse.js) — no rank 3 ela abre, sem segunda pergunta */
 export function subclasseEscolhida(pers, classeNome) {
-  return ((pers && pers.subclasses) || {})[classeNome] || null;
+  return ((pers && pers.subclasses) || {})[classeNome] || subclasseDoHeroi(pers, classeNome) || null;
 }
 export function podeEscolherSubclasse(pers, classeNome) {
   const rank = ranksDoPersonagem(pers)[classeNome] || 0;

@@ -24,6 +24,15 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · a ordem AAA, 1.ª peça · a subclasse pesa desde o nível 1
+- **a palavra:** «ainda falta cara de jogo… uma especialização e subclasse tem que ter um peso maior, inclusive não faz sentido escolher a subclasse no momento da criação se ela não vai fazer diferença até que você suba de lvl e desbloqueia ela, e ainda assim tem que escolher de novo, então a primeira decisão foi em vão». Ela pediu também molduras vivas, o inventário de encaixes, a cerimónia do nível, a batalha que se sente e a vela da noite; isso está com o `desenho` no Figma.
+- **feito (`src/marca-da-subclasse.js`, suíte 15/15):**
+  - **a escolha da criação é a escolha:** `subclasseEscolhida` lê a da criação na classe de origem enquanto a árvore não tiver outra, e no rank 3 a árvore abre sem segunda pergunta;
+  - **a marca:** as 36 subclasses treinam desde o nível 1 uma perícia que é a cara delas, e se a perícia já era treinada o herói fica especialista. A criação mostra-a antes do clique («Desde o primeiro dia: …»), e a ficha também.
+- **o save não mudou:** tudo é derivado do que já existia (`pers.subclasse`, `pers.subclasses`).
+- **decisão (pesada, pedida pela pessoa):** quem tem save antigo sem subclasse escolhida na árvore passa a ter a da criação, e perde a segunda escolha no rank 3. É o que ela pediu: a primeira decisão vale.
+- **prova viva (5199):** a criação mostra «Cavaleiro · Desde o primeiro dia: o juramento aguenta o que o corpo não aguentaria — treino em Fortitude». As suítes de classe, perícias, subclasse, talentos e ficha passam, e o `check-formas` também.
+
 ## 04/11 · toda a gente ganha pintura · o companheiro de outro género e a gente da cidade
 - **a palavra (a jogar a v9.600 no telefone):** «Ainda tem personagem sem imagem» — e logo: «acabei de começar essa campanha e veio com um companheiro, ou seja, ele é um personagem, deveria ter a imagem».
 - **medido:** fora da Fantasia o povo sai do cenário («forasteiro», «cultista», «híbrido», «aristocrata»), e a pintura só conhece as dez raças de fantasia. Em 120 companheiros iniciais dos outros géneros, 81 ficavam sem pintura; na Fantasia, 0 de 40. A gente do registo (o taverneiro, a mercenária) não tem classe e caía no desenho de traço em todos os géneros. As «matrizes de ofício» de 11/10 nunca foram pintadas.

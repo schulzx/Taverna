@@ -30,6 +30,7 @@
 
 import { bonusProficiencia } from "./regras.js";
 import { ANTECEDENTES } from "./antecedentes.js";
+import { treinaPelaMarca } from "./marca-da-subclasse.js";
 
 /* ---------------- O CATÁLOGO ----------------
    Três por atributo, dezoito no total. O corte foi por UTILIDADE em
@@ -167,8 +168,12 @@ export function bonusDePericia(pers, id, modAtributo) {
   const per = periciaPorId(id);
   if (!per) return { total: modAtributo || 0, treino: 0, nivelTreino: "nenhum" };
   const prof = bonusProficiencia((pers && pers.nivel) || 1);
-  const esp = ehEspecialista(pers, id);
-  const tre = ehTreinada(pers, id);
+  /* 05/11 · A MARCA DA SUBCLASSE: a perícia da marca é treinada desde o
+     nível 1; se já o era, o herói fica especialista nela */
+  const marca = treinaPelaMarca(pers, id);
+  const treinadaAntes = ehTreinada(pers, id);
+  const esp = ehEspecialista(pers, id) || (marca && treinadaAntes);
+  const tre = treinadaAntes || marca;
   const treino = esp ? prof * 2 : tre ? prof : 0;
   return {
     total: (modAtributo || 0) + treino,
