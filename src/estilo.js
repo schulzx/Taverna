@@ -153,7 +153,10 @@ export const T = {
      backup e no Figma (`126:5`), se a pessoa a quiser de volta.
      ============================================================ */
   /* A MESA — madeira escura e quente (h≈25). Recua: cinta, trilho, bastidor. */
-  bg:         "#1B130D",   /* a madeira — ink 14,96 · inkDim 6,75 */
+  /* 05/11 · O FELTRO (a pessoa: «não gostei muito do novo design da parte de
+     madeira, talvez a textura»; escolheu o feltro verde). A madeira fazia
+     riscas: o ruído era anisotrópico. formas.md §AAA §14. */
+  bg:         "#12241B",   /* o feltro verde-escuro — ink 13,24 · inkDim 5,98 (5,38 sob a vela) */
   panel:      "#251A12",   /* a cinta, o trilho, o campo — ink 13,87 · danger 5,35 */
   panelSoft:  "#33251A",   /* o erguido — ink 12,07 · inkDim 5,45 · lineStrong 3,65 */
   line:       "#4D3A29",   /* divisória decorativa — 1,70 contra a madeira */
@@ -186,6 +189,11 @@ export const T = {
      baixo de `ok` e de `danger` (cor é número, logo é tabela). */
   okFundo:             "#1F2A15",   /* ok sobre ele 7,92 */
   perigoFundo:         "#3A1A12",   /* danger sobre ele 4,94 */
+
+  /* NOVO (AAA · 05/11) · O COURO da borda da mesa e dos painéis do ecrã do Mestre */
+  couro:      "#33200F",   /* chão de painel — ink 12,65 · inkDim 5,71 · danger 4,88 */
+  couroAlto:  "#4A2F1C",   /* o lume do couro: só gradiente, nunca chão de letra (danger 3,85) */
+  couroBaixo: "#24160D",   /* a borda da mesa */
 
   /* NOVO (Mesa C) · A FOLHA — o pergaminho onde a narração mora. Na folha
      só há tinta: cartões, chips e ofertas ficam na paleta da mesa, pousados
@@ -998,6 +1006,14 @@ export const MOVIMENTO_DO_DADO = {
   semMovimento: 120,
 };
 
+/* A BORDA DA MESA (AAA §14): o couro à volta do feltro e o fio de ouro por
+   dentro dele. Quando o HUD B nascer, mora em HUD_DA_MESA. */
+export const BORDA_DA_MESA = {
+  mesa: 14, telefone: 6,
+  ouro: "#E0A93A",     /* o ouro meio das molduras (MOLDURA_POR_DEGRAU.ouro.meio) — 7,66 contra o feltro */
+  alfaDoOuro: 0.45,
+};
+
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
@@ -1007,8 +1023,8 @@ export const FOLHA_DO_MESTRE = {
   vinheta: 0.75,       /* a borda do papel, no máximo (o pior ponto da conta) */
   fibra: 0.06,         /* a fibra do papel: não mexe no contraste */
   sombra: 0.55,        /* a folha pousada no couro */
-  luzDaVela: 0.16,     /* a vela sobre a madeira, no topo da mesa */
-  cantoDaMesa: 0.55,   /* a vinheta escura da madeira */
+  luzDaVela: 0.07,     /* a vela sobre o feltro, no topo da mesa (era 0,16 na madeira: o âmbar sobre verde baixava o danger) */
+  cantoDaMesa: 0.45,   /* a vinheta do feltro */
 };
 
 /* ============================================================
@@ -2775,14 +2791,21 @@ export const SUPERFICIES_CSS = `
 @media (min-width: 768px) {
   .tv-folha { padding-inline: ${FOLHA_DO_MESTRE.lado}px; }
 }
-/* A MADEIRA (Mesa C): o veio (feTurbulence esticado em x), a luz da vela no
-   topo e a vinheta dos cantos. Só fundo: nada de leiaute. */
+/* O FELTRO (AAA · 05/11, formas.md §14): a fibra fina e a mancha larga são
+   ruído ISOTRÓPICO — a mesma frequência nos dois eixos, sem direção, logo
+   sem riscas (a madeira de antes tinha 0.012 0.42, e riscava o telefone). A
+   luz da vela vem de cima; a borda é couro com um fio de ouro por dentro. */
 .tv-mesa {
   background-color: ${T.bg};
   background-image:
     radial-gradient(120% 80% at 50% -10%, ${alfa(T.amber, FOLHA_DO_MESTRE.luzDaVela)}, transparent 70%),
     radial-gradient(130% 100% at 50% 40%, transparent 55%, ${sombra(FOLHA_DO_MESTRE.cantoDaMesa)} 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='v'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 0.42' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.10 0 0 0 0 0.06 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23v)'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.78 0 0 0 0 0.66 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.06 0 0 0 0 0.04 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  box-shadow: inset 0 0 0 ${BORDA_DA_MESA.telefone}px ${T.couroBaixo}, inset 0 0 0 ${BORDA_DA_MESA.telefone + 1}px ${alfa(BORDA_DA_MESA.ouro, BORDA_DA_MESA.alfaDoOuro)};
+}
+@media (min-width: 768px) {
+  .tv-mesa { box-shadow: inset 0 0 0 ${BORDA_DA_MESA.mesa}px ${T.couroBaixo}, inset 0 0 0 ${BORDA_DA_MESA.mesa + 1}px ${alfa(BORDA_DA_MESA.ouro, BORDA_DA_MESA.alfaDoOuro)}; }
 }
 @media (forced-colors: active) {
   .tv-folha, .tv-mesa { background-image: none; }

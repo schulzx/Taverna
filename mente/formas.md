@@ -13203,3 +13203,708 @@ pousado à frente dele quando rola. O jogador deixava de *ler* que o Gideon est�
 via a miniatura dele com a base quase vazia. É a diferença entre uma ficha e uma mesa, e
 é o que nenhum RPG de texto tem. No telefone as miniaturas viram a fila de fichas da cinta.
 Depende do `jogo` (quando a miniatura reage) e do motor (o PV por membro, que já existe).
+
+## AAA · as molduras vivas, a carta, o inventário, a subida e a vela (05/11/2026)
+
+**A ordem, nas palavras dela:** *«ainda falta cara de jogo… não podemos nos prender apenas a quadrados,
+botões, cores e texturas, tem que ser um design vivo e chamativo… bordas de ficha e avatar que vão mudando
+conforme o personagem sobe de lvl e se especializa… um inventário melhor com ícones dos itens com as cores
+devidas de sua raridade, onde você equipa de verdade o item no lugar dele… quando um personagem passa de lvl
+abre uma tela com a subida de lvl… quando fica de noite no jogo uma vela acende e ilumina o papel.»*
+O que se tira das quatro referências (cartas Runeterra/Shadowverse, a interface de MOBA, as cartas Granblue):
+**moldura ornamentada, gema, disco de número, carta, grelha de ícones em moldura, e «o escolhido» contra «os
+outros».** Tudo isto entra aqui, por cima da mesa C (a madeira, a folha, a bandeja), sem a trocar.
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página `250:2` «AAA · 05/11»):
+
+| peça / quadro | id |
+|---|---|
+| variáveis: coleção `AAA · molduras vivas (05/11)`, modo `Vela` (148 cores, `codeSyntax` = o caminho na tabela) | `VariableCollectionId:250:3` |
+| `Moldura · anel` (44) — Degrau 4 × Lado 2 × Progresso 3 | `252:518` |
+| `Moldura · medalhão` (64) — idem | `252:1263` |
+| `Moldura · carta` (160) — idem, com o disco de nível e o escudo da CA | `252:2278` |
+| `Moldura do inimigo` — Tier (comum, elite, chefe) × Forma (anel, medalhão) | `251:2125` |
+| `Encaixe` (56) — Raridade 7 × Estado 3, ícone por troca de instância | `253:352` |
+| `Disco de atributo` — repouso, ganhou, no teto (ícone, valor, rótulo e modificador por propriedade) | `253:383` |
+| `Ícone de item/*` (18) e `Ícone de atributo/*` (6) | `251:2130`…`251:2211` · `251:2217`…`251:2239` |
+| `Vela` — Fase (manhã, tarde, entardecer, noite, madrugada, amanhecer) | `251:2304` |
+| as 36 gemas (espécime, cada cor ligada à variável) · as seis raridades | `253:429` · `253:815` |
+| **Ficha · carta · 375** | `255:113` |
+| **Equipamento · 375** (o boneco e a mochila) | `255:261` |
+| **Equipamento · gaveta do elmo · 375** (a comparação antes do clique) | `255:506` |
+| **O herói · 1280** (ficha + equipamento numa tela só) | `257:1110` |
+| **Subida de nível**: os quadros 1 a 5 a 375 | `256:501` · `256:533` · `256:581` · `256:617` · `256:669` |
+| **Subida de nível · a escolha · 1280** | `256:790` |
+| **Vela · o par** dia (manhã) / noite a 1280, clonados da tela principal `246:499` | `256:925` / `256:1095` |
+| **Vela** · noite · 375 e amanhecer (fumo) · 375, clonados de `246:763` | `256:1245` · `256:1355` |
+| `Objeto da mesa` — Diário, Mapa, Bolsa × repouso / novidade (HUD B) | `259:1401` |
+| `Carta do grupo` — Lado (herói, companheiro) × Tamanho (mesa, telefone) (HUD B) | `259:1622` |
+| **HUD B · o par** antes (a tela de hoje, clonada de `246:499`) / depois, 1280×912, dia | `260:2012` / `260:1494` |
+| **HUD B · depois · 1280 (noite)** — a vela acesa no painel HORA, a luz de cima | `260:2106` |
+| **HUD B · o par** antes (clonada de `246:763`) / depois, 375×812 | `260:2070` / `260:1758` |
+
+**A geometria é código, não desenho solto:** `mente/figma/aaa-geometria.mjs` é um módulo puro (sem React)
+com as tabelas e as funções `medalhao()`, `carta()`, `gema()`, `selo()`, `disco()`, `icone()`, `iconeAtr()`
+e `vela()`, que devolvem SVG. **Foi esta mesma fonte que montou os componentes no Figma** (colada no
+`use_figma`), e é ela que se porta para `ui.jsx`: a forma não se redesenha, copia-se. As tabelas abaixo são
+as dela.
+
+### 1 · A moldura viva — o nível vê-se à volta do rosto
+
+**Quatro degraus pelo nível**, e cada degrau **soma** uma camada (nunca troca): ferro (1–4) é o aro com
+rebites; bronze (5–9) ganha a coroa de louro com haste; prata (10–14) ganha as três chamas no topo; ouro
+lendário (15+) ganha as asas e a aura. Quem olha a cinta sabe o nível do grupo sem ler número nenhum — é
+a leitura de relance dos jogos de cartas que ela mandou, e o degrau novo é **uma forma nova**, não só uma cor
+nova (WCAG 1.4.1: a cor nunca é o único portador).
+
+**A gema no topo é a subclasse** (36 pedras, uma por subclasse, agrupadas pela classe). Antes do rank 3 da
+classe o engaste está **vazio** (o furo escuro, um anel de sombra): é a promessa à vista. **A especialização
+(rank 10) acrescenta o selo em losango na base**, com o miolo na cor da gema — a especialização é a subclasse
+aprofundada, e lê-se assim.
+
+**O lado é o fio de dentro, em cor E forma:** herói = fio âmbar **duplo** (`T.amber`); companheiro = fio azul
+**simples** (`T.mundo`); inimigo = ferro enegrecido, fio vermelho (`T.danger`) e **um olho no lugar da gema**.
+O inimigo não tem degraus de nível — tem **tier**: comum (aro e rebites), elite (oito espinhos), chefe
+(chifres e uma aura vermelha). O tier sai do que o motor já sabe do inimigo (pedido ao sistema, §8).
+
+**O disco de nível** é o disco azul-petróleo da referência, no canto de baixo à direita (135°), com o número em
+Cinzel Bold. Na carta há dois: o nível à esquerda e, à direita, **a CA num escudo** — o número que o inimigo
+tem de bater é o segundo número da carta, como o ataque na carta de Runeterra.
+
+**Três tamanhos, uma família:**
+
+| forma | o aro mede | a peça ocupa (com o transbordo) | disco | gema (raio) | onde |
+|---|---|---|---|---|---|
+| `anel` | 36–44 | 1,4 × o aro | Ø 13 a 44 (só a partir de 40) · Cinzel 9 | 5,4 u | a cinta, a ordem de iniciativa |
+| `medalhao` | 64 | 1,7 × o aro | Ø 16 · Cinzel 10 | 5,6 u | o cartão, a ficha do companheiro, a cerimónia (×2,4) |
+| `carta` | 160 × 224 | 212 × 276 | Ø 28 · Cinzel 15 · escudo da CA 28 | 9 u | a ficha do herói, o equipamento |
+
+**O transbordo é reservado, nunca cortado:** o contentor do retrato deixa `overflow: visible` e soma a margem
+da tabela `VB`/`VB_CARTA`. Na cinta, **o arco de vida do `Anel` fica onde está** (é jogo) — a moldura pinta a
+pista dele com o metal do degrau e põe-lhe a gema, as folhas e o disco por fora.
+
+**No anel de 36–44 a filigrana encolhe de propósito:** duas folhas por lado em vez de seis, uma chama em vez
+de três, uma pena por asa. Abaixo de ~1,5 px um traço desaparece no ecrã; o que fica é o que se lê.
+
+### 2 · A ficha como carta
+
+A carta (`252:2278`) é a ficha: a janela em arco para o retrato pintado (o `Retrato` entra no recorte
+`M10 60A70 52 0 0 1 150 60V150H10Z`), a placa do nome por baixo (**Cinzel 26** no nome, a classe e a
+subclasse em `amberSoft`), o nível e a CA nos cantos, a gema no fecho do topo, o selo na base.
+
+**Os atributos são discos com ícone** (`Disco de atributo`): disco de 64 em `panelSoft`, o aro no metal do
+degrau do herói (a ficha inteira sobe de degrau com ele), o ícone de 20 em `amberSoft`, o número em Cinzel 22,
+o rótulo e o modificador por baixo. Seis ícones novos, no mesmo traço dos de `ui.jsx`: Força (o punho),
+Destreza (a pena), Vigor (o coração com pulso), Intelecto (o livro), Presença (a coroa), Percepção (o olho).
+PV e PM em barras (vermelho e violeta da casa), o XP numa linha âmbar, e **«N pontos por gastar» em moldura
+âmbar** quando os há — é a porta da subida para quem a adiou.
+
+**375:** a carta à esquerda (160), nome e barras à direita, os seis discos em 3 × 2, os pontos por baixo
+(`255:113`). **1280:** a ficha e o equipamento **são uma tela só** (`257:1110`), a carta a ×1,6 com o nome na
+placa, os atributos ao meio e o boneco à direita. **Medida:** ver a ficha e trocar uma peça custa, na mesa,
+**zero trocas de aba** (antes: ficha e equipamento em sítios diferentes); no telefone há duas abas, Ficha e
+Equipamento, porque 375 não cabe nas duas.
+
+### 3 · O equipamento de bonecos (o «paper doll»)
+
+**O herói é o centro e as peças vão no sítio delas:** a carta ao meio; à esquerda, de cima para baixo, Elmo,
+Amuleto, Armadura; à direita, Arma, Escudo, Anel; Botas por baixo. Cada encaixe é um `Encaixe` de 56 (alvo
+≥ 44, WCAG 2.5.5 e a HIG da Apple), com o rótulo de 11 por baixo. **Vazio, mostra o glifo do que lá vai a 35% e
+a borda tracejada** — o jogador vê o que lhe falta, não um buraco (`GLIFO_DO_ENCAIXE`).
+
+**Tocar num encaixe abre a gaveta** (`255:506`) — folha de baixo no telefone, popover ao lado do encaixe na
+mesa —, **só com os itens que cabem ali**. O primeiro vem escolhido; por baixo, **a comparação antes do
+clique**: o nome na cor da raridade, cada número que muda com antes → depois e o sinal (`ok` / `danger`), e
+**o tempo da troca, que o motor já sabe** (`TROCA_DE_SLOT`: *«trocar leva 1 minuto: a fivela é debaixo do
+queixo»*). O botão diz o preço: **«Equipar · CA 15, Percepção −1»**. É a lei da casa, o veredito antes do
+clique, aplicada ao inventário. Os secundários: «Tirar o elmo» e «Fechar».
+
+**A mochila é uma grelha de encaixes** (5 colunas no telefone, 6 na mesa), com a raridade na borda e
+«11 de 20» no canto quando há limite.
+
+**A raridade é cor E forma** (WCAG 1.4.1) — a forma sobe com ela, de modo que um daltónico lê a escada:
+
+| raridade | cor | fio | forma além da cor |
+|---|---|---|---|
+| comum | `#B9AE9C` (osso) | 1 | — |
+| incomum | `#7FC46A` | 2 | — |
+| raro | `#5AA9F0` | 2 | a gota no canto de cima |
+| épico | `#B57BF0` | 2 | os quatro cantos |
+| lendário | `#FF9A3D` | 2 | os cantos + brilho de dentro + lume lento |
+| único | `#3FD6C6` | 2 | os cantos + brilho + a estrela de quatro pontas |
+
+**Duas trocas contra `RARIDADE_COR` de `App.jsx:1330`, e o porquê:** o **comum** era um lilás-cinza
+(`#9B93AC`) que não pertence à madeira — passa a osso, a cor do dado de uso. O **lendário** era `#E8A33D`, a
+**mesma brasa do herói** (`T.amber`): o item lendário confundia-se com o «isto és tu». Passa a laranja vivo
+`#FF9A3D`. O **único** era vermelho (`#E86A4F` é o `danger` da casa — um item único lia-se como ameaça) e passa
+a turquesa, que nenhuma peça da mesa usa.
+
+**Os ícones de item:** 18 glifos no quadro de 24, traço 1,5, pontas e juntas redondas — a família de
+`ui.jsx`: espada, machado, arco, cajado, adaga, maça, escudo, elmo, armadura leve, armadura pesada, botas, anel,
+amuleto, poção, pergaminho, chave, aljava e tomo. Na cor `ink` dentro do encaixe.
+
+### 4 · A cerimónia da subida de nível
+
+**Tela cheia, e é a dopamina — mas nunca custa o turno.** Os quadros-chave (`256:501`…`256:669`):
+
+1. **0–240 ms · o véu.** A mesa escurece a 0,86; o medalhão do herói ao centro (×2,4).
+2. **120–1400 ms · a luz sobe e a forja.** Uma luz âmbar sobe de baixo (640 ms). **Só quando o degrau muda
+   (níveis 5, 10 e 15)**, a camada nova desenha-se à volta do retrato (800 ms, traço que se fecha) e saltam 14
+   faíscas. Nos outros níveis o aro dá **um pulso** (420 ms) e segue.
+3. **1300–1720 ms · o número.** «NÍVEL» em Cinzel 15 espaçado e o número em Cinzel 64 âmbar, de 0,82 a 1.
+4. **1700 ms + 120 por linha · os ganhos.** PV máx. 68 → 74, PM máx. 30 → 33, pontos de habilidade +2, ponto
+   de atributo +1, o teto dos atributos +3 → +4, Heroísmo +1 — **os números de `confirmarNivel` (App.jsx:17696),
+   não inventados**. **Se a subclasse abriu, a gema acende aos 1900 ms** (520 ms: 0,6 → 1,12 → 1, o brilho
+   acende) e o nome dela aparece por baixo do número.
+5. **2300 ms · a escolha.** Os seis discos entram (240 ms). **Toque num disco põe um ponto** (o disco passa a
+   «ganhou», com 18 → 19); **tocar outra vez desfaz**. O primário diz o preço: **«Confirmar · Intelecto 18 →
+   19»**; o secundário é **«Gastar depois»** (os pontos ficam em `pontosAtr`, como hoje, e a ficha mostra-os).
+   Disco no teto não aceita ponto e diz «no teto».
+
+**Saída, sempre:** «Toque para saltar» desde o primeiro quadro — **o primeiro toque salta para o quadro 5**,
+nunca fecha sem a escolha; Esc faz o mesmo. **`prefers-reduced-motion`:** sem luz a subir, sem faíscas, sem
+escala — o quadro 5 aparece num esvanecer de 160 ms, com a moldura nova já no sítio e a gema já acesa.
+Duração até à escolha: **2,54 s**, e saltável a qualquer instante.
+
+### 5 · A vela da noite
+
+**O castiçal de bronze com uma vela mora no painel HORA do ecrã do Mestre** (§13; na mesa a 68 px de alto,
+na tira do telefone a 30 px), e **a luz cai de cima** sobre a folha — o ecrã está do lado de lá da mesa, e a
+vela com ele. (Os quadros `256:925`…`256:1355` são o estudo da luz no esqueleto antigo, com a vela ao pé do
+livro e no cabeçalho da folha; o lugar que vale é o do HUD B, `260:2106`.) **A altura da vela é o
+relógio:** acende-se nova ao entardecer, está a 70% à noite e a 42% de madrugada; ao amanhecer é um toco que
+se apaga **com um fio de fumo**; de manhã e de tarde há **uma vela nova, apagada** — a próxima noite à espera.
+(`VELA.porFase` lê as seis fases de `MAPA_VIVO.modoDaFase`.)
+
+**À noite a luz cai no papel:** um gradiente radial `#FFC877` a 0,20 (0,24 de madrugada), com centro na chama
+e raio de 0,9 × a largura da folha, recortado à folha; uma poça de luz de 170 px na madeira à volta do
+castiçal; e **a mesa escurece nas bordas** (vinheta preta a 0,32). O papel passa a ser a fonte de luz da
+tela — que é o que a mesa C já dizia que a folha é. O par dia/noite é a mesma tela (`256:925` / `256:1095`).
+
+**Movimento:** a chama tremeluz (1800 ms: `scaleY` 1 → 1,06 → 0,97 → 1 e `skewX` ±2°, origem na base) e a
+luz respira noutro período (2300 ms, ±0,03), para não pulsarem juntas — o que é orgânico não tem período
+comum. Acender: 700 ms (chama de 0 a 1 e luz de 0 ao valor). Fumo: 2600 ms, uma vez. **`prefers-reduced-
+motion`:** chama e luz paradas, sem fumo, e as trocas de fase num esvanecer de 200 ms.
+
+### 6 · O contraste, medido (WCAG 2.2; a conta é a de sempre, em `node`)
+
+| par | sobre a madeira (`#1B130D`) | sobre o feltro (`#12241B`) | piso |
+|---|---|---|---|
+| moldura ferro · meio `#6E747A` (forma) | 3,88 | 3,43 | 3 |
+| moldura bronze · meio `#A9672F` (forma) | 4,07 | 3,61 | 3 |
+| moldura prata · meio `#B4BCC4` (forma) | 9,54 | 8,45 | 3 |
+| moldura ouro · meio `#E0A93A` (forma) | 8,65 | 7,66 | 3 |
+| moldura do inimigo · meio `#7A6A64` | 3,56 | 3,15 | 3 |
+| fio heroi `#F0A23B` sobre o fundo do retrato `#2A1E15` | 7,67 | (igual) | 3 |
+| fio companheiro `#7DB9DC` sobre o fundo do retrato `#2A1E15` | 7,60 | (igual) | 3 |
+| fio inimigo `#E86A4F` sobre o fundo do retrato `#2A1E15` | 5,10 | (igual) | 3 |
+| número do disco (heroi) `#F2E7D2` sobre `#15475A` | 8,24 | (igual) | 4,5 |
+| número do disco (inimigo) `#F2E7D2` sobre `#6A1E14` | 9,47 | (igual) | 4,5 |
+| raridade comum `#B9AE9C` (letra e borda) · sobre `panel` 7,77 · sobre o fundo do encaixe 5,39 | 8,38 | 7,42 | 4,5 letra · 3 borda |
+| raridade incomum `#7FC46A` (letra e borda) · sobre `panel` 8,10 · sobre o fundo do encaixe 5,61 | 8,74 | 7,73 | 4,5 letra · 3 borda |
+| raridade raro `#5AA9F0` (letra e borda) · sobre `panel` 6,77 · sobre o fundo do encaixe 4,85 | 7,30 | 6,47 | 4,5 letra · 3 borda |
+| raridade epico `#B57BF0` (letra e borda) · sobre `panel` 5,71 · sobre o fundo do encaixe 4,16 | 6,16 | 5,45 | 4,5 letra · 3 borda |
+| raridade lendario `#FF9A3D` (letra e borda) · sobre `panel` 8,05 · sobre o fundo do encaixe 5,55 | 8,68 | 7,68 | 4,5 letra · 3 borda |
+| raridade unico `#3FD6C6` (letra e borda) · sobre `panel` 9,43 · sobre o fundo do encaixe 6,50 | 10,17 | 9,00 | 4,5 letra · 3 borda |
+| `ink` no número do disco de atributo (`panelSoft`) | 12,07 | (igual) | 4,5 |
+| `amberSoft` no ícone do atributo (`panelSoft`) | 9,77 | (igual) | 3 |
+| `danger` no −1 (`panelSoft`) | 4,65 | (igual) | 4,5 |
+| `inkDim` no rótulo do disco (sobre o fundo) | 6,75 | 5,98 | 4,5 |
+| «Nível 10» `amber` sobre o véu da cerimónia (0,86) | 9,75 | — | 4,5 |
+| a prosa sob a vela (entardecer): `tintaDoPergaminho` sobre `#ECDAB7` · o rótulo `tintaDoPergaminhoDim` | 12,01 · 6,48 | (igual) | 7 · 4,5 |
+| a prosa sob a vela (noite): `tintaDoPergaminho` sobre `#EDD8B1` · o rótulo `tintaDoPergaminhoDim` | 11,83 · 6,39 | (igual) | 7 · 4,5 |
+| a prosa sob a vela (madrugada): `tintaDoPergaminho` sobre `#EED7AE` · o rótulo `tintaDoPergaminhoDim` | 11,76 · 6,35 | (igual) | 7 · 4,5 |
+
+**As 36 gemas:** toda a pedra passa 3:1 contra o furo do engaste (`#120C08`; a pior é Cronista, 3,45). Dentro de cada classe as três pedras distam **ΔE ≥ 26** (CIE76; a mais próxima: Domador e Rastreador) — é ali que se comparam. Entre classes a menor distância é 7 (Sacerdote e Asceta, diamante e pérola), e aceita-se: a gema nunca aparece sem a classe ao lado. Duas pedras foram trocadas pela conta: o **Assassino** (`#B01E3E`, 2,87 contra o furo) passou a `#CC2C4E`, e o **Metamorfo** (olho-de-tigre, ΔE 5 do Domador) passou a labradorita.
+
+**As raridades entre si:** a menor distância é ΔE 42 (incomum e unico), e a forma (§3) separa-as de qualquer modo.
+**O nome da raridade nunca vai para dentro do encaixe:** lá dentro a cor é só borda (pede 3:1, e o pior, o
+épico, dá 4,16); a letra na cor da raridade mora em `panel`/`panelSoft` (a gaveta, a ficha), onde o pior é 4,97.
+
+### 7 · As tabelas, prontas a colar em `src/estilo.js`
+
+O valor `= T.x` nos comentários diz qual chave de `T` a cor repete; no código, **leia-se `T.x`**, não o
+literal. `ICONES_DE_ITEM` e `ICONES_DE_ATRIBUTO` são arrays de `d` para `<path>` com `fill="none"`,
+`stroke-width 1,5`, pontas redondas.
+
+```js
+/* o degrau sai do nível: o primeiro cujo `ate` >= nível. As camadas SOMAM-se. */
+export const MOLDURA_POR_DEGRAU = {
+  ferro: {
+    de: 1,
+    ate: 4,
+    claro: "#A7ADB2",
+    meio: "#6E747A",
+    escuro: "#34383C",
+    brilho: "#D9DEE2",
+    camadas: ["aro", "rebites"],
+  },
+  bronze: {
+    de: 5,
+    ate: 9,
+    claro: "#E7AE6F",
+    meio: "#A9672F",
+    escuro: "#55300F",
+    brilho: "#FFD9A8",
+    camadas: ["aro", "folhas"],
+  },
+  prata: {
+    de: 10,
+    ate: 14,
+    claro: "#EEF1F4",
+    meio: "#B4BCC4",
+    escuro: "#5E6871",
+    brilho: "#FFFFFF",
+    camadas: ["aro", "folhas", "chamas"],
+  },
+  ouro: {
+    de: 15,
+    ate: 99,
+    claro: "#FFE39A",
+    meio: "#E0A93A",
+    escuro: "#7A5410",
+    brilho: "#FFF6D6",
+    camadas: ["aura", "asas", "aro", "folhas", "chamas"],
+  },
+};
+
+/* ferro enegrecido; o tier (comum, elite, chefe) diz as camadas */
+export const MOLDURA_DO_INIMIGO = {
+  metal: { claro: "#B3A39C", meio: "#7A6A64", escuro: "#2E2524", brilho: "#D6C6BF" },
+  comum: ["aro", "rebites"],
+  elite: ["aro", "espinhos"],
+  chefe: ["aura", "chifres", "aro", "espinhos"],
+};
+
+/* heroi.fio = T.amber, companheiro.fio = T.mundo, inimigo.fio = T.danger */
+export const LADO_DA_MOLDURA = {
+  heroi: { fio: "#F0A23B", duplo: true },
+  companheiro: { fio: "#7DB9DC", duplo: false },
+  inimigo: { fio: "#E86A4F", duplo: false },
+};
+
+/* numero = T.ink */
+export const DISCO_DE_NIVEL = {
+  heroi: { corpo: "#15475A", luz: "#2C7D96", sombra: "#0A2530", numero: "#F2E7D2" },
+  inimigo: { corpo: "#6A1E14", luz: "#A8382A", sombra: "#2E0B07", numero: "#F2E7D2" },
+};
+
+export const ENGASTE_VAZIO = "#120C08";
+
+/* a caixa de cada forma, com o transbordo (o aro mede 80 u; a carta 160 × 224) */
+export const VB_DA_MOLDURA = { anel: [-6, -8, 112, 112], medalhao: [-18, -20, 136, 136], carta: [-26, -30, 212, 276] };
+
+/* os nomes são os de src/subclasses.js, exatos; luz = corpo + 45% de branco, sombra = corpo + 50% de preto */
+export const GEMA_DA_SUBCLASSE = {
+  Cavaleiro: { classe: "Guerreiro", pedra: "safira", corpo: "#3F7FE0", luz: "#95B9EE", sombra: "#204070" },
+  "Bárbaro": { classe: "Guerreiro", pedra: "granada", corpo: "#D0362C", luz: "#E5908B", sombra: "#681B16" },
+  Gladiador: { classe: "Guerreiro", pedra: "topázio", corpo: "#E8A02A", luz: "#F2CB8A", sombra: "#745015" },
+  Elementalista: { classe: "Mago", pedra: "opala-de-fogo", corpo: "#F2742E", luz: "#F8B38C", sombra: "#793A17" },
+  Necromante: { classe: "Mago", pedra: "jade-espectral", corpo: "#5FC98C", luz: "#A7E1C0", sombra: "#306546" },
+  Arcanista: { classe: "Mago", pedra: "ametista", corpo: "#9D6BE6", luz: "#C9AEF1", sombra: "#4F3673" },
+  Assassino: { classe: "Ladino", pedra: "rubi-negro", corpo: "#CC2C4E", luz: "#E38B9E", sombra: "#661627" },
+  Batedor: { classe: "Ladino", pedra: "peridoto", corpo: "#9BC94A", luz: "#C8E19B", sombra: "#4E6525" },
+  Trapaceiro: { classe: "Ladino", pedra: "turmalina", corpo: "#E05FAE", luz: "#EEA7D2", sombra: "#703057" },
+  Sacerdote: { classe: "Clérigo", pedra: "diamante", corpo: "#EDE6D2", luz: "#F5F1E6", sombra: "#777369" },
+  Paladino: { classe: "Clérigo", pedra: "citrino", corpo: "#F5CF4A", luz: "#FAE59B", sombra: "#7B6825" },
+  Inquisidor: { classe: "Clérigo", pedra: "cornalina", corpo: "#E0542A", luz: "#EEA18A", sombra: "#702A15" },
+  Arqueiro: { classe: "Caçador", pedra: "esmeralda", corpo: "#2FB873", luz: "#8DD8B2", sombra: "#185C3A" },
+  Domador: { classe: "Caçador", pedra: "âmbar", corpo: "#C8862E", luz: "#E1BC8C", sombra: "#644317" },
+  Rastreador: { classe: "Caçador", pedra: "jaspe", corpo: "#B7613E", luz: "#D7A895", sombra: "#5C311F" },
+  Menestrel: { classe: "Bardo", pedra: "rodocrosita", corpo: "#F08AA0", luz: "#F7BFCB", sombra: "#784550" },
+  Cronista: { classe: "Bardo", pedra: "lápis-lazúli", corpo: "#3A5FD0", luz: "#93A7E5", sombra: "#1D3068" },
+  Encantador: { classe: "Bardo", pedra: "kunzita", corpo: "#CE96F0", luz: "#E4C5F7", sombra: "#674B78" },
+  "Punho de Ferro": { classe: "Monge", pedra: "hematita", corpo: "#8E9BA8", luz: "#C1C8CF", sombra: "#474E54" },
+  Andarilho: { classe: "Monge", pedra: "água-marinha", corpo: "#6CCFE0", luz: "#AEE5EE", sombra: "#366870" },
+  Asceta: { classe: "Monge", pedra: "pérola", corpo: "#D9E4D0", luz: "#EAF0E5", sombra: "#6D7268" },
+  Metamorfo: { classe: "Druida", pedra: "labradorita", corpo: "#5E8FA8", luz: "#A6C1CF", sombra: "#2F4854" },
+  "Xamã": { classe: "Druida", pedra: "turquesa", corpo: "#2BB7B0", luz: "#8AD7D4", sombra: "#165C58" },
+  "Guardião": { classe: "Druida", pedra: "jade", corpo: "#4C9A48", luz: "#9DC79A", sombra: "#264D24" },
+  "Linhagem Dracônica": { classe: "Feiticeiro", pedra: "rubi", corpo: "#E8283A", luz: "#F28993", sombra: "#74141D" },
+  "Alma da Tempestade": { classe: "Feiticeiro", pedra: "safira-elétrica", corpo: "#5CB4FF", luz: "#A5D6FF", sombra: "#2E5A80" },
+  "Magia Selvagem": { classe: "Feiticeiro", pedra: "opala", corpo: "#F07AE0", luz: "#F7B6EE", sombra: "#783D70" },
+  "Pacto Infernal": { classe: "Bruxo", pedra: "brasa", corpo: "#FF5E1A", luz: "#FFA681", sombra: "#802F0D" },
+  "Pacto Feérico": { classe: "Bruxo", pedra: "crisoprásio", corpo: "#7FE0A0", luz: "#B9EECB", sombra: "#407050" },
+  "Pacto do Abismo": { classe: "Bruxo", pedra: "obsidiana-violeta", corpo: "#7A5CE0", luz: "#B6A5EE", sombra: "#3D2E70" },
+  Artilheiro: { classe: "Engenheiro", pedra: "cobre", corpo: "#C9683A", luz: "#E1AC93", sombra: "#65341D" },
+  Mecanista: { classe: "Engenheiro", pedra: "latão", corpo: "#CDB04E", luz: "#E4D49E", sombra: "#675827" },
+  "Alquimista de Campo": { classe: "Engenheiro", pedra: "fluorita", corpo: "#56E0C8", luz: "#A2EEE1", sombra: "#2B7064" },
+  "Mestre das Feras": { classe: "Invocador", pedra: "sardônica", corpo: "#A8582A", luz: "#CFA38A", sombra: "#542C15" },
+  "Conjurador Elemental": { classe: "Invocador", pedra: "girassol", corpo: "#FF9E3D", luz: "#FFCA94", sombra: "#804F1F" },
+  "Chamador de Espíritos": { classe: "Invocador", pedra: "pedra-da-lua", corpo: "#A9C6F5", luz: "#D0E0FA", sombra: "#55637B" },
+};
+
+/* substitui RARIDADE_COR (App.jsx:1330). fundo = panelSoft + 12% da cor; o escolhido 22% */
+export const COR_DA_RARIDADE = {
+  comum: { cor: "#B9AE9C", fundo: "#43352A", fundoEscolhido: "#504337", fio: 1, forma: "fio simples" },
+  incomum: { cor: "#7FC46A", fundo: "#3C3824", fundoEscolhido: "#44482C", fio: 2, forma: "fio duplo" },
+  raro: { cor: "#5AA9F0", fundo: "#383534", fundoEscolhido: "#3C4249", fio: 2, forma: "fio duplo + 1 canto" },
+  epico: { cor: "#B57BF0", fundo: "#432F34", fundoEscolhido: "#503849", fio: 2, forma: "fio duplo + 4 cantos" },
+  lendario: {
+    cor: "#FF9A3D",
+    fundo: "#4B331E",
+    fundoEscolhido: "#603F22",
+    fio: 2,
+    forma: "4 cantos + brilho de dentro + lume lento",
+  },
+  unico: {
+    cor: "#3FD6C6",
+    fundo: "#343A2F",
+    fundoEscolhido: "#364C40",
+    fio: 2,
+    forma: "4 cantos + brilho + estrela no canto",
+  },
+};
+
+/* o glifo do encaixe vazio, a 35% */
+export const GLIFO_DO_ENCAIXE = {
+  elmo: "elmo",
+  amuleto: "amuleto",
+  armadura: "armaduraPesada",
+  arma: "espada",
+  escudo: "escudo",
+  anel: "anel",
+  botas: "botas",
+};
+
+/* quadro 24, fill none, stroke 1,5, pontas e juntas redondas */
+export const ICONES_DE_ITEM = {
+  espada: ["M20 4h-3.6L7.2 13.2l3.6 3.6L20 7.6z", "M5.2 11.6l7.2 7.2", "M7.6 16.4L4 20"],
+  machado: ["M5 20L15 7.5", "M12.6 5.4c2.2-2.2 6.4-2.4 8 .4-1.3 2.5-1 5 .6 7.2-2.8 1-6 .1-7.6-2.1z"],
+  arco: ["M7 3.5c7 3 7 14 0 17", "M7 3.5v17", "M4 12h15", "M16.5 9.5L19 12l-2.5 2.5"],
+  cajado: ["M7 21l8-13", "M18.6 6.4a2.6 2.6 0 1 1-5.2 0a2.6 2.6 0 1 1 5.2 0", "M20.5 1.8v2.4M19.3 3h2.4"],
+  adaga: ["M17 4l3 3-7.5 7.5-3-3z", "M8 10.5l5.5 5.5", "M10 14l-5 5"],
+  maca: [
+    "M5 19l7.5-7.5",
+    "M19 8.5a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0",
+    "M15.5 3v1.5M21 8.5h-1.5M19.4 4.6l-1 1M11.6 4.6l1 1M19.4 12.4l-1-1",
+  ],
+  escudo: ["M12 3l7 2.5V11c0 4.8-3 8-7 10-4-2-7-5.2-7-10V5.5z", "M12 7v10M8.5 11h7"],
+  elmo: ["M5 14a7 7 0 0 1 14 0v4.5h-4.5V15h-5v3.5H5z", "M12 7V3.5", "M8 14h8"],
+  armaduraLeve: ["M8 4l4 2 4-2 3 3-2 3v10H7V10L5 7z", "M11 9.5h2M11 12.5h2M11 15.5h2"],
+  armaduraPesada: ["M6 5h3l3 2 3-2h3l1.2 5-2.2 1v9H7v-9l-2.2-1z", "M7 14h10M7 17h10", "M12 7v13"],
+  botas: ["M7.5 3.5H13v9c3 .4 6 1.6 6 4.5v2.5H6.5V14z", "M6.5 17h12.5"],
+  anel: ["M17.5 15a5.5 5.5 0 1 1-11 0a5.5 5.5 0 1 1 11 0", "M9.5 8.5L12 5l2.5 3.5L12 10z"],
+  amuleto: ["M6 3c0 5 2.5 8 6 9 3.5-1 6-4 6-9", "M12 12l3 4-3 4.5-3-4.5z"],
+  pocao: ["M9.5 3h5", "M10.5 3v5L6.5 15a4.5 4.5 0 0 0 4 6.5h3a4.5 4.5 0 0 0 4-6.5L13.5 8V3", "M7.6 14.5h8.8"],
+  pergaminho: [
+    "M8 4.5h10.5v13a2.5 2.5 0 0 1-2.5 2.5H5.5",
+    "M8 4.5a2 2 0 1 0-2 2h2V18",
+    "M5.5 20a2 2 0 0 1 0-4H8",
+    "M10.5 9h5M10.5 12h5",
+  ],
+  chave: ["M10 12a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0", "M10 12h11", "M18 12v3M15 12v2.5"],
+  aljava: ["M8 9l2 12h4l2-12z", "M10 9V3M12 9V2.5M14 9V3", "M9 4.5l1-1.5 1 1.5M13 4.5l1-1.5 1 1.5"],
+  tomo: ["M5 4.5h11a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2z", "M5 18a2 2 0 0 1 2-2h11", "M10.5 8.5h4"],
+};
+
+/* o mesmo traço; as chaves são os ids de ATRIBUTOS (constantes.js) */
+export const ICONES_DE_ATRIBUTO = {
+  forca: [
+    "M7 11V7.5a1.5 1.5 0 0 1 3 0V10",
+    "M10 9.5V6.5a1.5 1.5 0 0 1 3 0V10",
+    "M13 9.5V7a1.5 1.5 0 0 1 3 0v3.5",
+    "M16 10a1.5 1.5 0 0 1 3 0v3c0 4-2.5 7-6.5 7S6 17.5 6 14.5V12c0-1 .8-1.6 1.8-1.4L11 11.5",
+  ],
+  destreza: ["M19 4C11 4 6 9.5 5.5 19", "M19 4c-.5 6-4.5 10-10.5 11", "M13 7.5l-3 .5M15.5 10l-4 .8"],
+  vigor: [
+    "M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z",
+    "M6.5 12.5h3l1.5-2.5 2 4 1.5-1.5h3",
+  ],
+  intelecto: [
+    "M12 6.5C9.8 5 6.8 4.6 4 5.2v13c2.8-.6 5.8-.2 8 1.3 2.2-1.5 5.2-1.9 8-1.3v-13c-2.8-.6-5.8-.2-8 1.3z",
+    "M12 6.5v13",
+  ],
+  presenca: ["M4 17h16", "M4.5 17L3.5 8l4.5 3.5L12 5l4 6.5L20.5 8l-1 9", "M5 20h14"],
+  percepcao: ["M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0"],
+};
+
+/* ms; «de» conta do toque que abre a cerimónia; reduzido = só o quadro final */
+export const CERIMONIA_DO_NIVEL = {
+  veu: { de: 0, dura: 240, opacidade: 0.86 },
+  luz: { de: 120, dura: 640 },
+  forja: { de: 600, dura: 800, faiscas: 14, soNoDegrau: [5, 10, 15] },
+  pulso: { de: 600, dura: 420 },
+  numero: { de: 1300, dura: 420, escalaDe: 0.82 },
+  ganhos: { de: 1700, passo: 120, dura: 280 },
+  gema: { de: 1900, dura: 520 },
+  escolha: { de: 2300, dura: 240 },
+  total: 2540,
+  reduzido: { dura: 160 },
+};
+
+/* porFase lê as fases do relógio (as de MAPA_VIVO.modoDaFase); luz = alfa do halo no papel */
+export const VELA = {
+  cor: {
+    chama: "#FFB347",
+    nucleo: "#FFF1C4",
+    halo: "#FFC877",
+    cera: "#EFE3C8",
+    ceraSombra: "#C9B48E",
+    pavio: "#2A1C11",
+    fumo: "#B9AE9C",
+  },
+  porFase: {
+    manha: { estado: "apagada", altura: 1, luz: 0 },
+    tarde: { estado: "apagada", altura: 1, luz: 0 },
+    entardecer: { estado: "acesa", altura: 1, luz: 0.12 },
+    noite: { estado: "acesa", altura: 0.7, luz: 0.2 },
+    madrugada: { estado: "acesa", altura: 0.42, luz: 0.24 },
+    amanhecer: { estado: "fumo", altura: 0.2, luz: 0 },
+  },
+  tempos: { tremor: 1800, respiroDaLuz: 2300, acender: 700, fumo: 2600, reduzido: 200 },
+  luzNoPapel: { raioDaFolha: 0.9, vinhetaDaMesa: 0.32 },
+};
+
+```
+
+### 8 · A geometria (os paths)
+
+As formas locais (apontam para cima, base na origem) e onde se pousam — o resto do SVG são círculos e anéis
+com o gradiente do metal (`#m`: `claro` 0 → `meio` 0,45 → `escuro` 1, na diagonal) e a aura (`#au`: `brilho` a
+0,55 → 0):
+
+| forma local | path | onde se pousa (ângulo horário a partir do topo, centro 50,50) |
+|---|---|---|
+| `FOLHA` | `M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z` | medalhão: haste em arco r 43,5 de 165° a 80° (e o espelho); folhas a 160, 145, 130, 115, 100, 85°, alternando r 44,5 (inclinação +40°) e r 42,5 (−15°), escala 1,25 · anel: 150° e 120°, escala 1,1 · carta: leque de 5 (−40…+40°) em cada canto, escala 1,9, apontando para fora |
+| `CHAMA` | `M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z` | medalhão: três, em (50,8) escala 1,15 e (43,10)/(57,10) escala 0,8 espelhada · anel: uma · carta: (80,2) escala 1,9 e (69,5)/(91,5) escala 1,3 |
+| `PENA(L)` | L o comprimento: `M0 0C2.8-3.2 3.6-{0,55L} 0-{L}C-1.8-{0,6L}-1.8-3 0 0Z` | medalhão: a partir de ±48° r 38, penas a 30/55/80° com L 26/22/17 · anel: uma, 30°, L 18 · carta: a partir de (80±22, 6), 50/72/94° com L 44/38/30 |
+| `CHIFRE` | `M0 0C6-6 9-14 6-24C4-15 0-9-5-4Z` | inimigo chefe: a partir de ±28° r 39, rodado ±8° |
+| espinho | triângulo: base em θ±4° r 39,5, ponta em θ r 48 (anel 45) | inimigo elite e chefe: θ = 30, 60, 90, 120, 240, 270, 300, 330 |
+| aro | anel par-ímpar `M10 50a40 40 0 1 0 80 0a40 40 0 1 0-80 0Z` + `M16 50a34…` | todas; brilho r 38,9 (0,6 a 0,7); fundo do retrato r 33,9; fio r 32,6 (1,4) e, no herói, r 30,9 (0,7) |
+| gema | engaste r+2,4 com o metal; furo r+0,6; pedra r; luz e sombra em lente; brilho r·0,2 | topo (50,10): anel 5,4 · medalhão 5,6 · carta (80,4) 9 |
+| selo | losango de meia-largura 0,6·w; miolo a 0,55 na cor da gema; brilho a 0,2 | base: medalhão (50,92) w 10 · anel w 8 · carta (80,226) w 11 |
+| disco | círculo r+1,6 no metal; corpo r; arco de luz | 135°, r 40: anel r 12 · medalhão r 10 · carta (10,214) r 14 |
+| escudo da CA (carta) | `M136 200H164V212C164 222 157 229 150 232C143 229 136 222 136 212Z` e miolo `M139 203H161V212C161 220 156 225 150 228C144 225 139 220 139 212Z` | canto de baixo à direita |
+| janela da carta | `M10 60A70 52 0 0 1 150 60V150H10Z` (o recorte do retrato) · fio `M13 61A67 49 0 0 1 147 61V147H13Z` · fecho `M68 9H92L87 18H73Z` | — |
+
+**O SVG inteiro do degrau mais rico** (as outras são este menos as camadas que `MOLDURA_POR_DEGRAU[d].camadas` não lista), como `medalhao({ degrau: "ouro", g: GEMA_DA_SUBCLASSE.Cavaleiro, especialista: true })`:
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="108.8" height="108.8" viewBox="-18 -20 136 136"><defs><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE39A"/><stop offset=".45" stop-color="#E0A93A"/><stop offset="1" stop-color="#7A5410"/></linearGradient><radialGradient id="au"><stop offset="0" stop-color="#FFF6D6" stop-opacity=".55"/><stop offset="1" stop-color="#FFF6D6" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="66" fill="url(#au)"/><path d="M0 0C2.8-3.2 3.6-14.3 0-26C-1.8-15.6-1.8-3 0 0Z" transform="translate(78.24 24.57) rotate(30)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-12.1 0-22C-1.8-13.2-1.8-3 0 0Z" transform="translate(78.24 24.57) rotate(55)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-9.35 0-17C-1.8-10.2-1.8-3 0 0Z" transform="translate(78.24 24.57) rotate(80)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-14.3 0-26C-1.8-15.6-1.8-3 0 0Z" transform="translate(21.76 24.57) rotate(-30) scale(-1 1)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-12.1 0-22C-1.8-13.2-1.8-3 0 0Z" transform="translate(21.76 24.57) rotate(-55) scale(-1 1)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-9.35 0-17C-1.8-10.2-1.8-3 0 0Z" transform="translate(21.76 24.57) rotate(-80) scale(-1 1)" fill="url(#m)"/><path d="M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z" transform="translate(50 8) rotate(0) scale(1.15 1.15)" fill="url(#m)" stroke="#7A5410" stroke-width=".5"/><path d="M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z" transform="translate(43 10) rotate(-21) scale(0.8 0.8)" fill="url(#m)" stroke="#7A5410" stroke-width=".5"/><path d="M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z" transform="translate(57 10) rotate(21) scale(-0.8 0.8)" fill="url(#m)" stroke="#7A5410" stroke-width=".5"/><path d="M10 50a40 40 0 1 0 80 0a40 40 0 1 0 -80 0ZM16 50a34 34 0 1 0 68 0a34 34 0 1 0 -68 0Z" fill="url(#m)" fill-rule="evenodd" stroke="#7A5410" stroke-width=".9"/><circle cx="50" cy="50" r="38.9" fill="none" stroke="#FFF6D6" stroke-width=".6" stroke-opacity=".7"/><circle cx="50" cy="50" r="33.9" fill="#2A1E15"/><circle cx="50" cy="50" r="32.6" fill="none" stroke="#F0A23B" stroke-width="1.4"/><circle cx="50" cy="50" r="30.9" fill="none" stroke="#F0A23B" stroke-width=".7" stroke-opacity=".8"/><path d="M61.26 92.02A43.5 43.5 0 0 0 92.84 42.45" fill="none" stroke="url(#m)" stroke-width="1.2"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(65.22 91.82) rotate(110) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(74.38 84.81) rotate(40) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(84.09 78.6) rotate(80) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(88.52 67.96) rotate(10) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(93.82 57.73) rotate(50) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(92.34 46.3) rotate(-20) scale(1.25)" fill="url(#m)"/><path d="M38.74 92.02A43.5 43.5 0 0 1 7.16 42.45" fill="none" stroke="url(#m)" stroke-width="1.2"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(34.78 91.82) rotate(-110) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(25.62 84.81) rotate(-40) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(15.91 78.6) rotate(-80) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(11.48 67.96) rotate(-10) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(6.18 57.73) rotate(-50) scale(1.25)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(7.66 46.3) rotate(20) scale(1.25)" fill="url(#m)"/><circle cx="50" cy="10" r="8" fill="url(#m)" stroke="#7A5410" stroke-width=".8"/><circle cx="50" cy="10" r="6.2" fill="#120C08"/><circle cx="50" cy="10" r="5.6" fill="#3F7FE0"/><path d="M45.63 9.16A4.59 4.59 0 0 1 50.84 5.63Q48.6 7.48 45.63 9.16Z" fill="#95B9EE"/><path d="M55.04 11.12A5.15 5.15 0 0 1 48.88 15.04Q52.52 12.8 55.04 11.12Z" fill="#204070"/><circle cx="47.87" cy="7.65" r="1.12" fill="#FFFFFF" fill-opacity=".9"/><path d="M50 82L56 92L50 102L44 92Z" fill="url(#m)" stroke="#7A5410" stroke-width=".8"/><path d="M50 86.5L53.3 92L50 97.5L46.7 92Z" fill="#3F7FE0" stroke="#7A5410" stroke-width=".5"/><path d="M50 90L51.2 92L50 94L48.8 92Z" fill="#FFFFFF" fill-opacity=".8"/><circle cx="78.28" cy="78.28" r="11.6" fill="url(#m)" stroke="#7A5410" stroke-width=".8"/><circle cx="78.28" cy="78.28" r="10" fill="#15475A"/><path d="M70.28 75.28A10 10 0 0 1 84.28 70.78" fill="none" stroke="#2C7D96" stroke-width="1.8" stroke-linecap="round"/></svg>
+```
+
+e a carta, `carta({ degrau: "ouro", g: GEMA_DA_SUBCLASSE.Cavaleiro, especialista: true })`:
+
+```svg
+<svg xmlns="http://www.w3.org/2000/svg" width="212" height="276" viewBox="-26 -30 212 276"><defs><linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE39A"/><stop offset=".45" stop-color="#E0A93A"/><stop offset="1" stop-color="#7A5410"/></linearGradient><radialGradient id="au"><stop offset="0" stop-color="#FFF6D6" stop-opacity=".55"/><stop offset="1" stop-color="#FFF6D6" stop-opacity="0"/></radialGradient></defs><ellipse cx="80" cy="100" rx="118" ry="140" fill="url(#au)"/><path d="M0 0C2.8-3.2 3.6-24.2 0-44C-1.8-26.4-1.8-3 0 0Z" transform="translate(102 6) rotate(50)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-20.9 0-38C-1.8-22.8-1.8-3 0 0Z" transform="translate(102 6) rotate(72)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-16.5 0-30C-1.8-18-1.8-3 0 0Z" transform="translate(102 6) rotate(94)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-24.2 0-44C-1.8-26.4-1.8-3 0 0Z" transform="translate(58 6) rotate(-50) scale(-1 1)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-20.9 0-38C-1.8-22.8-1.8-3 0 0Z" transform="translate(58 6) rotate(-72) scale(-1 1)" fill="url(#m)"/><path d="M0 0C2.8-3.2 3.6-16.5 0-30C-1.8-18-1.8-3 0 0Z" transform="translate(58 6) rotate(-94) scale(-1 1)" fill="url(#m)"/><path d="M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z" transform="translate(80 2) rotate(0) scale(1.9 1.9)" fill="url(#m)" stroke="#7A5410" stroke-width=".6"/><path d="M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z" transform="translate(69 5) rotate(-27.5) scale(1.3 1.3)" fill="url(#m)" stroke="#7A5410" stroke-width=".6"/><path d="M0 0C-4.6-2-4.8-8.5 0-16C.6-11 4.6-9.4 3.6-4.2C3.1-1.6 1.6 0 0 0Z" transform="translate(91 5) rotate(27.5) scale(-1.3 1.3)" fill="url(#m)" stroke="#7A5410" stroke-width=".6"/><rect x="0" y="0" width="160" height="224" rx="12" fill="url(#m)" stroke="#7A5410" stroke-width="1"/><rect x="4" y="4" width="152" height="216" rx="9" fill="none" stroke="#FFF6D6" stroke-width=".8" stroke-opacity=".6"/><rect x="6.5" y="6.5" width="147" height="211" rx="7.5" fill="none" stroke="#7A5410" stroke-width=".6" stroke-opacity=".7"/><path d="M10 60A70 52 0 0 1 150 60V150H10Z" fill="#2A1E15" stroke="#7A5410" stroke-width="1"/><path d="M13 61A67 49 0 0 1 147 61V147H13Z" fill="none" stroke="#F0A23B" stroke-width="1.4"/><path d="M16 62A64 46 0 0 1 144 62V144H16Z" fill="none" stroke="#F0A23B" stroke-width=".7" stroke-opacity=".8"/><rect x="10" y="156" width="140" height="56" rx="4" fill="#251A12" stroke="#7A5410" stroke-width="1"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 10) rotate(275) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 10) rotate(295) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 10) rotate(315) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 10) rotate(335) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 10) rotate(355) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 10) rotate(365) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 10) rotate(385) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 10) rotate(405) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 10) rotate(425) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 10) rotate(445) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 214) rotate(185) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 214) rotate(205) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 214) rotate(225) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 214) rotate(245) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(10 214) rotate(265) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 214) rotate(455) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 214) rotate(475) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 214) rotate(495) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 214) rotate(515) scale(1.9)" fill="url(#m)"/><path d="M0 0Q3.2-4.6 0-10Q-3.2-4.6 0 0Z" transform="translate(150 214) rotate(535) scale(1.9)" fill="url(#m)"/><path d="M68 9H92L87 18H73Z" fill="url(#m)" stroke="#7A5410" stroke-width=".7"/><circle cx="80" cy="4" r="11.4" fill="url(#m)" stroke="#7A5410" stroke-width=".8"/><circle cx="80" cy="4" r="9.6" fill="#120C08"/><circle cx="80" cy="4" r="9" fill="#3F7FE0"/><path d="M72.98 2.65A7.38 7.38 0 0 1 81.35 -3.02Q77.75 -0.05 72.98 2.65Z" fill="#95B9EE"/><path d="M88.1 5.8A8.28 8.28 0 0 1 78.2 12.1Q84.05 8.5 88.1 5.8Z" fill="#204070"/><circle cx="76.58" cy="0.22" r="1.8" fill="#FFFFFF" fill-opacity=".9"/><path d="M80 215L86.6 226L80 237L73.4 226Z" fill="url(#m)" stroke="#7A5410" stroke-width=".8"/><path d="M80 219.95L83.63 226L80 232.05L76.37 226Z" fill="#3F7FE0" stroke="#7A5410" stroke-width=".5"/><path d="M80 223.8L81.32 226L80 228.2L78.68 226Z" fill="#FFFFFF" fill-opacity=".8"/><circle cx="10" cy="214" r="15.6" fill="url(#m)" stroke="#7A5410" stroke-width=".8"/><circle cx="10" cy="214" r="14" fill="#15475A"/><path d="M-1.2 209.8A14 14 0 0 1 18.4 203.5" fill="none" stroke="#2C7D96" stroke-width="2.52" stroke-linecap="round"/><path d="M136 200H164V212C164 222 157 229 150 232C143 229 136 222 136 212Z" fill="url(#m)" stroke="#7A5410" stroke-width=".9"/><path d="M139 203H161V212C161 220 156 225 150 228C144 225 139 220 139 212Z" fill="#33251A"/></svg>
+```
+
+### 9 · Os estados e as saídas de movimento
+
+| peça | estados | movimento | `prefers-reduced-motion` |
+|---|---|---|---|
+| `Moldura` | por degrau e progresso; tombado = dessatura a 0,8 (o estado de `Anel`) | ouro: um lume que roda (cónico, 8 s, 0,35) | lume parado |
+| `Gema` | vazia · acesa | acender 520 ms (0,6 → 1,12 → 1) | troca em 160 ms |
+| `Encaixe` | repouso · foco (anel `T.mundo` 2 px a 5 px) · escolhido (anel `T.amber` + sombra, fundo `fundoEscolhido`) · pressionado (0,96, 80 ms) | lendário e único: o brilho de dentro respira 0,35 ↔ 0,55 em 2400 ms | brilho fixo a 0,45 |
+| `Disco de atributo` | repouso · ganhou · no teto · pressionado | ganhou: o aro passa a âmbar com halo (180 ms) | troca seca |
+| gaveta | fechada · aberta | telefone: sobe de baixo 220 ms, saída do foco ao primeiro item; mesa: popover 160 ms | esvanecer 120 ms |
+| cerimónia | quadros 1–5 | a linha do tempo de `CERIMONIA_DO_NIVEL` | só o quadro 5, 160 ms |
+| `Vela` | apagada · acesa · fumo | tremor 1800, luz 2300, acender 700, fumo 2600 | tudo parado; trocas 200 ms |
+
+### 10 · O «superior», escrito
+
+- **Estudo citado — a progressão à vista é a necessidade de competência servida.** Ryan, Rigby & Przybylski,
+  *«The Motivational Pull of Video Games: A Self-Determination Theory Approach»*, *Motivation and Emotion* 30
+  (2006), 347–363: a satisfação de competência (o retorno visível do domínio) prediz o prazer e a vontade de
+  voltar a jogar. Hoje a subida de nível é um aviso pequeno e a especialização não se vê em lado nenhum; a
+  moldura põe o domínio **no rosto**, em todas as telas onde o rosto já está, sem uma linha a mais de texto.
+- **Estudo citado — o boneco é a forma que o jogador já sabe.** A Lei de Jakob (Nielsen, NN/g, 2000): os
+  utilizadores passam a maior parte do tempo noutros produtos e esperam que o vosso funcione como esses. O
+  equipamento por encaixes no corpo é a convenção do género desde *Diablo* (1996); quem joga RPG não o aprende,
+  reconhece-o. E a heurística 5 de Nielsen (prevenção de erros) é a lei da casa: a comparação antes do clique.
+- **Medida — contraste:** todas as letras desta secção passam AA (≥ 4,5), a prosa da folha continua acima de 11
+  mesmo à luz da vela, e toda a forma não textual que carrega significado passa 3:1 (§6). **A cor nunca é o
+  único portador** — raridade, degrau e lado têm forma (WCAG 1.4.1).
+- **Medida — alvos:** encaixe 56, disco 64 + rótulo, botões 44–48 (WCAG 2.5.5 pede 44).
+- **Medida — o que custa:** a cerimónia leva 2,54 s até à escolha e salta-se com um toque; equipar é **três
+  toques** (encaixe → item → «Equipar») com o preço lido antes do terceiro.
+- **O que falta para fechar a prova:** o **par antes/depois com a tela de hoje** (a ficha e o `ModalNivel`
+  atuais capturados para o Figma, ao lado destes quadros) e **a assinatura do `jogo`** jogando a cerimónia e a
+  gaveta. Fica para quem construir: capturar antes de trocar.
+
+### 11 · O que fica por construir (por ordem de retorno — refeita com o HUD B e o feltro, §13–§14)
+
+1. **O feltro e a borda de couro** (§14): `T.bg`, as três chaves de couro e o CSS de `.tv-mesa`. Um commit,
+   desfaz-se num `revert`, e muda a tela inteira no primeiro segundo — e tira as riscas do telefone.
+2. **As tabelas em `src/estilo.js`** (§7 e `HUD_DA_MESA`) e a troca de `RARIDADE_COR` (App.jsx:1330) por
+   `COR_DA_RARIDADE`.
+3. **`Moldura` em `ui.jsx`** (porta de `medalhao()` e `carta()`), com `Gema`, `Selo` e `DiscoDeNivel` — é a
+   peça de que a carta do grupo, a ficha e a cerimónia dependem.
+4. **O esqueleto do HUD B** (§13, o `oficial`, com o bastão): o ecrã do Mestre (LUGAR, HORA com a `Vela`,
+   AMEAÇA), a **`CartaDoGrupo`** no lugar dos anéis da cinta, os **`ObjetoDaMesa`** no lugar do trilho, a
+   bandeja ao lado da página, e a Gestão para dentro da ficha. É o passo grande: troca o esqueleto, e por isso
+   vem depois das peças, não antes.
+5. **`CerimoniaDoNivel`** no lugar do `ModalNivel` (App.jsx:25749), com a escolha de pontos a gastar
+   `pontosAtr` no próprio ecrã e «Gastar depois» a manter o caminho de hoje.
+6. **`PainelEquipamento`** (boneco + gaveta + mochila), **`Encaixe`**, `IconeDeItem`.
+7. **A ficha-carta** (375) e o herói numa tela só (1280), já com a aba Gestão dentro.
+
+**Pedidos ao sistema** (para `mente/pedidos-ao-sistema.md`): (a) o **ícone de cada item** — um campo `icone`
+(chave de `ICONES_DE_ITEM`) ou uma tabela tipo → ícone em `itens.js`; (b) a **comparação** de um item contra o
+equipado — uma função pura que devolve as linhas que mudam (CA, atributos, perícias) com antes e depois; (c) o
+**tier do inimigo** (comum, elite, chefe) — se o motor já o sabe, só expô-lo; (d) os **PV e PM máximos antes e
+depois** da subida, pela conta que já existe; (e) **a AMEAÇA da cena em 0–3 pontos** para o ecrã do Mestre,
+lida do que o motor já mede do perigo (o lugar, a tensão, o relógio) — se não houver medida única, é um pedido
+de uma função pura que a junte; e (f) **«há novidade»** no Diário e na Bolsa (a gota âmbar dos objetos).
+
+**Peso:** médio no conjunto (cria peças e telas; o fluxo de equipar e de subir de nível **não muda de ordem**
+— muda de cara, e ganha a escolha no mesmo ecrã com «Gastar depois» a guardar o caminho antigo). Nada aqui toca
+o formato do save.
+
+### 12 · Para a pessoa decidir — a proposta ambiciosa
+
+**«As marcas da moldura» — a moldura vira a memória da campanha.** Cada feito verdadeiro grava uma marca no
+aro: um entalhe por chefe derrotado, uma runa por promessa cumprida do Livro de Promessas, uma cicatriz de ouro
+por cada vez que o herói voltou do chão a 1 PV. Até doze marcas, à volta do aro como as horas de um relógio;
+tocar numa diz a linha (*«o Rei-Lobo, dia 14»*). Ao fim de uma campanha, **duas molduras de ouro nunca são
+iguais**: a do herói conta a história dele sem uma palavra. É o critério da ordem de 28/09 levado ao rosto —
+tudo o que a marca diz **sai do sistema** (verdade), nunca da imaginação. Custa: um campo de save novo e
+aditivo (`feitos`, ignorado pela versão antiga) e uma tabela feito → marca. Proponho-a como a próxima etapa
+depois do §11.2.
+
+**E uma menor, já no espírito da cinta:** **a moldura sente a vida.** Abaixo de 25% de PV a gema perde o
+brilho e uma fissura atravessa o aro; tombado, a moldura apaga-se em cinza até alguém o levantar. A vida já se
+lê no arco do `Anel`; isto põe-na também no ornamento, onde o olho já está.
+
+### 13 · O HUD B — a mesa do Mestre vista de cima (a escolha da pessoa, 05/11)
+
+**O esqueleto de hoje sai** (os anéis do grupo em cima, o trilho de ícones à direita, a página ao centro, o
+campo em baixo) e entra **a mesa vista de cima**, que é o que um jogador de RPG de mesa reconhece sem lho
+explicarem:
+
+- **O ecrã do Mestre, do lado de lá.** Três painéis de couro (`T.couro` → `T.couroAlto`) com moldura de ouro
+  (2 px `ouro.meio` e um fio interior `ouro.claro` a 0,35), títulos em **Cinzel Bold 11 espaçado** em
+  `ouro.claro`: **LUGAR** (o sítio e a cidade), **HORA** (a hora do mundo, com a `Vela` dentro) e **AMEAÇA**
+  (●●○ em `T.danger`, e «2 de 3»). No telefone é **uma tira** de 44 px com os três, separados por fios de ouro.
+- **A página ao centro**: a folha de pergaminho da mesa C, intocada (504–520 px de linha na mesa).
+- **A bandeja dos dados ao lado da página** (à esquerda, na mesa): uma caixa de couro com o feltro mais
+  escuro por dentro, onde as `Marca do dado` pousam e a última rolagem fica escrita. No telefone continua a
+  `Bandeja` horizontal, por cima do campo.
+- **As fichas do grupo em baixo, como cartas à frente do jogador** (`Carta do grupo`): a do herói maior e
+  ao centro, as dos companheiros menores e um pouco recuadas; cada uma é a moldura viva (§1) em ponto pequeno,
+  com o nome na placa e **PV, PM e Destino em gemas** por baixo (granada, ametista, âmbar). Tocar numa carta
+  abre a ficha-carta.
+- **O Diário, o Mapa e a Bolsa como objetos na borda da mesa** (`Objeto da mesa`: um livro com cantos de
+  ouro, um mapa enrolado e atado, uma bolsa de couro com uma moeda à espreita), no lugar do trilho; a gota
+  âmbar diz «há coisa nova». **A Gestão vai para dentro da ficha** (uma aba da ficha-carta).
+- **O campo de escrever** em baixo da página, por cima das cartas.
+- **Para depois:** na luta, as habilidades viram uma mão de cartas em leque (não desenhado agora, por ordem).
+
+**O leiaute, em tabela** (pronto a colar em `src/estilo.js`; as áreas são as de `grid-template-areas`):
+
+```js
+/* o esqueleto B. gemasDaCarta: PV = a granada do Bárbaro, PM = a ametista do Arcanista, Destino = T.amber */
+export const HUD_DA_MESA = {
+  mesa: {
+    aPartirDe: 1024,
+    borda: 14,
+    colunas: ["236px", "minmax(560px, 600px)", "120px"],
+    folga: 44,
+    areas: [
+      "ecra ecra ecra",
+      "bandeja livro objetos",
+      "bandeja oferta objetos",
+      "bandeja campo objetos",
+      "cartas cartas cartas",
+    ],
+    linhas: ["84px", "1fr", "auto", "48px", "200px"],
+    ecra: { painel: 220, alto: 84, folga: 20, ordem: ["lugar", "hora", "ameaca"], velaAlta: 68 },
+    livro: { largura: 600, margem: 8, linha: 504 },
+    bandeja: { largura: 236, alto: 300, lado: "esquerda" },
+    cartas: { heroi: 0.62, companheiro: 0.46, folga: 48, recuo: 30 },
+    objetos: { escala: 1.25, passo: 140, ordem: ["diario", "mapa", "bolsa"] },
+  },
+  telefone: {
+    borda: 6,
+    areas: ["ecra", "livro", "bandeja", "oferta", "campo", "cartas"],
+    linhas: ["44px", "1fr", "36px", "40px", "44px", "150px"],
+    ecra: { forma: "tira", alto: 44, velaAlta: 30 },
+    livro: { margem: 4 },
+    cartas: { heroi: 0.46, companheiro: 0.34, objetosNaFila: true },
+    objetos: { tamanho: 40, rotulo: 10, ordem: ["diario", "mapa", "bolsa"] },
+  },
+  ameaca: { pontos: 3, cheio: "●", vazio: "○" },
+  gemasDaCarta: { PV: "#D0362C", PM: "#9D6BE6", Destino: "#F0A23B" },
+};
+```
+
+**O par antes/depois** é a mesma cena, a mesma prosa e a mesma oferta: `260:2012` → `260:1494` (1280) e
+`260:2070` → `260:1758` (375). **O que se mede no par:** a página fica com **600 px de livro e 504 px de
+linha** (64 caracteres: a régua da mesa C mantém-se); **o trilho de 68 px à direita desaparece** e a coluna
+dos objetos ocupa a mesma faixa com alvos de 90 × 115 em vez de ícones de 36; **o grupo deixa de ser três
+anéis de 44 e passa a três cartas** (131 × 171 o herói) com PV, PM e Destino lidos sem abrir nada; e o lugar,
+a hora e a ameaça, que hoje são uma pílula no topo, passam a três painéis legíveis de relance. No telefone a
+página perde ~52 px de altura para a fila das cartas: **o custo honesto deste esqueleto**, pago com o grupo
+sempre à vista.
+
+**Peso:** é o que a casa chama pesado (muda o lugar de coisas de que o jogador depende: o trilho, a Gestão), e
+**foi a pessoa que o escolheu** — está decidido, não à espera. O que um commit revertido conserta, conserta;
+nada aqui toca o save.
+
+### 14 · A superfície: feltro verde-escuro, borda de couro
+
+**Porquê sai a madeira:** o veio era um `feTurbulence` de frequência **anisotrópica**
+(`baseFrequency='0.012 0.42'`: 35 vezes mais denso num eixo que no outro). É isso que desenha riscas, e no
+ecrã estreito do telefone as riscas ficavam do tamanho da letra. **O feltro usa ruído isotrópico** (a mesma
+frequência nos dois eixos), que não tem direção e portanto não pode fazer riscas: uma fibra fina
+(`0.9`, alfa 0,10) e uma mancha larga e muito leve (`0.035`, alfa 0,05). A luz da vela vem de cima (o ecrã do
+Mestre), num radial âmbar mais fraco que o da madeira.
+
+**As chaves de `T` que mudam ou nascem:**
+
+| chave | antes | depois | nota |
+|---|---|---|---|
+| `bg` | `#1B130D` (a madeira) | **`#12241B`** (o feltro) | h≈150, L baixo: o pano da mesa de jogo |
+| `couro` (nova) | — | **`#33200F`** | o chão dos painéis do ecrã do Mestre e da bandeja |
+| `couroAlto` (nova) | — | `#4A2F1C` | o lume do couro: só gradiente, nunca chão de letra |
+| `couroBaixo` (nova) | — | `#24160D` | a borda da mesa (14 px na mesa, 6 no telefone) |
+| `panel`, `panelSoft` | `#251A12`, `#33251A` | **não mudam** | são as peças pousadas no feltro (cartões, chips, o campo); lêem-se pelo matiz e pela borda `lineStrong` |
+| `FOLHA_DO_MESTRE.luzDaVela` | 0,16 | **0,07** | o âmbar sobre verde; o pior ponto mede-se como mistura de 0,06 |
+| `FOLHA_DO_MESTRE.cantoDaMesa` | 0,55 | **0,45** | a vinheta do feltro |
+
+**O contraste sobre o feltro**, medido no centro, no **pior ponto** (debaixo da luz da vela, `#1F2C1D`) e na
+borda (`#0C1812`):
+
+| letra / forma | feltro | sob a vela (pior) | borda | piso |
+|---|---|---|---|---|
+| `ink` | 13,24 | 11,93 | 14,84 | 4,5 |
+| `inkMeio` | 9,13 | 8,23 | 10,23 | 4,5 |
+| `inkDim` (o rótulo) | 5,98 | **5,38** | 6,70 | 4,5 |
+| `amber` | 7,68 | 6,92 | 8,60 | 4,5 |
+| `amberSoft` | 10,72 | 9,66 | 12,01 | 4,5 |
+| `danger` | 5,11 | **4,60** | 5,72 | 4,5 |
+| `ok` · `mundo` · `violet` | 8,57 · 7,61 · 6,75 | 7,72 · 6,85 · 6,08 | — | 4,5 |
+| o pergaminho (figura e fundo) | 11,95 | 10,77 | 13,39 | 3 |
+| o ouro claro (`#FFE39A`, títulos do ecrã) | 12,91 | 11,63 | 14,46 | 4,5 |
+| o ouro meio (`#E0A93A`, molduras) | 7,66 | 6,90 | 8,58 | 3 |
+| `lineStrong` (borda de controlo) | 4,00 | 3,61 | 4,48 | 3 |
+| ferro meio / bronze meio (as molduras mais baixas) | 3,43 / 3,61 | 3,09 / 3,25 | — | 3 |
+| `panel` (a peça sem borda) | **1,05** | 1,16 | 1,07 | — |
+
+**A regra que nasce da última linha:** sobre o feltro, **toda a peça leva borda** (`lineStrong` ou ouro): o
+couro castanho e o pano verde distinguem-se pelo matiz, não pela luz, e a 1.4.11 pede a borda. **No couro**
+(`#33200F`): `ink` 12,65, `ouro.claro` 12,34, `amberSoft` 10,24, `inkDim` 5,71, `danger` 4,88, `lineStrong`
+3,82 — tudo passa; **em `couroAlto` o `danger` cai a 3,85**, por isso o lume do couro é só gradiente de topo.
+
+**O CSS de `.tv-mesa`** (no lugar do de `estilo.js:2780`; sem crase, porque mora dentro da literal):
+
+```css
+.tv-mesa {
+  background-color: ${T.bg};
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, ${alfa(T.amber, FOLHA_DO_MESTRE.luzDaVela)}, transparent 70%),
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, ${sombra(FOLHA_DO_MESTRE.cantoDaMesa)} 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.78 0 0 0 0 0.66 0 0 0 0.10 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.06 0 0 0 0 0.04 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
+  box-shadow: inset 0 0 0 ${HUD_DA_MESA.telefone.borda}px ${T.couroBaixo}, inset 0 0 0 ${HUD_DA_MESA.telefone.borda + 1}px ${alfa(MOLDURA_POR_DEGRAU.ouro.meio, 0.45)};
+}
+@media (min-width: 768px) {
+  .tv-mesa { box-shadow: inset 0 0 0 ${HUD_DA_MESA.mesa.borda}px ${T.couroBaixo}, inset 0 0 0 ${HUD_DA_MESA.mesa.borda + 1}px ${alfa(MOLDURA_POR_DEGRAU.ouro.meio, 0.45)}; }
+}
+@media (forced-colors: active) { .tv-mesa { background-image: none; box-shadow: none; } }
+```
+
+**A prova que fica por fazer:** abrir no telefone e procurar riscas (não deve haver nenhuma: a fibra mede
+~1 px e não tem direção), e o par antes/depois com a madeira no navegador. A madeira continua no backup e no
+Figma (`246:499`).

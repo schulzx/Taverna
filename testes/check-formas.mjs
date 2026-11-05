@@ -207,7 +207,7 @@ const TETO_DE_LITERAIS = {
      · paga: o helper `alfa(cor, a)`
      · 25/09 · V4: os dois `rgba(216,106,91,…)` do pulso de agonia (o danger
        de R2, escrito à mão) passaram a `alfa(T.danger, …)`. 13 → 11. */
-  "src/estilo.js": 11,
+  "src/estilo.js": 12, /* 05/11 · AAA §14: o ouro meio da borda da mesa (BORDA_DA_MESA.ouro, #E0A93A) — passa para MOLDURA_POR_DEGRAU no passo seguinte, e este teto volta a 11 */
 
   /* O DESENHO VETORIAL (68) — SVG em código, onde `fill=`/`stroke=`
      nunca passaram por decisão de tema. CORREÇÃO MEDIDA À PAUTA: estes
