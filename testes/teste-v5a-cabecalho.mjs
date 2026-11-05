@@ -172,9 +172,13 @@ sec("4. a peça e a fiação");
   t("tudo decorativo é aria-hidden (a runa e o floreado)", /aria-hidden="true"/.test(runa) && /aria-hidden="true"/.test(fim));
   /* O FIO DO CARTÃO É POR DENTRO, como o do Figma (strokeAlign INSIDE): é
      isso que põe o cabeçalho a 24 px da borda e não a 25. */
+  /* MOVIDA em 05/11 (o HUD B sobre o feltro, formas.md §AAA §14): toda a peça
+     pousada no feltro leva a borda de CONTROLO (lineStrong), porque o couro da
+     página e o pano verde só se separam pelo matiz. A intenção fica: o fio é por
+     dentro (outline −1), e não border. */
   t("o fio do cartão é por dentro (outline −1), e não border",
-    /style=\{\{ background: T\.pagina, outline: `1px solid \$\{T\.line\}`, outlineOffset: -1 \}\}/.test(APP)
-    && !/style=\{\{ background: T\.pagina, border: `1px solid \$\{T\.line\}` \}\}/.test(APP));
+    /style=\{\{ background: T\.pagina, outline: `1px solid \$\{T\.(?:line|lineStrong)\}`, outlineOffset: -1 \}\}/.test(APP)
+    && !/style=\{\{ background: T\.pagina, border: `1px solid \$\{T\.(?:line|lineStrong)\}` \}\}/.test(APP));
   t("o cabeçalho está no topo do papel, antes da área que rola",
     APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(") > 0
     && APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(") < APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden"));
