@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 04/11 · toda a gente ganha pintura · o companheiro de outro género e a gente da cidade
+- **a palavra (a jogar a v9.600 no telefone):** «Ainda tem personagem sem imagem» — e logo: «acabei de começar essa campanha e veio com um companheiro, ou seja, ele é um personagem, deveria ter a imagem».
+- **medido:** fora da Fantasia o povo sai do cenário («forasteiro», «cultista», «híbrido», «aristocrata»), e a pintura só conhece as dez raças de fantasia. Em 120 companheiros iniciais dos outros géneros, 81 ficavam sem pintura; na Fantasia, 0 de 40. A gente do registo (o taverneiro, a mercenária) não tem classe e caía no desenho de traço em todos os géneros. As «matrizes de ofício» de 11/10 nunca foram pintadas.
+- **feito (`retratos.js`, sem uma imagem nova e sem crédito):**
+  - o povo sem pintura veste a Humana, com a classe e o sexo da ficha (`POVO_SEM_PINTURA`);
+  - a gente veste o traje do papel (`O_TRAJE_DO_PAPEL`: o guarda o Guerreiro, o padre o Clérigo, o taverneiro o Bardo…). O bandido e a cultista usam a pintura deles. Sem papel que case, sai um traje da rua pela semente (`TRAJES_DA_RUA`).
+  - `fichas.js` passa o ente da pessoa (papel, género, raça) ao rosto da ficha, que antes só levava a semente.
+- **depois:** 119/119 nos três primeiros géneros e 119/119 nos outros três. Visto vivo (5199, Horror cósmico): Hiram Blackwood, povo «híbrido», Ladino, apareceu pintado na cinta.
+- **asserções movidas (`teste-retratos`, com o motivo):** três diziam que o povo de outro género e a gente sem classe recusavam a pintura. A intenção que fica é que a pessoa nunca vira bicho pelo nome, e que a ficha crua sem raça nenhuma continua sem pintura.
+- **decisão média:** um retrato aproximado (a pintura Humana de um «híbrido») vale mais que um vazio onde está um personagem. É reversível: a tabela volta num commit, e as matrizes próprias de cada povo continuam a ser o caminho certo quando houver crédito para as pintar. Isso é decisão da pessoa.
+
 ## 04/11 · a prova da v9.598 saiu vermelha, e não subiu
 - **o vermelho:** 428/428 suítes verdes, mas o `check-formas` falhou num só ponto (D5e.2). A classe nova `.tv-dado-rola` declarava animação sem duração no CSS, porque a duração ia inline, e o varredor não a podia colher.
 - **o conserto, e o que ele arrastou na árvore da casca:**

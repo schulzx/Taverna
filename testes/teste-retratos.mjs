@@ -32,6 +32,7 @@ const J = JSON.stringify;
 
 let R = {};
 try { R = await import("../src/retratos.js"); } catch (e) { console.log("  (retratos.js não carrega: " + e.message + ")"); }
+const { O_TRAJE_DO_PAPEL = [], TRAJES_DA_RUA = [], POVO_SEM_PINTURA = {} } = R;
 const { RETRATOS = [], RETRATO = {}, SINAIS_DE_GENTE = [], retratoDe = () => undefined, recorteDoRetrato = () => undefined, tamanhoDoRetrato = () => undefined } = R;
 const { RACAS, CLASSES } = await import("../src/classes.js");
 const { CRIATURAS_FANTASIA, ARQUETIPOS, completarInimigo } = await import("../src/bestiario.js");
@@ -97,8 +98,16 @@ sec("2. retratoDe — QUEM RECEBE QUAL PINTURA");
      não tem célula continua provado logo abaixo (classe sem raça, Terrano) */
   t("as que eram por pintar respondem com a sua célula (Goliath Mago, Gnomo Bardo, Tiefling f Monge)", ch({ classe: "Mago", raca: "Goliath", genero: "homem" }) === "gente:Goliath|m|Mago|1" && ch({ classe: "Bardo", raca: "Gnomo", genero: "mulher" }) === "gente:Gnomo|f|Bardo|1" && ch({ classe: "Monge", raca: "Tiefling", genero: "mulher" }) === "gente:Tiefling|f|Monge|1");
   t("…e o par que já era pintado continua (Tiefling m Monge)", ch({ classe: "Monge", raca: "Tiefling", genero: "homem" }) === "gente:Tiefling|m|Monge|1");
-  t("classe sem raça, ou raça de outro género (Terrano) → null, nunca o rosto de outra coisa", ch({ classe: "Mago" }) === null && ch({ classe: "Mago", raca: "Terrano" }) === null);
-  t("pessoa sem classe nem matriz de ofício → null, mesmo com nome de bicho (o Velho Lobo taverneiro)", ch({ nome: "Velho Lobo", papel: "taverneiro" }) === null && ch({ nome: "Lobo", oficio: "taverna", raca: "Humano" }) === null && SINAIS_DE_GENTE.includes("papel"));
+  /* MOVIDA em 04/11 (a pessoa, a jogar: «veio com um companheiro, ou seja, ele é um personagem, deveria ter a imagem»; e «Ainda tem personagem sem imagem»): o povo de outro género (Terrano, forasteiro, cultista) deixa de
+     recusar a pintura — veste a deste povo (POVO_SEM_PINTURA), com a sua classe.
+     Fica a outra metade: classe SEM raça nenhuma continua null (a ficha crua). */
+  t("classe sem raça → null; raça de outro género (Terrano) → a pintura Humana da sua classe", ch({ classe: "Mago" }) === null && String(ch({ classe: "Mago", raca: "Terrano" })).startsWith("gente:Humano|") && String(ch({ classe: "Mago", raca: "Terrano" })).includes("|Mago|"));
+  /* MOVIDA em 04/11 (a pessoa, a jogar: «veio com um companheiro, ou seja, ele é um personagem, deveria ter a imagem»; e «Ainda tem personagem sem imagem»): a gente do registo veste o traje do papel (O_TRAJE_DO_PAPEL). A
+     intenção que fica é a de sempre: pessoa nunca vira bicho pelo nome. */
+  t("pessoa sem classe veste o traje do papel, e nunca vira bicho pelo nome (o Velho Lobo taverneiro)", String(ch({ nome: "Velho Lobo", papel: "taverneiro" })).startsWith("gente:") && String(ch({ nome: "Velho Lobo", papel: "taverneiro" })).includes("|Bardo|") && !String(ch({ nome: "Lobo", oficio: "taverna", raca: "Humano" })).startsWith("especie:") && SINAIS_DE_GENTE.includes("papel"));
+  t("as tabelas da gente só nomeiam classes e raças do catálogo", O_TRAJE_DO_PAPEL.length >= 10 && O_TRAJE_DO_PAPEL.every((x) => x.rx instanceof RegExp && CLASSES.some((c) => c.nome === x.classe)) && TRAJES_DA_RUA.every((c) => CLASSES.some((k) => k.nome === c)) && RACAS.some((r) => r.nome === POVO_SEM_PINTURA.raca));
+  t("o guarda veste o Guerreiro, o padre o Clérigo, o bandido a pintura dele", String(ch({ nome: "X", papel: "guarda do portão", raca: "Humano" })).includes("|Guerreiro|") && String(ch({ nome: "Y", papel: "padre da capela", raca: "Humano" })).includes("|Clérigo|") && ch({ nome: "Z", papel: "bandido da estrada" }) === "especie:Bandido");
+  t("o papel que não casa veste um traje da rua, pela semente, e sempre o mesmo", (() => { const a = ch({ nome: "Ana", papel: "pessoa", raca: "Humano" }); return String(a).startsWith("gente:Humano|") && a === ch({ nome: "Ana", papel: "pessoa", raca: "Humano" }); })());
   t("lixo → null: null, undefined, {}, número, string, mundo null", [null, undefined, {}, 3, "Lobo", { nome: null }, { nome: "" }].every((e) => retratoDe(e, null) === null) && ch({ nome: "Troll" }, null) === "especie:Troll");
   /* o sexo sem género declarado sai de `feicoes`, a MESMA conta do rosto desenhado */
   let acordo = 0, n = 0;
@@ -189,7 +198,8 @@ sec("5. o companheiro ganha povo (13/10)");
   const comRaca = garantirFichaCompanheiro({ nome: "Ilsa", classe: "Clérigo", raca: "Tiefling" });
   t("o que a ficha já diz nunca é reescrito", comRaca.raca === "Tiefling");
   t("a palavra do registo vai à forma do catálogo («anã» → Anão, «humana» → Humano)", () => racaDeCompanheiro({ raca: "anã" }) === "Anão" && racaDeCompanheiro({ raca: "humana" }) === "Humano" && racaDeCompanheiro({ raca: "meio-orc" }) === "Meio-orc");
-  t("um povo que o catálogo não tem fica a palavra do registo (e a pintura recusa)", () => racaDeCompanheiro({ raca: "sintético" }) === "sintético" && retratoDe({ nome: "Z", classe: "Mago", raca: "sintético" }) === null);
+  /* MOVIDA em 04/11 (a pessoa, a jogar: «veio com um companheiro, ou seja, ele é um personagem, deveria ter a imagem»; e «Ainda tem personagem sem imagem»): a palavra do registo fica (o companheiro continua «sintético» na ficha); só a pintura deixou de recusar */
+  t("um povo que o catálogo não tem fica a palavra do registo (e a pintura veste a Humana da sua classe)", () => racaDeCompanheiro({ raca: "sintético" }) === "sintético" && String((retratoDe({ nome: "Z", classe: "Mago", raca: "sintético" }) || {}).chave).startsWith("gente:Humano|"));
   t("lixo não estoura e dá uma raça do catálogo", () => [null, undefined, {}, 7, "x"].every((x) => nomesDeRaca.has(racaDeCompanheiro(x))));
 
   const lobo = garantirFichaCompanheiro({ nome: "Companheiro Animal", classe: "Caçador", invocada: true });

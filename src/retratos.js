@@ -44,6 +44,7 @@
 
 import { RACAS, CLASSES } from "./classes.js";
 import { feicoes, hashSemente } from "./semente.js";
+import { racaDeCompanheiro } from "./companheiros.js";
 
 /* ---------------- o enquadramento (§4 e §12) ----------------
    `recorte`: o lado do recorte quadrado, em fração do lado da matriz.
@@ -66,6 +67,55 @@ export const RETRATO = {
    classe e sem matriz de ofício NÃO cai na espécie pelo nome — o "Velho
    Lobo" da taverna não é um lobo. `especie` declarada (R1) ganha de todos. */
 export const SINAIS_DE_GENTE = ["papel", "relacao", "oficio", "raca"];
+
+/* ---------------- A GENTE DA CIDADE GANHA PINTURA (04/11/2026) ----------------
+   A pessoa, a jogar no telefone: «Ainda tem personagem sem imagem». Os 240
+   retratos são do herói (raça × sexo × classe); a gente do registo — o
+   taverneiro, a mercenária, o padre — não tem classe nem, quase nunca, raça,
+   e caía no desenho de traço. As «matrizes de ofício» de 11/10 nunca foram
+   pintadas (custam créditos).
+
+   A gente veste o traje do papel que tem: a primeira linha que casa decide a
+   classe cuja pintura ela usa (o guarda veste o Guerreiro, o padre o Clérigo,
+   o taverneiro o Bardo). O papel que já é uma pintura de gente (o bandido, a
+   cultista) usa a dela. Sem papel que case, o traje sai da semente, entre os
+   ofícios da rua. A raça é a dita no registo; sem ela, a do povo da casa, pela
+   MESMA conta do companheiro (`racaDeCompanheiro`) — uma raça que o catálogo
+   não pinta (o mundo de outro género) dá null, e o desenho de traço fica.
+   A ordem importa: do mais específico ao mais largo (o monge antes do clérigo). */
+export const O_TRAJE_DO_PAPEL = Object.freeze([
+  Object.freeze({ rx: /\b(monge|mestre de luta|lutador de punhos)/, classe: "Monge" }),
+  Object.freeze({ rx: /\b(guard|sentinel|soldad|capit|mercenari|cavaleir|milic|carcereir|veteran|espadachim|guerreir|lanceir|escudeir|sargent|tenente|vigia|xerife|meirinho|gladiador|brutamont|capang|lutador|sem senhor)/, classe: "Guerreiro" }),
+  Object.freeze({ rx: /\b(sacerdot|padre|clerig|frei|freira|acolit|monja|abade|abadessa|pregador|peregrin|bispo|ermita|coveir|vigari|templari)/, classe: "Clérigo" }),
+  Object.freeze({ rx: /\b(mag[oa]|estudios|sabi[oa]|escrib|bibliotecari|astrolog|professor|erudit|alquimist|boticari|copista)/, classe: "Mago" }),
+  Object.freeze({ rx: /\b(ladr|contrabandist|espia|receptador|vigarist|trapaceir|informante|assassin|cortesa|falsari)/, classe: "Ladino" }),
+  Object.freeze({ rx: /\b(bard|menestrel|taverneir|estalajadeir|cantor|music|ator|atriz|saltimbanc|bobo|arauto|pregoeir|anfitri|cozinheir|criad)/, classe: "Bardo" }),
+  Object.freeze({ rx: /\b(cacad|batedor|guia|rastreador|pastor|lenhador|pescador|barqueir|marinheir|carroceir|tropeir|arqueir|falcoeir|caravaneir)/, classe: "Caçador" }),
+  Object.freeze({ rx: /\b(herborist|curandeir|parteir|druid|campones|fazendeir|lavrador|jardineir|moleir|apicultor|benzedeir)/, classe: "Druida" }),
+  Object.freeze({ rx: /\b(ferreir|artes|carpinteir|pedreir|mineir|engenheir|ourives|joalheir|curtidor|oleir|mercador|comerciante|vendedor|lojist|armeir|tanoeir|alfaiat|tecel|cartograf)/, classe: "Engenheiro" }),
+  Object.freeze({ rx: /\b(cultist|bruxa|bruxo|necromant|ocultist|vidente|cartomant)/, classe: "Bruxo" }),
+  Object.freeze({ rx: /\b(nobre|senhor|senhora|conde|condessa|duque|duquesa|barao|baronesa|princip|princesa|dama|lorde|regente|governador|burgomestre|vereador)/, classe: "Feiticeiro" }),
+]);
+/* sem papel que case: os trajes da rua, pela semente */
+export const TRAJES_DA_RUA = Object.freeze(["Bardo", "Caçador", "Engenheiro", "Ladino", "Druida"]);
+/* O POVO QUE O CATÁLOGO NÃO PINTA (04/11/2026). A pessoa: «acabei de começar
+   essa campanha e veio com um companheiro, ou seja, ele é um personagem,
+   deveria ter a imagem». Fora da Fantasia o povo sai do cenário («forasteiro»,
+   «cultista», «híbrido», «aristocrata»), e a pintura só conhece as dez raças
+   de fantasia — medido: 81 de 120 companheiros iniciais dos outros géneros sem
+   pintura, 0 de 40 na Fantasia. O herói tem pintura porque escolhe raça do
+   catálogo. Quem tem povo dito e sem pintura veste a pintura deste povo, com a
+   SUA classe e o SEU sexo: um retrato aproximado de alguém que existe vale mais
+   que um vazio onde está um personagem. */
+export const POVO_SEM_PINTURA = Object.freeze({ raca: "Humano" });
+function racaPintada(dita) {
+  const d = typeof dita === "string" ? dita.trim() : "";
+  if (!d) return null;
+  return nomeCanonico(d, RACA_POR_FIO) || nomeCanonico(racaDeCompanheiro({ raca: d }), RACA_POR_FIO) || POVO_SEM_PINTURA.raca;
+}
+
+/* as pinturas de espécie que são gente: o papel que as nomeia usa-as */
+const ESPECIES_QUE_SAO_GENTE = new Set(["especie:Bandido", "especie:Cultista"]);
 
 /* ---------------- o manifesto ----------------
    Feras: [espécie, arquivo, cx, olhos], na ordem de CRIATURAS_FANTASIA.
@@ -264,18 +314,29 @@ export function retratoDe(ente, mundo) {
   if (!ente || typeof ente !== "object") return null;
   const m = mundo && typeof mundo === "object" ? mundo : {};
   if (ente.classe) {
-    const raca = nomeCanonico(ente.raca, RACA_POR_FIO);
+    const raca = racaPintada(ente.raca);
     const classe = nomeCanonico(ente.classe, CLASSE_POR_FIO);
     if (!raca || !classe) return null;
     return daCelula(`gente:${raca}|${sexoDe(ente, m)}|${classe}`, ente, m);
   }
   if (ente.especie) return especieDoNome(ente.especie);
-  if (ente.oficio) {
-    const raca = nomeCanonico(ente.raca, RACA_POR_FIO);
-    return raca ? daCelula(`gente:${raca}|${sexoDe(ente, m)}|${ente.oficio}`, ente, m) : null;
-  }
-  if (SINAIS_DE_GENTE.some((k) => ente[k])) return null;
+  if (SINAIS_DE_GENTE.some((k) => ente[k])) return daGente(ente, m);
   return especieDoNome(ente.nome);
+}
+
+/* a pessoa sem ficha de herói: o traje do papel e a raça do registo (ou do povo) */
+function daGente(ente, m) {
+  const papel = [ente.papel, ente.oficio].filter((x) => typeof x === "string" && x.trim()).join(" ");
+  const bicho = papel ? especieDoNome(papel) : null;
+  if (bicho && ESPECIES_QUE_SAO_GENTE.has(bicho.chave)) return bicho;
+  const semente = String(m.semente ?? ente.semente ?? ente.nome ?? "");
+  const dita = typeof ente.raca === "string" ? ente.raca.trim() : "";
+  const raca = dita ? racaPintada(dita) : racaPintada(racaDeCompanheiro({ semente, nome: ente.nome }));
+  if (!raca) return null;
+  const p = palavras(papel);
+  const doPapel = O_TRAJE_DO_PAPEL.find((t) => t.rx.test(p));
+  const classe = doPapel ? doPapel.classe : TRAJES_DA_RUA[hashSemente("traje|" + semente) % TRAJES_DA_RUA.length];
+  return daCelula(`gente:${raca}|${sexoDe(ente, m)}|${classe}`, ente, m);
 }
 
 /* ---------------- recorteDoRetrato ----------------

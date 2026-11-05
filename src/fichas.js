@@ -481,7 +481,11 @@ function verbosDe(x, variante, f, ctx) {
 function retratoDe(x, ctx) {
   if (x.tipo === "pessoa") {
     const r = doRegisto(ctx.npcs, x.nome);
-    return { semente: txt((r && r.semente) || x.nome), inimigo: !!(x.hostil || x.armado), marca: null };
+    const semente = txt((r && r.semente) || x.nome);
+    /* 04/11: o ente vai junto — sem ele o Rosto não sabia que era gente, e a
+       pintura (o traje do papel, retratos.js) não tinha por onde chegar */
+    const ente = { nome: txt(x.nome), semente, papel: txt((r && r.papel) || x.papel) || "pessoa", genero: txt((r && r.genero) || x.genero), ...(r && r.raca ? { raca: txt(r.raca) } : {}) };
+    return { semente, ente, inimigo: !!(x.hostil || x.armado), marca: null };
   }
   if (x.tipo === "criatura") return { semente: null, inimigo: !!x.hostil, marca: x.hostil ? "pataHostil" : "pata" };
   return { semente: null, inimigo: false, marca: x.tipo === "coisa" ? "bolsa" : "lugar" };
