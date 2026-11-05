@@ -28,6 +28,9 @@ import { garantirDadosVida } from "./descanso.js";
 import { racaNaFicha, generoProprio } from "./lexico.js";
 import { fichaDoItem } from "./itens.js";
 import { marcaDe } from "./marca-da-subclasse.js";
+import { marcasNoAro, garantirFeitos, linhaDaMarca } from "./marcas-da-moldura.js";
+import { Moldura } from "./painel-moldura.jsx";
+import { molduraDe } from "./moldura.js";
 /* v9.159: os leitores dos escudos do corpo e do passo. Nenhum deles decide
    nada aqui — tracos.js, dadivas.js, danos.js e movimento.js já calculavam
    tudo isto para o combate; a ficha só passou a MOSTRAR o que sempre valeu. */
@@ -216,15 +219,22 @@ export function FichaVisual({
           nível e o quanto falta para o próximo são a MESMA pergunta. */}
       <div className="p-3" style={{ background: `linear-gradient(135deg, ${T.panel} 0%, #1B1528 100%)`, borderBottom: `1px solid ${T.line}` }}>
         <div className="flex items-center gap-3">
-        <div className="relative shrink-0 pb-2">
-          <div className="rounded-xl p-1" style={{ background: T.panelSoft, border: `1.5px solid ${tituloInfo && tituloInfo.divino ? T.violet : T.amber}` }}>
-            <Retrato semente={sementeDe(p)} ente={p} lex={(mundo || {}).lexico} legenda={(tituloInfo && tituloInfo.titulo) || ""} tamanho={64} anel={T.line} estado={estadoDe(p.vida, p.vidaMax)} />
-          </div>
-          <div className="absolute left-1/2 bottom-0 w-6 h-6 flex items-center justify-center"
-            title={`Nível ${nivel}`}
-            style={{ transform: "translateX(-50%) rotate(45deg)", background: T.amber, borderRadius: 5, border: `2px solid ${T.panelSoft}` }}>
-            <span className="tv-mono text-[10px]" style={{ transform: "rotate(-45deg)", color: T.onAccent, fontWeight: 700 }}>{nivel}</span>
-          </div>
+        {/* AAA · 05/11 · A MOLDURA VIVA (formas.md §AAA §1): o medalhão de 64 no
+            metal do degrau, a gema da subclasse no topo, o selo da
+            especialização na base e o disco de nível a 135° — o disco toma o
+            lugar do losango de nível. O transbordo é reservado: a caixa mede
+            o medalhão inteiro, nunca corta uma folha. */}
+        <div className="relative shrink-0" title={`Nível ${nivel}`}>
+          {(() => {
+            let m = null;
+            try { m = molduraDe(p, "heroi"); } catch (e) { m = null; }
+            const rosto = (lado) => <Retrato semente={sementeDe(p)} ente={p} lex={(mundo || {}).lexico} legenda={(tituloInfo && tituloInfo.titulo) || ""} tamanho={lado} anel={null} estado={estadoDe(p.vida, p.vidaMax)} />;
+            if (!m) return rosto(64);
+            let marcas = [];
+            try { marcas = marcasNoAro(p.feitos); } catch (e) { marcas = []; }
+            return <Moldura tamanho="medalhao" degrau={m.degrau} lado="heroi" gema={m.gema} selo={m.selo} nivel={nivel} marcas={marcas}>{rosto}</Moldura>;
+          })()}
+          <span className="sr-only">Nível {nivel}</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="tv-display text-2xl leading-tight truncate" style={{ color: T.ink }}>{p.nome}</div>
@@ -233,6 +243,17 @@ export function FichaVisual({
             {/* 20/10: o nome do sistema ganha — o do mundo só entre parênteses, num mundo de gênero próprio */}
             {[p.raca ? racaNaFicha((mundo || {}).lexico, p.raca, generoProprio(mundo)) : "", p.classe, p.subclasse].filter(Boolean).join(" · ") || "sem caminho"}
           </div>
+          {/* 05/11 · AS MARCAS DA MOLDURA: os feitos gravados no aro, por extenso */}
+          {(() => {
+            let feitos = [];
+            try { feitos = garantirFeitos(p.feitos); } catch (e) { feitos = []; }
+            if (!feitos.length) return null;
+            return (
+              <div className="tv-mono text-[11px]" style={{ color: T.amberSoft }} aria-label={`Feitos gravados: ${feitos.map(linhaDaMarca).join("; ")}`}>
+                {feitos.length} {feitos.length === 1 ? "marca" : "marcas"} no aro · <span style={{ color: T.inkMeio }}>{linhaDaMarca(feitos[feitos.length - 1])}</span>
+              </div>
+            );
+          })()}
           {/* 05/11 · A MARCA DA SUBCLASSE: o que ela dá desde o primeiro dia */}
           {(() => {
             let m = null;

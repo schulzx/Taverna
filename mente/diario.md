@@ -24,6 +24,33 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · a ordem AAA, 2.ª e 3.ª peças · o feltro, as molduras vivas e as marcas no aro
+- **as palavras:** a pessoa escolheu o HUD «B · a mesa do Mestre» e o feltro verde («não gostei muito do novo design da parte de madeira»), e aprovou as marcas da moldura («Gostei da proposta, aprovada»).
+- **o desenho (agente `desenho`, ~320 mil tokens):** a página «AAA · 05/11» no Figma (`250:2`) e a secção «## AAA» em `formas.md` (§1–§14), com as tabelas, a geometria e o HUD B.
+- **feito:**
+  - **o feltro (eu):** a madeira riscava porque o ruído era anisotrópico; o feltro usa ruído isotrópico, a borda é couro com um fio de ouro, e nascem `T.couro*` e `BORDA_DA_MESA`.
+  - **as molduras vivas (agente `aprendiz`, ~260 mil tokens):**
+    - as treze tabelas de §7 em `estilo.js`, mais o novo `src/moldura.js` (puro) e o novo `src/painel-moldura.jsx`;
+    - na cinta, o anel do herói tem o aro do degrau e a gema da subclasse; na ficha, o medalhão leva o disco de nível;
+    - `RARIDADE_COR` passa a ler `COR_DA_RARIDADE`;
+    - suíte 107/107.
+  - **as marcas no aro (eu):**
+    - `src/marcas-da-moldura.js` (suíte 16/16) e o campo novo `pers.feitos`;
+    - um efeito no App grava o feito pela transição que o jogo já faz: o herói que estava a morrer e se levanta (cicatriz), a missão que passa a concluída (runa), a luta que acaba com um chefe derrotado (entalhe);
+    - no medalhão da ficha, cada marca tem a sua linha, e a ficha diz «N marcas no aro · a última».
+- **decisões médias:**
+  - (1) a runa é da missão cumprida, e não do «Livro de Promessas»: este é o das sementes de trama do Mestre, não promessas do herói;
+  - (2) gravado não se apaga: o aro mostra as doze primeiras;
+  - (3) a gema acende desde o nível 1, porque segue a subclasse da criação, que já pesa (a §1 dizia engaste vazio até ao rank 3; o desenho tem de confirmar).
+- **o que o aprendiz deixou para decidir:**
+  - os companheiros na cinta (28–32 px) ficam sem moldura;
+  - o disco de nível no anel está desligado, porque choca com a marca da porta;
+  - nos degraus prata e ouro a cinta corta a chama em cima;
+  - falta o `Disco` de atributo e o `Encaixe`, cuja geometria está só no Figma;
+  - o sinal violeta do título divino perdeu-se.
+- **prova viva (5199):** o medalhão com as três marcas e as suas linhas. A ficha da Gestão ficou apertada com o medalhão maior (o nome trunca); a ficha-carta (§2) refá-la.
+- **bastão:** tomado e devolvido duas vezes por mim (o feltro não tocou no App; as marcas tocaram) e uma pelo aprendiz (`RARIDADE_COR`).
+
 ## 05/11 · a ordem AAA, 1.ª peça · a subclasse pesa desde o nível 1
 - **a palavra:** «ainda falta cara de jogo… uma especialização e subclasse tem que ter um peso maior, inclusive não faz sentido escolher a subclasse no momento da criação se ela não vai fazer diferença até que você suba de lvl e desbloqueia ela, e ainda assim tem que escolher de novo, então a primeira decisão foi em vão». Ela pediu também molduras vivas, o inventário de encaixes, a cerimónia do nível, a batalha que se sente e a vela da noite; isso está com o `desenho` no Figma.
 - **feito (`src/marca-da-subclasse.js`, suíte 15/15):**

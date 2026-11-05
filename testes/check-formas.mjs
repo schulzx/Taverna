@@ -176,7 +176,7 @@ const TETO_DE_LITERAIS = {
      o halo âmbar a 13%, o `#fff` do alvo escolhido) renasceram em `T` do
      outro lado. Por isso `painel-batalha.jsx` não tem entrada nesta tabela,
      e é assim que ela fica: arquivo novo nasce com teto zero. */
-  "src/App.jsx": 57, /* 29/10 · T3 §4c: a janela da cena (ModalCena) aposentou-se (formas.md T3 §5b) e levou o véu dela, o `rgba(8,6,14,0.92)` do fundo da janela — a última cor solta que só ela usava. 60 → 59. (Desceu-a o `oficial` que tirou a janela, porque a catraca tem folga zero.) · 29/10 · T3: os catorze hex do fundo do ModalCena (sete gradientes, duas paradas cada) saíram do App para `TOM_DA_CENA` (estilo.js), a quarta zona de tabela — o fundo é `fundoDaCena(tomDoGenero(...))`. 74 → 60. (Desceu-a o `oficial` que tirou os literais, porque a catraca tem folga zero.) · 28/09 · V5e: a sombra `rgba(0,0,0,.45)` da seta do fim saiu do App com a própria seta — `SetaDaLeitura` (ui.jsx) a tira de `SETA_DA_LEITURA`, o `onSecond` da casa a 0,45. 75 → 74. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 25/09 · V1b: o brilho `rgba(216,106,91,0.15)` do "Continuar aventura" (o danger de R2) morreu — sai de `alfa(T.rosa, 0.15)`. 76 → 75. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 24/09 · R21: o fundo `rgba(0,0,0,.45)` do `PainelLateral` morreu com a moldura velha — o véu do alforje é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isto. 77 → 76. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero.) · 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R17: `VinhetaDaCena` foi aposentada pela lei do §20 (duas peças para o mesmo facto: ela e a gravura de R13-B), e com ela saíram os dois `rgba(23,19,34,…)` do degradê. 79 → 77. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */ /* 04/11 · Mesa C: as duas tintas sobre o violeta viram T.onSecond — 59 → 57 */
+  "src/App.jsx": 51, /* 05/11 · AAA §3: os seis hex de RARIDADE_COR saíram do App — a cor da raridade é COR_DA_RARIDADE (estilo.js). 57 → 51. (Desceu-a o `aprendiz`, que tocou essa linha só, porque a catraca tem folga zero.) · */ /* 29/10 · T3 §4c: a janela da cena (ModalCena) aposentou-se (formas.md T3 §5b) e levou o véu dela, o `rgba(8,6,14,0.92)` do fundo da janela — a última cor solta que só ela usava. 60 → 59. (Desceu-a o `oficial` que tirou a janela, porque a catraca tem folga zero.) · 29/10 · T3: os catorze hex do fundo do ModalCena (sete gradientes, duas paradas cada) saíram do App para `TOM_DA_CENA` (estilo.js), a quarta zona de tabela — o fundo é `fundoDaCena(tomDoGenero(...))`. 74 → 60. (Desceu-a o `oficial` que tirou os literais, porque a catraca tem folga zero.) · 28/09 · V5e: a sombra `rgba(0,0,0,.45)` da seta do fim saiu do App com a própria seta — `SetaDaLeitura` (ui.jsx) a tira de `SETA_DA_LEITURA`, o `onSecond` da casa a 0,45. 75 → 74. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 25/09 · V1b: o brilho `rgba(216,106,91,0.15)` do "Continuar aventura" (o danger de R2) morreu — sai de `alfa(T.rosa, 0.15)`. 76 → 75. (Linha do `desenho`; desce-a quem aplicar, porque a catraca tem folga zero.) · 24/09 · R21: o fundo `rgba(0,0,0,.45)` do `PainelLateral` morreu com a moldura velha — o véu do alforje é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isto. 77 → 76. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero.) · 23/09 · R13: a barra de estado, a fila dos estados e a fita de prazos saíram da tela principal, e com elas dois literais. 81 → 79. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R3: o único literal que a narração ainda tinha — o `rgba(23,19,34,0.48)` do fundo do painel da prosa — virou `T.pagina`, que é a superfície quente que R2 fabricou. 82 → 81. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) · R17: `VinhetaDaCena` foi aposentada pela lei do §20 (duas peças para o mesmo facto: ela e a gravura de R13-B), e com ela saíram os dois `rgba(23,19,34,…)` do degradê. 79 → 77. (Esta linha é do `desenho`; foi o `oficial` que a desceu, porque a catraca tem folga zero e a dívida encolheu na tela dele.) */ /* 04/11 · Mesa C: as duas tintas sobre o violeta viram T.onSecond — 59 → 57 */
   /* 16/09 · E4: os dois fundos de selo (#1f3320 e #33201f) viravam token okFundo/perigoFundo — eram CINCO copias no mesmo bloco do HUD, e a fila de quatro pilulas escritas a mao virou um map sobre a tabela dos campos da mecanica. 89 → 82 */
 
   /* O PERGAMINHO (71 = 41 + 30) — não é sujeira, é um SISTEMA: 10 hexes
@@ -207,7 +207,7 @@ const TETO_DE_LITERAIS = {
      · paga: o helper `alfa(cor, a)`
      · 25/09 · V4: os dois `rgba(216,106,91,…)` do pulso de agonia (o danger
        de R2, escrito à mão) passaram a `alfa(T.danger, …)`. 13 → 11. */
-  "src/estilo.js": 12, /* 05/11 · AAA §14: o ouro meio da borda da mesa (BORDA_DA_MESA.ouro, #E0A93A) — passa para MOLDURA_POR_DEGRAU no passo seguinte, e este teto volta a 11 */
+  "src/estilo.js": 11, /* 05/11 · AAA §7: o ouro da borda da mesa passou a ler MOLDURA_POR_DEGRAU.ouro.meio, como a nota de §14 prometia — 12 → 11 */
 
   /* O DESENHO VETORIAL (68) — SVG em código, onde `fill=`/`stroke=`
      nunca passaram por decisão de tema. CORREÇÃO MEDIDA À PAUTA: estes
@@ -307,6 +307,23 @@ const ZONAS_DE_TABELA = [
      ser escrito T (os dezanove apelidos de §3 são `T.x`, e a luz da janela
      é `alfa(T.amberSoft, …)`), senão a tabela vira lavandaria. */
   { arquivo: "src/estilo.js", tabela: "MAPA_VIVO", d5a: "isenta", d5b: "VARRE" },
+  /* 05/11 · AAA (formas.md §AAA §7) — as tabelas de MATERIAL das molduras
+     vivas: o metal de cada degrau, o ferro do inimigo, o disco de nível, as
+     peças miúdas do engaste, as 36 pedras, as seis raridades e a vela. São o
+     que MATERIAIS é para o mural: de que a coisa é feita, não o que
+     significa. D5a isenta-as (é onde estas cores têm direito de nascer) e
+     D5b VARRE-as: onde a cor repete T escreve-se T.x (o fio do lado, o
+     número do disco, o pavio, a caixa e o escudo da carta). As pequenas têm
+     `piso` próprio — o piso de 10 foi medido em T e MATERIAIS, e uma tabela
+     de 4 metais não é uma zona que desapareceu: o piso de cada uma é a conta
+     dela hoje, e cair abaixo dele continua a dizer «a zona deixou de casar». */
+  { arquivo: "src/estilo.js", tabela: "MOLDURA_POR_DEGRAU", d5a: "isenta", d5b: "VARRE" },
+  { arquivo: "src/estilo.js", tabela: "MOLDURA_DO_INIMIGO", d5a: "isenta", d5b: "VARRE", piso: 4 },
+  { arquivo: "src/estilo.js", tabela: "DISCO_DE_NIVEL", d5a: "isenta", d5b: "VARRE", piso: 6 },
+  { arquivo: "src/estilo.js", tabela: "PECAS_DA_MOLDURA", d5a: "isenta", d5b: "VARRE", piso: 4 },
+  { arquivo: "src/estilo.js", tabela: "GEMA_DA_SUBCLASSE", d5a: "isenta", d5b: "VARRE" },
+  { arquivo: "src/estilo.js", tabela: "COR_DA_RARIDADE", d5a: "isenta", d5b: "VARRE" },
+  { arquivo: "src/estilo.js", tabela: "VELA", d5a: "isenta", d5b: "VARRE", piso: 6 },
   /* 29/10 · T3 §4c — a zona `TOM_DA_CENA` SAIU, como a de `LUZ_DA_CENA` em V5a. Ela
      nasceu em T3 §2 (os catorze hex do fundo do ModalCena, isentos aqui como
      material); a janela aposentou-se em §5b e a tabela passou a guardar só NOMES
@@ -532,7 +549,7 @@ const TETO_DE_PILULA_A_MAO = {
    verde por vazio é pior que catraca nenhuma. */
 const ALCANCE_MINIMO = {
   pisoDeArquivosComCor: 15,    /* 17 hoje */
-  pisoDeLiterais: 280,         /* 289 hoje (29/10 · T3 §4c: 290 → 289, o véu da janela da cena saiu com ela; o piso fica) · (29/10 · T3: 304 → 290, os catorze hex do ModalCena foram para a zona TOM_DA_CENA — não sumiram, mudaram para onde a cor tem direito de nascer; o piso desce 20 e guarda a mesma coisa, a varredura que não mede vazio) */
+  pisoDeLiterais: 270,         /* 279 hoje (05/11 · AAA §7: os seis hex de RARIDADE_COR foram do App para a zona COR_DA_RARIDADE e o ouro da borda da mesa passou a ler MOLDURA_POR_DEGRAU — não sumiram, mudaram para onde a cor tem direito de nascer; o piso desce 10 e guarda a mesma coisa) · (29/10 · T3 §4c: 290 → 289, o véu da janela da cena saiu com ela; o piso fica) · (29/10 · T3: 304 → 290, os catorze hex do ModalCena foram para a zona TOM_DA_CENA — não sumiram, mudaram para onde a cor tem direito de nascer; o piso desce 20 e guarda a mesma coisa, a varredura que não mede vazio) */
   pisoDeClassesDeAnimacao: 10, /* 13 hoje */
   /* PISO, e não igualdade, de propósito: `T` tem de poder ganhar a
      décima quinta cor sem ficar vermelho. O que ele guarda é o REGEX DA
@@ -750,8 +767,9 @@ t(`e acha pelo menos ${ALCANCE_MINIMO.pisoDeLiterais} literais no total`,
   somaA >= ALCANCE_MINIMO.pisoDeLiterais, `achou ${somaA}`);
 for (const z of ZONAS_DE_TABELA) {
   const n = zonasMedidas[z.tabela] || 0;
-  t(`a zona "${z.tabela}" de ${z.arquivo} continua a casar (pelo menos ${ALCANCE_MINIMO.pisoDeZona} cores)`,
-    n >= ALCANCE_MINIMO.pisoDeZona, n === 0 ? `A ZONA "${z.tabela}" DESAPARECEU — renomearam a tabela, ou o formato mudou. Sem a zona, ${z.arquivo} mede a si mesmo e a mensagem de teto mente.` : `a zona mede ${n}`);
+  const piso = z.piso || ALCANCE_MINIMO.pisoDeZona;
+  t(`a zona "${z.tabela}" de ${z.arquivo} continua a casar (pelo menos ${piso} cores)`,
+    n >= piso, n === 0 ? `A ZONA "${z.tabela}" DESAPARECEU — renomearam a tabela, ou o formato mudou. Sem a zona, ${z.arquivo} mede a si mesmo e a mensagem de teto mente.` : `a zona mede ${n}`);
 }
 
 /* ============================================================

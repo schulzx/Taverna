@@ -23,6 +23,7 @@ import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEsta
 import { Rosto } from "./rosto.jsx";
 import { tracos, estadoDe, sementeDe } from "./semente.js";
 import { CartaDeTaro } from "./carta-taro.jsx";
+import { CamadaDaMoldura, useMolduraDoAnel } from "./painel-moldura.jsx";
 /* A brasa e conta (`brasas.js`) e o campo e desenho — mesma divisao do rosto. */
 import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
 /* O selo de prazo e CONTA (`hora-e-prazo.js`) e DESENHO (aqui) — a mesma
@@ -2278,9 +2279,18 @@ export function SeloDePrazo({ noites, quantos = 1, urgente = false, conta = "noi
    NADA AQUI ESPERA: é tudo CSS sobre um desenho que já tem o estado final.
    Uma ferida a meio de outra recomeça do comprimento de agora, sem fila.
    É `aria-hidden`: quem diz o PV por palavras é o alvo que o contém.
+
+   AAA · 05/11 · A MOLDURA VIVA (formas.md §AAA §1): com `ente` e a partir
+   de 36 px, o anel veste a moldura do degrau — o aro de metal por baixo do
+   arco de vida (a pista do arco passa a ser o metal), e por cima o fio do
+   lado, as folhas, os rebites e a gema da subclasse. O arco de vida fica
+   onde está: é jogo. O disco de nível só com `discoDeNivel` (na cinta do
+   herói o canto dele é da marca da porta). Abaixo de 36 (os companheiros a
+   28 e 32) não há moldura: §1 desenhou-a para 36–44.
    ============================================================ */
-export function Anel({ ente = null, semente, vida = 0, vidaMax = 0, morrendo = false, tamanho = ANEL.heroi }) {
+export function Anel({ ente = null, semente, vida = 0, vidaMax = 0, morrendo = false, tamanho = ANEL.heroi, lado = "heroi", discoDeNivel = false }) {
   const estado = estadoDoAnel({ vida, vidaMax, morrendo });
+  const moldura = useMolduraDoAnel(ente, lado, tamanho, discoDeNivel);
   const frac = estado === "tombado" ? 0 : Math.max(0, Math.min(1, vidaMax > 0 ? vida / vidaMax : 1));
   const antesRef = React.useRef(null);
   const relogioRef = React.useRef(null);
@@ -2309,8 +2319,9 @@ export function Anel({ ente = null, semente, vida = 0, vidaMax = 0, morrendo = f
   const tombado = estado === "tombado";
   return (
     <span aria-hidden="true" className="relative inline-block shrink-0 rounded-full" style={{ width: s, height: s }}>
+      {moldura && <CamadaDaMoldura partes={moldura.partes} px={s} camada="abaixo" comDefs tombado={tombado} />}
       <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} className="absolute inset-0" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={meio} cy={meio} r={r} fill="none" stroke={T.panelSoft} strokeWidth={ANEL.aro} />
+        {!moldura && <circle cx={meio} cy={meio} r={r} fill="none" stroke={T.panelSoft} strokeWidth={ANEL.aro} />}
         {!tombado && (
           <circle className={cresce ? "tv-anel-cresce" : undefined} cx={meio} cy={meio} r={r} fill="none"
             stroke={estado === "grave" ? T.danger : T.amber} strokeWidth={ANEL.aro}
@@ -2324,6 +2335,7 @@ export function Anel({ ente = null, semente, vida = 0, vidaMax = 0, morrendo = f
       <span className="absolute" style={{ left: dentro, top: dentro, lineHeight: 0, opacity: tombado ? ANEL.apagado : 1, filter: tombado ? "grayscale(1)" : "none" }}>
         <Retrato semente={semente} ente={ente} semCarta tamanho={s - 2 * dentro} anel={null} estado={estadoDe(vida, vidaMax)} />
       </span>
+      {moldura && <CamadaDaMoldura partes={moldura.partes} px={s} camada="acima" nivel={moldura.comDisco ? moldura.nivel : null} tombado={tombado} />}
       {tombado && (
         <svg width={s} height={s} className="absolute inset-0">
           <line x1={s * (1 - ANEL.barra)} y1={s * ANEL.barra} x2={s * ANEL.barra} y2={s * (1 - ANEL.barra)}
@@ -2538,7 +2550,7 @@ export function GrupoNaCinta({ grupo = [], reparto, mesa = true, aoAbrir }) {
         {itens === 1 && <span aria-hidden="true" className="absolute" style={{ top: 0, bottom: 0, left: -CINTA.alvoAlem.esquerda, right: -CINTA.alvoAlem.direita }} />}
         {visiveis.map((c, i) => (
           <span key={(c.nome || "") + i} className="inline-flex rounded-full" style={{ ...recorte, marginLeft: i ? -ANEL.sobreposicao : 0 }}>
-            <Anel ente={c} semente={sementeDe(c)} vida={c.vida} vidaMax={c.vidaMax || 0} morrendo={!!c.morrendo} tamanho={ANEL.telefone} />
+            <Anel ente={c} lado="companheiro" semente={sementeDe(c)} vida={c.vida} vidaMax={c.vidaMax || 0} morrendo={!!c.morrendo} tamanho={ANEL.telefone} />
           </span>
         ))}
         {escondidos.length > 0 && (
@@ -2556,7 +2568,7 @@ export function GrupoNaCinta({ grupo = [], reparto, mesa = true, aoAbrir }) {
           {fio("fio" + i)}
           <button onClick={() => abrirQuem([c])} aria-label={nomeDoCompanheiro(c)} title={nomeDoCompanheiro(c)}
             className="tv-anel-foco rounded-lg flex items-center shrink-0 min-w-0" style={alvo}>
-            <Anel ente={c} semente={sementeDe(c)} vida={c.vida} vidaMax={c.vidaMax || 0} morrendo={!!c.morrendo} tamanho={ANEL.mesa} />
+            <Anel ente={c} lado="companheiro" semente={sementeDe(c)} vida={c.vida} vidaMax={c.vidaMax || 0} morrendo={!!c.morrendo} tamanho={ANEL.mesa} />
             <RotuloDoRetrato ente={c} estado={estadoDoAnel(c)} oculto={i >= reparto.rotulos} />
           </button>
         </React.Fragment>

@@ -41,10 +41,20 @@ sec("1. A FICHA NÃO PODE VOLTAR A TER 2 PIXELS");
 
 sec("2. O CABEÇALHO É UMA CARTA");
 {
-  t("o retrato tem moldura própria", /className="rounded-xl p-1" style=\{\{ background: T\.panelSoft, border: `1\.5px solid/.test(FICHA));
+  /* 05/11 · AAA §1: a moldura própria deixou de ser a caixa âmbar
+     (rounded-xl p-1) e passou a ser o medalhão da moldura viva — o metal
+     do degrau, a gema da subclasse, o selo da especialização. A intenção
+     é a mesma (o retrato tem moldura sua); a forma é a de formas.md §AAA. */
+  t("o retrato tem moldura própria", /<Moldura tamanho="medalhao"/.test(FICHA));
   /* o nível mora no escudo sob o retrato — e SÓ lá: de volta à linha da
      classe, seria o mesmo número em dois cantos */
-  t("o escudo de nível morde a base", /rotate\(45deg\)/.test(FICHA) && /title=\{`Nível \$\{nivel\}`\}/.test(FICHA));
+  /* 05/11 · AAA §1: o losango rodado a 45° saiu; o nível mora agora no
+     disco da moldura, a 135° do aro (nivel={nivel}), e o título «Nível N»
+     continua no contentor do retrato. Continua a ser SÓ ali. */
+  /* MOVIDA em 05/11 (as marcas da moldura, aprovadas pela pessoa): o medalhão
+     ganhou a prop `marcas` depois do nível; a intenção fica — o nível mora no
+     disco da moldura, e só ali */
+  t("o escudo de nível morde a base", /nivel=\{nivel\}[^>]*>\{rosto\}/.test(FICHA) && /title=\{`Nível \$\{nivel\}`\}/.test(FICHA));
   t("e a linha da classe não repete o nível", !/· nv \{nivel\}/.test(FICHA) && !/nv \{nivel\}<\/span>/.test(FICHA));
   /* a régua de experiência: relativa ao nível, como regras.js grava */
   t("a régua de XP vive no cabeçalho", /Experiência: \$\{p\.xp \|\| 0\} de \$\{teto\} para o nível/.test(FICHA));

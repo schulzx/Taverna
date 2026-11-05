@@ -1006,11 +1006,283 @@ export const MOVIMENTO_DO_DADO = {
   semMovimento: 120,
 };
 
+/* ============================================================
+   AAA · AS MOLDURAS VIVAS, A CARTA, O INVENTÁRIO, A SUBIDA E A VELA
+   (05/11/2026) — formas.md §«AAA» §7, colada tal qual. O desenho montou
+   tudo no Figma (página 250:2) a partir de mente/figma/aaa-geometria.mjs, e
+   é desse mesmo módulo que estas tabelas saem. Onde a cor repete uma chave
+   de T, lê-se T.x (o D5b do check-formas varre estas zonas). O contraste de
+   cada par está em §6, e a suíte teste-molduras-vivas.mjs volta a medi-lo.
+   ============================================================ */
+
+/* o degrau sai do nível: o primeiro cujo ate >= nível. As camadas SOMAM-se
+   (nunca trocam): o degrau novo é uma forma nova, não só uma cor nova. */
+export const MOLDURA_POR_DEGRAU = {
+  ferro: {
+    de: 1,
+    ate: 4,
+    claro: "#A7ADB2",
+    meio: "#6E747A",
+    escuro: "#34383C",
+    brilho: "#D9DEE2",
+    camadas: ["aro", "rebites"],
+  },
+  bronze: {
+    de: 5,
+    ate: 9,
+    claro: "#E7AE6F",
+    meio: "#A9672F",
+    escuro: "#55300F",
+    brilho: "#FFD9A8",
+    camadas: ["aro", "folhas"],
+  },
+  prata: {
+    de: 10,
+    ate: 14,
+    claro: "#EEF1F4",
+    meio: "#B4BCC4",
+    escuro: "#5E6871",
+    brilho: "#FFFFFF",
+    camadas: ["aro", "folhas", "chamas"],
+  },
+  ouro: {
+    de: 15,
+    ate: 99,
+    claro: "#FFE39A",
+    meio: "#E0A93A",
+    escuro: "#7A5410",
+    brilho: "#FFF6D6",
+    camadas: ["aura", "asas", "aro", "folhas", "chamas"],
+  },
+};
+
+/* ferro enegrecido; o tier (comum, elite, chefe) diz as camadas */
+export const MOLDURA_DO_INIMIGO = {
+  metal: { claro: "#B3A39C", meio: "#7A6A64", escuro: "#2E2524", brilho: "#D6C6BF" },
+  comum: ["aro", "rebites"],
+  elite: ["aro", "espinhos"],
+  chefe: ["aura", "chifres", "aro", "espinhos"],
+};
+
+/* o fio de dentro diz de que lado está, em cor E forma (WCAG 1.4.1) */
+export const LADO_DA_MOLDURA = {
+  heroi: { fio: T.amber, duplo: true },
+  companheiro: { fio: T.mundo, duplo: false },
+  inimigo: { fio: T.danger, duplo: false },
+};
+
+export const DISCO_DE_NIVEL = {
+  heroi: { corpo: "#15475A", luz: "#2C7D96", sombra: "#0A2530", numero: T.ink },
+  inimigo: { corpo: "#6A1E14", luz: "#A8382A", sombra: "#2E0B07", numero: T.ink },
+};
+
+/* AS PEÇAS MIÚDAS da moldura — as cores que aaa-geometria.mjs escreve soltas
+   dentro das funções (o furo do engaste, o anel do engaste vazio, o fundo do
+   retrato, o reflexo branco da pedra, a caixa de texto e o miolo do escudo
+   da carta, a aura do chefe). Aqui ganham casa, para nenhum literal nascer
+   em ui.jsx. ENGASTE_VAZIO é o nome que formas.md §7 lhe dá. */
+export const PECAS_DA_MOLDURA = {
+  engaste: "#120C08",
+  furo: "#3A2A1C",
+  retrato: "#2A1E15",
+  reflexo: "#FFFFFF",
+  caixa: T.panel,
+  escudo: T.panelSoft,
+  auraDoChefe: T.danger,
+};
+export const ENGASTE_VAZIO = PECAS_DA_MOLDURA.engaste;
+
+/* a caixa de cada forma, com o transbordo (o aro mede 80 u; a carta 160 x 224) */
+export const VB_DA_MOLDURA = { anel: [-6, -8, 112, 112], medalhao: [-18, -20, 136, 136], carta: [-26, -30, 212, 276] };
+
+/* os nomes são os de src/subclasses.js, exatos; luz = corpo + 45% de branco, sombra = corpo + 50% de preto */
+export const GEMA_DA_SUBCLASSE = {
+  Cavaleiro: { classe: "Guerreiro", pedra: "safira", corpo: "#3F7FE0", luz: "#95B9EE", sombra: "#204070" },
+  "Bárbaro": { classe: "Guerreiro", pedra: "granada", corpo: "#D0362C", luz: "#E5908B", sombra: "#681B16" },
+  Gladiador: { classe: "Guerreiro", pedra: "topázio", corpo: "#E8A02A", luz: "#F2CB8A", sombra: "#745015" },
+  Elementalista: { classe: "Mago", pedra: "opala-de-fogo", corpo: "#F2742E", luz: "#F8B38C", sombra: "#793A17" },
+  Necromante: { classe: "Mago", pedra: "jade-espectral", corpo: "#5FC98C", luz: "#A7E1C0", sombra: "#306546" },
+  Arcanista: { classe: "Mago", pedra: "ametista", corpo: "#9D6BE6", luz: "#C9AEF1", sombra: "#4F3673" },
+  Assassino: { classe: "Ladino", pedra: "rubi-negro", corpo: "#CC2C4E", luz: "#E38B9E", sombra: "#661627" },
+  Batedor: { classe: "Ladino", pedra: "peridoto", corpo: "#9BC94A", luz: "#C8E19B", sombra: "#4E6525" },
+  Trapaceiro: { classe: "Ladino", pedra: "turmalina", corpo: "#E05FAE", luz: "#EEA7D2", sombra: "#703057" },
+  Sacerdote: { classe: "Clérigo", pedra: "diamante", corpo: "#EDE6D2", luz: "#F5F1E6", sombra: "#777369" },
+  Paladino: { classe: "Clérigo", pedra: "citrino", corpo: "#F5CF4A", luz: "#FAE59B", sombra: "#7B6825" },
+  Inquisidor: { classe: "Clérigo", pedra: "cornalina", corpo: "#E0542A", luz: "#EEA18A", sombra: "#702A15" },
+  Arqueiro: { classe: "Caçador", pedra: "esmeralda", corpo: "#2FB873", luz: "#8DD8B2", sombra: "#185C3A" },
+  Domador: { classe: "Caçador", pedra: "âmbar", corpo: "#C8862E", luz: "#E1BC8C", sombra: "#644317" },
+  Rastreador: { classe: "Caçador", pedra: "jaspe", corpo: "#B7613E", luz: "#D7A895", sombra: "#5C311F" },
+  Menestrel: { classe: "Bardo", pedra: "rodocrosita", corpo: "#F08AA0", luz: "#F7BFCB", sombra: "#784550" },
+  Cronista: { classe: "Bardo", pedra: "lápis-lazúli", corpo: "#3A5FD0", luz: "#93A7E5", sombra: "#1D3068" },
+  Encantador: { classe: "Bardo", pedra: "kunzita", corpo: "#CE96F0", luz: "#E4C5F7", sombra: "#674B78" },
+  "Punho de Ferro": { classe: "Monge", pedra: "hematita", corpo: "#8E9BA8", luz: "#C1C8CF", sombra: "#474E54" },
+  Andarilho: { classe: "Monge", pedra: "água-marinha", corpo: "#6CCFE0", luz: "#AEE5EE", sombra: "#366870" },
+  Asceta: { classe: "Monge", pedra: "pérola", corpo: "#D9E4D0", luz: "#EAF0E5", sombra: "#6D7268" },
+  Metamorfo: { classe: "Druida", pedra: "labradorita", corpo: "#5E8FA8", luz: "#A6C1CF", sombra: "#2F4854" },
+  "Xamã": { classe: "Druida", pedra: "turquesa", corpo: "#2BB7B0", luz: "#8AD7D4", sombra: "#165C58" },
+  "Guardião": { classe: "Druida", pedra: "jade", corpo: "#4C9A48", luz: "#9DC79A", sombra: "#264D24" },
+  "Linhagem Dracônica": { classe: "Feiticeiro", pedra: "rubi", corpo: "#E8283A", luz: "#F28993", sombra: "#74141D" },
+  "Alma da Tempestade": { classe: "Feiticeiro", pedra: "safira-elétrica", corpo: "#5CB4FF", luz: "#A5D6FF", sombra: "#2E5A80" },
+  "Magia Selvagem": { classe: "Feiticeiro", pedra: "opala", corpo: "#F07AE0", luz: "#F7B6EE", sombra: "#783D70" },
+  "Pacto Infernal": { classe: "Bruxo", pedra: "brasa", corpo: "#FF5E1A", luz: "#FFA681", sombra: "#802F0D" },
+  "Pacto Feérico": { classe: "Bruxo", pedra: "crisoprásio", corpo: "#7FE0A0", luz: "#B9EECB", sombra: "#407050" },
+  "Pacto do Abismo": { classe: "Bruxo", pedra: "obsidiana-violeta", corpo: "#7A5CE0", luz: "#B6A5EE", sombra: "#3D2E70" },
+  Artilheiro: { classe: "Engenheiro", pedra: "cobre", corpo: "#C9683A", luz: "#E1AC93", sombra: "#65341D" },
+  Mecanista: { classe: "Engenheiro", pedra: "latão", corpo: "#CDB04E", luz: "#E4D49E", sombra: "#675827" },
+  "Alquimista de Campo": { classe: "Engenheiro", pedra: "fluorita", corpo: "#56E0C8", luz: "#A2EEE1", sombra: "#2B7064" },
+  "Mestre das Feras": { classe: "Invocador", pedra: "sardônica", corpo: "#A8582A", luz: "#CFA38A", sombra: "#542C15" },
+  "Conjurador Elemental": { classe: "Invocador", pedra: "girassol", corpo: "#FF9E3D", luz: "#FFCA94", sombra: "#804F1F" },
+  "Chamador de Espíritos": { classe: "Invocador", pedra: "pedra-da-lua", corpo: "#A9C6F5", luz: "#D0E0FA", sombra: "#55637B" },
+};
+
+/* substitui o RARIDADE_COR que morava no App. fundo = panelSoft + 12% da cor; o escolhido 22% */
+export const COR_DA_RARIDADE = {
+  comum: { cor: "#B9AE9C", fundo: "#43352A", fundoEscolhido: "#504337", fio: 1, forma: "fio simples" },
+  incomum: { cor: "#7FC46A", fundo: "#3C3824", fundoEscolhido: "#44482C", fio: 2, forma: "fio duplo" },
+  raro: { cor: "#5AA9F0", fundo: "#383534", fundoEscolhido: "#3C4249", fio: 2, forma: "fio duplo + 1 canto" },
+  epico: { cor: "#B57BF0", fundo: "#432F34", fundoEscolhido: "#503849", fio: 2, forma: "fio duplo + 4 cantos" },
+  lendario: {
+    cor: "#FF9A3D",
+    fundo: "#4B331E",
+    fundoEscolhido: "#603F22",
+    fio: 2,
+    forma: "4 cantos + brilho de dentro + lume lento",
+  },
+  unico: {
+    cor: "#3FD6C6",
+    fundo: "#343A2F",
+    fundoEscolhido: "#364C40",
+    fio: 2,
+    forma: "4 cantos + brilho + estrela no canto",
+  },
+};
+
+/* o glifo do encaixe vazio, a 35% */
+export const GLIFO_DO_ENCAIXE = {
+  elmo: "elmo",
+  amuleto: "amuleto",
+  armadura: "armaduraPesada",
+  arma: "espada",
+  escudo: "escudo",
+  anel: "anel",
+  botas: "botas",
+};
+
+/* quadro 24, fill none, stroke 1,5, pontas e juntas redondas */
+export const ICONES_DE_ITEM = {
+  espada: ["M20 4h-3.6L7.2 13.2l3.6 3.6L20 7.6z", "M5.2 11.6l7.2 7.2", "M7.6 16.4L4 20"],
+  machado: ["M5 20L15 7.5", "M12.6 5.4c2.2-2.2 6.4-2.4 8 .4-1.3 2.5-1 5 .6 7.2-2.8 1-6 .1-7.6-2.1z"],
+  arco: ["M7 3.5c7 3 7 14 0 17", "M7 3.5v17", "M4 12h15", "M16.5 9.5L19 12l-2.5 2.5"],
+  cajado: ["M7 21l8-13", "M18.6 6.4a2.6 2.6 0 1 1-5.2 0a2.6 2.6 0 1 1 5.2 0", "M20.5 1.8v2.4M19.3 3h2.4"],
+  adaga: ["M17 4l3 3-7.5 7.5-3-3z", "M8 10.5l5.5 5.5", "M10 14l-5 5"],
+  maca: [
+    "M5 19l7.5-7.5",
+    "M19 8.5a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0",
+    "M15.5 3v1.5M21 8.5h-1.5M19.4 4.6l-1 1M11.6 4.6l1 1M19.4 12.4l-1-1",
+  ],
+  escudo: ["M12 3l7 2.5V11c0 4.8-3 8-7 10-4-2-7-5.2-7-10V5.5z", "M12 7v10M8.5 11h7"],
+  elmo: ["M5 14a7 7 0 0 1 14 0v4.5h-4.5V15h-5v3.5H5z", "M12 7V3.5", "M8 14h8"],
+  armaduraLeve: ["M8 4l4 2 4-2 3 3-2 3v10H7V10L5 7z", "M11 9.5h2M11 12.5h2M11 15.5h2"],
+  armaduraPesada: ["M6 5h3l3 2 3-2h3l1.2 5-2.2 1v9H7v-9l-2.2-1z", "M7 14h10M7 17h10", "M12 7v13"],
+  botas: ["M7.5 3.5H13v9c3 .4 6 1.6 6 4.5v2.5H6.5V14z", "M6.5 17h12.5"],
+  anel: ["M17.5 15a5.5 5.5 0 1 1-11 0a5.5 5.5 0 1 1 11 0", "M9.5 8.5L12 5l2.5 3.5L12 10z"],
+  amuleto: ["M6 3c0 5 2.5 8 6 9 3.5-1 6-4 6-9", "M12 12l3 4-3 4.5-3-4.5z"],
+  pocao: ["M9.5 3h5", "M10.5 3v5L6.5 15a4.5 4.5 0 0 0 4 6.5h3a4.5 4.5 0 0 0 4-6.5L13.5 8V3", "M7.6 14.5h8.8"],
+  pergaminho: [
+    "M8 4.5h10.5v13a2.5 2.5 0 0 1-2.5 2.5H5.5",
+    "M8 4.5a2 2 0 1 0-2 2h2V18",
+    "M5.5 20a2 2 0 0 1 0-4H8",
+    "M10.5 9h5M10.5 12h5",
+  ],
+  chave: ["M10 12a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0", "M10 12h11", "M18 12v3M15 12v2.5"],
+  aljava: ["M8 9l2 12h4l2-12z", "M10 9V3M12 9V2.5M14 9V3", "M9 4.5l1-1.5 1 1.5M13 4.5l1-1.5 1 1.5"],
+  tomo: ["M5 4.5h11a2 2 0 0 1 2 2V20H7a2 2 0 0 1-2-2z", "M5 18a2 2 0 0 1 2-2h11", "M10.5 8.5h4"],
+};
+
+/* o mesmo traço; as chaves são os ids de ATRIBUTOS (constantes.js) */
+export const ICONES_DE_ATRIBUTO = {
+  forca: [
+    "M7 11V7.5a1.5 1.5 0 0 1 3 0V10",
+    "M10 9.5V6.5a1.5 1.5 0 0 1 3 0V10",
+    "M13 9.5V7a1.5 1.5 0 0 1 3 0v3.5",
+    "M16 10a1.5 1.5 0 0 1 3 0v3c0 4-2.5 7-6.5 7S6 17.5 6 14.5V12c0-1 .8-1.6 1.8-1.4L11 11.5",
+  ],
+  destreza: ["M19 4C11 4 6 9.5 5.5 19", "M19 4c-.5 6-4.5 10-10.5 11", "M13 7.5l-3 .5M15.5 10l-4 .8"],
+  vigor: [
+    "M12 20s-7.5-4.6-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z",
+    "M6.5 12.5h3l1.5-2.5 2 4 1.5-1.5h3",
+  ],
+  intelecto: [
+    "M12 6.5C9.8 5 6.8 4.6 4 5.2v13c2.8-.6 5.8-.2 8 1.3 2.2-1.5 5.2-1.9 8-1.3v-13c-2.8-.6-5.8-.2-8 1.3z",
+    "M12 6.5v13",
+  ],
+  presenca: ["M4 17h16", "M4.5 17L3.5 8l4.5 3.5L12 5l4 6.5L20.5 8l-1 9", "M5 20h14"],
+  percepcao: ["M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0"],
+};
+
+/* ms; «de» conta do toque que abre a cerimónia; reduzido = só o quadro final */
+export const CERIMONIA_DO_NIVEL = {
+  veu: { de: 0, dura: 240, opacidade: 0.86 },
+  luz: { de: 120, dura: 640 },
+  forja: { de: 600, dura: 800, faiscas: 14, soNoDegrau: [5, 10, 15] },
+  pulso: { de: 600, dura: 420 },
+  numero: { de: 1300, dura: 420, escalaDe: 0.82 },
+  ganhos: { de: 1700, passo: 120, dura: 280 },
+  gema: { de: 1900, dura: 520 },
+  escolha: { de: 2300, dura: 240 },
+  total: 2540,
+  reduzido: { dura: 160 },
+};
+
+/* porFase lê as fases do relógio (as de MAPA_VIVO.modoDaFase); luz = alfa do halo no papel */
+export const VELA = {
+  cor: {
+    chama: "#FFB347",
+    nucleo: "#FFF1C4",
+    halo: "#FFC877",
+    cera: "#EFE3C8",
+    ceraSombra: "#C9B48E",
+    pavio: T.tintaDoPergaminho,
+    fumo: "#B9AE9C",
+  },
+  porFase: {
+    manha: { estado: "apagada", altura: 1, luz: 0 },
+    tarde: { estado: "apagada", altura: 1, luz: 0 },
+    entardecer: { estado: "acesa", altura: 1, luz: 0.12 },
+    noite: { estado: "acesa", altura: 0.7, luz: 0.2 },
+    madrugada: { estado: "acesa", altura: 0.42, luz: 0.24 },
+    amanhecer: { estado: "fumo", altura: 0.2, luz: 0 },
+  },
+  tempos: { tremor: 1800, respiroDaLuz: 2300, acender: 700, fumo: 2600, reduzido: 200 },
+  luzNoPapel: { raioDaFolha: 0.9, vinhetaDaMesa: 0.32 },
+};
+
+/* OS TRÊS TAMANHOS, UMA FAMÍLIA (formas.md §AAA §1): o aro em px, desde
+   quando o anel leva o disco, e a letra do número (Cinzel). Abaixo de
+   anel.de o anel fica sem moldura: §1 desenhou-a para 36–44, e a 28–32 os
+   traços caem abaixo de 1,5 px e desaparecem no ecrã. */
+export const TAMANHOS_DA_MOLDURA = {
+  anel: { de: 36, ate: 44, discoDesde: 40, numero: 9 },
+  medalhao: { aro: 64, numero: 10 },
+  carta: { largura: 160, numero: 15 },
+};
+
+/* OS ESTADOS E O MOVIMENTO DA MOLDURA (formas.md §AAA §9): o lume do ouro
+   roda em 8 s a 0,35 (um arco claro que corre o aro); a gema acende em
+   520 ms (0,6, 1,12, 1), só quando muda e nunca ao montar. Com reduce o lume
+   para e a gema troca seca. Quem tombou dessatura a 0,8. Lidos por
+   MOVIMENTO_CSS e por src/painel-moldura.jsx. */
+export const ESTADOS_DA_MOLDURA = {
+  lume: 8000, alfaDoLume: 0.35, arcoDoLume: 0.22,
+  gema: CERIMONIA_DO_NIVEL.gema.dura, gemaDe: 0.6, gemaPico: 1.12,
+  tombado: 0.8,
+};
+
 /* A BORDA DA MESA (AAA §14): o couro à volta do feltro e o fio de ouro por
    dentro dele. Quando o HUD B nascer, mora em HUD_DA_MESA. */
 export const BORDA_DA_MESA = {
   mesa: 14, telefone: 6,
-  ouro: "#E0A93A",     /* o ouro meio das molduras (MOLDURA_POR_DEGRAU.ouro.meio) — 7,66 contra o feltro */
+  ouro: MOLDURA_POR_DEGRAU.ouro.meio,   /* o ouro meio das molduras — 7,66 contra o feltro */
   alfaDoOuro: 0.45,
 };
 
@@ -2301,9 +2573,19 @@ export const MOVIMENTO_CSS = `
 .tv-dado-veredito { animation: tvDadoVeredito ${MOVIMENTO_DO_DADO.veredito}ms ease-out both; transform-origin: 50% 50%; }
 .tv-bandeja { min-height: ${BANDEJA.altura.telefone}px; }
 @media (min-width: 768px) { .tv-bandeja { min-height: ${BANDEJA.altura.mesa}px; } }
+/* ---------------- A MOLDURA VIVA (AAA · 05/11) ----------------
+   O lume do ouro corre o aro devagar; a gema que acende cresce acima do
+   tamanho e assenta. Os tempos são de ESTADOS_DA_MOLDURA. O lume roda à
+   volta da própria caixa, que é a do aro (fill-box). */
+@keyframes tvMolduraLume { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes tvMolduraGema { 0% { transform: scale(${ESTADOS_DA_MOLDURA.gemaDe}); opacity: 0; } 60% { transform: scale(${ESTADOS_DA_MOLDURA.gemaPico}); opacity: 1; } 100% { transform: none; opacity: 1; } }
+.tv-moldura-lume { transform-box: fill-box; transform-origin: center; animation: tvMolduraLume ${ESTADOS_DA_MOLDURA.lume}ms linear infinite; }
+.tv-moldura-gema { transform-box: fill-box; transform-origin: center; animation: tvMolduraGema ${ESTADOS_DA_MOLDURA.gema}ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
+  /* a moldura parada: o lume fica onde está, a gema troca seca */
+  .tv-moldura-lume, .tv-moldura-gema { animation: none; }
   /* a bandeja parada: o dado aparece já pousado, com o número final, e o
      veredito à vista. A saída é none, como a casa exige (check-formas D5c):
      as três classes pousam no estado final porque nenhuma começa invisível */

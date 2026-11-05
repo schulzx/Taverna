@@ -73,7 +73,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, alfa, luzAmbiente } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -254,6 +254,7 @@ import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase } from "./painel-proposta.jsx";
 import { Bandeja } from "./painel-bandeja.jsx";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
+import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
 import { oQueOMestrePede, oCartaoDoPedido } from "./motor/o-mestre-pede.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie } from "./motor/a-bandeja.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
@@ -1328,7 +1329,8 @@ const ABAS = [{ id: "gestao", rotulo: "Gestão", icone: "🏛" }, { id: "diario"
    do arquivo, ele não teria onde caber a regra — e a regra de quando a
    Diplomacia aparece é justamente o que não pode morrer dentro de um JSX. */
 
-const RARIDADE_COR = { comum: "#9B93AC", incomum: "#7BC98F", raro: "#6BA9E8", epico: "#B084E8", lendario: "#E8A33D", unico: "#E8615B" };
+/* AAA · 05/11: a cor da raridade mora em COR_DA_RARIDADE (estilo.js, formas.md §AAA §3) — o comum passa a osso, o lendário deixa de ser a brasa do herói e o único deixa de ser o vermelho do perigo */
+const RARIDADE_COR = Object.fromEntries(Object.entries(COR_DA_RARIDADE).map(([k, v]) => [k, v.cor]));
 const SLOT_ROTULO = { arma: "Arma", armadura: "Armadura", elmo: "Elmo", botas: "Botas", anel: "Anel", amuleto: "Amuleto", escudo: "Escudo" };
 const SLOTS_ORDEM = ["arma", "escudo", "armadura", "elmo", "botas", "anel", "amuleto"];
 
@@ -5462,6 +5464,10 @@ export default function Taverna() {
   const ultimaFalaRef = useRef("");
   const pedidosFeitosRef = useRef([]);
   const falaDoPedidoRef = useRef(null);
+  /* AS MARCAS DA MOLDURA (05/11): o que se via no render anterior — quem
+     estava a morrer, que missões já estavam concluídas, a última luta. É a
+     TRANSIÇÃO que grava o feito; o primeiro olhar (null) só aprende. */
+  const antesDasMarcasRef = useRef({ morrendo: null, concluidas: null, combate: null });
   const aBandeja = (l) => { try { if (!l) return; const b = naBandeja(bandejaRef.current, l); bandejaRef.current = b; setBandeja(b); } catch (err) { calou("a bandeja", err); } };
   const [propostaAberta, setPropostaAberta] = useState(false);
   /* F2b · F2c: as fichas do pé da página (trocam a cada resposta do Mestre,
@@ -11186,7 +11192,7 @@ export default function Taverna() {
     diplomaciaRef.current = garantirDiplomacia(null); setDiploState(diplomaciaRef.current);
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
-    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0);
+    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     setCombate(null); combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
@@ -11302,7 +11308,7 @@ export default function Taverna() {
       try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (save carregado)", e); }
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
-      setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0);
+      setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
       try { fimSemSaidaRef.current = garantirFimSemSaida(sv.fimSemSaida); } catch (e) { calou("o fim sem saída no load", e); fimSemSaidaRef.current = null; }
       registroRef.current = garantirRegistro(sv.registro);
@@ -23761,6 +23767,45 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (c) { setPropostaDaFrase(c); setPropostaAberta(true); }
     } catch (e) { calou("o mestre pede o dado", e); }
   }, [fase, carregando, rolagem, propostaDaFrase, dadoRolando, mensagens.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ---------------- AS MARCAS DA MOLDURA (05/11) ----------------
+     A proposta do desenho, aprovada pela pessoa: cada feito verdadeiro grava
+     uma marca no aro do retrato. O feito sai do sistema, pela transição que
+     o próprio jogo já faz: o herói que estava a morrer e se levanta (a
+     cicatriz), a missão que passa a concluída (a runa), a luta que acaba com
+     um chefe derrotado (o entalhe). Campo novo e aditivo: `pers.feitos`. */
+  useEffect(() => {
+    try {
+      const p = personagemRef.current || personagem;
+      if (!p || fase !== "jogo") return;
+      const a = antesDasMarcasRef.current;
+      const dia = diaRef.current || 0;
+      const novos = [];
+      const morrendo = !!p.morrendo;
+      if (a.morrendo === true && !morrendo && (p.vida || 0) > 0 && !p.morto) {
+        const vezes = garantirFeitos(p.feitos).filter((x) => x.tipo === "levantou").length;
+        novos.push({ tipo: "levantou", dia, chave: `levantou|${vezes + 1}` });
+      }
+      const lista = Array.isArray(missoes) ? missoes : [];
+      const idDe = (m) => String((m && (m.id || m.titulo || m.nome)) || "");
+      const concluidas = lista.filter((m) => m && m.status === "concluida").map(idDe);
+      if (Array.isArray(a.concluidas)) {
+        for (const m of lista) if (m && m.status === "concluida" && !a.concluidas.includes(idDe(m))) novos.push({ tipo: "promessa", nome: String(m.titulo || m.nome || "a missão"), dia, chave: `missao|${idDe(m)}` });
+      }
+      if (a.combate && !combate) {
+        for (const e of (a.combate.inimigos || [])) {
+          if (e && (e.chefe || e.ameaca === "lendario") && (e.derrotado || (e.vida || 0) <= 0) && !e.fugiu) novos.push({ tipo: "chefe", nome: String(e.nome || "o chefe"), dia, chave: `chefe|${e.nome}|${dia}` });
+        }
+      }
+      antesDasMarcasRef.current = { morrendo, concluidas, combate: combate || null };
+      if (!novos.length) return;
+      let feitos = p.feitos, gravou = false;
+      for (const x of novos) { const r = gravarFeito(feitos, x); feitos = r.feitos; gravou = gravou || r.gravou; }
+      if (!gravou) return;
+      const np = { ...p, feitos };
+      personagemRef.current = np; setPersonagem(np); salvar({ personagem: np });
+    } catch (e) { calou("as marcas da moldura", e); }
+  }, [personagem && personagem.morrendo, missoes, combate, fase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
      texto fica intacto e o dado dá um pulso (nenhum com reduce). */
