@@ -73,7 +73,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, alfa, luzAmbiente } from "./estilo.js";
+import { FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -224,7 +224,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, SINAIS_ABERTOS } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, Anel, RotuloDoRetrato, Contadores, PilulaDoTempo, GrupoNaCinta, useMesa, useRepartoDaCinta, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, estadoDoAnel, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, CabecalhoDaPagina, FimDaPagina, useMesa, PeDaPagina, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -360,6 +360,7 @@ import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHer
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
+import { EcraDoMestre, FilaDasCartas, ObjetoDaMesa, LuzDaVela, VinhetaDaNoite } from "./painel-mesa-do-mestre.jsx";
 import { chegadaDaViagem } from "./partida.js";
 /* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
 import { equiparKitInicial } from "./kit-inicial.js";
@@ -1476,43 +1477,8 @@ const GLIFO_DA_ABA = {
    `line` não seria fio nenhum.
    ============================================================ */
 
-/* A GEOMETRIA DA CINTA sai de `CINTA` (`src/estilo.js`), que o `desenho`
-   publicou com a conta escrita por baixo — e é LÁ que ela se lê.
-
-   Aqui morava a conta ORÇADA de R13 (ficha 186, tempo 98, folga 67), e
-   ela envelheceu dentro do código que se abre para mexer na cinta: a
-   tabela diz hoje `CINTA.ficha` e `CINTA.tempo` MEDIDOS, e a folga a
-   375 px é `CINTA.folgaMinima`, com a conta escrita ao lado dele (e mais
-   apertada na última noite, quando o selo enche: `CINTA.tempoMaximo`). Em
-   A1 a hora passou a cheia e o número mudou lá sem mudar aqui — este
-   comentário dizia "doze" quando a tabela já dizia outra coisa. Um número que envelhece num comentário é lido como verdade
-   por quem vem a seguir; por isso este aponta para onde o número vive, e
-   não o repete. (R21, `formas.md` §R21 · a fabricação, 0.1.)
-
-   A LIÇÃO QUE FICA: qualquer peça nova na cinta custa ZERO px horizontais
-   ou não entra. É por isso que a marca da porta (R21) vai em absoluto
-   sobre o retrato, e `✓ guardado` se esconde abaixo de
-   `CINTA.larguraParaORotulo`.
-
-   O enchimento é `CINTA.enchimento`, 12 e não 16: com 16 a folga medida
-   cairia a 4 px.
-
-   OS TRÊS NÚMEROS QUE FALTAM À TABELA são de desenho fino e estão aqui
-   declarados em vez de escondidos num `style`: o retrato, o trilho da barra
-   de recurso e a altura dela — `formas.md` fixa-os em 32 e 56×6. Ficam do
-   lado de cá porque `estilo.js` estava a ser escrito pela outra mão no
-   instante em que esta etapa se construiu, e dois executores no mesmo
-   arquivo apagam-se. **É uma dívida de uma linha, e está dita.** */
-const CINTA_DESENHA = {
-  /* V4: o RETRATO (32), o TRILHO da barra (56) e a ALTURA dela (6) saíram —
-     o herói é um anel (`ANEL.heroi`, 40, com o rosto de 32 lá dentro) e a
-     barra de recurso morreu: o PV é o arco, o PM é número. */
-  /* R21 · o quanto A MARCA DA PORTA transborda do retrato, para baixo e
-     para a direita (`formas.md` §R21 · a fabricação, 4): 16 × 16 no canto
-     do retrato de 32, a sair 4 px — zero px de leiaute, que é a única
-     forma de caber numa cinta com `CINTA.folgaMinima` de folga. */
-  transbordoDaMarca: 4,
-};
+/* A GEOMETRIA DA CINTA (CINTA_DESENHA) saiu com a cinta em AAA · 4 (05/11): a
+   marca da porta mora agora na carta do herói (painel-mesa-do-mestre.jsx). */
 
 /* ---------------- OS CHIPS DO ESTADO VIVO ----------------
    Foi o ÚNICO item da barra antiga que mudou uma decisão em 20 turnos, e
@@ -1610,161 +1576,20 @@ function focarNoCartao(el) {
   try { el.scrollIntoView({ block: "start" }); el.focus({ preventScroll: true }); } catch (e) { calou("abrir o grupo no cartão", e); }
 }
 
-/* ---------------- V4 · A CINTA COM OS ANÉIS ----------------
-   A composição é a da pessoa (`126:6`, `top-hud-bar`): QUEM VOCÊS SÃO à
-   esquerda, O MUNDO ao meio, O QUE SE GASTA à direita — a ordem de
-   importância é a ordem de leitura (`mente/v4-jogo.md` §1: quanto PV eu
-   tenho, alguém do grupo está mal, há prazo, que horas são, quanto dinheiro,
-   quanto PM).
-
-   OS DESVIOS DO NÓ, cada um com o seu número (`formas.md` §V4):
-   - 48 de altura, e não 66: com o anel do herói em 40 dentro de 48 a prosa
-     não perde um pixel (o topo do campo fica onde estava, ±2);
-   - o anel ÂMBAR, e não ciano: contra o perigo separa 1,52:1 em cinzento, e
-     o ciano só 1,25 (em deuteranopia, 1,00 de luz);
-   - PV e não HP; a coroa no SEU herói, no canto de cima (a de baixo é da
-     marca da porta), sem a cinta crescer nem a cortar;
-   - o PM violeta (a magia tem uma cor só) e só número;
-   - a pílula sem o lugar (o lugar mora no cabeçalho da página, V5a) e com o
-     céu da hora; e nua no telefone, onde a moldura não cabe.
-
-   O QUE ELA RESOLVE, contado no antes: com quatro companheiros e uma a
-   morrer, a tela principal mostrava a heroína com o PV cheio e mais
-   ninguém — ler o PV do pior custava 2 toques e ~600 px de rolagem. Agora
-   são zero toques (o anel responde), e abrir o cartão dele é um.
-
-   QUEM CEDE quando a linha aperta é conta (`repartirACinta`, glifos.js,
-   provada em Node) e a medida é da peça (`useRepartoDaCinta`, ui.jsx): aqui
-   só se diz o que ocupa lugar (`chave`). A ordem é do `jogo`: na mesa os
-   rótulos, do último para o primeiro, depois o glifo da luz, depois os anéis
-   para o disco; no telefone o glifo e depois os anéis. Nunca cedem o herói,
-   a pílula, os contadores. */
-function ACinta({ personagem, minuto, dia, prazos, guardado, falhaAoGuardar, reduzido, tempoAberto, alforjeAberto, marcaDaPorta = "porta", nomeDaPorta = "A ficha", aoAbrirFicha, aoAbrirTempo, aoAbrirCompanheiro }) {
-  const chips = chipsDoEstado(personagem);
-  const vivo = chips.length > 0;
-  const vidaMax = personagem.vidaMax || 0;
-  const comPM = oPMConta(personagem);
-  const prazo = prazos && prazos.length ? prazos[0] : null;
-  /* o +N dos prazos herda o pior do que esconde — a mesma lei do disco */
-  const escondidoGrave = !!(prazos && prazos.slice(1).some((p) => p.noites <= 1));
-  /* as invocadas não entram: só existem em luta, e a luta tem tela própria */
-  const grupo = (personagem.grupo || []).filter((g) => g && !g.invocada);
-  const mesa = useMesa();
-  /* mede-se quando muda o que ocupa lugar — e não a cada tecla do campo */
-  const chave = [grupo.map((c) => c.nome + ":" + c.vida + ":" + c.vidaMax).join(","), horaTxt(minuto), dia,
-    prazo ? prazo.noites + "/" + prazos.length : "", personagem.moedas, comPM ? personagem.mana : "",
-    personagem.vida, personagem.nome].join("|");
-  const { reparto, refs } = useRepartoDaCinta(grupo, mesa, chave);
-  return (
-    <div style={{
-      height: vivo ? CINTA.alturaViva : CINTA.altura,
-      background: T.panel,
-      position: "relative",
-      /* o fio é `lineStrong` e não `line`, e é medido: `line` sobre `panel`
-         dá 1,53:1 — um fio de `line` não seria fio nenhum. `lineStrong` dá
-         3,84:1 e passa a WCAG 1.4.11. Quem o acende ao guardar é
-         `SinalDeGuardado`, que desenha por cima; daqui sai só o repouso. */
-      borderBottom: "1px solid " + T.lineStrong,
-      /* `prefers-reduced-motion` com corte seco: a cinta muda de altura no
-         mesmo fotograma, sem deslizar. O crescimento continua a acontecer —
-         o que se desliga é o movimento, nunca a informação. */
-      transition: reduzido ? "none" : "height .22s ease, border-color .6s ease",
-      overflow: "hidden",
-    }}>
-      <div ref={refs.linha} className="flex items-center justify-between relative"
-        style={{ height: CINTA.altura, paddingLeft: CINTA.enchimento, paddingRight: CINTA.enchimento, gap: CINTA.espaco }}>
-        <div className="flex items-center min-w-0">
-          {/* ---------------- O HERÓI, E É A PORTA DO ALFORJE ----------------
-              O mesmo alvo e o mesmo nome de R13/R21: custo de reaprender zero.
-              O ANEL É A MOLDURA — o bloco perdeu a borda vermelha e o pulso sem
-              fim (uma forma para o PV grave, não duas). A COROA marca o SEU
-              herói no canto de cima; o de baixo é da marca da porta. Nenhuma
-              das duas ocupa um pixel de leiaute, nem sai da cinta de 48. */}
-          <button ref={refs.heroi} onClick={aoAbrirFicha} title={nomeDaPorta} aria-label={nomeDaPorta} aria-haspopup="dialog" aria-expanded={!!alforjeAberto}
-            className="tv-anel-foco rounded-lg flex items-center shrink-0"
-            style={{ height: CINTA.altura, background: "transparent", border: "none", paddingRight: 4, paddingLeft: 2, gap: mesa ? 0 : CINTA.perto }}>
-            <span style={{ position: "relative", display: "inline-flex", flexShrink: 0 }}>
-              <Anel ente={personagem} semente={sementeDe(personagem)} vida={personagem.vida} vidaMax={vidaMax} morrendo={!!personagem.morrendo} tamanho={ANEL.heroi} />
-              <span aria-hidden="true" className="inline-flex items-center justify-center rounded-full"
-                style={{ position: "absolute", left: -CINTA_DESENHA.transbordoDaMarca, top: -CINTA_DESENHA.transbordoDaMarca, width: CINTA.coroa, height: CINTA.coroa, background: T.amber, pointerEvents: "none" }}>
-                <Glifo nome="coroa" tamanho={CINTA.glifoDaCoroa} cor={T.onAccent} />
-              </span>
-              <span aria-hidden="true" style={{ position: "absolute", right: -CINTA_DESENHA.transbordoDaMarca, bottom: -CINTA_DESENHA.transbordoDaMarca, lineHeight: 0, pointerEvents: "none" }}>
-                <MarcaDaPorta estado={marcaDaPorta} />
-              </span>
-            </span>
-            {/* no telefone o herói é o único com número (`14`); na mesa, o nome
-                e `14/14 PV` em duas linhas de 12, como cada companheiro */}
-            {mesa
-              ? <RotuloDoRetrato ente={personagem} estado={estadoDoAnel(personagem)} refRotulo={refs.rotuloDoHeroi} />
-              : <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.ink, fontWeight: 700 }}>{personagem.vida}</span>}
-          </button>
-          {/* O GRUPO (ui.jsx): na ordem de entrada, o cacho de um alvo no
-              telefone e um alvo por retrato na mesa; o toque abre a sala Grupo
-              no cartão de quem mais precisa. Sozinho, ocupa zero px. */}
-          <GrupoNaCinta grupo={grupo} reparto={reparto} mesa={mesa} aoAbrir={aoAbrirCompanheiro} />
-        </div>
-
-        {/* ---------------- O TEMPO, E TUDO O QUE É TEMPO MORA LÁ ----------------
-            O toque abre O TEMPO, como sempre. A pílula é a da v3: o céu da hora
-            (a conta d'O TEMPO e do cabeçalho da página), a hora, o dia na mesa,
-            e o selo do prazo, cujo +N herda o pior do que esconde. */}
-        <button onClick={aoAbrirTempo} title="O tempo — esperar, acampar, os prazos"
-          aria-label={["O tempo", horaCheiaFalada(horaTxt(minuto))].filter(Boolean).join(", ")} aria-expanded={!!tempoAberto}
-          className="tv-anel-foco rounded-lg flex items-center shrink-0"
-          style={{ height: CINTA.altura, background: "transparent", border: "none", padding: 0 }}>
-          <PilulaDoTempo luz={luzDaHora(horaTxt(minuto))} hora={horaTxt(minuto)} data={dataTxt(dia || 1)} prazo={prazo}
-            quantos={prazos ? prazos.length : 0} escondidoGrave={escondidoGrave} comGlifo={reparto.glifo} mesa={mesa}
-            refPilula={refs.pilula} refGlifo={refs.glifo} />
-        </button>
-
-        {/* ---------------- O QUE SE GASTA ----------------
-            A bolsa sempre (uma oferta com preço e sem saldo é meio veredito);
-            o PM só quando conta. No telefone empilham-se — é isso que faz o
-            pior caso caber a 375. Não é alvo: é um número que se lê, e o
-            glifo diz-se por palavra (moedas, PM) a quem não o vê. */}
-        <Contadores moedas={personagem.moedas || 0} pm={comPM ? personagem.mana : null} mesa={mesa} refContadores={refs.contadores} />
-      </div>
-
-      {/* A SEGUNDA FILA, e ela é de propósito: *o que não cabe numa linha
-          calma é exactamente o que tem de interromper.* Custo medido: em 20
-          turnos houve UM estado vivo, durante UM turno. As condições dos
-          COMPANHEIROS não vêm aqui: se sangram, o anel encurta, e isso chega. */}
-      {vivo && (
-        <div className="flex items-center gap-1.5"
-          style={{ height: CINTA.alturaViva - CINTA.altura, paddingLeft: CINTA.enchimento, paddingRight: CINTA.enchimento, overflowX: "auto", overflowY: "hidden" }}>
-          {chips.map((c) => (
-            <span key={c.id} title={c.titulo} className="tv-mono shrink-0 rounded-full"
-              style={{
-                fontSize: TIPOS.maquina, lineHeight: "18px", padding: "0 8px",
-                background: c.arcano ? T.panelSoft : c.bom ? T.okFundo : T.perigoFundo,
-                border: "1px solid " + (c.arcano ? T.violet : c.bom ? T.ok : T.danger),
-                color: c.arcano ? T.violetSoft : c.bom ? T.ok : T.danger,
-                fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4,
-              }}>{c.glifo ? <Glifo nome={c.glifo} tamanho={12} /> : null}{c.texto}</span>
-          ))}
-        </div>
-      )}
-
-      {/* ---------------- O SINAL DE GUARDADO ----------------
-          Num jogo cujo save mora só no `localStorage` é A ÚNICA COISA NA TELA
-          que diz ao jogador que a vida dele está segura: transitório, ZERO px
-          permanentes, filho DIRETO da cinta (é contra ela inteira que se
-          posiciona). A FALHA NÃO É TRANSITÓRIA: um save que não gravou fica
-          dito até deixar de ser verdade. */}
-      <SinalDeGuardado visivel={!!guardado} />
-      {falhaAoGuardar && (
-        <span className="tv-mono" role="alert"
-          style={{
-            position: "absolute", right: CINTA.enchimento, top: CINTA.altura / 2,
-            transform: "translateY(-50%)", fontSize: TIPOS.maquina, color: T.danger,
-            background: T.perigoFundo, border: "1px solid " + T.danger, padding: "2px 6px", borderRadius: 4,
-            whiteSpace: "nowrap", pointerEvents: "none", zIndex: 2,
-          }}><Glifo nome="aviso" tamanho={12} /> não guardou</span>
-      )}
-    </div>
-  );
-}
+/* ---------------- V4 · A CINTA COM OS ANÉIS — APOSENTADA EM AAA · 4 (05/11) ----------------
+   A cinta de 48 px com os anéis do grupo, a pílula do tempo e os contadores
+   saiu: a pessoa escolheu o HUD B, «a mesa do Mestre» (formas.md §AAA §13).
+   Cada coisa que ela mostrava ou abria mudou de casa, e nenhuma se perdeu:
+   - o herói e a porta da ficha → a carta do herói (FilaDasCartas), com o
+     mesmo abrirAPorta e o mesmo nome da porta;
+   - os anéis do grupo → as cartas dos companheiros, e o toque abre o cartão
+     no Grupo (abrirCompanheiro), como o anel abria;
+   - a pílula do tempo e o selo do prazo → o painel HORA do ecrã do Mestre,
+     e o toque abre O TEMPO;
+   - o PM → a gema da carta; as moedas → a legenda da Bolsa, na mesa;
+   - os estados vivos (a segunda fila) e o sinal de guardado → por baixo do
+     ecrã, com a mesma forma.
+   A montagem mora em src/painel-mesa-do-mestre.jsx. */
 
 /* ============================================================
    R13 · O PAINEL DO TEMPO — o que o toque no relógio abre
@@ -1929,55 +1754,14 @@ function primeiraLinhaDaProsa(texto) {
   } catch (e) { calou("a primeira linha da prosa", e); return ""; }
 }
 
-/* R21 · O TRILHO FICA SÓ NA COLUNA LARGA. No telefone ele era a fita fixa
-   de 76 px no fundo (4,75 rem de reserva no convés), e o censo de R6 e o
-   do `jogo` em R21 contaram o que ela decidia: 1 turno em 20, e 7
-   aberturas em 21 turnos. A fita passou a ser a DO ALFORJE (`Alforje`,
-   `painel-alforje.jsx`), que só existe aberta; a página ganhou os 76 px.
-   Na larga isto é exactamente o que era — a coluna em fluxo de v9.170, e
-   o que no telefone era barra inferior deixou de existir, em vez de ficar
-   escrito para uma tela onde não aparece. */
-/* A1 · B6 (10/10): O TRILHO É A MORADA DAS MARCAS (`a1-jogo.md` #8, #92).
-   Na mesa, a novidade acende NA PORTA DA COISA — a BOLSA, o DIÁRIO — e não
-   no retrato da cinta: no ANTES (T4) o ponto do retrato dizia "há novo na
-   bolsa" e o botão BOLSA, à vista, não dizia nada. A forma é a da fita do
-   alforje (`AbaComGlifo`, ui.jsx): `MarcaDaPorta` novo, no canto do glifo —
-   uma ação, uma forma, nas duas composições da aba.
-   E SAIU O CONTADOR VIOLETA DE GESTÃO (N3): era `nGrupo`, um número sem
-   nome que o `jogo` leu como enigma por dez turnos; os anéis da cinta já
-   mostram o grupo, cada um com o seu rosto. */
-function TrilhoAbas({ abaAtiva, aoClicar, marcas = [], desperto, codexAberto = true }) {
-  return (
-    <nav className="hidden md:flex shrink-0 flex-col justify-start gap-3"
-      aria-label="Painéis" style={{ background: T.bg }}>
-      {abasDoTrilho(desperto, codexAberto).map((aba) => {
-        const ativa = abaAtiva === aba.id;
-        const Glifo = GLIFO_DA_ABA[aba.id];
-        return (
-          <button key={aba.id} onClick={() => aoClicar(ativa ? null : aba.id)}
-            className="relative flex flex-none flex-col items-center justify-center gap-1.5 rounded-lg transition-all w-[72px] h-[72px]"
-            style={{
-              background: ativa ? T.panelSoft : T.panel,
-              border: "1px solid " + (ativa ? T.amber : T.line),
-              color: ativa ? T.amberSoft : T.inkDim,
-            }}>
-            <span style={{ position: "relative", display: "inline-flex" }}>
-              {Glifo
-                ? <Glifo tamanho={24} cor={ativa ? T.amberSoft : T.inkDim} />
-                : <span className="text-base leading-none">{aba.icone}</span>}
-              {!ativa && Array.isArray(marcas) && marcas.includes(aba.id) && (
-                <span aria-hidden="true" style={{ position: "absolute", top: -6, right: -8, lineHeight: 0 }}>
-                  <MarcaDaPorta estado="novo" />
-                </span>
-              )}
-            </span>
-            <span className="tv-mono text-[9px] uppercase tracking-[0.9px]">{aba.rotulo}</span>
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
+/* R21 → AAA · 4 · O TRILHO DE ÍCONES SAIU (05/11). No lugar dele, na mesa,
+   os OBJETOS DA MESA (formas.md §AAA §13): o livro do Diário, o mapa
+   enrolado e a bolsa de couro, cada um com a gota da novidade na porta da
+   coisa (a lei de A1 · B6 continua: a marca acende onde a coisa mora). A
+   Gestão foi para dentro da ficha — a carta do herói abre-a. O Códex e a
+   Ascensão, que a §13 não desenhou como objeto, ficam na mesma coluna com a
+   forma de aba que já tinham. No telefone os três objetos vão na fila das
+   cartas (objetosNaFila). */
 
 function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp, vinculo, ficha = null, comparadoA = null }) {
   const [verHabs, setVerHabs] = React.useState(false); // habilidades sob demanda — cartão limpo
@@ -24156,6 +23940,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("ir ao início da resposta", e); }
   };
   const despertoAgora = !!(divindade && divindade.despertar) || ((personagem && personagem.nivel) || 1) >= NIVEL_DESPERTAR;
+  const mesaDoAlforje = useMesa();
   const alforjeDoPainel = (() => {
     try {
       if (fase !== "jogo" || !personagem) return null;
@@ -24168,7 +23953,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           novo: marcasDaPorta.includes(a.id), contador: 0,
         })),
         aoEscolher: setAba,
-        topo: emBatalha ? 0 : (vivo ? CINTA.alturaViva : CINTA.altura),
+        topo: emBatalha ? 0 : ((mesaDoAlforje ? HUD_DA_MESA.mesa.ecra.alto + 2 * HUD_DA_MESA.mesa.ecra.respiro : HUD_DA_MESA.telefone.ecra.alto) + (vivo ? CINTA.alturaViva - CINTA.altura : 0)),
         espreita, aoTocarEspreita: irAoInicioDaEspreita,
         reduzido: !!reduzidoRef.current,
       };
@@ -24181,7 +23966,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      e a marca volta a morar no retrato. O corte é o da cinta (`useMesa`,
      `CINTA.mesa`), o mesmo `md:` que esconde o trilho. */
   const trilhoAVista = useMesa();
-  const estadoDaPorta = aba ? "aberta" : (marcasDaPorta.length && !trilhoAVista) ? "novo" : "porta";
+  /* AAA · 4: os objetos da mesa levam a marca nas DUAS larguras (no
+     telefone vão na fila das cartas); a carta do herói só acende pela
+     Gestão, que não tem objeto — mora dentro da ficha. */
+  const objetosDaMesa = (telefone) => {
+    try {
+      const ordem = (telefone ? HUD_DA_MESA.telefone : HUD_DA_MESA.mesa).objetos.ordem;
+      const abas = abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas()))
+        .filter((a) => a.id !== "gestao");
+      const objeto = (id) => (id === "bolsa" ? "inv" : id);
+      const naOrdem = ordem.map(objeto).map((id) => abas.find((a) => a.id === id)).filter(Boolean);
+      const resto = telefone ? [] : abas.filter((a) => !ordem.map(objeto).includes(a.id));
+      return [...naOrdem, ...resto].map((a) => (
+        <ObjetoDaMesa key={a.id} id={a.id} rotulo={a.rotulo} telefone={telefone} Glifo={GLIFO_DA_ABA[a.id]}
+          ativo={aba === a.id} novo={marcasDaPorta.includes(a.id)}
+          legenda={a.id === "inv" ? ((personagem && personagem.moedas) || 0) + " moedas" : ""}
+          aoTocar={() => { try { setAba(aba === a.id ? null : a.id); } catch (e) { calou("abrir um objeto da mesa", e); } }} />
+      ));
+    } catch (e) { calou("os objetos da mesa", e); return null; }
+  };
 
   /* ---------------- O MAPA VIVO (MM17 · a faixa do rumo e a tela grande) ----------------
      A forma: `mente/formas.md` § Mapa; a conta: `dadosDoMapaVivo`
@@ -24597,16 +24400,48 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && personagem && !emBatalha && (
         <div className="shrink-0 sticky top-0 z-30">
           <LimiteErro>
-            <ACinta
-              personagem={personagem} minuto={minuto} prazos={prazosDaCinta(relogios)}
-              guardado={guardadoAgora} falhaAoGuardar={statusSave === "erro"}
-              dia={dia} aoAbrirCompanheiro={abrirCompanheiro}
-              reduzido={!!reduzidoRef.current}
-              tempoAberto={tempoAberto} alforjeAberto={!!aba}
-              marcaDaPorta={estadoDaPorta} nomeDaPorta={nomeDaPortaAgora}
-              aoAbrirFicha={abrirAPorta}
-              aoAbrirTempo={() => setTempoAberto((v) => !v)} />
+            <EcraDoMestre telefone={!trilhoAVista} {...(() => {
+              try {
+                const e = etiquetasDaPagina({ lugar: lugarDaCena(), cena: cenaDoPalco(), clima });
+                const partes = String(e.lugar || "").split(" · ").filter(Boolean);
+                return { lugar: partes[0] || "", detalhe: [...partes.slice(1), ...(e.direita || [])].join(" · ") };
+              } catch (err) { calou("o lugar no ecrã do Mestre", err); return {}; }
+            })()}
+              minuto={minuto} hora={horaTxt(minuto)} data={dataTxt(dia || 1)}
+              {...(() => { try { const p = prazosDaCinta(relogios); return { prazo: p && p.length ? p[0] : null, quantosPrazos: p ? p.length : 0, escondidoGrave: !!(p && p.slice(1).some((x) => x.noites <= 1)) }; } catch (err) { calou("o prazo no ecrã do Mestre", err); return {}; } })()}
+              falaDaHora={["O tempo", horaCheiaFalada(horaTxt(minuto))].filter(Boolean).join(", ")}
+              tempoAberto={tempoAberto} aoAbrirTempo={() => setTempoAberto((v) => !v)}>
+              <SinalDeGuardado visivel={!!guardadoAgora} />
+              {statusSave === "erro" && (
+                <span className="tv-mono" role="alert"
+                  style={{ position: "absolute", right: CINTA.enchimento, bottom: 4, fontSize: TIPOS.maquina, color: T.danger,
+                    background: T.perigoFundo, border: "1px solid " + T.danger, padding: "2px 6px", borderRadius: 4,
+                    whiteSpace: "nowrap", pointerEvents: "none", zIndex: 2 }}><Glifo nome="aviso" tamanho={12} /> não guardou</span>
+              )}
+            </EcraDoMestre>
           </LimiteErro>
+          {/* OS ESTADOS VIVOS — a segunda fila da cinta, com a mesma forma:
+              o que não cabe numa linha calma é o que tem de interromper. */}
+          {(() => {
+            let chips = [];
+            try { chips = chipsDoEstado(personagem) || []; } catch (e) { calou("os estados vivos no ecrã", e); }
+            if (!chips.length) return null;
+            return (
+              <div className="flex items-center justify-center gap-1.5"
+                style={{ height: CINTA.alturaViva - CINTA.altura, paddingLeft: CINTA.enchimento, paddingRight: CINTA.enchimento, overflowX: "auto", overflowY: "hidden" }}>
+                {chips.map((c) => (
+                  <span key={c.id} title={c.titulo} className="tv-mono shrink-0 rounded-full"
+                    style={{
+                      fontSize: TIPOS.maquina, lineHeight: "18px", padding: "0 8px",
+                      background: c.arcano ? T.panelSoft : c.bom ? T.okFundo : T.perigoFundo,
+                      border: "1px solid " + (c.arcano ? T.violet : c.bom ? T.ok : T.danger),
+                      color: c.arcano ? T.violetSoft : c.bom ? T.ok : T.danger,
+                      fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4,
+                    }}>{c.glifo ? <Glifo nome={c.glifo} tamanho={12} /> : null}{c.texto}</span>
+                ))}
+              </div>
+            );
+          })()}
           <LimiteErro>
             <OPainelDoTempo
               aberto={tempoAberto} aoFechar={() => setTempoAberto(false)}
@@ -24618,6 +24453,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           </LimiteErro>
         </div>
       )}
+      {fase === "jogo" && personagem && !emBatalha && <VinhetaDaNoite minuto={minuto} />}
 
       {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setFase("mundo"); }} irNoite={() => { largarASala(); setFase("noite"); }} irDuelo={() => { largarASala(); setFase("duelo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
       {fase === "noite" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaNoite concluir={(esc) => iniciarNoite(esc)} voltar={() => setFase("menu")} /></div>}
@@ -24642,7 +24478,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           {emBatalha ? (
             <LimiteErro>{telaDaBatalha}</LimiteErro>
           ) : (
-          <main className="flex-1 flex flex-col min-w-0">
+          <main className="flex-1 flex flex-col min-w-0" style={trilhoAVista ? { maxWidth: HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga, marginLeft: "auto", marginRight: "auto" } : undefined}>
             {/* ---------------- O PAINEL DA NARRATIVA (v9.170) ----------------
                 Vem de `mesa-jogo-v2`: o log deixa de flutuar no fundo da tela
                 e passa a morar numa moldura própria, com um fundo um tom
@@ -24694,8 +24530,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 cartão tem dentro nascia 1 px mais para dentro do que no nó —
                 e o cabeçalho, que a pessoa pediu ao pixel, ficava a 25 px da
                 borda em vez de 24. Mesma cor, mesma espessura, mesmo raio. */}
-            <div data-tv-pagina="" className="flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
-              style={{ background: T.pagina, outline: `1px solid ${T.line}`, outlineOffset: -1 }}>
+            <div data-tv-pagina="" className="relative flex-1 min-h-0 flex flex-col mx-4 md:mx-8 mt-3 md:mt-4 rounded-2xl overflow-hidden"
+              style={{ background: T.pagina, outline: `1px solid ${T.lineStrong}`, outlineOffset: -1 }}>
+            {/* AAA · 4: a luz da vela cai de cima sobre a folha (formas.md §AAA §5) */}
+            <LuzDaVela minuto={minuto} />
             {/* ---------------- V5a · O CABEÇALHO DA PÁGINA ----------------
                 O topo do papel é o nó `129:4` da pessoa, ao pixel: 69 px que
                 NÃO rolam, o lugar em âmbar à esquerda, a luz e o ar à direita,
@@ -25686,11 +25524,28 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
             </div>
 
-
+            {/* AAA · 4 · AS CARTAS DO GRUPO — no lugar dos anéis da cinta.
+                A carta do herói abre a mesma porta que o anel abria; a de um
+                companheiro, o cartão dele no Grupo. */}
+            <LimiteErro>
+              <FilaDasCartas telefone={!trilhoAVista} heroi={personagem}
+                grupo={(personagem.grupo || []).filter((g) => g && !g.invocada)}
+                comPMDoHeroi={oPMConta(personagem)}
+                destino={(() => { try { return garantirHeroismo(personagem); } catch (e) { calou("o destino na carta", e); return null; } })()}
+                fichaAberta={!!aba} fichaNova={marcasDaPorta.includes("gestao") && !aba}
+                aoAbrirFicha={abrirAPorta} rotuloDoHeroi={nomeDaPortaAgora}
+                aoAbrirCompanheiro={abrirCompanheiro}
+                objetos={!trilhoAVista ? objetosDaMesa(true) : null} />
+            </LimiteErro>
           </main>
           )}
 
-          {!emBatalha && <TrilhoAbas abaAtiva={aba} aoClicar={setAba} marcas={marcasDaPorta} desperto={!!(divindade && divindade.despertar) || (personagem.nivel || 1) >= NIVEL_DESPERTAR} codexAberto={estaAberta("codex", abasAbertas, estadoDasAbas())} />}
+          {!emBatalha && trilhoAVista && (
+            <nav aria-label="Painéis" className="shrink-0 flex flex-col items-center"
+              style={{ width: parseInt(HUD_DA_MESA.mesa.colunas[2], 10), gap: HUD_DA_MESA.mesa.objetos.passo - HUD_DA_MESA.mesa.objetos.alvo.alto, paddingTop: HUD_DA_MESA.mesa.folga }}>
+              {objetosDaMesa(false)}
+            </nav>
+          )}
           {telaDoMapa && dadosMapaVivo ? (
             <LimiteDoMapa key={"tela|" + telaDoMapa.selo} aoEstourar={() => setTelaDoMapa(null)}>
               <TelaDoMapa key={telaDoMapa.selo} dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} chegada={chegadaDaViagemViva} telefone={!trilhoAVista}

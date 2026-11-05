@@ -770,6 +770,18 @@ dizendo **para quê**, porque um pedido sem o porquê vira adivinhação.
   lição que `mesmoAlvo` já aprendeu do outro lado.
 
 
+- [ ] **a AMEAÇA da cena em 0–3, para o ecrã do Mestre** · de: AAA · 4 (oficial) · 05/11
+  O HUD B (`formas.md` §AAA §13) tem três painéis no ecrã do Mestre: LUGAR, HORA e
+  **AMEAÇA** (●●○ e «2 de 3»). O esqueleto já está construído e o painel só nasce
+  quando receber um número: `EcraDoMestre` (`src/painel-mesa-do-mestre.jsx`) aceita
+  `ameaca` e, sem ele, **não desenha o painel** — a tela não inventa o perigo. Hoje o
+  App não passa nada, porque o motor não tem uma medida única.
+  **O que se pede:** uma função pura, com suíte, que junte o que o motor já mede do
+  perigo (o perigo do lugar no mapa vivo, a tensão da cena, os relógios que apertam,
+  a luta à porta) e devolva um inteiro 0–3 — e, se puder, a razão numa palavra para o
+  `title` do painel. **Para quê:** é a pergunta que um jogador faz ao Matt antes de
+  abrir uma porta («isto vai doer?»), respondida pelo sistema e não pela prosa.
+
 ## Atendidos
 
 _(vazio)_

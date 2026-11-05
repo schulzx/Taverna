@@ -107,20 +107,23 @@ sec("3. O TRILHO SÓ EXISTE NA COLUNA LARGA — no telefone, a fita é a do alfo
      px de prosa em TODOS os turnos. Deixar as classes da barra no trilho
      para esta régua ficar verde seria escrever para uma tela onde ele não
      aparece. */
-  t("no telefone o trilho não existe", /className="hidden md:flex/.test(nav));
+  /* AAA · 4 (05/11): o trilho virou a coluna dos objetos da mesa (formas.md §AAA §13), que só
+     existe na mesa; no telefone os objetos vão na fila das cartas. A régua lê a guarda nova. */
+  t("no telefone a coluna dos objetos não existe", /!emBatalha && trilhoAVista && \(/.test(nav));
   t("e nenhuma barra fixa sobrou por cima do convés", !/fixed/.test(nav));
   t("a fita do telefone é a do alforje, no pé e só no telefone", /role="tablist"/.test(ALF) && /className=\{?"md:hidden shrink-0 flex/.test(ALF));
   /* R21: a classe da fita passou a ser uma expressão (ganha `tv-fita-seis` com
      seis abas); o que a régua prende é que ela SÓ existe no telefone. */
   /* v9.170: no monitor o trilho está no fluxo, em coluna — o destino é o
      mesmo, e quem o põe lá é o layout. R21 não lhe mexeu. */
-  t("no monitor é coluna em fluxo", /md:flex shrink-0 flex-col/.test(nav));
+  t("no monitor é coluna em fluxo", /<nav aria-label="Painéis" className="shrink-0 flex flex-col items-center"/.test(APP)); /* AAA · 4: a classe vem depois do rótulo, fora da janela de nav */
   /* barra que flutua sobre o conteúdo sem fundo deixa o texto passar por
      baixo e vira ilegível nos dois */
   t("a barra tem chão próprio", /borderTop: `1px solid \$\{T\.line\}`/.test(APP));
   /* v9.170: o botão é um quadrado inteiro de 72. R21: sem o `md:`, porque
      o trilho só existe a partir do monitor. */
-  t("e o botão é quadrado no monitor", /w-\[72px\] h-\[72px\]/.test(APP));
+  /* AAA · 4, movida: o alvo deixou de ser o quadrado de 72 e passou ao objeto de 90 × 115, da tabela */
+  t("e o alvo do objeto sai da tabela no monitor", /minWidth: telefone \? ALVOS\.piso : H\.mesa\.objetos\.alvo\.largura/.test(readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8")));
 }
 
 sec("4. O PAINEL VIRA FOLHA CHEIA NO TELEFONE");

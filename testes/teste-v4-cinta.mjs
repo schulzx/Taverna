@@ -31,6 +31,12 @@ const trecho = (txt, ini, fim) => { const i = txt.indexOf(ini); return i < 0 ? "
 const ANEL_TXT = trecho(UI, "export function Anel(", "export function DiscoDoGrupo(");
 const GRUPO_TXT = trecho(UI, "export function GrupoNaCinta(", "\n}\n");
 const CINTA_TXT = trecho(APP, "function ACinta(", "\n}\n");
+/* AAA · 4 (05/11): a cinta saiu do App — o HUD B, «a mesa do Mestre»
+   (formas.md §AAA §13), escolhido pela pessoa. As asserções que liam o
+   corpo de ACinta passaram a ler quem herdou cada coisa: as cartas e o ecrã
+   em painel-mesa-do-mestre.jsx (MESA) e a fiação no App (APP). O motivo de
+   cada mudança fica escrito ao lado dela. */
+const MESA = ler("../src/painel-mesa-do-mestre.jsx");
 
 /* ============================================================ */
 sec("1. as contas da cinta — em Node");
@@ -96,7 +102,8 @@ sec("2. as medidas em tabela, e os pares que decidem");
   t(`a pílula: mundo sobre o erguido ${cr(T.mundo, T.panelSoft).toFixed(2)} ≥ 4,5`, cr(T.mundo, T.panelSoft) >= 4.5);
   /* MOVIDA (28/10, T1-B fatia 3): PARTIDA EM DUAS. A metade que prova a regra do módulo deixa de depender do App e sobrevive à T2; a metade do App (fiação/tela) segue texto, na lista de T2 (testes/assercoes-de-texto.json). */
   t("a coroa existe na família e é a do nó (lucide:crown)", !!GLIFOS.coroa && GLIFOS.coroa.de === "lucide:crown");
-  t("e a cinta a desenha", /<Glifo nome="coroa"/.test(CINTA_TXT));
+  /* movida: a coroa marcava o SEU herói entre anéis iguais; na mesa B o herói é a carta maior, ao centro */
+  t("e a mesa o distingue: a carta do herói é a maior", /<CartaDoGrupo ente=\{heroi\} heroi escala=\{esc\.heroi\}/.test(MESA));
   t("`esta noite` diz-se `hoje` só onde a conta o tem, e só abaixo do corte", palavraDoPrazo(0, false, "noites", true) === "hoje" && palavraDoPrazo(0) === "esta noite" && palavraDoPrazo(0, false, "turnos", true) === "este turno" && CINTA.palavraCurtaAbaixoDe < 375);
 }
 
@@ -119,15 +126,20 @@ sec("4. a peça e a fiação");
 {
   t("o anel é aria-hidden — quem diz o PV por palavras é o alvo", /<span aria-hidden="true" className="relative inline-block shrink-0 rounded-full"/.test(ANEL_TXT));
   t("tombado não se diz pela cor: sem arco, rosto apagado, traço", /\{!tombado && \(/.test(ANEL_TXT) && /opacity: tombado \? ANEL\.apagado : 1/.test(ANEL_TXT) && /\{tombado && \(/.test(ANEL_TXT));
-  t("as invocadas nunca entram na cinta", /\(personagem\.grupo \|\| \[\]\)\.filter\(\(g\) => g && !g\.invocada\)/.test(CINTA_TXT));
+  /* movida: o filtro mudou-se da cinta para a fiação das cartas, com a mesma conta */
+  t("as invocadas nunca entram nas cartas", /grupo=\{\(personagem\.grupo \|\| \[\]\)\.filter\(\(g\) => g && !g\.invocada\)\}/.test(APP));
   t("o grupo vai na ordem de entrada (nenhuma ordenação na cinta)", !/\.sort\(/.test(GRUPO_TXT) && !/\.sort\(/.test(CINTA_TXT));
   t("o disco herda o pior do que esconde", /const pior = piorEstado\(escondidos\.map\(estadoDoAnel\)\)/.test(GRUPO_TXT) && /estado=\{pior\}/.test(GRUPO_TXT));
-  t("o +N dos prazos também", /escondidoGrave \? T\.danger : T\.inkDim/.test(UI) && /const escondidoGrave = !!\(prazos && prazos\.slice\(1\)\.some\(\(p\) => p\.noites <= 1\)\)/.test(CINTA_TXT));
-  t("o PM é só número (nenhuma barra) e só quando conta", /pm=\{comPM \? personagem\.mana : null\}/.test(CINTA_TXT) && !/BarraDeRecurso/.test(CINTA_TXT));
-  t("o herói continua sendo a porta do alforje, com o mesmo nome", /aria-label=\{nomeDaPorta\} aria-haspopup="dialog" aria-expanded=\{!!alforjeAberto\}/.test(CINTA_TXT) && /<MarcaDaPorta estado=\{marcaDaPorta\} \/>/.test(CINTA_TXT));
+  /* movida: o selo do prazo foi para o painel HORA do ecrã, e o +N continua a herdar o pior */
+  t("o +N dos prazos também", /escondidoGrave \? T\.danger : T\.inkDim/.test(UI) && /escondidoGrave: !!\(p && p\.slice\(1\)\.some\(\(x\) => x\.noites <= 1\)\)/.test(APP) && /escondidoGrave=\{escondidoGrave\}/.test(MESA));
+  /* movida: o PM é a gema da carta (um número), e no herói só quando conta (oPMConta) */
+  t("o PM é só número (nenhuma barra) e só quando conta", /comPMDoHeroi=\{oPMConta\(personagem\)\}/.test(APP) && /comPM \? <GemaDaCarta cor=\{H\.gemasDaCarta\.PM\}/.test(MESA) && !/BarraDeRecurso/.test(MESA));
+  /* movida: a porta é a carta do herói — o mesmo abrirAPorta e o mesmo nome; a gota acende pela Gestão, que não tem objeto */
+  t("o herói continua sendo a porta do alforje, com o mesmo nome", /aoAbrirFicha=\{abrirAPorta\} rotuloDoHeroi=\{nomeDaPortaAgora\}/.test(APP) && /aria-haspopup="dialog"/.test(MESA) && /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP));
   t("o toque num companheiro abre o Grupo no cartão dele", /setSubPedida\(\{ sub: "grupo", selo: Date\.now\(\), alvo: nome \}\);\s*setAba\("gestao"\);/.test(APP) && /data-membro=\{m\.nome\} tabIndex=\{-1\}/.test(APP) && /\? focarNoCartao : undefined/.test(APP));
   t("e com a janela de reação aberta não abre", /const abrirCompanheiro = \(nome\) => \{\s*try \{\s*if \(janelaReacao\) return;/.test(APP));
-  t("a medida é da peça e a conta é de glifos.js — não há conta copiada no App", /useRepartoDaCinta\(grupo, mesa, chave\)/.test(CINTA_TXT) && !/function repartirACinta/.test(APP) && /repartirACinta\(\{/.test(UI));
+  /* movida: nas cartas ninguém cede — a fila rola de lado; o que fica provado é que a conta não foi copiada para o App */
+  t("nenhuma conta da cinta copiada no App, e a fila das cartas rola em vez de cortar", !/function repartirACinta/.test(APP) && /overflowX: "auto"/.test(MESA));
   t("mede-se quando muda o que ocupa lugar, não a cada tecla", /React\.useLayoutEffect\(\(\) => \{ medir\.current\(\); \}, \[chave, mesa, n, reparto\.glifo, reparto\.aneis, reparto\.rotulos\]\)/.test(UI));
   t("e a medida nunca custa o turno", /catch \(e\) \{ \/\* sem medida, a cinta fica como está \*\/ \}/.test(UI));
 }
@@ -135,8 +147,10 @@ sec("4. a peça e a fiação");
 /* ============================================================ */
 sec("5. os três defeitos do antes não voltam");
 {
-  t("1 · os companheiros estão na tela principal (a cinta desenha o grupo)", /<GrupoNaCinta grupo=\{grupo\} reparto=\{reparto\} mesa=\{mesa\} aoAbrir=\{aoAbrirCompanheiro\} \/>/.test(CINTA_TXT));
-  t("2 · a vida do herói não cede: é um arco, e não há barra com style inline a furar um hidden", /<Anel ente=\{personagem\}/.test(CINTA_TXT) && !/display: "inline-block"/.test(CINTA_TXT));
+  /* movida: o grupo está na tela principal como cartas, e o toque abre o cartão do companheiro */
+  t("1 · os companheiros estão na tela principal (as cartas desenham o grupo)", /<FilaDasCartas [\s\S]{0,600}aoAbrirCompanheiro=\{abrirCompanheiro\}/.test(APP) && /aoAbrirCompanheiro && aoAbrirCompanheiro\(c\.nome\)/.test(MESA));
+  /* movida: a vida é a gema PV da carta, um número que não cede; nenhuma barra */
+  t("2 · a vida do herói não cede: é a gema PV, e não há barra", /<GemaDaCarta cor=\{H\.gemasDaCarta\.PV\} valor=\{vida\}/.test(MESA) && !/BarraMini/.test(MESA));
   t("3 · o pulso de agonia não é infinito", !/animation: tvAgonia[^;]*infinite/.test(EST));
 }
 

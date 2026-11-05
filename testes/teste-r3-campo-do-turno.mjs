@@ -245,7 +245,11 @@ sec("5. A página, a coluna e as peças de R2 estão montadas");
    (`outlineOffset: -1`), como o `strokeAlign: INSIDE` do Figma — é o que põe
    o cabeçalho da página a 24 px da borda e não a 25. A asserção aceita os
    dois nomes do fio e guarda o mesmo: a narração mora na SUA superfície. */
-t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outline): `1px solid \$\{T\.line\}`/.test(APP),
+/* AAA · 4 (05/11) · a folha passou a pousar no FELTRO (formas.md §AAA §14): ali o pano verde e o
+   couro distinguem-se pelo matiz e não pela luz (T.panel mede 1,05:1 contra o feltro), e a regra
+   é «sobre o feltro, toda a peça leva borda», em lineStrong ou ouro. A asserção aceita lineStrong
+   e guarda o mesmo: a narração mora na SUA superfície (T.pagina). */
+t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outline): `1px solid \$\{T\.(?:line|lineStrong)\}`/.test(APP),
   "a narração voltou à mesa fria: o painel e o balão voltam a medir 1,039:1 um contra o outro");
 /* R21: a fala do Mestre ganhou `data-msg` (o endereço para onde a espreita
    do alforje salta) e `scrollMarginTop: ESBATIMENTO.altura` (para o salto não a

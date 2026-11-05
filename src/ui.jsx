@@ -2390,54 +2390,9 @@ export function RotuloDoRetrato({ ente = null, estado = "calma", oculto = false,
   );
 }
 
-/* V4 · OS CONTADORES — o que se gasta, à direita da cinta: `1.240 ◉` e, só
-   quando o PM conta, `85 ◆`. SÓ NÚMERO, SEM BARRA: o PM decide *"chego para
-   a Bola de Fogo (5)?"*, e o que se compara com um custo é um número.
-   Número primeiro e glifo depois, na cor do que conta — como o nó (`126:43`),
-   com o violeta da magia no lugar do ciano (`formas.md` §V1.6).
-   ARRANJO: na mesa lado a lado; no telefone EMPILHADOS (o PM por cima), numa
-   coluna de ~54 px — é isso que faz o pior caso caber a 375. */
-export function Contadores({ moedas = 0, pm = null, mesa = true, refContadores }) {
-  const letra = mesa ? TIPOS.rotulo : TIPOS.maquina;
-  const um = (valor, glifo, cor, rotulo) => (
-    <span className="inline-flex items-center tv-mono whitespace-nowrap"
-      style={{ gap: CINTA.entreNumeroEGlifo, fontSize: letra, fontWeight: 700, color: cor, lineHeight: 1.25 }}>
-      {valor}<Glifo nome={glifo} tamanho={TIPOS.piso} cor={cor} rotulo={rotulo} />
-    </span>
-  );
-  return (
-    <span ref={refContadores} className={"flex shrink-0 " + (mesa ? "flex-row items-center" : "flex-col-reverse items-end")}
-      style={{ gap: mesa ? CINTA.entreContadores : 0 }}>
-      {um((Number(moedas) || 0).toLocaleString("pt-BR"), "moeda", T.amber, "moedas")}
-      {pm != null && um(pm, "mana", T.violetSoft, "PM")}
-    </span>
-  );
-}
-
-/* V4 · A PÍLULA DO TEMPO — `[luz] 22:00 · 14 de Brumal [selo]` na mesa, e
-   `[luz] 22:00 [selo]` no telefone. O glifo é o da luz da hora (`luzDaHora`,
-   o mesmo d'O TEMPO e do cabeçalho da página: a hora nunca discorda de si).
-   Na mesa leva a moldura do nó (`126:37`): fundo `panelSoft`, fio e letra
-   `mundo` (7,09:1); no telefone é NUA, porque a moldura custaria 34 px que o
-   pior caso a 375 não tem. O glifo é o PRIMEIRO a ceder (`comGlifo`). Quem a
-   toca é o botão d'O TEMPO, à volta dela. */
-export function PilulaDoTempo({ luz = "dia", hora = "", data = "", prazo = null, quantos = 0, escondidoGrave = false, comGlifo = true, mesa = true, refPilula, refGlifo }) {
-  const P = CINTA.pilula;
-  return (
-    <span ref={refPilula} className="inline-flex items-center whitespace-nowrap"
-      style={mesa
-        ? { gap: P.entre, padding: `${P.cima}px ${P.lado}px`, borderRadius: P.raio, background: T.panelSoft, border: "1px solid " + T.mundo }
-        : { gap: P.entreTelefone }}>
-      {comGlifo && <span ref={refGlifo} className="inline-flex"><Glifo nome={luz} tamanho={TIPOS.piso} cor={T.mundo} rotulo={luz} /></span>}
-      {/* A1 · A HORA CHEIA (`formas.md` §A1 5): `8h`, e não `08:10`. O minuto
-          mora em O TEMPO, no toque; a conta é `horaNaCinta` (glifos.js). A
-          pílula não anima ao virar. */}
-      <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo, fontWeight: 700 }}>{horaNaCinta(hora)}</span>
-      {mesa && data ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>{data}</span> : null}
-      {prazo ? <SeloDePrazo noites={prazo.noites} quantos={quantos} urgente={prazo.noites <= 1} escondidoGrave={escondidoGrave} /> : null}
-    </span>
-  );
-}
+/* V4 · OS CONTADORES e A PÍLULA DO TEMPO saíram com a cinta em AAA · 4 (05/11):
+   as moedas são a legenda da Bolsa, o PM é a gema da carta, e a hora com o
+   selo do prazo é o painel HORA do ecrã do Mestre (painel-mesa-do-mestre.jsx). */
 
 /* ============================================================
    V4 · A CINTA MEDE-SE A SI MESMA — e decide pela conta, não pelo olho

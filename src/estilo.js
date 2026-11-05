@@ -1286,6 +1286,123 @@ export const BORDA_DA_MESA = {
   alfaDoOuro: 0.45,
 };
 
+/* O ESQUELETO B — a mesa do Mestre vista de cima (formas.md §AAA §13, a
+   escolha da pessoa a 05/11). As áreas são as de grid-template-areas; a
+   montagem é src/painel-mesa-do-mestre.jsx. gemasDaCarta: PV = a granada do
+   Bárbaro, PM = a ametista do Arcanista, Destino = T.amber. O que a §13 diz
+   em prosa (a moldura de ouro do painel, o título em Cinzel 11) mora em
+   painel e titulo, para não ser número solto na peça. */
+export const HUD_DA_MESA = {
+  mesa: {
+    aPartirDe: 1024,
+    borda: BORDA_DA_MESA.mesa,
+    colunas: ["236px", "minmax(560px, 600px)", "120px"],
+    folga: 44,
+    areas: [
+      "ecra ecra ecra",
+      "bandeja livro objetos",
+      "bandeja oferta objetos",
+      "bandeja campo objetos",
+      "cartas cartas cartas",
+    ],
+    linhas: ["84px", "1fr", "auto", "48px", "200px"],
+    ecra: { painel: 220, alto: 84, folga: 20, ordem: ["lugar", "hora", "ameaca"], velaAlta: 68, respiro: 8 },
+    livro: { largura: 600, margem: 8, linha: 504 },
+    bandeja: { largura: 236, alto: 300, lado: "esquerda" },
+    cartas: { heroi: 0.62, companheiro: 0.46, folga: 48, recuo: 30 },
+    objetos: { escala: 1.25, passo: 140, ordem: ["diario", "mapa", "bolsa"], alvo: { largura: 90, alto: 115 } },
+  },
+  telefone: {
+    borda: BORDA_DA_MESA.telefone,
+    areas: ["ecra", "livro", "bandeja", "oferta", "campo", "cartas"],
+    linhas: ["44px", "1fr", "36px", "40px", "44px", "150px"],
+    ecra: { forma: "tira", alto: 44, velaAlta: 30 },
+    livro: { margem: 4 },
+    cartas: { heroi: 0.46, companheiro: 0.34, objetosNaFila: true },
+    objetos: { tamanho: 40, rotulo: 10, ordem: ["diario", "mapa", "bolsa"] },
+  },
+  ameaca: { pontos: 3, cheio: "●", vazio: "○" },
+  gemasDaCarta: { PV: GEMA_DA_SUBCLASSE["Bárbaro"].corpo, PM: GEMA_DA_SUBCLASSE.Arcanista.corpo, Destino: T.amber },
+  painel: { moldura: 2, fio: 0.35, raio: 6, enchimento: 12 },
+  titulo: { tamanho: 11, rastreio: 1.8 },
+  gema: { mesa: 7, telefone: 6, letra: 11 },
+};
+
+/* O ENCAIXE (AAA §3 e §9; a geometria é a do componente 253:352 no Figma,
+   tirada do SVG dele): o quadrado de 56 de um item. O fio da raridade vai
+   por dentro (inset 1, raio 5); o anel do foco e do escolhido fica de 3 a
+   5 px por fora. A forma que sobe com a raridade: a gota (raro), os quatro
+   cantos (épico), o brilho de dentro (lendário) e a estrela (único) —
+   WCAG 1.4.1, a cor nunca é o único portador. Lido por painel-moldura.jsx
+   e painel-equipamento.jsx. */
+export const ENCAIXE = {
+  lado: 56, raio: 6, icone: 32, rotulo: 11,
+  vazio: { tracejado: 1, alfaDoGlifo: 0.35 },
+  anel: { espessura: 2, folga: 3 },
+  gota: { x: 7, y: 7, r: 3 },
+  canto: { de: 3, braco: 9, espessura: 2.5 },
+  estrela: { x: 46, y: 10, r: 6, miolo: 1.6 },
+  brilho: { de: 0.35, ate: 0.55, fixo: 0.45, dura: 2400, raio: 10, fora: 8, alfaDeFora: 0.35 },
+  sombra: PECAS_DA_MOLDURA.engaste,   /* o quase-preto do furo do engaste: a sombra do escolhido */
+  sombraDoEscolhido: { y: 4, raio: 10, alfa: 0.6 },
+  pressionado: { escala: 0.96, dura: 80 },
+  marcas: {
+    comum: [], incomum: [], raro: ["gota"], epico: ["cantos"],
+    lendario: ["cantos", "brilho"], unico: ["cantos", "brilho", "estrela"],
+  },
+  /* o boneco (§3): a carta ao meio, três de cada lado, as botas por baixo */
+  boneco: { esquerda: ["elmo", "amuleto", "armadura"], direita: ["arma", "escudo", "anel"], baixo: ["botas"] },
+  nomes: { elmo: "Elmo", amuleto: "Amuleto", armadura: "Armadura", arma: "Arma", escudo: "Escudo", anel: "Anel", botas: "Botas" },
+  tirar: { elmo: "Tirar o elmo", amuleto: "Tirar o amuleto", armadura: "Tirar a armadura", arma: "Largar a arma", escudo: "Tirar o escudo", anel: "Tirar o anel", botas: "Tirar as botas" },
+  mochila: { telefone: 5, mesa: 6, folga: 10 },
+};
+
+/* A GAVETA DO ENCAIXE (§3 e §9, nó 255:506): folha de baixo no telefone,
+   popover ao lado na mesa. Só os itens que cabem; o primeiro vem escolhido. */
+export const GAVETA_DO_ENCAIXE = {
+  sobe: 220, popover: 160, reduzido: 120,
+  raio: 16, largura: 360, alca: { largura: 36, altura: 4 },
+  enchimento: 16, folga: 12, alto: 0.85,
+};
+
+/* O DISCO DE ATRIBUTO (§2 e §9, componente 253:383): disco de 64 em
+   panelSoft, o aro no metal do degrau do herói; ganhou = aro âmbar de 3 com
+   halo de 14 a 0,55; ícone 20 em amberSoft, número Cinzel 22, rótulo 12,
+   linha de baixo 11. A troca de estado leva 180 ms. */
+export const DISCO_DE_ATRIBUTO = {
+  lado: 64, aro: 2.5, aroGanhou: 3, halo: 14, alfaDoHalo: 0.55,
+  icone: 20, numero: 22, rotulo: 12, linha: 11, folga: 6, dura: 180,
+};
+
+/* A TELA DA CERIMÓNIA (§4, quadros 256:501 a 256:669): o medalhão a ×2,4,
+   «NÍVEL» em Cinzel 15 espaçado, o número em Cinzel 64. As faíscas saltam
+   até `alcance` × o aro a partir do centro; a luz âmbar sobe de baixo a
+   `luz`. Os tempos são todos de CERIMONIA_DO_NIVEL. */
+export const CERIMONIA_DA_TELA = {
+  escalaDoMedalhao: 2.4, rotulo: 15, espacoDoRotulo: 0.32, numero: 64,
+  faisca: 4, alcance: 0.75, luz: 0.42, forjaDe: 1.08, pulso: 1.06, subida: 8,
+  /* a gema do medalhão (§8: o engaste em 50,10 com r 5,6 + 2,4), em unidades do aro de 80 */
+  gema: { x: 50, y: 10, r: 8 },
+  largura: 440, enchimento: 24,
+};
+
+/* A FICHA COMO CARTA (§2, nós 255:113 e 257:1110): a carta a 120 no
+   telefone (cabe com o nome ao lado em 375) e a x1,6 na mesa (256); o nome
+   em Cinzel; as barras de PV e PM; os discos em 3 x 2. Na mesa a ficha e
+   o equipamento são uma tela só, em três colunas. */
+export const FICHA_CARTA = {
+  carta: { telefone: 120, mesa: 256 },
+  nome: { telefone: 22, mesa: 26 },
+  barra: 8, folga: 16, colunas: 3,
+  /* as letras da ficha e da gaveta: o nome do item (Cinzel), a linha da
+     comparação, a nota miúda (a raridade, o tempo da troca, a secção) */
+  texto: { item: 18, linha: 14, nota: 13 },
+  /* a placa do nome na carta (§8: o rect x 10, y 156, 140 x 56, em unidades da carta de 160) */
+  placa: { x: 10, y: 156, largura: 140, altura: 56 },
+  /* a carta e o boneco medem-se a si mesmos (auto); a ficha do meio fica com o resto */
+  mesa: { colunas: ["auto", "minmax(280px, 1fr)", "auto"], folga: 32 },
+};
+
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
@@ -2581,11 +2698,57 @@ export const MOVIMENTO_CSS = `
 @keyframes tvMolduraGema { 0% { transform: scale(${ESTADOS_DA_MOLDURA.gemaDe}); opacity: 0; } 60% { transform: scale(${ESTADOS_DA_MOLDURA.gemaPico}); opacity: 1; } 100% { transform: none; opacity: 1; } }
 .tv-moldura-lume { transform-box: fill-box; transform-origin: center; animation: tvMolduraLume ${ESTADOS_DA_MOLDURA.lume}ms linear infinite; }
 .tv-moldura-gema { transform-box: fill-box; transform-origin: center; animation: tvMolduraGema ${ESTADOS_DA_MOLDURA.gema}ms ease-out both; }
+/* ---------------- A CERIMÓNIA, O ENCAIXE, A GAVETA E O DISCO (AAA · 05/11) ----------------
+   A cerimónia é uma linha do tempo de CSS: cada quadro tem a sua duração
+   aqui e o seu atraso posto pela peça (animation-delay), os dois lidos de
+   CERIMONIA_DO_NIVEL. Nenhum relógio de JavaScript: o fim da entrada da
+   escolha é o que a peça escuta (animationend). O brilho do lendário e do
+   único respira entre os dois alfas de ENCAIXE.brilho. */
+@keyframes tvCerimoniaVeu { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tvCerimoniaLuz { from { opacity: 0; transform: translateY(40%); } to { opacity: 1; transform: none; } }
+@keyframes tvCerimoniaForja { from { opacity: 0; transform: scale(${CERIMONIA_DA_TELA.forjaDe}); clip-path: circle(0% at 50% 50%); } to { opacity: 1; transform: none; clip-path: circle(75% at 50% 50%); } }
+@keyframes tvCerimoniaFaisca { 0% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(1); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(.4); } }
+@keyframes tvCerimoniaPulso { 0%, 100% { transform: none; } 50% { transform: scale(${CERIMONIA_DA_TELA.pulso}); } }
+@keyframes tvCerimoniaNumero { from { opacity: 0; transform: scale(${CERIMONIA_DO_NIVEL.numero.escalaDe}); } to { opacity: 1; transform: none; } }
+@keyframes tvCerimoniaSobe { from { opacity: 0; transform: translateY(${CERIMONIA_DA_TELA.subida}px); } to { opacity: 1; transform: none; } }
+@keyframes tvCerimoniaEsvai { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tvEncaixeBrilho { from { opacity: ${ENCAIXE.brilho.de}; } to { opacity: ${ENCAIXE.brilho.ate}; } }
+@keyframes tvGavetaSobe { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes tvGavetaAbre { from { opacity: 0; transform: scale(${ENCAIXE.pressionado.escala}); } to { opacity: 1; transform: none; } }
+.tv-cerimonia-veu { animation: tvCerimoniaVeu ${CERIMONIA_DO_NIVEL.veu.dura}ms ease-out both; }
+.tv-cerimonia-luz { animation: tvCerimoniaLuz ${CERIMONIA_DO_NIVEL.luz.dura}ms ease-out both; }
+.tv-cerimonia-forja { animation: tvCerimoniaForja ${CERIMONIA_DO_NIVEL.forja.dura}ms ease-out both; }
+.tv-cerimonia-faisca { animation: tvCerimoniaFaisca ${CERIMONIA_DO_NIVEL.forja.dura}ms ease-out both; }
+.tv-cerimonia-pulso { animation: tvCerimoniaPulso ${CERIMONIA_DO_NIVEL.pulso.dura}ms ease-in-out both; }
+.tv-cerimonia-numero { animation: tvCerimoniaNumero ${CERIMONIA_DO_NIVEL.numero.dura}ms cubic-bezier(.22,1.2,.36,1) both; }
+.tv-cerimonia-ganho { animation: tvCerimoniaSobe ${CERIMONIA_DO_NIVEL.ganhos.dura}ms ease-out both; }
+.tv-cerimonia-gema { transform-box: fill-box; transform-origin: center; animation: tvMolduraGema ${CERIMONIA_DO_NIVEL.gema.dura}ms ease-out both; }
+.tv-cerimonia-escolha { animation: tvCerimoniaSobe ${CERIMONIA_DO_NIVEL.escolha.dura}ms ease-out both; }
+.tv-cerimonia-esvai { animation: tvCerimoniaEsvai ${CERIMONIA_DO_NIVEL.reduzido.dura}ms ease-out both; }
+.tv-encaixe-brilho { animation: tvEncaixeBrilho ${ENCAIXE.brilho.dura}ms ease-in-out infinite alternate; }
+.tv-gaveta-sobe { animation: tvGavetaSobe ${GAVETA_DO_ENCAIXE.sobe}ms cubic-bezier(.2,.8,.2,1) both; }
+.tv-gaveta-abre { transform-origin: top center; animation: tvGavetaAbre ${GAVETA_DO_ENCAIXE.popover}ms ease-out both; }
+.tv-encaixe { transition: transform ${ENCAIXE.pressionado.dura}ms ease-out; }
+.tv-encaixe:active { transform: scale(${ENCAIXE.pressionado.escala}); }
+.tv-encaixe:focus-visible { outline: ${ENCAIXE.anel.espessura}px solid ${T.mundo}; outline-offset: ${ENCAIXE.anel.folga}px; }
+.tv-disco { transition: border-color ${DISCO_DE_ATRIBUTO.dura}ms ease-out, box-shadow ${DISCO_DE_ATRIBUTO.dura}ms ease-out; }
+.tv-disco:focus-visible { outline: ${ENCAIXE.anel.espessura}px solid ${T.mundo}; outline-offset: ${ENCAIXE.anel.folga}px; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
   /* a moldura parada: o lume fica onde está, a gema troca seca */
   .tv-moldura-lume, .tv-moldura-gema { animation: none; }
+  /* a cerimónia parada: só o quadro da escolha, num esvanecer (a peça põe
+     tv-cerimonia-reduzida na raiz, e só aqui dentro ela anima); o brilho do
+     encaixe fixo, a gaveta e o disco a trocar secos */
+  .tv-cerimonia-veu, .tv-cerimonia-luz, .tv-cerimonia-forja, .tv-cerimonia-pulso, .tv-cerimonia-numero, .tv-cerimonia-ganho, .tv-cerimonia-gema, .tv-cerimonia-escolha, .tv-cerimonia-esvai { animation: none; }
+  .tv-cerimonia-faisca { animation: none; opacity: 0; }
+  .tv-encaixe-brilho { animation: none; opacity: ${ENCAIXE.brilho.fixo}; }
+  .tv-gaveta-sobe, .tv-gaveta-abre { animation: none; }
+  .tv-encaixe, .tv-disco { transition: none; }
+  .tv-encaixe:active { transform: none; }
+  .tv-cerimonia-reduzida { animation: tvCerimoniaEsvai ${CERIMONIA_DO_NIVEL.reduzido.dura}ms ease-out both; }
+  .tv-gaveta-reduzida { animation: tvCerimoniaEsvai ${GAVETA_DO_ENCAIXE.reduzido}ms ease-out both; }
   /* a bandeja parada: o dado aparece já pousado, com o número final, e o
      veredito à vista. A saída é none, como a casa exige (check-formas D5c):
      as três classes pousam no estado final porque nenhuma começa invisível */

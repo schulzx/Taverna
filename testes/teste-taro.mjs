@@ -135,7 +135,11 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      ler `<Anel … ente=` como retrato que entrega a pessoa — é o mesmo, com
      outro invólucro, e a conta não mudou de verdade. (Os anéis do grupo são
      retratos NOVOS a entregar a pessoa, e moram em `GrupoNaCinta`.) */
-  const entes = ((APP + BATALHA).match(/<(?:Retrato [^>]*\sente=|Anel ente=)\{/g) || []).length;
+  /* AAA · 4 (05/11): o retrato do herói saiu da cinta (o Anel) para a carta do herói, em
+     painel-mesa-do-mestre.jsx, com o ente. A conta soma esse arquivo e o total não muda:
+     mudou o endereço, não a lei. */
+  const MESA_T = semComentarios(CRU("painel-mesa-do-mestre.jsx"));
+  const entes = ((APP + BATALHA + MESA_T).match(/<(?:Retrato [^>]*\sente=|Anel ente=)\{/g) || []).length;
   /* v9.177: passaram a SETE. A sala redesenhada (`sala-multiplayer-v2`)
      mostra o retrato de quem já sentou, e ele veste o traje da classe como
      todos os outros — com `semCarta`, porque a cadeira inteira já é área de
@@ -175,7 +179,8 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      retrato é `semCarta`. */
   /* V4: dentro do botão, o retrato é o do `Anel` — e o anel desenha-o
      sempre `semCarta` (`teste-heroi-na-tela` guarda essa metade). */
-  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-label=\{nomeDaPorta\}[\s\S]{0,700}<Anel ente=\{personagem\} semente=\{sementeDe\(personagem\)\}/.test(APP));
+  /* AAA · 4, movida: o atalho é a carta do herói, e dentro dela o retrato é semCarta */
+  t("o atalho da ficha continua sendo só o atalho da ficha", /aria-haspopup="dialog"[\s\S]{0,900}<Retrato semente=\{ente\.semente \|\| ente\.nome\} ente=\{ente\} tamanho=\{w\} estado=\{estado\} semCarta \/>/.test(semComentarios(CRU("painel-mesa-do-mestre.jsx"))));
 }
 
 console.log(`\ntarô v9.126: ${bons} passaram, ${maus} falharam`);

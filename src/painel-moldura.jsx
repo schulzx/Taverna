@@ -10,7 +10,12 @@
    · CamadaDaMoldura — uma das duas camadas (abaixo/acima), para o Anel da
      cinta meter o arco de vida entre elas (o arco é jogo e fica onde está).
    · Gema — a pedra da subclasse no seu engaste, sozinha.
-   · IconeDeItem — o glifo do item por tipo (ICONES_DE_ITEM), em ink.
+   · IconeDeItem — o glifo do item por tipo (ICONES_DE_ITEM), em ink; com
+     `raridade`, ganha a borda da cor e da forma dela (§3).
+   · Encaixe — o quadrado de 56 de um item (§3, Figma 253:352): a raridade
+     em cor E forma, o vazio tracejado com o glifo a 35%, o escolhido.
+   · Disco — o atributo como peça (§2, Figma 253:383): repouso, ganhou,
+     no teto.
 
    O TRANSBORDO É RESERVADO, NUNCA CORTADO (§1): a Moldura mede a caixa
    inteira de VB_DA_MOLDURA, e o rosto pousa na janela dela.
@@ -20,7 +25,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { TAMANHOS_DA_MOLDURA, ESTADOS_DA_MOLDURA, ICONES_DE_ITEM, MOLDURA_POR_DEGRAU } from "./estilo.js";
+import { TAMANHOS_DA_MOLDURA, ESTADOS_DA_MOLDURA, ICONES_DE_ITEM, MOLDURA_POR_DEGRAU, ICONES_DE_ATRIBUTO, COR_DA_RARIDADE, ENCAIXE, DISCO_DE_ATRIBUTO, alfa } from "./estilo.js";
 import { partesDaMoldura, partesDaCarta, molduraDe } from "./moldura.js";
 
 /* as peças de moldura.js ([tag, atributos, filhos]) em elementos React */
@@ -170,15 +175,144 @@ export function Gema({ gema = null, degrau = "ferro", tamanho = 16 }) {
 }
 
 /* O ÍCONE DE ITEM (§3): quadro 24, traço 1,5, pontas e juntas redondas, a
-   família dos glifos de ui.jsx. Na cor ink dentro do encaixe; a borda da
-   raridade é do Encaixe, não do ícone. */
-export function IconeDeItem({ nome, tamanho = 24, cor = T.ink, rotulo }) {
+   família dos glifos de ui.jsx. Na cor ink. Com `raridade` (chave de
+   COR_DA_RARIDADE) ganha a borda da cor e da forma dela — a mesma do
+   Encaixe, em miniatura, para a linha da loja, do chão e do recibo. */
+export function IconeDeItem({ nome, tamanho = 24, cor = T.ink, rotulo, raridade = null }) {
   const ds = ICONES_DE_ITEM[nome];
   if (!ds) return null;
-  return (
+  const svg = (
     <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none" stroke={cor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
       role={rotulo ? "img" : undefined} aria-label={rotulo || undefined} aria-hidden={rotulo ? undefined : "true"} style={{ display: "block" }}>
       {ds.map((d, i) => <path key={i} d={d} />)}
     </svg>
+  );
+  const c = raridade ? COR_DA_RARIDADE[raridade] : null;
+  if (!c) return svg;
+  /* o ícone ocupa no quadro a mesma fração que no encaixe (32 em 56) */
+  const lado = Math.round(tamanho * ENCAIXE.lado / ENCAIXE.icone);
+  return (
+    <span className="relative inline-flex items-center justify-center shrink-0" style={{ width: lado, height: lado, borderRadius: ENCAIXE.raio * lado / ENCAIXE.lado, background: c.fundo }}>
+      <MarcasDaRaridade raridade={raridade} lado={lado} />
+      {svg}
+    </span>
+  );
+}
+
+/* A RARIDADE EM COR E FORMA (§3, a geometria do SVG do Figma 253:352, num
+   quadro de 56): o fio por dentro (1 ou 2), a gota do raro, os quatro
+   cantos do épico em diante, a estrela do único. O brilho do lendário e do
+   único é do Encaixe (anima), não daqui. */
+function MarcasDaRaridade({ raridade, lado }) {
+  const c = COR_DA_RARIDADE[raridade];
+  if (!c) return null;
+  const E = ENCAIXE, L = E.lado, f = c.fio, m = E.marcas[raridade] || [];
+  const { de, braco } = E.canto, fim = L - de;
+  const cantos = [
+    `M${de} ${de + braco}V${de}H${de + braco}`, `M${fim - braco} ${de}H${fim}V${de + braco}`,
+    `M${fim} ${fim - braco}V${fim}H${fim - braco}`, `M${de + braco} ${fim}H${de}V${fim - braco}`,
+  ];
+  const { x, y, r, miolo } = E.estrela;
+  const estrela = `M${x} ${y - r}L${x + miolo} ${y - miolo}L${x + r} ${y}L${x + miolo} ${y + miolo}L${x} ${y + r}L${x - miolo} ${y + miolo}L${x - r} ${y}L${x - miolo} ${y - miolo}Z`;
+  return (
+    <svg aria-hidden="true" width={lado} height={lado} viewBox={`0 0 ${L} ${L}`} fill="none" className="absolute inset-0 pointer-events-none">
+      <rect x={f / 2} y={f / 2} width={L - f} height={L - f} rx={E.raio - f / 2} stroke={c.cor} strokeWidth={f} />
+      {m.includes("gota") ? <circle cx={E.gota.x} cy={E.gota.y} r={E.gota.r} fill={c.cor} /> : null}
+      {m.includes("cantos") ? cantos.map((d, i) => <path key={i} d={d} stroke={c.cor} strokeWidth={E.canto.espessura} strokeLinecap="round" />) : null}
+      {m.includes("estrela") ? <path d={estrela} fill={c.cor} /> : null}
+    </svg>
+  );
+}
+
+/* O ENCAIXE (§3, §9): o quadrado de um item, alvo de 56 (≥ 44, WCAG 2.5.5).
+   `raridade` null = vazio: tracejado em lineStrong, o `glifo` do que lá vai
+   a 35% (GLIFO_DO_ENCAIXE). `escolhido`: o anel âmbar por fora e a sombra,
+   o fundo fundoEscolhido. O foco (anel T.mundo) e o pressionado (0,96) são
+   do CSS (.tv-encaixe). Lendário e único: o brilho de dentro respira
+   (.tv-encaixe-brilho; parado a 0,45 com reduce). `rotulo` vai por baixo, a
+   11; `canto` é a marca miúda do canto de baixo (a quantidade). Sem
+   `aoTocar` é só figura. */
+export function Encaixe({ raridade = null, icone = null, glifo = null, escolhido = false, rotulo = "", aoTocar = null, ariaLabel = "", lado = ENCAIXE.lado, canto = null }) {
+  const E = ENCAIXE, k = lado / E.lado;
+  const c = raridade ? COR_DA_RARIDADE[raridade] : null;
+  const vazio = !c;
+  const brilho = !vazio && (E.marcas[raridade] || []).includes("brilho");
+  const sombras = [];
+  if (escolhido) sombras.push(`0 ${E.sombraDoEscolhido.y}px ${E.sombraDoEscolhido.raio}px ${alfa(E.sombra, E.sombraDoEscolhido.alfa)}`);
+  if (brilho) sombras.push(`0 0 ${E.brilho.fora}px ${alfa(c.cor, E.brilho.alfaDeFora)}`);
+  const estilo = {
+    width: lado, height: lado, borderRadius: E.raio * k,
+    background: vazio ? T.panel : escolhido ? c.fundoEscolhido : c.fundo,
+    border: vazio ? `${E.vazio.tracejado}px dashed ${T.lineStrong}` : "none",
+    boxShadow: sombras.length ? sombras.join(", ") : "none",
+    ...(escolhido ? { outline: `${E.anel.espessura}px solid ${T.amber}`, outlineOffset: E.anel.folga } : null),
+  };
+  const nome = vazio ? glifo : icone;
+  const miolo = (
+    <>
+      {!vazio ? <MarcasDaRaridade raridade={raridade} lado={lado} /> : null}
+      {brilho ? <span aria-hidden="true" className="tv-encaixe-brilho absolute inset-0 pointer-events-none" style={{ borderRadius: E.raio * k, boxShadow: `inset 0 0 ${E.brilho.raio}px ${c.cor}` }} /> : null}
+      <span className="relative" style={{ opacity: vazio ? E.vazio.alfaDoGlifo : 1 }}>
+        <IconeDeItem nome={nome} tamanho={Math.round(E.icone * k)} />
+      </span>
+      {canto != null ? <span className="absolute tv-mono" style={{ right: E.canto.de * k, bottom: 0, fontSize: E.rotulo * k, color: T.inkDim }}>{canto}</span> : null}
+    </>
+  );
+  const quadrado = aoTocar ? (
+    <button type="button" onClick={aoTocar} aria-label={ariaLabel || rotulo || undefined} aria-pressed={escolhido}
+      className="tv-encaixe relative shrink-0 inline-flex items-center justify-center" style={estilo}>{miolo}</button>
+  ) : (
+    <span className="relative shrink-0 inline-flex items-center justify-center" style={estilo} role={ariaLabel ? "img" : undefined} aria-label={ariaLabel || undefined}>{miolo}</span>
+  );
+  if (!rotulo) return quadrado;
+  return (
+    <span className="inline-flex flex-col items-center shrink-0" style={{ gap: E.rotulo / 2 }}>
+      {quadrado}
+      <span className="tv-body" style={{ fontSize: E.rotulo, color: T.inkDim, lineHeight: 1.1 }}>{rotulo}</span>
+    </span>
+  );
+}
+
+/* O ÍCONE DE ATRIBUTO (§2): os seis do mesmo traço, ICONES_DE_ATRIBUTO. */
+export function IconeDeAtributo({ atributo, tamanho = DISCO_DE_ATRIBUTO.icone, cor = T.amberSoft }) {
+  const ds = ICONES_DE_ATRIBUTO[atributo];
+  if (!ds) return null;
+  return (
+    <svg aria-hidden="true" width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none" stroke={cor} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" style={{ display: "block" }}>
+      {ds.map((d, i) => <path key={i} d={d} />)}
+    </svg>
+  );
+}
+
+/* O DISCO DE ATRIBUTO (§2, §9; Figma 253:383): disco de 64 em panelSoft, o
+   aro no metal do degrau do herói (a ficha sobe de degrau com ele), o ícone
+   em amberSoft, o número em Cinzel 22, o rótulo e a linha por baixo.
+   `estado`: "repouso" | "ganhou" (aro âmbar com halo, número amberSoft) |
+   "teto" (não aceita ponto; a linha em inkDim). Com `aoTocar` é botão. */
+export function Disco({ atributo, valor, rotulo = "", linha = "", estado = "repouso", degrau = "ferro", aoTocar = null, titulo = "" }) {
+  const D = DISCO_DE_ATRIBUTO;
+  const ganhou = estado === "ganhou";
+  const metal = (MOLDURA_POR_DEGRAU[degrau] || MOLDURA_POR_DEGRAU.ferro).meio;
+  const disco = {
+    width: D.lado, height: D.lado, borderRadius: "50%", background: T.panelSoft,
+    border: `${ganhou ? D.aroGanhou : D.aro}px solid ${ganhou ? T.amber : metal}`,
+    boxShadow: ganhou ? `0 0 ${D.halo}px ${alfa(T.amber, D.alfaDoHalo)}` : "none",
+  };
+  const miolo = (
+    <>
+      <span className="tv-disco inline-flex flex-col items-center justify-center shrink-0" style={disco}>
+        <IconeDeAtributo atributo={atributo} />
+        <span className="tv-titulo" style={{ fontSize: D.numero, lineHeight: 1, color: ganhou ? T.amberSoft : T.ink }}>{valor}</span>
+      </span>
+      <span className="tv-body" style={{ fontSize: D.rotulo, color: T.inkDim, lineHeight: 1.1 }}>{rotulo}</span>
+      {linha ? <span className="tv-mono" style={{ fontSize: D.linha, color: estado === "teto" ? T.inkDim : T.ok, lineHeight: 1.1 }}>{linha}</span> : null}
+    </>
+  );
+  const caixa = { gap: D.folga, padding: D.folga / 2 };
+  if (!aoTocar) return <span className="inline-flex flex-col items-center" style={caixa} title={titulo || undefined}>{miolo}</span>;
+  return (
+    <button type="button" onClick={aoTocar} aria-pressed={ganhou} title={titulo || undefined}
+      aria-label={`${rotulo} ${valor}${linha ? ", " + linha : ""}`}
+      className="tv-disco inline-flex flex-col items-center rounded-xl" style={caixa}>{miolo}</button>
   );
 }

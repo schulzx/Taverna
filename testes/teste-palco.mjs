@@ -301,8 +301,11 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
         inline passava por cima do `hidden` e, com um prazo, a barra de PV
         encolhia a 3 px e a de PM ficava nos 56 (`mente/v4-jogo.md` §0). A
         barra do PM morreu: o PM é número, e no telefone empilha-se com a bolsa. */
-  t("a vida do herói tem comprimento de arco, e ele sai da tabela", /tamanho=\{ANEL\.heroi\}/.test(APP) && ANEL_HEROI_NA_TABELA);
-  t("e o PM só aparece quando conta", /pm=\{comPM \? personagem\.mana : null\}/.test(APP) && /function oPMConta\(pers\)/.test(APP));
+  /* AAA · 4 (05/11), movida: o anel da cinta saiu com ela; a vida do herói é a gema PV da
+     carta, e o tamanho da carta sai da tabela (HUD_DA_MESA), nunca de um número no style. */
+  t("a vida do herói está à vista, e o tamanho sai da tabela", /escala=\{esc\.heroi\}/.test(readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8")) && ANEL_HEROI_NA_TABELA);
+  /* AAA · 4, movida: o PM é a gema da carta, com a mesma condição */
+  t("e o PM só aparece quando conta", /comPMDoHeroi=\{oPMConta\(personagem\)\}/.test(APP) && /function oPMConta\(pers\)/.test(APP));
   t("o PM não tem barra em lado nenhum da cinta", !/BarraDeRecurso/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")));
   t("não sobrou barra de largura fixa sem escape", !/flex flex-col gap-1 w-\[110px\] md:w-\[140px\]/.test(APP));
 }

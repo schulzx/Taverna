@@ -237,13 +237,17 @@ t("B4: o mural não prega trabalho de quem já tem trabalho ATIVO comigo",
   comigoB4("ativa") === false && comigoB4("concluida") === true);
 t("B5: a oferta do chão só existe na cena onde a coisa caiu",
   /if \(noChao && chao && chao\.cena && chao\.cena !== cenaDoChao\(\)\) noChao = 0;/.test(APP));
-const trilho = corpoDe("function TrilhoAbas(", "\n}\n");
+/* AAA · 4 (05/11): o trilho saiu — no lugar dele, os objetos da mesa (formas.md §AAA §13).
+   As asserções de B6 passam a ler quem herdou a lei: a marca acende NA PORTA DA COISA. */
+const trilho = corpoDe("const objetosDaMesa = (telefone) => {", "\n  };\n");
+const MESA_A1 = readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8");
 t("B6: o contador violeta de GESTÃO saiu do trilho e do alforje",
   !/nGrupo/.test(trilho) && !/contador: a\.id === "gestao"/.test(APP) && /contador: 0,/.test(APP));
 t("B6: o trilho acende a marca na porta da coisa (a forma da fita do alforje)",
-  /marcas\.includes\(aba\.id\)[\s\S]{0,200}?<MarcaDaPorta estado="novo" \/>/.test(trilho) && /<TrilhoAbas [^\n]*marcas=\{marcasDaPorta\}/.test(APP));
-t("B6: e o retrato só acende quando o trilho não está à vista",
-  /const trilhoAVista = useMesa\(\);\s*\n\s*const estadoDaPorta = aba \? "aberta" : \(marcasDaPorta\.length && !trilhoAVista\) \? "novo" : "porta";/.test(APP));
+  /novo=\{marcasDaPorta\.includes\(a\.id\)\}/.test(trilho) && /novo && !ativo \? \([\s\S]{0,200}?<MarcaDaPorta estado="novo" \/>/.test(MESA_A1));
+/* movida (AAA · 4): os objetos estão à vista nas duas larguras, logo o herói só acende pela Gestão, que não tem objeto */
+t("B6: e o retrato só acende pelo que não tem porta própria (a Gestão)",
+  /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP) && /\.filter\(\(a\) => a\.id !== "gestao"\)/.test(trilho));
 
 sec("8. B7 — o espólio e o chão vão para a mesa de batalha no fim");
 const tela = corpoDe("const telaDaBatalha = emBatalha ? (", ") : null;");
@@ -316,7 +320,8 @@ t("a missão que a porta do aceite abriu não acende o Diário (os dois aceites)
 t("o cabeçalho da batalha recebe o lugar da cena",
   /combate=\{combateNaTela\}\s*\n\s*lugar=\{lugarDaCena\(\)\}/.test(APP));
 t("o botão d'O TEMPO diz a hora cheia por extenso",
-  /aria-label=\{\["O tempo", horaCheiaFalada\(horaTxt\(minuto\)\)\]\.filter\(Boolean\)\.join\(", "\)\}/.test(APP)
+  /* AAA · 4: o botão d'O TEMPO é o painel HORA do ecrã; a fala vem do App como vinha */
+  /falaDaHora=\{\["O tempo", horaCheiaFalada\(horaTxt\(minuto\)\)\]\.filter\(Boolean\)\.join\(", "\)\}/.test(APP)
   && /return h === 1 \? "1 hora" : h \+ " horas";/.test(APP));
 /* (movido, T1-A 6.ª fatia: o `if (c) retratoDoFimRef.current = c;` de
    `notarFechoDaLuta` saiu do App para `notarOFecho`, no motor, que esta

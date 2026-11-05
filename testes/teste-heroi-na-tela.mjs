@@ -17,6 +17,8 @@
       o retrato do cabeçalho saiu — dois retratos da mesma pessoa na
       mesma tela eram duas verdades visuais. */
 
+/* AAA · 4: o herói da tela principal mora em painel-mesa-do-mestre.jsx */
+const APP_MESA = () => readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8");
 const S = "../src/";
 const { readFileSync } = await import("node:fs");
 const APP = readFileSync(S + "App.jsx", "utf8");
@@ -95,7 +97,10 @@ sec("2. O BLOCO SENTE — as três caras dele");
   /* V4: o herói é um `Anel` — o retrato e o arco moram na peça (ui.jsx), e o
      que se guarda é a mesma lei nos dois lados: a cinta passa ao anel a vida
      do herói, e o anel dá ao rosto o estado e ao arco a cor. */
-  t("o retrato reage pelo estado", /<Anel ente=\{personagem\} semente=\{sementeDe\(personagem\)\} vida=\{personagem\.vida\} vidaMax=\{vidaMax\}/.test(bloco) && /estado=\{estadoDe\(vida, vidaMax\)\}/.test(ANEL_TXT));
+  /* AAA · 4 (05/11), movida: a cinta saiu (o HUD B, formas.md §AAA §13) e o herói é a carta
+     de painel-mesa-do-mestre.jsx. A lei é a mesma: o rosto reage pelo estado, pela conta de sempre. */
+  const MESA_H = APP_MESA();
+  t("o retrato reage pelo estado", /estado = estadoDe\(vida, vidaMax\)/.test(MESA_H) && /<Retrato [^>]*estado=\{estado\} semCarta \/>/.test(MESA_H) && /estado=\{estadoDe\(vida, vidaMax\)\}/.test(ANEL_TXT));
   t("o anel avermelha na agonia", /stroke=\{estado === "grave" \? T\.danger : T\.amber\}/.test(ANEL_TXT));
   /* v9.170 (mesa-jogo-v2): a barra de vida passou a ser montada por tabela
      — as duas barras nascem do mesmo `map`, e a cor da agonia entra pelo
@@ -153,7 +158,8 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
      com a janela de reação aberta a porta não abre (nada com relógio fica
      atrás de uma porta, nos dois sentidos). A régua passa a exigir a guarda
      no sítio dela, em vez de a tolerar. */
-  t("e diz ao leitor de ecrã o que faz", /aria-label=\{nomeDaPorta\} aria-haspopup="dialog" aria-expanded=\{!!alforjeAberto\}/.test(APP));
+  /* AAA · 4, movida: o nome da porta passa à carta do herói (rotuloDoHeroi), que o diz e diz se está aberta */
+  t("e diz ao leitor de ecrã o que faz", /rotuloDoHeroi=\{nomeDaPortaAgora\}/.test(APP) && /aria-label=\{rotulo \|\| ente\.nome\}[^>]*aria-haspopup="dialog" aria-expanded=\{heroi \? !!aberta : undefined\}/.test(APP_MESA()));
   /* dentro de botão, o retrato não pode abrir carta — mesmo contrato do
      antigo atalho */
   /* v9.170: o retrato cresceu de 34 para 44 no redesenho. O que a lei
