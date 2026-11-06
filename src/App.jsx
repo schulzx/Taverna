@@ -61,6 +61,8 @@ import { genteParaPauta } from "./gente-por-dentro.js";
 import { soPergunta } from "./perguntas.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
+import { PainelMercado } from "./painel-mercado.jsx";
+import { PainelGrupo, SeletorCaminho } from "./painel-grupo.jsx";
 import { criarCondicao, limparPorDescanso, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
 import { ESCONDIDO, nascerEscondido, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
 import { luzDaLuta, aplicarGestoDaLuz } from "./luz.js";
@@ -1574,13 +1576,9 @@ function emTempo(minutos) {
    nos 56. Um arco não cede. A lição: *numa peça que cede, um `style` inline
    vence a classe que a devia esconder*.
 
-   V4 · O CARTÃO DO COMPANHEIRO, na sala Grupo: é aqui que o toque num anel
-   chega. Rola até ele e dá-lhe o foco — sem animar a rolagem (quem pediu
-   menos movimento não a tem, e quem não pediu não precisa dela). */
-function focarNoCartao(el) {
-  if (!el) return;
-  try { el.scrollIntoView({ block: "start" }); el.focus({ preventScroll: true }); } catch (e) { calou("abrir o grupo no cartão", e); }
-}
+   V4 · O CARTÃO DO COMPANHEIRO, na sala Grupo: o foco no cartão pedido mudou
+   de casa com o Grupo (AR5): é o `focarEm` de painel-grupo.jsx, sem animar a
+   rolagem, como antes. */
 
 /* ---------------- V4 · A CINTA COM OS ANÉIS — APOSENTADA EM AAA · 4 (05/11) ----------------
    A cinta de 48 px com os anéis do grupo, a pílula do tempo e os contadores
@@ -1769,132 +1767,9 @@ function primeiraLinhaDaProsa(texto) {
    forma de aba que já tinham. No telefone os três objetos vão na fila das
    cartas (objetosNaFila). */
 
-function CartaoMembro({ nome, subtitulo, nivel, vida, vidaMax, mana, manaMax, descricao, habilidades, ehVoce, semente, xpComp, vinculo, ficha = null, comparadoA = null }) {
-  const [verHabs, setVerHabs] = React.useState(false); // habilidades sob demanda — cartão limpo
-  return (
-    <div className="rounded-xl p-4" style={{ background: T.panelSoft, border: `1px solid ${ehVoce ? T.amber : T.line}` }}>
-      <div className="flex items-start gap-3">
-        <Retrato semente={semente || nome} ente={ficha || { nome, nivel, vida, vidaMax, semente }} tamanho={48} anel={ehVoce ? T.amber : T.line} estado={estadoDe(vida, vidaMax)} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className="tv-display text-xl leading-tight truncate" style={{ color: T.ink }}>{nome}</div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              {nivel != null && <span className="tv-mono text-[10px]" style={{ color: T.inkDim }}>NV {nivel}</span>}
-              {/* O PODER DE CADA UM (v9.116). No cartão, ao lado do nível,
-                  porque é aqui que o pedido queria: "saber se o personagem é
-                  fraco ou forte pra entrar no grupo". Um nível ao lado do
-                  outro não responde isso — dois níveis 12 podem valer três
-                  vezes um ao outro. */}
-              {ficha && (() => {
-                const pd = poderDe(ficha);
-                const meu = comparadoA ? poderDe(comparadoA).total : 0;
-                const frac = meu ? pd.total / meu : 1;
-                const cor = !comparadoA ? T.amber : frac >= 0.8 ? T.ok : frac >= 0.4 ? T.amberSoft : T.danger;
-                return (
-                  <span className="tv-mono text-[10px]" style={{ color: cor }}
-                    title={comparadoA
-                      ? `${contaDoPoder(pd)} — ${Math.round(frac * 100)}% do seu poder`
-                      : contaDoPoder(pd)}>
-                    ⚡ {formatarPoder(pd.total)}
-                  </span>
-                );
-              })()}
-              {ehVoce && <span className="tv-mono text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: T.amber, color: T.onAccent }}>Você</span>}
-            </div>
-          </div>
-          <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>{subtitulo}</div>
-        </div>
-      </div>
-      <div className="space-y-2 mt-3">
-        <BarraMini rotulo="PV" atual={vida} max={vidaMax} cor={T.amber} corBaixa={T.danger} />
-        {manaMax != null && <BarraMini rotulo="PM" atual={mana} max={manaMax} cor={T.violet} />}
-        {!ehVoce && xpComp != null && <BarraMini rotulo="XP" atual={xpComp} max={XP_POR_NIVEL(nivel || 1)} cor={T.ok} />}
-      </div>
-      {!ehVoce && vinculo != null && (() => {
-        const m = marcoDe(vinculo), prox = proximoMarco(vinculo);
-        return (
-          <div className="mt-2 rounded-lg px-2.5 py-2" style={{ background: T.panel, border: `1px solid ${T.line}` }}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: T.inkDim }}>Vínculo {m ? `${m.icone} ${m.nome}` : "· conhecido"}</span>
-              <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}>{vinculo}/{VINCULO_MAX}{prox ? ` → ${prox.icone} ${prox.nome} em ${prox.valor}` : " · máximo"}</span>
-            </div>
-            <div className="h-1 rounded-full overflow-hidden" style={{ background: T.panelSoft }}>
-              <div className="h-full rounded-full" style={{ width: `${vinculo}%`, background: T.violet }} />
-            </div>
-          </div>
-        );
-      })()}
-      {habilidades && habilidades.length > 0 && (
-        <div className="mt-2.5">
-          <button onClick={() => setVerHabs((v) => !v)} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px dashed ${T.line}`, color: T.violetSoft }}>
-            {verHabs ? "▾ ocultar habilidades" : `▸ ver habilidades (${habilidades.length})`}
-          </button>
-          {verHabs && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {habilidades.map((h, i) => (
-                <span key={i} className="tv-mono text-[9px] px-1.5 py-0.5 rounded" style={{ background: T.panel, color: T.violetSoft, border: `1px solid ${T.line}` }} title={h.descricao}>{h.nome}{h.custo != null ? ` · ${h.custo}PM` : ""}</span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      {descricao && <div className="tv-body text-xs mt-3" style={{ color: T.inkDim }}>{descricao}</div>}
-    </div>
-  );
-}
-
-function SeletorCaminho({ mundo, alvo, atual, acampado, trocarCaminho, fechar }) {
-  mundo = mundo || { genero: cenarioAtivo().generos.padrao };
-  const racasDisp = racasDoGenero(mundo.genero);
-  const ehFuturista = ["Ficção científica", "Cyberpunk", "Pós-apocalíptico"].includes(mundo.genero);
-  const [raca, setRaca] = React.useState(atual.raca || racasDisp[0].nome);
-  const [classe, setClasse] = React.useState(atual.classe || CLASSES[0].nome);
-  const [subclasse, setSubclasse] = React.useState(atual.subclasse || CLASSES[0].subclasses[0].nome);
-  const [profissao, setProfissao] = React.useState(atual.profissao || PROFISSOES[0].nome);
-  const cObj = classePorNome(classe);
-  const jaTinha = !!atual.classe;
-  const custo = jaTinha ? 80 : 20;
-  const campo = { background: T.panelSoft, border: `1px solid ${T.line}`, color: T.ink };
-  return (
-    <div className="rounded-xl p-3 mt-2" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-      <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.amberSoft }}>{jaTinha ? "Trilhar novo caminho" : "Definir caminho"} · {custo} moedas</div>
-      {!acampado ? (
-        <div className="tv-body text-xs" style={{ color: T.danger }}>⛺ Você precisa estar acampado. Feche a ficha, monte acampamento e volte aqui.</div>
-      ) : (
-        <div className="space-y-2">
-          <div>
-            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>{ehFuturista ? "Origem" : "Raça"}</div>
-            <select value={raca} onChange={(e) => setRaca(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {racasDisp.map((r) => <option key={r.nome} value={r.nome}>{racaNaFicha(mundo.lexico, r.nome, generoProprio(mundo))}</option>)}
-            </select>
-          </div>
-          <div>
-            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Classe</div>
-            <select value={classe} onChange={(e) => { setClasse(e.target.value); setSubclasse(classePorNome(e.target.value).subclasses[0].nome); }} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {CLASSES.map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
-            </select>
-          </div>
-          <div>
-            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Caminho</div>
-            <select value={subclasse} onChange={(e) => setSubclasse(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {(cObj?.subclasses || []).map((sc) => <option key={sc.nome} value={sc.nome}>{sc.nome}</option>)}
-            </select>
-          </div>
-          <div>
-            <div className="tv-mono text-[9px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>Profissão</div>
-            <select value={profissao} onChange={(e) => setProfissao(e.target.value)} className="w-full rounded-lg p-2 tv-body text-xs outline-none" style={campo}>
-              {PROFISSOES.map((pr) => <option key={pr.nome} value={pr.nome}>{profissaoNaFicha(mundo.lexico, pr.nome, generoProprio(mundo))}</option>)}
-            </select>
-          </div>
-          <button onClick={() => { trocarCaminho(alvo, { raca, classe, subclasse, profissao }); fechar(); }}
-            className="w-full rounded-lg py-2 tv-mono text-xs" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
-            Confirmar · {custo} moedas
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+/* AR5 (06/11) · O CartaoMembro e o SeletorCaminho saíram com o Grupo para
+   ./painel-grupo.jsx: o cartão virou a carta do companheiro, e o seletor
+   mora lá (o herói ainda o usa aqui, pela importação). */
 
 /* PainelDiario extraído para ./painel-diario.jsx (v8.8) */
 function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, grupoCheio, onDefinirRelacao, mortosBase = [], semente = "" }) {
@@ -2445,7 +2320,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
   const [abrirCaminho, setAbrirCaminho] = React.useState(null); // "eu" | nome do companheiro
-  const [confirmarRemover, setConfirmarRemover] = React.useState(null);
+  const [abaDaCarta, setAbaDaCarta] = React.useState(null); // AR5 · "ficha" | "equipamento": a porta do Grupo pediu a carta do companheiro
   const [subEscolhida, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
   /* AAA · na mesa, «O herói» é uma tela só (formas.md §AAA §2, 1280): as três
      colunas não cabem no alforje, então a carta abre por cima de tudo ao
@@ -2464,8 +2339,22 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
   const [heroiDispensado, setHeroiDispensado] = React.useState(false);
   React.useEffect(() => { setHeroiDispensado(false); }, [abaPedida, subEscolhida]);
   React.useEffect(() => {
-    try { if (bolsaPedida && bolsaPedida.nome) setInvDe(bolsaPedida.nome); } catch (e) { calou("a bolsa do companheiro", e); }
+    try { if (bolsaPedida && bolsaPedida.nome) { setInvDe(bolsaPedida.nome); setAbaDaCarta(null); } } catch (e) { calou("a bolsa do companheiro", e); }
   }, [bolsaPedida && bolsaPedida.selo]); // eslint-disable-line
+  /* AR5 (06/11) · O GRUPO saiu para painel-grupo.jsx. As duas portas da carta
+     do companheiro abrem a casa dele (AR1/AR3): «Abrir a bolsa» no boneco,
+     «Ver a ficha» na ficha. O toque num anel da mesa (subPedida) chega
+     ao Grupo como o nome a focar, enquanto o pedido está fresco. */
+  const abrirCartaDoCompanheiro = (qual) => (nome) => {
+    try { setInvDe(nome); setAbaDaCarta(qual); setSubGestao("ficha"); } catch (e) { calou("abrir a carta do companheiro pelo grupo", e); }
+  };
+  const propsDoGrupo = {
+    personagem, mundo, acampado,
+    trocarCaminho: (alvo, esc) => { try { trocarCaminho(alvo, esc); } catch (e) { calou("trocar o caminho pelo grupo", e); } },
+    removerDoGrupo: (nome) => { try { removerDoGrupo(nome); } catch (e) { calou("tirar do grupo", e); } },
+    aoAbrirBolsa: abrirCartaDoCompanheiro("equipamento"), aoVerFicha: abrirCartaDoCompanheiro("ficha"),
+    focarEm: subPedida && subPedida.alvo && Date.now() - (subPedida.selo || 0) < CINTA.pedidoFresco ? subPedida.alvo : null,
+  };
   /* R3: o pedido que vem da linha do sistema. Depende do SELO e não do
      nome — pedir "mural" duas vezes seguidas são dois pedidos, e um efeito
      que dependesse do nome só atenderia o primeiro. */
@@ -2494,7 +2383,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
       if (abaPedida) { setAbaVista(abaPedida); return undefined; }
       /* AR1 · fechada, a casa volta ao herói e à Ficha: a carta do herói abre
          sempre a ficha dele, nunca a sala ou a bolsa que se viu da última vez */
-      const tid = setTimeout(() => { setAbaVista(null); setInvDe("eu"); setSubGestao("ficha"); }, alforje && alforje.reduzido ? 0 : VEU.sai);
+      const tid = setTimeout(() => { setAbaVista(null); setInvDe("eu"); setSubGestao("ficha"); setAbaDaCarta(null); }, alforje && alforje.reduzido ? 0 : VEU.sai);
       return () => clearTimeout(tid);
     } catch (e) { calou("a saída do alforje", e); return undefined; }
   }, [abaPedida]); // eslint-disable-line
@@ -2917,188 +2806,12 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
         {/* MERCADO (v9.2): estoque e preço do sistema; a IA só narra a cena */}
         {aba === "gestao" && subGestao === "talentos" && !heroiNaMesa && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} onEscolherEspecializacao={onEscolherEspecializacao} onSubirAtributo={onSubirAtributo} onRespecAtributos={onRespecAtributos} />}
 
-        {aba === "gestao" && subGestao === "mercado" && (() => {
-          const bancas = mercadoAqui || [];
-          /* v9.150: o balcão de mantimentos é da CIDADE, e não de um
-             mercador. Os da praça são sorteados e podem não aparecer;
-             ração e água não são assim — qualquer lugar onde mora gente
-             tem as duas. Por isso ele é calculado antes do `return` que
-             fala das bancas, e sobrevive a ele. */
-          const balcao = balcaoAqui || [];
-          if (!bancas.length && !balcao.length) {
-            return <div className="tv-body text-sm italic text-center py-10" style={{ color: T.inkDim }}>Nenhuma banca por perto. Mercadores existem nas cidades — e, com sorte, numa carroça de estrada.</div>;
-          }
-          return (
-            <>
-              <div className="rounded-xl px-4 py-3 flex items-center justify-between" style={{ background: T.panelSoft, border: `1px solid ${T.amber}` }}>
-                <span className="tv-mono text-[10px] uppercase tracking-widest" style={{ color: T.inkDim }}>Sua bolsa</span>
-                <span className="tv-mono text-xl font-semibold" style={{ color: T.amber }}>◉ {personagem.moedas || 0}</span>
-              </div>
-              {/* ---------------- O BALCÃO DE MANTIMENTOS (v9.150) ----------------
-                  Primeiro na tela porque é o que se compra toda vez. O
-                  preço já vem com o motivo: ração a ◉2 numa vila agrícola
-                  no outono e a ◉9 numa fortaleza de montanha no inverno é
-                  o mesmo mundo, e o jogador precisa poder ver isso. */}
-              {balcao.length > 0 && (
-                <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                  <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Mantimentos {balcao[0] && balcao[0].porques.length ? `— ${balcao[0].porques.join("; ")}` : ""}</div>
-                  <div className="space-y-1.5">
-                    {balcao.map((s) => (
-                      <div key={s.id} className="flex items-center gap-2">
-                        <span className="text-base leading-none">{s.icone}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="tv-body text-sm" style={{ color: T.ink }}>{s.nome}</div>
-                          <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>{s.desc}</div>
-                        </div>
-                        {[1, 5].map((q) => (
-                          (s.id === "kit" && q > 1) ? null : (
-                            <button key={q} onClick={() => onComprarSuprimento && onComprarSuprimento(s.id, q)}
-                              disabled={(personagem.moedas || 0) < s.preco * q}
-                              className="tv-mono text-[10px] px-2 py-1 rounded-lg"
-                              style={{ border: `1px solid ${(personagem.moedas || 0) < s.preco * q ? T.line : T.amber}`, color: (personagem.moedas || 0) < s.preco * q ? T.inkDim : T.amberSoft }}>
-                              {q > 1 ? `${q}× ` : ""}◉ {s.preco * q}
-                            </button>
-                          )
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {/* v9.138: POR QUE O PREÇO É ESTE. O jogador que vê a poção a
-                  ◉ 90 numa serra e a ◉ 48 no porto precisa saber que não foi
-                  sorteio — se ele não souber, o mundo vira uma tabela. */}
-              {comercioAqui && (
-                <div className="rounded-xl px-4 py-2.5" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                  <div className="tv-body text-sm" style={{ color: T.ink }}>
-                    {cidadeMercado ? cidadeMercado.nome : "Aqui"} é <span style={{ color: T.amber }}>{comercioAqui.nome}</span> — {comercioAqui.o}.
-                  </div>
-                  <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>
-                    Sobra {comercioAqui.produz.map((g) => (generoPorId(g) || {}).nome).join(" e ")}
-                    {comercioAqui.falta.length ? `; falta ${comercioAqui.falta.map((g) => (generoPorId(g) || {}).nome).join(" e ")}` : ", e por aqui quase tudo passa"}.
-                  </div>
-                </div>
-              )}
-              {bancas.map((m) => (
-                <div key={m.id} className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                  <div className="tv-display text-lg" style={{ color: T.ink }}>{m.icone} {m.nome}</div>
-                  <div className="tv-body text-xs mb-2 italic" style={{ color: T.inkDim }}>{m.rotulo} — {m.desc}</div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="tv-mono text-[10px]" style={{ color: T.inkDim }} title="O que ele ainda tem na gaveta hoje — é o teto do que pode pagar por algo seu">gaveta ◉ {m.caixa}</span>
-                    {m.barganha ? (
-                      <span className="tv-mono text-[10px]" style={{ color: m.barganha.ok ? T.ok : T.danger }}>{m.barganha.ok ? "✓" : "✗"} {m.barganha.texto}</span>
-                    ) : (
-                      <button onClick={() => onPechinchar && onPechinchar(m.id)} className="tv-mono text-[10px] px-2 py-1 rounded-lg" style={{ border: `1px solid ${T.amberSoft}`, color: T.amberSoft }} title="Uma proposta por dia. Se ele se ofender, o preço sobe.">pechinchar</button>
-                    )}
-                  </div>
-                  {!m.estoque.length ? (
-                    <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Prateleiras vazias. Volte noutra semana.</div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      {m.estoque.map((it) => {
-                        const pode = (personagem.moedas || 0) >= it.preco;
-                        /* TREINO NA VITRINE (v9.14): armasRecomendadas e
-                           armadurasRecomendadas foram escritas junto do sistema
-                           de itens e nunca chegaram à tela. É aqui que servem —
-                           antes da compra, não depois de equipar e levar
-                           desvantagem. Marca, não bloqueia: quem quiser um mago
-                           de montante continua podendo comprar. */
-                        const treino = (() => {
-                          if (!["arma", "escudo", "armadura", "elmo", "botas"].includes(it.tipo)) return null;
-                          const cls = ranksDoPersonagem(personagem);
-                          const lista = it.tipo === "arma"
-                            ? Object.keys(cls).flatMap((c) => armasRecomendadas(c))
-                            : Object.keys(cls).flatMap((c) => armadurasRecomendadas(c));
-                          const f = fichaDoItem(it);
-                          if (!f || !f.cat) return null;
-                          return lista.some((x) => x.cat === f.cat);
-                        })();
-                        return (
-                          <div key={it.nome} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${treino === false ? T.danger : T.line}` }}>
-                            <div className="min-w-0 flex-1">
-                              <div className="tv-body text-sm truncate" style={{ color: T.ink }}>
-                                {it.nome}
-                                {treino === true && <span className="tv-mono text-[9px] ml-1" style={{ color: T.ok }} title="Você é treinado nisto">✓</span>}
-                                {treino === false && <span className="tv-mono text-[9px] ml-1" style={{ color: T.danger }} title="Sem treino: desvantagem ao usar, e magia travada se for armadura">⚠ sem treino</span>}
-                              </div>
-                              <div className="tv-mono text-[9px] uppercase tracking-wider" style={{ color: RARIDADE_COR[it.raridade] || T.inkDim }}>
-                                {it.detalhe || (it.tipo === "curiosidade" ? "curiosidade" : `${(fichaDoItem(it) || {}).rotulo || SLOT_ROTULO[it.tipo] || it.tipo} · ${it.raridade}`)}
-                              </div>
-                              {linhaDoPreco(it.porques) && <div className="tv-body text-[10px] italic truncate" style={{ color: T.amberSoft }}>{linhaDoPreco(it.porques)}</div>}
-                            </div>
-                            <button onClick={() => onComprar && onComprar(m.id, it.nome)} disabled={!pode}
-                              className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0"
-                              style={{ background: pode ? T.amber : T.panelSoft, color: pode ? T.onAccent : T.inkDim, border: `1px solid ${T.amber}`, fontWeight: 600, opacity: pode ? 1 : 0.45 }}>
-                              ◉ {it.preco}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {/* VENDER: o que está na bolsa e na mochila vale metade */}
-              {(() => {
-                const vendaveis = [
-                  ...(personagem.equipamento || []).map((it) => ({ it, origem: "equipamento", nome: it.nome })),
-                  ...(personagem.inventario || []).map((raw) => ({ it: typeof raw === "string" ? { nome: raw } : raw, origem: "inventario", nome: typeof raw === "string" ? raw : (raw && raw.nome) || "item" })),
-                ];
-                if (!vendaveis.length) return null;
-                const agrupado = Object.values(vendaveis.reduce((acc, v) => {
-                  const k = `${v.origem}|${v.nome}`;
-                  if (!acc[k]) acc[k] = { ...v, qtd: 0 };
-                  acc[k].qtd++; return acc;
-                }, {}));
-                return (
-                  <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-                    <div className="tv-mono text-[10px] uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Vender — quem compra é quem lida com aquilo, e paga do que tem</div>
-                    <div className="space-y-1.5">
-                      {agrupado.slice(0, 30).map((v) => (
-                        <div key={`${v.origem}|${v.nome}`} className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: T.panel, border: `1px solid ${v.it && v.it.raridade ? (RARIDADE_COR[v.it.raridade] || T.line) : T.line}` }}>
-                          {/* v9.187 (`painel-mercado-v2`): A LINHA DE VENDA DIZ O
-                              QUE É. Ela mostrava só o nome — e a vitrine de
-                              compra, logo acima, mostra slot e raridade em cor.
-                              Quem tinha dois elmos, um comum e um lendário,
-                              vendia no escuro. Aqui é o único lugar do jogo em
-                              que um clique tira um item da mochila para sempre;
-                              a ficha e a cor da raridade são o que separa
-                              "vendi o ferro velho" de "vendi a Coroa". */}
-                          <span className="flex-1 min-w-0">
-                            <span className="tv-body text-sm block truncate" style={{ color: T.ink }}>{v.nome}{v.qtd > 1 ? <span className="tv-mono text-[10px]" style={{ color: T.amberSoft }}> ×{v.qtd}</span> : null}</span>
-                            {v.it && v.it.raridade && (
-                              <span className="tv-mono text-[9px] uppercase tracking-wider block truncate" style={{ color: RARIDADE_COR[v.it.raridade] || T.inkDim }}>
-                                {(fichaDoItem(v.it) || {}).rotulo || SLOT_ROTULO[v.it.tipo] || v.it.tipo} · {v.it.raridade}
-                              </span>
-                            )}
-                          </span>
-                          {(() => {
-                            /* v9.138: a etiqueta e o cofre saem da MESMA
-                               função. Antes o botão dizia um número que o
-                               mercador podia não ter — e o jogador só
-                               descobria depois de clicar. */
-                            const of = ofertaPor ? ofertaPor(v.it) : { valor: 0, quem: null, motivo: "" };
-                            return (
-                              <button onClick={() => onVender && onVender(v.nome, v.origem)} disabled={!of.quem}
-                                title={of.quem ? `${of.quem.nome} compra${linhaDoPreco(of.porques) ? ` — ${linhaDoPreco(of.porques)}` : ""}` : of.motivo}
-                                className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg shrink-0"
-                                style={{ border: `1px solid ${of.quem ? T.ok : T.line}`, color: of.quem ? T.ok : T.inkDim, opacity: of.quem ? 1 : 0.5 }}>
-                                {of.quem ? `vender ◉ ${of.valor}` : "ninguém compra"}
-                              </button>
-                            );
-                          })()}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="tv-body text-xs" style={{ color: T.inkDim }}>
-                As bancas renovam a mercadoria a cada semana. O preço sobe com o que falta a este lugar e desce com o que ele produz, muda com a estação, e encarece com o quanto você mesmo já levou daqui. Cada mercador ouve uma proposta por dia, e só paga até onde a gaveta dele alcança.
-              </div>
-            </>
-          );
-        })()}
+        {/* AR6 (06/11) · O MERCADO saiu daqui para painel-mercado.jsx: a banca, o
+            veredito antes do clique e a bolsa com o que pagam. As funções são as
+            de sempre (comprar, vender, pechinchar, o balcão); o preço continua a
+            vir do estoque e de ofertaPor. Na mesa abre em tela inteira (abaixo,
+            pelo caminho dos Talentos); aqui, na gaveta. */}
+        {aba === "gestao" && subGestao === "mercado" && !heroiNaMesa && <PainelMercado personagem={personagem} bancas={mercadoAqui || []} cidade={cidadeMercado} balcao={balcaoAqui || []} comercio={comercioAqui} ofertaPor={ofertaPor} onComprar={onComprar} onVender={onVender} onPechinchar={onPechinchar} onComprarSuprimento={onComprarSuprimento} />}
 
         {aba === "gestao" && subGestao === "guilda" && (
           <div className="mb-4">
@@ -3367,50 +3080,10 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           );
         })()}
 
-        {aba === "gestao" && subGestao === "grupo" && (
-          <>
-            {/* o cabeçalho de `painel-grupo-v2`: o ponto vivo antes do rótulo.
-                A contagem fica, porque ela responde a pergunta que o desenho
-                não faz — quantos cabem ainda. */}
-            <div className="flex items-center gap-2">
-              <span className="rounded-full shrink-0" style={{ width: 6, height: 6, background: T.violetSoft }} />
-              <span className="tv-mono text-[10px] uppercase tracking-[1px]" style={{ color: T.violetSoft }}>
-                O grupo de aventura · {1 + (personagem.grupo || []).filter((g) => !g.invocada).length} de {1 + MAX_COMPANHEIROS}
-              </span>
-            </div>
-            <CartaoMembro nome={personagem.nome} subtitulo={personagem.conceito} nivel={personagem.nivel} vida={personagem.vida} vidaMax={personagem.vidaMax} mana={personagem.mana} manaMax={personagem.manaMax} habilidades={personagem.habilidades} semente={sementeDe(personagem)} ficha={personagem} ehVoce />
-            {(personagem.grupo || []).length === 0 ? (
-              <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Você viaja sozinho — por enquanto. Aliados podem se juntar a você.</div>
-            ) : (personagem.grupo || []).map((m, i) => (
-              <div key={i} data-membro={m.nome} tabIndex={-1} style={{ scrollMarginTop: FOCO_NA_GAVETA }} ref={subPedida && subPedida.alvo === m.nome && Date.now() - (subPedida.selo || 0) < CINTA.pedidoFresco ? focarNoCartao : undefined}>
-                {/* v9.184: o PM do companheiro entrou. Ele SEMPRE existiu —
-                    `companheiros.js` dá manaMax a todo mundo, o Mestre recebe
-                    "12/16 PM" na linha do prompt, e as habilidades dele cobram
-                    PM — mas este cartão passava só vida, e a barra de mana só
-                    aparece quando `manaMax` chega. Quem comandava o grupo não
-                    tinha como saber se o curandeiro ainda podia curar. */}
-                <CartaoMembro nome={m.nome} subtitulo={[m.conceito, m.classe, m.subclasse].filter(Boolean).join(" · ")} nivel={m.nivel} vida={m.vida} vidaMax={m.vidaMax} mana={m.mana} manaMax={m.manaMax} descricao={m.descricao} habilidades={m.habilidades} semente={sementeDe(m)} xpComp={m.xp || 0} vinculo={m.vinculo ?? VINCULO_INICIAL} ficha={m} comparadoA={personagem} />
-                <div className="flex flex-wrap gap-1 mt-1">
-                  <button onClick={() => setAbrirCaminho(abrirCaminho === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
-                    {m.classe ? "⚔ trilhar novo caminho" : "⚔ definir caminho"}
-                  </button>
-                  <button onClick={() => setConfirmarRemover(confirmarRemover === m.nome ? null : m.nome)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>
-                    ✕ remover
-                  </button>
-                </div>
-                {confirmarRemover === m.nome && (
-                  <div className="rounded-lg p-2 mt-1 flex items-center justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.danger}` }}>
-                    <span className="tv-body text-xs" style={{ color: T.inkDim }}>Remover {m.nome} do grupo?</span>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => { removerDoGrupo(m.nome); setConfirmarRemover(null); }} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ background: T.danger, color: "#fff" }}>remover</button>
-                      <button onClick={() => setConfirmarRemover(null)} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>cancelar</button>
-                    </div>
-                  </div>
-                )}
-                {abrirCaminho === m.nome && <SeletorCaminho mundo={mundo} alvo={m.nome} atual={m} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
-              </div>
-            ))}
-          </>
+        {aba === "gestao" && subGestao === "grupo" && !heroiNaMesa && (
+          <LimiteDasFichas key="grupo-na-gaveta">
+            <PainelGrupo {...propsDoGrupo} />
+          </LimiteDasFichas>
         )}
 
         {aba === "inv" && GAVETAS_ANTIGAS.bolsa && (
@@ -3726,7 +3399,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           const seguro = (nome, fz) => () => { try { fz(); } catch (e) { calou(nome, e); } };
           const grupoAqui = (personagem.grupo || []).filter((g) => g && g.nome);
           const comp = invDe !== "eu" ? grupoAqui.find((g) => g.nome === invDe) || null : null;
-          const daBolsa = aba === "inv" || !!comp;
+          const daBolsa = abaDaCarta && comp ? abaDaCarta === "equipamento" : aba === "inv" || !!comp;
           const pessoas = [{ id: "eu", rotulo: personagem.nome || "Você" }, ...grupoAqui.map((g) => ({ id: g.nome, rotulo: g.nome }))];
           const portas = abertasAqui.filter((x) => x.id !== "ficha").map((x) => ({ id: x.id, rotulo: x.rotulo }));
           const abrirPorta = (id) => {
@@ -3874,6 +3547,40 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             </div>
           );
         } catch (e) { calou("os talentos por cima", e); return null; }
+      })()}
+      {(() => {
+        try {
+          /* AR6 (06/11) · O MERCADO EM TELA INTEIRA, pelo caminho dos Talentos:
+             a 1905 cabem as bancas à esquerda, a banca ao meio e o veredito
+             fixo à direita. O «Fechar» (e o Esc) devolve à mesa. */
+          if (!(aba === "gestao" && subGestao === "mercado" && heroiNaMesa)) return null;
+          const fecharMercado = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar o mercado", e); } };
+          return (
+            <div role="dialog" aria-modal="true" aria-label="Mercado" className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+              style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
+              <LimiteDasFichas key="mercado-na-mesa" reserva={<button onClick={fecharMercado} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
+                <PainelMercado personagem={personagem} bancas={mercadoAqui || []} cidade={cidadeMercado} balcao={balcaoAqui || []} comercio={comercioAqui} ofertaPor={ofertaPor} onComprar={onComprar} onVender={onVender} onPechinchar={onPechinchar} onComprarSuprimento={onComprarSuprimento} aoFechar={fecharMercado} />
+              </LimiteDasFichas>
+            </div>
+          );
+        } catch (e) { calou("o mercado por cima", e); return null; }
+      })()}
+      {(() => {
+        try {
+          /* AR5 (06/11) · O GRUPO EM TELA INTEIRA, pelo mesmo caminho dos Talentos:
+             a 1905 as cartas ficam lado a lado. O «Fechar» (e o Esc) fecha tudo
+             e devolve à mesa; as portas da carta abrem a casa do companheiro. */
+          if (!(aba === "gestao" && subGestao === "grupo" && heroiNaMesa)) return null;
+          const fecharGrupo = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar o grupo", e); } };
+          return (
+            <div role="dialog" aria-modal="true" aria-label="O grupo" className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+              style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
+              <LimiteDasFichas key="grupo-na-mesa" reserva={<button onClick={fecharGrupo} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
+                <PainelGrupo {...propsDoGrupo} aoFechar={fecharGrupo} />
+              </LimiteDasFichas>
+            </div>
+          );
+        } catch (e) { calou("o grupo por cima", e); return null; }
       })()}
     </>
   );
@@ -22749,7 +22456,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      e por isso ele também sabe QUANTO se perdeu, que o bloco não sabia. */
   /* V4 · O TOQUE NUM COMPANHEIRO abre a sala Grupo NO CARTÃO DELE (o `jogo`,
      §2): a mesma porta de `abrirPortaDoSistema`, com o nome de quem abrir.
-     O cartão rola até ele e ganha o foco (`focarNoCartao`). Com a janela de
+     O cartão rola até ele e ganha o foco (`focarEm`, painel-grupo). Com a janela de
      reação aberta não abre — nada com relógio fica atrás de uma porta. */
   const abrirCompanheiro = (nome) => {
     try {
@@ -24343,7 +24050,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       return [...naOrdem, ...resto].map((a) => (
         <ObjetoDaMesa key={a.id} id={a.id} rotulo={a.rotulo} telefone={telefone} Glifo={GLIFO_DA_ABA[a.id]}
           ativo={aba === a.id} novo={marcasDaPorta.includes(a.id)}
-          legenda={a.id === "inv" ? ((personagem && personagem.moedas) || 0) + " moedas" : ""}
+          legenda={a.id === "inv" ? (() => { const n = (personagem && personagem.moedas) || 0; return n + (n === 1 ? " moeda" : " moedas"); })() : ""}
           aoTocar={() => { try { setAba(aba === a.id ? null : a.id); } catch (e) { calou("abrir um objeto da mesa", e); } }} />
       ));
     } catch (e) { calou("os objetos da mesa", e); return null; }

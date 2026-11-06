@@ -24,6 +24,28 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 06/11 · Fase AR, AR5 e AR6 · o Grupo e o Mercado
+- **o Grupo (agente `aprendiz`, `painel-grupo.jsx`, suíte 69/69):**
+  - saiu do `App.jsx`. Tem cartas grandes com a moldura do companheiro, PV e PM, o vínculo com os quatro marcos e «Sabe fazer» com o nó da árvore;
+  - as portas «Abrir a bolsa de X» e «Ver a ficha»;
+  - «Tirar do grupo» com o veredito antes;
+  - nenhuma ação se perdeu; o cartão do herói saiu, porque o herói vive na ficha.
+- **o Mercado (agente `oficial`, `painel-mercado.jsx`, suíte 61):**
+  - saiu do `App.jsx` (184 linhas). Tem as peças no encaixe da raridade e, antes de comprar, a comparação com o que o herói veste, as moedas antes e depois, o porquê do preço e o tempo de vestir;
+  - a bolsa do herói com o que pagam aqui; a pechincha com o preço de falhar;
+  - o painel não calcula preço: vem de `ofertaPor` e do estoque;
+  - visto ao vivo a 1905 e a 375 (comprar, vender e pechinchar).
+- **bastão:** o `aprendiz` editou o `App.jsx` sem criar o bastão. O `oficial` notou-o, esperou, e aplicou o seu patch sem pisar o dele. **Registo para a mesa:** o bastão é para toda a edição do `App.jsx`, mesmo as curtas.
+- **eu:** «Bolsa, 1 moedas» passou a singular, e a `teste-hud-da-mesa` mudou com o motivo.
+- **para o `desenho` e o sistema:**
+  - a capacidade da bolsa do companheiro;
+  - o glifo do grupo no cabeçalho;
+  - os ícones das bancas (ainda emoji);
+  - «Comprar e vestir» (regra nova);
+  - o que paga ESTE mercador (pedido ao sistema);
+  - a tabela dos custos do caminho (80/20 escritos à mão);
+  - as duas `LinhaDaComparacao`.
+
 ## 06/11 · Fase AR, AR4 · os Talentos, a alma do jogo
 - **a palavra:** «principalmente as abas grupo e talentos (essa principalmente, já que é uma das almas do jogo, habilidades e magias…)».
 - **feito (agente `aprendiz`, ~300 mil tokens):**

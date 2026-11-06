@@ -93,8 +93,12 @@ sec("4. O BALCÃO É DA CIDADE, NÃO DE UM MERCADOR");
   /* A LINHA QUE MAIS IMPORTA NA COSTURA: o painel do Mercado abria com um
      `return` para "nenhuma banca por perto". Deixar o balcão atrás dele
      seria não tê-lo justamente na vila pequena onde ele mais importa. */
-  t("o painel não morre por falta de banca", /if \(!bancas\.length && !balcao\.length\)/.test(APP));
-  t("e o balcão é calculado antes disso", APP.indexOf("const balcao = balcaoAqui || \[\]") < APP.indexOf("if (!bancas.length && !balcao.length)") || /const balcao = balcaoAqui/.test(APP));
+  /* MOVIDA (06/11, AR6), E O MOTIVO: o painel do Mercado saiu do App.jsx
+     para painel-mercado.jsx. A intenção é a mesma: o recado «nenhuma banca»
+     só vale quando também não há balcão, e o balcão é lido antes dele. */
+  const PAINEL = readFileSync("../src/painel-mercado.jsx", "utf8");
+  t("o painel não morre por falta de banca", /const vazio = !lista\.length && !mant\.length;/.test(PAINEL));
+  t("e o balcão é calculado antes disso", PAINEL.indexOf("const mant = Array.isArray(balcao)") > 0 && PAINEL.indexOf("const mant = Array.isArray(balcao)") < PAINEL.indexOf("const vazio ="));
   /* a ordem da prateleira: o que acaba todo dia vem antes do que se
      compra uma vez na vida */
   t("a ordem começa pela ração", M.ORDEM_DO_BALCAO[0] === "racoes");

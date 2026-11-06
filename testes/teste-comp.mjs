@@ -66,13 +66,14 @@ console.log("\n[o PM do companheiro chega ao painel]");
   ok(c.mana != null, "e com mana de agora");
   /* o cartão só desenha a barra de mana quando manaMax chega — e chegava
      `undefined` para todo companheiro */
-  ok(/\{manaMax != null && <BarraMini rotulo="PM"/.test(APP), "o cartão desenha PM quando recebe manaMax");
-  ok(/nivel=\{m\.nivel\} vida=\{m\.vida\} vidaMax=\{m\.vidaMax\} mana=\{m\.mana\} manaMax=\{m\.manaMax\}/.test(APP),
-    "e o painel do grupo passa os dois");
-  /* o cabeçalho de `painel-grupo-v2`: o ponto vivo, e a contagem que o
-     desenho não faz */
-  ok(/O grupo de aventura · \{1 \+ \(personagem\.grupo \|\| \[\]\)\.filter\(\(g\) => !g\.invocada\)\.length\} de \{1 \+ MAX_COMPANHEIROS\}/.test(APP),
-    "o cabeçalho conta quantos cabem ainda");
+  /* movida (AR5, 06/11): o cartão saiu do App com o Grupo e virou a carta do
+     companheiro em painel-grupo.jsx, que lê a ficha inteira (c.mana, c.manaMax).
+     A intenção fica: o PM aparece quando o companheiro tem mana, e o cabeçalho
+     conta quantos lugares sobram. A prova renderizada mora em teste-grupo-ar. */
+  const GRUPO = readFileSync("../src/painel-grupo.jsx", "utf8");
+  ok(/\(Number\(c\.manaMax\) \|\| 0\) > 0 \? <BarraDaCarta rotulo="PM" atual=\{c\.mana\} max=\{c\.manaMax\}/.test(GRUPO), "a carta desenha PM quando o companheiro tem mana");
+  ok(/<PainelGrupo \{\.\.\.propsDoGrupo\}/.test(APP) && /personagem, mundo, acampado,/.test(APP), "e o painel do grupo recebe a ficha inteira");
+  ok(/const livres = Math\.max\(0, MAX_COMPANHEIROS - n\)/.test(GRUPO), "o cabeçalho conta quantos cabem ainda");
 }
 /* ---------------- A GUARDA DO COMPANHEIRO NA MESA (v9.232 · P2) ----------
    `decidirAcaoCompanheiro` já escolhe a guarda (a catraca que prova isso

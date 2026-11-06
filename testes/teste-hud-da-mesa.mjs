@@ -50,7 +50,9 @@ t("a Gestão vai para dentro da ficha: a carta do herói abre a casa do herói",
 t("o Códex e a Ascensão continuam na coluna da mesa (o resto das abas)", /const resto = telefone \? \[\] : abas\.filter/.test(APP));
 t("o toque num objeto abre a mesma gaveta (setAba)", /aoTocar=\{\(\) => \{ try \{ setAba\(aba === a\.id \? null : a\.id\); \}/.test(APP));
 t("o painel HORA abre O TEMPO", /aoAbrirTempo=\{\(\) => setTempoAberto\(\(v\) => !v\)\}/.test(APP));
-t("as moedas continuam à vista, na legenda da Bolsa", /a\.id === "inv" \? \(\(personagem && personagem\.moedas\) \|\| 0\) \+ " moedas"/.test(APP));
+/* MOVIDA em 06/11 (o «Bolsa, 1 moedas» que o oficial achou ao vivo): a legenda
+   ganhou o singular; a intenção fica — as moedas continuam à vista, na Bolsa */
+t("as moedas continuam à vista, na legenda da Bolsa", /a\.id === "inv" \? \(\(\) => \{ const n = \(personagem && personagem\.moedas\) \|\| 0; return n \+ \(n === 1 \? " moeda" : " moedas"\); \}\)\(\)/.test(APP));
 t("e toda a fiação nova está em try/catch", /calou\("os objetos da mesa", e\)/.test(APP) && /calou\("o lugar no ecrã do Mestre", err\)/.test(APP) && /calou\("o destino na carta", e\)/.test(APP));
 
 sec("5. os defeitos da v9.605 (a pessoa jogou a 1905 × 860, 05/11)");

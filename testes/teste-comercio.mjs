@@ -216,7 +216,11 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
      bolsa entrega */
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o botão de vender lê a oferta" provava `const of = ofertaPor ? ofertaPor(v.it) :` — a mesma linha que teste-mercado.mjs exige ("o valor continua vindo de ofertaPor"). A intenção — a etiqueta e o cofre saem da MESMA função — fica pela metade do cofre aqui, abaixo, e pela do botão lá. */
   t("e o cofre lê a mesma oferta", /const of = ofertaPor\(item\);/.test(APP));
-  t("sem comprador, o botão não mente", /\{of\.quem \? `vender ◉ \$\{of\.valor\}` : "ninguém compra"\}/.test(APP));
+  /* MOVIDA (06/11, AR6), E O MOTIVO: a venda mudou-se para painel-mercado.jsx.
+     A intenção fica: sem comprador, a peça da bolsa diz «não compra» e o
+     verbo de vender vem impedido, em vez de prometer um número. */
+  const PAINEL = semCom(readFileSync("../src/painel-mercado.jsx", "utf8"));
+  t("sem comprador, o botão não mente", /paga \? <>paga <Moedas n=\{oferta\.valor\} \/><\/> : "não compra"/.test(PAINEL) && /impedido="ninguém aqui compra"/.test(PAINEL));
   t("e a venda recusa em vez de inventar", /if \(!of\.quem\) \{ pushMsgs/.test(APP));
   /* a gaveta desce ao pagar */
   t("o que ele pagou sai da gaveta", /gastos\[of\.quem\.id\] = \{ dia: diaRef\.current, moedas: gastoHojeDe\(of\.quem\.id\) \+ valor \}/.test(APP));

@@ -30,7 +30,7 @@ import {
   NO_DE_TALENTO, LIGACAO, SELO_DE_PONTOS,
 } from "./estilo.js";
 import { tracoNaGrelha } from "./glifos.js";
-import { Glifo } from "./ui.jsx";
+import { Glifo, TextoComMoeda } from "./ui.jsx";
 
 const OURO = MOLDURA_POR_DEGRAU.ouro;
 const FERRO = MOLDURA_POR_DEGRAU.ferro;
@@ -355,7 +355,8 @@ export function LinhaDaComparacao({ rotulo, antes = null, depois, sinal = "igual
   return (
     <div className="flex items-baseline gap-3 tv-body" style={{ fontSize: TIPOS.rotulo }}>
       <span className="flex-1 min-w-0" style={{ color: T.inkMeio }}>{rotulo}</span>
-      <span className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: T.ink }}>{antes != null ? `${antes} → ${depois}` : depois}</span>
+      {/* AR6: a moeda desenha-se (o Mercado diz «◉ 168 → ◉ 48»), como no verbo */}
+      <span className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: T.ink }}><TextoComMoeda texto={antes != null ? `${antes} → ${depois}` : String(depois)} /></span>
       <span className="tv-mono shrink-0 text-right" aria-hidden="true" style={{ fontSize: TIPOS.maquina, color: cor, minWidth: TIPOS.maquina }}>{marca}</span>
     </div>
   );

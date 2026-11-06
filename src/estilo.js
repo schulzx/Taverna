@@ -1727,6 +1727,31 @@ export const CERIMONIA_DE_APRENDER = {
   reduzido: { dura: 160 },
 };
 
+/* O GRUPO (AR5 · formas.md §AR 4, §AR 6, §AR 7; 281:1947, 281:2439, 281:2922):
+   a carta do companheiro. `acende` é o losango do marco do vínculo que se
+   alcança com o Grupo aberto (§AR 7: 320 ms; no reduce, troca seca). */
+export const CARTA_DO_COMPANHEIRO = {
+  largura: { mesa: 400, telefone: 343 }, enchimento: { mesa: 20, telefone: 14 }, raio: 14,
+  retrato: { mesa: 1, telefone: 0.5 }, nomeNaPlaca: { mesa: 18 }, nome: { telefone: TIPOS.titulo },
+  barra: 8, marco: { lado: 11, alcancado: MOLDURA_POR_DEGRAU.ouro.meio, porAlcancar: T.panel },
+  sabeFazer: 3,
+  acende: { dura: 320 },
+};
+
+/* O MERCADO (§AR 4; 282:3205, 282:3534, 282:3839) — AR6, 06/11. A banca e
+   o veredito: as medidas de §AR 6, mais o que a tela acrescenta (o vão entre
+   as colunas, o enchimento dos cartões, o escolher de 120 ms de §AR 7, o
+   encaixe grande do veredito e quantas peças da bolsa ficam à vista). */
+export const MERCADO = {
+  mesa: { esquerda: 300, veredito: 420, colunas: 4, peca: 245 },
+  meia: { veredito: 380, colunas: 4, peca: 186 },
+  telefone: { colunas: 2, peca: 165 },
+  peca: { encaixe: ENCAIXE.lado, folga: 6, raio: 10 },
+  bolsa: { encaixe: 48, largura: 84 },
+  gaveta: GAVETA_DO_ENCAIXE,
+  vao: 16, enchimento: 16, raio: 14, escolher: 120, encaixeGrande: 72, bolsaAVista: 30,
+};
+
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
@@ -3072,6 +3097,10 @@ export const MOVIMENTO_CSS = `
 .tv-aprender-frase { animation: tvAprenderFrase ${CERIMONIA_DE_APRENDER.frase.dura + CERIMONIA_DE_APRENDER.frase.fica}ms ease-out ${CERIMONIA_DE_APRENDER.frase.de}ms both; }
 .tv-no-talento { transition: transform ${CERIMONIA_DE_APRENDER.toque.dura}ms ease-out; }
 .tv-no-talento:active { transform: scale(${CERIMONIA_DE_APRENDER.toque.escala}); }
+.tv-peca-banca { transition: transform ${ENCAIXE.pressionado.dura}ms ease-out, border-color ${MERCADO.escolher}ms ease-out, background-color ${MERCADO.escolher}ms ease-out; }
+.tv-peca-banca:active { transform: scale(${ENCAIXE.pressionado.escala}); }
+/* O GRUPO (AR5): o losango do marco acende quando o vínculo o alcança */
+.tv-marco-acende { animation: tvCerimoniaEsvai ${CARTA_DO_COMPANHEIRO.acende.dura}ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
@@ -3095,7 +3124,11 @@ export const MOVIMENTO_CSS = `
   .tv-aprender-menos { animation: none; opacity: 0; }
   .tv-no-talento { transition: none; }
   .tv-no-talento:active { transform: none; }
+  .tv-peca-banca { transition: none; }
+  .tv-peca-banca:active { transform: none; }
   .tv-aprender-reduzida { animation: tvCerimoniaEsvai ${CERIMONIA_DE_APRENDER.reduzido.dura}ms ease-out both; }
+  /* o marco do vínculo: troca seca */
+  .tv-marco-acende { animation: none; }
   /* a bandeja parada: o dado aparece já pousado, com o número final, e o
      veredito à vista. A saída é none, como a casa exige (check-formas D5c):
      as três classes pousam no estado final porque nenhuma começa invisível */

@@ -100,21 +100,27 @@ console.log("\n[a linha de venda diz o que é]");
 {
   const { readFileSync } = await import("node:fs");
   const semComentarios = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
-  const APP = semComentarios(readFileSync("../src/App.jsx", "utf8"));
-  const i = APP.indexOf("Vender — quem compra é quem lida com aquilo");
+  /* MOVIDA (06/11, AR6), E O MOTIVO: a venda saiu do App.jsx para
+     painel-mercado.jsx (a bolsa por baixo da banca e o veredito da venda).
+     A intenção é a mesma — quem vende vê o que a peça é, de que raridade, na
+     cor dela, e o valor sai de ofertaPor —, e agora lê-se lá. A cor e a
+     borda deixaram RARIDADE_COR pelo Encaixe da raridade (COR_DA_RARIDADE:
+     cor E forma, §AAA 3), que é a mesma peça da vitrine de compra. */
+  const PAINEL = semComentarios(readFileSync("../src/painel-mercado.jsx", "utf8"));
+  const i = PAINEL.indexOf("function VereditoDaVenda(");
   ok(i > 0, "a seção de venda existe");
-  const bloco = APP.slice(i, i + 2600);
-  ok(/\{\(fichaDoItem\(v\.it\) \|\| \{\}\)\.rotulo \|\| SLOT_ROTULO\[v\.it\.tipo\] \|\| v\.it\.tipo\} · \{v\.it\.raridade\}/.test(bloco),
+  const bloco = PAINEL.slice(i, PAINEL.indexOf("function Balcao(", i));
+  ok(/v\.it && v\.it\.raridade \? maiuscula\(v\.it\.raridade\) : "", rotuloDoTipo\(v\.it\)/.test(bloco),
     "a linha diz o que a peça é e de que raridade");
-  ok(/color: RARIDADE_COR\[v\.it\.raridade\] \|\| T\.inkDim/.test(bloco),
+  ok(/const cor = \(COR_DA_RARIDADE\[r\] \|\| COR_DA_RARIDADE\.comum\)\.cor;/.test(bloco) && /color: cor/.test(bloco),
     "na cor da raridade, a mesma tabela da vitrine de compra");
-  ok(/border: `1px solid \$\{v\.it && v\.it\.raridade \? \(RARIDADE_COR\[v\.it\.raridade\] \|\| T\.line\) : T\.line\}`/.test(bloco),
+  ok(/<Encaixe raridade=\{r\} icone=\{iconeDoItem\(v\.it, ICONES_DE_ITEM\)\}/.test(PAINEL.slice(PAINEL.indexOf("function PecaDaBolsa("))),
     "e a borda do cartão acende junto");
   /* NADA SABIDO É NADA MOSTRADO: consumível e componente não têm raridade,
      e a linha some em vez de escrever "undefined" */
-  ok(/\{v\.it && v\.it\.raridade && \(/.test(bloco), "e a linha some no item que não tem raridade");
+  ok(/\]\.filter\(Boolean\)\.join\(" · "\)/.test(bloco), "e a linha some no item que não tem raridade");
   /* a oferta continua saindo da MESMA função que o cofre lê */
-  ok(/const of = ofertaPor \? ofertaPor\(v\.it\) :/.test(bloco), "o valor continua vindo de ofertaPor");
+  ok(/ofertaPor \? ofertaPor\(it\) : null/.test(PAINEL) && /oferta=\{ofertaDe\(v\.it\)\}/.test(PAINEL), "o valor continua vindo de ofertaPor");
 }
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");
 process.exit(falhas ? 1 : 0);
