@@ -24,6 +24,22 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 06/11 · Fase AR, AR1 e AR3 · uma porta, uma tela, e a bolsa de cada um
+- **a palavra:** «as duas fazem as mesmas coisas mas de formas diferentes, algo não está batendo… "mais da bolsa" abre a bolsa antiga… não consigo acessar a bolsa dos personagens do grupo».
+- **feito (agente `oficial`):**
+  - a carta do herói e a Bolsa abrem a mesma tela, a `PainelFichaCarta`: a carta na Ficha, a Bolsa no Equipamento, e um Fechar volta à mesa;
+  - dentro da tela há duas filas, «de quem é» (o herói e cada companheiro) e «as outras salas» da Gestão;
+  - a carta de um companheiro abre o boneco e a mochila dele;
+  - as gavetas antigas saíram da vista sem apagar o código (`GAVETAS_ANTIGAS`);
+  - cada ação da bolsa antiga mora em «O que se leva» (`painel-bolsa-da-carta.jsx`): usar, o verbo do item, dar a…, desmontar, soltar, a bancada e a forja, a sintonia, e para o companheiro tirar, equipar, passar ao herói e desmontar.
+- **decisão média, contra R21 («a marca promete, o toque cumpre»):** a carta do herói abre sempre a ficha (`abrirOHeroi`). Abria o Diário quando a marca estava nele, que era o defeito de que a pessoa se queixou. Na mesa cada sala tem o seu objeto e a sua marca, por isso a novidade não se perde.
+- **prova viva (1905 e 375):** cada ação carregada ao vivo, menos a sintonia, porque não havia peça que a pedisse. Três suítes mudaram, com o motivo.
+- **para o `desenho`:**
+  - a forma de «O que se leva», e o toque no item da mochila a abrir a gaveta dele;
+  - a bancada e a forja ainda com a cara antiga;
+  - ícones e retratos nas duas filas;
+  - o Grupo a saltar para o cartão do companheiro.
+
 ## 05/11 · Fase SQ, SQ4 e SQ5 · o mural vai-se buscar, e a prova
 - **a palavra:** «o mural pode continuar em funcionamento gerando mini quests pra caso o player deseje upar… mas também tem que ser liberado a partir de um certo lvl».
 - **SQ4 (agente `frontend`):**

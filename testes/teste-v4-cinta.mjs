@@ -135,8 +135,12 @@ sec("4. a peça e a fiação");
   /* movida: o PM é a gema da carta (um número), e no herói só quando conta (oPMConta) */
   t("o PM é só número (nenhuma barra) e só quando conta", /comPMDoHeroi=\{oPMConta\(personagem\)\}/.test(APP) && /comPM \? <GemaDaCarta cor=\{H\.gemasDaCarta\.PM\}/.test(MESA) && !/BarraDeRecurso/.test(MESA));
   /* movida: a porta é a carta do herói — o mesmo abrirAPorta e o mesmo nome; a gota acende pela Gestão, que não tem objeto */
-  t("o herói continua sendo a porta do alforje, com o mesmo nome", /aoAbrirFicha=\{abrirAPorta\} rotuloDoHeroi=\{nomeDaPortaAgora\}/.test(APP) && /aria-haspopup="dialog"/.test(MESA) && /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP));
-  t("o toque num companheiro abre o Grupo no cartão dele", /setSubPedida\(\{ sub: "grupo", selo: Date\.now\(\), alvo: nome \}\);\s*setAba\("gestao"\);/.test(APP) && /data-membro=\{m\.nome\} tabIndex=\{-1\}/.test(APP) && /\? focarNoCartao : undefined/.test(APP));
+  /* movida (AR1, 06/11): a carta abre a casa do herói (abrirOHeroi), e o nome diz «a ficha e a bolsa» */
+  t("o herói abre a casa do herói, e diz o que abre", /aoAbrirFicha=\{abrirOHeroi\}/.test(APP) && /if \(aba === "gestao" \|\| aba === "inv"\) \{ setAba\(null\); return; \}\s*if \(janelaReacao\) return;\s*setSubPedida\(\{ sub: "ficha", selo: Date\.now\(\) \}\);\s*setAba\("gestao"\);/.test(APP) && /rotuloDoHeroi=\{\(personagem && personagem\.nome \? personagem\.nome \+ ", " : ""\) \+ "a ficha e a bolsa"\}/.test(APP) && /aria-haspopup="dialog"/.test(MESA) && /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP));
+  /* movida (AR1, 06/11): o toque num companheiro abre a BOLSA dele (o boneco e a
+     mochila, na casa única do herói) — a pessoa: «não consigo acessar a bolsa dos
+     personagens do grupo». O cartão no Grupo continua (focarNoCartao), a uma porta. */
+  t("o toque num companheiro abre a bolsa dele", /setBolsaPedida\(\{ nome, selo: Date\.now\(\) \}\);\s*setAba\("inv"\);/.test(APP) && /data-membro=\{m\.nome\} tabIndex=\{-1\}/.test(APP) && /\? focarNoCartao : undefined/.test(APP));
   t("e com a janela de reação aberta não abre", /const abrirCompanheiro = \(nome\) => \{\s*try \{\s*if \(janelaReacao\) return;/.test(APP));
   /* movida: nas cartas ninguém cede — a fila rola de lado; o que fica provado é que a conta não foi copiada para o App */
   t("nenhuma conta da cinta copiada no App, e a fila das cartas rola em vez de cortar", !/function repartirACinta/.test(APP) && /overflowX: "auto"/.test(MESA));

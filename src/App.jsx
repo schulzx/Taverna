@@ -273,6 +273,7 @@ import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, gara
 import { FichaVisual } from "./painel-ficha.jsx";
 /* AAA · 05/11: a ficha como carta (com o boneco do equipamento) e a cerimónia da subida */
 import { PainelFichaCarta } from "./painel-ficha-carta.jsx";
+import { BolsaDaCarta } from "./painel-bolsa-da-carta.jsx";
 import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
@@ -2430,7 +2431,16 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
 /* ---------------- CÓDEX: conquistas/títulos, bestiário e registros ----------------
    Tudo lido dos contadores do app — zero tokens, a IA nem sabe que existe. */
 /* PainelCodex extraído para ./painel-codex.jsx (v8.8) */
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null }) {
+/* AR1 (06/11) · AS GAVETAS ANTIGAS SAEM DA VISTA. A carta do herói e a
+   Bolsa abrem a mesma casa (PainelFichaCarta, por cima de tudo, nas duas
+   larguras), e o que só as gavetas antigas faziam mora agora nela: a ficha
+   antiga (perícias, condições) desce para «Perícias e detalhes», e a bolsa
+   antiga (usar, o verbo do item, dar, desmontar, soltar, a bancada, a
+   forja, a bolsa de cada companheiro) para BolsaDaCarta. Sai a porta, não
+   o código: voltar é pôr true aqui. */
+const GAVETAS_ANTIGAS = { ficha: false, bolsa: false };
+
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null, bolsaPedida = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2453,6 +2463,9 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
   const heroiNaMesa = useMesa();
   const [heroiDispensado, setHeroiDispensado] = React.useState(false);
   React.useEffect(() => { setHeroiDispensado(false); }, [abaPedida, subEscolhida]);
+  React.useEffect(() => {
+    try { if (bolsaPedida && bolsaPedida.nome) setInvDe(bolsaPedida.nome); } catch (e) { calou("a bolsa do companheiro", e); }
+  }, [bolsaPedida && bolsaPedida.selo]); // eslint-disable-line
   /* R3: o pedido que vem da linha do sistema. Depende do SELO e não do
      nome — pedir "mural" duas vezes seguidas são dois pedidos, e um efeito
      que dependesse do nome só atenderia o primeiro. */
@@ -2479,7 +2492,9 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
   React.useEffect(() => {
     try {
       if (abaPedida) { setAbaVista(abaPedida); return undefined; }
-      const tid = setTimeout(() => setAbaVista(null), alforje && alforje.reduzido ? 0 : VEU.sai);
+      /* AR1 · fechada, a casa volta ao herói e à Ficha: a carta do herói abre
+         sempre a ficha dele, nunca a sala ou a bolsa que se viu da última vez */
+      const tid = setTimeout(() => { setAbaVista(null); setInvDe("eu"); setSubGestao("ficha"); }, alforje && alforje.reduzido ? 0 : VEU.sai);
       return () => clearTimeout(tid);
     } catch (e) { calou("a saída do alforje", e); return undefined; }
   }, [abaPedida]); // eslint-disable-line
@@ -2494,6 +2509,65 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
      carta vê os dois: as peças por vestir primeiro (a gaveta do encaixe só
      pega estas), e o resto da mochila depois. Só leitura; o save não muda. */
   const heroiDaCarta = { ...personagem, inventario: [...equipDisponivel, ...(Array.isArray(personagem.inventario) ? personagem.inventario : [])] };
+  /* AR1 · a ficha antiga (perícias, poder, condições, passivos) e a forja
+     de essência: um elemento cada, mostrado na casa do herói */
+  const fichaAntiga = (
+    <FichaVisual
+      personagem={personagem} mundo={mundo} divindade={divindade} tituloAtivo={tituloAtivo}
+      tituloInfo={tituloDoHeroi(divindade, (famaInfo && famaInfo.pf && famaInfo.pf.rotulo) || "", patamarDe(personagem.nivel).nome)}
+      famaInfo={famaInfo} patamarNome={patamarDe(personagem.nivel).nome}
+      defesa={defesaDe(personagem)}
+      iniciativa={atributoEfetivo(personagem, "destreza")}
+      ataques={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
+      golpe={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1)}
+      proximo={proximoGanho(personagem.classe, personagem.nivel || 1)}
+      modDe={(id) => atributoEfetivo(personagem, id)}
+      penalidades={penalidadesAtivas(personagem, ranksDoPersonagem(personagem))}
+      proficiencias={proficienciasDoHeroi(personagem, ranksDoPersonagem(personagem))}
+      onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0} onAlternarPericia={onAlternarPericia}
+    />
+  );
+  const forjaDoHeroi = (
+    <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.amberSoft }}>⚒ Forja</div>
+        <div className="tv-mono text-[11px]" style={{ color: T.violetSoft }}>⚗ {personagem.essencia || 0} essência</div>
+      </div>
+      {!forjaAberta ? (
+        <>
+          <div className="tv-body text-[11px] mb-2" style={{ color: T.inkDim }}>Desmonte equipamentos (botão ⚒) para ganhar essência e forje peças novas, na hora.</div>
+          <button onClick={() => setForjaAberta(true)} className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>abrir a forja</button>
+        </>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <select value={forjaSlot} onChange={(e) => setForjaSlot(e.target.value)} className="flex-1 tv-mono text-[11px] rounded-lg px-2 py-2 outline-none" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }}>
+              {SLOTS_ORDEM.map((s) => <option key={s} value={s}>{SLOT_ROTULO[s] || s}</option>)}
+            </select>
+            <button onClick={() => setForjaAberta(false)} className="tv-mono text-[11px] px-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>✕</button>
+          </div>
+          {/* v9.99: RARIDADES_FORJAVEIS, e não RARIDADES. O único
+              existe na lista de raridades e não existe na tabela de
+              custos — de propósito —, e percorrer a lista errada
+              fazia `c` vir undefined na sexta volta e a forja
+              inteira morrer ao abrir. */}
+          {RARIDADES_FORJAVEIS.map((rar) => {
+            const c = CUSTO_FORJA[rar];
+            const okE = (personagem.essencia || 0) >= c.essencia, okM = (personagem.moedas || 0) >= c.moedas;
+            return (
+              <button key={rar} onClick={() => { forjar(forjaSlot, rar); }} disabled={!okE || !okM}
+                className="w-full rounded-lg px-3 py-2 flex items-center justify-between"
+                style={{ border: `1px solid ${RARIDADE_COR[rar] || T.line}`, color: RARIDADE_COR[rar] || T.ink, opacity: okE && okM ? 1 : 0.45 }}>
+                <span className="tv-mono text-[11px] font-semibold">{RARIDADE_ROTULO[rar]}</span>
+                <span className="tv-mono text-[10px]">⚗ {c.essencia}{c.moedas ? ` · ◉ ${c.moedas}` : ""}</span>
+              </button>
+            );
+          })}
+          <div className="tv-body text-[10px] italic" style={{ color: T.inkDim }}>O item forjado cai na mochila de equipamentos — equipe você ou passe para o grupo.</div>
+        </div>
+      )}
+    </div>
+  );
   return (
     <>
       {/* R21 · A MOLDURA É O ALFORJE (`painel-alforje.jsx`). No telefone é
@@ -2519,7 +2593,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           </div>
         )}
 
-        {aba === "gestao" && subGestao === "ficha" && (
+        {aba === "gestao" && subGestao === "ficha" && GAVETAS_ANTIGAS.ficha && (
           <>
             {/* AAA · O HERÓI COMO CARTA: a carta, os discos e o boneco do
                 equipamento. O equipar é o do App (duas mãos, regra do
@@ -2542,20 +2616,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             <details className="rounded-lg" open={!!(heroiNaMesa && heroiDispensado)} style={{ border: `1px solid ${T.line}` }}>
               <summary className="tv-anel-foco tv-mono cursor-pointer px-3 flex items-center" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, color: T.inkDim }}>Mais detalhes</summary>
               <div className="p-2">
-            <FichaVisual
-              personagem={personagem} mundo={mundo} divindade={divindade} tituloAtivo={tituloAtivo}
-              tituloInfo={tituloDoHeroi(divindade, (famaInfo && famaInfo.pf && famaInfo.pf.rotulo) || "", patamarDe(personagem.nivel).nome)}
-              famaInfo={famaInfo} patamarNome={patamarDe(personagem.nivel).nome}
-              defesa={defesaDe(personagem)}
-              iniciativa={atributoEfetivo(personagem, "destreza")}
-              ataques={ataquesPorTurno(personagem.classe, personagem.nivel || 1)}
-              golpe={resumoAcaoDeTurno(personagem.classe, personagem.nivel || 1)}
-              proximo={proximoGanho(personagem.classe, personagem.nivel || 1)}
-              modDe={(id) => atributoEfetivo(personagem, id)}
-              penalidades={penalidadesAtivas(personagem, ranksDoPersonagem(personagem))}
-              proficiencias={proficienciasDoHeroi(personagem, ranksDoPersonagem(personagem))}
-              onSubirAtributo={onSubirAtributo} pontosAtr={personagem.pontosAtr || 0} onAlternarPericia={onAlternarPericia}
-            />
+            {fichaAntiga}
               </div>
             </details>
             <div className="flex items-center gap-2 flex-wrap">
@@ -3349,7 +3410,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           </>
         )}
 
-        {aba === "inv" && (
+        {aba === "inv" && GAVETAS_ANTIGAS.bolsa && (
           <>
             {heroiDispensado ? <Botao corpo onClick={() => setHeroiDispensado(false)}>O inventário</Botao> : null}
             {(personagem.grupo || []).length > 0 && (
@@ -3590,46 +3651,8 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               </div>
             )}
 
-            {/* Forja — fabricação básica por código */}
-            <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.amberSoft }}>⚒ Forja</div>
-                <div className="tv-mono text-[11px]" style={{ color: T.violetSoft }}>⚗ {personagem.essencia || 0} essência</div>
-              </div>
-              {!forjaAberta ? (
-                <>
-                  <div className="tv-body text-[11px] mb-2" style={{ color: T.inkDim }}>Desmonte equipamentos (botão ⚒) para ganhar essência e forje peças novas, na hora.</div>
-                  <button onClick={() => setForjaAberta(true)} className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg" style={{ border: `1px solid ${T.amber}`, color: T.amberSoft }}>abrir a forja</button>
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <select value={forjaSlot} onChange={(e) => setForjaSlot(e.target.value)} className="flex-1 tv-mono text-[11px] rounded-lg px-2 py-2 outline-none" style={{ background: T.panel, color: T.ink, border: `1px solid ${T.line}` }}>
-                      {SLOTS_ORDEM.map((s) => <option key={s} value={s}>{SLOT_ROTULO[s] || s}</option>)}
-                    </select>
-                    <button onClick={() => setForjaAberta(false)} className="tv-mono text-[11px] px-2 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim }}>✕</button>
-                  </div>
-                  {/* v9.99: RARIDADES_FORJAVEIS, e não RARIDADES. O único
-                      existe na lista de raridades e não existe na tabela de
-                      custos — de propósito —, e percorrer a lista errada
-                      fazia `c` vir undefined na sexta volta e a forja
-                      inteira morrer ao abrir. */}
-                  {RARIDADES_FORJAVEIS.map((rar) => {
-                    const c = CUSTO_FORJA[rar];
-                    const okE = (personagem.essencia || 0) >= c.essencia, okM = (personagem.moedas || 0) >= c.moedas;
-                    return (
-                      <button key={rar} onClick={() => { forjar(forjaSlot, rar); }} disabled={!okE || !okM}
-                        className="w-full rounded-lg px-3 py-2 flex items-center justify-between"
-                        style={{ border: `1px solid ${RARIDADE_COR[rar] || T.line}`, color: RARIDADE_COR[rar] || T.ink, opacity: okE && okM ? 1 : 0.45 }}>
-                        <span className="tv-mono text-[11px] font-semibold">{RARIDADE_ROTULO[rar]}</span>
-                        <span className="tv-mono text-[10px]">⚗ {c.essencia}{c.moedas ? ` · ◉ ${c.moedas}` : ""}</span>
-                      </button>
-                    );
-                  })}
-                  <div className="tv-body text-[10px] italic" style={{ color: T.inkDim }}>O item forjado cai na mochila de equipamentos — equipe você ou passe para o grupo.</div>
-                </div>
-              )}
-            </div>
+            {/* Forja — fabricação básica por código (AR1: mora em forjaDoHeroi) */}
+            {forjaDoHeroi}
 
             {/* Bolsa (itens comuns) */}
             <div>
@@ -3689,27 +3712,112 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
       </Alforje>
       {(() => {
         try {
-          const porCima = !heroiDispensado && (aba === "inv" || (heroiNaMesa && aba === "gestao" && subGestao === "ficha"));
+          /* AR1 (06/11) · UMA CASA SÓ. A carta do herói (a Ficha) e a Bolsa
+             abrem esta mesma tela, nas duas larguras; o mesmo «Fechar»
+             devolve à mesa. Dentro dela: de quem é (o herói e cada
+             companheiro), as outras salas da Gestão, e por baixo do boneco o
+             que se leva com o verbo de cada coisa. */
+          const porCima = aba === "inv" || (aba === "gestao" && subGestao === "ficha");
           if (!porCima) return null;
-          const daBolsa = aba === "inv";
           const fecharTudo = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar a carta do herói", e); } };
+          const seguro = (nome, fz) => () => { try { fz(); } catch (e) { calou(nome, e); } };
+          const grupoAqui = (personagem.grupo || []).filter((g) => g && g.nome);
+          const comp = invDe !== "eu" ? grupoAqui.find((g) => g.nome === invDe) || null : null;
+          const daBolsa = aba === "inv" || !!comp;
+          const pessoas = [{ id: "eu", rotulo: personagem.nome || "Você" }, ...grupoAqui.map((g) => ({ id: g.nome, rotulo: g.nome }))];
+          const portas = abertasAqui.filter((x) => x.id !== "ficha").map((x) => ({ id: x.id, rotulo: x.rotulo }));
+          const abrirPorta = (id) => {
+            try {
+              setSubGestao(id);
+              if (aba !== "gestao" && al.aoEscolher) al.aoEscolher("gestao");
+            } catch (e) { calou("abrir uma sala da casa", e); }
+          };
+          const nomeDe_ = (raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "item");
+          const ehEquipRaw = (raw) => raw && typeof raw === "object" && raw.tipo && raw.raridade;
+          const notaDaPeca = (it) => [SLOT_ROTULO[it.tipo] || it.tipo, it.raridade, fichaDeCombateTexto(it)].filter(Boolean).join(" · ");
+          let carta = heroiDaCarta, linhas = [], sintonia = [], oficina = null;
+          let aoEquiparAqui = (item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } };
+          let aoDesequiparAqui = (slot) => { try { desequipar(slot); } catch (e) { calou("desequipar na carta", e); } };
+          try {
+            if (comp) {
+              const mochilaEquip = [...(comp.equipamento || []), ...(comp.inventario || []).filter(ehEquipRaw)];
+              const itensComuns = (comp.inventario || []).filter((raw) => !ehEquipRaw(raw));
+              carta = { ...comp, inventario: [...mochilaEquip, ...itensComuns] };
+              aoEquiparAqui = (item) => { try { equiparComp(comp.nome, item); } catch (e) { calou("equipar o companheiro na carta", e); } };
+              aoDesequiparAqui = (slot) => { try { desequiparComp(comp.nome, slot); } catch (e) { calou("desequipar o companheiro na carta", e); } };
+              const passar = "Passar a " + (personagem.nome || "você");
+              linhas = [
+                ...mochilaEquip.map((it, i) => ({ chave: "e" + i + it.nome, nome: it.nome, nota: notaDaPeca(it), descricao: it.descricao || "",
+                  acoes: [
+                    { id: "passar", rotulo: passar, fazer: seguro("passar do companheiro", () => transferirItem(comp.nome, "eu", "inventario", it.nome)) },
+                    ...((comp.equipamento || []).some((e) => e && e.nome === it.nome) ? [{ id: "desmontar", rotulo: "Desmontar", dica: "+" + essenciaDe(it) + " de essência", fazer: seguro("desmontar do companheiro", () => desmontarEquip(comp.nome, it.nome)) }] : []),
+                  ] })),
+                ...itensComuns.map((raw, i) => ({ chave: "c" + i + nomeDe_(raw), nome: nomeDe_(raw), descricao: (raw && typeof raw === "object" && raw.descricao) || "",
+                  acoes: [{ id: "passar", rotulo: passar, fazer: seguro("passar do companheiro", () => transferirItem(comp.nome, "eu", "inventario", nomeDe_(raw))) }] })),
+              ];
+            } else {
+              const destinos = grupoAqui.map((g) => g.nome);
+              const dar = (origem, nome) => (destinos.length ? { destinos, fazer: (d) => { try { transferirItem("eu", d, origem, nome); } catch (e) { calou("dar a um companheiro", e); } } } : null);
+              const pecas = equipDisponivel.map((it, i) => ({ chave: "e" + i + it.nome, nome: it.nome, nota: notaDaPeca(it), descricao: it.descricao || "",
+                acoes: [
+                  { id: "desmontar", rotulo: "Desmontar", dica: "+" + essenciaDe(it) + " de essência", fazer: seguro("desmontar na carta", () => desmontarEquip("eu", it.nome)) },
+                  { id: "soltar", rotulo: "Soltar", fazer: seguro("soltar peça na carta", () => descartarEquip(it.nome)) },
+                ], dar: dar("equipamento", it.nome) }));
+              const juntos = Object.values((Array.isArray(personagem.inventario) ? personagem.inventario : []).reduce((acc, raw) => {
+                const nome = nomeDe_(raw);
+                const descricao = raw && typeof raw === "object" ? (raw.descricao || "") : "";
+                if (!acc[nome]) acc[nome] = { nome, descricao, qtd: 0 };
+                if (descricao && !acc[nome].descricao) acc[nome].descricao = descricao;
+                acc[nome].qtd++; return acc;
+              }, {}));
+              const comuns = juntos.map((it, i) => {
+                const cons = comoConsumivel(it.nome);
+                const acao = !cons && onAcaoDeItem ? acaoDaBolsa(it.nome, it.descricao) : null;
+                return { chave: "c" + i + it.nome, nome: it.nome, qtd: it.qtd, icone: cons ? cons.icone : null, nota: cons ? descricaoCurta(cons) : "", descricao: it.descricao,
+                  acoes: [
+                    ...(cons && onUsarConsumivel ? [{ id: "usar", rotulo: "Usar", primario: true, dica: descricaoCurta(cons), fazer: seguro("usar na carta", () => onUsarConsumivel(it.nome)) }] : []),
+                    ...(acao ? [{ id: "verbo", rotulo: acao.rotulo, primario: true, dica: (verboPorId(acao.verbo) || {}).faz || "", fazer: seguro("o verbo do item na carta", () => onAcaoDeItem(it.nome, acao.verbo)) }] : []),
+                    { id: "soltar", rotulo: "Soltar", fazer: seguro("soltar na carta", () => descartarItem(it.nome)) },
+                  ], dar: dar("inventario", it.nome) };
+              });
+              linhas = [...comuns, ...pecas];
+              sintonia = Object.values(equipados).filter((it) => it && pedeSintonia(it)).map((it) => ({ nome: it.nome, ligado: estaSintonizado(personagem, it),
+                dica: "Você sustenta " + MAX_SINTONIA + " objetos de poder ao mesmo tempo. Enquanto um dorme, serve como aço e couro — e o Mestre não pode narrar a magia dele." }));
+              oficina = (
+                <>
+                  <PainelBancada bancada={bancada} despensa={despensa} onForjar={onForjar} bloqueado={bloqueado} />
+                  {forjaDoHeroi}
+                </>
+              );
+            }
+          } catch (e) { calou("a bolsa na carta", e); }
+          const bolsaAqui = (
+            <BolsaDaCarta itens={linhas} sintonia={sintonia} oficina={oficina}
+              moedas={comp ? null : (personagem.moedas || 0)} essencia={comp ? null : (personagem.essencia || 0)}
+              vazio={comp ? "Bolsos vazios. O que lhe der pela sua bolsa aparece aqui." : "Bolsos vazios — explore, negocie ou saqueie."} />
+          );
+          const detalhes = comp ? null : (
+            <details className="rounded-lg" style={{ border: "1px solid " + T.line }}>
+              <summary className="tv-anel-foco tv-mono cursor-pointer px-3 flex items-center" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, color: T.inkDim }}>Perícias e detalhes</summary>
+              <div className="p-2">{fichaAntiga}</div>
+            </details>
+          );
           /* na saída (o alforje desce em VEU.sai) a carta esbate-se no mesmo tempo, e não
              recebe toque: nunca reaparece a gaveta que estava por baixo */
           return (
-            <div role="dialog" aria-modal="true" aria-label={daBolsa ? "A bolsa" : "O herói"} className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+            <div role="dialog" aria-modal="true" aria-label={comp ? "A bolsa de " + comp.nome : daBolsa ? "A bolsa" : "O herói"} className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
               style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
               <div className="mx-auto max-w-6xl" style={{ padding: heroiNaMesa ? FICHA_CARTA.mesa.folga : FICHA_CARTA.folga }}>
-                <LimiteDasFichas key={daBolsa ? "carta-da-bolsa" : "carta-do-heroi-na-mesa"}>
-                  <PainelFichaCarta key={daBolsa ? "equipamento" : "ficha"} aba={daBolsa ? "equipamento" : "ficha"}
-                    personagem={heroiDaCarta} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
-                    aoEquipar={(item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } }}
-                    aoDesequipar={(slot) => { try { desequipar(slot); } catch (e) { calou("desequipar na carta", e); } }}
-                    aoSubirAtributo={onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("ponto na carta", e); } } : null}
+                <LimiteDasFichas key={"casa:" + (comp ? comp.nome : "eu")}>
+                  <PainelFichaCarta key={(daBolsa ? "equipamento" : "ficha") + ":" + (comp ? comp.nome : "eu")} aba={daBolsa ? "equipamento" : "ficha"}
+                    personagem={carta} companheiro={!!comp} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
+                    aoEquipar={aoEquiparAqui} aoDesequipar={aoDesequiparAqui}
+                    aoSubirAtributo={!comp && onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("ponto na carta", e); } } : null}
+                    pessoas={pessoas} quem={comp ? comp.nome : "eu"} aoTrocarQuem={(id) => { try { setInvDe(id); } catch (e) { calou("trocar de quem é a bolsa", e); } }}
+                    portas={portas} aoAbrirPorta={abrirPorta}
+                    detalhes={detalhes} bolsa={bolsaAqui}
                     aoFechar={fecharTudo} lex={lexicoMundo} />
                 </LimiteDasFichas>
-                <div className="flex flex-wrap items-center" style={{ gap: FICHA_CARTA.folga / 2, marginTop: FICHA_CARTA.folga }}>
-                  <Botao corpo onClick={() => setHeroiDispensado(true)}>{daBolsa ? "Mais da bolsa" : "Mais detalhes"}</Botao>
-                </div>
               </div>
             </div>
           );
@@ -5407,6 +5515,8 @@ export default function Taverna() {
      o estado inteiro para cá seria mover uma decisão de painel para o
      arquivo grande, que é o caminho oposto ao desta fase. */
   const [subPedida, setSubPedida] = useState(null);
+  /* AR1 · a bolsa de quem abrir (o toque na carta de um companheiro) */
+  const [bolsaPedida, setBolsaPedida] = useState(null);
   const [habAbertas, setHabAbertas] = useState(false);
   /* v9.16: o painel de heroísmo e a memória do último golpe recebido —
      é ela que dá janela ao gasto "Aguentar". Vive num ref porque não
@@ -22592,8 +22702,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const abrirCompanheiro = (nome) => {
     try {
       if (janelaReacao) return;
-      setSubPedida({ sub: "grupo", selo: Date.now(), alvo: nome });
-      setAba("gestao");
+      /* AR1 (06/11) · a carta do companheiro abre a casa dele — o boneco e
+         a mochila DELE —, e não mais o cartão no Grupo (que segue a uma
+         porta de distância, na fila das salas). A pessoa: «não consigo
+         acessar a bolsa dos personagens do grupo». */
+      setBolsaPedida({ nome, selo: Date.now() });
+      setAba("inv");
     } catch (e) { calou("abrir o grupo no companheiro", e); }
   };
 
@@ -24095,6 +24209,20 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      efeito 5 fecha o alforje quando o relógio chega, e isto não o deixa
      abrir enquanto o relógio corre. A forma da porta não muda; o toque só
      não abre (decisão do `regente`, R21). */
+  /* AR1 (06/11) · A CARTA DO HERÓI ABRE O HERÓI. Era a porta da novidade
+     (abrirAPorta: com a marca acesa abria o Diário ou a Bolsa), e a pessoa
+     tocava na imagem do personagem e caía noutra sala. Na mesa cada sala tem
+     já o seu objeto, com a sua marca; a carta passa a abrir sempre a casa do
+     herói (a Ficha), e com ela aberta fecha. A porta da novidade fica para
+     quem a chama. */
+  const abrirOHeroi = () => {
+    try {
+      if (aba === "gestao" || aba === "inv") { setAba(null); return; }
+      if (janelaReacao) return;
+      setSubPedida({ sub: "ficha", selo: Date.now() });
+      setAba("gestao");
+    } catch (e) { calou("abrir a casa do herói", e); }
+  };
   const abrirAPorta = () => {
     try {
       if (aba) { setAba(null); return; }
@@ -25721,7 +25849,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 comPMDoHeroi={oPMConta(personagem)}
                 destino={(() => { try { return garantirHeroismo(personagem); } catch (e) { calou("o destino na carta", e); return null; } })()}
                 fichaAberta={!!aba} fichaNova={marcasDaPorta.includes("gestao") && !aba}
-                aoAbrirFicha={abrirAPorta} rotuloDoHeroi={nomeDaPortaAgora}
+                aoAbrirFicha={abrirOHeroi} rotuloDoHeroi={(personagem && personagem.nome ? personagem.nome + ", " : "") + "a ficha e a bolsa"}
                 aoAbrirCompanheiro={abrirCompanheiro}
                 objetos={!trilhoAVista ? objetosDaMesa(true) : null} />
             </LimiteErro>
@@ -25740,7 +25868,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 inicial={telaDoMapa.inicial} aoPartir={partirPeloMapaVivo} aoFechar={() => setTelaDoMapa(null)} />
             </LimiteDoMapa>
           ) : null}
-          <LimiteErro><PainelLateral portaoFechado={portaoFechadoAgora()} subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} /></LimiteErro>
+          <LimiteErro><PainelLateral portaoFechado={portaoFechadoAgora()} subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} bolsaPedida={bolsaPedida} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

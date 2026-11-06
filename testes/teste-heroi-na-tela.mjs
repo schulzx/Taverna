@@ -152,14 +152,17 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
      promete, o toque cumpre); sem ela, `abaDaPorta` devolve `gestao`, que é
      a Ficha de sempre. E o nome deixou de ser fixo: diz o que a porta abre
      ("A ficha — há novo no diário") e que abre um diálogo. */
-  t("o alvo da cinta abre a ficha — ou a novidade — e alterna",
-    /aoAbrirFicha=\{abrirAPorta\}/.test(APP) && /if \(aba\) \{ setAba\(null\); return; \}\s*if \(janelaReacao\) return;\s*setAba\(abaDaPorta\(marcasDaPorta\)\)/.test(APP));
+  /* movida (AR1, 06/11): a carta do herói abre SEMPRE a casa do herói (a Ficha),
+     e não a novidade — a pessoa tocava na imagem do personagem e caía no Diário.
+     Cada sala tem o seu objeto na mesa, com a sua marca; a guarda do relógio fica. */
+  t("o alvo da cinta abre a ficha e alterna", /aoAbrirFicha=\{abrirOHeroi\}/.test(APP) && /if \(aba === "gestao" \|\| aba === "inv"\) \{ setAba\(null\); return; \}\s*if \(janelaReacao\) return;\s*setSubPedida\(\{ sub: "ficha", selo: Date\.now\(\) \}\);\s*setAba\("gestao"\);/.test(APP));
   /* R21 (regente): entre o "fecha" e o "abre" entrou a guarda do relógio —
      com a janela de reação aberta a porta não abre (nada com relógio fica
      atrás de uma porta, nos dois sentidos). A régua passa a exigir a guarda
      no sítio dela, em vez de a tolerar. */
   /* AAA · 4, movida: o nome da porta passa à carta do herói (rotuloDoHeroi), que o diz e diz se está aberta */
-  t("e diz ao leitor de ecrã o que faz", /rotuloDoHeroi=\{nomeDaPortaAgora\}/.test(APP) && /aria-label=\{rotulo \|\| ente\.nome\}[^>]*aria-haspopup="dialog" aria-expanded=\{heroi \? !!aberta : undefined\}/.test(APP_MESA()));
+  /* movida (AR1, 06/11): o nome diz o que a carta abre agora — a ficha e a bolsa */
+  t("e diz ao leitor de ecrã o que faz", /rotuloDoHeroi=\{\(personagem && personagem\.nome \? personagem\.nome \+ ", " : ""\) \+ "a ficha e a bolsa"\}/.test(APP) && /aria-label=\{rotulo \|\| ente\.nome\}[^>]*aria-haspopup="dialog" aria-expanded=\{heroi \? !!aberta : undefined\}/.test(APP_MESA()));
   /* dentro de botão, o retrato não pode abrir carta — mesmo contrato do
      antigo atalho */
   /* v9.170: o retrato cresceu de 34 para 44 no redesenho. O que a lei

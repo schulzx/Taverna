@@ -107,15 +107,39 @@ function Atributos({ p, aoSubirAtributo }) {
   );
 }
 
-function Vitais({ p }) {
+function Vitais({ p, comXP = true }) {
   const nivel = p.nivel || 1;
   let xpMax = 0;
   try { xpMax = XP_POR_NIVEL(nivel); } catch (e) { xpMax = 0; }
   return (
     <div className="flex flex-col" style={{ gap: FICHA_CARTA.folga * 0.75 }}>
       <Barra rotulo="PV" atual={p.vida} max={p.vidaMax} cor={T.danger} />
-      <Barra rotulo="PM" atual={p.mana} max={p.manaMax} cor={T.violet} />
-      <Barra rotulo="XP" atual={p.xp || 0} max={xpMax} cor={T.amber} />
+      {(Number(p.manaMax) || 0) > 0 || comXP ? <Barra rotulo="PM" atual={p.mana} max={p.manaMax} cor={T.violet} /> : null}
+      {comXP ? <Barra rotulo="XP" atual={p.xp || 0} max={xpMax} cor={T.amber} /> : null}
+    </div>
+  );
+}
+
+/* AR1 · AS PORTAS DA CASA. Uma fila de abas sublinhadas, a mesma forma das
+   abas Ficha/Equipamento do telefone: `itens` [{ id, rotulo }], `ativo`
+   (o id aceso, ou nada), `aoTocar(id)`. Serve duas filas: QUEM (o herói e
+   cada companheiro — a bolsa de cada um) e AS OUTRAS SALAS da Gestão
+   (Grupo, Talentos, Mercado…), que deixaram de ter tela à parte para o
+   herói e abrem daqui. Quebra em linhas: a mesa e o telefone cabem. */
+function Fila({ rotulo, itens, ativo = null, aoTocar, papel = "tablist" }) {
+  if (!Array.isArray(itens) || itens.length < 1) return null;
+  return (
+    <div role={papel} aria-label={rotulo} className="flex flex-wrap">
+      {itens.map((it) => {
+        const aceso = ativo != null && it.id === ativo;
+        return (
+          <button key={it.id} type="button" role={papel === "tablist" ? "tab" : undefined} aria-selected={papel === "tablist" ? aceso : undefined}
+            onClick={() => { try { if (aoTocar) aoTocar(it.id); } catch (e) { /* o App avisa */ } }}
+            className="tv-display tv-anel-foco" style={{ minHeight: ALVOS.piso, paddingLeft: FICHA_CARTA.folga / 2, paddingRight: FICHA_CARTA.folga / 2, fontSize: TIPOS.rotulo, color: aceso ? T.amber : T.inkDim, borderBottom: `2px solid ${aceso ? T.amber : T.line}` }}>
+            {it.rotulo}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -127,34 +151,59 @@ function Vitais({ p }) {
      PainelEquipamento;
    · aoSubirAtributo(attrId) — um ponto num atributo (o subirAtributo do App);
    · aoFechar — a seta do telefone e o «Fechar» da mesa;
-   · lex, limite (a mochila), aba ("ficha" | "equipamento", no telefone). */
-export function PainelFichaCarta({ personagem, emCombate = false, aoEquipar, aoDesequipar, aoSubirAtributo = null, aoFechar = null, lex = null, limite = null, aba = "ficha" }) {
+   · lex, limite (a mochila), aba ("ficha" | "equipamento", no telefone).
+   AR1 (06/11) · UMA CASA SÓ. A carta do herói e a Bolsa abrem esta tela, e
+   o que antes morava noutras gavetas entra por props (todas opcionais — sem
+   elas, a carta é a de sempre):
+   · companheiro — a carta é de um companheiro: sem XP, e os discos só se
+     ele os tem (o boneco e a mochila são os DELE, pelos aoEquipar do App);
+   · pessoas [{ id, rotulo }], quem, aoTrocarQuem(id) — de quem é a bolsa;
+   · portas [{ id, rotulo }], aoAbrirPorta(id) — as outras salas da Gestão;
+   · detalhes — o que a ficha antiga mostrava e a carta não (aba Ficha);
+   · bolsa — os itens com as suas ações e a bancada (aba Equipamento). */
+export function PainelFichaCarta({ personagem, emCombate = false, aoEquipar, aoDesequipar, aoSubirAtributo = null, aoFechar = null, lex = null, limite = null, aba = "ficha", companheiro = false, pessoas = null, quem = null, aoTrocarQuem = null, portas = null, aoAbrirPorta = null, detalhes = null, bolsa = null }) {
   const p = personagem || {};
   const mesa = useMesa();
   const [qual, setQual] = React.useState(aba === "equipamento" ? "equipamento" : "ficha");
   const ca = caDoHeroi(p);
+  const comDiscos = !companheiro || !!p.atributos;
   const equipamento = <PainelEquipamento personagem={p} emCombate={emCombate} aoEquipar={aoEquipar} aoDesequipar={aoDesequipar} limite={limite} lex={lex} />;
+  /* na mesa as três colunas são uma tela só; a Bolsa pousa a vista nos itens */
+  const daBolsa = React.useRef(null);
+  React.useEffect(() => {
+    try { if (mesa && aba === "equipamento" && bolsa && daBolsa.current && daBolsa.current.scrollIntoView) daBolsa.current.scrollIntoView({ block: "start" }); } catch (e) { /* sem rolar, segue */ }
+  }, []); // eslint-disable-line
+  const filas = (
+    <>
+      {Array.isArray(pessoas) && pessoas.length > 1 ? <Fila rotulo="De quem é a bolsa" itens={pessoas} ativo={quem} aoTocar={aoTrocarQuem} /> : null}
+      {Array.isArray(portas) && portas.length ? <Fila rotulo="As outras salas" papel="navigation" itens={portas} aoTocar={aoAbrirPorta} /> : null}
+    </>
+  );
+  const titulo = companheiro ? (p.nome || "O companheiro") : "O herói";
 
   if (mesa) {
     const M = FICHA_CARTA.mesa;
     return (
-      <section aria-label="O herói" className="flex flex-col" style={{ gap: FICHA_CARTA.folga }}>
+      <section aria-label={titulo} className="flex flex-col" style={{ gap: FICHA_CARTA.folga }}>
         <header className="flex items-center justify-between" style={{ borderBottom: `1px solid ${T.line}`, paddingBottom: FICHA_CARTA.folga / 2 }}>
-          <h2 className="tv-titulo uppercase" style={{ color: T.inkDim, fontSize: FICHA_CARTA.texto.nota, letterSpacing: "0.16em" }}>O herói</h2>
+          <h2 className="tv-titulo uppercase" style={{ color: T.inkDim, fontSize: FICHA_CARTA.texto.nota, letterSpacing: "0.16em" }}>{titulo}</h2>
           {aoFechar ? <Botao pequeno onClick={aoFechar}>Fechar</Botao> : null}
         </header>
+        {filas}
         <div className="grid items-start" style={{ gridTemplateColumns: M.colunas.join(" "), gap: M.folga }}>
           <div className="flex flex-col items-center" style={{ gap: FICHA_CARTA.folga }}>
             <CartaComPlaca p={p} largura={FICHA_CARTA.carta.mesa} lex={lex} />
             <LinhaDaMarca p={p} />
           </div>
           <div className="flex flex-col" style={{ gap: FICHA_CARTA.folga * 1.5 }}>
-            <Vitais p={p} />
-            <Atributos p={p} aoSubirAtributo={aoSubirAtributo} />
+            <Vitais p={p} comXP={!companheiro} />
+            {comDiscos ? <Atributos p={p} aoSubirAtributo={aoSubirAtributo} /> : null}
             {ca != null ? <p className="tv-mono" style={{ color: T.ink, fontSize: TIPOS.maquina }}>CA {ca}</p> : null}
           </div>
           <div style={{ borderLeft: `1px solid ${T.line}`, paddingLeft: M.folga / 2 }}>{equipamento}</div>
         </div>
+        {bolsa ? <div ref={daBolsa} style={{ borderTop: `1px solid ${T.line}`, paddingTop: FICHA_CARTA.folga }}>{bolsa}</div> : null}
+        {detalhes}
       </section>
     );
   }
@@ -166,23 +215,30 @@ export function PainelFichaCarta({ personagem, emCombate = false, aoEquipar, aoD
     </button>
   );
   return (
-    <section aria-label="O herói" className="flex flex-col" style={{ gap: FICHA_CARTA.folga }}>
+    <section aria-label={titulo} className="flex flex-col" style={{ gap: FICHA_CARTA.folga }}>
       <header className="flex items-center" style={{ gap: FICHA_CARTA.folga / 2 }}>
         {aoFechar ? <button type="button" onClick={aoFechar} aria-label="Voltar" className="tv-mono" style={{ minWidth: ALVOS.piso, minHeight: ALVOS.piso, color: T.ink }}>{"‹"}</button> : null}
         <h2 className="tv-titulo" style={{ color: T.ink, fontSize: TIPOS.titulo }}>{p.nome}</h2>
       </header>
+      {filas}
       <div role="tablist" className="flex">{aba_("ficha", "Ficha")}{aba_("equipamento", "Equipamento")}</div>
-      {qual === "equipamento" ? equipamento : (
+      {qual === "equipamento" ? (
+        <>
+          {equipamento}
+          {bolsa}
+        </>
+      ) : (
         <>
           <div className="flex items-start" style={{ gap: FICHA_CARTA.folga * 0.75 }}>
             <RostoNaMoldura personagem={p} tamanho="carta" aro={FICHA_CARTA.carta.telefone} lex={lex} />
             <div className="flex-1 min-w-0 flex flex-col" style={{ gap: FICHA_CARTA.folga * 0.75 }}>
               <QuemE p={p} tamanho={FICHA_CARTA.nome.telefone} />
-              <Vitais p={p} />
+              <Vitais p={p} comXP={!companheiro} />
             </div>
           </div>
           <LinhaDaMarca p={p} />
-          <Atributos p={p} aoSubirAtributo={aoSubirAtributo} />
+          {comDiscos ? <Atributos p={p} aoSubirAtributo={aoSubirAtributo} /> : null}
+          {detalhes}
         </>
       )}
     </section>

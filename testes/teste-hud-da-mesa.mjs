@@ -45,7 +45,8 @@ const ABAS = (APP.match(/const ABAS = (\[[^\n]*\]);/) || [])[1] || "";
 const ids = [...ABAS.matchAll(/id: "(\w+)"/g)].map((m) => m[1]);
 t("as abas de hoje lêem-se do App", ids.length >= 5 && ids.includes("gestao"));
 t("os objetos da §13 são abas que existem (bolsa = inv)", H.mesa.objetos.ordem.every((o) => ids.includes(o === "bolsa" ? "inv" : o)));
-t("a Gestão vai para dentro da ficha: a carta do herói abre a porta de sempre", /aoAbrirFicha=\{abrirAPorta\}/.test(APP) && /\.filter\(\(a\) => a\.id !== "gestao"\)/.test(APP));
+/* movida (AR1, 06/11): a carta do herói abre a casa do herói (abrirOHeroi), não a porta da novidade */
+t("a Gestão vai para dentro da ficha: a carta do herói abre a casa do herói", /aoAbrirFicha=\{abrirOHeroi\}/.test(APP) && /\.filter\(\(a\) => a\.id !== "gestao"\)/.test(APP));
 t("o Códex e a Ascensão continuam na coluna da mesa (o resto das abas)", /const resto = telefone \? \[\] : abas\.filter/.test(APP));
 t("o toque num objeto abre a mesma gaveta (setAba)", /aoTocar=\{\(\) => \{ try \{ setAba\(aba === a\.id \? null : a\.id\); \}/.test(APP));
 t("o painel HORA abre O TEMPO", /aoAbrirTempo=\{\(\) => setTempoAberto\(\(v\) => !v\)\}/.test(APP));
@@ -61,8 +62,25 @@ t("o App lê a mesa baixa da tabela, com a altura da janela", /alturaDaJanela < 
 /* os objetos iam parar à borda da tela: as margens automáticas saem da página e ficam por fora */
 t("os objetos encostam na página (as margens automáticas ficam por fora)", /width: parseInt\(HUD_DA_MESA\.mesa\.colunas\[2\], 10\), marginLeft: "auto"/.test(APP) && /width: parseInt\(HUD_DA_MESA\.mesa\.colunas\[2\], 10\), marginRight: "auto"/.test(APP));
 /* a Bolsa abria a gaveta antiga; o Fechar da carta só tirava a camada de cima */
-t("a Bolsa abre a carta do herói na aba do equipamento", /aba === "inv" \|\| \(heroiNaMesa && aba === "gestao"/.test(APP) && /aba=\{daBolsa \? "equipamento" : "ficha"\}/.test(APP));
-t("e o que a gaveta antiga tinha continua a uma porta («Mais da bolsa», «O inventário»)", /daBolsa \? "Mais da bolsa" : "Mais detalhes"/.test(APP) && />O inventário<\/Botao>/.test(APP));
+/* movida (AR1, 06/11): a casa abre-se nas DUAS larguras (antes o heroiNaMesa
+   separava o telefone, onde a carta vivia dentro da sub-aba da Gestão) — a pessoa
+   via duas telas para a mesma coisa */
+t("a Bolsa abre a carta do herói na aba do equipamento", /const porCima = aba === "inv" \|\| \(aba === "gestao" && subGestao === "ficha"\);/.test(APP) && /aba=\{daBolsa \? "equipamento" : "ficha"\}/.test(APP));
+/* movida (AR1, 06/11): a gaveta antiga já não fica a uma porta («Mais da bolsa»,
+   «Mais detalhes», «O inventário» abriam a tela velha). O que só ela fazia mora
+   agora na casa nova — cada ação com o seu leitor —, e as gavetas antigas saem
+   da vista por uma tabela, sem apagar o código («sai a porta, não o código») */
+t("as gavetas antigas saem da vista, por tabela", /const GAVETAS_ANTIGAS = \{ ficha: false, bolsa: false \};/.test(APP) && /aba === "inv" && GAVETAS_ANTIGAS\.bolsa &&/.test(APP) && /subGestao === "ficha" && GAVETAS_ANTIGAS\.ficha &&/.test(APP) && !/"Mais da bolsa"/.test(APP));
+t("o que a bolsa antiga fazia mora na casa nova: usar, o verbo, dar, desmontar, soltar, a bancada, a forja",
+  /<BolsaDaCarta itens=\{linhas\}/.test(APP) && /onUsarConsumivel\(it\.nome\)\) \}\]/.test(APP) && /onAcaoDeItem\(it\.nome, acao\.verbo\)/.test(APP)
+  && /transferirItem\("eu", d, origem, nome\)/.test(APP) && /desmontarEquip\("eu", it\.nome\)/.test(APP) && /descartarEquip\(it\.nome\)\)/.test(APP)
+  && /descartarItem\(it\.nome\)\)/.test(APP) && /<PainelBancada bancada=\{bancada\}[^\n]*\/>\s*\{forjaDoHeroi\}/.test(APP) && /detalhes=\{detalhes\} bolsa=\{bolsaAqui\}/.test(APP));
+t("a ficha antiga (perícias, condições) desce para dentro da carta", /<div className="p-2">\{fichaAntiga\}<\/div>/.test(APP) && /Perícias e detalhes/.test(APP));
+t("as outras salas da Gestão abrem de dentro da casa", /const portas = abertasAqui\.filter\(\(x\) => x\.id !== "ficha"\)/.test(APP) && /portas=\{portas\} aoAbrirPorta=\{abrirPorta\}/.test(APP) && /al\.aoEscolher\("gestao"\)/.test(APP));
+t("a casa de cada companheiro: o boneco e a mochila DELE, e a troca pelo «passar»",
+  /equiparComp\(comp\.nome, item\)/.test(APP) && /desequiparComp\(comp\.nome, slot\)/.test(APP) && /companheiro=\{!!comp\}/.test(APP)
+  && /transferirItem\(comp\.nome, "eu", "inventario", it\.nome\)/.test(APP) && /pessoas=\{pessoas\} quem=/.test(APP));
+t("fechada, a casa volta ao herói e à Ficha", /setAbaVista\(null\); setInvDe\("eu"\); setSubGestao\("ficha"\);/.test(APP));
 t("o Fechar da carta fecha tudo e devolve à mesa", /aoFechar=\{fecharTudo\}/.test(APP) && !/aoFechar=\{\(\) => setHeroiDispensado\(true\)\}/.test(APP) && /calou\("fechar a carta do herói", e\)/.test(APP));
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);
