@@ -149,8 +149,12 @@ sec("4. UM SAVE ANTIGO MOSTRA O NOME DO SISTEMA, SEM MIGRAÇÃO");
   t("e a ficha diz Humano", racaNaFicha(mundo.lexico, "Humano", generoProprio(mundo)) === "Humano");
   t("e a moeda continua escamas, a mesma de antes", nomeDaMoeda(mundo.lexico) === "escamas");
   t("a ficha lê pelo rótulo do sistema (cabeçalho e cartão)", (FICHA.match(/racaNaFicha\(\(mundo \|\| \{\}\)\.lexico, p\.raca, generoProprio\(mundo\)\)/g) || []).length === 2 && !/chamadoDaRaca/.test(FICHA));
-  t("a criação e o trocar caminho também (raça e profissão)", (APP.match(/racaNaFicha\(mundo\.lexico, r\.nome, generoProprio\(mundo\)\)/g) || []).length === 2
-    && (APP.match(/profissaoNaFicha\(mundo\.lexico, p?r?\.nome, generoProprio\(mundo\)\)/g) || []).length === 2 && !/chamadoDaRaca|chamadoDaProfissao/.test(APP));
+  /* MOVIDA em 06/11 (AR5: o Grupo saiu do App para painel-grupo.jsx): o trocar caminho
+     (SeletorCaminho) mora agora em painel-grupo.jsx. A criacao continua no App; a soma dos dois
+     arquivos da as mesmas 2 + 2 leituras de antes (raca e profissao, na criacao e no trocar caminho). */
+  const APP_E_GRUPO = APP + fs.readFileSync(new URL("../src/painel-grupo.jsx", import.meta.url), "utf8");
+  t("a criação e o trocar caminho também (raça e profissão)", (APP_E_GRUPO.match(/racaNaFicha\(mundo\.lexico, r\.nome, generoProprio\(mundo\)\)/g) || []).length === 2
+    && (APP_E_GRUPO.match(/profissaoNaFicha\(mundo\.lexico, p?r?\.nome, generoProprio\(mundo\)\)/g) || []).length === 2 && !/chamadoDaRaca|chamadoDaProfissao/.test(APP_E_GRUPO));
   t("a carta do grupo diz a raça do sistema", /const abaixo = \[ente\.raca, ente\.classe, ente\.subclasse\]/.test(CARTA) && !/chamadoDaRaca/.test(CARTA));
 }
 

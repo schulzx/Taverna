@@ -30,6 +30,11 @@ const { DADOS_DO_CENARIO_PADRAO } = await import("../src/cenario-padrao.js");
 const APP = readFileSync("../src/App.jsx", "utf8").replace(/\r\n/g, "\n");
 const UI = readFileSync("../src/ui.jsx", "utf8").replace(/\r\n/g, "\n");
 const E = await import("../src/estilo.js");
+/* MOVIDA em 06/11 (AR5: o Grupo saiu do App para painel-grupo.jsx): o painel do grupo levou um
+   recuo do genero padrao (mundo = mundo || { genero: ... }). A lei e a mesma - todo recuo e o
+   genero padrao do mundo em uso -, e muda so o arquivo: a conta soma o App e o painel. */
+const GRUPO_PNL = readFileSync("../src/painel-grupo.jsx", "utf8").replace(/\r\n/g, "\n");
+const APP_E_GRUPO = APP + GRUPO_PNL;
 const LUZ = await import("./conta-da-luz.mjs");
 
 let ok = 0, falhas = 0;
@@ -57,9 +62,9 @@ sec("1 · os recuos do App são o gênero padrão do mundo em uso");
     ["as missões", "genero: (mundo && mundo.genero) || " + P + ", lexico:", 1],
     ["o encontro na estrada", "rolarEncontro((mundo && mundo.genero) || " + P + ",", 1],
   ];
-  for (const [nome, ancora, n] of SITIOS) t(nome + " (" + n + ")", conta(APP, ancora) === n, "achei " + conta(APP, ancora));
+  for (const [nome, ancora, n] of SITIOS) t(nome + " (" + n + ")", conta(APP_E_GRUPO, ancora) === n, "achei " + conta(APP_E_GRUPO, ancora));
   const total = SITIOS.reduce((a, s) => a + s[2], 0);
-  t("são " + total + " recuos, e nenhum outro sítio lê o padrão por fora da conta", total === 12 && conta(APP, P) === total, "no App: " + conta(APP, P));
+  t("são " + total + " recuos, e nenhum outro sítio lê o padrão por fora da conta", total === 12 && conta(APP_E_GRUPO, P) === total, "no App + painel-grupo: " + conta(APP_E_GRUPO, P));
   /* e o que saiu do App está na peça do load: o recuo das tarefas antigas e o das casas (que no App era o generoMundo()) */
   const PECA_DO_LOAD = readFileSync(new URL("../src/abrir-o-save.js", import.meta.url), "utf8");
   t("os recuos do load estão na peça dele (as tarefas antigas e as casas)", conta(PECA_DO_LOAD, "genero: mw.genero || " + P + ",") === 1 && conta(PECA_DO_LOAD, "mundo.genero || " + P + ", mundo.lexico") === 1);

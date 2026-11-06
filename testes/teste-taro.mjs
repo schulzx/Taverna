@@ -139,7 +139,11 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      painel-mesa-do-mestre.jsx, com o ente. A conta soma esse arquivo e o total não muda:
      mudou o endereço, não a lei. */
   const MESA_T = semComentarios(CRU("painel-mesa-do-mestre.jsx"));
-  const entes = ((APP + BATALHA + MESA_T).match(/<(?:Retrato [^>]*\sente=|Anel ente=)\{/g) || []).length;
+  /* MOVIDA em 06/11 (AR5: o Grupo saiu do App para painel-grupo.jsx): a carta do companheiro
+     levou o retrato com o ente consigo. A conta soma esse arquivo e o total nao muda: mudou o
+     endereco, nao a lei. */
+  const GRUPO_T = semComentarios(CRU("painel-grupo.jsx"));
+  const entes = ((APP + BATALHA + MESA_T + GRUPO_T).match(/<(?:Retrato [^>]*\sente=|Anel ente=)\{/g) || []).length;
   /* v9.177: passaram a SETE. A sala redesenhada (`sala-multiplayer-v2`)
      mostra o retrato de quem já sentou, e ele veste o traje da classe como
      todos os outros — com `semCarta`, porque a cadeira inteira já é área de

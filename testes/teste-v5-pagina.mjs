@@ -170,8 +170,16 @@ sec("4. a fiação");
      maior do que a soma. O foco passa a sair da altura MEDIDA do cabeçalho
      (`--tv-cabecalho-da-gaveta`, escrita pela gaveta) + `respiroDoFoco`; os 92
      ficam como reserva antes da primeira medida. */
-  t("V4d · e o cartão pedido para abaixo dele, pela altura medida do cabeçalho",
-    /scrollMarginTop: FOCO_NA_GAVETA/.test(APP)
+  /* MOVIDA em 06/11 (AR5: o Grupo saiu do App para painel-grupo.jsx): o cartao do companheiro ja
+     nao mora na gaveta, e o focarNoCartao + scrollMarginTop: FOCO_NA_GAVETA do App morreram com
+     ele. O foco no cartao pedido e agora o focarEm de painel-grupo.jsx (data-membro +
+     scrollIntoView + focus sem rolar), ligado no App por focarEm:; o Grupo tem cabecalho proprio
+     e nao preso, entao nao ha tira de cartao sob titulo para compensar. A parte da gaveta (altura
+     medida do cabecalho, que o Alforje ainda usa) continua provada. */
+  const GRUPO_PNL = ler("../src/painel-grupo.jsx");
+  t("V4d · o cartão pedido do Grupo ganha o foco (focarEm, ligado no App), e o cabeçalho medido da gaveta segue",
+    /data-membro=\{c\.nome\}/.test(GRUPO_PNL) && /querySelector\(`\[data-membro=/.test(GRUPO_PNL) && /scrollIntoView\(/.test(GRUPO_PNL)
+    && !/sticky/.test(GRUPO_PNL) && /focarEm: subPedida && subPedida\.alvo/.test(APP)
     && FOCO_NA_GAVETA === `calc(var(--tv-cabecalho-da-gaveta, ${ALFORJE.focoAbaixoDoCabecalho - ALFORJE.respiroDoFoco}px) + ${ALFORJE.respiroDoFoco}px)`
     && /ref=\{medirCabecalho\}/.test(GAVETA) && /--tv-cabecalho-da-gaveta/.test(GAVETA) && /new ResizeObserver\(medir\)/.test(GAVETA));
 }
