@@ -135,7 +135,7 @@ habilidades e magias etc, também precisam ser chamativas e com elementos de jog
   a cerimónia de aprender. É a tela que a pessoa pôs primeiro.
 - [ ] **AR5 · o Grupo** : as cartas dos companheiros em grande, o vínculo, a classe, o que cada um sabe
   fazer, a bolsa de cada um (AR2).
-- [ ] **AR6 · o Mercado e as restantes** (Diário, Mapa, Códex, Ascensão, a casa): na linguagem da AAA
+- [ ] **AR6 · o Mercado e as restantes** (Mapa, Códex, Ascensão, a casa): na linguagem da AAA
   (os objetos, os encaixes, as raridades), uma por versão, a de mais uso primeiro.
 - [ ] **AR7 · a prova jogada**, a 1905 e no telefone: cada porta abre uma casa só, e nenhuma tela antiga
   sobra à vista.
