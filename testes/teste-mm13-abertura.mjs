@@ -685,8 +685,12 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   t("o painel do diário lê proximoPasso de abertura.js", diario.includes('import { proximoPasso } from "./abertura.js";'));
   t("só a missão principal fala em voz de mundo — as outras continuam com a etapa crua",
     diario.includes('if (m.tipo === "principal") { try { pistaMundo = proximoPasso({ abertura, missoes: todas }); } catch { pistaMundo = ""; } }'));
-  t("e o cartão usa a pista do mundo quando ela existe, senão a etapa crua",
-    diario.includes("{etapaDef(atual.tipo).icone} {pistaMundo || textoDaEtapa(atual)}"));
+  /* MOVIDA em 06/11 (AR2, o Diário como portal de missões): o cartão deu
+     lugar à caixa do próximo passo, e o emoji da etapa saiu (o glifo do tipo
+     é desenhado). A intenção fica — a pista do mundo ganha quando existe;
+     sem ela, o rumo da etapa (rumoDaEtapa), e só depois o texto cru */
+  t("e o próximo passo usa a pista do mundo quando ela existe, senão o rumo da etapa",
+    diario.includes("if (pistaMundo) return pistaMundo;") && diario.includes("try { return rumoDaEtapa(e) || textoDaEtapa(e); }") && diario.includes("const frase = rumoDe(m, atual, pistaMundo);"));
   {
     /* PainelDiario mora dentro de PainelLateral (outro componente, definido
        ANTES de Taverna() no arquivo) — aberturaMundoRef não está no escopo
@@ -698,7 +702,10 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
        fica — a abertura chega por prop, e as duas asserções leem-na com o que
        vier depois dela */
     t("PainelLateral recebe a abertura por prop", /aoGerarCronica = null, alforje = null, abertura = null[^}]*\}\) \{/.test(app));
-    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} />'));
+    /* MOVIDA em 06/11 (AR2): o diário passou a receber também os relógios
+       (o prazo diz o que resta, não o total), o «Ver no mapa» e a distância
+       do passo; a abertura continua a chegar */
+    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} />'));
     t("e quem invoca PainelLateral (dentro de Taverna()) manda o ref", app.includes("aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current}"));
   }
 }

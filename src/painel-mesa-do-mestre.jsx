@@ -266,7 +266,7 @@ function CartaDoGrupo({ ente, heroi = false, escala = 0.5, telefone = false, com
    o mesmo objeto pode estar duas vezes na página. A chave é o objeto; a aba da
    bolsa chama-se «inv». Um id sem entrada cai no Glifo da aba. */
 const CHAVE_DO_OBJETO = { inv: "bolsa" };
-function DesenhoDoObjeto({ chave, lado, novo = false }) {
+export function DesenhoDoObjeto({ chave, lado, novo = false }) {
   const uid = "odm" + React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const o = OBJETOS_DA_MESA[chave];
   if (!o || !Array.isArray(o.camadas)) return null;

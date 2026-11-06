@@ -1590,6 +1590,95 @@ export const FICHA_CARTA = {
   mesa: { colunas: ["auto", "minmax(280px, 1fr)", "auto"], folga: 32 },
 };
 
+/* ============================================================
+   AR · AS TELAS QUE FALTAVAM À AAA (05/11/2026) — formas.md §AR.
+   O Diário (portal de missões), os Talentos (a árvore), o Grupo e o
+   Mercado. Figma: página «AR · 05/11» (268:2).
+   Entram aqui, por agora, só as tabelas das peças comuns e do Diário
+   (§AR 10, passos 1 e 2): as da árvore, do Grupo e do Mercado chegam com
+   a tela que as lê — export sem leitor mente.
+   ============================================================ */
+
+/* OS GLIFOS NOVOS: quadro 24, traço 1,5, pontas e juntas redondas (a família
+   de ui.jsx). A cor vem de quem desenha. Desenha-os `GlifoAR`
+   (painel-ar-pecas.jsx), que aceita vários caminhos por glifo. */
+export const ICONES_DA_ETAPA = {
+  ir_a: ["M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0", "M15.5 8.5l-2 5-5 2 2-5z"],
+  derrotar: ["M20 4h-3.6L7.2 13.2l3.6 3.6L20 7.6z", "M5.2 11.6l7.2 7.2", "M7.6 16.4L4 20"],
+  achar: ["M15.5 10.5a5.5 5.5 0 1 1-11 0a5.5 5.5 0 1 1 11 0", "M14.5 14.5L20 20"],
+  falar_com: ["M4 5h16v10H10l-4 4v-4H4z", "M8 9h8M8 12h5"],
+  levar_a: ["M4 8l8-4 8 4v8l-8 4-8-4z", "M4 8l8 4 8-4", "M12 12v8"],
+  resgatar: ["M9 7.5L6.5 5a3 3 0 0 0-4.2 4.2L5 12", "M15 16.5l2.5 2.5a3 3 0 0 0 4.2-4.2L19 12", "M9 15l6-6", "M14 4l1-2M10 20l-1 2"],
+  revelar: ["M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0"],
+  concluir_masmorra: ["M6 21V10a6 6 0 0 1 12 0v11", "M3 21h18", "M14.5 14v1.5"],
+  aguentar: ["M7 3h10M7 21h10", "M8 3c0 5 8 5 8 9s-8 4-8 9", "M16 3c0 5-8 5-8 9s8 4 8 9"],
+  vencer_relogio: ["M20 12a8 8 0 1 1-16 0a8 8 0 1 1 16 0", "M12 7.5V12l3 2"],
+};
+export const ICONES_DO_TALENTO = {
+  ataque: ICONES_DA_ETAPA.derrotar,
+  defesa: ["M12 3l7 2.5V11c0 4.8-3 8-7 10-4-2-7-5.2-7-10V5.5z", "M12 7v10M8.5 11h7"],
+  suporte: ["M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", "M12 9v5M9.5 11.5h5"],
+  utilidade: ["M10 12a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0", "M10 12h11", "M18 12v3M15 12v2.5"],
+  passiva: ["M15.5 12a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0", "M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"],
+  magia: ["M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z", "M19 3v3M17.5 4.5h3"],
+};
+export const ICONES_DA_INTERFACE = {
+  visto: ["M5 12.5l4.5 4.5L19 7"],
+  cadeado: ["M7.5 11V8a4.5 4.5 0 0 1 9 0v3", "M5.5 11h13v9.5h-13z", "M12 14.5v2.5"],
+  interrogacao: ["M9.2 9a3 3 0 1 1 4.3 2.7c-1 .5-1.5 1.2-1.5 2.3", "M12 17.5v.5"],
+  fechar: ["M6 6l12 12M18 6L6 18"],
+  pino: ["M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z", "M14.5 10a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0"],
+  seta: ["M5 12h14", "M13 6l6 6-6 6"],
+  estrela: ["M12 3.5l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.4l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"],
+  bolsa: ["M8 7.5c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5", "M5.5 9h13l-1.3 10.5a1.5 1.5 0 0 1-1.5 1.5H8.3a1.5 1.5 0 0 1-1.5-1.5z", "M9.5 13h5"],
+};
+
+/* A BARRA DE CIMA DE TODA TELA ABERTA DA MESA (Cabeçalho da tela, 271:214):
+   o objeto (ou a porta) que se tocou, o título em Cinzel Bold espaçado, o
+   estado numa linha e o fechar (Esc faz o mesmo). Chão couroBaixo, o fio de
+   ouro por baixo. */
+export const CABECALHO_DA_TELA = {
+  mesa: { alto: 72, objeto: 48, lado: 24, folga: 16 },
+  telefone: { alto: 56, objeto: 40, lado: 12, folga: 10 },
+  titulo: { tamanho: TIPOS.titulo, espaco: 0.12 },
+  subtitulo: TIPOS.rotulo,
+  fechar: 44,
+  fio: { espessura: 1, alfa: 0.45 },
+};
+/* As abas dentro de uma tela (Aba da tela, 271:151): a ALVOS.piso de alto, o
+   fio de ouro de 3 por baixo da ativa; a novidade é a gota da MarcaDaPorta. */
+export const ABA_DA_TELA = { alto: ALVOS.piso, fio: 3, gota: 8, largura: { mesa: 140, telefone: "1fr" } };
+
+/* O DIÁRIO, UM PORTAL DE MISSÕES (§AR 2; 273:296, 274:440, 274:649). */
+export const DIARIO_DE_MISSOES = {
+  mesa: { colunas: ["380px", "1fr", "420px"], folga: 24 },
+  meia: { colunas: ["340px", "1fr"], folga: 20 },          /* 1280: o mundo dobra-se para o fim do índice */
+  telefone: { abas: ["Em curso", "Ofertas", "Estante"] },
+  indice: { largura: 340, alto: 64, medalhao: 36, relogio: 32 },
+  glifoDoTipo: { principal: "★", divina: "★", trama: "✦", cacada: "◆", contrato: "◆", favor: "◆", global: "◆", oferta: "?" },
+  titulo: { mesa: 26, telefone: TIPOS.titulo },              /* a medida do nome na ficha-carta */
+  proximoPasso: { medalhao: { mesa: 52, telefone: 40 }, glifo: { mesa: 26, telefone: 20 }, borda: 2, raio: 14, halo: { alfa: 0.35, raio: 16 }, frase: { mesa: TIPOS.titulo, telefone: TIPOS.prosa } },
+  etapa: { medalhao: 32, glifo: 18, fio: { largura: 2, alto: 24 }, folga: 14 },
+  bilhete: { giro: 0.8, enchimento: [16, 18], raio: 4, largura: 380 },
+  lombada: { alto: 52, espinha: 14, frisos: [8, 41], friso: 3, selo: 24 },
+  /* AR2 · a largura que o próprio painel mede em si (não a da janela: o
+     Diário vive na gaveta de 320 e há de viver na tela inteira) e que
+     escolhe o leiaute — as três colunas pedem 380 + 420 + o meio; as duas,
+     340 + o meio. Abaixo de "meia" são as três abas do telefone. */
+  corte: { mesa: 1500, meia: 900 },
+};
+/* Os quatro estados de uma etapa: a FORMA (o glifo e o tracejado) é a
+   leitura, a cor é a segunda. "tipo" = o glifo de ICONES_DA_ETAPA da etapa. */
+export const ETAPA_DA_MISSAO = {
+  feita: { chao: T.okFundo, aro: T.ok, glifo: "visto", texto: T.inkMeio, nota: T.inkDim, fio: T.ok, alfaDoFio: 0.7 },
+  atual: { chao: T.couro, aro: T.amber, espessura: 2, glifo: "tipo", corDoGlifo: T.amberSoft, texto: T.ink, nota: T.amberSoft, fio: T.lineStrong, alfaDoFio: 0.6, halo: { alfa: 0.45, raio: 12 } },
+  silhueta: { chao: null, aro: T.lineStrong, tracejado: [3, 3], glifo: "interrogacao", texto: T.inkDim, nota: T.inkDim, fio: T.lineStrong, alfaDoFio: 0.35 },
+  falhada: { chao: T.perigoFundo, aro: T.danger, glifo: "fechar", texto: T.inkMeio, nota: T.danger, fio: T.danger, alfaDoFio: 0.5 },
+};
+/* O relógio do prazo (269:100): um gomo por noite; o gomo cheio é a noite
+   que passou; o número ao meio é o que resta. Aperta com restam <= 2. */
+export const RELOGIO_DO_PRAZO = { lado: 40, mini: 32, miolo: 0.58, folga: 0.06, apertaCom: 2, cheio: { calma: T.amber, aperta: T.danger }, vazio: { chao: T.panelSoft, aro: T.lineStrong } };
+
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
