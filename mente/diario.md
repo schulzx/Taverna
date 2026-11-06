@@ -24,6 +24,29 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 06/11 · Fase AR, AR4 · os Talentos, a alma do jogo
+- **a palavra:** «principalmente as abas grupo e talentos (essa principalmente, já que é uma das almas do jogo, habilidades e magias…)».
+- **feito (agente `aprendiz`, ~300 mil tokens):**
+  - `painel-talentos.jsx` refeito, com as mesmas props: a árvore com os degraus em colunas, e a classe, a subclasse e as especializações em bandas;
+  - a forma do nó diz o ramo e a insígnia diz o estado; as ligações acendem só entre aprendidos;
+  - o veredito antes do clique, como painel fixo a 1905, popover a 1280 e gaveta no telefone;
+  - o Grimório, pelo `grimorioDaClasse`, e a cerimónia de aprender (com saída no reduce);
+  - peças novas: `NoDeTalento`, `Ligacao`, `SeloDePontos` e `LinhaDaComparacao`;
+  - na mesa, os Talentos abrem em tela inteira;
+  - suíte `teste-talentos-ar` 74.
+- **um defeito achado e consertado ao vivo:** depois de aprender, o veredito ainda oferecia «Aprender». Agora diz «Já é tua».
+- **check-formas:** o `painel-talentos.jsx` ficou com zero cores literais e zero pílulas, e as duas entradas saíram com o motivo.
+- **para o `desenho`:**
+  - a régua em Cinzel ou Spectral;
+  - o Mago com três habilidades no degrau 6;
+  - a subclasse por escolher;
+  - as especializações no telefone;
+  - o «+N» do Grimório;
+  - a frase da cerimónia;
+  - duas `LinhaDaComparacao` diferentes, a unificar;
+  - a árvore deitada a partir de 1786 px.
+- **para o `oficial`:** no telefone, o Esc fecha o veredito e a gaveta juntos.
+
 ## 06/11 · Fase AR, AR2 · o Diário como portal de missões
 - **a palavra:** «Diário também tem que ser repensado para parecer mais com um portal de quests… qual é a quest, qual é o próximo passo, quais etapas… foram concluídas e quais quests foram concluídas».
 - **a forma (agente `desenho`, Figma `268:2`, `formas.md` §AR):** o Diário, os Talentos, o Grupo e o Mercado, a 1905, 1280 e 375. A proposta ambiciosa, a constelação do herói, fica para a pessoa decidir.

@@ -1679,6 +1679,54 @@ export const ETAPA_DA_MISSAO = {
    que passou; o número ao meio é o que resta. Aperta com restam <= 2. */
 export const RELOGIO_DO_PRAZO = { lado: 40, mini: 32, miolo: 0.58, folga: 0.06, apertaCom: 2, cheio: { calma: T.amber, aperta: T.danger }, vazio: { chao: T.panelSoft, aro: T.lineStrong } };
 
+/* OS TALENTOS, A ÁRVORE (§AR 3; 276:685, 278:1047, 278:1537, 280:1556).
+   A forma do nó diz o ramo; a insígnia diz o estado; o veredito diz o
+   preço antes do toque. Desenha-os NoDeTalento (painel-ar-pecas.jsx). */
+export const NO_DE_TALENTO = {
+  lado: 64, largura: { mesa: 80, meia: 88, telefone: 84 }, rotulo: TIPOS.piso, folga: 6, glifo: 28,
+  formas: {
+    classe: { el: "rect", x: 4, y: 4, width: 56, height: 56, rx: 14 },
+    subclasse: { el: "path", d: "M32 2L62 32L32 62L2 32Z", raio: 6 },
+    especializacao: { el: "path", d: "M32 3L58 11V31C58 45 47 56 32 61C17 56 6 45 6 31V11Z" },
+    magia: { el: "circle", cx: 32, cy: 32, r: 29 },
+  },
+  /* o aro de quem aprendeu é o metal do ramo; "gema" = GEMA_DA_SUBCLASSE[sub].corpo */
+  aroAprendido: { classe: MOLDURA_POR_DEGRAU.ouro.meio, subclasse: "gema", especializacao: MOLDURA_POR_DEGRAU.prata.meio, magia: T.violet },
+  estados: {
+    aprendido: { chao: T.couro, espessura: 3, glifo: "luz", insignia: "visto" },
+    disponivel: { chao: T.panelSoft, aro: T.amber, espessura: 2, glifo: T.ink, insignia: "custo", halo: { alfa: 0.4, raio: 12 } },
+    bloqueado: { chao: T.panel, aro: T.lineStrong, espessura: 1.5, tracejado: [4, 3], glifo: T.inkDim, alfaDoGlifo: 0.7, insignia: "cadeado" },
+    escolhido: { chao: T.panelSoft, aro: T.amber, espessura: 2, glifo: T.ink, insignia: "custo", anel: { cor: MOLDURA_POR_DEGRAU.ouro.claro, escala: 1.22, espessura: 2 }, halo: { alfa: 0.6, raio: 18 } },
+  },
+  /* a luz do glifo quando aprendido: classe amberSoft, subclasse a luz da gema, especialização ink, magia violetSoft */
+  luz: { classe: T.amberSoft, subclasse: "gema", especializacao: T.ink, magia: T.violetSoft },
+  insignia: { lado: 22, x: 46, y: 44, glifo: 14, custo: { fonte: "JetBrains Mono", peso: 700, tamanho: TIPOS.maquina } },
+  pressionado: ENCAIXE.pressionado,
+};
+export const LIGACAO = { acesa: { cor: MOLDURA_POR_DEGRAU.ouro.meio, espessura: 3, brilho: { alfa: 0.55, raio: 6 } }, apagada: { cor: T.lineStrong, espessura: 2, alfa: 0.55 } };
+export const ARVORE_DE_TALENTOS = {
+  colunas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14],
+  mesa: { rotulos: 150, passo: 78, linhas: { classe: [110, 222], subclasse: 350, especializacao: [470, 580] }, veredito: 420, esquerda: 280 },
+  meia: { rotulos: 140, passo: 88, linhas: { classe: [96, 200], subclasse: 316, especializacao: [426, 530] }, popover: 340 },
+  telefone: { passoVertical: 124, colunas: { classe: [96, 186], subclasse: 290 } },
+  regua: { numero: 13, fio: 2, andado: 3, aqui: 10 },
+  /* o tronco da especialização desce entre o degrau 9 e o 10 */
+  nascente: { subclasse: 3, especializacao: 10 },
+};
+/* O selo de pontos por gastar (270:256). O algarismo NÃO é Cinzel: o 1 do
+   Cinzel lê-se I. */
+export const SELO_DE_PONTOS = { numero: { fonte: "Spectral", peso: 600, tamanho: 28 }, borda: 2, raio: 10, halo: { alfa: 0.35, raio: 10 } };
+/* A cerimónia de aprender (280:1858). Nada espera por ela: o toque seguinte vale desde o 0. */
+export const CERIMONIA_DE_APRENDER = {
+  toque: { dura: 80, escala: 0.96 },
+  selo: { de: 0, dura: 240, escala: 1.12, insignia: 120, sobe: 16 },
+  fio: { de: 240, dura: 380 },
+  pontos: { de: 240, dura: 240 },
+  frase: { de: 620, dura: 280, sobe: 8, fica: 1600 },
+  total: 900,
+  reduzido: { dura: 160 },
+};
+
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
@@ -3009,6 +3057,21 @@ export const MOVIMENTO_CSS = `
 .tv-encaixe:focus-visible { outline: ${ENCAIXE.anel.espessura}px solid ${T.mundo}; outline-offset: ${ENCAIXE.anel.folga}px; }
 .tv-disco { transition: border-color ${DISCO_DE_ATRIBUTO.dura}ms ease-out, box-shadow ${DISCO_DE_ATRIBUTO.dura}ms ease-out; }
 .tv-disco:focus-visible { outline: ${ENCAIXE.anel.espessura}px solid ${T.mundo}; outline-offset: ${ENCAIXE.anel.folga}px; }
+/* A CERIMÓNIA DE APRENDER (AR4 · 280:1858): o selo respira, a insígnia vira, o
+   menos sobe, o fio desenha-se da esquerda, a frase sobe e fica. A frase sai
+   no esvanecer do reduzido; a peça escuta o fim dela (animationend). */
+@keyframes tvAprenderSelo { 0%, 100% { transform: none; } 50% { transform: scale(${CERIMONIA_DE_APRENDER.selo.escala}); } }
+@keyframes tvAprenderMenos { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-${CERIMONIA_DE_APRENDER.selo.sobe}px); } }
+@keyframes tvAprenderFio { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes tvAprenderFrase { 0% { opacity: 0; transform: translateY(${CERIMONIA_DE_APRENDER.frase.sobe}px); } ${(100 * CERIMONIA_DE_APRENDER.frase.dura / (CERIMONIA_DE_APRENDER.frase.dura + CERIMONIA_DE_APRENDER.frase.fica)).toFixed(2)}% { opacity: 1; transform: none; } ${(100 * (1 - CERIMONIA_DE_APRENDER.reduzido.dura / (CERIMONIA_DE_APRENDER.frase.dura + CERIMONIA_DE_APRENDER.frase.fica))).toFixed(2)}% { opacity: 1; transform: none; } 100% { opacity: 0; transform: none; } }
+.tv-aprender-selo { transform-origin: center; animation: tvAprenderSelo ${CERIMONIA_DE_APRENDER.selo.dura}ms ease-out ${CERIMONIA_DE_APRENDER.selo.de}ms both; }
+.tv-aprender-insignia { animation: tvCerimoniaEsvai ${CERIMONIA_DE_APRENDER.selo.dura - CERIMONIA_DE_APRENDER.selo.insignia}ms ease-out ${CERIMONIA_DE_APRENDER.selo.insignia}ms both; }
+.tv-aprender-menos { animation: tvAprenderMenos ${CERIMONIA_DE_APRENDER.selo.dura}ms ease-out both; }
+.tv-aprender-fio { transform-box: fill-box; transform-origin: left center; animation: tvAprenderFio ${CERIMONIA_DE_APRENDER.fio.dura}ms ease-out ${CERIMONIA_DE_APRENDER.fio.de}ms both; }
+.tv-aprender-pontos { animation: tvCerimoniaEsvai ${CERIMONIA_DE_APRENDER.pontos.dura}ms ease-out ${CERIMONIA_DE_APRENDER.pontos.de}ms both; }
+.tv-aprender-frase { animation: tvAprenderFrase ${CERIMONIA_DE_APRENDER.frase.dura + CERIMONIA_DE_APRENDER.frase.fica}ms ease-out ${CERIMONIA_DE_APRENDER.frase.de}ms both; }
+.tv-no-talento { transition: transform ${CERIMONIA_DE_APRENDER.toque.dura}ms ease-out; }
+.tv-no-talento:active { transform: scale(${CERIMONIA_DE_APRENDER.toque.escala}); }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
@@ -3025,6 +3088,14 @@ export const MOVIMENTO_CSS = `
   .tv-encaixe:active { transform: none; }
   .tv-cerimonia-reduzida { animation: tvCerimoniaEsvai ${CERIMONIA_DO_NIVEL.reduzido.dura}ms ease-out both; }
   .tv-gaveta-reduzida { animation: tvCerimoniaEsvai ${GAVETA_DO_ENCAIXE.reduzido}ms ease-out both; }
+  /* a cerimónia de aprender parada: sem escala, sem o fio a desenhar-se, sem
+     o menos a subir; o nó esvanece (tv-aprender-reduzida), a ligação já
+     está acesa e a frase fica */
+  .tv-aprender-selo, .tv-aprender-insignia, .tv-aprender-fio, .tv-aprender-pontos, .tv-aprender-frase { animation: none; }
+  .tv-aprender-menos { animation: none; opacity: 0; }
+  .tv-no-talento { transition: none; }
+  .tv-no-talento:active { transform: none; }
+  .tv-aprender-reduzida { animation: tvCerimoniaEsvai ${CERIMONIA_DE_APRENDER.reduzido.dura}ms ease-out both; }
   /* a bandeja parada: o dado aparece já pousado, com o número final, e o
      veredito à vista. A saída é none, como a casa exige (check-formas D5c):
      as três classes pousam no estado final porque nenhuma começa invisível */

@@ -225,7 +225,7 @@ const TETO_DE_LITERAIS = {
   "src/rosto.jsx": 10, /* 24/09 · V1: os dois brilhos das lentes eram T.ink escrito à mão */
 
   /* O RESTO (10) — migalhas, e o mais barato do projeto. */
-  "src/painel-talentos.jsx": 2, /* 04/11 · Mesa C: as duas tintas sobre o violeta viram T.onSecond — 4 → 2 */
+  /* 06/11 · AR4: `src/painel-talentos.jsx` (era 2) SAIU — a árvore nova tira toda a cor de T e das tabelas; os dois `#1A0F0D` sobre `danger` eram os botões de confirmar, que viraram VerboComPreco semVolta. (Linha do desenho; desceu-a o aprendiz, porque a catraca tem folga zero.) */
   "src/painel-ascensao.jsx": 3,
   "src/painel-ficha.jsx": 1,
   "src/ui.jsx": 1,
@@ -542,7 +542,7 @@ const TETO_DE_PILULA_A_MAO = {
   "src/grade-de-batalha.jsx": 1,
   "src/painel-codex.jsx": 1,
   "src/painel-mapa.jsx": 2,
-  "src/painel-talentos.jsx": 1,
+  /* 06/11 · AR4: `src/painel-talentos.jsx` (era 1) SAIU — as abas viraram AbaDaTela. */
 };
 
 /* O PISO DO ALCANCE, transplantado do `pisoDoAcervo` de

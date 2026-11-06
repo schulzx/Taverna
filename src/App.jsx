@@ -2915,7 +2915,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={[...new Set([...((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome), ...(potencias || []).filter((x) => !x.doJogador).map((x) => x.nome)])]} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
 
         {/* MERCADO (v9.2): estoque e preço do sistema; a IA só narra a cena */}
-        {aba === "gestao" && subGestao === "talentos" && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} onEscolherEspecializacao={onEscolherEspecializacao} onSubirAtributo={onSubirAtributo} onRespecAtributos={onRespecAtributos} />}
+        {aba === "gestao" && subGestao === "talentos" && !heroiNaMesa && <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} onEscolherEspecializacao={onEscolherEspecializacao} onSubirAtributo={onSubirAtributo} onRespecAtributos={onRespecAtributos} />}
 
         {aba === "gestao" && subGestao === "mercado" && (() => {
           const bancas = mercadoAqui || [];
@@ -3856,6 +3856,24 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             </div>
           );
         } catch (e) { calou("o diário por cima", e); return null; }
+      })()}
+      {(() => {
+        try {
+          /* AR4 (06/11) · OS TALENTOS EM TELA INTEIRA, pelo mesmo caminho do Diário:
+             na gaveta de 320 a árvore só cabia em pé (o leiaute do telefone);
+             aqui, a 1905, cabem a coluna da classe, a árvore deitada e o
+             veredito fixo. O «Fechar» (e o Esc) fecha tudo e devolve à mesa. */
+          if (!(aba === "gestao" && subGestao === "talentos" && heroiNaMesa)) return null;
+          const fecharTalentos = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar os talentos", e); } };
+          return (
+            <div role="dialog" aria-modal="true" aria-label="Talentos" className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+              style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
+              <LimiteDasFichas key="talentos-na-mesa" reserva={<button onClick={fecharTalentos} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
+                <PainelTalentos personagem={personagem} grupo={personagem.grupo || []} onAprender={onAprenderHab} onRespec={onRespec} onEscolherSubclasse={onEscolherSubclasse} onEscolherEspecializacao={onEscolherEspecializacao} onSubirAtributo={onSubirAtributo} onRespecAtributos={onRespecAtributos} aoFechar={fecharTalentos} />
+              </LimiteDasFichas>
+            </div>
+          );
+        } catch (e) { calou("os talentos por cima", e); return null; }
       })()}
     </>
   );

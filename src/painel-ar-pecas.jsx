@@ -13,6 +13,11 @@
      RelogioDoPrazo    um gomo por noite; o número é o que resta (269:100)
      LombadaDaEstante  a missão encerrada, um livro deitado (269:125)
      MissaoNoIndice    repouso · escolhida · oferta (269:171)
+     NoDeTalento       4 ramos (a forma) × aprendido · disponível · bloqueado,
+                       e o anel de escolhido (270:213) — AR4
+     Ligacao           acesa só entre dois aprendidos · apagada (270:220)
+     SeloDePontos      os pontos por gastar; o algarismo não é Cinzel (270:256)
+     LinhaDaComparacao o rótulo, antes → depois e o sinal ▲ ▼ = (271:96)
 
    Toda a medida e toda a cor saem de estilo.js (T e as tabelas de §AR 6).
    Nenhuma decide regra: recebem o que o painel já leu do jogo.
@@ -22,8 +27,10 @@ import {
   T, TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, MATERIAIS_DOS_OBJETOS, ENCAIXE,
   ICONES_DA_ETAPA, ICONES_DO_TALENTO, ICONES_DA_INTERFACE,
   CABECALHO_DA_TELA, ABA_DA_TELA, DIARIO_DE_MISSOES, ETAPA_DA_MISSAO, RELOGIO_DO_PRAZO,
+  NO_DE_TALENTO, LIGACAO, SELO_DE_PONTOS,
 } from "./estilo.js";
 import { tracoNaGrelha } from "./glifos.js";
+import { Glifo } from "./ui.jsx";
 
 const OURO = MOLDURA_POR_DEGRAU.ouro;
 const FERRO = MOLDURA_POR_DEGRAU.ferro;
@@ -212,5 +219,144 @@ export function MissaoNoIndice({ estado = "repouso", glifo = "", titulo, passo =
       </span>
       {prazo ? <RelogioDoPrazo segmentos={prazo.segmentos} cheios={prazo.cheios} lado={RELOGIO_DO_PRAZO.mini} /> : null}
     </button>
+  );
+}
+
+/* ============================================================
+   AR4 · AS PEÇAS DOS TALENTOS (§AR 3, §AR 6, §AR 7)
+   ============================================================ */
+
+/* um glifo dentro de outro svg: o quadro 24 encaixado em (x, y, lado) */
+function GlifoNoSvg({ caminhos, x, y, lado, cor }) {
+  if (!Array.isArray(caminhos)) return null;
+  return (
+    <svg x={x} y={y} width={lado} height={lado} viewBox="0 0 24 24" fill="none" stroke={cor}
+      strokeWidth={tracoNaGrelha(lado)} strokeLinecap="round" strokeLinejoin="round" overflow="visible" aria-hidden="true">
+      {caminhos.map((d, i) => <path key={i} d={d} />)}
+    </svg>
+  );
+}
+
+/* a forma do ramo, com o que a pinta (chão, aro, traço) */
+function FormaDoRamo({ ramo, ...pinta }) {
+  const f = NO_DE_TALENTO.formas[ramo] || NO_DE_TALENTO.formas.classe;
+  const { el, raio, ...geo } = f;
+  if (el === "rect") return <rect {...geo} {...pinta} />;
+  if (el === "circle") return <circle {...geo} {...pinta} />;
+  return <path {...geo} strokeLinejoin={raio ? "round" : "miter"} {...pinta} />;
+}
+
+/* O NÓ DE TALENTO. A forma diz o ramo (classe · subclasse · especialização ·
+   magia), a insígnia diz o estado (✓ · o custo · o cadeado), e o veredito —
+   que é do painel — diz o preço. Bloqueado continua tocável: abre o porquê.
+   `cerimonia` é o nó que acabou de ser aprendido (280:1858). */
+export function NoDeTalento({ ramo = "classe", estado = "bloqueado", escolhido = false, nome = "", custo = 1, glifo = "ataque", gema = null, preparada = false, largura = NO_DE_TALENTO.largura.mesa, cerimonia = false, aoTocar = null, rotuloDoEstado = "", estatico = false }) {
+  const N = NO_DE_TALENTO;
+  const est = estado === "disponivel" && escolhido ? "escolhido" : N.estados[estado] ? estado : "bloqueado";
+  const E = N.estados[est];
+  const L = N.lado;
+  const ouro = MOLDURA_POR_DEGRAU.ouro;
+  const corDaGema = (campo, reserva) => (gema && gema[campo]) || reserva;
+  const aroAprendido = N.aroAprendido[ramo] === "gema" ? corDaGema("corpo", ouro.meio) : N.aroAprendido[ramo] || ouro.meio;
+  const aro = est === "aprendido" ? aroAprendido : E.aro;
+  const luz = N.luz[ramo] === "gema" ? corDaGema("luz", ouro.claro) : N.luz[ramo] || T.amberSoft;
+  const corDoGlifo = est === "aprendido" ? luz : E.glifo;
+  const halo = escolhido ? N.estados.escolhido.halo : E.halo;
+  const sombra = halo ? `drop-shadow(0 0 ${halo.raio / 2}px ${alfa(est === "aprendido" ? aroAprendido : T.amber, halo.alfa)})` : "none";
+  const I = N.insignia;
+  const ic = I.x + I.lado / 2, jc = I.y + I.lado / 2, r = I.lado / 2;
+  const anel = N.estados.escolhido.anel;
+  const meio = L / 2;
+  const insignia = est === "aprendido"
+    ? (<g className={cerimonia ? "tv-aprender-insignia" : undefined}>
+        <circle cx={ic} cy={jc} r={r} fill={T.okFundo} stroke={T.ok} strokeWidth="1.5" />
+        <GlifoNoSvg caminhos={ICONES_DA_INTERFACE.visto} x={ic - I.glifo / 2} y={jc - I.glifo / 2} lado={I.glifo} cor={T.ok} />
+      </g>)
+    : E.insignia === "custo"
+      ? (<g>
+          <circle cx={ic} cy={jc} r={r} fill={T.amber} stroke={T.panel} strokeWidth="1.5" />
+          <text x={ic} y={jc} textAnchor="middle" dominantBaseline="central" fill={T.onAccent}
+            style={{ fontFamily: `'${I.custo.fonte}', monospace`, fontWeight: I.custo.peso, fontSize: I.custo.tamanho }}>{custo}</text>
+        </g>)
+      : (<g>
+          <circle cx={ic} cy={jc} r={r} fill={T.panel} stroke={T.lineStrong} strokeWidth="1.5" />
+          <GlifoNoSvg caminhos={ICONES_DA_INTERFACE.cadeado} x={ic - I.glifo / 2} y={jc - I.glifo / 2} lado={I.glifo} cor={T.inkDim} />
+        </g>);
+  const corDoNome = escolhido ? ouro.claro : est === "bloqueado" ? T.inkDim : T.ink;
+  const dito = [nome, rotuloDoEstado].filter(Boolean).join(" — ");
+  /* estatico: o nó grande do veredito — desenho, não alvo */
+  const Raiz = estatico ? "span" : "button";
+  const alvo = estatico ? { "aria-hidden": "true" } : { type: "button", onClick: aoTocar || undefined, "aria-pressed": escolhido ? "true" : "false", "aria-label": dito };
+  return (
+    <Raiz {...alvo}
+      data-estado={estado} data-ramo={ramo}
+      className={estatico ? "flex flex-col items-center" : "tv-anel-foco tv-no-talento flex flex-col items-center"}
+      style={{ width: largura, gap: N.folga, background: "transparent", border: "none", padding: 0, cursor: estatico ? "default" : "pointer" }}>
+      <span className={`relative inline-block ${cerimonia ? "tv-aprender-selo tv-aprender-reduzida" : ""}`} style={{ width: L, height: L, lineHeight: 0 }}>
+        <svg width={L} height={L} viewBox={`0 0 ${L} ${L}`} overflow="visible" aria-hidden="true" focusable="false" style={{ filter: sombra }}>
+          {escolhido ? (
+            <g transform={`translate(${meio} ${meio}) scale(${anel.escala}) translate(${-meio} ${-meio})`}>
+              <FormaDoRamo ramo={ramo} fill="none" stroke={anel.cor} strokeWidth={anel.espessura / anel.escala} />
+            </g>
+          ) : null}
+          <FormaDoRamo ramo={ramo} fill={E.chao} stroke={aro} strokeWidth={E.espessura}
+            strokeDasharray={E.tracejado ? E.tracejado.join(" ") : undefined} />
+          <g opacity={E.alfaDoGlifo || 1}>
+            <GlifoNoSvg caminhos={ICONES_DO_TALENTO[glifo] || ICONES_DO_TALENTO.ataque} x={meio - N.glifo / 2} y={meio - N.glifo / 2} lado={N.glifo} cor={corDoGlifo} />
+          </g>
+          {insignia}
+        </svg>
+        {cerimonia ? (
+          <span aria-hidden="true" className="tv-aprender-menos tv-mono absolute" style={{ right: 0, top: -I.lado / 2, fontSize: I.custo.tamanho, fontWeight: I.custo.peso, color: T.amberSoft, lineHeight: 1 }}>−{custo}</span>
+        ) : null}
+      </span>
+      {nome ? <span className="tv-body text-center" style={{ fontSize: N.rotulo, color: corDoNome, fontWeight: escolhido ? 600 : 400, lineHeight: 1.2 }}>
+        {preparada ? <><Glifo nome="faisca" tamanho={N.rotulo} rotulo="preparada" />{" "}</> : null}{nome}
+      </span> : null}
+    </Raiz>
+  );
+}
+
+/* A LIGAÇÃO entre dois nós vizinhos: acesa (ouro, com brilho) SÓ entre dois
+   aprendidos — o caminho andado desenha-se sozinho. Vive dentro do svg da
+   árvore. `desenha` = a cerimónia: o fio cresce da esquerda. */
+export function Ligacao({ x1, y1, x2, y2, acesa = false, desenha = false }) {
+  const G = acesa ? LIGACAO.acesa : LIGACAO.apagada;
+  return (
+    <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={G.cor} strokeWidth={G.espessura} strokeLinecap="round"
+      opacity={acesa ? 1 : G.alfa} data-acesa={acesa ? "sim" : "nao"}
+      className={acesa && desenha ? "tv-aprender-fio" : undefined}
+      style={acesa ? { filter: `drop-shadow(0 0 ${G.brilho.raio / 2}px ${alfa(G.cor, G.brilho.alfa)})` } : undefined} />
+  );
+}
+
+/* O SELO DE PONTOS: quantos pontos há por gastar. O algarismo em Spectral
+   (o 1 do Cinzel lê-se I). `conta` = a cerimónia: o número torna a entrar. */
+export function SeloDePontos({ pontos = 0, rotulo = "pontos de talento por gastar", conta = false }) {
+  const S = SELO_DE_PONTOS;
+  const tem = pontos > 0;
+  return (
+    <span role="status" aria-label={`${pontos} ${rotulo}`} className="inline-flex items-center gap-2 shrink-0" style={{
+      padding: `${S.raio / 2}px ${S.raio}px`, borderRadius: S.raio, background: T.couro,
+      border: `${S.borda}px solid ${tem ? T.amber : T.lineStrong}`,
+      boxShadow: tem ? `0 0 ${S.halo.raio}px ${alfa(T.amber, S.halo.alfa)}` : "none",
+    }}>
+      <span key={pontos} aria-hidden="true" className={conta ? "tv-aprender-pontos" : undefined} style={{ fontFamily: `'${S.numero.fonte}', serif`, fontWeight: S.numero.peso, fontSize: S.numero.tamanho, lineHeight: 1, color: tem ? T.amber : T.inkDim }}>{pontos}</span>
+      <span aria-hidden="true" className="tv-body" style={{ fontSize: TIPOS.piso, color: T.inkMeio, lineHeight: 1.2, maxWidth: 110 }}>{rotulo}</span>
+    </span>
+  );
+}
+
+/* UMA LINHA DA COMPARAÇÃO (271:96): o rótulo, antes → depois, e o sinal.
+   O sinal é a forma (▲ ▼ =); a cor é a segunda leitura (1.4.1). */
+const SINAL = { melhora: ["▲", T.ok], piora: ["▼", T.danger], igual: ["=", T.inkDim] };
+export function LinhaDaComparacao({ rotulo, antes = null, depois, sinal = "igual" }) {
+  const [marca, cor] = SINAL[sinal] || SINAL.igual;
+  return (
+    <div className="flex items-baseline gap-3 tv-body" style={{ fontSize: TIPOS.rotulo }}>
+      <span className="flex-1 min-w-0" style={{ color: T.inkMeio }}>{rotulo}</span>
+      <span className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: T.ink }}>{antes != null ? `${antes} → ${depois}` : depois}</span>
+      <span className="tv-mono shrink-0 text-right" aria-hidden="true" style={{ fontSize: TIPOS.maquina, color: cor, minWidth: TIPOS.maquina }}>{marca}</span>
+    </div>
   );
 }
