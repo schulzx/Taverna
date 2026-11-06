@@ -53,6 +53,7 @@
    ============================================================ */
 
 import { garantirAbertura, muralLiberado } from "../abertura.js";
+import { secundariasAbertas } from "../portao-das-secundarias.js";
 import { AMANHECER, dataTxt, ehNoite, estacaoDe, horaTxt } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
 import { cenarioAtivo } from "../cenario.js";
@@ -852,6 +853,9 @@ export function osOrgaosDoDepois(estado, portas) {
   const oferecerTrabalhoDaqui = () => {
     /* MM13: nenhuma oferta avulsa antes de o herói estar orientado. */
     if (!muralLiberado({ abertura: $ref.abertura, missoes: $ref.missoes })) return;
+    /* SQ2 (05/11): e o papel pregado só com o mural aberto — o portão da
+       introdução e o nível do mural (portao-das-secundarias.js) */
+    if (!secundariasAbertas({ abertura: $ref.abertura, espinha: $ref.espinha, nivel: ($ref.personagem || $render.personagem || {}).nivel }).mural) return;
     if ($ref.combate || $ref.masmorra) return;
     if (!$ref.cidadeAtual) return;
     if ($ref.ultimoTrabalhoDia >= $ref.dia) return;

@@ -58,6 +58,7 @@
    ============================================================ */
 
 import { garantirAbertura, muralLiberado, tramaTemEspaco } from "../abertura.js";
+import { secundariasAbertas } from "../portao-das-secundarias.js";
 import { arredoresDaCidade } from "../arredores.js";
 import { consultarBiblioteca, contarTurnoDeCena, envelopeDaCena, garantirEstante, marcarJogada, podeFormaDeCena, trechoDaJogada, zerarCadenciaDaCena } from "../biblioteca.js";
 import { chegadaABoca } from "../boca.js";
@@ -1736,7 +1737,10 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
       /* MM13: enquanto o herói não está orientado, a trama também espera —
          é uma oferta do mundo como outra qualquer. `forcar` (a abertura,
          quando não há pista) continua furando esta espera. */
-      if (!forcar && !muralLiberado({ abertura: $ref.abertura, missoes: $ref.missoes })) return ""; if (!forcar && !(() => { try { return tramaTemEspaco({ abertura: $ref.abertura, missoes: $ref.missoes, dia: $ref.dia }); } catch (e) { calou("tramaTemEspaco", e); return true; } })()) return ""; /* MM14: uma trama forçada só quando a principal deixou espaço */
+      if (!forcar && !muralLiberado({ abertura: $ref.abertura, missoes: $ref.missoes })) return "";
+      /* SQ2 (05/11): a trama é uma secundária — espera o portão da introdução */
+      if (!forcar && !secundariasAbertas({ abertura: $ref.abertura, espinha: $ref.espinha, nivel: (fichaViva() || $render.personagem || {}).nivel }).abertas) return "";
+      if (!forcar && !(() => { try { return tramaTemEspaco({ abertura: $ref.abertura, missoes: $ref.missoes, dia: $ref.dia }); } catch (e) { calou("tramaTemEspaco", e); return true; } })()) return ""; /* MM14: uma trama forçada só quando a principal deixou espaço */
       /* e não no respiro: o respiro existe para NÃO haver nada em jogo.
          v9.120: MENOS NA ABERTURA. O compasso nasce em "respiro" — é o
          padrão de `garantirCompasso` —, e por isso a primeira cena da
@@ -2621,6 +2625,8 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
          bastava insistir por carta até sair. */
       const potsCorreio = potenciasAqui().filter((x) => !x.doJogador);
       const pc = processarDiaCorreio($ref.correio, { sorte: sorteDoTurno("correio"),
+        /* SQ2 (05/11): petição nova só com o portão da introdução aberto */
+        peticoes: secundariasAbertas({ abertura: $ref.abertura, espinha: $ref.espinha, nivel: (fichaViva() || $render.personagem || {}).nivel }).abertas,
         dia: $ref.dia,
         fama: famaAtual(),
         ehLider: cidadesDominadas($ref.mapa).length > 0 || !!($ref.mapa.faccoes || []).some((f) => f.doJogador),

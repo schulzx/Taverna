@@ -561,8 +561,16 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      principal ativa sem o primeiro passo, não prega; com o passo dado, prega. */
   const { jogarODepois, umaCidadeQuePrega } = await import("./depois-bloco.mjs");
   const naCidade = umaCidadeQuePrega();
-  const comPasso = (feito) => !!jogarODepois("oferecerTrabalhoDaqui", { estado: { ...naCidade, abertura: { principalId: "p1", turnos: 0 }, missoes: [{ id: "p1", titulo: "A principal", tipo: "principal", status: "ativa", dador: "Ninguém", etapas: [{ tipo: "ir", alvo: "a ponte", feito }] }] } }).escritas.mural;
+  /* 05/11 (SQ2), ASSERÇÃO MOVIDA E O MOTIVO: o passo dado já não basta
+     sozinho — o papel pregado espera também o portão da introdução
+     (portao-das-secundarias.js, `nivelDoMural`), e esta sessão gravada é de
+     um herói de nível 1 sem marco feito. A intenção da MM13 fica de pé, e
+     prova-se no nível em que o mural abre: sem o passo não prega, com o
+     passo prega. E no nível 1, nem com o passo (teste-portao-das-secundarias). */
+  const comNivel = (n) => ({ ...naCidade, ...(naCidade.personagem ? { personagem: { ...naCidade.personagem, nivel: n } } : {}), ...(naCidade.render && naCidade.render.personagem ? { render: { ...naCidade.render, personagem: { ...naCidade.render.personagem, nivel: n } } } : {}) });
+  const comPasso = (feito, nivel = 3) => !!jogarODepois("oferecerTrabalhoDaqui", { estado: { ...comNivel(nivel), abertura: { principalId: "p1", turnos: 0 }, missoes: [{ id: "p1", titulo: "A principal", tipo: "principal", status: "ativa", dador: "Ninguém", etapas: [{ tipo: "ir", alvo: "a ponte", feito }] }] } }).escritas.mural;
   t("oferecerTrabalhoDaqui espera o mural (o herói orientado)", comPasso(false) === false && comPasso(true) === true);
+  t("e o portão da introdução: no nível 1, nem com o passo dado (SQ2)", comPasso(true, 1) === false);
   const mural = corpoApos(app, "const garantirMural = (forcar = false) => {");
   t("garantirMural espera o mural", mural.includes("if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;"));
   const trama = corpoApos(app, "const talvezDarUmaTrama = ({ forcar = false } = {}) => {");

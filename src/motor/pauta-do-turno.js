@@ -45,6 +45,7 @@
    teste-motor-pauta-do-turno.mjs.
    ============================================================ */
 import { fioParaAPrincipal, garantirAbertura, proximoPasso, sinosForaDeHora, vetosDaAbertura } from "../abertura.js";
+import { secundariasAbertas, PORTAO_DAS_SECUNDARIAS } from "../portao-das-secundarias.js";
 import { envelopeDaVirada, intencaoDaVez, linhaDaLuta, menteDaCriatura } from "../adversario.js";
 import { LUTA_SEM_PAINEL } from "../agressao.js";
 import { DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta, codigoPorId, cruzouOCodigo, garantirAliados, nascerAliado, vontadePorId } from "../aliado.js";
@@ -974,7 +975,13 @@ export function aPautaDoTurno(estado, entrada, portas) {
     try { if ($ref.combate && ($ref.naoPodeDoTurno || []).includes(LUTA_SEM_PAINEL.veto)) $ref.naoPodeDoTurno = $ref.naoPodeDoTurno.filter((v) => v !== LUTA_SEM_PAINEL.veto); } catch (e) { calou("o veto da luta com o combate aberto", e); }
     try { p = porNaPauta(p, "naoPode", $ref.naoPodeDoTurno || []); } catch (e) { calou("o veto da bolsa da frase", e); }
     /* MM13: enquanto o mural espera, o veto vai junto do do geógrafo. */
-    p = porNaPauta(p, "naoPode", vetosDaAbertura({ abertura: $ref.abertura, missoes: $ref.missoes }));
+    /* SQ2 (05/11): e enquanto o mural está fechado pelo portão da
+       introdução, o mesmo veto continua (a mesma frase: vai uma vez só) */
+    {
+      const vetos = vetosDaAbertura({ abertura: $ref.abertura, missoes: $ref.missoes });
+      const fechado = !secundariasAbertas({ abertura: $ref.abertura, espinha: $ref.espinha, nivel: ($ref.personagem || $render.personagem || {}).nivel }).mural;
+      p = porNaPauta(p, "naoPode", fechado && !vetos.includes(PORTAO_DAS_SECUNDARIAS.veto) ? [...vetos, PORTAO_DAS_SECUNDARIAS.veto] : vetos);
+    }
     /* MM15 (4): o segredo que a espinha guarda não é a boca do Narrador —
        o veto só nasce quando a frase do turno nomeia um segredo de pé. */
     try {

@@ -51,6 +51,7 @@ import { SECAO_DO_CRONISTA, abertasParaOCronista, pagarSementes, guardarSementes
 import { garantirMissoes } from "../missoes.js";
 import { formatarCanone } from "../prompt.js";
 import { muralLiberado } from "../abertura.js";
+import { secundariasAbertas } from "../portao-das-secundarias.js";
 import { cartazDaProposta, envelopeDoRecado } from "../ofertas.js";
 import { nomeComDono, fichaDoCronista, mesclarNPC, criarNPC, notaDoHomonimo, aMarcaQueFica } from "../npcs.js";
 import { favorJaPedido } from "../subtramas.js";
@@ -247,7 +248,9 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   try {
     const prop = ac.missao_oferecida;
     const E = ler();
-    if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: E.abertura, missoes: E.missoes })) {
+    if (prop && typeof prop === "object" && prop.titulo && muralLiberado({ abertura: E.abertura, missoes: E.missoes })
+      /* SQ2 (05/11): o cartaz da proposta só com o mural aberto */
+      && secundariasAbertas({ abertura: E.abertura, espinha: E.espinha, nivel: (p || {}).nivel }).mural) {
       /* a paga já é a da tabela da oferta (o juízo, `pagamento`): o
          número que a prosa disse não entra mais pela porta dos fundos */
       const cartaz = cartazDaProposta(

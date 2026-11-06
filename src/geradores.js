@@ -185,7 +185,11 @@ export const ALVOS_DO_DESCANSO = {
   diasAteGarantia: 10,   // dez dias sem arco regional e ele vem sem dado
 };
 
-export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2, sorte = sorteDaCasa } = {}) {
+/* `secundarias` (SQ2, 05/11): false enquanto o portão da introdução está
+   fechado (portao-das-secundarias.js) — a noite não sorteia missão nova nem
+   arco regional (que impõe a sua, semearMissoes). O fio local continua: é o
+   dia a dia da cidade, não um trabalho. Sem o campo, o de sempre. */
+export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2, sorte = sorteDaCasa, secundarias = true } = {}) {
   const A = ALVOS_DO_DESCANSO;
   const e = garantirEventos(ev);
   const out = { eventos: e, localNovo: null, questNova: null, globalNovo: null, globalAvancou: false, expirados: [] };
@@ -209,14 +213,17 @@ export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas 
   }
 
   /* quest da fase do arco */
-  if (secundariasAtivas < A.secundariasMax) {
+  if (secundarias !== false && secundariasAtivas < A.secundariasMax) {
     const r = rolarGatilho("Nova missão", A.novaMissao, { sorte });
     out.bastidor.push(r);
     if (r.passou) out.questNova = gerarQuestDeArco(ctx, ctx.fase || "meio");
   }
 
   /* evento global — raro; garantido depois de tantos dias sem nenhum */
-  if (!e.global) {
+  if (!e.global && secundarias === false) {
+    /* o portão fechado: o arco regional espera, e o relógio da garantia
+       também (não começa a contar antes de o herói estar na história) */
+  } else if (!e.global) {
     e.semGlobalDesde = e.semGlobalDesde || dia;
     const garantia = dia - e.semGlobalDesde >= A.diasAteGarantia;
     const r = rolarGatilho("Arco regional", A.arcoRegional, { garantido: garantia, sorte });

@@ -232,8 +232,11 @@ export function resolverPeticao(p, aceite, sorte = null) { return comSorte(sorte
 }
 
 /* Processamento diário: respostas chegam, petições novas surgem (~15%/dia),
-   petições vencidas expiram. Retorna mensagens (envelopes) e efeitos somados. */
-export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = false, faccoes = [], potencias = [], dip = null, meuPoder = 0, sorte = null } = {}) { return comSorte(sorte, () => {
+   petições vencidas expiram. Retorna mensagens (envelopes) e efeitos somados.
+   `peticoes` (SQ2, 05/11): false enquanto o portão da introdução está
+   fechado (portao-das-secundarias.js) — nenhuma petição NOVA nasce; as que
+   já chegaram seguem o seu prazo. Sem o campo, o de sempre. */
+export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = false, faccoes = [], potencias = [], dip = null, meuPoder = 0, sorte = null, peticoes = true } = {}) { return comSorte(sorte, () => {
   const c = garantirCorreio(correio);
   const msgs = [];
   const ef = { felicidade: 0, moedas: 0, tratadosAdd: [], tratadosRem: [], aprecoAdd: [] };
@@ -280,7 +283,7 @@ export function processarDiaCorreio(correio, { dia = 1, fama = 0, ehLider = fals
 
   /* nova petição do mundo (~15%/dia, máx. 3 pendentes) */
   const pendentes = c.recebidas.filter((p) => p.status === "pendente").length;
-  if (faccoes.length && pendentes < 3 && sorteDaCasa() < 0.15) {
+  if (peticoes !== false && faccoes.length && pendentes < 3 && sorteDaCasa() < 0.15) {
     const p = gerarPeticao({ faccoes, dia, potencias });
     if (p) {
       p.id = `pet_${dia}_${Math.floor(sorteDaCasa() * 9999)}`;
