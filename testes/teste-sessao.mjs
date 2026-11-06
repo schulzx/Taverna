@@ -325,7 +325,12 @@ sec("4c. O MURAL NO REPLAY E NO SERVIDOR — a porta do Cronista e o trabalho da
   t("no servidor, o mundo prega o seu trabalho e o Cronista o dele, nessa ordem", !!oferecido && (rs.estado.mural || []).length === 2 && rs.estado.mural[rs.estado.mural.length - 1].dador === "Varek Duro", J((rs.estado.mural || []).map((c) => c.dador)));
   t("o dia do último trabalho e o aviso que espera a cena ficam no estado (o eco os leva)", rs.estado.ultimoTrabalhoDia === 4 && J(rs.estado.trabalhoPendente) === J([`📋 ${oferecido && oferecido.dador} tem um trabalho no mural.`]));
   const recados = String(rs.estado.nota || "").split(/\r?\n/).filter((l) => /TRABALHO PREGADO NO MURAL/.test(l));
-  t("e a nota leva os dois recados ao Narrador, o do mundo primeiro", recados.length === 2 && recados[0].includes(oferecido && oferecido.dador) && recados[1].includes("Varek Duro"), J(rs.estado.nota));
+  /* MOVIDA em 05/11 (SQ4, o mural vai-se buscar): o Cronista que prega uma
+     proposta já não manda recado ao Narrador — o recado fazia a mesma oferta
+     interromper a cena outra vez no turno seguinte. Fica o do mundo (o
+     figurante, uma menção); a intenção que fica: o recado do mundo vai à nota,
+     e o do Cronista não se repete. */
+  t("e a nota leva o recado do mundo, e não o do Cronista", recados.length === 1 && recados[0].includes(oferecido && oferecido.dador) && !recados.some((l) => l.includes("Varek Duro")), J(rs.estado.nota));
   t("o servidor corre duas vezes igual", J(correrOTurno(Em, Lm, { semente: "teste|mural", servidor: true })) === J(rs));
 }
 
