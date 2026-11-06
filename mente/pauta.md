@@ -118,17 +118,26 @@ habilidades e magias etc, também precisam ser chamativas e com elementos de jog
   abre a ficha-carta; a Bolsa abre a MESMA tela, na aba do equipamento e da mochila), e aposentar a
   duplicada. «Mais da bolsa» deixa de abrir a bolsa antiga: o que só ela fazia (consumíveis, descartar,
   dar a um companheiro, a bancada) ganha casa na tela nova. Nenhuma função se perde.
-- [ ] **AR2 · a bolsa de cada um** (`desenho` + `oficial`): o boneco e a mochila de cada companheiro,
+- [ ] **AR2 · o Diário, um portal de missões** (`desenho` + `jogo` + `aprendiz`). A pessoa, em
+  05/11: *«Diário também tem que ser repensado para parecer mais com um portal de quests, ser mais
+  claro, dizendo qual é a quest, qual é o próximo passo, quais etapas dela (se é que ela possui etapas)
+  foram concluídas e quais quests foram concluídas, etc, tudo o que tem em uma página de quests de um
+  bom rpg».* A página de missões de um bom RPG: a missão principal à frente, com o próximo passo dito
+  numa frase e onde se faz; as etapas com o que está feito, o que falta e o que ainda não se sabe;
+  as secundárias planeadas (SQ3) com os seus atos; o prazo, quando o há; quem pediu e o que se ganha;
+  as concluídas (e as falhadas) numa estante própria; tocar numa missão leva ao lugar no mapa. Tudo
+  sai do sistema (missoes.js, a espinha) — o que o herói ainda não sabe não aparece.
+- [ ] **AR3 · a bolsa de cada um** (`desenho` + `oficial`): o boneco e a mochila de cada companheiro,
   a partir da carta dele, com a troca de itens entre o grupo (o «dar a» de hoje).
-- [ ] **AR3 · os Talentos, a alma do jogo** (`desenho` + `jogo` + `aprendiz`): a árvore de
+- [ ] **AR4 · os Talentos, a alma do jogo** (`desenho` + `jogo` + `aprendiz`): a árvore de
   habilidades e magias com cara de jogo — os nós como ícones com moldura e raridade, as ligações que
   acendem, a subclasse e a especialização como ramos com a gema, o custo e o efeito antes do clique,
   a cerimónia de aprender. É a tela que a pessoa pôs primeiro.
-- [ ] **AR4 · o Grupo** : as cartas dos companheiros em grande, o vínculo, a classe, o que cada um sabe
+- [ ] **AR5 · o Grupo** : as cartas dos companheiros em grande, o vínculo, a classe, o que cada um sabe
   fazer, a bolsa de cada um (AR2).
-- [ ] **AR5 · o Mercado e as restantes** (Diário, Mapa, Códex, Ascensão, a casa): na linguagem da AAA
+- [ ] **AR6 · o Mercado e as restantes** (Diário, Mapa, Códex, Ascensão, a casa): na linguagem da AAA
   (os objetos, os encaixes, as raridades), uma por versão, a de mais uso primeiro.
-- [ ] **AR6 · a prova jogada**, a 1905 e no telefone: cada porta abre uma casa só, e nenhuma tela antiga
+- [ ] **AR7 · a prova jogada**, a 1905 e no telefone: cada porta abre uma casa só, e nenhuma tela antiga
   sobra à vista.
 
 ### Fase SQ — as missões que se ganham (a ordem de 05/11 · DEPOIS da fase AAA)
