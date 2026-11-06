@@ -150,7 +150,10 @@ for (const leiaute of ["mesa", "telefone"]) {
   if (ilsa.habilidades.length > C.sabeFazer) t("as que não cabem estão a um toque", tg.includes(`Todas as ${ilsa.habilidades.length}`));
   /* as ações de antes, todas: a bolsa (AR3), a ficha, o caminho, tirar do grupo */
   t("a porta da bolsa, com o que leva", tg.includes("Abrir a bolsa de Ilsa 2 coisas") && tg.includes("Abrir a bolsa de Bram"));
-  t("a porta da ficha", (tg.match(/Ver a ficha atributos e talentos/g) || []).length === 2);
+  /* AR8 (06/11): a nota só promete atributos a quem os tem (D5 da prova jogada —
+     a etiqueta prometia o que a ficha não mostrava); o companheiro sem
+     atributos diz só «talentos». A porta continua uma por carta. */
+  t("a porta da ficha", (tg.match(/Ver a ficha (atributos e )?talentos/g) || []).length === 2);
   t("trilhar (com classe) ou definir (sem) o caminho", tg.includes("Trilhar novo caminho") && tg.includes("Definir caminho"));
   t("tirar do grupo", (tg.match(/Tirar do grupo/g) || []).length === 2);
   t("o lugar livre diz onde se encontra gente", tg.includes("Um lugar à fogueira") && tg.includes("nas tavernas"));

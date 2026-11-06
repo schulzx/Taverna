@@ -275,6 +275,7 @@ import { decidirSemSaida, aplicarSemSaida, assinaturaDaLuta, contarParadas, gara
 import { FichaVisual } from "./painel-ficha.jsx";
 /* AAA · 05/11: a ficha como carta (com o boneco do equipamento) e a cerimónia da subida */
 import { PainelFichaCarta } from "./painel-ficha-carta.jsx";
+import { CabecalhoDaTela } from "./painel-ar-pecas.jsx";
 import { BolsaDaCarta } from "./painel-bolsa-da-carta.jsx";
 import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
@@ -299,7 +300,7 @@ import { guardarTurno, maisUmaTentativa, oQueNarrar, travaODeclarar, lerOSilenci
 import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, bonusEquip, bonusEfeito, atributoEfetivo, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { abrirOSave, aFichaAberta, comACidadePisada } from "./abrir-o-save.js";
-import { SUPRIMENTOS, garantirSuprimentos, consumoDiario, comerODia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, resumoErmos } from "./ermos.js";
+import { SUPRIMENTOS, EXAUSTAO, garantirSuprimentos, consumoDiario, comerODia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, resumoErmos } from "./ermos.js";
 
 /* ---------------- O SILÊNCIO QUE NÃO CUSTA O TURNO ----------------
    Vivia dentro do componente desde a v9.109, e por isso NENHUMA peça de
@@ -2457,6 +2458,79 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
       )}
     </div>
   );
+  /* AR8 (06/11) · O RESTO DA FICHA ANTIGA. Ao desligá-la (AR1) ficaram sem
+     casa, além dos quatro da prova jogada (D1), o caminho, o caderno de
+     magias, o recalibrar, as habilidades, a história e o pé da ficha (o
+     heroísmo e as rolagens à vista). Vão morar em «Perícias e detalhes»,
+     tal qual eram: nenhuma função se perde. */
+  const restoDaFicha = (
+    <div className="space-y-2.5">
+      <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
+                {personagem.classe ? "⚔ trilhar novo caminho" : "⚔ escolher caminho"}
+              </button>
+      </div>
+      {abrirCaminho === "eu" && <SeletorCaminho mundo={mundo} alvo="eu" atual={personagem} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
+      <PainelCaderno personagem={personagem} onPreparar={onPrepararMagia} travado={arrumar.ok ? "" : arrumar.motivo} />
+      {recalibrarSave && (
+              <button onClick={recalibrarSave} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
+                style={{ border: `1px dashed ${T.line}`, color: T.inkDim }}
+                title="Para save de versão antiga: o arquivista relê a campanha inteira e propõe, em dois passos, os números do herói (nível, atributos) e o estado do mundo (companheiros, pessoas, potências, domínios, guilda). Você confirma cada passo antes de aplicar.">
+                ⚖ recalibrar save antigo · a lenda e o mundo
+              </button>
+            )}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Habilidades</div>
+                {(personagem.habilidades || []).length > 0 && (
+                  <button onClick={() => setVerHabsFicha((v) => !v)} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px dashed ${T.line}`, color: T.violetSoft }}>
+                    {verHabsFicha ? "▾ ocultar" : `▸ ver habilidades (${(personagem.habilidades || []).length})`}
+                  </button>
+                )}
+              </div>
+              {(personagem.habilidades || []).length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma ainda.</div> : !verHabsFicha ? null : (
+                <ul className="space-y-2">
+                  {(personagem.habilidades || []).filter((h) => h).map((h, i) => {
+                    const hn = typeof h === "string" ? { nome: h, custo: 0, descricao: "" } : h;
+                    return (
+                    <li key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft }}>
+                      <div className="flex items-baseline justify-between gap-2"><span className="tv-body text-sm" style={{ color: T.ink }}>{hn.nome}</span><span className="tv-mono text-[10px]" style={{ color: T.violetSoft }}>{hn.custo || 0} PM</span></div>
+                      {hn.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{hn.descricao}</div>}
+                    </li>
+                  ); })}
+                </ul>
+              )}
+            </div>
+            {personagem.historia && (
+              <div>
+                <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>História</div>
+                <div className="tv-body text-sm" style={{ color: T.inkDim }}>{personagem.historia}</div>
+              </div>
+            )}
+            <div className="space-y-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
+              <SeloHeroismo pontos={heroismoPontos} aceso={heroAberto} aoAbrir={aoAbrirHeroismo} />
+              {heroAberto && (
+                <PainelHeroismo pontos={heroismoPontos} contexto={contextoHeroismo}
+                  aoGastar={aoGastarHeroismo} aoFechar={aoAbrirHeroismo} />
+              )}
+              <button onClick={aoAlternarRolagens}
+                className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
+                aria-pressed={!!mostrarRolagens}
+                style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: mostrarRolagens ? T.amberSoft : T.inkDim }}>
+                🎲 Rolagens do mundo à vista: <b>{mostrarRolagens ? "sim" : "não"}</b>
+                <span className="block" style={{ color: T.inkDim }}>mostrar os dados que o Mestre rola por trás do escudo</span>
+              </button>
+              {aoIrAoMenu && (
+                <button onClick={aoIrAoMenu}
+                  className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
+                  style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px dashed ${T.line}`, color: T.inkDim }}>
+                  ⌂ Sair para o início
+                  <span className="block" style={{ color: T.inkDim }}>a campanha fica guardada — dá para continuar de onde parou</span>
+                </button>
+              )}
+            </div>
+    </div>
+  );
   return (
     <>
       {/* R21 · A MOLDURA É O ALFORJE (`painel-alforje.jsx`). No telefone é
@@ -2468,7 +2542,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
       <Alforje aberto={!!abaPedida} abas={al.abas || []} abaAtiva={aba}
         aoEscolher={al.aoEscolher} aoFechar={fechar} topo={al.topo}
         espreita={al.espreita || null} aoTocarEspreita={al.aoTocarEspreita} reduzido={!!al.reduzido}
-        titulo={aba === "gestao" ? "Gestão" : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : aba === "ascensao" ? "Ascensão" : "Bolsa"}>
+        titulo={aba === "gestao" ? ((abertasAqui.find((x) => x.id === subGestao) || {}).rotulo || "Ficha") : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : aba === "ascensao" ? "Ascensão" : "Bolsa"}>
 
         {aba === "gestao" && (
           <div className="flex flex-wrap gap-1.5">
@@ -2526,9 +2600,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               {personagem.antecedente && (
                 <span className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.inkDim }} title={personagem.antecedenteGancho || ""}>🎭 {personagem.antecedente}</span>
               )}
-              <button onClick={() => setAbrirCaminho(abrirCaminho === "eu" ? null : "eu")} className="tv-mono text-[10px] px-2 py-1 rounded" style={{ border: `1px solid ${T.line}`, color: T.violetSoft }}>
-                {personagem.classe ? "⚔ trilhar novo caminho" : "⚔ escolher caminho"}
-              </button>
+              
             </div>
             <div className="space-y-2.5">
               {/* a barra de XP saiu daqui (v9.159): a régua mora no cabeçalho
@@ -2653,7 +2725,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                   dentro do acampamento. Preparar fora do descanso não quebra
                   nada: o que a regra raciona é QUANTAS cabem na cabeça, e
                   esse teto é o mesmo em qualquer hora do dia. */}
-              <PainelCaderno personagem={personagem} onPreparar={onPrepararMagia} travado={arrumar.ok ? "" : arrumar.motivo} />
+              
               {/* v9.32: as dádivas passam a dizer COMO se usam. O jogador leu
                   "Dádiva do Destino" na tela e escreveu: "não entendi como
                   usar e não ficou claro se aconteceu algo". As passivas dizem
@@ -2673,14 +2745,8 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 </div>
               )}
             </div>
-            {abrirCaminho === "eu" && <SeletorCaminho mundo={mundo} alvo="eu" atual={personagem} acampado={acampado} trocarCaminho={trocarCaminho} fechar={() => setAbrirCaminho(null)} />}
-            {recalibrarSave && (
-              <button onClick={recalibrarSave} className="w-full tv-mono text-[10px] px-2 py-1.5 rounded-lg"
-                style={{ border: `1px dashed ${T.line}`, color: T.inkDim }}
-                title="Para save de versão antiga: o arquivista relê a campanha inteira e propõe, em dois passos, os números do herói (nível, atributos) e o estado do mundo (companheiros, pessoas, potências, domínios, guilda). Você confirma cada passo antes de aplicar.">
-                ⚖ recalibrar save antigo · a lenda e o mundo
-              </button>
-            )}
+            
+            
             {(personagem.condicoes || []).length > 0 && (
               <div>
                 <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>Condições</div>
@@ -2707,34 +2773,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 </div>
               </div>
             )}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <div className="tv-mono text-xs uppercase tracking-widest" style={{ color: T.inkDim }}>Habilidades</div>
-                {(personagem.habilidades || []).length > 0 && (
-                  <button onClick={() => setVerHabsFicha((v) => !v)} className="tv-mono text-[9px] px-2 py-1 rounded" style={{ border: `1px dashed ${T.line}`, color: T.violetSoft }}>
-                    {verHabsFicha ? "▾ ocultar" : `▸ ver habilidades (${(personagem.habilidades || []).length})`}
-                  </button>
-                )}
-              </div>
-              {(personagem.habilidades || []).length === 0 ? <div className="tv-body text-sm italic" style={{ color: T.inkDim }}>Nenhuma ainda.</div> : !verHabsFicha ? null : (
-                <ul className="space-y-2">
-                  {(personagem.habilidades || []).filter((h) => h).map((h, i) => {
-                    const hn = typeof h === "string" ? { nome: h, custo: 0, descricao: "" } : h;
-                    return (
-                    <li key={i} className="rounded-lg px-3 py-2" style={{ background: T.panelSoft }}>
-                      <div className="flex items-baseline justify-between gap-2"><span className="tv-body text-sm" style={{ color: T.ink }}>{hn.nome}</span><span className="tv-mono text-[10px]" style={{ color: T.violetSoft }}>{hn.custo || 0} PM</span></div>
-                      {hn.descricao && <div className="tv-body text-xs mt-0.5" style={{ color: T.inkDim }}>{hn.descricao}</div>}
-                    </li>
-                  ); })}
-                </ul>
-              )}
-            </div>
-            {personagem.historia && (
-              <div>
-                <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.inkDim }}>História</div>
-                <div className="tv-body text-sm" style={{ color: T.inkDim }}>{personagem.historia}</div>
-              </div>
-            )}
+
             {/* ============================================================
                 R13 · O PÉ DA FICHA — para onde foi o que o cabeçalho alojava
 
@@ -2753,28 +2792,10 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                   · `Início` (1 tentativa em 20 turnos, **e não fez nada**) é
                     sessão, não cena.
                 ============================================================ */}
-            <div className="space-y-2 pt-2" style={{ borderTop: `1px solid ${T.line}` }}>
-              <SeloHeroismo pontos={heroismoPontos} aceso={heroAberto} aoAbrir={aoAbrirHeroismo} />
-              {heroAberto && (
-                <PainelHeroismo pontos={heroismoPontos} contexto={contextoHeroismo}
-                  aoGastar={aoGastarHeroismo} aoFechar={aoAbrirHeroismo} />
-              )}
-              <button onClick={aoAlternarRolagens}
-                className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
-                aria-pressed={!!mostrarRolagens}
-                style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: mostrarRolagens ? T.amberSoft : T.inkDim }}>
-                🎲 Rolagens do mundo à vista: <b>{mostrarRolagens ? "sim" : "não"}</b>
-                <span className="block" style={{ color: T.inkDim }}>mostrar os dados que o Mestre rola por trás do escudo</span>
-              </button>
-              {aoIrAoMenu && (
-                <button onClick={aoIrAoMenu}
-                  className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
-                  style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px dashed ${T.line}`, color: T.inkDim }}>
-                  ⌂ Sair para o início
-                  <span className="block" style={{ color: T.inkDim }}>a campanha fica guardada — dá para continuar de onde parou</span>
-                </button>
-              )}
-            </div>
+            {/* AR8 · o caminho, o caderno, o recalibrar, as habilidades, a
+                história e o pé (heroísmo, rolagens) mudaram-se para
+                restoDaFicha, que a casa nova mostra em «Perícias e detalhes» */}
+            {restoDaFicha}
           </>
         )}
 
@@ -2797,8 +2818,8 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
         {aba === "ascensao" && <PainelAscensao divindade={divindade} nivel={personagem.nivel || 1} onDespertar={onDespertar} onRecalibrar={onRecalibrarAsc} recalibrando={recalAscState === "pedindo"}  onMilagre={onMilagreUI} mapa={mapa} devocao={devocao} onEncararProva={onEncararProva} onDesistirRito={onDesistirRito} />}
         {aba === "mapa" && <PainelMapa mapa={mapa} faccaoJogador={faccaoJogador} cidadeAtual={cidadeAtual} devocao={devocao} divindade={divindade} jornada={jornada} masmorra={masmorra} molde={molde} semente={sementeMundo} genero={generoMundo} lex={lexicoMundo} lugar={lugar} aoIrAoLugar={aoIrAoLugar} aoViajar={aoViajar} npcs={npcs} grupo={personagem.grupo || []} heroi={personagem.nome} />}
         {aba === "codex" && <PainelCodex conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contadores} mundo={mundo} npcs={npcs} mapa={mapa} personagem={personagem} nomeCampanha={nomeCampanha} guilda={guilda} reino={reino} dia={dia} nemesis={nemesis} faccaoJogador={faccaoJogador} onExportarCronica={onExportarCronica} onExportarSave={onExportarSave} paginas={paginasDoCodice} aoApontar={aoApontarPagina} />}
-        {aba === "gestao" && subGestao === "mural" && <PainelMural fechado={(portaoFechado && portaoFechado.mural) || ""} mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} vereditoDeCartaz={vereditoDeCartaz} recusaDeCartaz={recusaDeCartaz} aoVerNoDiario={aoVerNoDiario} />}
-        {aba === "gestao" && subGestao === "pessoas" && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
+        {aba === "gestao" && subGestao === "mural" && !heroiNaMesa && <PainelMural fechado={(portaoFechado && portaoFechado.mural) || ""} mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} vereditoDeCartaz={vereditoDeCartaz} recusaDeCartaz={recusaDeCartaz} aoVerNoDiario={aoVerNoDiario} />}
+        {aba === "gestao" && subGestao === "pessoas" && !heroiNaMesa && <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
 
         {aba === "gestao" && subGestao === "diplomacia" && <PainelDiplomacia potencias={potencias} dip={dip} veredito={veredito} onDiplomacia={onDiplomacia} onPresente={onPresente} onCumprir={onCumprirExigencia} cofre={guilda && guilda.cofre} temCasa={!!minhaCasa} />}
         {aba === "gestao" && subGestao === "correio" && <PainelCorreio correio={correio} faccoes={[...new Set([...((mapa && mapa.faccoes) || []).filter((f) => f && f.nome && !f.doJogador && f.relacao !== "jogador").map((f) => f.nome), ...(potencias || []).filter((x) => !x.doJogador).map((x) => x.nome)])]} dia={dia} moedas={personagem.moedas || 0} enviarCarta={enviarCarta} responderPeticao={responderPeticao} />}
@@ -3476,14 +3497,47 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             <details className="rounded-lg" style={{ border: "1px solid " + T.line }}>
               <summary className="tv-anel-foco tv-mono cursor-pointer px-3 flex items-center" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, color: T.inkDim }}>Perícias e detalhes</summary>
               <div className="p-2">{fichaAntiga}</div>
+              <div className="p-2">{restoDaFicha}</div>
             </details>
           );
+          /* AR8 · D1: os mantimentos (Equipamento), as duas escolhas de combate e
+             as dádivas (Ficha), que só a ficha antiga mostrava. Cada um no seu
+             calou: um que estoure não leva a casa. */
+          let mantimentos = null, escolhas = null, dadivas = null;
+          if (!comp) {
+            try {
+              const sup = garantirSuprimentos(personagem.suprimentos);
+              const bocas = 1 + (personagem.grupo || []).length;
+              const c = consumoDiario(bocas);
+              const dias = Math.min(Math.floor(sup.racoes / c.racoes), Math.floor(sup.agua / c.agua));
+              mantimentos = { racoes: sup.racoes, agua: sup.agua, tochas: sup.tochas, kit: !!sup.kit, bocas, dias,
+                exaustao: efeitoExaustao(personagem.exaustao || 0), exaustaoMax: EXAUSTAO.length - 1,
+                ritmos: RITMOS_VIAGEM, ritmo: personagem.ritmoViagem || "normal", marchaArmada: !!marchaArmada, bloqueado: !!bloqueado,
+                aoForragear: onForragear ? () => { try { onForragear(); } catch (e) { calou("forragear pela carta", e); } } : null,
+                aoRitmo: onRitmoViagem ? (id) => { try { onRitmoViagem(id); } catch (e) { calou("o ritmo de marcha pela carta", e); } } : null,
+                aoForcarMarcha: onForcarMarcha ? () => { try { onForcarMarcha(); } catch (e) { calou("forçar a marcha pela carta", e); } } : null };
+            } catch (e) { calou("os mantimentos na carta", e); }
+            try {
+              const verbo = verboDaReacao;
+              escolhas = [
+                { id: "reacao", titulo: "Quando um golpe chega", escolhida: preferenciaReacao || "normal",
+                  fila: [{ id: "normal", rotulo: "Eu decido" }, { id: "parado", rotulo: "Eu decido, sem pressa" }, ...(verbo ? [{ id: verbo.id, rotulo: verbo.nome + " sempre" }] : []), { id: "deixar_passar", rotulo: "Deixar passar" }],
+                  aoEscolher: (id) => { try { if (aoEscolherPreferenciaReacao) aoEscolherPreferenciaReacao(id); } catch (e) { calou("a reação pela carta", e); } } },
+                { id: "golpe", titulo: "Ao derrubar um inimigo", escolhida: preferenciaGolpeFinal || PREFERENCIA_PADRAO,
+                  fila: Object.values(PREFERENCIAS_DO_GOLPE_FINAL).map((p) => ({ id: p.id, rotulo: p.rotulo })),
+                  aoEscolher: (id) => { try { if (aoEscolherPreferenciaGolpeFinal) aoEscolherPreferenciaGolpeFinal(id); } catch (e) { calou("o golpe final pela carta", e); } } },
+              ];
+            } catch (e) { calou("as escolhas de combate na carta", e); }
+            try {
+              dadivas = { linhas: linhasDeDadivas(personagem), progresso: (personagem.nivel || 1) >= 20 ? { xp: personagem.xp || 0, por: XP_POR_DADIVA } : null };
+            } catch (e) { calou("as dádivas na carta", e); }
+          }
           /* na saída (o alforje desce em VEU.sai) a carta esbate-se no mesmo tempo, e não
              recebe toque: nunca reaparece a gaveta que estava por baixo */
           return (
-            <div role="dialog" aria-modal="true" aria-label={comp ? "A bolsa de " + comp.nome : daBolsa ? "A bolsa" : "O herói"} className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+            <div role="dialog" aria-modal="true" aria-label={comp ? (daBolsa ? "A bolsa de " : "A ficha de ") + comp.nome : daBolsa ? "A bolsa" : "O herói"} className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
               style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
-              <div className="mx-auto max-w-6xl" style={{ padding: heroiNaMesa ? FICHA_CARTA.mesa.folga : FICHA_CARTA.folga }}>
+              <div>
                 <LimiteDasFichas key={"casa:" + (comp ? comp.nome : "eu")}>
                   <PainelFichaCarta key={(daBolsa ? "equipamento" : "ficha") + ":" + (comp ? comp.nome : "eu")} aba={daBolsa ? "equipamento" : "ficha"}
                     personagem={carta} companheiro={!!comp} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
@@ -3492,6 +3546,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                     pessoas={pessoas} quem={comp ? comp.nome : "eu"} aoTrocarQuem={(id) => { try { setInvDe(id); } catch (e) { calou("trocar de quem é a bolsa", e); } }}
                     portas={portas} aoAbrirPorta={abrirPorta}
                     detalhes={detalhes} bolsa={bolsaAqui}
+                    mantimentos={mantimentos} escolhas={escolhas} dadivas={dadivas} talentos={comp ? (comp.habilidades || []) : null}
                     aoFechar={fecharTudo} lex={lexicoMundo} />
                 </LimiteDasFichas>
               </div>
@@ -3513,17 +3568,19 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           return (
             <div role="dialog" aria-modal="true" aria-label="Diário" className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
               style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
-              <div style={{ padding: DIARIO_DE_MISSOES.mesa.folga }}>
+              <div style={{ paddingBottom: DIARIO_DE_MISSOES.mesa.folga }}>
                 <LimiteDasFichas key="diario-na-mesa" reserva={<button onClick={fecharDiario} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
                   <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} aoFechar={fecharDiario} />
                 </LimiteDasFichas>
                 {gerar && (
+                  <div style={{ paddingLeft: DIARIO_DE_MISSOES.mesa.folga, paddingRight: DIARIO_DE_MISSOES.mesa.folga }}>
                   <button onClick={gerar}
                     className="tv-anel-foco tv-mono rounded-lg px-3 text-left mt-5"
                     style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.amberSoft }}>
                     📜 Gerar crônica
                     <span className="block" style={{ color: T.inkDim }}>escreve a campanha por extenso, como crônica</span>
                   </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -3581,6 +3638,29 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             </div>
           );
         } catch (e) { calou("o grupo por cima", e); return null; }
+      })()}
+      {(() => {
+        try {
+          /* AR8 (06/11) · PESSOAS E MURAL EM TELA INTEIRA (D2 da prova jogada):
+             na mesa ainda abriam a gaveta de 320, a única tela antiga à vista.
+             Abrem por cima de tudo, como o Grupo, com o mesmo cabeçalho fixo e
+             o mesmo Fechar (e o Esc), que devolve à mesa. */
+          const sala = aba === "gestao" && heroiNaMesa && (subGestao === "pessoas" || subGestao === "mural") ? subGestao : null;
+          if (!sala) return null;
+          const fecharSala = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar " + sala, e); } };
+          const nomeDaSala = (abertasAqui.find((x) => x.id === sala) || {}).rotulo || (sala === "mural" ? "Mural" : "Pessoas");
+          return (
+            <div role="dialog" aria-modal="true" aria-label={nomeDaSala} className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+              style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
+              <CabecalhoDaTela titulo={nomeDaSala} aoFechar={fecharSala} />
+              <div className="mx-auto max-w-3xl" style={{ padding: FICHA_CARTA.mesa.folga }}>
+                <LimiteDasFichas key={sala + "-na-mesa"}>
+                  {sala === "mural" ? <PainelMural fechado={(portaoFechado && portaoFechado.mural) || ""} mural={mural} quests={quests} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} acampado={acampado} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} moedas={personagem.moedas} cofre={guilda && guilda.cofre} nivel={personagem.nivel} cidadeAtual={cidadeAtual} vereditoDeCartaz={vereditoDeCartaz} recusaDeCartaz={recusaDeCartaz} aoVerNoDiario={aoVerNoDiario} /> : <PainelPessoas semente={sementeMundo} npcs={npcs} grupo={personagem.grupo || []} onConvidar={convidarNpc} onBancar={onBancarConvite} vereditoConvite={vereditoConvite} grupoCheio={(personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS} onDefinirRelacao={definirRelacao} mortosBase={mortosBase} />}
+                </LimiteDasFichas>
+              </div>
+            </div>
+          );
+        } catch (e) { calou("pessoas e mural por cima", e); return null; }
       })()}
     </>
   );

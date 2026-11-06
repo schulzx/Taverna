@@ -532,12 +532,14 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   return (
     <div ref={raiz} className="flex flex-col" data-leiaute={leiaute}>
       {aoFechar ? (
-        <div className="mb-4">
+        <div className="mb-4 sticky top-0 z-10">
           <CabecalhoDaTela titulo="Diário" subtitulo={subtitulo} telefone={telefone}
             objeto={<DesenhoDoObjeto chave="diario" lado={telefone ? CABECALHO_DA_TELA.telefone.objeto : CABECALHO_DA_TELA.mesa.objeto} />} aoFechar={aoFechar} />
         </div>
       ) : null}
-      {corpo}
+      {/* AR8 · D3: com o cabeçalho da tela inteira, a folga é do corpo e não da
+          janela: o Fechar fica no canto, no sítio do das outras telas */}
+      {aoFechar ? <div style={{ padding: `0 ${D.mesa.folga}px` }}>{corpo}</div> : corpo}
     </div>
   );
 }

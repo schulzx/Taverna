@@ -234,7 +234,7 @@ export function CartaDoCompanheiro({ c, telefone = false, aoAbrirBolsa = null, a
       {c.descricao ? <p className="tv-body italic" style={{ margin: 0, fontSize: TIPOS.rotulo, color: T.inkDim }}>{c.descricao}</p> : null}
       <div className={telefone ? "flex flex-col" : "flex"} style={{ gap: C.barra }}>
         {aoAbrirBolsa ? <Porta rotulo={`Abrir a bolsa de ${c.nome}`} nota={naBolsa ? plural(naBolsa, "coisa", "coisas") : "bolsos vazios"} aoTocar={() => aoAbrirBolsa(c.nome)} /> : null}
-        {aoVerFicha ? <Porta rotulo="Ver a ficha" nota="atributos e talentos" aoTocar={() => aoVerFicha(c.nome)} /> : null}
+        {aoVerFicha ? <Porta rotulo="Ver a ficha" nota={c.atributos ? "atributos e talentos" : "talentos"} aoTocar={() => aoVerFicha(c.nome)} /> : null}
       </div>
       <div className="flex flex-wrap" style={{ gap: C.barra }}>
         {aoTrocarCaminho ? <VerboQuieto aoTocar={() => aoTrocarCaminho(c.nome)}>{c.classe ? "Trilhar novo caminho" : "Definir caminho"}</VerboQuieto> : null}

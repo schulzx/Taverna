@@ -54,7 +54,10 @@ export function GlifoAR({ nome, familia = "interface", tamanho = 16, cor = "curr
 }
 
 /* O CABEÇALHO DA TELA: o objeto que se tocou, o título em Cinzel espaçado, o
-   estado numa linha, e o fechar. Esc fecha também (§AR 7, «saída, sempre»). */
+   estado numa linha, e o fechar. Esc fecha também (§AR 7, «saída, sempre»).
+   AR8 (06/11) · fixo no topo da rolagem (D4 da prova jogada: pela Bolsa o
+   Fechar ficava a −290 px, fora do ecrã). O fundo é couro opaco: o que rola
+   passa por baixo dele. */
 export function CabecalhoDaTela({ titulo, subtitulo = "", objeto = null, aoFechar = null, telefone = false }) {
   const C = CABECALHO_DA_TELA;
   const M = telefone ? C.telefone : C.mesa;
@@ -65,7 +68,7 @@ export function CabecalhoDaTela({ titulo, subtitulo = "", objeto = null, aoFecha
     return () => window.removeEventListener("keydown", tecla);
   }, [aoFechar]);
   return (
-    <div className="flex items-center shrink-0" style={{
+    <div className="flex items-center shrink-0 sticky top-0 z-10" style={{
       minHeight: M.alto, padding: `0 ${M.lado}px`, gap: M.folga, background: T.couroBaixo,
       borderBottom: `${C.fio.espessura}px solid ${alfa(OURO.meio, C.fio.alfa)}`,
     }}>

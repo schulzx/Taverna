@@ -24,6 +24,23 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 06/11 · Fase AR, AR7 e AR8 · a prova jogada, e o que ela achou
+- **AR7 (agente `jogo`, `mente/ar7-prova.md`):** uma porta, uma tela pegou, e o defeito da v9.605 não voltou. **Mas a AR1 (v9.612) tinha tirado de vista o que só a ficha antiga mostrava: os mantimentos, as duas escolhas de combate e as dádivas.** No save não se perdeu nada; na tela, sim. E Pessoas e Mural abriam a gaveta antiga.
+- **a lição, para a mesa:** «nenhuma função se perde» provou-se pelas AÇÕES da bolsa antiga e não pelo que a FICHA antiga MOSTRAVA. Quem desliga uma tela faz a lista do que ela mostra, não só do que ela faz.
+- **AR8 (agente `oficial`):**
+  - **D1:** na aba Equipamento ficam os mantimentos, o forragear, o ritmo e o forçar marcha; na aba Ficha, as duas escolhas de combate e as dádivas; em «Perícias e detalhes», o resto da ficha antiga tal qual (`restoDaFicha`: o caminho, o caderno de magias, o recalibrar, as habilidades, a história, o heroísmo, as rolagens à vista). As rações compradas aparecem.
+  - **D2:** Pessoas e Mural abrem em tela inteira na mesa; no telefone, o título é o nome da sala.
+  - **D4:** o cabeçalho é fixo no topo, e o Fechar está sempre à vista.
+  - **D5:** «Ver a ficha» do companheiro abre a ficha.
+  - **D3:** há um só Fechar (`CabecalhoDaTela`) nas cartas, e o Esc.
+  - Provado a 1906 e a 375, e as suítes de texto corridas todas antes de entregar.
+- **o que fica:**
+  - os defeitos D6 a D16: a mochila tocável, o «Dar a…» como cartas, a Força com dois valores, a voz tu/você, o Mural que fala do sistema, o «chamou-o», a primavera em Brumal;
+  - a Guilda e as outras salas, ainda na gaveta na mesa;
+  - o Mapa no mesmo cabeçalho;
+  - Pessoas e Mural, ainda dentro do App;
+  - a proposta (os mantimentos como dados de uso na mesa).
+
 ## 06/11 · Fase AR, AR5 e AR6 · o Grupo e o Mercado
 - **o Grupo (agente `aprendiz`, `painel-grupo.jsx`, suíte 69/69):**
   - saiu do `App.jsx`. Tem cartas grandes com a moldura do companheiro, PV e PM, o vínculo com os quatro marcos e «Sabe fazer» com o nó da árvore;
