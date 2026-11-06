@@ -52,7 +52,7 @@ import { garantirMissoes } from "../missoes.js";
 import { formatarCanone } from "../prompt.js";
 import { muralLiberado } from "../abertura.js";
 import { secundariasAbertas } from "../portao-das-secundarias.js";
-import { cartazDaProposta, envelopeDoRecado } from "../ofertas.js";
+import { cartazDaProposta } from "../ofertas.js";
 import { nomeComDono, fichaDoCronista, mesclarNPC, criarNPC, notaDoHomonimo, aMarcaQueFica } from "../npcs.js";
 import { favorJaPedido } from "../subtramas.js";
 import { aceitarProposta, tipoDe, barraDe, envelopeNovo } from "../relogios.js";
@@ -269,7 +269,11 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
         try { const coracao = ler().coracao; semPedido = !favorJaPedido(cartaz.dador, coracao, porta("nucleoAgora")); } catch (e) { calou("o favor já pedido", e); }
         if (semHomonimo && semPedido && porta("pregarNoMural", cartaz)) {
           msgs.push(`📋 ${cartaz.dador || "Alguém"} tem um trabalho no mural.`);
-          nota(envelopeDoRecado(cartaz));
+          /* 05/11 · SQ4 (a pessoa: «toda hora aparecer alguém oferecendo trabalho e
+             poluindo a tela»): o recado ao Mestre saiu. A cena já inventou a proposta
+             e a linha diz que o papel foi pregado; o recado fazia o Mestre voltar a
+             ela no turno seguinte — a mesma oferta a interromper duas vezes. O mural
+             vai-se buscar. */
         }
       }
     }

@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · Fase SQ, SQ4 e SQ5 · o mural vai-se buscar, e a prova
+- **a palavra:** «o mural pode continuar em funcionamento gerando mini quests pra caso o player deseje upar… mas também tem que ser liberado a partir de um certo lvl».
+- **SQ4 (agente `frontend`):**
+  - a aba do mural abre calada, e a soleira já não oferece o papel pregado (`PORTAO_DAS_SECUNDARIAS.naSoleira: false`);
+  - o mural fechado diz na voz do mundo «Ainda ninguém confia trabalho a quem chegou há pouco.», e a casa diz «A casa ainda não tem serviço para quem acabou de entrar.» (`FALAS_DO_PORTAO`);
+  - o mural conta como fechado enquanto qualquer das duas portas o feche (a da MM13 e a do portão), porque o botão de procurar ficava morto ao nível 3;
+  - suíte `teste-mural-vai-se-buscar` 20/0.
+- **a dívida da SQ3:** `teste-fecho-da-secundaria` 17/0 joga o conferente com os três fechos (laço, lugar e porta) e as contraprovas.
+- **o segundo recado do Cronista (eu):** a proposta pregada mandava também o recado ao Mestre, e a mesma oferta interrompia a cena duas vezes. O recado saiu. O dourado do Cronista foi regenerado com o conserto declarado em `gerar-cronista-dourado.mjs`, e só mudam os casos em que o Cronista prega um cartaz. `teste-mural-do-mestre` mudou uma asserção, com o motivo.
+- **SQ5, a prova (sem custo):** no nível 1, antes do primeiro marco, as seis fontes de oferta do censo estão caladas, provadas uma a uma por `teste-portao-das-secundarias` (42/0) e `teste-mural-vai-se-buscar` (20/0). O censo dizia ~15 ofertas em 3 dias, e agora são 0 até ao portão. Depois do portão nasce no máximo uma secundária planeada a cada 3 dias, com teto de 2. **A sessão jogada com IA real (20 turnos) fica para a pessoa decidir:** custa dinheiro.
+- **a Fase SQ fecha.** A seguir vem a Fase AR (a arrumação; o Diário como portal de missões em AR2).
+
 ## 05/11 · Fase SQ, SQ3 · a secundária planeada, uma história pequena
 - **a palavra:** «as quests secundárias também devem ser planejadas assim como uma quest de história… menos quests secundárias mas bem elaboradas».
 - **o motor (agente `backend`, `src/secundaria-planeada.js`, suíte 56/0):**

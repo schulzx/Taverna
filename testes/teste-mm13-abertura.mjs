@@ -607,7 +607,12 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      linha nova só acrescenta uma segunda porta, nunca tira a primeira. */
   t("a soleira não oferece cartaz oferecido antes do mural abrir",
     soleira.length > 200 && soleira.includes("for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }) && muralDoPortao)) {")
-    && soleira.includes("const muralDoPortao = portaoAgora().mural;"));
+    /* MOVIDA NA SQ4 (05/11, o frontend): `muralDoPortao` ganhou
+       `&& PORTAO_DAS_SECUNDARIAS.naSoleira === true` — o mural não chama
+       ninguém, e nem aberto o papel pregado se oferece na soleira. A régua
+       desta linha (o mural fechado não oferece) fica inteira: o portão
+       continua a ser a primeira condição; a SQ4 só acrescenta outra. */
+    && soleira.includes("const muralDoPortao = portaoAgora().mural && PORTAO_DAS_SECUNDARIAS.naSoleira === true;"));
   const pauta = corpoApos(app, 'const pautaDoTurno = (acaoDoTurno = "") => {');
   // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   // retirada (trilha A, 29/10): «o veto do mural vai à pauta (NÃO PODE), junto do veto do geógrafo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).

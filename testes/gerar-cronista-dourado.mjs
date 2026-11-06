@@ -41,7 +41,14 @@ const cru = execSync(`git show ${COMMIT}:src/App.jsx`, { cwd: path.join(AQUI, ".
    (gatilho-do-cronista.js), porque o aceite não viaja na fila. O App de antes
    não passava o aceite ao gatilho; o conserto passa-o (`aceite: dt.aceite`). */
 const ACEITE_NO_PEDIDO = "const __aceiteParaOCronista = (aceite) => { const a = aceite && typeof aceite === \"object\" ? aceite : {}; const objeto = typeof a.objeto === \"string\" ? a.objeto.trim() : \"\"; if (!objeto) return \"\"; const de = typeof a.de === \"string\" && a.de.trim() ? a.de.trim() : \"alguém em cena\"; const pede = typeof a.pede === \"string\" && a.pede.trim() ? \" — \\\"\" + a.pede.trim() + \"\\\"\" : \"\"; return \"PEDIDO QUE O HERÓI ACEITOU NESTE TURNO (é o do sistema; se a narrativa puser na boca de alguém OUTRO pedido, isso é palavra de quem fala, não fato — não dê papel a ninguém por ele):\\n- \" + de + \" pede: \" + objeto + pede + \"\\n\\n\"; };";
+/* O CONSERTO DECLARADO (05/11/2026, SQ4 — o mural vai-se buscar): a proposta
+   do Cronista prega no mural e diz-o numa linha, mas deixa de mandar o recado
+   ao Mestre (envelopeDoRecado) — o recado fazia a mesma oferta interromper a
+   cena outra vez no turno seguinte («toda hora aparecer alguém oferecendo
+   trabalho e poluindo a tela», a pessoa). Muda só os casos em que o Cronista
+   prega um cartaz; as outras fotos são as do dourado de antes. */
 const CONSERTOS = [
+  ["              notaRef.current = `${notaRef.current ? notaRef.current + \"\\n\" : \"\"}${envelopeDoRecado(cartaz)}`;\n", ""],
   ['notas\\":\\"máx. 8 palavras\\"}],\\"fe\\"', 'notas\\":\\"máx. 8 palavras\\"}],\\"falou_com\\":[],\\"fe\\"'],
   ["  const cronistaDoTurno = async (pers, narrativa, doTurno) => {\n", "  const cronistaDoTurno = async (pers, narrativa, doTurno) => {\n    " + ACEITE_NO_PEDIDO + "\n"],
   ["${filaDoCronista}NARRATIVA DO TURNO:", "${filaDoCronista}${__aceiteParaOCronista(doTurno && doTurno.aceite)}NARRATIVA DO TURNO:"],

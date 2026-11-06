@@ -51,6 +51,8 @@
 import { garantirAbertura, MURAL } from "./abertura.js";
 import { garantirEspinha } from "./saga.js";
 
+const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+
 export const PORTAO_DAS_SECUNDARIAS = Object.freeze({
   /* quantos marcos da espinha cumpridos abrem o portão (o primeiro) */
   marcos: 1,
@@ -61,9 +63,32 @@ export const PORTAO_DAS_SECUNDARIAS = Object.freeze({
   /* o veto que vai à pauta (NÃO PODE) enquanto o mural está fechado — a
      MESMA frase da MM13, para a pauta não a levar duas vezes */
   veto: MURAL.veto,
+  /* SQ4 (05/11): O MURAL NÃO CHAMA NINGUÉM. Aberto, ele enche-se como
+     sempre, mas o papel pregado nunca se oferece na soleira — quem quer
+     trabalho vai ao mural. Falso é a regra; verdadeiro devolve a soleira
+     de antes, num commit. */
+  naSoleira: false,
 });
 
-const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
+/* ---------------- O MURAL FECHADO DIZ PORQUÊ (SQ4) ----------------
+   Antes do nível do mural, o painel dele e o trabalho da casa não ficam
+   mudos nem dizem o mecanismo: dizem uma linha do mundo. A lei «o sistema
+   não fala de si mesmo» — nenhuma destas frases nomeia nível, portão,
+   missão nem mural; o jogador sente o porquê pela ficção, e a suíte
+   (teste-mural-vai-se-buscar) prova que nenhuma o nomeia. */
+export const FALAS_DO_PORTAO = Object.freeze({
+  mural: "Ainda ninguém confia trabalho a quem chegou há pouco.",
+  casa: "A casa ainda não tem serviço para quem acabou de entrar.",
+});
+
+/* A linha que o lugar diz, dado o portão de agora (o que
+   `secundariasAbertas` devolveu). Aberto, ou lugar sem linha: "" — o
+   painel mostra o que sempre mostrou. Nunca estoura. */
+export function falaDoPortao(onde, portao) {
+  const p = obj(portao);
+  if (p.mural !== false) return "";
+  return FALAS_DO_PORTAO[onde] || "";
+}
 
 export function secundariasAbertas(estado) {
   const P = PORTAO_DAS_SECUNDARIAS;

@@ -115,7 +115,11 @@ sec("4. o que o código de verdade faz com a proposta");
   const { jogarOAceito } = await import("./cronista-bloco.mjs");
   const pregado = jogarOAceito({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 12, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 2 }] } }, { estado: { npcs: {}, cidadeAtual: "Pedravale", missoes: [] } });
   const cartazPregado = (pregado.portas.find((x) => x[0] === "pregarNoMural") || [])[1] || {};
-  t("e prega no mural", cartazPregado.titulo === "Os lobos" && cartazPregado.cidade === "Pedravale" && pregado.fim.msgs.some((m) => m.includes("Hilda tem um trabalho no mural")) && pregado.efeitos.some((e) => e.tipo === "nota" && e.linhas[0] === O.envelopeDoRecado(cartazPregado)));
+  t("e prega no mural", cartazPregado.titulo === "Os lobos" && cartazPregado.cidade === "Pedravale" && pregado.fim.msgs.some((m) => m.includes("Hilda tem um trabalho no mural")) && !pregado.efeitos.some((e) => e.tipo === "nota" && e.linhas[0] === O.envelopeDoRecado(cartazPregado)));
+  /* MOVIDA em 05/11 (SQ4, o mural vai-se buscar): a proposta do Cronista prega
+     no mural e diz-o numa linha, mas já não manda o recado ao Mestre — o recado
+     fazia a mesma oferta interromper a cena no turno seguinte. A intenção que
+     fica: prega, e diz que pregou. */
   t("nada mais registra a proposta como missão do diário", !/envelopeDeOferta/.test(APP));
   /* 29/10 (Fase 4, trilha A), ASSERÇÕES MOVIDAS E O MOTIVO: o
      oferecerTrabalhoDaqui e o pregarNoMural saíram do App para

@@ -73,6 +73,8 @@ export function PainelGuilda({
   guildas = [], minha = null, personagem = {}, cidadeAtual = "", tarefas = [], elenco = [],
   aoEntrar, aoSair, aoPegarTrabalho, aoDelegar, aoPromover, aoExpulsar, aoAdmitir, aoTomar, podeTomar = null,
   aoFundar, aoSacar, aoDepositar, aoPedirPazes, trabalhos = [], motivoDeEntrar,
+  /* SQ4: antes do mural abrir, a casa diz porquê na voz do mundo (FALAS_DO_PORTAO) */
+  trabalhosFechados = "",
 }) {
   const [verMembros, setVerMembros] = React.useState(false);
   const [formFundar, setFormFundar] = React.useState(false);
@@ -229,7 +231,7 @@ export function PainelGuilda({
       <div>
         <Rotulo cor={T.amber}>O trabalho da casa</Rotulo>
         {trabalhos.length === 0 ? (
-          <div className="tv-body text-xs italic py-3 text-center" style={{ color: T.inkDim }}>Nada para o seu posto agora. Volte depois de uns dias.</div>
+          <div className="tv-body text-xs italic py-3 text-center" style={{ color: T.inkDim }}>{trabalhosFechados || "Nada para o seu posto agora. Volte depois de uns dias."}</div>
         ) : (
           <div className="space-y-2">
             {trabalhos.map((t) => (

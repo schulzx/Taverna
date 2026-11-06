@@ -60,7 +60,11 @@ export const SUBS_GESTAO = [
   { id: "dominios", rotulo: "Domínios", quando: (e) => e.dominios > 0 || e.podeTomar, porque: "governar sem ter o que governar foi exatamente o defeito que a v9.140 consertou — a aba existia e não havia como chegar nela" },
   { id: "diplomacia", rotulo: "Diplomacia", quando: (e) => e.temFaccao && e.potencias >= 2, porque: "com uma potência só não há política, há um vizinho — e sem eu pertencer a nada não há sequer quem me atenda" },
   { id: "correio", rotulo: "Correio", quando: (e) => e.cartas > 0, porque: "uma caixa de entrada vazia no primeiro dia é a definição de aba que não importa ainda" },
-  { id: "mural", rotulo: "Mural", quando: (e) => !!e.temMural, porque: "o mural é do lugar; o primeiro que o herói vê ensina o hábito de olhar" },
+  /* SQ4 (05/11): o mural vai-se buscar. A aba abre CALADA (sem a linha
+     de novidade no relato: o mural não chama ninguém) e abre também com o
+     mural ainda fechado numa cidade — é lá que o jogador lê, na voz do
+     mundo, porque ainda não há trabalho para ele. */
+  { id: "mural", rotulo: "Mural", calada: true, quando: (e) => !!e.temMural || !!e.muralFechado, porque: "o mural é do lugar; quem quer trabalho vai a ele, e ele não chama ninguém — fechado, diz porquê na voz do mundo" },
 ];
 
 /* ---------------- AS ABAS DE CIMA ----------------
@@ -119,7 +123,9 @@ export function subsAbertas(abertas, estado) {
    acontece. */
 export function novidades(antes, depois) {
   const a = new Set(Array.isArray(antes) ? antes : []);
-  return (Array.isArray(depois) ? depois : []).filter((x) => !a.has(x));
+  /* a aba `calada` abre sem linha (SQ4: o mural não chama ninguém) */
+  const caladas = new Set(TODAS.filter((x) => x.calada).map((x) => x.id));
+  return (Array.isArray(depois) ? depois : []).filter((x) => !a.has(x) && !caladas.has(x));
 }
 
 const ROTULO = Object.fromEntries([...SUBS_GESTAO.map((s) => [s.id, s.rotulo]), ["codex", "Códex"]]);
