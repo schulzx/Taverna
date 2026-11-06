@@ -14221,3 +14221,474 @@ o Mapa mostra **o selo partido** quando há um lugar novo por visitar, e o Códe
 uma entrada nova. É a mesa a contar o estado do herói sem uma palavra, que é o que um ícone de ARPG faz quando
 a mochila fica cheia. Custa: três a quatro variantes de desenho por objeto (na mesma tabela, por camadas que
 se ligam e desligam) e um sinal do sistema por objeto, que já existe em todos menos no Mapa.
+
+## AR · o Diário, os Talentos, o Grupo e o Mercado (05/11/2026)
+
+**A ordem, nas palavras dela (05/11):** *«as outras páginas "talentos", "mercado" etc precisam de um redesign
+para acompanhar nosso novo design de ficha e bolsa etc, também precisa de cara de AAA, principalmente as abas
+grupo e talentos (essa principalmente, já que é uma das almas do jogo…)»* e *«Diário também tem que ser
+repensado para parecer mais com um portal de quests… dizendo qual é a quest, qual é o próximo passo, quais
+etapas dela… foram concluídas e quais quests foram concluídas».* A linguagem é a da §AAA (as molduras, os
+encaixes, as raridades, o feltro, os objetos); nada aqui inventa cor nova para o jogo — **a única cor nova é o
+céu da proposta ambiciosa**, e está isolada (§AR 9).
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página **«AR · 05/11» `268:2`**):
+
+| peça / quadro | id |
+|---|---|
+| `Ícone de etapa/*` (10: ir_a, derrotar, achar, falar_com, levar_a, resgatar, revelar, concluir_masmorra, aguentar, vencer_relogio) | `268:6` … `268:48` |
+| `Ícone de talento/*` (6: ataque, defesa, suporte, utilidade, passiva, magia) | `268:53` … `268:74` |
+| `Ícone de interface/*` (8: visto, cadeado, interrogacao, fechar, pino, seta, estrela, bolsa) | `268:77` … `268:105` |
+| `Etapa da missão` — Estado: feita · atual · silhueta · falhada (Texto, Nota, Fio, Ícone) | `269:44` |
+| `Relógio do prazo` — Noites 4/6/8 × Pressa calma/aperta | `269:100` |
+| `Lombada da estante` — Estado: concluida · falhada | `269:125` |
+| `Missão no índice` — Estado: repouso · escolhida · oferta (Título, Passo, Tipo, Prazo) | `269:171` |
+| `Nó de talento` — Ramo (classe, subclasse, especializacao, magia) × Estado (aprendido, disponivel, bloqueado, escolhido) = 16 (Nome, Custo, Ícone) | `270:213` |
+| `Ligação` — Estado: acesa · apagada | `270:220` |
+| `O verbo com preço · espelho AR` — Papel: gesto · recuo · armado · semVolta · impedido (o espelho da biblioteca `64:2446` e de `VerboComPreco`) | `270:247` |
+| `Selo de pontos` — Estado: tem · zero | `270:256` |
+| `Linha da comparação` — Sinal: melhora · piora · igual | `271:96` |
+| `Peça da banca` — Estado: repouso · escolhida · caraDemais (o `Encaixe` exposto) | `271:134` |
+| `Aba da tela` — Estado: ativa · repouso · novidade | `271:151` |
+| `Cabeçalho da tela` — Tamanho: mesa · telefone (o `Objeto` exposto, trocável por porta) | `271:214` |
+| `Carta do companheiro` — Tamanho: mesa · telefone | `272:392` |
+| `Porta · o medalhão do herói` (Talentos) · `Porta · o grupo` (Grupo) | `275:716` · `281:1859` |
+| variáveis novas (coleção «AAA · molduras vivas», modo Vela): `ar/ceu/fundo`, `ar/ceu/estrela` — só da proposta | `VariableID:283:3597` · `283:3598` |
+| **Diário** · 1905 (a principal escolhida) · 1280 (a secundária planeada escolhida) · 375 · **o ANTES** (375) | `273:296` · `274:440` · `274:649` · `283:3599` |
+| **Talentos · a árvore** · 1905 · 1280 (o veredito em popover) · 375 (a gaveta) · **o ANTES** (375) | `276:685` · `278:1047` · `278:1537` · `283:3626` |
+| **Talentos · o grimório** · 1280 | `280:1556` |
+| **Talentos · a cerimónia de aprender** (quadros + reduced-motion) | `280:1858` |
+| **O Grupo** · 1905 · 1280 · 375 | `281:1947` · `281:2439` · `281:2922` |
+| **O Mercado** · 1905 · 1280 · 375 (a gaveta da compra) | `282:3205` · `282:3534` · `282:3839` |
+| **Proposta** · a constelação do herói · 1280 | `283:3675` |
+
+Todas as cores das telas estão ligadas a variáveis (`T · Mesa C (vela)` e `AAA · molduras vivas`): nas quatro
+telas a 1905, 114 preenchimentos ligados e 1 solto. Os efeitos (halos e sombras) são `alfa(T.x, a)` e
+`sombra(a)` — o Figma não liga variável a efeito com alfa, e a lei de `estilo.js` já diz que sombra é
+profundidade, não cor.
+
+### AR 1 · O que se decidiu, e porquê (as quatro telas numa frase cada)
+
+- **O Diário é um índice e uma missão à frente.** À esquerda, o índice (em curso, ofertas, a estante); ao meio,
+  a missão escolhida com **o próximo passo em caixa própria** (o medalhão do tipo de etapa, a frase de
+  `rumoDaEtapa`, o lugar com o pino, e «Ver no mapa» com o preço: o sítio e a distância); por baixo, as etapas
+  em linha do tempo; por baixo, o que se ganha. À direita, a 1905, *o mundo não espera* (evento global e fios).
+- **Os Talentos são uma árvore deitada na mesa e em pé no telefone.** As colunas são os degraus (1–10, 12,
+  14), as bandas são a classe, a subclasse e as duas especializações por escolher; a régua de cima diz onde o
+  herói está. **A forma do nó diz o ramo, a insígnia diz o estado, e o veredito diz o preço antes do toque.**
+- **O Grupo são cartas em pé.** A `Moldura · carta` de cada companheiro (o degrau pelo nível, a gema pela
+  subclasse), o vínculo com os quatro marcos à vista, o que sabe fazer como `Nós de talento` (a mesma peça da
+  árvore) e as duas portas: a bolsa dele (AR3) e a ficha.
+- **O Mercado é uma banca e um veredito.** As peças em `Encaixe` com a raridade, o preço, e **a diferença
+  contra o que o herói tem vestido no mesmo encaixe**; à direita, a comparação inteira e o preço dito com o
+  porquê (`porques` de `precoDaBancaComMotivo`); por baixo, a bolsa do herói com o que este mercador lhe paga.
+
+### AR 2 · O Diário, peça a peça
+
+**O índice** (`Missão no índice`, 340 de largo, 64 de alto): o medalhão do tipo (36, couro com aro de ouro; o
+glifo é `★` principal, `✦` do Mestre, `◆` secundária, `?` oferta — a forma diz o tipo, a cor é segunda
+leitura), o título (Spectral 15 SemiBold) e **o próximo passo** em `inkDim` 12 (`→ Procurar Petra na Corda
+Velha`): o índice já responde *o que faço agora* sem abrir nada. O relógio mini (32) quando há prazo.
+*escolhida* = borda âmbar de 2 + sombra; *oferta* = tracejado violeta (a decisão ainda está por tomar).
+
+**A missão à frente:** chips (o tipo; o patamar de `dificuldadeDaMissao`), o título em **Cinzel 26** (a mesma
+medida do nome na ficha-carta, `FICHA_CARTA.nome.mesa`), a descrição em `inkMeio` 15, e:
+
+- **O próximo passo** — caixa de couro com borda âmbar de 2 e halo `alfa(T.amber, .35)` r16: o medalhão de 52
+  com o glifo **do tipo da etapa** (`ICONES_DA_ETAPA`), «O PRÓXIMO PASSO» em mono 12 `amberSoft`, a frase de
+  `rumoDaEtapa` em Spectral 20 SemiBold, a linha do onde com o pino (`mundoSoft` 13) e o `VerboComPreco`
+  armado **«Ver no mapa · Corda Velha · 1 zona»**. *Tocar numa missão leva ao lugar no mapa:* o índice
+  escolhe, este botão leva. No telefone a caixa empilha e o verbo ocupa a largura.
+- **As etapas** (`Etapa da missão`): *feita* = ✓ musgo sobre `okFundo` e o texto recua a `inkMeio`, com a nota
+  «cumprida no dia N»; *atual* = o glifo do tipo em âmbar sobre couro, com halo, e a nota em `amberSoft`
+  («… — é o passo de agora»); *silhueta* = aro tracejado `lineStrong` com `?`, «Ainda não se sabe» em itálico
+  `inkDim` — **existe e conta-se, mas não se diz o quê** (a regra v9.27 de `painel-diario.jsx`, agora com
+  forma: o jogador sabe quanto falta, não o quê); *falhada* = ✗ vermelho e diz porquê. O fio entre etapas é
+  musgo nas feitas, `lineStrong` nas outras, e cala na última (`Fio`).
+- **O que se ganha** — `m.recompensa`: ◉ moedas, XP, Fama em chips, e o item como `Encaixe` da raridade com
+  `?` dentro («e um item raro») — a raridade é sabida, a peça não. Na secundária planeada, **o fecho**
+  (`lerSecundaria(m).fecho`) entra aqui: o losango de ouro do marco e «e Ilsa passa a confiar em ti» (laço),
+  «e o Fosso fica no teu mapa» (lugar), «e a estrada para Alto do Sal abre-se» (porta).
+
+**A secundária planeada** (o quadro a 1280): o chip com quem pediu, **o relógio de 40 com «faltam 4 noites ·
+de 6 · cheio, a missão falha»**, e **o gancho como bilhete** — o papel da mesa C (`pergaminho`, borda
+`pergaminhoBorda`, sombra, 0,8° de giro) com a voz de quem pediu em itálico `tinta`, a assinatura em
+`tintaDoPergaminhoDim` e **o custo de falhar** em `perigoNoPergaminho` (a frase que `planearSecundaria` já
+escreve no fim do gancho). Os atos são `Etapa da missão`. **A reviravolta nunca aparece** — é a verdade que o
+herói ainda não sabe; quando acontece, entra como etapa feita com o que se viu.
+
+**O relógio do prazo:** um gomo por noite (`PRAZOS` 4/6/8), anel de miolo 0,58, folga de 0,06 rad entre gomos;
+**o gomo cheio é a noite que passou** (é o relógio da casa: cheio, falha), o número ao meio é **o que resta**.
+*aperta* quando restam ≤ 2: os gomos e o número passam a `danger`. **Hoje o diário diz o total** («contra o
+tempo: 6 noites»), não o que resta: é a medida que mais muda a decisão.
+
+**A estante** (`Lombada da estante`): cada missão encerrada é um livro deitado — a espinha de couro do Diário
+(`objeto/couroDoDiario`) com dois frisos de ouro (concluída) ou de ferro (falhada), o selo ✓/✗, o título, «dia
+12 · pedida por Ilsa Corvo», e à direita o que se pagou de facto (`◉ 80 · 120 XP`) ou porquê falhou. Todas, não
+as últimas oito; no telefone é a terceira aba.
+
+**O telefone:** três abas (`Aba da tela`): *Em curso · 3*, *Ofertas · 1* (com a gota da novidade), *Estante ·
+2*. A principal à frente com o próximo passo e as duas etapas que importam (a última feita e a primeira por
+saber, com «e mais N»); as secundárias em `Missão no índice` com o relógio.
+
+**O que o Diário pede ao sistema (para `mente/pedidos-ao-sistema.md`):**
+1. **A distância ao lugar do passo**, em zonas, se o mapa a souber (`mapa-vivo`); se não souber, a linha diz
+   só o lugar e a cidade — nunca se inventa.
+2. **«Ver no mapa»**: abrir o mapa vivo centrado no `onde` da etapa atual (fiação do `oficial`).
+3. **O dia em que a etapa se cumpriu** (`feitoEm`, campo novo e aditivo na etapa; a versão antiga ignora-o).
+   Sem ele, a nota da etapa feita é só «cumprida».
+4. **O restante do prazo**: o relógio `missao:<id>` já existe em `relogios`; a tela lê segmentos − cheios.
+
+### AR 3 · Os Talentos, peça a peça
+
+**O nó** (`Nó de talento`, alvo 64 — WCAG 2.5.5 e HIG 44): **a forma é o ramo** — quadrado de raio 14 = classe,
+losango (raio 6) = subclasse, escudo = especialização, círculo = magia. **O aro é o metal do ramo quando
+aprendido**: ouro (classe), a gema da subclasse (`GEMA_DA_SUBCLASSE[sub].corpo`), prata (especialização),
+violeta (magia). **A insígnia (22, no canto de baixo) é o estado:** ✓ musgo = aprendido; **o custo em pontos
+num disco âmbar** = disponível (o preço está no próprio nó, não só no cabeçalho); cadeado = bloqueado. O nome
+por baixo em Spectral 12 (o piso). *Escolhido* = o anel ouro-claro a 1,22 por fora e o halo a 0,6. Disponível
+tem halo âmbar **parado** (0,4, r12): nada respira em vinte nós ao mesmo tempo.
+
+**A árvore:** colunas = degraus `[1..10, 12, 14]` (passo 78 a 1905, 88 a 1280); a **régua** de cima tem os
+números em Cinzel 13 (`amberSoft` até ao degrau do herói, `inkDim` depois), o fio andado em ouro e o ponto
+«tu estás aqui». Bandas: a classe em duas linhas (há degraus com duas habilidades), a subclasse, e as duas
+especializações **à vista antes de escolher** (bloqueadas, com «escolhe uma aos 10»): planear é metade do
+gosto de uma árvore. **As ligações** (`Ligação`) correm entre nós vizinhos da mesma linha: **acesas (ouro,
+3, com brilho) só entre dois aprendidos** — o caminho que o herói já andou desenha-se sozinho; o resto é
+`lineStrong` a 0,55. A subclasse nasce de um fio aceso que desce do degrau 3; a especialização de um tronco
+apagado entre o 9 e o 10.
+
+**O veredito antes do clique** (a lei): a 1905 é um painel fixo à direita; a 1280 **um popover ao lado do nó**
+(a mesma regra da gaveta do encaixe na mesa, §AAA §3); no telefone **a gaveta de baixo**. Tem o nó grande, o
+nome em Cinzel 20 ouro-claro, «Mago · degrau 6 · defesa», o efeito em Spectral 17, e **o que muda** em
+`Linha da comparação`: *Pontos por gastar 3 → 1*, *Habilidades de Mago 7 → 8*, *Custa a usar 4 PM*. O botão é
+`VerboComPreco` armado: **«Aprender Contramágica · 2 pontos · ficas com 1»**, e por baixo a irreversibilidade
+dita: «Fica tua. Só sai se recomeçares do zero (◉ 200)» (`custoRespec`). Bloqueado: o papel *impedido* com a
+razão de `podePegarHabilidade` («2 pontos · exige 8 de Mago (tens 6)») — continua tocável para se ler.
+
+**A coluna da esquerda (1905) / a faixa (1280, 375):** o medalhão do herói, a classe e os degraus, **a gema da
+subclasse** e o **selo por abrir** da especialização (losango de prata tracejado), «Abrir outra classe»
+(multiclasse, papel gesto) e «Recomeçar do zero» (papel *semVolta*, com o preço). Em cima, à direita das
+abas, o `Selo de pontos` (o número em Spectral SemiBold 28 — **o «1» do Cinzel lê-se «I»**, e por isso todo
+algarismo pequeno sai de Cinzel: a insígnia do custo vai em JetBrains Mono Bold 12).
+
+**O grimório** (a aba *Grimório*, quadro a 1280): uma linha por círculo («CÍRCULO 3 · nível 5 · 2 pontos
+cada», de `NIVEL_DO_CIRCULO` e `custoEmPontos`), os nós em círculo (a forma da magia), **✦ antes do nome =
+preparada hoje** e no topo «Na cabeça hoje: 3 de 4» (`limitePreparadas`). O veredito diz a forma («esfera»),
+o custo de uso (`custoDoCirculo`) e **a diferença entre aprender e preparar**, que hoje ninguém explica.
+Pedido ao sistema: **`grimorioDaClasse(pers, classe)`** — as magias da classe por círculo, marcadas como
+`arvoreDaClasse` marca (dominada, pode, motivo, custoPontos) e com `preparada` (`estaPreparada`). É módulo
+puro, em `classes.js` ou `grimorio.js`, com suíte.
+
+**A cerimónia de aprender** (`280:1858`): **0 ms** o verbo afunda (0,96, 80 ms) e o popover fecha; **0–240** a
+forma passa de âmbar a ouro e respira (1 → 1,12 → 1), a insígnia vira ✓ aos 120, o «−N» sobe 16 px e some;
+**240–620** a ligação ao vizinho aprendido desenha-se da esquerda (scaleX 0 → 1, origem à esquerda) e o selo
+conta; **620–900** a frase «Toque Gélido é teu» (Spectral itálico 15, ouro-claro) sobe 8 e fica 1,6 s.
+**Nunca custa o turno:** nada espera a animação, o toque seguinte já vale. **`prefers-reduced-motion`:** sem
+escala, sem desenho do fio, sem o número a subir — esvanecer de 160 ms, a ligação aparece acesa, a frase fica.
+
+### AR 4 · O Grupo e o Mercado
+
+**A carta do companheiro** (400 na mesa, 343 no telefone): a `Moldura · carta` (lado companheiro: o fio azul
+simples), o nome **na placa da carta** em Cinzel 18 (no telefone, ao lado), a classe e a subclasse em
+`mundoSoft` 13 (o azul é o lado do companheiro), PV e PM em barras de 8, **o vínculo** — a pista de
+`VINCULO_MAX` em violeta com os **quatro marcos de `MARCOS_VINCULO` como losangos** (ouro os alcançados), e
+a linha «62 → Lealdade aos 75» —, **«Sabe fazer»** com três `Nós de talento` aprendidos (o mesmo nó da
+árvore: uma ação, uma forma) e as duas portas: **«Abrir a bolsa de Ilsa · 11 de 20 · ◉ 34»** e «Ver a ficha».
+O lugar livre é uma carta tracejada que diz onde se encontra gente. *Ao `oficial` (AR3):* a porta da bolsa
+abre a mesma tela da ficha-carta do herói com o boneco do companheiro; a forma é esta, a casa é a dele.
+
+**A banca** (`Peça da banca`, 136–245 de largo conforme a grelha): o `Encaixe` da raridade (cor E forma, §AAA
+§3), o nome **na cor da raridade** (sobre `panel` o pior é o raro, 6,77), o preço em ◉ `amberSoft`, e **a
+diferença contra o vestido no mesmo encaixe** («▲ CA +1 · ▼ Perc. −1»; «= vai para a mochila» quando não há
+encaixe). *caraDemais* = o *impedido* da casa: tracejado e «◉ 190 · faltam ◉ 22» em vermelho.
+**O veredito da compra:** o encaixe grande, «No teu elmo agora: Capuz de couro», três `Linha da comparação`
+(CA ▲, Percepção ▼, **Moedas ◉ 168 → ◉ 48**), o preço explicado (a base e o porquê do lugar) e o tempo de
+vestir (`TROCA_DE_SLOT`), e três verbos: **«Comprar e vestir · ◉ 120 · CA 15, Percepção −1»** (armado), «Só
+comprar · vai para a bolsa · 13 de 20» (gesto), «Vender o capuz de couro · ele paga ◉ 9» (recuo). **A bolsa
+do herói** fica por baixo da banca com o que *este* mercador paga por cada coisa (`precoQueOferecemComMotivo`),
+ou «não compra». As bancas são cartões à esquerda (1905) ou abas (1280, 375); o balcão de mantimentos é a
+primeira. No telefone, a gaveta de baixo.
+
+### AR 5 · O contraste, medido (WCAG 2.2; a conta é a de sempre, em `node`)
+
+| par | razão | piso |
+|---|---|---|
+| título da tela (Cinzel 20) `ouroClaro` sobre `couroBaixo` | 13,97 | 4,5 |
+| subtítulo `inkDim` sobre `couroBaixo` | 6,47 | 4,5 |
+| rótulo mono 12 `inkDim` sobre o feltro `#12241B` | 5,98 | 4,5 |
+| «o mundo não espera» `danger` sobre o feltro | 5,11 | 4,5 |
+| «ofereceram-te» `violetSoft` sobre o feltro | 9,90 | 4,5 |
+| título da missão `ink` sobre `panel` | 13,87 | 4,5 |
+| descrição `inkMeio` sobre `panel` | 9,57 | 4,5 |
+| nota da etapa `inkDim` sobre `panel` | 6,26 | 4,5 |
+| etapa atual `amberSoft` / falhada `danger` sobre `panel` | 11,23 / 5,35 | 4,5 |
+| passo da oferta `violetSoft` / tipo `mundoSoft` sobre `panel` | 10,37 / 11,52 | 4,5 |
+| o próximo passo `ink` / o onde `mundoSoft` / o rótulo `amberSoft` sobre `couro` | 12,65 / 10,51 / 10,24 | 4,5 |
+| evento global `ink` / `inkMeio` / `danger` sobre `perigoFundo` | 12,82 / 8,84 / 4,94 | 4,5 |
+| o bilhete: `tintaDoPergaminho` / `tintaDoPergaminhoDim` / `perigoNoPergaminho` sobre `pergaminho` | 12,15 / 6,56 / 6,60 | 7 · 4,5 · 4,5 |
+| índice escolhido `ink` sobre `panelSoft` | 12,07 | 4,5 |
+| veredito `ouroClaro` / `inkMeio` / `inkDim` sobre `panelSoft` | 11,76 / 8,32 / 5,45 | 4,5 |
+| ▼ piora `danger` / ▲ melhora `ok` sobre `panelSoft` | 4,65 / 7,81 | 4,5 |
+| verbo armado e insígnia do custo: `onAccent` sobre `amber` | 8,68 | 4,5 |
+| verbo gesto `ink` / preço `inkDim` / sem volta `danger` sobre `pagina` | 15,34 / 6,92 / 5,91 | 4,5 |
+| nome do nó escolhido `ouroClaro` / bloqueado `inkDim` sobre `panel` | 13,53 / 6,26 | 4,5 |
+| aro do nó (forma) sobre `panel`: ouro 8,02 · âmbar 8,04 · `lineStrong` 4,19 · gema Elementalista 5,92 · prata 8,85 · violeta 7,07 | ≥ 4,19 | 3 |
+| insígnia ✓ `ok` sobre `okFundo` (forma) | 7,92 | 3 |
+| ligação acesa `ouroMeio` sobre `panel` (forma) | 8,02 | 3 |
+| relógio: gomo `amber` 8,04 · gomo `danger` 5,35 (forma) · número `ink` 13,87 | — | 3 · 4,5 |
+| nome da peça: comum 7,77 · incomum 8,10 · raro 6,77 sobre `panel`; incomum 7,05 sobre `panelSoft` | ≥ 6,77 | 4,5 |
+| preço `amberSoft` sobre `panel` | 11,23 | 4,5 |
+| classe do companheiro `mundoSoft` sobre `panel` | 11,52 | 4,5 |
+| constelação: estrela acesa `ouroClaro` 14,63 (forma) · nome `ink` 15,00 · por acender `inkDim` 6,77 sobre `ar/ceu/fundo` | — | 3 · 4,5 |
+
+**Nenhum par com letra abaixo de 4,5; nenhuma forma abaixo de 3.** O pior é o ▼ vermelho sobre `panelSoft`
+(4,65), e é sempre acompanhado do sinal ▼ — a cor é a segunda leitura (1.4.1).
+
+### AR 6 · As tabelas, prontas a colar em `src/estilo.js`
+
+Depois de `FICHA_CARTA` (lêem `T`, `TIPOS`, `ALVOS`, `MOLDURA_POR_DEGRAU`, `ENCAIXE` e `GAVETA_DO_ENCAIXE`, que
+já estão acima dela; os glifos e os caminhos vão como dados, sem crase).
+
+```js
+/* ============================================================
+   AR · AS TELAS QUE FALTAVAM À AAA (05/11/2026) — formas.md §AR.
+   O Diário (portal de missões), os Talentos (a árvore), o Grupo e o
+   Mercado. Figma: página «AR · 05/11» (268:2).
+   ============================================================ */
+
+/* OS GLIFOS NOVOS: quadro 24, traço 1,5, pontas e juntas redondas (a família
+   de ui.jsx). A cor vem de quem desenha. */
+export const ICONES_DA_ETAPA = {
+  ir_a: ["M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0", "M15.5 8.5l-2 5-5 2 2-5z"],
+  derrotar: ["M20 4h-3.6L7.2 13.2l3.6 3.6L20 7.6z", "M5.2 11.6l7.2 7.2", "M7.6 16.4L4 20"],
+  achar: ["M15.5 10.5a5.5 5.5 0 1 1-11 0a5.5 5.5 0 1 1 11 0", "M14.5 14.5L20 20"],
+  falar_com: ["M4 5h16v10H10l-4 4v-4H4z", "M8 9h8M8 12h5"],
+  levar_a: ["M4 8l8-4 8 4v8l-8 4-8-4z", "M4 8l8 4 8-4", "M12 12v8"],
+  resgatar: ["M9 7.5L6.5 5a3 3 0 0 0-4.2 4.2L5 12", "M15 16.5l2.5 2.5a3 3 0 0 0 4.2-4.2L19 12", "M9 15l6-6", "M14 4l1-2M10 20l-1 2"],
+  revelar: ["M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z", "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0"],
+  concluir_masmorra: ["M6 21V10a6 6 0 0 1 12 0v11", "M3 21h18", "M14.5 14v1.5"],
+  aguentar: ["M7 3h10M7 21h10", "M8 3c0 5 8 5 8 9s-8 4-8 9", "M16 3c0 5-8 5-8 9s8 4 8 9"],
+  vencer_relogio: ["M20 12a8 8 0 1 1-16 0a8 8 0 1 1 16 0", "M12 7.5V12l3 2"],
+};
+export const ICONES_DO_TALENTO = {
+  ataque: ICONES_DA_ETAPA.derrotar,
+  defesa: ["M12 3l7 2.5V11c0 4.8-3 8-7 10-4-2-7-5.2-7-10V5.5z", "M12 7v10M8.5 11h7"],
+  suporte: ["M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z", "M12 9v5M9.5 11.5h5"],
+  utilidade: ["M10 12a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0", "M10 12h11", "M18 12v3M15 12v2.5"],
+  passiva: ["M15.5 12a3.5 3.5 0 1 1-7 0a3.5 3.5 0 1 1 7 0", "M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"],
+  magia: ["M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z", "M19 3v3M17.5 4.5h3"],
+};
+export const ICONES_DA_INTERFACE = {
+  visto: ["M5 12.5l4.5 4.5L19 7"],
+  cadeado: ["M7.5 11V8a4.5 4.5 0 0 1 9 0v3", "M5.5 11h13v9.5h-13z", "M12 14.5v2.5"],
+  interrogacao: ["M9.2 9a3 3 0 1 1 4.3 2.7c-1 .5-1.5 1.2-1.5 2.3", "M12 17.5v.5"],
+  fechar: ["M6 6l12 12M18 6L6 18"],
+  pino: ["M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z", "M14.5 10a2.5 2.5 0 1 1-5 0a2.5 2.5 0 1 1 5 0"],
+  seta: ["M5 12h14", "M13 6l6 6-6 6"],
+  estrela: ["M12 3.5l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.4l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z"],
+  bolsa: ["M8 7.5c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5", "M5.5 9h13l-1.3 10.5a1.5 1.5 0 0 1-1.5 1.5H8.3a1.5 1.5 0 0 1-1.5-1.5z", "M9.5 13h5"],
+};
+
+/* A BARRA DE CIMA DE TODA TELA ABERTA DA MESA (Cabeçalho da tela, 271:214):
+   o objeto (ou a porta) que se tocou, o título em Cinzel Bold espaçado, o
+   estado numa linha e o fechar (Esc faz o mesmo). Chão couroBaixo, o fio de
+   ouro por baixo. */
+export const CABECALHO_DA_TELA = {
+  mesa: { alto: 72, objeto: 48, lado: 24, folga: 16 },
+  telefone: { alto: 56, objeto: 40, lado: 12, folga: 10 },
+  titulo: { tamanho: TIPOS.titulo, espaco: 0.12 },
+  subtitulo: TIPOS.rotulo,
+  fechar: 44,
+  fio: { espessura: 1, alfa: 0.45 },
+};
+/* As abas dentro de uma tela (Aba da tela, 271:151): a ALVOS.piso de alto, o
+   fio de ouro de 3 por baixo da ativa; a novidade é a gota da MarcaDaPorta. */
+export const ABA_DA_TELA = { alto: ALVOS.piso, fio: 3, gota: 8, largura: { mesa: 140, telefone: "1fr" } };
+
+/* O DIÁRIO, UM PORTAL DE MISSÕES (§AR 2; 273:296, 274:440, 274:649). */
+export const DIARIO_DE_MISSOES = {
+  mesa: { colunas: ["380px", "1fr", "420px"], folga: 24 },
+  meia: { colunas: ["340px", "1fr"], folga: 20 },          /* 1280: o mundo dobra-se para o fim do índice */
+  telefone: { abas: ["Em curso", "Ofertas", "Estante"] },
+  indice: { largura: 340, alto: 64, medalhao: 36, relogio: 32 },
+  glifoDoTipo: { principal: "★", divina: "★", trama: "✦", cacada: "◆", contrato: "◆", favor: "◆", global: "◆", oferta: "?" },
+  titulo: { mesa: 26, telefone: TIPOS.titulo },              /* a medida do nome na ficha-carta */
+  proximoPasso: { medalhao: { mesa: 52, telefone: 40 }, glifo: { mesa: 26, telefone: 20 }, borda: 2, raio: 14, halo: { alfa: 0.35, raio: 16 }, frase: { mesa: TIPOS.titulo, telefone: TIPOS.prosa } },
+  etapa: { medalhao: 32, glifo: 18, fio: { largura: 2, alto: 24 }, folga: 14 },
+  bilhete: { giro: 0.8, enchimento: [16, 18], raio: 4, largura: 380 },
+  lombada: { alto: 52, espinha: 14, frisos: [8, 41], friso: 3, selo: 24 },
+};
+/* Os quatro estados de uma etapa: a FORMA (o glifo e o tracejado) é a
+   leitura, a cor é a segunda. "tipo" = o glifo de ICONES_DA_ETAPA da etapa. */
+export const ETAPA_DA_MISSAO = {
+  feita: { chao: T.okFundo, aro: T.ok, glifo: "visto", texto: T.inkMeio, nota: T.inkDim, fio: T.ok, alfaDoFio: 0.7 },
+  atual: { chao: T.couro, aro: T.amber, espessura: 2, glifo: "tipo", corDoGlifo: T.amberSoft, texto: T.ink, nota: T.amberSoft, fio: T.lineStrong, alfaDoFio: 0.6, halo: { alfa: 0.45, raio: 12 } },
+  silhueta: { chao: null, aro: T.lineStrong, tracejado: [3, 3], glifo: "interrogacao", texto: T.inkDim, nota: T.inkDim, fio: T.lineStrong, alfaDoFio: 0.35 },
+  falhada: { chao: T.perigoFundo, aro: T.danger, glifo: "fechar", texto: T.inkMeio, nota: T.danger, fio: T.danger, alfaDoFio: 0.5 },
+};
+/* O relógio do prazo (269:100): um gomo por noite; o gomo cheio é a noite
+   que passou; o número ao meio é o que resta. Aperta com restam <= 2. */
+export const RELOGIO_DO_PRAZO = { lado: 40, mini: 32, miolo: 0.58, folga: 0.06, apertaCom: 2, cheio: { calma: T.amber, aperta: T.danger }, vazio: { chao: T.panelSoft, aro: T.lineStrong } };
+
+/* OS TALENTOS, A ÁRVORE (§AR 3; 276:685, 278:1047, 278:1537, 280:1556). */
+export const NO_DE_TALENTO = {
+  lado: 64, largura: { mesa: 80, meia: 88, telefone: 84 }, rotulo: TIPOS.piso, folga: 6, glifo: 28,
+  formas: {
+    classe: { el: "rect", x: 4, y: 4, width: 56, height: 56, rx: 14 },
+    subclasse: { el: "path", d: "M32 2L62 32L32 62L2 32Z", raio: 6 },
+    especializacao: { el: "path", d: "M32 3L58 11V31C58 45 47 56 32 61C17 56 6 45 6 31V11Z" },
+    magia: { el: "circle", cx: 32, cy: 32, r: 29 },
+  },
+  /* o aro de quem aprendeu é o metal do ramo; "gema" = GEMA_DA_SUBCLASSE[sub].corpo */
+  aroAprendido: { classe: MOLDURA_POR_DEGRAU.ouro.meio, subclasse: "gema", especializacao: MOLDURA_POR_DEGRAU.prata.meio, magia: T.violet },
+  estados: {
+    aprendido: { chao: T.couro, espessura: 3, glifo: "luz", insignia: "visto" },
+    disponivel: { chao: T.panelSoft, aro: T.amber, espessura: 2, glifo: T.ink, insignia: "custo", halo: { alfa: 0.4, raio: 12 } },
+    bloqueado: { chao: T.panel, aro: T.lineStrong, espessura: 1.5, tracejado: [4, 3], glifo: T.inkDim, alfaDoGlifo: 0.7, insignia: "cadeado" },
+    escolhido: { chao: T.panelSoft, aro: T.amber, espessura: 2, glifo: T.ink, insignia: "custo", anel: { cor: MOLDURA_POR_DEGRAU.ouro.claro, escala: 1.22, espessura: 2 }, halo: { alfa: 0.6, raio: 18 } },
+  },
+  /* a luz do glifo quando aprendido: classe amberSoft, subclasse a luz da gema, especialização ink, magia violetSoft */
+  insignia: { lado: 22, x: 46, y: 44, glifo: 14, custo: { fonte: "JetBrains Mono", peso: 700, tamanho: TIPOS.maquina } },
+  pressionado: ENCAIXE.pressionado,
+};
+export const LIGACAO = { acesa: { cor: MOLDURA_POR_DEGRAU.ouro.meio, espessura: 3, brilho: { alfa: 0.55, raio: 6 } }, apagada: { cor: T.lineStrong, espessura: 2, alfa: 0.55 } };
+export const ARVORE_DE_TALENTOS = {
+  colunas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14],
+  mesa: { rotulos: 150, passo: 78, linhas: { classe: [110, 222], subclasse: 350, especializacao: [470, 580] }, veredito: 420, esquerda: 280 },
+  meia: { rotulos: 140, passo: 88, linhas: { classe: [96, 200], subclasse: 316, especializacao: [426, 530] }, popover: 340 },
+  telefone: { passoVertical: 124, colunas: { classe: [96, 186], subclasse: 290 } },
+  regua: { numero: 13, fio: 2, andado: 3, aqui: 10 },
+  /* o tronco da especialização desce entre o degrau 9 e o 10 */
+  nascente: { subclasse: 3, especializacao: 10 },
+};
+/* O selo de pontos por gastar (270:256). O algarismo NÃO é Cinzel: o 1 do
+   Cinzel lê-se I. */
+export const SELO_DE_PONTOS = { numero: { fonte: "Spectral", peso: 600, tamanho: 28 }, borda: 2, raio: 10, halo: { alfa: 0.35, raio: 10 } };
+/* A cerimónia de aprender (280:1858). Nada espera por ela: o toque seguinte vale desde o 0. */
+export const CERIMONIA_DE_APRENDER = {
+  toque: { dura: 80, escala: 0.96 },
+  selo: { de: 0, dura: 240, escala: 1.12, insignia: 120, sobe: 16 },
+  fio: { de: 240, dura: 380 },
+  pontos: { de: 240, dura: 240 },
+  frase: { de: 620, dura: 280, sobe: 8, fica: 1600 },
+  total: 900,
+  reduzido: { dura: 160 },
+};
+
+/* O GRUPO (§AR 4; 281:1947, 281:2439, 281:2922). */
+export const CARTA_DO_COMPANHEIRO = {
+  largura: { mesa: 400, telefone: 343 }, enchimento: { mesa: 20, telefone: 14 }, raio: 14,
+  retrato: { mesa: 1, telefone: 0.5 }, nomeNaPlaca: { mesa: 18 }, nome: { telefone: TIPOS.titulo },
+  barra: 8, marco: { lado: 11, alcancado: MOLDURA_POR_DEGRAU.ouro.meio, porAlcancar: T.panel },
+  sabeFazer: 3,
+};
+
+/* O MERCADO (§AR 4; 282:3205, 282:3534, 282:3839). */
+export const MERCADO = {
+  mesa: { esquerda: 300, veredito: 420, colunas: 4, peca: 245 },
+  meia: { veredito: 380, colunas: 4, peca: 186 },
+  telefone: { colunas: 2, peca: 165 },
+  peca: { encaixe: ENCAIXE.lado, folga: 6, raio: 10 },
+  bolsa: { encaixe: 48, largura: 84 },
+  gaveta: GAVETA_DO_ENCAIXE,
+};
+
+/* A PROPOSTA (§AR 9) — só se a mesa a aprovar. A única cor nova da fase. */
+export const CONSTELACAO = { ceu: "#0B1426", estrela: "#FFF4D6", acesa: MOLDURA_POR_DEGRAU.ouro.claro, apagada: 0.22 };
+```
+
+### AR 7 · Os estados e as saídas de movimento
+
+| peça | repouso | foco (teclado) | pressionado | desabilitado / impedido | movimento | `prefers-reduced-motion` |
+|---|---|---|---|---|---|---|
+| `Missão no índice` | `panel` + `lineStrong` | `tv-anel-foco` | — | — (oferta = tracejado violeta) | escolher: borda âmbar em 120 ms | troca seca |
+| `Etapa da missão` | — | — (não é alvo; o alvo é «Ver no mapa») | — | — | etapa cumprida com o diário aberto: o ✓ desenha-se (240 ms), a silhueta seguinte vira atual (200 ms); o pulso é `MUDOU_AGORA` (1200 × 3) | troca seca de 120 ms |
+| `Relógio do prazo` | — | — | — | — | a noite enche um gomo (400 ms); calma → aperta, cor em 200 ms | troca seca |
+| `Nó de talento` | os quatro estados | `tv-anel-foco` (3 por fora) | 0,96 / 80 ms | bloqueado continua focável e abre o veredito (lê-se porquê) | halo parado; a cerimónia (§AR 3) | esvanecer 160 ms |
+| `Ligação` | acesa / apagada | — | — | — | desenha-se na cerimónia (380 ms) | aparece acesa |
+| popover / gaveta do veredito | — | o foco vai ao verbo armado | — | — | `GAVETA_DO_ENCAIXE`: sobe 220, popover 160 | 120 ms |
+| `Peça da banca` | repouso / escolhida | `tv-anel-foco` | 0,96 / 80 ms | caraDemais: tracejado, tocável, o verbo vem *impedido* com o que falta | escolher: 120 ms | troca seca |
+| «Comprar e vestir» | — | — | — | — | o encaixe do boneco pulsa (`MUDOU_AGORA`) e as moedas contam (280 ms) | troca seca |
+| `Carta do companheiro` | — | — | — | — | marco do vínculo alcançado: o losango acende (320 ms) | troca seca |
+
+**Saída, sempre:** Esc e o × fecham toda tela; a gaveta fecha-se a puxar para baixo e a tocar fora; o popover
+fecha a tocar fora. Nenhuma animação bloqueia o toque seguinte.
+
+### AR 8 · O «superior», por dois caminhos escritos (medida e estudo citado)
+
+**O par antes/depois está no Figma, a 375:** Diário `283:3599` → `274:649`; Talentos `283:3626` → `278:1537`
+(reconstruídos de `painel-diario.jsx` e `painel-talentos.jsx` de hoje, com as mesmas missões e o mesmo herói).
+
+**Medida — o Diário:**
+- **O próximo passo:** hoje é uma linha de 12 px em `amberSoft` dentro do cartão, sem o lugar escrito à parte e
+  sem caminho para o mapa. Depois: uma caixa própria, a frase a 20 (17 no telefone), o lugar numa linha e o
+  mapa a **1 toque** (hoje: fechar o diário, abrir o mapa, procurar — 3 toques e uma busca).
+- **O prazo:** hoje diz **o total** («contra o tempo: 6 noites»); depois diz **o que resta** (o número no
+  relógio e «faltam 4 noites · de 6»). É a informação que decide, e hoje não estava na tela.
+- **As etapas:** hoje são pontos de **7 px** (abaixo do alvo e da leitura) e uma linha «…e mais N passos»;
+  depois, uma linha do tempo com o feito, o agora e as silhuetas, cada uma com forma própria.
+- **O piso da letra:** o diário de hoje usa **9, 10 e 11 px** (`text-[9px]`, `text-[10px]`, `text-[11px]`), abaixo de
+  `TIPOS.piso` (12). Depois: nada abaixo de 12.
+- **As encerradas:** hoje as últimas 8, a 60% de opacidade; depois, todas, na estante, com o que se ganhou.
+
+**Medida — os Talentos:**
+- **Ver a árvore:** hoje, no telefone, a classe são ~12 cartões de ~98 px numa lista (≈ 1300 px de rolo, três
+  ecrãs) e a subclasse e a especialização vêm noutros blocos por baixo; **a 1905 a árvore inteira cabe num
+  ecrã (22 nós, zero rolo)**, a 1280 também, e no telefone o degrau atual e os vizinhos cabem acima da gaveta.
+- **O preço:** hoje o custo em pontos está **no cabeçalho do degrau** e no botão; depois está **no próprio
+  nó** (a insígnia) e o veredito diz *antes do toque* o que muda («3 → 1», «7 → 8») e que só sai com
+  «Recomeçar do zero (◉ 200)».
+- **O porquê do bloqueio:** hoje é texto de 9 px truncado a 60% da largura; depois é o *impedido* do verbo com
+  a razão inteira a 12.
+- **A especialização:** hoje não se vê antes de escolher; depois as duas estão à vista a partir do degrau 10.
+
+**Estudo citado:**
+- *Game Accessibility Guidelines* (gameaccessibilityguidelines.com), básico: **«Include reminders of current
+  objectives during gameplay»** — o índice mostra o passo em cada linha; e **«Ensure no essential information
+  is conveyed by colour alone»** — estado das etapas e dos nós em forma (✓ / glifo / ? / ✗; ✓ / custo /
+  cadeado), raridade em cor e forma (§AAA §3).
+- **WCAG 2.2** 1.4.1 (cor), 1.4.3 / 1.4.11 (os números de §AR 5), **2.5.5** (alvos de 44: nós de 64, verbos de 48,
+  fechar de 44) e 2.4.7 (foco visível em todos os alvos).
+- **Nielsen, «10 Usability Heuristics for User Interface Design» (NN/g, 1994/2020)**: *visibilidade do estado
+  do sistema* (o prazo que resta, a régua «tu estás aqui»), *reconhecer em vez de lembrar* (o passo no índice,
+  o preço no nó), *prevenção de erro* (o veredito antes do clique; o recomeçar com o preço e a barra sem volta).
+
+**Experiência jogada:** fica por fazer pelo `jogo` quando a primeira tela estiver no navegador (AR7, a prova
+jogada): o critério é *sei o que fazer a seguir sem ler a prosa de novo* (Diário) e *escolho o que aprender sem
+abrir mais nada* (Talentos).
+
+### AR 9 · Para a pessoa decidir — a proposta ambiciosa: a constelação do herói (`283:3675`)
+
+**A mesma árvore, a mesma regra, o mesmo veredito — desenhada como o céu da noite do herói.** Cada classe é
+uma figura (o Mago um cajado, o Guerreiro um escudo, o Ladino uma adaga…); a subclasse é um braço que brilha na
+cor da gema; cada habilidade aprendida **acende uma estrela**, e a ligação entre duas acesas **desenha a
+figura**. A multiclasse junta uma segunda figura ao céu. No fim de uma campanha o jogador tem **um desenho que
+é só dele** — e partilhável como imagem (a impressão, a ordem de 04/11). A referência são as árvores em
+constelação de RPGs de mundo aberto; o risco medido é a legibilidade, e por isso **a proposta não troca a
+árvore: é uma segunda vista** (um botão «ver o céu» na aba Árvore), com o veredito igual. Custa: a geometria de
+cada figura por classe (13 classes × 12–19 pontos, numa tabela) e a vista em SVG; nada no motor. Contraste
+medido (§AR 5): estrela acesa 14,63, nome 15,00, por acender 6,77. **As duas cores novas (`CONSTELACAO`) só
+entram se ela disser que sim.**
+
+### AR 10 · A ordem de construção (por retorno)
+
+1. **As peças, fora do `App.jsx` (`aprendiz`):** as tabelas de §AR 6 em `estilo.js`; em `ui.jsx` os glifos
+   (`ICONES_DA_ETAPA`, `ICONES_DO_TALENTO`, `ICONES_DA_INTERFACE` pelo `Glifo` de sempre), `CabecalhoDaTela`,
+   `AbaDaTela`, `EtapaDaMissao`, `RelogioDoPrazo`, `LombadaDaEstante`, `MissaoNoIndice`, `NoDeTalento`,
+   `Ligacao`, `SeloDePontos`, `LinhaDaComparacao` (a da gaveta do encaixe, se já existir: é a mesma),
+   `PecaDaBanca`, `CartaDoCompanheiro`. Suíte `testes/teste-ar-pecas.mjs` (cada export com dois leitores).
+2. **AR2 · o Diário** (`aprendiz` em `painel-diario.jsx`; o `oficial` só para «Ver no mapa»): é a tela que a
+   pessoa descreveu com mais pormenor e a que mais muda a decisão por turno. Os pedidos 1–4 de §AR 2 vão a
+   `mente/pedidos-ao-sistema.md`; a tela nasce sem eles (a distância cala, a data cala) e ganha-os depois.
+3. **AR4 · a árvore** (`aprendiz` em `painel-talentos.jsx`): a árvore, o veredito nos três tamanhos e a
+   cerimónia. **Depois** o grimório, quando o `backend` entregar `grimorioDaClasse`.
+4. **AR5 · o Grupo** (`aprendiz`, `CartaDoCompanheiro`; o `oficial` liga a porta da bolsa à tela de AR3).
+5. **AR6 · o Mercado** (`oficial`): sai do `App.jsx` (a sub-aba de Gestão, `App.jsx:~2856`) para
+   `painel-mercado.jsx` — mover vale mais que remendar — e ganha a banca e o veredito.
+6. **AR7 · a prova jogada** (`jogo`), a 1905 e a 375, com o par antes/depois desta secção.
+
+**Nada aqui toca o save** (o único campo pedido, `feitoEm` da etapa, é novo, aditivo e ignorado pela versão
+antiga). Tudo sai de tabela: desfaz-se num commit.
+
+---
