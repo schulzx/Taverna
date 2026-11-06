@@ -10,6 +10,8 @@ import { sorteDaCasa, comSorte } from "./semente.js";
    padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
 import { cenarioAtivo } from "./cenario.js";
 import { elencoDiverso } from "./nomes.js";
+import { planearSecundaria, podeNascerSecundaria } from "./secundaria-planeada.js";
+import { textoDaEtapa } from "./missoes.js";
 
 const pick = (arr) => arr[Math.floor(sorteDaCasa() * arr.length)];
 
@@ -189,7 +191,19 @@ export const ALVOS_DO_DESCANSO = {
    fechado (portao-das-secundarias.js) — a noite não sorteia missão nova nem
    arco regional (que impõe a sua, semearMissoes). O fio local continua: é o
    dia a dia da cidade, não um trabalho. Sem o campo, o de sempre. */
-export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas = 2, sorte = sorteDaCasa, secundarias = true } = {}) {
+/* SQ3 (05/11): A SECUNDÁRIA PLANEADA. Com `mundo` (a forma de
+   `mundoDasTarefas()` do App: semente, mapa, cidade, género, molde, léxico,
+   nível, dia), a noite deixa de sortear o gancho solto e passa a planear,
+   NO MÁXIMO, uma secundária com fio, atos, reviravolta, custo e fecho
+   (secundaria-planeada.js) — quando `podeNascerSecundaria` deixa: o
+   portão de SQ2, o teto das vivas e o intervalo entre nascimentos (lido
+   de `missoes`). E a noite que a dá não dá também o arco regional: um
+   trabalho novo por noite. `historia` ({ espinha, base, npcs, guildas,
+   elenco }) afina o elenco; é opcional. Sai em `questNova` com a missão
+   inteira em `planeada`, e `tarefaParaMissao` entrega-a tal qual.
+   Sem `mundo`, letra por letra o de antes. */
+export function processarDescansoLongoEventos(ev, ctx, opcoes = {}) {
+  const { dia, secundariasAtivas = 2, sorte = sorteDaCasa, secundarias = true, mundo = null, missoes = null, historia = null } = opcoes || {};
   const A = ALVOS_DO_DESCANSO;
   const e = garantirEventos(ev);
   const out = { eventos: e, localNovo: null, questNova: null, globalNovo: null, globalAvancou: false, expirados: [] };
@@ -212,8 +226,27 @@ export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas 
     if (r.passou) { out.localNovo = gerarEventoLocal(ctx, dia); e.locais.push(out.localNovo); }
   }
 
+  /* SQ3: a secundária planeada, quando a noite sabe o mundo */
+  const planeia = !!(mundo && typeof mundo === "object");
+  let nasceu = false;
+  if (planeia) {
+    const pode = podeNascerSecundaria({ portaoAberto: secundarias !== false, missoes, dia, vivas: Array.isArray(missoes) ? 0 : secundariasAtivas });
+    if (pode.pode) {
+      const r = rolarGatilho("Nova missão", A.novaMissao, { sorte });
+      out.bastidor.push(r);
+      if (r.passou) {
+        const h = historia && typeof historia === "object" ? historia : {};
+        const m = planearSecundaria(mundo, { ...h, missoes, eventos: e, dia, nivel: mundo.nivel }, Math.floor(sorte() * 2147483647));
+        if (m) {
+          out.questNova = { titulo: m.titulo, descricao: m.descricao, objetivo: textoDaEtapa(m.etapas[0]), quem: m.dador, ondes: [], planeada: m };
+          nasceu = true;
+        }
+      }
+    }
+  }
+
   /* quest da fase do arco */
-  if (secundarias !== false && secundariasAtivas < A.secundariasMax) {
+  if (!planeia && secundarias !== false && secundariasAtivas < A.secundariasMax) {
     const r = rolarGatilho("Nova missão", A.novaMissao, { sorte });
     out.bastidor.push(r);
     if (r.passou) out.questNova = gerarQuestDeArco(ctx, ctx.fase || "meio");
@@ -223,6 +256,9 @@ export function processarDescansoLongoEventos(ev, ctx, { dia, secundariasAtivas 
   if (!e.global && secundarias === false) {
     /* o portão fechado: o arco regional espera, e o relógio da garantia
        também (não começa a contar antes de o herói estar na história) */
+  } else if (!e.global && nasceu) {
+    /* SQ3: a noite já deu um trabalho; o arco espera, e o relógio conta */
+    e.semGlobalDesde = e.semGlobalDesde || dia;
   } else if (!e.global) {
     e.semGlobalDesde = e.semGlobalDesde || dia;
     const garantia = dia - e.semGlobalDesde >= A.diasAteGarantia;

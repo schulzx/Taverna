@@ -228,6 +228,13 @@ export function tarefaParaMissao(q, mundo = {}) {
   const t = obj(q);
   const titulo = String(t.titulo || "").trim();
   if (!titulo) return null;
+  /* SQ3 (05/11): a secundária que a noite já planeou (secundaria-planeada.js)
+     chega inteira em `planeada` — atos, reviravolta, prazo, paga. Passa tal
+     qual, só pela catraca do formato: convertê-la de novo deitava fora o
+     plano e ficava o gancho solto de antes. */
+  if (t.planeada && typeof t.planeada === "object" && !Array.isArray(t.planeada) && String(t.planeada.titulo || "").trim()) {
+    return garantirMissoes([t.planeada])[0] || null;
+  }
   const m = obj(mundo);
   const id = idDaTarefa(t);
   const contrato = t.contrato && typeof t.contrato === "object" ? t.contrato : null;
