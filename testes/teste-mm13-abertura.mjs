@@ -693,9 +693,13 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
        ali. A cadeia certa é: Taverna() lê o ref e passa por PROP a quem
        invoca PainelLateral; PainelLateral recebe a prop e repassa por prop
        a quem invoca PainelDiario. As três pontas, por texto. */
-    t("PainelLateral recebe a abertura por prop", app.includes("aoGerarCronica = null, alforje = null, abertura = null }) {"));
+    /* MOVIDA em 06/11 (AR1, uma porta, uma tela): o PainelLateral ganhou a prop
+       bolsaPedida depois da abertura (a bolsa de cada companheiro); a intenção
+       fica — a abertura chega por prop, e as duas asserções leem-na com o que
+       vier depois dela */
+    t("PainelLateral recebe a abertura por prop", /aoGerarCronica = null, alforje = null, abertura = null[^}]*\}\) \{/.test(app));
     t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} />'));
-    t("e quem invoca PainelLateral (dentro de Taverna()) manda o ref", app.includes("aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} />"));
+    t("e quem invoca PainelLateral (dentro de Taverna()) manda o ref", app.includes("aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current}"));
   }
 }
 
