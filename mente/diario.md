@@ -24,6 +24,22 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · Fase SQ, SQ1 e SQ2 · o censo e o portão das secundárias
+- **a palavra:** «as quests secundárias… não devem ser disponibilizadas no começo do jogo pra não poluir a experiência… o mural… liberado a partir de um certo lvl»; e «depois de corrigir tudo isso pode prosseguir com a fase SQ».
+- **o censo (agente `backend`, `mente/sq1-censo.md`):** 24 mundos novos com herói de nível 1, nos primeiros 3 dias. Passavam pela tela cerca de 15 ofertas, das quais 6 interrompem a cena, todas antes de o herói tocar na história. O mural abria ao 7.º turno em 24 de 24 mundos.
+- **o portão (`src/portao-das-secundarias.js`, suíte 42/42):**
+  - as secundárias abrem com o primeiro marco da espinha ou com o nível 3, o que vier antes; o mural só abre com o nível 3;
+  - os turnos já não abrem nada;
+  - um save antigo, ou uma espinha sem marcos, fica aberto;
+  - a missão principal e a abertura não mudam.
+- **a ligação:**
+  - no motor (pelo `backend`): ficam caladas a missão da noite, o arco regional, a petição, o figurante que prega no mural, a proposta do Cronista e a trama;
+  - no App (agente `oficial`): o `garantirMural`, a soleira, o descanso longo, o correio e os trabalhos da casa;
+  - o ajudante `portaoAgora()` abre o portão se estourar.
+- **decisão média:** o nível 3 é o fim do aprendizado na 5e (900 XP); quem não anda na história não fica sem trabalho para sempre.
+- **prova viva (1905 e 375):** no nível 1, nem a soleira nem a Gestão mostram mural ou contratos. O mural aberto no nível 3 está provado pela suíte; ao vivo só se enche com o descanso ou o botão do mural.
+- **a seguir:** SQ3 (a secundária planeada como uma história pequena), SQ4 (o mural vai-se buscar e não chama ninguém; a linha da ficção para a casa sem trabalho) e SQ5 (a prova jogada).
+
 ## 05/11 · os defeitos da v9.605, achados pela pessoa a jogar
 - **a palavra:** «Todas as páginas estão desconfiguradas, também acho que conseguimos melhorar esses ícones do bolsa, mapa e diário, além de que quando aperto em bolsa abre a antiga… se aperto em fechar ele abre a ficha antiga pra só depois fechar».
 - **o leiaute (agente `oficial`):** numa tela de ~1905×860 a fila das cartas tinha 200 px fixos, e a história ficava com 163 px. A fila passou a medir o que as cartas medem, e as cartas encolhem abaixo de 960 de altura (`HUD_DA_MESA.mesa.baixa`). Os objetos ficam a 47 px da página. A história tem agora 245 px a 1905×860 e 285 a 1440×900.

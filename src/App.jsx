@@ -191,6 +191,7 @@ import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
    é presença, o sino da escalada, o fio que o mundo pinga e o próximo
    passo. Substitui a abertura forçada de uma linha só. */
 import { abrirAbertura, garantirAbertura, pedidoDaAbertura, muralLiberado, sinosForaDeHora, tramaTemEspaco } from "./abertura.js";
+import { secundariasAbertas } from "./portao-das-secundarias.js";
 import { podeTerCompanheiro, companheiroInicial, juntarCompanheiroInicial, convivioDaFicha } from "./companheiro-inicial.js";
 import { guildasDoMundo, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, entrarNaCasa, sairDaCasa, contribuirNaCasa, punirNaCasa, conferirLeisDaCasa, podeFundarCasa, fundarCasa, admitirNaCasa, expulsarDaCasa, promoverMembro, trabalhosDaCasa, delegarNaCasa, resolverTarefaDaCasa, DESFECHO_TAREFA, sangueEntreCasas, fazerAsPazes, provaDeIngresso, nomeDoPosto as postoDaCasa, oficioPorId as oficioDaCasa, degrauDaCasa } from "./guildas.js";
 import { PainelGuilda } from "./painel-guilda.jsx";
@@ -16787,8 +16788,17 @@ export default function Taverna() {
     } catch { return { cidades: [], gente: [], criaturas: [], lugares: [] }; }
   };
 
+  /* SQ2: o portão das secundárias. Abre se estourar: um portão que estoura
+     não pode fechar o jogo a quem já joga. Fica aqui, antes do primeiro
+     leitor que corre no render (os contratos da casa, logo abaixo). */
+  const portaoAgora = () => {
+    try { return secundariasAbertas({ abertura: aberturaMundoRef.current, espinha: espinhaRef.current, nivel: (personagemRef.current || personagem || {}).nivel }); }
+    catch (e) { calou("o portão das secundárias", e); return { abertas: true, mural: true, porque: "erro" }; }
+  };
+
   const trabalhosDaMinhaCasa = (() => {
     const g = minhaCasa(); if (!g) return [];
+    if (!portaoAgora().mural) return []; /* SQ2: os contratos da casa são mural */
     try {
       return trabalhosDaCasa(g, {
         semente: sementeMundo(), dia: diaRef.current,
@@ -19293,6 +19303,7 @@ export default function Taverna() {
   const garantirMural = (forcar = false) => {
     /* MM13: nenhuma oferta avulsa antes de o herói estar orientado. */
     if (!muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current })) return;
+    if (!portaoAgora().mural) return; /* SQ2: o mural só depois do portão e do nível do mural */
     if (!forcar && (muralRef.current || []).length > 0) return;
     const mundo = ofertasDaqui({
       semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
@@ -19963,6 +19974,7 @@ export default function Taverna() {
       const potsCorreio = potenciasAqui().filter((x) => !x.doJogador);
       const pc = processarDiaCorreio(correioRef.current, { sorte: sorteDoTurno("correio"),
         dia: diaRef.current,
+        peticoes: portaoAgora().abertas, /* SQ2: sem petições antes do portão */
         fama: famaAtual(),
         ehLider: cidadesDominadas(mapaRef.current).length > 0 || !!(mapaRef.current.faccoes || []).some((f) => f.doJogador),
         faccoes: [...new Set([...faccNomes, ...potsCorreio.map((x) => x.nome)])],
@@ -20545,7 +20557,7 @@ export default function Taverna() {
         setPersonagem(pers);
         if (comeu.msgs.length) pushMsgs(comeu.msgs.map((t) => ({ autor: "sistema", texto: t })));
       } catch (e) { calou("o dia que se come no descanso", e); }
-      const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias });
+      const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias, secundarias: portaoAgora().abertas });
       eventosRef.current = r.eventos; setEventos(r.eventos);
       const partes = [];
       if (r.globalNovo) {
@@ -23082,7 +23094,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          o jogador — e a casa não oferece o que vai recusar. O papel pregado
          na tábua é o mundo a falar sozinho, e o mundo não apaga o que já
          disse: esse fica, e encolhe. */
-      for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {
+      const muralDoPortao = portaoAgora().mural; /* SQ2: o papel pregado espera também o portão da introdução */
+      for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }) && muralDoPortao)) {
         const rec = recompensaDe({ tipo: c.tipo || "contrato", nivel: c.nivel || (personagem && personagem.nivel) || 1, etapas: (c.etapas || []).length || 3, moedasPrometidas: c.paga });
         const paga = retornoDaSoleira({ moedas: c.paga, xp: rec.xp, item: rec.item }); /* V3c: XP e fama ficam no Mural e no Diário */
         lista.push({

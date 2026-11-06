@@ -599,8 +599,15 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
   /* MM18 (11/10): o filtro ganhou `!cartazJaVenceu(c)` — o papel pregado
      vence ao fim de CARTAZ_ESPERA e sai do rodapé. A régua desta linha (o
      mural fechado não oferece) continua inteira, no mesmo `filter`. */
+  /* MOVIDA NA SQ2 (05/11, o oficial): o mesmo `filter` ganhou
+     `&& muralDoPortao` (o papel pregado espera também o portão da
+     introdução, src/portao-das-secundarias.js, que guarda o mural até ao
+     nível dele). A régua desta linha — o mural fechado não oferece — fica
+     inteira: o `muralLiberado` da MM13 continua no filtro, à letra, e a
+     linha nova só acrescenta uma segunda porta, nunca tira a primeira. */
   t("a soleira não oferece cartaz oferecido antes do mural abrir",
-    soleira.length > 200 && soleira.includes("for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }))) {"));
+    soleira.length > 200 && soleira.includes("for (const c of (mural || []).filter((c) => c && c.oferecido && !cartazJaVenceu(c) && podeAceitarCartaz(c) && muralLiberado({ abertura: aberturaMundoRef.current, missoes: missoesRef.current }) && muralDoPortao)) {")
+    && soleira.includes("const muralDoPortao = portaoAgora().mural;"));
   const pauta = corpoApos(app, 'const pautaDoTurno = (acaoDoTurno = "") => {');
   // retirada (trilha A, 29/10): «o corpo de pautaDoTurno não está vazio» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
   // retirada (trilha A, 29/10): «o veto do mural vai à pauta (NÃO PODE), junto do veto do geógrafo» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).
