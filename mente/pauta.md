@@ -99,6 +99,38 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase AR — a arrumação: uma porta para cada coisa, e as telas que faltam à AAA (a ordem de 05/11 · DEPOIS da Fase SQ)
+
+**A palavra da pessoa (05/11/2026):** *«depois de terminar todas as fases da SQ, vamos arrumar as coisas,
+quando aperto na imagem do personagem abre uma aba gestão, com ficha e equipamento na parte mais embaixo,
+se aperto em bolsa abre uma aba diferente com ficha e equipamento, as duas fazem as mesmas coisas mas de
+formas diferentes, algo não está batendo, e se aperto em "mais da bolsa" abre a bolsa antiga, além disso
+não consigo acessar a bolsa dos personagens do grupo, e as outras páginas "talentos", "mercado" etc
+precisam de um redesign para acompanhar nosso novo design de ficha e bolsa etc, também precisa de cara de
+AAA, principalmente as abas grupo e talentos (essa principalmente, já que é uma das almas do jogo,
+habilidades e magias etc, também precisam ser chamativas e com elementos de jogos)».*
+
+**A ordem: só começa quando a Fase SQ fechar.** Liberdade de design da ordem de 23/09, pelo Figma.
+
+**As etapas (uma por versão):**
+- [ ] **AR1 · uma porta, uma tela** (`desenho` + `oficial`): o herói e a Bolsa abrem hoje duas telas que
+  fazem o mesmo de formas diferentes. Decidir UMA casa para a ficha e o equipamento (a carta do herói
+  abre a ficha-carta; a Bolsa abre a MESMA tela, na aba do equipamento e da mochila), e aposentar a
+  duplicada. «Mais da bolsa» deixa de abrir a bolsa antiga: o que só ela fazia (consumíveis, descartar,
+  dar a um companheiro, a bancada) ganha casa na tela nova. Nenhuma função se perde.
+- [ ] **AR2 · a bolsa de cada um** (`desenho` + `oficial`): o boneco e a mochila de cada companheiro,
+  a partir da carta dele, com a troca de itens entre o grupo (o «dar a» de hoje).
+- [ ] **AR3 · os Talentos, a alma do jogo** (`desenho` + `jogo` + `aprendiz`): a árvore de
+  habilidades e magias com cara de jogo — os nós como ícones com moldura e raridade, as ligações que
+  acendem, a subclasse e a especialização como ramos com a gema, o custo e o efeito antes do clique,
+  a cerimónia de aprender. É a tela que a pessoa pôs primeiro.
+- [ ] **AR4 · o Grupo** : as cartas dos companheiros em grande, o vínculo, a classe, o que cada um sabe
+  fazer, a bolsa de cada um (AR2).
+- [ ] **AR5 · o Mercado e as restantes** (Diário, Mapa, Códex, Ascensão, a casa): na linguagem da AAA
+  (os objetos, os encaixes, as raridades), uma por versão, a de mais uso primeiro.
+- [ ] **AR6 · a prova jogada**, a 1905 e no telefone: cada porta abre uma casa só, e nenhuma tela antiga
+  sobra à vista.
+
 ### Fase SQ — as missões que se ganham (a ordem de 05/11 · DEPOIS da fase AAA)
 
 **A palavra da pessoa (05/11/2026), na íntegra do que pede:** *«precisamos mudar o sistema de quests,
