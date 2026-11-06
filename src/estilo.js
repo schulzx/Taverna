@@ -1305,12 +1305,22 @@ export const HUD_DA_MESA = {
       "bandeja campo objetos",
       "cartas cartas cartas",
     ],
-    linhas: ["84px", "1fr", "auto", "48px", "200px"],
+    /* a fila das cartas mede o que as cartas medem (auto): a 200 fixos sobrava
+       um vão de feltro por baixo do campo quando o herói estava sozinho */
+    linhas: ["84px", "1fr", "auto", "48px", "auto"],
     ecra: { painel: 220, alto: 84, folga: 20, ordem: ["lugar", "hora", "ameaca"], velaAlta: 68, respiro: 8 },
     livro: { largura: 600, margem: 8, linha: 504 },
     bandeja: { largura: 236, alto: 300, lado: "esquerda" },
     cartas: { heroi: 0.62, companheiro: 0.46, folga: 48, recuo: 30 },
-    objetos: { escala: 1.25, passo: 140, ordem: ["diario", "mapa", "bolsa"], alvo: { largura: 90, alto: 115 } },
+    /* 05/11 · AAA §15: o desenho a 90 (OBJETOS_DA_MESA.tamanho.mesa), o alvo 96 × 120 e o passo 124 (cinco objetos cabem entre o ecrã e as cartas) */
+    objetos: { passo: 124, ordem: ["diario", "mapa", "bolsa"], alvo: { largura: 96, alto: 120 } },
+    /* A MESA BAIXA (a pessoa jogou a v9.605 a 1905 × 860): abaixo desta altura da
+       janela a página ficava com ~355 px. As cartas encolhem (herói 131 → 106 de
+       largura, ~38 px de altura devolvidos à página) e o horizonte usa a faixa
+       estreita (96 → 48). Medido a 1440 × 900: a história tinha 203 px com as
+       cartas grandes e 285 com estas. O Figma 260:1494 (912) não tem a faixa do
+       horizonte; com ela, só a partir de 960 as cartas grandes cabem. */
+    baixa: { abaixoDe: 960, cartas: { heroi: 0.5, companheiro: 0.38 } },
   },
   telefone: {
     borda: BORDA_DA_MESA.telefone,
@@ -1319,7 +1329,7 @@ export const HUD_DA_MESA = {
     ecra: { forma: "tira", alto: 44, velaAlta: 30 },
     livro: { margem: 4 },
     cartas: { heroi: 0.46, companheiro: 0.34, objetosNaFila: true },
-    objetos: { tamanho: 40, rotulo: 10, ordem: ["diario", "mapa", "bolsa"] },
+    objetos: { tamanho: 48, rotulo: 10, ordem: ["diario", "mapa", "bolsa"] },   /* 05/11 · AAA §15: 40 → 48, o piso de toque */
   },
   ameaca: { pontos: 3, cheio: "●", vazio: "○" },
   gemasDaCarta: { PV: GEMA_DA_SUBCLASSE["Bárbaro"].corpo, PM: GEMA_DA_SUBCLASSE.Arcanista.corpo, Destino: T.amber },
@@ -1327,6 +1337,183 @@ export const HUD_DA_MESA = {
   titulo: { tamanho: 11, rastreio: 1.8 },
   gema: { mesa: 7, telefone: 6, letra: 11 },
 };
+
+/* §AAA §15 · OS OBJETOS DA MESA — o Diário, o Mapa, a Bolsa, o Códex e a Ascensão.
+   Quadro 96×96, luz de cima, contorno escuro; a borda de cada um é material
+   claro ou metal (≥ 3:1 no feltro e sob a vela). formas.md §AAA §15. */
+export const MATERIAIS_DOS_OBJETOS = {
+  contorno: "#140B06",                                                   /* separa da luz e do halo; 1,20 no feltro: NUNCA é a borda sozinho */
+  sombra: "#000000",                                                     /* a sombra de contacto, a 0,45 */
+  couroDoDiario: { luz: "#D9814B", meio: "#B85A33", sombra: "#5A2114" }, /* luz 5,56 · meio 3,52 (3,17 sob a vela) */
+  couroDaBolsa: { luz: "#E6BA80", meio: "#B67F47", baixo: "#A06A38", sombra: "#6A4322" }, /* meio 4,73 · baixo 3,57 (3,21) — a borda de baixo */
+  couroDoCodex: { luz: "#A68AE6", meio: "#5E44A8", sombra: "#2B1C57" },  /* a borda é o fio de PRATA.meio (8,45), não o couro */
+  rolo: "#8C7350",                                                       /* o interior do rolo e o corte das folhas: 3,62 */
+};
+
+/* O IIFE guarda os nomes curtos (OURO, M, CHAO) só para o desenho — não
+   chocam com o resto da folha. */
+export const OBJETOS_DA_MESA = (() => {
+const OURO = MOLDURA_POR_DEGRAU.ouro;
+const PRATA = MOLDURA_POR_DEGRAU.prata;
+const BRONZE = MOLDURA_POR_DEGRAU.bronze;
+const GRANADA = GEMA_DA_SUBCLASSE["Bárbaro"].corpo;
+const AMETISTA = GEMA_DA_SUBCLASSE.Arcanista.corpo;
+const SAFIRA = GEMA_DA_SUBCLASSE.Cavaleiro.corpo;
+/* os materiais que só os objetos usam (feltro 12,24,1B · vela 1F,2C,1D) */
+const M = MATERIAIS_DOS_OBJETOS;
+
+const CHAO = { el: "ellipse", cx: 48, cy: 86, rx: 30, ry: 5, fill: M.sombra, opacity: 0.45 };
+
+/* camada: el = o elemento SVG; sw = strokeWidth (e então linejoin/linecap round);
+   dash = strokeDasharray; rot = rotate(rot cx cy). paradas: [posição, cor, alfa?]
+   (o terceiro é o stop-opacity; falta = 1). fill "url(#id)" aponta para um
+   gradiente do próprio objeto: o desenhador prefixa o id com useId(), porque o
+   mesmo objeto pode estar duas vezes na página. */
+return {
+  viewBox: "0 0 96 96",
+  material: M,
+  tamanho: { mesa: 90, telefone: 48 },
+  novidade: {
+    halo: { el: "ellipse", cx: 48, cy: 52, rx: 46, ry: 42, fill: "url(#odm-novo-halo)", opacity: 0.42 },
+    gradiente: { id: "odm-novo-halo", tipo: "radial", cx: 0.5, cy: 0.5, r: 0.5, paradas: [[0, T.amber], [1, T.amber, 0]] },
+    /* a gota é a MarcaDaPorta estado="novo", posta como hoje (top -4, right -6) */
+  },
+  ordem: ["diario", "mapa", "bolsa", "codex", "ascensao"],
+  diario: {
+    rotulo: "Diário",
+    gradientes: [
+      { id: "odm-diario-capa", tipo: "linear", x1: 0, y1: 0, x2: 0.35, y2: 1, paradas: [[0, M.couroDoDiario.luz], [0.45, M.couroDoDiario.meio], [1, M.couroDoDiario.sombra]] },
+      { id: "odm-diario-ouro", tipo: "linear", x1: 0, y1: 0, x2: 1, y2: 1, paradas: [[0, OURO.claro], [0.55, OURO.meio], [1, OURO.escuro]] },
+    ],
+    camadas: [
+      CHAO,
+      { el: "path", d: "M24 14h48a4 4 0 0 1 4 4v60a4 4 0 0 1-4 4H24z", fill: T.pergaminho, stroke: M.contorno, sw: 2 },
+      { el: "path", d: "M72 20v56M74 22v52M28 78h42M28 80h40", stroke: T.pergaminhoBorda, sw: 0.9, fill: "none" },
+      { el: "rect", x: 18, y: 10, width: 52, height: 68, rx: 4, fill: "url(#odm-diario-capa)", stroke: M.contorno, sw: 2 },
+      { el: "path", d: "M22 10h7v68h-7a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z", fill: M.couroDoDiario.sombra, opacity: 0.6 },
+      { el: "path", d: "M19.8 14v60", stroke: M.couroDoDiario.luz, sw: 1.2, fill: "none" },
+      { el: "path", d: "M18 22h11M18 66h11", stroke: M.couroDoDiario.luz, sw: 2.2, fill: "none" },
+      { el: "rect", x: 33, y: 17, width: 30, height: 54, rx: 2, fill: "none", stroke: M.couroDoDiario.sombra, sw: 1.6 },
+      { el: "rect", x: 35, y: 19, width: 26, height: 50, rx: 1.5, fill: "none", stroke: OURO.meio, sw: 1, opacity: 0.85 },
+      { el: "circle", cx: 48, cy: 44, r: 8.5, fill: "url(#odm-diario-ouro)", stroke: M.contorno, sw: 1.6 },
+      { el: "path", d: "M44 49c2-5 5-8 8-10-1 4-3 7-7 9m-1 1l-1 2", stroke: OURO.escuro, sw: 1.4, fill: "none" },
+      { el: "path", d: "M58 10h8a4 4 0 0 1 4 4v8l-4 0v-8h-8z", fill: "url(#odm-diario-ouro)", stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M58 78h8a4 4 0 0 0 4-4v-8l-4 0v8h-8z", fill: "url(#odm-diario-ouro)", stroke: M.contorno, sw: 1.4 },
+      { el: "circle", cx: 66.5, cy: 13.5, r: 1.3, fill: OURO.brilho },
+      { el: "circle", cx: 66.5, cy: 74.5, r: 1.3, fill: OURO.brilho },
+      { el: "path", d: "M60 39h17a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H60z", fill: M.couroDoDiario.sombra, stroke: M.contorno, sw: 1.6 },
+      { el: "rect", x: 56, y: 36, width: 10, height: 16, rx: 2.5, fill: "url(#odm-diario-ouro)", stroke: M.contorno, sw: 1.6 },
+      { el: "path", d: "M61 41.5a1.6 1.6 0 1 1-.01 0zM61 43v4", stroke: OURO.escuro, sw: 1.5, fill: "none" },
+      { el: "path", d: "M40 78v11l3-2.5 3 2.5V78", fill: GRANADA, stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M31 12h33", stroke: M.couroDoDiario.luz, sw: 1.4, fill: "none", opacity: 0.9 },
+    ],
+  },
+  mapa: {
+    rotulo: "Mapa",
+    gradientes: [
+      { id: "odm-mapa-folha", tipo: "linear", x1: 0, y1: 0, x2: 0, y2: 1, paradas: [[0, T.pergaminho], [1, T.pergaminhoBorda]] },
+      { id: "odm-mapa-rolo", tipo: "linear", x1: 0, y1: 0, x2: 1, y2: 0, paradas: [[0, M.rolo], [0.35, T.pergaminho], [0.7, T.pergaminhoBorda], [1, M.rolo]] },
+      { id: "odm-mapa-lacre", tipo: "radial", cx: 0.38, cy: 0.32, r: 0.75, paradas: [[0, T.rosa], [0.55, T.lacreNoPergaminho], [1, T.perigoNoPergaminho]] },
+    ],
+    camadas: [
+      CHAO,
+      { el: "path", d: "M14 24Q38 19 66 23V77Q38 73 14 78Q9 76 10 71V30Q10 25 14 24z", fill: "url(#odm-mapa-folha)", stroke: M.contorno, sw: 2 },
+      { el: "path", d: "M14 24Q19 27 17 32V72Q19 76 14 78", fill: "none", stroke: M.rolo, sw: 1.4 },
+      { el: "path", d: "M22 36q6-4 10 1t9 0 8 4M23 60q5 3 9-1t8 2", stroke: T.tintaDoPergaminhoMeio, sw: 1.4, fill: "none" },
+      { el: "path", d: "M44 28q-4 10 2 16t1 20", stroke: T.azulNoPergaminho, sw: 1.8, fill: "none" },
+      { el: "path", d: "M24 50l4-6 4 6M30 50l4-7 4 7", stroke: T.tintaDoPergaminho, sw: 1.5, fill: "none" },
+      { el: "path", d: "M27 68q10-2 16-10t14-6", stroke: T.brasaNoPergaminho, sw: 1.5, fill: "none", dash: "2.5 2.5" },
+      { el: "path", d: "M55 47l5 5m0-5l-5 5", stroke: T.perigoNoPergaminho, sw: 2.2, fill: "none" },
+      { el: "rect", x: 62, y: 18, width: 18, height: 64, rx: 9, fill: "url(#odm-mapa-rolo)", stroke: M.contorno, sw: 2 },
+      { el: "ellipse", cx: 71, cy: 20, rx: 8, ry: 3.6, fill: M.rolo, stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M71 20m-4 0a4 2 0 1 0 8 0a3 1.4 0 1 0-6 0", stroke: T.pergaminho, sw: 1, fill: "none" },
+      { el: "path", d: "M61 50h20v5H61z", fill: T.lacreNoPergaminho, stroke: M.contorno, sw: 1.2 },
+      { el: "path", d: "M71 51.5c-4 4-6 10-9 14M71 51.5c3 5 4 10 7 13", stroke: T.lacreNoPergaminho, sw: 2.4, fill: "none" },
+      { el: "path", d: "M71 54l3 1.3 3.2-.6 1 3 2.6 2-1.4 2.9.6 3.2-3 1-2 2.6-2.9-1.4-3.2.6-1-3-2.6-2 1.4-2.9-.6-3.2 3-1z", fill: "url(#odm-mapa-lacre)", stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M71 58.5l1.6 3.4 3.6.4-2.7 2.4.8 3.6-3.3-1.9-3.3 1.9.8-3.6-2.7-2.4 3.6-.4z", fill: T.perigoNoPergaminho, opacity: 0.85 },
+      { el: "path", d: "M66 21.5v52", stroke: T.pergaminho, sw: 1.6, fill: "none", opacity: 0.9 },
+    ],
+  },
+  bolsa: {
+    rotulo: "Bolsa",
+    gradientes: [
+      { id: "odm-bolsa-couro", tipo: "radial", cx: 0.35, cy: 0.3, r: 0.8, paradas: [[0, M.couroDaBolsa.luz], [0.5, M.couroDaBolsa.meio], [1, M.couroDaBolsa.baixo]] },
+      { id: "odm-bolsa-ouro", tipo: "linear", x1: 0, y1: 0, x2: 1, y2: 1, paradas: [[0, OURO.claro], [0.55, OURO.meio], [1, OURO.escuro]] },
+      { id: "odm-bolsa-cordao", tipo: "linear", x1: 0, y1: 0, x2: 0, y2: 1, paradas: [[0, BRONZE.claro], [1, BRONZE.meio]] },
+    ],
+    camadas: [
+      CHAO,
+      { el: "path", d: "M35 37C21 45 14 60 19 72c5 11 19 15 29 15s24-4 29-15c5-12-2-27-16-35z", fill: "url(#odm-bolsa-couro)", stroke: M.contorno, sw: 2 },
+      { el: "ellipse", cx: 48, cy: 24, rx: 15, ry: 5.5, fill: M.couroDaBolsa.sombra, stroke: M.contorno, sw: 1.6 },
+      { el: "ellipse", cx: 42, cy: 21, rx: 7, ry: 4.4, fill: "url(#odm-bolsa-ouro)", stroke: M.contorno, sw: 1.4, rot: -14 },
+      { el: "ellipse", cx: 53, cy: 18, rx: 7, ry: 4.4, fill: "url(#odm-bolsa-ouro)", stroke: M.contorno, sw: 1.4, rot: 18 },
+      { el: "path", d: "M49.5 16.5l5 1.5M38.5 20.5l5-1", stroke: OURO.brilho, sw: 1.2, fill: "none" },
+      { el: "path", d: "M32 24c3 5 4 9 3 13h26c-1-4 0-8 3-13-5 4-10 5-16 5s-11-1-16-5z", fill: M.couroDaBolsa.meio, stroke: M.contorno, sw: 1.6 },
+      { el: "path", d: "M40 30l1 7M48 31v6M56 30l-1 7", stroke: M.couroDaBolsa.sombra, sw: 1.2, fill: "none" },
+      { el: "path", d: "M33 35q15 6 30 0v5q-15 6-30 0z", fill: "url(#odm-bolsa-cordao)", stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M46 41c-3 6-5 11-8 15M50 41c2 6 5 10 9 13", stroke: BRONZE.meio, sw: 2.4, fill: "none" },
+      { el: "circle", cx: 48, cy: 40, r: 3.4, fill: BRONZE.claro, stroke: M.contorno, sw: 1.2 },
+      { el: "path", d: "M38 56l-2 4 4-1zM59 54l3 3.5-4 0z", fill: BRONZE.claro, stroke: M.contorno, sw: 1 },
+      { el: "path", d: "M24 66c5 10 15 14 24 14s19-4 24-14", stroke: M.couroDaBolsa.luz, sw: 1.2, fill: "none", dash: "2.2 2.2" },
+      { el: "ellipse", cx: 33, cy: 56, rx: 4, ry: 8, fill: OURO.brilho, opacity: 0.22, rot: 20 },
+      { el: "ellipse", cx: 78, cy: 83, rx: 6, ry: 2.6, fill: "url(#odm-bolsa-ouro)", stroke: M.contorno, sw: 1.2 },
+    ],
+  },
+  codex: {
+    rotulo: "Códex",
+    gradientes: [
+      { id: "odm-codex-capa", tipo: "linear", x1: 0, y1: 0, x2: 0.3, y2: 1, paradas: [[0, M.couroDoCodex.luz], [0.45, M.couroDoCodex.meio], [1, M.couroDoCodex.sombra]] },
+      { id: "odm-codex-prata", tipo: "linear", x1: 0, y1: 0, x2: 1, y2: 1, paradas: [[0, PRATA.claro], [0.55, PRATA.meio], [1, PRATA.escuro]] },
+      { id: "odm-codex-runa", tipo: "radial", cx: 0.5, cy: 0.5, r: 0.5, paradas: [[0, T.violetSoft], [0.6, T.violet], [1, M.couroDoCodex.meio]] },
+    ],
+    camadas: [
+      CHAO,
+      { el: "path", d: "M16 70h64v8a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4z", fill: T.pergaminhoBorda, stroke: M.contorno, sw: 2 },
+      { el: "path", d: "M20 75h56M20 78h56", stroke: M.rolo, sw: 0.9, fill: "none" },
+      { el: "rect", x: 14, y: 12, width: 68, height: 62, rx: 5, fill: "url(#odm-codex-capa)", stroke: M.contorno, sw: 2 },
+      { el: "rect", x: 16.5, y: 14.5, width: 63, height: 57, rx: 3.5, fill: "none", stroke: PRATA.meio, sw: 1.3 },
+      { el: "path", d: "M24 12v62M72 12v62", stroke: "url(#odm-codex-prata)", sw: 3, fill: "none" },
+      { el: "path", d: "M14 24V17a5 5 0 0 1 5-5h7l-12 12z", fill: "url(#odm-codex-prata)", stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M82 24V17a5 5 0 0 0-5-5h-7l12 12z", fill: "url(#odm-codex-prata)", stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M14 62v7a5 5 0 0 0 5 5h7L14 62z", fill: "url(#odm-codex-prata)", stroke: M.contorno, sw: 1.4 },
+      { el: "path", d: "M82 62v7a5 5 0 0 1-5 5h-7l12-12z", fill: "url(#odm-codex-prata)", stroke: M.contorno, sw: 1.4 },
+      { el: "circle", cx: 48, cy: 43, r: 17, fill: "url(#odm-codex-runa)", opacity: 0.55 },
+      { el: "circle", cx: 48, cy: 43, r: 12, fill: M.couroDoCodex.sombra, stroke: "url(#odm-codex-prata)", sw: 3 },
+      { el: "path", d: "M48 34v18M42 48l6-12 6 12M43.5 44h9", stroke: T.violetSoft, sw: 2, fill: "none" },
+      { el: "circle", cx: 48, cy: 52, r: 1.6, fill: PRATA.brilho },
+      { el: "circle", cx: 37, cy: 26, r: 1.2, fill: T.violetSoft },
+      { el: "circle", cx: 60, cy: 24, r: 1.5, fill: T.violetSoft },
+      { el: "circle", cx: 56, cy: 19, r: 0.9, fill: PRATA.brilho },
+      { el: "path", d: "M27 14h42", stroke: M.couroDoCodex.luz, sw: 1.4, fill: "none" },
+    ],
+  },
+  ascensao: {
+    rotulo: "Ascensão",
+    gradientes: [
+      { id: "odm-ascensao-luz", tipo: "radial", cx: 0.5, cy: 0.5, r: 0.5, paradas: [[0, OURO.brilho], [0.4, T.amberSoft], [1, T.amberSoft, 0]] },
+      { id: "odm-ascensao-ouro", tipo: "linear", x1: 0, y1: 0, x2: 0.4, y2: 1, paradas: [[0, OURO.claro], [0.5, OURO.meio], [1, BRONZE.meio]] },
+    ],
+    camadas: [
+      CHAO,
+      { el: "circle", cx: 48, cy: 42, r: 36, fill: "url(#odm-ascensao-luz)", opacity: 0.45 },
+      { el: "path", d: "M48 4l2.4 14h-4.8zM21 15l9.5 10.5-3.6 3.2zM75 15l-5.9 13.7-3.6-3.2zM8 42l14-2.4v4.8zM88 42l-14 2.4v-4.8z", fill: T.amberSoft, opacity: 0.9 },
+      { el: "circle", cx: 48, cy: 40, r: 27, fill: "none", stroke: OURO.claro, sw: 1.4, opacity: 0.8 },
+      { el: "path", d: "M24 62L20 34l13 14 7-22 8 16 8-16 7 22 13-14-4 28z", fill: "url(#odm-ascensao-ouro)", stroke: M.contorno, sw: 2 },
+      { el: "path", d: "M33 48l7-22 8 16 8-16 7 22", fill: "none", stroke: OURO.claro, sw: 1, opacity: 0.8 },
+      { el: "path", d: "M22 61h52l-2 14H24z", fill: "url(#odm-ascensao-ouro)", stroke: M.contorno, sw: 2 },
+      { el: "path", d: "M24 64.5h48", stroke: OURO.brilho, sw: 1.2, fill: "none" },
+      { el: "circle", cx: 20, cy: 33, r: 3, fill: OURO.brilho, stroke: M.contorno, sw: 1.2 },
+      { el: "circle", cx: 40, cy: 25, r: 3, fill: OURO.brilho, stroke: M.contorno, sw: 1.2 },
+      { el: "circle", cx: 56, cy: 25, r: 3, fill: OURO.brilho, stroke: M.contorno, sw: 1.2 },
+      { el: "circle", cx: 76, cy: 33, r: 3, fill: OURO.brilho, stroke: M.contorno, sw: 1.2 },
+      { el: "path", d: "M48 63l5 5-5 5-5-5z", fill: GRANADA, stroke: M.contorno, sw: 1.2 },
+      { el: "circle", cx: 33, cy: 68, r: 3, fill: AMETISTA, stroke: M.contorno, sw: 1.1 },
+      { el: "circle", cx: 63, cy: 68, r: 3, fill: SAFIRA, stroke: M.contorno, sw: 1.1 },
+      { el: "path", d: "M46.5 65.5l1.5-1", stroke: OURO.brilho, sw: 1, fill: "none" },
+    ],
+  },
+};
+})();
 
 /* O ENCAIXE (AAA §3 e §9; a geometria é a do componente 253:352 no Figma,
    tirada do SVG dele): o quadrado de 56 de um item. O fio da raridade vai

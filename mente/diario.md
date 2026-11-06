@@ -24,6 +24,14 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · os defeitos da v9.605, achados pela pessoa a jogar
+- **a palavra:** «Todas as páginas estão desconfiguradas, também acho que conseguimos melhorar esses ícones do bolsa, mapa e diário, além de que quando aperto em bolsa abre a antiga… se aperto em fechar ele abre a ficha antiga pra só depois fechar».
+- **o leiaute (agente `oficial`):** numa tela de ~1905×860 a fila das cartas tinha 200 px fixos, e a história ficava com 163 px. A fila passou a medir o que as cartas medem, e as cartas encolhem abaixo de 960 de altura (`HUD_DA_MESA.mesa.baixa`). Os objetos ficam a 47 px da página. A história tem agora 245 px a 1905×860 e 285 a 1440×900.
+- **as portas:** a Bolsa abre o inventário novo (`PainelFichaCarta` na aba equipamento), com «Mais da bolsa» para a gaveta antiga. O «Fechar» da carta fecha tudo e devolve à mesa.
+- **os objetos (o `desenho` desenhou, eu apliquei):** os antigos eram feitos do couro da mesa e não se viam (a Bolsa a 1,05:1). Os novos têm borda de material claro ou metal, a ≥ 3,17:1 no pior ponto: o livro de couro com cantos de ouro, o mapa com selo de lacre, a bolsa com moedas, o tomo do Códex e a coroa da Ascensão. Estão em `OBJETOS_DA_MESA` e `MATERIAIS_DOS_OBJETOS`, com um desenhador genérico (`DesenhoDoObjeto`). Medem 90 px na mesa e 48 no telefone.
+- **prova viva (1905×860):** os três objetos leem-se. A Bolsa abriu a carta com «Mais da bolsa». A ficha abriu a carta, e um «Fechar» deixou só a mesa (sem a ficha antiga e sem a Gestão).
+- **a lição:** a fase AAA foi provada a 1280 e a 375, e a pessoa joga a 1905. Daqui em diante, a prova de uma tela inclui a largura dela.
+
 ## 05/11 · a fase AAA fecha · a mesa do Mestre, a cerimónia do nível, o boneco e a ficha-carta
 - **a palavra:** «Pode continuar com a próxima etapa da fase aaa, prossiga até finalizar a fase aaa».
 - **o esqueleto do HUD B (agente `oficial`, ~280 mil tokens):** `src/painel-mesa-do-mestre.jsx` e `HUD_DA_MESA`.

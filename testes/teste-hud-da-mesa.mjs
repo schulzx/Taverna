@@ -52,5 +52,18 @@ t("o painel HORA abre O TEMPO", /aoAbrirTempo=\{\(\) => setTempoAberto\(\(v\) =>
 t("as moedas continuam à vista, na legenda da Bolsa", /a\.id === "inv" \? \(\(personagem && personagem\.moedas\) \|\| 0\) \+ " moedas"/.test(APP));
 t("e toda a fiação nova está em try/catch", /calou\("os objetos da mesa", e\)/.test(APP) && /calou\("o lugar no ecrã do Mestre", err\)/.test(APP) && /calou\("o destino na carta", e\)/.test(APP));
 
+sec("5. os defeitos da v9.605 (a pessoa jogou a 1905 × 860, 05/11)");
+/* a página ficava com ~355 px: a mesa baixa encolhe as cartas e estreita o horizonte */
+t("a mesa baixa tem cartas menores, e o herói continua maior que o companheiro",
+  H.mesa.baixa.abaixoDe > 0 && H.mesa.baixa.cartas.heroi < H.mesa.cartas.heroi && H.mesa.baixa.cartas.heroi > H.mesa.baixa.cartas.companheiro);
+t("a fila das cartas mede as cartas na mesa (nenhum vão por baixo do campo)", H.mesa.linhas[4] === "auto" && /height: telefone \? parseInt\(H\.telefone\.linhas\[5\], 10\) : undefined/.test(MESA));
+t("o App lê a mesa baixa da tabela, com a altura da janela", /alturaDaJanela < HUD_DA_MESA\.mesa\.baixa\.abaixoDe/.test(APP) && /baixa=\{mesaBaixa\}/.test(APP) && /telefone=\{!trilhoAVista \|\| mesaBaixa\}/.test(APP));
+/* os objetos iam parar à borda da tela: as margens automáticas saem da página e ficam por fora */
+t("os objetos encostam na página (as margens automáticas ficam por fora)", /width: parseInt\(HUD_DA_MESA\.mesa\.colunas\[2\], 10\), marginLeft: "auto"/.test(APP) && /width: parseInt\(HUD_DA_MESA\.mesa\.colunas\[2\], 10\), marginRight: "auto"/.test(APP));
+/* a Bolsa abria a gaveta antiga; o Fechar da carta só tirava a camada de cima */
+t("a Bolsa abre a carta do herói na aba do equipamento", /aba === "inv" \|\| \(heroiNaMesa && aba === "gestao"/.test(APP) && /aba=\{daBolsa \? "equipamento" : "ficha"\}/.test(APP));
+t("e o que a gaveta antiga tinha continua a uma porta («Mais da bolsa», «O inventário»)", /daBolsa \? "Mais da bolsa" : "Mais detalhes"/.test(APP) && />O inventário<\/Botao>/.test(APP));
+t("o Fechar da carta fecha tudo e devolve à mesa", /aoFechar=\{fecharTudo\}/.test(APP) && !/aoFechar=\{\(\) => setHeroiDispensado\(true\)\}/.test(APP) && /calou\("fechar a carta do herói", e\)/.test(APP));
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

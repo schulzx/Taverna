@@ -2433,8 +2433,17 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
   const [subEscolhida, setSubGestao] = React.useState("ficha");    // sub-aba dentro de Gestão
   /* AAA · na mesa, «O herói» é uma tela só (formas.md §AAA §2, 1280): as três
      colunas não cabem no alforje, então a carta abre por cima de tudo ao
-     entrar na Ficha; o «Fechar» dela devolve à sub-aba, onde fica a ficha
-     antiga. No telefone a carta vive dentro da sub-aba, com as duas abas. */
+     entrar na Ficha. A BOLSA abre a mesma carta, na aba do equipamento (o
+     boneco e a mochila), nas duas larguras.
+
+     O «Fechar» da carta FECHA TUDO e devolve à mesa (v9.605 a pessoa jogou:
+     o Fechar só tirava a camada de cima, e por baixo ficava a Gestão com a
+     ficha antiga — dois toques, e o primeiro parecia abrir outra coisa).
+     O que fica por baixo é porta própria: «Mais detalhes» (a ficha antiga e
+     as sub-abas da Gestão) e «Mais da bolsa» (consumíveis, bancada, o
+     inventário dos companheiros, descartar e transferir) dispensam a carta
+     e mostram a gaveta de sempre. No telefone a carta do herói vive dentro
+     da sub-aba, com as duas abas. */
   const heroiNaMesa = useMesa();
   const [heroiDispensado, setHeroiDispensado] = React.useState(false);
   React.useEffect(() => { setHeroiDispensado(false); }, [abaPedida, subEscolhida]);
@@ -2513,17 +2522,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
               {heroiNaMesa ? (
                 heroiDispensado ? (
                   <Botao corpo onClick={() => setHeroiDispensado(false)}>O herói</Botao>
-                ) : (
-                  <div role="dialog" aria-modal="true" aria-label="O herói" className="fixed inset-0 z-50 tv-scroll overflow-y-auto" style={{ background: T.bg }}>
-                    <div className="mx-auto max-w-6xl" style={{ padding: FICHA_CARTA.mesa.folga }}>
-                      <PainelFichaCarta personagem={heroiDaCarta} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
-                        aoEquipar={(item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } }}
-                        aoDesequipar={(slot) => { try { desequipar(slot); } catch (e) { calou("desequipar na carta", e); } }}
-                        aoSubirAtributo={onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("ponto na carta", e); } } : null}
-                        aoFechar={() => setHeroiDispensado(true)} lex={lexicoMundo} />
-                    </div>
-                  </div>
-                )
+                ) : null
               ) : (
               <PainelFichaCarta personagem={heroiDaCarta} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
                 aoEquipar={(item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } }}
@@ -2534,7 +2533,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
             </LimiteDasFichas>
             {/* a ficha antiga continua: perícias, poder, condições e
                 passivos que a carta não mostra */}
-            <details className="rounded-lg" style={{ border: `1px solid ${T.line}` }}>
+            <details className="rounded-lg" open={!!(heroiNaMesa && heroiDispensado)} style={{ border: `1px solid ${T.line}` }}>
               <summary className="tv-anel-foco tv-mono cursor-pointer px-3 flex items-center" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, color: T.inkDim }}>Mais detalhes</summary>
               <div className="p-2">
             <FichaVisual
@@ -3346,6 +3345,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
 
         {aba === "inv" && (
           <>
+            {heroiDispensado ? <Botao corpo onClick={() => setHeroiDispensado(false)}>O inventário</Botao> : null}
             {(personagem.grupo || []).length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {[{ id: "eu", rotulo: personagem.nome || "Você" }, ...(personagem.grupo || []).map((g) => ({ id: g.nome, rotulo: g.nome }))].map((op) => (
@@ -3681,6 +3681,34 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, guildasMundo = []
           </>
         )}
       </Alforje>
+      {(() => {
+        try {
+          const porCima = !heroiDispensado && (aba === "inv" || (heroiNaMesa && aba === "gestao" && subGestao === "ficha"));
+          if (!porCima) return null;
+          const daBolsa = aba === "inv";
+          const fecharTudo = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar a carta do herói", e); } };
+          /* na saída (o alforje desce em VEU.sai) a carta esbate-se no mesmo tempo, e não
+             recebe toque: nunca reaparece a gaveta que estava por baixo */
+          return (
+            <div role="dialog" aria-modal="true" aria-label={daBolsa ? "A bolsa" : "O herói"} className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+              style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
+              <div className="mx-auto max-w-6xl" style={{ padding: heroiNaMesa ? FICHA_CARTA.mesa.folga : FICHA_CARTA.folga }}>
+                <LimiteDasFichas key={daBolsa ? "carta-da-bolsa" : "carta-do-heroi-na-mesa"}>
+                  <PainelFichaCarta key={daBolsa ? "equipamento" : "ficha"} aba={daBolsa ? "equipamento" : "ficha"}
+                    personagem={heroiDaCarta} emCombate={!!(contextoHeroismo && contextoHeroismo.emCombate)}
+                    aoEquipar={(item) => { try { equipar(item); } catch (e) { calou("equipar na carta", e); } }}
+                    aoDesequipar={(slot) => { try { desequipar(slot); } catch (e) { calou("desequipar na carta", e); } }}
+                    aoSubirAtributo={onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("ponto na carta", e); } } : null}
+                    aoFechar={fecharTudo} lex={lexicoMundo} />
+                </LimiteDasFichas>
+                <div className="flex flex-wrap items-center" style={{ gap: FICHA_CARTA.folga / 2, marginTop: FICHA_CARTA.folga }}>
+                  <Botao corpo onClick={() => setHeroiDispensado(true)}>{daBolsa ? "Mais da bolsa" : "Mais detalhes"}</Botao>
+                </div>
+              </div>
+            </div>
+          );
+        } catch (e) { calou("a carta do herói por cima", e); return null; }
+      })()}
     </>
   );
 }
@@ -24069,6 +24097,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      e a marca volta a morar no retrato. O corte é o da cinta (`useMesa`,
      `CINTA.mesa`), o mesmo `md:` que esconde o trilho. */
   const trilhoAVista = useMesa();
+  /* AAA · 4 (a pessoa jogou a v9.605 a 1905 × 860): a página ficava com ~355 px
+     e a história quase não existia. Na mesa baixa (HUD_DA_MESA.mesa.baixa) as
+     cartas encolhem e o horizonte usa a faixa estreita; a página é quem cresce. */
+  const mesaBaixa = (() => { try { return !!trilhoAVista && alturaDaJanela < HUD_DA_MESA.mesa.baixa.abaixoDe; } catch (e) { calou("a mesa baixa", e); return false; } })();
   /* AAA · 4: os objetos da mesa levam a marca nas DUAS larguras (no
      telefone vão na fila das cartas); a carta do herói só acende pela
      Gestão, que não tem objeto — mora dentro da ficha. */
@@ -24580,8 +24612,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         <div className="flex flex-1 min-h-0 relative">
           {emBatalha ? (
             <LimiteErro>{telaDaBatalha}</LimiteErro>
-          ) : (
-          <main className="flex-1 flex flex-col min-w-0" style={trilhoAVista ? { maxWidth: HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga, marginLeft: "auto", marginRight: "auto" } : undefined}>
+          ) : (<>
+          {/* AAA · 4: a coluna dos objetos encosta na página (formas.md §AAA §13: 600 | 120),
+              e este contrapeso, com a largura dela, mantém a página ao centro da mesa.
+              As margens automáticas ficam por fora dos dois — antes ficavam na página,
+              e a 1905 os objetos iam parar a 580 px dela, na borda da tela. */}
+          {trilhoAVista ? <div aria-hidden="true" className="shrink-0" style={{ width: parseInt(HUD_DA_MESA.mesa.colunas[2], 10), marginLeft: "auto" }} /> : null}
+          <main className="flex-1 flex flex-col min-w-0" style={trilhoAVista ? { maxWidth: HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga } : undefined}>
             {/* ---------------- O PAINEL DA NARRATIVA (v9.170) ----------------
                 Vem de `mesa-jogo-v2`: o log deixa de flutuar no fundo da tela
                 e passa a morar numa moldura própria, com um fundo um tom
@@ -24667,7 +24704,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 Tocar um ícone abre a tela grande com o cartão daquele lugar. */}
             {dadosMapaVivo ? (
               <LimiteDoMapa key={"faixa|" + dia}>
-                <FaixaDoRumo dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} chegada={chegadaDaViagemViva} telefone={!trilhoAVista}
+                <FaixaDoRumo dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} chegada={chegadaDaViagemViva} telefone={!trilhoAVista || mesaBaixa}
                   recolhida={!!combate || alturaDaJanela < FICHAS.baixaAltura} aoTocarLugar={(id) => abrirMapaVivo(id)} />
               </LimiteDoMapa>
             ) : null}
@@ -25631,7 +25668,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 A carta do herói abre a mesma porta que o anel abria; a de um
                 companheiro, o cartão dele no Grupo. */}
             <LimiteErro>
-              <FilaDasCartas telefone={!trilhoAVista} heroi={personagem}
+              <FilaDasCartas telefone={!trilhoAVista} baixa={mesaBaixa} heroi={personagem}
                 grupo={(personagem.grupo || []).filter((g) => g && !g.invocada)}
                 comPMDoHeroi={oPMConta(personagem)}
                 destino={(() => { try { return garantirHeroismo(personagem); } catch (e) { calou("o destino na carta", e); return null; } })()}
@@ -25641,11 +25678,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 objetos={!trilhoAVista ? objetosDaMesa(true) : null} />
             </LimiteErro>
           </main>
-          )}
+          </>)}
 
           {!emBatalha && trilhoAVista && (
             <nav aria-label="Painéis" className="shrink-0 flex flex-col items-center"
-              style={{ width: parseInt(HUD_DA_MESA.mesa.colunas[2], 10), gap: HUD_DA_MESA.mesa.objetos.passo - HUD_DA_MESA.mesa.objetos.alvo.alto, paddingTop: HUD_DA_MESA.mesa.folga }}>
+              style={{ width: parseInt(HUD_DA_MESA.mesa.colunas[2], 10), marginRight: "auto", gap: HUD_DA_MESA.mesa.objetos.passo - HUD_DA_MESA.mesa.objetos.alvo.alto, paddingTop: HUD_DA_MESA.mesa.folga }}>
               {objetosDaMesa(false)}
             </nav>
           )}

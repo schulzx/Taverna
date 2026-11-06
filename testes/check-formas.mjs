@@ -324,6 +324,8 @@ const ZONAS_DE_TABELA = [
   { arquivo: "src/estilo.js", tabela: "GEMA_DA_SUBCLASSE", d5a: "isenta", d5b: "VARRE" },
   { arquivo: "src/estilo.js", tabela: "COR_DA_RARIDADE", d5a: "isenta", d5b: "VARRE" },
   { arquivo: "src/estilo.js", tabela: "VELA", d5a: "isenta", d5b: "VARRE", piso: 6 },
+  /* 05/11 · AAA §15: os materiais dos objetos da mesa (o couro do Diário, da Bolsa, do Códex, o rolo, o contorno) */
+  { arquivo: "src/estilo.js", tabela: "MATERIAIS_DOS_OBJETOS", d5a: "isenta", d5b: "VARRE", piso: 6 },
   /* 29/10 · T3 §4c — a zona `TOM_DA_CENA` SAIU, como a de `LUZ_DA_CENA` em V5a. Ela
      nasceu em T3 §2 (os catorze hex do fundo do ModalCena, isentos aqui como
      material); a janela aposentou-se em §5b e a tabela passou a guardar só NOMES

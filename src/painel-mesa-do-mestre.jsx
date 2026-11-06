@@ -16,7 +16,7 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, alfa } from "./estilo.js";
+import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, alfa, OBJETOS_DA_MESA } from "./estilo.js";
 import { molduraDe } from "./moldura.js";
 import { FASES_DO_DIA } from "./mapa-vivo.js";
 import { marcasNoAro } from "./marcas-da-moldura.js";
@@ -259,43 +259,47 @@ function CartaDoGrupo({ ente, heroi = false, escala = 0.5, telefone = false, com
   );
 }
 
-/* OS OBJETOS DA MESA (§13): o livro com cantos de ouro, o mapa enrolado e
-   atado, a bolsa de couro com uma moeda à espreita. Desenho em 48 × 48. */
-const DESENHO_DO_OBJETO = {
-  diario: (
-    <g>
-      <rect x="9" y="5" width="30" height="38" rx="2.5" fill={T.couroAlto} stroke={T.couroBaixo} strokeWidth="1.2" />
-      <rect x="35" y="7" width="5" height="34" rx="1" fill={VELA.cor.cera} stroke={T.couroBaixo} strokeWidth="0.8" />
-      <path d="M9 5h6l-6 6zM9 43h6l-6-6z" fill={OURO.meio} />
-      <circle cx="23" cy="22" r="6.5" fill="none" stroke={OURO.meio} strokeWidth="1.6" />
-      <path d="M23 17.6l1.3 2.8 3 .3-2.3 2 .7 3-2.7-1.6-2.7 1.6.7-3-2.3-2 3-.3z" fill={OURO.claro} />
-      <rect x="37" y="20" width="5" height="6" rx="1" fill={OURO.meio} />
-    </g>
-  ),
-  mapa: (
-    <g>
-      <path d="M8 15h28v22H8z" fill={VELA.cor.cera} stroke={VELA.cor.ceraSombra} strokeWidth="1" />
-      <path d="M14 21c4 2 6-2 10 1s6 4 9 2" fill="none" stroke={TINTA_DO_MAPA} strokeWidth="1.1" strokeDasharray="2 1.6" />
-      <ellipse cx="8" cy="26" rx="4" ry="11.5" fill={VELA.cor.ceraSombra} stroke={BRONZE.escuro} strokeWidth="1" />
-      <ellipse cx="38" cy="26" rx="4.5" ry="12" fill={VELA.cor.cera} stroke={VELA.cor.ceraSombra} strokeWidth="1" />
-      <path d="M22 13v27" stroke={TINTA_DO_MAPA} strokeWidth="2.2" />
-      <path d="M22 40l-3 5M22 40l3 5" stroke={TINTA_DO_MAPA} strokeWidth="1.6" strokeLinecap="round" />
-    </g>
-  ),
-  inv: (
-    <g>
-      <path d="M14 18c-6 6-8 14-5 19 3 6 27 6 30 0 3-5 1-13-5-19z" fill={T.couroAlto} stroke={T.couroBaixo} strokeWidth="1.2" />
-      <path d="M15 18c3 2 15 2 18 0l-2-5c-4 1-10 1-14 0z" fill={T.couro} stroke={T.couroBaixo} strokeWidth="1" />
-      <path d="M15 19.5c4 1.8 14 1.8 18 0" fill="none" stroke={OURO.meio} strokeWidth="1.4" />
-      <circle cx="31" cy="11" r="4.2" fill={OURO.meio} stroke={OURO.escuro} strokeWidth="0.8" />
-      <circle cx="31" cy="11" r="2.2" fill="none" stroke={OURO.claro} strokeWidth="0.7" />
-    </g>
-  ),
-};
+/* OS OBJETOS DA MESA (AAA §15, redesenhados a 05/11 a pedido da pessoa: «acho
+   que conseguimos melhorar esses ícones do bolsa, mapa e diário»). O desenho é
+   a tabela OBJETOS_DA_MESA (estilo.js): camadas SVG num quadro 96×96, com
+   gradientes próprios. Os ids dos gradientes ganham o prefixo de useId, porque
+   o mesmo objeto pode estar duas vezes na página. A chave é o objeto; a aba da
+   bolsa chama-se «inv». Um id sem entrada cai no Glifo da aba. */
+const CHAVE_DO_OBJETO = { inv: "bolsa" };
+function DesenhoDoObjeto({ chave, lado, novo = false }) {
+  const uid = "odm" + React.useId().replace(/[^a-zA-Z0-9]/g, "");
+  const o = OBJETOS_DA_MESA[chave];
+  if (!o || !Array.isArray(o.camadas)) return null;
+  const pref = (v) => (typeof v === "string" && v.startsWith("url(#") ? `url(#${uid}-${v.slice(5)}` : v);
+  const gradiente = (g) => {
+    const paradas = (g.paradas || []).map(([p, cor, a], k) => <stop key={k} offset={p} stopColor={cor} stopOpacity={a == null ? 1 : a} />);
+    return g.tipo === "radial"
+      ? <radialGradient key={g.id} id={`${uid}-${g.id}`} cx={g.cx} cy={g.cy} r={g.r}>{paradas}</radialGradient>
+      : <linearGradient key={g.id} id={`${uid}-${g.id}`} x1={g.x1} y1={g.y1} x2={g.x2} y2={g.y2}>{paradas}</linearGradient>;
+  };
+  const camada = (c, k) => {
+    const { el, sw, dash, rot, ...resto } = c;
+    const props = { ...resto, fill: pref(resto.fill), stroke: pref(resto.stroke) };
+    if (sw != null) { props.strokeWidth = sw; props.strokeLinejoin = "round"; props.strokeLinecap = "round"; }
+    if (dash) props.strokeDasharray = dash;
+    if (rot != null) props.transform = `rotate(${rot} ${c.cx != null ? c.cx : 48} ${c.cy != null ? c.cy : 48})`;
+    const Tag = el;
+    return <Tag key={k} {...props} />;
+  };
+  const gs = [...(o.gradientes || []), ...(novo && OBJETOS_DA_MESA.novidade ? [OBJETOS_DA_MESA.novidade.gradiente] : [])];
+  return (
+    <svg aria-hidden="true" width={lado} height={lado} viewBox={OBJETOS_DA_MESA.viewBox}>
+      <defs>{gs.map(gradiente)}</defs>
+      {novo && OBJETOS_DA_MESA.novidade ? camada(OBJETOS_DA_MESA.novidade.halo, "halo") : null}
+      {o.camadas.map(camada)}
+    </svg>
+  );
+}
 
 export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = false, telefone = false, Glifo = null, aoTocar }) {
-  const desenho = DESENHO_DO_OBJETO[id] || null;
-  const lado = telefone ? H.telefone.objetos.tamanho : Math.round(48 * H.mesa.objetos.escala);
+  const chave = CHAVE_DO_OBJETO[id] || id;
+  const desenho = OBJETOS_DA_MESA[chave] ? chave : null;
+  const lado = telefone ? H.telefone.objetos.tamanho : OBJETOS_DA_MESA.tamanho.mesa;
   return (
     <button onClick={aoTocar} aria-pressed={!!ativo} aria-label={[rotulo, legenda, novo ? "há coisa nova" : ""].filter(Boolean).join(", ")} title={rotulo}
       className="tv-anel-foco relative shrink-0 flex flex-col items-center justify-center gap-1 rounded-lg"
@@ -306,7 +310,7 @@ export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = f
       }}>
       <span style={{ position: "relative", display: "inline-flex", filter: `drop-shadow(0 4px 4px ${alfa(SOMBRA, 0.5)})` }}>
         {desenho
-          ? <svg aria-hidden="true" width={lado} height={lado} viewBox="0 0 48 48">{desenho}</svg>
+          ? <DesenhoDoObjeto chave={desenho} lado={lado} novo={novo && !ativo} />
           : Glifo ? <Glifo tamanho={telefone ? 22 : 26} cor={ativo ? T.amberSoft : T.inkMeio} /> : null}
         {novo && !ativo ? (
           <span aria-hidden="true" style={{ position: "absolute", top: -4, right: -6, lineHeight: 0 }}><MarcaDaPorta estado="novo" /></span>
@@ -319,9 +323,10 @@ export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = f
 }
 
 /* A FILA DE BAIXO: as cartas (o herói ao centro, maior) e, no telefone,
-   os objetos na mesma fila (objetosNaFila). Rola de lado se não couber. */
-export function FilaDasCartas({ telefone = false, heroi, grupo = [], comPMDoHeroi = true, destino = null, fichaAberta = false, fichaNova = false, aoAbrirFicha, aoAbrirCompanheiro, rotuloDoHeroi, objetos = null }) {
-  const esc = telefone ? H.telefone.cartas : H.mesa.cartas;
+   os objetos na mesma fila (objetosNaFila). Rola de lado se não couber.
+   `baixa`: a mesa com pouca altura (HUD_DA_MESA.mesa.baixa) — cartas menores. */
+export function FilaDasCartas({ telefone = false, baixa = false, heroi, grupo = [], comPMDoHeroi = true, destino = null, fichaAberta = false, fichaNova = false, aoAbrirFicha, aoAbrirCompanheiro, rotuloDoHeroi, objetos = null }) {
+  const esc = telefone ? H.telefone.cartas : baixa ? H.mesa.baixa.cartas : H.mesa.cartas;
   const lista = Array.isArray(grupo) ? grupo.filter(Boolean) : [];
   const metade = Math.ceil(lista.length / 2);
   const carta = (c, i) => (
@@ -330,7 +335,8 @@ export function FilaDasCartas({ telefone = false, heroi, grupo = [], comPMDoHero
   );
   return (
     <div className="tv-scroll flex items-start" style={{
-      height: telefone ? parseInt(H.telefone.linhas[5], 10) : parseInt(H.mesa.linhas[4], 10),
+      /* na mesa a fila mede as cartas (linhas[4] é auto): nenhum vão por baixo do campo */
+      height: telefone ? parseInt(H.telefone.linhas[5], 10) : undefined,
       justifyContent: telefone ? "flex-start" : "center", gap: telefone ? 8 : H.mesa.cartas.folga,
       overflowX: "auto", overflowY: "hidden", padding: telefone ? "6px 10px 0" : "6px 0 0",
     }}>
