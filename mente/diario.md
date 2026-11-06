@@ -24,6 +24,21 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 06/11 · Fase AR, AR2 · o Diário como portal de missões
+- **a palavra:** «Diário também tem que ser repensado para parecer mais com um portal de quests… qual é a quest, qual é o próximo passo, quais etapas… foram concluídas e quais quests foram concluídas».
+- **a forma (agente `desenho`, Figma `268:2`, `formas.md` §AR):** o Diário, os Talentos, o Grupo e o Mercado, a 1905, 1280 e 375. A proposta ambiciosa, a constelação do herói, fica para a pessoa decidir.
+- **o sistema (agente `backend`):** `grimorioDaClasse` (magias.js), `distanciaDoPasso` e `alvoNoMapa`, e o campo novo `feitoEm` (missoes.js, aditivo). Suítes 52 e 32.
+- **as peças e o Diário (agente `aprendiz`):** `painel-ar-pecas.jsx` e `painel-diario.jsx`, refeito. Leva o índice com o próximo passo, a missão com a caixa do passo (o lugar, a distância e «Ver no mapa»), a linha do tempo das etapas (✓, a atual acesa e «?»), o relógio do que resta, o bilhete da secundária sem a reviravolta, e a estante inteira. Suíte `teste-ar-pecas` 79, que renderiza o Diário.
+- **a tela inteira (agente `oficial`):** na mesa, o livro abre o Diário por cima de tudo, com três colunas a 1905 (380, 1009 e 420 px). O Fechar e o Esc devolvem à mesa. No telefone fica na gaveta, com abas.
+- **bastões:** o `aprendiz` e o `oficial` tomaram e devolveram cada um o seu (o do `oficial` às 00:50 de 06/11).
+- **o que fica:**
+  - «Ver no mapa» com um botão a pé, porque a missão inicial não tinha sítio no mapa;
+  - a largura entre 1024 e 1500;
+  - os movimentos de §AR 7;
+  - `encerradaEm` para o dia na estante;
+  - as perguntas ao `desenho`: os cortes 1500/900, as frases dos fechos, e o glifo do medalhão.
+- **a seguir:** os Talentos (AR4), o Grupo (AR5) e o Mercado (AR6).
+
 ## 06/11 · Fase AR, AR1 e AR3 · uma porta, uma tela, e a bolsa de cada um
 - **a palavra:** «as duas fazem as mesmas coisas mas de formas diferentes, algo não está batendo… "mais da bolsa" abre a bolsa antiga… não consigo acessar a bolsa dos personagens do grupo».
 - **feito (agente `oficial`):**

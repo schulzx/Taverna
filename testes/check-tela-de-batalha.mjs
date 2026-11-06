@@ -172,7 +172,12 @@ sec("3. o que some durante a luta — e o critério é duro");
     "ele ENCERROU uma luta por engano numa partida de verdade — é a razão mais cara da lista.");
   t("a `📜 crônica` não tem botão na moldura da cena — vive na aba Diário",
     !/<button onClick=\{gerarCronica\}/.test(APP)
-    && /\{aba === "diario" && aoGerarCronica && \(/.test(APP));
+    /* AR2 (06/11): a asserção mudou de forma, não de intenção. Na mesa o
+       Diário saiu da gaveta para a tela inteira, e o botão da crónica foi
+       com ele (o «gerar» do Diário por cima); no telefone segue na gaveta,
+       com !heroiNaMesa. Continua a morar no Diário, nunca na cena. */
+    && /\{aba === "diario" && !heroiNaMesa && aoGerarCronica && \(/.test(APP)
+    && /const gerar = aoGerarCronica \?/.test(APP));
   /* e o cabeçalho inteiro, que era a única coisa da tela a dizer que a tela
      era uma tela. R13: ele já não é gateado pela luta — **saiu da fase do
      jogo inteira**, e as outras fases (menu, mundo, ficha, sala) continuam a

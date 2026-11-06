@@ -73,7 +73,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FICHA_CARTA, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -2889,12 +2889,15 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           </>
         )}
 
-        {aba === "diario" && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} />}
+        {/* AR2 · no telefone o Diário mora na gaveta (lá ela já tem a largura do
+            ecrã); na mesa abre por cima de tudo, como a carta do herói — ver
+            «O DIÁRIO EM TELA INTEIRA» no fim deste painel. */}
+        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} />}
         {/* R13: `📜 Gerar crônica` desceu do cabeçalho para aqui. A crónica
             MORA no Diário — é ele escrito por extenso —, e o botão no topo da
             tela principal era a mesma ação com duas caras. Fica no pé do
             painel, depois do que ele resume, porque é isso que ele faz. */}
-        {aba === "diario" && aoGerarCronica && (
+        {aba === "diario" && !heroiNaMesa && aoGerarCronica && (
           <button onClick={aoGerarCronica}
             className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
             style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: T.amberSoft }}>
@@ -3822,6 +3825,37 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             </div>
           );
         } catch (e) { calou("a carta do herói por cima", e); return null; }
+      })()}
+      {(() => {
+        try {
+          /* AR2 (06/11) · O DIÁRIO EM TELA INTEIRA. Na mesa a gaveta de 320 dava
+             ao Diário o leiaute do telefone (ele mede a largura dele, não a da
+             janela); aqui abre por cima de tudo, como a carta do herói, e a
+             1905 cabem as três colunas. O «Fechar» do cabeçalho dele (e o Esc)
+             FECHA TUDO e devolve à mesa — nunca a gaveta por baixo (v9.605).
+             «Ver no mapa» abre o mapa vivo, que já fecha a aba. */
+          if (!(aba === "diario" && heroiNaMesa)) return null;
+          const fecharDiario = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar o diário", e); } };
+          const gerar = aoGerarCronica ? () => { try { aoGerarCronica(); } catch (e) { calou("a crônica pelo diário", e); } } : null;
+          return (
+            <div role="dialog" aria-modal="true" aria-label="Diário" className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
+              style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
+              <div style={{ padding: DIARIO_DE_MISSOES.mesa.folga }}>
+                <LimiteDasFichas key="diario-na-mesa" reserva={<button onClick={fecharDiario} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
+                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} aoFechar={fecharDiario} />
+                </LimiteDasFichas>
+                {gerar && (
+                  <button onClick={gerar}
+                    className="tv-anel-foco tv-mono rounded-lg px-3 text-left mt-5"
+                    style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.amberSoft }}>
+                    📜 Gerar crônica
+                    <span className="block" style={{ color: T.inkDim }}>escreve a campanha por extenso, como crônica</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        } catch (e) { calou("o diário por cima", e); return null; }
       })()}
     </>
   );
