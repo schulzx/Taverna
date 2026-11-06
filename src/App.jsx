@@ -20557,7 +20557,14 @@ export default function Taverna() {
         setPersonagem(pers);
         if (comeu.msgs.length) pushMsgs(comeu.msgs.map((t) => ({ autor: "sistema", texto: t })));
       } catch (e) { calou("o dia que se come no descanso", e); }
-      const r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias, secundarias: portaoAgora().abertas });
+      /* SQ3 (05/11): com o mundo, a noite planeia a secundária inteira (molde,
+         atos, virada, prazo, fecho — secundaria-planeada.js); sem ele faz o de
+         antes. O mundo que se monta não pode custar a noite. */
+      let mundoDaNoite = {};
+      try { mundoDaNoite = { mundo: mundoDasTarefas(), missoes: missoesRef.current || [], historia: contextoDoElenco() }; } catch (e) { calou("o mundo da noite", e); }
+      let r;
+      try { r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias, secundarias: portaoAgora().abertas, ...mundoDaNoite }); }
+      catch (e) { calou("a secundária planeada", e); r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias, secundarias: portaoAgora().abertas }); }
       eventosRef.current = r.eventos; setEventos(r.eventos);
       const partes = [];
       if (r.globalNovo) {
@@ -20579,8 +20586,12 @@ export default function Taverna() {
            como missão do sistema, com etapas que se conferem. O envelope
            para o Narrador e a linha do diário ficam os mesmos de sempre. */
         try {
-          const mFio = tarefaParaMissao({ ...r.questNova, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }, mundoDasTarefas());
-          if (mFio && !(missoesRef.current || []).some((x) => x.id === mFio.id)) {
+          const mFio0 = tarefaParaMissao({ ...r.questNova, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }, mundoDasTarefas());
+          if (mFio0 && !(missoesRef.current || []).some((x) => x.id === mFio0.id)) {
+            /* SQ3: a planeada traz prazo (4, 6 ou 8 noites), e o caminho da
+               noite nunca o pôs a contar. O fio antigo tem prazo 0 e passa igual. */
+            let mFio = mFio0;
+            try { if (mFio0.prazo > 0) mFio = iniciarPrazo(mFio0); } catch (e) { calou("o prazo da secundária", e); }
             missoesRef.current = [...(missoesRef.current || []), mFio];
             setMissoes(missoesRef.current);
           }

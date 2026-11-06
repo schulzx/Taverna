@@ -82,15 +82,17 @@ import { RARIDADE_ROTULO, gerarLoot } from "../loot.js";
 import { temCaderno } from "../magias.js";
 import { resumoDiplomacia, resumoMapaParaPrompt } from "../mapa.js";
 import { cenaNaMasmorra } from "../masmorra-sem-cidade.js";
-import { conferir as conferirMissoes, envelopeDeAvanco, envelopeDeConclusao, etapaDef, garantirMissoes, linhaDoAvanco as linhaEtapa, ativas as missoesAtivas, recompensaDe, resumoMissoesPrompt, tipoDef as tipoMissao } from "../missoes.js";
+import { conferir as conferirMissoes, mesmaPessoa, envelopeDeAvanco, envelopeDeConclusao, etapaDef, garantirMissoes, linhaDoAvanco as linhaEtapa, ativas as missoesAtivas, recompensaDe, resumoMissoesPrompt, tipoDef as tipoMissao } from "../missoes.js";
 import { MOLDE_PADRAO, moldePorId, resumoMoldePrompt } from "../moldes.js";
 import { notaComOTurno } from "./aplicar.js";
 import { somarAoContador } from "./combate-do-turno.js";
 import { oEnvelopeDaGente } from "./envelopes-do-turno.js";
 import { arcoComOMarco, ganhoDeFe } from "./meio-do-turno.js";
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto } from "./sorte-do-turno.js";
-import { chaveDoLugar, garantirBase, oQueExisteAqui } from "../mundo-base.js";
-import { garantirLaco, resumoNPCsParaPrompt } from "../npcs.js";
+import { chaveDoLugar, garantirBase, oQueExisteAqui, revelar } from "../mundo-base.js";
+import { descobrirVizinhanca } from "../geografia.js";
+import { lerSecundaria } from "../secundaria-planeada.js";
+import { firmarLaco, garantirLaco, resumoNPCsParaPrompt } from "../npcs.js";
 import { envelopeDoRecado, genteDaHistoria, ofertasDaqui } from "../ofertas.js";
 import { resumoPericiasPrompt } from "../pericias.js";
 import { resumoProfissaoPrompt } from "../profissoes.js";
@@ -791,6 +793,24 @@ export function osOrgaosDoDepois(estado, portas) {
         if (pf.fe) linhas.push(...ganharFe(pf.fe.fieis, pf.fe.pf, "seu feito corre de boca em boca"));
         if (pf.heroismo) { const rh = ganharHeroismo(pers, pf.heroismo); pers = rh.pers; if (rh.msg) linhas.push(rh.msg); }
       } catch (e) { calou("a paga da tarefa antiga", e); }
+      /* SQ3 (05/11): a secundária planeada fecha mudando o mundo — o laço com
+         quem pediu, o lugar que se revela, ou a porta para as vizinhanças. Quem
+         pediu e ainda não está no registo fica à espera: o fecho não cria gente.
+         Se falhar, a missão conclui na mesma. */
+      try {
+        const L = lerSecundaria(m);
+        if (L && L.fecho) {
+          if (L.fecho.tipo === "laco") {
+            const k = Object.keys($ref.npcs || {}).find((n) => mesmaPessoa(n, L.fecho.quem));
+            if (k) { const npcs = { ...$ref.npcs, [k]: firmarLaco($ref.npcs[k], L.fecho.laco, $ref.dia) }; $ref.npcs = npcs; setNpcs(npcs); }
+          } else if (L.fecho.tipo === "lugar" && L.fecho.chave) {
+            const b = revelar($ref.baseMundo, L.fecho.chave); $ref.baseMundo = b; setBaseMundo(b);
+          } else if (L.fecho.tipo === "porta") {
+            const d = descobrirVizinhanca($ref.mapa, L.fecho.cidade);
+            if (d.novas.length) { $ref.mapa = d.mapa; setMapa(d.mapa); linhas.push("🧭 Para lá de " + L.fecho.cidade + ": " + d.novas.join(", ") + "."); }
+          }
+        }
+      } catch (e) { calou("o fecho da secundária", e); }
       if (rec.item) {
         const it = gerarLoot(rec.item, { nivel: pers.nivel || 1, lex: (mundoAtual() || {}).lexico, rnd: sorteDoTurno("loot") });
         pers = { ...pers, equipamento: [...(pers.equipamento || []), it] };

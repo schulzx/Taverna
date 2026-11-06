@@ -24,6 +24,25 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 05/11 · Fase SQ, SQ3 · a secundária planeada, uma história pequena
+- **a palavra:** «as quests secundárias também devem ser planejadas assim como uma quest de história… menos quests secundárias mas bem elaboradas».
+- **o motor (agente `backend`, `src/secundaria-planeada.js`, suíte 56/0):**
+  - 9 moldes, cada um nascido de um fio do mundo: a dívida, a rivalidade, o aprendiz, o recado, o que a casa cala, o sítio que esconde, a estrada para, o recado da facção e o eco do arco;
+  - cada molde tem dois ou três atos feitos das etapas que já existem, a virada que o prelúdio executa, o prazo de 4, 6 ou 8 noites e o fecho (um laço, um lugar ou uma porta);
+  - há no máximo 2 vivas e 3 dias entre nascimentos, por cima do portão do SQ2;
+  - na prova, 192 secundárias em 24 mundos e 6 géneros, todas inteiras e todas a acabar.
+- **a ligação (agente `oficial`):**
+  - a noite recebe o mundo, e se estourar repete a chamada antiga;
+  - o prazo abre-se com `iniciarPrazo` só depois de confirmar que a missão não é repetida;
+  - o fecho aplica-se em `conferirAsMissoes`, e se falhar a missão conclui na mesma;
+  - `teste-mm14-canais` mudou duas asserções, com o motivo, e ganhou uma do prazo.
+- **prova viva (5199):** no nível 3, ao dormir, a terceira noite deu «O que O Depósito Sedento esconde» (de Kolvar, 4 noites, duas etapas e uma emboscada), visível no Diário.
+- **o que fica:**
+  - o fecho não foi visto a acontecer, porque concluir precisa de turnos do Narrador;
+  - uma suíte que conclua uma planeada de cada fecho;
+  - **a dúvida:** quem pede pode não estar ainda no registo de NPCs, e então o laço espera até lá entrar.
+- **a seguir:** SQ4 (o mural vai-se buscar) e SQ5 (a prova jogada). Depois a Fase AR, com o Diário como portal de missões em AR2.
+
 ## 05/11 · Fase SQ, SQ1 e SQ2 · o censo e o portão das secundárias
 - **a palavra:** «as quests secundárias… não devem ser disponibilizadas no começo do jogo pra não poluir a experiência… o mural… liberado a partir de um certo lvl»; e «depois de corrigir tudo isso pode prosseguir com a fase SQ».
 - **o censo (agente `backend`, `mente/sq1-censo.md`):** 24 mundos novos com herói de nível 1, nos primeiros 3 dias. Passavam pela tela cerca de 15 ofertas, das quais 6 interrompem a cena, todas antes de o herói tocar na história. O mural abria ao 7.º turno em 24 de 24 mundos.

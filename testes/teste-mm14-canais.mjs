@@ -328,10 +328,17 @@ sec("7. a fiação — App.jsx");
   /* ---- d) o descanso longo: o fio nasce missão, e o teto olha as missões ---- */
   t("a conta de secundárias ativas passou a olhar `missoes` (o fio não entra mais em `quests`)",
     app.includes('const secundarias = (missoesRef.current || []).filter((m) => m && m.status === "ativa" && m.veiculo === VEICULO_DA_TAREFA_ANTIGA && m.intencao !== "principal").length;'));
+  /* SQ3 (05/11): a missão saída de tarefaParaMissao chama-se agora `mFio0`,
+     e `mFio` é ela depois do `iniciarPrazo` (a secundária planeada traz prazo,
+     e o caminho da noite nunca o punha a contar). A intenção é a mesma: o fio
+     vira missão, e confere-se o id ANTES de empurrar — e antes de abrir o
+     relógio, para um fio repetido não gastar um relógio à toa. */
   t("o fio do descanso vira missão com tarefaParaMissao",
-    app.includes('const mFio = tarefaParaMissao({ ...r.questNova, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }, mundoDasTarefas());')
+    app.includes('const mFio0 = tarefaParaMissao({ ...r.questNova, tipo: "secundaria", status: "ativa", nota: "", sorteada: true }, mundoDasTarefas());')
     && app.includes("missoesRef.current = [...(missoesRef.current || []), mFio];"));
-  t("sem duplicar (confere o id antes de empurrar)", app.includes("!(missoesRef.current || []).some((x) => x.id === mFio.id)"));
+  t("sem duplicar (confere o id antes de empurrar)", app.includes("!(missoesRef.current || []).some((x) => x.id === mFio0.id)"));
+  t("o prazo da secundária conta (iniciarPrazo), e nunca custa o descanso",
+    app.includes("if (mFio0.prazo > 0) mFio = iniciarPrazo(mFio0);") && app.includes('calou("o prazo da secundária", e)'));
   t("nunca custa o descanso", app.includes('catch (e) { calou("o fio do descanso", e); }'));
   t("e o fio NÃO entra mais na lista antiga (o push direto em questsRef sumiu)",
     !app.includes('questsRef.current = [...questsRef.current, { titulo: r.questNova.titulo, descricao: r.questNova.descricao'));
