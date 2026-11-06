@@ -503,6 +503,10 @@ export function precoNoTexto(txt) {
 }
 
 /* ---------------- CRIAR ---------------- */
+/* O dia que se grava em `feitoEm`: inteiro, zero ou mais; o resto (null,
+   texto, NaN) não é dia nenhum, e a etapa fica sem o campo. */
+const diaDoFeito = (d) => (d == null || d === "" || !Number.isFinite(Number(d)) ? null : Math.max(0, Math.floor(Number(d))));
+
 export function garantirMissoes(lista, sorte = null) { return comSorte(sorte, () => {
   if (!Array.isArray(lista)) return [];
   return lista.filter((q) => q && q.titulo).map((q) => ({
@@ -540,6 +544,11 @@ export function garantirMissoes(lista, sorte = null) { return comSorte(sorte, ()
          viaja quando existe, como a chave: a missão antiga sai igual */
       ...(e.perguntada ? { perguntada: true } : {}),
       feito: !!e.feito,
+      /* 05/11 (AR2 · o Diário): o DIA em que a etapa se cumpriu, para a nota
+         «cumprida no dia N». Campo novo e aditivo: só viaja quando existe e a
+         etapa está feita, e a missão antiga sai daqui byte a byte igual — a
+         versão anterior ignora-o, e sem ele a nota diz só «cumprida». */
+      ...(e.feito && diaDoFeito(e.feitoEm) != null ? { feitoEm: diaDoFeito(e.feitoEm) } : {}),
     })).slice(0, 5),
     /* v9.38: em NOITES, não em dias — o relógio de prazo tem gatilho "noite",
        e medir em dias faria a barra andar num ritmo diferente do número que
@@ -791,7 +800,10 @@ export function conferir(lista, mundo = {}) {
       }
     }
     if (j < 0) return m;
-    const etapas = m.etapas.map((x, k) => (k === j ? { ...x, feito: true } : k >= i && k < j && !x.feito ? { ...x, feito: true, pulada: true } : x));
+    /* 05/11 (AR2): e o DIA em que se cumpriu, quando o mundo o diz (o motor
+       passa `dia` no mundo das missões). A pulada cumpriu-se no mesmo passo. */
+    const quando = diaDoFeito(mundo.dia) != null ? { feitoEm: diaDoFeito(mundo.dia) } : {};
+    const etapas = m.etapas.map((x, k) => (k === j ? { ...x, feito: true, ...quando } : k >= i && k < j && !x.feito ? { ...x, feito: true, pulada: true, ...quando } : x));
     const fim = etapas.every((x) => x.feito) && !segura(m, mundo);
     const novo = { ...m, etapas, status: fim ? "concluida" : "ativa" };
     avancos.push({ missao: novo, etapa: m.etapas[j], indice: j, total: etapas.length });
@@ -990,11 +1002,15 @@ export function aceitarProposta(lista, prop, { nivel = 1, dia = 0, mundo = null,
 /* O jogador encerra à mão o que o sistema não tem como conferir — só as de
    legado. Nas outras, quem marca é o código, e abrir essa porta seria desfazer
    a regra inteira. */
-export function encerrarLegado(lista, id, comoFoi = "concluida") {
+export function encerrarLegado(lista, id, comoFoi = "concluida", opcoes = null) {
   const ms = garantirMissoes(lista);
   const m = ms.find((q) => q.id === id && q.legado && q.status === "ativa");
   if (!m) return { ok: false, motivo: "essa missão não é de legado, ou já foi encerrada" };
-  return { ok: true, missoes: ms.map((q) => (q.id === id ? { ...q, status: comoFoi === "falhada" ? "falhada" : "concluida", etapas: q.etapas.map((e) => ({ ...e, feito: true })) } : q)), missao: m };
+  /* 05/11 (AR2): com `{ dia }`, as etapas que fecham aqui levam o feitoEm;
+     sem ele (a chamada de sempre), saem como sempre saíram */
+  const d = diaDoFeito(opcoes && typeof opcoes === "object" ? opcoes.dia : null);
+  const quando = d != null ? { feitoEm: d } : {};
+  return { ok: true, missoes: ms.map((q) => (q.id === id ? { ...q, status: comoFoi === "falhada" ? "falhada" : "concluida", etapas: q.etapas.map((e) => (e.feito ? e : { ...e, feito: true, ...quando })) } : q)), missao: m };
 }
 
 export function responderOferta(lista, id, aceita) {
@@ -1119,6 +1135,117 @@ export function rumoDaEtapa(e) {
   }
   if (e.tipo === "derrotar") return `Acabar com ${e.alvo}${onde ? ` — ${onde}` : ""}`;
   return textoDaEtapa(e);
+}
+
+/* ---------------- O PASSO NO MAPA (05/11, AR2 · o Diário) ----------------
+   A caixa do próximo passo diz ONDE e QUÃO LONGE («Ver no mapa · Corda Velha
+   · 1 zona»), e o verbo abre o mapa vivo no sítio. As duas perguntas são do
+   sistema, e respondem-se com o que ele já sabe — nunca com o que imagina:
+
+     · ONDE é o `onde` da etapa (ou o alvo, quando o alvo É o sítio: ir_a,
+       levar_a, concluir_masmorra, revelar). Etapa sem sítio não tem passo
+       no mapa — `null`, e a linha cala.
+     · QUÃO LONGE, por ordem: «aqui» (o herói já lá está, pela mesma régua de
+       `estaEm` que fecha a etapa); «a N zonas» (o sítio, ou a cidade dele,
+       é um nó do mapa vivo e há caminho do nó do herói até lá — N é o número
+       de troços, a contagem que o mapa desenha); «nesta cidade» (o sítio é
+       de dentro dos muros de onde ele está); «noutra cidade» (a etapa diz a
+       cidade, e não é esta, mas o mapa não a liga).
+     · O HERÓI SÓ SABE O QUE SABE. O mapa que entra é o `dadosDoMapaVivo` —
+       já passado pela neblina: um nó que o herói não conhece nem lá está, e
+       uma distância que não se sabe é `null`, não um palpite.
+
+   Uma zona é um troço do mapa vivo (uma aresta): a cidade, o lugar à beira
+   da estrada, a boca da masmorra — o que o jogador conta com o dedo. */
+export const DISTANCIA_DO_PASSO = Object.freeze({
+  aqui: Object.freeze({ id: "aqui", rotulo: () => "aqui" }),
+  cidade: Object.freeze({ id: "cidade", rotulo: () => "nesta cidade" }),
+  zonas: Object.freeze({ id: "zonas", rotulo: (n) => `a ${n} ${n === 1 ? "zona" : "zonas"}` }),
+  outra: Object.freeze({ id: "outra", rotulo: () => "noutra cidade" }),
+});
+
+/* Os tipos cujo ALVO é o próprio sítio, e se o alvo é cidade ou lugar. */
+const SITIO_NO_ALVO = { ir_a: (e) => (e.lugar ? "lugar" : "cidade"), levar_a: () => "cidade", concluir_masmorra: () => "lugar" };
+
+function ondeDoPasso(e) {
+  if (!e || typeof e !== "object") return null;
+  const md = moradaDe(e.onde);
+  const cidEt = String(e.cidade || "").trim();
+  const alvo = String(e.alvo || "").trim();
+  const peloAlvo = SITIO_NO_ALVO[e.tipo];
+  if (peloAlvo) {
+    if (!alvo) return null;
+    return peloAlvo(e) === "cidade" ? { lugar: "", cidade: alvo } : { lugar: alvo, cidade: md.cidade || cidEt };
+  }
+  if (md.lugar) return { lugar: md.lugar, cidade: md.cidade || cidEt };
+  if (e.tipo === "revelar" && alvo) return { lugar: alvo, cidade: cidEt };
+  return cidEt ? { lugar: "", cidade: cidEt } : null;
+}
+
+const nosDe = (dados) => (dados && typeof dados === "object" && Array.isArray(dados.nos) ? dados.nos.filter((n) => n && n.id && n.nome) : []);
+const noPeloNome = (dados, nome) => { const k = semArtigo(nome); return k ? nosDe(dados).find((n) => semArtigo(n.nome) === k) || null : null; };
+/* o nó do sítio: o próprio lugar, se o mapa o desenha; senão a cidade dele */
+const noDoPasso = (o, dados) => (o ? (o.lugar && noPeloNome(dados, o.lugar)) || (o.cidade && noPeloNome(dados, o.cidade)) || null : null);
+
+/* Troços do caminho mais curto entre dois nós, pelas arestas que o mapa
+   desenha (nos dois sentidos). Sem caminho, null. */
+function trocosEntre(dados, de, para) {
+  if (!de || !para) return null;
+  if (de === para) return 0;
+  const viz = new Map();
+  for (const a of (dados && Array.isArray(dados.arestas) ? dados.arestas : [])) {
+    if (!a || !a.de || !a.para) continue;
+    if (!viz.has(a.de)) viz.set(a.de, []);
+    if (!viz.has(a.para)) viz.set(a.para, []);
+    viz.get(a.de).push(a.para); viz.get(a.para).push(a.de);
+  }
+  const visto = new Set([de]);
+  let fila = [de], n = 0;
+  while (fila.length) {
+    n++;
+    const prox = [];
+    for (const x of fila) for (const y of viz.get(x) || []) {
+      if (y === para) return n;
+      if (!visto.has(y)) { visto.add(y); prox.push(y); }
+    }
+    fila = prox;
+  }
+  return null;
+}
+
+/* O alvo que o mapa vivo sabe centrar: o id de um nó de `dados.nos` — o
+   mesmo `inicial` que `abrirMapaVivo` passa à `TelaDoMapa`. Sem nó à
+   vista, null (e o verbo abre o mapa no herói, como a aba Mapa). */
+export function alvoNoMapa(etapa, dados) {
+  const no = noDoPasso(ondeDoPasso(etapa), dados);
+  return no ? no.id : null;
+}
+
+/* A distância ao sítio do passo. `estado`: { cidadeAtual, lugar, dados } —
+   `lugar` é o lugar do save (objeto ou nome), `dados` o retrato do mapa
+   vivo. Devolve { tipo, rotulo, nome, lugar, cidade, zonas, noId } ou null. */
+export function distanciaDoPasso(etapa, estado) {
+  const o = ondeDoPasso(etapa);
+  if (!o) return null;
+  const s = estado && typeof estado === "object" ? estado : {};
+  const mundo = { cidadeAtual: typeof s.cidadeAtual === "string" ? s.cidadeAtual : "", lugarAtual: s.lugar || null };
+  const dados = s.dados && typeof s.dados === "object" ? s.dados : null;
+  const no = noDoPasso(o, dados);
+  const aqui = aquiDe(mundo);
+  const mesmaCidade = !!o.cidade && !!aqui.cidade && semArtigo(o.cidade) === aqui.cidade;
+  const diz = (tipo, zonas = null) => ({
+    tipo, rotulo: DISTANCIA_DO_PASSO[tipo].rotulo(zonas),
+    nome: o.lugar || o.cidade, lugar: o.lugar, cidade: o.cidade || (no && no.tipo !== "lugar" ? no.nome : ""),
+    zonas, noId: no ? no.id : null,
+  });
+  if (o.lugar ? estaEm(mundo, o.lugar, { cidade: o.cidade }) : mesmaCidade) return diz("aqui");
+  const heroi = dados && dados.heroi && typeof dados.heroi === "object" ? dados.heroi.noId : null;
+  const n = no && heroi ? trocosEntre(dados, heroi, no.id) : null;
+  if (n === 0) return diz(no.tipo === "lugar" || !o.lugar ? "aqui" : "cidade");
+  if (n != null) return diz("zonas", n);
+  if (mesmaCidade || (!o.cidade && no && no.tipo !== "lugar" && semArtigo(no.nome) === aqui.cidade)) return diz("cidade");
+  if (o.cidade && aqui.cidade) return diz("outra");
+  return null;
 }
 
 /* A linha do ✓ diz o que fechou E o que abriu. Dizia só o que fechou, e na

@@ -27,7 +27,8 @@
    ============================================================ */
 
 import { naturezaDaHabilidade } from "./combos.js";
-import { classesDaHabilidade } from "./classes.js";
+import { classesDaHabilidade, podePegarHabilidade, custoEmPontos, subclasseEscolhida, pontosDisponiveis } from "./classes.js";
+import { MAGIAS, NIVEL_DO_CIRCULO, custoDoCirculo } from "./grimorio.js";
 
 /* Quem prepara e quem não prepara. Fora desta lista, ninguém prepara —
    inclusive as classes marciais, que é o caso comum. */
@@ -200,6 +201,64 @@ export function podeLancar(pers, hab, { emCombate = false } = {}) {
     motivo: emCombate
       ? `${hab.nome} não está preparada hoje. Só o que está no caderno sai no meio da luta.`
       : `${hab.nome} não está preparada hoje, e ela não é das que se conduzem como ritual. Prepare-a no próximo descanso longo.`,
+  };
+}
+
+/* ---------------- O GRIMÓRIO DE UMA CLASSE (05/11, AR3 · os Talentos) ----------------
+   A aba Grimório dos Talentos mostra as magias da classe por círculo, e cada
+   uma com o que o herói pode fazer com ela: já a sabe, pode aprendê-la agora
+   (e quanto custa), ou ainda não — e porquê. Hoje isto não se lia em lado
+   nenhum: o grimório entra na árvore pela porta de `habilidadesDisponiveis`,
+   que só mostra o que se pode pegar, e o mago não via o que o esperava.
+
+   NADA AQUI SE INVENTA. As magias são as do catálogo (`MAGIAS`, grimorio.js)
+   que nomeiam a classe; o degrau e o custo em PM são os do círculo
+   (`NIVEL_DO_CIRCULO`, `custoDoCirculo`, ou o `custo` próprio da entrada);
+   o custo em pontos e o porquê do bloqueio saem de `podePegarHabilidade` —
+   a MESMA régua que marca a árvore (`arvoreDaClasse`), para a magia e o
+   golpe dizerem «exige nível 5» com as mesmas palavras. E a diferença que
+   ninguém explicava, entre APRENDER e PREPARAR: `preparada` só existe para
+   a magia conhecida de uma classe que prepara (`PREPARAM`); quem nasce com
+   o dom sabe-a sempre, e aí o campo é null — não se aplica.
+
+   A subclasse: nenhuma tabela da casa liga uma magia a uma subclasse (as
+   magias nomeiam CLASSES), logo a magia não a diz. O que existe, e vem no
+   topo, é a subclasse que o herói trilha nesta classe (`subclasseEscolhida`).
+
+   Devolve null para classe sem magia nenhuma no catálogo (o Guerreiro não
+   tem aba Grimório). */
+export const ESTADOS_DO_GRIMORIO = Object.freeze(["conhecida", "disponivel", "bloqueada"]);
+
+export function grimorioDaClasse(pers, classe) {
+  const nome = typeof classe === "string" ? classe : "";
+  const daClasse = MAGIAS.filter((m) => m.classes.includes(nome));
+  if (!daClasse.length) return null;
+  const p = pers && typeof pers === "object" ? pers : {};
+  const sabe = new Set((Array.isArray(p.habilidades) ? p.habilidades : []).map((h) => (typeof h === "string" ? h : h && h.nome)).filter(Boolean));
+  const cadernoDaClasse = preparaMagia(nome) && classesQuePreparam(p).includes(nome);
+  const marcar = (m) => {
+    const conhecida = sabe.has(m.nome);
+    let chk = { pode: false, motivo: "" };
+    if (!conhecida) { try { chk = podePegarHabilidade(p, nome, m); } catch { chk = { pode: false, motivo: "" }; } }
+    const estado = conhecida ? ESTADOS_DO_GRIMORIO[0] : chk.pode ? ESTADOS_DO_GRIMORIO[1] : ESTADOS_DO_GRIMORIO[2];
+    return {
+      nome: m.nome, circulo: m.circulo, nivel: m.nivel, custoPM: m.custo, custoPontos: custoEmPontos(m),
+      efeito: m.descricao, tipo: m.tipo, forma: m.forma, raio: m.raio, alcance: m.alcance,
+      duracao: m.duracao, concentracao: m.concentracao, ritual: m.ritual,
+      estado, motivo: estado === "bloqueada" ? chk.motivo : "",
+      preparada: conhecida && cadernoDaClasse ? estaPreparada(p, m) : null,
+    };
+  };
+  const circulos = [...new Set(daClasse.map((m) => m.circulo))].sort((a, b) => a - b).map((c) => {
+    const nivel = NIVEL_DO_CIRCULO[c] || 1;
+    return { circulo: c, nivel, custoPontos: custoEmPontos({ nivel }), custoPM: custoDoCirculo(c), magias: daClasse.filter((m) => m.circulo === c).map(marcar) };
+  });
+  return {
+    classe: nome,
+    subclasse: subclasseEscolhida(p, nome),
+    pontos: pontosDisponiveis(p),
+    naCabeca: cadernoDaClasse ? { preparadas: garantirPreparadas(p).length, limite: limitePreparadas(p) } : null,
+    circulos,
   };
 }
 
