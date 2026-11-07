@@ -19,6 +19,11 @@
    · a CERIMÓNIA DE APRENDER, curta, que nunca espera: o toque seguinte vale
      desde o primeiro milissegundo (com prefers-reduced-motion, esvanece).
 
+   E O CÉU (AR 11, 07/11, aprovado pela pessoa): «Ver o céu» é a segunda
+   vista da aba Árvore — a mesma árvore desenhada como uma constelação
+   (painel-ceu.jsx). Cada estrela é um nó desta árvore (noDaEstrela), e
+   tocar nela abre o MESMO veredito, pelo mesmo caminho do nó.
+
    O leiaute escolhe-se pela largura DO PAINEL (como o Diário): na gaveta de
    320 é o do telefone. Nenhuma regra mora aqui: o estado de cada nó é o de
    classes.js (`arvoreDaClasse`, `podePegarHabilidade`…) e o do grimório é o
@@ -28,17 +33,18 @@ import React from "react";
 import { T } from "./constantes.js";
 import {
   TIPOS, alfa, MOLDURA_POR_DEGRAU, GEMA_DA_SUBCLASSE, ENCAIXE, ICONES_DO_TALENTO,
-  NO_DE_TALENTO, ARVORE_DE_TALENTOS, CABECALHO_DA_TELA,
+  NO_DE_TALENTO, ARVORE_DE_TALENTOS, CABECALHO_DA_TELA, FIGURAS_DA_CONSTELACAO,
 } from "./estilo.js";
 import { VerboComPreco, Glifo } from "./ui.jsx";
 import { CabecalhoDaTela, AbaDaTela, GlifoAR, NoDeTalento, Ligacao, SeloDePontos, LinhaDaComparacao } from "./painel-ar-pecas.jsx";
 import { Gema } from "./painel-moldura.jsx";
+import { CeuDoHeroi, ceuDaClasse, medidasDoCeu } from "./painel-ceu.jsx";
 import { RostoNaMoldura } from "./painel-equipamento.jsx";
 import {
   CLASSES, classePorNome, arvoreDaClasse, arvoreDaSubclasse, arvoreDaEspecializacao, ranksDoPersonagem,
   pontosDisponiveis, pontosTotais, custoRespec, custoEmPontos, podePegarHabilidade, subclasseEscolhida,
   podeEscolherSubclasse, habilidadesDaSubclasse, especializacaoEscolhida, podeEscolherEspecializacao,
-  especializacoesDaSubclasse, habilidadesDaEspecializacao, RANK_PARA_SUBCLASSE, RANK_PARA_ESPECIALIZACAO,
+  especializacoesDaSubclasse, habilidadesDaEspecializacao, RANK_PARA_SUBCLASSE, RANK_PARA_ESPECIALIZACAO, pontosNoNivel,
 } from "./classes.js";
 import { DEGRAUS_SUBCLASSE } from "./subclasses.js";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
@@ -138,6 +144,45 @@ function modeloDaArvore(pers, classe) {
 const estadoDoNo = (n) => (n.escolha ? (n.pode ? "disponivel" : "bloqueado") : estadoDaHab(n.h));
 const nomeDoNo = (n) => (n.escolha ? n.nome : n.h.nome);
 const chaveDoNo = (n) => `${n.banda}:${nomeDoNo(n)}`;
+/* o que fica escolhido quando se toca num nó (na árvore ou no céu) */
+const selDoNo = (n, onde = null) => (n.escolha ? { chave: chaveDoNo(n), tipo: "sub", nome: n.nome, onde } : { chave: chaveDoNo(n), tipo: "hab", n, onde });
+
+/* ---------------- O CÉU (AR 11) ----------------
+   A estrela é um nó desta árvore: o mesmo nome no mesmo ramo. O braço de uma
+   subclasse ainda por escolher não tem nós de habilidade na árvore — lá, o nó
+   é a ESCOLHA dessa subclasse, e é esse o veredito que a estrela abre. */
+function noDaEstrela(modelo, e) {
+  if (!e) return null;
+  if (e.ramo === "classe") return modelo.nos.find((n) => n.banda === "classe" && !n.escolha && n.h.nome === e.nome) || null;
+  if (e.ramo === "subclasse") {
+    if (modelo.sub === e.sub) return modelo.nos.find((n) => n.banda === "subclasse" && !n.escolha && n.h.nome === e.nome) || null;
+    return modelo.nos.find((n) => n.escolha === "sub" && n.nome === e.sub) || null;
+  }
+  return modelo.nos.find((n) => n.banda === "esp:" + e.esp && !n.escolha && n.h.nome === e.nome) || null;
+}
+/* O estado e o nome acessível de uma estrela, lidos do nó (as regras).
+   OS NOMES REPETIDOS: seis classes repetem nomes entre a classe e um braço
+   (o Arqueiro, o Arcanista, o Assassino, o Paladino, o Punho de Ferro, o
+   Andarilho), e `dominada` compara por nome. O céu decide pelo RAMO e pelo
+   nome onde a ficha o permite: a estrela de um braço ou ramo que o herói não
+   seguiu nunca acende (o modelo nem tem nós de habilidade para um braço por
+   escolher, e a especialização tem de ser a dele). Onde a ficha NÃO o
+   permite — a classe e o braço escolhido com o mesmo nome — acendem as duas,
+   como na árvore: a habilidade guardada é só o nome, sem o ramo. */
+function estadoDaEstrela(modelo, classe, e, espEscolhida) {
+  const n = noDaEstrela(modelo, e);
+  if (!n) return { estado: "porAcender", rotulo: e.nome };
+  if (n.escolha) return { estado: "porAcender", rotulo: `${e.nome} — ${e.sub}. Abre ao seguir ${e.sub}.` };
+  const h = n.h;
+  const doRamo = e.ramo !== "especializacao" || e.esp === espEscolhida;
+  if (h.dominada && doRamo) return { estado: "acesa", rotulo: `${h.nome} — aprendida.` };
+  const dono = e.ramo === "classe" ? classe : e.ramo === "subclasse" ? `${classe} · ${e.sub}` : `${classe} · ${e.esp}`;
+  if (h.pode) return { estado: "disponivel", rotulo: `${h.nome} — ${dono}, degrau ${h.nivel || 1}, ${h.tipo}. Por acender: custa ${pontosDito(h.custoPontos)}.` };
+  return { estado: "porAcender", rotulo: `${h.nome} — ${dono}, degrau ${h.nivel || 1}. ${h.motivo || "ainda não"}.` };
+}
+/* a vista da aba Árvore vive na sessão (não no save): abre na árvore até o
+   jogador escolher o céu, e daí em diante abre no céu */
+let vistaDaSessao = null;
 
 /* ---------------- A GEOMETRIA, POR LEIAUTE ---------------- */
 function geometria(modelo, leiaute, largura) {
@@ -420,11 +465,11 @@ function Arvore({ modelo, leiaute, largura, ranks, classe, escolhido, aprendeu, 
 }
 
 /* a frase da cerimónia: sobe, fica, sai — e a peça escuta o fim dela */
-function FraseDaCerimonia({ nome, aoAcabar }) {
+function FraseDaCerimonia({ nome, texto = null, aoAcabar }) {
   return (
     <div role="status" className="tv-aprender-frase tv-body italic text-center pointer-events-none"
       onAnimationEnd={aoAcabar} style={{ fontSize: TIPOS.corpo, color: OURO.claro }}>
-      Aprendeste {nome}.
+      {texto || `Aprendeste ${nome}.`}
     </div>
   );
 }
@@ -473,6 +518,13 @@ function selDoNome(pers, classe, aba, nome) {
   if (!nome) return null;
   if (nome === "respec") return { chave: "respec", tipo: "respec" };
   try {
+    /* a chave de uma estrela do céu: o veredito do nó dela */
+    if (/^(classe|sub|esp):/.test(nome)) {
+      const mod = modeloDaArvore(pers, classe);
+      const e = ceuDaClasse(classe, { sub: subclasseEscolhida(pers, classe), esp: especializacaoEscolhida(pers, classe) }).estrelas.find((x) => x.chave === nome);
+      const n = noDaEstrela(mod, e);
+      return n ? { ...selDoNo(n), estrela: e.chave } : null;
+    }
     if (aba === "grimorio") {
       const g = grimorioDaClasse(pers, classe);
       for (const c of (g && g.circulos) || []) { const m = c.magias.find((x) => x.nome === nome); if (m) return { chave: `magia:${m.nome}`, tipo: "magia", m, c }; }
@@ -487,7 +539,7 @@ function selDoNome(pers, classe, aba, nome) {
 }
 
 /* ---------------- O PAINEL ---------------- */
-export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, grupo = [], aoFechar = null, leiaute: leiautePedido = null, abaInicial = "arvore", inicial = null }) {
+export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, grupo = [], aoFechar = null, leiaute: leiautePedido = null, abaInicial = "arvore", inicial = null, vistaInicial = null }) {
   const pers = personagem || {};
   const raiz = React.useRef(null);
   const largura = useLarguraDe(raiz);
@@ -501,6 +553,10 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
   const [aprendeu, setAprendeu] = React.useState(null); /* { nome } — a cerimónia */
   const [abrindo, setAbrindo] = React.useState(false);
   const [confirmarAtr, setConfirmarAtr] = React.useState(false);
+  /* o céu (AR 11): a vista, a estrela com o foco do teclado, os braços que saem */
+  const [vista, setVista] = React.useState(() => vistaInicial || vistaDaSessao || "arvore");
+  const [focoDoCeu, setFocoDoCeu] = React.useState(null);
+  const [saindo, setSaindo] = React.useState(null);
 
   const ranks = ranksDoPersonagem(pers);
   const abertas = Object.keys(ranks);
@@ -519,13 +575,14 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
 
   const fechar = () => setSel(null);
   const trocarAba = (id) => { setAba(id); setSel(null); };
-  const trocarClasse = (n) => { setAbaClasse(n); setSel(null); setAbrindo(false); };
+  const trocarClasse = (n) => { setAbaClasse(n); setSel(null); setAbrindo(false); setFocoDoCeu(null); setSaindo(null); };
+  const trocarVista = (x) => { vistaDaSessao = x; setVista(x); };
   const aprender = (nome) => {
     try { if (onAprender) onAprender(abaClasse, nome); } catch { /* nunca custa o turno */ }
     setAprendeu({ nome });
     if (leiaute !== "mesa") setSel(null);
   };
-  const escolherSub = (nome) => { try { if (onEscolherSubclasse) onEscolherSubclasse(abaClasse, nome); } catch { /* idem */ } setSel(null); };
+  const escolherSub = (nome) => { try { if (onEscolherSubclasse) onEscolherSubclasse(abaClasse, nome); } catch { /* idem */ } setSel(null); if (vista === "ceu") setSaindo({ sub: nome }); };
   const escolherEsp = (nome) => { try { if (onEscolherEspecializacao) onEscolherEspecializacao(abaClasse, nome); } catch { /* idem */ } setSel(null); };
   const recomecar = () => { try { if (onRespec) onRespec(); } catch { /* idem */ } setSel(null); setAprendeu(null); };
 
@@ -624,7 +681,15 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
     setAprendeu((a) => (a ? null : a));
     const chave = chaveDoNo(n);
     if (sel && sel.chave === chave && leiaute !== "mesa") { setSel(null); return; }
-    setSel(n.escolha ? { chave, tipo: "sub", nome: n.nome, onde: p } : { chave, tipo: "hab", n, onde: p });
+    setSel(selDoNo(n, p));
+  };
+  /* tocar numa estrela é tocar no nó dela: o mesmo veredito */
+  const tocarEstrela = (e, p) => {
+    const n = noDaEstrela(modelo, e);
+    if (!n) return;
+    setAprendeu((a) => (a ? null : a));
+    if (sel && sel.estrela === e.chave && leiaute !== "mesa") { setSel(null); return; }
+    setSel({ ...selDoNo(n, p), estrela: e.chave });
   };
   const tocarBanda = (b) => setSel({ chave: `banda:${b.id}`, tipo: "esp", nome: b.nome });
   const tocarMagia = (m, c) => { setAprendeu((a) => (a ? null : a)); setSel({ chave: `magia:${m.nome}`, tipo: "magia", m, c }); };
@@ -794,7 +859,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
 
   /* ---- A ÁRVORE ---- */
   const aprendeuAqui = aprendeu && modelo.nos.some((n) => !n.escolha && n.h.nome === aprendeu.nome && n.h.dominada);
-  const frase = aprendeuAqui ? <FraseDaCerimonia nome={aprendeu.nome} aoAcabar={() => setAprendeu(null)} /> : null;
+  const frase = aprendeuAqui && vista !== "ceu" ? <FraseDaCerimonia nome={aprendeu.nome} aoAcabar={() => setAprendeu(null)} /> : null;
   const larguraDaArvore = leiaute === "telefone" ? Math.max(0, largura - 2 * CABECALHO_DA_TELA.telefone.lado) : 0;
   const popover = leiaute === "meia" && v && sel && sel.onde ? <CaixaDoVeredito modo="meia" v={v} onde={sel && sel.onde} larguraDaArvore={A.meia.rotulos + COLS.length * A.meia.passo} aoFechar={fechar} /> : null;
   const arvore = (
@@ -806,14 +871,59 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
       ✓ aprendido · o número = pontos para aprender · cadeado = ainda não (o porquê no veredito)
     </p>
   );
+  const temCeu = !!FIGURAS_DA_CONSTELACAO[abaClasse];
+  const verboDaVista = !temCeu ? null : vista === "ceu"
+    ? <VerboComPreco verbo="Ver a árvore" preco={telefone ? null : "a mesma árvore, deitada"} aoTocar={() => trocarVista("arvore")} />
+    : <VerboComPreco verbo="Ver o céu" preco={telefone ? null : "a mesma árvore, no céu"} aoTocar={() => trocarVista("ceu")} />;
   const quadroDaArvore = (
     <div className="flex flex-col gap-3 p-3 relative" style={{ background: T.panel, border: `1px solid ${alfa(OURO.meio, 0.6)}`, borderRadius: ENCAIXE.raio }}>
       {frase ? <div className="absolute left-0 right-0 z-20" style={{ top: N.folga }}>{frase}</div> : null}
+      {verboDaVista ? <div className="flex justify-end">{verboDaVista}</div> : null}
       {nova ? <p className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio, margin: 0 }}>{(classePorNome(abaClasse) || {}).desc} Um ponto num talento do degrau 1 abre {abaClasse} ao lado de {pers.classe}.</p> : null}
       <div className={leiaute === "mesa" ? "tv-scroll overflow-x-auto" : ""}>{arvore}</div>
       {legenda}
     </div>
   );
+
+  /* ---- O CÉU (AR 11): a mesma árvore, no céu ---- */
+  let quadro = quadroDaArvore;
+  if (vista === "ceu" && temCeu) {
+    const espDaFrente = especializacaoEscolhida(pers, abaClasse);
+    const modelos = { [abaClasse]: modelo };
+    const modeloDe = (cl) => {
+      if (!modelos[cl]) { try { modelos[cl] = modeloDaArvore(pers, cl); } catch { modelos[cl] = { nos: [], bandas: [], sub: null }; } }
+      return modelos[cl];
+    };
+    const estadoNoCeu = (cl, e) => estadoDaEstrela(modeloDe(cl), cl, e, especializacaoEscolhida(pers, cl));
+    /* as outras classes do herói, por degraus (desempate pelo nome) */
+    const atras = abertas.filter((cl) => cl !== abaClasse && FIGURAS_DA_CONSTELACAO[cl])
+      .sort((a, b) => (ranks[b] || 0) - (ranks[a] || 0) || a.localeCompare(b))
+      .map((cl) => ({ classe: cl, sub: subclasseEscolhida(pers, cl), esp: especializacaoEscolhida(pers, cl) }));
+    const figura = FIGURAS_DA_CONSTELACAO[abaClasse].figura;
+    const daClasseToda = modelo.nos.filter((n) => n.banda === "classe" && !n.escolha);
+    const fechou = !!aprendeuAqui && daClasseToda.some((n) => n.h.nome === aprendeu.nome) && daClasseToda.every((n) => n.h.dominada);
+    const textoDaFrase = fechou
+      ? `${figura.charAt(0).toUpperCase()}${figura.slice(1)} está ${figura.startsWith("a ") ? "completa" : "completo"}`
+      : aprendeuAqui ? `${aprendeu.nome} é tua` : null;
+    /* sem pontos: o próximo nível que dá pontos (pontosNoNivel) */
+    let proximo = nivel + 1;
+    while (pontosNoNivel(proximo) <= 0 && proximo < nivel + COLS[COLS.length - 1] * 2) proximo++;
+    const aviso = pontos > 0 ? null : `Sem pontos por gastar — o próximo chega no nível ${proximo}`;
+    const popoverDoCeu = leiaute === "meia" && v && sel && sel.onde && sel.estrela
+      ? <CaixaDoVeredito modo="meia" v={v} onde={sel.onde} larguraDaArvore={medidasDoCeu(leiaute, larguraDaArvore, atras.length).largo} aoFechar={fechar} /> : null;
+    quadro = (
+      <div className="flex flex-col gap-3 relative">
+        {textoDaFrase ? <div className="absolute left-0 right-0 z-20" style={{ top: N.folga }}><FraseDaCerimonia texto={textoDaFrase} aoAcabar={() => setAprendeu(null)} /></div> : null}
+        {nova ? <p className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio, margin: 0 }}>{(classePorNome(abaClasse) || {}).desc} Um ponto num talento do degrau 1 abre {abaClasse} ao lado de {pers.classe}.</p> : null}
+        <div className={telefone ? "" : "tv-scroll overflow-x-auto"}>
+          <CeuDoHeroi classe={abaClasse} sub={subDoHeroi} esp={espDaFrente} estadoDaEstrela={estadoNoCeu} atras={atras}
+            leiaute={leiaute} largura={larguraDaArvore} escolhida={sel && sel.estrela} foco={focoDoCeu} aoFocar={setFocoDoCeu}
+            aoTocarEstrela={tocarEstrela} aoTrazer={trocarClasse} aprendeu={aprendeuAqui ? aprendeu.nome : null} fechou={fechou}
+            saindo={saindo} aoAcabarSaida={() => setSaindo(null)} verbo={verboDaVista} aviso={aviso} popover={popoverDoCeu} />
+        </div>
+      </div>
+    );
+  }
 
   if (leiaute === "mesa") {
     return moldura(
@@ -824,7 +934,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
           {abrirOutra}
           <div className="mt-6 flex flex-col gap-2">{rotuloMono("Recomeçar")}{recomecarVerbo}</div>
         </div>
-        {quadroDaArvore}
+        {quadro}
         <div className="sticky top-0"><CaixaDoVeredito modo="mesa" v={v} aoFechar={fechar} /></div>
       </div>,
     );
@@ -846,7 +956,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
   return moldura(
     <>
       {faixa}
-      {quadroDaArvore}
+      {quadro}
       <div className="grid gap-3" style={{ gridTemplateColumns: telefone ? "1fr" : "repeat(2, minmax(0, 1fr))" }}>
         {abrirOutra}
         {recomecarVerbo}

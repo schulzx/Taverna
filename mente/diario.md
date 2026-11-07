@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 07/11 · v9.618 · a constelação do herói e os dados de uso (as duas aprovadas)
+- **a palavra:** «As duas estão aprovadas» — a constelação (§AR 9) e os mantimentos como dados de uso (`mente/ar7-prova.md`, a proposta).
+- **o sistema (agente `backend`):** `src/dado-de-uso.js`. **A contagem continua a ser a verdade** (o save não muda): a face sai da contagem por tabela, e ao fim do dia o dado rola; num 1 perde-se uma unidade a mais. `lancamentoDoDadoDeUso` leva o lance à bandeja (papel `uso`). A tocha rola a cada sala da masmorra (`irParaSala`), o único sítio onde uma tocha se queima. Suíte 76.
+  - **decisão média, com o número:** a minha tabela (d8 com ≥4 dias, perda antes de comer) custava **18,0%** dos dias com 1 boca e 17,5% com 2, acima do teto de 15% que eu tinha pedido. O `backend` passou a perda para depois de comer e juntou um **d10 com ≥6 dias**: fica em 14,2% / 14,5% / 1,8% / 0,0% para 1–4 bocas, e as tochas em ~12%. A catraca na suíte lê o teto; a folga é curta (0,5 pontos com 2 bocas).
+- **a forma (agente `desenho`, Figma `268:2`):** §AR 11 (a constelação: 12 figuras, uma por classe, cada estrela um nó real da árvore; `mente/figma/constelacao-geometria.mjs`) e §AR 12 (a prateleira dos mantimentos, debaixo da Bolsa). Frames `298:4457`, `299:4688`, `300:4812`, `302:4813`, `294:3628`, `294:4080`, `294:4493`. Nova proposta ambiciosa em §AR 13 (o céu como última tela da campanha, «Guardar o céu»).
+- **a construção (agente `aprendiz`, fora do App):** `src/painel-ceu.jsx` (`CeuDoHeroi`), «Ver o céu» nos Talentos com o mesmo veredito do nó; `PrateleiraDosMantimentos` e `DadoDeUso` em `painel-mesa-do-mestre.jsx` (o `Corpo` da bandeja passou a exportado); glifos `racao` e `agua` (as falas com 🥖/💧 chegam como glifo). Suíte `teste-constelacao` 142. Visto no navegador a 1905 e 375.
+- **a fiação (agente `oficial`, bastão 16:10 e 16:45, devolvido as duas vezes):** `oFimDoDia` no descanso longo (com o `comerODia` antigo de rede), a tocha em `irParaSala`, `mantimentosDeUso` como regra única das faces e contagens (a tocha da masmorra quando se está nela), a prateleira na mesa e no telefone, e o toque que abre a Bolsa com o foco em Mantimentos. Visto a 1905×860 e 375 (save de teste criado e apagado com o jogo desmontado).
+- **eu:** o `check-imports` não via `ks`/`ke` declarados em cadeia em `painel-ceu.jsx` — separei em três `const`. O aviso do `desenho` dos nomes repetidos confirmou-se: **11 habilidades com o mesmo nome na classe e na subclasse**; foi para `pedidos-ao-sistema.md` (C1), porque decidir é mexer no que o save guarda por nome.
+- **o que fica:** a rolagem do fim do dia na própria prateleira (hoje o lance aparece na bandeja e a prateleira só encolhe); o `desenho` confirmar a ligação de nascença (acende com a escolha do ramo); C1; os D6–D16 da AR7; o `so-o-meu.sh` não acha o `esbuild` das quatro suítes que o importam (o `oficial` suspeita do `NODE_PATH` no ESM — leve, para o `testes`).
+
+---
+
 ## 06/11 · Fase AR, AR7 e AR8 · a prova jogada, e o que ela achou
 - **AR7 (agente `jogo`, `mente/ar7-prova.md`):** uma porta, uma tela pegou, e o defeito da v9.605 não voltou. **Mas a AR1 (v9.612) tinha tirado de vista o que só a ficha antiga mostrava: os mantimentos, as duas escolhas de combate e as dádivas.** No save não se perdeu nada; na tela, sim. E Pessoas e Mural abriam a gaveta antiga.
 - **a lição, para a mesa:** «nenhuma função se perde» provou-se pelas AÇÕES da bolsa antiga e não pelo que a FICHA antiga MOSTRAVA. Quem desliga uma tela faz a lista do que ela mostra, não só do que ela faz.

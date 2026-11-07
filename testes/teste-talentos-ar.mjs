@@ -67,7 +67,15 @@ sec("1. as tabelas de §AR 6");
   varrer(NO_DE_TALENTO, "NO_DE_TALENTO"); varrer(LIGACAO, "LIGACAO"); varrer(SELO_DE_PONTOS, "SELO_DE_PONTOS");
   t("toda cor das tabelas dos Talentos é de T ou dos metais", soltas.length === 0, soltas.join(", "));
   const EST = fs.readFileSync(path.join(SRC, "estilo.js"), "utf8");
-  const bloco = EST.slice(EST.indexOf("/* OS TALENTOS, A ÁRVORE"), EST.indexOf("export const FOLHA_DO_MESTRE"));
+  /* 07/11 · AR 11, MUDADA E O MOTIVO: a tabela CONSTELACAO mora agora dentro
+     deste bloco (formas.md §AR 11 manda-a «depois de CERIMONIA_DE_APRENDER»), e
+     traz as duas únicas cores novas da fase — o céu e a estrela de fundo —, que
+     o check-formas registou como zona de tabela (é onde elas têm direito de
+     nascer). A asserção continua a valer para tudo o resto do bloco: corta-se
+     só a zona CONSTELACAO, do export ao primeiro «};» de coluna zero. */
+  const blocoTodo = EST.slice(EST.indexOf("/* OS TALENTOS, A ÁRVORE"), EST.indexOf("export const FOLHA_DO_MESTRE"));
+  const iCeu = blocoTodo.indexOf("export const CONSTELACAO = {");
+  const bloco = iCeu < 0 ? blocoTodo : blocoTodo.slice(0, iCeu) + blocoTodo.slice(blocoTodo.indexOf("\n};", iCeu) + 3);
   t("o bloco dos Talentos em estilo.js não tem hex solto", bloco.length > 0 && !/#[0-9a-fA-F]{3,8}\b/.test(bloco.replace(/\/\*[\s\S]*?\*\//g, "")));
   const RX_HEX = /#[0-9a-fA-F]{3,8}\b|rgba?\(/;
   for (const a of ["painel-talentos.jsx", "painel-ar-pecas.jsx"]) {

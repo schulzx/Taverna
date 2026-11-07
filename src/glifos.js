@@ -127,6 +127,12 @@ export const GLIFOS = {
   trabalho: { de: "lucide:scroll-text", d: "M15 12h-5M15 8h-5M19 17V5a2 2 0 0 0-2-2H4M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3" },
   /* as tochas, recurso contado · aposenta 🕯 (V3b) */
   tocha: { de: "lucide:flame", d: "M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" },
+  /* AR 12 (07/11) · os mantimentos no dado de uso (formas.md §AR 12, Figma 292:3654):
+     a ração (o pão) e a água (a gota), desenhados pela casa no quadro 24 · aposentam
+     🥖 e 💧. A secção escreve a origem como "desenho:AR12"; a gramática de GLIFOS só
+     conhece "casa" e "lucide:…" (teste-v3-glifos), e um desenho do `desenho` é da casa. */
+  racao: { de: "casa", d: "M4 14c0-4.4 3.6-8 8-8s8 3.6 8 8v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5zM8.5 10.5l-1 2.5M12.5 9.5l-1 3M16.5 10.5l-1 2.5" },
+  agua: { de: "casa", d: "M12 3.5c-2 2.6-6 7.2-6 11a6 6 0 0 0 12 0c0-3.8-4-8.4-6-11zM9.2 15.2a2.8 2.8 0 0 0 2.8 2.8" },
   /* o seu herói, e o legado · aposenta ⚜ (V3b) */
   heroi: { de: "lucide:user", d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M8 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" },
   /* venceu: conquista, título · aposenta 🏆 (V3b) */
@@ -242,7 +248,10 @@ export const ASSUNTO_DO_EMOJI = {
   /* o perigo mortal */
   "☠": "perigo", "💀": "perigo", "⚰": "perigo", "🪤": "perigo", "🪂": "perigo",
   /* aviso — reaja */
-  "⚠": "aviso", "💾": "aviso", "🔇": "aviso", "🥖": "aviso", "💧": "aviso",
+  "⚠": "aviso", "💾": "aviso", "🔇": "aviso",
+  /* os mantimentos (AR 12, 07/11): o pão e a gota, os glifos do dado de uso — as
+     falas de dado-de-uso.js e a fome de comerODia chegam à tela desenhadas */
+  "🥖": "racao", "💧": "agua",
   /* trancado */
   "🔒": "cadeado",
   /* procurar, perceber */

@@ -301,6 +301,7 @@ import { abrirCanal, novoIdDeParticipante, cabeNoFio } from "./transporte.js";
 import { aplicarNivel, PV_POR_NIVEL, PM_POR_NIVEL, evoluirCompanheiro, aplicarDescanso, recargaPadrao, bonusEquip, bonusEfeito, atributoEfetivo, processarCombate, migrarPersonagem } from "./regras-jogo.js";
 import { abrirOSave, aFichaAberta, comACidadePisada } from "./abrir-o-save.js";
 import { SUPRIMENTOS, EXAUSTAO, garantirSuprimentos, consumoDiario, comerODia, RITMOS_VIAGEM, ritmoViagem, marchaForcada, testarNavegacao, forragear, efeitoExaustao, resumoErmos } from "./ermos.js";
+import { faceDoDadoDeUso, oFimDoDia, aTochaQueSeAcende } from "./dado-de-uso.js";
 
 /* ---------------- O SILÊNCIO QUE NÃO CUSTA O TURNO ----------------
    Vivia dentro do componente desde a v9.109, e por isso NENHUMA peça de
@@ -369,7 +370,7 @@ import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHer
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
-import { EcraDoMestre, FilaDasCartas, ObjetoDaMesa, LuzDaVela, VinhetaDaNoite } from "./painel-mesa-do-mestre.jsx";
+import { EcraDoMestre, FilaDasCartas, ObjetoDaMesa, LuzDaVela, VinhetaDaNoite, PrateleiraDosMantimentos } from "./painel-mesa-do-mestre.jsx";
 import { chegadaDaViagem } from "./partida.js";
 /* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
 import { equiparKitInicial } from "./kit-inicial.js";
@@ -2316,6 +2317,24 @@ function PainelCorreio({ correio, faccoes, dia, moedas, enviarCarta, responderPe
    o código: voltar é pôr true aqui. */
 const GAVETAS_ANTIGAS = { ficha: false, bolsa: false };
 
+/* 07/11 (os dados de uso, formas.md §AR 12): a face de cada mantimento e a
+   contagem que ela lê, numa regra só — servem a prateleira da mesa e os
+   mantimentos da carta. As tochas são as da masmorra lá dentro (não
+   encerrada), as da mochila cá fora: a mesma fonte do tochasAgora, para o
+   «×N» e o dado baterem. As bocas são o herói e o grupo. */
+function mantimentosDeUso(personagem, masmorra) {
+  const p = personagem && typeof personagem === "object" ? personagem : {};
+  const sup = garantirSuprimentos(p.suprimentos);
+  const bocas = 1 + (Array.isArray(p.grupo) ? p.grupo.length : 0);
+  const tochas = masmorra && !masmorra.encerrada ? Math.max(0, Number(masmorra.tochas) || 0) : sup.tochas;
+  return {
+    dados: { racoes: faceDoDadoDeUso("racoes", sup, bocas), agua: faceDoDadoDeUso("agua", sup, bocas), tochas: faceDoDadoDeUso("tochas", { tochas }) },
+    contagens: { racoes: sup.racoes, agua: sup.agua, tochas },
+  };
+}
+/* quantas vezes, e de quanto em quanto, o «abrir na Bolsa» da prateleira
+   procura a secção «Mantimentos» da carta enquanto ela monta */
+const PROCURA_DOS_MANTIMENTOS = Object.freeze({ tentativas: 8, passoMs: 60 });
 function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null, bolsaPedida = null, relogios = [], aoVerNoMapa = null, distanciaDoPasso = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
@@ -3516,6 +3535,12 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 aoForragear: onForragear ? () => { try { onForragear(); } catch (e) { calou("forragear pela carta", e); } } : null,
                 aoRitmo: onRitmoViagem ? (id) => { try { onRitmoViagem(id); } catch (e) { calou("o ritmo de marcha pela carta", e); } } : null,
                 aoForcarMarcha: onForcarMarcha ? () => { try { onForcarMarcha(); } catch (e) { calou("forçar a marcha pela carta", e); } } : null };
+              /* 07/11 (os dados de uso): a face de cada mantimento, pela regra
+                 de mantimentosDeUso (a mesma da prateleira da mesa). Estourar
+                 deixa os mantimentos sem dado, nunca sem casa. */
+              try {
+                mantimentos = { ...mantimentos, dados: mantimentosDeUso(personagem, masmorra).dados };
+              } catch (e) { calou("os dados de uso na carta", e); mantimentos = { ...mantimentos, dados: null }; }
             } catch (e) { calou("os mantimentos na carta", e); }
             try {
               const verbo = verboDaReacao;
@@ -18959,9 +18984,20 @@ export default function Taverna() {
     } catch (e) { calou("a armadilha no caminho", e); }
     const r = entrarNaSala(mm, id);
     if (r.bloqueado) { pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t }))); return; }
-    const mm2 = r.mm, sala = r.sala;
+    /* 07/11 (os dados de uso): a passagem queimou a tocha da mão; se há
+       outra, ela acende-se e o dado rola com a face de antes do passo — num
+       1 a nova não pega e perde-se mais uma. Estourar não custa o passo. */
+    let mm2 = r.mm; const sala = r.sala; let msgsDaTocha = [];
+    try {
+      const tq = aTochaQueSeAcende(mm.tochas, r.mm.tochas);
+      if (tq.tochas !== r.mm.tochas) mm2 = { ...r.mm, tochas: tq.tochas };
+      if (tq.lancamento) aBandeja(tq.lancamento);
+      msgsDaTocha = tq.msgs || [];
+    } catch (e) { calou("a tocha que se acende", e); }
     masmorraRef.current = mm2; setMasmorra(mm2);
-    if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t }))); if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} · camada ${sala.camada} · ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala já resolvida não se refaz (a luta, o tesouro, o santuário, a armadilha, o enigma) */
+    if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t })));
+    if (msgsDaTocha.length) pushMsgs(msgsDaTocha.map((t) => ({ autor: "sistema", texto: t })));
+    if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} · camada ${sala.camada} · ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala já resolvida não se refaz (a luta, o tesouro, o santuário, a armadilha, o enigma) */
     /* PERCEPÇÃO PASSIVA (5e): o que estiver abaixo do seu limiar você nota
        sozinho, sem rolar. O apressado enxerga menos; o cauteloso, mais. */
     const modPerc = atributoEfetivo(personagem, "percepcao");
@@ -20521,11 +20557,19 @@ export default function Taverna() {
          `setPersonagem((pp) => …)` que o `setPersonagem(pers)` da manhã,
          abaixo, apagava: o botão cobrava «2 rações e 2 águas» e a mochila
          acordava cheia. As bocas são as do veredito (`contasDoLongo`). */
+      /* 07/11 (os dados de uso): o fim do dia come pela mesma conta
+         (comerODia, dentro de oFimDoDia) e rola o dado das rações e o da
+         água à vista, na bandeja. O dado nunca pode custar a refeição: se
+         estourar, come-se pela conta de antes, sem dado. */
       try {
-        const comeu = comerODia(pers, 1 + (personagem.grupo || []).length);
+        const bocasDoDia = 1 + (personagem.grupo || []).length;
+        let comeu;
+        try { comeu = oFimDoDia(pers, bocasDoDia); }
+        catch (e) { calou("o dado de uso no fim do dia", e); comeu = comerODia(pers, bocasDoDia); }
         pers = comeu.pers;
         setPersonagem(pers);
         if (comeu.msgs.length) pushMsgs(comeu.msgs.map((t) => ({ autor: "sistema", texto: t })));
+        try { for (const l of comeu.lancamentos || []) aBandeja(l); } catch (e) { calou("o dado de uso na bandeja", e); }
       } catch (e) { calou("o dia que se come no descanso", e); }
       /* SQ3 (05/11): com o mundo, a noite planeia a secundária inteira (molde,
          atos, virada, prazo, fecho — secundaria-planeada.js); sem ele faz o de
@@ -24127,13 +24171,50 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const objeto = (id) => (id === "bolsa" ? "inv" : id);
       const naOrdem = ordem.map(objeto).map((id) => abas.find((a) => a.id === id)).filter(Boolean);
       const resto = telefone ? [] : abas.filter((a) => !ordem.map(objeto).includes(a.id));
-      return [...naOrdem, ...resto].map((a) => (
+      /* 07/11 (formas.md §AR 12): a prateleira dos mantimentos — na mesa logo
+         debaixo da Bolsa (os dois num bloco só, para a folga ser a da peça e
+         não o passo da coluna); no telefone debaixo da fila dos objetos.
+         Uma prateleira que estoura cala-se e não leva os objetos. */
+      let prateleira = null;
+      try {
+        if (personagem) {
+          const u = mantimentosDeUso(personagem, masmorra);
+          prateleira = <PrateleiraDosMantimentos dados={u.dados} contagens={u.contagens} telefone={telefone} aoAbrir={abrirOsMantimentos} />;
+        }
+      } catch (e) { calou("a prateleira dos mantimentos", e); prateleira = null; }
+      const lista = [...naOrdem, ...resto].map((a) => {
+        const obj = (
         <ObjetoDaMesa key={a.id} id={a.id} rotulo={a.rotulo} telefone={telefone} Glifo={GLIFO_DA_ABA[a.id]}
           ativo={aba === a.id} novo={marcasDaPorta.includes(a.id)}
           legenda={a.id === "inv" ? (() => { const n = (personagem && personagem.moedas) || 0; return n + (n === 1 ? " moeda" : " moedas"); })() : ""}
           aoTocar={() => { try { setAba(aba === a.id ? null : a.id); } catch (e) { calou("abrir um objeto da mesa", e); } }} />
-      ));
+        );
+        if (telefone || a.id !== "inv" || !prateleira) return obj;
+        return <div key={a.id} className="flex flex-col items-center">{obj}{prateleira}</div>;
+      });
+      if (!telefone || !prateleira) return lista;
+      return [<span key="objetos-e-mantimentos" className="flex flex-col items-end gap-1"><span className="flex items-start gap-1">{lista}</span>{prateleira}</span>];
     } catch (e) { calou("os objetos da mesa", e); return null; }
+  };
+  /* o toque na prateleira: abre a Bolsa (a carta na aba do equipamento) e
+     leva o scroll e o foco à secção «Mantimentos», quando ela montar. Se
+     não a achar, abrir a Bolsa basta. */
+  const abrirOsMantimentos = () => {
+    try {
+      setAba("inv");
+      const procurar = (falta) => {
+        try {
+          const el = typeof document !== "undefined" ? document.querySelector('section[aria-label="Mantimentos"]') : null;
+          if (!el) { if (falta > 0) setTimeout(() => procurar(falta - 1), PROCURA_DOS_MANTIMENTOS.passoMs); return; }
+          if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+          /* ao centro, não ao topo: a carta tem cabeçalho fixo, e no topo o
+             título «Mantimentos» ficava por baixo dele (visto a 1905 × 860) */
+          el.scrollIntoView({ block: "center", behavior: reduzidoRef.current ? "auto" : "smooth" });
+          el.focus({ preventScroll: true });
+        } catch (e) { calou("o foco nos mantimentos", e); }
+      };
+      setTimeout(() => procurar(PROCURA_DOS_MANTIMENTOS.tentativas), 0);
+    } catch (e) { calou("abrir os mantimentos", e); }
   };
 
   /* ---------------- O MAPA VIVO (MM17 · a faixa do rumo e a tela grande) ----------------

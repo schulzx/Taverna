@@ -331,7 +331,11 @@ sec("O DIA QUE SE COME (29/10, a 13.ª sessão): o que o botão cobra é o que a
   const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   const i0 = APP.indexOf("  const sairDoAcampamento = (tipo, extra) => {"), i1 = APP.indexOf("\n  };\n", i0);
   const corpo = i0 > 0 && i1 > i0 ? APP.slice(i0, i1) : "";
-  const iCome = corpo.indexOf("const comeu = comerODia(pers, 1 + (personagem.grupo || []).length);");
+  /* 07/11 (os dados de uso): o dia passou a comer por oFimDoDia (que chama
+     comerODia por dentro e rola o dado das rações e da água), com comerODia
+     de rede se o dado estourar. A intenção da asserção é a mesma — a comida
+     desce na `pers` que a manhã grava depois —, só a âncora mudou de texto. */
+  const iCome = corpo.indexOf("try { comeu = oFimDoDia(pers, bocasDoDia); }");
   const iManha = corpo.indexOf("pers = { ...pers, ultimoLongo: diaRef.current };");
   ok(iCome > 0 && /pers = comeu\.pers;/.test(corpo) && iManha > iCome, "o descanso come na ficha que segue (antes da manhã gravar a dela)");
   ok(!/setPersonagem\(\(pp\) => \(\{\s*\.\.\.pp,\s*suprimentos:/.test(corpo), "e não sobra a escrita funcional que a manhã apagava");

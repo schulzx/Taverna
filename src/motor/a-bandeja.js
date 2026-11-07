@@ -134,6 +134,27 @@ export function lancamentoDaSerie(rotulo, testes = []) {
   return Object.freeze({ ...l, total: inteiro(ultimo.rolo), alvo: inteiro(ultimo.cd, null), desfecho: cedeu ? "falha" : "sucesso", serie: true });
 }
 
+/* O dado de uso (dado-de-uso.js): os mantimentos ao fim do dia, a tocha
+   que se acende. `rolagens`: [{ faces, valor, uso }] — `uso` diz que
+   mantimento é cada dado ("racoes", "agua", "tochas") e segue alinhado em
+   `usos`, para a mesa pôr o ícone certo. `salva` é o menor valor que não
+   encolhe: abaixo dele o dado encolheu, e o desfecho é «falha». Como na
+   série, a soma não diz nada — o que conta é o menor dado. */
+export function lancamentoDoDadoDeUso(rotulo, rolagens = [], salva = 2) {
+  const lista = (Array.isArray(rolagens) ? rolagens : [])
+    .filter((r) => r && FACES.has(inteiro(r.faces)) && inteiro(r.valor) >= 1 && inteiro(r.valor) <= inteiro(r.faces))
+    .slice(0, A_BANDEJA.tetoDeDados);
+  if (!lista.length) return null;
+  const l = lancamento({ rotulo, dados: lista.map((r) => ({ faces: r.faces, valor: r.valor })), papel: "uso" });
+  if (!l) return null;
+  const s = inteiro(salva, 2);
+  const menor = Math.min(...lista.map((r) => inteiro(r.valor)));
+  return Object.freeze({
+    ...l, total: menor, alvo: s, desfecho: menor < s ? "falha" : "sucesso", serie: true,
+    usos: Object.freeze(lista.map((r) => String(r.uso || ""))),
+  });
+}
+
 /* ---------------- A MESA ----------------
    A bandeja é uma lista curta e imutável: o lançamento novo entra à
    frente e o mais velho cai. O número de ordem (`n`) é a identidade do

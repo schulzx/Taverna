@@ -39,8 +39,10 @@ const semMovimento = () => {
   try { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch { return false; }
 };
 
-/* Um corpo de dado (um d10 do d100 também): a forma, as facetas e o número */
-function Corpo({ faces, legenda, papel, tam, desfecho = "livre", rolando = false, apagado = false }) {
+/* Um corpo de dado (um d10 do d100 também): a forma, as facetas e o número.
+   Exportado (AR 12, 07/11): o dado de uso dos mantimentos é este mesmo corpo,
+   papel uso — não se desenha um segundo dado. */
+export function Corpo({ faces, legenda, papel, tam, desfecho = "livre", rolando = false, apagado = false }) {
   const f = FORMAS_DO_DADO[faces] || FORMAS_DO_DADO[20];
   const p = PAPEL_DO_DADO[papel] || PAPEL_DO_DADO.teste;
   const cor = T[p.corpo], tinta = T[p.numero];

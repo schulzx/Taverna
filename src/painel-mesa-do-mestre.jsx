@@ -16,12 +16,13 @@
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, alfa, OBJETOS_DA_MESA } from "./estilo.js";
+import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, PAPEL_DO_DADO } from "./estilo.js";
 import { molduraDe } from "./moldura.js";
 import { FASES_DO_DIA } from "./mapa-vivo.js";
 import { marcasNoAro } from "./marcas-da-moldura.js";
 import { Moldura } from "./painel-moldura.jsx";
-import { Retrato, MarcaDaPorta, SeloDePrazo } from "./ui.jsx";
+import { Retrato, MarcaDaPorta, SeloDePrazo, Glifo } from "./ui.jsx";
+import { Corpo } from "./painel-bandeja.jsx";
 import { estadoDe } from "./semente.js";
 
 const OURO = MOLDURA_POR_DEGRAU.ouro;
@@ -318,6 +319,107 @@ export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = f
       </span>
       <span className="tv-titulo uppercase" style={{ fontSize: telefone ? H.telefone.objetos.rotulo : H.titulo.tamanho, letterSpacing: 1, color: ativo ? T.amberSoft : OURO.claro, lineHeight: 1 }}>{rotulo}</span>
       {legenda && !telefone ? <span className="tv-mono" style={{ fontSize: 10, color: T.inkMeio, lineHeight: 1 }}>{legenda}</span> : null}
+    </button>
+  );
+}
+
+
+/* ============================================================
+   AR 12 · A PRATELEIRA DOS MANTIMENTOS (07/11/2026) — formas.md §AR 12,
+   Figma 294:3628 (a mesa), 294:4040 (o detalhe), 294:4080 (o telefone).
+
+   As rações, a água e as tochas pousadas na mesa como três dados, ao pé da
+   Bolsa. A FORMA DO DADO É A QUANTIDADE (d10/d8 muito → d4 pouco), e por
+   baixo vai a contagem do inventário, «×5». A face NÃO se calcula aqui: vem
+   do sistema (faceDoDadoDeUso, dado-de-uso.js), já pronta na prop «dados».
+   O dado é o Corpo da Bandeja (papel uso, o osso) — não há segundo dado.
+
+   É UM botão, não três: a ação é uma só (abrir a Bolsa nos Mantimentos), e a
+   fiação dela é do App («aoAbrir»). Quando a face desce entre duas vistas, o
+   dado encolhe e volta (320 ms; parado no reduce).
+   ============================================================ */
+const USO = DADO_DE_USO_NA_MESA;
+/* a face dita por extenso no nome acessível («dado de seis») */
+const FACE_POR_EXTENSO = { 10: "dez", 8: "oito", 6: "seis", 4: "quatro" };
+const contaDe = (v) => Math.max(0, Math.floor(Number(v) || 0));
+const faceDe = (v) => (FORMAS_DO_DADO[v] && FACE_POR_EXTENSO[v] ? Number(v) : null);
+
+/* um mantimento: o dado (ou o contorno vazio) com o glifo dentro, e a contagem */
+export function DadoDeUso({ tipo, face, n, telefone = false }) {
+  const M = telefone ? USO.telefone : USO.mesa;
+  const tam = M.dado;
+  const f = faceDe(face);
+  const vazio = f == null;
+  const lado = M.glifo[vazio ? USO.vazio.forma : f];
+  const centro = vazio ? FORMAS_DO_DADO[USO.vazio.forma].numero : f === 10 ? USO.centroDoD10 : FORMAS_DO_DADO[f].numero;
+  const k = tam / 48;
+  const aperta = vazio || f === USO.apertaNaFace;
+  return (
+    <span className="inline-flex flex-col items-center" style={{ gap: USO.contagem.entre }} data-uso={tipo} data-face={vazio ? "vazio" : f}>
+      <span style={{ position: "relative", display: "inline-flex", width: tam, height: tam }}>
+        {vazio ? (
+          <svg width={tam} height={tam} viewBox="0 0 48 48" aria-hidden="true" style={{ flex: "none", overflow: "visible" }}>
+            <polygon points={FORMAS_DO_DADO[USO.vazio.forma].corpo} fill="none" stroke={USO.vazio.aro} strokeWidth="1.5" strokeDasharray={USO.vazio.tracejado.join(" ")} strokeLinejoin="round" />
+          </svg>
+        ) : <Corpo faces={f} legenda="" papel={USO.papel} tam={tam} />}
+        <span aria-hidden="true" style={{ position: "absolute", left: centro[0] * k - lado / 2, top: centro[1] * k - lado / 2, lineHeight: 0 }}>
+          <Glifo nome={USO.glifo[tipo]} tamanho={lado} cor={vazio ? USO.vazio.glifo : T[PAPEL_DO_DADO[USO.papel].numero]} />
+        </span>
+      </span>
+      <span className="tv-mono" aria-hidden="true" style={{ fontSize: USO.contagem.tamanho, fontWeight: USO.contagem.peso, lineHeight: 1, color: aperta ? USO.contagem.aperta : USO.contagem.cor }}>
+        {USO.contagem.prefixo}{contaDe(n)}
+      </span>
+    </span>
+  );
+}
+
+/* o nome acessível da prateleira inteira: «rações 5, dado de seis; …» */
+export function nomeDaPrateleira(dados, contagens) {
+  const d = dados && typeof dados === "object" ? dados : {};
+  const c = contagens && typeof contagens === "object" ? contagens : {};
+  const partes = USO.ordem.map((tipo) => {
+    const f = faceDe(d[tipo]);
+    const n = contaDe(c[tipo]);
+    if (f == null) return n > 0 ? USO.nome[tipo] + " " + n : USO.nome[tipo] + ": nenhuma";
+    return USO.nome[tipo] + " " + n + ", dado de " + FACE_POR_EXTENSO[f] + (f === USO.apertaNaFace ? ", a acabar" : "");
+  });
+  return "Mantimentos: " + partes.join("; ") + ". Abrir na Bolsa.";
+}
+
+export function PrateleiraDosMantimentos({ dados = null, contagens = null, telefone = false, aoAbrir }) {
+  const d = dados && typeof dados === "object" ? dados : {};
+  const c = contagens && typeof contagens === "object" ? contagens : {};
+  const M = telefone ? USO.telefone : USO.mesa;
+  /* o encolher: a face desceu desde a vista anterior (ou acabou) */
+  const anterior = React.useRef(null);
+  const [encolheu, setEncolheu] = React.useState({});
+  const chave = USO.ordem.map((tipo) => String(faceDe(d[tipo]))).join("|");
+  React.useEffect(() => {
+    try {
+      const antes = anterior.current;
+      const agora = Object.fromEntries(USO.ordem.map((tipo) => [tipo, faceDe(d[tipo])]));
+      anterior.current = agora;
+      if (!antes) return;
+      const desceram = USO.ordem.filter((tipo) => antes[tipo] != null && (agora[tipo] == null || agora[tipo] < antes[tipo]));
+      if (desceram.length) setEncolheu((e) => ({ ...e, ...Object.fromEntries(desceram.map((tipo) => [tipo, (e[tipo] || 0) + 1])) }));
+    } catch { /* a forma nunca custa o turno */ }
+  }, [chave]); // eslint-disable-line react-hooks/exhaustive-deps
+  const dado = (tipo) => (
+    <span key={tipo + "-" + (encolheu[tipo] || 0)} className={encolheu[tipo] ? "tv-uso-encolhe" : undefined} style={{ display: "inline-flex" }}>
+      <DadoDeUso tipo={tipo} face={d[tipo]} n={c[tipo]} telefone={telefone} />
+    </span>
+  );
+  return (
+    <button type="button" onClick={aoAbrir} aria-label={nomeDaPrateleira(d, c)} title="Mantimentos"
+      className="tv-anel-foco tv-encaixe shrink-0 flex flex-col items-center justify-center rounded-lg"
+      style={{
+        minWidth: M.alvo.largura, minHeight: M.alvo.alto, padding: 0, marginTop: telefone ? 0 : USO.mesa.acima,
+        rowGap: telefone ? 0 : USO.mesa.entreLinhas - USO.contagem.entre - USO.contagem.tamanho,
+        background: "transparent", border: "none", cursor: "pointer",
+      }}>
+      {M.linhas.map((linha, i) => (
+        <span key={i} className="flex items-start justify-center" style={{ gap: M.folga }}>{linha.map(dado)}</span>
+      ))}
     </button>
   );
 }

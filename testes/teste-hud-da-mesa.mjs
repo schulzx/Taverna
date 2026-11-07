@@ -85,5 +85,20 @@ t("a casa de cada companheiro: o boneco e a mochila DELE, e a troca pelo «passa
 t("fechada, a casa volta ao herói e à Ficha", /setAbaVista\(null\); setInvDe\("eu"\); setSubGestao\("ficha"\);/.test(APP));
 t("o Fechar da carta fecha tudo e devolve à mesa", /aoFechar=\{fecharTudo\}/.test(APP) && !/aoFechar=\{\(\) => setHeroiDispensado\(true\)\}/.test(APP) && /calou\("fechar a carta do herói", e\)/.test(APP));
 
+/* 07/11 (formas.md §AR 12): a prateleira dos mantimentos pousa na mesa */
+t("a prateleira dos mantimentos: na mesa debaixo da Bolsa, no telefone debaixo dos objetos",
+  /<PrateleiraDosMantimentos dados=\{u\.dados\} contagens=\{u\.contagens\} telefone=\{telefone\} aoAbrir=\{abrirOsMantimentos\} \/>/.test(APP)
+  && /if \(telefone \|\| a\.id !== "inv" \|\| !prateleira\) return obj;/.test(APP)
+  && /<span className="flex items-start gap-1">\{lista\}<\/span>\{prateleira\}/.test(APP));
+t("a face e o «×N» saem de uma regra só (mantimentosDeUso), com as tochas da masmorra lá dentro",
+  /function mantimentosDeUso\(personagem, masmorra\)/.test(APP)
+  && /const tochas = masmorra && !masmorra\.encerrada \? Math\.max\(0, Number\(masmorra\.tochas\) \|\| 0\) : sup\.tochas;/.test(APP)
+  && /dados: mantimentosDeUso\(personagem, masmorra\)\.dados/.test(APP)
+  && (APP.match(/faceDoDadoDeUso\("tochas"/g) || []).length === 1);
+t("o toque abre a Bolsa e procura «Mantimentos»; a prateleira que estoura cala-se",
+  /const abrirOsMantimentos = \(\) => \{\s*try \{\s*setAba\("inv"\);/.test(APP)
+  && /section\[aria-label="Mantimentos"\]/.test(APP)
+  && /calou\("a prateleira dos mantimentos", e\)/.test(APP) && /calou\("abrir os mantimentos", e\)/.test(APP));
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

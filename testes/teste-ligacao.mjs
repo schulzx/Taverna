@@ -263,6 +263,17 @@ sec("1. NENHUM MÓDULO MUDO");
        do servidor abre o save por ela; as sessões de prova regravaram-se e
        os dourados da pauta, do pedido e do prelúdio regeneraram-se no mesmo
        commit. A entrada saiu, e a lista voltou a ficar VAZIA. */
+    /* 07/11 (os mantimentos como dados de uso, a proposta da AR7 que a
+       pessoa aprovou): `dado-de-uso.js` nasce no backend — a face pela
+       contagem (DADO_DE_USO, faceDoDadoDeUso), o fim do dia que come e rola
+       (oFimDoDia, no lugar de `comerODia` no descanso longo) e a tocha que
+       se acende na masmorra (aTochaQueSeAcende, depois de `entrarNaSala` em
+       `irParaSala`). Credor: o `oficial`, na MESMA leva. A entrada sai
+       quando o App o importar, e a lista volta a ficar VAZIA.
+       `teste-dado-de-uso.mjs` é o primeiro leitor.
+       — 07/11 (a mesma leva): o oficial ligou-o — oFimDoDia no descanso
+       longo, aTochaQueSeAcende em `irParaSala`, faceDoDadoDeUso nos
+       mantimentos da carta. A entrada saiu, e a lista voltou a ficar VAZIA. */
   };
   const mudos = [];
   for (const f of arqs) {

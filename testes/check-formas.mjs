@@ -326,6 +326,12 @@ const ZONAS_DE_TABELA = [
   { arquivo: "src/estilo.js", tabela: "VELA", d5a: "isenta", d5b: "VARRE", piso: 6 },
   /* 05/11 · AAA §15: os materiais dos objetos da mesa (o couro do Diário, da Bolsa, do Códex, o rolo, o contorno) */
   { arquivo: "src/estilo.js", tabela: "MATERIAIS_DOS_OBJETOS", d5a: "isenta", d5b: "VARRE", piso: 6 },
+  /* 07/11 · AR 11 (a constelação do herói, aprovada pela pessoa): o céu e as
+     estrelas de fundo, as duas únicas cores novas da fase (formas.md §AR 11).
+     São material, como o feltro e a vela — não significam nada que T diga. O
+     resto da tabela já escreve T.x e MOLDURA_POR_DEGRAU, e D5b varre-a para
+     que continue assim. Piso 2: é a conta dela hoje. */
+  { arquivo: "src/estilo.js", tabela: "CONSTELACAO", d5a: "isenta", d5b: "VARRE", piso: 2 },
   /* 29/10 · T3 §4c — a zona `TOM_DA_CENA` SAIU, como a de `LUZ_DA_CENA` em V5a. Ela
      nasceu em T3 §2 (os catorze hex do fundo do ModalCena, isentos aqui como
      material); a janela aposentou-se em §5b e a tabela passou a guardar só NOMES
@@ -481,6 +487,14 @@ const COLISAO_DE_RELOGIO_ESCRITA = {
      vale aqui tal e qual: no dia em que `.tv-guardado-varre` deixar de
      animar 600 ms, a entrada SAI. */
   ".tv-guardado-varre": 600,
+  /* 07/11 · AR 11 — `tvCeuBrilho 600ms`, o brilho que corre as ligações da
+     constelação uma vez quando a figura de uma classe fecha. É COINCIDÊNCIA,
+     NÃO CÓPIA, pelo mesmo teste das duas de cima: o número sai de formas.md
+     §AR 11 («um brilho corre todas as ligações uma vez (600 ms)», lido de
+     CONSTELACAO.fecho.brilho), o brilho não desenha tempo de reação nenhum, e
+     se a janela de reação mudar ele continua certo. A regra anti-cemitério
+     vale igual: no dia em que deixar de animar 600 ms, a entrada SAI. */
+  ".tv-ceu-brilho": 600,
 };
 
 /* D5f · O ALVO DE TOQUE SAI DE TABELA, NUNCA DE ARITMÉTICA DE PADDING.

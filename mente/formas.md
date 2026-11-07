@@ -14261,6 +14261,10 @@ céu da proposta ambiciosa**, e está isolada (§AR 9).
 | **O Grupo** · 1905 · 1280 · 375 | `281:1947` · `281:2439` · `281:2922` |
 | **O Mercado** · 1905 · 1280 · 375 (a gaveta da compra) | `282:3205` · `282:3534` · `282:3839` |
 | **Proposta** · a constelação do herói · 1280 | `283:3675` |
+| **AR 11 · o céu** — `Estrela do céu` (Ramo × Estado × Escolhida = 18) · `Ligação do céu` (4) | `292:3730` · `292:3743` |
+| **AR 11 · o céu** · 1905 (Mago + Ladino de trás) · 375 (Clérigo, a subclasse por escolher) · as doze figuras · acender (quadros) | `298:4457` · `299:4688` · `300:4812` · `302:4813` |
+| **AR 12 · o dado de uso** — `Ícone de mantimento/*` (racao, agua, tocha) · `Dado de uso` (Face × Momento = 12) · `Prateleira dos mantimentos` (mesa · telefone) | `292:3599` · `292:3602` · `292:3605` · `292:3654` · `293:3641` |
+| **AR 12 · o dado de uso** · mesa 1905 × 860 · o detalhe a 200% · mesa 375 · o fim do dia (quadros) | `294:3628` · `294:4040` · `294:4080` · `294:4493` |
 
 Todas as cores das telas estão ligadas a variáveis (`T · Mesa C (vela)` e `AAA · molduras vivas`): nas quatro
 telas a 1905, 114 preenchimentos ligados e 1 solto. Os efeitos (halos e sombras) são `alfa(T.x, a)` e
@@ -14594,8 +14598,9 @@ export const MERCADO = {
   gaveta: GAVETA_DO_ENCAIXE,
 };
 
-/* A PROPOSTA (§AR 9) — só se a mesa a aprovar. A única cor nova da fase. */
-export const CONSTELACAO = { ceu: "#0B1426", estrela: "#FFF4D6", acesa: MOLDURA_POR_DEGRAU.ouro.claro, apagada: 0.22 };
+/* A PROPOSTA (§AR 9) — APROVADA a 07/11. Esta linha foi SUBSTITUÍDA pela tabela
+   inteira de §AR 11 (cola-se a de lá, não esta): `apagada: 0.22` saiu — a estrela
+   por acender é inkDim cheio (6,77), não ouro a 22%, que não passava 3:1. */
 ```
 
 ### AR 7 · Os estados e as saídas de movimento
@@ -14658,7 +14663,7 @@ fecha a tocar fora. Nenhuma animação bloqueia o toque seguinte.
 jogada): o critério é *sei o que fazer a seguir sem ler a prosa de novo* (Diário) e *escolho o que aprender sem
 abrir mais nada* (Talentos).
 
-### AR 9 · Para a pessoa decidir — a proposta ambiciosa: a constelação do herói (`283:3675`)
+### AR 9 · A proposta ambiciosa: a constelação do herói (`283:3675`) — **aprovada pela pessoa a 07/11, com as cores `CONSTELACAO`; a forma inteira é a §AR 11**
 
 **A mesma árvore, a mesma regra, o mesmo veredito — desenhada como o céu da noite do herói.** Cada classe é
 uma figura (o Mago um cajado, o Guerreiro um escudo, o Ladino uma adaga…); a subclasse é um braço que brilha na
@@ -14669,7 +14674,8 @@ constelação de RPGs de mundo aberto; o risco medido é a legibilidade, e por i
 árvore: é uma segunda vista** (um botão «ver o céu» na aba Árvore), com o veredito igual. Custa: a geometria de
 cada figura por classe (13 classes × 12–19 pontos, numa tabela) e a vista em SVG; nada no motor. Contraste
 medido (§AR 5): estrela acesa 14,63, nome 15,00, por acender 6,77. **As duas cores novas (`CONSTELACAO`) só
-entram se ela disser que sim.**
+entram se ela disser que sim.** *Disse, a 07/11. A contagem «13 classes» estava errada: `CLASSES` tem 12 (o
+Mago com 16 habilidades, as outras com 12) — a §AR 11 desenha as doze.*
 
 ### AR 10 · A ordem de construção (por retorno)
 
@@ -14690,5 +14696,294 @@ entram se ela disser que sim.**
 
 **Nada aqui toca o save** (o único campo pedido, `feitoEm` da etapa, é novo, aditivo e ignorado pela versão
 antiga). Tudo sai de tabela: desfaz-se num commit.
+
+### AR 11 · A constelação do herói — aprovada a 07/11: a forma para construir
+
+**A pessoa aprovou a §AR 9 com as cores `CONSTELACAO`.** O que faltava ao `aprendiz` era a geometria de cada
+classe, e ela está escrita como dados em **`mente/figma/constelacao-geometria.mjs`** — a mesma fonte que montou
+os quadros (`298:4457`, `299:4688`, `300:4812`). O `aprendiz` copia `FIGURAS_DA_CONSTELACAO` e `LUGAR_DAS_FIGURAS`
+para `estilo.js` tal qual, e põe `validarCeu()` numa suíte (`testes/teste-constelacao.mjs`: zero erros, e cada
+chave de estrela existe na árvore real — ver «a chave» abaixo).
+
+**A geometria, em quatro regras.**
+1. **Cada estrela é um nó real da árvore**, pela chave `"classe:<nome>"` (`arvoreDaClasse`), `"sub:<Subclasse>:<nome>"`
+   (`arvoreDaSubclasse`) ou `"esp:<Especialização>:<nome>"` (`arvoreDaEspecializacao`). O `<nome>` é o `nome` da
+   habilidade, exato. **As 12 classes** (não 13): 12 estrelas na figura (o Mago 16), 4 em cada braço de
+   subclasse, 3 em cada ramo de especialização.
+2. **Coordenadas normalizadas num quadrado** (0..1; y para baixo). A figura da classe mora em cima (y ≤ 0,44) e
+   desenha-se **a subir de degrau**: as habilidades ocupam os pontos pela ordem do nível. Da **raiz** (a estrela
+   de baixo da figura) pendem os três braços das subclasses, cada um na cor da sua gema (`GEMA_DA_SUBCLASSE`); do
+   fim de cada braço, os dois ramos das especializações, em prata.
+3. **O que está à vista nunca são as três camadas inteiras:** sem subclasse → a figura e **os três braços** (o
+   convite: o nome de cada subclasse na ponta, na luz da gema); com subclasse → a figura, **o braço dela e os dois
+   ramos**; com especialização → só **o ramo escolhido**. O céu acaba por ser o desenho do caminho que o herói
+   andou, e só dele.
+4. **Distância mínima de 0,07** entre duas estrelas que possam estar à vista juntas: 42 px a 600 de lado (a
+   mesa) e **24 px a 343 (o telefone) — os 24 de WCAG 2.2 2.5.8**. `validarCeu()` mede todos os conjuntos (12
+   classes × «três braços», «braço + dois ramos», «braço + um ramo»): zero erros.
+
+As figuras: Guerreiro **o escudo** · Mago **o cajado** · Ladino **a adaga** · Clérigo **o cálice** · Caçador **o
+arco** · Bardo **a lira** · Monge **o círculo aberto** · Druida **o carvalho** · Feiticeiro **a chama** · Bruxo **o
+crescente** · Engenheiro **a engrenagem** · Invocador **o portal** (as doze no quadro `300:4812`, cada uma num
+estado diferente). A engrenagem começou em ziguezague e lia-se como hexagrama; foi redesenhada (anel + seis
+raios) antes de sair.
+
+**As ligações.** As da figura são pares de estrelas. **Acesa só entre duas acesas**, no metal *meio* do ramo
+(ouro, a gema `corpo`, prata), 2 px na mesa e 1,6 no telefone; **apagada** é `lineStrong` 1 px tracejado 3/5 —
+a silhueta da figura por desenhar está sempre lá, porque planear é metade do gosto. A **ligação de nascença** (a
+raiz → a primeira do braço; a última do braço → a primeira do ramo) tem `null` à esquerda nos dados, e **acende
+quando a estrela da ponta acende**: é a escolha que a acende, não a estrela de cima (um herói que não aprendeu a
+raiz não fica com um braço a flutuar).
+
+**A multiclasse (`LUGAR_DAS_FIGURAS`).** A figura da frente é a classe de origem (`pers.classe`); as outras vêm
+por degraus (`ranksDoPersonagem`). Na mesa, a segunda fica **à direita, a 1,04 lados, 0,14 abaixo, a 0,72**; com
+três, as duas de trás empilham a 0,48. No telefone, a segunda fica **por baixo (y 1,06) a 0,72** e o céu rola.
+**A figura de trás é UM botão** («Trazer o Ladino para a frente», com moldura tracejada `lineStrong` e o nome
+em Cinzel 12): a 0,48 as estrelas ficavam a 21 px, abaixo de 2.5.8, e por isso só a figura da frente tem estrelas
+tocáveis. Tocar traz essa classe para a frente (estado de tela, não de save).
+
+**«Ver o céu» — a segunda vista da aba Árvore (`src/painel-talentos.jsx`).** Um `VerboComPreco` papel *gesto* no
+canto de cima à direita da área da árvore: **«Ver o céu · a mesma árvore, no céu»** na árvore, **«Ver a árvore ·
+a mesma árvore, deitada»** no céu (no telefone, 132 × 44 e só o verbo). A árvore **não sai**: o céu é uma
+segunda vista dos mesmos dados (`arvoreDaClasse` & c.), e **tocar numa estrela abre o mesmo veredito** — o painel
+fixo a 1905, o popover ao lado da estrela a 1280, a gaveta a 375 —, com o mesmo `VerboComPreco` armado ou
+*impedido* e a mesma cerimónia. A vista escolhida vive no estado do painel (não no save); abrir os Talentos abre
+sempre na árvore até o jogador escolher o céu nessa sessão.
+
+**Os tamanhos.**
+
+| | a área | o quadrado | a figura de trás | o veredito |
+|---|---|---|---|---|
+| **1905** | a área da árvore, 1117 × 676 (entre a coluna da classe, 280, e o veredito, 420) | 600, em (24, 76); a barra de cima (76) tem «O CÉU DO MAGO» em Cinzel 20 `ouroClaro`, a linha «o cajado · 6 de 26 estrelas acesas · Elementalista» em Spectral 13 `inkDim` e o verbo à direita | em (648, 160), lado 432 | o painel fixo, igual |
+| **1280** | a largura toda menos 24 de cada lado, a mesma altura | 600, em (24, 76) | em (648, 160), lado 432 — cabe em 1232 | popover de 340 ao lado da estrela (como na árvore) |
+| **375** | a área da árvore em pé | 343, em (16, 44); a barra de 44 com o título em Cinzel 15 e o verbo de 132 | por baixo, em (0,14 · 1,06) a 0,72, com rolo | a gaveta de baixo; ao abrir, o céu rola para a estrela escolhida ficar nos 60% de cima |
+
+**As estrelas (`Estrela do céu`, `292:3730`).** *Acesa* = o ponto no metal claro do ramo (ouro claro · a **luz**
+da gema · prata clara), raio 5 (4 no telefone), com halo do mesmo metal a 0,18 e raio 16 (13). *Disponível* (=
+`pode` **e** pontos ≥ `custoPontos`) = anel `amber` de 7 (6), traço 2, com o miolo `inkDim`. *Por acender* = o
+ponto `inkDim` de 2,5 (2). *Escolhida* = o anel `ouroClaro` de 12 (10) por fora. **A forma diz o estado** (ponto
+cheio com halo / anel / ponto pequeno), a cor diz o ramo — a cor é a segunda leitura (1.4.1). O halo é parado:
+nada respira em vinte estrelas ao mesmo tempo (a mesma regra do nó da árvore).
+
+**Os nomes.** A 1905 e a 1280: a escolhida, as disponíveis, as pontas (o nome da subclasse em Cinzel 12 na luz
+da gema; o da especialização em prata clara) e as acesas, **por esta prioridade**. Cada nome tenta o lado de fora
+da figura (à direita se x ≥ 0,5, à esquerda se não), depois o outro lado, depois por baixo, depois por cima; o
+primeiro sítio que não cobre estrela nem outro nome ganha. **Se nenhum couber, cala** — o nome está no veredito e
+no `aria-label`. No quadro a 1905 calaram zero. No telefone: só a escolhida e as pontas.
+
+**Acender uma estrela (`302:4813`).** São os tempos de `CERIMONIA_DE_APRENDER`, sem número novo (uma ação, uma
+forma): **0** o verbo afunda; **0–240** o anel âmbar vira ponto de ouro (escala 0 → 1,35 → 1, o halo abre de 0 a
+0,18); **240–620** a ligação desenha-se da vizinha acesa para a nova (traço de 0 a 100%) e o selo de pontos
+conta; **620–900** a frase «Contramágica é tua» sobe 8 px e fica 1,6 s. **Se a figura fechar** (todas as
+estrelas da classe acesas), um brilho corre todas as ligações uma vez (600 ms) e a frase é «O cajado está
+completo». **Escolher a subclasse:** os outros dois braços esvanecem (320 ms) e a nascença do escolhido acende na
+gema. **`prefers-reduced-motion`:** sem escala, sem traço, sem brilho — a estrela e a ligação esvanecem juntas
+(160 ms, `CERIMONIA_DE_APRENDER.reduzido`), os braços que saem somem a seco (120 ms), a frase aparece e fica.
+**Nunca custa o turno:** nada espera a animação.
+
+**Sem pontos.** Nenhum anel âmbar no céu (nada está disponível); o `Selo de pontos` no estado *zero*; por baixo do
+título, em `inkDim`: «Sem pontos por gastar — o próximo chega no nível 7» (de `pontosNoNivel`). As estrelas
+continuam tocáveis: o veredito vem *impedido* com «faltam 2 pontos». O céu sem nenhuma estrela acesa (só em
+teoria: a criação já dá habilidades) mostra a silhueta tracejada inteira.
+
+**Acessibilidade.** O céu é `role="group"` com `aria-label="O céu do Mago: 6 de 26 estrelas acesas"`. **Cada
+estrela é um `<button>`** com o nome e o estado: «Contramágica — Mago, degrau 6, defesa. Por acender: custa 2
+pontos.» · «Projétil Arcano — aprendida.» · «Meteoro — exige 8 de Mago (tens 6).» O alvo é um círculo de
+**min(44, distância à vizinha mais perto)** — 42 na mesa, 24 no telefone. **Teclado:** o céu é UMA paragem de
+Tab (*roving tabindex*), entra na escolhida, ou na primeira disponível, ou na raiz; as setas vão à estrela mais
+perto nessa direção (num cone de ±60°); Home = a raiz; Enter/Espaço abrem o veredito; Esc fecha o veredito, e o
+segundo Esc a tela. O foco é `tv-anel-foco` à volta do alvo. A figura de trás é um `<button>` com «Trazer o Ladino
+para a frente — 3 de 24 acesas».
+
+**A tabela (substitui a linha `CONSTELACAO` de §AR 6; depois de `CERIMONIA_DE_APRENDER`):**
+
+```js
+/* AR 11 · A CONSTELAÇÃO DO HERÓI (aprovada a 07/11) — formas.md §AR 11. A
+   geometria é FIGURAS_DA_CONSTELACAO e LUGAR_DAS_FIGURAS, copiadas tal qual de
+   mente/figma/constelacao-geometria.mjs. A única cor nova da fase é o céu. */
+export const CONSTELACAO = {
+  ceu: "#0B1426",                                   /* o fundo — Figma ar/ceu/fundo */
+  estrela: "#FFF4D6",                               /* só as estrelas de fundo (decoração) — ar/ceu/estrela */
+  fundo: { quantas: { mesa: 140, telefone: 60 }, raio: [0.6, 1.7], alfa: [0.18, 0.48] },
+  lado: { mesa: 600, telefone: 343 },
+  topo: { mesa: 76, telefone: 44 },
+  minimo: 0.07,
+  alvo: { maximo: 44, minimo: 24 },
+  acesa: { raio: { mesa: 5, telefone: 4 }, halo: { raio: { mesa: 16, telefone: 13 }, alfa: 0.18 } },
+  disponivel: { anel: { mesa: 7, telefone: 6 }, espessura: 2, cor: T.amber, miolo: 2.5 },
+  porAcender: { raio: { mesa: 2.5, telefone: 2 }, cor: T.inkDim },
+  escolhida: { anel: { mesa: 12, telefone: 10 }, espessura: 2, cor: MOLDURA_POR_DEGRAU.ouro.claro },
+  /* "gema" = GEMA_DA_SUBCLASSE[sub]: a luz na estrela, o corpo na ligação */
+  metal: {
+    classe: { luz: MOLDURA_POR_DEGRAU.ouro.claro, fio: MOLDURA_POR_DEGRAU.ouro.meio },
+    subclasse: { luz: "gema.luz", fio: "gema.corpo" },
+    especializacao: { luz: MOLDURA_POR_DEGRAU.prata.claro, fio: MOLDURA_POR_DEGRAU.prata.meio },
+  },
+  ligacao: { acesa: { espessura: { mesa: 2, telefone: 1.6 } }, apagada: { cor: T.lineStrong, espessura: 1, tracejado: [3, 5] } },
+  rotulo: { tamanho: TIPOS.piso, afastamento: 13, acesa: T.ink, disponivel: T.inkMeio, escolhida: MOLDURA_POR_DEGRAU.ouro.claro,
+    ponta: { fonte: "Cinzel", tamanho: TIPOS.piso, especializacao: MOLDURA_POR_DEGRAU.prata.claro } },
+  figuraDeTras: { moldura: T.lineStrong, tracejado: [4, 4], raio: 14 },
+  fecho: { brilho: 600 },
+  saida: { bracos: 320, reduzido: 120 },
+};
+```
+
+**O contraste (WCAG 2.2, contra `ceu` #0B1426, medido em `node`):** estrela acesa ouro claro **14,63** · prata
+clara **16,22** · a luz das 36 gemas **≥ 7,40** (a pior, Assassino) · anel disponível `amber` **8,70** · por
+acender `inkDim` **6,77** · ligação acesa ouro meio **8,67**, prata meio **9,57**, o corpo das gemas **≥ 3,26** (o
+pior, Cronista) · ligação apagada `lineStrong` **4,53** · nome aceso `ink` **15,00**, disponível `inkMeio`
+**10,34**, escolhida ouro claro **14,63**, as pontas na luz da gema ≥ **7,40**. **Nenhuma letra abaixo de 4,5,
+nenhuma forma abaixo de 3.**
+
+**O «superior», escrito.** *Medida:* a árvore continua (nada se reaprende); a 1905 o céu inteiro de uma classe
+— 26 estrelas — cabe num ecrã sem rolo, como a árvore. *Estudo citado:* Game Accessibility Guidelines, «Ensure no
+essential information is conveyed by colour alone» (o estado é forma: ponto com halo / anel / ponto pequeno);
+WCAG 2.2 **2.5.8** (alvos de 24 com espaçamento — é daí que vêm o 0,07 e a figura de trás como botão), 2.4.7
+(foco) e 1.4.11 (os números acima). *Experiência jogada:* fica para o `jogo`, com o critério da ordem de 04/11 —
+*quem abre os Talentos pela primeira vez quer tocar no céu?* — e o da §AR 8 — *escolho o que aprender sem abrir
+mais nada?* (o veredito é o mesmo; se o céu fizer escolher pior, é a vista que perde, não a árvore).
+
+**O que pede ao sistema (para `mente/pedidos-ao-sistema.md`):**
+1. **Os nomes repetidos entre ramos.** O Arqueiro tem «Tiro Duplo», «Flecha Perfurante», «Chuva de Flechas» e
+   «Tiro do Fim» também na classe; o Arcanista «Contramágica», «Prisão Arcana» e «Reescrever o Instante»; o
+   Assassino «Execução»; o Paladino «Julgamento»; o Punho de Ferro «Rajada de Golpes»; o Andarilho «Passo do
+   Vento». Como `dominada` compara por nome, **aprender uma acende as duas** — no céu e na árvore. O céu mostra
+   isso porque é a verdade do sistema; a pergunta é se é a verdade *querida*: são a mesma habilidade (e então a
+   do braço devia ser outra) ou duas (e então precisam de chave própria)? Até lá, a geometria guarda as duas
+   estrelas com chaves distintas e nada muda na forma.
+2. **Nada mais.** O céu lê o que a árvore já lê; nenhum campo de save.
+
+**Peso:** médio no regime da ordem de 23/09 (tela nova, segunda vista, nada se reaprende). Nada toca o save.
+
+### AR 12 · O dado de uso — os mantimentos pousados na mesa (07/11)
+
+**A proposta aprovada** (`mente/ar7-prova.md`, «Para a pessoa decidir»): os mantimentos saem da linha de texto e
+ficam na mesa como **três dados ao pé da Bolsa** — rações, água e tochas —, cada um com a face que a contagem lhe
+dá. Ao fim do dia rolam à vista; num 1, encolhem. A régua é a da ordem de 04/11: *um dado a cada dois ou três
+turnos fora da luta*. **A regra é do `backend`** (`src/dado-de-uso.js`, em curso a 07/11): rações e água pelos
+dias que restam, tochas pelas unidades; num 1 perde-se uma a mais. **Os degraus vivem em `DADO_DE_USO.degraus`, e
+não se copiam para aqui** (a lei do `v9.221`); no dia em que isto se escreveu, os dias já tinham um **d10** a partir
+de 6, por cima do d8 do pedido — por isso a peça desenha **d10, d8, d6, d4 e vazio**. **A forma não calcula a
+face: lê-a** (`faceDoDadoDeUso`).
+
+**A peça (`Dado de uso`, `292:3654`).** É o dado da Bandeja — `FORMAS_DO_DADO` (d8 losango, d6 quadrado, d4
+triângulo) com `PAPEL_DO_DADO.uso`: **corpo `inkMeio`, o osso**, traço e tinta `onAccent` (10,32). Dentro, **em
+repouso, o glifo do mantimento** (desenhado, nunca emoji: o `check-formas` proíbe glifo de fonte):
+
+```js
+/* em GLIFOS (src/glifos.js), quadro 24, traço 1,5 — a família de sempre; tocha já existe */
+racao: { de: "desenho:AR12", d: "M4 14c0-4.4 3.6-8 8-8s8 3.6 8 8v2.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5zM8.5 10.5l-1 2.5M12.5 9.5l-1 3M16.5 10.5l-1 2.5" },
+agua:  { de: "desenho:AR12", d: "M12 3.5c-2 2.6-6 7.2-6 11a6 6 0 0 0 12 0c0-3.8-4-8.4-6-11zM9.2 15.2a2.8 2.8 0 0 0 2.8 2.8" },
+```
+
+**O d10** leva as facetas de sempre — experimentou-se tirá-las para o glifo caber ao meio, e **sem elas o d10
+confundia-se com o d8** (os dois são losangos; é o V das facetas que os separa). Por isso, no d10, o glifo e o
+número moram no triângulo de cima, centro (24, 18) do quadro 48, a 14 px na mesa e 10 no telefone.
+
+**A forma do dado É a quantidade** (d10/d8 muito → d4 pouco), e por baixo vai **a contagem do inventário**, «×5», em
+JetBrains Mono Bold 12 `inkMeio` — «×» para não se ler como número rolado. Na face d4 a contagem passa a
+`danger`: é a última face. *Vazio* = o contorno tracejado de um d4 em `lineStrong`, o glifo em `inkDim`, «×0» em
+`danger`; não rola. **A contagem continua também na Bolsa** (Equipamento → Mantimentos), e as peças de lá passam a
+mostrar o mesmo `Dado de uso` a 28 por cima do número — uma ação, uma forma: um mantimento tem uma cara só.
+
+**Onde pousam.**
+- **Mesa (1905 × 860, a que a pessoa joga; `294:3628`):** na coluna dos objetos (120 de largo), **logo por baixo
+  da Bolsa**, 8 px abaixo do rótulo dela. **Dado 44**, dois em cima (rações, água) e um em baixo ao centro
+  (tochas) — como dados pousados, e porque três de 44 numa fila não cabem em 120. **O d4 leva a letra a 14,7**
+  (a 36 seriam 12, no limite; a 44 sobra). Com os cinco objetos (o Códex e a Ascensão) a coluna mede 752 de 788:
+  cabe na mesa baixa. O detalhe a 200% está em `294:4040`.
+- **Telefone (375; `294:4080`):** debaixo dos três objetos, na fila das cartas (150 de alto; os objetos ocupam
+  ~72, sobram 44+): **dado 28, os três numa fila**, a contagem por baixo, o botão 100 × 48. Rola de lado com a
+  fila, como os objetos.
+
+**É UM botão, não três.** A ação é uma só — **abrir a Bolsa no Equipamento, com o foco no título «Mantimentos»**
+(onde vivem as rações, a água, as tochas, o kit, a exaustão e o forragear) —, e três alvos para a mesma ação seriam
+a mesma ação com três caras. `aria-label`: «Mantimentos: rações 5, dado de seis; água 9, dado de oito; tochas 2,
+dado de quatro, a acabar. Abrir na Bolsa.» (vazio: «tochas: nenhuma»). Foco `tv-anel-foco`; pressionado
+`ENCAIXE.pressionado`. A fiação (abrir a Bolsa na aba certa e focar a secção) é do `oficial` (`objetosDaMesa`,
+`App.jsx`); a peça mora em `painel-mesa-do-mestre.jsx` ao lado de `ObjetoDaMesa`, e o desenho do dado é o `Corpo`
+de `painel-bandeja.jsx`, exportado (hoje é interno) — **não se desenha um segundo dado**.
+
+**O fim do dia (`294:4493`).** **0–520** os dados que o sistema mandou rolar rodam (−18°) e o número troca a cada
+60 ms (`MOVIMENTO_DO_DADO`), um 90 ms depois do outro; **520–660** pousam com o número (`onAccent` sobre o osso);
+**saiu 1**: o selo «−1» (disco `danger` de 18, letra `onAccent`, 5,77) no canto; **660–980** a face desce (d6 → d4,
+escala 0,82 → 1, 320 ms) e a contagem conta até ao valor novo; **+1600** o glifo volta. **A mesma rolagem entra na
+Bandeja** como um lance de papel `uso` («Rações · d6 → 1 · perdeste uma ração a mais») — é a Bandeja quem anuncia
+ao leitor de ecrã (o `aria-live` dela), nunca um segundo anúncio. **`prefers-reduced-motion`:** sem rodar e sem
+escala; o número aparece seco (120 ms, `MOVIMENTO_DO_DADO.semMovimento`), o selo aparece igual, a face troca seca e
+a contagem salta. **Nunca custa o turno:** o campo aceita a jogada desde o 0.
+
+**A tabela (depois de `MOVIMENTO_DO_DADO`, que ela lê; e de `ALVOS`, `TIPOS`, `BANDEJA`):**
+
+```js
+/* AR 12 · O DADO DE USO NA MESA (07/11/2026) — formas.md §AR 12; Figma 292:3654,
+   293:3641, 294:3628. A face vem do sistema (faceDoDadoDeUso: 10 | 8 | 6 | 4 | null);
+   a peça só a desenha. No d10 o glifo e o número vão a centroDoD10 (o triângulo de cima). */
+export const DADO_DE_USO_NA_MESA = {
+  ordem: ["racoes", "agua", "tochas"],
+  glifo: { racoes: "racao", agua: "agua", tochas: "tocha" },     /* GLIFOS */
+  nome: { racoes: "rações", agua: "água", tochas: "tochas" },
+  papel: "uso",                                                  /* PAPEL_DO_DADO.uso — o osso */
+  mesa: {
+    dado: 44, folga: 8, entreLinhas: 22, linhas: [["racoes", "agua"], ["tochas"]],
+    glifo: { 10: 14, 8: 22, 6: 22, 4: 17 },
+    alvo: { largura: 120, alto: 132 }, depoisDe: "bolsa", acima: 8,
+  },
+  telefone: {
+    dado: 28, folga: 8, linhas: [["racoes", "agua", "tochas"]],
+    glifo: { 10: 10, 8: 14, 6: 14, 4: 11 },
+    alvo: { largura: 100, alto: ALVOS.piso }, debaixoDos: "objetos",
+  },
+  contagem: { tamanho: TIPOS.maquina, peso: 700, cor: T.inkMeio, aperta: T.danger, prefixo: "×", entre: 2 },
+  apertaNaFace: 4,
+  centroDoD10: [24, 18],
+  vazio: { forma: 4, aro: T.lineStrong, tracejado: [3, 3], glifo: T.inkDim },
+  selo: { lado: BANDEJA.selo, chao: T.danger, letra: T.onAccent, texto: "−1" },
+  rolar: { dura: MOVIMENTO_DO_DADO.rolar, troca: MOVIMENTO_DO_DADO.troca, entreDados: MOVIMENTO_DO_DADO.entreDados, giro: -18, mostra: 1600 },
+  encolher: { dura: 320, escala: 0.82 },
+  reduzido: MOVIMENTO_DO_DADO.semMovimento,
+};
+```
+
+**O contraste (WCAG 2.2; no feltro `bg` #12241B / no pior ponto da vela #1F2C1D):** o osso (forma) **9,13 /
+8,23** · glifo e número `onAccent` sobre o osso **10,32** · contagem `inkMeio` **9,13 / 8,23** · contagem a
+acabar `danger` **5,11 / 4,60** · o vazio `lineStrong` (forma) **4,00 / 3,61** · glifo do vazio `inkDim` **5,98 /
+5,38** · o selo `onAccent` sobre `danger` **5,77**. Nenhuma letra abaixo de 4,5; nenhuma forma abaixo de 3.
+
+**O «superior», escrito.** *Medida:* ver quanto falta de comida passa de **2 toques** (abrir a Bolsa, ir ao
+Equipamento) a **0** — está na mesa; e cada fim de dia põe **até três dados a rolar fora da luta**, que é a régua
+da ordem de 04/11 (a medir pelo `jogo` numa sessão: hoje, fora da luta, quantos dados por turno?). A letra do d4 a
+1905: 14,7 px (piso 12). *Estudo citado:* Game Accessibility Guidelines, «Ensure no essential information is
+conveyed by colour alone» — a quantidade é a forma (d8/d6/d4) e o número, o vermelho é a terceira leitura; WCAG 2.2
+2.5.8 (o botão de 120 × 132 / 100 × 48). *Experiência jogada:* fica para o `jogo` — *vejo a comida a acabar sem
+abrir nada, e o 1 no fim do dia dói?*
+
+**O que pede ao sistema (para `mente/pedidos-ao-sistema.md`, ao `backend` que já está nisto):** conferido contra
+o que estava na árvore a 07/11 (`src/dado-de-uso.js` e `lancamentoDoDadoDeUso` em `src/motor/a-bandeja.js`, ainda
+por commitar):
+1. **A face:** `faceDoDadoDeUso(tipo, suprimentos, bocas)` já serve. A contagem à vista é `n` em **unidades** (o
+   que a Bolsa mostra); a face é que vem dos dias.
+2. **O fim do dia como lance da Bandeja:** `lancamentoDoDadoDeUso` já dá `papel: "uso"` e `usos` alinhado com os
+   dados — é por `usos[i]` que a prateleira sabe que dado animar. Um lance só, duas vistas.
+3. **Os emojis das falas e do `icone`** (`🥖`, `💧`, `🕯` em `DADO_DE_USO.tipos[*].icone`, nas `falas` e em
+   `ultimaTocha`) **não podem chegar à tela** (o `check-formas` proíbe glifo de fonte). O `🕯` já tem tradução para
+   `tocha` no mapa de emojis de `glifos.js`; o `🥖` e o `💧` não têm. Pede-se: tirar o emoji das frases (a Bandeja
+   já põe o dado ao lado), ou acrescentar `"🥖": "racao"` e `"💧": "agua"` a esse mapa quando os glifos novos
+   entrarem. O `icone` da tabela fica sem leitor na tela: a peça lê `DADO_DE_USO_NA_MESA.glifo`.
+4. **Quando rola a tocha** (`aTochaQueSeAcende`) é regra, e é dele: a peça rola o dado que chegar no lance.
+
+**Peso:** médio no regime da ordem de 23/09 (peça nova; o que estava na Bolsa continua lá). O campo de save dos
+dados de uso foi aprovado a 04/11 e é do `backend`; a forma não toca no save.
+
+### AR 13 · Para a pessoa decidir — a proposta ambiciosa: o céu como epitáfio e como cartão
+
+**Quando o herói morre, ou a campanha fecha, a última tela é o céu dele.** A constelação inteira — a figura da
+classe, o braço da gema, o ramo de prata, as figuras das outras classes —, com o nome, os dias e a frase do
+cronista por baixo, e um verbo: **«Guardar o céu»**, que exporta a imagem (o desenho já é SVG, `svgDoCeu` em
+`mente/figma/constelacao-geometria.mjs` prova-o; é só a moldura e o PNG). Dois heróis do mesmo Mago nunca têm o
+mesmo céu, porque o céu é o caminho que se andou e não a classe que se escolheu. É a impressão da ordem de 04/11
+levada ao fim: o jogo acaba com uma coisa que se mostra a alguém. Custa: uma tela de fecho (o `jogo` decide quando
+aparece — morte, fim, legado) e a exportação de imagem; nada no motor. Pede à pessoa porque mexe no fim do jogo,
+que é o que o jogador leva consigo.
 
 ---
