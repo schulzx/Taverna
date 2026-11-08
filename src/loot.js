@@ -178,7 +178,14 @@ function concordancia(par, baseNome) {
 
 /* Gera UM equipamento. raridade: id · nivel: nível do herói (escala o bônus)
    tipo: força um slot ("arma", "anel"…) ou null para sortear. */
-export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null, lex = null } = {}) { return comSorte(rnd, () => {
+/* `base` (09/11, TE6 · os espólios): o nome de uma base de BASES[tipo] que a
+   peça TEM de ter — a recompensa de uma quest que dá «uma lâmina melhor do
+   que a tua» precisa da mesma forma da que o herói empunha, e sortear entre
+   trinta armas daria um montante a um mago. Só vale com `tipo` e uma base
+   que exista nesse encaixe; ausente, a base é sorteada como sempre, e o
+   sorteio consome os mesmos dados de antes (toda chamada antiga rola
+   byte a byte o que rolava). */
+export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = null, lex = null, base: baseForcada = null } = {}) { return comSorte(rnd, () => {
   /* rnd opcional (v9.2): com semente, o mesmo mercador tem sempre o mesmo
      estoque — sem ela, o sorteio é aleatório como sempre foi. */
   const rand = rnd || sorteDaCasa;
@@ -201,7 +208,8 @@ export function gerarLoot(raridade = "comum", { tipo = null, nivel = 1, rnd = nu
      mecânica e absurdo no nome, que é meia correção do defeito que abriu
      esta versão. A bota que voa deve ser a Bota Alada. */
   const promissoras = degrauDe(raridade).concede ? elegiveis.filter((b) => CONCESSAO_DA_BASE[b.nome]) : [];
-  const base = promissoras.length ? pickL(promissoras)
+  const fixa = baseForcada && BASES[slot] ? BASES[slot].find((b) => b.nome === baseForcada) || null : null;
+  const base = fixa ? fixa : promissoras.length ? pickL(promissoras)
     : elegiveis.length ? pickL(elegiveis)
       : BASES[slot].find((b) => tierDaBase(b.nome) === 0) || BASES[slot][0];
   const escalaNivel = Math.min(3, Math.floor((nivel - 1) / 5)); // +1 a cada 5 níveis, teto +3

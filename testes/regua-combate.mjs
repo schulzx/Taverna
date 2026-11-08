@@ -227,6 +227,7 @@ import { intencaoDaVez, menteDaCriatura } from "../src/adversario.js";
 import { PESO_AMEACA } from "../src/orcamento.js";
 import { salvaDoGolpe, bonusDeSalvaguarda } from "../src/salvaguardas.js";
 import { atributoEfetivo } from "../src/regras-jogo.js";
+import { ataquesExtras, danoExtraDeDadiva, criticoMinimo } from "../src/dadivas.js";
 
 /* ============================================================
    1. AS TABELAS — se é número, é tabela
@@ -676,20 +677,33 @@ export function comSorteTravada(semente, fn) {
    quando mede uma ficha de verdade — a Iara nasceu com 20, e a régua dava-lhe
    os 14 de `pvEsperadoJogador`. Ausente, é a conta de sempre: os três
    cenários da casa não o declaram, e medem byte a byte o que mediam. */
+/* `equipados` e `sintonizados` (09/11, TE7 · a régua do poder): o cenário
+   PODE vestir o herói com PEÇAS de verdade — o item inteiro, no formato de
+   `gerarLoot`, com o bónus de dano, a defesa e os poderes —, e dizer o que
+   ele sintonizou. É a porta por onde a régua do poder mede o kit típico
+   contra o kit da história (`teste-regua-do-poder.mjs`): sem ela, a régua
+   só sabia vestir NOMES, e um nome não carrega o +1 que se quer medir.
+   Ausentes, é a conta de sempre (os nomes e a defesa da tabela): os três
+   cenários da casa não os declaram, e medem byte a byte o que mediam. */
 function fichaDoHeroi(cen) {
   const h = cen.heroi;
   const vidaMax = Number(h.vidaMax) > 0 ? Number(h.vidaMax) : pvEsperadoJogador(h.nivel, h.vigor);
   const peca = (nome, tipo) => (nome ? { nome, tipo, ...(tipo === "arma" ? {} : { atributos: { defesa: DEFESA_DA_ARMADURA[nome] || 1 } }) } : null);
   const equipados = {};
-  if (h.arma) equipados.arma = peca(h.arma, "arma");
-  if (h.armadura) equipados.armadura = peca(h.armadura, "armadura");
-  if (h.escudo) equipados.escudo = peca(h.escudo, "escudo");
+  if (h.equipados && typeof h.equipados === "object") {
+    for (const [slot, it] of Object.entries(h.equipados)) if (it) equipados[slot] = { ...it, atributos: { ...(it.atributos || {}) } };
+  } else {
+    if (h.arma) equipados.arma = peca(h.arma, "arma");
+    if (h.armadura) equipados.armadura = peca(h.armadura, "armadura");
+    if (h.escudo) equipados.escudo = peca(h.escudo, "escudo");
+  }
   return {
     nome: h.nome, classe: h.classe, nivel: h.nivel,
     atributos: { ...h.atributos },
     vida: vidaMax, vidaMax,
     condicoes: [], efeitos: [], guardas: [], inventario: [],
     equipados, morrendo: false, morto: false, morte: { sucessos: 0, falhas: 0 },
+    ...(Array.isArray(h.sintonizados) ? { sintonizados: [...h.sintonizados] } : {}),
   };
 }
 
@@ -947,8 +961,17 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
          `caminhada` é a única porta que o faz calar, e ela é 0 por padrão —
          com k = 0 o teste vira `rodada > 0`, verdadeiro em toda rodada, e a
          régua é byte a byte a de sempre. */
+      /* O PODER DA PEÇA ENTRA NO GOLPE (09/11, TE7 · a régua do poder), pelas
+         MESMAS três portas do App (resolverAtaqueJogador): o golpe extra
+         (ataquesExtras), o dano fixo (danoExtraDeDadiva) e o crítico mais
+         largo (criticoMinimo) — que leem as dádivas E os poderes do item
+         equipado e sintonizado (poderesDeItem, dadivas.js). Sem isto a régua
+         via o +dano da peça e não via o «Sede, +2» que o jogo soma, e mediria
+         um item de quest mais fraco do que ele é. O herói dos três cenários da
+         casa não tem dádiva nem poder: as três somam 0, 0 e 20 (o crítico de
+         sempre), e a régua mede byte a byte o que media. */
       if ((heroi.vida || 0) > 0 && rodada > caminhada) {
-        const nAtaques = ataquesPorTurno(heroi.classe, heroi.nivel);
+        const nAtaques = ataquesPorTurno(heroi.classe, heroi.nivel) + ataquesExtras(heroi);
         const arma = heroi.equipados && heroi.equipados.arma;
         const bonusAtk = modDoGolpe(heroi, arma) + 2 + Math.floor((heroi.nivel - 1) / 4);
         for (let i = 0; i < nAtaques; i++) {
@@ -958,7 +981,8 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
           const r = resolverAtaque({
             atacante: heroi.nome, alvo, ehAtacanteInimigo: false,
             bonusAtaque: bonusAtk,
-            danoBase: danoDaClasse(heroi.classe, heroi.nivel, Math.round(danoDe(heroi, false) / 2)),
+            danoBase: danoDaClasse(heroi.classe, heroi.nivel, Math.round(danoDe(heroi, false) / 2)) + danoExtraDeDadiva(heroi),
+            criticoEm: criticoMinimo(heroi),
             condAtacante: heroi.condicoes || [], condAlvo: alvo.condicoes || [],
             tipoDano: elementoDaArma(heroi), perfilAlvo: perfilDe(alvo),
           });

@@ -2551,6 +2551,12 @@ function garantirRegisto(r, F) {
        quantas reviravoltas tinham disparado até ali. Campo novo e aditivo:
        só viaja quando existe, e a versão antiga ignora-o. */
     ...(obj(R.vistaEm) ? { vistaEm: { dia: Math.max(0, inteiro(R.vistaEm.dia) || 0), n: Math.max(0, inteiro(R.vistaEm.n) || 0) } } : {}),
+    /* TE6 (09/11): OS ESPÓLIOS DA QUEST — os achados que o herói já levou
+       (os ids de espolios.js) e se a paga do fecho já caiu. Campo novo e
+       aditivo, como o de cima: só viaja quando existe, e a versão antiga
+       ignora-o. Sem isto, o primeiro avanço do turno apagava-o, e o achado
+       escondido voltava a cair. */
+    ...(obj(R.espolio) ? { espolio: { achados: arr(R.espolio.achados).filter((x) => typeof x === "string"), pago: R.espolio.pago === true } } : {}),
   };
 }
 const diaDe = (E) => Math.max(0, inteiro(obj(E) && E.dia) || 0);

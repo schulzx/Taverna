@@ -338,6 +338,18 @@ sec("1. NENHUM MÓDULO MUDO");
        — 08/11 (BQ7, a mesma fase): o App importa-o (esqueletoDaCampanha e
        comOEsqueleto na criação do mundo, questsDoAto na abertura), e a
        entrada saiu. */
+    /* 09/11 (Fase TE, TE6 · os espólios): `espolios.js` nasce no backend —
+       a paga do fecho pela temperatura e pela família do caminho
+       (pagaDaQuest), os achados da etapa e o escondido que espera a quest
+       fechar (achadosDaEtapa, achadoEscondido), o artefacto que cresce
+       (despertarArtefacto), o momento da recompensa (revelacaoDoEspolio) e a
+       linha da pauta (espolioNaPauta) — e espera a TE9, a fiação: o motor
+       das quests (quests-do-turno.js) paga no fecho chaveado em `aplicadas`,
+       o achado cai no chão, a linha vai à secção `momento`. Credor: o
+       `backend` (motor) e o `oficial` (App), na MESMA fase. A entrada sai
+       quando o motor ou o App o importar. `teste-espolios.mjs` e
+       `teste-regua-do-poder.mjs` são os primeiros leitores. */
+    "espolios.js": "09/11 · TE6 → TE9 (quests-do-turno.js e App.jsx)",
   };
   const mudos = [];
   for (const f of arqs) {
