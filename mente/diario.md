@@ -24,6 +24,15 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 08/11 · v9.622 · BQ3, BQ4 e BQ5 — as condições, as três primeiras quests e o vilão
+- **BQ3 (`backend`, 8a71cd4):** `src/condicoes-da-quest.js` — 16 predicados ativos por papel, cada um com a porta que escreve o facto (catraca); 5 reservados recusados até haver escritor; `julgarEtapa` → `{ feita, falta }` em dados («falar com Corrado (1 de 3)»).
+- **BQ4 (`backend`, 71a0018):** `src/biblioteca-de-quests.js` — a ficha como dado, `validarQuest` recusa as leis da pessoa (a morte como passo, desfecho sem facto, o pior sem acto do herói); as três primeiras (O Salvo-Conduto, As Cinzas de Ontem, A Carta Que Não Se Abre, com sete desfechos); `escolheu`/`etapa` ativados. Suíte 161.
+- **BQ5 (`backend`, 71a0018):** `src/plano-do-vilao.js` — o vilão nasce pela semente e pelo antecedente; planos de 6 passos para o Vendedor de Medo, o Traído, o Faminto e o Zeloso; o relógio e as camadas andam só pelo facto; 288 linhas provadas sem vazar a camada seguinte; o nome do herói vetado na voz dele até o aprender; a suíte apanhou um vazamento real (o passo 6 do Faminto dizia o `quer`). Suíte 193.
+- **para a pessoa ler (por ciência, não para aprovar):** `mente/leitura-bq-lote-1.md`, gerada das tabelas.
+- **o que fica:** BQ6 (o esqueleto: escolhe o vilão e as quests pela mão dele), BQ7 (a fiação, só em mundos novos), BQ8 (o acervo: 36 + 16, e os 16 planos que faltam), BQ9 (a prova jogada). Nada disto chega ainda ao jogador: os módulos estão sem leitor no App.
+
+---
+
 ## 08/11 · v9.620 e v9.621 · o dado de uso rola, e a Fase BQ começa (o livro de factos)
 - **v9.620 (o dado de uso rola à vista):** `aprendiz` fez a animação na prateleira (rola, pousa, «−1» no 1, a contagem corre; reduce sem rotação); eu liguei `ultimoLanceDeUso` no App (bastão de minutos).
 - **a palavra (a Fase BQ):** a pessoa pediu uma biblioteca de quests principais desenhadas, com papéis em aberto que o mundo preenche, condições de conclusão que o sistema identifica (o «encontrei e conversei»), dois tipos (físico e do coração — «dobre, parte dois») e **o vilão como fio** («uma campanha que não tem vilão só parece várias histórias misturadas»). Decisões dela: a biblioteca substitui o sorteio da espinha nos mundos novos; o vilão nasce na criação; o pacto existe; o companheiro pode sair ou morrer só como consequência; o acervo não espera aprovação (ela lê por ciência).
