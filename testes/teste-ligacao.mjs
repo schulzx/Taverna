@@ -309,8 +309,9 @@ sec("1. NENHUM MÓDULO MUDO");
        o esqueleto (`esqueleto.js`), que escolhe as quests do catálogo pela
        `mao` e as abre num mundo novo. Credor: o `backend`, na MESMA fase.
        A entrada sai quando o esqueleto (ou o plano do vilão, BQ5) o
-       importar. `teste-biblioteca-de-quests.mjs` é o primeiro leitor. */
-    "biblioteca-de-quests.js": "08/11 · BQ4 → BQ6 (esqueleto.js)",
+       importar. `teste-biblioteca-de-quests.mjs` é o primeiro leitor.
+       — 08/11 (BQ6, a mesma fase): `esqueleto.js` importa-o (escolhe as
+       quests do catálogo pela mão e valida-as), e a entrada saiu. */
     /* 08/11 (Fase BQ, BQ5 · o vilão: a ficha, o plano e as camadas):
        `plano-do-vilao.js` nasce no backend — o nascimento pela semente e
        pelo antecedente (nascerOVilao), o registo em `espinha.fio.vilao`
@@ -321,8 +322,20 @@ sec("1. NENHUM MÓDULO MUDO");
        (`esqueleto.js`), que escolhe primeiro o vilão e o plano e o importa;
        a fiação no App é da BQ7. Credor: o `backend`, na etapa seguinte da
        MESMA fase. A entrada sai quando o esqueleto o importar.
-       `teste-plano-do-vilao.mjs` é o primeiro leitor. */
-    "plano-do-vilao.js": "08/11 · BQ5 → BQ6 (esqueleto.js)",
+       `teste-plano-do-vilao.mjs` é o primeiro leitor.
+       — 08/11 (BQ6, a mesma fase): `esqueleto.js` importa-o (o vilão nasce
+       primeiro, `nascerOVilao`, e o registo sai com a fraqueza e os lugares
+       dos passos), e a entrada saiu. */
+    /* 08/11 (Fase BQ, BQ6 · o esqueleto): `esqueleto.js` nasce no backend —
+       o vilão primeiro, uma quest do tipo 1 por ato pela mão que contesta o
+       passo do ato (COMPOSICAO_DA_MAO, PASSO_DO_ATO), as do coração pela
+       ponte, os papéis com o mundo que existe (esqueletoDaCampanha), a
+       catraca do campo novo `espinha.esqueleto` (garantirEsqueleto), a
+       junção à espinha (comOEsqueleto) e o que abre em cada ato
+       (questsDoAto) — e espera a BQ7, a fiação no App.jsx só em mundos novos.
+       Credor: o `frontend`, na MESMA fase. A entrada sai quando o App o
+       importar. `teste-esqueleto.mjs` é o primeiro leitor. */
+    "esqueleto.js": "08/11 · BQ6 → BQ7 (App.jsx, mundos novos)",
   };
   const mudos = [];
   for (const f of arqs) {

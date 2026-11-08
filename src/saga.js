@@ -167,6 +167,14 @@ export function garantirEspinha(e) {
          fecharia um ciclo (saga → plano-do-vilao → nucleo → saga). */
       ...(copiaDoRegisto(f.vilao) ? { vilao: copiaDoRegisto(f.vilao) } : {}),
     } } : {}),
+    /* BQ6 (08/11): o ESQUELETO dos mundos novos — que quest corre em cada
+       ato, com que papéis, e as do coração (esqueleto.js). Só aditivo: a
+       versão antiga e as campanhas em curso não o têm, e a espinha delas é
+       a de sempre. Aqui só passa, copiado, pela mesma razão do registo do
+       vilão: a catraca é `garantirEsqueleto`, que quem o lê aplica, e
+       importá-la daqui fecharia o ciclo saga → esqueleto → plano-do-vilao
+       → nucleo → saga. */
+    ...(copiaDoRegisto(o.esqueleto) ? { esqueleto: copiaDoRegisto(o.esqueleto) } : {}),
     atos: atos.map((a, i) => ({
       ato: Number.isFinite(a && a.ato) ? a.ato : i,
       marcos: (Array.isArray(a && a.marcos) ? a.marcos : []).map((m) => ({

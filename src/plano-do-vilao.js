@@ -120,8 +120,9 @@ export const EFEITOS_DO_PLANO = Object.freeze({
    A voz é a que a pessoa pediu: «maravilhosas, provocantes e intensas».
    Um vilão que se sente antes de se ver: nenhuma linha destas tem dono, e
    nenhuma diz o nome do herói — ele ainda não o sabe.
-   ESTE LOTE traz quatro arquétipos; os outros dezasseis entram pelo acervo
-   (BQ8), no mesmo formato, e até lá andam pelo PLANO_DE_RECUO. */
+   O PRIMEIRO LOTE trouxe quatro arquétipos; o acervo (BQ8) traz mais quatro
+   por lote, no mesmo formato. Os que ainda não têm plano andam pelo
+   PLANO_DE_RECUO. */
 const passo = (diz, presagio, obra, seTravado, contra, muda, custa, prazo) =>
   Object.freeze({ diz, presagio, obra, seTravado, contra: Object.freeze(contra), muda: Object.freeze(muda), custa, prazo });
 export const PLANOS_DO_ARQUETIPO = Object.freeze({
@@ -254,6 +255,137 @@ export const PLANOS_DO_ARQUETIPO = Object.freeze({
       "a ordem cai num domingo, e os fiéis voltam para casa sem saber o que rezar",
       ["confronto"], ["base", "postura", "relogio"], "tudo", 1.5),
   ]),
+  /* ---- o acervo, lote 2 (BQ8): mais quatro, no mesmo formato. Em cada um,
+     o passo 4 aceita a pista e o recurso, para que as quests que entregam a
+     fraqueza ou tiram o recurso caibam em qualquer plano ---- */
+  credor: Object.freeze([
+    passo("comprar as dívidas pequenas da cidade",
+      "um homem de luvas cinzentas anda pelas lojas a pagar fiados que não são dele",
+      "os fiados da rua inteira foram pagos numa manhã, e cada lojista recebeu um recibo com a mesma letra",
+      "metade das lojas recusa o dinheiro, e ele compra-lhes as contas ao agiota, mais caras",
+      ["tenente", "recurso"], ["relacao"], "voz", 1),
+    passo("ficar com a casa de penhores",
+      "o penhorista fecha a porta mais cedo e sai pelas traseiras com um saco que não é dele",
+      "a casa de penhores mudou de dono, e os anéis de toda a gente estão numa montra que já não é deles",
+      "o penhorista não vende, e ele passa a emprestar mais barato à porta do lado, até a casa secar",
+      ["tenente", "recurso"], ["base", "relacao"], "lugar", 1),
+    passo("cobrar com juros a quem não pode pagar",
+      "levam a mesa de jantar de uma casa, depois as camas, e ninguém chama a guarda",
+      "uma família saiu da cidade com a roupa do corpo, e a casa dela tem um inquilino que nunca lá dorme",
+      "a cobrança fica a meio, e ele perdoa a dívida em voz alta, que é a cobrança mais cara de todas",
+      ["consequencia", "pista", "tenente"], ["cativeiro", "base"], "gente", 1.2),
+    passo("comprar a dívida de quem eu amo",
+      "quem eu amo anda a fazer contas à noite, e esconde o papel quando entro",
+      "quem eu amo deve agora a uma mão que não conheço, e paga-lhe com favores que não me conta",
+      "a dívida volta paga por outra mão, e ele fica a saber quem a pagou",
+      ["pista", "recurso"], ["relacao", "cativeiro"], "gente", 1),
+    passo("pôr à minha frente a conta de todos os que amo",
+      "chega-me um envelope sem remetente com uma conta somada, e o total é uma pessoa",
+      "deixaram-me à porta a lista de tudo o que devem os que amo, e no fim um espaço em branco para assinar",
+      "a lista chega rasgada ao meio, e ele manda a outra metade com flores",
+      ["rosto", "tenente"], ["porta", "postura"], "esperanca", 1.3),
+    passo("cobrar a região inteira, de uma vez",
+      "os sinos da região tocam a horas de feira, e não há feira em lado nenhum",
+      "não há porta na região sem um recibo pregado, e os juros já se pagam em braços",
+      "a região queima os recibos numa noite, e a dívida muda de lado",
+      ["confronto"], ["cativeiro", "relacao", "postura"], "tudo", 1.5),
+  ]),
+  boticaria: Object.freeze([
+    passo("envenenar o poço de uma aldeia pequena",
+      "os cães de uma aldeia bebem do poço e deitam-se ao sol sem se levantarem",
+      "metade de uma aldeia caiu de cama com a mesma febre, e a outra metade jura que foi a água",
+      "o poço é tapado a tempo, e a febre passa a vir no pão",
+      ["tenente", "recurso"], ["perigo", "relogio"], "gente", 1),
+    passo("vender o remédio fiado, em doses pequenas",
+      "uma carroça pintada de verde pára na praça e vende frascos a quem tosse, fiado",
+      "toda a gente que tossia tem um frasco verde à cabeceira, e já ninguém vai ao boticário velho",
+      "o frasco não pega, e a primeira dose passa a ser de graça, que é o anzol mais fundo",
+      ["tenente", "recurso"], ["relacao", "estrada"], "voz", 1),
+    passo("fechar a botica de quem cura de graça",
+      "a velha que cura com ervas tem a porta riscada a carvão, e ninguém lhe diz quem foi",
+      "a botica da velha ardeu numa noite sem vento, e a velha não foi vista desde então",
+      "a velha não fecha, e a febre começa a aparecer em quem lá vai",
+      ["consequencia", "pista", "tenente"], ["base", "cativeiro"], "lugar", 1.2),
+    passo("fazer da febre uma moeda",
+      "pagam a renda com frascos vazios, e o senhorio aceita",
+      "na região já se paga com frascos verdes, e quem não tem frasco não tem crédito",
+      "a moeda não vinga, e as doses ficam guardadas para o inverno, mais caras",
+      ["pista", "recurso"], ["estrada", "relacao"], "voz", 1),
+    passo("pôr-me doente, e oferecer-me a cura",
+      "acordo com a boca a saber a cobre, e a febre chega ao fim da tarde",
+      "estive três dias de cama, e ao quarto havia um frasco verde à minha cabeceira, sem bilhete",
+      "a febre passa sozinha, e chega recado de que da próxima não passa",
+      ["rosto", "pista"], ["postura", "porta"], "esperanca", 1.3),
+    passo("deixar a região de cama, menos quem paga",
+      "não há uma casa sem alguém a tossir, e as boticas velhas têm todas a porta pregada",
+      "a região só se levanta com a dose verde, e quem não paga a dose não se levanta",
+      "alguém acha a receita da cura, e a febre passa a ser só uma febre",
+      ["confronto"], ["relacao", "postura", "perigo"], "tudo", 1.5),
+  ]),
+  almiranta: Object.freeze([
+    passo("afundar um barco de quem não paga bandeira",
+      "a maré traz tábuas pintadas de azul, e nenhum barco azul saiu do porto esta semana",
+      "um barco de carga afundou com o mar chão, e os náufragos falam de uma bandeira que não descrevem",
+      "o barco escapa, e afundam-se dois no lugar dele, para que se conte",
+      ["tenente", "recurso"], ["perigo", "estrada"], "lugar", 1),
+    passo("pôr preço à travessia",
+      "os barqueiros pedem o dobro e olham para o mar antes de dizer porquê",
+      "a travessia custa agora o triplo, e o preço já vem combinado em todos os cais",
+      "um barqueiro teimoso atravessa barato, e deixam-no, para ver quem o segue",
+      ["tenente", "recurso"], ["estrada", "relacao"], "voz", 1),
+    passo("deixar uma vila de costa sem pão",
+      "os pescadores de uma vila voltam de mãos vazias, e as redes vêm cortadas",
+      "uma vila da costa passou o inverno a comer cascas, e os barcos dela apodrecem na praia, de casco furado",
+      "a vila pesca de noite, às escondidas, e alguém começa a contar as luzes no mar",
+      ["consequencia", "pista", "tenente"], ["base", "relogio"], "gente", 1.2),
+    passo("ficar com os armazéns do porto",
+      "carregadores novos no porto, todos com a mesma fita atada ao pulso",
+      "os armazéns do porto mudaram de dono numa semana, e o trigo de toda a gente dorme agora em casa alheia",
+      "um armazém resiste, e deixam-no cheio, à espera de que apodreça",
+      ["pista", "recurso"], ["base", "porta"], "lugar", 1),
+    passo("chamar-me a bordo, de bandeira branca",
+      "um bote sem remador encosta ao cais, com um lugar seco e uma manta dobrada",
+      "estive a bordo de um navio sem letras no casco, e trouxe de lá um convite e um cheiro a alcatrão",
+      "o bote volta vazio, e o recado chega pela boca de quem eu menos esperava",
+      ["rosto", "tenente"], ["postura", "relacao"], "esperanca", 1.3),
+    passo("fechar todos os portos da região, menos os seus",
+      "não sai um barco dos portos há seis dias, e o pão já se vende a peso de prata",
+      "só os cais da bandeira sem descrição têm barcos, e a região come o que lá deixam descarregar",
+      "um porto abre-se à força, e por ele entra mais coragem do que trigo",
+      ["confronto"], ["estrada", "base", "postura"], "tudo", 1.5),
+  ]),
+  profeta_queimado: Object.freeze([
+    passo("riscar a data nas paredes",
+      "alguém risca a carvão uma data nas paredes, e de manhã ninguém a consegue apagar",
+      "a mesma data está riscada em três paredes de três cidades, e as crianças já a dizem de cor",
+      "lavam as paredes, e a data aparece pintada com sangue de galinha nas portas das igrejas",
+      ["tenente", "pista"], ["relogio"], "voz", 1),
+    passo("converter os que já não têm nada",
+      "os mendigos da ponte deixam de pedir, e põem-se a cantar baixinho",
+      "os desesperados da cidade têm todos a mesma queimadura nas costas da mão, e já não pedem esmola: rezam",
+      "os convertidos dispersam com a primeira sopa quente, e ele vai buscar outros mais longe",
+      ["tenente", "recurso"], ["relacao", "postura"], "gente", 1),
+    passo("cumprir com as próprias mãos o primeiro sinal",
+      "o pregador anunciou um sinal para a lua cheia, e na lua cheia há quem afie facas",
+      "a ponte velha que o pregador disse que cairia caiu na noite dita, e já ninguém se ri dele na praça",
+      "o sinal não vem, e ele diz que foi adiado pelos pecados de quem o impediu",
+      ["consequencia", "pista", "tenente"], ["base", "postura"], "lugar", 1.2),
+    passo("comprar a voz dos sinos",
+      "o sineiro da sé anda de sapatos novos e toca os sinos meio minuto mais tarde",
+      "os sinos da cidade tocam agora à hora do pregador, e o padre da sé prega de porta fechada",
+      "o padre da sé não se cala, e começam a aparecer cinzas no altar dele",
+      ["pista", "recurso"], ["porta", "relacao"], "voz", 1),
+    passo("mostrar-me o fogo que vem",
+      "sonho com a cidade a arder, e de manhã tenho cheiro a fumo no cabelo",
+      "estive diante de uma cara queimada que me mostrou a cidade em cinza, e sabia a que horas eu tinha acordado",
+      "a visão corta-se a meio, e fica com ele a parte que eu não vi",
+      ["rosto", "pista"], ["postura"], "esperanca", 1.3),
+    passo("pôr a cidade de joelhos na data riscada, e acender o fogo",
+      "faltam três dias para a data riscada, e as lojas já fecham ao meio-dia",
+      "a cidade ajoelhou-se na data riscada, e o fogo começou exatamente onde a mão dele apontou",
+      "chega o dia e ninguém se ajoelha; o fogo acende-se na mesma, mas só na casa dele",
+      ["confronto"], ["base", "postura", "relogio"], "tudo", 1.5),
+  ]),
 });
 
 /* ---------------- O RECUO ----------------
@@ -369,6 +501,10 @@ export const FRAQUEZAS = Object.freeze({
     fraq("p_o_que_ficou", "o único que nunca o traiu, e que nunca soube que isso importava", { arquetipo: "traido" }),
     fraq("p_guardia_velha", "a guardiã velha que o ensinou a ler os selos, e ainda o chama pelo nome de menino", { arquetipo: "faminto" }),
     fraq("p_irma_de_outra_fe", "a irmã que ele não queimou, e que reza a outro deus", { arquetipo: "zeloso" }),
+    fraq("p_primeiro_perdoado", "o primeiro a quem perdoou uma dívida, e que nunca lhe pediu mais nada", { arquetipo: "credor" }),
+    fraq("p_aprendiz_fugida", "a aprendiz que lhe fugiu com metade das receitas, e que ainda cura de graça", { arquetipo: "boticaria" }),
+    fraq("p_imediato_velho", "o imediato velho que a ensinou a ler as estrelas, e cuja voz ela ainda obedece", { arquetipo: "almiranta" }),
+    fraq("p_quem_o_tirou_do_fogo", "quem o tirou da fogueira, e nunca acreditou numa palavra do que ele prega", { arquetipo: "profeta_queimado" }),
     fraq("p_quem_o_criou", "quem o criou, e a quem ele ainda não consegue mentir"),
     fraq("p_crianca_salva", "a criança que ele salvou um dia, e que hoje tem medo dele"),
   ]),
@@ -377,6 +513,10 @@ export const FRAQUEZAS = Object.freeze({
     fraq("c_promessa_assinada", "a promessa antiga, assinada pelas duas mãos, que prova quem faltou primeiro", { arquetipo: "traido", nome: "promessa assinada" }),
     fraq("c_ultimo_selo", "o último selo, inteiro, sem o qual a última porta não abre", { arquetipo: "faminto", nome: "último selo" }),
     fraq("c_primeiro_sermao", "o primeiro sermão, pela mão dele, que diz o contrário do de hoje", { arquetipo: "zeloso", nome: "primeiro sermão" }),
+    fraq("c_livro_mestre", "o livro-mestre das dívidas, sem o qual nenhuma cobrança se prova", { arquetipo: "credor", nome: "livro-mestre" }),
+    fraq("c_receita_da_cura", "a receita da cura verdadeira, que custa três ervas e um caldeirão", { arquetipo: "boticaria", nome: "receita da cura" }),
+    fraq("c_carta_de_mares", "a carta dos baixios e das marés onde ela afunda quem não paga", { arquetipo: "almiranta", nome: "carta de marés" }),
+    fraq("c_oleo_de_pedra", "o óleo de pedra com que ele acende os sinais que anuncia", { arquetipo: "profeta_queimado", nome: "óleo de pedra" }),
     fraq("c_selo_pessoal", "o selo pessoal dele, que fecha todas as ordens que dá", { nome: "selo pessoal" }),
     fraq("c_mapa_do_plano", "o mapa onde marcou o plano inteiro, passo a passo", { nome: "mapa do plano" }),
   ]),
@@ -385,6 +525,10 @@ export const FRAQUEZAS = Object.freeze({
     fraq("v_quem_traiu", "quem o traiu de verdade, e não foi o herói", { arquetipo: "traido" }),
     fraq("v_diario_das_portas", "o que as quatro portas abertas lhe tiraram, escrito no diário dele", { arquetipo: "faminto" }),
     fraq("v_ouro_da_ordem", "a ordem paga-lhe em ouro, e o ouro vem de quem ele condena", { arquetipo: "zeloso" }),
+    fraq("v_divida_dele", "a dívida que ele próprio nunca pagou, e a quem a deve", { arquetipo: "credor" }),
+    fraq("v_mesma_semente", "a febre e o remédio saem da mesma semente, no mesmo horto", { arquetipo: "boticaria" }),
+    fraq("v_naufragios_marcados", "os naufrágios sem tempestade, marcados um a um no diário de bordo dela", { arquetipo: "almiranta" }),
+    fraq("v_deuses_calados", "os deuses nunca lhe falaram: a voz que ouviu era a de quem o mandou queimar", { arquetipo: "profeta_queimado" }),
     fraq("v_crime_de_origem", "o crime que o pôs onde está, com uma testemunha ainda viva"),
     fraq("v_origem_inventada", "a mentira que ele conta sobre de onde veio"),
   ]),
@@ -407,18 +551,18 @@ export const COMO_SE_TEM_A_FRAQUEZA = Object.freeze({
 export const AFINIDADE_DO_ANTECEDENTE = Object.freeze({
   base: 1,
   por: Object.freeze({
-    orfao: Object.freeze({ traido: 2, vendedor_de_medo: 1 }),
+    orfao: Object.freeze({ traido: 2, vendedor_de_medo: 1, credor: 1 }),
     soldado: Object.freeze({ traido: 2, vendedor_de_medo: 1 }),
-    nobre_caido: Object.freeze({ traido: 3 }),
-    erudito: Object.freeze({ faminto: 3 }),
-    ladrao: Object.freeze({ vendedor_de_medo: 2, traido: 1 }),
-    acolito: Object.freeze({ zeloso: 3 }),
-    pragado: Object.freeze({ zeloso: 2, faminto: 1 }),
-    artista: Object.freeze({ faminto: 2, traido: 1 }),
+    nobre_caido: Object.freeze({ traido: 3, credor: 1 }),
+    erudito: Object.freeze({ faminto: 3, profeta_queimado: 1 }),
+    ladrao: Object.freeze({ vendedor_de_medo: 2, traido: 1, credor: 1 }),
+    acolito: Object.freeze({ zeloso: 3, profeta_queimado: 1 }),
+    pragado: Object.freeze({ zeloso: 2, faminto: 1, boticaria: 2 }),
+    artista: Object.freeze({ faminto: 2, traido: 1, almiranta: 1 }),
     cacador: Object.freeze({ vendedor_de_medo: 2, traido: 1 }),
-    ferreiro: Object.freeze({ faminto: 1, vendedor_de_medo: 1 }),
-    ex_cultista: Object.freeze({ zeloso: 2, faminto: 2 }),
-    naufrago: Object.freeze({ vendedor_de_medo: 2, faminto: 1 }),
+    ferreiro: Object.freeze({ faminto: 1, vendedor_de_medo: 1, boticaria: 1 }),
+    ex_cultista: Object.freeze({ zeloso: 2, faminto: 2, profeta_queimado: 2 }),
+    naufrago: Object.freeze({ vendedor_de_medo: 2, faminto: 1, almiranta: 3 }),
   }),
 });
 
@@ -552,28 +696,59 @@ export const REACOES_DO_VILAO = Object.freeze([
 /* ---------------- OS DESFECHOS ----------------
    Os quatro fins do confronto (§11.7 e a decisão da pessoa: o pacto existe).
    Julgam-se por esta ordem, e o primeiro que vale fica.
-     factos   — a condição no vocabulário fechado, sobre os papéis dele;
-     escolhas — [mão da quest, escolha]: o que o herói escolheu nela
-                (`escolhas` do estado da quest, BQ4);
+     caminhos — as portas do desfecho; ele vale se UM caminho se cumpre
+                por inteiro. Cada caminho tem, um ou os dois:
+       factos   — a condição no vocabulário fechado, sobre os papéis dele;
+       escolhas — [mão da quest, escolha]: o que o herói escolheu nela
+                  (`escolhas` do estado da quest, BQ4), todas;
      fraqueza — a família que o desfecho exige;
      rito     — os corpos que não morrem assim (a coisa antiga: sela-se), e
                 a escolha que os fecha;
-     depois   — o que fica; `seSobrevive`, quando o corpo sobrevive à queda. */
+     depois   — o que fica; `seSobrevive`, quando o corpo sobrevive à queda.
+
+   TODO FIM DO CATÁLOGO TEM UM DESFECHO (08/11, achado no lote 2). O vilão
+   que cai PELA PROVA — a fraqueza posta na mesa, sem luta — não tem o
+   facto `derrotou`, e as sentenças «acabar» e «selar» ficavam sem fim
+   (null); «poupar» também, fora da redenção. A sentença é o fim, e lê-se
+   igual caia ele pela lâmina ou pela prova: «acabar» é derrota; «selar» é
+   derrota (é o rito da coisa antiga, e quem fica fechado onde ninguém abre
+   já não move peças — os quatro da pessoa, sem um quinto); «poupar» sem
+   redenção é fuga. Corrige também o rendido: «acabar» com quem se rendeu
+   à lâmina dava fuga, porque o livro diz `poupou`; quem acaba, acaba.
+   O pacto é o «cumprir»: a dívida só se abre a quem é aliado dele, e o
+   «cumprir» fecha a quest; pedir ainda o «aceitar» do rosto deixava sem
+   fim quem chegou à aliança por outra porta. A catraca está na suíte:
+   nenhuma quest de confronto do catálogo, nenhuma família, nenhum corpo,
+   nenhuma sentença dá null. */
+const caminho = (c) => Object.freeze({
+  ...(c.factos ? { factos: Object.freeze(c.factos) } : {}),
+  ...(c.escolhas ? { escolhas: Object.freeze(c.escolhas.map((e) => Object.freeze(e))) } : {}),
+});
 export const DESFECHOS_DO_VILAO = Object.freeze([
   Object.freeze({ id: "pacto",
-    escolhas: Object.freeze([["rosto", "aceitar"], ["confronto", "cumprir"]]),
+    caminhos: Object.freeze([caminho({ escolhas: [["confronto", "cumprir"]] })]),
     depois: "ele ganha uma parte do que queria; a campanha continua, com o herói a dever-lhe" }),
   Object.freeze({ id: "redencao", fraqueza: "pessoa",
-    factos: Object.freeze(["algum", ["acompanha", "papel:fraqueza"], ["todos", ["conversou", "papel:vilao", 2], ["conversou", "papel:fraqueza"]]]),
-    escolhas: Object.freeze([["confronto", "poupar"]]),
+    caminhos: Object.freeze([caminho({
+      factos: ["algum", ["acompanha", "papel:fraqueza"], ["todos", ["conversou", "papel:vilao", 2], ["conversou", "papel:fraqueza"]]],
+      escolhas: [["confronto", "poupar"]] })]),
     depois: "ele larga o plano; a ferida dele fica dita; nasce um laço rompido, que ainda pode reatar" }),
   Object.freeze({ id: "derrota",
-    factos: Object.freeze(["todos", ["derrotou", "papel:vilao"], ["nenhum", ["poupou", "papel:vilao"]]]),
+    caminhos: Object.freeze([
+      caminho({ factos: ["todos", ["derrotou", "papel:vilao"], ["nenhum", ["poupou", "papel:vilao"]]] }),
+      caminho({ escolhas: [["confronto", "acabar"]] }),
+      caminho({ escolhas: [["confronto", "selar"]] }),
+    ]),
     rito: Object.freeze({ corpos: Object.freeze(["coisa"]), escolha: Object.freeze(["confronto", "selar"]) }),
     depois: "o plano morre com ele",
     seSobrevive: "o que sobra dele continua, mais lento, um passo atrás" }),
   Object.freeze({ id: "fuga",
-    factos: Object.freeze(["algum", ["poupou", "papel:vilao"], ["derrotou", "papel:vilao"]]),
+    caminhos: Object.freeze([
+      caminho({ factos: ["algum", ["poupou", "papel:vilao"], ["derrotou", "papel:vilao"]] }),
+      caminho({ escolhas: [["confronto", "poupar"]] }),
+      /* só chega aqui com «acabar» a coisa antiga sem o rito: não morre assim */
+      caminho({ escolhas: [["confronto", "acabar"]] }),
+    ]),
     depois: "ele escapa, e o capítulo seguinte herda-o" }),
 ]);
 
@@ -1126,10 +1301,12 @@ export function desfechoDoVilao(ficha, estado, opcoes) {
   const quests = questsDe(o.quests);
   const ctx = { estado: E, papeis: papeisDoVilao(f), mundo: obj(o.mundo) };
   const escolheu = ([mao, valor]) => quests.some((q) => q.maos.includes(mao) && q.escolhas.includes(valor));
+  /* um caminho vazio nunca vale: sem facto nem escolha, não decidiu nada */
+  const vale = (c) => (arr(c.escolhas).length > 0 || !!c.factos)
+    && arr(c.escolhas).every(escolheu) && (!c.factos || avaliarCondicao(c.factos, ctx));
   for (const d of DESFECHOS_DO_VILAO) {
     if (d.fraqueza && (!f.fraqueza || f.fraqueza.familia !== d.fraqueza)) continue;
-    if (!arr(d.escolhas).every(escolheu)) continue;
-    if (d.factos && !avaliarCondicao(d.factos, ctx)) continue;
+    if (!arr(d.caminhos).some(vale)) continue;
     if (d.rito && d.rito.corpos.includes(f.corpo.id) && !escolheu(d.rito.escolha)) continue;
     const depois = d.seSobrevive && f.corpo.sobrevive ? `${f.corpo.queda}; ${d.seSobrevive}` : d.depois;
     return { id: d.id, depois };

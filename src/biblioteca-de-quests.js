@@ -7,7 +7,8 @@
    a ESCOLHER E LIGAR QUESTS JÁ DESENHADAS, cada uma com etapas, soluções,
    consequências, reviravoltas e um fim — e o sistema sabe sempre em que
    etapa está e o que falta (mente/plano-biblioteca-de-quests.md, §2, §6 e
-   §10). Este módulo é a ficha, as três primeiras quests e o juiz delas.
+   §10). Este módulo é a ficha, o catálogo (as três da planta e o acervo
+   da BQ8, por lotes de seis) e o juiz delas.
 
    A QUEST É DADO, NUNCA FUNÇÃO. É isso que deixa a suíte lê-la de volta:
    cada condição é um predicado do vocabulário fechado da BQ3
@@ -490,11 +491,728 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
   abandono: { semAvancar: 15, desfecho: "a_ferida_fica" },
 });
 
+/* ============================================================
+   O ACERVO, LOTE 2 (BQ8) — seis quests no mesmo formato
+   Quatro do tipo 1, cada uma com a mão do vilão num passo que as três
+   primeiras não contestavam (o 4, o 5 e o 6): a PISTA que entrega a
+   fraqueza, o RECURSO de que o passo 4 precisa, o ROSTO (o encontro sem
+   luta, onde nasce o pacto) e o CONFRONTO. E duas do tipo 2, ligadas pela
+   ponte a quem anda com o herói: o medo de morrer e a fé.
+   As referências: a Grande Lista (Caçada #18 com o Dobre das «Onças» #23;
+   «Quanto custa…» #14 com «A ajuda está a caminho» #12; «Garfo longo…» #16
+   com «Olhe, não toque» #17; «Base oculta» #13, com o Surpreenda), e a
+   mesa do Matt: cada escolha custa dos dois lados, e o mundo lembra-se.
+   Os papéis não têm género: um papel pode ser qualquer pessoa.
+   ============================================================ */
+
+/* A PISTA (passo 4): quem serviu o vilão e saiu pela janela com o que
+   sabia. O preço da verdade é o perdão de quem fez mal — e há quem tenha
+   enterrado um irmão por ordem dessa pessoa. A prova é a fraqueza: o
+   esqueleto liga `arquivo` à verdade e `prova` à coisa (a família dela). */
+const A_MAO_QUE_MUDOU_DE_LADO = quest({
+  id: "a_mao_que_mudou_de_lado",
+  titulo: "A Mão Que Mudou de Lado",
+  tipo: 1,
+  enredo: 18,                                   // Caçada, com o Dobre das «Onças da Prevenção» (#23)
+  quando: ["meio"],
+  afim: ["misterio", "arquipelago"],
+  papeis: {
+    desertor: { de: "elenco", serviu: "vilao" },
+    esconderijo: { de: "lugar", e: "um sítio da cidade do ato" },
+    refugio: { de: "cidade", distancia: [2, 4] },
+    arquivo: { de: "lugar", fraqueza: "verdade" },
+    prova: { de: "item", fraqueza: "coisa" },
+    cacador: { de: "fio", papel: "tenente", alcunha: "quem anda a farejar {desertor}" },
+    vitima: { de: "elenco", feridoPor: "desertor" },
+  },
+  mao: { tipo: "pista", contra: [4], papel: "cacador" },
+  pede: [],
+  deixa: ["aliado:desertor"],
+  gancho: "{desertor} serviu sete anos a mão que anda por trás de tudo o que corre mal nesta terra, e uma noite saiu pela janela com o que sabia. Manda dizer, de {esconderijo}, que fala contigo e com mais ninguém — e só uma vez. {cacador} já pergunta por {desertor} nas tabernas, com uma moeda numa mão e uma corda na outra. E {vitima}, que enterrou um irmão por ordem de {desertor}, também pergunta.",
+  etapas: [
+    { id: "achar", texto: "Encontrar {desertor} em {esconderijo}",
+      conclui: ["todos", ["esteve", "lugar:esconderijo"], ["conversou", "papel:desertor"]] },
+    { id: "preco", texto: "Dizer a {desertor} quanto vale o que sabe",
+      conclui: ["algum", ["escolheu", "preco", "amnistia"], ["escolheu", "preco", "justica"]],
+      ramos: ["amnistia", "justica"] },
+    { id: "prova", texto: "Chegar ao que {desertor} sabe",
+      conclui: ["algum", ["descobriu", "lugar:arquivo"], ["tem", "item:prova"]],
+      ramos: ["verdade", "coisa"] },
+    { id: "salvo", texto: "Tirar {desertor} do alcance de {cacador}",
+      conclui: ["algum", ["derrotou", "papel:cacador"], ["todos", ["acompanha", "papel:desertor"], ["esta_em", "lugar:refugio"]]],
+      ramos: ["luta", "fuga"] },
+  ],
+  escolhas: {
+    preco: { etapa: "preco", opcoes: {
+      amnistia: {
+        texto: "prometer a {desertor} a vida e o perdão",
+        ganha: "{desertor} abre a boca e não a volta a fechar: diz-te onde está guardado o que mais se teme perder.",
+        custa: "{vitima} enterrou um irmão por ordem de {desertor}, e vai ver-te apertar essa mão. Não te vai perdoar, nem a mão, nem o aperto.",
+        efeitos: [{ tipo: "afeicao", papel: "vitima", n: -1 }, { tipo: "laco", papel: "desertor", laco: "divida" }],
+      },
+      justica: {
+        texto: "dizer a {desertor} que um dia vai responder perante {vitima}",
+        ganha: "{vitima} vai saber que ninguém comprou o perdão daquele sangue — nem tu, nem quem tem pressa.",
+        custa: "{desertor} fala, mas só metade: a outra guarda-a para quando estiver longe de ti. O caminho fica mais comprido, e {cacador} mais perto.",
+        efeitos: [{ tipo: "afeicao", papel: "vitima", n: 1 }, { tipo: "afeicao", papel: "desertor", n: -1 }],
+      },
+    } },
+  },
+  solucoes: {
+    preco: {
+      amnistia: [{ texto: "{desertor} chora sem fazer barulho, como quem aprendeu a chorar em casa alheia. Depois limpa a cara à manga e começa pelo princípio." }],
+      justica: [{ texto: "{desertor} ouve a sentença sem pestanejar, acena uma vez, e diz-te metade do que sabe a olhar para a porta." }],
+    },
+    prova: {
+      verdade: [{ texto: "Em {arquivo}, entre contas de mercearia e cartas de amor que ninguém mandou, está a letra que procuravas, com as datas certas ao lado das coisas erradas." }],
+      coisa: [{ texto: "{prova} pesa mais do que parece. Ninguém guarda uma coisa destas com tanto cuidado se ela não puder deitar alguém abaixo." }],
+    },
+    salvo: {
+      luta: [
+        { id: "poupou", quando: ["poupou", "papel:cacador"],
+          texto: "{cacador} ficou no chão com a corda ainda na mão, e deixaste {cacador} lá, com vida. Vai voltar a quem o mandou com uma história — e a história tem a tua cara.",
+          efeitos: [{ tipo: "deixa", premissa: "devedor:cacador" }, { tipo: "avisa_vilao" }] },
+        { id: "matou",
+          texto: "{cacador} não volta a perguntar por ninguém. A corda que trazia serviu para atar o saco onde levaram o corpo.",
+          efeitos: [{ tipo: "deixa", premissa: "vinganca:cacador" }] },
+      ],
+      fuga: [{ texto: "Dois dias de estrada sem fogueira, a dormir por turnos. Quando {refugio} aparece no horizonte, {desertor} ri-se pela primeira vez — e não consegue parar.",
+        efeitos: [{ tipo: "dia", n: 2 }] }],
+    },
+  },
+  reviravoltas: [
+    { id: "a_janela_aberta",
+      texto: "{desertor} não te mentiu em nada — e foi por isso que lhe seguiram o rasto até ti. A janela por onde fugiu ficou aberta de propósito. Quem guarda o que procuras já sabe a tua cara, e não vais lá chegar sem olhar antes para a de {cacador}.",
+      gatilho: ["todos", ["etapa", "achar"], ["nenhum", ["etapa", "prova"]], ["nenhum", ["consultou", "papel:desertor"]]],
+      efeitos: [{ tipo: "exige", etapa: "prova", condicao: ["conheceu", "papel:cacador"] }, { tipo: "avisa_vilao" }] },
+    { id: "a_outra_metade",
+      texto: "A metade que {desertor} guardou era a que dizia onde. Sem ela, só sabes o quê — e o quê não se leva à praça.",
+      gatilho: ["escolheu", "preco", "justica"],
+      efeitos: [{ tipo: "abre_etapa", antes: "prova", etapa: {
+        id: "metade", texto: "Arrancar a outra metade",
+        conclui: ["pelo_menos", 2, ["consultou", "papel:desertor", 2], ["conversou", "papel:vitima"], ["esteve", "lugar:arquivo"]] } },
+      { tipo: "relogio_do_fio", n: 1 }] },
+  ],
+  falha: [
+    { quando: ["morto", "papel:desertor"], ate: "prova",
+      texto: "{cacador} chegou primeiro. Acharam {desertor} no rio, de boca cosida com linha preta — e o que sabia foi com o rio." },
+  ],
+  abandono: { semAvancar: 5,
+    texto: "{desertor} deixou de mandar recado. Em {esconderijo} só ficou uma cadeira virada e um pedaço de corda cortada à faca.",
+    efeitos: [{ tipo: "situacao", papel: "desertor", situacao: "cativa" }] },
+  fecho: {
+    texto: "{desertor} entra em {refugio} com a vida e mais nada. O que pesava agora pesa-te a ti — e quem o perdeu já sabe que o tens.",
+    efeitos: [{ tipo: "aliado", papel: "desertor" }, { tipo: "avisa_vilao" }],
+  },
+});
+
+/* O RECURSO (passo 4): o último trigo antes do inverno, e alguém a
+   comprá-lo a dobrar. Abrir as portas, queimar, ou guardar à espada —
+   cada uma salva uma coisa e entrega outra. */
+const O_CELEIRO_DE_INVERNO = quest({
+  id: "o_celeiro_de_inverno",
+  titulo: "O Celeiro de Inverno",
+  tipo: 1,
+  enredo: 14,                                   // «Quanto custa…», com «A ajuda está a caminho» (#12)
+  quando: ["cedo", "meio"],
+  afim: ["jornada", "reinado"],
+  papeis: {
+    celeiro: { de: "lugar", e: "um sítio da cidade do ato" },
+    dono: { de: "elenco", do: "celeiro" },
+    faminta: { de: "elenco", e: "a voz de quem tem fome" },
+    comprador: { de: "fio", papel: "tenente", alcunha: "quem compra o trigo a dobrar" },
+  },
+  mao: { tipo: "recurso", contra: [4], papel: "comprador" },
+  pede: [],
+  deixa: ["inimigo:comprador"],
+  gancho: "O inverno vem cedo este ano, e o único trigo que sobra em muitas léguas dorme em {celeiro}, nas mãos de {dono}. {faminta} já enterrou duas crianças da rua desde a última colheita, e só te pede que vás ver. Entretanto, {comprador} oferece o dobro por cada saca — e ninguém sabe para quem compra.",
+  etapas: [
+    { id: "ouvir", texto: "Ouvir {faminta}", conclui: ["conversou", "papel:faminta"] },
+    { id: "celeiro", texto: "Ver com os teus olhos o que guarda {celeiro}", conclui: ["esteve", "lugar:celeiro"] },
+    { id: "dono", texto: "Chegar a {dono} antes de {comprador}",
+      conclui: ["algum", ["conversou", "papel:dono"], ["derrotou", "papel:comprador"]],
+      ramos: ["palavra", "lamina"] },
+    { id: "trigo", texto: "Decidir de quem é o trigo",
+      conclui: ["algum", ["escolheu", "trigo", "abrir"], ["escolheu", "trigo", "queimar"], ["escolheu", "trigo", "guardar"]],
+      ramos: ["abrir", "queimar", "guardar"] },
+  ],
+  escolhas: {
+    trigo: { etapa: "trigo", opcoes: {
+      abrir: {
+        texto: "abrir as portas de {celeiro} a quem tem fome",
+        ganha: "{faminta} vê pão na mesa da rua inteira antes da neve, e quem compra o trigo a dobrar fica de mãos vazias.",
+        custa: "{dono} perde num dia o que juntou numa vida, e não esquece de quem foi a mão que abriu a porta. E o trigo de um inverno acaba antes de o inverno acabar.",
+        efeitos: [{ tipo: "afeicao", papel: "faminta", n: 1 }, { tipo: "inimigo", papel: "dono" }],
+      },
+      queimar: {
+        texto: "queimar o trigo antes que mude de mãos",
+        ganha: "Ninguém compra a fome desta cidade: o que ardeu não se vende a ninguém, e quem o queria fica sem a alavanca.",
+        custa: "A cidade passa o inverno a olhar para as cinzas. {faminta} vai perguntar-te, à frente de todos, quantas crianças vale uma lição.",
+        efeitos: [{ tipo: "afeicao", papel: "faminta", n: -1 }, { tipo: "relogio_regional", n: 1 }, { tipo: "relogio_do_fio", n: -1 }],
+      },
+      guardar: {
+        texto: "guardar o trigo com {dono}, e pôr-te de vigia",
+        ganha: "O trigo fica onde está, contado e repartido até à primavera, e {dono} passa a dever-te o sono.",
+        custa: "Um celeiro guardado é um celeiro que se ataca: {comprador} vai voltar, com mais gente, e a tua lâmina passa a morar à porta de {celeiro}.",
+        efeitos: [{ tipo: "laco", papel: "dono", laco: "divida" }, { tipo: "deixa", premissa: "cerco:celeiro" }],
+      },
+    } },
+  },
+  solucoes: {
+    dono: {
+      palavra: [{ texto: "{dono} ouve-te de braços cruzados e, no fim, descruza-os. Não é bondade: é medo de quem oferece o dobro sem regatear." }],
+      lamina: [
+        { id: "poupou", quando: ["poupou", "papel:comprador"],
+          texto: "{comprador} rende-se no meio das sacas, com farinha até aos cotovelos. Deixas que se vá — e levas a bolsa das compras, que é mais pesada do que devia.",
+          efeitos: [{ tipo: "deixa", premissa: "devedor:comprador" }, { tipo: "moedas", n: 25 }] },
+        { id: "matou",
+          texto: "{comprador} fica estendido à porta de {celeiro}. Ninguém na rua pergunta quem era. Alguém, longe dali, vai perguntar.",
+          efeitos: [{ tipo: "deixa", premissa: "vinganca:comprador" }] },
+      ],
+    },
+    trigo: {
+      abrir: [{ texto: "As portas abrem-se ao meio-dia. Ao fim da tarde a rua inteira cheira a pão, e {dono} assiste da janela sem dizer uma palavra." }],
+      queimar: [{ texto: "O fogo de trigo cheira a pão queimado durante três dias. As crianças da rua vêm ver as chamas, e ninguém as manda embora." }],
+      guardar: [{ texto: "Repartem-se as sacas por números de casa, à luz de uma lanterna. {dono} conta-as duas vezes e, pela primeira vez, conta-as em voz alta." }],
+    },
+  },
+  reviravoltas: [
+    { id: "o_trigo_ja_vendido",
+      texto: "Debaixo das sacas de cima, palha. O trigo bom saiu de noite, há três noites, em carroças sem marca — e {dono} tem na gaveta um recibo de quem pagou adiantado. Ainda sobra para uma escolha, mas só metade, e a outra metade tem dono e cara.",
+      gatilho: ["todos", ["etapa", "celeiro"], ["nenhum", ["etapa", "trigo"]], ["descobriu", "lugar:celeiro"]],
+      efeitos: [{ tipo: "exige", etapa: "trigo", condicao: ["conheceu", "papel:comprador"] }, { tipo: "relogio_do_fio", n: 1 }] },
+  ],
+  falha: [
+    { quando: ["todos", ["morto", "papel:faminta"], ["nenhum", ["derrotou", "papel:faminta"]]], ate: "trigo",
+      texto: "{faminta} morreu numa rixa à porta de {celeiro}, a pedir pão para os outros. A rua deixou de pedir. Agora espera." },
+  ],
+  abandono: { semAvancar: 6,
+    texto: "{comprador} carregou o trigo numa noite de geada, saca a saca, e {celeiro} amanheceu de portas abertas e vazio.",
+    efeitos: [{ tipo: "relogio_do_fio", n: 1 }] },
+  fecho: {
+    texto: "O inverno chega, e desta vez a cidade sabe quem esteve à porta de {celeiro} quando importava.",
+    efeitos: [{ tipo: "inimigo", papel: "comprador" }],
+  },
+});
+
+/* O ROSTO (passo 5): um convite sob a lei de uma casa onde ninguém puxa
+   da lâmina. É aqui que o herói o vê pela primeira vez, e é aqui que
+   nasce o pacto (a decisão da pessoa): aceitar faz dele um «aliado» na
+   ficha, e o confronto lê isso. */
+const O_CONVITE_SEM_SELO = quest({
+  id: "o_convite_sem_selo",
+  titulo: "O Convite Sem Selo",
+  tipo: 1,
+  enredo: 16,                                   // «Garfo longo…», com «Olhe, não toque» (#17)
+  quando: ["meio", "fim"],
+  afim: ["reinado", "misterio"],
+  papeis: {
+    vilao: { de: "fio", papel: "vilao", alcunha: "quem manda o convite" },
+    anfitriao: { de: "elenco", neutro: true },
+    salao: { de: "lugar", do: "anfitriao" },
+    refem: { de: "elenco", exige: ["vivo", "cativa"] },
+  },
+  mao: { tipo: "rosto", contra: [5], papel: "vilao" },
+  pede: [],
+  deixa: ["conhece:vilao"],
+  gancho: "Chega um convite sem selo, escrito com boa letra: um lugar à mesa, amanhã à noite, em {salao}, sob a lei da casa de {anfitriao} — ninguém puxa de uma lâmina debaixo daquele teto, nem quem convida, nem quem é convidado. No fundo do papel, uma linha só: «{refem} também janta.»",
+  etapas: [
+    { id: "convite", texto: "Aceitar a lei da casa de {anfitriao}", conclui: ["conversou", "papel:anfitriao"] },
+    { id: "mesa", texto: "Sentar-te à mesa de {vilao}",
+      conclui: ["todos", ["esta_em", "lugar:salao"], ["conversou", "papel:vilao"]] },
+    { id: "oferta", texto: "Responder ao que {vilao} te oferece",
+      conclui: ["algum", ["escolheu", "rosto", "aceitar"], ["escolheu", "rosto", "recusar"], ["escolheu", "rosto", "levar"]],
+      ramos: ["aceitar", "recusar", "levar"] },
+    { id: "saida", texto: "Sair de {salao} sob a lei da casa", conclui: ["nenhum", ["esta_em", "lugar:salao"]] },
+  ],
+  escolhas: {
+    rosto: { etapa: "oferta", opcoes: {
+      aceitar: {
+        texto: "aceitar o que {vilao} te oferece",
+        ganha: "{refem} sai da sala livre esta noite, e a terra que te é mais cara fica fora do caminho do que vem a seguir — palavra de quem cumpre as que dá.",
+        custa: "Passas a dever a {vilao}, e {vilao} fica a saber o teu nome, a tua cara e o teu preço. Uma dívida destas não se paga em moedas, e cobra-se quando mais doer.",
+        efeitos: [{ tipo: "situacao", papel: "refem", situacao: "livre" }, { tipo: "aliado", papel: "vilao" }, { tipo: "avisa_vilao" }],
+      },
+      recusar: {
+        texto: "recusar, e dizê-lo na cara de {vilao}",
+        ganha: "Sais como entraste: sem dono. E quem estava à mesa viu que ainda há quem diga não.",
+        custa: "{refem} fica onde está, e {vilao} acaba de aprender o que precisava sobre ti. O próximo passo vem mais depressa — e vem para ti.",
+        efeitos: [{ tipo: "inimigo", papel: "vilao" }, { tipo: "relogio_do_fio", n: 1 }],
+      },
+      levar: {
+        texto: "levantar-te da mesa e levar {refem} contigo",
+        ganha: "{refem} sai pelo teu braço, sem ninguém ter puxado de uma lâmina — ainda.",
+        custa: "Quebras a lei de {anfitriao} à frente de toda a gente que importa. A casa fecha-te as portas para sempre, e a escada até à rua é comprida.",
+        efeitos: [{ tipo: "inimigo", papel: "anfitriao" }, { tipo: "avisa_vilao" }],
+      },
+    } },
+  },
+  solucoes: {
+    oferta: {
+      aceitar: [{ texto: "{vilao} levanta o copo, e tu levantas o teu. Não há papel nem assinatura: há um brinde, e toda a gente na sala o ouviu." }],
+      recusar: [{ texto: "Dizes que não. {vilao} sorri como quem já sabia, e manda servir a sobremesa na mesma. É a sobremesa mais longa da tua vida." }],
+      levar: [{ texto: "Levantas-te. Trinta cadeiras arrastam-se ao mesmo tempo, e ninguém se mexe. {anfitriao} olha para ti como para uma louça partida." }],
+    },
+  },
+  reviravoltas: [
+    { id: "o_refem_sem_correntes",
+      texto: "{anfitriao} enche-te o copo e diz, sem mexer os lábios: as correntes de {refem} não estão fechadas. Nunca estiveram. O que se joga esta noite não é a vida de {refem} — é a tua palavra.",
+      gatilho: ["todos", ["etapa", "convite"], ["nenhum", ["etapa", "oferta"]], ["conversou", "papel:anfitriao", 2]],
+      efeitos: [{ tipo: "quem_e", papel: "refem", linha: "sentou-se à mesa sem correntes, e sabia porquê" }, { tipo: "afeicao", papel: "anfitriao", n: 1 }] },
+    { id: "a_escada_comprida",
+      texto: "Ninguém puxa de uma lâmina. Mas ninguém se afasta da escada, também.",
+      gatilho: ["escolheu", "rosto", "levar"],
+      efeitos: [{ tipo: "abre_etapa", antes: "saida", etapa: {
+        id: "fuga", texto: "Descer a escada de {salao} com {refem}",
+        conclui: ["todos", ["acompanha", "papel:refem"], ["nenhum", ["esta_em", "lugar:salao"]]] } }] },
+  ],
+  falha: [
+    { quando: ["derrotou", "papel:anfitriao"],
+      texto: "Correu sangue na toalha de {anfitriao}. Daqui a uma semana, toda a gente que importa vai saber que não há mesa nem palavra que te prenda — e nenhuma porta se volta a abrir para conversar." },
+    { quando: ["morto", "papel:refem"], ate: "oferta",
+      texto: "{refem} não chegou a sentar-se. O lugar ficou posto, com o copo cheio, e {vilao} brindou à cadeira vazia antes de te desejar boa noite." },
+  ],
+  abandono: { semAvancar: 4,
+    texto: "A noite do convite passou sem ti. Em {salao}, o teu lugar ficou posto até ao amanhecer, e de manhã havia um bilhete no prato: «fica para a próxima, que será à minha maneira.»",
+    efeitos: [{ tipo: "relogio_do_fio", n: 1 }] },
+  fecho: {
+    texto: "Sais de {salao} com o gosto do vinho na boca e uma cara na memória que já não é rumor. Agora sabes com quem falas. E quem te convidou também.",
+    efeitos: [{ tipo: "deixa", premissa: "conhece:vilao" }],
+  },
+});
+
+/* O CONFRONTO (passo 6): a escada, o último servo, quem o herói ama de
+   joelhos ao lado dele, e o que fica depois. A fraqueza na mão abre o
+   ramo sem luta (§11.7); o pacto aceite no rosto abre a dívida, que se
+   cumpre ou se rasga; e a sentença é a última escolha: poupar, acabar
+   ou selar — as opções que DESFECHOS_DO_VILAO lê. A fraqueza tem três
+   papéis, um por família (FRAQUEZAS): o esqueleto liga o da família do
+   vilão, e os outros ficam sem ninguém (falsos, nunca lançam). */
+const O_CIMO_DA_ESCADA = quest({
+  id: "o_cimo_da_escada",
+  titulo: "O Cimo da Escada",
+  tipo: 1,
+  enredo: 13,                                   // Base oculta, com o Surpreenda
+  quando: ["fim"],
+  afim: [],
+  papeis: {
+    vilao: { de: "fio", papel: "vilao", alcunha: "quem espera ao cimo da escada" },
+    covil: { de: "lugar", e: "o covil dele" },
+    braco: { de: "fio", papel: "tenente", alcunha: "quem ainda guarda a escada" },
+    refem: { de: "elenco", exige: ["vivo", "querido_do_heroi"] },
+    fraqueza_quem: { de: "elenco", fraqueza: "pessoa" },
+    fraqueza_coisa: { de: "item", fraqueza: "coisa" },
+    fraqueza_verdade: { de: "lugar", fraqueza: "verdade" },
+  },
+  mao: { tipo: "confronto", contra: [6], papel: "vilao" },
+  pede: [],
+  deixa: ["caiu:vilao"],
+  gancho: "Já não há rumor nem recado: há uma porta, em {covil}, e atrás dela quem andou a mover esta terra contra ti desde o primeiro dia. {braco} guarda a escada. E lá em cima, diz quem viu, {refem} ainda respira — porque {vilao} sabe que é por isso que vens.",
+  etapas: [
+    { id: "covil", texto: "Entrar em {covil}", conclui: ["esteve", "lugar:covil"] },
+    { id: "braco", texto: "Passar por {braco}",
+      conclui: ["algum", ["derrotou", "papel:braco"], ["afeicao", "papel:braco", 2]],
+      ramos: ["luta", "palavra"] },
+    { id: "frente", texto: "Pôr {vilao} de joelhos",
+      conclui: ["algum", ["derrotou", "papel:vilao"], ["escolheu", "prova", "expor"]],
+      ramos: ["luta", "prova"] },
+    { id: "sentenca", texto: "Decidir o que fica de {vilao}",
+      conclui: ["algum", ["escolheu", "sentenca", "poupar"], ["escolheu", "sentenca", "acabar"], ["escolheu", "sentenca", "selar"]],
+      ramos: ["poupar", "acabar", "selar"] },
+  ],
+  escolhas: {
+    pacto: { etapa: "divida", opcoes: {
+      cumprir: {
+        texto: "cumprir o que prometeste à mesa de {vilao}",
+        ganha: "{refem} desce a escada contigo, com vida, e a terra que protegias fica de fora do que vier.",
+        custa: "{vilao} fica, com uma parte do que queria e a tua palavra guardada. Um dia vem cobrar o resto, e vai escolher o dia.",
+        efeitos: [{ tipo: "situacao", papel: "refem", situacao: "livre" }, { tipo: "deixa", premissa: "pacto:vilao" }],
+      },
+      romper: {
+        texto: "rasgar a palavra dada e subir a escada",
+        ganha: "Ficas sem dívida e com a lâmina livre.",
+        custa: "Quebras a palavra dada a quem as guarda melhor do que ninguém — e {refem} paga a primeira prestação.",
+        efeitos: [{ tipo: "situacao", papel: "refem", situacao: "ferida" }, { tipo: "rompe_laco", papel: "vilao" }],
+      },
+    } },
+    prova: { etapa: "prova", opcoes: {
+      expor: {
+        texto: "pôr à frente de {vilao} o que não pode negar",
+        ganha: "{vilao} cai sem que uma lâmina saia da bainha — e cai à frente de quem ainda seguia {vilao}.",
+        custa: "Uma coisa destas só se usa uma vez. E quem perde tudo sem luta, à frente de todos, não perdoa a quem lho tirou.",
+        efeitos: [{ tipo: "deixa", premissa: "humilhado:vilao" }],
+      },
+      guardar: {
+        texto: "guardar o que sabes e decidir à lâmina",
+        ganha: "Ninguém vai dizer que venceste com um papel na mão: venceste de pé.",
+        custa: "Se a luta correr mal, cais com a arma que derrubava {vilao} no bolso.",
+        efeitos: [],
+      },
+    } },
+    sentenca: { etapa: "sentenca", opcoes: {
+      poupar: {
+        texto: "deixar {vilao} viver, e ir-te embora",
+        ganha: "Ninguém vai poder dizer que te tornaste o que vieste derrubar. E quem poupa deixa uma porta aberta para alguém mudar.",
+        custa: "Uma vida poupada anda por aí, com memória e com tempo. Pode mudar — e pode voltar.",
+        efeitos: [{ tipo: "deixa", premissa: "poupado:vilao" }],
+      },
+      acabar: {
+        texto: "acabar com {vilao} aqui, de uma vez",
+        ganha: "Acabou, e acabou à tua frente: nenhum herdeiro pega no que ficaria a meio.",
+        custa: "Matar quem está de joelhos não se desfaz. Quem estava na escada vai contar como foi — e vai contar mal.",
+        efeitos: [{ tipo: "deixa", premissa: "caiu:vilao" }],
+      },
+      selar: {
+        texto: "fechar {vilao} onde ninguém abra",
+        ganha: "Nem sangue nem fuga: um nome atrás de uma porta que só tu sabes abrir.",
+        custa: "Uma porta fechada continua a ser uma porta. Alguém vai procurar a chave — e a chave és tu.",
+        efeitos: [{ tipo: "deixa", premissa: "selado:vilao" }],
+      },
+    } },
+  },
+  solucoes: {
+    braco: {
+      luta: [
+        { id: "poupou", quando: ["poupou", "papel:braco"],
+          texto: "{braco} larga a arma no terceiro degrau e senta-se, de mãos abertas. Deixas que fique. Quando passas, ouves atrás de ti: «lá em cima, não confies no copo.»",
+          efeitos: [{ tipo: "laco", papel: "braco", laco: "divida" }] },
+        { id: "matou", texto: "{braco} cai pela escada abaixo, degrau a degrau, e o barulho sobe antes de ti. Lá em cima já sabem que vens." },
+      ],
+      palavra: [{ texto: "{braco} afasta-se da escada sem uma palavra. Não te deixa passar: deixa de impedir. É diferente, e os dois sabem.",
+        efeitos: [{ tipo: "aliado", papel: "braco" }] }],
+    },
+    divida: {
+      cumprir: [{ fecha: "concluida",
+        texto: "Apertam as mãos por cima da mesa onde tudo se decidiu. {refem} desce a escada contigo, e lá fora o dia nasce igual aos outros. Só tu sabes quanto custou." }],
+      romper: [{ texto: "Rasgas a palavra em voz alta. {vilao} não se zanga: acena, como quem anota, e alguém grita no fundo da sala." }],
+    },
+    frente: {
+      luta: [
+        { id: "poupou", quando: ["poupou", "papel:vilao"],
+          texto: "{vilao} cai de joelhos e não se levanta. A lâmina está na tua mão, e a decisão também." },
+        { id: "matou", fecha: "concluida",
+          texto: "{vilao} cai, e não se levanta mais. Não há últimas palavras: só o barulho de quem estava na escada a largar as armas, uma a uma.",
+          efeitos: [{ tipo: "deixa", premissa: "caiu:vilao" }] },
+      ],
+      prova: [
+        { id: "pessoa", quando: ["acompanha", "papel:fraqueza_quem"],
+          texto: "{fraqueza_quem} entra na sala ao teu lado, e {vilao} baixa a lâmina antes de saber que a baixou. Há uma voz que ainda manda mais do que todo o medo que vendeu." },
+        { id: "coisa", quando: ["tem", "item:fraqueza_coisa"],
+          texto: "Pousas {fraqueza_coisa} em cima da mesa, à vista de todos, e {vilao} percebe antes de toda a gente que acabou." },
+        { texto: "Dizes em voz alta, à frente de quem ainda servia {vilao}, o que ficou escondido tantos anos. Ninguém puxa de uma arma. Um a um, saem pela porta, e deixam-te a sós com o que sobrou." },
+      ],
+    },
+    sentenca: {
+      poupar: [{ texto: "Viras costas. É a coisa mais difícil que fizeste em toda a estrada, e ninguém te vai agradecer por ela." }],
+      acabar: [{ texto: "Um golpe só. A sala fica tão calada que se ouve a vela a arder." }],
+      selar: [{ texto: "A porta fecha-se com um barulho de pedra contra pedra. Do outro lado, durante muito tempo, ninguém diz nada. Depois, uma voz pede água." }],
+    },
+  },
+  reviravoltas: [
+    { id: "a_divida_cobrada",
+      texto: "À entrada de {covil} há uma mesa posta e uma cadeira à tua espera. {vilao} não te recebe como inimigo: recebe-te como quem vem pagar. Apertaste-lhe a mão uma vez, e a mão lembra-se.",
+      gatilho: ["todos", ["etapa", "covil"], ["nenhum", ["etapa", "braco"]], ["relacao", "papel:vilao", "aliado"]],
+      efeitos: [{ tipo: "abre_etapa", antes: "braco", etapa: {
+        id: "divida", texto: "Responder ao que prometeste",
+        conclui: ["algum", ["escolheu", "pacto", "cumprir"], ["escolheu", "pacto", "romper"]],
+        ramos: ["cumprir", "romper"] } }] },
+    { id: "a_prova_na_mao",
+      texto: "O que trazes contigo pesa mais a cada degrau. Lá em cima, alguém vai perceber o que é antes de lhe dizeres — e isso pode chegar.",
+      gatilho: ["todos", ["etapa", "covil"], ["nenhum", ["etapa", "frente"]],
+        ["algum", ["acompanha", "papel:fraqueza_quem"], ["tem", "item:fraqueza_coisa"], ["descobriu", "lugar:fraqueza_verdade"]]],
+      efeitos: [{ tipo: "abre_etapa", antes: "frente", etapa: {
+        id: "prova", texto: "Pôr diante de {vilao} o que mais teme",
+        conclui: ["algum", ["escolheu", "prova", "expor"], ["escolheu", "prova", "guardar"]],
+        ramos: ["expor", "guardar"] } }] },
+    { id: "a_lamina_no_pescoco",
+      texto: "Ao cimo da escada, {vilao} não está sozinho: {refem} está de joelhos ao lado, com uma lâmina encostada ao pescoço e os olhos em ti. Ninguém cai esta noite enquanto aquela lâmina estiver ali.",
+      gatilho: ["todos", ["etapa", "braco"], ["nenhum", ["etapa", "frente"]], ["nenhum", ["acompanha", "papel:refem"]]],
+      efeitos: [{ tipo: "exige", etapa: "frente", condicao: ["acompanha", "papel:refem"] }] },
+  ],
+  falha: [
+    { quando: ["morto", "papel:refem"], ate: "frente",
+      texto: "{refem} não desceu a escada. {vilao} ficou a olhar para ti por cima do corpo, e sorriu como quem fecha uma conta. Saíste de {covil} com vida, e foi o pior que te podia acontecer." },
+    { quando: ["todos", ["morto", "papel:vilao"], ["nenhum", ["derrotou", "papel:vilao"]]], ate: "frente",
+      texto: "Outra mão chegou primeiro. {vilao} morreu sem te ver, e o que começou não morreu com o corpo: já tem quem lhe pegue." },
+  ],
+  abandono: { semAvancar: 8,
+    texto: "Esperaram por ti três noites. À quarta, {covil} amanheceu vazio, e o que lá se preparava foi ser feito noutro sítio.",
+    efeitos: [{ tipo: "relogio_do_fio", n: 2 }] },
+  fecho: {
+    texto: "Desces a escada de {covil} ao amanhecer. Lá fora a terra é a mesma e as estradas são as mesmas — e, pela primeira vez em muito tempo, ninguém está a mover as peças por trás delas.",
+    efeitos: [{ tipo: "aliado", papel: "refem" }],
+  },
+});
+
+/* O MEDO DE MORRER (tipo 2): uma febre que conta os dias, um segredo que
+   o herói decide guardar ou dar, e uma erva que se paga, se rouba, ou se
+   espera. Do melhor (a febre cede, e a verdade foi dita) ao pior (quem
+   esperou sem lutar, ou sem saber, morre) — sempre pelo que o herói
+   escolheu. A ponte: quem vende a erva paga a quem manda no vilão, e
+   quem vende a cura é quem semeia a febre (a reviravolta). */
+const OS_DIAS_QUE_FALTAM = quest({
+  id: "os_dias_que_faltam",
+  titulo: "Os Dias Que Faltam",
+  tipo: 2,
+  quando: ["cedo", "meio", "fim"],
+  afim: [],
+  papeis: {
+    quem: { de: "grupo", ou: "elo" },
+    curandeira: { de: "elenco", cidade: "a do ato" },
+    horto: { de: "lugar", cidade: "uma cidade dos atos 2 ou 3" },
+  },
+  mao: null,
+  ponte: "{horto} fica numa cidade por onde um passo do vilão vai passar, e quem lá vende a erva paga a quem manda nele",
+  pede: [],
+  deixa: [],
+  gancho: "{quem} tosse para o lenço e dobra-o depressa, antes que vejas a cor. Diz que é o pó da estrada. {curandeira} olhou para {quem} uma vez, ao passar, e chamou-te à parte com a cara de quem já deu esta notícia muitas vezes e nunca se habituou.",
+  etapas: [
+    { id: "sinal", texto: "Ouvir o que {curandeira} viu em {quem}",
+      espera: 2, acende: ["acompanha", "papel:quem"],
+      conclui: ["todos", ["acompanha", "papel:quem"], ["conversou", "papel:curandeira", 2]] },
+    { id: "segredo", texto: "Decidir se {quem} fica a saber",
+      conclui: ["algum", ["escolheu", "segredo", "contar"], ["escolheu", "segredo", "calar"]],
+      ramos: ["contar", "calar"] },
+    { id: "horto", texto: "Achar onde nasce a erva",
+      ancora: { tipo: 1, concluidas: 1 },
+      conclui: ["esteve", "lugar:horto"] },
+    { id: "cura", texto: "Decidir como se paga a erva",
+      conclui: ["algum", ["escolheu", "cura", "pagar"], ["escolheu", "cura", "roubar"], ["escolheu", "cura", "esperar"]],
+      ramos: ["pagar", "roubar", "esperar"] },
+  ],
+  escolhas: {
+    segredo: { etapa: "segredo", opcoes: {
+      contar: {
+        texto: "contar a {quem} o que {curandeira} disse",
+        ganha: "{quem} deixa de carregar sozinho uma coisa que já sentia no peito, e passa a lutar por ela de olhos abertos.",
+        custa: "Há quem prefira não saber. A partir desta noite, {quem} vai contar os dias contigo — e vais ver-lhe o medo em cada um.",
+        efeitos: [{ tipo: "vinculo", papel: "quem", n: 5 }],
+      },
+      calar: {
+        texto: "guardar o segredo, e procurar a cura sem dizer nada",
+        ganha: "{quem} dorme descansado mais umas noites, sem saber o que lhe conta a tosse.",
+        custa: "Se a cura não chegar a tempo, {quem} morre sem saber que tu sabias. E se chegar, um dia vai perguntar-te porque calaste.",
+        efeitos: [],
+      },
+    } },
+    cura: { etapa: "cura", opcoes: {
+      pagar: {
+        texto: "pagar o preço que pedem pela erva em {horto}",
+        ganha: "A erva vem limpa, em mão, sem perguntas e sem ninguém à tua procura.",
+        custa: "É mais do que a bolsa quer dar, e o dinheiro vai parar a quem não devia.",
+        efeitos: [{ tipo: "moedas", n: -80 }],
+      },
+      roubar: {
+        texto: "levar a erva de {horto} sem pagar",
+        ganha: "A erva vem, e quem a vende fica sem a moeda do teu medo.",
+        custa: "Quem guarda {horto} não perdoa a quem lhe mexe no negócio, e quem manda nesse negócio fica a saber por onde andas.",
+        efeitos: [{ tipo: "avisa_vilao" }],
+      },
+      esperar: {
+        texto: "confiar no tratamento lento de {curandeira}",
+        ganha: "Nem moeda nem roubo: só caldos, emplastros e tempo, e {quem} ao teu lado a cada dia.",
+        custa: "A febre não espera por ninguém. Sem a erva, só a vontade de {quem} a segura — e a vontade precisa de saber que tem de lutar, e de alguém por quem lutar.",
+        efeitos: [],
+      },
+    } },
+  },
+  solucoes: {
+    segredo: {
+      contar: [{ texto: "Dizes-lho junto ao fogo, sem rodeios. {quem} fica muito tempo calado, e depois pergunta só quanto tempo. Não sabes. Dizes-lho também." }],
+      calar: [{ texto: "Não dizes nada. {quem} pergunta o que {curandeira} queria, e tu respondes que era sobre o tempo. Não é mentira inteira, e pesa como se fosse." }],
+    },
+    cura: {
+      pagar: [{ texto: "Contas as moedas em cima do balcão de {horto}, uma a uma. Quem as recebe não olha para elas: olha para ti, e guarda a tua cara." }],
+      roubar: [{ texto: "Entras de noite em {horto} e sais com um molho de erva debaixo da capa e o coração a bater na garganta. Atrás de ti, um cão começa a ladrar." }],
+      esperar: [{ texto: "{curandeira} muda os emplastros de manhã e à noite, e diz que agora é com {quem}. Ficas ao lado da cama, porque é o que se pode fazer." }],
+    },
+  },
+  reviravoltas: [
+    { id: "a_mesma_mao",
+      texto: "Em {horto} não há só a erva que cura: há sacos de outra semente, atados com o mesmo nó, prontos a seguir para os poços. Quem vende a cura é quem semeia a febre — e {quem} não foi o primeiro, nem vai ser o último.",
+      gatilho: ["todos", ["etapa", "horto"], ["nenhum", ["etapa", "cura"]], ["descobriu", "lugar:horto"]],
+      efeitos: [{ tipo: "deixa", premissa: "febre:horto" }] },
+    { id: "a_tosse_que_ouve",
+      texto: "{quem} lê o nome da erva escrito no saco, à tua frente, e não diz nada. Só à noite, junto ao fogo, diz baixinho que preferia ter sabido por ti.",
+      gatilho: ["todos", ["escolheu", "segredo", "calar"], ["etapa", "horto"], ["acompanha", "papel:quem"], ["nenhum", ["etapa", "cura"]]],
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: -5 }] },
+  ],
+  desfechos: [
+    { id: "a_febre_cede",
+      quando: ["todos", ["escolheu", "segredo", "contar"], ["algum", ["escolheu", "cura", "pagar"], ["escolheu", "cura", "roubar"]], ["afeicao", "papel:quem", 2]],
+      texto: "A febre cede numa semana. {quem} volta a comer, a rir alto, a praguejar contra o frio — e uma noite diz-te, sem olhar para ti, que foi a primeira vez que alguém lhe contou a verdade quando era mais fácil mentir.",
+      efeitos: [{ tipo: "marco", papel: "quem" }, { tipo: "aliado", papel: "curandeira" }] },
+    { id: "o_tempo_emprestado",
+      quando: ["todos", ["escolheu", "cura", "esperar"], ["escolheu", "segredo", "contar"], ["afeicao", "papel:quem", 3]],
+      texto: "Sem erva nenhuma, só caldos e teimosia. {quem} passa uma semana a lutar com a febre de olhos abertos, a agarrar-te a mão nas piores horas — e ao oitavo dia senta-se na cama e pede pão. {curandeira} diz que nunca tinha visto uma coisa assim.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: 10 }, { tipo: "quem_e", papel: "quem", linha: "viu a morte de perto e decidiu não ir" }] },
+    { id: "curado_as_escuras",
+      quando: ["algum", ["escolheu", "cura", "pagar"], ["escolheu", "cura", "roubar"]],
+      texto: "A erva funciona. A febre cede numa semana, e {quem} volta a comer, a rir, a praguejar. Mas há uma distância nova entre vocês, do tamanho de uma conversa que ficou por ter.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: -5 }, { tipo: "quem_e", papel: "quem", linha: "voltou da febre, e não esquece a conversa que ficou por ter" }] },
+    { id: "a_febre_fica", padrao: true,
+      texto: "A febre não mata e não se vai embora. {quem} continua ao teu lado, com menos peso e menos palavras, e às vezes, de manhã, fica muito tempo a olhar para o lenço.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: -10 }, { tipo: "quem_e", papel: "quem", linha: "anda com uma febre que vai e volta, e já não fala dela" }] },
+    { id: "sem_quem_cure", cedo: true,
+      quando: ["todos", ["morto", "papel:curandeira"], ["nenhum", ["etapa", "horto"]]],
+      texto: "{curandeira} morreu antes de dizer onde nascia a erva. {quem} continua a tossir para o lenço, e já ninguém sabe ler a cor.",
+      efeitos: [{ tipo: "quem_e", papel: "quem", linha: "carrega uma febre que mais ninguém sabe ler" }] },
+    { id: "antes_da_febre", cedo: true,
+      quando: ["morto", "papel:quem"],
+      texto: "Não foi a febre. Foi a estrada, como quase sempre. Fica-te o lenço dobrado no bolso de {quem}, e a pergunta de quanto tempo teria havido.",
+      efeitos: [] },
+    { id: "a_ultima_febre",
+      quando: ["todos", ["escolheu", "cura", "esperar"], ["algum", ["escolheu", "segredo", "calar"], ["nenhum", ["afeicao", "papel:quem", 3]]]],
+      texto: "A febre volta numa madrugada e não se vai embora. {quem} morre ao terceiro dia, de mão dada contigo, e pergunta-te, já sem voz, se havia alguma coisa a fazer. Não sabes o que responder, porque havia.",
+      efeitos: [{ tipo: "morte", papel: "quem" }] },
+  ],
+  abandono: { semAvancar: 15, desfecho: "a_febre_fica" },
+});
+
+/* A FÉ (tipo 2): quem anda com o herói jurou num altar nunca mais
+   sangrar ninguém, e quem perdeu um irmão às mãos dessa pessoa vem a
+   caminho. Honrar o voto, quebrá-lo, ou comprar quem o desfaça — e,
+   quando a faca chegar, ouvir, lutar, ou fugir. Do melhor (a verdade
+   dita, as mãos limpas) ao pior (fugir, e deixar quem não ergue a lâmina
+   sozinho na estrada). A ponte: o altar de {templo} já aceitou o ouro do
+   vilão, e o perdão de lá tem preço (a reviravolta). */
+const A_LAMINA_ENTERRADA = quest({
+  id: "a_lamina_enterrada",
+  titulo: "A Lâmina Enterrada",
+  tipo: 2,
+  quando: ["cedo", "meio", "fim"],
+  afim: [],
+  papeis: {
+    quem: { de: "grupo", ou: "elo" },
+    vingador: { de: "elenco", perdeu: "um irmão" },
+    templo: { de: "lugar", cidade: "uma cidade dos atos 2 ou 3" },
+    sacerdote: { de: "elenco", do: "templo" },
+  },
+  mao: null,
+  ponte: "{sacerdote} guarda o altar de {templo}, numa cidade por onde um passo do vilão vai passar, e já aceitou o ouro de quem manda nele",
+  pede: [],
+  deixa: [],
+  gancho: "{quem} não puxa da lâmina. Nem quando devia, nem quando gritaste. Há muitos anos matou alguém que não merecia morrer e jurou, diante do altar de {templo}, que a sua mão não voltaria a sangrar ninguém. Agora {vingador}, que perdeu um irmão nessa noite, anda de terra em terra a perguntar por {quem} — e um voto não trava uma faca.",
+  etapas: [
+    { id: "sinal", texto: "Perguntar a {quem} porque não luta",
+      espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
+      conclui: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 2], ["conversou", "papel:quem", 2]] },
+    { id: "voto", texto: "Decidir o que vale o voto de {quem}",
+      conclui: ["algum", ["escolheu", "voto", "honrar"], ["escolheu", "voto", "quebrar"], ["escolheu", "voto", "absolver"]],
+      ramos: ["honrar", "quebrar", "absolver"] },
+    { id: "vingador", texto: "Encontrar {vingador} antes que encontre {quem}",
+      ancora: { tipo: 1, concluidas: 1 },
+      conclui: ["todos", ["conheceu", "papel:vingador"], ["conversou", "papel:vingador"]] },
+    { id: "conta", texto: "Acertar a conta de {quem} com {vingador}",
+      conclui: ["algum", ["derrotou", "papel:vingador"], ["escolheu", "conta", "ouvir"], ["escolheu", "conta", "afastar"]],
+      ramos: ["luta", "ouvir", "afastar"] },
+  ],
+  escolhas: {
+    voto: { etapa: "voto", opcoes: {
+      honrar: {
+        texto: "honrar o voto de {quem}, e lutar no seu lugar",
+        ganha: "{quem} guarda as mãos limpas, e sabe que há alguém que não lhe pede o que jurou não dar.",
+        custa: "Quando a lâmina vier, vem para os dois — e só um de vocês a vai erguer.",
+        efeitos: [{ tipo: "vinculo", papel: "quem", n: 5 }],
+      },
+      quebrar: {
+        texto: "pedir a {quem} que puxe da lâmina quando chegar a hora",
+        ganha: "Quando {vingador} chegar, vai encontrar duas lâminas, e não uma.",
+        custa: "Um voto partido não se cola. {quem} pode viver por isso — e deixar de rezar por isso também.",
+        efeitos: [{ tipo: "vinculo", papel: "quem", n: -5 }],
+      },
+      absolver: {
+        texto: "levar {quem} a {templo}, para que o altar desfaça o voto",
+        ganha: "Se o altar que ouviu o voto o desfizer, ninguém pode chamar perjúrio ao que vier depois.",
+        custa: "Um perdão tem sempre alguém que o vende. E {templo} fica longe, e {vingador} não espera por ninguém.",
+        efeitos: [],
+      },
+    } },
+    conta: { etapa: "conta", opcoes: {
+      ouvir: {
+        texto: "pôr {vingador} a ouvir o que {quem} tem a dizer daquela noite",
+        ganha: "A verdade daquela noite sai, por fim, da boca de quem a carregou. {vingador} pode não perdoar — mas vai ouvir.",
+        custa: "{quem} vai dizer em voz alta o pior que já fez, à frente de quem lhe tem mais ódio no mundo, e diante de ti.",
+        efeitos: [],
+      },
+      afastar: {
+        texto: "tirar {quem} do caminho de {vingador}, e fugir",
+        ganha: "Hoje ninguém sangra: põem estrada entre vocês e a faca.",
+        custa: "{vingador} não desiste, e {quem} não foge duas vezes. Se se encontrarem sem ti, {quem} não ergue a lâmina — e sabes bem o que isso quer dizer.",
+        efeitos: [{ tipo: "dia", n: 1 }],
+      },
+    } },
+  },
+  solucoes: {
+    voto: {
+      honrar: [{ texto: "{quem} não te agradece. Pousa a mão no teu ombro, uma vez, e deixa-a lá mais tempo do que costuma." }],
+      quebrar: [{ texto: "{quem} ouve-te até ao fim. Depois desembrulha a lâmina, devagar, como quem desenterra um morto, e passa a noite a afiá-la sem dizer nada." }],
+      absolver: [{ texto: "{quem} aceita sem discutir, e é isso que te assusta: há quem esteja à espera de licença para deixar de ser quem é." }],
+    },
+    conta: {
+      luta: [{ texto: "Acaba depressa, como acabam as coisas que demoraram anos a chegar. {vingador} fica no chão, e {quem} olha para ti com as mãos limpas e a cara de quem as queria sujas." }],
+      ouvir: [{ texto: "{quem} fala sem parar durante uma hora. {vingador} não interrompe uma única vez, e no fim guarda a faca sem pressa, como quem guarda uma coisa que já não serve." }],
+      afastar: [{ texto: "Saem antes do amanhecer, por um caminho de cabras. {quem} não olha para trás. Tu olhas, e vês ao longe uma fogueira que não estava lá ontem." }],
+    },
+  },
+  reviravoltas: [
+    { id: "o_altar_primeiro",
+      texto: "Para desfazer um voto, diz-se, é preciso voltar ao altar onde se fez — e com quem o fez.",
+      gatilho: ["escolheu", "voto", "absolver"],
+      efeitos: [{ tipo: "abre_etapa", antes: "vingador", etapa: {
+        id: "altar", texto: "Levar {quem} ao altar de {templo}",
+        conclui: ["todos", ["esteve", "lugar:templo"], ["acompanha", "papel:quem"], ["conversou", "papel:sacerdote"]] } }] },
+    { id: "o_perdao_a_peso",
+      texto: "Fazes perguntas a mais a {sacerdote}, e a resposta vem numa gaveta: uma bolsa de couro cheia, com um nó que já viste noutros sítios. O perdão de {templo} tem preço, e quem o paga não é quem reza.",
+      gatilho: ["todos", ["etapa", "altar"], ["consultou", "papel:sacerdote"], ["nenhum", ["etapa", "conta"]]],
+      efeitos: [{ tipo: "quem_e", papel: "sacerdote", linha: "vende absolvições a quem paga, e paga a quem manda" }, { tipo: "deixa", premissa: "comprado:sacerdote" }] },
+  ],
+  desfechos: [
+    { id: "a_mao_limpa",
+      quando: ["todos", ["escolheu", "conta", "ouvir"], ["afeicao", "papel:quem", 3], ["nenhum", ["escolheu", "voto", "quebrar"]]],
+      texto: "{vingador} ouve até ao fim e, no fim, estende a mão — não para perdoar, ainda, mas para fechar a conta. {quem} aperta-a com a mesma mão que jurou não voltar a sangrar ninguém, e cumpriu. Nessa noite, pela primeira vez, reza em voz alta.",
+      efeitos: [{ tipo: "marco", papel: "quem" }, { tipo: "aliado", papel: "vingador" }] },
+    { id: "o_voto_guardado",
+      quando: ["todos", ["escolheu", "voto", "honrar"], ["derrotou", "papel:vingador"]],
+      texto: "Lutaste no lugar de {quem}, e {quem} não ergueu a lâmina. O voto ficou inteiro. O que não ficou inteiro foi a paz: {quem} sabe que alguém sangrou para que as suas mãos continuassem limpas.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: 10 }, { tipo: "quem_e", papel: "quem", linha: "deve a vida a quem lutou no seu lugar" }] },
+    { id: "a_paz_a_meias",
+      quando: ["escolheu", "conta", "ouvir"],
+      texto: "{vingador} ouve tudo e vai-se embora sem uma palavra. Não perdoa. Não volta. {quem} fica de pé muito tempo, no sítio onde a conversa acabou, como quem espera um golpe que não vem.",
+      efeitos: [{ tipo: "quem_e", papel: "quem", linha: "disse em voz alta o pior que fez, e continua de pé" }] },
+    { id: "a_lamina_desenterrada",
+      quando: ["todos", ["escolheu", "voto", "quebrar"], ["algum", ["derrotou", "papel:vingador"], ["escolheu", "conta", "afastar"]]],
+      texto: "{quem} ergueu a lâmina, e a lâmina lembrava-se do caminho. Ficaram vivos os dois que tinham de ficar. Mas {quem} deixou de rezar nessa noite, e quando lhe perguntas porquê, diz que não se fala com quem se mentiu.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: -5 }, { tipo: "quem_e", papel: "quem", linha: "voltou a erguer a lâmina, e não reza desde então" }] },
+    { id: "o_falso_perdao",
+      quando: ["todos", ["escolheu", "voto", "absolver"], ["nenhum", ["escolheu", "conta", "afastar"]]],
+      texto: "O altar desfez o voto, e {quem} voltou a usar a lâmina como quem volta a usar um sapato velho. Mas há uma coisa partida no sítio onde estava a fé, e às vezes {quem} pergunta-te, sem razão nenhuma, quanto custa um perdão.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: -5 }, { tipo: "quem_e", papel: "quem", linha: "foi desligado do voto por um altar que se vende" }] },
+    { id: "o_voto_pesa", padrao: true,
+      texto: "A conta com {vingador} nunca se acertou — a estrada não deixou, ou outra mão chegou primeiro. {quem} continua sem puxar da lâmina, e já não diz porquê.",
+      efeitos: [{ tipo: "vinculo", papel: "quem", n: -10 }, { tipo: "quem_e", papel: "quem", linha: "não puxa da lâmina, e já não diz porquê" }] },
+    { id: "o_voto_ate_ao_fim", cedo: true,
+      quando: ["morto", "papel:quem"],
+      texto: "{quem} morreu sem voltar a erguer a lâmina. Cumpriu o voto até ao fim, e o fim chegou mais cedo do que o voto.",
+      efeitos: [] },
+    { id: "o_martir",
+      quando: ["todos", ["escolheu", "conta", "afastar"], ["nenhum", ["escolheu", "voto", "quebrar"]]],
+      texto: "{vingador} encontrou {quem} numa estrada sem ti, ao terceiro dia. {quem} não ergueu a lâmina: ajoelhou-se e esperou, como quem cumpre a última parte de uma promessa. Quando chegaste, {vingador} já tinha ido embora, e {quem} tinha as mãos limpas e os olhos abertos para o céu.",
+      efeitos: [{ tipo: "morte", papel: "quem" }] },
+  ],
+  abandono: { semAvancar: 15, desfecho: "o_voto_pesa" },
+});
+
 const congelarFundo = (o) => {
   if (o && typeof o === "object" && !Object.isFrozen(o)) { Object.freeze(o); Object.values(o).forEach(congelarFundo); }
   return o;
 };
-export const BIBLIOTECA_DE_QUESTS = congelarFundo([O_SALVO_CONDUTO, AS_CINZAS_DE_ONTEM, A_CARTA_QUE_NAO_SE_ABRE]);
+export const BIBLIOTECA_DE_QUESTS = congelarFundo([
+  O_SALVO_CONDUTO, AS_CINZAS_DE_ONTEM, A_CARTA_QUE_NAO_SE_ABRE,
+  /* o acervo, lote 2 (BQ8) */
+  A_MAO_QUE_MUDOU_DE_LADO, O_CELEIRO_DE_INVERNO, O_CONVITE_SEM_SELO, O_CIMO_DA_ESCADA,
+  OS_DIAS_QUE_FALTAM, A_LAMINA_ENTERRADA,
+]);
 
 export function questPorId(id) {
   return typeof id === "string" ? BIBLIOTECA_DE_QUESTS.find((q) => q.id === id) || null : null;

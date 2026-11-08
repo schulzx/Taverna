@@ -26,7 +26,7 @@ import {
   sabeONome, reagirAoHeroi, temAFraqueza, desfechoDoVilao, oVilaoNaPauta,
 } from "../src/plano-do-vilao.js";
 import { ARQUETIPOS, FASES, PASSOS_DO_PLANO, diasDoPasso } from "../src/vilao.js";
-import { FONTES, RESPOSTAS, LEITURAS, TETO_DO_QUE_SABE } from "../src/antagonista.js";
+import { FONTES, RESPOSTAS, LEITURAS, TETO_DO_QUE_SABE, CORPOS } from "../src/antagonista.js";
 import { FERIDA_DO_VILAO, ATO_DA_REVELACAO } from "../src/nucleo.js";
 import { ANTECEDENTES } from "../src/antecedentes.js";
 import { CONDICOES, validarCondicao } from "../src/condicoes-da-quest.js";
@@ -78,7 +78,13 @@ const visto = { de: 1, ate: 1, vezes: 1, turno: 1 };
 sec("§1 AS TABELAS");
 {
   const arqs = Object.keys(PLANOS_DO_ARQUETIPO);
-  t("quatro arquétipos com plano neste lote, todos de vilao.js", arqs.length === 4 && arqs.every((a) => ARQUETIPOS.some((x) => x.id === a)));
+  /* movida na BQ8 (o acervo, lote 2): eram «quatro arquétipos neste lote»;
+     o lote 2 trouxe mais quatro (credor, boticária, almiranta, profeta
+     queimado). A intenção fica — todo plano é de um arquétipo de vilao.js —
+     e os quatro do primeiro lote continuam lá, sem mudar */
+  t("oito arquétipos com plano (os quatro da BQ5 e os quatro do lote 2), todos de vilao.js",
+    arqs.length === 8 && arqs.every((a) => ARQUETIPOS.some((x) => x.id === a))
+    && ["vendedor_de_medo", "traido", "faminto", "zeloso", "credor", "boticaria", "almiranta", "profeta_queimado"].every((a) => arqs.includes(a)));
   t(`cada plano tem ${FICHA_DO_VILAO.passos} passos`, arqs.every((a) => PLANOS_DO_ARQUETIPO[a].length === FICHA_DO_VILAO.passos));
   const todos = arqs.flatMap((a) => PLANOS_DO_ARQUETIPO[a].map((p, i) => ({ a, i, p })));
   t("cada passo diz, pressagia, deixa obra e tem desvio", todos.every(({ p }) => p.diz && p.presagio && p.obra && p.seTravado));
@@ -124,8 +130,16 @@ sec("§1 AS TABELAS");
   t("a reação que o jogo não alimenta diz porquê (a fama por cidade)", REACOES_DO_VILAO.filter((r) => r.reservado).map((r) => r.id).join() === "mira_o_que_ama");
   t("duas reações ensinam-lhe o nome (poupar um servo, aceitar a oferta)", REACOES_DO_VILAO.filter((r) => r.sabe && r.sabe.sobre === "nome").map((r) => r.quando).sort().join() === "aceitou_oferta,poupou_tenente");
   t("os quatro desfechos, pela ordem de julgamento", DESFECHOS_DO_VILAO.map((d) => d.id).join() === "pacto,redencao,derrota,fuga");
+  /* 08/11: os factos e as escolhas passaram de cada desfecho para os seus
+     `caminhos` (a prova que vence sem luta também derruba); a asserção
+     segue-os para lá, e soma que nenhum caminho é vazio (vazio valeria
+     sempre) e que toda escolha lida é de uma mão que existe */
   t("os factos dos desfechos são condições válidas do vocabulário fechado",
-    DESFECHOS_DO_VILAO.every((d) => !d.factos || validarCondicao(d.factos, { vilao: { tipo: "pessoa" }, fraqueza: { tipo: "pessoa" } }).ok));
+    DESFECHOS_DO_VILAO.every((d) => d.caminhos.every((c) => !c.factos || validarCondicao(c.factos, { vilao: { tipo: "pessoa" }, fraqueza: { tipo: "pessoa" } }).ok)));
+  t("todo desfecho tem caminho, e nenhum caminho é vazio",
+    DESFECHOS_DO_VILAO.every((d) => d.caminhos.length > 0 && d.caminhos.every((c) => !!c.factos || (c.escolhas || []).length > 0)));
+  t("toda escolha que um desfecho lê é de uma mão do vilão",
+    DESFECHOS_DO_VILAO.every((d) => d.caminhos.every((c) => (c.escolhas || []).every(([m]) => !!MAOS_DO_VILAO[m])) && (!d.rito || !!MAOS_DO_VILAO[d.rito.escolha[0]])));
   t("o rosto espera o ato da máscara do núcleo", FICHA_DO_VILAO.atoDoRosto === ATO_DA_REVELACAO.mascara);
 
   /* O ENCONTRO COM A BQ4: o campo `mao` da ficha da quest é o ponto onde as
@@ -133,6 +147,14 @@ sec("§1 AS TABELAS");
      mãos são as dela, e as quests do catálogo contestam passos que as
      aceitam — no plano para que foram escritas (o da Vendedora, §11.9) */
   t("os passos de um plano são os que o `mao.contra` da quest aceita (LIMITES_DA_QUEST)", FICHA_DO_VILAO.passos === LIMITES_DA_QUEST.passosDoPlano);
+  /* o lote 2 (BQ8) foi escrito para servir o catálogo inteiro: nos quatro
+     planos novos, toda quest com a mão dele cabe no passo que contesta (o
+     passo 4 aceita a pista e o recurso, o 5 o rosto, o 6 o confronto) */
+  const novos = ["credor", "boticaria", "almiranta", "profeta_queimado"];
+  const encaixaJa = (q, plano) => q.mao.contra.every((n) => plano[n - 1] && [q.mao.tipo, ...(q.mao.tambem || [])].some((m) => plano[n - 1].contra.includes(m)));
+  const naoCabe = novos.flatMap((a) => BIBLIOTECA_DE_QUESTS.filter((q) => q.mao && !encaixaJa(q, PLANOS_DO_ARQUETIPO[a])).map((q) => a + "/" + q.id));
+  t("nos quatro planos do lote 2, toda quest do catálogo cabe no passo que contesta", naoCabe.length === 0, naoCabe.join(", "));
+  t("e o passo 4 de cada plano novo aceita a pista e o recurso", novos.every((a) => ["pista", "recurso"].every((m) => PLANOS_DO_ARQUETIPO[a][3].contra.includes(m))));
   t("as mãos são as da ficha da quest, e o plano usa-as todas", Object.keys(MAOS_DO_VILAO).every((m) => todos.some(({ p }) => p.contra.includes(m))));
   const comMao = BIBLIOTECA_DE_QUESTS.filter((q) => q.mao);
   t("o catálogo tem quests com a mão dele", comMao.length >= 2);
@@ -185,7 +207,11 @@ sec("§2 O NASCIMENTO — a semente e o antecedente");
   t("o acólito fugido atrai o Zeloso", maior(conta("acolito")) === "zeloso");
   t("o nobre caído atrai o Traído", maior(conta("nobre_caido")) === "traido");
   const sem = conta("");
-  t("sem antecedente, os quatro saem", Object.keys(sem).length === 4);
+  /* movida na BQ8: eram «os quatro»; a roda do nascimento é a dos
+     arquétipos com plano, e o lote 2 juntou-lhe mais quatro. A intenção
+     — sem antecedente, todos os que têm plano podem nascer — fica */
+  t("sem antecedente, todos os arquétipos com plano saem", Object.keys(sem).length === Object.keys(PLANOS_DO_ARQUETIPO).length);
+  t("o náufrago atrai a Almiranta (o lote 2 entra na roda pelo passado do herói)", maior(conta("naufrago")) === "almiranta");
   t("só nascem arquétipos com plano próprio", Object.keys(conta("pragado")).every((k) => PLANOS_DO_ARQUETIPO[k]));
   t("o vilão nasce na camada do rumor, sem saber o nome do herói", a.camada === "rumor" && a.nomeDoHeroi === null && a.reagiu.length === 0);
   t("os tenentes são os secundários do mundo, e o principal não", a.tenentes.map((x) => x.nome).join() === "Brás do Vau,Mira Cinzenta");
@@ -407,7 +433,7 @@ sec("§7 NENHUMA CAMADA VAZA A SEGUINTE");
       }
     }
   }
-  t(`${casos} linhas (4 arquétipos × 3 fraquezas × 6 camadas × 4 dias), nenhum campo de cima${vazou.length ? " — " + vazou.slice(0, 4).join("; ") : ""}`, vazou.length === 0);
+  t(`${casos} linhas (${Object.keys(PLANOS_DO_ARQUETIPO).length} arquétipos × 3 fraquezas × 6 camadas × 4 dias), nenhum campo de cima${vazou.length ? " — " + vazou.slice(0, 4).join("; ") : ""}`, vazou.length === 0);
   t("toda linha cabe no teto", longas.length === 0, longas.join("; "));
   t("com o vilão em cena, sempre há linha", semLinha === 0);
 
@@ -518,6 +544,78 @@ sec("§10 OS DESFECHOS — cada um alcançável");
      continuam alcançáveis */
   const noFim = relogioDoPlano(f, { dia: 10000 });
   t("com o relógio no fim, a derrota continua alcançável", !!noFim.fim && desfechoDoVilao(f, { dia: 10000, factos: morte("morto") }, { quests: [confronto()] }).id === "derrota");
+
+  /* PELA PROVA (08/11, o defeito do lote 2): o vilão que cai sem luta, com
+     a fraqueza na mesa, não tem `derrotou` no livro — e a sentença tem de
+     dar fim na mesma. */
+  const vivo = { dia: 9, factos: { v: 1, pessoas: { "npc|Ilídia Selamar": { nome: "Ilídia Selamar", visto } }, lugares: {} } };
+  const pelaProva = (sentenca) => confronto({ prova: { opcao: "expor" }, sentenca: { opcao: sentenca } });
+  t("pela prova, «acabar» é derrota", desfechoDoVilao(f, vivo, { quests: [pelaProva("acabar")] })?.id === "derrota");
+  t("pela prova, «selar» é derrota", desfechoDoVilao(f, vivo, { quests: [pelaProva("selar")] })?.id === "derrota");
+  t("pela prova, «poupar» sem redenção é fuga", desfechoDoVilao(f, vivo, { quests: [pelaProva("poupar")] })?.id === "fuga");
+  t("pela prova, a coisa antiga acabada sem rito foge; selada, cai",
+    desfechoDoVilao(coisa, vivo, { quests: [pelaProva("acabar")] })?.id === "fuga" && desfechoDoVilao(coisa, vivo, { quests: [pelaProva("selar")] })?.id === "derrota");
+  t("rendido à lâmina e acabado é derrota, não fuga (quem acaba, acaba)",
+    desfechoDoVilao(f, { dia: 9, factos: morte("rendido") }, { quests: [confronto({ sentenca: { opcao: "acabar" } })] })?.id === "derrota");
+  t("a dívida cumprida é pacto, mesmo sem o «aceitar» do rosto (a aliança veio por outra porta)",
+    desfechoDoVilao(f, vivo, { quests: [confronto({ pacto: { opcao: "cumprir" } })] })?.id === "pacto");
+  t("a prova posta na mesa e a sentença por dar: ainda nenhum desfecho",
+    desfechoDoVilao(f, vivo, { quests: [confronto({ prova: { opcao: "expor" } })] }) === null);
+
+  /* A CATRACA: todo fim que o catálogo permite dá um desfecho. Itera as
+     quests de confronto da biblioteca (as futuras entram sozinhas), cada
+     corpo, cada família de fraqueza, cada queda (pela prova, sem luta; ou
+     rendido à lâmina; e, para a pessoa, com e sem ela ao lado) e cada
+     sentença final: as opções da última etapa e as que fecham a quest
+     (`fecha: "concluida"`, a dívida cumprida). E a morte na luta, que fecha
+     a quest sem sentença. */
+  const confrontos = BIBLIOTECA_DE_QUESTS.filter((q) => q.mao && q.mao.tipo === "confronto");
+  t("o catálogo tem ao menos uma quest de confronto", confrontos.length > 0);
+  const fins = (q) => {
+    const ultima = q.etapas[q.etapas.length - 1].id;
+    const out = [];
+    for (const [k, e] of Object.entries(q.escolhas || {})) {
+      for (const op of Object.keys(e.opcoes)) {
+        const fecha = ((q.solucoes || {})[e.etapa] || {})[op];
+        if (e.etapa === ultima || (Array.isArray(fecha) && fecha.some((s) => s.fecha === "concluida"))) out.push([k, op]);
+      }
+    }
+    return out;
+  };
+  t("cada quest de confronto tem sentença final", confrontos.every((q) => fins(q).length > 0));
+  t("toda escolha que um desfecho lê na mão do confronto existe numa quest de confronto do catálogo",
+    DESFECHOS_DO_VILAO.every((d) => [...d.caminhos.flatMap((c) => c.escolhas || []), ...(d.rito ? [d.rito.escolha] : [])]
+      .filter(([m]) => m === "confronto").every(([, op]) => confrontos.some((q) => fins(q).some(([, o]) => o === op)))));
+  const vendedor = (fam) => FRAQUEZAS[fam].find((e) => e.arquetipo === "vendedor_de_medo");
+  const papelDa = { pessoa: { tipo: "pessoa", nome: "Teodora Lume" }, verdade: { tipo: "lugar", nome: "Alfândega", cidade: "Porto Velho" } };
+  const semFim = [];
+  let casos = 0;
+  for (const q of confrontos) {
+    const registoDaQuest = (escolhas) => ({ id: q.id, mao: q.mao, estado: "concluida", fechouEm: 9, escolhas });
+    for (const corpo of CORPOS.map((c) => c.id)) {
+      for (const fam of Object.keys(FRAQUEZAS)) {
+        const papeis = { covil: { tipo: "lugar", nome: "Porto Velho", cidade: "Porto Velho" }, ...(papelDa[fam] ? { fraqueza: papelDa[fam] } : {}) };
+        const fx = fichaDe(registo({ corpo, fraqueza: { familia: fam, id: vendedor(fam).id }, papeis }));
+        const quedas = [
+          ["pela prova", vivo],
+          ["rendido", { dia: 9, factos: morte("rendido") }],
+          ...(fam === "pessoa" ? [["pela prova, com ela ao lado", { ...vivo, personagem: { grupo: [{ nome: "Teodora Lume" }] } }],
+            ["rendido, com ela ao lado", { dia: 9, personagem: { grupo: [{ nome: "Teodora Lume" }] }, factos: morte("rendido") }]] : []),
+        ];
+        for (const [queda, est] of quedas) {
+          for (const [k, op] of fins(q)) {
+            casos++;
+            const d = desfechoDoVilao(fx, est, { quests: [registoDaQuest({ [k]: { opcao: op } })] });
+            if (!d || !DESFECHOS_DO_VILAO.some((x) => x.id === d.id) || !d.depois) semFim.push(`${q.id}/${corpo}/${fam}/${queda}/${op}`);
+          }
+        }
+        casos++;
+        const morreu = desfechoDoVilao(fx, { dia: 9, factos: morte("morto") }, { quests: [registoDaQuest()] });
+        if (!morreu) semFim.push(`${q.id}/${corpo}/${fam}/morto na luta`);
+      }
+    }
+  }
+  t(`a catraca: nenhum fim do catálogo fica sem desfecho (${casos} casos)`, casos > 0 && semFim.length === 0, semFim.slice(0, 5).join(" · "));
 }
 
 sec("§11 O DETERMINISMO, O NULL E A IMUTABILIDADE");

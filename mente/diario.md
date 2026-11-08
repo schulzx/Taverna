@@ -24,6 +24,14 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 08/11 · v9.623 · o esqueleto (BQ6), o lote 2 do acervo, e todo fim do vilão com desfecho
+- **o lote 2 (`backend`, BQ8):** seis quests — A Mão Que Mudou de Lado, O Celeiro de Inverno, O Convite Sem Selo (o rosto: onde nasce o pacto), O Cimo da Escada (o confronto, com a fraqueza a abrir caminho sem luta), Os Dias Que Faltam e A Lâmina Enterrada (o coração) — e os planos do Credor, da Boticária, da Almiranta e do Profeta Queimado. Leitura em `mente/leitura-bq-lote-2.md`. Suíte da biblioteca 261, com a cobertura de cada ramo, falha e desfecho.
+- **BQ6 (`backend`):** `src/esqueleto.js` — o vilão primeiro, depois a quest de cada ato pelo passo que contesta, a fraqueza como fio (quem a entrega e o confronto apontam para a mesma coisa), duas do coração, os papéis do mundo. Mil sementes: 1000 válidos; com as 9 de hoje duas campanhas partilham 4,66 quests; o catálogo sintético cai abaixo de 1 aos 42 (o alvo de 52 passa). Degradação provada: os atos sem quest caem no marco antigo.
+- **o conserto (`backend`):** pela prova, «acabar»/«selar»/«poupar» davam desfecho `null`. Os quatro desfechos passam a ter `caminhos`; acabar e selar são derrota, poupar sem redenção é fuga, o pacto é a dívida cumprida. Catraca: nenhum fim do catálogo dá `null`. **Mudança de comportamento:** rendido e acabado passa de fuga a derrota.
+- **o que fica:** a tabela §11.7 da planta desatualizada (pacto, derrota, fuga); para o acervo: o Celeiro nunca entra (contesta só o passo 4), falta uma quest «meio» contra os passos 3–4, os papéis de coisa sem `nome`, e os tenentes-bicho a ocupar papéis de gente; **BQ7 (a fiação, só em mundos novos)** — com a minha decisão: num mundo novo, a quest concluída é o peso do ato (a biblioteca substitui o sorteio, decisão da pessoa); os marcos antigos só nos atos sem quest.
+
+---
+
 ## 08/11 · v9.622 · BQ3, BQ4 e BQ5 — as condições, as três primeiras quests e o vilão
 - **BQ3 (`backend`, 8a71cd4):** `src/condicoes-da-quest.js` — 16 predicados ativos por papel, cada um com a porta que escreve o facto (catraca); 5 reservados recusados até haver escritor; `julgarEtapa` → `{ feita, falta }` em dados («falar com Corrado (1 de 3)»).
 - **BQ4 (`backend`, 71a0018):** `src/biblioteca-de-quests.js` — a ficha como dado, `validarQuest` recusa as leis da pessoa (a morte como passo, desfecho sem facto, o pior sem acto do herói); as três primeiras (O Salvo-Conduto, As Cinzas de Ontem, A Carta Que Não Se Abre, com sete desfechos); `escolheu`/`etapa` ativados. Suíte 161.
