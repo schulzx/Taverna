@@ -24,7 +24,11 @@ console.log("\n[1. SÓ EXISTE ETAPA QUE O CÓDIGO CONFERE]");
    pela lista que a masmorra publica ao cair o chefe (`base.concluidas`) — é
    só da espinha (`soDaEspinha`): `tipoDaEtapa` nunca a dá a uma missão
    (teste-regiao-historia.mjs prova as duas coisas). */
-ok(Object.keys(ETAPAS).length === 10, "dez tipos de etapa, todos verificáveis");
+/* MOVIDA (08/11, BQ7): ONZE. `quest` é a etapa da projeção de uma quest da
+   biblioteca no Diário (`missaoDaQuest`): lê o registo da quest pela chave,
+   e é só da quest (`soDaQuest`) — a porta do Mestre (o estrito de
+   `tipoDaEtapa`) nunca a dá (teste-bq7-motor.mjs prova as duas coisas). */
+ok(Object.keys(ETAPAS).length === 11, "onze tipos de etapa, todos verificáveis");
 ok(Object.values(ETAPAS).every((e) => typeof e.ver === "function" && typeof e.texto === "function"), "cada um sabe se olhar no espelho do estado e se descrever");
 const casos = [
   /* MM14 (30/09): a asserção mudou, e o motivo é a sessão de prova — o

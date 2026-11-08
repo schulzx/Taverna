@@ -143,7 +143,12 @@ sec("1. O FORMATO É TABELA, E O VALIDADOR A LÊ");
      App a anotação do fim da resposta (a presença, o lugar, a afeição) corre
      depois do conferente e do trabalho daqui e antes do Cronista; a peça é
      motor/livro-do-turno.js, e o replay tem de produzir o mesmo livro */
-  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o boato", "o turno do Mestre", "o códex", "a chegada", "as missões", "o trabalho daqui", "o livro de factos", "o Cronista"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
+  /* MOVIDA (08/11, BQ7): entra «as quests» no fim — as quests do esqueleto e
+     o vilão do plano andam no FIM do turno, depois do Cronista (a conversa
+     que ele anotou no livro fecha a etapa neste turno); a peça é
+     motor/quests-do-turno.js, e só corre nos mundos novos (a espinha com
+     `esqueleto`) — nas sessões gravadas o estado sai igual */
+  t("os passos do replay são os do App, na ordem dele", J(PASSOS_DO_REPLAY.map((p) => p.passo)) === J(["o mundo, o chão e a escuta", "o tempo da ação", "o sítio pela frase", "o passo antes do Mestre", "o boato", "o turno do Mestre", "o códex", "a chegada", "as missões", "o trabalho daqui", "o livro de factos", "o Cronista", "as quests"]) && PASSOS_DO_REPLAY.every((p) => typeof p.faz === "function" && p.de));
   t("e a porta do App diz que é do App, e é a única", /^App /.test(PASSOS_DO_REPLAY.find((p) => p.passo === "o passo antes do Mestre").de) && PASSOS_DO_REPLAY.filter((p) => /^App /.test(p.de)).length === 1);
   t("e o passo do motor antes do Mestre não leva o nome da porta (o `calou` e o oráculo dizem-na por ele)", PASSOS_DO_REPLAY.filter((p) => /antes do Mestre/.test(p.passo)).length === 1);
   t("fora da régua: o bastidor inteiro de estado.js e o relato", camposDoGrupo("bastidor").every((c) => FORA_DA_REGUA[c]) && FORA_DA_REGUA.mensagens && FORA_DA_REGUA.historico && !FORA_DA_REGUA.personagem && !FORA_DA_REGUA.npcs);

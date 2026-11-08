@@ -30,12 +30,33 @@
      aoFechar          — quando o Diário é tela inteira: o cabeçalho e o Esc
      leiaute           — "mesa" | "meia" | "telefone", para quem já sabe a largura
      a etapa com `feitoEm` (o dia) — «cumprida no dia N»; sem ele, «cumprida»
+
+   BQ (08/11/2026, formas.md §BQ 3–5; Figma 319:1233 · 320:1641 · 320:1425 ·
+   320:1838) · AS QUESTS DA BIBLIOTECA E AS DUAS HISTÓRIAS. Props novas, e
+   opcionais (sem elas o Diário é o de AR2, byte a byte):
+     questsDaBiblioteca — [{ missao, estado }]: a projeção (`missaoDaQuest`)
+                       e a vista (`estadoDaQuest`) de cada quest. A do tipo 1
+                       é a estrada (couro e âmbar); a do tipo 2 é quem anda
+                       contigo (papel e lacre), sempre à vista à direita.
+     rostoDe(gente)    → o retrato (um nó) de { id, nome, papel } — a gente
+                       da história, quem anda contigo; sem ele, o aro vazio
+     vilaoNoDiario     — o cartaz da sombra (`oVilaoNoDiario`): só até à
+                       camada alcançada, e a peça confere outra vez
+     rostoDoVilao, rostoDoTenente — os retratos do cartaz (nós)
+   Da vista da quest o Diário lê: etapaTexto, falta (o «o que falta», ≤ 2
+   de um «ou»), feitas[i].como (como se fez), escolhas, gente (só quem o
+   herói conheceu), reviravolta { dia, texto, vistaEm } (sem vistaEm, por
+   ler: no topo; lida, um marco na linha do tempo), comQuem (quem anda
+   contigo), e no fim desfecho, luto, comoFicou e fecho.texto (o epitáfio).
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, COR_DA_RARIDADE, ENCAIXE, ICONES_DA_ETAPA, DIARIO_DE_MISSOES, RELOGIO_DO_PRAZO, CABECALHO_DA_TELA } from "./estilo.js";
+import { TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, COR_DA_RARIDADE, ENCAIXE, ICONES_DA_ETAPA, DIARIO_DE_MISSOES, RELOGIO_DO_PRAZO, CABECALHO_DA_TELA, DIARIO_DA_QUEST, CARTAZ_DA_SOMBRA } from "./estilo.js";
 import { Glifo, VerboComPreco } from "./ui.jsx";
-import { GlifoAR, CabecalhoDaTela, AbaDaTela, EtapaDaMissao, RelogioDoPrazo, LombadaDaEstante, MissaoNoIndice } from "./painel-ar-pecas.jsx";
+import { GlifoAR, CabecalhoDaTela, AbaDaTela, EtapaDaMissao, RelogioDoPrazo, LombadaDaEstante, MissaoNoIndice, LinhaDoQueFalta, CaminhosDaEtapa, RostoDaHistoria } from "./painel-ar-pecas.jsx";
+import { COMBINADORES } from "./condicoes-da-quest.js";
+import { CAMPOS_DA_CAMADA } from "./plano-do-vilao.js";
+import { FASES as CAMADAS_DO_VILAO } from "./vilao.js";
 import { DesenhoDoObjeto } from "./painel-mesa-do-mestre.jsx";
 import { ESTRUTURAS, estruturaPorId } from "./historia.js";
 import { garantirMissoes, etapaAtual, progresso as progressoMissao, textoDaEtapa, tipoDef as tipoMissao, temPrazo, rumoDaEtapa } from "./missoes.js";
@@ -90,6 +111,46 @@ function fraseDoFecho(f) {
 }
 const NOME_DA_RARIDADE = { comum: "comum", incomum: "incomum", raro: "raro", epico: "épico", lendario: "lendário", unico: "único" };
 
+/* ---------------- BQ · O QUE SE LÊ DE UMA QUEST ----------------
+   A vista (`estadoDaQuest`) é a verdade; aqui só se arruma para a tela. */
+const Q = DIARIO_DA_QUEST;
+const arr = (x) => (Array.isArray(x) ? x : []);
+const encher = (modelo, mapa) => String(modelo || "").replace(/\{(\w+)\}/g, (_, k) => (mapa[k] != null ? String(mapa[k]) : ""));
+/* «o que falta» em linhas: de um «ou», até dois caminhos — primeiro os que são
+   cartas de uma escolha (já estão na mesa), depois os outros pela ordem da
+   ficha — e o resto calado em «ou outro caminho» (lei de v9.27: uma lista
+   inteira faria da história um checklist) */
+export function linhasDaFalta(falta) {
+  const junta = COMBINADORES.todos.junta;
+  const out = [];
+  for (const f of arr(falta)) {
+    if (!f || typeof f !== "object" || f.invalida) continue;
+    if (f.predicado === "algum") {
+      const ramos = arr(f.opcoes).map((r) => {
+        const itens = arr(r).filter((x) => x && typeof x === "object");
+        return { texto: itens.map((x) => String(x.texto || "").trim()).filter(Boolean).join(junta), carta: itens.some((x) => x.predicado === "escolheu") };
+      }).filter((r) => r.texto);
+      const ordenados = [...ramos.filter((r) => r.carta), ...ramos.filter((r) => !r.carta)];
+      for (const r of ordenados.slice(0, Q.falta.doOu)) out.push({ estado: "falta", texto: r.texto });
+      if (ordenados.length > Q.falta.doOu) out.push({ estado: "outro", texto: "" });
+      continue;
+    }
+    const texto = String(f.texto || "").trim();
+    if (!texto) continue;
+    out.push({ estado: "falta", texto, tem: Number.isInteger(f.tem) ? f.tem : null, precisa: Number.isInteger(f.precisa) ? f.precisa : null });
+  }
+  return out;
+}
+/* a etapa de agora fecha por mais de um caminho? (um «ou» no que falta, ou
+   uma escolha aberta) — o Diário di-lo, nunca quais */
+const temRamos = (q) => !!q && (arr(q.falta).some((f) => f && (f.predicado === "algum" || f.predicado === "pelo_menos")) || arr(q.escolhas).length > 0);
+/* a reviravolta por ler: sem `vistaEm` no registo, fica no topo */
+const reviravoltaDe = (q) => (q && q.reviravolta && String(q.reviravolta.texto || "").trim() ? q.reviravolta : null);
+const porLer = (q) => { const r = reviravoltaDe(q); return !!r && !(r.vistaEm != null || r.lida); };
+const idDaEtapa = (e) => { const c = String((e && e.chave) || ""); const i = c.lastIndexOf(":"); return i < 0 ? "" : c.slice(i + 1); };
+const comQuemDe = (q) => { const c = q && q.comQuem; if (!c) return null; if (typeof c === "string") return c.trim() ? { nome: c.trim() } : null; return c.nome ? c : null; };
+const rostoSeguro = (rostoDe, ref) => { if (!rostoDe || !ref) return null; try { return rostoDe(ref) || null; } catch { return null; } };
+
 /* ---------------- AS PEQUENAS ---------------- */
 function Rotulo({ children, cor = T.inkDim, extra = null }) {
   return (
@@ -106,7 +167,9 @@ function Chip({ children, cor = T.amberSoft, borda = alfa(T.amber, 0.6) }) {
 /* ---------------- O PRÓXIMO PASSO ----------------
    O medalhão do tipo da etapa, a frase do rumo, o lugar com o pino e,
    quando o jogo o der, «Ver no mapa» com o preço (o sítio e a distância). */
-function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso }) {
+function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso, falta = null }) {
+  /* BQ: debaixo da frase da etapa, «o que falta», uma linha por coisa */
+  const linhas = linhasDaFalta(falta);
   const P = D.proximoPasso;
   const lado = telefone ? P.medalhao.telefone : P.medalhao.mesa;
   const onde = String((e && e.onde) || "").trim();
@@ -136,6 +199,11 @@ function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso }) 
               <span>{onde}{longe ? ` — ${longe}` : ""}</span>
             </span>
           ) : null}
+          {linhas.length ? (
+            <ul className="m-0 p-0 flex flex-col mt-1" aria-label="O que falta" style={{ gap: 2 }}>
+              {linhas.map((l, i) => <LinhaDoQueFalta key={i} estado={l.estado} texto={l.texto} tem={l.tem} precisa={l.precisa} />)}
+            </ul>
+          ) : null}
         </div>
       </div>
       {podeVer ? (
@@ -150,21 +218,33 @@ function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso }) 
    Feitas com ✓; a atual acesa; as que faltam como silhueta, contadas sem
    dizer o quê. No telefone só as duas que importam: a última feita e a
    primeira por saber, com «e mais N». */
-function LinhaDoTempo({ m, frase, compacto, comAtual = false }) {
+function LinhaDoTempo({ m, frase, compacto, comAtual = false, q = null }) {
   const etapas = Array.isArray(m.etapas) ? m.etapas : [];
   const atual = etapaAtual(m);
   const iAtual = atual ? etapas.indexOf(atual) : -1;
+  /* BQ: como se fez cada etapa da quest (a primeira frase da solução) */
+  const comoDe = (e) => { if (!q) return ""; const f = arr(q.feitas).find((x) => x && x.id === idDaEtapa(e)); return f ? String(f.como || "").trim() : ""; };
   const linhas = etapas.map((e, i) => {
     if (e.feito) {
       const dia = Number(e.feitoEm);
-      return { i, estado: "feita", tipo: e.tipo, texto: textoDe(e), nota: Number.isFinite(dia) && dia > 0 ? `cumprida no dia ${dia}` : "cumprida" };
+      /* a etapa da quest diz-se pela frase de mundo que a projeção já traz */
+      return { i, estado: "feita", tipo: e.tipo, texto: q ? String(e.alvo || "") : textoDe(e), nota: Number.isFinite(dia) && dia > 0 ? `cumprida no dia ${dia}` : "cumprida", como: comoDe(e) };
     }
     if (i === iAtual) {
       const onde = String(e.onde || "").trim();
-      return { i, estado: "atual", tipo: e.tipo, texto: frase, nota: onde ? `${onde} — é o passo de agora` : "é o passo de agora" };
+      return { i, estado: "atual", tipo: e.tipo, texto: frase, nota: onde ? `${onde} — é o passo de agora` : "é o passo de agora", ramos: temRamos(q) };
     }
     return { i, estado: "silhueta", tipo: e.tipo, texto: "Ainda não se sabe", nota: i === iAtual + 1 ? "abre-se quando a de cima se cumprir" : "" };
   });
+  /* BQ: a reviravolta já lida é um marco próprio, no sítio em que aconteceu
+     (depois da última etapa cumprida até ao dia dela); por ler, mora no topo */
+  const rv = reviravoltaDe(q);
+  if (rv && !porLer(q)) {
+    const diaRv = Number(rv.dia);
+    let k = linhas.findIndex((l) => !(l.estado === "feita" && (!Number.isFinite(diaRv) || !Number.isFinite(Number(etapas[l.i].feitoEm)) || Number(etapas[l.i].feitoEm) <= diaRv)));
+    if (k < 0) k = linhas.length;
+    linhas.splice(k, 0, { i: "virou", estado: "virou", tipo: "", texto: String(rv.texto), nota: Number.isFinite(diaRv) && diaRv > 0 ? `dia ${diaRv} · ${Q.reviravolta.noIndice}` : Q.reviravolta.noIndice });
+  }
   let mostrar = linhas;
   if (compacto) {
     const feitas = linhas.filter((l) => l.estado === "feita");
@@ -174,6 +254,8 @@ function LinhaDoTempo({ m, frase, compacto, comAtual = false }) {
       const u = feitas[feitas.length - 1];
       mostrar.push({ ...u, nota: feitas.length > 1 ? `e mais ${feitas.length - 1} ${feitas.length - 1 === 1 ? "cumprida" : "cumpridas"} antes` : u.nota });
     }
+    const virou = linhas.find((l) => l.estado === "virou");
+    if (virou) mostrar.push(virou);
     /* a oferta não tem a caixa do próximo passo: o passo vai na linha */
     const at = linhas.find((l) => l.estado === "atual");
     if (comAtual && at) mostrar.push(at);
@@ -185,7 +267,13 @@ function LinhaDoTempo({ m, frase, compacto, comAtual = false }) {
   if (!mostrar.length) return null;
   return (
     <ol className="m-0 p-0">
-      {mostrar.map((l, k) => <EtapaDaMissao key={l.i} estado={l.estado} tipo={l.tipo} texto={l.texto} nota={l.nota} ultima={k === mostrar.length - 1} />)}
+      {mostrar.map((l, k) => (
+        <React.Fragment key={l.i}>
+          <EtapaDaMissao estado={l.estado} tipo={l.tipo} texto={l.texto} nota={l.nota} ultima={k === mostrar.length - 1 && !l.como && !l.ramos} />
+          {l.como ? <li style={{ listStyle: "none", marginTop: -8, marginBottom: 10 }}><CaminhosDaEtapa estado="tomado" texto={l.como} /></li> : null}
+          {l.ramos ? <li style={{ listStyle: "none", marginTop: -8, marginBottom: 10 }}><CaminhosDaEtapa estado="abertos" /></li> : null}
+        </React.Fragment>
+      ))}
     </ol>
   );
 }
@@ -239,7 +327,10 @@ function Bilhete({ m, sec }) {
 }
 
 /* ---------------- A MISSÃO À FRENTE ---------------- */
-function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto, aoResponder, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso }) {
+function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto, aoResponder, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, q: qDado = null, estadoDe = null, rostoDe = null, semGente = false }) {
+  /* BQ: a quest da biblioteca (q = a vista dela) — a estrada ou quem anda contigo */
+  const q = qDado || (estadoDe ? estadoDe(m.id) : null);
+  const coracao = !!q && q.tipo === 2;
   const t = tipoMissao(m.tipo);
   const sec = secundariaDe(m);
   const oferta = m.status === "oferecida";
@@ -247,17 +338,24 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
   const p = progressoMissao(m);
   const atual = etapaAtual(m);
   let pistaMundo = "";
-  if (m.tipo === "principal") { try { pistaMundo = proximoPasso({ abertura, missoes: todas }); } catch { pistaMundo = ""; } }
-  const frase = rumoDe(m, atual, pistaMundo);
+  if (m.tipo === "principal" && !q) { try { pistaMundo = proximoPasso({ abertura, missoes: todas }); } catch { pistaMundo = ""; } }
+  const frase = q ? String(q.etapaTexto || (atual && atual.alvo) || "") : rumoDe(m, atual, pistaMundo);
   const prazo = prazoDe(m, relogios);
   const lado = !telefone && !compacto;
+  const rv = porLer(q) ? reviravoltaDe(q) : null;
   return (
     <article className="flex flex-col gap-5" aria-label={m.titulo}>
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
+          {q ? (
+            <Chip cor={coracao ? T.rosa : T.amberSoft} borda={coracao ? alfa(T.rosa, 0.7) : alfa(T.amber, 0.6)}>
+              {coracao ? Q.indice.glifoDoCoracao : glifoDoTipo(m)} {coracao ? Q.indice.coracao : Q.indice.estrada}
+            </Chip>
+          ) : (
           <Chip cor={oferta ? T.violetSoft : sec ? T.mundoSoft : T.amberSoft} borda={oferta ? T.violet : sec ? alfa(T.mundoSoft, 0.6) : alfa(T.amber, 0.6)}>
             {glifoDoTipo(m)} {(oferta ? "Oferta" : sec ? "Secundária" : t.rotulo).toUpperCase()}
           </Chip>
+          )}
           {sec && m.dador ? <Chip cor={T.inkMeio} borda={T.lineStrong}>pedida por {m.dador}</Chip> : null}
           {dif ? <Chip cor={T[dif.patamar.cor] || T.inkDim} borda={T.lineStrong}>{dif.patamar.icone} {dif.patamar.rotulo.toUpperCase()}</Chip> : null}
           {compacto && p.total > 1 ? <span className="tv-body" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>{p.feitas} de {p.total} etapas</span> : null}
@@ -283,10 +381,14 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
         {m.descricao && !sec && !compacto ? <p className="tv-body mt-2 mb-0" style={{ fontSize: TIPOS.corpo, color: T.inkMeio }}>{m.descricao}</p> : null}
       </div>
 
+      {rv ? <BilheteDaReviravolta rv={rv} /> : null}
+      {q && !semGente ? <GenteDaHistoria gente={q.gente} rostoDe={rostoDe} /> : null}
+
       {(sec || (atual && !oferta)) ? (
         <div className={sec && lado ? "grid gap-5 items-start" : "flex flex-col gap-5"} style={sec && lado ? { gridTemplateColumns: `minmax(0, ${D.bilhete.largura}px) minmax(0, 1fr)` } : undefined}>
           {sec ? <Bilhete m={m} sec={sec} /> : null}
-          {atual && !oferta ? <ProximoPasso m={m} e={atual} frase={frase} telefone={telefone || compacto} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} /> : null}
+          {atual && !oferta && coracao ? <QuestDoCoracao missao={m} estado={q} telefone={telefone || compacto} rosto={rostoSeguro(rostoDe, comQuemDe(q))} /> : null}
+          {atual && !oferta && !coracao ? <ProximoPasso m={m} e={atual} frase={frase} telefone={telefone || compacto} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} falta={q ? q.falta : null} /> : null}
         </div>
       ) : null}
 
@@ -300,7 +402,7 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
       {(m.etapas || []).length > 0 ? (
         <div>
           {!compacto ? <Rotulo extra={`${p.feitas} de ${p.total}${p.total - p.feitas > 1 ? " · as que faltam abrem-se pelo caminho" : ""}`}>{sec ? "Os atos" : "As etapas"}</Rotulo> : null}
-          <LinhaDoTempo m={m} frase={frase} compacto={compacto} comAtual={oferta} />
+          <LinhaDoTempo m={m} frase={frase} compacto={compacto} comAtual={oferta} q={q} />
         </div>
       ) : null}
 
@@ -319,8 +421,190 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
   );
 }
 
+/* ---------------- BQ · A REVIRAVOLTA POR LER (320:1641) ----------------
+   O bilhete de papel no topo da história, até o jogador abrir o Diário uma
+   vez; depois desce para a linha do tempo (o marco `virou`). */
+function BilheteDaReviravolta({ rv }) {
+  const R = Q.reviravolta;
+  const B = R.bilhete;
+  const dia = Number(rv.dia);
+  return (
+    <aside aria-label={R.rotulo} data-reviravolta="por-ler" style={{
+      padding: `${B.enchimento[0]}px ${B.enchimento[1]}px`, borderRadius: B.raio, background: B.chao, border: `1px solid ${B.aro}`,
+    }}>
+      <div className="tv-mono uppercase flex items-center gap-1.5" style={{ fontSize: TIPOS.maquina, color: B.rotulo, fontWeight: 700, letterSpacing: "0.1em" }}>
+        <Glifo nome="reviravolta" tamanho={TIPOS.maquina + 2} cor={B.rotulo} />
+        <span>{R.rotulo}{Number.isFinite(dia) && dia > 0 ? ` · dia ${dia}` : ""}</span>
+      </div>
+      <p className="tv-body italic m-0 mt-1" style={{ fontSize: TIPOS.rotulo, color: B.texto }}>{rv.texto}</p>
+    </aside>
+  );
+}
+
+/* ---------------- BQ · A GENTE DESTA HISTÓRIA ----------------
+   Só quem o herói já conheceu (o motor filtra); quem traiu leva a racha. */
+function GenteDaHistoria({ gente, rostoDe }) {
+  const lista = arr(gente).filter((g) => g && String(g.nome || "").trim());
+  if (!lista.length) return null;
+  return (
+    <section aria-label={Q.gente.rotulo}>
+      <Rotulo>{Q.gente.rotulo}</Rotulo>
+      <ul className="m-0 p-0 flex flex-wrap" style={{ gap: 12 }}>
+        {lista.map((g, i) => <RostoDaHistoria key={g.id || g.papel || i} nome={g.nome} papel={g.rotulo || ""} traiu={!!g.traiu} rosto={rostoSeguro(rostoDe, g)} />)}
+      </ul>
+    </section>
+  );
+}
+
+/* ---------------- BQ · A HISTÓRIA DO CORAÇÃO (315:92) ----------------
+   Papel e não couro, a fita de lacre, o rosto de quem anda contigo, o
+   rosário das etapas (a feita cheia, a de agora em anel, as que não se sabem
+   tracejadas) e UM passo, com uma linha do que falta. Nunca relógio, nem
+   âmbar, nem «Ver no mapa»: anda pelo que se faz com quem está ao lado.
+   Antes de a primeira etapa acender não existe (0 px). */
+export function QuestDoCoracao({ missao, estado, telefone = false, rosto = null, aoTocar = null }) {
+  if (!missao || !estado || estado.visivel === false) return null;
+  const C = Q.coracao;
+  const etapas = arr(missao.etapas);
+  const atual = etapaAtual(missao);
+  const iAtual = atual ? etapas.indexOf(atual) : -1;
+  const quem = comQuemDe(estado);
+  const passo = String(estado.etapaTexto || (atual && atual.alvo) || "").trim();
+  const falta = linhasDaFalta(estado.falta).find((l) => l.estado === "falta") || null;
+  const lado = telefone ? C.rosto.telefone : C.rosto.mesa;
+  const feitas = etapas.filter((e) => e.feito).length;
+  const corpo = (
+    <>
+      <span aria-hidden="true" className="absolute inset-y-0 left-0" style={{ width: C.fita.largura, background: C.fita.cor }} />
+      <div className="flex items-start" style={{ gap: 10 }}>
+        {quem ? (
+          <span aria-hidden="true" className="shrink-0 overflow-hidden flex items-center justify-center" style={{ width: lado, height: lado, borderRadius: lado, border: `2px solid ${C.rosto.aro}`, background: T.couroBaixo }}>{rosto}</span>
+        ) : null}
+        <div className="flex flex-col min-w-0" style={{ gap: 2 }}>
+          {quem ? <span className="tv-mono uppercase" style={{ fontSize: TIPOS.maquina, color: C.marca, fontWeight: 700, letterSpacing: "0.1em" }}>{encher(C.com, { quem: quem.nome })}</span> : null}
+          <span className="tv-display" style={{ fontSize: telefone ? C.titulo.telefone : C.titulo.mesa, color: T.tintaDoPergaminho, fontWeight: 600, lineHeight: 1.15 }}>{missao.titulo}</span>
+        </div>
+      </div>
+      {etapas.length ? (
+        <div role="img" aria-label={`${feitas} de ${etapas.length} passos desta história`} className="flex items-center" style={{ gap: C.rosario.entre, marginTop: 8 }}>
+          {etapas.map((e, i) => {
+            const feita = !!e.feito;
+            const agora = i === iAtual;
+            return <span key={i} style={{ width: C.rosario.conta, height: C.rosario.conta, borderRadius: C.rosario.conta, boxSizing: "border-box",
+              background: feita ? C.marca : "transparent", border: `${agora ? 2 : 1}px ${feita || agora ? "solid" : "dashed"} ${feita || agora ? C.marca : T.tintaDoPergaminhoDim}` }} />;
+          })}
+        </div>
+      ) : null}
+      {passo ? (
+        <div className="flex items-center" style={{ gap: 8, marginTop: 8 }}>
+          <Glifo nome="coracao" tamanho={telefone ? C.passo.telefone : C.passo.mesa} cor={C.marca} />
+          <span className="tv-body" style={{ fontSize: telefone ? C.passo.telefone : C.passo.mesa, color: T.tintaDoPergaminho, fontWeight: 600 }}>{passo}</span>
+        </div>
+      ) : null}
+      {falta ? <ul className="m-0 p-0" style={{ marginTop: 4 }}><LinhaDoQueFalta estado="falta" texto={falta.texto} tem={falta.tem} precisa={falta.precisa} papel="pergaminho" /></ul> : null}
+    </>
+  );
+  const caixa = { position: "relative", overflow: "hidden", padding: `12px 14px 12px ${C.fita.largura + 14}px`, borderRadius: C.raio, background: C.chao, border: `1px solid ${T.pergaminhoBorda}` };
+  return aoTocar ? (
+    <button type="button" onClick={aoTocar} aria-label={[missao.titulo, quem ? encher(C.com, { quem: quem.nome }) : "", passo].filter(Boolean).join(" · ")}
+      data-coracao="" className="tv-anel-foco w-full text-left block" style={caixa}>{corpo}</button>
+  ) : (
+    <section aria-label={missao.titulo} data-coracao="" style={caixa}>{corpo}</section>
+  );
+}
+
+/* ---------------- BQ · O CARTAZ DA SOMBRA (315:189) ----------------
+   O vilão no Diário: um cartaz que se preenche sozinho. «Alguém», uma
+   silhueta e uma linha; cada facto que sobe a camada acrescenta uma linha;
+   o nome e o rosto só no rosto; o plano só na guerra. O motor já manda só o
+   que a camada deixa (`oVilaoNoDiario`); esta peça confere outra vez, pela
+   mesma régua (CAMPOS_DA_CAMADA), e cala o que vier de uma camada de cima.
+   Sem camada, o cartaz não existe (0 px). */
+const ORDEM_DA_CAMADA = Object.fromEntries(CAMADAS_DO_VILAO.map((f) => [f.id, f.ordem]));
+const PLANO_DO_CARTAZ = { feito: "feito", travado: "travado", agora: "agora", por_vir: "porVir", porVir: "porVir" };
+const PALAVRA_DO_PASSO = { feito: "feito", travado: "travado por ti", agora: "o de agora", porVir: "por vir" };
+function Silhueta({ lado }) {
+  return (
+    <svg width={lado} height={lado} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="9" r="4.5" fill={T.inkDim} />
+      <path d="M3.5 24c0-5.2 3.8-8.5 8.5-8.5s8.5 3.3 8.5 8.5z" fill={T.inkDim} />
+    </svg>
+  );
+}
+export function CartazDaSombra({ vilao, retrato = null, rostoDoTenente = null, telefone = false }) {
+  const [tudo, setTudo] = React.useState(false);
+  if (!vilao || typeof vilao !== "object" || ORDEM_DA_CAMADA[vilao.camada] == null) return null;
+  const C = CARTAZ_DA_SOMBRA;
+  const ordem = ORDEM_DA_CAMADA[vilao.camada];
+  const pode = (campo) => ORDEM_DA_CAMADA[CAMPOS_DA_CAMADA[campo]] != null && ORDEM_DA_CAMADA[CAMPOS_DA_CAMADA[campo]] <= ordem;
+  const comRosto = pode("nome");
+  const comMao = pode("tenente");
+  const comMarca = pode("assinatura");
+  const nome = comRosto && String(vilao.nome || "").trim() ? String(vilao.nome).trim() : C.semNome;
+  const quemE = comRosto ? String(vilao.quemE || "").trim() : (String(vilao.quemE || "").trim() || (comMao ? C.comMao : C.semRosto));
+  const linhas = arr(vilao.linhas).filter((l) => l && String(l.texto || "").trim());
+  const vistas = tudo ? linhas : linhas.slice(0, C.linhas);
+  const plano = pode("plano") && Array.isArray(vilao.plano) && vilao.plano.length ? vilao.plano.map((s) => PLANO_DO_CARTAZ[s] || "porVir") : null;
+  const R = C.retrato;
+  return (
+    <section aria-label={C.rotulo} data-camada={vilao.camada} style={{
+      width: telefone ? "100%" : undefined, maxWidth: C.largura, padding: C.enchimento, borderRadius: C.raio, background: T.couro,
+      border: `1.5px solid ${comRosto ? C.aro.comRosto : C.aro.semRosto}`, display: "flex", flexDirection: "column", gap: C.vao,
+    }}>
+      <span className="tv-mono uppercase" style={{ fontSize: TIPOS.maquina, color: T.inkDim, letterSpacing: "0.1em" }}>{C.rotulo}</span>
+      <div className="flex items-center" style={{ gap: 14 }}>
+        <span className="relative shrink-0" style={{ width: R.largura, height: R.alto }}>
+          <span aria-hidden="true" className="absolute inset-0 overflow-hidden flex items-end justify-center" style={{
+            borderRadius: `${R.arco}px ${R.arco}px 4px 4px`, background: T.couroBaixo, border: `1.5px solid ${comRosto ? C.aro.comRosto : C.aro.semRosto}`,
+          }}>
+            {comRosto && retrato ? retrato : <Silhueta lado={R.largura - 8} />}
+          </span>
+          {comMarca && !comRosto ? <span aria-hidden="true" data-assinatura="" className="absolute" style={{ left: -4, bottom: 6, width: 16, height: 16, borderRadius: 16, background: T.perigoFundo, border: `1.5px solid ${T.danger}` }} /> : null}
+          {comMao && !comRosto && rostoDoTenente ? (
+            <span aria-hidden="true" data-tenente="" className="absolute overflow-hidden flex items-center justify-center" style={{ right: -6, bottom: 4, width: 24, height: 24, borderRadius: 24, background: T.couroBaixo, border: `1.5px solid ${C.aro.semRosto}` }}>{rostoDoTenente}</span>
+          ) : null}
+        </span>
+        <div className="flex flex-col min-w-0" style={{ gap: 2 }}>
+          <span className="tv-titulo" data-nome="" style={{ fontSize: TIPOS.titulo, color: comRosto ? MOLDURA_POR_DEGRAU.ouro.claro : T.ink }}>{nome}</span>
+          {quemE ? <span className="tv-body italic" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>{quemE}</span> : null}
+        </div>
+      </div>
+      {vistas.length ? (
+        <ul className="m-0 p-0 flex flex-col" aria-label="O que se sabe" style={{ gap: 6 }}>
+          {vistas.map((l, i) => {
+            const S = l.nova ? C.nova : C.velha;
+            return (
+              <li key={i} className="flex items-baseline tv-body" style={{ gap: 10, listStyle: "none", fontSize: TIPOS.rotulo, color: S.letra }} data-nova={l.nova ? "sim" : undefined}>
+                <span aria-hidden="true" className="shrink-0" style={{ width: 12, height: 1.5, background: S.traco, alignSelf: "center" }} />
+                <span>{l.texto}</span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {linhas.length > C.linhas ? (
+        <button type="button" onClick={() => setTudo((v) => !v)} aria-expanded={tudo ? "true" : "false"} className="tv-anel-foco tv-body self-start underline"
+          style={{ background: "transparent", border: "none", padding: 0, minHeight: 32, color: T.inkDim, fontSize: TIPOS.piso }}>
+          {tudo ? "menos" : encher(C.mais, { n: linhas.length - C.linhas })}
+        </button>
+      ) : null}
+      {plano ? (
+        <div role="img" aria-label={`O plano dele: ${plano.map((s) => PALAVRA_DO_PASSO[s]).join(", ")}`} className="flex" style={{ gap: 4 }}>
+          {plano.map((s, i) => <span key={i} className="flex-1" data-passo={s} style={{ height: C.plano.alto, borderRadius: C.plano.raio, background: C.plano[s] }} />)}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 /* ---------------- O ÍNDICE ---------------- */
-function linhaDoIndice(m, relogios, todas, abertura) {
+function linhaDoIndice(m, relogios, todas, abertura, q = null) {
+  /* BQ: a quest diz o passo dela; com a história virada e por ler, di-lo primeiro */
+  if (q) {
+    const passo = String(q.etapaTexto || ((etapaAtual(m) || {}).alvo) || "").trim();
+    if (porLer(q)) return <><Glifo nome="reviravolta" tamanho={TIPOS.piso} cor={T.rosa} /> {[Q.reviravolta.noIndice, passo].filter(Boolean).join(" · ")}</>;
+    return passo ? `→ ${passo}` : null;
+  }
   if (m.status === "oferecida") {
     const r = m.recompensa || {};
     return <>Oferta{m.dador ? ` · de ${m.dador}` : ""}{r.moedas ? <> · <Glifo nome="moeda" tamanho={TIPOS.piso} /> {r.moedas}</> : null}</>;
@@ -333,21 +617,31 @@ function linhaDoIndice(m, relogios, todas, abertura) {
   const resto = prazo && prazo.restam <= RELOGIO_DO_PRAZO.apertaCom ? ` · restam ${plural(prazo.restam, "noite", "noites")}` : "";
   return `→ ${rumoDe(m, e, pista)}${resto}`;
 }
-function ItemDoIndice({ m, escolhida, aoEscolher, relogios, todas, abertura }) {
+function ItemDoIndice({ m, escolhida, aoEscolher, relogios, todas, abertura, q = null }) {
   const prazo = prazoDe(m, relogios);
   return (
     <li style={{ listStyle: "none" }}>
       <MissaoNoIndice estado={m.status === "oferecida" ? (escolhida ? "escolhida" : "oferta") : escolhida ? "escolhida" : "repouso"}
-        glifo={glifoDoTipo(m)} titulo={m.titulo} passo={linhaDoIndice(m, relogios, todas, abertura)}
+        glifo={q && q.tipo === 2 ? Q.indice.glifoDoCoracao : glifoDoTipo(m)} titulo={m.titulo} passo={linhaDoIndice(m, relogios, todas, abertura, q)}
         prazo={prazo} aoTocar={() => aoEscolher(m.id)} />
     </li>
   );
 }
-function Estante({ lista }) {
+function Estante({ lista, estadoDe = () => null }) {
   if (!lista.length) return <div className="tv-body italic" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Nenhuma missão encerrada ainda.</div>;
   return (
     <ul className="m-0 p-0 flex flex-col gap-2">
       {lista.map((m) => {
+        /* BQ: a história do coração fecha num desfecho (ou no luto); a estante
+           guarda-a sem a ordenar, e aberta mostra o desfecho como epitáfio */
+        const q = estadoDe(m.id);
+        if (q && q.tipo === 2 && (q.estado === "terminada" || q.desfecho)) {
+          const quem = comQuemDe(q);
+          const dia = Number(q.fecho && q.fecho.dia);
+          const linha = [Number.isFinite(dia) && dia > 0 ? `dia ${dia}` : "", quem ? `com ${quem.nome}` : ""].filter(Boolean).join(" · ");
+          return <LombadaDaEstante key={m.id} estado={q.luto ? "luto" : "desfecho"} titulo={m.titulo} linha={linha}
+            direita={String(q.comoFicou || "").trim() || null} epitafio={String((q.fecho && q.fecho.texto) || "").trim()} />;
+        }
         const falhada = m.status === "falhada";
         const r = m.recompensa || {};
         const pago = !falhada && (r.moedas || r.xp)
@@ -413,7 +707,8 @@ function useLarguraDe(ref) {
   return w;
 }
 
-export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null, abertura = null, relogios = [], aoFechar = null, aoVerNoMapa = null, distanciaDoPasso = null, leiaute: leiautePedido = null }) {
+export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null, abertura = null, relogios = [], aoFechar = null, aoVerNoMapa = null, distanciaDoPasso = null, leiaute: leiautePedido = null,
+  questsDaBiblioteca = [], rostoDe = null, vilaoNoDiario = null, rostoDoVilao = null, rostoDoTenente = null }) {
   const raiz = React.useRef(null);
   const largura = useLarguraDe(raiz);
   const leiaute = leiautePedido || (largura >= D.corte.mesa ? "mesa" : largura >= D.corte.meia ? "meia" : "telefone");
@@ -422,8 +717,18 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   const [aba, setAba] = React.useState("curso");
   const [verMundo, setVerMundo] = React.useState(false);
 
-  const todas = garantirMissoes(missoes);
-  const ativasM = todas.filter((m) => m.status === "ativa");
+  /* BQ: as quests da biblioteca entram já projetadas (missaoDaQuest) — não
+     passam pelo conferente das missões, que não as guarda; a vista de cada
+     uma (estadoDaQuest) fica à mão pelo id */
+  const qs = arr(questsDaBiblioteca).filter((x) => x && x.missao && x.missao.id && x.estado && typeof x.estado === "object");
+  const estadoPorId = Object.fromEntries(qs.map((x) => [x.missao.id, x.estado]));
+  const estadoDe = (id) => estadoPorId[id] || null;
+  const base = garantirMissoes(missoes);
+  const todas = [...base, ...qs.map((x) => x.missao).filter((m) => !base.some((b) => b.id === m.id))];
+  const doCoracao = (m) => { const q = estadoDe(m.id); return !!q && q.tipo === 2; };
+  const coracaoM = todas.filter((m) => m.status === "ativa" && doCoracao(m) && estadoDe(m.id).visivel !== false);
+  const comQuests = qs.length > 0;
+  const ativasM = todas.filter((m) => m.status === "ativa" && !doCoracao(m));
   /* "o que o mundo impôs" primeiro: a principal e as do Mestre à frente, as
      que o herói aceitou depois — a ordem diz o que foi escolha e o que foi
      consequência, sem precisar de o escrever. */
@@ -431,13 +736,13 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   const ofertasM = todas.filter((m) => m.status === "oferecida");
   /* a estante tem TODAS as encerradas, a mais recente em cima */
   const estanteM = todas.filter((m) => m.status === "concluida" || m.status === "falhada").slice().reverse();
-  const escolhida = todas.find((m) => m.id === escolhidaId && (m.status === "ativa" || m.status === "oferecida")) || emCurso[0] || ofertasM[0] || null;
+  const escolhida = todas.find((m) => m.id === escolhidaId && (m.status === "ativa" || m.status === "oferecida")) || emCurso[0] || ofertasM[0] || coracaoM[0] || null;
 
   const nEvento = eventos && eventos.global ? 1 : 0;
   const nFios = eventos && Array.isArray(eventos.locais) ? eventos.locais.length : 0;
-  const subtitulo = [plural(emCurso.length, "missão em curso", "missões em curso"), ofertasM.length ? plural(ofertasM.length, "oferta", "ofertas") : "", estanteM.length ? `${estanteM.length} na estante` : ""].filter(Boolean).join(" · ");
-  const vazio = !emCurso.length && !ofertasM.length;
-  const comum = { todas, abertura, pers, relogios, aoResponder: aoResponderMissao, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso };
+  const subtitulo = [plural(emCurso.length + coracaoM.length, "missão em curso", "missões em curso"), ofertasM.length ? plural(ofertasM.length, "oferta", "ofertas") : "", estanteM.length ? `${estanteM.length} na estante` : ""].filter(Boolean).join(" · ");
+  const vazio = !emCurso.length && !ofertasM.length && !coracaoM.length;
+  const comum = { todas, abertura, pers, relogios, aoResponder: aoResponderMissao, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, estadoDe, rostoDe };
   const escolher = (id) => { setEscolhidaId(id); setVerMundo(false); };
 
   const nadaEmCurso = <div className="tv-body italic" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>;
@@ -453,21 +758,40 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   const indice = (
     <nav aria-label="As missões" className="flex flex-col gap-4">
       <div>
-        <Rotulo>Em curso</Rotulo>
-        {emCurso.length ? <ul className="m-0 p-0 flex flex-col gap-2">{emCurso.map((m) => <ItemDoIndice key={m.id} m={m} escolhida={escolhida && escolhida.id === m.id} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul> : nadaEmCurso}
+        <Rotulo>{comQuests ? Q.indice.estrada : "Em curso"}</Rotulo>
+        {emCurso.length ? <ul className="m-0 p-0 flex flex-col gap-2">{emCurso.map((m) => <ItemDoIndice key={m.id} m={m} q={estadoDe(m.id)} escolhida={escolhida && escolhida.id === m.id} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul> : nadaEmCurso}
       </div>
+      {coracaoM.length ? (
+        <div>
+          <Rotulo>{Q.indice.coracao}</Rotulo>
+          <ul className="m-0 p-0 flex flex-col gap-2">{coracaoM.map((m) => <ItemDoIndice key={m.id} m={m} q={estadoDe(m.id)} escolhida={escolhida && escolhida.id === m.id} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul>
+        </div>
+      ) : null}
       {ofertasM.length ? (
         <div>
           <Rotulo cor={T.violetSoft}>Ofereceram-te</Rotulo>
-          <ul className="m-0 p-0 flex flex-col gap-2">{ofertasM.map((m) => <ItemDoIndice key={m.id} m={m} escolhida={escolhida && escolhida.id === m.id} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul>
+          <ul className="m-0 p-0 flex flex-col gap-2">{ofertasM.map((m) => <ItemDoIndice key={m.id} m={m} q={estadoDe(m.id)} escolhida={escolhida && escolhida.id === m.id} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul>
         </div>
       ) : null}
       <div>
         <Rotulo extra={[estanteM.filter((m) => m.status === "concluida").length ? plural(estanteM.filter((m) => m.status === "concluida").length, "cumprida", "cumpridas") : "", estanteM.filter((m) => m.status === "falhada").length ? plural(estanteM.filter((m) => m.status === "falhada").length, "falhada", "falhadas") : ""].filter(Boolean).join(" · ")}>A estante</Rotulo>
-        <Estante lista={estanteM} />
+        <Estante lista={estanteM} estadoDe={estadoDe} />
       </div>
     </nav>
   );
+
+  /* BQ: a história do coração (sempre à vista: à direita na mesa, por baixo
+     da estrada no telefone) e o cartaz da sombra */
+  const blocoDoCoracao = coracaoM.length ? (
+    <section aria-label="Quem anda contigo">
+      <Rotulo>{Q.indice.coracao}</Rotulo>
+      <div className="flex flex-col gap-3">
+        {coracaoM.map((m) => <QuestDoCoracao key={m.id} missao={m} estado={estadoDe(m.id)} telefone={telefone}
+          rosto={rostoSeguro(rostoDe, comQuemDe(estadoDe(m.id)))} aoTocar={() => escolher(m.id)} />)}
+      </div>
+    </section>
+  ) : null;
+  const cartaz = vilaoNoDiario ? <CartazDaSombra vilao={vilaoNoDiario} retrato={rostoDoVilao} rostoDoTenente={rostoDoTenente} telefone={telefone} /> : null;
 
   let corpo;
   if (telefone) {
@@ -476,7 +800,7 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
     corpo = (
       <div className="flex flex-col">
         <div role="tablist" aria-label="O diário" className="flex mb-4" style={{ borderBottom: `1px solid ${T.line}` }}>
-          <AbaDaTela rotulo={`${D.telefone.abas[0]} · ${emCurso.length}`} ativa={aba === "curso"} aoTocar={() => setAba("curso")} controla={ids.curso} />
+          <AbaDaTela rotulo={`${D.telefone.abas[0]} · ${emCurso.length + coracaoM.length}`} ativa={aba === "curso"} aoTocar={() => setAba("curso")} controla={ids.curso} />
           <AbaDaTela rotulo={`${D.telefone.abas[1]} · ${ofertasM.length}`} ativa={aba === "ofertas"} novidade={ofertasM.length > 0 && aba !== "ofertas"} aoTocar={() => setAba("ofertas")} controla={ids.ofertas} />
           <AbaDaTela rotulo={`${D.telefone.abas[2]} · ${estanteM.length}`} ativa={aba === "estante"} aoTocar={() => setAba("estante")} controla={ids.estante} />
         </div>
@@ -484,13 +808,16 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
           <div id={ids.curso} role="tabpanel" className="flex flex-col gap-4">
             {escolhida && escolhida.status === "ativa" ? (
               <div className="rounded-2xl p-4" style={{ background: T.panel, border: `1px solid ${T.amber}` }}>
-                <MissaoAFrente m={escolhida} telefone compacto {...comum} />
+                <MissaoAFrente m={escolhida} telefone compacto semGente {...comum} />
               </div>
             ) : nadaEmCurso}
+            {escolhida && doCoracao(escolhida) ? null : blocoDoCoracao}
+            {cartaz}
+            {escolhida && estadoDe(escolhida.id) ? <GenteDaHistoria gente={estadoDe(escolhida.id).gente} rostoDe={rostoDe} /> : null}
             {outras.length ? (
               <div>
                 <Rotulo>{escolhida && escolhida.tipo === "principal" ? "Secundárias" : "As outras"}</Rotulo>
-                <ul className="m-0 p-0 flex flex-col gap-2">{outras.map((m) => <ItemDoIndice key={m.id} m={m} escolhida={false} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul>
+                <ul className="m-0 p-0 flex flex-col gap-2">{outras.map((m) => <ItemDoIndice key={m.id} m={m} q={estadoDe(m.id)} escolhida={false} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul>
               </div>
             ) : null}
             {mundoDobrado}
@@ -506,7 +833,7 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
             )) : <div className="tv-body italic" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Ninguém te ofereceu nada por agora.</div>}
           </div>
         ) : (
-          <div id={ids.estante} role="tabpanel"><Estante lista={estanteM} /></div>
+          <div id={ids.estante} role="tabpanel"><Estante lista={estanteM} estadoDe={estadoDe} /></div>
         )}
       </div>
     );
@@ -516,6 +843,8 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
       <div className="grid items-start" style={{ gridTemplateColumns: M.colunas.join(" "), gap: M.folga }}>
         <div className="flex flex-col gap-4">
           {indice}
+          {leiaute === "meia" ? blocoDoCoracao : null}
+          {leiaute === "meia" ? cartaz : null}
           {leiaute === "meia" ? mundoDobrado : null}
           <ArcoDaCampanha historia={historia} trocarArco={trocarArco} />
         </div>
@@ -524,7 +853,13 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
             : escolhida ? <MissaoAFrente m={escolhida} telefone={false} compacto={false} {...comum} />
             : vazio ? nadaEmCurso : null}
         </div>
-        {leiaute === "mesa" ? <MundoNaoEspera eventos={eventos} diaAtual={diaAtual} /> : null}
+        {leiaute === "mesa" ? (
+          <div className="flex flex-col gap-4">
+            {blocoDoCoracao}
+            {cartaz}
+            <MundoNaoEspera eventos={eventos} diaAtual={diaAtual} />
+          </div>
+        ) : null}
       </div>
     );
   }

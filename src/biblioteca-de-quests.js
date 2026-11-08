@@ -185,13 +185,13 @@ const O_SALVO_CONDUTO = quest({
   quando: ["cedo", "meio"],
   afim: ["jornada", "reinado"],
   papeis: {
-    protegido: { de: "elenco", exige: ["vivo", "nao_e:vilao"] },
+    protegido: { de: "elenco", exige: ["vivo", "nao_e:vilao"], rotulo: "{protegido:o protegido|a protegida}" },
     origem: { de: "cidade", e: "a do ato" },
     destino: { de: "cidade", distancia: [2, 4] },
     passo: { de: "lugar", entre: ["origem", "destino"] },
     desvio: { de: "lugar", vizinho: "passo" },
-    tenente: { de: "fio", papel: "tenente", alcunha: "a mão que guarda {passo}" },
-    guarda: { de: "elenco", proximo: "protegido" },
+    tenente: { de: "fio", papel: "tenente", alcunha: "a mão que guarda {passo}", rotulo: "quem guarda {passo}" },
+    guarda: { de: "elenco", proximo: "protegido", rotulo: "quem anda mais perto de {protegido}" },
   },
   mao: { tipo: "tenente", contra: [1, 2], papel: "tenente" },
   pede: [],
@@ -297,10 +297,10 @@ const AS_CINZAS_DE_ONTEM = quest({
   afim: ["misterio", "reinado"],
   papeis: {
     lugar: { de: "lugar", e: "um sítio da cidade do ato" },
-    testemunha: { de: "elenco", do: "lugar" },
-    suspeito: { de: "elenco", rival: "de alguém da cidade" },
+    testemunha: { de: "elenco", do: "lugar", rotulo: "quem viu alguém sair antes do fogo" },
+    suspeito: { de: "elenco", rival: "de alguém da cidade", rotulo: "o nome que corre na praça" },
     prova: { de: "item", nasce: "lugar" },
-    mandante: { de: "fio", papel: "tenente", alcunha: "quem pagou o fogo" },
+    mandante: { de: "fio", papel: "tenente", alcunha: "quem pagou o fogo", rotulo: "quem pagou o fogo" },
   },
   mao: { tipo: "consequencia", contra: [3], papel: "mandante", tambem: ["pista"] },
   pede: [],
@@ -381,8 +381,8 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
   quando: ["cedo", "meio", "fim"],
   afim: [],
   papeis: {
-    quem: { de: "grupo", ou: "elo" },
-    ferido: { de: "elenco", cidade: "uma cidade dos atos 2 ou 3" },
+    quem: { de: "grupo", ou: "elo", rotulo: "quem carrega a carta" },
+    ferido: { de: "elenco", cidade: "uma cidade dos atos 2 ou 3", rotulo: "quem escreveu a carta" },
     carta: { de: "item", nasce: "quem" },
   },
   mao: null,
@@ -415,7 +415,7 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
       guardar: {
         texto: "devolver a carta fechada",
         ganha: "{quem} percebe que há respeito nisto: não lhe arrancas o que não quer dar.",
-        custa: "A carta continua a pesar no bolso dele, e o que diz continua a ser só de {ferido}.",
+        custa: "A carta continua a pesar no bolso {quem:dele|dela}, e o que diz continua a ser só de {ferido}.",
         efeitos: [],
       },
       queimar: {
@@ -435,7 +435,7 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
       pagar: {
         texto: "pagar a dívida de {quem}",
         ganha: "{ferido} aceita de ti o que {quem} nunca lhe pôde dar.",
-        custa: "O preço sai da tua bolsa — e {quem} vai saber, até ao fim, que foi o teu dinheiro e não o dele.",
+        custa: "O preço sai da tua bolsa — e {quem} vai saber, até ao fim, que foi o teu dinheiro e não o {quem:dele|dela}.",
         efeitos: [{ tipo: "moedas", n: -60 }],
       },
       deixar: {
@@ -462,18 +462,18 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
   desfechos: [
     { id: "perdao",
       quando: ["todos", ["escolheu", "carta", "abrir"], ["afeicao", "papel:quem", 3], ["algum", ["escolheu", "frente", "interpor"], ["escolheu", "frente", "pagar"]]],
-      texto: "A carta dizia, desde o princípio, que {ferido} já tinha perdoado. Faltava só {quem} ouvi-lo da boca dele. Choram os dois como quem já não sabe como se faz, e {quem} volta para o teu lado com um peso a menos que se vê de longe.",
+      texto: "A carta dizia, desde o princípio, que {ferido} já tinha perdoado. Faltava só {quem} ouvi-lo da boca {ferido:dele|dela}. Choram os dois como quem já não sabe como se faz, e {quem} volta para o teu lado com um peso a menos que se vê de longe.",
       efeitos: [{ tipo: "marco", papel: "quem" }, { tipo: "aliado", papel: "ferido" }] },
     { id: "a_divida_paga",
       quando: ["algum", ["escolheu", "frente", "interpor"], ["escolheu", "frente", "pagar"]],
-      texto: "Não há abraço. Há um aceno, e uma conta que se fecha. {ferido} vira costas primeiro; {quem} fica a vê-lo até dobrar a esquina, e depois diz o teu nome como quem agradece.",
+      texto: "Não há abraço. Há um aceno, e uma conta que se fecha. {ferido} vira costas primeiro; {quem} fica a {ferido:vê-lo|vê-la} até dobrar a esquina, e depois diz o teu nome como quem agradece.",
       efeitos: [{ tipo: "vinculo", papel: "quem", n: 10 }] },
     { id: "a_cicatriz",
       quando: ["todos", ["escolheu", "frente", "deixar"], ["nenhum", ["escolheu", "carta", "queimar"]], ["afeicao", "papel:quem", 2]],
       texto: "Acertaram à maneira antiga. {quem} volta com um corte que vai fechar torto, e {ferido} fica no pó, com vida e de olhos abertos para o céu. Nenhum dos dois ganhou. Os dois pararam.",
       efeitos: [{ tipo: "situacao", papel: "ferido", situacao: "ferida" }, { tipo: "quem_e", papel: "quem", linha: "traz uma cicatriz que não deixa ninguém tocar" }] },
     { id: "a_ferida_fica", padrao: true,
-      texto: "{quem} não volta a falar da carta. Continua ao teu lado, mais calado, e às vezes, junto ao fogo, passa o polegar pelo lacre como quem reza.",
+      texto: "{quem} não volta a falar da carta. Continua ao teu lado, mais {quem:calado|calada}, e às vezes, junto ao fogo, passa o polegar pelo lacre como quem reza.",
       efeitos: [{ tipo: "vinculo", papel: "quem", n: -10 }, { tipo: "quem_e", papel: "quem", linha: "carrega uma carta que não abriu, e já não fala dela" }] },
     { id: "tarde_demais", cedo: true,
       quando: ["todos", ["morto", "papel:ferido"], ["nenhum", ["etapa", "frente"]]],
@@ -517,13 +517,13 @@ const A_MAO_QUE_MUDOU_DE_LADO = quest({
   quando: ["meio"],
   afim: ["misterio", "arquipelago"],
   papeis: {
-    desertor: { de: "elenco", serviu: "vilao" },
+    desertor: { de: "elenco", serviu: "vilao", rotulo: "quem mudou de lado" },
     esconderijo: { de: "lugar", e: "um sítio da cidade do ato" },
     refugio: { de: "cidade", distancia: [2, 4] },
     arquivo: { de: "lugar", fraqueza: "verdade" },
     prova: { de: "item", fraqueza: "coisa" },
-    cacador: { de: "fio", papel: "tenente", alcunha: "quem anda a farejar {desertor}" },
-    vitima: { de: "elenco", feridoPor: "desertor" },
+    cacador: { de: "fio", papel: "tenente", alcunha: "quem anda a farejar {desertor}", rotulo: "quem anda a farejar {desertor}" },
+    vitima: { de: "elenco", feridoPor: "desertor", rotulo: "quem {desertor} feriu" },
   },
   mao: { tipo: "pista", contra: [4], papel: "cacador" },
   pede: [],
@@ -618,9 +618,9 @@ const O_CELEIRO_DE_INVERNO = quest({
   afim: ["jornada", "reinado"],
   papeis: {
     celeiro: { de: "lugar", e: "um sítio da cidade do ato" },
-    dono: { de: "elenco", do: "celeiro" },
-    faminta: { de: "elenco", e: "a voz de quem tem fome" },
-    comprador: { de: "fio", papel: "tenente", alcunha: "quem compra o trigo a dobrar" },
+    dono: { de: "elenco", do: "celeiro", rotulo: "{dono:o dono|a dona} do celeiro" },
+    faminta: { de: "elenco", e: "a voz de quem tem fome", rotulo: "a voz de quem tem fome" },
+    comprador: { de: "fio", papel: "tenente", alcunha: "quem compra o trigo a dobrar", rotulo: "quem compra o trigo a dobrar" },
   },
   mao: { tipo: "recurso", contra: [4], papel: "comprador" },
   pede: [],
@@ -707,10 +707,10 @@ const O_CONVITE_SEM_SELO = quest({
   quando: ["meio", "fim"],
   afim: ["reinado", "misterio"],
   papeis: {
-    vilao: { de: "fio", papel: "vilao", alcunha: "quem manda o convite" },
-    anfitriao: { de: "elenco", neutro: true },
+    vilao: { de: "fio", papel: "vilao", alcunha: "quem manda o convite", rotulo: "quem manda o convite" },
+    anfitriao: { de: "elenco", neutro: true, rotulo: "quem abre a casa" },
     salao: { de: "lugar", do: "anfitriao" },
-    refem: { de: "elenco", exige: ["vivo", "cativa"] },
+    refem: { de: "elenco", exige: ["vivo", "cativa"], rotulo: "quem está à mesa sem a ter escolhido" },
   },
   mao: { tipo: "rosto", contra: [5], papel: "vilao" },
   pede: [],
@@ -796,11 +796,11 @@ const O_CIMO_DA_ESCADA = quest({
   quando: ["fim"],
   afim: [],
   papeis: {
-    vilao: { de: "fio", papel: "vilao", alcunha: "quem espera ao cimo da escada" },
+    vilao: { de: "fio", papel: "vilao", alcunha: "quem espera ao cimo da escada", rotulo: "quem espera ao cimo da escada" },
     covil: { de: "lugar", e: "o covil dele" },
-    braco: { de: "fio", papel: "tenente", alcunha: "quem ainda guarda a escada" },
-    refem: { de: "elenco", exige: ["vivo", "querido_do_heroi"] },
-    fraqueza_quem: { de: "elenco", fraqueza: "pessoa" },
+    braco: { de: "fio", papel: "tenente", alcunha: "quem ainda guarda a escada", rotulo: "quem ainda guarda a escada" },
+    refem: { de: "elenco", exige: ["vivo", "querido_do_heroi"], rotulo: "quem está de joelhos ao cimo da escada" },
+    fraqueza_quem: { de: "elenco", fraqueza: "pessoa", rotulo: "{vilao:a voz que ele ainda ouve|a voz que ela ainda ouve}" },
     fraqueza_coisa: { de: "item", fraqueza: "coisa" },
     fraqueza_verdade: { de: "lugar", fraqueza: "verdade" },
   },
@@ -957,8 +957,8 @@ const OS_DIAS_QUE_FALTAM = quest({
   quando: ["cedo", "meio", "fim"],
   afim: [],
   papeis: {
-    quem: { de: "grupo", ou: "elo" },
-    curandeira: { de: "elenco", cidade: "a do ato" },
+    quem: { de: "grupo", ou: "elo", rotulo: "quem anda contigo" },
+    curandeira: { de: "elenco", cidade: "a do ato", rotulo: "quem ainda pode curar" },
     horto: { de: "lugar", cidade: "uma cidade dos atos 2 ou 3" },
   },
   mao: null,
@@ -984,7 +984,7 @@ const OS_DIAS_QUE_FALTAM = quest({
     segredo: { etapa: "segredo", opcoes: {
       contar: {
         texto: "contar a {quem} o que {curandeira} disse",
-        ganha: "{quem} deixa de carregar sozinho uma coisa que já sentia no peito, e passa a lutar por ela de olhos abertos.",
+        ganha: "{quem} deixa de carregar {quem:sozinho|sozinha} uma coisa que já sentia no peito, e passa a lutar por ela de olhos abertos.",
         custa: "Há quem prefira não saber. A partir desta noite, {quem} vai contar os dias contigo — e vais ver-lhe o medo em cada um.",
         efeitos: [{ tipo: "vinculo", papel: "quem", n: 5 }],
       },
@@ -1018,7 +1018,7 @@ const OS_DIAS_QUE_FALTAM = quest({
   },
   solucoes: {
     segredo: {
-      contar: [{ texto: "Dizes-lho junto ao fogo, sem rodeios. {quem} fica muito tempo calado, e depois pergunta só quanto tempo. Não sabes. Dizes-lho também." }],
+      contar: [{ texto: "Dizes-lho junto ao fogo, sem rodeios. {quem} fica muito tempo {quem:calado|calada}, e depois pergunta só quanto tempo. Não sabes. Dizes-lho também." }],
       calar: [{ texto: "Não dizes nada. {quem} pergunta o que {curandeira} queria, e tu respondes que era sobre o tempo. Não é mentira inteira, e pesa como se fosse." }],
     },
     cura: {
@@ -1083,10 +1083,10 @@ const A_LAMINA_ENTERRADA = quest({
   quando: ["cedo", "meio", "fim"],
   afim: [],
   papeis: {
-    quem: { de: "grupo", ou: "elo" },
-    vingador: { de: "elenco", perdeu: "um irmão" },
+    quem: { de: "grupo", ou: "elo", rotulo: "quem anda contigo" },
+    vingador: { de: "elenco", perdeu: "um irmão", rotulo: "quem perdeu um irmão" },
     templo: { de: "lugar", cidade: "uma cidade dos atos 2 ou 3" },
-    sacerdote: { de: "elenco", do: "templo" },
+    sacerdote: { de: "elenco", do: "templo", rotulo: "quem guarda {templo}" },
   },
   mao: null,
   ponte: "{sacerdote} guarda o altar de {templo}, numa cidade por onde um passo do vilão vai passar, e já aceitou o ouro de quem manda nele",
@@ -1275,6 +1275,7 @@ export function validarQuest(ficha) {
     if (!d) { err(`o papel «${nome}» não diz de onde vem (PAPEIS_DA_QUEST)`); continue; }
     decl[nome] = { tipo: d.tipo };
     if (p.alcunha !== undefined && typeof p.alcunha !== "string") err(`a alcunha de «${nome}» não é texto`);
+    if (p.rotulo !== undefined && (typeof p.rotulo !== "string" || !p.rotulo.trim())) err(`o rótulo de «${nome}» não é texto`);
   }
   if (!Object.keys(decl).length) err("sem papéis");
 
@@ -1459,8 +1460,15 @@ export function validarQuest(ficha) {
   /* os papéis citados nos textos existem */
   if (typeof F.gancho !== "string" || !F.gancho.trim()) err("sem gancho"); else textos.push([F.gancho, "gancho"]);
   for (const [nome, p] of Object.entries(papeis)) if (obj(p) && typeof p.alcunha === "string") textos.push([p.alcunha, `alcunha de ${nome}`]);
+  for (const [nome, p] of Object.entries(papeis)) if (obj(p) && typeof p.rotulo === "string") textos.push([p.rotulo, `rótulo de ${nome}`]);
+  /* BQ7 (08/11): o marcador de género, «{papel:dele|dela}» — só de gente */
   for (const [s, onde] of textos) {
-    for (const m of s.matchAll(/\{([^}]*)\}/g)) if (!decl[m[1]]) err(`${onde}: o texto cita «{${m[1]}}», que não é papel`);
+    for (const m of s.matchAll(/\{([^}]*)\}/g)) {
+      const g = RX_GENERO.exec(m[1]);
+      const k = g ? g[1] : m[1];
+      if (!decl[k]) err(`${onde}: o texto cita «{${m[1]}}», que não é papel`);
+      else if (g && decl[k].tipo !== "pessoa") err(`${onde}: o género de «${k}» só se marca em gente`);
+    }
   }
   for (const p of [...arr(F.deixa), ...arr(F.pede)]) if (!(typeof p === "string" && RX_PREMISSA.test(p))) err(`a premissa «${p}» é torta`);
 
@@ -1492,6 +1500,10 @@ function garantirRegisto(r, F) {
     desfecho: typeof R.desfecho === "string" ? R.desfecho : null,
     fecho: obj(R.fecho),
     fechouEm: inteiro(R.fechouEm),
+    /* BQ7 (08/11): A REVIRAVOLTA LIDA — o dia em que o herói abriu o Diário e
+       quantas reviravoltas tinham disparado até ali. Campo novo e aditivo:
+       só viaja quando existe, e a versão antiga ignora-o. */
+    ...(obj(R.vistaEm) ? { vistaEm: { dia: Math.max(0, inteiro(R.vistaEm.dia) || 0), n: Math.max(0, inteiro(R.vistaEm.n) || 0) } } : {}),
   };
 }
 const diaDe = (E) => Math.max(0, inteiro(obj(E) && E.dia) || 0);
@@ -1518,8 +1530,28 @@ const etapaAtual = (lista, R) => lista.find((e) => !R.feitas[e.id]) || null;
 
 /* o texto de mundo, com o nome de cada papel; quem não tem nome é
    «alguém», «um lugar», «uma coisa» (nunca o nome do papel) */
+/* BQ7 (08/11): A CONCORDÂNCIA. «{quem:dele|dela}» é a forma de quem ocupa
+   o papel: a segunda quando é mulher, a primeira quando é homem ou não se
+   sabe (a forma em que o acervo foi escrito). O género vem com os nomes
+   (vistaDosPapeis, na chave GENEROS — «#» não cabe num nome de papel). */
+const GENEROS = "#generos";
+const RX_GENERO = /^([a-z0-9_]+):([^|{}]*)\|([^{}]*)$/;
 function encher(modelo, nomes) {
-  return contrair(String(modelo || "").replace(/\{([a-z0-9_]+)\}/g, (m, k) => (nomes[k] != null ? nomes[k] : m)));
+  const g = (nomes && nomes[GENEROS]) || {};
+  return contrair(String(modelo || "")
+    .replace(/\{([a-z0-9_]+):([^|{}]*)\|([^{}]*)\}/g, (m, k, ele, ela) => (g[k] === "f" ? ela : ele))
+    .replace(/\{([a-z0-9_]+)\}/g, (m, k) => (nomes[k] != null ? nomes[k] : m)));
+}
+/* o género de quem ocupa um papel: o que o papel traz, o registo da gente,
+   ou o grupo — "f", "m", ou "" (não se sabe) */
+const semAcento = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+function generoDe(p, E) {
+  const nome = typeof p.nome === "string" ? p.nome : "";
+  const npcs = obj(obj(E) && E.npcs) || {};
+  const npc = nome ? (obj(npcs[nome]) || Object.values(npcs).find((n) => obj(n) && semAcento(n.nome) === semAcento(nome)) || null) : null;
+  const membro = nome ? arr(obj(obj(E) && E.personagem) && E.personagem.grupo).find((m) => obj(m) && semAcento(m.nome) === semAcento(nome)) || null : null;
+  const t = [p.genero, npc && npc.genero, membro && (membro.genero || membro.genero_pessoa)].map(semAcento).find(Boolean) || "";
+  return /^(f|mulher|femin|ela)/.test(t) ? "f" : t ? "m" : "";
 }
 const maiuscula = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 /* a frase inteira: o nome que entra no começo de uma frase («a mão que
@@ -1539,15 +1571,24 @@ function vistaDosPapeis(F, R, E, mundo) {
     crus[nome] = { ...p, tipo, nome: typeof p.nome === "string" ? p.nome : "" };
   }
   const nomes = {};
+  const generos = {};
   for (const nome of Object.keys(decl)) {
     const p = crus[nome];
     nomes[nome] = p.nome || PAPEIS_DA_CONDICAO[PREFIXO_DO_TIPO[p.tipo]].semNome;
+    if (p.tipo === "pessoa") generos[nome] = generoDe(p, E);
   }
+  nomes[GENEROS] = generos;
   const vistos = { ...crus };
   for (const nome of Object.keys(decl)) {
     const al = decl[nome].alcunha;
-    if (typeof al !== "string" || !crus[nome].id) continue;
-    const viu = avaliarCondicao(["conheceu", `papel:${nome}`], { estado: E, papeis: { [nome]: crus[nome] }, mundo });
+    if (typeof al !== "string") continue;
+    /* BQ7 (08/11): QUEM AINDA NÃO TEM ID NÃO FOI VISTO. O tenente que o
+       esqueleto põe numa quest de um mundo novo não está no registo da
+       gente quando ela abre — e sem id saltava a alcunha, e o nome dele ia
+       ao gancho, ao Diário e à pauta antes de o herói o ver (o «nome antes
+       do rosto» que a BQ5 veta). Sem id é a alcunha; o id chega quando ele
+       entra no registo, e o nome quando o herói o conhece. */
+    const viu = !!crus[nome].id && avaliarCondicao(["conheceu", `papel:${nome}`], { estado: E, papeis: { [nome]: crus[nome] }, mundo });
     if (!viu) { nomes[nome] = encher(al, nomes); vistos[nome] = { ...crus[nome], nome: nomes[nome] }; }
   }
   return { papeis: vistos, nomes };
@@ -1776,10 +1817,41 @@ function escolhasAbertas(F, R, ctx, dia, outras) {
 const custoDe = (efs) => arr(efs).filter((e) => e.tipo === "moedas" && e.n < 0).reduce((s, e) => s - e.n, 0);
 const bolsaDe = (E) => Math.max(0, inteiro(obj(obj(E) && E.personagem) && E.personagem.moedas) || 0);
 
+/* ---------------- A GRAVIDADE DE UMA ESCOLHA (08/11, BQ7 — a forma do desenho) ----------------
+   O que a carta da encruzilhada mostra de cada opção (mente/formas.md
+   «## BQ · as quests na tela», §BQ 2): a mais grave das quatro, por esta
+   ordem — `vida` (a opção está afirmada no `quando` de um desfecho com
+   `morte` de alguém do grupo), `fecha` (a solução dessa opção acaba a
+   quest), `preco` (custa moedas) e `leve`. `contexto`: o teto da frase
+   que diz o que está em jogo (a primeira frase da reviravolta que abriu a
+   etapa da escolha, ou a frase da etapa). */
+export const GRAVIDADE_DA_ESCOLHA = Object.freeze({
+  ordem: Object.freeze(["vida", "fecha", "preco", "leve"]),
+  contexto: 200,
+});
+/* a primeira frase de um texto de mundo (a régua do «como foi») */
+const primeiraFrase = (s, n = GRAVIDADE_DA_ESCOLHA.contexto) => {
+  const t0 = String(s || "").replace(/\s+/g, " ").trim();
+  const m = /^.+?[.!?…](?=\s|$)/.exec(t0);
+  const f = m ? m[0] : t0;
+  return f.length <= n ? f : f.slice(0, n).replace(/\s+\S*$/, "") + "…";
+};
+/* o ramo de uma etapa que uma opção de escolha fecha: o do «algum» onde
+   `escolheu chave opcao` está afirmado */
+function ramoDaOpcao(etapa, chave, op) {
+  if (!etapa || !Array.isArray(etapa.ramos) || !Array.isArray(etapa.conclui)) return null;
+  const i = etapa.conclui.slice(1).findIndex((c) => atomos(c).some((a) => a.positivo && a.cond[0] === "escolheu" && a.cond[1] === chave && a.cond[2] === op));
+  return i >= 0 ? etapa.ramos[i] : null;
+}
+
 /* ============================================================
    O VEREDITO ANTES DO CLIQUE — vereditoDaEscolha(ficha, registo, chave, contexto)
    → null | { chave, etapa, opcoes: [{ id, texto, ganha, custa, efeitos,
-   custo, podeEscolher }] }. Os dois lados de cada opção, em mundo, e o
+   custo, podeEscolher, gravidade, fecha, risco }], contexto }. Desde a BQ7
+   (o desenho): `gravidade` (GRAVIDADE_DA_ESCOLHA), `fecha` (o fim que a
+   solução da opção dá, ou null), `risco` ({ papel, quem, certo } quando a
+   opção leva a um desfecho com morte; `certo` se, com o livro de hoje, é
+   esse que ganha) e `contexto` (o que está em jogo). Os dois lados de cada opção, em mundo, e o
    preço — a tela mostra-os ANTES de o jogador escolher (a lei da casa).
    null quando a escolha não está aberta agora.
    ============================================================ */
@@ -1795,13 +1867,35 @@ export function vereditoDaEscolha(ficha, registo, chave, contexto) {
   if (!escolhasAbertas(F, R, ctx, dia, k.quests).includes(chave)) return null;
   const e = F.escolhas[chave];
   const bolsa = bolsaDe(E);
+  const etapa = etapasDe(F, R).find((x) => x.id === e.etapa) || null;
+  /* o contexto: a reviravolta que abriu esta etapa, se foi uma; senão a etapa */
+  const abriu = R.reviravoltas.map((x) => arr(F.reviravoltas).find((r) => r.id === x.id)).find((r) => r && arr(r.efeitos).some((ef) => ef.tipo === "abre_etapa" && obj(ef.etapa) && ef.etapa.id === e.etapa));
+  const oQueEstaEmJogo = abriu ? primeiraFrase(frase(abriu.texto, ctx.nomes)) : etapa ? frase(etapa.texto, ctx.nomes) : "";
+  const G = GRAVIDADE_DA_ESCOLHA.ordem;
   return {
-    chave, etapa: e.etapa,
+    chave, etapa: e.etapa, contexto: oQueEstaEmJogo,
     opcoes: Object.entries(e.opcoes).map(([id, o]) => {
       const custo = custoDe(o.efeitos);
+      /* o mundo com esta opção escolhida: o que ela fecha e quem ela arrisca */
+      const ctx2 = contextoDe(F, { ...R, escolhas: { ...R.escolhas, [chave]: { opcao: id, dia } } }, E, obj(k.mundo));
+      const ramo = ramoDaOpcao(etapa, chave, id);
+      const vs = ramo ? arr(((obj(F.solucoes) || {})[e.etapa] || {})[ramo]) : [];
+      const variante = vs.find((x) => x.quando === undefined || avaliarCondicao(x.quando, ctx2)) || null;
+      const fecha = variante && variante.fecha ? variante.fecha : null;
+      let risco = null;
+      const ds = arr(F.desfechos);
+      const mortal = ds.find((d) => !d.padrao && arr(d.efeitos).some((x) => x.tipo === "morte")
+        && atomos(d.quando).some((a) => a.positivo && a.cond[0] === "escolheu" && a.cond[1] === chave && a.cond[2] === id));
+      if (mortal) {
+        const papel = arr(mortal.efeitos).find((x) => x.tipo === "morte").papel;
+        const ganha = ds.find((d) => !d.padrao && avaliarCondicao(d.quando, ctx2)) || null;
+        risco = { papel, quem: ctx.nomes[papel] || "", certo: ganha === mortal };
+      }
+      const gravidade = risco ? G[0] : fecha ? G[1] : custo > 0 ? G[2] : G[3];
       return {
         id, texto: maiuscula(encher(o.texto, ctx.nomes)), ganha: frase(o.ganha, ctx.nomes), custa: frase(o.custa, ctx.nomes),
         efeitos: arr(o.efeitos).map((x) => ({ ...x })), custo, podeEscolher: custo <= bolsa,
+        gravidade, fecha, risco,
       };
     }),
   };
@@ -1842,13 +1936,18 @@ export function escolherNaQuest(ficha, registo, chave, opcao, contexto) {
        gancho,
        etapa     — o id da etapa atual (null quando fechou), etapaTexto,
        acesa     — se a etapa atual já acendeu (a do tipo 2 espera),
-       feitas    — [{ id, dia, ramo, variante }], pela ordem da quest,
+       feitas    — [{ id, dia, ramo, variante, como }], pela ordem da quest
+                   (`como`: a primeira frase da solução, BQ7),
        falta     — o «o que falta» em dados (julgarEtapa, BQ3), o que a
                    reviravolta exige primeiro; vazio com a quest fechada
                    ou escondida,
+                   (o de um «ou» traz `caminhos`: [{ texto, predicados,
+                   carta }], BQ7),
        faltaTexto — as frases de mundo do «o que falta»,
+       gente     — [{ papel, id, nome, rotulo, traiu }], só quem o herói já
+                   conheceu (BQ7),
        escolhas  — as chaves das escolhas abertas agora,
-       reviravolta — a última que disparou: { id, dia, texto } | null,
+       reviravolta — a última que disparou: { id, dia, texto, lida } | null,
        desfecho  — o id do desfecho do tipo 2 | null, ordem (1 o melhor),
        fecho     — { de, texto } quando fechou,
        consequencias — o que a quest deixou no mundo, para a fiação aplicar,
@@ -1879,6 +1978,28 @@ export function estadoDaQuest(ficha, registo, contexto) {
   const rv = ult ? arr(F.reviravoltas).find((x) => x.id === ult.id) : null;
   const ordem = R.desfecho ? arr(F.desfechos).findIndex((d) => d.id === R.desfecho) + 1 : null;
   const mao = obj(F.mao) ? { ...F.mao, contra: [...F.mao.contra], quem: F.mao.papel ? ctx.nomes[F.mao.papel] : null, id: F.mao.papel ? (R.papeis[F.mao.papel] || {}).id || "" : "" } : null;
+  /* BQ7 (08/11, a forma do desenho): A GENTE DESTA HISTÓRIA — só quem o
+     herói já conheceu (o nome que ele sabe), com o rótulo do papel em frase
+     de mundo, e `traiu` em quem uma reviravolta pôs no lugar de outro (a
+     `troca_papel`: o guarda que se vendeu). Uma pessoa, uma entrada. */
+  const traidores = new Set(R.reviravoltas.flatMap((x) => arr((arr(F.reviravoltas).find((r) => r.id === x.id) || {}).efeitos))
+    .filter((ef) => ef.tipo === "troca_papel").map((ef) => ef.por));
+  const crus = {};
+  for (const [nome, d] of Object.entries(F.papeis)) crus[nome] = { ...(obj(R.papeis[nome]) || {}), tipo: PAPEIS_DA_QUEST[d.de].tipo };
+  const gente = [];
+  for (const [nome, d] of Object.entries(F.papeis)) {
+    const p = crus[nome];
+    if (p.tipo !== "pessoa" || !p.id || typeof p.nome !== "string" || !p.nome) continue;
+    if (!avaliarCondicao(["conheceu", `papel:${nome}`], { estado: E, papeis: { [nome]: p }, mundo: obj(k.mundo) })) continue;
+    const um = { papel: nome, id: p.id, nome: p.nome, rotulo: typeof d.rotulo === "string" ? frase(d.rotulo, ctx.nomes) : "", traiu: traidores.has(nome) };
+    const i = gente.findIndex((g) => g.id === um.id);
+    if (i < 0) gente.push(um); else if (um.traiu && !gente[i].traiu) gente[i] = um;
+  }
+  /* o «o que falta» de um «ou», caminho a caminho: o texto, os predicados e
+     se é uma carta de uma escolha (o Diário mostra primeiro as cartas) */
+  const comCaminhos = falta.map((f) => (f && f.predicado === "algum" && Array.isArray(f.opcoes)
+    ? { ...f, caminhos: f.opcoes.map((l) => ({ texto: arr(l).map((x) => x && x.texto).filter(Boolean).join(" e "), predicados: arr(l).map((x) => x && x.predicado), carta: arr(l).some((x) => x && x.predicado === "escolheu") })) }
+    : f));
   return {
     id: F.id, tipo: F.tipo, titulo: F.titulo,
     estado: R.estado, concluida: R.estado === "concluida", motivo: R.motivo,
@@ -1887,14 +2008,91 @@ export function estadoDaQuest(ficha, registo, contexto) {
     etapa: atual ? atual.id : null,
     etapaTexto: atual && visivel ? frase(atual.texto, ctx.nomes) : "",
     acesa,
-    feitas: lista.filter((e) => R.feitas[e.id]).map((e) => ({ id: e.id, ...R.feitas[e.id] })),
-    falta,
+    /* `como` (08/11, BQ7): a primeira frase da solução que fechou a etapa,
+       quando ela fechou por um ramo — o «Caminhos da etapa · tomado» */
+    feitas: lista.filter((e) => R.feitas[e.id]).map((e) => {
+      const f = R.feitas[e.id];
+      const c = f && f.ramo ? R.consequencias.find((x) => x.de === `${e.id}:${f.ramo}`) : null;
+      return { id: e.id, ...f, como: c && c.texto ? primeiraFrase(c.texto) : "" };
+    }),
+    falta: comCaminhos,
     faltaTexto: falta.map((f) => f.texto).filter(Boolean),
+    gente,
     escolhas: visivel ? escolhasAbertas(F, R, ctx, dia, k.quests) : [],
-    reviravolta: ult && rv ? { id: ult.id, dia: ult.dia, texto: (R.consequencias.find((c) => c.de === `reviravolta:${ult.id}`) || {}).texto || "" } : null,
+    /* `lida` (08/11, BQ7): o herói já abriu o Diário depois dela (`vistaEm`) */
+    reviravolta: ult && rv ? { id: ult.id, dia: ult.dia, texto: (R.consequencias.find((c) => c.de === `reviravolta:${ult.id}`) || {}).texto || "", lida: !!(R.vistaEm && R.vistaEm.n >= R.reviravoltas.length) } : null,
     desfecho: R.desfecho, ordem,
     fecho: R.fecho,
     consequencias: R.consequencias,
     mao,
+  };
+}
+
+/* ============================================================
+   A PROJEÇÃO NO DIÁRIO — missaoDaQuest(ficha, registo, contexto)
+   (08/11/2026, Fase BQ · BQ7)
+   → null | uma missão na forma de `missoes.js` (a que o Diário já mostra:
+   o índice, o próximo passo, as etapas feitas), feita do registo AVANÇADO.
+   A quest continua a ser a verdade: a projeção não se guarda em lado
+   nenhum (o `missoes` do save não a leva), refaz-se de cada vez, e cada
+   etapa dela é do tipo `quest` (missoes.js), que LÊ o registo pela chave.
+   O tipo 2 escondido (a primeira etapa ainda não acendeu) não se projeta:
+   a história do coração aparece quando começa, não antes.
+   As etapas levam a frase de mundo com os nomes que o herói já sabe (a
+   alcunha de quem é do vilão e ele não viu); a de agora leva o «o que
+   falta» em `rotulo`, que é o próximo passo do Diário. As que vêm depois
+   vão também — o Diário conta-as e não as diz (a silhueta, lei de v9.27).
+   MISSAO_DA_QUEST: o prefixo do id (é por ele que a tela sabe que a
+   missão é uma quest), o tipo de missão de cada tipo de quest, e o estado
+   da missão de cada estado do registo.
+   ============================================================ */
+export const MISSAO_DA_QUEST = Object.freeze({
+  prefixo: "quest:",
+  tipo: Object.freeze({ 1: "principal", 2: "trama" }),
+  status: Object.freeze({ aberta: "ativa", concluida: "concluida", falhada: "falhada", terminada: "concluida" }),
+  juntaFalta: "; ",
+});
+export function missaoDaQuest(ficha, registo, contexto) {
+  const F = fichaDe(ficha);
+  if (!F || !validarQuest(F).ok) return null;
+  const R = avancarQuest(F, registo, contexto);
+  if (!R) return null;
+  const k = obj(contexto) || {};
+  const E = obj(k.estado) || {};
+  const ctx = contextoDe(F, R, E, obj(k.mundo));
+  const dia = Math.max(diaDe(E), R.inicio);
+  const lista = etapasDe(F, R);
+  const primeira = lista[0];
+  const visivel = F.tipo === 1 || (primeira && R.acesas[primeira.id] != null);
+  if (!visivel) return null;
+  const atual = R.estado === "aberta" ? etapaAtual(lista, R) : null;
+  let falta = [];
+  if (atual && estaAcesa(atual, R, ctx, dia, k.quests)) {
+    const exige = atual.exige.flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
+    falta = [...exige, ...(exige.length ? [] : julgarEtapa({ conclui: atual.conclui }, ctx).falta)];
+  }
+  const M = MISSAO_DA_QUEST;
+  return {
+    id: `${M.prefixo}${F.id}`,
+    titulo: F.titulo,
+    tipo: M.tipo[F.tipo],
+    descricao: frase(F.gancho, ctx.nomes),
+    dador: "",
+    status: M.status[R.estado] || "ativa",
+    etapas: lista.map((e) => {
+      const feita = obj(R.feitas[e.id]);
+      return {
+        tipo: "quest",
+        alvo: frase(e.texto, ctx.nomes),
+        chave: `${F.id}:${e.id}`,
+        feito: !!feita,
+        ...(feita && Number.isInteger(feita.dia) ? { feitoEm: feita.dia } : {}),
+        ...(atual && e.id === atual.id ? { rotulo: falta.map((f) => f.texto).filter(Boolean).join(M.juntaFalta) } : {}),
+      };
+    }),
+    criadaEm: R.inicio,
+    nivel: 0,
+    prazo: 0,
+    recompensa: null,
   };
 }

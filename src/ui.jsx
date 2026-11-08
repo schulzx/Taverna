@@ -2107,7 +2107,7 @@ export function Soleira({ ofertas = [] }) {
    e só existe quando há momento (0 px sem ele; 56 de alto sempre, o
    `ALVOS.chamado`). UMA COISA DE CADA VEZ, pela prioridade da tabela
    (SOLEIRA_DO_MOMENTO.prioridade): a rolagem pendente > o dado que acabou de
-   pousar > a oferta.
+   pousar > a escolha de uma quest (BQ, 08/11) > a oferta.
 
    O BOTÃO PRINCIPAL é âmbar (`onAccent` sobre `amber`, 8,68). A primeira
    linha é o verbo (pode encurtar com reticência); a segunda é o preço — e A
@@ -2128,10 +2128,18 @@ export function Soleira({ ofertas = [] }) {
    <SoleiraDoMomento momentos={{
      rolagem:  { verbo, cede, preco, aoPrincipal, desativado, secundario: { rotulo, aoTocar } },
      dado:     { chave, conteudo, rotulo },
+     escolha:  { verbo, preco, vida, aoPrincipal, secundario: { rotulo, aoTocar } },
      proposta: { verbo, cede, preco, aoPrincipal, desativado, secundario: { quantos, rotulo, aoTocar } },
    }} />
    Cada momento é opcional; um momento sem `verbo` (ou o dado sem `conteudo`)
-   não existe. Entra com `tv-fade`; a página encolhe 56 + 8 de uma vez. */
+   não existe. Entra com `tv-fade`; a página encolhe 56 + 8 de uma vez.
+
+   BQ (formas.md §BQ 2) · A ESCOLHA: o glifo da encruzilhada à esquerda, o
+   verbo («Decidir · O que Gil merece») e, no nó que nunca encurta, quantos
+   caminhos — ou, se uma das cartas pode custar a vida de alguém do grupo,
+   quem («pode custar Brash»), e então o chão do botão é `danger` (onAccent
+   sobre danger 5,77): uma escolha que pode matar já é vermelha fechada. O
+   momento monta-o `momentoDaEscolha` (painel-encruzilhada.jsx). */
 const SM = SOLEIRA_DO_MOMENTO;
 const momentoVale = (qual, m) => !!(m && typeof m === "object" && (qual === "dado" ? m.conteudo != null && m.chave != null : String(m.verbo || "").trim()));
 
@@ -2161,16 +2169,17 @@ export function SoleiraDoMomento({ momentos = null }) {
   }
   const momento = m[qual];
   return (
-    <div key={qual} className="tv-fade" role="group" aria-label={qual === "rolagem" ? "O Mestre pede o dado" : "O que o mundo oferece agora"} data-momento={qual} style={caixa}>
-      <PrincipalDoMomento momento={momento} rolagem={qual === "rolagem"} />
+    <div key={qual} className="tv-fade" role="group" aria-label={qual === "rolagem" ? "O Mestre pede o dado" : qual === "escolha" ? "Uma escolha à tua frente" : "O que o mundo oferece agora"} data-momento={qual} style={caixa}>
+      <PrincipalDoMomento momento={momento} rolagem={qual === "rolagem"} escolha={qual === "escolha"} />
       <SecundarioDoMomento s={momento.secundario} />
     </div>
   );
 }
 
 /* o botão âmbar: o verbo em cima, o preço em baixo, e o nó do preço que não encolhe */
-function PrincipalDoMomento({ momento, rolagem = false }) {
+function PrincipalDoMomento({ momento, rolagem = false, escolha = false }) {
   const P = SM.principal;
+  const chao = escolha && momento.vida ? SM.escolha.vida.chao : P.chao;
   const verbo = String(momento.verbo || "");
   const cede = String(momento.cede || "");
   const preco = String(momento.preco || "");
@@ -2179,8 +2188,9 @@ function PrincipalDoMomento({ momento, rolagem = false }) {
     <button type="button" onClick={momento.desativado ? undefined : momento.aoPrincipal} disabled={!!momento.desativado} aria-label={nome}
       className="tv-anel-foco flex items-center text-left min-w-0" data-momento-principal=""
       style={{ flex: "1 1 0", height: "100%", gap: 10, padding: `0 ${SM.enchimento}px`, borderRadius: SM.raio, border: "none",
-        background: P.chao, color: P.letra, cursor: momento.desativado ? "not-allowed" : "pointer", opacity: momento.desativado ? 0.6 : 1 }}>
+        background: chao, color: P.letra, cursor: momento.desativado ? "not-allowed" : "pointer", opacity: momento.desativado ? 0.6 : 1 }}>
       {rolagem ? <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0 }}><Glifo nome="dado" tamanho={P.dado} cor={P.letra} /></span> : null}
+      {escolha ? <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0 }}><Glifo nome={SM.escolha.glifo} tamanho={SM.escolha.lado} cor={P.letra} /></span> : null}
       <span className="flex flex-col min-w-0" style={{ flex: "1 1 0", gap: 1 }}>
         <span className="tv-body" data-momento-verbo="" style={{ fontSize: P.verbo.tamanho, fontWeight: P.verbo.peso, lineHeight: `${P.verbo.entrelinha}px`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{verbo}</span>
         <span className="tv-mono flex items-center min-w-0" style={{ gap: 6, fontSize: P.preco.tamanho, lineHeight: `${P.preco.entrelinha}px` }}>

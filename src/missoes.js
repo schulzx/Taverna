@@ -442,7 +442,32 @@ export const ETAPAS = {
     texto: (e) => e.rotulo || "Impedir o que se aproxima",
     ver: (e, m) => !(m.relogios || []).some((r) => r.id === e.relogioId),
   },
+  /* ---------------- A ETAPA DE UMA QUEST (08/11, Fase BQ · BQ7) ----------------
+     A projeção de uma quest da biblioteca no Diário (`missaoDaQuest`,
+     biblioteca-de-quests.js): a quest é a verdade, e esta etapa só a LÊ —
+     `chave` é «id_da_quest:id_da_etapa», e ela está cumprida quando o
+     registo da quest (em `espinha.quests`, que o mundo das missões já leva)
+     a tem por feita. `alvo` é a frase de mundo da etapa e `rotulo` o «o que
+     falta» da etapa de agora. É SÓ DA QUEST (`soDaQuest`): a porta do Mestre
+     (o estrito de `tipoDaEtapa`) não a dá a missão nenhuma — escrita por
+     ele, seria uma etapa que lê uma quest que não existe. Uma versão antiga
+     não conhece o tipo e lê `ir_a` sem alvo, que não fecha: fica presa,
+     nunca fecha em falso (§6 da planta). */
+  quest: {
+    id: "quest", icone: "✦", soDaQuest: true,
+    texto: (e) => e.alvo || "…",
+    ver: (e, m) => etapaDaQuestFeita(m && m.espinha, e.chave),
+  },
 };
+
+/* a etapa «id_da_quest:id_da_etapa» está feita no registo da quest? */
+function etapaDaQuestFeita(espinha, chave) {
+  const [id, etapa] = String(chave || "").split(":");
+  if (!id || !etapa) return false;
+  const q = espinha && typeof espinha === "object" && espinha.quests && typeof espinha.quests === "object" ? espinha.quests : {};
+  const r = (Array.isArray(q.registos) ? q.registos : []).find((x) => x && x.id === id);
+  return !!(r && r.feitas && typeof r.feitas === "object" && r.feitas[etapa]);
+}
 export function etapaDef(t) { return ETAPAS[t] || ETAPAS.ir_a; }
 
 /* ---------------- O TIPO QUE O SISTEMA NÃO CONHECE (v9.128) ----------------
@@ -459,7 +484,8 @@ export function etapaDef(t) { return ETAPAS[t] || ETAPAS.ir_a; }
    mas aí o texto do Mestre também não prometia mais do que chegar. */
 export function tipoDaEtapa(e, { estrito = false } = {}) {
   /* MM17 C1: o tipo que é só da espinha não vira etapa de missão */
-  if (ETAPAS[e && e.tipo] && !ETAPAS[e.tipo].soDaEspinha) return e.tipo;
+  /* BQ7: e a etapa que é só da quest não entra pela porta do Mestre */
+  if (ETAPAS[e && e.tipo] && !ETAPAS[e.tipo].soDaEspinha && !(estrito && ETAPAS[e.tipo].soDaQuest)) return e.tipo;
   const t = norm(e && e.tipo);
   /* v9.132: resgatar tem etapa propria agora. Escoltar e proteger ainda
      nao — sao promessas de DURACAO, e o sistema nao sabe medir "chegou
@@ -1175,6 +1201,12 @@ export function rumoDaEtapa(e) {
     return `Descobrir o que ${meioDaFrase(e.alvo)} esconde${resto}`;
   }
   if (e.tipo === "derrotar") return `Acabar com ${e.alvo}${onde ? ` — ${onde}` : ""}`;
+  /* BQ7: a etapa de uma quest aponta pelo «o que falta» dela (é o que o
+     Diário mostra, §6 da planta), e sem ele pela frase da etapa */
+  if (e.tipo === "quest") {
+    const r = String(e.rotulo || "").trim();
+    return r ? contrair(r[0].toUpperCase() + r.slice(1)) : textoDaEtapa(e);
+  }
   return textoDaEtapa(e);
 }
 

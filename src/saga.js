@@ -46,7 +46,7 @@ import { rngDe } from "./geografia.js";
 /* T4-B (29/10) · o gênero de recuo — quando quem chama não diz o seu — é o
    padrão do mundo em uso (`generos.padrao`), e não um literal da Taverna */
 import { cenarioAtivo } from "./cenario.js";
-import { estruturaPorId, custoDaEtapa, pesoDe } from "./historia.js";
+import { estruturaPorId, custoDaEtapa, pesoDe, PESO_DA_QUEST } from "./historia.js";
 import { locaisDaCidade, genteDoLocal, criaturasDaRegiao, chefesDoMundo, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
 import { contrair } from "./lugar.js";
@@ -175,6 +175,12 @@ export function garantirEspinha(e) {
        importá-la daqui fecharia o ciclo saga → esqueleto → plano-do-vilao
        → nucleo → saga. */
     ...(copiaDoRegisto(o.esqueleto) ? { esqueleto: copiaDoRegisto(o.esqueleto) } : {}),
+    /* BQ7 (08/11): as QUESTS que o esqueleto abriu, com o registo de cada
+       uma (biblioteca-de-quests.js) e o que já se aplicou delas — a catraca
+       é `garantirQuestsDaEspinha` (motor/quests-do-turno.js), que quem as
+       lê aplica, pela mesma razão do esqueleto. Só aditivo, e só nos mundos
+       novos: a espinha sem ele sai daqui igual. */
+    ...(copiaDoRegisto(o.quests) ? { quests: copiaDoRegisto(o.quests) } : {}),
     atos: atos.map((a, i) => ({
       ato: Number.isFinite(a && a.ato) ? a.ato : i,
       marcos: (Array.isArray(a && a.marcos) ? a.marcos : []).map((m) => ({
@@ -404,7 +410,28 @@ export function marcoAtual(espinha, ato) {
    pelo fato, e quem decide se o arco vira e `historia.js`, pelo peso. Duas
    portas para a mesma decisao seriam duas versoes de quando a historia anda. */
 
+/* BQ7 (08/11): O ATO QUE TEM QUEST. Num mundo novo, o ato a que o
+   esqueleto deu uma quest do tipo 1 vive DELA: o progresso dele é a quest
+   fechada (PESO_DA_QUEST.fecham, historia.js), e os marcos antigos desse
+   ato calam — não fecham nem pesam (`conferirEspinha`, abaixo). O ato sem
+   quest, e o ato cuja quest não chegou a nascer (a primeira etapa já
+   estava feita: `fora`), vive dos marcos, como sempre. Lê os campos crus
+   (`esqueleto`, `quests`), pela razão do ciclo que garantirEspinha diz. */
+function questDoAto(e, ato) {
+  const s = e && e.esqueleto && typeof e.esqueleto === "object" ? e.esqueleto : null;
+  if (!s || !Array.isArray(s.atos)) return null;
+  const a = s.atos.find((x) => x && x.ato === ato);
+  const id = a && typeof a.quest === "string" && a.quest ? a.quest : null;
+  if (!id) return null;
+  const q = e.quests && typeof e.quests === "object" && !Array.isArray(e.quests) ? e.quests : {};
+  if ((Array.isArray(q.fora) ? q.fora : []).some((f) => f && f.id === id)) return null;
+  const registo = (Array.isArray(q.registos) ? q.registos : []).find((x) => x && x.id === id) || null;
+  return { id, registo };
+}
+
 export function progressoDoAto(espinha, ato) {
+  const q = questDoAto(garantirEspinha(espinha), ato);
+  if (q) return { feitos: q.registo && PESO_DA_QUEST.fecham.includes(q.registo.estado) ? 1 : 0, total: 1 };
   const ms = marcosDoAto(espinha, ato);
   return { feitos: ms.filter((m) => m.feito).length, total: ms.length };
 }
@@ -420,12 +447,15 @@ export function progressoDoAto(espinha, ato) {
    não fecha — fica para quando a história lá chegar; os de atos anteriores
    ainda por fechar continuam a poder (a história deixou-os para trás, o
    fato não). Sem `ato`, a conferência de sempre. */
+/* BQ7 (08/11): e o ato que vive de uma quest (`questDoAto`, acima) não
+   confere marco nenhum — os antigos dele não fecham nem empurram o arco;
+   quem o fecha é a quest (motor/quests-do-turno.js). */
 export function conferirEspinha(espinha, mundo, verEtapa, opcoes) {
   const e = garantirEspinha(espinha);
   const cumpridos = [];
   let mudou = false;
   const atoAgora = opcoes && typeof opcoes === "object" && Number.isFinite(opcoes.ato) ? opcoes.ato : null;
-  const atos = e.atos.map((a) => ({
+  const atos = e.atos.map((a) => (questDoAto(e, a.ato) ? a : {
     ...a,
     marcos: a.marcos.map((m) => {
       if (m.feito || !m.condicao) return m;

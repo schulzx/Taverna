@@ -396,9 +396,42 @@ NÃO anuncie um novo vilão, NÃO plante uma ameaça nova e NÃO diga a palavra 
 /* ---------------- O MOTOR VISTO PELO ARCO ----------------
    Um retrato pequeno do estado do mundo. O arco só precisa saber se há
    alguém contra quem terminar e o que está em jogo agora. */
+/* BQ7 (08/11): e o VILÃO DO PLANO dos mundos novos (plano-do-vilao.js),
+   que existe desde a criação e não espera fama nenhuma para ter contra quem
+   acontecer — quem o diz é a peça das quests (motor/quests-do-turno.js),
+   com `vilao: true`. O motor do App não o passa, e a conta dele é a de
+   sempre. */
 export function temAntagonista(motor) {
   const m = motor || {};
-  return !!(m.nemesis || m.global);
+  return !!(m.nemesis || m.global || m.vilao);
+}
+
+/* ============================================================
+   A QUEST É O PESO DO ATO (08/11/2026, Fase BQ · BQ7)
+
+   Num mundo novo, o ato não vira por somar marcos soltos: vira quando a
+   quest da biblioteca que o esqueleto lhe deu FECHA (esqueleto.js). A
+   decisão é da pessoa — a biblioteca substitui o sorteio — e a conta sai
+   desta tabela: os estados do registo que fecham o ato (concluída ou
+   falhada: falhar também resolve o ato, e o plano do vilão anda por isso;
+   uma campanha presa numa quest perdida não seria história, seria um muro)
+   e o mínimo que a quest pesa quando o ato já vinha cheio de outras coisas.
+   `marcoDaQuest` enche o ato até ao custo dele, e `virarEtapa` faz o resto
+   pela regra de sempre (o último momento não vira; a segunda metade pede
+   antagonista). Os atos sem quest — a degradação do esqueleto, e as
+   campanhas antigas inteiras — continuam a andar pelos marcos. */
+export const PESO_DA_QUEST = Object.freeze({
+  fecham: Object.freeze(["concluida", "falhada"]),
+  minimo: 1,
+});
+export function marcoDaQuest(h, rotulo = "") {
+  const hh = garantirHistoria(h);
+  const est = estruturaPorId(hh.estrutura);
+  const p = Math.max(PESO_DA_QUEST.minimo, custoDaEtapa(est, hh.etapa) - hh.marcos);
+  return {
+    historia: { ...hh, marcos: hh.marcos + p, feitos: [...hh.feitos, String(rotulo || "quest").slice(0, 80)].slice(-6) },
+    ganhou: p,
+  };
 }
 
 export function registrarMarco(h, tipo, rotulo = "") {

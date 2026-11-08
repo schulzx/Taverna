@@ -96,6 +96,7 @@ import { ativas as missoesAtivas } from "../missoes.js";
 import { MODO_PADRAO } from "../modos.js";
 import { MOLDE_PADRAO, moldePorId } from "../moldes.js";
 import { vetosParaAPauta } from "./correcao-do-juiz.js";
+import { aMesaDasQuests } from "./quests-do-turno.js";
 import { oEnvelopeDaGente, oEnvelopeDoFio } from "./envelopes-do-turno.js";
 import { aCidadeSobOsPes } from "./tempo-do-turno.js";
 import { garantirBase, locaisDaCidade, oQueExisteAqui } from "../mundo-base.js";
@@ -921,11 +922,33 @@ export function aPautaDoTurno(estado, entrada, portas) {
       const casa = minhaCasa();
       if (casa && !$ref.masmorra) p = porNaPauta(p, "onde", envelopeDaGuilda(casa)); /* MM16 nº 4: lá dentro a casa não é o lugar */
     }
-    p = porNaPauta(p, "momento", envelopeDaEspinha($ref.espinha, $ref.historia.etapa, estruturaPorId($ref.historia.estrutura)));
+    /* BQ7 (08/11): NUM MUNDO NOVO (a espinha com `esqueleto`), a história
+       fala pela biblioteca de quests (motor/quests-do-turno.js#aMesaDasQuests):
+       «O PASSO» — a etapa de agora e uma coisa que falta — entra NO LUGAR da
+       batida da espinha quando o ato tem quest, e «A MÃO DELE AQUI» (o vilão
+       do plano, filtrado pela camada) NO LUGAR da marca do relógio do fio,
+       com os vetos dele em NÃO PODE. Nunca ao lado: o teto é um só, e as
+       duas linhas novas são mais curtas do que as que substituem (220 e 160).
+       Sem esqueleto (todas as campanhas de antes) a peça dá null, e a pauta
+       é a de sempre, byte a byte. */
+    let mesaDasQuests = null;
+    try {
+      mesaDasQuests = aMesaDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() },
+        { mundo: mundoDaBase(), cena: { presentes: [...(aqui || []).map((x) => x && x.nome), ...((($ref.combate || {}).inimigos) || []).map((x) => x && x.nome)].filter(Boolean), lugar: ($ref.lugar && $ref.lugar.nome) || "" } });
+    } catch (e) { calou("a mesa das quests", e); mesaDasQuests = null; }
+    if (mesaDasQuests && mesaDasQuests.comQuest) p = porNaPauta(p, "momento", mesaDasQuests.passo);
+    else p = porNaPauta(p, "momento", envelopeDaEspinha($ref.espinha, $ref.historia.etapa, estruturaPorId($ref.historia.estrutura)));
+    if (mesaDasQuests && !mesaDasQuests.comQuest) p = porNaPauta(p, "momento", mesaDasQuests.passo);
     /* v9.391: a marca do antagonista no momento, o JÁ SE SABE do segredo que
        acabou de cair, o que o mundo lembra de quem chegou a tempo */
     let maoDoVilao = false; /* MM-C C2: a marca ou os servos do fio nesta cena (o vilão do núcleo só pede pela mão) */
-    try { const mf = momentoDoFio($ref.espinha, $ref.historia.etapa, { dia: $ref.dia, vilao: $ref.nemesis }); p = porNaPauta(p, "momento", mf); const assin = String((($ref.espinha || {}).fio || {}).assinatura || ""); if (assin && (mf || []).some((l) => String(l).includes(assin))) maoDoVilao = true; } catch (e) { calou("o momento do fio", e); }
+    if (mesaDasQuests) {
+      p = porNaPauta(p, "momento", mesaDasQuests.mao);
+      p = porNaPauta(p, "naoPode", mesaDasQuests.naoPode);
+      if (mesaDasQuests.mao) maoDoVilao = true;
+    } else {
+      try { const mf = momentoDoFio($ref.espinha, $ref.historia.etapa, { dia: $ref.dia, vilao: $ref.nemesis }); p = porNaPauta(p, "momento", mf); const assin = String((($ref.espinha || {}).fio || {}).assinatura || ""); if (assin && (mf || []).some((l) => String(l).includes(assin))) maoDoVilao = true; } catch (e) { calou("o momento do fio", e); }
+    }
     /* o episodio em curso fala pelo mesmo canal do arco: e a batida de
        dentro da batida — o cerco que a Jornada esta vivendo agora. */
     if ($ref.episodio && $ref.episodio.aberto) p = porNaPauta(p, "momento", envelopeDoEpisodio($ref.episodio));

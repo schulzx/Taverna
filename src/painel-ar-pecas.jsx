@@ -19,6 +19,15 @@
      SeloDePontos      os pontos por gastar; o algarismo não é Cinzel (270:256)
      LinhaDaComparacao o rótulo, antes → depois e o sinal ▲ ▼ = (271:96)
 
+   BQ (08/11, formas.md §BQ 3; Figma 313:2) — as quests da biblioteca:
+     EtapaDaMissao     + virou: o marco da reviravolta, em rosa (316:6752)
+     LombadaDaEstante  + desfecho · luto: a história do coração fechada
+                       (316:6764 · 316:6777), e o epitáfio ao abrir
+     LinhaDoQueFalta   falta · feito · outro, e a conta «1 de 3» (315:22)
+     CaminhosDaEtapa   abertos · tomado — como se fez, nas palavras do
+                       jogo (315:31)
+     RostoDaHistoria   conhecido · traiu (315:47)
+
    Toda a medida e toda a cor saem de estilo.js (T e as tabelas de §AR 6).
    Nenhuma decide regra: recebem o que o painel já leu do jogo.
    ============================================================ */
@@ -27,13 +36,12 @@ import {
   T, TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, MATERIAIS_DOS_OBJETOS, ENCAIXE,
   ICONES_DA_ETAPA, ICONES_DO_TALENTO, ICONES_DA_INTERFACE,
   CABECALHO_DA_TELA, ABA_DA_TELA, DIARIO_DE_MISSOES, ETAPA_DA_MISSAO, RELOGIO_DO_PRAZO,
-  NO_DE_TALENTO, LIGACAO, SELO_DE_PONTOS,
+  NO_DE_TALENTO, LIGACAO, SELO_DE_PONTOS, DIARIO_DA_QUEST,
 } from "./estilo.js";
 import { tracoNaGrelha } from "./glifos.js";
 import { Glifo, TextoComMoeda } from "./ui.jsx";
 
 const OURO = MOLDURA_POR_DEGRAU.ouro;
-const FERRO = MOLDURA_POR_DEGRAU.ferro;
 const FAMILIAS = { etapa: ICONES_DA_ETAPA, talento: ICONES_DO_TALENTO, interface: ICONES_DA_INTERFACE };
 const EM_LINHA = { display: "inline-block", verticalAlign: "-0.15em", flexShrink: 0 };
 
@@ -42,7 +50,10 @@ const EM_LINHA = { display: "inline-block", verticalAlign: "-0.15em", flexShrink
 export function GlifoAR({ nome, familia = "interface", tamanho = 16, cor = "currentColor", rotulo }) {
   const tabela = FAMILIAS[familia] || ICONES_DA_INTERFACE;
   const caminhos = tabela[nome];
-  if (!Array.isArray(caminhos)) return null;
+  /* BQ: os glifos das quests (encruzilhada, reviravolta, fita, coração)
+     moram na tabela da casa (glifos.js), um desenho só; a etapa e a lombada
+     pedem-nos pelo nome, como pedem os da AR */
+  if (!Array.isArray(caminhos)) return familia === "interface" ? <Glifo nome={nome} tamanho={tamanho} cor={cor} rotulo={rotulo} /> : null;
   const a11y = rotulo ? { role: "img", "aria-label": rotulo } : { "aria-hidden": "true" };
   return (
     <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" fill="none" stroke={cor}
@@ -122,7 +133,8 @@ export function EtapaDaMissao({ estado = "silhueta", tipo = "ir_a", texto = "", 
         <span className="flex items-center justify-center shrink-0" style={{
           width: D.medalhao, height: D.medalhao, borderRadius: D.medalhao,
           background: E.chao || "transparent", border: `${E.espessura || 1}px ${tracejado} ${E.aro}`,
-          boxShadow: E.halo ? `0 0 ${E.halo.raio}px ${alfa(T.amber, E.halo.alfa)}` : "none",
+          /* o halo é da cor do aro: âmbar na atual, rosa no marco que virou (BQ) */
+          boxShadow: E.halo ? `0 0 ${E.halo.raio}px ${alfa(E.aro, E.halo.alfa)}` : "none",
         }}>{glifo}</span>
         {ultima ? null : <span aria-hidden="true" className="flex-1" style={{ width: D.fio.largura, minHeight: D.fio.alto, background: alfa(E.fio, E.alfaDoFio) }} />}
       </span>
@@ -168,30 +180,58 @@ export function RelogioDoPrazo({ segmentos = 0, cheios = 0, lado = RELOGIO_DO_PR
 
 /* A LOMBADA DA ESTANTE: a espinha de couro do Diário com dois frisos de ouro
    (concluída) ou de ferro (falhada), o selo, o título, a linha e, à
-   direita, o que se pagou ou porquê falhou. */
-export function LombadaDaEstante({ estado = "concluida", titulo, linha = "", direita = null }) {
+   direita, o que se pagou ou porquê falhou.
+   BQ: a história do coração fecha num desfecho — frisos de bronze e o selo
+   do coração, à direita como ficou quem anda contigo («Brash ficou») — ou
+   no luto — frisos de ferro, a fita, «Brash não voltou» em danger. A
+   estante não os ordena do melhor ao pior: guarda-os. Com `epitafio`, a
+   lombada abre-se e mostra o texto do desfecho. */
+const SELO_DA_LOMBADA = {
+  concluida: { chao: T.okFundo, aro: T.ok, glifo: "visto", rotulo: "concluída" },
+  falhada: { chao: T.perigoFundo, aro: T.danger, glifo: "fechar", rotulo: "falhada" },
+};
+const ROTULO_DO_SELO = { desfecho: "a história fechou", luto: "de luto" };
+export function LombadaDaEstante({ estado = "concluida", titulo, linha = "", direita = null, epitafio = "" }) {
   const L = DIARIO_DE_MISSOES.lombada;
-  const falhada = estado === "falhada";
-  const friso = falhada ? FERRO.meio : OURO.meio;
+  const est = L.corDoFriso[estado] ? estado : "concluida";
+  const falhada = est === "falhada";
+  const luto = est === "luto";
+  const friso = L.corDoFriso[est];
   const couro = MATERIAIS_DOS_OBJETOS.couroDoDiario;
-  return (
-    <li className="flex items-center overflow-hidden relative" style={{
-      minHeight: L.alto, listStyle: "none", background: T.panel, border: `1px solid ${T.lineStrong}`, borderRadius: ENCAIXE.raio,
-    }}>
+  const S = L.seloDe[est] ? { ...L.seloDe[est], rotulo: ROTULO_DO_SELO[est] } : SELO_DA_LOMBADA[est];
+  /* o glifo do selo: o da AR (✓ ✗) ou o das quests (o coração, a fita) */
+  const glifoDoSelo = est === "desfecho" ? "coracao" : luto ? "fita" : S.glifo;
+  const corDoGlifo = est === "desfecho" ? T.rosa : luto ? T.inkMeio : S.aro;
+  const corDaDireita = falhada || luto ? T.danger : est === "desfecho" ? T.ink : T.amberSoft;
+  const fila = (
+    <>
       <span aria-hidden="true" className="self-stretch relative shrink-0" style={{ width: L.espinha, background: `linear-gradient(90deg, ${couro.luz}, ${couro.meio} 55%, ${couro.sombra})` }}>
         {L.frisos.map((y) => <span key={y} className="absolute inset-x-0" style={{ top: y, height: L.friso, background: friso }} />)}
       </span>
+      {luto ? <span aria-hidden="true" className="absolute inset-y-0" style={{ left: L.fitaDeLuto.x, width: L.fitaDeLuto.largura, background: L.fitaDeLuto.cor }} /> : null}
       <span className="flex items-center justify-center shrink-0 mx-3" style={{
-        width: L.selo, height: L.selo, borderRadius: L.selo,
-        background: falhada ? T.perigoFundo : T.okFundo, border: `1px solid ${falhada ? T.danger : T.ok}`,
+        width: L.selo, height: L.selo, borderRadius: L.selo, background: S.chao, border: `1px solid ${S.aro}`,
       }}>
-        <GlifoAR nome={falhada ? "fechar" : "visto"} tamanho={TIPOS.maquina} cor={falhada ? T.danger : T.ok} rotulo={falhada ? "falhada" : "concluída"} />
+        <GlifoAR nome={glifoDoSelo} tamanho={TIPOS.maquina} cor={corDoGlifo} rotulo={S.rotulo} />
       </span>
       <span className="flex flex-col min-w-0 flex-1 py-1.5">
         <span className="tv-body truncate" style={{ fontSize: TIPOS.corpo, color: T.ink }}>{titulo}</span>
         {linha ? <span className="tv-body truncate" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>{linha}</span> : null}
       </span>
-      {direita ? <span className="tv-mono shrink-0 px-3 flex items-center gap-1" style={{ fontSize: TIPOS.maquina, color: falhada ? T.danger : T.amberSoft }}>{direita}</span> : null}
+      {direita ? <span className="tv-mono shrink-0 px-3 flex items-center gap-1" style={{ fontSize: TIPOS.maquina, color: corDaDireita }}>{direita}</span> : null}
+    </>
+  );
+  const caixa = { listStyle: "none", background: T.panel, border: `1px solid ${T.lineStrong}`, borderRadius: ENCAIXE.raio };
+  if (!epitafio) {
+    return <li className="flex items-center overflow-hidden relative" style={{ ...caixa, minHeight: L.alto }}>{fila}</li>;
+  }
+  /* aberta, o epitáfio: o <details> abre e fecha sem estado e o leitor de ecrã diz que abre */
+  return (
+    <li className="overflow-hidden" style={caixa}>
+      <details>
+        <summary className="tv-anel-foco flex items-center relative cursor-pointer" style={{ minHeight: L.alto, listStyle: "none" }}>{fila}</summary>
+        <p className="tv-body italic m-0" style={{ padding: `8px 12px 12px ${L.espinha + 12}px`, fontSize: TIPOS.rotulo, color: T.inkMeio }}>{epitafio}</p>
+      </details>
     </li>
   );
 }
@@ -362,5 +402,106 @@ export function LinhaDaComparacao({ rotulo, antes = null, depois, sinal = "igual
       <span className="tv-mono shrink-0" style={{ fontSize: TIPOS.maquina, color: T.ink }}><TextoComMoeda texto={antes != null ? `${antes} → ${depois}` : String(depois)} /></span>
       <span className="tv-mono shrink-0 text-right" aria-hidden="true" style={{ fontSize: TIPOS.maquina, color: cor, minWidth: TIPOS.maquina }}>{marca}</span>
     </div>
+  );
+}
+
+/* ============================================================
+   BQ · AS PEÇAS DAS QUESTS NO DIÁRIO (formas.md §BQ 3, §BQ 8)
+   ============================================================ */
+
+/* As duas superfícies onde «o que falta» se lê: o couro do próximo passo
+   (a estrada) e o papel da história do coração. No papel não há âmbar nem
+   tinta da mesa: a marca e a conta vão em lacre (6,77), a letra em tinta. */
+const TINTA_DA_FALTA = {
+  couro: { marca: T.amber, feito: T.ok, outro: T.inkDim, texto: T.ink, dim: T.inkDim, conta: T.amberSoft, vazio: T.lineStrong },
+  pergaminho: { marca: T.lacreNoPergaminho, feito: T.musgoNoPergaminho, outro: T.tintaDoPergaminhoDim, texto: T.tintaDoPergaminho, dim: T.tintaDoPergaminhoDim, conta: T.lacreNoPergaminho, vazio: T.tintaDoPergaminhoDim },
+};
+
+/* A LINHA DO QUE FALTA (315:22): o anel (falta), o ✓ (feito), o anel
+   tracejado de «ou outro caminho» (outro). Quando a coisa tem número, «1 de
+   3» e os pontos (até cinco). A forma diz o estado; a cor é a segunda. */
+export function LinhaDoQueFalta({ estado = "falta", texto = "", tem = null, precisa = null, papel = "couro" }) {
+  const F = DIARIO_DA_QUEST.falta;
+  const C = TINTA_DA_FALTA[papel] || TINTA_DA_FALTA.couro;
+  const outro = estado === "outro";
+  const feito = estado === "feito";
+  const frase = outro ? F.resto : String(texto || "").trim();
+  if (!frase) return null;
+  const n = Number(precisa);
+  const t = Math.max(0, Math.min(n, Math.floor(Number(tem) || 0)));
+  const conta = Number.isInteger(n) && n > 1;
+  const pontos = conta ? Math.min(n, F.conta.max) : 0;
+  return (
+    <li className="flex items-center" style={{ gap: 8, listStyle: "none", minHeight: 22 }}>
+      <span aria-hidden="true" className="flex items-center justify-center shrink-0" style={{ width: F.marca, height: F.marca }}>
+        {feito ? <GlifoAR nome="visto" tamanho={F.marca} cor={C.feito} />
+          : <span style={{ width: F.marca, height: F.marca, borderRadius: F.marca, border: `2px ${outro ? "dashed" : "solid"} ${outro ? C.outro : C.marca}`, boxSizing: "border-box" }} />}
+      </span>
+      <span className={`tv-body flex-1 min-w-0 ${outro ? "italic" : ""}`} style={{ fontSize: TIPOS.rotulo, color: outro ? C.dim : feito ? C.dim : C.texto }}>
+        {feito ? <span className="sr-only">feito: </span> : null}{frase}
+      </span>
+      {conta ? (
+        <span className="flex items-center shrink-0" style={{ gap: 8 }}>
+          <span aria-hidden="true" className="flex items-center" style={{ gap: F.conta.entre }}>
+            {Array.from({ length: pontos }, (_, i) => (
+              <span key={i} style={{ width: F.conta.ponto, height: F.conta.ponto, borderRadius: F.conta.ponto, background: i < t ? C.conta : "transparent", border: `1px solid ${i < t ? C.conta : C.vazio}`, boxSizing: "border-box" }} />
+            ))}
+          </span>
+          <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: C.conta }}>{t} de {n}</span>
+        </span>
+      ) : null}
+    </li>
+  );
+}
+
+/* OS CAMINHOS DA ETAPA (315:31), debaixo da etapa, recuados ao texto dela.
+   Abertos: a encruzilhada e «Fecha por mais de um caminho.» — nunca quais.
+   Tomado: a encruzilhada em musgo e como foi, nas palavras do próprio jogo
+   (a primeira frase da solução que aconteceu). Sem a frase, cala. */
+export function CaminhosDaEtapa({ estado = "abertos", texto = "" }) {
+  const C = DIARIO_DA_QUEST.caminhos;
+  const tomado = estado === "tomado";
+  const frase = tomado ? String(texto || "").trim() : C.abertos;
+  if (!frase) return null;
+  return (
+    <div className="flex items-start" style={{ gap: 6, paddingLeft: C.recuo }} data-caminhos={tomado ? "tomado" : "abertos"}>
+      <span aria-hidden="true" className="shrink-0" style={{ lineHeight: `${C.entrelinha}px` }}>
+        <Glifo nome="encruzilhada" tamanho={C.lado} cor={tomado ? T.ok : T.inkDim} />
+      </span>
+      <span className={`tv-body ${tomado ? "" : "italic"}`} style={{ fontSize: C.tamanho, lineHeight: `${C.entrelinha}px`, color: tomado ? T.inkMeio : T.inkDim }}>{frase}</span>
+    </div>
+  );
+}
+
+/* O ROSTO DA HISTÓRIA (315:47): quem o herói já conheceu nesta história —
+   o rosto (44, aro de bronze), o nome e o papel em frase de mundo. Traiu:
+   a racha e o selo da reviravolta sobre a pintura, o nome e o papel em
+   danger (4,88 no couro). O retrato é de quem liga (`rosto`); sem ele, o
+   aro fica vazio. */
+export function RostoDaHistoria({ nome = "", papel = "", traiu = false, rosto = null }) {
+  const G = DIARIO_DA_QUEST.gente;
+  if (!String(nome || "").trim()) return null;
+  const cor = traiu ? G.traiu.cor : T.ink;
+  return (
+    <li className="flex flex-col items-center text-center" style={{ width: G.largura, gap: 4, listStyle: "none" }} data-traiu={traiu ? "sim" : "nao"}>
+      <span className="relative inline-block shrink-0" style={{ width: G.rosto, height: G.rosto }}>
+        <span aria-hidden="true" className="absolute inset-0 overflow-hidden flex items-center justify-center" style={{
+          borderRadius: G.rosto, border: `${G.aro}px solid ${traiu ? G.traiu.cor : G.aroConhecido}`, background: T.couroBaixo,
+        }}>
+          {rosto}
+          {traiu ? <span className="absolute" style={{ left: "50%", top: -4, bottom: -4, width: G.traiu.racha, background: G.traiu.cor, transform: "rotate(24deg)" }} /> : null}
+        </span>
+        {traiu ? (
+          <span aria-hidden="true" className="absolute flex items-center justify-center" style={{
+            right: -G.traiu.selo / 4, bottom: -G.traiu.selo / 4, width: G.traiu.selo, height: G.traiu.selo, borderRadius: G.traiu.selo,
+            background: T.perigoFundo, border: `1px solid ${G.traiu.cor}`,
+          }}>
+            <Glifo nome="reviravolta" tamanho={G.traiu.selo - 6} cor={G.traiu.cor} />
+          </span>
+        ) : null}
+      </span>
+      <span className="tv-body" style={{ fontSize: TIPOS.piso, color: cor, lineHeight: 1.25 }}>{nome}</span>
+      {papel ? <span className="tv-body italic" style={{ fontSize: TIPOS.piso, color: traiu ? G.traiu.cor : T.inkDim, lineHeight: 1.25 }}>{papel}</span> : null}
+    </li>
   );
 }

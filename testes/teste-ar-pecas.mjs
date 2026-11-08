@@ -39,7 +39,10 @@ sec("1. as tabelas de §AR 6");
     const ruins = Object.entries(fam).filter(([, cs]) => !Array.isArray(cs) || !cs.length || !cs.every((d) => typeof d === "string" && RX_D.test(d)));
     t(`${nome}: cada glifo é uma lista de caminhos de quadro 24`, ruins.length === 0, ruins.map(([k]) => k).join(", "));
   }
-  t("os dez glifos de etapa (268:6 … 268:48)", Object.keys(ICONES_DA_ETAPA).length === 10);
+  /* MOVIDA (08/11, BQ7): onze — a etapa `quest` (missoes.js) nasceu com o
+     glifo provisório do backend (a estrela da família), e a regra de baixo
+     («toda etapa do jogo tem o seu glifo») pede-o; o desenho dá-lhe a forma */
+  t("os onze glifos de etapa (268:6 … 268:48, e a quest)", Object.keys(ICONES_DA_ETAPA).length === 11);
   t("os seis de talento e os oito de interface", Object.keys(ICONES_DO_TALENTO).length === 6 && Object.keys(ICONES_DA_INTERFACE).length === 8);
   t("toda etapa do jogo tem o seu glifo", Object.keys(ETAPAS).every((k) => ICONES_DA_ETAPA[k]), Object.keys(ETAPAS).filter((k) => !ICONES_DA_ETAPA[k]).join(", "));
   t("o ataque é o mesmo desenho do derrotar", ICONES_DO_TALENTO.ataque === ICONES_DA_ETAPA.derrotar);

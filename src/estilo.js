@@ -1414,7 +1414,12 @@ export const HUD_DA_MESA = {
    preço («5 min», «precisa de 13») nunca. onAccent sobre amber: 8,68. */
 export const SOLEIRA_DO_MOMENTO = {
   alto: ALVOS.chamado, vao: 8, raio: 10, enchimento: 14,
-  prioridade: ["rolagem", "dado", "proposta"],
+  /* BQ (08/11, formas.md §BQ 2): a escolha passa à frente da oferta — é a
+     quest que já se aceitou a pedir uma decisão; a rolagem e o dado que pousa
+     continuam primeiro. Na vida, o chão do botão passa a danger (onAccent
+     sobre danger 5,77). */
+  prioridade: ["rolagem", "dado", "escolha", "proposta"],
+  escolha: { glifo: "encruzilhada", lado: 24, vida: { chao: T.danger } },   /* lado: o glifo do 316:2063 */
   principal: { chao: T.amber, letra: T.onAccent, verbo: { tamanho: 16, peso: 500, entrelinha: 20 }, preco: { tamanho: TIPOS.maquina, entrelinha: 16 }, dado: 28 },
   secundario: { chao: T.panel, aro: T.lineStrong, enchimento: 12 },
   mostraODado: DADO_DE_USO_NA_MESA.rolar.mostra,
@@ -1725,6 +1730,10 @@ export const ICONES_DA_ETAPA = {
   concluir_masmorra: ["M6 21V10a6 6 0 0 1 12 0v11", "M3 21h18", "M14.5 14v1.5"],
   aguentar: ["M7 3h10M7 21h10", "M8 3c0 5 8 5 8 9s-8 4-8 9", "M16 3c0 5-8 5-8 9s8 4 8 9"],
   vencer_relogio: ["M20 12a8 8 0 1 1-16 0a8 8 0 1 1 16 0", "M12 7.5V12l3 2"],
+  /* BQ7 (08/11): a etapa de uma quest da biblioteca (missoes.js, `quest`).
+     Provisório, do `backend`: a estrela de quatro pontas da família, até o
+     `desenho` lhe dar a forma dela. */
+  quest: ["M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"],
 };
 export const ICONES_DO_TALENTO = {
   ataque: ICONES_DA_ETAPA.derrotar,
@@ -1772,7 +1781,15 @@ export const DIARIO_DE_MISSOES = {
   proximoPasso: { medalhao: { mesa: 52, telefone: 40 }, glifo: { mesa: 26, telefone: 20 }, borda: 2, raio: 14, halo: { alfa: 0.35, raio: 16 }, frase: { mesa: TIPOS.titulo, telefone: TIPOS.prosa } },
   etapa: { medalhao: 32, glifo: 18, fio: { largura: 2, alto: 24 }, folga: 14 },
   bilhete: { giro: 0.8, enchimento: [16, 18], raio: 4, largura: 380 },
-  lombada: { alto: 52, espinha: 14, frisos: [8, 41], friso: 3, selo: 24 },
+  lombada: { alto: 52, espinha: 14, frisos: [8, 41], friso: 3, selo: 24,
+    /* BQ (08/11, §BQ 3): a história do coração fecha num desfecho, e a
+       estante guarda-o sem o ordenar — frisos de bronze e o selo do coração
+       (desfecho), frisos de ferro e a fita de luto (luto). «friso» é a
+       espessura (AR); a cor de cada estado mora em «corDoFriso». */
+    corDoFriso: { concluida: MOLDURA_POR_DEGRAU.ouro.meio, falhada: MOLDURA_POR_DEGRAU.ferro.meio, desfecho: MOLDURA_POR_DEGRAU.bronze.meio, luto: MOLDURA_POR_DEGRAU.ferro.meio },
+    seloDe: { desfecho: { chao: T.panelSoft, aro: T.rosa, glifo: "coracao" }, luto: { chao: T.couroBaixo, aro: T.inkDim, glifo: "fita" } },
+    fitaDeLuto: { largura: 4, x: 22, cor: T.inkDim },
+  },
   /* AR2 · a largura que o próprio painel mede em si (não a da janela: o
      Diário vive na gaveta de 320 e há de viver na tela inteira) e que
      escolhe o leiaute — as três colunas pedem 380 + 420 + o meio; as duas,
@@ -1786,10 +1803,79 @@ export const ETAPA_DA_MISSAO = {
   atual: { chao: T.couro, aro: T.amber, espessura: 2, glifo: "tipo", corDoGlifo: T.amberSoft, texto: T.ink, nota: T.amberSoft, fio: T.lineStrong, alfaDoFio: 0.6, halo: { alfa: 0.45, raio: 12 } },
   silhueta: { chao: null, aro: T.lineStrong, tracejado: [3, 3], glifo: "interrogacao", texto: T.inkDim, nota: T.inkDim, fio: T.lineStrong, alfaDoFio: 0.35 },
   falhada: { chao: T.perigoFundo, aro: T.danger, glifo: "fechar", texto: T.inkMeio, nota: T.danger, fio: T.danger, alfaDoFio: 0.5 },
+  /* BQ (08/11, §BQ 3, 316:6752): o marco da reviravolta, no sítio em que
+     aconteceu — o glifo, o aro e a nota em rosa (o lacre: 4,61 no couro,
+     5,05 no panel) */
+  virou: { chao: T.couro, aro: T.rosa, espessura: 2, glifo: "reviravolta", corDoGlifo: T.rosa, texto: T.ink, nota: T.rosa, fio: T.lineStrong, alfaDoFio: 0.6, halo: { alfa: 0.45, raio: 12 } },
 };
 /* O relógio do prazo (269:100): um gomo por noite; o gomo cheio é a noite
    que passou; o número ao meio é o que resta. Aperta com restam <= 2. */
 export const RELOGIO_DO_PRAZO = { lado: 40, mini: 32, miolo: 0.58, folga: 0.06, apertaCom: 2, cheio: { calma: T.amber, aperta: T.danger }, vazio: { chao: T.panelSoft, aro: T.lineStrong } };
+
+/* ============================================================
+   BQ · AS QUESTS NA TELA (08/11/2026) — formas.md §BQ; Figma 313:2.
+   A encruzilhada (a escolha de uma quest: uma mão de cartas de duas
+   faces, a gravidade pela forma, dois toques), o Diário das duas
+   histórias (a estrada em couro e âmbar, a do coração em papel e lacre)
+   e o cartaz da sombra. As peças: painel-encruzilhada.jsx, as de
+   painel-ar-pecas.jsx (LinhaDoQueFalta, CaminhosDaEtapa, RostoDaHistoria)
+   e as de painel-diario.jsx (QuestDoCoracao, CartazDaSombra).
+   As palavras de cada peça moram aqui, ao lado da forma: são as que o
+   Figma escreve, e a suíte lê-as de volta.
+   ============================================================ */
+export const ENCRUZILHADA = {
+  /* Momento=escolha | escolha de vida (316:2063 · 316:2075) */
+  soleira: { glifo: "encruzilhada", recuo: "Depois", verbo: "Decidir", caminhos: { um: "caminho", varios: "caminhos" } },
+  veu: 0.55,
+  mesa: { largura: { ate3: 900, com4: 1060 }, raio: 16, enchimento: [24, 28], vao: 16, aro: 1.5, acimaDoCampo: 16, topo: 64,
+    titulo: 30, contexto: { tamanho: TIPOS.corpo, entrelinha: 22 } },
+  telefone: { lado: 6, cima: 8, raio: { cima: 16, baixo: 12 }, enchimento: [8, 16, 12], vao: 12, titulo: 26,
+    contexto: { tamanho: 14, entrelinha: 20 }, virada: 132 },
+  carta: { largura: { mesa: 216, telefone: 331 }, raio: 10, enchimento: 16, vao: 10,
+    verbo: { tamanho: 21, entrelinha: 24 }, rotulo: { tamanho: TIPOS.maquina, espacamento: 1.2 }, texto: { tamanho: 14, entrelinha: 20 },
+    chao: T.pergaminho, aro: T.pergaminhoBorda, tinta: T.tintaDoPergaminho, ganha: T.musgoNoPergaminho, custa: T.perigoNoPergaminho,
+    picote: { cor: T.tintaDoPergaminhoDim, alfa: 0.5, traco: [3, 3] },
+    escolhida: { aro: T.amber, espessura: 3, sobe: 8, sombra: { y: 10, raio: 24, alfa: 0.5 }, tag: { chao: T.amber, letra: T.onAccent } } },
+  virada: { chao: T.couro, aro: MOLDURA_POR_DEGRAU.ouro.meio, medalhao: 44, titulo: 20 },
+  confirmar: { alto: ALVOS.piso, calado: "Escolhe uma carta", leve: "Escolher: {texto}", preco: "Pagar ◉ {n}", fecha: "{texto}, e acabar aqui" },
+  movimento: { dar: { dura: 180, entre: 60, sobe: 12, giro: 2 }, escolher: { dura: 120 }, folha: { dura: 220 } },  /* reduzido: tudo seco */
+  /* as palavras da cabeça, da carta e do rodapé (318:900 · 317:11) */
+  textos: {
+    cabeca: "Uma escolha", ganhas: "Ganhas", custa: "Custa", escolhida: "A tua escolha",
+    virada: { titulo: "Há outras maneiras.", linha: "Fá-lo à tua maneira: escreve o que fazes." },
+    rodape: { mesa: "Ou escreve o que fazes — o campo continua aberto, e a tua frase pode ser uma destas cartas.", telefone: "Ou escreve o que fazes no campo, aqui em baixo." },
+  },
+};
+export const GRAVIDADE_DA_ESCOLHA = {
+  ordem: ["vida", "fecha", "preco", "leve"],       /* a soleira mostra a mais grave das cartas */
+  vida: { aro: T.danger, espessura: 2, faixa: { chao: T.perigoFundo, letra: T.ink, rosto: 32, aroDoRosto: T.danger, raio: 6 },
+    soleira: T.danger, botao: T.danger,
+    frase: { pode: "Pode custar a vida de {quem}.", certo: "Com o que há hoje entre vocês, custa a vida de {quem}." },
+    noSoleira: "pode custar {quem}", verbo: "Escolher, e arriscar {quem}" },
+  fecha: { cor: T.perigoNoPergaminho, selo: 24, frase: "Esta história acaba aqui." },
+  preco: { chao: T.couro, letra: T.amberSoft, frase: "◉ {n} da tua bolsa", impedida: { chao: T.perigoFundo, letra: T.ink, frase: "faltam ◉ {n}", tracejado: [4, 3] } },
+  leve: {},
+};
+export const DIARIO_DA_QUEST = {
+  falta: { doOu: 2, resto: "ou outro caminho", marca: 12, conta: { ponto: 6, entre: 4, max: 5 } },
+  caminhos: { glifo: "encruzilhada", lado: 16, tamanho: 13, entrelinha: 18, recuo: 46, abertos: "Fecha por mais de um caminho." },
+  gente: { rosto: 44, aro: 2, largura: 72, aroConhecido: MOLDURA_POR_DEGRAU.bronze.meio, traiu: { cor: T.danger, racha: 2, selo: 20 }, rotulo: "Gente desta história" },
+  reviravolta: { cor: T.rosa, glifo: "reviravolta", porLer: "topo", lida: "linha", rotulo: "A história virou", noIndice: "a história virou",
+    bilhete: { chao: T.pergaminho, aro: T.pergaminhoBorda, rotulo: T.lacreNoPergaminho, texto: T.tintaDoPergaminho, enchimento: [12, 14], raio: 4 } },
+  coracao: { chao: T.pergaminho, raio: 6, fita: { cor: T.rosa, largura: 6 }, marca: T.lacreNoPergaminho,
+    rosto: { mesa: 44, telefone: 36, aro: MOLDURA_POR_DEGRAU.bronze.meio }, titulo: { mesa: 22, telefone: 20 },
+    rosario: { conta: 12, entre: 6 }, passo: { mesa: 17, telefone: 16 }, com: "Com {quem}" },
+  indice: { estrada: "A ESTRADA", coracao: "QUEM ANDA CONTIGO", glifoDoCoracao: "❦" },
+};
+export const CARTAZ_DA_SOMBRA = {
+  largura: 420, raio: 12, enchimento: 16, vao: 12, retrato: { largura: 64, alto: 80, arco: 32 },
+  aro: { semRosto: MOLDURA_POR_DEGRAU.ferro.meio, comRosto: MOLDURA_POR_DEGRAU.ouro.meio },
+  semNome: "Alguém", linhas: 3,
+  nova: { traco: T.amberSoft, letra: T.ink }, velha: { traco: T.inkDim, letra: T.inkMeio },
+  plano: { alto: 8, raio: 4, feito: T.danger, travado: T.ok, agora: T.amber, porVir: T.panelSoft },
+  /* as palavras do cartaz (315:189): o rótulo, e o que se diz de quem ainda não tem nome */
+  rotulo: "A mão por trás", semRosto: "sem nome, sem rosto", comMao: "sem nome — mas tem quem o sirva", mais: "e mais {n}",
+};
 
 /* OS TALENTOS, A ÁRVORE (§AR 3; 276:685, 278:1047, 278:1537, 280:1556).
    A forma do nó diz o ramo; a insígnia diz o estado; o veredito diz o
@@ -4015,11 +4101,29 @@ export const MOVIMENTO_CSS = `
 .tv-mesa-sobe { animation: tvMesaSobe ${TIRA_DA_MESA.puxada.dura}ms ease-out both; }
 .tv-veu-da-mesa { animation: tvVeuDaMesa ${TIRA_DA_MESA.puxada.dura}ms ease-out both; }
 .tv-gaveta-desce { animation: tvGavetaDesce ${HORIZONTE_DA_CENA.gaveta.dura}ms ease-out both; }
+/* BQ (a encruzilhada, formas.md §BQ 2): as cartas dão-se da soleira — cada
+   uma sobe e roda até ao lugar, uma depois da outra; a escolhida sobe; a
+   folha do telefone sobe como a mesa puxada e o véu esvanece no mesmo tempo.
+   Nada espera pelo movimento: a carta é tocável desde o primeiro quadro. */
+@keyframes tvCartaDada { from { opacity: 0; transform: translateY(${ENCRUZILHADA.movimento.dar.sobe}px) rotate(${ENCRUZILHADA.movimento.dar.giro}deg); } to { opacity: 1; transform: none; } }
+.tv-carta-dada { animation: tvCartaDada ${ENCRUZILHADA.movimento.dar.dura}ms ease-out both; }
+.tv-carta-dada-1 { animation-delay: ${ENCRUZILHADA.movimento.dar.entre}ms; }
+.tv-carta-dada-2 { animation-delay: ${2 * ENCRUZILHADA.movimento.dar.entre}ms; }
+.tv-carta-dada-3 { animation-delay: ${3 * ENCRUZILHADA.movimento.dar.entre}ms; }
+.tv-carta-dada-4 { animation-delay: ${4 * ENCRUZILHADA.movimento.dar.entre}ms; }
+.tv-carta-escolha { transition: transform ${ENCRUZILHADA.movimento.escolher.dura}ms ease-out, box-shadow ${ENCRUZILHADA.movimento.escolher.dura}ms ease-out; }
+.tv-carta-escolha[aria-pressed="true"] { transform: translateY(-${ENCRUZILHADA.carta.escolhida.sobe}px); }
+.tv-folha-da-escolha { animation: tvMesaSobe ${ENCRUZILHADA.movimento.folha.dura}ms ease-out both; }
+.tv-veu-da-escolha { animation: tvVeuDaMesa ${ENCRUZILHADA.movimento.folha.dura}ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
   /* TL: a mesa puxada, o veu e a gaveta do horizonte aparecem secos */
   .tv-mesa-sobe, .tv-veu-da-mesa, .tv-gaveta-desce { animation: none; }
+  /* BQ: a encruzilhada aparece seca; a escolhida só ganha o aro */
+  .tv-carta-dada, .tv-folha-da-escolha, .tv-veu-da-escolha { animation: none; }
+  .tv-carta-escolha { transition: none; }
+  .tv-carta-escolha[aria-pressed="true"] { transform: none; }
   /* a moldura parada: o lume fica onde está, a gema troca seca */
   .tv-moldura-lume, .tv-moldura-gema { animation: none; }
   /* a cerimónia parada: só o quadro da escolha, num esvanecer (a peça põe

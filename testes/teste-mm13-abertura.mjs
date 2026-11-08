@@ -683,14 +683,20 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
 
   /* ---- o próximo passo sempre à vista (painel-diario.jsx) ---- */
   t("o painel do diário lê proximoPasso de abertura.js", diario.includes('import { proximoPasso } from "./abertura.js";'));
+  /* MOVIDA em 08/11 (BQ, as quests na tela): a quest da biblioteca projetada
+     como «principal» (missaoDaQuest) tem a frase da etapa dela — a pista da
+     abertura não pode falar por cima. A intenção fica: só a principal que
+     NÃO é quest fala na voz da abertura; as outras, com a etapa delas. */
   t("só a missão principal fala em voz de mundo — as outras continuam com a etapa crua",
-    diario.includes('if (m.tipo === "principal") { try { pistaMundo = proximoPasso({ abertura, missoes: todas }); } catch { pistaMundo = ""; } }'));
+    diario.includes('if (m.tipo === "principal" && !q) { try { pistaMundo = proximoPasso({ abertura, missoes: todas }); } catch { pistaMundo = ""; } }'));
   /* MOVIDA em 06/11 (AR2, o Diário como portal de missões): o cartão deu
      lugar à caixa do próximo passo, e o emoji da etapa saiu (o glifo do tipo
      é desenhado). A intenção fica — a pista do mundo ganha quando existe;
      sem ela, o rumo da etapa (rumoDaEtapa), e só depois o texto cru */
+  /* MOVIDA em 08/11 (BQ): a frase passa a ler primeiro a etapa da quest
+     (etapaTexto), e só sem quest o rumo de sempre — a pista, depois o rumo */
   t("e o próximo passo usa a pista do mundo quando ela existe, senão o rumo da etapa",
-    diario.includes("if (pistaMundo) return pistaMundo;") && diario.includes("try { return rumoDaEtapa(e) || textoDaEtapa(e); }") && diario.includes("const frase = rumoDe(m, atual, pistaMundo);"));
+    diario.includes("if (pistaMundo) return pistaMundo;") && diario.includes("try { return rumoDaEtapa(e) || textoDaEtapa(e); }") && diario.includes(': rumoDe(m, atual, pistaMundo);'));
   {
     /* PainelDiario mora dentro de PainelLateral (outro componente, definido
        ANTES de Taverna() no arquivo) — aberturaMundoRef não está no escopo

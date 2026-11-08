@@ -15240,3 +15240,366 @@ página deixa de ter interface por cima e passa a SER a interface** — o livro-
 com a ficha (`posicaoNaProsa`, em `fichas.js`, já sabe onde cada nome está) e uma forma de sublinhado com estado de
 foco e de apontado; nada no motor nem no save. Pede à pessoa porque muda **como se aponta** — é o que o jogador
 teria de reaprender.
+
+
+---
+
+## BQ · as quests na tela — a encruzilhada e o Diário das duas histórias (08/11/2026)
+
+**O pedido.** A Fase BQ põe no motor uma biblioteca de quests (`src/biblioteca-de-quests.js`) e o plano do vilão
+(`src/plano-do-vilao.js`). Faltava a forma de **como o jogador as vive**: a escolha de uma quest (2 ou 3 opções com
+«ganha» e «custa», algumas irreversíveis, uma que pode custar a vida de um companheiro: decisão 4 da pessoa em
+`mente/plano-biblioteca-de-quests.md`) e o Diário que mostra a quest, as duas histórias (o tipo 1, do lugar; o tipo
+2, do coração) e o vilão só até onde o herói o alcançou. A régua do `jogo` para as quests: *provocantes, intensas*.
+Peso: **médio** no regime de 23/09 e 04/11 (peças novas e um momento novo na soleira; o fluxo de quem joga não
+muda — a escolha é um momento a mais, como a rolagem; nada sai). Um campo de save novo, aditivo (pedido 6), e mais
+nada no save.
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página **«BQ · as quests na tela» `313:2`**):
+
+| peça / quadro | id |
+|---|---|
+| `Ícone de interface/encruzilhada` · `/reviravolta` · `/fita` · `/coracao` (24, traço 2, a grelha da AR) | `313:5` · `313:9` · `313:12` · `313:16` |
+| **`Carta da escolha`** — Gravidade (leve · preco · fecha · vida) × Estado (repouso · escolhida) + `preco/impedida` = 9 (Verbo, Ganha, Custa) | `313:108` |
+| **`Carta virada`** — os caminhos que não são carta | `313:109` |
+| **`Linha do que falta`** — Estado: falta · feito · outro (Texto, Conta) | `315:22` |
+| **`Caminhos da etapa`** — Estado: abertos · tomado (Texto) | `315:31` |
+| **`Rosto da história`** — Estado: conhecido · traiu (Nome, Papel) | `315:47` |
+| **`Quest do coração`** — Tamanho: mesa · telefone (Com quem, Título, Passo, Falta) | `315:92` |
+| **`Cartaz da sombra`** — Camada: rumor · marca · mao · rosto · guerra | `315:189` |
+| `Soleira do momento` (TL) **+ Momento=escolha · escolha de vida**, × telefone · mesa | `306:106` (`316:2063` · `316:2075` · `316:2087` · `316:2099`) |
+| `Etapa da missão` (AR) **+ Estado=virou** | `269:44` (`316:6752`) |
+| `Lombada da estante` (AR) **+ Estado=desfecho · luto** | `269:125` (`316:6764` · `316:6777`) |
+| **Encruzilhada · 375 × 812** — aberta · pode custar um companheiro · fechada na soleira | `318:900` · `318:1137` · `318:620` |
+| **Encruzilhada · 1905 × 860** — aberta · pode custar um companheiro | `317:11` · `317:452` |
+| **Diário · 375 × 812** — uma quest de cada tipo · a reviravolta | `320:1425` · `320:1838` |
+| **Diário · 1905 × 860** — uma quest de cada tipo · a reviravolta | `319:1233` · `320:1641` |
+
+Todas as cores das peças novas estão ligadas a variáveis (`T · Mesa C (vela)` e `AAA · molduras vivas`). Soltos, de
+propósito: o véu (`sombra(.55)`), as sombras e o halo âmbar do próximo passo (efeito com alfa — a lei de
+`estilo.js`: sombra é profundidade, não cor) e as pinturas dos rostos (as de `08 · Retratos`).
+
+### BQ 1 · O que se decidiu, numa frase cada
+
+- **A escolha é uma encruzilhada, não um formulário.** Fechada, é a soleira (um momento como a rolagem). Aberta, é
+  **uma mão de cartas na mesa**: cada opção é uma carta com as duas faces — o que ganhas por cima, o que custa por
+  baixo, separadas por um picote — e a carta virada diz que há mais caminhos sem os contar.
+- **A gravidade lê-se pela forma, antes da cor.** Preço = a ficha da bolsa na carta. Fecha = o tracejado de perigo e
+  «Esta história acaba aqui.». Vida = o aro de perigo, a faixa escura com **o rosto de quem pode morrer** e o nome
+  dele por extenso. Na soleira fechada, uma escolha que pode matar já é vermelha.
+- **Escolher custa dois toques e nunca um.** Tocar numa carta escolhe-a (sobe, ganha o aro âmbar e «✓ A TUA
+  ESCOLHA»); o botão de baixo confirma e **diz o preço no verbo** («Escolher, e arriscar Brash»).
+- **O Diário passa a ter duas histórias com duas caras.** A do lugar em couro e âmbar (a estrada, o próximo
+  passo, o mapa); a do coração em papel e lacre (o rosto de quem anda contigo, um rosário de etapas, um passo).
+  Nunca dois «próximos passos» com o mesmo peso.
+- **O vilão é um cartaz que se preenche sozinho.** «Alguém», uma silhueta e uma linha; cada facto que sobe a camada
+  acrescenta uma linha; o nome e o rosto só no rosto; o plano só na guerra.
+
+### BQ 2 · A encruzilhada — a escolha da quest, peça a peça
+
+**Onde aparece.** Na `Soleira do momento`, com `Momento=escolha`. A prioridade passa a **rolagem > dado > escolha >
+proposta**: a rolagem pendente resolve-se primeiro; o dado que pousa vive os seus 1 600 ms e a soleira volta à
+escolha; a escolha passa à frente da oferta, porque é a quest que já se aceitou a pedir uma decisão. O botão
+âmbar leva o glifo da encruzilhada à esquerda, «Decidir · O que Gil merece» no verbo, e no nó que nunca encurta
+**quantos caminhos** («2 caminhos»; a carta virada não conta). Se uma das cartas tem gravidade `vida`, o chão do
+botão passa a **`danger`** (`onAccent` sobre `danger`, 5,77) e o nó diz **quem** («pode custar Brash»). O secundário
+é **«Depois»**: a escolha espera e volta no turno seguinte (a etapa continua aberta no Diário).
+
+**Abre-se em cartão inteiro — sim.** Duas a três opções com 80–120 caracteres por face não cabem em 56 px, e uma
+decisão irreversível é o momento que merece pausa (a régua do `jogo`). Mas **o campo nunca se tapa**:
+
+- *Telefone (< 1024):* uma **folha que sobe** da soleira até 8 px do topo (363 de largo, 6 de cada lado, raio 16 em
+  cima), por cima do véu `sombra(.55)` — a mesma linguagem da `MesaPuxada` (pega 36 × 4, Esc, arrastar para baixo,
+  tocar no véu = «Depois»). Por baixo dela, **o campo e a tira continuam vivos**. As cartas empilham-se num rolo
+  (cada uma a 331 de largo; a carta virada a 132 de alto) e o rodapé fica preso: a frase de que o campo continua
+  aberto, «Depois» e o botão de confirmar a ocupar o resto.
+- *Mesa (≥ 1024):* um **cartão** centrado na coluna da página (900 de largo com até três cartas, 1060 com quatro),
+  pousado 16 px acima do campo e nunca acima de y = 64, com o véu sobre tudo o resto **menos a linha do campo**. As
+  cartas ficam lado a lado (`1fr` cada), alinhadas pelo topo.
+
+**A cabeça do cartão:** o glifo e «UMA ESCOLHA · O SALVO-CONDUTO» (mono 12 `amberSoft`), o título em Cormorant
+SemiBold 30 (26 no telefone) — a etapa em frase de mundo —, e **o que está em jogo** numa linha ou duas em itálico
+`inkMeio` (a frase da reviravolta ou da etapa que abriu a escolha; vem do motor, pedido 1).
+
+**A carta** (`Carta da escolha`): papel (`pergaminho`), raio 10, enchimento 16. O verbo em Cormorant SemiBold 21/24
+`tintaDoPergaminho`; **GANHAS** em mono 12 `musgoNoPergaminho` (6,54) e o texto em Spectral 14/20 `tinta` (12,15); o
+picote (`tintaDoPergaminhoDim` a 50 %, traço 3/3); **CUSTA** em mono 12 `perigoNoPergaminho` (6,60) e o texto. Os
+rótulos ficam, curtos e em caixa alta pequena: a legibilidade antes da beleza, e sem eles o jogador teria de
+adivinhar qual face é qual. Por gravidade:
+
+| gravidade | quando (o motor decide, pedido 1) | a forma |
+|---|---|---|
+| `leve` | nada abaixo | só as duas faces |
+| `preco` | `custo > 0` (`EFEITOS_DA_QUEST.moedas`) | a ficha de couro «◉ 60 da tua bolsa» (`amberSoft` sobre `couro`, 10,24). **Impedida** quando a bolsa não paga: aro tracejado, «faltam ◉ 12» (`ink` sobre `perigoFundo`, 12,82), não se escolhe — e **não se esbate**: a letra continua a 12,15 |
+| `fecha` | a solução dessa opção tem `fecha` (`falhada` ou `concluida`) | por baixo, um traço tracejado de perigo, o selo ✗ e «Esta história acaba aqui.» em itálico `perigoNoPergaminho` |
+| `vida` | a opção abre caminho a um desfecho com `morte` de alguém do grupo | o aro da carta em `danger` 2, e a **faixa** `perigoFundo` com o rosto de quem (32, aro `danger` 2) e «Pode custar a vida de Brash.» em Spectral SemiBold 14 `ink` (12,82). Quando, com o que já está no livro, esse desfecho é o que ganharia hoje: «Com o que há hoje entre vocês, custa a vida de Brash.» |
+
+**Escolhida:** aro `amber` 3, sobe 8 px com sombra mais funda, e a tag «✓ A TUA ESCOLHA» (`onAccent` sobre `amber`,
+8,68). **As outras não se esbatem** (a transparência baixaria a tinta da prosa delas — e são elas que o jogador
+está a comparar). Na `vida` escolhida a faixa continua lá: o aviso não se desliga por se ter escolhido.
+
+**A carta virada** (`Carta virada`): o verso — couro, aro de ouro, o medalhão da encruzilhada — com «Há outras
+maneiras.» e «Fá-lo à tua maneira: escreve o que fazes.» Mostra que há caminhos (lutar com o tenente, o desvio, a
+palavra que o jogador inventar) **sem os contar**. Tocar põe o foco no campo; nunca escolhe nada.
+
+**O botão de confirmar** (48 de alto): sem carta escolhida, calado — «Escolhe uma carta» (`inkDim` sobre
+`panelSoft`); com uma carta, o verbo **diz a escolha e o preço**: «Escolher: levar Gil até ao fim» (âmbar), «Pagar ◉
+60» (âmbar), «Entregar Gil, e acabar aqui» (âmbar), **«Escolher, e arriscar Brash»** (`danger`). Rejeitei o
+*segurar para confirmar*: é um gesto sem afordância, pune quem tem pouca destreza e, na prática, ensina a segurar
+sem ler. O peso está no texto do botão, que se lê.
+
+**Quando o jogador escreve em vez de tocar.** O campo nunca se fecha. Três casos:
+1. *A frase é uma das cartas* («pago a portagem», «entrego-o à guarda»): a proposta da frase reconhece-a (pedido
+   9) e a encruzilhada abre-se **com essa carta já escolhida** e a frase do jogador entre aspas na cabeça
+   («“entrego-o à guarda”»). O veredito antes do clique não se salta por se escrever: a frase escolhe, o botão
+   confirma.
+2. *A frase é um caminho que não é carta* («ataco Brás»): é jogo normal (a luta, a rolagem). A encruzilhada fecha-se
+   sozinha e a escolha continua aberta no Diário até a etapa fechar — se fechar pela luta, fechou.
+3. *A frase é outra coisa* («pergunto ao Gil o que roubou»): a cena continua; a soleira volta à escolha no turno
+   seguinte.
+
+**O movimento, com saída.** As cartas *dão-se* da soleira: cada uma sobe 12 px e roda 2° → 0 em 180 ms, 60 ms
+entre elas (`ease-out`); a escolhida sobe 8 px em 120 ms; a folha sobe em 220 ms (a da `MesaPuxada`). **Nada
+espera pelo movimento:** a carta é tocável desde o primeiro quadro. Com `prefers-reduced-motion`, tudo aparece seco
+e a escolhida só ganha o aro (WCAG 2.3.3). Esc = «Depois»; o foco fica preso no cartão e volta à soleira ao fechar.
+Leitor de ecrã: cada carta é um botão com `aria-pressed` e um nome que leva tudo — «Deixá-los acertar contas à
+maneira antiga. Ganhas: … Custa: … Pode custar a vida de Brash.»
+
+**375 e 1905.** No telefone a lista rola e o rodapé fica (no quadro `318:1137` o rolo está deslocado para mostrar a
+carta da vida escolhida e uma fatia da de cima). Na mesa nada rola: três cartas a 900 medem 588 de alto; quatro a
+1060, 597.
+
+### BQ 3 · O Diário mostra a quest da biblioteca
+
+A base é a §AR 2 (o índice, a história à frente, o próximo passo, a linha do tempo, a estante). O que muda:
+
+**O próximo passo e «o que falta».** Debaixo da frase da etapa, «o que falta» vem do motor (`faltaTexto`), uma linha
+por coisa, com a `Linha do que falta`: o anel âmbar (`falta`), o ✓ musgo (`feito`) e, quando o predicado tem número,
+**«1 de 3» e os pontos** (até cinco). **De um «ou», o Diário mostra até dois caminhos e cala o resto em «ou outro
+caminho»** (anel tracejado, itálico `inkDim`): mostra que há caminhos sem os contar todos, e a lei v9.27 continua —
+uma lista inteira faria da quest um checklist. Os dois que se mostram são os que o jogador já viu: primeiro os que
+são cartas de uma escolha (já estão na mesa), depois os outros pela ordem da ficha.
+
+**As etapas com ramos.** Debaixo da etapa, recuada 46 (o centro do medalhão), os `Caminhos da etapa`: aberta, o
+glifo da encruzilhada e «Fecha por mais de um caminho.» — nunca quais. **Tomada**, o glifo em musgo e **como foi, nas
+palavras do próprio jogo**: a primeira frase da solução que aconteceu («Pelo desvio. «Ninguém vos viu passar.
+Ninguém, que saibas.»»; pedido 2). O Diário lembra-se de como se fez.
+
+**A gente desta história.** Debaixo do gancho, os `Rosto da história` (44, aro de bronze, nome em 12 e o papel em
+frase de mundo: «o protegido», «a guarda de Gil»). **Só quem o herói já conheceu** (pedido 5). No telefone a fila
+vai para o fim do rolo, para as duas histórias caberem por cima da dobra.
+
+**A reviravolta, quando acontece.** Três sinais, e nenhum antes de acontecer:
+1. **No topo da história, por ler** (`320:1641`, `320:1838`): o bilhete de papel com «↯ A HISTÓRIA VIROU · DIA 6»
+   (mono 12 `lacreNoPergaminho`, 6,77) e a frase da reviravolta em itálico `tinta`. Fica no topo até o jogador abrir
+   o Diário uma vez; depois desce para a linha do tempo (pedido 6).
+2. **Na linha do tempo**, um marco próprio no sítio em que aconteceu: `Etapa da missão` `Estado=virou` — o glifo da
+   reviravolta, o aro e a nota em **rosa** (o lacre: 4,61 no couro, 5,05 no `panel`) — «dia 6 · Ilda Seixas vendeu-te
+   a quem guarda o Vau Negro». A etapa que mudou diz o que mudou na nota («o passo de agora — e quem o guarda agora é
+   Ilda»); a que nasce (`abre_etapa`) entra como etapa nova, a seguir ao marco.
+3. **O papel que trai:** o `Rosto da história` passa a `traiu` — a racha e o selo da reviravolta sobre a pintura, o
+   nome e «vendeu-te» em `danger` (4,88). E o «o que falta» corrige-se sozinho («vencer Ilda Seixas, que guarda
+   agora o Vau Negro»). No índice, o passo leva «↯ a história virou».
+
+**O desfecho e a estante.** O tipo 1 fecha como na AR (concluída · falhada). O tipo 2 fecha num desfecho: a
+`Lombada` ganha **`desfecho`** (frisos de bronze, o selo do coração em rosa, à direita como ficou quem anda contigo —
+«Brash ficou») e **`luto`** (frisos de ferro, a fita de luto, «Brash não voltou» em `danger`). **A estante não ordena
+desfechos do melhor ao pior** e nunca diz «4 de 7»: guarda-os. Aberta, a lombada mostra o texto do desfecho como
+epitáfio.
+
+### BQ 4 · As duas histórias, sem uma atrapalhar a outra
+
+**A mesa (1905):** o índice separa **A ESTRADA** e **QUEM ANDA CONTIGO** (a carta da história do coração usa o
+glifo ❦); ao meio, a história escolhida (por omissão, a da estrada); **à direita, a do coração, sempre à vista**, por
+cima do cartaz da sombra e do «o mundo não espera». As duas têm próximo passo, e os dois cabem no primeiro ecrã.
+
+**A carta da história do coração** (`Quest do coração`): papel e não couro, a **fita de lacre** de 6 à esquerda, o
+rosto de quem anda contigo (44; 36 no telefone, aro de bronze), «COM BRASH» em mono `lacreNoPergaminho`, o título em
+Cormorant 22, **o rosário** das etapas (feita = conta cheia de lacre; a de agora = anel; as que não se sabem =
+tracejado) e **um** passo com o glifo do coração, mais uma linha do que falta («falar com Brash junto ao fogo · 1 de
+3»). **Nunca tem relógio, nem âmbar, nem «Ver no mapa»**: o âmbar é da decisão e da estrada; a do coração anda pelo
+que se faz com quem está ao lado. Antes de a primeira etapa acender, não existe (o `visivel` do motor): 0 px.
+
+**O telefone (375 × 812):** na aba *Em curso*, a estrada primeiro (o próximo passo com o que falta, o mapa, a etapa
+de agora e «2 cumpridas antes · e mais 1 que ainda não se sabe») e, logo a seguir, **a do coração inteira acima da
+dobra** (medida: a carta acaba a y = 758 de 812). Depois, o cartaz e a gente da estrada.
+
+### BQ 5 · O vilão no Diário — o cartaz da sombra
+
+`Cartaz da sombra`, 420 (no telefone, a largura do rolo): couro, aro de **ferro** enquanto não tem rosto e de
+**ouro** quando o tem; o rótulo «A MÃO POR TRÁS»; o retrato em arco (64 × 80); o nome em Cinzel; e **o que se sabe**,
+uma linha por facto, a mais nova com o travessão `amberSoft` e a letra `ink`, as outras `inkMeio`. Só a camada
+alcançada (`camadaDoVilao`), e os campos dela (`CAMPOS_DA_CAMADA`):
+
+| camada | o retrato | o nome | o que se acrescenta |
+|---|---|---|---|
+| (nenhuma) | — | — | **o cartaz não existe** (0 px) |
+| `rumor` | a silhueta | «Alguém» · *sem nome, sem rosto* | a obra: «Alguém compra o medo desta região.» |
+| `marca` | a silhueta e o selo da assinatura | idem | «Nas portas que arderam, o mesmo nó de corda.» |
+| `mao` | + o rosto do tenente no canto | idem · *sem nome — mas tem quem o sirva* | «Brás Malho guarda o Vau Negro por ele.» |
+| `rosto` | a pintura | **o nome** · *o título* | o que quer |
+| `guerra` | idem | idem | o plano: seis traços (feito `danger` · travado por ti `ok` · o de agora `amber` · por vir `panelSoft`) |
+| `queda` | idem | idem | a fraqueza, quando o herói a tem |
+
+Mostra as três linhas mais novas; as outras ficam um toque abaixo. O texto destas linhas é a voz do jogador, não
+a do Narrador: sai de uma tabela própria (pedido 4), montada só com os campos permitidos, e a suíte prova o mesmo
+que prova para a pauta — nenhum campo de uma camada de cima aparece.
+
+### BQ 6 · O contraste, medido (WCAG 2.2; a conta de sempre, em `node`)
+
+Na carta (sobre `pergaminho`): `tinta` 12,15 · `tintaMeio` 7,78 · `tintaDim` 6,56 · `musgoNoPergaminho` 6,54 ·
+`perigoNoPergaminho` 6,60 · `lacreNoPergaminho` 6,77. Na faixa da vida (sobre `perigoFundo`): `ink` 12,82 · `inkMeio`
+8,84 · `danger` 4,94. A ficha do preço: `amberSoft` sobre `couro` 10,24. A soleira e o botão da vida: `onAccent`
+sobre `danger` 5,77. A nota da reviravolta: `rosa` sobre `couro` 4,61 · sobre `panel` 5,05. O traidor: `danger`
+sobre `couro` 4,88. O cartaz: `ink` 12,65 · `inkMeio` 8,73 · `inkDim` 5,71 sobre `couro`. **Formas:** o aro âmbar da
+escolhida contra o `panel` 8,04; o aro `danger` da vida contra o `panel` 5,35. Nada usado como letra abaixo de 4,5. O
+âmbar e o `danger` **nunca são letra sobre o papel** (1,56 e 2,34) — só aro, contra a mesa. Alvos: cada carta ≥ 216
+× 324 na mesa e 331 × 250 no telefone; os botões 48; a carta virada 216 × 260 / 331 × 132.
+
+### BQ 7 · O «superior», escrito
+
+*Medida.* Hoje uma escolha de quest **não tem forma nenhuma**; o mais perto é a soleira de 56 px, que a 375 mostra
+o verbo e ~30 caracteres do resto. A encruzilhada mostra o veredito inteiro antes do clique: na escolha «O que Gil
+merece», **375 caracteres de ganha e custa** (116 + 83 + 92 + 84), a gravidade de cada opção em forma, e o nome de
+quem pode morrer. Custo: **três toques** (abrir · escolher · confirmar) contra um botão por opção — os dois a mais
+são o preço declarado do irreversível. O campo **perde 0 px** com a encruzilhada aberta. No Diário a 375 × 812, as
+duas histórias e os seus passos ficam acima da dobra (a do coração acaba a y = 758); a 1905 × 860, os dois próximos
+passos estão no primeiro ecrã.
+
+*Estudo citado.* WCAG 2.2, SC 3.3.4 *Error Prevention* (o que não se desfaz confirma-se e verifica-se — aqui
+aplicado em espírito a uma escolha de jogo, que é o que a lei da casa já manda); Nielsen Norman Group, Laubheimer,
+*Confirmation Dialogs Can Prevent User Errors — If Not Overused* (2018): confirmar só o que é sério, dizer a
+consequência, e **rótulos que dizem a ação** em vez de «Sim/Não» — é «Escolher, e arriscar Brash»; Apple HIG,
+*Alerts*: a ação destrutiva com estilo próprio e título descritivo — é o `danger` só na vida; Sid Meier, GDC 2012,
+*Interesting Decisions*: uma decisão é interessante quando os dois lados se veem e nenhum é óbvio — é a carta de
+duas faces; WCAG 2.3.3 (o movimento com saída) e 2.5.8 (os alvos).
+
+*Experiência jogada.* Fica para o `jogo`: *a escolha dói? A carta da vida faz parar? Escrevo em vez de tocar e o
+jogo percebe-me?* Ele assina depois de jogar o Salvo-Conduto até à escolha «O que Gil merece» e a Carta até ao
+frente a frente, nas duas larguras.
+
+### BQ 8 · As tabelas (para `src/estilo.js`)
+
+```js
+/* BQ · AS QUESTS NA TELA (08/11/2026) — formas.md §BQ; Figma 313:2. */
+export const ENCRUZILHADA = {
+  soleira: { glifo: "encruzilhada", recuo: "Depois" },          /* Momento=escolha | escolha de vida */
+  veu: 0.55,
+  mesa: { largura: { ate3: 900, com4: 1060 }, raio: 16, enchimento: [24, 28], vao: 16, aro: 1.5, acimaDoCampo: 16, topo: 64,
+    titulo: 30, contexto: { tamanho: TIPOS.corpo, entrelinha: 22 } },
+  telefone: { lado: 6, cima: 8, raio: { cima: 16, baixo: 12 }, enchimento: [8, 16, 12], vao: 12, titulo: 26,
+    contexto: { tamanho: 14, entrelinha: 20 }, virada: 132 },
+  carta: { largura: { mesa: 216, telefone: 331 }, raio: 10, enchimento: 16, vao: 10,
+    verbo: { tamanho: 21, entrelinha: 24 }, rotulo: { tamanho: TIPOS.maquina, espacamento: 1.2 }, texto: { tamanho: 14, entrelinha: 20 },
+    chao: T.pergaminho, aro: T.pergaminhoBorda, tinta: T.tintaDoPergaminho, ganha: T.musgoNoPergaminho, custa: T.perigoNoPergaminho,
+    picote: { cor: T.tintaDoPergaminhoDim, alfa: 0.5, traco: [3, 3] },
+    escolhida: { aro: T.amber, espessura: 3, sobe: 8, sombra: { y: 10, raio: 24, alfa: 0.5 }, tag: { chao: T.amber, letra: T.onAccent } } },
+  virada: { chao: T.couro, aro: MOLDURA_POR_DEGRAU.ouro.meio, medalhao: 44, titulo: 20 },
+  confirmar: { alto: ALVOS.piso, calado: "Escolhe uma carta" },
+  movimento: { dar: { dura: 180, entre: 60, sobe: 12, giro: 2 }, escolher: { dura: 120 }, folha: { dura: 220 } },  /* reduzido: tudo seco */
+};
+export const GRAVIDADE_DA_ESCOLHA = {
+  ordem: ["vida", "fecha", "preco", "leve"],       /* a soleira mostra a mais grave das cartas */
+  vida: { aro: T.danger, espessura: 2, faixa: { chao: T.perigoFundo, letra: T.ink, rosto: 32, aroDoRosto: T.danger, raio: 6 },
+    soleira: T.danger, botao: T.danger,
+    frase: { pode: "Pode custar a vida de {quem}.", certo: "Com o que há hoje entre vocês, custa a vida de {quem}." },
+    noSoleira: "pode custar {quem}", verbo: "Escolher, e arriscar {quem}" },
+  fecha: { cor: T.perigoNoPergaminho, selo: 24, frase: "Esta história acaba aqui." },
+  preco: { chao: T.couro, letra: T.amberSoft, frase: "◉ {n} da tua bolsa", impedida: { chao: T.perigoFundo, letra: T.ink, frase: "faltam ◉ {n}", tracejado: [4, 3] } },
+  leve: {},
+};
+export const DIARIO_DA_QUEST = {
+  falta: { doOu: 2, resto: "ou outro caminho", marca: 12, conta: { ponto: 6, entre: 4, max: 5 } },
+  caminhos: { glifo: "encruzilhada", lado: 16, tamanho: 13, entrelinha: 18, recuo: 46, abertos: "Fecha por mais de um caminho." },
+  gente: { rosto: 44, aro: 2, largura: 72, aroConhecido: MOLDURA_POR_DEGRAU.bronze.meio, traiu: { cor: T.danger, racha: 2, selo: 20 } },
+  reviravolta: { cor: T.rosa, glifo: "reviravolta", porLer: "topo", lida: "linha",
+    bilhete: { chao: T.pergaminho, aro: T.pergaminhoBorda, rotulo: T.lacreNoPergaminho, texto: T.tintaDoPergaminho, enchimento: [12, 14], raio: 4 } },
+  coracao: { chao: T.pergaminho, raio: 6, fita: { cor: T.rosa, largura: 6 }, marca: T.lacreNoPergaminho,
+    rosto: { mesa: 44, telefone: 36, aro: MOLDURA_POR_DEGRAU.bronze.meio }, titulo: { mesa: 22, telefone: 20 },
+    rosario: { conta: 12, entre: 6 }, passo: { mesa: 17, telefone: 16 } },
+  indice: { estrada: "A ESTRADA", coracao: "QUEM ANDA CONTIGO", glifoDoCoracao: "❦" },
+};
+export const CARTAZ_DA_SOMBRA = {
+  largura: 420, raio: 12, enchimento: 16, vao: 12, retrato: { largura: 64, alto: 80, arco: 32 },
+  aro: { semRosto: MOLDURA_POR_DEGRAU.ferro.meio, comRosto: MOLDURA_POR_DEGRAU.ouro.meio },
+  semNome: "Alguém", linhas: 3,
+  nova: { traco: T.amberSoft, letra: T.ink }, velha: { traco: T.inkDim, letra: T.inkMeio },
+  plano: { alto: 8, raio: 4, feito: T.danger, travado: T.ok, agora: T.amber, porVir: T.panelSoft },
+};
+// SOLEIRA_DO_MOMENTO — muda: prioridade: ["rolagem", "dado", "escolha", "proposta"];
+//   nasce escolha: { glifo: "encruzilhada", vida: { chao: T.danger } }.
+// ETAPA_DA_MISSAO — nasce virou: { chao: T.couro, aro: T.rosa, espessura: 2, glifo: "reviravolta", corDoGlifo: T.rosa,
+//   texto: T.ink, nota: T.rosa, fio: T.lineStrong, alfaDoFio: 0.6, halo: { alfa: 0.45, raio: 12 } }.
+// DIARIO_DE_MISSOES.lombada — nasce friso: { concluida: OURO.meio, falhada: FERRO.meio, desfecho: BRONZE.meio, luto: FERRO.meio },
+//   selo: { desfecho: { chao: T.panelSoft, aro: T.rosa, glifo: "coracao" }, luto: { chao: T.couroBaixo, aro: T.inkDim, glifo: "fita" } },
+//   fitaDeLuto: { largura: 4, x: 22, cor: T.inkDim }.
+// Os quatro glifos novos (encruzilhada, reviravolta, fita, coracao) entram na tabela dos glifos da AR com os
+//   caminhos dos componentes 313:5 · 313:9 · 313:12 · 313:16.
+```
+
+### BQ 9 · O que a tela pede ao sistema (para `mente/pedidos-ao-sistema.md`)
+
+1. **`vereditoDaEscolha`, por opção:** `gravidade` (`vida` · `fecha` · `preco` · `leve`, a mais grave), e com ela
+   `fecha` (o `fecha` da solução dessa opção), `risco: { papel, quem, certo }` (a opção aparece afirmada no `quando`
+   de um desfecho com `morte`; `certo` se, somada ao livro de hoje, é esse o desfecho que ganha) e `contexto` (a
+   frase da etapa ou da reviravolta que abriu a escolha). Hoje o motor já dá `custo` e `podeEscolher`.
+2. **`estadoDaQuest.feitas[i].como`:** a primeira frase da solução que fechou a etapa (a consequência
+   `solucao:<etapa>:<ramo>` já guarda o texto) — é o «Caminhos da etapa · tomado».
+3. **`falta[i]` com o tipo do predicado**, para o Diário preferir, num «ou», os caminhos que são cartas.
+4. **`oVilaoNoDiario(ficha, registro)`** → `{ camada, nome | null, quemE, linhas: [{ texto, nova }], plano: [estado] |
+   null }`, numa tabela de voz do jogador ao lado de `LINHA_DO_VILAO`, com a mesma prova de `CAMPOS_DA_CAMADA`.
+5. **`estadoDaQuest.gente`:** `[{ papel, id, nome, rotulo, traiu }]`, só dos papéis cujo ocupante o herói
+   `conheceu`; `rotulo` sai de um campo novo e opcional do papel na ficha («o protegido»); `traiu` da `troca_papel`.
+6. **A reviravolta lida:** `vistaEm` no registo da quest — campo novo, aditivo, ignorado pela versão antiga. Sem
+   ele, o bilhete fica no topo até a etapa seguinte fechar.
+7. **A concordância do `{quem}`:** os textos do acervo dizem «no bolso **dele**», «o voto **dele**»; com uma
+   companheira, a frase quebra. Um marcador de género no `encher` (`{dele|dela}`) antes do lote 3.
+8. **A proposta da frase reconhece uma opção de escolha de quest** e devolve `{ quest, chave, opcao }`, para a
+   encruzilhada abrir com essa carta escolhida.
+
+### BQ 10 · A ordem de construção (por retorno)
+
+**`aprendiz` (fora do `App.jsx`):**
+1. `src/estilo.js` — as tabelas da BQ 8 e as mudanças nomeadas (`SOLEIRA_DO_MOMENTO`, `ETAPA_DA_MISSAO.virou`,
+   `DIARIO_DE_MISSOES.lombada`), os quatro glifos novos.
+2. `src/painel-ar-pecas.jsx` — `EtapaDaMissao` com `virou`; `LombadaDaEstante` com `desfecho` e `luto`; nascem
+   `LinhaDoQueFalta`, `CaminhosDaEtapa` e `RostoDaHistoria`.
+3. `src/ui.jsx` — a `SoleiraDoMomento` aprende `escolha` (o glifo, o nó dos caminhos, o chão `danger` na vida) e a
+   prioridade nova.
+4. **`src/painel-encruzilhada.jsx`** (novo) — `Encruzilhada` (folha no telefone, cartão na mesa, véu, foco preso, Esc
+   = «Depois», o foco volta à soleira), `CartaDaEscolha`, `CartaVirada`, o botão que diz o preço, o movimento com
+   saída; e `momentoDaEscolha(veredito, { aoAbrir, aoDepois })` → `{ qual: "escolha", momento }`, como o
+   `momentoDaProposta`.
+5. `src/painel-diario.jsx` — aceita os estados das quests (pela projeção `missaoDaQuest` e por `estadoDaQuest`): o
+   que falta (≤ 2 de um «ou»), os caminhos, a gente, a reviravolta (por ler no topo, lida na linha), as duas
+   histórias (índice em duas secções, a do coração na coluna da direita e por baixo da estrada no telefone), a
+   `QuestDoCoracao`, a estante com desfecho e luto; e o `CartazDaSombra` (no mesmo arquivo, ou em
+   `painel-sombra.jsx` se passar de 120 linhas).
+
+**`oficial` (dentro do `App.jsx`, com o bastão, por âncora):**
+1. A escolha aberta (`estadoDaQuest(...).escolhas` + `vereditoDaEscolha`) vira `momentoDaEscolha` na
+   `SoleiraDoMomento`, ao lado da rolagem, do dado e da proposta; abrir e fechar a `Encruzilhada`; confirmar chama
+   `escolherNaQuest` dentro de `calou`. O campo continua a aceitar escrita com a encruzilhada aberta.
+2. A frase que cumpre (pedido 8): abrir a encruzilhada com a carta escolhida e a frase entre aspas.
+3. O Diário recebe as quests, o `oVilaoNoDiario` e marca a reviravolta como lida ao abrir.
+
+Tudo depende dos pedidos 1–6; o 7 e o 8 podem vir depois (sem o 8, a frase não pré-escolhe a carta: a soleira
+continua lá).
+
+**A prova (quem constrói, no navegador; salvar e repor os saves antes):** a encruzilhada a 375 × 812, 375 × 667,
+1280 × 720 e 1905 × 860, nos dois estados do Figma; o campo aceita escrita com ela aberta; reduced motion seco; o
+leitor de ecrã lê cada carta inteira; o Diário com uma quest de cada tipo e com a reviravolta, e o cartaz em cada
+camada — nenhum nome antes do rosto.
+
+### BQ 11 · Para a pessoa decidir — a proposta ambiciosa: o fio do que podia ter sido
+
+**Quando uma quest fecha, a lombada abre-se num mapa das escolhas.** O caminho que o jogador fez acende-se — as
+etapas, as cartas que escolheu, o ramo por onde passou —, e **as cartas que não escolheu ficam lá, viradas**, com o
+verbo à vista e o resto escondido («Entregar Gil a quem o procura» — e o verso). No fim da campanha, no epitáfio, as
+cartas viradas **viram-se**: o jogador lê o que teria acontecido. É o que fez o fluxograma de fim de capítulo de
+*Detroit: Become Human* (Quantic Dream, 2018) ser a coisa de que toda a gente falava: a escolha passa a pesar
+*depois* também, porque se vê o tamanho do que se deixou. Para nós custa pouco — a ficha já tem todas as escolhas,
+soluções e desfechos, e a estante já existe —, e dá uma razão para jogar Uma Vida outra vez. Pede à pessoa porque
+**mostra ao jogador conteúdo que ele não viveu**: muda o que o produto revela, e um desfecho lido deixa de poder
+surpreender numa segunda campanha. Uma variante mais tímida, se ela quiser metade: só os verbos das cartas não
+escolhidas, nunca o que teria acontecido.

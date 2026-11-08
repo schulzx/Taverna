@@ -184,6 +184,18 @@ export const GLIFOS = {
      `perigo` já é a caveira e quer dizer o perigo mortal (V3b); no retrato, o
      morto-vivo ler-se-ia "isto está morto", e há o estado tombado que diz isso */
   morto: { de: "lucide:bone", d: "M17 10c.7-.7 1.69 0 2.5 0a2.5 2.5 0 1 0 0-5 .5.5 0 0 1-.5-.5 2.5 2.5 0 1 0-5 0c0 .81.7 1.8 0 2.5l-7 7c-.7.7-1.69 0-2.5 0a2.5 2.5 0 0 0 0 5c.28 0 .5.22.5.5a2.5 2.5 0 1 0 5 0c0-.81-.7-1.8 0-2.5Z" },
+  /* BQ (08/11, formas.md §BQ; Figma 313:5 · 313:9 · 313:12 · 313:16) — as
+     quests na tela. Desenho da casa na grelha da AR (24, traço 2), copiado
+     dos vetores do Figma com a origem somada (nada redesenhado). */
+  /* a escolha de uma quest: a soleira, a cabeça da encruzilhada, a carta
+     virada, os caminhos de uma etapa com ramos */
+  encruzilhada: { de: "casa", d: "M12 22v-9M12 13L5 5M12 13l7-8M5 9V5h4M19 9V5h-4" },
+  /* a reviravolta: o bilhete do topo, o marco na linha do tempo, quem traiu */
+  reviravolta: { de: "casa", d: "M4 7h11a5 5 0 0 1 0 10H8M11 14l-3 3 3 3M4 4v6" },
+  /* a fita de luto: o selo da lombada de quem não voltou */
+  fita: { de: "casa", d: "M9 3h6l-1.5 8L18 21l-3.5-1.5L12 22l-2-9-4 8-1-4 5.5-6z" },
+  /* a história do coração: o passo dela e o selo do desfecho na estante */
+  coracao: { de: "casa", d: "M12 20C7 16.5 3.5 13.2 3.5 9.2C3.26 8.07 3.48 6.9 4.11 5.93C4.74 4.97 5.72 4.29 6.85 4.05C7.98 3.81 9.15 4.03 10.12 4.66C11.09 5.29 11.76 6.27 12 7.4C12.24 6.27 12.92 5.29 13.88 4.66C14.85 4.03 16.02 3.81 17.15 4.05C18.28 4.29 19.26 4.97 19.89 5.93C20.52 6.9 20.74 8.07 20.5 9.2C20.5 13.2 17 16.5 12 20zM12 7.4v4.6" },
 };
 
 /* ============================================================

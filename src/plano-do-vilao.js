@@ -1396,3 +1396,68 @@ export function oVilaoNaPauta(ficha, estado, opcoes) {
   if (camada === "rosto") naoPode.push(preencher(L.vetos.semLuta, { nome: f.nome }));
   return { momento, naoPode };
 }
+
+/* ============================================================
+   O VILÃO NO DIÁRIO — o cartaz da sombra (08/11/2026, Fase BQ · BQ7, o
+   pedido 4 do desenho: mente/formas.md «## BQ · as quests na tela», §BQ 5)
+   oVilaoNoDiario(ficha, estado, { quests, relogio, mundo })
+     → null | { camada, nome, quemE, linhas: [{ texto, nova }], plano }
+   O que o JOGADOR sabe dele, na voz do jogador (não na do Narrador): uma
+   linha por camada alcançada, a mais nova à cabeça e marcada `nova`; o
+   nome só no rosto (até lá `null`); o plano — um estado por passo — só na
+   guerra (até lá `null`); a fraqueza só na queda e só quando o herói a tem.
+   A régua dos campos é a MESMA da pauta (CAMPOS_DA_CAMADA), e a suíte prova
+   o mesmo: nenhum campo de uma camada de cima aparece.
+   DIARIO_DO_VILAO: as frases (modelos com {campos}), o «quem é» de cada
+   camada, quantas linhas a tela mostra de cara, e o nome de cada estado de
+   um passo no plano. ============================================================ */
+export const DIARIO_DO_VILAO = Object.freeze({
+  mostra: 3,
+  linhas: Object.freeze({
+    rumor: "{obra}",
+    marca: "Por onde passa, fica {assinatura}.",
+    mao: "{tenente} trabalha por ele.",
+    rosto: "Quer {quer}.",
+    queda: "Cai sem luta {fraqueza}.",
+  }),
+  quemE: Object.freeze({ semNome: "sem nome, sem rosto", comServo: "sem nome — mas tem quem o sirva", semTitulo: "o nome que já se sabe" }),
+  plano: Object.freeze({ cumprido: "feito", recuado: "travado", travado: "travado", corre: "agora", por_vir: "por_vir" }),
+});
+const frasePronta = (s) => { const t = texto(s, 400); return t ? t[0].toUpperCase() + t.slice(1) + (/[.!?…]$/.test(t) ? "" : ".") : ""; };
+export function oVilaoNoDiario(ficha, estado, opcoes) {
+  const f = obj(ficha) && obj(ficha.registro) ? ficha : null;
+  if (!f) return null;
+  const E = obj(estado) || {};
+  const o = obj(opcoes) || {};
+  const camada = ORDEM[f.registro.camada] != null ? f.registro.camada : "rumor";
+  const ordem = ORDEM[camada];
+  const pode = (campo) => ORDEM[CAMPOS_DA_CAMADA[campo]] <= ordem;
+  const relogio = obj(o.relogio) || relogioDoPlano(f, E, o);
+  const D = DIARIO_DO_VILAO;
+  const passos = arr(relogio.passos);
+  const cumpridos = passos.filter((s) => s.estado === "cumprido" && !s.recuado);
+  const corre = passos.find((s) => s.estado === "corre") || null;
+  const v = {};
+  v.obra = cumpridos.length ? f.plano[cumpridos[cumpridos.length - 1].n - 1].obra : corre ? f.plano[corre.n - 1].presagio : f.plano[0].presagio;
+  if (pode("assinatura")) v.assinatura = f.assinatura;
+  if (pode("tenente")) {
+    const ctx = { estado: E, papeis: papeisDoVilao(f), mundo: obj(o.mundo) };
+    const visto = f.tenentes.find((t) => { try { return avaliarCondicao(["conheceu", `papel:${t.papel}`], ctx); } catch { return false; } });
+    const servo = visto || (corre && f.tenentes.find((t) => t.passo === corre.n)) || f.tenentes[0] || null;
+    if (servo) v.tenente = servo.nome;
+  }
+  if (pode("quer")) v.quer = f.quer;
+  if (pode("fraqueza") && f.fraqueza && temAFraqueza(f, E, o)) v.fraqueza = `: ${f.fraqueza.o}`;
+  const linhas = [];
+  for (const fase of FASES) {
+    if (fase.ordem > ordem) break;
+    const m = D.linhas[fase.id];
+    if (!m || [...m.matchAll(/\{(\w+)\}/g)].some((x) => !v[x[1]])) continue;
+    linhas.unshift({ texto: fase.id === "rumor" ? frasePronta(v.obra) : preencher(m, v), nova: false });
+  }
+  if (linhas.length) linhas[0] = { ...linhas[0], nova: true };
+  const nome = pode("nome") && f.nome ? f.nome : null;
+  const quemE = pode("titulo") ? (f.titulo || D.quemE.semTitulo) : v.tenente ? D.quemE.comServo : D.quemE.semNome;
+  const plano = pode("plano") ? passos.map((s) => D.plano[s.recuado ? "recuado" : s.estado] || D.plano.por_vir) : null;
+  return { camada, nome, quemE, linhas, plano };
+}

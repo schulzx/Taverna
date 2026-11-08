@@ -65,7 +65,11 @@ sec("1. as tabelas da TL 8");
     F.barra.alto === 48 && F.barra.velaAlta === 28 && F.vao === 8 && F.livro.margem === 2 && F.livro.enchimento === 16 && F.livro.cima === 12 && F.livro.baixo === 8);
   t("a soleira do momento: 56 (ALVOS.chamado), vão 8, raio 10, enchimento 14",
     SOLEIRA_DO_MOMENTO.alto === ALVOS.chamado && ALVOS.chamado === 56 && SOLEIRA_DO_MOMENTO.vao === 8 && SOLEIRA_DO_MOMENTO.raio === 10 && SOLEIRA_DO_MOMENTO.enchimento === 14);
-  t("a prioridade: a rolagem > o dado que pousou > a oferta", SOLEIRA_DO_MOMENTO.prioridade.join(">") === "rolagem>dado>proposta");
+  /* MOVIDA (08/11, BQ): a escolha de uma quest entra entre o dado e a oferta
+     (formas.md §BQ 2) — é a quest que já se aceitou a pedir uma decisão, e
+     passa à frente da porta nova; a rolagem e o dado continuam primeiro.
+     A suíte da BQ (teste-bq-tela) prova a escolha na soleira renderizada. */
+  t("a prioridade: a rolagem > o dado que pousou > a escolha > a oferta", SOLEIRA_DO_MOMENTO.prioridade.join(">") === "rolagem>dado>escolha>proposta");
   t("o principal: onAccent sobre amber, o verbo Spectral 500 16/20, o preço mono 12/16, o d20 28",
     SOLEIRA_DO_MOMENTO.principal.chao === T.amber && SOLEIRA_DO_MOMENTO.principal.letra === T.onAccent
     && SOLEIRA_DO_MOMENTO.principal.verbo.tamanho === 16 && SOLEIRA_DO_MOMENTO.principal.verbo.peso === 500 && SOLEIRA_DO_MOMENTO.principal.verbo.entrelinha === 20

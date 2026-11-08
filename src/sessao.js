@@ -207,6 +207,7 @@ import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
 import { oBoatoDaChegada, oBoatoQueChegou } from "./boatos.js";
 import { oCronistaChama } from "./motor/portas-do-narrador.js";
 import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
+import { oTurnoDasQuests } from "./motor/quests-do-turno.js";
 
 /* ---------------- O FORMATO (se é número, é tabela) ---------------- */
 export const FORMATO_DA_SESSAO = Object.freeze({
@@ -911,6 +912,29 @@ export const PASSOS_DO_REPLAY = Object.freeze([
       return r.estado;
     },
   },
+  {
+    /* AS QUESTS E O VILÃO (BQ7, 08/11). Só nos mundos novos (a espinha com
+       `esqueleto`): as quests do ato abrem, avançam pelo livro de factos e
+       aplicam o que é do estado do motor; o arco vira quando a do ato
+       fecha; o vilão anda (o relógio, a camada, as reações). No App é o FIM
+       do turno, DEPOIS do Cronista — a conversa que ele anotou fecha a
+       etapa NESTE turno —, e por isso aqui é o último passo. A espinha sem
+       esqueleto (todas as sessões gravadas até hoje) sai igual: a peça
+       devolve null e o estado segue. O que só a tela aplica (o relógio da
+       região, o grupo, a base) vai em `nota.efeitosDasQuests`, o relato em
+       `nota.tela`, e o que vai ao Narrador à nota (só no servidor; no
+       replay é bastidor). */
+    passo: "as quests", de: "motor/quests-do-turno.js#oTurnoDasQuests (só nos mundos novos: as quests do esqueleto e o vilão do plano, no fim do turno, depois do Cronista)",
+    faz: (E, L, ctx, nota) => {
+      const r = oTurnoDasQuests(E, { mundo: ctx.mundo });
+      if (!r) return E;
+      if (nota && nota.tela && r.linhas.length) nota.tela.linhas.push(...r.linhas);
+      if (nota && r.efeitos.length) nota.efeitosDasQuests = r.efeitos;
+      let E1 = { ...E, ...oQueOTurnoGuarda(r.estado, ctx) };
+      if (ctx.servidor && r.notas.length) E1 = { ...E1, nota: notaComOTurno(E1.nota, r.notas) };
+      return E1;
+    },
+  },
 ]);
 
 /* o Juiz: julga outra vez sobre a entrada gravada (ele mede, não muda o estado) */
@@ -975,6 +999,7 @@ export const DONO_DO_CAMPO = Object.freeze({
   minuto: "o relógio do mundo: o tempo da ação e o da caminhada (motor/tempo-do-turno.js); a viagem: App",
   missoes: "as missões do turno: o conferente (motor/depois-do-turno.js) e o aceito do Cronista (motor)",
   factos: "o livro de factos: a presença, o lugar e a afeição do fim da resposta, e o que o Cronista ouviu (motor/livro-do-turno.js); os caídos da luta (App, como a luta)",
+  espinha: "a espinha: os marcos que o conferente das missões fecha (motor/depois-do-turno.js) e, nos mundos novos, as quests e o registo do vilão (motor/quests-do-turno.js)",
   "*": "sem dono: nenhum passo do replay o escreve e AINDA_DO_APP não o lista — é defeito até alguém o reclamar",
 });
 
