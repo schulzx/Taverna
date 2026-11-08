@@ -15230,7 +15230,7 @@ soleira ou a mesa puxada abertas.
 fechada), com o mesmo método da TL 1; e a tabela da TL 5 percorrida linha a linha — **cada coisa achada na morada
 nova**. O `jogo` joga o antes e o depois e assina.
 
-### TL 10 · Para a pessoa decidir — a proposta ambiciosa: a prosa é a fileira
+### TL 10 · A prosa é a fileira — **aprovada pela pessoa a 09/11**; a forma para construir é a secção §TP, logo abaixo
 
 **Os nomes na prosa passam a ser as fichas.** Quando o Mestre escreve «Conrado para à beira do caminho», *Conrado*
 fica sublinhado a ponteado (`brasaNoPergaminho`, 6,71 sobre a folha); um toque aponta-o (escreve-o no campo, como a
@@ -15240,6 +15240,308 @@ página deixa de ter interface por cima e passa a SER a interface** — o livro-
 com a ficha (`posicaoNaProsa`, em `fichas.js`, já sabe onde cada nome está) e uma forma de sublinhado com estado de
 foco e de apontado; nada no motor nem no save. Pede à pessoa porque muda **como se aponta** — é o que o jogador
 teria de reaprender.
+
+---
+
+## TP · a prosa tocável — os nomes são as fichas (TL 10, aprovada 09/11/2026)
+
+**O pedido.** A pessoa aprovou a TL 10. A TL tinha declarado uma perda (TL 5): *a ficha da cena passa de um
+toque a dois*, porque a fileira saiu do pé e foi para a gaveta do `Em cena`. A TP devolve o toque sem devolver a
+altura: o nome que o Mestre escreveu **é** a ficha. Peso: médio no regime de 23/09 e 04/11 (muda como se aponta;
+nada sai — a gaveta continua com tudo —, e um commit revertido desfaz). Nada no save. Um pedido ao sistema (TP 9).
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página **«A prosa tocável · 09/11» `327:2`**):
+
+| peça / quadro | id |
+|---|---|
+| **`Nome tocável`** — Estado (repouso · sobre · foco · apontado · aberto) × Tom (comum · hostil), propriedade `Nome` | `327:24` (comum `327:4` · `327:6` · `327:8` · `327:10` · `327:12`; hostil `327:14` · `327:16` · `327:18` · `327:20` · `327:22`) |
+| variável nova **`marcaNoPergaminho`** em `T · Mesa C (vela)` (`#DFBCAC`) | `VariableID:327:3` |
+| a régua (medidas e decisões, ao lado da biblioteca) | `329:1513` |
+| **o par comparável, 375 × 667** — antes (TL: as fichas só na barra, `Em cena` 3+2) · depois, repouso | `328:3` · `328:27` |
+| 375 × 667 — apontado (1.º toque) · aberto (2.º toque: a folha, e a página rolada) | `328:531` · `328:622` (cartão `328:713`) |
+| 1905 × 860 — repouso com o foco do teclado em «ermida» · aberto (o cartão junto ao nome) | `329:722` · `329:1062` (cartão `329:1306`) |
+
+Os dois cartões são o `CartaoDaFicha` que já existe (clonado de `10 · Fichas`, com o chão passado a `panel`); a
+repintura dele à Mesa C não é desta etapa.
+
+### TP 1 · O que se decidiu, numa frase cada
+
+- **O nome tocável é tinta com um pontilhado por baixo.** A letra não muda de cor (a prosa continua a 12,15); só
+  o sublinhado diz «isto toca-se». Uma página com cinco nomes assim lê-se como prosa, não como menu.
+- **Os toques são os da ficha, sem tirar nem pôr:** o 1.º aponta (escreve a frase no campo, o nome fica marcado a
+  rosa — *a tua mão*), o 2.º abre o cartão com os verbos, o 3.º fecha. Uma ação, uma forma: é a máquina de três
+  estados da `FileiraAVista`, que o jogador já sabe.
+- **Só a primeira menção de cada ficha, no máximo cinco por resposta, e só na resposta de agora.**
+- **Só o que o sistema conhece vira nome tocável.** O que só a prosa trouxe (`deOnde: "prosa"`) não; o companheiro
+  e o lugar onde se está também não (moram na mesa e na barra). Gente que o herói **já viu** e está longe toca-se
+  para a procurar — o livro de factos decide (`conheceu`), e o só nomeado nunca.
+- **O cartão abre onde não tapa o nome nem o campo:** no telefone, a folha de sempre, e a página rola até o nome
+  ficar 16 px acima dela; na mesa, o popover de 376 junto ao nome, do lado da linha com mais espaço.
+- **O `Em cena` da barra mostra só quem a resposta de agora não nomeou** — e a gaveta dele continua a ter todos.
+
+### TP 2 · O sublinhado — os estados, o contraste e o peso na leitura
+
+| estado | o que muda (sobre `pergaminho`) | contraste (WCAG 2.2, em `node`) |
+|---|---|---|
+| **repouso** | letra `tintaDoPergaminho` (a da prosa) · sublinhado **pontilhado** `brasaNoPergaminho`, 1,5 px, a 4 px da linha de base | letra **12,15** · sublinhado **6,71** (pior ponto da vinheta 5,39) — forma ≥ 3 (1.4.11) |
+| repouso · **hostil** | sublinhado **tracejado** `perigoNoPergaminho` (a forma muda, não só a cor — 1.4.1) | **6,60** |
+| **sobre** (só `hover: hover` e ponteiro fino) | o sublinhado passa a contínuo | idem |
+| **foco** (teclado) | `.tv-anel-foco` + sublinhado contínuo. No papel o anel que se lê é o de `bg` (2 px) | **13,50** (o contorno `ink` dá 1,11 e não conta); `forced-colors`: `Highlight` |
+| **apontado** (1.º toque) | chão **`marcaNoPergaminho`** `#DFBCAC` (o rosa da tua mão a 30 % sobre o papel) · sublinhado contínuo 2 px `lacreNoPergaminho` (hostil: `perigoNoPergaminho`) | letra **9,37** · sublinhado **5,22** |
+| **aberto** (2.º toque) | chão `lacreNoPergaminho`, letra `pergaminho`, sem sublinhado | **6,77** |
+
+O chão do apontado e do aberto **sangra 2 px por `box-shadow`** (raio 3), e não por enchimento: a linha não mexe
+um pixel ao marcar. O nome não quebra de linha (`white-space: nowrap`): «Martim Cinzentos» passa inteiro à linha
+seguinte, e a marca nunca fica partida em duas.
+
+**Porque a letra não muda de cor.** Pôr o nome em brasa custaria a esse nome metade do contraste (12,15 → 6,71) e
+faria cinco manchas de cor por resposta. O pontilhado sozinho já cumpre a 1.4.1 (o nome distingue-se por forma,
+não por cor), e é a marca mais leve que o olho ainda acha. O rosa só aparece quando o jogador põe a mão.
+
+**O peso na leitura, medido.** Nas **194 respostas do Mestre** das sessões gravadas (`testes/sessao-s8.json`,
+`-s9`, `-s10`), cada resposta tem em média **677 caracteres** (17,8 linhas a 375; 10,6 a 1905) e **3,0 nomes
+próprios distintos** (mediana 3, **p90 6**, máximo 12); com a repetição, 3,3 ocorrências. É o teto de cima: nem
+todo nome próprio é ficha (os deuses, as cidades longe, quem só foi nomeado). Daí o teto:
+
+- **Só a primeira menção de cada ficha por resposta.** É a regra que a Wikipédia escreveu para o mesmo problema —
+  *link a term only on its first occurrence* (Wikipedia: Manual of Style/Linking, §Duplicate and repeat links) — e
+  aqui pesa mais, porque cada marca é uma decisão oferecida ao leitor: DeStefano & LeFevre (2007, *Cognitive load
+  in hypertext reading: A review*, Computers in Human Behavior 23(3), 1616–1641) reveem que cada ligação no texto
+  pede uma decisão e soma carga à leitura.
+- **No máximo 5 por resposta.** Com a mediana de 3, o caso comum fica abaixo do teto; no p90 (6), o sexto vai para
+  o `Em cena` (TP 5) e nada se perde. A 375, 5 marcas em 17,8 linhas são **uma marca a cada 3,6 linhas** no pior
+  caso, e uma a cada 6 no comum; em palavras, **2,5 % do texto** (3 de ~120) e no teto 4 %.
+- **Quem passa à frente quando há mais de 5:** os que estão **aqui** antes dos de **longe**, e entre iguais a
+  ordem da prosa.
+
+### TP 3 · Que nomes ficam tocáveis
+
+**Só o que o sistema conhece como ficha; a prosa nunca inventa uma.** O motor marca (pedido TP 9); a tela só
+desenha o que ele marcou.
+
+| o que é | vem de | tocável? | o 1.º toque escreve | os verbos (2.º toque) |
+|---|---|---|---|---|
+| pessoa em cena | `montarEmCena`, `aqui`, fonte do sistema | **sim** | «Falo com Conrado» | Falar · Ajudar · Atacar |
+| criatura em cena (hostil = tracejado) | idem | **sim** | «Ataco o rato gigante» / «Observo …» | os de `VERBOS_DA_FICHA` |
+| coisa à venda · coisa no chão | `deOnde: banca` · `chao` | **sim** | «Compro as ataduras» · «Pego …» | Comprar (com o preço) · … |
+| saída | `deOnde: saida` | **sim** | «Saio pela porta» | Sair · Espreitar |
+| lugar perto (o horizonte) | `deOnde: perto` | **sim** | «Vou até a ermida» | Ir (com o caminho) · Perguntar o caminho |
+| **pessoa longe, que o herói já viu** | a página da memória (F2d) **e** `conheceu(livro, id)` | **sim** | «Procuro Delfina» | Procurar (`paginaPessoa`) |
+| **lugar longe, onde o herói já esteve** | a página da memória **ou** `esteve(livro, id)` | **sim** | «Vou até Porto das Pedras» | Ir (`paginaLugar`) |
+| pessoa só **nomeada** (o registo ouviu o nome, nunca a viu) | `nomeado` sem `visto` | **não** — a distinção da MM14: ouvir falar não é conhecer |
+| o que só a prosa trouxe | `deOnde: "prosa"` (`SO_DA_PROSA`) | **não** — a lição da 13.ª (gente fantasma) |
+| o companheiro · o lugar onde se está | `EM_CENA.fora` (`pessoaDoGrupo`, `aqui`) | **não** — moram na mesa e na barra; nomeados quase em todas as respostas, seriam a marca mais frequente e a de menos valor |
+| a fala do jogador | — | **não** — só a prosa do Mestre |
+
+**O livro de factos serve aqui, e só aqui:** decide se um nome **longe** se toca. É ele que separa «Teodoro
+disse que a Delfina vive no moinho» (nunca vista: o nome é prosa) de «a Delfina foi vista no porto» (vista no dia
+12: o nome procura-a). Para quem está **aqui**, a presença basta — o herói está a vê-lo agora.
+
+### TP 4 · Onde abre o cartão (os dois tamanhos)
+
+**Telefone (< 1024)** — `328:531`, `328:622`. **A folha do `CartaoDaFicha`** (`formato="telefone"`, a mesma da
+fileira, portal ao `body`, até 62 % da altura, o fundo no pé, o campo à vista). **O dedo tapa o nome — e por isso
+nada de importante mora debaixo dele:** o 1.º toque diz-se em três sítios que o dedo não tapa — o campo (a frase),
+a linha do veredito (quem e o preço, `aria-live`) e a marca rosa, que sangra 2 px para lá da palavra e fica à
+vista ao levantar o dedo. **Ao abrir**, se a folha tapar o nome, **a página rola** até a linha do nome ficar 16 px
+acima do topo da folha (`scrollBy`, suave; seco com reduced motion); ao fechar, não rola de volta. Um balão junto
+ao nome foi recusado: a 375 o cartão (376 de largo, três verbos de 48) não cabe sem tapar a coluna inteira, e
+teria uma segunda forma para a mesma ação.
+
+**Mesa (≥ 1024)** — `329:1062`. **O popover de 376 do `CartaoDaFicha`** (`formato="mesa"`), pousado **junto ao
+nome**: alinhado à esquerda da palavra e preso às bordas da página; **do lado da linha com mais espaço** (acima ou
+abaixo), a 8 px dela; **nunca sobre a linha do nome nem sobre o campo**; a altura máxima é o espaço desse lado. No
+quadro: acima havia 126 px, abaixo 524 — abriu abaixo. Fecha com Esc, ×, toque fora, ou o 3.º toque no nome; o
+foco volta ao nome.
+
+### TP 5 · O `Em cena` da barra, e nada se perde (a lição da AR1)
+
+**Os rostos da barra são de quem a resposta de agora não marcou.** No quadro: Conrado, Martim, Mécia e a porta
+estão na prosa → a barra fica com 1 rosto (o barqueiro), em vez de 3+2. A gaveta **continua a ser a
+`FileiraAVista` inteira, com todos** — é o índice, e é o caminho de quem não lê a página (leitor de ecrã, a pressa).
+Com todos nomeados, a barra mostra **o disco «N»** (a forma do «+N», `panelSoft`, aro `lineStrong`) e continua a
+ser um botão: a gaveta nunca fica sem porta. O `aria-label` lista sempre **todos** («Em cena: Conrado Sem-Senhor,
+Mécia dos Juncos, Martim Cinzentos e mais 2. Abrir.»).
+
+A AR1 tirou de vista o que só a peça antiga mostrava. **O que a ficha da fileira mostrava sem toque, e onde fica:**
+
+| a ficha mostrava | no nome tocável | e também |
+|---|---|---|
+| o nome | é a própria palavra | gaveta |
+| o rosto / a marca | — | gaveta · cartão · os rostos da barra (dos não nomeados) |
+| a linha (o papel, «a 2 h, norte», «◉ 29») | `aria-describedby` | gaveta · cartão |
+| **o preço** da coisa à venda | o 1.º toque põe-no na **linha do veredito** antes de qualquer envio | gaveta · cartão |
+| **hostil** (o anel `danger`, a presa) | o **tracejado** `perigoNoPergaminho` | gaveta · cartão |
+| o estado escrita / aberta (contorno rosa, ⌄ ⌃) | apontado / aberto | — |
+
+### TP 6 · A acessibilidade
+
+- **O nome é um `<button type="button">` dentro do `<p>`.** Age (escreve no campo, abre um diálogo), não navega:
+  é botão e não ligação (WAI-ARIA APG, *Button pattern* vs *Link pattern*). O nome acessível é **a palavra**, para
+  a prosa ler-se direita no leitor de ecrã («Conrado, botão, recolhido»); a linha da ficha vai em
+  `aria-describedby` (um `sr-only` no fim da resposta, com o `falado()` da ficha: «◉ 29» diz-se «29 moedas»).
+  `aria-haspopup="dialog"`, `aria-expanded` (aberto), `aria-controls` (o cartão, quando aberto). O apontado
+  anuncia-se pela linha do veredito, que já é `aria-live` — nada novo a dizer.
+- **O Tab pela prosa:** cada nome é uma paragem, pela ordem da leitura (WCAG 2.4.3), e no máximo 5 — o teto
+  também é o teto do Tab. As setas não são interceptadas (é texto). Com o cartão aberto valem as teclas da fileira:
+  Esc fecha e devolve o foco ao nome; 1–3 escrevem o verbo da posição (nunca com o foco no campo).
+- **O alvo:** a palavra tem a altura da linha (27,6 px) e um `::after` que a alarga 4 px para cada lado. É abaixo
+  do piso de 48 da casa, **de propósito e escrito**: a WCAG 2.5.8 isenta o alvo *inline*, cujo tamanho é limitado
+  pela entrelinha do texto à volta — e mesmo assim passa os 24. A fileira (alvo de 48) continua na gaveta.
+- **O movimento:** a troca de estado (o chão e o sublinhado) em 120 ms; o cartão entra com o `tv-cartao-entra` de
+  sempre; a página rola suave para pôr o nome à vista. Com `prefers-reduced-motion`, tudo seco, e o rolar é
+  `auto`. Quando chega uma resposta nova, as marcas da anterior **somem secas** — nada pisca na leitura.
+- **Alto contraste (`forced-colors`):** o nome em `LinkText` com o sublinhado em `LinkText`; apontado e aberto em
+  `Highlight` / `HighlightText`.
+
+### TP 7 · As respostas antigas: **só a resposta de agora**
+
+Os nomes das respostas de cima voltam a ser prosa (sem sublinhado) quando chega a seguinte. Três razões:
+
+1. **Verdade.** A ficha é o que está aqui *agora*. Conrado nomeado há três turnos pode ter ido embora; tocá-lo lá
+   em cima escreveria «Falo com Conrado» a quem não está — a tela a prometer o que o sistema não tem.
+2. **Uma coisa, um lugar** (TL 3). O mesmo Conrado sublinhado em quatro respostas é quatro portas para a mesma
+   ficha, e o olho não sabe qual é a de agora.
+3. **A leitura.** Com 16–24 linhas à vista (TL 2), duas ou três respostas cabem no ecrã: só a de agora marcada são
+   ≤ 5 marcas; todas marcadas seriam até 15.
+
+Quem quer apontar alguém de antes tem a gaveta (se está aqui) e o Códice (se está longe). Enquanto a resposta nova
+não chega (`carregando`), as marcas da de agora continuam vivas: o jogador pode apontar enquanto espera.
+
+### TP 8 · As tabelas (para `src/estilo.js`)
+
+```js
+/* TP · A PROSA TOCÁVEL (09/11/2026) — formas.md §TP; Figma 327:2 (Nome tocável 327:24).
+   O nome da prosa que o sistema conhece é a ficha: o 1.º toque aponta, o 2.º abre. */
+// T — nasce:
+//   marcaNoPergaminho: "#DFBCAC",   /* o nome apontado: o rosa da tua mão a 30 % sobre o pergaminho — tinta 9,37 · lacre 5,22 */
+export const PROSA_TOCAVEL = {
+  so: "agora",                                  /* só a resposta do Mestre de agora (TP 7) */
+  sublinhado: { espessura: 1.5, cerimonia: 2, afastado: 4, estilo: "dotted", estiloHostil: "dashed",
+                cor: T.brasaNoPergaminho, corHostil: T.perigoNoPergaminho },
+  apontado: { chao: T.marcaNoPergaminho, sublinhado: T.lacreNoPergaminho, espessura: 2 },
+  aberto: { chao: T.lacreNoPergaminho, letra: T.pergaminho },
+  sangra: 2, raio: 3,                           /* o chão sangra por box-shadow: a linha não mexe */
+  alvo: { lado: 4 },                            /* o ::after alarga o toque; a altura é a da linha (WCAG 2.5.8, inline) */
+  cartao: { folgaDaLinha: 8, acimaDaFolha: 16 },/* mesa: o popover a 8 da linha; telefone: o nome 16 acima da folha */
+  dura: 120,                                    /* a troca de estado; reduced-motion: 0 */
+};
+// EM_CENA — nasce `nomeados` no contrato da peça (não na tabela): os ids marcados na prosa saem dos rostos,
+//   ficam na gaveta; sem rostos e com gente em cena, o disco «N» (a forma do «+N»).
+```
+
+A folha de estilo (é um template-literal: **sem crase em comentário**, a lição de 24/09):
+
+```css
+.tv-nome-tocavel { font: inherit; color: inherit; background: transparent; border: 0; padding: 0; margin: 0;
+  position: relative; cursor: pointer; white-space: nowrap; border-radius: 3px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; -webkit-tap-highlight-color: transparent;
+  text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: <brasaNoPergaminho>;
+  text-decoration-thickness: 1.5px; text-underline-offset: 4px; text-decoration-skip-ink: auto;
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out, text-decoration-color 120ms ease-out; }
+.tv-nome-tocavel::after { content: ""; position: absolute; top: 0; bottom: 0; left: -4px; right: -4px; }
+.tv-nome-tocavel[data-tom="hostil"] { text-decoration-style: dashed; text-decoration-color: <perigoNoPergaminho>; }
+@media (hover: hover) and (pointer: fine) { .tv-nome-tocavel:hover { text-decoration-style: solid; } }
+.tv-nome-tocavel:focus-visible { text-decoration-style: solid; }               /* + a classe tv-anel-foco */
+.tv-nome-tocavel[data-estado="apontado"] { background: <marca>; box-shadow: 0 0 0 2px <marca>;
+  text-decoration-style: solid; text-decoration-thickness: 2px; text-decoration-color: <lacre>; }
+.tv-nome-tocavel[data-estado="apontado"][data-tom="hostil"] { text-decoration-color: <perigoNoPergaminho>; }
+.tv-nome-tocavel[data-estado="aberto"] { background: <lacre>; box-shadow: 0 0 0 2px <lacre>;
+  color: <pergaminho>; text-decoration-line: none; }
+[data-abertura="cerimonia"] .tv-nome-tocavel { text-decoration-thickness: 2px; }
+@media (prefers-reduced-motion: reduce) { .tv-nome-tocavel { transition: none; } }
+@media (forced-colors: active) {
+  .tv-nome-tocavel { color: LinkText; text-decoration-color: LinkText; }
+  .tv-nome-tocavel[data-estado="apontado"], .tv-nome-tocavel[data-estado="aberto"] {
+    forced-color-adjust: none; background: Highlight; color: HighlightText; box-shadow: none; } }
+```
+
+### TP 9 · O pedido ao sistema — `marcasDaProsa` (em `mente/pedidos-ao-sistema.md`, TP-1)
+
+`posicaoNaProsa` (`fichas.js:561`) sabe **em que palavra** está cada ficha, mas é privada, devolve um índice de
+palavra (não o trecho escrito) e não conhece o teto, a primeira menção nem o «longe». Pede-se, em `src/fichas.js`:
+
+```js
+export const MARCAS_NA_PROSA = { teto: 5, fora: ["pessoaDoGrupo", "aqui"] };   /* fora === EM_CENA.fora (catraca) */
+export function marcasDaProsa(texto, lista, ctx)
+// texto: a resposta do Mestre, como está no save (m.texto)
+// lista: a de montarEmCena; ctx: o de fichaParaTela + { memoria, factos }
+// → [{ id, palavra, de, longe, ficha }]  pela ordem da prosa, no máximo `teto`
+//    palavra: o trecho EXATO como está escrito («Conrado», «Martim Cinzentos», «ataduras de linho», «porta»),
+//             estendido ao nome inteiro quando o nome inteiro vem a seguir; nunca atravessa parágrafo
+//    de:      o índice do 1.º carácter em `texto` (a 1.ª ocorrência de `palavra` com fronteira de palavra Unicode)
+//    longe:   true quando vem da memória (pessoa com conheceu, lugar com esteve ou página)
+//    ficha:   a de fichaParaTela (aqui) ou a de paginaDoCodice (longe) — com verbos, linha, retrato
+```
+
+**As regras que a suíte prende:** só ids da lista com `aqui` e fonte do sistema (nunca `SO_DA_PROSA`), mais os de
+longe pelo livro; nunca as variantes de `fora`; uma marca por id (a 1.ª menção); teto 5, os de aqui antes dos de
+longe; `texto.indexOf` com fronteira de `palavra` === `de`; determinístico; `null` e lixo dão `[]`. **Para quê:**
+é o motor quem decide o que é ficha (a lei «a prosa nunca inventa»); a tela só embrulha o trecho que ele devolve.
+
+### TP 10 · A lista de construção
+
+**`backend`** (o pedido TP-1): `marcasDaProsa` + `MARCAS_NA_PROSA` + `testes/teste-marcas-da-prosa.mjs`, com as
+quatro respostas do quadro (5 marcas; o 2.º «Conrado» e o 2.º «ermida» fora) e um caso de longe (vista / só
+nomeada).
+
+**`aprendiz` (fora do `App.jsx`), por esta ordem:**
+
+1. `src/estilo.js` — `T.marcaNoPergaminho`, `PROSA_TOCAVEL`, a folha `.tv-nome-tocavel` (TP 8); na suíte de
+   contraste, os seis pares da TP 2; e a catraca `EM_CENA.fora` === `MARCAS_NA_PROSA.fora`.
+2. `src/ui.jsx` — **`NomeTocavel`** (o botão, `estado` repouso · apontado · aberto, `tom`, `idDaLinha`,
+   `idDoCartao`; definido no módulo, nunca dentro do render) e **`Prosa({ texto, abertura, marcas })`**: com
+   `marcas = [{ palavra, no: (texto) => ReactNode }]` embrulha a 1.ª ocorrência de cada `palavra` (fronteira
+   Unicode, também dentro da frase da cerimónia); sem `marcas`, a peça é byte a byte a de hoje. A fatia é uma
+   função pura exportada (`fatiarPelasMarcas(partes, palavras)`) com suíte em Node.
+3. `src/painel-fichas.jsx` — tirar da `FileiraAVista` o par de efeitos do cartão aberto (Esc, 1–3, toque fora) para
+   um gancho **`useCartaoAberto`** (refactor sem mudança de comportamento: as suítes da fileira prendem-no);
+   nascer **`CartaoNaProsa`** (o `CartaoDaFicha` posto junto ao nome: na mesa o lado com mais espaço dentro de
+   `[data-tv-pagina]`, no telefone a folha + o rolar da TP 4) e **`marcasParaProsa(marcas, { escrita, aberta,
+   onToque, onAbrir, onFechar })`** (a máquina de três toques da fileira, devolvendo os `no` da `Prosa`);
+   **`EmCena`** ganha `nomeados = []` (saem dos rostos, ficam na gaveta; o disco «N» com zero rostos).
+4. `src/painel-relato.jsx` — `Relato` aceita `tocaveis = { i, marcas, escrita, aberta, onToque, onAbrir,
+   onFechar, onVerbo }`; só a resposta `i === tocaveis.i` passa `marcas` à `Prosa` e desenha o `CartaoNaProsa`; o
+   `sr-only` das linhas (`aria-describedby`) no fim dessa resposta.
+
+**`oficial` (dentro do `App.jsx`, com o bastão, por âncora):**
+
+1. Em `calou(...)`: `marcasDaProsa(última resposta do Mestre, a lista de em cena, { …ctx das fichas, memoria,
+   factos })`, memorizado pela resposta e pela chave da lista.
+2. `<Relato tocaveis={…}>` com **o mesmo estado** `escrita` / `aberta` e os mesmos `tocarFicha` / abrir / fechar /
+   verbo do `EmCena` — uma ficha apontada na prosa é a mesma apontada na gaveta, e o toque escreve pelo
+   `juntarNomeNoCampo` de sempre.
+3. `<EmCena nomeados={marcas.map((m) => m.id)}>`.
+4. `quemNoEnvio` com a `memoria` quando o id tocado é de longe (o «Procuro Delfina» chega a ela fora de cena).
+
+**A prova (quem constrói, no navegador; salvar e repor os saves antes):** a 375 × 667 e a 1905 × 860, numa
+resposta real: ≤ 5 marcas, só a 1.ª menção, nenhuma em resposta antiga; o 1.º toque escreve, o 2.º abre, o 3.º
+fecha; o cartão nunca tapa o nome nem o campo (medir os retângulos); o Tab percorre os nomes pela ordem e o Esc
+devolve o foco ao nome; reduced motion seco; `forced-colors` visível; o `Em cena` sem os nomeados e a gaveta com
+todos; a régua da TL 2 inalterada (as marcas são inline: 0 px).
+
+### TP 11 · O «superior», escrito
+
+*Medida.* **Apontar quem o Mestre acabou de nomear: de 2 toques para 1** (a TL: o `Em cena` e a ficha na gaveta;
+aqui, a palavra). **Abrir-lhe o cartão: de 3 para 2.** A perda declarada na TL 5 desaparece **sem devolver um
+pixel de altura**: a prosa à vista continua em 16,5 linhas a 375 × 667 e 24,3 a 1905 × 860. **O olho não sai da
+linha:** no quadro a 375, «Conrado» está na linha 4 da resposta (y ≈ 232); antes, o alvo estava na barra (y = 24)
+— 208 px e uma troca de contexto por cada apontar. A barra passa de 3+2 rostos (115 px de largo) a 1 (44) no
+quadro. Contraste: nenhuma letra abaixo de 6,77 nos estados novos, nenhuma forma abaixo de 5,22.
+*Estudo citado.* Wikipedia, *Manual of Style/Linking* (só a 1.ª menção); DeStefano & LeFevre 2007 (cada ligação
+pesa na leitura: o teto); WCAG 2.2 1.4.1 (o sublinhado distingue sem cor), 1.4.11 (forma ≥ 3), 2.4.3 (ordem do
+foco), 2.5.8 (a isenção inline); WAI-ARIA APG (botão, não ligação).
+*Experiência jogada.* Fica para o `jogo`: *leio, toco no nome que acabei de ler, e a frase está no campo — sem
+tirar os olhos da página?*
+
+### TP 12 · Para a pessoa decidir — a proposta ambiciosa: a marginália
+
+**Na mesa larga (≥ 1500), quem foi nomeado ganha o rosto na margem, à altura da linha onde o Mestre o nomeou** —
+como as iluminuras de um manuscrito, 28 px, na margem esquerda da página (há 443 px de feltro à esquerda a 1905).
+O rosto acompanha a linha ao rolar e sai com a marca quando chega a resposta seguinte; tocá-lo é o mesmo que tocar
+no nome. A 1905 o `Em cena` deixaria de ser preciso para quem foi nomeado, e a página passaria a ter **quem está
+na cena desenhado onde a cena é contada**. Custa: a medida da linha de cada marca (o `getClientRects` do botão) e
+um retrato de 28; nada no motor. Pede à pessoa porque mexe no que a página é — passa a ter margem com gente.
 
 
 ---

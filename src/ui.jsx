@@ -710,18 +710,25 @@ export function BotaoDeOuvir({ estado = "muda", aoOuvir, naFolha = false }) {
    outros custaria dezenas de px por turno. Não anima — a cerimônia é o
    tamanho, não o movimento. Quem decide o turno é o `App.jsx`; a peça só
    desenha. */
-export function Prosa({ texto = "", abertura = "nenhuma" }) {
+export function Prosa({ texto = "", abertura = "nenhuma", marcas = null }) {
   const partes = partesDaProsa(texto);
   const normal = { fontSize: TIPOS.prosa, lineHeight: PAGINA.entrelinha, margin: 0 };
+  /* TP (09/11): com `marcas`, a 1.ª ocorrência de cada palavra vira o nome
+     tocável que o `no` desenha (também dentro da frase da cerimônia). Sem
+     marcas, `tinta` devolve o parágrafo tal e qual: a peça é a de antes. */
+  const vivas = (Array.isArray(marcas) ? marcas : []).filter((m) => m && m.palavra && typeof m.no === "function");
+  const fatiar = (blocos) => (vivas.length ? fatiarPelasMarcas(blocos, vivas.map((m) => m.palavra)) : null);
+  const tinta = (fatias, k, p) => (fatias ? fatias[k].map((f, j) => (typeof f === "string" ? f : <React.Fragment key={j}>{vivas[f.marca].no(f.texto)}</React.Fragment>)) : p);
   if (abertura === "cerimonia" && partes.length) {
     const { frase, resto } = primeiraFrase(partes[0]);
     const longa = frase.length > ABERTURA.tetoDeCaracteres;
     partes.splice(0, 1, ...(resto ? [resto] : []));
+    const fatias = fatiar([frase, ...partes]);
     return (
       <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
         <p className="whitespace-pre-wrap" data-abertura="cerimonia"
-          style={{ fontSize: longa ? ABERTURA.letraLonga : ABERTURA.letra, lineHeight: ABERTURA.entrelinha, fontWeight: ABERTURA.peso, margin: 0 }}>{frase}</p>
-        {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
+          style={{ fontSize: longa ? ABERTURA.letraLonga : ABERTURA.letra, lineHeight: ABERTURA.entrelinha, fontWeight: ABERTURA.peso, margin: 0 }}>{tinta(fatias, 0, frase)}</p>
+        {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{tinta(fatias, k + 1, p)}</p>)}
       </div>
     );
   }
@@ -729,12 +736,84 @@ export function Prosa({ texto = "", abertura = "nenhuma" }) {
      «na folha só há tinta»: nada com caixa mora aqui dentro). 07/11 · TL 8: a
      folha deixou de ser de cada resposta e passou a ser a PÁGINA (.tv-folha
      no que embrulha a área que rola) — a prosa leva só a tinta. */
+  const fatias = fatiar(partes);
   return (
     <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
-      {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
+      {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{tinta(fatias, k, p)}</p>)}
     </div>
   );
 }
+
+/* ---------------- TP · A FATIA PELAS MARCAS (formas.md §TP 6 e TP 10) ----------------
+   Pura, provada em Node: os parágrafos (`partes`) e as palavras que o motor
+   marcou (`palavras`, o trecho EXATO como está escrito). Cada palavra embrulha
+   a sua PRIMEIRA ocorrência na prosa inteira, com fronteira de palavra
+   Unicode (Conrado não acende dentro de Conradinho). O nome inteiro reclama
+   antes do pedaço («Martim Cinzentos» antes de «Martim»), e uma marca nunca
+   cai por cima de outra — o pedaço passa à ocorrência seguinte. A mesma
+   palavra duas vezes é uma marca só. Devolve, por parágrafo, as fatias: o
+   texto solto (string) e a marca (`{ marca, texto }`, `marca` é o índice em
+   `palavras`). Nada a marcar: cada parágrafo é uma fatia só, o texto dele. */
+const escaparNaRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export function fatiarPelasMarcas(partes, palavras) {
+  const blocos = (Array.isArray(partes) ? partes : []).map((p) => String(p == null ? "" : p));
+  const lista = Array.isArray(palavras) ? palavras : [];
+  const tomados = blocos.map(() => []);
+  const vistas = new Set();
+  const ordem = lista
+    .map((p, k) => ({ p: String(p == null ? "" : p).trim(), k }))
+    .filter((x) => x.p)
+    .sort((a, b) => b.p.length - a.p.length || a.k - b.k);
+  for (const { p, k } of ordem) {
+    if (vistas.has(p)) continue;
+    vistas.add(p);
+    let rx;
+    try { rx = new RegExp("(?<![\\p{L}\\p{N}\\p{M}])" + escaparNaRegex(p) + "(?![\\p{L}\\p{N}\\p{M}])", "gu"); } catch (e) { continue; }
+    achou: for (let b = 0; b < blocos.length; b++) {
+      rx.lastIndex = 0;
+      let m;
+      while ((m = rx.exec(blocos[b]))) {
+        const de = m.index, ate = de + m[0].length;
+        if (!tomados[b].some((x) => de < x.ate && x.de < ate)) { tomados[b].push({ de, ate, k }); break achou; }
+        if (rx.lastIndex === m.index) rx.lastIndex++;
+      }
+    }
+  }
+  return blocos.map((s, b) => {
+    const marcas = tomados[b].sort((x, y) => x.de - y.de);
+    if (!marcas.length) return [s];
+    const fatias = [];
+    let i = 0;
+    for (const x of marcas) {
+      if (x.de > i) fatias.push(s.slice(i, x.de));
+      fatias.push({ marca: x.k, texto: s.slice(x.de, x.ate) });
+      i = x.ate;
+    }
+    if (i < s.length) fatias.push(s.slice(i));
+    return fatias;
+  });
+}
+
+/* ---------------- TP · O NOME TOCÁVEL (Figma 327:24; formas.md §TP 2 e TP 6) ----------------
+   A palavra da prosa que o sistema conhece É a ficha. Um `<button>` dentro do
+   parágrafo — age (escreve no campo, abre o cartão), não navega. O nome
+   acessível é a própria palavra, para a prosa ler-se direita; a linha da ficha
+   vai por `aria-describedby` (`idDaLinha`, um sr-only no fim da resposta).
+     estado      repouso · apontado (1.º toque: a frase está no campo) ·
+                 aberto (2.º toque: o cartão `idDoCartao` está aberto)
+     tom         comum · hostil (o tracejado em perigo)
+     onToque     o toque (a máquina de três toques é de quem liga)
+   A forma toda mora na folha (`.tv-nome-tocavel`, estilo.js): esta peça só
+   escreve os atributos. Com `ref`, para o Esc devolver o foco à palavra. */
+export const NomeTocavel = React.forwardRef(function NomeTocavel({ children, estado = "repouso", tom = "comum", idDaLinha, idDoCartao, onToque }, ref) {
+  const est = estado === "apontado" || estado === "aberto" ? estado : "repouso";
+  return (
+    <button ref={ref} type="button" onClick={onToque} className="tv-nome-tocavel tv-anel-foco"
+      data-estado={est} data-tom={tom === "hostil" ? "hostil" : "comum"}
+      aria-describedby={idDaLinha || undefined} aria-haspopup="dialog" aria-expanded={est === "aberto"}
+      aria-controls={est === "aberto" && idDoCartao ? idDoCartao : undefined}>{children}</button>
+  );
+});
 
 /* ---------------- V5 · O PÉ DA PÁGINA — onde a cena oferece ----------------
    O terceiro andar do cartão da pessoa (`126:54`): cabeçalho fixo, corpo que

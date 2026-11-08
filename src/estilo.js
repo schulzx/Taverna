@@ -208,6 +208,9 @@ export const T = {
   musgoNoPergaminho:     "#33521C",   /* 6,54 · pior 4,71 */
   azulNoPergaminho:      "#1F4872",   /* 6,94 · pior 4,99 */
   lacreNoPergaminho:     "#7E2A3C",   /* a cera do selo */
+  /* NOVO (TP · 09/11) · o nome apontado na prosa: o rosa da tua mão a 30 %
+     sobre o pergaminho (Figma VariableID:327:3) — tinta 9,37 · lacre 5,22 */
+  marcaNoPergaminho:     "#DFBCAC",
 };
 
 /* O PRETO E O BRANCO DE SEMPRE. Sombra e brilho não são cor do tema:
@@ -1431,6 +1434,22 @@ export const SOLEIRA_DO_MOMENTO = {
 export const EM_CENA = {
   rosto: 32, aro: 2, sobrepoe: 8, mostra: 3, alvo: ALVOS.piso,
   fora: ["pessoaDoGrupo", "aqui"],   /* as formas de fichas.js que moram noutro lugar */
+};
+/* TP · A PROSA TOCÁVEL (09/11/2026) — formas.md §TP; Figma 327:2 (Nome tocável 327:24).
+   O nome da prosa que o sistema conhece é a ficha: o 1.º toque aponta, o 2.º abre.
+   O teto (5) e a lista do que fica de fora são do motor (MARCAS_NA_PROSA): a tela
+   só embrulha o trecho que ele devolve. A folha está em SUPERFICIES_CSS
+   (.tv-nome-tocavel). EM_CENA ganha nomeados no contrato da peça, não aqui. */
+export const PROSA_TOCAVEL = {
+  so: "agora",                                  /* só a resposta do Mestre de agora (TP 7) */
+  sublinhado: { espessura: 1.5, cerimonia: 2, afastado: 4, estilo: "dotted", estiloHostil: "dashed",
+                cor: T.brasaNoPergaminho, corHostil: T.perigoNoPergaminho },
+  apontado: { chao: T.marcaNoPergaminho, sublinhado: T.lacreNoPergaminho, espessura: 2 },
+  aberto: { chao: T.lacreNoPergaminho, letra: T.pergaminho },
+  sangra: 2, raio: 3,                           /* o chão sangra por box-shadow: a linha não mexe */
+  alvo: { lado: 4 },                            /* o ::after alarga o toque; a altura é a da linha (WCAG 2.5.8, inline) */
+  cartao: { folgaDaLinha: 8, acimaDaFolha: 16 },/* mesa: o popover a 8 da linha; telefone: o nome 16 acima da folha */
+  dura: 120,                                    /* a troca de estado; reduced-motion: 0 */
 };
 /* A TIRA DA MESA (306:107), 375 × 72: a pega, o herói (retrato 44, nível 18, até
    três gemas), o companheiro (34, PV e PM), os objetos (desenho 40 em alvo
@@ -4770,6 +4789,42 @@ export const SUPERFICIES_CSS = `
   outline: ${COMPOSITOR.anelDoFoco}px solid ${T.lineStrong};
   outline-offset: 2px;
 }
+/* ---------------- TP · O NOME TOCAVEL (formas.md secao TP 2 e TP 8; Figma 327:24) ----------------
+   Tinta com um pontilhado por baixo: a letra nao muda de cor, so o sublinhado
+   diz que isto se toca. Hostil: tracejado em perigo (a forma muda, nao so a
+   cor). Apontado: o chao da tua mao; aberto: o lacre. O chao SANGRA por
+   box-shadow e nao por enchimento: a linha nao mexe um pixel ao marcar. O
+   nome nunca quebra (nowrap). O ::after alarga o toque para os lados. */
+.tv-nome-tocavel { font: inherit; color: inherit; background: transparent; border: 0; padding: 0; margin: 0;
+  position: relative; cursor: pointer; white-space: nowrap; border-radius: ${PROSA_TOCAVEL.raio}px;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; -webkit-tap-highlight-color: transparent;
+  text-decoration-line: underline; text-decoration-style: ${PROSA_TOCAVEL.sublinhado.estilo}; text-decoration-color: ${PROSA_TOCAVEL.sublinhado.cor};
+  text-decoration-thickness: ${PROSA_TOCAVEL.sublinhado.espessura}px; text-underline-offset: ${PROSA_TOCAVEL.sublinhado.afastado}px; text-decoration-skip-ink: auto;
+  transition: background-color ${PROSA_TOCAVEL.dura}ms ease-out, box-shadow ${PROSA_TOCAVEL.dura}ms ease-out, text-decoration-color ${PROSA_TOCAVEL.dura}ms ease-out; }
+.tv-nome-tocavel::after { content: ""; position: absolute; top: 0; bottom: 0; left: -${PROSA_TOCAVEL.alvo.lado}px; right: -${PROSA_TOCAVEL.alvo.lado}px; }
+.tv-nome-tocavel[data-tom="hostil"] { text-decoration-style: ${PROSA_TOCAVEL.sublinhado.estiloHostil}; text-decoration-color: ${PROSA_TOCAVEL.sublinhado.corHostil}; }
+@media (hover: hover) and (pointer: fine) { .tv-nome-tocavel:hover { text-decoration-style: solid; } }
+.tv-nome-tocavel:focus-visible { text-decoration-style: solid; }
+.tv-nome-tocavel[data-estado="apontado"] { background: ${PROSA_TOCAVEL.apontado.chao}; box-shadow: 0 0 0 ${PROSA_TOCAVEL.sangra}px ${PROSA_TOCAVEL.apontado.chao};
+  text-decoration-style: solid; text-decoration-thickness: ${PROSA_TOCAVEL.apontado.espessura}px; text-decoration-color: ${PROSA_TOCAVEL.apontado.sublinhado}; }
+.tv-nome-tocavel[data-estado="apontado"][data-tom="hostil"] { text-decoration-color: ${PROSA_TOCAVEL.sublinhado.corHostil}; }
+.tv-nome-tocavel[data-estado="aberto"] { background: ${PROSA_TOCAVEL.aberto.chao}; box-shadow: 0 0 0 ${PROSA_TOCAVEL.sangra}px ${PROSA_TOCAVEL.aberto.chao};
+  color: ${PROSA_TOCAVEL.aberto.letra}; text-decoration-line: none; }
+[data-abertura="cerimonia"] .tv-nome-tocavel { text-decoration-thickness: ${PROSA_TOCAVEL.sublinhado.cerimonia}px; }
+/* O ANEL GANHA AO CHAO. No papel o anel que se le e o de bg (o contorno ink
+   da 1,11 sobre o pergaminho e nao conta); apontado ou aberto, a sombra do
+   chao ocuparia o mesmo lugar e apagaria o anel. Mais especifica que as duas
+   de cima, para valer seja qual for a ordem da folha. */
+.tv-nome-tocavel.tv-anel-foco:focus-visible { box-shadow: 0 0 0 2px ${T.bg}; }
+@media (prefers-reduced-motion: reduce) { .tv-nome-tocavel { transition: none; animation: none; } }
+/* Alto contraste: LinkText; apontado e aberto em Highlight / HighlightText. A
+   secao TP 8 pedia tambem o desligar do ajuste forcado; a lei da folha
+   (teste-r13-pecas) nunca o declara, e nao e preciso: o valor que ja e cor do
+   sistema passa pelo modo forcado tal como esta. */
+@media (forced-colors: active) {
+  .tv-nome-tocavel { color: LinkText; text-decoration-color: LinkText; }
+  .tv-nome-tocavel[data-estado="apontado"], .tv-nome-tocavel[data-estado="aberto"] {
+    background: Highlight; color: HighlightText; box-shadow: none; } }
 `;
 
 /* A FOLHA INTEIRA, na ordem em que o navegador tem de recebê-la.

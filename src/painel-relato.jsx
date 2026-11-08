@@ -18,6 +18,12 @@
      abertura    o índice da resposta que abre com cerimónia, ou null
      aoAbrir     (porta) => abre a aba/sub-aba que a linha com seta anuncia
      aoOuvir     (i, texto) => lê em voz alta a resposta i
+     tocaveis    { i, marcas, escrita, aberta, onToque, onAbrir, onFechar,
+                 onVerbo } ou null — TP (09/11): os nomes da resposta i (a
+                 de agora) passam a ser as fichas. `marcas` é o que o motor
+                 devolve (`marcasDaProsa`); o resto é o mesmo estado e as
+                 mesmas mãos do `EmCena`. Só a resposta i recebe marcas: as de
+                 cima voltam a ser prosa (TP 7). Sem ele, a página é a de antes.
      horizonte   { i, dados, chegada, aoTocarLugar } ou null — TL 9: o
                  horizonte do sítio ONDE SE CHEGOU entra no relato, no turno
                  da chegada (a resposta i), como bloco que rola com a prosa
@@ -52,6 +58,7 @@ import { T, TIPOS, ALVOS, ESBATIMENTO, LADRILHO, PAGINA, RECIBO } from "./estilo
 const TINTA = { meio: T.tintaDoPergaminhoMeio, dim: T.tintaDoPergaminhoDim, porta: T.brasaNoPergaminho };
 import { DivisoriaRunica, Prosa, BotaoDeOuvir, Glifo, LadrilhoDoAssunto, Recibo, Dobra, useMesa } from "./ui.jsx";
 import { FaixaDoRumo } from "./painel-mapa-vivo.jsx";
+import { marcasParaProsa, CartaoNaProsa } from "./painel-fichas.jsx";
 import { assuntoDaLinha, arrumarORelato, cabecalhoDaLuta, linhasDaLuta } from "./glifos.js";
 import { SUBS_GESTAO } from "./abas.js";
 /* As frases dos verbos da fileira (golpe.js, pela tela da batalha): é por
@@ -265,12 +272,46 @@ function ReciboDaResposta({ chips }) {
   );
 }
 
+/* ---------------- TP · A PROSA TOCÁVEL (formas.md §TP 10, item 4) ----------------
+   A resposta de agora com os nomes que o motor marcou: a `Prosa` com as
+   marcas, o sr-only das linhas no fim (o `aria-describedby` de cada nome) e o
+   cartão junto ao nome aberto. Mora no módulo, nunca dentro do render. */
+function ProsaTocavel({ texto, abertura, tocaveis }) {
+  const refs = React.useRef({});
+  const base = "tv-nome-" + React.useId().replace(/:/g, "");
+  const idDoCartao = base + "-cartao";
+  const tv = tocaveis || {};
+  const marcas = marcasParaProsa(tv.marcas, {
+    escrita: tv.escrita, aberta: tv.aberta, onToque: tv.onToque, onAbrir: tv.onAbrir, onFechar: tv.onFechar,
+    idDoCartao, idBase: base, refs,
+  });
+  const aberta = tv.aberta == null ? null : marcas.find((m) => m.id === tv.aberta) || null;
+  const focar = (id) => { try { const el = refs.current[String(id)]; if (el) el.focus({ preventScroll: true }); } catch (e) { /* sem foco, segue */ } };
+  /* o que conta como «dentro» para o toque fora: qualquer nome desta resposta */
+  const nomes = React.useMemo(() => ({ contains: (el) => Object.values(refs.current).some((b) => !!b && b.contains(el)) }), []);
+  const comLinha = marcas.filter((m) => m.idDaLinha);
+  return (
+    <>
+      <Prosa texto={texto} abertura={abertura} marcas={marcas} />
+      {comLinha.length ? (
+        <div className="sr-only">
+          {comLinha.map((m) => <span key={m.idDaLinha} id={m.idDaLinha}>{m.linha}</span>)}
+        </div>
+      ) : null}
+      {aberta ? (
+        <CartaoNaProsa id={idDoCartao} ficha={aberta.ficha} ancora={refs.current[String(aberta.id)] || null} raiz={nomes}
+          focar={focar} onFechar={tv.onFechar} onVerbo={tv.onVerbo} />
+      ) : null}
+    </>
+  );
+}
+
 /* ---------------- O RELATO ----------------
    Os componentes moram no módulo, nunca dentro de um render: um componente
    declarado no corpo de outro remonta a cada letra e mata o foco. O `Relato`
    devolve um fragmento — os mesmos filhos que o laço devolvia dentro da área
    que rola —, e por isso o DOM é o de antes, nó por nó. */
-export function Relato({ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null }) {
+export function Relato({ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null, tocaveis = null }) {
   /* `= []` no destructuring não cobre `null`: trata-se aqui. */
   const lista = Array.isArray(mensagens) ? mensagens : [];
   return (
@@ -349,7 +390,9 @@ export function Relato({ mensagens, carregando = false, voz = null, abertura = n
               </div>
             ) : null}
             <DivisoriaRunica respiro={0} naFolha ponta={<BotaoDeOuvir naFolha estado={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"} aoOuvir={() => aoOuvir && aoOuvir(i, m.texto)} />} />
-            <Prosa texto={m.texto} abertura={abertura === i ? "cerimonia" : "nenhuma"} />
+            {tocaveis && tocaveis.i === i && Array.isArray(tocaveis.marcas) && tocaveis.marcas.length
+              ? <ProsaTocavel texto={m.texto} abertura={abertura === i ? "cerimonia" : "nenhuma"} tocaveis={tocaveis} />
+              : <Prosa texto={m.texto} abertura={abertura === i ? "cerimonia" : "nenhuma"} />}
             {/* A1 · A2: `m.recibo` — o que a ficha mudou neste turno
                 (`reciboDoTurno`, que o App calcula no fim do turno, B2) —
                 desenha-se por baixo da prosa. */}

@@ -57,7 +57,10 @@ sec("1. O RELATO MORA NO MÓDULO DELE");
    horizonte do sítio onde se chegou entra no relato, no turno da chegada
    (formas.md §TL 5). A intenção fica: a assinatura é contrato, e mudá-la
    obriga a passar por aqui. */
-t("painel-relato.jsx exporta `Relato` com a assinatura do contrato", /export function Relato\(\{ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null \}\)/.test(RELATO));
+/* MOVIDA em 09/11 (TP, a prosa tocável): o contrato ganhou `tocaveis` — os
+   nomes da resposta de agora passam a ser as fichas (formas.md §TP 10, item
+   4). A mesma intenção: a assinatura é contrato, e mudá-la passa por aqui. */
+t("painel-relato.jsx exporta `Relato` com a assinatura do contrato", /export function Relato\(\{ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null, tocaveis = null \}\)/.test(RELATO));
 t("e NENHUM pedaço do relato voltou ao App.jsx",
   !/function BlocoSistema\(|function portaDaLinhaDeSistema\(|function semSetaQueMente\(|const PORTAS_DO_SISTEMA|const SETA_DA_PORTA|agruparMensagens\(/.test(APP),
   "o relato é da mesa: um pedaço dele de volta no App pede o bastão outra vez");

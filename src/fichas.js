@@ -25,6 +25,9 @@
        o jogador apagou o nome, cai para a leitura livre (`quemNaFrase`);
      · `bancasDoToque(alvo, lista, bancas)` — a compra tocada fecha contra a
        entrada do estoque que a ficha mostrou, e só ela;
+     · TP · a prosa tocável (09/11): `marcasDaProsa(texto, lista, ctx)` —
+       onde estão, na resposta do Mestre, os nomes que são fichas; a tela
+       só embrulha o trecho que ele devolve, a prosa nunca inventa uma;
      · F2d, a memória com rosto: cada cartão aberto vira página
        (`lembrarFicha`), a página do Códice tem a forma da ficha
        (`paginaDoCodice`), e dela também se aponta — "procuro Oren" chega a
@@ -43,6 +46,7 @@ import { garantirLaco, tipoDeLacoPorId } from "./npcs.js";
 import { cabecaDaCoisa } from "./economia.js";
 import { nomeProcurado } from "./procura.js";
 import { DIAS_ANO } from "./calendario.js";
+import { conheceu, esteve, pessoaDoLivro } from "./livro-de-factos.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const palavras = (s) => norm(s).split(/[^a-z0-9]+/).filter(Boolean);
@@ -594,6 +598,244 @@ export function fichasDaCena(lista, ctx) {
   };
   const ordem = L.map((x, i) => [x, chave(x, i)]).sort((a, b) => a[1][0] - b[1][0] || a[1][1] - b[1][1]).map(([x]) => x);
   return ordem.slice(0, FICHAS_NA_FILEIRA.max).map((x) => fichaParaTela(x, c)).filter(Boolean);
+}
+
+/* ============================================================
+   TP · A PROSA TOCÁVEL (09/11/2026) — os nomes são as fichas
+   (`marcasDaProsa`; formas.md §TP, o pedido TP-1)
+
+   A pessoa aprovou a TL 10, e com ela uma perda declarada: apontar quem o
+   Mestre acabou de nomear passara de um toque a dois (a fileira foi para a
+   gaveta do `Em cena`). A TP devolve o toque sem devolver a altura: o nome
+   que o Mestre escreveu É a ficha. Quem decide o que é ficha é o motor — a
+   tela só embrulha o trecho que daqui sai, e a prosa nunca inventa uma.
+
+   As regras, uma por linha (a suíte prende cada uma):
+     · só o que está na `lista` (a de montarEmCena) com `aqui` — ou no
+       horizonte (`deOnde: "perto"`, que a lista traz com `aqui: false` e a
+       §TP 3 diz tocável: «Vou até a ermida») — e fonte do sistema; o que só
+       a prosa trouxe (SO_DA_PROSA) nunca, que é a gente fantasma da 13.ª;
+     · nunca as variantes de `fora`: o companheiro e o lugar onde se está
+       moram na mesa e na barra, e nomeados quase em toda resposta seriam a
+       marca mais frequente e a de menos valor (a mesma lista é `EM_CENA.fora`
+       da folha de estilo, e a suíte obriga as duas a serem iguais);
+     · LONGE só quem o herói já viu: a pessoa com página na memória (F2d) E
+       `conheceu` no livro de factos — o só nomeado nunca, a distinção da
+       MM14 —, e o lugar com página ou `esteve`. Longe pede o nome próprio
+       escrito com maiúscula (o «porto» da frase não é o Porto das Pedras), e
+       um lugar de nome comum sozinho («Porta», «Rua») nunca toca de longe;
+     · uma marca por ficha, na 1.ª menção; os nomes compostos antes dos
+       simples («Corrado o Ruivo» antes de «Corrado»); nenhuma marca se
+       sobrepõe a outra; um nome partido entre duas fichas (dois «Conrado»
+       em cena) não toca nenhuma;
+     · no máximo `teto`, os de cá antes dos de longe, e entre iguais a ordem
+       da prosa (Wikipedia, MoS/Linking: «link a term only on its first
+       occurrence»; DeStefano & LeFevre 2007 — cada marca é uma decisão
+       oferecida ao leitor).
+
+   A forma devolvida: [{ id, palavra, de, longe, ficha }] pela ordem da
+   prosa. `palavra` é o trecho EXATO como está escrito, e `de` o índice do
+   1.º carácter — sempre a 1.ª ocorrência de `palavra` em `texto` com
+   fronteira de palavra Unicode (a peça `Prosa` da tela embrulha a 1.ª
+   ocorrência, e as duas contas têm de cair no mesmo sítio). Um nome nunca
+   atravessa parágrafo nem pontuação: entre as palavras dele só cabe o que
+   `JUNTA_DO_NOME` deixa (o espaço, o hífen de «Sem-Senhor», o «&»).
+   `ficha` é a de `fichaParaTela` (cá) ou a de `paginaDoCodice` (longe).
+
+   `ctx`: o de `fichaParaTela`, mais `memoria` (as páginas, F2d), `factos`
+   (o livro, BQ1) e, se houver, `cidade` / `lugar` (onde o herói está: não
+   se oferece ir onde já se está). Determinístico; `null` e lixo dão [].
+   Nada no save.
+   ============================================================ */
+/* `teto`: as marcas por resposta (a mediana das 194 respostas gravadas é 3
+   nomes próprios, o p90 6 — formas.md §TP 2). `fora`: as variantes que não
+   tocam. `primeiroNome`: o tamanho mínimo para o primeiro nome tocar
+   sozinho («Ana» toca; «Bo» seria fronteira demais). `junta`: quantos
+   caracteres cabem entre duas palavras do mesmo nome. */
+export const MARCAS_NA_PROSA = {
+  teto: 5,
+  fora: ["pessoaDoGrupo", "aqui"],
+  primeiroNome: 3,
+  junta: 3,
+};
+const LETRA_DA_PALAVRA = /[\p{L}\p{M}\p{N}]/u;
+const PALAVRA_DA_PROSA = /[\p{L}\p{M}\p{N}]+/gu;
+const JUNTA_DO_NOME = new RegExp(`^[ \\t\\u00a0&'’\\-‐‑]{1,${MARCAS_NA_PROSA.junta}}$`, "u");
+const ARTIGO_DO_NOME = new Set(["o", "a", "os", "as", "um", "uma"]);
+
+const tokensDe = (s) => [...String(s == null ? "" : s).matchAll(PALAVRA_DA_PROSA)].map((m) => ({ t: m[0], n: norm(m[0]), de: m.index, ate: m.index + m[0].length }));
+const capital = (t) => !!t && t[0] !== t[0].toLowerCase();
+/* o nome sem o artigo da frente («A ermida» → ermida) */
+function corpoDoNome(nome) {
+  const ts = tokensDe(nome);
+  return ts.length > 1 && ARTIGO_DO_NOME.has(ts[0].n) ? ts.slice(1) : ts;
+}
+const chaveDoNome = (nome) => corpoDoNome(nome).map((t) => t.n).join(" ");
+/* um lugar de nome comum sozinho: de longe, toda «porta» da prosa seria ele */
+const lugarComum = (nome) => { const ts = corpoDoNome(nome); return ts.length === 1 && LUGAR_COM_ARTIGO.includes(ts[0].n); };
+const varianteDaMarca = (x, grupoN) => (x.tipo === "pessoa" && x.comigo ? "pessoaDoGrupo" : varianteDe(x, grupoN));
+
+/* As chaves de uma ficha: cada uma é uma sequência de palavras (sem acento
+   nem caixa), com a maiúscula que exige palavra a palavra, e se aceita o
+   plural. A mais longa vem primeiro — é ela que estende a marca. */
+function chavesDaMarca(x, longe) {
+  const ts = corpoDoNome(x.nome);
+  if (!ts.length) return [];
+  const proprio = (t) => !CONECTORES.has(t.n) && !ARTIGO_DO_NOME.has(t.n);
+  const inteiro = (solta, caps) => ({ ps: ts.map((t) => t.n), caps, solta, inteiro: true });
+  const so = (t, solta, cap) => ({ ps: [t.n], caps: [cap], solta, inteiro: ts.length === 1 });
+  const out = [];
+  if (x.tipo === "pessoa") {
+    const caps = ts.map((t) => (longe ? proprio(t) : capital(t.t)));
+    out.push(inteiro(false, caps));
+    const p1 = ts[0];
+    if (ts.length > 1 && p1.n.length >= MARCAS_NA_PROSA.primeiroNome && proprio(p1) && capital(p1.t)) out.push(so(p1, false, true));
+  } else if (longe) {
+    out.push(inteiro(false, ts.map(proprio)));
+  } else if (x.tipo === "criatura") {
+    out.push(inteiro(true, ts.map(() => false)));
+    const raiz = norm(x.raiz || "");
+    if (raiz && !(ts.length === 1 && ts[0].n === raiz)) out.push({ ps: [raiz], caps: [false], solta: true, inteiro: false });
+    if (ts.length > 1 && ts[0].n.length >= MARCAS_NA_PROSA.primeiroNome && ts[0].n !== raiz && proprio(ts[0])) out.push(so(ts[0], true, false));
+  } else if (x.tipo === "coisa") {
+    out.push(inteiro(true, ts.map(() => false)));
+    let cab = [];
+    try { cab = cabecaDaCoisa(x.nome); } catch { cab = []; }
+    if (ts.length > 1) {
+      for (const t of ts) {
+        if (CONECTORES.has(t.n)) break;
+        const s = semS(t.n);
+        if (t.n.length >= MARCAS_NA_PROSA.primeiroNome && cab.some((c) => c && (s.startsWith(c) || c.startsWith(s)))) { out.push(so(t, true, false)); break; }
+      }
+    }
+  } else if (x.tipo === "lugar") {
+    out.push(inteiro(true, ts.map(() => false)));
+    /* «a porta da ermida» também é «a porta» — só no nome descritivo */
+    if (ts.length > 1 && LUGAR_COM_ARTIGO.includes(ts[0].n) && !capital(ts[0].t)) out.push(so(ts[0], true, false));
+  }
+  return out;
+}
+const igualNaProsa = (a, b, solta) => a === b || (solta && a.length > 3 && b.length > 3 && singular(a) === singular(b));
+/* a 1.ª ocorrência de `palavra` em `texto` com fronteira de palavra Unicode */
+function primeiraComFronteira(texto, palavra) {
+  if (!palavra) return -1;
+  for (let i = texto.indexOf(palavra); i >= 0; i = texto.indexOf(palavra, i + 1)) {
+    const antes = i > 0 ? texto[i - 1] : "";
+    const depois = texto[i + palavra.length] || "";
+    if (!(antes && LETRA_DA_PALAVRA.test(antes)) && !(depois && LETRA_DA_PALAVRA.test(depois))) return i;
+  }
+  return -1;
+}
+
+export function marcasDaProsa(texto, lista, ctx) {
+  if (typeof texto !== "string" || !texto.trim()) return [];
+  const c = obj(ctx);
+  const grupoN = new Set(arr(c.grupo).map((g) => norm(typeof g === "string" ? g : obj(g).nome)).filter(Boolean));
+  const fora = new Set(arr(MARCAS_NA_PROSA.fora));
+  const L = arr(lista).filter((x) => x && typeof x === "object" && typeof x.id === "string" && x.id && txt(x.nome) && ["pessoa", "criatura", "coisa", "lugar"].includes(x.tipo));
+  const deCa = (x) => x.aqui === true || x.deOnde === "perto";
+
+  /* quem está na lista bloqueia o «longe» pelo id; quem está aqui, também
+     pelo nome — e o sítio onde o herói está nunca é longe */
+  const idsDaLista = new Set(L.map((x) => x.id));
+  const nomesDeCa = new Set(L.filter(deCa).map((x) => chaveDoNome(x.nome)).filter(Boolean));
+  for (const k of ["cidade", "lugar"]) if (typeof c[k] === "string" && chaveDoNome(c[k])) nomesDeCa.add(chaveDoNome(c[k]));
+
+  const cands = [];
+  const jaCa = new Set();
+  for (const x of L) {
+    if (jaCa.has(x.id) || !deCa(x) || SO_DA_PROSA.deOnde.includes(x.deOnde) || fora.has(varianteDaMarca(x, grupoN))) continue;
+    jaCa.add(x.id);
+    cands.push({ id: x.id, longe: false, chaves: chavesDaMarca(x, false), ficha: () => fichaParaTela(x, c) });
+  }
+
+  /* LONGE: a página da memória (a mais recente primeiro) e o livro */
+  const factos = obj(c.factos);
+  const nomesDeLonge = new Set();
+  const podeLonge = (id, nome) => {
+    const k = chaveDoNome(nome);
+    return !!k && !idsDaLista.has(id) && !nomesDeCa.has(k) && !nomesDeLonge.has(k);
+  };
+  let paginas = [];
+  try { paginas = Object.values(garantirMemoriaDoSave(c.memoria).paginas); } catch { paginas = []; }
+  paginas.sort((a, b) => (b.ultimo || 0) - (a.ultimo || 0) || (a.id < b.id ? -1 : 1));
+  for (const p of paginas) {
+    if (!podeLonge(p.id, p.nome)) continue;
+    if (p.tipo === "pessoa") {
+      let viu = false;
+      try { viu = conheceu(factos, p.id) || conheceu(factos, pessoaDoLivro(factos, p.nome, { cidade: p.cidade })); } catch { viu = false; }
+      if (!viu) continue;
+    } else if (p.tipo !== "lugar" || lugarComum(p.nome)) continue;
+    nomesDeLonge.add(chaveDoNome(p.nome));
+    cands.push({ id: p.id, longe: true, chaves: chavesDaMarca(p, true), ficha: () => paginaDoCodice(p, c) });
+  }
+  const lugaresDoLivro = Object.keys(obj(factos.lugares)).filter((id) => !PROIBIDAS.has(id)).sort();
+  for (const id of lugaresDoLivro) {
+    const nome = txt(obj(factos.lugares[id]).nome);
+    let foi = false;
+    try { foi = esteve(factos, id); } catch { foi = false; }
+    if (!foi || !podeLonge(id, nome) || lugarComum(nome)) continue;
+    nomesDeLonge.add(chaveDoNome(nome));
+    const x = { id, tipo: "lugar", nome };
+    cands.push({ id, longe: true, chaves: chavesDaMarca(x, true), ficha: () => paginaDoCodice(x, c) });
+  }
+
+  /* um nome partido entre duas fichas: fica com quem o tem por nome
+     inteiro (a primeira, cá antes de longe — o «Corrado» que é só Corrado
+     ganha ao «Corrado» de «Corrado o Ruivo»); se é só um pedaço de cada
+     («Nyla» de Nyla Pé-Leve e de Nyla Punho-de-Pedra), não toca nenhuma —
+     a prosa nunca escolhe por nós */
+  const donos = new Map();
+  cands.forEach((cd, ci) => cd.chaves.forEach((ch) => {
+    const k = ch.ps.join(" ");
+    if (!donos.has(k)) donos.set(k, []);
+    if (!donos.get(k).some((d) => d.ci === ci)) donos.get(k).push({ ci, inteiro: ch.inteiro });
+  }));
+  const valeAChave = (ci, ch) => {
+    const ds = donos.get(ch.ps.join(" "));
+    if (ds.length === 1) return true;
+    const dono = ds.find((d) => d.inteiro);
+    return !!dono && dono.ci === ci;
+  };
+
+  /* todas as ocorrências de todas as chaves */
+  const T = tokensDe(texto);
+  const achados = [];
+  cands.forEach((cd, ci) => {
+    for (const ch of cd.chaves) {
+      if (!valeAChave(ci, ch)) continue;
+      const n = ch.ps.length;
+      for (let i = 0; i + n <= T.length; i++) {
+        let ok = true;
+        for (let k = 0; k < n && ok; k++) {
+          const tk = T[i + k];
+          ok = igualNaProsa(tk.n, ch.ps[k], ch.solta) && (!ch.caps[k] || capital(tk.t)) && (k === 0 || JUNTA_DO_NOME.test(texto.slice(T[i + k - 1].ate, tk.de)));
+        }
+        if (ok) achados.push({ ci, n, de: T[i].de, ate: T[i + n - 1].ate });
+      }
+    }
+  });
+  achados.sort((a, b) => a.de - b.de || b.n - a.n || (cands[a.ci].longe ? 1 : 0) - (cands[b.ci].longe ? 1 : 0) || a.ci - b.ci);
+
+  /* a 1.ª menção de cada ficha, o mais longo primeiro, sem sobrepor */
+  const marcados = new Set();
+  const aceites = [];
+  for (const a of achados) {
+    if (marcados.has(a.ci) || aceites.some((b) => a.de < b.ate && b.de < a.ate)) continue;
+    const palavra = texto.slice(a.de, a.ate);
+    if (primeiraComFronteira(texto, palavra) !== a.de) continue;
+    let ficha = null;
+    try { ficha = cands[a.ci].ficha(); } catch { ficha = null; }
+    marcados.add(a.ci);
+    if (ficha) aceites.push({ id: cands[a.ci].id, palavra, de: a.de, ate: a.ate, longe: cands[a.ci].longe, ficha });
+  }
+
+  /* o teto: os de cá antes dos de longe, e depois de volta à ordem da prosa */
+  const teto = Math.max(0, Math.floor(Number(MARCAS_NA_PROSA.teto)) || 0);
+  return [...aceites.filter((m) => !m.longe), ...aceites.filter((m) => m.longe)]
+    .slice(0, teto)
+    .sort((a, b) => a.de - b.de)
+    .map(({ id, palavra, de, longe, ficha }) => ({ id, palavra, de, longe, ficha }));
 }
 
 /* ============================================================

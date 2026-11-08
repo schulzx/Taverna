@@ -108,8 +108,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { T, ALVOS } from "./constantes.js";
-import { TIPOS, FICHAS, EM_CENA } from "./estilo.js";
-import { Retrato, VerboComPreco, LinhaDoVeredito, TextoComMoeda, useMesa, Glifo } from "./ui.jsx";
+import { TIPOS, FICHAS, EM_CENA, PROSA_TOCAVEL, HUD_DA_MESA } from "./estilo.js";
+import { Retrato, VerboComPreco, LinhaDoVeredito, TextoComMoeda, useMesa, Glifo, NomeTocavel } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
 import { retratoDe } from "./retratos.js";
 
@@ -203,6 +203,8 @@ const corDaLinha = (f) => (hostilDe(f) ? FICHAS.hostil : f.tipo === "coisa" ? FI
 /* o alvo de uma tecla é de escrever (o campo do turno)? então a tecla é dele */
 const deEscrever = (el) => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName || ""));
 const reduzMovimento = () => { try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
+/* chamar quem liga sem que um erro dele custe o turno */
+const chamar = (f, ...a) => { try { if (f) return f(...a); } catch (e) { /* nunca pode custar o turno */ } return undefined; };
 
 /* ============================================================
    AS PEÇAS (biblioteca `210:2`) — todas fora do render
@@ -565,24 +567,92 @@ function posicaoDoCartao(formato, raiz, ficha) {
   return { left, width: largura, bottom: R.height + FICHAS.vao, maxHeight: Math.max(ALVOS.piso, R.top - FICHAS.vao - teto) };
 }
 
+/* a janela que muda de tamanho mede no quadro SEGUINTE: no próprio evento o
+   leiaute ainda é o de antes (medido: a folha pousava 37 px à esquerda depois
+   de passar da Mesa ao telefone). Um adiamento, não um contador: o pedido
+   anterior cancela-se. A fileira e o cartão na prosa partilham-no. */
+function noQuadroSeguinte(calcular) {
+  let quadro = 0;
+  return {
+    medir: () => { cancelAnimationFrame(quadro); quadro = requestAnimationFrame(calcular); },
+    parar: () => cancelAnimationFrame(quadro),
+  };
+}
+
 function usePosicao(raiz, ficha, formato, aberta) {
   const [pos, setPos] = React.useState(null);
   React.useLayoutEffect(() => {
     if (!aberta || !raiz) { setPos(null); return undefined; }
     const calcular = () => { try { setPos(posicaoDoCartao(formato, raiz, ficha)); } catch (e) { /* fica a de antes */ } };
-    /* a janela que muda de tamanho mede no quadro SEGUINTE: no próprio
-       evento o leiaute ainda é o de antes (medido: a folha pousava 37 px à
-       esquerda depois de passar da Mesa ao telefone) */
-    let quadro = 0;
-    const medir = () => { cancelAnimationFrame(quadro); quadro = requestAnimationFrame(calcular); };
+    const { medir, parar } = noQuadroSeguinte(calcular);
     calcular();
     let obs = null;
     try { obs = typeof ResizeObserver !== "undefined" ? new ResizeObserver(medir) : null; if (obs) obs.observe(raiz); } catch (e) { obs = null; }
     window.addEventListener("resize", medir);
     window.addEventListener("scroll", medir, true);
-    return () => { cancelAnimationFrame(quadro); if (obs) obs.disconnect(); window.removeEventListener("resize", medir); window.removeEventListener("scroll", medir, true); };
+    return () => { parar(); if (obs) obs.disconnect(); window.removeEventListener("resize", medir); window.removeEventListener("scroll", medir, true); };
   }, [raiz, ficha, formato, aberta]);
   return pos;
+}
+
+/* ============================================================
+   O CARTÃO ABERTO — as teclas e o toque fora (TP 10: tirado da fileira,
+   sem mudar o comportamento, para o nome tocável da prosa ter os mesmos)
+
+   Esc fecha e devolve o foco à ficha (se o foco estava na `raiz` ou no
+   cartão); 1–3 escrevem o verbo da posição, nunca quando a tecla é do campo
+   nem com o verbo impedido; o toque fora da `raiz` e do cartão fecha.
+     fichaAberta  a ficha do cartão aberto, ou null (sem ela, nada escuta)
+     raiz         o que conta como «dentro» além do cartão: um elemento, ou
+                  qualquer coisa com `contains(el)` (a prosa passa os nomes)
+     idDoCartao   o id do cartão (o portal também conta como dentro)
+     focar(id)    devolve o foco a quem abriu
+   `maosDoCartao` são as duas mãos, puras de React: a suíte chama-as com um
+   documento de mentira e prova o Esc a devolver o foco.
+   ============================================================ */
+export function maosDoCartao(atual) {
+  const focar = (id) => chamar(atual.current && atual.current.focar, id);
+  const aoTeclar = (e) => {
+    try {
+      const a = atual.current;
+      if (!a.fichaAberta || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        const cartao = document.getElementById(a.idDoCartao);
+        const dentro = (a.raiz && a.raiz.contains(document.activeElement)) || (cartao && cartao.contains(document.activeElement));
+        chamar(a.onFechar);
+        if (dentro) focar(a.fichaAberta.id);
+        return;
+      }
+      if (deEscrever(e.target) || !/^[1-3]$/.test(e.key)) return;
+      const verbos = (Array.isArray(a.fichaAberta.verbos) ? a.fichaAberta.verbos : []).filter((v) => v && v.verbo);
+      const v = verbos[Number(e.key) - 1];
+      if (!v || v.impedido) return;
+      e.preventDefault();
+      focar(a.fichaAberta.id);
+      chamar(a.onVerbo, a.fichaAberta, v);
+    } catch (erro) { /* nunca pode custar o turno */ }
+  };
+  const aoTocarFora = (e) => {
+    try {
+      const a = atual.current;
+      const cartao = document.getElementById(a.idDoCartao);
+      if (a.fichaAberta && a.raiz && !a.raiz.contains(e.target) && !(cartao && cartao.contains(e.target))) chamar(a.onFechar);
+    } catch (erro) { /* idem */ }
+  };
+  return { aoTeclar, aoTocarFora };
+}
+
+export function useCartaoAberto({ fichaAberta = null, raiz = null, idDoCartao, focar, onFechar, onVerbo }) {
+  const atual = React.useRef(null);
+  atual.current = { fichaAberta, onFechar, onVerbo, raiz, idDoCartao, focar };
+  React.useEffect(() => {
+    if (!fichaAberta || typeof window === "undefined") return undefined;
+    const { aoTeclar, aoTocarFora } = maosDoCartao(atual);
+    window.addEventListener("keydown", aoTeclar);
+    document.addEventListener("pointerdown", aoTocarFora, true);
+    return () => { window.removeEventListener("keydown", aoTeclar); document.removeEventListener("pointerdown", aoTocarFora, true); };
+  }, [fichaAberta && fichaAberta.id]);
 }
 
 /* ============================================================
@@ -624,7 +694,6 @@ export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToq
   const pos = usePosicao(raiz, fichaAberta ? refs.current[fichaAberta.id] : null, formato, !!fichaAberta);
 
   const focar = (id) => { try { const el = refs.current[id]; if (el) el.focus({ preventScroll: true }); } catch (e) { /* sem foco, segue */ } };
-  const chamar = (f, ...a) => { try { if (f) f(...a); } catch (e) { /* nunca pode custar o turno */ } };
 
   /* os toques: 1.º escreve, 2.º (na escrita) abre, 3.º (na aberta) fecha */
   const tocar = (f) => {
@@ -643,45 +712,9 @@ export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToq
     focar(lista[j].id);
   };
 
-  /* AS TECLAS DO CARTÃO e O TOQUE FORA — só com o cartão aberto. Esc fecha e
-     devolve o foco à ficha (se o foco estava na fileira ou no cartão); 1–3
-     escrevem o verbo da posição, nunca quando a tecla é do campo. */
-  const atual = React.useRef(null);
-  atual.current = { fichaAberta, onFechar, onVerbo, raiz, idDoCartao };
-  React.useEffect(() => {
-    if (!fichaAberta || typeof window === "undefined") return undefined;
-    const aoTeclar = (e) => {
-      try {
-        const a = atual.current;
-        if (!a.fichaAberta || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
-        if (e.key === "Escape") {
-          e.preventDefault();
-          const cartao = document.getElementById(a.idDoCartao);
-          const dentro = (a.raiz && a.raiz.contains(document.activeElement)) || (cartao && cartao.contains(document.activeElement));
-          chamar(a.onFechar);
-          if (dentro) focar(a.fichaAberta.id);
-          return;
-        }
-        if (deEscrever(e.target) || !/^[1-3]$/.test(e.key)) return;
-        const verbos = (Array.isArray(a.fichaAberta.verbos) ? a.fichaAberta.verbos : []).filter((v) => v && v.verbo);
-        const v = verbos[Number(e.key) - 1];
-        if (!v || v.impedido) return;
-        e.preventDefault();
-        focar(a.fichaAberta.id);
-        chamar(a.onVerbo, a.fichaAberta, v);
-      } catch (erro) { /* nunca pode custar o turno */ }
-    };
-    const aoTocarFora = (e) => {
-      try {
-        const a = atual.current;
-        const cartao = document.getElementById(a.idDoCartao);
-        if (a.fichaAberta && a.raiz && !a.raiz.contains(e.target) && !(cartao && cartao.contains(e.target))) chamar(a.onFechar);
-      } catch (erro) { /* idem */ }
-    };
-    window.addEventListener("keydown", aoTeclar);
-    document.addEventListener("pointerdown", aoTocarFora, true);
-    return () => { window.removeEventListener("keydown", aoTeclar); document.removeEventListener("pointerdown", aoTocarFora, true); };
-  }, [fichaAberta && fichaAberta.id]);
+  /* AS TECLAS DO CARTÃO e O TOQUE FORA — só com o cartão aberto (o gancho
+     `useCartaoAberto`, partilhado com o nome tocável da prosa). */
+  useCartaoAberto({ fichaAberta, raiz, idDoCartao, focar, onFechar, onVerbo });
 
   const mostra = velha ? velha.lista : lista;
   if (!mostra.length) return null;
@@ -781,11 +814,16 @@ function RostoEmCena({ ficha, primeiro }) {
   return <span aria-hidden="true" style={caixa} data-em-cena={ficha.tipo}><MarcaDaFicha ficha={ficha} lado={R} /></span>;
 }
 
-export function EmCena({ itens = [], escrita = null, aberta = null, onToque, onAbrir, onFechar, onVerbo, baixa = false }) {
+export function EmCena({ itens = [], escrita = null, aberta = null, onToque, onAbrir, onFechar, onVerbo, baixa = false, nomeados = [] }) {
   const [gaveta, setGaveta] = React.useState(false);
   const raiz = React.useRef(null);
   const botao = React.useRef(null);
   const lista = quemEstaEmCena(itens);
+  /* TP 5: os rostos são de quem a resposta de agora NÃO nomeou (o nome
+     tocável já é a ficha dele, na página); a gaveta continua com todos, e o
+     nome acessível também. `= []` não cobre null. */
+  const ditos = new Set((Array.isArray(nomeados) ? nomeados : []).filter((id) => id != null).map(String));
+  const rostos = lista.filter((f) => !ditos.has(String(f.id)));
   /* Esc e o toque fora fecham a gaveta (e o foco volta ao botão) */
   React.useEffect(() => {
     if (!gaveta) return undefined;
@@ -796,8 +834,11 @@ export function EmCena({ itens = [], escrita = null, aberta = null, onToque, onA
     return () => { document.removeEventListener("keydown", tecla); document.removeEventListener("pointerdown", fora); };
   }, [gaveta]);
   if (!lista.length) return null;
-  const vistos = lista.slice(0, EM_CENA.mostra);
-  const resto = lista.length - vistos.length;
+  const vistos = rostos.slice(0, EM_CENA.mostra);
+  /* com todos nomeados, o disco «N» (todos os que estão em cena): a gaveta
+     nunca fica sem porta */
+  const todosDitos = !vistos.length;
+  const resto = todosDitos ? lista.length : rostos.length - vistos.length;
   return (
     <div ref={raiz} className="relative shrink-0" data-em-cena-raiz="">
       <button ref={botao} type="button" onClick={() => setGaveta((v) => !v)} aria-label={nomeDoEmCena(lista)} aria-expanded={gaveta} aria-haspopup="dialog"
@@ -805,9 +846,9 @@ export function EmCena({ itens = [], escrita = null, aberta = null, onToque, onA
         {vistos.map((f, i) => <RostoEmCena key={f.id} ficha={f} primeiro={i === 0} />)}
         {resto > 0 ? (
           <span aria-hidden="true" className="tv-mono flex items-center justify-center" style={{
-            height: EM_CENA.rosto, minWidth: EM_CENA.rosto, padding: "0 7px", marginLeft: -EM_CENA.sobrepoe + EM_CENA.aro, borderRadius: EM_CENA.rosto / 2,
+            height: EM_CENA.rosto, minWidth: EM_CENA.rosto, padding: "0 7px", marginLeft: todosDitos ? 0 : -EM_CENA.sobrepoe + EM_CENA.aro, borderRadius: EM_CENA.rosto / 2,
             background: T.panelSoft, border: `1px solid ${T.lineStrong}`, color: T.ink, fontSize: TIPOS.maquina, fontWeight: 700,
-          }}>+{resto}</span>
+          }} data-todos-ditos={todosDitos ? "" : undefined}>{todosDitos ? resto : "+" + resto}</span>
         ) : null}
       </button>
       {gaveta ? (
@@ -820,6 +861,160 @@ export function EmCena({ itens = [], escrita = null, aberta = null, onToque, onA
       ) : null}
     </div>
   );
+}
+
+/* ============================================================
+   TP · A PROSA TOCÁVEL (09/11/2026) — formas.md §TP; Figma 327:2.
+
+   O nome que o Mestre escreveu É a ficha. O motor marca (`marcasDaProsa`:
+   [{ id, palavra, de, longe, ficha }], pela ordem da prosa, no máximo o teto
+   dele); esta parte só embrulha o trecho que ele devolveu, com a máquina de
+   três toques da fileira — uma ação, uma forma.
+
+   marcasParaProsa(marcas, { escrita, aberta, onToque, onAbrir, onFechar,
+                             idDoCartao, idBase, refs })
+     → [{ id, palavra, longe, ficha, idDaLinha, linha, no }]
+     · `no(texto)` é o que a `Prosa` (ui.jsx) põe no lugar da palavra: o
+       `NomeTocavel` com o estado (repouso · apontado = a escrita · aberto =
+       a aberta), o tom (hostil = o tracejado, quem a ficha diz inimigo), e o
+       toque: 1.º escreve (`onToque`), 2.º abre (`onAbrir`), 3.º fecha
+       (`onFechar`) — os mesmos da fileira, e o mesmo estado.
+     · `linha` é a linha da ficha falada (o «◉ 29» diz-se «29 moedas»), para
+       o sr-only do `aria-describedby` (`idDaLinha`); sem linha, sem id.
+     · `refs` (opcional, um ref de objeto): o botão de cada id, para o Esc
+       devolver o foco à palavra e o cartão saber onde pousar.
+     · uma marca por id (a 1.ª), e sem id ou sem palavra não há marca.
+
+   <CartaoNaProsa ficha id ancora raiz focar onFechar onVerbo />
+     · o `CartaoDaFicha` posto junto ao nome (`ancora`, o botão). Na mesa
+       (≥ HUD_DA_MESA.mesa.aPartirDe, 1024) o popover de 376 alinhado à
+       esquerda da palavra, preso às bordas de `[data-tv-pagina]`, do lado
+       da linha com mais espaço, a 8 dela; nunca sobre a linha nem sobre o
+       campo (que mora fora da página). No telefone a folha de sempre, com o
+       fundo no pé da página, e a página rola até o nome ficar 16 acima dela
+       (suave; seco com reduced motion); ao fechar, não rola de volta.
+     · traz as teclas e o toque fora da fileira (`useCartaoAberto`): `raiz`
+       é o que conta como dentro (os nomes), `focar(id)` devolve o foco.
+   ============================================================ */
+const MESA_DA_PROSA = `(min-width: ${HUD_DA_MESA.mesa.aPartirDe}px)`;
+function useMesaDaProsa() {
+  const [larga, setLarga] = React.useState(() => { try { return window.matchMedia(MESA_DA_PROSA).matches; } catch (e) { return true; } });
+  React.useEffect(() => {
+    try {
+      const mm = window.matchMedia(MESA_DA_PROSA);
+      const aoMudar = () => setLarga(mm.matches);
+      mm.addEventListener("change", aoMudar);
+      return () => mm.removeEventListener("change", aoMudar);
+    } catch (e) { return undefined; }
+  }, []);
+  return larga;
+}
+
+/* ONDE POUSA O CARTÃO — pura (retângulos dentro, estilo fora), provada em
+   Node: `nome` e `pagina` são retângulos do ecrã ({ top, bottom, left,
+   right, width }), `vh`/`vw` o ecrã. Sem página, o limite é o ecrã. */
+export function ondePousaOCartao({ formato = "mesa", nome, pagina = null, vh, vw }) {
+  const P = pagina || { top: 0, bottom: vh, left: 0, right: vw, width: vw };
+  const C = FICHAS.cartao;
+  if (formato === "telefone") {
+    const fundo = P.bottom;
+    return { position: "fixed", left: 0, width: vw, bottom: vh - fundo, maxHeight: Math.max(ALVOS.piso, Math.min(C.folhaMax * vh, fundo - P.top)) };
+  }
+  const folga = PROSA_TOCAVEL.cartao.folgaDaLinha;
+  const largura = Math.min(C.largura, P.width);
+  const left = Math.max(P.left, Math.min(nome.left, P.right - largura));
+  const acima = nome.top - folga - P.top, abaixo = P.bottom - nome.bottom - folga;
+  if (abaixo >= acima) return { position: "fixed", left, width: largura, top: nome.bottom + folga, maxHeight: Math.max(ALVOS.piso, abaixo) };
+  return { position: "fixed", left, width: largura, bottom: vh - (nome.top - folga), maxHeight: Math.max(ALVOS.piso, acima) };
+}
+
+/* quem rola a página: o primeiro antepassado que rola de facto */
+function quemRola(el) {
+  try {
+    for (let n = el && el.parentElement; n; n = n.parentElement) {
+      const oy = window.getComputedStyle(n).overflowY;
+      if ((oy === "auto" || oy === "scroll") && n.scrollHeight > n.clientHeight) return n;
+    }
+  } catch (e) { /* sem rolador, não rola */ }
+  return null;
+}
+
+export function CartaoNaProsa({ ficha = null, id, ancora = null, raiz = null, focar, onFechar, onVerbo }) {
+  const larga = useMesaDaProsa();
+  const formato = larga ? "mesa" : "telefone";
+  const [pos, setPos] = React.useState(null);
+  const rolou = React.useRef(null);
+  useCartaoAberto({ fichaAberta: ficha, raiz: raiz || ancora, idDoCartao: id, focar, onFechar, onVerbo });
+  React.useLayoutEffect(() => {
+    if (!ficha || !ancora) { setPos(null); return undefined; }
+    const calcular = () => {
+      try {
+        const pagina = ancora.closest ? ancora.closest("[data-tv-pagina]") : null;
+        setPos(ondePousaOCartao({ formato, nome: ancora.getBoundingClientRect(), pagina: pagina ? pagina.getBoundingClientRect() : null,
+          vh: window.innerHeight, vw: document.documentElement.clientWidth || window.innerWidth }));
+      } catch (e) { /* fica a de antes */ }
+    };
+    const { medir, parar } = noQuadroSeguinte(calcular);
+    calcular();
+    window.addEventListener("resize", medir);
+    window.addEventListener("scroll", medir, true);
+    return () => { parar(); window.removeEventListener("resize", medir); window.removeEventListener("scroll", medir, true); };
+  }, [ficha && ficha.id, ancora, formato]);
+  /* TP 4 · o telefone: se a folha tapa o nome, a página rola UMA vez, até a
+     linha do nome ficar 16 acima do topo da folha. O topo mede-se pela altura
+     (offsetHeight), não pelo retângulo: a entrada do cartão sobe 4 px. */
+  React.useEffect(() => {
+    if (formato !== "telefone" || !ficha || !ancora || !pos || rolou.current === ficha.id) return;
+    rolou.current = ficha.id;
+    try {
+      const cartao = document.getElementById(id);
+      if (!cartao) return;
+      const topoDaFolha = window.innerHeight - pos.bottom - cartao.offsetHeight;
+      const falta = ancora.getBoundingClientRect().bottom + PROSA_TOCAVEL.cartao.acimaDaFolha - topoDaFolha;
+      const rolador = falta > 0 ? quemRola(ancora) : null;
+      if (rolador) rolador.scrollBy({ top: falta, behavior: reduzMovimento() ? "auto" : "smooth" });
+    } catch (e) { /* nunca pode custar o turno */ }
+  }, [pos, formato, ficha && ficha.id, ancora, id]);
+  if (!ficha || !pos || typeof document === "undefined") return null;
+  return createPortal(
+    <CartaoDaFicha id={id} ficha={ficha} formato={formato} style={pos}
+      onFechar={() => { chamar(onFechar); chamar(focar, ficha.id); }}
+      onVerbo={(f, v) => { chamar(focar, f.id); chamar(onVerbo, f, v); }} />,
+    document.body,
+  );
+}
+
+export function marcasParaProsa(marcas, opcoes) {
+  const { escrita = null, aberta = null, onToque, onAbrir, onFechar, idDoCartao, idBase = "tv-nome", refs = null } = opcoes || {};
+  const vistos = new Set();
+  const lista = (Array.isArray(marcas) ? marcas : []).filter((m) => {
+    if (!m || m.id == null || !String(m.palavra || "").trim()) return false;
+    const k = String(m.id);
+    if (vistos.has(k)) return false;
+    vistos.add(k);
+    return true;
+  });
+  return lista.map((m, k) => {
+    const ficha = { ...(m.ficha && typeof m.ficha === "object" ? m.ficha : {}), id: m.id };
+    if (!ficha.nome) ficha.nome = String(m.palavra);
+    const estado = m.id === aberta ? "aberto" : m.id === escrita ? "apontado" : "repouso";
+    const linha = falado(ficha.quem || ficha.linha);
+    const idDaLinha = linha ? idBase + "-linha-" + k : undefined;
+    const tocar = () => {
+      if (m.id === aberta) return chamar(onFechar);
+      if (m.id === escrita) return chamar(onAbrir, ficha);
+      if (aberta != null) chamar(onFechar);
+      return chamar(onToque, ficha);
+    };
+    const guardar = refs ? (el) => { try { if (el) refs.current[String(m.id)] = el; else delete refs.current[String(m.id)]; } catch (e) { /* segue */ } } : undefined;
+    return {
+      id: m.id, palavra: String(m.palavra), longe: !!m.longe, ficha, idDaLinha, linha,
+      no: (texto) => (
+        <NomeTocavel ref={guardar} estado={estado} tom={inimigoDe(ficha) ? "hostil" : "comum"}
+          idDaLinha={idDaLinha} idDoCartao={idDoCartao} onToque={tocar}>{texto}</NomeTocavel>
+      ),
+    };
+  });
 }
 
 /* ============================================================
