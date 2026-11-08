@@ -52,6 +52,8 @@ import { TIPOS_DE_LACO } from "./npcs.js";
 import { SITUACOES } from "./mundo-base.js";
 import { ESTRUTURAS } from "./historia.js";
 import { contrair } from "./lugar.js";
+/* o acervo, do lote 4 em diante: um ficheiro por lote (src/acervo/) */
+import { QUESTS_LOTE_4 } from "./acervo/quests-lote-4.js";
 
 /* ---------------- OS DOIS TIPOS ----------------
    `fim`: como a quest acaba — `falha` (concluída ou falhada) ou
@@ -82,7 +84,7 @@ export const ESTADOS_DA_QUEST = Object.freeze({
    nome dele é uma camada da revelação, §11.4). */
 export const PAPEIS_DA_QUEST = Object.freeze({
   elenco: Object.freeze({ tipo: "pessoa", diz: "gente do mundo, que a criação escolhe" }),
-  fio: Object.freeze({ tipo: "pessoa", diz: "a gente do vilão — o tenente, o mandante —, que vem da espinha", aceita: Object.freeze(["gente"]) }),
+  fio: Object.freeze({ tipo: "pessoa", diz: "a gente do vilão — o tenente, o mandante —, que vem da espinha", aceita: Object.freeze(["gente"]), aceitaOVilao: Object.freeze(["gente", "fera"]) }),
   grupo: Object.freeze({ tipo: "pessoa", diz: "quem anda com o herói: o companheiro, ou o elo" }),
   cidade: Object.freeze({ tipo: "lugar", diz: "uma cidade do mapa" }),
   lugar: Object.freeze({ tipo: "lugar", diz: "um sítio de uma cidade, ou da estrada" }),
@@ -95,7 +97,13 @@ export const PAPEIS_DA_QUEST = Object.freeze({
    a contar moedas no passo do Salvo-Conduto. Um papel do fio diz agora o
    que aceita (`aceita`, destas): por omissão, só gente
    (PAPEIS_DA_QUEST.fio.aceita); a caçada aceita só a fera; o guarda que só
-   aparece pela luta aceita as duas. */
+   aparece pela luta aceita as duas.
+   O VILÃO TAMBÉM (lote 4, 09/11): mais de metade dos mundos (549 de 1000)
+   têm por vilão um bicho, e o esqueleto sentava-o à mesa do Convite e à
+   cabeceira do Velório. O papel `vilao` diz agora, no mesmo campo, que
+   natureza a cena dele aceita; por omissão as duas
+   (PAPEIS_DA_QUEST.fio.aceitaOVilao) — um confronto num covil serve um
+   bicho e uma pessoa —, e as cenas que pedem palavra e mesa só gente. */
 export const NATUREZAS_DO_FIO = Object.freeze({
   gente: Object.freeze({ diz: "alguém que fala, paga, mente e se rende" }),
   fera: Object.freeze({ diz: "um bicho do servo dele: caça-se, doma-se, não se suborna" }),
@@ -722,7 +730,7 @@ const O_CONVITE_SEM_SELO = quest({
   quando: ["meio", "fim"],
   afim: ["reinado", "misterio"],
   papeis: {
-    vilao: { de: "fio", papel: "vilao", alcunha: "quem manda o convite", rotulo: "quem manda o convite" },
+    vilao: { de: "fio", papel: "vilao", aceita: ["gente"], alcunha: "quem manda o convite", rotulo: "quem manda o convite" },
     anfitriao: { de: "elenco", neutro: true, rotulo: "quem abre a casa" },
     salao: { de: "lugar", do: "anfitriao" },
     refem: { de: "elenco", exige: ["vivo", "cativa"], rotulo: "quem está à mesa sem a ter escolhido" },
@@ -1652,7 +1660,7 @@ const O_VELORIO_PAGO = quest({
   quando: ["fim"],
   afim: ["misterio", "reinado"],
   papeis: {
-    vilao: { de: "fio", papel: "vilao", alcunha: "quem paga o enterro", rotulo: "quem paga o enterro" },
+    vilao: { de: "fio", papel: "vilao", aceita: ["gente"], alcunha: "quem paga o enterro", rotulo: "quem paga o enterro" },
     enlutada: { de: "elenco", rotulo: "quem vela o morto" },
     capela: { de: "lugar", e: "um sítio da cidade do ato", tipos: ["templo", "cemitério"] },
   },
@@ -2175,6 +2183,9 @@ export const BIBLIOTECA_DE_QUESTS = congelarFundo([
   /* o acervo, lote 3 (BQ8) */
   O_QUE_DESCE_AO_ANOITECER, AS_BOTAS_NA_ESTRADA, OS_BRACOS_QUE_FALTAM, O_ULTIMO_A_SAIR, O_VELORIO_PAGO, A_HORA_MARCADA,
   O_SANGUE_DO_OUTRO_LADO, AS_CARTAS_DE_OUTRA_CASA,
+  /* o acervo, do lote 4 em diante (BQ8): cada lote no seu ficheiro, em
+     src/acervo/quests-lote-N.js — uma linha de import lá em cima e uma aqui */
+  ...QUESTS_LOTE_4,
 ]);
 
 export function questPorId(id) {
@@ -2239,7 +2250,9 @@ export function validarQuest(ficha) {
     decl[nome] = { tipo: d.tipo };
     if (p.alcunha !== undefined && typeof p.alcunha !== "string") err(`a alcunha de «${nome}» não é texto`);
     if (p.rotulo !== undefined && (typeof p.rotulo !== "string" || !p.rotulo.trim())) err(`o rótulo de «${nome}» não é texto`);
-    if (p.aceita !== undefined && !(p.de === "fio" && p.papel !== "vilao" && Array.isArray(p.aceita) && p.aceita.length && p.aceita.every((x) => NATUREZAS_DO_FIO[x]))) err(`o «aceita» de «${nome}» é de um servo do fio, e das NATUREZAS_DO_FIO`);
+    /* lote 4 (09/11): o vilão também diz que natureza aceita (o rosto que é
+       demonstração, a mesa que pede palavra) — o campo passa a ser de todo o fio */
+    if (p.aceita !== undefined && !(p.de === "fio" && Array.isArray(p.aceita) && p.aceita.length && p.aceita.every((x) => NATUREZAS_DO_FIO[x]))) err(`o «aceita» de «${nome}» é de um papel do fio, e das NATUREZAS_DO_FIO`);
   }
   if (!Object.keys(decl).length) err("sem papéis");
 

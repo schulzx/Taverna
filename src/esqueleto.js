@@ -478,7 +478,12 @@ function preencher(q, ato, S, extra) {
         if (pessoa) { r = { nome: pessoa.nome, cidade: pessoa.cidade }; cidadeDe[nome] = W.porNome.get(norm(pessoa.cidade)) || cAto; pessoasAqui.add(norm(pessoa.nome)); }
       } else if (p.de === "fio") {
         if (p.papel === "vilao") {
-          if (S.nomeDoVilao) r = { nome: S.nomeDoVilao };
+          /* O VILÃO À MESA (lote 4, 09/11): o bicho não se senta no Convite
+             nem paga o Velório. O papel diz que natureza a cena aceita (por
+             omissão as duas, PAPEIS_DA_QUEST.fio.aceitaOVilao); a outra não
+             nasce aqui, e o ato procura outra quest */
+          const aceitaV = arr(p.aceita).length ? p.aceita : PAPEIS_DA_QUEST.fio.aceitaOVilao;
+          if (S.nomeDoVilao && aceitaV.includes(S.naturezaDoVilao)) r = { nome: S.nomeDoVilao };
         } else {
           const t = umTenente(p);
           if (t) { r = { nome: t.nome }; tenentesAqui.push(t.papel); }
@@ -576,6 +581,9 @@ export function esqueletoDaCampanha(entrada) {
     /* o nome próprio, antes da vírgula — a régua de `nomeDoFio` (BQ5), para
        que o papel `vilao` de uma quest e o da ficha dele deem o mesmo id */
     nomeDoVilao: nomesDoVilao(fio).pop() || "",
+    /* a natureza dele (NATUREZAS_DO_FIO): a do chefe principal do mundo,
+       que é o antagonista do fio; quem não se acha é gente */
+    naturezaDoVilao: natureza.get(norm(texto(fio.antagonista, ESQUELETO.nome))) || "gente",
     pessoas: new Set(),                       // quem já tem papel (elenco)
     lugares: new Set(),
     proibidos: new Set([...nomesDoVilao(fio), ...vilao.tenentes.map((t) => t.nome)].map(norm)),

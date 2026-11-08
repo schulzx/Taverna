@@ -50,7 +50,7 @@ import { envelopeDaVirada, intencaoDaVez, linhaDaLuta, menteDaCriatura } from ".
 import { LUTA_SEM_PAINEL } from "../agressao.js";
 import { DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta, codigoPorId, cruzouOCodigo, garantirAliados, nascerAliado, vontadePorId } from "../aliado.js";
 import { certezaDe, garantirSaber, oQueEleNaoSabe, responder, paraPauta as vilaoParaPauta } from "../antagonista.js";
-import { quedasDoLivro } from "../livro-de-factos.js";
+import { quedasDoLivro, linhasDoQuemE } from "../livro-de-factos.js";
 import { arredoresDaCidade } from "../arredores.js";
 import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
@@ -366,13 +366,15 @@ export function aPautaDoTurno(estado, entrada, portas) {
      (pelo nome inteiro ou pelo primeiro, como o Mestre o chama) ou a andar
      no grupo. O registo de NPCs não basta: o elo e o vilão podem ainda não
      estar lá quando o Mestre já os pôs a falar. */
-  const nucleoEmCena = (nucleo) => {
+  /* 09/11: `outros` — nomes de fora do núcleo que contam pela mesma régua
+     (a gente com linha durável no QUEM É, que as quests escreveram) */
+  const nucleoEmCena = (nucleo, outros) => {
     const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const fala = " " + sem(($ref.mensagens || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ")).replace(/[^a-z0-9]+/g, " ") + " ";
     const grupo = (($ref.personagem || $render.personagem || {}).grupo || []).filter((g) => g && g.nome && !g.invocada).map((g) => sem(g.nome));
     const out = [];
-    for (const p of ((nucleo && nucleo.pessoas) || [])) {
-      if (!p || !p.nome) continue;
+    for (const p of [...((nucleo && nucleo.pessoas) || []), ...(Array.isArray(outros) ? outros : []).map((nome) => ({ nome }))]) {
+      if (!p || !p.nome || out.includes(p.nome)) continue;
       const inteiro = sem(String(p.nome).split(",")[0]).replace(/[^a-z0-9]+/g, " ").trim();
       const prim = inteiro.split(" ")[0] || "";
       const citado = (inteiro && fala.includes(" " + inteiro + " ")) || (prim.length >= 3 && fala.includes(" " + prim + " "));
@@ -942,6 +944,12 @@ export function aPautaDoTurno(estado, entrada, portas) {
     /* v9.391: a marca do antagonista no momento, o JÁ SE SABE do segredo que
        acabou de cair, o que o mundo lembra de quem chegou a tempo */
     let maoDoVilao = false; /* MM-C C2: a marca ou os servos do fio nesta cena (o vilão do núcleo só pede pela mão) */
+    /* 09/11: o lugar que deve um favor ao herói, quando ele lá está — vai em
+       O QUE VOLTA (a coisa plantada antes que volta agora). Na cauda do ONDE
+       (2,49 e abaixo) o teto cortava-a mesmo numa pauta de praça sem nada:
+       medido na suíte (teste-consequencias-caladas), a quarta linha do ONDE
+       não chegava ao texto. */
+    if (mesaDasQuests && mesaDasQuests.favor) p = porNaPauta(p, "volta", mesaDasQuests.favor);
     if (mesaDasQuests) {
       p = porNaPauta(p, "momento", mesaDasQuests.mao);
       p = porNaPauta(p, "naoPode", mesaDasQuests.naoPode);
@@ -1154,7 +1162,12 @@ export function aPautaDoTurno(estado, entrada, portas) {
       const esp = $ref.espinha || {};
       const turnoQ = $ref.turnoDeRegistro + 1;
       const q = { ultimas: {}, cenas: {}, ...($ref.quemE || {}), pendente: null };
-      const r = quemEParaPauta(nucleo, { emCena: nucleoEmCena(nucleo), ato: ($ref.historia || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega, ...elencoDoCoracao(), espinha: esp, cidade: cidadeDoCoracao() }); /* 13/10 (v9.461): quem a historia sabe longe nao leva a ficha */
+      /* 09/11: as linhas duráveis que as quests escreveram (o livro de
+         factos) — a de quem é do núcleo vai depois da ficha; a de quem não é,
+         sozinha, quando a pessoa está em cena */
+      let duraveis = [];
+      try { duraveis = linhasDoQuemE($ref.factos); } catch (e2) { duraveis = []; }
+      const r = quemEParaPauta(nucleo, { duraveis, emCena: nucleoEmCena(nucleo, duraveis.map((d) => d.nome)), ato: ($ref.historia || {}).etapa || 0, ultimoAto: Math.max(0, (esp.atos || []).length - 1), turno: turnoQ, ultimas: q.ultimas, cenas: q.cenas, fio: esp.fio || null, jaCarrega: quemCarrega, ...elencoDoCoracao(), espinha: esp, cidade: cidadeDoCoracao() }); /* 13/10 (v9.461): quem a historia sabe longe nao leva a ficha */
       p = porNaPauta(p, "quemE", ...(r.quemE || []));
       $ref.quemE = { ...q, pendente: r.quem && r.quemE && r.quemE[0] ? { quem: r.quem, turno: turnoQ, linha: r.quemE[0] } : null };
     } catch (e) { calou("quemEParaPauta", e); } try { p = porNaPauta(p, "foraDeCena", foraDeCenaParaPauta($ref.elenco, { dia: $ref.dia, cidade: $ref.cidadeAtual, npcs: $ref.npcs, emCena: (() => { try { const c = ($ref.mensagens || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" "); return Object.keys($ref.npcs || {}).filter((nm) => c.includes(nm)); } catch (e2) { return []; } })() }).foraDeCena); } catch (e) { calou("foraDeCenaParaPauta", e); }

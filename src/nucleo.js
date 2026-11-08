@@ -457,6 +457,12 @@ export const QUEM_E = {
   cenasComExemplo: 2,
   /* as palavras de bastidor que nunca chegam ao Narrador (§3.1, regra 5) */
   proibidas: ["subtrama", "arco", "pedido", "crise", "escolha", "pista", "núcleo", "nucleo"],
+  /* 09/11 (as consequências caladas): o teto da linha DURÁVEL — o que uma
+     quest escreveu no QUEM É de alguém (o livro de factos, linhasDoQuemE),
+     que vai numa linha sua logo depois da ficha («Brash carrega a carta de
+     um morto.»), para a voz nunca a empurrar para fora: o nome e as duas
+     linhas que o livro guarda por pessoa (LIVRO_DE_FACTOS.quemE) */
+  duravel: 200,
 };
 
 /* ---------------- O GÉNERO DE QUEM FALA (C2, 11/10) ----------------
@@ -1136,6 +1142,20 @@ export function longeDaHistoria(ctx) {
 }
 const estaLonge = (lista, nome) => arr(lista).some((x) => mesmoNome(x.nome, nome));
 
+/* 09/11: a linha durável de alguém — «Nome linha1; linha2.» —, só com as
+   linhas que cabem em QUEM_E.duravel e nenhuma palavra de bastidor.
+   `duraveis`: [{ nome, linhas }] (linhasDoQuemE, livro-de-factos.js). */
+const RX_PROIBIDA = new RegExp(`(?<![\\p{L}])(${QUEM_E.proibidas.join("|")})(?![\\p{L}])`, "iu");
+function linhaDuravel(duraveis, nome) {
+  const d = arr(duraveis).map(obj).find((x) => x.nome && mesmoNome(x.nome, nome));
+  if (!d) return "";
+  const quem = String(nome).split(",")[0].trim();
+  const ls = arr(d.linhas).map((x) => String(x || "").replace(/\s+/g, " ").trim().replace(/[.;\s]+$/, "")).filter((x) => x && !RX_PROIBIDA.test(x));
+  const fica = [];
+  for (const l of [...ls].reverse()) if (`${quem} ${[l, ...fica].join("; ")}.`.length <= QUEM_E.duravel) fica.unshift(l);
+  return fica.length ? `${quem} ${fica.join("; ")}.` : "";
+}
+
 export function quemEParaPauta(nucleo, cena) {
   const out = { quemE: [], quem: "" };
   const n = obj(nucleo);
@@ -1163,8 +1183,27 @@ export function quemEParaPauta(nucleo, cena) {
     const linha = linhaQuemE(p, { tamanho: tamanhoDoAto(ato, ultimo), fio: c.fio, cenas: valor(cenas, p.nome) || 0 });
     if (!linha) continue;
     out.quemE.push(linha);
+    /* 09/11: o que uma quest escreveu no QUEM É dela vem logo a seguir */
+    const dur = p.papel === "vilao" ? "" : linhaDuravel(c.duraveis, p.nome);
+    if (dur) out.quemE.push(dur);
     out.quem = p.nome;
     break;
+  }
+  /* 09/11: quem não é do núcleo e tem linha durável (a gente das quests),
+     em cena e fora do intervalo, leva-a sozinha — é a QUEM É dela */
+  if (!out.quem) {
+    for (const d of arr(c.duraveis).map(obj)) {
+      if (!d.nome || !emCena.some((x) => mesmoNome(x, d.nome))) continue;
+      if (arr(n.pessoas).some((p) => p && p.nome && mesmoNome(p.nome, d.nome))) continue;
+      if (jaCarrega && mesmoNome(jaCarrega, d.nome)) continue;
+      const u = valor(ultimas, d.nome);
+      if (u != null && Number.isFinite(u) && turno - u < QUEM_E.intervalo) continue;
+      const dur = linhaDuravel(c.duraveis, d.nome);
+      if (!dur) continue;
+      out.quemE.push(dur);
+      out.quem = d.nome;
+      break;
+    }
   }
   return out;
 }

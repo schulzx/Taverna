@@ -50,19 +50,22 @@
        o motor já escreve, faz o arco virar quando a quest do ato fecha
        (PESO_DA_QUEST, historia.js), e anda com o vilão — o relógio, a
        camada (uma por chamada), as reações, o fim. `estado` devolve só os
-       campos que mudaram (espinha, saber, historia, personagem, npcs);
+       campos que mudaram (espinha, saber, historia, personagem, npcs, e
+       factos — o favor e o QUEM É que as quests deixam, 09/11);
        `efeitos` o que só a tela sabe aplicar (a forma está abaixo, em
        EFEITOS PARA A TELA); `notas` o que vai ao Narrador no turno seguinte
        (o `nota` do App, `notaComOTurno`); `linhas` o relato.
        Chamá-lo duas vezes sobre o mesmo estado não aplica nada duas vezes.
 
-     aMesaDasQuests(estado, { mundo, cena }) → null | { comQuest, passo, mao, naoPode }
+     aMesaDasQuests(estado, { mundo, cena }) → null | { comQuest, passo, mao, naoPode, favor }
        O que o Narrador recebe, pela pauta (motor/pauta-do-turno.js, secção
        `momento`): «O PASSO» (a etapa de agora em frase de mundo, e uma
        coisa que falta — nunca as soluções todas, §7) NO LUGAR da batida da
        espinha, quando o ato tem quest (`comQuest`); e «A MÃO DELE AQUI»
        (`oVilaoNaPauta`, filtrada pela camada) NO LUGAR da marca do relógio
-       do fio, em todo o mundo novo. Os vetos vão em `naoPode`.
+       do fio, em todo o mundo novo. Os vetos vão em `naoPode`. E (09/11)
+       `favor`: quando o herói está num lugar que lhe deve um favor (o
+       livro de factos, o efeito «favor»), a linha que o diz — vai em O QUE VOLTA.
 
      missoesDasQuests(estado, { mundo }) → [missão]
        A projeção de cada quest para o Diário (`missaoDaQuest`), que não se
@@ -85,15 +88,20 @@
        frase escrita que é uma das cartas abertas.
 
    EFEITOS PARA A TELA — o que o motor não aplica, porque mora em órgãos do
-   App (o relógio da região, o grupo, a base, o QUEM É, o mapa). A forma:
+   App (os relógios, o grupo, a base, o mapa). Cada um diz o que pede ao
+   órgão em motor/efeitos-da-quest.js (oQueOEfeitoPede). A forma:
      { tipo, quest, n?, alvo?, laco?, situacao?, linha?, cidade? }
        tipo ∈ dia · relogio_regional · afeicao · vinculo · marco · situacao
-              · favor · quem_e · morte (os de EFEITOS_DA_QUEST que não estão
-              em QUESTS_DO_TURNO.aplica);
+              · morte (os de EFEITOS_DA_QUEST que não estão em
+              QUESTS_DO_TURNO.aplica);
        alvo = { nome, id, cidade?, chave? } — o papel já resolvido;
        cidade — a do ato da quest (o relógio da região).
-     { tipo: "passo_do_plano", n, dia, muda: [EFEITOS_DO_PLANO], lugar, alvo? }
-     { tipo: "fim_do_plano", efeitos, tom, tenentesAMais, dia }
+     { tipo: "passo_do_plano", n, dia, muda: [EFEITOS_DO_PLANO], lugar, alvo?, obra? }
+       lugar — o sítio do passo (`passo_N` do registo dele, que o esqueleto
+       põe); alvo — o que ele mira no que o herói ama (escolherAlvo, vilao.js:
+       { campo, nome, comoDoi }), só quando já sabe do herói; obra — o que
+       fica no mundo (sem dono), que também vai ao Narrador como facto longe.
+     { tipo: "fim_do_plano", efeitos, tom, tenentesAMais, dia, frase }
      { tipo: "desfecho_do_vilao", id, depois }
      { tipo: "reacao_do_vilao", id, resposta?, leitura? }   (só as que pedem
        uma resposta ou uma leitura do antagonista.js)
@@ -106,11 +114,16 @@ import { garantirHistoria, marcoDaQuest, virarEtapa, envelopeDeVirada, PESO_DA_Q
 import { chegouAteEle } from "../antagonista.js";
 import { diasDoPasso } from "../vilao.js";
 import { firmarLaco, romperLaco } from "../npcs.js";
+import { anotarTurno, favoresDoLivro } from "../livro-de-factos.js";
+import { avaliarCondicao, resolverPapeis } from "../condicoes-da-quest.js";
 
 /* ---------------- OS NÚMEROS E AS FRASES (se é número, é tabela) ----------------
    `aplica`: as consequências que o motor aplica, porque o estado delas é
    dele (a bolsa, o livro do vilão, o relógio do vilão, as premissas, o
-   registo da gente); as outras de EFEITOS_DA_QUEST vão à tela.
+   registo da gente, e — 09/11 — o livro de factos: o favor que um lugar
+   fica a dever e a linha durável do QUEM É, que nenhum órgão guardava e
+   agora o livro guarda, para o replay as reproduzir); as outras de
+   EFEITOS_DA_QUEST vão à tela.
    `avisa`: a linha que entra no livro DELE quando uma quest o avisa — a
    fonte `marca` tem certeza 3 (antagonista.js), e é com ela que o plano
    passa a mirar no que o herói ama (RITMO_DO_PLANO.certezaQueMira).
@@ -122,7 +135,7 @@ import { firmarLaco, romperLaco } from "../npcs.js";
    `arco`: o que o arco cita da quest que o fez virar. */
 export const QUESTS_DO_TURNO = Object.freeze({
   v: 1,
-  aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "deixa", "laco", "rompe_laco", "aliado", "inimigo"]),
+  aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "deixa", "laco", "rompe_laco", "aliado", "inimigo", "favor", "quem_e"]),
   avisa: Object.freeze({ comOnde: "o forasteiro passou por {onde}", semOnde: "o forasteiro anda a meter-se no caminho dele", fonte: "marca", sobre: "onde" }),
   relogioDoFio: 1,
   premissas: 24,
@@ -137,6 +150,10 @@ export const QUESTS_DO_TURNO = Object.freeze({
   }),
   linhas: Object.freeze({ etapa: "✓ {etapa}", concluida: "★ {titulo} — cumprida", falhada: "✖ {titulo} — perdida", terminada: "♥ {titulo} — chegou ao fim" }),
   arco: Object.freeze({ concluida: "concluí \"{titulo}\"", falhada: "perdi \"{titulo}\"" }),
+  /* 09/11: o lugar que deve um favor ao herói, na pauta (O QUE VOLTA) quando ele lá está
+     (a condição «esta_em», a régua com que o livro escreve o lugar): a frase,
+     o «desde» com a quest que o deixou, e o teto */
+  favor: Object.freeze({ linha: "{lugar} deve um favor ao herói{desde}: quem lá manda lembra-se, e honra-o se ele o cobrar", desde: " (desde «{titulo}»)", teto: 220 }),
   /* a frase que é uma carta (aEscolhaDaFrase): duas palavras casam quando
      partilham o começo — pelo menos `minimo` letras, e no máximo `folga`
      a menos do que a mais curta («pago» casa «pagar», «entrego» casa
@@ -250,12 +267,15 @@ function correr(E0, opcoes, antes) {
   let premissas = [...Q.premissas];
   let desfecho = Q.desfecho;
   let fim = Q.fim;
-  let personagem = E0.personagem, npcs = E0.npcs, saber = E0.saber;
+  let personagem = E0.personagem, npcs = E0.npcs, saber = E0.saber, factos = E0.factos;
   let adianta = 0;
   const efeitos = [], linhas = [];
   const candidatas = [];        // { prio, texto } — as notas da quest
-  const doVilao = [];           // as notas do vilão
-  const agora = () => ({ ...E0, personagem, npcs, saber, historia: h });
+  const doVilao = [];           // as notas do vilão (as reações)
+  const dosPassos = [];         // a obra dos passos que se cumpriram (09/11)
+  let doFim = "";               // a frase do fim do plano
+  const favores = [], quemE = []; // o que vai ao livro de factos (09/11)
+  const agora = () => ({ ...E0, personagem, npcs, saber, factos, historia: h });
 
   /* 1. ABRIR as quests de cada ato até ao de agora, uma vez por ato */
   const abrir = () => {
@@ -301,6 +321,24 @@ function correr(E0, opcoes, antes) {
     }
     if (t === "relogio_do_fio") { if (Number.isInteger(ef.n)) adianta += ef.n; return; }
     if (t === "deixa") { if (typeof ef.premissa === "string") premissas = [...new Set([...premissas, ef.premissa])].slice(-T.premissas); return; }
+    /* 09/11: o favor e o QUEM É vão ao livro de factos, pelo id do papel —
+       o que se resolveu quando a quest abriu, ou, se então a pessoa ainda
+       não era conhecida, o que a mesma régua dá agora (resolverPapeis, o
+       elenco do livro). O papel que nem assim tem id não escreve: o livro
+       guarda ids, e adivinhar um seria escrever no sítio errado. */
+    const comId = () => {
+      if (!alvo || alvo.id) return alvo;
+      const p = obj(obj(R.papeis) && R.papeis[ef.papel]);
+      try { const r = p ? resolverPapeis({ x: p }, agora(), { mundo }).papeis.x : null; return r && r.id ? { ...alvo, id: r.id } : alvo; } catch { return alvo; }
+    };
+    if (t === "favor") { const a = comId(); if (a && a.id) favores.push({ lugar: a, de: R.id }); return; }
+    if (t === "quem_e") {
+      const ps = obj(R.papeis) || {};
+      const linha = typeof ef.linha === "string" ? ef.linha.replace(/\{([a-z0-9_]+)\}/g, (m, k) => (obj(ps[k]) && ps[k].nome) || m) : "";
+      const a = comId();
+      if (a && a.id && linha.trim() && !/\{[a-z0-9_]+\}/.test(linha)) quemE.push({ quem: a.id, o: linha, de: R.id });
+      return;
+    }
     if (t === "laco" || t === "rompe_laco" || t === "aliado" || t === "inimigo") {
       /* o fecho não cria gente: quem ainda não está no registo fica como
          está (a régua da secundária planeada, SQ3) */
@@ -336,6 +374,12 @@ function correr(E0, opcoes, antes) {
       }
     }
     aplicadas[R.id] = lista.length;
+  }
+  /* o livro de factos, de uma vez (anotarTurno, sem elenco: os ids já vêm
+     resolvidos, e a cidade de agora não se marca como visitada por isto).
+     Um estado sem livro continua sem ele (a régua de anotarOLivro). */
+  if ((favores.length || quemE.length) && obj(factos)) {
+    try { factos = anotarTurno(factos, { dia, favores, quemE }).factos; } catch { /* o livro nunca custa o turno */ }
   }
 
   /* 4. O ARCO: a quest do tipo 1 do ato de agora fechou → o ato vira
@@ -382,12 +426,17 @@ function correr(E0, opcoes, antes) {
       for (const s of arr(relogio.passos)) {
         if (s.estado !== "cumprido" || s.recuado || passosDitos.includes(s.n)) continue;
         passosDitos.push(s.n);
-        efeitos.push({ tipo: "passo_do_plano", n: s.n, dia: s.dia, muda: [...arr(s.muda)], lugar: (reg || ficha.registro).papeis[`passo_${s.n}`] || null, ...(s.alvo ? { alvo: s.alvo } : {}) });
+        /* 09/11: a obra do passo (o que fica no mundo, sem dono) chega ao
+           Narrador como facto longe — o vilão sente-se antes de se ver — e
+           vai no efeito, para a tela a pôr no que o passo muda */
+        const obra = (ficha.plano[s.n - 1] && ficha.plano[s.n - 1].obra) || "";
+        if (obra) dosPassos.push(T.notas.longe + corta(obra, T.notas.teto));
+        efeitos.push({ tipo: "passo_do_plano", n: s.n, dia: s.dia, muda: [...arr(s.muda)], lugar: (reg || ficha.registro).papeis[`passo_${s.n}`] || null, ...(s.alvo ? { alvo: s.alvo } : {}), ...(obra ? { obra } : {}) });
       }
       if (relogio.fim && fim == null) {
         fim = dia;
-        efeitos.push({ tipo: "fim_do_plano", efeitos: [...arr(relogio.fim.efeitos)], tom: relogio.fim.tom, tenentesAMais: relogio.fim.tenentesAMais, dia });
-        doVilao.unshift(T.notas.longe + corta(relogio.fim.frase, T.notas.teto));
+        efeitos.push({ tipo: "fim_do_plano", efeitos: [...arr(relogio.fim.efeitos)], tom: relogio.fim.tom, tenentesAMais: relogio.fim.tenentesAMais, dia, frase: relogio.fim.frase });
+        doFim = T.notas.longe + corta(relogio.fim.frase, T.notas.teto);
       }
       const d = desfecho ? null : desfechoDoVilao(ficha, E, { quests: qv, mundo });
       if (d) {
@@ -414,9 +463,11 @@ function correr(E0, opcoes, antes) {
     if (R.estado !== "aberta" && (!A || A.estado === "aberta") && T.linhas[R.estado]) linhas.push(encher(T.linhas[R.estado], { titulo: m.titulo }));
   }
 
+  /* do vilão vão T.notas.doVilao: o fim antes de tudo, depois o passo mais
+     recente que se cumpriu, depois as reações */
   const notas = [
     ...candidatas.sort((a, b) => a.prio - b.prio).slice(0, T.notas.max).map((c) => c.texto),
-    ...doVilao.slice(0, T.notas.doVilao),
+    ...[doFim, ...[...dosPassos].reverse(), ...doVilao].filter(Boolean).slice(0, T.notas.doVilao),
   ];
 
   /* o estado novo: só os campos que mudaram */
@@ -428,6 +479,7 @@ function correr(E0, opcoes, antes) {
   if (J(h) !== J(h0)) estado.historia = h;
   if (personagem !== E0.personagem && J(personagem) !== J(E0.personagem)) estado.personagem = personagem;
   if (npcs !== E0.npcs && J(npcs) !== J(E0.npcs)) estado.npcs = npcs;
+  if (factos !== E0.factos && J(factos) !== J(E0.factos)) estado.factos = factos;
   return { estado, efeitos, notas, linhas };
 }
 
@@ -494,7 +546,17 @@ export function aMesaDasQuests(estado, opcoes) {
       naoPode.push(...arr(mv.naoPode));
       if (mao && um && um.mao && um.mao.quem) naoPode.push(encher(T.veto, { quem: um.mao.quem }));
     }
-    return { comQuest, passo, mao, naoPode };
+    /* O FAVOR: o mais recente dos lugares onde o herói está agora */
+    let favor = "";
+    try {
+      const aqui = favoresDoLivro(E.factos).filter((f) => avaliarCondicao(["esta_em", "lugar:x"], { estado: E, papeis: { x: { tipo: "lugar", nome: f.nome, id: f.id } }, mundo }));
+      const f = aqui.sort((a, b) => (b.dia || 0) - (a.dia || 0))[0];
+      if (f) {
+        const F = f.de ? questPorId(f.de) : null;
+        favor = corta(encher(T.favor.linha, { lugar: f.nome, desde: F ? encher(T.favor.desde, { titulo: F.titulo }) : "" }), T.favor.teto);
+      }
+    } catch { favor = ""; }
+    return { comQuest, passo, mao, naoPode, favor };
   } catch { return null; }
 }
 

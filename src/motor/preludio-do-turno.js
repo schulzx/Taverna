@@ -132,6 +132,7 @@ import { atributoEfetivo } from "../regras-jogo.js";
 import { bonusProficiencia, ehProficiente, resumoEpico } from "../regras.js";
 import { processarDiaReino } from "../reino.js";
 import { barraDe } from "../relogios.js";
+import { leiturasDoPlano } from "./efeitos-da-quest.js";
 import { alvoDaForma, diasEntreRegasDe, elegerReviravoltas, garantirReviravolta, maiorPodeNascer, menorPodeNascer, oDiaSeguinte, quemPodeRevelar, revelacaoDe, sementesDaReviravolta } from "../reviravoltas.js";
 import { caiuOFio, fatosQueFecham, garantirEspinha, oRostoEspera, progressoDoAto } from "../saga.js";
 import { LUGARES, ocupados as ocupadosDaSala } from "../sala.js";
@@ -1159,6 +1160,13 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
           rostoCaiu = !!v.conhecido || faseVilao >= 3;
           alvoDoVilao = faseVilao >= 2 && Array.isArray(v.marcas) && v.marcas.length > 0;
         }
+      } catch (e) {}
+      /* 09/11 (as consequências caladas): o vilão do plano (mundos novos) muda
+         a postura quando um passo cumprido — ou o fim — a traz no que muda
+         (leiturasDoPlano, motor/efeitos-da-quest.js); junta-se à nemesis */
+      try {
+        const pl = leiturasDoPlano($ref.espinha);
+        if (pl) { faseVilao = Math.max(faseVilao, pl.faseVilao); rostoCaiu = rostoCaiu || pl.rostoCaiu; alvoDoVilao = alvoDoVilao || pl.heroiAlvoDoVilao; }
       } catch (e) {}
       let estacaoDura = false;
       try { estacaoDura = estacaoDe($ref.dia).id === "inverno"; } catch (e) {}

@@ -57,7 +57,7 @@
    ============================================================ */
 import {
   idDaPessoa, idDoLugar, pessoaDoLivro, grauDeAfeicao,
-  conheceu, conversou, derrotou, poupou, afeicaoAlcancada, esteve, descobriu,
+  conheceu, conversou, derrotou, poupou, afeicaoAlcancada, esteve, descobriu, deveFavor,
 } from "./livro-de-factos.js";
 import { elencoDoLivro } from "./motor/livro-do-turno.js";
 import { situacaoDe, SITUACOES, lugarConcluido } from "./mundo-base.js";
@@ -203,6 +203,13 @@ export const CONDICOES = Object.freeze({
     args: [A.lugar], le: ["livro"], facto: "descobriu", volta: false,
     portas: [PORTA_DO_CRONISTA],
     texto: "descobrir o que {0} esconde", nao: "deixar {0} guardar o segredo" }),
+  /* 09/11 (as consequências caladas): o favor que uma quest deixou a dever
+     (o efeito «favor», escrito no livro pelo motor das quests) — uma quest
+     seguinte pode pedi-lo («ter a dever {0}») ou vetá-lo */
+  deve_favor: Object.freeze({
+    args: [A.lugar], le: ["livro"], facto: "favor", volta: false,
+    portas: [P("src/motor/quests-do-turno.js", "oTurnoDasQuests", "as consequências das quests: o efeito «favor» escreve-o no livro de factos")],
+    texto: "ter {0} a dever-te um favor", nao: "nunca ficar com {0} a dever-te nada" }),
   concluiu: Object.freeze({
     args: [A.lugar], le: ["base"], volta: false,
     portas: [P("src/mundo-base.js", "concluirLugar", "a masmorra que chegou ao fundo")],
@@ -448,6 +455,7 @@ const LEITURAS = {
   esteve: (c, [l]) => ({ v: esteve(c.factos, l.id) }),
   esta_em: (c, [l]) => ({ v: idsDeAqui(c).includes(l.id) }),
   descobriu: (c, [l]) => ({ v: descobriu(c.factos, l.id) }),
+  deve_favor: (c, [l]) => ({ v: deveFavor(c.factos, l.id) }),
   concluiu: (c, [l]) => ({ v: lugarConcluido(c.base, nomeDaBase(l)) }),
   /* a coisa pelo nome inteiro, palavra a palavra, dentro do nome do que se
      leva («a carta» está em «carta selada de Brás»; «Espada» não está em

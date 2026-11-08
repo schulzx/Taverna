@@ -139,6 +139,10 @@ function cheio() {
   base = porSituacao(base, "Teodoro", SITUACOES.ferida);
   let npcs = registrarConsulta(e.npcs, "Teodoro");
   npcs = { ...npcs, Teodoro: firmarLaco(npcs.Teodoro, "amizade", 3), Lia: mesclarNPC(npcs.Lia, { relacao: "aliado" }) };
+  /* 09/11: o favor pela porta do livro que o motor das quests chama (o
+     efeito «favor»), com o id que o papel resolveu — a mesma régua */
+  const desvio = resolverPapeis({ desvio: PAPEIS.desvio }, e).papeis.desvio;
+  e = { ...e, factos: anotarTurno(e.factos, { dia: 3, favores: [{ lugar: desvio, de: "o_salvo_conduto" }] }).factos };
   return { ...e, baseMundo: base, npcs, dia: 7, personagem: { ...e.personagem, inventario: [{ nome: "Carta selada de Brás" }] } };
 }
 const VERDADE = {
@@ -156,6 +160,7 @@ const VERDADE = {
   esta_em: ["esta_em", "lugar:desvio"],
   descobriu: ["descobriu", "lugar:covil"],
   concluiu: ["concluiu", "lugar:covil"],
+  deve_favor: ["deve_favor", "lugar:desvio"],
   tem: ["tem", "item:carta"],
   dia: ["dia", 7],
   /* BQ4 (08/11): `escolheu` e `etapa` deixaram de estar reservados — leem

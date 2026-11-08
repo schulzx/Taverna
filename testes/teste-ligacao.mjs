@@ -481,6 +481,35 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
   t(`${tot} regras do motor varridas, nenhuma sem leitor${mortos.length ? " — " + mortos.join(", ") : ""}`, mortos.length === 0);
 }
 
+sec("2c. O ACERVO (src/acervo/) — os lotes de quests e de planos, um ficheiro cada");
+{
+  /* 09/11 (BQ8, lote 4): o acervo da biblioteca passou a viver um lote por
+     ficheiro, em src/acervo/ (quests-lote-N.js, planos-lote-N.js), para que
+     duas mãos escrevam dois lotes ao mesmo tempo. As secções de cima só leem
+     src/ e src/motor/: um lote que ninguém importasse ficava fora do
+     catálogo sem que nada o dissesse. A régua é a mesma: todo ficheiro do
+     acervo é importado por um módulo de src/ (a biblioteca, o plano do
+     vilão), e todo export tem leitor além da própria definição. */
+  const DIRA = path.join(DIR, "acervo");
+  const acervo = fs.existsSync(DIRA) ? fs.readdirSync(DIRA).filter((f) => /.js$/.test(f)) : [];
+  const fonteA = Object.fromEntries(acervo.map((f) => [f, fs.readFileSync(path.join(DIRA, f), "utf8")]));
+  const deSrc = [...Object.values(fonte), ...MOTOR_FONTES];
+  const mudosA = acervo.filter((f) => !deSrc.some((g) => g.includes(`/acervo/${f}"`)));
+  t(`todo lote de src/acervo/ é importado por um módulo de src/ (${acervo.length} lotes)${mudosA.length ? " — mudos: " + mudosA.join(", ") : ""}`, mudosA.length === 0);
+  t("e nenhum lote importa outro módulo (a ficha é dado; quem a lê e a valida é a biblioteca)", acervo.every((f) => !/^import /m.test(fonteA[f])));
+  const RXA = /^export (?:async )?(?:function|const|class) ([A-Za-z_][A-Za-z0-9_]*)/gm;
+  const mortosA = [];
+  for (const f of acervo) {
+    for (const m of fonteA[f].matchAll(RXA)) {
+      const rx = new RegExp("\\b" + m[1] + "\\b", "g");
+      let c = (txtProvas.match(rx) || []).length;
+      for (const g of [...deSrc, ...Object.values(fonteA)]) c += (g.match(rx) || []).length;
+      if (c <= 2) mortosA.push(`acervo/${f}:${m[1]}`);
+    }
+  }
+  t(`todo export do acervo tem leitor além do import${mortosA.length ? " — " + mortosA.join(", ") : ""}`, mortosA.length === 0);
+}
+
 sec("3. AS DUAS QUE ESTA VARREDURA ACHOU");
 {
   /* "Comando: Atacar" custa um ponto no rank 2 e promete "sua invocação

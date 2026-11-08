@@ -179,7 +179,13 @@ console.log("\n6. BQ7b · cada efeito da tela, e o órgão que o aplica");
   t("dia sem número, ou negativo: nada", p({ tipo: "dia" }).length === 0 && p({ tipo: "dia", n: -1 }).length === 0);
   /* os calados e os do Narrador */
   t("os sem órgão calam com o motivo da tabela", Object.keys(T.calado).every((k) => { const r = p({ tipo: k, n: 1 }); return r.length === 1 && r[0].ordem === "calado" && r[0].motivo === T.calado[k]; }));
-  t("calam o relógio regional, o favor, o QUEM É e os dois do plano do vilão", ["relogio_regional", "favor", "quem_e", "passo_do_plano", "fim_do_plano"].every((k) => T.calado[k]));
+  /* MUDADA em 09/11 (as consequências caladas): os cinco que calavam ganharam
+     órgão — o favor e o QUEM É vão ao livro de factos pelo motor
+     (QUESTS_DO_TURNO.aplica), o relógio da região e o plano do vilão por
+     esta peça (EFEITOS_NA_TELA.orgao). A intenção fica: nenhum dos cinco
+     cai calado inteiro; o que ainda cala do plano cala por coisa, com o
+     motivo (MUDA_DO_PLANO) — provado em teste-consequencias-caladas.mjs */
+  t("o relógio regional e os dois do plano do vilão têm órgão; o favor e o QUEM É aplica-os o motor", ["relogio_regional", "passo_do_plano", "fim_do_plano"].every((k) => T.orgao[k] && !T.calado[k]) && ["favor", "quem_e"].every((k) => QUESTS_DO_TURNO.aplica.includes(k) && !T.calado[k]));
   t("os que só vão ao Narrador não pedem nada à tela (o motor já os pôs nas notas)", T.soNarrador.every((k) => p({ tipo: k, id: "x" }).length === 0));
   t("um tipo desconhecido cala, sem órgão", p({ tipo: "inventado" })[0].motivo === T.semOrgao);
   t("lixo nunca lança", [null, undefined, 3, "x", {}, { tipo: 4 }].every((x) => { try { return Array.isArray(oQueOEfeitoPede(x, null)); } catch { return false; } }));
@@ -233,8 +239,11 @@ console.log("\n8. BQ7b · a fiação no App: os efeitos, os rostos, o foco, o n�
     && ap.includes("npcsRef.current = o.npcs; setNpcs(o.npcs);") && ap.includes("porSituacao(baseMundoRef.current, o.nome, o.situacao); setBaseMundo(baseMundoRef.current);") && ap.includes("morrerNaQuest(o);"));
   t("o que o relógio diz do dia (o reino, a festa) vai ao Narrador", ap.includes("notaRef.current = notaComOTurno(notaRef.current, [tx.trim()]);"));
   t("cada ordem em calou", ap.includes('} catch (e) { calou("BQ7b · " + ef.tipo + " · " + o.ordem, e); }'));
+  /* MOVIDA em 09/11 (as consequências caladas): o estado das quests passou a
+     levar também os relógios (`relogios: relogiosRef.current`), para o
+     `relogio_regional` escolher quais andam; a intenção fica — leva a base */
   t("o estado das quests leva a base do mundo (as condições «situacao» e «morto» leem-na), e a memória das escolhas também a olha",
-    app.includes("saber: saberRef.current, baseMundo: baseMundoRef.current });") && corpo("escolhasAgora").includes("c.base === E.baseMundo"));
+    app.includes("saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current });") && corpo("escolhasAgora").includes("c.base === E.baseMundo"));
   /* os rostos */
   t("o rosto é um componente de fora do render (RostoDaQuest), antes de Taverna()", /\nfunction RostoDaQuest\(\{ semente, ente = null, lado = 44 \}\) \{/.test(app) && app.indexOf("function RostoDaQuest(") < app.indexOf("export default function Taverna()"));
   t("e enche o aro que a peça der (viewBox, 100%), sem a carta por trás", /function RostoDaQuest[\s\S]{0,200}<svg width="100%" height="100%" viewBox="0 0 64 64"[\s\S]{0,200}<Rosto semente=\{semente\} ente=\{ente\} lado=\{lado\} \/>/.test(app));

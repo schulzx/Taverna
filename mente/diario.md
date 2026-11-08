@@ -24,6 +24,13 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 09/11 · v9.627 · as quatro consequências caladas, e o lote 4 do acervo
+- **a palavra:** «A prosa tocável é interessante, os outros dois não são necessários, prossiga para o que falta, termine o acervo e as quatro consequências caladas, depois faça a prosa tocável, e então avaliamos uma sessão teste». As duas recusadas foram para «Recusado» em `pauta-desenho.md`.
+- **as consequências (`backend`):** `relogio_regional` (só a ameaça e a caçada andam — o mapa é uma região só; tabela `RELOGIOS_DA_REGIAO`, pelo `tiquear` de sempre); `favor` (tipo novo no livro de factos, a condição `deve_favor`, uma linha em «O QUE VOLTA» com o herói no lugar); `quem_e` (linha durável no livro, que o Cronista não apaga, lida por `quemEParaPauta`); o plano do vilão (`MUDA_DO_PLANO`: o relógio anda com a obra como causa, o «amado» perde um grau, a postura vira para a Sombra; base, porta, estrada, perigo e cativeiro calados com o motivo; cada passo cumprido manda a obra ao Narrador como facto longe). Eu liguei as três linhas no App (bastão de minutos).
+- **o lote 4 (`backend`):** a casa nova — cada lote no seu ficheiro (`src/acervo/quests-lote-N.js`, `planos-lote-N.js`), para correrem em paralelo. Dez quests (À Luz do Dia: a besta mostra-se ao meio-dia; O Fundo da Toca; O Fundo da Pedreira; O Enforcado de Amanhã; O Livro dos Nomes; As Mãos Que Curam; Do Outro Lado do Vau; e do coração A Palavra Dada a Um Enforcado, A Vida Que Se Deve, A Farda Debaixo do Colchão) e quatro planos (16 de 20). **O vilão-fera à mesa: 289 → 0**; partilha média 2,35 → 1,64; passo 4 por contestar nas espinhas de 4 atos 216 → 81.
+
+---
+
 ## 08/11 · v9.626 · a campanha nova já não herda nada da anterior
 - **o `oficial` (bastão 09:28–09:51 e 09:53–10:09):** (1) a base do mundo repõe-se no começo de `iniciar`, antes da primeira composição do esqueleto — sem companheiro, o núcleo lia a base da campanha anterior; provado com duas campanhas seguidas no navegador (a base da primeira suja de propósito: zero nomes partilhados nos papéis da segunda). (2) o sino da abertura cala num mundo com esqueleto quando a quest do ato 0 tomou o lugar da principal antiga (apontava para «O Cervo Lento», alheio à quest). (3) **o defeito irmão:** `iniciar` não repunha doze refs de campanha — promessas, reviravoltas, escada, escuta, gestos, fatos do peso, episódio, a Noite e a postura —, e uma campanha nova na mesma sessão herdava o Livro de Promessas e a reviravolta da anterior. Repostas só numa campanha nova (não no capítulo, não na Noite, que semeia o Livro antes).
 

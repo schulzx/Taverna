@@ -7237,7 +7237,7 @@ export default function Taverna() {
      (condicoes-da-quest.js, «E.baseMundo»), e sem ela toda a gente era livre
      e ninguém morria para as quests; o save, o replay e o servidor já a
      levam (é campo do save) */
-  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current });
+  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current });
   /* os efeitos que só a tela aplica: cada um pelo órgão que já existe; o que
      não tem órgão no App cala-se (nunca se inventa a regra dele aqui).
      BQ7b: a conta de cada um mora em motor/efeitos-da-quest.js
@@ -7282,6 +7282,10 @@ export default function Taverna() {
           baseMundoRef.current = porSituacao(baseMundoRef.current, o.nome, o.situacao); setBaseMundo(baseMundoRef.current);
         } else if (o.ordem === "morte") {
           morrerNaQuest(o);
+        } else if (o.ordem === "relogios") {
+          /* 09/11 · as consequências caladas: os relógios da região andam pelo
+             `tiquear` de sempre (a linha à vista, o envelope do relógio cheio) */
+          tiquear(null, { quanto: o.quanto, porque: o.porque, apenasIds: o.ids });
         } else if (o.ordem === "calado") {
           calou("BQ7 · efeito sem órgão no App: " + o.tipo, new Error(o.motivo || (EFEITOS_NA_TELA.calado[o.tipo] || EFEITOS_NA_TELA.semOrgao)));
         }
@@ -7299,6 +7303,7 @@ export default function Taverna() {
     try { if (e.historia) historiaRef.current = e.historia; } catch (err) { calou("BQ7 · " + onde + " · o arco", err); }
     try { if (e.personagem) { personagemRef.current = e.personagem; setPersonagem(e.personagem); } } catch (err) { calou("BQ7 · " + onde + " · a ficha", err); }
     try { if (e.npcs) { npcsRef.current = e.npcs; setNpcs(e.npcs); } } catch (err) { calou("BQ7 · " + onde + " · a gente", err); }
+    try { if (e.factos) factosRef.current = e.factos; } catch (err) { calou("BQ7 · " + onde + " · o livro", err); }
     try { if (notas.length) notaRef.current = notaComOTurno(notaRef.current, notas); } catch (err) { calou("BQ7 · " + onde + " · a nota", err); }
     try { if (linhas.length) pushMsgs(linhas.map((texto) => ({ autor: "sistema", texto }))); } catch (err) { calou("BQ7 · " + onde + " · o relato", err); }
     for (const ef of efeitos) { try { aplicarEfeitoDaQuest(ef); } catch (err) { calou("BQ7 · " + onde + " · " + (ef && ef.tipo), err); } }

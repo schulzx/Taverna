@@ -311,6 +311,38 @@ const VIVOS = [], CHEIOS = [], DE_HOJE = [];
   console.log(`      · passos sem quest que os conteste (atos → { passo: campanhas }): ${J(semC)}`);
   t("com quatro atos, o passo 4 já é contestado em parte das campanhas (o lote 3: O Último a Sair, 3 e 4)", semC[4] && (semC[4][4] || 0) < semC[4].campanhas);
 
+  /* O LOTE 4 (09/11): o que o esqueleto mediu no lote 3, agora catraca.
+     1. O vilão que é bicho (o chefe principal sem vírgula, a régua de
+        naturezaDe) nunca ocupa o papel `vilao` de uma quest que não o
+        aceite — já não se senta à mesa do Convite nem paga o Velório —, e
+        tem rosto e confronto na mesma (as quests que o aceitam).
+     2. Nos mundos sem nenhum servo que seja gente, o passo 3 é contestado.
+     3. O passo 4 das espinhas de quatro atos ficava por contestar em 216 de
+        500 campanhas; o lote 4 (O Enforcado de Amanhã, do meio, 3 e 4) baixa-o. */
+  let feras = 0, feraForaDoQueAceita = 0, feraComRosto = 0, feraDemonstracao = 0, semServoGente = 0, semGenteP3 = 0;
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    if (!k) continue;
+    const ehBicho = (c) => c && c.especie && !String(c.nome).includes(",") && norm2(c.nome).startsWith(norm2(c.especie));
+    const principal = w.chefes.find((c) => norm2(c.nome) === norm2(w.espinha.fio.antagonista));
+    const servos = k.vilao.tenentes.map((x) => w.chefes.find((c) => norm2(c.nome) === norm2(x.nome)));
+    if (servos.length && servos.every(ehBicho)) { semServoGente++; if (!k.semContestacao.includes(3)) semGenteP3++; }
+    if (!ehBicho(principal)) continue;
+    feras++;
+    for (const a of k.atos.filter((x) => x.quest)) {
+      const v = Object.values(questPorId(a.quest).papeis).find((p) => p.de === "fio" && p.papel === "vilao");
+      if (v && !(v.aceita || PAPEIS_DA_QUEST.fio.aceitaOVilao).includes("fera")) feraForaDoQueAceita++;
+    }
+    const rosto = k.atos.find((a) => a.mao === "rosto");
+    if (rosto) { feraComRosto++; if (J(Object.values(questPorId(rosto.quest).papeis).find((p) => p.papel === "vilao").aceita) === J(["fera"])) feraDemonstracao++; }
+  }
+  console.log(`      · vilão-bicho: ${feras} mundos; numa quest que não o aceita: ${feraForaDoQueAceita}; com rosto: ${feraComRosto}, dos quais de demonstração (só de fera): ${feraDemonstracao}`);
+  console.log(`      · mundos sem nenhum servo gente: ${semServoGente}; com o passo 3 contestado: ${semGenteP3}`);
+  t("o vilão que é bicho nunca se senta numa cena que não o aceita (o Convite, o Velório), e tem um rosto de demonstração em parte dos mundos",
+    feras > 0 && feraForaDoQueAceita === 0 && feraDemonstracao > 0);
+  t("nos mundos sem nenhum servo gente, o passo 3 é contestado na mesma (um servo que pode ser bicho)", semServoGente > 0 && semGenteP3 === semServoGente, `${semGenteP3}/${semServoGente}`);
+  t("com quatro atos, o passo 4 fica por contestar em menos de um quarto das campanhas (eram 216 de 500 antes do lote 4)", semC[4] && (semC[4][4] || 0) < semC[4].campanhas / 4, `${semC[4] && semC[4][4]}/${semC[4] && semC[4].campanhas}`);
+
   /* 4. O PRIMEIRO NOME: o livro e o registo da gente acham alguém também pelo
      primeiro nome — «Osric» da cidade e «Osric Passo-de-Gato, a Praga Mansa»
      ficavam com o mesmo id. Nenhum papel de gente partilha o primeiro nome

@@ -47,7 +47,11 @@ const CTX13 = { npcs: S13.npcs, cidade: S13.cidadeAtual, heroi: "Ilse Varga" };
 sec("§1 as tabelas: cada tipo de facto diz de onde vem, e escreve-se");
 {
   const tipos = Object.keys(TIPOS_DE_FACTO);
-  t("os tipos de facto são os da planta (§3/§4) e o nomeado à parte", J(tipos) === J(["nomeado", "visto", "falou", "afeicao", "derrotado", "recebeu", "prometeu", "esteve", "descobriu"]));
+  /* MUDADA em 09/11 (as consequências caladas da BQ7b): o livro ganhou dois
+     factos que as quests deixam e mais nenhum órgão guardava — o favor que um
+     lugar deve (`favor`) e a linha durável do QUEM É (`quemE`). A intenção
+     fica: a lista é fechada, e quem a alarga tem de vir aqui dizê-lo. */
+  t("os tipos de facto são os da planta (§3/§4), o nomeado à parte, e os dois das quests", J(tipos) === J(["nomeado", "visto", "falou", "afeicao", "derrotado", "recebeu", "prometeu", "esteve", "descobriu", "favor", "quemE"]));
   t("cada tipo é de uma pessoa ou de um lugar", tipos.every((k) => ["pessoa", "lugar"].includes(TIPOS_DE_FACTO[k].de)));
   t("cada tipo tem um peso numérico e uma forma no save", tipos.every((k) => Number.isFinite(TIPOS_DE_FACTO[k].peso) && typeof TIPOS_DE_FACTO[k].forma === "string"));
   /* a causa (d) da planta: o que o jogo ainda não escreve DIZ que não escreve */
@@ -69,6 +73,8 @@ sec("§1 as tabelas: cada tipo de facto diz de onde vem, e escreve-se");
     prometeu: { promessas: [{ a: "Bruna", o: "achar o irmão dela" }] },
     esteve: { lugar: { nome: "A Lanterna", cidade: "Foz" } },
     descobriu: { segredos: ["A Lanterna"] },
+    favor: { favores: [{ lugar: { nome: "A Lanterna", cidade: "Foz" }, de: "o_salvo_conduto" }] },
+    quemE: { quemE: [{ quem: "Bruna", o: "carrega a carta de um morto", de: "a_carta_que_nao_se_abre" }] },
   };
   for (const k of tipos) {
     const r = anotarTurno(null, { ...ctx, ...um[k] });

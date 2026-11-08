@@ -1597,6 +1597,9 @@ elemento cuja largura não carrega informação**; e `A marca de borda` foi
 
 ## Recusado (com o motivo — para a mente não propor de novo)
 
+- **«O fio do que podia ter sido»** (`formas.md` §BQ 11, o mapa das escolhas não feitas) e **«o céu como última tela da campanha»** (§AR 13, «Guardar o céu») · recusadas pela pessoa a 09/11: *«os outros dois não são necessários»*. Não se propõem de novo.
+- **Aprovada no mesmo dia, para depois do acervo e das consequências:** a prosa tocável (`formas.md` «TL», TL 10) — os nomes no texto do Mestre abrem a ficha.
+
 _(vazio)_
 
 ## Fases fechadas (o texto saiu para a estante)

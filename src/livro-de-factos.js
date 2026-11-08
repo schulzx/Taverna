@@ -63,7 +63,14 @@ import { MARCOS_VINCULO } from "./vinculos.js";
    um terço disso —, e o comum é muito menos.
    `vezNova.turnos`: duas conversas com a mesma pessoa contam como DUAS
    vezes quando entre elas passaram mais do que estes turnos, ou mudou o
-   dia — falar do T2 ao T5 é UMA conversa, não quatro. */
+   dia — falar do T2 ao T5 é UMA conversa, não quatro.
+   `quemE` (09/11, as consequências caladas): as linhas que uma quest
+   escreve no QUEM É de alguém (o efeito «quem_e») — `porPessoa` ficam (as
+   mais recentes), cada uma até `linha` caracteres (a mais longa do acervo
+   tem 75), e no livro inteiro nunca mais de `total` (sai a mais velha):
+   24 × 90 são 2 160 caracteres, e uma campanha de doze quests escreve
+   menos de metade disso. `favor`: o id da quest que o deixou (o RX dos ids
+   da ficha, 40). */
 export const LIVRO_DE_FACTOS = Object.freeze({
   v: 1,
   pessoas: 120,
@@ -75,6 +82,8 @@ export const LIVRO_DE_FACTOS = Object.freeze({
   id: 120,
   chars: 50000,
   vezNova: Object.freeze({ turnos: 3 }),
+  quemE: Object.freeze({ porPessoa: 2, linha: 90, total: 24 }),
+  favor: Object.freeze({ de: 40 }),
 });
 
 /* ---------------- OS TIPOS DE FACTO ----------------
@@ -109,6 +118,13 @@ export const TIPOS_DE_FACTO = Object.freeze({
     porta: "o lugar e a cidade no fim do turno (lugarRef, cidadeAtualRef)" }),
   descobriu: Object.freeze({ de: "lugar", entrada: "segredos", peso: 3, forma: "{ dia }",
     porta: "segredosReveladosNoTurno (saga.js), com o herói no lugar" }),
+  /* 09/11 (as consequências caladas da BQ7b): o que uma quest deixa no
+     mundo e mais nenhum órgão guardava. Pesam como a luta e o segredo: o
+     teto não tira um favor por dever nem a linha que a história escreveu. */
+  favor: Object.freeze({ de: "lugar", entrada: "favores", peso: 3, forma: "{ dia, de }",
+    porta: "as consequências das quests (motor/quests-do-turno.js, o efeito «favor»): o lugar fica a dever ao herói" }),
+  quemE: Object.freeze({ de: "pessoa", entrada: "quemE", peso: 3, forma: "[{ o, dia, de }]",
+    porta: "as consequências das quests (motor/quests-do-turno.js, o efeito «quem_e»): uma linha do QUEM É que o Cronista não reescreve" }),
 });
 
 /* ---------------- COMO ALGUÉM CAI ----------------
@@ -351,7 +367,19 @@ function pessoaLimpa(p) {
   const pro = arr(o.prometeu).map((x) => obj(x)).filter((x) => x && limpo(x.o, LIVRO_DE_FACTOS.texto))
     .map((x) => ({ o: limpo(x.o, LIVRO_DE_FACTOS.texto), dia: inteiro(x.dia) })).slice(-LIVRO_DE_FACTOS.prometeu);
   if (pro.length) out.prometeu = pro;
+  const qe = linhasLimpas(o.quemE);
+  if (qe.length) out.quemE = qe;
   return Object.keys(out).some((k) => k !== "nome") ? out : null;
+}
+/* as linhas do QUEM É: texto de mundo, a mesma linha uma vez só (a de
+   antes fica com o dia dela), as mais recentes */
+function linhasLimpas(x) {
+  const L = LIVRO_DE_FACTOS.quemE;
+  const vistas = new Set();
+  return arr(x).map((y) => obj(y)).filter((y) => y && limpo(y.o, L.linha))
+    .map((y) => ({ o: limpo(y.o, L.linha), dia: inteiro(y.dia), ...(limpo(y.de, LIVRO_DE_FACTOS.favor.de) ? { de: limpo(y.de, LIVRO_DE_FACTOS.favor.de) } : {}) }))
+    .filter((y) => { const k = semAc(y.o); if (vistas.has(k)) return false; vistas.add(k); return true; })
+    .slice(-L.porPessoa);
 }
 function lugarLimpo(l) {
   const o = obj(l);
@@ -362,6 +390,8 @@ function lugarLimpo(l) {
   const m = marcaLimpa(o.esteve);
   if (m) out.esteve = m;
   if (obj(o.descobriu)) out.descobriu = { dia: inteiro(o.descobriu.dia) };
+  const fv = obj(o.favor);
+  if (fv) out.favor = { dia: inteiro(fv.dia), ...(limpo(fv.de, LIVRO_DE_FACTOS.favor.de) ? { de: limpo(fv.de, LIVRO_DE_FACTOS.favor.de) } : {}) };
   return Object.keys(out).some((k) => k !== "nome") ? out : null;
 }
 
@@ -417,6 +447,28 @@ export function garantirFactos(x, opcoes) {
     }
     out[campo] = aparar(out[campo], LIVRO_DE_FACTOS[campo], protegidos);
   }
+  out.pessoas = apararLinhas(out.pessoas);
+  return out;
+}
+/* o teto das linhas do QUEM É no livro inteiro (LIVRO_DE_FACTOS.quemE.total):
+   sai a mais velha (o dia; o id e a ordem desempatam — a mesma em qualquer
+   máquina). Abaixo do teto, o mapa sai como entrou. */
+function apararLinhas(pessoas) {
+  const todas = [];
+  for (const id of Object.keys(pessoas)) arr(pessoas[id].quemE).forEach((l, i) => todas.push({ id, i, dia: Number.isFinite(l.dia) ? l.dia : -1 }));
+  const total = LIVRO_DE_FACTOS.quemE.total;
+  if (todas.length <= total) return pessoas;
+  todas.sort((a, b) => a.dia - b.dia || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0) || a.i - b.i);
+  const sai = new Set(todas.slice(0, todas.length - total).map((x) => x.id + "#" + x.i));
+  const out = {};
+  for (const id of Object.keys(pessoas)) {
+    const e = pessoas[id];
+    if (!arr(e.quemE).some((l, i) => sai.has(id + "#" + i))) { out[id] = e; continue; }
+    const fica = e.quemE.filter((l, i) => !sai.has(id + "#" + i));
+    const { quemE, ...resto } = e;
+    const novo = fica.length ? { ...resto, quemE: fica } : resto;
+    if (Object.keys(novo).some((k) => k !== "nome")) out[id] = novo;
+  }
   return out;
 }
 
@@ -455,6 +507,10 @@ const comoDe = (d) => {
      afeicoes: [{ quem, grau | vinculo | laco }]
      entregas: [{ a, item }]  — porta ainda por fazer
      promessas: [{ a, o }]    — porta ainda por fazer
+     favores: [{ lugar, de }] — o lugar (o papel da quest, com id) que fica a
+                                dever ao herói; `de`, a quest (09/11)
+     quemE: [{ quem, o, de }] — a linha que a quest escreve no QUEM É de
+                                alguém (`quem`: o id do papel, ou o nome)
      lugar: { nome, cidade, dentroDe, id?, chave? } | nome
      naEstrada: true          — em viagem, a cidade não conta como visitada
      segredos: [nome do lugar] — segredosReveladosNoTurno
@@ -539,6 +595,16 @@ export function anotarTurno(livro, ocorrido) {
     tocar(r, (e) => (arr(e.prometeu).some((p) => semAc(p.o) === semAc(texto)) ? e
       : { ...e, prometeu: [...arr(e.prometeu), { o: texto, dia }].slice(-LIVRO_DE_FACTOS.prometeu) }));
   }
+  /* o QUEM É que a quest escreve: a mesma linha não entra duas vezes */
+  for (const a of arr(o.quemE)) {
+    const x = obj(a);
+    const linha = x && limpo(x.o, LIVRO_DE_FACTOS.quemE.linha);
+    const r = linha && resolver(x.quem);
+    if (!r) continue;
+    const de = limpo(x.de, LIVRO_DE_FACTOS.favor.de);
+    tocar(r, (e) => (arr(e.quemE).some((l) => semAc(l.o) === semAc(linha)) ? e
+      : { ...e, quemE: [...arr(e.quemE), { o: linha, dia, ...(de ? { de } : {}) }].slice(-LIVRO_DE_FACTOS.quemE.porPessoa) }));
+  }
 
   /* os lugares: o sítio, o prédio de que ele é cómodo, e a cidade */
   const ctxL = { cidade: o.cidade, chaveDoLugar: o.chaveDoLugar };
@@ -563,10 +629,22 @@ export function anotarTurno(livro, ocorrido) {
     estar(id, nome);
     if (!lugares[id].descobriu) lugares[id] = { ...lugares[id], descobriu: { dia } };
   }
+  /* o favor: o primeiro fica (o dia em que se ficou a dever) — dever duas
+     vezes ao mesmo lugar não é um favor maior, é o mesmo */
+  for (const f of arr(o.favores)) {
+    const x = obj(f);
+    const l = x && (typeof x.lugar === "string" ? { nome: x.lugar } : obj(x.lugar));
+    const id = l ? idDoLugar(l, ctxL) : "";
+    if (!id) continue;
+    const atual = lugares[id] || {};
+    if (atual.favor) continue;
+    const de = limpo(x.de, LIVRO_DE_FACTOS.favor.de);
+    lugares[id] = { ...atual, nome: atual.nome || limpo(l.nome || (l.cidade || "")), favor: { dia, ...(de ? { de } : {}) } };
+  }
 
   const protegidos = arr(o.protegidos).filter((id) => typeof id === "string");
   return {
-    factos: { v: LIVRO_DE_FACTOS.v, pessoas: aparar(pessoas, LIVRO_DE_FACTOS.pessoas, protegidos), lugares: aparar(lugares, LIVRO_DE_FACTOS.lugares, protegidos) },
+    factos: { v: LIVRO_DE_FACTOS.v, pessoas: apararLinhas(aparar(pessoas, LIVRO_DE_FACTOS.pessoas, protegidos)), lugares: aparar(lugares, LIVRO_DE_FACTOS.lugares, protegidos) },
     notas,
   };
 }
@@ -603,6 +681,30 @@ export function entregou(livro, id, item) {
 export const esteve = (livro, id) => !!obj((doLugar(livro, id) || {}).esteve);
 /* o segredo do lugar caiu com o herói lá */
 export const descobriu = (livro, id) => !!obj((doLugar(livro, id) || {}).descobriu);
+/* o lugar deve um favor ao herói (09/11: o efeito «favor» das quests) */
+export const deveFavor = (livro, id) => !!obj((doLugar(livro, id) || {}).favor);
+
+/* ---------------- O QUE A QUEST DEIXOU, PARA QUEM O LÊ (09/11) ----------------
+   favoresDoLivro(livro) → [{ id, nome, dia, de }] — os lugares que devem um
+     favor ao herói (a pauta di-lo quando ele lá está, motor/quests-do-turno.js
+     aMesaDasQuests);
+   linhasDoQuemE(livro) → [{ id, nome, linhas: [texto] }] — as linhas que as
+     quests escreveram no QUEM É de alguém (a pauta junta-as à ficha da
+     pessoa em cena, nucleo.js quemEParaPauta).
+   Pela ordem do livro; lixo: []. */
+export function favoresDoLivro(livro) {
+  const l = obj(livro);
+  const ls = (l && obj(l.lugares)) || {};
+  return Object.keys(ls).filter((id) => obj(obj(ls[id]) && ls[id].favor))
+    .map((id) => ({ id, nome: limpo(ls[id].nome) || id.split("|").pop(), dia: inteiro(ls[id].favor.dia), de: limpo(ls[id].favor.de, LIVRO_DE_FACTOS.favor.de) }));
+}
+export function linhasDoQuemE(livro) {
+  const l = obj(livro);
+  const ps = (l && obj(l.pessoas)) || {};
+  return Object.keys(ps).map((id) => ({ id, e: obj(ps[id]) || {} }))
+    .map(({ id, e }) => ({ id, nome: limpo(e.nome) || id.split("|").pop(), linhas: linhasLimpas(e.quemE).map((x) => x.o) }))
+    .filter((x) => x.linhas.length && x.nome);
+}
 
 /* ---------------- A PORTA DAS ETAPAS DE ANTES (BQ2, 08/11) ----------------
    As etapas que nasceram antes do livro (`falar_com` das missões e da

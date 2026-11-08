@@ -64,6 +64,7 @@ import { antecedenteDe } from "./batidas.js";
 import { derrotou, poupou } from "./livro-de-factos.js";
 import { avaliarCondicao, resolverPapeis } from "./condicoes-da-quest.js";
 import { MAOS_DO_VILAO, LIMITES_DA_QUEST } from "./biblioteca-de-quests.js";
+import { PLANOS_LOTE_4 } from "./acervo/planos-lote-4.js";
 
 /* ---------------- A FICHA, EM NÚMEROS ----------------
    `passos`: quantos passos tem um plano (a planta: seis, as frentes do
@@ -122,9 +123,16 @@ export const EFEITOS_DO_PLANO = Object.freeze({
    nenhuma diz o nome do herói — ele ainda não o sabe.
    O PRIMEIRO LOTE trouxe quatro arquétipos; o acervo (BQ8) traz mais quatro
    por lote, no mesmo formato (com o lote 3, doze dos vinte). Os que ainda não têm plano andam pelo
-   PLANO_DE_RECUO. */
+   PLANO_DE_RECUO.
+   DO LOTE 4 EM DIANTE (09/11), cada lote vive no seu ficheiro,
+   src/acervo/planos-lote-N.js (os planos, as fraquezas e a afinidade dos
+   arquétipos novos), e entra aqui por LOTES_DE_PLANOS — uma linha de import
+   e um nome na lista. As tabelas continuam a ser estas, e nenhuma função
+   muda: quem as lê não sabe de que ficheiro veio cada arquétipo. */
 const passo = (diz, presagio, obra, seTravado, contra, muda, custa, prazo) =>
   Object.freeze({ diz, presagio, obra, seTravado, contra: Object.freeze(contra), muda: Object.freeze(muda), custa, prazo });
+const LOTES_DE_PLANOS = Object.freeze([PLANOS_LOTE_4]);
+const doLote = (p) => passo(p.diz, p.presagio, p.obra, p.seTravado, p.contra, p.muda, p.custa, p.prazo);
 export const PLANOS_DO_ARQUETIPO = Object.freeze({
   /* §11.9: Ilídia Selamar é este plano, com a cara que a criação lhe der */
   vendedor_de_medo: Object.freeze([
@@ -520,6 +528,8 @@ export const PLANOS_DO_ARQUETIPO = Object.freeze({
       "as feras soltam-se, mas sem o assobio viram-se contra quem as trouxe",
       ["confronto"], ["perigo", "estrada", "postura"], "tudo", 1.5),
   ]),
+  /* os lotes do acervo (src/acervo/planos-lote-N.js), na mesma forma */
+  ...Object.fromEntries(LOTES_DE_PLANOS.flatMap((l) => Object.entries(l.planos || {})).map(([id, ps]) => [id, Object.freeze(ps.map(doLote))])),
 });
 
 /* ---------------- O RECUO ----------------
@@ -629,6 +639,9 @@ export const RITMO_DO_PLANO = Object.freeze({
    preenchidos pelo esqueleto (BQ6) em `papeis.fraqueza`; até lá ninguém a
    tem, e nenhuma linha a diz. */
 const fraq = (id, o, extra) => Object.freeze({ id, o, ...(extra || {}) });
+/* as fraquezas dos arquétipos dos lotes do acervo, por família, à cauda */
+const daFamilia = (fam) => LOTES_DE_PLANOS.flatMap((l) => (l.fraquezas && l.fraquezas[fam]) || [])
+  .map((e) => fraq(e.id, e.o, { ...(e.arquetipo ? { arquetipo: e.arquetipo } : {}), ...(e.nome ? { nome: e.nome } : {}) }));
 export const FRAQUEZAS = Object.freeze({
   pessoa: Object.freeze([
     fraq("p_salvo_do_fogo", "quem tirou do primeiro incêndio, e que ainda lhe escreve todos os invernos", { arquetipo: "vendedor_de_medo" }),
@@ -645,6 +658,7 @@ export const FRAQUEZAS = Object.freeze({
     fraq("p_velho_tratador", "o velho tratador que lhe ensinou o assobio, e cujo assobio as feras ainda preferem", { arquetipo: "domador" }),
     fraq("p_quem_o_criou", "quem o criou, e a quem ele ainda não consegue mentir"),
     fraq("p_crianca_salva", "a criança que ele salvou um dia, e que hoje tem medo dele"),
+    ...daFamilia("pessoa"),
   ]),
   coisa: Object.freeze([
     fraq("c_chave_da_jaula", "a chave da jaula onde guarda o perigo que vende", { arquetipo: "vendedor_de_medo", nome: "chave da jaula" }),
@@ -661,6 +675,7 @@ export const FRAQUEZAS = Object.freeze({
     fraq("c_apito_de_osso", "o apito de osso a que as feras obedecem antes de obedecerem a ele", { arquetipo: "domador", nome: "apito de osso" }),
     fraq("c_selo_pessoal", "o selo pessoal dele, que fecha todas as ordens que dá", { nome: "selo pessoal" }),
     fraq("c_mapa_do_plano", "o mapa onde marcou o plano inteiro, passo a passo", { nome: "mapa do plano" }),
+    ...daFamilia("coisa"),
   ]),
   verdade: Object.freeze([
     fraq("v_livro_de_contas", "o livro de contas, com as datas dos ataques e as dos recibos lado a lado", { arquetipo: "vendedor_de_medo" }),
@@ -677,6 +692,7 @@ export const FRAQUEZAS = Object.freeze({
     fraq("v_erva_das_feras", "as feras não lhe obedecem por respeito: andam drogadas com uma erva que ele lhes mete na água", { arquetipo: "domador" }),
     fraq("v_crime_de_origem", "o crime que o pôs onde está, com uma testemunha ainda viva"),
     fraq("v_origem_inventada", "a mentira que ele conta sobre de onde veio"),
+    ...daFamilia("verdade"),
   ]),
 });
 
@@ -693,10 +709,22 @@ export const COMO_SE_TEM_A_FRAQUEZA = Object.freeze({
    `base`: o peso de cada arquétipo com plano; `por`: o que o passado do
    herói lhe soma. Um erudito que leu o que não devia atrai o Faminto; um
    acólito fugido, o Zeloso; um nobre caído, o Traído. Só entram arquétipos
-   com plano próprio — o acervo alarga a roda sozinho. */
+   com plano próprio — o acervo alarga a roda sozinho. Os lotes do acervo
+   (src/acervo/) SOMAM os pesos deles aos desta tabela. */
+const somarAfinidade = (base) => {
+  const out = { ...base };
+  for (const l of LOTES_DE_PLANOS) {
+    for (const [ant, pesos] of Object.entries(l.afinidade || {})) {
+      const novo = { ...(out[ant] || {}) };
+      for (const [arq, n] of Object.entries(pesos)) novo[arq] = (novo[arq] || 0) + n;
+      out[ant] = Object.freeze(novo);
+    }
+  }
+  return Object.freeze(out);
+};
 export const AFINIDADE_DO_ANTECEDENTE = Object.freeze({
   base: 1,
-  por: Object.freeze({
+  por: somarAfinidade({
     orfao: Object.freeze({ traido: 2, vendedor_de_medo: 1, credor: 1, herdeiro: 1 }),
     soldado: Object.freeze({ traido: 2, vendedor_de_medo: 1, domador: 1 }),
     nobre_caido: Object.freeze({ traido: 3, credor: 1, herdeiro: 2, cortesao: 1 }),
