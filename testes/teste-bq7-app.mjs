@@ -239,11 +239,12 @@ console.log("\n8. BQ7b · a fiação no App: os efeitos, os rostos, o foco, o n�
     && ap.includes("npcsRef.current = o.npcs; setNpcs(o.npcs);") && ap.includes("porSituacao(baseMundoRef.current, o.nome, o.situacao); setBaseMundo(baseMundoRef.current);") && ap.includes("morrerNaQuest(o);"));
   t("o que o relógio diz do dia (o reino, a festa) vai ao Narrador", ap.includes("notaRef.current = notaComOTurno(notaRef.current, [tx.trim()]);"));
   t("cada ordem em calou", ap.includes('} catch (e) { calou("BQ7b · " + ef.tipo + " · " + o.ordem, e); }'));
+  /* MOVIDA outra vez em 09/11 (TE5): o estado leva também o elenco, para a convivência contar igual no App e no replay. */
   /* MOVIDA em 09/11 (as consequências caladas): o estado das quests passou a
      levar também os relógios (`relogios: relogiosRef.current`), para o
      `relogio_regional` escolher quais andam; a intenção fica — leva a base */
   t("o estado das quests leva a base do mundo (as condições «situacao» e «morto» leem-na), e a memória das escolhas também a olha",
-    app.includes("saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current });") && corpo("escolhasAgora").includes("c.base === E.baseMundo"));
+    app.includes("saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current, elenco: elencoSaveRef.current });") && corpo("escolhasAgora").includes("c.base === E.baseMundo"));
   /* os rostos */
   t("o rosto é um componente de fora do render (RostoDaQuest), antes de Taverna()", /\nfunction RostoDaQuest\(\{ semente, ente = null, lado = 44 \}\) \{/.test(app) && app.indexOf("function RostoDaQuest(") < app.indexOf("export default function Taverna()"));
   t("e enche o aro que a peça der (viewBox, 100%), sem a carta por trás", /function RostoDaQuest[\s\S]{0,200}<svg width="100%" height="100%" viewBox="0 0 64 64"[\s\S]{0,200}<Rosto semente=\{semente\} ente=\{ente\} lado=\{lado\} \/>/.test(app));

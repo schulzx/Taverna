@@ -19,13 +19,18 @@
       catálogo que a faz cair abaixo de 1;
    §6 o save: a catraca, a espinha com o esqueleto, o registo do vilão com
       a fraqueza e os lugares dos passos, o que abre em cada ato;
-   §7 o determinismo, o null e a imutabilidade. */
+   §7 o determinismo, o null e a imutabilidade;
+   §2d (TE4, 09/11) A TEMPERATURA E O GRAFO: a curva por ato, o respiro, o
+      teto do coração, o grafo dos pressupostos, o rosto só no seu ato, um
+      primeiro encontro só, e a reserva da quest do coração que espera. */
 import {
   COMPOSICAO_DA_MAO, PASSO_DO_ATO, QUANDO_DO_ATO, JANELAS_DO_CORACAO, ESQUELETO,
   esqueletoDaCampanha, garantirEsqueleto, comOEsqueleto, questsDoAto,
+  CURVA_DA_TEMPERATURA, RESPIRO, TETO_DO_CORACAO, CAMADA_DO_ATO, reservaDoCoracao,
 } from "../src/esqueleto.js";
-import { BIBLIOTECA_DE_QUESTS, MAOS_DO_VILAO, QUANDO_DA_QUEST, PAPEIS_DA_QUEST, LIMITES_DA_QUEST, NATUREZAS_DO_FIO, validarQuest, abrirQuest, questPorId } from "../src/biblioteca-de-quests.js";
-import { FRAQUEZAS, COMO_SE_TEM_A_FRAQUEZA, fichaDoVilao, temAFraqueza, PLANOS_DO_ARQUETIPO, PLANO_DE_RECUO } from "../src/plano-do-vilao.js";
+import { BIBLIOTECA_DE_QUESTS, MAOS_DO_VILAO, QUANDO_DA_QUEST, PAPEIS_DA_QUEST, LIMITES_DA_QUEST, NATUREZAS_DO_FIO, validarQuest, abrirQuest, questPorId, TEMPERATURAS, TEMPERATURA_DO_QUANDO, PRESSUPOSTOS } from "../src/biblioteca-de-quests.js";
+import { FRAQUEZAS, COMO_SE_TEM_A_FRAQUEZA, fichaDoVilao, temAFraqueza, PLANOS_DO_ARQUETIPO, PLANO_DE_RECUO, SOBE_A_CAMADA } from "../src/plano-do-vilao.js";
+import { FASES } from "../src/vilao.js";
 import { ESTRUTURAS, estruturaPorId } from "../src/historia.js";
 import { gerarGeografia } from "../src/geografia.js";
 import { estenderEspinha, garantirEspinha } from "../src/saga.js";
@@ -485,6 +490,192 @@ sec("2c. o lote 5 (BQ8) — o ato 0 de todas as campanhas, as pistas do 3 e do 4
   t("nos mundos sem nenhum servo gente, o tenente que é bicho do cedo abre parte das campanhas (já não é só O Que Desce ao Anoitecer)", semGente5 > 0 && semGenteComPao > 0, `${semGenteComPao}/${semGente5}`);
   t("a pista do vilão que é bicho só entra nos mundos em que ele é bicho, e entra", pegadasComFera > 0 && pegadasComGente === 0, `${pegadasComFera}/${pegadasComGente}`);
   t("e o tenente do Pão é sempre um bicho", paoComServoGente === 0 && (vezes5.o_pao_que_sai_de_noite || 0) > 0);
+}
+
+/* A TEMPERATURA E O GRAFO (TE4, 09/11). Medido em mil mundos com o
+   esqueleto da BQ8 (mente/plano-temperatura-e-espolios.md, §1.2): 35
+   campanhas com uma quest de rosto antes do ato do rosto (Os Dados Dele,
+   pela mão `tambem`), e essas 35 com dois primeiros encontros; 315 com o
+   coração do turno 0 em fogueira; 133 com a curva a descer, 7 a descer
+   fundo ou duas vezes, 111 fora da curva. Agora, catracas. */
+sec("2d. A TEMPERATURA E O GRAFO (TE4)");
+{
+  const G = (id) => TEMPERATURAS[id].ordem;
+  const grauDe = (id) => G(questPorId(id).temperatura);
+  const ORD = Object.fromEntries(FASES.map((f) => [f.id, f.ordem]));
+  /* as tabelas */
+  for (const n of [4, 5, 6]) {
+    const cv = CURVA_DA_TEMPERATURA[n];
+    t(`${n} atos: a curva tem um intervalo por ato, de graus que existem, do mais frio ao mais quente`, cv.length === n && cv.every((f) => f.length === 2 && TEMPERATURAS[f[0]] && TEMPERATURAS[f[1]] && G(f[0]) <= G(f[1])));
+    t(`${n} atos: a curva nunca desce de um ato para o seguinte (nem o chão nem o teto)`, cv.every((f, i) => i === 0 || (G(f[0]) >= G(cv[i - 1][0]) && G(f[1]) >= G(cv[i - 1][1]))));
+    t(`${n} atos: abre em brasa ou chama, o rosto é fogueira, o confronto incêndio`, J(cv[0]) === J(["brasa", "chama"]) && J(cv[n - 2]) === J(["fogueira", "fogueira"]) && J(cv[n - 1]) === J(["incendio", "incendio"]));
+    /* o chão da curva é o do «quando» do ato (TEMPERATURA_DO_QUANDO) em todos
+       os atos que podem respirar: uma ficha que cabe no ato nunca fica abaixo
+       do intervalo — a curva só se quebra pelo respiro, dentro dele. O
+       confronto (incêndio, num ato «fim» que aceita fogueira) é fechado. */
+    t(`${n} atos: o chão da curva é o do «quando» de cada ato que pode respirar, e o teto é um grau que o «quando» aceita`, cv.every((f, i) => {
+      const chao = Math.min(...TEMPERATURA_DO_QUANDO[QUANDO_DO_ATO[n][i]].map(G));
+      return G(f[0]) === chao || i >= n - RESPIRO.fechados;
+    }) && cv.every((f, i) => TEMPERATURA_DO_QUANDO[QUANDO_DO_ATO[n][i]].includes(f[1])));
+    t(`${n} atos: o teto do coração da primeira janela cabe no primeiro ato`, G(TETO_DO_CORACAO[0]) <= G(cv[0][1]));
+  }
+  t("o respiro da planta: uma descida, de um grau, nunca nos dois últimos atos (o rosto e o confronto)", RESPIRO.descidas === 1 && RESPIRO.graus === 1 && RESPIRO.fechados === 2);
+  t("o coração da primeira janela é no máximo chama; o da última, qualquer um", TETO_DO_CORACAO[0] === "chama" && G(TETO_DO_CORACAO[TETO_DO_CORACAO.length - 1]) === Math.max(...Object.values(TEMPERATURAS).map((x) => x.ordem)));
+  /* o teto da revelação antes do ato do rosto é o de SOBE_A_CAMADA: a camada
+     mais alta que não espera o ato (`ato`) */
+  const semAto = FASES.filter((f) => !(SOBE_A_CAMADA[f.id] && SOBE_A_CAMADA[f.id].ato)).sort((a, b) => b.ordem - a.ordem)[0];
+  t(`antes do ato do rosto, a revelação não passa de «${CAMADA_DO_ATO.antesDoRosto}» — a camada mais alta que não espera o ato (SOBE_A_CAMADA)`, !!semAto && semAto.id === CAMADA_DO_ATO.antesDoRosto && FASES.every((f) => !(SOBE_A_CAMADA[f.id] || {}).ato || f.ordem > ORD[CAMADA_DO_ATO.antesDoRosto]));
+  t("o primeiro encontro é a camada do rosto, e só o rosto e o confronto ficam presos ao seu ato", J(CAMADA_DO_ATO.estreia) === J(["rosto"]) && CAMADA_DO_ATO.maoDoSeuAto.every((m) => MAOS_DO_VILAO[m]) && J(CAMADA_DO_ATO.maoDoSeuAto) === J(["rosto", "confronto"]));
+
+  /* o grafo, conferido por fora: a condição garantida com o piso (o que as
+     quests do tipo 1 de atos anteriores estabelecem) e o teto (o da revelação) */
+  const ramos = (c) => c.slice(c[0] === "pelo_menos" ? 2 : 1);
+  const atomos = (c) => (["todos", "algum", "nenhum", "pelo_menos"].includes(c[0]) ? ramos(c).flatMap(atomos) : [c]);
+  const doJogo = (c) => atomos(c).some((x) => PRESSUPOSTOS[x[0]] && PRESSUPOSTOS[x[0]].garante !== "esqueleto");
+  const vale = (c, piso, teto, quer) => {
+    if (c[0] === "camada") return quer ? piso >= ORD[c[1]] : ORD[c[1]] > teto;
+    if (c[0] === "nenhum") return quer ? ramos(c).every((x) => vale(x, piso, teto, false)) : ramos(c).some((x) => vale(x, piso, teto, true));
+    if (c[0] === "todos") return quer ? ramos(c).every((x) => vale(x, piso, teto, true)) : ramos(c).some((x) => vale(x, piso, teto, false));
+    if (c[0] === "algum") return quer ? ramos(c).some((x) => vale(x, piso, teto, true)) : ramos(c).every((x) => vale(x, piso, teto, false));
+    return false;
+  };
+  const camadasDe = (q) => (q.estabelece || []).filter((c) => c[0] === "camada").map((c) => ORD[c[1]]);
+  const violacoesDe = (k, cat) => {
+    const ficha = (id) => cat.find((q) => q.id === id);
+    const n = k.atos.length;
+    const atoDoRosto = COMPOSICAO_DA_MAO[n].findIndex((c) => c.includes("rosto"));
+    const pisoEm = (ato) => Math.max(0, ...k.atos.filter((a) => a.quest && a.ato < ato).flatMap((a) => camadasDe(ficha(a.quest))));
+    const tetoEm = (ato) => (ato < atoDoRosto ? ORD[CAMADA_DO_ATO.antesDoRosto] : Math.max(...FASES.map((f) => f.ordem)));
+    const out = [];
+    const todas = [...k.atos.filter((a) => a.quest).map((a) => ({ q: ficha(a.quest), ato: a.ato })), ...k.coracao.map((c) => ({ q: ficha(c.quest), ato: c.atos[0] }))];
+    for (const { q, ato } of todas) {
+      for (const c of q.pressupoe || []) if (!doJogo(c) && !vale(c, pisoEm(ato), tetoEm(ato), true)) out.push(`${q.id} no ato ${ato}: ${J(c)} sem garantia`);
+      for (const k2 of camadasDe(q)) if (k2 > tetoEm(ato)) out.push(`${q.id} estabelece no ato ${ato} uma camada que o ato não permite`);
+    }
+    return out;
+  };
+
+  let rostoAntes = 0, estreias = 0, coracao0 = 0, tetoJanela = 0, viol = 0, primeiraViol = "", descidas = 0, duas = 0, fechada = 0, funda = 0, fora = 0;
+  const ondeDesce = {};
+  for (const k of VIVOS) {
+    if (!k) continue;
+    const n = k.atos.length;
+    const atoDoRosto = COMPOSICAO_DA_MAO[n].findIndex((c) => c.includes("rosto"));
+    for (const a of k.atos.filter((x) => x.quest)) {
+      const q = questPorId(a.quest);
+      if ([q.mao.tipo, ...(q.mao.tambem || [])].includes("rosto") && a.ato !== atoDoRosto) rostoAntes++;
+    }
+    const ids = [...k.atos.map((a) => a.quest), ...k.coracao.map((c) => c.quest)].filter(Boolean);
+    if (ids.filter((id) => (questPorId(id).estabelece || []).some((c) => J(c) === J(["camada", "rosto"]))).length > 1) estreias++;
+    for (const [j, c] of k.coracao.entries()) {
+      const teto = G(TETO_DO_CORACAO[Math.min(j, TETO_DO_CORACAO.length - 1)]);
+      if (grauDe(c.quest) > teto) tetoJanela++;
+      if (c.atos[0] === 0 && grauDe(c.quest) > G("chama")) coracao0++;
+    }
+    const v = violacoesDe(k, BIBLIOTECA_DE_QUESTS);
+    if (v.length) { viol++; if (!primeiraViol) primeiraViol = v[0]; }
+    let ant = null, d = 0;
+    for (const a of k.atos.filter((x) => x.quest)) {
+      const g = grauDe(a.quest);
+      const [lo, hi] = CURVA_DA_TEMPERATURA[n][a.ato].map(G);
+      if (g < lo || g > hi) fora++;
+      if (ant != null && g < ant) {
+        d++; ondeDesce[`${n}:${a.ato}`] = (ondeDesce[`${n}:${a.ato}`] || 0) + 1;
+        if (a.ato >= n - RESPIRO.fechados) fechada++;
+        if (ant - g > RESPIRO.graus) funda++;
+      }
+      ant = g;
+    }
+    if (d) descidas++;
+    if (d > RESPIRO.descidas) duas++;
+  }
+  console.log(`      · com um respiro (uma descida de um grau): ${descidas} de ${N} campanhas — onde (atos:ato → campanhas): ${J(ondeDesce)}`);
+  t(`nenhuma quest de rosto fora do ato do rosto (eram 35 de ${N})`, rostoAntes === 0, String(rostoAntes));
+  t(`nenhuma campanha com dois primeiros encontros (eram 35 de ${N})`, estreias === 0, String(estreias));
+  t(`nenhum coração do turno 0 acima de chama (eram 315 de ${N} em fogueira), e nenhum acima do teto da sua janela`, coracao0 === 0 && tetoJanela === 0, `${coracao0}/${tetoJanela}`);
+  t("nenhuma violação do grafo: todo pressuposto do esqueleto garantido, nenhuma camada antes da hora", viol === 0, primeiraViol);
+  t(`nenhuma quest fora do intervalo do seu ato (eram 111 de ${N} contra a curva da planta)`, fora === 0, String(fora));
+  t("as descidas só pelo respiro: no máximo uma, de um grau, nunca nos dois últimos atos (eram 133 com descida, 7 fundas ou duplas)", duas === 0 && fechada === 0 && funda === 0, `${duas}/${fechada}/${funda}`);
+  /* a variedade não cai: a curva e o grafo fecham portas, e a partilha média
+     tem de ficar abaixo de uma quest (era 0,84 antes da TE4); nenhuma quest a zero */
+  let s2 = 0, n2 = 0;
+  for (let i = 0; i + 1 < VIVOS.length; i += 2) {
+    const a = new Set([...VIVOS[i].atos.map((x) => x.quest), ...VIVOS[i].coracao.map((c) => c.quest)].filter(Boolean));
+    s2 += [...VIVOS[i + 1].atos.map((x) => x.quest), ...VIVOS[i + 1].coracao.map((c) => c.quest)].filter((id) => id && a.has(id)).length; n2++;
+  }
+  const part = Math.round((100 * s2) / n2) / 100;
+  const vezes = {};
+  for (const k of VIVOS) for (const id of [...k.atos.map((a) => a.quest), ...k.coracao.map((c) => c.quest)].filter(Boolean)) vezes[id] = (vezes[id] || 0) + 1;
+  t(`a variedade não cai: duas campanhas partilham em média menos de uma quest (${part}; era 0,84 antes da TE4)`, part < 1, String(part));
+  t("e nenhuma quest do catálogo fica a zero", BIBLIOTECA_DE_QUESTS.every((q) => vezes[q.id] > 0), BIBLIOTECA_DE_QUESTS.filter((q) => !vezes[q.id]).map((q) => q.id).join(", "));
+
+  /* A RESERVA (TE5): a quest do coração que espera no jogo leva a seguinte
+     da mesma janela que não espera — com papéis no que existe, no teto da
+     janela, e que não é nenhuma outra quest da campanha */
+  let comEspera = 0, comReserva = 0, reservaMa = 0, primeiraMa = "";
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    const g = garantirEsqueleto(k);
+    for (const [j, c] of k.coracao.entries()) {
+      const q = questPorId(c.quest);
+      const espera = (q.pressupoe || []).some(doJogo);
+      if (espera) comEspera++;
+      if (!c.reserva) continue;
+      comReserva++;
+      const r = questPorId(c.reserva.quest);
+      const outras = [...k.atos.map((a) => a.quest), ...k.coracao.map((x) => x.quest), ...k.coracao.filter((x) => x !== c && x.reserva).map((x) => x.reserva.quest)].filter(Boolean);
+      const mal = !espera ? "reserva de uma quest que não espera"
+        : !r || r.tipo !== 2 ? "a reserva não é do tipo 2"
+        : (r.pressupoe || []).some(doJogo) ? "a reserva também espera"
+        : G(r.temperatura) > G(TETO_DO_CORACAO[Math.min(j, TETO_DO_CORACAO.length - 1)]) ? "a reserva acima do teto da janela"
+        : outras.includes(r.id) ? "a reserva repete outra quest da campanha"
+        : Object.entries(r.papeis).find(([nm, d]) => !papelExiste(w, k, d, c.reserva.papeis[nm], k.vilao)) ? "a reserva com papel fora do mundo"
+        : J(reservaDoCoracao(k, c.quest)) !== J({ id: r.id, tipo: 2, papeis: g.coracao[j].reserva.papeis }) ? "reservaDoCoracao não a devolve"
+        : "";
+      if (mal) { reservaMa++; if (!primeiraMa) primeiraMa = `${w.semente} ${c.quest}: ${mal}`; }
+    }
+  }
+  console.log(`      · do coração que espera no jogo: ${comEspera}; com reserva: ${comReserva}`);
+  t("a quest do coração que espera no jogo leva uma reserva (em nove de cada dez ou mais), e toda reserva é válida", comReserva > 0 && comReserva >= comEspera * 0.9 && reservaMa === 0, primeiraMa || `${comReserva}/${comEspera}`);
+  t("a reserva atravessa o save (garantirEsqueleto) e a de quem não espera é null", (() => {
+    const k = VIVOS.find((x) => x.coracao.some((c) => c.reserva));
+    const c = k.coracao.find((x) => x.reserva);
+    const g = garantirEsqueleto(JSON.parse(J(k)));
+    const semR = VIVOS.flatMap((x) => x.coracao.map((cc) => [x, cc])).find(([, cc]) => !cc.reserva);
+    return J(g.coracao.find((x) => x.quest === c.quest).reserva) === J(c.reserva) && (!semR || reservaDoCoracao(semR[0], semR[1].quest) === null);
+  })());
+  t("reservaDoCoracao com lixo: null", reservaDoCoracao(null, "x") === null && reservaDoCoracao(VIVOS[0], null) === null && reservaDoCoracao(VIVOS[0], "nao_existe") === null);
+
+  /* O GRAFO, PELA DEGRADAÇÃO: o confronto pressupõe o rosto visto. Sem quest
+     de rosto no catálogo, o confronto já não entra (antes da TE4 entrava, e
+     o herói chegava ao fim sem nunca lhe ter visto a cara): o ato cai no
+     marco antigo. Com o rosto, entra depois dele. */
+  const AM = MUNDOS.slice(0, 60);
+  const soCimo = AM.map((w) => esqueletoDaCampanha(entradaDe(w, { catalogo: [questPorId("o_salvo_conduto"), questPorId("o_cimo_da_escada")] })));
+  t("sem quest de rosto, o confronto nunca entra (o grafo não se viola: o ato cai no marco antigo)", soCimo.every((k) => k.atos.every((a) => a.quest !== "o_cimo_da_escada") && k.atos[k.atos.length - 1].quest === null));
+  const comRosto = AM.map((w) => esqueletoDaCampanha(entradaDe(w, { catalogo: [questPorId("o_salvo_conduto"), questPorId("o_convite_sem_selo"), questPorId("a_mesma_tempestade"), questPorId("o_cimo_da_escada")] })));
+  const cimoEntra = comRosto.filter((k) => k.atos.some((a) => a.quest === "o_cimo_da_escada"));
+  t("com o rosto no seu ato, o confronto entra — e só depois de um rosto", cimoEntra.length > 0 && cimoEntra.every((k) => k.atos.some((a) => a.mao === "rosto" && a.ato < k.atos.length - 1)), `${cimoEntra.length}/${AM.length}`);
+  /* a mão `rosto` pelo `tambem`: Os Dados Dele (rosto e pista, contra 4 e 5)
+     caía no ato da pista de cinco atos; agora só no do rosto */
+  const dados = MUNDOS.filter((w) => w.espinha.atos.length === 5).slice(0, 40).map((w) => esqueletoDaCampanha(entradaDe(w, { catalogo: [questPorId("os_dados_dele")] })));
+  t("Os Dados Dele, sozinho no catálogo, só entra no ato do rosto, nunca no da pista", dados.some((k) => k.atos[3].quest === "os_dados_dele") && dados.every((k) => k.atos.every((a) => a.quest !== "os_dados_dele" || a.ato === 3)));
+
+  /* O RESPIRO, PELA DEGRADAÇÃO: seis atos e um catálogo feito para descer.
+     No ato 0 só há uma chama (o Salvo-Conduto); no 1, só uma brasa (Os Braços
+     Que Faltam): desce um grau — é o respiro, e entra. No 2, uma fogueira (O
+     Fundo da Pedreira); no 3, só uma chama (O Recado Verdadeiro): seria a
+     segunda descida, e o respiro já se gastou — o ato cai no marco antigo.
+     Sem a brasa, o respiro está livre, e o Recado entra no 3. */
+  const SEIS = MUNDOS.filter((w) => w.espinha.atos.length === 6).slice(0, 60);
+  const cat = ["o_salvo_conduto", "os_bracos_que_faltam", "o_fundo_da_pedreira", "o_recado_verdadeiro"].map(questPorId);
+  const ks = SEIS.map((w) => esqueletoDaCampanha(entradaDe(w, { catalogo: cat })));
+  const desceu = ks.filter((k) => k.atos[0].quest === "o_salvo_conduto" && k.atos[1].quest === "os_bracos_que_faltam");
+  t("a descida de um grau entra pelo respiro (chama → brasa, no ato 1 de seis)", desceu.length > 0, `${desceu.length}/${SEIS.length}`);
+  t("e, com o respiro gasto, a segunda descida não entra: o ato cai no marco antigo", desceu.some((k) => k.atos[2].quest === "o_fundo_da_pedreira") && desceu.filter((k) => k.atos[2].quest === "o_fundo_da_pedreira").every((k) => k.atos[3].quest === null));
+  const ks2 = SEIS.map((w) => esqueletoDaCampanha(entradaDe(w, { catalogo: cat.filter((q) => q.id !== "os_bracos_que_faltam") })));
+  t("sem a primeira descida, o respiro está livre e a chama entra depois da fogueira", ks2.some((k) => k.atos[2].quest === "o_fundo_da_pedreira" && k.atos[3].quest === "o_recado_verdadeiro"));
+  t("e o grafo e a curva valem também nestes catálogos", [...soCimo, ...comRosto, ...dados, ...ks, ...ks2].every((k) => violacoesDe(k, BIBLIOTECA_DE_QUESTS).length === 0));
 }
 
 sec("3. o catálogo cheio (sintético): o plano desenhado pelas quests");

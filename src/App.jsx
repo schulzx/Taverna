@@ -7274,7 +7274,7 @@ export default function Taverna() {
      (condicoes-da-quest.js, «E.baseMundo»), e sem ela toda a gente era livre
      e ninguém morria para as quests; o save, o replay e o servidor já a
      levam (é campo do save) */
-  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current });
+  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current, elenco: elencoSaveRef.current });
   /* os efeitos que só a tela aplica: cada um pelo órgão que já existe; o que
      não tem órgão no App cala-se (nunca se inventa a regra dele aqui).
      BQ7b: a conta de cada um mora em motor/efeitos-da-quest.js

@@ -39,8 +39,29 @@
                    até à TE2 (09/11), que tirou o efeito: ninguém o lia.
                    O campo fica, para o save que já o tem; nada novo entra
        desfecho,   { id, dia } o fim do vilão, quando o confronto decidiu
-       fim         o dia em que o relógio dele chegou ao fim (o tom muda)
+       fim,        o dia em que o relógio dele chegou ao fim (o tom muda)
+       espera      [{ id, ato, desde }] (TE5, 09/11) as do coração cuja janela
+                   já abriu e cujo pressuposto do jogo ainda não vale — o
+                   portão da abertura; `desde`: o dia em que começaram a esperar
      }
+
+   O PORTÃO DA ABERTURA (09/11/2026, Fase TE · TE5). Uma quest do coração
+   pode pressupor o que só o jogo garante — *O Morto Que Voltou a Casa*
+   conta o que o companheiro disse «no primeiro dia»; isso só é verdade
+   depois de dias de estrada e de alguma confiança (a convivência e a
+   afeição, PRESSUPOSTOS `garante: "abertura"`). Medido com o esqueleto
+   da TE4: 360 de 1000 campanhas abriam uma destas no turno 0. Agora a
+   quest ESPERA: não tem registo — logo não aparece no Diário, nas escolhas
+   nem na pauta, e o Narrador não sabe dela — até cada um desses
+   pressupostos valer (`avaliarCondicao` com os papéis do esqueleto), e só
+   então abre, com o dia de hoje. NINGUÉM FICA PRESO: ao fim de
+   PORTAO_DA_ABERTURA.esperaMaxima dias, a planta (§1.3) manda que «dê
+   lugar ao seguinte da mesma janela» — ela sai para `fora`, e abre a
+   reserva que o esqueleto lhe guardou (reservaDoCoracao, esqueleto.js),
+   que não espera por nada. Sem reserva, a janela fica sem coração, como
+   o tipo 2 sem par sempre ficou. O tipo 1 nunca espera (um ato não fica
+   sem enredo; validarQuest já o recusa). Só toca quests ainda não
+   abertas: a que já abriu numa campanha em curso segue.
 
    AS PEÇAS, todas puras, todas sobre o ESTADO (a forma do save):
 
@@ -109,15 +130,25 @@
        uma resposta ou uma leitura do antagonista.js)
      { tipo: "remontarPrompt" }   (o arco virou)
    ============================================================ */
-import { garantirEsqueleto, questsDoAto } from "../esqueleto.js";
-import { questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha, escolherNaQuest, missaoDaQuest, EFEITOS_DA_QUEST } from "../biblioteca-de-quests.js";
+import { garantirEsqueleto, questsDoAto, reservaDoCoracao } from "../esqueleto.js";
+import { questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha, escolherNaQuest, missaoDaQuest, EFEITOS_DA_QUEST, PRESSUPOSTOS, PAPEIS_DA_QUEST } from "../biblioteca-de-quests.js";
 import { fichaDoVilao, relogioDoPlano, camadaDoVilao, reagirAoHeroi, desfechoDoVilao, oVilaoNaPauta, oVilaoNoDiario, garantirRegistroDoVilao } from "../plano-do-vilao.js";
 import { garantirHistoria, marcoDaQuest, virarEtapa, envelopeDeVirada, PESO_DA_QUEST } from "../historia.js";
 import { chegouAteEle } from "../antagonista.js";
 import { diasDoPasso } from "../vilao.js";
 import { firmarLaco, romperLaco } from "../npcs.js";
 import { anotarTurno, favoresDoLivro } from "../livro-de-factos.js";
-import { avaliarCondicao, resolverPapeis } from "../condicoes-da-quest.js";
+import { avaliarCondicao, resolverPapeis, COMBINADORES } from "../condicoes-da-quest.js";
+
+/* ---------------- O PORTÃO DA ABERTURA (TE5) ----------------
+   `garante`: os pressupostos (PRESSUPOSTOS, biblioteca-de-quests.js) que o
+   portão julga em jogo — os que o esqueleto não garante por construção.
+   `esperaMaxima`: os dias que uma quest do coração espera antes de dar
+   lugar à reserva — uma semana de estrada, mais do dobro da convivência
+   mais longa que o acervo pede (3 dias; a suíte trava a folga), para que a
+   espera só acabe quando a condição já não vem por si. `teto`: quantas
+   esperas o save guarda (são no máximo as do coração, ESQUELETO.coracao). */
+export const PORTAO_DA_ABERTURA = Object.freeze({ garante: "abertura", esperaMaxima: 7, teto: 4 });
 
 /* ---------------- OS NÚMEROS E AS FRASES (se é número, é tabela) ----------------
    `aplica`: as consequências que o motor aplica, porque o estado delas é
@@ -218,7 +249,32 @@ export function garantirQuestsDaEspinha(x) {
     premissas: [...new Set(arr(o.premissas).filter((p) => typeof p === "string" && /^[a-z_]{1,24}:[a-z0-9_]{1,40}$/.test(p)))].slice(-T.premissas),
     desfecho: d && typeof d.id === "string" ? { id: d.id.slice(0, 20), dia: Math.max(0, inteiro(d.dia) || 0) } : null,
     fim: inteiro(o.fim) != null && o.fim >= 0 ? inteiro(o.fim) : null,
+    /* TE5: a que espera nunca é uma que já abriu ou já ficou de fora */
+    espera: arr(o.espera).filter((e) => obj(e) && idOk(e.id) && questPorId(e.id) && !vistos.has(e.id))
+      .map((e) => ({ id: e.id, ato: Math.max(0, inteiro(e.ato) || 0), desde: Math.max(0, inteiro(e.desde) || 0) }))
+      .filter((e, i, a) => a.findIndex((y) => y.id === e.id) === i && !arr(o.fora).some((f) => obj(f) && f.id === e.id)).slice(-PORTAO_DA_ABERTURA.teto),
   };
+}
+
+/* ---------------- O PORTÃO ----------------
+   portaoAberto(q, E, mundo) → bool. `q`: { id, papeis } (questsDoAto ou
+   reservaDoCoracao). Aberto quando cada pressuposto da ficha que tem um
+   átomo do jogo (PORTAO_DA_ABERTURA.garante) vale agora, com os papéis do
+   esqueleto (o tipo de cada um sai da ficha). Os outros pressupostos são
+   do esqueleto, que já os garantiu por construção. Uma condição que
+   estoura fecha o portão — e a espera máxima garante que não para sempre. */
+const atomosDe = (c) => (Array.isArray(c) && COMBINADORES[c[0]] ? c.slice(c[0] === "pelo_menos" ? 2 : 1).flatMap(atomosDe) : [c]);
+const doPortao = (c) => atomosDe(c).some((x) => Array.isArray(x) && PRESSUPOSTOS[x[0]] && PRESSUPOSTOS[x[0]].garante === PORTAO_DA_ABERTURA.garante);
+const esperaNoPortao = (F) => !!F && F.tipo === 2 && arr(F.pressupoe).some(doPortao);
+function portaoAberto(q, E, mundo) {
+  const F = questPorId(q.id);
+  if (!esperaNoPortao(F)) return true;
+  const papeis = {};
+  for (const [nome, d] of Object.entries(F.papeis || {})) {
+    const p = obj(obj(q.papeis) && q.papeis[nome]);
+    if (p && PAPEIS_DA_QUEST[d.de]) papeis[nome] = { ...p, tipo: PAPEIS_DA_QUEST[d.de].tipo };
+  }
+  try { return arr(F.pressupoe).filter(doPortao).every((c) => avaliarCondicao(c, { estado: E, papeis, mundo })); } catch { return false; }
 }
 
 /* o esqueleto de um estado, ou null (o mundo antigo) */
@@ -268,6 +324,7 @@ function correr(E0, opcoes, antes) {
   const pesadas = [...Q.pesadas];
   const passosDitos = [...Q.passos];
   const premissas = [...Q.premissas];
+  const espera = [...Q.espera];
   let desfecho = Q.desfecho;
   let fim = Q.fim;
   let personagem = E0.personagem, npcs = E0.npcs, saber = E0.saber, factos = E0.factos;
@@ -280,16 +337,34 @@ function correr(E0, opcoes, antes) {
   const favores = [], quemE = []; // o que vai ao livro de factos (09/11)
   const agora = () => ({ ...E0, personagem, npcs, saber, factos, historia: h });
 
-  /* 1. ABRIR as quests de cada ato até ao de agora, uma vez por ato */
+  /* 1. ABRIR as quests de cada ato até ao de agora, uma vez por ato — e as
+     que esperam no portão (TE5): abrem quando o pressuposto vale, ou, ao fim
+     da espera máxima, dão lugar à reserva */
+  const jaTem = (id) => registos.some((r) => r.id === id) || fora.some((f) => f.id === id);
+  const abrirUma = (q, a) => {
+    let R = null;
+    try { R = abrirQuest(q.id, { estado: agora(), papeis: q.papeis, mundo, quests: registos }); } catch { R = null; }
+    if (R) registos.push(R); else fora.push({ id: q.id, ato: a, dia });
+  };
   const abrir = () => {
+    for (const e of [...espera]) {
+      const sai = () => { const k = espera.findIndex((x) => x.id === e.id); if (k >= 0) espera.splice(k, 1); };
+      const q = jaTem(e.id) ? null : questsDoAto(esq, e.ato).find((x) => x.id === e.id) || null;
+      if (!q) { sai(); continue; }
+      if (portaoAberto(q, agora(), mundo)) { sai(); abrirUma(q, e.ato); continue; }
+      if (dia - e.desde < PORTAO_DA_ABERTURA.esperaMaxima) continue;
+      sai();
+      fora.push({ id: e.id, ato: e.ato, dia });
+      const r = reservaDoCoracao(esq, e.id);
+      if (r && !jaTem(r.id) && !espera.some((x) => x.id === r.id)) abrirUma(r, e.ato);
+    }
     for (let a = 0; a <= h.etapa; a++) {
       if (atos.includes(a)) continue;
       atos.push(a);
       for (const q of questsDoAto(esq, a)) {
-        if (registos.some((r) => r.id === q.id) || fora.some((f) => f.id === q.id)) continue;
-        let R = null;
-        try { R = abrirQuest(q.id, { estado: agora(), papeis: q.papeis, mundo, quests: registos }); } catch { R = null; }
-        if (R) registos.push(R); else fora.push({ id: q.id, ato: a, dia });
+        if (jaTem(q.id) || espera.some((x) => x.id === q.id)) continue;
+        if (q.tipo === 2 && !portaoAberto(q, agora(), mundo)) { espera.push({ id: q.id, ato: a, desde: dia }); continue; }
+        abrirUma(q, a);
       }
     }
   };
@@ -473,7 +548,7 @@ function correr(E0, opcoes, antes) {
   ];
 
   /* o estado novo: só os campos que mudaram */
-  const quests = { v: T.v, atos: [...atos].sort((a, b) => a - b), registos, fora, aplicadas, pesadas, passos: [...passosDitos].sort((a, b) => a - b), premissas, desfecho, fim };
+  const quests = { v: T.v, atos: [...atos].sort((a, b) => a - b), registos, fora, aplicadas, pesadas, passos: [...passosDitos].sort((a, b) => a - b), premissas, desfecho, fim, ...(espera.length ? { espera } : {}) };
   const espinha = { ...esp0, quests, ...(fio ? { fio } : {}) };
   const estado = {};
   if (J(espinha) !== J(esp0)) estado.espinha = espinha;

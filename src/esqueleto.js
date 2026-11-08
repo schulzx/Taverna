@@ -57,12 +57,44 @@
    em curso NÃO ganham esqueleto — só os mundos novos (§8, §11.8).
    `comOEsqueleto` junta-os à espinha; `garantirEsqueleto` é a catraca.
 
+   A TEMPERATURA E O GRAFO (09/11/2026, Fase TE · TE4). A pessoa: *«uma
+   missão que diz que o vilão se apresenta não vem depois de uma missão que
+   o vilão ainda não foi apresentado… uma missão quente e depois uma missão
+   fria»* (mente/plano-temperatura-e-espolios.md, §1.3). Medido em mil
+   mundos com o esqueleto da BQ8: 35 campanhas punham o rosto antes do ato
+   do rosto (Os Dados Dele, pela mão `tambem`), e essas 35 tinham dois
+   primeiros encontros; 111 saíam da curva; 315 abriam o coração no turno 0
+   com uma quest de fogueira. Agora cada quest só entra num ato por DUAS
+   portas, nesta ordem:
+     1. O GRAFO, que nunca se viola. Cada `pressupoe` que o esqueleto
+        garante (PRESSUPOSTOS, `garante: "esqueleto"`) tem de estar
+        GARANTIDO POR CONSTRUÇÃO no ato: a camada mínima é a que as quests
+        do tipo 1 de atos anteriores estabelecem (`estabelece`); a máxima é
+        a que a revelação permite (CAMADA_DO_ATO — antes do ato do rosto,
+        nunca acima da mão). Uma quest também não estabelece uma camada que
+        o ato não permite, nem um primeiro encontro que já aconteceu; e a
+        mão `rosto` (e a `confronto`) só cai no seu ato, mesmo pelo `tambem`.
+        O que só o jogo garante (a convivência, a afeição) não é daqui: é o
+        portão da abertura (motor/quests-do-turno.js, TE5).
+     2. A CURVA (CURVA_DA_TEMPERATURA, o intervalo de cada ato), com o
+        RESPIRO: no máximo uma descida, de um grau, nunca nos dois últimos
+        atos. O coração (o tipo 2) segue o teto da sua janela
+        (TETO_DO_CORACAO: a primeira no máximo chama).
+   A DEGRADAÇÃO, quando o catálogo não tem a quest certa: o grafo nunca se
+   viola; a subida só se quebra por um respiro — uma quest que aquece UM
+   grau menos do que a anterior, dentro do intervalo do ato, uma vez por
+   campanha e nunca nos dois últimos atos. Fora do intervalo, nunca (o chão
+   da curva é o do `quando` do ato, e a suíte trava-o). Sem nenhuma que
+   sirva, o ato cai no marco antigo, como sempre caiu — e a quest que dele
+   dependia (o confronto sem rosto antes) também.
+
    PURO E DETERMINÍSTICO. A sorte sai da semente (`dadoDo`); o mundo
    entra por argumento e nunca é mutado; o `null` e o lixo dão `null`.
    ============================================================ */
 import { dadoDo } from "./semente.js";
-import { BIBLIOTECA_DE_QUESTS, validarQuest, PAPEIS_DA_QUEST, QUANDO_DA_QUEST, MAOS_DO_VILAO, LIMITES_DA_QUEST, NATUREZAS_DO_FIO } from "./biblioteca-de-quests.js";
+import { BIBLIOTECA_DE_QUESTS, validarQuest, PAPEIS_DA_QUEST, QUANDO_DA_QUEST, MAOS_DO_VILAO, LIMITES_DA_QUEST, NATUREZAS_DO_FIO, TEMPERATURAS, PRESSUPOSTOS } from "./biblioteca-de-quests.js";
 import { nascerOVilao, garantirRegistroDoVilao, PLANOS_DO_ARQUETIPO, PLANO_DE_RECUO, FRAQUEZAS } from "./plano-do-vilao.js";
+import { FASES } from "./vilao.js";
 import { chefesDoMundo, locaisDaCidade, genteDoLocal, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
 
@@ -129,6 +161,46 @@ export const JANELAS_DO_CORACAO = Object.freeze({
   6: Object.freeze([Object.freeze([0, 1, 2]), Object.freeze([3, 4, 5])]),
 });
 
+/* ---------------- A CURVA DA TEMPERATURA (TE4) ----------------
+   O intervalo de graus (TEMPERATURAS, biblioteca-de-quests.js) que cada
+   ato aceita, por número de atos — [o mais frio, o mais quente]. É a
+   «subida com patamares» da planta (§1.3): o primeiro ato abre em brasa ou
+   chama, o penúltimo é o rosto (fogueira), o último o confronto (incêndio).
+   A composição pela mão já fazia 87% disto sozinha; a curva fecha o resto. */
+const faixa = (a, b) => Object.freeze([a, b || a]);
+export const CURVA_DA_TEMPERATURA = Object.freeze({
+  4: Object.freeze([faixa("brasa", "chama"), faixa("chama", "fogueira"), faixa("fogueira"), faixa("incendio")]),
+  5: Object.freeze([faixa("brasa", "chama"), faixa("chama"), faixa("chama", "fogueira"), faixa("fogueira"), faixa("incendio")]),
+  6: Object.freeze([faixa("brasa", "chama"), faixa("brasa", "chama"), faixa("chama", "fogueira"), faixa("chama", "fogueira"), faixa("fogueira"), faixa("incendio")]),
+});
+
+/* O RESPIRO: o ato que deixa o jogador sentar-se antes do penúltimo.
+   `descidas`: quantas vezes, por campanha, uma quest do tipo 1 pode aquecer
+   menos do que a do ato anterior com quest (sempre dentro do intervalo do
+   seu ato); `graus`: de quanto, no máximo; `fechados`: os últimos atos,
+   onde nunca se respira (do rosto ao confronto a história só sobe). */
+export const RESPIRO = Object.freeze({ descidas: 1, graus: 1, fechados: 2 });
+
+/* O TETO DO CORAÇÃO: o grau mais quente que a quest do tipo 2 de cada
+   janela (JANELAS_DO_CORACAO) pode ter. A primeira abre com a campanha —
+   uma promessa de sangue no dia 1 é um clímax sem caminho; a última pode
+   ser qualquer uma. Janela além da tabela: a última linha. */
+export const TETO_DO_CORACAO = Object.freeze(["chama", "incendio"]);
+
+/* O QUE A REVELAÇÃO PERMITE EM CADA ATO (o grafo). `antesDoRosto`: a
+   camada mais alta (FASES, vilao.js) que pode ser verdade num ato antes do
+   do rosto — o rosto, a guerra e a queda esperam o ato do rosto
+   (SOBE_A_CAMADA, `ato`), e a suíte prova que esta linha é a dessa tabela;
+   é o teto do que uma quest pode pressupor e estabelecer ali. `estreia`:
+   as camadas que só UMA quest por campanha estabelece — o primeiro encontro
+   com ele (eram dois em 35 campanhas de 1000). `maoDoSeuAto`: as mãos que só
+   caem no ato cuja composição as pede, mesmo pelo `tambem` da ficha. */
+export const CAMADA_DO_ATO = Object.freeze({
+  antesDoRosto: "mao",
+  estreia: Object.freeze(["rosto"]),
+  maoDoSeuAto: Object.freeze(["rosto", "confronto"]),
+});
+
 /* ---------------- OS NÚMEROS DO ESQUELETO ----------------
    `v`: a forma de `espinha.esqueleto` no save. `coracao`: quantas do tipo
    2 a planta pede por campanha. `afim`/`base`: o peso de uma quest cuja
@@ -172,20 +244,21 @@ const PASSOS = LIMITES_DA_QUEST.passosDoPlano;
 
 /* a forma para n atos: a tabela, ou — fora do menu — a de 6 esticada */
 function formaPara(n) {
-  if (COMPOSICAO_DA_MAO[n]) return { comp: COMPOSICAO_DA_MAO[n], passo: PASSO_DO_ATO[n], quando: QUANDO_DO_ATO[n], janelas: JANELAS_DO_CORACAO[n] };
+  if (COMPOSICAO_DA_MAO[n]) return { comp: COMPOSICAO_DA_MAO[n], passo: PASSO_DO_ATO[n], quando: QUANDO_DO_ATO[n], janelas: JANELAS_DO_CORACAO[n], curva: CURVA_DA_TEMPERATURA[n] };
   const idx = (i) => (n <= 1 ? 5 : Math.round((i * 5) / (n - 1)));
   const vistos = new Set();
-  const passo = [], comp = [], quando = [];
+  const passo = [], comp = [], quando = [], curva = [];
   for (let i = 0; i < n; i++) {
     const k = idx(i);
     const p = PASSO_DO_ATO[6][k];
     passo.push(vistos.has(p) ? null : p); vistos.add(p);
     comp.push(COMPOSICAO_DA_MAO[6][k]);
     quando.push(QUANDO_DO_ATO[6][k]);
+    curva.push(CURVA_DA_TEMPERATURA[6][k]);
   }
   const meio = Math.ceil(n / 2);
   const janelas = [Array.from({ length: meio }, (_, i) => i), Array.from({ length: n - meio }, (_, i) => meio + i)].filter((j) => j.length);
-  return { comp, passo, quando, janelas };
+  return { comp, passo, quando, janelas, curva };
 }
 
 /* os passos do plano de um arquétipo (o próprio, ou o recuo da BQ5) — só
@@ -600,6 +673,9 @@ export function esqueletoDaCampanha(entrada) {
     familia: fr ? vilao.fraqueza.familia : null,
     nomeDaCoisa: fr && vilao.fraqueza.familia === "coisa" ? texto(fr.nome, ESQUELETO.nome) : "",
     fraquezaPosta: null,
+    /* TE4: o grau da última quest do tipo 1 posta, e os respiros gastos */
+    grauAnterior: null,
+    respiros: 0,
   };
   const peso = (q) => (arr(q.afim).includes(espinha.estrutura) ? ESQUELETO.afim : ESQUELETO.base);
   const passosDosAtos = new Set(forma.passo.filter(Boolean));
@@ -618,6 +694,84 @@ export function esqueletoDaCampanha(entrada) {
       const p = f.papeis[papel];
       if (p && p.nome && PAPEIS_DA_QUEST[(q.papeis[papel] || {}).de] && PAPEIS_DA_QUEST[q.papeis[papel].de].tipo === "pessoa") S.deixado.push({ tipo, nome: p.nome, cidade: p.cidade || "", de: q.id });
     }
+  };
+
+  /* ---- TE4: O GRAFO E A CURVA ----
+     `pisoNoAto`: a camada garantida por construção num ato — a mais alta que
+     as quests do tipo 1 de atos ANTERIORES estabelecem (o rumor é sempre
+     verdade). Só o tipo 1 conta: o coração corre por janelas e não se sabe
+     quando fecha. (Não se lê a camada pela composição: sem quest de rosto,
+     o rosto nunca chega em jogo — SOBE_A_CAMADA.rosto exige a quest aberta.)
+     `tetoNoAto`: a mais alta que pode ser verdade nele (CAMADA_DO_ATO). */
+  const porId = new Map(catalogo.map((q) => [q.id, q]));
+  const ORDEM = Object.fromEntries(FASES.map((f) => [f.id, f.ordem]));
+  const TOPO = Math.max(...FASES.map((f) => f.ordem));
+  const grau = (q) => (TEMPERATURAS[q && q.temperatura] ? TEMPERATURAS[q.temperatura].ordem : null);
+  const camadaDe = (c) => (Array.isArray(c) && c[0] === "camada" && ORDEM[c[1]] != null ? ORDEM[c[1]] : null);
+  const pisoNoAto = (ato) => {
+    let p = ORDEM[FASES[0].id];
+    for (const a of atos) {
+      if (!a.quest || a.ato >= ato) continue;
+      for (const c of arr((porId.get(a.quest) || {}).estabelece)) { const k = camadaDe(c); if (k != null) p = Math.max(p, k); }
+    }
+    return p;
+  };
+  const tetoNoAto = (ato) => (S.atoDoRosto >= 0 && ato < S.atoDoRosto ? ORDEM[CAMADA_DO_ATO.antesDoRosto] : TOPO);
+  /* a condição GARANTIDA (verdade em qualquer jogo) ou IMPOSSÍVEL (falsa em
+     qualquer jogo) com a camada entre o piso e o teto; os combinadores da
+     BQ3 (COMBINADORES). O que não se sabe dizer não é garantido: na dúvida,
+     o grafo recusa — nunca se viola */
+  const ramos = (c) => c.slice(c[0] === "pelo_menos" ? 2 : 1);
+  const garantido = (c, piso, teto) => {
+    if (!Array.isArray(c)) return false;
+    if (c[0] === "camada") return camadaDe(c) != null && piso >= camadaDe(c);
+    if (c[0] === "todos") return ramos(c).every((x) => garantido(x, piso, teto));
+    if (c[0] === "algum") return ramos(c).some((x) => garantido(x, piso, teto));
+    if (c[0] === "nenhum") return ramos(c).every((x) => impossivel(x, piso, teto));
+    if (c[0] === "pelo_menos") return ramos(c).filter((x) => garantido(x, piso, teto)).length >= Math.max(1, inteiro(c[1]) || 1);
+    return false;
+  };
+  const impossivel = (c, piso, teto) => {
+    if (!Array.isArray(c)) return false;
+    if (c[0] === "camada") return camadaDe(c) != null && camadaDe(c) > teto;
+    if (c[0] === "todos") return ramos(c).some((x) => impossivel(x, piso, teto));
+    if (c[0] === "algum") return ramos(c).every((x) => impossivel(x, piso, teto));
+    if (c[0] === "nenhum") return ramos(c).some((x) => garantido(x, piso, teto));
+    if (c[0] === "pelo_menos") return ramos(c).length - ramos(c).filter((x) => impossivel(x, piso, teto)).length < Math.max(1, inteiro(c[1]) || 1);
+    return false;
+  };
+  /* o pressuposto que só o jogo garante (PRESSUPOSTOS, `garante` que não é
+     do esqueleto: a convivência, a afeição) — esse é do portão da abertura */
+  const atomosDe = (c) => (Array.isArray(c) && ["todos", "algum", "nenhum", "pelo_menos"].includes(c[0]) ? ramos(c).flatMap(atomosDe) : [c]);
+  const doJogo = (c) => atomosDe(c).some((x) => Array.isArray(x) && PRESSUPOSTOS[x[0]] && PRESSUPOSTOS[x[0]].garante !== "esqueleto");
+  const esperaNoJogo = (q) => arr(q.pressupoe).some(doJogo);
+  const cabeNoGrafo = (q, ato) => {
+    const piso = pisoNoAto(ato), teto = tetoNoAto(ato);
+    for (const c of arr(q.pressupoe)) if (!doJogo(c) && !garantido(c, piso, teto)) return false;
+    for (const c of arr(q.estabelece)) {
+      const k = camadaDe(c);
+      if (k == null) continue;
+      if (k > teto) return false;                                              // a revelação antes da hora
+      if (CAMADA_DO_ATO.estreia.includes(c[1]) && piso >= k) return false;     // o segundo primeiro encontro
+    }
+    return !maosDe(q).some((m) => CAMADA_DO_ATO.maoDoSeuAto.includes(m) && !arr(forma.comp[ato]).includes(m));
+  };
+  /* a curva: null (não entra), ou { respiro } — se a quest gasta o respiro
+     (aquece menos do que a anterior, dentro do intervalo do ato). Fora do
+     intervalo, nunca: o chão da curva é o do `quando` do ato
+     (TEMPERATURA_DO_QUANDO) em todos os atos menos o do confronto, que é
+     fechado — a suíte trava-o —, e por isso uma ficha que cabe no ato nunca
+     fica abaixo dele por um respiro */
+  const naCurva = (q, ato) => {
+    const t = grau(q);
+    const faixaDoAto = arr(forma.curva && forma.curva[ato]);
+    if (t == null || faixaDoAto.length !== 2) return null;
+    const [lo, hi] = faixaDoAto.map((id) => TEMPERATURAS[id].ordem);
+    if (t > hi || t < lo) return null;
+    const ant = S.grauAnterior;
+    if (ant == null || t >= ant) return { respiro: false };
+    if (ato >= n - RESPIRO.fechados || S.respiros >= RESPIRO.descidas || ant - t > RESPIRO.graus) return null;
+    return { respiro: true };
   };
 
   /* A FRAQUEZA, quando nenhuma quest a entregou pelo papel: a quest da
@@ -661,13 +815,15 @@ export function esqueletoDaCampanha(entrada) {
     let escolhida = null;
     if (arr(forma.comp[i]).includes("confronto")) porAFraqueza();
     if (passo) {
+      /* TE4: só as que cabem no grafo e na curva (com o respiro) */
       for (const mao of maos) {
         const cand = tipo1.filter((q) => !usadas.has(q.id) && maosDe(q).includes(mao)
           && arr(q.mao.contra).includes(passo) && arr(q.quando).includes(posicao)
-          && (q.enredo === undefined || q.enredo !== familiaAnterior));
+          && (q.enredo === undefined || q.enredo !== familiaAnterior)
+          && cabeNoGrafo(q, i) && naCurva(q, i));
         for (const q of ordenarPorPeso(rnd, cand, pesoDoAto)) {
           const f = preencher(q, i, S);
-          if (f) { escolhida = { q, f, mao }; break; }
+          if (f) { escolhida = { q, f, mao, curva: naCurva(q, i) }; break; }
         }
         if (escolhida) break;
       }
@@ -677,6 +833,8 @@ export function esqueletoDaCampanha(entrada) {
       const { q, f, mao } = escolhida;
       usadas.add(q.id);
       aceitar(q, f, i);
+      if (escolhida.curva.respiro) S.respiros++;
+      S.grauAnterior = grau(q);
       /* o tenente que é a mão desta quest passa a servir o passo dela: vencê-lo
          faz recuar ESTE passo (o relógio da BQ5 lê `tenente.passo`) */
       const papelDaMao = q.mao.papel;
@@ -703,8 +861,9 @@ export function esqueletoDaCampanha(entrada) {
   const coracao = [];
   const tipo2 = catalogo.filter((q) => q.tipo === 2);
   const ponte = vilao.ponte || null;
-  for (const janela of forma.janelas.slice(0, ESQUELETO.coracao)) {
+  for (const [j, janela] of forma.janelas.slice(0, ESQUELETO.coracao).entries()) {
     if (!janela.length) continue;
+    const tetoDaJanela = TEMPERATURAS[TETO_DO_CORACAO[Math.min(j, TETO_DO_CORACAO.length - 1)]].ordem;
     const posicao = forma.quando[janela[0]];
     /* o ato da ponte: na janela, o do passo mais perto do passo da ponte;
        ponte de ferida, o último da janela (a cidade por onde o tipo 1 vai
@@ -725,22 +884,46 @@ export function esqueletoDaCampanha(entrada) {
       cidadesJanela: janela.map((k) => W.cidadeDoAto[k]).filter(Boolean),
       partilhaveis,
     };
-    const cand = tipo2.filter((q) => !usadas.has(q.id) && arr(q.quando).includes(posicao));
-    let feita = null;
-    for (const q of ordenarPorPeso(rnd, cand, peso)) {
-      const f = preencher(q, janela[0], S, extra);
-      if (f) { feita = { q, f }; break; }
+    const cand = tipo2.filter((q) => !usadas.has(q.id) && arr(q.quando).includes(posicao)
+      && grau(q) != null && grau(q) <= tetoDaJanela && cabeNoGrafo(q, janela[0]));
+    const ordenadas = ordenarPorPeso(rnd, cand, peso);
+    let feita = null, k0 = -1;
+    for (let k = 0; k < ordenadas.length && !feita; k++) {
+      const f = preencher(ordenadas[k], janela[0], S, extra);
+      if (f) { feita = { q: ordenadas[k], f }; k0 = k; }
     }
     if (!feita) continue;
     const { q, f } = feita;
+    /* TE5: A RESERVA. A quest que espera no jogo (um pressuposto que só a
+       abertura garante: a convivência, a afeição) pode nunca abrir — o
+       companheiro que parte, a confiança que não vem. A planta (§1.3): ao
+       fim da espera, «o tipo 2 dá lugar ao seguinte da mesma janela». O
+       seguinte é este: a próxima da mesma ordem que NÃO espera, com os
+       papéis postos agora, sobre o mesmo mundo (vê a mesma gente que a
+       primeira: a do grupo é a mesma pessoa, e não tira ninguém à janela
+       seguinte). Só uma das duas chega a correr. */
+    let reserva = null;
+    if (esperaNoJogo(q)) {
+      for (const r of ordenadas.slice(k0 + 1)) {
+        if (esperaNoJogo(r)) continue;
+        const fr = preencher(r, janela[0], S, extra);
+        if (fr) { reserva = { q: r, f: fr }; break; }
+      }
+    }
     usadas.add(q.id);
     aceitar(q, f, janela[0]);
     for (const k of f.pessoas) S.coracaoUsado.add(k);
+    if (reserva) {
+      usadas.add(reserva.q.id);
+      aceitar(reserva.q, reserva.f, janela[0]);
+      for (const k of reserva.f.pessoas) S.coracaoUsado.add(k);
+    }
     coracao.push({
       quest: q.id, atos: [...janela], papeis: f.papeis,
       ponte: ponte && ponte.de === "ferida"
         ? { de: "ferida", com: ponte.com, ato: atoPonte }
         : { de: "passo", passo: ponte ? ponte.passo : forma.passo[atoPonte] || null, ato: atoPonte },
+      ...(reserva ? { reserva: { quest: reserva.q.id, papeis: reserva.f.papeis } } : {}),
     });
   }
 
@@ -831,6 +1014,8 @@ export function garantirEsqueleto(x) {
   });
   const coracao = arr(o.coracao).map((c) => obj(c)).filter((c) => c && typeof c.quest === "string" && RX_ID.test(c.quest)).map((c) => {
     const p = obj(c.ponte) || {};
+    /* TE5: a reserva (campo novo, aditivo — a versão antiga ignora-o) */
+    const rv = obj(c.reserva);
     return {
       quest: c.quest,
       atos: [...new Set(arr(c.atos).filter((k) => Number.isInteger(k) && k >= 0))],
@@ -838,6 +1023,7 @@ export function garantirEsqueleto(x) {
       ponte: p.de === "ferida" && typeof p.com === "string"
         ? { de: "ferida", com: texto(p.com, 20), ato: Number.isInteger(p.ato) ? p.ato : null }
         : { de: "passo", passo: passoOk(p.passo), ato: Number.isInteger(p.ato) ? p.ato : null },
+      ...(rv && typeof rv.quest === "string" && RX_ID.test(rv.quest) && rv.quest !== c.quest ? { reserva: { quest: rv.quest, papeis: papeisGuardados(rv.papeis) || {} } } : {}),
     };
   }).slice(0, ESQUELETO.coracao);
   const f = obj(o.fraqueza);
@@ -894,4 +1080,19 @@ export function questsDoAto(esqueleto, ato) {
   if (a && a.quest) out.push({ id: a.quest, tipo: 1, papeis: { ...a.papeis } });
   for (const c of s.coracao) if (c.atos[0] === ato) out.push({ id: c.quest, tipo: 2, papeis: { ...c.papeis } });
   return out;
+}
+
+/* ============================================================
+   A RESERVA DE UMA DO CORAÇÃO (TE5)
+   reservaDoCoracao(esqueleto, id) → { id, tipo: 2, papeis } | null
+   A quest que dá lugar à do coração `id` quando esta espera e o que ela
+   pressupõe nunca chega (o portão da abertura, motor/quests-do-turno.js).
+   A mesma forma de questsDoAto. Sem reserva (a quest não espera, ou a
+   janela não tinha outra), ou com lixo: null.
+   ============================================================ */
+export function reservaDoCoracao(esqueleto, id) {
+  const s = garantirEsqueleto(esqueleto);
+  if (!s || typeof id !== "string") return null;
+  const c = s.coracao.find((x) => x.quest === id);
+  return c && c.reserva ? { id: c.reserva.quest, tipo: 2, papeis: { ...c.reserva.papeis } } : null;
 }

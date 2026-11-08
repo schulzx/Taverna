@@ -25,9 +25,9 @@
       um «ou», o cartaz da sombra sem camada que vaze, a gente que o herói
       conheceu, a reviravolta lida, o género do {quem}, a frase que é carta. */
 import fs from "node:fs";
-import { QUESTS_DO_TURNO, garantirQuestsDaEspinha, oTurnoDasQuests, aMesaDasQuests, missoesDasQuests, escolhasDasQuests, escolherNaQuestDoEstado, oVilaoDasQuests, verAsReviravoltas, aEscolhaDaFrase } from "../src/motor/quests-do-turno.js";
-import { esqueletoDaCampanha, comOEsqueleto, questsDoAto } from "../src/esqueleto.js";
-import { EFEITOS_DA_QUEST, MISSAO_DA_QUEST, missaoDaQuest, questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha, validarQuest, GRAVIDADE_DA_ESCOLHA, BIBLIOTECA_DE_QUESTS } from "../src/biblioteca-de-quests.js";
+import { QUESTS_DO_TURNO, garantirQuestsDaEspinha, oTurnoDasQuests, aMesaDasQuests, missoesDasQuests, escolhasDasQuests, escolherNaQuestDoEstado, oVilaoDasQuests, verAsReviravoltas, aEscolhaDaFrase, PORTAO_DA_ABERTURA } from "../src/motor/quests-do-turno.js";
+import { esqueletoDaCampanha, comOEsqueleto, questsDoAto, ESQUELETO } from "../src/esqueleto.js";
+import { EFEITOS_DA_QUEST, MISSAO_DA_QUEST, missaoDaQuest, questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha, validarQuest, GRAVIDADE_DA_ESCOLHA, BIBLIOTECA_DE_QUESTS, PRESSUPOSTOS } from "../src/biblioteca-de-quests.js";
 import { LINHA_DO_VILAO, CAMPOS_DA_CAMADA, fichaDoVilao, PLANOS_DO_ARQUETIPO, DIARIO_DO_VILAO, oVilaoNoDiario } from "../src/plano-do-vilao.js";
 import { PESO_DA_QUEST, marcoDaQuest, garantirHistoria, temAntagonista, ESTRUTURAS, estruturaPorId, custoDaEtapa } from "../src/historia.js";
 import { gerarGeografia, rngDe } from "../src/geografia.js";
@@ -478,6 +478,98 @@ sec("§10 os pedidos do desenho (formas.md «## BQ · as quests na tela», §BQ 
   const ab2 = [{ quest: "o_salvo_conduto", chave: "verdade", opcoes: vv.opcoes }];
   t("8 · entre duas cartas com o mesmo nome dentro, decide o verbo", aEscolhaDaFrase("entrego a Lia a quem a procura", ab2).opcao === "entregar" && aEscolhaDaFrase("levo a Lia até ao fim", ab2).opcao === "levar");
   t("8 · e o empate não escolhe por ninguém", aEscolhaDaFrase("falo com a Lia", ab2) === null);
+}
+
+/* §11 O PORTÃO DA ABERTURA (TE5, 09/11). Uma quest do coração que pressupõe
+   o que só o jogo garante (a convivência, a afeição) ESPERA: sem registo —
+   logo fora do Diário, das escolhas e da pauta — até isso valer, e abre
+   nesse dia; ao fim da espera máxima dá lugar à reserva que o esqueleto
+   lhe guardou (reservaDoCoracao). Medido com o esqueleto da TE4: 360 de
+   1000 campanhas abriam uma destas no turno 0. O replay faz o mesmo. */
+sec("§11 o portão da abertura (TE5)");
+{
+  const P = PORTAO_DA_ABERTURA;
+  t("o portão julga os pressupostos que só o jogo garante, e a espera tem fim", P.garante === "abertura" && Object.values(PRESSUPOSTOS).some((x) => x.garante === P.garante) && Number.isInteger(P.esperaMaxima) && P.esperaMaxima > 0 && P.teto >= ESQUELETO.coracao);
+  const convMax = Math.max(...BIBLIOTECA_DE_QUESTS.flatMap((q) => (q.pressupoe || []).filter((c) => c[0] === "convivencia").map((c) => (Number.isInteger(c[2]) ? c[2] : 3))));
+  t(`a espera máxima (${P.esperaMaxima} dias) passa do dobro da convivência mais longa que o acervo pede (${convMax})`, P.esperaMaxima > 2 * convMax);
+
+  /* o mundo de prova: o primeiro cujo coração do turno 0 espera a convivência e tem reserva */
+  let TW = null;
+  for (let i = 0; i < 80 && !TW; i++) {
+    const w = mundoNovo(`TE5|${i}`, "jornada", "soldado");
+    const c = w.esq && w.esq.coracao.find((x) => x.atos[0] === 0);
+    if (c && c.reserva && (questPorId(c.quest).pressupoe || []).some((x) => x[0] === "convivencia")) TW = { w, c };
+  }
+  t("há um mundo de prova cujo coração do turno 0 espera a convivência, com reserva", !!TW);
+  const W5 = TW.w, c0 = TW.c;
+  const quem = c0.papeis.quem.nome;
+  const titulo = questPorId(c0.quest).titulo;
+  const espera = (E) => garantirQuestsDaEspinha(E.espinha.quests).espera;
+  const fora = (E) => garantirQuestsDaEspinha(E.espinha.quests).fora;
+
+  /* o turno 0: espera */
+  let { E, r } = turno(W5, W5.estado);
+  t("no turno 0, a quest do coração com gancho de convivência espera: na espera, sem registo", espera(E).some((e) => e.id === c0.quest && e.ato === 0 && e.desde === 1) && !registoDe(E, c0.quest), J(espera(E)));
+  t("e o tipo 1 do ato não espera: abriu", !W5.esq.atos[0].quest || !!registoDe(E, W5.esq.atos[0].quest));
+  const mesa = aMesaDasQuests(E, { mundo: W5.mundo, cena: { presentes: [] } });
+  t("enquanto espera, não aparece no Diário, nas escolhas, na pauta nem no relato", !missoesDasQuests(E, { mundo: W5.mundo }).some((m) => m.id.endsWith(c0.quest)) && !escolhasDasQuests(E, { mundo: W5.mundo }).some((x) => x.quest === c0.quest) && !J(mesa).includes(titulo) && !r.linhas.some((l) => l.includes(titulo)));
+  t("a espera atravessa o save (garantirQuestsDaEspinha, depois do JSON)", J(garantirQuestsDaEspinha(JSON.parse(J(E.espinha.quests)))) === J(garantirQuestsDaEspinha(E.espinha.quests)));
+
+  /* o caminho que abre: quem é do grupo (a afeição) e foi visto no dia 1 (a convivência) */
+  let E2 = E;
+  ({ E: E2 } = turno(W5, { ...E2, dia: 2 }, (e) => comGrupo({ ...e, elenco: { vistos: { [quem]: [1] } } }, quem)));
+  t("ao fim de um dia de estrada, ainda espera (a convivência pede três)", espera(E2).some((e) => e.id === c0.quest) && !registoDe(E2, c0.quest));
+  ({ E: E2 } = turno(W5, { ...E2, dia: 4 }));
+  const R2 = registoDe(E2, c0.quest);
+  t("ao terceiro dia de estrada com quem confia no herói, o portão abre: a quest nasce, com o dia de hoje", !!R2 && R2.inicio === 4 && !espera(E2).length, J(espera(E2)));
+  t("e a reserva não abre (só uma das duas corre)", !registoDe(E2, c0.reserva.quest) && !fora(E2).some((f) => f.id === c0.quest));
+  /* os dois pressupostos contam: três dias de estrada sem confiança não abrem */
+  let E4 = E;
+  ({ E: E4 } = turno(W5, { ...E4, dia: 4 }, (e) => ({ ...e, elenco: { vistos: { [quem]: [1] } } })));
+  t("três dias de estrada sem a confiança de quem é (a afeição) não abrem: continua à espera", espera(E4).some((e) => e.id === c0.quest) && !registoDe(E4, c0.quest));
+
+  /* o caminho que nunca chega: ninguém com quem fazer estrada */
+  let E3 = E;
+  for (let d = 2; d <= P.esperaMaxima; d++) ({ E: E3 } = turno(W5, { ...E3, dia: d }));
+  t(`sem a convivência, espera até ao fim da espera máxima (dia ${P.esperaMaxima}: ainda espera)`, espera(E3).some((e) => e.id === c0.quest) && !registoDe(E3, c0.reserva.quest));
+  ({ E: E3 } = turno(W5, { ...E3, dia: 1 + P.esperaMaxima }));
+  const R3 = registoDe(E3, c0.reserva.quest);
+  t("e então dá lugar à reserva: a quest sai para fora, a reserva abre, ninguém fica preso", fora(E3).some((f) => f.id === c0.quest) && !!R3 && R3.inicio === 1 + P.esperaMaxima && !espera(E3).length && !registoDe(E3, c0.quest), J({ espera: espera(E3), fora: fora(E3) }));
+  t("a reserva abre com os papéis que o esqueleto lhe guardou", !!R3 && Object.entries(c0.reserva.papeis).every(([k, p]) => R3.papeis[k] && R3.papeis[k].nome === p.nome));
+
+  /* o replay: o passo «as quests», dia a dia, da espera à reserva */
+  const passo = PASSOS_DO_REPLAY.find((p) => p.passo === "as quests");
+  let A = W5.estado, B = W5.estado, iguais = true;
+  for (let d = 1; d <= 1 + P.esperaMaxima; d++) {
+    A = { ...A, dia: d }; B = { ...B, dia: d };
+    const ra = oTurnoDasQuests(A, { mundo: W5.mundo });
+    A = ra ? { ...A, ...ra.estado } : A;
+    B = passo.faz(B, {}, { mundo: W5.mundo }, { tela: { linhas: [] } });
+    if (J(A) !== J(B)) iguais = false;
+  }
+  t("o replay é igual ao turno, dia a dia, da espera à reserva", iguais && !!registoDe(A, c0.reserva.quest));
+  let C2 = { ...W5.estado }, D2 = { ...W5.estado }, iguais2 = true;
+  for (const [d, f] of [[1, null], [2, (e) => comGrupo({ ...e, elenco: { vistos: { [quem]: [1] } } }, quem)], [4, null]]) {
+    C2 = { ...(f ? f(C2) : C2), dia: d }; D2 = { ...(f ? f(D2) : D2), dia: d };
+    const rc = oTurnoDasQuests(C2, { mundo: W5.mundo });
+    C2 = rc ? { ...C2, ...rc.estado } : C2;
+    D2 = passo.faz(D2, {}, { mundo: W5.mundo }, { tela: { linhas: [] } });
+    if (J(C2) !== J(D2)) iguais2 = false;
+  }
+  t("e é igual no caminho que abre", iguais2 && !!registoDe(C2, c0.quest));
+
+  /* a campanha em curso: a quest que já abriu segue, o portão não a toca */
+  const Rja = abrirQuest(c0.quest, { estado: W5.estado, papeis: c0.papeis });
+  const EmCurso = { ...W5.estado, espinha: { ...W5.estado.espinha, quests: { ...garantirQuestsDaEspinha(null), atos: [0], registos: [Rja] } } };
+  const rc = Rja ? oTurnoDasQuests(EmCurso, { mundo: W5.mundo }) : null;
+  const Ec = rc ? { ...EmCurso, ...rc.estado } : EmCurso;
+  t("numa campanha em curso, a do coração que já abriu segue: o portão só toca as que ainda não abriram", !!Rja && !!registoDe(Ec, c0.quest) && !espera(Ec).length);
+  /* o save que nunca esperou fica com a forma de antes: sem o campo */
+  const { E: Ep } = turno(W, W.estado);
+  t("sem ninguém à espera, a espinha não ganha o campo (o save fica com a forma de antes)", !("espera" in Ep.espinha.quests));
+  /* o lixo */
+  const g = garantirQuestsDaEspinha({ registos: [Rja], espera: [{ id: "nao_existe" }, 3, null, { id: c0.quest, ato: 0, desde: 1 }, { id: c0.reserva.quest, ato: -4, desde: "x" }, { id: c0.reserva.quest, ato: 1, desde: 2 }] });
+  t("a espera torta cai: o id que não é do catálogo, a que já abriu, a repetida; o número torto vai a zero", J(g.espera) === J([{ id: c0.reserva.quest, ato: 0, desde: 0 }]), J(g.espera));
 }
 
 console.log(`\nBQ7 · as quests e o vilão no motor: ${bons} passaram, ${maus} falharam`);
