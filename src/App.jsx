@@ -11183,6 +11183,38 @@ export default function Taverna() {
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
+    /* BQ7c (08/11): a base do mundo é reposta AQUI, com o registo e o elenco,
+       e não lá embaixo com a devoção — o esqueleto compõe-se antes disso
+       (comporOEsqueleto, no bloco da espinha) e o núcleo dele lê a base
+       (contextoDoElenco): numa campanha nova sem companheiro de antes, os
+       mortos e as situações da campanha ANTERIOR (chaveados por nome)
+       tiravam dos papéis quem, no mundo novo, tinha o mesmo nome. */
+    if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
+    /* BQ7c (08/11): OS MOTORES DA CAMPANHA NASCEM LIMPOS. Uma campanha nova
+       na mesma sessão herdava da anterior a reviravolta (e o prelúdio só
+       elege outra quando não há nenhuma), o Livro de Promessas, a escada do
+       encalhe, a escuta, o episódio, os gestos e a postura — todos refs
+       que o load repõe do save e a criação não tocava. Os mesmos vazios
+       que iniciarNoite usa («higiene de território»), mais a postura e a
+       noite. Só numa campanha NOVA: um capítulo novo (cap) continua a mesma
+       campanha e guarda-os; e Uma Noite já os limpou e semeou antes de
+       chamar iniciar (as sementes do episódio e do pronto), por isso fica
+       de fora. Em calou: uma reposição que estoure não custa a criação. */
+    if (!cap && modoRef.current !== "rapida") {
+      try {
+        promessasRef.current = garantirLivro(null);
+        reviravoltaRef.current = null;
+        reviravoltaMaiorRef.current = null;
+        escadaRef.current = garantirEscada(null);
+        escutaRef.current = garantirEscuta(null);
+        adiadosEscutaRef.current = [];
+        gestosRef.current = [];
+        fatosDoPesoRef.current = {};
+        episodioRef.current = null;
+        posturaRef.current = garantirPosturaAtiva(null);
+        noiteRef.current = null; torneioRef.current = null; vereditoRef.current = null;
+      } catch (e) { calou("BQ7c · os motores da campanha nova", e); }
+    }
     if (!cap) factosRef.current = garantirFactos(null); /* BQ2: o livro de factos é da campanha; um capítulo novo guarda-o */
     if (!cap) memoriaRef.current = garantirMemoriaDoSave(null); /* F2d: a memória com rosto é da campanha; um capítulo novo guarda-a, como o registo */
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
@@ -11341,7 +11373,7 @@ export default function Taverna() {
     if (!cap) { missoesRef.current = []; setMissoes([]); }
     divindadeRef.current = garantirDivindade(null); setDivindade(divindadeRef.current);
     devocaoRef.current = garantirDevocao(null, mapaRef.current, divindadeRef.current); setDevocao(devocaoRef.current);
-    if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }
+    /* (a base do mundo já foi reposta no começo de iniciar — BQ7c) */
     if (!cap) formaRef.current = garantirForma(null);
     confidenciasRef.current = [];
     mercadoRef.current = { comprados: {}, ambulante: null, pressoes: {}, gastos: {}, pechinchas: {} }; setMercado(mercadoRef.current);
@@ -18382,6 +18414,28 @@ export default function Taverna() {
      relógio, porque é o mesmo instante — e antes do sino, que lê o que ele
      deixar), e o toque que vai à tela e à nota.
      Provado byte a byte contra o de antes (teste-motor-antes-do-mestre). */
+  /* BQ7c · O SINO NÃO TOCA SOBRE O ALVO DE OUTRA HISTÓRIA. O sino da
+     abertura traz a pressão do alvo do marco antigo («{quem}», «{onde}»,
+     abertura.js, ACONTECIMENTOS_DO_SINO). Num mundo novo esse alvo não é
+     a história: cala-se (1) num ato com a quest do tipo 1 aberta — quem
+     puxa o herói é a quest, e o sino falaria de outra gente —, e (2)
+     quando a principal da abertura nunca nasceu, porque a quest do ato 0
+     tomou o lugar dela (iniciar: «if (!questNoAto0)»): o alvo do sino é
+     de um marco que o mundo não vive. Calar é não andar: a abertura fica
+     como está, e o mural e a trama (muralLiberado, tramaTemEspaco) já a
+     dão por cumprida sem a principal. Mundo antigo: nunca cala. */
+  const oSinoCala = () => {
+    try {
+      if (!comEsqueleto()) return false;
+      const a = aberturaMundoRef.current || {};
+      if (a.principalId && !(missoesRef.current || []).some((m) => m && m.id === a.principalId)) return true;
+      const h = historiaRef.current || {};
+      const ato = Number.isInteger(h.etapa) ? h.etapa : 0;
+      const q1 = questsDoAto(espinhaRef.current.esqueleto, ato).find((q) => q && q.tipo === 1);
+      if (!q1) return false;
+      return garantirQuestsDaEspinha(espinhaRef.current.quests).registos.some((r) => r && r.id === q1.id && r.estado === "aberta");
+    } catch (e) { calou("BQ7c · o sino na quest", e); return false; }
+  };
   const marcarTurnoDoMundo = () => {
     const rel = oRelogioDoMundo({ combate: combateRef.current, turnosDeMundo: turnosDeMundoRef.current, acampado: acampadoRef.current, masmorra: masmorraRef.current });
     if (rel.parado) return;
@@ -18389,6 +18443,7 @@ export default function Taverna() {
     if (rel.tiquear) tiquear("turno_mundo", { porque: "o mundo se mexeu enquanto você agia" });
     if (rel.mundoSeMexe) talvezOMundoSeMexer();
     try {
+      if (oSinoCala()) return;
       const s = oSinoDoTurno({
         abertura: aberturaMundoRef.current, missoes: missoesRef.current, lugar: lugarRef.current, npcs: npcsRef.current,
         acampado: acampadoRef.current, masmorra: masmorraRef.current, raid: raidRef.current, cidadeAtual: cidadeAtualRef.current,

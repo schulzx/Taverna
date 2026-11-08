@@ -197,6 +197,11 @@ export function dublesDoAntes(k, { novo }) {
     MINUTOS_POR_TURNO: 45,
     avancarMinutos: (n) => { log.minutos.push(n); return `(+${n} min)`; },
     marcarTurnoDoMundo: undefined,
+    /* BQ7c (08/11): a porta que cala o sino num mundo com esqueleto
+       (oSinoCala, no App, antes de marcarTurnoDoMundo). Os casos daqui são
+       mundos antigos — sem esqueleto ela devolve sempre false —, e o dublê
+       diz isso mesmo; a porta prova-se em teste-bq7-app. */
+    oSinoCala: () => false,
     acao: k.frase, conteudo: k.frase, novosNoChao: copia(k.novosNoChao), chaoAntes: null,
   };
   S.chaoAntes = S.chaoRef.current;

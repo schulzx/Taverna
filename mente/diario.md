@@ -24,6 +24,11 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 08/11 · v9.626 · a campanha nova já não herda nada da anterior
+- **o `oficial` (bastão 09:28–09:51 e 09:53–10:09):** (1) a base do mundo repõe-se no começo de `iniciar`, antes da primeira composição do esqueleto — sem companheiro, o núcleo lia a base da campanha anterior; provado com duas campanhas seguidas no navegador (a base da primeira suja de propósito: zero nomes partilhados nos papéis da segunda). (2) o sino da abertura cala num mundo com esqueleto quando a quest do ato 0 tomou o lugar da principal antiga (apontava para «O Cervo Lento», alheio à quest). (3) **o defeito irmão:** `iniciar` não repunha doze refs de campanha — promessas, reviravoltas, escada, escuta, gestos, fatos do peso, episódio, a Noite e a postura —, e uma campanha nova na mesma sessão herdava o Livro de Promessas e a reviravolta da anterior. Repostas só numa campanha nova (não no capítulo, não na Noite, que semeia o Livro antes).
+
+---
+
 ## 08/11 · v9.625 · BQ7b — as consequências das quests chegam ao jogo
 - **o `oficial` (bastão 08:25–fim):** `src/motor/efeitos-da-quest.js` (puro) calcula cada efeito e o App executa pelo órgão de sempre: vinculo e marco (`aplicarVinculo`), afeição (no grupo pelo vínculo; fora, o grau ao livro e o laço que já exista), situação (`porSituacao`), dia (o relógio). **A morte** pelo caminho que já existia (sai do grupo como na luta sem saída, `registrarMorteDeAlvo`, `registrarMorte`), só com o registo terminado num desfecho que a traz e a pessoa ainda no grupo; a suíte confirma no acervo que toda morte exige uma escolha do herói.
 - **corrigido da BQ7:** o estado passado ao motor das quests não levava a base do mundo — «situacao» e «morto» viam toda a gente livre.

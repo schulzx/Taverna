@@ -254,5 +254,117 @@ console.log("\n8. BQ7b · a fiação no App: os efeitos, os rostos, o foco, o n�
     ini.includes('if (v0 && v0.gancho) questDaAbertura = { gancho: v0.gancho, passo: v0.etapaTexto || "" };') && ini.includes("quest: questDaAbertura }), persAb, []);") && ini.includes('calou("BQ7b · a pista da abertura", e)'));
 }
 
+console.log("\n9. BQ7c: a base do mundo novo antes do esqueleto, e o sino que cala na quest");
+{
+  const ini = app.slice(app.indexOf("  const iniciar = (pers) => {"), app.indexOf("  const abrirACampanha = (pers) => {"));
+  const RESET = "if (!cap) { baseMundoRef.current = garantirBase(null); setBaseMundo(baseMundoRef.current); }";
+  /* o defeito: sem companheiro de antes, o esqueleto era composto ANTES de
+     a base ser reposta, e o núcleo dele (contextoDoElenco → base) lia os
+     mortos e as situações da campanha anterior. A recomposição com o
+     companheiro já corria depois — por isso o defeito só mordia sem ele. */
+  t("a base do mundo é reposta uma vez só em iniciar", ini.split(RESET).length - 1 === 1);
+  t("e antes da primeira composição do esqueleto (e do núcleo que ele lê)",
+    ini.indexOf(RESET) > 0 && ini.indexOf(RESET) < ini.indexOf("comporOEsqueleto(espinhaSemEsqueleto, pers)") && ini.indexOf(RESET) < ini.indexOf("const comporOEsqueleto = (base, heroi) => {"));
+  t("junto do registo e do elenco que o núcleo também lê", ini.indexOf(RESET) > ini.indexOf("elencoSaveRef.current = garantirElencoDoSave(null);") && ini.indexOf(RESET) < ini.indexOf("nucleoCacheRef.current = null;"));
+  t("e antes da abertura e do companheiro de antes (que leem a mesma base)", ini.indexOf(RESET) < ini.indexOf("ab = abrirAbertura({") && ini.indexOf(RESET) < ini.indexOf("companheiroInicial({"));
+
+  /* A ORDEM IMPORTA, em Node: a base viva de uma campanha (os seus mortos,
+     por nome) muda o núcleo e o esqueleto da campanha seguinte em parte dos
+     mundos — os papéis da segunda dependeriam da primeira, e a mesma semente
+     daria outro mundo conforme o que se jogou antes na mesma sessão. Com a
+     base reposta, o mundo é o da semente (determinismo). Se um dia esta
+     contagem cair a zero, o núcleo deixou de ler a base (hoje: 1 de 60, com
+     todos os nomes importantes da primeira mortos — o efeito é raro, e por
+     isso a prova principal é a de texto, a da ordem): a prova de texto
+     acima perde o motivo, e deve ser revista — não apagada às cegas.
+     (Pedido original: «a segunda não herda nenhum id da primeira». Não se
+     pode escrever assim: os nomes saem de um banco partilhado, e dois mundos
+     limpos já partilham algum nome — 27 de 60 nestas sementes. O que se
+     prova é a dependência, que é o defeito.) */
+  const { esqueletoDaCampanha } = await import("../src/esqueleto.js");
+  const { gerarGeografia } = await import("../src/geografia.js");
+  const { estenderEspinha } = await import("../src/saga.js");
+  const { nucleoDaCampanha } = await import("../src/nucleo.js");
+  const { chefesDoMundo } = await import("../src/mundo-base.js");
+  const mundo = (semente, base) => {
+    const mapa = gerarGeografia(semente, null, null);
+    const espinha = estenderEspinha({ semente, mapa, estrutura: "jornada", cidadeInicial: mapa.cidades[0].nome, antecedente: "soldado", dia: 1 });
+    const nucleo = nucleoDaCampanha(semente, mapa, { espinha, antecedente: "soldado", grupo: [], base });
+    return { nucleo, esq: esqueletoDaCampanha({ semente, mapa, espinha, antecedente: "soldado", nucleo, chefes: chefesDoMundo(semente, mapa) }) };
+  };
+  const nomesDe = (esq) => {
+    const s = new Set();
+    for (const g of [...((esq && esq.atos) || []), ...((esq && esq.coracao) || [])]) for (const p of Object.values(g.papeis || {})) if (p && p.nome) s.add(p.nome);
+    return s;
+  };
+  let mudou = 0, iguais = 0;
+  const N = 60;
+  for (let i = 0; i < N; i++) {
+    const A = mundo("BQ7c|A|" + i, garantirBase(null));
+    let viva = garantirBase(null);
+    for (const n of [...A.nucleo.pessoas.map((p) => p.nome), ...nomesDe(A.esq)]) viva = matar(viva, n);
+    const comAViva = mundo("BQ7c|B|" + i, viva);
+    const reposta = mundo("BQ7c|B|" + i, garantirBase(null));
+    const limpa = mundo("BQ7c|B|" + i, garantirBase(null));
+    if (JSON.stringify(comAViva.esq) !== JSON.stringify(reposta.esq) || JSON.stringify(comAViva.nucleo) !== JSON.stringify(reposta.nucleo)) mudou++;
+    if (JSON.stringify(reposta) === JSON.stringify(limpa)) iguais++;
+  }
+  console.log(`      a base da campanha anterior mudou a seguinte em ${mudou} de ${N} mundos`);
+  t("a base da campanha anterior muda o esqueleto ou o núcleo da seguinte em parte dos mundos (é por isso que a ordem importa)", mudou > 0, `${mudou}/${N}`);
+  t("com a base reposta, a segunda campanha é a da semente — igual à de uma sessão limpa", iguais === N, `${iguais}/${N}`);
+
+  /* OS MOTORES DA CAMPANHA NOVA. Uma campanha nova na mesma sessão herdava
+     da anterior a reviravolta (o prelúdio só elege outra quando não há
+     nenhuma: «if (menor && !$ref.reviravolta)»), o Livro de Promessas e a
+     escada — refs que o load repõe do save e a criação não tocava. Agora
+     nascem com os vazios do useRef (o mesmo que uma sessão limpa), e só na
+     campanha nova: o capítulo (cap) continua a campanha e guarda-os, e Uma
+     Noite já os limpou e semeou antes de chamar iniciar. */
+  const MOT = 'if (!cap && modoRef.current !== "rapida") {';
+  const iM = ini.indexOf(MOT);
+  const mot = iM > 0 ? ini.slice(iM, ini.indexOf('calou("BQ7c · os motores da campanha nova", e); }', iM) + 60) : "";
+  t("os motores repõem-se uma vez, só em campanha nova (não no capítulo, não na Noite)", iM > 0 && ini.split(MOT).length - 1 === 1);
+  const VAZIOS = [
+    "promessasRef.current = garantirLivro(null);", "reviravoltaRef.current = null;", "reviravoltaMaiorRef.current = null;",
+    "escadaRef.current = garantirEscada(null);", "escutaRef.current = garantirEscuta(null);", "adiadosEscutaRef.current = [];",
+    "gestosRef.current = [];", "fatosDoPesoRef.current = {};", "episodioRef.current = null;", "posturaRef.current = garantirPosturaAtiva(null);",
+    "noiteRef.current = null; torneioRef.current = null; vereditoRef.current = null;",
+  ];
+  const faltam = VAZIOS.filter((v) => !mot.includes(v));
+  t("a reviravolta, as promessas, a escada, a escuta, o episódio, os gestos, a postura e a noite, com os vazios de sempre", !faltam.length, faltam.join(" | "));
+  t("os vazios são os do useRef (uma campanha nova = uma sessão limpa)",
+    app.includes("const promessasRef = useRef(garantirLivro(null));") && app.includes("const escadaRef = useRef(garantirEscada(null));") && app.includes("const posturaRef = useRef(garantirPosturaAtiva(null));") && app.includes("const reviravoltaRef = useRef(null);"));
+  t("em calou, e antes da espinha e do esqueleto (que a campanha nova escreve a seguir)",
+    mot.includes('} catch (e) { calou("BQ7c · os motores da campanha nova", e); }') && iM < ini.indexOf("espinhaRef.current = estenderEspinha({"));
+  /* o capítulo: é capituloNovoRef que o distingue, lido uma vez no começo */
+  t("o capítulo distingue-se por capituloNovoRef, lido e limpo antes da reposição",
+    ini.indexOf("const cap = capituloNovoRef.current;") > 0 && ini.indexOf("const cap = capituloNovoRef.current;") < iM);
+  /* a Noite semeia o Livro ANTES de chamar iniciar — repô-lo ali apagava as sementes */
+  const noite = corpo("iniciarNoite");
+  t("Uma Noite semeia as promessas e só depois chama iniciar (por isso fica de fora da reposição)",
+    noite.indexOf("promessasRef.current = L;") > 0 && noite.indexOf("promessasRef.current = L;") < noite.indexOf("iniciar(pers);") && noite.includes('modoRef.current = "rapida";'));
+
+  /* O SINO (abertura.js, andarOSino): traz a pressão do alvo do marco
+     antigo. Num mundo novo esse alvo não é a história — calar-se é a saída
+     que não inventa regra (apontá-lo à quest pediria traduzir a etapa da
+     quest no feitio do sino, que é tabela do sistema). */
+  const ms = corpo("marcarTurnoDoMundo");
+  const sc = corpo("oSinoCala");
+  t("marcarTurnoDoMundo pergunta à porta antes de andar o sino, dentro do mesmo try (o calou de sempre)",
+    ms.indexOf("if (oSinoCala()) return;") > ms.indexOf("try {") && ms.indexOf("if (oSinoCala()) return;") < ms.indexOf("const s = oSinoDoTurno({"));
+  t("a porta é de mundo novo: sem esqueleto nunca cala", sc.indexOf("if (!comEsqueleto()) return false;") > 0 && sc.indexOf("if (!comEsqueleto()) return false;") < sc.indexOf("principalId"));
+  t("cala quando a principal da abertura nunca nasceu (a quest do ato 0 tomou-lhe o lugar)",
+    sc.includes("if (a.principalId && !(missoesRef.current || []).some((m) => m && m.id === a.principalId)) return true;"));
+  t("cala num ato com a quest do tipo 1 aberta (o ato é o da história, a quest a do esqueleto)",
+    sc.includes("questsDoAto(espinhaRef.current.esqueleto, ato).find((q) => q && q.tipo === 1)") && sc.includes('garantirQuestsDaEspinha(espinhaRef.current.quests).registos.some((r) => r && r.id === q1.id && r.estado === "aberta")') && sc.includes("const ato = Number.isInteger(h.etapa) ? h.etapa : 0;"));
+  t("e em calou, a responder «não cala» se estourar (o mundo antigo nunca perde o sino)", sc.includes('} catch (e) { calou("BQ7c · o sino na quest", e); return false; }'));
+  /* calar é não andar: a abertura fica como está, e nada que dependa dela
+     fica preso — sem a principal, o mural e a trama já a dão por cumprida */
+  const { muralLiberado, tramaTemEspaco } = await import("../src/abertura.js");
+  const abQ = { v: 1, principalId: "mis_x", cidade: "Vau", titulo: "t", pista: { nome: "P" }, alvo: { feitio: "procurar", quem: "Noé" }, turnos: 0, semAvanco: 0 };
+  t("sem a principal entre as missões, o mural abre e a trama tem espaço com a abertura parada no turno 0",
+    muralLiberado({ abertura: abQ, missoes: [] }) === true && tramaTemEspaco({ abertura: abQ, missoes: [], dia: 1 }) === true);
+}
+
 console.log(`\nbq7-app: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);
