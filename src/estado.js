@@ -103,6 +103,7 @@ export const CAMPOS = Object.freeze([
   C("lei", "memoria", "qualquer"),
   C("aliados", "coracao", "qualquer"),
   C("memoria", "memoria", "qualquer"),
+  C("factos", "memoria", "qualquer"),   // BQ2: o livro de factos (livro-de-factos.js)
   C("saber", "memoria", "qualquer"),
   C("coracao", "coracao", "qualquer"),
   C("vilaoAgiu", "historia", "numero"),

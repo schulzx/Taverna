@@ -200,6 +200,11 @@ export function casoDoCronista(i) {
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
 const sha = (x) => createHash("sha256").update(typeof x === "string" ? x : JSON.stringify(x === undefined ? null : x)).digest("hex").slice(0, 16);
+/* BQ2 (08/11, oficial): os refs que o App de HOJE lê e o de antes não tinha —
+   estado novo, que o dourado (o App de antes) não pode fotografar. Ficam fora da
+   foto para que ela continue a comparar o que o bloco sempre fez; cada um
+   prova-se na sua suíte (o livro de factos: teste-bq2-app). */
+const FORA_DA_FOTO = Object.freeze(["factosRef"]);
 export function dublesDoCronista(k, { novo }) {
   const log = { portas: [], tela: [], calados: [], sets: [], rede: [], salvos: [], faltas: [] };
   const P = (...x) => log.portas.push(copia(x));
@@ -214,6 +219,11 @@ export function dublesDoCronista(k, { novo }) {
     npcTurnoRef: ref(k.npcTurno), espinhaRef: ref(copia(k.espinha)), leituraDoCronistaRef: ref(copia(k.leitura)), testeDoTurnoRef: ref(copia(k.testeDoTurno)),
     ultimoPedidoRef: ref(k.doTurno.frase), notaRef: ref(k.notaAntes), questsRef: ref([{ titulo: "q" }]), falouComRef: ref([]), segredosReveladosRef: ref([]),
     systemRef: ref(""), bancoNomesRef: ref([]), faccaoJogadorRef: ref(null), muralRef: ref([]),
+    /* BQ2 (08/11, oficial): o estado do Cronista passou a levar o livro de factos, e o
+       efeito `factos` vai ao invólucro do App (`anotarNoLivro`). O livro é estado novo,
+       fora da foto do dourado (o App de antes não o tinha): o dublê é o livro vazio e um
+       invólucro que não escreve. O livro prova-se em teste-bq2-app. */
+    factosRef: ref(null), anotarNoLivro: () => undefined,
     calou: (onde, e) => log.calados.push([onde, String(e && e.message)]),
     pushMsgs: (xs) => log.tela.push(copia(xs)),
     salvar: (o) => log.salvos.push(sha(o)),
@@ -319,7 +329,7 @@ export async function correrOBloco(fazer, k, { novo } = {}) {
   try { ret = await fazer(escopo)({ pers: k.pers === undefined ? undefined : S.personagem, narrativa: k.narrativa, doTurno: copia(k.doTurno) }); }
   catch (e) { erro = String(e && e.message); }
   const refs = {};
-  for (const [nome, v] of Object.entries(S)) if (/Ref$/.test(nome) && v && typeof v === "object" && "current" in v) refs[nome] = v.current;
+  for (const [nome, v] of Object.entries(S)) if (/Ref$/.test(nome) && !FORA_DA_FOTO.includes(nome) && v && typeof v === "object" && "current" in v) refs[nome] = v.current;
   return { ret, erro, refs, log };
 }
 

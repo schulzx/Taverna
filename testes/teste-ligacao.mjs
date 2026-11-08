@@ -282,8 +282,12 @@ sec("1. NENHUM MÓDULO MUDO");
        lugar, o segredo, os caídos da luta; o ref no save e no load). Credor:
        o `oficial`, na etapa seguinte da MESMA fase. A entrada sai quando o
        App ou o motor o importar, e a lista volta a ficar VAZIA.
-       `teste-livro-de-factos.mjs` é o primeiro leitor. */
-    "livro-de-factos.js": "08/11/2026 — oficial (BQ2): o App e o motor do Cronista escrevem o livro no fim do turno, com o ref no save e no load",
+       `teste-livro-de-factos.mjs` é o primeiro leitor.
+       — 08/11 (BQ2, a mesma fase): o backend ligou-o nos motores —
+       missoes.js (a porta a mais de `falar_com` e do segredo, por id), o
+       Cronista e a luta (o efeito `factos`), o vilão (quem o herói poupou
+       e matou) — e o oficial no App (o ref, o save, o load, a escrita do
+       turno). A entrada saiu, e a lista voltou a ficar VAZIA. */
   };
   const mudos = [];
   for (const f of arqs) {

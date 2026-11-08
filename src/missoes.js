@@ -57,6 +57,9 @@ import { situacaoDe, SITUACOES, lugarConcluido } from "./mundo-base.js";
 /* MM13b: a preposição colada ao artigo ("na Corda Velha"), a mesma régua
    que a abertura e o "você está em" já usam. */
 import { comEm, contrair } from "./lugar.js";
+/* BQ2 (08/11): a porta a mais das etapas de antes — o livro de factos,
+   lido por id (o nome da etapa procura-se uma vez entre quem o livro tem) */
+import { pessoaDoLivro, conversou, idDoLugar, descobriu } from "./livro-de-factos.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -168,7 +171,28 @@ export function estaCom(e, mundo, ficha = null) {
    esteve. E a cidade continua a contar: falar com a Delfina a 146 km não é
    possível, então a conversa só vale na cidade da pessoa, quando se sabe
    qual é (a da etapa, ou a do `onde`). */
+/* A PORTA DO LIVRO (BQ2, 08/11 — a planta da biblioteca de quests, §8).
+   A conversa vista vivia só na conferência do turno em que o Cronista a
+   via: na 13.ª, «Encontrar Corrado» ficou em falso com a heroína a falar
+   com ele do T2 ao T5, porque nesses turnos a lista não chegou. O livro de
+   factos guarda-a (`mundo.factos`, livro-de-factos.js), e esta porta
+   lê-a por id: a conversa de ontem fecha a etapa hoje. É uma porta A MAIS
+   — a de sempre (abaixo) fica inteira, e o que fechava continua a fechar.
+   A cidade continua a contar quando se sabe: a pessoa da base traz a
+   cidade no id (`Cidade|gente|Nome`), e a da etapa que for outra reprova. */
+function conversouPeloLivro(e, mundo) {
+  const livro = mundo && mundo.factos;
+  const alvo = e && e.alvo;
+  if (!alvo || !livro || typeof livro !== "object") return false;
+  const a = aquiDe(mundo);
+  const id = pessoaDoLivro(livro, alvo, { cidade: (mundo && mundo.cidadeAtual) || a.cidade });
+  if (!id || !conversou(livro, id)) return false;
+  const cid = semArtigo(e.cidade || moradaDe(e.onde).cidade);
+  const cidDoId = id.includes("|gente|") ? semArtigo(id.split("|")[0]) : "";
+  return !cid || !cidDoId || cid === cidDoId;
+}
 function conversouCom(e, mundo) {
+  if (conversouPeloLivro(e, mundo)) return true;
   const lista = mundo && Array.isArray(mundo.falouCom) ? mundo.falouCom : [];
   const alvo = e && e.alvo;
   if (!alvo || !lista.length) return false;
@@ -211,7 +235,24 @@ function guardaPeloFato(mundo, campo, alvo) {
   const lista = f && Array.isArray(f[campo]) ? f[campo] : [];
   return lista.some((n) => nomeIgual(n, alvo) || (campo === "pessoas" && mesmaPessoa(n, alvo)));
 }
+/* A PORTA DO LIVRO (BQ2, 08/11): o segredo que caiu com o herói no lugar
+   fica escrito (`descobriu`), e não só no turno em que caiu. O lugar
+   procura-se pelos ids que a escrita pode ter dado: a chave que a etapa já
+   traz, a da base pela ponte do App (`mundo.chaveDoLugar`), e o sítio
+   inventado (`cidade|sitio|nome`) — um id só casa com ele mesmo, então
+   procurar por mais de um não fecha nada em falso. */
+function segredoPeloLivro(e, mundo) {
+  const livro = mundo && mundo.factos;
+  if (!livro || typeof livro !== "object" || !e || !e.alvo) return false;
+  const md = moradaDe(e.onde || e.alvo);
+  const nome = moradaDe(e.alvo).lugar || e.alvo;
+  const cidade = md.cidade || (String(e.chave || "").includes("|") ? String(e.chave).split("|")[0] : "") || (mundo.lugarAtual && typeof mundo.lugarAtual === "object" && mundo.lugarAtual.cidade) || mundo.cidadeAtual || "";
+  const ponte = typeof mundo.chaveDoLugar === "function" ? (n) => mundo.chaveDoLugar(n) : undefined;
+  const ids = [e.chave, idDoLugar({ nome, cidade }, { chaveDoLugar: ponte }), idDoLugar({ nome, cidade }, {})];
+  return ids.some((id) => typeof id === "string" && !!id && descobriu(livro, id));
+}
 function segredoRevelado(e, mundo) {
+  if (segredoPeloLivro(e, mundo)) return true;
   const lista = mundo && Array.isArray(mundo.segredosRevelados) ? mundo.segredosRevelados : [];
   const alvo = moradaDe(e.alvo).lugar || e.alvo;
   return lista.some((n) => nomeIgual(n, alvo) || nomeIgual(n, e.alvo));

@@ -48,7 +48,8 @@
    Os efeitos: `nota` (linhas ao Narrador), `combate` (o ref e o painel),
    `ficha` (o painel da ficha; o ref, como antes, fica com quem o escreve),
    `descobertas` (o ref e o códex), `ocioso`, `intencao`, `impressionou`,
-   `ataqueResolvido`, `derrotados`.
+   `ataqueResolvido`, `derrotados`, e `factos` (BQ2, 08/11: os caídos da
+   vitória declarada, para o livro de factos — ver `caidosParaOLivro`).
    ============================================================ */
 import { processarCombate, aplicarNivel, evoluirCompanheiro } from "../regras-jogo.js";
 import { conferirLista, envelopeDaListaAparada, envelopeDaLutaImpossivel } from "../emboscada.js";
@@ -66,6 +67,7 @@ import { identificarDivindadeAbatida } from "../ascensao.js";
 import { MINUTOS_POS_COMBATE } from "../calendario.js";
 import { temAcaoBonus } from "./combate-do-turno.js";
 import { aRespostaPelaPorta } from "./portas-do-narrador.js";
+import { COMO_CAIU } from "../livro-de-factos.js";
 
 /* O RETRATO DO FIM, COM OS FINAIS. A vitória que a resposta do Mestre
    declara chega com o retrato de ANTES da resposta (`combateAntes`) e a
@@ -90,6 +92,26 @@ export function retratoComOsFinais(antes, finais) {
       return { ...e, vida, derrotado: !!(f.derrotado || (Number(vida) || 0) <= 0) };
     }),
   };
+}
+
+/* ---------------- OS CAÍDOS, PARA O LIVRO (BQ2, 08/11) ----------------
+   O `derrotados` acima é a lista da SESSÃO (`derrotadosDaSessao`), que
+   não vai ao save e só sabe nomes. O livro de factos (livro-de-factos.js)
+   guarda cada caído com COMO caiu, e é dele que o «poupou» e o «derrotou»
+   se leem. Cada inimigo da lista final vai com as marcas que o fim da luta
+   lhe pôs (COMO_CAIU.deFlags: fugiu, rendido, desacordado; sem marca,
+   morto) — o App anota-o no livro com o elenco do turno, a mesma forma do
+   efeito do Cronista, plana: { tipo: "factos", derrotados } (o `tipo` o
+   `anotarTurno` ignora). */
+export function caidosParaOLivro(finais) {
+  const out = [];
+  for (const e of Array.isArray(finais) ? finais : []) {
+    if (!e || typeof e !== "object" || typeof e.nome !== "string" || !e.nome.trim()) continue;
+    const x = { nome: e.nome };
+    for (const f of COMO_CAIU.deFlags) if (e[f]) x[f] = true;
+    out.push(x);
+  }
+  return out;
 }
 
 export function aLutaDaResposta(estado, ctx) {
@@ -246,6 +268,11 @@ export function aLutaDaResposta(estado, ctx) {
       ...ler().derrotadosDaSessao,
       ...(m.__inimigosFinais || []).map((e) => e && e.nome).filter(Boolean),
     ].slice(-120) });
+    /* BQ2: e os mesmos caídos, com o como, para o livro de factos */
+    {
+      const derrotados = caidosParaOLivro(m.__inimigosFinais);
+      if (derrotados.length) fazer({ tipo: "factos", derrotados });
+    }
     const espBruto = gerarEspolios(m.__inimigosFinais || [], pers.nivel || 1, porta("sorteDoTurno", "espolio"));
     /* v9.44: o Caçador de Recompensas cobra pelo trabalho. O acréscimo é
        sobre as MOEDAS, não sobre o XP — quem vive de contrato ganha mais

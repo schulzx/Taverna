@@ -50,6 +50,7 @@ import { envelopeDaVirada, intencaoDaVez, linhaDaLuta, menteDaCriatura } from ".
 import { LUTA_SEM_PAINEL } from "../agressao.js";
 import { DIAS_ATE_APODRECER, paraPauta as aliadoParaPauta, codigoPorId, cruzouOCodigo, garantirAliados, nascerAliado, vontadePorId } from "../aliado.js";
 import { certezaDe, garantirSaber, oQueEleNaoSabe, responder, paraPauta as vilaoParaPauta } from "../antagonista.js";
+import { quedasDoLivro } from "../livro-de-factos.js";
 import { arredoresDaCidade } from "../arredores.js";
 import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
@@ -1354,6 +1355,12 @@ export function aPautaDoTurno(estado, entrada, portas) {
     const p0 = fichaViva() || $render.personagem || {};
     const saber = garantirSaber($ref.saber);
     const naoSabe = oQueEleNaoSabe(saber, ($ref.registro || []).filter((x) => x.peso >= 2));
+    /* BQ2 (08/11, a planta da biblioteca de quests, §11.5): quem o herói
+       poupou e quem matou passam a vir TAMBÉM do livro de factos (o App
+       passa `factos` no estado, junto dos refs). Os contadores continuam a
+       valer — a porta soma, não troca. E o `poupados` dos contadores nunca
+       teve quem o escrevesse: a leitura «sentimental» só acorda por aqui. */
+    const quedas = quedasDoLivro($ref.factos);
     return {
       nome: v.nome, arquetipo: v.arquetipo, corpo: v.corpo || "pessoa",
       passo: v.passo || 0, conhecido: !!v.conhecido, marcas: (v.marcas || []).length,
@@ -1365,8 +1372,8 @@ export function aPautaDoTurno(estado, entrada, portas) {
       heroiFerido: (p0.vida || 0) < (p0.vidaMax || 1) * 0.5,
       heroiSozinho: !(p0.grupo || []).length,
       heroiRico: (p0.moedas || 0) >= 300,
-      heroiMatou: ($ref.contadores.inimigosDerrotados || 0) > 0,
-      heroiPoupou: ($ref.contadores.poupados || 0) > 0,
+      heroiMatou: ($ref.contadores.inimigosDerrotados || 0) > 0 || quedas.mortos > 0,
+      heroiPoupou: ($ref.contadores.poupados || 0) > 0 || quedas.poupados > 0,
       heroiFugiu: ($ref.contadores.fugas || 0) > 0,
       heroiAceitouAlgo: ($ref.contadores.contratos || 0) > 0,
       perto: !!(v.marcas || []).some((m) => String(m).includes($ref.cidadeAtual || "\u0000")),

@@ -248,7 +248,8 @@ sec("8. a fiação no App.jsx (por texto, fim de linha normalizado)");
   /* F2d (12/10, oficial): e também `memoria` (as páginas do Códice são do
      herói) — a âncora cresce junto; a chave `elenco` continua a não atravessar. */
   /* T0 (27/10, oficial): o retrato passou a ser o estado v2 e abre com `versao`; a desestruturação tira também `versao` — o convidado recebe o mesmo objeto de antes, e o protocolo da sala não cresce. A âncora cresce junto. */
-  const sala = linhaDe("try { const { versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados;");
+  /* BQ2 (08/11, oficial): a desestruturação tira também `factos` (o livro de factos é do herói, como a memória e a lei) — o convidado recebe o mesmo objeto de antes, e o protocolo da sala não cresce. A âncora cresce junto. */
+  const sala = linhaDe("try { const { versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, factos: _factosLocal, ...paraSala } = dados;");
   t("a sala recebe o save SEM a chave `elenco` — o protocolo da sala não muda nesta fase", sala.includes("publicarEstado(paraSala)") && !sala.includes("publicarEstado(dados)"));
 
   const load = linhaDe("elencoMemRef.current = garantirElenco(sv.elencoMem);");

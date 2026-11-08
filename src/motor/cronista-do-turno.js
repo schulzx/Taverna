@@ -32,7 +32,8 @@
    Os efeitos: `nota` (linhas ao Narrador), `calou` (o erro que a secção
    engoliu, com o nome de sempre), `prometido`, `relogios`, `eventos`,
    `quests` (a lista redesenhada), `ficha` (o painel da ficha), `npcs`,
-   `canone` e `rolagem` (o teste que se abre).
+   `canone`, `rolagem` (o teste que se abre) e `factos` (BQ2, 08/11: o que
+   o turno deu ao livro de factos — ver FACTOS_DO_CRONISTA).
 
    As portas (ctx): ler, aplicar, registrarLugar, historiaDoMural,
    contextoDoNome, nucleoAgora, pregarNoMural, marcarNoArco, ganharFe,
@@ -160,6 +161,38 @@ export function oPedidoAoCronista(ler, turno) {
   return { sys, user, erro };
 }
 
+/* ---------------- O QUE O CRONISTA DÁ AO LIVRO (BQ2, 08/11) ----------------
+   O livro de factos (livro-de-factos.js) guarda o que dura: com quem o
+   herói falou, que segredo caiu com ele no lugar, quem o registo ouviu
+   nomear. Três secções daqui já o sabiam e deixavam-no cair no fim do
+   turno — `falou_com` conferia as missões e apagava a lista, o segredo
+   idem, e a pessoa nova entrava no registo sem que nada dissesse que só
+   foi NOMEADA. Agora as três saem num efeito só, no fim, e o App anota-o
+   no livro com o elenco do turno (`anotarTurno(livro, { ...elenco,
+   ...ef })`) — o mesmo elenco com que anota a presença das fichas, para
+   que um nome dê o mesmo id pelas duas portas.
+   O efeito é a própria entrada do `anotarTurno`, plana: { tipo: "factos",
+   dia, turno, nomeados, falouCom, segredos } — cada lista com a chave que
+   o `anotarTurno` lê (`FACTOS_DO_CRONISTA`: a chave e a secção que a
+   escreve); a lista vazia não vai, e sem nenhuma não há efeito. O dia e o
+   turno são os do estado lido (`dia`, `npcTurno`); o `tipo` o
+   `anotarTurno` ignora. */
+export const FACTOS_DO_CRONISTA = Object.freeze({
+  nomeados: "pessoas",
+  falouCom: "falou_com",
+  segredos: "o segredo revelado",
+});
+function oEfeitoDosFactos(E, listas) {
+  const ocorrido = {};
+  for (const k of Object.keys(FACTOS_DO_CRONISTA)) {
+    const xs = [...new Set((Array.isArray(listas[k]) ? listas[k] : []).filter((x) => typeof x === "string" && x.trim()))];
+    if (xs.length) ocorrido[k] = xs;
+  }
+  if (!Object.keys(ocorrido).length) return null;
+  const e = E || {};
+  return { tipo: "factos", dia: e.dia, turno: e.npcTurno, ...ocorrido };
+}
+
 /* os efeitos pendentes de uma peça: aplicados antes de cada porta, e no fim
    (a mesma mecânica do fecho da resposta) */
 function pendentes(ctx) {
@@ -200,6 +233,8 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   const msgs = [];
   let p = ctx.pers;
   let tocouElenco = false;
+  /* o que vai ao livro de factos (FACTOS_DO_CRONISTA), juntado secção a secção */
+  const doLivro = { nomeados: [], falouCom: [], segredos: [] };
   /* ---- SEÇÃO o que a cena regista (o Narrador ator, a 14.ª sessão) ----
      No modo em que o Cronista não lê, quem está na ficha e falou com o
      herói entra pelas MESMAS secções que o Cronista alimentava (`pessoas`
@@ -353,7 +388,11 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
           nF = fichaDoCronista(n, chave ? reg[chave] : null, { cidade: naoNaCidade ? "" : (E.cidadeAtual || ""), mapa: E.mapa });
         } catch (e) { calou("o gênero do Cronista", e); nF = n; }
         if (chave) reg[chave] = mesclarNPC(reg[chave], nF);
-        else reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: E.npcTurno, conhecidoEm: E.dia });
+        else {
+          reg[String(nomeCerto).slice(0, 40)] = criarNPC(String(nomeCerto).slice(0, 40), { ...nF, ultimaVez: E.npcTurno, conhecidoEm: E.dia });
+          /* BQ2: quem nasce no registo por ser nomeado — no livro, `nomeado`, que não é `conheceu` */
+          doLivro.nomeados.push(String(nomeCerto).slice(0, 40));
+        }
       });
       if (homonimos.length) nota(notaDoHomonimo(homonimos));
       if (tocou) { fazer({ tipo: "npcs", npcs: reg }); porta("sincronizarNemesis"); tocouElenco = true; }
@@ -369,6 +408,7 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
     const falou = Array.isArray(ac.falou_com)
       ? ac.falou_com.filter((x) => typeof x === "string" && x.trim()).map((x) => x.trim().slice(0, 60)).slice(0, 6) : [];
     if (falou.length) {
+      doLivro.falouCom.push(...falou);
       const antes = ler();
       p = porta("conferirCom", p, { falouCom: falou }) || p;
       const depois = ler();
@@ -385,12 +425,22 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
     /* a porta da pista na prosa (portas-do-narrador.js): fechada, só o teste que passou revela */
     try { seg = segredosReveladosNoTurno(E.espinha, { lugar: E.lugar && E.lugar.nome, teste: testeDoTurno, narrativa: portaAberta("segredosReveladosNoTurno", ctx.modoDoNarrador) ? narrativa : "" }); } catch (e) { calou("segredosReveladosNoTurno", e); seg = []; }
     if (Array.isArray(seg) && seg.length) {
+      doLivro.segredos.push(...seg.map((x) => String(x)));
       const antes = ler();
       p = porta("conferirCom", p, { segredos: seg }) || p;
       const depois = ler();
       if (depois.missoes !== antes.missoes || depois.espinha !== antes.espinha) tocouElenco = true;
     }
   } catch (e) { calou("o segredo revelado", e); }
+  /* ---- SEÇÃO o livro de factos (isolada) — BQ2, 08/11 ----
+     A conversa, o segredo e os nomeados deste turno, que as secções acima
+     usaram e deixavam cair, vão ao livro (oEfeitoDosFactos). Lê o estado
+     de agora para o dia e o turno. */
+  try {
+    /* sem nada para o livro, nem se lê o estado: o turno corre como antes */
+    const ef = Object.values(doLivro).some((xs) => xs.length) ? oEfeitoDosFactos(ler(), doLivro) : null;
+    if (ef) fazer(ef);
+  } catch (e) { calou("o livro de factos do Cronista", e); }
   /* ---- SEÇÃO fé (isolada) ----
      T1-B: o Cronista só CLASSIFICA o que viu; a conta é a da tabela
      (motor/cronista.js#TABELA_DA_FE) sobre a população do lugar — o

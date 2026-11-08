@@ -206,7 +206,8 @@ sec("7. a costura no App");
   /* F2d (12/10, oficial): a desestruturação tira também `memoria` (as
      páginas do Códice são do herói, e o protocolo da sala não cresce). */
   /* T0 (27/10, oficial): o retrato passou a ser o estado v2 e abre com `versao`; a desestruturação tira também `versao` — o convidado recebe o mesmo objeto de antes, e o protocolo da sala não cresce. A âncora cresce junto. */
-  t("o mundo atravessa a cada save", /const \{ versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
+  /* BQ2 (08/11, oficial): a desestruturação tira também `factos` (o livro de factos é do herói, como a memória e a lei) — o convidado recebe o mesmo objeto de antes, e o protocolo da sala não cresce. A âncora cresce junto. */
+  t("o mundo atravessa a cada save", /const \{ versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, factos: _factosLocal, \.\.\.paraSala \} = dados; publicarEstado\(paraSala\)/.test(APP));
   t("o convidado veste o save pela porta que já existia", /continuar\(false, \{ silencioso: true \}\)/.test(APP));
   /* e os avisos que são da FICHA não caem na tela de quem não é dono dela */
   t("o despertar do outro não estoura na tela do convidado", /if \(!silencioso\) setTimeout\(\(\) => checarDespertar/.test(APP));

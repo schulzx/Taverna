@@ -570,6 +570,12 @@ export function osOrgaosDoDepois(estado, portas) {
          segredos revelados só existem na conferência que o Cronista dispara. */
       soPeloFato: (() => { try { return fatosQueFecham($ref.espinha); } catch (e) { calou("os fatos que fecham", e); return null; } })(),
       segredosRevelados: $ref.segredosRevelados || [],
+      /* BQ2 (08/11): o livro de factos — a conversa e o segredo de ontem,
+         guardados, que as etapas de antes leem por id (a porta a mais de
+         missoes.js). Não é ref da tabela: o App passa-o no estado, junto
+         dos refs; sem ele (o recorte de antes, o servidor), fica de fora e
+         as etapas fecham pelas portas de sempre. */
+      factos: $ref.factos,
       derrotados: [...(($ref.baseMundo || {}).mortos || []), ...($ref.derrotadosDaSessao || [])],
       inventario: p.inventario || [], equipamento: p.equipamento || [],
       npcs: $ref.npcs, dia: $ref.dia, relogios: $ref.relogios, emLuta: !!$ref.combate,

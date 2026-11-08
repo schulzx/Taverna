@@ -603,3 +603,57 @@ export function entregou(livro, id, item) {
 export const esteve = (livro, id) => !!obj((doLugar(livro, id) || {}).esteve);
 /* o segredo do lugar caiu com o herói lá */
 export const descobriu = (livro, id) => !!obj((doLugar(livro, id) || {}).descobriu);
+
+/* ---------------- A PORTA DAS ETAPAS DE ANTES (BQ2, 08/11) ----------------
+   As etapas que nasceram antes do livro (`falar_com` das missões e da
+   espinha das campanhas em curso) guardam um NOME, não um id — e a planta
+   (§8) dá-lhes uma porta a mais que lê o livro, sem reescrever a etapa.
+   O nome da etapa procura-se UMA VEZ entre as pessoas que o livro já tem
+   (o `nome` que cada entrada guardou quando se escreveu, que é o do dono
+   do id), pelos mesmos níveis de RESOLVER_NOME — e quem lê o facto lê-o
+   pelo id que saiu daqui. Procurar no livro, e não no elenco de agora, é
+   o que mantém a porta fiel à escrita: o id do livro foi resolvido com o
+   elenco inteiro do turno em que se escreveu, e o «Corrado» da etapa cai
+   no `npc|Corrado` que lá está, venha o registo com que chave vier.
+   Mais de uma pessoa no nível: fica a ÚNICA da cidade (o id da gente da
+   base, `Cidade|gente|Nome`, traz a cidade); senão nenhuma — a porta que
+   não abre deixa a etapa como estava, e a de sempre continua a valer.
+   pessoaDoLivro(livro, nome, { cidade }) → id | "" */
+export function pessoaDoLivro(livro, nome0, opcoes) {
+  const l = obj(livro);
+  const pessoas = (l && obj(l.pessoas)) || {};
+  const nome = typeof nome0 === "string" ? nome0.trim() : nomeDe(nome0).trim();
+  if (!nome) return "";
+  if (obj(pessoas[nome])) return nome;
+  const ps = palavrasDoNome(nome);
+  if (!ps.length) return "";
+  const cands = Object.keys(pessoas).map((id) => ({ id, ps: palavrasDoNome(limpo((obj(pessoas[id]) || {}).nome) || id.split("|").pop()) }));
+  const cidade = limpo(obj(opcoes) && opcoes.cidade, LIVRO_DE_FACTOS.id);
+  for (const nivel of RESOLVER_NOME.niveis) {
+    const ids = cands.filter((x) => x.ps.length && CASA[nivel](ps, x.ps)).map((x) => x.id);
+    if (!ids.length) continue;
+    if (ids.length === 1) return ids[0];
+    const daqui = cidade ? ids.filter((id) => id.includes("|gente|") && naCidade(id.split("|")[0], cidade)) : [];
+    return daqui.length === 1 ? daqui[0] : "";
+  }
+  return "";
+}
+
+/* ---------------- QUEM CAIU, CONTADO (BQ2, 08/11) ----------------
+   O que o vilão lê do herói (antagonista.js, as LEITURAS «sentimental» e
+   «igual_a_ele», e a resposta «recolhe») pergunta se o herói já poupou
+   alguém e se já matou alguém. Os poupados (COMO_CAIU.poupado) e os
+   mortos que o livro registou, contados por pessoa — a mesma pessoa
+   caída duas vezes conta uma, pelo pior (COMO_CAIU.pesos). Lixo: zeros. */
+export function quedasDoLivro(livro) {
+  const l = obj(livro);
+  const pessoas = (l && obj(l.pessoas)) || {};
+  let poupados = 0, mortos = 0;
+  for (const id of Object.keys(pessoas)) {
+    const d = obj((obj(pessoas[id]) || {}).derrotado);
+    if (!d) continue;
+    if (COMO_CAIU.poupado.includes(d.como)) poupados++;
+    else if (d.como === "morto") mortos++;
+  }
+  return { poupados, mortos };
+}

@@ -267,6 +267,11 @@ export function casoDoBloco(i) {
 }
 
 /* ---------------- OS DUBLÊS ---------------- */
+/* BQ2 (08/11, oficial): os refs que o App de HOJE lê e o de antes não tinha —
+   estado novo, que o dourado (o App de antes) não pode fotografar. Ficam fora da
+   foto para que ela continue a comparar o que o bloco sempre fez; cada um
+   prova-se na sua suíte (o livro de factos: teste-bq2-app). */
+const FORA_DA_FOTO = Object.freeze(["factosRef"]);
 const copia = (x) => (x === undefined ? undefined : JSON.parse(JSON.stringify(x)));
 const ref = (v) => ({ current: v });
 export function dublesDoBloco(k, { novo, sorte, extras }) {
@@ -286,6 +291,11 @@ export function dublesDoBloco(k, { novo, sorte, extras }) {
     setMasmorra: (m) => log.masmorras.push(m), setBaseMundo: (b) => log.bases.push(b), setNpcs: (n) => log.npcs.push(n), setDivindade: (d) => log.divindades.push(d), setChao: (c) => log.chaos.push(c),
     pushMsgs: (xs) => log.tela.push(copia(xs)), calou: (onde) => log.calados.push(onde), salvar: (x) => log.salvos.push(copia(x)), talvezFecharSessao: (m) => log.sessoes.push(m),
     sorteDoTurno: sorte || sorteDoCaso(k),
+    /* BQ2 (08/11, oficial): o fim da luta passou a anotar os caídos no livro de factos
+       (`anotarNoLivro`, o invólucro do App, em calou). O livro é estado novo, fora da
+       foto do dourado — que é o App de antes, sem ele —, logo o dublê não escreve nada:
+       o que o bloco faz continua igual caso a caso, e o livro prova-se em teste-bq2-app. */
+    factosRef: ref(null), anotarNoLivro: () => undefined,
     ...(extras || {}),
     sementeMundo: () => k.semente, generoMundo: () => k.semente.split("|")[1], moldeMundo: () => moldePorId(MOLDE_PADRAO), mundoAtual: () => ({ lexico: null, genero: k.semente.split("|")[1] }),
     cidadeDoMapa: (nome) => ((S.mapaRef.current || {}).cidades || []).find((c) => c.nome === nome) || null,
@@ -345,7 +355,7 @@ export function correrOBloco(fazer, k, { novo, sorte, extras }) {
   for (const [f] of log.agendas) f();
   Date.now = agora;
   const refs = {};
-  for (const [nome, v] of Object.entries(S)) if (/Ref$/.test(nome) && v && typeof v === "object" && "current" in v) refs[nome] = v.current;
+  for (const [nome, v] of Object.entries(S)) if (/Ref$/.test(nome) && !FORA_DA_FOTO.includes(nome) && v && typeof v === "object" && "current" in v) refs[nome] = v.current;
   return { ret, msgs, erro, refs, log: { ...log, agendas: log.agendas.map((a) => a[1]) } };
 }
 

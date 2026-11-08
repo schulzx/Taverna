@@ -105,6 +105,8 @@ import { falaDaListaAparada } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel } from "./agressao.js";
 import { montarEmCena, quemNaFrase } from "./em-cena.js";
 import { fichasDaCena, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
+import { garantirFactos } from "./livro-de-factos.js";
+import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
 import { EmCena, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
 import { consultarBiblioteca, garantirEstante, marcarJogada, trechoDaJogada } from "./biblioteca.js";
@@ -5630,6 +5632,7 @@ export default function Taverna() {
   const canoneRef = useRef({});
   const npcsRef = useRef({});                 // registro persistente de pessoas
   const elencoSaveRef = useRef(garantirElencoDoSave(null)); // MM8e: promovidos, saídos e dias vistos (campo `elenco` do save)
+  const factosRef = useRef(garantirFactos(null));            // BQ2: o livro de factos — o que aconteceu, por id (campo `factos` do save; fora da sala)
   const memoriaRef = useRef(garantirMemoriaDoSave(null));   // F2d: a memória com rosto — cada cartão aberto vira página (campo `memoria` do save)
   /* MM10: a lei que o herói carrega perante cada cidade — quem ele atacou
      que não era inimigo, e o preço disso (campo novo do save, `lei`). */
@@ -7150,6 +7153,27 @@ export default function Taverna() {
      última fala do Mestre, e só ela. A bolsa NÃO é chave — medido vivo: a
      compra tocada fecha antes do Narrador, e com a bolsa na chave a fileira
      trocava no meio da espera; o impedido da compra acerta na resposta. */
+  /* BQ2 · O LIVRO DE FACTOS (livro-de-factos.js): o que aconteceu, por id.
+     QUEM ESCREVE É O MOTOR (motor/livro-do-turno.js): o elenco que resolve
+     os nomes sai do ESTADO (elencoDoLivro), e o replay e o servidor chamam
+     a mesma peça sobre o mesmo estado — um nome dá o mesmo id pelas três
+     portas, e o livro do replay é o do jogo. Aqui só se monta o retrato do
+     livro com os refs do instante e se grava o que a peça devolve. As notas
+     do ambíguo vão à consola, nunca à tela; e um livro que estoura nunca
+     custa o turno. */
+  const retratoDoLivro = () => ({
+    factos: factosRef.current, personagem: personagemRef.current || personagem, cidadeAtual: cidadeAtualRef.current, jornada: jornadaRef.current,
+    npcs: npcsRef.current, canone: canoneRef.current, dia: diaRef.current, npcTurno: npcTurnoRef.current, mapa: mapaRef.current,
+    lugar: lugarRef.current, masmorra: masmorraRef.current, combate: combateRef.current, espinha: espinhaRef.current,
+  });
+  const mundoDoLivro = () => ({ semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico });
+  const anotarNoLivro = (onde, ocorrido, retrato) => {
+    try {
+      const r = anotarOLivro(retrato || retratoDoLivro(), ocorrido, { mundo: mundoDoLivro() });
+      if (r && r.factos) factosRef.current = r.factos;
+      if (r && Array.isArray(r.notas) && r.notas.length) { try { if (import.meta.env && import.meta.env.DEV) console.info("[LIVRO · " + onde + "] por ambiguidade, não se escreveu:", r.notas); } catch { /* fora do Vite */ } }
+    } catch (e) { calou("LIVRO · " + onde, e); }
+  };
   const ultimaDoMestre = (() => {
     try { for (let i = mensagens.length - 1; i >= 0; i--) { const m = mensagens[i]; if (m && m.autor === "mestre") return i + ":" + String(m.texto || "").length; } } catch (e) { calou("FICHAS · a chave da fala", e); }
     return "";
@@ -7209,7 +7233,8 @@ export default function Taverna() {
     eventosRef, genteDaquiRef, genteNaPautaRef, nomesOferecidosRef, npcTurnoRef, promessasRef,
     questsRef, raidRef, relevanciaRef, salaRef, sinaisDoTurnoRef, systemRef, tomandoRef,
   });
-  const estadoDoPedido = () => oEstadoDoPedido(refsDoPedido(), { personagem, mundo, nomeCampanha, mercado, governos, historico });
+  /* BQ2: o livro de factos não é ref da tabela; vai junto, e a pauta lê-o (o vilão: quem o herói poupou e matou) */
+  const estadoDoPedido = () => ({ ...oEstadoDoPedido(refsDoPedido(), { personagem, mundo, nomeCampanha, mercado, governos, historico }), factos: factosRef.current });
   const aplicarDoPedido = (x) => {
     const refs = refsDoPedido();
     for (const [c, v] of Object.entries(x || {})) { const r = REFS_DO_PEDIDO[c] || REFS_DA_PAUTA[c]; if (r && refs[r.ref]) refs[r.ref].current = v; }
@@ -7243,6 +7268,7 @@ export default function Taverna() {
     const refs = refsDoPreludio();
     const e = { render: { mundo, nomeCampanha, personagem } };
     for (const [c, r] of Object.entries(REFS_DO_PRELUDIO)) if (refs[r.ref]) e[c] = refs[r.ref].current;
+    e.factos = factosRef.current; /* BQ2: o mundo das missões leva o livro (não é ref da tabela) */
     return e;
   };
   const aplicarDoPreludio = (x) => {
@@ -7278,7 +7304,8 @@ export default function Taverna() {
   };
   const osOrgaosAgora = () => {
     const refs = refsDoDepois();
-    const e = { ...agoraDosRefs(refs), render: { mundo, nomeCampanha, personagem } };
+    /* BQ2: o livro de factos vai no estado (não é ref da tabela): as missões leem-no por id */
+    const e = { ...agoraDosRefs(refs), factos: factosRef.current, render: { mundo, nomeCampanha, personagem } };
     return osOrgaosDoDepois(e, {
       aplicar: (x) => { for (const [c, v] of Object.entries(x || {})) { const r = REFS_DO_DEPOIS[c]; if (r && refs[r.ref]) refs[r.ref].current = v; } },
       calou, salvar, agora: () => Date.now(),
@@ -8493,7 +8520,7 @@ export default function Taverna() {
          lê este literal e falha se um campo nascer aqui sem nascer lá. */
       versao: ESTADO_VERSAO,
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -8674,7 +8701,7 @@ export default function Taverna() {
          porque TODO caminho que muda o jogo passa por `salvar` — o turno, o
          combate, o mercado, o descanso. Pendurar a publicação num só deles
          deixaria o convidado com uma tela velha nos outros. */
-      try { const { versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
+      try { const { versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, factos: _factosLocal, ...paraSala } = dados; publicarEstado(paraSala); } catch (e) { calou("publicarEstado", e); }
       if (podou && !avisoPodaRef.current) {
         avisoPodaRef.current = true;
         pushMsgs([{ autor: "sistema", texto: "💾 O save estava grande demais para o navegador: poddo só o histórico antigo de mensagens (o mundo, a ficha, o cânone e as missões seguem intactos)." }]);
@@ -9597,6 +9624,7 @@ export default function Taverna() {
     else if (ef.tipo === "impressionou") impressionouRef.current = ef.impressionou;
     else if (ef.tipo === "ataqueResolvido") ataqueResolvidoRef.current = ef.ataqueResolvido;
     else if (ef.tipo === "derrotados") derrotadosDaSessaoRef.current = ef.derrotados;
+    else if (ef.tipo === "factos") anotarNoLivro("a luta", ef); /* BQ2 */
   };
   const portasDaLuta = () => ({
     ler: () => ({
@@ -9866,6 +9894,8 @@ export default function Taverna() {
       /* 11/10: com quem falei neste turno — só na conferência que o
          Cronista dispara (`falouComRef`); fora dela, vazio */
       falouCom: falouComRef.current || [],
+      /* BQ2: o livro de factos — conversouCom e segredoRevelado leem-no por id */
+      factos: factosRef.current,
       /* MM-C · C0: o marco com cena fecha pelo FATO (saga.js, fatosQueFecham)
          — o segredo revelado, a conversa — e não por o herói lá estar. Os
          segredos revelados só existem na conferência que o Cronista dispara. */
@@ -9924,6 +9954,7 @@ export default function Taverna() {
     mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, divindade: divindadeRef.current, eventos: eventosRef.current,
     missoes: missoesRef.current, prometido: prometidoRef.current, abertura: aberturaMundoRef.current, coracao: coracaoRef.current,
     relogios: relogiosRef.current, dia: diaRef.current, jornada: jornadaRef.current, masmorra: masmorraRef.current, npcTurno: npcTurnoRef.current, espinha: espinhaRef.current,
+    factos: factosRef.current,
   });
   const aplicarEfeitoDoCronista = (ef) => {
     if (ef.tipo === "nota") notaRef.current = notaComOTurno(notaRef.current, ef.linhas);
@@ -9936,6 +9967,7 @@ export default function Taverna() {
     else if (ef.tipo === "npcs") { npcsRef.current = ef.npcs; setNpcs(ef.npcs); }
     else if (ef.tipo === "canone") canoneRef.current = ef.canone;
     else if (ef.tipo === "rolagem") setRolagem(ef.rolagem);
+    else if (ef.tipo === "factos") anotarNoLivro("o Cronista", ef); /* BQ2: o que o Cronista ouviu (falou_com, segredos, nomeados) */
   };
   const portasDoCronista = () => ({
     ler: estadoDoCronista,
@@ -10457,6 +10489,8 @@ export default function Taverna() {
           narrador: JSON.parse(JSON.stringify({ narrativa: resp.narrativa || "", mudancas: resp.mudancas || {} })),
         });
       } catch (e) { calou("a sessão (o pedido)", e); turnoDaSessao = null; }
+      /* BQ2: a prosa que o livro lê é a resposta CRUA, a que a sessão grava (o replay lê a mesma) */
+      const narrativaDoLivro = String(resp.narrativa || "");
       let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa, quemFalou: pedidoDoAtor ? pedidoDoAtor.ficha.falam : null }) || personagemRef.current || personagem;
       juizDoTurnoRef.current = null; /* um turno sem juízo não empresta o veredito da véspera ao Cronista */
       try {
@@ -10488,6 +10522,11 @@ export default function Taverna() {
       /* v9.37: e se há espaço no diário, o mundo oferece trabalho por conta
          própria — o serviço sai montado daqui e o Mestre só encena quem pede */
       try { oferecerTrabalhoDaqui(); } catch { /* idem */ }
+      /* BQ2 · O LIVRO NO FIM DA RESPOSTA: quem esteve à vista, onde o herói
+         está, a afeição do grupo — depois do conferente e do trabalho daqui,
+         antes do Cronista, como o passo «o livro de factos» do replay. A
+         peça é do motor (oQueACenaDaAoLivro), sobre o mesmo retrato. */
+      try { const rl = { ...retratoDoLivro(), personagem: pers }; anotarNoLivro("o fim da resposta", oQueACenaDaAoLivro(rl, { narrativa: narrativaDoLivro }), rl); } catch (e) { calou("LIVRO · o fim da resposta", e); }
       /* PORTÃO (v9.12): se algum cão de guarda duro mordeu, o conserto acontece
          AQUI — antes de a narrativa chegar à tela e antes de ela entrar no
          histórico. O que o Mestre lembra na próxima vez é o texto corrigido,
@@ -10927,6 +10966,7 @@ export default function Taverna() {
     setPersonagem(pers);
     registroRef.current = []; cobradasRef.current = []; ultimaCobrancaRef.current = -99; formasCobradasRef.current = []; elencoMemRef.current = {}; aliadosRef.current = {}; saberRef.current = []; vilaoAgiuRef.current = -99; turnoDeRegistroRef.current = 0; turnoContRef.current = 0;
     if (!cap) { canoneRef.current = {}; npcsRef.current = {}; setNpcs({}); elencoSaveRef.current = garantirElencoDoSave(null); leiRef.current = garantirLei(null); }
+    if (!cap) factosRef.current = garantirFactos(null); /* BQ2: o livro de factos é da campanha; um capítulo novo guarda-o */
     if (!cap) memoriaRef.current = garantirMemoriaDoSave(null); /* F2d: a memória com rosto é da campanha; um capítulo novo guarda-a, como o registo */
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
     try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração da campanha nova", e); }
@@ -11193,7 +11233,7 @@ export default function Taverna() {
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { factosRef.current = garantirFactos(sv.factos); } catch (e) { calou("o livro de factos do save", e); factosRef.current = garantirFactos(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -13892,6 +13932,8 @@ export default function Taverna() {
         mortos.forEach((e) => registrarMorte(e.nome));
         if (mortos.length) derrotadosDaSessaoRef.current = [...derrotadosDaSessaoRef.current, ...mortos.map((e) => e.nome).filter(Boolean)].slice(-120);
       } catch (e) { calou("os mortos da luta sem saída", e); }
+      /* BQ2: os caídos vão ao livro com a marca de como caíram — quem ficou de pé não */
+      anotarNoLivro("os caídos da luta sem saída", { derrotados: (fimDaLuta.inimigos || []).filter((e) => e && (e.fugiu || e.rendido || e.desacordado || e.derrotado || (e.vida || 0) <= 0)) });
       /* quem não acordou tombou: o título do fim é dele, e não muda quando a
          ficha viva passar a ser a do herdeiro */
       notarFechoDaLuta({ combate: fimDaLuta, desfecho: (!r || dec.motivo === "parada") ? "encerrada" : (r.heroi && r.heroi.morto) ? "queda" : "derrota", linha: r ? r.linha : null });
@@ -13973,6 +14015,8 @@ export default function Taverna() {
     /* quem FUGIU não tombou: não rende espólio, não conta abate e — o que
        mais importaria — não tem o nome riscado no registro do mundo (v9.14) */
     const derrotados = c.inimigos.filter((e) => !e.fugiu);
+    /* BQ2: todos caíram ou fugiram — o livro guarda cada um com a marca (o fugido também: ninguém o matou) */
+    anotarNoLivro("os caídos da luta", { derrotados: c.inimigos || [] });
     if (!derrotados.length) { pushMsgs([{ autor: "sistema", texto: "⚔ Não sobrou ninguém em pé para lutar — o combate termina sem espólios." }]); return base0 || true; }
     /* v9.8: quem cai sai da base do mundo para sempre — o nome fica riscado no
        registro de pessoas e some do que o Mestre recebe no prompt. */

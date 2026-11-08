@@ -206,6 +206,7 @@ import { vetosDoVeredito, andarOsVetos, vetosParaAPauta, canoneSemInvencao, juiz
 import { sorteNoPonto, CONTAGEM_VAZIA } from "./motor/sorte-do-turno.js";
 import { oBoatoDaChegada, oBoatoQueChegou } from "./boatos.js";
 import { oCronistaChama } from "./motor/portas-do-narrador.js";
+import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
 
 /* ---------------- O FORMATO (se é número, é tabela) ---------------- */
 export const FORMATO_DA_SESSAO = Object.freeze({
@@ -660,6 +661,11 @@ function oAceitoNoReplay(E0, juizo, proposta, ctx) {
          `notaComOTurno` que o App faz com o efeito (o recado do trabalho
          que o Cronista pregou, a fé, o homónimo, o teste exigido) */
       if (ef.tipo === "nota") { if (ctx.servidor) E = { ...E, nota: notaComOTurno(E.nota, arr(ef.linhas)) }; continue; }
+      /* BQ2 (08/11): o que o Cronista dá ao livro de factos não é um campo
+         que se troca — anota-se no livro com o elenco de agora, pela peça
+         que o App também chama (motor/livro-do-turno.js#anotarOLivro). Sem
+         livro no estado (a sessão gravada antes dele), continua sem livro. */
+      if (ef.tipo === "factos") { const lv = anotarOLivro(E, ef, { mundo: ctx.mundo }); if (lv) E = { ...E, factos: lv.factos }; continue; }
       const x = EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo];
       if (x) E = { ...E, [x.campo]: ef[x.chave] };
     }
@@ -866,6 +872,20 @@ export const PASSOS_DO_REPLAY = Object.freeze([
     },
   },
   {
+    /* O LIVRO DE FACTOS NO FIM DA RESPOSTA (BQ2, 08/11): quem esteve à
+       vista, onde o herói esteve e a afeição do grupo — no App, depois do
+       conferente e do trabalho daqui, antes do Cronista (que anota a
+       conversa, o segredo e os nomeados pelo seu efeito). A prosa que
+       conta é a resposta CRUA do Narrador, a que a linha grava. Sem livro
+       no estado, continua sem ele (a régua do minuto, §11 de
+       teste-sessao). Os caídos da luta são do App, como a luta. */
+    passo: "o livro de factos", de: "motor/livro-do-turno.js#oQueACenaDaAoLivro + #anotarOLivro (o fim da resposta: a presença, o lugar, a afeição)",
+    faz: (E, L, ctx) => {
+      const lv = anotarOLivro(E, oQueACenaDaAoLivro(E, { narrativa: ctx.resposta.narrativa }), { mundo: ctx.mundo });
+      return lv ? { ...E, factos: lv.factos } : E;
+    },
+  },
+  {
     passo: "o Cronista", de: "motor/cronista.js#julgarOCronista e motor/cronista-do-turno.js#oAceitoDoCronista (as portas do App: PORTAS_DO_CRONISTA_NO_REPLAY)",
     faz: (E, L, ctx, nota) => {
       if (!ehObj(L.cronista)) return E;
@@ -954,7 +974,21 @@ export const DONO_DO_CAMPO = Object.freeze({
   dia: "o relógio do mundo (avancarOsMinutos) e a viagem: App",
   minuto: "o relógio do mundo: o tempo da ação e o da caminhada (motor/tempo-do-turno.js); a viagem: App",
   missoes: "as missões do turno: o conferente (motor/depois-do-turno.js) e o aceito do Cronista (motor)",
+  factos: "o livro de factos: a presença, o lugar e a afeição do fim da resposta, e o que o Cronista ouviu (motor/livro-do-turno.js); os caídos da luta (App, como a luta)",
   "*": "sem dono: nenhum passo do replay o escreve e AINDA_DO_APP não o lista — é defeito até alguém o reclamar",
+});
+
+/* O CAMPO QUE A GRAVAÇÃO NÃO TRAZIA (BQ2, 08/11). A régua do replay é o
+   que se jogou: «um estado sem relógio continua sem ele» (o minuto, §11 de
+   teste-sessao — as sessões de prova gravadas sem relógio não ganham uma
+   hora que ninguém marcou). Os campos desta tabela nasceram no save
+   depois de sessões já gravadas: um estado de antes que não os tem
+   continua sem eles ao fim do turno — o `estadoDoSave` dá-lhes o padrão
+   (null) para os passos lerem, e o turno não o grava como se fosse jogo.
+   Com o campo no estado (toda gravação de depois), corre e compara-se
+   como os outros. */
+export const NASCERAM_DEPOIS_DA_GRAVACAO = Object.freeze({
+  factos: "o livro de factos (livro-de-factos.js, BQ1–BQ2, 08/11): as sessões gravadas antes dele não o levam, e o replay não o inventa",
 });
 
 /* fora da régua: o que não é jogo, ou o que só a tela escreve */
@@ -1074,7 +1108,9 @@ export function correrOTurno(antes, linha, contexto) {
   if (casa) comSorte(casa, correr); else correr();
   if (erroDoJuiz) calou.push({ passo: "o Juiz", erro: String((erroDoJuiz && erroDoJuiz.message) || erroDoJuiz) });
   const juiz = julgado ? dado(julgado.resumo) : null;
-  return { estado: comoSave(E), juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), calouDoDepois: arr(nota.calouDoDepois), tirados: arr(nota.tirados) };
+  const fim = comoSave(E);
+  for (const campo of Object.keys(NASCERAM_DEPOIS_DA_GRAVACAO)) if (!tem(E0, campo) && fim[campo] == null) delete fim[campo];
+  return { estado: fim, juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), calouDoDepois: arr(nota.calouDoDepois), tirados: arr(nota.tirados) };
 }
 
 const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) => !tem(FORA_DA_REGUA, k)));

@@ -307,8 +307,9 @@ bloco(() => {
   t("o App lê do módulo do estado", /import \{[^}]*estadoDoSave[^}]*\} from "\.\/estado\.js";/.test(APP));
   t("a gravação passa por `saveDoEstado` (o disco recebe o v2)",
     /const gravar = \(d\) => \{ try \{ localStorage\.setItem\(chaveDoSave\(\), JSON\.stringify\(saveDoEstado\(d\)\)\)/.test(APP));
+  /* BQ2 (08/11, oficial): a desestruturação tira também `factos` (o livro de factos é do herói, como a memória e a lei) — o convidado recebe o mesmo objeto de antes, e o protocolo da sala não cresce. A âncora cresce junto. */
   t("o mundo que atravessa a sala não leva a versão (o protocolo da sala não muda)",
-    /const \{ versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, \.\.\.paraSala \} = dados;/.test(APP));
+    /const \{ versao: _versaoLocal, elenco: _elencoLocal, lei: _leiLocal, memoria: _memoriaLocal, factos: _factosLocal, \.\.\.paraSala \} = dados;/.test(APP));
   const leitor = APP.indexOf("const lerSave = (sv) =>");
   t("toda leitura de save passa por `lerSave`, que é `estadoDoSave` + a migração da ficha",
     leitor > 0 && /const lerSave = \(sv\) => \{ if \(!sv \|\| typeof sv !== "object" \|\| Array\.isArray\(sv\)\) return null; const e = estadoDoSave\(sv\);/.test(APP));
