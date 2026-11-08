@@ -12,7 +12,7 @@ import { T, ALVOS } from "./constantes.js";
    etapa (o bump de `VERSAO` é a última edição antes do commit dele) —
    importar direto da folha é o mesmo dado, sem tocar num arquivo que
    não é meu agora. */
-import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, FOLHA_DO_MESTRE, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, VERBO_COM_PRECO, alfa } from "./estilo.js";
+import { TIPOS, SOLEIRA, CINTA, MARCA_DA_PORTA, LADRILHO, RUNA, CABECALHO_DA_PAGINA, FLOREADO, ANEL, PAGINA, ABERTURA, FOLHA_DO_MESTRE, ALFORJE, SETA_DA_LEITURA, DADO, TELA_DE_BATALHA, RECIBO, FIM_DA_LUTA, VERBO_COM_PRECO, SOLEIRA_DO_MOMENTO, alfa } from "./estilo.js";
 /* V3 · o desenho de cada glifo é número e mora numa tabela (`glifos.js`),
    como a cor mora em `T`. Aqui só se desenha; a geometria não se escreve. */
 import { GLIFOS, tracoNaGrelha, partesDaMoeda, estadoDoAnel, textoDoPV, piorEstado, nomeDoCompanheiro, nomeDoCacho, quemAbrir, repartirACinta, partesDaProsa, primeiraFrase, ESTADOS_DO_DADO, reciboQueCabe, horaNaCinta } from "./glifos.js";
@@ -679,13 +679,15 @@ export function SetaDaLeitura({ estado = "fim", texto = "", aoIr }) {
    borda — não paga um pixel por ser maior que o desenho. O estado se diz no
    glifo (ouvir · `…` preparando · pausa lendo) e no NOME: o `a ler…` que a
    voz escrevia ao lado passa a ser o nome acessível do botão. */
-export function BotaoDeOuvir({ estado = "muda", aoOuvir }) {
+/* TL 8 · `naFolha`: na página de pergaminho o glifo é tinta (tintaMeio 7,78;
+   a brasa 6,71 quando lê) — o âmbar e o osso da mesa não se lêem no papel. */
+export function BotaoDeOuvir({ estado = "muda", aoOuvir, naFolha = false }) {
   const nome = estado === "lendo" ? "Parar a leitura" : estado === "preparando" ? "Preparando a leitura" : "Ouvir o Mestre";
   const ativo = estado !== "muda";
   return (
     <button type="button" onClick={aoOuvir} aria-label={nome} title={nome}
       className="tv-anel-foco shrink-0 rounded-full flex items-center justify-center"
-      style={{ width: ALVOS.piso, height: ALVOS.piso, background: "transparent", border: "none", cursor: "pointer", color: ativo ? T.amber : T.inkMeio }}>
+      style={{ width: ALVOS.piso, height: ALVOS.piso, background: "transparent", border: "none", cursor: "pointer", color: naFolha ? (ativo ? T.brasaNoPergaminho : T.tintaDoPergaminhoMeio) : ativo ? T.amber : T.inkMeio }}>
       {estado === "preparando"
         ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, lineHeight: 1 }}>…</span>
         : <Glifo nome={estado === "lendo" ? "pausa" : "ouvir"} tamanho={RUNA.glifoDeOuvir} />}
@@ -716,18 +718,19 @@ export function Prosa({ texto = "", abertura = "nenhuma" }) {
     const longa = frase.length > ABERTURA.tetoDeCaracteres;
     partes.splice(0, 1, ...(resto ? [resto] : []));
     return (
-      <div className="tv-body tv-folha flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
+      <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
         <p className="whitespace-pre-wrap" data-abertura="cerimonia"
           style={{ fontSize: longa ? ABERTURA.letraLonga : ABERTURA.letra, lineHeight: ABERTURA.entrelinha, fontWeight: ABERTURA.peso, margin: 0 }}>{frase}</p>
         {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
       </div>
     );
   }
-  /* MESA C (04/11): a resposta do Mestre é uma folha de pergaminho pousada
-     no couro — tinta escura sobre papel (FOLHA, e a regra «na folha só há
-     tinta»: nada com caixa mora aqui dentro) */
+  /* MESA C (04/11): a resposta do Mestre é tinta escura sobre papel (a regra
+     «na folha só há tinta»: nada com caixa mora aqui dentro). 07/11 · TL 8: a
+     folha deixou de ser de cada resposta e passou a ser a PÁGINA (.tv-folha
+     no que embrulha a área que rola) — a prosa leva só a tinta. */
   return (
-    <div className="tv-body tv-folha flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
+    <div className="tv-body flex flex-col" style={{ gap: PAGINA.entreParagrafos, color: T.tintaDoPergaminho, fontWeight: FOLHA_DO_MESTRE.peso }}>
       {partes.map((p, k) => <p key={k} className="whitespace-pre-wrap" style={normal}>{p}</p>)}
     </div>
   );
@@ -754,9 +757,36 @@ export function PeDaPagina({ children }) {
    o botão de ouvir (o alvo de 48 de R2). A runa continua decorativa — é a
    ponta que é controle, e por isso o `aria-hidden` passa da linha inteira
    para os traços e os pontos. Sem ponta, a peça é byte a byte a de V5a. */
-export function DivisoriaRunica({ respiro = RUNA.respiro, ponta = null }) {
+/* TL 8 · O EIXO `naFolha` (Figma 307:811): a runa que começa uma resposta
+   pousa agora no pergaminho — o fio curto em `pergaminhoBorda`, o losango em
+   `brasaNoPergaminho` (6,71) e o fio curto do outro lado, centrados
+   (RUNA.naFolha). Os três pontos de luz da mesa não se lêem no papel. A ponta
+   (o botão de ouvir) continua à direita. Sem o eixo, a peça é a de sempre. */
+function RunaDaFolha() {
+  const F = RUNA.naFolha;
+  const caixa = Math.ceil(F.losango * Math.SQRT2);
+  return (
+    <div className="flex items-center justify-center flex-1" aria-hidden="true" style={{ gap: F.espaco }} data-runa="folha">
+      <div className="shrink-0" style={{ width: F.fio, height: RUNA.espessura, background: T.pergaminhoBorda }} />
+      <span className="shrink-0 inline-flex items-center justify-center" style={{ width: caixa, height: caixa }}>
+        <span style={{ width: F.losango, height: F.losango, background: T.brasaNoPergaminho, transform: "rotate(45deg)" }} />
+      </span>
+      <div className="shrink-0" style={{ width: F.fio, height: RUNA.espessura, background: T.pergaminhoBorda }} />
+    </div>
+  );
+}
+export function DivisoriaRunica({ respiro = RUNA.respiro, ponta = null, naFolha = false }) {
   const fio = alfa(T.amber, RUNA.alfaDoFio);
   const largura = RUNA.passo * (RUNA.pontos.length - 1) + RUNA.ponto;
+  if (naFolha) {
+    return (
+      <div className="flex items-center w-full" style={{ gap: RUNA.espaco, paddingTop: respiro, paddingBottom: respiro }}>
+        {ponta ? <span aria-hidden="true" className="shrink-0" style={{ width: ALVOS.piso }} /> : null}
+        <RunaDaFolha />
+        {ponta ? <span className="shrink-0 inline-flex">{ponta}</span> : null}
+      </div>
+    );
+  }
   if (ponta) {
     return (
       <div className="flex items-center w-full" style={{ gap: RUNA.espaco, paddingTop: respiro, paddingBottom: respiro }}>
@@ -2069,6 +2099,119 @@ export function Soleira({ ofertas = [] }) {
         {foraDoTelefone > 0 && porta(foraDoTelefone)}
       </div>
     </div>
+  );
+}
+
+/* ---------------- TL · A SOLEIRA DO MOMENTO (07/11/2026) ----------------
+   formas.md §TL 4; Figma 306:106. O momento tem UM lugar, por cima do campo,
+   e só existe quando há momento (0 px sem ele; 56 de alto sempre, o
+   `ALVOS.chamado`). UMA COISA DE CADA VEZ, pela prioridade da tabela
+   (SOLEIRA_DO_MOMENTO.prioridade): a rolagem pendente > o dado que acabou de
+   pousar > a oferta.
+
+   O BOTÃO PRINCIPAL é âmbar (`onAccent` sobre `amber`, 8,68). A primeira
+   linha é o verbo (pode encurtar com reticência); a segunda é o preço — e A
+   PARTE DO PREÇO NUNCA ENCURTA: «5 min», «precisa de 13» moram num nó à
+   direita que não encolhe, e é a outra metade («Martim Cinzentos conta
+   contigo», «Percepção») que cede. Na rolagem vai o d20 desenhado à esquerda
+   e o veredito antes do clique inteiro: o dado, o bónus, o número a bater. O
+   nome acessível leva tudo, sem corte.
+
+   O SECUNDÁRIO (`panel`, aro `lineStrong`) é «+N ofertas» (abre as outras) ou
+   o recuo («Agora não»).
+
+   O DADO QUE POUSA ocupa a soleira durante `mostraODado` (1 600 ms, o de
+   DADO_DE_USO_NA_MESA.rolar.mostra) a cada lance novo (`chave`), e depois a
+   soleira volta ao que tinha. O conteúdo é o lance da Bandeja, que quem liga
+   passa já montado (esta peça não importa a Bandeja: a Bandeja importa daqui).
+
+   <SoleiraDoMomento momentos={{
+     rolagem:  { verbo, cede, preco, aoPrincipal, desativado, secundario: { rotulo, aoTocar } },
+     dado:     { chave, conteudo, rotulo },
+     proposta: { verbo, cede, preco, aoPrincipal, desativado, secundario: { quantos, rotulo, aoTocar } },
+   }} />
+   Cada momento é opcional; um momento sem `verbo` (ou o dado sem `conteudo`)
+   não existe. Entra com `tv-fade`; a página encolhe 56 + 8 de uma vez. */
+const SM = SOLEIRA_DO_MOMENTO;
+const momentoVale = (qual, m) => !!(m && typeof m === "object" && (qual === "dado" ? m.conteudo != null && m.chave != null : String(m.verbo || "").trim()));
+
+export function SoleiraDoMomento({ momentos = null }) {
+  const m = momentos && typeof momentos === "object" ? momentos : {};
+  /* o dado que pousa: vivo por `mostraODado` a cada chave nova */
+  const chaveDoDado = momentoVale("dado", m.dado) ? String(m.dado.chave) : null;
+  /* o dado que já está lá quando a soleira nasce também se mostra */
+  const [dadoVivo, setDadoVivo] = React.useState(() => chaveDoDado);
+  React.useEffect(() => {
+    if (chaveDoDado == null) { setDadoVivo(null); return undefined; }
+    setDadoVivo(chaveDoDado);
+    const fim = setTimeout(() => setDadoVivo(null), SM.mostraODado);
+    return () => clearTimeout(fim);
+  }, [chaveDoDado]);
+  const vivo = (qual) => (qual === "dado" ? chaveDoDado != null && dadoVivo === chaveDoDado : momentoVale(qual, m[qual]));
+  const qual = SM.prioridade.find(vivo) || null;
+  if (!qual) return null;
+  const caixa = { display: "flex", alignItems: "stretch", gap: SM.vao, height: SM.alto, width: "100%" };
+  if (qual === "dado") {
+    return (
+      <div key={"dado:" + chaveDoDado} className="tv-fade" role="status" aria-label={m.dado.rotulo || "O dado na mesa"} data-momento="dado"
+        style={{ ...caixa, alignItems: "center", overflow: "hidden", borderRadius: SM.raio }}>
+        {m.dado.conteudo}
+      </div>
+    );
+  }
+  const momento = m[qual];
+  return (
+    <div key={qual} className="tv-fade" role="group" aria-label={qual === "rolagem" ? "O Mestre pede o dado" : "O que o mundo oferece agora"} data-momento={qual} style={caixa}>
+      <PrincipalDoMomento momento={momento} rolagem={qual === "rolagem"} />
+      <SecundarioDoMomento s={momento.secundario} />
+    </div>
+  );
+}
+
+/* o botão âmbar: o verbo em cima, o preço em baixo, e o nó do preço que não encolhe */
+function PrincipalDoMomento({ momento, rolagem = false }) {
+  const P = SM.principal;
+  const verbo = String(momento.verbo || "");
+  const cede = String(momento.cede || "");
+  const preco = String(momento.preco || "");
+  const nome = momento.rotulo || [verbo, [cede, preco].filter(Boolean).join(" · ")].filter(Boolean).join(". ");
+  return (
+    <button type="button" onClick={momento.desativado ? undefined : momento.aoPrincipal} disabled={!!momento.desativado} aria-label={nome}
+      className="tv-anel-foco flex items-center text-left min-w-0" data-momento-principal=""
+      style={{ flex: "1 1 0", height: "100%", gap: 10, padding: `0 ${SM.enchimento}px`, borderRadius: SM.raio, border: "none",
+        background: P.chao, color: P.letra, cursor: momento.desativado ? "not-allowed" : "pointer", opacity: momento.desativado ? 0.6 : 1 }}>
+      {rolagem ? <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0 }}><Glifo nome="dado" tamanho={P.dado} cor={P.letra} /></span> : null}
+      <span className="flex flex-col min-w-0" style={{ flex: "1 1 0", gap: 1 }}>
+        <span className="tv-body" data-momento-verbo="" style={{ fontSize: P.verbo.tamanho, fontWeight: P.verbo.peso, lineHeight: `${P.verbo.entrelinha}px`, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{verbo}</span>
+        <span className="tv-mono flex items-center min-w-0" style={{ gap: 6, fontSize: P.preco.tamanho, lineHeight: `${P.preco.entrelinha}px` }}>
+          <span data-momento-cede="" style={{ flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{cede}</span>
+          {preco ? <span data-momento-preco="" style={{ flexShrink: 0, whiteSpace: "nowrap", fontWeight: 700 }}>{preco}</span> : null}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+/* o secundário: «+N ofertas» ou o recuo */
+function SecundarioDoMomento({ s }) {
+  if (!s || typeof s !== "object") return null;
+  const n = Math.max(0, Math.floor(Number(s.quantos) || 0));
+  const S = SM.secundario;
+  const caixa = { height: "100%", flexShrink: 0, padding: `0 ${S.enchimento}px`, borderRadius: SM.raio, background: S.chao, border: `1px solid ${S.aro}`, cursor: "pointer" };
+  if (n > 0) {
+    const palavra = s.rotulo || (n === 1 ? "oferta" : "ofertas");
+    return (
+      <button type="button" onClick={s.aoTocar} aria-label={`Mais ${n} ${palavra}`} className="tv-anel-foco flex flex-col items-center justify-center" style={caixa}>
+        <span className="tv-mono" style={{ fontSize: SM.principal.verbo.tamanho, fontWeight: 700, color: T.ink, lineHeight: 1.2 }}>+{n}</span>
+        <span className="tv-body" style={{ fontSize: TIPOS.piso, color: T.inkMeio, lineHeight: 1.2 }}>{palavra}</span>
+      </button>
+    );
+  }
+  if (!s.rotulo) return null;
+  return (
+    <button type="button" onClick={s.aoTocar} className="tv-anel-foco tv-body flex items-center justify-center" style={{ ...caixa, fontSize: TIPOS.corpo, color: T.ink }}>
+      {s.rotulo}
+    </button>
   );
 }
 

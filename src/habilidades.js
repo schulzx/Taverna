@@ -180,20 +180,38 @@ export function reerguer(pers, hab) {
    4. REESCREVER O INSTANTE
    ============================================================ */
 
-export const ehReescrever = (hab) => /reescrever o instante|desfaz o resultado do ultimo turno|desfaz a ultima rodada/.test(txtDe(hab));
+/* AS DUAS QUE DESFAZEM (C1, 07/11). Até aqui era uma regex só, e a
+   habilidade do Arcanista tinha o MESMO nome da do Mago: casava pelo nome
+   e devolvia a mesma coisa. Agora são duas linhas, cada uma com o seu nome
+   na linha que o jogador lê, e o mesmo motor: devolver o dano da rodada.
+   TENTOU-SE MAIS, e a casa recusou: a do Arcanista levaria junto o que a
+   ferida deixou no corpo (pela porta `Purificar`), e check-cura-nao-limpa
+   travou — este arquivo é dos que SÓ devolvem PV ("se a cura não limpa, a
+   limpeza vem por porta declarada", e a porta declarada de habilidade é
+   `aplicarPoder`, que recusa — e cancela o turno — quando não há o que
+   tirar). Ficou o nome próprio; o reforço é decisão à parte. */
+const REESCRITAS = [
+  { id: "reescrever_o_instante", rx: /reescrever o instante|desfaz o resultado do ultimo turno|desfaz a ultima rodada/, rotulo: "Reescrever o Instante" },
+  { id: "ferida_que_nao_houve",  rx: /^ferida que nao houve\b|desfaz a ultima ferida sofrida/,                     rotulo: "Ferida que Não Houve" },
+];
+const reescritaDe = (hab) => { const t = txtDe(hab); return t.trim() ? REESCRITAS.find((r) => r.rx.test(t)) || null : null; };
+export const ehReescrever = (hab) => !!reescritaDe(hab);
 
 /* Devolve o que a última rodada cobrou. `dano` vem de quem chama (o App
    guarda o golpe da rodada para o gasto "Aguentar" desde a v9.16) — e é
-   por isso que esta função não precisa de retrato nenhum do mundo. */
-export function reescreverInstante(pers, dano = 0) {
+   por isso que esta função não precisa de retrato nenhum do mundo.
+   `hab` (C1) diz QUAL das duas: sem ela, a do Mago, como sempre foi. */
+export function reescreverInstante(pers, dano = 0, hab = null) {
+  const regra = reescritaDe(hab) || REESCRITAS[0];
+  const rotulo = regra.rotulo;
   const d = Math.max(0, Math.round(Number(dano) || 0));
-  if (!d) return { ok: false, pers, linha: "⛔ Reescrever o Instante: nada aconteceu com você na última rodada que valha desfazer.", nota: "" };
+  if (!d) return { ok: false, pers, linha: `⛔ ${rotulo}: nada aconteceu com você na última rodada que valha desfazer.`, nota: "" };
   const antes = pers.vida || 0;
   const vida = Math.min(pers.vidaMax || antes, antes + d);
   return {
     ok: true,
     pers: { ...pers, vida, morrendo: vida > 0 ? false : pers.morrendo, morte: vida > 0 ? { sucessos: 0, falhas: 0, rolagens: [] } : pers.morte },
-    linha: `⏪ Reescrever o Instante — a última rodada não te tocou: +${vida - antes} PV (${vida}/${pers.vidaMax}).`,
+    linha: `⏪ ${rotulo} — a última rodada não te tocou: +${vida - antes} PV (${vida}/${pers.vidaMax}).`,
     nota: `[INSTANTE REESCRITO PELO SISTEMA] Desfiz o que a última rodada me custou: os ${d} de dano não aconteceram, e estou com ${vida}/${pers.vidaMax} PV. Narre isso como o que é — o tempo dobrando sobre si, o golpe que se desfaz no ar, a memória de uma ferida que ninguém mais tem. Os inimigos NÃO esquecem o que fizeram; só o meu corpo esqueceu.`,
   };
 }
@@ -501,6 +519,13 @@ const IGNORAM = [
   { id: "cano_longo",     rx: /cano longo|longuissimo alcance que ignora cobertura/,          cobertura: true, alcanceM: 90, diz: "o tiro vem de onde ninguém esperava" },
   { id: "tiro_calibrado", rx: /tiro calibrado|disparo preciso que ignora cobertura/,          cobertura: true, diz: "o disparo entra pelo vão" },
   { id: "olho_vento",     rx: /olho que mede o vento|ignora cobertura, penumbra e distancia/, cobertura: true, alcanceM: 90, diz: "vento, sombra e distância deixam de contar" },
+  /* C1 (07/11): duas do Arqueiro que eram cópia do Caçador e passaram a ter
+     nome e efeito próprios. A Ponta de Agulha é a flecha de malha: fura a
+     couraça, como as quatro de cima. O Tiro de Mil Passos é o fim da árvore,
+     e o que o separa do Tiro do Fim da classe é a distância deixar de contar
+     (o do tronco nem chega à régua do golpe — ver `AGUARDAM`). */
+  { id: "ponta_agulha",   rx: /^ponta de agulha\b|fura a armadura e a carne atras dela/,      armadura: true, diz: "a ponta fina encontra o vão da malha" },
+  { id: "mil_passos",     rx: /^tiro de mil passos\b|a distancia e a cobertura nao contam/,   cobertura: true, alcanceM: 90, diz: "a flecha vence o campo inteiro" },
 ];
 
 export function ignoraDoGolpe(hab) {
@@ -558,6 +583,10 @@ export const PRESSAS = [
      seria dar de graça o que custa nível 6 e nível 9 nas outras árvores. */
   { id: "ataque_duplo", rx: /^ataque duplo\b|ataca duas vezes no mesmo turno/,        acoes: 2, turnos: 1, conceito: "o segundo golpe sai antes de o primeiro terminar de cair" },
   { id: "tiro_duplo",   rx: /^tiro duplo\b|dispara duas flechas no mesmo turno/,      acoes: 2, turnos: 1, conceito: "duas flechas na corda, e a segunda parte antes de a primeira chegar" },
+  /* C1 (07/11): a do Arqueiro, que até aqui era o próprio Tiro Duplo com
+     outra descrição. A especialização dá-lhe o SEGUNDO turno, e só ele: a
+     régua de cima continua a valer (quatro turnos são de nível 6 e 9). */
+  { id: "flechas_gemeas", rx: /^flechas gemeas\b|duas flechas no mesmo movimento, por dois turnos/, acoes: 2, turnos: 2, conceito: "o arco não descansa entre uma flecha e a outra, e a mão já tem a seguinte" },
 ];
 
 export function pressaDe(hab) {

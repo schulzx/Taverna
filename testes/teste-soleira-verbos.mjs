@@ -142,7 +142,11 @@ sec("4. a janela é `O selo de prazo`, não texto — e o motor conta as noites"
 t("a oferta da petição leva janela", /janela: \{ quanto: noites, conta: "noites" \}/.test(R));
 t("e as noites saem de `prazo - dia`, que é o que `processarDiaCorreio` usa",
   /const noites = Math\.max\(0, \(Number\(p\.prazo\) \|\| 0\) - dia\)/.test(R));
-t("a tela passa a janela à peça", /janela=\{o\.janela\}/.test(APP));
+/* MOVIDA em 08/11 (TL 9, o oficial): a primeira oferta mora na Soleira do
+   momento, e o prazo dela é a palavra do selo (palavraDoPrazo, a mesma conta),
+   no nó do preço que nunca encolhe; as de trás do «+N» passam a janela à peça
+   como antes. A intenção fica: a janela chega à tela inteira, nunca inventada. */
+t("a tela passa a janela à peça", /janela=\{x\.janela\}/.test(APP) && /const j = typeof o\.janela === "number" \? \{ quanto: o\.janela \} : \(o\.janela \|\| \{\}\);/.test(APP) && /prazo = palavraDoPrazo\(j\.quanto, j\.urgente === true, j\.conta \|\| "noites"\)/.test(APP));
 t("`A oferta` aceita a janela como objecto OU número solto",
   /const j = typeof janela === "number" \? \{ quanto: janela \} : \(janela \|\| \{\}\)/.test(UI));
 t("e desenha-a com `O selo de prazo`, não com uma segunda forma",
@@ -222,7 +226,10 @@ t("e a soleira continua a ser ZERO px quando não tem o que oferecer",
   /* MOVIDA de novo na F2b (12/10, oficial): as fichas do que está à vista
      moram no mesmo pé, por cima — sem soleira, sem coração E sem fichas,
      zero px. A âncora aceita a terceira condição. */
-  /if \(!vivas\.length( && !doCoracao)?( && !comFichas)?\) return null;/.test(APP),
+  /* MOVIDA em 08/11 (TL 9, o oficial): as fichas foram para a barra e o momento
+     mora por cima do campo — sem momento, sem coração E sem as outras ofertas
+     abertas, zero px. A lei é a mesma. */
+  /if \(!comMomento && !doCoracao && !outras\) return null;/.test(APP),
   "região que reserva espaço para nada é mobília a mentir");
 
 console.log(`\n${maus === 0 ? "TUDO VERDE" : "VERMELHO"} — ${bons} passaram, ${maus} falharam`);

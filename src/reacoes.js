@@ -31,6 +31,18 @@ export const REACOES = [
      primeira que se aplica, e cancelar é melhor do que aparar. Só morde o
      que é mágico — contramágica não para uma machadada —, então quem não
      está sob magia cai no Escudo Arcano da linha seguinte, como antes. */
+  /* C1 (07/11): CONTRATEMPO, a do Arcanista. Até aqui a subclasse listava
+     uma "Contramágica" com o mesmo nome da do Mago, e por isso era a mesma
+     linha desta tabela. Agora é a sua, e vem ANTES pela regra da ordem: quem
+     tem as duas usa a melhor. O que a especialista do tempo compra é chegar
+     mais cedo — 2 PM em vez de 3, e sem o piso de 4 de dano (o piso de 8%
+     da vida, que é de todas, continua a valer em `escolherReacao`). */
+  {
+    id: "contratempo", nome: "Contratempo", icone: "⏳", gatilho: "sofre_dano",
+    exigeTipo: [], soMagia: true, pm: 2, corta: 1, minDano: 1,
+    desc: "Chega ao instante antes do feitiço: a magia inimiga não chega a nascer.",
+    narrar: "toca o instante antes de o feitiço se formar, e o feitiço não chega a existir",
+  },
   {
     id: "contramagia", nome: "Contramágica", icone: "🚫", gatilho: "sofre_dano",
     exigeTipo: [], soMagia: true, pm: 3, corta: 1, minDano: 4,

@@ -147,7 +147,11 @@ sec("5. A COSTURA — no topo, e sem inventar");
      que as duas asserções seguintes guardavam — o lugar vem antes da primeira
      palavra do Narrador — fica mais forte, não mais fraca: agora vem antes
      por construção, em todos os turnos, e não só no topo da conversa. */
-  const iCab = APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(");
+  /* MOVIDA em 08/11 (TL 9, o oficial): o cabeçalho da página saiu — o lugar
+     aparecia três vezes. Mora uma vez, na Barra do Mestre, que fica por cima de
+     tudo e fora do que rola. As duas leis abaixo valem contra ela: o lugar
+     continua ACIMA da área que rola e ANTES da primeira palavra do Narrador. */
+  const iCab = APP.indexOf("<BarraDoMestre telefone={!mesaLarga}");
   t("fica ACIMA da área que rola, e não rola com ela", iCab > 0 && iCab < iArea);
   /* v9.170 (mesa-jogo-v2): o selo "MESTRE ATIVO" passou a abrir o painel da
      narrativa, então o cabeçalho da cena virou a SEGUNDA coisa. A folga
@@ -204,12 +208,16 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
      `teste-v5a-cabecalho.mjs`; aqui fica só o que esta tela pode errar.
      ============================================================ */
   {
-    const iPapel = APP.indexOf("O PAPEL TEM DUAS FAIXAS (R13-B → V5a)");
-    const iCabecalho = APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(");
+    /* MOVIDAS em 08/11 (TL 9, o oficial): o papel deixou de ter duas faixas —
+       o cabeçalho saiu para a Barra do Mestre e a página é uma folha só
+       (.tv-folha à volta da área que rola). A intenção fica, e mede-se contra
+       a barra: o lugar não rola com a prosa e vem antes dela. */
+    const iPapel = APP.indexOf("<div data-tv-pagina=\"\" className=\"tv-folha relative flex-1");
+    const iCabecalho = APP.indexOf("<BarraDoMestre telefone={!mesaLarga}");
     const iRola = APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden");
     /* NO TOPO DO PAPEL e FORA do que rola — como a gravura estava: o
        cabeçalho é o topo da folha, não um cartaz que sobe com a prosa. */
-    t("o papel continua a ser moldura de duas faixas", iPapel > 0 && iPapel < iCabecalho);
+    t("o papel é uma folha só, por baixo da barra do lugar", iPapel > 0 && iCabecalho > 0 && iCabecalho < iPapel && iPapel < iRola);
     t("e o cabeçalho vem ANTES da área que rola — ele não rola com a prosa", iCabecalho > 0 && iCabecalho < iRola);
     /* A CONTA NÃO MORA NA TELA: o que as etiquetas dizem é `etiquetasDaPagina`
        (glifos.js, provada em Node). Uma cópia dela aqui seria a segunda
@@ -217,7 +225,8 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
     t("a peça vem da biblioteca e a conta das etiquetas não foi copiada para cá",
       /* V4: as duas importações ganharam as peças da cinta (o anel e os seus);
          a âncora passa a aceitar o que vem depois, e guarda o mesmo. */
-      /, CabecalhoDaPagina, FimDaPagina[^}]*\} from "\.\/ui\.jsx"/.test(APP)
+      /* MOVIDA em 08/11 (TL 9): a peça é a Barra do Mestre, da mesa do Mestre */
+      /import \{ BarraDoMestre[^}]*\} from "\.\/painel-mesa-do-mestre\.jsx"/.test(APP)
       && /import \{ assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina[^}]*\} from "\.\/glifos\.js"/.test(APP)
       && !/function etiquetasDaPagina|const etiquetasDaPagina/.test(APP) && !/\/tocha\/\.test/.test(APP) &&!/RostoDaCena|OTopoDoPapel\(|gravuraDaCena\(/.test(APP.replace(/\/\*[\s\S]*?\*\//g, "")),
       "se a regra das etiquetas for copiada para o App.jsx, o telefone e a mesa passam a dizer coisas diferentes");
@@ -225,7 +234,10 @@ sec("O MEIO NÃO ANDA PARA OS LADOS (v9.196)");
        que a etiqueta escreve; a mesma `luzDaHora` d'O TEMPO; o mesmo `clima`. */
     t("o mesmo lugar, a mesma luz e o mesmo clima alimentam a etiqueta",
       /const lugarDaCena = \(\) => \{/.test(APP)
-      && /etiquetasDaPagina\(\{ lugar: lugarDaCena\(\), cena: cenaDoPalco\(\),\s*luz: luzDaHora\(Math\.floor\(\(minuto \|\| 0\) \/ 60\)\), clima \}\)/.test(APP));
+      /* MOVIDA em 08/11 (TL 9): a barra lê o mesmo lugarDaCena, a mesma cena do
+         palco e o mesmo clima pela etiqueta, e a mesma luzDaHora d'O TEMPO */
+      && /const cena = cenaDoPalco\(\);\s*const e = etiquetasDaPagina\(\{ lugar: lugarDaCena\(\), cena, clima \}\);/.test(APP)
+      && /const l = luzDaHora\(Math\.floor\(\(minuto \|\| 0\) \/ 60\)\) \|\| "";/.test(APP));
     /* E O `📍 lugar` NÃO VOLTOU AO PAINEL DO TEMPO: a morada dele mudou de
        casa (da legenda da gravura para a etiqueta), nunca para duas. */
     t("e o empréstimo do lugar ao painel do tempo terminou",

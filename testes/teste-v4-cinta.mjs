@@ -127,7 +127,9 @@ sec("4. a peça e a fiação");
   t("o anel é aria-hidden — quem diz o PV por palavras é o alvo", /<span aria-hidden="true" className="relative inline-block shrink-0 rounded-full"/.test(ANEL_TXT));
   t("tombado não se diz pela cor: sem arco, rosto apagado, traço", /\{!tombado && \(/.test(ANEL_TXT) && /opacity: tombado \? ANEL\.apagado : 1/.test(ANEL_TXT) && /\{tombado && \(/.test(ANEL_TXT));
   /* movida: o filtro mudou-se da cinta para a fiação das cartas, com a mesma conta */
-  t("as invocadas nunca entram nas cartas", /grupo=\{\(personagem\.grupo \|\| \[\]\)\.filter\(\(g\) => g && !g\.invocada\)\}/.test(APP));
+  /* MOVIDA em 08/11 (TL 9, o oficial): o grupo das cartas passou a ser uma conta
+     só (grupoDaMesa), lida pela tira e pela coluna do grupo. A lei fica. */
+  t("as invocadas nunca entram nas cartas", /const grupoDaMesa = \(\(\) => \{ try \{ return \(\(personagem && personagem\.grupo\) \|\| \[\]\)\.filter\(\(g\) => g && !g\.invocada\); \}/.test(APP) && /grupo=\{grupoDaMesa\}/.test(APP));
   t("o grupo vai na ordem de entrada (nenhuma ordenação na cinta)", !/\.sort\(/.test(GRUPO_TXT) && !/\.sort\(/.test(CINTA_TXT));
   t("o disco herda o pior do que esconde", /const pior = piorEstado\(escondidos\.map\(estadoDoAnel\)\)/.test(GRUPO_TXT) && /estado=\{pior\}/.test(GRUPO_TXT));
   /* movida: o selo do prazo foi para o painel HORA do ecrã, e o +N continua a herdar o pior */
@@ -136,7 +138,9 @@ sec("4. a peça e a fiação");
   t("o PM é só número (nenhuma barra) e só quando conta", /comPMDoHeroi=\{oPMConta\(personagem\)\}/.test(APP) && /comPM \? <GemaDaCarta cor=\{H\.gemasDaCarta\.PM\}/.test(MESA) && !/BarraDeRecurso/.test(MESA));
   /* movida: a porta é a carta do herói — o mesmo abrirAPorta e o mesmo nome; a gota acende pela Gestão, que não tem objeto */
   /* movida (AR1, 06/11): a carta abre a casa do herói (abrirOHeroi), e o nome diz «a ficha e a bolsa» */
-  t("o herói abre a casa do herói, e diz o que abre", /aoAbrirFicha=\{abrirOHeroi\}/.test(APP) && /if \(aba === "gestao" \|\| aba === "inv"\) \{ setAba\(null\); return; \}\s*if \(janelaReacao\) return;\s*setSubPedida\(\{ sub: "ficha", selo: Date\.now\(\) \}\);\s*setAba\("gestao"\);/.test(APP) && /rotuloDoHeroi=\{\(personagem && personagem\.nome \? personagem\.nome \+ ", " : ""\) \+ "a ficha e a bolsa"\}/.test(APP) && /aria-haspopup="dialog"/.test(MESA) && /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP));
+  /* MOVIDA em 08/11 (TL 9, o oficial): o rótulo da carta do herói passou a uma
+     conta só (rotuloDaCartaDoHeroi), lida pela tira e pela coluna do grupo. */
+  t("o herói abre a casa do herói, e diz o que abre", /aoAbrirFicha=\{abrirOHeroi\}/.test(APP) && /if \(aba === "gestao" \|\| aba === "inv"\) \{ setAba\(null\); return; \}\s*if \(janelaReacao\) return;\s*setSubPedida\(\{ sub: "ficha", selo: Date\.now\(\) \}\);\s*setAba\("gestao"\);/.test(APP) && /const rotuloDaCartaDoHeroi = \(personagem && personagem\.nome \? personagem\.nome \+ ", " : ""\) \+ "a ficha e a bolsa";/.test(APP) && /rotuloDoHeroi=\{rotuloDaCartaDoHeroi\}/.test(APP) && /aria-haspopup="dialog"/.test(MESA) && /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP));
   /* movida (AR1, 06/11): o toque num companheiro abre a BOLSA dele (o boneco e a
      mochila, na casa única do herói) — a pessoa: «não consigo acessar a bolsa dos
      personagens do grupo». O cartão no Grupo continua, a uma porta.

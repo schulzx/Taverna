@@ -109,7 +109,10 @@ sec("3. O TRILHO SÓ EXISTE NA COLUNA LARGA — no telefone, a fita é a do alfo
      aparece. */
   /* AAA · 4 (05/11): o trilho virou a coluna dos objetos da mesa (formas.md §AAA §13), que só
      existe na mesa; no telefone os objetos vão na fila das cartas. A régua lê a guarda nova. */
-  t("no telefone a coluna dos objetos não existe", /!emBatalha && trilhoAVista && \(/.test(nav));
+  /* MOVIDA em 08/11 (TL 9, o oficial): a coluna dos objetos só existe na mesa
+     larga (HUD_DA_MESA.mesa.aPartirDe); abaixo dela os objetos moram na tira da
+     mesa. A guarda é outra, a intenção a mesma: no telefone a coluna não existe. */
+  t("no telefone a coluna dos objetos não existe", /!emBatalha && mesaLarga && \(/.test(nav));
   t("e nenhuma barra fixa sobrou por cima do convés", !/fixed/.test(nav));
   t("a fita do telefone é a do alforje, no pé e só no telefone", /role="tablist"/.test(ALF) && /className=\{?"md:hidden shrink-0 flex/.test(ALF));
   /* R21: a classe da fita passou a ser uma expressão (ganha `tv-fita-seis` com
@@ -123,7 +126,10 @@ sec("3. O TRILHO SÓ EXISTE NA COLUNA LARGA — no telefone, a fita é a do alfo
   /* v9.170: o botão é um quadrado inteiro de 72. R21: sem o `md:`, porque
      o trilho só existe a partir do monitor. */
   /* AAA · 4, movida: o alvo deixou de ser o quadrado de 72 e passou ao objeto de 90 × 115, da tabela */
-  t("e o alvo do objeto sai da tabela no monitor", /minWidth: telefone \? ALVOS\.piso : H\.mesa\.objetos\.alvo\.largura/.test(readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8")));
+  /* MOVIDA em 07/11 (TL 4): o objeto ganhou a forma da tira (`naTira`, o alvo
+     48 × 56 de TIRA_DA_MESA) à frente do ternário; a intenção fica — no
+     monitor o alvo continua a sair de H.mesa.objetos.alvo */
+  t("e o alvo do objeto sai da tabela no monitor", /telefone \? ALVOS\.piso : H\.mesa\.objetos\.alvo\.largura/.test(readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8")));
 }
 
 sec("4. O PAINEL VIRA FOLHA CHEIA NO TELEFONE");
@@ -171,7 +177,11 @@ sec("5. AS TELAS DE JOGO CARREGAM A CLASSE");
      errada. Agora ela tolera classes entre `tv-scroll` e `flex-1`, e o que
      ela prende é o que ela sempre quis prender. */
   t("a área que rola NÃO reserva mais", /className="tv-scroll[^"]*flex-1 overflow-y-auto overflow-x-hidden/.test(APP));
-  t("e a linha de escrita também não", /className="px-4 md:px-8 shrink-0" style=\{\{ paddingBottom:/.test(APP));
+  /* MOVIDA em 08/11 (TL 9, o oficial): a linha de escrita alinha com a folha
+     (os lados saem de paginaDaFolha, 8 no telefone como no Figma 307:103), e o
+     fundo é o vão até à tira. A intenção fica: ela não reserva a altura do
+     trilho — só o enchimento dela. */
+  t("e a linha de escrita também não", /<div className="shrink-0" style=\{\{ paddingLeft: \(paginaDaFolha \|\| \{\}\)\.marginLeft, paddingRight: \(paginaDaFolha \|\| \{\}\)\.marginRight,/.test(APP));
   /* O CONVÉS FICA: é o que separa "o jogo na mão" de "o jogo que foge" */
   /* mesma correção de âncora (R15): o que importa aqui é a ORDEM dos dois
      blocos, não de que classes a região que rola é feita. `flex-1

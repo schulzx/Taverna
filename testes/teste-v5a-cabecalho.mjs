@@ -163,7 +163,8 @@ sec("4. a peça e a fiação");
   t("a runa solta guarda o ar de sempre (as oito da criação do mundo não mudam de ritmo)",
     /* V5: a assinatura ganhou `ponta = null` (o botão de ouvir na runa que abre
        uma resposta). Sem ponta, a peça é a de V5a — o respiro de sempre. */
-    /export function DivisoriaRunica\(\{ respiro = RUNA\.respiro, ponta = null \}\)/.test(UI) && RUNA.respiro === 8);
+    /* MOVIDA em 07/11 (TL 8): e o eixo `naFolha` (a runa que pousa no pergaminho); sem ele, a de sempre */
+    /export function DivisoriaRunica\(\{ respiro = RUNA\.respiro, ponta = null, naFolha = false \}\)/.test(UI) && RUNA.respiro === 8);
   t("nenhuma runa à mão sobrou no App (a gema em losango de v9.173)", !/rotate\(45deg\)", border: `1px solid \$\{T\.amber\}`/.test(APP + UI));
   /* O FIM DA PÁGINA CUSTA 0 px: tem a altura do marcador que o fimRef já era (8). */
   t("o fim da página tem a altura do marcador que substituiu (8 px = RUNA.ponto)", /style=\{\{ height: RUNA\.ponto, gap: RUNA\.espaco \}\}/.test(fim) && RUNA.ponto === 8);
@@ -176,12 +177,18 @@ sec("4. a peça e a fiação");
      pousada no feltro leva a borda de CONTROLO (lineStrong), porque o couro da
      página e o pano verde só se separam pelo matiz. A intenção fica: o fio é por
      dentro (outline −1), e não border. */
-  t("o fio do cartão é por dentro (outline −1), e não border",
-    /style=\{\{ background: T\.pagina, outline: `1px solid \$\{T\.(?:line|lineStrong)\}`, outlineOffset: -1 \}\}/.test(APP)
+  /* MOVIDAS em 08/11 (TL 9, o oficial — formas.md §TL 3, 5): o cartão escuro
+     deu lugar a uma folha só de pergaminho (.tv-folha, a borda e a sombra são
+     da folha), e o cabeçalho da página saiu — o lugar aparecia três vezes, e
+     mora agora uma vez na Barra do Mestre. As intenções ficam, ditas na forma
+     nova: o papel não ganha uma `border` que empurre o que tem dentro (o
+     motivo do outline −1), e o lugar fica por cima e FORA da área que rola. */
+  t("o papel é a folha, sem border que empurre o que tem dentro",
+    /className="tv-folha relative flex-1 min-h-0 flex flex-col overflow-hidden"\s*style=\{paginaDaFolha\}>/.test(APP)
     && !/style=\{\{ background: T\.pagina, border: `1px solid \$\{T\.(?:line|lineStrong)\}` \}\}/.test(APP));
-  t("o cabeçalho está no topo do papel, antes da área que rola",
-    APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(") > 0
-    && APP.indexOf("<CabecalhoDaPagina {...etiquetasDaPagina(") < APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden"));
+  t("o lugar está por cima do papel, antes da área que rola",
+    APP.indexOf("<BarraDoMestre telefone={!mesaLarga}") > 0
+    && APP.indexOf("<BarraDoMestre telefone={!mesaLarga}") < APP.indexOf("flex-1 overflow-y-auto overflow-x-hidden"));
 }
 
 /* ============================================================ */

@@ -321,6 +321,9 @@ export const RUNA = {
      v9.173, para aquelas telas não mudarem de ritmo. Dentro do cabeçalho
      e no fim da página vai a 0: ali quem dá o ar é o vizinho. */
   respiro: 8,
+  /* 07/11 · TL 8 · a runa na página de pergaminho (Figma 307:811): fio 10 em
+     pergaminhoBorda, losango 7 em brasaNoPergaminho, 8 entre eles */
+  naFolha: { fio: 10, espaco: 8, losango: 7 },
 };
 
 export const CABECALHO_DA_PAGINA = {
@@ -844,7 +847,12 @@ export const SOLEIRA = {
    continua zero: cobre só os 24 px de enchimento em `scrollTop = 0`.
    ============================================================ */
 export const ESBATIMENTO = {
-  altura: 24,
+  /* 07/11 · TL (a tela limpa): 24 → 12. A página passou a ser a folha e o
+     enchimento de cima dela desceu a 12 (PAGINA.cima, TL 8); o Figma desenha a
+     banda a 12 (o «esbatimento» de 307:103, 307:273 e 307:805). A conta de
+     R15 continua de pé: 12 de enchimento ≥ 12 de banda, a primeira linha nasce
+     à luz inteira — e 12 é o piso de R13 (abaixo dele volta a ser borda). */
+  altura: 12,
   alfaAA: 0.52,            /* V1: T.ink sobre o pior ponto do corpo (13,59:1) cai a 4,5:1 em a = 0,52 — a tabela que se recalcula não se afina à mão */
   entrelinhaDaProsa: 27.6, /* TIPOS.prosa (17) x 1,625 — o leading-relaxed da tela */
   /* A RAMPA, em pares [fracção da altura, alfa da máscara]. Ela é TABELA e
@@ -892,20 +900,25 @@ export const ESBATIMENTO = {
    por linha numa medida que já está abaixo do piso de 45); em cima e em
    baixo, 28 nos dois.
 
-   O ENCHIMENTO DE CIMA NÃO PODE DESCER DE `ESBATIMENTO.altura` (24): é
+   O ENCHIMENTO DE CIMA NÃO PODE DESCER DE `ESBATIMENTO.altura`: é
    por ser ≥ que a máscara do topo cobre só enchimento em `scrollTop = 0` e
-   a primeira linha nasce à luz inteira (a conta de R15). 28 ≥ 24 — e a
-   suíte o prende.
+   a primeira linha nasce à luz inteira (a conta de R15). Era 28 ≥ 24; desde
+   a TL (07/11) é 12 ≥ 12 — e a suíte o prende.
 
    ENTRE PARÁGRAFOS, 16 E NÃO UMA LINHA EM BRANCO: até aqui a prosa era um
    bloco `pre-wrap` e o parágrafo se separava com uma linha vazia de 27,6
    (a entrelinha). O nó os separa com 16 — cada parágrafo devolve 11,6 px
    à página, e a resposta típica do Mestre tem três ou quatro.
    ============================================================ */
+/* 07/11 · TL 8 (a tela limpa): A PÁGINA É A FOLHA. A folha de cada resposta
+   saiu e o pergaminho passou para a área que rola; o enchimento é o da folha
+   — 12 em cima e 8 em baixo no telefone, 16 e 16 na mesa —, e os lados são os
+   de FOLHA_DO_MESTRE (16 no telefone, 26 na mesa). Antes eram três molduras
+   (o cartão 16 + 16, a página 20 + 20, a folha 18 + 18): 108 px de 375, e a
+   prosa ficava com 30 caracteres por linha. Agora 38 (formas.md §TL 1–2). */
 export const PAGINA = {
-  cima: 28, baixo: 28,
-  lado: 28,             /* na mesa (o nó) */
-  ladoTelefone: 20,     /* no telefone — ver acima */
+  cima: 12, baixo: 8,              /* no telefone */
+  mesa: { cima: 16, baixo: 16 },   /* a partir de 768 */
   entreParagrafos: 16,
   entreBlocos: 24,
   entrelinha: 1.625,    /* a da prosa de hoje (o `leading-relaxed`), agora dita */
@@ -1019,10 +1032,13 @@ export const DADO_DE_USO_NA_MESA = {
     glifo: { 10: 14, 8: 22, 6: 22, 4: 17 },
     alvo: { largura: 120, alto: 132 }, depoisDe: "bolsa", acima: 8,
   },
+  /* 07/11 · TL 8: no telefone os mantimentos moram na TIRA_DA_MESA — o dado
+     a 22, em colunas de 24 (TIRA_DA_MESA.mantimentos), e o alvo 76 × 56, a
+     altura da fila da tira. Na mesa puxada voltam a 28 (TIRA_DA_MESA.puxada). */
   telefone: {
-    dado: 28, folga: 8, linhas: [["racoes", "agua", "tochas"]],
-    glifo: { 10: 10, 8: 14, 6: 14, 4: 11 },
-    alvo: { largura: 100, alto: ALVOS.piso }, debaixoDos: "objetos",
+    dado: 22, folga: 8, linhas: [["racoes", "agua", "tochas"]],
+    glifo: { 10: 8, 8: 11, 6: 11, 4: 9 },
+    alvo: { largura: 76, alto: 56 }, debaixoDos: "tira",
   },
   contagem: { tamanho: TIPOS.maquina, peso: 700, cor: T.inkMeio, aperta: T.danger, prefixo: "×", entre: 2 },
   apertaNaFace: 4,
@@ -1325,21 +1341,26 @@ export const HUD_DA_MESA = {
     aPartirDe: 1024,
     borda: BORDA_DA_MESA.mesa,
     colunas: ["236px", "minmax(560px, 600px)", "120px"],
-    folga: 44,
-    areas: [
-      "ecra ecra ecra",
-      "bandeja livro objetos",
-      "bandeja oferta objetos",
-      "bandeja campo objetos",
-      "cartas cartas cartas",
-    ],
-    /* a fila das cartas mede o que as cartas medem (auto): a 200 fixos sobrava
-       um vão de feltro por baixo do campo quando o herói estava sozinho */
-    linhas: ["84px", "1fr", "auto", "48px", "auto"],
+    /* 07/11 · TL 8 (a tela limpa): a barra do topo e o ecrã do Mestre são UMA
+       faixa (a barra, 56); a fila das cartas de baixo saiu — as cartas sobem
+       para a coluna da esquerda, por cima da Bandeja (o grupo); o momento tem
+       um lugar só, por cima do campo. As colunas começam a 72 do topo. */
+    folga: 32, topo: 72,
+    areas: ["barra barra barra", "grupo livro objetos", "grupo momento objetos", "grupo campo objetos"],
+    linhas: ["56px", "1fr", "auto", "48px"],
+    barra: { alto: 56, velaAlta: 40 },
+    /* as cartas a 0,9 da carta da mesa de antes (cartas, abaixo): 117,9 × 170
+       o herói e 88,2 × 130,5 o companheiro, lado a lado (Figma 309:1758) */
+    grupo: { largura: 236, cartas: { heroi: 0.9, companheiro: 0.9, entre: 12 }, bandeja: { acima: 20, teto: 300 } },
+    /* O ECRÃ DE ANTES — sai quando o App deixar de o ler (o `oficial`, TL 9):
+       hoje ainda dá a altura do topo ao alforje. A barra é `barra`. */
     ecra: { painel: 220, alto: 84, folga: 20, ordem: ["lugar", "hora", "ameaca"], velaAlta: 68, respiro: 8 },
     livro: { largura: 600, margem: 8, linha: 504 },
     bandeja: { largura: 236, alto: 300, lado: "esquerda" },
-    cartas: { heroi: 0.62, companheiro: 0.46, folga: 48, recuo: 30 },
+    /* a carta da mesa (a do componente «Carta do grupo» no Figma): é a base de
+       grupo.cartas (0,9 dela) e a escala da fila de baixo enquanto o App a
+       desenhar (sai com ela; `baixa` é a da fila de baixo na mesa baixa) */
+    cartas: { heroi: 0.62, companheiro: 0.46, folga: 48, recuo: 30, baixa: { heroi: 0.5, companheiro: 0.38 } },
     /* 05/11 · AAA §15: o desenho a 90 (OBJETOS_DA_MESA.tamanho.mesa), o alvo 96 × 120 e o passo 124 (cinco objetos cabem entre o ecrã e as cartas) */
     objetos: { passo: 124, ordem: ["diario", "mapa", "bolsa"], alvo: { largura: 96, alto: 120 } },
     /* A MESA BAIXA (a pessoa jogou a v9.605 a 1905 × 860): abaixo desta altura da
@@ -1348,15 +1369,25 @@ export const HUD_DA_MESA = {
        estreita (96 → 48). Medido a 1440 × 900: a história tinha 203 px com as
        cartas grandes e 285 com estas. O Figma 260:1494 (912) não tem a faixa do
        horizonte; com ela, só a partir de 960 as cartas grandes cabem. */
-    baixa: { abaixoDe: 960, cartas: { heroi: 0.5, companheiro: 0.38 } },
+    /* 07/11 · TL 8: a fila de baixo saiu, e com ela o que comia a altura — a
+       mesa baixa passa a ser abaixo de 800, e aí as cartas do grupo vão a 0,8 */
+    baixa: { abaixoDe: 800, cartas: { heroi: 0.8, companheiro: 0.8 } },
   },
   telefone: {
     borda: BORDA_DA_MESA.telefone,
-    areas: ["ecra", "livro", "bandeja", "oferta", "campo", "cartas"],
-    linhas: ["44px", "1fr", "36px", "40px", "44px", "150px"],
+    /* 07/11 · TL 8: a barra (48), a página, o momento, o campo e a TIRA (72 em
+       vez da fila de 150). A página é uma folha só, a 8 do feltro (a borda 6 +
+       a margem 2), com 16 dos lados e 12 em cima. */
+    areas: ["barra", "livro", "momento", "campo", "tira"],
+    linhas: ["48px", "1fr", "auto", "48px", "72px"],
+    barra: { alto: 48, velaAlta: 28 },
+    vao: 8,
+    livro: { margem: 2, enchimento: 16, cima: 12, baixo: 8 },   /* margem: além da borda 6 */
+    /* O DE ANTES — sai quando o App deixar de o ler (o `oficial`, TL 9): o
+       `ecra` dá a altura do topo ao alforje; as `cartas` são a escala da mesa
+       puxada (TIRA_DA_MESA.puxada.cartas = "telefone") e `alto` a fila velha */
     ecra: { forma: "tira", alto: 44, velaAlta: 30 },
-    livro: { margem: 4 },
-    cartas: { heroi: 0.46, companheiro: 0.34, objetosNaFila: true },
+    cartas: { heroi: 0.46, companheiro: 0.34, objetosNaFila: true, alto: 150 },
     objetos: { tamanho: 48, rotulo: 10, ordem: ["diario", "mapa", "bolsa"] },   /* 05/11 · AAA §15: 40 → 48, o piso de toque */
   },
   ameaca: { pontos: 3, cheio: "●", vazio: "○" },
@@ -1364,6 +1395,55 @@ export const HUD_DA_MESA = {
   painel: { moldura: 2, fio: 0.35, raio: 6, enchimento: 12 },
   titulo: { tamanho: 11, rastreio: 1.8 },
   gema: { mesa: 7, telefone: 6, letra: 11 },
+};
+
+/* ============================================================
+   TL · A TELA LIMPA (07/11/2026) — formas.md §TL; Figma 306:2. A barra do topo
+   e o ecrã do Mestre são uma faixa; o momento tem um lugar; a mesa do telefone
+   é uma tira. A pessoa, com a foto do telefone: «veja só como fica poluída a
+   tela». Na foto não se via uma linha de prosa; no depois, 14,2 (TL 2).
+   As peças: BarraDoMestre, TiraDaMesa e MesaPuxada (painel-mesa-do-mestre.jsx),
+   EmCena (painel-fichas.jsx), SoleiraDoMomento (ui.jsx).
+   ============================================================ */
+/* A SOLEIRA DO MOMENTO (306:106): uma coisa de cada vez, pela prioridade; 56 de
+   alto sempre (ALVOS.chamado), 0 px sem momento. O verbo pode encurtar; o nó do
+   preço («5 min», «precisa de 13») nunca. onAccent sobre amber: 8,68. */
+export const SOLEIRA_DO_MOMENTO = {
+  alto: ALVOS.chamado, vao: 8, raio: 10, enchimento: 14,
+  prioridade: ["rolagem", "dado", "proposta"],
+  principal: { chao: T.amber, letra: T.onAccent, verbo: { tamanho: 16, peso: 500, entrelinha: 20 }, preco: { tamanho: TIPOS.maquina, entrelinha: 16 }, dado: 28 },
+  secundario: { chao: T.panel, aro: T.lineStrong, enchimento: 12 },
+  mostraODado: DADO_DE_USO_NA_MESA.rolar.mostra,
+};
+/* EM CENA (306:11): quem está aqui, uma vez só — rostos de 32 sobrepostos 8, no
+   máximo 3, o resto em «+N». UM botão de 48 de alto, que abre a gaveta «Em cena»
+   (a FileiraAVista inteira). Ficam de fora as variantes de fichas.js que moram
+   noutro lugar: a pessoa do grupo (na mesa) e o lugar onde se está (na barra). */
+export const EM_CENA = {
+  rosto: 32, aro: 2, sobrepoe: 8, mostra: 3, alvo: ALVOS.piso,
+  fora: ["pessoaDoGrupo", "aqui"],   /* as formas de fichas.js que moram noutro lugar */
+};
+/* A TIRA DA MESA (306:107), 375 × 72: a pega, o herói (retrato 44, nível 18, até
+   três gemas), o companheiro (34, PV e PM), os objetos (desenho 40 em alvo
+   48 × 56, sem rótulo) e os mantimentos (dado 22 em colunas de 24). Puxar ou
+   tocar a pega abre a mesa inteira (307:805): a folha de couro de 340 que sobe. */
+export const TIRA_DA_MESA = {
+  alto: 72, cima: 13, lado: [10, 6],
+  pega: { largura: 36, alto: 4, cima: 5, cor: T.inkDim, alfa: 0.7 },
+  heroi: { retrato: 44, aro: 2, nivel: 18, gemas: 3, entre: 4 },
+  companheiro: { retrato: 34, aro: 2 },
+  objeto: { alvo: { largura: ALVOS.piso, alto: 56 }, desenho: 40, rotulo: false },
+  mantimentos: { dado: 22, coluna: 24, entre: 2 },
+  /* glifo: os do dado de 28 que AR 12 desenhou para o telefone (294:4080) — a TL
+     levou o telefone a 22 e a mesa puxada continua a 28, por isso moram aqui */
+  puxada: { alto: 340, raio: 14, veu: 0.55, cartas: "telefone", objetos: 0.62, dado: 28, dura: 220, glifo: { 10: 10, 8: 14, 6: 14, 4: 11 } },
+};
+/* O HORIZONTE DA CENA: deixa de ter faixa fixa. Ao chegar entra no relato (o
+   bloco do turno da chegada, rola com a prosa); a pedido abre numa gaveta de
+   cima (96 na mesa, 48 no telefone); em viagem fica preso debaixo da barra. */
+export const HORIZONTE_DA_CENA = {
+  aoChegar: "relato", aPedido: "gaveta", emViagem: "preso",
+  gaveta: { mesa: 96, telefone: 48, dura: 220 },
 };
 
 /* §AAA §15 · OS OBJETOS DA MESA — o Diário, o Mapa, a Bolsa, o Códex e a Ascensão.
@@ -1900,11 +1980,11 @@ export const FIGURAS_DA_CONSTELACAO = {
       "Arcanista": {
         estrelas: {
           "Dilatação": [0.567, 0.52],
-          "Contramágica": [0.621, 0.573],
-          "Prisão Arcana": [0.681, 0.619],
-          "Reescrever o Instante": [0.744, 0.658],
+          "Contratempo": [0.621, 0.573],
+          "Âmbar do Tempo": [0.681, 0.619],
+          "Ferida que Não Houve": [0.744, 0.658],
         },
-        ligacoes: [[null, "Dilatação"], ["Dilatação", "Contramágica"], ["Contramágica", "Prisão Arcana"], ["Prisão Arcana", "Reescrever o Instante"]],
+        ligacoes: [[null, "Dilatação"], ["Dilatação", "Contratempo"], ["Contratempo", "Âmbar do Tempo"], ["Âmbar do Tempo", "Ferida que Não Houve"]],
         ramos: {
           "Cronomante": { estrelas: { "Instante Roubado": [0.777, 0.725], "Bolha Estagnada": [0.808, 0.79], "Volta Atrás": [0.84, 0.855] }, ligacoes: [[null, "Instante Roubado"], ["Instante Roubado", "Bolha Estagnada"], ["Bolha Estagnada", "Volta Atrás"]] },
           "Teurgista": { estrelas: { "Geometria Viva": [0.819, 0.658], "Empréstimo Arcano": [0.891, 0.658], "Palavra Primeira": [0.963, 0.658] }, ligacoes: [[null, "Geometria Viva"], ["Geometria Viva", "Empréstimo Arcano"], ["Empréstimo Arcano", "Palavra Primeira"]] },
@@ -1936,9 +2016,9 @@ export const FIGURAS_DA_CONSTELACAO = {
           "Lâmina Peçonhenta": [0.433, 0.52],
           "Bote Silencioso": [0.379, 0.573],
           "Marca Mortal": [0.319, 0.619],
-          "Execução": [0.256, 0.658],
+          "Golpe de Misericórdia": [0.256, 0.658],
         },
-        ligacoes: [[null, "Lâmina Peçonhenta"], ["Lâmina Peçonhenta", "Bote Silencioso"], ["Bote Silencioso", "Marca Mortal"], ["Marca Mortal", "Execução"]],
+        ligacoes: [[null, "Lâmina Peçonhenta"], ["Lâmina Peçonhenta", "Bote Silencioso"], ["Bote Silencioso", "Marca Mortal"], ["Marca Mortal", "Golpe de Misericórdia"]],
         ramos: {
           "Lâmina Silenciosa": { estrelas: { "Passo sem Som": [0.181, 0.658], "Corte na Nuca": [0.109, 0.658], "Uma Só Respiração": [0.037, 0.658] }, ligacoes: [[null, "Passo sem Som"], ["Passo sem Som", "Corte na Nuca"], ["Corte na Nuca", "Uma Só Respiração"]] },
           "Envenenador": { estrelas: { "Frasco na Manga": [0.223, 0.725], "Coquetel Amargo": [0.192, 0.79], "Bafo da Cripta": [0.16, 0.855] }, ligacoes: [[null, "Frasco na Manga"], ["Frasco na Manga", "Coquetel Amargo"], ["Coquetel Amargo", "Bafo da Cripta"]] },
@@ -2009,9 +2089,9 @@ export const FIGURAS_DA_CONSTELACAO = {
           "Golpe Consagrado": [0.5, 0.545],
           "Escudo da Aurora": [0.5, 0.62],
           "Juramento Radiante": [0.5, 0.695],
-          "Julgamento": [0.5, 0.77],
+          "Luz do Juízo": [0.5, 0.77],
         },
-        ligacoes: [[null, "Golpe Consagrado"], ["Golpe Consagrado", "Escudo da Aurora"], ["Escudo da Aurora", "Juramento Radiante"], ["Juramento Radiante", "Julgamento"]],
+        ligacoes: [[null, "Golpe Consagrado"], ["Golpe Consagrado", "Escudo da Aurora"], ["Escudo da Aurora", "Juramento Radiante"], ["Juramento Radiante", "Luz do Juízo"]],
         ramos: {
           "Juramento da Aurora": { estrelas: { "Lâmina de Amanhecer": [0.46, 0.834], "Luz que Não Recua": [0.422, 0.895], "Julgamento da Aurora": [0.384, 0.956] }, ligacoes: [[null, "Lâmina de Amanhecer"], ["Lâmina de Amanhecer", "Luz que Não Recua"], ["Luz que Não Recua", "Julgamento da Aurora"]] },
           "Vingador": { estrelas: { "Dívida de Sangue": [0.54, 0.834], "Perseguição Sagrada": [0.578, 0.895], "Cobrança Final": [0.616, 0.956] }, ligacoes: [[null, "Dívida de Sangue"], ["Dívida de Sangue", "Perseguição Sagrada"], ["Perseguição Sagrada", "Cobrança Final"]] },
@@ -2053,12 +2133,12 @@ export const FIGURAS_DA_CONSTELACAO = {
     bracos: {
       "Arqueiro": {
         estrelas: {
-          "Tiro Duplo": [0.433, 0.52],
-          "Flecha Perfurante": [0.379, 0.573],
-          "Chuva de Flechas": [0.319, 0.619],
-          "Tiro do Fim": [0.256, 0.658],
+          "Flechas Gêmeas": [0.433, 0.52],
+          "Ponta de Agulha": [0.379, 0.573],
+          "Saraivada": [0.319, 0.619],
+          "Tiro de Mil Passos": [0.256, 0.658],
         },
-        ligacoes: [[null, "Tiro Duplo"], ["Tiro Duplo", "Flecha Perfurante"], ["Flecha Perfurante", "Chuva de Flechas"], ["Chuva de Flechas", "Tiro do Fim"]],
+        ligacoes: [[null, "Flechas Gêmeas"], ["Flechas Gêmeas", "Ponta de Agulha"], ["Ponta de Agulha", "Saraivada"], ["Saraivada", "Tiro de Mil Passos"]],
         ramos: {
           "Tiro Certeiro": { estrelas: { "Olho que Mede o Vento": [0.181, 0.658], "Flecha na Junta": [0.109, 0.658], "Disparo Definidor": [0.037, 0.658] }, ligacoes: [[null, "Olho que Mede o Vento"], ["Olho que Mede o Vento", "Flecha na Junta"], ["Flecha na Junta", "Disparo Definidor"]] },
           "Chuva de Flechas": { estrelas: { "Salva Rápida": [0.223, 0.725], "Céu Escuro": [0.192, 0.79], "Tempestade de Hastes": [0.16, 0.855] }, ligacoes: [[null, "Salva Rápida"], ["Salva Rápida", "Céu Escuro"], ["Céu Escuro", "Tempestade de Hastes"]] },
@@ -2173,12 +2253,12 @@ export const FIGURAS_DA_CONSTELACAO = {
     bracos: {
       "Punho de Ferro": {
         estrelas: {
-          "Rajada de Golpes": [0.433, 0.515],
+          "Punhos em Cascata": [0.433, 0.515],
           "Palma Atordoante": [0.379, 0.568],
           "Punho que Rompe": [0.319, 0.614],
           "Punho da Montanha": [0.256, 0.653],
         },
-        ligacoes: [[null, "Rajada de Golpes"], ["Rajada de Golpes", "Palma Atordoante"], ["Palma Atordoante", "Punho que Rompe"], ["Punho que Rompe", "Punho da Montanha"]],
+        ligacoes: [[null, "Punhos em Cascata"], ["Punhos em Cascata", "Palma Atordoante"], ["Palma Atordoante", "Punho que Rompe"], ["Punho que Rompe", "Punho da Montanha"]],
         ramos: {
           "Mão Aberta": { estrelas: { "Palma que Desloca": [0.181, 0.653], "Sequência de Cinco": [0.109, 0.653], "Toque do Fim": [0.037, 0.653] }, ligacoes: [[null, "Palma que Desloca"], ["Palma que Desloca", "Sequência de Cinco"], ["Sequência de Cinco", "Toque do Fim"]] },
           "Quebra-Montanhas": { estrelas: { "Punho de Pedra": [0.223, 0.72], "Impacto Sísmico": [0.192, 0.785], "Rachar o Mundo": [0.16, 0.85] }, ligacoes: [[null, "Punho de Pedra"], ["Punho de Pedra", "Impacto Sísmico"], ["Impacto Sísmico", "Rachar o Mundo"]] },
@@ -2186,12 +2266,12 @@ export const FIGURAS_DA_CONSTELACAO = {
       },
       "Andarilho": {
         estrelas: {
-          "Passo do Vento": [0.5, 0.54],
+          "Pés Ligeiros": [0.5, 0.54],
           "Dança das Sombras": [0.5, 0.615],
           "Corrida Impossível": [0.5, 0.69],
           "Cem Passos": [0.5, 0.765],
         },
-        ligacoes: [[null, "Passo do Vento"], ["Passo do Vento", "Dança das Sombras"], ["Dança das Sombras", "Corrida Impossível"], ["Corrida Impossível", "Cem Passos"]],
+        ligacoes: [[null, "Pés Ligeiros"], ["Pés Ligeiros", "Dança das Sombras"], ["Dança das Sombras", "Corrida Impossível"], ["Corrida Impossível", "Cem Passos"]],
         ramos: {
           "Vento Veloz": { estrelas: { "Passo de Trinta Metros": [0.46, 0.829], "Vendaval de Punhos": [0.422, 0.89], "Mais Rápido que o Olho": [0.384, 0.951] }, ligacoes: [[null, "Passo de Trinta Metros"], ["Passo de Trinta Metros", "Vendaval de Punhos"], ["Vendaval de Punhos", "Mais Rápido que o Olho"]] },
           "Sombra Dançante": { estrelas: { "Passo entre Sombras": [0.54, 0.829], "Golpe do Escuro": [0.578, 0.89], "Dança Sem Vulto": [0.616, 0.951] }, ligacoes: [[null, "Passo entre Sombras"], ["Passo entre Sombras", "Golpe do Escuro"], ["Golpe do Escuro", "Dança Sem Vulto"]] },
@@ -2559,7 +2639,7 @@ export const MERCADO = {
 export const FOLHA_DO_MESTRE = {
   cima: 18, baixo: 20,
   lado: 26,            /* na mesa */
-  ladoTelefone: 18,    /* no telefone */
+  ladoTelefone: 16,    /* no telefone — 07/11 · TL 8: 18 → 16, e são os lados da PÁGINA (a página é a folha) */
   raio: 4,
   peso: 400,
   vinheta: 0.75,       /* a borda do papel, no máximo (o pior ponto da conta) */
@@ -3922,9 +4002,20 @@ export const MOVIMENTO_CSS = `
 /* O DADO DE USO (AR 12 · 294:4493): quando a face desce, o dado encolhe e volta (0,82 a 1) */
 @keyframes tvUsoEncolhe { from { transform: scale(${DADO_DE_USO_NA_MESA.encolher.escala}); } to { transform: none; } }
 .tv-uso-encolhe { transform-origin: 50% 50%; animation: tvUsoEncolhe ${DADO_DE_USO_NA_MESA.encolher.dura}ms ease-out both; }
+/* TL (a tela limpa, formas.md §TL 8): a mesa puxada sobe e a gaveta do
+   horizonte desce em 220 ms ease-out; o veu esvanece no mesmo tempo. Com
+   reduce, tudo aparece seco (abaixo). */
+@keyframes tvMesaSobe { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes tvGavetaDesce { from { transform: translateY(-100%); } to { transform: none; } }
+@keyframes tvVeuDaMesa { from { opacity: 0; } to { opacity: 1; } }
+.tv-mesa-sobe { animation: tvMesaSobe ${TIRA_DA_MESA.puxada.dura}ms ease-out both; }
+.tv-veu-da-mesa { animation: tvVeuDaMesa ${TIRA_DA_MESA.puxada.dura}ms ease-out both; }
+.tv-gaveta-desce { animation: tvGavetaDesce ${HORIZONTE_DA_CENA.gaveta.dura}ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
+  /* TL: a mesa puxada, o veu e a gaveta do horizonte aparecem secos */
+  .tv-mesa-sobe, .tv-veu-da-mesa, .tv-gaveta-desce { animation: none; }
   /* a moldura parada: o lume fica onde está, a gema troca seca */
   .tv-moldura-lume, .tv-moldura-gema { animation: none; }
   /* a cerimónia parada: só o quadro da escolha, num esvanecer (a peça põe
@@ -4427,7 +4518,7 @@ export const SUPERFICIES_CSS = `
    entre blocos saem de PAGINA. No telefone os lados sao mais estreitos que
    o no, de proposito (ver a tabela). */
 .tv-pagina {
-  padding: ${PAGINA.cima}px ${PAGINA.ladoTelefone}px ${PAGINA.baixo}px;
+  padding: ${PAGINA.cima}px ${FOLHA_DO_MESTRE.ladoTelefone}px ${PAGINA.baixo}px;
 }
 .tv-pagina > * + * { margin-top: ${PAGINA.entreBlocos}px; }
 /* A FOLHA (Mesa C): o pergaminho, a vinheta da borda e a fibra do papel. A
@@ -4440,11 +4531,7 @@ export const SUPERFICIES_CSS = `
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 ${FOLHA_DO_MESTRE.fibra} 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   color: ${T.tintaDoPergaminho};
   border-radius: ${FOLHA_DO_MESTRE.raio}px;
-  padding: ${FOLHA_DO_MESTRE.cima}px ${FOLHA_DO_MESTRE.ladoTelefone}px ${FOLHA_DO_MESTRE.baixo}px;
   box-shadow: 0 2px 10px ${sombra(FOLHA_DO_MESTRE.sombra)};
-}
-@media (min-width: 768px) {
-  .tv-folha { padding-inline: ${FOLHA_DO_MESTRE.lado}px; }
 }
 /* O FELTRO (AAA · 05/11, formas.md §14): a fibra fina e a mancha larga são
    ruído ISOTRÓPICO — a mesma frequência nos dois eixos, sem direção, logo
@@ -4465,8 +4552,11 @@ export const SUPERFICIES_CSS = `
 @media (forced-colors: active) {
   .tv-folha, .tv-mesa { background-image: none; }
 }
+/* TL 8: A PAGINA E A FOLHA. O papel (.tv-folha) vai no que embrulha a area que
+   rola, e o enchimento (.tv-pagina) na propria area: assim a mascara do topo
+   (.tv-esbate-topo) esbate a letra e nunca o papel. */
 @media (min-width: 768px) {
-  .tv-pagina { padding-inline: ${PAGINA.lado}px; }
+  .tv-pagina { padding: ${PAGINA.mesa.cima}px ${FOLHA_DO_MESTRE.lado}px ${PAGINA.mesa.baixo}px; }
 }
 /* V5 · o pe do cartao: os lados da mesa sao os do no, os do telefone os da cinta */
 .tv-pe-da-pagina { padding: ${PE_DA_PAGINA.cima}px ${PE_DA_PAGINA.ladoTelefone}px ${PE_DA_PAGINA.baixo}px; }

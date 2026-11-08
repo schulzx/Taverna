@@ -15,19 +15,21 @@
    objeto, ficam na mesma coluna com a forma de aba que já tinham.
    ============================================================ */
 import React from "react";
+import { createPortal } from "react-dom";
 import { T } from "./constantes.js";
-import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, PAPEL_DO_DADO } from "./estilo.js";
+import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, TIPOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, PAPEL_DO_DADO, TIRA_DA_MESA } from "./estilo.js";
 import { molduraDe } from "./moldura.js";
 import { FASES_DO_DIA } from "./mapa-vivo.js";
 import { marcasNoAro } from "./marcas-da-moldura.js";
 import { Moldura } from "./painel-moldura.jsx";
-import { Retrato, MarcaDaPorta, SeloDePrazo, Glifo } from "./ui.jsx";
+import { Retrato, MarcaDaPorta, SeloDePrazo, Glifo, IconeChevronEsq } from "./ui.jsx";
 import { Corpo } from "./painel-bandeja.jsx";
 import { estadoDe } from "./semente.js";
 
 const OURO = MOLDURA_POR_DEGRAU.ouro;
 const BRONZE = MOLDURA_POR_DEGRAU.bronze || OURO;
 const H = HUD_DA_MESA;
+const TIRA = TIRA_DA_MESA;
 /* a sombra é a borda escura da mesa; a tinta do mapa e o atilho são a
    granada do Bárbaro (a mesma pedra do PV) — nenhuma cor nasce aqui */
 const SOMBRA = T.couroBaixo;
@@ -61,7 +63,7 @@ function faseDoMinuto(minuto) {
 }
 
 /* A VELA — o castiçal de bronze. A altura da cera é o relógio da noite. */
-function Vela({ fase = "manha", alto = H.mesa.ecra.velaAlta }) {
+function Vela({ fase = "manha", alto = H.mesa.barra.velaAlta }) {
   const v = velaDaFase(fase);
   const pe = 66, maxCera = 40;
   const cera = Math.max(4, maxCera * (Number(v.altura) || 0));
@@ -140,82 +142,15 @@ function PontosDaAmeaca({ n }) {
   );
 }
 
-/* O ECRÃ DO MESTRE. `ameaca` só aparece quando o sistema a dá (um número
-   0–3); sem ele o painel não nasce — a casa não inventa o perigo. O toque
-   na HORA abre O TEMPO, como o relógio da cinta abria. `children` é o que
-   se posiciona contra o ecrã inteiro (o sinal de guardado). */
-export function EcraDoMestre({ telefone = false, lugar = "", detalhe = "", hora = "", data = "", minuto = 0, ameaca = null, prazo = null, quantosPrazos = 0, escondidoGrave = false, falaDaHora = "", tempoAberto = false, aoAbrirTempo, children }) {
-  const fase = faseDoMinuto(minuto);
-  const comAmeaca = ameaca != null && Number.isFinite(Number(ameaca));
-  const fala = falaDaHora || ["O tempo", hora].filter(Boolean).join(", ");
-  if (telefone) {
-    const fio = { width: 1, alignSelf: "stretch", background: alfa(OURO.meio, 0.7), margin: "8px 0" };
-    return (
-      <div className="relative flex items-stretch" style={{ height: H.telefone.ecra.alto, ...couroDoPainel(), borderRadius: 0, border: "none",
-        /* a moldura da tira desenha-se por sombra, para não roubar 2 px ao alvo da HORA (44, WCAG 2.5.5) */
-        boxShadow: `inset 0 -${H.painel.moldura}px 0 ${OURO.meio}, inset 0 -${H.painel.moldura + 1}px 0 ${alfa(OURO.claro, H.painel.fio)}, 0 6px 14px ${alfa(SOMBRA, 0.45)}` }}>
-        <style>{CSS_DA_VELA}</style>
-        <div className="flex-1 min-w-0 flex flex-col justify-center px-2.5">
-          <span className="tv-body truncate" style={{ fontSize: 13, color: T.ink, lineHeight: 1.15 }} title={[lugar, detalhe].filter(Boolean).join(" · ")}>{lugar}</span>
-          {detalhe ? <span className="tv-mono truncate" style={{ fontSize: 10, color: T.inkDim, lineHeight: 1.2 }}>{detalhe}</span> : null}
-        </div>
-        <span aria-hidden="true" style={fio} />
-        <button onClick={aoAbrirTempo} aria-label={fala} aria-expanded={!!tempoAberto} title="O tempo — esperar, acampar, os prazos"
-          className="tv-anel-foco shrink-0 flex items-center gap-1.5 px-2" style={{ background: "transparent", border: "none", minWidth: ALVOS.piso }}>
-          <Vela fase={fase} alto={H.telefone.ecra.velaAlta} />
-          <span className="tv-body" style={{ fontSize: 13, color: T.ink, whiteSpace: "nowrap" }}>{hora}</span>
-          {prazo ? <SeloDePrazo noites={prazo.noites} quantos={quantosPrazos} urgente={prazo.noites <= 1} escondidoGrave={escondidoGrave} /> : null}
-        </button>
-        {comAmeaca ? (<>
-          <span aria-hidden="true" style={fio} />
-          <span className="shrink-0 flex items-center px-2.5 tv-mono" style={{ fontSize: 12 }} aria-label={`Ameaça, ${ameaca} de ${H.ameaca.pontos}`}><PontosDaAmeaca n={ameaca} /></span>
-        </>) : null}
-        {children}
-      </div>
-    );
-  }
-  const painel = { width: H.mesa.ecra.painel, height: H.mesa.ecra.alto, padding: `8px ${H.painel.enchimento}px`, ...couroDoPainel() };
-  return (
-    <div className="relative flex items-center justify-center" style={{ height: H.mesa.ecra.alto + 2 * H.mesa.ecra.respiro, gap: H.mesa.ecra.folga, paddingTop: H.mesa.ecra.respiro, paddingBottom: H.mesa.ecra.respiro }}>
-      <style>{CSS_DA_VELA}</style>
-      <div className="flex flex-col justify-center min-w-0" style={painel}>
-        <TituloDoPainel>Lugar</TituloDoPainel>
-        <span className="tv-body truncate" style={{ fontSize: 15, color: T.ink, lineHeight: 1.3 }} title={lugar}>{lugar}</span>
-        {detalhe ? <span className="tv-mono truncate" style={{ fontSize: 10, color: T.inkDim }}>{detalhe}</span> : null}
-      </div>
-      <button onClick={aoAbrirTempo} aria-label={fala} aria-expanded={!!tempoAberto} title="O tempo — esperar, acampar, os prazos"
-        className="tv-anel-foco flex items-center gap-2 text-left min-w-0" style={{ ...painel, padding: `4px ${H.painel.enchimento}px 4px 6px`, outlineColor: tempoAberto ? T.amber : undefined }}>
-        <Vela fase={fase} alto={H.mesa.ecra.velaAlta} />
-        <span className="flex flex-col min-w-0">
-          <TituloDoPainel>Hora</TituloDoPainel>
-          <span className="tv-body truncate" style={{ fontSize: 15, color: T.ink, lineHeight: 1.3 }}>{hora}</span>
-          <span className="flex items-center gap-1.5 min-w-0">
-            <span className="tv-mono truncate" style={{ fontSize: 10, color: T.inkDim }}>{data}</span>
-            {prazo ? <SeloDePrazo noites={prazo.noites} quantos={quantosPrazos} urgente={prazo.noites <= 1} escondidoGrave={escondidoGrave} /> : null}
-          </span>
-        </span>
-      </button>
-      {comAmeaca ? (
-        <div className="flex flex-col justify-center" style={painel} aria-label={`Ameaça, ${ameaca} de ${H.ameaca.pontos}`}>
-          <TituloDoPainel>Ameaça</TituloDoPainel>
-          <span className="tv-mono" style={{ fontSize: 14 }}><PontosDaAmeaca n={ameaca} /></span>
-          <span className="tv-mono" style={{ fontSize: 10, color: T.inkDim }}>{ameaca} de {H.ameaca.pontos}</span>
-        </div>
-      ) : null}
-      {children}
-    </div>
-  );
-}
-
 /* UMA GEMA DA CARTA: a pedra pequena e o número ao lado */
-function GemaDaCarta({ cor, valor, rotulo, tam }) {
+function GemaDaCarta({ cor, valor, rotulo, tam, letra = H.gema.letra, peso = 400 }) {
   return (
     <span className="inline-flex items-center gap-1" title={rotulo} aria-label={`${rotulo} ${valor}`}>
       <svg aria-hidden="true" width={tam} height={tam} viewBox="0 0 10 10" style={{ display: "block" }}>
         <path d="M5 0.6L9.4 5L5 9.4L0.6 5Z" fill={cor} stroke={alfa(SOMBRA, 0.5)} strokeWidth="0.8" />
         <path d="M5 1.8L7.2 5L5 4.2L2.8 5Z" fill={VELA.cor.nucleo} fillOpacity="0.35" />
       </svg>
-      <span className="tv-mono" style={{ fontSize: H.gema.letra, color: T.ink, lineHeight: 1 }}>{valor}</span>
+      <span className="tv-mono" style={{ fontSize: letra, fontWeight: peso, color: T.ink, lineHeight: 1 }}>{valor}</span>
     </span>
   );
 }
@@ -297,28 +232,34 @@ export function DesenhoDoObjeto({ chave, lado, novo = false }) {
   );
 }
 
-export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = false, telefone = false, Glifo = null, aoTocar }) {
+/* 07/11 · TL 4: `naTira` — o objeto na Tira da mesa do telefone: o desenho a 40
+   num alvo de 48 × 56 e SEM rótulo escrito (o rótulo fica no nome acessível e
+   na mesa puxada). A gota de novidade é a de sempre. */
+export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = false, telefone = false, naTira = false, escala = 1, Glifo = null, aoTocar }) {
   const chave = CHAVE_DO_OBJETO[id] || id;
   const desenho = OBJETOS_DA_MESA[chave] ? chave : null;
-  const lado = telefone ? H.telefone.objetos.tamanho : OBJETOS_DA_MESA.tamanho.mesa;
+  const lado = naTira ? TIRA.objeto.desenho : telefone ? H.telefone.objetos.tamanho : OBJETOS_DA_MESA.tamanho.mesa * escala;
   return (
     <button onClick={aoTocar} aria-pressed={!!ativo} aria-label={[rotulo, legenda, novo ? "há coisa nova" : ""].filter(Boolean).join(", ")} title={rotulo}
       className="tv-anel-foco relative shrink-0 flex flex-col items-center justify-center gap-1 rounded-lg"
       style={{
-        minWidth: telefone ? ALVOS.piso : H.mesa.objetos.alvo.largura, minHeight: telefone ? ALVOS.piso : (desenho ? H.mesa.objetos.alvo.alto : ALVOS.piso), padding: telefone ? 2 : 6,
+        minWidth: naTira ? TIRA.objeto.alvo.largura : telefone ? ALVOS.piso : H.mesa.objetos.alvo.largura * escala,
+        minHeight: naTira ? TIRA.objeto.alvo.alto : telefone ? ALVOS.piso : (desenho ? H.mesa.objetos.alvo.alto * escala : ALVOS.piso),
+        /* na mesa puxada (escala < 1) o objeto é o da mesa encolhido inteiro: sem enchimento, e o alvo é o desenho (59,5 × 74,4) */
+        padding: naTira || escala < 1 ? 0 : telefone ? 2 : 6,
         background: ativo ? alfa(T.amber, 0.12) : "transparent",
         border: `1px solid ${ativo ? T.amber : desenho ? "transparent" : T.lineStrong}`,
       }}>
       <span style={{ position: "relative", display: "inline-flex", filter: `drop-shadow(0 4px 4px ${alfa(SOMBRA, 0.5)})` }}>
         {desenho
           ? <DesenhoDoObjeto chave={desenho} lado={lado} novo={novo && !ativo} />
-          : Glifo ? <Glifo tamanho={telefone ? 22 : 26} cor={ativo ? T.amberSoft : T.inkMeio} /> : null}
+          : Glifo ? <Glifo tamanho={telefone || naTira ? 22 : 26} cor={ativo ? T.amberSoft : T.inkMeio} /> : null}
         {novo && !ativo ? (
           <span aria-hidden="true" style={{ position: "absolute", top: -4, right: -6, lineHeight: 0 }}><MarcaDaPorta estado="novo" /></span>
         ) : null}
       </span>
-      <span className="tv-titulo uppercase" style={{ fontSize: telefone ? H.telefone.objetos.rotulo : H.titulo.tamanho, letterSpacing: 1, color: ativo ? T.amberSoft : OURO.claro, lineHeight: 1 }}>{rotulo}</span>
-      {legenda && !telefone ? <span className="tv-mono" style={{ fontSize: 10, color: T.inkMeio, lineHeight: 1 }}>{legenda}</span> : null}
+      {naTira && !TIRA.objeto.rotulo ? null : <span className="tv-titulo uppercase" style={{ fontSize: telefone ? H.telefone.objetos.rotulo : H.titulo.tamanho, letterSpacing: 1, color: ativo ? T.amberSoft : OURO.claro, lineHeight: 1 }}>{rotulo}</span>}
+      {legenda && !telefone && !naTira && escala >= 1 ? <span className="tv-mono" style={{ fontSize: 10, color: T.inkMeio, lineHeight: 1 }}>{legenda}</span> : null}
     </button>
   );
 }
@@ -345,8 +286,13 @@ const contaDe = (v) => Math.max(0, Math.floor(Number(v) || 0));
 const faceDe = (v) => (FORMAS_DO_DADO[v] && FACE_POR_EXTENSO[v] ? Number(v) : null);
 
 /* um mantimento: o dado (ou o contorno vazio) com o glifo dentro, e a contagem */
-export function DadoDeUso({ tipo, face, n, telefone = false }) {
-  const M = telefone ? USO.telefone : USO.mesa;
+/* `lugar` (TL 8): "mesa" (44) · "tira" (o telefone, 22) · "puxada" (a mesa
+   puxada do telefone, 28 — os glifos de 28 que AR 12 desenhou para o telefone
+   e a TL guarda em TIRA_DA_MESA.puxada). `telefone` é o nome antigo da tira. */
+const lugarDoUso = (lugar, telefone) => (lugar === "tira" || lugar === "puxada" || lugar === "mesa" ? lugar : telefone ? "tira" : "mesa");
+const medidaDoUso = (lugar) => (lugar === "puxada" ? { dado: TIRA.puxada.dado, glifo: TIRA.puxada.glifo } : lugar === "tira" ? USO.telefone : USO.mesa);
+export function DadoDeUso({ tipo, face, n, telefone = false, lugar = null }) {
+  const M = medidaDoUso(lugarDoUso(lugar, telefone));
   const tam = M.dado;
   const f = faceDe(face);
   const vazio = f == null;
@@ -386,10 +332,12 @@ export function nomeDaPrateleira(dados, contagens) {
   return "Mantimentos: " + partes.join("; ") + ". Abrir na Bolsa.";
 }
 
-export function PrateleiraDosMantimentos({ dados = null, contagens = null, telefone = false, aoAbrir }) {
+export function PrateleiraDosMantimentos({ dados = null, contagens = null, telefone = false, lugar = null, aoAbrir }) {
   const d = dados && typeof dados === "object" ? dados : {};
   const c = contagens && typeof contagens === "object" ? contagens : {};
-  const M = telefone ? USO.telefone : USO.mesa;
+  const onde = lugarDoUso(lugar, telefone);
+  const M = onde === "mesa" ? USO.mesa : USO.telefone;
+  const naTira = onde === "tira";
   /* o encolher: a face desceu desde a vista anterior (ou acabou) */
   const anterior = React.useRef(null);
   const [encolheu, setEncolheu] = React.useState({});
@@ -406,19 +354,21 @@ export function PrateleiraDosMantimentos({ dados = null, contagens = null, telef
   }, [chave]); // eslint-disable-line react-hooks/exhaustive-deps
   const dado = (tipo) => (
     <span key={tipo + "-" + (encolheu[tipo] || 0)} className={encolheu[tipo] ? "tv-uso-encolhe" : undefined} style={{ display: "inline-flex" }}>
-      <DadoDeUso tipo={tipo} face={d[tipo]} n={c[tipo]} telefone={telefone} />
+      <span style={naTira ? { display: "inline-flex", justifyContent: "center", width: TIRA.mantimentos.coluna } : { display: "inline-flex" }}>
+        <DadoDeUso tipo={tipo} face={d[tipo]} n={c[tipo]} lugar={onde} />
+      </span>
     </span>
   );
   return (
     <button type="button" onClick={aoAbrir} aria-label={nomeDaPrateleira(d, c)} title="Mantimentos"
       className="tv-anel-foco tv-encaixe shrink-0 flex flex-col items-center justify-center rounded-lg"
       style={{
-        minWidth: M.alvo.largura, minHeight: M.alvo.alto, padding: 0, marginTop: telefone ? 0 : USO.mesa.acima,
-        rowGap: telefone ? 0 : USO.mesa.entreLinhas - USO.contagem.entre - USO.contagem.tamanho,
+        minWidth: onde === "puxada" ? undefined : M.alvo.largura, minHeight: onde === "puxada" ? ALVOS.piso : M.alvo.alto, padding: 0, marginTop: onde === "mesa" ? USO.mesa.acima : 0,
+        rowGap: onde === "mesa" ? USO.mesa.entreLinhas - USO.contagem.entre - USO.contagem.tamanho : 0,
         background: "transparent", border: "none", cursor: "pointer",
       }}>
       {M.linhas.map((linha, i) => (
-        <span key={i} className="flex items-start justify-center" style={{ gap: M.folga }}>{linha.map(dado)}</span>
+        <span key={i} className="flex items-start justify-center" style={{ gap: naTira ? TIRA.mantimentos.entre : M.folga }}>{linha.map(dado)}</span>
       ))}
     </button>
   );
@@ -428,7 +378,7 @@ export function PrateleiraDosMantimentos({ dados = null, contagens = null, telef
    os objetos na mesma fila (objetosNaFila). Rola de lado se não couber.
    `baixa`: a mesa com pouca altura (HUD_DA_MESA.mesa.baixa) — cartas menores. */
 export function FilaDasCartas({ telefone = false, baixa = false, heroi, grupo = [], comPMDoHeroi = true, destino = null, fichaAberta = false, fichaNova = false, aoAbrirFicha, aoAbrirCompanheiro, rotuloDoHeroi, objetos = null }) {
-  const esc = telefone ? H.telefone.cartas : baixa ? H.mesa.baixa.cartas : H.mesa.cartas;
+  const esc = telefone ? H.telefone.cartas : baixa ? H.mesa.cartas.baixa : H.mesa.cartas;
   const lista = Array.isArray(grupo) ? grupo.filter(Boolean) : [];
   const metade = Math.ceil(lista.length / 2);
   const carta = (c, i) => (
@@ -438,7 +388,7 @@ export function FilaDasCartas({ telefone = false, baixa = false, heroi, grupo = 
   return (
     <div className="tv-scroll flex items-start" style={{
       /* na mesa a fila mede as cartas (linhas[4] é auto): nenhum vão por baixo do campo */
-      height: telefone ? parseInt(H.telefone.linhas[5], 10) : undefined,
+      height: telefone ? H.telefone.cartas.alto : undefined,
       justifyContent: telefone ? "flex-start" : "center", gap: telefone ? 8 : H.mesa.cartas.folga,
       overflowX: "auto", overflowY: "hidden", padding: telefone ? "6px 10px 0" : "6px 0 0",
     }}>
@@ -449,4 +399,295 @@ export function FilaDasCartas({ telefone = false, baixa = false, heroi, grupo = 
       {telefone && objetos ? <span className="flex items-start gap-1 shrink-0" style={{ marginLeft: "auto", paddingTop: 10 }}>{objetos}</span> : null}
     </div>
   );
+}
+
+/* ============================================================
+   TL · A TELA LIMPA (07/11/2026) — formas.md §TL 3–5, 8; Figma 306:2.
+
+   A pessoa mandou a foto do telefone: «veja só como fica poluída a tela».
+   Na foto não se via UMA linha de prosa. Três peças desta casa mudam isso:
+
+   · BarraDoMestre (306:69) — a barra do topo e o ecrã do Mestre passam a ser
+     uma faixa só: o lugar (um botão: abre o horizonte), quem está em cena (a
+     ranhura do EmCena), a hora com a vela e o clima (um botão: abre O TEMPO,
+     como o relógio de sempre) e a ameaça. O lugar aparece aqui e só aqui.
+   · TiraDaMesa (306:107) — a mesa do telefone recolhida a 72 px: a pega, o
+     herói, o companheiro, os objetos sem rótulo e os mantimentos. Nenhum
+     número passa da borda (o «132 ◆1» da foto, cortado, volta a ver-se).
+   · MesaPuxada (307:805) — puxar ou tocar a pega: a folha de couro de 340
+     sobe por cima da página, com as cartas grandes, a Bandeja, os objetos com
+     rótulo e os mantimentos a 28. Véu; fecha com Esc, com um toque no véu ou
+     arrastando para baixo; o foco fica preso dentro e volta à pega.
+
+   MUDA A PORTA, NÃO A SALA: cada toque abre a mesma gaveta de antes. O que a
+   tira esconde (o nome do herói, o rótulo dos objetos) fica no nome
+   acessível e na mesa puxada — as duas perdas declaradas da TL 5.
+   ============================================================ */
+/* a letra da barra, do Figma (306:14, 306:38, 306:33, 306:59) — a TL 8 não a
+   tabelou; é a do ecrã de antes, subida ao tamanho que a faixa única deixa */
+const BARRA_LETRA = {
+  lugar: { telefone: 19, mesa: 22 },
+  hora: { telefone: 14, mesa: 15 },
+  lado: { telefone: 12, mesa: 28 },
+};
+
+/* a seta que diz «isto abre para baixo» (a da casa, virada) */
+function SetaDeAbrir({ aberta = false }) {
+  return (
+    <span aria-hidden="true" style={{ display: "inline-flex", flexShrink: 0, transform: `rotate(${aberta ? 90 : -90}deg)` }}>
+      <IconeChevronEsq tamanho={12} cor={T.inkMeio} />
+    </span>
+  );
+}
+
+/* A BARRA DO MESTRE. `cena` é a linha da masmorra (o andar, a camada): na mesa
+   vai por baixo do lugar; no telefone SUBSTITUI o nome do lugar (TL 5). `luz`
+   («Dia») vai escrita na mesa e, no telefone, só no nome acessível (a vela já
+   muda de forma com a hora). `clima` = { glifo, rotulo } ou null. A ameaça só
+   nasce quando o sistema a dá — no telefone, só acima de zero. `emCena` é a
+   ranhura do <EmCena>; `children` o que se posiciona contra a barra inteira
+   (o sinal de guardado). */
+export function BarraDoMestre({ telefone = false, lugar = "", cena = "", luz = "", hora = "", minuto = 0, clima = null, ameaca = null,
+  prazo = null, quantosPrazos = 0, escondidoGrave = false, falaDaHora = "", tempoAberto = false, aoAbrirTempo,
+  horizonteAberto = false, aoAbrirHorizonte, emCena = null, children }) {
+  const B = telefone ? H.telefone.barra : H.mesa.barra;
+  const fase = faseDoMinuto(minuto);
+  const nAmeaca = Number(ameaca);
+  const comAmeaca = ameaca != null && Number.isFinite(nAmeaca) && (!telefone || nAmeaca > 0);
+  const nome = telefone && cena ? cena : lugar;
+  const climaOk = clima && typeof clima === "object" && clima.glifo ? clima : null;
+  const fala = falaDaHora || ["O tempo", luz, hora, climaOk && climaOk.rotulo].filter(Boolean).join(", ");
+  const falaDoLugar = [lugar, cena].filter(Boolean).join(", ") + ". Abrir o horizonte.";
+  const botao = { background: "transparent", border: "none", padding: 0, minHeight: ALVOS.piso, cursor: "pointer" };
+  const horaEscrita = telefone ? hora : [luz, hora].filter(Boolean).join(" · ");
+  return (
+    <div className="relative flex items-center justify-between" data-barra-do-mestre={telefone ? "telefone" : "mesa"}
+      style={{ height: B.alto, padding: `0 ${telefone ? BARRA_LETRA.lado.telefone : BARRA_LETRA.lado.mesa}px`, background: T.couro, borderBottom: `1px solid ${OURO.meio}`, gap: 8 }}>
+      <style>{CSS_DA_VELA}</style>
+      <div className="flex items-center min-w-0" style={{ gap: telefone ? 4 : 20 }}>
+        <button type="button" onClick={aoAbrirHorizonte} aria-label={falaDoLugar} aria-expanded={!!horizonteAberto}
+          className="tv-anel-foco flex items-center text-left min-w-0" style={{ ...botao, gap: 6 }}>
+          <span className="flex flex-col min-w-0">
+            {telefone ? null : <TituloDoPainel>Lugar</TituloDoPainel>}
+            <span className="tv-display truncate" style={{ fontSize: telefone ? BARRA_LETRA.lugar.telefone : BARRA_LETRA.lugar.mesa, fontWeight: 600, color: T.ink, lineHeight: 1.1 }}>{nome}</span>
+            {!telefone && cena ? <span className="tv-mono truncate" style={{ fontSize: TIPOS.maquina, color: T.inkDim, lineHeight: 1.2 }}>{cena}</span> : null}
+          </span>
+          <SetaDeAbrir aberta={horizonteAberto} />
+        </button>
+        {emCena}
+      </div>
+      <div className="flex items-center shrink-0" style={{ gap: telefone ? 8 : 40 }}>
+        <button type="button" onClick={aoAbrirTempo} aria-label={fala} aria-expanded={!!tempoAberto} title="O tempo — esperar, acampar, os prazos"
+          className="tv-anel-foco flex items-center text-left" style={{ ...botao, gap: 8, minWidth: ALVOS.piso, outlineColor: tempoAberto ? T.amber : undefined }}>
+          <Vela fase={fase} alto={B.velaAlta} />
+          <span className="flex flex-col">
+            {telefone ? null : <TituloDoPainel>Hora</TituloDoPainel>}
+            <span className="flex items-center" style={{ gap: 6 }}>
+              <span className="tv-mono" style={{ fontSize: telefone ? BARRA_LETRA.hora.telefone : BARRA_LETRA.hora.mesa, color: T.ink, whiteSpace: "nowrap", lineHeight: 1.2 }}>{horaEscrita}</span>
+              {climaOk ? <Glifo nome={climaOk.glifo} tamanho={16} cor={T.inkMeio} /> : null}
+              {prazo ? <SeloDePrazo noites={prazo.noites} quantos={quantosPrazos} urgente={prazo.noites <= 1} escondidoGrave={escondidoGrave} /> : null}
+            </span>
+          </span>
+        </button>
+        {comAmeaca ? (
+          <span className="flex flex-col" role="img" aria-label={`Ameaça, ${nAmeaca} de ${H.ameaca.pontos}`}>
+            {telefone ? null : <TituloDoPainel>Ameaça</TituloDoPainel>}
+            <span className="flex items-center tv-mono" style={{ gap: 6, fontSize: TIPOS.maquina }}>
+              <PontosDaAmeaca n={nAmeaca} />
+              {telefone ? null : <span style={{ color: T.inkMeio }}>{nAmeaca} de {H.ameaca.pontos}</span>}
+            </span>
+          </span>
+        ) : null}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/* uma gema da tira: a da carta, com o número em mono negrito 12 (TL 4) */
+function GemaDaTira({ cor, valor, rotulo, tam }) {
+  return <GemaDaCarta cor={cor} valor={valor} rotulo={rotulo} tam={tam} letra={TIPOS.maquina} peso={700} />;
+}
+
+/* as gemas que a carta mostra, na ordem da carta (PV, PM, Destino) — até `teto` */
+function gemasDe(ente, { comPM = true, destino = null, teto = TIRA.heroi.gemas } = {}) {
+  if (!ente) return [];
+  const lista = [{ rotulo: "PV", valor: Math.max(0, Number(ente.vida) || 0), cor: H.gemasDaCarta.PV }];
+  if (comPM) lista.push({ rotulo: "PM", valor: Math.max(0, Number(ente.mana) || 0), cor: H.gemasDaCarta.PM });
+  if (destino != null) lista.push({ rotulo: "Destino", valor: destino, cor: H.gemasDaCarta.Destino });
+  return lista.slice(0, teto);
+}
+
+/* O HERÓI NA TIRA: retrato 44 (aro de ouro), o nível num disco de 18 no canto
+   e as gemas empilhadas — um botão de 82 × 56 que abre a ficha. O nome sai da
+   tira e fica no nome acessível (TL 5). */
+function HeroiNaTira({ heroi, comPM = true, destino = null, aberta = false, novo = false, rotulo, aoAbrir }) {
+  if (!heroi) return null;
+  const T4 = TIRA.heroi;
+  const vida = Math.max(0, Number(heroi.vida) || 0), vidaMax = Math.max(0, Number(heroi.vidaMax) || 0);
+  let estado = "normal";
+  try { estado = estadoDe(vida, vidaMax); } catch (e) { estado = "normal"; }
+  const gemas = gemasDe(heroi, { comPM, destino });
+  return (
+    <button type="button" onClick={aoAbrir} aria-haspopup="dialog" aria-expanded={!!aberta} data-tira="heroi"
+      aria-label={rotulo || [heroi.nome, `nível ${heroi.nivel || 1}`, ...gemas.map((g) => `${g.rotulo} ${g.valor}`)].join(", ")}
+      className="tv-anel-foco shrink-0 flex items-center rounded-lg" style={{ background: "transparent", border: "none", padding: 0, gap: T4.entre, minHeight: TIRA.objeto.alvo.alto }}>
+      <span className="relative inline-block shrink-0" style={{ width: T4.retrato, height: T4.retrato + 4 }}>
+        <span style={{ position: "absolute", left: 0, top: 2 }}>
+          <Retrato semente={heroi.semente || heroi.nome} ente={heroi} tamanho={T4.retrato} estado={estado} anel={OURO.meio} semCarta />
+        </span>
+        <span aria-hidden="true" className="tv-mono flex items-center justify-center" style={{
+          position: "absolute", left: -4, bottom: 0, width: T4.nivel, height: T4.nivel, borderRadius: "50%",
+          background: T.couroBaixo, border: `1px solid ${OURO.meio}`, color: OURO.claro, fontSize: TIPOS.piso, fontWeight: 700, lineHeight: 1,
+        }}>{heroi.nivel || 1}</span>
+        {novo && !aberta ? <span aria-hidden="true" style={{ position: "absolute", right: -4, top: -2, lineHeight: 0 }}><MarcaDaPorta estado="novo" /></span> : null}
+      </span>
+      <span className="flex flex-col" aria-hidden="true" style={{ gap: 2 }}>
+        {gemas.map((g) => <GemaDaTira key={g.rotulo} cor={g.cor} valor={g.valor} rotulo={g.rotulo} tam={H.gema.mesa} />)}
+      </span>
+    </button>
+  );
+}
+
+/* O COMPANHEIRO NA TIRA: retrato 34 (aro de bronze) e PV e PM numa linha */
+function CompanheiroNaTira({ ente, aoAbrir }) {
+  if (!ente) return null;
+  const vida = Math.max(0, Number(ente.vida) || 0), vidaMax = Math.max(0, Number(ente.vidaMax) || 0);
+  let estado = "normal";
+  try { estado = estadoDe(vida, vidaMax); } catch (e) { estado = "normal"; }
+  const gemas = gemasDe(ente, { comPM: (Number(ente.manaMax) || 0) > 0, teto: 2 });
+  return (
+    <button type="button" onClick={aoAbrir} data-tira="companheiro" aria-label={`${ente.nome}, ${vida} de ${vidaMax} PV`}
+      className="tv-anel-foco shrink-0 flex flex-col items-center justify-center rounded-lg" style={{ background: "transparent", border: "none", padding: 0, gap: 3, minHeight: TIRA.objeto.alvo.alto, minWidth: ALVOS.piso }}>
+      <Retrato semente={ente.semente || ente.nome} ente={ente} tamanho={TIRA.companheiro.retrato} estado={estado} anel={BRONZE.meio} semCarta />
+      <span className="flex items-start" aria-hidden="true" style={{ gap: 4 }}>
+        {gemas.map((g) => <GemaDaTira key={g.rotulo} cor={g.cor} valor={g.valor} rotulo={g.rotulo} tam={H.gema.telefone} />)}
+      </span>
+    </button>
+  );
+}
+
+/* o objeto da lista que o App passa: { id, rotulo, legenda, ativo, novo, Glifo, aoTocar } */
+const objetosValidos = (objetos) => (Array.isArray(objetos) ? objetos.filter((o) => o && o.id) : []);
+const mantimentosValidos = (m) => (m && typeof m === "object" ? m : null);
+
+/* A PEGA DA MESA: a barra de 36 × 4 no topo da tira (ou da mesa puxada). */
+function TracoDaPega() {
+  const P = TIRA.pega;
+  return <span aria-hidden="true" style={{ display: "block", width: P.largura, height: P.alto, borderRadius: P.alto / 2, background: alfa(P.cor, P.alfa) }} />;
+}
+
+/* A TIRA DA MESA. A pega é um botão (abre a mesa inteira); arrastar para cima
+   em qualquer ponto da tira também a abre (o limiar é um alvo, ALVOS.piso — o
+   mesmo do arrastar que fecha a folha da ficha). O herói fica sempre à vista;
+   o resto rola de lado se não couber (mais de um companheiro, o Códex, a
+   Ascensão). `bandeja` é o nó da Bandeja que a mesa puxada mostra. */
+export function TiraDaMesa({ heroi, grupo = [], comPMDoHeroi = true, destino = null, fichaAberta = false, fichaNova = false, rotuloDoHeroi,
+  aoAbrirFicha, aoAbrirCompanheiro, objetos = [], mantimentos = null, bandeja = null }) {
+  const [puxada, setPuxada] = React.useState(false);
+  const pega = React.useRef(null);
+  const toque = React.useRef(null);
+  const lista = Array.isArray(grupo) ? grupo.filter(Boolean) : [];
+  const objs = objetosValidos(objetos);
+  const mant = mantimentosValidos(mantimentos);
+  const abrir = () => setPuxada(true);
+  /* o gesto: para cima, mais vertical que horizontal, ao menos um alvo */
+  const aoBaixar = (e) => { try { toque.current = { x: e.clientX, y: e.clientY }; } catch { toque.current = null; } };
+  const aoSoltar = (e) => {
+    try {
+      const t0 = toque.current; toque.current = null;
+      if (!t0) return;
+      const dy = t0.y - e.clientY, dx = Math.abs(e.clientX - t0.x);
+      if (dy >= ALVOS.piso && dy > dx) abrir();
+    } catch { /* a forma nunca custa o turno */ }
+  };
+  return (
+    <div className="relative shrink-0" data-tira-da-mesa="" onPointerDown={aoBaixar} onPointerUp={aoSoltar}
+      style={{ height: TIRA.alto, background: T.couro, borderTop: `1px solid ${OURO.meio}`, touchAction: "pan-x" }}>
+      <button ref={pega} type="button" onClick={abrir} aria-haspopup="dialog" aria-expanded={puxada} aria-label="A mesa: as cartas, a Bandeja e os objetos"
+        className="tv-anel-foco absolute flex justify-center" style={{ left: 0, right: 0, top: 0, height: TIRA.cima, padding: `${TIRA.pega.cima}px 0 0`, background: "transparent", border: "none", cursor: "grab", zIndex: 1 }}>
+        <TracoDaPega />
+      </button>
+      <div className="absolute flex items-center" style={{ left: 0, right: 0, top: TIRA.cima, height: TIRA.objeto.alvo.alto, paddingLeft: TIRA.lado[0], paddingRight: TIRA.lado[1] }}>
+        <HeroiNaTira heroi={heroi} comPM={comPMDoHeroi} destino={destino} aberta={fichaAberta} novo={fichaNova} rotulo={rotuloDoHeroi} aoAbrir={aoAbrirFicha} />
+        {/* a fila mede 354 de 375 (TL 4): sem vão fixo, o que sobra reparte-se (justify-between) */}
+        <div className="tv-scroll flex-1 min-w-0 flex items-center justify-between" style={{ overflowX: "auto", overflowY: "hidden" }}>
+          {lista.map((c, i) => <CompanheiroNaTira key={(c.nome || "") + i} ente={c} aoAbrir={() => aoAbrirCompanheiro && aoAbrirCompanheiro(c.nome)} />)}
+          {objs.length ? (
+            <span className="flex items-start shrink-0">
+              {objs.map((o) => <ObjetoDaMesa key={o.id} id={o.id} rotulo={o.rotulo} legenda={o.legenda} ativo={o.ativo} novo={o.novo} Glifo={o.Glifo} aoTocar={o.aoTocar} naTira />)}
+            </span>
+          ) : null}
+          {mant ? <PrateleiraDosMantimentos dados={mant.dados} contagens={mant.contagens} aoAbrir={mant.aoAbrir} lugar="tira" /> : null}
+        </div>
+      </div>
+      <MesaPuxada aberta={puxada} aoFechar={() => setPuxada(false)} devolverFocoA={pega}
+        heroi={heroi} grupo={lista} comPMDoHeroi={comPMDoHeroi} destino={destino} fichaAberta={fichaAberta} fichaNova={fichaNova} rotuloDoHeroi={rotuloDoHeroi}
+        aoAbrirFicha={aoAbrirFicha} aoAbrirCompanheiro={aoAbrirCompanheiro} objetos={objs} mantimentos={mant} bandeja={bandeja} />
+    </div>
+  );
+}
+
+/* os focáveis de dentro da folha, para o foco preso */
+const FOCAVEIS = "button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
+
+/* A MESA PUXADA. Só existe aberta. Em telas com documento vai num portal ao
+   body (fixa, por cima de tudo); sem documento (a suíte, em Node) desenha-se
+   ali mesmo. Ao fechar, o foco volta a `devolverFocoA` (a pega). */
+export function MesaPuxada({ aberta = false, aoFechar, devolverFocoA = null, rotulo = "A mesa", heroi = null, grupo = [], comPMDoHeroi = true, destino = null,
+  fichaAberta = false, fichaNova = false, rotuloDoHeroi, aoAbrirFicha, aoAbrirCompanheiro, objetos = [], mantimentos = null, bandeja = null }) {
+  const folha = React.useRef(null);
+  const arrasto = React.useRef(null);
+  React.useEffect(() => {
+    if (!aberta) return undefined;
+    const devolver = devolverFocoA;
+    try { const f = folha.current && folha.current.querySelector(FOCAVEIS); if (f) f.focus(); } catch { /* sem foco, sem custo */ }
+    return () => { try { if (devolver && devolver.current) devolver.current.focus(); } catch { /* idem */ } };
+  }, [aberta]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!aberta) return null;
+  const fechar = () => { try { if (aoFechar) aoFechar(); } catch { /* a forma nunca custa o turno */ } };
+  const aoTeclar = (e) => {
+    if (e.key === "Escape") { e.stopPropagation(); fechar(); return; }
+    if (e.key !== "Tab" || !folha.current) return;
+    const todos = Array.from(folha.current.querySelectorAll(FOCAVEIS));
+    if (!todos.length) return;
+    const primeiro = todos[0], ultimo = todos[todos.length - 1];
+    if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+  };
+  const aoBaixar = (e) => { arrasto.current = e.clientY; };
+  const aoSoltar = (e) => { const y0 = arrasto.current; arrasto.current = null; if (y0 != null && e.clientY - y0 >= ALVOS.piso) fechar(); };
+  const P = TIRA.puxada;
+  const esc = H.telefone.cartas;   /* puxada.cartas = "telefone": as cartas grandes do telefone */
+  const lista = Array.isArray(grupo) ? grupo.filter(Boolean) : [];
+  const objs = objetosValidos(objetos);
+  const mant = mantimentosValidos(mantimentos);
+  const conteudo = (
+    <div onKeyDown={aoTeclar} data-mesa-puxada="">
+      <div aria-hidden="true" className="tv-veu-da-mesa" onClick={fechar} style={{ position: "fixed", inset: 0, background: alfa(SOMBRA, P.veu), zIndex: 60 }} />
+      <div ref={folha} role="dialog" aria-modal="true" aria-label={rotulo} className="tv-mesa-sobe" onPointerDown={aoBaixar} onPointerUp={aoSoltar}
+        style={{ position: "fixed", left: 0, right: 0, bottom: 0, height: P.alto, zIndex: 61, background: T.couro, border: `1px solid ${OURO.meio}`, borderBottom: "none",
+          borderTopLeftRadius: P.raio, borderTopRightRadius: P.raio, overflow: "hidden", display: "flex", flexDirection: "column", gap: 12, padding: "0 16px 16px" }}>
+        <button type="button" onClick={fechar} aria-label="Fechar a mesa" className="tv-anel-foco flex justify-center shrink-0"
+          style={{ minHeight: TIRA.cima * 2, paddingTop: TIRA.pega.cima, background: "transparent", border: "none", cursor: "grab" }}>
+          <TracoDaPega />
+        </button>
+        <div className="flex items-start" style={{ gap: 8 }}>
+          <span className="flex items-start shrink-0" style={{ gap: 8 }}>
+            <CartaDoGrupo ente={heroi} heroi escala={esc.heroi} telefone comPM={comPMDoHeroi} destino={destino} aberta={fichaAberta} novo={fichaNova} aoAbrir={aoAbrirFicha} rotulo={rotuloDoHeroi} />
+            {lista.map((c, i) => (
+              <CartaDoGrupo key={(c.nome || "") + i} ente={c} escala={esc.companheiro} telefone comPM={(Number(c.manaMax) || 0) > 0}
+                aoAbrir={() => aoAbrirCompanheiro && aoAbrirCompanheiro(c.nome)} rotulo={`${c.nome}, ${c.vida || 0} de ${c.vidaMax || 0} PV`} />
+            ))}
+          </span>
+          {bandeja ? <div className="flex-1 min-w-0">{bandeja}</div> : null}
+        </div>
+        <div className="flex items-center" style={{ gap: 8 }}>
+          {objs.map((o) => <ObjetoDaMesa key={o.id} id={o.id} rotulo={o.rotulo} legenda={o.legenda} ativo={o.ativo} novo={o.novo} Glifo={o.Glifo} aoTocar={o.aoTocar} escala={P.objetos} />)}
+          {mant ? <PrateleiraDosMantimentos dados={mant.dados} contagens={mant.contagens} aoAbrir={mant.aoAbrir} lugar="puxada" /> : null}
+        </div>
+      </div>
+    </div>
+  );
+  return typeof document !== "undefined" && document.body ? createPortal(conteudo, document.body) : conteudo;
 }

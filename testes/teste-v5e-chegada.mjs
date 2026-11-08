@@ -88,7 +88,8 @@ sec("3. a fiação");
   t("abrir o jogo usa a mesma regra, seca", /const t = setTimeout\(\(\) => pousarAoAbrir\(\), 80\);/.test(APP) && /if \(i >= 0 && pousarNaResposta\(i, "auto"\)\) return;/.test(APP));
   t("e a volta da batalha continua no fim (o desfecho da luta está lá)", /if \(!daBatalha\) \{ pousarAoAbrir\(\); return; \}/.test(APP));
   t("a seta é a peça, com os dois estados", /\{\(longeDoFim \|\| porLer\) && \(\s*<SetaDaLeitura estado=\{porLer \? "novo" : "fim"\} texto=\{porLer \? porLer\.texto : ""\} aoIr=\{porLer \? irANova : irParaOFim\} \/>/.test(APP));
-  t("e a `novo` some quando o começo entra na vista", /onScroll=\{\(e\) => \{ aoRolar\(e\); verSeChegouANova\(\); \}\}/.test(APP) && /setPorLer\(null\)/.test(CODIGO));
+  /* MOVIDA em 08/11 (TL 9, o oficial): o mesmo onScroll fecha também a gaveta do horizonte (fecha ao rolar, formas.md §TL 5); a ordem e a intenção ficam */
+  t("e a `novo` some quando o começo entra na vista", /onScroll=\{\(e\) => \{ aoRolar\(e\); verSeChegouANova\(\); /.test(APP) && /setPorLer\(null\)/.test(CODIGO));
   t("nada rouba o foco: a chegada não toca no foco de ninguém", !/\.focus\(/.test(CODIGO));
   t("nunca custa o turno", /calou\("pousar a vista na chegada", e\)/.test(ORG) && /calou\("pousar a vista depois da cerimonia", e\)/.test(ORG));
   t("e nada vai ao save: é onde a vista está, não um fato do mundo", !/porLer:|chegadaRef\.current[^\n]*salvar|distanciaAoFim[^\n]*salvar/.test(APP));

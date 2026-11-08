@@ -26,7 +26,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { buildSync } from "esbuild";
 import {
   T, FOLHA, CONSTELACAO, FIGURAS_DA_CONSTELACAO, LUGAR_DAS_FIGURAS, GEMA_DA_SUBCLASSE, MOLDURA_POR_DEGRAU,
-  CERIMONIA_DE_APRENDER, DADO_DE_USO_NA_MESA, ALVOS, MOVIMENTO_DO_DADO, PAPEL_DO_DADO,
+  CERIMONIA_DE_APRENDER, DADO_DE_USO_NA_MESA, ALVOS, MOVIMENTO_DO_DADO, PAPEL_DO_DADO, TIRA_DA_MESA,
 } from "../src/estilo.js";
 import * as GEO from "../mente/figma/constelacao-geometria.mjs";
 import {
@@ -82,8 +82,12 @@ sec("1. as tabelas, e a geometria do desenho tal qual");
     nomes.filter((n) => !FIGURAS_DA_CONSTELACAO[n]).join(", "));
   t("cada figura tem nome, raiz entre as estrelas e três braços", Object.values(FIGURAS_DA_CONSTELACAO).every((f) => f.figura && f.estrelas[f.raiz] && Object.keys(f.bracos).length === 3));
   t("DADO_DE_USO_NA_MESA: rações, água, tochas, no papel do osso", DADO_DE_USO_NA_MESA.ordem.join() === "racoes,agua,tochas" && DADO_DE_USO_NA_MESA.papel === "uso" && PAPEL_DO_DADO.uso);
-  t("os alvos: 120 × 132 na mesa, 100 × o piso no telefone", DADO_DE_USO_NA_MESA.mesa.alvo.largura === 120 && DADO_DE_USO_NA_MESA.mesa.alvo.alto === 132 && DADO_DE_USO_NA_MESA.telefone.alvo.alto === ALVOS.piso);
-  t("três dados de 28 numa fila cabem nos 100 do telefone", 3 * DADO_DE_USO_NA_MESA.telefone.dado + 2 * DADO_DE_USO_NA_MESA.telefone.folga <= DADO_DE_USO_NA_MESA.telefone.alvo.largura);
+  /* MOVIDAS em 07/11 (TL 8, a tela limpa): no telefone os mantimentos mudaram
+     para a Tira da mesa — o dado a 22, em colunas de 24 com 2 entre elas, e o
+     alvo 76 × 56 (a altura da fila da tira). A intenção fica: o alvo do
+     telefone cabe os três dados, e nunca desce do piso de toque. */
+  t("os alvos: 120 × 132 na mesa, 76 × 56 no telefone (nunca abaixo do piso)", DADO_DE_USO_NA_MESA.mesa.alvo.largura === 120 && DADO_DE_USO_NA_MESA.mesa.alvo.alto === 132 && DADO_DE_USO_NA_MESA.telefone.alvo.largura === 76 && DADO_DE_USO_NA_MESA.telefone.alvo.alto === 56 && DADO_DE_USO_NA_MESA.telefone.alvo.alto >= ALVOS.piso);
+  t("três dados de 22 em colunas de 24 cabem nos 76 da tira", 3 * TIRA_DA_MESA.mantimentos.coluna + 2 * TIRA_DA_MESA.mantimentos.entre <= DADO_DE_USO_NA_MESA.telefone.alvo.largura && DADO_DE_USO_NA_MESA.telefone.dado <= TIRA_DA_MESA.mantimentos.coluna);
   t("as duas linhas de 44 e a contagem cabem nos 132 da mesa",
     2 * (DADO_DE_USO_NA_MESA.mesa.dado + DADO_DE_USO_NA_MESA.contagem.entre + DADO_DE_USO_NA_MESA.contagem.tamanho) + (DADO_DE_USO_NA_MESA.mesa.entreLinhas - DADO_DE_USO_NA_MESA.contagem.entre - DADO_DE_USO_NA_MESA.contagem.tamanho) <= DADO_DE_USO_NA_MESA.mesa.alvo.alto);
   t("o dado de uso tem um glifo para cada face que o sistema dá", [10, 8, 6, 4].every((f) => DADO_DE_USO_NA_MESA.mesa.glifo[f] && DADO_DE_USO_NA_MESA.telefone.glifo[f]));
@@ -261,15 +265,22 @@ sec("5b. o clique leva ao veredito");
 
 sec("5c. os nomes repetidos, a multiclasse e o estado sem pontos");
 {
-  /* o Arqueiro repete «Tiro Duplo» da classe. Sem a subclasse, a estrela do
-     braço NÃO acende (decide-se pelo ramo); com o Arqueiro escolhido a ficha
-     guarda só o nome, e acendem as duas — como na árvore. */
+  /* ATÉ 07/11 o Arqueiro repetia «Tiro Duplo» da classe, e esta secção provava
+     o defeito como verdade: com o Arqueiro escolhido, a ficha guarda só o nome
+     e acendiam as duas. MUDOU COM O PEDIDO C1: a do braço passou a chamar-se
+     «Flechas Gêmeas», e o nome antigo ficou na classe, onde o save já o lia.
+     A asserção agora prova o conserto — o herói com «Tiro Duplo» acende só a
+     da classe, e a do braço fica por comprar. */
   const semSub = { nome: "R", classe: "Caçador", nivel: 6, habilidades: [{ nome: "Tiro Duplo" }], subclasses: {} };
   const s1 = estrelasDo(html(R.PainelTalentos, { personagem: semSub, leiaute: "mesa", vistaInicial: "ceu" }));
-  t("sem subclasse: a classe acende, o braço do Arqueiro não", /aprendida/.test((s1.find((e) => e.chave === "classe:Tiro Duplo") || {}).rotulo || "") && !/aprendida/.test((s1.find((e) => e.chave === "sub:Arqueiro:Tiro Duplo") || {}).rotulo || "x"));
+  t("sem subclasse: a classe acende, o braço do Arqueiro não", /aprendida/.test((s1.find((e) => e.chave === "classe:Tiro Duplo") || {}).rotulo || "") && !/aprendida/.test((s1.find((e) => e.chave === "sub:Arqueiro:Flechas Gêmeas") || {}).rotulo || "x"));
   const comSub = { ...semSub, subclasses: { "Caçador": "Arqueiro" } };
   const s2 = estrelasDo(html(R.PainelTalentos, { personagem: comSub, leiaute: "mesa", vistaInicial: "ceu" }));
-  t("com o Arqueiro: as duas acendem (a ficha não guarda o ramo)", ["classe:Tiro Duplo", "sub:Arqueiro:Tiro Duplo"].every((k) => /aprendida/.test((s2.find((e) => e.chave === k) || {}).rotulo || "")));
+  t("com o Arqueiro: «Tiro Duplo» acende só a da classe (C1: o braço tem «Flechas Gêmeas», por comprar)",
+    /aprendida/.test((s2.find((e) => e.chave === "classe:Tiro Duplo") || {}).rotulo || "")
+    && !!s2.find((e) => e.chave === "sub:Arqueiro:Flechas Gêmeas")
+    && !/aprendida/.test((s2.find((e) => e.chave === "sub:Arqueiro:Flechas Gêmeas") || {}).rotulo || "x")
+    && !s2.some((e) => e.chave === "sub:Arqueiro:Tiro Duplo"));
 
   const multi = { ...thalia, habilidades: [...thalia.habilidades, { nome: "Ataque Furtivo" }, { nome: "Esquiva Ágil" }] };
   const sm = html(R.PainelTalentos, { personagem: multi, leiaute: "mesa", vistaInicial: "ceu" });
@@ -305,7 +316,8 @@ sec("6. a prateleira dos mantimentos");
   t("o nome acessível sai de uma função só (nomeDaPrateleira)", R.nomeDaPrateleira(dados, contagens).startsWith("Mantimentos: rações 3"));
   t("lixo não parte a peça (faces fora da tabela contam como vazio)", /data-face="vazio"/.test(html(R.DadoDeUso, { tipo: "racoes", face: 7, n: "x" })));
   const tel = html(R.PrateleiraDosMantimentos, { dados, contagens, telefone: true });
-  t("no telefone: 100 × o piso, os três numa fila de 28", tel.includes(`min-width:${DADO_DE_USO_NA_MESA.telefone.alvo.largura}px`) && tel.includes(`min-height:${ALVOS.piso}px`) && (tel.match(new RegExp(`width="${DADO_DE_USO_NA_MESA.telefone.dado}"`, "g")) || []).length === 3);
+  /* MOVIDA em 07/11 (TL 8): o telefone é a tira — 76 × 56, os três dados a 22 */
+  t("no telefone: 76 × 56, os três numa fila de 22", tel.includes(`min-width:${DADO_DE_USO_NA_MESA.telefone.alvo.largura}px`) && tel.includes(`min-height:${DADO_DE_USO_NA_MESA.telefone.alvo.alto}px`) && (tel.match(new RegExp(`width="${DADO_DE_USO_NA_MESA.telefone.dado}"`, "g")) || []).length === 3);
   t("na mesa: 120 × 132", s.includes(`min-width:${DADO_DE_USO_NA_MESA.mesa.alvo.largura}px`) && s.includes(`min-height:${DADO_DE_USO_NA_MESA.mesa.alvo.alto}px`));
 
   t("os glifos novos: racao e agua na família de sempre", GLIFOS.racao && GLIFOS.agua && GLIFOS.racao.de === "casa" && /^M/.test(GLIFOS.agua.d));

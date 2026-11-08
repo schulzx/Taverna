@@ -147,7 +147,8 @@ sec("3. o que some durante a luta — e o critério é duro");
 {
   /* o trilho inteiro: oito portas para fora da luta, todas de uma vez */
   t("o trilho de abas inteiro é gateado por `!emBatalha`",
-    /\{!emBatalha && trilhoAVista && \(\s*\n\s*<nav aria-label="Painéis"/.test(APP)); /* AAA · 4: o trilho virou a coluna dos objetos da mesa, com a mesma guarda */
+    /\{!emBatalha && mesaLarga && \(\s*\n\s*<nav aria-label="Painéis"/.test(APP)); /* AAA · 4: o trilho virou a coluna dos objetos da mesa, com a mesma guarda */
+  /* MOVIDA em 08/11 (TL 9, o oficial): a coluna dos objetos só existe na mesa larga; a guarda de batalha é a mesma */
   /* AS DUAS QUE TERMINAM A LUTA, e uma delas já terminou uma por engano
      numa partida de verdade — é a razão mais cara desta lista.
 

@@ -34,6 +34,8 @@
    tinha pronta. */
 export const PALAVRAS_DA_RESOLUCAO = [
   { id: "contramagia",   voce: "você cortou a magia no ar",    instinto: "a magia se desfez por você" },
+  /* C1 (07/11): a do Arcanista, que nasceu como reação própria (reacoes.js) */
+  { id: "contratempo",   voce: "você chegou antes do feitiço", instinto: "o instante desfez o feitiço por você" },
   { id: "escudo_arcano", voce: "você ergueu a barreira",       instinto: "a barreira subiu por você" },
   { id: "aparar",        voce: "você aparou o golpe",          instinto: "o instinto aparou por você" },
   { id: "esquiva_agil",  voce: "você saiu da linha do golpe",  instinto: "o corpo saiu por você" },

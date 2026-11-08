@@ -162,7 +162,10 @@ sec("3. UM RETRATO DO HERÓI POR TELA");
      no sítio dela, em vez de a tolerar. */
   /* AAA · 4, movida: o nome da porta passa à carta do herói (rotuloDoHeroi), que o diz e diz se está aberta */
   /* movida (AR1, 06/11): o nome diz o que a carta abre agora — a ficha e a bolsa */
-  t("e diz ao leitor de ecrã o que faz", /rotuloDoHeroi=\{\(personagem && personagem\.nome \? personagem\.nome \+ ", " : ""\) \+ "a ficha e a bolsa"\}/.test(APP) && /aria-label=\{rotulo \|\| ente\.nome\}[^>]*aria-haspopup="dialog" aria-expanded=\{heroi \? !!aberta : undefined\}/.test(APP_MESA()));
+  /* MOVIDA em 08/11 (TL 9, o oficial): o rótulo da carta do herói passou a ser
+     uma conta só (rotuloDaCartaDoHeroi), lida pela tira e pela coluna do grupo.
+     A intenção fica: o leitor de ecrã ouve o nome e «a ficha e a bolsa». */
+  t("e diz ao leitor de ecrã o que faz", /const rotuloDaCartaDoHeroi = \(personagem && personagem\.nome \? personagem\.nome \+ ", " : ""\) \+ "a ficha e a bolsa";/.test(APP) && /rotuloDoHeroi=\{rotuloDaCartaDoHeroi\}/.test(APP) && /aria-label=\{rotulo \|\| ente\.nome\}[^>]*aria-haspopup="dialog" aria-expanded=\{heroi \? !!aberta : undefined\}/.test(APP_MESA()));
   /* dentro de botão, o retrato não pode abrir carta — mesmo contrato do
      antigo atalho */
   /* v9.170: o retrato cresceu de 34 para 44 no redesenho. O que a lei

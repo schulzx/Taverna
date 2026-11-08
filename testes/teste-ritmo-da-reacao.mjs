@@ -136,7 +136,10 @@ sec("4. AS OITO PORTAS — provar POR QUE não abriu");
      tabela porque `escolherReacao` tem o filtro (v9.47: "reação que só morde
      magia não morde uma machadada"), mas NENHUMA FICHA a alcança hoje:
 
-     - a única reação com `soMagia` é a Contramágica, e ela custa 3 PM;
+     - a única reação com `soMagia` é a Contramágica, e ela custa 3 PM
+       (C1, 07/11: nasceu a segunda, o Contratempo do Arcanista, a 2 PM —
+       o MESMO preço do Escudo Arcano do conjurador, logo a lista continua
+       a nunca ficar "só magia"; a varredura abaixo passou a varrê-la também);
      - `reacoesDe` dá SEMPRE ao herói a reação de `sofre_dano` do seu perfil
        — aparar (marcial/misto), esquiva ágil (furtivo) ou escudo arcano
        (conjurador) — e `perfilCombate` devolve "marcial" para toda classe
@@ -153,7 +156,7 @@ sec("4. AS OITO PORTAS — provar POR QUE não abriu");
   const alcancadas = new Set();
   for (const classe of [...Object.keys(PERFIS.PERFIS_COMBATE), "Classe Que Não Existe"]) {
     for (let mana = 0; mana <= 10; mana++) {
-      for (const habs of [[], ["Contramágica"]]) {
+      for (const habs of [[], ["Contramágica"], ["Contratempo"], ["Contramágica", "Contratempo"]]) {
         for (const tipoDano of ["fisico", "arcano"]) {
           const x = ritmoDaRodada({ golpes: [{ ordem: 0, inimigo: "Ogro", gatilho: "sofre_dano", dano: 30, tipoDano }], heroi: { classe, vidaMax: 100, mana, habilidades: habs } });
           for (const f of x.fechados) alcancadas.add(f.porta);

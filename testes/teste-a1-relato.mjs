@@ -53,7 +53,11 @@ sec("1. O RELATO MORA NO MÓDULO DELE");
    que é contrato: a assinatura, que o relato não alcança o App, que nada
    do relato voltou ao App, e a lei do foco (nenhum componente nasce dentro
    de um render). */
-t("painel-relato.jsx exporta `Relato` com a assinatura do contrato", /export function Relato\(\{ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir \}\)/.test(RELATO));
+/* MOVIDA em 07/11 (TL 9, a tela limpa): o contrato ganhou `horizonte` — o
+   horizonte do sítio onde se chegou entra no relato, no turno da chegada
+   (formas.md §TL 5). A intenção fica: a assinatura é contrato, e mudá-la
+   obriga a passar por aqui. */
+t("painel-relato.jsx exporta `Relato` com a assinatura do contrato", /export function Relato\(\{ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null \}\)/.test(RELATO));
 t("e NENHUM pedaço do relato voltou ao App.jsx",
   !/function BlocoSistema\(|function portaDaLinhaDeSistema\(|function semSetaQueMente\(|const PORTAS_DO_SISTEMA|const SETA_DA_PORTA|agruparMensagens\(/.test(APP),
   "o relato é da mesa: um pedaço dele de volta no App pede o bastão outra vez");
@@ -321,7 +325,11 @@ t("o cabeçalho da batalha recebe o lugar da cena",
   /combate=\{combateNaTela\}\s*\n\s*lugar=\{lugarDaCena\(\)\}/.test(APP));
 t("o botão d'O TEMPO diz a hora cheia por extenso",
   /* AAA · 4: o botão d'O TEMPO é o painel HORA do ecrã; a fala vem do App como vinha */
-  /falaDaHora=\{\["O tempo", horaCheiaFalada\(horaTxt\(minuto\)\)\]\.filter\(Boolean\)\.join\(", "\)\}/.test(APP)
+  /* MOVIDA em 08/11 (TL 9, o oficial): o ecrã passou a ser a Barra do Mestre e
+     a fala ganhou a luz e o clima, que saíram do cabeçalho da página (no
+     telefone moram só no nome acessível). A intenção fica: a hora cheia por
+     extenso, depois de «O tempo». */
+  /falaDaHora: \["O tempo", l, horaCheiaFalada\(horaTxt\(minuto\)\), clima && clima\.rotulo\]\.filter\(Boolean\)\.join\(", "\)/.test(APP)
   && /return h === 1 \? "1 hora" : h \+ " horas";/.test(APP));
 /* (movido, T1-A 6.ª fatia: o `if (c) retratoDoFimRef.current = c;` de
    `notarFechoDaLuta` saiu do App para `notarOFecho`, no motor, que esta

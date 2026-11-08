@@ -28,9 +28,47 @@
      · proposta.tom «semVolta» (a luta): o contorno, o glifo e o preço em
        `T.danger`; proposta.impedido: o botão calado (a razão já vai nas
        linhas); proposta.opcoes: um botão por escolha, com os minutos
+
+   07/11 · TL 9 (a tela limpa) · A FORMA COMPACTA, para a Soleira do momento:
+     <PropostaDaFrase compacta … /> — fechada, a proposta é a SoleiraDoMomento
+     (ui.jsx): o pedido do Mestre é `Momento=rolagem` («Rolar d20 + 3 · Olhar
+     à volta», «Percepção» que cede, «precisa de 13» que nunca encurta; o
+     toque ROLA, o secundário é o recuo «Agora não»); a frase do jogador é
+     `Momento=proposta` (o verbo, a frase entre aspas que cede, o preço que
+     não encurta; o toque ABRE, o secundário é o recuo). Aberta, é o cartão
+     de sempre: o abrir / confirmar / reescrever continua por baixo do toque.
+     `momentoDaProposta(proposta, { preco, impedida, onAbrir, onConfirmar,
+     onReescrever })` devolve { qual, momento } — o mesmo momento, para quem
+     liga o pôr na soleira ao lado do dado e da oferta (a soleira escolhe
+     pela prioridade).
    ============================================================ */
 import { T, ALVOS, TIPOS } from "./estilo.js";
-import { Botao, IconeAlfinete, IconeMapa, IconeAmpulheta, IconeBolsa, IconeChevronEsq, IconeEspada, IconeFaiscas } from "./ui.jsx";
+import { Botao, IconeAlfinete, IconeMapa, IconeAmpulheta, IconeBolsa, IconeChevronEsq, IconeEspada, IconeFaiscas, SoleiraDoMomento } from "./ui.jsx";
+
+/* o preço do pedido: a linha do motor é «Percepção · precisa de 13» — a parte
+   depois do último « · » é o número a bater (o nó que não encolhe); a de
+   antes, o nome que cede */
+function partesDoPedido(linha) {
+  const l = String(linha || "");
+  const i = l.lastIndexOf(" · ");
+  return i < 0 ? { cede: "", preco: l } : { cede: l.slice(0, i), preco: l.slice(i + 3) };
+}
+
+export function momentoDaProposta(proposta, { preco = "", impedida = false, onAbrir, onConfirmar, onReescrever } = {}) {
+  if (!proposta || !proposta.verbo) return null;
+  const pedido = !!proposta.pedido;
+  const recuo = proposta.recuo || "Reescrever";
+  const bloqueia = impedida || !!String(proposta.impedido || "");
+  const linhas = Array.isArray(proposta.linhas) ? proposta.linhas.filter(Boolean) : [];
+  const secundario = { rotulo: recuo, aoTocar: onReescrever };
+  if (pedido) {
+    const p = partesDoPedido(linhas[0]);
+    const verbo = [[proposta.confirmar, preco || proposta.preco].filter(Boolean).join(" "), proposta.verbo].filter(Boolean).join(" · ");
+    return { qual: "rolagem", momento: { verbo, cede: p.cede, preco: p.preco, desativado: bloqueia, aoPrincipal: () => onConfirmar && onConfirmar(), secundario } };
+  }
+  const frase = String(proposta.frase || "").trim();
+  return { qual: "proposta", momento: { verbo: proposta.verbo, cede: frase ? `«${frase}»` : "", preco, aoPrincipal: onAbrir, secundario } };
+}
 
 /* o glifo do efeito (a tabela é do motor: A_PROPOSTA_DA_FRASE.glifo) */
 const GLIFOS = {
@@ -49,8 +87,13 @@ const GLIFOS = {
   ),
 };
 
-export function PropostaDaFrase({ proposta, preco = "", aberta = false, onAbrir, onFechar, onConfirmar, onReescrever, impedida = false, rotuloDoTempo = (m) => `${m} min` }) {
+export function PropostaDaFrase({ proposta, preco = "", aberta = false, onAbrir, onFechar, onConfirmar, onReescrever, impedida = false, rotuloDoTempo = (m) => `${m} min`, compacta = false }) {
   if (!proposta || !proposta.verbo) return null;
+  /* TL 9: compacta e fechada (o pedido nunca abre: rola ou recua), a soleira */
+  if (compacta && (!aberta || proposta.pedido)) {
+    const m = momentoDaProposta(proposta, { preco, impedida, onAbrir, onConfirmar, onReescrever });
+    return m ? <SoleiraDoMomento momentos={{ [m.qual]: m.momento }} /> : null;
+  }
   const glifo = GLIFOS[proposta.glifo] || GLIFOS.alfinete;
   /* A 2.ª LEVA: a luta é sem volta (a cor do perigo, a da `Oferta` semVolta);
      o que o motor impede (a bolsa, o PM) cala o botão e diz porquê; a espera

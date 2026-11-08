@@ -132,6 +132,16 @@ export const PODERES_DE_CLASSE = [
     motor: "passivo", chave: "movimento",
     conceito: "o passo não encontra chão difícil: onde os outros tropeçam, ele já passou",
   },
+  /* C1 (07/11): a do Andarilho, que até aqui se chamava "Passo do Vento" como
+     a do Monge e só por isso casava com a linha de cima. Ganhou nome e esta
+     linha própria — o mesmo passivo de movimento —, e o que a especialização
+     lhe soma (fica apressado ao usá-la) vem pela aflição `pressa`, que já
+     existe: aqui mora só o que outro módulo lê. */
+  {
+    id: "pes_ligeiros", rx: /^pes ligeiros\b|em disparada, move-?se muito alem do normal/,
+    motor: "passivo", chave: "movimento",
+    conceito: "o andarilho não pisa o chão: passa por cima dele",
+  },
 ];
 
 /* ---------------- O LEITOR ----------------

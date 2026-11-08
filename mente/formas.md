@@ -14987,3 +14987,256 @@ aparece — morte, fim, legado) e a exportação de imagem; nada no motor. Pede 
 que é o que o jogador leva consigo.
 
 ---
+
+## TL · a tela limpa — a prosa é o jogo (07/11/2026)
+
+**O pedido.** A pessoa mandou a foto da tela principal no telefone com a v9.618 no ar: *«veja só como fica
+poluída a tela, na tela do notebook isso também incomoda, precisamos de uma forma melhor de fazer isso»*. Na
+foto **não se vê uma única linha de prosa**. Figma: página **«Tela limpa · 07/11»** (`306:2`). Peso: médio no
+regime de 23/09 e 04/11 (reorganiza a tela principal; nada sai do jogo, tudo muda de morada, e um commit
+revertido desfaz). Não toca no save.
+
+### TL 1 · A medida do antes (navegador, `taverna-sem-ia`, v9.618, campanha nova + a prosa da foto)
+
+«Linhas úteis» = (altura da área que rola − o enchimento de cima e de baixo) ÷ a entrelinha da prosa (27,625).
+Mediu-se com `getBoundingClientRect`, não com a captura.
+
+| largura × altura | estado | prosa à vista | o que come a altura |
+|---|---|---|---|
+| 375 × 667 | turno normal | **5,5 linhas** a **30 car./linha** (~165 car.) | barra 44 · cabeçalho 69 · horizonte 48 · pé 58 · campo 78 · cartas 150 |
+| 375 × 667 | **a foto** (oferta + 3 pessoas + luta) | **0 linhas** (o pé passa a 203; sobram 64 px para a dobra da luta e a runa) | + pessoas 56 · Aceitar e prazo 72 · «mais 2 ofertas» 75 |
+| 375 × 812 | turno normal | 10,8 | idem |
+| 1280 × 720 | turno normal | **4,1** | barra 44 + ecrã 56 · cabeçalho 69 · horizonte 48 · campo 95 · cartas 165 |
+| 1905 × 860 | turno normal | 9,2 (a foto: ~1,5) | idem, e **976 px de feltro vazio** ao lado (o conjunto ocupa 930 de 1906) |
+
+**A largura também comia:** no telefone a prosa tinha **259 px de 375** — a margem do cartão (16 + 16), o
+enchimento da página (20 + 20) e o da folha (18 + 18) são **108 px, 29 % da largura**: três molduras umas dentro
+das outras (o feltro, o cartão escuro, a folha de cada resposta). 30 caracteres por linha está abaixo do piso de
+45 de Bringhurst (*The Elements of Typographic Style*, §2.1.2: 45–75 numa coluna) e é o que faz cada parágrafo
+do Mestre virar uma torre de oito linhas.
+
+**O lugar aparecia três vezes** na mesa (a barra, o ecrã do Mestre, o cabeçalho da página) e duas no telefone;
+**o companheiro duas** (a carta na mesa e a ficha «anda com você» no pé).
+
+### TL 2 · A régua, em número
+
+| | meta da mente | **o depois (Figma, medido no quadro)** |
+|---|---|---|
+| 375 × 667 turno normal | ≥ 8 | **16,5 linhas** a **38 car.** (~630 car.: **3,8×**) |
+| 375 × 667 decisão + pessoas + luta | — | **14,2** (antes: **0**) |
+| 375 × 812 normal / decisão | — | **21,8 / 19,5** |
+| 1280 × 720 normal / decisão | — | **19,2 / 16,9** (antes 4,1) |
+| 1905 × 860 normal / decisão | ≥ 18 | **24,3 / 21,9** (antes 9,2) |
+
+**As metas sobem e ficam como catraca:** 375 × 667 **≥ 14 em qualquer estado** (normal ≥ 16) e 1280 × 720
+normal **≥ 18**. A da mente (≥ 8) era o piso de «não pode ser zero»; o desenho chega ao dobro, e a régua passa
+a guardar o que se ganhou. Na mesa, a linha continua a 504 px (64 caracteres — a régua da Mesa C não muda).
+
+### TL 3 · O leiaute, por largura
+
+**Três leis.** *Uma coisa, um lugar* (o lugar e as pessoas aparecem uma vez). *Fixo só o que serve todos os
+turnos* (a barra, a página, o campo, a mesa). *O momento tem UM lugar*, por cima do campo, e só existe quando há
+momento.
+
+**Telefone (< 1024), de cima para baixo** — `307:103` (375 × 667 normal), `307:273` (375 × 667 decisão),
+`307:454` / `307:624` (375 × 812), `307:805` (a mesa puxada):
+
+1. **`Barra do Mestre`** (`306:12`), 48: o lugar (Cormorant SemiBold 19 `ink` + seta; **tocar abre o horizonte**),
+   **`Em cena`** (`306:11`), e à direita a vela (28) e a hora (mono 14). A ameaça entra à direita só quando > 0.
+2. **A página**: **uma folha só**, de pergaminho, 8 px do feltro (borda 6 + 2), enchimento 16 dos lados e 12 em
+   cima. A folha de cada resposta e o cartão escuro saem: **a página é a folha**. Prosa 359 − 32 = **327 px**.
+3. **`Soleira do momento`** (`306:106`), 56 (`ALVOS.chamado`), só quando há momento.
+4. **O campo**, 48, e o botão de rolar, 48 (como hoje).
+5. **`Tira da mesa`** (`306:107`), 72 em vez de 150: a pega, o herói, o companheiro, o Diário, o Mapa, a Bolsa e
+   os mantimentos. **Puxar a pega (ou tocar nela) abre a mesa inteira** (`307:805`): uma folha de couro de 340 que
+   sobe por cima da página, com as cartas grandes, a Bandeja (os últimos lances), os objetos com rótulo e os
+   mantimentos a 28. Véu `sombra(.55)`; fecha com Esc, tocar no véu ou arrastar para baixo; o foco fica preso
+   dentro e volta à pega.
+
+**Mesa (≥ 1024)** — `309:1103` / `309:1467` (1280 × 720), `309:1758` / `309:2038` (1905 × 860):
+
+1. **`Barra do Mestre`** largura mesa (`306:34`), **56 — a barra do topo (44) e o ecrã do Mestre (84) passam a
+   ser uma faixa só**: LUGAR (o lugar, e na masmorra o andar por baixo), `Em cena`, HORA (vela 40 · «Dia · 08:10»
+   · o glifo do clima), AMEAÇA (●○○ · «1 de 3»).
+2. **Três colunas** (236 · 600 · 120, folga 32), começando a 72: **à esquerda o grupo** — a carta do herói e a do
+   companheiro lado a lado (a 0,9; a 0,8 abaixo de 800 de altura) e **a Bandeja por baixo delas** —; **ao centro
+   a página**, do topo até ao campo; **à direita os objetos e os mantimentos** (AR 12, sem mudança).
+3. **A fila das cartas em baixo sai** — era ela que roubava 165 px à página em todas as alturas. As cartas sobem
+   para a coluna da esquerda, que estava vazia acima da Bandeja.
+
+### TL 4 · As peças novas (biblioteca, página `306:2`, y ≥ 3400)
+
+- **`Barra do Mestre`** (`306:69`) · `Largura=telefone|mesa`. Substitui `EcraDoMestre` e a barra do topo.
+- **`Em cena`** (`306:11`) · `Quantos=1|3+2`. Rostos de **32** (aro `couro` 2, sobrepostos 8), no máximo **3**, e o
+  resto em «+N» (`panelSoft`, aro `lineStrong`). **Pessoas e criaturas pelo rosto; coisas e saídas pelo glifo**
+  (o de `glifos.js`, num disco de 32 `panelSoft`). **Ficam de fora** a pessoa do grupo (`pessoaDoGrupo`, mora na
+  mesa) e o lugar onde se está (`aqui`, mora na barra) — são os dois que `fichasDaCena` já manda para o «fundo».
+  **É UM botão** (alvo 48 de alto, a altura da barra): abre a gaveta **«Em cena»**, que é a `FileiraAVista` de
+  hoje, inteira (nome, «sabe», verbos, apontar). `aria-label`: «Em cena: Conrado Sem-Senhor, Mécia dos Juncos,
+  Martim Cinzentos e mais 2. Abrir.» Sem ninguém em cena: 0 px.
+- **`Soleira do momento`** (`306:106`) · `Momento=proposta|rolagem` × `Largura=telefone|mesa`. **Uma coisa de cada
+  vez, por prioridade: a rolagem pendente > o dado que acabou de pousar > a oferta.** O botão principal é âmbar
+  (`onAccent` sobre `amber`, 8,68): a primeira linha é o verbo (Spectral Medium 16/20; pode encurtar com
+  reticência), a segunda é o preço em mono 12 — **e a parte do preço nunca encurta**: «5 min», «precisa de 13»
+  moram num nó à direita, e é «Martim Cinzentos conta contigo», «Percepção», que cede. O secundário (`panel`, aro
+  `lineStrong`) é **«+N ofertas»** (abre as outras numa folha que sobe, a mesma da mesa puxada) ou **«Agora
+  não»**. Na rolagem, o verbo é «Rolar d20 + 3 · Olhar à volta» com o d20 desenhado à esquerda: **o veredito
+  antes do clique** continua inteiro (o dado, o bónus, o número a bater). **O dado que pousa** ocupa a soleira
+  durante `DADO_DE_USO_NA_MESA.rolar.mostra` (1 600 ms) com o lance da Bandeja e passa depois a recibo debaixo
+  da prosa — no telefone a Bandeja deixa de ter fila própria.
+- **`Tira da mesa`** (`306:107`), 375 × 72. Herói: retrato 44 (aro `ouro.meio` 2), o nível num disco de 18 no
+  canto, **as gemas que a carta mostra, até três, empilhadas** (gema 7, número JetBrains Mono Bold 12 `ink`).
+  Companheiro: retrato 34 (aro `bronze.meio`), PV e PM numa linha. Objetos: desenho 40 em **alvo 48 × 56**, a
+  gota de novidade como hoje, **sem rótulo na tira** (o rótulo fica no `aria-label` e na mesa puxada).
+  Mantimentos: o `Dado de uso` a 22 e a contagem «×N» por baixo, em colunas de 24; **um botão** (AR 12). A fila
+  mede 354 de 375. Com mais de um companheiro, ou com o Códex e a Ascensão, a fila rola de lado (como hoje); o
+  herói e a pega nunca saem do ecrã.
+
+### TL 5 · Nada se perde — o que a tela MOSTRA hoje, e onde passa a morar
+
+| hoje à vista | onde | passa a morar |
+|---|---|---|
+| o lugar, a vela, a hora | barra / ecrã | **`Barra do Mestre`** (a mesma coisa, uma vez) |
+| o prazo e a ameaça do ecrã | ecrã | barra: AMEAÇA; o prazo de uma oferta, na soleira |
+| o lugar repetido (`CabecalhoDaPagina`) | página | **sai** — já está na barra |
+| a cena da masmorra (andar, camada) | cabeçalho | barra: na mesa, linha por baixo do lugar; no telefone, **substitui** o nome do lugar |
+| «3 TOCHAS» | cabeçalho | já é o dado de uso das tochas (tira / coluna) |
+| a luz («DIA») | cabeçalho | barra: «Dia · 08:10» na mesa; no telefone a vela (a forma já muda com a hora, AAA §5) e o `aria-label` |
+| o clima | cabeçalho | barra: glifo 16 ao lado da hora |
+| «A noite · sítio» (fogueira) | cabeçalho | barra, no lugar do nome |
+| os três pontos do cabeçalho | cabeçalho | **sai**: ornamento, não informação |
+| o horizonte (`FaixaDoRumo`) | sempre, 48–96 px | **ao chegar** a um sítio: entra no relato como bloco do turno da chegada (rola com a prosa); **a pedido**: tocar no lugar abre-o numa gaveta de cima (96 / 48) sobre a página, que fecha com Esc, outro toque ou ao rolar; **em viagem** (`estadoDaPartida` / chegada viva): fica preso por baixo da barra, porque aí é o momento. O Mapa continua na mesa |
+| a dobra da luta | relato | **igual** (36 px). Com 14–24 linhas à vista deixa de ser a única coisa |
+| as fichas (pessoas, criaturas, coisas, saídas) | pé | **`Em cena`** na barra; a fileira inteira, com verbos e apontar, na gaveta «Em cena» (+1 toque — o preço declarado) |
+| o companheiro como ficha «anda com você» | pé | **sai** — mora na mesa (carta / tira) |
+| a oferta («Aceitar: …») | pé | **`Soleira do momento`** |
+| o prazo («… conta com você · 5 min») | pé | dentro da soleira, à direita, **nunca encolhe** |
+| «mais N ofertas» | pé | «+N ofertas» ao lado do Aceitar; abre as outras |
+| o pedido de rolagem (verbo, perícia, «precisa de», d20 + N, Agora não, Rolar) | pé | **`Soleira do momento`**, `Momento=rolagem` |
+| a Bandeja | mesa: coluna · telefone: por cima do campo | mesa: **igual** (por baixo das cartas); telefone: o lance pousa na soleira e fica como recibo; o histórico na mesa puxada |
+| o campo e o botão de rolar | | **igual** |
+| a carta do herói (retrato, nome, nível, gemas) | fila de baixo | mesa: coluna da esquerda, igual; telefone: tira (retrato, nível, gemas) — **o nome sai da tira** e fica na mesa puxada, na ficha e no `aria-label` |
+| a carta do companheiro (retrato, nome, PV, PM) | fila de baixo | mesa: igual; telefone: tira (retrato, PV, PM) — o nome idem |
+| o Diário, o Mapa, a Bolsa, o Códex, a Ascensão, a gota | fila / coluna | mesa: igual; telefone: tira, 48 × 56, sem rótulo (o rótulo na mesa puxada e no `aria-label`) |
+| os mantimentos (face + «×N») | fila / coluna | mesa: igual (AR 12); telefone: tira, dado 22 (era 28) |
+| o «132 ◆1» da carta, **cortado** no fundo da foto | fila | **volta a ver-se**: a tira tem 72 e nenhum número passa da borda |
+
+**Duas perdas declaradas, as duas no telefone e as duas por escolha:** os nomes escritos do grupo e os rótulos
+dos três objetos saem da tira (ficam a um toque e no leitor de ecrã). A ficha da cena passa de um toque a dois.
+
+### TL 6 · O contraste dos pares novos (WCAG 2.2, a conta de sempre, em `node`)
+
+`ink` · `ouroClaro` · `inkMeio` · `inkDim` sobre `couro` (a barra, a tira): **12,65 · 12,34 · 8,73 · 5,71** ·
+`ouroClaro` sobre `couroBaixo` (o disco do nível) **13,97** · `onAccent` sobre `amber` (a soleira) **8,68** ·
+`ink` · `inkMeio` · `inkDim` sobre `panel` («+N», «Agora não», o campo) **13,87 · 9,57 · 6,26** · `tinta` ·
+`tintaMeio` · `brasa` sobre `pergaminho` (a prosa, a tua fala, a runa) **12,15 · 7,78 · 6,71** · o chip escuro da
+luta sobre a folha **12,52**. Formas: `lineStrong` sobre `panel` 4,19, o aro âmbar do botão de rolar 8,04, a gema
+granada sobre `couro` 3,14, a ametista 4,19. Nenhuma letra abaixo de 4,5; nenhuma forma abaixo de 3. Alvos: o
+`Em cena` 48 de alto; os objetos da tira 48 × 56; o herói 82 × 56; a soleira 56 (`ALVOS.chamado`).
+
+### TL 7 · O «superior», escrito
+
+*Medida:* a prosa à vista passa de **0 → 14,2 linhas** no estado da foto e de **5,5 → 16,5** no turno normal a
+375 × 667; de **4,1 → 19,2** a 1280 × 720 e de **9,2 → 24,3** a 1905 × 860. A linha do telefone passa de **30 a 38
+caracteres**. A altura que não é prosa, a 1280 × 720, passa de **551 px (77 %)** a **162 px (23 %)**.
+*Estudo citado:* Bringhurst §2.1.2 (45–75 caracteres; o telefone sobe de 30 para 38, o mais perto que a letra
+de 17 deixa a 375) e WCAG 1.4.8 (≤ 80; a mesa fica em 64); a revelação progressiva (Nielsen Norman Group,
+*Progressive Disclosure*, 2006: o que se usa sempre à vista, o raro a um passo) é a lei do «momento» — a
+oferta, o horizonte, a mesa inteira; WCAG 2.5.8 e o piso de 48 da casa para os alvos.
+*Experiência jogada:* fica para o `jogo` — *leio a cena sem rolar, e o dado e a decisão continuam a ser a
+coisa mais chamativa da tela?* O âmbar só aparece no momento; com a página limpa, é a primeira coisa que o olho
+encontra.
+
+### TL 8 · As tabelas (para `src/estilo.js`; mudam os campos de `HUD_DA_MESA` que se nomeiam, e nascem as novas)
+
+```js
+/* TL · A TELA LIMPA (07/11/2026) — formas.md §TL; Figma 306:2. A barra do topo e o
+   ecrã do Mestre são uma faixa; o momento tem um lugar; a mesa do telefone é uma tira. */
+// HUD_DA_MESA.mesa — muda:
+//   folga: 32, topo: 72,
+//   areas: ["barra barra barra", "grupo livro objetos", "grupo momento objetos", "grupo campo objetos"],
+//   linhas: ["56px", "1fr", "auto", "48px"],
+//   barra: { alto: 56, velaAlta: 40 },                        /* sai `ecra` (84 + respiro) */
+//   grupo: { largura: 236, cartas: { heroi: 0.9, companheiro: 0.9, entre: 12 }, bandeja: { acima: 20, teto: 300 } },
+//   baixa: { abaixoDe: 800, cartas: { heroi: 0.8, companheiro: 0.8 } },   /* era 960: a fila de baixo saiu */
+//   sai `cartas` (a fila de baixo), e o horizonte deixa de ter faixa fixa.
+// HUD_DA_MESA.telefone — muda:
+//   areas: ["barra", "livro", "momento", "campo", "tira"], linhas: ["48px", "1fr", "auto", "48px", "72px"],
+//   barra: { alto: 48, velaAlta: 28 }, vao: 8,
+//   livro: { margem: 2, enchimento: 16, cima: 12, baixo: 8 },   /* margem: além da borda 6 */
+//   saem `cartas` e `objetos` (passam a TIRA_DA_MESA).
+export const SOLEIRA_DO_MOMENTO = {
+  alto: ALVOS.chamado, vao: 8, raio: 10, enchimento: 14,
+  prioridade: ["rolagem", "dado", "proposta"],
+  principal: { chao: T.amber, letra: T.onAccent, verbo: { tamanho: 16, peso: 500, entrelinha: 20 }, preco: { tamanho: TIPOS.maquina, entrelinha: 16 }, dado: 28 },
+  secundario: { chao: T.panel, aro: T.lineStrong, enchimento: 12 },
+  mostraODado: DADO_DE_USO_NA_MESA.rolar.mostra,
+};
+export const EM_CENA = {
+  rosto: 32, aro: 2, sobrepoe: 8, mostra: 3, alvo: ALVOS.piso,
+  fora: ["pessoaDoGrupo", "aqui"],   /* as formas de fichas.js que moram noutro lugar */
+};
+export const TIRA_DA_MESA = {
+  alto: 72, cima: 13, lado: [10, 6],
+  pega: { largura: 36, alto: 4, cima: 5, cor: T.inkDim, alfa: 0.7 },
+  heroi: { retrato: 44, aro: 2, nivel: 18, gemas: 3, entre: 4 },
+  companheiro: { retrato: 34, aro: 2 },
+  objeto: { alvo: { largura: ALVOS.piso, alto: 56 }, desenho: 40, rotulo: false },
+  mantimentos: { dado: 22, coluna: 24, entre: 2 },
+  puxada: { alto: 340, raio: 14, veu: 0.55, cartas: "telefone", objetos: 0.62, dado: 28, dura: 220 },
+};
+export const HORIZONTE_DA_CENA = {
+  aoChegar: "relato", aPedido: "gaveta", emViagem: "preso",
+  gaveta: { mesa: 96, telefone: 48, dura: 220 },
+};
+// DADO_DE_USO_NA_MESA.telefone — muda: dado 22, glifo { 10: 8, 8: 11, 6: 11, 4: 9 }, alvo { largura: 76, alto: 56 }, debaixoDos → "tira".
+// PAGINA / FOLHA_DO_MESTRE: a `.tv-folha` passa do bloco de cada resposta para a área que rola (a página);
+//   no telefone FOLHA_DO_MESTRE.ladoTelefone 18 → 16 e PAGINA.cima / baixo passam a 12 / 8 (mesa 16 / 16).
+```
+
+**Os movimentos, com saída:** a gaveta do horizonte e a mesa puxada sobem e descem em 220 ms (`ease-out`); a
+soleira entra com `tv-fade` (o de sempre) e a página encolhe 56 + 8 px de uma vez, sem animar a altura. Com
+`prefers-reduced-motion`, tudo aparece seco. **Nada disto custa o turno:** o campo aceita escrita com a gaveta, a
+soleira ou a mesa puxada abertas.
+
+### TL 9 · A ordem de construção (por retorno)
+
+**`aprendiz` (fora do `App.jsx`):**
+1. `src/estilo.js` — as tabelas da TL 8, e a `.tv-folha` aplicada à página (com as suítes que prendem bytes de
+   `PAGINA` / `FOLHA_DO_MESTRE` / `HUD_DA_MESA` atualizadas, cada asserção movida com o motivo escrito).
+2. `src/painel-mesa-do-mestre.jsx` — `EcraDoMestre` vira **`BarraDoMestre`** (telefone e mesa; o lugar como botão
+   do horizonte; o glifo do clima; a linha da masmorra; a ranhura do `EmCena`); nascem **`TiraDaMesa`** e
+   **`MesaPuxada`** (folha que sobe, véu, Esc, foco preso, devolve o foco à pega).
+3. `src/painel-fichas.jsx` (ao lado da `FileiraAVista`) — **`EmCena`** (os rostos e a gaveta que leva a
+   `FileiraAVista` inteira); `src/ui.jsx` — **`SoleiraDoMomento`** (as três formas, por prioridade; o preço num nó
+   que não encolhe).
+4. `src/painel-proposta.jsx` — a forma compacta da `PropostaDaFrase` para a soleira (o abrir / confirmar /
+   reescrever de hoje continua, por baixo do toque).
+5. `src/painel-relato.jsx` — a folha de cada resposta sai (a página é a folha); o relato aceita
+   `horizonte={{ i, dados }}` e desenha a `FaixaDoRumo` (forma telefone) no turno da chegada.
+
+**`oficial` (dentro do `App.jsx`, com o bastão, por âncora):**
+1. O topo: a barra do topo e o `<EcraDoMestre>` (perto de 24634) passam a uma `<BarraDoMestre>`; sai o
+   `<CabecalhoDaPagina>` (24794) e a `<FaixaDoRumo>` fixa (24801) vai para a gaveta / o relato / o modo viagem; o
+   cartão escuro à volta da área que rola (24810) perde a margem e o chão no telefone.
+2. O pé (`<PeDaPagina>`, perto de 25386): as fichas vão para o `<EmCena>` da barra; a `<Soleira>`, a oferta e o
+   pedido de rolagem vão para a `<SoleiraDoMomento>`, por cima do campo.
+3. A mesa (a `<Bandeja>` perto de 25709, a coluna dos objetos perto de 25781): no telefone, `<TiraDaMesa>` +
+   `<MesaPuxada>`; na mesa, as cartas sobem para a coluna da esquerda, por cima da Bandeja, e a fila de baixo sai.
+4. Depois de o App deixar de o ler, o `aprendiz` apaga o export `CabecalhoDaPagina` (a catraca `teste-ligacao`).
+
+**A prova (quem constrói, no navegador; salvar e repor os saves antes):** a régua da TL 2 medida a 375 × 667,
+375 × 812, 1280 × 720 e 1905 × 860, nos dois estados (a campanha nova + uma oferta + três fichas + uma luta
+fechada), com o mesmo método da TL 1; e a tabela da TL 5 percorrida linha a linha — **cada coisa achada na morada
+nova**. O `jogo` joga o antes e o depois e assina.
+
+### TL 10 · Para a pessoa decidir — a proposta ambiciosa: a prosa é a fileira
+
+**Os nomes na prosa passam a ser as fichas.** Quando o Mestre escreve «Conrado para à beira do caminho», *Conrado*
+fica sublinhado a ponteado (`brasaNoPergaminho`, 6,71 sobre a folha); um toque aponta-o (escreve-o no campo, como a
+ficha faz hoje) e um segundo toque abre a ficha com os verbos. O mesmo para a coisa à venda, a porta, a saída. **A
+página deixa de ter interface por cima e passa a SER a interface** — o livro-jogo onde as palavras são portas. O
+`Em cena` da barra fica só com os rostos de quem não foi nomeado neste turno. Custa: o casamento do nome na prosa
+com a ficha (`posicaoNaProsa`, em `fichas.js`, já sabe onde cada nome está) e uma forma de sublinhado com estado de
+foco e de apontado; nada no motor nem no save. Pede à pessoa porque muda **como se aponta** — é o que o jogador
+teria de reaprender.

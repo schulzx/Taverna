@@ -249,7 +249,11 @@ sec("5. A página, a coluna e as peças de R2 estão montadas");
    couro distinguem-se pelo matiz e não pela luz (T.panel mede 1,05:1 contra o feltro), e a regra
    é «sobre o feltro, toda a peça leva borda», em lineStrong ou ouro. A asserção aceita lineStrong
    e guarda o mesmo: a narração mora na SUA superfície (T.pagina). */
-t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outline): `1px solid \$\{T\.(?:line|lineStrong)\}`/.test(APP),
+/* MOVIDA em 08/11 (TL 9, o oficial): a página É a folha — o cartão escuro e a
+   folha de cada resposta deram lugar a uma folha só de pergaminho (.tv-folha)
+   à volta da área que rola (formas.md §TL 3; tinta 12,15 sobre o pergaminho).
+   A intenção fica: a narração mora na SUA superfície, que não é a da mesa. */
+t("a narração usa a superfície dela", /<div data-tv-pagina="" className="tv-folha relative flex-1 min-h-0 flex flex-col overflow-hidden"/.test(APP),
   "a narração voltou à mesa fria: o painel e o balão voltam a medir 1,039:1 um contra o outro");
 /* R21: a fala do Mestre ganhou `data-msg` (o endereço para onde a espreita
    do alforje salta) e `scrollMarginTop: ESBATIMENTO.altura` (para o salto não a
@@ -259,7 +263,11 @@ t("a narração usa a superfície dela", /background: T\.pagina, (?:border|outli
    (o `jogo`, V5 §4), e não por `O MESTRE`. A coluna é a mesma; o que muda é
    o primeiro filho dela. */
 /* A1 · B1: a fala do Mestre mora em `painel-relato.jsx`. */
-t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir /.test(RELATO));
+/* MOVIDA em 07/11 (TL 9, a tela limpa): a runa e o botão vão na forma da folha
+   (`naFolha`), e no turno da chegada o horizonte do sítio entra ANTES dela,
+   no mesmo bloco (formas.md §TL 5). A intenção fica: a resposta é um bloco
+   `.tv-coluna` e começa pela runa com o botão de ouvir — nunca por «O MESTRE». */
+t("a prosa do Mestre tem medida de coluna", /className="tv-fade tv-coluna"[^>\n]*>\s*\n\s*\{horizonte && horizonte\.i === i[\s\S]{0,500}?<DivisoriaRunica respiro=\{0\} naFolha ponta=\{<BotaoDeOuvir /.test(RELATO));
 /* mede o CÓDIGO e não a prosa: o comentário que explica por que as
    percentagens saíram cita-as, e um regex cego sobre o arquivo inteiro
    acusaria o próprio motivo de ser o defeito */
@@ -276,21 +284,28 @@ t("e não voltaram as percentagens que partiam os dois aparelhos",
    e a fala do jogador. O do topo DESCEU para onde a resposta vai nascer (é o
    mesmo, esperando), e o da prosa virou a runa. Ficam dois, e os dois
    continuam a ser a peça, nunca um cabeçalho à mão. */
-t("`A voz` continua sendo a peça nos dois lugares onde ela ainda fala",
-  /* A1 · B1: a fala do jogador foi com o relato; a espera ficou no App. */
-  ((APP + RELATO).match(/<Voz quem=/g) || []).length >= 2 && /<Voz quem="mestre" voz="preparando" \/>/.test(APP) && /<Voz quem="voce"/.test(RELATO),
-  "são dois usos: a espera do Mestre (onde a resposta nasce) e a fala do jogador");
+/* MOVIDA em 07/11 (TL 8, a tela limpa): a página passou a ser o pergaminho,
+   e na folha só há tinta — a tua fala perdeu a caixa e o cabeçalho «Você»
+   (Figma 307:809: itálico em tinta meia, recuado por um filete). Fica UM uso
+   da peça, a espera do Mestre; e a fala do jogador continua a ser marcada
+   (o filete, que acende na brasa enquanto se espera), nunca um balão. */
+t("`A voz` continua sendo a peça onde ela ainda fala (a espera do Mestre); a tua fala é tinta na folha",
+  /<Voz quem="mestre" voz="preparando" \/>/.test(APP) && !/<Voz quem="voce"/.test(RELATO) && /data-fala="jogador"/.test(RELATO) && /borderLeft: `2px solid \$\{esperaResposta \? TINTA\.porta : TINTA\.dim\}`/.test(RELATO),
+  "um uso da peça (a espera do Mestre); a fala do jogador é a tinta da folha com o filete");
 t("e o botão de ouvir deixou de medir 22", !/width: 22, height: 22, fontSize: 12/.test(APP));
 /* MOVIDA na v9.449 (oficial): as <Oferta> montam-se uma vez em `ofertasDoPe`
    — na janela baixa vão à fileira das fichas (numa linha só, § Fichas 1), no
    resto à soleira. A intenção é a mesma: a soleira recebe `A oferta`, nunca
    uma oferta feita à mão. */
-t("`A soleira` está montada com `A oferta` dentro", /const ofertasDoPe = vivas\.map\(\(o\) => \(\s*<Oferta key=\{o\.id\}/.test(APP) && /<Soleira ofertas=\{ofertasDoPe\} \/>/.test(APP));
+/* MOVIDA em 08/11 (TL 9, o oficial): a primeira oferta é a Soleira do momento
+   e as outras, atrás do «+N», continuam a ser a Soleira com A oferta dentro. */
+t("`A soleira` está montada com `A oferta` dentro", /<Soleira ofertas=\{vivas\.slice\(1\)\.map\(\(x\) => \(\s*<Oferta key=\{x\.id\}/.test(APP) && /<SoleiraDoMomento momentos=\{momentos\} \/>/.test(APP));
 t("a montagem da lista tem nome e está em `try/catch`",
   /const ofertasDaSoleira = \(\) => \{\s*\n\s*try \{/.test(APP) && /calou\("montar a soleira", e\); return \[\];/.test(APP),
   "a soleira lê sete estados diferentes; um deles em forma inesperada não pode derrubar a cena");
 t("e `bloqueado` NÃO a desliga — só impede a oferta que precisa do narrador",
-  /estado=\{o\.precisaDoNarrador && bloqueado \? "impedida" : "repouso"\}/.test(APP),
+  /* MOVIDA em 08/11 (TL 9): a oferta do momento cala só o botão (desativado) e as de trás do «+N» ficam impedidas — nos dois, só a que precisa do narrador */
+  /estado=\{x\.precisaDoNarrador && bloqueado \? "impedida" : "repouso"\}/.test(APP) && /desativado: !!\(o\.precisaDoNarrador && bloqueado\),/.test(APP),
   "se a soleira sumir durante os 14,3 s, o ganho principal da etapa some com ela");
 /* R15: a expressão ganhou uma cláusula e a asserção acompanha-a. O que ela
    guardava — a marca decai por TURNO e não por relógio — não mudou; o que
@@ -298,11 +313,12 @@ t("e `bloqueado` NÃO a desliga — só impede a oferta que precisa do narrador"
    CHEGA, porque ela ESTÁ. Uma marca de "novo neste turno" que dura enquanto
    o estado durar deixa de significar novo e passa a significar ruído. */
 t("a chegada decai por TURNO, e não por relógio",
-  /chegada=\{o\.fila === "B" \|\| \(jaTinha && jaTinha\.has\(o\.id\)\) \? "assentada" : "agora"\}/.test(APP)
+  /* MOVIDA em 08/11 (TL 9): as ofertas de trás do «+N» chamam-se x */
+  /chegada=\{x\.fila === "B" \|\| \(jaTinha && jaTinha\.has\(x\.id\)\) \? "assentada" : "agora"\}/.test(APP)
   && /\}, \[carregando\]\); \/\/ eslint-disable-line/.test(APP),
   "uma marca que morre por tempo morre enquanto o jogador está a pensar");
 t("e a fila B nunca chega — ela está",
-  /o\.fila === "B" \|\| /.test(APP),
+  /x\.fila === "B" \|\| /.test(APP),
   "a fila A chega; a fila B está. Uma marca de novidade que dura cinco turnos é ruído");
 
 sec("6. O atalho de rolamento não pode voltar a tapar a chamada do turno");

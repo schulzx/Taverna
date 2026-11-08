@@ -257,8 +257,12 @@ sec("9. V3b · os consertos da prova jogada");
   /* 5 — a porta: a seta no ladrilho, o fio de controlo, a largura do texto.
      A1 · B1 (10/10): a porta mudou-se com o relato para `painel-relato.jsx`. */
   { const RELATO = readFileSync("../src/painel-relato.jsx", "utf8").replace(/\r\n/g, "\n");
-  t("a porta leva fio lineStrong, raio do ladrilho e a largura do texto",
-    /className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"/.test(RELATO) && /border: "1px solid " \+ T\.lineStrong, borderRadius: LADRILHO\.raio/.test(RELATO)); }
+  /* MOVIDA em 07/11 (TL 8): a página passou a ser o pergaminho, e lineStrong
+     sobre ele dá 2,99 (abaixo dos 3 de uma forma); o fio da porta passa à
+     tinta discreta do papel (tintaDim, 6,56). A intenção fica: a porta tem
+     fio, o raio do ladrilho e a largura do texto. */
+  t("a porta leva fio (a tinta do papel), raio do ladrilho e a largura do texto",
+    /className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"/.test(RELATO) && /border: "1px solid " \+ TINTA\.dim, borderRadius: LADRILHO\.raio/.test(RELATO) && /dim: T\.tintaDoPergaminhoDim/.test(RELATO)); }
   /* 6 — o Impedido ganha marca: o ladrilho oco sem assunto desenha o círculo cortado */
   { const i = UI3.indexOf("export function LadrilhoDoAssunto("); const LAD2 = UI3.slice(i, UI3.indexOf("\n}\n", i));
     t("o Impedido sem assunto desenha ban, em inkDim", !!GLIFOS.ban && /<Glifo nome=\{glifo \|\| "ban"\}/.test(LAD2) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD2)); }

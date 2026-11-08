@@ -160,7 +160,12 @@ sec("6. TODO RETRATO ABRE A CARTA, E NENHUM PAINEL PRECISOU SABER DISSO");
      levou os seus dois retratos — o do grupo e o do inimigo de pé. Não é retrato que deixou de
      entregar a pessoa: é uma tela que saiu, e os mesmos rostos continuam no tabuleiro e na tira
      da batalha, que entregam a pessoa e estão nesta conta. A lei é a mesma. */
-  t(`a interface entrega a pessoa em ${entes} retratos`, entes === 7);
+  /* TL (07/11): e NOVE. A Tira da mesa do telefone (painel-mesa-do-mestre.jsx)
+     ganhou o retrato do herói (44) e o do companheiro (34), e os dois entregam
+     a pessoa (com `semCarta`: o botão inteiro já abre a ficha). São retratos
+     novos — a carta do grupo continua, na mesa e na mesa puxada —, e por isso
+     a conta sobe de verdade. A lei é a mesma. */
+  t(`a interface entrega a pessoa em ${entes} retratos`, entes === 9);
   t("a ficha também", /<Retrato semente=\{sementeDe\(p\)\} ente=\{p\}/.test(semComentarios(CRU("painel-ficha.jsx"))));
   /* E3: pelo mesmo motivo — um dos dois é o da tela da batalha, e ele
      mudou de arquivo, não de comportamento. */

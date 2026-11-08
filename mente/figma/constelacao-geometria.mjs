@@ -10,11 +10,12 @@
      "sub:<Subclasse>:<nome>" — arvoreDaSubclasse(pers, classe)     (4 por subclasse)
      "esp:<Especial.>:<nome>" — arvoreDaEspecializacao(pers, classe) (3 por especialização)
    O <nome> é o `nome` da habilidade, exato (o mesmo que `dominada` compara).
-   O prefixo é preciso porque há nomes repetidos entre ramos (o Arqueiro tem
-   «Tiro Duplo», «Flecha Perfurante», «Chuva de Flechas» e «Tiro do Fim» também
-   na classe; o Arcanista, o Assassino, o Paladino, o Punho de Ferro e o
-   Andarilho também repetem). Como `dominada` é por nome, as duas acendem
-   juntas — é a verdade do sistema, e está escrita em formas.md §AR 11.
+   O prefixo diz de que ramo é a estrela. Até 07/11 era também o que
+   separava onze nomes repetidos entre a classe e a subclasse (o Arqueiro
+   inteiro, mais o Arcanista, o Assassino, o Paladino, o Punho de Ferro e o
+   Andarilho), que acendiam juntas porque `dominada` é por nome. O pedido C1
+   deu nome próprio às da subclasse, e a catraca teste-nomes-unicos.mjs impede
+   que um nome volte a repetir-se entre ramos.
 
    AS COORDENADAS: normalizadas, 0..1 num QUADRADO (x para a direita, y para
    baixo). A figura da classe mora em cima (y 0,03–0,44); da raiz (a estrela
@@ -160,11 +161,11 @@ export const FIGURAS_DA_CONSTELACAO = {
       "Arcanista": {
         estrelas: {
           "Dilatação": [0.567, 0.52],
-          "Contramágica": [0.621, 0.573],
-          "Prisão Arcana": [0.681, 0.619],
-          "Reescrever o Instante": [0.744, 0.658],
+          "Contratempo": [0.621, 0.573],
+          "Âmbar do Tempo": [0.681, 0.619],
+          "Ferida que Não Houve": [0.744, 0.658],
         },
-        ligacoes: [[null, "Dilatação"], ["Dilatação", "Contramágica"], ["Contramágica", "Prisão Arcana"], ["Prisão Arcana", "Reescrever o Instante"]],
+        ligacoes: [[null, "Dilatação"], ["Dilatação", "Contratempo"], ["Contratempo", "Âmbar do Tempo"], ["Âmbar do Tempo", "Ferida que Não Houve"]],
         ramos: {
           "Cronomante": { estrelas: { "Instante Roubado": [0.777, 0.725], "Bolha Estagnada": [0.808, 0.79], "Volta Atrás": [0.84, 0.855] }, ligacoes: [[null, "Instante Roubado"], ["Instante Roubado", "Bolha Estagnada"], ["Bolha Estagnada", "Volta Atrás"]] },
           "Teurgista": { estrelas: { "Geometria Viva": [0.819, 0.658], "Empréstimo Arcano": [0.891, 0.658], "Palavra Primeira": [0.963, 0.658] }, ligacoes: [[null, "Geometria Viva"], ["Geometria Viva", "Empréstimo Arcano"], ["Empréstimo Arcano", "Palavra Primeira"]] },
@@ -196,9 +197,9 @@ export const FIGURAS_DA_CONSTELACAO = {
           "Lâmina Peçonhenta": [0.433, 0.52],
           "Bote Silencioso": [0.379, 0.573],
           "Marca Mortal": [0.319, 0.619],
-          "Execução": [0.256, 0.658],
+          "Golpe de Misericórdia": [0.256, 0.658],
         },
-        ligacoes: [[null, "Lâmina Peçonhenta"], ["Lâmina Peçonhenta", "Bote Silencioso"], ["Bote Silencioso", "Marca Mortal"], ["Marca Mortal", "Execução"]],
+        ligacoes: [[null, "Lâmina Peçonhenta"], ["Lâmina Peçonhenta", "Bote Silencioso"], ["Bote Silencioso", "Marca Mortal"], ["Marca Mortal", "Golpe de Misericórdia"]],
         ramos: {
           "Lâmina Silenciosa": { estrelas: { "Passo sem Som": [0.181, 0.658], "Corte na Nuca": [0.109, 0.658], "Uma Só Respiração": [0.037, 0.658] }, ligacoes: [[null, "Passo sem Som"], ["Passo sem Som", "Corte na Nuca"], ["Corte na Nuca", "Uma Só Respiração"]] },
           "Envenenador": { estrelas: { "Frasco na Manga": [0.223, 0.725], "Coquetel Amargo": [0.192, 0.79], "Bafo da Cripta": [0.16, 0.855] }, ligacoes: [[null, "Frasco na Manga"], ["Frasco na Manga", "Coquetel Amargo"], ["Coquetel Amargo", "Bafo da Cripta"]] },
@@ -269,9 +270,9 @@ export const FIGURAS_DA_CONSTELACAO = {
           "Golpe Consagrado": [0.5, 0.545],
           "Escudo da Aurora": [0.5, 0.62],
           "Juramento Radiante": [0.5, 0.695],
-          "Julgamento": [0.5, 0.77],
+          "Luz do Juízo": [0.5, 0.77],
         },
-        ligacoes: [[null, "Golpe Consagrado"], ["Golpe Consagrado", "Escudo da Aurora"], ["Escudo da Aurora", "Juramento Radiante"], ["Juramento Radiante", "Julgamento"]],
+        ligacoes: [[null, "Golpe Consagrado"], ["Golpe Consagrado", "Escudo da Aurora"], ["Escudo da Aurora", "Juramento Radiante"], ["Juramento Radiante", "Luz do Juízo"]],
         ramos: {
           "Juramento da Aurora": { estrelas: { "Lâmina de Amanhecer": [0.46, 0.834], "Luz que Não Recua": [0.422, 0.895], "Julgamento da Aurora": [0.384, 0.956] }, ligacoes: [[null, "Lâmina de Amanhecer"], ["Lâmina de Amanhecer", "Luz que Não Recua"], ["Luz que Não Recua", "Julgamento da Aurora"]] },
           "Vingador": { estrelas: { "Dívida de Sangue": [0.54, 0.834], "Perseguição Sagrada": [0.578, 0.895], "Cobrança Final": [0.616, 0.956] }, ligacoes: [[null, "Dívida de Sangue"], ["Dívida de Sangue", "Perseguição Sagrada"], ["Perseguição Sagrada", "Cobrança Final"]] },
@@ -313,12 +314,12 @@ export const FIGURAS_DA_CONSTELACAO = {
     bracos: {
       "Arqueiro": {
         estrelas: {
-          "Tiro Duplo": [0.433, 0.52],
-          "Flecha Perfurante": [0.379, 0.573],
-          "Chuva de Flechas": [0.319, 0.619],
-          "Tiro do Fim": [0.256, 0.658],
+          "Flechas Gêmeas": [0.433, 0.52],
+          "Ponta de Agulha": [0.379, 0.573],
+          "Saraivada": [0.319, 0.619],
+          "Tiro de Mil Passos": [0.256, 0.658],
         },
-        ligacoes: [[null, "Tiro Duplo"], ["Tiro Duplo", "Flecha Perfurante"], ["Flecha Perfurante", "Chuva de Flechas"], ["Chuva de Flechas", "Tiro do Fim"]],
+        ligacoes: [[null, "Flechas Gêmeas"], ["Flechas Gêmeas", "Ponta de Agulha"], ["Ponta de Agulha", "Saraivada"], ["Saraivada", "Tiro de Mil Passos"]],
         ramos: {
           "Tiro Certeiro": { estrelas: { "Olho que Mede o Vento": [0.181, 0.658], "Flecha na Junta": [0.109, 0.658], "Disparo Definidor": [0.037, 0.658] }, ligacoes: [[null, "Olho que Mede o Vento"], ["Olho que Mede o Vento", "Flecha na Junta"], ["Flecha na Junta", "Disparo Definidor"]] },
           "Chuva de Flechas": { estrelas: { "Salva Rápida": [0.223, 0.725], "Céu Escuro": [0.192, 0.79], "Tempestade de Hastes": [0.16, 0.855] }, ligacoes: [[null, "Salva Rápida"], ["Salva Rápida", "Céu Escuro"], ["Céu Escuro", "Tempestade de Hastes"]] },
@@ -433,12 +434,12 @@ export const FIGURAS_DA_CONSTELACAO = {
     bracos: {
       "Punho de Ferro": {
         estrelas: {
-          "Rajada de Golpes": [0.433, 0.515],
+          "Punhos em Cascata": [0.433, 0.515],
           "Palma Atordoante": [0.379, 0.568],
           "Punho que Rompe": [0.319, 0.614],
           "Punho da Montanha": [0.256, 0.653],
         },
-        ligacoes: [[null, "Rajada de Golpes"], ["Rajada de Golpes", "Palma Atordoante"], ["Palma Atordoante", "Punho que Rompe"], ["Punho que Rompe", "Punho da Montanha"]],
+        ligacoes: [[null, "Punhos em Cascata"], ["Punhos em Cascata", "Palma Atordoante"], ["Palma Atordoante", "Punho que Rompe"], ["Punho que Rompe", "Punho da Montanha"]],
         ramos: {
           "Mão Aberta": { estrelas: { "Palma que Desloca": [0.181, 0.653], "Sequência de Cinco": [0.109, 0.653], "Toque do Fim": [0.037, 0.653] }, ligacoes: [[null, "Palma que Desloca"], ["Palma que Desloca", "Sequência de Cinco"], ["Sequência de Cinco", "Toque do Fim"]] },
           "Quebra-Montanhas": { estrelas: { "Punho de Pedra": [0.223, 0.72], "Impacto Sísmico": [0.192, 0.785], "Rachar o Mundo": [0.16, 0.85] }, ligacoes: [[null, "Punho de Pedra"], ["Punho de Pedra", "Impacto Sísmico"], ["Impacto Sísmico", "Rachar o Mundo"]] },
@@ -446,12 +447,12 @@ export const FIGURAS_DA_CONSTELACAO = {
       },
       "Andarilho": {
         estrelas: {
-          "Passo do Vento": [0.5, 0.54],
+          "Pés Ligeiros": [0.5, 0.54],
           "Dança das Sombras": [0.5, 0.615],
           "Corrida Impossível": [0.5, 0.69],
           "Cem Passos": [0.5, 0.765],
         },
-        ligacoes: [[null, "Passo do Vento"], ["Passo do Vento", "Dança das Sombras"], ["Dança das Sombras", "Corrida Impossível"], ["Corrida Impossível", "Cem Passos"]],
+        ligacoes: [[null, "Pés Ligeiros"], ["Pés Ligeiros", "Dança das Sombras"], ["Dança das Sombras", "Corrida Impossível"], ["Corrida Impossível", "Cem Passos"]],
         ramos: {
           "Vento Veloz": { estrelas: { "Passo de Trinta Metros": [0.46, 0.829], "Vendaval de Punhos": [0.422, 0.89], "Mais Rápido que o Olho": [0.384, 0.951] }, ligacoes: [[null, "Passo de Trinta Metros"], ["Passo de Trinta Metros", "Vendaval de Punhos"], ["Vendaval de Punhos", "Mais Rápido que o Olho"]] },
           "Sombra Dançante": { estrelas: { "Passo entre Sombras": [0.54, 0.829], "Golpe do Escuro": [0.578, 0.89], "Dança Sem Vulto": [0.616, 0.951] }, ligacoes: [[null, "Passo entre Sombras"], ["Passo entre Sombras", "Golpe do Escuro"], ["Golpe do Escuro", "Dança Sem Vulto"]] },

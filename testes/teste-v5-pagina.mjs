@@ -12,7 +12,7 @@
       masmorra diz a sala.
    5. NENHUM MOVIMENTO NOVO — a cerimônia é o tamanho, não a animação. */
 import { readFileSync } from "node:fs";
-import { T, TIPOS, ALVOS, RUNA, ESBATIMENTO, PAGINA, ABERTURA, PE_DA_PAGINA, ALFORJE, FOCO_NA_GAVETA, FONT_CSS } from "../src/estilo.js";
+import { T, TIPOS, ALVOS, RUNA, ESBATIMENTO, PAGINA, ABERTURA, PE_DA_PAGINA, ALFORJE, FOCO_NA_GAVETA, FONT_CSS, FOLHA_DO_MESTRE } from "../src/estilo.js";
 import { GLIFOS, GLIFO_DA_SALA, partesDaProsa, primeiraFrase } from "../src/glifos.js";
 import { ROTULO_SALA } from "../src/masmorras.js";
 
@@ -44,15 +44,23 @@ const RUNA_TXT = trecho(UI, "export function DivisoriaRunica(", "\n}\n");
 /* ============================================================ */
 sec("1. as medidas da página — em tabela");
 {
-  t("o enchimento do nó: 28 em cima, embaixo e dos lados na mesa", PAGINA.cima === 28 && PAGINA.baixo === 28 && PAGINA.lado === 28);
-  t("no telefone os lados são 20 (28 comeria 2 caracteres por linha a uma coluna já abaixo de 45)", PAGINA.ladoTelefone === 20);
+  /* MOVIDAS em 07/11 (TL 8, a tela limpa): A PÁGINA É A FOLHA. A folha de
+     cada resposta saiu, e o enchimento passou a ser o da folha que é a
+     página: 12 / 8 no telefone, 16 / 16 na mesa, e os lados os da folha (16 /
+     26). As três molduras de antes (o cartão, a página, a folha) comiam 108
+     de 375 e deixavam 30 caracteres por linha; agora são 38 (formas.md §TL
+     1–2). A intenção fica: o enchimento sai de tabela, e no telefone os lados
+     são mais estreitos que na mesa. */
+  t("o enchimento da página: 12 / 8 no telefone, 16 / 16 na mesa", PAGINA.cima === 12 && PAGINA.baixo === 8 && PAGINA.mesa.cima === 16 && PAGINA.mesa.baixo === 16);
+  t("os lados são os da folha: 16 no telefone (38 car. a 375), 26 na mesa", FOLHA_DO_MESTRE.ladoTelefone === 16 && FOLHA_DO_MESTRE.lado === 26 && FOLHA_DO_MESTRE.ladoTelefone < FOLHA_DO_MESTRE.lado);
   t("e o de cima nunca desce do esbatimento: a primeira linha nasce à luz inteira (R15)", PAGINA.cima >= ESBATIMENTO.altura);
   t("16 entre parágrafos e 24 entre blocos, como o nó", PAGINA.entreParagrafos === 16 && PAGINA.entreBlocos === 24);
   t("a entrelinha da prosa é a de hoje, agora dita", PAGINA.entrelinha === 1.625);
   t("a folha lê a página da tabela, e não de número à mão",
-    /\.tv-pagina \{\s*padding: \$\{PAGINA\.cima\}px \$\{PAGINA\.ladoTelefone\}px \$\{PAGINA\.baixo\}px;/.test(EST)
+    /* MOVIDA em 07/11 (TL 8): os lados saem da folha (a página é a folha) e a mesa tem enchimento próprio */
+    /\.tv-pagina \{\s*padding: \$\{PAGINA\.cima\}px \$\{FOLHA_DO_MESTRE\.ladoTelefone\}px \$\{PAGINA\.baixo\}px;/.test(EST)
     && /\.tv-pagina > \* \+ \* \{ margin-top: \$\{PAGINA\.entreBlocos\}px; \}/.test(EST)
-    && /\.tv-pagina \{ padding-inline: \$\{PAGINA\.lado\}px; \}/.test(EST));
+    && /\.tv-pagina \{ padding: \$\{PAGINA\.mesa\.cima\}px \$\{FOLHA_DO_MESTRE\.lado\}px \$\{PAGINA\.mesa\.baixo\}px; \}/.test(EST));
   t("a cerimônia é a letra de display, e a frase longa cai para a de título", ABERTURA.letra === TIPOS.display && ABERTURA.letraLonga === TIPOS.titulo && ABERTURA.tetoDeCaracteres === 110);
   t("o peso da cerimônia é um que a folha CARREGA (nada de negrito falso)", ABERTURA.peso === 500 && /family=Spectral:ital,wght@[^&']*0,500/.test(FONT_CSS));
   t("o pé custa o que a caixa de hoje custava: os 8 de baixo e os 2 da borda ciano, repartidos 6 + 4", PE_DA_PAGINA.cima + PE_DA_PAGINA.baixo === 8 + 2 && PE_DA_PAGINA.cima === 6 && PE_DA_PAGINA.lado === 24 && PE_DA_PAGINA.ladoTelefone === 12);
@@ -91,7 +99,8 @@ sec("3. as peças");
   t("e diz o estado no nome (o 'a ler…' de antes virou o nome acessível)", /"Parar a leitura"/.test(OUVIR) && /"Preparando a leitura"/.test(OUVIR) && /"Ouvir o Mestre"/.test(OUVIR) && /aria-label=\{nome\}/.test(OUVIR));
   t("a voz fala o português do jogo (preparando, lendo, tecendo)", /const ROTULO_DA_VOZ = \{ lendo: "lendo…", preparando: "preparando…" \};/.test(UI) && /o Mestre está tecendo/.test(UI) && !/"a preparar…"|"a ler…"|está a tecer/.test(UI));
   t("a runa com ponta: a linha deixa de ser aria-hidden, os traços continuam",
-    /export function DivisoriaRunica\(\{ respiro = RUNA\.respiro, ponta = null \}\)/.test(UI) && /if \(ponta\) \{[\s\S]*?<DivisoriaRunica respiro=\{0\} \/>[\s\S]*?\{ponta\}/.test(RUNA_TXT));
+    /* MOVIDA em 07/11 (TL 8): a runa ganhou o eixo `naFolha` (a página de pergaminho, Figma 307:811); sem ele, a peça é a de sempre */
+    /export function DivisoriaRunica\(\{ respiro = RUNA\.respiro, ponta = null, naFolha = false \}\)/.test(UI) && /if \(ponta\) \{[\s\S]*?<DivisoriaRunica respiro=\{0\} \/>[\s\S]*?\{ponta\}/.test(RUNA_TXT));
   t("O pé da página: sem oferta não há pé (0 px)", /if \(!children\) return null;/.test(PE));
   t("e o fio que o separa do que rola é uma sombra, sem leiaute", /boxShadow: "inset 0 1px 0 " \+ T\.line/.test(PE) && /background: T\.pagina/.test(PE) && /tv-pe-da-pagina shrink-0/.test(PE));
 }
@@ -101,12 +110,13 @@ sec("4. a fiação");
 {
   t("a região que rola é a página: .tv-pagina no lugar do px-5/py-6", /className="tv-scroll tv-esbate-topo[^"]*tv-pagina[^"]*"/.test(APP) && !/tv-esbate-topo[^"]*py-6/.test(APP));
   t("a resposta do Mestre começa pela runa com o botão de ouvir na ponta",
-    /<DivisoriaRunica respiro=\{0\} ponta=\{<BotaoDeOuvir estado=\{[^}]*\} aoOuvir=\{\(\) => aoOuvir && aoOuvir\(i, m\.texto\)\} \/>\} \/>/.test(RELATO)
+    /* MOVIDA em 07/11 (TL 8): na página de pergaminho a runa e o botão vão na forma da folha (`naFolha`) — a resposta continua a começar pela runa com o botão de ouvir na ponta */
+    /<DivisoriaRunica respiro=\{0\} naFolha ponta=\{<BotaoDeOuvir naFolha estado=\{[^}]*\} aoOuvir=\{\(\) => aoOuvir && aoOuvir\(i, m\.texto\)\} \/>\} \/>/.test(RELATO)
     && /<Relato [^>\n]*aoOuvir=\{ouvirMestre\}/.test(APP));
   t("e a prosa é a peça, com a cerimônia só no turno marcado", /<Prosa texto=\{m\.texto\} abertura=\{abertura === i \? "cerimonia" : "nenhuma"\} \/>/.test(RELATO)
     && /<Relato [^>\n]*abertura=\{abertura\}/.test(APP));
   t("o `O MESTRE` do topo da página saiu: a voz do Mestre só existe na espera",
-    (APP.match(/<Voz quem="mestre"/g) || []).length === 1 && /\{carregando && \(\s*<div className="tv-fade tv-coluna flex items-center gap-2">\s*<span className="tv-dice inline-flex"><IconeD20 tamanho=\{16\} cor=\{T\.inkMeio\} \/><\/span>\s*<div className="flex-1 min-w-0"><Voz quem="mestre" voz="preparando" \/><\/div>/.test(APP));
+    (APP.match(/<Voz quem="mestre"/g) || []).length === 1 && /\{carregando && \(\s*<div className="tv-fade tv-coluna flex items-center gap-2">\s*<span className="tv-dice inline-flex"><IconeD20 tamanho=\{16\} cor=\{T\.tintaDoPergaminhoMeio\} \/><\/span>\s*<div className="flex-1 min-w-0"><Voz quem="mestre" voz="preparando" \/><\/div>/.test(APP));
   t("e a espera mora no fim do registro, antes do fim da página", APP.indexOf('<Voz quem="mestre" voz="preparando"') < APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>"));
   const ABRE = trecho(APP, "const aberturaRef = useRef(", "}, [carregando, mensagens.length]);");
   /* A ASSERÇÃO MUDOU, E O MOTIVO FICA: a cerimônia está APAGADA ATÉ V5e, "a
@@ -125,7 +135,12 @@ sec("4. a fiação");
   t("e ela é efêmera: o turno seguinte a devolve à prosa", /a\.pendente = true;[^\n]*setAbertura\(null\);/.test(ABRE));
   t("e nunca custa o turno", /calou\("marcar a abertura de cerimonia", e\)/.test(ABRE));
   t("e não vai ao save (é um momento, não um fato)", !/aberturaRef\.current[^\n]*(?:localStorage|salvar)/.test(APP) && !/\babertura: abertura\b/.test(APP));
-  const pe = APP.indexOf("<PeDaPagina>"), fim = APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>");
+  /* MOVIDA em 08/11 (TL 9, o oficial): o pé do cartão saiu. O que ele levava (a
+     soleira, o coração, o crime) mora agora no momento por cima do campo — fora
+     do que rola, pela mesma razão de R15. O `pe` desta secção passa a ser a
+     chamada desse momento; e o d20 da espera vai em tinta (a página é a folha,
+     por isso a asserção da Voz acima também mudou de cor). */
+  const pe = APP.indexOf("{!emBatalha ? momentoPorCimaDoCampo() : null}"), fim = APP.indexOf("<div ref={fimRef}><FimDaPagina /></div>");
   /* MOVIDA na v9.449 (oficial): o texto tem agora DUAS etiquetas <Soleira — a
      de sempre, que só se desenha fora da linha só (`!numaLinha`), e a
      `reserva` do LimiteDasFichas, que só existe quando a fileira estoura NA
@@ -133,9 +148,11 @@ sec("4. a fiação");
      de "UMA soleira só". Prende-se a exclusão e a ordem do pé (fichas, coração,
      soleira). */
   const soleiras = APP.match(/<Soleira [^>]*\/>/g) || [];
-  t("a soleira mora no pé do cartão, e há UMA soleira só", pe > fim && soleiras.length === 2 && soleiras.every((x) => x === "<Soleira ofertas={ofertasDoPe} />")
-    && /reserva=\{numaLinha \? <Soleira ofertas=\{ofertasDoPe\} \/> : null\}/.test(APP)
-    && /<PeDaPagina>\s*\{comFichas \? \([\s\S]{0,1200}?<FileiraAVista [\s\S]{0,700}?\) : null\}\s*\{doCoracao\}\s*\{vivas\.length && !numaLinha \? <Soleira ofertas=\{ofertasDoPe\} \/> : null\}/.test(APP));
+  /* MOVIDA em 08/11 (TL 9): UMA Soleira do momento, por cima do campo e depois
+     do fim da página; o «+N» abre as OUTRAS ofertas (uma lista, as de trás), e
+     nunca uma segunda soleira das mesmas. */
+  t("a soleira mora fora do que rola, e há UMA soleira só", pe > fim && soleiras.length === 0 && (APP.match(/<SoleiraDoMomento momentos=\{momentos\} \/>/g) || []).length === 1
+    && (APP.match(/<Soleira ofertas=\{vivas\.slice\(1\)\.map\(/g) || []).length === 1);
   /* MOVIDA na F2b (12/10, oficial): as fichas (FileiraAVista) entram no
      MESMO pé, por cima do coração e da soleira (formas.md § Fichas 1: a
      prosa → as fichas → a soleira → o campo). Continua a haver UMA soleira
@@ -148,7 +165,8 @@ sec("4. a fiação");
   /* V5e: a seta é a peça `SetaDaLeitura` — o que se prende é o mesmo lugar: entre o
      fim da página e o pé, dentro do invólucro da rolagem. */
   t("a seta de voltar ao fim mora dentro da região da rolagem (nunca cobre a oferta)", APP.indexOf("<SetaDaLeitura", fim) > fim && APP.indexOf("<SetaDaLeitura", fim) < pe);
-  t("todas as peças de V3c continuam (a chegada, a impedida, a janela)", /chegada=\{o\.fila === "B" \|\| \(jaTinha && jaTinha\.has\(o\.id\)\) \? "assentada" : "agora"\}/.test(APP) && /estado=\{o\.precisaDoNarrador && bloqueado \? "impedida" : "repouso"\}/.test(APP) && /janela=\{o\.janela\}/.test(APP));
+  /* MOVIDA em 08/11 (TL 9): as ofertas de trás do «+N» chamam-se x */
+  t("todas as peças de V3c continuam (a chegada, a impedida, a janela)", /chegada=\{x\.fila === "B" \|\| \(jaTinha && jaTinha\.has\(x\.id\)\) \? "assentada" : "agora"\}/.test(APP) && /estado=\{x\.precisaDoNarrador && bloqueado \? "impedida" : "repouso"\}/.test(APP) && /janela=\{x\.janela\}/.test(APP));
   /* lado a lado NÃO: a 1280 cada coluna teria 544 px e a oferta pede ~600 numa
      linha (verbo 314 + quem + preço + janela 108) — o verbo quebrava em duas
      linhas. O `jogo` disse *se couberem*; não cabem. */
@@ -157,7 +175,10 @@ sec("4. a fiação");
   t("a oferta ganhou a moldura aberta, e sem ela é a de ontem",
     /aoClicar, moldura = "caixa" \}\)/.test(OFERTA) && /background: aberta \? "transparent" : T\.panel/.test(OFERTA)
     && /border: aberta \? "none" : `1px solid \$\{tomada \? T\.lineStrong : corDoTom\}`/.test(OFERTA) && /\$\{aberta \? "" : "px-3 "\}py-1/.test(OFERTA));
-  t("no pé a oferta é aberta: a moldura é a do cartão", /aoClicar=\{o\.aoClicar\} moldura="aberta" \/>/.test(APP));
+  /* MOVIDA em 08/11 (TL 9): o cartão escuro saiu, e com ele a moldura que a
+     oferta emprestava; as ofertas de trás do «+N» pousam no feltro, por cima do
+     campo, e por isso levam a caixa delas (a de ontem). */
+  t("fora do pé a oferta leva a caixa dela (a moldura do cartão saiu)", /aoClicar=\{x\.aoClicar\} \/>/.test(APP) && !/moldura="aberta"/.test(APP));
   t("e o tom continua dito: a cor do preço", /color: corDoTom, fontWeight: 600/.test(OFERTA));
   const SALA = trecho(APP, "V5 · O PAINEL DIZ A SALA", "A PORTA DOS CAPITULOS");
   t("o painel da masmorra diz a SALA, com o glifo dela", /GLIFO_DA_SALA\[salaAtual\?\.tipo\]/.test(SALA) && /" · por resolver"/.test(SALA));

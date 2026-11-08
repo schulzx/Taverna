@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 08/11 · v9.619 · a tela limpa, e as onze habilidades com nome próprio
+- **a palavra:** a foto do telefone — «veja só como fica poluída a tela, na tela do notebook isso também incomoda» —, e «corrigir as 11 habilidades com o mesmo nome».
+- **a forma (agente `desenho`, Figma `306:2`, `formas.md` «## TL · a tela limpa»):** a página da narração tinha dentro o lugar repetido, o horizonte, a luta dobrada, as pessoas, a proposta, o prazo e as ofertas — **0 linhas de prosa à vista** no estado da foto. A barra do topo e o ecrã do Mestre viram uma barra só (lugar, Em cena, vela e hora); o horizonte só ao chegar ou a pedido; a decisão num lugar só por cima do campo (a soleira do momento); a mesa do telefone numa tira de 72 px que se puxa; na mesa larga as cartas sobem à coluna da esquerda. TL 5 lista as 24 coisas que a tela mostrava e onde cada uma mora.
+- **as peças (agente `aprendiz`):** `BarraDoMestre`, `TiraDaMesa`, `MesaPuxada`, `EmCena`, `SoleiraDoMomento`, `momentoDaProposta`, a folha que passa da resposta à página. Suíte `teste-tela-limpa` 94.
+- **a fiação (agente `oficial`, bastão 07/11 23:50 → 08/11 00:41):** medido no navegador pela altura útil (a IA não corre): **375×667 5,5 → 16,4 linhas** (14,1 com decisão), 375×812 10,8 → 21,4, **1280×720 4,1 → 18,9**, **1905×860 9,2 → 24,0** (21,6 com decisão). Capturas em `mente/figma/tl-depois-*.png`. Quinze suítes de texto ajustadas com o motivo.
+- **as onze habilidades (agente `backend`):** a da subclasse ganhou nome e mecânica (Contratempo, Âmbar do Tempo, Ferida que Não Houve, Golpe de Misericórdia, Luz do Juízo, Flechas Gêmeas, Ponta de Agulha, Saraivada, Tiro de Mil Passos, Punhos em Cascata, Pés Ligeiros); o nome antigo fica na classe — que é o que `fichaDaHabilidade` sempre resolveu, logo nenhum save muda de sentido e ninguém perde pontos. Catraca `teste-nomes-unicos` (508 habilidades, 195 asserções).
+- **eu:** a linha `reescreverInstante(…, h)` no App (bastão de dois minutos); apaguei o `EcraDoMestre`, que ficou sem leitor.
+- **o que fica:** o glifo do clima (não existe; vive só no nome acessível); a escala das cartas na coluna vem por `zoom` (o `aprendiz` deve dar prop de escala à `FilaDasCartas`); os restos `CabecalhoDaPagina`, `PeDaPagina`, `mesa.ecra`, `telefone.ecra`, a fila velha; a pega da tira (alvo de 13 px, compensado pelo arrastar); «Em cena» contra a §8 das fichas, a confirmar pelo `desenho`; a §AR 11 ainda diz que as duas estrelas acendem juntas; a animação do dado de uso, a seguir; a proposta TL 10 (a prosa tocável) para a pessoa.
+
+---
+
 ## 07/11 · v9.618 · a constelação do herói e os dados de uso (as duas aprovadas)
 - **a palavra:** «As duas estão aprovadas» — a constelação (§AR 9) e os mantimentos como dados de uso (`mente/ar7-prova.md`, a proposta).
 - **o sistema (agente `backend`):** `src/dado-de-uso.js`. **A contagem continua a ser a verdade** (o save não muda): a face sai da contagem por tabela, e ao fim do dia o dado rola; num 1 perde-se uma unidade a mais. `lancamentoDoDadoDeUso` leva o lance à bandeja (papel `uso`). A tocha rola a cada sala da masmorra (`irParaSala`), o único sítio onde uma tocha se queima. Suíte 76.

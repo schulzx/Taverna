@@ -18,6 +18,18 @@
      abertura    o índice da resposta que abre com cerimónia, ou null
      aoAbrir     (porta) => abre a aba/sub-aba que a linha com seta anuncia
      aoOuvir     (i, texto) => lê em voz alta a resposta i
+     horizonte   { i, dados, chegada, aoTocarLugar } ou null — TL 9: o
+                 horizonte do sítio ONDE SE CHEGOU entra no relato, no turno
+                 da chegada (a resposta i), como bloco que rola com a prosa
+                 (a FaixaDoRumo, forma telefone). Sem ele (ou sem dados), 0 px.
+
+   07/11 · TL (a tela limpa): A PÁGINA É A FOLHA. A folha de cada resposta
+   saiu — o pergaminho é a área que rola inteira (.tv-folha, no App) —, e por
+   isso tudo o que aqui era letra solta no couro passa à tinta do papel: a
+   tua fala (tintaMeio 7,78, com o filete em tintaDim), a runa (a brasa
+   6,71), o botão de ouvir, as linhas do sistema (tintaMeio / tintaDim, a
+   porta em brasa). O que tem chão próprio — o ladrilho, as dobras, o
+   recibo — continua da paleta da mesa, pousado por cima (a regra da folha).
 
    OS CAMPOS DA MENSAGEM que este módulo conhece: `autor`, `texto`, e os
    três de A1, todos novos e ignorados pela versão antiga:
@@ -36,7 +48,10 @@
 
 import React, { useState } from "react";
 import { T, TIPOS, ALVOS, ESBATIMENTO, LADRILHO, PAGINA, RECIBO } from "./estilo.js";
-import { Voz, DivisoriaRunica, Prosa, BotaoDeOuvir, Glifo, LadrilhoDoAssunto, Recibo, Dobra, useMesa } from "./ui.jsx";
+/* a tinta das linhas soltas na página (TL 8: a página é o pergaminho) */
+const TINTA = { meio: T.tintaDoPergaminhoMeio, dim: T.tintaDoPergaminhoDim, porta: T.brasaNoPergaminho };
+import { DivisoriaRunica, Prosa, BotaoDeOuvir, Glifo, LadrilhoDoAssunto, Recibo, Dobra, useMesa } from "./ui.jsx";
+import { FaixaDoRumo } from "./painel-mapa-vivo.jsx";
 import { assuntoDaLinha, arrumarORelato, cabecalhoDaLuta, linhasDaLuta } from "./glifos.js";
 import { SUBS_GESTAO } from "./abas.js";
 /* As frases dos verbos da fileira (golpe.js, pela tela da batalha): é por
@@ -128,13 +143,13 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
     const miolo = (
       <>
         {porta ? <LadrilhoDoAssunto tom="porta" /> : glifo || impedido ? <LadrilhoDoAssunto glifo={glifo} tom={tom} /> : <span aria-hidden="true" className="shrink-0" style={{ width: LADRILHO.lado }} />}
-        <span className={(bloco ? "whitespace-pre-line " : "") + (porta ? "min-w-0" : "flex-1 min-w-0")} style={{ color: porta ? T.amberSoft : impedido ? T.inkDim : T.inkMeio }}>{resto}</span>
+        <span className={(bloco ? "whitespace-pre-line " : "") + (porta ? "min-w-0" : "flex-1 min-w-0")} style={{ color: porta ? TINTA.porta : impedido ? TINTA.dim : TINTA.meio }}>{resto}</span>
         {/* a seta da porta mora no ladrilho, à esquerda: a coluna dos assuntos fica inteira */}
       </>
     );
     return porta ? (
       <button key={i} type="button" onClick={() => aoAbrir(porta)} className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"
-        style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, cursor: "pointer", border: "1px solid " + T.lineStrong, borderRadius: LADRILHO.raio, padding: "0 12px 0 5px", marginLeft: -6 }}>{miolo}</button>
+        style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, cursor: "pointer", border: "1px solid " + TINTA.dim, borderRadius: LADRILHO.raio, padding: "0 12px 0 5px", marginLeft: -6 }}>{miolo}</button>
     ) : (
       <div key={i} className={"tv-fade tv-mono flex " + (bloco ? "items-start" : "items-center")}
         style={{ fontSize: TIPOS.maquina, gap: LADRILHO.espaco, minHeight: LADRILHO.lado }}>{miolo}</div>
@@ -149,15 +164,15 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
           <button onClick={() => setAberto((v) => !v)}
             title={aberto ? "Esconder as rolagens e os golpes" : "Ver rolagem por rolagem, golpe por golpe"}
             className="tv-anel-foco tv-mono w-full text-left flex items-center rounded-xl"
-            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, color: T.inkMeio }}>
+            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, color: TINTA.meio }}>
             <LadrilhoDoAssunto glifo={doSaldo.glifo || "dado"} />
-            <span style={{ color: T.amberSoft }}>{doSaldo.resto}</span>
+            <span style={{ color: TINTA.porta }}>{doSaldo.resto}</span>
             <span style={{ opacity: 0.7 }}>{aberto ? "▴ esconder" : `▾ ${dobradas.length} linhas`}</span>
           </button>
           {aberto && (
             <div className="w-full space-y-1" style={{ paddingLeft: LADRILHO.lado + LADRILHO.espaco }}>
               {dobradas.map((t, i) => { const d = assuntoDaLinha(t); return (
-                <div key={i} className="tv-mono flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>
+                <div key={i} className="tv-mono flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: TINTA.dim }}>
                   {d.glifo ? <Glifo nome={d.glifo} tamanho={14} /> : null}<span>{d.resto}</span>
                 </div>
               ); })}
@@ -255,7 +270,7 @@ function ReciboDaResposta({ chips }) {
    declarado no corpo de outro remonta a cada letra e mata o foco. O `Relato`
    devolve um fragmento — os mesmos filhos que o laço devolvia dentro da área
    que rola —, e por isso o DOM é o de antes, nó por nó. */
-export function Relato({ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir }) {
+export function Relato({ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null }) {
   /* `= []` no destructuring não cobre `null`: trata-se aqui. */
   const lista = Array.isArray(mensagens) ? mensagens : [];
   return (
@@ -294,12 +309,17 @@ export function Relato({ mensagens, carregando = false, voz = null, abertura = n
              `Resposta`. R2 não fabricou nem um nem outro — a peça só
              tem `quem` e `voz`. Pedido ao `desenho`, não inventado
              aqui. */
+          /* TL 8 (Figma 307:809): na página de pergaminho a tua fala é tinta
+             meia em itálico, na letra da prosa, recuada por um filete de 2 em
+             tintaDim (6,56) — sem caixa e sem o cabeçalho «Você» (na folha só
+             há tinta). O filete da espera passa à brasa do papel (6,71; o
+             âmbar daria 1,56 sobre o pergaminho), e assenta quando o Mestre
+             responde. */
           const esperaResposta = carregando && i === lista.length - 1;
           return (
-            <div key={i} className="tv-fade tv-coluna">
-              <Voz quem="voce" voz="muda" />
-              <div className="tv-body whitespace-pre-wrap mt-1 pl-4 pr-3 py-2 rounded-r-lg"
-                style={{ fontSize: TIPOS.corpo, fontStyle: "italic", color: T.inkMeio, background: T.paginaAlta, borderLeft: `2px solid ${esperaResposta ? T.amber : T.line}` }}>{m.texto}</div>
+            <div key={i} className="tv-fade tv-coluna" data-fala="jogador">
+              <div className="tv-body whitespace-pre-wrap"
+                style={{ fontSize: TIPOS.prosa, lineHeight: PAGINA.entrelinha, fontStyle: "italic", color: TINTA.meio, paddingLeft: 12, borderLeft: `2px solid ${esperaResposta ? TINTA.porta : TINTA.dim}` }}>{m.texto}</div>
             </div>
           );
         }
@@ -323,7 +343,12 @@ export function Relato({ mensagens, carregando = false, voz = null, abertura = n
            um lugar novo e a primeira resposta da sessão. */
         return (
           <div key={i} data-msg={i} className="tv-fade tv-coluna" style={{ scrollMarginTop: ESBATIMENTO.altura }}>
-            <DivisoriaRunica respiro={0} ponta={<BotaoDeOuvir estado={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"} aoOuvir={() => aoOuvir && aoOuvir(i, m.texto)} />} />
+            {horizonte && horizonte.i === i && horizonte.dados ? (
+              <div data-horizonte="chegada" style={{ marginBottom: PAGINA.entreBlocos }}>
+                <FaixaDoRumo dados={horizonte.dados} chegada={horizonte.chegada || null} telefone aoTocarLugar={horizonte.aoTocarLugar || null} />
+              </div>
+            ) : null}
+            <DivisoriaRunica respiro={0} naFolha ponta={<BotaoDeOuvir naFolha estado={voz && voz.i === i ? (voz.status === "gerando" ? "preparando" : "lendo") : "muda"} aoOuvir={() => aoOuvir && aoOuvir(i, m.texto)} />} />
             <Prosa texto={m.texto} abertura={abertura === i ? "cerimonia" : "nenhuma"} />
             {/* A1 · A2: `m.recibo` — o que a ficha mudou neste turno
                 (`reciboDoTurno`, que o App calcula no fim do turno, B2) —

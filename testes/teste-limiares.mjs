@@ -29,10 +29,14 @@ sec("1. quem e da familia — pelo texto real do catalogo");
   t("pega o campo inteiro", l.escopo === "todos");
   t("no terco dos PV", Math.abs(l.fracao - 1 / 3) < 1e-9);
 
-  /* as duas "Execucao" tem o MESMO nome e promessas diferentes: o ladino
-     elimina, o assassino dobra. Se o casamento fosse por nome, colidiriam. */
+  /* as duas "Execucao" tinham o MESMO nome e promessas diferentes: o ladino
+     elimina, o assassino dobra. Se o casamento fosse por nome, colidiriam.
+     C1 (07/11): a do Assassino passou a chamar-se "Golpe de Misericórdia" (o
+     nome igual acendia as duas na árvore). A asserção continua a mesma — duas
+     regras diferentes, cada uma achada pela promessa e não pelo nome —, e
+     agora prova também que a do Assassino segue a dobrar com o nome novo. */
   const exLadino = CLASSES.find((c) => c.nome === "Ladino").habilidades.find((h) => h.nome === "Execução");
-  const exAssassino = (SUBCLASSES["Assassino"] || []).find((h) => h.nome === "Execução");
+  const exAssassino = (SUBCLASSES["Assassino"] || []).find((h) => h.nome === "Golpe de Misericórdia");
   t("as duas Execucao existem", !!exLadino && !!exAssassino);
   t("a do Ladino ABATE", limiarDe(exLadino).modo === "abate");
   t("a do Assassino DOBRA", limiarDe(exAssassino).modo === "dobra");

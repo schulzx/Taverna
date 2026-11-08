@@ -191,6 +191,10 @@ sec("2. nada fora da tabela vira poder");
   const NOMES_QUE_CUMPREM = [
     "Cura Leve", "Toque Curativo", "Canção Curativa", "Balada do Herói",
     "Segundo Fôlego", "Purificar", "Palavra de Coragem", "Passo do Vento",
+    /* C1 (07/11): a do Andarilho chamava-se "Passo do Vento" como a do Monge
+       e casava pelo nome dele, sem aparecer aqui. Com nome próprio, ganhou
+       linha própria na tabela (`pes_ligeiros`), e entra na lista declarada. */
+    "Pés Ligeiros",
   ];
   const reconhecidas = ACERVO.filter(({ hab }) => poderDe(hab));
   const falsos = reconhecidas.filter(({ hab }) => !NOMES_QUE_CUMPREM.includes(hab.nome)).map(({ hab, fonte }) => `${hab.nome} (${fonte})`);

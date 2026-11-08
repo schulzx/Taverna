@@ -108,8 +108,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { T, ALVOS } from "./constantes.js";
-import { TIPOS, FICHAS } from "./estilo.js";
-import { Retrato, VerboComPreco, LinhaDoVeredito, TextoComMoeda, useMesa } from "./ui.jsx";
+import { TIPOS, FICHAS, EM_CENA } from "./estilo.js";
+import { Retrato, VerboComPreco, LinhaDoVeredito, TextoComMoeda, useMesa, Glifo } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
 import { retratoDe } from "./retratos.js";
 
@@ -122,6 +122,9 @@ const PALAVRAS = {
   sabe: "O que você sabe",
   lembra: "Você lembra",
   fechar: "Fechar",
+  /* TL 4 (07/11): o nome da gaveta e do botão de quem está aqui, na Barra do
+     Mestre — o desenho chama-lhe «Em cena» (formas.md §TL 4) */
+  emCena: "Em cena",
 };
 
 /* O DESENHO DAS MARCAS — a geometria dos nós `210:49` (`Ficha/Marca`) e
@@ -721,6 +724,100 @@ export function FileiraAVista({ itens = [], escrita = null, aberta = null, onToq
         );
         return formato === "telefone" && typeof document !== "undefined" ? createPortal(cartao, document.body) : cartao;
       })() : null}
+    </div>
+  );
+}
+
+/* ============================================================
+   TL · EM CENA (07/11/2026) — formas.md §TL 4; Figma 306:11 (Rostos em cena).
+
+   Quem está aqui, UMA vez só, na Barra do Mestre: rostos de 32 sem nome
+   escrito (aro couro 2, sobrepostos 8), no máximo 3, e o resto num «+N».
+   Pessoas e criaturas pelo rosto (a MarcaDaFicha, a mesma peça da fileira);
+   coisas e saídas pelo glifo de glifos.js num disco de 32 `panelSoft`.
+
+   É UM botão (48 de alto, a altura da barra) que abre a gaveta «Em cena» — a
+   FileiraAVista de hoje, inteira (nome, «sabe», verbos, apontar). O preço,
+   declarado na TL 5: a ficha passa de um toque a dois.
+
+   FICAM DE FORA as variantes que moram noutro lugar (EM_CENA.fora): a pessoa
+   do grupo (mora na mesa) e o lugar onde se está (mora na barra). A peça lê
+   `ficha.variante` quando o motor a manda; sem ela, ninguém é tirado — quem
+   liga filtra antes, se precisar. Sem ninguém em cena: 0 px.
+
+   <EmCena itens={fichas} escrita aberta onToque onAbrir onFechar onVerbo baixa />
+     · as mesmas props da FileiraAVista, que a gaveta passa tal e qual.
+   ============================================================ */
+const GLIFO_EM_CENA = { coisa: "bolsa", lugar: "alfinete" };
+const quemEstaEmCena = (itens) => (Array.isArray(itens) ? itens : [])
+  .filter((f) => f && f.id != null && f.nome && !EM_CENA.fora.includes(f.variante));
+
+/* o nome acessível: «Em cena: A, B, C e mais 2. Abrir.» */
+function nomeDoEmCena(itens) {
+  const lista = quemEstaEmCena(itens);
+  if (!lista.length) return "";
+  const vistos = lista.slice(0, EM_CENA.mostra).map((f) => String(f.nome));
+  const resto = lista.length - vistos.length;
+  const nomes = resto > 0 ? vistos.join(", ") + " e mais " + resto
+    : vistos.length > 1 ? vistos.slice(0, -1).join(", ") + " e " + vistos[vistos.length - 1] : vistos[0];
+  return PALAVRAS.emCena + ": " + nomes + ". Abrir.";
+}
+
+/* um rosto da barra: o rosto da ficha, ou o glifo num disco */
+function RostoEmCena({ ficha, primeiro }) {
+  const R = EM_CENA.rosto;
+  const caixa = { position: "relative", display: "inline-flex", flexShrink: 0, width: R + 2 * EM_CENA.aro, height: R + 2 * EM_CENA.aro,
+    marginLeft: primeiro ? 0 : -EM_CENA.sobrepoe, borderRadius: "50%", border: `${EM_CENA.aro}px solid ${T.couro}`, background: T.couro };
+  const glifo = GLIFO_EM_CENA[ficha.tipo];
+  if (glifo) {
+    return (
+      <span aria-hidden="true" style={caixa} data-em-cena={ficha.tipo}>
+        <span className="flex items-center justify-center" style={{ width: R, height: R, borderRadius: "50%", background: T.panelSoft }}>
+          <Glifo nome={glifo} tamanho={R / 2} cor={T.inkMeio} />
+        </span>
+      </span>
+    );
+  }
+  return <span aria-hidden="true" style={caixa} data-em-cena={ficha.tipo}><MarcaDaFicha ficha={ficha} lado={R} /></span>;
+}
+
+export function EmCena({ itens = [], escrita = null, aberta = null, onToque, onAbrir, onFechar, onVerbo, baixa = false }) {
+  const [gaveta, setGaveta] = React.useState(false);
+  const raiz = React.useRef(null);
+  const botao = React.useRef(null);
+  const lista = quemEstaEmCena(itens);
+  /* Esc e o toque fora fecham a gaveta (e o foco volta ao botão) */
+  React.useEffect(() => {
+    if (!gaveta) return undefined;
+    const tecla = (e) => { if (e.key === "Escape") { setGaveta(false); try { botao.current && botao.current.focus(); } catch (er) { /* segue */ } } };
+    const fora = (e) => { try { if (raiz.current && !raiz.current.contains(e.target)) setGaveta(false); } catch (er) { /* segue */ } };
+    document.addEventListener("keydown", tecla);
+    document.addEventListener("pointerdown", fora);
+    return () => { document.removeEventListener("keydown", tecla); document.removeEventListener("pointerdown", fora); };
+  }, [gaveta]);
+  if (!lista.length) return null;
+  const vistos = lista.slice(0, EM_CENA.mostra);
+  const resto = lista.length - vistos.length;
+  return (
+    <div ref={raiz} className="relative shrink-0" data-em-cena-raiz="">
+      <button ref={botao} type="button" onClick={() => setGaveta((v) => !v)} aria-label={nomeDoEmCena(lista)} aria-expanded={gaveta} aria-haspopup="dialog"
+        className="tv-anel-foco flex items-center" style={{ minHeight: EM_CENA.alvo, padding: "0 6px", background: "transparent", border: "none", cursor: "pointer" }}>
+        {vistos.map((f, i) => <RostoEmCena key={f.id} ficha={f} primeiro={i === 0} />)}
+        {resto > 0 ? (
+          <span aria-hidden="true" className="tv-mono flex items-center justify-center" style={{
+            height: EM_CENA.rosto, minWidth: EM_CENA.rosto, padding: "0 7px", marginLeft: -EM_CENA.sobrepoe + EM_CENA.aro, borderRadius: EM_CENA.rosto / 2,
+            background: T.panelSoft, border: `1px solid ${T.lineStrong}`, color: T.ink, fontSize: TIPOS.maquina, fontWeight: 700,
+          }}>+{resto}</span>
+        ) : null}
+      </button>
+      {gaveta ? (
+        <div role="dialog" aria-label={PALAVRAS.emCena} className="tv-gaveta-desce" style={{
+          position: "absolute", top: "100%", left: 0, zIndex: 40, width: "min(360px, calc(100vw - 16px))", padding: 12,
+          background: T.panel, border: `1px solid ${T.lineStrong}`, borderRadius: 10,
+        }}>
+          <FileiraAVista itens={lista} escrita={escrita} aberta={aberta} onToque={onToque} onAbrir={onAbrir} onFechar={onFechar} onVerbo={onVerbo} baixa={baixa} />
+        </div>
+      ) : null}
     </div>
   );
 }

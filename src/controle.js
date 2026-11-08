@@ -75,6 +75,16 @@ export const CONTROLES = [
     soTxt: "demônios e mortos-vivos",
     conceito: "o selo se fecha em círculo e o que é profano não atravessa",
   },
+  /* C1 (07/11): a do Arcanista, que até aqui se chamava "Prisão Arcana" como
+     a do Mago e por isso ERA a do Mago (um agarrão de aflição, ao acaso do
+     dado). A especialista do tempo não prende: para. Dois turnos, o que a
+     descrição diz, num alvo só — o selo de cima dura três, mas só morde o
+     profano; este morde qualquer um e por isso dura menos. */
+  {
+    id: "ambar_do_tempo", rx: /^ambar do tempo\b|fica paralisado no lugar por dois turnos/,
+    modo: "parar", escopo: "alvo", turnos: 2, cond: "paralisado",
+    conceito: "o instante endurece em volta dele como resina, e ele fica lá dentro",
+  },
   {
     id: "silencio", rx: /silencio que grita|ninguem consegue conjurar nem falar/,
     modo: "calar", escopo: "todos", turnos: 2, cond: "enfraquecido",

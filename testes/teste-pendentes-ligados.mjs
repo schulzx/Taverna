@@ -51,11 +51,19 @@ sec("1 · o paradeiro do Cronista");
 sec("2 · a janela baixa: fichas e ofertas numa linha");
 {
   t("o painel aceita `ofertas` (o contrato existe)", /export function FileiraAVista\(\{[^}]*ofertas = null[^}]*\}\)/.test(FICHAS));
-  t("numaLinha = fichas E ofertas E janela baixa", /const numaLinha = comFichas && vivas\.length > 0 && baixaDoPe;/.test(CODIGO_APP) && /const baixaDoPe = alturaDaJanela < FICHAS\.baixaAltura;/.test(CODIGO_APP));
-  t("a fileira recebe as mesmas <Oferta> na linha só", /<FileiraAVista [\s\S]*?ofertas=\{numaLinha \? ofertasDoPe : null\} \/>/.test(CODIGO_APP));
-  t("e a <Soleira> não se desenha então", /\{vivas\.length && !numaLinha \? <Soleira ofertas=\{ofertasDoPe\} \/> : null\}/.test(CODIGO_APP));
-  t("as ofertas são montadas uma vez (as mesmas, com as mesmas props)", (CODIGO_APP.match(/const ofertasDoPe = vivas\.map\(/g) || []).length === 1 && !/<Soleira ofertas=\{vivas\.map/.test(CODIGO_APP));
-  t("se a fileira estoura na linha só, a soleira volta (o que o mundo oferece não some)", /reserva=\{numaLinha \? <Soleira ofertas=\{ofertasDoPe\} \/> : null\}/.test(CODIGO_APP) && /this\.state\.erro \? \(this\.props\.reserva \|\| null\)/.test(CODIGO_APP));
+  /* MOVIDAS em 08/11 (TL 9, o oficial): a linha só da janela baixa deixou de
+     existir, porque as fichas e as ofertas deixaram de partilhar o pé — as
+     fichas foram para o EmCena da barra, as ofertas para a Soleira do momento,
+     por cima do campo. A intenção das cinco fica, dita na forma nova: as duas
+     nunca disputam a mesma linha; a primeira oferta é o momento e as outras são
+     as mesmas <Oferta> (com as mesmas props) atrás do «+N»; e se as fichas
+     estouram, o que o mundo oferece não some (cada uma cala-se no seu limite). */
+  const MOMENTO = (CODIGO_APP.match(/const momentoPorCimaDoCampo = \(\) => \{[\s\S]*?calou\("o momento por cima do campo", e\); return null; \}\s*\};/) || [""])[0];
+  t("as fichas moram na barra, as ofertas por cima do campo (nunca na mesma linha)", /emCena=\{fogueiraNaPagina \? null : \(\s*<LimiteDasFichas key=\{"em-cena\|"/.test(CODIGO_APP) && /const vivas = ofertasDaSoleira\(\) \|\| \[\];/.test(MOMENTO) && !/<FileiraAVista /.test(CODIGO_APP));
+  t("a primeira oferta é o momento, com o verbo, o preço e o prazo", /const o = vivas\[0\];/.test(MOMENTO) && /momentos\.proposta = \{\s*verbo: o\.verbo,/.test(MOMENTO) && /preco: \[o\.preco, prazo\]\.filter\(Boolean\)\.join\(" · "\),/.test(MOMENTO));
+  t("e as outras abrem-se atrás do «+N», as mesmas <Oferta> com as mesmas props", /secundario: vivas\.length > 1 \? \{ quantos: vivas\.length - 1,/.test(MOMENTO) && /<Soleira ofertas=\{vivas\.slice\(1\)\.map\(\(x\) => \(\s*<Oferta key=\{x\.id\} verbo=\{x\.verbo\} preco=\{x\.preco\} retorno=\{x\.retorno\}/.test(MOMENTO));
+  t("as ofertas lêem-se uma vez por render (uma lista, um lugar)", (CODIGO_APP.match(/ofertasDaSoleira\(\) \|\| \[\]/g) || []).length === 1);
+  t("se as fichas estouram, a soleira fica (cada uma no seu limite)", /<LimiteDasFichas key="soleira-do-momento"><SoleiraDoMomento momentos=\{momentos\} \/><\/LimiteDasFichas>/.test(MOMENTO) && /this\.state\.erro \? \(this\.props\.reserva \|\| null\)/.test(CODIGO_APP));
 }
 
 sec("3 · os nomes tocados em seguida");

@@ -103,9 +103,20 @@ sec("4. O sistema não fala de si (§8) e a cor não nasce solta");
   /* 12/10 (`aprendiz`): de quatro para cinco — a linha só da Baixa com oferta (§1)
      leva a região das ofertas com a MESMA etiqueta da `Soleira` (ui.jsx). O que se
      guarda não mudou: a lista é curta, fechada, e passa pela peneira das proibidas. */
-  t("PALAVRAS tem as cinco da tela", tela.length === 5, tela.join(" | "));
+  /* 07/11 (TL 4, `aprendiz`): de cinco para seis — «Em cena», o nome do botão
+     de quem está aqui na Barra do Mestre e da gaveta que ele abre (formas.md
+     §TL 4, decisão do `desenho`). A lista continua curta e fechada. */
+  t("PALAVRAS tem as seis da tela", tela.length === 6, tela.join(" | "));
   const PROIBIDAS = ["ficha", "fichas", "id", "em cena", "lista", "hostil", "segredo", "desconhecido", "papel", "mecanismo"];
-  const achadas = tela.filter((l) => PROIBIDAS.some((p) => new RegExp("(^|[^\\p{L}])" + p + "($|[^\\p{L}])", "iu").test(l)));
+  /* MOVIDA em 07/11 (TL 4): «Em cena» entra por decisão escrita do `desenho`
+     (formas.md §TL 4: o botão e a gaveta «Em cena», e o nome acessível «Em
+     cena: Conrado…, e mais 2. Abrir.»). É o nome de um LUGAR da barra, como
+     «À vista» é o do grupo — e só no nome acessível, nunca escrito na tela.
+     A exceção é UMA, nomeada, e o resto da peneira não afrouxa: «em cena»
+     dentro de qualquer outra palavra da tela continua proibido. A dúvida
+     (§8 contra TL 4) está declarada ao `regente`. */
+  const EXCECAO_DA_TL = ["Em cena"];
+  const achadas = tela.filter((l) => !EXCECAO_DA_TL.includes(l)).filter((l) => PROIBIDAS.some((p) => new RegExp("(^|[^\\p{L}])" + p + "($|[^\\p{L}])", "iu").test(l)));
   t("nenhuma palavra de mecanismo no que a tela diz", achadas.length === 0, achadas.join(" | "));
   const ariaLiterais = [...CODIGO.matchAll(/aria-label="([^"]*)"/g)].map((m) => m[1]);
   t("nenhum aria-label literal solto (vêm de PALAVRAS ou do nome)", ariaLiterais.length === 0, ariaLiterais.join(" | "));

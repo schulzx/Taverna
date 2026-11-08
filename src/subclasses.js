@@ -13,6 +13,17 @@
    O `degrau` é o rank exigido NAQUELA classe, não o nível do
    herói: um mago 9 de mago abre o último degrau da subclasse
    dele; um mago 9 espalhado em três classes, não.
+
+   UM NOME, UMA HABILIDADE (C1, 07/11). Onze entradas daqui tinham o
+   nome de uma habilidade da classe-mãe — o Arqueiro inteiro, três do
+   Arcanista, uma do Assassino, do Paladino, do Punho de Ferro e do
+   Andarilho. Como a árvore e a ficha procuram POR NOME, aprender uma
+   acendia as duas, e `fichaDaHabilidade` devolvia sempre a da classe:
+   o nó da subclasse era um nó que ninguém podia comprar. A decisão foi
+   que são DUAS — a da subclasse ganhou nome e efeito próprios (a
+   especialização é mais forte que o tronco) —, e o nome antigo ficou
+   onde o save já o lia, na classe. Nenhuma ficha muda de sentido. A
+   catraca que impede a próxima é `testes/teste-nomes-unicos.mjs`.
    ============================================================ */
 
 /* nome, custo em PM, tipo, descrição — o degrau vem da posição (3,5,7,9) */
@@ -55,9 +66,9 @@ export const SUBCLASSES = {
   ],
   "Arcanista": [
     S("Dilatação", 3, "utilidade", "O tempo se estica: você age com pressa sobrenatural."),
-    S("Contramágica", 4, "defesa", "Anula a próxima magia inimiga antes que ela se forme."),
-    S("Prisão Arcana", 6, "ataque", "Amarras místicas paralisam o alvo no lugar."),
-    S("Reescrever o Instante", 8, "utilidade", "Desfaz o último golpe sofrido, como se não tivesse acontecido."),
+    S("Contratempo", 4, "defesa", "Anula a próxima magia inimiga antes que ela se forme — mais cedo e mais barato que a contramágica."),
+    S("Âmbar do Tempo", 6, "ataque", "O instante endurece em volta do alvo, que fica paralisado no lugar por dois turnos."),
+    S("Ferida que Não Houve", 8, "utilidade", "Desfaz a última ferida sofrida, como se não tivesse acontecido."),
   ],
 
   /* ---------------- LADINO ---------------- */
@@ -65,7 +76,7 @@ export const SUBCLASSES = {
     S("Lâmina Peçonhenta", 3, "ataque", "Unta a arma: o golpe envenena quem sangrar."),
     S("Bote Silencioso", 4, "ataque", "Ataque das sombras com dano multiplicado."),
     S("Marca Mortal", 5, "ataque", "Marca um alvo — todo dano contra ele aumenta."),
-    S("Execução", 8, "ataque", "Contra alvo abaixo de metade da vida, o dano dobra."),
+    S("Golpe de Misericórdia", 8, "ataque", "Contra alvo abaixo de metade da vida, o dano dobra."),
   ],
   "Batedor": [
     S("Passo de Sombra", 3, "utilidade", "Some de vista e reaparece onde quiser — fica furtivo."),
@@ -91,7 +102,7 @@ export const SUBCLASSES = {
     S("Golpe Consagrado", 4, "ataque", "A arma brilha: dano sagrado extra no impacto."),
     S("Escudo da Aurora", 4, "defesa", "Uma barreira de luz protege você e quem estiver perto."),
     S("Juramento Radiante", 6, "suporte", "O grupo fica abençoado enquanto o juramento durar."),
-    S("Julgamento", 8, "ataque", "Luz que ofusca e queima todos os inimigos em cena."),
+    S("Luz do Juízo", 8, "ataque", "Luz que ofusca e queima todos os inimigos em cena: dano sagrado e cegueira."),
   ],
   "Inquisidor": [
     S("Marca do Ímpio", 3, "ataque", "Marca um herege: você acerta com vantagem contra ele."),
@@ -102,10 +113,10 @@ export const SUBCLASSES = {
 
   /* ---------------- CAÇADOR ---------------- */
   "Arqueiro": [
-    S("Tiro Duplo", 3, "ataque", "Duas flechas no mesmo movimento."),
-    S("Flecha Perfurante", 4, "ataque", "Atravessa a armadura e a carne atrás dela."),
-    S("Chuva de Flechas", 6, "ataque", "Uma saraivada que atinge todos os inimigos."),
-    S("Tiro do Fim", 8, "ataque", "Um único disparo, longo e certeiro, com dano brutal."),
+    S("Flechas Gêmeas", 3, "ataque", "Duas flechas no mesmo movimento, por dois turnos seguidos."),
+    S("Ponta de Agulha", 4, "ataque", "Uma ponta fina que fura a armadura e a carne atrás dela: ignora a armadura do alvo."),
+    S("Saraivada", 6, "ataque", "Uma saraivada de flechas que causa dano a todos os inimigos."),
+    S("Tiro de Mil Passos", 8, "ataque", "Um único disparo, longo e certeiro, com dano brutal: a distância e a cobertura não contam."),
   ],
   "Domador": [
     S("Chamado Selvagem", 4, "suporte", "Um animal aliado entra na luta ao seu lado."),
@@ -142,13 +153,13 @@ export const SUBCLASSES = {
 
   /* ---------------- MONGE ---------------- */
   "Punho de Ferro": [
-    S("Rajada de Golpes", 3, "ataque", "Uma sequência rápida de socos no mesmo alvo."),
+    S("Punhos em Cascata", 3, "ataque", "Uma sequência rápida de golpes no mesmo alvo."),
     S("Palma Atordoante", 4, "ataque", "Um golpe seco que atordoa quem recebe."),
     S("Punho que Rompe", 5, "ataque", "Ignora a defesa do alvo neste ataque."),
     S("Punho da Montanha", 8, "ataque", "Um único impacto capaz de derrubar um gigante."),
   ],
   "Andarilho": [
-    S("Passo do Vento", 3, "utilidade", "Move-se muito além do normal e fica apressado."),
+    S("Pés Ligeiros", 3, "utilidade", "Em disparada, move-se muito além do normal, ignora terreno difícil e fica apressado."),
     S("Dança das Sombras", 4, "defesa", "Esquiva do próximo ataque e reaparece atrás do inimigo."),
     S("Corrida Impossível", 5, "utilidade", "Atravessa a cena inteira sem ser tocado."),
     S("Cem Passos", 8, "ataque", "Atinge todos os inimigos em movimento, um após o outro."),

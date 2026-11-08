@@ -235,9 +235,14 @@ sec("8. lixo");
      vir ANTES de `relacao: "inimigo"` no texto da função. */
   t("(b) a ordem protege o crime: lerCrime roda ANTES de a vítima virar inimigo", agressao.indexOf("lerCrime(a, {") < agressao.indexOf('relacao: "inimigo"'));
 
-  const cartao = corpo("if (crimeVereditoPendente) {", 1200);
-  t("(a) o cartão tem as duas escolhas, na forma do golpe final (painel âmbar, Botao corpo/primário)", /border: `1px solid \$\{T\.amber\}`/.test(cartao) && /Botao corpo className="flex-1" onClick=\{crimeVereditoPendente\.aoDeixar\}>Deixar/.test(cartao) && /Botao corpo primario className="flex-1" onClick=\{crimeVereditoPendente\.aoConfirmar\}>Atacar mesmo assim/.test(cartao));
-  t("(a) nunca com a soleira ao mesmo tempo (mesmo slot, um só)", /if \(crimeVereditoPendente\) \{[\s\S]*?return \(\s*<PeDaPagina>/.test(cartao));
+  /* MOVIDAS em 08/11 (TL 9, o oficial): o pé do cartão saiu e o cartão do crime
+     mudou-se para o momento por cima do campo (momentoPorCimaDoCampo), com a
+     mesma forma; a borda passou a concatenação. A intenção fica: as duas
+     escolhas na forma do golpe final, e nunca com a soleira ao mesmo tempo —
+     o crime devolve ANTES de a soleira se montar (mesmo lugar, um só). */
+  const cartao = corpo("if (!propostaDaFrase && crimeVereditoPendente) {", 1200);
+  t("(a) o cartão tem as duas escolhas, na forma do golpe final (painel âmbar, Botao corpo/primário)", /border: "1px solid " \+ T\.amber/.test(cartao) && /Botao corpo className="flex-1" onClick=\{crimeVereditoPendente\.aoDeixar\}>Deixar/.test(cartao) && /Botao corpo primario className="flex-1" onClick=\{crimeVereditoPendente\.aoConfirmar\}>Atacar mesmo assim/.test(cartao));
+  t("(a) nunca com a soleira ao mesmo tempo (mesmo slot, um só)", /if \(!propostaDaFrase && crimeVereditoPendente\) \{\s*return \(\s*<div className="pt-2" data-momento="crime">/.test(cartao) && corpo("const momentoPorCimaDoCampo = () => {", 9000).indexOf("crimeVereditoPendente") < corpo("const momentoPorCimaDoCampo = () => {", 9000).indexOf("<SoleiraDoMomento"));
 
   const pauta = corpo('p = porNaPauta(p, "acabou", (propositosDoTurnoRef.current || []).map((x) => x.envelope).join("\\n"));', 900);
   // retirada (trilha A, 29/10): «(c) o crime do turno vai à pauta uma vez, e some» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).

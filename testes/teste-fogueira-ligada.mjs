@@ -73,7 +73,10 @@ sec("nunca pode custar o turno");
 sec("a página: a roda no lugar do relato, a manhã acima da prosa");
 {
   t("o cabeçalho diz «A noite · …» com a roda aberta (por cima do lugar da cena, que continua a alimentar a etiqueta)",
-    /clima \}\)\} \{\.\.\.\(fogueiraNaPagina \? \{ lugar: "A noite · " \+ \(\(sitio && sitio\.nome\) \|\| lugarDaCena\(\)\) \} : \{\}\)\} \/>/.test(APP));
+    /* MOVIDA em 08/11 (TL 9, o oficial): o cabeçalho da página saiu (o lugar
+       aparecia três vezes); «A noite · …» mora agora na Barra do Mestre, no
+       lugar do nome, alimentada pelo mesmo lugarDaCena. */
+    /const lugar = fogueiraNaPagina \? "A noite · " \+ \(\(sitio && sitio\.nome\) \|\| partes\[0\] \|\| lugarDaCena\(\)\)/.test(APP));
   t("a página volta ao topo quando a roda abre (a abertura e o fogo primeiro)", /areaRef\.current\.scrollTop = 0/.test(corpo("descansoLongo")));
   t("a roda toma o lugar do relato", /\{fogueiraNaPagina \? \([\s\S]{0,400}<PainelFogueira \{\.\.\.propsDaFogueira\(\)\} \/>/.test(APP));
   t("o acampamento sai da página enquanto a roda está aberta", /\{acampado && !fogueiraNaPagina && \(/.test(APP));
