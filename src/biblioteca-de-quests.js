@@ -54,6 +54,8 @@ import { ESTRUTURAS } from "./historia.js";
 import { contrair } from "./lugar.js";
 /* o acervo, do lote 4 em diante: um ficheiro por lote (src/acervo/) */
 import { QUESTS_LOTE_4 } from "./acervo/quests-lote-4.js";
+import { QUESTS_LOTE_5 } from "./acervo/quests-lote-5.js";
+import { QUESTS_LOTE_6 } from "./acervo/quests-lote-6.js";
 
 /* ---------------- OS DOIS TIPOS ----------------
    `fim`: como a quest acaba — `falha` (concluída ou falhada) ou
@@ -2186,6 +2188,8 @@ export const BIBLIOTECA_DE_QUESTS = congelarFundo([
   /* o acervo, do lote 4 em diante (BQ8): cada lote no seu ficheiro, em
      src/acervo/quests-lote-N.js — uma linha de import lá em cima e uma aqui */
   ...QUESTS_LOTE_4,
+  ...QUESTS_LOTE_5,
+  ...QUESTS_LOTE_6,
 ]);
 
 export function questPorId(id) {

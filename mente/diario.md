@@ -24,6 +24,14 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 09/11 · v9.628 · o acervo completo — 36 quests físicas, 16 do coração, 20 vilões com plano
+- **lote 5 (`backend`):** oito físicas do cedo e do meio (O Pão Que Sai de Noite, A Barca a Meio do Rio, As Chaves da Guarda, A Torre do Sino, A Rua Que Não Acorda, As Pegadas no Barro — a besta lida só pelas pegadas —, A Estalagem do Temporal, As Duas Fogueiras) e quatro do coração (A Vigia Trocada, A Última Lição, O Sangue do Carrasco, Quarenta Invernos), e os quatro últimos planos (espelho, penitente, fomentador, viúva do trono): **20 de 20**, o plano de recuo já não é alcançado.
+- **lote 6 (`backend`, em paralelo, cada lote no seu ficheiro):** nove físicas do meio e do fim (Os Dados Dele, A Mesma Tempestade, A Nona Noite, O Último Barco, O Teu Nome na Parede, O Posto do Capitão Morto, As Armas do Poço, O Recado Verdadeiro, O Que a Ama Esqueceu) e quatro do coração (A Cabeça Que Não Se Baixa, O Que o Tio Deixou, O Juramento à Cabeceira, O Morto Que Voltou a Casa).
+- **as medidas (1000 mundos):** a partilha média entre duas campanhas **0,84** (a meta da planta: abaixo de 1); o passo 4 por contestar nas espinhas de 4 atos 20 de 500; nenhuma quest a zero (a mínima entra em 32); o ato 0 espalhado por 7 quests. Catracas em `teste-esqueleto` 2b e 2c; a biblioteca com 836 provas, cada caminho de cada quest jogado.
+- **o que fica:** a prosa tocável (aprovada) e a sessão de teste com IA, que se avalia com a pessoa.
+
+---
+
 ## 09/11 · v9.627 · as quatro consequências caladas, e o lote 4 do acervo
 - **a palavra:** «A prosa tocável é interessante, os outros dois não são necessários, prossiga para o que falta, termine o acervo e as quatro consequências caladas, depois faça a prosa tocável, e então avaliamos uma sessão teste». As duas recusadas foram para «Recusado» em `pauta-desenho.md`.
 - **as consequências (`backend`):** `relogio_regional` (só a ameaça e a caçada andam — o mapa é uma região só; tabela `RELOGIOS_DA_REGIAO`, pelo `tiquear` de sempre); `favor` (tipo novo no livro de factos, a condição `deve_favor`, uma linha em «O QUE VOLTA» com o herói no lugar); `quem_e` (linha durável no livro, que o Cronista não apaga, lida por `quemEParaPauta`); o plano do vilão (`MUDA_DO_PLANO`: o relógio anda com a obra como causa, o «amado» perde um grau, a postura vira para a Sombra; base, porta, estrada, perigo e cativeiro calados com o motivo; cada passo cumprido manda a obra ao Narrador como facto longe). Eu liguei as três linhas no App (bastão de minutos).

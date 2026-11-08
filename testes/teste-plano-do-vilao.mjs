@@ -26,6 +26,7 @@ import {
   sabeONome, reagirAoHeroi, temAFraqueza, desfechoDoVilao, oVilaoNaPauta,
 } from "../src/plano-do-vilao.js";
 import { PLANOS_LOTE_4 } from "../src/acervo/planos-lote-4.js";
+import { PLANOS_LOTE_5 } from "../src/acervo/planos-lote-5.js";
 import { ARQUETIPOS, FASES, PASSOS_DO_PLANO, diasDoPasso } from "../src/vilao.js";
 import { FONTES, RESPOSTAS, LEITURAS, TETO_DO_QUE_SABE, CORPOS } from "../src/antagonista.js";
 import { FERIDA_DO_VILAO, ATO_DA_REVELACAO } from "../src/nucleo.js";
@@ -90,11 +91,21 @@ sec("§1 AS TABELAS");
      Guerra, o Santo Vivo, a Criança Antiga e o Arquiteto — dezasseis dos
      vinte —, e trouxe-os de outro ficheiro (src/acervo/planos-lote-4.js),
      que plano-do-vilao.js junta às suas tabelas. A intenção fica: todos de
-     vilao.js, e os de antes continuam lá */
-  t("dezasseis arquétipos com plano (os quatro da BQ5 e os dos lotes 2, 3 e 4), todos de vilao.js",
-    arqs.length === 16 && arqs.every((a) => ARQUETIPOS.some((x) => x.id === a))
+     vilao.js, e os de antes continuam lá.
+     Movida no lote 5 (BQ8, 09/11): eram dezasseis; o lote 5 trouxe os quatro
+     que faltavam (o Espelho, o Penitente, o Fomentador e a Viúva do Trono),
+     de src/acervo/planos-lote-5.js. São os vinte — todos os de vilao.js —, e
+     a intenção fica: todos de vilao.js, e os de antes continuam lá */
+  t("vinte arquétipos com plano (os quatro da BQ5 e os dos lotes 2 a 5): todos os de vilao.js",
+    arqs.length === 20 && arqs.length === ARQUETIPOS.length && arqs.every((a) => ARQUETIPOS.some((x) => x.id === a))
     && ["vendedor_de_medo", "traido", "faminto", "zeloso", "credor", "boticaria", "almiranta", "profeta_queimado",
-      "herdeiro", "cortesao", "colecionador", "domador", ...Object.keys(PLANOS_LOTE_4.planos)].every((a) => arqs.includes(a)));
+      "herdeiro", "cortesao", "colecionador", "domador", ...Object.keys(PLANOS_LOTE_4.planos), ...Object.keys(PLANOS_LOTE_5.planos)].every((a) => arqs.includes(a)));
+  t("o lote 5 entra nas tabelas pelo seu ficheiro: os quatro que andavam pelo recuo, uma fraqueza de cada família, e a afinidade somada",
+    J(Object.keys(PLANOS_LOTE_5.planos).sort()) === J(["espelho", "fomentador", "penitente", "viuva_do_trono"])
+    && Object.keys(PLANOS_LOTE_5.planos).every((a) => J(PLANOS_DO_ARQUETIPO[a].map((p) => p.diz)) === J(PLANOS_LOTE_5.planos[a].map((p) => p.diz)) && Object.isFrozen(PLANOS_DO_ARQUETIPO[a][0]))
+    && Object.entries(PLANOS_LOTE_5.fraquezas).every(([fam, l]) => l.length === 4 && l.every((e) => FRAQUEZAS[fam].some((x) => x.id === e.id && x.arquetipo === e.arquetipo)))
+    && AFINIDADE_DO_ANTECEDENTE.por.artista.viuva_do_trono === PLANOS_LOTE_5.afinidade.artista.viuva_do_trono
+    && AFINIDADE_DO_ANTECEDENTE.por.ferreiro.fomentador === PLANOS_LOTE_5.afinidade.ferreiro.fomentador);
   t("o lote 4 entra nas tabelas pelo seu ficheiro: os planos, uma fraqueza de cada família por arquétipo, e a afinidade somada à da tabela",
     Object.keys(PLANOS_LOTE_4.planos).length === 4
     && Object.keys(PLANOS_LOTE_4.planos).every((a) => J(PLANOS_DO_ARQUETIPO[a].map((p) => p.diz)) === J(PLANOS_LOTE_4.planos[a].map((p) => p.diz)) && Object.isFrozen(PLANOS_DO_ARQUETIPO[a][0]))
@@ -169,10 +180,11 @@ sec("§1 AS TABELAS");
      escritos com a forma dos do lote 2, para servir o catálogo inteiro — o
      de hoje, com as seis do tipo 1 que o lote 3 trouxe */
   /* o lote 4 (BQ8) também: os planos do seu ficheiro entram na régua */
-  const novos = ["credor", "boticaria", "almiranta", "profeta_queimado", "herdeiro", "cortesao", "colecionador", "domador", ...Object.keys(PLANOS_LOTE_4.planos)];
+  /* e o lote 5 (BQ8, 09/11), na mesma régua: os quatro últimos */
+  const novos = ["credor", "boticaria", "almiranta", "profeta_queimado", "herdeiro", "cortesao", "colecionador", "domador", ...Object.keys(PLANOS_LOTE_4.planos), ...Object.keys(PLANOS_LOTE_5.planos)];
   const encaixaJa = (q, plano) => q.mao.contra.every((n) => plano[n - 1] && [q.mao.tipo, ...(q.mao.tambem || [])].some((m) => plano[n - 1].contra.includes(m)));
   const naoCabe = novos.flatMap((a) => BIBLIOTECA_DE_QUESTS.filter((q) => q.mao && !encaixaJa(q, PLANOS_DO_ARQUETIPO[a])).map((q) => a + "/" + q.id));
-  t("nos planos dos lotes 2, 3 e 4, toda quest do catálogo cabe no passo que contesta", naoCabe.length === 0, naoCabe.join(", "));
+  t("nos planos dos lotes 2 a 5, toda quest do catálogo cabe no passo que contesta", naoCabe.length === 0, naoCabe.join(", "));
   t("e o passo 4 de cada plano novo aceita a pista e o recurso", novos.every((a) => ["pista", "recurso"].every((m) => PLANOS_DO_ARQUETIPO[a][3].contra.includes(m))));
   t("o caçador atrai o Domador (o lote 3 entra na roda pelo passado do herói)", (() => {
     const c = {}; for (let i = 0; i < 400; i++) { const r = nascerOVilao({ semente: "dom" + i, antecedente: "cacador" }); c[r.arquetipo] = (c[r.arquetipo] || 0) + 1; }
@@ -281,8 +293,17 @@ sec("§4 A FICHA — a vista sobre o que existe");
   t("o fim e o plano próprio", f.fim === FIM_DO_PLANO.vendedor_de_medo && f.planoProprio && f.plano === PLANOS_DO_ARQUETIPO.vendedor_de_medo);
   t("a fraqueza, em mundo", f.fraqueza.familia === "verdade" && f.fraqueza.o.includes("livro de contas"));
   t("a ficha pelo fio também serve", fichaDoVilao({ ...FIO, vilao: registo() }).nome === "Ilídia Selamar");
+  /* movida no lote 5 (BQ8, 09/11): o Espelho era o exemplo de quem ainda
+     não tinha plano e andava pelo recuo. O lote 5 deu plano aos quatro que
+     faltavam, e já nenhum arquétipo de vilao.js passa por essa porta — que
+     fica aberta (PLANO_DE_RECUO, provado em §1) para o arquétipo que um dia
+     nascer sem plano. A intenção — o arquétipo sem plano próprio anda pelo
+     recuo, e o que tem plano anda pelo seu — prova-se agora pelo outro lado:
+     o Espelho anda pelo dele, e não sobra ninguém para o recuo */
   const esp = fichaDe(registo({ arquetipo: "espelho" }));
-  t("quem ainda não tem plano anda pelo recuo, com seis passos", !esp.planoProprio && esp.plano.length === 6 && esp.plano[0].diz === PASSOS_DO_PLANO[0].diz && esp.fim === FIM_DO_PLANO.espelho);
+  t("o Espelho, o último exemplo do recuo, anda agora pelo plano próprio; e nenhum arquétipo sobra para o recuo",
+    esp.planoProprio && esp.plano === PLANOS_DO_ARQUETIPO.espelho && esp.plano.length === 6 && esp.plano[0].diz !== PASSOS_DO_PLANO[0].diz && esp.fim === FIM_DO_PLANO.espelho
+    && ARQUETIPOS.every((a) => PLANOS_DO_ARQUETIPO[a.id]));
 }
 
 sec("§5 O RELÓGIO — anda e recua pelos factos certos");

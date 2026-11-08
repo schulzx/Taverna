@@ -31,6 +31,8 @@ import { gerarGeografia } from "../src/geografia.js";
 import { estenderEspinha, garantirEspinha } from "../src/saga.js";
 import { nucleoDaCampanha } from "../src/nucleo.js";
 import { chefesDoMundo, locaisDaCidade, genteDoLocal } from "../src/mundo-base.js";
+import { QUESTS_LOTE_6 } from "../src/acervo/quests-lote-6.js";
+import { QUESTS_LOTE_5 } from "../src/acervo/quests-lote-5.js";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -390,6 +392,96 @@ const VIVOS = [], CHEIOS = [], DE_HOJE = [];
   }
   console.log(`      · o sítio do tipo preferido, quando a cidade o tem: ${doTipo} de ${comTipo}`);
   t("quando a cidade tem o sítio do tipo que a ficha prefere, o esqueleto escolhe-o em quatro de cada cinco vezes ou mais (o resto: já ocupado por outra quest, ou o vizinho que o evita)", comTipo > 0 && doTipo / comTipo > 0.8, `${doTipo}/${comTipo}`);
+}
+
+/* O LOTE 6 (BQ8, 08/11): o que o esqueleto mediu com o catálogo de 27, agora
+   catraca. Antes do lote: o passo 4 das espinhas de quatro atos ficava por
+   contestar em 81 de 500 campanhas, e só O Enforcado de Amanhã o cobria (564
+   de 1000); o rosto e o confronto tinham quatro e três quests para um ato
+   em todas as mil; e duas campanhas partilhavam 1,64 quests em média.
+   1. o passo 4 de quatro atos por contestar em menos de uma campanha em dez;
+   2. cada quest do lote entra, e os dois rostos e os dois confrontos só com
+      o vilão da natureza que a ficha aceita (a Tempestade com as duas);
+   3. a pista que entrega a fraqueza pelo papel (O Que a Ama Esqueceu) entrega-a;
+   4. a partilha média do catálogo vivo abaixo de 1,3 (era 1,64). */
+sec("2b. o lote 6 (BQ8) — o passo 4 de quatro atos, os rostos e os confrontos novos, e a partilha");
+{
+  const LOTE6 = QUESTS_LOTE_6.map((q) => q.id);
+  const ehBicho6 = (c) => !!c && !!c.especie && !String(c.nome).includes(",") && norm(c.nome).startsWith(norm(c.especie));
+  const vezes6 = {}, natureza6 = {}, semP4 = { campanhas: 0, sem: 0 };
+  let pelaAma = 0, comAma = 0;
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    if (!k) continue;
+    const principal = w.chefes.find((c) => norm(c.nome) === norm(w.espinha.fio.antagonista));
+    const nat = ehBicho6(principal) ? "fera" : "gente";
+    for (const id of [...k.atos.map((a) => a.quest), ...k.coracao.map((c) => c.quest)].filter((x) => LOTE6.includes(x))) {
+      vezes6[id] = (vezes6[id] || 0) + 1;
+      natureza6[id] = { ...(natureza6[id] || {}), [nat]: ((natureza6[id] || {})[nat] || 0) + 1 };
+    }
+    if (k.atos.length === 4) { semP4.campanhas++; if (k.semContestacao.includes(4)) semP4.sem++; }
+    if (k.atos.some((a) => a.quest === "o_que_a_ama_esqueceu")) { comAma++; if (k.fraqueza && k.fraqueza.quest === "o_que_a_ama_esqueceu") pelaAma++; }
+  }
+  console.log(`      · o lote 6, quantas vezes cada quest entra em ${N}: ${LOTE6.map((id) => `${id} ${vezes6[id] || 0}`).join(" · ")}`);
+  console.log(`      · com quatro atos, o passo 4 por contestar: ${semP4.sem} de ${semP4.campanhas} (eram 81 de 500 antes do lote 6)`);
+  t("cada quest do lote 6 entra em alguma campanha", LOTE6.every((id) => vezes6[id] > 0), LOTE6.filter((id) => !vezes6[id]).join(", "));
+  t("com quatro atos, o passo 4 fica por contestar em menos de uma campanha em dez (eram 81 de 500)", semP4.campanhas > 0 && semP4.sem < semP4.campanhas / 10, `${semP4.sem}/${semP4.campanhas}`);
+  const aceitaDe = (id) => { const v = Object.values(questPorId(id).papeis).find((p) => p.de === "fio" && p.papel === "vilao"); return (v && v.aceita) || PAPEIS_DA_QUEST.fio.aceitaOVilao; };
+  const novas = ["os_dados_dele", "a_mesma_tempestade", "a_nona_noite", "o_ultimo_barco"];
+  t("os dois rostos e os dois confrontos do lote 6 entram só com o vilão da natureza que aceitam",
+    novas.every((id) => Object.keys(natureza6[id] || {}).length > 0 && Object.keys(natureza6[id]).every((n) => aceitaDe(id).includes(n))), J(natureza6));
+  t("a mesma tempestade serve as duas naturezas, e a nona noite é de uma fera",
+    ["gente", "fera"].every((n) => (natureza6.a_mesma_tempestade || {})[n] > 0) && J(Object.keys(natureza6.a_nona_noite || {})) === J(["fera"]));
+  console.log(`      · O Que a Ama Esqueceu entrega a fraqueza pelo papel em ${pelaAma} das ${comAma} campanhas onde entra`);
+  t("a pista do lote 6 que traz os papéis da fraqueza entrega-a em parte das campanhas onde entra", comAma > 0 && pelaAma > 0, `${pelaAma}/${comAma}`);
+  let s6 = 0, n6 = 0;
+  for (let i = 0; i + 1 < VIVOS.length; i += 2) {
+    if (!VIVOS[i] || !VIVOS[i + 1]) continue;
+    const a = new Set([...VIVOS[i].atos.map((x) => x.quest), ...VIVOS[i].coracao.map((c) => c.quest)].filter(Boolean));
+    s6 += [...VIVOS[i + 1].atos.map((x) => x.quest), ...VIVOS[i + 1].coracao.map((c) => c.quest)].filter((id) => id && a.has(id)).length; n6++;
+  }
+  const part6 = Math.round((100 * s6) / n6) / 100;
+  t(`duas campanhas partilham em média menos de 1,3 quests com o catálogo vivo (${part6}; era 1,64 antes do lote 6)`, part6 < 1.3, String(part6));
+}
+
+sec("2c. o lote 5 (BQ8) — o ato 0 de todas as campanhas, as pistas do 3 e do 4, e o vilão que é bicho lido no chão");
+{
+  /* O lote 5 (09/11) foi escrito para o que o esqueleto mediu com 27
+     quests: o ato 0 (o passo 1, «cedo») de mil campanhas tinha quatro
+     tenentes; nos 188 mundos sem nenhum servo gente só O Que Desce ao
+     Anoitecer servia; O Enforcado de Amanhã entrava em mais de metade das
+     campanhas, porque as pistas do 3 e do 4 eram três; e nenhuma quest do
+     meio servia o vilão que é bicho (549 de 1000). Medido sem o lote 6
+     (scratchpad, 09/11): a partilha desce de 1,67 para 1,17, o passo 4 de
+     quatro atos por contestar de 73 para 22 de 500, o Enforcado de 582
+     para 271. Aqui, com o catálogo vivo, as catracas. */
+  const LOTE5 = QUESTS_LOTE_5.map((q) => q.id);
+  const ehBicho5 = (c) => !!c && !!c.especie && !String(c.nome).includes(",") && norm(c.nome).startsWith(norm(c.especie));
+  const vezes5 = {}, doAto0 = {};
+  let ato0 = 0, semGente5 = 0, semGenteComPao = 0, pegadasComGente = 0, pegadasComFera = 0, paoComServoGente = 0;
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    if (!k) continue;
+    for (const id of [...k.atos.map((a) => a.quest), ...k.coracao.map((c) => c.quest)].filter((x) => LOTE5.includes(x))) vezes5[id] = (vezes5[id] || 0) + 1;
+    const a0 = k.atos[0];
+    if (a0 && a0.quest) { ato0++; doAto0[a0.quest] = (doAto0[a0.quest] || 0) + 1; }
+    const principal = w.chefes.find((c) => norm(c.nome) === norm(w.espinha.fio.antagonista));
+    if (k.atos.some((a) => a.quest === "as_pegadas_no_barro")) { if (ehBicho5(principal)) pegadasComFera++; else pegadasComGente++; }
+    const pao = k.atos.find((a) => a.quest === "o_pao_que_sai_de_noite");
+    if (pao) { const servo = w.chefes.find((c) => norm(c.nome) === norm(pao.papeis.fera.nome)); if (!ehBicho5(servo)) paoComServoGente++; }
+    const servos = k.vilao.tenentes.map((x) => w.chefes.find((c) => norm(c.nome) === norm(x.nome)));
+    if (servos.length && servos.every(ehBicho5)) { semGente5++; if (pao && pao.ato === 0) semGenteComPao++; }
+  }
+  const maiorAto0 = Object.entries(doAto0).sort((x, y) => y[1] - x[1])[0] || ["", 0];
+  console.log(`      · o lote 5, quantas vezes cada quest entra em ${N}: ${LOTE5.map((id) => `${id} ${vezes5[id] || 0}`).join(" · ")}`);
+  console.log(`      · o ato 0: ${Object.keys(doAto0).length} quests diferentes em ${ato0} campanhas; a que mais entra, ${maiorAto0[0]}, em ${maiorAto0[1]}`);
+  console.log(`      · nos ${semGente5} mundos sem nenhum servo gente, O Pão Que Sai de Noite abre a campanha em ${semGenteComPao}`);
+  console.log(`      · As Pegadas no Barro: ${pegadasComFera} com o vilão bicho, ${pegadasComGente} com o vilão gente`);
+  t("cada quest do lote 5 entra em alguma campanha", LOTE5.every((id) => vezes5[id] > 0), LOTE5.filter((id) => !vezes5[id]).join(", "));
+  t("o ato 0 de todas as campanhas reparte-se: nenhuma quest abre mais de uma campanha em quatro", ato0 > 0 && maiorAto0[1] < ato0 / 4, `${maiorAto0[0]} ${maiorAto0[1]}/${ato0}`);
+  t("nos mundos sem nenhum servo gente, o tenente que é bicho do cedo abre parte das campanhas (já não é só O Que Desce ao Anoitecer)", semGente5 > 0 && semGenteComPao > 0, `${semGenteComPao}/${semGente5}`);
+  t("a pista do vilão que é bicho só entra nos mundos em que ele é bicho, e entra", pegadasComFera > 0 && pegadasComGente === 0, `${pegadasComFera}/${pegadasComGente}`);
+  t("e o tenente do Pão é sempre um bicho", paoComServoGente === 0 && (vezes5.o_pao_que_sai_de_noite || 0) > 0);
 }
 
 sec("3. o catálogo cheio (sintético): o plano desenhado pelas quests");

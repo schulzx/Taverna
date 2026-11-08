@@ -65,6 +65,7 @@ import { derrotou, poupou } from "./livro-de-factos.js";
 import { avaliarCondicao, resolverPapeis } from "./condicoes-da-quest.js";
 import { MAOS_DO_VILAO, LIMITES_DA_QUEST } from "./biblioteca-de-quests.js";
 import { PLANOS_LOTE_4 } from "./acervo/planos-lote-4.js";
+import { PLANOS_LOTE_5 } from "./acervo/planos-lote-5.js";
 
 /* ---------------- A FICHA, EM NÚMEROS ----------------
    `passos`: quantos passos tem um plano (a planta: seis, as frentes do
@@ -131,7 +132,7 @@ export const EFEITOS_DO_PLANO = Object.freeze({
    muda: quem as lê não sabe de que ficheiro veio cada arquétipo. */
 const passo = (diz, presagio, obra, seTravado, contra, muda, custa, prazo) =>
   Object.freeze({ diz, presagio, obra, seTravado, contra: Object.freeze(contra), muda: Object.freeze(muda), custa, prazo });
-const LOTES_DE_PLANOS = Object.freeze([PLANOS_LOTE_4]);
+const LOTES_DE_PLANOS = Object.freeze([PLANOS_LOTE_4, PLANOS_LOTE_5]);
 const doLote = (p) => passo(p.diz, p.presagio, p.obra, p.seTravado, p.contra, p.muda, p.custa, p.prazo);
 export const PLANOS_DO_ARQUETIPO = Object.freeze({
   /* §11.9: Ilídia Selamar é este plano, com a cara que a criação lhe der */
@@ -535,7 +536,9 @@ export const PLANOS_DO_ARQUETIPO = Object.freeze({
 /* ---------------- O RECUO ----------------
    Quem ainda não tem plano próprio anda por seis dos nove passos genéricos
    de vilao.js (`indices`), com a voz de recuo de cada posição. Não é o
-   ideal — é o que existia, e o acervo (BQ8) vai esvaziando esta porta. */
+   ideal — é o que existia, e o acervo (BQ8) foi esvaziando esta porta.
+   Com o lote 5 (09/11) os vinte de vilao.js têm plano próprio, e já ninguém
+   passa por aqui; a porta fica aberta para o arquétipo que nascer sem plano. */
 export const PLANO_DE_RECUO = Object.freeze({
   indices: Object.freeze([0, 1, 2, 4, 6, 8]),
   presagio: Object.freeze([
