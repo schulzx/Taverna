@@ -22,6 +22,14 @@
    guarda com `porta: null` (TIPOS_DE_FACTO): ninguém no jogo os escreve
    ainda, e uma quest que os pedisse nunca fecharia.
 
+   O ESTADO DA PRÓPRIA QUEST (BQ4, biblioteca-de-quests.js). `escolheu` e
+   `etapa` nasceram reservados à espera de quem guardasse a escolha e a
+   etapa feita; a BQ4 guarda-as no registo da quest (`escolherNaQuest`,
+   `avancarQuest`) e passa-as aqui em `contexto.quest` — { feitas,
+   escolhas, rotulos }. Leem só isso: nunca o livro, nunca a prosa. Os
+   `rotulos` são as frases de mundo que a ficha dá à escolha e à etapa
+   («pagar a portagem a Brás»), porque o vocabulário não as sabe.
+
    OS ARGUMENTOS SÃO PAPÉIS, NUNCA NOMES. A condição diz `papel:mentor`,
    `lugar:covil`, `item:carta`; quem é o mentor sai da criação do mundo, e
    o papel passa a id UMA VEZ (`resolverPapeis`), pelo MESMO elenco com que
@@ -70,6 +78,8 @@ export const PAPEIS_DA_CONDICAO = Object.freeze({
   item: Object.freeze({ tipo: "item", semNome: "uma coisa", artigos: Object.freeze(["o", "a", "os", "as", "um", "uma", "uns", "umas"]) }),
 });
 const RX_ARGUMENTO = /^(papel|lugar|item):([a-z0-9_]{1,40})$/;
+/* o argumento de texto (a escolha, a opção, a etapa): um id da ficha */
+const RX_TEXTO = /^[a-z0-9_]{1,40}$/;
 const TIPO_DO_PREFIXO = Object.freeze(Object.fromEntries(Object.entries(PAPEIS_DA_CONDICAO).map(([k, v]) => [k, v.tipo])));
 
 /* ---------------- DE ONDE SE LÊ ----------------
@@ -80,6 +90,7 @@ export const FONTES_DA_CONDICAO = Object.freeze({
   base: "estado.baseMundo — os mortos, as situações e as masmorras concluídas (mundo-base.js)",
   dia: "estado.dia — o dia do mundo",
   inventario: "estado.personagem: inventario, equipamento e equipados",
+  quest: "contexto.quest — o registo da quest aberta (biblioteca-de-quests.js): as etapas feitas e as escolhas",
 });
 
 /* ---------------- OS LIMITES ----------------
@@ -118,6 +129,9 @@ export const COMBINADORES = Object.freeze({
               (conhecer, falar, morrer): um `nenhum` sobre ele, já verdade,
               não se cumpre mais (`impossivel` no «o que falta»);
      texto  — a frase de mundo, com {0}, {1} para os argumentos;
+     rotulo — onde a frase de mundo vem do registo da quest (contexto.quest
+              .rotulos), quando o vocabulário não a sabe: a chave, com os
+              argumentos em {0}, {1};
      nao    — a frase do veto (dentro de `nenhum`);
      reservado — o motivo, quando ninguém escreve ainda o facto: o
               predicado existe para a planta, e nenhuma quest o pode usar.
@@ -132,6 +146,7 @@ const A = Object.freeze({
 const PORTA_DO_CRONISTA = P("src/motor/cronista-do-turno.js", "oAceitoDoCronista", "o efeito «factos» do Cronista: falou_com, os segredos, os nomeados");
 const PORTA_DA_CENA = P("src/motor/livro-do-turno.js", "oQueACenaDaAoLivro", "o fim da resposta: quem está à vista, o lugar, a afeição do grupo");
 const PORTA_DA_LUTA = P("src/motor/luta-do-turno.js", "caidosParaOLivro", "o fim da luta: os caídos, com rendido, desacordado e fugiu");
+const A_TEXTO = Object.freeze({ tipo: "texto" });
 export const CONDICOES = Object.freeze({
   conheceu: Object.freeze({
     args: [A.pessoa], le: ["livro"], facto: "visto", volta: false,
@@ -200,6 +215,15 @@ export const CONDICOES = Object.freeze({
     args: [Object.freeze({ tipo: "numero", omissao: 1, min: 1, max: 100000 })], le: ["dia"], volta: false,
     portas: [P("src/motor/tempo-do-turno.js", "osMinutosAndam", "o relógio do mundo, que vira o dia")],
     texto: "esperar até ao dia {0}", nao: "acabar antes do dia {0}" }),
+  /* ---- o estado da própria quest (BQ4): ativos desde que o registo existe ---- */
+  escolheu: Object.freeze({
+    args: [A_TEXTO, A_TEXTO], le: ["quest"], volta: false,
+    portas: [P("src/biblioteca-de-quests.js", "escolherNaQuest", "a decisão do herói, com o veredito antes do clique, guardada no registo da quest")],
+    texto: "tomar uma decisão", nao: "não decidir", rotulo: "{0}:{1}" }),
+  etapa: Object.freeze({
+    args: [A_TEXTO], le: ["quest"], volta: false,
+    portas: [P("src/biblioteca-de-quests.js", "avancarQuest", "a etapa que fecha, guardada no registo da quest com o dia e o ramo")],
+    texto: "dar o passo anterior", nao: "antes do passo anterior", rotulo: "etapa:{0}" }),
 
   /* ---- reservados: a planta pede-os, e o jogo ainda não escreve o facto ---- */
   entregou: Object.freeze({
@@ -210,14 +234,6 @@ export const CONDICOES = Object.freeze({
     args: [A.pessoa], le: ["livro"], facto: "prometeu", volta: false, portas: [],
     texto: "dar a palavra a {0}", nao: "não prometer nada a {0}",
     reservado: "o livro guarda `prometeu` (TIPOS_DE_FACTO), mas nenhuma peça do jogo o escreve: porta null" }),
-  escolheu: Object.freeze({
-    args: [Object.freeze({ tipo: "texto" }), Object.freeze({ tipo: "texto" })], le: [], volta: false, portas: [],
-    texto: "decidir", nao: "não decidir",
-    reservado: "as escolhas guardam-se no estado da quest (`quests[q].escolhas`), que nasce na BQ4 — até lá ninguém as escreve" }),
-  etapa: Object.freeze({
-    args: [Object.freeze({ tipo: "texto" })], le: [], volta: false, portas: [],
-    texto: "o passo anterior", nao: "antes do passo anterior",
-    reservado: "a etapa feita guarda-se no estado da quest, que nasce na BQ4 — até lá ninguém a escreve" }),
   relogio: Object.freeze({
     args: [Object.freeze({ tipo: "texto" }), A.vezes], le: [], volta: false, portas: [],
     texto: "o tempo a correr", nao: "o tempo parado",
@@ -340,6 +356,8 @@ export function validarCondicao(cond, papeis) {
         if (!Number.isInteger(v) || v < a.min || v > a.max) erros.push(`${onde}: ${nome}, o argumento ${i} devia ser um inteiro de ${a.min} a ${a.max}`);
       } else if (a.tipo === "opcao") {
         if (!a.de.includes(v)) erros.push(`${onde}: ${nome}, o argumento ${i} devia ser um de ${a.de.join(", ")}`);
+      } else if (a.tipo === "texto") {
+        if (typeof v !== "string" || !RX_TEXTO.test(v)) erros.push(`${onde}: ${nome}, o argumento ${i} devia ser um id da ficha ([a-z0-9_])`);
       } else {
         const m = typeof v === "string" ? v.match(RX_ARGUMENTO) : null;
         if (!m || TIPO_DO_PREFIXO[m[1]] !== a.tipo) { erros.push(`${onde}: ${nome}, o argumento ${i} devia ser um papel do tipo ${a.tipo}`); return; }
@@ -435,6 +453,9 @@ const LEITURAS = {
      leva («a carta» está em «carta selada de Brás»; «Espada» não está em
      «Espadachim») */
   tem: (c, [i]) => ({ v: !!i.id && nosPertences(c).some((n) => ` ${n} `.includes(` ${i.id} `)) }),
+  /* o registo da quest, e só ele (BQ4) */
+  escolheu: (c, [k, op]) => ({ v: !!c.quest && !!obj(c.quest.escolhas) && c.quest.escolhas[k] === op }),
+  etapa: (c, [id]) => ({ v: !!c.quest && !!obj(c.quest.feitas) && !!c.quest.feitas[id] }),
   dia: (c, [n]) => {
     const tem = Math.max(0, inteiro(c.E.dia) || 0);
     return { v: tem >= n, tem, precisa: n };
@@ -456,6 +477,7 @@ function montar(contexto) {
     base: obj(E.baseMundo) || {},
     npcs: obj(E.npcs) || {},
     grupo: arr((obj(E.personagem) || {}).grupo),
+    quest: obj(k.quest),
   };
 }
 function argumentos(c, def, args) {
@@ -491,8 +513,11 @@ function atomo(c, cond) {
   if (!def) return { v: false, item: { predicado: nome, desconhecido: true, texto: "" }, descr: "" };
   const { out, mostrar, dados, semId, torto } = argumentos(c, def, cond.slice(1));
   const valores = Object.fromEntries(mostrar.map((x, i) => [i, x]));
-  const descr = preencher(def.texto, valores);
-  const nao = preencher(def.nao, valores);
+  /* a frase que o registo da quest dá à escolha e à etapa, quando a tem */
+  const chave = def.rotulo ? String(def.rotulo).replace(/\{(\d+)\}/g, (m, k) => String(cond[1 + Number(k)])) : null;
+  const rot = chave && c.quest && obj(c.quest.rotulos) && typeof c.quest.rotulos[chave] === "string" ? c.quest.rotulos[chave] : null;
+  const descr = rot || preencher(def.texto, valores);
+  const nao = rot ? preencher(COMBINADORES.nenhum.evitar, { 0: rot }) : preencher(def.nao, valores);
   const base = { predicado: nome, args: dados };
   if (def.reservado) return { v: false, item: { ...base, reservado: true, texto: descr }, descr, nao, volta: def.volta };
   if (torto) return { v: false, item: { ...base, invalida: true, texto: "" }, descr: "", nao: "", volta: def.volta };
@@ -550,12 +575,13 @@ function julgar(c, cond, prof) {
   };
 }
 
-/* avaliarCondicao(cond, { estado, papeis, mundo }) → true | false
+/* avaliarCondicao(cond, { estado, papeis, mundo, quest }) → true | false
    `estado`: a forma do save (estado.js). `papeis`: os da criação, já
    resolvidos ou não (resolvem-se aqui, pela mesma régua). `mundo`: a
    semente e o molde, para a ponte do lugar (o de elencoDoLivro); sem ele,
-   o `estado.mundo`. É o que a reviravolta, a falha e o desfecho da quest
-   (BQ4) perguntam. */
+   o `estado.mundo`. `quest`: o registo da quest — { feitas, escolhas,
+   rotulos } —, o único que `escolheu` e `etapa` leem. É o que a
+   reviravolta, a falha e o desfecho da quest (BQ4) perguntam. */
 export function avaliarCondicao(cond, contexto) {
   try { return julgar(montar(contexto), cond, 0).v; } catch { return false; }
 }

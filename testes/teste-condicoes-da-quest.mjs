@@ -158,17 +158,27 @@ const VERDADE = {
   concluiu: ["concluiu", "lugar:covil"],
   tem: ["tem", "item:carta"],
   dia: ["dia", 7],
+  /* BQ4 (08/11): `escolheu` e `etapa` deixaram de estar reservados — leem
+     o registo da quest (biblioteca-de-quests.js), que entra em
+     contexto.quest. O caso de verdade deles é o registo cheio abaixo. */
+  escolheu: ["escolheu", "passo", "portagem"],
+  etapa: ["etapa", "aceitar"],
 };
+const QUEST_CHEIA = { feitas: { aceitar: true }, escolhas: { passo: "portagem" }, rotulos: {} };
 
 sec("§2 cada predicado ativo fecha com o mundo que o produz — e só com ele");
 {
   const C = cheio();
   t("há um caso de verdade para cada predicado ativo", J(Object.keys(VERDADE).sort()) === J([...ativos].sort()), J(ativos.filter((k) => !VERDADE[k])));
-  const naoFecham = Object.keys(VERDADE).filter((k) => !julgarEtapa({ conclui: VERDADE[k] }, { estado: C, papeis: PAPEIS }).feita);
+  const naoFecham = Object.keys(VERDADE).filter((k) => !julgarEtapa({ conclui: VERDADE[k] }, { estado: C, papeis: PAPEIS, quest: QUEST_CHEIA }).feita);
   t("no mundo cheio, todos fecham", naoFecham.length === 0, naoFecham.join(", "));
   const fechamNoVazio = Object.keys(VERDADE).filter((k) => avaliarCondicao(VERDADE[k], { estado: vazio(), papeis: PAPEIS }));
   t("no mundo vazio, nenhum fecha", fechamNoVazio.length === 0, fechamNoVazio.join(", "));
   t("e cada caso passa a validação", Object.values(VERDADE).every((c) => validarCondicao(c, PAPEIS).ok));
+  t("escolheu e etapa leem só o registo da quest: o mundo cheio sem registo não os fecha",
+    !avaliarCondicao(VERDADE.escolheu, { estado: C, papeis: PAPEIS }) && !avaliarCondicao(VERDADE.etapa, { estado: C, papeis: PAPEIS }));
+  t("o argumento deles é um id da ficha: o nome, o número e o vazio não validam",
+    !validarCondicao(["escolheu", "Passo Largo", "x"], PAPEIS).ok && !validarCondicao(["etapa", 3], PAPEIS).ok && !validarCondicao(["etapa", ""], PAPEIS).ok);
   const C2 = cheio();
   t("o poupado não está morto, e a morta não foi poupada",
     !avaliarCondicao(["morto", "papel:tenente"], { estado: C2, papeis: PAPEIS }) && !avaliarCondicao(["poupou", "papel:sumida"], { estado: C2, papeis: PAPEIS }) && avaliarCondicao(["derrotou", "papel:sumida"], { estado: C2, papeis: PAPEIS }));
@@ -319,7 +329,9 @@ sec("§6 os compostos e o «o que falta»");
   t("nenhuma frase do «o que falta» diz um papel, um prefixo ou um modelo por preencher", vazam.length === 0 && frases.length >= 16, vazam.join(" | "));
 
   /* O Salvo-Conduto da planta (§2), no vocabulário de hoje. O passo social
-     («escolheu») é da BQ4: aqui fica de fora, e a validação o recusa. */
+     («escolheu») é da BQ4: aqui fica de fora. Até à BQ4 a validação
+     recusava-o (reservado); desde a BQ4 aceita-o, e a quest inteira, com o
+     passo social, joga-se em teste-biblioteca-de-quests.mjs. */
   sec("§6.1 o Salvo-Conduto, etapa a etapa");
   const SC = {
     aceitar: ["conversou", "papel:protegido"],
@@ -329,8 +341,13 @@ sec("§6 os compostos e o «o que falta»");
   };
   const PSC = { ...PAPEIS, destino: { tipo: "lugar", cidade: "Foz do Meio" } };
   t("as quatro etapas validam contra os papéis declarados", Object.values(SC).every((c) => validarCondicao(c, PSC).ok));
-  t("o passo da planta, com o «escolheu», não valida ainda (reservado até à BQ4)",
-    !validarCondicao(["algum", ["derrotou", "papel:tenente"], ["escolheu", "passo", "portagem"], ["esteve", "lugar:desvio"]], PSC).ok);
+  /* MOVIDA na BQ4 (08/11): esta asserção dizia «não valida ainda (reservado
+     até à BQ4)». A BQ4 deu ao `escolheu` quem escreva o que ele lê
+     (escolherNaQuest, no registo da quest), e a intenção — nenhum predicado
+     sem escritor passa a validação — continua provada em §1 para os que
+     ficaram reservados (entregou, prometeu, relogio). */
+  t("o passo da planta, com o «escolheu», valida desde a BQ4 (o registo da quest escreve a escolha)",
+    validarCondicao(["algum", ["derrotou", "papel:tenente"], ["escolheu", "passo", "portagem"], ["esteve", "lugar:desvio"]], PSC).ok);
   let e = { ...vazio(), lugar: { nome: "Praça", cidade: CIDADE } };
   const j = (k) => julgarEtapa({ id: k, conclui: SC[k] }, { estado: e, papeis: PSC });
   t("nenhuma etapa nasce feita", Object.keys(SC).every((k) => !j(k).feita));

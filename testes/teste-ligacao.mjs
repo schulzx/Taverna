@@ -296,8 +296,33 @@ sec("1. NENHUM MÓDULO MUDO");
        as três primeiras quests (`biblioteca-de-quests.js`, `estadoDaQuest`),
        que o importa. Credor: o `backend`, na etapa seguinte da MESMA fase.
        A entrada sai quando a BQ4 o importar, e a lista volta a ficar VAZIA.
-       `teste-condicoes-da-quest.mjs` é o primeiro leitor. */
-    "condicoes-da-quest.js": "08/11 · BQ3 → BQ4 (biblioteca-de-quests.js)",
+       `teste-condicoes-da-quest.mjs` é o primeiro leitor.
+       — 08/11 (BQ4, a mesma fase): `biblioteca-de-quests.js` importa-o (a
+       ficha valida-se pelo vocabulário, e a quest julga-se por ele), e a
+       entrada saiu. */
+    /* 08/11 (Fase BQ, BQ4 · a ficha e as três primeiras quests):
+       `biblioteca-de-quests.js` nasce no backend — a ficha em dado
+       (validarQuest, as tabelas dos tipos, da mão do vilão e dos efeitos),
+       o catálogo (BIBLIOTECA_DE_QUESTS: o Salvo-Conduto, as Cinzas de
+       Ontem, a Carta Que Não Se Abre) e o juiz (abrirQuest, avancarQuest,
+       escolherNaQuest, vereditoDaEscolha, estadoDaQuest) — e espera a BQ6,
+       o esqueleto (`esqueleto.js`), que escolhe as quests do catálogo pela
+       `mao` e as abre num mundo novo. Credor: o `backend`, na MESMA fase.
+       A entrada sai quando o esqueleto (ou o plano do vilão, BQ5) o
+       importar. `teste-biblioteca-de-quests.mjs` é o primeiro leitor. */
+    "biblioteca-de-quests.js": "08/11 · BQ4 → BQ6 (esqueleto.js)",
+    /* 08/11 (Fase BQ, BQ5 · o vilão: a ficha, o plano e as camadas):
+       `plano-do-vilao.js` nasce no backend — o nascimento pela semente e
+       pelo antecedente (nascerOVilao), o registo em `espinha.fio.vilao`
+       (garantirRegistroDoVilao), a ficha (fichaDoVilao), o relógio do plano
+       (relogioDoPlano), as camadas pelo facto (camadaDoVilao), as reações
+       (reagirAoHeroi), os desfechos (desfechoDoVilao) e a linha «A MÃO DELE
+       AQUI» com os vetos (oVilaoNaPauta) — e espera a BQ6, o esqueleto
+       (`esqueleto.js`), que escolhe primeiro o vilão e o plano e o importa;
+       a fiação no App é da BQ7. Credor: o `backend`, na etapa seguinte da
+       MESMA fase. A entrada sai quando o esqueleto o importar.
+       `teste-plano-do-vilao.mjs` é o primeiro leitor. */
+    "plano-do-vilao.js": "08/11 · BQ5 → BQ6 (esqueleto.js)",
   };
   const mudos = [];
   for (const f of arqs) {

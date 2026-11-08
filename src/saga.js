@@ -130,6 +130,13 @@ export const FEITIOS = {
 };
 export function feitioDe(id) { return FEITIOS[id] || FEITIOS.procurar; }
 
+/* a cópia do registo do vilão (BQ5): um objeto simples, nunca a mesma
+   referência — a espinha guardada não pode ser mutada por quem a leu */
+function copiaDoRegisto(v) {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+  try { return JSON.parse(JSON.stringify(v)); } catch { return null; }
+}
+
 /* ---------------- A CATRACA ---------------- */
 export function garantirEspinha(e) {
   const o = e && typeof e === "object" ? e : {};
@@ -153,6 +160,12 @@ export function garantirEspinha(e) {
          e o bilhete sem palavras que ele deixa */
       ...(Number.isFinite(f.inicio) ? { inicio: f.inicio } : {}),
       ...(f.assinatura ? { assinatura: String(f.assinatura).slice(0, 60) } : {}),
+      /* BQ5 (08/11): o registo do vilão dos mundos novos — o arquétipo, o
+         plano, a fraqueza, a camada (plano-do-vilao.js). Só aditivo: a versão
+         antiga ignora-o. Aqui só passa, copiado; a catraca dele é
+         `garantirRegistroDoVilao`, que quem o lê aplica — importá-la daqui
+         fecharia um ciclo (saga → plano-do-vilao → nucleo → saga). */
+      ...(copiaDoRegisto(f.vilao) ? { vilao: copiaDoRegisto(f.vilao) } : {}),
     } } : {}),
     atos: atos.map((a, i) => ({
       ato: Number.isFinite(a && a.ato) ? a.ato : i,
