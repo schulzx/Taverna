@@ -43,6 +43,23 @@
    leem o registo daqui (passado em `contexto.quest`): quem escreve a
    escolha é `escolherNaQuest`, e quem escreve a etapa é `avancarQuest`.
 
+   A TEMPERATURA E OS PRESSUPOSTOS (09/11/2026, Fase TE · TE1–TE3). A
+   pessoa: *«uma missão que diz que o vilão se apresenta não vem depois de
+   uma missão que o vilão ainda não foi apresentado… uma missão quente e
+   depois uma missão fria… temos que ter o tipo de "calor" dela»*
+   (mente/plano-temperatura-e-espolios.md, parte 1). Cada ficha diz agora
+   QUANTO aquece (`temperatura`, um grau de TEMPERATURAS) além de ONDE cabe
+   (`quando`), e os dois não se contradizem (TEMPERATURA_DO_QUANDO). E diz o
+   que tem de ser verdade para poder existir (`pressupoe`) e o que garante
+   quando conclui (`estabelece`), no vocabulário da BQ3 — sem segunda
+   língua — e só com os predicados de PRESSUPOSTOS. As premissas («tipo:
+   papel», o `deixa` e o `pede`) fecharam-se em PREMISSAS: a planta contou
+   52 tipos escritos por 110 efeitos, e zero leitores; o que tinha leitor
+   passou a `estabelece` (o encontro com ele é a camada do rosto), o resto
+   saiu. Premissa escrita sem leitor quebra a suíte — a lei do export morto,
+   aplicada a dado. Nada disto aparece na tela: é a ordem que o jogador
+   sente, nunca o nome do mecanismo.
+
    PURO E DETERMINÍSTICO. Nenhuma sorte, nenhum relógio: o dia sai do
    estado que entra por argumento, que nunca é mutado. O `null` e o lixo
    não abrem, não fecham e não lançam.
@@ -60,14 +77,70 @@ import { QUESTS_LOTE_6 } from "./acervo/quests-lote-6.js";
 /* ---------------- OS DOIS TIPOS ----------------
    `fim`: como a quest acaba — `falha` (concluída ou falhada) ou
    `desfechos` (terminada, num dos desfechos da ficha). `mao`: se a quest
-   leva a mão do vilão (§11.3: o tipo 2 não é sobre ele; toca-o pela ponte). */
+   leva a mão do vilão (§11.3: o tipo 2 não é sobre ele; toca-o pela ponte).
+   `quandoDaTemperatura` (TE1): quantos dos seus `quando` têm de aceitar a
+   temperatura (TEMPERATURA_DO_QUANDO) — `cada` no tipo 1, que o esqueleto
+   põe por ato; `algum` no tipo 2, que corre por janelas (JANELAS_DO_CORACAO)
+   e tem por `quando` os três: o calor dele responde à janela, não ao ato. */
 export const TIPOS_DE_QUEST = Object.freeze({
-  1: Object.freeze({ nome: "o enredo do lugar", fim: "falha", mao: true }),
-  2: Object.freeze({ nome: "o que acompanha o herói", fim: "desfechos", mao: false }),
+  1: Object.freeze({ nome: "o enredo do lugar", fim: "falha", mao: true, quandoDaTemperatura: "cada" }),
+  2: Object.freeze({ nome: "o que acompanha o herói", fim: "desfechos", mao: false, quandoDaTemperatura: "algum" }),
 });
 
 /* em que ato o esqueleto (BQ6) a pode pôr */
 export const QUANDO_DA_QUEST = Object.freeze(["cedo", "meio", "fim"]);
+
+/* ---------------- A TEMPERATURA (TE1) ----------------
+   Quanto a quest aquece a história — não ONDE ela cabe (isso é o `quando`),
+   mas o que põe em jogo. Um grau por ficha, nunca uma lista. `ordem`: para
+   o esqueleto comparar (a curva e o respiro são da TE4); `diz`: o que o
+   grau é, para quem escreve a ficha; `exemplo`: a ficha que o mostra. */
+export const TEMPERATURAS = Object.freeze({
+  brasa: Object.freeze({ ordem: 0, diz: "o lugar, uma pessoa, o rumor: ninguém do vilão à vista", exemplo: "o_celeiro_de_inverno" }),
+  chama: Object.freeze({ ordem: 1, diz: "a mão dele age: morre gente, um servo tem cara", exemplo: "o_salvo_conduto" }),
+  fogueira: Object.freeze({ ordem: 2, diz: "a obra dele à vista, a fraqueza, o rosto", exemplo: "o_convite_sem_selo" }),
+  incendio: Object.freeze({ ordem: 3, diz: "tudo em jogo: o confronto", exemplo: "o_cimo_da_escada" }),
+});
+
+/* A CATRACA ENTRE O ONDE E O QUANTO: os graus que cada posição aceita. Uma
+   brasa no meio de uma campanha é uma descida que ninguém pediu; um incêndio
+   cedo, um clímax sem caminho. `validarQuest` recusa a ficha fora dela
+   (pela regra do tipo, TIPOS_DE_QUEST.quandoDaTemperatura). */
+export const TEMPERATURA_DO_QUANDO = Object.freeze({
+  cedo: Object.freeze(["brasa", "chama"]),
+  meio: Object.freeze(["chama", "fogueira"]),
+  fim: Object.freeze(["fogueira", "incendio"]),
+});
+
+/* ---------------- OS PRESSUPOSTOS (TE2) ----------------
+   O que uma quest pode pressupor (`pressupoe`: uma lista de condições do
+   vocabulário da BQ3, todas verdade antes de ela existir) e estabelecer
+   (`estabelece`: o que garante quando conclui). Só estes predicados, cada
+   um com quem o garante:
+     `esqueleto` — garantido por construção: o esqueleto só põe a quest
+                   num ato depois do que o estabelece (a ordem dos atos e o
+                   `estabelece` das quests anteriores, TE4). O tipo 1 só
+                   pressupõe destes: um ato nunca fica à espera;
+     `abertura`  — garantido em jogo: a quest espera para abrir até ele
+                   valer (o portão da abertura, TE5). Só o tipo 2.
+   `estabelece`: se o predicado pode estar no `estabelece` de uma ficha. */
+export const PRESSUPOSTOS = Object.freeze({
+  camada: Object.freeze({ garante: "esqueleto", estabelece: true, diz: "a revelação do vilão já chegou a esta camada" }),
+  convivencia: Object.freeze({ garante: "abertura", estabelece: false, diz: "o herói já fez dias de estrada com alguém: um passado partilhado é verdade" }),
+  afeicao: Object.freeze({ garante: "abertura", estabelece: false, diz: "alguém já confia no herói o bastante para lhe contar o que não conta" }),
+});
+
+/* ---------------- AS PREMISSAS (TE2) ----------------
+   O `deixa` e o `pede` da ficha («tipo:papel»): a pessoa que uma quest
+   deixa para outra, e que o esqueleto (`pede`, esqueleto.js) põe no papel
+   da seguinte. Vocabulário fechado: cada tipo diz quem o lê. A planta contou
+   52 tipos de premissa escritos e nenhum lido; o que tinha leitor virou
+   `estabelece`, o resto saiu. A suíte quebra se uma ficha do catálogo deixa
+   uma premissa que nenhuma outra pede. */
+export const PREMISSAS = Object.freeze({
+  aliado: Object.freeze({ le: "pede", diz: "alguém que a quest deixou do lado do herói" }),
+  inimigo: Object.freeze({ le: "pede", diz: "alguém que a quest deixou contra o herói" }),
+});
 
 /* os estados do registo (a planta, §6) */
 export const ESTADOS_DA_QUEST = Object.freeze({
@@ -148,8 +221,12 @@ export const LIMITES_DA_QUEST = Object.freeze({
    (`consequencias`), e a fiação (BQ7) aplica-os, cada um pela porta que já
    existe. `campos`: o que cada um pede — `n` (inteiro com sinal),
    `papel` (pessoa, lugar ou coisa, declarado na ficha), `laco`
-   (TIPOS_DE_LACO, npcs.js), `situacao` (SITUACOES, mundo-base.js),
-   `premissa` («tipo:papel», para o esqueleto) e `linha` (texto de mundo).
+   (TIPOS_DE_LACO, npcs.js), `situacao` (SITUACOES, mundo-base.js) e
+   `linha` (texto de mundo). O efeito `deixa` (a premissa em jogo) saiu na
+   TE2: escrevia 52 tipos numa lista (espinha.quests.premissas) que nenhuma
+   peça lia, e o esqueleto, que era o leitor pensado, corre na criação do
+   mundo — antes de qualquer efeito acontecer. O que ele dizia de uma pessoa
+   passou, nas reviravoltas, a uma linha do QUEM É (`quem_e`), que é lida.
    `so`: onde o efeito pode estar — a morte de alguém do grupo só num
    desfecho do tipo 2, nunca numa etapa, numa escolha ou numa solução. */
 const C_N = Object.freeze({ n: "inteiro" });
@@ -159,7 +236,6 @@ export const EFEITOS_DA_QUEST = Object.freeze({
   relogio_regional: Object.freeze({ campos: C_N, diz: "o relógio da região anda" }),
   relogio_do_fio: Object.freeze({ campos: C_N, diz: "o relógio do vilão anda" }),
   avisa_vilao: Object.freeze({ campos: Object.freeze({}), diz: "o vilão fica a saber por onde o herói anda (o livro dele, BQ5)" }),
-  deixa: Object.freeze({ campos: Object.freeze({ premissa: "premissa" }), diz: "uma premissa para as quests seguintes" }),
   laco: Object.freeze({ campos: Object.freeze({ papel: "pessoa", laco: "laco" }), diz: "nasce um laço com alguém" }),
   rompe_laco: Object.freeze({ campos: Object.freeze({ papel: "pessoa" }), diz: "o laço com alguém rompe-se" }),
   afeicao: Object.freeze({ campos: Object.freeze({ papel: "pessoa", n: "inteiro" }), diz: "a confiança de alguém sobe ou desce graus" }),
@@ -216,8 +292,8 @@ const O_SALVO_CONDUTO = quest({
     guarda: { de: "elenco", proximo: "protegido", rotulo: "quem anda mais perto de {protegido}" },
   },
   mao: { tipo: "tenente", contra: [1, 2], papel: "tenente" },
-  pede: [],
-  deixa: ["aliado:protegido", "inimigo:tenente"],
+  temperatura: "chama",
+  estabelece: [["camada", "mao"]],
   gancho: "{protegido} tem de chegar a {destino} com vida antes da lua nova, e leva na cabeça o que sabe de quem está por trás de {tenente}. Em {origem} ninguém faz a estrada ao lado de {protegido}: os dois últimos que tentaram voltaram num carro de bois, de cara para o céu.",
   etapas: [
     { id: "aceitar", texto: "Ouvir {protegido}", conclui: ["conversou", "papel:protegido"] },
@@ -238,7 +314,7 @@ const O_SALVO_CONDUTO = quest({
         texto: "pagar a portagem em {passo}",
         ganha: "{protegido} passa {passo} sem que ninguém tire a lâmina da bainha.",
         custa: "A bolsa fica mais leve — e quem está por trás de {tenente} fica a saber, ao fim da tarde, que estrada levas e com quem.",
-        efeitos: [{ tipo: "moedas", n: -40 }, { tipo: "avisa_vilao" }, { tipo: "deixa", premissa: "avisado:tenente" }],
+        efeitos: [{ tipo: "moedas", n: -40 }, { tipo: "avisa_vilao" }],
       },
     } },
     verdade: { etapa: "verdade", opcoes: {
@@ -252,7 +328,6 @@ const O_SALVO_CONDUTO = quest({
         texto: "levar {protegido} até ao fim na mesma",
         ganha: "Chegas a {destino} com a palavra cumprida, e há poucas coisas que valham tanto na estrada.",
         custa: "Levas pela estrada quem roubou — e quem foi roubado não esquece quem lhe deu abrigo.",
-        efeitos: [{ tipo: "deixa", premissa: "procurado:protegido" }],
       },
     } },
   },
@@ -261,10 +336,9 @@ const O_SALVO_CONDUTO = quest({
       violenta: [
         { id: "poupou", quando: ["poupou", "papel:tenente"],
           texto: "{tenente} ficou de joelhos na lama de {passo}, e tu deixaste que se levantasse. Há quem pague uma dívida destas com a vida; e há quem a pague com a tua.",
-          efeitos: [{ tipo: "laco", papel: "tenente", laco: "divida" }, { tipo: "deixa", premissa: "devedor:tenente" }] },
+          efeitos: [{ tipo: "laco", papel: "tenente", laco: "divida" }] },
         { id: "matou",
-          texto: "{tenente} ficou em {passo}, e o rio levou o resto. Longe dali, alguém vai contar os homens que lhe restam e reparar que falta um.",
-          efeitos: [{ tipo: "deixa", premissa: "vinganca:tenente" }] },
+          texto: "{tenente} ficou em {passo}, e o rio levou o resto. Longe dali, alguém vai contar os homens que lhe restam e reparar que falta um." },
       ],
       social: [
         { texto: "As moedas mudaram de mão sem uma palavra. {tenente} contou-as duas vezes, olhou {protegido} de alto a baixo, e afastou-se do caminho com um sorriso que não te agradou." },
@@ -325,8 +399,7 @@ const AS_CINZAS_DE_ONTEM = quest({
     mandante: { de: "fio", papel: "tenente", alcunha: "quem pagou o fogo", rotulo: "quem pagou o fogo" },
   },
   mao: { tipo: "consequencia", contra: [3], papel: "mandante", tambem: ["pista"] },
-  pede: [],
-  deixa: ["inimigo:mandante"],
+  temperatura: "chama",
   gancho: "{lugar} ardeu esta noite, com gente lá dentro. {testemunha} viu alguém sair antes das chamas e jura, a quem pergunta, que não viu nada. Na praça já se diz um nome — o de {suspeito} — e já anda uma corda à procura de pescoço.",
   etapas: [
     { id: "ver", texto: "Ver o que o fogo deixou em {lugar}", conclui: ["esteve", "lugar:lugar"] },
@@ -357,7 +430,7 @@ const AS_CINZAS_DE_ONTEM = quest({
         texto: "responder ao recado à tua maneira",
         ganha: "{mandante} aprende que um recado destes tem resposta, e que a resposta tem o teu nome.",
         custa: "A lei de {lugar} deixa de te cobrir. E quem cobra pela própria mão fica a dever ao próximo que o fizer.",
-        efeitos: [{ tipo: "inimigo", papel: "mandante" }, { tipo: "deixa", premissa: "cobranca:mandante" }],
+        efeitos: [{ tipo: "inimigo", papel: "mandante" }],
       },
     } },
   },
@@ -392,7 +465,6 @@ const AS_CINZAS_DE_ONTEM = quest({
     efeitos: [{ tipo: "situacao", papel: "suspeito", situacao: "escondida" }] },
   fecho: {
     texto: "O que ardeu não volta. Mas agora tens um nome para o fogo, e o fogo tem o teu.",
-    efeitos: [{ tipo: "deixa", premissa: "inimigo:mandante" }],
   },
 });
 
@@ -409,8 +481,7 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
   },
   mao: null,
   ponte: "{ferido} mora numa cidade por onde um passo do vilão vai passar",
-  pede: [],
-  deixa: [],
+  temperatura: "chama",
   gancho: "{quem} carrega uma carta que nunca abriu. O lacre está gasto de tanto o polegar lhe passar por cima. É de {ferido}, alguém a quem {quem} falhou há muitos anos — e {quem} só diz que há coisas que não se leem duas vezes, e esta nem uma.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} pela carta",
@@ -432,13 +503,11 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
         texto: "abrir a carta com {quem}",
         ganha: "Ficas a saber o que {ferido} escreveu, e {quem} deixa de carregar isto sem ninguém.",
         custa: "O que está escrito não se desescreve. E {quem} vai ter de o ouvir da tua voz.",
-        efeitos: [],
       },
       guardar: {
         texto: "devolver a carta fechada",
         ganha: "{quem} percebe que há respeito nisto: não lhe arrancas o que não quer dar.",
         custa: "A carta continua a pesar no bolso {quem:dele|dela}, e o que diz continua a ser só de {ferido}.",
-        efeitos: [],
       },
       queimar: {
         texto: "queimar a carta",
@@ -452,7 +521,6 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
         texto: "pôr-te entre os dois",
         ganha: "Ninguém puxa de uma lâmina enquanto estiveres no meio.",
         custa: "{ferido} passa a odiar-te um bocadinho também, por lhe roubares a conta.",
-        efeitos: [],
       },
       pagar: {
         texto: "pagar a dívida de {quem}",
@@ -464,7 +532,6 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
         texto: "deixá-los acertar contas à maneira antiga",
         ganha: "A conta é deles, e tu não lha roubas.",
         custa: "À maneira antiga, só um costuma ir-se embora a andar. E se {quem} não tiver por que viver, não volta.",
-        efeitos: [],
       },
     } },
   },
@@ -503,8 +570,7 @@ const A_CARTA_QUE_NAO_SE_ABRE = quest({
       efeitos: [{ tipo: "quem_e", papel: "quem", linha: "carrega a carta de um morto" }] },
     { id: "a_carta_fechada", cedo: true,
       quando: ["morto", "papel:quem"],
-      texto: "{quem} levou a carta fechada para a cova. Ficaste tu com ela. O lacre continua inteiro, e agora és tu quem não sabe se a deve abrir.",
-      efeitos: [] },
+      texto: "{quem} levou a carta fechada para a cova. Ficaste tu com ela. O lacre continua inteiro, e agora és tu quem não sabe se a deve abrir." },
     { id: "o_preco_inteiro",
       quando: ["todos", ["escolheu", "frente", "deixar"], ["algum", ["escolheu", "carta", "queimar"], ["nenhum", ["afeicao", "papel:quem", 2]]]],
       texto: "Acertaram à maneira antiga, e {quem} deixou-se acertar. Não ergueu a lâmina a tempo — talvez nem quisesse. {ferido} fica de pé sobre o corpo sem saber o que fazer às mãos, e tu percebes, tarde, que a dívida nunca foi de sangue.",
@@ -548,8 +614,7 @@ const A_MAO_QUE_MUDOU_DE_LADO = quest({
     vitima: { de: "elenco", feridoPor: "desertor", rotulo: "quem {desertor} feriu" },
   },
   mao: { tipo: "pista", contra: [4], papel: "cacador" },
-  pede: [],
-  deixa: ["aliado:desertor"],
+  temperatura: "fogueira",
   gancho: "{desertor} serviu sete anos a mão que anda por trás de tudo o que corre mal nesta terra, e uma noite saiu pela janela com o que sabia. Manda dizer, de {esconderijo}, que fala contigo e com mais ninguém — e só uma vez. {cacador} já pergunta por {desertor} nas tabernas, com uma moeda numa mão e uma corda na outra. E {vitima}, que enterrou um irmão por ordem de {desertor}, também pergunta.",
   etapas: [
     { id: "achar", texto: "Encontrar {desertor} em {esconderijo}",
@@ -593,10 +658,9 @@ const A_MAO_QUE_MUDOU_DE_LADO = quest({
       luta: [
         { id: "poupou", quando: ["poupou", "papel:cacador"],
           texto: "{cacador} ficou no chão com a corda ainda na mão, e deixaste {cacador} lá, com vida. Vai voltar a quem o mandou com uma história — e a história tem a tua cara.",
-          efeitos: [{ tipo: "deixa", premissa: "devedor:cacador" }, { tipo: "avisa_vilao" }] },
+          efeitos: [{ tipo: "avisa_vilao" }] },
         { id: "matou",
-          texto: "{cacador} não volta a perguntar por ninguém. A corda que trazia serviu para atar o saco onde levaram o corpo.",
-          efeitos: [{ tipo: "deixa", premissa: "vinganca:cacador" }] },
+          texto: "{cacador} não volta a perguntar por ninguém. A corda que trazia serviu para atar o saco onde levaram o corpo." },
       ],
       fuga: [{ texto: "Dois dias de estrada sem fogueira, a dormir por turnos. Quando {refugio} aparece no horizonte, {desertor} ri-se pela primeira vez — e não consegue parar.",
         efeitos: [{ tipo: "dia", n: 2 }] }],
@@ -639,7 +703,7 @@ const O_CELEIRO_DE_INVERNO = quest({
   titulo: "O Celeiro de Inverno",
   tipo: 1,
   enredo: 14,                                   // «Quanto custa…», com «A ajuda está a caminho» (#12)
-  quando: ["cedo", "meio"],
+  quando: ["cedo"],                             // TE1: uma brasa no meio é uma descida
   afim: ["jornada", "reinado"],
   papeis: {
     celeiro: { de: "lugar", e: "um sítio da cidade do ato", tipos: ["mercado", "docas", "guilda"] },
@@ -648,8 +712,7 @@ const O_CELEIRO_DE_INVERNO = quest({
     comprador: { de: "fio", papel: "tenente", alcunha: "quem compra o trigo a dobrar", rotulo: "quem compra o trigo a dobrar" },
   },
   mao: { tipo: "recurso", contra: [2, 4], papel: "comprador" },
-  pede: [],
-  deixa: ["inimigo:comprador"],
+  temperatura: "brasa",
   gancho: "O inverno vem cedo este ano, e o único trigo que sobra em muitas léguas dorme em {celeiro}, nas mãos de {dono}. {faminta} já enterrou duas crianças da rua desde a última colheita, e só te pede que vás ver. Entretanto, {comprador} oferece o dobro por cada saca — e ninguém sabe para quem compra.",
   etapas: [
     { id: "ouvir", texto: "Ouvir {faminta}", conclui: ["conversou", "papel:faminta"] },
@@ -679,7 +742,7 @@ const O_CELEIRO_DE_INVERNO = quest({
         texto: "guardar o trigo com {dono}, e pôr-te de vigia",
         ganha: "O trigo fica onde está, contado e repartido até à primavera, e {dono} passa a dever-te o sono.",
         custa: "Um celeiro guardado é um celeiro que se ataca: {comprador} vai voltar, com mais gente, e a tua lâmina passa a morar à porta de {celeiro}.",
-        efeitos: [{ tipo: "laco", papel: "dono", laco: "divida" }, { tipo: "deixa", premissa: "cerco:celeiro" }],
+        efeitos: [{ tipo: "laco", papel: "dono", laco: "divida" }],
       },
     } },
   },
@@ -689,10 +752,9 @@ const O_CELEIRO_DE_INVERNO = quest({
       lamina: [
         { id: "poupou", quando: ["poupou", "papel:comprador"],
           texto: "{comprador} rende-se no meio das sacas, com farinha até aos cotovelos. Deixas que se vá — e levas a bolsa das compras, que é mais pesada do que devia.",
-          efeitos: [{ tipo: "deixa", premissa: "devedor:comprador" }, { tipo: "moedas", n: 25 }] },
+          efeitos: [{ tipo: "moedas", n: 25 }] },
         { id: "matou",
-          texto: "{comprador} fica estendido à porta de {celeiro}. Ninguém na rua pergunta quem era. Alguém, longe dali, vai perguntar.",
-          efeitos: [{ tipo: "deixa", premissa: "vinganca:comprador" }] },
+          texto: "{comprador} fica estendido à porta de {celeiro}. Ninguém na rua pergunta quem era. Alguém, longe dali, vai perguntar." },
       ],
     },
     trigo: {
@@ -738,8 +800,8 @@ const O_CONVITE_SEM_SELO = quest({
     refem: { de: "elenco", exige: ["vivo", "cativa"], rotulo: "quem está à mesa sem a ter escolhido" },
   },
   mao: { tipo: "rosto", contra: [5], papel: "vilao" },
-  pede: [],
-  deixa: ["conhece:vilao"],
+  temperatura: "fogueira",
+  estabelece: [["camada", "rosto"]],
   gancho: "Chega um convite sem selo, escrito com boa letra: um lugar à mesa, amanhã à noite, em {salao}, sob a lei da casa de {anfitriao} — ninguém puxa de uma lâmina debaixo daquele teto, nem quem convida, nem quem é convidado. No fundo do papel, uma linha só: «{refem} também janta.»",
   etapas: [
     { id: "convite", texto: "Aceitar a lei da casa de {anfitriao}", conclui: ["conversou", "papel:anfitriao"] },
@@ -802,7 +864,6 @@ const O_CONVITE_SEM_SELO = quest({
     efeitos: [{ tipo: "relogio_do_fio", n: 1 }] },
   fecho: {
     texto: "Sais de {salao} com o gosto do vinho na boca e uma cara na memória que já não é rumor. Agora sabes com quem falas. E quem te convidou também.",
-    efeitos: [{ tipo: "deixa", premissa: "conhece:vilao" }],
   },
 });
 
@@ -830,8 +891,8 @@ const O_CIMO_DA_ESCADA = quest({
     fraqueza_verdade: { de: "lugar", fraqueza: "verdade" },
   },
   mao: { tipo: "confronto", contra: [6], papel: "vilao" },
-  pede: [],
-  deixa: ["caiu:vilao"],
+  temperatura: "incendio",
+  pressupoe: [["camada", "rosto"]],
   gancho: "Já não há rumor nem recado: há uma porta, em {covil}, e atrás dela quem andou a mover esta terra contra ti desde o primeiro dia. {braco} guarda a escada. E lá em cima, diz quem viu, {refem} ainda respira — porque {vilao} sabe que é por isso que vens.",
   etapas: [
     { id: "covil", texto: "Entrar em {covil}", conclui: ["esteve", "lugar:covil"] },
@@ -851,7 +912,7 @@ const O_CIMO_DA_ESCADA = quest({
         texto: "cumprir o que prometeste à mesa de {vilao}",
         ganha: "{refem} desce a escada contigo, com vida, e a terra que protegias fica de fora do que vier.",
         custa: "{vilao} fica, com uma parte do que queria e a tua palavra guardada. Um dia vem cobrar o resto, e vai escolher o dia.",
-        efeitos: [{ tipo: "situacao", papel: "refem", situacao: "livre" }, { tipo: "deixa", premissa: "pacto:vilao" }],
+        efeitos: [{ tipo: "situacao", papel: "refem", situacao: "livre" }],
       },
       romper: {
         texto: "rasgar a palavra dada e subir a escada",
@@ -865,13 +926,11 @@ const O_CIMO_DA_ESCADA = quest({
         texto: "pôr à frente de {vilao} o que não pode negar",
         ganha: "{vilao} cai sem que uma lâmina saia da bainha — e cai à frente de quem ainda seguia {vilao}.",
         custa: "Uma coisa destas só se usa uma vez. E quem perde tudo sem luta, à frente de todos, não perdoa a quem lho tirou.",
-        efeitos: [{ tipo: "deixa", premissa: "humilhado:vilao" }],
       },
       guardar: {
         texto: "guardar o que sabes e decidir à lâmina",
         ganha: "Ninguém vai dizer que venceste com um papel na mão: venceste de pé.",
         custa: "Se a luta correr mal, cais com a arma que derrubava {vilao} no bolso.",
-        efeitos: [],
       },
     } },
     sentenca: { etapa: "sentenca", opcoes: {
@@ -879,19 +938,16 @@ const O_CIMO_DA_ESCADA = quest({
         texto: "deixar {vilao} viver, e ir-te embora",
         ganha: "Ninguém vai poder dizer que te tornaste o que vieste derrubar. E quem poupa deixa uma porta aberta para alguém mudar.",
         custa: "Uma vida poupada anda por aí, com memória e com tempo. Pode mudar — e pode voltar.",
-        efeitos: [{ tipo: "deixa", premissa: "poupado:vilao" }],
       },
       acabar: {
         texto: "acabar com {vilao} aqui, de uma vez",
         ganha: "Acabou, e acabou à tua frente: nenhum herdeiro pega no que ficaria a meio.",
         custa: "Matar quem está de joelhos não se desfaz. Quem estava na escada vai contar como foi — e vai contar mal.",
-        efeitos: [{ tipo: "deixa", premissa: "caiu:vilao" }],
       },
       selar: {
         texto: "fechar {vilao} onde ninguém abra",
         ganha: "Nem sangue nem fuga: um nome atrás de uma porta que só tu sabes abrir.",
         custa: "Uma porta fechada continua a ser uma porta. Alguém vai procurar a chave — e a chave és tu.",
-        efeitos: [{ tipo: "deixa", premissa: "selado:vilao" }],
       },
     } },
   },
@@ -916,8 +972,7 @@ const O_CIMO_DA_ESCADA = quest({
         { id: "poupou", quando: ["poupou", "papel:vilao"],
           texto: "{vilao} cai de joelhos e não se levanta. A lâmina está na tua mão, e a decisão também." },
         { id: "matou", fecha: "concluida",
-          texto: "{vilao} cai, e não se levanta mais. Não há últimas palavras: só o barulho de quem estava na escada a largar as armas, uma a uma.",
-          efeitos: [{ tipo: "deixa", premissa: "caiu:vilao" }] },
+          texto: "{vilao} cai, e não se levanta mais. Não há últimas palavras: só o barulho de quem estava na escada a largar as armas, uma a uma." },
       ],
       prova: [
         { id: "pessoa", quando: ["acompanha", "papel:fraqueza_quem"],
@@ -988,8 +1043,7 @@ const OS_DIAS_QUE_FALTAM = quest({
   },
   mao: null,
   ponte: "{horto} fica numa cidade por onde um passo do vilão vai passar, e quem lá vende a erva paga a quem manda nele",
-  pede: [],
-  deixa: [],
+  temperatura: "chama",
   gancho: "{quem} tosse para o lenço e dobra-o depressa, antes que vejas a cor. Diz que é o pó da estrada. {curandeira} olhou para {quem} uma vez, ao passar, e chamou-te à parte com a cara de quem já deu esta notícia muitas vezes e nunca se habituou.",
   etapas: [
     { id: "sinal", texto: "Ouvir o que {curandeira} viu em {quem}",
@@ -1017,7 +1071,6 @@ const OS_DIAS_QUE_FALTAM = quest({
         texto: "guardar o segredo, e procurar a cura sem dizer nada",
         ganha: "{quem} dorme descansado mais umas noites, sem saber o que lhe conta a tosse.",
         custa: "Se a cura não chegar a tempo, {quem} morre sem saber que tu sabias. E se chegar, um dia vai perguntar-te porque calaste.",
-        efeitos: [],
       },
     } },
     cura: { etapa: "cura", opcoes: {
@@ -1037,7 +1090,6 @@ const OS_DIAS_QUE_FALTAM = quest({
         texto: "confiar no tratamento lento de {curandeira}",
         ganha: "Nem moeda nem roubo: só caldos, emplastros e tempo, e {quem} ao teu lado a cada dia.",
         custa: "A febre não espera por ninguém. Sem a erva, só a vontade de {quem} a segura — e a vontade precisa de saber que tem de lutar, e de alguém por quem lutar.",
-        efeitos: [],
       },
     } },
   },
@@ -1056,7 +1108,7 @@ const OS_DIAS_QUE_FALTAM = quest({
     { id: "a_mesma_mao",
       texto: "Em {horto} não há só a erva que cura: há sacos de outra semente, atados com o mesmo nó, prontos a seguir para os poços. Quem vende a cura é quem semeia a febre — e {quem} não foi o primeiro, nem vai ser o último.",
       gatilho: ["todos", ["etapa", "horto"], ["nenhum", ["etapa", "cura"]], ["descobriu", "lugar:horto"]],
-      efeitos: [{ tipo: "deixa", premissa: "febre:horto" }] },
+      efeitos: [{ tipo: "quem_e", papel: "quem", linha: "apanhou uma febre semeada de propósito, por quem depois lhe vende a cura" }] },
     { id: "a_tosse_que_ouve",
       texto: "{quem} lê o nome da erva escrito no saco, à tua frente, e não diz nada. Só à noite, junto ao fogo, diz baixinho que preferia ter sabido por ti.",
       gatilho: ["todos", ["escolheu", "segredo", "calar"], ["etapa", "horto"], ["acompanha", "papel:quem"], ["nenhum", ["etapa", "cura"]]],
@@ -1084,8 +1136,7 @@ const OS_DIAS_QUE_FALTAM = quest({
       efeitos: [{ tipo: "quem_e", papel: "quem", linha: "carrega uma febre que mais ninguém sabe ler" }] },
     { id: "antes_da_febre", cedo: true,
       quando: ["morto", "papel:quem"],
-      texto: "Não foi a febre. Foi a estrada, como quase sempre. Fica-te o lenço dobrado no bolso de {quem}, e a pergunta de quanto tempo teria havido.",
-      efeitos: [] },
+      texto: "Não foi a febre. Foi a estrada, como quase sempre. Fica-te o lenço dobrado no bolso de {quem}, e a pergunta de quanto tempo teria havido." },
     { id: "a_ultima_febre",
       quando: ["todos", ["escolheu", "cura", "esperar"], ["algum", ["escolheu", "segredo", "calar"], ["nenhum", ["afeicao", "papel:quem", 3]]]],
       texto: "A febre volta numa madrugada e não se vai embora. {quem} morre ao terceiro dia, de mão dada contigo, e pergunta-te, já sem voz, se havia alguma coisa a fazer. Não sabes o que responder, porque havia.",
@@ -1115,8 +1166,8 @@ const A_LAMINA_ENTERRADA = quest({
   },
   mao: null,
   ponte: "{sacerdote} guarda o altar de {templo}, numa cidade por onde um passo do vilão vai passar, e já aceitou o ouro de quem manda nele",
-  pede: [],
-  deixa: [],
+  temperatura: "fogueira",
+  pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
   gancho: "{quem} não puxa da lâmina. Nem quando devia, nem quando gritaste. Há muitos anos matou alguém que não merecia morrer e jurou, diante do altar de {templo}, que a sua mão não voltaria a sangrar ninguém. Agora {vingador}, que perdeu um irmão nessa noite, anda de terra em terra a perguntar por {quem} — e um voto não trava uma faca.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} porque não luta",
@@ -1150,7 +1201,6 @@ const A_LAMINA_ENTERRADA = quest({
         texto: "levar {quem} a {templo}, para que o altar desfaça o voto",
         ganha: "Se o altar que ouviu o voto o desfizer, ninguém pode chamar perjúrio ao que vier depois.",
         custa: "Um perdão tem sempre alguém que o vende. E {templo} fica longe, e {vingador} não espera por ninguém.",
-        efeitos: [],
       },
     } },
     conta: { etapa: "conta", opcoes: {
@@ -1158,7 +1208,6 @@ const A_LAMINA_ENTERRADA = quest({
         texto: "pôr {vingador} a ouvir o que {quem} tem a dizer daquela noite",
         ganha: "A verdade daquela noite sai, por fim, da boca de quem a carregou. {vingador} pode não perdoar — mas vai ouvir.",
         custa: "{quem} vai dizer em voz alta o pior que já fez, à frente de quem lhe tem mais ódio no mundo, e diante de ti.",
-        efeitos: [],
       },
       afastar: {
         texto: "tirar {quem} do caminho de {vingador}, e fugir",
@@ -1189,8 +1238,8 @@ const A_LAMINA_ENTERRADA = quest({
         conclui: ["todos", ["esteve", "lugar:templo"], ["acompanha", "papel:quem"], ["conversou", "papel:sacerdote"]] } }] },
     { id: "o_perdao_a_peso",
       texto: "Fazes perguntas a mais a {sacerdote}, e a resposta vem numa gaveta: uma bolsa de couro cheia, com um nó que já viste noutros sítios. O perdão de {templo} tem preço, e quem o paga não é quem reza.",
-      gatilho: ["todos", ["etapa", "altar"], ["consultou", "papel:sacerdote"], ["nenhum", ["etapa", "conta"]]],
-      efeitos: [{ tipo: "quem_e", papel: "sacerdote", linha: "vende absolvições a quem paga, e paga a quem manda" }, { tipo: "deixa", premissa: "comprado:sacerdote" }] },
+      gatilho: ["todos", ["etapa", "altar"], ["consultou", "papel:sacerdote"], ["camada", "marca"], ["nenhum", ["etapa", "conta"]]],
+      efeitos: [{ tipo: "quem_e", papel: "sacerdote", linha: "vende absolvições a quem paga, e paga a quem manda" }] },
   ],
   desfechos: [
     { id: "a_mao_limpa",
@@ -1218,8 +1267,7 @@ const A_LAMINA_ENTERRADA = quest({
       efeitos: [{ tipo: "vinculo", papel: "quem", n: -10 }, { tipo: "quem_e", papel: "quem", linha: "não puxa da lâmina, e já não diz porquê" }] },
     { id: "o_voto_ate_ao_fim", cedo: true,
       quando: ["morto", "papel:quem"],
-      texto: "{quem} morreu sem voltar a erguer a lâmina. Cumpriu o voto até ao fim, e o fim chegou mais cedo do que o voto.",
-      efeitos: [] },
+      texto: "{quem} morreu sem voltar a erguer a lâmina. Cumpriu o voto até ao fim, e o fim chegou mais cedo do que o voto." },
     { id: "o_martir",
       quando: ["todos", ["escolheu", "conta", "afastar"], ["nenhum", ["escolheu", "voto", "quebrar"]]],
       texto: "{vingador} encontrou {quem} numa estrada sem ti, ao terceiro dia. {quem} não ergueu a lâmina: ajoelhou-se e esperou, como quem cumpre a última parte de uma promessa. Quando chegaste, {vingador} já tinha ido embora, e {quem} tinha as mãos limpas e os olhos abertos para o céu.",
@@ -1270,8 +1318,8 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
     tratador: { de: "elenco", proximo: "pastora", rotulo: "quem conhece o assobio" },
   },
   mao: { tipo: "tenente", contra: [1, 2], papel: "fera" },
-  pede: [],
-  deixa: ["inimigo:tratador"],
+  temperatura: "brasa",
+  estabelece: [["camada", "mao"]],
   gancho: "Desce todas as noites quando o sino acaba de tocar, e nunca à mesma porta duas vezes. Ontem foi às traseiras de {curral}, onde {pastora} guardava o que lhe restava do rebanho: já não sobra um animal de pé, e {pastora} deixou-os lá para que vejas com os teus olhos. Na aldeia diz-se que é bicho do monte. {pastora} diz que bicho do monte não escolhe as portas.",
   etapas: [
     { id: "ver", texto: "Ver o que ficou em {curral}", conclui: ["esteve", "lugar:curral"] },
@@ -1333,7 +1381,7 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
     { id: "as_crias",
       texto: "Ao fundo de {toca}, entre ossos de ovelha, há três crias que ainda não abriram os olhos. {tratador} jura que, se a besta não voltar, ninguém as vai alimentar — e que quem paga a coleira já mandou vir outra de longe, maior.",
       gatilho: ["todos", ["esteve", "lugar:toca"], ["conversou", "papel:tratador"], ["nenhum", ["etapa", "destino"]]],
-      efeitos: [{ tipo: "deixa", premissa: "crias:toca" }] },
+      efeitos: [{ tipo: "quem_e", papel: "tratador", linha: "sabe de três crias sem quem as alimente, e de outra besta maior que já vem a caminho" }] },
   ],
   falha: [
     { quando: ["todos", ["morto", "papel:pastora"], ["nenhum", ["derrotou", "papel:pastora"]]], ate: "destino",
@@ -1365,8 +1413,8 @@ const AS_BOTAS_NA_ESTRADA = quest({
     chefe: { de: "fio", papel: "tenente", alcunha: "quem paga o vinho aos da estrada", rotulo: "quem paga o vinho aos da estrada" },
   },
   mao: { tipo: "tenente", contra: [1, 2], papel: "chefe" },
-  pede: [],
-  deixa: ["inimigo:chefe"],
+  temperatura: "brasa",
+  estabelece: [["camada", "mao"]],
   gancho: "Assaltam quem passa por {estrada}, de cara tapada, e na semana passada deixaram um almocreve na valeta com a garganta aberta. {mae} não dorme: jura que reconheceu as botas de um deles, umas botas que pagou do próprio bolso, e que são de {rapaz}. Dizem que todos os da estrada devem dinheiro a quem lhes paga o vinho. Na praça já se fala em forca.",
   etapas: [
     { id: "ouvir", texto: "Ouvir {mae}", conclui: ["conversou", "papel:mae"] },
@@ -1411,10 +1459,9 @@ const AS_BOTAS_NA_ESTRADA = quest({
       lamina: [
         { id: "poupou", quando: ["poupou", "papel:chefe"],
           texto: "{chefe} fica de joelhos entre as mesas viradas da taberna, e deixas que se levante. Sai sem pagar a conta, e ninguém lha cobra. Vai contar a quem manda que alguém lhe tirou os rapazes.",
-          efeitos: [{ tipo: "deixa", premissa: "devedor:chefe" }, { tipo: "avisa_vilao" }] },
+          efeitos: [{ tipo: "avisa_vilao" }] },
         { id: "matou",
-          texto: "{chefe} não volta a pagar vinho a ninguém. Os da estrada olham uns para os outros, e percebem que as dívidas morreram com quem as cobrava.",
-          efeitos: [{ tipo: "deixa", premissa: "vinganca:chefe" }] },
+          texto: "{chefe} não volta a pagar vinho a ninguém. Os da estrada olham uns para os outros, e percebem que as dívidas morreram com quem as cobrava." },
       ],
       palavra: [{ texto: "{chefe} ouve-te até ao fim, e no fim pousa em cima da mesa o livro das dívidas dos rapazes. Não muda de lado: muda de estrada. É diferente, e os dois sabem.",
         efeitos: [{ tipo: "aliado", papel: "chefe" }] }],
@@ -1452,7 +1499,7 @@ const OS_BRACOS_QUE_FALTAM = quest({
   titulo: "Os Braços Que Faltam",
   tipo: 1,
   enredo: 30,                                   // Stalag 23, com «A ajuda está a caminho» (#12)
-  quando: ["cedo", "meio"],
+  quando: ["cedo"],                             // TE1: uma brasa no meio é uma descida
   afim: ["reinado", "arquipelago"],
   papeis: {
     pedreira: { de: "lugar", e: "um sítio da cidade do ato", tipos: ["forja", "docas", "cadeia", "quartel", "mercado"] },
@@ -1461,8 +1508,7 @@ const OS_BRACOS_QUE_FALTAM = quest({
     feitor: { de: "fio", papel: "tenente", alcunha: "quem conta os braços em {pedreira}", rotulo: "quem conta os braços em {pedreira}" },
   },
   mao: { tipo: "recurso", contra: [2], papel: "feitor" },
-  pede: [],
-  deixa: ["aliado:devedor", "inimigo:feitor"],
+  temperatura: "brasa",
   gancho: "{pedinte} não te pede dinheiro: pede que vás ver {pedreira}. Há três luas que {devedor} lá entrou por uma dívida de sessenta moedas, e trabalha de corrente ao tornozelo da alva à noite. A dívida, em vez de minguar, cresce — come-se a pão e a palha, e paga-se a braço. Quem compra estas dívidas paga o dobro por cada par de braços, e não diz para que obra os quer.",
   etapas: [
     { id: "pedido", texto: "Ouvir {pedinte}", conclui: ["conversou", "papel:pedinte"] },
@@ -1501,7 +1547,6 @@ const OS_BRACOS_QUE_FALTAM = quest({
         texto: "sair só com {devedor}, e deixar o resto como está",
         ganha: "A palavra dada a {pedinte} fica cumprida, sem guerra nem papel, e ninguém em {pedreira} fica a saber quem és.",
         custa: "Quarenta ficam de corrente ao pé, e tu passaste por eles à saída. Vão lembrar-se da tua cara melhor do que tu te vais lembrar das deles.",
-        efeitos: [],
       },
     } },
   },
@@ -1510,10 +1555,9 @@ const OS_BRACOS_QUE_FALTAM = quest({
       lamina: [
         { id: "poupou", quando: ["poupou", "papel:feitor"],
           texto: "{feitor} fica sentado no pó, com o molho de chaves ainda à cintura, e deixas que se vá. Vai contar a quem lhe compra os braços que {pedreira} tem agora outro dono.",
-          efeitos: [{ tipo: "deixa", premissa: "devedor:feitor" }, { tipo: "avisa_vilao" }] },
+          efeitos: [{ tipo: "avisa_vilao" }] },
         { id: "matou",
-          texto: "{feitor} cai entre as correntes que mandou fechar. O molho de chaves passa de mão em mão até chegar às correntes, e ninguém pergunta de quem eram.",
-          efeitos: [{ tipo: "deixa", premissa: "vinganca:feitor" }] },
+          texto: "{feitor} cai entre as correntes que mandou fechar. O molho de chaves passa de mão em mão até chegar às correntes, e ninguém pergunta de quem eram." },
       ],
       compra: [{ texto: "Pagas em cima da mesa da entrada. Riscam o nome de {devedor} com tinta fresca, e os outros, presos à mesma corrente, ficam a ver o risco a secar." }],
       fuga: [{ texto: "Saem de noite, pela porta das traseiras, com {devedor} a coxear e a morder a manga para não fazer barulho. Atrás de vós, alguém conta os braços e a conta não bate.",
@@ -1570,8 +1614,7 @@ const O_ULTIMO_A_SAIR = quest({
     limpador: { de: "fio", papel: "tenente", aceita: ["gente", "fera"], alcunha: "quem anda a acabar o serviço", rotulo: "quem anda a acabar o serviço" },
   },
   mao: { tipo: "consequencia", contra: [3, 4], papel: "limpador", tambem: ["pista"] },
-  pede: [],
-  deixa: ["inimigo:limpador"],
+  temperatura: "chama",
   gancho: "{ruina} veio abaixo esta noite, com gente lá dentro, e ninguém sabe dizer se foi fogo, pólvora ou mão. Contaram os corpos de manhã, e falta um: {sobrevivente} saiu de lá com vida antes de o teto cair, e desde então ninguém lhe pôs a vista em cima. {limpador} também anda à procura, rua a rua. E não é para dar os pêsames.",
   etapas: [
     { id: "ruina", texto: "Ver o que resta de {ruina}", conclui: ["esteve", "lugar:ruina"] },
@@ -1590,7 +1633,7 @@ const O_ULTIMO_A_SAIR = quest({
         texto: "pôr {sobrevivente} a contar na praça o que viu",
         ganha: "A cidade inteira ouve da boca de quem lá estava o que deitou abaixo {ruina}, e o golpe seguinte deixa de chegar de surpresa.",
         custa: "{sobrevivente} passa a ter a cara conhecida de quem anda a acabar o serviço. Daqui em diante, nenhuma porta da cidade lhe vale — só a tua.",
-        efeitos: [{ tipo: "relogio_do_fio", n: -1 }, { tipo: "avisa_vilao" }, { tipo: "deixa", premissa: "alvo:sobrevivente" }],
+        efeitos: [{ tipo: "relogio_do_fio", n: -1 }, { tipo: "avisa_vilao" }],
       },
       longe: {
         texto: "tirar {sobrevivente} da cidade, e calar o que viu",
@@ -1602,7 +1645,7 @@ const O_ULTIMO_A_SAIR = quest({
         texto: "ouvir tudo em segredo, e guardar o que sabes só para ti",
         ganha: "Sabes o que vem a seguir, e és o único que sabe. Ninguém te vê chegar.",
         custa: "{sobrevivente} fica à tua guarda, porque mais ninguém sabe que precisa. E se te acontecer alguma coisa na estrada, o que sabes morre contigo.",
-        efeitos: [{ tipo: "laco", papel: "sobrevivente", laco: "divida" }, { tipo: "deixa", premissa: "protegido:sobrevivente" }],
+        efeitos: [{ tipo: "laco", papel: "sobrevivente", laco: "divida" }],
       },
     } },
   },
@@ -1614,8 +1657,7 @@ const O_ULTIMO_A_SAIR = quest({
           texto: "{limpador} fica no chão e não se volta a erguer, mas respira. Deixas assim. Quem {limpador} serve vai saber que o serviço ficou por acabar — e por causa de quem.",
           efeitos: [{ tipo: "avisa_vilao" }] },
         { id: "matou",
-          texto: "{limpador} não acaba mais serviço nenhum. Do esconderijo, uma porta entreabre-se devagar, e alguém que não dormia há três noites espreita para ver quem ficou de pé.",
-          efeitos: [{ tipo: "deixa", premissa: "vinganca:limpador" }] },
+          texto: "{limpador} não acaba mais serviço nenhum. Do esconderijo, uma porta entreabre-se devagar, e alguém que não dormia há três noites espreita para ver quem ficou de pé." },
       ],
     },
     voz: {
@@ -1646,7 +1688,6 @@ const O_ULTIMO_A_SAIR = quest({
     efeitos: [{ tipo: "situacao", papel: "sobrevivente", situacao: "cativa" }] },
   fecho: {
     texto: "{ruina} continua em pedaços, mas agora tem uma história, e a história tem um fim que ainda não aconteceu. Tu sabes qual é. E alguém sabe que tu sabes.",
-    efeitos: [{ tipo: "deixa", premissa: "inimigo:limpador" }],
   },
 });
 
@@ -1667,8 +1708,8 @@ const O_VELORIO_PAGO = quest({
     capela: { de: "lugar", e: "um sítio da cidade do ato", tipos: ["templo", "cemitério"] },
   },
   mao: { tipo: "rosto", contra: [5], papel: "vilao" },
-  pede: [],
-  deixa: ["conhece:vilao"],
+  temperatura: "fogueira",
+  estabelece: [["camada", "rosto"]],
   gancho: "Morreu em {capela} quem não devia, do lado errado de um negócio que não era seu. O enterro, a cera, o vinho do velório e o caixão de castanho estão pagos adiantado, por quem não pôs lá os pés. Esta noite vai pôr. {enlutada} manda dizer-te que vás, e que não leves lâmina: ao pé de um morto ninguém puxa de uma.",
   etapas: [
     { id: "velorio", texto: "Ir velar o morto em {capela}",
@@ -1699,7 +1740,7 @@ const O_VELORIO_PAGO = quest({
         texto: "dizer em voz alta, à frente de todos, quem fez o morto",
         ganha: "A capela inteira ouve o que ninguém se atrevia a dizer, e ninguém volta a beber o vinho de {vilao} sem pensar no que bebe.",
         custa: "Quebras o luto à frente de quem chora. {enlutada} não te perdoa o escândalo ao pé do caixão, e {vilao} sai sem pressa, a acenar, como quem toma nota.",
-        efeitos: [{ tipo: "afeicao", papel: "enlutada", n: -1 }, { tipo: "deixa", premissa: "acusado:vilao" }, { tipo: "avisa_vilao" }],
+        efeitos: [{ tipo: "afeicao", papel: "enlutada", n: -1 }, { tipo: "avisa_vilao" }],
       },
     } },
   },
@@ -1714,7 +1755,7 @@ const O_VELORIO_PAGO = quest({
     { id: "o_caixao_leve",
       texto: "O caixão pesa pouco demais. {enlutada} sabe, e cala: o corpo não está lá dentro. Quem paga o enterro guardou-o, e prometeu devolvê-lo depois de esta noite correr bem.",
       gatilho: ["todos", ["etapa", "velorio"], ["nenhum", ["etapa", "oferta"]], ["consultou", "papel:enlutada", 2]],
-      efeitos: [{ tipo: "quem_e", papel: "enlutada", linha: "velou um caixão vazio por ordem de quem pagou o enterro" }, { tipo: "deixa", premissa: "refem:enlutada" }] },
+      efeitos: [{ tipo: "quem_e", papel: "enlutada", linha: "velou um caixão vazio por ordem de quem pagou o enterro" }] },
     { id: "o_luto_quebrado",
       texto: "Ninguém te põe fora da capela. Mas ninguém te abre caminho até à cova, também.",
       gatilho: ["escolheu", "rosto", "acusar"],
@@ -1731,7 +1772,6 @@ const O_VELORIO_PAGO = quest({
     efeitos: [{ tipo: "relogio_do_fio", n: 1 }] },
   fecho: {
     texto: "Sais do cemitério com terra nas botas e uma cara na memória que já não é rumor. Agora sabes a quem pertence a mão. E a mão sabe a quem pertence a tua cara.",
-    efeitos: [{ tipo: "deixa", premissa: "conhece:vilao" }],
   },
 });
 
@@ -1758,8 +1798,8 @@ const A_HORA_MARCADA = quest({
     fraqueza_verdade: { de: "lugar", fraqueza: "verdade" },
   },
   mao: { tipo: "confronto", contra: [6], papel: "vilao" },
-  pede: [],
-  deixa: ["caiu:vilao"],
+  temperatura: "incendio",
+  pressupoe: [["camada", "rosto"]],
   gancho: "Há uma hora marcada, e a região inteira a conhece sem saber de onde a ouviu: amanhã, quando o sol bater em {palco}, acontece o que andou a ser preparado desde o primeiro dia. Quem o vai fazer não é quem o quer feito — é {executor}, com a família fechada algures e a mão no sítio onde lha mandaram pôr. {guardiao} guarda a porta. Lá dentro, à espera da hora, {vilao}.",
   etapas: [
     { id: "palco", texto: "Chegar a {palco} antes da hora", conclui: ["esteve", "lugar:palco"] },
@@ -1782,7 +1822,6 @@ const A_HORA_MARCADA = quest({
         texto: "cumprir o que prometeste a {vilao}",
         ganha: "A hora passa sem que nada aconteça em {palco}, e quem te é mais caro fica fora do que viesse depois.",
         custa: "{vilao} sai pela porta das traseiras com metade do que queria e a tua palavra no bolso. Um dia volta a marcar uma hora — e és tu quem a vai ouvir primeiro.",
-        efeitos: [{ tipo: "deixa", premissa: "pacto:vilao" }],
       },
       romper: {
         texto: "rasgar a palavra dada e entrar na mesma",
@@ -1796,13 +1835,11 @@ const A_HORA_MARCADA = quest({
         texto: "pôr à frente de toda a gente o que {vilao} não pode negar",
         ganha: "{vilao} cai sem que uma lâmina saia da bainha, à frente da multidão que vinha ver a hora.",
         custa: "Uma coisa destas só se usa uma vez. E quem perde tudo à frente de uma praça cheia não esquece a cara de quem lho tirou.",
-        efeitos: [{ tipo: "deixa", premissa: "humilhado:vilao" }],
       },
       guardar: {
         texto: "guardar o que sabes, e decidir à lâmina",
         ganha: "Ninguém vai dizer que venceste com um papel na mão: venceste de pé, à frente de todos.",
         custa: "Se a luta correr mal, cais com a arma que derrubava {vilao} no bolso, e a hora chega na mesma.",
-        efeitos: [],
       },
     } },
     sentenca: { etapa: "sentenca", opcoes: {
@@ -1810,19 +1847,16 @@ const A_HORA_MARCADA = quest({
         texto: "deixar {vilao} viver, e ir-se pelo meio da multidão",
         ganha: "Ninguém vai poder dizer que a hora marcada acabou em sangue pela tua mão. E quem é poupado à frente de todos fica a dever a todos.",
         custa: "Uma vida poupada anda por aí, com memória e com tempo. E há quem na multidão não te perdoe a misericórdia.",
-        efeitos: [{ tipo: "deixa", premissa: "poupado:vilao" }],
       },
       acabar: {
         texto: "acabar com {vilao} ali, à vista de todos",
         ganha: "Acabou, e a região inteira viu acabar: ninguém vai pegar no que ficaria a meio.",
         custa: "A multidão que vinha ver uma hora marcada viu outra coisa, e vai contá-la à sua maneira. Matar quem está de joelhos não se desfaz.",
-        efeitos: [{ tipo: "deixa", premissa: "caiu:vilao" }],
       },
       selar: {
         texto: "fechar {vilao} na cave onde fechou a família de {executor}",
         ganha: "Nem sangue nem fuga, e uma justiça que a região entende sem que lha expliquem.",
         custa: "Uma cave fechada continua a ser uma porta. Alguém vai procurar a chave — e a chave és tu.",
-        efeitos: [{ tipo: "deixa", premissa: "selado:vilao" }],
       },
     } },
   },
@@ -1856,8 +1890,7 @@ const A_HORA_MARCADA = quest({
         { id: "poupou", quando: ["poupou", "papel:vilao"],
           texto: "{vilao} cai de joelhos no meio da praça, à frente de toda a gente que vinha ver a hora. A lâmina está na tua mão, e a decisão também." },
         { id: "matou", fecha: "concluida",
-          texto: "{vilao} cai, e não se levanta mais. A multidão demora a perceber. Depois, devagar, alguém começa a rir, e o riso pega como um fogo bom.",
-          efeitos: [{ tipo: "deixa", premissa: "caiu:vilao" }] },
+          texto: "{vilao} cai, e não se levanta mais. A multidão demora a perceber. Depois, devagar, alguém começa a rir, e o riso pega como um fogo bom." },
       ],
       prova: [
         { id: "pessoa", quando: ["acompanha", "papel:fraqueza_quem"],
@@ -1928,9 +1961,8 @@ const O_SANGUE_DO_OUTRO_LADO = quest({
   },
   mao: null,
   ponte: "{irmao} serve, numa cidade por onde um passo do vilão vai passar, a mão que manda nele",
-  pede: [],
-  deixa: [],
-  gancho: "Há dez anos, alguém abriu de noite a porta de casa a quem vinha buscar a família, e só {quem} saiu de lá com vida. Ontem, numa praça, {quem} viu ao longe uma cara que já não via desde essa noite: {irmao}, com ao pulso a fita de quem serve a mão por trás de tudo o que corre mal nesta terra. {quem} não disse nada. Mas afiou a lâmina até de madrugada, e de manhã perguntou-te, como quem não quer a coisa, se sabias o caminho para {casa}.",
+  temperatura: "fogueira",
+  gancho: "Há dez anos, alguém abriu de noite a porta de casa a quem vinha buscar a família, e só {quem} saiu de lá com vida. Ontem, numa praça, {quem} viu ao longe uma cara que já não via desde essa noite: {irmao}, com ao pulso a mesma fita que traziam os que entraram em casa naquela noite. {quem} não disse nada. Mas afiou a lâmina até de madrugada, e de manhã perguntou-te, como quem não quer a coisa, se sabias o caminho para {casa}.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} por quem viu na praça",
       espera: 2, acende: ["todos", ["acompanha", "papel:quem"], ["afeicao", "papel:quem", 1]],
@@ -1959,7 +1991,6 @@ const O_SANGUE_DO_OUTRO_LADO = quest({
         texto: "dizer a {quem} o que se conta de {irmao} nas tabernas",
         ganha: "{quem} ouve da tua boca o que já temia, e não tem de o ouvir de estranhos.",
         custa: "Nas tabernas diz-se que {irmao} serve por gosto e mata por ofício. A partir de agora, {quem} pode não querer ver mais nada.",
-        efeitos: [],
       },
     } },
     segredo: { etapa: "segredo", opcoes: {
@@ -1973,13 +2004,11 @@ const O_SANGUE_DO_OUTRO_LADO = quest({
         texto: "recusar, e contar a {quem} que foi {irmao} quem abriu a porta",
         ganha: "{quem} ouve a verdade da tua boca, e de mais ninguém.",
         custa: "O que {irmao} sabia vai com {irmao}. E se só souberes metade, {quem} só ouve metade: sem ninguém em quem se apoiar, vai sozinho, de noite, perguntar porquê — e {irmao} aprendeu a matar.",
-        efeitos: [],
       },
       trocar: {
         texto: "pedir a {irmao} que o diga, à frente de {quem}",
         ganha: "Se {irmao} tiver coragem, os dois saem disto inteiros, e ninguém mente a ninguém.",
         custa: "Obrigas quem nunca teve coragem a tê-la agora, à frente de quem mais teme. Se lhe faltar, perdes o segredo e a verdade de uma vez.",
-        efeitos: [],
       },
     } },
   },
@@ -2002,7 +2031,7 @@ const O_SANGUE_DO_OUTRO_LADO = quest({
     { id: "a_fita_cortada",
       texto: "{irmao} corta a fita do pulso à tua frente, sem dizer nada, e guarda-a no bolso. Ainda não é uma resposta. É o princípio de uma.",
       gatilho: ["todos", ["escolheu", "sangue", "esperanca"], ["etapa", "irmao"], ["afeicao", "papel:irmao", 2], ["nenhum", ["etapa", "frente"]]],
-      efeitos: [{ tipo: "deixa", premissa: "desertor:irmao" }] },
+      efeitos: [{ tipo: "quem_e", papel: "irmao", linha: "cortou do pulso a fita de quem serve, e guarda-a no bolso sem saber o que fazer dela" }] },
   ],
   desfechos: [
     { id: "o_sangue_volta",
@@ -2030,8 +2059,7 @@ const O_SANGUE_DO_OUTRO_LADO = quest({
       efeitos: [{ tipo: "quem_e", papel: "quem", linha: "afiou a lâmina para alguém que morreu antes" }] },
     { id: "a_porta_por_explicar", cedo: true,
       quando: ["morto", "papel:quem"],
-      texto: "{quem} morreu sem saber quem abriu a porta, nem porquê. {irmao} soube-o pela boca de outros, e dizem que nessa noite cortou a fita do pulso.",
-      efeitos: [] },
+      texto: "{quem} morreu sem saber quem abriu a porta, nem porquê. {irmao} soube-o pela boca de outros, e dizem que nessa noite cortou a fita do pulso." },
     { id: "sangue_contra_sangue",
       quando: ["todos", ["escolheu", "segredo", "contar"], ["nenhum", ["afeicao", "papel:quem", 2]], ["nenhum", ["consultou", "papel:irmao"]]],
       texto: "{quem} foi de noite perguntar porquê. {irmao} respondeu como aprendeu a responder em dez anos ao serviço daquela mão: antes de ver quem era. Encontras {quem} de manhã à porta de {casa}, e {irmao} sentado ao lado, com a fita cortada numa mão e, na outra, a lâmina que não consegue largar.",
@@ -2061,8 +2089,8 @@ const AS_CARTAS_DE_OUTRA_CASA = quest({
   },
   mao: null,
   ponte: "a casa de {amado} fica numa cidade por onde um passo do vilão vai passar, e a dívida que paga a mão prometida foi emprestada por quem paga a quem manda nele",
-  pede: [],
-  deixa: [],
+  temperatura: "chama",
+  pressupoe: [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]],
   gancho: "{quem} recebe cartas que não lê à tua frente, e guarda-as dentro da camisa, do lado do coração. São de {amado}, que mora em {casa} e tem a mão prometida a {prometido} desde o inverno — um casamento que paga uma dívida que não é de ninguém que se ame. {quem} diz que não é nada. Mas já perguntou duas vezes quantos dias faltam para a lua cheia, que é quando se casa quem se tem de casar.",
   etapas: [
     { id: "sinal", texto: "Perguntar a {quem} de quem são as cartas",
@@ -2116,7 +2144,6 @@ const AS_CARTAS_DE_OUTRA_CASA = quest({
         texto: "ajudar {quem} a despedir-se, e deixar {amado} cumprir a palavra da casa",
         ganha: "Ninguém foge, ninguém paga, ninguém morre na estrada: a dívida fecha-se como foi combinada, e {quem} diz adeus com tempo.",
         custa: "{quem} vai estar no casamento, de pé ao fundo da igreja, porque é isso que se faz. Vais ver-lhe a cara durante a cerimónia inteira.",
-        efeitos: [],
       },
     } },
   },
@@ -2135,7 +2162,7 @@ const AS_CARTAS_DE_OUTRA_CASA = quest({
     { id: "a_divida_da_casa",
       texto: "Nos livros de {casa}, a dívida que paga a mão de {amado} está escrita a outra tinta: não foi {prometido} quem a emprestou. Só a comprou depois, para ter onde pôr a mão — e quem a emprestou primeiro paga a quem manda em tudo o que corre mal nesta terra.",
       gatilho: ["todos", ["etapa", "encontro"], ["descobriu", "lugar:casa"], ["nenhum", ["etapa", "lua"]]],
-      efeitos: [{ tipo: "deixa", premissa: "comprado:prometido" }] },
+      efeitos: [{ tipo: "quem_e", papel: "prometido", linha: "comprou a dívida de {casa} a quem a emprestou, só para ter onde pôr a mão" }] },
   ],
   desfechos: [
     { id: "do_outro_lado_da_serra",
@@ -2163,8 +2190,7 @@ const AS_CARTAS_DE_OUTRA_CASA = quest({
       efeitos: [{ tipo: "quem_e", papel: "quem", linha: "queimou as cartas de alguém que morreu antes do casamento" }] },
     { id: "as_cartas_sem_dono", cedo: true,
       quando: ["morto", "papel:quem"],
-      texto: "{quem} morreu com as cartas dentro da camisa. Levas tu as cartas a {amado}, porque alguém tem de o fazer, e {amado} recebe-as à porta sem chorar — até fechares a porta.",
-      efeitos: [] },
+      texto: "{quem} morreu com as cartas dentro da camisa. Levas tu as cartas a {amado}, porque alguém tem de o fazer, e {amado} recebe-as à porta sem chorar — até fechares a porta." },
     { id: "a_estrada_vigiada",
       quando: ["todos", ["escolheu", "lua", "fugir"], ["algum", ["nenhum", ["esteve", "lugar:passagem"]], ["escolheu", "bilhete", "contar"]]],
       texto: "Esperavam-nos em {passagem}: gente de {prometido}, com archotes e ordens que não eram de trazer ninguém de volta. {quem} pôs-se à frente de {amado} e não saiu da frente. Ao amanhecer, {amado} voltou para {casa} pelo braço de {prometido}, e {quem} ficou na estrada, de olhos abertos para a serra.",
@@ -2226,7 +2252,10 @@ function atomos(cond, positivo = true, out = []) {
    da ficha, cada `etapa` contra as etapas, cada efeito contra a tabela,
    cada texto contra os papéis. E as leis da pessoa: a morte nunca é passo
    (nenhum `morto` afirmado numa etapa), a morte de alguém do grupo só num
-   desfecho, o tipo 2 vai do melhor ao pior e o pior tem causa.
+   desfecho, o tipo 2 vai do melhor ao pior e o pior tem causa. E as da
+   Fase TE: a temperatura que não contradiz o `quando`, os pressupostos só
+   do vocabulário de PRESSUPOSTOS (e o tipo 1 só com o que o esqueleto
+   garante), e as premissas só de PREMISSAS.
    ============================================================ */
 /* só a ficha congelada (a do catálogo) se guarda: não muda, e são poucas;
    a cópia de uma suíte valida-se sempre de novo */
@@ -2242,6 +2271,14 @@ export function validarQuest(ficha) {
   const T = TIPOS_DE_QUEST[F.tipo];
   if (!T) err("o tipo não é 1 nem 2");
   if (!arr(F.quando).length || !arr(F.quando).every((q) => QUANDO_DA_QUEST.includes(q))) err("o «quando» não bate com QUANDO_DA_QUEST");
+  /* TE1: a temperatura, e a catraca contra o `quando` */
+  if (!TEMPERATURAS[F.temperatura]) err("a temperatura não está em TEMPERATURAS");
+  else if (T) {
+    const qs = arr(F.quando);
+    const aceitam = qs.filter((q) => arr(TEMPERATURA_DO_QUANDO[q]).includes(F.temperatura));
+    const cabe = T.quandoDaTemperatura === "cada" ? aceitam.length === qs.length : aceitam.length > 0;
+    if (!cabe) err(`a temperatura «${F.temperatura}» contradiz o «quando» (TEMPERATURA_DO_QUANDO)`);
+  }
   if (!Array.isArray(F.afim) || !F.afim.every((a) => ESPINHAS.includes(a))) err("o «afim» tem uma espinha que não existe");
 
   /* os papéis */
@@ -2294,7 +2331,6 @@ export function validarQuest(ficha) {
         if (["pessoa", "lugar", "item"].includes(tipo) && !(decl[v] && decl[v].tipo === tipo)) err(`${onde}[${i}]: ${e.tipo} pede um papel ${tipo} declarado em «${campo}»`);
         if (tipo === "laco" && !LACOS.includes(v)) err(`${onde}[${i}]: o laço «${v}» não está em TIPOS_DE_LACO`);
         if (tipo === "situacao" && !SITS.includes(v)) err(`${onde}[${i}]: a situação «${v}» não existe`);
-        if (tipo === "premissa" && !(typeof v === "string" && RX_PREMISSA.test(v) && decl[v.split(":")[1]])) err(`${onde}[${i}]: a premissa «${v}» não é «tipo:papel declarado»`);
         if (tipo === "linha") { if (typeof v !== "string" || !v.trim()) err(`${onde}[${i}]: a linha está vazia`); else textos.push([v, `${onde}[${i}]`]); }
       }
       if (e.tipo === "morte" && !(papeis[e.papel] && papeis[e.papel].de === "grupo")) err(`${onde}[${i}]: a morte é de alguém do grupo`);
@@ -2451,7 +2487,37 @@ export function validarQuest(ficha) {
       else if (g && decl[k].tipo !== "pessoa") err(`${onde}: o género de «${k}» só se marca em gente`);
     }
   }
-  for (const p of [...arr(F.deixa), ...arr(F.pede)]) if (!(typeof p === "string" && RX_PREMISSA.test(p))) err(`a premissa «${p}» é torta`);
+  /* TE2: as premissas, do vocabulário fechado, e de gente declarada (o
+     esqueleto só passa pessoas de uma quest para a seguinte) */
+  for (const p of [...arr(F.deixa), ...arr(F.pede)]) {
+    const m = typeof p === "string" && RX_PREMISSA.test(p) ? p.split(":") : null;
+    if (!m) { err(`a premissa «${p}» é torta`); continue; }
+    if (!PREMISSAS[m[0]]) err(`a premissa «${p}» não está em PREMISSAS`);
+    if (!(decl[m[1]] && decl[m[1]].tipo === "pessoa")) err(`a premissa «${p}» não é de um papel de gente declarado`);
+  }
+  /* TE2: os pressupostos e o que a quest estabelece — condições do
+     vocabulário da BQ3, só com os predicados de PRESSUPOSTOS */
+  if (F.pressupoe !== undefined) {
+    if (!Array.isArray(F.pressupoe) || !F.pressupoe.length) err("o «pressupoe» é uma lista de condições");
+    else F.pressupoe.forEach((c, i) => {
+      const onde = `pressupoe[${i}]`;
+      verCond(c, onde);
+      for (const { cond } of atomos(c)) {
+        const P = PRESSUPOSTOS[cond[0]];
+        if (!P) err(`${onde}: «${cond[0]}» não é um pressuposto (PRESSUPOSTOS)`);
+        else if (F.tipo === 1 && P.garante !== "esqueleto") err(`${onde}: o tipo 1 só pressupõe o que o esqueleto garante — um ato não fica à espera`);
+      }
+    });
+  }
+  if (F.estabelece !== undefined) {
+    if (!Array.isArray(F.estabelece) || !F.estabelece.length) err("o «estabelece» é uma lista de condições");
+    else F.estabelece.forEach((c, i) => {
+      const onde = `estabelece[${i}]`;
+      verCond(c, onde);
+      const P = Array.isArray(c) ? PRESSUPOSTOS[c[0]] : null;
+      if (!P || !P.estabelece) err(`${onde}: só se estabelece um predicado simples de PRESSUPOSTOS que o aceite`);
+    });
+  }
 
   const r = { ok: erros.length === 0, erros };
   if (Object.isFrozen(F)) cacheValidacao.set(F, r);

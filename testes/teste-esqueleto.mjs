@@ -161,14 +161,17 @@ function defeitos(w, k, catalogo) {
    Cópias das três fichas da planta, com outro id e outra mão: a escolha do
    esqueleto só lê a mão, o «contra», o «quando», o «afim» e os papéis, e
    por isso uma cópia mede o algoritmo tão bem como uma quest escrita. `k`
-   cópias por mão; o tipo 2, `k` cópias da Carta. */
+   cópias por mão; o tipo 2, `k` cópias da Carta.
+   TE1 (09/11): a cópia que muda o «quando» muda também a temperatura — a
+   ficha já não pode dizer «meio e fim» e aquecer como uma chama (a catraca
+   TEMPERATURA_DO_QUANDO), e a do molde era a da quest copiada. */
 const MOLDES_DA_MAO = [
-  { mao: "tenente", contra: [1, 2], quando: ["cedo", "meio"], de: "o_salvo_conduto" },
-  { mao: "recurso", contra: [2, 3], quando: ["cedo", "meio"], de: "as_cinzas_de_ontem" },
-  { mao: "consequencia", contra: [3], quando: ["meio"], de: "as_cinzas_de_ontem" },
-  { mao: "pista", contra: [3, 4], quando: ["meio", "fim"], de: "as_cinzas_de_ontem" },
-  { mao: "rosto", contra: [5], quando: ["fim"], de: "as_cinzas_de_ontem" },
-  { mao: "confronto", contra: [6], quando: ["fim"], de: "as_cinzas_de_ontem" },
+  { mao: "tenente", contra: [1, 2], quando: ["cedo", "meio"], temperatura: "chama", de: "o_salvo_conduto" },
+  { mao: "recurso", contra: [2, 3], quando: ["cedo", "meio"], temperatura: "chama", de: "as_cinzas_de_ontem" },
+  { mao: "consequencia", contra: [3], quando: ["meio"], temperatura: "chama", de: "as_cinzas_de_ontem" },
+  { mao: "pista", contra: [3, 4], quando: ["meio", "fim"], temperatura: "fogueira", de: "as_cinzas_de_ontem" },
+  { mao: "rosto", contra: [5], quando: ["fim"], temperatura: "fogueira", de: "as_cinzas_de_ontem" },
+  { mao: "confronto", contra: [6], quando: ["fim"], temperatura: "incendio", de: "as_cinzas_de_ontem" },
 ];
 const clonar = (x) => JSON.parse(JSON.stringify(x));
 function catalogoCheio(k) {
@@ -177,7 +180,7 @@ function catalogoCheio(k) {
     for (const m of MOLDES_DA_MAO) {
       const q = clonar(questPorId(m.de));
       q.id = `${m.mao}_${i}`; delete q.enredo;
-      q.quando = [...m.quando]; q.afim = i % 2 ? ["jornada", "misterio"] : ["arquipelago", "reinado"];
+      q.quando = [...m.quando]; q.temperatura = m.temperatura; q.afim = i % 2 ? ["jornada", "misterio"] : ["arquipelago", "reinado"];
       q.mao = { ...q.mao, tipo: m.mao, contra: [...m.contra] };
       if (q.mao.tambem) delete q.mao.tambem;
       /* lote 3 (08/11): o servo passou a ter natureza (gente, por omissão;
@@ -568,7 +571,14 @@ sec("4. A DEGRADAÇÃO com o catálogo de hoje (três quests)");
   const pedinte = clonar(questPorId("as_cinzas_de_ontem"));
   pedinte.id = "pede_um_aliado"; pedinte.pede = ["aliado:testemunha"];
   t("a ficha que pede um «aliado» é válida", validarQuest(pedinte).ok);
-  const comPede = MUNDOS.slice(0, 80).map((x) => ({ x, k: esqueletoDaCampanha(entradaDe(x, { catalogo: [questPorId("o_salvo_conduto"), pedinte] })) }));
+  /* TE2 (09/11): o par é sintético. O Salvo-Conduto deixava o protegido
+     como «aliado», e nenhuma ficha do catálogo o pedia — premissa sem leitor,
+     que a catraca da biblioteca agora recusa; o mecanismo do «pede» prova-se
+     com um Salvo-Conduto que deixa e uma ficha que pede, as duas aqui */
+  const deixador = clonar(questPorId("o_salvo_conduto"));
+  deixador.deixa = ["aliado:protegido"];
+  t("o Salvo-Conduto que deixa o protegido como «aliado» é válido (PREMISSAS)", validarQuest(deixador).ok);
+  const comPede = MUNDOS.slice(0, 80).map((x) => ({ x, k: esqueletoDaCampanha(entradaDe(x, { catalogo: [deixador, pedinte] })) }));
   const recebeu = comPede.filter(({ k }) => k.atos.some((a) => a.quest === "pede_um_aliado"));
   t("quando entra depois do Salvo-Conduto, o papel pedido é o protegido que ele deixou como aliado", recebeu.length > 0 && recebeu.every(({ k }) => {
     const sc = k.atos.find((a) => a.quest === "o_salvo_conduto");
@@ -576,6 +586,11 @@ sec("4. A DEGRADAÇÃO com o catálogo de hoje (três quests)");
     return sc && sc.ato < pd.ato && pd.papeis.testemunha.nome === sc.papeis.protegido.nome;
   }), `${recebeu.length} de 80`);
   t("sem o Salvo-Conduto, a que pede não entra nunca", MUNDOS.slice(0, 40).every((x) => esqueletoDaCampanha(entradaDe(x, { catalogo: [pedinte] })).atos.every((a) => !a.quest)));
+  t("e com o Salvo-Conduto do catálogo, que já não deixa nada, também não",
+    MUNDOS.slice(0, 40).every((x) => esqueletoDaCampanha(entradaDe(x, { catalogo: [questPorId("o_salvo_conduto"), pedinte] })).atos.every((a) => a.quest !== "pede_um_aliado")));
+  const premissaTorta = clonar(questPorId("o_salvo_conduto"));
+  premissaTorta.deixa = ["conhece:vilao"];
+  t("a premissa fora de PREMISSAS é recusada (o «conhece» passou a «estabelece camada rosto»)", !validarQuest(premissaTorta).ok);
 }
 
 sec("5. AS MEDIDAS");

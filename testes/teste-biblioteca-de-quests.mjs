@@ -36,12 +36,21 @@
       os tenentes do cedo, as pistas do 3 e do 4, a pista do vilão que é
       bicho (lida no chão, nunca vista), e quatro do coração.
    §13 o acervo, lote 6 (BQ8) — as treze quests de src/acervo/quests-lote-6.js
-      (o meio e o fim: dois rostos, dois confrontos, e quatro do coração). */
+      (o meio e o fim: dois rostos, dois confrontos, e quatro do coração);
+   §14 a temperatura, os pressupostos e as premissas (Fase TE · TE1–TE3) —
+      cada ficha com um grau coerente com o seu «quando»; cada pressuposto
+      do vocabulário e com quem o escreva; cada «estabelece» com quem o leia
+      e provado pela regra que sobe a camada; nenhuma premissa sem leitor; e
+      as catorze correções da auditoria, cada uma com a sua prova. */
 import {
   BIBLIOTECA_DE_QUESTS, TIPOS_DE_QUEST, QUANDO_DA_QUEST, ESTADOS_DA_QUEST, PAPEIS_DA_QUEST, MAOS_DO_VILAO,
   LIMITES_DA_QUEST, EFEITOS_DA_QUEST, EFEITOS_DA_REVIRAVOLTA, ATOS_DO_HEROI,
   questPorId, validarQuest, abrirQuest, avancarQuest, escolherNaQuest, vereditoDaEscolha, estadoDaQuest, NATUREZAS_DO_FIO,
+  TEMPERATURAS, TEMPERATURA_DO_QUANDO, PRESSUPOSTOS, PREMISSAS,
 } from "../src/biblioteca-de-quests.js";
+import { ARQUETIPOS, FASES } from "../src/vilao.js";
+import { SOBE_A_CAMADA } from "../src/plano-do-vilao.js";
+import { registrarVisto } from "../src/elenco.js";
 import { QUESTS_LOTE_4 } from "../src/acervo/quests-lote-4.js";
 import { QUESTS_LOTE_6 } from "../src/acervo/quests-lote-6.js";
 import { QUESTS_LOTE_5 } from "../src/acervo/quests-lote-5.js";
@@ -318,7 +327,8 @@ const chegar = (e) => ({ ...e, jornada: null, cidadeAtual: FOZ, lugar: { nome: "
   t("o veredito da portagem: os dois lados, em mundo, e o preço", ver && ver.opcoes.length === 1 && ver.opcoes[0].custo === 40 && ver.opcoes[0].podeEscolher && /Vau Negro/.test(ver.opcoes[0].ganha) && ver.opcoes[0].custa.length > 30, J(ver));
   js.escolher("passo", "portagem");
   t("social: a portagem fecha o passo pelo ramo «social»", js.R.feitas.passo && js.R.feitas.passo.ramo === "social");
-  t("e o preço, o aviso ao vilão e a premissa entram nas consequências", js.R.consequencias.some((c) => c.de === "escolha:passo:portagem" && J(c.efeitos.map((x) => x.tipo)) === J(["moedas", "avisa_vilao", "deixa"])));
+  /* MOVIDA na TE2 (09/11): o efeito «deixa» saiu — escrevia uma premissa que nenhuma peça lia (avisado:tenente); o preço e o aviso ficam */
+  t("e o preço e o aviso ao vilão entram nas consequências", js.R.consequencias.some((c) => c.de === "escolha:passo:portagem" && J(c.efeitos.map((x) => x.tipo)) === J(["moedas", "avisa_vilao"])));
   t("concluível por este ramo", js.turno(chegar).R.estado === "concluida");
 
   /* furtiva: o desvio, com a Lia ao lado */
@@ -705,7 +715,9 @@ t("o Celeiro: ouvir, ver, falar com a dona, abrir as portas — concluída", c1.
 const c2 = guiao(CEL, "lâmina poupando · queimar", [...ateAoDono, (e) => lutar(e, { nome: "Gaspar", rendido: true }), ["escolher", "trigo", "queimar"]]);
 t("o Celeiro: o comprador poupado deixa a bolsa, e queimar o trigo tira-lhe a alavanca", c2.R.feitas.dono.variante === "poupou" && c2.R.consequencias.some((c) => c.de === "escolha:trigo:queimar" && c.efeitos.some((x) => x.tipo === "relogio_do_fio" && x.n === -1)) && c2.R.estado === "concluida");
 const c3 = guiao(CEL, "lâmina matando · guardar", [...ateAoDono, (e) => lutar(e, { nome: "Gaspar" }), ["escolher", "trigo", "guardar"]]);
-t("o Celeiro: guardar o trigo deixa o cerco para as quests seguintes", c3.R.feitas.dono.variante === "matou" && c3.R.consequencias.some((c) => c.efeitos.some((x) => x.premissa === "cerco:celeiro")));
+/* MOVIDA na TE2 (09/11): o efeito «deixa» saiu — escrevia uma premissa que nenhuma peça lia (cerco:celeiro): guardar o trigo continua a pôr o dono
+   em dívida — o laço, que o registo da gente lê */
+t("o Celeiro: guardar o trigo põe o dono em dívida contigo", c3.R.feitas.dono.variante === "matou" && c3.R.consequencias.some((c) => c.de === "escolha:trigo:guardar" && J(c.efeitos) === J([{ tipo: "laco", papel: "dono", laco: "divida" }])));
 const c4 = guiao(CEL, "o trigo já vendido", [(e) => falar(e, "Joana"), (e) => segredo(ir(e, CELEIRO), CELEIRO), (e) => falar(e, "Isaura")]);
 const c4v = c4.ver();
 t("o Celeiro: quem revolve as sacas descobre o trigo já vendido, e a escolha espera o comprador", c4.R.reviravoltas.some((r) => r.id === "o_trigo_ja_vendido") && c4v.etapa === "trigo" && c4v.escolhas.length === 0 && /compra o trigo a dobrar/.test(c4v.faltaTexto.join(" ")), J(c4v));
@@ -786,7 +798,9 @@ t("e o veredito de esperar avisava, antes do clique, que a febre não espera", e
 const e5 = dias2(55, "contar", "esperar");
 t("os Dias: contar e esperar sem confiança inteira — também a última febre", e5.R.desfecho === "a_ultima_febre");
 const e6 = dias2(55, "contar", "pagar", [(e) => segredo(ir(e, HORTO), HORTO)]);
-t("os Dias: quem revolve o horto descobre que a mesma mão vende a cura e semeia a febre", e6.R.reviravoltas.some((r) => r.id === "a_mesma_mao") && e6.R.consequencias.some((c) => c.efeitos.some((x) => x.premissa === "febre:horto")));
+/* MOVIDA na TE2 (09/11): o efeito «deixa» saiu — escrevia uma premissa que nenhuma peça lia (febre:horto): o que a reviravolta descobre passa ao
+   QUEM É de quem tosse, onde é lido */
+t("os Dias: quem revolve o horto descobre que a mesma mão vende a cura e semeia a febre", e6.R.reviravoltas.some((r) => r.id === "a_mesma_mao") && e6.R.consequencias.some((c) => c.de === "reviravolta:a_mesma_mao" && c.efeitos.some((x) => x.tipo === "quem_e" && x.papel === "quem" && /febre semeada/.test(x.linha))));
 const e7 = guiao(DIA, "a febre fica (abandono)", [(e) => dias(e, 2), (e) => dias(e, 15)], { e0: mundo2([IAGO(55)]) });
 t("os Dias: a história ignorada acaba no padrão", e7.R.desfecho === "a_febre_fica" && e7.R.motivo === "abandono");
 const e8 = guiao(DIA, "sem quem cure", [(e) => dias(e, 2), (e) => morre(e, "Ermelinda")], { e0: mundo2([IAGO(55)]) });
@@ -815,8 +829,14 @@ const f3 = lamina(80, "quebrar", "ouvir");
 t("a Lâmina: quebrar o voto e ouvir — a paz a meias (a mão limpa pede o voto inteiro)", f3.R.desfecho === "a_paz_a_meias");
 const f4 = lamina(55, "quebrar", "afastar");
 t("a Lâmina: quebrar e fugir — a lâmina desenterrada: vive, e deixa de rezar", f4.R.desfecho === "a_lamina_desenterrada");
-const f5 = lamina(55, "absolver", "luta", [(e) => consulta(falar(ir(e, ERMIDA), "Anselmo"), "Anselmo")]);
+/* TE3 (09/11): o nó do perdão a peso é «um nó que já viste noutros sítios» —
+   a assinatura dele, que só se reconhece na camada da marca. O guião põe o
+   vilão nessa camada; sem ela, a reviravolta espera (a prova a seguir) */
+const comAMarca = (e) => ({ ...e, espinha: { ...(e.espinha || {}), fio: { ...((e.espinha || {}).fio || {}), vilao: { arquetipo: ARQUETIPOS[0].id, camada: "marca" } } } });
+const f5 = lamina(55, "absolver", "luta", [comAMarca, (e) => consulta(falar(ir(e, ERMIDA), "Anselmo"), "Anselmo")]);
 t("a Lâmina: absolver abre o altar, e perguntar a mais mostra o perdão a peso", f5.R.reviravoltas.some((r) => r.id === "o_altar_primeiro") && f5.R.reviravoltas.some((r) => r.id === "o_perdao_a_peso") && !!f5.R.feitas.altar, J(f5.R.reviravoltas));
+const f5b = lamina(55, "absolver", "luta", [(e) => consulta(falar(ir(e, ERMIDA), "Anselmo"), "Anselmo")]);
+t("TE3 · a Lâmina: sem a assinatura dele à vista (a camada do rumor), o nó ainda não diz nada — o perdão a peso não dispara", f5b.R.reviravoltas.some((r) => r.id === "o_altar_primeiro") && !f5b.R.reviravoltas.some((r) => r.id === "o_perdao_a_peso"), J(f5b.R.reviravoltas));
 t("e o fim é o falso perdão", f5.R.desfecho === "o_falso_perdao");
 const f6 = lamina(80, "honrar", "afastar");
 t("a Lâmina: honrar o voto e fugir — o mártir (o pior): quem não ergue a lâmina morre na estrada", f6.R.desfecho === "o_martir" && f6.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "morte" && x.papel === "quem")));
@@ -1189,7 +1209,8 @@ const depoisDaFeira = (e) => falar(em(e, PRACA), "Ildo");
 const z1 = g4(LUZ, "recuar", [...aoAlcance, ["escolher", "rosto", "recuar"], depoisDaFeira]);
 t("à Luz do Dia: a torre, ao alcance da fera (vista, sem lhe falar), recuar, contar à torre — concluída", z1.R.estado === "concluida" && z1.R.feitas.gesto.ramo === "recuar", J(z1.R.feitas));
 const z2 = g4(LUZ, "ficar · o ferrete", [...aoAlcance, ["escolher", "rosto", "ficar"], depoisDaFeira]);
-t("à Luz do Dia: ficar deixa ver o ferrete antigo (a pista de quem já a prendeu)", z2.R.reviravoltas.some((r) => r.id === "o_ferrete") && z2.R.estado === "concluida" && z2.R.consequencias.some((c) => c.efeitos.some((x) => x.premissa === "ferrete:vilao")));
+/* MOVIDA na TE2 (09/11): o efeito «deixa» saiu — escrevia uma premissa que nenhuma peça lia (ferrete:vilao): o ferrete passa ao QUEM É dele */
+t("à Luz do Dia: ficar deixa ver o ferrete antigo (a pista de quem já a prendeu)", z2.R.reviravoltas.some((r) => r.id === "o_ferrete") && z2.R.estado === "concluida" && z2.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "quem_e" && x.papel === "vilao" && /ferro/.test(x.linha))));
 const z3 = g4(LUZ, "a lição · dar", [(e) => falar(e, "Ildo"), (e) => consulta(e, "Ildo"), (e) => avista(ir(e, FEIRA), "Quimera Rubra"), ["escolher", "rosto", "dar"], depoisDaFeira]);
 t("à Luz do Dia: perguntar à torre mostra a lição; dar o gado faz da fera aliada (o pacto que O Fundo da Toca lê)", z3.R.reviravoltas.some((r) => r.id === "a_licao") && z3.R.feitas.gesto.ramo === "dar"
   && z3.R.consequencias.some((c) => c.de === "escolha:rosto:dar" && c.efeitos.some((x) => x.tipo === "aliado" && x.papel === "vilao")) && z3.R.estado === "concluida", J(z3.R.reviravoltas));
@@ -1283,7 +1304,8 @@ const v42 = g4(LIV, "lâmina poupando · queimar", [ouvirMatilde, (e) => segredo
 t("o Livro: o servo vencido e poupado, e o livro queimado (a terra perde a memória)", v42.R.feitas.livro.variante === "poupou" && v42.R.feitas.destino.ramo === "queimar" && v42.R.estado === "concluida");
 const v43 = g4(LIV, "a letra vendida · lâmina matando · trocar", [ouvirMatilde, (e) => falar(e, "Hilário"), (e) => ir(e, PACO), (e) => lutar(e, { nome: "Rogério" }), ["escolher", "livro", "trocar"]]);
 t("o Livro: quem imita letras já vendeu uma, e a cópia que mente faz recuar o relógio dele",
-  v43.R.reviravoltas.some((r) => r.id === "a_letra_vendida") && v43.R.feitas.destino.ramo === "trocar" && v43.R.consequencias.some((c) => c.efeitos.some((x) => x.premissa === "falsario:copista")), J(v43.R));
+  /* MOVIDA na TE2 (09/11): o efeito «deixa» saiu — escrevia uma premissa que nenhuma peça lia (falsario:copista): o falsário já estava no QUEM É do copista */
+  v43.R.reviravoltas.some((r) => r.id === "a_letra_vendida") && v43.R.feitas.destino.ramo === "trocar" && v43.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "quem_e" && x.papel === "copista")), J(v43.R));
 const v44 = g4(LIV, "a falha", [ouvirMatilde, (e) => morre(e, "Matilde")], { falha: 0 });
 t("o Livro: quem o guardava morto antes do destino — falhada", v44.R.motivo === "falha" && /página em branco/.test(v44.R.fecho.texto));
 const v45 = g4(LIV, "o abandono", [(e) => dias(e, 5)]);
@@ -1303,7 +1325,8 @@ t("as Mãos: as cartas compradas por sessenta moedas a quem as guarda, e levadas
   && m42.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "moedas" && x.n === -60)) && m42.R.estado === "concluida", J(m42.R));
 const m43 = g4(MAO4, "o furto · guardar", [ouvirBenedita, (e) => segredo(consulta(e, "Benedita"), BANHOS), (e) => ir(e, BANHOS), ["escolher", "segredo", "guardar"]]);
 t("as Mãos: a lista das portas no arquivo, as cartas tiradas de onde se sabia que estavam, e guardadas (quem cura fica a dever)",
-  m43.R.reviravoltas.some((r) => r.id === "as_portas_marcadas") && m43.R.feitas.tirar.ramo === "furto" && m43.R.feitas.segredo.ramo === "guardar" && m43.R.consequencias.some((c) => c.efeitos.some((x) => x.premissa === "devedor:curadora")));
+  /* MOVIDA na TE2 (09/11): o efeito «deixa» saiu — escrevia uma premissa que nenhuma peça lia (devedor:curadora): quem guarda as cartas fica com a desconfiança dela */
+  m43.R.reviravoltas.some((r) => r.id === "as_portas_marcadas") && m43.R.feitas.tirar.ramo === "furto" && m43.R.feitas.segredo.ramo === "guardar" && m43.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "afeicao" && x.papel === "curadora" && x.n === -1)));
 t("e o veredito de pagar diz o preço antes do clique", m42.vereditos.some((v) => v.chave === "preco" && v.opcoes[0].custo === 60));
 const m44 = g4(MAO4, "a falha", [ouvirBenedita, (e) => morre(e, "Benedita")], { falha: 0 });
 t("as Mãos: quem cura morta antes da decisão — falhada", m44.R.motivo === "falha" && /giz/.test(m44.R.fecho.texto));
@@ -2281,6 +2304,156 @@ for (const id of LOTE6) {
   t("o marcador de género: «a vida é dele» de um homem, «a vida é dela» de uma mulher", /vida é dele./.test(gen6("m")) && /vida é dela./.test(gen6("f")), gen6("m") + " | " + gen6("f"));
   const g = () => { turno = 9000; return J(mor6(80, "voltar", "reclamar", { baixa: 55 }).R); };
   t("determinístico: o mesmo guião do lote 6 dá o mesmo registo", g() === g());
+}
+
+sec("§14 a temperatura, os pressupostos e as premissas (Fase TE · TE1–TE3)");
+{
+  const CAT = BIBLIOTECA_DE_QUESTS;
+  const ord = (g) => TEMPERATURAS[g].ordem;
+  const maosDe = (q) => (q.mao ? [q.mao.tipo, ...(q.mao.tambem || [])] : []);
+  const textoDe = (q) => J(q);
+  const recusa2 = (q, mudar, re) => { const c = copia(q); mudar(c); const v = validarQuest(c); return !v.ok && v.erros.some((e) => re.test(e)); };
+
+  /* ---- TE1 · a temperatura ---- */
+  t("TE1 · quatro graus, de 0 a 3, cada um com o que é e a ficha que o mostra (e a ficha tem esse grau)",
+    J(Object.keys(TEMPERATURAS)) === J(["brasa", "chama", "fogueira", "incendio"]) && Object.values(TEMPERATURAS).every((g, i) => g.ordem === i && g.diz.length > 10)
+    && Object.entries(TEMPERATURAS).every(([k, g]) => (questPorId(g.exemplo) || {}).temperatura === k));
+  t("TE1 · cada posição aceita dois graus vizinhos, e sobe: cedo ≤ meio ≤ fim",
+    J(Object.keys(TEMPERATURA_DO_QUANDO)) === J(QUANDO_DA_QUEST) && Object.values(TEMPERATURA_DO_QUANDO).every((l) => l.length === 2 && l.every((g) => TEMPERATURAS[g]) && ord(l[1]) === ord(l[0]) + 1)
+    && QUANDO_DA_QUEST.every((q, i) => i === 0 || ord(TEMPERATURA_DO_QUANDO[q][0]) > ord(TEMPERATURA_DO_QUANDO[QUANDO_DA_QUEST[i - 1]][0])));
+  const semGrau = CAT.filter((q) => !TEMPERATURAS[q.temperatura]).map((q) => q.id);
+  t(`TE1 · as ${CAT.length} fichas têm um grau, e um só`, semGrau.length === 0, semGrau.join(", "));
+  const contradiz = CAT.filter((q) => {
+    const aceitam = q.quando.filter((x) => TEMPERATURA_DO_QUANDO[x].includes(q.temperatura));
+    return TIPOS_DE_QUEST[q.tipo].quandoDaTemperatura === "cada" ? aceitam.length !== q.quando.length : aceitam.length === 0;
+  }).map((q) => q.id);
+  t("TE1 · nenhuma temperatura contradiz o «quando» (o tipo 1 em cada posição; o tipo 2, que corre por janelas, em alguma)", contradiz.length === 0, contradiz.join(", "));
+  t("TE1 · a regra do tipo é tabela: cada no 1, algum no 2", TIPOS_DE_QUEST[1].quandoDaTemperatura === "cada" && TIPOS_DE_QUEST[2].quandoDaTemperatura === "algum");
+  const conta = (g, tipo) => CAT.filter((q) => q.temperatura === g && q.tipo === tipo).length;
+  t("TE1 · a classificação da planta (§1.5): brasa 7+2, chama 12+9, fogueira 12+5, incêndio 5",
+    J([1, 2].map((tp) => Object.keys(TEMPERATURAS).map((g) => conta(g, tp)))) === J([[7, 12, 12, 5], [2, 9, 5, 0]]),
+    J([1, 2].map((tp) => Object.keys(TEMPERATURAS).map((g) => conta(g, tp)))));
+  t("TE1 · os confrontos são incêndio, e só eles; todo rosto é fogueira", CAT.filter((q) => q.temperatura === "incendio").every((q) => q.mao && q.mao.tipo === "confronto")
+    && CAT.filter((q) => q.mao && q.mao.tipo === "confronto").every((q) => q.temperatura === "incendio") && CAT.filter((q) => maosDe(q).includes("rosto")).every((q) => q.temperatura === "fogueira"));
+  t("TE1 · toda brasa do tipo 1 é só do cedo (O Celeiro e Os Braços deixaram o meio: uma brasa no meio é uma descida)",
+    CAT.filter((q) => q.tipo === 1 && q.temperatura === "brasa").every((q) => J(q.quando) === J(["cedo"])) && J(questPorId("o_celeiro_de_inverno").quando) === J(["cedo"]) && J(questPorId("os_bracos_que_faltam").quando) === J(["cedo"]));
+  const cel = questPorId("o_celeiro_de_inverno"), sc = questPorId("o_salvo_conduto"), cimo = questPorId("o_cimo_da_escada"), carta = questPorId("a_carta_que_nao_se_abre");
+  t("TE1 · recusada: sem grau, ou com um grau que não existe", recusa2(sc, (c) => { delete c.temperatura; }, /TEMPERATURAS/) && recusa2(sc, (c) => { c.temperatura = "morna"; }, /TEMPERATURAS/));
+  t("TE1 · recusada: a brasa que também pode cair no meio (o Celeiro de antes)", recusa2(cel, (c) => { c.quando = ["cedo", "meio"]; }, /contradiz/));
+  t("TE1 · recusados: o confronto frio e o tenente do cedo em incêndio", recusa2(cimo, (c) => { c.temperatura = "chama"; }, /contradiz/) && recusa2(sc, (c) => { c.temperatura = "incendio"; }, /contradiz/));
+  t("TE1 · o tipo 2 aceita qualquer grau (a janela é que o ordena, na TE4)", Object.keys(TEMPERATURAS).every((g) => { const c = copia(carta); c.temperatura = g; return validarQuest(c).ok; }));
+
+  /* ---- TE2 · os pressupostos ---- */
+  t("TE2 · todo pressuposto é um predicado ativo do vocabulário da BQ3, com quem o garante",
+    Object.entries(PRESSUPOSTOS).every(([k, p]) => CONDICOES[k] && !CONDICOES[k].reservado && ["esqueleto", "abertura"].includes(p.garante) && typeof p.estabelece === "boolean" && p.diz.length > 10));
+  const atomosDe = (c, pos = true, out = []) => {
+    if (!Array.isArray(c)) return out;
+    if (c[0] === "todos" || c[0] === "algum") c.slice(1).forEach((x) => atomosDe(x, pos, out));
+    else if (c[0] === "pelo_menos") c.slice(2).forEach((x) => atomosDe(x, pos, out));
+    else if (c[0] === "nenhum") c.slice(1).forEach((x) => atomosDe(x, !pos, out));
+    else out.push({ c, pos });
+    return out;
+  };
+  const pres = CAT.flatMap((q) => (q.pressupoe || []).flatMap((c) => atomosDe(c).map((a) => ({ q, ...a }))));
+  const estab = CAT.flatMap((q) => (q.estabelece || []).map((c) => ({ q, c })));
+  t("TE2 · todo átomo de pressuposto é de PRESSUPOSTOS, e o tipo 1 só pressupõe o que o esqueleto garante",
+    pres.every(({ q, c }) => PRESSUPOSTOS[c[0]] && (q.tipo === 2 || PRESSUPOSTOS[c[0]].garante === "esqueleto")), J(pres.filter(({ q, c }) => !PRESSUPOSTOS[c[0]] || (q.tipo === 1 && PRESSUPOSTOS[c[0]].garante !== "esqueleto")).map(({ q, c }) => q.id + " " + J(c))));
+  const semUso = Object.keys(PRESSUPOSTOS).filter((k) => !pres.some(({ c }) => c[0] === k) && !estab.some(({ c }) => c[0] === k));
+  t("TE2 · todo pressuposto do vocabulário é usado por uma ficha (nenhum vocabulário morto)", semUso.length === 0, semUso.join(", "));
+  const igual = (a, b) => J(a) === J(b);
+  const semLeitor = estab.filter(({ q, c }) => !pres.some((p) => p.q.id !== q.id && igual(p.c, c))).map(({ q, c }) => q.id + " " + J(c));
+  t("TE2 · todo «estabelece» tem leitor: o pressuposto de outra ficha que o pede", semLeitor.length === 0, semLeitor.join("; "));
+  const semEscritor = pres.filter(({ q, c, pos }) => pos && PRESSUPOSTOS[c[0]].garante === "esqueleto" && !estab.some((e) => e.q.id !== q.id && igual(e.c, c))).map(({ q, c }) => q.id + " " + J(c));
+  t("TE2 · todo pressuposto que o esqueleto garante tem quem o estabeleça (outra ficha)", semEscritor.length === 0, semEscritor.join("; "));
+  /* o «estabelece camada X» é verdade pela regra que sobe a camada: alguma
+     camada Y ≥ X sobe pela mão da quest, concluída (SOBE_A_CAMADA.quests).
+     A do rosto (a guerra, pela mão do rosto concluída) pede o ato do rosto
+     (SOBE_A_CAMADA.guerra.ato): a TE4 tranca a mão do rosto nesse ato */
+  const ordemCamada = Object.fromEntries(FASES.map((f) => [f.id, f.ordem]));
+  const provado = ({ q, c }) => c[0] !== "camada" || FASES.some((f) => f.ordem >= ordemCamada[c[1]] && SOBE_A_CAMADA[f.id] && (SOBE_A_CAMADA[f.id].quests || []).some(([m, sit]) => sit === "concluida" && maosDe(q).includes(m)));
+  t("TE2 · todo «estabelece camada» é verdade pela regra que sobe a camada (a mão da quest, concluída)", estab.every(provado), J(estab.filter((e) => !provado(e)).map(({ q, c }) => q.id + " " + J(c))));
+  t("TE2 · estabelecem a mão as doze com mão de tenente; o rosto, as seis do rosto",
+    J(CAT.filter((q) => maosDe(q).includes("tenente")).map((q) => q.id).sort()) === J(estab.filter(({ c }) => igual(c, ["camada", "mao"])).map(({ q }) => q.id).sort())
+    && estab.filter(({ c }) => igual(c, ["camada", "mao"])).length === 12
+    && J(CAT.filter((q) => maosDe(q).includes("rosto")).map((q) => q.id).sort()) === J(estab.filter(({ c }) => igual(c, ["camada", "rosto"])).map(({ q }) => q.id).sort())
+    && estab.filter(({ c }) => igual(c, ["camada", "rosto"])).length === 6);
+  t("TE2 · recusados: o pressuposto fora do vocabulário, e o tipo 1 que espera pela convivência",
+    recusa2(sc, (c) => { c.pressupoe = [["dia", 3]]; }, /PRESSUPOSTOS/) && recusa2(sc, (c) => { c.pressupoe = [["convivencia", "papel:protegido", 3]]; }, /um ato não fica à espera/));
+  t("TE2 · recusados: o «estabelece» composto, o de quem não se estabelece, e a lista vazia",
+    recusa2(sc, (c) => { c.estabelece = [["todos", ["camada", "mao"]]]; }, /estabelece/) && recusa2(carta, (c) => { c.estabelece = [["afeicao", "papel:quem", 1]]; }, /estabelece/) && recusa2(sc, (c) => { c.pressupoe = []; }, /pressupoe/));
+  t("TE2 · recusado: o pressuposto com papel que a ficha não declara", recusa2(cimo, (c) => { c.pressupoe = [["convivencia", "papel:ninguem", 3]]; }, /não está declarado/));
+
+  /* ---- TE2 · as premissas ---- */
+  const deixa = CAT.flatMap((q) => (q.deixa || []).map((p) => ({ q, p })));
+  const pede = CAT.flatMap((q) => (q.pede || []).map((p) => ({ q, p })));
+  const tipoDe = (p) => p.split(":")[0];
+  const premSemLeitor = deixa.filter(({ q, p }) => !pede.some((x) => x.q.id !== q.id && tipoDe(x.p) === tipoDe(p))).map(({ q, p }) => q.id + " " + p);
+  t("TE2 · nenhuma ficha deixa uma premissa que nenhuma outra pede (premissa sem leitor quebra a suíte)", premSemLeitor.length === 0, premSemLeitor.join(", "));
+  const pedeSemQuem = pede.filter(({ q, p }) => !deixa.some((x) => x.q.id !== q.id && tipoDe(x.p) === tipoDe(p))).map(({ q, p }) => q.id + " " + p);
+  t("TE2 · e nenhuma pede o que nenhuma deixa (nunca entraria)", pedeSemQuem.length === 0, pedeSemQuem.join(", "));
+  t("TE2 · toda premissa do catálogo é de PREMISSAS, e PREMISSAS diz quem a lê", [...deixa, ...pede].every(({ p }) => PREMISSAS[tipoDe(p)]) && Object.values(PREMISSAS).every((x) => x.le === "pede" && x.diz.length > 10));
+  let efDeixa = 0;
+  const anda = (x) => { if (Array.isArray(x)) x.forEach(anda); else if (x && typeof x === "object") { if (x.tipo === "deixa") efDeixa++; Object.values(x).forEach(anda); } };
+  CAT.forEach(anda);
+  t("TE2 · o efeito «deixa» saiu da tabela e das 52 fichas (os 110 que escreviam 52 tipos que ninguém lia)", !EFEITOS_DA_QUEST.deixa && efDeixa === 0, `${efDeixa} restam`);
+  t("TE2 · recusadas: a premissa que saiu (o rasto), e a de um papel que não é gente",
+    recusa2(sc, (c) => { c.deixa = ["rasto:tenente"]; }, /PREMISSAS/) && recusa2(sc, (c) => { c.deixa = ["aliado:destino"]; }, /gente/) && recusa2(sc, (c) => { c.fecho.efeitos = [{ tipo: "deixa", premissa: "aliado:protegido" }]; }, /EFEITOS_DA_QUEST/));
+  const revs = CAT.flatMap((q) => (q.reviravoltas || []).map((r) => ({ q, r })));
+  t("TE2 · nenhuma reviravolta ficou sem efeito: as que só deixavam premissa dizem-no agora no QUEM É de alguém da quest",
+    revs.every(({ r }) => r.efeitos.length > 0) && revs.filter(({ r }) => r.efeitos.some((e) => e.tipo === "quem_e")).length >= 18);
+
+  /* ---- TE3 · as correções da auditoria (§1.4), uma a uma ---- */
+  const dados = questPorId("os_dados_dele");
+  t("TE3 · Os Dados Dele: o recado vem endereçado «ao forasteiro», e nenhuma frase da ficha diz o nome que ele ainda não sabe",
+    /«ao forasteiro»/.test(dados.gancho) && !/teu nome/.test(textoDe(dados)));
+  t("TE3 · Os Dados Dele: fogueira, e o encontro com ele é a camada do rosto (a mão de rosto só no ato do rosto é a TE4)",
+    dados.temperatura === "fogueira" && igual(dados.estabelece, [["camada", "rosto"]]) && !dados.deixa);
+  const ama = questPorId("o_que_a_ama_esqueceu");
+  t("TE3 · O Que a Ama Esqueceu: ninguém diz de quem é a obra antes da hora — nem o gancho, nem a canção, nem o QUEM É",
+    !/toda a terra teme/.test(textoDe(ama)) && /anda por trás do que esta terra teme/.test(ama.gancho) && ama.reviravoltas.find((r) => r.id === "a_cancao").efeitos[0].linha.includes("anda por trás"));
+  const nome = questPorId("o_teu_nome_na_parede");
+  const papeisNome = { servo: { tipo: "pessoa", nome: "x" } };
+  const comCamada = (camada) => ({ ...vazio(), espinha: { fio: { vilao: { arquetipo: ARQUETIPOS[0].id, camada } } } });
+  t("TE3 · O Teu Nome na Parede: pressupõe que a gente dele já sabe quem és (a camada da mão), e a condição só vale lá",
+    igual(nome.pressupoe, [["camada", "mao"]]) && !nome.pressupoe.every((c) => avaliarCondicao(c, { estado: comCamada("marca"), papeis: papeisNome }))
+    && nome.pressupoe.every((c) => avaliarCondicao(c, { estado: comCamada("mao"), papeis: papeisNome })));
+  const lam = questPorId("a_lamina_enterrada");
+  t("TE3 · A Lâmina Enterrada (rev. 1): o nó que «já viste» pede a assinatura dele à vista (camada marca)",
+    J(lam.reviravoltas[1].gatilho).includes(J(["camada", "marca"])) && lam.reviravoltas[1].id === "o_perdao_a_peso");
+  const sangue = questPorId("o_sangue_do_outro_lado");
+  t("TE3 · O Sangue do Outro Lado: a fita é a memória do companheiro daquela noite, não um saber do herói",
+    /a mesma fita que traziam os que entraram em casa naquela noite/.test(sangue.gancho) && !/a fita de quem serve a mão por trás/.test(sangue.gancho));
+  const pedreira = questPorId("o_fundo_da_pedreira");
+  t("TE3 · O Fundo da Pedreira: a noite já não se prende ao relógio dele (que é dinâmico)", !/se cumpriu/.test(pedreira.gancho) && /as carroças de fora partiram cheias/.test(pedreira.gancho));
+  const chaves = questPorId("as_chaves_da_guarda");
+  t("TE3 · As Chaves da Guarda: as chaves vêm parar-lhe à mão porque mais ninguém as quis", /ninguém da terra as quis, e tu eras quem estava na sala/.test(chaves.gancho) && chaves.temperatura === "brasa");
+  /* o grupo B: o gancho que finge um passado partilhado fica, e passa a ser verdade */
+  const B = {
+    o_morto_que_voltou_a_casa: "no primeiro dia", o_juramento_a_cabeceira: "todas as noites", a_lamina_enterrada: "nem quando gritaste",
+    a_cabeca_que_nao_se_baixa: "Em todas as tabernas por onde passam", as_cartas_de_outra_casa: "não lê à tua frente",
+    a_palavra_dada_a_um_enforcado: "Dá a volta", a_ultima_licao: "sempre disse", o_que_o_tio_deixou: "como nunca o tinhas visto rir",
+  };
+  const PB = [["convivencia", "papel:quem", 3], ["afeicao", "papel:quem", 1]];
+  for (const [id, frase] of Object.entries(B)) {
+    const q = questPorId(id);
+    t(`TE3 · ${q.titulo}: o gancho fica («${frase}»), e pressupõe três dias de estrada e a confiança de quem o conta`, q.tipo === 2 && q.gancho.includes(frase) && igual(q.pressupoe, PB));
+  }
+  t("TE3 · as outras oito do coração aguentam-se no dia 1, e não pressupõem nada", CAT.filter((q) => q.tipo === 2 && !B[q.id]).length === 8 && CAT.filter((q) => q.tipo === 2 && !B[q.id]).every((q) => !q.pressupoe));
+  /* e o pressuposto do grupo B, jogado: o companheiro recrutado, o de antes */
+  const morto = questPorId("o_morto_que_voltou_a_casa");
+  const papeisB = { quem: { tipo: "pessoa", nome: "Iago" } };
+  const comIago = (dia, laco) => ({ ...vazio(), dia, npcs: { ...NPCS, Iago: { nome: "Iago", relacao: "aliado", status: "vivo", ...(laco ? { laco } : {}) } },
+    personagem: { ...vazio().personagem, grupo: [{ nome: "Iago", vinculo: 55 }] }, elenco: registrarVisto(null, "Iago", 2) });
+  const vale = (e) => morto.pressupoe.every((c) => avaliarCondicao(c, { estado: e, papeis: papeisB }));
+  t("TE3 · jogado: quem entrou no grupo no dia 2 ainda não contou nada «no primeiro dia» no dia 3; no dia 5, já",
+    !vale(comIago(3)) && vale(comIago(5)));
+  t("TE3 · jogado: quem o herói conhece de antes da campanha conta-o no dia 1", vale(comIago(1, { tipo: "amizade", forca: 3, desde: -400 })));
+  /* o grupo D: certas, e declaradas, para a catraca as guardar */
+  const peg = questPorId("as_pegadas_no_barro");
+  t("TE3 · As Pegadas no Barro: «ainda não lhe viste a cara» — declara que vem antes do rosto", igual(peg.pressupoe, [["nenhum", ["camada", "rosto"]]]) && /Ainda não lhe viste a cara/.test(peg.fecho.texto));
+  const confrontos = CAT.filter((q) => q.mao && q.mao.tipo === "confronto");
+  t("TE3 · os cinco confrontos pressupõem o rosto visto", confrontos.length === 5 && confrontos.every((q) => igual(q.pressupoe, [["camada", "rosto"]])));
+  t("TE3 · as catorze da auditoria e as seis declaradas passam todas no validador", [dados, ama, nome, lam, sangue, pedreira, chaves, ...Object.keys(B).map(questPorId), peg, ...confrontos].every((q) => validarQuest(q).ok));
 }
 
 console.log(`\nBQ4 · a biblioteca de quests: ${bons} passaram, ${maus} falharam`);

@@ -51,6 +51,19 @@
    nunca diz o nome de um mecanismo nem o de um papel: quem não tem nome é
    «alguém», «um lugar», «uma coisa».
 
+   OS PRESSUPOSTOS (09/11/2026, Fase TE · TE2). Uma quest também pede coisas
+   ANTES de existir: *O Morto Que Voltou a Casa* conta o que o companheiro
+   disse «no primeiro dia», e isso só é verdade depois de dias de estrada; *O
+   Teu Nome na Parede* põe um servo dele a vestir a cara do herói, e isso só
+   é verdade quando a gente dele já sabe quem ele é. A planta
+   (mente/plano-temperatura-e-espolios.md, §1.3) não quis uma segunda língua
+   para isto: o pressuposto é uma condição DESTE vocabulário, e faltavam três
+   predicados, os três com o tracker vivo — `camada` (a camada da revelação
+   do vilão, que `camadaDoVilao` sobe e guarda no registo dele),
+   `sabe_nome` (o nome do herói na boca dele: a mesma conta de `sabeONome`)
+   e `convivencia` (os dias de estrada com alguém: os vistos do elenco, e
+   quem o herói conhece de antes da campanha passa logo).
+
    PURO E DETERMINÍSTICO. Nenhuma sorte, nenhum relógio: tudo sai do
    estado (a forma do save, estado.js) que entra por argumento, que nunca
    é mutado. O `null` e o lixo não fecham nada e nunca lançam.
@@ -64,6 +77,14 @@ import { situacaoDe, SITUACOES, lugarConcluido } from "./mundo-base.js";
 import { RELACOES_NPC, estadoSemVolta } from "./npcs.js";
 import { MARCOS_VINCULO } from "./vinculos.js";
 import { contrair } from "./lugar.js";
+/* TE2: os trackers dos três pressupostos. O registo do vilão lê-se cru
+   (espinha.fio.vilao), pela mesma régua de garantirRegistroDoVilao: o
+   plano-do-vilao.js importa este módulo, e importá-lo de volta faria um
+   ciclo — a suíte prova que as duas leituras dão o mesmo. */
+import { FASES, ARQUETIPOS } from "./vilao.js";
+import { garantirSaber } from "./antagonista.js";
+import { garantirElencoDoSave, VISTOS } from "./elenco.js";
+import { lacoDeAntes } from "./companheiro-inicial.js";
 
 /* ---------------- OS PAPÉIS ----------------
    O prefixo do argumento diz o tipo do papel: `papel:mentor` é uma pessoa,
@@ -91,6 +112,8 @@ export const FONTES_DA_CONDICAO = Object.freeze({
   dia: "estado.dia — o dia do mundo",
   inventario: "estado.personagem: inventario, equipamento e equipados",
   quest: "contexto.quest — o registo da quest aberta (biblioteca-de-quests.js): as etapas feitas e as escolhas",
+  vilao: "estado.espinha.fio.vilao e estado.saber — o registo do vilão (a camada, o nome do herói) e o livro dele (plano-do-vilao.js)",
+  elenco: "estado.elenco — os dias em que o herói viu cada pessoa (elenco.js, os vistos)",
 });
 
 /* ---------------- OS LIMITES ----------------
@@ -129,6 +152,8 @@ export const COMBINADORES = Object.freeze({
               (conhecer, falar, morrer): um `nenhum` sobre ele, já verdade,
               não se cumpre mais (`impossivel` no «o que falta»);
      texto  — a frase de mundo, com {0}, {1} para os argumentos;
+     diz    — num argumento de opção: a frase de mundo de cada valor, quando
+              o valor é bastidor (a camada «rosto» diz-se «ver-lhe a cara»);
      rotulo — onde a frase de mundo vem do registo da quest (contexto.quest
               .rotulos), quando o vocabulário não a sabe: a chave, com os
               argumentos em {0}, {1};
@@ -147,6 +172,20 @@ const PORTA_DO_CRONISTA = P("src/motor/cronista-do-turno.js", "oAceitoDoCronista
 const PORTA_DA_CENA = P("src/motor/livro-do-turno.js", "oQueACenaDaAoLivro", "o fim da resposta: quem está à vista, o lugar, a afeição do grupo");
 const PORTA_DA_LUTA = P("src/motor/luta-do-turno.js", "caidosParaOLivro", "o fim da luta: os caídos, com rendido, desacordado e fugiu");
 const A_TEXTO = Object.freeze({ tipo: "texto" });
+/* TE2: as camadas que se podem pressupor (o rumor é sempre verdade: não se
+   pede), e a frase de mundo de cada uma — o nome da camada é bastidor */
+const ORDEM_DA_CAMADA = Object.freeze(Object.fromEntries(FASES.map((f) => [f.id, f.ordem])));
+const A_CAMADA = Object.freeze({
+  tipo: "opcao",
+  de: Object.freeze(FASES.filter((f) => f.ordem > 0).map((f) => f.id)),
+  diz: Object.freeze({
+    marca: "ver a assinatura dele na obra",
+    mao: "dar de caras com a gente dele",
+    rosto: "ver-lhe a cara",
+    guerra: "ver o plano dele à luz do dia",
+    queda: "chegar à hora dele",
+  }),
+});
 export const CONDICOES = Object.freeze({
   conheceu: Object.freeze({
     args: [A.pessoa], le: ["livro"], facto: "visto", volta: false,
@@ -222,6 +261,28 @@ export const CONDICOES = Object.freeze({
     args: [Object.freeze({ tipo: "numero", omissao: 1, min: 1, max: 100000 })], le: ["dia"], volta: false,
     portas: [P("src/motor/tempo-do-turno.js", "osMinutosAndam", "o relógio do mundo, que vira o dia")],
     texto: "esperar até ao dia {0}", nao: "acabar antes do dia {0}" }),
+  /* ---- TE2 (09/11): os pressupostos — o que tem de ser verdade para a
+     quest poder existir (a ficha diz `pressupoe`), com tracker vivo ---- */
+  camada: Object.freeze({
+    args: [A_CAMADA], le: ["vilao"], volta: false,
+    portas: [P("src/plano-do-vilao.js", "camadaDoVilao", "a camada da revelação, que sobe pelo facto (SOBE_A_CAMADA) e nunca desce")],
+    texto: "{0}", nao: "antes de {0}" }),
+  sabe_nome: Object.freeze({
+    args: [], le: ["vilao"], volta: false,
+    portas: [P("src/plano-do-vilao.js", "reagirAoHeroi", "a reação que lhe ensina o nome do herói: o servo poupado que volta, a oferta aceite")],
+    texto: "que ele saiba o teu nome", nao: "sem que ele saiba o teu nome" }),
+  /* os dias contam-se do primeiro em que o herói viu a pessoa (os vistos do
+     elenco guardam os últimos VISTOS.porPessoa dias distintos: por isso o
+     teto é um a menos, e a conta nunca mente); quem o herói conhece de antes
+     da campanha (lacoDeAntes) passa logo */
+  convivencia: Object.freeze({
+    args: [A.pessoa, Object.freeze({ tipo: "numero", omissao: 3, min: 1, max: VISTOS.porPessoa - 1 })],
+    le: ["elenco", "ficha", "dia"], volta: false,
+    portas: [
+      P("src/companheiro-inicial.js", "juntarCompanheiroInicial", "o companheiro que entra no grupo, visto no dia em que entra"),
+      P("src/elenco.js", "vistosDaNarrativa", "cada dia em que a narração cita alguém pelo nome"),
+    ],
+    texto: "fazer estrada com {0}", nao: "antes de fazer estrada com {0}" }),
   /* ---- o estado da própria quest (BQ4): ativos desde que o registo existe ---- */
   escolheu: Object.freeze({
     args: [A_TEXTO, A_TEXTO], le: ["quest"], volta: false,
@@ -260,6 +321,16 @@ const semArtigo = (s) => {
 const inteiro = (v) => (typeof v === "number" && Number.isFinite(v) ? Math.floor(v) : null);
 const preencher = (modelo, valores) => contrair(String(modelo).replace(/\{(\w+)\}/g, (m, k) => (valores[k] != null ? String(valores[k]) : m)));
 const RX_ID_PESSOA = /^(npc\|.+|[^|]+\|gente\|.+)$/;
+/* o registo do vilão, cru (espinha.fio.vilao), com a régua de
+   garantirRegistroDoVilao para o que aqui se lê: sem arquétipo que exista
+   não há registo, e a camada torta é o rumor */
+function registoDoVilao(E) {
+  const esp = obj(E.espinha);
+  const fio = esp && obj(esp.fio);
+  const v = fio && obj(fio.vilao);
+  if (!v || typeof v.arquetipo !== "string" || !ARQUETIPOS.some((a) => a.id === v.arquetipo)) return null;
+  return { camada: ORDEM_DA_CAMADA[v.camada] != null ? v.camada : "rumor", nomeDoHeroi: obj(v.nomeDoHeroi) };
+}
 
 /* ---------------- DO PAPEL AO ID ----------------
    resolverPapeis(papeis, estado, { mundo }) → { papeis, pendentes }
@@ -468,6 +539,29 @@ const LEITURAS = {
     const tem = Math.max(0, inteiro(c.E.dia) || 0);
     return { v: tem >= n, tem, precisa: n };
   },
+  /* TE2: os pressupostos */
+  camada: (c, [id]) => {
+    const r = registoDoVilao(c.E);
+    return { v: !!r && ORDEM_DA_CAMADA[r.camada] >= ORDEM_DA_CAMADA[id] };
+  },
+  /* a conta de sabeONome (plano-do-vilao.js): o registo que guardou o nome,
+     ou uma linha «nome» no livro dele */
+  sabe_nome: (c) => {
+    const r = registoDoVilao(c.E);
+    return { v: !!(r && r.nomeDoHeroi) || garantirSaber(c.E.saber).some((l) => l.sobre === "nome") };
+  },
+  convivencia: (c, [p, n]) => {
+    const f = fichaDe(c, p);
+    if (f && lacoDeAntes(f)) return { v: true, tem: n, precisa: n };
+    const hoje = Math.max(0, inteiro(c.E.dia) || 0);
+    const nome = semAc((f && typeof f.nome === "string" && f.nome) || p.nome || p.id.split("|").pop()).trim();
+    const vistos = garantirElencoDoSave(c.E.elenco).vistos;
+    const k = Object.keys(vistos).find((x) => semAc(x).trim() === nome);
+    const conhecido = f && inteiro(f.conhecidoEm) > 0 ? [f.conhecidoEm] : [];
+    const desde = Math.min(...(k ? vistos[k] : []), ...conhecido);
+    const tem = Number.isFinite(desde) ? Math.max(0, hoje - desde) : 0;
+    return { v: tem >= n, tem, precisa: n };
+  },
 };
 
 /* ---------------- O JULGAMENTO ----------------
@@ -502,7 +596,7 @@ function argumentos(c, def, args) {
     }
     if (a.tipo === "opcao" || a.tipo === "texto") {
       if (a.tipo === "opcao" ? !a.de.includes(v) : typeof v !== "string") torto = true;
-      out.push(v); mostrar.push(RELACOES_NPC[v] ? RELACOES_NPC[v].rotulo.toLowerCase() : v); dados.push(v);
+      out.push(v); mostrar.push(a.diz && a.diz[v] ? a.diz[v] : RELACOES_NPC[v] ? RELACOES_NPC[v].rotulo.toLowerCase() : v); dados.push(v);
       return;
     }
     const m = typeof v === "string" ? v.match(RX_ARGUMENTO) : null;

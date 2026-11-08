@@ -170,7 +170,9 @@ let SC = null;
   const sc3 = registoDe(E, "o_salvo_conduto");
   t("poupar o servo fecha o passo pelo ramo violento, variante «poupou»", sc3.feitas.passo && sc3.feitas.passo.ramo === "violenta" && sc3.feitas.passo.variante === "poupou", J(sc3.feitas));
   t("o laço de dívida nasce no registo da gente (o motor aplica-o)", E.npcs[tenente].laco && E.npcs[tenente].laco.tipo === "divida");
-  t("a premissa fica na espinha", garantirQuestsDaEspinha(E.espinha.quests).premissas.includes("devedor:tenente"));
+  /* MOVIDA na TE2 (09/11): o efeito «deixa» saiu (escrevia uma premissa que
+     nenhuma peça lia); o que o servo poupado deve ao herói vive no laço, acima */
+  t("nenhuma premissa nova entra na espinha (o efeito «deixa» saiu na TE2)", garantirQuestsDaEspinha(E.espinha.quests).premissas.length === 0);
   t("o vilão reage: o servo poupado volta a dever, e ele aprende o nome do herói", !!E.espinha.fio.vilao.nomeDoHeroi && E.espinha.fio.vilao.balancas.length === 1 && E.saber.some((l) => l.sobre === "nome"));
   t("e o que ele fez longe vai ao Narrador como facto", r.notas.some((n) => n.startsWith(QUESTS_DO_TURNO.notas.longe)), J(r.notas));
   t("a variante da solução vai ao Narrador como o que aconteceu", r.notas.some((n) => n.startsWith(QUESTS_DO_TURNO.notas.aconteceu)));

@@ -35,7 +35,9 @@
                    aplicaram (a lista do registo só cresce)
        pesadas,    as do tipo 1 que já pesaram no arco (uma vez cada)
        passos,     os passos do plano dele já anunciados como cumpridos
-       premissas,  o que as quests deixaram («tipo:papel», o `deixa`)
+       premissas,  o que as quests deixavam («tipo:papel», o efeito `deixa`)
+                   até à TE2 (09/11), que tirou o efeito: ninguém o lia.
+                   O campo fica, para o save que já o tem; nada novo entra
        desfecho,   { id, dia } o fim do vilão, quando o confronto decidiu
        fim         o dia em que o relógio dele chegou ao fim (o tom muda)
      }
@@ -123,7 +125,8 @@ import { avaliarCondicao, resolverPapeis } from "../condicoes-da-quest.js";
    registo da gente, e — 09/11 — o livro de factos: o favor que um lugar
    fica a dever e a linha durável do QUEM É, que nenhum órgão guardava e
    agora o livro guarda, para o replay as reproduzir); as outras de
-   EFEITOS_DA_QUEST vão à tela.
+   EFEITOS_DA_QUEST vão à tela. (As premissas já não entram: o efeito
+   `deixa` saiu na TE2; o teto delas guarda só o que um save antigo traz.)
    `avisa`: a linha que entra no livro DELE quando uma quest o avisa — a
    fonte `marca` tem certeza 3 (antagonista.js), e é com ela que o plano
    passa a mirar no que o herói ama (RITMO_DO_PLANO.certezaQueMira).
@@ -135,7 +138,7 @@ import { avaliarCondicao, resolverPapeis } from "../condicoes-da-quest.js";
    `arco`: o que o arco cita da quest que o fez virar. */
 export const QUESTS_DO_TURNO = Object.freeze({
   v: 1,
-  aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "deixa", "laco", "rompe_laco", "aliado", "inimigo", "favor", "quem_e"]),
+  aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "laco", "rompe_laco", "aliado", "inimigo", "favor", "quem_e"]),
   avisa: Object.freeze({ comOnde: "o forasteiro passou por {onde}", semOnde: "o forasteiro anda a meter-se no caminho dele", fonte: "marca", sobre: "onde" }),
   relogioDoFio: 1,
   premissas: 24,
@@ -264,7 +267,7 @@ function correr(E0, opcoes, antes) {
   const aplicadas = { ...Q.aplicadas };
   const pesadas = [...Q.pesadas];
   const passosDitos = [...Q.passos];
-  let premissas = [...Q.premissas];
+  const premissas = [...Q.premissas];
   let desfecho = Q.desfecho;
   let fim = Q.fim;
   let personagem = E0.personagem, npcs = E0.npcs, saber = E0.saber, factos = E0.factos;
@@ -320,7 +323,6 @@ function correr(E0, opcoes, antes) {
       return;
     }
     if (t === "relogio_do_fio") { if (Number.isInteger(ef.n)) adianta += ef.n; return; }
-    if (t === "deixa") { if (typeof ef.premissa === "string") premissas = [...new Set([...premissas, ef.premissa])].slice(-T.premissas); return; }
     /* 09/11: o favor e o QUEM É vão ao livro de factos, pelo id do papel —
        o que se resolveu quando a quest abriu, ou, se então a pessoa ainda
        não era conhecida, o que a mesma régua dá agora (resolverPapeis, o

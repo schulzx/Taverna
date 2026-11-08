@@ -22,7 +22,10 @@
       o veto impossível; o Salvo-Conduto da planta (§2), etapa a etapa;
    §7 validarCondicao;
    §8 o lixo, o null, a imutabilidade e o determinismo — e a invariante:
-      feita quando, e só quando, a falta está vazia. */
+      feita quando, e só quando, a falta está vazia;
+   §9 os três pressupostos da Fase TE (TE2) — a camada do vilão, o nome do
+      herói na boca dele e a convivência, cada um pelo tracker que o jogo já
+      escreve, e a leitura crua do registo igual à de plano-do-vilao.js. */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -36,6 +39,10 @@ import { caidosParaOLivro } from "../src/motor/luta-do-turno.js";
 import { oQueACenaDaAoLivro, anotarOLivro } from "../src/motor/livro-do-turno.js";
 import { matar, porSituacao, concluirLugar, SITUACOES } from "../src/mundo-base.js";
 import { firmarLaco, registrarConsulta, mesclarNPC } from "../src/npcs.js";
+import { garantirRegistroDoVilao, sabeONome } from "../src/plano-do-vilao.js";
+import { ARQUETIPOS, FASES } from "../src/vilao.js";
+import { chegouAteEle } from "../src/antagonista.js";
+import { registrarVisto, vistosDaNarrativa, garantirElencoDoSave, VISTOS } from "../src/elenco.js";
 
 const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const RAIZ = path.resolve(AQUI, "..");
@@ -143,7 +150,12 @@ function cheio() {
      efeito «favor»), com o id que o papel resolveu — a mesma régua */
   const desvio = resolverPapeis({ desvio: PAPEIS.desvio }, e).papeis.desvio;
   e = { ...e, factos: anotarTurno(e.factos, { dia: 3, favores: [{ lugar: desvio, de: "o_salvo_conduto" }] }).factos };
-  return { ...e, baseMundo: base, npcs, dia: 7, personagem: { ...e.personagem, inventario: [{ nome: "Carta selada de Brás" }] } };
+  /* TE2 (09/11): o vilão na camada da mão, que já aprendeu o nome do herói
+     (o registo, como reagirAoHeroi o guarda), e a Lia vista desde o dia 2
+     pela porta da narração (vistosDaNarrativa) */
+  const espinha = { fio: { vilao: { arquetipo: ARQUETIPOS[0].id, camada: "mao", nomeDoHeroi: { dia: 3, fonte: "viu" } } } };
+  const elenco = vistosDaNarrativa(null, npcs, "A Lia acorda antes de toda a gente.", 2);
+  return { ...e, baseMundo: base, npcs, dia: 7, espinha, elenco, personagem: { ...e.personagem, inventario: [{ nome: "Carta selada de Brás" }] } };
 }
 const VERDADE = {
   conheceu: ["conheceu", "papel:informante"],
@@ -168,6 +180,10 @@ const VERDADE = {
      contexto.quest. O caso de verdade deles é o registo cheio abaixo. */
   escolheu: ["escolheu", "passo", "portagem"],
   etapa: ["etapa", "aceitar"],
+  /* TE2 (09/11): os três pressupostos */
+  camada: ["camada", "mao"],
+  sabe_nome: ["sabe_nome"],
+  convivencia: ["convivencia", "papel:protegido", 3],
 };
 const QUEST_CHEIA = { feitas: { aceitar: true }, escolhas: { passo: "portagem" }, rotulos: {} };
 
@@ -437,6 +453,84 @@ sec("§8 o lixo, o null, a imutabilidade e o determinismo");
   }
   t(`a invariante em ${casos} árvores geradas: feita ⇔ falta vazia ⇔ avaliarCondicao`, quebras === 0, `${quebras} quebras`);
   t("determinístico: a mesma condição e o mesmo estado (copiado) dão o mesmo julgamento", mudou === 0, `${mudou} diferentes`);
+}
+
+sec("§9 os três pressupostos (Fase TE · TE2)");
+{
+  const comVilao = (v, extra) => ({ ...vazio(), espinha: { fio: { vilao: v } }, ...extra });
+  const V = (camada, extra) => ({ arquetipo: ARQUETIPOS[0].id, camada, ...extra });
+  const camadas = FASES.map((f) => f.id);
+  const ok = (c) => validarCondicao(c, PAPEIS).ok;
+  /* a camada: a ordem das FASES, e nada sem registo */
+  t("camada: sem espinha, sem vilão, com arquétipo que não existe — nada fecha",
+    !avaliarCondicao(["camada", "marca"], { estado: vazio() }) && !avaliarCondicao(["camada", "marca"], { estado: { ...vazio(), espinha: { fio: {} } } })
+    && !avaliarCondicao(["camada", "marca"], { estado: comVilao({ arquetipo: "nao_existe", camada: "queda" }) }));
+  t("camada: o rosto já passou a marca e a mão, e ainda não chegou à guerra",
+    ["marca", "mao", "rosto"].every((c) => avaliarCondicao(["camada", c], { estado: comVilao(V("rosto")) })) && !avaliarCondicao(["camada", "guerra"], { estado: comVilao(V("rosto")) }));
+  t("camada: o veto — «antes do rosto» vale na mão e cai no rosto",
+    avaliarCondicao(["nenhum", ["camada", "rosto"]], { estado: comVilao(V("mao")) }) && !avaliarCondicao(["nenhum", ["camada", "rosto"]], { estado: comVilao(V("rosto")) }));
+  /* a leitura crua bate com a do plano (o registo garantido), camada a camada */
+  const registos = [V("rumor"), V("marca"), V("guerra"), V("queda"), V("torta"), { arquetipo: "nao_existe", camada: "rosto" }, null, 7];
+  let difere = 0;
+  for (const r of registos) {
+    const g = garantirRegistroDoVilao(r);
+    for (const c of camadas.slice(1)) {
+      const doPlano = !!g && camadas.indexOf(g.camada) >= camadas.indexOf(c);
+      if (doPlano !== avaliarCondicao(["camada", c], { estado: comVilao(r) })) difere++;
+    }
+  }
+  t("a leitura crua da camada é a de garantirRegistroDoVilao, em todos os registos e camadas (a torta é o rumor)", difere === 0, `${difere} diferenças`);
+  t("camada: o rumor não se pede (é sempre verdade), e a camada que não existe também não",
+    !ok(["camada", "rumor"]) && !ok(["camada", "trono"]) && ok(["camada", "queda"]) && !ok(["camada"]));
+  const fc = julgarEtapa({ conclui: ["camada", "rosto"] }, { estado: comVilao(V("mao")) });
+  t("camada: o «o que falta» diz o mundo, nunca o nome da camada", !fc.feita && fc.falta[0].texto === "ver-lhe a cara" && !/rosto|camada/.test(fc.falta[0].texto), J(fc));
+  t("e a frase do veto também", julgarEtapa({ conclui: ["nenhum", ["camada", "mao"]] }, { estado: comVilao(V("rosto")) }).falta[0].texto === "antes de dar de caras com a gente dele");
+  t("camada: toda camada que se pede tem a sua frase de mundo", CONDICOES.camada.args[0].de.every((c) => typeof CONDICOES.camada.args[0].diz[c] === "string"));
+  t("camada: uma vez lá, não volta (volta: false) — o veto já cumprido é impossível",
+    julgarEtapa({ conclui: ["nenhum", ["camada", "marca"]] }, { estado: comVilao(V("mao")) }).falta[0].impossivel === true);
+  /* o nome: a conta de sabeONome, nos dois sítios onde mora */
+  const saberNome = chegouAteEle([], { o: "o nome do herói, da boca de quem ele poupou", fonte: "viu", dia: 3, sobre: "nome" });
+  const saberOnde = chegouAteEle([], { o: "o forasteiro passou por Alto do Sal", fonte: "marca", dia: 3, sobre: "onde" });
+  const casos = [
+    [V("mao", { nomeDoHeroi: { dia: 2, fonte: "viu" } }), []],
+    [V("mao"), saberNome],
+    [V("mao"), saberOnde],
+    [V("mao"), []],
+    [null, saberNome],
+    [{ arquetipo: "nao_existe", nomeDoHeroi: { dia: 1 } }, []],
+  ];
+  const esperado = casos.map(([r, sb]) => sabeONome(garantirRegistroDoVilao(r), sb));
+  const lido = casos.map(([r, sb]) => avaliarCondicao(["sabe_nome"], { estado: comVilao(r, { saber: sb }) }));
+  t("sabe_nome é sabeONome: o registo que o guardou, ou a linha «nome» no livro dele (e a «onde» não ensina o nome)", J(lido) === J(esperado) && J(esperado) === J([true, true, false, false, true, false]), J({ lido, esperado }));
+  t("sabe_nome não leva argumentos", ok(["sabe_nome"]) && !ok(["sabe_nome", "papel:tenente"]));
+  t("sabe_nome: o «o que falta» é de mundo", julgarEtapa({ conclui: ["sabe_nome"] }, { estado: vazio() }).falta[0].texto === "que ele saiba o teu nome");
+  /* a convivência: os vistos do elenco, e quem vem de antes passa logo */
+  const NPCS2 = { ...NPCS, Lia: { ...NPCS.Lia, conhecidoEm: 0 } };
+  const vistaEm = (d) => ({ ...vazio(), npcs: NPCS2, elenco: registrarVisto(null, "Lia", d) });
+  t("convivência: vista no dia 5, no dia 6 faz um dia — três ainda faltam, e a falta conta (1 de 3)",
+    !avaliarCondicao(["convivencia", "papel:protegido", 3], { estado: { ...vistaEm(5), dia: 6 }, papeis: PAPEIS })
+    && julgarEtapa({ conclui: ["convivencia", "papel:protegido", 3] }, { estado: { ...vistaEm(5), dia: 6 }, papeis: PAPEIS }).falta[0].texto === "fazer estrada com Lia (1 de 3)");
+  t("no dia 8 já são três", avaliarCondicao(["convivencia", "papel:protegido", 3], { estado: { ...vistaEm(5), dia: 8 }, papeis: PAPEIS }));
+  t("o primeiro dia visto conta, não o último (vista nos dias 5, 6 e 7: no 8 são três)",
+    avaliarCondicao(["convivencia", "papel:protegido", 3], { estado: { ...vazio(), npcs: NPCS2, dia: 8, elenco: registrarVisto(registrarVisto(registrarVisto(null, "Lia", 7), "Lia", 6), "Lia", 5) }, papeis: PAPEIS }));
+  t("o «conhecidoEm: 0» que o registo dá a quem cria às pressas não é um passado partilhado",
+    !avaliarCondicao(["convivencia", "papel:protegido", 1], { estado: { ...vazio(), npcs: NPCS2, dia: 30 }, papeis: PAPEIS }));
+  t("o conhecidoEm de um dia de verdade conta (o registo, quando a narração ainda não a nomeou)",
+    avaliarCondicao(["convivencia", "papel:protegido", 3], { estado: { ...vazio(), dia: 4 }, papeis: PAPEIS }));
+  const deAntes = { ...NPCS2, Lia: { ...NPCS2.Lia, laco: { tipo: "amizade", forca: 3, desde: -400 } } };
+  t("quem o herói conhece de antes da campanha (lacoDeAntes) passa logo, no dia 1, sem vistos",
+    avaliarCondicao(["convivencia", "papel:protegido", 9], { estado: { ...vazio(), npcs: deAntes, dia: 1 }, papeis: PAPEIS }));
+  t("convivência: o teto é um dia a menos que os vistos que o elenco guarda (a conta nunca mente)",
+    CONDICOES.convivencia.args[1].max === VISTOS.porPessoa - 1 && ok(["convivencia", "papel:protegido", VISTOS.porPessoa - 1]) && !ok(["convivencia", "papel:protegido", VISTOS.porPessoa]));
+  t("convivência: sem o número, três dias (a omissão da tabela)", CONDICOES.convivencia.args[1].omissao === 3
+    && !avaliarCondicao(["convivencia", "papel:protegido"], { estado: { ...vistaEm(5), dia: 7 }, papeis: PAPEIS }) && avaliarCondicao(["convivencia", "papel:protegido"], { estado: { ...vistaEm(5), dia: 8 }, papeis: PAPEIS }));
+  t("convivência: o papel é gente — o lugar não serve", !ok(["convivencia", "lugar:covil", 3]));
+  t("os três, no estado de lixo, não fecham nem lançam",
+    [{ espinha: 7 }, { espinha: { fio: { vilao: "x" } } }, { elenco: 3, saber: "x" }, { npcs: null }].every((e) => ["camada", "sabe_nome", "convivencia"].every((k) => avaliarCondicao(VERDADE[k], { estado: e, papeis: PAPEIS }) === false)));
+  const congelado = congelar(cheio());
+  const foto = J(congelado);
+  t("e não mudam o estado (congelado, sai igual)", ["camada", "sabe_nome", "convivencia"].every((k) => avaliarCondicao(VERDADE[k], { estado: congelado, papeis: PAPEIS })) && J(congelado) === foto);
+  t("o elenco que a narração escreveu é o do save (garantirElencoDoSave lê-o igual)", J(garantirElencoDoSave(cheio().elenco).vistos.Lia) === J([2]));
 }
 
 console.log(`\nBQ3 · as condições da quest: ${bons} passaram, ${maus} falharam`);
