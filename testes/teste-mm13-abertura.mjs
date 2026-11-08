@@ -39,7 +39,7 @@ import {
   LUGARES_DE_CONVERSA, CHEGADAS, HISTORIA_DO_LUGAR, SINO, PRENUNCIOS, ACONTECIMENTOS_DO_SINO,
   SINO_DE_LONGE, MURAL, FIOS, PALAVRAS_DE_BASTIDOR,
   garantirAbertura, abrirAbertura, pedidoDaAbertura, muralLiberado, vetosDaAbertura,
-  aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino,
+  aindaSoUmNome, proximoPasso, fioParaAPrincipal, andarOSino, ABERTURA_COM_QUEST,
 } from "../src/abertura.js";
 /* MM14 (30/09): CONTRACOES mudou-se de abertura.js para lugar.js, ao lado
    de comEm/comDe/comA — as tramas e as etapas das missoes precisavam da
@@ -522,8 +522,12 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     /* 19/10 (a 12.ª sessão): o pedido leva também a moeda do Léxico — a
        abertura chamou "cobres" a um mundo que paga em lascas. Continua a ser
        o MESMO pedido substituindo abrirACampanha (teste-sessao-12.mjs prova
-       a linha da moeda). */
-    && iniciar.includes("enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb, moeda: moedaDoMundo() }), persAb, []);"));
+       a linha da moeda).
+       MOVIDA em 08/11 (BQ7b): o pedido leva também a quest do ato 0
+       («quest: questDaAbertura», o gancho e a etapa), para a pista não
+       contradizer a quest; sem quest vai null e o pedido é o de sempre. A
+       intenção fica: o MESMO pedido substitui abrirACampanha. */
+    && iniciar.includes("enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb, moeda: moedaDoMundo(), quest: questDaAbertura }), persAb, []);"));
   {
     /* sem pista (abrirAbertura devolveu null): o caminho antigo — trama
        forçada + abrirACampanha — continua de pé, dentro do `else`. */
@@ -714,10 +718,48 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
        MOVIDA em 08/11 (BQ7): o diário passou a receber também as quests da
        biblioteca e o cartaz da sombra (questsDaBiblioteca, vilaoNoDiario),
        depois da distância do passo; a abertura continua a chegar, e a
-       asserção lê o mesmo começo da linha e deixa o fim aberto */
-    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} />'));
+       asserção lê o mesmo começo da linha e deixa o fim aberto
+       MOVIDA em 08/11 (BQ7b): e o rosto da gente das quests (rostoDe), no
+       fim; a abertura continua a chegar */
+    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} />'));
     t("e quem invoca PainelLateral (dentro de Taverna()) manda o ref", app.includes("aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current}"));
   }
+}
+
+/* ============================================================ */
+sec("12. num ato com quest, a pista é a quest (BQ7b, 08/11)");
+{
+  /* Porquê: num mundo novo com a quest do tipo 1 aberta no ato 0, a
+     principal do marco antigo não nasce — e o pedido continuava a mandar o
+     herói à pessoa do marco («O que sabe: Fulano…», «Ele ainda NÃO está
+     diante de Fulano») enquanto «O PASSO» da pauta, no mesmo turno,
+     apontava para a quest. Com a quest, a parte 4 é o gancho e a etapa de
+     agora, e a pessoa do marco cala-se; sem quest, o pedido de sempre,
+     letra por letra. */
+  const a = R0.abertura;
+  const sem = pedidoDaAbertura(a, { habilidades: ["Golpe"] });
+  const Q = { gancho: "Gil tem de chegar vivo a Vau Negro, e alguém paga para que não chegue.", passo: "Ouvir Gil" };
+  const com = pedidoDaAbertura(a, { habilidades: ["Golpe"], quest: Q });
+  t("sem quest (null, {}, ou sem gancho), o pedido é o de sempre", sem === pedidoDaAbertura(a, { habilidades: ["Golpe"], quest: null }) && sem === pedidoDaAbertura(a, { habilidades: ["Golpe"], quest: {} }) && sem === pedidoDaAbertura(a, { habilidades: ["Golpe"], quest: { passo: "Ouvir Gil" } }));
+  t("com quest, a parte 4 é o gancho e o primeiro passo", com.includes("4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: Gil tem de chegar vivo a Vau Negro, e alguém paga para que não chegue. O primeiro passo à vista: Ouvir Gil."));
+  t("e a pessoa do marco antigo cala-se: nem a razão, nem o que se sabe dela, nem o «ainda não está diante de»",
+    !com.includes(a.pista.nome) && !com.includes(a.razao) && !com.includes(a.sabe) && !com.includes("nem diante de"));
+  t("o «ainda não» passa a ser o passo da quest", com.includes("ninguém oferece trabalho ao herói." + ABERTURA_COM_QUEST.ainda + " Termine com o próximo passo à vista"));
+  const soGancho = pedidoDaAbertura(a, { quest: { gancho: Q.gancho } });
+  t("sem a etapa, só o gancho, e nada de «ainda não»", soGancho.includes(": Gil tem de chegar vivo a Vau Negro, e alguém paga para que não chegue.\n") && !soGancho.includes("O primeiro passo") && !soGancho.includes(ABERTURA_COM_QUEST.ainda.trim()));
+  t("as quatro partes, na ordem do Matt, e o resto do pedido igual", ["1) O MUNDO", "2) ONDE", "3) A PEQUENA", "4) PORQUE"].every((x, i, xs) => i === 0 || com.indexOf(xs[i - 1]) < com.indexOf(x)) && com.includes(a.chegada) && com.includes(a.historia));
+  t("e cabe no mesmo teto (1.500)", com.length <= 1500);
+  /* medido vivo (08/11): um gancho de três frases cortado a 240 letras deu
+     «e Isolde deixou-os lá para que.» — o gancho entra por frases inteiras */
+  const longo = "Desce todas as noites quando o sino acaba de tocar, e nunca à mesma porta duas vezes. Ontem foi às traseiras do Trovão & a Hera, onde Isolde guardava o que lhe restava do rebanho. Já não sobra um animal de pé, e Isolde deixou-os lá para que toda a gente veja o que veio e o que há de voltar, e ninguém na vila se atreve a enterrá-los antes de a guarda dizer o que foi.";
+  const comLongo = pedidoDaAbertura(a, { habilidades: ["Golpe"], quest: { gancho: longo, passo: "Ver o que ficou no Trovão & a Hera" } });
+  t("o gancho comprido entra por frases inteiras, até ao teto, e o pedido continua a caber",
+    longo.length > ABERTURA_COM_QUEST.teto.gancho && comLongo.includes("o que lhe restava do rebanho. O primeiro passo à vista: Ver o que ficou no Trovão & a Hera.") && !comLongo.includes("deixou-os lá") && comLongo.length <= 1500);
+  t("nenhuma palavra de bastidor entra pela quest", !PALAVRAS_DE_BASTIDOR.some((p) => norm(com.slice(com.indexOf("4) PORQUE"), com.indexOf("(Habilidades"))).includes(norm(p))));
+  const app12 = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const ini12 = app12.slice(app12.indexOf("  const iniciar = (pers) => {"), app12.indexOf("  const abrirACampanha = (pers) => {"));
+  t("o App manda a quest do ato 0 (o gancho e a etapa da vista) e corre as quests antes do pedido",
+    ini12.includes('if (v0 && v0.gancho) questDaAbertura = { gancho: v0.gancho, passo: v0.etapaTexto || "" };') && ini12.indexOf('correrAsQuests("a criação do mundo")') > 0 && ini12.indexOf('correrAsQuests("a criação do mundo")') < ini12.indexOf("enviar(pedidoDaAbertura(ab.abertura,"));
 }
 
 console.log(`\nmm13-abertura: ${ok} passaram, ${mal} falharam`);

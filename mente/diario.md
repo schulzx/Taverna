@@ -24,6 +24,14 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 08/11 · v9.625 · BQ7b — as consequências das quests chegam ao jogo
+- **o `oficial` (bastão 08:25–fim):** `src/motor/efeitos-da-quest.js` (puro) calcula cada efeito e o App executa pelo órgão de sempre: vinculo e marco (`aplicarVinculo`), afeição (no grupo pelo vínculo; fora, o grau ao livro e o laço que já exista), situação (`porSituacao`), dia (o relógio). **A morte** pelo caminho que já existia (sai do grupo como na luta sem saída, `registrarMorteDeAlvo`, `registrarMorte`), só com o registo terminado num desfecho que a traz e a pessoa ainda no grupo; a suíte confirma no acervo que toda morte exige uma escolha do herói.
+- **corrigido da BQ7:** o estado passado ao motor das quests não levava a base do mundo — «situacao» e «morto» viam toda a gente livre.
+- **a abertura** num ato com quest usa o gancho e a etapa da quest; o marco antigo cala. **O núcleo:** o esqueleto recompõe-se uma vez quando o companheiro inicial entra (só na criação) — o companheiro ganha a quest do coração dele (4 de 4 mundos; ao vivo, a Sable com O Sangue do Outro Lado). **Os rostos** ligados na encruzilhada e no Diário; o foco volta à soleira depois de «Depois».
+- **o que fica:** calados à espera do sistema — `relogio_regional` (relógios sem região), `favor` (sem órgão), `quem_e` (sem linha durável), os efeitos do plano do vilão (sem alvo que o mundo aceite); o sino da abertura ainda toca sobre o alvo antigo; `rostoDoVilao`/`rostoDoTenente`; **um defeito antigo:** sem companheiro, o esqueleto compõe-se antes de a base do mundo ser reposta e o núcleo lê a da campanha anterior.
+
+---
+
 ## 08/11 · v9.624 · a biblioteca entra no jogo (BQ7), e o lote 3 do acervo
 - **o motor (`backend`, 1a1ae13):** `src/motor/quests-do-turno.js` — as quests e o vilão andam no fim do turno (depois do Cronista, que também escreve no livro); o registo em `espinha.quests` (o nome `quests` à cabeça do save já era das missões antigas); num mundo novo a quest concluída fecha o ato; «O PASSO» e «A MÃO DELE AQUI» pela pauta no lugar da batida (o MOMENTO mais longo cai de 1105 para 209 caracteres); o replay igual; a campanha antiga byte a byte; os oito pedidos da tela (gravidade e risco, `como`, `gente`, `oVilaoNoDiario`, `vistaEm`, o género `{papel:dele|dela}`, a frase que é carta).
 - **as peças (`aprendiz`, 1a1ae13), da forma do `desenho` (`formas.md` «BQ · as quests na tela», Figma `313:2`):** a Encruzilhada (cartas de duas faces, gravidade pela forma, rosto de quem pode morrer, dois toques com o preço no botão), a soleira com o momento «escolha», o Diário com as duas histórias e o cartaz da sombra.

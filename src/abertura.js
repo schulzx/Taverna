@@ -660,21 +660,63 @@ export const LEI_DA_PORTA = {
    mundo que paga em lascas. `opcoes.moeda` é o COISAS.moeda do Léxico. */
 export const TAMANHO_DA_ABERTURA = { max: 220 };
 
+/* ---------------- A ABERTURA NUM ATO COM QUEST (BQ7b, 08/11) ----------------
+   Num mundo novo com a quest do tipo 1 aberta no ato 0 (esqueleto.js, a
+   biblioteca de quests), a principal do marco antigo não nasce — e o
+   pedido continuava a mandar o herói procurar a pessoa do marco: «O que
+   sabe: Fulano, é quem sabe mais de…» e «Ele ainda NÃO está diante de
+   Fulano», enquanto «O PASSO» da pauta, no mesmo turno, apontava para a
+   quest. Duas histórias no primeiro minuto. Com `quest` ({ gancho, passo },
+   a vista da quest — estadoDaQuest: o gancho e a etapa de agora, em frase
+   de mundo), a parte 4 é a quest, e a pessoa do marco cala-se: a razão
+   (que aponta para o objeto do marco), o que sabe dela e o «ainda não está
+   diante de». Sem a etapa, só o gancho. Sem gancho, o pedido de sempre —
+   a quest do tipo 1 visível tem-no sempre (validarQuest). */
+export const ABERTURA_COM_QUEST = Object.freeze({
+  sabe: "{gancho}. O primeiro passo à vista: {passo}",
+  semPasso: "{gancho}",
+  ainda: " Ele ainda não deu esse passo.",
+  /* o gancho entra por frases inteiras até ao teto (a razão e o que se
+     sabe, que ele substitui, tinham 300 + 200); cortar a meio da frase
+     deixava «e Isolde deixou-os lá para que.» no pedido (medido vivo) */
+  teto: Object.freeze({ gancho: 360, passo: 160 }),
+});
+/* as frases inteiras que cabem no teto; a primeira, se sozinha passa, corta
+   na última palavra que cabe */
+function frasesAte(texto, teto) {
+  const t = String(texto == null ? "" : texto).replace(/\s+/g, " ").trim();
+  if (t.length <= teto) return t;
+  const frases = t.match(/[^.!?…]+[.!?…]+["»”]?\s*/g) || [t];
+  let s = "";
+  for (const f of frases) { if ((s + f).trim().length > teto) break; s += f; }
+  return s.trim() || t.slice(0, teto).replace(/\s+\S*$/, "") + "…";
+}
+
 export function pedidoDaAbertura(abertura, opcoes) {
-  const { habilidades = [], companheiro = null, moeda = "" } = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const { habilidades = [], companheiro = null, moeda = "", quest = null } = opcoes && typeof opcoes === "object" ? opcoes : {};
   const emMoeda = typeof moeda === "string" && moeda.trim() ? ` (em ${moeda.trim()})` : "";
   const a = garantirAbertura(abertura);
   if (a.legado || !a.pista.nome) return "";
   const habs = (Array.isArray(habilidades) ? habilidades : []).filter(Boolean).join(", ") || "nenhuma";
   const aoLado = linhaDoCompanheiro(companheiro);
+  const q = quest && typeof quest === "object" ? quest : {};
+  const gancho = typeof q.gancho === "string" ? frasesAte(q.gancho, ABERTURA_COM_QUEST.teto.gancho).replace(/[.\s]+$/, "") : "";
+  const passo = typeof q.passo === "string" ? frasesAte(q.passo, ABERTURA_COM_QUEST.teto.passo).replace(/[.\s]+$/, "") : "";
+  const comQuest = !!gancho;
+  const porque = comQuest
+    ? encher(passo ? ABERTURA_COM_QUEST.sabe : ABERTURA_COM_QUEST.semPasso, { gancho, passo })
+    : `${a.razao}. O que sabe: ${a.sabe}`;
+  const ainda = comQuest
+    ? (passo ? ABERTURA_COM_QUEST.ainda : "")
+    : ` Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}.`;
   return `[ABERTURA DA CAMPANHA] Primeiro turno. Narre em QUATRO partes, em prosa corrida e sem títulos, na 2ª pessoa — o herói é "você" ("você chegou", nunca "cheguei"). Até ${TAMANHO_DA_ABERTURA.max} palavras, parágrafos curtos:
 
 1) O MUNDO. Que lugar é este, por dentro: o que o move, quem manda, do que vive. Concreto: um cheiro, um som, um preço${emMoeda}.
 2) ONDE O HERÓI ESTÁ. Chegou agora ${a.chegada}${aoLado}. O que se vê e se ouve dali.${a.porta ? ` ${LEI_DA_PORTA.diz.replace("{porta}", a.porta)}.` : ""}
 3) A PEQUENA HISTÓRIA DO LUGAR. ${a.historia}.
-4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: ${a.razao}. O que sabe: ${a.sabe}.
+4) PORQUE ELE ESTÁ AQUI E O QUE SABE — como memória dele, não como pedido de ninguém: ${porque}.
 
-Já decidido: nesta cena ninguém lhe pede nada, e ninguém oferece trabalho ao herói. Ele ainda NÃO está ${comEm(a.pista.local)} nem diante de ${a.pista.nome}. Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
+Já decidido: nesta cena ninguém lhe pede nada, e ninguém oferece trabalho ao herói.${ainda} Termine com o próximo passo à vista pelo que ele sabe, sem o dizer por ele e sem perguntar "o que você faz?".
 (Habilidades iniciais já concedidas: ${habs} — NÃO envie "adicionar_habilidades".)`;
 }
 

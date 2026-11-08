@@ -234,7 +234,7 @@ import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
-import { AjusteDoRetrato } from "./rosto.jsx";
+import { AjusteDoRetrato, Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semearACasa, sorteDaCasa } from "./semente.js";
 import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRolagem as chaveDaRolagemDe } from "./motor/sorte-do-turno.js";
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
@@ -289,6 +289,7 @@ import { PainelDiario } from "./painel-diario.jsx";
 import { Encruzilhada, momentoDaEscolha } from "./painel-encruzilhada.jsx";
 import { esqueletoDaCampanha, comOEsqueleto, questsDoAto } from "./esqueleto.js";
 import { oTurnoDasQuests, missoesDasQuests, escolhasDasQuests, escolherNaQuestDoEstado, oVilaoDasQuests, verAsReviravoltas, aEscolhaDaFrase, garantirQuestsDaEspinha } from "./motor/quests-do-turno.js";
+import { oQueOEfeitoPede, EFEITOS_NA_TELA } from "./motor/efeitos-da-quest.js";
 import { estadoDaQuest, questPorId, MISSAO_DA_QUEST } from "./biblioteca-de-quests.js";
 import { PainelDiplomacia } from "./painel-diplomacia.jsx";
 import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco, pesarProposta, custoDoPresente, presentear, envelopeDaResposta, envelopeDoPresente, golpeDaGuerra, apetitePorId, medoPorId } from "./diplomacia.js";
@@ -1781,6 +1782,21 @@ function primeiraLinhaDaProsa(texto) {
    mora lá (o herói ainda o usa aqui, pela importação). */
 
 /* PainelDiario extraído para ./painel-diario.jsx (v8.8) */
+/* BQ7b · O ROSTO NAS PEÇAS DAS QUESTS (a encruzilhada, o Diário). As peças
+   desenham o aro e o tamanho (painel-encruzilhada.jsx, painel-diario.jsx —
+   «rostoDe(...) → um nó»); daqui sai só o rosto, a encher o aro que for: o
+   mesmo Rosto do Retrato (a pintura de quem a tem, a xilogravura pela
+   semente), sem a carta por trás — a carta da escolha já é um botão, e
+   botão dentro de botão falha no dedo. Fora do render, como todo
+   componente desta casa. */
+function RostoDaQuest({ semente, ente = null, lado = 44 }) {
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 64 64" aria-hidden="true" focusable="false" style={{ display: "block", background: tracos(semente).fundo }}>
+      <Rosto semente={semente} ente={ente} lado={lado} />
+    </svg>
+  );
+}
+
 function PainelPessoas({ npcs, grupo, onConvidar, onBancar, vereditoConvite, grupoCheio, onDefinirRelacao, mortosBase = [], semente = "" }) {
   /* o registro é a união de quem o Mestre anotou e de quem o SISTEMA matou:
      alguém da base do mundo pode ter morrido sem nunca ter virado ficha */
@@ -2828,7 +2844,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
         {/* AR2 · no telefone o Diário mora na gaveta (lá ela já tem a largura do
             ecrã); na mesa abre por cima de tudo, como a carta do herói — ver
             «O DIÁRIO EM TELA INTEIRA» no fim deste painel. */}
-        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} />}
+        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} />}
         {/* R13: `📜 Gerar crônica` desceu do cabeçalho para aqui. A crónica
             MORA no Diário — é ele escrito por extenso —, e o botão no topo da
             tela principal era a mesma ação com duas caras. Fica no pé do
@@ -3602,7 +3618,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
               <div style={{ paddingBottom: DIARIO_DE_MISSOES.mesa.folga }}>
                 <LimiteDasFichas key="diario-na-mesa" reserva={<button onClick={fecharDiario} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
-                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} aoFechar={fecharDiario} />
+                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} aoFechar={fecharDiario} />
                 </LimiteDasFichas>
                 {gerar && (
                   <div style={{ paddingLeft: DIARIO_DE_MISSOES.mesa.folga, paddingRight: DIARIO_DE_MISSOES.mesa.folga }}>
@@ -7184,22 +7200,93 @@ export default function Taverna() {
   const [escolhaAdiada, setEscolhaAdiada] = useState("");     /* «Depois»: a escolha espera e volta no turno seguinte */
   const [versaoDasQuests, setVersaoDasQuests] = useState(0); // eslint-disable-line no-unused-vars                /* a tela relê as quests quando o motor as muda */
   const escolhasCacheRef = useRef(null);
+  /* BQ7b · O FOCO VOLTA À SOLEIRA (formas.md §BQ 2: «o foco fica preso no
+     cartão e volta à soleira ao fechar»). A encruzilhada chama
+     «devolverFocoA.current.focus()» ao fechar; depois do «Depois» a escolha
+     sai da soleira, e o que ela ainda mostra pode ser nada — então o foco vai
+     ao primeiro botão da soleira, e sem nenhum ao campo (onde a frase que a
+     abriu acabou de voltar). Nunca ao <body>. */
+  const soleiraRef = useRef(null);
+  const focoDaSoleira = useRef({ current: { focus: () => {
+    try {
+      const b = soleiraRef.current && soleiraRef.current.querySelector ? soleiraRef.current.querySelector("button:not([disabled])") : null;
+      if (b) b.focus(); else if (campoRef.current) campoRef.current.focus();
+    } catch (e) { calou("BQ7b · o foco de volta à soleira", e); }
+  } } }).current;
+  /* BQ7b · O ROSTO DE QUEM A PEÇA NOMEIA: { nome } (a gente da história,
+     quem anda contigo) ou o risco da carta ({ quem }). Quem anda no grupo, a
+     ficha do grupo (a pintura da classe); quem está no registo, a ficha do
+     registo; os outros, o rosto pelo nome (a régua das Fichas: «gente sem
+     retrato tem rosto pelo nome»). */
+  const rostoDaGente = (ref, lado) => {
+    try {
+      const o = ref && typeof ref === "object" ? ref : {};
+      const nome = String(o.nome || o.quem || "").trim();
+      if (!nome) return null;
+      const k = nome.toLowerCase();
+      const p = personagemRef.current || personagem || {};
+      const g = (p.grupo || []).find((x) => x && !x.invocada && String(x.nome || "").toLowerCase() === k);
+      if (g) return <RostoDaQuest semente={sementeDe(g)} ente={g} lado={lado} />;
+      const n = Object.values(npcsRef.current || {}).find((x) => x && String(x.nome || "").toLowerCase() === k);
+      if (n) return <RostoDaQuest semente={n.semente || n.nome} ente={n} lado={lado} />;
+      return <RostoDaQuest semente={nome} lado={lado} />;
+    } catch (e) { calou("BQ7b · o rosto da quest", e); return null; }
+  };
   const comEsqueleto = () => !!(espinhaRef.current && espinhaRef.current.esqueleto);
-  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current });
+  /* BQ7b: e a base do mundo — as condições «situacao» e «morto» leem-na
+     (condicoes-da-quest.js, «E.baseMundo»), e sem ela toda a gente era livre
+     e ninguém morria para as quests; o save, o replay e o servidor já a
+     levam (é campo do save) */
+  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current });
   /* os efeitos que só a tela aplica: cada um pelo órgão que já existe; o que
-     não tem órgão no App cala-se (nunca se inventa a regra dele aqui) */
+     não tem órgão no App cala-se (nunca se inventa a regra dele aqui).
+     BQ7b: a conta de cada um mora em motor/efeitos-da-quest.js
+     (oQueOEfeitoPede, provada em Node); aqui só se executa a ordem — o
+     vínculo por aplicarVinculo, os dias pelo relógio, a afeição no livro e
+     no laço, a situação na base, e a morte pela porta da morte do sistema.
+     O que fica calado vai ao calou com o motivo da tabela
+     (EFEITOS_NA_TELA.calado); o que só vai ao Narrador já foi nas notas. */
+  const morrerNaQuest = (o) => {
+    /* a morte de quem anda no grupo, num desfecho de quest do coração: sai do
+       grupo como na luta sem saída (aplicarSemSaida), o registo marca-a pela
+       morte que o sistema decide (registrarMorteDeAlvo: «Morreu no dia N —
+       …») e o nome fica riscado na base (registrarMorte) — os três órgãos de
+       sempre, nenhum caminho novo. Irreversível: o veredito foi a carta da
+       vida na encruzilhada, antes do clique. */
+    const p0 = personagemRef.current || personagem;
+    if (p0 && Array.isArray(p0.grupo) && p0.grupo.some((g) => g && g.nome === o.nome)) {
+      const np = { ...p0, grupo: p0.grupo.filter((g) => !(g && g.nome === o.nome)) };
+      personagemRef.current = np; setPersonagem(np);
+    }
+    try { registrarMorteDeAlvo(o.nome, o.causa); } catch (e) { calou("BQ7b · a morte no registo", e); }
+    try { registrarMorte(o.nome); } catch (e) { calou("BQ7b · a morte na base", e); }
+    try { pushMsgs([{ autor: "sistema", texto: o.linha }]); } catch (e) { calou("BQ7b · a linha da morte", e); }
+  };
   const aplicarEfeitoDaQuest = (ef) => {
     if (!ef || typeof ef !== "object") return;
     if (ef.tipo === "remontarPrompt") { aplicarOsEfeitos({ estado: {}, efeitos: [{ tipo: "remontarPrompt" }], paraOCronista: [] }); return; }
-    if (ef.tipo === "vinculo" && ef.alvo && ef.alvo.nome && Number.isInteger(ef.n)) {
-      const p0 = personagemRef.current || personagem;
-      if (p0 && Array.isArray(p0.grupo) && p0.grupo.some((g) => g && g.nome === ef.alvo.nome)) {
-        const np = { ...p0, grupo: aplicarVinculo(p0.grupo, ef.alvo.nome, ef.n) };
-        personagemRef.current = np; setPersonagem(np);
-      }
-      return;
+    const ordens = oQueOEfeitoPede(ef, estadoDasQuests());
+    for (const o of ordens) {
+      try {
+        if (o.ordem === "vinculo") {
+          const p0 = personagemRef.current || personagem;
+          if (p0 && Array.isArray(p0.grupo)) { const np = { ...p0, grupo: aplicarVinculo(p0.grupo, o.nome, o.pontos) }; personagemRef.current = np; setPersonagem(np); }
+        } else if (o.ordem === "minutos") {
+          const tx = avancarMinutos(o.n);
+          if (typeof tx === "string" && tx.trim()) notaRef.current = notaComOTurno(notaRef.current, [tx.trim()]);
+        } else if (o.ordem === "livro") {
+          anotarNoLivro("BQ7b · a afeição da quest", { afeicoes: o.afeicoes });
+        } else if (o.ordem === "npcs") {
+          npcsRef.current = o.npcs; setNpcs(o.npcs);
+        } else if (o.ordem === "situacao") {
+          baseMundoRef.current = porSituacao(baseMundoRef.current, o.nome, o.situacao); setBaseMundo(baseMundoRef.current);
+        } else if (o.ordem === "morte") {
+          morrerNaQuest(o);
+        } else if (o.ordem === "calado") {
+          calou("BQ7 · efeito sem órgão no App: " + o.tipo, new Error(o.motivo || (EFEITOS_NA_TELA.calado[o.tipo] || EFEITOS_NA_TELA.semOrgao)));
+        }
+      } catch (e) { calou("BQ7b · " + ef.tipo + " · " + o.ordem, e); }
     }
-    calou("BQ7 · efeito sem órgão no App: " + ef.tipo, ef);
   };
   const aplicarAsQuests = (r, onde) => {
     if (!r || typeof r !== "object") return false;
@@ -7238,9 +7325,9 @@ export default function Taverna() {
       if (!comEsqueleto() || salaRef.current) return [];
       const E = estadoDasQuests();
       const c = escolhasCacheRef.current;
-      if (c && c.espinha === E.espinha && c.factos === E.factos && c.personagem === E.personagem && c.npcs === E.npcs && c.saber === E.saber && c.historia === E.historia && c.dia === E.dia && c.cidade === E.cidadeAtual) return c.lista;
+      if (c && c.espinha === E.espinha && c.factos === E.factos && c.personagem === E.personagem && c.npcs === E.npcs && c.saber === E.saber && c.historia === E.historia && c.dia === E.dia && c.cidade === E.cidadeAtual && c.base === E.baseMundo) return c.lista;
       const lista = escolhasDasQuests(E, { mundo: mundoDoLivro() }) || [];
-      escolhasCacheRef.current = { espinha: E.espinha, factos: E.factos, personagem: E.personagem, npcs: E.npcs, saber: E.saber, historia: E.historia, dia: E.dia, cidade: E.cidadeAtual, lista };
+      escolhasCacheRef.current = { espinha: E.espinha, factos: E.factos, personagem: E.personagem, npcs: E.npcs, saber: E.saber, historia: E.historia, dia: E.dia, cidade: E.cidadeAtual, base: E.baseMundo, lista };
       return lista;
     } catch (e) { calou("BQ7 · as escolhas abertas", e); return []; }
   };
@@ -7274,7 +7361,7 @@ export default function Taverna() {
       }
       let vilao = null;
       try { vilao = oVilaoDasQuests(E, { mundo }); } catch (e) { calou("BQ7 · o cartaz da sombra", e); }
-      return { quests, vilao };
+      return { quests, vilao, rostoDe: (g) => rostoDaGente(g, 44) };
     } catch (e) { calou("BQ7 · o Diário das quests", e); return null; }
   };
   /* o Diário abriu: as reviravoltas ficam lidas (o bilhete desce do topo
@@ -11158,6 +11245,21 @@ export default function Taverna() {
        unico momento em que ela e escrita: dali em diante o mundo so a
        cumpre. A cidade inicial entra porque a espinha caminha para FORA —
        os primeiros marcos ficam a mao, o ultimo no ponto mais longe. */
+    /* BQ7b · QUEM COMPÕE O ESQUELETO, e a espinha de antes dele: a porta é
+       uma só, chamada aqui (campanha nova) e, uma segunda vez, quando o
+       companheiro de antes entra — sempre sobre a MESMA espinha sem esqueleto
+       e com as mesmas entradas, mudando só o núcleo (que passa a tê-lo). O
+       vilão não lê o núcleo (nascerOVilao: a semente, o antecedente, o fio):
+       recompor muda só quem ocupa os papéis. Determinístico pela semente. */
+    let espinhaSemEsqueleto = null;
+    const comporOEsqueleto = (base, heroi) => {
+      const esq = esqueletoDaCampanha({
+        semente: sementeMundo(), mapa: mapaRef.current, espinha: base, genero: generoMundo(), molde: moldeMundo(),
+        lex: (mundoAtual() || {}).lexico, antecedente: (heroi && heroi.antecedente) || "", cidadeInicial: cidadeAtualRef.current, nucleo: nucleoAgora(),
+      });
+      if (esq) espinhaRef.current = comOEsqueleto(espinhaRef.current, esq);
+      return !!esq;
+    };
     if (!cap) {
       guildasRef.current = guildasDoMundo(sementeMundo(), mapaRef.current, generoMundo(), (mundoAtual() || {}).lexico);
       setGuildasMundo(guildasRef.current);
@@ -11193,14 +11295,10 @@ export default function Taverna() {
          acabou de nascer. Só aqui — campanha nova; um capítulo e o load nunca
          passam por este ponto. Se estourar, a espinha fica a de sempre (e a
          campanha vive dos marcos antigos). O companheiro de antes ainda não
-         existe neste instante: nasce com a abertura, mais abaixo. */
-      try {
-        const esq = esqueletoDaCampanha({
-          semente: sementeMundo(), mapa: mapaRef.current, espinha: espinhaRef.current, genero: generoMundo(), molde: moldeMundo(),
-          lex: (mundoAtual() || {}).lexico, antecedente: (pers && pers.antecedente) || "", cidadeInicial: cidadeAtualRef.current, nucleo: nucleoAgora(),
-        });
-        if (esq) espinhaRef.current = comOEsqueleto(espinhaRef.current, esq);
-      } catch (e) { calou("BQ7 · o esqueleto do mundo novo", e); }
+         existe neste instante: nasce com a abertura, mais abaixo, e é lá que
+         o esqueleto se recompõe UMA vez para o ver (BQ7b). */
+      espinhaSemEsqueleto = espinhaRef.current;
+      try { comporOEsqueleto(espinhaSemEsqueleto, pers); } catch (e) { calou("BQ7 · o esqueleto do mundo novo", e); }
     }
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
@@ -11288,19 +11386,6 @@ export default function Taverna() {
        devolve null, e o caminho de sempre — a trama forçada, porque o
        compasso nasce em respiro — continua de pé: a primeira cena nunca
        fica muda. */
-    /* BQ7: as quests do ato 0 abrem antes do primeiro turno (o Diário já as
-       mostra, e o Narrador recebe o passo desde a abertura). A principal da
-       abertura (o marco antigo) só nasce quando o ato 0 não tem a quest do
-       tipo 1 aberta — a que abrirQuest recusou vive dos marcos, como o ato
-       sem quest. */
-    let questNoAto0 = false;
-    try {
-      if (comEsqueleto()) {
-        correrAsQuests("a criação do mundo");
-        const q0 = questsDoAto(espinhaRef.current.esqueleto, 0).find((q) => q && q.tipo === 1);
-        questNoAto0 = !!q0 && garantirQuestsDaEspinha(espinhaRef.current.quests).registos.some((r) => r.id === q0.id);
-      }
-    } catch (e) { calou("BQ7 · as quests da criação", e); questNoAto0 = false; }
     let ab = null;
     try {
       ab = abrirAbertura({
@@ -11311,11 +11396,8 @@ export default function Taverna() {
         nivel: pers.nivel || 1, dia: diaRef.current,
       });
     } catch (e) { calou("a abertura", e); ab = null; }
+    let persAb = pers, companheiroAb = null;
     if (ab) {
-      if (!questNoAto0) {
-        missoesRef.current = [...(missoesRef.current || []).filter((m) => m.id !== ab.missao.id), ab.missao];
-        setMissoes(missoesRef.current);
-      }
       aberturaMundoRef.current = ab.abertura;
       /* O COMPANHEIRO DE ANTES (30/09, companheiro-inicial.js): só campanha
          nova de Uma Vida, grupo vazio, com a abertura de pé — a razão dele
@@ -11323,7 +11405,6 @@ export default function Taverna() {
          entra pelo mesmo juntar que grava grupo, registo e vistos de uma
          vez. Dentro de calou: um companheiro que estourasse não pode
          derrubar o primeiro turno da campanha. */
-      let persAb = pers, companheiroAb = null;
       try {
         if (podeTerCompanheiro({ modo: modoRef.current, capitulo: !!cap, grupo: pers.grupo, abertura: ab.abertura })) {
           const ci = companheiroInicial({
@@ -11341,7 +11422,49 @@ export default function Taverna() {
           }
         }
       } catch (e) { calou("o companheiro de antes", e); }
-      enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb, moeda: moedaDoMundo() }), persAb, []);
+      /* BQ7b · O ESQUELETO VÊ O COMPANHEIRO. Ele nasce aqui, depois do
+         esqueleto, e as quests do coração ficavam sem ele (o papel «quem» é
+         o companheiro do núcleo, e caía no elo, que não anda com o herói).
+         Recompõe-se UMA vez, só aqui — a criação, o turno 0, antes de
+         qualquer quest abrir —, sobre a espinha de antes do esqueleto
+         (comporOEsqueleto). Sem esqueleto da primeira vez, nada muda. */
+      if (companheiroAb && comEsqueleto() && espinhaSemEsqueleto) {
+        try { comporOEsqueleto(espinhaSemEsqueleto, persAb); } catch (e) { calou("BQ7b · o esqueleto com o companheiro", e); }
+      }
+    }
+    /* BQ7: as quests do ato 0 abrem antes do primeiro turno (o Diário já as
+       mostra, e o Narrador recebe o passo desde a abertura). A principal da
+       abertura (o marco antigo) só nasce quando o ato 0 não tem a quest do
+       tipo 1 aberta — a que abrirQuest recusou vive dos marcos, como o ato
+       sem quest. BQ7b: correm DEPOIS do companheiro de antes (o esqueleto
+       já o vê) e antes do pedido da abertura, que passa a apontar para a
+       quest. */
+    let questNoAto0 = false;
+    let questDaAbertura = null;
+    try {
+      if (comEsqueleto()) {
+        correrAsQuests("a criação do mundo");
+        const q0 = questsDoAto(espinhaRef.current.esqueleto, 0).find((q) => q && q.tipo === 1);
+        const Q0 = garantirQuestsDaEspinha(espinhaRef.current.quests);
+        const R0 = q0 ? Q0.registos.find((r) => r && r.id === q0.id) : null;
+        questNoAto0 = !!R0;
+        /* BQ7b · A PISTA DA ABERTURA É A QUEST: o gancho e a etapa de agora,
+           em frase de mundo (estadoDaQuest), e a pessoa do marco antigo
+           cala-se no pedido (pedidoDaAbertura, ABERTURA_COM_QUEST) */
+        if (R0) {
+          try {
+            const v0 = estadoDaQuest(R0.id, R0, { estado: estadoDasQuests(), mundo: mundoDoLivro(), quests: Q0.registos });
+            if (v0 && v0.gancho) questDaAbertura = { gancho: v0.gancho, passo: v0.etapaTexto || "" };
+          } catch (e) { calou("BQ7b · a pista da abertura", e); questDaAbertura = null; }
+        }
+      }
+    } catch (e) { calou("BQ7 · as quests da criação", e); questNoAto0 = false; }
+    if (ab) {
+      if (!questNoAto0) {
+        missoesRef.current = [...(missoesRef.current || []).filter((m) => m.id !== ab.missao.id), ab.missao];
+        setMissoes(missoesRef.current);
+      }
+      enviar(pedidoDaAbertura(ab.abertura, { habilidades: (pers.habilidades || []).map((h) => h.nome), companheiro: companheiroAb, moeda: moedaDoMundo(), quest: questDaAbertura }), persAb, []);
     } else {
       aberturaMundoRef.current = garantirAbertura(null);
       { const env = talvezDarUmaTrama({ forcar: true }); if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; }
@@ -24727,7 +24850,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           <Encruzilhada aberta veredito={esc} quest={esc.titulo || ""} titulo="" telefone={!mesaLarga}
             aoConfirmar={confirmarAEscolha} aoDepois={() => adiarAEscolha(esc)}
             aoEscrever={() => { try { if (campoRef.current) campoRef.current.focus(); } catch (e) { calou("BQ7 · a carta virada foca o campo", e); } }}
-            preEscolhida={ab.preEscolhida || null} frase={ab.frase || ""} bolsa={Number(p.moedas) || 0} baseDoCampo={baseDoCampo} />
+            preEscolhida={ab.preEscolhida || null} frase={ab.frase || ""} bolsa={Number(p.moedas) || 0} baseDoCampo={baseDoCampo}
+            rostoDe={(risco) => rostoDaGente(risco, 32)} devolverFocoA={focoDaSoleira} />
         </LimiteDasFichas>
       );
     } catch (e) { calou("BQ7 · a encruzilhada", e); return null; }
@@ -24821,7 +24945,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           {/* o cartão do núcleo traz o enchimento da página de onde veio; aqui o convés já o tem */}
           {doCoracao ? <div style={{ marginLeft: -((paginaDaFolha || {}).marginLeft || 0), marginRight: -((paginaDaFolha || {}).marginRight || 0) }}>{doCoracao}</div> : null}
           {outras ? <div className="pt-2 tv-fade" data-momento="outras-ofertas">{outras}</div> : null}
-          {comMomento ? <div className="pt-2"><LimiteDasFichas key="soleira-do-momento"><SoleiraDoMomento momentos={momentos} /></LimiteDasFichas></div> : null}
+          {comMomento ? <div className="pt-2" ref={soleiraRef}><LimiteDasFichas key="soleira-do-momento"><SoleiraDoMomento momentos={momentos} /></LimiteDasFichas></div> : null}
         </>
       );
     } catch (e) { calou("o momento por cima do campo", e); return null; }
