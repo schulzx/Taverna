@@ -17,7 +17,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { T } from "./constantes.js";
-import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, TIPOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, PAPEL_DO_DADO, TIRA_DA_MESA } from "./estilo.js";
+import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, TIPOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, PAPEL_DO_DADO, TIRA_DA_MESA, MOVIMENTO_DO_DADO } from "./estilo.js";
+import { DADO_DE_USO } from "./dado-de-uso.js";
 import { molduraDe } from "./moldura.js";
 import { FASES_DO_DIA } from "./mapa-vivo.js";
 import { marcasNoAro } from "./marcas-da-moldura.js";
@@ -278,6 +279,17 @@ export function ObjetoDaMesa({ id, rotulo, legenda = "", ativo = false, novo = f
    É UM botão, não três: a ação é uma só (abrir a Bolsa nos Mantimentos), e a
    fiação dela é do App («aoAbrir»). Quando a face desce entre duas vistas, o
    dado encolhe e volta (320 ms; parado no reduce).
+
+   O FIM DO DIA (294:4493, 08/11). A prop «lancamento» é o último lance de
+   papel uso da Bandeja (ou null). Cada lance NOVO (o «n» da bandeja) faz
+   rodar só os dados que vêm em «usos», um «entreDados» depois do outro; cada
+   um pousa no seu número; num 1 aparece o selo «−1»; depois a face desce (o
+   encolher de sempre) e a contagem corre até ao valor novo; aos «mostra» ms o
+   glifo volta. Teatro, nunca sorteio: o número já veio da semente. Com
+   reduce: sem rodar, o número e o selo já pousados, a face e a contagem
+   trocam secas aos «reduzido» ms. Quem anuncia ao leitor de ecrã é a Bandeja
+   (o aria-live dela, §AR 12: nunca um segundo anúncio); aqui o lance entra só
+   no nome do botão, para quem lá pousar o foco.
    ============================================================ */
 const USO = DADO_DE_USO_NA_MESA;
 /* a face dita por extenso no nome acessível («dado de seis») */
@@ -291,7 +303,27 @@ const faceDe = (v) => (FORMAS_DO_DADO[v] && FACE_POR_EXTENSO[v] ? Number(v) : nu
    e a TL guarda em TIRA_DA_MESA.puxada). `telefone` é o nome antigo da tira. */
 const lugarDoUso = (lugar, telefone) => (lugar === "tira" || lugar === "puxada" || lugar === "mesa" ? lugar : telefone ? "tira" : "mesa");
 const medidaDoUso = (lugar) => (lugar === "puxada" ? { dado: TIRA.puxada.dado, glifo: TIRA.puxada.glifo } : lugar === "tira" ? USO.telefone : USO.mesa);
-export function DadoDeUso({ tipo, face, n, telefone = false, lugar = null }) {
+/* O SELO «−1» (294:4493): o disco danger no canto de cima, à direita, como o
+   da Bandeja. Entra com o veredito da Bandeja (tv-dado-veredito), que no
+   reduce já aparece pousado. */
+function SeloDoUso({ tam }) {
+  const S = USO.selo;
+  const r = S.lado / 2;
+  return (
+    <svg className="tv-dado-veredito" data-menos-um="" width={S.lado} height={S.lado} viewBox={"0 0 " + S.lado + " " + S.lado} aria-hidden="true"
+      style={{ position: "absolute", left: tam - r + S.canto[0], top: -r + S.canto[1], overflow: "visible", pointerEvents: "none" }}>
+      <circle cx={r} cy={r} r={r} fill={S.chao} />
+      <text x={r} y={r} textAnchor="middle" dominantBaseline="central" fontFamily="'JetBrains Mono', ui-monospace, monospace" fontWeight="700" fontSize={S.tamanho} fill={S.letra}>{S.texto}</text>
+    </svg>
+  );
+}
+
+/* `lance` (08/11): a vista deste dado no lance que corre, de
+   vistaDoLanceDeUso — { numero, rolando, pousa, selo }. Com número, o número
+   toma o lugar do glifo (o Corpo de sempre, rodado enquanto rola); sem lance,
+   o repouso de sempre. */
+export function DadoDeUso({ tipo, face, n, telefone = false, lugar = null, lance = null }) {
+  const L = lance && typeof lance === "object" ? lance : null;
   const M = medidaDoUso(lugarDoUso(lugar, telefone));
   const tam = M.dado;
   const f = faceDe(face);
@@ -300,17 +332,22 @@ export function DadoDeUso({ tipo, face, n, telefone = false, lugar = null }) {
   const centro = vazio ? FORMAS_DO_DADO[USO.vazio.forma].numero : f === 10 ? USO.centroDoD10 : FORMAS_DO_DADO[f].numero;
   const k = tam / 48;
   const aperta = vazio || f === USO.apertaNaFace;
+  const numero = L && L.numero != null && !vazio ? String(L.numero) : "";
   return (
-    <span className="inline-flex flex-col items-center" style={{ gap: USO.contagem.entre }} data-uso={tipo} data-face={vazio ? "vazio" : f}>
-      <span style={{ position: "relative", display: "inline-flex", width: tam, height: tam }}>
+    <span className="inline-flex flex-col items-center" style={{ gap: USO.contagem.entre }} data-uso={tipo} data-face={vazio ? "vazio" : f}
+      data-lance={L ? (L.rolando ? "rola" : numero ? "pousou" : "espera") : undefined}>
+      <span className={L && L.pousa ? "tv-dado-pousa" : undefined} style={{ position: "relative", display: "inline-flex", width: tam, height: tam }}>
         {vazio ? (
           <svg width={tam} height={tam} viewBox="0 0 48 48" aria-hidden="true" style={{ flex: "none", overflow: "visible" }}>
             <polygon points={FORMAS_DO_DADO[USO.vazio.forma].corpo} fill="none" stroke={USO.vazio.aro} strokeWidth="1.5" strokeDasharray={USO.vazio.tracejado.join(" ")} strokeLinejoin="round" />
           </svg>
-        ) : <Corpo faces={f} legenda="" papel={USO.papel} tam={tam} />}
-        <span aria-hidden="true" style={{ position: "absolute", left: centro[0] * k - lado / 2, top: centro[1] * k - lado / 2, lineHeight: 0 }}>
-          <Glifo nome={USO.glifo[tipo]} tamanho={lado} cor={vazio ? USO.vazio.glifo : T[PAPEL_DO_DADO[USO.papel].numero]} />
-        </span>
+        ) : <Corpo faces={f} legenda={numero} papel={USO.papel} tam={tam} rolando={!!(L && L.rolando)} />}
+        {numero ? null : (
+          <span aria-hidden="true" style={{ position: "absolute", left: centro[0] * k - lado / 2, top: centro[1] * k - lado / 2, lineHeight: 0 }}>
+            <Glifo nome={USO.glifo[tipo]} tamanho={lado} cor={vazio ? USO.vazio.glifo : T[PAPEL_DO_DADO[USO.papel].numero]} />
+          </span>
+        )}
+        {L && L.selo ? <SeloDoUso tam={tam} /> : null}
       </span>
       <span className="tv-mono" aria-hidden="true" style={{ fontSize: USO.contagem.tamanho, fontWeight: USO.contagem.peso, lineHeight: 1, color: aperta ? USO.contagem.aperta : USO.contagem.cor }}>
         {USO.contagem.prefixo}{contaDe(n)}
@@ -319,8 +356,79 @@ export function DadoDeUso({ tipo, face, n, telefone = false, lugar = null }) {
   );
 }
 
-/* o nome acessível da prateleira inteira: «rações 5, dado de seis; …» */
-export function nomeDaPrateleira(dados, contagens) {
+/* A VISTA DO LANCE, em cada instante (pura, provada em Node). Lê o lance da
+   Bandeja (papel uso: `dados` e `usos` alinhados) e o tempo decorrido, e
+   diz de cada dado que rola: a face do lance, o número à vista (o que troca
+   enquanto rola, o resultado depois), se pousa, se leva o selo (num
+   DADO_DE_USO.encolheEm — a regra é do sistema, aqui só se lê), se já mostra
+   a face nova, a contagem a correr de `antes` a `agora`, e se acabou.
+   Só os mantimentos que vêm em `usos` aparecem; um lance que não é de uso,
+   ou lixo, dá null. */
+export function vistaDoLanceDeUso(lancamento, decorrido = 0, { reduzido = false, antes = null, agora = null } = {}) {
+  const l = lancamento && typeof lancamento === "object" ? lancamento : null;
+  if (!l || l.papel !== USO.papel || !Array.isArray(l.dados) || !Array.isArray(l.usos)) return null;
+  const R = USO.rolar;
+  const rolar = reduzido ? 0 : R.dura;
+  const pousar = reduzido ? USO.reduzido : MOVIMENTO_DO_DADO.pousar;
+  const correr = reduzido ? 0 : USO.encolher.dura;
+  const ms = Math.max(0, Number(decorrido) || 0);
+  const de = antes && typeof antes === "object" ? antes : null;
+  const para = agora && typeof agora === "object" ? agora : null;
+  const out = {};
+  let ordem = 0;
+  l.dados.forEach((d, i) => {
+    const tipo = l.usos[i];
+    if (!d || !USO.ordem.includes(tipo) || out[tipo]) return;
+    const faces = faceDe(d.faces);
+    const valor = Math.floor(Number(d.valor));
+    if (faces == null || !(valor >= 1 && valor <= faces)) return;
+    const atraso = reduzido ? 0 : ordem * R.entreDados;
+    ordem += 1;
+    const t = ms - atraso;
+    const acabou = ms >= atraso + R.mostra;
+    const rolando = !acabou && t >= 0 && t < rolar;
+    const pousou = t >= rolar;
+    const desce = t >= rolar + pousar;
+    const encolhe = valor <= DADO_DE_USO.encolheEm;
+    const tique = Math.floor(Math.max(0, t) / R.troca);
+    const numero = acabou || t < 0 ? null : rolando ? ((tique * 7 + i * 3 + faces) % faces) + 1 : valor;
+    let contagem = null;
+    if (de && para) {
+      const a = contaDe(de[tipo]), b = contaDe(para[tipo]);
+      const p = !desce ? 0 : correr ? Math.min(1, (t - rolar - pousar) / correr) : 1;
+      contagem = a + Math.round((b - a) * p);
+    }
+    out[tipo] = { faces, valor, numero, rolando, pousa: pousou && !desce && !acabou, selo: encolhe && pousou && !acabou, encolhe, faceNova: desce || acabou, contagem, acabou };
+  });
+  return Object.keys(out).length ? out : null;
+}
+
+/* o nome do lance, na voz da mesa: «Rações: 1, perdeu uma; água: 7» */
+export function nomeDoLanceDeUso(lancamento) {
+  const v = vistaDoLanceDeUso(lancamento, 0);
+  if (!v) return "";
+  const frase = Object.entries(v).map(([tipo, x]) => USO.nome[tipo] + ": " + x.valor + (x.encolhe ? ", perdeu uma" : "")).join("; ");
+  return frase.charAt(0).toUpperCase() + frase.slice(1);
+}
+
+/* a identidade do lance: o «n» da bandeja (é ele que distingue dois lances
+   iguais seguidos); sem ele, a chave ou o id; sem nada, a assinatura */
+const chaveDoLanceDeUso = (l) => {
+  if (!l || typeof l !== "object") return null;
+  const id = l.n != null ? l.n : l.chave != null ? l.chave : l.id;
+  if (id != null) return String(id);
+  return [l.rotulo || "", ...l.dados.map((d) => (d && d.faces) + ":" + (d && d.valor)), ...l.usos].join("|");
+};
+const semMovimentoNoUso = () => {
+  try { return !!(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch { return false; }
+};
+/* antes da pintura no navegador (o primeiro quadro do lance já é o do lance);
+   em Node (a suíte) não há pintura, e o efeito comum basta */
+const useAntesDaPintura = typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
+/* o nome acessível da prateleira inteira: «rações 5, dado de seis; …», e o
+   último lance, quando há */
+export function nomeDaPrateleira(dados, contagens, lancamento = null) {
   const d = dados && typeof dados === "object" ? dados : {};
   const c = contagens && typeof contagens === "object" ? contagens : {};
   const partes = USO.ordem.map((tipo) => {
@@ -329,23 +437,79 @@ export function nomeDaPrateleira(dados, contagens) {
     if (f == null) return n > 0 ? USO.nome[tipo] + " " + n : USO.nome[tipo] + ": nenhuma";
     return USO.nome[tipo] + " " + n + ", dado de " + FACE_POR_EXTENSO[f] + (f === USO.apertaNaFace ? ", a acabar" : "");
   });
-  return "Mantimentos: " + partes.join("; ") + ". Abrir na Bolsa.";
+  let lance = "";
+  try { lance = nomeDoLanceDeUso(lancamento); } catch { lance = ""; }
+  return "Mantimentos: " + partes.join("; ") + "." + (lance ? " " + lance + "." : "") + " Abrir na Bolsa.";
 }
 
-export function PrateleiraDosMantimentos({ dados = null, contagens = null, telefone = false, lugar = null, aoAbrir }) {
+export function PrateleiraDosMantimentos({ dados = null, contagens = null, telefone = false, lugar = null, aoAbrir, lancamento = null }) {
   const d = dados && typeof dados === "object" ? dados : {};
   const c = contagens && typeof contagens === "object" ? contagens : {};
   const onde = lugarDoUso(lugar, telefone);
   const M = onde === "mesa" ? USO.mesa : USO.telefone;
   const naTira = onde === "tira";
-  /* o encolher: a face desceu desde a vista anterior (ou acabou) */
+  /* O LANCE (08/11). Rola só um lance NOVO depois de montada: a mesa puxada
+     que se abre, ou a tela que troca de largura, não volta a rolar o lance
+     que já rolou. `contagensVistas` é a contagem da vista anterior — é dela
+     que a contagem corre. */
+  let chaveDoLance = null;
+  try { chaveDoLance = vistaDoLanceDeUso(lancamento, 0) ? chaveDoLanceDeUso(lancamento) : null; } catch { chaveDoLance = null; }
+  const lanceVisto = React.useRef(undefined);
+  const contagensVistas = React.useRef(null);
+  const [anim, setAnim] = React.useState(null);
+  /* o relógio do quadro: a hora lida no último passo (nunca um tique contado) */
+  const [agora, setAgora] = React.useState(0);
+  const chaveDasContagens = USO.ordem.map((tipo) => contaDe(c[tipo])).join("|");
+  useAntesDaPintura(() => {
+    try {
+      const ant = lanceVisto.current;
+      lanceVisto.current = chaveDoLance;
+      if (ant === undefined || chaveDoLance == null || chaveDoLance === ant) return;
+      setAnim({ chave: chaveDoLance, lance: lancamento, inicio: Date.now(), reduzido: semMovimentoNoUso(), antes: contagensVistas.current });
+    } catch { /* a forma nunca custa o turno */ }
+  }, [chaveDoLance]); // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(() => {
+    contagensVistas.current = Object.fromEntries(USO.ordem.map((tipo) => [tipo, contaDe(c[tipo])]));
+  }, [chaveDasContagens]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* o relógio do lance: lê o tempo (Date.now() − início), não conta tiques;
+     acaba quando todos os dados acabaram */
+  React.useEffect(() => {
+    if (!anim) return undefined;
+    let vivo = true, passo = null;
+    const espera = anim.reduzido ? USO.reduzido : USO.rolar.troca;
+    const segue = () => {
+      if (!vivo) return;
+      try {
+        const v = vistaDoLanceDeUso(anim.lance, Date.now() - anim.inicio, { reduzido: anim.reduzido });
+        if (!v || Object.values(v).every((x) => x.acabou)) { setAnim((a) => (a === anim ? null : a)); return; }
+        setAgora(Date.now());
+      } catch { setAnim(null); return; }
+      passo = setTimeout(segue, espera);
+    };
+    passo = setTimeout(segue, espera);
+    return () => { vivo = false; clearTimeout(passo); };
+  }, [anim]);
+  /* a vista deste quadro: no próprio quadro em que o lance chega (antes de o
+     efeito o guardar) já é o instante zero, para a face e a contagem novas
+     não piscarem antes de o dado rolar */
+  let vista = null;
+  try {
+    const chega = chaveDoLance != null && lanceVisto.current !== undefined && chaveDoLance !== lanceVisto.current;
+    if (chega) vista = vistaDoLanceDeUso(lancamento, 0, { reduzido: semMovimentoNoUso(), antes: contagensVistas.current, agora: c });
+    else if (anim) vista = vistaDoLanceDeUso(anim.lance, Math.max(agora, anim.inicio) - anim.inicio, { reduzido: anim.reduzido, antes: anim.antes, agora: c });
+  } catch { vista = null; }
+  const doLance = (tipo) => (vista && vista[tipo] && !vista[tipo].acabou ? vista[tipo] : null);
+  /* a face à vista: a do lance enquanto o dado está na mão, a do sistema depois */
+  const faceVista = (tipo) => { const v = doLance(tipo); return v && !v.faceNova ? v.faces : faceDe(d[tipo]); };
+  const contaVista = (tipo) => { const v = doLance(tipo); return v && v.contagem != null ? v.contagem : c[tipo]; };
+  /* o encolher: a face à vista desceu desde a vista anterior (ou acabou) */
   const anterior = React.useRef(null);
   const [encolheu, setEncolheu] = React.useState({});
-  const chave = USO.ordem.map((tipo) => String(faceDe(d[tipo]))).join("|");
+  const chave = USO.ordem.map((tipo) => String(faceVista(tipo))).join("|");
   React.useEffect(() => {
     try {
       const antes = anterior.current;
-      const agora = Object.fromEntries(USO.ordem.map((tipo) => [tipo, faceDe(d[tipo])]));
+      const agora = Object.fromEntries(USO.ordem.map((tipo) => [tipo, faceVista(tipo)]));
       anterior.current = agora;
       if (!antes) return;
       const desceram = USO.ordem.filter((tipo) => antes[tipo] != null && (agora[tipo] == null || agora[tipo] < antes[tipo]));
@@ -355,12 +519,12 @@ export function PrateleiraDosMantimentos({ dados = null, contagens = null, telef
   const dado = (tipo) => (
     <span key={tipo + "-" + (encolheu[tipo] || 0)} className={encolheu[tipo] ? "tv-uso-encolhe" : undefined} style={{ display: "inline-flex" }}>
       <span style={naTira ? { display: "inline-flex", justifyContent: "center", width: TIRA.mantimentos.coluna } : { display: "inline-flex" }}>
-        <DadoDeUso tipo={tipo} face={d[tipo]} n={c[tipo]} lugar={onde} />
+        <DadoDeUso tipo={tipo} face={faceVista(tipo)} n={contaVista(tipo)} lugar={onde} lance={doLance(tipo)} />
       </span>
     </span>
   );
   return (
-    <button type="button" onClick={aoAbrir} aria-label={nomeDaPrateleira(d, c)} title="Mantimentos"
+    <button type="button" onClick={aoAbrir} aria-label={nomeDaPrateleira(d, c, lancamento)} title="Mantimentos"
       className="tv-anel-foco tv-encaixe shrink-0 flex flex-col items-center justify-center rounded-lg"
       style={{
         minWidth: onde === "puxada" ? undefined : M.alvo.largura, minHeight: onde === "puxada" ? ALVOS.piso : M.alvo.alto, padding: 0, marginTop: onde === "mesa" ? USO.mesa.acima : 0,
@@ -618,7 +782,7 @@ export function TiraDaMesa({ heroi, grupo = [], comPMDoHeroi = true, destino = n
               {objs.map((o) => <ObjetoDaMesa key={o.id} id={o.id} rotulo={o.rotulo} legenda={o.legenda} ativo={o.ativo} novo={o.novo} Glifo={o.Glifo} aoTocar={o.aoTocar} naTira />)}
             </span>
           ) : null}
-          {mant ? <PrateleiraDosMantimentos dados={mant.dados} contagens={mant.contagens} aoAbrir={mant.aoAbrir} lugar="tira" /> : null}
+          {mant ? <PrateleiraDosMantimentos dados={mant.dados} contagens={mant.contagens} aoAbrir={mant.aoAbrir} lancamento={mant.lancamento || null} lugar="tira" /> : null}
         </div>
       </div>
       <MesaPuxada aberta={puxada} aoFechar={() => setPuxada(false)} devolverFocoA={pega}
@@ -684,7 +848,7 @@ export function MesaPuxada({ aberta = false, aoFechar, devolverFocoA = null, rot
         </div>
         <div className="flex items-center" style={{ gap: 8 }}>
           {objs.map((o) => <ObjetoDaMesa key={o.id} id={o.id} rotulo={o.rotulo} legenda={o.legenda} ativo={o.ativo} novo={o.novo} Glifo={o.Glifo} aoTocar={o.aoTocar} escala={P.objetos} />)}
-          {mant ? <PrateleiraDosMantimentos dados={mant.dados} contagens={mant.contagens} aoAbrir={mant.aoAbrir} lugar="puxada" /> : null}
+          {mant ? <PrateleiraDosMantimentos dados={mant.dados} contagens={mant.contagens} aoAbrir={mant.aoAbrir} lancamento={mant.lancamento || null} lugar="puxada" /> : null}
         </div>
       </div>
     </div>

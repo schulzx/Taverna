@@ -115,8 +115,12 @@ t("fechada, a casa volta ao herói e à Ficha", /setAbaVista\(null\); setInvDe\(
 t("o Fechar da carta fecha tudo e devolve à mesa", /aoFechar=\{fecharTudo\}/.test(APP) && !/aoFechar=\{\(\) => setHeroiDispensado\(true\)\}/.test(APP) && /calou\("fechar a carta do herói", e\)/.test(APP));
 
 /* 07/11 (formas.md §AR 12): a prateleira dos mantimentos pousa na mesa */
+/* MOVIDA em 08/11 (a animação do dado de uso): a prateleira passou a receber
+   também o último lance de uso (`lancamento={ultimoLanceDeUso()}`), para o
+   dado rodar à vista; a intenção fica — debaixo da Bolsa na mesa larga */
 t("a prateleira dos mantimentos: na mesa debaixo da Bolsa, no telefone debaixo dos objetos",
-  /<PrateleiraDosMantimentos dados=\{u\.dados\} contagens=\{u\.contagens\} telefone=\{telefone\} aoAbrir=\{abrirOsMantimentos\} \/>/.test(APP)
+  /<PrateleiraDosMantimentos dados=\{u\.dados\} contagens=\{u\.contagens\} telefone=\{telefone\} aoAbrir=\{abrirOsMantimentos\} lancamento=\{ultimoLanceDeUso\(\)\} \/>/.test(APP)
+  && /lancamento: ultimoLanceDeUso\(\)/.test(APP)
   && /if \(telefone \|\| a\.id !== "inv" \|\| !prateleira\) return obj;/.test(APP)
   && /<span className="flex items-start gap-1">\{lista\}<\/span>\{prateleira\}/.test(APP));
 t("a face e o «×N» saem de uma regra só (mantimentosDeUso), com as tochas da masmorra lá dentro",

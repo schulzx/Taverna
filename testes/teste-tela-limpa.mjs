@@ -290,6 +290,17 @@ sec("5. os rótulos acessíveis");
     mp.includes("data-bandeja") && texto(mp).includes("Diário") && texto(mp).includes("Mapa") && mp.includes('aria-label="Fechar a mesa"')
     && mp.includes(`width:${TIRA_DA_MESA.puxada.dado}px;height:${TIRA_DA_MESA.puxada.dado}px`));
   t("e a puxada tem os glifos do dado de 28 para cada face", [10, 8, 6, 4].every((f) => TIRA_DA_MESA.puxada.glifo[f] > 0));
+
+  /* 08/11 · o fim do dia (formas.md §AR 12, 294:4493): o App põe o último lance
+     de uso em «mantimentos.lancamento», e a tira e a mesa puxada passam-no à
+     prateleira — o nome do botão diz o que saiu. */
+  const LANCE = { papel: "uso", n: 7, rotulo: "Os mantimentos", dados: [{ faces: 10, valor: 1 }, { faces: 10, valor: 7 }], usos: ["racoes", "agua"] };
+  const comLance = { ...MANT, lancamento: LANCE };
+  const lanceNaTira = desfaz(html(R.TiraDaMesa, { heroi: HEROI, objetos: OBJETOS, mantimentos: comLance }));
+  const lanceNaPuxada = desfaz(html(R.MesaPuxada, { aberta: true, heroi: HEROI, objetos: OBJETOS, mantimentos: comLance }));
+  t("o lance de uso chega à prateleira da tira e da mesa puxada (no nome do botão)",
+    lanceNaTira.includes("tochas 5, dado de seis. Rações: 1, perdeu uma; água: 7. Abrir na Bolsa.\"")
+    && lanceNaPuxada.includes("Rações: 1, perdeu uma; água: 7. Abrir na Bolsa.\""));
 }
 
 /* ============================================================ */

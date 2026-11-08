@@ -24200,7 +24200,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       try {
         if (personagem) {
           const u = mantimentosDeUso(personagem, masmorra);
-          prateleira = <PrateleiraDosMantimentos dados={u.dados} contagens={u.contagens} telefone={telefone} aoAbrir={abrirOsMantimentos} />;
+          prateleira = <PrateleiraDosMantimentos dados={u.dados} contagens={u.contagens} telefone={telefone} aoAbrir={abrirOsMantimentos} lancamento={ultimoLanceDeUso()} />;
         }
       } catch (e) { calou("a prateleira dos mantimentos", e); prateleira = null; }
       const lista = [...naOrdem, ...resto].map((a) => {
@@ -24254,11 +24254,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       }));
     } catch (e) { calou("os objetos da tira", e); return []; }
   };
+  /* 08/11 · o dado de uso rola à vista: o último lance de papel «uso» da
+     bandeja (o mais novo vem à frente, naBandeja) vai à prateleira, que o
+     faz rodar, pousar e, num 1, pôr o «−1» (formas.md §AR 12). */
+  const ultimoLanceDeUso = () => {
+    try { return (bandeja || []).find((l) => l && l.papel === "uso") || null; }
+    catch (e) { calou("o último lance de uso", e); return null; }
+  };
   const mantimentosDaTira = () => {
     try {
       if (!personagem) return null;
       const u = mantimentosDeUso(personagem, masmorra);
-      return { dados: u.dados, contagens: u.contagens, aoAbrir: abrirOsMantimentos };
+      return { dados: u.dados, contagens: u.contagens, aoAbrir: abrirOsMantimentos, lancamento: ultimoLanceDeUso() };
     } catch (e) { calou("os mantimentos da tira", e); return null; }
   };
 

@@ -16,7 +16,10 @@
       nome, o clique leva ao veredito da árvore, os nomes repetidos, a
       multiclasse e o estado sem pontos;
    6. a prateleira: o dado de uso lê a face (não a calcula), é um botão só, e
-      os glifos novos chegam à tela no lugar dos emojis.
+      os glifos novos chegam à tela no lugar dos emojis;
+   7. o fim do dia (294:4493, 08/11): o lance de uso roda só os dados que vêm
+      em «usos», o selo «−1» só no 1, a contagem que corre, o null, o reduce e
+      o nome do lance.
 
    O JSX não corre em Node: empacota-se um ponto de entrada com o esbuild (o
    mesmo de teste-ar-pecas) e lê-se o HTML de renderToStaticMarkup. */
@@ -34,6 +37,7 @@ import {
 } from "../src/classes.js";
 import { GLIFOS, ASSUNTO_DO_EMOJI, assuntoDaLinha } from "../src/glifos.js";
 import { DADO_DE_USO, faceDoDadoDeUso } from "../src/dado-de-uso.js";
+import { lancamentoDoDadoDeUso, lancamentoDoTeste, naBandeja } from "../src/motor/a-bandeja.js";
 import { razao, rgb } from "./conta-da-luz.mjs";
 
 let ok = 0, mal = 0;
@@ -48,9 +52,9 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { CeuDoHeroi, ceuDaClasse, medidasDoCeu } from "./painel-ceu.jsx";
 import { PainelTalentos } from "./painel-talentos.jsx";
-import { PrateleiraDosMantimentos, DadoDeUso, nomeDaPrateleira } from "./painel-mesa-do-mestre.jsx";
+import { PrateleiraDosMantimentos, DadoDeUso, nomeDaPrateleira, vistaDoLanceDeUso, nomeDoLanceDeUso } from "./painel-mesa-do-mestre.jsx";
 export const html = (el) => renderToStaticMarkup(el);
-export { React, CeuDoHeroi, ceuDaClasse, medidasDoCeu, PainelTalentos, PrateleiraDosMantimentos, DadoDeUso, nomeDaPrateleira };
+export { React, CeuDoHeroi, ceuDaClasse, medidasDoCeu, PainelTalentos, PrateleiraDosMantimentos, DadoDeUso, nomeDaPrateleira, vistaDoLanceDeUso, nomeDoLanceDeUso };
 `;
 const saida = path.join(AQUI, `.tmp-constelacao-${process.pid}.mjs`);
 buildSync({
@@ -325,6 +329,74 @@ sec("6. a prateleira dos mantimentos");
   const falas = [...DADO_DE_USO.falas.racoes, ...DADO_DE_USO.falas.agua, ...DADO_DE_USO.falas.tochas, DADO_DE_USO.ultimaTocha];
   const semGlifo = falas.filter((f) => { const a = assuntoDaLinha(f); return !a || !a.glifo || /🥖|💧|🕯/.test(a.texto || ""); });
   t("as falas do dado de uso chegam à tela com o glifo, sem o emoji", semGlifo.length === 0, semGlifo.join(" | "));
+}
+
+/* ============================================================ */
+sec("7. o fim do dia: o dado de uso rola na prateleira (294:4493)");
+{
+  const U = DADO_DE_USO_NA_MESA;
+  /* o lance como o sistema o faz: rações num d6 deu 1 (encolhe), água num d8 deu 7 */
+  const dia = naBandeja([], lancamentoDoDadoDeUso(DADO_DE_USO.rotulos.dia, [{ faces: 6, valor: 1, uso: "racoes" }, { faces: 8, valor: 7, uso: "agua" }], DADO_DE_USO.encolheEm + 1))[0];
+  const tocha = naBandeja([], lancamentoDoDadoDeUso(DADO_DE_USO.rotulos.tocha, [{ faces: 6, valor: 4, uso: "tochas" }], DADO_DE_USO.encolheEm + 1))[0];
+  const V = (l, ms, o) => R.vistaDoLanceDeUso(l, ms, o);
+  const rolar = U.rolar.dura, pousou = U.rolar.dura + MOVIMENTO_DO_DADO.pousar;
+
+  const a = V(dia, 10);
+  t("rodam só os dados que vêm em «usos» (rações e água; as tochas ficam paradas)", a && Object.keys(a).join(",") === "racoes,agua");
+  t("o lance da tocha rola só a tocha", Object.keys(V(tocha, 10) || {}).join(",") === "tochas");
+  t("a água sai «entreDados» depois: aos 10 ms as rações rodam e a água ainda espera",
+    a.racoes.rolando && !a.agua.rolando && a.agua.numero === null && V(dia, U.rolar.entreDados + 10).agua.rolando);
+  const trocas = new Set(); for (let ms = 0; ms < rolar; ms += U.rolar.troca) trocas.add(V(dia, ms).racoes.numero);
+  t("enquanto rola, o número troca (teatro) e fica dentro da face", trocas.size > 1 && [...trocas].every((n) => n >= 1 && n <= 6), [...trocas].join(","));
+  const p = V(dia, rolar + 10);
+  t("aos «rolar» ms pousa no número que o sistema rolou, com o ressalto do pouso", p.racoes.numero === 1 && !p.racoes.rolando && p.racoes.pousa && V(dia, rolar + U.rolar.entreDados + 10).agua.numero === 7);
+  t("o selo «−1» só no 1: as rações levam-no, a água não", p.racoes.selo && !V(dia, rolar + U.rolar.entreDados + 10).agua.selo);
+  t("o selo não aparece antes de pousar", !V(dia, rolar - 10).racoes.selo);
+  t("a face do lance fica até pousar; depois, a face que o sistema der", !V(dia, pousou - 1).racoes.faceNova && V(dia, pousou + 1).racoes.faceNova);
+  const ctx = { antes: { racoes: 5, agua: 9, tochas: 2 }, agora: { racoes: 3, agua: 8, tochas: 2 } };
+  const seq = []; for (let ms = 0; ms <= pousou + U.encolher.dura + 60; ms += 20) seq.push(V(dia, ms, ctx).racoes.contagem);
+  t("a contagem fica em ×5 até pousar e corre 5 → 4 → 3 enquanto a face desce",
+    V(dia, pousou - 1, ctx).racoes.contagem === 5 && seq.includes(4) && V(dia, pousou + U.encolher.dura, ctx).racoes.contagem === 3 && seq.every((n, i) => i === 0 || n <= seq[i - 1]), seq.join(","));
+  t("sem a contagem de antes, a peça não inventa: contagem null (fica a do sistema)", V(dia, 700).racoes.contagem === null);
+  const fim = V(dia, U.rolar.entreDados + U.rolar.mostra);
+  t("aos «mostra» ms o glifo volta: sem número, sem selo", fim.racoes.acabou && fim.agua.acabou && fim.racoes.numero === null && !fim.racoes.selo);
+
+  const r0 = V(dia, 0, { reduzido: true, ...ctx });
+  t("reduce: sem rodar — o número e o selo já pousados no instante zero", !r0.racoes.rolando && !r0.agua.rolando && r0.racoes.numero === 1 && r0.racoes.selo && r0.agua.numero === 7);
+  const r1 = V(dia, U.reduzido, { reduzido: true, ...ctx });
+  t("reduce: a face e a contagem trocam secas aos «reduzido» ms", !r0.racoes.faceNova && r0.racoes.contagem === 5 && r1.racoes.faceNova && r1.racoes.contagem === 3);
+
+  t("o null: sem lance, lance de outro papel ou lixo, não há vista",
+    V(null, 0) === null && V(undefined, 0) === null && V(lancamentoDoTeste({ valor: 12, dc: 10 }), 0) === null
+    && V({ papel: "uso", dados: [{ faces: 7, valor: 9 }], usos: ["racoes"] }, 0) === null && V({ papel: "uso", dados: [{ faces: 6, valor: 2 }], usos: ["ouro"] }, 0) === null);
+
+  t("o nome do lance: «Rações: 1, perdeu uma; água: 7»", R.nomeDoLanceDeUso(dia) === "Rações: 1, perdeu uma; água: 7", R.nomeDoLanceDeUso(dia));
+  t("a tocha que pega: «Tochas: 4»; sem lance, nada", R.nomeDoLanceDeUso(tocha) === "Tochas: 4" && R.nomeDoLanceDeUso(null) === "");
+  const dados = { racoes: 4, agua: 8, tochas: 4 }, contagens = { racoes: 3, agua: 8, tochas: 2 };
+  const nome = R.nomeDaPrateleira(dados, contagens, dia);
+  t("o lance entra no nome do botão, antes de «Abrir na Bolsa.»",
+    nome === "Mantimentos: rações 3, dado de quatro, a acabar; água 8, dado de oito; tochas 2, dado de quatro, a acabar. Rações: 1, perdeu uma; água: 7. Abrir na Bolsa.", nome);
+  t("o sistema não fala de si no nome (nem do papel do dado)", !/\bsistemas?\b|\bIA\b|\bNarrador|\bCronista\b|\btokens?\b|\bpela tabela\b|\bpapel\b|\buso\b/u.test(nome));
+  t("sem lance, o nome de sempre (regressão zero)", R.nomeDaPrateleira(dados, contagens, null) === R.nomeDaPrateleira(dados, contagens));
+  /* um anúncio só: quem anuncia o lance ao leitor de ecrã é a Bandeja (formas.md §AR 12) */
+  const sl = html(R.PrateleiraDosMantimentos, { dados, contagens, lancamento: dia });
+  t("a prateleira com lance: o nome no botão, e nenhum segundo aria-live (o anúncio é da Bandeja)", desfaz(sl).includes('aria-label="' + nome + '"') && !sl.includes("aria-live"));
+  t("montar com um lance já rolado não o rola outra vez (a mesa puxada que se abre)", !sl.includes("data-lance") && !sl.includes("data-menos-um"));
+
+  const rola = html(R.DadoDeUso, { tipo: "racoes", face: 6, n: 5, lance: { numero: 3, rolando: true } });
+  t("o dado que rola: o Corpo rodado −18° com o número no lugar do glifo", rola.includes("rotate(-18deg)") && rola.includes('data-lance="rola"') && />3<\/text>/.test(rola) && !rola.includes(GLIFOS.racao.d));
+  const selo = html(R.DadoDeUso, { tipo: "racoes", face: 6, n: 5, lance: { numero: 1, pousa: true, selo: true } });
+  t("o dado que pousou no 1: o número, o ressalto do pouso e o selo «−1» (disco danger de 18, letra onAccent)",
+    />1<\/text>/.test(selo) && selo.includes("tv-dado-pousa") && selo.includes("data-menos-um") && selo.includes('fill="' + U.selo.chao + '"')
+    && selo.includes('fill="' + U.selo.letra + '"') && selo.includes('width="' + U.selo.lado + '"') && selo.includes(U.selo.texto));
+  const sete = html(R.DadoDeUso, { tipo: "agua", face: 8, n: 9, lance: { numero: 7 } });
+  t("o 7 da água: número sem selo", />7<\/text>/.test(sete) && !sete.includes("data-menos-um"));
+  const vz = html(R.DadoDeUso, { tipo: "racoes", face: null, n: 0, lance: { numero: 1, selo: true } });
+  t("se a face acabou (vazio), o contorno fica com o glifo e o selo — sem número", vz.includes('data-face="vazio"') && vz.includes(GLIFOS.racao.d) && vz.includes("data-menos-um") && !/>1<\/text>/.test(vz));
+  const foraDoReduce = FOLHA.split("@media (prefers-reduced-motion: reduce)")[0];
+  t("o selo e o pouso usam as classes da Bandeja: duração no CSS e saída no reduce",
+    /\.tv-dado-veredito \{[^}]*animation: \w+ \d+ms/.test(foraDoReduce) && /\.tv-dado-pousa \{[^}]*animation: \w+ \d+ms/.test(foraDoReduce)
+    && /\.tv-dado-veredito \{ animation: none/.test(FOLHA) && /\.tv-dado-rola, \.tv-dado-pousa \{ animation: none/.test(FOLHA));
 }
 
 console.log(`\nconstelacao: ${ok} passaram, ${mal} falharam`);

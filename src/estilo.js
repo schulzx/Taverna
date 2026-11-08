@@ -1044,7 +1044,11 @@ export const DADO_DE_USO_NA_MESA = {
   apertaNaFace: 4,
   centroDoD10: [24, 18],
   vazio: { forma: 4, aro: T.lineStrong, tracejado: [3, 3], glifo: T.inkDim },
-  selo: { lado: BANDEJA.selo, chao: T.danger, letra: T.onAccent, texto: "−1" },
+  /* 08/11 · a animação do fim do dia (294:4493): a spec dava o disco (18) e as
+     cores; a letra e o canto são os da Marca da Bandeja (0,62 do lado; o disco
+     2 px para fora à direita e 4 px para dentro em cima), para o «−1» ser o
+     mesmo selo nas duas vistas do mesmo lance. */
+  selo: { lado: BANDEJA.selo, chao: T.danger, letra: T.onAccent, texto: "−1", tamanho: 11, canto: [2, 4] },
   rolar: { dura: MOVIMENTO_DO_DADO.rolar, troca: MOVIMENTO_DO_DADO.troca, entreDados: MOVIMENTO_DO_DADO.entreDados, giro: -18, mostra: 1600 },
   encolher: { dura: 320, escala: 0.82 },
   reduzido: MOVIMENTO_DO_DADO.semMovimento,
