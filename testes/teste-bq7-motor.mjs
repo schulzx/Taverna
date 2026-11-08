@@ -51,11 +51,20 @@ const congelar = (x) => { if (x && typeof x === "object" && !Object.isFrozen(x))
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 /* ---------------- um mundo novo, como a criação o faz ---------------- */
-function mundoNovo(semente, estrutura = "jornada", antecedente = "soldado") {
+/* O CATÁLOGO DA PONTA A PONTA (lote 3 do acervo, 08/11). O §3 conta uma
+   campanha inteira de um mundo só («BQ7|0»): o Salvo-Conduto no 1.º ato, o
+   2.º sem quest (a degradação), as Cinzas no 3.º. Com o acervo a crescer,
+   o 2.º ato passou a ter quest (o lote 3 trouxe duas para o passo 2) e o
+   coração mudou — e a prova da PEÇA ficava refém do ACERVO. Esse mundo
+   corre agora com as três quests da planta (como a degradação em
+   teste-esqueleto.mjs); os mundos de cem e duzentos (§7, §8, o Diário)
+   continuam com o catálogo vivo. */
+const DA_PLANTA = BIBLIOTECA_DE_QUESTS.filter((q) => ["o_salvo_conduto", "as_cinzas_de_ontem", "a_carta_que_nao_se_abre"].includes(q.id));
+function mundoNovo(semente, estrutura = "jornada", antecedente = "soldado", catalogo) {
   const mapa = gerarGeografia(semente, null, null);
   const espinha0 = estenderEspinha({ semente, mapa, estrutura, cidadeInicial: mapa.cidades[0].nome, antecedente, dia: 1 });
   const nucleo = nucleoDaCampanha(semente, mapa, { espinha: espinha0, antecedente, grupo: [] });
-  const esq = esqueletoDaCampanha({ semente, mapa, espinha: espinha0, antecedente, nucleo, chefes: chefesDoMundo(semente, mapa) });
+  const esq = esqueletoDaCampanha({ semente, mapa, espinha: espinha0, antecedente, nucleo, chefes: chefesDoMundo(semente, mapa), ...(catalogo ? { catalogo } : {}) });
   const espinha = comOEsqueleto(espinha0, esq);
   return {
     semente, mapa, espinha0, espinha, esq,
@@ -129,7 +138,7 @@ sec("§2 a campanha antiga, byte a byte");
 }
 
 sec("§3 uma campanha nova de ponta a ponta");
-const W = mundoNovo("BQ7|0");
+const W = mundoNovo("BQ7|0", "jornada", "soldado", DA_PLANTA);
 let SC = null;
 {
   t("o mundo de prova tem esqueleto, e o ato 1 tem o Salvo-Conduto", !!W.esq && W.esq.atos[0].quest === "o_salvo_conduto", J(W.esq && W.esq.atos.map((a) => a.quest)));
@@ -401,7 +410,7 @@ sec("§10 os pedidos do desenho (formas.md «## BQ · as quests na tela», §BQ 
   t("5 · o rótulo é campo opcional, e a ficha valida-o (todas as do catálogo têm-no em quem é gente)", BIBLIOTECA_DE_QUESTS.every((q) => validarQuest(q).ok) && BIBLIOTECA_DE_QUESTS.every((q) => Object.values(q.papeis).every((p) => !["elenco", "fio", "grupo"].includes(p.de) || typeof p.rotulo === "string")));
 
   /* 6. a reviravolta lida */
-  const W6 = mundoNovo("BQ7|0");
+  const W6 = mundoNovo("BQ7|0", "jornada", "soldado", DA_PLANTA);
   let { E: E6 } = turno(W6, W6.estado);
   const Q6 = garantirQuestsDaEspinha(E6.espinha.quests);
   const comRv = Q6.registos.map((r) => (r.id === "o_salvo_conduto" ? { ...r, reviravoltas: [{ id: "o_guarda_vendido", dia: 1 }] } : r));

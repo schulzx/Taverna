@@ -24,7 +24,7 @@ import {
   COMPOSICAO_DA_MAO, PASSO_DO_ATO, QUANDO_DO_ATO, JANELAS_DO_CORACAO, ESQUELETO,
   esqueletoDaCampanha, garantirEsqueleto, comOEsqueleto, questsDoAto,
 } from "../src/esqueleto.js";
-import { BIBLIOTECA_DE_QUESTS, MAOS_DO_VILAO, QUANDO_DA_QUEST, PAPEIS_DA_QUEST, LIMITES_DA_QUEST, validarQuest, abrirQuest, questPorId } from "../src/biblioteca-de-quests.js";
+import { BIBLIOTECA_DE_QUESTS, MAOS_DO_VILAO, QUANDO_DA_QUEST, PAPEIS_DA_QUEST, LIMITES_DA_QUEST, NATUREZAS_DO_FIO, validarQuest, abrirQuest, questPorId } from "../src/biblioteca-de-quests.js";
 import { FRAQUEZAS, COMO_SE_TEM_A_FRAQUEZA, fichaDoVilao, temAFraqueza, PLANOS_DO_ARQUETIPO, PLANO_DE_RECUO } from "../src/plano-do-vilao.js";
 import { ESTRUTURAS, estruturaPorId } from "../src/historia.js";
 import { gerarGeografia } from "../src/geografia.js";
@@ -178,6 +178,12 @@ function catalogoCheio(k) {
       q.quando = [...m.quando]; q.afim = i % 2 ? ["jornada", "misterio"] : ["arquipelago", "reinado"];
       q.mao = { ...q.mao, tipo: m.mao, contra: [...m.contra] };
       if (q.mao.tambem) delete q.mao.tambem;
+      /* lote 3 (08/11): o servo passou a ter natureza (gente, por omissão;
+         NATUREZAS_DO_FIO), e um mundo cujos servos são todos bichos já não
+         dá o Salvo-Conduto nem as Cinzas. As cópias medem a ESCOLHA (a mão,
+         o passo, o «quando»), não a natureza — que tem a régua dela no §2 —,
+         por isso aceitam as duas */
+      for (const p of Object.values(q.papeis)) if (p.de === "fio" && p.papel !== "vilao") p.aceita = Object.keys(NATUREZAS_DO_FIO);
       out.push(congelar(q));
     }
     const c = clonar(questPorId("a_carta_que_nao_se_abre"));
@@ -191,7 +197,14 @@ function catalogoCheio(k) {
    triplo do tempo */
 const CHEIO3 = catalogoCheio(3);
 /* quantas pessoas do núcleo podem carregar uma história do coração */
-const doCoracao = (w, k) => w.nucleo.pessoas.filter((x) => ESQUELETO.grupo.includes(x.papel) || (x.papel === "porta" && k.vilao.ponte && k.vilao.ponte.com === "porta")).length;
+/* lote 3 (08/11): quem do núcleo partilha o primeiro nome com o vilão ou
+   com um servo dele não carrega uma história do coração (o livro acharia
+   os dois pela mesma pessoa) — e não conta aqui */
+const primeiroDe = (x) => norm(String(x || "").split(",")[0]).split(/\s+/)[0];
+const doCoracao = (w, k) => {
+  const doFio = new Set([w.espinha.fio.antagonista, ...k.vilao.tenentes.map((t) => t.nome)].map(primeiroDe));
+  return w.nucleo.pessoas.filter((x) => (ESQUELETO.grupo.includes(x.papel) || (x.papel === "porta" && k.vilao.ponte && k.vilao.ponte.com === "porta")) && !doFio.has(primeiroDe(x.nome))).length;
+};
 
 /* ============================================================ */
 sec("1. as tabelas");
@@ -251,6 +264,100 @@ const VIVOS = [], CHEIOS = [], DE_HOJE = [];
   console.log(`      · a fraqueza entregue por uma quest da biblioteca: ${pct(fraquezaPorQuest, N)}% (o resto cai no ato da pista, no marco antigo); pelo papel de fraqueza da ficha: ${pct(pelaFicha, N)}%`);
   if (questPorId("o_cimo_da_escada")) t(`o Cimo da Escada abre com os dois papéis de outra família vazios e declarados (${cimoAbre}/${comCimo})`, comCimo > 0 && cimoAbre === comCimo);
   t("com o catálogo vivo, alguma fraqueza já vem de uma quest", fraquezaPorQuest > 0);
+
+  /* O LOTE 3 (08/11): os acertos que o esqueleto apontou no lote 2.
+     1. Um servo que é bicho (o chefe sem vírgula, «Espécie Título» —
+        chefesDoMundo) só ocupa um papel do fio que aceite a fera
+        (NATUREZAS_DO_FIO; por omissão, PAPEIS_DA_QUEST.fio.aceita: gente):
+        a Quimera já não paga o fogo das Cinzas.
+     2. O servo com o título do vilão no nome nunca entra numa quest antes do
+        ato do rosto: o nome dele chega à tela quando o herói o vê, e diria o
+        título do vilão antes da cara.
+     3. Toda quest do catálogo entra em alguma campanha (o Celeiro de Inverno
+        só contestava o passo 4, que a pista ganha sempre, e dava 0 em 1000). */
+  const norm2 = (x) => norm(x);
+  let bichos = 0, bichoEmGente = 0, genteEmFera = 0, comTitulo = 0, tituloAntes = 0;
+  const vezes = {};
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    if (!k) continue;
+    const bicho = new Set(w.chefes.filter((c) => c.especie && !String(c.nome).includes(",") && norm2(c.nome).startsWith(norm2(c.especie))).map((c) => norm2(c.nome)));
+    const tituloDe = (c) => (c.nome.includes(", ") ? c.nome.split(", ").slice(1).join(", ") : c.nome.slice(String(c.especie || "").length).trim());
+    const doVilao = norm2(w.espinha.fio.titulo);
+    const comOTitulo = new Set(w.chefes.filter((c) => c.linha !== "principal" && norm2(tituloDe(c)) === doVilao).map((c) => norm2(c.nome)));
+    const atoDoRosto = k.atos.findIndex((a) => a.maos.includes("rosto"));
+    for (const a of k.atos.filter((x) => x.quest)) {
+      const q = questPorId(a.quest);
+      for (const [nm, p] of Object.entries(a.papeis)) {
+        const d = q.papeis[nm];
+        if (d.de !== "fio" || d.papel === "vilao") continue;
+        if (J(d.aceita) === J(["fera"]) && !bicho.has(norm2(p.nome))) genteEmFera++;
+        if (bicho.has(norm2(p.nome))) { bichos++; if (!(d.aceita || PAPEIS_DA_QUEST.fio.aceita).includes("fera")) bichoEmGente++; }
+        if (comOTitulo.has(norm2(p.nome))) { comTitulo++; if (a.ato < atoDoRosto) tituloAntes++; }
+      }
+    }
+    for (const id of [...k.atos.map((a) => a.quest), ...k.coracao.map((c) => c.quest)].filter(Boolean)) vezes[id] = (vezes[id] || 0) + 1;
+  }
+  t(`um servo que é bicho só ocupa um papel que aceita a fera (${bichos} postos, ${bichoEmGente} em papel de gente; ${genteEmFera} gente em papel só de fera)`, bichos > 0 && bichoEmGente === 0 && genteEmFera === 0 && Object.keys(NATUREZAS_DO_FIO).includes("fera"));
+  t(`o servo com o título do vilão nunca entra antes do ato do rosto (${comTitulo} postos, ${tituloAntes} antes)`, tituloAntes === 0);
+  const nunca = BIBLIOTECA_DE_QUESTS.filter((q) => !vezes[q.id]).map((q) => q.id);
+  t(`toda quest do catálogo entra em alguma das ${N} campanhas (o Celeiro em ${vezes.o_celeiro_de_inverno || 0})`, nunca.length === 0, nunca.join(", "));
+  console.log(`      · quantas vezes cada quest entra, em ${N}: ${BIBLIOTECA_DE_QUESTS.map((q) => `${q.id} ${vezes[q.id] || 0}`).join(" · ")}`);
+  /* os passos que ficam sem quest que os conteste, por número de atos — o
+     alvo da planta é zero; o lote 2 deixava o 4 sem ninguém em todas as
+     espinhas de quatro atos */
+  const semC = {};
+  for (const k of VIVOS) { if (!k) continue; const n = k.atos.length; semC[n] = semC[n] || { campanhas: 0 }; semC[n].campanhas++; for (const p of k.semContestacao) semC[n][p] = (semC[n][p] || 0) + 1; }
+  console.log(`      · passos sem quest que os conteste (atos → { passo: campanhas }): ${J(semC)}`);
+  t("com quatro atos, o passo 4 já é contestado em parte das campanhas (o lote 3: O Último a Sair, 3 e 4)", semC[4] && (semC[4][4] || 0) < semC[4].campanhas);
+
+  /* 4. O PRIMEIRO NOME: o livro e o registo da gente acham alguém também pelo
+     primeiro nome — «Osric» da cidade e «Osric Passo-de-Gato, a Praga Mansa»
+     ficavam com o mesmo id. Nenhum papel de gente partilha o primeiro nome
+     com o vilão, com um servo dele, ou com outra pessoa da mesma quest. */
+  const p1 = (x) => norm(String(x || "").split(",")[0]).split(/\s+/)[0];
+  let colide = 0, primeiraColisao = "";
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    if (!k) continue;
+    const doFio = new Set([w.espinha.fio.antagonista, ...k.vilao.tenentes.map((x) => x.nome)].map(p1));
+    for (const { id, papeis } of [...k.atos.filter((a) => a.quest).map((a) => ({ id: a.quest, papeis: a.papeis })), ...k.coracao.map((c) => ({ id: c.quest, papeis: c.papeis }))]) {
+      const q = questPorId(id);
+      const gente = Object.entries(papeis).filter(([nm]) => ["elenco", "grupo"].includes(q.papeis[nm].de) && !q.papeis[nm].fraqueza).map(([, p]) => p.nome);
+      const vistos = new Set();
+      for (const nome of gente) {
+        const pn = p1(nome);
+        if (doFio.has(pn) || vistos.has(pn)) { colide++; if (!primeiraColisao) primeiraColisao = `${w.semente} ${id}: ${nome}`; }
+        vistos.add(pn);
+      }
+    }
+  }
+  t("nenhum papel de gente partilha o primeiro nome com o vilão, um servo dele, ou outra pessoa da mesma quest", colide === 0, primeiraColisao);
+
+  /* 5. O TIPO DE SÍTIO que a ficha prefere (`tipos`) existe no mundo, e é
+     o que o esqueleto escolhe quando a cidade o tem */
+  const tiposDoMundo = new Set();
+  for (const w of MUNDOS.slice(0, 40)) for (const c of w.mapa.cidades) for (const l of locaisDaCidade(w.semente, c)) tiposDoMundo.add(l.tipo);
+  const pedidos = BIBLIOTECA_DE_QUESTS.flatMap((q) => Object.values(q.papeis).flatMap((p) => p.tipos || []));
+  t(`todo tipo de sítio que uma ficha prefere existe no mundo (${new Set(pedidos).size} pedidos)`, pedidos.length > 0 && pedidos.every((x) => tiposDoMundo.has(x)), pedidos.filter((x) => !tiposDoMundo.has(x)).join(", "));
+  let comTipo = 0, doTipo = 0;
+  for (const [i, w] of MUNDOS.entries()) {
+    const k = VIVOS[i];
+    if (!k) continue;
+    for (const { id, papeis } of [...k.atos.filter((a) => a.quest).map((a) => ({ id: a.quest, papeis: a.papeis })), ...k.coracao.map((c) => ({ id: c.quest, papeis: c.papeis }))]) {
+      const q = questPorId(id);
+      for (const [nm, p] of Object.entries(papeis)) {
+        const d = q.papeis[nm];
+        if (d.de !== "lugar" || !d.tipos || !p.chave) continue;
+        const tipoDaCidade = locaisDaCidade(w.semente, cidadeDe(w, p.cidade)).map((l) => l.tipo);
+        if (!tipoDaCidade.some((x) => d.tipos.includes(x))) continue;
+        comTipo++;
+        if (d.tipos.some((x) => p.chave.endsWith("|" + x))) doTipo++;
+      }
+    }
+  }
+  console.log(`      · o sítio do tipo preferido, quando a cidade o tem: ${doTipo} de ${comTipo}`);
+  t("quando a cidade tem o sítio do tipo que a ficha prefere, o esqueleto escolhe-o em quatro de cada cinco vezes ou mais (o resto: já ocupado por outra quest, ou o vizinho que o evita)", comTipo > 0 && doTipo / comTipo > 0.8, `${doTipo}/${comTipo}`);
 }
 
 sec("3. o catálogo cheio (sintético): o plano desenhado pelas quests");

@@ -710,8 +710,12 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     t("PainelLateral recebe a abertura por prop", /aoGerarCronica = null, alforje = null, abertura = null[^}]*\}\) \{/.test(app));
     /* MOVIDA em 06/11 (AR2): o diário passou a receber também os relógios
        (o prazo diz o que resta, não o total), o «Ver no mapa» e a distância
-       do passo; a abertura continua a chegar */
-    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} />'));
+       do passo; a abertura continua a chegar.
+       MOVIDA em 08/11 (BQ7): o diário passou a receber também as quests da
+       biblioteca e o cartaz da sombra (questsDaBiblioteca, vilaoNoDiario),
+       depois da distância do passo; a abertura continua a chegar, e a
+       asserção lê o mesmo começo da linha e deixa o fim aberto */
+    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} />'));
     t("e quem invoca PainelLateral (dentro de Taverna()) manda o ref", app.includes("aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current}"));
   }
 }

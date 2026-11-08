@@ -125,10 +125,13 @@ t("e o `onKeyDown` chama `gestoDoCampo`",
    uma linha em branco antes de partir. Só mudou o nome de quem parte. */
 /* V6: o Enter de mandar passa pelo dado (`lancarODado`), que é quem parte pelo
    `partirOTurno` — ou espera, na resposta do Mestre e no teste. O que a régua
-   protege não mudou: mandar não escreve uma linha em branco antes de partir. */
+   protege não mudou: mandar não escreve uma linha em branco antes de partir.
+   AJUSTADA em 08/11 (BQ7): o dado pergunta primeiro se a frase é uma carta da
+   encruzilhada (aEscolhaDaFrase), e esse bloco empurrou o partirOTurno para lá
+   dos 700 caracteres. A régua é a mesma; só a janela cresceu. */
 t("mandar impede o `Enter` nativo de escrever a linha em branco",
   /gestoDoCampo\(e\) !== "mandar"\) return; e\.preventDefault\(\); lancarODado\(\); \}/.test(APP)
-  && /const lancarODado = \(\) => \{[\s\S]{0,700}?partirOTurno\(entrada\);/.test(APP));
+  && /const lancarODado = \(\) => \{[\s\S]{0,1800}?partirOTurno\(entrada\);/.test(APP));
 t("e quem parte devolve o campo ao repouso ANTES de mandar — e o `agir` fica de fora do try",
   /const partirOTurno = \(texto\) => \{[\s\S]{0,600}?calou\([^)]*\); \}\n    agir\(texto\);/.test(APP)
   || (/const partirOTurno/.test(APP) && /\} catch \(e\) \{ calou\("devolver o campo ao repouso quando o turno parte", e\); \}\s*\n\s*agir\(texto\);/.test(APP)),

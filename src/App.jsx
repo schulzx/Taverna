@@ -285,6 +285,11 @@ import { FaixaRelogios } from "./painel-relogios.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
 import { PainelCodex } from "./painel-codex.jsx";
 import { PainelDiario } from "./painel-diario.jsx";
+/* BQ7 (08/11): as quests da biblioteca, o vilão e a encruzilhada — só nos mundos novos */
+import { Encruzilhada, momentoDaEscolha } from "./painel-encruzilhada.jsx";
+import { esqueletoDaCampanha, comOEsqueleto, questsDoAto } from "./esqueleto.js";
+import { oTurnoDasQuests, missoesDasQuests, escolhasDasQuests, escolherNaQuestDoEstado, oVilaoDasQuests, verAsReviravoltas, aEscolhaDaFrase, garantirQuestsDaEspinha } from "./motor/quests-do-turno.js";
+import { estadoDaQuest, questPorId, MISSAO_DA_QUEST } from "./biblioteca-de-quests.js";
 import { PainelDiplomacia } from "./painel-diplomacia.jsx";
 import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco, pesarProposta, custoDoPresente, presentear, envelopeDaResposta, envelopeDoPresente, golpeDaGuerra, apetitePorId, medoPorId } from "./diplomacia.js";
 import { PainelMapa } from "./painel-mapa.jsx";
@@ -2337,7 +2342,7 @@ function mantimentosDeUso(personagem, masmorra) {
 /* quantas vezes, e de quanto em quanto, o «abrir na Bolsa» da prateleira
    procura a secção «Mantimentos» da carta enquanto ela monta */
 const PROCURA_DOS_MANTIMENTOS = Object.freeze({ tentativas: 8, passoMs: 60 });
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null, bolsaPedida = null, relogios = [], aoVerNoMapa = null, distanciaDoPasso = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null, bolsaPedida = null, relogios = [], aoVerNoMapa = null, distanciaDoPasso = null, bq = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2823,7 +2828,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
         {/* AR2 · no telefone o Diário mora na gaveta (lá ela já tem a largura do
             ecrã); na mesa abre por cima de tudo, como a carta do herói — ver
             «O DIÁRIO EM TELA INTEIRA» no fim deste painel. */}
-        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} />}
+        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} />}
         {/* R13: `📜 Gerar crônica` desceu do cabeçalho para aqui. A crónica
             MORA no Diário — é ele escrito por extenso —, e o botão no topo da
             tela principal era a mesma ação com duas caras. Fica no pé do
@@ -3597,7 +3602,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
               <div style={{ paddingBottom: DIARIO_DE_MISSOES.mesa.folga }}>
                 <LimiteDasFichas key="diario-na-mesa" reserva={<button onClick={fecharDiario} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
-                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} aoFechar={fecharDiario} />
+                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} aoFechar={fecharDiario} />
                 </LimiteDasFichas>
                 {gerar && (
                   <div style={{ paddingLeft: DIARIO_DE_MISSOES.mesa.folga, paddingRight: DIARIO_DE_MISSOES.mesa.folga }}>
@@ -7167,6 +7172,121 @@ export default function Taverna() {
     lugar: lugarRef.current, masmorra: masmorraRef.current, combate: combateRef.current, espinha: espinhaRef.current,
   });
   const mundoDoLivro = () => ({ semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico });
+  /* ---------------- BQ7 · AS QUESTS DA BIBLIOTECA NO JOGO (08/11) ----------------
+     O motor (motor/quests-do-turno.js) faz as quests e o vilão andarem sobre o
+     ESTADO; aqui só se monta o estado com os refs do instante (o retrato do
+     livro, mais o arco e o que o vilão sabe), se grava o que a peça devolve e
+     se passam os efeitos aos órgãos que já existem. SÓ NOS MUNDOS NOVOS: sem
+     «espinha.esqueleto» nada disto corre (comEsqueleto), e a campanha que já
+     existe fica como era. Tudo em calou: uma quest que estoura nunca custa o
+     turno. */
+  const [escolhaAberta, setEscolhaAberta] = useState(null);   /* { quest, chave, preEscolhida, frase } — a encruzilhada aberta */
+  const [escolhaAdiada, setEscolhaAdiada] = useState("");     /* «Depois»: a escolha espera e volta no turno seguinte */
+  const [versaoDasQuests, setVersaoDasQuests] = useState(0); // eslint-disable-line no-unused-vars                /* a tela relê as quests quando o motor as muda */
+  const escolhasCacheRef = useRef(null);
+  const comEsqueleto = () => !!(espinhaRef.current && espinhaRef.current.esqueleto);
+  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current });
+  /* os efeitos que só a tela aplica: cada um pelo órgão que já existe; o que
+     não tem órgão no App cala-se (nunca se inventa a regra dele aqui) */
+  const aplicarEfeitoDaQuest = (ef) => {
+    if (!ef || typeof ef !== "object") return;
+    if (ef.tipo === "remontarPrompt") { aplicarOsEfeitos({ estado: {}, efeitos: [{ tipo: "remontarPrompt" }], paraOCronista: [] }); return; }
+    if (ef.tipo === "vinculo" && ef.alvo && ef.alvo.nome && Number.isInteger(ef.n)) {
+      const p0 = personagemRef.current || personagem;
+      if (p0 && Array.isArray(p0.grupo) && p0.grupo.some((g) => g && g.nome === ef.alvo.nome)) {
+        const np = { ...p0, grupo: aplicarVinculo(p0.grupo, ef.alvo.nome, ef.n) };
+        personagemRef.current = np; setPersonagem(np);
+      }
+      return;
+    }
+    calou("BQ7 · efeito sem órgão no App: " + ef.tipo, ef);
+  };
+  const aplicarAsQuests = (r, onde) => {
+    if (!r || typeof r !== "object") return false;
+    const e = r.estado && typeof r.estado === "object" ? r.estado : {};
+    const notas = Array.isArray(r.notas) ? r.notas : [];
+    const linhas = Array.isArray(r.linhas) ? r.linhas : [];
+    const efeitos = Array.isArray(r.efeitos) ? r.efeitos : [];
+    try { if (e.espinha) espinhaRef.current = e.espinha; } catch (err) { calou("BQ7 · " + onde + " · a espinha", err); }
+    try { if (e.saber) saberRef.current = e.saber; } catch (err) { calou("BQ7 · " + onde + " · o saber", err); }
+    try { if (e.historia) historiaRef.current = e.historia; } catch (err) { calou("BQ7 · " + onde + " · o arco", err); }
+    try { if (e.personagem) { personagemRef.current = e.personagem; setPersonagem(e.personagem); } } catch (err) { calou("BQ7 · " + onde + " · a ficha", err); }
+    try { if (e.npcs) { npcsRef.current = e.npcs; setNpcs(e.npcs); } } catch (err) { calou("BQ7 · " + onde + " · a gente", err); }
+    try { if (notas.length) notaRef.current = notaComOTurno(notaRef.current, notas); } catch (err) { calou("BQ7 · " + onde + " · a nota", err); }
+    try { if (linhas.length) pushMsgs(linhas.map((texto) => ({ autor: "sistema", texto }))); } catch (err) { calou("BQ7 · " + onde + " · o relato", err); }
+    for (const ef of efeitos) { try { aplicarEfeitoDaQuest(ef); } catch (err) { calou("BQ7 · " + onde + " · " + (ef && ef.tipo), err); } }
+    if (Object.keys(e).length || notas.length || linhas.length || efeitos.length) {
+      try { escolhasCacheRef.current = null; setVersaoDasQuests((n) => n + 1); salvar({}); } catch (err) { calou("BQ7 · " + onde + " · gravar", err); }
+    }
+    return true;
+  };
+  /* o fim do turno (depois do Cronista) e a criação do mundo: a peça é a mesma */
+  const correrAsQuests = (onde) => {
+    try {
+      if (!comEsqueleto()) return null;
+      const r = oTurnoDasQuests(estadoDasQuests(), { mundo: mundoDoLivro() });
+      if (r) aplicarAsQuests(r, onde);
+      setEscolhaAdiada("");
+      return r;
+    } catch (e) { calou("BQ7 · as quests (" + onde + ")", e); return null; }
+  };
+  /* as escolhas abertas agora, com o veredito; memorizadas pelo que as muda
+     (o render corre a cada letra do campo). Na sala a dois não há escolha de
+     quest: o clique é de um só, e o protocolo da sala não muda. */
+  const escolhasAgora = () => {
+    try {
+      if (!comEsqueleto() || salaRef.current) return [];
+      const E = estadoDasQuests();
+      const c = escolhasCacheRef.current;
+      if (c && c.espinha === E.espinha && c.factos === E.factos && c.personagem === E.personagem && c.npcs === E.npcs && c.saber === E.saber && c.historia === E.historia && c.dia === E.dia && c.cidade === E.cidadeAtual) return c.lista;
+      const lista = escolhasDasQuests(E, { mundo: mundoDoLivro() }) || [];
+      escolhasCacheRef.current = { espinha: E.espinha, factos: E.factos, personagem: E.personagem, npcs: E.npcs, saber: E.saber, historia: E.historia, dia: E.dia, cidade: E.cidadeAtual, lista };
+      return lista;
+    } catch (e) { calou("BQ7 · as escolhas abertas", e); return []; }
+  };
+  /* O DIÁRIO: cada quest projetada (missoesDasQuests) com a vista dela
+     (estadoDaQuest), e o cartaz da sombra. «comQuem» (quem anda contigo, na
+     do coração) é o papel que a ficha tira do grupo — lido da ficha, não
+     decidido aqui; «fecho.dia» é o dia em que o registo fechou. */
+  const oDiarioDasQuests = () => {
+    try {
+      if (!comEsqueleto()) return null;
+      const E = estadoDasQuests();
+      const mundo = mundoDoLivro();
+      const Q = garantirQuestsDaEspinha(E.espinha.quests);
+      const ctx = { estado: E, mundo, quests: Q.registos };
+      const missoes = missoesDasQuests(E, { mundo }) || [];
+      const quests = [];
+      for (const R of Q.registos) {
+        try {
+          const missao = missoes.find((m) => m && m.id === MISSAO_DA_QUEST.prefixo + R.id);
+          const v = missao ? estadoDaQuest(R.id, R, ctx) : null;
+          if (!v) continue;
+          const F = questPorId(R.id);
+          const papelDoGrupo = F && F.papeis ? Object.keys(F.papeis).find((k) => F.papeis[k] && F.papeis[k].de === "grupo") : null;
+          const quem = papelDoGrupo && R.papeis ? R.papeis[papelDoGrupo] : null;
+          quests.push({ missao, estado: {
+            ...v,
+            ...(v.tipo === 2 && quem && quem.nome ? { comQuem: { nome: quem.nome, id: quem.id || "", papel: papelDoGrupo } } : {}),
+            ...(v.fecho ? { fecho: { ...v.fecho, ...(Number.isInteger(R.fechouEm) ? { dia: R.fechouEm } : {}) } } : {}),
+          } });
+        } catch (e) { calou("BQ7 · uma quest no Diário", e); }
+      }
+      let vilao = null;
+      try { vilao = oVilaoDasQuests(E, { mundo }); } catch (e) { calou("BQ7 · o cartaz da sombra", e); }
+      return { quests, vilao };
+    } catch (e) { calou("BQ7 · o Diário das quests", e); return null; }
+  };
+  /* o Diário abriu: as reviravoltas ficam lidas (o bilhete desce do topo
+     para a linha do tempo na próxima vez — nesta, o render já as leu por ler) */
+  useEffect(() => {
+    if (aba !== "diario") return;
+    try {
+      if (!comEsqueleto()) return;
+      const r = verAsReviravoltas(estadoDasQuests());
+      if (r && r.espinha) { espinhaRef.current = r.espinha; salvar({}); }
+    } catch (e) { calou("BQ7 · a reviravolta lida", e); }
+  }, [aba]); // eslint-disable-line react-hooks/exhaustive-deps
   const anotarNoLivro = (onde, ocorrido, retrato) => {
     try {
       const r = anotarOLivro(retrato || retratoDoLivro(), ocorrido, { mundo: mundoDoLivro() });
@@ -10662,16 +10782,26 @@ export default function Taverna() {
         try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current, aceite: aceiteDesteTurno, fichaDoAtor: pedidoDoAtor ? pedidoDoAtor.ficha : null }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
         const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
-        /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila */
+        /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila.
+           BQ7: nos mundos novos as quests andam nesse intervalo — depois do
+           Cronista (a conversa que ele anotou fecha a etapa NESTE turno) e
+           antes da linha (que grava o estado já com elas). Sem esqueleto, a
+           fila é a de sempre. */
         try {
-          if (turnoDaSessao) {
+          const comQuests = comEsqueleto();
+          if (turnoDaSessao || comQuests) {
             const juntado = turnoDaSessao;
             filaDaSessaoRef.current = filaDaSessaoRef.current
               .then(() => Promise.resolve(doCronista).catch(() => null))
-              .then(() => { try { gravarOTurnoDaSessao(juntado); } catch (e) { calou("a sessão (o turno)", e); } });
+              .then(() => { if (comQuests) correrAsQuests("o fim do turno"); })
+              .then(() => { if (juntado) { try { gravarOTurnoDaSessao(juntado); } catch (e) { calou("a sessão (o turno)", e); } } });
           }
         } catch (e) { calou("a sessão (a fila)", e); }
-      } catch { if (fimDoCronista) fimDoCronista(null); }
+      } catch {
+        if (fimDoCronista) fimDoCronista(null);
+        /* BQ7: o Cronista não correu — as quests andam na mesma */
+        try { if (comEsqueleto()) filaDaSessaoRef.current = filaDaSessaoRef.current.then(() => { correrAsQuests("o fim do turno, sem o Cronista"); }); } catch (e) { calou("BQ7 · as quests sem o Cronista", e); }
+      }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
     } catch (e) {
@@ -11058,6 +11188,19 @@ export default function Taverna() {
           espinhaRef.current = espinhaNaRegiao(mapaRef.current, espinhaRef.current, { semente: sementeMundo(), genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico });
         } catch (e) { calou("a espinha na região", e); }
       }
+      /* BQ7 · O ESQUELETO DO MUNDO NOVO (esqueleto.js): o vilão primeiro, uma
+         quest por ato e as do coração, com os papéis tirados do mundo que
+         acabou de nascer. Só aqui — campanha nova; um capítulo e o load nunca
+         passam por este ponto. Se estourar, a espinha fica a de sempre (e a
+         campanha vive dos marcos antigos). O companheiro de antes ainda não
+         existe neste instante: nasce com a abertura, mais abaixo. */
+      try {
+        const esq = esqueletoDaCampanha({
+          semente: sementeMundo(), mapa: mapaRef.current, espinha: espinhaRef.current, genero: generoMundo(), molde: moldeMundo(),
+          lex: (mundoAtual() || {}).lexico, antecedente: (pers && pers.antecedente) || "", cidadeInicial: cidadeAtualRef.current, nucleo: nucleoAgora(),
+        });
+        if (esq) espinhaRef.current = comOEsqueleto(espinhaRef.current, esq);
+      } catch (e) { calou("BQ7 · o esqueleto do mundo novo", e); }
     }
     jornadaRef.current = null; setJornada(null);
     eventosRef.current = { locais: [], global: null, semGlobalDesde: 0, seq: 1 }; setEventos(eventosRef.current);
@@ -11145,6 +11288,19 @@ export default function Taverna() {
        devolve null, e o caminho de sempre — a trama forçada, porque o
        compasso nasce em respiro — continua de pé: a primeira cena nunca
        fica muda. */
+    /* BQ7: as quests do ato 0 abrem antes do primeiro turno (o Diário já as
+       mostra, e o Narrador recebe o passo desde a abertura). A principal da
+       abertura (o marco antigo) só nasce quando o ato 0 não tem a quest do
+       tipo 1 aberta — a que abrirQuest recusou vive dos marcos, como o ato
+       sem quest. */
+    let questNoAto0 = false;
+    try {
+      if (comEsqueleto()) {
+        correrAsQuests("a criação do mundo");
+        const q0 = questsDoAto(espinhaRef.current.esqueleto, 0).find((q) => q && q.tipo === 1);
+        questNoAto0 = !!q0 && garantirQuestsDaEspinha(espinhaRef.current.quests).registos.some((r) => r.id === q0.id);
+      }
+    } catch (e) { calou("BQ7 · as quests da criação", e); questNoAto0 = false; }
     let ab = null;
     try {
       ab = abrirAbertura({
@@ -11156,8 +11312,10 @@ export default function Taverna() {
       });
     } catch (e) { calou("a abertura", e); ab = null; }
     if (ab) {
-      missoesRef.current = [...(missoesRef.current || []).filter((m) => m.id !== ab.missao.id), ab.missao];
-      setMissoes(missoesRef.current);
+      if (!questNoAto0) {
+        missoesRef.current = [...(missoesRef.current || []).filter((m) => m.id !== ab.missao.id), ab.missao];
+        setMissoes(missoesRef.current);
+      }
       aberturaMundoRef.current = ab.abertura;
       /* O COMPANHEIRO DE ANTES (30/09, companheiro-inicial.js): só campanha
          nova de Uma Vida, grupo vazio, com a abertura de pé — a razão dele
@@ -23840,6 +23998,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       setTimeout(() => { try { setLancado(false); } catch (e) { calou("o dado assenta", e); } }, DADO.lancado);
     } catch (e) { calou("o quarto de volta do dado", e); }
     /* a frase que ia agir vira proposta, e o turno espera o toque */
+    /* BQ7: a frase que é uma das cartas abertas abre a encruzilhada com essa
+       carta escolhida e a frase entre aspas — o botão continua a confirmar.
+       A frase que não é carta fecha a encruzilhada e segue como sempre. */
+    try {
+      const lista = escolhasAgora();
+      if (lista.length && !carregando && !rolagem && !combateRef.current) {
+        const c = aEscolhaDaFrase(entrada, lista);
+        const esc = c ? lista.find((x) => x.quest === c.quest && x.chave === c.chave) : null;
+        if (esc) { abrirAEscolha(esc, { preEscolhida: c.opcao, frase: entrada.trim() }); setEntrada(""); return; }
+      }
+      if (escolhaAberta) setEscolhaAberta(null);
+    } catch (e) { calou("BQ7 · a frase que é uma carta", e); }
     if (proporAFrase(entrada)) return;
     partirOTurno(entrada);
   };
@@ -24495,6 +24665,73 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
        · no telefone, o dado que pousa ocupa a soleira 1 600 ms (a Bandeja deixou
          de ter fila própria; o histórico está na mesa puxada).
      É uma FUNÇÃO que devolve nós, não um componente: nada aqui tem estado. */
+  /* BQ7 · A ENCRUZILHADA (painel-encruzilhada.jsx, formas.md §BQ 2). Fechada,
+     é o momento «escolha» da soleira; aberta, a peça. «Depois» adia-a até ao
+     turno seguinte (e devolve ao campo a frase que a abriu). Confirmar passa
+     pelo motor (escolherNaQuestDoEstado): recusada, nada muda; aceite, o
+     estado, o relato e a nota entram como num fim de turno, e a escolha vai
+     ao Narrador como o ato do herói — com o preço já pago, pelo envelope da
+     compra (o Narrador não cobra de novo). */
+  const chaveDaEscolha = (x) => (x ? String(x.quest) + ":" + String(x.chave) : "");
+  const abrirAEscolha = (esc, extra) => {
+    try {
+      if (!esc) return;
+      const o = extra || {};
+      setEscolhaAberta({ quest: esc.quest, chave: esc.chave, preEscolhida: o.preEscolhida || null, frase: o.frase || "" });
+    } catch (e) { calou("BQ7 · abrir a encruzilhada", e); }
+  };
+  const adiarAEscolha = (esc) => {
+    try {
+      const ab = escolhaAberta;
+      setEscolhaAberta(null);
+      const k = chaveDaEscolha(esc || ab);
+      if (k) setEscolhaAdiada(k);
+      if (ab && ab.frase && !String(entradaRef.current || "").trim()) setEntrada(ab.frase);
+    } catch (e) { calou("BQ7 · a escolha fica para depois", e); }
+  };
+  const confirmarAEscolha = (opcaoId) => {
+    try {
+      const ab = escolhaAberta;
+      if (!ab || !opcaoId) return;
+      const esc = escolhasAgora().find((x) => x.quest === ab.quest && x.chave === ab.chave) || null;
+      const op = esc ? (esc.opcoes || []).find((o) => o && o.id === opcaoId) : null;
+      const r = escolherNaQuestDoEstado(estadoDasQuests(), ab.quest, ab.chave, opcaoId, { mundo: mundoDoLivro() });
+      setEscolhaAberta(null);
+      if (!r) return;
+      aplicarAsQuests(r, "a escolha");
+      const custo = op && Number(op.custo) > 0 ? Math.floor(Number(op.custo)) : 0;
+      if (custo > 0) {
+        try {
+          pushMsgs([{ autor: "sistema", texto: "◉ −" + custo + " moedas" }]);
+          notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + envelopeDaCompra({ fecha: true, itens: [{ nome: (op && op.texto) || "o que escolheu", quantos: 1 }], total: custo });
+        } catch (e) { calou("BQ7 · o preço da escolha", e); }
+      }
+      const frase = String(ab.frase || "").trim() || String((op && op.texto) || "").trim();
+      if (frase && !carregando && !rolagem && !combateRef.current) partirOTurno(frase);
+    } catch (e) { calou("BQ7 · confirmar a escolha", e); }
+  };
+  const encruzilhadaDaQuest = () => {
+    try {
+      const ab = escolhaAberta;
+      if (!ab) return null;
+      const esc = escolhasAgora().find((x) => x.quest === ab.quest && x.chave === ab.chave) || null;
+      if (!esc) return null;
+      let baseDoCampo = 0;
+      try {
+        const pilula = campoRef.current && campoRef.current.closest ? campoRef.current.closest(".tv-pilula-do-campo") : null;
+        if (pilula && typeof window !== "undefined") baseDoCampo = Math.max(0, Math.round(window.innerHeight - pilula.getBoundingClientRect().top));
+      } catch (e) { calou("BQ7 · a base do campo", e); }
+      const p = fichaViva() || {};
+      return (
+        <LimiteDasFichas key="encruzilhada">
+          <Encruzilhada aberta veredito={esc} quest={esc.titulo || ""} titulo="" telefone={!mesaLarga}
+            aoConfirmar={confirmarAEscolha} aoDepois={() => adiarAEscolha(esc)}
+            aoEscrever={() => { try { if (campoRef.current) campoRef.current.focus(); } catch (e) { calou("BQ7 · a carta virada foca o campo", e); } }}
+            preEscolhida={ab.preEscolhida || null} frase={ab.frase || ""} bolsa={Number(p.moedas) || 0} baseDoCampo={baseDoCampo} />
+        </LimiteDasFichas>
+      );
+    } catch (e) { calou("BQ7 · a encruzilhada", e); return null; }
+  };
   const momentoPorCimaDoCampo = () => {
     try {
       const precoDaProposta = () => {
@@ -24561,6 +24798,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             );
           }
         }
+      }
+      /* BQ7: o momento «escolha» (a prioridade é da SoleiraDoMomento: rolagem >
+         dado > escolha > proposta). A proposta da frase que o jogador acabou de
+         escrever não se tapa: a escolha volta no turno seguinte. */
+      if (!propostaDaFrase && !escolhaAberta) {
+        try {
+          const esc = escolhasAgora().find((x) => chaveDaEscolha(x) !== escolhaAdiada) || null;
+          const m = esc ? momentoDaEscolha(esc, { titulo: esc.titulo || "", aoAbrir: () => abrirAEscolha(esc), aoDepois: () => adiarAEscolha(esc) }) : null;
+          if (m && m.qual) momentos[m.qual] = m.momento;
+        } catch (e) { calou("BQ7 · a escolha na soleira", e); }
       }
       try {
         if (!mesaLarga && bandeja[0] && bandeja[0].n !== bandejaVista) {
@@ -25976,6 +26223,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   momento. A Bandeja saiu desta fila: na mesa larga mora na coluna do
                   grupo, no telefone pousa na soleira e fica na mesa puxada. */}
               {!emBatalha ? momentoPorCimaDoCampo() : null}
+              {!emBatalha ? encruzilhadaDaQuest() : null}
               <div className="pt-2">
               {linhaDoCampo || !vereditoDaFicha
                 ? (podeDesistirDoTeste
@@ -26059,7 +26307,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 inicial={telaDoMapa.inicial} aoPartir={partirPeloMapaVivo} aoFechar={() => setTelaDoMapa(null)} />
             </LimiteDoMapa>
           ) : null}
-          <LimiteErro><PainelLateral portaoFechado={portaoFechadoAgora()} subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} bolsaPedida={bolsaPedida} relogios={relogios} aoVerNoMapa={dadosMapaVivo ? (m, e) => { try { return abrirMapaVivo(alvoNoMapa(e, dadosMapaVivo)); } catch (err) { calou("ver no mapa pelo diário", err); return false; } } : null} distanciaDoPasso={(m, e) => { try { return distanciaDoPassoNoMapa(e, { cidadeAtual: cidadeAtualRef.current || "", lugar: lugarRef.current || null, dados: dadosMapaVivo }); } catch (err) { calou("a distância do passo", err); return null; } }} /></LimiteErro>
+          <LimiteErro><PainelLateral portaoFechado={portaoFechadoAgora()} subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} bolsaPedida={bolsaPedida} relogios={relogios} aoVerNoMapa={dadosMapaVivo ? (m, e) => { try { return abrirMapaVivo(alvoNoMapa(e, dadosMapaVivo)); } catch (err) { calou("ver no mapa pelo diário", err); return false; } } : null} distanciaDoPasso={(m, e) => { try { return distanciaDoPassoNoMapa(e, { cidadeAtual: cidadeAtualRef.current || "", lugar: lugarRef.current || null, dados: dadosMapaVivo }); } catch (err) { calou("a distância do passo", err); return null; } }} bq={aba === "diario" ? oDiarioDasQuests() : null} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />

@@ -81,10 +81,14 @@ sec("§1 AS TABELAS");
   /* movida na BQ8 (o acervo, lote 2): eram «quatro arquétipos neste lote»;
      o lote 2 trouxe mais quatro (credor, boticária, almiranta, profeta
      queimado). A intenção fica — todo plano é de um arquétipo de vilao.js —
-     e os quatro do primeiro lote continuam lá, sem mudar */
-  t("oito arquétipos com plano (os quatro da BQ5 e os quatro do lote 2), todos de vilao.js",
-    arqs.length === 8 && arqs.every((a) => ARQUETIPOS.some((x) => x.id === a))
-    && ["vendedor_de_medo", "traido", "faminto", "zeloso", "credor", "boticaria", "almiranta", "profeta_queimado"].every((a) => arqs.includes(a)));
+     e os quatro do primeiro lote continuam lá, sem mudar.
+     Movida outra vez no lote 3 (BQ8): eram oito; o lote 3 trouxe o herdeiro,
+     o cortesão, o colecionador e o domador — doze dos vinte. A intenção é a
+     mesma, e os oito de antes continuam lá */
+  t("doze arquétipos com plano (os quatro da BQ5, os quatro do lote 2 e os quatro do lote 3), todos de vilao.js",
+    arqs.length === 12 && arqs.every((a) => ARQUETIPOS.some((x) => x.id === a))
+    && ["vendedor_de_medo", "traido", "faminto", "zeloso", "credor", "boticaria", "almiranta", "profeta_queimado",
+      "herdeiro", "cortesao", "colecionador", "domador"].every((a) => arqs.includes(a)));
   t(`cada plano tem ${FICHA_DO_VILAO.passos} passos`, arqs.every((a) => PLANOS_DO_ARQUETIPO[a].length === FICHA_DO_VILAO.passos));
   const todos = arqs.flatMap((a) => PLANOS_DO_ARQUETIPO[a].map((p, i) => ({ a, i, p })));
   t("cada passo diz, pressagia, deixa obra e tem desvio", todos.every(({ p }) => p.diz && p.presagio && p.obra && p.seTravado));
@@ -150,11 +154,17 @@ sec("§1 AS TABELAS");
   /* o lote 2 (BQ8) foi escrito para servir o catálogo inteiro: nos quatro
      planos novos, toda quest com a mão dele cabe no passo que contesta (o
      passo 4 aceita a pista e o recurso, o 5 o rosto, o 6 o confronto) */
-  const novos = ["credor", "boticaria", "almiranta", "profeta_queimado"];
+  /* o lote 3 (BQ8) entra na mesma régua: os quatro planos novos foram
+     escritos com a forma dos do lote 2, para servir o catálogo inteiro — o
+     de hoje, com as seis do tipo 1 que o lote 3 trouxe */
+  const novos = ["credor", "boticaria", "almiranta", "profeta_queimado", "herdeiro", "cortesao", "colecionador", "domador"];
   const encaixaJa = (q, plano) => q.mao.contra.every((n) => plano[n - 1] && [q.mao.tipo, ...(q.mao.tambem || [])].some((m) => plano[n - 1].contra.includes(m)));
   const naoCabe = novos.flatMap((a) => BIBLIOTECA_DE_QUESTS.filter((q) => q.mao && !encaixaJa(q, PLANOS_DO_ARQUETIPO[a])).map((q) => a + "/" + q.id));
-  t("nos quatro planos do lote 2, toda quest do catálogo cabe no passo que contesta", naoCabe.length === 0, naoCabe.join(", "));
+  t("nos planos dos lotes 2 e 3, toda quest do catálogo cabe no passo que contesta", naoCabe.length === 0, naoCabe.join(", "));
   t("e o passo 4 de cada plano novo aceita a pista e o recurso", novos.every((a) => ["pista", "recurso"].every((m) => PLANOS_DO_ARQUETIPO[a][3].contra.includes(m))));
+  t("o caçador atrai o Domador (o lote 3 entra na roda pelo passado do herói)", (() => {
+    const c = {}; for (let i = 0; i < 400; i++) { const r = nascerOVilao({ semente: "dom" + i, antecedente: "cacador" }); c[r.arquetipo] = (c[r.arquetipo] || 0) + 1; }
+    return Object.entries(c).sort((x, y) => y[1] - x[1])[0][0] === "domador"; })());
   t("as mãos são as da ficha da quest, e o plano usa-as todas", Object.keys(MAOS_DO_VILAO).every((m) => todos.some(({ p }) => p.contra.includes(m))));
   const comMao = BIBLIOTECA_DE_QUESTS.filter((q) => q.mao);
   t("o catálogo tem quests com a mão dele", comMao.length >= 2);

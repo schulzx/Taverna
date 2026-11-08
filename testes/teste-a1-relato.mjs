@@ -193,8 +193,12 @@ t("a foto guarda a ficha do envio, o índice da resposta e se o turno começou n
   /fichaNoEnvio: fichaViva\(\) \|\| persAtual \|\| personagem,/.test(enviar) && /inicio: mensagensRef\.current\.length,/.test(enviar) && /lutaNoEnvio: !!\(combateRef\.current \|\| fechoDaLutaRef\.current\),/.test(enviar));
 t("um recibo ainda à espera fecha no envio seguinte (nunca conta duas vezes)",
   /if \(reciboPendenteRef\.current\) fecharORecibo\(reciboPendenteRef\.current\.id,/.test(enviar));
+/* MOVIDA em 08/11 (BQ7): o «catch» do Cronista deixou de ser uma linha só —
+   além de fechar o recibo, põe as quests dos mundos novos a andar na fila
+   (o Cronista caído não as cala). A intenção é a mesma: o recibo fecha
+   com null quando o Cronista cai; a asserção aceita o que vem depois. */
 t("o recibo espera o Cronista, e o Cronista calado ou caído não o impede",
-  /Promise\.resolve\(doCronista\)\.then\(fimDoCronista, \(\) => fimDoCronista\(null\)\)/.test(enviar) && /catch \{ if \(fimDoCronista\) fimDoCronista\(null\); \}/.test(enviar));
+  /Promise\.resolve\(doCronista\)\.then\(fimDoCronista, \(\) => fimDoCronista\(null\)\)/.test(enviar) && /catch \{\s*if \(fimDoCronista\) fimDoCronista\(null\);/.test(enviar));
 t("no fim do turno a luta que fechou pára de carimbar e o fim dela segue com o recibo",
   /turnoDoReciboRef\.current = null;[\s\S]*?fechoDaLutaRef\.current = null;[\s\S]*?reciboPendenteRef\.current = \{ \.\.\.reciboPendenteRef\.current, fecho: f \};[\s\S]*?else encerrarOFechoDaLuta\(f, fichaViva\(\)\);/.test(enviar));
 t("e isso vem DEPOIS de o portão soltar o que retinha (que sai carimbado)",

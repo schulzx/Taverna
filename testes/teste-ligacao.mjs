@@ -334,8 +334,10 @@ sec("1. NENHUM MÓDULO MUDO");
        junção à espinha (comOEsqueleto) e o que abre em cada ato
        (questsDoAto) — e espera a BQ7, a fiação no App.jsx só em mundos novos.
        Credor: o `frontend`, na MESMA fase. A entrada sai quando o App o
-       importar. `teste-esqueleto.mjs` é o primeiro leitor. */
-    "esqueleto.js": "08/11 · BQ6 → BQ7 (App.jsx, mundos novos)",
+       importar. `teste-esqueleto.mjs` é o primeiro leitor.
+       — 08/11 (BQ7, a mesma fase): o App importa-o (esqueletoDaCampanha e
+       comOEsqueleto na criação do mundo, questsDoAto na abertura), e a
+       entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

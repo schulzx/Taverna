@@ -61,7 +61,7 @@
    entra por argumento e nunca é mutado; o `null` e o lixo dão `null`.
    ============================================================ */
 import { dadoDo } from "./semente.js";
-import { BIBLIOTECA_DE_QUESTS, validarQuest, PAPEIS_DA_QUEST, QUANDO_DA_QUEST, MAOS_DO_VILAO, LIMITES_DA_QUEST } from "./biblioteca-de-quests.js";
+import { BIBLIOTECA_DE_QUESTS, validarQuest, PAPEIS_DA_QUEST, QUANDO_DA_QUEST, MAOS_DO_VILAO, LIMITES_DA_QUEST, NATUREZAS_DO_FIO } from "./biblioteca-de-quests.js";
 import { nascerOVilao, garantirRegistroDoVilao, PLANOS_DO_ARQUETIPO, PLANO_DE_RECUO, FRAQUEZAS } from "./plano-do-vilao.js";
 import { chefesDoMundo, locaisDaCidade, genteDoLocal, idDoLocal } from "./mundo-base.js";
 import { kmEntre } from "./coordenadas.js";
@@ -141,7 +141,13 @@ export const JANELAS_DO_CORACAO = Object.freeze({
    possível) só entra quando a ponte do vilão é a ferida com teia a ela
    (`w_filha`): aí ela passa à frente de todos. `querido`: quem do núcleo
    ocupa um papel que `exige` «querido_do_heroi» (o refém do confronto),
-   por esta ordem. `nome`/`texto`: o que se guarda. */
+   por esta ordem. `nome`/`texto`: o que se guarda.
+   `cobre` (lote 3, 08/11): o peso a mais de uma quest do tipo 1 que, além do
+   passo do ato, contesta um passo que nenhum ato contesta (o 4 com quatro
+   atos, o 2 com quatro ou cinco). Sem ele, o passo 4 das espinhas de quatro
+   atos ficava por contestar em mais de metade das campanhas, porque a única
+   quest que o cobre (O Último a Sair, 3 e 4) sorteava em pé de igualdade
+   com as Cinzas, que só cobrem o 3. Pesa; não tranca. */
 export const ESQUELETO = Object.freeze({
   v: 1,
   coracao: 2,
@@ -152,6 +158,7 @@ export const ESQUELETO = Object.freeze({
   querido: Object.freeze(["porta", "voz", "elo"]),
   nome: 60,
   texto: 120,
+  cobre: 3,
 });
 
 /* ---------------- utilidades ---------------- */
@@ -201,6 +208,34 @@ function ordenarPorPeso(rnd, lista, peso) {
   return lista.map((x) => ({ x, k: Math.pow(rnd() || 1e-9, 1 / Math.max(1e-9, peso(x))) }))
     .sort((a, b) => b.k - a.k).map((e) => e.x);
 }
+
+/* O QUE O MUNDO DIZ DE UM CHEFE (lote 3, 08/11). Um chefe gente chama-se
+   «Nome, o Título»; um bicho chama-se «Espécie Título», sem vírgula
+   (chefesDoMundo, mundo-base.js — a mesma régua do título do fio, saga.js).
+   `naturezaDe` diz qual das NATUREZAS_DO_FIO ele é; o que não traz espécie
+   (um nome solto) é gente, como sempre foi. `tituloDe` é o que vem depois
+   do nome — o que o servo partilha com o vilão quando o gerador repete. */
+const naturezaDe = (c) => {
+  const o = obj(c);
+  const nat = o && typeof o.especie === "string" && o.especie && !String(o.nome || "").includes(",") && norm(o.nome).startsWith(norm(o.especie)) ? "fera" : "gente";
+  return NATUREZAS_DO_FIO[nat] ? nat : "gente";
+};
+const tituloDe = (c) => {
+  const o = obj(c);
+  const nome = texto(o && o.nome, 120);
+  if (nome.includes(", ")) return nome.split(", ").slice(1).join(", ");
+  return o && typeof o.especie === "string" && o.especie && norm(nome).startsWith(norm(o.especie)) ? nome.slice(o.especie.length).trim() : "";
+};
+
+/* O PRIMEIRO NOME (lote 3, 08/11). O livro de factos e o registo da gente
+   acham uma pessoa também pelo primeiro nome, e o esqueleto só comparava o
+   nome inteiro: num mundo de prova, «Osric» (gente da cidade) foi quem pede
+   por um devedor, e «Osric Passo-de-Gato, a Praga Mansa» o feitor que o
+   prende — abrirQuest deu aos dois o mesmo id; noutro, o irmão de «Vionna»
+   era «Vionna Lâmina-Rápida». Por isso um papel de gente não aceita quem
+   partilhe o primeiro nome com o vilão, com um servo dele, ou com outra
+   pessoa da mesma quest. */
+const primeiroNome = (nome) => norm(String(nome || "").split(",")[0]).split(/\s+/)[0] || "";
 
 /* os nomes que nunca ocupam um papel de gente: o vilão (inteiro e curto) */
 function nomesDoVilao(fio) {
@@ -286,9 +321,12 @@ function preencher(q, ato, S, extra) {
   const cAto = W.cidadeDoAto[ato] || W.cidades[0];
   const tipo2 = q.tipo === 2;
   const ex = obj(extra) || {};
+  const primeirosAqui = () => new Set([...pessoasAqui].map(primeiroNome));
   const ocupada = (nome) => {
     const k = norm(nome);
-    return !k || pessoasAqui.has(k) || S.pessoas.has(k) || S.proibidos.has(k) || (!tipo2 && S.nucleo.has(k));
+    const p1 = primeiroNome(nome);
+    return !k || pessoasAqui.has(k) || S.pessoas.has(k) || S.proibidos.has(k) || (!tipo2 && S.nucleo.has(k))
+      || S.primeirosProibidos.has(p1) || primeirosAqui().has(p1);
   };
 
   /* o que a quest pede de uma anterior (`pede`: «tipo:papel») */
@@ -331,7 +369,14 @@ function preencher(q, ato, S, extra) {
     }
     const todos = W.locaisDe(c).filter((l) => !lugaresAqui.has(norm(`${c.nome}|${l.nome}`)) && l.nome !== evitar);
     const livres = todos.filter((l) => !S.lugares.has(norm(`${c.nome}|${l.nome}`)));
-    const l = pickDe(livres.length ? livres : todos);
+    /* O TIPO DE SÍTIO (lote 3, 08/11): `tipos` é a preferência da ficha (a
+       capela de um velório num templo ou num cemitério, a toca de uma besta
+       num cemitério ou nas docas). Prefere, não tranca: uma aldeia só tem
+       taverna e mercado, e a quest nasce na mesma. Livre e do tipo, livre,
+       do tipo, qualquer — por esta ordem */
+    const pref = arr(p.tipos).filter((x) => typeof x === "string");
+    const doTipo = (ls) => ls.filter((x) => pref.includes(x.tipo));
+    const l = pickDe([doTipo(livres), livres, doTipo(todos), todos].find((ls) => ls.length) || []);
     return l ? { c, l } : null;
   };
 
@@ -348,8 +393,16 @@ function preencher(q, ato, S, extra) {
     return null;
   };
 
-  const umTenente = () => {
-    const ts = S.vilao.tenentes.filter((t) => !tenentesAqui.includes(t.papel));
+  /* o servo certo para o papel: da natureza que o papel aceita (gente, por
+     omissão — PAPEIS_DA_QUEST.fio.aceita), e nunca, antes do ato do rosto,
+     um que traga o título do vilão no nome (o nome do servo chega à tela
+     quando o herói o vê, e diria o título dele antes da cara) */
+  const umTenente = (p) => {
+    const aceita = arr(p && p.aceita).length ? p.aceita : PAPEIS_DA_QUEST.fio.aceita;
+    const antesDoRosto = S.atoDoRosto >= 0 && ato < S.atoDoRosto;
+    const ts = S.vilao.tenentes.filter((t) => !tenentesAqui.includes(t.papel)
+      && aceita.includes(S.natureza.get(norm(t.nome)) || "gente")
+      && !(antesDoRosto && S.mesmoTitulo.has(norm(t.nome))));
     if (!ts.length) return null;
     const passo = S.forma.passo[ato];
     const serve = ts.filter((t) => t.passo === passo && !S.tenenteDoPasso.has(t.papel));
@@ -403,7 +456,8 @@ function preencher(q, ato, S, extra) {
              ato da ponte (a forma mais forte, §5), depois a gente da cidade
              desse ato, e só então as outras cidades da janela */
           const partilha = arr(ex.partilhaveis)
-            .filter((g) => !pessoasAqui.has(norm(g.nome)) && !S.proibidos.has(norm(g.nome)) && !S.coracaoUsado.has(norm(g.nome)));
+            .filter((g) => !pessoasAqui.has(norm(g.nome)) && !S.proibidos.has(norm(g.nome)) && !S.coracaoUsado.has(norm(g.nome))
+              && !S.primeirosProibidos.has(primeiroNome(g.nome)) && !primeirosAqui().has(primeiroNome(g.nome)));
           pessoa = pickDe(partilha);
           if (!pessoa) {
             const cs = [ex.cidadePonte, ...arr(ex.cidadesJanela)].filter(Boolean);
@@ -413,7 +467,8 @@ function preencher(q, ato, S, extra) {
           /* «querido do herói»: alguém do núcleo que ele conhece por dentro —
              a porta, a voz, o elo (o companheiro anda com ele, não é refém) —
              e só sem nenhum, a gente da cidade */
-          const doNucleo = ESQUELETO.querido.map((pp) => S.nucleoPessoas.find((g) => g.papel === pp && !pessoasAqui.has(norm(g.nome)) && !S.proibidos.has(norm(g.nome)))).filter(Boolean);
+          const doNucleo = ESQUELETO.querido.map((pp) => S.nucleoPessoas.find((g) => g.papel === pp && !pessoasAqui.has(norm(g.nome)) && !S.proibidos.has(norm(g.nome))
+            && !S.primeirosProibidos.has(primeiroNome(g.nome)) && !primeirosAqui().has(primeiroNome(g.nome)))).filter(Boolean);
           pessoa = doNucleo[0] ? { nome: doNucleo[0].nome, cidade: doNucleo[0].cidade || cAto.nome } : alguem([cAto, ...W.perto(cAto).slice(0, ESQUELETO.vizinhas)], null);
         } else {
           const sitio = typeof p.do === "string" && localDe[p.do] ? { c: cidadeDe[p.do], l: W.locaisDe(cidadeDe[p.do]).find((l) => l.nome === localDe[p.do]) } : null;
@@ -425,7 +480,7 @@ function preencher(q, ato, S, extra) {
         if (p.papel === "vilao") {
           if (S.nomeDoVilao) r = { nome: S.nomeDoVilao };
         } else {
-          const t = umTenente();
+          const t = umTenente(p);
           if (t) { r = { nome: t.nome }; tenentesAqui.push(t.papel); }
         }
         if (r) cidadeDe[nome] = cAto;
@@ -433,7 +488,8 @@ function preencher(q, ato, S, extra) {
         const ordem = [...new Set([ex.pontePor, "companheiro", ...arr(typeof p.ou === "string" ? [p.ou] : p.ou), ...ESQUELETO.grupo].filter(Boolean))];
         let quem = null;
         for (const papel of ordem) {
-          quem = S.nucleoPessoas.find((g) => g.papel === papel && !S.coracaoUsado.has(norm(g.nome)) && !pessoasAqui.has(norm(g.nome)));
+          quem = S.nucleoPessoas.find((g) => g.papel === papel && !S.coracaoUsado.has(norm(g.nome)) && !pessoasAqui.has(norm(g.nome))
+            && !S.primeirosProibidos.has(primeiroNome(g.nome)) && !primeirosAqui().has(primeiroNome(g.nome)));
           if (quem) break;
         }
         if (quem) { r = { nome: quem.nome, ...(quem.cidade ? { cidade: quem.cidade } : {}) }; cidadeDe[nome] = W.porNome.get(norm(quem.cidade)) || cAto; pessoasAqui.add(norm(quem.nome)); }
@@ -508,16 +564,22 @@ export function esqueletoDaCampanha(entrada) {
     .filter((p) => obj(p) && texto(p.nome, ESQUELETO.nome) && typeof p.papel === "string")
     .map((p) => ({ nome: texto(p.nome, ESQUELETO.nome), papel: p.papel, cidade: texto(p.cidade, ESQUELETO.nome) }));
   const rnd = dadoDo(W.semente, "esqueleto", espinha.estrutura || "", vilao.arquetipo);
+  /* a natureza de cada chefe, e os servos com o título do vilão */
+  const tituloDoVilao = norm(texto(fio.titulo, ESQUELETO.nome) || tituloDe({ nome: fio.antagonista }));
+  const natureza = new Map(chefes.filter(obj).map((c) => [norm(c.nome), naturezaDe(c)]));
+  const mesmoTitulo = new Set(chefes.filter((c) => obj(c) && c.linha !== "principal" && tituloDoVilao && norm(tituloDe(c)) === tituloDoVilao).map((c) => norm(c.nome)));
   const fr = vilao.fraqueza ? FRAQUEZAS[vilao.fraqueza.familia].find((e) => e.id === vilao.fraqueza.id) || null : null;
 
   const S = {
-    W, rnd, forma, vilao,
+    W, rnd, forma, vilao, natureza, mesmoTitulo,
+    atoDoRosto: forma.comp.findIndex((c) => arr(c).includes("rosto")),
     /* o nome próprio, antes da vírgula — a régua de `nomeDoFio` (BQ5), para
        que o papel `vilao` de uma quest e o da ficha dele deem o mesmo id */
     nomeDoVilao: nomesDoVilao(fio).pop() || "",
     pessoas: new Set(),                       // quem já tem papel (elenco)
     lugares: new Set(),
     proibidos: new Set([...nomesDoVilao(fio), ...vilao.tenentes.map((t) => t.nome)].map(norm)),
+    primeirosProibidos: new Set([...nomesDoVilao(fio), ...vilao.tenentes.map((t) => t.nome)].map(primeiroNome).filter(Boolean)),
     nucleo: new Set(nucleoPessoas.map((p) => norm(p.nome))),
     nucleoPessoas,
     coracaoUsado: new Set(),
@@ -532,6 +594,8 @@ export function esqueletoDaCampanha(entrada) {
     fraquezaPosta: null,
   };
   const peso = (q) => (arr(q.afim).includes(espinha.estrutura) ? ESQUELETO.afim : ESQUELETO.base);
+  const passosDosAtos = new Set(forma.passo.filter(Boolean));
+  const pesoDoAto = (q) => peso(q) * (arr(q.mao && q.mao.contra).some((p) => !passosDosAtos.has(p)) ? ESQUELETO.cobre : 1);
   const aceitar = (q, f, ato) => {
     if (f.entrega && !S.fraquezaPosta) {
       const r = f.papeis[f.entrega];
@@ -563,7 +627,7 @@ export function esqueletoDaCampanha(entrada) {
     let papel = null;
     if (S.familia === "pessoa") {
       for (const cc of [c, ...W.perto(c).slice(0, ESQUELETO.vizinhas)]) {
-        const g = W.genteDe(cc).filter((x) => { const k = norm(x.nome); return !S.pessoas.has(k) && !S.proibidos.has(k) && !S.nucleo.has(k); });
+        const g = W.genteDe(cc).filter((x) => { const k = norm(x.nome); return !S.pessoas.has(k) && !S.proibidos.has(k) && !S.nucleo.has(k) && !S.primeirosProibidos.has(primeiroNome(x.nome)); });
         if (g.length) { const p = g[Math.floor(rnd() * g.length)]; papel = { tipo: "pessoa", nome: p.nome, cidade: p.cidade }; S.pessoas.add(norm(p.nome)); break; }
       }
     } else if (S.familia === "verdade") {
@@ -593,7 +657,7 @@ export function esqueletoDaCampanha(entrada) {
         const cand = tipo1.filter((q) => !usadas.has(q.id) && maosDe(q).includes(mao)
           && arr(q.mao.contra).includes(passo) && arr(q.quando).includes(posicao)
           && (q.enredo === undefined || q.enredo !== familiaAnterior));
-        for (const q of ordenarPorPeso(rnd, cand, peso)) {
+        for (const q of ordenarPorPeso(rnd, cand, pesoDoAto)) {
           const f = preencher(q, i, S);
           if (f) { escolhida = { q, f, mao }; break; }
         }

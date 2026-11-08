@@ -27,11 +27,13 @@
    §9 o acervo, lote 2 (BQ8) — as seis quests novas por cada ramo, e a
       cobertura contada da ficha: todo ramo, opção, reviravolta, falha e
       desfecho alcançado por um guião; o pior do tipo 2 só pela escolha que
-      o veredito avisa. */
+      o veredito avisa;
+   §10 o acervo, lote 3 (BQ8) — as oito quests novas pela mesma régua, e o
+      género de quem ocupa o papel pelo marcador. */
 import {
   BIBLIOTECA_DE_QUESTS, TIPOS_DE_QUEST, QUANDO_DA_QUEST, ESTADOS_DA_QUEST, PAPEIS_DA_QUEST, MAOS_DO_VILAO,
   LIMITES_DA_QUEST, EFEITOS_DA_QUEST, EFEITOS_DA_REVIRAVOLTA, ATOS_DO_HEROI,
-  questPorId, validarQuest, abrirQuest, avancarQuest, escolherNaQuest, vereditoDaEscolha, estadoDaQuest,
+  questPorId, validarQuest, abrirQuest, avancarQuest, escolherNaQuest, vereditoDaEscolha, estadoDaQuest, NATUREZAS_DO_FIO,
 } from "../src/biblioteca-de-quests.js";
 import { CONDICOES, avaliarCondicao, julgarEtapa } from "../src/condicoes-da-quest.js";
 import { garantirFactos } from "../src/livro-de-factos.js";
@@ -121,22 +123,49 @@ sec("§1 a ficha e as tabelas");
      lotes de seis, e a intenção — as três da planta à cabeça, pela ordem, e
      cada lote inteiro e sem repetidos — fica */
   const ids = BIBLIOTECA_DE_QUESTS.map((q) => q.id);
-  t("o catálogo tem as três quests da planta à cabeça, e o lote 2 do acervo a seguir",
+  /* movida no lote 3 (BQ8): o lote 2 era o fim do catálogo (slice(3));
+     agora vem o lote 3 a seguir, e cada lote confere-se no seu troço */
+  t("o catálogo tem as três quests da planta à cabeça, o lote 2 do acervo a seguir, e o lote 3 depois",
     J(ids.slice(0, 3)) === J(["o_salvo_conduto", "as_cinzas_de_ontem", "a_carta_que_nao_se_abre"])
-    && J(ids.slice(3)) === J(["a_mao_que_mudou_de_lado", "o_celeiro_de_inverno", "o_convite_sem_selo", "o_cimo_da_escada", "os_dias_que_faltam", "a_lamina_enterrada"])
+    && J(ids.slice(3, 9)) === J(["a_mao_que_mudou_de_lado", "o_celeiro_de_inverno", "o_convite_sem_selo", "o_cimo_da_escada", "os_dias_que_faltam", "a_lamina_enterrada"])
+    && J(ids.slice(9)) === J(["o_que_desce_ao_anoitecer", "as_botas_na_estrada", "os_bracos_que_faltam", "o_ultimo_a_sair", "o_velorio_pago", "a_hora_marcada", "o_sangue_do_outro_lado", "as_cartas_de_outra_casa"])
     && new Set(ids).size === ids.length);
   const invalidas = BIBLIOTECA_DE_QUESTS.map((q) => [q.id, validarQuest(q)]).filter(([, v]) => !v.ok);
   t("cada quest passa a validação inteira", invalidas.length === 0, J(invalidas));
   /* movida na BQ8: eram «dois do tipo 1 e um do tipo 2» (as três da
      planta); o lote 2 traz quatro do tipo 1 e dois do tipo 2 */
-  t("as da planta: dois do tipo 1 e um do tipo 2; o lote 2: quatro e dois; os tipos são os da tabela",
-    J(BIBLIOTECA_DE_QUESTS.slice(0, 3).map((q) => q.tipo)) === J([1, 1, 2]) && J(BIBLIOTECA_DE_QUESTS.slice(3).map((q) => q.tipo)) === J([1, 1, 1, 1, 2, 2]) && BIBLIOTECA_DE_QUESTS.every((q) => TIPOS_DE_QUEST[q.tipo]));
+  t("as da planta: dois do tipo 1 e um do tipo 2; o lote 2: quatro e dois; o lote 3: seis e dois; os tipos são os da tabela",
+    J(BIBLIOTECA_DE_QUESTS.slice(0, 3).map((q) => q.tipo)) === J([1, 1, 2]) && J(BIBLIOTECA_DE_QUESTS.slice(3, 9).map((q) => q.tipo)) === J([1, 1, 1, 1, 2, 2])
+    && J(BIBLIOTECA_DE_QUESTS.slice(9).map((q) => q.tipo)) === J([1, 1, 1, 1, 1, 1, 2, 2]) && BIBLIOTECA_DE_QUESTS.every((q) => TIPOS_DE_QUEST[q.tipo]));
   /* o lote 2 contesta os passos que as três da planta não contestavam, com
      as mãos que faltavam ao esqueleto: a pista, o recurso, o rosto e o
      confronto, e o «quando» de cedo a fim */
-  const lote2 = BIBLIOTECA_DE_QUESTS.slice(3).filter((q) => q.tipo === 1);
-  t("o lote 2 contesta os passos 4, 5 e 6, com a pista, o recurso, o rosto e o confronto",
-    J([...new Set(lote2.flatMap((q) => q.mao.contra))].sort()) === J([4, 5, 6]) && J(lote2.map((q) => q.mao.tipo).sort()) === J(["confronto", "pista", "recurso", "rosto"]));
+  /* movida no lote 3 (BQ8): o lote 2 contestava só o 4, o 5 e o 6. O
+     Celeiro de Inverno passou a contestar também o 2 — só com o 4, a pista
+     ganhava-lhe sempre, e o esqueleto mediu-o em 0 de 1000 campanhas. As
+     mãos do lote 2 continuam as quatro que faltavam ao esqueleto */
+  const lote2 = BIBLIOTECA_DE_QUESTS.slice(3, 9).filter((q) => q.tipo === 1);
+  t("o lote 2 contesta os passos 4, 5 e 6 (e o Celeiro também o 2), com a pista, o recurso, o rosto e o confronto",
+    J([...new Set(lote2.flatMap((q) => q.mao.contra))].sort()) === J([2, 4, 5, 6]) && J(lote2.map((q) => q.mao.tipo).sort()) === J(["confronto", "pista", "recurso", "rosto"]));
+  /* o lote 3 foi escrito para o que o esqueleto mediu: o 1 e o 2 com mais de
+     uma quest, o 3 e o 4 por uma quest do meio, um segundo rosto e um
+     segundo confronto */
+  const lote3 = BIBLIOTECA_DE_QUESTS.slice(9).filter((q) => q.tipo === 1);
+  t("o lote 3: duas ou mais contestam o passo 2, uma do meio contesta o 3 e o 4, e há um segundo rosto e um segundo confronto",
+    lote3.filter((q) => q.mao.contra.includes(2)).length >= 2
+    && lote3.some((q) => q.quando.includes("meio") && [3, 4].every((p) => q.mao.contra.includes(p)))
+    && lote3.some((q) => q.mao.tipo === "rosto") && lote3.some((q) => q.mao.tipo === "confronto"));
+  t("e o «quando» do lote 3 vai de cedo a fim", ["cedo", "meio", "fim"].every((w) => lote3.some((q) => q.quando.includes(w))));
+  /* um servo do fio diz o que aceita (NATUREZAS_DO_FIO); por omissão, gente */
+  const papeisDoFio = BIBLIOTECA_DE_QUESTS.flatMap((q) => Object.values(q.papeis).filter((p) => p.de === "fio" && p.papel !== "vilao"));
+  t("o que um servo aceita é das NATUREZAS_DO_FIO, e só gente quando a ficha não diz",
+    J(PAPEIS_DA_QUEST.fio.aceita) === J(["gente"]) && papeisDoFio.every((p) => (p.aceita || PAPEIS_DA_QUEST.fio.aceita).every((x) => NATUREZAS_DO_FIO[x]))
+    && papeisDoFio.some((p) => J(p.aceita) === J(["fera"])));
+  /* os papéis de coisa que não são da fraqueza têm nome (o esqueleto lê `nome` ou `nomes`) */
+  const coisas = BIBLIOTECA_DE_QUESTS.flatMap((q) => Object.entries(q.papeis).filter(([, p]) => p.de === "item" && !p.fraqueza).map(([k, p]) => [q.id, k, p]));
+  t("todo papel de coisa fora da fraqueza tem nome, para não chegar à tela com o nome do papel",
+    coisas.length >= 3 && coisas.every(([, , p]) => (typeof p.nome === "string" && p.nome.trim()) || (Array.isArray(p.nomes) && p.nomes.length && p.nomes.every((x) => typeof x === "string" && x.trim()))),
+    coisas.filter(([, , p]) => !p.nome && !p.nomes).map(([q, k]) => q + "." + k).join(", "));
   t("e o «quando» do lote 2 vai de cedo a fim", ["cedo", "meio", "fim"].every((w) => lote2.some((q) => q.quando.includes(w))));
   t("o rosto tem a opção «aceitar» e o confronto «cumprir», «poupar» e «selar» (o que DESFECHOS_DO_VILAO lê)",
     (() => { const op = (q) => Object.values(q.escolhas).flatMap((e) => Object.keys(e.opcoes)); const r = lote2.find((q) => q.mao.tipo === "rosto"), c = lote2.find((q) => q.mao.tipo === "confronto");
@@ -197,6 +226,8 @@ sec("§1 a ficha e as tabelas");
   recusa("o predicado reservado (entregou): recusado", sc, (c) => { c.etapas[3].conclui = ["entregou", "item:carta", "papel:protegido"]; }, "reservado");
   recusa("o papel não declarado na condição: recusado", sc, (c) => { c.etapas[0].conclui = ["conversou", "papel:rei"]; }, "não está declarado");
   recusa("ramos que não batem com o «algum»: recusados", sc, (c) => { c.etapas[2].ramos = ["violenta", "social"]; }, "ramos");
+  recusa("o «aceita» fora das naturezas: recusado", sc, (c) => { c.papeis.tenente.aceita = ["dragao"]; }, "aceita");
+  recusa("o «aceita» num papel que não é servo do fio: recusado", sc, (c) => { c.papeis.guarda.aceita = ["fera"]; }, "aceita");
   t("a ficha nula ou de lixo não valida e não lança", [null, undefined, 3, "x", [], {}].every((x) => validarQuest(x).ok === false));
 }
 
@@ -803,6 +834,268 @@ for (const id of LOTE2) {
   t("nomear o vilão à mesa não é falar com ele", !jv.R.feitas.mesa);
   const g = () => { turno = 3000; return J(lamina(55, "absolver", "luta", [(e) => consulta(falar(ir(e, ERMIDA), "Anselmo"), "Anselmo")]).R); };
   t("determinístico: o mesmo guião do lote 2 dá o mesmo registo", g() === g());
+}
+
+sec("§10 o acervo, lote 3 (BQ8) — cada quest por cada ramo, e a cobertura contada");
+/* As oito quests do lote 3, pelas mesmas portas e pela mesma régua do
+   lote 2: um guião por caminho, e a cobertura contada da ficha (todo ramo,
+   toda opção, toda reviravolta, toda falha, o abandono e todo desfecho). */
+const NOVOS3 = {
+  Benta: N("Benta"), Vasco: N("Vasco"), "Lobo Cinzento": N("Lobo Cinzento"),
+  Graça: N("Graça"), Duarte: N("Duarte"), Fausto: N("Fausto"),
+  Elias: N("Elias"), Rosa: N("Rosa"), Morais: N("Morais"),
+  Inês: N("Inês"), Abel: N("Abel"), Nuno: N("Nuno"),
+  Celeste: N("Celeste"), Tomás: N("Tomás"),
+  Clarice: N("Clarice", FOZ), Gonçalo: N("Gonçalo", FOZ),
+};
+const mundo3 = (membros = []) => ({ ...mundo2(membros), npcs: { ...NPCS, ...NOVOS, ...NOVOS3 } });
+const CURRAL = { nome: "Curral da Ladeira", cidade: CIDADE }, TOCA = { nome: "Lapa do Monte", cidade: CIDADE };
+const ESTRADA = { nome: "Estrada Velha", cidade: CIDADE }, PEDREIRA = { nome: "Pedreira do Corvo", cidade: CIDADE };
+const FORJA = { nome: "Forja Velha", cidade: CIDADE }, MOINHO = { nome: "Moinho de Baixo", cidade: CIDADE }, MOEDA = { nome: "Casa da Moeda", cidade: CIDADE };
+const CAPELA = { nome: "Capela de São Brás", cidade: CIDADE }, LARGO = { nome: "Largo do Relógio", cidade: CIDADE };
+const FERRADOR = { nome: "Casa do Ferrador", cidade: FOZ }, SOLAR = { nome: "Solar dos Sá", cidade: FOZ }, PORTELA = { nome: "Portela", cidade: FOZ };
+Object.assign(PAPEIS2, {
+  o_que_desce_ao_anoitecer: { curral: CURRAL, toca: TOCA, fera: { nome: "Lobo Cinzento" }, pastora: { nome: "Benta" }, tratador: { nome: "Vasco" } },
+  as_botas_na_estrada: { estrada: ESTRADA, mae: { nome: "Graça" }, rapaz: { nome: "Duarte" }, chefe: { nome: "Fausto" } },
+  os_bracos_que_faltam: { pedreira: PEDREIRA, devedor: { nome: "Elias" }, pedinte: { nome: "Rosa" }, feitor: { nome: "Morais" } },
+  o_ultimo_a_sair: { ruina: FORJA, esconderijo: MOINHO, alvo: MOEDA, sobrevivente: { nome: "Inês" }, guardiao: { nome: "Abel" }, pagina: { nome: "o recibo meio queimado" }, limpador: { nome: "Nuno" } },
+  o_velorio_pago: { vilao: { nome: "Quelvar" }, enlutada: { nome: "Celeste" }, capela: CAPELA },
+  a_hora_marcada: { vilao: { nome: "Quelvar" }, palco: LARGO, guardiao: { nome: "Sancha" }, executor: { nome: "Tomás" } },
+  o_sangue_do_outro_lado: { quem: { nome: "Iago" }, irmao: { nome: "Rufino" }, casa: FERRADOR },
+  as_cartas_de_outra_casa: { quem: { nome: "Iago" }, amado: { nome: "Clarice" }, prometido: { nome: "Gonçalo" }, casa: SOLAR, passagem: PORTELA },
+});
+const LOTE3 = ["o_que_desce_ao_anoitecer", "as_botas_na_estrada", "os_bracos_que_faltam", "o_ultimo_a_sair", "o_velorio_pago", "a_hora_marcada", "o_sangue_do_outro_lado", "as_cartas_de_outra_casa"];
+const g3 = (id, nome, passos, o = {}) => guiao(id, nome, passos, { e0: mundo3(), ...o });
+const confia = (nome, forca = 2) => (e) => ficha(e, nome, { laco: { forca } });
+
+/* ---- O Que Desce ao Anoitecer ---- */
+const DES = "o_que_desce_ao_anoitecer";
+const ateToca = [(e) => ir(e, CURRAL), (e) => falar(e, "Benta"), (e) => ir(e, TOCA)];
+const n1 = g3(DES, "lâmina poupando · à aldeia", [...ateToca, (e) => lutar(e, { nome: "Lobo Cinzento", rendido: true }), ["escolher", "destino", "aldeia"]]);
+t("o Que Desce: o curral, o rasto, a besta rendida, entregue à aldeia — concluída", n1.R.estado === "concluida" && n1.R.feitas.fera.variante === "poupou" && n1.R.feitas.destino.ramo === "aldeia", J(n1.R.feitas));
+const n2 = g3(DES, "as portas · o assobio · a coleira", [(e) => segredo(ir(e, CURRAL), CURRAL), (e) => falar(e, "Benta"), (e) => ir(e, TOCA), (e) => consulta(falar(e, "Vasco"), "Vasco"), ["escolher", "destino", "coleira"]]);
+t("o Que Desce: as portas que não pagaram, o assobio arrancado ao tratador, a besta de coleira na praça", n2.R.reviravoltas.some((r) => r.id === "as_portas_que_nao_pagaram") && n2.R.feitas.fera.ramo === "assobio" && n2.R.feitas.destino.ramo === "coleira" && n2.R.estado === "concluida", J(n2.R));
+t("e a coleira faz recuar o relógio dele (a prova de quem a soltava)", n2.R.consequencias.some((c) => c.de === "escolha:destino:coleira" && c.efeitos.some((x) => x.tipo === "relogio_do_fio" && x.n === -1)));
+const n3 = g3(DES, "as crias · o monte", [(e) => ir(e, CURRAL), (e) => falar(e, "Benta"), (e) => falar(ir(e, TOCA), "Vasco"), (e) => consulta(e, "Vasco"), ["escolher", "destino", "monte"]]);
+t("o Que Desce: as crias na toca, e a besta solta no alto do monte", n3.R.reviravoltas.some((r) => r.id === "as_crias") && n3.R.feitas.destino.ramo === "monte", J(n3.R.reviravoltas));
+const n4 = g3(DES, "matar fecha ali", [...ateToca, (e) => lutar(e, { nome: "Lobo Cinzento" })]);
+t("o Que Desce: matar a besta fecha a quest ali, e a coleira arde com ela", n4.R.estado === "concluida" && n4.R.feitas.fera.variante === "matou" && !n4.R.feitas.destino && /coleira arde/.test(n4.R.fecho.texto));
+const n5 = g3(DES, "a falha", [(e) => ir(e, CURRAL), (e) => morre(e, "Benta")], { falha: 0 });
+t("o Que Desce: a pastora morta à porta — falhada", n5.R.motivo === "falha" && /forquilha/.test(n5.R.fecho.texto));
+const n6 = g3(DES, "o abandono", [(e) => dias(e, 5)]);
+t("o Que Desce: cinco dias — a aldeia paga a proteção", n6.R.motivo === "abandono");
+
+/* ---- As Botas na Estrada ---- */
+const BOT = "as_botas_na_estrada";
+const ateDuarte = [(e) => falar(e, "Graça"), (e) => falar(ir(e, ESTRADA), "Duarte")];
+const b1 = g3(BOT, "a forca · lâmina poupando", [...ateDuarte, ["escolher", "rapaz", "forca"], (e) => lutar(e, { nome: "Fausto", rendido: true })]);
+t("as Botas: a mãe, a espera na estrada, a forca, quem paga o vinho poupado — concluída", b1.R.estado === "concluida" && b1.R.feitas.sentenca.ramo === "forca" && b1.R.feitas.chefe.variante === "poupou", J(b1.R.feitas));
+t("e a forca rompe o laço com a mãe (o veredito avisava)", b1.R.consequencias.some((c) => c.de === "escolha:rapaz:forca" && c.efeitos.some((x) => x.tipo === "rompe_laco" && x.papel === "mae")) && b1.vereditos.some((v) => /primeira fila/.test(v.opcoes.find((o) => o.id === "forca").custa)));
+const b2 = g3(BOT, "o nome · lâmina matando", [...ateDuarte, ["escolher", "rapaz", "nome"], (e) => lutar(e, { nome: "Fausto" })]);
+t("as Botas: o rapaz solto por um nome, e quem paga o vinho morto", b2.R.feitas.sentenca.ramo === "nome" && b2.R.feitas.chefe.variante === "matou" && b2.R.estado === "concluida");
+const b3 = g3(BOT, "comprar · palavra", [...ateDuarte, ["escolher", "rapaz", "comprar"], confia("Fausto")]);
+t("as Botas: a dívida paga, e quem pagava o vinho muda de estrada pela palavra", b3.R.feitas.sentenca.ramo === "comprar" && b3.R.feitas.chefe.ramo === "palavra" && b3.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "moedas" && x.n === -60)));
+const b4 = g3(BOT, "o almocreve", [...ateDuarte, (e) => consulta(e, "Duarte")]);
+t("as Botas: perguntar ao rapaz mostra quem abriu a garganta ao almocreve", b4.R.reviravoltas.some((r) => r.id === "o_almocreve"));
+const b5 = g3(BOT, "quem levou o rapaz", [...ateDuarte, (e) => consulta(e, "Graça")]);
+t("as Botas: perguntar à mãe mostra quem levou o rapaz à estrada", b5.R.reviravoltas.some((r) => r.id === "quem_levou_o_rapaz"));
+const b6 = g3(BOT, "a falha", [(e) => falar(e, "Graça"), (e) => morre(e, "Duarte")], { falha: 0 });
+t("as Botas: o rapaz na valeta antes da sentença — falhada", b6.R.motivo === "falha" && /moeda na boca/.test(b6.R.fecho.texto));
+const b7 = g3(BOT, "o abandono", [(e) => dias(e, 6)]);
+t("as Botas: seis dias — o rapaz deixa de voltar a casa", b7.R.motivo === "abandono");
+
+/* ---- Os Braços Que Faltam ---- */
+const BRA = "os_bracos_que_faltam";
+const ateElias = [(e) => falar(e, "Rosa"), (e) => falar(ir(e, PEDREIRA), "Elias")];
+const c31 = g3(BRA, "lâmina poupando · abrir", [...ateElias, (e) => lutar(e, { nome: "Morais", rendido: true }), ["escolher", "pedreira", "abrir"]]);
+t("os Braços: o pedido, a pedreira, o feitor poupado, as correntes de todos — concluída", c31.R.estado === "concluida" && c31.R.feitas.corrente.variante === "poupou" && c31.R.feitas.porta.ramo === "abrir", J(c31.R.feitas));
+const c32 = g3(BRA, "compra · a lei", [...ateElias, ["escolher", "divida", "comprar"], ["escolher", "pedreira", "lei"]]);
+t("os Braços: a dívida comprada, e as contas levadas à guarda", c32.R.feitas.corrente.ramo === "compra" && c32.R.feitas.porta.ramo === "lei" && c32.R.estado === "concluida");
+const c33 = g3(BRA, "fuga · sair", [...ateElias, (e) => em(juntar(e, { nome: "Elias", vinculo: 30 }), PRACA), ["escolher", "pedreira", "sair"]]);
+t("os Braços: a fuga pela encosta, e sair só com quem se veio buscar", c33.R.feitas.corrente.ramo === "fuga" && c33.R.feitas.porta.ramo === "sair" && c33.R.estado === "concluida");
+const c34 = g3(BRA, "a mesma letra · um não sai sozinho · matar", [...ateElias, (e) => segredo(e, PEDREIRA), (e) => consulta(e, "Elias")]);
+const c34v = c34.ver();
+t("os Braços: as dívidas fabricadas, e quem não sai sozinho — a compra espera", c34.R.reviravoltas.some((r) => r.id === "a_mesma_letra") && c34.R.reviravoltas.some((r) => r.id === "um_nao_sai_sozinho") && c34v.etapa === "corrente" && c34v.escolhas.length === 0, J(c34v));
+c34.turno((e) => lutar(e, { nome: "Morais" })).escolher("pedreira", "abrir");
+t("e com quem conta os braços caído, as correntes caem", c34.R.feitas.corrente.variante === "matou" && c34.R.estado === "concluida");
+const c35 = g3(BRA, "a falha", [(e) => falar(e, "Rosa"), (e) => morre(e, "Elias")], { falha: 0 });
+t("os Braços: o devedor morto de corrente ao pé — falhada, e a dívida passa a quem pedia", c35.R.motivo === "falha" && /corrente ao pé/.test(c35.R.fecho.texto));
+const c36 = g3(BRA, "o abandono", [(e) => dias(e, 6)]);
+t("os Braços: seis dias — vendido para outra obra, e cativo", c36.R.motivo === "abandono" && c36.R.consequencias.some((c) => c.efeitos.some((x) => x.situacao === "cativa")));
+
+/* ---- O Último a Sair ---- */
+const ULT = "o_ultimo_a_sair";
+const ateAbel = [(e) => segredo(ir(e, FORJA), FORJA), (e) => falar(e, "Abel")];
+const u1 = g3(ULT, "achou · a praça", [...ateAbel, (e) => falar(ir(e, MOINHO), "Inês"), ["escolher", "voz", "praca"]]);
+t("o Último: a ruína, o rasto, quem saiu com vida achada, e a praça — concluída", u1.R.estado === "concluida" && u1.R.feitas.sobrevivente.ramo === "achou" && u1.R.feitas.voz.ramo === "praca", J(u1.R.feitas));
+const u2 = g3(ULT, "lâmina poupando · longe", [...ateAbel, (e) => lutar(e, { nome: "Nuno", rendido: true }), ["escolher", "voz", "longe"]]);
+t("o Último: quem acaba o serviço vencido e poupado, e a testemunha levada para longe", u2.R.feitas.sobrevivente.variante === "poupou" && u2.R.feitas.voz.ramo === "longe" && u2.R.estado === "concluida");
+const u3 = g3(ULT, "o barulho · guardar", [...ateAbel, (e) => falar(ir(e, MOINHO), "Inês"), (e) => consulta(e, "Inês"), (e) => segredo(ir(e, MOEDA), MOEDA), ["escolher", "voz", "guardar"]]);
+t("o Último: o desastre era o barulho — abre-se o que levaram do outro lado da rua", u3.R.reviravoltas.some((r) => r.id === "o_barulho") && !!u3.R.feitas.alvo && u3.R.feitas.voz.ramo === "guardar" && u3.R.estado === "concluida", J(u3.R));
+const u4 = g3(ULT, "a marca na porta", [(e) => segredo(ir(e, FORJA), FORJA), (e) => levar(e, "O recibo meio queimado"), (e) => falar(ir(e, MOINHO), "Inês")]);
+t("o Último: quem não pergunta a quem esconde encontra a marca na porta, e a testemunha espera por quem a caça", u4.R.reviravoltas.some((r) => r.id === "a_marca_na_porta") && !u4.R.feitas.sobrevivente, J(u4.R));
+u4.turno((e) => falar(e, "Nuno")).escolher("voz", "praca");
+t("até olhar quem acaba o serviço nos olhos: aí chega à testemunha", !!u4.R.feitas.sobrevivente && u4.R.estado === "concluida");
+const u5 = g3(ULT, "a falha", [(e) => segredo(ir(e, FORJA), FORJA), (e) => morre(e, "Inês")], { falha: 0 });
+t("o Último: a testemunha morta antes da voz — falhada", u5.R.motivo === "falha" && /espera visita/.test(u5.R.fecho.texto));
+const u6 = g3(ULT, "o abandono", [(e) => dias(e, 5)]);
+t("o Último: cinco dias — a testemunha some", u6.R.motivo === "abandono");
+
+/* ---- O Velório Pago ---- */
+const VEL = "o_velorio_pago";
+const velar = [(e) => falar(ir(e, CAPELA), "Celeste"), (e) => falar(e, "Quelvar")];
+const enterrar = (e) => falar(em(e, PRACA), "Celeste");
+const w1 = g3(VEL, "aceitar", [...velar, ["escolher", "rosto", "aceitar"], enterrar]);
+t("o Velório: velar, o vilão junto ao caixão, aceitar, o enterro — concluída", w1.R.estado === "concluida" && w1.R.feitas.oferta.ramo === "aceitar");
+t("aceitar faz dele um aliado na ficha (o pacto que o confronto lê)", w1.R.consequencias.some((c) => c.de === "escolha:rosto:aceitar" && c.efeitos.some((x) => x.tipo === "aliado" && x.papel === "vilao")));
+const w2 = g3(VEL, "recusar", [...velar, ["escolher", "rosto", "recusar"], enterrar]);
+t("o Velório: recusar — concluída, e o relógio dele anda", w2.R.estado === "concluida" && w2.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "relogio_do_fio" && x.n === 1)));
+const w3 = g3(VEL, "acusar · o luto quebrado", [...velar, ["escolher", "rosto", "acusar"], enterrar]);
+t("o Velório: acusar quebra o luto — o enterro espera a confiança de quem chora", w3.R.reviravoltas.some((r) => r.id === "o_luto_quebrado") && !w3.R.feitas.enterro && w3.R.estado === "aberta");
+w3.turno(confia("Celeste"));
+t("e com ela reconquistada, o morto vai à terra", w3.R.estado === "concluida");
+const w4 = g3(VEL, "o caixão leve", [(e) => falar(ir(e, CAPELA), "Celeste"), (e) => consulta(consulta(e, "Celeste"), "Celeste")]);
+t("o Velório: perguntar duas vezes a quem vela mostra o caixão vazio", w4.R.reviravoltas.some((r) => r.id === "o_caixao_leve") && /quem paga o enterro/.test(w4.ver().faltaTexto.join(" ")) && !/Quelvar/.test(w4.ver().faltaTexto.join(" ")), J(w4.ver().faltaTexto));
+const w5 = g3(VEL, "a mão levantada", [...velar, (e) => lutar(e, { nome: "Celeste" })], { falha: 0 });
+t("o Velório: levantar a mão a quem vela — falhada", w5.R.motivo === "falha" && /caixão/.test(w5.R.fecho.texto));
+const w6 = g3(VEL, "quem vela morre", [(e) => falar(ir(e, CAPELA), "Celeste"), (e) => morre(e, "Celeste")], { falha: 1 });
+t("o Velório: quem velava morta antes da oferta — falhada", w6.R.motivo === "falha" && /vela apagada/.test(w6.R.fecho.texto));
+const w7 = g3(VEL, "o abandono", [(e) => dias(e, 3)]);
+t("o Velório: três dias — o enterro faz-se sem o herói", w7.R.motivo === "abandono");
+
+/* ---- A Hora Marcada ---- */
+const HOR = "a_hora_marcada";
+const noLargo = (e) => ir(e, LARGO);
+const h1 = g3(HOR, "luta poupando · palavra · luta poupando · poupar", [noLargo, (e) => lutar(e, { nome: "Sancha", rendido: true }), confia("Tomás"), (e) => lutar(e, { nome: "Quelvar", rendido: true }), ["escolher", "sentenca", "poupar"]]);
+t("a Hora: a porta, a mão tirada pela palavra, o vilão de joelhos, poupar — concluída", h1.R.estado === "concluida" && h1.R.feitas.porta.variante === "poupou" && h1.R.feitas.executor.ramo === "palavra" && h1.R.feitas.frente.variante === "poupou" && h1.R.feitas.sentenca.ramo === "poupar", J(h1.R.feitas));
+const h2 = g3(HOR, "a porta de dentro · matar", [noLargo, confia("Tomás"), (e) => lutar(e, { nome: "Quelvar" })]);
+t("a Hora: quem tem a mão abre a porta lateral, e o vilão morto fecha ali, sem sentença", h2.R.feitas.porta.ramo === "dentro" && h2.R.feitas.frente.variante === "matou" && h2.R.estado === "concluida" && !h2.R.feitas.sentenca, J(h2.R));
+const h3 = g3(HOR, "a força · a prova (uma pessoa) · acabar", [(e) => juntar(noLargo(e), { nome: "Teodora", vinculo: 30 }), (e) => lutar(e, { nome: "Sancha" }), (e) => lutar(e, { nome: "Tomás", rendido: true }), ["escolher", "prova", "expor"], ["escolher", "sentenca", "acabar"]], { papeis: { fraqueza_quem: { nome: "Teodora" } } });
+t("a Hora: a fraqueza ao lado abre a prova; a mão tirada à força; expor derruba sem luta; acabar", h3.R.reviravoltas.some((r) => r.id === "a_prova_na_mao") && h3.R.feitas.executor.variante === "poupou" && h3.R.feitas.frente.ramo === "prova" && h3.R.feitas.frente.variante === "pessoa" && h3.R.feitas.sentenca.ramo === "acabar", J(h3.R.feitas));
+const h4 = g3(HOR, "a coisa guardada · matar quem tinha a mão · selar", [(e) => levar(noLargo(e), "O apito de osso"), (e) => lutar(e, { nome: "Sancha" }), (e) => lutar(e, { nome: "Tomás" }), ["escolher", "prova", "guardar"], (e) => lutar(e, { nome: "Quelvar", rendido: true }), ["escolher", "sentenca", "selar"]], { papeis: { fraqueza_coisa: { nome: "o apito de osso" } } });
+t("a Hora: matar quem foi obrigado custa à região; guardar a prova obriga à luta; selar na cave", h4.R.feitas.executor.variante === "matou" && h4.R.feitas.prova.ramo === "guardar" && h4.R.feitas.frente.ramo === "luta" && h4.R.feitas.sentenca.ramo === "selar", J(h4.R.feitas));
+const h5 = g3(HOR, "a verdade · expor", [(e) => segredo(noLargo(e), ALFANDEGA), (e) => lutar(e, { nome: "Sancha" }), confia("Tomás"), ["escolher", "prova", "expor"], ["escolher", "sentenca", "poupar"]], { papeis: { fraqueza_verdade: ALFANDEGA } });
+t("a Hora: a verdade descoberta também abre a prova", h5.R.feitas.frente.ramo === "prova" && h5.R.feitas.frente.variante === null && h5.R.estado === "concluida", J(h5.R.feitas));
+const pacto3 = ficha(mundo3(), "Quelvar", { relacao: "aliado" });
+const h6 = g3(HOR, "o pacto cumprido", [noLargo, ["escolher", "pacto", "cumprir"]], { e0: pacto3 });
+t("a Hora: quem é aliado dele encontra um lugar posto, e cumprir a palavra fecha a quest (o pacto)", h6.R.reviravoltas.some((r) => r.id === "a_divida_cobrada") && h6.R.feitas.divida.ramo === "cumprir" && h6.R.estado === "concluida");
+const h7 = g3(HOR, "o pacto rasgado", [noLargo, ["escolher", "pacto", "romper"], (e) => lutar(e, { nome: "Sancha" }), confia("Tomás"), (e) => lutar(e, { nome: "Quelvar" })], { e0: pacto3 });
+t("a Hora: rasgar o pacto fere quem tem a mão, e a hora continua até ao fim", h7.R.feitas.divida.ramo === "romper" && h7.R.consequencias.some((c) => c.efeitos.some((x) => x.situacao === "ferida" && x.papel === "executor")) && h7.R.estado === "concluida");
+const h8 = g3(HOR, "a cave", [noLargo, (e) => consulta(falar(e, "Tomás"), "Tomás"), confia("Tomás")]);
+t("a Hora: perguntar a quem tem a mão mostra a cave — a palavra não chega enquanto a chave não mudar de dono", h8.R.reviravoltas.some((r) => r.id === "a_cave") && h8.R.feitas.porta && !h8.R.feitas.executor, J(h8.R.feitas));
+h8.turno((e) => lutar(e, { nome: "Sancha" }));
+t("e com o guarda da chave caído, a mão sai", !!h8.R.feitas.executor);
+const h9 = g3(HOR, "quem tinha a mão morre", [noLargo, (e) => morre(e, "Tomás")], { falha: 0 });
+t("a Hora: quem tinha a mão morto por outra — falhada, a hora cumpre-se", h9.R.motivo === "falha" && /outra mão/.test(h9.R.fecho.texto));
+const h10 = g3(HOR, "outra mão primeiro", [noLargo, confia("Tomás"), (e) => morre(e, "Quelvar")], { falha: 1 });
+t("a Hora: o vilão morto por outra mão — falhada", h10.R.motivo === "falha" && /Outra mão/.test(h10.R.fecho.texto));
+const h11 = g3(HOR, "o abandono", [(e) => dias(e, 8)]);
+t("a Hora: oito dias — a hora chega sem o herói", h11.R.motivo === "abandono");
+
+/* ---- O Sangue do Outro Lado ---- */
+const SAN = "o_sangue_do_outro_lado";
+const sangue = (vinculo, s1, s2, { antes = [], depois = [], baixa = null } = {}) => g3(SAN, `${s1} · ${s2} · ${vinculo}${baixa ? "→" + baixa : ""}`, [
+  (e) => dias(e, 2), (e) => falar(falar(e, "Iago"), "Iago"), ["escolher", "sangue", s1], ...(baixa ? [(e) => grupo(e, IAGO(baixa))] : []), ...antes,
+  (e) => falar(ir(e, FERRADOR), "Rufino"), ...depois, ["escolher", "segredo", s2], (e) => falar(e, "Rufino")], { e0: mundo3([IAGO(vinculo)]) });
+const s31 = sangue(80, "esperanca", "trocar", { depois: [confia("Rufino")] });
+t("o Sangue: esperança, a fita cortada, e os dois dizem tudo — o sangue volta (o melhor)", s31.R.desfecho === "o_sangue_volta" && s31.ver().ordem === 1 && s31.R.reviravoltas.some((r) => r.id === "a_fita_cortada"), J(s31.R));
+const s32 = sangue(55, "verdade", "contar");
+t("o Sangue: contar com confiança — a verdade inteira", s32.R.desfecho === "a_verdade_inteira");
+const s33 = sangue(80, "verdade", "contar", { baixa: 30, depois: [(e) => consulta(e, "Rufino")] });
+t("o Sangue: quem perguntou ao irmão sabe porque a porta se abriu — a verdade inteira, mesmo sem confiança", s33.R.reviravoltas.some((r) => r.id === "a_noite_da_porta") && s33.R.desfecho === "a_verdade_inteira", J(s33.R));
+const s34 = sangue(80, "verdade", "contar", { baixa: 30 });
+t("o Sangue: contar metade a quem não confia — sangue contra sangue (o pior)", s34.R.desfecho === "sangue_contra_sangue" && s34.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "morte" && x.papel === "quem")));
+t("e o veredito de contar avisava, antes do clique, que metade da verdade mata", s34.vereditos.some((v) => v.chave === "segredo" && /aprendeu a matar/.test(v.opcoes.find((o) => o.id === "contar").custa)));
+const s35 = sangue(55, "esperanca", "trocar");
+t("o Sangue: pedir-lhe que o diga, sem confiança inteira — a meia verdade", s35.R.desfecho === "a_meia_verdade");
+const s36 = sangue(55, "verdade", "calar");
+t("o Sangue: calar em troca do que ele sabe — a mentira que salva", s36.R.desfecho === "a_mentira_que_salva" && s36.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "relogio_do_fio" && x.n === -1)));
+const s37 = g3(SAN, "o sangue calado (abandono)", [(e) => dias(e, 2), (e) => dias(e, 15)], { e0: mundo3([IAGO(55)]) });
+t("o Sangue: a história ignorada acaba no padrão", s37.R.desfecho === "o_sangue_calado" && s37.R.motivo === "abandono");
+const s38 = g3(SAN, "sem irmão", [(e) => dias(e, 2), (e) => morre(e, "Rufino")], { e0: mundo3([IAGO(55)]) });
+t("o Sangue: o irmão morto antes de se verem", s38.R.desfecho === "sem_irmao");
+const s39 = g3(SAN, "a porta por explicar", [(e) => grupo(morre(e, "Iago"))], { e0: mundo3([IAGO(55)]) });
+t("o Sangue: quem anda contigo morto pela estrada", s39.R.desfecho === "a_porta_por_explicar");
+const combosS = [];
+for (const v of [30, 55, 80]) for (const s1 of ["esperanca", "verdade"]) for (const s2 of ["calar", "contar", "trocar"]) for (const pergunta of [false, true]) {
+  const r = sangue(80, s1, s2, { baixa: v, depois: pergunta ? [(e) => consulta(e, "Rufino")] : [] }).R;
+  combosS.push({ v, s1, s2, pergunta, d: r.desfecho, estado: r.estado });
+}
+t("o Sangue: as 36 combinações acabam todas num desfecho", combosS.every((x) => x.estado === "terminada"), J(combosS.filter((x) => x.estado !== "terminada")));
+t("o Sangue: a morte só chega a quem contou metade a quem não confiava", combosS.filter((x) => x.d === "sangue_contra_sangue").every((x) => x.s2 === "contar" && !x.pergunta && x.v < 55) && combosS.some((x) => x.d === "sangue_contra_sangue"));
+
+/* ---- As Cartas de Outra Casa ---- */
+const CAR = "as_cartas_de_outra_casa";
+const cartas = (vinculo, bil, lua, { portela = true, extra = [] } = {}) => g3(CAR, `${bil} · ${lua} · ${vinculo}${portela ? "" : " · sem ver a estrada"}`, [
+  (e) => dias(e, 2), (e) => falar(falar(e, "Iago"), "Iago"), ["escolher", "bilhete", bil], (e) => falar(ir(e, SOLAR), "Clarice"), ...extra,
+  ...(portela ? [(e) => ir(e, PORTELA)] : []), ["escolher", "lua", lua]], { e0: mundo3([IAGO(vinculo)]) });
+const k1 = cartas(80, "levar", "fugir", { extra: [(e) => consulta(e, "Clarice"), (e) => segredo(e, SOLAR)] });
+t("as Cartas: levar, a porta e o amor, a dívida da casa, a estrada vista, fugir — do outro lado da serra (o melhor)", k1.R.desfecho === "do_outro_lado_da_serra" && k1.ver().ordem === 1 && ["a_porta_e_o_amor", "a_divida_da_casa"].every((id) => k1.R.reviravoltas.some((r) => r.id === id)), J(k1.R));
+const k2 = cartas(55, "levar", "pedir");
+t("as Cartas: pagar a dívida e pedir a mão — a mão pedida, comprada", k2.R.desfecho === "a_mao_pedida" && k2.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "moedas" && x.n === -100)));
+const k3 = cartas(55, "recusar", "fugir");
+t("as Cartas: fugir com a estrada vista, sem confiança inteira — a carta que não se manda", k3.R.desfecho === "a_carta_que_nao_se_manda");
+const k4 = cartas(55, "levar", "renunciar");
+t("as Cartas: deixar ir — a despedida", k4.R.desfecho === "a_despedida");
+const k5 = cartas(80, "levar", "fugir", { portela: false });
+t("as Cartas: fugir sem ninguém ter ido ver a estrada — a estrada vigiada (o pior)", k5.R.desfecho === "a_estrada_vigiada" && k5.R.consequencias.some((c) => c.efeitos.some((x) => x.tipo === "morte" && x.papel === "quem")));
+t("e o veredito de fugir avisava, antes do clique, que a estrada se vê antes", k5.vereditos.some((v) => v.chave === "lua" && /ninguém for ver antes/.test(v.opcoes.find((o) => o.id === "fugir").custa)));
+const k6 = cartas(80, "contar", "fugir");
+t("as Cartas: quem contou as cartas ao prometido entregou-lhe a estrada — a estrada vigiada, mesmo vista", k6.R.desfecho === "a_estrada_vigiada");
+const k7 = g3(CAR, "as cartas guardadas (abandono)", [(e) => dias(e, 2), (e) => dias(e, 15)], { e0: mundo3([IAGO(55)]) });
+t("as Cartas: a história ignorada acaba no padrão", k7.R.desfecho === "as_cartas_guardadas");
+const k8 = g3(CAR, "antes da lua", [(e) => dias(e, 2), (e) => morre(e, "Clarice")], { e0: mundo3([IAGO(55)]) });
+t("as Cartas: quem era amado morto antes da lua cheia", k8.R.desfecho === "antes_da_lua");
+const k9 = g3(CAR, "as cartas sem dono", [(e) => grupo(morre(e, "Iago"))], { e0: mundo3([IAGO(55)]) });
+t("as Cartas: quem anda contigo morto pela estrada", k9.R.desfecho === "as_cartas_sem_dono");
+const combosK = [];
+for (const v of [55, 80]) for (const b of ["levar", "recusar", "contar"]) for (const l of ["fugir", "pedir", "renunciar"]) for (const portela of [false, true]) {
+  const r = cartas(v, b, l, { portela }).R;
+  combosK.push({ v, b, l, portela, d: r.desfecho, estado: r.estado });
+}
+t("as Cartas: as 36 combinações acabam todas num desfecho", combosK.every((x) => x.estado === "terminada"), J(combosK.filter((x) => x.estado !== "terminada")));
+t("as Cartas: a morte só chega a quem fugiu sem ver a estrada, ou depois de a contar", combosK.filter((x) => x.d === "a_estrada_vigiada").every((x) => x.l === "fugir" && (!x.portela || x.b === "contar")) && combosK.some((x) => x.d === "a_estrada_vigiada"));
+t("as Cartas: pedir ou deixar ir nunca mata ninguém", combosK.filter((x) => x.l !== "fugir").every((x) => x.d !== "a_estrada_vigiada"));
+
+/* ---- A COBERTURA, contada da ficha ---- */
+t("nenhum guião do lote 3 tentou uma escolha fechada", casos.filter((c) => LOTE3.includes(c.id)).every((c) => !c.erro), casos.filter((c) => LOTE3.includes(c.id) && c.erro).map((c) => `${c.id}/${c.nome}: ${c.erro}`).join("; "));
+for (const id of LOTE3) {
+  const F = questPorId(id);
+  const meus = casos.filter((c) => c.id === id);
+  const etapas = [...F.etapas, ...F.reviravoltas.flatMap((r) => r.efeitos).filter((x) => x.tipo === "abre_etapa").map((x) => x.etapa)];
+  const ramos = etapas.flatMap((e) => (e.ramos || []).map((r) => `${e.id}:${r}`));
+  const vistos = new Set(meus.flatMap((c) => Object.entries(c.j.R.feitas).map(([k, v]) => `${k}:${v.ramo}`)));
+  const opcoes = Object.entries(F.escolhas).flatMap(([k, e]) => Object.keys(e.opcoes).map((o) => `${k}:${o}`));
+  const escolhidas = new Set(meus.flatMap((c) => Object.entries(c.j.R.escolhas).map(([k, v]) => `${k}:${v.opcao}`)));
+  const revs = F.reviravoltas.map((r) => r.id);
+  const disparadas = new Set(meus.flatMap((c) => c.j.R.reviravoltas.map((r) => r.id)));
+  const faltam = [...ramos.filter((r) => !vistos.has(r)), ...opcoes.filter((o) => !escolhidas.has(o)), ...revs.filter((r) => !disparadas.has(r))];
+  t(`${F.titulo}: todo ramo, toda opção e toda reviravolta alcançados por um guião`, faltam.length === 0, faltam.join(", "));
+  if (F.tipo === 1) {
+    const falhas = new Set(meus.filter((c) => c.falha != null && c.j.R.motivo === "falha").map((c) => c.falha));
+    t(`${F.titulo}: concluível, cada falha alcançada, e o abandono`, meus.some((c) => c.j.R.estado === "concluida") && F.falha.every((_, i) => falhas.has(i)) && meus.some((c) => c.j.R.motivo === "abandono"), J([...falhas]));
+  } else {
+    const alcancados = new Set(meus.map((c) => c.j.R.desfecho).filter(Boolean));
+    t(`${F.titulo}: cada desfecho alcançado pelo que o herói fez, do melhor ao pior`, F.desfechos.every((d) => alcancados.has(d.id)), F.desfechos.filter((d) => !alcancados.has(d.id)).map((d) => d.id).join(", "));
+  }
+  const txt = meus.flatMap((c) => [c.j.ver().gancho, c.j.ver().etapaTexto, ...c.j.ver().faltaTexto, ...c.j.R.consequencias.map((x) => x.texto), c.j.R.fecho && c.j.R.fecho.texto,
+    ...(c.j.vereditos || []).flatMap((v) => v.opcoes.flatMap((o) => [o.texto, o.ganha, o.custa]))]).filter(Boolean).join(" ");
+  t(`${F.titulo}: o texto à vista não tem chavetas nem nomes de papel`, !/[{}]|papel:|lugar:|item:|undefined|\b(pastora|tratador|pedinte|feitor|sobrevivente|guardiao|pagina|limpador|enlutada|executor|irmao|amado|prometido|devedor|ruina|esconderijo|fraqueza_\w+)\b/.test(txt));
+  t(`${F.titulo}: todo veredito diz os dois lados`, meus.every((c) => (c.j.vereditos || []).every((v) => v.opcoes.every((o) => o.ganha.length > 20 && o.custa.length > 20))));
+}
+{
+  const abertas = LOTE3.map((id) => abrirQuest(id, { estado: mundo3([IAGO(55)]), papeis: PAPEIS2[id] }));
+  t("o lote 3 abre num mundo vazio, aberto e sem nenhuma etapa feita", abertas.every((r) => r && r.estado === "aberta" && Object.keys(r.feitas).length === 0));
+  t("as Botas com a mãe já ouvida não abrem (a primeira etapa já está cumprida)", abrirQuest(BOT, { estado: falar(mundo3(), "Graça"), papeis: PAPEIS2[BOT] }) === null);
+  t("o Velório com quem vela já morto não abre (a falha já aconteceu)", abrirQuest(VEL, { estado: morre(mundo3(), "Celeste"), papeis: PAPEIS2[VEL] }) === null);
+  const jn = jogo(BRA, PAPEIS2[BRA], mundo3(), { quests: [] });
+  jn.turno((e) => nomear(e, "Rosa", "Elias", "Morais"));
+  t("nomear quem pede não é ouvi-lo", !jn.R.feitas.pedido);
+  /* o género de quem ocupa o papel: a mesma ficha diz «sozinho» de um e «sozinha» de uma */
+  const so = (genero) => { const e = mundo3([{ nome: "Iago", vinculo: 55, genero }]); const j = jogo(CAR, PAPEIS2[CAR], e, { quests: UM_TIPO_1_CONCLUIDO }); j.turno((x) => dias(x, 2)).turno((x) => falar(falar(x, "Iago"), "Iago")); return vereditoDaEscolha(j.F, j.R, "bilhete", j.ctx()).opcoes.find((o) => o.id === "recusar").custa; };
+  t("o marcador de género: «sozinho» de um homem, «sozinha» de uma mulher", /sozinho,/.test(so("m")) && /sozinha,/.test(so("f")), so("m") + " | " + so("f"));
+  const g = () => { turno = 5000; return J(sangue(80, "verdade", "contar", { baixa: 30, depois: [(e) => consulta(e, "Rufino")] }).R); };
+  t("determinístico: o mesmo guião do lote 3 dá o mesmo registo", g() === g());
 }
 
 console.log(`\nBQ4 · a biblioteca de quests: ${bons} passaram, ${maus} falharam`);
