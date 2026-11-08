@@ -99,7 +99,91 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
-### Fase BQ — a biblioteca de quests (a ideia da pessoa, 08/11 · a planta espera o sim dela)
+### Fase TE — a temperatura e os espólios (a ideia da pessoa, 09/11 · o topo da fila do sistema)
+
+**A palavra da pessoa (09/11/2026), resumida:** (1) *«uma missão que diz que o vilão se apresenta
+não vem depois de uma missão que o vilão ainda não foi apresentado… uma missão quente e depois uma
+missão fria… temos que ter o tipo de "calor" dela»*, também para o tipo 2; (2) *«os espólios, tanto
+possíveis achados no caminho quanto recompensas… além da ótima história ele precisa da recompensa e
+da sensação de ficar mais forte».*
+
+**A planta:** `mente/plano-temperatura-e-espolios.md` (o censo das duas, as medidas, a auditoria
+das 52 com a correção de cada uma, as tabelas, a migração). **O porquê em números (1000 mundos):**
+um tipo 2 com gancho de passado partilhado abre no turno 0 em **492**; *Os Dados Dele* põe o rosto
+antes do ato do rosto em **35** e diz o nome do herói sem ele o saber em **154**; das 52 fichas,
+**0 usam `pede`**, e as quests escrevem **52 tipos de premissa que ninguém lê**. E uma quest da BQ
+**paga por código zero XP e zero itens** (três ganhos de moedas em 52 fichas): menos do que um
+contrato de mural. **A lei que serve:** o Mestre é código — a ordem e o prémio saem de tabela, e a
+régua de combate prova o poder.
+
+**A ordem:** TE1–TE5 primeiro (baratas, consertam o que hoje se vê); TE6–TE10 depois. Dentro da
+ideia aprovada, o pesado anda sem esperar, **menos** as duas perguntas no fim deste bloco.
+
+**As etapas (uma por versão):**
+- [ ] **TE1 · a temperatura na ficha** (`backend`) · médio (campo novo no catálogo, sem mudar o que
+  o jogador vive). `TEMPERATURAS` (brasa, chama, fogueira, incêndio) e `TEMPERATURA_DO_QUANDO` em
+  `biblioteca-de-quests.js`; o campo `temperatura` nas 52 fichas pela classificação provisória da
+  planta (§1.5), conferida contra `mente/leitura-bq-lote-*.md`. `validarQuest` recusa a ficha sem
+  grau ou fora do seu `quando`. Suíte: a catraca em `teste-biblioteca-de-quests.mjs`.
+- [ ] **TE2 · os pressupostos** (`backend`) · pesado (muda quando e onde uma quest pode nascer).
+  `pressupoe`/`estabelece` na ficha, **no vocabulário da BQ3** — sem segunda língua — com três
+  predicados novos e de tracker vivo: `camada` (`registro.camada`), `sabe_nome` (`sabeONome`),
+  `convivencia` (o dia visto do `elenco`, e o `lacoDeAntes` passa logo). `PRESSUPOSTOS` fecha o
+  vocabulário das premissas: **premissa escrita sem leitor quebra a suíte** (a lei do export morto,
+  aplicada a dado). Suíte `teste-pressupostos.mjs`.
+- [ ] **TE3 · as correções da auditoria** (`backend`) · médio (sete frases e dois gatilhos, no mesmo
+  formato). Os textos de *Os Dados Dele* (o nome → a alcunha), *O Que a Ama Esqueceu*, *O Sangue do
+  Outro Lado*, *O Fundo da Pedreira* e *As Chaves da Guarda*; o gatilho da *Lâmina Enterrada* (rev. 1)
+  com `camada marca`; `pressupoe convivencia` nas oito do grupo B; a declaração nas seis do grupo D.
+  Catraca: a suíte da biblioteca continua a jogar cada caminho de cada quest.
+- [ ] **TE4 · o esqueleto pelo grafo e pela curva** (`backend`) · pesado (muda a história dos mundos
+  novos). `CURVA_DA_TEMPERATURA`, `RESPIRO`, `CAMADA_DO_ATO` em `esqueleto.js`; a mão `rosto` só no ato
+  do rosto; o tipo 2 da janela 0 no máximo `chama`. **Catracas em `teste-esqueleto.mjs`, 1000
+  mundos:** 0 rostos antes do rosto (hoje 35); 0 campanhas fora da curva (hoje 111); 0 pressupostos
+  sem garantia; e **a variedade não pode cair**: partilha média < 1 (hoje 0,84) e nenhuma quest a
+  zero.
+- [ ] **TE5 · o portão da abertura** (`backend`, motor `quests-do-turno.js`) · pesado (o tipo 2 passa a
+  esperar). `PORTAO_DA_ABERTURA` e `ESPERA_MAXIMA`: a quest do tipo 2 com pressuposto dinâmico fica
+  `à espera` (estado novo, aditivo) até ele valer; o tipo 1 nunca espera. Só toca quests ainda não
+  abertas. Catraca: 0 ganchos de convivência no turno 0 (hoje 492 em 1000); o replay igual.
+- [ ] **TE6 · os espólios, o módulo** (`backend`) · pesado (economia nova). `src/espolios-da-quest.js`:
+  `PAGA_DA_QUEST` (XP em fração do vão, pela régua do Juiz; moedas em múltiplo da base de missão, com
+  o `tetoDoPresente` por teto), `FAMILIA_DO_RAMO`, `RECOMPENSA_DO_DESFECHO`, `RARIDADE_DA_TEMPERATURA`,
+  `TETO_DE_RARIDADE_DO_NIVEL`, `ACHADO_DO_SITIO`, `ORCAMENTO_DO_ESPOLIO`; `pagaDaQuest`, `achadosDaEtapa`,
+  `revelacaoDoEspolio`. Toda a sorte por `dadoDo(semente, "espolio", …)`. Suíte
+  `teste-espolios-da-quest.mjs`: determinismo, imutável, `null`, o orçamento em 1000 campanhas, ≥ 80%
+  dos itens com uma linha positiva em `compararItem` contra o kit típico do nível.
+- [ ] **TE7 · a régua do poder** (`testes`) · médio (catraca nova sobre motor que existe).
+  `regua-combate.mjs` ganha o kit típico e o kit da história por nível; `teste-regua.mjs` trava os dois
+  lados: o kit da história vence o `justo` **+3 a +12 pontos** acima do típico, e nunca acima de 70%.
+  Anda **antes** da TE9: sem ela, nenhum item da história sobe.
+- [ ] **TE8 · os artefactos com nome** (`backend`) · o 1.º lote pesado (a voz), os seguintes médios.
+  `ITEM_DA_QUEST` nas 17 quests de fogueira e incêndio do tipo 1, a lembrança nas 16 do tipo 2, e
+  `DESPERTAR_DO_ARTEFACTO` (adormecido → desperto → exaltado, à maneira dos *Vestiges of
+  Divergence*). Poderes **só do vocabulário com leitor** (`afixos.js`, `relicas.js#usarAtivo`).
+  Catraca: a da TE7 com o artefacto exaltado.
+- [ ] **TE9 · a fiação dos espólios** (`backend` no motor + `oficial` no App) · pesado (campo de save
+  novo, aditivo). O achado cai no chão (`chao.js`); a paga no fecho, chaveada em `aplicadas` para
+  nunca pagar duas vezes; a paga **substitui** o `feito` do Narrador no turno do fecho; a linha «O QUE
+  O HERÓI LEVA» na secção `momento` (teto 140), o veto em `naoPode`. **Prova:** pior caso da pauta
+  ≤ 1400, prompt ≈ 82k; um save de campanha em curso abre sem diferença até à próxima quest fechar.
+- [ ] **TE10 · o momento da recompensa** (pedido à fila do `desenho`, com o `jogo`) · a carta que vira
+  no fecho, a cor e a forma pela `COR_DA_RARIDADE`, o som, a comparação com o que veste, o «Equipar
+  já» com o veredito no botão. O sistema entrega `revelacaoDoEspolio`; a forma é deles.
+- [ ] **TE11 · a prova jogada** (`jogo`), numa campanha nova de 30 turnos e duas sementes: a curva
+  sentida (o que abriu era brasa, o que fechou era incêndio); zero pressupostos quebrados na prosa;
+  pelo menos um achado por quest; o artefacto ganho, comparado e equipado; e quantos níveis subiu.
+
+**Para a pessoa decidir (só estas duas):**
+1. **O orçamento do que tem nome:** a planta propõe, por campanha, **dois artefactos do enredo** (um
+   na pista ou no rosto, um no confronto) e **até duas lembranças** do coração. E as **10 relíquias**
+   (`relicas.js`, o degrau «único», escritas para o nível 20 contra um semideus) hoje só entram pelo
+   modo deus: **podem ser o prémio raro de um confronto**, ou ficam fora das quests?
+2. **O achado que se perde:** o achado escondido (o que se acha por explorar o desvio) **perde-se para
+   sempre** se o herói passar reto, ou **espera** por ele até a quest fechar? Perder dá peso a
+   explorar; esperar não castiga quem não sabia.
+
+### Fase BQ — a biblioteca de quests (a ideia da pessoa, 08/11 · BQ1–BQ8 no ar, v9.621–v9.628)
 
 **A palavra da pessoa (08/11/2026), resumida:** o esqueleto da história é vago. A ideia é
 preenchê-lo com uma **biblioteca grande de quests principais já desenhadas** (etapas,
@@ -128,79 +212,14 @@ pessoa disser sim. BQ4 em diante mudam o que o jogador vive em mundos novos, e e
 as respostas às perguntas da planta.
 
 **As etapas (uma por versão):**
-- [ ] **BQ1 · o livro de factos** (`backend`) · pesado pela tabela (formato de save), dentro do
-  que a ordem de 28/09 libera (campo novo, aditivo e ignorado pela versão antiga). Módulo
-  puro `src/livro-de-factos.js`: `garantirFactos`, `anotarTurno(factos, ocorrido)`,
-  `idDaPessoa` (o nome vira id **uma vez**, na escrita, e o caso ambíguo não escreve), e as
-  leituras `conheceu`, `conversou`, `esteve`, `descobriu`, `derrotado`. Teto por tabela
-  (`LIVRO_DE_FACTOS`). Suíte `teste-livro-de-factos.mjs`: imutável, `null` explícito, e
-  determinismo. O nome só dito não escreve `visto`.
-- [ ] **BQ2 · a fiação do livro, e a porta a mais nas etapas antigas** (`frontend` + `backend`)
-  · médio (ligar um sinal dormente a um tracker que já existe). O App escreve o livro no
-  fim de cada turno, com `calou`: o `falou_com` do Cronista guardado em vez de apagado,
-  quem `montarEmCena` dá como presente por fonte do sistema, o `lugarRef`, o
-  `segredosReveladosNoTurno`, e os rendidos e desacordados no fim da luta. Ref no save e
-  no load. As etapas `falar_com` e `revelar` de `missoes.js` passam a ler também
-  `factos.falou` e `factos.descobriu`, e as portas de hoje ficam todas. **Catraca:** os
-  casos do censo passam a regressão com os saves que temos (`sessao-s13-fecho.json`, o
-  Corrado): os presos fecham, e os que fechavam em falso continuam a não fechar. E as
-  bandeiras `heroiPoupou`/`heroiMatou` das `LEITURAS` do antagonista (`antagonista.js`,
-  hoje vindas de `contadores`) passam a ler `poupou`/`derrotou` do livro.
-- [ ] **BQ3 · o vocabulário fechado de predicados** (`backend`) · médio. `src/predicados.js`:
-  os predicados em dado (nunca em função), os combinadores `e`/`ou`/`nao`/`pelo_menos`,
-  `avaliar(pred, factos, mundo)`, `faltaDe(pred, …)` (o «o que falta» em frase de mundo,
-  de `TEXTO_DO_PREDICADO`) e `escritoPor` em cada predicado. Suíte `teste-predicados.mjs`,
-  com a catraca: predicado sem quem escreva o facto quebra a suíte.
-- [ ] **BQ4 · a ficha e as três primeiras quests** (`backend`) · pesado (órgão novo). A ficha
-  (com o campo `mao`: tenente, recurso, consequência, pista, rosto ou confronto, e os
-  passos que contesta), o catálogo `src/biblioteca-de-quests.js`, `estadoDaQuest`
-  (concluída, etapa, falta, reviravolta, desfecho) e as três quests da planta (§10).
-  Suíte `teste-biblioteca-de-quests.mjs`: o vocabulário, cada quest concluível por cada
-  ramo, a quest nunca nasce feita, a menção não fecha, e cada falha e cada desfecho
-  alcançáveis.
-- [ ] **BQ5 · o vilão: a ficha, o plano e as camadas** (`backend`) · pesado (muda o que o
-  jogador vive: o vilão passa a andar pelo facto). Módulo puro `src/plano-do-vilao.js`,
-  construído sobre `vilao.js`, `antagonista.js`, `saga.js` (o fio) e `nucleo.js` (a ferida),
-  sem os substituir. Contém:
-  - `fichaDoVilao`: uma vista sobre o que existe, mais os campos novos e aditivos em
-    `espinha.fio`: `FIM_DO_PLANO` (20), `FRAQUEZAS` (pessoa, coisa ou verdade) e a ponte;
-  - `PLANOS_DO_ARQUETIPO`: 6 passos com `muda`, `seTravado`, `contra` e `prazo`, por
-    arquétipo. Este primeiro lote traz 4 arquétipos, e os restantes entram no acervo;
-  - `relogioDoPlano`: anda pelo tempo, pelas quests ignoradas, falhadas ou abandonadas,
-    e pelo que ele sabe; recua ou desvia pelas quests concluídas e pelos tenentes
-    vencidos (`RITMO_DO_PLANO`);
-  - `camadaDoVilao`: as `FASES` sobem pelo facto, e nunca pelo tempo;
-  - `REACOES_DO_VILAO`: cada reação com uma linha no livro dele. Ele aprende o nome do
-    herói, e até lá o veto em `naoPode` impede que a voz dele o use;
-  - os desfechos: derrota, redenção, fuga e pacto, mais o relógio que chega ao fim e
-    muda o tom.
-
-  Suíte `teste-plano-do-vilao.mjs`: determinismo; cada passo é contestável por alguma
-  quest do catálogo; nenhuma camada sobe sem o facto dela; e **o texto de cada camada não
-  contém campo de uma camada acima** (o nome antes do rosto, o plano antes da guerra, a
-  fraqueza antes de o herói a ter).
-- [ ] **BQ6 · o esqueleto** (`backend`) · pesado (muda a história de mundos novos).
-  `src/esqueleto.js`: **primeiro o vilão e o plano**, depois uma quest do tipo 1 por ato,
-  escolhida pela `mao` que contesta o passo daquele ato (`COMPOSICAO_DA_MAO`: um tenente,
-  um recurso ou consequência, uma pista que dá a fraqueza, um rosto no penúltimo ato, o
-  confronto no fim), e duas do tipo 2, que tocam o vilão pela ponte, sem serem sobre ele.
-  A ligação faz-se por papéis partilhados (`de: "fio"`) e por `deixa`/`pede`. A
-  compatibilidade é uma tabela, e o tipo 2 é ancorado sem nunca trancar o tipo 1.
-  Determinístico. Suíte: 200 sementes × 4 espinhas num mundo real; todo papel cai no que
-  existe; e o número de passos sem quest que os conteste fica contado (o alvo é zero).
-- [ ] **BQ7 · a fiação do esqueleto e do vilão** (`frontend`) · pesado. Só em mundos novos
-  (campo novo `quests`, ignorado pela versão antiga). A projeção `missaoDaQuest` alimenta
-  o Diário (a casa do AR2). «O PASSO» entra na secção `momento` **no lugar** da batida da
-  espinha, e «A MÃO DELE AQUI» entra **no lugar** da marca do relógio (`marcaDaEtapa`),
-  filtrada pela camada. Meia linha do livro de factos entra no QUEM É de quem tem papel, e
-  os vetos vão em `naoPode`. **Prova:** o pior caso da pauta continua ≤ 1400 e o do prompt
-  ≈ 82k.
-- [ ] **BQ8 · o acervo, em lotes de seis** (`backend`) · o 1.º lote é pesado (a voz em
-  massa), os seguintes são médios (ampliar acervo no mesmo formato, com a catraca das
-  suítes BQ4 e BQ5). Alvo do lançamento: **36 do tipo 1** (12 cedo, 14 meio, 10 fim),
-  **16 do tipo 2**, e os **planos dos 20 arquétipos** (6 passos cada). Medida: duas
-  campanhas partilham menos de 1 quest em média (1000 sementes), e em nenhuma o plano
-  fica sem uma quest de pista para a fraqueza.
+- [x] **BQ1 · o livro de factos** · feita em v9.621 · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ2 · a fiação do livro, e a porta a mais nas etapas antigas** · feita · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ3 · o vocabulário fechado de predicados** · feita em v9.622 · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ4 · a ficha e as três primeiras quests** · feita em v9.622 · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ5 · o vilão: a ficha, o plano e as camadas** · feita em v9.622 · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ6 · o esqueleto** · feita em v9.623 · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ7 · a fiação do esqueleto e do vilão** · feita em v9.624 · texto em `mente/arquivo/pauta-feitas.md`
+- [x] **BQ8 · o acervo, em lotes de seis** · feita em v9.628 · texto em `mente/arquivo/pauta-feitas.md`
 - [ ] **BQ9 · a prova jogada** (`jogo`), numa campanha nova de 30 turnos:
   - cada passo fechou por um facto, e zero fecharam por menção;
   - o Diário disse o que faltava sempre que havia algo por fazer;

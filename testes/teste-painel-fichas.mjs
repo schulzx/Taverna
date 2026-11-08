@@ -288,6 +288,18 @@ sec("11. Os acertos de 12/10 (aprendiz): a fera pintada, a linha só da Baixa, o
   t("no meio da frase, o resto não perde o espaço", juntarNomeNoCampo("Falo com Freya agora", 14, "Ondine", ["Freya"]).texto === "Falo com Freya e Ondine agora");
   t("o cursor fica logo depois do nome posto", juntarNomeNoCampo("Falo com Freya agora", 14, "Ondine", ["Freya"]).cursor === 23);
   t("lixo não estoura: null, cursor fora, nome vazio", juntarNomeNoCampo(null, 99, "Ana", null).texto === "Ana" && juntarNomeNoCampo("x", null, "", []).texto === "x");
+  /* o nome que já está no campo não entra outra vez (vivo, 08/11, na prosa e
+     na gaveta): o toque repetido devolve o texto intacto e o cursor depois dele */
+  const dobra = juntarNomeNoCampo("Falo com Conrado Sem-Senhor", null, "Conrado Sem-Senhor", []);
+  t("o mesmo nome tocado outra vez não se repete: «Falo com Conrado Sem-Senhor» fica igual",
+    dobra.texto === "Falo com Conrado Sem-Senhor" && dobra.cursor === dobra.texto.length, JSON.stringify(dobra));
+  t("nem quando foi posto por toque nesta vez (postos), nem com o cursor no meio",
+    juntarNomeNoCampo("Falo com Conrado Sem-Senhor agora", 9, "Conrado Sem-Senhor", ["Conrado Sem-Senhor"]).texto === "Falo com Conrado Sem-Senhor agora");
+  t("sem caixa: «O rato» no começo é «o rato»", juntarNomeNoCampo("O rato foge", null, "o rato", []).texto === "O rato foge");
+  t("palavra inteira: «Freya» não está em «Freyanor», e entra",
+    juntarNomeNoCampo("Falo com Freyanor", null, "Freya", []).texto === "Falo com Freyanor Freya");
+  t("parte do nome não é o nome: com «Conrado» no campo, «Conrado Sem-Senhor» entra",
+    juntarNomeNoCampo("Falo com Conrado", null, "Conrado Sem-Senhor", []).texto === "Falo com Conrado Conrado Sem-Senhor");
   t("a função não lê nada de fora (a suíte corre-a sozinha)", !!fonteJ && !/\b(T|FICHAS|React|PALAVRAS)\b/.test(fonteJ.replace(/\/\*[\s\S]*?\*\//g, "")));
 }
 

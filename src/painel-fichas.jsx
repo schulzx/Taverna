@@ -108,7 +108,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { T, ALVOS } from "./constantes.js";
-import { TIPOS, FICHAS, EM_CENA, PROSA_TOCAVEL, HUD_DA_MESA } from "./estilo.js";
+import { TIPOS, FICHAS, EM_CENA, PROSA_TOCAVEL, HUD_DA_MESA, ESBATIMENTO } from "./estilo.js";
 import { Retrato, VerboComPreco, LinhaDoVeredito, TextoComMoeda, useMesa, Glifo, NomeTocavel } from "./ui.jsx";
 import { sementeDe } from "./semente.js";
 import { retratoDe } from "./retratos.js";
@@ -917,8 +917,15 @@ export function ondePousaOCartao({ formato = "mesa", nome, pagina = null, vh, vw
   const P = pagina || { top: 0, bottom: vh, left: 0, right: vw, width: vw };
   const C = FICHAS.cartao;
   if (formato === "telefone") {
+    /* TP 4: o nome fica 16 acima da folha, SEMPRE à vista. O teto da folha
+       deixa no alto da página a linha do nome (a altura medida dela) mais os
+       16; com a página baixa (o teclado aberto, 375 × 667 → 56–352) a folha
+       encolhe e o que se sabe rola por dentro. Antes o teto era a página
+       inteira, e depois de rolar o nome ficava por baixo da folha. */
     const fundo = P.bottom;
-    return { position: "fixed", left: 0, width: vw, bottom: vh - fundo, maxHeight: Math.max(ALVOS.piso, Math.min(C.folhaMax * vh, fundo - P.top)) };
+    const linhaDoNome = nome && nome.bottom > nome.top ? nome.bottom - nome.top : ESBATIMENTO.entrelinhaDaProsa;
+    const teto = fundo - P.top - linhaDoNome - PROSA_TOCAVEL.cartao.acimaDaFolha;
+    return { position: "fixed", left: 0, width: vw, bottom: vh - fundo, maxHeight: Math.max(ALVOS.piso, Math.min(C.folhaMax * vh, teto)) };
   }
   const folga = PROSA_TOCAVEL.cartao.folgaDaLinha;
   const largura = Math.min(C.largura, P.width);
@@ -1046,6 +1053,14 @@ export function juntarNomeNoCampo(atual, pos, nome, postos) {
   const n = String(nome == null ? "" : nome).trim();
   const p = typeof pos === "number" && pos >= 0 ? Math.min(pos, txt.length) : txt.length;
   if (!n) return { texto: txt, cursor: p };
+  /* o nome que JÁ está no campo não entra outra vez (vivo, 08/11: com
+     «Falo com Conrado Sem-Senhor» no campo, um novo toque no mesmo nome dava
+     «… Conrado Sem-Senhor Conrado Sem-Senhor», na prosa e na gaveta). Conta
+     a palavra inteira e sem caixa: «Freya» não está em «Freyanor», e «O rato»
+     no começo da frase é «o rato». O cursor vai para logo depois dele. */
+  const esc = n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const achado = new RegExp("(^|[^\\p{L}\\p{N}])(" + esc + ")(?![\\p{L}\\p{N}])", "iu").exec(txt);
+  if (achado) return { texto: txt, cursor: achado.index + achado[1].length + achado[2].length };
   const antes = txt.slice(0, p), depois = txt.slice(p);
   const ja = (Array.isArray(postos) ? postos : []).map((x) => String(x == null ? "" : x).trim()).filter(Boolean);
   const seco = antes.replace(/\s+$/, "");

@@ -104,7 +104,7 @@ import { RELIQUIAS, reliquiaPorId, itemDaReliquia, ativoDeclarado, podeUsarAtivo
 import { falaDaListaAparada } from "./emboscada.js";
 import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, envelopeDaAgressao, envelopeSemAlvo, NAO_E_AGRESSAO, vetoDaLutaSemPainel } from "./agressao.js";
 import { montarEmCena, quemNaFrase } from "./em-cena.js";
-import { fichasDaCena, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
+import { fichasDaCena, marcasDaProsa, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
 import { garantirFactos } from "./livro-de-factos.js";
 import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
 import { EmCena, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
@@ -5373,6 +5373,16 @@ export default function Taverna() {
   const toqueRef = useRef(null);
   const toqueDoEnvioRef = useRef(null);
   const listaDasFichasRef = useRef([]);
+  /* TP · A PROSA TOCÁVEL: { i, marcas } — os nomes que o motor marcou na
+     resposta de agora (marcasDaProsa), com o índice dela no registo; null
+     sem marcas. NUNCA no save: refaz-se com a resposta, como as fichas. */
+  const [marcasDaResposta, setMarcasDaResposta] = useState(null);
+  /* ONDE se abriu o cartão da ficha aberta: a ficha aberta é uma só (o
+     fichaAberta de sempre), mas o cartão desenha-se onde foi pedido — junto
+     ao nome da prosa, ou na gaveta. Medido vivo: com o mesmo aberta nos
+     dois, abrir na gaveta abria também o da página, dois cartões da mesma
+     ficha (TL 3: uma coisa, um lugar). */
+  const [cartaoNaProsa, setCartaoNaProsa] = useState(false);
   const alturaDaJanela = useAlturaDaJanela();
   /* R17 · O CAMPO SERVE DOIS MOMENTOS E SÃO DE TAMANHOS DIFERENTES:
      convidar e escrever. Este estado é o que os separa. A composição
@@ -7148,7 +7158,31 @@ export default function Taverna() {
     let frase = "";
     try { const ms = mensagensRef.current || []; for (let i = ms.length - 1; i >= 0; i--) if (ms[i] && ms[i].autor === "jogador") { frase = String(ms[i].texto || ""); break; } } catch (e) { calou("FICHAS · a última frase", e); }
     const lista = montarEmCena(contextoDoEmCena(frase, presentes));
-    return { lista, fichas: fichasDaCena(lista, ctx) };
+    return { lista, fichas: fichasDaCena(lista, ctx), ctx };
+  };
+  /* TP · AS MARCAS DA PROSA (formas.md §TP 10, oficial 1): os nomes da
+     resposta de agora que são fichas. A MESMA lista e o MESMO ctx das fichas
+     do pé da página (uma ficha marcada na prosa é a da gaveta), mais o que
+     só o «longe» lê: a memória, o livro de factos, e a cidade e o sítio onde
+     o herói está — sem eles, o sítio daqui tocaria como lembrança. Calcula-se
+     uma vez por resposta (no efeito das fichas), nunca a cada letra. Um motor
+     que estoura deixa a prosa como era. */
+  const montarAsMarcas = (ms, lista, ctx) => {
+    try {
+      const L = Array.isArray(ms) ? ms : [];
+      let i = -1;
+      for (let j = L.length - 1; j >= 0; j--) if (L[j] && L[j].autor === "mestre") { i = j; break; }
+      if (i < 0) return null;
+      const lg = lugarRef.current;
+      const marcas = marcasDaProsa(String(L[i].texto || ""), lista, {
+        ...(ctx || {}),
+        memoria: memoriaRef.current,
+        factos: factosRef.current,
+        cidade: String(cidadeAtualRef.current || ""),
+        lugar: String((lg && lg.nome) || ""),
+      });
+      return Array.isArray(marcas) && marcas.length ? { i, marcas } : null;
+    } catch (e) { calou("TP · as marcas da prosa", e); return null; }
   };
   /* O ID NO ENVIO: a ficha tocada (`toqueDoEnvioRef`, o que partiu com o
      turno) vem à frente enquanto a frase ainda a nomeia (fichas.js,
@@ -7162,6 +7196,9 @@ export default function Taverna() {
       const ids = tq ? [...new Set([...(Array.isArray(tq.ids) ? tq.ids : []), tq.id].filter(Boolean))] : [];
       const faltam = ids.length ? (listaDasFichasRef.current || []).filter((x) => x && ids.includes(x.id) && !base.some((y) => y && y.id === x.id)) : [];
       const lista = faltam.length ? [...base, ...faltam] : base;
+      /* a memória vai sempre: é por ela que o id tocado DE LONGE (o Códice,
+         e desde a TP o nome «longe» da prosa) acha a página de quem não está
+         em cena — «Procuro Delfina» chega a ela fora daqui */
       return { alvo: quemNoEnvio({ id: tq && tq.id, ids, texto: acao }, lista, memoriaRef.current)[0] || null, lista };
     } catch (e) {
       calou("o alvo do envio", e);
@@ -7391,13 +7428,16 @@ export default function Taverna() {
     return "";
   })();
   useEffect(() => {
-    if (fase !== "jogo" || !ultimaDoMestre) { setFichas((f) => (f.length ? [] : f)); return; }
+    if (fase !== "jogo" || !ultimaDoMestre) { setFichas((f) => (f.length ? [] : f)); setMarcasDaResposta(null); return; }
     try {
       const r = montarAsFichas();
       listaDasFichasRef.current = r.lista;
       setFichas(Array.isArray(r.fichas) ? r.fichas : []);
       setFichaAberta(null);
-    } catch (e) { calou("as fichas da cena", e); setFichas((f) => (f.length ? [] : f)); }
+      /* TP 7: as marcas da resposta de antes somem secas, e as de agora
+         nascem com a lista que as fichas acabaram de montar */
+      setMarcasDaResposta(montarAsMarcas(mensagens, r.lista, r.ctx));
+    } catch (e) { calou("as fichas da cena", e); setFichas((f) => (f.length ? [] : f)); setMarcasDaResposta(null); }
   }, [fase, ultimaDoMestre]); // eslint-disable-line
   /* F2d · AS PÁGINAS DO CÓDICE: a forma da ficha, fora de cena, com o verbo
      que aponta de longe (procurar a pessoa, ir ao lugar). */
@@ -24820,6 +24860,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("quem está em cena", e); return []; }
   })();
 
+  /* TP · A PROSA TOCÁVEL (formas.md §TP 10, oficial 2–3): os nomes da
+     resposta de agora com O MESMO estado e AS MESMAS mãos do Em cena — a
+     ficha apontada na prosa é a apontada na gaveta, o toque escreve pelo
+     juntarNomeNoCampo de sempre. Quem a prosa nomeou sai dos rostos da barra
+     (fica na gaveta). Um estouro aqui deixa a prosa como era. */
+  const abrirNaProsa = (ficha) => { try { setCartaoNaProsa(true); } catch (e) { calou("TP · o cartão na prosa", e); } abrirFicha(ficha); };
+  const abrirNaGaveta = (ficha) => { try { setCartaoNaProsa(false); } catch (e) { calou("TP · o cartão na gaveta", e); } abrirFicha(ficha); };
+  const fichaEscrita = (() => { try { return toque && entrada.trim() === String(toque.texto || "").trim() ? toque.id : null; } catch (e) { calou("a ficha escrita", e); return null; } })();
+  const tocaveisDaProsa = (() => {
+    try {
+      const mr = marcasDaResposta;
+      if (!mr || !(mr.i >= 0) || !Array.isArray(mr.marcas) || !mr.marcas.length) return null;
+      const m = mensagens[mr.i];
+      if (!m || m.autor !== "mestre") return null;
+      return { i: mr.i, marcas: mr.marcas, escrita: fichaEscrita, aberta: cartaoNaProsa ? fichaAberta : null, onToque: tocarFicha, onAbrir: abrirNaProsa, onFechar: fecharFicha, onVerbo: verboDaFicha };
+    } catch (e) { calou("TP · os nomes tocáveis", e); return null; }
+  })();
+  const nomeadosNaProsa = (() => { try { return tocaveisDaProsa ? tocaveisDaProsa.marcas.map((m) => m.id) : []; } catch (e) { calou("TP · os nomeados", e); return []; } })();
+
   /* O GRUPO, uma conta para a tira e para a coluna da mesa */
   const grupoDaMesa = (() => { try { return ((personagem && personagem.grupo) || []).filter((g) => g && !g.invocada); } catch (e) { calou("o grupo da mesa", e); return []; } })();
   const destinoDaCarta = (() => { try { return personagem ? garantirHeroismo(personagem) : null; } catch (e) { calou("o destino na carta", e); return null; } })();
@@ -25393,8 +25452,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               aoAbrirHorizonte={dadosMapaVivo && !horizontePreso ? () => { try { setHorizonteAberto((v) => !v); } catch (err) { calou("abrir o horizonte", err); } } : undefined}
               emCena={fogueiraNaPagina ? null : (
                 <LimiteDasFichas key={"em-cena|" + fichasEmCena.map((f) => f.id).join("|")}>
-                  <EmCena itens={fichasEmCena} escrita={toque && entrada.trim() === String(toque.texto || "").trim() ? toque.id : null} aberta={fichaAberta}
-                    onToque={tocarFicha} onAbrir={abrirFicha} onFechar={fecharFicha} onVerbo={verboDaFicha} baixa={alturaDaJanela < FICHAS.baixaAltura} />
+                  <EmCena itens={fichasEmCena} escrita={fichaEscrita} aberta={cartaoNaProsa ? null : fichaAberta} nomeados={nomeadosNaProsa}
+                    onToque={tocarFicha} onAbrir={abrirNaGaveta} onFechar={fecharFicha} onVerbo={verboDaFicha} baixa={alturaDaJanela < FICHAS.baixaAltura} />
                 </LimiteDasFichas>
               )}>
               <SinalDeGuardado visivel={!!guardadoAgora} />
@@ -25617,14 +25676,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               ) : (() => {
                 const mf = manhaDaFogueira;
                 const k = mf ? mf.inicio : -1;
-                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} />;
+                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} />;
                 return (
                   <>
-                    <Relato mensagens={mensagens.slice(0, k)} carregando={false} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} />
+                    <Relato mensagens={mensagens.slice(0, k)} carregando={false} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} />
                     <div className="tv-coluna">
                       <LimiteDaFogueira aoEstourar={() => setManhaDaFogueira(null)}><PainelFogueira manha={mf} /></LimiteDaFogueira>
                     </div>
-                    <Relato mensagens={mensagens.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} horizonte={horizonteDoRelato ? { ...horizonteDoRelato, i: horizonteDoRelato.i - k } : null} />
+                    <Relato mensagens={mensagens.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} horizonte={horizonteDoRelato ? { ...horizonteDoRelato, i: horizonteDoRelato.i - k } : null} tocaveis={tocaveisDaProsa ? { ...tocaveisDaProsa, i: tocaveisDaProsa.i - k } : null} />
                   </>
                 );
               })()}

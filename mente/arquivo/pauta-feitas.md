@@ -1596,3 +1596,83 @@ está escrito aqui, o orquestrador corrige a etapa na pauta e diz no diário.
   `moverInimigos` é gulosa em linha reta: na planta da taverna, o conjurador de antes
   empatava 20 rodadas com 0% de vitória. Afeta todo inimigo de perto. Caminho de verdade
   (o herói da sonda já o tem), medido pela régua.
+- [x] **BQ1 · o livro de factos** (`backend`) · feita em v9.621 · pesado pela tabela (formato de save), dentro do
+  que a ordem de 28/09 libera (campo novo, aditivo e ignorado pela versão antiga). Módulo
+  puro `src/livro-de-factos.js`: `garantirFactos`, `anotarTurno(factos, ocorrido)`,
+  `idDaPessoa` (o nome vira id **uma vez**, na escrita, e o caso ambíguo não escreve), e as
+  leituras `conheceu`, `conversou`, `esteve`, `descobriu`, `derrotado`. Teto por tabela
+  (`LIVRO_DE_FACTOS`). Suíte `teste-livro-de-factos.mjs`: imutável, `null` explícito, e
+  determinismo. O nome só dito não escreve `visto`.
+
+- [x] **BQ2 · a fiação do livro, e a porta a mais nas etapas antigas** (`frontend` + `backend`)
+  · médio (ligar um sinal dormente a um tracker que já existe). O App escreve o livro no
+  fim de cada turno, com `calou`: o `falou_com` do Cronista guardado em vez de apagado,
+  quem `montarEmCena` dá como presente por fonte do sistema, o `lugarRef`, o
+  `segredosReveladosNoTurno`, e os rendidos e desacordados no fim da luta. Ref no save e
+  no load. As etapas `falar_com` e `revelar` de `missoes.js` passam a ler também
+  `factos.falou` e `factos.descobriu`, e as portas de hoje ficam todas. **Catraca:** os
+  casos do censo passam a regressão com os saves que temos (`sessao-s13-fecho.json`, o
+  Corrado): os presos fecham, e os que fechavam em falso continuam a não fechar. E as
+  bandeiras `heroiPoupou`/`heroiMatou` das `LEITURAS` do antagonista (`antagonista.js`,
+  hoje vindas de `contadores`) passam a ler `poupou`/`derrotou` do livro.
+
+- [x] **BQ3 · o vocabulário fechado de predicados** (`backend`) · feita em v9.622 · médio. `src/predicados.js`:
+  os predicados em dado (nunca em função), os combinadores `e`/`ou`/`nao`/`pelo_menos`,
+  `avaliar(pred, factos, mundo)`, `faltaDe(pred, …)` (o «o que falta» em frase de mundo,
+  de `TEXTO_DO_PREDICADO`) e `escritoPor` em cada predicado. Suíte `teste-predicados.mjs`,
+  com a catraca: predicado sem quem escreva o facto quebra a suíte.
+
+- [x] **BQ4 · a ficha e as três primeiras quests** (`backend`) · feita em v9.622 · pesado (órgão novo). A ficha
+  (com o campo `mao`: tenente, recurso, consequência, pista, rosto ou confronto, e os
+  passos que contesta), o catálogo `src/biblioteca-de-quests.js`, `estadoDaQuest`
+  (concluída, etapa, falta, reviravolta, desfecho) e as três quests da planta (§10).
+  Suíte `teste-biblioteca-de-quests.mjs`: o vocabulário, cada quest concluível por cada
+  ramo, a quest nunca nasce feita, a menção não fecha, e cada falha e cada desfecho
+  alcançáveis.
+
+- [x] **BQ5 · o vilão: a ficha, o plano e as camadas** (`backend`) · feita em v9.622 · pesado (muda o que o
+  jogador vive: o vilão passa a andar pelo facto). Módulo puro `src/plano-do-vilao.js`,
+  construído sobre `vilao.js`, `antagonista.js`, `saga.js` (o fio) e `nucleo.js` (a ferida),
+  sem os substituir. Contém:
+  - `fichaDoVilao`: uma vista sobre o que existe, mais os campos novos e aditivos em
+    `espinha.fio`: `FIM_DO_PLANO` (20), `FRAQUEZAS` (pessoa, coisa ou verdade) e a ponte;
+  - `PLANOS_DO_ARQUETIPO`: 6 passos com `muda`, `seTravado`, `contra` e `prazo`, por
+    arquétipo. Este primeiro lote traz 4 arquétipos, e os restantes entram no acervo;
+  - `relogioDoPlano`: anda pelo tempo, pelas quests ignoradas, falhadas ou abandonadas,
+    e pelo que ele sabe; recua ou desvia pelas quests concluídas e pelos tenentes
+    vencidos (`RITMO_DO_PLANO`);
+  - `camadaDoVilao`: as `FASES` sobem pelo facto, e nunca pelo tempo;
+  - `REACOES_DO_VILAO`: cada reação com uma linha no livro dele. Ele aprende o nome do
+    herói, e até lá o veto em `naoPode` impede que a voz dele o use;
+  - os desfechos: derrota, redenção, fuga e pacto, mais o relógio que chega ao fim e
+    muda o tom.
+
+  Suíte `teste-plano-do-vilao.mjs`: determinismo; cada passo é contestável por alguma
+  quest do catálogo; nenhuma camada sobe sem o facto dela; e **o texto de cada camada não
+  contém campo de uma camada acima** (o nome antes do rosto, o plano antes da guerra, a
+  fraqueza antes de o herói a ter).
+
+- [x] **BQ6 · o esqueleto** (`backend`) · feita em v9.623 · pesado (muda a história de mundos novos).
+  `src/esqueleto.js`: **primeiro o vilão e o plano**, depois uma quest do tipo 1 por ato,
+  escolhida pela `mao` que contesta o passo daquele ato (`COMPOSICAO_DA_MAO`: um tenente,
+  um recurso ou consequência, uma pista que dá a fraqueza, um rosto no penúltimo ato, o
+  confronto no fim), e duas do tipo 2, que tocam o vilão pela ponte, sem serem sobre ele.
+  A ligação faz-se por papéis partilhados (`de: "fio"`) e por `deixa`/`pede`. A
+  compatibilidade é uma tabela, e o tipo 2 é ancorado sem nunca trancar o tipo 1.
+  Determinístico. Suíte: 200 sementes × 4 espinhas num mundo real; todo papel cai no que
+  existe; e o número de passos sem quest que os conteste fica contado (o alvo é zero).
+
+- [x] **BQ7 · a fiação do esqueleto e do vilão** (`frontend`) · feita em v9.624, e as consequências em v9.625 · pesado. Só em mundos novos
+  (campo novo `quests`, ignorado pela versão antiga). A projeção `missaoDaQuest` alimenta
+  o Diário (a casa do AR2). «O PASSO» entra na secção `momento` **no lugar** da batida da
+  espinha, e «A MÃO DELE AQUI» entra **no lugar** da marca do relógio (`marcaDaEtapa`),
+  filtrada pela camada. Meia linha do livro de factos entra no QUEM É de quem tem papel, e
+  os vetos vão em `naoPode`. **Prova:** o pior caso da pauta continua ≤ 1400 e o do prompt
+  ≈ 82k.
+
+- [x] **BQ8 · o acervo, em lotes de seis** (`backend`) · fechada em v9.628 (36 + 16 quests, 20 planos; partilha média 0,84) · o 1.º lote é pesado (a voz em
+  massa), os seguintes são médios (ampliar acervo no mesmo formato, com a catraca das
+  suítes BQ4 e BQ5). Alvo do lançamento: **36 do tipo 1** (12 cedo, 14 meio, 10 fim),
+  **16 do tipo 2**, e os **planos dos 20 arquétipos** (6 passos cada). Medida: duas
+  campanhas partilham menos de 1 quest em média (1000 sementes), e em nenhuma o plano
+  fica sem uma quest de pista para a fraqueza.

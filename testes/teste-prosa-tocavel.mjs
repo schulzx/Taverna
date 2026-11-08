@@ -406,7 +406,46 @@ sec("8. onde pousa o cartão: nunca sobre a linha do nome nem sobre o campo (TP 
   /* o telefone, 375 × 667: a página de 54 a 531, o campo por baixo dela */
   const tel = O({ formato: "telefone", nome: nomeEm(232, 120), pagina: { top: 54, bottom: 531, left: 8, right: 367, width: 359 }, vh: 667, vw: 375 });
   t("o telefone: a folha de lado a lado, com o fundo no pé da página (o campo à vista)", tel.left === 0 && tel.width === 375 && tel.bottom === 667 - 531);
-  t("e até 62 % da altura, nunca acima do topo da página", tel.maxHeight === Math.min(FICHAS.cartao.folhaMax * 667, 531 - 54));
+  /* a asserção antiga dizia «até 62 %, nunca acima do topo da página» — e o
+     topo da página era o teto. Mudou (08/11, o `oficial` viu-o a 375 × 667
+     com o teclado): o teto deixa à vista a linha do nome mais 16, porque com
+     a folha à altura da página inteira o nome rolava para baixo dela. */
+  t("e até 62 % da altura, deixando no alto a linha do nome e os 16",
+    tel.maxHeight === Math.min(FICHAS.cartao.folhaMax * 667, 531 - 54 - linha - PROSA_TOCAVEL.cartao.acimaDaFolha));
+  /* depois de rolar, o nome fica com a base 16 acima do topo da folha (o
+     efeito do CartaoNaProsa); a folha no maior que pode ter. Pode o nome
+     ficar inteiro dentro da página e por cima da folha? */
+  const aVista = (pag, vhx, vwx, y0) => {
+    const n = nomeEm(y0, 120);
+    const pos = O({ formato: "telefone", nome: n, pagina: pag, vh: vhx, vw: vwx });
+    const topoDaFolha = vhx - pos.bottom - pos.maxHeight;
+    const falta = Math.max(0, n.bottom + PROSA_TOCAVEL.cartao.acimaDaFolha - topoDaFolha);
+    const rolado = { top: n.top - falta, bottom: n.bottom - falta };
+    return { pos, topoDaFolha, rolado, dentro: rolado.top >= pag.top - 0.01, acima: rolado.bottom + PROSA_TOCAVEL.cartao.acimaDaFolha <= topoDaFolha + 0.01 };
+  };
+  /* 375 × 667 com o teclado: a página ficou de 56 a 352 (o caso do `oficial`:
+     antes, a folha cobria-a toda e o nome ia parar a 56–84, por baixo dela) */
+  const teclado = { top: 56, bottom: 352, left: 8, right: 367, width: 359 };
+  let pior667 = null;
+  for (let y = teclado.top; y + linha <= teclado.bottom; y += 4) {
+    const v = aVista(teclado, 667, 375, y);
+    if (!v.dentro || !v.acima) { pior667 = { y, ...v }; break; }
+  }
+  const k = aVista(teclado, 667, 375, 200);
+  t("375 × 667 com teclado: a folha encolhe a 352 − 56 − 27,6 − 16 e o nome fica à vista, 16 acima dela, em toda a página",
+    !pior667 && Math.abs(k.pos.maxHeight - (352 - 56 - linha - 16)) < 0.01 && Math.abs(k.topoDaFolha - (56 + linha + 16)) < 0.01, JSON.stringify(pior667));
+  t("e o nome nunca fica debaixo da folha (o defeito: 56–84 com a folha a começar em 56)", k.rolado.bottom <= k.topoDaFolha - 16 + 0.01 && k.rolado.top >= 56 - 0.01);
+  /* 375 × 812, sem teclado: a página de 56 a 676 — os 62 % mandam, como antes */
+  const alta = { top: 56, bottom: 676, left: 8, right: 367, width: 359 };
+  let pior812 = null;
+  for (let y = alta.top; y + linha <= alta.bottom; y += 4) {
+    const v = aVista(alta, 812, 375, y);
+    if (!v.dentro || !v.acima) { pior812 = { y, ...v }; break; }
+  }
+  t("375 × 812: a folha nos 62 % de sempre e o nome à vista em toda a página",
+    !pior812 && aVista(alta, 812, 375, 300).pos.maxHeight === FICHAS.cartao.folhaMax * 812, JSON.stringify(pior812));
+  t("um nome em duas linhas deixa à vista as duas", Math.abs(O({ formato: "telefone", nome: { top: 200, bottom: 200 + 2 * linha, left: 120, right: 300, width: 180 }, pagina: teclado, vh: 667, vw: 375 }).maxHeight - (352 - 56 - 2 * linha - 16)) < 0.01);
+  t("a página baixíssima não fura o piso de toque", O({ formato: "telefone", nome: nomeEm(60, 120), pagina: { ...teclado, bottom: 120 }, vh: 667, vw: 375 }).maxHeight === ALVOS.piso);
   t("o corte da mesa da prosa é o da mesa de 1024 (HUD_DA_MESA)", HUD_DA_MESA.mesa.aPartirDe === 1024
     && /MESA_DA_PROSA = `\(min-width: \$\{HUD_DA_MESA\.mesa\.aPartirDe\}px\)`/.test(fs.readFileSync(path.join(SRC, "painel-fichas.jsx"), "utf8")));
 }
