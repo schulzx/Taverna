@@ -99,6 +99,116 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase BQ — a biblioteca de quests (a ideia da pessoa, 08/11 · a planta espera o sim dela)
+
+**A palavra da pessoa (08/11/2026), resumida:** o esqueleto da história é vago. A ideia é
+preenchê-lo com uma **biblioteca grande de quests principais já desenhadas** (etapas,
+soluções, consequências, reviravoltas). A criação do mundo só preenche as personagens, o
+vilão e os lugares. O esqueleto junta algumas quests e liga-as, e com muitas quests e um
+mundo novo nunca sai a mesma história. Há **dois tipos**: 1, físico ou externo; 2,
+emocional ou do coração (a dica «Dobre, parte dois» da Grande Lista de Enredos). E sempre
+**condições de conclusão que o sistema identifica**: em que etapa está, e o que falta. O
+exemplo dela: «encontre fulano» fecha quando encontrei e conversei, e a ficha da pessoa
+guarda isso. **E o vilão (a pessoa, no mesmo dia):** *«uma campanha que não tem vilão só
+parece várias histórias misturadas, temos que ter uma forma de colocá-lo no meio disso»*.
+A resposta é que cada quest física é um passo dele ou um passo contra ele.
+
+**A planta:** `mente/plano-biblioteca-de-quests.md` (o censo, a ficha de uma quest, o
+vocabulário de predicados, o livro de factos, o esqueleto, a migração, o tamanho, três
+quests de exemplo, e **§11, o vilão**: a ficha, o plano como relógio, a mão dele em cada
+quest, a revelação pelo facto, as reações, o fim, e um vilão inteiro ligado às três
+quests). **O porquê em uma linha:** foram contados 17 defeitos de fecho
+documentados, e saem de quatro causas: o nome usado como chave, o facto que dura um
+turno, a presença tomada como prova, e a condição que o mundo não produz. A BQ ataca a
+classe, não o caso.
+
+**A ordem:** a Fase AR e a Fase SQ fecharam (AR8 em v9.617). As etapas BQ1–BQ3 consertam
+campanhas em curso e não mudam a história de ninguém, por isso podem andar logo que a
+pessoa disser sim. BQ4 em diante mudam o que o jogador vive em mundos novos, e esperam
+as respostas às perguntas da planta.
+
+**As etapas (uma por versão):**
+- [ ] **BQ1 · o livro de factos** (`backend`) · pesado pela tabela (formato de save), dentro do
+  que a ordem de 28/09 libera (campo novo, aditivo e ignorado pela versão antiga). Módulo
+  puro `src/livro-de-factos.js`: `garantirFactos`, `anotarTurno(factos, ocorrido)`,
+  `idDaPessoa` (o nome vira id **uma vez**, na escrita, e o caso ambíguo não escreve), e as
+  leituras `conheceu`, `conversou`, `esteve`, `descobriu`, `derrotado`. Teto por tabela
+  (`LIVRO_DE_FACTOS`). Suíte `teste-livro-de-factos.mjs`: imutável, `null` explícito, e
+  determinismo. O nome só dito não escreve `visto`.
+- [ ] **BQ2 · a fiação do livro, e a porta a mais nas etapas antigas** (`frontend` + `backend`)
+  · médio (ligar um sinal dormente a um tracker que já existe). O App escreve o livro no
+  fim de cada turno, com `calou`: o `falou_com` do Cronista guardado em vez de apagado,
+  quem `montarEmCena` dá como presente por fonte do sistema, o `lugarRef`, o
+  `segredosReveladosNoTurno`, e os rendidos e desacordados no fim da luta. Ref no save e
+  no load. As etapas `falar_com` e `revelar` de `missoes.js` passam a ler também
+  `factos.falou` e `factos.descobriu`, e as portas de hoje ficam todas. **Catraca:** os
+  casos do censo passam a regressão com os saves que temos (`sessao-s13-fecho.json`, o
+  Corrado): os presos fecham, e os que fechavam em falso continuam a não fechar. E as
+  bandeiras `heroiPoupou`/`heroiMatou` das `LEITURAS` do antagonista (`antagonista.js`,
+  hoje vindas de `contadores`) passam a ler `poupou`/`derrotou` do livro.
+- [ ] **BQ3 · o vocabulário fechado de predicados** (`backend`) · médio. `src/predicados.js`:
+  os predicados em dado (nunca em função), os combinadores `e`/`ou`/`nao`/`pelo_menos`,
+  `avaliar(pred, factos, mundo)`, `faltaDe(pred, …)` (o «o que falta» em frase de mundo,
+  de `TEXTO_DO_PREDICADO`) e `escritoPor` em cada predicado. Suíte `teste-predicados.mjs`,
+  com a catraca: predicado sem quem escreva o facto quebra a suíte.
+- [ ] **BQ4 · a ficha e as três primeiras quests** (`backend`) · pesado (órgão novo). A ficha
+  (com o campo `mao`: tenente, recurso, consequência, pista, rosto ou confronto, e os
+  passos que contesta), o catálogo `src/biblioteca-de-quests.js`, `estadoDaQuest`
+  (concluída, etapa, falta, reviravolta, desfecho) e as três quests da planta (§10).
+  Suíte `teste-biblioteca-de-quests.mjs`: o vocabulário, cada quest concluível por cada
+  ramo, a quest nunca nasce feita, a menção não fecha, e cada falha e cada desfecho
+  alcançáveis.
+- [ ] **BQ5 · o vilão: a ficha, o plano e as camadas** (`backend`) · pesado (muda o que o
+  jogador vive: o vilão passa a andar pelo facto). Módulo puro `src/plano-do-vilao.js`,
+  construído sobre `vilao.js`, `antagonista.js`, `saga.js` (o fio) e `nucleo.js` (a ferida),
+  sem os substituir. Contém:
+  - `fichaDoVilao`: uma vista sobre o que existe, mais os campos novos e aditivos em
+    `espinha.fio`: `FIM_DO_PLANO` (20), `FRAQUEZAS` (pessoa, coisa ou verdade) e a ponte;
+  - `PLANOS_DO_ARQUETIPO`: 6 passos com `muda`, `seTravado`, `contra` e `prazo`, por
+    arquétipo. Este primeiro lote traz 4 arquétipos, e os restantes entram no acervo;
+  - `relogioDoPlano`: anda pelo tempo, pelas quests ignoradas, falhadas ou abandonadas,
+    e pelo que ele sabe; recua ou desvia pelas quests concluídas e pelos tenentes
+    vencidos (`RITMO_DO_PLANO`);
+  - `camadaDoVilao`: as `FASES` sobem pelo facto, e nunca pelo tempo;
+  - `REACOES_DO_VILAO`: cada reação com uma linha no livro dele. Ele aprende o nome do
+    herói, e até lá o veto em `naoPode` impede que a voz dele o use;
+  - os desfechos: derrota, redenção, fuga e pacto, mais o relógio que chega ao fim e
+    muda o tom.
+
+  Suíte `teste-plano-do-vilao.mjs`: determinismo; cada passo é contestável por alguma
+  quest do catálogo; nenhuma camada sobe sem o facto dela; e **o texto de cada camada não
+  contém campo de uma camada acima** (o nome antes do rosto, o plano antes da guerra, a
+  fraqueza antes de o herói a ter).
+- [ ] **BQ6 · o esqueleto** (`backend`) · pesado (muda a história de mundos novos).
+  `src/esqueleto.js`: **primeiro o vilão e o plano**, depois uma quest do tipo 1 por ato,
+  escolhida pela `mao` que contesta o passo daquele ato (`COMPOSICAO_DA_MAO`: um tenente,
+  um recurso ou consequência, uma pista que dá a fraqueza, um rosto no penúltimo ato, o
+  confronto no fim), e duas do tipo 2, que tocam o vilão pela ponte, sem serem sobre ele.
+  A ligação faz-se por papéis partilhados (`de: "fio"`) e por `deixa`/`pede`. A
+  compatibilidade é uma tabela, e o tipo 2 é ancorado sem nunca trancar o tipo 1.
+  Determinístico. Suíte: 200 sementes × 4 espinhas num mundo real; todo papel cai no que
+  existe; e o número de passos sem quest que os conteste fica contado (o alvo é zero).
+- [ ] **BQ7 · a fiação do esqueleto e do vilão** (`frontend`) · pesado. Só em mundos novos
+  (campo novo `quests`, ignorado pela versão antiga). A projeção `missaoDaQuest` alimenta
+  o Diário (a casa do AR2). «O PASSO» entra na secção `momento` **no lugar** da batida da
+  espinha, e «A MÃO DELE AQUI» entra **no lugar** da marca do relógio (`marcaDaEtapa`),
+  filtrada pela camada. Meia linha do livro de factos entra no QUEM É de quem tem papel, e
+  os vetos vão em `naoPode`. **Prova:** o pior caso da pauta continua ≤ 1400 e o do prompt
+  ≈ 82k.
+- [ ] **BQ8 · o acervo, em lotes de seis** (`backend`) · o 1.º lote é pesado (a voz em
+  massa), os seguintes são médios (ampliar acervo no mesmo formato, com a catraca das
+  suítes BQ4 e BQ5). Alvo do lançamento: **36 do tipo 1** (12 cedo, 14 meio, 10 fim),
+  **16 do tipo 2**, e os **planos dos 20 arquétipos** (6 passos cada). Medida: duas
+  campanhas partilham menos de 1 quest em média (1000 sementes), e em nenhuma o plano
+  fica sem uma quest de pista para a fraqueza.
+- [ ] **BQ9 · a prova jogada** (`jogo`), numa campanha nova de 30 turnos:
+  - cada passo fechou por um facto, e zero fecharam por menção;
+  - o Diário disse o que faltava sempre que havia algo por fazer;
+  - uma pergunta do jogador sobre a história teve resposta verdadeira (a régua MM);
+  - **a mão do vilão chegou à prosa em cada ato, e o nome nunca antes do rosto** (contra
+    o zero em 64 da 5.ª sessão);
+  - duas sementes, para contar a repetição.
+
 ### Fase AR — a arrumação: uma porta para cada coisa, e as telas que faltam à AAA (a ordem de 05/11 · DEPOIS da Fase SQ)
 
 **A palavra da pessoa (05/11/2026):** *«depois de terminar todas as fases da SQ, vamos arrumar as coisas,

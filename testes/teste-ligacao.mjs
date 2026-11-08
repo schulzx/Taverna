@@ -274,6 +274,16 @@ sec("1. NENHUM MÓDULO MUDO");
        — 07/11 (a mesma leva): o oficial ligou-o — oFimDoDia no descanso
        longo, aTochaQueSeAcende em `irParaSala`, faceDoDadoDeUso nos
        mantimentos da carta. A entrada saiu, e a lista voltou a ficar VAZIA. */
+    /* 08/11 (Fase BQ, BQ1 · o livro de factos): `livro-de-factos.js` nasce
+       no backend — o nome que passa a id uma vez (idDaPessoa, idDoLugar), o
+       livro no save (garantirFactos, o campo novo `factos`) e a escrita do
+       turno (anotarTurno) — e espera a BQ2, que o liga no App.jsx e no
+       motor do Cronista (o falou_com guardado, a presença das fichas, o
+       lugar, o segredo, os caídos da luta; o ref no save e no load). Credor:
+       o `oficial`, na etapa seguinte da MESMA fase. A entrada sai quando o
+       App ou o motor o importar, e a lista volta a ficar VAZIA.
+       `teste-livro-de-factos.mjs` é o primeiro leitor. */
+    "livro-de-factos.js": "08/11/2026 — oficial (BQ2): o App e o motor do Cronista escrevem o livro no fim do turno, com o ref no save e no load",
   };
   const mudos = [];
   for (const f of arqs) {
