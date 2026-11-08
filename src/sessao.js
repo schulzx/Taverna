@@ -783,6 +783,9 @@ export const PASSOS_DO_REPLAY = Object.freeze([
       /* o que a tela leva deste passo (o servidor devolve-o; o replay não o
          compara): a narração podada e as linhas do sistema no relato */
       if (r && nota) nota.tela = { narrativa: String(obj(r.podado).narrativa || ""), linhas: arr(r.msgs).map((x) => (typeof x === "string" ? x : String(obj(x).texto || ""))) };
+      /* TE9: o `feito` que este aplicar pagou (o da resposta podada) e o nível
+         de antes dele — a paga da quest que fechar no fim do turno desconta-o */
+      if (r && nota) { const fe = obj(obj(r.podado).mudancas).feito; if (typeof fe === "string" && fe) nota.feitoDoTurno = { grau: fe, nivel: obj(E.personagem).nivel }; }
       let E1 = r && r.estado ? r.estado : E;
       /* no servidor, o que o aplicar deixa ao Narrador (`paraOCronista`)
          vai à nota, como o App a escreve (`notaComOTurno`); no replay é
@@ -926,7 +929,7 @@ export const PASSOS_DO_REPLAY = Object.freeze([
        replay é bastidor). */
     passo: "as quests", de: "motor/quests-do-turno.js#oTurnoDasQuests (só nos mundos novos: as quests do esqueleto e o vilão do plano, no fim do turno, depois do Cronista)",
     faz: (E, L, ctx, nota) => {
-      const r = oTurnoDasQuests(E, { mundo: ctx.mundo });
+      const r = oTurnoDasQuests(E, { mundo: ctx.mundo, ...(nota && nota.feitoDoTurno ? { feitoDoTurno: nota.feitoDoTurno } : {}) });
       if (!r) return E;
       if (nota && nota.tela && r.linhas.length) nota.tela.linhas.push(...r.linhas);
       if (nota && r.efeitos.length) nota.efeitosDasQuests = r.efeitos;

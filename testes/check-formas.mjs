@@ -495,6 +495,17 @@ const COLISAO_DE_RELOGIO_ESCRITA = {
      se a janela de reação mudar ele continua certo. A regra anti-cemitério
      vale igual: no dia em que deixar de animar 600 ms, a entrada SAI. */
   ".tv-ceu-brilho": 600,
+  /* 09/11 · TE10 — a relíquia do confronto (formas.md §TE 5): a antecipação
+     longa (treme e a luz vaza de 0,55 a 0,9, 600 ms) e o lume turquesa que
+     acende no lugar do âmbar (0 → 0,10, 600 ms), lidos de
+     RELIQUIA_DA_TELA.antecipacao.dura e .lume.dura. COINCIDÊNCIA, NÃO CÓPIA,
+     pelo mesmo teste das de cima: o número sai da §TE 5, nenhuma das três
+     desenha tempo de reação (a relíquia sai uma vez por campanha, fora da
+     luta: FILA_DAS_CERIMONIAS.esperaALuta), e se a janela de reação mudar
+     elas continuam certas. A regra anti-cemitério vale igual. */
+  ".tv-carta-treme-longa": 600,
+  ".tv-luz-vaza-longa": 600,
+  ".tv-reliquia-lume": 600,
 };
 
 /* D5f · O ALVO DE TOQUE SAI DE TABELA, NUNCA DE ARITMÉTICA DE PADDING.

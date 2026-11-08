@@ -938,6 +938,14 @@ export function aPautaDoTurno(estado, entrada, portas) {
       mesaDasQuests = aMesaDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() },
         { mundo: mundoDaBase(), cena: { presentes: [...(aqui || []).map((x) => x && x.nome), ...((($ref.combate || {}).inimigos) || []).map((x) => x && x.nome)].filter(Boolean), lugar: ($ref.lugar && $ref.lugar.nome) || "" } });
     } catch (e) { calou("a mesa das quests", e); mesaDasQuests = null; }
+    /* TE9 (09/11): O QUE O HERÓI LEVA — a paga e os achados do turno anterior,
+       só neste turno (o anúncio vive um), À FRENTE da batida: é a 1.ª linha
+       do MOMENTO (a frente 2,475) no turno em que o Narrador narra o fecho.
+       Medido (teste-te9-motor §2): numa pauta de cidade cheia, como 2.ª linha
+       (2,48) era a de prioridade mais baixa do texto e o teto cortava-a — e
+       a batida volta no turno seguinte, o espólio não. O veto ao lado já
+       veio em `naoPode`. */
+    if (mesaDasQuests && Array.isArray(mesaDasQuests.espolio) && mesaDasQuests.espolio.length) p = porNaPauta(p, "momento", mesaDasQuests.espolio);
     if (mesaDasQuests && mesaDasQuests.comQuest) p = porNaPauta(p, "momento", mesaDasQuests.passo);
     else p = porNaPauta(p, "momento", envelopeDaEspinha($ref.espinha, $ref.historia.etapa, estruturaPorId($ref.historia.estrutura)));
     if (mesaDasQuests && !mesaDasQuests.comQuest) p = porNaPauta(p, "momento", mesaDasQuests.passo);

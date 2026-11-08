@@ -197,8 +197,18 @@ let SC = null;
   t("o 2.º ato não tem quest no catálogo de hoje: vive dos marcos (a degradação)", ato2.quest === null && progressoDoAto(E.espinha, 1).total === E.espinha.atos[1].marcos.length && aMesaDasQuests(E, { mundo: W.mundo }).comQuest === false);
   t("e a quest de um ato antigo não volta a abrir", J(garantirQuestsDaEspinha(E.espinha.quests).atos) === "[0,1]" && garantirQuestsDaEspinha(E.espinha.quests).registos.filter((x) => x.id === "o_salvo_conduto").length === 1);
   /* chamar duas vezes não aplica nada duas vezes */
+  /* TE9 (09/11): o turno que fechou a quest pagou-a, e a espinha leva o
+     ANÚNCIO do espólio (a linha «O QUE O HERÓI LEVA» e o trinco do feito),
+     que vive um turno só: o fim de turno seguinte apaga-o. A asserção antiga
+     pedia o estado vazio já na 2.ª chamada; agora a 2.ª só pode apagar o
+     anúncio (nada se aplica duas vezes — nem a paga, nem o achado), e a 3.ª
+     é que é o vazio de sempre. */
+  const semAnuncio = (esp) => { const q = { ...esp.quests }; delete q.anuncio; return { ...esp, quests: q }; };
   const de = oTurnoDasQuests(E, { mundo: W.mundo });
-  t("o mesmo estado outra vez: nada muda, nada se repete", J(de.estado) === "{}" && de.efeitos.length === 0 && de.linhas.length === 0 && de.notas.length === 0, J(de));
+  const soOAnuncio = Object.keys(de.estado).every((k) => k === "espinha") && (!de.estado.espinha || J(semAnuncio(de.estado.espinha)) === J(semAnuncio(E.espinha)));
+  t("o mesmo estado outra vez: nada se repete, só o anúncio de um turno se apaga", soOAnuncio && de.efeitos.length === 0 && de.linhas.length === 0 && de.notas.length === 0, J(de).slice(0, 600));
+  const de3 = oTurnoDasQuests({ ...E, ...de.estado }, { mundo: W.mundo });
+  t("e outra vez ainda: nada muda", J(de3.estado) === "{}" && de3.efeitos.length === 0 && de3.linhas.length === 0 && de3.notas.length === 0, J(de3).slice(0, 600));
   /* o 3.º ato (as Cinzas): o arco chega lá e a quest abre */
   const E3 = { ...E, historia: { ...E.historia, etapa: 2, marcos: 0 } };
   const r3 = oTurnoDasQuests(E3, { mundo: W.mundo });

@@ -242,10 +242,29 @@ export function reliquiasEquipadas(pers) {
   const out = [];
   for (const it of Object.values((pers && pers.equipados) || {})) {
     if (!it || !it.ativo || !it.ativo.id) continue;
-    const rel = reliquiaPorId(it.ativo.id);
+    const rel = reliquiaPorId(it.ativo.id) || gestoDoArtefacto(it);
     if (rel) out.push({ item: it, rel });
   }
   return out;
+}
+
+/* A PORTA DO ARTEFACTO (09/11/2026, Fase TE · TE9). O artefacto com nome de
+   uma quest (espolios.js, ARTEFACTOS_COM_NOME), quando EXALTADO, leva o
+   gesto escrito na forma do `ativo` das relíquias — e até aqui só se
+   procuravam ids de RELIQUIAS, e o gesto ficava escrito sem porta. A peça
+   não é uma relíquia (não há uma só no mundo: é a memória desta campanha),
+   mas o gesto lê-se igual: uma vez por dia, pelo mesmo `usarAtivo`, o mesmo
+   contador (o id do gesto é o da quest, que nunca é o de uma relíquia), a
+   mesma frase escrita («invoco O Último Degrau»). Só abre com o `ativo` na
+   peça — despertarArtefacto só o põe no exaltado — e com o efeito escrito. */
+function gestoDoArtefacto(it) {
+  const a = it && it.artefacto;
+  const g = a && a.gesto;
+  if (!g || !g.efeito || typeof g.efeito !== "object" || typeof a.id !== "string" || it.ativo.id !== a.id) return null;
+  return {
+    id: a.id, nome: it.nome || g.nome, tipo: it.tipo, historia: it.descricao || "",
+    ativo: { nome: it.ativo.nome || g.nome, diz: it.ativo.diz || g.diz || "", efeito: g.efeito },
+  };
 }
 
 export function podeUsarAtivo(pers, rel, { dia = 0, sintonizado = true } = {}) {

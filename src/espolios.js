@@ -84,7 +84,7 @@ import { RELIQUIAS, itemDaReliquia } from "./relicas.js";
 import { KIT_INICIAL } from "./kit-inicial.js";
 import { avaliarCondicao } from "./condicoes-da-quest.js";
 import { contrair } from "./lugar.js";
-import { compararItem, rotuloDoEquipar, encaixeDoItem } from "./comparar-item.js";
+import { compararItem, rotuloDoEquipar, encaixeDoItem, fraseDaTroca } from "./comparar-item.js";
 
 /* ============================================================
    1. AS TABELAS
@@ -692,12 +692,65 @@ export function despertarArtefacto(item, contexto) {
 }
 
 /* ============================================================
+   5b. O QUE O ARTEFACTO AINDA PROMETE — promessaDoArtefacto(item, nivel)
+   (TE10-1, 09/11, pedido do `desenho`: o veredito e a cerimónia do
+   despertar mostram quando a peça acorda e o que acorda nela, e a tela não
+   soma níveis nem lê PODERES à mão — regra na tela é número fora de tabela.)
+   `nivel`: o do herói agora (para `faltamNiveis`).
+   → null para o que não é artefacto (ou lixo); senão {
+       genero, estado,
+       proximo: "desperto" | "exaltado" | null   (a lembrança e o exaltado: null),
+       nivelQueAcorda: o nível em que o próximo estado chega sozinho (o da
+         peça ganha + DESPERTAR_DO_ARTEFACTO[proximo].quando.niveis), ou null
+         (sem próximo, ou para lá do nível 20),
+       faltamNiveis: quanto falta até lá (0: acorda no fim deste turno), ou null,
+       porProva: { quests, temperaturas } — a quest à altura concluída que
+         também o acorda —, ou null,
+       porConfronto: o confronto final concluído também o acorda,
+       poderes: [{ id, nome, diz, aceso, acordaEm }] — só os passivos que esta
+         peça pode de facto acender (o degrau e o encaixe, a régua de
+         comOsPassivos), pela ordem em que acordam,
+       gesto: { nome, diz, aceso, acordaEm } | null }
+   Tudo de DESPERTAR_DO_ARTEFACTO, PODERES e `item.artefacto`. Nada no save.
+   ============================================================ */
+export function promessaDoArtefacto(item, nivel) {
+  const it = obj(item);
+  const a = it && obj(it.artefacto);
+  if (!a || typeof a.id !== "string") return null;
+  const D = DESPERTAR_DO_ARTEFACTO;
+  const ordem = D.ordem;
+  const estado = ordem.includes(a.estado) ? a.estado : ordem[0];
+  const genero = a.genero === "lembranca" ? "lembranca" : "artefacto";
+  const i = ordem.indexOf(estado);
+  const proximo = genero === "lembranca" || i >= ordem.length - 1 ? null : ordem[i + 1];
+  const q = proximo ? obj(D[proximo].quando) || {} : {};
+  const alvo = Number.isFinite(q.niveis) ? nivelDe(a.nivel) + q.niveis : null;
+  /* para lá da escala de níveis (a de nivelDe) não acorda por nível */
+  const nivelQueAcorda = alvo != null && nivelDe(alvo) === alvo ? alvo : null;
+  const acordaEm = (cond) => (genero === "lembranca" ? (cond(D[ordem[0]]) ? ordem[0] : null) : ordem.find((e) => cond(D[e])) || null);
+  const tier = tierDe(it.raridade);
+  const podem = arr(a.passivos).map((id) => PODERES.find((p) => p.id === id)).filter((p) => p && p.tier <= tier && arr(p.slots).includes(it.tipo));
+  const maxPassivos = Math.max(...ordem.map((e) => D[e].passivos));
+  const acesos = D[estado].passivos;
+  const g = obj(a.gesto);
+  return {
+    genero, estado, proximo, nivelQueAcorda,
+    faltamNiveis: nivelQueAcorda != null ? Math.max(0, nivelQueAcorda - nivelDe(nivel)) : null,
+    porProva: proximo && Number.isFinite(q.quests) && q.quests > 0 ? { quests: q.quests, temperaturas: [...arr(q.temperaturas)] } : null,
+    porConfronto: !!(proximo && q.confronto),
+    poderes: podem.slice(0, maxPassivos).map((p, k) => ({ id: p.id, nome: p.nome, diz: p.diz, aceso: k < acesos, acordaEm: acordaEm((st) => st.passivos > k) })),
+    gesto: g && typeof g.nome === "string" ? { nome: g.nome, diz: typeof g.diz === "string" ? g.diz : "", aceso: !!D[estado].gesto, acordaEm: acordaEm((st) => !!st.gesto) } : null,
+  };
+}
+
+/* ============================================================
    6. O MOMENTO — revelacaoDoEspolio(paga, heroi, { emCombate })
    O que é do SISTEMA no fecho (a carta que vira é da tela, TE10): a ORDEM —
    as moedas, o XP, os itens por raridade crescente, a peça com nome por
    último —, e por cada peça a comparação com o que está no encaixe
    (`compararItem`), se pode equipar já e o rótulo do botão
-   («Equipar · CA 15→16», `rotuloDoEquipar`).
+   («Equipar · CA 15→16», `rotuloDoEquipar`), e o outro lado (TE10-2):
+   `sai` (o que sai do encaixe, ou null) e `troca` (fraseDaTroca).
    → [] para lixo; senão [{ tipo: "moedas"|"xp"|"favor"|"achado"|"item", … }].
    ============================================================ */
 export function revelacaoDoEspolio(paga, heroi, opcoes) {
@@ -714,9 +767,14 @@ export function revelacaoDoEspolio(paga, heroi, opcoes) {
   const itens = arr(p.itens).filter(obj).map((item, i) => ({ item, i })).sort((a, b) => peso(a.item) - peso(b.item) || a.i - b.i);
   for (const { item } of itens) {
     const slot = encaixeDoItem(item);
-    if (!slot) { out.push({ tipo: "item", item, slot: null, linhas: [], podeEquipar: false, rotulo: "" }); continue; }
+    if (!slot) { out.push({ tipo: "item", item, slot: null, linhas: [], podeEquipar: false, rotulo: "", sai: null, troca: "" }); continue; }
     const c = compararItem(h, item, slot, { emCombate });
-    out.push({ tipo: "item", item, slot, linhas: c.linhas, dorme: c.dorme, podeEquipar: !!(c.troca && c.troca.ok), motivo: c.troca && !c.troca.ok ? c.troca.motivo : "", rotulo: rotuloDoEquipar(c.linhas) });
+    /* TE10-2 (09/11, pedido do `desenho`): o outro lado da troca — o que sai
+       do corpo ao equipar já (o nome do que está no encaixe, ou null) e o
+       tempo da troca em palavras. O veredito antes do clique mostra os dois
+       lados; compararItem já os sabia, e a revelação deitava-os fora. */
+    out.push({ tipo: "item", item, slot, linhas: c.linhas, dorme: c.dorme, podeEquipar: !!(c.troca && c.troca.ok), motivo: c.troca && !c.troca.ok ? c.troca.motivo : "", rotulo: rotuloDoEquipar(c.linhas),
+      sai: obj(c.atual) && typeof c.atual.nome === "string" && c.atual.nome ? c.atual.nome : null, troca: fraseDaTroca(slot) });
   }
   return out;
 }

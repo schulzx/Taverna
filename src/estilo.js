@@ -3700,6 +3700,124 @@ export const MAPA_VIVO = {
 };
 
 /* ============================================================
+   TE · OS ESPÓLIOS NA TELA (09/11/2026) — formas.md §TE; Figma 334:2.
+   A carta que vira, o achado que pousa, a arma que acorda. A ordem das
+   peças é de revelacaoDoEspolio (espolios.js): a tela nunca a refaz. A
+   conta da linha do tempo (o teto, a antecipação, a relíquia) é pura e
+   mora em espolio-na-tela.js; quem desenha é painel-espolio.jsx.
+   Nenhuma cor nova: tudo nomeia T, COR_DA_RARIDADE, ENCAIXE e a moldura.
+   ============================================================ */
+export const REVELACAO_DO_ESPOLIO = {
+  veu: CERIMONIA_DO_NIVEL.veu,                             /* o mesmo da subida, de propósito */
+  rotulo: { de: 120, dura: 320, sobe: 8, coracao: 640 },   /* coracao: o tipo 2 entra devagar */
+  xp: { de: 360, dura: 700 },
+  moedas: { de: 560, dura: 500 },
+  favor: { de: 1060, dura: 200 },
+  chegam: { de: 1200, dura: 220, entre: 90, sobe: 16, curva: MOVIMENTO_DO_DADO.curva },
+  vira: { meia: 160, abre: 160, assenta: 240, entre: 120 },
+  antecipacao: { dura: 360, graus: 2, vezes: 2, vaza: { de: 0.55, ate: 0.85 }, desde: "raro" },  /* só a última */
+  veredito: { dura: 220, troca: 120 },
+  teto: 4000,                                              /* com mais cartas, vira.entre encolhe */
+  reduzido: CERIMONIA_DO_NIVEL.reduzido,
+};
+/* a luz ao assentar, por raridade (alfa do halo; brilho = passa uma vez) */
+export const LUZ_DA_RARIDADE = {
+  comum: null, incomum: null,
+  raro: { brilho: 400 }, epico: { halo: 0.3 },
+  lendario: { halo: ENCAIXE.brilho.fixo, lume: ENCAIXE.brilho },
+  unico: "reliquia",
+};
+/* a carta (334:325): 120 × 168 de base. As coordenadas de dentro são as do
+   componente, em unidades da carta de 120: a luz (88 × 72 em 14,10), o
+   ícone em 26,14, o nome em 88 (largura 104), o fio do despertar em 122,
+   a placa em 140; o selo «melhor» em 50,4. */
+export const CARTA_DO_ESPOLIO = {
+  lado: 120, alto: 168, raio: 10, icone: 64, placa: 26, nome: { tamanho: 12, entrelinha: 15 }, rotulo: 11,
+  escala: { telefone: 0.8, mesa: 1.27, despertar: 1.6, reliquia: 1.4 },
+  entre: { telefone: 16, mesa: 20 },
+  costas: { chao: T.couro, filete: 8, selo: 40, estrela: 20,
+            vaza: { raio: 12, raioForte: 16, alfa: 0.4, alfaForte: 0.55, desde: "raro", forteDesde: "lendario" } },
+  escolhida: { anel: 3, cor: T.amber },
+  marcas: ENCAIXE.marcas,
+  dentro: {
+    borda: 2, luz: { x: 14, y: 10, largura: 88, alto: 72 }, icone: { x: 26, y: 14 },
+    nome: { y: 88, largura: 104 }, fio: { y: 122 }, placa: { y: 140, espaco: 0.14 },
+    melhor: { x: 50, y: 4, tamanho: 10, raio: 8 }, selo: { traco: 2 },
+  },
+};
+/* o veredito (335:119): o botão é o da gaveta */
+export const VEREDITO_DO_ESPOLIO = {
+  largura: { telefone: 343, mesa: 360 }, enchimento: 16, vao: 10, raio: 12,
+  nome: 20, meta: 13, historia: 14, linha: 13, sai: 12, botao: ALVOS.piso,
+  coluna: 880, mesaDesde: 1024,   /* a mesa (337:233), de 1024 para cima: as cartas à esquerda e o veredito à direita, numa coluna de 880 ao centro */
+};
+/* o fio do despertar (334:24): três casas de 14, 6 entre elas; a runa é um
+   losango de 8; a estrela do gesto ocupa a casa inteira */
+export const FIO_DO_DESPERTAR = { casa: 14, entre: 6, runa: 8, traco: 1, acesa: MOLDURA_POR_DEGRAU.ouro.meio, furo: PECAS_DA_MOLDURA.engaste, aro: T.lineStrong };
+/* a faixa do ganho (335:145) e a do fecho pequeno (337:531) */
+export const FAIXA_DO_GANHO = { barra: 8, raio: 4, alfaDoQueHavia: 0.55, moeda: 14, largura: { telefone: 343, mesa: 560 } };
+export const FAIXA_DO_FECHO = { alto: 32, raio: 16, barra: { largura: 40, alto: 6 }, entra: FIM_DA_LUTA.entra };
+/* o achado no caminho (335:166): o primeiro chip do recibo */
+export const CHIP_DO_ACHADO = { alto: 32, alvo: ALVOS.piso, raio: 16, glifo: 20, fioDaPeca: 1.5, pousa: { cai: 8, dura: 180, brilho: 400 } };
+/* o despertar (337:368): irmã de CERIMONIA_DO_NIVEL */
+export const DESPERTAR_DA_TELA = {
+  veu: CERIMONIA_DO_NIVEL.veu,
+  carta: { de: 120, dura: 320, escalaDe: 0.9 },
+  luz: { de: 240, dura: 640 },
+  anel: { de: 600, dura: 800, de0: 0.7, ate: 1.15, alfa: 0.5 },
+  runa: { de: 900, dura: 520, faiscas: 10 },
+  nome: { de: 1300, dura: 420, escalaDe: 0.82, tamanho: 26 },   /* Cinzel Bold 26, na cor da raridade */
+  ganhos: CERIMONIA_DO_NIVEL.ganhos,
+  total: 2100,
+  reduzido: CERIMONIA_DO_NIVEL.reduzido,
+};
+/* a relíquia (337:410): por cima da cerimónia, quando chega a vez dela */
+export const RELIQUIA_DA_TELA = {
+  veu: VEU.semRetorno, outras: 0.4, apaga: 400,
+  lume: { cor: COR_DA_RARIDADE.unico.cor, alfa: 0.1, dura: 600 },
+  sobe: { dura: 500, curva: MOVIMENTO_DO_DADO.curva },
+  antecipacao: { dura: 600, vaza: { de: 0.55, ate: 0.9 } },
+  vira: { meia: 200, abre: 200 },
+  anel: { dura: 700, de0: 0.6, alfa: { de: 0.45, ate: 0.2 } },
+  estrela: 300, frase: { de: 200, dura: 280 },
+};
+/* uma cerimónia de cada vez; nunca com a luta aberta */
+export const FILA_DAS_CERIMONIAS = { ordem: ["espolio", "nivel", "despertar"], entre: 240, esperaALuta: true };
+/* o que a tela diz; {n} e {nome} vêm do sistema. As chaves de baixo do
+   «achaste» são as frases da §TE 6 (o leitor de ecrã) e das linhas do
+   veredito e do despertar no Figma (335:119, 337:368), escritas aqui para
+   a tela não ter frase solta: a raridade em palavra (o único é «relíquia»,
+   como a placa da carta diz), o estado do artefacto concordado com o
+   encaixe, e as palavras do resumo que a região viva lê uma vez. */
+export const PALAVRAS_DO_ESPOLIO = {
+  concluida: "CONCLUÍDA", coracao: "O QUE FICA", desperta: "DESPERTA", exalta: "EXALTA",
+  saltar: "Toque para saltar", continuar: "Continuar", equipar: "Equipar já", guardar: "Guardar na mochila",
+  naMochila: "Já está na mochila.", sai: "Sai {nome} — vai para a mochila.",
+  dorme: "O poder dorme: pede sintonia, e as tuas três já estão em uso. Serve de peça desde já.",
+  acorda: "acorda na próxima prova à altura, ou no nível {n}", exaltaQuando: "exalta-se no confronto, ou no nível {n}",
+  porAcordar: "o segundo poder, quando acordar", gesto: "o gesto, quando se exaltar",
+  reliquia: "Há {n} no mundo. Esta é tua.", achaste: "Achaste",
+  acordaSo: "acorda na próxima prova à altura", exaltaSo: "exalta-se no confronto",
+  favor: "{nome} fica a dever-te", experiencia: "EXPERIÊNCIA", nivel: "Nível {n}", moedas: "{n} moedas",
+  temNome: "tem nome", lembranca: "lembrança", consumivel: "Consumível", metaReliquia: "há {n} no mundo, e esta é tua",
+  porDia: "uma vez por dia", aindaDorme: "Ainda dorme: {nome} — {quando}", continuarToque: "Toque para continuar",
+  feita: "✓", examinar: "Examinar", pecas: "As peças", melhor: "melhor",
+  raridade: { comum: "comum", incomum: "incomum", raro: "raro", epico: "épico", lendario: "lendário", unico: "relíquia" },
+  feminino: ["arma", "armadura", "botas"],
+  estado: {
+    adormecido: { f: "Adormecida", m: "Adormecido" },
+    desperto: { f: "Desperta", m: "Desperto" },
+    exaltado: { f: "Exaltada", m: "Exaltado" },
+  },
+  leitor: {
+    ganhaste: "Ganhaste", experiencia: "{n} de experiência", moedas: "{n} moedas", e: " e ",
+    peca: "{q} peça", pecas: "{q} peças", quantas: ["", "Uma", "Duas", "Três", "Quatro", "Cinco", "Seis"],
+    melhor: "melhor que o teu", sobe: "sobe", desce: "desce", mais: "mais", menos: "menos",
+    desperta: "{nome} desperta.", exalta: "{nome} exalta-se.", ganha: "Ganha {nome}: {diz}.",
+  },
+};
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
@@ -4135,6 +4253,61 @@ export const MOVIMENTO_CSS = `
 .tv-folha-da-escolha { animation: tvMesaSobe ${ENCRUZILHADA.movimento.folha.dura}ms ease-out both; }
 .tv-veu-da-escolha { animation: tvVeuDaMesa ${ENCRUZILHADA.movimento.folha.dura}ms ease-out both; }
 
+/* TE · OS ESPOLIOS (formas.md §TE): a carta chega de costas, treme se for
+   rara, vira em duas metades (a face troca-se ENTRE elas, pelo estado da
+   peca, e nunca por backface-visibility: a face escondida assim continuava
+   na arvore de acessibilidade), e a luz vaza pela borda antes de virar.
+   Cada quadro tem aqui a sua duracao, lida das tabelas; o atraso e posto
+   pela peca (animation-delay), contado por cronogramaDoEspolio. O --sobe e
+   a --escala de tvCartaChega servem a chegada, a carta do despertar e a
+   reliquia que sobe; o --de/--ate da luz e do anel, a carta e a reliquia.
+   O anel fica a zero ate abrir (forwards, e nao both: o both mostrava-o
+   pequeno e a meio alfa durante o atraso).
+   As moedas e o XP contam sem relogio de JavaScript: o --tv-n e um inteiro
+   registado, animado de 0 ao alvo, e o contador do CSS escreve-o. */
+@property --tv-n { syntax: "<integer>"; initial-value: 0; inherits: false; }
+@keyframes tvCartaChega { from { opacity: 0; transform: translateY(var(--sobe, 0px)) scale(var(--escala, 1)); } to { opacity: 1; transform: none; } }
+@keyframes tvCartaTreme { 0%, 100% { transform: none; } 12.5%, 62.5% { transform: rotate(-${REVELACAO_DO_ESPOLIO.antecipacao.graus}deg); } 37.5%, 87.5% { transform: rotate(${REVELACAO_DO_ESPOLIO.antecipacao.graus}deg); } }
+@keyframes tvCartaViraA { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes tvCartaViraB { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes tvLuzVaza { from { opacity: var(--vaza-de); } to { opacity: var(--vaza-ate); } }
+@keyframes tvBrilhoPassa { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes tvAnelAbre { from { opacity: var(--anel-a0); transform: scale(var(--anel-de)); } to { opacity: var(--anel-a1); transform: scale(var(--anel-ate)); } }
+@keyframes tvRunaAcende { 0% { opacity: 0; transform: scale(.6); } 60% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: none; } }
+@keyframes tvAchadoPousa { from { opacity: 0; transform: translateY(-${CHIP_DO_ACHADO.pousa.cai}px); } to { opacity: 1; transform: none; } }
+@keyframes tvFaixaEnche { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes tvConta { from { --tv-n: 0; } to { --tv-n: var(--alvo); } }
+.tv-carta-chega { --sobe: -${REVELACAO_DO_ESPOLIO.chegam.sobe}px; animation: tvCartaChega ${REVELACAO_DO_ESPOLIO.chegam.dura}ms ${REVELACAO_DO_ESPOLIO.chegam.curva} both; }
+.tv-carta-treme { animation: tvCartaTreme ${REVELACAO_DO_ESPOLIO.antecipacao.dura}ms ease-in-out both; }
+.tv-carta-treme-longa { animation: tvCartaTreme ${RELIQUIA_DA_TELA.antecipacao.dura}ms ease-in-out both; }
+.tv-carta-vira-a { animation: tvCartaViraA ${REVELACAO_DO_ESPOLIO.vira.meia}ms ease-in both; }
+.tv-carta-vira-b { animation: tvCartaViraB ${REVELACAO_DO_ESPOLIO.vira.abre}ms ease-out both; }
+.tv-reliquia-vira-a { animation: tvCartaViraA ${RELIQUIA_DA_TELA.vira.meia}ms ease-in both; }
+.tv-reliquia-vira-b { animation: tvCartaViraB ${RELIQUIA_DA_TELA.vira.abre}ms ease-out both; }
+.tv-luz-vaza { --vaza-de: ${REVELACAO_DO_ESPOLIO.antecipacao.vaza.de}; --vaza-ate: ${REVELACAO_DO_ESPOLIO.antecipacao.vaza.ate}; animation: tvLuzVaza ${REVELACAO_DO_ESPOLIO.antecipacao.dura}ms ease-in both; }
+.tv-luz-vaza-longa { --vaza-de: ${RELIQUIA_DA_TELA.antecipacao.vaza.de}; --vaza-ate: ${RELIQUIA_DA_TELA.antecipacao.vaza.ate}; animation: tvLuzVaza ${RELIQUIA_DA_TELA.antecipacao.dura}ms ease-in both; }
+.tv-brilho-passa { animation: tvBrilhoPassa ${LUZ_DA_RARIDADE.raro.brilho}ms ease-out both; }
+.tv-achado-brilho { animation: tvBrilhoPassa ${CHIP_DO_ACHADO.pousa.brilho}ms ease-out both; }
+.tv-anel-abre { --anel-de: ${DESPERTAR_DA_TELA.anel.de0}; --anel-ate: ${DESPERTAR_DA_TELA.anel.ate}; --anel-a0: ${DESPERTAR_DA_TELA.anel.alfa}; --anel-a1: 0; opacity: 0; animation: tvAnelAbre ${DESPERTAR_DA_TELA.anel.dura}ms ease-out forwards; }
+.tv-anel-reliquia { --anel-de: ${RELIQUIA_DA_TELA.anel.de0}; --anel-ate: 1; --anel-a0: ${RELIQUIA_DA_TELA.anel.alfa.de}; --anel-a1: ${RELIQUIA_DA_TELA.anel.alfa.ate}; opacity: 0; animation: tvAnelAbre ${RELIQUIA_DA_TELA.anel.dura}ms ease-out forwards; }
+.tv-runa-acende { animation: tvRunaAcende ${DESPERTAR_DA_TELA.runa.dura}ms ease-out both; }
+.tv-estrela-acende { animation: tvRunaAcende ${RELIQUIA_DA_TELA.estrela}ms ease-out both; }
+.tv-achado-pousa { animation: tvAchadoPousa ${CHIP_DO_ACHADO.pousa.dura}ms ${MOVIMENTO_DO_DADO.curva} both; }
+.tv-despertar-carta { --escala: ${DESPERTAR_DA_TELA.carta.escalaDe}; animation: tvCartaChega ${DESPERTAR_DA_TELA.carta.dura}ms ease-out both; }
+.tv-reliquia-sobe { --sobe: ${REVELACAO_DO_ESPOLIO.chegam.sobe}px; animation: tvCartaChega ${RELIQUIA_DA_TELA.sobe.dura}ms ${RELIQUIA_DA_TELA.sobe.curva} both; }
+.tv-reliquia-apaga { animation: tvCerimoniaVeu ${RELIQUIA_DA_TELA.apaga}ms ease-out both; }
+.tv-reliquia-lume { animation: tvCerimoniaVeu ${RELIQUIA_DA_TELA.lume.dura}ms ease-out both; }
+.tv-reliquia-frase { animation: tvCerimoniaSobe ${RELIQUIA_DA_TELA.frase.dura}ms ease-out both; }
+.tv-espolio-rotulo { animation: tvCerimoniaSobe ${REVELACAO_DO_ESPOLIO.rotulo.dura}ms ease-out both; }
+.tv-espolio-rotulo-coracao { animation: tvCerimoniaSobe ${REVELACAO_DO_ESPOLIO.rotulo.coracao}ms ease-out both; }
+.tv-espolio-favor { animation: tvCerimoniaEsvai ${REVELACAO_DO_ESPOLIO.favor.dura}ms ease-out both; }
+.tv-espolio-veredito { animation: tvCerimoniaSobe ${REVELACAO_DO_ESPOLIO.veredito.dura}ms ease-out both; }
+.tv-faixa-enche { transform-origin: left center; animation: tvFaixaEnche ${REVELACAO_DO_ESPOLIO.xp.dura}ms ease-out both; }
+.tv-conta { --tv-n: var(--alvo); counter-reset: tvn var(--tv-n); }
+.tv-conta::after { content: counter(tvn); }
+.tv-conta-xp { animation: tvConta ${REVELACAO_DO_ESPOLIO.xp.dura}ms ease-out both; }
+.tv-conta-moedas { animation: tvConta ${REVELACAO_DO_ESPOLIO.moedas.dura}ms ease-out both; }
+
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
   /* TL: a mesa puxada, o veu e a gaveta do horizonte aparecem secos */
@@ -4250,6 +4423,14 @@ export const MOVIMENTO_CSS = `
      esperar os 120). */
   .tv-ficha-entra, .tv-cartao-entra { animation: none; opacity: 1; transform: none; }
   .tv-ficha-sai { animation: none; opacity: 0; }
+  /* TE · OS ESPOLIOS parados: so o quadro final, num esvanecer (a peca poe
+     tv-cerimonia-reduzida na raiz); a luz e os aneis no valor de repouso, a
+     barra cheia e os numeros no alvo (o --tv-n da regra base). */
+  .tv-carta-chega, .tv-carta-treme, .tv-carta-treme-longa, .tv-carta-vira-a, .tv-carta-vira-b, .tv-reliquia-vira-a, .tv-reliquia-vira-b, .tv-despertar-carta, .tv-reliquia-sobe { animation: none; opacity: 1; transform: none; }
+  .tv-luz-vaza, .tv-luz-vaza-longa, .tv-brilho-passa, .tv-achado-brilho { animation: none; opacity: 0; }
+  .tv-anel-abre, .tv-anel-reliquia { animation: none; opacity: var(--anel-a1); transform: none; }
+  .tv-runa-acende, .tv-estrela-acende, .tv-achado-pousa, .tv-reliquia-apaga, .tv-reliquia-lume, .tv-reliquia-frase, .tv-espolio-rotulo, .tv-espolio-rotulo-coracao, .tv-espolio-favor, .tv-espolio-veredito, .tv-faixa-enche { animation: none; opacity: 1; transform: none; }
+  .tv-conta-xp, .tv-conta-moedas { animation: none; }
 }
 `;
 
@@ -4802,6 +4983,11 @@ export const SUPERFICIES_CSS = `
   text-decoration-thickness: ${PROSA_TOCAVEL.sublinhado.espessura}px; text-underline-offset: ${PROSA_TOCAVEL.sublinhado.afastado}px; text-decoration-skip-ink: auto;
   transition: background-color ${PROSA_TOCAVEL.dura}ms ease-out, box-shadow ${PROSA_TOCAVEL.dura}ms ease-out, text-decoration-color ${PROSA_TOCAVEL.dura}ms ease-out; }
 .tv-nome-tocavel::after { content: ""; position: absolute; top: 0; bottom: 0; left: -${PROSA_TOCAVEL.alvo.lado}px; right: -${PROSA_TOCAVEL.alvo.lado}px; }
+/* TE · O CHIP DO ACHADO (formas.md §TE 3 e §TE 6): mede 32 de alto e o
+   ::after alarga o toque a ALVOS.piso, para cima e para baixo, como o nome
+   tocavel faz para os lados. */
+.tv-chip-do-achado { position: relative; }
+.tv-chip-do-achado::after { content: ""; position: absolute; left: 0; right: 0; top: -${(CHIP_DO_ACHADO.alvo - CHIP_DO_ACHADO.alto) / 2}px; bottom: -${(CHIP_DO_ACHADO.alvo - CHIP_DO_ACHADO.alto) / 2}px; }
 .tv-nome-tocavel[data-tom="hostil"] { text-decoration-style: ${PROSA_TOCAVEL.sublinhado.estiloHostil}; text-decoration-color: ${PROSA_TOCAVEL.sublinhado.corHostil}; }
 @media (hover: hover) and (pointer: fine) { .tv-nome-tocavel:hover { text-decoration-style: solid; } }
 .tv-nome-tocavel:focus-visible { text-decoration-style: solid; }

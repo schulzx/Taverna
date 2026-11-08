@@ -28,6 +28,12 @@
                                                      porque, apenasIds: ids })
                                                      — o ponteiro, a linha e o
                                                      envelope do cheio (09/11)
+         { ordem: "revelacao", quest, titulo, revelacao }  (TE9) o momento da
+                                                     recompensa: a lista de
+                                                     revelacaoDoEspolio (a
+                                                     ordem, a comparação, o
+                                                     «Equipar já») — a paga
+                                                     já entrou pelo motor
          { ordem: "calado", tipo, motivo }           sem órgão: vai ao calou
        A lista vazia quer dizer «nada a fazer»: o alvo já não está, ou a
        conta não muda nada. Nunca lança.
@@ -61,6 +67,7 @@ import { garantirQuestsDaEspinha } from "./quests-do-turno.js";
 import { garantirRelogios } from "../relogios.js";
 import { EFEITOS_DO_PLANO, fichaDoVilao } from "../plano-do-vilao.js";
 import { FASES } from "../vilao.js";
+import { revelacaoDoEspolio } from "../espolios.js";
 
 /* ---------------- A TABELA (se é texto de regra, é tabela) ----------------
    `orgao`: onde cada efeito ligado mora (para quem lê, e a suíte confere que
@@ -79,6 +86,10 @@ export const EFEITOS_NA_TELA = Object.freeze({
     relogio_regional: "os relógios da região (RELOGIOS_DA_REGIAO), pelo tiquear de sempre (relogios.js, avancar)",
     passo_do_plano: "o que o passo muda, cada coisa pelo seu órgão ou calada com o motivo (MUDA_DO_PLANO)",
     fim_do_plano: "o que o fim muda, pela mesma tabela (MUDA_DO_PLANO), com a região inteira por alvo",
+    /* TE9 (09/11): a paga já entrou (o motor aplica-a, para o replay a
+       reproduzir); à tela fica o MOMENTO — a ordem, a comparação com o que
+       o herói veste e o «Equipar já» (revelacaoDoEspolio, espolios.js) */
+    espolio: "a revelação no fecho (revelacaoDoEspolio, espolios.js): a carta que vira é da TE10; a paga, o motor já a aplicou",
   }),
   /* 09/11: vazio — as quatro que aqui moravam ganharam órgão (o favor e o
      QUEM É no livro de factos, pelo motor; o relógio da região e o plano
@@ -319,6 +330,10 @@ export function oQueOEfeitoPede(efeito, estado) {
     if (t === "dia") return n > 0 ? [{ ordem: "minutos", n: n * RELOGIO_DO_DIA.minutosDoDia }] : [];
     if (t === "relogio_regional") return ordemDosRelogios(daRegiao(E.relogios), n, RELOGIOS_DA_REGIAO.porque.quest);
     if (t === "passo_do_plano" || t === "fim_do_plano") return oQueOPlanoMuda(ef, E);
+    if (t === "espolio") {
+      const revelacao = obj(ef.paga) ? revelacaoDoEspolio(ef.paga, E.personagem, { emCombate: !!E.combate }) : [];
+      return revelacao.length ? [{ ordem: "revelacao", quest: typeof ef.quest === "string" ? ef.quest : "", titulo: typeof ef.titulo === "string" ? ef.titulo : "", revelacao }] : [];
+    }
     if (t === "morte") {
       const g = doGrupo(E, nome);
       if (!g) return [];

@@ -348,8 +348,10 @@ sec("1. NENHUM MÓDULO MUDO");
        o achado cai no chão, a linha vai à secção `momento`. Credor: o
        `backend` (motor) e o `oficial` (App), na MESMA fase. A entrada sai
        quando o motor ou o App o importar. `teste-espolios.mjs` e
-       `teste-regua-do-poder.mjs` são os primeiros leitores. */
-    "espolios.js": "09/11 · TE6 → TE9 (quests-do-turno.js e App.jsx)",
+       `teste-regua-do-poder.mjs` são os primeiros leitores.
+       — 09/11 (TE9, a mesma fase): o motor das quests importa-o (a paga no
+       fecho, os achados, o artefacto que acorda, o anúncio da pauta), e
+       motor/efeitos-da-quest.js a revelação; a entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

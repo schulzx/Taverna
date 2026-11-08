@@ -53,10 +53,13 @@ import { areiaDaAmpulheta, apertoDoPrazo, palavraDoPrazo } from "./hora-e-prazo.
    detalhe de estrutura é um nome que a próxima refatoração apaga em
    silêncio. Com `ariaLabel`, o nome vira explícito e para de depender de
    COMO os filhos estão organizados — undefined não muda nada para quem
-   já chama `Botao` sem o passar. */
-export function Botao({ children, onClick, primario, desativado, pequeno, corpo = false, className = "", ariaLabel }) {
+   já chama `Botao` sem o passar.
+   `descritoPor` (TE · 09/11): o id da linha que diz o outro lado do preço
+   (o «Sai …» do veredito do espólio, formas.md §TE 6) — o aria-describedby;
+   undefined, como o ariaLabel, não muda nada para quem não o passa. */
+export function Botao({ children, onClick, primario, desativado, pequeno, corpo = false, className = "", ariaLabel, descritoPor }) {
   return (
-    <button onClick={onClick} disabled={desativado} aria-label={ariaLabel}
+    <button onClick={onClick} disabled={desativado} aria-label={ariaLabel} aria-describedby={descritoPor}
       className={`${corpo ? "tv-body tv-anel-foco" : "tv-mono"} rounded-lg transition-all ${pequeno ? "px-3 py-1.5 text-xs" : corpo ? "px-5 py-3" : "px-5 py-3 text-sm"} ${className}`}
       style={{
         background: primario ? T.amber : "transparent",

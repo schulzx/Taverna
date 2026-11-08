@@ -60,6 +60,7 @@ import { nomeComDono, mesclarNPC, criarNPC, notaDoHomonimo, retomarContador, est
 import { aindaSoUmNome } from "../abertura.js";
 import { dadivasConcedidas, aplicarOMapa, aplicarAsMissoes, aplicarOsSinais } from "./meio-do-turno.js";
 import { aRespostaPelaPorta, portaAberta } from "./portas-do-narrador.js";
+import { oFeitoJaPago } from "./quests-do-turno.js";
 
 /* a nota do turno cresce como sempre cresceu no App: uma linha por vez,
    separadas por quebra, sem quebra na frente da primeira */
@@ -139,6 +140,18 @@ export function aplicar(estado, resposta, ctx = {}) {
       if (resp.mudancas && typeof resp.mudancas.mana === "number" && resp.mudancas.mana < 0) resp = { ...resp, mudancas: { ...resp.mudancas, mana: 0 } };
       travas.habUsada = false;
     }
+    /* TE9 (09/11) · A PAGA SUBSTITUI O FEITO. No turno a seguir ao fecho de
+       uma quest — o turno em que o Narrador o narra — a experiência dela já
+       entrou pela paga (motor/quests-do-turno.js, o anúncio na espinha), e
+       um `feito: marco` pelo mesmo fecho seria pagá-la duas vezes. Sai
+       calado: o sistema não fala de si mesmo. Mundo antigo: nada muda. */
+    try {
+      if (resp && resp.mudancas && resp.mudancas.feito != null && oFeitoJaPago(e0.espinha)) {
+        const sem = { ...resp.mudancas };
+        delete sem.feito;
+        resp = { ...resp, mudancas: sem };
+      }
+    } catch (e) { calou("o feito já pago", e); }
     /* ---- O TURNO VIRA UMA VEZ POR RODADA (v9.5, simplificado em v9.13) ----
        Buff de 3 turnos morria em uma rodada e meia: quem tinha dois movimentos
        mandava DUAS respostas por rodada, e cada uma descontava um turno. Havia

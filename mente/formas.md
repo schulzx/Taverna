@@ -15905,3 +15905,403 @@ soluções e desfechos, e a estante já existe —, e dá uma razão para jogar 
 **mostra ao jogador conteúdo que ele não viveu**: muda o que o produto revela, e um desfecho lido deixa de poder
 surpreender numa segunda campanha. Uma variante mais tímida, se ela quiser metade: só os verbos das cartas não
 escolhidas, nunca o que teria acontecido.
+
+
+## TE · os espólios na tela — a carta que vira, o achado que pousa, a arma que acorda (`desenho`, 09/11/2026)
+
+**O pedido, nas palavras dela (09/11):** *«itens que façam valer a pena a busca pela conclusão da missão, temos que
+usar todos os sentidos pra prender o player, além da ótima história ele precisa da recompensa e da sensação de ficar
+mais forte».* O sistema já decide tudo (`src/espolios.js`: `pagaDaQuest`, `revelacaoDoEspolio`, `achadosDaEtapa`,
+`achadoEscondido`, `despertarArtefacto`). Esta secção é **a forma** da TE10 (pauta, Fase TE). A régua de bolso:
+**o espólio aparece na proporção do que vale.** A peça ganha uma cerimónia, o achado ganha uma linha, a quest sem
+peça ganha um recibo, e a relíquia apaga a vela.
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página `334:2` «Os espólios · 09/11»):
+
+| peça / quadro | id |
+|---|---|
+| `Carta do espólio`: Raridade 6 × Face (costas, frente) × Estado (repouso, escolhida); propriedades `Nome`, `Melhor`, `Com nome`, `Ícone` (troca de instância com os 18 ícones da AAA) | `334:325` |
+| `Fio do despertar`: Estado (adormecido, desperto, exaltado) | `334:24` |
+| `Linha do ganho`: Sinal (sobe, desce, igual); `Rótulo` e `Antes → depois` por propriedade | `334:40` |
+| `Veredito do espólio`: Caso (peça, com nome, dorme, consumível, relíquia) | `335:119` |
+| `Faixa do ganho`: Estado (enchendo, subiu de nível) | `335:145` |
+| `Chip do achado`: Tipo (moedas, consumível, peça, peça melhor) | `335:166` |
+| **Espólio · 1 · o ganho, e as cartas de costas · 375** | `336:63` |
+| **Espólio · 2 · a carta que vira (os cinco quadros, com os ms)** | `336:98` |
+| **Espólio · 3 · o veredito (a carta com nome escolhida) · 375** | `336:198` |
+| **Espólio · 3 · o veredito · 1905** | `337:233` |
+| **Artefacto · o despertar (adormecida → desperta) · 375** | `337:368` |
+| **Relíquia · o confronto paga a mais rara · 375** | `337:410` |
+| **Achado no caminho · o par:** ANTES (hoje) / DEPOIS (o chip pousa, e o fecho pequeno) · 375 | `337:524` / `337:531` |
+
+Todas as cores das peças estão ligadas a variáveis que já existiam (`T · Mesa C (vela)` e `AAA · molduras vivas`:
+`raridade/*`, `moldura/ouro/meio`, `mesa/couro`). **Nenhuma cor nova nasce nesta fase.** O único literal é o chão da
+frente da carta, e esse é `COR_DA_RARIDADE[r].fundo` (já é tabela em `estilo.js:1190`; só não tem variável no Figma).
+
+### TE 1 · O que se decidiu, numa frase cada
+
+1. **Quatro tamanhos para quatro valores.** Quest fechada **com peça** → a cerimónia por cima da mesa (o véu da subida
+   de nível). Quest fechada **sem peça** (brasa, falha, o coração no meio ou no pior) → `Faixa do fecho`, um chip de
+   32 na página, debaixo da prosa do turno. **Achado no caminho** → um chip no recibo, nunca a soleira. **Relíquia** →
+   a cerimónia dentro da cerimónia: a vela apaga-se.
+2. **A carta vira.** Todas as peças chegam **de costas** e viram uma a uma, **da menos rara para a mais rara**. A
+   ordem é a de `revelacaoDoEspolio`, e a tela nunca a refaz. Do raro para cima, **a luz da raridade vaza pela borda
+   das costas** antes de virar: o jogador sabe que vem coisa boa, mas não sabe o quê.
+3. **O ganho vê-se como diferença.** A barra de XP mostra o que já havia (âmbar a 0,55) e o que entra agora (âmbar
+   cheio). As moedas contam. O favor é uma frase com o lugar («A capela fica a dever-te»), nunca a palavra do motor.
+4. **O veredito antes do clique, dos dois lados.** A carta escolhida abre por baixo o `Veredito do espólio`: as
+   linhas de `compararItem` (▲ e ▼ em forma **e** cor), **o que sai do corpo e para onde vai**, e o botão que diz o
+   preço, `rotuloDoEquipar(linhas, "Equipar já")`. É **o mesmo botão** do Equipar da gaveta (`255:506`): âmbar,
+   Spectral SemiBold 15, 48 de alto. Uma ação, uma forma.
+5. **Fechar nunca perde nada.** O que não se equipa já está na mochila (a fiação aplicou a paga antes de a
+   cerimónia abrir). «Continuar» fecha. «Guardar na mochila» é só a outra resposta, dita por extenso.
+6. **O artefacto mostra a promessa.** O `Fio do despertar` (duas runas e a estrela do gesto) vai na carta e no
+   veredito, com o estado escrito ao lado, e os poderes por acordar ficam à vista com o losango oco. **É a mesma lei
+   do engaste vazio da AAA §1: a promessa à vista.** Quando o artefacto acorda, há uma cerimónia irmã da subida de nível.
+7. **Uma cerimónia de cada vez** (`FILA_DAS_CERIMONIAS`): espólio → nível → despertar. Se o XP da quest passa o nível,
+   o selo aparece no fim da barra e a subida abre **depois** de o espólio fechar. Nunca com a luta aberta.
+8. **O coração tem outro tom.** Uma quest do tipo 2 que deixa lembrança abre com «O QUE FICA» em vez de
+   «CONCLUÍDA», o título demora o dobro a entrar e não há o clarão âmbar. É a fita de luto, não um troféu.
+9. **O som não se decidiu aqui** (§TE 9). A casa não tem som de efeito; proponho-o, e a decisão espera a pessoa.
+
+### TE 2 · A cerimónia do espólio, quadro a quadro
+
+**Quando:** a quest fecha e `pagaDaQuest(...).itens` tem pelo menos uma peça (`revelacaoDoEspolio` devolve ≥ 1 entrada
+`tipo: "item"`). **Onde:** por cima da mesa, como a subida (`336:63`).
+
+| ms | o quê | de que é feito |
+|---|---|---|
+| 0–240 | o véu | `CERIMONIA_DO_NIVEL.veu` (0,86), o mesmo de propósito |
+| 120–440 | o rótulo «CONCLUÍDA» (Cinzel 13, espaçado 0,32, `amber`) e o nome da quest (Cinzel Bold 28, `ink`) sobem 8 | o nome vem da ficha |
+| 360–1060 | **a barra de XP enche** (o ganho, por cima do que havia); o número conta até `+N` | `Faixa do ganho` |
+| 560–1060 | as moedas contam de 0 a `+N` | idem |
+| 1060 | o favor, se a paga o tem | idem |
+| 1200 → | **as cartas chegam de costas**, uma a cada 90 ms (220 cada, de 16 px acima, curva `MOVIMENTO_DO_DADO.curva`) | `Carta do espólio`, Face=costas |
+| depois | **cada carta vira**: meia-volta `scaleX 1 → 0` (160), a frente `0 → 1` (160), assenta (240, em paralelo com a seguinte); 120 entre viragens | Face=frente |
+| a última | **se for rara ou melhor, a antecipação**: treme ±2° duas vezes e a luz vaza de 0,55 a 0,85 (360) antes de virar | `336:98`, quadro 2 |
+| ao assentar a última | ela fica **escolhida** (anel âmbar de 3) e o veredito sobe por baixo (220) | `Veredito do espólio` |
+
+**Três cartas (comum, raro, épico) levam 3,5 s até ao veredito.** Com mais cartas o intervalo encolhe para caber no
+**teto de 4 s** (`REVELACAO_DO_ESPOLIO.teto`). **A luz da raridade ao assentar:** comum e incomum ficam só com o fio;
+raro tem um brilho que passa uma vez (400); épico, o halo fixo (0,30); lendário, o halo e o lume lento que o encaixe
+já tem (`ENCAIXE.brilho`); único, a sequência da relíquia (§TE 5).
+
+**Saída, sempre:** o véu inteiro é o botão «Toque para saltar» desde o primeiro quadro. **O primeiro toque salta para
+o quadro final** (todas viradas, a melhor escolhida, os números no fim) e nunca fecha. Esc faz o mesmo; no quadro
+final, Esc fecha. **`prefers-reduced-motion`:** nada chega, nada vira, nada treme, as barras e os números já estão no
+fim. O quadro final aparece num esvanecer de 160 ms (`CERIMONIA_DO_NIVEL.reduzido`), com os halos parados no valor fixo.
+
+**Escolher outra carta:** tocar numa carta escolhe-a e troca o veredito por baixo (120 ms, sem animação de entrada).
+**375** (`336:198`): as cartas a ×0,8 (96 × 134) numa fila de três, o veredito por baixo (343) e «Continuar» preso ao
+fundo. No caso mais longo (a carta com nome) a cerimónia mede 867 e rola 55 px, mas o «Equipar já» acaba a 723:
+**fica à vista sem rolar**. **Mesa ≥ 1024** (`337:233`): uma coluna de 880 ao centro; as cartas a ×1,27 (152 × 212)
+à esquerda, o veredito (360) à direita, a faixa (560) por cima.
+
+### TE 3 · O achado no caminho — uma linha, nunca a soleira
+
+**A soleira é o lugar da decisão** (TL 3: «o momento tem UM lugar»), e um achado não pede decisão nenhuma: o objeto
+caiu no chão (TE9, `chao.js`) e está ali. Pôr cada achado na soleira custava **56 px de prosa por etapa** (pode
+haver um por etapa, `ORCAMENTO_DO_ESPOLIO.achadosPorEtapa`). A linha custa **0 px**, porque o recibo do turno já
+existe (`RECIBO`, A1 §1). Por isso:
+
+- O achado é um **`Chip do achado`** no recibo do turno em que caiu, e é **o primeiro da fila**: o objeto é o
+  acontecimento do turno. A regra de corte do recibo não muda (o primeiro que não cabe fecha a fila).
+- **Pousa:** cai 8 px e assenta (180 ms, `MOVIMENTO_DO_DADO.curva`). Se for peça, um brilho na cor da raridade passa
+  uma vez (400). Com reduced motion, aparece já pousado.
+- **Peça** leva a borda da raridade a 1,5; **peça melhor** (`compararItem` com ≥ 1 linha `ok`) leva «▲ CA +1» em
+  `ok`. Moedas e consumível ficam com a borda `lineStrong`.
+- **Tocar abre o que o chão já abre** (o exame e o recolher). A forma não inventa um segundo inventário.
+- **O achado escondido** tem a mesma forma. «Ninguém diz que existe» vale também para a tela: nada o anuncia antes, e
+  depois é um achado como os outros. O leitor de ecrã diz «Achaste».
+- **O par** (`337:524` / `337:531`): antes, a frase «🧺 No chão: … — toque em EXAMINAR para recolher» no meio da prosa
+  (`App.jsx:14452`); depois, o chip. A informação é a mesma, com a raridade e o «melhor» à vista, e a prosa fica sem
+  uma frase de máquina no meio.
+
+**O fecho sem peça (`Faixa do fecho`)** mora no mesmo sítio: um chip de 32 debaixo da prosa do turno do fecho, com
+«✓ {quest}», a mini-barra de 40 × 6 (o ganho por cima do que havia), «+XP» em `amber`, a moeda e «+N». Entra com o
+`.tv-fim-entra` que já existe (240). Se o XP passa o nível, a subida abre pela fila, como sempre.
+
+### TE 4 · O artefacto com nome — a primeira vez, e o despertar
+
+**A primeira vez é a própria cerimónia do espólio**, com a carta `Com nome` por último: o nome em Cinzel e o
+`Fio do despertar` por baixo dele (a primeira runa acende ao assentar, 220). No veredito (`335:119`, Caso=com nome)
+vêm a **história** (Spectral Itálico 14, `inkMeio`), o **estado** escrito ao lado do fio («Adormecida · acorda na
+próxima prova à altura, ou no nível 10»), a comparação de agora e **os poderes por acordar**, com o losango oco em
+`inkDim` («◇ Empunhadura Justa — o segundo poder, quando acordar»; «◇ O Último Degrau — o gesto, quando se exaltar»).
+«Prova à altura» é a fogueira e o incêndio ditos sem o nome do mecanismo. A lembrança do coração usa a mesma carta
+**sem o fio** (não cresce), e a linha de cima diz de quem é («Amuleto · Incomum · lembrança de Gil»).
+
+**É aqui que mora o «ficar mais forte» do nível 11 em diante.** A régua da TE7 provou que, a partir daí, a peça da
+quest fica um degrau abaixo do teto (`TETO_DE_RARIDADE_DO_NIVEL.daQuest`) e quem sobe é o artefacto. Por isso o
+despertar ganha cerimónia própria, **irmã da subida de nível** (`337:368`), e entra na mesma fila:
+
+| ms | o quê |
+|---|---|
+| 0–240 | o véu (0,86) |
+| 120–440 | a carta entra ao centro a ×1,6 (de 0,9) |
+| 240–880 | a luz da raridade sobe de baixo (a da subida, na cor do item) |
+| 600–1400 | o anel abre-se à volta da carta (0,7 → 1,15, alfa 0,5 → 0) |
+| 900–1420 | **a runa nova acende** (0,6 → 1,12 → 1, `moldura/ouro/meio`) e saltam 10 faíscas na cor da raridade |
+| 1300–1720 | «DESPERTA» ou «EXALTA» (Cinzel 15 espaçado, `amber`) e o nome (Cinzel Bold 26 na cor da raridade, 0,82 → 1) |
+| 1700 + 120 por linha | os ganhos: «+ Empunhadura Justa · Força +1 — {diz}» em `ok`; «Ainda dorme: …» em `inkDim` |
+
+**Total: 2,1 s**, sem escolha (não há nada a decidir, o poder já é teu). A saída é igual à da subida: o primeiro toque
+salta para o fim e o segundo fecha. Com reduced motion, o quadro final em 160. **Exaltar** acende a estrela (forma
+diferente das runas, para o gesto se ler sem cor), e a linha de ganho é o gesto, «✦ O Último Degrau, uma vez por
+dia — {diz}». O gesto passa a morar onde o gesto das relíquias já mora (`usarAtivo`).
+
+### TE 5 · A relíquia do confronto — a vela apaga-se
+
+Sai uma vez em cinco, no confronto final, e só uma por campanha (`RELIQUIA_DO_CONFRONTO`). É **sempre a última carta**
+(peso 99 em `revelacaoDoEspolio`, e a paga põe-na no fim). Quando chega a vez dela (`337:410`):
+
+1. **o véu desce a 0,94** (`VEU.semRetorno`) em 400, as outras cartas descem a 0,4, **o lume âmbar do fundo apaga-se**
+   e no lugar dele acende-se um lume turquesa (0 → 0,10, 600). É a única vez no jogo em que a luz da mesa muda de cor;
+2. a carta **sobe da fila para o centro**, a ×1,4 (500, `MOVIMENTO_DO_DADO.curva`), ainda de costas;
+3. **a antecipação longa:** treme, e a luz vaza de 0,55 a 0,9 (600);
+4. **vira** (200 + 200); o anel turquesa abre-se à volta (0,6 → 1, alfa 0,45 → 0,2, 700) e a estrela de quatro pontas
+   desenha-se no canto (300);
+5. por baixo aparece «Há dez no mundo. Esta é tua.» (Spectral Itálico 14; o número é `RELIQUIAS.length`, nunca o
+   literal), e depois o veredito, Caso=relíquia: a história de `relicas.js`, o gesto em turquesa («✦ Banquete, uma
+   vez por dia — …»), a comparação e o «Equipar já».
+
+**Soma 2,4 s à cerimónia**, no máximo uma vez por campanha. Saltar leva ao quadro final, como sempre. Com reduced
+motion, o quadro final já com a luz turquesa, sem subir nem tremer.
+
+### TE 6 · O leitor de ecrã, o teclado e os alvos
+
+- **A cerimónia** é `role="dialog"` `aria-modal="true"`, com `aria-labelledby` no nome da quest, e o foco fica preso.
+  Durante a animação o foco está no véu-botão («Saltar»). No quadro final passa ao «Equipar já» da carta escolhida
+  (ou a «Continuar», quando não há nada a equipar).
+- **Uma região `aria-live="polite"` diz o resumo uma vez** quando chega o quadro final (logo no início, com reduced
+  motion): «Ganhaste 269 de experiência e 98 moedas. A capela fica a dever-te. Três peças: Ataduras de Mortalha,
+  comum; Anel do Copista, raro, melhor que o teu; A Que Subiu a Escada, épico, tem nome.» (WCAG 4.1.3.)
+- **As cartas são um `radiogroup`** («As peças»), e cada carta é um `radio` com `aria-checked`. As setas mudam a
+  escolhida com *roving tabindex* (a lei de E4 §3). Nome acessível: «A Que Subiu a Escada, épico, arma, tem nome.
+  Iniciativa sobe 3.» As costas não têm nome acessível: só entram no grupo quando viram.
+- **«Equipar já»** tem por nome o preço (`rotulo`) e `aria-describedby` na linha «Sai …», que é o outro lado.
+  Os ▲ ▼ são `aria-hidden`; a linha diz «sobe» e «desce» em texto escondido.
+- **O despertar** diz «A Que Subiu a Escada desperta. Ganha Empunhadura Justa: Força mais 1.»
+- **O chip do achado** é um botão: «Achaste: Anel do astrónomo, raro, melhor que o teu (CA mais 1). Examinar.»
+- **Alvos:** cartas de 96 × 134 (telefone) e 152 × 212 (mesa); botões de 48 (`ALVOS.piso`). O chip mede 32 de alto e
+  alarga o toque a 48 com o `::after` (como faz `PROSA_TOCAVEL.alvo`).
+
+### TE 7 · O contraste, medido (WCAG 2.2; a conta de sempre, em `node`)
+
+O véu mede-se no **pior chão que pode ter por baixo**: 0,86 de preto sobre o pergaminho dá `#211F1B` (sobre o feltro,
+`#030504`). O da relíquia, 0,94 sobre o pergaminho, dá `#0E0D0C`.
+
+| par | contraste | piso |
+|---|---|---|
+| `ink` · `inkMeio` · `inkDim` sobre o véu (pior) | 13,42 · 9,26 · 6,06 | 4,5 |
+| `amber` (o rótulo, o +XP) sobre o véu (pior) | 7,78 | 4,5 |
+| raridade (o nome do veredito) sobre `panel`: comum · incomum · raro · épico · lendário · único | 7,77 · 8,10 · 6,77 · **5,71** · 8,05 · 9,43 | 4,5 |
+| `ink` (o nome na carta) sobre `COR_DA_RARIDADE.fundo`, o pior | 9,56 | 4,5 |
+| a borda da carta (a cor da raridade) sobre o próprio fundo, o pior (épico) | 4,16 | 3 |
+| a raridade escrita na placa (`panel`), o pior (épico) | 5,71 | 4,5 |
+| `ok` ▲ · `danger` ▼ sobre `panel` | 8,98 · 5,35 | 4,5 |
+| a barra: `amber` sobre `panelSoft` | 7,00 | 3 |
+| o selo das costas: `rosa` sobre `couro` · o filete `lineStrong` sobre `couro` | 4,61 · 3,82 | 3 |
+| a runa acesa `ouro.meio` · a apagada (aro `lineStrong`) sobre o furo do engaste | 9,16 · 4,79 | 3 |
+| `onAccent` sobre `amber` (o «Equipar já») | 8,68 | 4,5 |
+| `unico` · `ink` · `inkDim` sobre o véu da relíquia | 10,77 · 15,84 · 7,15 | 4,5 |
+
+**A raridade nunca é só cor** (WCAG 1.4.1): vai escrita na placa, e a carta leva as marcas do encaixe (gota, cantos,
+estrela). O épico nunca escreve na cor dele sobre o próprio fundo (4,16 não chega para letra): escreve na placa.
+
+### TE 8 · As tabelas (para `src/estilo.js`)
+
+```js
+/* TE · OS ESPÓLIOS NA TELA (09/11/2026) — formas.md §TE; Figma 334:2.
+   A ordem das peças é de revelacaoDoEspolio (espolios.js): a tela nunca a refaz. */
+export const REVELACAO_DO_ESPOLIO = {
+  veu: CERIMONIA_DO_NIVEL.veu,                             /* o mesmo da subida, de propósito */
+  rotulo: { de: 120, dura: 320, sobe: 8, coracao: 640 },   /* coracao: o tipo 2 entra devagar */
+  xp: { de: 360, dura: 700 },
+  moedas: { de: 560, dura: 500 },
+  favor: { de: 1060, dura: 200 },
+  chegam: { de: 1200, dura: 220, entre: 90, sobe: 16, curva: MOVIMENTO_DO_DADO.curva },
+  vira: { meia: 160, abre: 160, assenta: 240, entre: 120 },
+  antecipacao: { dura: 360, graus: 2, vezes: 2, vaza: { de: 0.55, ate: 0.85 }, desde: "raro" },  /* só a última */
+  veredito: { dura: 220, troca: 120 },
+  teto: 4000,                                              /* com mais cartas, vira.entre encolhe */
+  reduzido: CERIMONIA_DO_NIVEL.reduzido,
+};
+/* a luz ao assentar, por raridade (alfa do halo; brilho = passa uma vez) */
+export const LUZ_DA_RARIDADE = {
+  comum: null, incomum: null,
+  raro: { brilho: 400 }, epico: { halo: 0.3 },
+  lendario: { halo: ENCAIXE.brilho.fixo, lume: ENCAIXE.brilho },
+  unico: "reliquia",
+};
+/* a carta (334:325): 120 × 168 de base */
+export const CARTA_DO_ESPOLIO = {
+  lado: 120, alto: 168, raio: 10, icone: 64, placa: 26, nome: { tamanho: 12, entrelinha: 15 }, rotulo: 11,
+  escala: { telefone: 0.8, mesa: 1.27, despertar: 1.6, reliquia: 1.4 },
+  entre: { telefone: 16, mesa: 20 },
+  costas: { chao: T.couro, filete: 8, selo: 40, estrela: 20,
+            vaza: { raio: 12, raioForte: 16, alfa: 0.4, alfaForte: 0.55, desde: "raro", forteDesde: "lendario" } },
+  escolhida: { anel: 3, cor: T.amber },
+  marcas: ENCAIXE.marcas,
+};
+/* o veredito (335:119): o botão é o da gaveta */
+export const VEREDITO_DO_ESPOLIO = {
+  largura: { telefone: 343, mesa: 360 }, enchimento: 16, vao: 10, raio: 12,
+  nome: 20, meta: 13, historia: 14, linha: 13, sai: 12, botao: ALVOS.piso,
+};
+/* a faixa do ganho (335:145) e a do fecho pequeno (337:531) */
+export const FAIXA_DO_GANHO = { barra: 8, raio: 4, alfaDoQueHavia: 0.55, moeda: 14, largura: { telefone: 343, mesa: 560 } };
+export const FAIXA_DO_FECHO = { alto: 32, raio: 16, barra: { largura: 40, alto: 6 }, entra: FIM_DA_LUTA.entra };
+/* o achado no caminho (335:166): o primeiro chip do recibo */
+export const CHIP_DO_ACHADO = { alto: 32, alvo: ALVOS.piso, raio: 16, glifo: 20, fioDaPeca: 1.5, pousa: { cai: 8, dura: 180, brilho: 400 } };
+/* o despertar (337:368): irmã de CERIMONIA_DO_NIVEL */
+export const DESPERTAR_DA_TELA = {
+  veu: CERIMONIA_DO_NIVEL.veu,
+  carta: { de: 120, dura: 320, escalaDe: 0.9 },
+  luz: { de: 240, dura: 640 },
+  anel: { de: 600, dura: 800, de0: 0.7, ate: 1.15, alfa: 0.5 },
+  runa: { de: 900, dura: 520, faiscas: 10 },
+  nome: { de: 1300, dura: 420, escalaDe: 0.82 },
+  ganhos: CERIMONIA_DO_NIVEL.ganhos,
+  total: 2100,
+  reduzido: CERIMONIA_DO_NIVEL.reduzido,
+};
+/* a relíquia (337:410): por cima da cerimónia, quando chega a vez dela */
+export const RELIQUIA_DA_TELA = {
+  veu: VEU.semRetorno, outras: 0.4, apaga: 400,
+  lume: { cor: COR_DA_RARIDADE.unico.cor, alfa: 0.1, dura: 600 },
+  sobe: { dura: 500, curva: MOVIMENTO_DO_DADO.curva },
+  antecipacao: { dura: 600, vaza: { de: 0.55, ate: 0.9 } },
+  vira: { meia: 200, abre: 200 },
+  anel: { dura: 700, de0: 0.6, alfa: { de: 0.45, ate: 0.2 } },
+  estrela: 300, frase: { de: 200, dura: 280 },
+};
+/* uma cerimónia de cada vez; nunca com a luta aberta */
+export const FILA_DAS_CERIMONIAS = { ordem: ["espolio", "nivel", "despertar"], entre: 240, esperaALuta: true };
+/* o que a tela diz; {n} e {nome} vêm do sistema */
+export const PALAVRAS_DO_ESPOLIO = {
+  concluida: "CONCLUÍDA", coracao: "O QUE FICA", desperta: "DESPERTA", exalta: "EXALTA",
+  saltar: "Toque para saltar", continuar: "Continuar", equipar: "Equipar já", guardar: "Guardar na mochila",
+  naMochila: "Já está na mochila.", sai: "Sai {nome} — vai para a mochila.",
+  dorme: "O poder dorme: pede sintonia, e as tuas três já estão em uso. Serve de peça desde já.",
+  acorda: "acorda na próxima prova à altura, ou no nível {n}", exaltaQuando: "exalta-se no confronto, ou no nível {n}",
+  porAcordar: "o segundo poder, quando acordar", gesto: "o gesto, quando se exaltar",
+  reliquia: "Há {n} no mundo. Esta é tua.", achaste: "Achaste",
+};
+```
+
+**Os keyframes novos, em `MOVIMENTO_CSS`, todos com saída em `prefers-reduced-motion`:** `tv-carta-chega`,
+`tv-carta-treme`, `tv-carta-vira-a` / `tv-carta-vira-b` (as duas metades da viragem; a face troca-se entre elas por
+estado, nunca por `backface-visibility`, porque a face escondida assim continua na árvore de acessibilidade),
+`tv-luz-vaza`, `tv-brilho-passa`, `tv-anel-abre`, `tv-runa-acende` e `tv-achado-pousa`. **Os comentários deles vão sem
+crase** (a lei de R17: `MOVIMENTO_CSS` e `SUPERFICIES_CSS` são template-literais).
+
+### TE 9 · O som — a casa não tem, e eu proponho (não decido)
+
+**O que há:** um único `new Audio()` (`App.jsx:11069`), que é a **voz** do Narrador. Não há som de efeito nenhum,
+nem ficheiro de áudio. O pedido dela fala de «todos os sentidos», e o espólio é onde o som rende mais. Mas som é peso
+novo (o jogador passa a ouvir, e quem joga no autocarro tem de o poder calar), por isso **a decisão fica com ela**.
+
+**Como eu o faria, se ela disser sim:** `SOM_DA_MESA`, sintetizado com Web Audio. **Zero ficheiros, zero KB a
+descarregar**, e tudo determinado por tabela, como o resto:
+
+| deixa | som | quando |
+|---|---|---|
+| moeda | dois senos curtos (≈ 2,1 e 3,2 kHz, 120 ms), um por cada 20 moedas, no máximo 6 | as moedas contam |
+| virar | ruído rosa filtrado, 60 ms | cada carta vira |
+| raridade | **uma nota por degrau** numa escala pentatónica: comum, nada; incomum, raro e épico sobem; lendário, a oitava com a quinta; relíquia, um acorde com cauda de 1,2 s | a carta assenta |
+| despertar | um sino grave, 900 ms | a runa acende |
+| equipar | couro: ruído grave, 90 ms | «Equipar já» |
+
+**Desligado por omissão** até ela decidir, com um interruptor «Som da mesa» no menu e o volume baixo (−18 dB). O
+`AudioContext` só acorda depois de um gesto do jogador (a política de *autoplay* do Chrome, 2018), e o fecho de uma
+quest vem sempre depois de um gesto. Sem som, nada se perde: **todo o som repete o que a tela já mostra.**
+
+### TE 10 · O que a tela pede ao sistema (em `mente/pedidos-ao-sistema.md`, TE10-1 e TE10-2)
+
+- **TE10-1 · `promessaDoArtefacto(item, nivel)`** em `espolios.js` → `{ genero, estado, proximo, nivelQueAcorda,
+  porProva, porConfronto, poderes: [{ id, nome, diz, aceso }], gesto: { nome, diz, aceso } | null }`. Serve para a
+  tela nunca somar «+3 níveis» sozinha (número é tabela: `DESPERTAR_DO_ARTEFACTO.desperto.quando.niveis`) nem ler
+  `PODERES` à mão. Pura e com suíte; nada no save.
+- **TE10-2 · `revelacaoDoEspolio` passa a levar o outro lado:** em cada entrada `item`, `sai` (o nome de
+  `compararItem(...).atual`, ou null) e `troca` (`fraseDaTroca(slot)`). Hoje a comparação já sabe o que sai e
+  `revelacaoDoEspolio` deita-o fora; sem isso, o veredito só mostra um lado.
+
+**Depende da TE9** (a paga aplicada no fecho e o achado no chão). A tela não aplica nada: mostra o que já foi dado.
+
+### TE 11 · A lista de construção (por retorno)
+
+**`aprendiz` (fora do App):**
+1. As tabelas de §TE 8 em `src/estilo.js` e os keyframes em `MOVIMENTO_CSS` (comentários sem crase).
+2. `src/espolio-na-tela.js` (puro, sem React, como o `reciboQueCabe` de `glifos.js`): `cronogramaDoEspolio(entradas,
+   { reduzido })` → `[{ passo, de, dura }]`. Aplica o teto (o `vira.entre` encolhe), põe a antecipação **só na
+   última**, se for rara ou melhor, e soma a sequência da relíquia. Suíte `testes/teste-espolio-na-tela.mjs`: o total
+   ≤ `teto` (sem relíquia); a última viragem é a da peça mais rara; com reduzido há um passo só, de 160; nenhum `de`
+   negativo; com relíquia, a relíquia é a última e o véu dela é `VEU.semRetorno`.
+3. `src/painel-espolio.jsx`: `CartaDoEspolio`, `FioDoDespertar`, `LinhaDoGanho`, `VereditoDoEspolio`,
+   `FaixaDoGanho`, `PainelEspolio` (a cerimónia, com o `radiogroup`, a `aria-live` e a saída), `PainelDespertar`
+   (irmã de `PainelSubidaDeNivel`: copia-se a estrutura, não se importa), `ChipDoAchado` e `FaixaDoFecho`. **Todos
+   definidos fora do render.** O SVG das marcas é o de `painel-moldura.jsx` (o encaixe): reutiliza-se, não se redesenha.
+
+**`oficial` (no App, com o bastão):**
+4. No fecho da quest (onde a TE9 aplica a paga), `revelacaoDoEspolio(paga, heroi, { emCombate })`: se há peça, o
+   espólio entra na `FILA_DAS_CERIMONIAS`; se não há, a `FaixaDoFecho` vai para o recibo do turno.
+5. «Equipar já» chama **o mesmo** equipar da gaveta (`aoEquipar` de `PainelEquipamento`, com `devolverAMochila`).
+   Nunca um segundo caminho.
+6. O achado (`achadosDaEtapa`, e `achadoEscondido` quando `achou`) entra no recibo como o primeiro chip; tocar abre o
+   exame do chão que já existe.
+7. Depois de cada subida de nível e de cada quest concluída, corre `despertarArtefacto` sobre o que o herói tem; se o
+   estado mudou, o despertar entra na fila. A ordem é fixa: espólio → nível → despertar.
+8. Tudo em `calou(...)`: uma cerimónia que estoura não leva a cena. Nada novo no save (a cerimónia é tela; a paga e
+   o estado do artefacto já são da TE9).
+
+**A conferência viva** é do `desenho`, no navegador, com `TAVERNA_API=http://127.0.0.1:9` e os espaços de save
+salvos e restaurados: as três cartas a 375 e a 1905; saltar no 1.º quadro; reduced motion; o leitor de ecrã pela
+árvore de acessibilidade; um nível passado pelo XP da quest (a subida abre depois); a relíquia forçada pela semente.
+
+### TE 12 · O «superior», escrito (medida e estudo citado; a experiência jogada é a TE11)
+
+**Medida: os toques entre o ganho e o corpo.** Hoje, uma peça que cai pede «EXAMINAR» → recolher → abrir a ficha →
+a aba Equipamento (só no telefone, AAA §2) → o encaixe → «Equipar»: **6 toques no telefone, 5 na mesa**, e a
+comparação só aparece no 5.º (a gaveta). Depois: **1 toque** («Equipar já»), com a comparação e o que sai à vista
+**antes** dele. (Contado no código, em `App.jsx:14452` e na AAA §2–§3, não no navegador; a conferência viva
+confirma.) **E hoje o fecho de uma quest da BQ não mostra nada por código** (planta §2.2): passa de zero ecrãs a um
+momento.
+**Medida: o custo à prosa.** O achado custa 0 px (o recibo já existe), contra 56 px se fosse para a soleira. A
+cerimónia só abre com peça, e o orçamento (`ORCAMENTO_DO_ESPOLIO`) põe-lhe um teto: ~5 quests com peça e até 2
+lembranças por campanha.
+
+**Estudo citado.** **A mais rara por último** segue a regra do pico e do fim: a memória de uma experiência pesa o
+seu melhor momento e o último (Kahneman, Fredrickson, Schreiber & Redelmeier, «When more pain is preferred to less:
+adding a better end», *Psychological Science* 4(6), 1993). Aqui os dois coincidem. **A luz que vaza antes de virar**
+é a antecipação, o primeiro dos doze princípios (Thomas & Johnston, *The Illusion of Life*, 1981). O precedente na
+indústria é a abertura de pacotes do *Hearthstone* (Blizzard, 2014), onde a carta lendária brilha de costas antes de
+se virar. **Menos peças, cada uma com cerimónia,** é o *Loot 2.0* do *Diablo III* (fev. 2014), já citado na planta.
+A acessibilidade segue a WCAG 2.2: 1.4.1 (a raridade escrita e com forma), 2.2.2 (o movimento automático acaba em
+3,5 s, abaixo dos 5, e salta-se a qualquer instante), 2.3.3 (reduced motion), 2.5.8 (alvos) e 4.1.3 (o resumo numa
+região viva).
+
+**A experiência jogada** é a TE11 do `jogo` (o artefacto ganho, comparado e equipado). Não a reclamo aqui.
+
+### TE 13 · Para a pessoa decidir — a proposta ambiciosa: **a carta virada no Diário**
+
+**O prémio à vista desde o primeiro dia da quest.** No Diário (BQ 3), cada quest aberta mostra **a sua carta de
+costas** (a mesma `Carta do espólio`, Face=costas), com **a luz da raridade a vazar pela borda** à medida do que ela
+pode pagar (a temperatura e o teto do nível, que o sistema já sabe). Por baixo, na boca de quem a deu: «O que o
+moleiro prometeu: uma peça rara». E a parte que muda o jogo: **o modo como fechas escolhe o que vem.** A carta mostra
+os quatro caminhos como quatro glifos pequenos (a lâmina dá arma ou armadura, a sombra um anel ou botas, a palavra
+moedas e um favor, o saber um frasco raro), porque `RECOMPENSA_DA_FAMILIA` já o decide e hoje ninguém o vê.
+
+**Porquê:** pela hipótese do gradiente de objetivo, o esforço acelera à medida que o prémio à vista se aproxima
+(Hull, 1932; Kivetz, Urminsky & Zheng, «The Goal-Gradient Hypothesis Resurrected», *Journal of Marketing Research*
+43(1), 2006). Hoje o prémio só existe no fim; com a carta, existe durante a quest inteira, e cada escolha da
+encruzilhada ganha um segundo peso (o veredito antes do clique, levado à quest inteira). **Pede à pessoa** porque
+muda o que o jogador lê antes de decidir: há quem jogue pela história e passe a jogar pelo anel. Se ela quiser metade,
+há a variante tímida: só a carta de costas com a luz, sem os quatro caminhos.
+
+**E a segunda, mais pequena: a lenda que a arma escreve.** O artefacto ganha uma linha gravada de cada vez que o
+sistema regista um feito com ele na mão («Abriu caminho até Conrado Sem-Senhor, no dia 14»), e o veredito mostra as
+três últimas por baixo da história. É o *Dark Souls* ao contrário: em vez de o objeto contar o mundo, conta **a tua**
+campanha. Pede ao sistema um campo de save novo (aditivo) no item; por isso também espera a palavra dela.
+
+---
