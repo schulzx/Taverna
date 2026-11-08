@@ -288,6 +288,16 @@ sec("1. NENHUM MÓDULO MUDO");
        Cronista e a luta (o efeito `factos`), o vilão (quem o herói poupou
        e matou) — e o oficial no App (o ref, o save, o load, a escrita do
        turno). A entrada saiu, e a lista voltou a ficar VAZIA. */
+    /* 08/11 (Fase BQ, BQ3 · o vocabulário fechado de condições):
+       `condicoes-da-quest.js` nasce no backend — os predicados em dado, com
+       a porta que escreve cada facto (CONDICOES), o papel que passa a id
+       uma vez (resolverPapeis), a avaliação dos compostos (avaliarCondicao)
+       e o «o que falta» em dados (julgarEtapa) — e espera a BQ4, a ficha e
+       as três primeiras quests (`biblioteca-de-quests.js`, `estadoDaQuest`),
+       que o importa. Credor: o `backend`, na etapa seguinte da MESMA fase.
+       A entrada sai quando a BQ4 o importar, e a lista volta a ficar VAZIA.
+       `teste-condicoes-da-quest.mjs` é o primeiro leitor. */
+    "condicoes-da-quest.js": "08/11 · BQ3 → BQ4 (biblioteca-de-quests.js)",
   };
   const mudos = [];
   for (const f of arqs) {
