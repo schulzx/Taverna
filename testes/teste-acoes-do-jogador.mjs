@@ -266,8 +266,13 @@ sec("1-B. do clique ao número — o que roda (sonda) e o que se lê (texto)");
      foi o número de botões: é que nenhum deles monte a frase por conta
      própria nem salte a porta única — e o elo 3, logo abaixo, é quem prova
      isso, com os seus DOIS chamadores intactos. */
-  t("`declararGolpe` tem DOIS chamadores, e os dois são botões da mesma porta",
-    contar(/\bdeclararGolpe\s*\(/g) === 2, String(contar(/\bdeclararGolpe\s*\(/g)));
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: o gesto da CB5 — o clique
+     no inimigo longe ANDA E ATACA (`andarEAtacar`) — é o terceiro chamador, e
+     é a mesma porta: anda pelo `moverPara` de sempre e golpeia por
+     `declararGolpe(nome)`, sem montar frase nenhuma. A intenção da asserção
+     (nenhum botão salta a porta única) fica; o número passa a três. */
+  t("`declararGolpe` tem TRÊS chamadores, e os três são gestos da mesma porta",
+    contar(/\bdeclararGolpe\s*\(/g) === 3 && /const andarEAtacar = [\s\S]{0,600}declararGolpe\(nome\);/.test(APP), String(contar(/\bdeclararGolpe\s*\(/g)));
   t("e o segundo é o verbo `Atacar` da tela da batalha",
     /aoAtacar=\{\(\) => \{ try \{ declararGolpe\(null\); \}/.test(APP));
   /* R4b: o "primeiro" chamador era o `onClick` das ACOES_PRONTAS, e

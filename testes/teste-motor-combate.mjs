@@ -268,7 +268,10 @@ sec("6 · a porta única de abrir combate (abrirCombate → abrirOCombate)");
     const r = abrirOCombate({ inimigosCrus: [], pers: p }, {});
     return !r.abriu && r.saida.pers === p && r.saida.nota === "" && r.saida.msgs.length === 0 && !("combate" in r.saida) && abrirOCombate(null, null).abriu === false;
   })());
-  t("no App, o órgão é o invólucro da peça", /const abrirCombate = \(inimigosCrus, \{ pers: persEntra = null, jaNoRef = false, situacao = "cena" \} = \{\}\) => \{\s*territorioEmLutaRef\.current = null;\s*const r = abrirOCombate\(\{/.test(C)
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a porta ganhou `iniciativa` e
+     `fugaAberta` (o desfecho do encontro da estrada, que abrirOCombate já lia).
+     O invólucro é o mesmo; só a assinatura cresceu. */
+  t("no App, o órgão é o invólucro da peça", /const abrirCombate = \(inimigosCrus, \{ pers: persEntra = null, jaNoRef = false, situacao = "cena", iniciativa = null, fugaAberta = false \} = \{\}\) => \{\s*territorioEmLutaRef\.current = null;\s*const r = abrirOCombate\(\{/.test(C)
     && /\}, \{ sorteDoTurno, calou \}\);\s*if \(!r\.abriu\) return r\.saida;\s*combateRef\.current = r\.combateNoRef;\s*combateOciosoRef\.current = 0;\s*reacaoUsadaRef\.current = false;\s*expiracoesSeguidasRef\.current = 0;\s*diaLutaRef\.current = r\.diaLuta;\s*setCombate\(combateRef\.current\);/.test(C)
     && /setTimeout\(\(\) => presencaNaLuta\(combateRef\.current, personagemRef\.current, \{ contraMim: false \}\), 0\);\s*return r\.saida;/.test(C));
   t("e a semente da abertura é a do mundo e do turno, com a planta do App", /sementeDaAbertura: `\$\{sementeMundo\(\)\}\|abertura\|\$\{turnoDeRegistroRef\.current\}`/.test(C) && /planta: plantaDaLuta,/.test(C) && /const plantaDaLuta = \(\) => \{/.test(C));

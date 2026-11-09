@@ -95,7 +95,14 @@ const CORTE_DO_TELEFONE = "(max-width: 767px)";
 /* B1b (06/10): o CURTO subiu de 900 para a altura do próprio quadro
    (1000) e nasceu o BAIXO (860) — os dois números e o motivo moram em
    `MESA_DE_BATALHA.patamares`. */
-const CORTE_ESTREITO = "(max-width: 1439px)";
+/* §CB 16: o corte do estreito mora na tabela (a geometria em Node conta com
+   ele para dar as colunas certas a 1366) */
+const CORTE_ESTREITO = `(max-width: ${B3.estreitoAbaixoDe - 1}px)`;
+/* §CB 16.1 nº 5: O ALVO MEDE-SE PELO PONTEIRO, NÃO PELA LARGURA. Com toque
+   (`pointer: coarse`, Media Queries Level 4 do W3C) os verbos, as gavetas,
+   os recuos, o `como?` e o Agir ficam a 48 (`ALVOS.piso`); com rato, a 40
+   (WCAG 2.2, 2.5.8 AA: 24 × 24). Um iPad a 1024 é toque e fica a 48. */
+const CORTE_GROSSO = "(pointer: coarse)";
 const CORTE_CURTO = `(max-height: ${M.patamares.curto - 1}px)`;
 const CORTE_BAIXO = `(max-height: ${M.patamares.baixo - 1}px)`;
 /* MM11 · 10.ª sessão (13/10): o TERCEIRO patamar, a janela baixa (800×451).
@@ -393,22 +400,46 @@ function FilaDaVez({ fila, rotulo, entes, intencaoDe, noTelefone, realce, aoReal
    em que ele tem de decidir depressa.* O terço de baixo da janela do
    campo é território emprestado, e nada desta tela depende de estar
    visível ali. */
-function LinhaDoVeredito({ texto, armado, reacao, noTelefone }) {
+/* §CB 16.1 nº 1 · O PÉ DO CAMPO. A linha do veredito desceu para dentro da
+   moldura do campo, por baixo de um fio `line`: 32 de alto no monitor, 44
+   no telefone, e NUNCA cresce — a frase vai em mono 12 com entrelinha 16,
+   até duas linhas, e o `title` leva-a inteira. Continua ENTRE O CAMPO E OS
+   VERBOS (a 8 px do verbo armado, e o bico dele aponta para ela), com o
+   mesmo `aria-live`. Sai só o rótulo «Sua próxima ação»: a posição e o bico
+   já o dizem. À direita, o nó onde o tabuleiro escreve os chips do campo e
+   o ⤢ (`aoPortal`). A reação (K3) continua ancorada por cima desta linha e
+   cresce para cima, sobre o terço de baixo do campo. `tom`: a cor da frase
+   quando ela não é a do armado nem a do repouso (o resumo da área). */
+function PeDoCampo({ texto, armado, tom = null, reacao, noTelefone, aoPortal }) {
+  const alto = (noTelefone ? B3.telefone.pe : B3.pe) + B3.aro;
+  const V = B3.vereditoNoPe;
   return (
-    <div className="shrink-0" style={{ position: "relative" }}>
+    <div className="shrink-0 flex items-center min-w-0"
+      style={{ position: "relative", height: alto, minHeight: alto, gap: M.entreVerbos, paddingLeft: M.chipLadoX, borderTop: `${B3.aro}px solid ${T.line}` }}>
       {reacao && (
         <div style={{ position: "absolute", left: 0, right: 0, bottom: "100%", zIndex: 40 }}>{reacao}</div>
       )}
-      <div className="flex items-center justify-between flex-wrap" style={{ minHeight: G.veredito, gap: M.entreVerbos }}>
-        {!noTelefone && <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.amberSoft }}>Sua próxima ação</span>}
-        <span className="tv-mono flex items-center min-w-0" aria-live="polite"
-          style={{ gap: M.entreVerbos, fontSize: M.letra.veredito, color: armado ? T.amberSoft : T.inkDim }}>
-          <Glifo nome="mira" tamanho={M.glifoDoSelo + 4} cor={T.danger} />
-          <span>{texto}</span>
-        </span>
-      </div>
+      <Glifo nome="mira" tamanho={M.glifoDoSelo + 4} cor={T.danger} />
+      <span className="tv-mono min-w-0" aria-live="polite" title={texto || undefined}
+        style={{ flex: "1 1 0", fontSize: TIPOS.piso, lineHeight: `${V.entrelinha}px`, maxHeight: V.entrelinha * V.linhas,
+          color: tom || (armado ? T.amberSoft : T.inkDim),
+          display: "-webkit-box", WebkitLineClamp: V.linhas, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        {texto}
+      </span>
+      <div ref={aoPortal} className="flex items-center min-w-0 overflow-hidden" style={{ flex: "0 1 auto", height: "100%" }} />
     </div>
   );
+}
+
+/* §CB 16.3: o resumo da área deixou de ser uma tarja no pé — é O TEXTO DO
+   VEREDITO enquanto se mira, porque é o que vai acontecer. A previsão é a de
+   sempre (`previsaoDeArea`, a fiação), e as palavras são as da tarja. */
+function resumoDaArea(pv) {
+  if (!pv || typeof pv !== "object" || !pv.nome) return "";
+  const nIni = Array.isArray(pv.inimigos) ? pv.inimigos.length : 0;
+  const aliados = Array.isArray(pv.aliados) ? pv.aliados : [];
+  return `${pv.nome} (${pv.forma}${pv.raio ? ` de ${pv.raio} m` : ""}): ${nIni} inimigo${nIni === 1 ? "" : "s"}`
+    + (aliados.length ? ` · PEGA ${aliados.join(", ")}` : " · nenhum aliado na área");
 }
 
 /* ============================================================
@@ -439,8 +470,15 @@ function LinhaDoVeredito({ texto, armado, reacao, noTelefone }) {
    mesmo botão, com o preço ao lado do rótulo. Que recurso cada verbo gasta é
    regra, e chega por `recurso` (a tabela do motor, pela fiação); sem ela o
    pip cala-se. Passar o rato no verbo põe o recurso dele «em jogo» na coluna. */
-function Verbo({ v, armado, impedido, aoTocar, estreito = false, recurso = null, chance = null, aoApontar = null }) {
+/* §CB 16 · `alto`: a altura do alvo, pelo ponteiro (40 rato, 48 toque; 48
+   no telefone). `grelha`: o telefone, onde o verbo enche a sua casa da
+   grelha de 4 e o Atacar leva a chance POR BAIXO do rótulo. O pip do
+   recurso só chega com `recurso` (o centro ≥ 660, §CB 16.1 nº 4); quem
+   gasta passo («movimento») leva o glifo dos passos como preço. As
+   espadas do Atacar saíram: o pip e o «· 78%» já o distinguem. */
+function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, aoApontar = null, alto = B3.verbo.fino, grelha = false }) {
   const recuo = v.papel === "recuo";
+  const P = B3.verboComPip;
   return (
     <button
       /* O BOTÃO NÃO DECIDE, E ISTO CUSTOU UMA LUTA PARA SE VER. Ele
@@ -470,25 +508,38 @@ function Verbo({ v, armado, impedido, aoTocar, estreito = false, recurso = null,
       className="tv-anel-foco tv-mono flex items-center justify-center"
       style={{
         /* o alvo sai da tabela, nunca de aritmética de padding */
-        minHeight: G.verbos, height: G.verbos,
-        padding: `0 ${estreito ? M.chipLadoX : M.chipLadoX + 4}px`, gap: M.entreVerbos, borderRadius: M.raioControle,
-        fontSize: M.letra.verbo, fontWeight: armado ? 600 : 500,
+        minHeight: alto, height: alto,
+        padding: `0 ${P.lado}px`, gap: P.entre, borderRadius: M.raioControle,
+        fontSize: M.letra.verbo, fontWeight: armado ? 600 : 500, whiteSpace: "nowrap",
         /* `Atacar` é o primeiro entre iguais, e paga-se na LARGURA — nunca
-           no preenchimento, que pertence ao armado */
-        flex: v.primeiro ? "1 1 0" : recuo ? "0 0 auto" : "0 1 auto",
-        minWidth: v.primeiro ? 120 : 0,
+           no preenchimento, que pertence ao armado. Na grelha do telefone
+           cada verbo enche a sua casa, e os quatro são iguais. */
+        flex: grelha ? undefined : v.primeiro ? "1 1 0" : recuo ? "0 0 auto" : "0 1 auto",
+        minWidth: grelha ? 0 : v.primeiro ? 120 : 0,
         background: armado ? T.amber : T.panelSoft,
-        color: armado ? T.onAccent : recuo || impedido ? T.inkDim : T.ink,
+        /* §CB 16.4: Esperar `inkMeio` (8,32), o recuo impedido `inkDim` (5,45) —
+           a grelha do telefone não tem fio, e o papel diz-se pela letra */
+        color: armado ? T.onAccent : impedido ? T.inkDim : recuo ? T.inkMeio : T.ink,
         /* o armado HERDA o contorno do repouso do mesmo `Papel`: o traço é
            o que segura a largura, e tirá-lo encolheria o botão ao armar-se */
         border: `1px solid ${armado ? T.amber : T.line}`,
         opacity: impedido ? 0.45 : 1,
         position: "relative",
       }}>
-      {v.primeiro && <Glifo nome="espadas" tamanho={M.glifo} cor={armado ? T.onAccent : T.violetSoft} />}
-      {recurso && <PipDoRecurso recurso={recurso} estado={impedido ? "gasto" : "livre"} tamanho={Math.round(M.glifo * 0.75 * 1.6)} />}
-      {v.rotulo}
-      {chance != null && <span aria-hidden="true" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>· {chance}%</span>}
+      {recurso === "movimento"
+        ? <Glifo nome="passo" tamanho={P.passos} cor={armado ? T.onAccent : T.amberSoft} />
+        : recurso && <PipDoRecurso recurso={recurso} estado={impedido ? "gasto" : "livre"} tamanho={P.pip} />}
+      {grelha && chance != null ? (
+        <span className="flex flex-col items-center" style={{ lineHeight: `${B3.vereditoNoPe.entrelinha}px` }}>
+          <span>{v.rotulo}</span>
+          <span aria-hidden="true" style={{ fontWeight: 700 }}>{chance}%</span>
+        </span>
+      ) : (
+        <>
+          {v.rotulo}
+          {chance != null && <span aria-hidden="true" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>· {chance}%</span>}
+        </>
+      )}
       {/* o bico: um triângulo encostado à aresta de cima, a apontar para a
           linha do veredito. Não diz só "estou armado": diz "aquela linha é
           minha", que é o que faltava numa tela onde uma linha serve a
@@ -508,42 +559,44 @@ function Verbo({ v, armado, impedido, aoTocar, estreito = false, recurso = null,
 /* CB 2: na mesa a três colunas os recuos (Esperar · Fugir) descem para a
    linha do `como?`, ao lado do Agir — a barra de ação fica com duas linhas
    (§CB 2: «por baixo, o como? com Esperar · Fugir · Agir»), e a altura volta
-   ao tabuleiro. `semRecuos` é esse arranjo; no telefone ficam aqui. */
-function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, gavetaAberta, aoAbrirGaveta, bolsaAberta, aoAbrirBolsa, nBolsa, estreito = false, recursos = null, chanceDoAtaque = null, aoApontar = null, semRecuos = false }) {
+   ao tabuleiro. (Desde §CB 16 é o arranjo de todo monitor; no telefone os
+   recuos fecham a segunda linha da grelha.) */
+/* §CB 16.1 nº 4 · A FILEIRA SÓ TEM GESTOS, E NUNCA QUEBRA. As duas gavetas
+   (✦ e a bolsa) e os recuos descem para a linha do `como?`: são listas e
+   saídas, não gestos (a lei da fileira já o dizia), e é isso que deixa os
+   seis gestos caberem numa linha a 1024. Uma fileira que quebra deixa de
+   ter a altura da conta e come o tabuleiro. No telefone (`grelha`) é a
+   grelha de 4 colunas: os gestos, e os recuos no fim da segunda linha. */
+function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, chanceDoAtaque = null, aoApontar = null, alto = B3.verbo.fino, grelha = false }) {
   const gestos = verbos.filter((v) => v.papel !== "recuo");
   /* MAIS DE UM RECUO PODE VIVER AQUI: `esperar` e `fugir` são os dois
      "sair do turno sem golpe" — era `.find` quando só `esperar` existia,
      e um `.find` teria engolido um dos dois em silêncio no dia em que o
      segundo chegasse. */
-  const recuos = verbos.filter((v) => v.papel === "recuo");
-  const gaveta = (aberta) => ({
-    minHeight: G.verbos, height: G.verbos, minWidth: ALVOS.piso, borderRadius: M.raioControle,
-    background: aberta ? T.violet : T.panelSoft,
-    color: aberta ? T.onSecond : T.violetSoft,
-    border: `1px solid ${aberta ? T.violet : T.line}`,
-    gap: 4,
-  });
+  const recuos = grelha ? verbos.filter((v) => v.papel === "recuo") : [];
+  const TT = B3.telefone;
   return (
-    <div className="shrink-0 flex items-stretch flex-wrap" style={{ minHeight: G.verbos, gap: M.entreVerbos }}>
-      {gestos.map((v) => (
-        <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} estreito={estreito}
-          recurso={recursos ? recursos[v.id] || null : null} chance={v.id === "atacar" ? chanceDoAtaque : null} aoApontar={aoApontar} />
+    <div className={`shrink-0 min-w-0 ${grelha ? "grid" : "flex items-stretch overflow-hidden"}`}
+      style={grelha ? { gridTemplateColumns: `repeat(${TT.colunasDosVerbos}, minmax(0, 1fr))`, gap: TT.entre } : { height: alto, gap: M.entreVerbos }}>
+      {[...gestos, ...recuos].map((v) => (
+        <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} alto={alto} grelha={grelha}
+          recurso={recursos && v.papel !== "recuo" ? recursos[v.id] || null : null} chance={v.id === "atacar" ? chanceDoAtaque : null} aoApontar={v.papel !== "recuo" ? aoApontar : null} />
       ))}
-      {/* AS DUAS GAVETAS — abrem lista, logo não são verbos */}
-      <button onClick={aoAbrirGaveta} aria-pressed={gavetaAberta} title="Habilidades" aria-label="Habilidades"
-        className="tv-anel-foco tv-mono inline-flex items-center justify-center" style={{ minWidth: ALVOS.piso, ...gaveta(gavetaAberta) }}><Glifo nome="faisca" tamanho={M.glifo} /></button>
-      <button onClick={aoAbrirBolsa} aria-pressed={bolsaAberta} title="Bolsa" aria-label={nBolsa > 0 ? `Bolsa, ${nBolsa}` : "Bolsa"}
-        className="tv-anel-foco tv-mono inline-flex items-center justify-center" style={{ minWidth: ALVOS.piso, ...gaveta(bolsaAberta), fontSize: M.letra.chip }}><Glifo nome="bolsa" tamanho={M.glifo} />{nBolsa > 0 ? nBolsa : null}</button>
-      {/* o fio, e depois os recuos — a posição do Recuo em toda a casa */}
-      {!semRecuos && recuos.length > 0 && (
-        <span className="flex items-center" style={{ gap: M.entreVerbos }}>
-          <span aria-hidden="true" style={{ width: 1, height: M.separador, background: T.line }} />
-          {recuos.map((v) => (
-            <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} estreito={estreito} />
-          ))}
-        </span>
-      )}
     </div>
+  );
+}
+
+/* AS DUAS GAVETAS — abrem lista, logo não são verbos. Moram na linha do
+   `como?` (§CB 16.1 nº 4), quadradas, à altura do ponteiro. */
+function Gaveta({ aberta, aoAbrir, glifo, rotulo, rotuloAcessivel = "", conta = 0, alto }) {
+  return (
+    <button onClick={aoAbrir} aria-pressed={aberta} title={rotulo} aria-label={rotuloAcessivel || rotulo}
+      className="tv-anel-foco tv-mono inline-flex items-center justify-center shrink-0"
+      style={{ height: alto, minHeight: alto, minWidth: alto, padding: conta > 0 ? `0 ${M.entreVerbos}px` : 0, gap: 4, borderRadius: M.raioControle,
+        background: aberta ? T.violet : T.panelSoft, color: aberta ? T.onSecond : T.violetSoft,
+        border: `1px solid ${aberta ? T.violet : T.line}`, fontSize: M.letra.chip }}>
+      <Glifo nome={glifo} tamanho={M.glifo} />{conta > 0 ? conta : null}
+    </button>
   );
 }
 
@@ -566,20 +619,32 @@ function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, gavetaAberta, aoA
 /* CB 2: na mesa a três colunas a fala é UMA linha, centrada, em Spectral
    itálico 16 `inkMeio` — o campo é que leva a altura toda. A fala inteira
    continua no `title` e no relato; o corte de verdade continua a ser o do
-   módulo, pelo começo. `linhas` > 1 devolve o clamp de B1b (o patamar que
-   ainda o pede). */
-function AUltimaFala({ texto, inteiro = "", carregando, noTelefone, linhas = 1 }) {
-  return (
-    <div className="shrink-0 overflow-hidden" style={{ maxHeight: noTelefone ? G.narracaoNoTelefone : G.narracao }}>
-      <p className={`tv-body${noTelefone || linhas <= 1 ? " truncate" : ""}`} title={inteiro || undefined}
-        style={{
-          fontSize: noTelefone ? M.letra.cena : PREVISAO_DO_GOLPE.letra.porExtenso, color: T.inkMeio, lineHeight: 1.625, margin: 0,
-          fontStyle: "italic", textAlign: noTelefone ? "left" : "center",
-          ...(noTelefone || linhas <= 1 ? {} : { display: "-webkit-box", WebkitLineClamp: NARRACAO.linhas, WebkitBoxOrient: "vertical", overflow: "hidden" }),
-        }}>
+   módulo, pelo começo. */
+/* §CB 16.1 nº 3: no monitor a fala SOBE AO BLOCO DIREITO DA LINHA DA FILA,
+   em Spectral itálico 16 `inkMeio`, entrelinha 24, até três
+   linhas (72 ≤ os 90 da fila), reticências no fim e a frase inteira no
+   `title`. Devolve a sua linha ao tabuleiro, e dá MAIS lugar à prosa. No
+   telefone continua na linha dela (22). (O clamp de duas linhas de B1b,
+   centrado por baixo da fila, aposentou-se com ela.) */
+function AUltimaFala({ texto, inteiro = "", carregando, noTelefone }) {
+  /* o telefone: uma linha de 22, cortada com reticências */
+  if (noTelefone) {
+    const alto = B3.telefone.fala;
+    return (
+      <p className="tv-body truncate shrink-0" title={inteiro || undefined}
+        style={{ fontSize: M.letra.cena, color: T.inkMeio, lineHeight: `${alto}px`, height: alto, margin: 0, fontStyle: "italic" }}>
         {carregando && !texto ? "" : texto}
       </p>
-    </div>
+    );
+  }
+  /* o monitor: o bloco direito da linha da fila, até três linhas */
+  const F = B3.falaNaFila;
+  return (
+    <p className="tv-body" title={inteiro || undefined}
+      style={{ fontSize: F.letra, lineHeight: `${F.entrelinha}px`, maxHeight: F.entrelinha * F.linhas, color: T.inkMeio, margin: 0, fontStyle: "italic",
+        display: "-webkit-box", WebkitLineClamp: F.linhas, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      {carregando && !texto ? "" : texto}
+    </p>
   );
 }
 
@@ -667,15 +732,22 @@ function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = 
    FACES com as que acertam acesas (quem joga RPG de mesa pensa em «preciso
    de 6», não em «78 %»), DANO com a média, ABATE e CRÍTICO. O que falta,
    cala-se. */
-function OTeuGolpe({ previsao }) {
+/* §CB 16.3: com a coluna Tu estreita (< 450) as 20 faces vão em DUAS FILAS
+   DE 10, e a conta de cada linha (ACERTO, DANO…) desce para debaixo do
+   número — numa linha só, a 320, as faces partiam-se em 15 + 5 e a conta
+   espremia-se ao lado do número. */
+function OTeuGolpe({ previsao, estreito = false }) {
   const g = golpePorExtenso(previsao);
   if (!g) return null;
   const P = PREVISAO_DO_GOLPE;
+  const larguraDeDezFaces = P.faces.lado[0] * B3.colunaEstreita.facesPorFila + P.faces.entre * (B3.colunaEstreita.facesPorFila - 1);
   const linha = (rotulo, grande, cor, diz, chave) => (
     <div key={chave} className="flex items-baseline" style={{ gap: M.cartao }}>
       <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.inkDim, width: 64 }}>{rotulo}</span>
-      <span className="tv-mono shrink-0" style={{ fontSize: P.letra.chance, fontWeight: 700, color: cor }}>{grande}</span>
-      {diz && <span className="tv-body min-w-0" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>{diz}</span>}
+      <span className={estreito ? "flex flex-col min-w-0" : "contents"}>
+        <span className="tv-mono shrink-0" style={{ fontSize: P.letra.chance, fontWeight: 700, color: cor }}>{grande}</span>
+        {diz && <span className="tv-body min-w-0" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>{diz}</span>}
+      </span>
     </div>
   );
   return (
@@ -685,7 +757,9 @@ function OTeuGolpe({ previsao }) {
         <Glifo nome="espadas" tamanho={16} cor={T.amber} />O teu golpe{g.alvo ? ` → ${g.alvo}` : ""}{g.vida != null ? ` · ${g.vida} PV` : ""}
       </span>
       {g.chance != null && linha("Acerto", `${g.chance}%`, T.amberSoft, g.bonus != null && g.defesa != null ? `d20 ${g.bonus >= 0 ? "+" : "−"}${Math.abs(g.bonus)} contra a defesa ${g.defesa}` : null, "acerto")}
-      {g.faces && <FacesDoD20 faces={g.faces} rotulo={g.legenda} />}
+      {g.faces && (estreito
+        ? <div style={{ maxWidth: larguraDeDezFaces }}><FacesDoD20 faces={g.faces} rotulo={g.legenda} /></div>
+        : <FacesDoD20 faces={g.faces} rotulo={g.legenda} />)}
       {g.legenda && <span className="tv-mono" style={{ fontSize: P.letra.legenda, color: T.inkDim }}>{g.legenda}</span>}
       {g.semCobertura != null && <span className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.mundo }}>sem cobertura: {g.semCobertura}%</span>}
       {g.dano && linha("Dano", g.dano.texto, T.ink, g.dano.medio ? `média ${g.dano.medio}` : null, "dano")}
@@ -796,7 +870,10 @@ function ORastroDosDados({ linhas, registo = null, rodada = null }) {
    PÍLULA DA INTENÇÃO à direita; o alvo da previsão ganha aro âmbar 2. Quem
    anda contigo fica por baixo («Contigo»): a vida dele não pode sair da
    tela da luta. */
-function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, cede = false, intencaoDe = null, alvo = "", realce = null, aoRealcar = null }) {
+/* §CB 16.3: com «Eles» estreita (< 400: a coluna a 321, a gaveta, o
+   telefone) a pílula da intenção desce para a SEGUNDA LINHA do cartão, por
+   baixo da barra do PV — à direita ela espremia o nome e a barra. */
+function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, cede = false, intencaoDe = null, alvo = "", realce = null, aoRealcar = null, estreito = false }) {
   const m = compacto ? M.aperto : M;
   return (
     <div className="flex flex-col w-full min-h-0 overflow-hidden"
@@ -827,8 +904,9 @@ function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, c
                   )}
                 </span>
                 {!e.derrotado && <Recurso rotulo="PV" atual={e.vida} max={e.vidaMax} cor={T.danger} />}
+                {estreito && vista && !e.derrotado && <span className="self-start"><PilulaDaIntencao vista={vista} distanciaM={vz ? vz.distanciaM : null} /></span>}
               </span>
-              {vista && !e.derrotado && <PilulaDaIntencao vista={vista} distanciaM={vz ? vz.distanciaM : null} />}
+              {!estreito && vista && !e.derrotado && <PilulaDaIntencao vista={vista} distanciaM={vz ? vz.distanciaM : null} />}
             </div>
           </div>
         );
@@ -1046,6 +1124,7 @@ export function TelaDeBatalha(props) {
   const curto = usarMidia(CORTE_CURTO) && !noTelefone;
   const baixo = usarMidia(CORTE_BAIXO) && !noTelefone;
   const janelaBaixa = usarMidia(CORTE_JANELA_BAIXA) && !noTelefone;
+  const grosso = usarMidia(CORTE_GROSSO);
   const [armado, setArmado] = React.useState("");
   const [bolsaAberta, setBolsaAberta] = React.useState(false);
   /* o turno atual e NESTA BATALHA abertos por cima do campo — só no
@@ -1274,7 +1353,11 @@ export function TelaDeBatalha(props) {
   const prevGolpe = p.previsaoDoGolpe && typeof p.previsaoDoGolpe === "object" ? p.previsaoDoGolpe : null;
   const alvoDaPrevisao = prevGolpe && prevGolpe.alvo ? String(prevGolpe.alvo) : "";
   const enteDoAlvo = alvoDaPrevisao ? inimigos.find((e) => e.nome === alvoDaPrevisao) || null : null;
-  const geo = (() => { try { return geometriaDaMesa({ largura: mesaMedida.largura, altura: mesaMedida.altura }); } catch { return { arranjo: "tres", coluna: B3.coluna }; } })();
+  const geo = (() => { try { return geometriaDaMesa({ largura: mesaMedida.largura, altura: mesaMedida.altura, grosso }); } catch { return { arranjo: "tres", coluna: B3.coluna }; } })();
+  /* §CB 16: a altura dos alvos da barra sai do PONTEIRO (40 rato, 48 toque;
+     48 no telefone), e o pip no verbo só com o centro ≥ 660 */
+  const altoDoVerbo = noTelefone ? B3.telefone.verbo : grosso ? B3.verbo.grosso : B3.verbo.fino;
+  const comPip = !noTelefone && !!geo.comPip;
   const arranjo = noTelefone ? "telefone" : mesaMedida.largura > 0 && geo.arranjo !== "telefone" ? geo.arranjo : "tres";
   React.useEffect(() => { if (arranjo !== "duas") setElesAberto(false); }, [arranjo]);
   /* AS COLUNAS MEXEM NA JANELA DO CAMPO, E A JANELA VOLTA A SER MEDIDA. Medido
@@ -1320,7 +1403,9 @@ export function TelaDeBatalha(props) {
       }).map((e) => ({ nome: e.nome, x: e.x, y: e.y, lado: 1 }));
       return camaraDoTelefone({ colunas: g ? g.largura : 14, linhas: g ? g.altura : 14, heroi: heroi && heroi.x != null ? heroi : null,
         alvo: enteDoAlvo && enteDoAlvo.x != null ? enteDoAlvo : null, importa: quemImporta,
-        larguraUtil: larguraDaJanela > 0 ? larguraDaJanela - 22 : 0, alturaUtil: alturaDaJanela > 0 ? alturaDaJanela - 22 : 0 });
+        /* §CB 16.2: sem o −22 — no telefone a régua mora por cima das casas,
+           e a câmara mede a janela inteira */
+        larguraUtil: larguraDaJanela > 0 ? larguraDaJanela : 0, alturaUtil: alturaDaJanela > 0 ? alturaDaJanela : 0 });
     } catch { return null; }
   })();
   const casaDoTelefone = camara ? camara.casa : B3.telefone.casa;
@@ -1448,12 +1533,31 @@ export function TelaDeBatalha(props) {
     fugiu: !!p.fugiu,
   });
 
+  /* §CB 16.1 nº 3: no monitor a fala mora no bloco direito da fila, e o
+     corte pelo COMEÇO conta com a largura medida desse bloco — o fim é o
+     que o jogador precisa, e as reticências do clamp quase nunca entram */
+  const [falaEl, setFalaEl] = React.useState(null);
+  const [larguraDaFala, setLarguraDaFala] = React.useState(0);
+  React.useEffect(() => {
+    if (!falaEl) return undefined;
+    try {
+      const mede = () => setLarguraDaFala(falaEl.clientWidth || 0);
+      mede();
+      if (typeof ResizeObserver === "undefined") return undefined;
+      const ro = new ResizeObserver(() => mede());
+      ro.observe(falaEl);
+      return () => ro.disconnect();
+    } catch (e) { console.warn("TelaDeBatalha: medir o bloco da fala falhou", e); return undefined; }
+  }, [falaEl]);
+  const FNF = B3.falaNaFila;
   const fala = ultimasLinhasDoMestre(p.mensagens, {
-    linhas: noTelefone ? NARRACAO.linhasNoTelefone : NARRACAO.linhas,
-    chars: noTelefone ? NARRACAO.charsPorLinhaNoTelefone : NARRACAO.charsPorLinha,
+    linhas: noTelefone ? NARRACAO.linhasNoTelefone : FNF.linhas,
+    chars: noTelefone ? NARRACAO.charsPorLinhaNoTelefone
+      : larguraDaFala > 0 ? Math.floor(larguraDaFala / (FNF.letra * FNF.emPorLetra)) : NARRACAO.charsPorLinha,
   });
   /* a fala sem corte nenhum, para o `title` (B1b) — o mesmo módulo, sem teto */
   const falaInteira = ultimasLinhasDoMestre(p.mensagens, { linhas: 1, chars: Infinity });
+
 
   const tocarVerbo = (v) => {
     /* O VERBO QUE NÃO PODE ARMAR RECUSA, E A LINHA DIZ PORQUÊ. Antes ele
@@ -1507,8 +1611,26 @@ export function TelaDeBatalha(props) {
     } catch (e) { console.warn("TelaDeBatalha: rolar até o campo da decisão falhou", e); }
   }, [esperando, noTelefone]);
 
+  /* §CB 16.3 · O TEXTO DO PÉ DO CAMPO, por esta prioridade: o armado, a
+     recusa e o preço da fuga (o que o próximo toque faz) > o resumo da área
+     enquanto se mira (é o que vai acontecer; a cor diz se pega um aliado) >
+     no telefone, o aviso da área (a pílula que vivia por baixo da tira) > a
+     linha do golpe. Com o cartão do golpe final aberto ou o fim da luta na
+     secção, o pé cala-se: o veredito daquele clique é o cartão. */
+  const resumo = (() => { try { return resumoDaArea(p.previsao); } catch { return ""; } })();
+  const vereditoForte = !!armado || !!recusado || !!p.precoDaFuga || !!p.fugiu;
+  const pegaAliado = !!(p.previsao && Array.isArray(p.previsao.aliados) && p.previsao.aliados.length);
+  const textoDoPe = esperando || fimComEspolio ? ""
+    : resumo && !vereditoForte ? resumo
+      : noTelefone && aviso && aviso.texto && !vereditoForte ? aviso.texto
+        : linha;
+  const tomDoPe = resumo && !vereditoForte && !esperando && !fimComEspolio ? (pegaAliado ? T.danger : T.amberSoft) : null;
+
   const titulo = comMaiuscula(zonaDoHeroi);
-  const margem = noTelefone || estreito ? M.margemNoTelefone : M.margem;
+  /* §CB 16.2: 6 no telefone (a janela fica com 361 de largo), 16 no
+     estreito, e 24 (§CB 2, a conta das três colunas) no largo — era o 32 do
+     quadro B1, que a geometria nunca contou */
+  const margem = noTelefone ? B3.telefone.margem : estreito ? B3.margemEstreita : B3.margem;
 
   /* ============================================================
      A CENA E O TURNO — o cabeçalho do quadro
@@ -1522,16 +1644,20 @@ export function TelaDeBatalha(props) {
     realce={realce} aoRealcar={setRealce} aoAbrirEles={arranjo === "duas" ? () => setElesAberto((v) => !v) : null} />}</>);
   /* CB 2: margem 24 · a fila · a fala numa linha, sem respiro por baixo (a
      mesa já tem o seu topo) */
-  const respiroDaCena = noTelefone || curto
-    ? (baixo ? { topo: M.aperto.cenaTopo, baixo: M.aperto.cenaBaixo, entre: M.aperto.cenaEntre } : { topo: M.chipLadoX, baixo: M.chipLadoY, entre: M.chipLadoY })
-    : { topo: B3.margem, baixo: 0, entre: M.chipLadoY };
+  /* §CB 16.2: os três patamares de B1b são os que `geometriaDaMesa` conta
+     (24 + 8, 12 + 8, 8 + 4); no telefone, 4 + fila 48 + 2 + fala 22 + 4 */
+  const TC = B3.telefone.cabecalho;
+  const respiroDaCena = noTelefone ? { topo: TC.topo, baixo: TC.baixo, entre: TC.entre }
+    : baixo ? { topo: M.aperto.cenaTopo, baixo: M.aperto.cenaBaixo, entre: 0 }
+      : curto ? { topo: M.chipLadoX, baixo: M.chipLadoY, entre: 0 }
+        : { topo: B3.margem, baixo: 0, entre: 0 };
   /* CB 2 · O CABEÇALHO DA MESA: o lugar e a rodada à esquerda, A FILA DA VEZ
      ao centro, e por baixo a fala do Mestre numa linha. No telefone, a fila
      e «A TUA VEZ · <nome>» no canto (a pílula da vez aposentou-se). */
   const cena = (
     <header className="flex flex-col shrink-0 min-w-0"
       style={{ padding: `${respiroDaCena.topo}px ${margem}px ${respiroDaCena.baixo}px`, gap: respiroDaCena.entre }}>
-      <div className="flex items-center justify-between min-w-0" style={{ gap: noTelefone ? M.chipLadoX : M.entreColunas }}>
+      <div className="flex items-center justify-between min-w-0 shrink-0" style={{ gap: noTelefone ? M.chipLadoX : M.entreColunas, height: noTelefone ? B3.telefone.fila : B3.fila }}>
         {!noTelefone && (
           <div className="flex flex-col min-w-0" style={{ gap: 4, flex: "1 1 0" }}>
             {/* A1 (peça 93): a legenda de máquina por cima do título, com o
@@ -1548,9 +1674,14 @@ export function TelaDeBatalha(props) {
             <span className="tv-mono" style={{ ...LEGENDA, color: T.amber, fontWeight: 700 }}>A tua vez</span>
             <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoAliado, color: T.ink, maxWidth: 120 }}>{personagem.nome}</span>
           </span>
-        ) : <span aria-hidden="true" style={{ flex: "1 1 0" }} />}
+        ) : (
+          /* §CB 16.1 nº 3: o bloco direito, que estava vazio, leva a fala */
+          <div ref={setFalaEl} className="min-w-0" style={{ flex: "1 1 0" }}>
+            <AUltimaFala texto={fala} inteiro={falaInteira} carregando={p.carregando} />
+          </div>
+        )}
       </div>
-      <AUltimaFala texto={fala} inteiro={falaInteira} carregando={p.carregando} noTelefone={noTelefone} />
+      {noTelefone && <AUltimaFala texto={fala} inteiro={falaInteira} carregando={p.carregando} noTelefone />}
     </header>
   );
 
@@ -1611,8 +1742,10 @@ export function TelaDeBatalha(props) {
           aoApontarInimigo={apontarInimigo} aoTocarInimigo={tocarInimigo} realce={realce} reguaPresa={noTelefone} heroiNome={nomeDoHeroi}
           quedas={p.quedas || null} aoMudarQueda={p.aoMudarQueda} veuDoUltimo={p.decisao && p.ultimoGolpe ? p.ultimoGolpe : null} />
       </div>
-      <div ref={setPeDaArena} className="shrink-0 min-w-0"
-        style={{ minHeight: M.arenaPe, padding: `0 ${noTelefone ? M.chipLadoX : M.arenaLado}px`, borderTop: `1px solid ${T.line}` }} />
+      {/* §CB 16.1 nº 1: o pé da arena e a linha do veredito são uma faixa só,
+          de altura fixa — o Pé do campo; o tabuleiro escreve os chips e o ⤢
+          na ponta direita dele (`setPeDaArena`) */}
+      <PeDoCampo texto={textoDoPe} armado={!!armado} tom={tomDoPe} reacao={esperando ? null : p.reacao} noTelefone={noTelefone} aoPortal={setPeDaArena} />
     </section>
   );
 
@@ -1627,8 +1760,11 @@ export function TelaDeBatalha(props) {
      de baixo e o `Respirar fundo →` de hoje. */
   /* CB 2: na mesa a três colunas a barra de ação aperta (o respiro e o vão do
      chip) — a altura que sobra é do tabuleiro */
-  const mesaEmTres = !noTelefone && arranjo !== "telefone";
-  const respiroDaAcao = { order: 3, gap: noTelefone || curto || mesaEmTres ? M.entreVerbos : M.escolhasEntre, padding: noTelefone ? M.escolhasRespiroNoTelefone : curto || mesaEmTres ? M.chipLadoX : M.escolhasRespiro, borderRadius: M.raio, background: T.panel, border: `1px solid ${T.line}` };
+  /* §CB 16.2: a barra mede aro + respiro 8 + verbo + 8 + verbo + respiro 8
+     + aro em todos os patamares do monitor (106 com rato, 122 com toque); no
+     telefone, a grelha de três linhas de 48 com respiro e vão de 6 (170) */
+  const respiroDaAcao = { order: 3, gap: noTelefone ? B3.telefone.entre : B3.entreFileiras, padding: noTelefone ? B3.telefone.respiro : B3.barraRespiro, borderRadius: M.raio, background: T.panel, border: `${B3.aro}px solid ${T.line}` };
+  const recuosDaBarra = verbos.filter((v) => v.papel === "recuo");
   const acaoDoFim = fimComEspolio ? (
     <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
       <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao} linha={p.espolio.linha || ""}
@@ -1642,7 +1778,6 @@ export function TelaDeBatalha(props) {
       {esperando && p.ultimoGolpe && (
         <p className="tv-display text-center" style={{ fontSize: M.letra.foco + 6, color: T.ink, margin: 0, lineHeight: 1.2 }}>O último golpe é teu.</p>
       )}
-      {!esperando && <LinhaDoVeredito texto={linha} armado={!!armado} reacao={p.reacao} noTelefone={noTelefone} />}
       {/* CB 9 · a folha da previsão sobe por cima dos verbos, no telefone */}
       {noTelefone && !esperando && !p.fim && enteDoAlvo && (
         <FolhaDaPrevisao previsao={prevGolpe} alvo={enteDoAlvo} anda={!!(p.caminho && Array.isArray(p.caminho.pontos) && p.caminho.pontos.length > 1)}
@@ -1676,43 +1811,57 @@ export function TelaDeBatalha(props) {
         </div>
       ) : (
         <FileiraDeVerbos verbos={verbos} armado={armado} impedidos={impedidos}
-          aoTocar={tocarVerbo}
-          gavetaAberta={!!p.gavetaAberta} aoAbrirGaveta={p.aoAbrirGaveta}
-          bolsaAberta={bolsaAberta} aoAbrirBolsa={() => setBolsaAberta((v) => !v)}
-          nBolsa={(p.bolsa || []).length} estreito={estreito || noTelefone}
-          recursos={recursosDosVerbos} chanceDoAtaque={chanceDoAtaque} aoApontar={noTelefone ? null : setVerboSobre} semRecuos={!noTelefone} />
+          aoTocar={tocarVerbo} alto={altoDoVerbo} grelha={noTelefone}
+          recursos={comPip ? recursosDosVerbos : null} chanceDoAtaque={chanceDoAtaque} aoApontar={noTelefone ? null : setVerboSobre} />
       )}
       {/* O TEXTO LIVRE muda de papel: deixa de ser a sintaxe obrigatória e
           vira o tempero. O convite é `como? (opcional)`, e ele NUNCA é
           `disabled` enquanto há um verbo armado — escrever e mirar são
           compatíveis, e é esse o ponto inteiro. No quadro B1 é o
           "Compositor de ação": a caixa com a pena e o `Agir →` com o d20. */}
-      {!p.decisao && <div className="flex items-center gap-2 rounded-lg px-2 shrink-0"
-        style={{ gap: noTelefone ? M.entreVerbos : M.escolhasEntre, padding: 0 }}>
+      {/* §CB 16.1 nº 4 · A LINHA 2 DA BARRA: o `como?` (enche) · ✦ · a bolsa
+          · o fio · Esperar · Fugir · Agir, todos à altura do ponteiro. No
+          telefone: o `como?`, ✦ 48, a bolsa 48 e o Agir (os recuos moram na
+          grelha, por cima). Ninguém quebra: o `como?` é quem cede. */}
+      {!p.decisao && <div className="flex items-center shrink-0 min-w-0"
+        style={{ gap: noTelefone ? B3.telefone.entre : M.entreVerbos, height: altoDoVerbo }}>
         <label className="flex items-center flex-1 min-w-0"
-          style={{ minHeight: noTelefone || curto || mesaEmTres ? ALVOS.piso : M.compositor, gap: M.chipLadoX, padding: `0 ${noTelefone ? M.chipLadoX : M.compositorLado}px`, borderRadius: M.raioRedondo, background: T.pagina, border: `1px solid ${armado ? T.amber : T.line}` }}>
+          style={{ height: altoDoVerbo, minHeight: altoDoVerbo, gap: M.chipLadoX, padding: `0 ${noTelefone ? M.chipLadoX : M.compositorLado}px`, borderRadius: M.raioRedondo, background: T.pagina, border: `1px solid ${armado ? T.amber : T.line}` }}>
           <Glifo nome="pena" tamanho={M.glifo} cor={T.violetSoft} />
           <input value={p.entrada || ""} onChange={(e) => p.aoEscrever && p.aoEscrever(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && p.aoAgir) { setArmado(""); p.aoAgir(p.entrada); } }}
             placeholder={armado ? PEDIDO_DO_VERBO[armado] || "como? (opcional)" : "como? (opcional)"}
             disabled={!armado && !!p.bloqueado}
-            className="tv-anel-foco flex-1 bg-transparent tv-body min-w-0" style={{ fontSize: M.letra.cena, color: T.ink, minHeight: ALVOS.piso - 8 }} />
+            className="tv-anel-foco flex-1 bg-transparent tv-body min-w-0" style={{ fontSize: M.letra.cena, color: T.ink, minHeight: altoDoVerbo - M.entreVerbos }} />
         </label>
-        {!noTelefone && !p.fim && verbos.filter((v) => v.papel === "recuo").map((v) => (
-          <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => tocarVerbo(v)} estreito />
-        ))}
+        {!p.fim && (
+          <>
+            <Gaveta aberta={!!p.gavetaAberta} aoAbrir={p.aoAbrirGaveta} glifo="faisca" rotulo="Habilidades" alto={altoDoVerbo} />
+            <Gaveta aberta={bolsaAberta} aoAbrir={() => setBolsaAberta((v) => !v)} glifo="bolsa" rotulo="Bolsa"
+              rotuloAcessivel={(p.bolsa || []).length > 0 ? `Bolsa, ${(p.bolsa || []).length}` : "Bolsa"} conta={(p.bolsa || []).length} alto={altoDoVerbo} />
+          </>
+        )}
+        {/* o fio, e depois os recuos — a posição do Recuo em toda a casa */}
+        {!noTelefone && !p.fim && recuosDaBarra.length > 0 && (
+          <>
+            <span aria-hidden="true" className="shrink-0" style={{ width: B3.aro, height: M.separador, background: T.line }} />
+            {recuosDaBarra.map((v) => (
+              <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => tocarVerbo(v)} alto={altoDoVerbo} />
+            ))}
+          </>
+        )}
         <button onClick={() => { setArmado(""); if (p.aoAgir) p.aoAgir(p.entrada); }}
           disabled={!!p.bloqueado || !String(p.entrada || "").trim()}
           className="tv-anel-foco tv-mono flex items-center justify-center shrink-0"
           style={{
-            minHeight: noTelefone || curto || mesaEmTres ? ALVOS.piso : M.compositor, width: noTelefone ? "auto" : M.agir,
+            height: altoDoVerbo, minHeight: altoDoVerbo, width: noTelefone ? "auto" : M.agir,
             gap: M.chipLadoX, padding: `0 ${M.chipLadoX + 6}px`, borderRadius: M.raioRedondo,
             background: alfa(T.amber, M.alfa.brilho), border: `1px solid ${alfa(T.amber, M.alfa.fio)}`,
             color: T.amberSoft, fontSize: M.letra.agir, fontWeight: 700,
             opacity: (p.bloqueado || !String(p.entrada || "").trim()) ? 0.4 : 1,
           }}>
           <Glifo nome="dado" tamanho={M.glifoDoDado} cor={T.amber} />
-          Agir →
+          <span>{noTelefone ? "Agir" : "Agir →"}</span>
         </button>
       </div>}
       {p.dado}
@@ -1722,14 +1871,17 @@ export function TelaDeBatalha(props) {
   /* ============================================================
      A COLUNA DA DIREITA — o turno atual, nesta batalha, o foco
      ============================================================ */
-  const emJogo = verboSobre && recursosDosVerbos ? recursosDosVerbos[verboSobre] || null : null;
+  /* §CB 16.1 nº 4: «em jogo» com o rato por cima OU COM O VERBO ARMADO — o
+     toque não tem rato, e abaixo de 660 o preço só se lê aqui */
+  const emJogo = recursosDosVerbos ? recursosDosVerbos[verboSobre || armado] || null : null;
+  const elesEstreita = noTelefone || arranjo === "duas" || (geo.coluna || 0) < B3.colunaEstreita.intencao;
   const tu = (
     <TurnoAtual personagem={personagem} economia={combate.economia} recursos={combate.recursos || null} acaoBonus={p.acaoBonus} selos={modificadores} compacto={baixo}
       emJogo={emJogo} passoM={p.passoM} passoTotal={p.passoTotal} />
   );
   const eles = (
     <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd} compacto={baixo} cede={!noTelefone}
-      intencaoDe={intencaoDe} alvo={alvoDaPrevisao} realce={realce} aoRealcar={setRealce}>
+      intencaoDe={intencaoDe} alvo={alvoDaPrevisao} realce={realce} aoRealcar={setRealce} estreito={elesEstreita}>
       {/* OS ALVOS DECLARADOS ficam aqui, ao lado de quem eles nomeiam:
           são CONTROLES, e um controle que desaparece é função que a tela
           não tem. Só nascem quando há o que declarar (mais de um
@@ -1748,7 +1900,8 @@ export function TelaDeBatalha(props) {
     <aside className="shrink-0 min-w-0 w-full" style={{ order: 2 }}>
       <TiraDoHeroi personagem={personagem} economia={combate.economia} recursos={combate.recursos || null} acaoBonus={p.acaoBonus} {...passoDaTira}
         selos={modificadores} adversario={adversario} aberta={fichaAberta} aoAbrir={() => setFichaAberta((v) => !v)} />
-      {aviso && <div style={{ marginTop: M.entreVerbos }}><AvisoDaArea aviso={aviso} pilula /></div>}
+      {/* §CB 16.3: o aviso da área já não é pílula por baixo da tira — é o
+          texto do Pé do campo, quando nada está armado */}
       {fichaAberta && (
         <div className="fixed inset-0 z-40 flex flex-col justify-end"
           style={{ padding: margem, paddingBottom: G.tiraDoHeroi + margem * 2, background: alfa(T.bg, VEU.leve) }}
@@ -1773,7 +1926,7 @@ export function TelaDeBatalha(props) {
     <aside className="flex flex-col min-h-0 min-w-0 shrink-0 overflow-y-auto tv-scroll"
       style={{ width: geo.coluna || M.lateral, order: 0, gap: baixo ? M.aperto.entrePaineis : M.entrePaineis, contain: janelaBaixa ? "size" : undefined }}>
       {tu}
-      <OTeuGolpe previsao={prevGolpe ? { ...prevGolpe, vidaDoAlvo: enteDoAlvo ? enteDoAlvo.vida : prevGolpe.vidaDoAlvo } : null} />
+      <OTeuGolpe previsao={prevGolpe ? { ...prevGolpe, vidaDoAlvo: enteDoAlvo ? enteDoAlvo.vida : prevGolpe.vidaDoAlvo } : null} estreito={(geo.coluna || M.lateral) < B3.colunaEstreita.faces} />
       <AvisoDaArea aviso={aviso} />
       <div ref={setSobraEl} className="flex flex-col min-h-0 overflow-hidden" style={{ flex: "1 1 0", gap: baixo ? M.aperto.entrePaineis : M.entrePaineis }}>
         {!p.fim && !prevGolpe && alturaDaSobra >= ALTURA_DO_FOCO && <FocoDaEscolha />}
@@ -1815,8 +1968,9 @@ export function TelaDeBatalha(props) {
           (`display: contents`) para a tira morar entre as duas metades dela.
           A ordem do DOM continua a ser a do turno: campo → veredito → verbos. */}
       <div className="flex-1 min-h-0 min-w-0 flex flex-col md:flex-row"
-        style={{ flex: janelaBaixa ? "1 0 auto" : undefined, gap: noTelefone ? M.entreVerbos : estreito ? M.margemNoTelefone : B3.entre, padding: noTelefone ? `0 ${margem}px ${margem}px` : curto ? `0 ${margem}px ${M.margemNoTelefone}px` : `${M.mesaTopo}px ${margem}px ${B3.margemDeBaixo}px` }}>
-        <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", order: 1, gap: curto ? M.chipLadoX : M.entrePaineis }}>
+        style={{ flex: janelaBaixa ? "1 0 auto" : undefined, gap: noTelefone ? B3.telefone.entre : estreito ? B3.margemEstreita : B3.entre, padding: noTelefone ? `0 ${margem}px ${margem}px` : curto ? `0 ${margem}px ${M.margemNoTelefone}px` : `${M.mesaTopo}px ${margem}px ${B3.margemDeBaixo}px` }}>
+        {/* §CB 16.2: entre o campo e a barra, 8 em todos os patamares */}
+        <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", order: 1, gap: B3.entreCampoEBarra }}>
           {campo}
           {acaoDoFim || acao}
         </div>

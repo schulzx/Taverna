@@ -423,7 +423,11 @@ for (const cen of ["justo", "duro", "brando"]) {
    escrito no diário passar a mentir — e ninguém teria como saber. */
 const MED_SEM = {};
 for (const cen of ["justo", "duro", "brando"]) {
-  MED_SEM[cen] = medir(cen, { n: CATRACA_DE_UMA_VIDA.sementesPorFamilia, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario: false });
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: o anúncio da intenção
+     (INTENCAO_NA_REGUA) ligou-se porque o App passou a anunciar; o molde
+     histórico é de antes do anúncio, e o caminho de volta pede-o desligado
+     de forma explícita — senão o retrato de 54,7% deixaria de ser alcançável. */
+  MED_SEM[cen] = medir(cen, { n: CATRACA_DE_UMA_VIDA.sementesPorFamilia, prefixo: AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario: false, comIntencao: false });
 }
 const CUSTO_DA_MEDIDA = Date.now() - T0;
 
@@ -925,9 +929,10 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
      inimigo como parâmetro, desligado até o App anunciar), com leitor logo
      abaixo e a medida inteira em teste-intencao §7. */
   t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 18 && semLeitor.length === 0, semLeitor.join(", "));
-  /* e o anúncio desligado é o jogo de hoje: com ele, o retrato desta suíte é o
-     de sempre, byte a byte (o App ainda não anuncia — CB6, fiação do oficial) */
-  t("o anúncio da intenção está desligado na régua até o App anunciar (INTENCAO_NA_REGUA)", R.INTENCAO_NA_REGUA && R.INTENCAO_NA_REGUA.ligado === false);
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: o App passou a anunciar a
+     intenção no começo de cada rodada (CB6, a fiação), e a régua mede o jogo de
+     hoje — o anúncio LIGA. Era `=== false` «até o App anunciar»; o dia chegou. */
+  t("o anúncio da intenção está ligado na régua, porque o App anuncia (INTENCAO_NA_REGUA)", R.INTENCAO_NA_REGUA && R.INTENCAO_NA_REGUA.ligado === true);
 
   /* E A RÉGUA COMPÕE O ADVERSÁRIO DE VERDADE, pelo mesmo motivo que compõe o
      combate: uma régua que reimplementasse `intencaoDaVez` mediria um segundo

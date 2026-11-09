@@ -49,6 +49,9 @@ import { IconeEscudoAlerta, Glifo, PilulaDaPrevisao, PilulaDaIntencao } from "./
    canto da ficha, o caminho no chão e o golpe sentido. O que se mostra é
    decidido em batalha-na-tela.js; as medidas saem das tabelas de CB. */
 import { PREVISAO_DO_GOLPE, CAMINHO_NO_CHAO, INTENCAO_NA_MESA, GOLPE_SENTIDO, FECHO_DA_QUEDA, TIPOS, alfa } from "./estilo.js";
+/* §CB 16: o Pé do campo (a altura dos botões dele, os chips) e o telefone
+   sem calha (a régua presa desenha-se por cima das casas) */
+import { BATALHA_EM_TRES as B3 } from "./estilo.js";
 import { variacaoDoGolpe, pilulaDaPrevisao, chipDaQueda } from "./batalha-na-tela.js";
 import { GLIFOS } from "./glifos.js";
 import { tocarGolpe } from "./som-da-mesa.js";
@@ -199,14 +202,24 @@ const GRAUS_DA_REGUA = {
 /* Definido FORA do render de propósito: um componente declarado lá dentro
    nasce outro a cada quadro e mata o foco de quem estiver focado — e aqui
    o foco é justamente o que acende o rótulo. */
-function RotuloDaRegua({ texto, grau, coluna, parado }) {
+/* §CB 9 / §CB 16.3 · A RÉGUA PRESA (o telefone) escreve no CANTO de cada
+   casa, por cima das casas e sem lhes tirar um píxel: o quadro 358:1250 põe
+   a letra e o número a ~2 px do canto, mono 12 `inkDim` a 85 %. No canto da
+   primeira fila à vista a letra e o número cairiam um em cima do outro (o
+   quadro resolve-o omitindo o número dessa fila, o que uma régua que rola não
+   pode fazer); por isso o número desce uma linha de letra (16, a linha que o
+   glifo de 12 mede — ver CALHA_DA_REGUA). */
+const CANTO_DA_REGUA = { recuo: 2, alfa: 0.85, linhaDaLetra: 16 };
+function RotuloDaRegua({ texto, grau, coluna, parado, canto = false }) {
   const d = GRAUS_DA_REGUA[grau] || GRAUS_DA_REGUA.repouso;
   /* Sob `prefers-reduced-motion` a troca pousa no ESTADO FINAL — a cor de
      chegada, de uma vez. Nenhuma classe nova nasce por causa disto: a
      transição é do elemento, e a saída é o próprio tempo a zero. */
   const anda = `${parado ? 0 : MS_DA_REGUA}ms linear`;
   return (
-    <div style={{ flex: 1, minWidth: 0, minHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ flex: 1, minWidth: 0, minHeight: 0, position: "relative", display: "flex", alignItems: canto ? "flex-start" : "center", justifyContent: canto ? "flex-start" : "center",
+      padding: canto ? CANTO_DA_REGUA.recuo : 0, paddingTop: canto && !coluna ? CANTO_DA_REGUA.recuo + CANTO_DA_REGUA.linhaDaLetra : undefined,
+      opacity: canto ? CANTO_DA_REGUA.alfa : 1 }}>
       {texto ? (
         <span className="tv-mono" style={{ fontSize: CORPO_DA_REGUA, fontWeight: 700, lineHeight: 1, color: d.cor, transition: `color ${anda}` }}>{texto}</span>
       ) : (
@@ -767,6 +780,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
        combate é o momento mais tenso da mesa e era o painel mais espremido
        dela. `position: relative` é o chão da faixa do chefe. */
     const larguraDoCampo = grande ? `min(94vw, ${Math.round((68 * g.largura) / g.altura)}vh)` : g.largura * ladoEmPx(false);
+    /* §CB 16.3: com a régua PRESA (o telefone) não há calha — as letras e os
+       números desenham-se por cima das casas, colados ao topo e à esquerda
+       da janela, e a câmara mede a janela inteira. Na vista ⤢ a régua
+       continua na calha de sempre. */
+    const presa = reguaPresa && !grande;
+    const calha = presa ? B3.telefone.calha : CALHA_DA_REGUA;
     /* rotula uma a cada N; as outras levam só um traço. Na mesa (48 px)
        N = 1; no aperto máximo que existe — 18 colunas em 375 px, 18,8 px
        de lado — N = 2. A letra nunca precisa de sair. */
@@ -818,26 +837,32 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     /* A CALHA: o canto, as letras em cima, os números à esquerda, e o campo
        no quadrante que sobra. O `maxWidth` cresce os 22 px da calha para
        que o tabuleiro fique do mesmo tamanho que tinha antes dela. */
-    <div style={{ display: "grid", gridTemplateColumns: `${CALHA_DA_REGUA}px 1fr`, gridTemplateRows: `${CALHA_DA_REGUA}px auto`,
+    <div style={{ display: "grid", gridTemplateColumns: `${calha}px 1fr`, gridTemplateRows: `${calha}px auto`,
       /* com lado imposto a caixa NÃO encolhe: é a janela que corta o campo,
          e é o rolador do pai que mostra o resto. Sem ele, `width: 100%`
          devolveria a casa ao tamanho do buraco — o defeito que E1 mediu. */
-      width: !grande && ladoFixo > 0 ? larguraDoCampo + CALHA_DA_REGUA : "100%",
+      width: !grande && ladoFixo > 0 ? larguraDoCampo + calha : "100%",
       flexShrink: 0,
-      maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + CALHA_DA_REGUA, margin: "0 auto", background: T.bg }}>
+      maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + calha, margin: "0 auto", background: T.bg }}>
       {/* o canto é `bg` e não leva rótulo: `A1` não se escreve duas vezes */}
-      <div aria-hidden="true" style={reguaPresa ? { position: "sticky", top: 0, left: 0, zIndex: 4, background: T.bg } : undefined} />
-      <div aria-hidden="true" style={{ display: "flex", alignItems: "stretch", ...(reguaPresa ? { position: "sticky", top: 0, zIndex: 3, background: alfa(T.bg, 0.85) } : {}) }}>
-        {Array.from({ length: g.largura }).map((_, x) => (
-          <RotuloDaRegua key={`rc${x}`} coluna parado={parado} grau={grauDaColuna(x)}
-            texto={x % passoDoRotulo === 0 ? (LETRAS_DA_GRADE[x] || "") : ""} />
-        ))}
+      <div aria-hidden="true" style={presa ? { position: "sticky", top: 0, left: 0, zIndex: 4 } : undefined} />
+      {/* presa: a faixa tem altura zero na grelha e a régua pende dela por
+          cima da primeira fila (e da primeira coluna), sem apanhar toque */}
+      <div aria-hidden="true" style={presa ? { position: "sticky", top: 0, zIndex: 3, height: 0, overflow: "visible", pointerEvents: "none" } : { display: "flex", alignItems: "stretch" }}>
+        <div style={presa ? { display: "flex", alignItems: "stretch", height: CALHA_DA_REGUA } : { display: "contents" }}>
+          {Array.from({ length: g.largura }).map((_, x) => (
+            <RotuloDaRegua key={`rc${x}`} coluna canto={presa} parado={parado} grau={grauDaColuna(x)}
+              texto={x % passoDoRotulo === 0 ? (LETRAS_DA_GRADE[x] || "") : ""} />
+          ))}
+        </div>
       </div>
-      <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", ...(reguaPresa ? { position: "sticky", left: 0, zIndex: 3, background: alfa(T.bg, 0.85) } : {}) }}>
-        {Array.from({ length: g.altura }).map((_, y) => (
-          <RotuloDaRegua key={`rn${y}`} coluna={false} parado={parado} grau={grauDaLinha(y)}
-            texto={y % passoDoRotulo === 0 ? String(y + 1) : ""} />
-        ))}
+      <div aria-hidden="true" style={presa ? { position: "sticky", left: 0, zIndex: 3, width: 0, overflow: "visible", pointerEvents: "none" } : { display: "flex", flexDirection: "column", alignItems: "stretch" }}>
+        <div style={presa ? { display: "flex", flexDirection: "column", alignItems: "stretch", width: CALHA_DA_REGUA, height: "100%" } : { display: "contents" }}>
+          {Array.from({ length: g.altura }).map((_, y) => (
+            <RotuloDaRegua key={`rn${y}`} coluna={false} canto={presa} parado={parado} grau={grauDaLinha(y)}
+              texto={y % passoDoRotulo === 0 ? String(y + 1) : ""} />
+          ))}
+        </div>
       </div>
       {/* e o campo, no quadrante que sobra. `position: relative` é o chão
           da faixa do chefe, e continua a ser. */}
@@ -1474,25 +1499,30 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      B1: são as mesmas nos dois sítios onde o campo as escreve (o cabeçalho
      de sempre, e o pé da arena da tela da batalha), e por isso nascem uma
      vez só. */
+  /* §CB 16.3 · OS CHIPS DO PÉ DO CAMPO, a 12 (`TIPOS.piso`; as tarjas
+     estavam a 9, abaixo do piso). Cada coisa foi para onde já era dita: a
+     tarja do passo («6 de 9 m») mora na Economia (coluna Tu e tira) e o seu
+     `title` passou ao movimento de lá; o resumo da área é o TEXTO DO
+     VEREDITO enquanto se mira (painel-batalha.jsx); a legenda do passo é a
+     primeira linha da vista ⤢. Ficam o golpe livre, a rota, o andar/mirar
+     da área e o alcance do alvo único. */
+  const chip = { display: "inline-flex", alignItems: "center", gap: 4, height: B3.chipDoPe.alto, padding: `0 ${MB.chipLadoX / 2 + 2}px`, borderRadius: B3.chipDoPe.raio, fontSize: TIPOS.piso, whiteSpace: "nowrap", flexShrink: 0 };
+  const altoDoBotaoDoPe = peCompacto ? B3.telefone.pe : B3.pe;
   const tarjas = (
     <>
       {colados.length > 0 && (
-        <span className="tv-mono text-[9px]" style={{ color: T.danger }} title="Sair de perto de um inimigo dá a ele um golpe livre">
-          <Glifo nome="espadas" tamanho={12} /> sair custa {colados.length === 1 ? "um golpe livre" : `${colados.length} golpes livres`}
+        <span className="tv-mono" style={{ ...chip, color: T.danger, border: `1px solid ${T.danger}` }} title="Sair de perto de um inimigo dá a ele um golpe livre">
+          <Glifo nome="espadas" tamanho={12} /> sair: {colados.length === 1 ? "golpe livre" : `${colados.length} golpes livres`}
         </span>
       )}
-      <span className="tv-mono text-[9px]" style={{ color: passoM > 0 ? T.inkDim : T.danger }}
-        title="O que sobra do seu passo nesta rodada. Andar não gasta a ação: dá para dar dois passos, contornar e ainda golpear.">
-        <Glifo nome="passo" tamanho={12} /> {metrosTxt(passoM)} de {metrosTxt(passoTotal)} m nesta rodada
-      </span>
       {rotaPrevista && (
-        <span className="tv-mono text-[9px]" style={{ color: T.amberSoft }}>
+        <span className="tv-mono" style={{ ...chip, color: T.amberSoft }}>
           ↳ {metrosTxt(rotaPrevista.custoM)} m até ali
         </span>
       )}
       {/* a de alvo único diz o alcance em palavras, já que não tem botão */}
       {!podeMirar && alcanceMira && alcanceMira.nome && (
-        <span className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: T.violetSoft, border: `1px solid ${T.violet}` }}
+        <span className="tv-mono" style={{ ...chip, color: T.violetSoft, border: `1px solid ${T.violet}` }}
           title="O tracejado roxo é até onde esta habilidade chega. Fora dele, não há disparo — e o PM não é gasto.">
           ◎ {alcanceMira.nome} alcança {metrosTxt(alcanceMira.alcanceM)} m
         </span>
@@ -1500,16 +1530,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       {podeMirar && (
         <button onClick={() => setModo((m) => (m === "mirar" ? "andar" : "mirar"))}
           title={mirando ? "Voltar a andar pelo tabuleiro" : `Escolher onde ${alcanceMira.nome} vai cair`}
-          className="tv-mono text-[9px] px-2 py-0.5 rounded-full"
-          style={{ background: mirando ? T.violet : "transparent", color: mirando ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}` }}>
+          className="tv-anel-foco tv-mono"
+          style={{ ...chip, height: altoDoBotaoDoPe, minHeight: altoDoBotaoDoPe, borderRadius: altoDoBotaoDoPe / 2, background: mirando ? T.violet : "transparent", color: mirando ? T.onSecond : T.violetSoft, border: `1px solid ${T.violet}` }}>
           {mirando ? `◎ mirando ${alcanceMira.nome} — toque onde cai` : <><Glifo nome="passo" tamanho={12} /> andando — toque para mirar {alcanceMira.nome}</>}
         </button>
-      )}
-      {previsao && (
-        <span className="tv-mono text-[9px] px-2 py-0.5 rounded-full" style={{ color: previsao.aliados.length ? T.danger : T.amberSoft, border: `1px solid ${previsao.aliados.length ? T.danger : T.amber}` }}>
-          {previsao.aliados.length ? <Glifo nome="espadas" tamanho={12} rotulo="atinge aliados" /> : "◎"} {previsao.nome} ({previsao.forma}{previsao.raio ? ` de ${previsao.raio} m` : ""}): {previsao.inimigos.length} inimigo{previsao.inimigos.length === 1 ? "" : "s"}
-          {previsao.aliados.length ? ` · PEGA ${previsao.aliados.join(", ")}` : " · nenhum aliado na área"}
-        </span>
       )}
     </>
   );
@@ -1517,17 +1541,20 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      rato (32, WCAG 2.5.8 AA) — o pé do quadro mede 22, e um botão de 48 ali
      comia 26 px ao tabuleiro, que é a vista que agora cabe inteira. No
      telefone (`peCompacto`) e fora da mesa, o piso do dedo de sempre. */
-  const alvoDoAmpliar = pe && !peCompacto ? MB.casaMinimaNoMonitor : ALVOS.piso;
+  /* §CB 16.3: e passa a botão-glifo no fim do Pé do campo — 32 × 32 no
+     monitor, 44 × 44 no telefone (`B3.telefone.pe`), o nome no
+     `aria-label` e no `title` */
+  const alvoDoAmpliar = pe && !peCompacto ? MB.casaMinimaNoMonitor : peCompacto ? B3.telefone.pe : ALVOS.piso;
   const ampliar = (
-      <button onClick={() => setAberto(true)} title="Abrir o campo em tela cheia"
-        className="tv-anel-foco tv-mono text-[9px] ml-auto px-3 rounded-lg flex items-center justify-center"
-        style={{ minHeight: alvoDoAmpliar, minWidth: alvoDoAmpliar, border: `1px solid ${T.line}`, color: T.inkDim }}>
-        ⤢ ampliar
+      <button onClick={() => setAberto(true)} title="Ver o campo inteiro" aria-label="Ver o campo inteiro"
+        className="tv-anel-foco tv-mono ml-auto rounded-lg flex items-center justify-center shrink-0"
+        style={{ width: alvoDoAmpliar, height: alvoDoAmpliar, minHeight: alvoDoAmpliar, minWidth: alvoDoAmpliar, border: `1px solid ${T.line}`, color: T.inkDim, fontSize: TIPOS.piso + 4 }}>
+        <span aria-hidden="true">⤢</span>
       </button>
   );
   const cabecalho = (
     <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-      <span className="tv-mono text-[9px] uppercase tracking-widest" style={{ color: T.inkDim }}>
+      <span className="tv-mono uppercase tracking-widest" style={{ color: T.inkDim, fontSize: TIPOS.piso }}>
         campo · {g.largura}×{g.altura} quadrados de 1,5 m
       </span>
       {tarjas}
@@ -1557,22 +1584,14 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   const custosAcesos = [...new Set(custoDoPasso.values())].sort((a, b) => a - b);
   const legendaDoPe = { fontSize: MB.letra.legenda, letterSpacing: MB.rastreio, textTransform: "uppercase" };
   const textoDaLegenda = (() => { try { return legendaDoPasso(custoDoPasso, grade, { ignoraDificil }); } catch (e) { return ""; } })();
+  /* §CB 16.3: o pé da arena dissolve-se no Pé do campo (painel-batalha.jsx),
+     que tem altura fixa — aqui ficam só os chips e o ⤢, numa linha que não
+     quebra. «Área de movimento» e a legenda do passo vão para a primeira
+     linha da legenda da vista ⤢; o custo continua escrito em cada casa. */
   const peDaArena = (
-    <div className="flex items-center flex-wrap w-full" style={{ gap: MB.entreVerbos, minHeight: MB.arenaPe }}>
-      {/* no telefone o pé tem de caber numa linha de 48: o rótulo sai (o
-          tracejado e o número dentro de cada casa já dizem que é a área), e
-          os custos ficam nus */}
-      {custosAcesos.length > 0 && !mirando && !peCompacto && !legendaCede && (
-        <span className="tv-mono shrink-0" style={{ ...legendaDoPe, color: T.amberSoft }}>Área de movimento</span>
-      )}
+    <div className="flex items-center justify-end min-w-0" style={{ gap: MB.entreVerbos, height: "100%" }}>
       {tarjas}
-      <span className="ml-auto flex items-center" style={{ gap: MB.chipLadoX }}>
-        {/* CB 9: no telefone a legenda do passo sai do pé (o tracejado e o número na casa já a dizem), e o pé fica numa linha */}
-        {custosAcesos.length > 0 && !mirando && !legendaCede && !peCompacto && textoDaLegenda && (
-          <span className="tv-mono" style={{ ...legendaDoPe, color: T.inkDim }}>{textoDaLegenda}</span>
-        )}
-        {ampliar}
-      </span>
+      {ampliar}
     </div>
   );
 
@@ -1604,6 +1623,13 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           {/* v9.125: a legenda falava de 🧍🛡👹, que saíram do tabuleiro. Uma
               legenda que descreve o desenho anterior é pior do que nenhuma —
               ela ensina a procurar o que não está lá. */}
+          {/* §CB 16.3: a primeira linha da legenda é a do passo, que saiu do pé */}
+          {custosAcesos.length > 0 && !mirando && (
+            <div className="flex flex-wrap items-center justify-center mt-3 tv-mono" style={{ gap: MB.chipLadoX, fontSize: TIPOS.piso, maxWidth: "min(640px, 100%)" }}>
+              <span style={{ ...legendaDoPe, fontSize: TIPOS.piso, color: T.amberSoft }}>Área de movimento</span>
+              {textoDaLegenda && <span style={{ ...legendaDoPe, fontSize: TIPOS.piso, color: T.inkDim }}>{textoDaLegenda}</span>}
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-3 tv-mono text-[10px]" style={{ color: T.inkDim, maxWidth: "min(640px, 100%)" }}>
             <span style={{ color: T.amberSoft }}>◍ o rosto de cada um</span>
             <span>· o anel é a vida</span>

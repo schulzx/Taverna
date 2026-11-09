@@ -162,17 +162,42 @@ const ESC_LENDA = escolhasDoEncontro(LENDA, { bonus: { furtividade: 3, sobrevive
 }
 
 /* ============================================================ */
-sec("7. as três colunas, sem rolar; o telefone com 99 casas (§CB 2, §CB 9)");
+sec("7. as três colunas, sem rolar; o telefone com 99 casas (§CB 2, §CB 9, §CB 16.2)");
 {
+  /* §CB 16.2: a tabela de medidas da mesa que cabe. Era «casa 51» a 1905:
+     o 51 do quadro 344:156 não pagava o Pé do campo (32 + fio + aro) nem a
+     fila de 90 (a tabela dizia 84), e a tela real deu 42. Com a conta que
+     fecha, 49 com rato e 48 com toque — e 48 é um alvo de dedo inteiro. */
   const g1905 = geometriaDaMesa({ largura: 1905, altura: 1000 });
-  t("1905 × 1000: três colunas de 470, casa 51, 196/196 sem rolar", g1905.arranjo === "tres" && g1905.coluna === 470 && g1905.casa === 51 && g1905.cabe && g1905.casasAVista === 196, J(g1905));
+  const g1905t = geometriaDaMesa({ largura: 1905, altura: 1000, grosso: true });
+  t("1905 × 1000: três colunas de 470, centro 869, janela 713, casa 49 (rato) e 48 (toque), 196/196 sem rolar, com pip",
+    g1905.arranjo === "tres" && g1905.coluna === 470 && g1905.centro === 869 && g1905.campo.altura === 713 && g1905.casa === 49 && g1905t.casa === 48
+    && g1905.cabe && g1905t.cabe && g1905.casasAVista === 196 && g1905.comPip, J(g1905));
+  /* a 1366 a casa continua 34 com rato, mas agora CABE: a tela real rolava
+     com a casa no piso de 32 (a conta antiga não tinha o veredito, o pé nem
+     os verbos em duas linhas). As colunas ficam a 321 e o centro a 660. */
   const g1366 = geometriaDaMesa({ largura: 1366, altura: 768 });
-  t("1366 × 768: três colunas (cedem acima de 320), casa 34, 196/196", g1366.arranjo === "tres" && g1366.coluna >= BATALHA_EM_TRES.colunaMinima && g1366.casa === 34 && g1366.cabe, J(g1366));
+  const g1366t = geometriaDaMesa({ largura: 1366, altura: 768, grosso: true });
+  t("1366 × 768: três colunas de 321, centro 660 com pip, janela 501, casa 34 (rato) e 33 (toque), cabe",
+    g1366.arranjo === "tres" && g1366.coluna === 321 && g1366.centro === 660 && g1366.comPip && g1366.campo.altura === 501
+    && g1366.casa === 34 && g1366t.casa === 33 && g1366.cabe && g1366t.cabe, J(g1366));
   const g1024 = geometriaDaMesa({ largura: 1024, altura: 768 });
-  t("1024 × 768: duas colunas (Tu a 320; Eles em gaveta), 196/196, casa ≥ 32", g1024.arranjo === "duas" && g1024.coluna === 320 && g1024.cabe && g1024.casa >= 32, J(g1024));
-  t("nunca abaixo do piso do rato (32) nem acima de 64", [g1905, g1366, g1024].every((g) => g.casa >= BATALHA_EM_TRES.casaMinima && g.casa <= BATALHA_EM_TRES.casaMaxima));
+  const g1024t = geometriaDaMesa({ largura: 1024, altura: 768, grosso: true });
+  t("1024 × 768: duas colunas (Tu a 320; Eles em gaveta), centro 656 sem pip, casa 34 (rato) e 33 (toque), cabe",
+    g1024.arranjo === "duas" && g1024.coluna === 320 && g1024.centro === 656 && !g1024.comPip && g1024.casa === 34 && g1024t.casa === 33 && g1024.cabe && g1024t.cabe, J(g1024));
+  t("o centro nunca desce do piso dos seis gestos sem pip (540)", [1024, 1100, 1280, 1366, 1439].every((l) => geometriaDaMesa({ largura: l, altura: 768 }).centro >= BATALHA_EM_TRES.centroMinimo));
+  t("nunca abaixo do piso do rato (32) nem acima de 64", [g1905, g1366, g1024, g1905t, g1366t, g1024t].every((g) => g.casa >= BATALHA_EM_TRES.casaMinima && g.casa <= BATALHA_EM_TRES.casaMaxima));
+  t("a barra mede 106 com rato e 122 com toque (a diferença é o ponteiro, não a largura)",
+    g1905.campo.altura - g1905t.campo.altura === 2 * (BATALHA_EM_TRES.verbo.grosso - BATALHA_EM_TRES.verbo.fino) && BATALHA_EM_TRES.verbo.fino === 40 && BATALHA_EM_TRES.verbo.grosso === 48);
+  /* §CB 16.2, o telefone: a casa deixou de ser 40 fixa — é o que cabe na
+     janela de 9 × 11 (o alvo), entre 32 e 40. A 812 continua 40 e 99 casas;
+     a 760 (o navegador com as barras) desce a 36 e vê 110. */
   const tel = geometriaDaMesa({ largura: 375, altura: 812 });
-  t("375: o telefone, casa 40, janela 9 × 11 = 99 casas (era 35)", tel.arranjo === "telefone" && tel.casa === 40 && tel.casasAVista === 99, J(tel));
+  t("375 × 812: o telefone, janela 361 × 453, casa 40, 9 × 11 = 99 casas (era 35, e 70 na tela real)", tel.arranjo === "telefone" && tel.casa === 40 && tel.casasAVista === 99 && tel.campo.largura === 361 && tel.campo.altura === 453, J(tel));
+  const tel760 = geometriaDaMesa({ largura: 375, altura: 760 });
+  t("375 × 760: janela 401, casa 36, 10 × 11 = 110 casas", tel760.casa === 36 && tel760.casasAVista === 110 && tel760.campo.altura === 401, J(tel760));
+  const camT = camaraDoTelefone({ colunas: 14, linhas: 14, heroi: { x: 5, y: 7 }, alvo: { x: 6, y: 8 }, importa: [], larguraUtil: 361, alturaUtil: 401 });
+  t("a câmara conta com a mesma casa da geometria (36, 10 × 11), sem a calha a descontar", camT.casa === 36 && J(camT.janela) === "[10,11]", J(camT));
   const cam = camaraDoTelefone({ colunas: 14, linhas: 14, heroi: { x: 5, y: 7 }, alvo: { x: 6, y: 8 }, importa: [] });
   t("a câmara enquadra o herói e o alvo a 40, 9 × 11", cam.casa === 40 && J(cam.janela) === "[9,11]" && cam.casasAVista === 99 && cam.marcadores.length === 0, J(cam));
   t("e o herói e o alvo cabem na janela", cam.x0 <= 5 && 6 < cam.x0 + 9 && cam.y0 <= 7 && 8 < cam.y0 + 11);

@@ -643,8 +643,11 @@ export const CAMINHADA_NA_REGUA = {
    · Nenhum dente da catraca se mexe: no `justo` o PV do grupo desce (de
      0,75–1,00 para 0,27–0,71, contra um teto de 35) e as quedas sobem
      (2,97 → 2,98, contra um piso de 1,2). Nada a ajustar em tabela. */
+/* LIGADO (09/11, CB lote 1, oficial): o App passou a anunciar no começo de
+   cada rodada (`combate.intencoes`) e a cumprir o anunciado no revide — a
+   régua mede agora o jogo como ele é. Muda a medida, não o jogo. */
 export const INTENCAO_NA_REGUA = {
-  ligado: false,
+  ligado: true,
   heroiLe: true,
 };
 

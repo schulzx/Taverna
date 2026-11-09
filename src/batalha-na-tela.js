@@ -18,7 +18,7 @@
    em Node; o JSX (grade-de-batalha, painel-batalha, painel-encontro, ui)
    só desenha. Quando um dado falta, a conta devolve null e a peça cala-se.
    ============================================================ */
-import { PREVISAO_DO_GOLPE, INTENCAO_NA_MESA, GOLPE_SENTIDO, BATALHA_EM_TRES } from "./estilo.js";
+import { PREVISAO_DO_GOLPE, INTENCAO_NA_MESA, GOLPE_SENTIDO, BATALHA_EM_TRES, MESA_DE_BATALHA } from "./estilo.js";
 import { periciaPorId } from "./pericias.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
@@ -190,33 +190,65 @@ export function variacaoDoGolpe(evento, o) {
    e cedem até 320 para o campo ficar quadrado. Abaixo de 1280 «Eles» vira
    gaveta; abaixo de 768 é o telefone (§CB 9). Devolve o arranjo, a largura
    de cada coluna, a casa e se o tabuleiro cabe inteiro (sem rolar).
+
+   §CB 16.2 · A CONTA QUE FECHA. A altura da JANELA do campo (o que rola) é
+   a tela menos o topo e a mesa (os três patamares de B1b), a fila (90), a
+   margem de baixo, o vão até à barra, a barra (duas linhas, com o verbo à
+   altura do PONTEIRO: `j.grosso` é o toque) e o Pé do campo com o fio e o
+   aro. A casa é a menor entre a altura e a largura do centro, sem a calha.
+   O centro quer o campo quadrado e, no mínimo, 660 (o pip no verbo cabe);
+   as colunas cedem até 320 e, se nem assim, o centro leva o resto. No
+   telefone a casa é o que cabe na janela de 9 × 11, entre 32 e 40.
    ============================================================ */
 export function geometriaDaMesa(janela) {
   const j = obj(janela) || {};
-  const B = BATALHA_EM_TRES;
+  const B = BATALHA_EM_TRES, M = MESA_DE_BATALHA;
   const largura = Number(j.largura) || 0, altura = Number(j.altura) || 0;
   const colunas = Number(j.colunas) || B.casasDeReferencia, linhas = Number(j.linhas) || B.casasDeReferencia;
+  const aros = B.aro * 2;
   if (largura < B.telefoneAbaixoDe) {
     const T = B.telefone;
-    const util = largura - T.margem * 2;
-    const casa = Math.max(T.casaMinima, Math.min(T.casa, Math.floor(util / T.janela[0])));
-    const vC = Math.min(colunas, Math.floor(util / casa)), vL = Math.min(linhas, T.janela[1]);
-    return { arranjo: "telefone", coluna: 0, casa, campo: { largura: util, altura: vL * casa }, casasAVista: vC * vL, cabe: vC * vL >= colunas * linhas };
+    /* a janela de largo: a margem dos dois lados e o aro do campo (361 a 375) */
+    const util = largura - T.margem * 2 - aros;
+    const cab = T.cabecalho.topo + T.fila + T.cabecalho.entre + T.fala + T.cabecalho.baixo;
+    const barra = aros + T.respiro * 2 + T.verbo * 3 + T.entre * 2;
+    const alturaUtil = Math.max(0, altura - cab - (aros + B.aro + T.pe) - T.entre - T.tira - T.entre - barra - T.margem);
+    const casa = casaDoTelefone(util, alturaUtil);
+    const vC = Math.min(colunas, Math.floor(util / casa)), vL = Math.min(linhas, Math.floor(alturaUtil / casa));
+    return { arranjo: "telefone", coluna: 0, casa, campo: { largura: util, altura: alturaUtil }, casasAVista: vC * vL, cabe: vC * vL >= colunas * linhas, comPip: false };
   }
   const tres = largura >= B.duasColunasAbaixoDe;
   const nCol = tres ? 2 : 1;
-  /* a altura do campo: o que sobra da margem, da fila, da fala e da barra */
-  const altCampo = altura - B.margem - B.fila - B.fala - B.barra - B.margemDeBaixo;
+  /* os três patamares de B1b (a altura da janela, não da tela) */
+  const [topo, mesa] = altura >= M.patamares.curto ? [B.margem, M.mesaTopo]
+    : altura >= M.patamares.baixo ? [M.chipLadoX, M.chipLadoY]
+      : [M.aperto.cenaTopo, M.aperto.cenaBaixo];
+  const verbo = j.grosso ? B.verbo.grosso : B.verbo.fino;
+  const barra = aros + B.barraRespiro * 2 + verbo * 2 + B.entreFileiras;
+  const pe = B.pe + B.aro + aros;
+  /* a janela do campo: 713 a 1905 × 1000 (rato), 501 a 768 */
+  const altJanela = altura - topo - B.fila - mesa - B.margemDeBaixo - B.entreCampoEBarra - barra - pe;
+  const estreito = largura < B.estreitoAbaixoDe;
+  const margem = estreito ? B.margemEstreita : B.margem;
+  const entre = estreito ? B.margemEstreita : B.entre;
   /* o campo quadrado que a altura pede (a calha da régua nas duas direções) */
-  const casaPelaAltura = Math.floor((altCampo - B.calha) / linhas);
-  const larguraIdeal = Math.max(B.casaMinima, Math.min(B.casaMaxima, casaPelaAltura)) * colunas + B.calha;
-  const sobra = largura - B.margem * 2 - B.entre * nCol;
-  /* com duas colunas, Tu fica no mínimo (320) e o campo leva o resto */
-  const coluna = !tres ? B.colunaMinima : Math.max(B.colunaMinima, Math.min(B.coluna, Math.floor((sobra - larguraIdeal) / nCol)));
-  const larCampo = sobra - coluna * nCol;
-  const casa = Math.max(B.casaMinima, Math.min(B.casaMaxima, Math.floor(Math.min((larCampo - B.calha) / colunas, (altCampo - B.calha) / linhas))));
-  const cabe = casa * colunas + B.calha <= larCampo && casa * linhas + B.calha <= altCampo;
-  return { arranjo: tres ? "tres" : "duas", coluna, casa, campo: { largura: larCampo, altura: altCampo }, casasAVista: cabe ? colunas * linhas : null, cabe };
+  const casaPelaAltura = Math.floor((altJanela - B.calha) / linhas);
+  const larguraIdeal = Math.max(B.casaMinima, Math.min(B.casaMaxima, casaPelaAltura)) * colunas + B.calha + aros;
+  const sobra = largura - margem * 2 - entre * nCol;
+  const centroQuer = Math.max(larguraIdeal, B.centroComPip);
+  /* com duas colunas, Tu fica no mínimo (320) e o centro leva o resto */
+  const coluna = !tres ? B.colunaMinima : Math.max(B.colunaMinima, Math.min(B.coluna, Math.floor((sobra - centroQuer) / nCol)));
+  const centro = sobra - coluna * nCol;
+  const larJanela = centro - aros;
+  const casa = Math.max(B.casaMinima, Math.min(B.casaMaxima, Math.floor(Math.min((larJanela - B.calha) / colunas, (altJanela - B.calha) / linhas))));
+  const cabe = casa * colunas + B.calha <= larJanela && casa * linhas + B.calha <= altJanela;
+  return { arranjo: tres ? "tres" : "duas", coluna, casa, centro, campo: { largura: larJanela, altura: altJanela }, casasAVista: cabe ? colunas * linhas : null, cabe, comPip: centro >= B.centroComPip };
+}
+/* a casa do telefone: o que cabe na janela de 9 × 11 (o alvo), entre o piso
+   (32) e o teto (40). A geometria e a câmara contam com a mesma. */
+function casaDoTelefone(util, alturaUtil) {
+  const T = BATALHA_EM_TRES.telefone;
+  return Math.max(T.casaMinima, Math.min(T.casa, Math.floor(util / T.janela[0]), Math.floor(alturaUtil / T.janela[1])));
 }
 
 /* ============================================================
@@ -226,6 +258,9 @@ export function geometriaDaMesa(janela) {
    Cabe em 9×11: centra-o. Não cabe: a casa desce até 32 (11×13). Nem
    assim: ficam o herói e o alvo, e os outros ganham o marcador fora de
    vista na borda, com a distância. `importa`: [{ nome, x, y, lado }].
+   §CB 16.2: a casa de partida é a que cabe na janela (9 × 11 é o alvo,
+   entre 32 e 40), e a largura e a altura úteis chegam inteiras — no
+   telefone já não há calha a descontar (a régua mora por cima das casas).
    ============================================================ */
 export function camaraDoTelefone(cena) {
   const c = obj(cena) || {};
@@ -254,7 +289,8 @@ export function camaraDoTelefone(cena) {
   const todos = caixa([heroi, alvo, ...outros]);
   const cabeEm = (cx, casa) => { const [jc, jl] = janelaDe(casa); return !cx || (cx.w <= jc && cx.h <= jl); };
   let pouso = null, fora = [];
-  if (cabeEm(todos, T.casa)) pouso = pousar(todos, T.casa);
+  const casaQueCabe = casaDoTelefone(util, alturaUtil);
+  if (cabeEm(todos, casaQueCabe)) pouso = pousar(todos, casaQueCabe);
   else if (cabeEm(todos, T.casaMinima)) pouso = pousar(todos, T.casaMinima);
   else {
     pouso = pousar(caixa([heroi, alvo]) || todos, T.casaMinima);

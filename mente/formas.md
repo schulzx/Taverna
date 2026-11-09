@@ -16746,3 +16746,214 @@ lançarem o dado.
 **E a segunda, que já está na planta do `jogo`** (§6, «quem vê primeiro, monta a mesa»): o encontro desenhado aqui
 (§CB 7) é o chão dela, e a escolha «Emboscar» passa a abrir a fase de colocação. A forma de arrastar as fichas na zona
 fica para depois de CB14.
+
+### CB 16 · A mesa que cabe: onde moram o veredito, o pé e os verbos (`desenho`, 09/11/2026, depois da construção)
+
+**O que o `aprendiz` mediu na tela real** (`src/painel-batalha.jsx`, `src/grade-de-batalha.jsx`, `src/batalha-na-tela.js`):
+a 1905×1000 a casa ficou em **42**, não em 51; a 1366×768 e a 1024×768 o campo **rola** com a casa no piso de 32; no
+telefone veem-se **70** casas, não 99, com a barra de ação a 266 px (os verbos em três linhas). A diferença tem quatro
+causas. As três primeiras o quadro `344:156` não tinha: **a linha do veredito** (32), **o pé da arena** com a legenda e
+o «ampliar» (33 a 56; cresce quando quebra) e **os verbos em duas linhas** quando o centro estreita (+56). A quarta é do
+próprio quadro, que desenhou os verbos a 40 e o `como?` a 24–32, enquanto o código os pôs a 48 (`G.verbos`,
+`ALVOS.piso`). No telefone há mais duas: a régua comia 22 px de largura (`larguraUtil − 22`) e a margem era 16, não 7.
+
+**Os quadros corrigidos** (página `341:2`, fila **B′**, y 6100): **`356:794`** 1905×1000 · **`356:1275`** 1366×768 ·
+**`356:1756`** 1024×768 · **`358:1250`** 375×812. O par comparável é a fila B (`344:156`, `346:313`), na mesma página.
+
+#### CB 16.1 · As cinco decisões
+
+1. **O veredito desce para o pé do campo.** A linha que estava entre o campo e os verbos passa a ser **o Pé do campo**:
+   32 de alto no monitor (44 no telefone), dentro da moldura do campo, por baixo de um fio `line`. Leva a mira (`danger`,
+   16) e o texto do veredito em mono 12 com entrelinha 16, **até duas linhas dentro dos 32**. Nunca cresce, e o `title`
+   leva a frase inteira. À direita ficam os chips do campo e o ⤢. A linha continua **entre o campo e os verbos**, a
+   8 px do verbo armado, e o bico dele continua a apontar para ela. Sai o rótulo «Sua próxima ação», porque a posição e
+   o bico já o dizem. A reação (K3) continua ancorada por cima desta linha e cresce para cima, sobre o terço de baixo do
+   campo, como sempre.
+2. **O pé da arena dissolve-se, e nada se perde: cada coisa vai para onde já era dita.** A lista está em §CB 16.3. O
+   pé deixa de existir como faixa própria; o que fica cabe no Pé do campo, que tem altura fixa.
+3. **A fala do Mestre sobe à linha da fila** (só no monitor). O cabeçalho tem três blocos e o da direita estava vazio.
+   Fica assim: o lugar e o título à esquerda, a fila ao centro, **a fala à direita**, em Spectral itálico 16 `inkMeio`,
+   entrelinha 24, **até três linhas** (72 ≤ os 90 da fila), com reticências no fim e a frase inteira no `title`. Devolve
+   36 px ao tabuleiro a 1905 e 32 a 768, **e dá mais lugar à prosa, não menos**: a 1905 cabem ~240 caracteres em vez de
+   ~50; a 1024, ~90 em vez de ~50. No telefone a fala continua na linha dela (22).
+4. **A barra tem sempre duas linhas, e nenhuma quebra.** Linha 1: **os seis gestos**, pela ordem de
+   `VERBOS_DE_COMBATE`. Linha 2: **o `como?`** (enche) · **✦** · **a bolsa** · o fio · **Esperar** · **Fugir** · **Agir**.
+   As duas gavetas descem para a linha do `como?` porque são listas, não gestos (a lei da fileira já o dizia), e é isso
+   que deixa os seis gestos caberem numa linha a 1024. O pip do recurso no verbo **só aparece quando o centro tem
+   ≥ 660 px**. Abaixo disso o preço continua à vista na Economia (coluna Tu ou tira), que passa a marcar «em jogo»
+   **também com o verbo armado**, e não só com o rato por cima, porque o toque não tem rato. O Atacar guarda sempre
+   «· 78%».
+5. **O alvo mede-se pelo ponteiro, não pela largura.** Com `(pointer: fine)`, verbos, gavetas, recuos, `como?` e Agir
+   ficam a **40**; com `(pointer: coarse)`, a **48** (`ALVOS.piso`). 40 com rato cumpre com folga o WCAG 2.2, 2.5.8
+   (AA, 24×24), e a casa já aceitou 32 no monitor pelo mesmo motivo (B1b, `M.casaMinimaNoMonitor`). Um iPad a 1024 é
+   toque e fica a 48. O sinal é a característica `pointer` do Media Queries Level 4 (W3C).
+
+#### CB 16.2 · A conta que fecha (a mesma que `geometriaDaMesa` tem de devolver)
+
+**Monitor.** `janela = altura − topo − fila − mesa − 16 − 8 − barra − 35`. A fila mede **90** (medida na DOM:
+6 + 56 + 4 + 16 + 6 + 2; o 84 da tabela estava curto). A barra mede **106** com ponteiro fino (2 + 8 + 40 + 8 + 40 + 8)
+e **122** com toque. O 35 é o Pé do campo (32), mais o fio (1) e a borda do campo (2). O topo e a mesa são os patamares
+de B1b: com ≥ 1000 de alto, 24 + 8; no curto (860–999), 12 + 8; no baixo (< 860), 8 + 4. A casa é
+`min((janela − 22) ÷ 14, (centro − 24) ÷ colunas)`, entre 32 e 64.
+
+| tamanho | janela | casa (fino · toque) | tabuleiro 14×14 | antes (medido) |
+|---|---|---|---|---|
+| **1905×1000** | 713 | **49 · 48** | 708, cabe sem rolar (deserto 18×14: casa 46) | 42 |
+| **1366×768** | 501 | **34 · 33** | 498, cabe sem rolar | 32, e rola |
+| **1024×768** | 501 | **34 · 33** | 498, cabe sem rolar | 32, e rola |
+| 1366×900 (curto) | 625 | 43 · 42 | cabe | — |
+
+A 1905 a casa fica em 49 e não em 51, porque o 51 do quadro `344:156` não pagava o Pé do campo. Como 49 ≥ 48, **cada
+casa é um alvo de dedo inteiro**. A 1366×657 e abaixo, o 14×14 continua a não caber a 32 (precisa de 470) e a janela
+rola, centrada no herói, como B1b já escrevia.
+
+**A largura do centro.** `centro = max(larguraIdeal + 2, 660)` enquanto as colunas puderem ficar ≥ 320. Quando não
+podem, as colunas ficam a 320 e o centro leva o resto (≥ 540, onde os seis gestos sem pip cabem: 504 + 18). Daí sai:
+1905 → colunas 470, centro 869, com pip · 1366 → colunas **321**, centro **660**, com pip · 1280 → colunas 320, centro
+576, sem pip · 1024 (duas colunas) → Tu 320, centro 656, sem pip. A linha 1 mede **625** com pip e **504** sem pip
+(Figma, mono 12, lado 8, entre 6, 8 entre verbos). Cabe nos 644 de dentro a 1366 e nos 640 a 1024.
+
+**Telefone (375).** `janela = altura − 80 − 47 − 6 − 44 − 6 − 170 − 6`. As parcelas: o cabeçalho 80 (4 + fila 48 + 2 +
+fala 22 + 4), o campo com o Pé 44 e as bordas (47), a tira 44, a barra 170 (2 + 6 + 3 × 48 + 2 × 6 + 6) e a margem de
+baixo. A margem dos lados é **6**, logo a janela tem **361** de largo. A casa é
+`min(⌊361 ÷ 9⌋, ⌊janela ÷ 11⌋)`, entre 32 e 40: **a janela de 9×11 é o alvo, e a casa é o que cabe**.
+
+| telefone | janela | casa | casas à vista | antes |
+|---|---|---|---|---|
+| **375×812** | 453 | **40** | **9 × 11 = 99** (e 13 px da 12.ª fila) | 70 |
+| 375×760 (o navegador com as barras) | 401 | 36 | 10 × 11 = 110 | — |
+
+#### CB 16.3 · Onde mora cada coisa (nada se tira)
+
+| o que era | onde mora agora |
+|---|---|
+| a linha do veredito («Sua próxima ação» + a frase) | **o Pé do campo**, com a mesma frase e o mesmo `aria-live`; sai só o rótulo |
+| «Área de movimento» e a legenda do passo («1,5 m por casa · na encosta, 3 m») | **a primeira linha da legenda da vista ⤢** (que já tem a legenda do tabuleiro); o custo continua escrito dentro de cada casa |
+| «6 de 9 m nesta rodada» (a tarja do passo) | **a Economia** (coluna Tu) e **a tira** (telefone), que já o mostravam; o `title` da tarja passa ao movimento da Economia |
+| «sair custa um golpe livre» | **chip no Pé do campo**: espadas 12 + «sair: golpe livre» / «sair: 2 golpes livres», mono 12 `danger`, aro `danger`, 24 de alto, raio 12 |
+| «↳ 4,5 m até ali» (a rota sob o rato) | **chip no Pé do campo**, mono 12 `amberSoft`, sem aro |
+| o botão andar/mirar da habilidade de área | **chip no Pé do campo**, 32 de alto (44 no telefone), com a forma de hoje |
+| «◎ X alcança 9 m» (alvo único) | **chip no Pé do campo**, `violetSoft`, aro `violet` |
+| o resumo da área («Bola de fogo…: 2 inimigos · PEGA Quorin») | **o texto do veredito enquanto se mira**, porque é o que vai acontecer; a mira fica `danger` |
+| «⤢ ampliar» | **botão-glifo no fim do Pé do campo**: 32×32 no monitor (como em B1b), 44×44 no telefone, com `aria-label` e `title` «Ver o campo inteiro» |
+| a fala do Mestre (uma linha por baixo da fila) | **o bloco direito da linha da fila**, até três linhas (monitor); a linha dela no telefone |
+| ✦ e a bolsa (no fim da fileira) | **a linha do `como?`**, entre o campo e o fio dos recuos |
+| o pip do recurso no verbo | no verbo, quando o centro ≥ 660; **sempre na Economia**, «em jogo» com o rato **ou com o verbo armado** |
+| a pílula do aviso da área por baixo da tira (telefone) | **o texto do veredito**, quando nada está armado, por esta prioridade: armado / recusa / preço da fuga > aviso da área > a linha do golpe |
+| a pílula da intenção à direita do cartão, em «Eles» a < 400 | **a segunda linha do cartão** (x 62, por baixo da barra do PV); o cartão mede 92 |
+| as 20 faces do d20 numa linha, em «Tu» a < 450 | **duas filas de 10**; a conta de cada linha (ACERTO, DANO…) desce para debaixo do número |
+
+**O que nunca se tirou, conferido:**
+- **a previsão**: a pílula sob o alvo, «O teu golpe» e a folha do telefone;
+- **a intenção**: as pílulas no tabuleiro, a coluna «Eles» e a gaveta a 1024;
+- **a Economia**: Tu e tira, e o pip no verbo quando cabe;
+- **os verbos**: os seis gestos, Esperar, Fugir, ✦, a bolsa, o `como?` e o Agir estão **todos à vista nos quatro
+  tamanhos**, nenhum atrás de um «mais» nem de uma rolagem.
+
+**As três sugestões do pedido, e o que se fez com cada uma:**
+- *O veredito na coluna da esquerda* — recusado. A 1024 e no telefone a coluna Tu não está onde o olho está, e o bico
+  do verbo armado deixaria de apontar para a sua linha. O Pé do campo dá os mesmos 32 sem afastar a frase do verbo.
+- *A legenda num ícone de ajuda* — feito, mas sem ícone novo: a vista ⤢ já tem a legenda do tabuleiro, e a do passo
+  junta-se a ela. Fica um glifo a menos, não um a mais.
+- *Os verbos com rolagem horizontal ou um «mais»* — recusado, pela lei da fileira («uma fileira que nunca muda
+  aprende-se em duas lutas e usa-se sem olhar») e pela regra do pedido (os verbos que o jogador usa nunca saem). O que
+  resolveu foi tirar da fileira o que não é gesto (as gavetas), e o pip quando falta lugar.
+
+**O telefone.** Os verbos são **uma grelha de 4 colunas** (82,75 cada), em três linhas:
+- **Atacar** (com «78%» por baixo) · Mover · Esquivar · Empurrar;
+- Derrubar · Saltar · **Esperar** · **Fugir**;
+- o `como?` (enche) · ✦ 48 · bolsa 48 · **Agir** (d20 + «Agir»).
+
+Os recuos distinguem-se pelo papel (aro `line`, letra `inkMeio`/`inkDim`), já que a grelha não tem fio. A régua presa
+fica **por cima das casas**, como §CB 9 a desenhou (mono 12 `inkDim` a 85 %): no telefone **não há calha**, e a câmara
+mede a janela inteira.
+
+#### CB 16.4 · O contraste dos pares novos (WCAG 2.2; `T` lido em `node`)
+
+| par | razão |
+|---|---|
+| o veredito em repouso `inkDim` / `panel` (o fundo do campo) | 6,26 |
+| o veredito armado `amberSoft` / `panel` | 11,23 |
+| o chip do golpe livre `danger` / `panel` · a mira `danger` / `panel` (não-texto) | 5,35 |
+| o alcance `violetSoft` / `panel` · as gavetas `violetSoft` / `panelSoft` | 10,37 · 9,02 |
+| a fala na linha da fila `inkMeio` / `bg` | 9,13 |
+| o verbo `ink` / `panelSoft` · Esperar `inkMeio` / `panelSoft` · Fugir impedido `inkDim` / `panelSoft` | 12,07 · 8,32 · 5,45 |
+
+Todo o texto passa 4,5. **As tarjas do pé estavam a 9 px** (`text-[9px]` em `grade-de-batalha.jsx`), abaixo do piso de
+12 (`TIPOS.piso`): os chips nascem a 12. Nenhuma cor nova.
+
+#### CB 16.5 · O que o `aprendiz` muda (por esta ordem; o `App.jsx` não se toca)
+
+1. **`src/estilo.js` · `BATALHA_EM_TRES`**:
+   - `fila` 84 → **90**;
+   - sai `barra: 112`; entram `verbo: { fino: 40, grosso: 48 }`, `barraRespiro: 8`, `entreFileiras: 8`,
+     `entreCampoEBarra: 8`, `pe: 32`, `centroComPip: 660`, `centroMinimo: 540`,
+     `verboComPip: { pip: 18, passos: 14, lado: 8, entre: 6 }` (o 18 é `ECONOMIA_DA_VEZ.lado × noVerbo`, e lê-se de lá)
+     e `falaNaFila: { linhas: 3, entrelinha: 24, letra: 16 }`;
+   - em `telefone`: `margem` 7 → **6**, e entram `calha: 0`, `pe: 44`, `fila: 48`, `tira: 44`, `colunasDosVerbos: 4`,
+     `respiro: 6`, `entre: 6`; `casa: 40` passa a teto, `casaMinima: 32` fica, `janela: [9, 11]` passa a alvo;
+   - `fala: 28` fica só para o telefone.
+2. **`src/batalha-na-tela.js`**:
+   - **`geometriaDaMesa`**: a altura do campo pela fórmula de §CB 16.2. O topo sai dos três patamares, lidos de
+     `MESA_DE_BATALHA` (`margem`/`mesaTopo`, `chipLadoX`/`chipLadoY`, `aperto.cenaTopo`/`cenaBaixo`). Um `j.grosso`
+     (o ponteiro) escolhe a altura do verbo. A largura do centro sai de `centroComPip`/`centroMinimo`, e a função
+     devolve também `comPip`. No telefone: `util = largura − 2 × 6`, sem calha, e a casa
+     `min(⌊util ÷ 9⌋, ⌊alturaUtil ÷ 11⌋)` entre 32 e 40.
+   - **`camaraDoTelefone`**: a mesma casa (a janela 9×11 é o alvo), e `larguraUtil`/`alturaUtil` chegam sem o −22.
+3. **`testes/teste-batalha-na-tela.mjs`** (ou a suíte que já prova a geometria): as linhas da tabela de §CB 16.2.
+   - 1905×1000 → 49 (fino) e 48 (toque), cabe;
+   - 1366×768 → 34 e 33, cabe, colunas 321, `comPip`;
+   - 1024×768 → 34 e 33, cabe, sem pip;
+   - 375×812 → casa 40, 99 casas; 375×760 → casa 36, 110.
+
+   Se uma asserção antiga (51, 34, 35, 99 a 40 fixo) mudar de valor, o motivo vai num comentário ao lado.
+4. **`src/painel-batalha.jsx`**:
+   - `LinhaDoVeredito` sai da secção da ação e passa a ser **o Pé do campo**, no lugar do `div` do `peDaArena`. Altura
+     fixa `B3.pe` (44 no telefone), fio `line` por cima, mira e texto (mono `TIPOS.piso`, entrelinha 16, duas linhas com
+     reticências, `title` inteiro), sem o rótulo «Sua próxima ação». A `reacao` continua em `bottom: 100%` dele. O nó
+     que a grade usa como portal (`setPeDaArena`) passa a ser a ponta direita deste pé.
+   - O cabeçalho no monitor: `AUltimaFala` vai para o terceiro bloco da linha (o `span` vazio de `flex: 1 1 0`), com
+     `falaNaFila`. No telefone fica onde está.
+   - `FileiraDeVerbos` nunca quebra (sai o `flex-wrap`) e leva só os gestos. As duas gavetas e os recuos passam à linha
+     do `como?` em todos os arranjos de monitor. O pip aparece só com `geo.comPip`. O Atacar perde as espadas, porque o
+     pip e o «· 78%» já o distinguem. Mover e Saltar levam o glifo dos passos como preço quando há pip.
+   - A altura de verbo, gaveta, recuo, `como?` e Agir sai de `B3.verbo.fino`/`grosso`, por `(pointer: coarse)` (um
+     `usarMidia` novo), no lugar de `G.verbos`, `M.compositor` e `ALVOS.piso` nesta barra. A barra leva respiro 8 e 8
+     entre as linhas. O vão entre o campo e a barra é `B3.entreCampoEBarra` em todos os patamares.
+   - O `TurnoAtual` marca «em jogo» o recurso do verbo **armado**, além do apontado (`emJogo = verboSobre || armado`).
+   - Telefone: a margem da batalha é `B3.telefone.margem`, e a barra é a grelha de 4 de §CB 16.3 (o Atacar com a
+     chance por baixo). A `AvisoDaArea` em pílula sai de debaixo da tira, e o aviso passa a texto do veredito pela
+     prioridade de §CB 16.3.
+   - `QuemEstaDePe` (coluna Eles) a < 400: a pílula da intenção desce para a segunda linha do cartão. `OTeuGolpe` a
+     < 450: as faces em duas filas de 10, e a conta de cada linha por baixo do número.
+5. **`src/grade-de-batalha.jsx`**:
+   - o `peDaArena` passa a ter só os chips (golpe livre, rota, andar/mirar, alcance) e o ⤢, todos a 12 (`TIPOS.piso`,
+     adeus `text-[9px]`);
+   - sai «Área de movimento» e o `textoDaLegenda` do pé, que entra como primeira linha da legenda da vista ⤢;
+   - a tarja do passo sai, porque mora na Economia;
+   - o resumo da área passa ao texto do veredito (uma prop `aoResumirArea`, ou o `previsao` que o painel já recebe);
+   - com `reguaPresa`, a régua desenha-se por cima das casas, sem calha.
+6. **A conferência no navegador** (não no diff), a 1905×1000, 1366×768, 1024×768, 375×812 e 375×760. Medir na árvore
+   o lado da casa, o `scrollHeight − clientHeight` da janela (tem de dar 0 nos três monitores) e as casas inteiras à
+   vista no telefone. Repetir com o toque emulado (`pointer: coarse`). Antes, salvar e restaurar os espaços de save.
+
+**O peso:** médio (reorganizar a tela sem mudar o fluxo). Nenhum verbo muda de nome nem de efeito, e nenhum controle
+sai da tela. O que muda de lugar (a frase do veredito, uns centímetros abaixo; as gavetas, uma linha abaixo) fica a
+menos de um palmo de onde estava, com a mesma forma. Reverte-se num commit.
+
+#### CB 16.6 · Para a pessoa decidir — a proposta ambiciosa: **o tabuleiro com a altura toda**
+
+A conta de §CB 16.2 mostra que a 1905 **o tabuleiro está preso pela altura, não pela largura**. A largura do centro
+daria casa 60, e a altura dá 49. A coluna Tu tem 470 de largo e usa ~550 dos seus 862 de alto. A proposta: **a 1600+,
+os verbos sobem para a coluna Tu**, por baixo da Economia. Ficam numa grelha de 3 × 2 gestos a 48, com a linha do
+`como?` e dos recuos por baixo, ao lado do «O teu golpe» que já diz o preço de cada um. A barra de baixo deixa de
+existir nesse arranjo e o tabuleiro ganha a altura toda: janela 713 → **827**, casa **49 → 57** a 1905. O herói, os
+seus recursos, o seu golpe e os seus verbos ficam numa coluna só («tu»), e o campo fica limpo como uma mesa. É a
+convenção das mesas virtuais de RPG de mesa (o mapa ao centro, a ficha com as ações ao lado), e é o que faria um
+primeiro olhar dizer «isto é uma mesa de jogo».
+
+**Porque espera a palavra dela:** muda onde a mão procura os verbos, de debaixo do campo para a esquerda. Isso é
+reaprender, e o rollback não devolve o hábito. A variante tímida é só o 1905+.
+
+
+> **§CB 16.6 decidido pelo coordenador (09/11, com a licença da pessoa para ousar e decidir): não.** Os verbos ficam em baixo, ao centro, a convenção de Baldur’s Gate 3 e Divinity que quem joga já tem na mão; a casa de 49 px já é um alvo de dedo inteiro. Mudar onde a mão procura os verbos custa mais do que os 8 px valem.

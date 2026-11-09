@@ -362,7 +362,11 @@ sec("1. NENHUM MÓDULO MUDO");
        abrir a mesa, o Mestre narra antes, e a luta abre só depois da
        escolha. Credor: o `oficial`, na MESMA fase. A entrada sai quando o
        App o importar. `teste-encontro-na-estrada.mjs` é o primeiro leitor. */
-    "encontro-na-estrada.js": "o encontro pendente na viagem, o cartão do sinal e das escolhas, e a pauta antes da mesa (oficial, CB3, 09/11)",
+    /* e paga na MESMA fase (09/11, CB lote 1, oficial): o App.jsx importa
+       `encontro-na-estrada.js` — viajar pousa o encontro pendente e pára a
+       jornada, o Mestre narra cada tempo pela pauta, o sinal pede a Percepção, o
+       cartão das seis escolhas resolve, e a mesa abre só depois da narração.
+       A entrada saiu. */
     /* 09/11 (Fase CB, CB6 · a intenção do inimigo, na leva da CB3):
        `intencao.js` nasce no backend — `intencoesDaRodada` (o anúncio no
        começo da rodada, com a mesma mente de `turnoDosInimigos`, o sopro que
@@ -375,7 +379,11 @@ sec("1. NENHUM MÓDULO MUDO");
        combate e `teste-intencao.mjs` são os primeiros leitores.
        `previsao.js` (CB5) não precisa de entrada: `intencao.js` e a bandeja
        (`lancamentoDoAtaque`, motor/a-bandeja.js) já o importam. */
-    "intencao.js": "o anúncio da intenção do inimigo no começo da rodada e o balanço depois (oficial, CB6 na leva da CB3, 09/11)",
+    /* e paga no MESMO commit (09/11, CB lote 1, oficial): o App.jsx importa
+       `intencao.js` — anuncia no começo de cada rodada (`combate.intencoes`),
+       passa `intencoes` a turnoDosInimigos, foge quem anunciou fugir, quem
+       sopra não anda, e o balanço vai ao registo da rodada; e
+       `INTENCAO_NA_REGUA.ligado` passou a true. A entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

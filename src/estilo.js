@@ -3858,8 +3858,47 @@ export const LENDA_DO_ARTEFACTO = {
    grade-de-batalha.jsx, painel-batalha.jsx, painel-encontro.jsx e ui.jsx.
    Nenhuma cor nova: tudo nomeia T.
    ============================================================ */
-export const BATALHA_EM_TRES = {          // §CB 2
-  margem: 24, fila: 84, fala: 28, barra: 112, entre: 24, calha: 22,
+/* (subiu de baixo de FILA_DA_VEZ: o pip do verbo, em BATALHA_EM_TRES, lê-a) */
+export const ECONOMIA_DA_VEZ = { lado: 24, acao: 16, bonus: [18, 16], reacao: 12, emJogo: 0.35, tracejado: [3, 2], noVerbo: 0.75, movimento: { largura: 64, alto: 6 } };   // §CB 8
+export const BATALHA_EM_TRES = {          // §CB 2, §CB 16
+  /* §CB 16.2: a fila mede 90 na DOM (6 + 56 + 4 + 16 + 6 + 2; o 84 estava
+     curto). A fala do Mestre subiu à linha da fila no monitor, e o 28 dela
+     já não entra na conta da altura (só o telefone tem a fala na sua linha,
+     e essa é telefone.fala) */
+  margem: 24, fila: 90, fala: 28, entre: 24, calha: 22,
+  /* §CB 16.1 nº 5: o alvo mede-se pelo ponteiro, não pela largura — 40 com
+     rato (WCAG 2.2, 2.5.8 AA: 24), 48 com toque (ALVOS.piso) */
+  verbo: { fino: 40, grosso: ALVOS.piso },
+  /* a barra tem sempre duas linhas: aro + respiro + verbo + entre + verbo
+     + respiro + aro = 106 (fino) e 122 (toque) */
+  barraRespiro: 8, entreFileiras: 8, entreCampoEBarra: 8,
+  /* o Pé do campo (o veredito, os chips e o ⤢): altura fixa, nunca cresce.
+     Os chips dele (golpe livre, rota, alcance) medem 24 com raio 12 (§CB 16.3) */
+  pe: 32, chipDoPe: { alto: 24, raio: 12 },
+  /* o texto do veredito no Pé: mono 12 com entrelinha 16, até duas linhas
+     dentro dos 32 (o title leva a frase inteira) */
+  vereditoNoPe: { entrelinha: 16, linhas: 2 },
+  /* o pip do recurso no verbo só com o centro ≥ 660; abaixo, a Economia diz
+     o preço. 540 é o piso do centro (os seis gestos sem pip: 504 + 18) */
+  centroComPip: 660, centroMinimo: 540,
+  verboComPip: { pip: ECONOMIA_DA_VEZ.lado * ECONOMIA_DA_VEZ.noVerbo, passos: 14, lado: 8, entre: 6 },
+  /* a fala no bloco direito da linha da fila: Spectral itálico 16, até três
+     linhas de 24 (72 ≤ os 90 da fila) */
+  /* emPorLetra: a largura média de uma letra da Spectral, em em — a razão
+     que NARRACAO já usava (118 letras em 888 px a 15: 0,50; 48 em 359 a
+     15: 0,50). Com ela a fala é cortada PELO COMEÇO no tamanho do bloco,
+     e as reticências do fim quase nunca têm de entrar */
+  falaNaFila: { linhas: 3, entrelinha: 24, letra: 16, emPorLetra: 0.5 },
+  /* o aro de cada caixa (campo, barra): entra duas vezes em cada conta */
+  aro: 1,
+  /* abaixo de 1440 a margem da página e o vão entre as colunas descem a 16
+     (era o CORTE_ESTREITO literal de painel-batalha.jsx, B1); a conta das
+     colunas precisa dele para dar 321 a 1366 (§CB 16.2) */
+  estreitoAbaixoDe: 1440, margemEstreita: MESA_DE_BATALHA.margemNoTelefone,
+  /* §CB 16.3: as colunas estreitas reorganizam-se — a pílula da intenção
+     desce para a segunda linha do cartão em «Eles» a < 400; as faces do d20
+     em duas filas de 10 em «Tu» a < 450, com a conta por baixo do número */
+  colunaEstreita: { intencao: 400, faces: 450, facesPorFila: 10 },
   coluna: 470, colunaMinima: 320,
   duasColunasAbaixoDe: 1280,              // abaixo, «Eles» vira gaveta
   telefoneAbaixoDe: 768,
@@ -3867,7 +3906,13 @@ export const BATALHA_EM_TRES = {          // §CB 2
      com que a conta das colunas cede para o campo ficar quadrado */
   margemDeBaixo: 16, casasDeReferencia: 14,
   casaMinima: MESA_DE_BATALHA.casaMinimaNoMonitor, casaMaxima: MESA_DE_BATALHA.casaMaximaNoMonitor,
-  telefone: { casa: 40, janela: [9, 11], casaMinima: 32, casaMaxima: 64, margem: 7, fila: 52, fala: 22, tira: 40, verbo: 48, compositor: 44, folgaDaCamara: 1 },
+  /* §CB 16.2, o telefone: margem 6 (a janela tem 361 de largo), sem calha (a
+     régua desenha-se por cima das casas), o Pé 44, a fila 48, a tira 44 e a
+     barra em grelha de 4 (2 + 6 + 3 × 48 + 2 × 6 + 6 = 170). A casa 40 é o
+     TETO, 32 o piso, e a janela 9 × 11 o ALVO: a casa é o que cabe. O
+     cabeçalho: 4 + fila + 2 + fala + 4 = 80 */
+  telefone: { casa: 40, janela: [9, 11], casaMinima: 32, casaMaxima: 64, margem: 6, calha: 0, pe: 44, fila: 48, fala: 22, tira: 44,
+    colunasDosVerbos: 4, respiro: 6, entre: 6, cabecalho: { topo: 4, entre: 2, baixo: 4 }, verbo: 48, compositor: 44, folgaDaCamara: 1 },
 };
 export const PREVISAO_DO_GOLPE = {         // §CB 3
   alto: 32, raio: 16, enchimento: { x: 10, y: 6 }, entre: 8, abaixoDaFicha: 8, aro: 1.5,
@@ -3924,7 +3969,6 @@ export const FILA_DA_VEZ = {               // §CB 8
   vez: 56, espera: 40, aroVez: 3, aro: 2, agiu: 0.45, caido: 0.3, entre: 6,
   marcaDaRodada: { fio: [2, 36], alfa: 0.6 }, telefone: { vez: 44, espera: 34 },
 };
-export const ECONOMIA_DA_VEZ = { lado: 24, acao: 16, bonus: [18, 16], reacao: 12, emJogo: 0.35, tracejado: [3, 2], noVerbo: 0.75, movimento: { largura: 64, alto: 6 } };   // §CB 8
 
 /* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.

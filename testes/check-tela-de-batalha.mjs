@@ -237,8 +237,13 @@ sec("5. as seis regiões estão na tela, e na ordem do turno");
      pílula AGORA); a forma passou a ser a `FilaDaVez` (os rostos numa linha
      do tempo, formas.md §CB 8). A região é a mesma — sabe se pode agir agora
      — e continua a primeira da linha do turno; mudou o nome da peça. */
+  /* MOVIDA (09/11, §CB 16.1 nº 1): a região `veredito` era a
+     `LinhaDoVeredito`, na secção da ação; desceu para dentro da moldura do
+     campo como o `PeDoCampo`, de altura fixa. Continua ENTRE o campo e os
+     verbos, no DOM e na tela, com o mesmo `aria-live` — a ordem que esta
+     secção prova não mudou. */
   const montagem = {
-    vez: "<FilaDaVez ", campo: "<GridDeBatalha ", veredito: "<LinhaDoVeredito ",
+    vez: "<FilaDaVez ", campo: "<GridDeBatalha ", veredito: "<PeDoCampo ",
     verbos: "<FileiraDeVerbos ", dePe: "<QuemEstaDePe ", narracao: "<AUltimaFala ",
   };
   for (const r of REGIOES_DA_BATALHA) {
@@ -258,8 +263,12 @@ sec("5. as seis regiões estão na tela, e na ordem do turno");
     /ultimasLinhasDoMestre\(p\.mensagens/.test(TEL) && /mensagens=\{mensagens\}/.test(APP));
   /* duas linhas no monitor, UMA no telefone — e os dois números saem da
      mesma tabela. A prosa encolhe; o que ela nunca faz é sair. */
+  /* MOVIDA (09/11, §CB 16.1 nº 3): no monitor a fala subiu ao bloco direito
+     da linha da fila, até TRÊS linhas de 24 (`falaNaFila`), e no telefone é
+     a linha de 22 (`B3.telefone.fala`). Os dois números continuam a sair da
+     mesma tabela, e a prosa continua a nunca sair. */
   t("e a altura dela sai da tabela, não da conta de alguém, nos dois tamanhos",
-    /maxHeight: noTelefone \? G\.narracaoNoTelefone : G\.narracao/.test(TEL));
+    /const alto = B3\.telefone\.fala;/.test(TEL) && /maxHeight: F\.entrelinha \* F\.linhas/.test(TEL) && /const F = B3\.falaNaFila;/.test(TEL));
 }
 
 /* ============================================================
@@ -267,7 +276,12 @@ sec("5. as seis regiões estão na tela, e na ordem do turno");
    ============================================================ */
 sec("6. o veredito antes do clique: linha permanente, nunca balão");
 {
-  t("a linha é permanente e a altura sai da tabela", /minHeight: G\.veredito/.test(TEL));
+  /* MOVIDA (09/11, §CB 16.1 nº 1): a altura era o PISO `G.veredito` (24) e
+     a linha crescia; agora é o Pé do campo, de altura FIXA (32 no monitor,
+     44 no telefone, mais o fio), porque a conta que faz o tabuleiro caber
+     (`geometriaDaMesa`) soma-a. A intenção fica: permanente, e da tabela. */
+  t("a linha é permanente e a altura sai da tabela (o Pé do campo, fixo)",
+    /const alto = \(noTelefone \? B3\.telefone\.pe : B3\.pe\) \+ B3\.aro;/.test(TEL) && /height: alto, minHeight: alto/.test(TEL));
   /* RXX: a linha ganhou um SEGUNDO módulo que garante que ela nunca cala.
      `fugir` não faz pergunta nenhuma quando arma (não há "toque a casa" ou
      "diga em quem" para ele) — mostra o PREÇO de sair, medido pelo App
@@ -430,10 +444,14 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
      ao tabuleiro, que agora cabe inteiro. A intenção sobrevive: nunca abaixo
      do piso da casa ao lado dele, e no telefone (e fora da mesa) continua o
      piso do dedo — é isso que a asserção passa a provar. */
-  t("o `⤢ ampliar` está no piso do alvo (48 no dedo, o da casa no monitor) e ganhou anel",
-    /const alvoDoAmpliar = pe && !peCompacto \? MB\.casaMinimaNoMonitor : ALVOS\.piso;/.test(GRADE)
+  /* MOVIDA (09/11, §CB 16.3): o `⤢` virou botão-glifo no fim do Pé do campo
+     — 32 × 32 no monitor (o piso da casa, como em B1b) e 44 × 44 no
+     telefone (a altura do Pé de lá, `B3.telefone.pe`); a letra a 9 px saiu
+     (abaixo do piso de 12). O anel e o piso continuam a ser provados. */
+  t("o `⤢` está no piso do alvo (o da casa no monitor, o Pé no telefone) e tem anel",
+    /const alvoDoAmpliar = pe && !peCompacto \? MB\.casaMinimaNoMonitor : peCompacto \? B3\.telefone\.pe : ALVOS\.piso;/.test(GRADE)
     && /minHeight: alvoDoAmpliar, minWidth: alvoDoAmpliar/.test(GRADE)
-    && /className="tv-anel-foco tv-mono text-\[9px\] ml-auto/.test(GRADE));
+    && /className="tv-anel-foco tv-mono ml-auto/.test(GRADE) && /aria-label="Ver o campo inteiro"/.test(GRADE));
 
   /* escrever e mirar são compatíveis, e é esse o ponto inteiro */
   t("o texto livre NUNCA é `disabled` enquanto há um verbo armado",
@@ -588,8 +606,11 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
     && /const ALTURA_DO_FOCO = Math\.ceil\(M\.escolhasRespiro \* 2 \+ M\.glifoDaRuna/.test(TEL));
   /* A FRASE DO MESTRE: duas linhas com reticências, e o corte de verdade
      continua a ser o do módulo, pelo começo */
+  /* MOVIDA (09/11, §CB 16.1 nº 3): o teto era `NARRACAO.linhas` (2); na
+     linha da fila são três (`falaNaFila.linhas`), e o corte do módulo conta
+     com elas. O texto inteiro continua no title. */
   t("a frase da cena tem o teto de linhas da tabela e o texto inteiro no title",
-    /WebkitLineClamp: NARRACAO\.linhas/.test(TEL) && /title=\{inteiro \|\| undefined\}/.test(TEL));
+    /WebkitLineClamp: F\.linhas/.test(TEL) && /linhas: noTelefone \? NARRACAO\.linhasNoTelefone : FNF\.linhas/.test(TEL) && /title=\{inteiro \|\| undefined\}/.test(TEL));
   t("e o chão divide os píxeis pelo lado real, não pelo piso",
     /const px = 1 \/ Math\.max\(1, ladoEmPx\(grande\)\);/.test(GRADE_B1) && !/\/ ALVOS\.piso/.test(GRADE_B1));
   t("a câmara enquadra com o lado medido", /aoMedirOLado=\{aoMedirOLado\}/.test(TEL) && /const lado = ladoRef\.current \|\| ALVOS\.piso;/.test(TEL));

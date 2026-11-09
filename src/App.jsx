@@ -6,7 +6,7 @@ import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilid
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
-import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, ECONOMIA_ACAO_PROMPT } from "./combate.js";
+import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, ECONOMIA_ACAO_PROMPT, eventoDoGolpe } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher } from "./fuga.js";
 import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
 /* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
@@ -49,7 +49,7 @@ import { PainelReacao } from "./painel-reacao.jsx";
    Letal ou poupar, e "como voce faz isso?" -- a conta inteira mora em
    `golpe-final.js`; o App so liga a fiacao e pinta o cartao (peca propria,
    `painel-golpe-final.jsx`, pelo mesmo molde do cartao da reacao). */
-import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada } from "./golpe-final.js";
+import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, oFechoPergunta, QUANDO_O_FECHO_PERGUNTA } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta } from "./mercado.js";
@@ -75,7 +75,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -87,7 +87,7 @@ import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastar
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { menteDaCriatura, intencaoPorId, ADVERSARIO_PROMPT } from "./adversario.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, garantirDia, zerarDia, folgaDoDia, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { garantirGrade, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar } from "./grid.js";
+import { garantirGrade, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar, passoAteAlcancar } from "./grid.js";
 /* v9.255 (Fase X, X2): a conta do alcance do golpe saiu daqui de dentro e
    virou tabela provável em Node. O App não decide mais quem dá para
    acertar — ele PERGUNTA, e pergunta duas vezes: uma quando o golpe sai,
@@ -161,7 +161,7 @@ import { distanciaDoPasso as distanciaDoPassoNoMapa, alvoNoMapa, garantirMissoes
 import { identificarDivindadeAbatida, provaAtual, registrarProva, cancelarRito, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
 import { resolverPresenca, presencaDoHeroiEmCombate, PRESENCA_PROMPT } from "./presenca-divina.js";
 import { arredoresDaCidade } from "./arredores.js";
-import { abrirViagem, andar, progressoDaViagem, comTrechos, minutosPorAvanco, relogioDoAvanco, linhaDaViagem, minutosDaRota, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT } from "./viagem.js";
+import { abrirViagem, andar, progressoDaViagem, comTrechos, minutosPorAvanco, relogioDoAvanco, linhaDaViagem, minutosDaRota, MINUTOS_ESTRADA_POR_TURNO, MINUTOS_RELOGIO_POR_TURNO, ESTADOS as ESTADOS_VIAGEM, VIAGEM_PROMPT, pausarViagem, retomarViagem, recuarViagem } from "./viagem.js";
 import { partidaNaRegiao } from "./marcha.js";
 import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, linhaDaCelula } from "./celulas.js";
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
@@ -262,7 +262,7 @@ import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { devolverAMochila } from "./comparar-item.js";
 import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
 import { oQueOMestrePede, oCartaoDoPedido } from "./motor/o-mestre-pede.js";
-import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie } from "./motor/a-bandeja.js";
+import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, lancamentoDoAtaque } from "./motor/a-bandeja.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -383,7 +383,13 @@ import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
 import { BarraDoMestre, TiraDaMesa, FilaDasCartas, ObjetoDaMesa, LuzDaVela, VinhetaDaNoite, PrateleiraDosMantimentos } from "./painel-mesa-do-mestre.jsx";
-import { chegadaDaViagem } from "./partida.js";
+import { chegadaDaViagem, perigoDoTrecho } from "./partida.js";
+/* CB lote 1 (09/11, a fiação do oficial): o encontro na estrada em três tempos,
+   a intenção do inimigo anunciada, a previsão do golpe e as peças do encontro */
+import { oEncontroNaEstrada, avistar, escolhasDoEncontro, resolverEscolha, pautaDoEncontro, ESCOLHAS_DO_ENCONTRO } from "./encontro-na-estrada.js";
+import { intencoesDaRodada, balancoDasIntencoes } from "./intencao.js";
+import { previsaoDoHeroi } from "./previsao.js";
+import { CartaoDoEncontro, SinalNaFolha, EntradaNaMesa } from "./painel-encontro.jsx";
 /* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
 import { equiparKitInicial } from "./kit-inicial.js";
 
@@ -6163,7 +6169,9 @@ export default function Taverna() {
       bioma: ((mapaRef.current.cidades || []).find((c) => c.nome === cidadeAtualRef.current) || {}).bioma || "",
     };
   };
-  const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false, situacao = "cena" } = {}) => {
+  /* CB3: `iniciativa` ("heroi" | "inimigos") e `fugaAberta` chegam do desfecho
+     do encontro da estrada e vão a `abrirOCombate`, que já os lê */
+  const abrirCombate = (inimigosCrus, { pers: persEntra = null, jaNoRef = false, situacao = "cena", iniciativa = null, fugaAberta = false } = {}) => {
     /* TODA luta nova zera a marca do território: só volta a valer quando
        ESTA luta é mesmo a que reabriu por causa do território de uma fuga —
        `talvezVoltarAoTerritorio` a repõe logo depois de chamar esta função.
@@ -6171,7 +6179,7 @@ export default function Taverna() {
        relógio de território que nunca chegou a se resolver. */
     territorioEmLutaRef.current = null;
     const r = abrirOCombate({
-      inimigosCrus, jaNoRef, combateNoRef: combateRef.current, pers: persEntra || fichaViva() || personagem, situacao,
+      inimigosCrus, jaNoRef, combateNoRef: combateRef.current, pers: persEntra || fichaViva() || personagem, situacao, iniciativa, fugaAberta,
       panteao: (divindadeRef.current && divindadeRef.current.panteao) || [], planta: plantaDaLuta,
       sementeDaAbertura: `${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`, diaLuta: diaLutaRef.current, descobertas: descobRef.current,
     }, { sorteDoTurno, calou });
@@ -6186,6 +6194,7 @@ export default function Taverna() {
     diaLutaRef.current = r.diaLuta;
     setCombate(combateRef.current);
     if (r.descobertas !== descobRef.current) { descobRef.current = r.descobertas; setDescobertas(descobRef.current); }
+
     /* v9.32: o meu peso divino sobre eles. Adiado um tique porque ele lê o
        combate já no ref, e aqui o React ainda não reagiu. */
     setTimeout(() => presencaNaLuta(combateRef.current, personagemRef.current, { contraMim: false }), 0);
@@ -9154,6 +9163,33 @@ export default function Taverna() {
   /* o envelope de UM turno -- nasce quando a escolha se aplica, e
      `pautaDoTurno` o consome e limpa; nunca sobrevive a um segundo turno */
   const golpeFinalEnvelopeRef = useRef(null);
+  /* ---------------- CB lote 1 · O ESTADO DA MESA NOVA (09/11) ----------------
+     O ENCONTRO PENDENTE (encontro-na-estrada.js): o estado do encontro da
+     estrada em três tempos, campo NOVO e aditivo do save (a versão antiga
+     ignora-o). `escolhaNoEncontro` é o id tocado no cartão (estado de tela),
+     e `entradaNaMesa` o ente que a entrada mostra antes de a mesa abrir. */
+  const [encontroPendente, setEncontroPendente] = useState(null);
+  const encontroPendenteRef = useRef(null);
+  const [escolhaNoEncontro, setEscolhaNoEncontro] = useState(null);
+  const [entradaNaMesa, setEntradaNaMesa] = useState(null);
+  const abrirAMesaDoEncontroRef = useRef(null);
+  /* estável de propósito: a peça da entrada refaz os relógios quando o
+     `aoFim` muda, e um App que repinta a cada segundo nunca a deixaria acabar */
+  const aoFimDaEntrada = useCallback(() => { try { if (abrirAMesaDoEncontroRef.current) abrirAMesaDoEncontroRef.current(); } catch (e) { calou("o fim da entrada na mesa", e); } }, []);
+  /* A PREVISÃO (CB5): o inimigo sob o rato ou o primeiro toque — estado de tela */
+  const [alvoPrevisto, setAlvoPrevisto] = useState(null);
+  /* O GOLPE SENTIDO (CB7): os eventos de UMA rajada (o golpe do herói e o
+     revide que corre no mesmo clique), com chave única; limpa-se a cada rajada */
+  const [golpesDaRajada, setGolpesDaRajada] = useState(null);
+  const rajadaRef = useRef([]);
+  const rajadaNRef = useRef(0);
+  const rajadaAgendadaRef = useRef(false);
+  /* A RODADA N (CB 2): o registo da rodada que acabou — os golpes e o balanço das intenções */
+  const [registoDaRodada, setRegistoDaRodada] = useState(null);
+  const registoDaVezRef = useRef([]);
+  /* O FECHO (CB8): as quedas do meio que não pararam a mesa (o chip da casa) */
+  const [quedasDoMeio, setQuedasDoMeio] = useState([]);
+  const quedasNRef = useRef(0);
   /* O que a reacao DE FACTO fez, para o cartao poder dizer o numero sem o
      inventar. E leitura: `resolverReacao` continua a ser a unica fonte, e
      nada muda de caminho por causa desta anotacao. */
@@ -10656,7 +10692,7 @@ export default function Taverna() {
     escadaRef.current = garantirEscada(null);
     escutaRef.current = garantirEscuta(null);
     adiadosEscutaRef.current = [];
-    prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null; juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
+    encontroPendenteRef.current = null; setEncontroPendente(null); prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null; juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
     gestosRef.current = [];
     fatosDoPesoRef.current = {};
     episodioRef.current = null;
@@ -11469,7 +11505,7 @@ export default function Taverna() {
         antecedente: (pers && pers.antecedente) || "",
         dia: diaRef.current,
       });
-      prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null; juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
+      encontroPendenteRef.current = null; setEncontroPendente(null); prometidoRef.current = garantirPrometido(null); fechoRef.current = ""; ultimoTemaRef.current = ""; leituraDoCronistaRef.current = garantirLeitura(null); fidelidadeRef.current = null; juizDoTurnoRef.current = null; vetosDoJuizRef.current = [];
       /* MM17 C1: A HISTÓRIA MORA NOS LUGARES. Só num mapa de região (campanha
          nova de Uma Vida): cada ato do meio e o do fim descem ao SEU lugar, e
          o confronto final é no clímax (espinhaNaRegiao, regiao.js). Sem
@@ -11699,6 +11735,9 @@ export default function Taverna() {
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
       setCombate(sv.combate || null); combateRef.current = sv.combate || null;
+      /* CB3: o encontro pendente mora na jornada que ele pausou (`jornada.encontro`,
+         campo novo e aditivo: a versão antiga ignora-o; save sem ele, nenhum) */
+      try { const ep = sv.jornada && sv.jornada.encontro && typeof sv.jornada.encontro === "object" && sv.jornada.encontro.fase ? sv.jornada.encontro : null; encontroPendenteRef.current = ep; setEncontroPendente(ep); } catch (e) { calou("o encontro pendente no load", e); encontroPendenteRef.current = null; setEncontroPendente(null); }
       try { fimSemSaidaRef.current = garantirFimSemSaida(sv.fimSemSaida); } catch (e) { calou("o fim sem saída no load", e); fimSemSaidaRef.current = null; }
       registroRef.current = garantirRegistro(sv.registro);
       /* v9.112: o livro-razão. Sem ele o mundo cobraria de novo, a cada
@@ -12194,19 +12233,43 @@ export default function Taverna() {
        quando a preferência de quem joga diz "perguntar"; sempre_letal e
        sempre_poupar aplicam direto, sem cartão e sem cena escrita — quem
        decide isso é `continuarGolpeDoJogador`. */
+    /* CB8 (09/11): O FECHO UMA VEZ POR LUTA. Até aqui toda queda com escolha
+       parava a mesa e abria o cartão; agora a regra é `oFechoPergunta`
+       (golpe-final.js, QUANDO_O_FECHO_PERGUNTA): pergunta no máximo uma vez
+       por luta, e só no último inimigo de pé ou num `importante`; a queda do
+       meio aplica a escolha LEMBRADA (poupar, até ao primeiro «matar») e o
+       chip da casa oferece o outro lado. A preferência «sempre» manda sobre
+       tudo, como sempre mandou. `perguntas` e `lembrada` vivem no combate
+       (`combate.fecho`, campo novo e aditivo): são desta luta e de mais nenhuma. */
+    let porAlvo = null;
     try {
-      if (decidirGolpeFinal(preferenciaGolpeFinalRef.current) === "perguntar") {
-        const quedas = ataque.resultados.filter(({ r, alvo }) => {
-          try { return haEscolhaNoGolpe({ alvo, r }).ha; } catch (e) { return false; }
-        });
-        if (quedas.length) {
-          golpeFinalCtxRef.current = { acao, pers, ataque };
-          setGolpeFinalPendente({ quedas: quedas.map(({ r, alvo }) => ({ nome: alvo.nome, dano: r.dano, critico: !!r.critico })) });
+      const pref = preferenciaGolpeFinalRef.current;
+      if (decidirGolpeFinal(pref) === "perguntar") {
+        const fe = (combateRef.current && combateRef.current.fecho) || {};
+        const base = (combateRef.current && combateRef.current.inimigos) || [];
+        const vidas = new Map(base.map((e) => [e.nome, e.vida]));
+        let perguntasAgora = Number(fe.perguntas) || 0;
+        const perguntar = [];
+        const doMeio = [];
+        porAlvo = {};
+        for (const { r, alvo } of ataque.resultados) {
+          const lista = base.map((e) => ({ ...e, vida: vidas.has(e.nome) ? vidas.get(e.nome) : e.vida }));
+          const f = oFechoPergunta({ alvo, r, inimigos: lista, peloAliado: false, perguntas: perguntasAgora, lembrada: fe.lembrada || null, preferencia: pref });
+          if (r && r.dano > 0) vidas.set(alvo.nome, Math.max(0, (vidas.has(alvo.nome) ? vidas.get(alvo.nome) : alvo.vida) - r.dano));
+          if (f.pergunta) { perguntar.push({ r, alvo }); perguntasAgora += 1; }
+          else if (f.escolha) { porAlvo[alvo.nome] = f.escolha; doMeio.push({ nome: alvo.nome, escolha: f.escolha }); }
+        }
+        if (doMeio.length) mostrarQuedasDoMeio(doMeio);
+        if (perguntar.length) {
+          combateRef.current = { ...combateRef.current, fecho: { ...fe, perguntas: perguntasAgora } };
+          setCombate(combateRef.current);
+          golpeFinalCtxRef.current = { acao, pers, ataque, porAlvo };
+          setGolpeFinalPendente({ quedas: perguntar.map(({ r, alvo }) => ({ nome: alvo.nome, dano: r.dano, critico: !!r.critico })) });
           return true;
         }
       }
-    } catch (e) { calou("perguntar o golpe final", e); }
-    return continuarGolpeDoJogador(acao, pers, ataque, null);
+    } catch (e) { calou("o fecho uma vez por luta", e); porAlvo = null; }
+    return continuarGolpeDoJogador(acao, pers, ataque, porAlvo && Object.keys(porAlvo).length ? { escolha: null, comoFez: "", porAlvo } : null);
   };
 
   /* ---------------- MM3: A APLICAÇÃO, RETOMADA (OU DIRETA) ----------------
@@ -12239,6 +12302,8 @@ export default function Taverna() {
     for (const { r, alvo } of resultados) {
       let pvDepois = alvo.vida;
       let poupadoAgora = false;
+      /* CB8: a queda do meio leva a escolha lembrada (`porAlvo`); a perguntada, a do cartão */
+      const escolhaDeste = (escolhaEComoFez && escolhaEComoFez.porAlvo && escolhaEComoFez.porAlvo[alvo.nome]) || escolhaAplicada;
       if (r.dano > 0) {
         const atualAlvo = (combateRef.current?.inimigos || []).find((e) => e.nome === alvo.nome);
         pvDepois = Math.max(0, (atualAlvo ? atualAlvo.vida : alvo.vida) - r.dano);
@@ -12256,12 +12321,12 @@ export default function Taverna() {
              derrubou alguém, ou acertou em cheio. Vale para a sequência
              inteira, então basta UM golpe da rodada bater para carimbar. */
           try { if (r.critico || pvDepois <= 0) impressionouRef.current = combateRef.current?.rodada || 1; } catch (e) { calou("a rodada que impressiona", e); }
-          if (pvDepois <= 0 && escolhaAplicada) {
+          if (pvDepois <= 0 && escolhaDeste) {
             try {
               if (haEscolhaNoGolpe({ alvo, r }).ha) {
-                corpo = aplicarEscolha(corpo, escolhaAplicada, { semente: sementeDaFuga(combateRef.current) });
-                poupadoAgora = escolhaAplicada === "nao_letal";
-                const env = envelopeDoGolpeFinal({ alvo: corpo, escolha: escolhaAplicada, comoFez: cenaJaNarrada ? "" : comoFezDoJogador, heroi: pers.nome });
+                corpo = aplicarEscolha(corpo, escolhaDeste, { semente: sementeDaFuga(combateRef.current) });
+                poupadoAgora = escolhaDeste === "nao_letal";
+                const env = envelopeDoGolpeFinal({ alvo: corpo, escolha: escolhaDeste, comoFez: cenaJaNarrada ? "" : comoFezDoJogador, heroi: pers.nome });
                 cenaJaNarrada = true;
                 acabouGolpeFinal = acabouGolpeFinal.concat(env.acabou);
                 naoPodeGolpeFinal = naoPodeGolpeFinal.concat(env.naoPode);
@@ -12287,6 +12352,14 @@ export default function Taverna() {
       }
       logDadoCombate(resumoDoAtaque(r));
       if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: "🎲 " + resumoDoAtaque(r) });
+      /* CB · A BANDEJA: o d20 que o golpe DE FACTO rolou, com as faces que
+         acertam acesas — rola na mesa, saltável, nunca prende */
+      try { aBandeja(lancamentoDoAtaque(r, { criticoEm: criticoMinimo(pers) })); } catch (e) { calou("o d20 do golpe na bandeja", e); }
+      /* CB7: o golpe sentido (a grade toca o som) e a linha do registo da rodada */
+      try {
+        sentirGolpe(eventoDoGolpe(r, { vidaAntes: alvo.vida, vidaMax: alvo.vidaMax || alvo.vida, lado: "heroi" }));
+        registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: personagem.nome, alvo: alvo.nome, diz: r.escopoImune ? "imune" : r.dano > 0 ? `${r.critico ? "crítico · " : ""}${r.dano} de dano${pvDepois <= 0 ? (poupadoAgora ? " · poupado" : " · cai") : ""}` : "errou", teu: true, feriu: false }];
+      } catch (e) { calou("o teu golpe na mesa", e); }
       linhas.push({ autor: "sistema", texto: r.escopoImune
         ? `⚔ ${personagem.nome} → ${alvo.nome}: o golpe atravessa sem encontrar carne — ${alvo.nome} é GD ${alvo.gd} (${tituloDe(alvo.gd)}), IMUNE ao seu dano comum`
         : r.dano > 0
@@ -12337,7 +12410,9 @@ export default function Taverna() {
       setGolpeFinalPendente(null);
       if (lembrar) escolherPreferenciaDoGolpeFinal(escolhaId === "letal" ? "sempre_letal" : "sempre_poupar");
       if (!ctx) return;
-      continuarGolpeDoJogador(ctx.acao, ctx.pers, ctx.ataque, { escolha: escolhaId, comoFez });
+      /* CB8: a resposta passa a ser a lembrada desta luta */
+      try { if (combateRef.current) { combateRef.current = { ...combateRef.current, fecho: { ...(combateRef.current.fecho || {}), lembrada: escolhaId === "letal" ? "letal" : "nao_letal" } }; setCombate(combateRef.current); } } catch (e) { calou("a escolha lembrada do cartão", e); }
+      continuarGolpeDoJogador(ctx.acao, ctx.pers, ctx.ataque, { escolha: escolhaId, comoFez, porAlvo: ctx.porAlvo || null });
     } catch (e) { calou("responder o golpe final", e); }
   };
 
@@ -14868,7 +14943,35 @@ export default function Taverna() {
     return { r, pv, morreu: pv <= 0 };
   };
 
+  /* ---------------- CB6 · A INTENÇÃO NO COMEÇO DA RODADA (09/11) ----------------
+     `intencoesDaRodada` (intencao.js) decide, com a mesma mente de
+     `turnoDosInimigos`, o que cada inimigo vai fazer — e a mesa mostra-o
+     ANTES do golpe do herói. `combate.intencoes` é campo novo e aditivo; uma
+     vez por rodada (a rodada que já tem a sua não sorteia outra). */
+  const anunciarIntencoes = (persDado) => {
+    try {
+      const comb = combateRef.current;
+      if (!comb) return null;
+      const rod = Number(comb.rodada) || 1;
+      if (comb.intencoes && comb.intencoes.rodada === rod) return comb.intencoes;
+      const pers = persDado || fichaViva() || personagem;
+      if (!pers) return null;
+      const ints = intencoesDaRodada(comb, {
+        jogador: pers, grupo: pers.grupo || [], gdJogador: grauDe(divindadeRef.current),
+        provocado: estaProvocando(comb, rod),
+        prioridade: (intencaoPorId(intencaoRef.current) || {}).alvo || "",
+        sorte: sorteDoTurno("intencoes"), comFuga: true,
+      });
+      if (!ints) return null;
+      combateRef.current = { ...comb, intencoes: ints };
+      setCombate(combateRef.current);
+      return ints;
+    } catch (e) { calou("a intenção da rodada", e); return null; }
+  };
+
   const resolverRevide = (persBase, aoTerminar) => {
+    /* CB6: a rodada que chega aqui sem anúncio (a luta em que eles abrem) anuncia agora */
+    try { anunciarIntencoes(persBase); } catch (e) { calou("a intenção antes do revide", e); }
     /* K3: a rodada passou a ter uma CONTINUACAO, e a razao e uma so — a janela
        da reacao suspende o meio dela, e uma funcao sincrona nao sabe suspender.
        TODO caminho de saida chama `aoTerminar` com o mesmo objecto de sempre;
@@ -14897,7 +15000,13 @@ export default function Taverna() {
     /* MM6 (coerencia): os aliados do golpe de oportunidade, pela mesma leitura
        do golpe comum — aqui ha posicao (grade/heroi de combPos). */
     const aliadosOp = (combPos.aliados || []).map((al, i) => ({ ...al, vida: ((persBase.grupo || [])[i] || {}).vida, condicoes: ((persBase.grupo || [])[i] || {}).condicoes, i }));
-    for (const e of vivos.filter((x) => querFugir(x, { sorte: sorteDoTurno("fuga-do-inimigo") }))) {
+    /* CB6: quem foge é quem a intenção ANUNCIOU — o «foge» que a mesa mostrou é
+       o que acontece. Sem anúncio (save de antes), a régua de sempre. */
+    const anunciadas = (combPos.intencoes && Array.isArray(combPos.intencoes.lista) && combPos.intencoes.rodada === (combPos.rodada || 1)) ? combPos.intencoes.lista : null;
+    const vaoFugir = anunciadas
+      ? vivos.filter((x) => anunciadas.some((it) => it && it.inimigo === x.nome && it.tipo === "fugir"))
+      : vivos.filter((x) => querFugir(x, { sorte: sorteDoTurno("fuga-do-inimigo") }));
+    for (const e of vaoFugir) {
       const { r, pv, morreu } = golpeDeOportunidadeDoHeroi(persBase, e, aliadosOp, combPos.grade, combPos.heroi);
       /* sai do combate nos dois casos; `fugiu` distingue quem escapou VIVO —
          é o que impede o sistema de dar XP por ele e, pior, de riscar o nome
@@ -14935,7 +15044,13 @@ export default function Taverna() {
     const lugarHeroi = combPos.heroi || null;
     const lugaresAliados = combPos.aliados || [];
     if (gradeAtual && lugarHeroi) {
-      const mv = moverInimigos(gradeAtual, combPos.inimigos, lugarHeroi, [lugarHeroi, ...lugaresAliados]);
+      const mv0 = moverInimigos(gradeAtual, combPos.inimigos, lugarHeroi, [lugarHeroi, ...lugaresAliados]);
+      /* CB6: quem vai soprar não se move — as casas que pintou são as do começo da rodada */
+      let mv = mv0;
+      try {
+        const soprando = new Set((anunciadas || []).filter((it) => it && it.tipo === "sopro").map((it) => it.inimigo));
+        if (soprando.size) mv = { inimigos: mv0.inimigos.map((e) => (soprando.has(e.nome) ? (combPos.inimigos.find((x) => x.nome === e.nome) || e) : e)), movimentos: mv0.movimentos.filter((m) => !soprando.has(m.nome)) };
+      } catch (e) { calou("o sopro não anda", e); mv = mv0; }
       if (mv.movimentos.length) {
         combPos.inimigos = mv.inimigos;
         combateRef.current = { ...combateRef.current, inimigos: mv.inimigos };
@@ -15023,6 +15138,8 @@ export default function Taverna() {
       /* v9.110: e é AQUI que a linha da Pauta vira verdade. A mesma
          intenção que o Narrador leu escolhe em quem o golpe cai. */
       prioridade: (intencaoPorId(intencaoRef.current) || {}).alvo || "",
+      /* CB6: o que se anunciou é o que se faz (o sopro nas casas que pintou) */
+      intencoes: anunciadas,
     });
     /* ---------------- A CISAO (v9.259, K3) ----------------
        Daqui ate ao `return` do fim e o corpo de hoje, INTACTO e sem uma linha
@@ -15177,6 +15294,13 @@ export default function Taverna() {
         : a.alvoRef === "inimigo" ? doCampo(a.alvoNome)
         : (grupoAtual.find((g) => g.nome === a.alvoNome) || { nome: a.alvoNome });
       partes.push(linhaParaMestre(a.golpeNome ? `${a.inimigo} (${a.golpeNome})` : a.inimigo, a.alvoNome, a.r, alvoMax, alvoDepois, generoDoAlvo(quemLeva, npcsRef.current)));
+      /* CB7: o golpe deles na mesa (o número, o tremor, o som — a grade toca-o)
+         e no registo da rodada; o dano é o que chegou, depois da reação */
+      try {
+        const vidaAntesDoGolpe = alvoDepois != null ? alvoDepois + (Number(a.r.dano) || 0) : null;
+        sentirGolpe(eventoDoGolpe(a.r, { vidaAntes: vidaAntesDoGolpe, vidaMax: alvoMax, lado: a.virado ? "aliado" : "inimigo", golpeNome: a.golpeNome || "" }));
+        registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: a.inimigo, alvo: a.alvoNome, diz: a.r.dano > 0 ? `${a.r.critico ? "crítico · " : ""}${a.r.dano} de dano` : "errou", teu: false, feriu: a.alvoRef === "jogador" && a.r.dano > 0 }];
+      } catch (e) { calou("o golpe deles na mesa", e); }
     }
     if (linhasSis.length) pushMsgs(linhasSis);
     /* v9.16: guarda o golpe da rodada para o gasto "Aguentar". Vale a rodada
@@ -15489,6 +15613,18 @@ export default function Taverna() {
           if (fimSem) { persAtual = fimSem.pers; envelopeSemSaida = " " + fimSem.envelope; }
         }
       } catch (e) { calou("a vez do mundo sem saída", e); }
+      /* CB · A RODADA N: o que aconteceu — os golpes dos dois lados e o balanço
+         das intenções (o que anunciaram e não foi golpe: fugiu, o sopro que não
+         apanhou ninguém, quem só se aproximou) */
+      try {
+        const ints = combPos && combPos.intencoes;
+        const bal = ints ? balancoDasIntencoes(ints, acoes, (combateRef.current && combateRef.current.inimigos) || combPos.inimigos || []) : [];
+        const PALAVRA_DO_BALANCO = { fugiu: "fugiu da luta", esquivaram: "o sopro não apanhou ninguém", aproximou: "aproximou-se" };
+        const doBalanco = bal.filter((b) => b && PALAVRA_DO_BALANCO[b.desfecho]).map((b) => ({ quem: b.inimigo, alvo: "", diz: PALAVRA_DO_BALANCO[b.desfecho], teu: false, feriu: false }));
+        const reg = [...(registoDaVezRef.current || []), ...doBalanco];
+        setRegistoDaRodada(reg.length ? reg : null);
+        registoDaVezRef.current = [];
+      } catch (e) { calou("o registo da rodada", e); }
 
       /* v9.46: O PRAZO DA CONJURAÇÃO. Vence na virada da rodada, que é o
          único relógio que a luta tem. Sai do grupo E do tabuleiro na mesma
@@ -15561,6 +15697,8 @@ export default function Taverna() {
         setCombate(combateRef.current);
         reacaoUsadaRef.current = false;   // nova rodada, reação de novo disponível
       }
+      /* CB6: a rodada nova anuncia o que eles vão fazer, antes do meu golpe */
+      try { anunciarIntencoes(persAtual); } catch (e) { calou("a intenção da rodada nova", e); }
       const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
       const morteTxt = (!envelopeSemSaida && persAtual.vida <= 0) ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
       entregar({ pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}${envelopeSemSaida}` });
@@ -15570,6 +15708,18 @@ export default function Taverna() {
        preferência é perguntar — o MESMO desenho do K3: nada mais acontece
        até o cartão responder. Sem pendente nenhum, ou com a preferência já
        decidida, corre tudo síncrono, byte a byte o jogo de hoje. */
+    /* CB8: A QUEDA PELA MÃO DE UM ALIADO NUNCA PERGUNTA
+       (`QUANDO_O_FECHO_PERGUNTA.peloAliado`): aplica a escolha lembrada desta
+       luta, e o chip da casa oferece o outro lado. Era uma das duas
+       interrupções na luta dos três bandidos. */
+    let escolhaDoAliado = null;
+    try {
+      if (quedasPendentesComp.length && !QUANDO_O_FECHO_PERGUNTA.peloAliado) {
+        escolhaDoAliado = lembradaDaLuta();
+        mostrarQuedasDoMeio(quedasPendentesComp.map((q) => ({ nome: q.nome, escolha: escolhaDoAliado })));
+      }
+    } catch (e) { calou("a queda pela mão do aliado", e); escolhaDoAliado = null; }
+    if (escolhaDoAliado) { finalizarRodada(escolhaDoAliado, ""); return; }
     if (quedasPendentesComp.length) {
       combateRef.current = combPos; setCombate({ ...combPos });
       golpeFinalCompCtxRef.current = { finalizar: finalizarRodada, entregar, persAtual };
@@ -22501,12 +22651,204 @@ export default function Taverna() {
     return c;
   };
 
+  /* ============================================================
+     CB lote 1 · AS PEÇAS QUE A VIAGEM E A MESA USAM (oficial, 09/11)
+     Tudo em `calou`: uma peça nova que estoura nunca custa o turno nem a luta.
+     ============================================================ */
+  /* o encontro pendente, nos dois lugares de uma vez (o ref para quem lê já, o estado para a tela) */
+  /* O SAVE: o encontro vai DENTRO da jornada que ele pausou (`jornada.encontro`,
+     campo novo e aditivo). Não é campo de topo de propósito: o estado v2 é a
+     tabela CAMPOS (estado.js), e um campo de topo novo faz as sessões
+     gravadas (jogar-em-node) divergirem em todo turno, pelo campo que elas não
+     tinham. E é onde ele pertence: sem jornada não há estrada, nem encontro. */
+  const pousarOEncontro = (e) => {
+    try {
+      encontroPendenteRef.current = e || null; setEncontroPendente(e || null); if (!e) setEscolhaNoEncontro(null);
+      const j = jornadaRef.current;
+      if (j && (e || j.encontro)) {
+        const { encontro: _velho, ...resto } = j;
+        jornadaRef.current = e ? { ...resto, encontro: e } : resto;
+        setJornada(jornadaRef.current);
+      }
+    } catch (er) { calou("pousar o encontro", er); }
+  };
+  /* o bónus de cada perícia que o encontro pede — as da tabela das escolhas e a
+     Percepção do sinal —, pela régua da ficha (bonusDePericia sobre o atributo efetivo) */
+  const bonusDoEncontro = (p) => {
+    const out = {};
+    try {
+      const ids = ["percepcao", ...Object.values(ESCOLHAS_DO_ENCONTRO.escolhas).map((x) => x && x.pericia).filter(Boolean)];
+      for (const id of ids) {
+        try { const per = periciaPorId(id); out[id] = bonusDePericia(p || {}, id, atributoEfetivo(p || {}, per ? per.atributo : id)).total; } catch (e) { calou("o bónus da perícia no encontro", e); out[id] = 0; }
+      }
+    } catch (e) { calou("os bónus do encontro", e); }
+    return out;
+  };
+  /* o d20 do encontro, pela semente do turno (o mesmo árbitro de toda rolagem) */
+  const dadoDoEncontro = (evento) => { const s = sorteDoTurno(evento); return 1 + Math.min(19, Math.max(0, Math.floor(Number(s()) * 20))); };
+  /* o perigo do trecho (CB1): a estrada que o mapa pinta. Na primeira partida a
+     jornada ainda não existe quando o encontro rola: mede-se o trecho que vai nascer */
+  const estradaDoTrecho = (destino) => {
+    try {
+      if (jornadaRef.current) return perigoDoTrecho(mapaRef.current, jornadaRef.current);
+      const para = destino || destinoViagemRef.current || "";
+      if (!para) return null;
+      const r = rotaEntre(cidadeAtualRef.current, para);
+      return perigoDoTrecho(mapaRef.current, { de: cidadeAtualRef.current || "", para, terreno: (r && r.terreno) || "" });
+    } catch (e) { calou("o perigo do trecho", e); return null; }
+  };
+  /* A PAUTA DO ENCONTRO, pelo canal de um turno que a pauta já consome e limpa
+     (o do crime: `{ acabou, naoPode }` → ACABOU DE e NÃO PODE). Nenhum bloco
+     estático: o teto do prompt é sagrado. Junta-se ao que lá estiver. */
+  const porNaPautaDoTurno = (pa) => {
+    try {
+      if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length)) return;
+      const atual = crimeDoTurnoRef.current || {};
+      crimeDoTurnoRef.current = { ...atual, acabou: [...(atual.acabou || []), ...(pa.acabou || [])], naoPode: [...(atual.naoPode || []), ...(pa.naoPode || [])] };
+    } catch (e) { calou("a pauta do encontro", e); }
+  };
+  /* A CHAMADA DO MESTRE PARA O ENCONTRO (QUEM_RESPONDE.encontro): uma, própria,
+     antes de a mesa abrir. O que narrar vai na pauta; o envelope só o chama. */
+  const narrarOEncontro = (e, p) => {
+    try {
+      porNaPautaDoTurno(pautaDoEncontro(e));
+      if (quemResponde("encontro").chamadas) enviar("[NA ESTRADA — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]", p || fichaViva() || personagem);
+    } catch (er) { calou("a narração do encontro", er); }
+  };
+  /* O ENCONTRO SEGUE, pela fase que o motor devolveu:
+       escolha   — a criatura à vista; o Mestre narra, e o cartão vem depois;
+       resolvido com luta — o Mestre narra a descida, e a mesa abre DEPOIS da
+                   narração (o efeito da entrada, que espera o Mestre calar);
+       resolvido sem luta — o preço cobra-se (as horas, o tributo, o recuo), a
+                   jornada retoma, a criatura fica à vista, e o Mestre narra. */
+  const seguirOEncontro = (e, p0) => {
+    try {
+      if (!e) return;
+      const p = p0 || fichaViva() || personagem;
+      const trechoDe = () => { const j = jornadaRef.current; return e.trecho || (j ? (j.de || "") + ">" + (j.para || "") : ""); };
+      if (e.fase === "escolha") {
+        pousarOEncontro(e);
+        try { criaturaAVistaRef.current = jornadaRef.current ? { nome: e.criatura, ameaca: e.ameaca, quantos: e.quantos, trecho: trechoDe() } : null; } catch (er) { calou("a criatura à vista no encontro", er); }
+        narrarOEncontro(e, p);
+        return;
+      }
+      if (e.fase !== "resolvido" || !e.desfecho) { pousarOEncontro(e); return; }
+      if (e.desfecho.luta) { pousarOEncontro(e); narrarOEncontro(e, p); return; }
+      let pv = p;
+      const custo = e.desfecho.custo || {};
+      const horas = Math.max(0, Number(custo.horas) || 0);
+      const moedas = Math.max(0, Math.floor(Number(custo.moedas) || 0));
+      if (moedas > 0 && (pv.moedas || 0) >= moedas) {
+        pv = { ...pv, moedas: (pv.moedas || 0) - moedas };
+        personagemRef.current = pv; setPersonagem(pv); salvar({ personagem: pv });
+        pushMsgs([{ autor: "sistema", texto: `◉ −${moedas} moedas` }]);
+      }
+      if (horas > 0) { try { avancarMinutos(horas * 60); } catch (er) { calou("as horas do encontro", er); } }
+      try {
+        let j = jornadaRef.current;
+        if (j) { if (e.desfecho.recuo || custo.recuo) j = recuarViagem(j, horas * 60); j = retomarViagem(j); jornadaRef.current = j; setJornada(j); }
+      } catch (er) { calou("a jornada depois do encontro", er); }
+      try { criaturaAVistaRef.current = jornadaRef.current ? { nome: e.criatura, ameaca: e.ameaca, quantos: e.quantos, trecho: trechoDe() } : null; } catch (er) { calou("a criatura à vista depois do encontro", er); }
+      pousarOEncontro(null);
+      narrarOEncontro(e, pv);
+    } catch (er) { calou("seguir o encontro", er); }
+  };
+  /* O SINAL: o dado da bandeja lê-o (`avistar` com o d20 rolado); «Agora não» é
+     a percepção passiva (o 10). Fora da fase do sinal, nada. */
+  const lerOSinal = (passivo) => {
+    try {
+      const ep = encontroPendenteRef.current;
+      if (!ep || ep.fase !== "sinal" || carregando) return;
+      const p = fichaViva() || personagem;
+      const d20 = passivo ? 10 : dadoDoEncontro("encontro-sinal");
+      const novo = avistar(ep, { d20, bonus: bonusDoEncontro(p), sorte: sorteDoTurno("encontro-investida") });
+      if (!novo || novo === ep) return;
+      if (!passivo && novo.percepcao && novo.percepcao.d20 != null) {
+        try { const per = periciaPorId("percepcao"); aBandeja(lancamento({ rotulo: (per && per.nome) || "Percepção", dados: [{ faces: 20, valor: novo.percepcao.d20 }], mod: novo.percepcao.bonus, alvo: novo.percepcao.cd, papel: "teste" })); } catch (er) { calou("o d20 do sinal na bandeja", er); }
+      }
+      seguirOEncontro(novo, p);
+    } catch (e) { calou("ler o sinal na estrada", e); }
+  };
+  /* A ESCOLHA: o botão do cartão diz a escolha e o preço; o toque rola o teste dela */
+  const escolherNoEncontro = (id) => {
+    try {
+      const ep = encontroPendenteRef.current;
+      if (!ep || ep.fase !== "escolha" || carregando) return;
+      const p = fichaViva() || personagem;
+      const r = resolverEscolha(ep, id, { d20: dadoDoEncontro("encontro-escolha"), bonus: bonusDoEncontro(p), moedas: p.moedas || 0 });
+      if (!r) return;
+      setEscolhaNoEncontro(null);
+      if (r.teste && r.teste.d20 != null) {
+        try { const per = periciaPorId(r.teste.pericia); aBandeja(lancamento({ rotulo: (per && per.nome) || "Teste", dados: [{ faces: 20, valor: r.teste.d20 }], mod: r.teste.bonus, alvo: r.teste.cd, papel: "teste" })); } catch (er) { calou("o d20 da escolha na bandeja", er); }
+      }
+      seguirOEncontro(r, p);
+    } catch (e) { calou("a escolha no encontro", e); }
+  };
+  /* O GOLPE SENTIDO: junta os eventos do mesmo clique numa rajada só (o golpe
+     do herói e o revide correm síncronos), e a mesa recebe-a de uma vez */
+  const sentirGolpe = (ev) => {
+    try {
+      if (!ev) return;
+      rajadaNRef.current += 1;
+      rajadaRef.current = [...rajadaRef.current, { ...ev, chave: "g" + rajadaNRef.current }];
+      if (rajadaAgendadaRef.current) return;
+      rajadaAgendadaRef.current = true;
+      setTimeout(() => {
+        try { const l = rajadaRef.current; rajadaRef.current = []; rajadaAgendadaRef.current = false; setGolpesDaRajada(l.length ? l : null); } catch (e) { calou("a rajada na mesa", e); }
+      }, 0);
+    } catch (e) { calou("o golpe sentido", e); }
+  };
+  /* O FECHO (CB8): a escolha lembrada desta luta — antes da primeira, a da
+     tabela (`QUANDO_O_FECHO_PERGUNTA.lembra`) */
+  const lembradaDaLuta = () => {
+    try { const f = (combateRef.current && combateRef.current.fecho) || {}; return f.lembrada || (QUANDO_O_FECHO_PERGUNTA.lembra === "matar" ? "letal" : "nao_letal"); } catch (e) { calou("a escolha lembrada", e); return "nao_letal"; }
+  };
+  const mostrarQuedasDoMeio = (lista) => {
+    try {
+      const novas = (lista || []).filter((q) => q && q.nome).map((q) => { quedasNRef.current += 1; return { chave: "q" + quedasNRef.current, nome: q.nome, escolha: q.escolha }; });
+      if (novas.length) setQuedasDoMeio((qs) => [...qs, ...novas]);
+    } catch (e) { calou("as quedas do meio", e); }
+  };
+  /* o chip da queda: o outro lado a um toque — muda só aquela queda, e passa a
+     ser a lembrada. O corpo refaz-se pela porta única (`aplicarEscolha`), e o
+     Narrador sabe pelo envelope do golpe final, no turno seguinte. */
+  const mudarQueda = (chave, escolha) => {
+    try {
+      const q = quedasDoMeio.find((x) => x.chave === chave);
+      if (!q || (escolha !== "letal" && escolha !== "nao_letal")) return;
+      setQuedasDoMeio((qs) => qs.map((x) => (x.chave === chave ? { ...x, escolha } : x)));
+      const comb = combateRef.current;
+      if (!comb) return;
+      let corpo = null;
+      const inimigos = (comb.inimigos || []).map((e) => {
+        if (e.nome !== q.nome || (e.vida || 0) > 0 || e.fugiu) return e;
+        corpo = aplicarEscolha(e, escolha, { semente: sementeDaFuga(comb) });
+        return corpo;
+      });
+      combateRef.current = { ...comb, inimigos, fecho: { ...(comb.fecho || {}), lembrada: escolha } };
+      setCombate(combateRef.current);
+      if (corpo) {
+        try {
+          const env = envelopeDoGolpeFinal({ alvo: corpo, escolha, comoFez: "", heroi: (fichaViva() || personagem || {}).nome || "" });
+          const g = golpeFinalEnvelopeRef.current || { acabou: [], naoPode: [] };
+          golpeFinalEnvelopeRef.current = { acabou: [...(g.acabou || []), ...(env.acabou || [])], naoPode: [...(g.naoPode || []), ...(env.naoPode || [])] };
+        } catch (er) { calou("o envelope da queda mudada", er); }
+      }
+    } catch (e) { calou("mudar a queda do meio", e); }
+  };
+
   const viajar = (destino = "", opcoes = null) => {
     /* MM16 nº 2: quem pediu a estrada diz quantas vezes o Mestre fala
        (`QUEM_RESPONDE`, rastro.js): a frase leva o envelope junto, o sinal
        do Mestre o deixa à espera da próxima frase, e só o toque chama */
-    const qr = quemResponde(opcoes && opcoes.origem);
+    /* `let`: um encontro de perigo neste trecho troca quem responde (abaixo, antes do envelope) */
+    let qr = quemResponde(opcoes && opcoes.origem);
     if (acampadoRef.current) return;
+    /* CB3: com um encontro à frente ainda por decidir, a estrada não anda — o
+       cartão (ou a frase do jogador) decide primeiro */
+    try {
+      if (encontroPendenteRef.current && !combateRef.current) { pushMsgs([{ autor: "sistema", texto: "Há alguma coisa na estrada à frente: primeiro, o que fazes?" }]); return; }
+    } catch (e) { calou("a estrada com um encontro à frente", e); }
     /* v9.165: a quarta boca do porteiro — botões e sinais do Mestre chegam
        direto aqui, sem passar pela interceptação. Confere ANTES de qualquer
        efeito (rastro, clima, encontro): uma partida negada não deixa pegada. */
@@ -22546,7 +22888,7 @@ export default function Taverna() {
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para viajar no meio de um combate." }]); return; }
     const c = rolarClimaEstacao(climaRef.current ? climaRef.current.id : null);
     climaRef.current = c; setClima(c);
-    const enc = rolarEncontro((mundo && mundo.genero) || cenarioAtivo().generos.padrao, personagem.nivel || 1, null, sorteDoTurno("encontro-qual"));
+    const enc = rolarEncontro((mundo && mundo.genero) || cenarioAtivo().generos.padrao, personagem.nivel || 1, null, sorteDoTurno("encontro-qual"), estradaDoTrecho(destino));
     /* a campanha que prende (item 3): o encontro de CENA ganha o tema da
        história; o perigo e o achado ficam com a tabela. `enc.tipo` conta. */
     let encV = enc;
@@ -22691,24 +23033,38 @@ export default function Taverna() {
        fica à vista e o primeiro golpe é do jogador (lerAgressao). Vem depois
        da marcha e do achado para a ficha que abre a luta ser a viva (persV),
        e respeita o fôlego da fuga como a emboscada respeitava. */
+    /* CB3 (09/11): A ESTRADA JÁ NÃO ABRE A MESA. A pessoa: «apertei em viajar
+       para o lugar e instantaneamente abriu uma batalha contra um dragão
+       ancião… não teve narração sobre o encontro, não teve nada». Aqui morava
+       a porta da luta aberta direto pela investida, como «emboscada»: a
+       mesa abria antes de uma palavra. Agora o perigo do trecho é um ENCONTRO
+       PENDENTE em três tempos (encontro-na-estrada.js): o sinal de longe e o
+       pedido de Percepção, a escolha com o preço à vista, e só então, se for o
+       caso, a luta — depois da narração. A investida não morreu: mora no dado
+       do sinal (`avistar`), pela mesma tabela. O fôlego da fuga continua a
+       mandar: quem acabou de escapar não é apanhado na mesma estrada. */
+    let encontroDaEstrada = null;
     try {
-      const inv = investidaDaEstrada(enc, { clima: c && c.id, pers: persV });
-      const fugiuDela = !!(inv && inv.investe) && folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "emboscada", criatura: inv.criatura });
-      /* 9.ª sessão: a que não veio em cima fica à vista — e é ela que a
-         frase do golpe acha (lerAgressao, `conhecidas`). Turno a turno, sem save. */
-      try {
-        const jv = jornadaRef.current;
-        criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv) ? { nome: inv.criatura, ameaca: inv.ameaca, quantos: inv.quantos, trecho: (jv.de || "") + ">" + (jv.para || "") } : null;
-      } catch (e) { calou("a criatura à vista", e); criaturaAVistaRef.current = null; }
-      if (inv && inv.investe && !fugiuDela && !combateRef.current) {
-        const ab = abrirCombate(inv.inimigos, { pers: persV, situacao: "emboscada" });
-        if (ab.pers !== persV) { persV = ab.pers; personagemRef.current = ab.pers; setPersonagem(ab.pers); }
-        if (ab.msgs.length) pushMsgs(ab.msgs.map((tx) => ({ autor: "sistema", texto: tx })));
-        if (ab.nota) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + ab.nota;
-        texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
-        encV = { ...encV, detalhe: envelopeDaInvestida(inv) };
+      const jv = jornadaRef.current;
+      const trecho = jv ? (jv.de || "") + ">" + (jv.para || "") : "";
+      const inv = enc && enc.tipo === "perigo" ? investidaDaEstrada(enc, { clima: c && c.id, pers: persV }) : null;
+      const fugiuDela = !!inv && folegoSegura(folegoRef.current, { lugares: ondeEstou(), origem: "emboscada", criatura: inv.criatura });
+      if (inv && !fugiuDela && !combateRef.current) {
+        const e0 = oEncontroNaEstrada(enc, { pers: persV, clima: c && c.id, noite: ehNoite(minutoRef.current), bonus: bonusDoEncontro(persV), dia: diaRef.current, trecho });
+        if (e0) encontroDaEstrada = { ...e0, trecho };
       }
-    } catch (e) { calou("a investida da estrada", e); }
+      /* a que fica à vista: a da fase da escolha (vê-se), ou a que o fôlego
+         deixou passar; no sinal ainda não se sabe o que é */
+      try {
+        criaturaAVistaRef.current = (inv && jv && (!encontroDaEstrada || encontroDaEstrada.fase === "escolha")) ? { nome: inv.criatura, ameaca: inv.ameaca, quantos: inv.quantos, trecho } : null;
+      } catch (e) { calou("a criatura à vista", e); criaturaAVistaRef.current = null; }
+      if (encontroDaEstrada) {
+        pousarOEncontro(encontroDaEstrada);
+        /* o trecho não diz o nome do que deixou o sinal: diz o sinal */
+        if (encontroDaEstrada.fase === "sinal" && encontroDaEstrada.sinal) encV = { ...encV, detalhe: encontroDaEstrada.sinal.frase };
+        porNaPautaDoTurno(pautaDoEncontro(encontroDaEstrada));
+      }
+    } catch (e) { calou("o encontro da estrada", e); encontroDaEstrada = null; }
     /* ---------------- O TURNO DE ESTRADA (v9.56) ----------------
        Um avanço cobre QUATRO horas de marcha — meio dia dos oito que se
        caminha — e o relógio anda meio dia de calendário. Antes o relógio
@@ -22726,6 +23082,9 @@ export default function Taverna() {
       jornadaRef.current = andar(jornadaRef.current, minutosPorAvanco(jornadaRef.current) + (marchouForcado ? 180 : 0));
       setJornada(jornadaRef.current);
     }
+    /* CB3: com um encontro à frente, a jornada PÁRA (retomar é explícito, e quem
+       retoma é o desfecho do encontro, ou a mesa que ele abre) */
+    try { if (encontroDaEstrada && jornadaRef.current) { jornadaRef.current = pausarViagem(jornadaRef.current, "um encontro na estrada"); setJornada(jornadaRef.current); } } catch (e) { calou("a jornada parada pelo encontro", e); }
     const extraTempo = avancarMinutos(Math.round(minutosDoRelogio * fator));
     /* v9.56: o jogador vê a MESMA barra que o Mestre recebe — quanto já se
        andou e quantos avanços faltam. Vem depois de andar, para mostrar o
@@ -22778,6 +23137,9 @@ export default function Taverna() {
        (detectarSeguirViagem não lê o destino da frase). */
     const paraCidade = !paraBoca && jornadaRef.current && jornadaRef.current.para ? String(jornadaRef.current.para) : "";
     const ultimoTrechoCidade = (() => { try { return !!paraCidade && !!(progressoDaViagem(jornadaRef.current) || {}).chegou; } catch (e) { calou("o último trecho até à cidade", e); return false; } })();
+    /* CB3: o encontro de perigo tem UMA chamada própria (QUEM_RESPONDE.encontro),
+       e ela vem agora, antes de qualquer mesa — nunca na fila da próxima frase */
+    try { if (encontroDaEstrada && !qr.chamadas && quemResponde("encontro").chamadas) qr = quemResponde("encontro"); } catch (e) { calou("quem responde ao encontro", e); }
     const textoDaViagem = oEnvelopeDaViagem("trecho", {
       local: localAtualTxt(), clima: c, encontro: { tipo: enc.tipo, detalhe: encV.detalhe }, meio: jornadaRef.current.meio,
       paraBoca, ultimoTrecho, alvo: paraBoca ? jornadaRef.current.alvo.nome : null, paraCidade, ultimoTrechoCidade, destino,
@@ -24325,6 +24687,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     const p = propostaDaFrase;
     if (!p || carregando || rolagem || p.impedido) return;
     setPropostaDaFrase(null); setPropostaAberta(false);
+    /* CB3: o pedido do sinal não manda frase — o d20 rola aqui e lê o sinal */
+    try {
+      const ep = encontroPendenteRef.current;
+      if (p.pedido && ep && ep.fase === "sinal" && ep.pedido && p.chave === ep.pedido.chave) { lerOSinal(false); return; }
+    } catch (e) { calou("o d20 do sinal", e); }
     const d = p.dados || {};
     /* o que paga ou vende vai com o turno (ladoDaPropostaRef, em agirInterno) */
     const lado = (frase) => { ladoDaPropostaRef.current = d.pagar || d.venda ? { frase, pagar: d.pagar || null, venda: d.venda || null } : null; };
@@ -24350,9 +24717,74 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const reescreverAProposta = () => {
     const p = propostaDaFrase;
     setPropostaDaFrase(null); setPropostaAberta(false);
+    /* CB3: «Agora não» perante o sinal é a percepção passiva (o 10 do dado) */
+    try {
+      const ep = encontroPendenteRef.current;
+      if (p && p.pedido && ep && ep.fase === "sinal" && ep.pedido && p.chave === ep.pedido.chave) { lerOSinal(true); return; }
+    } catch (e) { calou("o sinal: agora não", e); }
     if (p && p.pedido) return;
     try { if (p && p.frase) { setEntrada(p.frase); setCampoFocado(true); } } catch (e) { calou("a frase volta ao campo", e); }
   };
+
+  /* ---------------- CB3 · A MESA ABRE DEPOIS DA NARRAÇÃO ----------------
+     O encontro resolvido com luta espera o Mestre calar (a descida foi
+     narrada), e só então a ENTRADA NA MESA corre (1,2 s, saltável) e a luta
+     abre pela porta única, com a abertura do desfecho: a situação, de que
+     lado está a surpresa, e a fuga aberta perante um lendário. Vale também
+     para o save que fechou entre a narração e a mesa. A rede de segurança:
+     se a peça da entrada calar, a mesa abre na mesma. */
+  abrirAMesaDoEncontroRef.current = () => {
+    try {
+      setEntradaNaMesa(null);
+      const e = encontroPendenteRef.current;
+      if (!e || e.fase !== "resolvido" || !e.desfecho || !e.desfecho.luta) return;
+      pousarOEncontro(null);
+      try { if (jornadaRef.current) { jornadaRef.current = retomarViagem(jornadaRef.current); setJornada(jornadaRef.current); } } catch (er) { calou("a jornada retoma com a mesa", er); }
+      if (combateRef.current) return;
+      const p0 = fichaViva() || personagem;
+      const ab = abrirCombate(e.inimigos || [], { pers: p0, situacao: e.desfecho.situacao || "encontro", iniciativa: e.desfecho.iniciativa || null, fugaAberta: e.desfecho.fugaAberta === true });
+      if (ab && ab.pers && ab.pers !== p0) { personagemRef.current = ab.pers; setPersonagem(ab.pers); }
+      if (ab && Array.isArray(ab.msgs) && ab.msgs.length) pushMsgs(ab.msgs.map((tx) => ({ autor: "sistema", texto: tx })));
+      if (ab && ab.nota) notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + ab.nota;
+      texturaRef.current = { ...texturaRef.current, luta: true, pilar: "combate" };
+    } catch (er) { calou("abrir a mesa do encontro", er); }
+  };
+  useEffect(() => {
+    try {
+      const e = encontroPendente;
+      if (!e || e.fase !== "resolvido" || !e.desfecho || !e.desfecho.luta) return;
+      if (fase !== "jogo" || carregando || combate || entradaNaMesa) return;
+      setEntradaNaMesa((Array.isArray(e.inimigos) && e.inimigos[0]) || { nome: e.criatura });
+    } catch (er) { calou("a entrada na mesa do encontro", er); }
+  }, [encontroPendente, carregando, combate, entradaNaMesa, fase]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* CB: A LUTA QUE NASCE (por qualquer porta: o encontro, a frase, o Narrador,
+     o load). Mora num efeito e não em `abrirCombate` de propósito: a porta é
+     recortada e jogada byte a byte contra o App de antes (teste-motor-luta), e
+     o que é da tela não lhe pertence. A luta nova nasce sem previsão, sem
+     rajada, sem registo e sem quedas da anterior; o encontro da estrada, se
+     havia, acabou aqui (a jornada retoma: a luta corre como corria antes da
+     CB); e a rodada 1 anuncia o que eles vão fazer. */
+  const lutaAbertaRef = useRef(false);
+  useEffect(() => {
+    const aberta = !!combate;
+    if (aberta === lutaAbertaRef.current) return;
+    lutaAbertaRef.current = aberta;
+    if (!aberta) return;
+    try {
+      setAlvoPrevisto(null); setGolpesDaRajada(null); setRegistoDaRodada(null); setQuedasDoMeio([]); registoDaVezRef.current = [];
+      setEntradaNaMesa(null); setEscolhaNoEncontro(null);
+      if (encontroPendenteRef.current) {
+        pousarOEncontro(null);
+        if (jornadaRef.current) { jornadaRef.current = retomarViagem(jornadaRef.current); setJornada(jornadaRef.current); }
+      }
+    } catch (e) { calou("a mesa nova nasce limpa", e); }
+    try { anunciarIntencoes(fichaViva() || personagem); } catch (e) { calou("a intenção da rodada 1", e); }
+  }, [combate]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!entradaNaMesa) return undefined;
+    const id = setTimeout(() => { try { aoFimDaEntrada(); } catch (er) { calou("a rede da entrada na mesa", er); } }, CARTAO_DO_ENCONTRO.entrada.total * 3);
+    return () => clearTimeout(id);
+  }, [entradaNaMesa]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ---------------- O MESTRE PEDE O DADO (04/11) ----------------
      Quando a mesa assenta (o Mestre calou, nada à espera, nenhum cartão),
@@ -24368,6 +24800,17 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (travaODeclarar(guardadoRef.current)) return;
       const pv = fichaViva() || personagem;
       if (!pv || pv.morto) return;
+      /* CB3 · O SINAL NA ESTRADA: com um encontro na fase do sinal, o pedido é o
+         dele — a Percepção pela CD do sinal, o cartão de sempre (`oCartaoDoPedido`) */
+      try {
+        const ep = encontroPendenteRef.current;
+        if (ep && ep.fase === "sinal" && ep.pedido && !combateRef.current) {
+          const per = periciaPorId("percepcao");
+          const c = oCartaoDoPedido(ep.pedido, ep.pedido.v, { mod: bonusDoEncontro(pv).percepcao || 0, pericia: per && per.nome });
+          if (c) { setPropostaDaFrase(c); setPropostaAberta(true); }
+          return;
+        }
+      } catch (e) { calou("o pedido do sinal na estrada", e); }
       const fala = ultimaFalaRef.current || "";
       if (falaDoPedidoRef.current === fala) return;
       let falouCom = "";
@@ -25541,6 +25984,69 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("o espólio do fim da luta", e); return null; }
   })();
 
+  /* ---------------- CB5 · A PREVISÃO DO GOLPE, E ANDAR E ATACAR ----------------
+     O inimigo sob o rato (ou o primeiro toque no telefone) recebe a previsão
+     do PRIMEIRO golpe (`previsaoDoHeroi`, previsao.js — a mesma conta do
+     golpe, com a penalidade do alcance do veredito). Longe: o caminho até à
+     primeira casa de onde se alcança, com o golpe livre que sair provoca, e
+     um clique ANDA E ATACA. Quem não se alcança nem andando não recebe
+     previsão nenhuma: a peça cala-se, e o golpe recusa como sempre. */
+  const planoDeAndarAte = (nome) => {
+    try {
+      const comb = combateRef.current;
+      if (!comb || !comb.grade || !comb.heroi) return null;
+      const alvo = (comb.inimigos || []).find((e) => e && e.nome === nome && !e.derrotado && (e.vida || 0) > 0);
+      if (!alvo) return null;
+      const persMov = personagemRef.current || personagem;
+      const passo = passoComSelecao(persMov, habsSel, { dobrar: dobraMovimento(persMov), ignoraDificil: ignoraTerrenoDificil(persMov) || ignoraDificilPorTraco(persMov) });
+      if (!passo || passo.parado) return null;
+      const eco = comb.economia;
+      if (!podeDarUmPasso(eco && eco.movM, passo.metros)) return null;
+      const restante = passoQueResta(eco && eco.movM, passo.metros);
+      const armaEq = persMov.equipados && persMov.equipados.arma;
+      const alcanceM = alcanceDoGolpe({ armaLonge: !!(armaEq && armaEq.distancia), temPropAlcance: !!(armaEq && (fichaDoItem(armaEq).props || []).includes("alcance")), nome: persMov.nome, tamanho: persMov.tamanho });
+      const de = comb.heroi;
+      const ocupados = ocupacaoDe([...(comb.inimigos || []), ...(comb.aliados || [])], de);
+      const dest = passoAteAlcancar(comb.grade, de, alvo, { ocupados, deslocamentoM: restante, ignoraDificil: passo.ignoraDificil, alcanceM, desempate: "passo" });
+      if (!dest) return null;
+      const lugar = { ...de, x: dest.x, y: dest.y };
+      if (!(distanciaM(lugar, alvo) <= alcanceM && linhaDeVisao(comb.grade, lugar, alvo))) return null;
+      const chk = caminhar(comb.grade, de, { x: dest.x, y: dest.y }, { ocupados, deslocamentoM: restante, ignoraDificil: passo.ignoraDificil });
+      if (!chk || !chk.ok) return null;
+      const colados = adjacentes(de, comb.inimigos || []);
+      return { destino: chk.destino, caminho: { pontos: [{ x: de.x, y: de.y }, ...chk.caminho], metros: chk.custoM, sobraM: passoAposAndar(eco && eco.movM, passo.metros, chk.custoM), golpeLivreEm: colados.length ? [{ x: de.x, y: de.y }] : [] } };
+    } catch (e) { calou("o caminho até ao alvo", e); return null; }
+  };
+  const previsaoNaMesa = (() => {
+    try {
+      if (!emBatalha || !combate || !alvoPrevisto) return null;
+      const comb = combateRef.current || combate;
+      const alvo = (comb.inimigos || []).find((e) => e && e.nome === alvoPrevisto && !e.derrotado && (e.vida || 0) > 0);
+      if (!alvo) return null;
+      const pers = fichaViva() || personagem;
+      const noAlcance = vdDaBatalha && (vdDaBatalha.aoAlcance || []).find((a) => a.nome === alvo.nome);
+      const plano = noAlcance ? null : planoDeAndarAte(alvo.nome);
+      if (!noAlcance && !plano) return null;
+      const de = comb.heroi || { nome: pers.nome, x: null, y: null };
+      const meuLugar = plano ? { ...de, x: plano.destino.x, y: plano.destino.y } : de;
+      const aliados = (comb.aliados || []).map((a, i) => ({ ...a, vida: ((pers.grupo || [])[i] || {}).vida, condicoes: ((pers.grupo || [])[i] || {}).condicoes, i }));
+      const prev = previsaoDoHeroi(pers, alvo, { grade: comb.grade || null, meuLugar, gdJogador: grauDe(divindadeRef.current), penalidade: noAlcance ? (Number(noAlcance.penalidade) || 0) : 0, estorvado: ataqueEstorvado(pers), aliados, andaDe: plano ? de : null, inimigos: plano ? (comb.inimigos || []) : null });
+      if (!prev) return null;
+      return { previsao: { ...prev, alvo: alvo.nome, vidaDoAlvo: alvo.vida, ...(plano ? { caminho: { metros: plano.caminho.metros } } : {}) }, caminho: plano ? plano.caminho : null };
+    } catch (e) { calou("a previsão do golpe", e); return null; }
+  })();
+  const andarEAtacar = (nome) => {
+    try {
+      if (!nome || !combateRef.current || bloqueado) return;
+      const vd = vereditoDoGolpeAgora();
+      const ja = !!(vd && (vd.aoAlcance || []).some((a) => a.nome === nome));
+      if (!ja) { const pl = planoDeAndarAte(nome); if (pl) moverPara(pl.destino); }
+      setAlvoPrevisto(null);
+      if (((personagemRef.current || personagem || {}).vida || 0) <= 0) return;
+      declararGolpe(nome);
+    } catch (e) { calou("andar e atacar", e); }
+  };
+
   const telaDaBatalha = emBatalha ? (
     <TelaDeBatalha
       combate={combateNaTela}
@@ -25581,10 +26087,23 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       gaveta={gavetaDaBatalha}
       reacao={reacaoDaBatalha}
       decisao={golpeFinalDaBatalha}
-      dado={dadoDaBatalha}
+      /* CB · A BANDEJA NA LUTA (formas.md §CB 15, decisão do coordenador): o d20 do
+         último golpe do herói rola na mesa, com as faces que acertam acesas — a
+         peça de sempre, no lugar do dado (o teste pendente tem a vez quando há) */
+      dado={dadoDaBatalha || (combate && bandeja[0] && bandeja[0].golpe ? <LimiteDasFichas key="bandeja-da-luta"><Bandeja lancamentos={[bandeja[0]]} fresca={bandeja[0].n !== bandejaVista} /></LimiteDasFichas> : null)}
       passoM={passoDaBatalha.passoM}
       passoTotal={passoDaBatalha.passoTotal}
       ignoraDificil={passoDaBatalha.ignoraDificil}
+      previsaoDoGolpe={previsaoNaMesa ? previsaoNaMesa.previsao : null}
+      caminho={previsaoNaMesa ? previsaoNaMesa.caminho : null}
+      intencoes={combate && combate.intencoes && Array.isArray(combate.intencoes.lista) ? combate.intencoes.lista : null}
+      golpes={golpesDaRajada}
+      aoPreverGolpe={(nome) => { try { setAlvoPrevisto(nome || null); } catch (e) { calou("prever o golpe", e); } }}
+      aoAndarEAtacar={andarEAtacar}
+      registo={registoDaRodada}
+      quedas={quedasDoMeio.length ? quedasDoMeio : null}
+      aoMudarQueda={mudarQueda}
+      ultimoGolpe={golpeFinalPendente && Array.isArray(golpeFinalPendente.quedas) && golpeFinalPendente.quedas[0] ? golpeFinalPendente.quedas[0].nome : null}
     />
   ) : null;
 
@@ -26694,6 +27213,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   que pousa no telefone), o cartão do crime e o do núcleo. 0 px sem
                   momento. A Bandeja saiu desta fila: na mesa larga mora na coluna do
                   grupo, no telefone pousa na soleira e fica na mesa puxada. */}
+              {/* CB3 · O SINAL NA ESTRADA: o caixilho tracejado com o sinal, por cima
+                  do pedido de Percepção, enquanto o encontro está no primeiro tempo */}
+              {!emBatalha && encontroPendente && encontroPendente.fase === "sinal" && encontroPendente.sinal
+                ? <div className="pt-2" data-momento="sinal-na-estrada"><LimiteDasFichas key="sinal-na-folha"><SinalNaFolha sinal={encontroPendente.sinal} /></LimiteDasFichas></div>
+                : null}
               {!emBatalha ? momentoPorCimaDoCampo() : null}
               {!emBatalha ? encruzilhadaDaQuest() : null}
               <div className="pt-2">
@@ -26902,6 +27426,37 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && cerimoniaCalou && !cerimoniaDoNivel && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
       )}
+
+      {/* CB3 · O CARTÃO DO ENCONTRO (formas.md §CB 7): a escolha com o preço à
+          vista, depois de o Mestre narrar o que se vê. Por cima da página e
+          nunca do campo (o campo continua aberto: «ou escreve o que fazes»). */}
+      {fase === "jogo" && !emBatalha && encontroPendente && encontroPendente.fase === "escolha" && !carregando && !entradaNaMesa ? (
+        <LimiteDasFichas key="cartao-do-encontro">
+          {(() => {
+            try {
+              const p = fichaViva() || personagem || {};
+              const escolhas = escolhasDoEncontro(encontroPendente, { bonus: bonusDoEncontro(p), moedas: p.moedas || 0 });
+              let baseDoCampo = 0;
+              try {
+                const pilula = campoRef.current && campoRef.current.closest ? campoRef.current.closest(".tv-pilula-do-campo") : null;
+                if (pilula && typeof window !== "undefined") baseDoCampo = Math.max(0, Math.round(window.innerHeight - pilula.getBoundingClientRect().top));
+              } catch (e) { calou("a base do campo sob o encontro", e); }
+              return (
+                /* a margem automática centra quando cabe e deixa rolar desde o topo
+                   quando não cabe (a 1024 × 768 o cartão mede mais do que a janela) */
+                <div className="flex justify-center overflow-y-auto" style={{ position: "fixed", left: 0, right: 0, top: 0, bottom: baseDoCampo, zIndex: 60, alignItems: mesaLarga ? "flex-start" : "flex-end", padding: mesaLarga ? CARTAO_DO_ENCONTRO.cartao.enchimento : 0, background: alfa(T.bg, CARTAO_DO_ENCONTRO.entrada.veuAlfa) }}>
+                  <div className="flex justify-center" style={{ margin: mesaLarga ? "auto" : 0, width: "100%", maxHeight: mesaLarga ? "none" : "100%" }}>
+                    <CartaoDoEncontro estado={encontroPendente} escolhas={escolhas} escolhida={escolhaNoEncontro}
+                      aoEscolher={(id) => { try { setEscolhaNoEncontro(id); } catch (e) { calou("tocar na escolha do encontro", e); } }}
+                      aoConfirmar={escolherNoEncontro} telefone={!mesaLarga} />
+                  </div>
+                </div>
+              );
+            } catch (e) { calou("o cartão do encontro", e); return null; }
+          })()}
+        </LimiteDasFichas>
+      ) : null}
+      {entradaNaMesa ? <LimiteDasFichas key="entrada-na-mesa"><EntradaNaMesa ente={entradaNaMesa} aoFim={aoFimDaEntrada} /></LimiteDasFichas> : null}
 
       {cronica && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.9)", backdropFilter: "blur(4px)" }} onClick={() => cronica !== "gerando" && setCronica(null)}>

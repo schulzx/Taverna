@@ -144,8 +144,15 @@ for (const a of ["painel-codex", "painel-habilidades", "painel-mapa", "painel-as
 const CODEX = readFileSync("../src/painel-codex.jsx", "utf8");
 t("o Bestiário diz a ameaça em degraus 1–5, por tabela", /const DEGRAU_DA_AMEACA = \{ fraco: 1, comum: 2, competente: 3, elite: 4, lendario: 5 \}/.test(CODEX) && /<DegrausDaAmeaca nivel=\{DEGRAU_DA_AMEACA\[c\.ameaca\]\}/.test(CODEX));
 const BAT = readFileSync("../src/painel-batalha.jsx", "utf8");
-t("as duas gavetas da luta têm nome e 48 px de largura mínima", /aria-label="Habilidades"/.test(BAT) && (BAT.match(/minWidth: ALVOS\.piso/g) || []).length >= 2);
-t("a bolsa da luta deixou o ◆ (que é o PM)", !/>◆\{nBolsa/.test(BAT) && /<Glifo nome="bolsa"/.test(BAT));
+/* MOVIDA (09/11, §CB 16.1 nº 5): as duas gavetas desceram para a linha do
+   `como?` como a peça `Gaveta`, quadrada, à altura do PONTEIRO — 48 com toque
+   (`ALVOS.piso`, via `B3.verbo.grosso`), 40 com rato (WCAG 2.2, 2.5.8 AA). A
+   intenção fica: têm nome, e a largura mínima é o alvo da tabela. */
+t("as duas gavetas da luta têm nome e a largura mínima do alvo (o ponteiro)",
+  /aria-label=\{rotuloAcessivel \|\| rotulo\}/.test(BAT) && /rotulo="Habilidades"/.test(BAT) && /rotulo="Bolsa"/.test(BAT)
+  && /height: alto, minHeight: alto, minWidth: alto/.test(BAT) && /alto=\{altoDoVerbo\}/.test(BAT));
+/* MOVIDA (09/11, §CB 16): o glifo chega à `Gaveta` por prop (`glifo="bolsa"`) */
+t("a bolsa da luta deixou o ◆ (que é o PM)", !/>◆\{nBolsa/.test(BAT) && /glifo="bolsa"/.test(BAT) && /<Glifo nome=\{glifo\}/.test(BAT));
 
 /* ============================================================
    6. V3b · o assunto da linha — o motor escreve, o ecrã traduz

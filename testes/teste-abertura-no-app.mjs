@@ -28,7 +28,8 @@ sec("1. a situação chega a `posicionar`");
      que se lê aqui: a situação entra na peça, a semente é a do mundo e do
      turno, e a rede é a do App. Que a situação chega a `posicionar` e que a
      queda abre como encontro é jogado em teste-motor-combate §6.) */
-  t("abrirCombate aceita a situação, com a cena por padrão", APP.includes('jaNoRef = false, situacao = "cena" } = {}) => {'));
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a porta ganhou `iniciativa` e `fugaAberta` (o desfecho do encontro da estrada, que abrirOCombate já lia); a situação continua com a cena por padrão. */
+  t("abrirCombate aceita a situação, com a cena por padrão", APP.includes('jaNoRef = false, situacao = "cena", iniciativa = null, fugaAberta = false } = {}) => {'));
   t("e passa-a à peça, com a semente do mundo e do turno",
     /const r = abrirOCombate\(\{\s*inimigosCrus, jaNoRef, combateNoRef: combateRef\.current, pers: persEntra \|\| fichaViva\(\) \|\| personagem, situacao,/.test(APP)
     && APP.includes("sementeDaAbertura: `${sementeMundo()}|abertura|${turnoDeRegistroRef.current}`,"));
@@ -41,7 +42,8 @@ sec("2. quem abre a luta diz como ela abriu");
     APP.includes('abrirCombate([{ nome: a.nome, ameaca: a.ameaca }], { pers: p, situacao: "declarada" })'));
   t("a luta que o lado do coração prometeu entra pela mesma porta (`declarada`)",
     APP.includes('abrirCombate([{ nome: luta.nome, ameaca: luta.ameaca }], { pers, situacao: "declarada" })'));
-  t("a investida da estrada abre como `emboscada`", APP.includes('abrirCombate(inv.inimigos, { pers: persV, situacao: "emboscada" })'));
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a estrada já não abre a mesa na investida (a pessoa: «abriu uma batalha contra um dragão ancião… não teve narração»). A luta da estrada abre DEPOIS do encontro em três tempos, pela situação que o desfecho decidiu — a emboscada contra (falhou o sinal e a criatura investiu, `ABERTURA_DA_LUTA`) continua a ser `emboscada`, agora lida da tabela do desfecho e não escrita no App. */
+  t("a luta da estrada abre pela situação do desfecho do encontro (a emboscada continua emboscada)", APP.includes('abrirCombate(e.inimigos || [], { pers: p0, situacao: e.desfecho.situacao || "encontro", iniciativa: e.desfecho.iniciativa || null, fugaAberta: e.desfecho.fugaAberta === true })'));
   /* (movido, T1-A 7.ª fatia: a emboscada do perigo saiu do App para `oPerigoDaResposta` (src/motor/fecho-da-resposta.js), que se prova JOGANDO e não lendo. A intenção é a mesma: a investida que o Narrador descreve abre pela porta única como `emboscada`. No texto do App ficam as outras quatro.) */
   {
     const { oPerigoDaResposta } = await import("../src/motor/fecho-da-resposta.js");
@@ -50,7 +52,8 @@ sec("2. quem abre a luta diz como ela abriu");
     t("a emboscada do perigo abre como `emboscada`", abriu.length === 1 && abriu[0] === "emboscada" && /oPerigoDaResposta\(\{[^}]*\}, portasDoFecho\(\)\)/.test(APP) && /sorteDoTurno, abrirCombate, dispararPerigo,/.test(APP));
   }
   /* MOVIDA (trilha A, 29/10), E O MOTIVO: a emboscada devida da virada e a da volta ao território (`revelarAVirada`, `talvezVoltarAoTerritorio`) saíram do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). Ficam no App o bando da fuga que volta e a emboscada da viagem. */
-  t("o bando da fuga e a emboscada da viagem também (2 no App; a da virada e a da volta ao território no prelúdio, a do perigo no motor)", conta('situacao: "emboscada" })') === 2);
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a emboscada da viagem saiu do App (a mesa da estrada abre pelo desfecho do encontro, acima). Fica no App o bando da fuga que volta. */
+  t("o bando da fuga também (1 no App; a da viagem pelo desfecho do encontro, a da virada e a da volta ao território no prelúdio, a do perigo no motor)", conta('situacao: "emboscada" })') === 1);
   t("a sala da masmorra não força nada: a planta decide (`cena` → masmorra)",
     APP.includes("const ab = abrirCombate(inimigos, { pers: personagemRef.current || personagem });"));
 }

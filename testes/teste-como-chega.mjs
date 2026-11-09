@@ -309,7 +309,10 @@ sec("6. A FIAÇÃO NO App E O CARTÃO NO ECRÃ (texto, corpo por âncora)");
     /\) : p\.decisao \? \(/.test(TEL) && TEL.indexOf(") : p.decisao ? (") < TEL.indexOf("<FileiraDeVerbos verbos="));
   t("o lugar da decisão não é absoluto (nasce no fluxo, visível)",
     (() => { const k = TEL.indexOf(") : p.decisao ? ("); const bloco = TEL.slice(k, TEL.indexOf("<FileiraDeVerbos verbos=", k)); return k > 0 && !/position: "absolute"/.test(bloco) && /\{p\.decisao\}/.test(bloco); })());
-  t("enquanto ela espera, o texto livre sai (um `como?` só no ecrã)", /\{!p\.decisao && <div className="flex items-center gap-2 rounded-lg px-2 shrink-0"/.test(TEL));
+  /* MOVIDA (09/11, §CB 16.1 nº 4): a linha do `como?` ganhou as gavetas e os
+     recuos e mudou de classe; continua a sair inteira enquanto a decisão
+     espera, que é o que esta asserção guarda. */
+  t("enquanto ela espera, o texto livre sai (um `como?` só no ecrã)", /\{!p\.decisao && <div className="flex items-center shrink-0 min-w-0"/.test(TEL));
   /* o foco vai ao campo SEM rolar (no 1.º quadro a tela ainda não sabe se é
      telefone, e o rolar ficava preso: a 374 × 310 o cartão abria rolado 47 px);
      quem rola, se faltar ecrã, é a tela, depois de saber o tamanho */
@@ -323,7 +326,11 @@ sec("6. A FIAÇÃO NO App E O CARTÃO NO ECRÃ (texto, corpo por âncora)");
   /* (09/11, CB 8) a vez passou de FaixaDaVez a FilaDaVez — a mesma região
      com outra forma; o que se guarda é que ela sai enquanto a decisão espera */
   t("os controles do turno saem enquanto a decisão espera (a vez, o veredito, a tira no telefone)",
-    /\{!esperando && <FilaDaVez /.test(TEL) && /\{!esperando && <LinhaDoVeredito /.test(TEL) && /\{!\(esperando && noTelefone\) && lateral\}/.test(TEL));
+    /* MOVIDA (09/11, §CB 16.1 nº 1): a linha do veredito virou o Pé do campo,
+       que fica sempre montado (o tabuleiro escreve lá os chips e o ⤢); o que
+       sai enquanto a decisão espera é a FRASE dele e a reação ancorada nele */
+    /\{!esperando && <FilaDaVez /.test(TEL) && /const textoDoPe = esperando \|\| fimComEspolio \? ""/.test(TEL)
+    && /reacao=\{esperando \? null : p\.reacao\}/.test(TEL) && /\{!\(esperando && noTelefone\) && lateral\}/.test(TEL));
 }
 
 console.log(`\ncomo chega (MM16 nº 5): ${ok} passaram, ${mal} falharam`);

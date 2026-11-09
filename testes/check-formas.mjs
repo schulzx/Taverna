@@ -564,7 +564,10 @@ const TETO_DE_PILULA_A_MAO = {
      projeto não se mexe. Trocá-la por `PilulaDeEscolha` é conserto de
      forma, e forma é da outra mesa. */
   "src/painel-habilidades.jsx": 1, /* 16/09 · E3, veio do App.jsx sem uma linha mudar */
-  "src/grade-de-batalha.jsx": 1,
+  /* 09/11 · §CB 16: `src/grade-de-batalha.jsx` (era 1) SAIU — a pílula do
+     andar/mirar da área (`rounded-full` com o fundo em ternário) virou chip
+     do Pé do campo, com a altura e o raio de `BATALHA_EM_TRES`. A dívida foi
+     paga; tirou-a o aprendiz, porque a catraca tem folga zero. */
   "src/painel-codex.jsx": 1,
   "src/painel-mapa.jsx": 2,
   /* 06/11 · AR4: `src/painel-talentos.jsx` (era 1) SAIU — as abas viraram AbaDaTela. */

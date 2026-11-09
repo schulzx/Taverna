@@ -180,7 +180,8 @@ sec("4. o preço da banca chega à pauta, na moeda do mundo (M42–M43)");
   t("fiação · a criatura à vista vai a lerAgressao em `conhecidas`, só no mesmo trecho",
     /* 13/10 (v9.463): depois de `conhecidas` pode vir `apontado` (a gente que
        a frase aponta); a criatura à vista continua a ir em `conhecidas`. */
-    /lerAgressao\(acao, \{[^}]*\bconhecidas(?:, apontado)? \}\)/.test(app) && app.includes("criaturaAVistaRef.current = (inv && (!inv.investe || fugiuDela) && jv)"));
+    /lerAgressao\(acao, \{[^}]*\bconhecidas(?:, apontado)? \}\)/.test(app) && /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a criatura à vista já não depende da investida (a estrada não abre a mesa): fica à vista a da fase da escolha do encontro, ou a que o fôlego da fuga deixou passar */
+    app.includes("criaturaAVistaRef.current = (inv && jv && (!encontroDaEstrada || encontroDaEstrada.fase === \"escolha\"))"));
   t("fiação · a moeda do mundo vai ao balcão e ao preço comum",
     app.includes("temKit: garantirSuprimentos(p0.suprimentos).kit, moeda: moedaDoMundo() });") && app.includes("precoComumParaPauta(frase, { fator: fatorDoPouso(), moeda: moedaDoMundo() })"));
   // retirada (trilha A, 29/10): «fiação · o veto viaja na pauta (naoPode) e a pauta vai aos envelopes que a cobrança lê» — a pauta do turno mudou-se para src/motor/pauta-do-turno.js (aPautaDoTurno), e o App já não tem este texto; é a mesma pauta à letra, provada byte a byte contra o recorte do App em teste-motor-pauta-do-turno.mjs (275 casos), e o texto do motor não se lê (teste-assercoes-de-texto).

@@ -197,9 +197,14 @@ sec("§6 a mente que esconde, e a ameaça somada");
 /* ============================================================ */
 sec("§7 a régua de combate com a intenção");
 {
-  t("a régua mede o jogo de hoje: o anúncio desligado até o App anunciar", INTENCAO_NA_REGUA.ligado === false);
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: o App passou a anunciar a
+     intenção no começo de cada rodada e a cumpri-la no revide, e a régua mede o
+     jogo de hoje — logo o anúncio LIGA (era `=== false` «até o App anunciar»).
+     A segunda asserção dizia «omitir = false explícito»; omitir passa a ser o
+     ligado explícito, e a régua sem anúncio continua a medir-se pela opção. */
+  t("a régua mede o jogo de hoje: o App anuncia, e o anúncio está ligado", INTENCAO_NA_REGUA.ligado === true);
   const s = "umavida|7";
-  t("desligada, a régua é byte a byte a de antes (omitir = false explícito)", J(simularCombate("justo", s)) === J(simularCombate("justo", s, { comIntencao: false })));
+  t("ligada, omitir é o mesmo que o anúncio explícito", J(simularCombate("justo", s)) === J(simularCombate("justo", s, { comIntencao: true })));
   t("ligada, a mesma semente dá o mesmo combate", J(simularCombate("justo", s, { comIntencao: true })) === J(simularCombate("justo", s, { comIntencao: true })));
   const K = CATRACA_DE_UMA_VIDA;
   const com = medir("justo", { n: 300, comIntencao: true });

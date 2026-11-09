@@ -214,7 +214,14 @@ const KITS = ["tipico", "historia", "artefacto",
 const BASE_DO_KIT = (q) => (q.startsWith("noEncaixe:") && q !== "noEncaixe:armadura" ? `tipicoNo:${q.split(":")[1]}` : "tipico");
 function medirMesa(classe, nivel, n) {
   const v = Object.fromEntries(KITS.map((q) => [q, 0]));
-  for (let i = 0; i < n; i++) for (const q of KITS) v[q] += simularCombate(mesa(classe, nivel, q, i), `${REGUA_DO_PODER.prefixo}|${i}`).vitoria;
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a régua de combate ligou o
+     anúncio da intenção (INTENCAO_NA_REGUA.ligado, porque o App passou a
+     anunciar). As faixas desta régua (35–65 % do típico, o +3 da arma desperta)
+     foram calibradas sem ele: com ele, três mesas caem a 31–34 % e o Ladino 12
+     a +2,0, e a suíte passa de 84 s a mais de 120 s (o relógio do rodar-tudo).
+     Fica medida como foi calibrada, com o anúncio DESLIGADO de forma explícita;
+     recalibrar as faixas com o anúncio é do sistema (está no relato do oficial). */
+  for (let i = 0; i < n; i++) for (const q of KITS) v[q] += simularCombate(mesa(classe, nivel, q, i), `${REGUA_DO_PODER.prefixo}|${i}`, { comIntencao: false }).vitoria;
   return v;
 }
 

@@ -525,7 +525,10 @@ sec("13. a fiação no App.jsx");
        dele, e nem `querFugir` nem o recuo do atirador são isso. */
     /* T1-A (27/10): a chamada passou a receber a sorte do turno (sorteDoTurno), e o
      texto ganhou o argumento; a intenção (a fórmula e o caminho) é a mesma. */
-    const posQuerFugir = APP.indexOf("for (const e of vivos.filter((x) => querFugir(x, { sorte: sorteDoTurno(\"fuga-do-inimigo\") }))) {");
+    /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: quem foge passou a ser quem a
+       intenção anunciou (CB6, `vaoFugir`, com `querFugir` como recuo para o save
+       sem anúncio); o laço da fuga é o mesmo, e o recorte começa nele. */
+    const posQuerFugir = APP.indexOf("for (const e of vaoFugir) {");
     const posFimRecuo = APP.indexOf("notaRecuo = recuos.length");
     const fugaAoRecuo = APP.slice(posQuerFugir, posFimRecuo > -1 ? posFimRecuo : posQuerFugir + 4000);
     t("nem a fuga nem o recuo perguntam `setGolpeFinalPendente`", posQuerFugir > -1 && !/setGolpeFinalPendente/.test(fugaAoRecuo));

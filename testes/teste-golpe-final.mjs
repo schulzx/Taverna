@@ -310,7 +310,12 @@ sec("6. A FIAÇÃO EM src/App.jsx E NO PAINEL (texto, corpo por âncora)");
 
   const corpoAplicar = corpoEntre(DECL_APLICAR, DECL_CONTINUAR);
   t("aplicarGolpeDoJogador chama decidirGolpeFinal antes de perguntar", /decidirGolpeFinal\(/.test(corpoAplicar));
-  t("aplicarGolpeDoJogador chama haEscolhaNoGolpe para achar quem cai", /haEscolhaNoGolpe\(/.test(corpoAplicar));
+  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: quem cai passou a ser achado
+     por `oFechoPergunta` (golpe-final.js, CB8 — o fecho uma vez por luta), que
+     chama `haEscolhaNoGolpe` por dentro e decide, além de haver escolha, se
+     pergunta ou aplica a lembrada. A intenção (o App não acha a queda à mão)
+     fica; a porta é a nova regra. */
+  t("aplicarGolpeDoJogador acha quem cai pela regra do fecho (oFechoPergunta, que usa haEscolhaNoGolpe)", /oFechoPergunta\(/.test(corpoAplicar));
   t("e SUSPENDE o turno (devolve true) quando há escolha a perguntar", /setGolpeFinalPendente\(/.test(corpoAplicar) && /return true;/.test(corpoAplicar));
 
   const corpoContinuar = corpoEntre(DECL_CONTINUAR, DECL_RESPONDER);
