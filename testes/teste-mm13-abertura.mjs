@@ -720,8 +720,10 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
        depois da distância do passo; a abertura continua a chegar, e a
        asserção lê o mesmo começo da linha e deixa o fim aberto
        MOVIDA em 08/11 (BQ7b): e o rosto da gente das quests (rostoDe), no
-       fim; a abertura continua a chegar */
-    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} />'));
+       fim; a abertura continua a chegar
+       MOVIDA em 09/11 (TE11): e a carta de costas (raridadeDaRecompensa,
+       lida do sistema), no fim; a abertura continua a chegar */
+    t("...e repassa ao painel do diário", app.includes('<PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} raridadeDaRecompensa={raridadeDaRecompensaDe(bq)} />'));
     t("e quem invoca PainelLateral (dentro de Taverna()) manda o ref", app.includes("aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current}"));
   }
 }

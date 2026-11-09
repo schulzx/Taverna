@@ -17,6 +17,9 @@ Formato de um item:
 
 ## Para a pessoa decidir (pesado)
 
+- [x] **Fase CB · o dragão ancião na estrada** · **decidido 09/11 pelo coordenador** (a pessoa: *«tem minha permissão para ousar e decidir quais são as melhores alternativas»*): **(b)** — a estrada pode trazê-lo ao herói alto, **sempre com aviso de longe e com a fuga aberta**. Um dragão que só vive no covil é seguro e morto; o que se vê no horizonte e de que se foge é uma história.
+- [x] **Fase CB · as superfícies elementares** · **decidido 09/11 pelo coordenador:** entram, no lote 3 (CB15), depois dos lotes 1 e 2 jogados — são o coração do que faz Divinity lembrado, e a régua de combate prova o equilíbrio antes de subir.
+
 - [ ] **"Como você quer fazer isto?" — o momento que para a mesa** · do `jogo`, 01/10, da terceira sessão de prova · toca o fluxo da batalha
   Quando um golpe derruba o último de pé (ou um chefe, ou um nomeado), **a batalha congela**: o tabuleiro escurece, quem
   caiu fica no centro a meio da queda, e a pergunta ocupa o ecrã inteiro — "Como você quer fazer isto?" (ou "Como a
@@ -99,7 +102,52 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
-### Fase TE — a temperatura e os espólios (a ideia da pessoa, 09/11 · o topo da fila do sistema)
+### Fase CB — o combate e a viagem (a ordem da pessoa, 09/11 · o topo da fila do sistema)
+
+**A palavra da pessoa (09/11/2026), resumida:** partiu pelo mapa e *«instantaneamente abriu uma
+batalha contra um dragão ancião… não teve narração sobre o encontro, não teve nada»*; e *«temos que
+ter um combate fluido e instintivo, que também use todos os sentidos e que seja intuitivo… não
+precisamos ter receio em copiar o que funciona (Baldur's Gate 3, Divinity 2)… tem minha permissão
+para ousar e decidir»*. Copiar mecânica e convenção pode; arte, nomes e texto, não.
+
+**A planta:** `mente/plano-combate-e-viagem.md` (o `jogo`, 09/11) — o caso do dragão reproduzido no
+código, a tabela da estrada medida por nível, a batalha jogada e medida, a visão peça a peça com a
+origem, e as 17 etapas com quem faz e o que prova. Capturas: `mente/figma/cb-antes-*.png`.
+
+**A causa do dragão, curta:** o Mestre narra a partida antes de a estrada ser rolada; o encontro,
+rolado 400 ms depois (`viajar`, origem `sinal`), abre a mesa na hora e manda a narração para a fila
+da próxima frase (`QUEM_RESPONDE.sinal`, `chamadas: 0`). E `rolarEncontro` lê só o nível do herói
+numa janela `nivel−4…nivel+2`: do nível 14 para cima, **100%** do perigo da estrada é lendário, sem
+bioma nem região, e o mapa pinta a mesma estrada como «perigo baixo». Duas réguas, uma pergunta.
+
+**O peso:** a ordem de 23/09 mais a permissão de hoje põem a fase na mão da mesa. Todo o campo
+novo (encontro pendente, `combate.intencoes`, `grade.alturas`, `combate.superficies`) é aditivo e
+ignorado pela versão antiga. Nenhum bloco estático no prompt: o encontro vai pela pauta dinâmica.
+
+**As etapas** (o pormenor, as provas e quem faz estão na planta, §5):
+- [ ] **CB1 · a régua da estrada** · B · a ameaça lê região, bioma e nível; lendário e `importante` nunca investem; > 2× é «a evitar». Catraca: a tabela por nível e zero investidas acima de 2×.
+- [ ] **CB2 · o encontro em três tempos** · B · `o-encontro.js`: o sinal de longe, as escolhas com o veredito (evitar, esconder, negociar, emboscar, fugir, lutar), o desfecho pela semente.
+- [ ] **CB3 · a fiação do encontro** · O · a estrada pousa o encontro em vez de abrir a mesa; o Mestre narra antes; a luta só depois da escolha. Corrige a causa.
+- [ ] **CB4 · o cartão do encontro e a entrada na mesa** · D → A · Figma antes; pulável; movimento reduzido = corte seco.
+- [ ] **CB5 · a previsão do golpe** · B → D → A/O · `previsaoDoAtaque`: chance, dano, abate, antes do clique (a lei do veredito).
+- [ ] **CB6 · a intenção do inimigo** · B → D → O · anunciada no começo da rodada e cumprida (Into the Breach); a régua mede de novo.
+- [ ] **CB7 · o golpe sentido** · D → A (+B) · pausa no impacto, tremor, número, som (`SOM_DA_MESA`); < 400 ms e nunca prende a entrada.
+- [ ] **CB8 · o fecho uma vez por luta** · B → O · ≤ 1 pergunta por luta; o golpe do companheiro nunca interrompe.
+- [ ] **CB9 · a fila da vez** · D → A
+- [ ] **CB10 · a economia de ação à vista** · D → A
+- [ ] **CB11 · o caminho com o custo, e andar-e-atacar num toque** · B → A/O · −1 clique por turno com inimigo longe.
+- [ ] **CB12 · o turno deles, contado em passos** · O · acelerar, pular, o registo da rodada.
+- [ ] **CB13 · a régua do nível 1** · B · hoje todo bicho de nível 1 cai num golpe; cenário `nivel1` na `regua-combate.mjs`.
+- [ ] **CB14 · a altura** · B → D → A
+- [ ] **CB15 · as superfícies e as reações elementares** · B → D → A/O · decidido 09/11: entra, depois dos lotes 1 e 2 jogados (planta §7, 2).
+- [ ] **CB16 · o cenário que se usa** (a queda, os objetos, o empurrão previsto) · B → D → A
+- [ ] **CB17 · o telefone a 375 e o PC a 1905** · D → A/O · hoje o telefone vê 35 de 196 casas.
+
+**A ordem:** CB1 → CB2 → CB3 → CB4 (o defeito dela primeiro) · CB5 → CB7 → CB8 · CB6 · depois o
+lote 2 (CB9–CB13) e o lote 3 (CB14–CB17). **Para a pessoa** (planta §7): o lendário na estrada,
+(a) só no covil ou (b) com aviso e fuga; e se as superfícies entram no beta.
+
+### Fase TE — a temperatura e os espólios (a ideia da pessoa, 09/11 · o segundo da fila, depois da CB)
 
 **A palavra da pessoa (09/11/2026), resumida:** (1) *«uma missão que diz que o vilão se apresenta
 não vem depois de uma missão que o vilão ainda não foi apresentado… uma missão quente e depois uma

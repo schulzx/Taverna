@@ -17,7 +17,10 @@
      4. «Equipar já» é o MESMO equipar da gaveta;
      5. a fila: espólio → nível → despertar, nunca com a luta aberta, nada no
         save, e esquecida com o recibo;
-     6. tudo em calou.
+     6. tudo em calou;
+     7. (TE11, 09/11) a lenda, a carta de costas e o som: o interruptor no
+        menu, o dado do Véu que soa, a carta no Diário, o tom pelo sistema,
+        a paga que já está na mochila e os achados no recibo.
    ============================================================ */
 import fs from "node:fs";
 import path from "node:path";
@@ -100,10 +103,16 @@ console.log("\n4. «Equipar já» é o mesmo equipar da gaveta");
   const ee = corpo("equiparDoEspolio");
   t("chama equipar (o da gaveta: equipar={equipar})", /\bequipar\(naMochila\);/.test(ee) && app.includes(" equipar={equipar} "));
   t("e não monta a troca à mão (nada de equipados nem setPersonagem)", !/equipados|setPersonagem|mudarFicha/.test(ee));
-  t("antes, a peça sai do chão pelo recolher de sempre", ee.indexOf("recolherDaPaga(c);") >= 0 && ee.indexOf("recolherDaPaga(c);") < ee.indexOf("equipar(naMochila)")
-    && corpo("recolherDaPaga").includes("recolherDoChao(ids)"));
+  /* MOVIDA (09/11, TE11): a paga já entra na mochila pelo motor; o «Equipar
+     já» só tira do chão a peça QUE ELE EQUIPA, e só se ela não coube
+     (`noChao`). A intenção fica: antes de equipar, o recolher de sempre. */
+  t("antes, a peça (se ficou no chão) sai dele pelo recolher de sempre", ee.indexOf("recolherDaPaga(c, item);") >= 0 && ee.indexOf("recolherDaPaga(c, item);") < ee.indexOf("equipar(naMochila)")
+    && corpo("recolherDaPaga").includes("recolherDoChao(item ? ids.slice(0, 1) : ids)"));
   t("o painel recebe esse handler", app.includes("aoEquipar={(item) => equiparDoEspolio(c, item)}"));
-  t("fechar também recolhe (a mochila do «Guardar na mochila» é verdade)", corpo("fecharOEspolio").includes("recolherDaPaga(c);"));
+  /* MOVIDA (09/11, TE11): «Guardar na mochila» continua verdade, mas quem a
+     cumpre é o motor (ESPOLIO_NO_TURNO.mochila). Fechar só fecha; recolher
+     aqui tiraria do chão a peça que não coube, contra o que a carta disse. */
+  t("fechar já não recolhe: só sai da cerimónia", !corpo("fecharOEspolio").includes("recolherDaPaga") && corpo("fecharOEspolio").includes("sairDaCerimonia(c);"));
 }
 
 console.log("\n5. a fila das cerimónias");
@@ -142,6 +151,47 @@ console.log("\n6. tudo em calou (nunca custa o turno nem a recompensa)");
   t("a que estoura sai da fila e cala-se", conta('aoEstourar={(err) => { calou("TE10 · a cerimónia do') === 2);
   t("o despertar na aplicação das quests, em calou", app.includes('try { if (e.personagem) acordouNaQuest(fichaAntes, e.personagem); } catch (err) { calou("TE10 · " + onde + " · o despertar", err); }'));
   t("nada de som", !/new Audio\(|AudioContext/.test(corpo("receberOEspolio") + corpo("equiparDoEspolio") + corpo("fecharOEspolio")));
+}
+
+console.log("\n7. TE11 · a lenda, a carta de costas, o som, e os restos da TE10");
+{
+  /* o interruptor do som mora no menu, logo abaixo das rolagens do mundo */
+  const iRol = app.indexOf("mostrar os dados que o Mestre rola por trás do escudo");
+  const iSom = app.indexOf("<InterruptorDoSom />");
+  const iMenu = app.indexOf("⌂ Sair para o início");
+  t("o interruptor do som no menu, logo abaixo das rolagens", iRol > 0 && iSom > iRol && iSom < iMenu && conta("<InterruptorDoSom") === 1);
+  t("e vem da peça (ui.jsx), sem estado no App", /import \{[^}]*\bInterruptorDoSom\b[^}]*\} from "\.\/ui\.jsx"/.test(app) && !/["']taverna_cfg_som["']/.test(app));
+  /* o dado do Véu soa quando pousa, uma vez, em calou */
+  const iOv = app.indexOf("function OverlayDado(");
+  const ov = app.slice(iOv, app.indexOf("\n}\n", iOv));
+  t("o tocarDado no Véu, quando o d20 pousa", /import \{ tocarDado \} from "\.\/som-da-mesa\.js"/.test(app)
+    && ov.indexOf("tocarDado()") > ov.indexOf('setFaseD("resultado");'));
+  t("uma vez só por véu (o refazer não volta a soar), e em calou", ov.includes('if (!soouRef.current) { soouRef.current = true; try { tocarDado(); } catch (e) { calou("TE · o som do dado no véu", e); } }')
+    && conta("tocarDado()") === 1);
+  t("nem a carta nem o despertar se tocam no App (já soam nas peças)", !/tocarCarta|tocarDespertar/.test(app));
+  /* a carta de costas no Diário: a prop nos dois Diários, lida do sistema */
+  t("a prop raridadeDaRecompensa nos dois Diários", conta("raridadeDaRecompensa={raridadeDaRecompensaDe(bq)}") === 2);
+  const iRr = app.indexOf("function raridadeDaRecompensaDe(bq) {");
+  const rr = app.slice(iRr, app.indexOf("\n}\n", iRr));
+  t("o degrau vem do sistema (podePagar), e sem esqueleto a prop é null", rr.includes("missao.podePagar") && rr.includes("if (!qs.length) return null;") && rr.includes("calou("));
+  /* o tom do coração vem do sistema (tomDaRevelacao), a lembrança de recurso */
+  const re = corpo("receberOEspolio");
+  t("o tom pelo sistema", re.includes('const coracao = typeof o.tom === "string" && o.tom ? o.tom === "coracao"') && re.includes('genero === "lembranca"'));
+  t("o nome do favor pelo sistema (nomesDosFavores)", app.includes('nomeDoFavor={(p) => { try { return ganhoDoEspolio(c.entradas).nomesDosFavores[p] || ""; }'));
+  /* a paga já está na mochila: o recolher só leva a que não coube */
+  t("o recolher só procura a peça que não coube (noChao)", corpo("recolherDaPaga").includes("e.noChao === true"));
+  t("o recolher já não corre ao fechar", !corpo("fecharOEspolio").includes("recolherDaPaga") && conta("recolherDaPaga(") === 1);
+  /* os achados do turno: os primeiros chips do recibo da última resposta */
+  const aq = corpo("aplicarAsQuests");
+  t("os achados no recibo, lidos de r.achados e em calou", aq.includes('try { if (Array.isArray(r.achados) && r.achados.length) porOsAchadosNoRecibo(r.achados); } catch (err) { calou("TE11 · " + onde + " · os achados no recibo", err); }'));
+  const pa = corpo("porOsAchadosNoRecibo");
+  t("o chip lê-se do módulo (chipDoAchado), com a ficha de agora", pa.includes("chipDoAchado(a, heroi)") && /import \{[^}]*\bchipDoAchado\b[^}]*\} from "\.\/espolio-na-tela\.js"/.test(app));
+  t("à frente do recibo, na última resposta do Mestre, sem repetir", pa.includes("recibo: [...novos, ...ja]") && pa.includes('m.autor !== "mestre"') && pa.includes("!ja.some((x) => mesmo(x, c))"));
+  t("e o relato recebe o toque que abre o exame do chão", conta("achados={achadosDoRelato}") === 3 && app.includes("setExaminando(true); } catch (e) { calou(\"TE11 · o achado abre o chão\""));
+  const relato = fs.readFileSync(path.join(AQUI, "..", "src", "painel-relato.jsx"), "utf8");
+  t("o relato desenha o achado com a peça dele (ChipDoAchado), antes do Recibo", /import \{ ChipDoAchado \} from "\.\/painel-espolio\.jsx"/.test(relato)
+    && relato.indexOf("<ChipDoAchado") > 0 && relato.indexOf("<Recibo chips={resto}", relato.indexOf("<ChipDoAchado")) > relato.indexOf("<ChipDoAchado"));
+  t("porOsAchadosNoRecibo em try/calou", pa.includes("try {") && pa.includes('calou("TE11'));
 }
 
 console.log(`\nte9-app: ${ok} passaram, ${mal} falharam`);

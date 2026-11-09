@@ -62,8 +62,10 @@ t("tocaveisDaProsa em calou", /catch \(e\) \{ calou\("TP · os nomes tocáveis",
 t("o i é o das marcas, e confere que é uma fala do Mestre", /i: mr\.i, marcas: mr\.marcas/.test(toc) && /if \(!m \|\| m\.autor !== "mestre"\) return null;/.test(toc));
 const relatos = APP.match(/<Relato [^\n]*\/>/g) || [];
 t("as três chamadas do Relato passam tocaveis", relatos.length === 3 && relatos.every((r) => /tocaveis=\{/.test(r)), relatos.length + " chamadas");
+/* MOVIDA em 09/11 (TE11): depois de tocaveis vem agora achados (o chip do
+   achado no recibo); a intenção é a mesma — o i passa tal qual, sem desconto */
 t("o Relato inteiro e a 1.ª metade levam o i tal qual",
-  relatos.filter((r) => /tocaveis=\{tocaveisDaProsa\} \/>/.test(r)).length === 2);
+  relatos.filter((r) => /tocaveis=\{tocaveisDaProsa\}[ />]/.test(r)).length === 2);
 t("a 2.ª metade da manhã desconta o corte (i - k), como a voz e a abertura",
   relatos.some((r) => /mensagens=\{mensagens\.slice\(k\)\}/.test(r) && /tocaveis=\{tocaveisDaProsa \? \{ \.\.\.tocaveisDaProsa, i: tocaveisDaProsa\.i - k \} : null\}/.test(r)));
 

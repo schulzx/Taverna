@@ -229,7 +229,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, SINAIS_ABERTOS } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, InterruptorDoSom, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -282,7 +282,8 @@ import { BolsaDaCarta } from "./painel-bolsa-da-carta.jsx";
 import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
 /* TE10 (09/11): os espólios na tela — a cerimónia, o despertar e a faixa do fecho (formas.md §TE) */
 import { PainelEspolio, PainelDespertar, FaixaDoFecho } from "./painel-espolio.jsx";
-import { formaDoEspolio, ganhoDoEspolio, barraDoGanho, entrarNaFila, proximaCerimonia, despertarNaTela } from "./espolio-na-tela.js";
+import { formaDoEspolio, ganhoDoEspolio, barraDoGanho, entrarNaFila, proximaCerimonia, despertarNaTela, chipDoAchado } from "./espolio-na-tela.js";
+import { tocarDado } from "./som-da-mesa.js";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
@@ -702,6 +703,11 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
   const finalRef = useRef(null);
   const setFinalRef = (v) => { finalRef.current = v; };
   const dadosRef = useRef(null);
+  /* TE (09/11, decisão da pessoa) · O SOM DO DADO: duas batidas de madeira
+     quando o d20 pousa (som-da-mesa.js). Uma vez por véu: o ref guarda que
+     já soou, e o refazer não volta a soar (é o mesmo momento). A bandeja
+     soa o dela dentro da peça; o véu é este, e só este. */
+  const soouRef = useRef(false);
   if (!dadosRef.current) dadosRef.current = semente ? { face: dadoDo(semente, "d20"), anima: dadoDo(semente, "anima") } : { face: sorteDaCasa, anima: sorteDaCasa };
   /* REFAZER (v9.16): o ponto de heroísmo comprado DEPOIS de ver o dado.
      Um só por rolagem, e o segundo resultado vale mesmo se for pior —
@@ -732,6 +738,7 @@ function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino =
         setValor(final);
         setFinalRef(final);
         setFaseD("resultado");
+        if (!soouRef.current) { soouRef.current = true; try { tocarDado(); } catch (e) { calou("TE · o som do dado no véu", e); } }
       }
     }, 70);
     return () => clearInterval(iv);
@@ -2348,6 +2355,22 @@ const GAVETAS_ANTIGAS = { ficha: false, bolsa: false };
    mantimentos da carta. As tochas são as da masmorra lá dentro (não
    encerrada), as da mochila cá fora: a mesma fonte do tochasAgora, para o
    «×N» e o dado baterem. As bocas são o herói e o grupo. */
+/* TE (09/11, decisão 5 da pessoa) · A CARTA DE COSTAS NO DIÁRIO. O degrau que
+   a quest aberta pode pagar vem do sistema (missoesDasQuests → `podePagar`,
+   raridadeQuePodePagar): a tela só o lê, pela missão ou pela vista da
+   biblioteca com o mesmo id. Sem esqueleto não há `bq`, a prop fica null e o
+   Diário é o de sempre. */
+function raridadeDaRecompensaDe(bq) {
+  const qs = bq && Array.isArray(bq.quests) ? bq.quests : [];
+  if (!qs.length) return null;
+  return (missao) => {
+    try {
+      if (missao && missao.podePagar) return missao.podePagar;
+      const x = missao ? qs.find((q) => q && q.missao && q.missao.id === missao.id) : null;
+      return (x && x.missao && x.missao.podePagar) || null;
+    } catch (e) { calou("TE · a carta de costas no Diário", e); return null; }
+  };
+}
 function mantimentosDeUso(personagem, masmorra) {
   const p = personagem && typeof personagem === "object" ? personagem : {};
   const sup = garantirSuprimentos(p.suprimentos);
@@ -2565,6 +2588,8 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 🎲 Rolagens do mundo à vista: <b>{mostrarRolagens ? "sim" : "não"}</b>
                 <span className="block" style={{ color: T.inkDim }}>mostrar os dados que o Mestre rola por trás do escudo</span>
               </button>
+              {/* TE (09/11) · o som da mesa: a peça guarda a preferência sozinha (taverna_cfg_som) */}
+              <InterruptorDoSom />
               {aoIrAoMenu && (
                 <button onClick={aoIrAoMenu}
                   className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
@@ -2847,7 +2872,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
         {/* AR2 · no telefone o Diário mora na gaveta (lá ela já tem a largura do
             ecrã); na mesa abre por cima de tudo, como a carta do herói — ver
             «O DIÁRIO EM TELA INTEIRA» no fim deste painel. */}
-        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} />}
+        {aba === "diario" && !heroiNaMesa && <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} raridadeDaRecompensa={raridadeDaRecompensaDe(bq)} />}
         {/* R13: `📜 Gerar crônica` desceu do cabeçalho para aqui. A crónica
             MORA no Diário — é ele escrito por extenso —, e o botão no topo da
             tela principal era a mesma ação com duas caras. Fica no pé do
@@ -3621,7 +3646,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               style={{ background: T.bg, opacity: abaPedida ? 1 : 0, pointerEvents: abaPedida ? "auto" : "none", transition: "opacity " + (al.reduzido ? 0 : VEU.sai) + "ms ease" }}>
               <div style={{ paddingBottom: DIARIO_DE_MISSOES.mesa.folga }}>
                 <LimiteDasFichas key="diario-na-mesa" reserva={<button onClick={fecharDiario} className="tv-anel-foco tv-mono rounded-lg px-3" style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: "1px solid " + T.line, color: T.ink }}>Fechar</button>}>
-                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} aoFechar={fecharDiario} />
+                  <PainelDiario historia={historia} quests={quests} trocarArco={trocarArco} eventos={eventos} diaAtual={dia} missoes={missoes} aoResponderMissao={onResponderMissao} aoEncerrarLegado={onEncerrarLegado} pers={personagem} abertura={abertura} relogios={relogios} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} questsDaBiblioteca={(bq && bq.quests) || []} vilaoNoDiario={(bq && bq.vilao) || null} rostoDe={(bq && bq.rostoDe) || null} raridadeDaRecompensa={raridadeDaRecompensaDe(bq)} aoFechar={fecharDiario} />
                 </LimiteDasFichas>
                 {gerar && (
                   <div style={{ paddingLeft: DIARIO_DE_MISSOES.mesa.folga, paddingRight: DIARIO_DE_MISSOES.mesa.folga }}>
@@ -7353,6 +7378,37 @@ export default function Taverna() {
       } catch (e) { calou("BQ7b · " + ef.tipo + " · " + o.ordem, e); }
     }
   };
+  /* TE11 (09/11, formas.md §TE 3) · O ACHADO NO RECIBO. Os achados do turno
+     (r.achados: o do caminho e o escondido) entram como os PRIMEIROS chips do
+     recibo da última resposta do Mestre — o objeto é o acontecimento do
+     turno, e a soleira fica para a decisão. O chip lê-se do módulo
+     (chipDoAchado); `achado` vai junto para a peça (ChipDoAchado, no relato)
+     o desenhar com a raridade e o «melhor». As quests correm DEPOIS do
+     Cronista, logo o recibo do turno já está escrito: junta-se-lhe à frente,
+     e o mesmo achado nunca entra duas vezes. */
+  const porOsAchadosNoRecibo = (achados) => {
+    try {
+      const heroi = personagemRef.current || personagem;
+      const chips = achados.map((a) => {
+        let d = null;
+        try { d = chipDoAchado(a, heroi); } catch (e) { d = null; }
+        return d ? { tipo: "achado", delta: 1, texto: d.texto + (d.melhor ? " \u25B2 " + d.melhor : ""), falado: d.rotulo, achado: a } : null;
+      }).filter(Boolean);
+      if (!chips.length) return;
+      const mesmo = (x, c) => x && x.tipo === "achado" && x.achado && c.achado && (x.achado.id ? x.achado.id === c.achado.id : x.texto === c.texto);
+      aplicarNoRelato((lista) => {
+        for (let i = lista.length - 1; i >= 0; i--) {
+          const m = lista[i];
+          if (!m || m.autor !== "mestre") continue;
+          const ja = Array.isArray(m.recibo) ? m.recibo : [];
+          const novos = chips.filter((c) => !ja.some((x) => mesmo(x, c)));
+          if (!novos.length) return lista;
+          return lista.map((x, k) => (k === i ? { ...x, recibo: [...novos, ...ja] } : x));
+        }
+        return lista;
+      });
+    } catch (e) { calou("TE11 · os achados no recibo", e); }
+  };
   const aplicarAsQuests = (r, onde) => {
     if (!r || typeof r !== "object") return false;
     const e = r.estado && typeof r.estado === "object" ? r.estado : {};
@@ -7373,6 +7429,7 @@ export default function Taverna() {
     try { if (notas.length) notaRef.current = notaComOTurno(notaRef.current, notas); } catch (err) { calou("BQ7 · " + onde + " · a nota", err); }
     try { if (linhas.length) pushMsgs(linhas.map((texto) => ({ autor: "sistema", texto }))); } catch (err) { calou("BQ7 · " + onde + " · o relato", err); }
     for (const ef of efeitos) { try { aplicarEfeitoDaQuest(ef, { fichaAntes, onde }); } catch (err) { calou("BQ7 · " + onde + " · " + (ef && ef.tipo), err); } }
+    try { if (Array.isArray(r.achados) && r.achados.length) porOsAchadosNoRecibo(r.achados); } catch (err) { calou("TE11 · " + onde + " · os achados no recibo", err); }
     if (Object.keys(e).length || notas.length || linhas.length || efeitos.length) {
       try { escolhasCacheRef.current = null; setVersaoDasQuests((n) => n + 1); salvar({}); } catch (err) { calou("BQ7 · " + onde + " · gravar", err); }
     }
@@ -18099,10 +18156,11 @@ export default function Taverna() {
      as peças no chão da cena). Aqui só se mostra, pela forma que o que vale
      pede (formaDoEspolio): com peça, a cerimónia na fila; sem peça, a faixa
      do fecho debaixo da prosa. A tela nunca refaz a ordem nem a conta.
-     «Guardar na mochila» diz a verdade: fechar a cerimónia recolhe as peças
-     desta paga do chão pelo recolher de sempre (recolherDoChao) — e se a
-     cerimónia estourar, ficam no chão, à espera do exame. «Equipar já» é o
-     MESMO equipar da gaveta (equipar), depois do mesmo recolher. */
+     «Guardar na mochila» diz a verdade porque o MOTOR já a pôs lá (09/11,
+     ESPOLIO_NO_TURNO.mochila): fechar a cerimónia só a fecha. A peça que não
+     coube ficou no chão, e a carta di-lo (`noChao` na entrada); só essa sai
+     do chão, e só pelo «Equipar já», que é o MESMO equipar da gaveta
+     (equipar), depois do recolher de sempre (recolherDoChao). */
   const receberOEspolio = (o, ctx) => {
     try {
       const entradas = o && Array.isArray(o.revelacao) ? o.revelacao : [];
@@ -18126,7 +18184,10 @@ export default function Taverna() {
       }
       /* o coração: a quest que deixa lembrança abre com «O QUE FICA» (§TE 1.8);
          lê-se da peça que o sistema deu, não se decide aqui */
-      const coracao = entradas.some((e) => e && e.tipo === "item" && e.item && e.item.artefacto && e.item.artefacto.genero === "lembranca");
+      /* 09/11: o tom vem do sistema (efeitos-da-quest, tomDaRevelacao); a
+         lembrança na paga fica de recurso para a ordem que não o traga */
+      const coracao = typeof o.tom === "string" && o.tom ? o.tom === "coracao"
+        : entradas.some((e) => e && e.tipo === "item" && e.item && e.item.artefacto && e.item.artefacto.genero === "lembranca");
       const c = { tipo: "espolio", chave, quest: String(o.quest || ""), titulo: String(o.titulo || ""), entradas, coracao, nivel: Number.isFinite(agora.nivel) ? agora.nivel : null, xpAntes, xpParaSubir, nivelNovo };
       setFilaDasCerimonias((f) => (f.some((x) => x && x.chave === chave) ? f : entrarNaFila(f, c)));
     } catch (e) { calou("TE10 · o espólio na tela", e); }
@@ -18160,26 +18221,28 @@ export default function Taverna() {
   const sairDaCerimonia = (c) => {
     try { setFilaDasCerimonias((f) => f.filter((x) => !(x && c && x.chave === c.chave))); } catch (e) { calou("TE10 · sair da cerimónia", e); }
   };
-  /* as peças DESTA paga que ainda estão no chão (o motor pô-las lá com o
-     título da quest por origem) vão para a mochila pelo recolher de sempre */
-  const recolherDaPaga = (c) => {
+  /* a peça DESTA paga que não coube na mochila (`noChao` na entrada: o motor
+     pô-la no chão com o título da quest por origem) sai do chão pelo
+     recolher de sempre. `item`: só essa peça. As outras já estão na mochila. */
+  const recolherDaPaga = (c, item) => {
     try {
-      const nomes = new Set(((c && c.entradas) || []).filter((e) => e && e.tipo === "item" && e.item && e.item.nome).map((e) => e.item.nome));
+      const nomes = new Set(((c && c.entradas) || []).filter((e) => e && e.tipo === "item" && e.noChao === true && e.item && e.item.nome && (!item || e.item.nome === item.nome)).map((e) => e.item.nome));
       if (!nomes.size) return;
       const ids = ((chaoRef.current && chaoRef.current.itens) || []).filter((x) => x && x.id && x.de === c.titulo && x.pronto && nomes.has(x.pronto.nome)).map((x) => x.id);
-      if (ids.length) recolherDoChao(ids);
+      if (ids.length) recolherDoChao(item ? ids.slice(0, 1) : ids);
     } catch (e) { calou("TE10 · a paga para a mochila", e); }
   };
   const equiparDoEspolio = (c, item) => {
     try {
-      recolherDaPaga(c);
+      recolherDaPaga(c, item);
       const naMochila = (((personagemRef.current || personagem || {}).equipamento) || []).find((x) => x && item && x.nome === item.nome) || item;
       equipar(naMochila);
     } catch (e) { calou("TE10 · equipar já", e); }
   };
+  /* 09/11: fechar já não recolhe — a paga entrou na mochila pelo motor, e a
+     que não coube fica no chão, dita na carta, à espera do exame */
   const fecharOEspolio = (c) => {
-    try { recolherDaPaga(c); } catch (e) { calou("TE10 · fechar o espólio", e); }
-    sairDaCerimonia(c);
+    try { sairDaCerimonia(c); } catch (e) { calou("TE10 · fechar o espólio", e); }
   };
   /* a cerimónia da vez: a subida de nível entra na fila só como lugar; com
      a luta aberta, nada abre (proximaCerimonia, FILA_DAS_CERIMONIAS) */
@@ -25025,6 +25088,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const abrirNaProsa = (ficha) => { try { setCartaoNaProsa(true); } catch (e) { calou("TP · o cartão na prosa", e); } abrirFicha(ficha); };
   const abrirNaGaveta = (ficha) => { try { setCartaoNaProsa(false); } catch (e) { calou("TP · o cartão na gaveta", e); } abrirFicha(ficha); };
   const fichaEscrita = (() => { try { return toque && entrada.trim() === String(toque.texto || "").trim() ? toque.id : null; } catch (e) { calou("a ficha escrita", e); return null; } })();
+  /* TE11 · o chip do achado no recibo: tocar abre o que o chão já abre (o
+     exame), e o «melhor» compara com a ficha de agora */
+  const achadosDoRelato = { heroi: personagem, aoTocar: () => { try { setExaminando(true); } catch (e) { calou("TE11 · o achado abre o chão", e); } } };
   const tocaveisDaProsa = (() => {
     try {
       const mr = marcasDaResposta;
@@ -25833,14 +25899,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               ) : (() => {
                 const mf = manhaDaFogueira;
                 const k = mf ? mf.inicio : -1;
-                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} />;
+                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} achados={achadosDoRelato} />;
                 return (
                   <>
-                    <Relato mensagens={mensagens.slice(0, k)} carregando={false} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} />
+                    <Relato mensagens={mensagens.slice(0, k)} carregando={false} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} achados={achadosDoRelato} />
                     <div className="tv-coluna">
                       <LimiteDaFogueira aoEstourar={() => setManhaDaFogueira(null)}><PainelFogueira manha={mf} /></LimiteDaFogueira>
                     </div>
-                    <Relato mensagens={mensagens.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} horizonte={horizonteDoRelato ? { ...horizonteDoRelato, i: horizonteDoRelato.i - k } : null} tocaveis={tocaveisDaProsa ? { ...tocaveisDaProsa, i: tocaveisDaProsa.i - k } : null} />
+                    <Relato mensagens={mensagens.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} horizonte={horizonteDoRelato ? { ...horizonteDoRelato, i: horizonteDoRelato.i - k } : null} tocaveis={tocaveisDaProsa ? { ...tocaveisDaProsa, i: tocaveisDaProsa.i - k } : null} achados={achadosDoRelato} />
                   </>
                 );
               })()}
@@ -26822,6 +26888,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         if (c.tipo === "espolio") return (
           <LimiteDaCerimonia key={c.chave} aoEstourar={(err) => { calou("TE10 · a cerimónia do espólio", err); sairDaCerimonia(c); }}>
             <PainelEspolio entradas={c.entradas} titulo={c.titulo} coracao={c.coracao} nivel={c.nivel} xpAntes={c.xpAntes} xpParaSubir={c.xpParaSubir} nivelNovo={c.nivelNovo}
+              nomeDoFavor={(p) => { try { return ganhoDoEspolio(c.entradas).nomesDosFavores[p] || ""; } catch (e) { calou("TE10 · o nome do favor", e); return ""; } }}
               aoEquipar={(item) => equiparDoEspolio(c, item)} aoFechar={() => fecharOEspolio(c)} />
           </LimiteDaCerimonia>
         );

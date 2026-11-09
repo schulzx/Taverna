@@ -24,6 +24,11 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 09/11 · v9.632 · a lenda da arma, a carta no Diário e o som da mesa — e a Fase CB começa
+- **as três decisões da pessoa (09/11), sistema (`backend`) + peças (`aprendiz`), 9996d46:** a lenda gravada no motor a partir dos factos (teto 5, o replay igual); `raridadeQuePodePagar` só o degrau; `som-da-mesa.js` (Web Audio, ligado a −18 dB, interruptor; carta, dado, despertar); a paga direta à mochila; o nome do favor e o tom do coração pelo sistema; a frase da lembrança no nível 1 já não mente.
+- **a fiação (`oficial`, bastão 22:40–22:55):** o interruptor no menu, o d20 do Véu soa uma vez, a carta de costas nos dois Diários, os achados como primeiros chips do recibo (gravados em `m.recibo`, aditivo). Visto na porta 5196 (a 5199 tinha um save do `jogo`).
+- **a Fase CB (o combate e a viagem):** o `jogo` fez `mente/plano-combate-e-viagem.md` — a causa do dragão (a partida narrada antes de a estrada rolar; o encontro só pelo nível, lendário de 14 em diante; duas réguas para a mesma pergunta); o que dói (ataca-se às cegas, o inimigo não anuncia, o golpe não se sente, luta de uma rodada no nível 1, 18% das casas no telefone). **Decidi eu** (a pessoa deu licença para ousar): o dragão pode vir pela estrada ao herói alto, com aviso e fuga aberta; as superfícies elementares entram no lote 3. CB1–CB2 em curso.
+
 ## 09/11 · v9.631 · os espólios chegam ao jogo, com a cerimónia e os artefactos com nome
 - **TE9 motor (`backend`, bae2671):** o achado escondido, o da etapa e a paga no fecho (uma vez só, três trincos); a paga substitui o feito do Narrador; o artefacto acorda; a linha do que se leva na pauta (pior caso 1366/1400); o replay igual.
 - **TE10 peças (`aprendiz`, bae2671):** a cerimónia (as cartas de costas a virar pela raridade, teto 4 s), o veredito com «Equipar já», o chip do achado, o despertar, a relíquia. O agente caiu por falha de rede no fim; o trabalho estava no disco e verde.

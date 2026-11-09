@@ -58,6 +58,7 @@ import { T, TIPOS, ALVOS, ESBATIMENTO, LADRILHO, PAGINA, RECIBO } from "./estilo
 const TINTA = { meio: T.tintaDoPergaminhoMeio, dim: T.tintaDoPergaminhoDim, porta: T.brasaNoPergaminho };
 import { DivisoriaRunica, Prosa, BotaoDeOuvir, Glifo, LadrilhoDoAssunto, Recibo, Dobra, useMesa } from "./ui.jsx";
 import { FaixaDoRumo } from "./painel-mapa-vivo.jsx";
+import { ChipDoAchado } from "./painel-espolio.jsx";
 import { marcasParaProsa, CartaoNaProsa } from "./painel-fichas.jsx";
 import { assuntoDaLinha, arrumarORelato, cabecalhoDaLuta, linhasDaLuta } from "./glifos.js";
 import { SUBS_GESTAO } from "./abas.js";
@@ -261,13 +262,29 @@ function DobraDaLuta({ linhas = [], fimDaLuta = null }) {
    não ao recuo das linhas da mesa). Chega com a prosa — se o turno o
    calcula depois, aparece no fim do bloco SEM movimento e só cresce para
    baixo. Vazio: 0 px, nem a margem. */
-function ReciboDaResposta({ chips }) {
+/* TE11 (09/11, formas.md §TE 3) · o achado do turno é o PRIMEIRO chip do
+   recibo: os chips `achado` (o App põe-nos à frente) desenham-se com a peça
+   deles (ChipDoAchado: a raridade, o «melhor», e tocar abre o exame do
+   chão); o resto é o Recibo de sempre, com a regra de corte de sempre.
+   `achados`: { heroi, aoTocar } — sem ele, o achado cai no Recibo como texto. */
+function ReciboDaResposta({ chips, achados = null, pousa = false }) {
   const mesa = useMesa();
   const lista = Array.isArray(chips) ? chips : [];
   if (!lista.length) return null;
+  const comPeca = !!(achados && typeof achados === "object");
+  const deAchado = comPeca ? lista.filter((c) => c && c.tipo === "achado" && c.achado) : [];
+  const resto = comPeca ? lista.filter((c) => !(c && c.tipo === "achado" && c.achado)) : lista;
+  if (!deAchado.length) {
+    return (
+      <div style={{ marginTop: PAGINA.entreParagrafos }}>
+        <Recibo chips={resto} telefone={!mesa} />
+      </div>
+    );
+  }
   return (
-    <div style={{ marginTop: PAGINA.entreParagrafos }}>
-      <Recibo chips={lista} telefone={!mesa} />
+    <div className="flex items-center flex-wrap" style={{ marginTop: PAGINA.entreParagrafos, gap: mesa ? RECIBO.entre : RECIBO.entreTelefone }}>
+      {deAchado.map((c, i) => <ChipDoAchado key={"a" + i} achado={c.achado} heroi={achados.heroi || null} aoTocar={achados.aoTocar} pousa={pousa} />)}
+      {resto.length ? <div className="flex-1 min-w-0"><Recibo chips={resto} telefone={!mesa} /></div> : null}
     </div>
   );
 }
@@ -311,9 +328,12 @@ function ProsaTocavel({ texto, abertura, tocaveis }) {
    declarado no corpo de outro remonta a cada letra e mata o foco. O `Relato`
    devolve um fragmento — os mesmos filhos que o laço devolvia dentro da área
    que rola —, e por isso o DOM é o de antes, nó por nó. */
-export function Relato({ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null, tocaveis = null }) {
+export function Relato({ mensagens, carregando = false, voz = null, abertura = null, aoAbrir, aoOuvir, horizonte = null, tocaveis = null, achados = null }) {
   /* `= []` no destructuring não cobre `null`: trata-se aqui. */
   const lista = Array.isArray(mensagens) ? mensagens : [];
+  /* TE11: o chip do achado pousa só na resposta mais nova; nas de trás, parado */
+  let ultimaDoMestre = -1;
+  for (let j = lista.length - 1; j >= 0; j--) { if (lista[j] && lista[j].autor === "mestre") { ultimaDoMestre = j; break; } }
   return (
     <>
       {arrumarORelato(lista, { frasesDosVerbos: FRASES_DOS_VERBOS }).map((item, k) => {
@@ -396,7 +416,7 @@ export function Relato({ mensagens, carregando = false, voz = null, abertura = n
             {/* A1 · A2: `m.recibo` — o que a ficha mudou neste turno
                 (`reciboDoTurno`, que o App calcula no fim do turno, B2) —
                 desenha-se por baixo da prosa. */}
-            <ReciboDaResposta chips={m.recibo} />
+            <ReciboDaResposta chips={m.recibo} achados={achados} pousa={i === ultimaDoMestre} />
           </div>
         );
       })}
