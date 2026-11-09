@@ -18,17 +18,33 @@
         com a luta aberta (FILA_DAS_CERIMONIAS);
      4. o que cada peça diz: o veredito com os dois lados, o nome acessível
         da carta, o resumo que a região viva lê uma vez, o chip do achado e
-        o despertar — cada palavra de PALAVRAS_DO_ESPOLIO.
+        o despertar — cada palavra de PALAVRAS_DO_ESPOLIO;
+     5. as duas decisões da pessoa de 09/11 que são tela: a lenda gravada no
+        artefacto (`linhasDaLenda`) e a carta de costas no Diário
+        (`cartaNoDiario`).
 
    A tela NUNCA refaz a ordem que o sistema deu, nem soma níveis, nem lê
    PODERES à mão: onde um campo falta, a peça cala-se.
    ============================================================ */
-import { REVELACAO_DO_ESPOLIO, RELIQUIA_DA_TELA, FILA_DAS_CERIMONIAS, PALAVRAS_DO_ESPOLIO, ENCAIXE } from "./estilo.js";
+import { REVELACAO_DO_ESPOLIO, RELIQUIA_DA_TELA, FILA_DAS_CERIMONIAS, PALAVRAS_DO_ESPOLIO, ENCAIXE, LENDA_DO_ARTEFACTO, CARTA_NO_DIARIO } from "./estilo.js";
 import { RARIDADES, raridadeDoItem, encaixeDoItem, compararItem, rotuloDoEquipar } from "./comparar-item.js";
 import { promessaDoArtefacto, DESPERTAR_DO_ARTEFACTO } from "./espolios.js";
 import { RELIQUIAS } from "./relicas.js";
+import { MAX_SINTONIA } from "./sintonia.js";
 
 const R = REVELACAO_DO_ESPOLIO, P = PALAVRAS_DO_ESPOLIO, L = P.leitor;
+/* AS DUAS FRASES QUE A PAGA NA MOCHILA PEDIU (09/11, os restos da TE10).
+   `dormeComVaga`: a peça que dorme com lugar de sintonia livre — a sintonia
+   nunca é automática, e a frase de PALAVRAS_DO_ESPOLIO.dorme («as tuas três
+   já estão em uso») só é verdade com os três tomados; no nível 1, com
+   nenhum, mentia. `noChao`: a peça da paga que não coube na mochila (o
+   motor pô-la no chão, ESPOLIO_NO_TURNO.mochila). Moram aqui enquanto a mão
+   do desenho tem estilo.js aberto; o lugar delas é PALAVRAS_DO_ESPOLIO, e
+   mudam-se para lá na volta seguinte da tela. */
+const PALAVRAS_DA_PAGA = Object.freeze({
+  dormeComVaga: "O poder dorme até o sintonizares — tens {n} de {max} lugares livres. Serve de peça desde já.",
+  noChao: "Não coube na mochila: ficou no chão, à tua espera.",
+});
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : 0);
@@ -49,13 +65,17 @@ export function cartasDoEspolio(entradas) {
   return arr(entradas).filter((e) => obj(e) && e.tipo === "item" && obj(e.item));
 }
 
-/* o ganho de cima: o XP, as moedas e os favores (os papéis, crus) */
+/* o ganho de cima: o XP, as moedas e os favores (os papéis, crus) — e
+   (09/11) `nomesDosFavores`: { papel: nome } com o nome que a paga já traz
+   (revelacaoDoEspolio), para a tela não ter de o procurar */
 export function ganhoDoEspolio(entradas) {
   const es = arr(entradas).filter(obj);
   const xp = es.filter((e) => e.tipo === "xp").reduce((a, e) => a + Math.max(0, num(e.n)), 0);
   const moedas = es.filter((e) => e.tipo === "moedas").reduce((a, e) => a + Math.max(0, num(e.n)), 0);
-  const favores = es.filter((e) => e.tipo === "favor" && typeof e.papel === "string" && e.papel).map((e) => e.papel);
-  return { xp, moedas, favores };
+  const deFavor = es.filter((e) => e.tipo === "favor" && typeof e.papel === "string" && e.papel);
+  const favores = deFavor.map((e) => e.papel);
+  const nomesDosFavores = Object.fromEntries(deFavor.filter((e) => typeof e.nome === "string" && e.nome.trim()).map((e) => [e.papel, e.nome.trim()]));
+  return { xp, moedas, favores, nomesDosFavores };
 }
 
 /* QUATRO TAMANHOS PARA QUATRO VALORES (§TE 1): com peça, a cerimónia (a
@@ -197,7 +217,7 @@ function quandoAcorda(pr) {
 
 /* O VEREDITO (335:119) — os dois lados antes do clique.
    → null para lixo; senão { nome, raridade, meta, historia, fio, estado,
-     linhas, porAcordar, gesto, dorme, sai, troca, naMochila, botao }.
+     linhas, porAcordar, gesto, dorme, sai, troca, naMochila, lenda, botao }.
    `botao`: { rotulo, pode, motivo } — o rótulo é o preço,
    rotuloDoEquipar(linhas, "Equipar já") —, ou null (nada a vestir). */
 export function vereditoDoEspolio(entrada, opcoes) {
@@ -231,12 +251,41 @@ export function vereditoDoEspolio(entrada, opcoes) {
     historia: conta && typeof item.descricao === "string" ? item.descricao : "",
     fio: fioDoArtefacto(item), estado,
     linhas: arr(e.linhas), porAcordar, gesto,
-    dorme: e.dorme ? P.dorme : "",
+    dorme: e.dorme ? (Number.isInteger(e.vagas) && e.vagas > 0 ? frase(PALAVRAS_DA_PAGA.dormeComVaga, { n: e.vagas, max: MAX_SINTONIA }) : P.dorme) : "",
     sai: slot && e.sai ? frase(P.sai, { nome: e.sai }) : "",
     troca: slot && typeof e.troca === "string" ? e.troca : "",
-    naMochila: slot ? "" : P.naMochila,
+    naMochila: slot || e.noChao ? "" : P.naMochila,
+    noChao: e.noChao ? PALAVRAS_DA_PAGA.noChao : "",
+    lenda: linhasDaLenda(item),
     botao: slot ? { rotulo: rotuloDoEquipar(e.linhas, P.equipar), pode: !!e.podeEquipar, motivo: e.motivo || "" } : null,
   };
+}
+
+/* A LENDA DO ARTEFACTO (decisão 6 da pessoa, 09/11) — as linhas que o
+   sistema grava em `item.lenda` (dos factos que regista; nunca do
+   Narrador), na ordem que ele deu, até LENDA_DO_ARTEFACTO.teto. Cada linha
+   é uma frase, ou { texto } (também `linha` ou `diz`); o resto cala-se.
+   → [string], vazio quando não há lenda. */
+export function linhasDaLenda(item) {
+  const it = obj(item);
+  const lenda = it ? it.lenda : null;
+  const lista = Array.isArray(lenda) ? lenda : typeof lenda === "string" ? [lenda] : [];
+  return lista
+    .map((l) => (typeof l === "string" ? l : obj(l) ? l.texto || l.linha || l.diz || "" : ""))
+    .map((l) => String(l || "").trim())
+    .filter(Boolean)
+    .slice(0, LENDA_DO_ARTEFACTO.teto);
+}
+
+/* A CARTA NO DIÁRIO (decisão 5 da pessoa, 09/11, «só metade») — a carta
+   de costas com a luz da raridade que a quest pode pagar. `raridade`: o
+   degrau que o sistema dá (raridadeQuePodePagar); lixo ou nada, null.
+   → { raridade, rara, frase } — `rara` é a palavra no feminino («peça»),
+   `frase` a linha que diz por escrito o que a luz diz. Nunca o caminho. */
+export function cartaNoDiario(raridade) {
+  if (!RARIDADES.includes(raridade)) return null;
+  const rara = CARTA_NO_DIARIO.rara[raridade] || "";
+  return { raridade, rara, frase: frase(CARTA_NO_DIARIO.diz, { r: rara }) };
 }
 
 /* uma linha da comparação dita: «Iniciativa sobe 3» (o dano diz só o sentido) */
@@ -274,6 +323,7 @@ export function resumoDoEspolio(entradas, opcoes) {
   for (const papel of g.favores) {
     let nome = "";
     try { nome = typeof op.nomeDoFavor === "function" ? String(op.nomeDoFavor(papel) || "") : ""; } catch (x) { nome = ""; }
+    if (!nome) nome = g.nomesDosFavores[papel] || "";
     if (nome) frases.push(`${cap(frase(P.favor, { nome }))}.`);
   }
   const cartas = cartasDoEspolio(entradas);

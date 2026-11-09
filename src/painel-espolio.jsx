@@ -29,13 +29,25 @@
    primeira metade da viragem, e o fim do veredito é o fim da cerimónia.
    Tudo chega por props; nada se lê do App. Todos os componentes nascem
    FORA do render (a lei da casa: o que nasce dentro perde o foco).
+
+   AS DECISÕES DA PESSOA DE 09/11 que moram aqui:
+   · O SOM (som-da-mesa.js): a carta toca a nota da sua raridade no
+     instante em que a face aparece (o animationend da primeira metade); o
+     despertar toca o sino quando a runa acende (o animationstart da
+     primeira faísca, que tem o atraso da runa). Saltar, ou pedir menos
+     movimento, toca uma vez só a nota da mais rara (ou o sino) — o som
+     fica com o reduce. Cada som toca no máximo uma vez por cerimónia, e
+     um som que estoura cala-se sozinho.
+   · A LENDA (LendaDoArtefacto): as linhas que o sistema gravou no item,
+     até cinco, no veredito e no despertar (e na gaveta do encaixe).
    ============================================================ */
 import React from "react";
 import {
   T, alfa, COR_DA_RARIDADE, ENCAIXE, ICONES_DE_ITEM, CERIMONIA_DO_NIVEL, CERIMONIA_DA_TELA, ALVOS, TIPOS,
   REVELACAO_DO_ESPOLIO, LUZ_DA_RARIDADE, CARTA_DO_ESPOLIO, VEREDITO_DO_ESPOLIO, FIO_DO_DESPERTAR, FAIXA_DO_GANHO,
-  FAIXA_DO_FECHO, CHIP_DO_ACHADO, DESPERTAR_DA_TELA, RELIQUIA_DA_TELA, PALAVRAS_DO_ESPOLIO,
+  FAIXA_DO_FECHO, CHIP_DO_ACHADO, DESPERTAR_DA_TELA, RELIQUIA_DA_TELA, PALAVRAS_DO_ESPOLIO, LENDA_DO_ARTEFACTO,
 } from "./estilo.js";
+import { tocarCarta, tocarDespertar } from "./som-da-mesa.js";
 import { GLIFOS } from "./glifos.js";
 import { Botao, Glifo } from "./ui.jsx";
 import { IconeDeItem } from "./painel-moldura.jsx";
@@ -43,7 +55,7 @@ import { raridadeDoItem, iconeDoItem } from "./comparar-item.js";
 import { RELIQUIAS } from "./relicas.js";
 import {
   frase, cartasDoEspolio, ganhoDoEspolio, cronogramaDoEspolio, fioDoArtefacto, vereditoDoEspolio,
-  nomeDaCarta, resumoDoEspolio, barraDoGanho, chipDoAchado, despertarNaTela,
+  nomeDaCarta, resumoDoEspolio, barraDoGanho, chipDoAchado, despertarNaTela, linhasDaLenda,
 } from "./espolio-na-tela.js";
 
 const C = CARTA_DO_ESPOLIO, V = VEREDITO_DO_ESPOLIO, R = REVELACAO_DO_ESPOLIO, D = DESPERTAR_DA_TELA, Q = RELIQUIA_DA_TELA;
@@ -214,6 +226,36 @@ export function CartaDoEspolio({ item, face = "frente", escolhida = false, k = 1
 }
 
 /* ============================================================
+   A LENDA DO ARTEFACTO (decisão 6 da pessoa, 09/11; formas.md §TE 13) —
+   as linhas gravadas no item (linhasDaLenda: até cinco, na ordem que o
+   sistema deu), cada uma com a runa ACESA do fio do despertar, e o filete
+   do aro à esquerda. Sem lenda, nada se desenha. «item», ou «linhas» já
+   tiradas. Mora no veredito, no despertar e na gaveta do encaixe.
+   ============================================================ */
+export function LendaDoArtefacto({ item = null, linhas = null }) {
+  let ls = [];
+  try { ls = Array.isArray(linhas) ? linhas.filter((l) => typeof l === "string" && l.trim()).slice(0, LENDA_DO_ARTEFACTO.teto) : linhasDaLenda(item); } catch (e) { ls = []; }
+  if (!ls.length) return null;
+  const L = LENDA_DO_ARTEFACTO;
+  const entrelinha = 1.5;
+  return (
+    <section aria-label={L.rotulo} className="flex flex-col text-left" style={{ gap: L.entre, paddingLeft: L.recuo, borderLeft: `${L.filete}px solid ${L.aro}` }}>
+      <span aria-hidden="true" className="tv-body uppercase" style={{ color: T.inkDim, fontSize: L.rotuloTamanho, letterSpacing: `${L.espaco}em`, fontWeight: 500 }}>{L.rotulo}</span>
+      <ul className="m-0 p-0 flex flex-col" style={{ gap: L.entre, listStyle: "none" }}>
+        {ls.map((l, i) => (
+          <li key={i} className="tv-body flex items-start" style={{ gap: 8, color: T.inkMeio, fontSize: L.texto, lineHeight: entrelinha }}>
+            <span aria-hidden="true" style={{ flexShrink: 0, paddingTop: (L.texto * entrelinha - L.runa) / 2 }}>
+              <span className="block" style={{ width: L.runa, height: L.runa, transform: "rotate(45deg)", background: L.acesa }} />
+            </span>
+            <span>{l}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/* ============================================================
    A LINHA DO GANHO (334:40): o rótulo, antes → depois, e ▲ ▼ em forma E
    cor; o leitor ouve «sobe» e «desce» em texto escondido.
    ============================================================ */
@@ -252,6 +294,7 @@ export function VereditoDoEspolio({ entrada, nivel = null, largura = V.largura.t
         <p className="tv-body" style={{ color: T.inkDim, fontSize: V.meta }}>{v.meta}</p>
       </div>
       {v.historia ? <p className="tv-body italic" style={{ color: T.inkMeio, fontSize: V.historia, lineHeight: 1.5 }}>{v.historia}</p> : null}
+      {v.lenda && v.lenda.length ? <LendaDoArtefacto linhas={v.lenda} /> : null}
       {v.fio && v.estado ? (
         <div className="flex items-start gap-2">
           <FioDoDespertar fio={v.fio} />
@@ -446,7 +489,17 @@ export function PainelEspolio({ entradas = [], titulo = "", coracao = false, niv
     } catch (e) { /* sem foco, segue */ }
   }, [vivo]);
 
-  const virar = React.useCallback((i) => setViradas((s) => (s.has(i) ? s : new Set([...s, i]))), []);
+  /* o som da carta: no instante em que a face aparece, uma vez por carta */
+  const soaram = React.useRef(new Set());
+  const soarCarta = React.useCallback((i) => {
+    if (soaram.current.has(i) || !cartas[i]) return;
+    soaram.current.add(i);
+    try { tocarCarta(raridadeDoItem(cartas[i].item)); } catch (e) { /* um som que estoura cala-se */ }
+  }, [cartas]);
+  const virar = React.useCallback((i) => { soarCarta(i); setViradas((s) => (s.has(i) ? s : new Set([...s, i]))); }, [soarCarta]);
+  /* saltar, ou o reduce: as cartas não viram uma a uma, e soa só a mais
+     rara (a última), uma vez — o som fica com quem pediu menos movimento */
+  React.useEffect(() => { if (!vivo && n) soarCarta(n - 1); }, [vivo, n, soarCarta]);
   const escolher = (i) => { if (!vivo) setEscolhida(i); };
   const teclar = (e, i) => {
     const mapa = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
@@ -587,6 +640,16 @@ export function PainelDespertar({ antes, depois, nivel = null, aoFechar = () => 
   const botao = React.useRef(null);
   let d = null;
   try { d = despertarNaTela(antes, depois, nivel); } catch (e) { d = null; }
+  /* o sino: quando a runa acende (a primeira faísca começa com ela), ou de
+     uma vez no quadro final (saltou antes, ou o reduce) — nunca duas */
+  const soou = React.useRef(false);
+  const soarSino = React.useCallback(() => {
+    if (soou.current) return;
+    soou.current = true;
+    try { tocarDespertar(); } catch (e) { /* um som que estoura cala-se */ }
+  }, []);
+  const temDespertar = !!d;
+  React.useEffect(() => { if (!vivo && temDespertar) soarSino(); }, [vivo, temDespertar, soarSino]);
   const fechar = React.useCallback(() => { try { aoFechar(); } catch (e) { /* nunca custa o turno */ } }, [aoFechar]);
   const tocar = React.useCallback(() => { if (estado === "correndo") setEstado("final"); else fechar(); }, [estado, fechar]);
   React.useEffect(() => {
@@ -603,7 +666,10 @@ export function PainelDespertar({ antes, depois, nivel = null, aoFechar = () => 
     ...d.ganhos.map((g) => ({ cor: T.ok, gesto: g.gesto, texto: g.gesto ? `${g.nome}, ${W.porDia}${g.diz ? ` — ${g.diz}` : ""}` : `+ ${g.nome}${g.diz ? ` — ${g.diz}` : ""}` })),
     ...d.dormem.map((t) => ({ cor: T.inkDim, gesto: false, texto: t })),
   ];
-  const ultimo = linhas.length - 1;
+  let lenda = [];
+  try { lenda = linhasDaLenda(depois); } catch (e) { lenda = []; }
+  /* a lenda entra depois da última linha, como mais uma, e é ela que acaba */
+  const ultimo = lenda.length ? -1 : linhas.length - 1;
   const acabou = (e) => { if (e.target === e.currentTarget && vivo) setEstado("final"); };
   const lado = C.alto * k * D.anel.ate;
   return (
@@ -621,12 +687,13 @@ export function PainelDespertar({ antes, depois, nivel = null, aoFechar = () => 
             </div>
             {vivo ? Array.from({ length: D.runa.faiscas }, (_, i) => (
               <span key={i} aria-hidden="true" className="absolute rounded-full tv-cerimonia-faisca pointer-events-none"
+                onAnimationStart={i === 0 ? soarSino : undefined}
                 style={{ left: "50%", top: "50%", width: CT.faisca, height: CT.faisca, marginLeft: -CT.faisca / 2, marginTop: -CT.faisca / 2, background: c.cor,
                   "--a": `${(360 / D.runa.faiscas) * i}deg`, "--d": `${Math.round(C.alto * k * CT.alcance / 2)}px`, ...atraso(D.runa.de) }} />
             )) : null}
           </div>
           <div className={`flex flex-col items-center ${vivo ? "tv-cerimonia-numero" : ""}`} style={vivo ? atraso(D.nome.de) : undefined}
-            onAnimationEnd={ultimo < 0 ? acabou : undefined}>
+            onAnimationEnd={ultimo < 0 && !lenda.length ? acabou : undefined}>
             <span className="tv-titulo uppercase" style={{ color: T.amber, fontSize: CT.rotulo, letterSpacing: `${CT.espacoDoRotulo}em`, fontWeight: 400 }}>{d.estado === "exaltado" ? W.exalta : W.desperta}</span>
             <h2 id={idNome} className="tv-titulo" style={{ color: c.cor, fontSize: D.nome.tamanho, lineHeight: 1.2 }}>{d.nome}</h2>
           </div>
@@ -638,6 +705,12 @@ export function PainelDespertar({ antes, depois, nivel = null, aoFechar = () => 
               </p>
             ))}
           </div>
+          {lenda.length ? (
+            <div className={`w-full ${vivo ? "tv-cerimonia-ganho" : ""}`} style={{ maxWidth: V.largura.telefone, ...(vivo ? atraso(D.ganhos.de + linhas.length * D.ganhos.passo) : null) }}
+              onAnimationEnd={acabou}>
+              <LendaDoArtefacto linhas={lenda} />
+            </div>
+          ) : null}
         </div>
       </div>
       <button ref={botao} type="button" onClick={tocar} aria-label={vivo ? W.saltar : W.continuarToque} className="absolute inset-0 flex items-end justify-center tv-anel-foco"

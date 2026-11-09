@@ -89,6 +89,11 @@
        `chao` quando cai alguma coisa, e `opcoes.feitoDoTurno` ({ grau,
        nivel }: o `feito` que o aplicar deste turno já pagou, e o nível de
        antes dele) desconta-se da paga.
+       09/11: e `achados` — [achado] os achados deste turno (o do caminho, o
+       escondido, o extra da sombra), só quando há algum: o chip do recibo
+       (chipDoAchado, espolio-na-tela.js) lê-os daqui, já com o que deram.
+       E a LENDA (7f): cada feito marcante do turno grava uma linha nas peças
+       com nome que o herói traz no corpo (gravarNaLenda, espolios.js).
 
      aMesaDasQuests(estado, { mundo, cena }) → null | { comQuest, passo, mao, naoPode, favor, espolio }
        O que o Narrador recebe, pela pauta (motor/pauta-do-turno.js, secção
@@ -104,7 +109,10 @@
 
      missoesDasQuests(estado, { mundo }) → [missão]
        A projeção de cada quest para o Diário (`missaoDaQuest`), que não se
-       guarda: a tela junta-a às missões dela.
+       guarda: a tela junta-a às missões dela. 09/11 (decisão 5 da pessoa, a
+       carta de costas): a quest aberta que pode pagar uma peça leva
+       `podePagar` — o degrau máximo (raridadeQuePodePagar, espolios.js), e
+       só o degrau: nunca o caminho nem a peça de cada um.
 
      escolhasDasQuests(estado, { mundo }) → [{ quest, titulo, chave, etapa, opcoes }]
        As escolhas abertas agora, com o veredito (`vereditoDaEscolha`: os
@@ -150,11 +158,11 @@ import { questPorId, abrirQuest, avancarQuest, estadoDaQuest, vereditoDaEscolha,
 import { fichaDoVilao, relogioDoPlano, camadaDoVilao, reagirAoHeroi, desfechoDoVilao, oVilaoNaPauta, oVilaoNoDiario, garantirRegistroDoVilao } from "../plano-do-vilao.js";
 import { garantirHistoria, marcoDaQuest, virarEtapa, envelopeDeVirada, PESO_DA_QUEST } from "../historia.js";
 import { chegouAteEle } from "../antagonista.js";
-import { diasDoPasso } from "../vilao.js";
+import { diasDoPasso, FASES } from "../vilao.js";
 import { firmarLaco, romperLaco } from "../npcs.js";
 import { anotarTurno, favoresDoLivro } from "../livro-de-factos.js";
 import { avaliarCondicao, resolverPapeis, COMBINADORES } from "../condicoes-da-quest.js";
-import { pagaDaQuest, achadosDaEtapa, achadoEscondido, despertarArtefacto, espolioNaPauta, RELIQUIA_DO_CONFRONTO, LINHA_DO_ESPOLIO } from "../espolios.js";
+import { pagaDaQuest, achadosDaEtapa, achadoEscondido, despertarArtefacto, espolioNaPauta, raridadeQuePodePagar, gravarNaLenda, RELIQUIA_DO_CONFRONTO, LINHA_DO_ESPOLIO } from "../espolios.js";
 import { reliquiaNoNivel } from "../relicas.js";
 import { porNoChao, varrerSeMudou, achadoDeEquipamento, achadoDeConsumivel } from "../chao.js";
 import { consumivelPorId } from "../pocoes.js";
@@ -196,6 +204,18 @@ import { cenaDoChao } from "./antes-do-mestre.js";
    espinha guarda para isso o `anuncio`: a linha da pauta e o veto, que vivem
    um turno só (o fim do turno seguinte apaga-os).
 
+   A PAGA VAI À MOCHILA (09/11, decisão do coordenador na fiação da TE10). A
+   cerimónia diz «já está na mochila», e era mentira: a TE9 punha as peças
+   no chão, e o App recolhia-as ao fechar — se a cena mudasse antes, o chão
+   varria-se e a paga ia com ele. Agora as peças DA PAGA entram direto na
+   ficha, como entrariam pelo recolher (o equipamento na mochila, o frasco
+   no inventário), e só a que não cabe vai ao chão, e o relato di-lo. Os
+   ACHADOS DO CAMINHO continuam no chão: quem se baixa é o herói.
+   `mochila.equipamento`: o teto de peças na mochila. O jogo não tem carga
+   (nada a mede: o recolher de sempre não tem teto) — este é o do chão
+   (LIMITE_CHAO, chao.js, 40), para que a paga nunca faça crescer sem fim a
+   mochila de um save torto, e o excedente tenha para onde ir. Com a mochila
+   de quem joga, não morde.
    `chave`: o começo da chave da paga (a suíte prova que é o de espolios.js);
    `pagas`: o teto do histórico que o orçamento da campanha lê (contar,
    espolios.js) e o despertar conta; `anuncio`: quantas linhas vão à pauta;
@@ -204,11 +224,13 @@ export const ESPOLIO_NO_TURNO = Object.freeze({
   chave: "espolio:",
   pagas: 32,
   anuncio: Object.freeze({ linhas: 2 }),
+  mochila: Object.freeze({ equipamento: 40 }),
   linhas: Object.freeze({
     paga: "✦ O que «{titulo}» deixa: {partes}",
     xp: "+{n} XP",
     moedas: "+{n} moedas",
-    noChao: "{nome} (no chão)",
+    naMochila: "{nome} (na mochila)",
+    noChao: "{nome} (no chão: a mochila já não leva mais)",
     achado: "✧ {diz}{ganho}",
     ganhoMoedas: " — +{n} moedas",
     ganhoItem: " — {nome}, no chão",
@@ -297,6 +319,18 @@ const tipoDoLugarDe = (nome, p) => {
   const k = String((obj(p) && (p.chave || p.id)) || "");
   const i = k.lastIndexOf("|");
   return i > 0 ? k.slice(i + 1) : null;
+};
+/* 09/11 (a lenda): a camada em que o nome dele já se diz (FASES, vilao.js) */
+const ORDEM_DO_ROSTO = (FASES.find((x) => x.id === "rosto") || { ordem: 3 }).ordem;
+/* o género de alguém pelo nome (o registo da gente, o grupo): "f", "m" ou
+   "" — a mesma régua da concordância das quests (biblioteca-de-quests.js) */
+const generoDaGente = (nome, E) => {
+  const n = norm(nome);
+  if (!n) return "";
+  const gente = [...Object.values(obj(obj(E) && E.npcs) || {}), ...arr(obj(obj(E) && E.personagem) && E.personagem.grupo)];
+  const x = gente.find((g) => obj(g) && norm(g.nome) === n);
+  const g = norm(x && (x.genero || x.genero_pessoa));
+  return /^(f|mulher|femin|ela)/.test(g) ? "f" : g ? "m" : "";
 };
 /* as partes cabem por ordem; a que não cabe sai inteira (a primeira fica) */
 const cabe = (partes, teto) => {
@@ -476,6 +510,7 @@ function correr(E0, opcoes, antes) {
   const dosPassos = [];         // a obra dos passos que se cumpriram (09/11)
   let doFim = "";               // a frase do fim do plano
   const favores = [], quemE = []; // o que vai ao livro de factos (09/11)
+  let achadosDoChip = [];         // os achados deste turno, para o chip (09/11)
   const agora = () => ({ ...E0, personagem, npcs, saber, factos, historia: h });
 
   /* 1. ABRIR as quests de cada ato até ao de agora, uma vez por ato — e as
@@ -621,7 +656,9 @@ function correr(E0, opcoes, antes) {
   }
   if (h.etapa !== h0.etapa) { abrir(); avancar(); }
 
-  /* 5. O VILÃO: o relógio, a camada, as reações, o fim */
+  /* 5. O VILÃO: o relógio, a camada, as reações, o fim — e os feitos da
+     lenda que daqui saem (7f): o servo que cai, a camada que sobe, o fim */
+  const feitosDaLenda = [];
   let fio = obj(esp0.fio) ? { ...esp0.fio } : null;
   if (fio && adianta) {
     const reg = garantirRegistroDoVilao(fio.vilao);
@@ -638,6 +675,15 @@ function correr(E0, opcoes, antes) {
       const camada = camadaDoVilao(ficha, E, { quests: qv, relogio, ato: h.etapa, mundo });
       const rx = reagirAoHeroi(ficha, E, { quests: qv, relogio, mundo });
       saber = rx.saber;
+      /* a lenda: o nome dele só depois do rosto (a lei da BQ5) */
+      const nomeDele = camada.ordem >= ORDEM_DO_ROSTO && typeof ficha.nome === "string" ? ficha.nome : "";
+      for (const r of rx.reacoes) {
+        const [como, papel] = String(r.chave || "").split("|");
+        const sub = como === "derrotou" ? "caiu" : como === "poupou" ? "poupado" : null;
+        const ten = sub ? arr(ficha.tenentes).find((x) => obj(x) && x.papel === papel) : null;
+        if (ten) feitosDaLenda.push({ tipo: "tenente", sub, chave: "tenente:" + papel, vars: { tenente: ten.nome }, generos: { tenente: generoDaGente(ten.nome, E) } });
+      }
+      if (camada.subiu) feitosDaLenda.push({ tipo: "camada", sub: camada.id, chave: "camada:" + camada.id, vars: { vilao: nomeDele } });
       const reg = garantirRegistroDoVilao({ ...(rx.registro || ficha.registro), camada: camada.id, subiuPor: camada.subiuPor });
       if (reg) fio = { ...fio, vilao: reg };
       for (const r of rx.reacoes) {
@@ -662,6 +708,7 @@ function correr(E0, opcoes, antes) {
       const d = desfecho ? null : desfechoDoVilao(ficha, E, { quests: qv, mundo });
       if (d) {
         desfecho = { id: d.id, dia };
+        feitosDaLenda.push({ tipo: "desfecho", sub: d.id, chave: "desfecho:" + d.id, vars: { vilao: nomeDele } });
         efeitos.push({ tipo: "desfecho_do_vilao", id: d.id, depois: d.depois });
         candidatas.push({ prio: 1, texto: T.notas.aconteceu + corta(d.depois, T.notas.teto) });
       }
@@ -725,6 +772,18 @@ function correr(E0, opcoes, antes) {
       return "";
     };
     const dizDo = (a) => { const s = String(a.diz || "").trim(); return s ? s[0].toUpperCase() + s.slice(1) : ""; };
+    /* a peça da paga entra na ficha como entraria pelo recolher (o destino
+       do achado: o equipamento na mochila, o frasco no inventário); a que
+       não cabe vai ao chão. → "mochila" | "chao" | null (não é peça) */
+    const paraAMochila = (item, de) => {
+      const c = paraOChao(item, de);
+      if (!c) return null;
+      const p = obj(personagem);
+      const mo = p && Array.isArray(p.equipamento) ? p.equipamento : [];
+      if (!p || (c.destino === "equipamento" && mo.length >= S.mochila.equipamento)) { novosNoChao.push(c); return "chao"; }
+      personagem = c.destino === "equipamento" ? { ...p, equipamento: [...mo, c.pronto] } : { ...p, inventario: [...arr(p.inventario), c.pronto] };
+      return "mochila";
+    };
 
     /* 7a. os achados: a etapa que fechou por um ramo NESTE turno (a que já
        estava feita antes não dá para trás), e o escondido da quest que
@@ -780,7 +839,12 @@ function correr(E0, opcoes, antes) {
       const partes = [];
       if (xp > 0) partes.push(encher(L.xp, { n: xp }));
       if (paga.moedas > 0) partes.push(encher(L.moedas, { n: paga.moedas }));
-      for (const it of arr(paga.itens)) { const c = paraOChao(it, F.titulo); if (c) { novosNoChao.push(c); partes.push(encher(L.noChao, { nome: it.nome })); } }
+      const noChao = [];
+      arr(paga.itens).forEach((it, k) => {
+        const onde = paraAMochila(it, F.titulo);
+        if (onde === "chao") noChao.push(k);
+        if (onde) partes.push(encher(onde === "chao" ? L.noChao : L.naMochila, { nome: it.nome }));
+      });
       const ids = [];
       for (const a of arr(paga.achados)) {
         if (!obj(a) || jaLevou(R, a.id) || ids.includes(a.id)) continue;
@@ -790,7 +854,7 @@ function correr(E0, opcoes, antes) {
       for (const ef of arr(paga.efeitos)) if (obj(ef) && ef.tipo === "favor" && typeof ef.papel === "string") { try { aplicarUm({ tipo: "favor", papel: ef.papel }, R); } catch { /* o favor nunca custa a paga */ } }
       registos[i] = comEspolio(R, ids, true);
       aplicadas[chave] = 1;
-      const aplicada = { ...paga, xp, ...(abatido > 0 ? { xpDoFeito: abatido } : {}) };
+      const aplicada = { ...paga, xp, ...(abatido > 0 ? { xpDoFeito: abatido } : {}), ...(noChao.length ? { noChao } : {}) };
       pagas.push(pagaGuardada({ ...paga, confronto: !!(obj(F.mao) && F.mao.tipo === RELIQUIA_DO_CONFRONTO.mao) }));
       pagasDoTurno.push(aplicada);
       efeitos.push({ tipo: "espolio", quest: R.id, titulo: F.titulo, paga: aplicada });
@@ -836,6 +900,31 @@ function correr(E0, opcoes, antes) {
       if (itens.some((c, j) => c !== chao.itens[j])) chao = { ...chao, itens };
     }
 
+    /* 7f. A LENDA (09/11, decisão 6 da pessoa): cada feito marcante deste
+       turno — a quest que fechou e pagou, o servo dele que caiu ou saiu vivo,
+       a camada que subiu, o fim dele — grava uma linha em cada peça com nome
+       QUE ESTÁ NO CORPO (gravarNaLenda, espolios.js: a frase pela semente, o
+       teto de cinco pelo peso). Daqui e só daqui: o Narrador não escreve na
+       lenda, e o replay grava a mesma linha que o jogo. A peça que a paga
+       deste turno deu está na mochila — a quest dela é a história dela. */
+    for (const pg of pagasDoTurno) {
+      const F = questPorId(pg.quest);
+      const titulo = F ? F.titulo : pg.quest;
+      if (pg.tipo === 1 && pg.estado === "concluida") feitosDaLenda.push({ tipo: "quest", sub: pg.temperatura, chave: "quest:" + pg.quest, vars: { titulo } });
+      else if (pg.tipo === 2 && pg.grau) feitosDaLenda.push({ tipo: "coracao", sub: pg.grau, chave: "quest:" + pg.quest, vars: { titulo } });
+    }
+    const pl = obj(personagem);
+    if (feitosDaLenda.length && pl && obj(pl.equipados)) {
+      let gravou = false;
+      const eq = Object.fromEntries(Object.entries(pl.equipados).map(([sl, it]) => {
+        let n = it;
+        try { n = gravarNaLenda(it, feitosDaLenda, { semente, dia }); } catch { n = it; }
+        if (n !== it) gravou = true;
+        return [sl, n];
+      }));
+      if (gravou) personagem = { ...pl, equipados: eq };
+    }
+
     /* 7e. o anúncio do turno seguinte: a linha da pauta (espolioNaPauta) e,
        havendo paga, o trinco do `feito` (oFeitoJaPago) */
     const anunciar = [];
@@ -844,6 +933,7 @@ function correr(E0, opcoes, antes) {
     if (anunciar.length || pagasDoTurno.length) {
       anuncio = { linhas: [...anunciar, ...(anuncio ? anuncio.linhas : [])].slice(0, S.anuncio.linhas), feito: pagasDoTurno.length > 0 || !!(anuncio && anuncio.feito) };
     }
+    achadosDoChip = achadosDoTurno;
   } catch { /* os espólios nunca custam o turno */ }
 
   /* do vilão vão T.notas.doVilao: o fim antes de tudo, depois o passo mais
@@ -864,7 +954,7 @@ function correr(E0, opcoes, antes) {
   if (npcs !== E0.npcs && J(npcs) !== J(E0.npcs)) estado.npcs = npcs;
   if (factos !== E0.factos && J(factos) !== J(E0.factos)) estado.factos = factos;
   if (chao !== E0.chao && J(chao) !== J(E0.chao)) estado.chao = chao;
-  return { estado, efeitos, notas, linhas };
+  return { estado, efeitos, notas, linhas, ...(achadosDoChip.length ? { achados: achadosDoChip } : {}) };
 }
 
 export function oTurnoDasQuests(estado, opcoes) {
@@ -957,8 +1047,18 @@ export function missoesDasQuests(estado, opcoes) {
   const Q = garantirQuestsDaEspinha(E.espinha.quests);
   const ctx = { estado: E, mundo: obj(obj(opcoes) && opcoes.mundo), quests: Q.registos };
   const out = [];
+  const p = obj(E.personagem);
+  const nivel = p && inteiro(p.nivel) >= 1 ? inteiro(p.nivel) : 1;
+  const esq = esqueletoDe(E);
+  const campanha = { atos: arr(esq && esq.atos).length || undefined, pagas: arr(Q.pagas) };
   for (const R of Q.registos) {
-    try { const m = missaoDaQuest(R.id, R, ctx); if (m) out.push(m); } catch { /* uma projeção torta não apaga o Diário */ }
+    try {
+      const m = missaoDaQuest(R.id, R, ctx);
+      if (!m) continue;
+      let podePagar = null;
+      try { podePagar = raridadeQuePodePagar(questPorId(R.id), R, { nivel, campanha, heroi: p, tipoDoLugar: tipoDoLugarDe }); } catch { podePagar = null; }
+      out.push(podePagar ? { ...m, podePagar } : m);
+    } catch { /* uma projeção torta não apaga o Diário */ }
   }
   return out;
 }

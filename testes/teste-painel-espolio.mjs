@@ -20,20 +20,24 @@
       rara escolhida, o resumo lido uma vez, «Equipar já» com o preço e o
       outro lado em aria-describedby, «Guardar na mochila» e «Continuar»;
       e nenhuma animação a correr;
-   5. a relíquia, o despertar, o chip do achado e a faixa do fecho. */
+   5. a relíquia, o despertar, o chip do achado e a faixa do fecho;
+   6. (09/11, as decisões 4 e 6 da pessoa) a lenda gravada no artefacto —
+      até cinco linhas, no veredito e no despertar — e o som ligado onde o
+      momento mora: a carta que vira e a runa que acende. */
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { buildSync } from "esbuild";
 import {
   T, MOVIMENTO_CSS, SUPERFICIES_CSS, REVELACAO_DO_ESPOLIO, RELIQUIA_DA_TELA, PALAVRAS_DO_ESPOLIO, VEREDITO_DO_ESPOLIO, CHIP_DO_ACHADO,
+  LENDA_DO_ARTEFACTO, DESPERTAR_DA_TELA,
 } from "../src/estilo.js";
 import { pagaDaQuest, revelacaoDoEspolio, despertarArtefacto, promessaDoArtefacto } from "../src/espolios.js";
 import { questPorId } from "../src/biblioteca-de-quests.js";
 import { itemConsumivel } from "../src/pocoes.js";
 import { gerarLoot } from "../src/loot.js";
 import { RELIQUIAS, itemDaReliquia } from "../src/relicas.js";
-import { cronogramaDoEspolio, duracaoDoCronograma, nomeDaCarta, resumoDoEspolio, cartasDoEspolio, despertarNaTela } from "../src/espolio-na-tela.js";
+import { cronogramaDoEspolio, duracaoDoCronograma, nomeDaCarta, resumoDoEspolio, cartasDoEspolio, despertarNaTela, linhasDaLenda, vereditoDoEspolio } from "../src/espolio-na-tela.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -96,9 +100,9 @@ const ENT_REL = revelacaoDoEspolio({ ...PAGA, itens: [ART, RELIQUIA, ANEL] }, HE
 const ENTRADA = `
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PainelEspolio, PainelDespertar, ChipDoAchado, FaixaDoFecho, CartaDoEspolio, FioDoDespertar, LinhaDoGanho, VereditoDoEspolio, FaixaDoGanho } from "./painel-espolio.jsx";
+import { PainelEspolio, PainelDespertar, ChipDoAchado, FaixaDoFecho, CartaDoEspolio, FioDoDespertar, LinhaDoGanho, VereditoDoEspolio, FaixaDoGanho, LendaDoArtefacto } from "./painel-espolio.jsx";
 export const html = (el) => renderToStaticMarkup(el);
-export { React, PainelEspolio, PainelDespertar, ChipDoAchado, FaixaDoFecho, CartaDoEspolio, FioDoDespertar, LinhaDoGanho, VereditoDoEspolio, FaixaDoGanho };
+export { React, PainelEspolio, PainelDespertar, ChipDoAchado, FaixaDoFecho, CartaDoEspolio, FioDoDespertar, LinhaDoGanho, VereditoDoEspolio, FaixaDoGanho, LendaDoArtefacto };
 `;
 const saida = path.join(AQUI, `.tmp-painel-espolio-${process.pid}.mjs`);
 buildSync({
@@ -207,6 +211,48 @@ sec("5. a relíquia, o despertar, o achado e o fecho");
   const vered = R.html(h(R.VereditoDoEspolio, { entrada: cartasDoEspolio(ENT)[0] }));
   const faixa = R.html(h(R.FaixaDoGanho, { xp: 10, moedas: 0, barra: { havia: 0.9, entra: 0.1, subiu: true }, nivelNovo: 8 }));
   t("o veredito do consumível sem botão; a faixa que passa o nível diz o nível novo e põe o selo", texto(vered).includes(W.naMochila) && !/<button/.test(vered) && texto(faixa).includes("Nível 8") && /<svg/.test(faixa));
+}
+/* ============================================================ */
+sec("6. a lenda do artefacto e o som (as decisões da pessoa de 09/11)");
+{
+  /* a lenda vem do sistema (item.lenda); aqui só se prova a forma: até
+     cinco, na ordem que ele deu, frase ou { texto } */
+  const FEITOS = ["Abriu caminho até Conrado Sem-Senhor, no dia 14.", { texto: "Não caiu no Vau Negro, no dia 16." }, "  ", { linha: "Partiu o escudo do tenente, no dia 19." },
+    { diz: "Viu a capela arder, no dia 21." }, "Calou o lobo-cinzento, no dia 23.", "Esta é a sexta, e não cabe.", "Nem esta."];
+  const ls = linhasDaLenda({ ...ART, lenda: FEITOS });
+  t(`a lenda tem no máximo ${LENDA_DO_ARTEFACTO.teto} linhas, as primeiras que o sistema deu`, ls.length === LENDA_DO_ARTEFACTO.teto && LENDA_DO_ARTEFACTO.teto === 5
+    && ls[0] === FEITOS[0] && ls[1] === FEITOS[1].texto && ls[2] === FEITOS[3].linha && !ls.includes("Esta é a sexta, e não cabe."), JSON.stringify(ls));
+  t("sem lenda, ou com lixo, nada (e nunca lança)", linhasDaLenda(ART).length === 0 && linhasDaLenda(null).length === 0 && linhasDaLenda({ lenda: 7 }).length === 0 && linhasDaLenda({ lenda: "Uma só." }).length === 1);
+
+  mundo({ reduce: true });
+  const entrada = { ...cartasDoEspolio(ENT).find((e) => e.item.artefacto), item: { ...ART, lenda: FEITOS } };
+  const v = R.html(h(R.VereditoDoEspolio, { entrada, nivel: 7 }));
+  const tv = texto(v);
+  t("o veredito mostra a lenda: «A lenda», as cinco gravadas e nenhuma a mais", /aria-label="A lenda"/.test(v) && ls.every((l) => tv.includes(l)) && !tv.includes("Nem esta.") && (v.match(/<li /g) || []).length === 5);
+  t("…por baixo da história (a história primeiro)", tv.indexOf(ART.descricao.slice(0, 20)) >= 0 && tv.indexOf(ART.descricao.slice(0, 20)) < tv.indexOf(ls[0]));
+  t("cada linha leva a runa acesa do fio (o losango em ouro), muda ao leitor", (v.match(/rotate\(45deg\)/g) || []).length >= 5 && v.includes(`background:${LENDA_DO_ARTEFACTO.acesa}`) && /<span aria-hidden="true"[^>]*><span class="block"/.test(v));
+  t("o veredito puro leva a lenda (vereditoDoEspolio.lenda)", JSON.stringify(vereditoDoEspolio(entrada, { nivel: 7 }).lenda) === JSON.stringify(ls));
+  const semLenda = R.html(h(R.VereditoDoEspolio, { entrada: cartasDoEspolio(ENT).find((e) => e.item.artefacto), nivel: 7 }));
+  t("sem lenda, o veredito é o de sempre (nenhum «A lenda»)", !/A lenda/.test(semLenda));
+  t("a peça sozinha: sem linhas, nada se desenha", R.html(h(R.LendaDoArtefacto, { item: ART })) === "" && R.html(h(R.LendaDoArtefacto, { linhas: [] })) === "");
+
+  const desperta = { ...despertarArtefacto(ART, { nivel: 10 }), lenda: FEITOS.slice(0, 2) };
+  const d = R.html(h(R.PainelDespertar, { antes: ART, depois: desperta, nivel: 10 }));
+  t("o despertar mostra a lenda do que despertou", /aria-label="A lenda"/.test(d) && texto(d).includes(FEITOS[0]) && texto(d).includes(FEITOS[1].texto));
+  mundo({ reduce: false });
+  const dv = R.html(h(R.PainelDespertar, { antes: ART, depois: desperta, nivel: 10 }));
+  const dd = despertarNaTela(ART, desperta, 10);
+  const atrasoDaLenda = DESPERTAR_DA_TELA.ganhos.de + (dd.ganhos.length + dd.dormem.length) * DESPERTAR_DA_TELA.ganhos.passo;
+  t(`a correr, a lenda entra depois da última linha (${atrasoDaLenda} ms), como mais uma`, new RegExp(`tv-cerimonia-ganho"[^>]*animation-delay:${atrasoDaLenda}ms`).test(dv));
+
+  /* o som: o painel liga-o onde o momento mora (o SSR não corre efeitos, e
+     o som prova-se em teste-som-da-mesa; aqui prova-se a fiação) */
+  const fonte = semComentarios(PAINEL);
+  t("a carta toca a nota da sua raridade quando a face aparece (no virar), uma vez por carta",
+    /import \{ tocarCarta, tocarDespertar \} from "\.\/som-da-mesa\.js"/.test(PAINEL) && /const virar = React\.useCallback\(\(i\) => \{ soarCarta\(i\);/.test(fonte) && /soaram\.current\.has\(i\)/.test(fonte) && /tocarCarta\(raridadeDoItem\(cartas\[i\]\.item\)\)/.test(fonte));
+  t("saltar, ou o reduce, toca só a mais rara (a última), uma vez", /if \(!vivo && n\) soarCarta\(n - 1\)/.test(fonte));
+  t("o sino toca quando a runa acende (a primeira faísca), ou no quadro final, nunca duas", /onAnimationStart=\{i === 0 \? soarSino : undefined\}/.test(fonte) && /if \(soou\.current\) return;/.test(fonte) && /if \(!vivo && temDespertar\) soarSino\(\)/.test(fonte));
+  t("um som que estoura cala-se: as duas chamadas em try", /try \{ tocarCarta\(/.test(fonte) && /try \{ tocarDespertar\(\); \}/.test(fonte));
 }
 semMundo();
 

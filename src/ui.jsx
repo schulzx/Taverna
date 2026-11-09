@@ -31,6 +31,8 @@ import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
    `gravura-da-cena.js` e reexportava daqui `RostoDaCena`, a xilogravura do
    topo do papel; a gravura saiu da tela e o topo e `CabecalhoDaPagina`.) */
 import { areiaDaAmpulheta, apertoDoPrazo, palavraDoPrazo } from "./hora-e-prazo.js";
+/* TE (09/11): o som da mesa — a preferência e as palavras do interruptor */
+import { SOM_DA_MESA, somLigado, ligarSom } from "./som-da-mesa.js";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
    máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
@@ -2963,6 +2965,38 @@ export function AbaComGlifo({ id, rotulo, Glifo, escolhida, novo, contador, soGl
           {contador}
         </span>
       )}
+    </button>
+  );
+}
+
+/* ============================================================
+   O INTERRUPTOR DO SOM (TE · decisão da pessoa, 09/11/2026) — formas.md §TE 9
+   «Ligado por omissão e em volume baixo, com o interruptor à vista no
+   menu.» A forma é a do interruptor que já mora no menu (as rolagens do
+   mundo à vista): a mesma linha de 48, a mesma letra de máquina, âmbar
+   quando ligado e apagado quando não, e aria-pressed. Uma ação, uma forma.
+   O glifo é o «ouvir» da tabela (desenhado, nunca emoji).
+   A preferência é do som-da-mesa.js (taverna_cfg_som): o interruptor lê-a
+   ao nascer e guarda-a a cada toque, sem passar pelo App. Opcional:
+   `aoMudar(ligado)`, para quem queira saber. Nunca lança.
+   ============================================================ */
+export function InterruptorDoSom({ aoMudar = null }) {
+  const [ligado, setLigado] = React.useState(() => somLigado());
+  const P = SOM_DA_MESA.palavras;
+  const alternar = () => {
+    const v = ligarSom(!ligado);
+    setLigado(v);
+    try { if (typeof aoMudar === "function") aoMudar(v); } catch (e) { /* nunca custa o turno */ }
+  };
+  return (
+    <button type="button" onClick={alternar} aria-pressed={ligado}
+      className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
+      style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: ligado ? T.amberSoft : T.inkDim, background: "transparent" }}>
+      <span className="inline-flex items-center" style={{ gap: 6 }}>
+        <Glifo nome="ouvir" tamanho={TIPOS.maquina} cor={ligado ? T.amberSoft : T.inkDim} />
+        <span>{P.rotulo}: <b>{ligado ? P.sim : P.nao}</b></span>
+      </span>
+      <span className="block" style={{ color: T.inkDim }}>{P.diz}</span>
     </button>
   );
 }

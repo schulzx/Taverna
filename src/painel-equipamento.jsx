@@ -19,10 +19,17 @@
 
    Aqui só se pinta: a conta é de comparar-item.js, itens.js e combate.js.
    O equipar de verdade é do App (aoEquipar / aoDesequipar).
+
+   TE (09/11/2026, decisão 6 da pessoa): A LENDA. A gaveta mostra as linhas
+   que o sistema gravou no item (item.lenda, até cinco) — da peça que já
+   está no encaixe, por cima, e da escolhida, por baixo do nome. A peça é a
+   mesma do veredito do espólio (LendaDoArtefacto). Sem lenda, nada muda.
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { ENCAIXE, GAVETA_DO_ENCAIXE, GLIFO_DO_ENCAIXE, COR_DA_RARIDADE, ICONES_DE_ITEM, VEU, FICHA_CARTA } from "./estilo.js";
+import { ENCAIXE, GAVETA_DO_ENCAIXE, GLIFO_DO_ENCAIXE, COR_DA_RARIDADE, ICONES_DE_ITEM, VEU, FICHA_CARTA, LENDA_DO_ARTEFACTO } from "./estilo.js";
+import { LendaDoArtefacto } from "./painel-espolio.jsx";
+import { linhasDaLenda } from "./espolio-na-tela.js";
 import { Botao, Retrato, useMesa } from "./ui.jsx";
 import { Moldura, Encaixe } from "./painel-moldura.jsx";
 import { molduraDe } from "./moldura.js";
@@ -94,6 +101,8 @@ function Gaveta({ slot, personagem, emCombate, mesa, inicial, aoEquipar, aoDeseq
   let rotulo = "";
   try { rotulo = escolhido ? (fichaDoItem(escolhido) || {}).rotulo || "" : ""; } catch (e) { rotulo = ""; }
   const G = GAVETA_DO_ENCAIXE;
+  let lendaDoAtual = [];
+  try { lendaDoAtual = atual ? linhasDaLenda(atual) : []; } catch (e) { lendaDoAtual = []; }
   const conteudo = (
     <>
       {!mesa ? <span aria-hidden="true" className="block mx-auto rounded-full" style={{ width: G.alca.largura, height: G.alca.altura, background: T.lineStrong, marginBottom: G.folga }} /> : null}
@@ -101,6 +110,14 @@ function Gaveta({ slot, personagem, emCombate, mesa, inicial, aoEquipar, aoDeseq
         <h3 className="tv-titulo" style={{ color: T.ink, fontSize: FICHA_CARTA.nome.telefone }}>{ENCAIXE.nomes[slot]}</h3>
         <span className="tv-mono" style={{ color: T.inkDim, fontSize: ENCAIXE.rotulo }}>{servem.length} {servem.length === 1 ? "que serve" : "que servem"}</span>
       </div>
+      {lendaDoAtual.length ? (
+        <div className="flex flex-col gap-2" data-lenda-do-atual="">
+          <div className="tv-titulo" style={{ color: COR_DA_RARIDADE[raridadeDoItem(atual)].cor, fontSize: FICHA_CARTA.texto.item }}>
+            {nomeDe(atual)}<span className="tv-body" style={{ color: T.inkDim, fontSize: FICHA_CARTA.texto.nota, fontWeight: 400 }}>{" · "}{LENDA_DO_ARTEFACTO.emUso}</span>
+          </div>
+          <LendaDoArtefacto linhas={lendaDoAtual} />
+        </div>
+      ) : null}
       {servem.length ? (
         <div className="flex flex-wrap" style={{ gap: ENCAIXE.mochila.folga, padding: ENCAIXE.anel.folga + ENCAIXE.anel.espessura }}>
           {servem.map((it, k) => (
@@ -117,6 +134,7 @@ function Gaveta({ slot, personagem, emCombate, mesa, inicial, aoEquipar, aoDeseq
         <div className="flex flex-col gap-2" style={{ borderTop: `1px solid ${T.line}`, paddingTop: G.folga }}>
           <div className="tv-titulo" style={{ color: COR_DA_RARIDADE[r].cor, fontSize: FICHA_CARTA.texto.item }}>{nomeDe(escolhido)}</div>
           <div className="tv-body" style={{ color: T.inkDim, fontSize: FICHA_CARTA.texto.nota }}>{NOME_DA_RARIDADE[r]}{rotulo ? ` · ${rotulo}` : ""}</div>
+          <LendaDoArtefacto item={escolhido} />
           {cmp.linhas.map((l) => <LinhaDaComparacao key={l.id} l={l} />)}
           {cmp.dorme ? <p className="tv-body" style={{ color: T.amberSoft, fontSize: FICHA_CARTA.texto.nota }}>Pede sintonia: até lá serve de peça, e o poder dorme.</p> : null}
           <p className="tv-body italic" style={{ color: cmp.troca.ok ? T.inkDim : T.danger, fontSize: FICHA_CARTA.texto.nota }}>

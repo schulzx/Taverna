@@ -329,7 +329,8 @@ function gestoDoArtefacto(it) {
   const g = a && a.gesto;
   if (!g || !g.efeito || typeof g.efeito !== "object" || typeof a.id !== "string" || it.ativo.id !== a.id) return null;
   return {
-    id: a.id, nome: it.nome || g.nome, tipo: it.tipo, historia: it.descricao || "",
+    id: a.id, nome: it.nome || g.nome, tipo: it.tipo, historia: it.descricao || "", artefacto: true,
+    lenda: Array.isArray(it.lenda) ? it.lenda.filter((l) => l && typeof l.linha === "string").map((l) => l.linha) : [],
     ativo: { nome: it.ativo.nome || g.nome, diz: it.ativo.diz || g.diz || "", efeito: g.efeito },
   };
 }
@@ -404,11 +405,24 @@ export function ativoDeclarado(texto, pers) {
 
 export function falaDoAtivoNegado(r) { return r && r.porque ? `⛔ ${r.porque}` : ""; }
 
+/* O ENVELOPE DO GESTO (09/11, o resto da fiação da TE10). Dizia «RELÍQUIA…
+   existe UMA no mundo» também para o artefacto com nome — e o artefacto não
+   é único no mundo: é a memória DESTA campanha (gestoDoArtefacto). Cada um
+   tem a sua cabeça e a sua frase; o artefacto leva ainda as duas linhas
+   mais recentes da lenda que o motor gravou (gravarNaLenda, espolios.js),
+   factos do sistema e não invenção, no teto de `lenda` — o envelope é de
+   um turno só e nunca bloco estático. */
+export const ENVELOPE_DO_GESTO = Object.freeze({
+  reliquia: Object.freeze({ cabeca: "RELÍQUIA", eE: "E trate a relíquia como o que ela é: existe UMA no mundo, ela tem história ({historia}) e quem a vê reconhece." }),
+  artefacto: Object.freeze({ cabeca: "ARTEFACTO", eE: "E trate a peça como o que ela é: não há outra igual, porque é a memória desta campanha — tem história ({historia}) e quem a viu nos feitos dela reconhece-a.", lenda: 2, abreLenda: " O que ela já viu (do sistema): " }),
+});
 export function envelopeDoAtivo(rel, texto) {
   if (!rel) return "";
-  return `[RELÍQUIA — JÁ RESOLVIDA PELO SISTEMA] Eu acionei ${rel.ativo.nome}, de ${rel.nome}. O sistema rolou, aplicou na minha ficha e marcou o uso do dia. ${texto ? `Resultado: ${texto.replace(/^◈ /, "")}` : ""}
+  const E = rel.artefacto ? ENVELOPE_DO_GESTO.artefacto : ENVELOPE_DO_GESTO.reliquia;
+  const lenda = rel.artefacto && Array.isArray(rel.lenda) && rel.lenda.length ? E.abreLenda + rel.lenda.slice(-E.lenda).join(" ") : "";
+  return `[${E.cabeca} — JÁ RESOLVIDA PELO SISTEMA] Eu acionei ${rel.ativo.nome}, de ${rel.nome}. O sistema rolou, aplicou na minha ficha e marcou o uso do dia. ${texto ? `Resultado: ${texto.replace(/^◈ /, "")}` : ""}
 REGRA DESTE ENVELOPE (obrigatória): narre o GESTO e o que ele parece — ${rel.ativo.diz} — em duas ou três frases, com o peso que uma peça assim merece. NÃO mande vida, mana, condições nem itens em "mudancas": seria dobrado. NÃO invente outro efeito, NÃO diga que falhou e NÃO deixe usar de novo hoje.
-E trate a relíquia como o que ela é: existe UMA no mundo, ela tem história (${rel.historia}) e quem a vê reconhece.`;
+${E.eE.replace("{historia}", rel.historia || "")}${lenda}`;
 }
 
 export function envelopeDaReliquiaAchada(rel) {

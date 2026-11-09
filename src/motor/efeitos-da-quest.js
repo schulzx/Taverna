@@ -28,12 +28,15 @@
                                                      porque, apenasIds: ids })
                                                      — o ponteiro, a linha e o
                                                      envelope do cheio (09/11)
-         { ordem: "revelacao", quest, titulo, revelacao }  (TE9) o momento da
+         { ordem: "revelacao", quest, titulo, revelacao, tom }  (TE9) o momento da
                                                      recompensa: a lista de
                                                      revelacaoDoEspolio (a
                                                      ordem, a comparação, o
                                                      «Equipar já») — a paga
-                                                     já entrou pelo motor
+                                                     já entrou pelo motor;
+                                                     tom (09/11): "coracao"
+                                                     | "enredo", pelo tipo
+                                                     da quest (tomDaRevelacao)
          { ordem: "calado", tipo, motivo }           sem órgão: vai ao calou
        A lista vazia quer dizer «nada a fazer»: o alvo já não está, ou a
        conta não muda nada. Nunca lança.
@@ -96,6 +99,11 @@ export const EFEITOS_NA_TELA = Object.freeze({
      do vilão por esta peça). O que ainda cala está em MUDA_DO_PLANO. */
   calado: Object.freeze({}),
   soNarrador: Object.freeze(["desfecho_do_vilao", "reacao_do_vilao"]),
+  /* 09/11 (os restos da fiação da TE10): o tom da cerimónia — «O QUE FICA»
+     no coração — decidia-se no App pela peça ser uma lembrança, e a quest
+     do coração que não deixava lembrança abria com «CONCLUÍDA». O tom é
+     do TIPO da quest (o 2 é o coração), que a paga traz; o App lê-o. */
+  tomDaRevelacao: Object.freeze({ 1: "enredo", 2: "coracao" }),
   semOrgao: "sem órgão conhecido",
   morte: Object.freeze({ linha: "{nome} morreu.", causa: "no fim de «{titulo}»" }),
 });
@@ -332,7 +340,8 @@ export function oQueOEfeitoPede(efeito, estado) {
     if (t === "passo_do_plano" || t === "fim_do_plano") return oQueOPlanoMuda(ef, E);
     if (t === "espolio") {
       const revelacao = obj(ef.paga) ? revelacaoDoEspolio(ef.paga, E.personagem, { emCombate: !!E.combate }) : [];
-      return revelacao.length ? [{ ordem: "revelacao", quest: typeof ef.quest === "string" ? ef.quest : "", titulo: typeof ef.titulo === "string" ? ef.titulo : "", revelacao }] : [];
+      const tom = T.tomDaRevelacao[obj(ef.paga) && ef.paga.tipo] || T.tomDaRevelacao[1];
+      return revelacao.length ? [{ ordem: "revelacao", quest: typeof ef.quest === "string" ? ef.quest : "", titulo: typeof ef.titulo === "string" ? ef.titulo : "", revelacao, tom }] : [];
     }
     if (t === "morte") {
       const g = doGrupo(E, nome);

@@ -25,7 +25,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { buildSync } from "esbuild";
 import {
   T, ALVOS, ENCRUZILHADA, GRAVIDADE_DA_ESCOLHA, DIARIO_DA_QUEST, CARTAZ_DA_SOMBRA, SOLEIRA_DO_MOMENTO,
-  ETAPA_DA_MISSAO, DIARIO_DE_MISSOES, MOLDURA_POR_DEGRAU, MOVIMENTO_CSS,
+  ETAPA_DA_MISSAO, DIARIO_DE_MISSOES, MOLDURA_POR_DEGRAU, MOVIMENTO_CSS, CARTA_NO_DIARIO, COR_DA_RARIDADE,
 } from "../src/estilo.js";
 import { GLIFOS } from "../src/glifos.js";
 import { razao, rgb } from "./conta-da-luz.mjs";
@@ -353,6 +353,34 @@ sec("6. o Diário com uma quest de cada tipo");
   t("no telefone: a estrada primeiro, a do coração logo a seguir", iEstrada > 0 && iCor > tel.indexOf("O próximo passo") && iCor > 0);
   t("depois o cartaz e a gente da estrada", iCartaz > iCor && iGente > iCartaz);
   t("a aba Em curso conta as duas histórias", tt.includes("Em curso · 2"));
+
+  /* TE (09/11, decisão 5 da pessoa, «só metade»): em cada quest aberta, a
+     carta da recompensa de costas, com a luz da raridade que pode pagar — e
+     NUNCA o prémio (o nome da peça) nem os caminhos */
+  {
+    const pedidas = [];
+    const raridadeDaRecompensa = (m, q) => { pedidas.push(m.id); return m.id === "quest:carta" ? "incomum" : m.status === "ativa" ? "epico" : null; };
+    const comCarta = html(R.PainelDiario, { ...base, leiaute: "mesa", raridadeDaRecompensa });
+    const tc = texto(comCarta);
+    const frase = CARTA_NO_DIARIO.diz.replace("{r}", CARTA_NO_DIARIO.rara.epico);
+    t("a quest aberta mostra a carta de costas com a luz da raridade (épica)", /data-carta-da-recompensa="epico"/.test(comCarta) && comCarta.includes(`border:2px solid ${COR_DA_RARIDADE.epico.cor}`) && comCarta.includes(`background:${T.couro}`));
+    t("…e diz por escrito o que a luz diz: «Pode valer uma peça épica — descobres qual no fim.»", tc.includes(CARTA_NO_DIARIO.rotulo) && tc.includes(frase), frase);
+    const iCarta = comCarta.indexOf('data-carta-da-recompensa="epico"');
+    const daCarta = comCarta.slice(iCarta, comCarta.indexOf("</div></div>", iCarta) + 12);
+    t("a carta é muda ao leitor e não traz o prémio: sem nome de peça, sem caminhos, sem frente", /aria-hidden="true"/.test(daCarta) && !/data-caminhos|role="radio"|Equipar/.test(daCarta) && !/tv-titulo/.test(daCarta));
+    t("a raridade nunca é só cor: a palavra vai escrita, na cor da raridade", daCarta.includes(`color:${COR_DA_RARIDADE.epico.cor};font-weight:600">${CARTA_NO_DIARIO.rara.epico}<`));
+    t("a estante (fechadas) não pergunta nem mostra carta", !pedidas.includes("quest:velha") && !pedidas.includes("quest:luto"));
+    const outra = html(R.PainelDiario, { ...base, leiaute: "mesa", raridadeDaRecompensa: () => "raro", questsDaBiblioteca: [coracao] });
+    t("a do coração aberta, quando o sistema dá a raridade, também a mostra", /data-carta-da-recompensa="raro"/.test(outra) && texto(outra).includes(CARTA_NO_DIARIO.diz.replace("{r}", "rara")));
+    const tel = html(R.PainelDiario, { ...base, leiaute: "telefone", raridadeDaRecompensa });
+    t(`no telefone a carta é a ×${CARTA_NO_DIARIO.escala.telefone} (60 × 84); na mesa a ×${CARTA_NO_DIARIO.escala.mesa} (72 de largo)`,
+      /data-carta-da-recompensa="epico"[^>]*><span class="shrink-0"><span aria-hidden="true" class="relative block" style="width:60px;height:84px/.test(tel) && /data-carta-da-recompensa="epico"[^>]*><span class="shrink-0"><span aria-hidden="true" class="relative block" style="width:72px/.test(comCarta));
+    t("sem a prop, ou se ela lança, ou dá lixo: o Diário de antes, sem carta",
+      !/data-carta-da-recompensa/.test(html(R.PainelDiario, { ...base, leiaute: "mesa" }))
+      && !/data-carta-da-recompensa/.test(html(R.PainelDiario, { ...base, leiaute: "mesa", raridadeDaRecompensa: () => { throw new Error("x"); } }))
+      && !/data-carta-da-recompensa/.test(html(R.PainelDiario, { ...base, leiaute: "mesa", raridadeDaRecompensa: () => "mitica" })));
+    t("a frase não fala da máquina (nem «raridade», nem «degrau», nem «máxima»)", !/raridade|degrau|m[áa]xim/i.test(tc.slice(tc.indexOf(CARTA_NO_DIARIO.rotulo))));
+  }
 
   /* sem quests, o Diário de AR2: «Em curso», nenhum cartaz */
   const ar2 = texto(html(R.PainelDiario, { ...base, leiaute: "mesa", questsDaBiblioteca: [], vilaoNoDiario: null }));

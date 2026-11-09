@@ -21,7 +21,7 @@ import { TROCA_DE_SLOT, fichaDoItem, danoDaArma, podeTrocarAgora, CAT_ARMA } fro
 import { defesaDe } from "./combate.js";
 import { bonusEquip } from "./regras-jogo.js";
 import { ATRIBUTOS } from "./constantes.js";
-import { pedeSintonia, estaSintonizado } from "./sintonia.js";
+import { pedeSintonia, estaSintonizado, garantirSintonia, MAX_SINTONIA } from "./sintonia.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -132,7 +132,14 @@ export function compararItem(pers, item, slot, { emCombate = false } = {}) {
      A gaveta tem de o dizer, senão o jogador lê «nada muda» e não sabe porquê. */
   let dorme = false;
   try { dorme = !!item && pedeSintonia(item) && !estaSintonizado(depois, item); } catch (e) { dorme = false; }
-  return { linhas, troca, atual, item: item || null, dorme };
+  /* 09/11 (TE10, o resto da lembrança no nível 1): dormir não diz porquê. A
+     sintonia nunca é automática (sintonia.js: troca-se no acampamento), logo
+     a peça nova dorme MESMO com lugar livre — e a frase «as tuas três já
+     estão em uso» mentia a quem não tinha nenhuma. `vagas`: os lugares
+     livres de agora (MAX_SINTONIA menos os sintonizados do corpo de antes). */
+  let vagas = MAX_SINTONIA;
+  try { vagas = Math.max(0, MAX_SINTONIA - garantirSintonia(p).length); } catch (e) { vagas = MAX_SINTONIA; }
+  return { linhas, troca, atual, item: item || null, dorme, vagas };
 }
 
 /* O TEMPO DA TROCA, em palavras (§3: «trocar leva 1 minuto: a fivela é

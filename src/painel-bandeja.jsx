@@ -21,11 +21,20 @@
 
    DUAS ALTURAS: FRESCA (logo depois do lance) e RECOLHIDA (o jogador já
    mandou outro turno — só a fileira pequena; a mesa lembra o que saiu).
+
+   O SOM (TE, decisão da pessoa de 09/11; som-da-mesa.js): o lance novo
+   soa quando POUSA — no fim da rolagem, ou logo, com o reduce (o som fica
+   com quem pediu menos movimento). O que já rolou no Véu (jaRolou) não
+   soa aqui: soou lá. Um som que estoura cala-se; o dado pousa na mesma.
    ============================================================ */
 import { useEffect, useState } from "react";
 import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO } from "./estilo.js";
 import { Glifo } from "./ui.jsx";
 import { aLinhaDoLancamento, NOME_DO_DESFECHO } from "./motor/a-bandeja.js";
+import { tocarDado } from "./som-da-mesa.js";
+
+/* o dado pousou: o som, e nunca o turno */
+const soarDado = () => { try { tocarDado(); } catch { /* um som que estoura cala-se */ } };
 
 /* o crítico não tem letra: a faísca desenha-se (FAISCA), a casa não pede glifo à fonte */
 const SELO = { sucesso: "✓", falha: "✕", critico: "", desastre: "!" };
@@ -122,11 +131,12 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
   const [rolandoN, setRolandoN] = useState(0);
   const [troca, setTroca] = useState(0);
   useEffect(() => {
-    if (!ultimo || ultimo.jaRolou || semMovimento()) { setRolandoN(0); return undefined; }
+    if (!ultimo || ultimo.jaRolou) { setRolandoN(0); return undefined; }
+    if (semMovimento()) { setRolandoN(0); soarDado(); return undefined; }
     setRolandoN(n); setTroca(0);
     const inicio = Date.now();
     const passo = setInterval(() => setTroca(Math.floor((Date.now() - inicio) / MOVIMENTO_DO_DADO.troca)), MOVIMENTO_DO_DADO.troca);
-    const fim = setTimeout(() => { clearInterval(passo); setRolandoN(0); }, MOVIMENTO_DO_DADO.rolar);
+    const fim = setTimeout(() => { clearInterval(passo); setRolandoN(0); soarDado(); }, MOVIMENTO_DO_DADO.rolar);
     return () => { clearInterval(passo); clearTimeout(fim); };
   }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ultimo) return null;

@@ -3818,6 +3818,38 @@ export const PALAVRAS_DO_ESPOLIO = {
 };
 
 /* ============================================================
+   TE · DUAS DAS TRÊS DECISÕES DA PESSOA (09/11/2026) — formas.md §TE 13.
+   (A terceira, o som, mora em som-da-mesa.js: é número de áudio, não de cor.)
+
+   A CARTA NO DIÁRIO — «só metade»: em cada quest aberta, a carta da
+   recompensa DE COSTAS, com a luz da raridade que ela pode pagar (o
+   degrau vem do sistema, raridadeQuePodePagar). É a mesma CartaDoEspolio
+   da cerimónia, a meio tamanho: no Diário a carta é sinal, não cerimónia.
+   NUNCA os caminhos nem a peça de cada um — o jogador escolhe pela
+   história e descobre o prémio no fim. A frase diz o mesmo que a luz,
+   por escrito (a raridade nunca é só cor, WCAG 1.4.1), e diz «pode
+   valer» porque fechar mal paga menos: a carta promete o teto, não o fim.
+   ============================================================ */
+export const CARTA_NO_DIARIO = {
+  escala: { telefone: 0.5, mesa: 0.6 },   /* 60 × 84 e 72 × 101 */
+  vao: 12,                                 /* entre a carta e a frase */
+  rotulo: "A recompensa",
+  diz: "Pode valer uma peça {r} — descobres qual no fim.",
+  rara: { comum: "comum", incomum: "incomum", raro: "rara", epico: "épica", lendario: "lendária", unico: "única" },
+};
+/* A LENDA DO ARTEFACTO — as linhas que o sistema grava no item (item.lenda,
+   dos factos que regista: nunca do Narrador), até cinco. Cada uma leva a
+   runa ACESA do fio do despertar (o mesmo losango, o mesmo ouro): um feito
+   é uma marca gravada. À esquerda, o filete do aro. Mora no veredito do
+   espólio, no despertar e na gaveta do encaixe. */
+export const LENDA_DO_ARTEFACTO = {
+  teto: 5, texto: VEREDITO_DO_ESPOLIO.meta, entre: 6, recuo: 10, filete: 1,
+  runa: FIO_DO_DESPERTAR.runa, acesa: FIO_DO_DESPERTAR.acesa, aro: FIO_DO_DESPERTAR.aro,
+  rotulo: "A lenda", rotuloTamanho: CARTA_DO_ESPOLIO.rotulo, espaco: CARTA_DO_ESPOLIO.dentro.placa.espaco,
+  emUso: "em uso",   /* na gaveta, a peça que está no corpo e tem lenda */
+};
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`

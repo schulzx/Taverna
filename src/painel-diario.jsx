@@ -48,10 +48,24 @@
    herói conheceu), reviravolta { dia, texto, vistaEm } (sem vistaEm, por
    ler: no topo; lida, um marco na linha do tempo), comQuem (quem anda
    contigo), e no fim desfecho, luto, comoFicou e fecho.texto (o epitáfio).
+
+   TE (09/11/2026, decisão 5 da pessoa, «só metade»; formas.md §TE 13) · A
+   CARTA DA RECOMPENSA. Prop nova, e opcional (sem ela, nada muda):
+     raridadeDaRecompensa(missao, estado) → "comum" … "unico" | null — o
+                       degrau que a quest aberta pode pagar (o sistema:
+                       raridadeQuePodePagar). Em cada quest aberta, a carta
+                       de costas (a CartaDoEspolio da cerimónia, a meio
+                       tamanho) com a luz dessa raridade, e a frase que o
+                       diz por escrito. NUNCA os caminhos nem a peça de cada
+                       um: o jogador escolhe pela história e descobre o
+                       prémio no fim.
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
-import { TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, COR_DA_RARIDADE, ENCAIXE, ICONES_DA_ETAPA, DIARIO_DE_MISSOES, RELOGIO_DO_PRAZO, CABECALHO_DA_TELA, DIARIO_DA_QUEST, CARTAZ_DA_SOMBRA } from "./estilo.js";
+import { TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, COR_DA_RARIDADE, ENCAIXE, ICONES_DA_ETAPA, DIARIO_DE_MISSOES, RELOGIO_DO_PRAZO, CABECALHO_DA_TELA, DIARIO_DA_QUEST, CARTAZ_DA_SOMBRA, CARTA_NO_DIARIO } from "./estilo.js";
+/* TE: a carta de costas da recompensa — a mesma peça da cerimónia */
+import { CartaDoEspolio } from "./painel-espolio.jsx";
+import { cartaNoDiario } from "./espolio-na-tela.js";
 import { Glifo, VerboComPreco } from "./ui.jsx";
 import { GlifoAR, CabecalhoDaTela, AbaDaTela, EtapaDaMissao, RelogioDoPrazo, LombadaDaEstante, MissaoNoIndice, LinhaDoQueFalta, CaminhosDaEtapa, RostoDaHistoria } from "./painel-ar-pecas.jsx";
 import { COMBINADORES } from "./condicoes-da-quest.js";
@@ -306,6 +320,30 @@ function OQueSeGanha({ m, sec }) {
   );
 }
 
+/* ---------------- TE · A CARTA DA RECOMPENSA (decisão 5, 09/11) ----------------
+   A carta de costas com a luz da raridade que a quest pode pagar, e por
+   escrito o mesmo que a luz diz (a raridade nunca é só cor). A carta é
+   muda ao leitor (aria-hidden, como na cerimónia); a frase fala por ela.
+   Nunca o nome da peça, nunca o caminho: só a promessa do teto. */
+function CartaDaRecompensa({ raridade, telefone }) {
+  const c = cartaNoDiario(raridade);
+  if (!c) return null;
+  const k = telefone ? CARTA_NO_DIARIO.escala.telefone : CARTA_NO_DIARIO.escala.mesa;
+  const [antes, depois] = String(CARTA_NO_DIARIO.diz).split("{r}");
+  return (
+    <div className="flex items-center" style={{ gap: CARTA_NO_DIARIO.vao }} data-carta-da-recompensa={c.raridade}>
+      {/* a carta não encolhe: a frase é que dobra (num flex, a largura de 60 cedia a 49) */}
+      <span className="shrink-0"><CartaDoEspolio item={{ raridade: c.raridade }} face="costas" k={k} /></span>
+      <div className="flex flex-col gap-1 min-w-0">
+        <span className="tv-mono uppercase tracking-widest" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>{CARTA_NO_DIARIO.rotulo}</span>
+        <p className="tv-body m-0" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>
+          {antes || ""}<span style={{ color: COR_DA_RARIDADE[c.raridade].cor, fontWeight: 600 }}>{c.rara}</span>{depois || ""}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- O BILHETE ----------------
    O gancho de uma secundária na voz de quem pediu, em papel da mesa, com o
    custo de falhar por baixo. A reviravolta não entra: é o que o herói ainda
@@ -327,9 +365,14 @@ function Bilhete({ m, sec }) {
 }
 
 /* ---------------- A MISSÃO À FRENTE ---------------- */
-function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto, aoResponder, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, q: qDado = null, estadoDe = null, rostoDe = null, semGente = false }) {
+function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto, aoResponder, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, q: qDado = null, estadoDe = null, rostoDe = null, semGente = false, raridadeDaRecompensa = null }) {
   /* BQ: a quest da biblioteca (q = a vista dela) — a estrada ou quem anda contigo */
   const q = qDado || (estadoDe ? estadoDe(m.id) : null);
+  /* TE: a raridade que a quest aberta pode pagar (do sistema); sem ela, cala */
+  let raridadeDaCarta = null;
+  if (m.status === "ativa" && typeof raridadeDaRecompensa === "function") {
+    try { raridadeDaCarta = raridadeDaRecompensa(m, q) || null; } catch { raridadeDaCarta = null; }
+  }
   const coracao = !!q && q.tipo === 2;
   const t = tipoMissao(m.tipo);
   const sec = secundariaDe(m);
@@ -416,6 +459,7 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
         </div>
       ) : null}
 
+      {raridadeDaCarta ? <CartaDaRecompensa raridade={raridadeDaCarta} telefone={telefone || compacto} /> : null}
       <OQueSeGanha m={m} sec={sec} />
     </article>
   );
@@ -708,7 +752,7 @@ function useLarguraDe(ref) {
 }
 
 export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null, abertura = null, relogios = [], aoFechar = null, aoVerNoMapa = null, distanciaDoPasso = null, leiaute: leiautePedido = null,
-  questsDaBiblioteca = [], rostoDe = null, vilaoNoDiario = null, rostoDoVilao = null, rostoDoTenente = null }) {
+  questsDaBiblioteca = [], rostoDe = null, vilaoNoDiario = null, rostoDoVilao = null, rostoDoTenente = null, raridadeDaRecompensa = null }) {
   const raiz = React.useRef(null);
   const largura = useLarguraDe(raiz);
   const leiaute = leiautePedido || (largura >= D.corte.mesa ? "mesa" : largura >= D.corte.meia ? "meia" : "telefone");
@@ -742,7 +786,7 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   const nFios = eventos && Array.isArray(eventos.locais) ? eventos.locais.length : 0;
   const subtitulo = [plural(emCurso.length + coracaoM.length, "missão em curso", "missões em curso"), ofertasM.length ? plural(ofertasM.length, "oferta", "ofertas") : "", estanteM.length ? `${estanteM.length} na estante` : ""].filter(Boolean).join(" · ");
   const vazio = !emCurso.length && !ofertasM.length && !coracaoM.length;
-  const comum = { todas, abertura, pers, relogios, aoResponder: aoResponderMissao, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, estadoDe, rostoDe };
+  const comum = { todas, abertura, pers, relogios, aoResponder: aoResponderMissao, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, estadoDe, rostoDe, raridadeDaRecompensa };
   const escolher = (id) => { setEscolhidaId(id); setVerMundo(false); };
 
   const nadaEmCurso = <div className="tv-body italic" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>;

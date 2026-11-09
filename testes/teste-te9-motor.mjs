@@ -47,6 +47,7 @@ let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
 const sec = (s) => console.log("\n" + s);
 const J = (x) => JSON.stringify(x);
+const arr = (x) => (Array.isArray(x) ? x : []);
 /* o mesmo objeto, com as chaves por ordem (a catraca da espinha reordena-as) */
 const canon = (x) => JSON.stringify(x, (k, v) => (v && typeof v === "object" && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map((c) => [c, v[c]])) : v));
 const congelar = (x) => { if (x && typeof x === "object" && !Object.isFrozen(x)) { Object.freeze(x); Object.values(x).forEach(congelar); } return x; };
@@ -125,7 +126,7 @@ sec("§1 as tabelas e as portas");
   const pg = pagaDaQuest(F, R, { semente: "x", nivel: 3 });
   t("a chave da paga de espolios.js começa pelo prefixo que `aplicadas` aceita", pg && pg.chave === S.chave + F.id, pg && pg.chave);
   t("o histórico das pagas tem teto, e o anúncio leva no máximo duas linhas", Number.isInteger(S.pagas) && S.pagas > 0 && S.anuncio.linhas >= 1 && S.anuncio.linhas <= 2);
-  t("as linhas do relato são todas da tabela, com os buracos que a peça enche", ["paga", "xp", "moedas", "noChao", "achado", "ganhoMoedas", "ganhoItem", "nivel", "desperto", "exaltado"].every((k) => typeof S.linhas[k] === "string" && S.linhas[k].length > 0));
+  t("as linhas do relato são todas da tabela, com os buracos que a peça enche", ["paga", "xp", "moedas", "naMochila", "noChao", "achado", "ganhoMoedas", "ganhoItem", "nivel", "desperto", "exaltado"].every((k) => typeof S.linhas[k] === "string" && S.linhas[k].length > 0));
   t("cada estado do artefacto que acorda tem a sua linha", DESPERTAR_DO_ARTEFACTO.ordem.slice(1).every((k) => S.linhas[k]));
   t("o efeito «espolio» tem órgão na tela (a revelação), e só esse sítio", !!EFEITOS_NA_TELA.orgao.espolio && !EFEITOS_NA_TELA.calado.espolio && !EFEITOS_NA_TELA.soNarrador.includes("espolio"));
   t("o trinco do feito não morde o mundo antigo nem o lixo", oFeitoJaPago(W.espinha0) === false && oFeitoJaPago(null) === false && oFeitoJaPago({}) === false && oFeitoJaPago({ esqueleto: {}, quests: "lixo" }) === false);
@@ -162,8 +163,15 @@ sec("§2 a campanha de ponta a ponta");
   const p0 = fecho.antes.personagem, p1 = fecho.E.personagem;
   t("a quest concluída paga: um efeito «espolio» com a paga aplicada", R6.estado === "concluida" && !!paga && paga.quest === "o_salvo_conduto" && paga.temperatura === "chama", J(paga).slice(0, 300));
   t("o XP e as moedas entram na ficha, pela conta da paga", p1.xp === p0.xp + paga.xp && p1.moedas === p0.moedas + paga.moedas && paga.xp > 0 && paga.moedas > 0, `${p0.xp}→${p1.xp} · ${p0.moedas}→${p1.moedas}`);
-  const daQuest = fecho.E.chao.itens.filter((i) => i.pronto && i.pronto.deQuest === "o_salvo_conduto" && i.destino === "equipamento");
-  t("a peça cai no chão, com `deQuest` (o campo novo do item)", daQuest.length === paga.itens.filter((i) => i.tipo !== "consumivel").length && daQuest.length >= 1, J(fecho.E.chao.itens.map((i) => i.nome)));
+  /* 09/11 (a asserção mudou de sítio, e o porquê): a TE9 punha a peça da
+     paga no CHÃO e a cerimónia dizia «já está na mochila» — se a cena mudasse
+     antes de a fechar, o chão varria-se e a paga ia com ele. Decisão do
+     coordenador: a paga vai direta à mochila (ESPOLIO_NO_TURNO.mochila), e só
+     o excedente cai. A intenção que fica: a peça chega ao herói com
+     `deQuest`; o sítio passou do chão à mochila (teste-te11-motor prova o
+     excedente e a mudança de cena). */
+  const daQuest = arr(fecho.E.personagem.equipamento).filter((i) => i && i.deQuest === "o_salvo_conduto");
+  t("a peça entra na mochila, com `deQuest` (o campo novo do item), e não fica no chão", daQuest.length === paga.itens.filter((i) => i.tipo !== "consumivel").length && daQuest.length >= 1 && !fecho.E.chao.itens.some((i) => i.pronto && i.pronto.deQuest === "o_salvo_conduto"), J(fecho.E.chao.itens.map((i) => i.nome)));
   t("a chave da paga mora em `aplicadas`, o registo diz `pago`, o histórico guarda-a", Q(fecho.E).aplicadas["espolio:o_salvo_conduto"] === 1 && R6.espolio.pago === true && Q(fecho.E).pagas.length === 1 && Q(fecho.E).pagas[0].quest === "o_salvo_conduto");
   t("o relato diz o que a quest deixa, depois do «cumprida»", fecho.r.linhas.findIndex((l) => l.startsWith("✦ O que")) > fecho.r.linhas.findIndex((l) => l.startsWith("★")), J(fecho.r.linhas));
   const an = Q(fecho.E).anuncio;

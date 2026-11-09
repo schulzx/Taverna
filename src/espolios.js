@@ -76,9 +76,15 @@
    acontece — `espolioNaPauta` devolve uma linha («O QUE O HERÓI LEVA: …»,
    teto 140) e o veto para `naoPode`. Nunca bloco estático.
 
-   O SAVE: só campo novo e aditivo — no item, `deQuest` e `artefacto`; no
-   registo da quest, `espolio: { achados, pago }` (que `garantirRegisto`
-   preserva). A chave da paga é `paga.chave`, para `aplicadas`.
+   O SAVE: só campo novo e aditivo — no item, `deQuest`, `artefacto` e
+   (09/11) `lenda`; no registo da quest, `espolio: { achados, pago }` (que
+   `garantirRegisto` preserva). A chave da paga é `paga.chave`, para
+   `aplicadas`.
+
+   09/11, AS DUAS DECISÕES DA PESSOA QUE SÃO CONTA: a carta de costas no
+   Diário (`raridadeQuePodePagar`, 3b — só o degrau, nunca o caminho) e a
+   lenda que a arma escreve (`gravarNaLenda` e FEITOS_DA_LENDA, 3c — dos
+   factos do sistema, teto de cinco; quem a chama é o motor das quests).
    ============================================================ */
 
 import { dadoDo } from "./semente.js";
@@ -516,6 +522,25 @@ function contar(campanha) {
   };
 }
 
+/* O orçamento da campanha, dito uma vez — a paga e a carta de costas
+   (raridadeQuePodePagar) leem as mesmas três réguas, e por isso a luz da
+   carta nunca promete o que a paga não daria. */
+const artefactoCabe = (F, def, ja) => {
+  if (!def || def.genero !== "artefacto" || ja.nomeados.has(F.id)) return false;
+  const ehConfronto = !!(obj(F.mao) && F.mao.tipo === RELIQUIA_DO_CONFRONTO.mao);
+  const reserva = ehConfronto || ja.confrontoPago ? 0 : ORCAMENTO_DO_ESPOLIO.reservaDoConfronto;
+  return ja.artefactos < ORCAMENTO_DO_ESPOLIO.artefactos - reserva;
+};
+const lembrancaCabe = (F, def, ja) => !!(def && def.genero === "lembranca" && ja.lembrancas < ORCAMENTO_DO_ESPOLIO.lembrancas && !ja.nomeados.has(F.id));
+/* o degrau da peça da família: o da temperatura, no teto do nível, e a
+   incomum quando a campanha já levou as raras que o orçamento deixa */
+function degrauDaPeca(P, nivel, campanha, ja) {
+  const atos = Math.max(1, Math.floor(Number(obj(campanha) && campanha.atos) || ORCAMENTO_DO_ESPOLIO.atosPadrao));
+  const tetoDeRaras = Math.ceil(atos * ORCAMENTO_DO_ESPOLIO.rarosPorAto);
+  const raridade = noTeto(P.item, nivel);
+  return tierDe(raridade) >= TIER.raro && ja.raros >= tetoDeRaras ? "incomum" : raridade;
+}
+
 /* ============================================================
    3. A PAGA DA QUEST — pagaDaQuest(ficha, registo, opcoes)
    `opcoes`: { semente, nivel, heroi, campanha: { atos, pagas }, tipoDoLugar,
@@ -523,10 +548,14 @@ function contar(campanha) {
    um papel, para a concordância da peça com nome (o registo também o diz).
    → null enquanto a quest está aberta (ou lixo); senão a paga:
      { chave, quest, tipo, estado, temperatura, familia, grau,
-       xp, moedas, itens: [item], efeitos: [{ tipo: "favor", papel }],
-       achados: [achado] }
+       xp, moedas, itens: [item], efeitos: [{ tipo: "favor", papel, nome }],
+       favores: [{ papel, nome }], achados: [achado] }
    Cada item leva `deQuest`. A chave vai para `aplicadas`: a mesma quest
    nunca paga duas vezes. Não muta nada do que recebe.
+   `favores` (09/11, o resto que a fiação da TE10 achou): o lugar que fica a
+   dever, COM O NOME que a campanha lhe deu (o do registo; sem ele, ""). A
+   cerimónia dizia «A capela fica a dever-te» só se a tela soubesse o nome,
+   e a tela não o sabia — o papel cru é palavra do motor.
    ============================================================ */
 export function pagaDaQuest(ficha, registo, opcoes) {
   const F = fichaValida(ficha);
@@ -540,7 +569,7 @@ export function pagaDaQuest(ficha, registo, opcoes) {
   const campanha = obj(op.campanha) || {};
   const ja = contar({ ...campanha, heroi });
   const paga = { chave: `espolio:${F.id}`, quest: F.id, tipo: F.tipo, estado: R.estado, temperatura: F.temperatura || "brasa",
-    familia: null, grau: null, xp: 0, moedas: 0, itens: [], efeitos: [], achados: [] };
+    familia: null, grau: null, xp: 0, moedas: 0, itens: [], efeitos: [], favores: [], achados: [] };
 
   /* o coração: XP pelo grau, e a lembrança na metade boa */
   if (F.tipo === 2) {
@@ -549,7 +578,7 @@ export function pagaDaQuest(ficha, registo, opcoes) {
     paga.grau = grau;
     paga.xp = xpDaFracao(P.xp, nivel);
     const def = ARTEFACTOS_COM_NOME[F.id];
-    if (P.lembranca && def && def.genero === "lembranca" && ja.lembrancas < ORCAMENTO_DO_ESPOLIO.lembrancas && !ja.nomeados.has(F.id)) {
+    if (P.lembranca && lembrancaCabe(F, def, ja)) {
       paga.itens.push(pecaComNome(F, R, def, { nivel, semente, heroi, generos: op.generos }));
     }
     return paga;
@@ -573,15 +602,10 @@ export function pagaDaQuest(ficha, registo, opcoes) {
      a peça da família, no degrau da temperatura, no teto do nível e do
      orçamento de raras */
   const def = ARTEFACTOS_COM_NOME[F.id];
-  const ehConfronto = !!(obj(F.mao) && F.mao.tipo === RELIQUIA_DO_CONFRONTO.mao);
-  const reserva = ehConfronto || ja.confrontoPago ? 0 : ORCAMENTO_DO_ESPOLIO.reservaDoConfronto;
-  if (def && def.genero === "artefacto" && ja.artefactos < ORCAMENTO_DO_ESPOLIO.artefactos - reserva && !ja.nomeados.has(F.id)) {
+  if (artefactoCabe(F, def, ja)) {
     paga.itens.push(pecaComNome(F, R, def, { nivel, semente, heroi, generos: op.generos }));
   } else if (P.item && Rf.slots) {
-    const atos = Math.max(1, Math.floor(Number(campanha.atos) || ORCAMENTO_DO_ESPOLIO.atosPadrao));
-    const tetoDeRaras = Math.ceil(atos * ORCAMENTO_DO_ESPOLIO.rarosPorAto);
-    let raridade = noTeto(P.item, nivel);
-    if (tierDe(raridade) >= TIER.raro && ja.raros >= tetoDeRaras) raridade = "incomum";
+    const raridade = degrauDaPeca(P, nivel, campanha, ja);
     const eq = obj(heroi && heroi.equipados) || {};
     const kit = KIT_INICIAL[heroi && heroi.classe] || {};
     const slots = Rf.slots.filter((s) => s === "arma" || (s === "armadura" && (eq.armadura || kit.armadura || !heroi)) || (s === "escudo" && eq.escudo) || !["arma", "armadura", "escudo"].includes(s));
@@ -596,7 +620,12 @@ export function pagaDaQuest(ficha, registo, opcoes) {
   }
   if (Rf.favor) {
     const l = lugarDaEtapa(F, mao && mao.etapa);
-    if (l) paga.efeitos.push({ tipo: "favor", papel: l.nome });
+    if (l) {
+      const p = obj(obj(R.papeis) && R.papeis[l.nome]);
+      const nome = p && typeof p.nome === "string" ? p.nome : "";
+      paga.efeitos.push({ tipo: "favor", papel: l.nome, nome });
+      paga.favores.push({ papel: l.nome, nome });
+    }
   }
   if (Rf.achadoExtra > 0 && mao) {
     paga.achados.push(...achadosDaEtapa(F, R, mao.id, { ...op, extra: true }).slice(0, Rf.achadoExtra));
@@ -612,6 +641,189 @@ export function pagaDaQuest(ficha, registo, opcoes) {
     }
   }
   return paga;
+}
+
+/* ============================================================
+   3b. A CARTA DE COSTAS — raridadeQuePodePagar(ficha, registo, ctx)
+   Decisão 5 da pessoa (09/11): no Diário, a carta virada com a luz da
+   raridade que a quest PODE pagar — «só metade»: nunca a tabela dos
+   caminhos com a peça de cada um. O jogador escolhe o caminho pela
+   história e descobre o prémio no fim. Por isso isto devolve UM degrau, o
+   máximo, e nada que diga por que caminho se chega a ele.
+   `ctx`: { nivel, campanha: { atos, pagas }, heroi, tipoDoLugar } — o mesmo
+   que pagaDaQuest lê, e as mesmas réguas (artefactoCabe, lembrancaCabe,
+   degrauDaPeca): a luz é a verdade do dia em que se olha. Sobe o nível,
+   pode subir a luz; a campanha leva as raras, pode descer.
+   → null (lixo, a quest não está aberta, ou só paga XP e moedas); senão a
+   raridade (RARIDADES de loot.js):
+     · tipo 2 — a lembrança, se a ficha a tem e o orçamento deixa;
+     · tipo 1 — o maior de: o artefacto com nome (o degrau da quest no nível),
+       a peça das famílias que a dão (ferro e sombra), e o achado escondido
+       (um degrau abaixo, se o sítio esconde uma peça e ainda lá está).
+   FORA, de propósito: a relíquia do confronto. É uma em cinco, pela semente;
+   a luz é uma promessa, e quatro vezes em cinco seria mentira. Que ela
+   apareça é a surpresa que a pessoa guardou para o fim. E o consumível do
+   saber também: a luz fala de ficar mais forte, não de um frasco.
+   ============================================================ */
+export function raridadeQuePodePagar(ficha, registo, ctx) {
+  const F = fichaValida(ficha);
+  const R = obj(registo);
+  if (!F || !R || R.id !== F.id || R.estado !== "aberta") return null;
+  const op = obj(ctx) || {};
+  const nivel = nivelDe(op.nivel);
+  const campanha = obj(op.campanha) || {};
+  const ja = contar({ ...campanha, heroi: obj(op.heroi) });
+  const def = ARTEFACTOS_COM_NOME[F.id];
+  if (F.tipo === 2) return lembrancaCabe(F, def, ja) ? RARIDADE_DA_LEMBRANCA : null;
+  const P = PAGA_DA_QUEST[F.temperatura] || PAGA_DA_QUEST.brasa;
+  const degraus = [];
+  if (artefactoCabe(F, def, ja)) degraus.push(tetoDeRaridade(nivel).daQuest);
+  if (P.item && Object.values(RECOMPENSA_DA_FAMILIA).some((r) => r.slots)) degraus.push(degrauDaPeca(P, nivel, campanha, ja));
+  /* o escondido: só se o sítio esconde uma peça, e ninguém a levou ainda */
+  const lugares = lugaresDe(F);
+  const lugar = lugares.find((l) => l.decl.vizinho) || lugares[0];
+  if (lugar) {
+    const e = ACHADO_DO_SITIO[sitioDe(F, R, lugar, op.tipoDoLugar)].escondido;
+    const levado = arr(obj(R.espolio) && R.espolio.achados).includes(`${F.id}:escondido:${e.id}`);
+    if (e.equipamento && !levado) degraus.push(noTeto(raridadeDoTier(Math.max(0, tierDe(P.item || "comum") - 1)), nivel));
+  }
+  if (!degraus.length) return null;
+  return raridadeDoTier(Math.max(...degraus.map(tierDe)));
+}
+
+/* ============================================================
+   3c. A LENDA QUE A ARMA ESCREVE — gravarNaLenda(item, feitos, opcoes)
+   Decisão 6 da pessoa (09/11): *uma linha gravada no artefacto por feito
+   marcante, saída dos factos que o sistema regista (o livro de factos, os
+   desfechos das quests), nunca do Narrador; teto de cinco linhas, as mais
+   marcantes. Campo novo e aditivo no item.* É o Vestige que se lembra: a
+   peça deixa de ser «a arma do Cimo da Escada» e passa a ser «a que esteve
+   lá quando o tenente caiu». Ninguém a escreve à mão — o motor escreve-a
+   (motor/quests-do-turno.js, o passo 7f), no fim do turno, para o replay a
+   reproduzir byte a byte.
+
+   QUEM ESCREVE: só a peça com nome (`item.artefacto`, os dois géneros) QUE
+   ESTÁ NO CORPO no turno do feito. A que dorme na mochila não viu nada; a
+   que nasce da paga daquele turno também não (a quest que a deu é a
+   história dela, `descricao`, e não uma linha da lenda).
+
+   OS FEITOS (o motor junta-os do que já decidiu nesse turno, nunca do texto):
+     quest     a quest do enredo concluída (a temperatura é o `sub`)
+     coracao   a do coração que chegou ao fim (o grau do desfecho é o `sub`)
+     tenente   um servo dele que caiu (`caiu`) ou saiu vivo (`poupado`) — a
+               reação do vilão, que lê o livro de factos
+     camada    a camada dele que subiu (o id da FASE é o `sub`)
+     desfecho  o fim dele (o id do desfecho é o `sub`)
+   `peso`: quanto o feito pesa contra o teto — quando a sexta linha chega,
+   sai a que pesa menos, e entre as que pesam o mesmo sai a mais nova (a
+   primeira façanha de uma peça não é empurrada por uma igual a ela); por
+   isso a linha nova que pesa o mesmo que a mais leve nem entra.
+   `frases`: a voz da casa. Nenhuma dá género à peça (pode ser um anel ou
+   uma armadura) nem ao vilão (pode ser um bicho); `{tenente:dele|dela}` é a
+   forma de quem ocupa o papel. O nome dele só depois do rosto
+   (`semNome` antes — a lei do «nome antes do rosto» da BQ5).
+   `linha`: o teto de cada linha gravada (o título longo corta-se).
+
+   A FORMA NO SAVE (aditiva, a versão antiga ignora-a):
+     item.lenda = [{ chave, peso, dia, linha }]   pela ordem em que aconteceu
+   `chave`: o feito (`quest:<id>`, `tenente:<papel>`, `camada:<id>`,
+   `desfecho:<id>`) — a mesma chave nunca se grava duas vezes na mesma peça.
+   ============================================================ */
+const AINDA_LA = ["Esteve lá no dia em que «{titulo}» se cumpriu.", "Viu «{titulo}» cumprir-se, do primeiro passo ao último."];
+export const FEITOS_DA_LENDA = Object.freeze({
+  teto: 5,
+  linha: 140,
+  semNome: "quem move as peças",
+  peso: Object.freeze({
+    quest: Object.freeze({ brasa: 1, chama: 2, fogueira: 4, incendio: 6 }),
+    coracao: Object.freeze({ melhor: 4, bom: 3, meio: 2, pior: 4 }),
+    tenente: Object.freeze({ caiu: 5, poupado: 4 }),
+    camada: Object.freeze({ marca: 2, mao: 2, rosto: 4, guerra: 3, queda: 3 }),
+    desfecho: Object.freeze({ derrota: 10, redencao: 9, fuga: 6, pacto: 6 }),
+  }),
+  frases: Object.freeze({
+    quest: Object.freeze({ brasa: Object.freeze(AINDA_LA), chama: Object.freeze(AINDA_LA), fogueira: Object.freeze(AINDA_LA), incendio: Object.freeze(AINDA_LA) }),
+    coracao: Object.freeze({
+      melhor: Object.freeze(["Estava lá quando «{titulo}» acabou como devia, e ainda se lhe sente o calor."]),
+      bom: Object.freeze(["Esteve perto quando «{titulo}» chegou ao fim, e guardou o que lá se disse."]),
+      meio: Object.freeze(["Esteve lá quando «{titulo}» acabou sem que ninguém o decidisse."]),
+      pior: Object.freeze(["Esteve lá no dia em que «{titulo}» acabou mal, e pesa desde então."]),
+    }),
+    tenente: Object.freeze({
+      caiu: Object.freeze(["Viu {tenente} cair, e o último olhar {tenente:dele|dela} ficou-lhe gravado.", "Esteve lá quando {tenente} caiu; a ordem que {tenente:ele|ela} levava nunca chegou."]),
+      poupado: Object.freeze(["Esteve lá quando {tenente} saiu {tenente:vivo|viva} daquela luta, e o que ficou por acertar ainda corre."]),
+    }),
+    camada: Object.freeze({
+      marca: Object.freeze(["Já cá estava no dia em que a marca apareceu pela primeira vez, numa parede que ninguém pintou."]),
+      mao: Object.freeze(["Esteve lá no dia em que o método se tornou claro, e deixou de ser possível chamar-lhe acaso."]),
+      rosto: Object.freeze(["Estava à vista no dia em que {vilao} mostrou o rosto."]),
+      guerra: Object.freeze(["Esteve lá quando {vilao} deixou de se esconder e o plano se fez guerra."]),
+      queda: Object.freeze(["Esteve lá quando o plano de {vilao} começou a ruir."]),
+    }),
+    desfecho: Object.freeze({
+      derrota: Object.freeze(["Esteve lá no fim de {vilao}, e é por isso que ainda se conta."]),
+      redencao: Object.freeze(["Esteve lá no dia em que {vilao} largou o plano e disse, enfim, a ferida."]),
+      fuga: Object.freeze(["Viu {vilao} fugir; entre os dois, a história ficou por acabar."]),
+      pacto: Object.freeze(["Esteve lá no dia do pacto com {vilao}, e lembra-se do preço."]),
+    }),
+  }),
+});
+
+const J = (x) => JSON.stringify(x);
+/* a lenda que um item já traz, pela catraca: só entradas inteiras, no teto */
+const lendaDe = (item) => arr(obj(item) && item.lenda)
+  .filter((l) => obj(l) && typeof l.chave === "string" && l.chave && typeof l.linha === "string" && l.linha.trim())
+  .map((l) => ({ chave: l.chave.slice(0, 80), peso: Number.isFinite(l.peso) ? l.peso : 0, dia: Number.isFinite(l.dia) ? Math.max(0, Math.floor(l.dia)) : 0, linha: l.linha.slice(0, FEITOS_DA_LENDA.linha) }))
+  .filter((l, i, a) => a.findIndex((x) => x.chave === l.chave) === i);
+/* uma frase da lenda com o que o feito sabe: {titulo}, {tenente}, {vilao} e
+   a forma de quem ocupa o papel ({tenente:dele|dela}) */
+function encherLenda(modelo, vars, generos) {
+  const v = obj(vars) || {}, g = obj(generos) || {};
+  const s = String(modelo || "")
+    .replace(/\{([a-z0-9_]+):([^|{}]*)\|([^{}]*)\}/g, (m, k, ele, ela) => (ehMulher(g[k]) ? ela : ele))
+    .replace(/\{([a-z0-9_]+)\}/g, (m, k) => (typeof v[k] === "string" && v[k].trim() ? v[k].trim() : k === "vilao" ? FEITOS_DA_LENDA.semNome : "alguém"));
+  const t = s.replace(/\s+/g, " ").trim();
+  const cortada = t.length <= FEITOS_DA_LENDA.linha ? t : t.slice(0, FEITOS_DA_LENDA.linha - 1).replace(/\s+\S*$/, "") + "…";
+  return cortada ? cortada[0].toUpperCase() + cortada.slice(1) : "";
+}
+/* a mais leve sai; entre as mais leves, a mais nova */
+function noTetoDaLenda(lista) {
+  const out = [...lista];
+  while (out.length > FEITOS_DA_LENDA.teto) {
+    let k = 0;
+    for (let i = 1; i < out.length; i++) if (out[i].peso <= out[k].peso) k = i;
+    out.splice(k, 1);
+  }
+  return out;
+}
+/* gravarNaLenda(item, feitos, { semente, dia }) → o item com a lenda nova,
+   ou O MESMO item quando nada muda (não é peça com nome, nenhum feito
+   conhecido, só chaves já gravadas, ou a linha nova não passa o teto).
+   `feitos`: [{ tipo, sub, chave, vars: { titulo?, tenente?, vilao? },
+   generos?: { tenente: "f"|"m" } }]. A frase escolhe-se pela semente
+   (`dado`, com o id da peça e a chave): a mesma campanha grava a mesma
+   linha em qualquer máquina. Nunca muta o item. */
+export function gravarNaLenda(item, feitos, opcoes) {
+  const it = obj(item);
+  const a = it && obj(it.artefacto);
+  if (!a || typeof a.id !== "string") return item;
+  const op = obj(opcoes) || {};
+  const dia = Number.isFinite(op.dia) ? Math.max(0, Math.floor(op.dia)) : 0;
+  const antes = lendaDe(it);
+  let lista = [...antes];
+  for (const f of arr(feitos)) {
+    const x = obj(f);
+    if (!x || typeof x.chave !== "string" || !x.chave || lista.some((l) => l.chave === x.chave)) continue;
+    const peso = obj(FEITOS_DA_LENDA.peso[x.tipo]) && FEITOS_DA_LENDA.peso[x.tipo][x.sub];
+    const frases = obj(FEITOS_DA_LENDA.frases[x.tipo]) && FEITOS_DA_LENDA.frases[x.tipo][x.sub];
+    if (!Number.isFinite(peso) || !Array.isArray(frases) || !frases.length) continue;
+    const r = dado(op.semente, "lenda", a.id, x.chave);
+    const linha = encherLenda(frases[Math.floor(r() * frases.length)], x.vars, x.generos);
+    if (!linha) continue;
+    lista = noTetoDaLenda([...lista, { chave: x.chave.slice(0, 80), peso, dia, linha }]);
+  }
+  if (J(lista) === J(antes)) return item;
+  return { ...it, lenda: lista };
 }
 
 /* ============================================================
@@ -786,6 +998,13 @@ export function promessaDoArtefacto(item, nivel) {
    («Equipar · CA 15→16», `rotuloDoEquipar`), e o outro lado (TE10-2):
    `sai` (o que sai do encaixe, ou null) e `troca` (fraseDaTroca).
    → [] para lixo; senão [{ tipo: "moedas"|"xp"|"favor"|"achado"|"item", … }].
+   09/11 (os restos da fiação da TE10): o favor leva o `nome` do lugar (o da
+   paga, "" sem ele); a peça leva `noChao` — a paga entra na MOCHILA (o
+   motor, ESPOLIO_NO_TURNO.mochila), e só a que não coube fica no chão, e a
+   cerimónia tem de o dizer em vez de «já está na mochila» —; e, quando dorme,
+   `vagas`: quantos dos três lugares de sintonia ainda estão livres
+   (compararItem). Dormir com lugar livre e dormir com os três tomados são
+   frases diferentes, e o nível 1 dizia a segunda sem ter nenhum tomado.
    ============================================================ */
 export function revelacaoDoEspolio(paga, heroi, opcoes) {
   const p = obj(paga);
@@ -795,20 +1014,28 @@ export function revelacaoDoEspolio(paga, heroi, opcoes) {
   const out = [];
   if (p.moedas > 0) out.push({ tipo: "moedas", n: p.moedas });
   if (p.xp > 0) out.push({ tipo: "xp", n: p.xp });
-  for (const e of arr(p.efeitos)) if (obj(e) && e.tipo === "favor") out.push({ tipo: "favor", papel: e.papel });
+  const nomeDoFavor = (papel) => {
+    const e = arr(p.efeitos).find((x) => obj(x) && x.tipo === "favor" && x.papel === papel && typeof x.nome === "string" && x.nome);
+    const f = arr(p.favores).find((x) => obj(x) && x.papel === papel && typeof x.nome === "string" && x.nome);
+    return (e && e.nome) || (f && f.nome) || "";
+  };
+  for (const e of arr(p.efeitos)) if (obj(e) && e.tipo === "favor") out.push({ tipo: "favor", papel: e.papel, nome: nomeDoFavor(e.papel) });
+  const noChao = new Set(arr(p.noChao).filter((i) => Number.isInteger(i)));
   for (const a of arr(p.achados)) if (obj(a)) out.push({ tipo: "achado", achado: a });
   const peso = (i) => (obj(i.artefacto) || i.raridade === "unico" ? 99 : tierDe(i.raridade));
   const itens = arr(p.itens).filter(obj).map((item, i) => ({ item, i })).sort((a, b) => peso(a.item) - peso(b.item) || a.i - b.i);
-  for (const { item } of itens) {
+  for (const { item, i } of itens) {
     const slot = encaixeDoItem(item);
-    if (!slot) { out.push({ tipo: "item", item, slot: null, linhas: [], podeEquipar: false, rotulo: "", sai: null, troca: "" }); continue; }
+    const chao = noChao.has(i);
+    if (!slot) { out.push({ tipo: "item", item, slot: null, linhas: [], podeEquipar: false, rotulo: "", sai: null, troca: "", noChao: chao }); continue; }
     const c = compararItem(h, item, slot, { emCombate });
     /* TE10-2 (09/11, pedido do `desenho`): o outro lado da troca — o que sai
        do corpo ao equipar já (o nome do que está no encaixe, ou null) e o
        tempo da troca em palavras. O veredito antes do clique mostra os dois
        lados; compararItem já os sabia, e a revelação deitava-os fora. */
     out.push({ tipo: "item", item, slot, linhas: c.linhas, dorme: c.dorme, podeEquipar: !!(c.troca && c.troca.ok), motivo: c.troca && !c.troca.ok ? c.troca.motivo : "", rotulo: rotuloDoEquipar(c.linhas),
-      sai: obj(c.atual) && typeof c.atual.nome === "string" && c.atual.nome ? c.atual.nome : null, troca: fraseDaTroca(slot) });
+      sai: obj(c.atual) && typeof c.atual.nome === "string" && c.atual.nome ? c.atual.nome : null, troca: fraseDaTroca(slot), noChao: chao,
+      ...(c.dorme && Number.isInteger(c.vagas) ? { vagas: c.vagas } : {}) });
   }
   return out;
 }
