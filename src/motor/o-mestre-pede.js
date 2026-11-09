@@ -31,6 +31,13 @@ export const O_MESTRE_PEDE = Object.freeze({
     Object.freeze({ id: "intencao", frase: (q) => `Leio as intenções de ${q}.`, verbo: (q) => `Ler as intenções de ${q}` }),
     Object.freeze({ id: "chegada", frase: () => "Olho em volta com atenção.", verbo: () => "Olhar à volta" }),
   ]),
+  /* CB2 (09/11): O SINAL DA ESTRADA. Não entra em `pedidos` — esses são os
+     que o Mestre pede quando a mesa está parada, e a estrada continua a
+     calar para eles (`naEstrada`). Este pede-o o ENCONTRO
+     (`encontro-na-estrada.js`): há um rasto, um som, uma sombra, e o Mestre
+     diz «rola Percepção». A frase é um teste do catálogo (Percepção, a
+     suíte prova-o), como todas as desta tabela; a CD é a do sinal. */
+  sinal: Object.freeze({ id: "sinal", frase: () => "Presto atenção ao que vem pela estrada.", verbo: () => "Ler os sinais da estrada" }),
   confirmar: "Rolar",
   recuo: "Agora não",
   /* o glifo do cartão (a tabela de glifos é da peça) */

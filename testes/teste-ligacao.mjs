@@ -352,6 +352,17 @@ sec("1. NENHUM MÓDULO MUDO");
        — 09/11 (TE9, a mesma fase): o motor das quests importa-o (a paga no
        fecho, os achados, o artefacto que acorda, o anúncio da pauta), e
        motor/efeitos-da-quest.js a revelação; a entrada saiu. */
+    /* 09/11 (Fase CB, CB2 · o encontro em três tempos):
+       `encontro-na-estrada.js` nasce no backend — o sinal de longe
+       (oEncontroNaEstrada, avistar, a Percepção pedida por
+       `O_MESTRE_PEDE.sinal`), a escolha com o veredito (escolhasDoEncontro,
+       resolverEscolha: contornar, esconder-se, negociar, emboscar, voltar
+       atrás, lutar) e a linha da pauta de cada tempo (pautaDoEncontro) — e
+       espera a CB3, a fiação: `viajar` pousa o encontro pendente em vez de
+       abrir a mesa, o Mestre narra antes, e a luta abre só depois da
+       escolha. Credor: o `oficial`, na MESMA fase. A entrada sai quando o
+       App o importar. `teste-encontro-na-estrada.mjs` é o primeiro leitor. */
+    "encontro-na-estrada.js": "o encontro pendente na viagem, o cartão do sinal e das escolhas, e a pauta antes da mesa (oficial, CB3, 09/11)",
   };
   const mudos = [];
   for (const f of arqs) {
