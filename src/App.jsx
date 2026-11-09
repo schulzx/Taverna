@@ -280,6 +280,9 @@ import { PainelFichaCarta } from "./painel-ficha-carta.jsx";
 import { CabecalhoDaTela } from "./painel-ar-pecas.jsx";
 import { BolsaDaCarta } from "./painel-bolsa-da-carta.jsx";
 import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
+/* TE10 (09/11): os espólios na tela — a cerimónia, o despertar e a faixa do fecho (formas.md §TE) */
+import { PainelEspolio, PainelDespertar, FaixaDoFecho } from "./painel-espolio.jsx";
+import { formaDoEspolio, ganhoDoEspolio, barraDoGanho, entrarNaFila, proximaCerimonia, despertarNaTela } from "./espolio-na-tela.js";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
@@ -5451,6 +5454,18 @@ export default function Taverna() {
      estourou uma vez, e daí em diante a subida volta ao ModalNivel. */
   const [cerimoniaDoNivel, setCerimoniaDoNivel] = useState(null);
   const [cerimoniaCalou, setCerimoniaCalou] = useState(false);
+  /* TE10 · A FILA DAS CERIMÓNIAS (formas.md §TE 1.7): espólio → nível →
+     despertar, uma de cada vez e nunca com a luta aberta. Só tela: NADA
+     disto vai ao save — a paga já entrou pelo motor (TE9), e um load a meio
+     encontra a fila vazia, logo a paga nunca aparece duas vezes. A subida de
+     nível continua a ser a de sempre (cerimoniaDoNivel); na fila ela entra
+     só como lugar («nivel»), para o espólio ir antes e o despertar depois.
+     fechoDaQuest: a quest fechada SEM peça — a faixa debaixo da prosa do
+     turno, até o turno seguinte começar. feitoDoTurnoRef: o `feito` que o
+     aplicar deste turno já pagou (TE9), para a paga da quest o descontar. */
+  const [filaDasCerimonias, setFilaDasCerimonias] = useState([]);
+  const [fechoDaQuest, setFechoDaQuest] = useState(null);
+  const feitoDoTurnoRef = useRef(null);
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
   const [habsSel, setHabsSel] = useState([]);
@@ -7274,7 +7289,9 @@ export default function Taverna() {
      (condicoes-da-quest.js, «E.baseMundo»), e sem ela toda a gente era livre
      e ninguém morria para as quests; o save, o replay e o servidor já a
      levam (é campo do save) */
-  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current, elenco: elencoSaveRef.current });
+  /* TE9: e o chão (a paga e os achados caem nele) e a luta (o «Equipar já»
+     da revelação compara com a regra do corpo: em luta, a armadura não troca) */
+  const estadoDasQuests = () => ({ ...retratoDoLivro(), historia: historiaRef.current, saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current, elenco: elencoSaveRef.current, chao: chaoRef.current, combate: combateRef.current });
   /* os efeitos que só a tela aplica: cada um pelo órgão que já existe; o que
      não tem órgão no App cala-se (nunca se inventa a regra dele aqui).
      BQ7b: a conta de cada um mora em motor/efeitos-da-quest.js
@@ -7299,7 +7316,7 @@ export default function Taverna() {
     try { registrarMorte(o.nome); } catch (e) { calou("BQ7b · a morte na base", e); }
     try { pushMsgs([{ autor: "sistema", texto: o.linha }]); } catch (e) { calou("BQ7b · a linha da morte", e); }
   };
-  const aplicarEfeitoDaQuest = (ef) => {
+  const aplicarEfeitoDaQuest = (ef, ctx) => {
     if (!ef || typeof ef !== "object") return;
     if (ef.tipo === "remontarPrompt") { aplicarOsEfeitos({ estado: {}, efeitos: [{ tipo: "remontarPrompt" }], paraOCronista: [] }); return; }
     const ordens = oQueOEfeitoPede(ef, estadoDasQuests());
@@ -7323,8 +7340,15 @@ export default function Taverna() {
           /* 09/11 · as consequências caladas: os relógios da região andam pelo
              `tiquear` de sempre (a linha à vista, o envelope do relógio cheio) */
           tiquear(null, { quanto: o.quanto, porque: o.porque, apenasIds: o.ids });
+        } else if (o.ordem === "revelacao") {
+          /* TE10 · o momento da recompensa: a paga já entrou (o motor), e a
+             tela só a mostra — a cerimónia na fila, ou a faixa do fecho */
+          receberOEspolio(o, ctx);
         } else if (o.ordem === "calado") {
           calou("BQ7 · efeito sem órgão no App: " + o.tipo, new Error(o.motivo || (EFEITOS_NA_TELA.calado[o.tipo] || EFEITOS_NA_TELA.semOrgao)));
+        } else {
+          /* TE9: uma ordem que o App não conhece não passa calada — vai ao calou */
+          calou("BQ7 · ordem sem órgão no App: " + o.ordem, new Error(EFEITOS_NA_TELA.semOrgao));
         }
       } catch (e) { calou("BQ7b · " + ef.tipo + " · " + o.ordem, e); }
     }
@@ -7335,25 +7359,38 @@ export default function Taverna() {
     const notas = Array.isArray(r.notas) ? r.notas : [];
     const linhas = Array.isArray(r.linhas) ? r.linhas : [];
     const efeitos = Array.isArray(r.efeitos) ? r.efeitos : [];
+    /* TE10: a ficha de ANTES da paga — a faixa do ganho mostra o que já havia
+       por baixo do que entra, e o despertar compara o artefacto antes/depois */
+    const fichaAntes = personagemRef.current || personagem;
+    try { if (e.personagem) acordouNaQuest(fichaAntes, e.personagem); } catch (err) { calou("TE10 · " + onde + " · o despertar", err); }
     try { if (e.espinha) espinhaRef.current = e.espinha; } catch (err) { calou("BQ7 · " + onde + " · a espinha", err); }
     try { if (e.saber) saberRef.current = e.saber; } catch (err) { calou("BQ7 · " + onde + " · o saber", err); }
     try { if (e.historia) historiaRef.current = e.historia; } catch (err) { calou("BQ7 · " + onde + " · o arco", err); }
     try { if (e.personagem) { personagemRef.current = e.personagem; setPersonagem(e.personagem); } } catch (err) { calou("BQ7 · " + onde + " · a ficha", err); }
     try { if (e.npcs) { npcsRef.current = e.npcs; setNpcs(e.npcs); } } catch (err) { calou("BQ7 · " + onde + " · a gente", err); }
     try { if (e.factos) factosRef.current = e.factos; } catch (err) { calou("BQ7 · " + onde + " · o livro", err); }
+    try { if (e.chao) { chaoRef.current = e.chao; setChao(e.chao); } } catch (err) { calou("BQ7 · " + onde + " · o chão", err); }
     try { if (notas.length) notaRef.current = notaComOTurno(notaRef.current, notas); } catch (err) { calou("BQ7 · " + onde + " · a nota", err); }
     try { if (linhas.length) pushMsgs(linhas.map((texto) => ({ autor: "sistema", texto }))); } catch (err) { calou("BQ7 · " + onde + " · o relato", err); }
-    for (const ef of efeitos) { try { aplicarEfeitoDaQuest(ef); } catch (err) { calou("BQ7 · " + onde + " · " + (ef && ef.tipo), err); } }
+    for (const ef of efeitos) { try { aplicarEfeitoDaQuest(ef, { fichaAntes, onde }); } catch (err) { calou("BQ7 · " + onde + " · " + (ef && ef.tipo), err); } }
     if (Object.keys(e).length || notas.length || linhas.length || efeitos.length) {
       try { escolhasCacheRef.current = null; setVersaoDasQuests((n) => n + 1); salvar({}); } catch (err) { calou("BQ7 · " + onde + " · gravar", err); }
     }
     return true;
   };
-  /* o fim do turno (depois do Cronista) e a criação do mundo: a peça é a mesma */
-  const correrAsQuests = (onde) => {
+  /* o fim do turno (depois do Cronista) e a criação do mundo: a peça é a mesma.
+     TE9: `feitoDoTurno` ({ grau, nivel }) só no fim do turno — o feito que o
+     aplicar desse turno já pagou desconta-se da paga da quest; a criação do
+     mundo não tem turno, logo não tem feito. Quem chama tira-o do ref no
+     momento em que enfileira (tomarOFeitoDoTurno): o turno seguinte, se
+     chegar antes do Cronista, não lhe troca o feito. */
+  const tomarOFeitoDoTurno = () => {
+    try { const f = feitoDoTurnoRef.current; feitoDoTurnoRef.current = null; return f || null; } catch (e) { calou("TE9 · o feito do turno", e); return null; }
+  };
+  const correrAsQuests = (onde, feitoDoTurno = null) => {
     try {
       if (!comEsqueleto()) return null;
-      const r = oTurnoDasQuests(estadoDasQuests(), { mundo: mundoDoLivro() });
+      const r = oTurnoDasQuests(estadoDasQuests(), { mundo: mundoDoLivro(), feitoDoTurno });
       if (r) aplicarAsQuests(r, onde);
       setEscolhaAdiada("");
       return r;
@@ -8715,6 +8752,13 @@ export default function Taverna() {
     retratoDoFimRef.current = null; mostradoRef.current = { itens: [], missoes: [] };
     setFechoNaTela(null);
   };
+  /* TE10: as cerimónias esquecem-se só com a CAMPANHA (nova, ou um save
+     carregado) — nunca no turno desfeito: o turno que cai repõe a ficha do
+     envio, e a paga de uma escolha confirmada antes dele continua dada, logo
+     a cerimónia dela também. A paga que ficou no chão continua lá. */
+  const esquecerAsCerimonias = () => {
+    try { setFilaDasCerimonias([]); setFechoDaQuest(null); feitoDoTurnoRef.current = null; } catch (e) { calou("TE10 · esquecer as cerimónias", e); }
+  };
 
   const pushMsgs = useCallback((novas) => {
     /* A1 · B1 (10/10): `naLuta` — CAMPO NOVO, que a versão antiga ignora.
@@ -9946,6 +9990,13 @@ export default function Taverna() {
       mundo: mundoDaBase, baseDoNome, motorDoArco, sorteDoTurno, modoDoNarrador: MODO_DA_MESA,
     });
     aplicarOsEfeitos(saida);
+    /* TE9: o feito que este aplicar pagou, com o nível de ANTES dele (pers
+       ainda é a ficha da entrada) — para a paga da quest que fechar neste
+       turno o descontar. Não vai ao save: vive até ao fim do turno. */
+    try {
+      const feito = saida && saida.podado && saida.podado.mudancas ? saida.podado.mudancas.feito : null;
+      feitoDoTurnoRef.current = feito != null ? { grau: feito, nivel: (pers && pers.nivel) || null } : null;
+    } catch (e) { calou("TE9 · guardar o feito do turno", e); }
     if (saida.semFicha) return null;
     resp = saida.podado;
     pers = saida.estado.personagem;
@@ -10643,6 +10694,9 @@ export default function Taverna() {
         aberturaNoTurno: null,
       };
     } catch (e) { calou("a foto do recibo no envio", e); }
+    /* TE10: a faixa do fecho é do turno em que a quest fechou; o turno novo
+       apaga-a — menos o envio que a própria escolha partiu (vaiComOEnvio) */
+    try { setFechoDaQuest((f) => (f && f.vaiComOEnvio ? { ...f, vaiComOEnvio: false } : null)); } catch (e) { calou("TE10 · a faixa do fecho (envio)", e); }
     /* O PRELÚDIO DO TURNO MORA NO MOTOR (Fase 4, trilha A, 29/10): da
        frase que é pedido meu às bocas — o chão que se varre, a oficina que
        vira bilhete, a chegada sozinha, a caminhada na cidade, a escuta que
@@ -10921,18 +10975,19 @@ export default function Taverna() {
            fila é a de sempre. */
         try {
           const comQuests = comEsqueleto();
+          const feitoDeste = tomarOFeitoDoTurno();
           if (turnoDaSessao || comQuests) {
             const juntado = turnoDaSessao;
             filaDaSessaoRef.current = filaDaSessaoRef.current
               .then(() => Promise.resolve(doCronista).catch(() => null))
-              .then(() => { if (comQuests) correrAsQuests("o fim do turno"); })
+              .then(() => { if (comQuests) correrAsQuests("o fim do turno", feitoDeste); })
               .then(() => { if (juntado) { try { gravarOTurnoDaSessao(juntado); } catch (e) { calou("a sessão (o turno)", e); } } });
           }
         } catch (e) { calou("a sessão (a fila)", e); }
       } catch {
         if (fimDoCronista) fimDoCronista(null);
         /* BQ7: o Cronista não correu — as quests andam na mesma */
-        try { if (comEsqueleto()) filaDaSessaoRef.current = filaDaSessaoRef.current.then(() => { correrAsQuests("o fim do turno, sem o Cronista"); }); } catch (e) { calou("BQ7 · as quests sem o Cronista", e); }
+        try { if (comEsqueleto()) { const feitoDeste = tomarOFeitoDoTurno(); filaDaSessaoRef.current = filaDaSessaoRef.current.then(() => { correrAsQuests("o fim do turno, sem o Cronista", feitoDeste); }); } } catch (e) { calou("BQ7 · as quests sem o Cronista", e); }
       }
       /* DESPERTAR: checa DEPOIS do turno (o XP do combate pode ter cruzado o nível) */
       setTimeout(() => checarDespertar(pers), 600);
@@ -11429,6 +11484,7 @@ export default function Taverna() {
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
+    esquecerAsCerimonias();
     setCombate(null); combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0;   /* fim de campanha: nao ha ficha para limpar */
     setFase("jogo");
     /* v9.101: a mesa fica sabendo que o mundo dela foi lido. É a única
@@ -11581,6 +11637,7 @@ export default function Taverna() {
       personagemRef.current = pers;   // o prompt é montado ainda dentro deste clique
       setMundo(sv.mundo || { genero: cenarioAtivo().generos.padrao }); setNomeCampanha(ab.nomeCampanha); setPersonagem(pers);
       try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (save carregado)", e); }
+      esquecerAsCerimonias();
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
@@ -18037,6 +18094,104 @@ export default function Taverna() {
      antes e o depois para a tela. Com dois níveis pendentes, a primeira
      fecha e a segunda abre. Os PV/PM máx. de antes/depois descontam os
      níveis ainda por confirmar: a ficha já os somou todos (aplicarNivel). */
+  /* ---------------- TE10 · OS ESPÓLIOS NA TELA (09/11) ----------------
+     A paga da quest JÁ entrou pelo motor (TE9: o XP, as moedas, o favor, e
+     as peças no chão da cena). Aqui só se mostra, pela forma que o que vale
+     pede (formaDoEspolio): com peça, a cerimónia na fila; sem peça, a faixa
+     do fecho debaixo da prosa. A tela nunca refaz a ordem nem a conta.
+     «Guardar na mochila» diz a verdade: fechar a cerimónia recolhe as peças
+     desta paga do chão pelo recolher de sempre (recolherDoChao) — e se a
+     cerimónia estourar, ficam no chão, à espera do exame. «Equipar já» é o
+     MESMO equipar da gaveta (equipar), depois do mesmo recolher. */
+  const receberOEspolio = (o, ctx) => {
+    try {
+      const entradas = o && Array.isArray(o.revelacao) ? o.revelacao : [];
+      const forma = formaDoEspolio(entradas);
+      if (!forma) return;
+      const antes = (ctx && ctx.fichaAntes) || null;
+      const agora = personagemRef.current || personagem || {};
+      const g = ganhoDoEspolio(entradas);
+      const n0 = antes && Number.isFinite(antes.nivel) ? antes.nivel : null;
+      const xpAntes = antes && Number.isFinite(antes.xp) ? antes.xp : null;
+      const xpParaSubir = n0 != null ? XP_POR_NIVEL(n0) : null;
+      const nivelNovo = n0 != null && Number.isFinite(agora.nivel) && agora.nivel > n0 ? agora.nivel : null;
+      const chave = "espolio:" + String(o.quest || o.titulo || "");
+      if (forma === "fecho") {
+        let barra = null;
+        try { barra = xpParaSubir != null ? barraDoGanho(xpAntes, xpParaSubir, g.xp) : null; } catch (e) { barra = null; }
+        /* a escolha confirmada manda logo o turno que a narra (partirOTurno):
+           esse envio é o turno do fecho, e a faixa sobrevive-lhe uma vez */
+        setFechoDaQuest({ chave, quest: String(o.titulo || ""), xp: g.xp, moedas: g.moedas, barra, vaiComOEnvio: !!(ctx && ctx.onde === "a escolha") });
+        return;
+      }
+      /* o coração: a quest que deixa lembrança abre com «O QUE FICA» (§TE 1.8);
+         lê-se da peça que o sistema deu, não se decide aqui */
+      const coracao = entradas.some((e) => e && e.tipo === "item" && e.item && e.item.artefacto && e.item.artefacto.genero === "lembranca");
+      const c = { tipo: "espolio", chave, quest: String(o.quest || ""), titulo: String(o.titulo || ""), entradas, coracao, nivel: Number.isFinite(agora.nivel) ? agora.nivel : null, xpAntes, xpParaSubir, nivelNovo };
+      setFilaDasCerimonias((f) => (f.some((x) => x && x.chave === chave) ? f : entrarNaFila(f, c)));
+    } catch (e) { calou("TE10 · o espólio na tela", e); }
+  };
+  /* O DESPERTAR: o motor acorda o artefacto (despertarArtefacto, no fim de
+     cada turno das quests, pelo nível e pelas quests pagas); aqui só se
+     acha o mesmo artefacto antes e depois, e despertarNaTela diz se mudou.
+     O artefacto novo (o da paga) não entra: a primeira vez dele é a própria
+     cerimónia do espólio (§TE 4). */
+  const acordouNaQuest = (antes, depois) => {
+    try {
+      const artefactosDe = (p) => {
+        const m = new Map();
+        const ver = (it) => { if (it && it.artefacto && typeof it.artefacto.id === "string" && !m.has(it.artefacto.id)) m.set(it.artefacto.id, it); };
+        Object.values((p && p.equipados) || {}).forEach(ver);
+        ((p && p.equipamento) || []).forEach(ver);
+        return m;
+      };
+      const a = artefactosDe(antes);
+      for (const [id, novo] of artefactosDe(depois)) {
+        const velho = a.get(id);
+        if (!velho) continue;
+        const tela = despertarNaTela(velho, novo, depois && depois.nivel);
+        if (!tela) continue;
+        const chave = "despertar:" + id + ":" + tela.estado;
+        const c = { tipo: "despertar", chave, antes: velho, depois: novo, nivel: depois && Number.isFinite(depois.nivel) ? depois.nivel : null };
+        setFilaDasCerimonias((f) => (f.some((x) => x && x.chave === chave) ? f : entrarNaFila(f, c)));
+      }
+    } catch (e) { calou("TE10 · o despertar na fila", e); }
+  };
+  const sairDaCerimonia = (c) => {
+    try { setFilaDasCerimonias((f) => f.filter((x) => !(x && c && x.chave === c.chave))); } catch (e) { calou("TE10 · sair da cerimónia", e); }
+  };
+  /* as peças DESTA paga que ainda estão no chão (o motor pô-las lá com o
+     título da quest por origem) vão para a mochila pelo recolher de sempre */
+  const recolherDaPaga = (c) => {
+    try {
+      const nomes = new Set(((c && c.entradas) || []).filter((e) => e && e.tipo === "item" && e.item && e.item.nome).map((e) => e.item.nome));
+      if (!nomes.size) return;
+      const ids = ((chaoRef.current && chaoRef.current.itens) || []).filter((x) => x && x.id && x.de === c.titulo && x.pronto && nomes.has(x.pronto.nome)).map((x) => x.id);
+      if (ids.length) recolherDoChao(ids);
+    } catch (e) { calou("TE10 · a paga para a mochila", e); }
+  };
+  const equiparDoEspolio = (c, item) => {
+    try {
+      recolherDaPaga(c);
+      const naMochila = (((personagemRef.current || personagem || {}).equipamento) || []).find((x) => x && item && x.nome === item.nome) || item;
+      equipar(naMochila);
+    } catch (e) { calou("TE10 · equipar já", e); }
+  };
+  const fecharOEspolio = (c) => {
+    try { recolherDaPaga(c); } catch (e) { calou("TE10 · fechar o espólio", e); }
+    sairDaCerimonia(c);
+  };
+  /* a cerimónia da vez: a subida de nível entra na fila só como lugar; com
+     a luta aberta, nada abre (proximaCerimonia, FILA_DAS_CERIMONIAS) */
+  const cerimoniaDaFilaAgora = () => {
+    try {
+      if (carregando || dadoRolando || !filaDasCerimonias.length) return null;
+      const nivelNaFila = !!cerimoniaDoNivel || ((personagem && personagem.nivelPendentes) || 0) > 0;
+      const fila = nivelNaFila ? entrarNaFila(filaDasCerimonias, { tipo: "nivel" }) : filaDasCerimonias;
+      const c = proximaCerimonia(fila, { lutaAberta: !!combate });
+      return c && c.tipo !== "nivel" ? c : null;
+    } catch (e) { calou("TE10 · a fila das cerimónias", e); return null; }
+  };
   const abrirCerimoniaDoNivel = () => {
     try {
       const p = personagemRef.current || personagem;
@@ -18053,10 +18208,12 @@ export default function Taverna() {
   useEffect(() => {
     try {
       if (fase !== "jogo" || cerimoniaDoNivel || cerimoniaCalou || carregando || dadoRolando) return;
+      /* TE10: o espólio vai antes (o XP da quest passou o nível: a subida abre depois de o espólio fechar) */
+      if (filaDasCerimonias.some((c) => c && c.tipo === "espolio")) return;
       if ((personagem?.nivelPendentes || 0) > 0) abrirCerimoniaDoNivel();
     } catch (e) { calou("cerimonia do nivel", e); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fase, personagem?.nivelPendentes, cerimoniaDoNivel, cerimoniaCalou, carregando, dadoRolando]);
+  }, [fase, personagem?.nivelPendentes, cerimoniaDoNivel, cerimoniaCalou, carregando, dadoRolando, filaDasCerimonias]);
 
   /* ---------------- DEPOIS DO ÚLTIMO DADO (v9.25) ----------------
      Duas saídas, e as duas custam. Voltar cobra ouro (ou fé, para quem tem
@@ -26136,6 +26293,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </div>
             )}
 
+              {/* TE10: a quest fechada sem peça (formas.md §TE 3) — um chip debaixo da prosa do turno do fecho */}
+              {fechoDaQuest ? (
+                <LimiteDaCerimonia key={fechoDaQuest.chave} aoEstourar={(err) => { calou("TE10 · a faixa do fecho", err); setFechoDaQuest(null); }}>
+                  <div className="mt-3"><FaixaDoFecho quest={fechoDaQuest.quest} xp={fechoDaQuest.xp} moedas={fechoDaQuest.moedas} barra={fechoDaQuest.barra} /></div>
+                </LimiteDaCerimonia>
+              ) : null}
               <div ref={fimRef}><FimDaPagina /></div>
             </div>
             {/* V5e · A SETA DA LEITURA — uma peça, dois estados: `fim` (o círculo de
@@ -26652,6 +26815,23 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             lex={(mundoAtual() || {}).lexico} />
         </LimiteDaCerimonia>
       )}
+      {/* TE10: a cerimónia da vez (o espólio ou o despertar); a que estoura cala-se e sai da fila, e a paga continua dada */}
+      {fase === "jogo" && (() => {
+        const c = cerimoniaDaFilaAgora();
+        if (!c) return null;
+        if (c.tipo === "espolio") return (
+          <LimiteDaCerimonia key={c.chave} aoEstourar={(err) => { calou("TE10 · a cerimónia do espólio", err); sairDaCerimonia(c); }}>
+            <PainelEspolio entradas={c.entradas} titulo={c.titulo} coracao={c.coracao} nivel={c.nivel} xpAntes={c.xpAntes} xpParaSubir={c.xpParaSubir} nivelNovo={c.nivelNovo}
+              aoEquipar={(item) => equiparDoEspolio(c, item)} aoFechar={() => fecharOEspolio(c)} />
+          </LimiteDaCerimonia>
+        );
+        if (c.tipo === "despertar") return (
+          <LimiteDaCerimonia key={c.chave} aoEstourar={(err) => { calou("TE10 · a cerimónia do despertar", err); sairDaCerimonia(c); }}>
+            <PainelDespertar antes={c.antes} depois={c.depois} nivel={c.nivel} aoFechar={() => sairDaCerimonia(c)} />
+          </LimiteDaCerimonia>
+        );
+        return null;
+      })()}
       {fase === "jogo" && cerimoniaCalou && !cerimoniaDoNivel && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
         <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
       )}

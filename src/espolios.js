@@ -53,8 +53,11 @@
         10 relíquias únicas como prémio RARO de um confronto final. O
         artefacto cresce de adormecido a desperto a exaltado, à maneira dos
         Vestiges of Divergence (Explorer's Guide to Wildemount, 2020, cap. 6):
-        a peça é memória da campanha porque muda com ela. O primeiro lote é
-        da TE8; aqui ficam a forma e três de exemplo.
+        a peça é memória da campanha porque muda com ela. O catálogo é do
+        acervo (TE8: src/acervo/artefactos-lote-1.js — uma peça por quest
+        quente, uma lembrança por quest do coração); aqui fica a conta. Um
+        dos dois artefactos fica guardado para o confronto final
+        (`reservaDoConfronto`).
 
    O QUE A RÉGUA MUDOU NA PLANTA, em número (o cenário justo de cada classe,
    400 sementes, as peças sorteadas por semente). (1) A planta dizia que o
@@ -64,7 +67,10 @@
    dele é o nome, os passivos escritos e o gesto do exaltado. (2) Do nível 11
    em diante, a peça no teto do DMG quebra a luta em todas as classes
    (+14,2 a +25,0): a quest dá um degrau abaixo (TETO_DE_RARIDADE_DO_NIVEL,
-   coluna `daQuest`), e o porquê está lá.
+   coluna `daQuest`), e o porquê está lá. (3) TE8: desse ponto em diante o
+   «mais forte» é o artefacto que desperta — acende o teto (coluna `degrau`
+   de DESPERTAR_DO_ARTEFACTO) sem reforjar o aço; no 12 a arma com nome dá
+   +3 a +7 nas classes do aço, onde a peça genérica dava −0,3 a +1,0.
 
    O QUE O NARRADOR RECEBE: só pela pauta dinâmica, só no turno em que
    acontece — `espolioNaPauta` devolve uma linha («O QUE O HERÓI LEVA: …»,
@@ -85,6 +91,7 @@ import { KIT_INICIAL } from "./kit-inicial.js";
 import { avaliarCondicao } from "./condicoes-da-quest.js";
 import { contrair } from "./lugar.js";
 import { compararItem, rotuloDoEquipar, encaixeDoItem, fraseDaTroca } from "./comparar-item.js";
+import { ARTEFACTOS_LOTE_1 } from "./acervo/artefactos-lote-1.js";
 
 /* ============================================================
    1. AS TABELAS
@@ -181,11 +188,17 @@ export const TETO_DE_RARIDADE_DO_NIVEL = Object.freeze([
    melhores vindas de quests — a que passar desce a incomum; `atosPadrao`:
    quando a campanha não diz quantos atos tem; o resto, as decisões da
    pessoa. A sintonia (três) continua a ser o teto do que age ao mesmo
-   tempo. */
+   tempo.
+   `reservaDoConfronto` (TE8): dos dois artefactos, um fica guardado para o
+   confronto final enquanto ele não pagou — a planta pedia «um na faixa da
+   pista ou do rosto, um no confronto» (§2.3), e com uma peça escrita para
+   cada quest quente as duas primeiras fogueiras levavam o orçamento todo e o
+   cimo da escada não dava nada: o prémio do fim ia para o meio. */
 export const ORCAMENTO_DO_ESPOLIO = Object.freeze({
   rarosPorAto: 0.5,
   atosPadrao: 5,
   artefactos: 2,
+  reservaDoConfronto: 1,
   lembrancas: 2,
   reliquias: 1,
   achadosPorEtapa: 1,
@@ -255,55 +268,38 @@ export const ACHADO_DO_SITIO = Object.freeze({
    que acorda o estado — uma quest de fogueira ou incêndio concluída DEPOIS
    de o ganhar, ou níveis subidos; o confronto concluído também exalta.
    `degrausAcimaDoTeto`: 0 em todos — a régua mediu o degrau a mais e ele
-   quebra a luta (cabeçalho). */
+   quebra a luta (cabeçalho).
+   `degrau` (TE8, 09/11): a coluna de TETO_DE_RARIDADE_DO_NIVEL em que a
+   peça está nesse estado, lida no nível em que FOI GANHA (`artefacto.nivel`)
+   — nunca no de agora: um artefacto do nível 8 continua a ser memória do
+   nível 8, e a promessa (promessaDoArtefacto) diz a verdade sem adivinhar
+   níveis. Até ao 10 as duas colunas são a mesma (o teto É o degrau da
+   quest), e nada muda. Do 11 em diante a quest dá um degrau abaixo do teto
+   e a peça genérica já não sobe o herói; o artefacto que DESPERTA sobe ao
+   teto — é ele, e só ele, o «mais forte» desses níveis (a régua do poder
+   mede-o, secção 5). Nunca acima do teto: `degrausAcimaDoTeto` fica 0. */
 export const DESPERTAR_DO_ARTEFACTO = Object.freeze({
   ordem: Object.freeze(["adormecido", "desperto", "exaltado"]),
-  adormecido: Object.freeze({ passivos: 1, gesto: false, degrausAcimaDoTeto: 0, quando: null }),
-  desperto: Object.freeze({ passivos: 2, gesto: false, degrausAcimaDoTeto: 0, quando: Object.freeze({ quests: 1, temperaturas: Object.freeze(["fogueira", "incendio"]), niveis: 3 }) }),
-  exaltado: Object.freeze({ passivos: 2, gesto: true, degrausAcimaDoTeto: 0, quando: Object.freeze({ confronto: true, niveis: 6 }) }),
+  adormecido: Object.freeze({ passivos: 1, gesto: false, degrausAcimaDoTeto: 0, degrau: "daQuest", quando: null }),
+  desperto: Object.freeze({ passivos: 2, gesto: false, degrausAcimaDoTeto: 0, degrau: "teto", quando: Object.freeze({ quests: 1, temperaturas: Object.freeze(["fogueira", "incendio"]), niveis: 3 }) }),
+  exaltado: Object.freeze({ passivos: 2, gesto: true, degrausAcimaDoTeto: 0, degrau: "teto", quando: Object.freeze({ confronto: true, niveis: 6 }) }),
 });
 
-/* AS PEÇAS COM NOME — a forma, e três de exemplo (o lote é da TE8). Chave: o
-   id da quest. `genero`: `artefacto` (do enredo, tipo 1 de fogueira ou
-   incêndio) ou `lembranca` (do coração, tipo 2, metade boa do desfecho).
-   `nome` e `historia` são modelos com os papéis da ficha (`{vilao}`); `base`:
-   a base de BASES[tipo], ou null para usar a do herói nesse encaixe;
-   `passivos`: ids de PODERES (afixos.js), pela ordem em que acordam — só o
-   vocabulário que já tem leitor; `gesto`: a forma do `ativo` de relicas.js.
-   A voz, a da casa: maravilhosas, provocantes, intensas. */
-export const ARTEFACTOS_COM_NOME = Object.freeze({
-  o_cimo_da_escada: Object.freeze({
-    genero: "artefacto", tipo: "arma", base: null,
-    nome: "A Que Subiu a Escada",
-    historia: "Esteve na mão de {vilao} até ao último degrau de {covil}. Agora sabe o peso de quem a venceu, e não o esquece.",
-    /* o Bote (a iniciativa) e a Empunhadura, e nenhum passivo de dano ou de
-       defesa: a régua do poder recusou três versões desta peça no nível 7 —
-       com a Sede (+2 por golpe) o exaltado punha o Guerreiro a +27,7 pontos,
-       com o Peso Certo (+1 de defesa) a +22,0, com o Gume Eterno (+1 por
-       golpe) a +16,3. Uma peça escrita leva sempre o passivo que escolheu, e
-       o sorteio raro muitas vezes não (a Canalização não serve a um
-       guerreiro): por isso a peça com nome tem de ser mais mansa no número do
-       que a sorteada do mesmo degrau. A força dela é o gesto. */
-    passivos: Object.freeze(["bote", "empunhadura"]),
-    gesto: Object.freeze({ nome: "O Último Degrau", diz: "Por três respirações, todos à tua volta lutam como quem já viu o fim e não teve medo.",
-      efeito: Object.freeze({ buff: Object.freeze({ nome: "O Último Degrau", bonus: 4, turnos: 3, aplica: "todos" }) }) }),
-  }),
-  o_convite_sem_selo: Object.freeze({
-    genero: "artefacto", tipo: "amuleto", base: "Medalhão Antigo",
-    nome: "O Selo Que Faltava",
-    historia: "O lacre que {vilao} nunca pôs no convite, arrancado da mesa de {salao}. Aquece contra o peito quando alguém mente à tua frente.",
-    passivos: Object.freeze(["lingua_de_prata", "voz_que_manda"]),
-    gesto: Object.freeze({ nome: "A Lei da Casa", diz: "Debaixo deste teto ninguém puxa de uma lâmina — e quem te ouve sente-o nos ossos.",
-      efeito: Object.freeze({ buff: Object.freeze({ nome: "A Lei da Casa", bonus: 4, turnos: 3, aplica: "presenca" }) }) }),
-  }),
-  a_ultima_licao: Object.freeze({
-    genero: "lembranca", tipo: "amuleto", base: "Corda de Nós",
-    nome: "A Faixa de {mestre}",
-    historia: "{quem} usou-a no último dia de escola, e deu-ta sem dizer porquê. Cada nó é um golpe que {mestre} lhe ensinou.",
-    passivos: Object.freeze(["porte"]),
-    gesto: null,
-  }),
-});
+/* AS PEÇAS COM NOME — o catálogo vive no acervo (TE8: o lote 1 em
+   src/acervo/artefactos-lote-1.js, o mesmo espírito dos lotes de quests: um
+   ficheiro por lote, que não importa nada). Chave: o id da quest — cada
+   quest quente do enredo tem O SEU artefacto, e cada quest do coração a sua
+   lembrança; é a coisa DAQUELE vilão, DAQUELE companheiro, e não «um
+   artefacto» tirado de um saco. `genero`: `artefacto` (do enredo, tipo 1 de
+   fogueira ou incêndio) ou `lembranca` (do coração, tipo 2, metade boa do
+   desfecho). `nome` e `historia` são modelos com os papéis da ficha
+   (`{vilao}`, e o género de gente em `{quem:dele|dela}`); `base`: a base de
+   BASES[tipo], ou null para usar a do herói nesse encaixe; `passivos`: ids
+   de PODERES (afixos.js), pela ordem em que acordam — só o vocabulário que
+   já tem leitor, e só acendem os que o degrau da peça deixa (a régua de
+   comOsPassivos); `gesto`: a forma do `ativo` de relicas.js. A forma de
+   cada um e as catracas estão no cabeçalho do lote e em teste-espolios. */
+export const ARTEFACTOS_COM_NOME = Object.freeze({ ...ARTEFACTOS_LOTE_1 });
 
 /* A RELÍQUIA DO CONFRONTO — decisão da pessoa (09/11): as 10 relíquias de
    relicas.js entram como prémio RARO de um confronto final. `chance`: uma
@@ -454,29 +450,43 @@ function comOsPassivos(item, ids, quantos) {
 }
 
 /* o nome e a história com os papéis da campanha (o nome que o registo tem;
-   sem nome, «alguém» / «um lugar») */
-function encherComPapeis(modelo, R) {
+   sem nome, «alguém» / «um lugar»). O género (TE8): «{quem:dele|dela}» é a
+   forma de quem ocupa o papel — a segunda quando é mulher, a primeira quando
+   é homem ou não se sabe, a mesma regra de biblioteca-de-quests.js#encher.
+   O género vem do papel no registo (`genero`) ou do mapa `generos` que a
+   fiação pode passar; sem nenhum, a primeira forma. */
+const ehMulher = (g) => /^(f|mulher|femin|ela)/.test(semAcento(g));
+function encherComPapeis(modelo, R, generos) {
   const papeis = obj(R.papeis) || {};
-  return contrair(String(modelo || "").replace(/\{([a-z0-9_]+)\}/g, (m, k) => {
-    const p = obj(papeis[k]);
-    if (p && typeof p.nome === "string" && p.nome) return p.nome;
-    return p && p.tipo === "lugar" ? "um lugar" : "alguém";
-  }));
+  const gs = obj(generos) || {};
+  return contrair(String(modelo || "")
+    .replace(/\{([a-z0-9_]+):([^|{}]*)\|([^{}]*)\}/g, (m, k, ele, ela) => (ehMulher(gs[k] || (obj(papeis[k]) && papeis[k].genero)) ? ela : ele))
+    .replace(/\{([a-z0-9_]+)\}/g, (m, k) => {
+      const p = obj(papeis[k]);
+      if (p && typeof p.nome === "string" && p.nome) return p.nome;
+      return p && p.tipo === "lugar" ? "um lugar" : "alguém";
+    })).replace(/(^|[.!?…]\s+)(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
 }
 
-/* A peça com nome, no estado que se pede, no degrau do teto do nível. */
-function pecaComNome(F, R, def, { nivel, semente, heroi, estado = "adormecido" }) {
+/* o degrau de um estado, lido no nível em que a peça foi ganha (a coluna
+   `degrau` de DESPERTAR_DO_ARTEFACTO); a lembrança é sempre incomum */
+const RARIDADE_DA_LEMBRANCA = "incomum";
+const degrauDoEstado = (genero, estado, nivelGanho) => (genero === "lembranca" ? RARIDADE_DA_LEMBRANCA
+  : tetoDeRaridade(nivelGanho)[(DESPERTAR_DO_ARTEFACTO[estado] || DESPERTAR_DO_ARTEFACTO.adormecido).degrau] || tetoDeRaridade(nivelGanho).daQuest);
+
+/* A peça com nome, no estado que se pede, no degrau desse estado. */
+function pecaComNome(F, R, def, { nivel, semente, heroi, estado = "adormecido", generos }) {
   const tipo = def.tipo;
   const daMao = obj(obj(heroi) && heroi.equipados) && obj(heroi.equipados[tipo]) ? heroi.equipados[tipo].base : null;
   const base = def.base || daMao || (tipo === "arma" ? (KIT_INICIAL[obj(heroi) && heroi.classe] || {}).arma : null) || null;
-  const raridade = def.genero === "lembranca" ? "incomum" : tetoDeRaridade(nivel).daQuest;
+  const raridade = degrauDoEstado(def.genero, estado, nivel);
   const cru = gerarLoot(raridade, { tipo, nivel: nivelDe(nivel), base, rnd: dado(semente, F.id, "artefacto") });
   const st = DESPERTAR_DO_ARTEFACTO[estado] || DESPERTAR_DO_ARTEFACTO.adormecido;
   const comPoder = comOsPassivos(cru, def.passivos, st.passivos);
-  const historia = encherComPapeis(def.historia, R);
+  const historia = encherComPapeis(def.historia, R, generos);
   return {
     ...comPoder,
-    nome: encherComPapeis(def.nome, R),
+    nome: encherComPapeis(def.nome, R, generos),
     descricao: historia,
     sintoniza: true,
     deQuest: F.id,
@@ -501,12 +511,16 @@ function contar(campanha) {
     lembrancas: itens.filter((i) => obj(i.artefacto) && i.artefacto.genero === "lembranca").length,
     reliquias: [...itens, ...doHeroi].filter((i) => i.raridade === "unico").map((i) => i.nome),
     nomeados: new Set(itens.filter((i) => obj(i.artefacto) && typeof i.artefacto.id === "string").map((i) => i.artefacto.id)),
+    /* o confronto já pagou (a paga guardada leva `confronto`): a reserva cai */
+    confrontoPago: pagas.some((p) => p.confronto === true),
   };
 }
 
 /* ============================================================
    3. A PAGA DA QUEST — pagaDaQuest(ficha, registo, opcoes)
-   `opcoes`: { semente, nivel, heroi, campanha: { atos, pagas }, tipoDoLugar }.
+   `opcoes`: { semente, nivel, heroi, campanha: { atos, pagas }, tipoDoLugar,
+   generos } — `generos` (TE8): { papel: "f"|"m" }, o género de quem ocupa
+   um papel, para a concordância da peça com nome (o registo também o diz).
    → null enquanto a quest está aberta (ou lixo); senão a paga:
      { chave, quest, tipo, estado, temperatura, familia, grau,
        xp, moedas, itens: [item], efeitos: [{ tipo: "favor", papel }],
@@ -536,7 +550,7 @@ export function pagaDaQuest(ficha, registo, opcoes) {
     paga.xp = xpDaFracao(P.xp, nivel);
     const def = ARTEFACTOS_COM_NOME[F.id];
     if (P.lembranca && def && def.genero === "lembranca" && ja.lembrancas < ORCAMENTO_DO_ESPOLIO.lembrancas && !ja.nomeados.has(F.id)) {
-      paga.itens.push(pecaComNome(F, R, def, { nivel, semente, heroi }));
+      paga.itens.push(pecaComNome(F, R, def, { nivel, semente, heroi, generos: op.generos }));
     }
     return paga;
   }
@@ -559,8 +573,10 @@ export function pagaDaQuest(ficha, registo, opcoes) {
      a peça da família, no degrau da temperatura, no teto do nível e do
      orçamento de raras */
   const def = ARTEFACTOS_COM_NOME[F.id];
-  if (def && def.genero === "artefacto" && ja.artefactos < ORCAMENTO_DO_ESPOLIO.artefactos && !ja.nomeados.has(F.id)) {
-    paga.itens.push(pecaComNome(F, R, def, { nivel, semente, heroi }));
+  const ehConfronto = !!(obj(F.mao) && F.mao.tipo === RELIQUIA_DO_CONFRONTO.mao);
+  const reserva = ehConfronto || ja.confrontoPago ? 0 : ORCAMENTO_DO_ESPOLIO.reservaDoConfronto;
+  if (def && def.genero === "artefacto" && ja.artefactos < ORCAMENTO_DO_ESPOLIO.artefactos - reserva && !ja.nomeados.has(F.id)) {
+    paga.itens.push(pecaComNome(F, R, def, { nivel, semente, heroi, generos: op.generos }));
   } else if (P.item && Rf.slots) {
     const atos = Math.max(1, Math.floor(Number(campanha.atos) || ORCAMENTO_DO_ESPOLIO.atosPadrao));
     const tetoDeRaras = Math.ceil(atos * ORCAMENTO_DO_ESPOLIO.rarosPorAto);
@@ -592,7 +608,7 @@ export function pagaDaQuest(ficha, registo, opcoes) {
     if (r() < RELIQUIA_DO_CONFRONTO.chance) {
       const livres = RELIQUIAS.filter((x) => !ja.reliquias.includes(x.nome));
       const rel = livres.length ? livres[Math.floor(r() * livres.length)] : null;
-      if (rel) paga.itens.push({ ...itemDaReliquia(rel), deQuest: F.id });
+      if (rel) paga.itens.push({ ...itemDaReliquia(rel, { nivel }), deQuest: F.id });
     }
   }
   return paga;
@@ -683,7 +699,17 @@ export function despertarArtefacto(item, contexto) {
   const atual = ordem.includes(a.estado) ? a.estado : "adormecido";
   if (ordem.indexOf(alvo) <= ordem.indexOf(atual)) return item;
   const st = DESPERTAR_DO_ARTEFACTO[alvo];
-  const novo = comOsPassivos(it, a.passivos, st.passivos);
+  /* o degrau do estado novo (TE8): a peça ACENDE o degrau desse estado —
+     os poderes que ele compra (DEGRAUS, afixos.js: o épico «faz duas, e uma
+     delas pesa») —, e o aço fica o do dia em que foi ganha. Não se reforja:
+     a régua mediu as duas maneiras no nível 12 (o Guerreiro, 300 mesas), e a
+     peça refeita no épico punha a Aurora a +15 pontos (71%) e a Clériga a
+     +19, acima da lei; acesa, +7 e +10. Até ao 10 o degrau é o mesmo e só
+     acendem os passivos. */
+  const genero = a.genero === "lembranca" ? "lembranca" : "artefacto";
+  const novoDegrau = degrauDoEstado(genero, alvo, a.nivel);
+  const refeita = tierDe(novoDegrau) > tierDe(it.raridade) ? { ...it, raridade: novoDegrau } : it;
+  const novo = comOsPassivos(refeita, a.passivos, st.passivos);
   return {
     ...novo,
     artefacto: { ...a, estado: alvo },
@@ -728,17 +754,25 @@ export function promessaDoArtefacto(item, nivel) {
   /* para lá da escala de níveis (a de nivelDe) não acorda por nível */
   const nivelQueAcorda = alvo != null && nivelDe(alvo) === alvo ? alvo : null;
   const acordaEm = (cond) => (genero === "lembranca" ? (cond(D[ordem[0]]) ? ordem[0] : null) : ordem.find((e) => cond(D[e])) || null);
-  const tier = tierDe(it.raridade);
-  const podem = arr(a.passivos).map((id) => PODERES.find((p) => p.id === id)).filter((p) => p && p.tier <= tier && arr(p.slots).includes(it.tipo));
-  const maxPassivos = Math.max(...ordem.map((e) => D[e].passivos));
-  const acesos = D[estado].passivos;
+  /* TE8: o que acende em cada estado é o que o DEGRAU desse estado deixa (a
+     peça que desperta para o teto pode acender um passivo que a adormecida
+     não podia). O degrau de um estado que já passou é o da peça; o de um
+     que vem é o maior entre o da peça e o do estado (degrauDoEstado) — a
+     mesma conta de despertarArtefacto, e por isso a promessa é a verdade. */
+  const tierDe2 = (e) => (ordem.indexOf(e) <= i ? tierDe(it.raridade) : Math.max(tierDe(it.raridade), tierDe(degrauDoEstado(genero, e, a.nivel))));
+  const estadosDaPeca = genero === "lembranca" ? [ordem[0]] : ordem;
+  const acesosEm = (e) => arr(a.passivos).map((id) => PODERES.find((p) => p.id === id))
+    .filter((p) => p && p.tier <= tierDe2(e) && arr(p.slots).includes(it.tipo)).slice(0, D[e].passivos).map((p) => p.id);
+  const porEstado = Object.fromEntries(estadosDaPeca.map((e) => [e, acesosEm(e)]));
+  const algumaVez = arr(a.passivos).filter((id, k, l) => l.indexOf(id) === k && estadosDaPeca.some((e) => porEstado[e].includes(id)));
+  const acesosAgora = genero === "lembranca" ? porEstado[ordem[0]] : porEstado[estado];
   const g = obj(a.gesto);
   return {
     genero, estado, proximo, nivelQueAcorda,
     faltamNiveis: nivelQueAcorda != null ? Math.max(0, nivelQueAcorda - nivelDe(nivel)) : null,
     porProva: proximo && Number.isFinite(q.quests) && q.quests > 0 ? { quests: q.quests, temperaturas: [...arr(q.temperaturas)] } : null,
     porConfronto: !!(proximo && q.confronto),
-    poderes: podem.slice(0, maxPassivos).map((p, k) => ({ id: p.id, nome: p.nome, diz: p.diz, aceso: k < acesos, acordaEm: acordaEm((st) => st.passivos > k) })),
+    poderes: algumaVez.map((id) => PODERES.find((p) => p.id === id)).map((p) => ({ id: p.id, nome: p.nome, diz: p.diz, aceso: acesosAgora.includes(p.id), acordaEm: estadosDaPeca.find((e) => porEstado[e].includes(p.id)) || null })),
     gesto: g && typeof g.nome === "string" ? { nome: g.nome, diz: typeof g.diz === "string" ? g.diz : "", aceso: !!D[estado].gesto, acordaEm: acordaEm((st) => !!st.gesto) } : null,
   };
 }

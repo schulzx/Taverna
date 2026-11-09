@@ -394,7 +394,9 @@ sec("6 · a fiação no App");
      passo das quests dos mundos novos (a linha grava o estado já com elas), e
      a gravação só corre com a sessão aberta (juntado). A ordem que a asserção
      protege — o Cronista antes da linha, numa fila, em calou — é a mesma. */
-  t("a linha grava-se depois do Cronista, numa fila, em calou", /\.then\(\(\) => Promise\.resolve\(doCronista\)\.catch\(\(\) => null\)\)\s*\.then\(\(\) => \{ if \(comQuests\) correrAsQuests\("o fim do turno"\); \}\)\s*\.then\(\(\) => \{ if \(juntado\) \{ try \{ gravarOTurnoDaSessao\(juntado\); \} catch \(e\) \{ calou\("a sessão \(o turno\)", e\); \} \} \}\);/.test(C));
+  /* AJUSTADA em 09/11 (TE9), E O MOTIVO: as quests do fim do turno levam o
+     feito desse turno (feitoDeste). A ordem protegida é a mesma. */
+  t("a linha grava-se depois do Cronista, numa fila, em calou", /\.then\(\(\) => Promise\.resolve\(doCronista\)\.catch\(\(\) => null\)\)\s*\.then\(\(\) => \{ if \(comQuests\) correrAsQuests\("o fim do turno", feitoDeste\); \}\)\s*\.then\(\(\) => \{ if \(juntado\) \{ try \{ gravarOTurnoDaSessao\(juntado\); \} catch \(e\) \{ calou\("a sessão \(o turno\)", e\); \} \} \}\);/.test(C));
   t("a escrita que falha apaga a chave da sessão, e só ela", /catch \(e\) \{ try \{ localStorage\.removeItem\(chave\); \} catch \{ *\} calou\("guardar a sessão", e\); \}/.test(C) && /const chave = chaveDaSessao\(chaveDoSave\(\)\);/.test(C));
 }
 

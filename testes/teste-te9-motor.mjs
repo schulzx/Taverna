@@ -40,7 +40,7 @@ import { PASSOS_DO_REPLAY } from "../src/sessao.js";
 import { aPautaDoTurno } from "../src/motor/pauta-do-turno.js";
 import { textoDaPauta, TETO_DA_PAUTA } from "../src/pauta.js";
 import { xpDoFeito } from "../src/juiz.js";
-import { reliquiasEquipadas, podeUsarAtivo, usarAtivo, ativoDeclarado } from "../src/relicas.js";
+import { reliquiasEquipadas, podeUsarAtivo, usarAtivo, ativoDeclarado, itemDaReliquia, reliquiaPorId, danoDaReliquia } from "../src/relicas.js";
 import { fraseDaTroca } from "../src/comparar-item.js";
 
 let bons = 0, maus = 0;
@@ -298,6 +298,14 @@ sec("§5 o artefacto que acorda");
   const Echao = { ...comArt(E0, 3, conf), personagem: { ...E0.personagem, nivel: 3 }, chao: { cena: "x", itens: [{ id: "ch1", especie: "equipamento", nome: art.nome, destino: "equipamento", pronto: art }] } };
   const r4 = oTurnoDasQuests(Echao, { mundo: W.mundo });
   t("a peça ainda no chão acorda também (o objeto pronto), e não muda de crachá", r4.estado.chao && r4.estado.chao.itens[0].id === "ch1" && r4.estado.chao.itens[0].pronto.artefacto.estado === "exaltado");
+  /* TE8: a relíquia arma acompanha o nível de quem a traz — o mesmo laço do
+     artefacto que acorda (7d) chama reliquiaNoNivel, calado */
+  const relV = itemDaReliquia(reliquiaPorId("comedora"));
+  const rR = oTurnoDasQuests({ ...E0, personagem: { ...E0.personagem, nivel: 17, equipados: { arma: relV } } }, { mundo: W.mundo });
+  const aR = rR && rR.estado.personagem && rR.estado.personagem.equipados.arma;
+  t("a relíquia arma feita no nível 1 ganha no turno o aço do nível 17, sem linha no relato", aR && aR.atributos.dano === danoDaReliquia(reliquiaPorId("comedora"), 17) && aR.atributos.dano > (relV.atributos.dano || 0) && !rR.linhas.some((l) => l.includes(relV.nome)), J(aR && aR.atributos));
+  const rR2 = oTurnoDasQuests({ ...E0, personagem: { ...E0.personagem, nivel: 17, equipados: { arma: aR } } }, { mundo: W.mundo });
+  t("e no turno seguinte, no mesmo nível, já não mexe na ficha", rR2 && !rR2.estado.personagem);
 }
 
 sec("§6 o teto: a pauta com o anúncio cheio, e o prompt fixo");

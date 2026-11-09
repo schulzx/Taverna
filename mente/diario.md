@@ -24,6 +24,13 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 09/11 · v9.631 · os espólios chegam ao jogo, com a cerimónia e os artefactos com nome
+- **TE9 motor (`backend`, bae2671):** o achado escondido, o da etapa e a paga no fecho (uma vez só, três trincos); a paga substitui o feito do Narrador; o artefacto acorda; a linha do que se leva na pauta (pior caso 1366/1400); o replay igual.
+- **TE10 peças (`aprendiz`, bae2671):** a cerimónia (as cartas de costas a virar pela raridade, teto 4 s), o veredito com «Equipar já», o chip do achado, o despertar, a relíquia. O agente caiu por falha de rede no fim; o trabalho estava no disco e verde.
+- **a fiação (`oficial`, bastão 20:21–21:14):** a fila das cerimónias (espólio → nível → despertar, nunca com a luta aberta), «Equipar já» pelo equipar da gaveta, a faixa da quest sem peça; visto a 1905 e a 375 (CONCLUÍDA com +125 XP; «O QUE FICA» e a lembrança equipada). **Decisão minha:** a paga da quest vai direta à mochila (é o que a cerimónia diz); os achados do caminho ficam no chão — próxima volta do motor.
+- **TE8 (`backend`):** 17 artefactos e 16 lembranças (`src/acervo/artefactos-lote-1.js`, leitura em `mente/leitura-artefactos.md`); o confronto leva sempre o seu; a relíquia arma ganha aço pelo nível (`ACO_DA_RELIQUIA`: antes −18 a −28 no 17, agora +2,7 a +19,7 em 18 de 20 mesas, nunca acima de 70%); o Último Argumento perde o golpe extra. **Desvio aceite:** do nível 11 a arma desperta acende a Aurora/Ceifa (a régua aprova; nível 12: +3 a +7, contra ~0 da peça genérica). Defeito antigo à parte: `criticoMinimo` não lê os poderes dos itens.
+- **a pessoa (09/11):** o som (ligado, volume baixo, interruptor; três momentos), a carta de costas no Diário (só a luz da raridade, sem a tabela dos caminhos), a lenda que a arma escreve (dos factos, teto 5) — próxima volta.
+
 ## 09/11 · v9.630 · a temperatura das quests (TE1–TE5), e os espólios com a régua do poder (TE6–TE7)
 - **TE1–TE3 (`backend`):** a temperatura (brasa, chama, fogueira, incêndio) nas 52, coerente com o `quando`; `pressupoe`/`estabelece` com três predicados novos (camada do vilão, sabe_nome, convivência); o efeito `deixa` sai (escrevia numa lista sem leitor; as 18 reviravoltas que só o tinham passam a uma linha do QUEM É). As 14 correções da auditoria: «com o teu nome» 154 → 0, a Ama antes da hora 34 → 0.
 - **TE4–TE5 (`backend`):** `CURVA_DA_TEMPERATURA` por ato com um respiro; o grafo nunca se viola; a quest do coração espera o pressuposto (`espinha.quests.espera`, 7 dias, depois a reserva). Rosto antes do ato 35 → 0, duplo encontro 35 → 0, coração quente no turno 0 315 → 0, fora da curva 111 → 0. Eu liguei `elenco` ao estado das quests no App (bastão de minutos).

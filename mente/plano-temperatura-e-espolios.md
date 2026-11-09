@@ -19,6 +19,9 @@ de combate prova. O Narrador não escolhe a ordem nem inventa o prémio.
 
 1. **Os itens com nome:** dois artefactos do enredo e até duas lembranças dos companheiros por campanha. **As 10 relíquias únicas** entram como prémio raro de um confronto final.
 2. **O achado escondido espera até a quest fechar:** o herói pode voltar a buscá-lo enquanto ela estiver aberta.
+4. **O som (09/11): sim, ligado por omissão e em volume baixo**, com o interruptor à vista no menu. Sintetizado (Web Audio, sem ficheiros). Começa em três momentos só: a carta que vira (uma nota por raridade), o dado que pousa, o artefacto que desperta. Mais, só depois de ouvido.
+5. **A carta virada no Diário (09/11): sim, só metade** — a carta de costas com a luz da raridade que a quest pode pagar. **Não** a tabela dos caminhos com a peça de cada um: o jogador escolhe o caminho pela história e descobre o prémio no fim.
+6. **A lenda que a arma escreve (09/11): sim** — uma linha gravada no artefacto por feito marcante, **saída dos factos que o sistema regista** (o livro de factos, os desfechos das quests), nunca do Narrador; teto de cinco linhas, as mais marcantes. Campo novo e aditivo no item.
 3. **O nome «temperatura»** e os graus brasa → chama → fogueira → incêndio ficam (proposta do coordenador; ela pediu «calor ou algum nome que você ache melhor»).
 
 ---

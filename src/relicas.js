@@ -44,6 +44,7 @@
 
 import { criarCondicao } from "./condicoes.js";
 import { empilhar } from "./efeitos.js";
+import { BASES } from "./loot.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -52,7 +53,7 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
    `ativo` é o gesto, uma vez por dia, aplicado por `usarAtivo`. */
 export const RELIQUIAS = [
   {
-    id: "comedora", nome: "A Comedora de Reis", tipo: "arma", icone: "🗡",
+    id: "comedora", nome: "A Comedora de Reis", tipo: "arma", base: "Adaga", icone: "🗡",
     historia: "Foi forjada para matar um só homem, e matou. Continua com fome.",
     poderes: [
       { id: "fome_antiga", nome: "Fome Antiga", efeito: { danoExtra: 5, criticoEm: 18 }, diz: "Ela não corta para ferir: corta para tirar." },
@@ -64,10 +65,14 @@ export const RELIQUIAS = [
     },
   },
   {
-    id: "ultimo_argumento", nome: "O Último Argumento", tipo: "arma", icone: "⚔",
+    id: "ultimo_argumento", nome: "O Último Argumento", tipo: "arma", base: "Rapieira", icone: "⚔",
     historia: "Nenhuma guerra que ela terminou precisou de uma segunda conversa.",
     poderes: [
-      { id: "palavra_final", nome: "Palavra Final", efeito: { ataqueExtra: 1, danoExtra: 3 }, diz: "O braço encontra o ritmo de duas armas com uma só." },
+      /* TE8 (09/11): era { ataqueExtra: 1, danoExtra: 3 } — «o ritmo de duas
+         armas com uma só». A régua do poder nunca a tinha medido, e o golpe
+         extra punha-a entre 77% e 100% de vitória em todas as mesas justas
+         (o teto do prémio raro é 70%). Fica o dano, e a frase acompanha. */
+      { id: "palavra_final", nome: "Palavra Final", efeito: { danoExtra: 3 }, diz: "Ela não discute: cada golpe chega como a última coisa que se disse." },
       { id: "sem_replica", nome: "Sem Réplica", efeito: { iniciativa: 5 }, diz: "Ela já está no ar quando o outro decide sacar." },
     ],
     ativo: {
@@ -183,14 +188,61 @@ export function reliquiaPorNome(nome) {
 }
 export function reliquiasDoSlot(tipo) { return RELIQUIAS.filter((r) => r.tipo === tipo); }
 
+/* O AÇO DA RELÍQUIA QUE É ARMA (09/11/2026, Fase TE · TE8). Até aqui a
+   Comedora de Reis e o Último Argumento não tinham base nem `dano`: o
+   combate lia-as como «arma simples», 1d6, sem bónus de aço, e toda a força
+   delas era o passivo escrito. A régua do poder (teste-regua-do-poder.mjs)
+   mediu o que isso dava: a Comedora valia +17 pontos de vitória no nível 3
+   e −19 a −28 no 17 — abaixo da arma TÍPICA, a sorteada do mercado, porque
+   o `dano` da arma de loot sobe com o degrau e com o nível (loot.js: base
+   + degrau + 1 a cada 5 níveis) e o da relíquia ficava no zero. O prémio
+   mais raro do jogo envelhecia pior do que uma espada qualquer.
+   O conserto é o aço: a relíquia arma tem a forma de uma base do catálogo
+   (`base`, que dá o dado e a propriedade — as duas são subtis, e servem a
+   quem luta com a força e a quem luta com a destreza) e um `dano` que
+   ACOMPANHA O NÍVEL de quem a traz, por esta tabela. A Comedora tem a forma
+   de uma Adaga (a lâmina de quem mata um rei) e o Último Argumento a de uma
+   Rapieira (o argumento de um duelo). `dano`: o que se soma
+   ao da base (o `dano` dela em BASES.arma, loot.js — o mesmo da forja), na
+   faixa do nível. Os números são os que a régua deixou: a
+   relíquia nunca abaixo da arma típica e nunca acima de 70% no cenário
+   justo (secção 6 da régua). Medido (300 lutas por mesa): +2,7 a +19,7
+   acima da típica em 18 das 20 mesas, máximo 68,7%; o −1 do 1–4 é o que
+   tirou o Ladino do 3 dos 72%, e o salto do 17 é o épico sorteado que o
+   típico ali já é. Abaixo da típica ficam o Ladino e o Mago no 17 (−1 a −9):
+   o aço que os levasse lá punha o Guerreiro acima dos 70%. O nível entra pela porta (`itemDaReliquia` e
+   `reliquiaNoNivel`, que a fiação chama quando o herói sobe). */
+export const ACO_DA_RELIQUIA = Object.freeze({
+  porNivel: Object.freeze([
+    Object.freeze({ ate: 4, dano: -1 }),
+    Object.freeze({ ate: 10, dano: 0 }),
+    Object.freeze({ ate: 16, dano: 1 }),
+    Object.freeze({ ate: 20, dano: 7 }),
+  ]),
+});
+const nivelDaReliquia = (n) => Math.max(1, Math.min(20, Math.floor(Number(n) || 1)));
+/* o `dano` de aço de uma relíquia arma no nível; null para o que não é arma */
+export function danoDaReliquia(rel, nivel) {
+  if (!rel || rel.tipo !== "arma") return null;
+  const n = nivelDaReliquia(nivel);
+  const faixa = ACO_DA_RELIQUIA.porNivel.find((f) => n <= f.ate) || ACO_DA_RELIQUIA.porNivel[ACO_DA_RELIQUIA.porNivel.length - 1];
+  const b = BASES.arma.find((x) => x.nome === rel.base);
+  return ((b && b.dano) || 0) + faixa.dano;
+}
+
 /* O item de equipamento pronto — a mesma forma que `gerarLoot` devolve, para
    que tudo o que já lê item (ficha, mercado, sintonia, dádivas) leia esta
-   peça sem saber que ela é especial. */
-export function itemDaReliquia(rel) {
+   peça sem saber que ela é especial. `opcoes.nivel` (TE8): o nível de quem
+   a ganha, para o aço da relíquia arma; sem ele, o nível 1. */
+export function itemDaReliquia(rel, opcoes) {
   if (!rel) return null;
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const aco = danoDaReliquia(rel, op.nivel);
   return {
     nome: rel.nome, tipo: rel.tipo, raridade: "unico",
-    atributos: atributosDaReliquia(rel),
+    ...(rel.base ? { base: rel.base } : {}),
+    atributos: { ...atributosDaReliquia(rel), ...(aco != null && aco > 0 ? { dano: aco } : {}) },
+    ...(aco != null ? { nivelDoAco: nivelDaReliquia(op.nivel) } : {}),
     poderes: rel.poderes.map((p) => ({ id: p.id, nome: p.nome, efeito: p.efeito, diz: p.diz })),
     ...(rel.concede ? { concede: rel.concede } : {}),
     ativo: { id: rel.id, nome: rel.ativo.nome, diz: rel.ativo.diz },
@@ -205,6 +257,21 @@ export function itemDaReliquia(rel) {
 /* Os efeitos de atributo dos passivos, dobrados como em `loot.js`: quem lê
    atributo e resistência é `bonusEquip` e `danos.js`, e sempre foi. */
 const DE_ATRIBUTO = ["forca", "destreza", "vigor", "intelecto", "presenca", "percepcao", "defesa"];
+/* A relíquia arma no nível de agora (TE8): o mesmo item quando o aço não
+   muda (ou não é relíquia arma), senão o item com o `dano` da faixa nova —
+   nunca muta o que recebe. É a porta que o motor do turno chama quando o
+   herói sobe (motor/quests-do-turno.js, 7d), e só sobe: um item do modo
+   deus feito sem nível acerta-se no primeiro turno. */
+export function reliquiaNoNivel(item, nivel) {
+  if (!item || typeof item !== "object" || item.raridade !== "unico" || item.tipo !== "arma") return item;
+  const rel = reliquiaPorNome(item.nome);
+  const aco = danoDaReliquia(rel, nivel);
+  if (aco == null) return item;
+  const agora = (item.atributos && Number(item.atributos.dano)) || 0;
+  if (aco <= agora) return item;
+  return { ...item, ...(rel.base && !item.base ? { base: rel.base } : {}), atributos: { ...(item.atributos || {}), dano: aco }, nivelDoAco: nivelDaReliquia(nivel) };
+}
+
 export function atributosDaReliquia(rel) {
   const out = {};
   for (const p of (rel && rel.poderes) || []) {

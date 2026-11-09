@@ -155,6 +155,7 @@ import { firmarLaco, romperLaco } from "../npcs.js";
 import { anotarTurno, favoresDoLivro } from "../livro-de-factos.js";
 import { avaliarCondicao, resolverPapeis, COMBINADORES } from "../condicoes-da-quest.js";
 import { pagaDaQuest, achadosDaEtapa, achadoEscondido, despertarArtefacto, espolioNaPauta, RELIQUIA_DO_CONFRONTO, LINHA_DO_ESPOLIO } from "../espolios.js";
+import { reliquiaNoNivel } from "../relicas.js";
 import { porNoChao, varrerSeMudou, achadoDeEquipamento, achadoDeConsumivel } from "../chao.js";
 import { consumivelPorId } from "../pocoes.js";
 import { aplicarNivel } from "../regras-jogo.js";
@@ -810,6 +811,10 @@ function correr(E0, opcoes, antes) {
        que contam são as pagas DEPOIS da dele (o histórico, pela ordem) */
     const ditos = new Set();
     const despertar = (it) => {
+      /* TE8: a relíquia arma acompanha o nível de quem a traz (o aço de
+         relicas.js#ACO_DA_RELIQUIA) — calada: o jogador vê o número subir na
+         ficha, o sistema não anuncia o mecanismo */
+      if (obj(it) && it.raridade === "unico") { try { return reliquiaNoNivel(it, nivelAgora()) || it; } catch { return it; } }
       if (!obj(it) || !obj(it.artefacto) || typeof it.artefacto.id !== "string") return it;
       const k = pagas.findIndex((p) => p.quest === it.artefacto.id);
       const depois = k >= 0 ? pagas.slice(k + 1) : [];

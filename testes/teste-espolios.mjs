@@ -15,7 +15,11 @@
         artefactos, duas lembranças, uma relíquia e só no confronto;
      6. o achado que espera (decisão da pessoa) e o registo que o guarda;
      7. o artefacto que cresce; o momento e a pauta;
-     8. o null, o lixo e a imutabilidade.
+     8. o null, o lixo e a imutabilidade;
+     9. o lote 1 dos artefactos (TE8): uma peça por quest quente e uma
+        lembrança por quest do coração, nada de dano nem defesa abaixo do
+        épico, o que acende nunca se apaga, o teto, a reserva do confronto;
+    10. a relíquia arma com o aço do nível (TE8).
    A força das peças contra a luta é da OUTRA suíte, a régua do poder
    (teste-regua-do-poder.mjs, TE7): esta prova a conta, aquela o efeito. */
 import {
@@ -23,14 +27,16 @@ import {
   TETO_DE_RARIDADE_DO_NIVEL, ORCAMENTO_DO_ESPOLIO, SITIO_DO_PAPEL, ACHADO_DO_SITIO,
   DESPERTAR_DO_ARTEFACTO, ARTEFACTOS_COM_NOME, RELIQUIA_DO_CONFRONTO, LINHA_DO_ESPOLIO,
   familiaDoRamo, tetoDeRaridade, grauDoDesfecho, pagaDaQuest, achadosDaEtapa, achadoEscondido,
-  despertarArtefacto, revelacaoDoEspolio, espolioNaPauta,
+  despertarArtefacto, revelacaoDoEspolio, espolioNaPauta, promessaDoArtefacto,
 } from "../src/espolios.js";
+import { ARTEFACTOS_LOTE_1 } from "../src/acervo/artefactos-lote-1.js";
+import { PAPEIS_DA_QUEST } from "../src/biblioteca-de-quests.js";
 import { BIBLIOTECA_DE_QUESTS, TEMPERATURAS, questPorId, avancarQuest } from "../src/biblioteca-de-quests.js";
 import { vaoDoNivel, pressaDoNivel, tetoDoPresente } from "../src/juiz.js";
 import { RARIDADES, BASES, gerarLoot } from "../src/loot.js";
 import { TIER, PODERES } from "../src/afixos.js";
 import { consumivelPorId } from "../src/pocoes.js";
-import { RELIQUIAS } from "../src/relicas.js";
+import { RELIQUIAS, reliquiaPorId, reliquiaPorNome, itemDaReliquia, reliquiaNoNivel, danoDaReliquia, ACO_DA_RELIQUIA } from "../src/relicas.js";
 import { TIPOS_MASMORRA } from "../src/mundo-base.js";
 import { garantirFactos, anotarTurno } from "../src/livro-de-factos.js";
 import { dadoDo } from "../src/semente.js";
@@ -126,9 +132,12 @@ sec("1. AS TABELAS — se é número, é tabela, e a suíte lê-a de volta");
     defs.every(([id, d]) => { const q = questPorId(id); return d.genero === "artefacto" ? q.tipo === 1 && ["fogueira", "incendio"].includes(q.temperatura) : d.genero === "lembranca" && q.tipo === 2; }));
   t("os passivos são do vocabulário que tem leitor (afixos.js), e servem no encaixe da peça",
     defs.every(([, d]) => d.passivos.length >= 1 && d.passivos.every((p) => { const x = PODERES.find((y) => y.id === p); return x && x.slots.includes(d.tipo); })));
-  t("o nome e a história só usam papéis da ficha", defs.every(([id, d]) => {
+  /* TE8: o modelo pode marcar o género («{quem:dele|dela}»), e o marcador só
+     se põe em gente — a mesma regra da biblioteca (a régua lia só «{x}» e
+     deixava o marcador por provar) */
+  t("o nome e a história só usam papéis da ficha (e o género só em gente)", defs.every(([id, d]) => {
     const q = questPorId(id);
-    return [...`${d.nome} ${d.historia}`.matchAll(/\{([a-z0-9_]+)\}/g)].every((m) => q.papeis[m[1]]);
+    return [...`${d.nome} ${d.historia}`.matchAll(/\{([a-z0-9_]+)(:[^{}]*)?\}/g)].every((m) => q.papeis[m[1]] && (!m[2] || PAPEIS_DA_QUEST[q.papeis[m[1]].de].tipo === "pessoa"));
   }));
   t("a base fixa, quando há, existe no encaixe", defs.every(([, d]) => d.base === null || BASES[d.tipo].some((b) => b.nome === d.base)));
   t("o gesto, quando há, fala a língua do ativo das relíquias (nome, diz, efeito)", defs.every(([, d]) => d.gesto === null || (d.gesto.nome && d.gesto.diz && d.gesto.efeito)));
@@ -159,7 +168,12 @@ sec("2. O DETERMINISMO — a mesma semente, a mesma paga");
 /* ============================================================ */
 sec("3. A CURVA — pela temperatura e pelo nível");
 {
-  const umaDe = (temp) => TIPO1.find((q) => q.temperatura === temp && !ARTEFACTOS_COM_NOME[q.id]);
+  /* TE8: toda quest quente tem agora o seu artefacto (o lote 1), e já não há
+     fogueira nem incêndio «sem ficha» para escolher. Esta secção mede a curva
+     do XP e das moedas, e o teto da peça genérica — o artefacto fica de fora
+     das contas dela (`!i.artefacto`), como sempre ficou; por isso basta a
+     primeira quest de cada grau. */
+  const umaDe = (temp) => TIPO1.find((q) => q.temperatura === temp);
   let curvaCerta = true, sobe = true, noTetoDoPresente = true, noTetoDeRaridade = true, brasaSemPeca = true;
   for (let n = 1; n <= 20; n++) {
     let antes = -1;
@@ -233,7 +247,7 @@ sec("4. AS FAMÍLIAS — cada caminho paga o que diz");
 sec("5. OS TETOS POR CAMPANHA — 1000 campanhas simuladas");
 {
   const porTemp = (temp) => TIPO1.filter((q) => q.temperatura === temp);
-  let estourou = 0, raras = 0, arts = 0, lemb = 0, rels = 0, relFora = 0, maxRaras = 0;
+  let estourou = 0, raras = 0, arts = 0, lemb = 0, rels = 0, relFora = 0, maxRaras = 0, confrontos = 0, confrontosComArt = 0, faixaDupla = 0;
   for (let c = 0; c < 1000; c++) {
     const r = dadoDo("campanha-te6", c);
     const pick = (l) => l[Math.floor(r() * l.length)];
@@ -245,24 +259,54 @@ sec("5. OS TETOS POR CAMPANHA — 1000 campanhas simuladas");
     const coracao = [questPorId("a_ultima_licao"), pick(TIPO2), questPorId("a_ultima_licao")];
     const pagas = [];
     for (const F of [...atos, ...coracao]) {
+      const ehConf = !!(F.mao && F.mao.tipo === RELIQUIA_DO_CONFRONTO.mao);
       const R = F.tipo === 1 ? fechada(F, { ramo: pick(["luta", "violenta", "lamina", "furtiva", "palavra"]) }) : fechada(F, { estado: "terminada", desfecho: F.desfechos[0].id });
       const p = pagaDaQuest(F, R, { semente: "camp" + c, nivel, heroi: { ...HEROI, nivel }, campanha: { atos: 5, pagas } });
-      for (const i of p.itens) if (i.raridade === "unico" && !(F.mao && F.mao.tipo === RELIQUIA_DO_CONFRONTO.mao)) relFora++;
-      pagas.push(p);
+      for (const i of p.itens) if (i.raridade === "unico" && !ehConf) relFora++;
+      if (ehConf) { confrontos++; if (p.itens.some((i) => i.artefacto)) confrontosComArt++; }
+      /* a paga guardada leva `confronto`, como a do motor (quests-do-turno.js) */
+      pagas.push({ ...p, confronto: ehConf });
     }
     const itens = pagas.flatMap((p) => p.itens);
     const nR = itens.filter((i) => TIER[i.raridade] >= TIER.raro && i.raridade !== "unico" && !i.artefacto).length;
     const nA = itens.filter((i) => i.artefacto && i.artefacto.genero === "artefacto").length;
     const nL = itens.filter((i) => i.artefacto && i.artefacto.genero === "lembranca").length;
+    if (itens.filter((i) => i.artefacto && i.artefacto.id === "a_ultima_licao").length > 1) faixaDupla++;
     const nU = itens.filter((i) => i.raridade === "unico").length;
     maxRaras = Math.max(maxRaras, nR);
     if (nR > Math.ceil(5 * ORCAMENTO_DO_ESPOLIO.rarosPorAto) || nA > ORCAMENTO_DO_ESPOLIO.artefactos || nL > ORCAMENTO_DO_ESPOLIO.lembrancas || nU > ORCAMENTO_DO_ESPOLIO.reliquias) estourou++;
     raras += nR; arts += nA; lemb += nL; rels += nU;
   }
   t("nenhuma das 1000 campanhas passa do orçamento (⌈atos/2⌉ raras, 2 artefactos, 2 lembranças, 1 relíquia)", estourou === 0, `${estourou} estouraram`);
-  t(`e o orçamento morde: alguma campanha chegou às ${Math.ceil(5 * ORCAMENTO_DO_ESPOLIO.rarosPorAto)} raras`, maxRaras === Math.ceil(5 * ORCAMENTO_DO_ESPOLIO.rarosPorAto));
-  t("a mesma peça com nome nunca cai duas vezes (a ficha da lembrança veio duas vezes em cada campanha)", lemb > 0 && lemb <= 1000, `${lemb}`);
+  /* TE8: com uma peça escrita em cada quest quente, os dois artefactos ficam
+     com dois dos três atos quentes, e uma campanha de cinco atos já não chega
+     às três raras genéricas sozinha — a mordida passou a provar-se à mão:
+     dois artefactos já levados, cinco atos quentes pelo ferro, e a quarta
+     rara vira incomum. A intenção é a mesma: o teto de raras existe e morde. */
+  {
+    const dois = [{ quest: "x", confronto: true, itens: [{ nome: "A", raridade: "raro", artefacto: { id: "x", genero: "artefacto" } }, { nome: "B", raridade: "raro", artefacto: { id: "y", genero: "artefacto" } }] }];
+    const quentes = TIPO1.filter((q) => ["fogueira", "incendio"].includes(q.temperatura) && q.etapas.some((e) => (e.ramos || []).some((r) => familiaDoRamo(r) === "ferro")));
+    let maxMao = 0;
+    for (let c = 0; c < 40; c++) {
+      const pagas = [...dois];
+      for (let k = 0; k < 5; k++) {
+        const F = quentes[(c + k * 3) % quentes.length];
+        const R = fechada(F);
+        for (const e of F.etapas) if ((e.ramos || []).length) R.feitas[e.id].ramo = e.ramos.find((r) => familiaDoRamo(r) === "ferro") || e.ramos[0];
+        pagas.push(pagaDaQuest({ ...F, mao: null }, R, { semente: "morde" + c + "|" + k, nivel: 8, heroi: { ...HEROI, nivel: 8 }, campanha: { atos: 5, pagas } }));
+      }
+      maxMao = Math.max(maxMao, pagas.flatMap((p) => p.itens).filter((i) => TIER[i.raridade] >= TIER.raro && i.raridade !== "unico" && !i.artefacto).length);
+    }
+    t(`e o orçamento morde: com os artefactos já levados, cinco atos quentes chegam às ${Math.ceil(5 * ORCAMENTO_DO_ESPOLIO.rarosPorAto)} raras e não passam`, maxMao === Math.ceil(5 * ORCAMENTO_DO_ESPOLIO.rarosPorAto), String(maxMao));
+  }
+  /* TE8: o coração sorteado (pick(TIPO2)) também tem agora a sua lembrança, e
+     já não se pode contar o total contra 1000: conta-se a Faixa, a ficha que
+     vem duas vezes em cada campanha */
+  t("a mesma peça com nome nunca cai duas vezes (a ficha da lembrança veio duas vezes em cada campanha)", lemb > 0 && faixaDupla === 0, `${lemb} lembranças, ${faixaDupla} campanhas com a Faixa duas vezes`);
   t("a relíquia só cai no confronto final", relFora === 0);
+  /* TE8: a reserva do confronto — o artefacto do fim não fica sem lugar porque
+     duas fogueiras do meio o levaram primeiro */
+  t(`o confronto final leva sempre o seu artefacto (${confrontosComArt} de ${confrontos}): a reserva guarda-lhe o lugar`, confrontos > 500 && confrontosComArt === confrontos);
   t(`e cai rara: ${rels} em 1000 campanhas (≈ ${(RELIQUIA_DO_CONFRONTO.chance * 100).toFixed(0)}% do confronto)`, rels > 50 && rels < 250);
   console.log(`  ··  média por campanha: ${(raras / 1000).toFixed(2)} raras · ${(arts / 1000).toFixed(2)} artefactos · ${(lemb / 1000).toFixed(2)} lembranças · ${(rels / 1000).toFixed(3)} relíquias  (medido, não travado)`);
 
@@ -341,7 +385,9 @@ sec("7. O ARTEFACTO QUE CRESCE, o momento e a pauta");
   t("o confronto com ficha dá o artefacto, adormecido, com um passivo", art && art.artefacto.estado === "adormecido" && art.poderes.length === 1 && art.poderes[0].id === "bote");
   t("no teto do nível, e com a forma da arma do herói", art.raridade === tetoDeRaridade(8).daQuest && art.base === "Espada Longa");
   t("o nome e a história levam os papéis da campanha", art.nome === "A Que Subiu a Escada" && art.descricao.includes("Morvan") && art.descricao.includes("Torre Rota"));
-  t("pede sintonia, guarda a semente do crescimento, e ainda não tem gesto", art.sintoniza === true && art.artefacto.passivos.length === 2 && !art.ativo && art.artefacto.gesto);
+  /* TE8: a lista de passivos cresceu (a do épico e a do lendário entram na
+     ordem — o lote 1); o item guarda-a inteira, como guardava as duas */
+  t("pede sintonia, guarda a semente do crescimento, e ainda não tem gesto", art.sintoniza === true && J(art.artefacto.passivos) === J(ARTEFACTOS_COM_NOME[C.id].passivos) && !art.ativo && art.artefacto.gesto);
   const mesmo = despertarArtefacto(art, { nivel: 8, quests: [] });
   t("sem nada que o acorde, é o MESMO item", mesmo === art);
   const desp = despertarArtefacto(art, { nivel: 8, quests: [{ temperatura: "fogueira", estado: "concluida" }] });
@@ -432,6 +478,113 @@ sec("8. O NULL, O LIXO E A IMUTABILIDADE");
   t("gerarLoot sem `base` rola exatamente o que rolava (a mesma corrente, o mesmo item)", J(gerarLoot("raro", { tipo: "arma", nivel: 5, rnd: r1 })) === J(gerarLoot("raro", { tipo: "arma", nivel: 5, rnd: r2, base: null })));
   t("com `base`, a peça tem essa base", gerarLoot("raro", { tipo: "arma", nivel: 5, base: "Rapieira", rnd: dadoDo("lb", 2) }).base === "Rapieira");
   t("uma base que não é do encaixe é ignorada", gerarLoot("raro", { tipo: "arma", nivel: 5, base: "Escudo Torre", rnd: dadoDo("lb", 3) }).base !== "Escudo Torre");
+}
+
+/* ============================================================ */
+sec("9. O LOTE 1 DOS ARTEFACTOS (TE8) — uma peça por quest quente, e a régua dentro");
+{
+  const quentes = TIPO1.filter((q) => ["fogueira", "incendio"].includes(q.temperatura));
+  const arts = Object.entries(ARTEFACTOS_COM_NOME).filter(([, d]) => d.genero === "artefacto");
+  const lems = Object.entries(ARTEFACTOS_COM_NOME).filter(([, d]) => d.genero === "lembranca");
+  t("o lote 1 está inteiro no catálogo (espolios.js lê o acervo, não o copia)", Object.keys(ARTEFACTOS_LOTE_1).every((k) => ARTEFACTOS_COM_NOME[k] === ARTEFACTOS_LOTE_1[k]));
+  t(`pelo menos doze artefactos do enredo (${arts.length}) e oito lembranças (${lems.length})`, arts.length >= 12 && lems.length >= 8);
+  t(`toda quest quente do tipo 1 tem o seu artefacto (${quentes.length} de ${quentes.length})`, quentes.every((q) => ARTEFACTOS_COM_NOME[q.id] && ARTEFACTOS_COM_NOME[q.id].genero === "artefacto"));
+  t(`toda quest do coração tem a sua lembrança (${TIPO2.length})`, TIPO2.every((q) => ARTEFACTOS_COM_NOME[q.id] && ARTEFACTOS_COM_NOME[q.id].genero === "lembranca"));
+  t("os nomes não se repetem (cada peça é uma)", new Set(Object.values(ARTEFACTOS_COM_NOME).map((d) => d.nome)).size === Object.keys(ARTEFACTOS_COM_NOME).length);
+  t("os gestos não se repetem, e só o artefacto tem gesto", new Set(arts.map(([, d]) => d.gesto.nome)).size === arts.length && arts.every(([, d]) => d.gesto) && lems.every(([, d]) => d.gesto === null));
+  /* o gesto é mais manso que a relíquia mais mansa: nunca mais bónus que o
+     menor bónus de uma relíquia, nem mais cura que metade da maior */
+  const bonusMin = Math.min(...RELIQUIAS.map((r) => (r.ativo.efeito.buff ? r.ativo.efeito.buff.bonus : 99)));
+  const curaMax = Math.max(...RELIQUIAS.map((r) => r.ativo.efeito.curaFracao || 0));
+  t(`o gesto do artefacto é mais manso que o da relíquia (bónus ≤ ${bonusMin}, cura ≤ ${curaMax / 2})`, arts.every(([, d]) => (!d.gesto.efeito.buff || d.gesto.efeito.buff.bonus <= bonusMin) && (d.gesto.efeito.curaFracao || 0) <= curaMax / 2 && !d.gesto.efeito.revive && !d.gesto.efeito.manaFracao));
+
+  /* A LEI DA RÉGUA (TE7): nada que bata mais ou defenda mais acende abaixo
+     do épico — e o épico só chega a uma peça de quest que desperta do 11 em
+     diante (DESPERTAR_DO_ARTEFACTO, coluna `degrau`) */
+  const DE_COMBATE = ["danoExtra", "ataqueExtra", "criticoEm", "defesa"];
+  const doCombate = (id) => { const p = PODERES.find((x) => x.id === id); return p && Object.keys(p.efeito).some((k) => DE_COMBATE.includes(k)); };
+  t("nenhum passivo de dano, golpe, crítico ou defesa abaixo do épico (a régua recusou-os no nível 7)", arts.every(([, d]) => d.passivos.filter(doCombate).every((id) => PODERES.find((x) => x.id === id).tier >= TIER.epico)));
+  t("nenhum passivo de golpe extra, em estado nenhum (a Presteza punha o kit a +28 a +59 pontos no 12)", arts.every(([, d]) => d.passivos.every((id) => !("ataqueExtra" in PODERES.find((x) => x.id === id).efeito))));
+  t("a lembrança não leva passivo de combate nenhum, e é de um passivo menor", lems.every(([, d]) => d.passivos.length === 1 && !doCombate(d.passivos[0]) && PODERES.find((x) => x.id === d.passivos[0]).tier <= TIER.incomum));
+
+  /* o que acende, nível a nível, nos três estados: nunca se apaga, nunca passa
+     o teto, sobe ao teto do 11 em diante, e a promessa diz a verdade */
+  let apaga = 0, passaTeto = 0, naoSobe = 0, mente = 0, poucos = 0, chaves = 0, vistos = 0;
+  for (const [id] of arts) {
+    const F = questPorId(id);
+    const papeis = Object.fromEntries(Object.entries(F.papeis).map(([k, p]) => [k, { tipo: PAPEIS_DA_QUEST[p.de].tipo, nome: "Nome" + k }]));
+    for (let n = 1; n <= 20; n++) {
+      const p = pagaDaQuest(F, fechada(F, { ramo: "luta", papeis }), { semente: "lote|" + n, nivel: n, heroi: { ...HEROI, nivel: n } });
+      const a = p.itens.find((i) => i.artefacto);
+      if (!a) { mente++; continue; }
+      vistos++;
+      const pr = promessaDoArtefacto(a, n);
+      const de = despertarArtefacto(a, { nivel: n, quests: [{ temperatura: "fogueira", estado: "concluida" }] });
+      const ex = despertarArtefacto(de, { nivel: n, confronto: true });
+      const ids = (x) => x.poderes.map((y) => y.id);
+      if (!ids(a).every((x) => ids(de).includes(x)) || !ids(de).every((x) => ids(ex).includes(x))) apaga++;
+      const T = tetoDeRaridade(n);
+      if ([a, de, ex].some((x) => TIER[x.raridade] > TIER[T.teto])) passaTeto++;
+      if (de.raridade !== T.teto || a.raridade !== T.daQuest) naoSobe++;
+      const prometidos = pr.poderes.filter((x) => x.acordaEm === "adormecido" || x.acordaEm === "desperto").map((x) => x.id);
+      if (J(prometidos) !== J(ids(de))) mente++;
+      if (TIER[T.daQuest] >= TIER.raro && de.poderes.length < 2) poucos++;
+      const usados = [...`${ARTEFACTOS_COM_NOME[id].nome} ${ARTEFACTOS_COM_NOME[id].historia}`.matchAll(/\{([a-z0-9_]+)\}/g)].map((m) => m[1]);
+      if (/[{}]/.test(a.nome + a.descricao) || !usados.every((k) => (a.nome + a.descricao).includes("Nome" + k))) chaves++;
+    }
+  }
+  t(`o que acende num estado nunca se apaga no seguinte (${vistos} peças, níveis 1 a 20)`, apaga === 0 && vistos === arts.length * 20, String(apaga));
+  t("nenhum estado passa o teto do DMG", passaTeto === 0);
+  t("a adormecida é do degrau da quest, e a desperta acende o teto (do 11 em diante, o degrau acima da peça genérica)", naoSobe === 0, String(naoSobe));
+  t("a promessa (promessaDoArtefacto) é a verdade do motor: o que diz que acende, acende", mente === 0, String(mente));
+  t("do raro em diante a desperta acende dois passivos (a lista nunca fica curta)", poucos === 0, String(poucos));
+  t("o nome e a história saem cheios com os nomes da campanha (nenhum papel por encher)", chaves === 0, String(chaves));
+  {
+    const F = questPorId("o_cimo_da_escada");
+    const a12 = pagaDaQuest(F, fechada(F, { ramo: "luta" }), { semente: "x", nivel: 12, heroi: { ...HEROI, nivel: 12 } }).itens.find((i) => i.artefacto);
+    const d12 = despertarArtefacto(a12, { nivel: 12, quests: [{ temperatura: "incendio", estado: "concluida" }] });
+    t("desperta, a peça acende o degrau e não se reforja: o aço fica o do dia em que foi ganha", d12.raridade === "epico" && d12.atributos.dano === a12.atributos.dano && d12.base === a12.base && d12.nome === a12.nome && d12.descricao === a12.descricao);
+    t("e no nível 12 acende o passivo que só o épico deixa (a Aurora)", d12.poderes.some((x) => x.id === "aurora") && !a12.poderes.some((x) => x.id === "aurora"));
+  }
+
+  /* o género */
+  const Q = questPorId("a_carta_que_nao_se_abre");
+  const melhor = Q.desfechos.find((x) => grauDoDesfecho(Q, x.id) === "melhor").id;
+  const comGen = (g, op = {}) => pagaDaQuest(Q, fechada(Q, { estado: "terminada", desfecho: melhor, papeis: { quem: { tipo: "pessoa", nome: "Sable", ...(g ? { genero: g } : {}) }, ferido: { tipo: "pessoa", nome: "Odo" } } }), { semente: "g", nivel: 4, ...op }).itens[0];
+  t("o género de quem ocupa o papel concorda: «dela» para ela, «dele» para ele ou quem não se sabe", comGen("f").descricao.includes("polegar dela") && comGen("m").descricao.includes("polegar dele") && comGen(null).descricao.includes("polegar dele"));
+  t("e o mapa `generos` da fiação também serve", comGen(null, { generos: { quem: "f" } }).descricao.includes("polegar dela"));
+
+  /* a reserva do confronto */
+  const fog = quentes.find((q) => !(q.mao && q.mao.tipo === RELIQUIA_DO_CONFRONTO.mao));
+  const conf = questPorId("o_cimo_da_escada");
+  const um = [{ quest: "z", itens: [{ nome: "Z", raridade: "raro", artefacto: { id: "z", genero: "artefacto" } }] }];
+  const temArt = (F, pagas) => pagaDaQuest(F, fechada(F, { ramo: "luta" }), { semente: "res", nivel: 8, heroi: HEROI, campanha: { pagas } }).itens.some((i) => i.artefacto);
+  t("a primeira fogueira leva o seu artefacto", temArt(fog, []));
+  t("com um já levado e o confronto por pagar, a segunda fogueira não leva (o lugar é do fim)", !temArt(fog, um));
+  t("o confronto, com um já levado, leva o seu", temArt(conf, um));
+  t("pago o confronto, a reserva cai (a fogueira de depois leva o segundo)", temArt(fog, [{ ...um[0], confronto: true }]));
+}
+
+/* ============================================================ */
+sec("10. A RELÍQUIA ARMA COM O AÇO DO NÍVEL (TE8)");
+{
+  const armas = RELIQUIAS.filter((r) => r.tipo === "arma");
+  t("toda relíquia arma tem a forma de uma base do catálogo", armas.length >= 2 && armas.every((r) => BASES.arma.some((b) => b.nome === r.base)));
+  t("a tabela do aço cobre os vinte níveis, por faixas que sobem", ACO_DA_RELIQUIA.porNivel[ACO_DA_RELIQUIA.porNivel.length - 1].ate === 20 && ACO_DA_RELIQUIA.porNivel.every((f, i) => i === 0 || (f.ate > ACO_DA_RELIQUIA.porNivel[i - 1].ate && f.dano >= ACO_DA_RELIQUIA.porNivel[i - 1].dano)));
+  const certo = Array.from({ length: 20 }, (_, i) => i + 1).every((n) => armas.every((r) => { const it = itemDaReliquia(r, { nivel: n }); return (it.atributos.dano || 0) === Math.max(0, danoDaReliquia(r, n)) && it.base === r.base; }));
+  t("o item tem o dano da faixa do nível, e a base", certo);
+  t("o aço sobe com o nível (o 17 bate mais que o 3)", armas.every((r) => danoDaReliquia(r, 17) > danoDaReliquia(r, 3)));
+  t("só a relíquia arma tem aço: a armadura e o anel ficam como eram", RELIQUIAS.filter((r) => r.tipo !== "arma").every((r) => danoDaReliquia(r, 17) === null && !("dano" in itemDaReliquia(r, { nivel: 17 }).atributos)));
+  const velha = itemDaReliquia(reliquiaPorId("comedora"));
+  const foto = J(velha);
+  const nova = reliquiaNoNivel(velha, 17);
+  t("reliquiaNoNivel: a do nível 1 levada ao 17 ganha o aço do 17, sem mutar a de antes", nova !== velha && nova.atributos.dano === danoDaReliquia(reliquiaPorId("comedora"), 17) && J(velha) === foto);
+  t("no mesmo nível, o MESMO item; e nunca desce", reliquiaNoNivel(nova, 17) === nova && reliquiaNoNivel(nova, 3) === nova);
+  t("o que não é relíquia arma passa igual (e o lixo também)", (() => { const x = { nome: "Espada", tipo: "arma", raridade: "raro" }; const anel = itemDaReliquia(reliquiaPorId("anel_da_divida")); return reliquiaNoNivel(x, 17) === x && reliquiaNoNivel(null, 5) === null && reliquiaNoNivel(anel, 17) === anel; })());
+  const C = questPorId("o_cimo_da_escada");
+  let rel = null;
+  for (let i = 0; i < 300 && !rel; i++) rel = pagaDaQuest(C, fechada(C, { ramo: "luta" }), { semente: "aco" + i, nivel: 14 }).itens.find((x) => x.raridade === "unico" && x.tipo === "arma") || null;
+  t("a relíquia arma do confronto já vem com o aço do nível de quem a ganha", rel && rel.atributos.dano === danoDaReliquia(reliquiaPorNome(rel.nome), 14), rel && J(rel.atributos));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

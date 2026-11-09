@@ -77,14 +77,18 @@ console.log("\n1. o esqueleto nasce só na criação de uma campanha nova");
 console.log("\n2. o turno das quests: depois do Cronista, antes da linha da sessão");
 {
   const iCr = app.indexOf(".then(() => Promise.resolve(doCronista).catch(() => null))");
-  const iQ = app.indexOf('.then(() => { if (comQuests) correrAsQuests("o fim do turno"); })');
+  /* AJUSTADA em 09/11 (TE9), E O MOTIVO: o fim do turno passa a levar o
+     feito que o aplicar desse turno já pagou (feitoDeste, tirado do ref no
+     momento em que enfileira), para a paga da quest o descontar. A ordem que
+     a asserção protege — o Cronista, as quests, a linha — é a mesma. */
+  const iQ = app.indexOf('.then(() => { if (comQuests) correrAsQuests("o fim do turno", feitoDeste); })');
   const iS = app.indexOf(".then(() => { if (juntado) { try { gravarOTurnoDaSessao(juntado);");
   t("a fila espera o Cronista", iCr > 0);
   t("as quests correm depois dele", iQ > iCr);
   t("e a linha da sessão grava depois delas", iS > iQ);
-  t("o Cronista que não corre não as cala", app.includes('correrAsQuests("o fim do turno, sem o Cronista")'));
+  t("o Cronista que não corre não as cala", app.includes('correrAsQuests("o fim do turno, sem o Cronista", feitoDeste)'));
   t("sem esqueleto a fila é a de sempre (só a sessão a abre)", app.includes("if (turnoDaSessao || comQuests) {") && app.includes("const comQuests = comEsqueleto();"));
-  t("o turno é o do motor, sobre o estado do livro", /oTurnoDasQuests\(estadoDasQuests\(\), \{ mundo: mundoDoLivro\(\) \}\)/.test(corpo("correrAsQuests")));
+  t("o turno é o do motor, sobre o estado do livro", /oTurnoDasQuests\(estadoDasQuests\(\), \{ mundo: mundoDoLivro\(\), feitoDoTurno \}\)/.test(corpo("correrAsQuests"))); /* AJUSTADA em 09/11 (TE9): e o feito do turno, que só o fim do turno diz */
 }
 
 console.log("\n3. a encruzilhada está ligada");
@@ -244,7 +248,10 @@ console.log("\n8. BQ7b · a fiação no App: os efeitos, os rostos, o foco, o n�
      levar também os relógios (`relogios: relogiosRef.current`), para o
      `relogio_regional` escolher quais andam; a intenção fica — leva a base */
   t("o estado das quests leva a base do mundo (as condições «situacao» e «morto» leem-na), e a memória das escolhas também a olha",
-    app.includes("saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current, elenco: elencoSaveRef.current });") && corpo("escolhasAgora").includes("c.base === E.baseMundo"));
+    /* AJUSTADA em 09/11 (TE9), E O MOTIVO: o estado das quests passou a
+       levar também o chão e a luta (a paga cai no chão; a revelação compara
+       com a regra do corpo); a intenção fica — leva a base */
+    app.includes("saber: saberRef.current, baseMundo: baseMundoRef.current, relogios: relogiosRef.current, elenco: elencoSaveRef.current, chao: chaoRef.current, combate: combateRef.current });") && corpo("escolhasAgora").includes("c.base === E.baseMundo"));
   /* os rostos */
   t("o rosto é um componente de fora do render (RostoDaQuest), antes de Taverna()", /\nfunction RostoDaQuest\(\{ semente, ente = null, lado = 44 \}\) \{/.test(app) && app.indexOf("function RostoDaQuest(") < app.indexOf("export default function Taverna()"));
   t("e enche o aro que a peça der (viewBox, 100%), sem a carta por trás", /function RostoDaQuest[\s\S]{0,200}<svg width="100%" height="100%" viewBox="0 0 64 64"[\s\S]{0,200}<Rosto semente=\{semente\} ente=\{ente\} lado=\{lado\} \/>/.test(app));
