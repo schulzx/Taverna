@@ -165,8 +165,8 @@ export const GLIFOS = {
      desenha e a família não tinha. Os três primeiros são o Lucide que o próprio
      quadro usa (scan, crosshair, pen-line, na grelha 18 → 24); o quarto é o ✧
      do quadro, desenhado: nenhuma família da casa tem U+2727 (D5h). */
-  /* o campo de batalha: o cabeçalho da arena */
-  campo: { de: "lucide:scan", d: "M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" },
+  /* (o «campo», o cabeçalho da arena, aposentou-se com ele em CB 2, 09/11:
+     as zonas estão escritas no chão e a do herói é o título da mesa) */
   /* o alvo e a distância: a linha do veredito */
   mira: { de: "lucide:crosshair", d: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M22 12h-4M6 12H2M12 6V2M12 22v-4" },
   /* o `como?`: a frase que o jogador escreve */
@@ -196,6 +196,36 @@ export const GLIFOS = {
   fita: { de: "casa", d: "M9 3h6l-1.5 8L18 21l-3.5-1.5L12 22l-2-9-4 8-1-4 5.5-6z" },
   /* a história do coração: o passo dela e o selo do desfecho na estante */
   coracao: { de: "casa", d: "M12 20C7 16.5 3.5 13.2 3.5 9.2C3.26 8.07 3.48 6.9 4.11 5.93C4.74 4.97 5.72 4.29 6.85 4.05C7.98 3.81 9.15 4.03 10.12 4.66C11.09 5.29 11.76 6.27 12 7.4C12.24 6.27 12.92 5.29 13.88 4.66C14.85 4.03 16.02 3.81 17.15 4.05C18.28 4.29 19.26 4.97 19.89 5.93C20.52 6.9 20.74 8.07 20.5 9.2C20.5 13.2 17 16.5 12 20zM12 7.4v4.6" },
+  /* ---------------- CB · A BATALHA (09/11/2026) — formas.md §CB, Figma 341:20–341:93 ----------------
+     Os glifos que a batalha e o encontro pediram e a tabela não tinha, pelo traço
+     dos `Glifo/*` da página CB (traço 2 em 24, sem enchimento), deslocados para
+     a grelha 24. Os outros da página já tinham forma aqui e não se redesenham:
+     espadas, escudo, relogio, dado (o d20), passo (os passos), perigo (a
+     caveira), moeda (a da cinta). Uma ação, uma forma. */
+  /* o fogo que vem: o sopro anunciado, a chama no chão da área (CB 4) · não é a tocha (o recurso contado), que tem a sua */
+  chama: { de: "casa", d: "M8.5 14.5C9.16 14.5 9.8 14.24 10.27 13.77C10.74 13.3 11 12.66 11 12C11 10.6 10.5 10 10 9C8.9 6.9 9.8 5 12 3C12.5 5.5 14 7.9 16 9.5C18 11.1 19 13 19 15C19 15.92 18.82 16.83 18.47 17.68C18.12 18.53 17.6 19.3 16.95 19.95C16.3 20.6 15.53 21.12 14.68 21.47C13.83 21.82 12.92 22 12 22C11.08 22 10.17 21.82 9.32 21.47C8.47 21.12 7.7 20.6 7.05 19.95C6.4 19.3 5.88 18.53 5.53 17.68C5.18 16.83 5 15.92 5 15C5 13.8 5.4 12.7 6 12C6 12.66 6.26 13.3 6.73 13.77C7.2 14.24 7.84 14.5 8.5 14.5Z" },
+  /* quem foge: a intenção de fugir do inimigo (CB 4) */
+  fuga: { de: "casa", d: "M4 12L19 12M19 12L13 6M19 12L13 18" },
+  /* ver e ser visto: «ainda não te viu», sem linha de vista, a ameaça à vista (CB 3, CB 7) */
+  olho: { de: "casa", d: "M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12ZM15 12C15 13.66 13.66 15 12 15C10.34 15 9 13.66 9 12C9 10.34 10.34 9 12 9C13.66 9 15 10.34 15 12Z" },
+  /* o sinal na estrada: um rasto no chão (CB 7) */
+  rasto: { de: "casa", d: "M7 16C5.5 16 4.5 14.5 4.5 12C4.5 9.5 5.5 6 7 6C8.5 6 9.5 8 9.5 11C9.5 14 8.5 16 7 16ZM17 20C15.5 20 14.5 18.5 14.5 16C14.5 13.5 15.5 10 17 10C18.5 10 19.5 12 19.5 15C19.5 18 18.5 20 17 20Z" },
+  /* o sinal na estrada: um som ao longe (CB 7) */
+  som: { de: "casa", d: "M15 9C15.43 9.38 15.77 9.84 16 10.35C16.23 10.87 16.35 11.43 16.35 12C16.35 12.57 16.23 13.13 16 13.65C15.77 14.16 15.43 14.62 15 15M18 6C18.85 6.75 19.53 7.67 20 8.71C20.47 9.74 20.71 10.86 20.71 12C20.71 13.14 20.47 14.26 20 15.29C19.53 16.33 18.85 17.25 18 18M3 10L3 14L6 14L11 18L11 6L6 10L3 10Z" },
+  /* o sinal na estrada: o cheiro que o vento traz (CB 7) */
+  cheiro: { de: "casa", d: "M3 8L14 8C14.59 8 15.17 7.82 15.67 7.49C16.16 7.16 16.54 6.7 16.77 6.15C17 5.6 17.06 5 16.94 4.41C16.83 3.83 16.54 3.3 16.12 2.88C15.7 2.46 15.17 2.17 14.59 2.06C14 1.94 13.4 2 12.85 2.23C12.3 2.46 11.84 2.84 11.51 3.33C11.18 3.83 11 4.41 11 5M3 12L19 12C19.59 12 20.17 12.18 20.67 12.51C21.16 12.84 21.54 13.3 21.77 13.85C22 14.4 22.06 15 21.94 15.59C21.83 16.17 21.54 16.7 21.12 17.12C20.7 17.54 20.17 17.83 19.59 17.94C19 18.06 18.4 18 17.85 17.77C17.3 17.54 16.84 17.16 16.51 16.67C16.18 16.17 16 15.59 16 15M3 16L11 16" },
+  /* o sinal na estrada: um vulto; e a escolha de se esconder (CB 7) */
+  vulto: { de: "casa", d: "M15 6C15 7.66 13.66 9 12 9C10.34 9 9 7.66 9 6C9 4.34 10.34 3 12 3C13.66 3 15 4.34 15 6ZM6 21L6 15C6 13.41 6.63 11.88 7.76 10.76C8.88 9.63 10.41 9 12 9C13.59 9 15.12 9.63 16.24 10.76C17.37 11.88 18 13.41 18 15L18 21" },
+  /* o sinal na estrada: o silêncio de repente (CB 7) */
+  silencio: { de: "casa", d: "M3 13C6 9 9 9 12 13C15 9 18 9 21 13M4 4L20 20" },
+  /* o sinal na estrada: a sombra que passa; e o cabeçalho do encontro (CB 7) */
+  sombra: { de: "casa", d: "M2 14C6 13 8 10 12 5C16 10 18 13 22 14C19 14 16 15 12 19C8 15 5 14 2 14Z" },
+  /* voltar atrás: a escolha da fuga no encontro (CB 7) */
+  recuo: { de: "casa", d: "M9 14L4 9M4 9L9 4M4 9L14 9C15.59 9 17.12 9.63 18.24 10.76C19.37 11.88 20 13.41 20 15C20 16.59 19.37 18.12 18.24 19.24C17.12 20.37 15.59 21 14 21L11 21" },
+  /* a palavra: negociar a passagem (CB 7) */
+  palavra: { de: "casa", d: "M21 12C20.99 13.36 20.64 14.7 19.97 15.89C19.3 17.07 18.34 18.07 17.18 18.78C16.01 19.49 14.69 19.89 13.33 19.95C11.97 20.01 10.62 19.71 9.4 19.1L4 20L5 15.4C4.55 13.28 4.96 11.06 6.14 9.25C7.32 7.43 9.18 6.15 11.3 5.7C13.42 5.25 15.64 5.66 17.45 6.84C19.27 8.02 20.55 9.88 21 12Z" },
+  /* contornar por fora da estrada (CB 7) */
+  contornar: { de: "casa", d: "M4 20C4 12 20 12 20 4M20 4L16 4M20 4L20 8" },
 };
 
 /* ============================================================

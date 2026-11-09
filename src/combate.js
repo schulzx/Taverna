@@ -7,7 +7,7 @@
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
 import { sorteDaCasa, comSorte } from "./semente.js";
-import { alcanca, bonusDefesaEm, distanciaM, METROS_POR_QUADRADO } from "./grid.js";
+import { alcanca, bonusDefesaEm, distanciaM, METROS_POR_QUADRADO, pegosPelaArea } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
 import { xpDeCombate } from "./juiz.js";
@@ -277,6 +277,12 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
 
   /* TIPOS DE DANO (v6.6): fraqueza ×1,5 / resistido ×0,5 / imune 0 — por tabela */
   let tagDano = "";
+  /* CB7 (09/11): o multiplicador que de facto se aplicou viaja no resultado,
+     para o evento do golpe (`eventoDoGolpe`, abaixo) dizer «fraqueza» sem
+     ler a etiqueta de texto nem refazer a conta. A chave só nasce quando o
+     multiplicador mordeu (≠ 1): quem já lia o resultado não vê campo novo
+     no golpe comum. */
+  let multAplicado = null;
   if (dano > 0 && (perfilAlvo || (resistAlvo && resistAlvo.length))) {
     let mult = 1;
     if (perfilAlvo) {
@@ -286,12 +292,72 @@ export function resolverAtaque({ atacante, alvo, ehAtacanteInimigo, bonusAtaque,
     if (mult > 0 && resistAlvo.includes(tipoDano)) { mult = mult * 0.5; tagDano = `${iconeDano(tipoDano)} resistido ×0,5`; }
     if (mult === 0) { dano = 0; resultado = "imune"; }
     else if (mult !== 1) dano = Math.max(1, Math.round(dano * mult));
+    if (mult !== 1) multAplicado = mult;
   }
 
   return {
     tipo: "ataque", atacante, alvo: alvo.nome || alvo, resultado,
     d20: rolagem.valor, dados: rolagem.dados, modo: rolagem.modo,
     bonus, total, ca, dano, critico, desastre, tipoDano, tagDano,
+    ...(multAplicado != null ? { mult: multAplicado } : {}),
+  };
+}
+
+/* ---------------- O GOLPE SENTIDO: O EVENTO (CB7, 09/11) ----------------
+   A tela vai pausar a mesa no impacto, tremer a ficha, saltar o número
+   (dourado no crítico, cinza no «errou») e soar o corte ou a queda
+   (`GOLPE_SENTIDO`, `SOM_DA_MESA`). Para isso precisa de saber O QUE
+   ACONTECEU, numa forma que não mude debaixo dela — e o resultado de
+   `resolverAtaque` não é essa forma: tem campos de depuração, o «imune»
+   mora no `resultado`, a fraqueza só existia numa etiqueta de texto, e a
+   queda depende da vida que só quem aplica o dano conhece.
+
+   O evento é essa forma, e só diz factos: nenhuma cor, nenhuma duração,
+   nenhuma decisão de tela. `versao` sobe se um campo mudar de sentido.
+     desfecho — um de `EVENTO_DO_GOLPE.desfechos` (o 1 natural é «erro», com
+                `desastre: true`; o golpe que encontra a guarda intocável
+                também é «erro»);
+     peso     — o dano sobre a vida máxima, de 0 a 1: a escala do impacto
+                (um arranhão e um golpe de metade da vida não pesam igual);
+     fraqueza — `EVENTO_DO_GOLPE.fraqueza`: «fraqueza» (×1,5), «resiste»
+                (×0,5 ou menos, acima de zero), «imune» — ou null;
+     abate    — a vida depois chegou a zero.
+   `ctx`: { vidaAntes, vidaMax, lado ("heroi" | "inimigo" | "aliado": de
+   que lado está quem bate), golpeNome }. Sem `vidaAntes`, o abate é null
+   (não se sabe), nunca false. */
+export const EVENTO_DO_GOLPE = Object.freeze({
+  versao: 1,
+  desfechos: Object.freeze({ critico: "critico", acerta: "acerto", erra: "erro", desastre: "erro", imune: "imune", impedido: "impedido" }),
+  fraqueza: Object.freeze({ fraqueza: "fraqueza", resiste: "resiste", imune: "imune" }),
+});
+export function eventoDoGolpe(r, ctx) {
+  const x = r && typeof r === "object" ? r : null;
+  if (!x) return null;
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const E = EVENTO_DO_GOLPE;
+  const desfecho = E.desfechos[x.tipo === "impedido" ? "impedido" : x.resultado] || E.desfechos.erra;
+  const dano = Math.max(0, Number(x.dano) || 0);
+  const vidaAntes = Number.isFinite(Number(c.vidaAntes)) && c.vidaAntes !== null ? Number(c.vidaAntes) : null;
+  const vidaMax = Number.isFinite(Number(c.vidaMax)) && Number(c.vidaMax) > 0 ? Number(c.vidaMax) : null;
+  const vidaDepois = vidaAntes == null ? null : Math.max(0, vidaAntes - dano);
+  const mult = Number(x.mult);
+  const fraqueza = desfecho === E.desfechos.imune || mult === 0 ? E.fraqueza.imune
+    : Number.isFinite(mult) && mult > 1 ? E.fraqueza.fraqueza
+      : Number.isFinite(mult) && mult > 0 && mult < 1 ? E.fraqueza.resiste : null;
+  return {
+    versao: E.versao, tipo: "golpe",
+    quem: String(x.atacante || ""), alvo: String(x.alvo || ""),
+    lado: typeof c.lado === "string" && c.lado ? c.lado : null,
+    golpe: typeof c.golpeNome === "string" && c.golpeNome ? c.golpeNome : null,
+    desfecho, dano,
+    critico: x.critico === true, desastre: x.desastre === true,
+    fraqueza, elemento: x.tipoDano || null,
+    d20: Number.isFinite(Number(x.d20)) ? Number(x.d20) : null,
+    total: Number.isFinite(Number(x.total)) ? Number(x.total) : null,
+    defesa: Number.isFinite(Number(x.ca)) ? Number(x.ca) : null,
+    vidaAntes, vidaDepois, vidaMax,
+    peso: vidaMax ? Math.min(1, dano / vidaMax) : null,
+    abate: vidaDepois == null ? null : vidaAntes > 0 && vidaDepois <= 0,
   };
 }
 
@@ -495,8 +561,100 @@ export function lugarDaAcao(atacante, alvoOnde, alcance) {
   return out;
 }
 
-export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false, prioridade = "", sorte = null }) { return comSorte(sorte, () => {
+/* ---------------- O GOLPE ARMADO DE UM INIMIGO (CB6, 09/11) ----------------
+   Os termos com que um inimigo golpeia um alvo — o bónus (a ameaça, o
+   degrau divino, a penalidade por faixa), as condições, o elemento, a
+   resistência, a cobertura do lugar de quem apanha, e a desvantagem de
+   quem não vê ou dispara colado —, menos o dado do dano. Moravam dentro do
+   laço de `turnoDosInimigos`; saíram para que a INTENÇÃO anunciada
+   (intencao.js) mostre a chance do golpe pela MESMA conta que o golpe vai
+   rolar. Nada aqui rola dado: o `danoDe` continua no laço, no mesmo sítio
+   da corrente da sorte.
+   `alvo`: { ref, nome, ent, onde }; `o`: { grade, pos, gdJogador, colado }
+   — sem `colado`, mede-se pela regra de `coladoEmQuem` contra `o.alvosDele`
+   (a lista dos alvos dele, na forma de `alvo`). `o.area: true` é o sopro:
+   a área já decidiu quem apanha, logo não há alcance a pedir nem faixa a
+   pagar, e a desvantagem de não ver ou de estar colado não conta.
+   Devolve { alc, args } — `args` só quando `alc.ok`. */
+export function armarGolpeDoInimigo(inim, alvo, o) {
+  const op0 = o && typeof o === "object" ? o : {};
+  const grade = op0.grade || null, pos = op0.pos || null;
+  const op = op0.colado === undefined
+    ? { ...op0, colado: mantemDistancia(inim) && coladoEmQuem(inim, Array.isArray(op0.alvosDele) ? op0.alvosDele : [], grade) }
+    : op0;
+  const alc = op0.area === true
+    ? { ok: true, penalidade: 0, metros: (() => { try { const m = distanciaM(inim, alvo.onde || pos); return Number.isFinite(m) ? m : null; } catch { return null; } })() }
+    : alcanca(grade, { ...inim }, alvo.onde || pos, alcanceDoGolpe(inim));
+  if (!alc.ok) return { alc };
+  const penalidadeZona = alc.penalidade || 0;
+  const perfilInim = perfilDe(inim);
+  /* `ehAtacanteInimigo` só serve para dizer de que lado está o ALVO, e a
+     marionete bate em quem está do lado de lá. Sem esta linha, o golpe
+     dela rolaria contra a defesa de um herói que não existe. */
+  const alvoEhInimigo = alvo.ref === "inimigo";
+  return {
+    alc,
+    args: {
+      ehAtacanteInimigo: !alvoEhInimigo,
+      /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
+      bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (op.gdJogador || 0)) - penalidadeZona,
+      condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
+      tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
+      /* cobertura do LUGAR de quem apanha: quem luta atrás de alguma coisa
+         é mais difícil de acertar, e é isso que dá motivo para recuar */
+      bonusDefesaAlvo: bonusDefesaEm(grade, alvo.onde || pos),
+      /* v9.45: quem não é visto é difícil de acertar. Enquanto a
+         invisibilidade dura — e ela dura até o herói atacar ou conjurar —
+         todo golpe contra ele sai com desvantagem. É a metade da magia que
+         faltava; sem ela, sumir não protegia de nada. */
+      desvantagem: op0.area === true ? false : (estaInvisivel(alvo.ent)
+        /* MM6: e quem não o ACHOU também. O herói escondido de ESTE
+           inimigo (`oculto`, escondido.js — com a posição de agora, para
+           quem acabou de ganhar linha de visão já o ver) é golpe às cegas:
+           desvantagem, a mesma metade da invisibilidade. Só o herói se
+           esconde nesta etapa; o grupo e a marionete ficam como estavam. */
+        || (alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos }))
+        /* MM7: e o disparo colado, a regra do 5e */
+        || !!op.colado),
+    },
+  };
+}
+
+/* ---------------- A INTENÇÃO CUMPRIDA (CB6, 09/11) ----------------
+   `intencoes` (opcional): a lista que `intencoesDaRodada` (intencao.js)
+   anunciou no começo da rodada. Com ela, cada inimigo CUMPRE o anunciado —
+   o alvo de cada golpe é o que disse, e o sopro queima as casas que pintou
+   —, salvo quando o herói mudou as condições; aí manda o recurso desta
+   tabela, e a ação diz qual (`intencao`):
+     alvoCaiu      — o alvo caiu, fugiu, ou já não está na mesa: a mesma
+                     mente escolhe de novo, com a mesa de agora;
+     foraDeAlcance — o alvo saiu do alcance (andou, escondeu-se atrás da
+                     parede): golpeia quem alcança, escolhido pela mesma
+                     mente entre esses; ninguém, não golpeia;
+     provocado     — o herói provocou depois do anúncio: a provocação é
+                     regra dura, e manda sobre a intenção (provocar é uma
+                     resposta do jogador ao que leu, e tem de valer);
+     aproximar     — anunciou que vinha a caminho de alguém que não alcançava
+                     (o golpe `perdido` do anúncio): se esse alvo lhe ficou
+                     ao alcance (o herói veio ter com ele), golpeia-o; senão
+                     não golpeia — nunca troca de alvo por isso;
+     soproVazio    — ninguém ficou nas casas pintadas: o sopro queima o
+                     chão, e ninguém leva dano (é a recompensa de ler a
+                     intenção e sair).
+   Sem `intencoes`, o laço é byte a byte o de antes — a mesma corrente da
+   sorte, os mesmos alvos. */
+export const RECURSO_DA_INTENCAO = Object.freeze({
+  alvoCaiu: "reescolhe",
+  foraDeAlcance: "reescolheAoAlcance",
+  provocado: "provocacao",
+  aproximar: "golpeiaSeAlcanca",
+  soproVazio: "perdido",
+});
+
+export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0, grade = null, heroi = null, aliados = [], rodada = 1, provocado = false, prioridade = "", sorte = null, intencoes = null, comOsPerdidos = false }) { return comSorte(sorte, () => {
   const vivos = (inimigos || []).filter((e) => !e.derrotado && e.vida > 0);
+  const anunciadas = Array.isArray(intencoes) ? intencoes : intencoes && Array.isArray(intencoes.lista) ? intencoes.lista : null;
+  const intencaoDe = (nome) => (anunciadas ? anunciadas.find((x) => x && x.inimigo === nome) || null : null);
   const pos = heroi || jogador;
   const alvosPossiveis = [
     { ref: "jogador", nome: jogador.nome, ent: jogador, onde: pos },
@@ -523,10 +681,53 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
        lado é a mesma dos alvos — para a marionete, os próprios. */
     const atira = mantemDistancia(inim);
     const colado = atira && coladoEmQuem(inim, alvosDele, grade);
+    const minha = virado ? null : intencaoDe(inim.nome);
+    /* CB6: O SOPRO CUMPRE AS CASAS QUE PINTOU. Quem lá ficou leva o golpe
+       (um dado por alvo, o dano da ameaça vezes `multDano`, o elemento do
+       sopro); quem saiu escapou. O sopro é a ação inteira da vez dele. */
+    if (minha && minha.tipo === "sopro" && Array.isArray(minha.area) && grade) {
+      const pegos = pegosPelaArea(minha.area, alvosDele.filter((a) => (a.ent.vida || 0) > 0 && a.onde && a.onde.x != null)
+        .map((a) => ({ ...a.onde, vida: a.ent.vida, derrotado: false, __a: a }))).map((x) => x.__a);
+      for (const alvo of pegos) {
+        /* `area: true`: sem alcance a pedir e sem a desvantagem de não ver
+           ou de estar colado — a área já decidiu quem apanha */
+        const arm = armarGolpeDoInimigo(inim, alvo, { grade, pos, gdJogador, colado: false, area: true });
+        const r = resolverAtaque({
+          atacante: inim.nome, alvo: alvo.ent, ...arm.args,
+          tipoDano: minha.elemento || perfilDe(inim).ataque,
+          danoBase: Math.round(danoDe(inim, true) * (Number(minha.multDano) || 1)),
+        });
+        acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: 1, deTotal: 1, golpeNome: minha.golpeNome || golpeDaVez(inim.nome, perfilDe(inim).ataque, inim.ameaca, 0), virado: false, area: true, intencao: "cumprida", ...lugarDaAcao(inim, alvo.onde || pos, arm.alc) });
+      }
+      continue;
+    }
     for (let g = 0; g < nGolpes; g++) {
       const vivosAlvo = alvosDele.filter((a) => (a.ent.vida || 0) > 0);
       if (!vivosAlvo.length) break;
       let alvo;
+      /* CB6: o alvo anunciado, se ainda está de pé e ao alcance */
+      let recurso = null, cumpriu = false, mesa = vivosAlvo;
+      if (minha && (minha.tipo === "atacar" || minha.tipo === "aproximar")) {
+        const quer = (minha.alvos || [])[g] || (minha.alvos || [])[0] || null;
+        const achado = quer ? vivosAlvo.find((x) => x.ref === quer.ref && x.nome === quer.nome) : null;
+        const chega = (x) => !!alcanca(grade, { ...inim }, x.onde || pos, alcanceDoGolpe(inim)).ok;
+        /* o golpe anunciado como «a caminho» (o alvo que ele quer, e que
+           não alcançava): golpeia esse alvo se agora chega; senão, não
+           golpeia — que é o que anunciou (RECURSO_DA_INTENCAO.aproximar) */
+        if (quer && quer.perdido) {
+          if (provocado) recurso = "provocado";
+          else if (achado && chega(achado)) { alvo = achado; recurso = "aproximar"; }
+          else continue;
+        } else if (provocado) recurso = "provocado";
+        else if (!achado) recurso = "alvoCaiu";
+        else if (!chega(achado)) recurso = "foraDeAlcance";
+        else { alvo = achado; cumpriu = true; }
+        if (recurso === "foraDeAlcance" && RECURSO_DA_INTENCAO.foraDeAlcance === "reescolheAoAlcance") {
+          mesa = vivosAlvo.filter(chega);
+          if (!mesa.length) continue;
+        }
+      }
+      if (!alvo) {
       /* v9.110: A PRIORIDADE DO ADVERSÁRIO vem antes de tudo o que é
          sorteio, e depois da provocação e da marionete, que são regras
          DURAS — uma intenção não desfaz uma provocação, senão provocar
@@ -536,10 +737,10 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
          sorteio de sempre continua valendo. Uma intenção nunca pode
          custar o turno de um inimigo. */
       let daIntencao = null;
-      if (prioridade && !virado && !provocado && vivosAlvo.length > 1) {
-        const bandeiras = bandeirasDosAlvos(vivosAlvo, inim, grade, pos);
+      if (prioridade && !virado && !provocado && mesa.length > 1) {
+        const bandeiras = bandeirasDosAlvos(mesa, inim, grade, pos);
         const esc = escolherAlvo(prioridade, bandeiras);
-        if (esc) daIntencao = vivosAlvo.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
+        if (esc) daIntencao = mesa.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
       }
       /* A MIRA PELA CABEÇA (depois de v9.316). Quem DISPARA e não recebeu do
          bando um alvo com nome — sem intenção, ou com a da rede, "quem
@@ -551,22 +752,22 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
          sorteio. A provocação e a marionete continuam a mandar, como sempre. */
       let daMira = null;
       const semNome = MIRA_SEM_ALVO_DO_BANDO.includes(prioridade || "") || !daIntencao;
-      if (atira && !virado && !provocado && semNome && vivosAlvo.length > 1) {
-        const bandeiras = bandeirasDosAlvos(vivosAlvo, inim, grade, pos);
+      if (atira && !virado && !provocado && semNome && mesa.length > 1) {
+        const bandeiras = bandeirasDosAlvos(mesa, inim, grade, pos);
         const esc = alvoDaMira(degrauDaCriatura(inim), bandeiras);
-        if (esc) daMira = vivosAlvo.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
+        if (esc) daMira = mesa.find((x) => x.nome === esc.nome && x.ref === esc.ref) || null;
       }
       if (daMira) {
         alvo = daMira;
       } else if (daIntencao) {
         alvo = daIntencao;
-      } else if (!virado && !provocado && vivosAlvo.length > 1 && sorteDaCasa() < 0.35) {
-        const comps = vivosAlvo.filter((a) => a.ref === "grupo");
-        alvo = comps.length ? comps[Math.floor(sorteDaCasa() * comps.length)] : vivosAlvo[0];
-      } else if (virado && vivosAlvo.length > 1) {
-        alvo = vivosAlvo[Math.floor(sorteDaCasa() * vivosAlvo.length)];
+      } else if (!virado && !provocado && mesa.length > 1 && sorteDaCasa() < 0.35) {
+        const comps = mesa.filter((a) => a.ref === "grupo");
+        alvo = comps.length ? comps[Math.floor(sorteDaCasa() * comps.length)] : mesa[0];
+      } else if (virado && mesa.length > 1) {
+        alvo = mesa[Math.floor(sorteDaCasa() * mesa.length)];
       } else {
-        alvo = vivosAlvo[0];
+        alvo = mesa[0];
       }
       /* MM7: QUEM NÃO O VÊ ESCOLHE OUTRO. O atirador que perdeu o herói de
          vista (escondido dele, MM6) e tem outro alvo que vê e alcança dispara
@@ -575,44 +776,26 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
          golpe às cegas já tem logo abaixo. Uma provocação não se desfaz aqui:
          quem provoca PEDE para ser alvo. */
       if (atira && !virado && !provocado && alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos })) {
-        const outro = vivosAlvo.find((x) => x.ref !== "jogador" && !!alcanca(grade, { ...inim }, x.onde || pos, alcanceDoGolpe(inim)).ok);
+        const outro = mesa.find((x) => x.ref !== "jogador" && !!alcanca(grade, { ...inim }, x.onde || pos, alcanceDoGolpe(inim)).ok);
         if (outro) alvo = outro;
+      }
       }
       /* quem não alcança, não bate — e agora "alcançar" é uma distância em
          metros contra o alcance natural do bicho (o ogro pega de 3 m), com
          parede cortando o tiro. Sem grade, devolve "alcança, sem penalidade"
          e o comportamento antigo fica intacto. */
-      const alc = alcanca(grade, { ...inim }, alvo.onde || pos, alcanceDoGolpe(inim));
-      if (!alc.ok) continue;
-      const penalidadeZona = alc.penalidade || 0;
+      /* os termos do golpe moram em `armarGolpeDoInimigo` (logo acima): a
+         MESMA conta que a intenção anunciada mostra antes. O dado do dano
+         rola aqui, no sítio de sempre da corrente da sorte. */
+      const arm = armarGolpeDoInimigo(inim, alvo, { grade, pos, gdJogador, colado });
+      const alc = arm.alc;
+      /* CB6: o anúncio quer saber também o golpe que se perde por não chegar
+         (`comOsPerdidos`, só intencao.js o pede): vai como `perdido`, sem dado */
+      if (!alc.ok) { if (comOsPerdidos) acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, perdido: true, golpe: g + 1, deTotal: nGolpes }); continue; }
       const perfilInim = perfilDe(inim);
-      /* `ehAtacanteInimigo` só serve para dizer de que lado está o ALVO, e a
-         marionete bate em quem está do lado de lá. Sem esta linha, o golpe
-         dela rolaria contra a defesa de um herói que não existe. */
-      const alvoEhInimigo = alvo.ref === "inimigo";
       const r = resolverAtaque({
-        atacante: inim.nome, alvo: alvo.ent, ehAtacanteInimigo: !alvoEhInimigo,
-        /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
-        bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (gdJogador || 0)) - penalidadeZona,
+        atacante: inim.nome, alvo: alvo.ent, ...arm.args,
         danoBase: danoDe(inim, true),
-        condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
-        tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
-        /* cobertura do LUGAR de quem apanha: quem luta atrás de alguma coisa
-           é mais difícil de acertar, e é isso que dá motivo para recuar */
-        bonusDefesaAlvo: bonusDefesaEm(grade, alvo.onde || pos),
-        /* v9.45: quem não é visto é difícil de acertar. Enquanto a
-           invisibilidade dura — e ela dura até o herói atacar ou conjurar —
-           todo golpe contra ele sai com desvantagem. É a metade da magia que
-           faltava; sem ela, sumir não protegia de nada. */
-        desvantagem: estaInvisivel(alvo.ent)
-          /* MM6: e quem não o ACHOU também. O herói escondido de ESTE
-             inimigo (`oculto`, escondido.js — com a posição de agora, para
-             quem acabou de ganhar linha de visão já o ver) é golpe às cegas:
-             desvantagem, a mesma metade da invisibilidade. Só o herói se
-             esconde nesta etapa; o grupo e a marionete ficam como estavam. */
-          || (alvo.ref === "jogador" && oculto(alvo.ent, inim, { grade, heroi: pos }))
-          /* MM7: e o disparo colado, a regra do 5e */
-          || colado,
       });
       /* GOLPE DO CATÁLOGO (v9.1): o bicho não "ataca" genericamente — ele usa
          um golpe com nome, do repertório fixo dele. É esse nome que o Mestre
@@ -626,7 +809,9 @@ export function turnoDosInimigos({ inimigos, jogador, grupo = [], gdJogador = 0,
       /* `deLonge` só nasce em quem dispara (a chave que só existe quando é
          verdade, a regra de `LUGAR_NA_ACAO`): quem já lia a ação não vê
          campo novo em golpe de perto. */
-      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado, ...lugarDaAcao(inim, alvo.onde || pos, alc), ...(atira ? { deLonge: true } : {}) });
+      /* CB6: `intencao` só nasce quando havia intenção — "cumprida", ou o
+         recurso que mandou (RECURSO_DA_INTENCAO) */
+      acoes.push({ inimigo: inim.nome, alvoRef: alvo.ref, alvoNome: alvo.nome, r, golpe: g + 1, deTotal: nGolpes, golpeNome, virado, ...lugarDaAcao(inim, alvo.onde || pos, alc), ...(atira ? { deLonge: true } : {}), ...(minha ? { intencao: cumpriu ? "cumprida" : recurso } : {}) });
     }
   }
   return acoes;

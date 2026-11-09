@@ -42,6 +42,8 @@ import { abrirCombateTracos, iniciativaDeTraco } from "../tracos.js";
 import { avaliarEncontro, gastarDoDia, selo, resumoOrcamentoPrompt } from "../orcamento.js";
 import { reconciliarGraus } from "../presenca-divina.js";
 import { rolarIniciativa, resumoIniciativa, novosRecursos, acoesBonusDe } from "../combate.js";
+/* CB3: o bónus de quem tem a surpresa mora na tabela do encontro */
+import { DESFECHOS_DO_ENCONTRO } from "../encontro-na-estrada.js";
 import { atributoEfetivo } from "../regras-jogo.js";
 import { iniciativaDeItem } from "../dadivas.js";
 import { mapaEmTexto, ladoDe, tamanhoDe, alcanceNatural, montarGrade, posicionar } from "../grid.js";
@@ -348,12 +350,27 @@ export function abrirOCombate(estado, ctx) {
   inimigos.filter((e) => e.gdPeloSistema).forEach((e) => msgsEq.push(`✦ ${e.nome} é de outra grandeza: o aço comum não o fere.`));
   let g;
   try { g = montarAGrade(pers, inimigos, situacao, e0.planta, e0.sementeDaAbertura); } catch (e) { calar("a abertura da luta pela situação", e); g = montarAGrade(pers, inimigos, "cena", e0.planta, e0.sementeDaAbertura); }
+  /* CB3 (09/11): A LUTA ABRE PELO QUE SE DECIDIU ANTES DELA. O encontro da
+     estrada (encontro-na-estrada.js) diz quem tem a surpresa —
+     `iniciativa: "heroi"` (emboscou sem ser visto) ou `"inimigos"` (foi visto
+     primeiro, ou alcançado na fuga) — e esse lado soma
+     `DESFECHOS_DO_ENCONTRO.bonusDeIniciativa` na primeira ordem (o grupo vai
+     com o herói). E `fugaAberta` (perante um lendário, um `importante` ou um
+     «a evitar») marca cada inimigo que entra com `deixaIr`: a criatura não
+     persegue quem se vai, e `vereditoDaFuga` (fuga.js) lê a marca — a fuga
+     prometida no cartão do encontro é a que a mesa cumpre. Sem os dois
+     campos (toda luta que não veio da estrada), a ordem rola como sempre
+     rolou, byte a byte. */
+  const surpresa = e0.iniciativa === "heroi" || e0.iniciativa === "inimigos" ? e0.iniciativa : null;
+  const bonusDe = (lado) => (!surpresa ? 0
+    : (surpresa === "heroi" && lado !== "inimigo") || (surpresa === "inimigos" && lado === "inimigo") ? DESFECHOS_DO_ENCONTRO.bonusDeIniciativa : 0);
+  if (e0.fugaAberta === true) g = { ...g, inimigos: g.inimigos.map((e) => ({ ...e, deixaIr: true })) };
   const ordem = rolarIniciativa([
-    { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) },
-    ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 })),
-    ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: Number(e.des) || 0 })),
+    { nome: pers.nome, lado: "heroi", modDestreza: atributoEfetivo(pers, "destreza") + iniciativaDeTraco(pers) + iniciativaDeItem(pers) + bonusDe("heroi") },
+    ...(pers.grupo || []).map((g2) => ({ nome: g2.nome, lado: "aliado", modDestreza: 1 + bonusDe("aliado") })),
+    ...g.inimigos.map((e) => ({ nome: e.nome, lado: "inimigo", modDestreza: (Number(e.des) || 0) + bonusDe("inimigo") })),
   ], typeof c.sorteDoTurno === "function" ? c.sorteDoTurno("iniciativa") : undefined);
-  const equipado = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos(), economia: economiaNova(pers) };
+  const equipado = { ...comb, inimigos: g.inimigos, grade: g.grade, heroi: g.heroi, aliados: g.aliados, ordem, rodada: 1, recursos: novosRecursos(), economia: economiaNova(pers), ...(surpresa ? { surpresa } : {}) };
   msgsEq.push(`🗺 Terreno: ${mapaEmTexto(g.grade, { heroi: g.heroi, grupo: g.aliados, inimigos: g.inimigos })}`);
   const grandes = g.inimigos.filter((e) => ladoDe(e) > 1);
   if (grandes.length) msgsEq.push(`📏 ${grandes.map((e) => `${e.nome} é ${tamanhoDe(e).nome.toLowerCase()} (${ladoDe(e)}×${ladoDe(e)} quadrados, alcança ${alcanceNatural(e)} m)`).join(" · ")}`);

@@ -920,8 +920,14 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
      leitor. Subir a contagem sem que o leitor exista seria afrouxar a única
      catraca que a régua tem — `teste-ligacao` varre `src/`, não `testes/`.
      SÃO 17 DESDE 31/10: `fichaDoGrupo` (o companheiro vestido como o jogo),
-     com leitor na seção 11 e em teste-kit-inicial §6. */
-  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 17 && semLeitor.length === 0, semLeitor.join(", "));
+     com leitor na seção 11 e em teste-kit-inicial §6.
+     SÃO 18 DESDE 09/11 (CB6): `INTENCAO_NA_REGUA` (o anúncio da intenção do
+     inimigo como parâmetro, desligado até o App anunciar), com leitor logo
+     abaixo e a medida inteira em teste-intencao §7. */
+  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 18 && semLeitor.length === 0, semLeitor.join(", "));
+  /* e o anúncio desligado é o jogo de hoje: com ele, o retrato desta suíte é o
+     de sempre, byte a byte (o App ainda não anuncia — CB6, fiação do oficial) */
+  t("o anúncio da intenção está desligado na régua até o App anunciar (INTENCAO_NA_REGUA)", R.INTENCAO_NA_REGUA && R.INTENCAO_NA_REGUA.ligado === false);
 
   /* E A RÉGUA COMPÕE O ADVERSÁRIO DE VERDADE, pelo mesmo motivo que compõe o
      combate: uma régua que reimplementasse `intencaoDaVez` mediria um segundo

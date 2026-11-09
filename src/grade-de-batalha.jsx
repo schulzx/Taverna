@@ -44,7 +44,14 @@ import { MESA_DE_BATALHA as MB, TERRENO_DO_TABULEIRO } from "./estilo.js";
 import { Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { fasesDoChefe, viradaPorId } from "./masmorras.js";
-import { IconeEscudoAlerta, Glifo } from "./ui.jsx";
+import { IconeEscudoAlerta, Glifo, PilulaDaPrevisao, PilulaDaIntencao } from "./ui.jsx";
+/* CB (09/11, formas.md §CB 3–§CB 5): a previsão sob o alvo, a intenção no
+   canto da ficha, o caminho no chão e o golpe sentido. O que se mostra é
+   decidido em batalha-na-tela.js; as medidas saem das tabelas de CB. */
+import { PREVISAO_DO_GOLPE, CAMINHO_NO_CHAO, INTENCAO_NA_MESA, GOLPE_SENTIDO, FECHO_DA_QUEDA, TIPOS, alfa } from "./estilo.js";
+import { variacaoDoGolpe, pilulaDaPrevisao, chipDaQueda } from "./batalha-na-tela.js";
+import { GLIFOS } from "./glifos.js";
+import { tocarGolpe } from "./som-da-mesa.js";
 /* A1 · o custo onde surpreende e a legenda do passo são contas puras */
 import { casasQueSurpreendem, legendaDoPasso } from "./glifos.js";
 /* E2 — A GRAMÁTICA DO ENDEREÇO NÃO É NOVA, E ISSO É LEI. `LETRAS_DA_GRADE`
@@ -282,7 +289,12 @@ const Contorno = ({ linhas, cor, largura = 0.05, tracejado = null, opacidade = 1
    atributo do SVG, porque só a propriedade do CSS aceita transição — é
    dela que sai o deslizamento. Quem move de verdade é o sistema; isto aqui
    só evita que a ficha pisque de um canto ao outro. */
-function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0 }) {
+/* CB 5 · O GOLPE NA FICHA. `golpe` é a variação de batalha-na-tela.js com a
+   chave do evento: a chave remonta o <g> de dentro, e a animação corre uma
+   vez por golpe. O tremor mede-se em píxeis de tela (--tremor, convertido
+   para casas, porque o SVG mede em casas). `anel`: o anel tracejado âmbar
+   do alvo da previsão, ou o realce de quem está sob o rato na fila. */
+function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0, golpe = null, anel = null }) {
   /* o clipPath precisa de id único e ESTÁVEL: derivado de x,y ele trocaria
      no meio do deslizamento e o rosto piscaria a cada passo */
   const uid = React.useId();
@@ -300,8 +312,16 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
      carta, e o estado muda a expressão AQUI também — o inimigo pressionado
      fica furioso no quadrado dele. Uma pessoa, uma cara, em todo painel. */
   const s = (2 * r * 0.94) / 64;
+  const umPx = 1 / Math.max(1, pxDaCasa || 1);
+  const tremorPx = golpe ? (GOLPE_SENTIDO[golpe.variante] && GOLPE_SENTIDO[golpe.variante].tremor ? GOLPE_SENTIDO[golpe.variante].tremor.px : 0) : 0;
   return (
     <g style={{ transform: `translate(${cx}px, ${cy}px)`, transition: `transform ${ms}ms linear` }}>
+      {anel && (
+        <circle r={r + lado * 0.13} fill="none" stroke={anel} strokeWidth={PREVISAO_DO_GOLPE.anelDoAlvo.traco * umPx}
+          strokeDasharray={PREVISAO_DO_GOLPE.anelDoAlvo.tracejado.map((n) => n * umPx).join(" ")} />
+      )}
+      <g key={golpe ? golpe.chave : "quieta"} className={golpe ? [golpe.classes.tremor, golpe.classes.afunda].filter(Boolean).join(" ") : undefined}
+        style={golpe ? { "--tremor": `${tremorPx * umPx}px` } : undefined}>
       {tipo === "heroi" && <circle r={r * 1.5} fill={T.amber} opacity={0.12} />}
       <circle r={r} fill="#100e1a" stroke={cor} strokeWidth={lado * 0.055} />
       <clipPath id={uid}><circle r={r * 0.94} /></clipPath>
@@ -321,7 +341,44 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
         <text className="tv-mono" textAnchor="middle" y={r + lado * 0.4} fill={cor} opacity={0.8}
           style={{ fontSize: 0.26, pointerEvents: "none" }}>{rotulo || ent.nome}</text>
       )}
+      {/* a pausa no impacto: a ficha pisca (ink a 35 %) o tempo da pausa */}
+      {golpe && golpe.classes.pausa && <circle className={golpe.classes.pausa} r={r} fill={T.ink} opacity={0} />}
+      </g>
     </g>
+  );
+}
+
+/* CB 4 · o glifo desenhado DENTRO do SVG do tabuleiro (a chama no chão da
+   área, as espadas na casa do golpe livre, a caveira de quem caiu): o mesmo
+   `d` de GLIFOS, escalado à casa, com o traço em píxeis de tela */
+function GlifoNaCasa({ nome, x, y, lado = 0.5, cor, px }) {
+  const g = GLIFOS[nome];
+  if (!g) return null;
+  const k = lado / 24;
+  return (
+    <path d={g.d} fill="none" stroke={cor} strokeWidth={(2 * px) / k} strokeLinecap="round" strokeLinejoin="round"
+      transform={`translate(${x + 0.5 - lado / 2} ${y + 0.5 - lado / 2}) scale(${k})`} style={{ pointerEvents: "none" }} />
+  );
+}
+
+/* CB 5 · O NÚMERO DO GOLPE (Figma 342:183) — substitui o flutuante. Salta
+   (0,6 → 1,25), assenta e sobe 12 px; fica para se ler e esvanece. O
+   crítico é maior e âmbar, com «CRÍTICO»; o erro é itálico e baço; o golpe
+   em ti é perigo. É HTML por cima do tabuleiro (o tamanho é de tela, não
+   de casa), e não toca no toque. */
+const TOM_DO_NUMERO = { dano: "ink", critico: "amber", erro: "inkDim", emTi: "danger", cura: "ok" };
+function NumeroDoGolpe({ variacao, reduzido = false }) {
+  if (!variacao) return null;
+  const cor = T[TOM_DO_NUMERO[variacao.tom]] || T.ink;
+  const erro = variacao.tom === "erro";
+  return (
+    <span aria-hidden="true" className={`${erro ? "tv-body" : "tv-display"} ${variacao.classes.salto}${reduzido ? " tv-golpe-reduzido" : ""}`}
+      style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", lineHeight: 1, color: cor, fontSize: variacao.tamanho,
+        fontWeight: erro ? 400 : 700, fontStyle: erro ? "italic" : "normal", whiteSpace: "nowrap",
+        WebkitTextStroke: erro ? undefined : `${GOLPE_SENTIDO.numero.contorno / 2}px ${T.bg}`, paintOrder: "stroke fill" }}>
+      {variacao.texto}
+      {variacao.etiqueta && <span className="tv-mono" style={{ fontSize: TIPOS.piso, letterSpacing: 2, fontWeight: 700, color: T.amberSoft, WebkitTextStroke: "0" }}>{variacao.etiqueta}</span>}
+    </span>
   );
 }
 
@@ -337,8 +394,80 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
    sai — o "deixar passar" encavalava-se na "ÁREA DE MOVIMENTO". As tarjas e
    o `ampliar` ficam; quem decide é a reação, e a área continua dita pelo
    tracejado do chão. */
-export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, alturaDaJanela = 0, tetoDoLado = 0, aoMedirOLado = null, pe = null, peCompacto = false, legendaCede = false }) {
+export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao = null, passoM = 9, passoTotal = 9, ignoraDificil = false, podeMover = true, onMover, mira = null, onMirar, alcanceMira = null, ladoFixo = 0, aoMedirOPasso = null, larguraDaJanela = 0, alturaDaJanela = 0, tetoDoLado = 0, aoMedirOLado = null, pe = null, peCompacto = false, legendaCede = false,
+  /* CB (formas.md §CB 13, item 3). As de hoje (`mira`, `previsao`) não
+     mudam de sentido: `mira` é a retícula da área, `previsao` a área que
+     ela apanha. As novas:
+       previsaoDoGolpe — previsaoDoHeroi(...) com `alvo` (o nome) e, se a
+                         fiação souber, `semVista`: a pílula sob o alvo;
+       intencoes       — intencoesDaRodada(...).lista: a pílula no canto da
+                         ficha, a seta do ataque e as casas do sopro;
+       caminho         — { pontos: [{x,y}], metros, sobraM, golpeLivreEm:
+                         [{x,y}] }: o caminho no chão antes de andar e atacar;
+       golpes          — os eventoDoGolpe da rajada, cada um com `chave`
+                         única: o golpe sentido e o número;
+       aoApontarInimigo(nome|null), aoTocarInimigo(nome) — o rato e o toque
+                         na ficha do inimigo (prever; andar e atacar);
+       realce          — o nome de quem está sob o rato na fila da vez;
+       reguaPresa      — as letras e os números colados à janela (telefone);
+       heroiNome       — o nome do herói (o golpe «em ti»);
+       quedas          — [{ chave, nome, escolha }]: a queda do meio, que não
+                         pára a mesa; o chip pousa na casa 4 s com o outro lado
+                         a um toque (aoMudarQueda(chave, escolha));
+       veuDoUltimo     — o nome do último (ou do importante): o véu a 45 %
+                         sobre o campo, menos a casa dele, com o anel âmbar. */
+  previsaoDoGolpe = null, intencoes = null, caminho = null, golpes = null, aoApontarInimigo = null, aoTocarInimigo = null, realce = null, reguaPresa = false, heroiNome = "",
+  quedas = null, aoMudarQueda = null, veuDoUltimo = null }) {
   const [aberto, setAberto] = React.useState(false);
+
+  /* ---------------- CB 5 · O GOLPE SENTIDO ----------------
+     Cada evento novo (pela chave) entra na mesa uma vez: a ficha treme, o
+     número salta, o som nasce no impacto. Fica o tempo do golpe, da leitura
+     e do esvanecer, e sai. NADA ESPERA POR ISTO: o estado já está aplicado
+     quando a animação começa, e o toque seguinte é aceite em qualquer
+     quadro. Um som que estoura cala-se; o golpe pousa na mesma. */
+  const golpesVistosRef = React.useRef(new Set());
+  const [golpesNaMesa, setGolpesNaMesa] = React.useState([]);
+  React.useEffect(() => {
+    if (!Array.isArray(golpes) || !golpes.length) return undefined;
+    const novos = [];
+    for (const ev of golpes) {
+      try {
+        if (!ev || ev.chave == null || golpesVistosRef.current.has(ev.chave)) continue;
+        golpesVistosRef.current.add(ev.chave);
+        const v = variacaoDoGolpe(ev, { heroi: heroiNome || (heroiFicha && heroiFicha.nome) || "" });
+        if (v) novos.push({ ...v, chave: ev.chave, alvo: ev.alvo });
+        try { tocarGolpe(ev); } catch { /* um som que estoura cala-se */ }
+      } catch (e) { console.warn("GridDeBatalha: o golpe não pousou", e); }
+    }
+    if (!novos.length) return undefined;
+    setGolpesNaMesa((g) => [...g, ...novos]);
+    const tids = novos.map((n) => setTimeout(() => setGolpesNaMesa((g) => g.filter((x) => x.chave !== n.chave)), n.dura));
+    return () => tids.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [golpes]);
+  const golpeEm = (nome) => { for (let i = golpesNaMesa.length - 1; i >= 0; i--) if (golpesNaMesa[i].alvo === nome) return golpesNaMesa[i]; return null; };
+  const golpeComBorda = golpesNaMesa.find((x) => x.borda) || null;
+  const golpeQueTremeAMesa = golpesNaMesa.find((x) => x.mesa) || null;
+
+  /* ---------------- CB 6 · A QUEDA DO MEIO NÃO PÁRA A MESA ----------------
+     O chip fica FECHO_DA_QUEDA.chip na casa de quem caiu e para sempre no
+     registo da rodada; tocar no outro lado muda só aquela queda. */
+  const quedasVistasRef = React.useRef(new Set());
+  const [quedasNaMesa, setQuedasNaMesa] = React.useState([]);
+  React.useEffect(() => {
+    if (!Array.isArray(quedas) || !quedas.length) return undefined;
+    const novas = quedas.filter((q) => q && q.chave != null && !quedasVistasRef.current.has(q.chave));
+    if (!novas.length) {
+      /* a mesma queda com a escolha mudada: o chip troca o texto, o relógio não recomeça */
+      setQuedasNaMesa((qs) => qs.map((q) => { const n = quedas.find((x) => x && x.chave === q.chave); return n ? { ...q, escolha: n.escolha } : q; }));
+      return undefined;
+    }
+    novas.forEach((q) => quedasVistasRef.current.add(q.chave));
+    setQuedasNaMesa((qs) => [...qs, ...novas.map((q) => ({ ...q }))]);
+    const tids = novas.map((q) => setTimeout(() => setQuedasNaMesa((qs) => qs.filter((x) => x.chave !== q.chave)), FECHO_DA_QUEDA.chip));
+    return () => tids.forEach(clearTimeout);
+  }, [quedas]);
 
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
      O golpe acontecia em dois lugares desligados: o número na linha do
@@ -358,11 +487,15 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     (combate.aliados || []).forEach((a, i) => { const ent = { ...a, ...(grupo[i] || {}), x: a.x, y: a.y }; if (ent.x != null) todos.push({ ent, id: `al:${ent.nome || i}` }); });
     (combate.inimigos || []).forEach((e, i) => { if (e.x != null) todos.push({ ent: e, id: `in:${e.nome || i}` }); });
     const novos = [];
+    /* CB 5: o número do golpe substitui o flutuante; o flutuante fica para o
+       que não vem de golpe (o veneno, a área, a cura) */
+    const comGolpe = new Set((Array.isArray(golpes) ? golpes : []).filter((g) => g && g.chave != null).map((g) => g.alvo));
     for (const { ent, id } of todos) {
       const v = Math.max(0, ent.vida || 0);
       agora.set(id, v);
       const antes = vidasRef.current.get(id);
-      if (antes != null && v !== antes) {
+      const nomeDele = id === "heroi" ? ((heroiFicha && heroiFicha.nome) || heroiNome) : ent.nome;
+      if (antes != null && v !== antes && !(v < antes && comGolpe.has(nomeDele))) {
         const delta = v - antes;
         novos.push({
           chave: seqRef.current++,
@@ -512,6 +645,14 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      mapa que a área. */
   const surpreendem = (() => { try { return casasQueSurpreendem(custoDoPasso, heroi); } catch (e) { return new Set(custoDoPasso.keys()); } })();
   const naArea = new Set(((previsao && previsao.quadrados) || []).map((q) => K(q.x, q.y)));
+  /* CB 4 · as intenções, por inimigo; as casas do sopro; quem é o alvo */
+  const intencaoDe = new Map((Array.isArray(intencoes) ? intencoes : []).filter((i) => i && i.inimigo && i.vista).map((i) => [i.inimigo, i.vista]));
+  const casasDoSopro = new Set();
+  for (const v of intencaoDe.values()) if (v.tipo === "sopro" && Array.isArray(v.area)) v.area.forEach((q) => casasDoSopro.add(K(q.x, q.y)));
+  const alvoDaPrevisao = previsaoDoGolpe && previsaoDoGolpe.alvo ? String(previsaoDoGolpe.alvo) : "";
+  const pontosDoCaminho = caminho && Array.isArray(caminho.pontos) ? caminho.pontos.filter((q) => q && q.x != null) : [];
+  const golpeLivreEm = new Set((caminho && Array.isArray(caminho.golpeLivreEm) ? caminho.golpeLivreEm : []).map((q) => K(q.x, q.y)));
+  const caidosComCasa = ((combate.inimigos) || []).filter((e) => e && e.x != null && (e.derrotado || (e.vida || 0) <= 0));
   const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
 
   /* quem ocupa cada quadrado — o rótulo fica no canto superior esquerdo de
@@ -685,14 +826,14 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       flexShrink: 0,
       maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + CALHA_DA_REGUA, margin: "0 auto", background: T.bg }}>
       {/* o canto é `bg` e não leva rótulo: `A1` não se escreve duas vezes */}
-      <div aria-hidden="true" />
-      <div aria-hidden="true" style={{ display: "flex", alignItems: "stretch" }}>
+      <div aria-hidden="true" style={reguaPresa ? { position: "sticky", top: 0, left: 0, zIndex: 4, background: T.bg } : undefined} />
+      <div aria-hidden="true" style={{ display: "flex", alignItems: "stretch", ...(reguaPresa ? { position: "sticky", top: 0, zIndex: 3, background: alfa(T.bg, 0.85) } : {}) }}>
         {Array.from({ length: g.largura }).map((_, x) => (
           <RotuloDaRegua key={`rc${x}`} coluna parado={parado} grau={grauDaColuna(x)}
             texto={x % passoDoRotulo === 0 ? (LETRAS_DA_GRADE[x] || "") : ""} />
         ))}
       </div>
-      <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", alignItems: "stretch" }}>
+      <div aria-hidden="true" style={{ display: "flex", flexDirection: "column", alignItems: "stretch", ...(reguaPresa ? { position: "sticky", left: 0, zIndex: 3, background: alfa(T.bg, 0.85) } : {}) }}>
         {Array.from({ length: g.altura }).map((_, y) => (
           <RotuloDaRegua key={`rn${y}`} coluna={false} parado={parado} grau={grauDaLinha(y)}
             texto={y % passoDoRotulo === 0 ? String(y + 1) : ""} />
@@ -700,7 +841,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       </div>
       {/* e o campo, no quadrante que sobra. `position: relative` é o chão
           da faixa do chefe, e continua a ser. */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: `${g.largura} / ${g.altura}` }}>
+      <div className={golpeQueTremeAMesa ? "tv-golpe-mesa" : undefined} style={{ position: "relative", width: "100%", aspectRatio: `${g.largura} / ${g.altura}` }}>
       {faixa && (
         /* v9.172 (`mesa-combate-v2`): a faixa deixa de ser um letreiro
            centrado e vira o CABEÇALHO do chefe — nome em vermelho de perigo à
@@ -879,6 +1020,70 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           </g>
         )}
 
+        {/* CB 4 · AS CASAS DO SOPRO: o chão a 22 % é decoração (1,33 contra o
+            feltro), e de propósito — quem leva a informação é o aro tracejado
+            (5,11) e a chama (3,83), os dois acima de 3 (WCAG 2.2, 1.4.11) */}
+        {casasDoSopro.size > 0 && (
+          <g style={{ pointerEvents: "none" }}>
+            {[...casasDoSopro].map((k) => {
+              const [x, y] = k.split(",").map(Number);
+              const A = INTENCAO_NA_MESA.area;
+              return (
+                <g key={`sopro${k}`}>
+                  <rect x={x + (A.aro * px) / 2} y={y + (A.aro * px) / 2} width={1 - A.aro * px} height={1 - A.aro * px}
+                    fill={alfa(T.danger, A.chao)} stroke={T.danger} strokeWidth={A.aro * px} strokeDasharray={A.tracejado.map((n) => n * px).join(" ")} />
+                  <GlifoNaCasa nome={INTENCAO_NA_MESA.glifo.sopro} x={x} y={y} lado={0.42} cor={T.danger} px={px} />
+                </g>
+              );
+            })}
+          </g>
+        )}
+        {/* CB 4 · A SETA DO ATAQUE: da ficha dele à do alvo, tracejada */}
+        {[...intencaoDe.entries()].map(([nome, v]) => {
+          if (v.tipo !== "atacar" || !v.alvo) return null;
+          const de = inimigos.find((e) => e.nome === nome);
+          const ehHeroi = v.alvo === ((heroiFicha && heroiFicha.nome) || heroiNome);
+          const para = ehHeroi ? heroi : aliados.find((a) => a.nome === v.alvo);
+          if (!de || !para || de.x == null || para.x == null) return null;
+          const S = INTENCAO_NA_MESA.seta;
+          return (
+            <line key={`seta${nome}`} x1={de.x + ladoDe(de) / 2} y1={de.y + ladoDe(de) / 2} x2={para.x + ladoDe(para) / 2} y2={para.y + ladoDe(para) / 2}
+              stroke={T.danger} strokeWidth={S.traco * px} strokeDasharray={S.tracejado.map((n) => n * px).join(" ")} strokeLinecap="round" style={{ pointerEvents: "none" }} />
+          );
+        })}
+        {/* CB 3 · O CAMINHO NO CHÃO antes de andar e atacar: a linha une os
+            centros (traço 3 âmbar), um ponto em cada casa; a casa que sai do
+            alcance de quem ameaça pinta-se de perigo, com as espadas (o golpe
+            livre); o destino leva o aro tracejado */}
+        {pontosDoCaminho.length > 1 && (
+          <g style={{ pointerEvents: "none" }}>
+            <path d={viaDoCaminho(pontosDoCaminho)} fill="none" stroke={T.amber} strokeWidth={CAMINHO_NO_CHAO.traco * px} strokeLinecap="round" strokeLinejoin="round" />
+            {pontosDoCaminho.slice(1, -1).map((q, i) => <circle key={`pc${i}`} cx={q.x + 0.5} cy={q.y + 0.5} r={(CAMINHO_NO_CHAO.ponto / 2) * px} fill={T.amber} />)}
+            {[...golpeLivreEm].map((k) => {
+              const [x, y] = k.split(",").map(Number);
+              const L = CAMINHO_NO_CHAO.golpeLivre;
+              return (
+                <g key={`gl${k}`}>
+                  <rect x={x + (L.aro * px) / 2} y={y + (L.aro * px) / 2} width={1 - L.aro * px} height={1 - L.aro * px}
+                    fill={alfa(T.danger, L.chao)} stroke={T.danger} strokeWidth={L.aro * px} strokeDasharray={L.tracejado.map((n) => n * px).join(" ")} />
+                  <GlifoNaCasa nome="espadas" x={x} y={y} lado={0.42} cor={T.danger} px={px} />
+                </g>
+              );
+            })}
+            {(() => {
+              const d = pontosDoCaminho[pontosDoCaminho.length - 1];
+              const D = CAMINHO_NO_CHAO.destino;
+              const l = D.lado * px;
+              return (
+                <rect x={d.x + 0.5 - l / 2} y={d.y + 0.5 - l / 2} width={l} height={l} rx={D.raio * px}
+                  fill={alfa(T.amber, D.chao)} stroke={T.amber} strokeWidth={D.aro * px} strokeDasharray={D.tracejado.map((n) => n * px).join(" ")} />
+              );
+            })()}
+          </g>
+        )}
+        {/* CB 5 · quem caiu deixa a caveira na casa */}
+        {caidosComCasa.map((e, i) => <GlifoNaCasa key={`caido${e.nome}-${i}`} nome={INTENCAO_NA_MESA.caveira} x={e.x + (ladoDe(e) - 1) / 2} y={e.y + (ladoDe(e) - 1) / 2} lado={0.46} cor={T.inkDim} px={px} />)}
+
         {/* o caminho: o previsto pontilhado, o andado inteiro */}
         {rotaPrevista && (
           <g>
@@ -969,11 +1174,16 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         {/* AS FICHAS */}
         <g style={{ pointerEvents: "none" }}>
           {aliados.map((a, i) => (a.vida || 0) > 0 && a.x != null ? (
-            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={a.x} y={a.y} lado={ladoDe(a)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)} />
+            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={a.x} y={a.y} lado={ladoDe(a)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)}
+              golpe={golpeEm(a.nome)} anel={realce && realce === a.nome ? T.amber : null} />
           ) : null)}
           {inimigos.map((e, i) => e.x != null ? (
-            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)} />
+            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)}
+              golpe={golpeEm(e.nome)} anel={alvoDaPrevisao === e.nome || (realce && realce === e.nome) ? T.amber : null} />
           ) : null)}
+          {caidosComCasa.filter((e) => { const gq = golpeEm(e.nome); return gq && gq.variante === "abate"; }).map((e, i) => (
+            <Ficha key={`cai${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={0} grande={grande} pxDaCasa={ladoEmPx(grande)} golpe={golpeEm(e.nome)} />
+          ))}
           {heroi && heroi.x != null && (
             /* a ficha completa entra por baixo: a entidade da grade só tem
                nome e lugar, e o rosto precisa da classe e da vida — a
@@ -981,7 +1191,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             <Ficha ent={{ ...(heroiFicha || {}), ...heroi }} rotulo="você" tipo="heroi" cor={T.amber} lado={ladoDe(heroi)} grande={grande} pxDaCasa={ladoEmPx(grande)}
               x={andando ? andando.rota[andando.i].x : heroi.x}
               y={andando ? andando.rota[andando.i].y : heroi.y}
-              ms={andando ? andando.ms : 260} />
+              ms={andando ? andando.ms : 260}
+              golpe={golpeEm((heroiFicha && heroiFicha.nome) || heroiNome)} anel={realce && realce === ((heroiFicha && heroiFicha.nome) || heroiNome) ? T.amber : null} />
           )}
         </g>
 
@@ -1088,7 +1299,15 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                    substituída inteira quando `vereditoDoPasso` nascer — é
                    de lá que vêm o custo em metros e o "vá até K11", que
                    são conta de caminho e não são deste lado da mesa. */
-                const veredito = tiro ? `dá para fazer ${alcanceMira.nome} cair aqui`
+                /* CB 3: o inimigo desta casa, e se o toque nele prevê/ataca */
+                const inimigoAqui = oc && oc.tipo === "inimigo" ? oc.ent.nome : "";
+                const tocaInimigo = !!inimigoAqui && !mirando && !!aoTocarInimigo;
+                /* o alvo da previsão diz a previsão no veredito da casa: o ouvido
+                   ouve o mesmo que o olho lê debaixo da ficha (CB 3) */
+                const daPrevisao = inimigoAqui && inimigoAqui === alvoDaPrevisao ? (() => { try { const v = pilulaDaPrevisao(previsaoDoGolpe); return v ? v.rotulo.replace(`${inimigoAqui}: `, "") : ""; } catch { return ""; } })() : "";
+                const veredito = daPrevisao ? daPrevisao
+                  : tocaInimigo ? "toque para prever o golpe"
+                  : tiro ? `dá para fazer ${alcanceMira.nome} cair aqui`
                   : mirando ? `${(alcanceMira && alcanceMira.nome) || "a habilidade"} não alcança ${end}`
                   : souEu ? `você já está em ${end}`
                   : parede ? `${end} é pedra`
@@ -1098,7 +1317,15 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                   : podeMover ? `${end} fica fora do seu passo nesta rodada`
                   : `não dá para andar até ${end} agora`;
                 const nomeDaCasa = [end, quem, lugar, veredito].filter(Boolean).join(" · ");
-                const agir = () => { if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y }); };
+                /* CB 3 · O INIMIGO SE TOCA: o rato prevê (aoApontarInimigo), o
+                   clique anda e ataca; no telefone o primeiro toque prevê e o
+                   segundo confirma — quem decide qual é a tela, por
+                   aoTocarInimigo. Mirar uma área continua a ganhar. */
+                const agir = () => {
+                  if (tocaInimigo) { try { aoTocarInimigo(inimigoAqui); } catch (e) { console.warn("GridDeBatalha: tocar o inimigo falhou", e); } return; }
+                  if (!clicavel) return; if (mirando) onMirar({ x, y }); else onMover && onMover({ x, y });
+                };
+                const apontar = (nome) => { if (!aoApontarInimigo) return; try { aoApontarInimigo(nome); } catch (e) { console.warn("GridDeBatalha: apontar falhou", e); } };
                 /* ============================================================
                    E4 · UM PONTO DE PARAGEM, E AS SETAS POR DENTRO
 
@@ -1134,21 +1361,110 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                            preme numa casa impedida já ouviu o veredito no
                            nome dela, e roubar-lhe a barra de espaço seria
                            cobrar-lhe o gesto duas vezes */
-                        if (!clicavel) return;
+                        if (!clicavel && !tocaInimigo) return;
                         ev.preventDefault(); agir(); return;
                       }
                       andarComTecla(ev, x, y);
                     }}
                     className="tv-anel-foco-no-campo"
                     onFocus={() => { setFocada({ x, y }); setParagem({ x, y }); }} onBlur={() => setFocada(null)}
-                    onMouseEnter={() => setSobre({ x, y })} onMouseLeave={() => setSobre(null)}
-                    style={{ cursor: clicavel ? "pointer" : "default" }} />
+                    onMouseEnter={() => { setSobre({ x, y }); if (inimigoAqui) apontar(inimigoAqui); }} onMouseLeave={() => { setSobre(null); if (inimigoAqui) apontar(null); }}
+                    style={{ cursor: clicavel || tocaInimigo ? "pointer" : "default" }} />
                 );
               })}
             </g>
           ))}
         </g>
       </svg>
+      {/* CB · A CAMADA DE CIMA, em HTML: a previsão 8 px abaixo da ficha do
+          alvo, a intenção no canto de cima da ficha (as duas nunca se tapam),
+          o rótulo do caminho junto ao destino, e o número do golpe. Fora do
+          toque: o toque é das casas, por baixo. */}
+      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {[...intencaoDe.entries()].map(([nome, v]) => {
+          const e = inimigos.find((x) => x.nome === nome);
+          if (!e || e.x == null) return null;
+          const n = ladoDe(e);
+          const cimaOcupada = e.y > 0 && mapa.has(K(e.x + n - 1, e.y - 1));
+          const pos = cimaOcupada
+            ? { left: `${((e.x + n) / g.largura) * 100}%`, top: `${((e.y + n / 2) / g.altura) * 100}%`, transform: "translate(4px, -50%)" }
+            : { left: `${((e.x + n) / g.largura) * 100}%`, top: `${(e.y / g.altura) * 100}%`, transform: "translate(-40%, -60%)" };
+          return (
+            <span key={`int${nome}`} style={{ position: "absolute", zIndex: 2, ...pos }}>
+              <PilulaDaIntencao vista={v} distanciaM={heroi ? Math.round(distanciaM(heroi, e) * 10) / 10 : null} />
+            </span>
+          );
+        })}
+        {alvoDaPrevisao && (() => {
+          const e = inimigos.find((x) => x.nome === alvoDaPrevisao);
+          if (!e || e.x == null) return null;
+          const n = ladoDe(e);
+          return (
+            <span style={{ position: "absolute", zIndex: 3, left: `${((e.x + n / 2) / g.largura) * 100}%`, top: `${((e.y + n) / g.altura) * 100}%`, transform: `translate(-50%, ${PREVISAO_DO_GOLPE.abaixoDaFicha}px)` }}>
+              <PilulaDaPrevisao previsao={previsaoDoGolpe} caminho={pontosDoCaminho.length > 1 ? { metros: caminho.metros } : null} />
+            </span>
+          );
+        })()}
+        {pontosDoCaminho.length > 1 && caminho.metros != null && (() => {
+          const d = pontosDoCaminho[pontosDoCaminho.length - 1];
+          return (
+            <span className="tv-mono" style={{ position: "absolute", zIndex: 2, left: `${((d.x + 0.5) / g.largura) * 100}%`, top: `${((d.y + 1) / g.altura) * 100}%`, transform: "translate(-50%, 2px)",
+              fontSize: CAMINHO_NO_CHAO.rotulo, fontWeight: 700, color: T.ink, background: T.pagina, border: `1px solid ${T.amber}`, borderRadius: PREVISAO_DO_GOLPE.raio, padding: "2px 8px", whiteSpace: "nowrap" }}>
+              {metrosTxt(caminho.metros)} m{caminho.sobraM != null ? ` · sobra ${metrosTxt(caminho.sobraM)}` : ""}
+            </span>
+          );
+        })()}
+        {veuDoUltimo && (() => {
+          const e = ((combate.inimigos) || []).find((x) => x && x.nome === veuDoUltimo && x.x != null);
+          if (!e) return null;
+          const n = ladoDe(e);
+          const L = g.largura, A = g.altura;
+          /* o véu em quatro faixas à volta da casa dele: a casa fica limpa */
+          const x0 = (e.x / L) * 100, x1 = ((e.x + n) / L) * 100, y0 = (e.y / A) * 100, y1 = ((e.y + n) / A) * 100;
+          const veu = { position: "absolute", background: alfa(T.bg, FECHO_DA_QUEDA.veuDoUltimo) };
+          return (
+            <>
+              <span aria-hidden="true" style={{ ...veu, left: 0, top: 0, right: 0, height: `${y0}%` }} />
+              <span aria-hidden="true" style={{ ...veu, left: 0, top: `${y1}%`, right: 0, bottom: 0 }} />
+              <span aria-hidden="true" style={{ ...veu, left: 0, top: `${y0}%`, width: `${x0}%`, height: `${y1 - y0}%` }} />
+              <span aria-hidden="true" style={{ ...veu, left: `${x1}%`, top: `${y0}%`, right: 0, height: `${y1 - y0}%` }} />
+              <span aria-hidden="true" style={{ position: "absolute", left: `${x0}%`, top: `${y0}%`, width: `${x1 - x0}%`, height: `${y1 - y0}%`, borderRadius: "50%", border: `${PREVISAO_DO_GOLPE.anelDoAlvo.traco}px solid ${T.amber}` }} />
+            </>
+          );
+        })()}
+        {quedasNaMesa.map((q) => {
+          const e = ((combate.inimigos) || []).find((x) => x && x.nome === q.nome && x.x != null);
+          const c = chipDaQueda(q.nome, q.escolha);
+          if (!e || !c) return null;
+          const n = ladoDe(e);
+          return (
+            <span key={`queda${q.chave}`} role="status" className="tv-mono inline-flex items-center"
+              style={{ position: "absolute", zIndex: 5, pointerEvents: "auto", left: `${((e.x + n / 2) / g.largura) * 100}%`, top: `${((e.y + n) / g.altura) * 100}%`, transform: "translate(-50%, 4px)",
+                minHeight: FECHO_DA_QUEDA.alto, borderRadius: FECHO_DA_QUEDA.raio, padding: `1px 2px 1px 10px`, gap: 6, whiteSpace: "nowrap",
+                fontSize: TIPOS.piso, color: T.ink, background: T.pagina, border: `1px solid ${T.lineStrong}` }}>
+              {c.texto}
+              {aoMudarQueda && (
+                <button onClick={() => { try { aoMudarQueda(q.chave, c.outraEscolha); } catch (er) { console.warn("GridDeBatalha: mudar a queda falhou", er); } }}
+                  className="tv-anel-foco tv-mono" style={{ minHeight: FECHO_DA_QUEDA.alto - 2, padding: "0 8px", borderRadius: FECHO_DA_QUEDA.raio, fontSize: TIPOS.piso, fontWeight: 700,
+                    color: c.outraEscolha === "letal" ? T.danger : T.ok, border: `1px solid ${T.line}`, background: T.panelSoft }}>
+                  {c.outro}
+                </button>
+              )}
+            </span>
+          );
+        })}
+        {golpesNaMesa.map((gq) => {
+          const ehHeroi = gq.alvo === ((heroiFicha && heroiFicha.nome) || heroiNome);
+          const ent = ehHeroi ? heroi : inimigos.find((x) => x.nome === gq.alvo) || aliados.find((x) => x.nome === gq.alvo) || caidosComCasa.find((x) => x.nome === gq.alvo);
+          if (!ent || ent.x == null) return null;
+          const n = ladoDe(ent);
+          return (
+            <span key={`num${gq.chave}`} style={{ position: "absolute", zIndex: 4, left: `${((ent.x + n / 2) / g.largura) * 100}%`, top: `${((ent.y + 0.1) / g.altura) * 100}%`, transform: "translate(-50%, -50%)" }}>
+              <NumeroDoGolpe variacao={gq} reduzido={parado} />
+            </span>
+          );
+        })}
+      </div>
       </div>
     </div>
     );
@@ -1251,7 +1567,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       )}
       {tarjas}
       <span className="ml-auto flex items-center" style={{ gap: MB.chipLadoX }}>
-        {custosAcesos.length > 0 && !mirando && !legendaCede && textoDaLegenda && (
+        {/* CB 9: no telefone a legenda do passo sai do pé (o tracejado e o número na casa já a dizem), e o pé fica numa linha */}
+        {custosAcesos.length > 0 && !mirando && !legendaCede && !peCompacto && textoDaLegenda && (
           <span className="tv-mono" style={{ ...legendaDoPe, color: T.inkDim }}>{textoDaLegenda}</span>
         )}
         {ampliar}
@@ -1272,6 +1589,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       {/* B1: e o lado que a casa ganhou, para a câmara enquadrar certo */}
       <MedidorDoLado lado={ladoEmPx(false)} aoMedir={aoMedirOLado} />
       {pe ? createPortal(peDaArena, pe) : cabecalho}
+      {golpeComBorda && !movimentoParado() && (
+        <div key={`borda${golpeComBorda.chave}`} aria-hidden="true" className="tv-golpe-borda"
+          style={{ position: "fixed", inset: 0, zIndex: 60, pointerEvents: "none", boxShadow: `inset 0 0 0 ${GOLPE_SENTIDO.emTi.borda}px ${alfa(T.danger, GOLPE_SENTIDO.emTi.alfa)}` }} />
+      )}
       {tabuleiro(false)}
       {aberto && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4" style={{ background: "rgba(8,6,14,0.92)", backdropFilter: "blur(3px)" }}

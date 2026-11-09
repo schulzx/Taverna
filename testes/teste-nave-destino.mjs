@@ -85,7 +85,12 @@ sec("1. as tabelas");
   t("a boca registra-se fora dos muros, nunca \"dentro\"", I.distanciaDaBoca && I.distanciaDaBoca !== "dentro");
   const Q = R.QUEM_RESPONDE || {};
   t("uma frase, uma resposta: as três origens estão na tabela", !!(Q.frase && Q.sinal && Q.toque));
-  t("e nenhuma fala na boca do herói", Object.values(Q).length === 3 && Object.values(Q).every((q) => q.vozDoHeroi === false));
+  /* 09/11 (CB3): a contagem passou de 3 a 4 — nasceu a origem "encontro" (o
+     perigo da estrada tem chamada própria, antes de a mesa abrir; a causa do
+     dragão sem uma palavra). A intenção da asserção fica: NENHUMA origem fala
+     na boca do herói, por mais que a tabela cresça. */
+  t("e nenhuma fala na boca do herói", Object.values(Q).length === 4 && Object.values(Q).every((q) => q.vozDoHeroi === false));
+  t("o encontro de perigo faz a sua chamada, com envelope próprio (CB3)", (Q.encontro || {}).chamadas === 1 && (Q.encontro || {}).envelope === "proprio");
   t("a frase não faz chamada própria: o envelope vai junto da frase", (Q.frase || {}).chamadas === 0 && (Q.frase || {}).envelope === "junto");
   t("o sinal do Mestre também não (ele já respondeu): o envelope espera a próxima frase", (Q.sinal || {}).chamadas === 0 && (Q.sinal || {}).envelope === "proximo");
   t("o toque faz uma, a sua — não há frase onde colar", (Q.toque || {}).chamadas === 1 && (Q.toque || {}).envelope === "proprio");

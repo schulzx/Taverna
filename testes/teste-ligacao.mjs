@@ -363,6 +363,19 @@ sec("1. NENHUM MÓDULO MUDO");
        escolha. Credor: o `oficial`, na MESMA fase. A entrada sai quando o
        App o importar. `teste-encontro-na-estrada.mjs` é o primeiro leitor. */
     "encontro-na-estrada.js": "o encontro pendente na viagem, o cartão do sinal e das escolhas, e a pauta antes da mesa (oficial, CB3, 09/11)",
+    /* 09/11 (Fase CB, CB6 · a intenção do inimigo, na leva da CB3):
+       `intencao.js` nasce no backend — `intencoesDaRodada` (o anúncio no
+       começo da rodada, com a mesma mente de `turnoDosInimigos`, o sopro que
+       pinta as casas, a ameaça somada por alvo) e `balancoDasIntencoes` — e
+       espera o `oficial`: o App anuncia no começo de cada rodada
+       (`combate.intencoes`, campo novo e aditivo), passa `intencoes` a
+       `turnoDosInimigos` e põe a `vista` na peça `Intencao`. Credor: o
+       `oficial`, na MESMA fase. A entrada sai quando o App o importar (e,
+       no mesmo commit, `INTENCAO_NA_REGUA.ligado` passa a true). A régua de
+       combate e `teste-intencao.mjs` são os primeiros leitores.
+       `previsao.js` (CB5) não precisa de entrada: `intencao.js` e a bandeja
+       (`lancamentoDoAtaque`, motor/a-bandeja.js) já o importam. */
+    "intencao.js": "o anúncio da intenção do inimigo no começo da rodada e o balanço depois (oficial, CB6 na leva da CB3, 09/11)",
   };
   const mudos = [];
   for (const f of arqs) {

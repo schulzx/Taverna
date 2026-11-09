@@ -250,5 +250,56 @@ export { React, InterruptorDoSom };
   limpar();
 }
 
+/* ============================================================ */
+sec("9. a luta (CB7, formas.md §CB 5 e §CB 12)");
+{
+  const L = S.luta;
+  const momentos = ["golpe", "critico", "erro", "queda", "entrada", "imune"];
+  t("os cinco momentos da luta e o imune estão na tabela, congelados", momentos.every((m) => Array.isArray(L[m]) && L[m].length > 0 && Object.isFrozen(L[m])) && Object.isFrozen(L));
+  t("o crítico é o golpe com um sino por cima (mais vozes, o agudo)", L.critico.length > L.golpe.length && Math.max(...L.critico.map((v) => v.freq)) > 1000);
+  t("a queda é grave e longa: a mais longa e a mais grave", L.queda.every((v) => v.freq <= 110) && Math.max(...L.queda.map((v) => v.em + v.dura)) >= Math.max(...momentos.map((m) => Math.max(...L[m].map((v) => v.em + v.dura)))));
+  t("o golpe e o erro cabem nos 380 ms do golpe sentido", ["golpe", "erro"].every((m) => L[m].every((v) => v.em + v.dura <= 0.38)));
+  t("o tambor da entrada: três batidas, uma depois da outra", L.entrada.length === 3 && L.entrada.every((v, i) => i === 0 || v.em > L.entrada[i - 1].em));
+  const nav = navegador();
+  const M = await carregar();
+  t("antes do gesto, a luta cala como o resto", M.tocarDaLuta("golpe") === false && nav.reg.nascidos === 0);
+  nav.gesto();
+  let antes = nav.reg.osciladores.length;
+  t("depois do gesto, cada momento soa com as suas vozes", momentos.every((m) => { const n = nav.reg.osciladores.length; const ok = M.tocarDaLuta(m) === true && nav.reg.osciladores.length === n + L[m].length; return ok; }));
+  t("momento desconhecido cala (e o herdado do objeto também)", M.tocarDaLuta("trovao") === false && M.tocarDaLuta("toString") === false);
+  const quantos = (ev) => { const n = nav.reg.osciladores.length; M.tocarGolpe(ev); return nav.reg.osciladores.length - n; };
+  t("tocarGolpe escolhe pelo evento: o acerto é o golpe, o crítico o crítico, o erro o erro",
+    quantos({ desfecho: "acerto", abate: false }) === L.golpe.length && quantos({ desfecho: "critico", abate: false }) === L.critico.length && quantos({ desfecho: "erro" }) === L.erro.length);
+  t("o abate manda sobre o desfecho: soa a queda", quantos({ desfecho: "critico", abate: true }) === L.queda.length);
+  t("o imune soa o erro com o tinido", quantos({ desfecho: "imune" }) === L.imune.length);
+  antes = nav.reg.osciladores.length;
+  t("o impedido e o lixo calam", M.tocarGolpe({ desfecho: "impedido" }) === false && M.tocarGolpe(null) === false && M.tocarGolpe({}) === false && nav.reg.osciladores.length === antes);
+  t("tocarEntrada é o tambor", M.tocarEntrada() === true);
+  limpar();
+  /* o volume: as vozes dividem o teto */
+  const teto = Math.pow(10, S.volumeDb / 20);
+  let pior = 0;
+  for (const m of momentos) {
+    const n2 = navegador();
+    const M2 = await carregar();
+    n2.gesto();
+    M2.tocarDaLuta(m);
+    pior = Math.max(pior, picosDe(n2.reg).reduce((a, b) => a + b, 0));
+    limpar();
+  }
+  t(`nenhum momento da luta passa do teto (${teto.toFixed(3)})`, pior <= teto + 1e-9, pior.toFixed(4));
+  const n3 = navegador({ guarda: fazerGuarda({ [S.chave]: "0" }) });
+  const M3 = await carregar();
+  n3.gesto();
+  t("desligado, a luta cala e o contexto não nasce", M3.tocarGolpe({ desfecho: "critico" }) === false && M3.tocarEntrada() === false && n3.reg.nascidos === 0);
+  limpar();
+  limpar();
+  const n4 = navegador({ reduce: true });
+  const M4 = await carregar();
+  n4.gesto();
+  t("com menos movimento, o golpe soa na mesma", M4.tocarGolpe({ desfecho: "acerto" }) === true);
+  limpar();
+}
+
 console.log(`\n${ok} ok, ${mal} mal`);
 if (mal) process.exit(1);

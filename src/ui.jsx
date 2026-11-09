@@ -33,6 +33,9 @@ import { quantasBrasas, HALO, brasaEm, forcaDoHalo } from "./brasas.js";
 import { areiaDaAmpulheta, apertoDoPrazo, palavraDoPrazo } from "./hora-e-prazo.js";
 /* TE (09/11): o som da mesa — a preferência e as palavras do interruptor */
 import { SOM_DA_MESA, somLigado, ligarSom } from "./som-da-mesa.js";
+/* CB (09/11): as peças da batalha leem as tabelas de CB e a conta pura da tela */
+import { PREVISAO_DO_GOLPE, INTENCAO_NA_MESA, ECONOMIA_DA_VEZ } from "./estilo.js";
+import { pilulaDaPrevisao, pilulaDaIntencao, pipsDaEconomia } from "./batalha-na-tela.js";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
    máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
@@ -2998,5 +3001,152 @@ export function InterruptorDoSom({ aoMudar = null }) {
       </span>
       <span className="block" style={{ color: T.inkDim }}>{P.diz}</span>
     </button>
+  );
+}
+
+
+/* ============================================================
+   CB · AS PEÇAS DA BATALHA (09/11/2026) — formas.md §CB 3, §CB 4, §CB 8;
+   Figma 342:100 (Previsao do golpe), 342:160 (Intencao), 342:265 (Economia)
+
+   Moram aqui, e não na grade nem no painel, porque cada uma tem DOIS
+   lugares e uma forma só: a pílula da previsão pousa debaixo do alvo e
+   repete-se na folha do telefone; a da intenção pousa no canto da ficha e
+   no cartão do inimigo na coluna Eles; o pip da economia vive na coluna Tu
+   e no preço de cada verbo; as faces do d20 acendem-se no «O teu golpe» e
+   no dado que rola na bandeja. O que cada uma mostra é decidido em
+   batalha-na-tela.js (provado em Node); aqui só se desenha, com as medidas
+   de PREVISAO_DO_GOLPE, INTENCAO_NA_MESA e ECONOMIA_DA_VEZ e as tintas de T.
+   ============================================================ */
+
+/* A PREVISÃO DO GOLPE — «78% · 6–13 · ☠ 40%», 32 de alto, debaixo do alvo */
+export function PilulaDaPrevisao({ previsao, caminho = null, semVista = false }) {
+  const v = pilulaDaPrevisao(previsao, { caminho, semVista });
+  if (!v) return null;
+  const P = PREVISAO_DO_GOLPE;
+  const fio = <span aria-hidden="true" style={{ width: 1, alignSelf: "stretch", margin: `${P.enchimento.y}px 0`, background: T.line }} />;
+  return (
+    <span role="img" aria-label={v.rotulo} className="tv-mono inline-flex items-center"
+      style={{ height: P.alto, borderRadius: P.raio, padding: `0 ${P.enchimento.x}px`, gap: P.entre, whiteSpace: "nowrap",
+        background: T.pagina, border: `${P.aro}px solid ${v.aroLetal ? T.danger : T.amber}`, color: T.ink }}>
+      <span aria-hidden="true" className="inline-flex items-center" style={{ gap: P.entre }}>
+        {v.estado === "sem-vista" ? (
+          <>
+            <Glifo nome="olho" tamanho={16} cor={T.inkDim} />
+            <span className="tv-body" style={{ fontStyle: "italic", fontSize: P.letra.dano, color: T.inkDim }}>sem linha de vista</span>
+          </>
+        ) : (
+          <>
+            {v.golpeLivre && <><span style={{ fontSize: P.letra.etiqueta, fontWeight: 700, color: T.danger }}>sai: golpe livre</span>{fio}</>}
+            {!v.golpeLivre && v.anda && <><Glifo nome="passo" tamanho={16} cor={T.ink} /><span style={{ fontSize: P.letra.etiqueta, fontWeight: 700 }}>{v.anda}</span>{fio}</>}
+            {v.coberto > 0 && <><Glifo nome="escudo" tamanho={16} cor={T.mundo} /><span style={{ fontSize: P.letra.etiqueta, fontWeight: 700, color: T.mundo }}>−{v.coberto}</span></>}
+            <Glifo nome="espadas" tamanho={16} cor={T.amber} />
+            {v.chance != null && <span style={{ fontSize: P.letra.chance, fontWeight: 700, color: T.amberSoft }}>{v.chance}%</span>}
+            {v.dano && <>{fio}<span style={{ fontSize: P.letra.dano, color: T.ink }}>{v.dano}</span></>}
+            {v.abate != null && <><Glifo nome="perigo" tamanho={14} cor={T.danger} /><span style={{ fontSize: TIPOS.rotulo, fontWeight: 700, color: T.danger }}>{v.abate}%</span></>}
+            {v.abateCerto && <span style={{ fontSize: P.letra.etiqueta, fontWeight: 700, color: T.onAccent, background: T.danger, borderRadius: P.raio / 2, padding: `2px ${P.enchimento.y}px`, letterSpacing: 1 }}>ABATE</span>}
+          </>
+        )}
+      </span>
+    </span>
+  );
+}
+
+/* A INTENÇÃO DO INIMIGO — 24 de alto, no canto da ficha e no cartão dele.
+   `rostoDoAlvo`: o rosto 18 de quem vai levar o golpe (quem monta escolhe a
+   peça: o tabuleiro e a coluna têm cada um o seu retrato). */
+export function PilulaDaIntencao({ vista, distanciaM = null, rostoDoAlvo = null }) {
+  const v = pilulaDaIntencao(vista, { distanciaM });
+  if (!v) return null;
+  const I = INTENCAO_NA_MESA;
+  const cor = I.cor[v.tipo];
+  return (
+    <span role="img" aria-label={v.rotulo} className="tv-mono inline-flex items-center shrink-0"
+      style={{ height: I.alto, borderRadius: I.raio, padding: `0 ${I.enchimento.x}px`, gap: I.entre, whiteSpace: "nowrap",
+        background: T.pagina, border: `${v.letal ? I.aroLetal : I.aro}px solid ${cor}`, color: cor, fontSize: TIPOS.piso, fontWeight: 700 }}>
+      <span aria-hidden="true" className="inline-flex items-center" style={{ gap: I.entre }}>
+        <Glifo nome={I.glifo[v.tipo]} tamanho={14} cor={cor} />
+        {v.texto && <span>{v.texto}</span>}
+        {v.tipo === "atacar" && <span>→</span>}
+        {v.tipo === "atacar" && (v.alvoEscondido || !rostoDoAlvo ? <span>{v.alvoEscondido ? "?" : v.alvo}</span> : rostoDoAlvo)}
+        {v.letal && <><Glifo nome={I.caveira} tamanho={14} cor={T.danger} /><span style={{ color: T.danger }}>{v.abate}%</span></>}
+      </span>
+    </span>
+  );
+}
+
+/* O PIP DE UM RECURSO — ● ação, ▲ bónus, ◆ reação. A forma diz o recurso e
+   a cor é uma só (WCAG 1.4.1): livre cheio, em jogo tracejado, gasto só o aro. */
+const FORMA_DO_PIP = {
+  acao: (E) => <circle cx="12" cy="12" r={E.acao / 2} />,
+  bonus: (E) => <polygon points={`12,${12 - E.bonus[1] / 2} ${12 + E.bonus[0] / 2},${12 + E.bonus[1] / 2} ${12 - E.bonus[0] / 2},${12 + E.bonus[1] / 2}`} />,
+  reacao: (E) => <rect x={12 - E.reacao / 2} y={12 - E.reacao / 2} width={E.reacao} height={E.reacao} transform="rotate(45 12 12)" />,
+};
+export function PipDoRecurso({ recurso, estado = "livre", tamanho = ECONOMIA_DA_VEZ.lado }) {
+  const E = ECONOMIA_DA_VEZ;
+  const forma = FORMA_DO_PIP[recurso];
+  if (!forma) return null;
+  const pinta = estado === "livre" ? { fill: T.amber, stroke: T.amber, strokeWidth: 1 }
+    : estado === "emJogo" ? { fill: alfa(T.amber, E.emJogo), stroke: T.amber, strokeWidth: 1.5, strokeDasharray: E.tracejado.join(" ") }
+      : { fill: "none", stroke: T.lineStrong, strokeWidth: 1.5 };
+  return (
+    <svg width={tamanho} height={tamanho} viewBox="0 0 24 24" aria-hidden="true" focusable="false" style={{ flexShrink: 0 }}>
+      <g {...pinta}>{forma(E)}</g>
+    </svg>
+  );
+}
+/* A ECONOMIA — os pips e o movimento («6 de 9 m»), na coluna Tu e na tira */
+export function Economia({ economia, recursos = null, emJogo = null, acaoBonus = false, passoM = null, passoTotal = null, compacta = false }) {
+  const pips = pipsDaEconomia(economia, recursos, { emJogo, acaoBonus });
+  const E = ECONOMIA_DA_VEZ;
+  const m = Math.max(0, Number(passoM) || 0), mt = Math.max(0, Number(passoTotal) || 0);
+  const temPasso = passoM != null && mt > 0;
+  const pct = temPasso ? Math.max(0, Math.min(100, (m / mt) * 100)) : 0;
+  const leitura = [...pips.map((p) => `${p.rotulo} ${p.estado === "gasto" ? "gasta" : p.estado === "emJogo" ? "em jogo" : "livre"}`), temPasso ? `${String(m).replace(".", ",")} de ${String(mt).replace(".", ",")} m de passo` : null].filter(Boolean).join(", ");
+  return (
+    <div role="group" aria-label={leitura} className="tv-mono flex items-center flex-wrap" style={{ gap: compacta ? 6 : 12, fontSize: TIPOS.piso, color: T.inkMeio }}>
+      {pips.map((p) => (
+        <span key={p.recurso} className="inline-flex items-center" style={{ gap: 4 }} aria-hidden="true">
+          <PipDoRecurso recurso={p.recurso} estado={p.estado} tamanho={compacta ? E.acao + 2 : E.lado} />
+          {!compacta && <span style={{ color: p.estado === "gasto" ? T.inkDim : T.inkMeio }}>{p.rotulo}</span>}
+        </span>
+      ))}
+      {temPasso && (
+        <span className="inline-flex items-center" style={{ gap: 6 }} aria-hidden="true">
+          <Glifo nome="passo" tamanho={16} cor={T.amberSoft} />
+          {!compacta && (
+            <span style={{ width: E.movimento.largura, height: E.movimento.alto, borderRadius: E.movimento.alto / 2, background: T.line, overflow: "hidden" }}>
+              <span style={{ display: "block", height: "100%", width: `${pct}%`, background: T.amber }} />
+            </span>
+          )}
+          <span>{String(m).replace(".", ",")}{compacta ? "" : ` de ${String(mt).replace(".", ",")} m`}</span>
+        </span>
+      )}
+    </div>
+  );
+}
+
+/* AS 20 FACES DO D20 — as que acertam acesas em âmbar. `faces`: a lista de
+   golpePorExtenso (ou do lançamento do golpe, na bandeja); `saiu`: a face
+   que o dado deu, quando já pousou. */
+export function FacesDoD20({ faces, saiu = null, rotulo = "" }) {
+  if (!Array.isArray(faces) || faces.length !== 20) return null;
+  const F = PREVISAO_DO_GOLPE.faces;
+  return (
+    <div role="img" aria-label={rotulo || `acertam: ${faces.filter((f) => f.acerta).map((f) => f.n).join(", ") || "nenhuma"}`}
+      className="tv-mono flex flex-wrap" style={{ gap: F.entre }}>
+      {faces.map((f) => {
+        const caiu = saiu === f.n;
+        return (
+          <span key={f.n} aria-hidden="true" className="inline-flex items-center justify-center"
+            style={{ width: F.lado[0], height: F.lado[1], borderRadius: F.raio, fontSize: PREVISAO_DO_GOLPE.letra.legenda, fontWeight: f.acerta ? 700 : 400,
+              background: f.acerta ? alfa(T.amber, F.acesa) : "transparent", color: f.acerta ? T.onAccent : T.inkDim,
+              border: `1px solid ${f.acerta ? T.amber : T.lineStrong}`,
+              outline: caiu ? `2px solid ${T.ink}` : undefined, outlineOffset: caiu ? 1 : undefined, opacity: saiu != null && !caiu ? 0.55 : 1 }}>
+            {f.n}
+          </span>
+        );
+      })}
+    </div>
   );
 }

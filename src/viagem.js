@@ -151,6 +151,33 @@ export function retomarViagem(jornada) {
   return { ...jornada, estado: ESTADOS.emCurso, motivoPausa: "" };
 }
 
+/* ---------------- VOLTAR ATRÁS (CB3, 09/11) ----------------
+   O encontro da estrada (encontro-na-estrada.js) oferece «Voltar atrás»
+   perante o que não se quer enfrentar — e perante um lendário a volta é
+   sempre possível. Até aqui a jornada só sabia ANDAR para a frente: o
+   recuo não tinha onde morar, e a fiação teria de mexer em `andadoMin` à
+   mão. Recuar é o avesso de `andar`: tira `minutos` de ESTRADA ao que foi
+   andado, com piso no zero (quem recua mais do que andou está de volta à
+   partida, `andadoMin` 0 — e é isso que a fiação lê para saber se voltou
+   ao sítio de onde saiu).
+
+   Os minutos são do preço da escolha (`ESCOLHAS_DO_ENCONTRO.fugir.custo`),
+   não daqui: duas tabelas para o mesmo recuo discordariam no dia em que
+   uma mudasse. Sem minutos válidos, a jornada volta como veio. O relógio do
+   calendário não é desta função (quem recua gastou as horas da escolha, e
+   quem as cobra é quem cobra as horas).
+
+   A jornada concluída que recua volta a estar em curso (já não chegou); a
+   pausada continua pausada — retomar é explícito, como sempre. */
+export function recuarViagem(jornada, minutos) {
+  if (!jornada || typeof jornada !== "object") return jornada || null;
+  const m = num(minutos, NaN);
+  if (!Number.isFinite(m) || m <= 0) return jornada;
+  const andadoMin = Math.max(0, num(jornada.andadoMin) - m);
+  const estado = jornada.estado === ESTADOS.concluida ? ESTADOS.emCurso : jornada.estado;
+  return { ...jornada, andadoMin, estado };
+}
+
 /* ---------------- A JORNADA SEM DESTINO TEM SAÍDA (12/10, MM11 · 8.ª sessão) ----------------
    Uma jornada aberta só por direção ("pela estrada", "para o norte") nasce
    com \`para\` vazio, e tudo o que fecha uma viagem pergunta pelo \`para\`:

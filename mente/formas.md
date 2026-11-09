@@ -16305,3 +16305,444 @@ três últimas por baixo da história. É o *Dark Souls* ao contrário: em vez d
 campanha. Pede ao sistema um campo de save novo (aditivo) no item; por isso também espera a palavra dela.
 
 ---
+
+## CB · a batalha — o encontro, a previsão, a intenção, o golpe e o fecho (`desenho`, 09/11/2026)
+
+*O lote 1 da Fase CB (`mente/plano-combate-e-viagem.md`, do `jogo`), mais a fila e a economia do lote 2 e o
+telefone de CB17, desenhados já para o lote 1 nascer com o lugar deles. Figma `ffWFqD7TueSb88Mkeg9bhW`, página
+**`341:2` · «CB · a batalha · 09/11»**. A pessoa elogiou o tabuleiro, o retrato do dragão e o tamanho dele: os três
+ficam (a escala `TAMANHOS`/`ladoDe` não muda; o dragão jovem ocupa 2×2 e o ancião vê-se a 300×380 no cartão).
+Copiou-se convenção e mecânica (a percentagem sobre o alvo do XCOM/BG3, a intenção do Into the Breach, a forma dos
+recursos do BG3, a pausa no impacto da escola do «juice»); nenhum nome, arte ou texto desses jogos.*
+
+**Os nós.** Fila A, o ANTES: `341:94` (a abertura, 1024×768), `341:95` (o Poupar/Matar a cada queda), `341:96` (o
+telefone, 18 % das casas). Fila B, o DEPOIS: **`344:156`** a mesa a 1905×1000 (a previsão e a intenção);
+**`346:313`** o telefone com a câmara e a intenção; **`346:521`** o telefone com a previsão em folha e o
+andar-e-atacar. Fila C, o encontro: **`347:502`** o sinal e o pedido (375); **`347:554`** a escolha perante a lenda
+(375); **`347:700`** o cartão do encontro a 1905; **`347:841`** a entrada na mesa, quadro a quadro. Fila D:
+**`348:738`** o golpe quadro a quadro; **`348:846`** as variantes (crítico, erro, queda, em ti); **`348:930`** a queda
+do meio que não pára; **`348:954`** o último golpe. Fila E, as peças (todas com as variáveis de `T · Mesa C (vela)`
+ligadas): `Previsao do golpe` **`342:100`** · `Intencao` **`342:160`** · `Numero do golpe` **`342:183`** · `Rosto da
+fila` **`342:246`** · `Economia` **`342:265`** · `Casa marcada` **`342:289`** · `Linha da escolha` **`343:208`** ·
+`Faixa da ameaca` **`343:228`** · os glifos `Glifo/*` (`341:20`–`341:93`, 22 de traço 2 em 24×24).
+
+### CB 1 · O que se decidiu, numa frase cada
+
+1. **A mesa a 1905 tem três colunas: tu, o campo, eles.** O tabuleiro ao centro com a altura toda (14×14 inteiro,
+   casa 51), a tua ficha à esquerda, os inimigos com o que vão fazer à direita, os verbos por baixo do campo. Saem as
+   faixas mortas e a rolagem.
+2. **A previsão do golpe pousa debaixo do alvo** («78% · 6–13 · ☠ 40%») e repete-se por extenso na tua coluna, com as
+   faces do d20 que acertam acesas. Andar e atacar é **um** clique no inimigo longe, com o caminho e o golpe livre
+   desenhados no chão antes.
+3. **A intenção do inimigo pousa no canto da ficha dele** (o tipo, o dano, o rosto do alvo; a caveira quando te pode
+   derrubar) e o sopro pinta as casas antes. Os quatro tipos são os do motor: atacar, sopro, aproximar, fugir.
+4. **O golpe sente-se em 380 ms**: pausa no impacto, tremor da ficha, número que salta, som. A entrada nunca espera.
+   Movimento reduzido: ficam o número e o som.
+5. **O fecho pergunta uma vez por luta** (o último inimigo, ou um `importante`). As quedas do meio repetem a escolha
+   lembrada num chip que se muda com um toque, e a queda pela mão de um aliado nunca pergunta.
+6. **O encontro da estrada é um cartão, em três tempos**: o sinal na folha e o pedido de Percepção na soleira de
+   sempre; o que se sabe (o retrato, a faixa da ameaça, «ainda não te viu») e as seis escolhas com o preço; e a
+   entrada na mesa (1,2 s, pulável).
+7. **No telefone a câmara enquadra quem importa**: janela 9×11 a casa 40, 51 % do tabuleiro em vez de 18 %; a
+   previsão é uma folha que sobe do fundo, e o segundo toque no alvo confirma.
+
+### CB 2 · A mesa a 1905: três colunas, e o tabuleiro inteiro
+
+| largura | arranjo | a casa (14×14) | casas à vista |
+|---|---|---|---|
+| **≥ 1280** | três colunas: **Tu** (470, mínimo 320) · **o campo** (o que sobra) · **Eles** (470, mínimo 320) | `min(larg − 22, alt − 22) ÷ 14`, entre `MESA_DE_BATALHA.casaMinimaNoMonitor` (32) e `casaMaximaNoMonitor` (64) | 1905×1000: casa 51 → **196/196**; 1366×768: casa 34 → **196/196** |
+| **768–1279** | duas colunas: **Tu** (320) · o campo; **Eles** passa a gaveta aberta pelo rosto do inimigo na fila (o alforje de R21) | a mesma conta | 1024×768: casa 35 → **196/196** (hoje: filas 12–14 fora, e rola) |
+| **< 768** | o telefone (§CB 9) | 40 | **99/196** (hoje 35) |
+
+Na vertical, a 1905×1000: margem 24 · **a fila** (84) · **a fala do Mestre** numa linha (28; Spectral itálico 16
+`inkMeio`, centrada) · o campo (740) · **a barra de ação** (112) · margem 16. O deserto (18×14) dá casa 48 e campo
+864×672. Os patamares de altura de B1b (`curto`, `baixo`, `janelaBaixa`) continuam a mandar no que cede, pela mesma
+ordem; acrescenta-se só que **a fala do Mestre cede antes do título**.
+
+**Tu**, de cima a baixo: o rosto 74 em aro amber 3, «A TUA VEZ», o nome em Cormorant 32 · PV e PM (as barras de
+`TurnoAtual`) · **a Economia** (§CB 8) · **O teu golpe**, a previsão por extenso quando há alvo sob o rato · o aviso
+da área, quando se está dentro de uma (`perigoFundo`: «Estás na área do sopro do dragão (14–24). Sai uma casa
+para escapar.»).
+
+**Eles:** «NESTA RODADA, ELES VÃO» e um cartão por inimigo (rosto 38 com aro danger, nome Cormorant 20, a distância,
+a barra do PV e **a pílula da intenção** à direita); o alvo da previsão ganha aro amber 2. Por baixo, «A RODADA N»:
+o que aconteceu na rodada anterior, uma linha por ação (quem → quem em mono 12 bold `inkMeio`; o desfecho em Spectral
+14, `ink` o teu, `danger` o que te feriu). É o `ORastroDosDados` crescido em registo: o turno deles deixa de ser uma
+rajada sem rasto (o defeito 3 da planta).
+
+**A barra de ação:** a fileira dos verbos (Atacar · Mover · Empurrar · Derrubar · Esquivar · Saltar · Dons) e, por
+baixo, o `como?` com **Esperar · Fugir · Agir**. Cada verbo é o **`VerboComPreco`** de sempre (`ui.jsx`, `64:2446`):
+o preço passa a ser **o recurso que gasta** (o pip da Economia, a 75 %) e, no Atacar, a chance («Atacar · 78%»). Uma
+ação, uma forma: não nasce outro botão.
+
+**Aposenta-se a pílula `AGORA: <nome>`** (`PilulaDaVez`): o rosto grande da fila e «A TUA VEZ» na coluna diziam o
+mesmo duas vezes. No telefone o canto superior direito diz «A TUA VEZ · Bran».
+
+### CB 3 · A previsão do golpe (CB5) — e porque não se chama «Mira»
+
+A planta chamava-lhe `Mira`. **No código, `mira` já é a retícula violeta de apontar a habilidade de área**
+(`grade-de-batalha.jsx:893`, props `mira`/`onMirar`), e `previsao` já é a área que essa habilidade vai apanhar
+(`:514`). Duas coisas com um nome é a doença que a casa caça: a peça chama-se **`PrevisaoDoGolpe`** e a prop
+**`previsaoDoGolpe`**.
+
+**Lê `previsaoDoHeroi(pers, alvo, ctx)`** (`src/previsao.js`), e o estado escolhe-se assim:
+
+| estado | quando | a forma |
+|---|---|---|
+| `alcance` | ao alcance, `abateNoTurno` < 0,05 | espadas amber · «78%» (mono 18 bold `amberSoft`) · fio · «6–13» (mono 15 `ink`); aro amber 1,5 |
+| `abate-possivel` | 0,05 ≤ `abateNoTurno` < 0,995 | + a caveira danger e «40%» (mono 13 bold `danger`) |
+| `abate-certo` | `abateNoTurno` ≥ 0,995 | + a etiqueta **ABATE** (`onAccent` sobre `danger`); o aro passa a danger |
+| `coberto` | `cobertura` > 0 | o escudo `mundo` e «−2» antes da chance; «sem cobertura: 78%» (`semCobertura.chance`) vai ao «O teu golpe» |
+| `anda-e-ataca` | `andaDe`, e `golpesLivres.quem` vazio | os passos e os metros antes da chance |
+| `golpe-livre` | `andaDe`, e `golpesLivres.quem` com gente | «sai: golpe livre» em danger, aro danger; o «O teu golpe» diz de quem e quanto («o Bandido tem um golpe livre (4–9)») |
+| `sem-vista` | sem linha de vista | o olho e «sem linha de vista» em itálico `inkDim`; sem número |
+
+A chance arredonda ao inteiro e o dano é `dano.min`–`dano.max`: **nunca se mostram as casas decimais da conta**. A
+pílula mede 32 de alto, raio 16, couro (`pagina`), com sombra, e pousa **8 px abaixo da ficha do alvo** (a intenção
+vive no canto de cima: as duas nunca se tapam). O alvo ganha um anel amber tracejado (6/4).
+
+**O teu golpe** (coluna Tu; `pagina`, aro amber a 50 %): «O TEU GOLPE → BANDIDO · 8 PV» e quatro linhas — ACERTO «78%»
+com «d20 +6 contra a defesa 12» (`bonus`, `defesa`), **as 20 faces do d20 com as que acertam acesas em amber**
+(«acertas com 6 ou mais no dado · o 20 é crítico»), DANO «6–13» com «1d8 +5 · média 9,5» (`dano.medio`), ABATE e
+CRÍTICO (`chanceCritico`, `danoCritico`). As faces traduzem a percentagem em coisa de mesa: quem joga RPG de mesa
+pensa em «preciso de 6», não em «78 %», e a percentagem fica para quem a prefere.
+
+**O caminho no chão** (`Casa marcada`): a linha une os centros das casas, traço 3 amber (7,68 contra `bg`), com um
+ponto de 10 em cada casa; **a casa que sai do alcance de quem ameaça** pinta-se de danger a 12 % com aro tracejado e
+as espadas (o golpe livre do BG3); o destino leva aro amber tracejado e os passos; o rótulo «7,5 m · sobra 1,5» (mono
+12 bold `ink` sobre `pagina`) pousa junto ao destino. Os dados são `caminhar`/`custosDe` e `golpesLivres` (já no
+motor).
+
+**O gesto.** *Rato:* passar no inimigo mostra a previsão e o caminho; **clicar nele anda e ataca** (hoje são dois
+cliques: a casa e o Atacar). *Telefone:* **o primeiro toque prevê, o segundo confirma**, no alvo ou no botão da
+folha. Nenhum toque numa casa é irreversível, e é isso que deixa a casa descer a 40 no telefone (§CB 9).
+
+### CB 4 · A intenção do inimigo (CB6)
+
+**Lê `intencoesDaRodada(...).lista[i].vista`** (`src/intencao.js`): `{ tipo, alvo, golpes, dano: {min, max}, abate,
+area }`.
+
+| `vista.tipo` | glifo e cor | o texto | no chão |
+|---|---|---|---|
+| `atacar` | espadas `danger` | «7–12 → (o rosto 18 do alvo)» | uma seta tracejada danger (traço 2, 5/4) da ficha dele à do alvo |
+| `atacar`, `vista.alvo` null | espadas `danger` | «7–12 → ?»: a mente `brilhante` esconde o alvo, nunca o tipo | sem seta |
+| `atacar`, `vista.abate` ≥ 0,25 | + a caveira e «35%», aro danger 2 | a chance de **te** derrubar | — |
+| `sopro` | chama `danger` | «14–24 · 9 casas» | as casas de `vista.area`: chão danger a 22 %, aro tracejado 1,5 (4/3), a chama ao centro |
+| `aproximar` | passos `inkMeio` | «vem · 9 m» | — |
+| `fugir` | seta `inkDim` | «foge» | — |
+
+A pílula mede 24, raio 12, `pagina`, aro na cor do tipo, e pousa **no canto superior direito da ficha** (à direita
+dela quando a casa de cima está ocupada). O chão da área a 22 % mede 1,33 contra o feltro: é decoração, e de
+propósito, porque **quem leva a informação é o aro tracejado (5,11) e a chama (3,83)**, os dois acima de 3 (WCAG 2.2,
+1.4.11). Quando o herói está dentro de uma área, o aviso da coluna Tu (e, no telefone, a pílula no pé do campo) diz
+quanto e como escapar. O rosto do inimigo na fila leva o glifo da intenção num disco de 18.
+
+### CB 5 · O golpe sentido (CB7) — 380 ms, e a entrada nunca espera
+
+**Lê `eventoDoGolpe(r, ctx)`** (`src/combate.js`, `EVENTO_DO_GOLPE` v1). O tempo, quadro a quadro (`348:738`):
+
+| tempo (ms) | o que se vê |
+|---|---|
+| 0 | o toque. **A entrada já está livre**: o próximo toque é aceite em qualquer quadro |
+| 0–70 | **a pausa no impacto**: a mesa congela; a ficha atingida pisca (`ink` a 35 %, um quadro). O som nasce aqui |
+| 70–190 | **o tremor**, só da ficha: ±3 px, três vaivéns a amortecer. O número salta (0,6 → 1,25) |
+| 190–380 | **o número assenta** (1,25 → 1) e sobe 12 px; o cartão do inimigo já mostra o PV novo |
+| 380–1 280 | o número fica parado para se ler, e esvanece em 200 ms. Não é animação, é leitura |
+
+As variantes (`348:846`): **crítico** — pausa 110, tremor ±6 px e a mesa inteira ±2 px por 140 ms, número 44 `amber`
+com «CRÍTICO» · **erro** — sem pausa, o alvo desvia 4 px e volta (160 ms), «errou» (ou «imune», «impedido») em
+itálico `inkDim` · **queda** (`abate: true`) — pausa 90, a ficha afunda (escala 0,9, 45 %) em 180 ms e a caveira fica
+na casa · **em ti** (o alvo é o herói) — o número em `danger`, e a moldura do ecrã acende `danger` a 35 % por 160 ms,
+só quando se perde pelo menos um quarto do PV (`peso` ≥ 0,25). O número nasce do `Numero do golpe` (`342:183`) e
+substitui o flutuante de hoje (`grade-de-batalha.jsx:351`, o «-8» de 1 400 ms).
+
+**A régua dos 400 ms:** em cada desfecho, `pausa + tremor + assenta ≤ GOLPE_SENTIDO.teto` (400) — acerto 70 + 120 + 190
+= 380; crítico 110 + 140 + 150 = 400; queda 90 + 120 + 180 = 390; erro 0 + 160 + 0 = 160. É a soma que a suíte lê de
+volta. **Nada bloqueia**: o estado já está aplicado quando a animação começa, e a animação é só leitura.
+
+**Movimento reduzido** (`prefers-reduced-motion`, WCAG 2.3.3): sem pausa, sem tremor, sem escala, sem a mesa a mexer e
+sem a moldura a acender; o número aparece num esvanecer de 120 ms e o som fica (reduzir movimento não é pedir
+silêncio: é a lei de `som-da-mesa.js`).
+
+**O som** (pedido ao sistema, §CB 12): cinco momentos novos em `SOM_DA_MESA`, sintetizados como os três de hoje —
+`golpe` (o acerto: uma pancada surda), `critico` (o golpe e um sino curto por cima), `erro` (o ar cortado), `queda`
+(grave e longo) e `entrada` (o tambor da entrada na mesa, §CB 7). `imune` toca o `erro` com um tinido metálico.
+Todos respeitam o interruptor e o volume de hoje.
+
+### CB 6 · O fecho uma vez por luta (CB8)
+
+- **A queda do meio não pára a mesa** (`348:930`): a ficha afunda, e na casa pousa o chip «Bandido cai · poupado» com
+  o botão «matar» (mono 12, `pagina`, aro `lineStrong`). A escolha é **a lembrada**: poupar por omissão até ao
+  primeiro «matar», e daí em diante a última. O chip fica 4 s na casa e para sempre no registo da rodada; tocar em
+  «matar» muda só aquela queda.
+- **A queda pela mão de um aliado nunca pergunta** (era uma das duas interrupções na luta dos três bandidos).
+- **O último inimigo, ou um `importante`, pergunta** (`348:954`): o véu a 45 % sobre o campo, menos a casa dele (anel
+  amber), «O último golpe é teu.» em Cormorant 28, e **o cartão do golpe final de sempre** (`Poupar · Matar` e o
+  `como?`). A peça não muda; muda a frequência: **de N interrupções por luta para no máximo 1** (na luta dos três
+  bandidos, de 2 para 1).
+
+### CB 7 · O encontro na estrada (CB4)
+
+**Lê `src/encontro-na-estrada.js`**: `oEncontroNaEstrada`, `avistar`, `escolhasDoEncontro`, `resolverEscolha`. Os
+três tempos são as três `fase`:
+
+1. **`sinal`** (`347:502`). Na folha, a prosa do Mestre e **o sinal num caixilho tracejado** (o glifo do `sinal.tipo`
+   em `brasaNoPergaminho` e a `sinal.frase` em itálico `tinta`). Na soleira, **o pedido de sempre** (`Soleira do
+   momento · Momento=rolagem`, `oCartaoDoPedido`): «O MESTRE PEDE · PERCEPÇÃO», «CD 6 · 95%», «Lançar o d20». Não
+   nasce peça: o pedido já tem forma. Os seis glifos do sinal: rasto, som, cheiro, vulto (o olho), silêncio, sombra.
+2. **`escolha`** (`347:554` a 375, `347:700` a 1905). O **cartão do encontro**: «NA ESTRADA · UM ENCONTRO» (mono 12
+   `amberSoft`, o glifo da sombra) · o retrato (84 no telefone; a carta 300×380 na mesa, o retrato que a pessoa
+   elogiou) · o nome em Cormorant · o chip **«ainda não te viu»** (`ok` sobre `okFundo`; «já te viu» em `danger` sobre
+   `perigoFundo`) · **a Faixa da ameaça** · e as seis **Linhas da escolha**, pela ordem de
+   `ESCOLHAS_DO_ENCONTRO.ordem`.
+3. **`resolvido`**: o dado do teste pousa na bandeja de sempre e a linha do desfecho na folha; com `desfecho.luta`,
+   vem a entrada na mesa.
+
+**A Linha da escolha** (`343:208`) é a carta da encruzilhada (BQ 2) deitada: o mesmo papel, o mesmo aro da escolhida,
+o mesmo «a impedida não se esbate», porque seis cartas lado a lado não cabem e seis linhas cabem. Cada linha diz, antes
+do toque: o glifo (contornar, vulto, palavra, passos, recuo, espadas), o `rotulo` em Cormorant SemiBold 21, a perícia
+e a CD (mono 12 `tintaMeio`), o `custo` (o relógio com as horas, a moeda com o tributo), **o que custa falhar**
+(Spectral itálico 13 `perigoNoPergaminho`, de `seFalhar.frase`) e **a chance grande à direita** (Cinzel 26, com «d20
++N» por baixo). Os estados:
+
+| estado | quando | a forma |
+|---|---|---|
+| `repouso` | disponível | pergaminho, sem aro |
+| `escolhida` | tocada | aro amber 3 |
+| `impedida` | `disponivel: false` | aro tracejado `tintaDim`, chance «—», o `porqueNao` no lugar do falhar («já te viu», «não ouve propostas», «faltam moedas»). **Não se esbate** |
+| `fuga-segura` | `fugir`, com `fugaAberta` e sem dado | aro musgo 2, «CERTO» em musgo, «ainda não te viu: recuar é seguro» |
+| `lutar-lenda` | `lutar` com `aviso` | aro danger 2 e a faixa `perigoFundo`: «Isto não é um encontro. É uma lenda.» |
+
+**A fuga perante a lenda vê-se sempre**: a linha `fuga-segura` nunca sai, nunca se esbate, e é a única em musgo. **O
+botão de confirmar diz a escolha e o preço** («Esconder-se · 45% · 1 h»), como na encruzilhada; por baixo, «ou escreve
+o que fazes — o campo continua aberto». No telefone o rolo rola e o rodapé fica (BQ 2); na mesa o cartão mede
+1000×795 e nada rola.
+
+**A Faixa da ameaça** (`343:228`) diz a ameaça como faixa e nunca como número (o sistema não fala de si: nada de
+«2,76×» nem de «capacidade»): `lenda` e `a-evitar` em `perigoFundo` com a caveira; `a-vista` em `panelSoft`, com o
+olho e quantos são.
+
+**A entrada na mesa** (`347:841`), 1 200 ms, **pulável com um toque ou Esc**: 0 — a narração da descida acaba (a
+pauta pede-a antes de a mesa abrir); 0–300 — o véu fecha (`bg` a 70 %); 300–800 — o retrato cresce do cartão para o
+centro (1 → 1,6) e soa a `entrada`; 800–1 200 — a mesa aparece por baixo e as fichas pousam, 40 ms entre elas.
+Movimento reduzido: corte seco para a mesa, e o som fica.
+
+### CB 8 · A fila da vez e a economia (CB9 e CB10, desenhadas já)
+
+**A FilaDaVez** (o `FaixaDaVez` de hoje com outra forma; `Rosto da fila`, `342:246`): os rostos pela ordem de
+`faixaDaVez`, numa linha do tempo — **a vez a 56, com aro amber 3 e brilho**; os outros a 40 (aro `lineStrong` no
+grupo, `danger` nos inimigos, com o glifo da intenção num disco de 18); **quem já agiu a 45 %**; quem caiu a 30 %, com
+a caveira; o nome em mono 12. Entre rodadas, um fio amber (2×36) e «R3» em mono 12 bold `amberSoft`. Passar o rato
+num rosto acende a ficha no tabuleiro, e vice-versa. No telefone: 44 e 34, sem nomes.
+
+**A Economia** (`342:265`): **● ação, ▲ bónus, ◆ reação**. A forma diz o recurso (a convenção do BG3) e a cor é uma
+só, amber, a decisão. Livre: cheio. **Em jogo** (o verbo sob o rato vai gastá-lo): amber a 35 % com aro tracejado
+(3/2). Gasto: só o aro `lineStrong` (4,19). Ao lado, os passos e a barra do movimento («6 de 9 m»). Mora na coluna Tu
+e na tira do telefone, e o mesmo pip é o preço de cada verbo.
+
+### CB 9 · O telefone a 375 (CB17)
+
+De cima a baixo (`346:313`): a fila (52) e «A TUA VEZ · Bran» · a fala do Mestre numa linha, com reticências (22) ·
+**o campo, janela 9×11 a casa 40** (440) · a tira (40: PV, os três pips, o movimento) · os verbos em duas filas de 48
+· o `como?` (44). Soma 760 com os respiros; sobram 52 para a barra do sistema.
+
+- **A casa desce de 48 para 40 no telefone, e fica escrito porquê.** 48 era o alvo do dedo (`ALVOS.piso`; o WCAG
+  2.5.5, AAA, pede 44). Mas no tabuleiro **nenhum toque é irreversível**: o primeiro toque numa casa ou num inimigo só
+  prevê, e o segundo confirma (§CB 3). 40 cumpre com folga o WCAG 2.2, 2.5.8 (AA, 24×24) e falha o AAA de propósito,
+  pela troca medida: **35 → 99 casas à vista (18 % → 51 %)**. A pinça devolve 48–64 a quem quiser.
+- **A câmara enquadra quem importa**: o retângulo que contém o herói, o alvo da previsão e todo o inimigo cuja
+  intenção o tem por alvo (ou cuja área o apanha), com uma casa de folga. Se cabe em 9×11, centra-o; se não cabe, a
+  casa desce até 32 (11×13); se nem assim, ficam o herói e o alvo, e os outros ganham **o marcador fora de vista** na
+  borda (o rosto 18 e a distância, «9 m ›», aro danger), que leva a câmara até eles quando tocado. A câmara só se mexe
+  quando alguém chegaria a menos de uma casa da borda (`TELA_DE_BATALHA.folgaDaBorda`, a lei de E1).
+- **A régua presa**: as letras e os números ficam colados ao topo e à esquerda da janela (mono 12 `inkDim` a 85 %) e
+  não somem quando a janela rola. Paga a dívida B4 da pauta.
+- **Saem as duas barras de rolagem castanhas.**
+- **A previsão é uma folha** (`346:521`): sobe do fundo por cima dos verbos (`pagina`, aro amber, raio 16 em cima, a
+  pega 36×4), com o rosto e o PV do alvo, **três números grandes** (Cinzel 30: ACERTO `amberSoft`, DANO `ink`, ABATE
+  `danger`), a faixa do golpe livre quando o caminho o provoca, e **«Andar e atacar · 78%»** com «Cancelar». O dedo
+  nunca tapa o número.
+
+### CB 10 · O contraste, medido (WCAG 2.2; a conta de sempre, em `node`)
+
+| par | razão |
+|---|---|
+| previsão: a % `amberSoft` / `pagina` | **12,42** |
+| previsão: o dano `ink` / `pagina` | 15,34 |
+| ABATE `onAccent` / `danger` | 5,77 |
+| abate % `danger` / `pagina` | 5,91 |
+| coberto `mundo` / `pagina` | 8,81 |
+| intenção atacar e sopro `danger` / `pagina` | 5,91 |
+| intenção aproximar `inkMeio` / `pagina` · fugir `inkDim` / `pagina` | 10,58 · 6,92 |
+| a casa da área (danger a 22 % sobre `bg`) / `bg` — **não-texto, decoração** | 1,33 |
+| a chama `danger` / a casa da área — não-texto | 3,83 |
+| o aro tracejado da área `danger` / `bg` — não-texto | 5,11 |
+| o caminho `amber` / `bg` · o golpe livre `danger` / `bg` | 7,68 · 5,11 |
+| número: dano `ink` / `bg` · crítico `amber` · erro `inkDim` · cura `ok` · em ti `danger` | 13,24 · 7,68 · 5,98 · 8,57 · 5,11 |
+| o número `ink` sobre o véu do fecho | 15,30 |
+| pip livre `amber` / `panel` · gasto `lineStrong` / `panel` | 8,04 · 4,19 |
+| escolha: o verbo e a chance `tinta` / `pergaminho` | 12,15 |
+| escolha: falhar `perigoNoPergaminho` · custo `tintaDim` · fuga `musgoNoPergaminho` | 6,60 · 6,56 · 6,54 |
+| a faixa da lenda: `ink` / `perigoFundo` · a caveira `danger` / `perigoFundo` | 12,82 · 4,94 |
+| o registo: `inkMeio` / `panel` · o golpe que te feriu `danger` / `panel` | 9,57 · 5,35 |
+
+Todo o texto passa 4,5; todo o não-texto que leva informação passa 3. O único par abaixo de 3 é o chão da área, que
+não leva informação sozinho. **Nenhuma cor nova**: tudo sai de `T`.
+
+### CB 11 · As tabelas (para `src/estilo.js`; leem `T`, `ALVOS` e `MESA_DE_BATALHA`, e não copiam número deles)
+
+```js
+export const BATALHA_EM_TRES = {          // §CB 2
+  margem: 24, fila: 84, fala: 28, barra: 112, entre: 24, calha: 22,
+  coluna: 470, colunaMinima: 320,
+  duasColunasAbaixoDe: 1280,              // abaixo, «Eles» vira gaveta
+  telefoneAbaixoDe: 768,
+  telefone: { casa: 40, janela: [9, 11], casaMinima: 32, casaMaxima: 64, margem: 7, fila: 52, fala: 22, tira: 40, verbo: 48, compositor: 44, folgaDaCamara: 1 },
+};
+export const PREVISAO_DO_GOLPE = {         // §CB 3
+  alto: 32, raio: 16, enchimento: { x: 10, y: 6 }, entre: 8, abaixoDaFicha: 8, aro: 1.5,
+  letra: { chance: 18, dano: 15, etiqueta: 12, porExtenso: 16 },
+  abateCerto: 0.995, abatePossivel: 0.05,
+  anelDoAlvo: { traco: 2, tracejado: [6, 4] },
+  faces: { lado: [18, 20], entre: 2, raio: 3, acesa: 0.85 },
+  folha: { raio: 16, pega: [36, 4], numero: 30 },
+};
+export const CAMINHO_NO_CHAO = {           // §CB 3
+  traco: 3, ponto: 10, rotulo: 12,
+  golpeLivre: { chao: 0.12, aro: 1.5, tracejado: [4, 3] },
+  destino: { lado: 41, raio: 6, aro: 2, tracejado: [5, 3], chao: 0.12 },
+};
+export const INTENCAO_NA_MESA = {          // §CB 4 — as chaves são INTENCAO_DO_INIMIGO.tipos
+  alto: 24, raio: 12, enchimento: { x: 8, y: 4 }, entre: 6, rosto: 18, aro: 1.5, aroLetal: 2,
+  abateQueSeAnuncia: 0.25,
+  cor: { atacar: T.danger, sopro: T.danger, aproximar: T.inkMeio, fugir: T.inkDim },
+  glifo: { atacar: "espadas", sopro: "chama", aproximar: "passos", fugir: "fuga" },
+  area: { chao: 0.22, aro: 1.5, tracejado: [4, 3] },
+  seta: { traco: 2, tracejado: [5, 4] },
+  discoNaFila: 18,
+};
+export const GOLPE_SENTIDO = {             // §CB 5 — ms; a suíte soma pausa + tremor.ms + assenta ≤ teto
+  teto: 400,
+  acerto:  { pausa: 70,  tremor: { px: 3, ms: 120, vaivens: 3 }, assenta: 190 },
+  critico: { pausa: 110, tremor: { px: 6, ms: 140, vaivens: 4 }, assenta: 150, mesa: { px: 2, ms: 140 } },
+  abate:   { pausa: 90,  tremor: { px: 3, ms: 120, vaivens: 3 }, assenta: 180, afunda: { escala: 0.9, alfa: 0.45 } },
+  erro:    { pausa: 0,   tremor: { px: 4, ms: 160, vaivens: 1 }, assenta: 0 },
+  piscar: { alfa: 0.35, quadros: 1 },
+  salto: { de: 0.6, pico: 1.25, sobe: 12 },
+  leitura: 900, esvai: 200,
+  numero: { dano: 32, critico: 44, cura: 30, emTi: 34, erro: 22, contorno: 3 },
+  emTi: { alfa: 0.35, ms: 160, peso: 0.25, borda: 6 },
+  reduzido: { esvai: 120 },                // sem pausa, tremor, escala, mesa nem borda
+};
+export const FECHO_DA_QUEDA = { chip: 4000, alto: 28, raio: 14, veuDoUltimo: 0.45 };   // §CB 6
+export const CARTAO_DO_ENCONTRO = {        // §CB 7
+  folha: { largura: 363, raio: 16 }, cartao: { largura: 1000, enchimento: 28, entre: 28, carta: [300, 380] },
+  rosto: 84, faixa: { raio: 8, enchimento: [14, 9] },
+  linha: { largura: 440, raio: 10, enchimento: { x: 14, y: 12 }, glifo: 22, verbo: 21, chance: 26, aroEscolhida: 3, aroImpedida: 1.5, aroFuga: 2, tracejado: [5, 4] },
+  entrada: { total: 1200, veu: [0, 300], veuAlfa: 0.7, cresce: [300, 800], escala: 1.6, mesa: [800, 1200], passoDasFichas: 40 },
+};
+export const FILA_DA_VEZ = {               // §CB 8
+  vez: 56, espera: 40, aroVez: 3, aro: 2, agiu: 0.45, caido: 0.3, entre: 6,
+  marcaDaRodada: { fio: [2, 36], alfa: 0.6 }, telefone: { vez: 44, espera: 34 },
+};
+export const ECONOMIA_DA_VEZ = { lado: 24, acao: 16, bonus: [18, 16], reacao: 12, emJogo: 0.35, tracejado: [3, 2], noVerbo: 0.75, movimento: { largura: 64, alto: 6 } };   // §CB 8
+```
+
+**A letra:** todo o texto novo está no piso (`TIPOS.piso`, 12) ou acima. A única exceção, a 11, é o «d20 +N» por
+baixo da chance na linha da escolha e a legenda das faces, que repetem o que o número grande já diz (como as de B1;
+a catraca D5g não sobe).
+
+### CB 12 · O que a tela pede ao sistema
+
+1. **O som** (`backend`, `som-da-mesa.js`): os momentos `golpe`, `critico`, `erro`, `queda` e `entrada` em
+   `SOM_DA_MESA`, com um `tocarGolpe(evento)` que escolhe pelo `desfecho`/`abate` do `eventoDoGolpe`.
+   `teste-som-da-mesa.mjs` cresce.
+2. **`QUANDO_O_FECHO_PERGUNTA`** (`backend`, CB8): `{ ultimoInimigo: true, importante: true, peloAliado: false, lembra:
+   "poupar" }`, e a função que diz, dada a queda, se pergunta ou aplica a escolha lembrada.
+3. **A câmara** é da tela: o retângulo de §CB 9 sai de `vista.alvo`, de `vista.area` e da casa do alvo da previsão,
+   que o motor já dá. Não pede nada.
+4. **O registo da rodada** lê o `balancoDasIntencoes` (já no motor) e os `eventoDoGolpe` da rajada.
+
+### CB 13 · A ordem de construção
+
+**O `aprendiz`, fora do `App.jsx`:**
+
+1. `src/estilo.js` — as tabelas de §CB 11 e as classes `tv-golpe-pausa`, `tv-golpe-tremor`, `tv-golpe-salto`,
+   `tv-golpe-afunda` e `tv-golpe-borda`, que leem `GOLPE_SENTIDO` e ficam todas desligadas no bloco de movimento
+   reduzido. (Lembrete da casa: nada de crase em comentário dentro de `SUPERFICIES_CSS`.)
+2. `src/ui.jsx` — os glifos que ainda não existem (chama, passos, caveira, olho, rasto, som, cheiro, vulto, silêncio,
+   sombra, relógio, recuo, palavra, contornar), pelos traços de `Glifo/*`.
+3. `src/grade-de-batalha.jsx` — props novas **`previsaoDoGolpe`**, **`intencoes`**, **`caminho`** e **`golpes`** (a
+   lista de eventos): a `PrevisaoDoGolpe` sob o alvo, a `Intencao` no canto da ficha e a seta, as casas da área e do
+   caminho (`Casa marcada`), o `Numero do golpe` no lugar do flutuante, o marcador fora de vista e a régua presa no
+   telefone. As props de hoje (`mira`, `previsao`) não mudam de sentido.
+4. `src/painel-batalha.jsx` — as três colunas de §CB 2: `FaixaDaVez` → `FilaDaVez`; `TurnoAtual` ganha a `Economia` e
+   **O teu golpe**; `QuemEstaDePe` ganha a intenção por inimigo e vira **Eles**; `ORastroDosDados` vira **A rodada N**;
+   `Verbo` põe o pip no preço; sai a `PilulaDaVez`; a folha da previsão no telefone; o chip da queda do meio.
+5. `src/painel-encontro.jsx` (novo) — `CartaoDoEncontro`, `LinhaDaEscolha`, `FaixaDaAmeaca` e a entrada na mesa, que
+   leem por props o estado de `encontro-na-estrada.js`.
+6. Os varredores: `testes/check-tela-de-batalha.mjs` cresce (todo o verbo de ataque tem previsão; toda a intenção tem
+   glifo e texto; nenhuma cor literal nas peças novas), e nasce `check-golpe-sentido.mjs` (a soma de cada desfecho ≤
+   `teto`; toda a classe `tv-golpe-*` está no bloco de movimento reduzido).
+
+**O `oficial`, no `App.jsx`, com o bastão:**
+
+7. A fiação da previsão: `previsaoDoHeroi` para o inimigo sob o rato ou o toque (com `andaDe` quando está longe), em
+   `calou(...)`, para `previsaoDoGolpe`; o clique no inimigo longe anda e ataca.
+8. As intenções no começo da rodada (`combate.intencoes`, campo novo e aditivo), para a grade e para **Eles**.
+9. O fluxo de `eventoDoGolpe` da rajada para a grade, e o som.
+10. O encontro pendente para o `CartaoDoEncontro` (o CB3 já o pousa) e a entrada na mesa.
+11. O fecho pela regra nova (depois de `QUANDO_O_FECHO_PERGUNTA`).
+
+**A ordem, por retorno:** 5 e 10 (o encontro, que é o defeito dela) → 1, 3, 4 e 7 (a previsão) → 9 e o som (o golpe)
+→ 11 (o fecho) → 8 (a intenção) → a fila e a economia (já dentro de 4) → o telefone.
+
+### CB 14 · O «superior», escrito (medida e estudo citado; a experiência jogada é do `jogo`, depois da construção)
+
+**Medida:**
+
+| | antes (09/11, v9.632) | depois |
+|---|---|---|
+| casas à vista no telefone (375×812) | 35/196 (18 %) | **99/196 (51 %)**, e ≥ 9×9 garantidas pela câmara |
+| o tabuleiro 14×14 a 1905×1000 | faixas mortas de ~20 % de cada lado, e rolagem | **inteiro, casa 51, sem rolar** |
+| a 1366×768 e a 1024×768 | filas 12–14 fora de vista | **inteiro** (casa 34 e 35) |
+| cliques para andar até um inimigo longe e atacar (rato) | 2 | **1** |
+| o que se vê antes de atacar | a distância e o dado seco | **chance, dano mín–máx, abate, crítico, cobertura, golpe livre** |
+| o que se sabe do turno deles | nada | **o tipo, o dano, o alvo e as casas**, de cada inimigo |
+| interrupções do fecho, na luta de 3 bandidos | 2 (uma pela Quorin) | **1** |
+| o golpe | um «-8» que sobe | pausa, tremor, número e som, **≤ 400 ms, sem prender a entrada** |
+| o encontro na estrada | a mesa cai do céu em 400 ms | sinal → dado → escolha com preço → narração → mesa |
+
+**Estudo citado:**
+
+- *A percentagem antes do disparo*: a convenção de XCOM: Enemy Unknown (Firaxis, 2012) e de Baldur's Gate 3 (Larian,
+  2023), que mostram a chance sobre o alvo antes de confirmar. É a lei da casa, *o veredito antes do clique*, levada
+  ao golpe.
+- *A ameaça anunciada*: Into the Breach (Subset Games, 2018) mostra no turno do jogador o que cada inimigo vai atingir,
+  casa a casa; o turno inimigo resolve-se como quebra-cabeças em vez de se sofrer.
+- *A pausa no impacto e o tremor*: Jan Willem Nijman, «The Art of Screenshake» (INDIGO, 2013), e Masahiro Sakurai, o
+  episódio sobre *hitstop* de «Masahiro Sakurai on Creating Games» (2022): um congelamento curto no impacto, de
+  alguns quadros, é o que faz o golpe pesar. Os nossos 70–110 ms ficam nessa faixa.
+- *A forma diz o recurso*: WCAG 2.2, 1.4.1 (Use of Color). A economia distingue-se pela forma (● ▲ ◆) e não só pela
+  cor; a mesma regra na intenção (o glifo repete o tipo).
+- *Alvos e movimento*: WCAG 2.2, 2.5.8 (Target Size, Minimum, AA: 24×24) e 2.3.3 (Animation from Interactions). A casa
+  de 40 no telefone cumpre o AA, e todo o movimento novo tem saída no movimento reduzido.
+
+### CB 15 · Para a pessoa decidir — a proposta ambiciosa: **o dado do golpe rola na mesa**
+
+**O que mudaria:** hoje o d20 do ataque é uma linha de texto («d20 9+6=15 vs 12»). Com a previsão, a coluna já mostra
+as faces do d20 que acertam (§CB 3). A proposta leva isso ao tabuleiro: **todo o ataque do herói lança o d20 na bandeja
+ao lado do campo**, com as faces que acertam acesas em amber **antes** de o dado cair («precisas de 6+»); o dado rola
+600 ms e pousa, e a face que sai acende ou apaga. O crítico pousa com o sino; o 1, com um estalo. É o dado da ordem de
+04/11 («um rpg precisa de constantes rolagens pra ter o sentimento que você está jogando e arriscando algo») levado ao
+momento em que mais se arrisca: **numa luta de 3 rodadas são 3 a 6 dados à vista**, e o número da previsão deixa de
+ser uma promessa abstrata e passa a ser um alvo no dado.
+
+**Porque espera a palavra dela:** muda o ritmo de cada golpe (600 ms a mais por ataque, com «acelerar» e «pular»
+sempre à mão, e o estado aplicado antes, de modo que nunca custa o turno) e toca no que o jogo é: uma mesa onde os
+dados se lançam, ou uma interface que os resume. A minha escolha é a primeira. A variante tímida é só o crítico e o 1
+lançarem o dado.
+
+**E a segunda, que já está na planta do `jogo`** (§6, «quem vê primeiro, monta a mesa»): o encontro desenhado aqui
+(§CB 7) é o chão dela, e a escolha «Emboscar» passa a abrir a fase de colocação. A forma de arrastar as fichas na zona
+fica para depois de CB14.

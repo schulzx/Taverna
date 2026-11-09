@@ -82,7 +82,7 @@ import { rotaAteAMasmorra, jornadaAteAMasmorra, masmorraDaBoca, IDA_NA_REGIAO } 
 import { pontoDoHeroi } from "./rastro.js";
 import { masmorrasDoMundo } from "./mundo-base.js";
 import { caminhoNaRegiao, origemDoHeroi, rotaDoCaminho, partidaNaRegiao } from "./marcha.js";
-import { PERIGO_POR_NIVEL } from "./regiao.js";
+import { PERIGO_POR_NIVEL, quemDoLugar } from "./regiao.js";
 import { FASES_DO_DIA, PERIGO_NA_ESTRADA, perigoDaEstradaComMotivo } from "./mapa-vivo.js";
 import { ehNoite, horaTxt, HORAS_EXAUSTO } from "./calendario.js";
 import { podeAvancar } from "./vilao.js";
@@ -214,6 +214,66 @@ export function chegadaDaViagem(dados, estado) {
   const minuto = ((fim % 1440) + 1440) % 1440;
   const noites = Math.floor(fim / 1440);
   return { dia: Number(relogio.dia) + noites, minuto, hora: horaTxt(minuto), fase: faseDe(minuto), noite: ehNoite(minuto), noites, minutosDeRelogio: rel.minutos, avancos: rel.avancos };
+}
+
+/* ---------------- O PERIGO VERDADEIRO DO TRECHO (CB3, 09/11) ----------------
+   A régua da estrada (CB1, `reguaDaEstrada` em encontros.js) rola o
+   encontro pelo degrau que o MAPA pinta na aresta — uma régua só, para o
+   mapa e o encontro não discordarem. Mas o mapa pinta com a neblina: a ponta
+   que a ficha cala dá aresta sem cor (`null`), e o veredito da partida
+   herda o silêncio. A estrada não tem neblina. O dragão que mora na ravina
+   está lá quer o herói saiba quer não; o que a neblina esconde é o AVISO,
+   nunca o perigo.
+
+   Esta função é o perigo do trecho SEM neblina, pela MESMA régua das
+   arestas (`perigoDaEstradaComMotivo`: o pior das duas pontas, um degrau
+   acima no chão duro), lida da ficha de cada ponta e não do nó visível:
+     · a povoação pesa `PERIGO_NA_ESTRADA.povoado`;
+     · o lugar pesa o `ficha.perigo` dele;
+     · a ponta de partida que não é nó (um arredor, «a última parada») pesa
+       como `VEREDITO_DA_PARTIDA.pontaSemNo`, como no veredito;
+     · o chão é o que a jornada grava (`jornada.terreno`), o chão da ida;
+     · `quem` são os nomes da ficha das pontas que são lugares
+       (`quemDoLugar`, regiao.js) — os bichos que lá andam, que a régua da
+       estrada pesa a mais.
+   Uma jornada que passa por povoações tem por pontas a partida e o
+   destino: as do meio pesam o povoado, que é o chão da escada, e nunca
+   sobem o pior.
+
+   Devolve `{ perigo, ponta, chao, subiu, quem }` — `perigo` e `quem` são o
+   segundo argumento de `rolarEncontro` (`estrada`), à letra —, ou `null`
+   fora da região (o continente; sem destino; ponta podre), e aí o encontro
+   rola pelo nível, como antes. Puro, sem sorteio, sem tocar no que recebe. */
+export function perigoDoTrecho(mapa, jornada) {
+  const m = obj(mapa), j = obj(jornada);
+  const r = m && obj(m.regiao);
+  if (!r || !j) return null;
+  const cidades = lista(m.cidades).filter((c) => obj(c) && c.nome);
+  const lugares = lista(r.lugares).filter((l) => obj(l) && l.nome);
+  const achar = (nome) => {
+    const k = semArtigo(nome);
+    if (!k) return null;
+    const c = cidades.find((x) => semArtigo(x.nome) === k);
+    if (c) return { tipo: "cidade", nome: c.nome };
+    const l = lugares.find((x) => semArtigo(x.nome) === k || String(x.id) === String(nome));
+    return l ? { tipo: "lugar", nome: l.nome, id: l.id, ficha: obj(l.ficha) || {} } : null;
+  };
+  const para = achar(j.para) || achar(obj(j.alvo) && j.alvo.nome);
+  if (!para) return null;
+  const de = achar(j.de);
+  const pesoDe = (p) => (!p ? PERIGO_NA_ESTRADA[VEREDITO_DA_PARTIDA.pontaSemNo]
+    : p.tipo === "cidade" ? PERIGO_NA_ESTRADA.povoado
+      : PERIGOS.includes(p.ficha.perigo) ? p.ficha.perigo : null);
+  const pm = perigoDaEstradaComMotivo(pesoDe(de), pesoDe(para), String(j.terreno || ""));
+  if (!pm) return null;
+  const quem = [];
+  for (const p of [de, para]) {
+    if (!p || p.tipo !== "lugar") continue;
+    let q = null;
+    try { q = quemDoLugar(m, String(p.id != null ? p.id : p.nome)); } catch { q = null; }
+    for (const x of lista(q)) if (obj(x) && typeof x.nome === "string" && x.nome.trim() && !quem.includes(x.nome.trim())) quem.push(x.nome.trim());
+  }
+  return { perigo: pm.perigo, ponta: pm.ponta, chao: pm.chao, subiu: pm.subiu, quem };
 }
 
 /* ---------------- A IDA ----------------

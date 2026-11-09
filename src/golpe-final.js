@@ -413,3 +413,63 @@ export function quedasComEscolhaNaRodada(golpes, inimigos) {
   }
   return pendentes;
 }
+
+/* ============================================================
+   O FECHO UMA VEZ POR LUTA (CB8, 09/11 — formas.md §CB 6 e §CB 12)
+
+   Na luta dos três bandidos a mesa parou DUAS vezes para perguntar «poupar
+   ou matar?» — uma delas pela queda que o golpe de um companheiro causou. A
+   pergunta é o melhor momento do jogo (o jogador dirige em vez de agir), e
+   por isso mesmo não pode ser a coisa que mais se repete: a cada queda ela
+   vira um formulário. A regra:
+
+   · PERGUNTA, no máximo `porLuta` vezes por luta, e só quando importa: no
+     ÚLTIMO inimigo de pé (`ultimoInimigo`) ou num `importante`
+     (`importante` — o dragão, o chefe, o que o bestiário marca);
+   · A QUEDA DO MEIO NÃO PÁRA A MESA: aplica-se a escolha LEMBRADA — a
+     última que o jogador tomou nesta luta, e antes da primeira, `lembra`
+     (poupar: o chip da casa oferece «matar», e tocar nele muda só aquela
+     queda e passa a ser a lembrada);
+   · A QUEDA PELA MÃO DE UM ALIADO NUNCA PERGUNTA (`peloAliado: false`):
+     aplica a lembrada, como a do meio;
+   · a PREFERÊNCIA de quem não quer ser perguntado («sempre matar», «sempre
+     poupar») manda sobre tudo, como sempre mandou;
+   · e o que não é escolha (`haEscolhaNoGolpe`: área, instantânea, não fere,
+     não leva a zero) não pergunta nem aplica nada.
+   ============================================================ */
+export const QUANDO_O_FECHO_PERGUNTA = Object.freeze({
+  ultimoInimigo: true,
+  importante: true,
+  peloAliado: false,
+  lembra: "poupar",
+  porLuta: 1,
+});
+/* a palavra da tabela → a escolha que viaja (ESCOLHAS_DO_GOLPE_FINAL) */
+const ESCOLHA_DA_PALAVRA = Object.freeze({ poupar: "nao_letal", matar: "letal" });
+
+/* A queda pergunta, ou aplica? `entrada`:
+     alvo, r, area, instantanea — o mesmo que `haEscolhaNoGolpe` lê;
+     inimigos   — a lista da luta ANTES deste golpe (para saber se é o último);
+     peloAliado — a queda veio do golpe de um companheiro (ou invocação);
+     perguntas  — quantas vezes esta luta já perguntou;
+     lembrada   — a última escolha desta luta ("letal" | "nao_letal"), ou nada;
+     preferencia— a do jogador (PREFERENCIAS_DO_GOLPE_FINAL).
+   Devolve SEMPRE { pergunta, escolha, motivo }: `pergunta` true → a tela
+   abre o cartão do golpe final (e `escolha` é null); false com `escolha` →
+   aplica-se já; false sem `escolha` → não havia escolha nenhuma. */
+export function oFechoPergunta(entrada) {
+  const e = ehObj(entrada) ? entrada : {};
+  const T = QUANDO_O_FECHO_PERGUNTA;
+  const ha = haEscolhaNoGolpe({ alvo: e.alvo, r: e.r, area: e.area, instantanea: e.instantanea });
+  if (!ha.ha) return { pergunta: false, escolha: null, motivo: "sem_escolha" };
+  const pref = decidirGolpeFinal(e.preferencia);
+  if (pref !== PREFERENCIA_PADRAO) return { pergunta: false, escolha: pref, motivo: "preferencia" };
+  const lembrada = ESCOLHAS_DO_GOLPE_FINAL[String(e.lembrada || "")] ? String(e.lembrada) : ESCOLHA_DA_PALAVRA[T.lembra];
+  if (e.peloAliado === true && !T.peloAliado) return { pergunta: false, escolha: lembrada, motivo: "pelo_aliado" };
+  if ((Number(e.perguntas) || 0) >= T.porLuta) return { pergunta: false, escolha: lembrada, motivo: "ja_perguntou" };
+  const alvo = e.alvo;
+  const outros = (Array.isArray(e.inimigos) ? e.inimigos : []).filter((x) => ehObj(x) && x.nome !== alvo.nome && !x.derrotado && !x.fugiu && (Number(x.vida) || 0) > 0);
+  if (T.ultimoInimigo && !outros.length) return { pergunta: true, escolha: null, motivo: "ultimo" };
+  if (T.importante && alvo.importante === true) return { pergunta: true, escolha: null, motivo: "importante" };
+  return { pergunta: false, escolha: lembrada, motivo: "meio" };
+}

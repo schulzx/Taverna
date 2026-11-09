@@ -3850,6 +3850,83 @@ export const LENDA_DO_ARTEFACTO = {
 };
 
 /* ============================================================
+   CB · A BATALHA (09/11/2026) — formas.md §CB 11; Figma 341:2.
+   O encontro, a previsão, a intenção, o golpe e o fecho. As tabelas leem
+   T, ALVOS e MESA_DE_BATALHA e não copiam número deles. A conta da tela
+   (o estado da pílula, o número do golpe, a câmara do telefone, a geometria
+   das três colunas) é pura e mora em batalha-na-tela.js; quem desenha é
+   grade-de-batalha.jsx, painel-batalha.jsx, painel-encontro.jsx e ui.jsx.
+   Nenhuma cor nova: tudo nomeia T.
+   ============================================================ */
+export const BATALHA_EM_TRES = {          // §CB 2
+  margem: 24, fila: 84, fala: 28, barra: 112, entre: 24, calha: 22,
+  coluna: 470, colunaMinima: 320,
+  duasColunasAbaixoDe: 1280,              // abaixo, «Eles» vira gaveta
+  telefoneAbaixoDe: 768,
+  /* a margem de baixo (16) e as casas do tabuleiro de referência (14×14),
+     com que a conta das colunas cede para o campo ficar quadrado */
+  margemDeBaixo: 16, casasDeReferencia: 14,
+  casaMinima: MESA_DE_BATALHA.casaMinimaNoMonitor, casaMaxima: MESA_DE_BATALHA.casaMaximaNoMonitor,
+  telefone: { casa: 40, janela: [9, 11], casaMinima: 32, casaMaxima: 64, margem: 7, fila: 52, fala: 22, tira: 40, verbo: 48, compositor: 44, folgaDaCamara: 1 },
+};
+export const PREVISAO_DO_GOLPE = {         // §CB 3
+  alto: 32, raio: 16, enchimento: { x: 10, y: 6 }, entre: 8, abaixoDaFicha: 8, aro: 1.5,
+  letra: { chance: 18, dano: 15, etiqueta: 12, porExtenso: 16, legenda: 11 },   /* legenda: a exceção escrita (§CB 11), os números das faces e o «d20 +N», que repetem o número grande */
+  abateCerto: 0.995, abatePossivel: 0.05,
+  anelDoAlvo: { traco: 2, tracejado: [6, 4] },
+  faces: { lado: [18, 20], entre: 2, raio: 3, acesa: 0.85 },
+  folha: { raio: 16, pega: [36, 4], numero: 30 },
+};
+export const CAMINHO_NO_CHAO = {           // §CB 3
+  traco: 3, ponto: 10, rotulo: 12,
+  golpeLivre: { chao: 0.12, aro: 1.5, tracejado: [4, 3] },
+  destino: { lado: 41, raio: 6, aro: 2, tracejado: [5, 3], chao: 0.12 },
+};
+/* §CB 4 — as chaves são INTENCAO_DO_INIMIGO.tipos (intencao.js; a suíte
+   confere). Os passos e a caveira já tinham glifo antes de CB: «passo» e
+   «perigo» (glifos.js) — uma ação, uma forma; a página CB redesenhou-os, e
+   o redesenho não entra como segunda cara do mesmo sentido. */
+export const INTENCAO_NA_MESA = {
+  alto: 24, raio: 12, enchimento: { x: 8, y: 4 }, entre: 6, rosto: 18, aro: 1.5, aroLetal: 2,
+  abateQueSeAnuncia: 0.25,
+  cor: { atacar: T.danger, sopro: T.danger, aproximar: T.inkMeio, fugir: T.inkDim },
+  glifo: { atacar: "espadas", sopro: "chama", aproximar: "passo", fugir: "fuga" },
+  caveira: "perigo",
+  area: { chao: 0.22, aro: 1.5, tracejado: [4, 3] },
+  seta: { traco: 2, tracejado: [5, 4] },
+  discoNaFila: 18,
+};
+export const GOLPE_SENTIDO = {             // §CB 5 — ms; a suíte soma pausa + tremor.ms + assenta ≤ teto
+  teto: 400,
+  acerto:  { pausa: 70,  tremor: { px: 3, ms: 120, vaivens: 3 }, assenta: 190 },
+  critico: { pausa: 110, tremor: { px: 6, ms: 140, vaivens: 4 }, assenta: 150, mesa: { px: 2, ms: 140 } },
+  abate:   { pausa: 90,  tremor: { px: 3, ms: 120, vaivens: 3 }, assenta: 180, afunda: { escala: 0.9, alfa: 0.45 } },
+  erro:    { pausa: 0,   tremor: { px: 4, ms: 160, vaivens: 1 }, assenta: 0 },
+  piscar: { alfa: 0.35, quadros: 1 },
+  salto: { de: 0.6, pico: 1.25, sobe: 12 },
+  leitura: 900, esvai: 200,
+  numero: { dano: 32, critico: 44, cura: 30, emTi: 34, erro: 22, contorno: 3 },
+  emTi: { alfa: 0.35, ms: 160, peso: 0.25, borda: 6 },
+  reduzido: { esvai: 120 },                // sem pausa, tremor, escala, mesa nem borda
+  /* §CB 15 (decisão do coordenador): o d20 do ataque rola na bandeja com as
+     faces que acertam acesas; o relógio é de JavaScript (o número troca até
+     pousar), a volta do corpo é a de sempre (tvDadoRola), e um toque salta */
+  dadoNaBandeja: 600,
+};
+export const FECHO_DA_QUEDA = { chip: 4000, alto: 28, raio: 14, veuDoUltimo: 0.45 };   // §CB 6
+export const CARTAO_DO_ENCONTRO = {        // §CB 7
+  folha: { largura: 363, raio: 16 }, cartao: { largura: 1000, enchimento: 28, entre: 28, carta: [300, 380] },
+  rosto: 84, faixa: { raio: 8, enchimento: [14, 9] },
+  linha: { largura: 440, raio: 10, enchimento: { x: 14, y: 12 }, glifo: 22, verbo: 21, chance: 26, aroEscolhida: 3, aroImpedida: 1.5, aroFuga: 2, tracejado: [5, 4] },
+  entrada: { total: 1200, veu: [0, 300], veuAlfa: 0.7, cresce: [300, 800], escala: 1.6, mesa: [800, 1200], passoDasFichas: 40 },
+};
+export const FILA_DA_VEZ = {               // §CB 8
+  vez: 56, espera: 40, aroVez: 3, aro: 2, agiu: 0.45, caido: 0.3, entre: 6,
+  marcaDaRodada: { fio: [2, 36], alfa: 0.6 }, telefone: { vez: 44, espera: 34 },
+};
+export const ECONOMIA_DA_VEZ = { lado: 24, acao: 16, bonus: [18, 16], reacao: 12, emJogo: 0.35, tracejado: [3, 2], noVerbo: 0.75, movimento: { largura: 64, alto: 6 } };   // §CB 8
+
+/* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
    O `@import` é a PRIMEIRÍSSIMA coisa da string, e por isso `FONT_CSS`
@@ -4340,6 +4417,45 @@ export const MOVIMENTO_CSS = `
 .tv-conta-xp { animation: tvConta ${REVELACAO_DO_ESPOLIO.xp.dura}ms ease-out both; }
 .tv-conta-moedas { animation: tvConta ${REVELACAO_DO_ESPOLIO.moedas.dura}ms ease-out both; }
 
+/* CB 5 · O GOLPE SENTIDO: a pausa (o piscar da ficha), o tremor (so a ficha;
+   a amplitude vem em --tremor, em unidades da grelha, porque o SVG mede em
+   casas), o numero que salta e assenta, a queda que afunda, a moldura que
+   acende quando o golpe e em ti, e a mesa que treme no critico. As duracoes
+   sao as de GOLPE_SENTIDO; a entrada nunca espera por nenhuma delas. */
+@keyframes tvGolpePisca { from { opacity: ${GOLPE_SENTIDO.piscar.alfa}; } to { opacity: 0; } }
+@keyframes tvGolpeTremor { 0%, 100% { transform: none; } 16% { transform: translateX(var(--tremor, 0px)); } 33% { transform: translateX(calc(var(--tremor, 0px) * -0.8)); } 50% { transform: translateX(calc(var(--tremor, 0px) * 0.55)); } 66% { transform: translateX(calc(var(--tremor, 0px) * -0.35)); } 83% { transform: translateX(calc(var(--tremor, 0px) * 0.15)); } }
+@keyframes tvGolpeDesvia { 0%, 100% { transform: none; } 45% { transform: translateX(var(--tremor, 0px)); } }
+@keyframes tvGolpeSaltoAcerto { 0% { opacity: 0; transform: scale(${GOLPE_SENTIDO.salto.de}); } 18.4% { opacity: 1; transform: scale(${GOLPE_SENTIDO.salto.de}); } 50% { opacity: 1; transform: scale(${GOLPE_SENTIDO.salto.pico}); } 100% { opacity: 1; transform: translateY(-${GOLPE_SENTIDO.salto.sobe}px) scale(1); } }
+@keyframes tvGolpeSaltoCritico { 0% { opacity: 0; transform: scale(${GOLPE_SENTIDO.salto.de}); } 27.5% { opacity: 1; transform: scale(${GOLPE_SENTIDO.salto.de}); } 62.5% { opacity: 1; transform: scale(${GOLPE_SENTIDO.salto.pico}); } 100% { opacity: 1; transform: translateY(-${GOLPE_SENTIDO.salto.sobe}px) scale(1); } }
+@keyframes tvGolpeSaltoAbate { 0% { opacity: 0; transform: scale(${GOLPE_SENTIDO.salto.de}); } 23.1% { opacity: 1; transform: scale(${GOLPE_SENTIDO.salto.de}); } 53.8% { opacity: 1; transform: scale(${GOLPE_SENTIDO.salto.pico}); } 100% { opacity: 1; transform: translateY(-${GOLPE_SENTIDO.salto.sobe}px) scale(1); } }
+@keyframes tvGolpeSaltoErro { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tvGolpeEsvai { from { opacity: 1; } to { opacity: 0; } }
+@keyframes tvGolpeAfunda { from { transform: none; opacity: 1; } to { transform: scale(${GOLPE_SENTIDO.abate.afunda.escala}); opacity: ${GOLPE_SENTIDO.abate.afunda.alfa}; } }
+@keyframes tvGolpeBorda { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes tvGolpeMesa { 0%, 100% { transform: none; } 25% { transform: translate(${GOLPE_SENTIDO.critico.mesa.px}px, -1px); } 50% { transform: translate(-${GOLPE_SENTIDO.critico.mesa.px}px, 1px); } 75% { transform: translate(1px, 0); } }
+.tv-golpe-pausa { animation: tvGolpePisca ${GOLPE_SENTIDO.acerto.pausa}ms steps(1, end) both; }
+.tv-golpe-pausa-critico { animation: tvGolpePisca ${GOLPE_SENTIDO.critico.pausa}ms steps(1, end) both; }
+.tv-golpe-pausa-abate { animation: tvGolpePisca ${GOLPE_SENTIDO.abate.pausa}ms steps(1, end) both; }
+.tv-golpe-tremor { animation: tvGolpeTremor ${GOLPE_SENTIDO.acerto.tremor.ms}ms ease-out ${GOLPE_SENTIDO.acerto.pausa}ms both; }
+.tv-golpe-tremor-critico { animation: tvGolpeTremor ${GOLPE_SENTIDO.critico.tremor.ms}ms ease-out ${GOLPE_SENTIDO.critico.pausa}ms both; }
+.tv-golpe-tremor-abate { animation: tvGolpeTremor ${GOLPE_SENTIDO.abate.tremor.ms}ms ease-out ${GOLPE_SENTIDO.abate.pausa}ms both; }
+.tv-golpe-desvia { animation: tvGolpeDesvia ${GOLPE_SENTIDO.erro.tremor.ms}ms ease-in-out both; }
+.tv-golpe-salto { animation: tvGolpeSaltoAcerto ${GOLPE_SENTIDO.acerto.pausa + GOLPE_SENTIDO.acerto.tremor.ms + GOLPE_SENTIDO.acerto.assenta}ms ease-out both, tvGolpeEsvai ${GOLPE_SENTIDO.esvai}ms ease-in ${GOLPE_SENTIDO.acerto.pausa + GOLPE_SENTIDO.acerto.tremor.ms + GOLPE_SENTIDO.acerto.assenta + GOLPE_SENTIDO.leitura}ms forwards; }
+.tv-golpe-salto-critico { animation: tvGolpeSaltoCritico ${GOLPE_SENTIDO.critico.pausa + GOLPE_SENTIDO.critico.tremor.ms + GOLPE_SENTIDO.critico.assenta}ms ease-out both, tvGolpeEsvai ${GOLPE_SENTIDO.esvai}ms ease-in ${GOLPE_SENTIDO.critico.pausa + GOLPE_SENTIDO.critico.tremor.ms + GOLPE_SENTIDO.critico.assenta + GOLPE_SENTIDO.leitura}ms forwards; }
+.tv-golpe-salto-abate { animation: tvGolpeSaltoAbate ${GOLPE_SENTIDO.abate.pausa + GOLPE_SENTIDO.abate.tremor.ms + GOLPE_SENTIDO.abate.assenta}ms ease-out both, tvGolpeEsvai ${GOLPE_SENTIDO.esvai}ms ease-in ${GOLPE_SENTIDO.abate.pausa + GOLPE_SENTIDO.abate.tremor.ms + GOLPE_SENTIDO.abate.assenta + GOLPE_SENTIDO.leitura}ms forwards; }
+.tv-golpe-salto-erro { animation: tvGolpeSaltoErro ${GOLPE_SENTIDO.erro.tremor.ms}ms ease-out both, tvGolpeEsvai ${GOLPE_SENTIDO.esvai}ms ease-in ${GOLPE_SENTIDO.erro.tremor.ms + GOLPE_SENTIDO.leitura}ms forwards; }
+.tv-golpe-afunda { transform-box: fill-box; transform-origin: center; animation: tvGolpeAfunda ${GOLPE_SENTIDO.abate.assenta}ms ease-in ${GOLPE_SENTIDO.abate.pausa}ms both; }
+.tv-golpe-borda { animation: tvGolpeBorda ${GOLPE_SENTIDO.emTi.ms}ms ease-out both; }
+.tv-golpe-mesa { animation: tvGolpeMesa ${GOLPE_SENTIDO.critico.mesa.ms}ms linear ${GOLPE_SENTIDO.critico.pausa}ms both; }
+/* CB 7 · A ENTRADA NA MESA (1,2 s, pulavel com um toque ou Esc): o veu fecha,
+   o retrato cresce do cartao para o centro, a mesa aparece por baixo. */
+@keyframes tvEntradaVeu { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tvEntradaCresce { from { transform: scale(1); } to { transform: scale(${CARTAO_DO_ENCONTRO.entrada.escala}); } }
+@keyframes tvEntradaMesa { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.tv-entrada-veu { animation: tvEntradaVeu ${CARTAO_DO_ENCONTRO.entrada.veu[1] - CARTAO_DO_ENCONTRO.entrada.veu[0]}ms ease-out both; }
+.tv-entrada-cresce { animation: tvEntradaCresce ${CARTAO_DO_ENCONTRO.entrada.cresce[1] - CARTAO_DO_ENCONTRO.entrada.cresce[0]}ms ease-in-out ${CARTAO_DO_ENCONTRO.entrada.cresce[0]}ms both; }
+.tv-entrada-mesa { animation: tvEntradaMesa ${CARTAO_DO_ENCONTRO.entrada.mesa[1] - CARTAO_DO_ENCONTRO.entrada.mesa[0]}ms ease-out ${CARTAO_DO_ENCONTRO.entrada.mesa[0]}ms both; }
+
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
   /* TL: a mesa puxada, o veu e a gaveta do horizonte aparecem secos */
@@ -4463,6 +4579,19 @@ export const MOVIMENTO_CSS = `
   .tv-anel-abre, .tv-anel-reliquia { animation: none; opacity: var(--anel-a1); transform: none; }
   .tv-runa-acende, .tv-estrela-acende, .tv-achado-pousa, .tv-reliquia-apaga, .tv-reliquia-lume, .tv-reliquia-frase, .tv-espolio-rotulo, .tv-espolio-rotulo-coracao, .tv-espolio-favor, .tv-espolio-veredito, .tv-faixa-enche { animation: none; opacity: 1; transform: none; }
   .tv-conta-xp, .tv-conta-moedas { animation: none; }
+  /* CB 5 · o golpe parado (WCAG 2.3.3): sem pausa, sem tremor, sem escala, sem
+     a mesa a mexer e sem a moldura a acender. A queda pousa ja afundada. O
+     numero aparece num esvanecer curto (a peca poe tv-golpe-reduzido nele, e
+     so aqui dentro ele anima), e o som fica: reduzir movimento nao e pedir
+     silencio. */
+  .tv-golpe-pausa, .tv-golpe-pausa-critico, .tv-golpe-pausa-abate, .tv-golpe-borda { animation: none; opacity: 0; }
+  .tv-golpe-tremor, .tv-golpe-tremor-critico, .tv-golpe-tremor-abate, .tv-golpe-desvia, .tv-golpe-mesa { animation: none; transform: none; }
+  .tv-golpe-afunda { animation: none; transform: scale(${GOLPE_SENTIDO.abate.afunda.escala}); opacity: ${GOLPE_SENTIDO.abate.afunda.alfa}; }
+  .tv-golpe-salto, .tv-golpe-salto-critico, .tv-golpe-salto-abate, .tv-golpe-salto-erro { animation: none; opacity: 1; transform: none; }
+  .tv-golpe-reduzido { animation: tvGolpeSaltoErro ${GOLPE_SENTIDO.reduzido.esvai}ms ease-out both; }
+  /* CB 7 · a entrada na mesa: corte seco para a mesa, e o som fica */
+  .tv-entrada-veu, .tv-entrada-cresce { animation: none; opacity: 0; }
+  .tv-entrada-mesa { animation: none; opacity: 1; transform: none; }
 }
 `;
 
@@ -5043,6 +5172,10 @@ export const SUPERFICIES_CSS = `
   .tv-nome-tocavel { color: LinkText; text-decoration-color: LinkText; }
   .tv-nome-tocavel[data-estado="apontado"], .tv-nome-tocavel[data-estado="aberto"] {
     background: Highlight; color: HighlightText; box-shadow: none; } }
+/* CB 9 · o telefone: a janela do campo rola sem as duas barras castanhas (a
+   câmara enquadra e a régua fica presa; a barra só tapava casas) */
+.tv-sem-barra { scrollbar-width: none; }
+.tv-sem-barra::-webkit-scrollbar { display: none; }
 `;
 
 /* A FOLHA INTEIRA, na ordem em que o navegador tem de recebê-la.

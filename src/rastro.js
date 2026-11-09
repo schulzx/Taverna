@@ -819,13 +819,22 @@ export function idaAMasmorra(acao, ctx = {}) {
      · "toque" — um botão. O toque É a ação do jogador, e não há frase
        dele a quem colar o envelope: uma chamada, a do sistema.
 
-   `vozDoHeroi` é falso nas três, e está na tabela para que a suíte o leia
+     · "encontro" — a estrada pôs um perigo à frente (CB3, 09/11). Era a
+       causa do dragão da pessoa: o encontro rolado depois da partida ia pela
+       origem "sinal", o envelope ficava na nota à espera da próxima frase, e
+       a próxima frase já era um golpe — a mesa abria com zero palavras. O
+       encontro de perigo tem UMA chamada própria, e ela vem ANTES de a mesa
+       abrir (o sinal de longe, a escolha, a descida). A resposta da partida
+       não conta: ela narrou a saída, não o que a estrada trouxe.
+
+   `vozDoHeroi` é falso nas quatro, e está na tabela para que a suíte o leia
    e para que ninguém o ligue sem ter de apagar esta frase primeiro.
    ============================================================ */
 export const QUEM_RESPONDE = {
   frase: { id: "frase", vozDoHeroi: false, chamadas: 0, envelope: "junto", porque: "a frase do jogador é a ação; o sistema age antes e o Mestre responde UMA vez, à frase, com o envelope junto" },
   sinal: { id: "sinal", vozDoHeroi: false, chamadas: 0, envelope: "proximo", porque: "o Mestre já respondeu; o que o sistema rolou espera na nota pela próxima frase do jogador" },
   toque: { id: "toque", vozDoHeroi: false, chamadas: 1, envelope: "proprio", porque: "o botão é a ação do jogador e não tem frase onde colar o envelope: uma chamada, a do sistema" },
+  encontro: { id: "encontro", vozDoHeroi: false, chamadas: 1, envelope: "proprio", porque: "o perigo da estrada tem a sua chamada do Mestre, e a narração vem antes de a mesa abrir — nunca na fila da próxima frase, que na luta já é um golpe" },
 };
 export function quemResponde(origem) {
   return QUEM_RESPONDE[origem] || QUEM_RESPONDE.sinal;

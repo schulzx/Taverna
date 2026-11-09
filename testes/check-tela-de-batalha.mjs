@@ -56,7 +56,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FORA_DA_TELA_DA_LUTA, REGIOES_DA_BATALHA, TETO_DA_RECUSA } from "../src/tela-de-batalha.js";
-import { TELA_DE_BATALHA, ALVOS, MESA_DE_BATALHA, TERRENO_DO_TABULEIRO } from "../src/estilo.js";
+import { TELA_DE_BATALHA, ALVOS, MESA_DE_BATALHA, TERRENO_DO_TABULEIRO, BATALHA_EM_TRES, INTENCAO_NA_MESA } from "../src/estilo.js";
+import { INTENCAO_DO_INIMIGO } from "../src/intencao.js";
+import { pilulaDaIntencao } from "../src/batalha-na-tela.js";
+import { GLIFOS } from "../src/glifos.js";
 import { PLANTAS } from "../src/grid.js";
 import { VERBOS_DE_COMBATE } from "../src/golpe.js";
 
@@ -230,8 +233,12 @@ sec("4. e nada nesta tela diz que ela é uma tela");
    ============================================================ */
 sec("5. as seis regiões estão na tela, e na ordem do turno");
 {
+  /* MOVIDA (09/11, CB 8): a região `vez` era a `FaixaDaVez` (chips e a
+     pílula AGORA); a forma passou a ser a `FilaDaVez` (os rostos numa linha
+     do tempo, formas.md §CB 8). A região é a mesma — sabe se pode agir agora
+     — e continua a primeira da linha do turno; mudou o nome da peça. */
   const montagem = {
-    vez: "<FaixaDaVez ", campo: "<GridDeBatalha ", veredito: "<LinhaDoVeredito ",
+    vez: "<FilaDaVez ", campo: "<GridDeBatalha ", veredito: "<LinhaDoVeredito ",
     verbos: "<FileiraDeVerbos ", dePe: "<QuemEstaDePe ", narracao: "<AUltimaFala ",
   };
   for (const r of REGIOES_DA_BATALHA) {
@@ -458,9 +465,17 @@ sec("8. a geometria sai de `TELA_DE_BATALHA`, nunca da cabeça de quem digitou")
      era "48 sempre"; a pessoa pediu o tabuleiro inteiro à vista no monitor,
      e ali o piso passa a ser o da casa de rato (`casaMinimaNoMonitor`, 32,
      WCAG 2.5.8 AA). NO TELEFONE NADA MUDA — o piso continua `ALVOS.piso`,
-     e é isso que a asserção guarda com os dois lados escritos. */
-  t("a casa do tabuleiro é imposta por um piso — o do dedo no telefone, o do rato no monitor",
-    /ladoFixo=\{noTelefone \? ALVOS\.piso : M\.casaMinimaNoMonitor\}/.test(TEL) && /ladoFixo = 0/.test(ler("src/grade-de-batalha.jsx"))
+     e é isso que a asserção guarda com os dois lados escritos.
+     MOVIDA OUTRA VEZ (09/11, CB 9), e o telefone mudou: a casa desce de 48
+     para 40 (e a 32 se a câmara precisar), porque no tabuleiro NENHUM TOQUE
+     É IRREVERSÍVEL — o primeiro toque numa casa ou num inimigo só prevê, e o
+     segundo confirma. 40 cumpre o WCAG 2.2, 2.5.8 (AA, 24 × 24) e falha o
+     AAA de propósito, pela troca medida: 35 → 99 casas à vista. O piso
+     continua IMPOSTO pela tela, e nunca abaixo do AA nos dois lados. */
+  t("a casa do tabuleiro é imposta por um piso — o da câmara no telefone (40 → 32), o do rato no monitor",
+    /ladoFixo=\{noTelefone \? casaDoTelefone : M\.casaMinimaNoMonitor\}/.test(TEL) && /ladoFixo = 0/.test(ler("src/grade-de-batalha.jsx"))
+    && /const casaDoTelefone = camara \? camara\.casa : B3\.telefone\.casa;/.test(TEL)
+    && BATALHA_EM_TRES.telefone.casa === 40 && BATALHA_EM_TRES.telefone.casaMinima >= 24
     && MESA_DE_BATALHA.casaMinimaNoMonitor >= 24 && MESA_DE_BATALHA.casaMinimaNoMonitor < ALVOS.piso);
   t("e o campo visível é que rola, nunca o alvo que encolhe",
     /flex-1 min-h-0 min-w-0 overflow-auto tv-scroll/.test(TEL));
@@ -598,6 +613,43 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
   t("e a frase que confessava o buraco não voltou", !/a esquiva ainda não pesa/.test(cruTela) && !/RECUSA_DO_GESTO_SEM_MOTOR/.test(cruTela));
   const semMotor = VERBOS_DE_COMBATE.filter((v) => !v.motor).map((v) => v.id);
   t("hoje é a esquiva que fica de fora — e só ela (o dia em que ganhar motor, esta linha muda)", semMotor.join(",") === "esquivar", semMotor.join(", "));
+}
+
+/* ============================================================
+   11. CB (09/11) · A BATALHA: a previsão, a intenção e as peças novas
+   ============================================================ */
+sec("11. CB: todo ataque tem previsão, toda intenção tem glifo e texto, e nenhuma cor nas peças novas");
+{
+  const GRADE_B1 = semProsa(ler("src/grade-de-batalha.jsx"));
+  /* O VEREDITO ANTES DO CLIQUE, levado ao golpe (formas.md §CB 3): o verbo
+     de ataque diz a chance («Atacar · 78%»), a pílula pousa sob o alvo, e o
+     gesto no inimigo prevê antes de atacar. Se um destes fios se partir, o
+     golpe volta a ser «o dado seco» — e nenhum teste de módulo o sente. */
+  const verbosDeAtaque = VERBOS_DE_COMBATE.filter((v) => v.id === "atacar");
+  t("todo verbo de ataque tem a previsão no preço («Atacar · 78%»)",
+    verbosDeAtaque.length === 1 && /chance=\{v\.id === "atacar" \? chanceDoAtaque : null\}/.test(TEL) && /chanceDoAtaque=\{chanceDoAtaque\}/.test(TEL));
+  t("a grade recebe a previsão, as intenções, o caminho e os golpes",
+    /previsaoDoGolpe=\{prevGolpe\} intencoes=\{intencoes\} caminho=\{p\.caminho \|\| null\} golpes=\{p\.golpes \|\| null\}/.test(TEL));
+  t("a pílula da previsão pousa sob o alvo, 8 px abaixo da ficha",
+    /<PilulaDaPrevisao previsao=\{previsaoDoGolpe\}/.test(GRADE_B1) && /PREVISAO_DO_GOLPE\.abaixoDaFicha/.test(GRADE_B1));
+  t("o gesto no inimigo: no telefone o primeiro toque prevê, o segundo confirma",
+    /if \(noTelefone && alvoDaPrevisao !== nome\) \{ preverGolpe\(nome\); return; \}/.test(TEL) && /andarEAtacar\(nome\);/.test(TEL));
+  /* toda a intenção tem glifo e texto — os quatro tipos do motor, cada um
+     com um glifo que EXISTE na tabela e uma frase para quem ouve */
+  const semForma = INTENCAO_DO_INIMIGO.tipos.filter((tipo) => {
+    const v = pilulaDaIntencao({ tipo, alvo: "Bran", dano: { min: 3, max: 6 }, area: [{ x: 0, y: 0 }] }, { distanciaM: 6 });
+    return !v || !v.texto || !v.rotulo || !GLIFOS[INTENCAO_NA_MESA.glifo[tipo]];
+  });
+  t(`toda intenção (${INTENCAO_DO_INIMIGO.tipos.join(", ")}) tem glifo desenhado e texto`, semForma.length === 0, semForma.join(", "));
+  t("e a caveira da intenção letal é um glifo da tabela", !!GLIFOS[INTENCAO_NA_MESA.caveira]);
+  /* nenhuma cor literal nas peças novas: a paleta é T, e as tabelas de CB */
+  const UI_CB = (() => { const u = ler("src/ui.jsx"); const i = u.indexOf("CB · AS PEÇAS DA BATALHA"); return i < 0 ? "" : u.slice(i); })();
+  const pecasNovas = { "src/painel-encontro.jsx": ler("src/painel-encontro.jsx"), "src/batalha-na-tela.js": ler("src/batalha-na-tela.js"), "ui.jsx (as peças de CB)": UI_CB };
+  const comCor = Object.entries(pecasNovas).filter(([, s]) => /#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(s.replace(/\/\*[\s\S]*?\*\//g, ""))).map(([n]) => n);
+  t("nenhuma cor literal nas peças novas (o encontro, a conta da tela, as peças da batalha)", UI_CB.length > 2000 && comCor.length === 0, comCor.join(" · ") || `a secção de CB do ui.jsx tem ${UI_CB.length} caracteres`);
+  t("e a tela da batalha continua sem cor literal, com as três colunas", !/#[0-9a-fA-F]{3,8}\b/.test(TEL) && !/rgba?\(/.test(TEL) && /arranjo === "tres" && colunaEles/.test(TEL));
+  t("a pílula «AGORA:» aposentou-se, e a fila diz de quem é a vez a quem ouve",
+    !/function PilulaDaVez/.test(TEL) && /<FilaDaVez fila=\{fila\} rotulo=\{rotuloDaVez\(selos\)\}/.test(TEL));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

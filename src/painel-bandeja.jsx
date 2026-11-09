@@ -27,9 +27,16 @@
    com quem pediu menos movimento). O que já rolou no Véu (jaRolou) não
    soa aqui: soou lá. Um som que estoura cala-se; o dado pousa na mesma.
    ============================================================ */
-import { useEffect, useState } from "react";
-import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO } from "./estilo.js";
-import { Glifo } from "./ui.jsx";
+import { useEffect, useRef, useState } from "react";
+import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO, GOLPE_SENTIDO } from "./estilo.js";
+import { Glifo, FacesDoD20 } from "./ui.jsx";
+/* CB 15 (decisão do coordenador, 09/11): o d20 do ataque rola AQUI, com as
+   faces que acertam acesas ANTES de pousar («precisas de 6+»). O lançamento
+   do golpe (`lancamentoDoAtaque`, motor/a-bandeja.js) traz `golpe`,
+   `acertam` e `criticoEm`; as faces são as mesmas que a coluna acende
+   (`golpePorExtenso`). Rola GOLPE_SENTIDO.dadoNaBandeja, um toque na bandeja
+   salta, e nada disto prende a entrada: o golpe já está aplicado. */
+import { golpePorExtenso } from "./batalha-na-tela.js";
 import { aLinhaDoLancamento, NOME_DO_DESFECHO } from "./motor/a-bandeja.js";
 import { tocarDado } from "./som-da-mesa.js";
 
@@ -130,14 +137,18 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
      tudo pousa já com o número final. */
   const [rolandoN, setRolandoN] = useState(0);
   const [troca, setTroca] = useState(0);
+  const pousarRef = useRef(null);
   useEffect(() => {
     if (!ultimo || ultimo.jaRolou) { setRolandoN(0); return undefined; }
     if (semMovimento()) { setRolandoN(0); soarDado(); return undefined; }
     setRolandoN(n); setTroca(0);
     const inicio = Date.now();
     const passo = setInterval(() => setTroca(Math.floor((Date.now() - inicio) / MOVIMENTO_DO_DADO.troca)), MOVIMENTO_DO_DADO.troca);
-    const fim = setTimeout(() => { clearInterval(passo); setRolandoN(0); soarDado(); }, MOVIMENTO_DO_DADO.rolar);
-    return () => { clearInterval(passo); clearTimeout(fim); };
+    let pousou = false;
+    const pousar = () => { if (pousou) return; pousou = true; clearInterval(passo); clearTimeout(fim); setRolandoN(0); soarDado(); pousarRef.current = null; };
+    const fim = setTimeout(pousar, ultimo.golpe ? GOLPE_SENTIDO.dadoNaBandeja : MOVIMENTO_DO_DADO.rolar);
+    pousarRef.current = pousar;
+    return () => { clearInterval(passo); clearTimeout(fim); pousarRef.current = null; };
   }, [n]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!ultimo) return null;
   const rolando = rolandoN === n;
@@ -160,8 +171,13 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
   }
 
   const tam = ultimo.dados.length > 3 ? BANDEJA.dado - 12 : BANDEJA.dado;
+  /* o golpe: as 20 faces, as que acertam acesas; pousado, a que saiu marcada */
+  const doGolpe = ultimo.golpe && Array.isArray(ultimo.acertam) ? golpePorExtenso({ faces: ultimo.acertam, criticoEm: ultimo.criticoEm }) : null;
+  const natural = (ultimo.dados.find((d) => !d.posto) || {}).valor;
   return (
     <div className="tv-fade tv-bandeja" role="group" aria-label="Os dados na mesa"
+      onClick={rolando && pousarRef.current ? () => { try { pousarRef.current && pousarRef.current(); } catch { /* saltar nunca custa o turno */ } } : undefined}
+      title={rolando ? "toque para o dado pousar já" : undefined}
       style={{ display: "flex", alignItems: "center", gap: BANDEJA.espaco + 4, padding: `0 ${BANDEJA.espaco + 6}px`, borderRadius: BANDEJA.raio,
         border: `1px solid ${T.line}`, background: T.pagina, boxShadow: BANDEJA.sombraInterior }}>
       <span style={{ display: "inline-flex", gap: BANDEJA.espaco + 4, alignItems: "center", padding: "6px 0" }}>
@@ -171,6 +187,11 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
         <span className="tv-mono" style={{ display: "block", fontSize: TIPOS.rotulo, color: T.inkMeio, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {rolando ? (ultimo.rotulo || "…") : linha}
         </span>
+        {doGolpe && doGolpe.faces && (
+          <span style={{ display: "block", marginTop: 4 }}>
+            <FacesDoD20 faces={doGolpe.faces} saiu={rolando ? null : natural} rotulo={doGolpe.legenda} />
+          </span>
+        )}
         {!rolando && desfecho && (
           <span className="tv-dado-veredito" style={{ display: "block", fontSize: TIPOS.corpo, fontWeight: 700, color: corD, animationDuration: `${MOVIMENTO_DO_DADO.veredito}ms` }}>
             {ultimo.desfecho === "critico" ? <><Glifo nome="faisca" tamanho={14} cor={corD} />{" "}</> : SELO[ultimo.desfecho] ? `${SELO[ultimo.desfecho]} ` : ""}{desfecho}

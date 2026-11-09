@@ -320,8 +320,10 @@ sec("6. A FIAÇÃO NO App E O CARTÃO NO ECRÃ (texto, corpo por âncora)");
   /* enquanto o cartão espera, os controles do turno (parados) devolvem a
      altura: medido a 374 × 310, só assim campo, contador e os dois botões
      cabem sem rolar */
+  /* (09/11, CB 8) a vez passou de FaixaDaVez a FilaDaVez — a mesma região
+     com outra forma; o que se guarda é que ela sai enquanto a decisão espera */
   t("os controles do turno saem enquanto a decisão espera (a vez, o veredito, a tira no telefone)",
-    /\{!esperando && <FaixaDaVez /.test(TEL) && /\{!esperando && <LinhaDoVeredito /.test(TEL) && /\{!\(esperando && noTelefone\) && lateral\}/.test(TEL));
+    /\{!esperando && <FilaDaVez /.test(TEL) && /\{!esperando && <LinhaDoVeredito /.test(TEL) && /\{!\(esperando && noTelefone\) && lateral\}/.test(TEL));
 }
 
 console.log(`\ncomo chega (MM16 nº 5): ${ok} passaram, ${mal} falharam`);

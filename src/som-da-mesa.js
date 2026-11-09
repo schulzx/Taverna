@@ -60,6 +60,52 @@ export const SOM_DA_MESA = Object.freeze({
   despertar: Object.freeze({
     nota: 196, parciais: Object.freeze([1, 2.76, 5.4]), ganhos: Object.freeze([1, 0.5, 0.25]), dura: 0.9, onda: "sine",
   }),
+  /* A LUTA (CB7, 09/11 — formas.md §CB 5 e §CB 12). Cada momento é uma
+     lista de vozes: `em` (s depois do toque), `freq` → `ate` Hz (a queda do
+     tom; sem `ate`, fixo), `onda`, `dura`, e `ganho` — o peso da voz no
+     momento. Os ganhos de um momento DIVIDEM o teto do volume entre si, como
+     as camadas da carta: nenhum momento soa mais alto que o teto.
+       golpe   — o acerto: uma pancada surda (o triângulo que cai, e o grave
+                 por baixo);
+       critico — o golpe e um sino curto por cima (parciais de sino, Dó6);
+       erro    — o ar cortado: um sopro agudo que desce depressa;
+       queda   — o abate: grave e longo;
+       entrada — o tambor da entrada na mesa (§CB 7): três batidas;
+       imune   — o erro com um tinido metálico.
+     Nenhum dura mais que a queda (0,7 s), e o golpe e o erro cabem nos
+     380 ms do golpe sentido. */
+  luta: Object.freeze({
+    golpe: Object.freeze([
+      Object.freeze({ em: 0, freq: 180, ate: 70, onda: "triangle", dura: 0.12, ganho: 1 }),
+      Object.freeze({ em: 0, freq: 90, ate: 50, onda: "sine", dura: 0.16, ganho: 0.6 }),
+    ]),
+    critico: Object.freeze([
+      Object.freeze({ em: 0, freq: 180, ate: 70, onda: "triangle", dura: 0.12, ganho: 1 }),
+      Object.freeze({ em: 0, freq: 90, ate: 50, onda: "sine", dura: 0.16, ganho: 0.6 }),
+      Object.freeze({ em: 0.03, freq: 1046.5, onda: "sine", dura: 0.35, ganho: 0.5 }),
+      Object.freeze({ em: 0.03, freq: 1046.5 * 2.76, onda: "sine", dura: 0.25, ganho: 0.2 }),
+    ]),
+    erro: Object.freeze([
+      Object.freeze({ em: 0, freq: 900, ate: 300, onda: "sine", dura: 0.12, ganho: 1 }),
+    ]),
+    queda: Object.freeze([
+      Object.freeze({ em: 0, freq: 110, ate: 45, onda: "sine", dura: 0.7, ganho: 1 }),
+      Object.freeze({ em: 0.02, freq: 55, onda: "triangle", dura: 0.6, ganho: 0.5 }),
+    ]),
+    entrada: Object.freeze([
+      Object.freeze({ em: 0, freq: 120, ate: 60, onda: "triangle", dura: 0.14, ganho: 1 }),
+      Object.freeze({ em: 0.18, freq: 120, ate: 60, onda: "triangle", dura: 0.14, ganho: 0.7 }),
+      Object.freeze({ em: 0.36, freq: 110, ate: 50, onda: "triangle", dura: 0.22, ganho: 1 }),
+    ]),
+    imune: Object.freeze([
+      Object.freeze({ em: 0, freq: 900, ate: 300, onda: "sine", dura: 0.12, ganho: 1 }),
+      Object.freeze({ em: 0.02, freq: 2093, onda: "sine", dura: 0.18, ganho: 0.4 }),
+      Object.freeze({ em: 0.02, freq: 2093 * 2.4, onda: "sine", dura: 0.12, ganho: 0.2 }),
+    ]),
+  }),
+  /* o desfecho do evento do golpe (`EVENTO_DO_GOLPE`, combate.js) → o
+     momento; o abate manda sobre o desfecho; o impedido cala (não houve golpe) */
+  somDoDesfecho: Object.freeze({ critico: "critico", acerto: "golpe", erro: "erro", imune: "imune", impedido: null, abate: "queda" }),
   /* o que o interruptor diz (ui.jsx) */
   palavras: Object.freeze({
     rotulo: "Som da mesa", sim: "sim", nao: "não",
@@ -187,6 +233,30 @@ export function tocarDado() {
     for (const b of d.batidas) voz(c, { freq: d.de, freqFim: d.ate, onda: d.onda, inicio: t + b.em, dura: d.dura, pico: teto * b.ganho });
   });
 }
+
+/* 4. A LUTA — um momento da tabela `luta`, pelo nome; nome desconhecido
+   cala. As vozes dividem o teto pelos seus ganhos. */
+export function tocarDaLuta(momento) {
+  const vozes = Object.prototype.hasOwnProperty.call(S.luta, momento) ? S.luta[momento] : null;
+  if (!vozes) return false;
+  return tocar((c, t) => {
+    const soma = vozes.reduce((a, v) => a + v.ganho, 0) || 1;
+    for (const v of vozes) voz(c, { freq: v.freq, freqFim: v.ate || null, onda: v.onda, inicio: t + v.em, dura: v.dura, pico: (tetoDoVolume() * v.ganho) / soma });
+  });
+}
+
+/* O golpe sentido: o som que o evento do golpe pede (`eventoDoGolpe`,
+   combate.js). O abate soa a queda; o resto, pelo desfecho; o impedido e o
+   lixo calam. */
+export function tocarGolpe(evento) {
+  const e = evento && typeof evento === "object" ? evento : null;
+  if (!e) return false;
+  const momento = e.abate === true ? S.somDoDesfecho.abate : S.somDoDesfecho[e.desfecho];
+  return momento ? tocarDaLuta(momento) : false;
+}
+
+/* O tambor da entrada na mesa (§CB 7). */
+export function tocarEntrada() { return tocarDaLuta("entrada"); }
 
 /* 3. O ARTEFACTO QUE DESPERTA — o sino grave */
 export function tocarDespertar() {

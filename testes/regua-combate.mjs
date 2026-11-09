@@ -228,6 +228,7 @@ import { PESO_AMEACA } from "../src/orcamento.js";
 import { salvaDoGolpe, bonusDeSalvaguarda } from "../src/salvaguardas.js";
 import { atributoEfetivo } from "../src/regras-jogo.js";
 import { ataquesExtras, danoExtraDeDadiva, criticoMinimo } from "../src/dadivas.js";
+import { intencoesDaRodada } from "../src/intencao.js";
 
 /* ============================================================
    1. AS TABELAS — se é número, é tabela
@@ -595,6 +596,58 @@ export const CAMINHADA_NA_REGUA = {
   familias: ["umavida", "aa", "bb", "cc"],
 };
 
+/* ---------------- A INTENÇÃO ANUNCIADA, COMO PARÂMETRO (CB6, 09/11) ----------------
+
+   A Fase CB faz o inimigo ANUNCIAR no começo da rodada o que vai fazer
+   (`intencoesDaRodada`, intencao.js) e cumpri-lo na vez dele
+   (`turnoDosInimigos` com `intencoes`). Anunciar dá vantagem a quem lê:
+   esta tabela é a porta por onde a régua mede quanta.
+
+   `ligado: false` É O JOGO DE HOJE, e é lei pelo motivo de N1b: o App
+   ainda não anuncia (a fiação é do `oficial`, na CB6), e uma régua que
+   medisse um anúncio que o jogador não vê mediria um jogo que não existe.
+   Com ele desligado a régua é byte a byte a de antes (a suíte prova). No dia
+   em que o App anunciar, `ligado` passa a `true` NO MESMO COMMIT da fiação
+   — a régua segue o jogo, nunca o contrário.
+
+   `heroiLe` é o jogador que lê o anúncio: o herói golpeia primeiro o
+   inimigo cuja intenção mais ameaça derrubar alguém (a maior chance de
+   abate anunciada); sem ameaça de abate, o mais ferido, como sempre. É a
+   leitura mais simples que um jogador faz, e a régua NÃO mede a outra
+   metade da vantagem — sair do alcance, sair das casas do sopro, provocar —
+   porque não tem tabuleiro (`TABULEIRO_NA_REGUA`). O número que sai daqui
+   é o PISO da vantagem, e diz-se piso.
+
+   O QUE SE MEDIU (09/11, 4 famílias × 1000, Adversário ligado), e o que
+   cada número quer dizer:
+
+     controle (4 elites nv3)   sem 53,8–57,6% · anuncia 45,8–48,0% · lê = anuncia
+     justo    (4 elites nv6)   sem 2,1–2,6%   · anuncia 1,4–2,3%   · lê = anuncia
+     brando   (3 comuns nv5)   100% nos três; PV do grupo 116 → 114
+
+   · LER NÃO MUDA NADA AQUI, e é verdade, não defeito: o bando concentra os
+     golpes num alvo só (a intenção do Adversário), e a melhor resposta sem
+     tabuleiro continua a ser bater no mais ferido — a política de sempre. A
+     vantagem de ler vive no tabuleiro (sair do alcance, sair do sopro,
+     provocar), que esta régua não tem. Piso: zero.
+   · O QUE MEXE É A HORA DA DECISÃO. Anunciar obriga o bando a decidir no
+     COMEÇO da rodada, antes do golpe do herói — e isso custa ao grupo 8 a 11
+     pontos de vitória no controle. Isolado (o anúncio feito e NÃO passado ao
+     turno: o mesmo número, ao byte), é só a hora: a escolha comprometida dá
+     os mesmos alvos que a de sempre. E a hora certa é a do App: a intenção
+     do bando nasce na pauta do turno (`motor/pauta-do-turno.js`,
+     `intencaoDaLuta`), ANTES de o golpe do herói se resolver, e
+     `resolverRevide` lê esse `intencaoRef`. A régua sem anúncio decide
+     DEPOIS do golpe — é ela que difere do jogo, e o anúncio só o pôs à
+     vista (a lição de N1b outra vez). Recalibrar o retrato é da pessoa.
+   · Nenhum dente da catraca se mexe: no `justo` o PV do grupo desce (de
+     0,75–1,00 para 0,27–0,71, contra um teto de 35) e as quedas sobem
+     (2,97 → 2,98, contra um piso de 1,2). Nada a ajustar em tabela. */
+export const INTENCAO_NA_REGUA = {
+  ligado: false,
+  heroiLe: true,
+};
+
 /* AS CLASSES QUE CURAM, do jeito que `lutaDaMesa` as lê (App.jsx). A
    lista existe em `combate.js` (`CURAM`) e não é exportada de lá; copiá-la
    aqui é o mesmo que o App faz, e ela fica nomeada em vez de literal no meio
@@ -822,7 +875,7 @@ function aplicarBuffDeCompanheiro(heroi, grupo, ac) {
    rola os mesmos dados com e sem elas, e a diferença medida é só a aflição.
    Desligado por omissão: as catracas de sempre mediam sem ele. A vantagem
    mental (Gnomo, Sintético) fica de fora: o herói da régua não tem raça. */
-export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comAflicoes = null } = {}) {
+export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comAflicoes = null, comIntencao = INTENCAO_NA_REGUA.ligado, heroiLe = INTENCAO_NA_REGUA.heroiLe } = {}) {
   const sorteDaAflicao = comAflicoes ? sorteDaSemente(String(semente) + "|aflicao") : null;
   const caminhada = Math.max(0, Math.floor(Number(rodadasDeCaminhada) || 0));
   const cen = typeof cenario === "string" ? CENARIOS_DA_REGUA[cenario] : cenario;
@@ -952,8 +1005,30 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
       return v.intencao.alvo || "";
     };
 
+    /* CB6: o anúncio da rodada (só com `comIntencao`), numa corrente de
+       sorte própria — o anúncio não come os dados da luta. */
+    let anunciadas = null, prioridadeAnunciada = "";
+    /* o alvo de quem lê: o aliado que a soma anunciada mais ameaça derrubar
+       (`porAlvo`, a ameaça somada) — e, de quem o ameaça, o mais ferido, o
+       que um golpe mais depressa tira da conta. Sem ameaça de queda, nada:
+       fica a regra de sempre (o mais ferido da mesa). */
+    const alvoDeQuemLe = (vivos) => {
+      if (!anunciadas) return null;
+      const perigo = (anunciadas.porAlvo || []).find((a) => (Number(a.abate) || 0) > 0);
+      if (!perigo) return null;
+      const quem = vivos.filter((e) => perigo.de.includes(e.nome));
+      return quem.length ? [...quem].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0] : null;
+    };
+
     for (; rodada <= cen.tetoDeRodadas; rodada++) {
       if (!vivosInimigos().length) break;
+      if (comIntencao) {
+        prioridadeAnunciada = prioridadeDaRodada();
+        anunciadas = intencoesDaRodada({ inimigos: vivosInimigos(), grade: null, heroi: null, aliados: [], rodada }, {
+          jogador: heroi, grupo: grupoDePe(), gdJogador: 0, provocado: false, prioridade: prioridadeAnunciada,
+          sorte: sorteDaSemente(`${semente}|intencao|${rodada}`),
+        });
+      }
 
       /* ---- 1. O HERÓI (App.jsx) ----
          E AQUI ESTAVA O PONTO CEGO QUE X4 ACHOU (v. `TABULEIRO_NA_REGUA`):
@@ -977,7 +1052,7 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
         for (let i = 0; i < nAtaques; i++) {
           const vivos = vivosInimigos();
           if (!vivos.length) break;
-          const alvo = [...vivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
+          const alvo = (comIntencao && heroiLe && alvoDeQuemLe(vivos)) || [...vivos].sort((a, b) => (a.vida || 0) - (b.vida || 0))[0];
           const r = resolverAtaque({
             atacante: heroi.nome, alvo, ehAtacanteInimigo: false,
             bonusAtaque: bonusAtk,
@@ -995,11 +1070,12 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
       /* a intenção é lida ANTES do turno, com o estado da mesa como ele
          chegou até aqui — é a ordem do App: `intencaoDaLuta` já rodou e
          `intencaoRef` já vale quando `turnoDosInimigos` é chamado. */
-      const prioridade = prioridadeDaRodada();
+      const prioridade = comIntencao ? prioridadeAnunciada : prioridadeDaRodada();
       const acoes = turnoDosInimigos({
         inimigos: vivosInimigos(), jogador: heroi, grupo: grupoDePe(),
         gdJogador: 0, grade: null, heroi: null, aliados: [],
         rodada, provocado: false, prioridade,
+        ...(comIntencao ? { intencoes: anunciadas } : {}),
       });
       for (const a of acoes) {
         if (!(a.r && a.r.dano > 0)) continue;
@@ -1239,9 +1315,9 @@ export function concordam(a, b) {
 /* Roda `n` combates do cenário e devolve, por métrica, {media, margem, n}.
    `prefixo` escolhe a FAMÍLIA de sementes; uma família só é uma amostra, e
    o que prova estabilidade é o acordo entre famílias independentes. */
-export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao } = {}) {
+export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comIntencao = INTENCAO_NA_REGUA.ligado, heroiLe = INTENCAO_NA_REGUA.heroiLe } = {}) {
   const combates = [];
-  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario, rodadasDeCaminhada }));
+  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario, rodadasDeCaminhada, comIntencao, heroiLe }));
   /* o cabeçalho carrega os DOIS parâmetros de instrumento, pelo motivo de
      N1b: uma tabela de números que não diz com qual instrumento foi medida é
      exatamente o que produziu o retrato de B1. */

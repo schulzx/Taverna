@@ -18,6 +18,8 @@
    o resultado — e a semente é o único árbitro que esta casa tem.
    ============================================================ */
 
+import { facesQueAcertam } from "../previsao.js";
+
 export const A_BANDEJA = Object.freeze({
   /* as faces que a mesa conhece; o d100 desenha-se como dois d10 */
   faces: Object.freeze([4, 6, 8, 10, 12, 20, 100]),
@@ -106,6 +108,43 @@ export function lancamentoDoTeste({ valor, mod = 0, dc = null, rotulo = "", ante
   /* o Véu já rolou este dado na tela, com a cerimónia dele: na bandeja ele
      pousa sem rolar outra vez, ou o jogador veria o mesmo dado cair duas */
   return l && Object.freeze({ ...l, jaRolou: true });
+}
+
+/* O D20 DO GOLPE (CB, decisão de 09/11 — formas.md §CB 15: «o dado do
+   golpe rola na mesa»). Todo ataque do herói lança na bandeja o d20 que
+   `resolverAtaque` (combate.js) DE FACTO rolou — `r.dados`, os dois da
+   vantagem ou da desvantagem, com o que não contou posto de lado —, o
+   bónus, a defesa a bater (`r.ca`, já com a cobertura), e as FACES QUE
+   ACERTAM (`facesQueAcertam`, previsao.js: a mesma lista que a previsão
+   acende na coluna), para a tela as acender ANTES de o dado pousar. O
+   desfecho é o do golpe (`r.resultado`), não uma conta nova: o crítico em
+   19 da dádiva pousa como crítico, e o imune pousa como acerto (acertou;
+   não feriu). O golpe que nem rolou (impedido; a guarda intocável, d20 0)
+   não vai à mesa: null. `o`: { rotulo, criticoEm (a régua do crítico que o
+   golpe usou; 20 sem ela) }. A tela rola-o (não é o Véu): `jaRolou` false. */
+const DESFECHO_DO_GOLPE = Object.freeze({ critico: "critico", desastre: "desastre", acerta: "sucesso", imune: "sucesso", erra: "falha" });
+export function lancamentoDoAtaque(r, o) {
+  if (!r || typeof r !== "object" || r.tipo !== "ataque") return null;
+  const op = o && typeof o === "object" ? o : {};
+  const natural = inteiro(r.d20);
+  if (natural < 1 || natural > 20) return null;
+  const rolados = (Array.isArray(r.dados) ? r.dados : [natural]).map((v) => inteiro(v)).filter((v) => v >= 1 && v <= 20);
+  /* o que contou é o natural; o outro (vantagem/desvantagem) fica posto */
+  let contou = false;
+  const dados = rolados.map((v) => { if (!contou && v === natural) { contou = true; return { faces: 20, valor: v }; } return { faces: 20, valor: v, posto: true }; });
+  if (!contou) return null;
+  const l = lancamento({ rotulo: op.rotulo || `Golpe${r.alvo ? ` → ${r.alvo}` : ""}`, dados, mod: r.bonus, alvo: r.ca, papel: "teste" });
+  if (!l) return null;
+  const criticoEm = Math.max(2, Math.min(20, inteiro(op.criticoEm, 20) || 20));
+  return Object.freeze({
+    ...l,
+    desfecho: DESFECHO_DO_GOLPE[r.resultado] || l.desfecho,
+    acertam: Object.freeze(facesQueAcertam(r.bonus, r.ca, criticoEm)),
+    criticoEm,
+    modo: r.modo || null,
+    golpe: true,
+    jaRolou: false,
+  });
 }
 
 /* O d100 do oráculo: ganha por baixo, contra a chance. Uma resposta que o

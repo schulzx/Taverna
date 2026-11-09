@@ -325,6 +325,13 @@ function medirModo({ heroi, inimigos, passoH, modo, rodada, alvo = null, defesa 
       const desvantagem = bruta > DISPARO_NA_FUGA.longaAcimaDe;
       return { nome: e.nome, distanciaM: redondo(bruta), desvantagem, chance: chanceContra(e, alvo, defesa, gdJogador, desvantagem) };
     });
+  /* CB3 (09/11): A FUGA ABERTA. A luta que o encontro da estrada abriu
+     perante um lendário (ou um `importante`, ou um «a evitar») marca cada
+     inimigo com `deixaIr` (abrirOCombate, motor/combate-do-turno.js): a
+     criatura não persegue quem se vai — o cartão do encontro prometeu a fuga
+     sempre possível, e a mesa cumpre. Quem deixa ir não alcança ninguém e não
+     fecha a fuga; o golpe de quem está colado continua (é reação, e sai-se
+     sem ele recuando de guarda erguida, como sempre). */
   const perseguidores = naLuta
     .filter((e) => !atacaDeLonge(e))
     .map((e) => {
@@ -332,13 +339,15 @@ function medirModo({ heroi, inimigos, passoH, modo, rodada, alvo = null, defesa 
       const alcance = alcanceNatural(e);
       const corridaDele = redondo(deslocamentoDeCriatura(e).metros * FUGA.perseguicao * fatorDePerseguicao(e));
       const distFinal = redondo(dist + corridaHeroi - corridaDele);
+      if (e.deixaIr === true) return { nome: e.nome, distanciaM: dist, alcance, corridaDele, distFinal, alcanca: false, deixaIr: true };
       return { nome: e.nome, distanciaM: dist, alcance, corridaDele, distFinal, alcanca: distFinal <= alcance };
     });
   const quemAlcanca = perseguidores.filter((p) => p.alcanca).map((p) => p.nome);
   /* A folga é o que sobra ao perseguidor mais bem colocado; sem ninguém a
      perseguir, é infinita. Serve para desempatar dois modos que escapam. */
-  const folga = perseguidores.length
-    ? Math.min(...perseguidores.map((p) => redondo(p.distFinal - p.alcance)))
+  const quemPersegue = perseguidores.filter((p) => !p.deixaIr);
+  const folga = quemPersegue.length
+    ? Math.min(...quemPersegue.map((p) => redondo(p.distFinal - p.alcance)))
     : Infinity;
   const parado = passoH <= 0;
   const escapa = !parado && quemAlcanca.length === 0;
