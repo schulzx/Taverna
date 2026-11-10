@@ -232,7 +232,10 @@ function RotuloDaRegua({ texto, grau, coluna, parado, canto = false }) {
   const anda = `${parado ? 0 : MS_DA_REGUA}ms linear`;
   return (
     <div style={{ flex: 1, minWidth: 0, minHeight: 0, position: "relative", display: "flex", alignItems: canto ? "flex-start" : "center", justifyContent: canto ? "flex-start" : "center",
-      padding: canto ? CANTO_DA_REGUA.recuo : 0, paddingTop: canto && !coluna ? CANTO_DA_REGUA.recuo + CANTO_DA_REGUA.linhaDaLetra : undefined,
+      /* o recuo por lado, e nunca o atalho padding ao lado de paddingTop: o React
+         avisava a cada render que os dois se pisam (11 mil avisos numa sessao) */
+      paddingRight: canto ? CANTO_DA_REGUA.recuo : 0, paddingBottom: canto ? CANTO_DA_REGUA.recuo : 0, paddingLeft: canto ? CANTO_DA_REGUA.recuo : 0,
+      paddingTop: canto ? (!coluna ? CANTO_DA_REGUA.recuo + CANTO_DA_REGUA.linhaDaLetra : CANTO_DA_REGUA.recuo) : 0,
       opacity: canto ? CANTO_DA_REGUA.alfa : 1 }}>
       {texto ? (
         <span className="tv-mono" style={{ fontSize: CORPO_DA_REGUA, fontWeight: 700, lineHeight: 1, color: d.cor, transition: `color ${anda}` }}>{texto}</span>
@@ -2143,7 +2146,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                 return (
                   <rect key={k} x={x} y={y} width="1" height="1" fill="transparent"
                     ref={(el) => { const m = casasRef.current; const ck = chaveDoFoco(x, y); if (el) m.set(ck, el); else m.delete(ck); }}
-                    role="gridcell" aria-label={nomeDaCasa} tabIndex={ehAParagem ? 0 : -1}
+                    role="gridcell" aria-label={nomeDaCasa} tabIndex={ehAParagem ? 0 : -1} data-inimigo={inimigoAqui ? "" : undefined}
                     onClick={agir}
                     onKeyDown={(ev) => {
                       if (ev.key === "Enter" || ev.key === " ") {

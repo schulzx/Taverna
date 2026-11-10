@@ -330,7 +330,10 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
      tem ouvinte nenhum, e transformar as 84 em botões de cancelar seria
      dar significado a 84 alvos para uma ação que já tem dois */
   t("saída 3 — tocar o campo desarma, e andar desarma por consequência",
-    /onPointerDown=\{\(\) => setArmado\(""\)\}/.test(TEL)
+    /* movida em 10/11 (CB lote 3): o toque no campo continua a desarmar, mas
+       o Empurrar sobre um inimigo é a exceção — o pointerdown corre antes do
+       clique e desarmava-o, e o clique ia atacar em vez de empurrar */
+    /onPointerDown=\{\(e\) => \{[\s\S]{0,400}?if \(empurrando && sobreInimigo\) return;\s*setArmado\(""\);/.test(TEL)
     && /const mover = \(destino\) => \{ setArmado\(""\);/.test(TEL));
 
   /* O VERBO IMPEDIDO CONTINUA NA ORDEM DE TABULAÇÃO. `disabled` tira-o

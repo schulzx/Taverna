@@ -2065,7 +2065,13 @@ export function TelaDeBatalha(props) {
           casa porque a casa fora do alcance não tem ouvinte nenhum. */}
       <div ref={janelaRef} className={`flex-1 min-h-0 min-w-0 overflow-auto tv-scroll${noTelefone ? " tv-sem-barra" : ""}`}
         style={janelaBaixa ? { flex: "0 0 auto", height: alturaDaJanelaNaBaixa } : { minHeight: ALVOS.piso * M.janelaMinima }}
-        onPointerDown={() => setArmado("")}
+        onPointerDown={(e) => {
+          /* o toque no campo desarma, MENOS o do Empurrar sobre um inimigo: o
+             pointerdown corre antes do clique e desarmava-o, e o clique ia atacar */
+          const sobreInimigo = !!(e && e.target && e.target.closest && e.target.closest("[data-inimigo]"));
+          if (empurrando && sobreInimigo) return;
+          setArmado("");
+        }}
         onPointerDownCapture={(e) => { if (!contando) { engolirCliqueRef.current = false; return; } e.stopPropagation(); engolirCliqueRef.current = true; saltarTurno(); }}
         onClickCapture={(e) => { if (engolirCliqueRef.current) { engolirCliqueRef.current = false; e.stopPropagation(); e.preventDefault(); } }}>
         {/* CB 9: quem importa e ficou fora da câmara, na borda da janela */}
