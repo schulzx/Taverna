@@ -17237,3 +17237,349 @@ o turno pára um instante, sem relógio de resposta: é o momento em que a mesa 
 de 04/11 levada ao instante de maior risco do jogador, e liga a caveira que ele leu no começo da rodada ao dado que a
 cumpre ou não. Custa até 600 ms por golpe letal, e conta para o teto de 4 s (o teto não muda). A variante tímida é
 rolar só quando o golpe te deixa a 0.
+
+### CB 18 · A altura, as superfícies e o cenário (`desenho`, 10/11/2026, para o lote 3: CB14, CB15 e CB16)
+
+**Os quadros** (página `341:2`, fila **G**, y 9780): **`374:2105`** G1, o campo a casa 48 (≥ 1280), com dois
+tabuleiros lado a lado: *Empurrar* (o veredito do empurrão do alto para o fogo) e *Mover* (o caminho que atravessa
+veneno, e o barril apontado) · **`374:2610`** G2, o mesmo a 375 com casa 40 e a folha do empurrão · **`376:2623`** G3,
+a reação quadro a quadro (a primeira, a décima e o movimento reduzido). **O par comparável** é F1 (`365:1438`), o
+tabuleiro do lote 2 na mesma página: chão plano, o estorvo genérico e nenhuma consequência à vista.
+
+**As peças novas** (x 4100, y 9840, todas com as variáveis de `T · Mesa C (vela)`): `Superficie no chao`
+**`373:2203`** (Tipo = óleo · água · gelo · fogo · veneno · elétrica; Estado = viva · ultima) · `Degrau`
+**`373:2216`** (Nivel = 1 · 2) · `Objeto do cenario` **`373:2259`** (barril · candeeiro · feno · caixote) · `Rotulo
+do empurrao` **`373:2274`** (livre · queda · fogo · colide) · `Letreiro da reacao` **`373:2280`** (primeira ·
+repetida). Usa também `Casa marcada` (`342:289`) e `Previsao do golpe` (`342:100`).
+
+*Nota do Figma, para quem for ler os nós:* ligar uma variável a uma pintura repõe a opacidade dessa pintura a 1. Por
+isso, no arquivo, o alfa do chão, do lume e do padrão está na **opacidade da camada**. No código é `fillOpacity` ou
+`opacity`, lido da tabela de §CB 18.6. O número é o mesmo.
+
+Copiou-se a mecânica e a convenção, nunca a arte, o nome ou o texto: a seta do empurrão com a casa final e o dano, de
+Into the Breach; o chão que reage e se lê pelo padrão, de Divinity: Original Sin 2; o +2/−2 da altura escrito na
+previsão, de Baldur's Gate 3.
+
+#### CB 18.1 · O degrau (CB14)
+
+**Três sinais redundantes, e nenhum deles é só cor** (G1, `Degrau`):
+
+| sinal | degrau 1 | degrau 2 | a 49 (1905) | a 40 (telefone) | contraste |
+|---|---|---|---|---|---|
+| **o lume**: `ink` por cima do chão | 6 % | 10 % | — | — | 1,17 · 1,31 (decoração) |
+| **a face**: `pagina`, na borda de baixo da casa | 0,12 da casa | 0,22 da casa | 6 · 11 px | 5 · 9 px | 1,16 (decoração) |
+| **a aresta**: `inkMeio` 1,5, em cima e à esquerda | sim | sim | — | — | **6,98** sobre o alto |
+| **a cota**: chevrons `inkMeio`, traço 2, no canto de cima à esquerda | um | dois | 10 px | 8 px | **9,13** sobre `bg` |
+
+- **A informação vai na cota e na aresta**, que passam 3:1 com folga (WCAG 2.2, 1.4.11). O lume e a face dão o
+  volume. A luz vem de cima e da esquerda, como na parede de B1, e por isso a face fica em baixo.
+- **A face e a aresta seguem o patamar, não a casa.** Desenham-se só nos lados que dão para uma casa mais baixa, pelo
+  mesmo `contorno()` que já desenha a parede. Um patamar de 2×2 lê-se como um bloco, e não como quatro azulejos. A cota
+  repete-se em cada casa, porque é ela que se lê debaixo do dedo.
+- **A ficha num degrau sobe metade da face** (`ALTURA_NA_MESA.fichaSobe`), para assentar no tampo e não na face.
+- **O campo da casa** (o `<title>` e o toque longo) ganha «no alto (degrau 2)», ao lado de «cobertura +2», no mesmo
+  sítio da frase. Não nasce outra caixa.
+- O véu do alcance (v9.125) continua por cima de tudo. Se o alto vir mais longe (a linha de visão de CB14), é o véu que
+  o mostra. A forma não muda.
+
+#### CB 18.2 · As seis superfícies (CB15)
+
+**Cada superfície tem uma forma, um glifo e uma cor, e a forma basta sozinha.** As formas vêm de famílias
+geométricas diferentes, e com a lama de hoje (a hachura diagonal de `tv-lama`) são sete, sem nenhuma repetida. É o que
+o WCAG 2.2, 1.4.1 (Use of Color), pede, e é o que um daltónico lê.
+
+| tipo | o chão (cor de `T`, alfa) | o padrão (a forma) | o traço | o glifo | contorno / `bg` | traço / chão | glifo / selo |
+|---|---|---|---|---|---|---|---|
+| `oleo` | `pagina` 0,60 | **manchas**: três arcos curtos de brilho | `inkMeio` 0,8 | `oleo` (a poça) | 9,13 | 6,87 | 10,58 |
+| `agua` | `mundo` 0,18 | **ondas**: três linhas onduladas na horizontal | `mundo` 0,8 | `ondas` | 7,61 | 4,01 | 8,81 |
+| `gelo` | `mundoSoft` 0,22 | **flocos**: quatro estrelas de seis braços | `mundoSoft` 0,8 | `floco` | 11,00 | 4,66 | 12,74 |
+| `fogo` | `danger` 0,22 | **línguas**: três arcos agudos para cima | `danger` 1,0 | `chama` (já existe) | 5,11 | 3,83 | 5,91 |
+| `veneno` | `ok` 0,18 | **bolhas**: cinco anéis de tamanhos diferentes | `ok` 0,8 | `bolhas` | 8,57 | 4,34 | 9,93 |
+| `eletrica` | `mundo` 0,18 | **as ondas da água e um zigue-zague** por cima | `violetSoft` 1,0, traço 2 | `raio` | 9,90 | 5,03 | 11,47 |
+
+- **O traço do fogo vai a 1,0** porque a 0,8 dava 2,99 e chumbava os 3:1. **O óleo não é uma gota:** a gota já é o
+  glifo `agua` da ração (`glifos.js`), e a mesma forma com dois sentidos é defeito. O óleo é uma poça.
+- **Nada no chão é amber.** O amber é a mão do jogador, no caminho, no destino e na seta do empurrão, e tem de se
+  ler por cima de qualquer chão (amber / chão da água 5,34; do gelo 4,35; do fogo 5,76). A única brasa no chão é a
+  chama do candeeiro, de 5×7 e dentro da peça.
+- **O veneno é `ok`, e fica escrito porquê.** `ok` é também a cura. Ficou porque o veneno verde é a convenção do
+  género (DOS2, BG3) e porque os dois nunca se cruzam: a cura é um número que salta sobre a ficha, o veneno é chão e não
+  leva número. O `jogo` revê isto jogando. Se confundir, a troca é uma linha da tabela (o `violet` é a alternativa,
+  com 6,15).
+- **Debaixo da ficha.** A ficha tapa o círculo do meio (0,76 da casa). O padrão cobre a casa inteira, e os quatro
+  cantos que ficam à vista são **55 % da casa** (1 − π·0,38²). Chega para ler a forma.
+- **O contorno desenha a mancha, não a casa.** Uma mancha é o conjunto de casas vizinhas (em cruz) com o mesmo tipo e as
+  mesmas rodadas. O contorno (o traço, 1,5) passa só na borda dela, pelo mesmo `contorno()` do degrau.
+- **O selo diz o tipo e a duração, uma vez por mancha** (`Selo da superficie`: `pagina` a 0,92, aro da cor do traço,
+  raio 8, alto 18, o glifo 12 e as rodadas que faltam em mono 12 bold `ink`, com 15,34). Mora no canto de baixo à
+  esquerda da casa mais abaixo e mais à esquerda da mancha que não tenha ficha (se todas tiverem, fica na de baixo à
+  esquerda). Desenha-se **por cima das fichas**, porque é pequeno e está no canto. Sem número quando a superfície não
+  acaba (`rodadas` nulo).
+- **A última rodada lê-se pela forma, não por esmaecer.** O contorno passa a tracejado 4/3 e o aro do selo a 3/2
+  (`Estado=ultima`). Esmaecer o padrão a metade dava 2,00 e chumbava.
+- **Um chão que nasce** entra em 200 ms (`tv-chao-nasce`, opacidade). Fora de uma reação não há onda. Com movimento
+  reduzido entra num corte.
+- **O campo da casa** diz «óleo, mais 2 rodadas» e, quando a tabela de reações o sabe, a consequência: «o fogo aqui
+  explode». A frase vem de `FRASE_DO_CHAO` (tabela de tela) e nunca diz «superfície» nem «reação».
+
+**A ordem das camadas na grade:** o chão → o lume e a face do degrau → a lama e a cobertura → as superfícies (o chão e
+o padrão) → a malha → a aresta e a cota do degrau → os objetos → as casas marcadas (a área, o caminho) → as fichas → os
+selos da superfície → as pílulas (a previsão, a intenção, o dado).
+
+#### CB 18.3 · Os objetos como peças (CB16)
+
+`Objeto do cenario`, desenhado na grelha de 48 e escalado à casa, como o estorvo de B1. **Quando a casa tem um
+objeto em `grade.objetos`, a peça toma o lugar do estorvo genérico.** O estorvo sem objeto continua igual, mas as três
+cores literais dele (`#2B2540`, `#73628C`, `#5D527C`) passam a `panelSoft`, `lineStrong` e `pagina`. É uma dívida de
+literais paga de passagem.
+
+**A peça diz o que faz antes de ser usada.** São selos de 16 px no canto de cima à direita (até dois, 2 px entre
+eles, a subir 4 px por cima da peça): disco `pagina`, aro 1,5 e o glifo 10 na cor do aro. **Os selos saem das
+etiquetas do motor, não do tipo do objeto**, de modo que um objeto novo na tabela do motor aparece certo sem tocar na
+tela:
+
+| etiqueta (`OBJETOS_DO_CENARIO`) | o selo | contraste |
+|---|---|---|
+| `explode` | `explode` (a explosão de oito pontas) `danger` | 5,91 sobre `pagina` |
+| `arde` | `chama` `danger` | 5,91 |
+| `derrama` | `oleo` `inkMeio` | 10,58 |
+| `tapaVista` | `semVista` (o `olho` riscado) `inkMeio` | 10,58 |
+| `cobre` | `escudo` (já existe) `mundo` | 8,81 (o mesmo azul da «cobertura» de §CB 10) |
+
+O barril leva também **o óleo que escorre pela tampa** (a poça `inkMeio`). É o desenho que avisa antes do selo.
+
+**Apontar um objeto mostra o que ele faria** (G1, *Mover*). Com o rato por cima, ou com um ataque de fogo armado cuja
+área o apanha, as casas que ele atingiria pintam-se como a área do sopro (`Casa marcada · area`, `danger` a 22 % e o aro
+tracejado 4/3) e um rótulo diz «barril de óleo · explode: −9 em 9 casas, deixa fogo». No telefone, o primeiro toque
+prevê e o segundo confirma (§CB 3), como em tudo.
+
+#### CB 18.4 · O veredito antes do clique
+
+**a) O empurrão** (G1 *Empurrar*, G2). Com Empurrar armado e o rato (ou o primeiro toque) num inimigo:
+
+- **A seta**: traço 3 `amber` (`CAMINHO_NO_CHAO.traco`), da borda da ficha à borda do fantasma, com a ponta de 7 px e
+  uma marca em cada casa atravessada. **O fantasma**: o anel tracejado 4/3 `inkMeio` a 60 % na casa onde ele pára
+  (`previsaoDoEmpurrao.para`; 4,18 contra `bg`).
+- **Os rótulos** (`Rotulo do empurrao`, mono 13 sobre `pagina`, raio 12) empilham-se ao lado da casa final, por esta
+  ordem: **a colisão → a queda → a superfície**. Aro `danger` quando há preço; aro `amber` e «2 casas» quando não
+  acontece nada.
+  - a queda: glifo `degrau` e «cai 1 · −3»;
+  - a superfície: o glifo do tipo e a frase de `FRASE_DO_EMPURRAO` («no fogo · −4 por rodada», «na água
+    eletrificada · −5», «no gelo · Destreza 12 ou cai»);
+  - a colisão: a seta pára na casa antes do obstáculo, a explosão `danger` marca o impacto, e o rótulo diz «bate no
+    caixote · −3».
+  - **Se a soma derruba**, o primeiro rótulo começa pela caveira (`perigo`), como o abate da previsão.
+- **A pílula da previsão** debaixo do alvo diz «Empurrar 64%» e o modificador da altura (b). No telefone, o primeiro
+  toque abre **a folha do empurrão** (G2: CHANCE, QUEDA e E ARDE em Cormorant 30, a linha do alto, os rótulos e
+  «Empurrar · 64%» com «Cancelar»). A 1905 a coluna Tu repete tudo por extenso em «O teu golpe».
+
+**b) «+2 do alto»** na previsão do golpe e do empurrão. Na pílula, a seguir à percentagem: os chevrons `degrau` 12 em
+`ok` e «+2» em mono 13 (9,93 sobre `pagina`). De baixo: os chevrons **virados para baixo** em `danger` e «−2» (5,91). A
+direção do chevron diz o sinal sem a cor. Por extenso, em «O teu golpe», ganha uma linha «do alto +2» ou «de baixo
+−2», ao lado de «sem cobertura» (8,98 sobre `panel`).
+
+**c) O caminho que atravessa perigo** (G1 *Mover*). O troço da linha do caminho que passa por fogo, veneno, água
+eletrificada ou gelo muda para `danger` tracejado 6/4 (3,83 sobre o chão do fogo; 3,47 sobre o do veneno). Os pontos
+de cada casa ficam `amber`. **O rótulo do destino** acrescenta o preço: «6 casas · [bolhas] atravessa veneno · −3».
+O óleo não fere e não avisa no caminho, mas o campo da casa diz-lho. Andar-e-atacar (§CB 3) leva o mesmo aviso no
+mesmo rótulo.
+
+#### CB 18.5 · O momento da reação (para o `jogo` rever jogando)
+
+**A regra de sempre:** o estado já está aplicado no 0, nada prende a entrada, e qualquer toque leva ao fim.
+
+| | a primeira daquele tipo na luta (`evento.primeira`) | as outras | movimento reduzido |
+|---|---|---|---|
+| **pausa** (tudo parado, o *hitstop* de §CB 5) | 120 ms | 0 | 0 |
+| **clarão** sobre as casas (`ink`, decoração, 2,80) | 35 %, linear, dentro da pausa | não há | não há |
+| **a onda**: as casas mudam anel a anel a partir da origem | 120 ms por anel, 2 anéis (o resto muda com o 2.º) | 80 ms por anel | **corte seco**: o chão já é o novo |
+| *easing* da onda | `cubic-bezier(0.2, 0.8, 0.2, 1)` (sai depressa e assenta) | o mesmo | — |
+| **o que se mexe, somado** | **360 ms** (≤ `GOLPE_SENTIDO.teto`, 400) | **160 ms** | 0 |
+| **os números** | no fim da onda, pelo `GOLPE_SENTIDO` de cada atingido | idem | parados, sem escala |
+| **o letreiro** | `Letreiro da reacao · primeira` por cima da área (Cormorant 22 `ink` sobre `perigoFundo`, 12,82; e a linha mono 12), com a regra de pousar do dado (§CB 17.1): por cima se não couber por baixo. 900 ms de leitura e 200 a esvair (`GOLPE_SENTIDO.leitura`/`esvai`) | **só a linha, no Pé do campo** (`Letreiro · repetida`). Não pousa no tabuleiro | o mesmo da coluna ao lado, sem transição (é informação) |
+| **o som** | `reacao` (pedido) | o mesmo, mais baixo | fica |
+
+- **Porquê a primeira e não as outras:** na primeira explosão o jogador está a aprender que o chão reage, e a pausa
+  ensina-o. À décima já sabe, e a pausa passava a pedágio (o plano do `jogo`, §3.8). `primeira` vem do motor, por
+  tipo de reação e por luta.
+- **No turno deles** a reação conta para `TURNO_DELES.teto` (4 s) e usa sempre os tempos das «outras». Com 2× corta a
+  metade, como tudo.
+- **A frase** vem de `FRASE_DA_REACAO` (tabela de tela, por `tipo`) e diz o que o mundo fez, nunca o mecanismo:
+  `explode` «O barril explode» ou «O óleo explode» · `eletrifica` «A água eletrifica-se» · `congela` «A água gela» ·
+  `derrete` «O gelo derrete» · `apaga` «A água apaga o fogo». A segunda linha: «4 casas ardem · −9 ao Goblin».
+- **Para o `jogo` decidir jogando:** se os 120 ms da primeira chegam ou pedem 160, e se as outras deviam calar também
+  o número em quem não perdeu PV.
+
+#### CB 18.6 · As tabelas (para `src/estilo.js`; leem `T` e as de §CB 11 e §CB 17.3, e não copiam número delas)
+
+```js
+export const ALTURA_NA_MESA = {            // §CB 18.1 — frações da casa
+  lume: { 1: 0.06, 2: 0.10 }, face: { 1: 0.12, 2: 0.22 }, fichaSobe: 0.5,   // metade da face
+  aresta: 1.5, cota: { lado: 0.21, traco: 2, folga: 0.08 },
+  cor: { lume: T.ink, face: T.pagina, aresta: T.inkMeio, cota: T.inkMeio },
+  glifo: "degrau",
+  previsao: { glifo: 12, letra: 13, alto: T.ok, baixo: T.danger },          // «+2 do alto» · «−2 de baixo»
+};
+export const SUPERFICIES_NO_CHAO = {       // §CB 18.2 — as chaves de tipos são SUPERFICIES (superficies.js; a suíte confere)
+  tipos: {
+    oleo:     { chao: T.pagina,    alfa: 0.60, traco: T.inkMeio,    alfaDoTraco: 0.8, padrao: "manchas", glifo: "oleo" },
+    agua:     { chao: T.mundo,     alfa: 0.18, traco: T.mundo,      alfaDoTraco: 0.8, padrao: "ondas",   glifo: "ondas" },
+    gelo:     { chao: T.mundoSoft, alfa: 0.22, traco: T.mundoSoft,  alfaDoTraco: 0.8, padrao: "flocos",  glifo: "floco" },
+    fogo:     { chao: T.danger,    alfa: 0.22, traco: T.danger,     alfaDoTraco: 1,   padrao: "linguas", glifo: "chama" },
+    veneno:   { chao: T.ok,        alfa: 0.18, traco: T.ok,         alfaDoTraco: 0.8, padrao: "bolhas",  glifo: "bolhas" },
+    eletrica: { chao: T.mundo,     alfa: 0.18, traco: T.violetSoft, alfaDoTraco: 1,   padrao: "raio",    glifo: "raio", sobre: "ondas" },
+  },
+  traco: 1.5 / 48, tracoDoRaio: 2 / 48,    // frações da casa
+  contorno: 1.5, ultima: { contorno: [4, 3], selo: [3, 2] },
+  selo: { alto: 18, raio: 8, glifo: 12, entre: 3, enchimento: [4, 5], margem: 2, fundo: 0.92 },
+  nasce: 200,
+};
+export const PADROES_DO_CHAO = {           // §CB 18.2 — geometria em frações da casa (os nós de `373:2203`)
+  manchas: { arcos: [[0.17, 0.29, 0.42, 0.27], [0.54, 0.67, 0.79, 0.65], [0.21, 0.75, 0.35, 0.73]], curva: 0.1 },
+  ondas: { linhas: [0.25, 0.5, 0.75], periodo: 0.5, amplitude: 0.083, margem: 0.083 },
+  flocos: { centros: [[0.25, 0.25], [0.71, 0.375], [0.375, 0.67], [0.79, 0.79]], raio: 0.083 },
+  linguas: { base: 0.92, meiaLargura: 0.104, chamas: [[0.21, 0.29], [0.46, 0.42], [0.71, 0.33]] },   // [x, altura]
+  bolhas: { aneis: [[0.25, 0.29, 0.083], [0.625, 0.21, 0.052], [0.75, 0.625, 0.094], [0.33, 0.71, 0.0625], [0.54, 0.5, 0.042]] },
+  raio: { pontos: [[0.625, 0.083], [0.42, 0.42], [0.58, 0.46], [0.33, 0.92]] },
+};
+export const OBJETOS_NA_MESA = {           // §CB 18.3 — grelha de 48; as etiquetas são as de OBJETOS_DO_CENARIO
+  grelha: 48, sombra: 0.55,
+  cor: { corpo: T.panelSoft, aro: T.lineStrong, tampa: T.pagina, feno: T.inkDim, chama: T.amber },
+  selo: { lado: 16, glifo: 10, aro: 1.5, sobe: 4, entre: 2, maximo: 2 },
+  etiquetas: {
+    explode: { glifo: "explode", cor: T.danger }, arde: { glifo: "chama", cor: T.danger },
+    derrama: { glifo: "oleo", cor: T.inkMeio }, tapaVista: { glifo: "semVista", cor: T.inkMeio },
+    cobre: { glifo: "escudo", cor: T.mundo },
+  },
+};
+export const EMPURRAO_NA_MESA = {          // §CB 18.4
+  seta: { traco: CAMINHO_NO_CHAO.traco, ponta: 7, marca: 6 },
+  fantasma: { lado: 0.76, traco: 2, tracejado: [4, 3], alfa: 0.6 },
+  rotulo: { raio: 12, enchimento: { x: 10, y: 4 }, entre: 4, letra: 13, glifo: 12, aro: 1.5 },
+  ordem: ["colide", "queda", "superficie"],
+  impacto: "explode",
+};
+// e, em CAMINHO_NO_CHAO (§CB 3), acrescenta-se: perigo: { tracejado: [6, 4] }
+export const REACAO_NA_MESA = {            // §CB 18.5 — ms; a suíte prova pausa + porAnel × aneis ≤ teto
+  teto: GOLPE_SENTIDO.teto,
+  primeira: { pausa: 120, clarao: 0.35, porAnel: 120, aneis: 2 },
+  outras:   { pausa: 0,   clarao: 0,    porAnel: 80,  aneis: 2 },
+  easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+  leitura: GOLPE_SENTIDO.leitura, esvai: GOLPE_SENTIDO.esvai,
+  letreiro: { raio: 10, aro: 2, aroOutras: 1.5, titulo: 22, linha: 12, enchimento: { x: 14, y: 6 } },
+};
+```
+
+As classes novas, todas desligadas no bloco de movimento reduzido: `tv-chao-nasce`, `tv-reacao-clarao` e
+`tv-reacao-onda` (o atraso de cada anel vai por variável CSS, `--anel`). **Nenhuma cor nova:** tudo sai de `T`. Lembrete
+da casa: dentro de `SUPERFICIES_CSS` (que é a folha de estilo e não tem nada a ver com estas superfícies, apesar do
+nome) não vai crase em comentário nenhum.
+
+**Os glifos novos** (`glifos.js`, pelos traços dos nós `Glifo/*` das peças): `degrau`, `oleo`, `ondas`, `floco`,
+`bolhas`, `raio`, `explode` e `semVista`. Reusam-se `chama`, `escudo`, `perigo` e `olho` (a base do `semVista`). Uma
+ação, uma forma.
+
+#### CB 18.7 · A ordem de construção
+
+**O `aprendiz`, fora do `App.jsx`:**
+
+1. `src/estilo.js`: as tabelas de §CB 18.6 e as três classes. `src/glifos.js`: os oito glifos.
+2. `src/batalha-na-tela.js` (o módulo puro da tela): `manchasDoChao(superficies)` → `[{ tipo, rodadas, casas,
+   ancora, contorno }]` e `patamares(alturas)` → as arestas e as faces por lado. As duas provam-se em Node.
+3. `src/grade-de-batalha.jsx`, com as props novas **`alturas`**, **`superficies`**, **`objetos`**, **`empurrao`**
+   (`{ de, previsao }`) e **`reacoes`** (a lista de eventos):
+   - o degrau (lume, face, aresta, cota) e a ficha que sobe; os padrões como `<pattern>` lidos de `PADROES_DO_CHAO`; as
+     manchas com o contorno e o selo; a ordem das camadas de §CB 18.2;
+   - os objetos no lugar do estorvo (e o estorvo sem as três cores literais); a área do objeto apontado;
+   - a seta do empurrão, o fantasma e os rótulos; os chevrons na `PrevisaoDoGolpe`; o troço `perigo` do caminho e o
+     rótulo do destino;
+   - a reação: a pausa, o clarão, a onda por anéis, os números e o letreiro, com a entrada que nunca espera;
+   - o campo da casa com «no alto (degrau N)», a superfície e o objeto, por `FRASE_DO_CHAO`.
+4. `src/painel-batalha.jsx`: «O teu golpe» com «do alto +2» e «de baixo −2»; a folha do empurrão no telefone (G2) e o
+   empurrão por extenso a 1905; a linha da reação no Pé do campo; as tabelas de frase `FRASE_DO_EMPURRAO` e
+   `FRASE_DA_REACAO`.
+5. Os varredores. `check-tela-de-batalha.mjs` cresce: todo o tipo de `SUPERFICIES` tem entrada em
+   `SUPERFICIES_NO_CHAO.tipos`, **nenhum `padrao` se repete** e todo o glifo existe em `glifos.js`; toda a etiqueta de
+   `OBJETOS_DO_CENARIO` tem selo; a soma de `REACAO_NA_MESA` ≤ `teto`; as três classes estão no bloco reduzido; e nenhuma
+   cor literal nova entra na grade (as três do estorvo saem; as doze que ficam, da parede ao véu, são dívida declarada,
+   e a catraca conta-as para não subirem).
+
+**O `oficial`, no `App.jsx`, com o bastão:**
+
+6. `grade.alturas`, `combate.superficies` e `grade.objetos` para a grade, num snapshot em `calou(...)`.
+7. Com Empurrar armado: `previsaoDoEmpurrao` para o alvo sob o rato ou o toque, para a prop `empurrao`. O segundo
+   toque confirma.
+8. Os eventos de reação da resolução (do herói e da rajada) para `reacoes`, e o som.
+9. Os perigos do caminho para `caminho` (depende do pedido 3 de §CB 18.8).
+
+**A ordem, por retorno:** 1, 2, 3 (o degrau e as superfícies) e 6 → o empurrão (3, 4 e 7) → a reação (8) → os
+objetos → o caminho perigoso (9).
+
+**O peso:** médio. Nascem peças e a grade mostra o que o motor novo já decide. Nada sai ao jogador, e a ordem do que
+ele faz não muda: Empurrar já existia e já se armava. Reverte-se num commit.
+
+#### CB 18.8 · O que a tela pede ao sistema (o que o contrato ainda não dá)
+
+1. **`previsaoDoAtaque` com o modificador da altura à parte** (`alto: +2 | −2 | 0`). Sem ele, a pílula só pode dizer
+   o total, e «+2 do alto» não tem de onde sair.
+2. **`previsaoDoEmpurrao` com mais quatro campos:** `chance` (quando o empurrão é disputado); o dano partido em
+   `danoDaQueda`, `danoDaColisao` e `danoDaSuperficie` (por rodada), em vez de um `dano` só, porque os rótulos dizem
+   cada um o seu; `colideCom: { tipo, nome }` (parede, objeto ou criatura); e o efeito da superfície (`arde`,
+   `atordoa`, `escorrega` com o teste). Se for mais simples, uma lista `consequencias: [{ tipo, dano, efeito }]` já
+   na ordem da tela.
+3. **Os perigos do caminho:** `caminhoComProvocacoes` passa a dar `perigos: [{ x, y, tipo, dano, teste }]`.
+4. **`OBJETOS_DO_CENARIO` com `etiquetas`** (`explode`, `arde`, `derrama`, `tapaVista`, `cobre`), a área e o dano; o
+   que acontece ao objeto depois de usado (sai de `grade.objetos`, ou fica `usado`); e um
+   `previsaoDoObjeto(objeto, ctx)` → `{ casas, dano, deixa }` para o objeto apontado.
+5. **O evento de reação com `origem: { x, y }`** (onde a onda começa), `alvos: [{ nome, dano }]` (para «−9 ao Goblin»;
+   o `dano` de hoje é um só) e `objeto` quando foi um objeto que reagiu («O barril explode» ou «O óleo explode»).
+6. **`rodadas: null` para a superfície que não acaba.** Confirmar que é assim que vem.
+7. **O som** (`som-da-mesa.js`): o momento `reacao`, por tipo.
+8. **A linha de visão do alto** (CB14): se o alto vê mais longe, a grade precisa de a receber como recebe o alcance
+   hoje (o véu). Diz-me o nome do campo e eu não desenho mais nada.
+
+#### CB 18.9 · O «superior», escrito
+
+**Medida:**
+
+| | antes (F1, `365:1438`) | depois |
+|---|---|---|
+| o que se lê da altura | não existe | três sinais redundantes; os dois que levam informação a **9,13** e **6,98** |
+| superfícies que um daltónico distingue | — | **6 de 6** pela forma (7 com a lama); glifo ≥ **5,91**, traço ≥ **3,83**, contorno ≥ **5,11** |
+| a casa debaixo da ficha | — | **55 %** à vista, e o padrão lê-se nos cantos |
+| o que se sabe antes de empurrar | «empurra 2 casas» | a casa final, a queda, a superfície e a colisão, com o dano de cada uma; **0 cliques a mais** (o primeiro toque já previa) |
+| o caminho que fere | não se via | o troço `danger` e o preço no rótulo do destino |
+| a reação | — | **≤ 360 ms** do que se mexe, **0 ms** de entrada presa; a décima em 160 |
+| cores literais em `grade-de-batalha.jsx` | 15 | **12**: saem as três do estorvo; as outras ficam como dívida declarada |
+
+**Estudo citado:**
+
+- *O empurrão com a casa final e o dano antes do clique*: Into the Breach (Subset Games, 2018). Cada ação de empurrar
+  desenha a seta, a casa de chegada e o dano antes de confirmar, e o turno resolve-se como quebra-cabeças. É a lei da
+  casa, *o veredito antes do clique*, aplicada ao cenário.
+- *O chão que reage, lido pela textura*: Divinity: Original Sin 2 (Larian Studios, 2017), em que as superfícies e as
+  reações entre elas são o centro do combate.
+- *O +2/−2 da altura escrito na previsão*: Baldur's Gate 3 (Larian Studios, 2023), que mostra o modificador do alto ao
+  apontar.
+- *Forma e não só cor*: WCAG 2.2, 1.4.1 (Use of Color) e 1.4.11 (Non-text Contrast, 3:1); Okabe e Ito, *Color
+  Universal Design* (2008), que recomendam codificar com forma ou padrão o que a cor diz, para os leitores com
+  daltonismo. A seta para cima e para baixo do «±2» segue a mesma regra.
+- *A pausa no impacto e o movimento com saída*: o *hitstop* já citado em §CB 14 (Sakurai, 2022; Nijman, 2013), e o
+  WCAG 2.2, 2.3.3 e 2.2.2 para o corte seco e o toque que leva ao fim.
+
+**A experiência jogada** é do `jogo`, depois da construção. Ficam marcados para ele o veneno em `ok` (§CB 18.2) e a
+pausa da primeira reação (§CB 18.5).
+
+#### CB 18.10 · Para a pessoa decidir: a proposta ambiciosa, **segurar para ver o que o mundo faz**
+
+**O que mudaria:** com a tecla Alt segura (ou um toque longo de 400 ms num sítio vazio do campo, no telefone) a mesa
+mostra **tudo o que o cenário pode fazer, de uma vez**: os selos de todos os objetos e superfícies acesos, a área de
+cada objeto que explode, e **as cadeias desenhadas como setas entre elas**. Por exemplo: a tocha do Goblin → o óleo →
+o barril, com «3 casas → 9 casas · −9 a dois». Larga-se a tecla e a mesa volta ao normal. É o realce de objetos do
+BG3 levado às combinações do DOS2, e faz de cada luta com cenário um quebra-cabeças à Into the Breach, que se lê antes
+de se jogar. É a ordem de 04/11 por outro caminho: o jogador arrisca porque vê o que arrisca.
+
+**Porque espera a palavra dela:** acrescenta um gesto que o jogador tem de aprender (não lhe tira nada, mas é uma
+coisa nova a saber) e pede ao motor `cadeiasPossiveis(grade, combate)`, uma busca pequena sobre `REACOES_ELEMENTARES`.
+A forma já cabe nas peças desta secção: são os selos, a `Casa marcada · area` e a seta tracejada da intenção. **A
+variante tímida** é segurar Alt e ver só os selos, sem as cadeias.
