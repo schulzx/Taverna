@@ -138,9 +138,9 @@ ignorado pela versão antiga. Nenhum bloco estático no prompt: o encontro vai p
 - [ ] **CB11 · o caminho com o custo, e andar-e-atacar num toque** · B → A/O · −1 clique por turno com inimigo longe.
 - [ ] **CB12 · o turno deles, contado em passos** · O · acelerar, pular, o registo da rodada.
 - [ ] **CB13 · a régua do nível 1** · B · hoje todo bicho de nível 1 cai num golpe; cenário `nivel1` na `regua-combate.mjs`.
-- [ ] **CB14 · a altura** · B → D → A
-- [ ] **CB15 · as superfícies e as reações elementares** · B → D → A/O · decidido 09/11: entra, depois dos lotes 1 e 2 jogados (planta §7, 2).
-- [ ] **CB16 · o cenário que se usa** (a queda, os objetos, o empurrão previsto) · B → D → A
+- [x] (v9.635) **CB14 · a altura** · B → D → A
+- [x] (v9.635) **CB15 · as superfícies e as reações elementares** · B → D → A/O · decidido 09/11: entra, depois dos lotes 1 e 2 jogados (planta §7, 2).
+- [x] (v9.635) **CB16 · o cenário que se usa** (a queda, os objetos, o empurrão previsto) · B → D → A
 - [ ] **CB17 · o telefone a 375 e o PC a 1905** · D → A/O · hoje o telefone vê 35 de 196 casas.
 
 **A ordem:** CB1 → CB2 → CB3 → CB4 (o defeito dela primeiro) · CB5 → CB7 → CB8 · CB6 · depois o
