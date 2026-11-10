@@ -305,7 +305,15 @@ sec("§CB lote 2 · a soma dos golpes num vetor — a mesma conta, ao byte");
      1500 somas sorteadas (1 a 12 golpes, as cinco ameaças, o sopro dobrado,
      vida de 0 a 220, vantagem e desvantagem). */
   const RAIZ = new URL("..", import.meta.url);
-  const texto = execSync("git show 89a1649:src/previsao.js", { cwd: RAIZ, encoding: "utf8", maxBuffer: 1 << 26 }).split(String.fromCharCode(13)).join("")
+  /* 10/11: a prova limpa corre de um `git archive`, sem .git — ali o histórico
+     não existe, e esta prova de equivalência (contra o ficheiro de ANTES) salta
+     com aviso. Na árvore real corre sempre. Não é uma regra: é a prova de que
+     uma otimização não mudou a conta, e essa prova vive onde há histórico. */
+  let textoDoGit = null;
+  try { textoDoGit = execSync("git show 89a1649:src/previsao.js", { cwd: RAIZ, encoding: "utf8", maxBuffer: 1 << 26, stdio: ["ignore", "pipe", "ignore"] }); } catch { textoDoGit = null; }
+  if (textoDoGit == null) { console.log("  --  saltada: sem histórico do git (prova limpa); corre na árvore real"); }
+  else {
+  const texto = textoDoGit.split(String.fromCharCode(13)).join("")
     .replace(/from "\.\/([^"]+)"/g, (_, m) => `from "${new URL("../src/" + m, import.meta.url).href}"`);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taverna-previsao-"));
   const arq = path.join(dir, "previsao-antes.mjs");
@@ -322,6 +330,7 @@ sec("§CB lote 2 · a soma dos golpes num vetor — a mesma conta, ao byte");
   }
   fs.rmSync(dir, { recursive: true, force: true });
   t(`o vetor dá o mesmo do Map de antes em ${iguais} de ${n} somas`, iguais === n);
+  }
 }
 
 console.log(`\na previsão do golpe: ${bons} ok · ${maus} falhas`);
