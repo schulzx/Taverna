@@ -87,13 +87,13 @@ import { dadoDeVida, garantirDadosVida, dadosQueVoltam, dadosDisponiveis, gastar
 import { garantirRelogios, semearRelogios, avancar, avancarUm, aceitarProposta, removerRelogio, envelopeCheio, envelopeNovo, linhaDoAvanco, tipoDe, barraDe, MAX_RELOGIOS, RELOGIOS_PROMPT } from "./relogios.js";
 import { menteDaCriatura, intencaoPorId, ADVERSARIO_PROMPT } from "./adversario.js";
 import { avaliarEncontro, PESO_AMEACA, quantosPara, garantirDia, zerarDia, folgaDoDia, ORCAMENTO_DIA, ORCAMENTO_PROMPT } from "./orcamento.js";
-import { garantirGrade, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, nomeDoLugar, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar, passoAteAlcancar } from "./grid.js";
+import { garantirGrade, posicionarPerto, alcanca, caminhar, ocupacaoDe, adjacentes, moverInimigos, bonusDaAltura, nomeDoLugar, bonusDefesaEm, quadradosDaArea, pegosPelaArea, distanciaM, ehParede, m2q, linhaDeVisao, metrosTxt, METROS_POR_QUADRADO, PASSO_NA_RODADA, passoQueResta, podeDarUmPasso, passoAposAndar, passoAteAlcancar } from "./grid.js";
 /* v9.255 (Fase X, X2): a conta do alcance do golpe saiu daqui de dentro e
    virou tabela provável em Node. O App não decide mais quem dá para
    acertar — ele PERGUNTA, e pergunta duas vezes: uma quando o golpe sai,
    outra antes do clique, para a tela poder dizer o veredito sem gastar o
    turno de ninguém. */
-import { alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe, recusaDoGolpe, linhaDoGolpe, maisPertoAoAlcance } from "./golpe.js";
+import { alcanceDoGolpe, vereditoDoGolpe, fraseDoGolpe, recusaDoGolpe, linhaDoGolpe, maisPertoAoAlcance, vereditoDoEmpurrao, VERBOS_DE_COMBATE } from "./golpe.js";
 import { deslocamentoDe, passoEfetivo, passoComSelecao, passoDeHabilidade, deslocamentoDeCriatura, resumoDeslocamento, MOVIMENTO_PROMPT } from "./movimento.js";
 import { temCaderno, preparaveisDe, limitePreparadas, garantirPreparadas, estaPreparada, ehPreparavel, preparadasIniciais, alternarPreparada, podeLancar, ehRitual, motivoDoCaderno, MINUTOS_RITUAL, MAGIAS_PROMPT } from "./magias.js";
 import { MAX_SINTONIA, pedeSintonia, garantirSintonia, estaSintonizado, candidatos as itensDePoder, alternarSintonia, resumoSintoniaPrompt, SINTONIA_PROMPT } from "./sintonia.js";
@@ -284,6 +284,8 @@ import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
 import { PainelEspolio, PainelDespertar, FaixaDoFecho } from "./painel-espolio.jsx";
 import { formaDoEspolio, ganhoDoEspolio, barraDoGanho, entrarNaFila, proximaCerimonia, despertarNaTela, chipDoAchado } from "./espolio-na-tela.js";
 import { tocarDado } from "./som-da-mesa.js";
+/* CB15 (lote 3): o som da reação do chão — em linha própria, para a do Véu ficar como a TE11 a ancorou */
+import { tocarDaLuta } from "./som-da-mesa.js";
 import { SeloHeroismo, PainelHeroismo } from "./painel-heroismo.jsx";
 import { FaixaRelogios } from "./painel-relogios.jsx";
 import { PainelAscensao } from "./painel-ascensao.jsx";
@@ -378,7 +380,7 @@ import { REFS_DA_PAUTA, juntarNaPautaDeUmTurno } from "./motor/pauta-do-turno.js
 /* CB lote 2 (10/11): o turno deles contado em passos, o golpe da habilidade na
    mesa, a economia da vez e a linha do caminho */
 import { passosDoTurno, duracaoDosPassos, golpeDaHabilidade } from "./turno-contado.js";
-import { economiaDaVez, caminhoComProvocacoes } from "./vez-na-mesa.js";
+import { economiaDaVez, caminhoComProvocacoes, CUSTO_DOS_VERBOS, RECUSA_DO_VERBO } from "./vez-na-mesa.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO } from "./motor/pedido-do-turno.js";
 import { oPreludioDoTurno, REFS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
 import { osOrgaosDoDepois, REFS_DO_DEPOIS } from "./motor/depois-do-turno.js";
@@ -393,6 +395,13 @@ import { chegadaDaViagem, perigoDoTrecho } from "./partida.js";
 import { oEncontroNaEstrada, avistar, escolhasDoEncontro, resolverEscolha, pautaDoEncontro, ESCOLHAS_DO_ENCONTRO } from "./encontro-na-estrada.js";
 import { intencoesDaRodada, balancoDasIntencoes } from "./intencao.js";
 import { previsaoDoHeroi } from "./previsao.js";
+/* CB lote 3 (10/11): a altura, o chão que reage, o cenário que se usa e o
+   empurrão — o motor (superficies.js, disputa.js) e a costura provada em Node
+   (motor/o-chao-na-mesa.js); a frase da reação é a da peça (batalha-na-tela.js) */
+import { marcaDoAtaque, feridosDoEvento, passarRodada, casasQueSeEvitam, previsaoDoEmpurrao, empurraoNoCenario } from "./superficies.js";
+import { empurrar, TABELA_DA_DISPUTA } from "./disputa.js";
+import { chaoDaLuta, vistasDaLuta, combateDoSave, entidadesDaLuta, feridasNaLuta, feridasDoChao, linhaDoChao, alturasNaMesa, objetosNaMesa, reacoesNaMesa, previsaoDoEmpurraoNaMesa } from "./motor/o-chao-na-mesa.js";
+import { letreiroDaReacao } from "./batalha-na-tela.js";
 import { CartaoDoEncontro, SinalNaFolha, EntradaNaMesa } from "./painel-encontro.jsx";
 /* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
 import { equiparKitInicial } from "./kit-inicial.js";
@@ -9183,12 +9192,21 @@ export default function Taverna() {
   const aoFimDaEntrada = useCallback(() => { try { if (abrirAMesaDoEncontroRef.current) abrirAMesaDoEncontroRef.current(); } catch (e) { calou("o fim da entrada na mesa", e); } }, []);
   /* A PREVISÃO (CB5): o inimigo sob o rato ou o primeiro toque — estado de tela */
   const [alvoPrevisto, setAlvoPrevisto] = useState(null);
+  /* CB lote 3 (CB16): o inimigo sob o rato com Empurrar armado (o veredito
+     do empurrão antes do clique) — tela, nunca vai ao save */
+  const [alvoDoEmpurrao, setAlvoDoEmpurrao] = useState(null);
   /* O GOLPE SENTIDO (CB7): os eventos de UMA rajada (o golpe do herói e o
      revide que corre no mesmo clique), com chave única; limpa-se a cada rajada */
   const [golpesDaRajada, setGolpesDaRajada] = useState(null);
   const rajadaRef = useRef([]);
   const rajadaNRef = useRef(0);
   const rajadaAgendadaRef = useRef(false);
+  /* CB lote 3 (CB15): as reações do chão da MESMA rajada — soltas no mesmo
+     setState que os golpes, para a onda e o número chegarem juntos */
+  const [reacoesDaRajada, setReacoesDaRajada] = useState(null);
+  const reacoesRajadaRef = useRef([]);
+  const reacoesNRef = useRef(0);
+  const reacoesAgendadasRef = useRef(false);
   /* A RODADA N (CB 2): o registo da rodada que acabou — os golpes e o balanço das intenções */
   const [registoDaRodada, setRegistoDaRodada] = useState(null);
   const registoDaVezRef = useRef([]);
@@ -11894,7 +11912,9 @@ export default function Taverna() {
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
       setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
-      setCombate(sv.combate || null); combateRef.current = sv.combate || null;
+      /* CB lote 3: `combate.superficies` e `combate.reacoesVistas` são campos
+         novos e aditivos — o lixo e a ausência valem a planta (combateDoSave) */
+      { let cSv = sv.combate || null; try { cSv = combateDoSave(sv.combate); } catch (e) { calou("o chão da luta no load", e); } setCombate(cSv); combateRef.current = cSv; }
       /* CB3: o encontro pendente mora na jornada que ele pausou (`jornada.encontro`,
          campo novo e aditivo: a versão antiga ignora-o; save sem ele, nenhum) */
       try { const ep = sv.jornada && sv.jornada.encontro && typeof sv.jornada.encontro === "object" && sv.jornada.encontro.fase ? sv.jornada.encontro : null; encontroPendenteRef.current = ep; setEncontroPendente(ep); } catch (e) { calou("o encontro pendente no load", e); encontroPendenteRef.current = null; setEncontroPendente(null); }
@@ -12310,7 +12330,9 @@ export default function Taverna() {
       } catch (e) { calou("vereditoDoFurtivo", e); }
       const r = resolverAtaque({ rolar: sorteDoTurno("ataque"),
         atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-        bonusAtaque: bonusAtkBase - penal + degrau,
+        /* CB14 (lote 3): de cima acerta-se melhor — a MESMA leitura que a
+           previsão soma (bonusDaAltura), ou a pílula e o dado divergiam */
+        bonusAtaque: bonusAtkBase - penal + degrau + alturaDoGolpe(gradeDaLuta, meuLugar, alvo),
         /* v9.47: o golpe da FORMA soma aqui — garra de bicho e punho de
            avatar são o corpo batendo, não um buff mágico. */
         danoBase: danoDaClasse(pers.classe, nv, Math.round(danoDe(pers, false, sorteDoTurno("dano")) / 2), vf ? { furtivo: vf.soma } : null) + bArma.bonus + danoDeDadiva + danoDaForma(pers),
@@ -12539,6 +12561,17 @@ export default function Taverna() {
     }
     /* MM3: o envelope de UM turno — `pautaDoTurno` o lê na próxima montagem
        (a narração deste mesmo golpe, logo abaixo) e o limpa depois. */
+    /* CB15 (lote 3): O GOLPE COM ELEMENTO CHEGA AO CHÃO. O de alvo único não
+       deixa chão (MARCA_DO_ATAQUE) — só reage: a flecha de fogo no óleo
+       debaixo do goblin explode-o, a que pára no barril rebenta-o. Só o
+       golpe que acertou: o que errou não chegou lá. */
+    try {
+      const elemA = elementoDaArma(pers);
+      const casasA = resultados.filter((x) => x && x.r && x.r.dano > 0)
+        .map((x) => (combateRef.current && (combateRef.current.inimigos || []).find((e) => e && e.nome === x.alvo.nome)) || x.alvo)
+        .filter((a) => a && a.x != null).map((a) => ({ x: a.x, y: a.y }));
+      if (elemA && casasA.length) linhas.push(...oGolpeNoChao({ elemento: elemA, casas: casasA, area: false }));
+    } catch (e) { calou("o golpe de arma no chão", e); }
     golpeFinalEnvelopeRef.current = (acabouGolpeFinal.length || naoPodeGolpeFinal.length) ? { acabou: acabouGolpeFinal, naoPode: naoPodeGolpeFinal } : null;
     pushMsgs(linhas);
     alvosGolpeRef.current = []; setAlvosGolpe([]);
@@ -12834,7 +12867,8 @@ export default function Taverna() {
     const gdAlvoH = Math.max(0, Number(alvo.gd) || 0);
     const r = resolverAtaque({ rolar: sorteDoTurno("ataque"),
       atacante: pers.nome, alvo, ehAtacanteInimigo: false,
-      bonusAtaque: bonusAtk + bonusDivino(gdJH, gdAlvoH), danoBase: danoBase + danoExtraDeDadiva(pers),
+      /* CB14 (lote 3): a altura soma também na habilidade, pela mesma leitura */
+      bonusAtaque: bonusAtk + bonusDivino(gdJH, gdAlvoH) + alturaDoGolpe(gradeH, meuLugarH, alvo), danoBase: danoBase + danoExtraDeDadiva(pers),
       condAtacante: pers.condicoes || [], condAlvo: alvo.condicoes || [],
       /* v9.21: o tipo de dano sai da habilidade — elemento no nome, senão a
          escola da classe. Antes ia "magico", que não existe na tabela: toda
@@ -13034,6 +13068,22 @@ export default function Taverna() {
     } catch (e) { calou("o golpe da habilidade na mesa", e); }
     combateRef.current = { ...comb, inimigos: virarChefeSePreciso(comb.inimigos, locais), economia: comb.economia, log: combateRef.current.log };
     setCombate(combateRef.current);
+    /* CB15 (lote 3): O FEITIÇO COM ELEMENTO MARCA O CHÃO — a área deixa o
+       chão do elemento perto do ponto de impacto e reage com o que lá está
+       (a Bola de Fogo no óleo explode a mancha toda); o de alvo único só
+       reage. Depois do estado do golpe, e antes do fecho: o chão que mata
+       também conta para `fecharSeTodosCairam`. */
+    try {
+      if (r.dano > 0) {
+        const elemH = tipoDeDanoDaHabilidade(h, pers);
+        const emArea = !!(ehArea(h) || h.area) && !!gradeH;
+        const casasH = emArea
+          ? quadradosDaArea(geometriaDe(h), { grade: gradeH, origem: meuLugarH, alvo: miraAqui || alvo })
+          : (alvo.x != null ? [{ x: alvo.x, y: alvo.y }] : []);
+        const centroH = emArea ? { x: (miraAqui || alvo).x, y: (miraAqui || alvo).y } : null;
+        if (elemH && casasH.length) linhasSis.push(...oGolpeNoChao({ elemento: elemH, casas: casasH, centro: centroH, area: emArea }));
+      }
+    } catch (e) { calou("o feitiço no chão", e); }
     if (linhasSis.length) pushMsgs(linhasSis);
     /* a ficha que entrou aqui já é a mais nova (o PM saiu dela) e virou a ficha
        viva na primeira linha desta função; o que o fechamento creditar fica no
@@ -15154,6 +15204,23 @@ export default function Taverna() {
        o que mudou e QUANDO ele chega, nunca o que ele traz. */
     const combPos = combateRef.current;
     if (!combPos) return aoTerminar({ pers: persBase, resumo: "" });
+    /* CB15 (lote 3): QUEM COMEÇA A VEZ NO CHÃO QUE FERE — os inimigos e o
+       grupo, antes de andarem (o herói começa a dele na rodada nova, em
+       `finalizarRodada`). `combPos` é a autoridade desta função inteira, e é
+       nela que se escreve, como no resto do revide. */
+    /* as linhas saem com o cabeçalho da vez do mundo, na MESMA chamada (o
+       funil do combate conta as bocas do revide, e esta não é uma nova) */
+    let linhasDoChaoNaVez = [];
+    try {
+      const entT = entidadesDaLuta(combPos, persBase).filter((e) => e.nome !== persBase.nome);
+      const feT = feridasDoChao(chaoDaLuta(combPos), entT, "turno", sorteDoTurno("chao-turno"));
+      if (feT.length) {
+        const apT = feridasNaLuta(combPos, persBase, feT);
+        combPos.inimigos = apT.combate.inimigos;
+        persBase = apT.pers;
+        linhasDoChaoNaVez = feT.map(linhaDoChao).filter(Boolean).map((texto) => ({ autor: "sistema", texto }));
+      }
+    } catch (e) { calou("o chão no começo da vez deles", e); }
     const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
     if (!vivos.length) { const p = fecharSeTodosCairam(persBase); return aoTerminar({ pers: (p && p !== true) ? p : persBase, resumo: "" }); }
     /* CB 17.2 (lote 2): O RETRATO À ENTRADA DA VEZ DELES — quem estava onde,
@@ -15177,7 +15244,7 @@ export default function Taverna() {
        jogador age no turno dele e só reage; aqui agem os inimigos E o grupo
        dele. É a única fase do jogo em que o mundo se move sem ele, e ela tem
        cabeçalho para o jogador saber que a vez virou. */
-    pushMsgs([{ autor: "sistema", texto: `🌍 VEZ DO MUNDO — rodada ${combPos.rodada || 1}: os inimigos e o seu grupo agem.` }]);
+    pushMsgs([{ autor: "sistema", texto: `🌍 VEZ DO MUNDO — rodada ${combPos.rodada || 1}: os inimigos e o seu grupo agem.` }, ...linhasDoChaoNaVez]);
 
     /* ---- QUEM ESTÁ MUITO FERIDO TENTA SAIR (v9.14) ----
        E dar as costas custa: o herói leva um golpe livre — a reação que a
@@ -15232,7 +15299,8 @@ export default function Taverna() {
     const lugarHeroi = combPos.heroi || null;
     const lugaresAliados = combPos.aliados || [];
     if (gradeAtual && lugarHeroi) {
-      const mv0 = moverInimigos(gradeAtual, combPos.inimigos, lugarHeroi, [lugarHeroi, ...lugaresAliados]);
+      /* CB15 (lote 3): o passo deles evita o chão que fere (casasQueSeEvitam) */
+      const mv0 = moverInimigos(gradeAtual, combPos.inimigos, lugarHeroi, [lugarHeroi, ...lugaresAliados], opcoesDoPasso(combPos));
       /* CB6: quem vai soprar não se move — as casas que pintou são as do começo da rodada */
       let mv = mv0;
       try {
@@ -15242,7 +15310,20 @@ export default function Taverna() {
       if (mv.movimentos.length) {
         combPos.inimigos = mv.inimigos;
         combateRef.current = { ...combateRef.current, inimigos: mv.inimigos };
-        pushMsgs(mv.movimentos.map((m) => ({ autor: "sistema", texto: linhaDePasso(m) })));
+        /* CB15 (lote 3): quem entrou numa casa com chão apanha o chão (a casa
+           de chegada; o óleo e o gelo não se evitam, e derrubam). A linha vai
+           atrás do passo, na mesma chamada. */
+        let linhasDoChaoE = [];
+        try {
+          const andaram = new Set(mv.movimentos.map((m) => m.nome));
+          const feE = feridasDoChao(chaoDaLuta(combPos), (combPos.inimigos || []).filter((e) => e && andaram.has(e.nome) && !e.derrotado && (e.vida || 0) > 0), "entrar", sorteDoTurno("chao-entrar"));
+          if (feE.length) {
+            combPos.inimigos = feridasNaLuta(combPos, null, feE).combate.inimigos;
+            combateRef.current = { ...combateRef.current, inimigos: combPos.inimigos };
+            linhasDoChaoE = feE.map(linhaDoChao).filter(Boolean).map((texto) => ({ autor: "sistema", texto }));
+          }
+        } catch (e) { calou("o chão de quem anda", e); }
+        pushMsgs(mv.movimentos.map((m) => ({ autor: "sistema", texto: linhaDePasso(m) })).concat(linhasDoChaoE));
         /* MM7: O RECUO PROVOCA — quem sai do alcance do herói para abrir
            distância e disparar dá as costas à mesma guarda erguida que a
            fuga já cobrava (`querFugir`, acima); `m.provoca` é quem
@@ -15295,11 +15376,23 @@ export default function Taverna() {
       const alvoDeles = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0)
         .sort((a, b) => distanciaM(a, lugarHeroi || vivosAli[0]) - distanciaM(b, lugarHeroi || vivosAli[0]))[0];
       if (alvoDeles) {
-        const mvA = moverInimigos(gradeAtual, vivosAli, alvoDeles, [lugarHeroi, ...(combPos.inimigos || [])]);
+        const mvA = moverInimigos(gradeAtual, vivosAli, alvoDeles, [lugarHeroi, ...(combPos.inimigos || [])], opcoesDoPasso(combPos));
         if (mvA.movimentos.length) {
           aliadosAgora = mvA.inimigos.map(({ vida, i, ...resto }) => resto);
           combateRef.current = { ...combateRef.current, aliados: aliadosAgora };
-          pushMsgs(mvA.movimentos.map((m) => ({ autor: "sistema", texto: linhaDePasso(m) })));
+          /* CB15 (lote 3): e o grupo apanha o chão onde chega, na ficha (a
+             linha atrás do passo, na mesma chamada) */
+          let linhasDoChaoA = [];
+          try {
+            const andaramA = new Set(mvA.movimentos.map((m) => m.nome));
+            const entA = entidadesDaLuta({ aliados: aliadosAgora }, persBase).filter((a) => andaramA.has(a.nome));
+            const feA = feridasDoChao(chaoDaLuta(combPos), entA, "entrar", sorteDoTurno("chao-entrar"));
+            if (feA.length) {
+              persBase = feridasNaLuta(null, persBase, feA).pers;
+              linhasDoChaoA = feA.map(linhaDoChao).filter(Boolean).map((texto) => ({ autor: "sistema", texto }));
+            }
+          } catch (e) { calou("o chão de onde o grupo chega", e); }
+          pushMsgs(mvA.movimentos.map((m) => ({ autor: "sistema", texto: linhaDePasso(m) })).concat(linhasDoChaoA));
         }
       }
     }
@@ -15494,6 +15587,52 @@ export default function Taverna() {
         registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: a.inimigo, alvo: a.alvoNome, diz: a.r.dano > 0 ? `${a.r.critico ? "crítico · " : ""}${a.r.dano} de dano` : "errou", teu: false, feriu: a.alvoRef === "jogador" && a.r.dano > 0 }];
       } catch (e) { calou("o golpe deles na mesa", e); }
     }
+    /* CB15 (lote 3): O SOPRO DEIXA O CHÃO em todas as casas que queimou (a
+       área sem centro), e reage com o que lá está. Cai mesmo que não tenha
+       apanhado ninguém — o fogo do dragão já não some ao cair. Escreve nas
+       autoridades deste laço: `combPos` (os inimigos e o chão), o dano no
+       herói por `danoNoJogador`, as condições em `persTracos`, o grupo em
+       `grupoAtual`. */
+    try {
+      for (const it of (anunciadas || [])) {
+        if (!it || it.tipo !== "sopro" || !Array.isArray(it.area) || !it.area.length || !gradeAtual) continue;
+        const quemSopra = (combPos.inimigos || []).find((e) => e && e.nome === it.inimigo);
+        if (!quemSopra || quemSopra.derrotado || (quemSopra.vida || 0) <= 0) continue;
+        const elemS = it.elemento || (((acoes.find((a) => a && a.area && a.inimigo === it.inimigo) || {}).r) || {}).tipoDano;
+        if (!elemS) continue;
+        const persAgora = { ...persTracos, vida: Math.max(0, (persTracos.vida || 0) - danoNoJogador), grupo: grupoAtual };
+        const ch = chaoDoGolpe(combPos, persAgora, { elemento: elemS, casas: it.area, area: true });
+        if (!ch) continue;
+        combPos.inimigos = ch.combate.inimigos; combPos.grade = ch.combate.grade;
+        combPos.superficies = ch.combate.superficies; combPos.reacoesVistas = ch.combate.reacoesVistas;
+        danoNoJogador += Math.max(0, (persAgora.vida || 0) - (ch.pers.vida || 0));
+        persTracos = { ...persTracos, condicoes: ch.pers.condicoes };
+        grupoAtual = ch.pers.grupo || grupoAtual;
+        linhasSis.push(...mostrarAsReacoes(ch.eventos, ch.feridos));
+      }
+    } catch (e) { calou("o sopro no chão", e); }
+    /* CB15 (lote 3): A RODADA PASSA TAMBÉM PARA O CHÃO (passarRodada: o fogo
+       apaga-se, o gelo derrete em água) e o herói começa a vez nova no chão
+       que lhe ficou debaixo dos pés. Aqui, e não na virada da rodada lá
+       embaixo, por três razões: o dano entra por `danoNoJogador` (a
+       concentração testa-o, e a queda a zero é a de sempre, em
+       `finalizarRodada`); a linha sai com as do golpe deles, na mesma
+       chamada; e o grupo, que age depois, já não anda. */
+    try {
+      const supR = passarRodada(chaoDaLuta(combPos)).superficies;
+      combPos.superficies = supR;
+      const persAgoraR = { ...persTracos, vida: Math.max(0, (persTracos.vida || 0) - danoNoJogador), grupo: grupoAtual };
+      if ((persAgoraR.vida || 0) > 0) {
+        const eu = entidadesDaLuta(combPos, persAgoraR).filter((e) => e.nome === persAgoraR.nome);
+        const feH = feridasDoChao(supR, eu, "turno", sorteDoTurno("chao-turno"));
+        if (feH.length) {
+          const depoisR = feridasNaLuta(null, persAgoraR, feH).pers;
+          danoNoJogador += Math.max(0, (persAgoraR.vida || 0) - (depoisR.vida || 0));
+          persTracos = { ...persTracos, condicoes: depoisR.condicoes };
+          for (const f of feH) { const l = linhaDoChao(f); if (l) linhasSis.push({ autor: "sistema", texto: l }); }
+        }
+      }
+    } catch (e) { calou("a rodada no chão", e); }
     if (linhasSis.length) pushMsgs(linhasSis);
     /* v9.16: guarda o golpe da rodada para o gasto "Aguentar". Vale a rodada
        inteira, não o golpe isolado — o jogador não deveria precisar escolher
@@ -16413,6 +16552,19 @@ export default function Taverna() {
     const novaEco = { ...(eco || {}), [PASSO_NA_RODADA.campo]: sobra };
     combateRef.current = { ...comb, heroi: { ...de, x: chk.destino.x, y: chk.destino.y }, economia: novaEco };
     setCombate(combateRef.current);
+    /* CB15 (lote 3): ENTRAR NA CASA COM CHÃO — a de chegada (o caminho já o
+       avisou, troço a troço, antes do clique) */
+    try {
+      if ((pers.vida || 0) > 0) {
+        const eu = entidadesDaLuta(combateRef.current, pers).filter((e) => e.nome === pers.nome);
+        const feM = feridasDoChao(chaoDaLuta(combateRef.current), eu, "entrar", sorteDoTurno("chao-entrar"));
+        if (feM.length) {
+          pers = feridasNaLuta(null, pers, feM).pers;
+          setPersonagem(pers); personagemRef.current = pers;
+          for (const f of feM) { const l = linhaDoChao(f); if (l) linhas.push({ autor: "sistema", texto: l }); }
+        }
+      }
+    } catch (e) { calou("o chão onde paro", e); }
     pushMsgs(linhas);
     salvar({ personagem: pers });
     notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCaminho("movimentoResolvido", { nomeDe, nomePara, colados });
@@ -23008,11 +23160,91 @@ export default function Taverna() {
       if (rajadaAgendadaRef.current) return;
       rajadaAgendadaRef.current = true;
       setTimeout(() => {
+        /* CB15 (lote 3): as reações do chão no MESMO lote que os golpes */
+        soltarAsReacoes();
         try { const l = rajadaRef.current; rajadaRef.current = []; rajadaAgendadaRef.current = false; setGolpesDaRajada(l.length ? l : null); } catch (e) { calou("a rajada na mesa", e); }
         /* CB 17.1: o lance do herói no MESMO lote que os golpes (o número espera pelo dado) */
         soltarOLance();
       }, 0);
     } catch (e) { calou("o golpe sentido", e); }
+  };
+  /* as reações juntas à espera: soltam-se dentro do callback da rajada (o
+     React junta os setState, e a onda e o número chegam à mesa juntos), ou
+     sozinhas quando não houve golpe nenhum (o sopro contado, o empurrão) */
+  const soltarAsReacoes = () => {
+    try {
+      const rs = reacoesRajadaRef.current; reacoesRajadaRef.current = []; reacoesAgendadasRef.current = false;
+      if (rs.length) setReacoesDaRajada(rs);
+    } catch (e) { calou("as reações na rajada", e); }
+  };
+  /* CB15 (lote 3): A REAÇÃO DO CHÃO NA MESA — vai para a rajada que estiver
+     a juntar-se (a do golpe que a causou), com chave própria */
+  const sentirReacoes = (evs) => {
+    try {
+      const l = Array.isArray(evs) ? evs.filter(Boolean) : [];
+      if (!l.length) return;
+      reacoesNRef.current += 1;
+      reacoesRajadaRef.current = [...reacoesRajadaRef.current, ...reacoesNaMesa(l, "r" + reacoesNRef.current)];
+      /* a rajada de um golpe já está a juntar-se: vai com ela */
+      if (rajadaAgendadaRef.current || reacoesAgendadasRef.current) return;
+      reacoesAgendadasRef.current = true;
+      setTimeout(soltarAsReacoes, 0);
+    } catch (e) { calou("a reação na mesa", e); }
+  };
+  /* as reações de um golpe: na mesa, no som, no registo e na pauta do turno
+     (uma linha curta em ACABOU DE — nenhum bloco estático: o teto é sagrado).
+     Devolve as linhas do registo, para quem chama as juntar às suas. */
+  const mostrarAsReacoes = (eventos, feridos) => {
+    const linhas = [];
+    try {
+      const evs = Array.isArray(eventos) ? eventos.filter(Boolean) : [];
+      if (evs.length) {
+        sentirReacoes(evs);
+        try { tocarDaLuta("reacao"); } catch (e) { calou("o som da reação", e); }
+        const ditos = evs.map((ev) => { try { const l = letreiroDaReacao(ev); return l ? l.rotulo : ""; } catch { return ""; } }).filter(Boolean);
+        for (const texto of ditos) linhas.push({ autor: "sistema", texto });
+        if (ditos.length) porNaPautaDoTurno({ acabou: [ditos.join(" ") + " (o sistema já aplicou o dano)"] });
+      }
+      for (const f of (Array.isArray(feridos) ? feridos : [])) {
+        if (!f || !(f.condicao || (Array.isArray(f.condicoes) && f.condicoes.length))) continue;
+        const l = linhaDoChao(f); if (l) linhas.push({ autor: "sistema", texto: l });
+      }
+    } catch (e) { calou("as reações na mesa", e); }
+    return linhas;
+  };
+  /* O GOLPE NO CHÃO, puro sobre o que recebe: a marca do motor
+     (marcaDoAtaque), quem cada reação apanha (feridosDoEvento) e as feridas
+     aplicadas (feridasNaLuta). Devolve { combate, pers, eventos, feridos } —
+     quem chama decide onde escrever (o revide tem autoridades próprias). */
+  const chaoDoGolpe = (comb, pers, golpe) => {
+    if (!comb || !comb.grade || !golpe || !golpe.elemento) return null;
+    const entidades = entidadesDaLuta(comb, pers);
+    const d = marcaDoAtaque({ grade: comb.grade, superficies: chaoDaLuta(comb), vistas: vistasDaLuta(comb), entidades }, golpe);
+    const feridos = [];
+    for (const ev of (d.eventos || [])) feridos.push(...feridosDoEvento(ev, entidades, { sorte: sorteDoTurno("chao") }));
+    const ap = feridasNaLuta({ ...comb, grade: d.grade, superficies: d.superficies, reacoesVistas: d.vistas }, pers, feridos);
+    return { combate: ap.combate, pers: ap.pers, eventos: d.eventos || [], feridos };
+  };
+  /* o golpe do herói no chão: escreve no combate e na ficha vivos */
+  const oGolpeNoChao = (golpe) => {
+    try {
+      const comb = combateRef.current;
+      const pers = fichaViva() || personagem;
+      const ch = comb ? chaoDoGolpe(comb, pers, golpe) : null;
+      if (!ch) return [];
+      combateRef.current = ch.combate; setCombate(ch.combate);
+      if (ch.pers && ch.pers !== pers) mudarFicha(() => ch.pers);
+      return mostrarAsReacoes(ch.eventos, ch.feridos);
+    } catch (e) { calou("o golpe no chão", e); return []; }
+  };
+  /* o passo deles evita o chão que fere; sem chão, o passo de antes */
+  const opcoesDoPasso = (comb) => {
+    try { const s = casasQueSeEvitam(chaoDaLuta(comb)); return s && s.size ? { evitar: s } : undefined; } catch (e) { calou("o passo que evita o chão", e); return undefined; }
+  };
+  /* CB14 (lote 3): o que a altura soma ao d20 do herói — a leitura única
+     (bonusDaAltura, grid.js), a mesma que a previsão já soma */
+  const alturaDoGolpe = (grade, de, alvo) => {
+    try { return bonusDaAltura(grade || null, de, alvo); } catch (e) { calou("a altura do golpe", e); return 0; }
   };
   /* O FECHO (CB8): a escolha lembrada desta luta — antes da primeira, a da
      tabela (`QUANDO_O_FECHO_PERGUNTA.lembra`) */
@@ -24988,6 +25220,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (!aberta) return;
     try {
       setAlvoPrevisto(null); setGolpesDaRajada(null); setRegistoDaRodada(null); setQuedasDoMeio([]); registoDaVezRef.current = [];
+      try { setAlvoDoEmpurrao(null); setReacoesDaRajada(null); reacoesRajadaRef.current = []; } catch (e) { calou("o chão da luta que acabou", e); }
       setLanceNaLuta(null); lanceDaRajadaRef.current = []; porOTurno(null);
       setEntradaNaMesa(null); setEscolhaNoEncontro(null);
       if (encontroPendenteRef.current) {
@@ -26233,10 +26466,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          `moverPara` aplica (`caminhoComProvocacoes`, vez-na-mesa.js), com o
          que RESTA andar nesta rodada. Se a conta calar, a de sempre. */
       try {
-        const cp = caminhoComProvocacoes(comb.grade, de, { x: dest.x, y: dest.y }, comb.inimigos || [], { aliados: comb.aliados || [], deslocamentoM: restante, ignoraDificil: passo.ignoraDificil });
+        /* CB15 (lote 3): com o chão da luta, o caminho acende os perigos */
+        const cp = caminhoComProvocacoes(comb.grade, de, { x: dest.x, y: dest.y }, comb.inimigos || [], { aliados: comb.aliados || [], deslocamentoM: restante, ignoraDificil: passo.ignoraDificil, superficies: chaoDaLuta(comb) });
         if (cp && cp.ok && cp.casas.length) {
           const fim = cp.casas[cp.casas.length - 1];
-          return { destino: { x: fim.x, y: fim.y }, caminho: { pontos: [{ x: de.x, y: de.y }, ...cp.casas.map((q) => ({ x: q.x, y: q.y }))], metros: cp.custoM, sobraM: passoAposAndar(eco && eco.movM, passo.metros, cp.custoM), golpeLivreEm: cp.provoca ? [{ x: de.x, y: de.y }] : [], casas: cp.casas, golpesLivres: cp.golpesLivres } };
+          return { destino: { x: fim.x, y: fim.y }, caminho: { pontos: [{ x: de.x, y: de.y }, ...cp.casas.map((q) => ({ x: q.x, y: q.y }))], metros: cp.custoM, sobraM: passoAposAndar(eco && eco.movM, passo.metros, cp.custoM), golpeLivreEm: cp.provoca ? [{ x: de.x, y: de.y }] : [], casas: cp.casas, golpesLivres: cp.golpesLivres, perigos: cp.perigos || [] } };
         }
       } catch (e) { calou("a linha do caminho", e); }
       const chk = caminhar(comb.grade, de, { x: dest.x, y: dest.y }, { ocupados, deslocamentoM: restante, ignoraDificil: passo.ignoraDificil });
@@ -26275,6 +26509,135 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("andar e atacar", e); }
   };
 
+  /* ---------------- CB16 (lote 3) · O EMPURRÃO, ANTES E DEPOIS DO CLIQUE ----------------
+     Empurrar deixou de ser uma frase para o Mestre. Com o verbo armado, o
+     inimigo sob o rato recebe o veredito do motor (`previsaoDoEmpurrao`: a
+     casa onde pára, a queda, a colisão, o chão, a chance exata da disputa),
+     e o clique empurra (`empurrar`, disputa.js, e depois `empurraoNoCenario`).
+     Longe, anda até encostar pelo mesmo passo de andar e atacar, e a seta
+     sai da casa onde se vai estar. O recurso é o da tabela (CUSTO_DOS_VERBOS,
+     vez-na-mesa.js: a ação). A altura não entra: a disputa não a soma. */
+  const planoDoEmpurrao = (nome) => {
+    try {
+      const comb = combateRef.current;
+      if (!comb || !comb.grade || !comb.heroi || comb.heroi.x == null || !nome) return null;
+      const alvo = (comb.inimigos || []).find((e) => e && e.nome === nome && !e.derrotado && (e.vida || 0) > 0);
+      if (!alvo || alvo.x == null) return null;
+      const pers = fichaViva() || personagem;
+      if (!pers || (pers.vida || 0) <= 0) return null;
+      const de = comb.heroi;
+      let lugar = de, caminho = null;
+      if (!adjacentes(de, [alvo]).length) {
+        const passo = passoComSelecao(pers, habsSel, { dobrar: dobraMovimento(pers), ignoraDificil: ignoraTerrenoDificil(pers) || ignoraDificilPorTraco(pers) });
+        if (!passo || passo.parado) return null;
+        const eco = comb.economia;
+        if (!podeDarUmPasso(eco && eco.movM, passo.metros)) return null;
+        const restante = passoQueResta(eco && eco.movM, passo.metros);
+        const alcanceM = alcanceDoGolpe({ armaLonge: false, temPropAlcance: false, nome: pers.nome, tamanho: pers.tamanho });
+        const ocupados = ocupacaoDe([...(comb.inimigos || []), ...(comb.aliados || [])], de);
+        const dest = passoAteAlcancar(comb.grade, de, alvo, { ocupados, deslocamentoM: restante, ignoraDificil: passo.ignoraDificil, alcanceM, desempate: "passo" });
+        if (!dest) return null;
+        const cp = caminhoComProvocacoes(comb.grade, de, { x: dest.x, y: dest.y }, comb.inimigos || [], { aliados: comb.aliados || [], deslocamentoM: restante, ignoraDificil: passo.ignoraDificil, superficies: chaoDaLuta(comb) });
+        if (!cp || !cp.ok || !cp.casas.length) return null;
+        const fim = cp.casas[cp.casas.length - 1];
+        lugar = { ...de, x: fim.x, y: fim.y };
+        if (!adjacentes(lugar, [alvo]).length) return null;
+        caminho = { destino: { x: fim.x, y: fim.y }, pontos: [{ x: de.x, y: de.y }, ...cp.casas.map((q) => ({ x: q.x, y: q.y }))], metros: cp.custoM, sobraM: passoAposAndar(eco && eco.movM, passo.metros, cp.custoM), golpeLivreEm: cp.provoca ? [{ x: de.x, y: de.y }] : [], casas: cp.casas, golpesLivres: cp.golpesLivres, perigos: cp.perigos || [] };
+      }
+      const entidades = entidadesDaLuta(comb, pers, { heroiEm: lugar });
+      const quem = entidades.find((e) => e.nome === pers.nome) || { ...pers, x: lugar.x, y: lugar.y };
+      return { grade: comb.grade, quem, alvo, entidades, superficies: chaoDaLuta(comb), vistas: vistasDaLuta(comb), lugar, caminho };
+    } catch (e) { calou("o plano do empurrão", e); return null; }
+  };
+  const empurraoNaMesa = (() => {
+    try {
+      if (!emBatalha || !combate || !alvoDoEmpurrao) return null;
+      const pl = planoDoEmpurrao(alvoDoEmpurrao);
+      if (!pl) return null;
+      const prev = previsaoDoEmpurrao(pl);
+      if (!prev) return null;
+      return { alvo: pl.alvo.nome, de: prev.de, previsao: previsaoDoEmpurraoNaMesa(prev), caminho: pl.caminho };
+    } catch (e) { calou("a previsão do empurrão", e); return null; }
+  })();
+  const empurrarAgora = (nome) => {
+    try {
+      if (!nome || !combateRef.current || bloqueado) return;
+      if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
+      setAlvoDoEmpurrao(null);
+      const recurso = CUSTO_DOS_VERBOS.empurrar;
+      const eco0 = combateRef.current.economia;
+      if (eco0 && recurso && typeof eco0[recurso] === "number" && eco0[recurso] <= 0) {
+        pushMsgs([{ autor: "sistema", texto: `O empurrão fica para a próxima rodada: ${RECUSA_DO_VERBO[recurso] || RECUSA_DO_VERBO.acao}.` }]);
+        return;
+      }
+      let pl = planoDoEmpurrao(nome);
+      if (!pl) { pushMsgs([{ autor: "sistema", texto: `${nome} está longe demais para o empurrar nesta rodada.` }]); return; }
+      const vd = vereditoDoEmpurrao({ grade: pl.grade, quem: pl.quem, alvo: pl.alvo, entidades: pl.entidades });
+      if (vd && !vd.pode) { pushMsgs([{ autor: "sistema", texto: `${pl.alvo.nome} ${vd.porque}.` }]); return; }
+      if (pl.caminho) {
+        moverPara(pl.caminho.destino);
+        if (((personagemRef.current || personagem || {}).vida || 0) <= 0) return;
+        pl = planoDoEmpurrao(nome);
+        if (!pl || pl.caminho) return;
+      }
+      const persE = fichaViva() || personagem;
+      const frase = (VERBOS_DE_COMBATE.find((v) => v.id === "empurrar") || {}).frase || "";
+      const acao = `${frase} ${pl.alvo.nome}`.trim();
+      try { setEntrada((t) => (String(t || "").trim() === frase ? "" : t)); } catch (e) { calou("a frase do empurrão na caixa", e); }
+      /* a ação sai ANTES do dado, como no golpe: ganhar ou perder, foi gasta */
+      const eco = combateRef.current.economia;
+      if (eco && recurso && typeof eco[recurso] === "number") { combateRef.current = { ...combateRef.current, economia: { ...eco, [recurso]: eco[recurso] - 1 } }; setCombate(combateRef.current); }
+      ataqueResolvidoRef.current = true;
+      const r = empurrar({ grade: pl.grade, quem: pl.quem, alvo: pl.alvo, entidades: pl.entidades, sorte: sorteDoTurno("empurrao") });
+      const linhas = [{ autor: "jogador", texto: acao }];
+      try {
+        if (r && r.rolagem) {
+          const q = r.rolagem.quem;
+          const empate = TABELA_DA_DISPUTA.empateFavorece === "quemResiste" ? 1 : 0;
+          aBandeja(lancamento({ rotulo: (VERBOS_DE_COMBATE.find((v) => v.id === "empurrar") || {}).rotulo || "", dados: [{ faces: TABELA_DA_DISPUTA.faces, valor: q.dado }], mod: q.total - q.dado, alvo: r.rolagem.totalAlvo + empate, papel: "teste" }));
+          if (mostrarRolagensRef.current) linhas.push({ autor: "sistema", texto: r.rolagem.conta });
+        }
+      } catch (e) { calou("o dado do empurrão", e); }
+      let desfecho = "";
+      if (!r || !r.venceu) {
+        linhas.push({ autor: "sistema", texto: `${persE.nome} → ${pl.alvo.nome}: ${(r && r.motivo) || "ele se firma e não sai do lugar"}` });
+        desfecho = `um empurrão: ${pl.alvo.nome} resistiu${r && r.rolagem ? ` (${r.rolagem.conta})` : ""} e não saiu do lugar`;
+      } else {
+        const cen = empurraoNoCenario({ grade: pl.grade, quem: pl.quem, alvo: pl.alvo, entidades: pl.entidades, superficies: pl.superficies, vistas: pl.vistas, sorte: sorteDoTurno("empurrao-chao") });
+        if (cen) {
+          const moveu = { ...combateRef.current, grade: cen.grade, superficies: cen.superficies, reacoesVistas: cen.vistas,
+            inimigos: (combateRef.current.inimigos || []).map((e) => (e && e.nome === pl.alvo.nome ? { ...e, x: cen.para.x, y: cen.para.y } : e)) };
+          const ap = feridasNaLuta(moveu, persE, cen.feridos);
+          combateRef.current = ap.combate; setCombate(ap.combate);
+          if (ap.pers && ap.pers !== persE) mudarFicha(() => ap.pers);
+          const casas = Math.max(Math.abs(cen.para.x - pl.alvo.x), Math.abs(cen.para.y - pl.alvo.y));
+          const dele = cen.feridos.find((f) => f.nome === pl.alvo.nome) || { dano: 0, condicoes: [] };
+          const depois = (ap.combate.inimigos || []).find((e) => e && e.nome === pl.alvo.nome) || {};
+          const partes = [];
+          if (cen.colide) partes.push(cen.colide === "parede" ? "bate na parede" : `bate em ${cen.colide}`);
+          if (cen.queda > 0) partes.push(`cai ${cen.queda} ${cen.queda > 1 ? "degraus" : "degrau"}`);
+          if (dele.dano > 0) partes.push(`${dele.dano} de dano · ${pl.alvo.nome} ${Math.max(0, depois.vida || 0)}/${pl.alvo.vidaMax || pl.alvo.vida}${depois.derrotado ? " (cai)" : ""}`);
+          for (const c of (dele.condicoes || [])) if (c && c.nome) partes.push(`fica ${String(c.nome).toLowerCase()}`);
+          const dito = `${persE.nome} empurra ${pl.alvo.nome}${casas ? ` ${casas} ${casas > 1 ? "casas" : "casa"}` : ""}${partes.length ? `: ${partes.join(", ")}` : ""}`;
+          linhas.push({ autor: "sistema", texto: dito });
+          linhas.push(...mostrarAsReacoes(cen.eventos, cen.feridos.filter((f) => f.nome !== pl.alvo.nome)));
+          desfecho = `um empurrão: ${dito}`;
+        } else {
+          linhas.push({ autor: "sistema", texto: `${persE.nome} → ${pl.alvo.nome}: ${r.motivo || "o mundo não cede"}` });
+          desfecho = `um empurrão: ${pl.alvo.nome} não saiu do lugar`;
+        }
+      }
+      pushMsgs(linhas);
+      const fechou = fecharSeTodosCairam(fichaViva() || personagem);
+      /* o mesmo envelope do golpe (o combate resolvido pelo sistema, a narrar)
+         — mas não a mesma porta: o envio do golpe continua um só, em
+         `continuarGolpeDoJogador`, que é o que a tabela do funil cita */
+      const depoisDoRevide = (rv) => { const envelope = oEnvelopeDaFicha("combateResolvido", { desfecho, resumoInimigos: rv.texto, acao }); enviar(envelope, rv.pers); };
+      if (fechou) depoisDoRevide({ pers: fichaViva() || personagem, texto: "" });
+      else fecharMeuTurno(fichaViva() || personagem, depoisDoRevide);
+    } catch (e) { calou("empurrar", e); }
+  };
+
   /* ---------------- CB 17 (lote 2) · O QUE A MESA RECEBE DO TURNO DELES ----------------
      Na espera (o dado do herói a rolar), a mesa mostra-os ONDE ESTAVAM: o
      estado já os moveu, e sem isto saltariam para a frente, de volta e para
@@ -26307,6 +26670,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const recursosDosVerbosDaMesa = (() => {
     try { const v = combate && personagem ? economiaDaVez(combate, personagem, { passoTotalM: passoDaBatalha.passoTotal }) : null; return v ? v.recursosDosVerbos : null; }
     catch (e) { calou("a economia da vez", e); return null; }
+  })();
+
+  /* CB lote 3: o degrau (da planta, por garantirGrade), o chão da luta e os
+     objetos com o que fariam ao elemento do golpe do herói */
+  const alturasDaMesa = (() => { try { return emBatalha && combate ? alturasNaMesa(combate.grade) : null; } catch (e) { calou("o degrau na mesa", e); return null; } })();
+  const superficiesDaMesa = (() => { try { return emBatalha && combate ? chaoDaLuta(combate) : null; } catch (e) { calou("o chão na mesa", e); return null; } })();
+  const objetosDoCenarioNaMesa = (() => {
+    try { return emBatalha && combate && personagem ? objetosNaMesa(combate, { elemento: elementoDaArma(personagem), entidades: entidadesDaLuta(combate, personagem) }) : null; }
+    catch (e) { calou("os objetos na mesa", e); return null; }
   })();
 
   const telaDaBatalha = emBatalha ? (
@@ -26363,7 +26735,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       passoTotal={passoDaBatalha.passoTotal}
       ignoraDificil={passoDaBatalha.ignoraDificil}
       previsaoDoGolpe={previsaoNaMesa ? previsaoNaMesa.previsao : null}
-      caminho={previsaoNaMesa ? previsaoNaMesa.caminho : null}
+      caminho={empurraoNaMesa && empurraoNaMesa.caminho ? empurraoNaMesa.caminho : previsaoNaMesa ? previsaoNaMesa.caminho : null}
+      /* CB lote 3 (formas.md §CB 18): o degrau, o chão, os objetos, as
+         reações da rajada e o empurrão com as suas duas portas */
+      alturas={alturasDaMesa}
+      superficies={superficiesDaMesa}
+      objetos={objetosDoCenarioNaMesa}
+      reacoes={reacoesDaRajada}
+      empurrao={empurraoNaMesa}
+      aoPreverEmpurrao={(nome) => { try { setAlvoDoEmpurrao(nome || null); } catch (e) { calou("prever o empurrão", e); } }}
+      aoEmpurrar={empurrarAgora}
       intencoes={intencoesDaMesa}
       golpes={golpesDaMesa}
       aoPreverGolpe={(nome) => { try { setAlvoPrevisto(nome || null); } catch (e) { calou("prever o golpe", e); } }}
