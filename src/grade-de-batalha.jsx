@@ -677,6 +677,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      quadro. Um som que estoura cala-se; o golpe pousa na mesma. */
   const golpesVistosRef = React.useRef(new Set());
   const [golpesNaMesa, setGolpesNaMesa] = React.useState([]);
+  const tidsDosGolpesRef = React.useRef([]);
   React.useEffect(() => {
     if (!Array.isArray(golpes) || !golpes.length) return undefined;
     const novos = [];
@@ -695,10 +696,15 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     }
     if (!novos.length) return undefined;
     setGolpesNaMesa((g) => [...g, ...novos]);
-    const tids = novos.map((n) => setTimeout(() => setGolpesNaMesa((g) => g.filter((x) => x.chave !== n.chave)), n.dura));
-    return () => tids.forEach(clearTimeout);
+    /* 10/11: os timers de saída vivem num ref e só se limpam ao desmontar.
+       Limpá-los quando a lista `golpes` mudava (a cada passo do turno deles)
+       deixava golpes presos na mesa — e `golpeComBorda` (um find) apanhava o
+       preso, e a moldura «em ti» deixava de acender nos golpes seguintes */
+    for (const n of novos) tidsDosGolpesRef.current.push(setTimeout(() => setGolpesNaMesa((g) => g.filter((x) => x.chave !== n.chave)), n.dura));
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [golpes]);
+  React.useEffect(() => () => tidsDosGolpesRef.current.forEach(clearTimeout), []);
   /* o pouso solta os golpes que esperavam (o número nasce agora, com o som) */
   const tidsDoPousoRef = React.useRef([]);
   React.useEffect(() => {

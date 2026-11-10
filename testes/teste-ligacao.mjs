@@ -395,8 +395,11 @@ sec("1. NENHUM MÓDULO MUDO");
        App.jsx (a lista está no relato do backend). As entradas saem quando o
        App os importar. `teste-vez-na-mesa.mjs` e `teste-turno-contado.mjs`
        são os primeiros leitores. */
-    "vez-na-mesa.js": "CB lote 2 (10/11): a fila, a economia e o caminho — espera a fiação do oficial",
-    "turno-contado.js": "CB lote 2 (10/11): o turno deles em passos e o golpe da habilidade — espera a fiação do oficial",
+    /* e paga na MESMA leva (10/11, oficial): o App.jsx importa os dois — a
+       economia da vez (`recursosDosVerbos` ao painel) e a linha do caminho no
+       plano de andar e atacar; o turno deles contado em `finalizarRodada`
+       (`passosDoTurno`, e o relógio com `duracaoDosPassos`); o golpe da
+       habilidade na mesa (`golpeDaHabilidade`). As duas entradas saíram. */
   };
   const mudos = [];
   for (const f of arqs) {

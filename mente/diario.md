@@ -24,6 +24,13 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 10/11 · v9.634 · o combate, lote 2 — o d20 no alvo, o turno deles passo a passo, a luta do nível 1 que dura
+- **motor (`backend`, 2e8bfd4; parou uma vez por falha de rede e foi retomado):** a fila (pela ordem do motor, com a iniciativa como número — **decisão minha**: outra ordem mentiria sobre as vidas), a economia, o caminho com provocações, o turno deles em passos (o d20 separado, as faces que salvam), o teto de 4 s; o nível 1 (o comum com 12 PV de piso e 3+d4−1: luta numa rodada 34,5% → 5,4%; a luta mortal mais leve, 70% → 45% — **aceite**); o canal `pautaDeUmTurno`; o golpe das habilidades com d20; a régua do poder recalibrada com o anúncio (120 s → 80 s; Ladino|12 pendente, é o artefacto).
+- **forma (`desenho` §CB 17):** o d20 rola em cima do alvo (a pílula vira o dado, nenhuma casa perdida); o turno deles passo a passo com 2× e Saltar ›, nunca mais de 4 s. **Decisão minha** (§CB 17.8): o d20 do inimigo que te pode derrubar rola em cima de ti com as faces que te salvam.
+- **peças (`aprendiz`, 4a2344c):** `DadoNoAlvo`, o turno contado, a fila e a economia do motor; `check-turno-deles` apanhou um arredondamento (round → floor, 492/9000 passavam o teto por 1–4 ms) — corrigi eu.
+- **fiação (`oficial`, bastão 00:12–fim):** os verbos à vista depois do ataque, o lance no mesmo lote dos golpes, o turno deles passo a passo, o canal de um turno. Visto a 1905 e 375: «9 +5 = 14 contra 13, acerta»; «A VEZ DELES · BANDIDO»; turno de 4 passos em ~2,4 s. **Eu:** os timers dos golpes na grade passam a um ref (limpos ao desmontar) — presos, apagavam a moldura «em ti».
+- **o que fica:** o lote 3 (altura, superfícies, cenário); a janela de reação atrasa o turno deles; o teste do Mestre no lugar dos verbos por ver ao vivo.
+
 ## 10/11 · v9.633 · o combate e a viagem, lote 1 — o encontro antes da luta, a previsão, a intenção, o golpe sentido
 - **a palavra:** a viagem abria na hora uma luta contra um dragão ancião, sem uma palavra; e «um combate fluido e instintivo… maravilhoso», com licença para ousar.
 - **CB1–CB2 (`backend`, f98c553):** uma régua só para o perigo da estrada (o mapa e o encontro concordam em mil estradas; o lendário ~14% em vez de 100% do perigo do nível 14 numa estrada mortal; o lendário e o «a evitar» nunca investem); o encontro em três tempos (sinal, escolha com o preço, narração).

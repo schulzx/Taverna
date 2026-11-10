@@ -75,7 +75,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -374,7 +374,11 @@ import { metamagiaDe, armarMetamagia, consumirMetamagia, alcanceComMetamagia, eh
 import { aplicarPoder } from "./poder-de-classe.js";
 import { empilhar, firmarEfeito, efeitoDeBuff, efeitoDeMagia, quebrarConcentracao, notaDosBuffs } from "./efeitos.js";
 import { carimbarALuta } from "./motor/carimbo-da-luta.js";
-import { REFS_DA_PAUTA } from "./motor/pauta-do-turno.js";
+import { REFS_DA_PAUTA, juntarNaPautaDeUmTurno } from "./motor/pauta-do-turno.js";
+/* CB lote 2 (10/11): o turno deles contado em passos, o golpe da habilidade na
+   mesa, a economia da vez e a linha do caminho */
+import { passosDoTurno, duracaoDosPassos, golpeDaHabilidade } from "./turno-contado.js";
+import { economiaDaVez, caminhoComProvocacoes } from "./vez-na-mesa.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO } from "./motor/pedido-do-turno.js";
 import { oPreludioDoTurno, REFS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
 import { osOrgaosDoDepois, REFS_DO_DEPOIS } from "./motor/depois-do-turno.js";
@@ -5715,6 +5719,7 @@ export default function Taverna() {
      que não era inimigo, e o preço disso (campo novo do save, `lei`). */
   const leiRef = useRef(garantirLei(null));
   const crimeDoTurnoRef = useRef(null);       // as linhas do crime deste turno, para a pauta
+  const pautaDeUmTurnoRef = useRef(null);     // o canal de um turno (ACABOU DE e NÃO PODE): o encontro da estrada, e quem mais o pedir
   const crimeConfirmadoRef = useRef(false);
   /* A PROPOSTA (04/11): a frase cujo veredito do crime já foi visto no cartão — o turno não pergunta outra vez */
   const crimeVistoNaPropostaRef = useRef(null);
@@ -7570,7 +7575,7 @@ export default function Taverna() {
     jornadaRef, leiRef, lugarRef, mapaRef, masmorraRef, mensagensRef,
     mercadoRef, mesaRef, minutoRef, missoesRef, modoRef, mundoRef,
     naoPodeDoTurnoRef, nemesisRef, noiteRef, nomeCampanhaRef, nomesPendentesRef, notaRef,
-    npcsRef, nucleoCacheRef, personagemRef, posturaRef, prometidoRef, propositosDoTurnoRef,
+    npcsRef, nucleoCacheRef, pautaDeUmTurnoRef, personagemRef, posturaRef, prometidoRef, propositosDoTurnoRef,
     quemERef, registroRef, reinoRef, relogiosRef, reviravoltaRef, saberRef,
     sinoDoTurnoRef, sitioRef, subtramasCacheRef, torneioRef, turnoDeRegistroRef, ultimaAcaoRef,
     ultimaCobrancaRef, ultimoPesoRef, vetosDoJuizRef, vilaoAgiuRef,
@@ -9187,6 +9192,161 @@ export default function Taverna() {
   /* A RODADA N (CB 2): o registo da rodada que acabou — os golpes e o balanço das intenções */
   const [registoDaRodada, setRegistoDaRodada] = useState(null);
   const registoDaVezRef = useRef([]);
+  /* ============================================================
+     CB 17 (lote 2) · O D20 NO ALVO E O TURNO DELES, CONTADO
+     Estado de TELA, nunca de jogo: nada disto vai ao save, e o estado da
+     luta já está aplicado quando qualquer coisa daqui começa.
+     · `lanceNaLuta`: o d20 do golpe do herói, que rola NO ALVO (a grade,
+       formas.md §CB 17.1). Sai no MESMO lote que os golpes (a rajada de
+       `sentirGolpe`), senão o número saltava antes do dado.
+     · `turnoDeles`: { id, passos (passosDoTurno), indice, espera, intencoes
+       (as anunciadas, que cada passo cumpre), antes (as casas à entrada) }.
+       `indice` −1 é a espera: o dado do herói rola e pousa antes de eles
+       agirem, e a mesa mostra-os onde estavam. O relógio anda o `indice`
+       pela duração planeada (`duracaoDosPassos`, a regra dos 4 s, §CB 17.2)
+       e qualquer entrada salta. O 2× é preferência do navegador
+       (TURNO_DELES.preferencia), nunca do save.
+     ============================================================ */
+  const [lanceNaLuta, setLanceNaLuta] = useState(null);
+  const lanceDaRajadaRef = useRef([]);
+  const lanceNRef = useRef(0);
+  const lanceFimRef = useRef(0);
+  const [turnoDeles, setTurnoDeles] = useState(null);
+  const turnoDelesRef = useRef(null);
+  const turnoNRef = useRef(0);
+  const golpesDaMesaRef = useRef(null);
+  const [turnoDeles2x, setTurnoDeles2x] = useState(() => { try { return typeof localStorage !== "undefined" && localStorage.getItem(TURNO_DELES.preferencia) === "1"; } catch { return false; } });
+  const porOTurno = (td) => { turnoDelesRef.current = td; setTurnoDeles(td); };
+  /* quanto o dado do herói leva a pousar e o golpe a sentir-se (a espera antes
+     do turno deles): o rolar e o entre-dados de DADO_NO_ALVO e o teto do golpe
+     sentido; com movimento reduzido, o aparecer já pousado */
+  const msDoLance = (nDados) => {
+    try {
+      if (reduzidoRef.current) return DADO_NO_ALVO.reduzido;
+      return Math.min(DADO_NO_ALVO.rola + Math.max(0, nDados - 1) * DADO_NO_ALVO.entreDados, DADO_NO_ALVO.tetoDeVarios) + GOLPE_SENTIDO.teto;
+    } catch (e) { calou("o tempo do dado no alvo", e); return 0; }
+  };
+  /* o d20 de um golpe do herói, a caminho do alvo: junta-se à rajada deste
+     clique (dois golpes no mesmo alvo, dois d20 na mesma pílula) */
+  const porNoLance = (r, alvoNome, criticoEm) => {
+    try {
+      const nat = Number(r && r.d20);
+      if (!alvoNome || !(nat >= 1 && nat <= 20)) return;
+      const desfecho = r.resultado === "critico" ? "critico" : r.resultado === "acerta" || r.resultado === "imune" ? "acerta" : "erra";
+      const d = { natural: nat, bonus: Number(r.bonus) || 0, total: Number.isFinite(Number(r.total)) ? Number(r.total) : null, defesa: Number.isFinite(Number(r.ca)) ? Number(r.ca) : null, desfecho };
+      /* as faces que acertam são as do lançamento que acabou de entrar na bandeja */
+      const b0 = bandejaRef.current && bandejaRef.current[0];
+      const doMesmo = !!(b0 && b0.golpe && Array.isArray(b0.dados) && b0.dados.some((x) => x && !x.posto && x.valor === nat));
+      const ja = lanceDaRajadaRef.current || [];
+      const i = ja.findIndex((l) => l.alvo === alvoNome);
+      if (i >= 0) lanceDaRajadaRef.current = ja.map((l, k) => (k === i ? { ...l, dados: [...l.dados, d] } : l));
+      else { lanceNRef.current += 1; lanceDaRajadaRef.current = [...ja, { alvo: alvoNome, n: lanceNRef.current, dados: [d], acertam: doMesmo ? b0.acertam : null, criticoEm: criticoEm || 20 }]; }
+      /* a rede: se nenhum golpe sentido levar o lance (um evento que não
+         nasceu), ele sai sozinho DEPOIS da rajada — nunca antes dela */
+      setTimeout(() => { setTimeout(() => soltarOLance(), 0); }, 0);
+    } catch (e) { calou("o d20 no alvo", e); }
+  };
+  const soltarOLance = () => {
+    try {
+      const lc = lanceDaRajadaRef.current || [];
+      lanceDaRajadaRef.current = [];
+      if (!lc.length) return;
+      lanceFimRef.current = Date.now() + msDoLance(lc.reduce((s, l) => s + l.dados.length, 0));
+      setLanceNaLuta(lc.length === 1 ? lc[0] : lc);
+    } catch (e) { calou("soltar o d20 no alvo", e); }
+  };
+  /* o plano do tempo do turno deles: a regra dos 4 s, com o 2× e o reduzido */
+  const planoDoTurno = (td) => {
+    try { return td && Array.isArray(td.passos) ? duracaoDosPassos(td.passos, { velocidade: turnoDeles2x ? 2 : 1, reduzido: !!reduzidoRef.current, tabela: TURNO_DELES }) : null; }
+    catch (e) { calou("o plano do turno deles", e); return null; }
+  };
+  /* contar o turno deles: os passos já aplicados ao estado. Devolve se conta
+     (sem passos, ou se estourar, os golpes vão à mesa de uma vez, como sempre) */
+  const contarOTurnoDeles = (passos, o) => {
+    try {
+      const ps = Array.isArray(passos) ? passos.filter((x) => x && x.quem) : [];
+      if (!ps.length) return false;
+      const c = o || {};
+      const pendentes = (lanceDaRajadaRef.current || []).reduce((s, l) => s + l.dados.length, 0);
+      const espera = pendentes ? msDoLance(pendentes) : Math.max(0, (lanceFimRef.current || 0) - Date.now());
+      const casas = (l) => Object.fromEntries((Array.isArray(l) ? l : []).filter((x) => x && x.nome && x.x != null).map((x) => [x.nome, { x: x.x, y: x.y }]));
+      turnoNRef.current += 1;
+      const td = { id: turnoNRef.current, passos: ps, indice: espera > 0 ? -1 : 0, espera, intencoes: Array.isArray(c.intencoes) ? c.intencoes : [], antes: { inimigos: casas(c.inimigosAntes), aliados: casas(c.aliadosAntes) } };
+      porOTurno(td);
+      if (td.indice === 0) setLanceNaLuta(null);
+      return true;
+    } catch (e) { calou("contar o turno deles", e); return false; }
+  };
+  const comecarOTurnoDeles = (id) => {
+    try {
+      const t = turnoDelesRef.current;
+      if (!t || t.id !== id || t.indice >= 0) return;
+      porOTurno({ ...t, indice: 0 });
+      /* o dado do herói já pousou e o golpe sentiu-se: a pílula sai, e o
+         relógio dos dados deles começa limpo */
+      setLanceNaLuta(null);
+    } catch (e) { calou("o começo do turno deles", e); }
+  };
+  const avancarOTurnoDeles = (id, prox) => {
+    try {
+      const t = turnoDelesRef.current;
+      if (!t || t.id !== id) return;
+      porOTurno(prox >= t.passos.length ? null : { ...t, indice: prox });
+    } catch (e) { calou("o passo seguinte do turno deles", e); porOTurno(null); }
+  };
+  /* Saltar ›, Esc, Espaço, escrever, um verbo, um toque no tabuleiro: a mesa vai ao fim já */
+  const saltarOTurnoDeles = () => { try { porOTurno(null); } catch (e) { calou("saltar o turno deles", e); } };
+  const acelerarOTurnoDeles = () => {
+    try {
+      const n = !turnoDeles2x;
+      setTurnoDeles2x(n);
+      try { localStorage.setItem(TURNO_DELES.preferencia, n ? "1" : "0"); } catch { /* sem armazenamento, o 2× vale só nesta aba */ }
+    } catch (e) { calou("o 2× do turno deles", e); }
+  };
+  /* O RELÓGIO DO TURNO DELES: um setTimeout por passo (nunca um contador de
+     quadros), com a duração do grupo do passo corrente no plano. Na espera,
+     qualquer toque ou tecla começa já (e pousa o dado do herói, na grade). */
+  useEffect(() => {
+    const td = turnoDeles;
+    if (!td) return undefined;
+    let tid = null, ouve = null;
+    try {
+      if (td.indice < 0) {
+        tid = setTimeout(() => comecarOTurnoDeles(td.id), Math.max(0, Number(td.espera) || 0));
+        ouve = () => comecarOTurnoDeles(td.id);
+        window.addEventListener("pointerdown", ouve, true);
+        window.addEventListener("keydown", ouve, true);
+      } else {
+        const grupos = (planoDoTurno(td) || {}).passos || [];
+        const k = grupos.findIndex((g) => Array.isArray(g.i) && g.i.includes(td.indice));
+        const prox = k >= 0 && grupos[k + 1] ? grupos[k + 1].i[0] : td.passos.length;
+        tid = setTimeout(() => avancarOTurnoDeles(td.id, prox), k >= 0 ? Math.max(0, Number(grupos[k].ms) || 0) : 0);
+      }
+    } catch (e) { calou("o relógio do turno deles", e); porOTurno(null); }
+    return () => {
+      clearTimeout(tid);
+      if (ouve) { try { window.removeEventListener("pointerdown", ouve, true); window.removeEventListener("keydown", ouve, true); } catch { /* sair nunca custa o turno */ } }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnoDeles, turnoDeles2x]);
+  /* os golpes que a mesa recebe: a rajada de sempre e, durante o turno
+     deles, os do passo corrente (o grupo dele no plano) — a rajada inimiga
+     não vai à mesa de uma vez enquanto o turno se conta. Memorizada, e um
+     passo sem golpe repete a lista anterior: a grade lê cada lista NOVA como
+     golpes novos */
+  const golpesDaMesa = useMemo(() => {
+    try {
+      const td = turnoDeles;
+      if (!td || td.indice < 0 || td.indice >= td.passos.length) { golpesDaMesaRef.current = golpesDaRajada; return golpesDaRajada; }
+      const plano = planoDoTurno(td);
+      const g = plano ? plano.passos.find((x) => Array.isArray(x.i) && x.i.includes(td.indice)) : null;
+      const evs = [];
+      for (const i of (g ? g.i : [td.indice])) ((td.passos[i] || {}).golpes || []).forEach((gp, j) => { if (gp && gp.evento) evs.push({ ...gp.evento, chave: "t" + td.id + ":" + i + ":" + j }); });
+      if (evs.length) golpesDaMesaRef.current = evs;
+      return golpesDaMesaRef.current;
+    } catch (e) { calou("o golpe do passo deles", e); return golpesDaRajada; }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turnoDeles, turnoDeles2x, golpesDaRajada]);
   /* O FECHO (CB8): as quedas do meio que não pararam a mesa (o chip da casa) */
   const [quedasDoMeio, setQuedasDoMeio] = useState([]);
   const quedasNRef = useRef(0);
@@ -12355,6 +12515,8 @@ export default function Taverna() {
       /* CB · A BANDEJA: o d20 que o golpe DE FACTO rolou, com as faces que
          acertam acesas — rola na mesa, saltável, nunca prende */
       try { aBandeja(lancamentoDoAtaque(r, { criticoEm: criticoMinimo(pers) })); } catch (e) { calou("o d20 do golpe na bandeja", e); }
+      /* CB 17.1 (lote 2): e o mesmo d20 rola NO ALVO (a grade), no lote dos golpes */
+      porNoLance(r, alvo.nome, criticoMinimo(pers));
       /* CB7: o golpe sentido (a grade toca o som) e a linha do registo da rodada */
       try {
         sentirGolpe(eventoDoGolpe(r, { vidaAntes: alvo.vida, vidaMax: alvo.vidaMax || alvo.vida, lado: "heroi" }));
@@ -12856,6 +13018,20 @@ export default function Taverna() {
       partes.push(oEnvelopeDoDesfecho("errou", { alvo: alvo.nome, desastre: r.desastre, d20: r.d20, bonus: r.bonus, total: r.total, ca: r.ca }));
       linhasSis.push({ autor: "sistema", texto: `✦ ${pers.nome} · ${h.nome} → ${alvo.nome}: ${r.desastre ? "erro desastroso" : "errou"}` });
     }
+    /* CB lote 2: O GOLPE DA HABILIDADE NA MESA, como o de arma — o d20 na
+       bandeja (e no alvo, menos na área: formas.md §CB 17.1) e o golpe
+       sentido no alvo e em cada corpo que a área ou a gémea apanharam com o
+       mesmo dano (`golpeDaHabilidade`, turno-contado.js) */
+    try {
+      const atingidos = (comb.inimigos || []).filter((e) => e && e.nome !== alvo.nome)
+        .filter((e) => { const dep = locais.find((x) => x.nome === e.nome); return dep && (Number(dep.vida) || 0) < (Number(e.vida) || 0); })
+        .map((e) => ({ nome: e.nome, vidaAntes: e.vida, vidaMax: e.vidaMax || e.vida }));
+      const gh = golpeDaHabilidade(r, { habilidade: h, criticoEm: criticoMinimo(pers), vidaAntes: alvo.vida, vidaMax: alvo.vidaMax || alvo.vida, atingidos });
+      if (gh) {
+        if (gh.lancamento) { aBandeja(gh.lancamento); if (!(ehArea(h) || h.area)) porNoLance(r, alvo.nome, criticoMinimo(pers)); }
+        for (const ev of gh.eventos || []) sentirGolpe(ev);
+      }
+    } catch (e) { calou("o golpe da habilidade na mesa", e); }
     combateRef.current = { ...comb, inimigos: virarChefeSePreciso(comb.inimigos, locais), economia: comb.economia, log: combateRef.current.log };
     setCombate(combateRef.current);
     if (linhasSis.length) pushMsgs(linhasSis);
@@ -14980,6 +15156,17 @@ export default function Taverna() {
     if (!combPos) return aoTerminar({ pers: persBase, resumo: "" });
     const vivos = (combPos.inimigos || []).filter((e) => !e.derrotado && (e.vida || 0) > 0);
     if (!vivos.length) { const p = fecharSeTodosCairam(persBase); return aoTerminar({ pers: (p && p !== true) ? p : persBase, resumo: "" }); }
+    /* CB 17.2 (lote 2): O RETRATO À ENTRADA DA VEZ DELES — quem estava onde,
+       e com que vida —, para `passosDoTurno` arrumar por quem age o que a
+       rajada fez. Só leitura: o estado aplica-se como sempre, e contar é tela. */
+    const inimigosAntesDoTurno = (combPos.inimigos || []).map((e) => ({ ...e }));
+    const aliadosAntesDoTurno = (combPos.aliados || []).map((a) => (a ? { ...a } : a));
+    const vidasAntesDoTurno = {}, vidaMaxAntesDoTurno = {};
+    const fugasDoTurno = [];
+    try {
+      for (const e of inimigosAntesDoTurno) if (e && e.nome) { vidasAntesDoTurno[e.nome] = Number(e.vida) || 0; vidaMaxAntesDoTurno[e.nome] = Number(e.vidaMax || e.vida) || 0; }
+      for (const g of [persBase, ...(persBase.grupo || [])]) if (g && g.nome) { vidasAntesDoTurno[g.nome] = Number(g.vida) || 0; vidaMaxAntesDoTurno[g.nome] = Number(g.vidaMax || g.vida) || 0; }
+    } catch (e) { calou("o retrato antes do turno deles", e); }
     /* ---------------- A VEZ DO MUNDO (v9.31) ----------------
        Ela sempre existiu aqui dentro, escondida: o revide dos inimigos e o
        turno dos companheiros já rodavam colados na ação do jogador, sem nome
@@ -15008,6 +15195,7 @@ export default function Taverna() {
       : vivos.filter((x) => querFugir(x, { sorte: sorteDoTurno("fuga-do-inimigo") }));
     for (const e of vaoFugir) {
       const { r, pv, morreu } = golpeDeOportunidadeDoHeroi(persBase, e, aliadosOp, combPos.grade, combPos.heroi);
+      fugasDoTurno.push({ nome: e.nome, r, morreu });
       /* sai do combate nos dois casos; `fugiu` distingue quem escapou VIVO —
          é o que impede o sistema de dar XP por ele e, pior, de riscar o nome
          dele no registro do mundo como se tivesse morrido. */
@@ -15153,6 +15341,7 @@ export default function Taverna() {
        resolve. */
     const correrORestoDaRodada = (acoes, escolha, entregar) => {
     const linhasSis = [];
+    const golpesDelesDaVez = [];   /* CB 17.2: os eventos do golpe deles, à espera de saber se o turno se conta */
     let danoNoJogador = 0;
     let grupoAtual = [...(persBase.grupo || [])];
     const partes = [];
@@ -15298,7 +15487,10 @@ export default function Taverna() {
          e no registo da rodada; o dano é o que chegou, depois da reação */
       try {
         const vidaAntesDoGolpe = alvoDepois != null ? alvoDepois + (Number(a.r.dano) || 0) : null;
-        sentirGolpe(eventoDoGolpe(a.r, { vidaAntes: vidaAntesDoGolpe, vidaMax: alvoMax, lado: a.virado ? "aliado" : "inimigo", golpeNome: a.golpeNome || "" }));
+        /* CB 17.2 (lote 2): guardado, não sentido já — se o turno deles se
+           contar, cada golpe vai à mesa no passo de quem o deu; se não, vão
+           todos de uma vez no fim (finalizarRodada), como sempre */
+        golpesDelesDaVez.push(eventoDoGolpe(a.r, { vidaAntes: vidaAntesDoGolpe, vidaMax: alvoMax, lado: a.virado ? "aliado" : "inimigo", golpeNome: a.golpeNome || "" }));
         registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: a.inimigo, alvo: a.alvoNome, diz: a.r.dano > 0 ? `${a.r.critico ? "crítico · " : ""}${a.r.dano} de dano` : "errou", teu: false, feriu: a.alvoRef === "jogador" && a.r.dano > 0 }];
       } catch (e) { calou("o golpe deles na mesa", e); }
     }
@@ -15699,6 +15891,27 @@ export default function Taverna() {
       }
       /* CB6: a rodada nova anuncia o que eles vão fazer, antes do meu golpe */
       try { anunciarIntencoes(persAtual); } catch (e) { calou("a intenção da rodada nova", e); }
+      /* CB 17.2 (lote 2) · O TURNO DELES, CONTADO EM PASSOS. Tudo o que está
+         acima já foi aplicado ao estado; `passosDoTurno` só arruma, por quem
+         age, o que a rajada fez (o caminho, o d20 separado do total, o golpe),
+         e a mesa conta-o passo a passo em ≤ 4 s, saltável com um toque. Sem
+         passos, ou se a conta estourar, os golpes vão à mesa de uma vez. */
+      let contou = false;
+      try {
+        if (combateRef.current) {
+          const passos = passosDoTurno(acoes, {
+            antes: inimigosAntesDoTurno.filter((e) => e && !e.derrotado && (e.vida || 0) > 0),
+            depois: combateRef.current.inimigos || [],
+            aliadosAntes: aliadosAntesDoTurno, aliadosDepois: combateRef.current.aliados || [],
+            grade: gradeAtual, heroi: persBase.nome || "",
+            fugas: fugasDoTurno, intencoes: anunciadas || [],
+            vidas: vidasAntesDoTurno, vidaMax: vidaMaxAntesDoTurno,
+            companheiros: acoesComp,
+          });
+          contou = contarOTurnoDeles(passos, { intencoes: anunciadas || [], inimigosAntes: inimigosAntesDoTurno, aliadosAntes: aliadosAntesDoTurno });
+        }
+      } catch (e) { calou("o turno deles contado", e); contou = false; }
+      if (!contou) for (const ev of golpesDelesDaVez) { try { sentirGolpe(ev); } catch (e) { calou("o golpe deles na mesa", e); } }
       const compTxt = partesComp.length ? ` Meus companheiros agiram: ${partesComp.join("; ")}.` : "";
       const morteTxt = (!envelopeSemSaida && persAtual.vida <= 0) ? ` ATENÇÃO: eu caí a 0 PV e estou ${persAtual.morto ? "à beira da morte" : "inconsciente, lutando pela vida (testes de morte). Um aliado pode me estabilizar ou curar para eu voltar"}.` : "";
       entregar({ pers: persAtual, resumo: `${notaFuga}${notaRecuo} Turno dos inimigos (resolvido pelo sistema, dano já aplicado — narre só as decisões): ${partes.join("; ")}.${compTxt}${morteTxt}${envelopeSemSaida}` });
@@ -22698,13 +22911,14 @@ export default function Taverna() {
     } catch (e) { calou("o perigo do trecho", e); return null; }
   };
   /* A PAUTA DO ENCONTRO, pelo canal de um turno que a pauta já consome e limpa
-     (o do crime: `{ acabou, naoPode }` → ACABOU DE e NÃO PODE). Nenhum bloco
-     estático: o teto do prompt é sagrado. Junta-se ao que lá estiver. */
+     (`pautaDeUmTurno`, REFS_DA_PAUTA: `{ acabou, naoPode }` → ACABOU DE e NÃO
+     PODE). Nenhum bloco estático: o teto do prompt é sagrado. Junta-se ao que
+     lá estiver. CB lote 2: era o canal do crime, emprestado — dois órgãos no
+     mesmo ref apagavam-se um ao outro. */
   const porNaPautaDoTurno = (pa) => {
     try {
       if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length)) return;
-      const atual = crimeDoTurnoRef.current || {};
-      crimeDoTurnoRef.current = { ...atual, acabou: [...(atual.acabou || []), ...(pa.acabou || [])], naoPode: [...(atual.naoPode || []), ...(pa.naoPode || [])] };
+      pautaDeUmTurnoRef.current = juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, pa);
     } catch (e) { calou("a pauta do encontro", e); }
   };
   /* A CHAMADA DO MESTRE PARA O ENCONTRO (QUEM_RESPONDE.encontro): uma, própria,
@@ -22795,6 +23009,8 @@ export default function Taverna() {
       rajadaAgendadaRef.current = true;
       setTimeout(() => {
         try { const l = rajadaRef.current; rajadaRef.current = []; rajadaAgendadaRef.current = false; setGolpesDaRajada(l.length ? l : null); } catch (e) { calou("a rajada na mesa", e); }
+        /* CB 17.1: o lance do herói no MESMO lote que os golpes (o número espera pelo dado) */
+        soltarOLance();
       }, 0);
     } catch (e) { calou("o golpe sentido", e); }
   };
@@ -24772,6 +24988,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (!aberta) return;
     try {
       setAlvoPrevisto(null); setGolpesDaRajada(null); setRegistoDaRodada(null); setQuedasDoMeio([]); registoDaVezRef.current = [];
+      setLanceNaLuta(null); lanceDaRajadaRef.current = []; porOTurno(null);
       setEntradaNaMesa(null); setEscolhaNoEncontro(null);
       if (encontroPendenteRef.current) {
         pousarOEncontro(null);
@@ -26011,6 +26228,17 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (!dest) return null;
       const lugar = { ...de, x: dest.x, y: dest.y };
       if (!(distanciaM(lugar, alvo) <= alcanceM && linhaDeVisao(comb.grade, lugar, alvo))) return null;
+      /* CB11 (lote 2): A LINHA DO CAMINHO casa a casa — o custo acumulado, o
+         terreno difícil, quem alcança cada casa e o golpe livre pela regra que
+         `moverPara` aplica (`caminhoComProvocacoes`, vez-na-mesa.js), com o
+         que RESTA andar nesta rodada. Se a conta calar, a de sempre. */
+      try {
+        const cp = caminhoComProvocacoes(comb.grade, de, { x: dest.x, y: dest.y }, comb.inimigos || [], { aliados: comb.aliados || [], deslocamentoM: restante, ignoraDificil: passo.ignoraDificil });
+        if (cp && cp.ok && cp.casas.length) {
+          const fim = cp.casas[cp.casas.length - 1];
+          return { destino: { x: fim.x, y: fim.y }, caminho: { pontos: [{ x: de.x, y: de.y }, ...cp.casas.map((q) => ({ x: q.x, y: q.y }))], metros: cp.custoM, sobraM: passoAposAndar(eco && eco.movM, passo.metros, cp.custoM), golpeLivreEm: cp.provoca ? [{ x: de.x, y: de.y }] : [], casas: cp.casas, golpesLivres: cp.golpesLivres } };
+        }
+      } catch (e) { calou("a linha do caminho", e); }
       const chk = caminhar(comb.grade, de, { x: dest.x, y: dest.y }, { ocupados, deslocamentoM: restante, ignoraDificil: passo.ignoraDificil });
       if (!chk || !chk.ok) return null;
       const colados = adjacentes(de, comb.inimigos || []);
@@ -26047,9 +26275,43 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("andar e atacar", e); }
   };
 
+  /* ---------------- CB 17 (lote 2) · O QUE A MESA RECEBE DO TURNO DELES ----------------
+     Na espera (o dado do herói a rolar), a mesa mostra-os ONDE ESTAVAM: o
+     estado já os moveu, e sem isto saltariam para a frente, de volta e para
+     a frente outra vez. As intenções que o turno cumpre são as anunciadas;
+     as da rodada nova só entram depois do último passo. */
+  const turnoNaMesa = (() => {
+    try {
+      const td = turnoDeles;
+      if (!emBatalha || !combate || !td || td.indice < 0 || td.indice >= td.passos.length) return null;
+      return { passos: td.passos, indice: td.indice, acelerado: !!turnoDeles2x, aoSaltar: saltarOTurnoDeles, aoAcelerar: acelerarOTurnoDeles };
+    } catch (e) { calou("o turno deles na mesa", e); return null; }
+  })();
+  const combateDaMesa = (() => {
+    try {
+      const td = turnoDeles;
+      if (!td || td.indice >= 0 || !combate || !combateNaTela || !td.antes) return combateNaTela;
+      const pi = td.antes.inimigos || {}, pa = td.antes.aliados || {};
+      return { ...combateNaTela,
+        inimigos: (combateNaTela.inimigos || []).map((e) => (e && pi[e.nome] ? { ...e, ...pi[e.nome] } : e)),
+        aliados: (combateNaTela.aliados || []).map((a) => (a && a.nome && pa[a.nome] ? { ...a, ...pa[a.nome] } : a)) };
+    } catch (e) { calou("a mesa antes do turno deles", e); return combateNaTela; }
+  })();
+  const intencoesDaMesa = (() => {
+    try {
+      if (combate && turnoDeles && (turnoDeles.indice < 0 || turnoNaMesa)) return turnoDeles.intencoes;
+      return combate && combate.intencoes && Array.isArray(combate.intencoes.lista) ? combate.intencoes.lista : null;
+    } catch (e) { calou("as intenções na mesa", e); return null; }
+  })();
+  /* CB10 (lote 2): o recurso que cada verbo gasta é regra (`economiaDaVez`) */
+  const recursosDosVerbosDaMesa = (() => {
+    try { const v = combate && personagem ? economiaDaVez(combate, personagem, { passoTotalM: passoDaBatalha.passoTotal }) : null; return v ? v.recursosDosVerbos : null; }
+    catch (e) { calou("a economia da vez", e); return null; }
+  })();
+
   const telaDaBatalha = emBatalha ? (
     <TelaDeBatalha
-      combate={combateNaTela}
+      combate={combateDaMesa}
       lugar={lugarDaCena()}
       fim={!combate}
       aoSair={() => setFimDaLuta(null)}
@@ -26087,17 +26349,23 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       gaveta={gavetaDaBatalha}
       reacao={reacaoDaBatalha}
       decisao={golpeFinalDaBatalha}
-      /* CB · A BANDEJA NA LUTA (formas.md §CB 15, decisão do coordenador): o d20 do
-         último golpe do herói rola na mesa, com as faces que acertam acesas — a
-         peça de sempre, no lugar do dado (o teste pendente tem a vez quando há) */
-      dado={dadoDaBatalha || (combate && bandeja[0] && bandeja[0].golpe ? <LimiteDasFichas key="bandeja-da-luta"><Bandeja lancamentos={[bandeja[0]]} fresca={bandeja[0].n !== bandejaVista} /></LimiteDasFichas> : null)}
+      /* CB 17.1 (lote 2): o d20 do golpe do herói rola NO ALVO (`lance`, a
+         grade) e já não tapa a fileira dos verbos. `dado` leva só o teste que
+         o Mestre pede no meio da luta, que toma o lugar dos verbos enquanto
+         espera — e com ele pendente os verbos já estão impedidos (`bloqueado`
+         = carregando || rolagem). O lançamento continua na `bandeja`, para a
+         bandeja de fora da luta o mostrar depois. */
+      dado={dadoDaBatalha}
+      lance={lanceNaLuta}
+      turnoDeles={turnoNaMesa}
+      recursosDosVerbos={recursosDosVerbosDaMesa}
       passoM={passoDaBatalha.passoM}
       passoTotal={passoDaBatalha.passoTotal}
       ignoraDificil={passoDaBatalha.ignoraDificil}
       previsaoDoGolpe={previsaoNaMesa ? previsaoNaMesa.previsao : null}
       caminho={previsaoNaMesa ? previsaoNaMesa.caminho : null}
-      intencoes={combate && combate.intencoes && Array.isArray(combate.intencoes.lista) ? combate.intencoes.lista : null}
-      golpes={golpesDaRajada}
+      intencoes={intencoesDaMesa}
+      golpes={golpesDaMesa}
       aoPreverGolpe={(nome) => { try { setAlvoPrevisto(nome || null); } catch (e) { calou("prever o golpe", e); } }}
       aoAndarEAtacar={andarEAtacar}
       registo={registoDaRodada}

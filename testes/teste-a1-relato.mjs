@@ -332,8 +332,12 @@ t("o recibo do turno e o da luta anotam o que mostraram; o turno novo esquece",
   && /mostradoRef\.current = \{ itens: \[\], missoes: \[\] \};\s*\n\s*turnoDoReciboRef\.current = \{/.test(APP));
 t("a missão que a porta do aceite abriu não acende o Diário (os dois aceites)",
   (APP.match(/mostrarNaTela\(\{ missoes: /g) || []).length === 2);
+/* MOVIDA no CB lote 2 (10/11): a mesa recebe `combateDaMesa` — o mesmo
+   `combateNaTela`, salvo na espera antes do turno deles, em que os inimigos
+   aparecem nas casas de onde partiram. A intenção (o lugar da cena chega ao
+   cabeçalho, ao lado do combate) é a mesma. */
 t("o cabeçalho da batalha recebe o lugar da cena",
-  /combate=\{combateNaTela\}\s*\n\s*lugar=\{lugarDaCena\(\)\}/.test(APP));
+  /combate=\{combateDaMesa\}\s*\n\s*lugar=\{lugarDaCena\(\)\}/.test(APP) && /const combateDaMesa = \(\(\) => \{[\s\S]{0,200}return combateNaTela;/.test(APP));
 t("o botão d'O TEMPO diz a hora cheia por extenso",
   /* AAA · 4: o botão d'O TEMPO é o painel HORA do ecrã; a fala vem do App como vinha */
   /* MOVIDA em 08/11 (TL 9, o oficial): o ecrã passou a ser a Barra do Mestre e
