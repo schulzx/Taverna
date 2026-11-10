@@ -245,7 +245,7 @@ export function duracaoDosPassos(passos, o) {
       }
     }
   }
-  grupos = grupos.map((g) => ({ ...g, ms: Math.round(g.ms) }));
+  grupos = grupos.map((g) => ({ ...g, ms: Math.floor(g.ms) }))   /* 10/11: floor, não round — arredondar cada grupo para cima fazia a soma passar o teto por 1–4 ms (check-turno-deles: 492 de 9000) */;
   return { total: Math.round(soma(grupos) + fim), fator: Math.round(fator * 1000) / 1000, juntos, pousaDesde, passos: grupos };
 }
 

@@ -25,7 +25,10 @@
       casas e a câmara que enquadra quem importa;
    8. os rótulos acessíveis (a pílula, a casa do alvo, a fila, a economia,
       o cartão do encontro, as faces);
-   9. o d20 do golpe na bandeja, com as faces que acertam. */
+   9. o d20 do golpe na bandeja, com as faces que acertam;
+  10. CB 17 (lote 2): o d20 que rola NO ALVO sem tirar casas, o número que
+      espera pelo dado, o turno deles passo a passo, o teto, a saída, o
+      movimento reduzido, e a fila e a economia com os dados do motor. */
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
@@ -232,12 +235,12 @@ const ENTRADA = `
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PilulaDaPrevisao, PilulaDaIntencao, Economia, PipDoRecurso, FacesDoD20 } from "./ui.jsx";
-import { GridDeBatalha } from "./grade-de-batalha.jsx";
+import { GridDeBatalha, lancesNaMesa, alvosQueEsperam } from "./grade-de-batalha.jsx";
 import { TelaDeBatalha } from "./painel-batalha.jsx";
 import { CartaoDoEncontro, LinhaDaEscolha, FaixaDaAmeaca, SinalNaFolha, EntradaNaMesa } from "./painel-encontro.jsx";
-import { Bandeja } from "./painel-bandeja.jsx";
+import { Bandeja, DadoDoLance } from "./painel-bandeja.jsx";
 export const html = (el) => renderToStaticMarkup(el);
-export { React, PilulaDaPrevisao, PilulaDaIntencao, Economia, PipDoRecurso, FacesDoD20, GridDeBatalha, TelaDeBatalha, CartaoDoEncontro, LinhaDaEscolha, FaixaDaAmeaca, SinalNaFolha, EntradaNaMesa, Bandeja };
+export { React, PilulaDaPrevisao, PilulaDaIntencao, Economia, PipDoRecurso, FacesDoD20, GridDeBatalha, TelaDeBatalha, CartaoDoEncontro, LinhaDaEscolha, FaixaDaAmeaca, SinalNaFolha, EntradaNaMesa, Bandeja, DadoDoLance, lancesNaMesa, alvosQueEsperam };
 `;
 const saida = path.join(AQUI, `.tmp-batalha-na-tela-${process.pid}.mjs`);
 buildSync({
@@ -374,6 +377,116 @@ sec("9. o d20 do golpe na bandeja (§CB 15)");
   t("a bandeja acende as faces que acertam, com a legenda «acertas com 6 ou mais»", /aria-label="acertas com 6 ou mais no dado · o 20 é crítico"/.test(b));
   t("pousado, a face que saiu fica marcada (o 14)", /outline:2px solid/.test(b));
   t("o relógio do dado do golpe é a tabela (600 ms), e não é CSS", GOLPE_SENTIDO.dadoNaBandeja === 600);
+}
+
+/* ============================================================
+   10. CB 17 — o dado no alvo e o turno deles (formas.md §CB 17)
+   ============================================================ */
+const { DADO_NO_ALVO, TURNO_DELES, FOLHA } = await import("../src/estilo.js");
+const { duracaoDosPassos } = await import("../src/turno-contado.js");
+const { filaDaRodada, economiaDaVez } = await import("../src/vez-na-mesa.js");
+const LANCE = { alvo: "Bandido", n: 7, dados: [{ natural: 9, bonus: 6, total: 15, defesa: 12, desfecho: "acerta" }], acertam: facesQueAcertam(6, 12, 20), criticoEm: 20 };
+const GRADE_1905 = { combate: COMBATE, heroiFicha: HEROI, heroiNome: "Bran", ladoFixo: 32, larguraDaJanela: 869, alturaDaJanela: 740, tetoDoLado: 64 };
+const evento = (dano, desfecho = "acerto") => ({ tipo: "golpe", versao: 1, quem: "Bandido", alvo: "Bran", desfecho, dano, critico: false, abate: false, vidaAntes: 20, vidaMax: 28 });
+/* dois passos, na forma de passosDoTurno: o dragão sopra parado; o bandido
+   vem 4,5 m e acerta, com o d20 separado (14 +4 contra 16) */
+const PASSOS = [
+  { quem: "Dragão Jovem", lado: "inimigo", tipo: "sopro", de: { x: 9, y: 2 }, para: { x: 9, y: 2 }, caminho: [], metros: 0, area: SOPRO, intencao: "cumprida", emTi: true,
+    golpes: [{ alvo: "Bran", alvoOnde: { x: 5, y: 7 }, dado: null, acertam: [], salvam: [], abateAnunciado: 0.2, evento: { ...evento(14), quem: "Dragão Jovem" } }] },
+  { quem: "Bandido", lado: "inimigo", tipo: "atacar", de: { x: 6, y: 11 }, para: { x: 6, y: 8 }, caminho: [{ x: 6, y: 11 }, { x: 6, y: 10 }, { x: 6, y: 9 }, { x: 6, y: 8 }], metros: 4.5, area: null, intencao: "cumprida", emTi: true,
+    golpes: [{ alvo: "Bran", alvoOnde: { x: 5, y: 7 }, dado: { natural: 14, dados: [14], bonus: 4, total: 18, defesa: 16, modo: null }, acertam: facesQueAcertam(4, 16, 20), salvam: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], abateAnunciado: 0.1, evento: evento(5) }] },
+];
+const TURNO = (indice, acelerado = false) => ({ passos: PASSOS, indice, acelerado, aoSaltar: () => {}, aoAcelerar: () => {} });
+
+sec("10. CB 17: o dado no alvo e o turno deles");
+{
+  /* --- o d20 rola no alvo, sem tirar casas --- */
+  janela(1905);
+  const g = R.html(h(R.GridDeBatalha, { ...GRADE_1905, previsaoDoGolpe: PREV, lance: LANCE }));
+  t("O D20 ROLA NO ALVO: a pílula da previsão vira o dado («precisas de 6+», «o dado rola…»)",
+    /role="status" aria-label="o dado rola contra Bandido; precisas de 6\+"/.test(g) && texto(g).includes("o dado rola…"), (g.match(/role="status"[^>]*>/) || [""])[0]);
+  t("a rolar: o d20 balança (tv-dado-no-alvo) e o aro é âmbar tracejado 4/3", g.includes("tv-dado-no-alvo") && g.includes(`stroke-dasharray="${DADO_NO_ALVO.tracejadoRola.join(" ")}"`));
+  t("enquanto há lance do herói, a pílula da previsão daquele alvo não se desenha (o dado tomou-lhe o lugar)", !/role="img" aria-label="Bandido: 78% de acertar/.test(g));
+  t("o d20 da mesa mede 44 (o corpo da bandeja, DadoDoLance)", g.includes(`width="${DADO_NO_ALVO.lado.mesa}" height="${DADO_NO_ALVO.lado.mesa}"`));
+  t("É UMA CAMADA, NÃO UM LUGAR: a pílula mora em position:absolute na camada de cima do tabuleiro",
+    /<span style="position:absolute;z-index:4;left:[^"]*opacity:1[^"]*"><span role="status" aria-label="o dado rola contra Bandido/.test(g));
+  /* a conta de §CB 16.2 não muda com o dado: ele não ocupa layout */
+  const tel = geometriaDaMesa({ largura: 375, altura: 812 }), mesa = geometriaDaMesa({ largura: 1905, altura: 1000 });
+  t("e não tira casa nenhuma: 99 casas a 375 × 812, casa 49 a 1905 × 1000", tel.casasAVista === 99 && tel.casa === 40 && mesa.casa === 49, `${tel.casasAVista} · ${mesa.casa}`);
+  const telaComLance = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], lance: LANCE, intencoes: INTENCOES, passoM: 6, passoTotal: 9 }));
+  t("a barra não leva a bandeja do golpe (o dado está no alvo)", !/aria-label="Os dados na mesa"/.test(telaComLance) && /aria-label="o dado rola contra Bandido/.test(telaComLance));
+  const comTeste = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], dado: R.React.createElement("button", null, "Rolar d20"), passoM: 6, passoTotal: 9 }));
+  t("o teste pendente («Rolar d20») toma o lugar da fileira — a barra não ganha linha", texto(comTeste).includes("Rolar d20") && !texto(comTeste).includes("Mover") && !texto(comTeste).includes("Atacar"));
+
+  janela(1905, true);
+  const pousado = R.html(h(R.GridDeBatalha, { ...GRADE_1905, previsaoDoGolpe: PREV, lance: LANCE }));
+  t("REDUZIDO: o dado aparece pousado — a conta («9 +6 = 15 contra 12») e «acerta», sem balançar",
+    /aria-label="Bandido: 9 \+6 = 15 contra 12, acerta"/.test(pousado) && !pousado.includes("tv-dado-no-alvo") && !pousado.includes(`stroke-dasharray="${DADO_NO_ALVO.tracejadoRola.join(" ")}"`));
+  const crit = R.html(h(R.GridDeBatalha, { ...GRADE_1905, lance: { ...LANCE, dados: [{ natural: 20, bonus: 6, total: 26, defesa: 12, desfecho: "critico" }] } }));
+  t("o crítico: «20 no dado», «CRÍTICO» e o aro a 2,5", texto(crit).includes("20 no dado") && texto(crit).includes("CRÍTICO") && crit.includes(`stroke-width="${DADO_NO_ALVO.aroCritico}"`));
+  const erra = R.html(h(R.GridDeBatalha, { ...GRADE_1905, lance: { ...LANCE, dados: [{ natural: 3, bonus: 6, total: 9, defesa: 12, desfecho: "erra" }] } }));
+  t("o erro: «erra», o d20 a 70 % e o aro lineStrong", texto(erra).includes("erra") && erra.includes(`opacity:${DADO_NO_ALVO.erraAlfa}`) && erra.includes(`stroke="${T.lineStrong}"`));
+
+  /* --- o número espera pelo dado (a conta, pura) --- */
+  const um = R.lancesNaMesa(LANCE, null, { heroi: "Bran" });
+  t("um d20 pousa aos 600 ms (DADO_NO_ALVO.rola)", um.length === 1 && J(um[0].pousaEm) === `[${DADO_NO_ALVO.rola}]` && um[0].rola === true);
+  const quatro = R.lancesNaMesa({ ...LANCE, dados: [1, 2, 3, 4].map((n) => ({ natural: n, bonus: 6, total: n + 6, defesa: 12, desfecho: "erra" })) }, null, {});
+  t("vários d20 pousam com 90 ms entre si e nunca passam de 780", J(quatro[0].pousaEm) === "[600,690,780,780]", J(quatro[0].pousaEm));
+  const extra = R.lancesNaMesa([LANCE, { ...LANCE, alvo: "Dragão Jovem" }], null, {});
+  t("o Ataque Extra: um dado em cada alvo, que rolam juntos e pousam com 90 ms entre si", extra.length === 2 && J(extra.map((l) => l.pousaEm[0])) === "[600,690]");
+  t("com 2× o dado rola 300", J(R.lancesNaMesa(LANCE, null, { acelerado: true })[0].pousaEm) === `[${DADO_NO_ALVO.rola * TURNO_DELES.acelerado}]`);
+  t("O NÚMERO ESPERA PELO DADO: enquanto rola, o alvo do lance espera; pousado, ninguém", R.alvosQueEsperam(um, false).has("Bandido") && R.alvosQueEsperam(um, true).size === 0);
+  const deles = R.lancesNaMesa(null, { ...PASSOS[1], i: 1 }, { heroi: "Bran" });
+  t("o d20 deles pousa já (0 ms), e o golpe nele não espera", deles.length === 1 && J(deles[0].pousaEm) === "[0]" && deles[0].deles === "Bandido" && R.alvosQueEsperam(deles, false).size === 0);
+  const letal = R.lancesNaMesa(null, { ...PASSOS[1], i: 1, golpes: [{ ...PASSOS[1].golpes[0], abateAnunciado: 0.4 }] }, { heroi: "Bran" });
+  t("§CB 17.8: o d20 que anunciou a caveira sobre ti ROLA (600) — e o número espera", letal[0].letal === true && letal[0].rola === true && J(letal[0].pousaEm) === "[600]" && R.alvosQueEsperam(letal, false).has("Bran"));
+  t("o golpe livre de quem foge é do herói, e não dá um d20 deles", R.lancesNaMesa(null, { quem: "Bandido", lado: "inimigo", tipo: "fugir", golpes: [{ alvo: "Bandido", dado: { natural: 12, bonus: 5, defesa: 12 }, evento: evento(4) }] }, {}).length === 0);
+
+  /* --- o turno deles, passo a passo --- */
+  janela(1905);
+  const p1 = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1) }));
+  t("«A TUA VEZ» passa a «A VEZ DELES · Bandido» na coluna Tu", texto(p1).includes("A vez deles · Bandido") && !texto(p1).includes("A tua vez"));
+  t("a fila diz a quem ouve que a vez é deles («agora: Bandido»)", /role="group" aria-label="agora: Bandido"/.test(p1));
+  t("o Pé do campo leva a frase do passo («Bandido → Bran: vem 4,5 m e acerta, 5.»)", texto(p1).includes("Bandido → Bran: vem 4,5 m e acerta, 5."));
+  t("os dois controlos no Pé: «2×» (interruptor, desligado) e «Saltar ›», a 32", /aria-pressed="false" aria-label="dobro da velocidade"/.test(p1) && texto(p1).includes("Saltar ›") && p1.includes(`height:${BATALHA_EM_TRES.pe}px;min-height:${BATALHA_EM_TRES.pe}px;border-radius:${BATALHA_EM_TRES.pe / 2}px`));
+  t("«A rodada N» cresce: a linha lida do sopro e a nova do bandido, com a barra (te feriu: danger)", texto(p1).includes("Dragão Jovem") && texto(p1).includes("Bandido → Bran") && p1.includes(`border-left:2px solid ${T.danger}`));
+  t("o cartão de quem age leva aro danger 2; quem já agiu fica a 45 %", p1.includes(`border:2px solid ${T.danger}`) && p1.includes(`opacity:${TURNO_DELES.agiu}`));
+  t("o d20 deles pousa no alvo, a 28 («Bandido · 14 +4 contra 16», «acerta»)", /aria-label="Bran: 14 \+4 contra 16, acerta"/.test(p1) && p1.includes(`width="${DADO_NO_ALVO.lado.deles}" height="${DADO_NO_ALVO.lado.deles}"`));
+  t("o anel de quem age (com o brilho) e o caminho com a origem tracejada", p1.includes("tv-anel-age") && /<circle cx="6\.5" cy="11\.5" r="0\.4" fill="none" stroke="[^"]*"/.test(p1));
+  t("a intenção cumprida sai da mesa: a pílula do Bandido e a do Dragão já não estão no tabuleiro", !/vai atacar Bran[^"]*"[^>]*>[^<]*<\/span>\s*<\/span>\s*<span style="position:absolute;z-index:2/.test(p1) && (p1.match(/vai soprar/g) || []).length <= 1);
+  const p1x2 = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1, true) }));
+  t("com 2× o interruptor liga (aria-pressed, chão âmbar a 18 %)", /aria-pressed="true" aria-label="dobro da velocidade"/.test(p1x2));
+  const fim = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(PASSOS.length) }));
+  t("NO FIM, A TUA VEZ: sem controlos, e a fila volta ao herói", texto(fim).includes("A tua vez") && !texto(fim).includes("Saltar ›") && /aria-label="agora: Bran"/.test(fim));
+  janela(375);
+  const pt = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1) }));
+  t("no telefone: «A vez deles» e o nome no canto, 2× e Saltar a 44, e o ⤢ cala-se", texto(pt).includes("A vez deles") && pt.includes(`height:${BATALHA_EM_TRES.telefone.pe}px;min-height:${BATALHA_EM_TRES.telefone.pe}px`) && /display:none/.test(pt));
+
+  /* --- o teto e a saída --- */
+  const d1 = duracaoDosPassos(PASSOS, { velocidade: 1, tabela: TURNO_DELES }), d2 = duracaoDosPassos(PASSOS, { velocidade: 2, tabela: TURNO_DELES });
+  t("O TETO: com a tabela de estilo.js, o turno cabe em 4 s, e a 2× em 2", d1.total <= TURNO_DELES.teto && d2.total <= TURNO_DELES.teto * TURNO_DELES.acelerado, `${d1.total} · ${d2.total}`);
+  t("A SAÍDA: há sempre «Saltar ›» enquanto o turno se conta, e nunca depois", [0, 1].every((i) => texto(R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], passoM: 6, passoTotal: 9, turnoDeles: TURNO(i) }))).includes("Saltar ›")));
+
+  /* --- o movimento reduzido --- */
+  janela(1905, true);
+  const pr = R.html(h(R.GridDeBatalha, { ...GRADE_1905, passo: { ...PASSOS[1], i: 1 }, agiram: ["Dragão Jovem"] }));
+  t("REDUZIDO: a ficha de quem age já está no destino (sem deslizar), e o caminho fica desenhado", /<circle cx="6\.5" cy="11\.5" r="0\.4"/.test(pr) && pr.includes("transform:translate(6.5px, 8.5px)"));
+  const reduzido = (FOLHA.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}/g) || []).join("\n");
+  t("e as três classes novas param no bloco reduzido (o dado, o anel, o sopro)", ["tv-dado-no-alvo", "tv-anel-age", "tv-sopro-pulsa"].every((c) => reduzido.includes(`.${c} { animation: none`)));
+
+  /* --- a fila e a economia com os dados do motor --- */
+  janela(1905);
+  const tela = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9 }));
+  const fila = filaDaRodada(COMBATE, { ...HEROI, grupo: [] }, {});
+  const grupoDaFila = (tela.match(/role="group" aria-label="agora: Bran"[\s\S]*?<\/div>/) || [""])[0];
+  const ordem = fila.rostos.map((x) => x.nome);
+  const posicoes = ordem.map((n) => grupoDaFila.indexOf(`>${n}<`));
+  t(`A FILA SEGUE A ORDEM DO MOTOR (${ordem.join(" → ")}), e não a iniciativa`, posicoes.every((p, i) => p >= 0 && (i === 0 || p > posicoes[i - 1])), J(posicoes));
+  t("a iniciativa aparece como número ao lado do nome («Bandido 12»)", texto(grupoDaFila).includes("Bandido 12") && texto(grupoDaFila).includes("Bran 15"));
+  const eco = economiaDaVez(COMBATE, HEROI, { passoTotalM: 9 });
+  t("A ECONOMIA LÊ economiaDaVez: ação, bónus e reação como o motor os conta", eco.acao.resta === 1 && eco.bonus.tem && /aria-label="ação livre, bónus livre, reação livre, 6 de 9 m de passo"/.test(tela));
+  const gasto = R.html(h(R.Economia, { vez: economiaDaVez({ ...COMBATE, economia: { acao: 0, extra: 1 }, recursos: { reacao: false } }, HEROI, { passoTotalM: 9 }) }));
+  t("e com a ação e a reação gastas, a peça di-lo (vinda só de `vez`)", /aria-label="ação gasta, bónus livre, reação gasta/.test(gasto), (gasto.match(/aria-label="[^"]*"/) || [""])[0]);
 }
 
 console.log(`\nbatalha na tela (CB): ${ok} passaram, ${mal} falharam`);

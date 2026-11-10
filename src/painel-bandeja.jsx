@@ -104,8 +104,10 @@ function Marca({ desfecho, tam, largura = tam }) {
   );
 }
 
-/* Um dado do lance. O d100 é dois d10 (dezenas e unidades), com a marca à volta dos dois. */
-function DadoDoLance({ d, tam, rolando, desfecho, troca }) {
+/* Um dado do lance. O d100 é dois d10 (dezenas e unidades), com a marca à volta dos dois.
+   Exportado (CB 17.1, 09/11): o d20 que rola no alvo (`DadoNoAlvo`, grade-de-batalha.jsx)
+   é este mesmo dado — não se desenha um segundo. Nada muda na Bandeja de fora da luta. */
+export function DadoDoLance({ d, tam, rolando, desfecho, troca }) {
   const papel = d.papel;
   if (d.faces === 100) {
     const v = d.valor % 100;

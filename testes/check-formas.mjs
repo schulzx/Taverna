@@ -439,7 +439,8 @@ const TETO_DE_CONTADOR_DE_QUADRO = {
   "src/ui.jsx": 2,               /* as brasas, e elas estão certas: `performance.now()` */
   "src/painel-bandeja.jsx": 1,   /* 04/11 · a bandeja: o número que troca enquanto o dado rola lê o relógio (`Date.now() - inicio`), não conta tiques; numa aba de fundo ele salta, e o resultado já veio da semente */
   "src/App.jsx": 2,              /* o d20, e ele está certo: `Date.now() - inicio > 1200` */
-  "src/grade-de-batalha.jsx": 1, /* DÍVIDA: `grade-de-batalha.jsx:385` conta TIQUES
+  "src/grade-de-batalha.jsx": 3, /* 09/11 · CB 17 (+2): o número do dado no alvo e o deslizar da ficha de quem age no turno deles — os dois LEEM o relógio (`Date.now() - inicio`), não contam tiques; numa aba de fundo saltam para onde já deviam estar. O terceiro é a dívida de baixo. */
+                                 /* DÍVIDA: `grade-de-batalha.jsx:385` conta TIQUES
                                     (`i += 1`), não tempo. Cosmético ali — a peça anda
                                     devagar numa aba de fundo e não mente sobre nada.
                                     FATAL se copiado para o trilho da reação. É este

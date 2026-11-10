@@ -54,7 +54,15 @@ import { PREVISAO_DO_GOLPE, CAMINHO_NO_CHAO, INTENCAO_NA_MESA, GOLPE_SENTIDO, FE
 import { BATALHA_EM_TRES as B3 } from "./estilo.js";
 import { variacaoDoGolpe, pilulaDaPrevisao, chipDaQueda } from "./batalha-na-tela.js";
 import { GLIFOS } from "./glifos.js";
-import { tocarGolpe } from "./som-da-mesa.js";
+import { tocarGolpe, tocarDado } from "./som-da-mesa.js";
+/* CB 17 (lote 2): o d20 do ataque rola NO ALVO (formas.md §CB 17.1) e o turno
+   deles conta-se em passos (§CB 17.2). O corpo do dado é o da bandeja
+   (DadoDoLance), as faces que acertam são as do motor (facesQueAcertam), e
+   as medidas e os tempos moram em DADO_NO_ALVO e TURNO_DELES. */
+import { DADO_NO_ALVO, TURNO_DELES } from "./estilo.js";
+import { DadoDoLance } from "./painel-bandeja.jsx";
+import { FacesDoD20 } from "./ui.jsx";
+import { facesQueAcertam } from "./previsao.js";
 /* A1 · o custo onde surpreende e a legenda do passo são contas puras */
 import { casasQueSurpreendem, legendaDoPasso } from "./glifos.js";
 /* E2 — A GRAMÁTICA DO ENDEREÇO NÃO É NOVA, E ISSO É LEI. `LETRAS_DA_GRADE`
@@ -307,7 +315,10 @@ const Contorno = ({ linhas, cor, largura = 0.05, tracejado = null, opacidade = 1
    vez por golpe. O tremor mede-se em píxeis de tela (--tremor, convertido
    para casas, porque o SVG mede em casas). `anel`: o anel tracejado âmbar
    do alvo da previsão, ou o realce de quem está sob o rato na fila. */
-function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0, golpe = null, anel = null }) {
+/* CB 17.2 · `age`: o `Anel de quem age` (Figma 364:1469) — traço 3 em `danger`
+   (`ok` num aliado), a `folga` px por fora do disco, e o brilho a 35 % por
+   baixo dele (tv-anel-age, que sai com o movimento reduzido). */
+function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0, golpe = null, anel = null, age = null }) {
   /* o clipPath precisa de id único e ESTÁVEL: derivado de x,y ele trocaria
      no meio do deslizamento e o rosto piscaria a cada passo */
   const uid = React.useId();
@@ -333,6 +344,16 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
         <circle r={r + lado * 0.13} fill="none" stroke={anel} strokeWidth={PREVISAO_DO_GOLPE.anelDoAlvo.traco * umPx}
           strokeDasharray={PREVISAO_DO_GOLPE.anelDoAlvo.tracejado.map((n) => n * umPx).join(" ")} />
       )}
+      {age && (() => {
+        const A = TURNO_DELES.anel;
+        const rA = r + lado * 0.07 + (A.folga + A.traco / 2) * umPx;
+        return (
+          <>
+            <circle className="tv-anel-age" r={rA} fill="none" stroke={age} strokeWidth={(A.traco + A.raio * 2) * umPx} />
+            <circle r={rA} fill="none" stroke={age} strokeWidth={A.traco * umPx} />
+          </>
+        );
+      })()}
       <g key={golpe ? golpe.chave : "quieta"} className={golpe ? [golpe.classes.tremor, golpe.classes.afunda].filter(Boolean).join(" ") : undefined}
         style={golpe ? { "--tremor": `${tremorPx * umPx}px` } : undefined}>
       {tipo === "heroi" && <circle r={r * 1.5} fill={T.amber} opacity={0.12} />}
@@ -395,6 +416,146 @@ function NumeroDoGolpe({ variacao, reduzido = false }) {
   );
 }
 
+/* ============================================================
+   CB 17.1 · O DADO NO ALVO (Figma 363:1649) — a pílula da previsão vira o
+   dado. Seis estados: rola (aro âmbar tracejado 4/3, o d20 a balançar e o
+   número a trocar, «precisas de N+»), acerta, critico (aro 2,5, «✦ CRÍTICO»),
+   erra (aro lineStrong, o d20 a 70 %), deles-acerta e deles-erra (o d20 a 28,
+   pousado, «Goblin · 14 +4 contra 16», aro danger / lineStrong).
+   O relógio do NÚMERO é desta peça (troca a cada DADO_NO_ALVO.troca); o
+   relógio do POUSO é da grade (`pousou`), que o encurta com qualquer toque.
+   Fora do toque: o toque é das casas, por baixo.
+   `lance`: { alvo, dados: [{ natural, bonus, total, defesa, desfecho }],
+   deles (o nome de quem ataca, no turno deles), rola, pousaEm: [ms],
+   letal, salvam } — já normalizado pela grade.
+   §CB 17.8 (o dado que te pode derrubar): o d20 deles cuja intenção
+   anunciou a caveira sobre ti ROLA, com «precisa de N+ para te acertar» e
+   as faces que te salvam acesas em `ok`.
+   ============================================================ */
+const sinal = (n) => (Number(n) >= 0 ? `+${Number(n) || 0}` : `−${Math.abs(Number(n))}`);
+const precisaDe = (d) => { const f = facesQueAcertam(d.bonus, d.defesa, 20); return f.length ? f[0] : 20; };
+function DadoNoAlvo({ lance, pousou, telefone = false, parado = false }) {
+  const L = DADO_NO_ALVO;
+  const dados = Array.isArray(lance && lance.dados) ? lance.dados : [];
+  const pousaEm = Array.isArray(lance && lance.pousaEm) ? lance.pousaEm : [];
+  const ultimoPouso = Math.max(0, ...pousaEm);
+  const [passou, setPassou] = React.useState(0);
+  React.useEffect(() => {
+    if (pousou || parado || !lance || !lance.rola) return undefined;
+    const inicio = Date.now();
+    const id = setInterval(() => {
+      const ms = Date.now() - inicio;
+      setPassou(ms);
+      if (ms >= ultimoPouso) clearInterval(id);
+    }, L.troca);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pousou]);
+  if (!lance || !dados.length) return null;
+  const rolaODado = (i) => !!lance.rola && !pousou && !parado && passou < (pousaEm[i] || 0);
+  const rolando = dados.some((_, i) => rolaODado(i));
+  const deles = !!lance.deles;
+  const lado = deles && !lance.rola ? L.lado.deles : telefone ? L.lado.telefone : L.lado.mesa;
+  const alto = lado + L.respiro * 2;
+  const critico = !rolando && dados.some((d) => d.desfecho === "critico");
+  const acertou = dados.some((d) => d.desfecho === "acerta" || d.desfecho === "critico");
+  const aro = rolando ? T.amber : deles ? (acertou ? T.danger : T.lineStrong) : acertou ? T.amber : T.lineStrong;
+  const grossura = critico && !deles ? L.aroCritico : L.aro;
+  const d0 = dados[0];
+  const conta = (d) => (d.natural === 20 && !deles ? "20 no dado"
+    : deles ? `${d.natural} ${sinal(d.bonus)} contra ${d.defesa}`
+      : `${d.natural} ${sinal(d.bonus)} = ${d.total != null ? d.total : d.natural + (Number(d.bonus) || 0)} contra ${d.defesa}`);
+  const linha1 = rolando
+    ? (deles ? `precisa de ${precisaDe(d0)}+ para te acertar` : `precisas de ${precisaDe(d0)}+`)
+    : `${deles ? `${lance.deles} · ` : ""}${dados.map(conta).join(" · ")}`;
+  const desfechoDe = (d) => (d.desfecho === "critico" && !deles ? "CRÍTICO" : d.desfecho === "acerta" || d.desfecho === "critico" ? "acerta" : "erra");
+  const corDoDesfecho = !acertou ? T.inkDim : deles ? T.danger : critico ? T.amber : T.ok;
+  const rotulo = rolando
+    ? `o dado rola contra ${lance.alvo}; ${linha1}`
+    : `${lance.alvo}: ${dados.map((d) => `${conta(d)}, ${desfechoDe(d).toLowerCase()}`).join("; ")}`;
+  /* as faces que te salvam (§CB 17.8): só no dado letal deles */
+  const salvam = lance.letal && Array.isArray(lance.salvam) ? new Set(lance.salvam) : null;
+  const P = PREVISAO_DO_GOLPE;
+  return (
+    <span role="status" aria-label={rotulo} className="inline-flex flex-col items-center" style={{ gap: L.entre }}>
+      <span className="inline-flex items-center" style={{ position: "relative", height: alto, borderRadius: alto / 2, gap: L.entre,
+        padding: `0 ${L.direita}px 0 ${L.respiro}px`, background: T.pagina, whiteSpace: "nowrap" }}>
+        {/* o aro em SVG: o tracejado 4/3 da peça não sai de um border dashed */}
+        <svg aria-hidden="true" width="100%" height="100%" style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}>
+          <rect x="0" y="0" width="100%" height="100%" rx={alto / 2} fill="none" stroke={aro} strokeWidth={grossura}
+            strokeDasharray={rolando ? L.tracejadoRola.join(" ") : undefined} />
+        </svg>
+        <span aria-hidden="true" className="inline-flex" style={{ gap: L.respiro }}>
+          {dados.map((d, i) => (
+            <span key={i} className={rolaODado(i) ? "tv-dado-no-alvo" : undefined}
+              style={{ display: "inline-flex", opacity: !rolaODado(i) && desfechoDe(d) === "erra" ? L.erraAlfa : 1 }}>
+              <DadoDoLance d={{ faces: 20, valor: d.natural, papel: "teste" }} tam={lado} rolando={rolaODado(i)} desfecho="livre" troca={Math.floor(passou / L.troca) + i} />
+            </span>
+          ))}
+        </span>
+        <span aria-hidden="true" className="tv-mono flex flex-col" style={{ lineHeight: 1.25 }}>
+          <span style={{ fontSize: TIPOS.piso, color: rolando ? T.amberSoft : T.inkMeio }}>{linha1}</span>
+          {rolando
+            ? <span style={{ fontSize: TIPOS.piso, color: T.inkDim }}>o dado rola…</span>
+            : (
+              <span style={{ fontSize: TIPOS.rotulo, fontWeight: 700, color: corDoDesfecho }}>
+                {critico && !deles && <><Glifo nome="faisca" tamanho={TIPOS.rotulo} cor={T.amber} />{" "}</>}
+                {[...new Set(dados.map(desfechoDe))].join(" · ")}
+              </span>
+            )}
+        </span>
+      </span>
+      {salvam && (
+        <span style={{ padding: L.respiro, borderRadius: P.raio / 2, background: T.pagina, maxWidth: P.faces.lado[0] * 10 + P.faces.entre * 9 + L.respiro * 2 }}>
+          <FacesDoD20 tom="salva" faces={Array.from({ length: 20 }, (_, i) => ({ n: i + 1, acerta: salvam.has(i + 1) }))}
+            saiu={rolando ? null : d0.natural} rotulo={`as faces que te salvam: ${[...salvam].join(", ") || "nenhuma"}`} />
+        </span>
+      )}
+    </span>
+  );
+}
+
+/* o desfecho do d20 deles, lido do evento do golpe (a variante do golpe sentido) */
+const desfechoDoEvento = (ev) => { const v = variacaoDoGolpe(ev); return !v ? "erra" : v.variante === "erro" ? "erra" : v.variante === "critico" ? "critico" : "acerta"; };
+/* a chave estável de um passo (o índice e quem age): muda quando o passo muda */
+const chaveDoPasso = (p) => (p && p.quem ? `${p.i != null ? p.i : ""}:${p.quem}` : "");
+
+/* ============================================================
+   CB 17.1 · OS LANCES NA MESA — a conta, pura (provada em Node pela suíte)
+   Os do herói (`lance`, um ou uma lista) e os do passo deles (o d20 de cada
+   golpe, que pousa já — menos o letal, §CB 17.8, que rola). Cada dado ganha
+   o instante em que pousa: DADO_NO_ALVO.rola (a metade com 2×), mais
+   `entreDados` por dado a seguir, nunca além de `tetoDeVarios`. O golpe de
+   fuga é o golpe livre do herói, e não é um d20 deles.
+   ============================================================ */
+export function lancesNaMesa(lance, passo, o) {
+  const { heroi = "", acelerado = false } = o && typeof o === "object" ? o : {};
+  const kDoDado = acelerado ? TURNO_DELES.acelerado : 1;
+  const out = [];
+  let ordem = 0;
+  const pousos = (n, rola) => Array.from({ length: n }, () => (rola ? Math.min(DADO_NO_ALVO.rola * kDoDado + (ordem++) * DADO_NO_ALVO.entreDados, DADO_NO_ALVO.tetoDeVarios * kDoDado) : 0));
+  const doHeroi = (Array.isArray(lance) ? lance : lance ? [lance] : []).filter((l) => l && l.alvo && Array.isArray(l.dados) && l.dados.length);
+  for (const l of doHeroi) {
+    const dados = l.dados.filter((d) => d && Number.isFinite(Number(d.natural))).map((d) => ({ natural: Number(d.natural), bonus: Number(d.bonus) || 0, total: d.total != null ? Number(d.total) : null, defesa: d.defesa != null ? Number(d.defesa) : null, desfecho: d.desfecho || "erra" }));
+    if (!dados.length) continue;
+    out.push({ chave: `h:${l.n != null ? l.n : ""}:${l.alvo}`, alvo: String(l.alvo), dados, deles: null, rola: true, pousaEm: pousos(dados.length, true), heroi: true, acertam: l.acertam || null, criticoEm: l.criticoEm || null });
+  }
+  const kp = chaveDoPasso(passo);
+  (passo && Array.isArray(passo.golpes) ? passo.golpes : []).forEach((gp, j) => {
+    if (!gp || !gp.dado || !gp.alvo || passo.lado === "inimigo" && passo.tipo === "fugir") return;
+    const letal = !!heroi && gp.alvo === heroi && Number.isFinite(Number(gp.abateAnunciado)) && Number(gp.abateAnunciado) >= INTENCAO_NA_MESA.abateQueSeAnuncia;
+    const d = { natural: Number(gp.dado.natural), bonus: Number(gp.dado.bonus) || 0, total: gp.dado.total, defesa: gp.dado.defesa, desfecho: desfechoDoEvento(gp.evento) };
+    out.push({ chave: `d:${kp}:${j}`, alvo: String(gp.alvo), dados: [d], deles: passo.quem, rola: letal, letal, salvam: gp.salvam || null, pousaEm: pousos(1, letal), de: passo.para || passo.de || null });
+  });
+  return out;
+}
+/* quem espera pelo dado: os alvos de um lance que ainda rola (o número do
+   golpe neles nasce no pouso, §CB 17.1); depois do pouso, ninguém */
+export function alvosQueEsperam(lances, pousou) {
+  if (pousou || !Array.isArray(lances)) return new Set();
+  return new Set(lances.filter((l) => l && l.rola).map((l) => l.alvo));
+}
+
 /* `ladoFixo` (E3): o lado da casa em píxeis, imposto por quem monta. Com
    ele o tabuleiro deixa de ser "o campo inteiro espremido no espaço que
    houver" e passa a ser uma JANELA SOBRE UM CAMPO — *quem encolhe é o
@@ -430,8 +591,83 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
        veuDoUltimo     — o nome do último (ou do importante): o véu a 45 %
                          sobre o campo, menos a casa dele, com o anel âmbar. */
   previsaoDoGolpe = null, intencoes = null, caminho = null, golpes = null, aoApontarInimigo = null, aoTocarInimigo = null, realce = null, reguaPresa = false, heroiNome = "",
-  quedas = null, aoMudarQueda = null, veuDoUltimo = null }) {
+  quedas = null, aoMudarQueda = null, veuDoUltimo = null,
+  /* CB 17 (formas.md §CB 17.6, item 3):
+       lance    — o d20 do herói, que rola NO ALVO: { alvo, dados: [{ natural,
+                  bonus, total, defesa, desfecho ("acerta"|"critico"|"erra") }],
+                  n, acertam?, criticoEm? } (ou uma lista, um por alvo, no
+                  Ataque Extra). Enquanto há lance, a previsão daquele alvo
+                  cala-se, e o número do golpe nele ESPERA pelo dado;
+       passo    — o passo corrente do turno deles (passosDoTurno, com `i` e
+                  `porVir`: [{ quem, de }] — quem ainda não agiu fica onde
+                  estava): o anel de quem age, o caminho, a origem, o deslizar
+                  da ficha, o pulso do sopro e o d20 deles no alvo;
+       agiram   — os nomes de quem já agiu (a intenção deles sai da mesa);
+       acelerado — o 2× do turno deles (o dado rola a metade);
+       vista    — no telefone, a janela da câmara ({ x0, y0, janela }): o dado
+                  que não cabe por baixo do alvo sobe para cima dele;
+       aoLance({ alvo, rolando, saiu, acertam, criticoEm } | null) — o estado
+                  do lance do herói, para «O teu golpe» acender a face. */
+  lance = null, passo = null, agiram = null, acelerado = false, vista = null, aoLance = null }) {
   const [aberto, setAberto] = React.useState(false);
+  const paradoAgora = movimentoParado();
+  const heroiDoGolpe = heroiNome || (heroiFicha && heroiFicha.nome) || "";
+
+  /* ---------------- CB 17.1 · OS LANCES NA MESA ----------------
+     Os do herói (`lance`) e os do passo deles (o d20 de cada golpe, que
+     pousa já — menos o letal, §CB 17.8, que rola). O relógio do pouso é um
+     só: rola DADO_NO_ALVO.rola (a metade com 2×); vários dados pousam com
+     `entreDados` entre si e nunca passam de `tetoDeVarios`. Qualquer toque,
+     clique ou tecla pousa já, e é aceite (a entrada nunca espera). Depois do
+     pouso, o golpe sentido, a leitura e o esvanecer; e a pílula sai. */
+  const lances = (() => { try { return lancesNaMesa(lance, passo, { heroi: heroiDoGolpe, acelerado }); } catch (e) { console.warn("GridDeBatalha: o lance não se leu", e); return []; } })();
+  const chaveDosLances = lances.map((l) => l.chave).join("|");
+  const pousoMax = Math.max(0, ...lances.flatMap((l) => l.pousaEm));
+  const [estadoDoLance, setEstadoDoLance] = React.useState({ chave: "", pousou: false, acabou: false });
+  const lanceAgora = estadoDoLance.chave === chaveDosLances ? estadoDoLance : { chave: chaveDosLances, pousou: paradoAgora || pousoMax === 0, acabou: false };
+  const pousarJaRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!chaveDosLances) { pousarJaRef.current = null; return undefined; }
+    const chave = chaveDosLances;
+    const depois = GOLPE_SENTIDO.teto + GOLPE_SENTIDO.leitura + GOLPE_SENTIDO.esvai;
+    const rolou = lances.some((l) => l.rola);
+    let tFim = null, pousado = false;
+    const pousar = () => {
+      if (pousado) return;
+      pousado = true; clearTimeout(tPouso); pousarJaRef.current = null;
+      setEstadoDoLance({ chave, pousou: true, acabou: false });
+      if (rolou) { try { tocarDado(); } catch { /* um som que estoura cala-se */ } }
+      tEsvai = setTimeout(() => setEstadoDoLance({ chave, pousou: true, acabou: false, esvai: true }), depois - GOLPE_SENTIDO.esvai);
+      tFim = setTimeout(() => setEstadoDoLance({ chave, pousou: true, acabou: true }), depois);
+    };
+    let tEsvai = null;
+    const tPouso = setTimeout(pousar, paradoAgora ? 0 : pousoMax);
+    pousarJaRef.current = pousar;
+    return () => { clearTimeout(tPouso); clearTimeout(tEsvai); clearTimeout(tFim); pousarJaRef.current = null; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveDosLances]);
+  const rolandoAgora = !!chaveDosLances && !lanceAgora.pousou;
+  /* o toque que pousa: qualquer, em qualquer sítio, e nunca consumido */
+  React.useEffect(() => {
+    if (!rolandoAgora || typeof window === "undefined" || !window.addEventListener) return undefined;
+    const ja = () => { try { if (pousarJaRef.current) pousarJaRef.current(); } catch { /* saltar nunca custa o turno */ } };
+    window.addEventListener("pointerdown", ja, true);
+    window.addEventListener("keydown", ja, true);
+    return () => { window.removeEventListener("pointerdown", ja, true); window.removeEventListener("keydown", ja, true); };
+  }, [rolandoAgora]);
+  /* o lance do herói dito a quem monta («O teu golpe» marca a face) */
+  const lanceDoHeroi = lances.find((l) => l.heroi) || null;
+  const sinalDoLance = lanceDoHeroi && !lanceAgora.acabou ? `${lanceDoHeroi.chave}|${lanceAgora.pousou ? "p" : "r"}` : "";
+  React.useEffect(() => {
+    if (!aoLance) return;
+    try {
+      aoLance(lanceDoHeroi && !lanceAgora.acabou ? { alvo: lanceDoHeroi.alvo, rolando: !lanceAgora.pousou, saiu: lanceAgora.pousou ? lanceDoHeroi.dados[lanceDoHeroi.dados.length - 1].natural : null, acertam: lanceDoHeroi.acertam, criticoEm: lanceDoHeroi.criticoEm } : null);
+    } catch (e) { console.warn("GridDeBatalha: dizer o lance falhou", e); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sinalDoLance]);
+  /* quem espera pelo dado: os alvos de um lance que ainda rola */
+  const alvosAEspera = alvosQueEsperam(lances, !rolandoAgora);
+  const esperaRef = React.useRef([]);
 
   /* ---------------- CB 5 · O GOLPE SENTIDO ----------------
      Cada evento novo (pela chave) entra na mesa uma vez: a ficha treme, o
@@ -449,6 +685,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         if (!ev || ev.chave == null || golpesVistosRef.current.has(ev.chave)) continue;
         golpesVistosRef.current.add(ev.chave);
         const v = variacaoDoGolpe(ev, { heroi: heroiNome || (heroiFicha && heroiFicha.nome) || "" });
+        /* CB 17.1: O NÚMERO ESPERA PELO DADO. O golpe no alvo de um lance que
+           ainda rola guarda-se, e nasce (com o som) no pouso — se saltasse
+           antes, estragava o dado */
+        if (v && alvosAEspera.has(ev.alvo)) { esperaRef.current.push({ v: { ...v, chave: ev.chave, alvo: ev.alvo }, ev }); continue; }
         if (v) novos.push({ ...v, chave: ev.chave, alvo: ev.alvo });
         try { tocarGolpe(ev); } catch { /* um som que estoura cala-se */ }
       } catch (e) { console.warn("GridDeBatalha: o golpe não pousou", e); }
@@ -459,6 +699,21 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     return () => tids.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [golpes]);
+  /* o pouso solta os golpes que esperavam (o número nasce agora, com o som) */
+  const tidsDoPousoRef = React.useRef([]);
+  React.useEffect(() => {
+    if (rolandoAgora || !esperaRef.current.length) return;
+    const soltos = esperaRef.current;
+    esperaRef.current = [];
+    try {
+      setGolpesNaMesa((g) => [...g, ...soltos.map((x) => x.v)]);
+      for (const x of soltos) {
+        try { tocarGolpe(x.ev); } catch { /* um som que estoura cala-se */ }
+        tidsDoPousoRef.current.push(setTimeout(() => setGolpesNaMesa((g) => g.filter((y) => y.chave !== x.v.chave)), x.v.dura));
+      }
+    } catch (e) { console.warn("GridDeBatalha: o golpe depois do dado não pousou", e); }
+  }, [rolandoAgora, golpes]);
+  React.useEffect(() => () => tidsDoPousoRef.current.forEach(clearTimeout), []);
   const golpeEm = (nome) => { for (let i = golpesNaMesa.length - 1; i >= 0; i--) if (golpesNaMesa[i].alvo === nome) return golpesNaMesa[i]; return null; };
   const golpeComBorda = golpesNaMesa.find((x) => x.borda) || null;
   const golpeQueTremeAMesa = golpesNaMesa.find((x) => x.mesa) || null;
@@ -637,6 +892,30 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [posHeroi]);
 
+  /* ---------------- CB 17.2 · O PASSO DELES ----------------
+     A ficha de quem age desliza pelo caminho a TURNO_DELES.porCasa por casa,
+     com teto de andarTeto (a metade com 2×). Com movimento reduzido salta
+     para o destino (o caminho fica desenhado o passo inteiro). O estado já
+     está aplicado: isto é só leitura do que aconteceu. */
+  const kpAgora = chaveDoPasso(passo);
+  const [andaDeles, setAndaDeles] = React.useState(null);
+  React.useEffect(() => {
+    const cam = passo && Array.isArray(passo.caminho) ? passo.caminho.filter((q) => q && q.x != null) : [];
+    if (cam.length < 2 || movimentoParado()) { setAndaDeles(null); return undefined; }
+    const ms = Math.max(1, Math.round(Math.min(TURNO_DELES.porCasa, TURNO_DELES.andarTeto / (cam.length - 1)) * (acelerado ? TURNO_DELES.acelerado : 1)));
+    /* lê o relógio, não conta tiques (D5e): numa aba de fundo a ficha salta
+       para a casa em que já devia estar */
+    const inicio = Date.now();
+    setAndaDeles({ chave: kpAgora, rota: cam, i: 0, ms });
+    const id = setInterval(() => {
+      const i = Math.floor((Date.now() - inicio) / ms);
+      if (i >= cam.length) { clearInterval(id); setAndaDeles({ chave: kpAgora, rota: cam, i: cam.length - 1, ms }); }
+      else setAndaDeles({ chave: kpAgora, rota: cam, i, ms });
+    }, ms);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kpAgora]);
+
   if (!g) return null;
 
   const aliados = ((combate.aliados) || []).map((a, i) => ({ ...a, ...(grupo[i] || {}), x: a.x, y: a.y }));
@@ -659,7 +938,10 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   const surpreendem = (() => { try { return casasQueSurpreendem(custoDoPasso, heroi); } catch (e) { return new Set(custoDoPasso.keys()); } })();
   const naArea = new Set(((previsao && previsao.quadrados) || []).map((q) => K(q.x, q.y)));
   /* CB 4 · as intenções, por inimigo; as casas do sopro; quem é o alvo */
-  const intencaoDe = new Map((Array.isArray(intencoes) ? intencoes : []).filter((i) => i && i.inimigo && i.vista).map((i) => [i.inimigo, i.vista]));
+  /* CB 17.2: no turno deles a intenção de quem age e a de quem já agiu saem
+     da mesa (cumpriu-se; o dado e o caminho dizem-no agora) */
+  const jaCumpriu = new Set([...(Array.isArray(agiram) ? agiram.map(String) : []), ...(passo && passo.quem ? [String(passo.quem)] : [])]);
+  const intencaoDe = new Map((Array.isArray(intencoes) ? intencoes : []).filter((i) => i && i.inimigo && i.vista && !jaCumpriu.has(i.inimigo)).map((i) => [i.inimigo, i.vista]));
   const casasDoSopro = new Set();
   for (const v of intencaoDe.values()) if (v.tipo === "sopro" && Array.isArray(v.area)) v.area.forEach((q) => casasDoSopro.add(K(q.x, q.y)));
   const alvoDaPrevisao = previsaoDoGolpe && previsaoDoGolpe.alvo ? String(previsaoDoGolpe.alvo) : "";
@@ -667,6 +949,24 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   const golpeLivreEm = new Set((caminho && Array.isArray(caminho.golpeLivreEm) ? caminho.golpeLivreEm : []).map((q) => K(q.x, q.y)));
   const caidosComCasa = ((combate.inimigos) || []).filter((e) => e && e.x != null && (e.derrotado || (e.vida || 0) <= 0));
   const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
+  /* CB 17.2 · quem age, quem já agiu e onde cada um se vê durante o passo:
+     quem age no caminho (no começo dele antes de deslizar), quem ainda não
+     agiu na casa de onde parte (`porVir`), os outros onde o estado os pôs */
+  const quemAge = passo && passo.quem ? String(passo.quem) : "";
+  const camDoPasso = passo && Array.isArray(passo.caminho) ? passo.caminho.filter((q) => q && q.x != null) : [];
+  const porVir = new Map((passo && Array.isArray(passo.porVir) ? passo.porVir : []).filter((x) => x && x.quem && x.de && x.de.x != null && x.quem !== quemAge).map((x) => [String(x.quem), x.de]));
+  const ondeEsta = (ent) => {
+    if (!ent || ent.x == null) return ent;
+    if (quemAge && ent.nome === quemAge && camDoPasso.length > 1 && !paradoAgora) {
+      const q = andaDeles && andaDeles.chave === kpAgora ? andaDeles.rota[andaDeles.i] : camDoPasso[0];
+      return q ? { x: q.x, y: q.y } : ent;
+    }
+    const pv = porVir.get(ent.nome);
+    return pv ? { x: pv.x, y: pv.y } : ent;
+  };
+  const msDoPasso = (ent) => (quemAge && ent && ent.nome === quemAge && andaDeles && andaDeles.chave === kpAgora ? andaDeles.ms : 260);
+  /* o sopro de quem age pulsa (as casas do passo); o vazio apaga-se */
+  const soproDoPasso = passo && passo.tipo === "sopro" && passo.intencao !== "perdido" && Array.isArray(passo.area) ? passo.area.filter((q) => q && q.x != null) : [];
 
   /* quem ocupa cada quadrado — o rótulo fica no canto superior esquerdo de
      quem ocupa mais de um, que é onde a ficha é desenhada */
@@ -1063,6 +1363,36 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             })}
           </g>
         )}
+        {/* CB 17.2 · O SOPRO DE QUEM AGE: as casas pulsam do chão da área ao
+            segundo alfa (22 → 45 → 22 %, no tempo de pintar), com o aro e a
+            chama de sempre; o sopro vazio não se desenha (a linha di-lo) */}
+        {soproDoPasso.length > 0 && (
+          <g key={`soproPasso${kpAgora}`} style={{ pointerEvents: "none" }}>
+            {soproDoPasso.map((q) => {
+              const A = INTENCAO_NA_MESA.area;
+              return (
+                <g key={`sp${q.x},${q.y}`}>
+                  <rect className="tv-sopro-pulsa" x={q.x + (A.aro * px) / 2} y={q.y + (A.aro * px) / 2} width={1 - A.aro * px} height={1 - A.aro * px}
+                    fill={T.danger} fillOpacity={TURNO_DELES.sopro.alfa[0]} stroke={T.danger} strokeWidth={A.aro * px} strokeDasharray={A.tracejado.map((n) => n * px).join(" ")} />
+                  <GlifoNaCasa nome={INTENCAO_NA_MESA.glifo.sopro} x={q.x} y={q.y} lado={0.42} cor={T.danger} px={px} />
+                </g>
+              );
+            })}
+          </g>
+        )}
+        {/* CB 17.2 · O CAMINHO DELES (`Casa marcada · caminho-deles`, Figma
+            364:1470): a linha da intenção (traço 2, tracejado 5/4, `danger`)
+            pelos centros, um ponto em cada casa do meio, e o aro tracejado
+            `lineStrong` na casa de onde veio. Fica o passo inteiro. */}
+        {camDoPasso.length > 1 && (
+          <g style={{ pointerEvents: "none" }}>
+            <path d={viaDoCaminho(camDoPasso)} fill="none" stroke={T.danger} strokeWidth={INTENCAO_NA_MESA.seta.traco * px}
+              strokeDasharray={INTENCAO_NA_MESA.seta.tracejado.map((n) => n * px).join(" ")} strokeLinecap="round" strokeLinejoin="round" />
+            {camDoPasso.slice(1, -1).map((q, i) => <circle key={`cd${i}`} cx={q.x + 0.5} cy={q.y + 0.5} r={(CAMINHO_NO_CHAO.ponto / 2) * px} fill={T.danger} />)}
+            <circle cx={camDoPasso[0].x + 0.5} cy={camDoPasso[0].y + 0.5} r={0.4} fill="none" stroke={T.lineStrong}
+              strokeWidth={TURNO_DELES.origem.aro * px} strokeDasharray={TURNO_DELES.origem.tracejado.map((n) => n * px).join(" ")} />
+          </g>
+        )}
         {/* CB 4 · A SETA DO ATAQUE: da ficha dele à do alvo, tracejada */}
         {[...intencaoDe.entries()].map(([nome, v]) => {
           if (v.tipo !== "atacar" || !v.alvo) return null;
@@ -1188,7 +1518,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           {[...mapa.values()].filter((o) => o.chefe).map((o, i) => {
             const n = ladoDe(o.ent), eu = o.tipo === "heroi";
             const tr = (eu ? MB.chao.tracoDoHeroi : MB.chao.tracoDosOutros) * px;
-            const ox = eu && andando ? andando.rota[andando.i].x : o.ent.x, oy = eu && andando ? andando.rota[andando.i].y : o.ent.y;
+            const naMesa = eu ? o.ent : ondeEsta(o.ent);
+            const ox = eu && andando ? andando.rota[andando.i].x : naMesa.x, oy = eu && andando ? andando.rota[andando.i].y : naMesa.y;
             return (
               <rect key={`casa${i}`} x={ox + tr / 2} y={oy + tr / 2} width={n - tr} height={n - tr}
                 fill={o.cor} fillOpacity={eu ? MB.alfa.casaDoHeroi : MB.alfa.casaDosOutros} stroke={o.cor} strokeWidth={tr} />
@@ -1199,12 +1530,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         {/* AS FICHAS */}
         <g style={{ pointerEvents: "none" }}>
           {aliados.map((a, i) => (a.vida || 0) > 0 && a.x != null ? (
-            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={a.x} y={a.y} lado={ladoDe(a)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)}
-              golpe={golpeEm(a.nome)} anel={realce && realce === a.nome ? T.amber : null} />
+            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={ondeEsta(a).x} y={ondeEsta(a).y} lado={ladoDe(a)} ms={msDoPasso(a)} grande={grande} pxDaCasa={ladoEmPx(grande)}
+              golpe={golpeEm(a.nome)} anel={realce && realce === a.nome ? T.amber : null} age={quemAge === a.nome ? T.ok : null} />
           ) : null)}
           {inimigos.map((e, i) => e.x != null ? (
-            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={260} grande={grande} pxDaCasa={ladoEmPx(grande)}
-              golpe={golpeEm(e.nome)} anel={alvoDaPrevisao === e.nome || (realce && realce === e.nome) ? T.amber : null} />
+            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={ondeEsta(e).x} y={ondeEsta(e).y} lado={ladoDe(e)} ms={msDoPasso(e)} grande={grande} pxDaCasa={ladoEmPx(grande)}
+              golpe={golpeEm(e.nome)} anel={alvoDaPrevisao === e.nome || (realce && realce === e.nome) ? T.amber : null} age={quemAge === e.nome ? T.danger : null} />
           ) : null)}
           {caidosComCasa.filter((e) => { const gq = golpeEm(e.nome); return gq && gq.variante === "abate"; }).map((e, i) => (
             <Ficha key={`cai${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={0} grande={grande} pxDaCasa={ladoEmPx(grande)} golpe={golpeEm(e.nome)} />
@@ -1420,7 +1751,43 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             </span>
           );
         })}
-        {alvoDaPrevisao && (() => {
+        {/* CB 17.1 · O DADO NO ALVO: pousa 8 px abaixo da ficha do alvo (onde
+            a previsão estava) e, se não cabe por baixo — a borda do tabuleiro
+            ou a janela da câmara —, sobe para cima dela. O d20 deles pousa do
+            lado do alvo OPOSTO a quem ataca, para o caminho e o atacante
+            ficarem à vista. Esvanece no fim da leitura. */}
+        {!lanceAgora.acabou && lances.map((l) => {
+          const ehHeroi = !!heroiDoGolpe && l.alvo === heroiDoGolpe;
+          const e = ehHeroi ? heroi : inimigos.find((x) => x.nome === l.alvo) || aliados.find((x) => x.nome === l.alvo) || caidosComCasa.find((x) => x.nome === l.alvo);
+          if (!e || e.x == null) return null;
+          const n = ladoDe(e);
+          const ladoPx = Math.max(1, ladoEmPx(grande));
+          const altoEmCasas = (DADO_NO_ALVO.lado.mesa + DADO_NO_ALVO.respiro * 2 + DADO_NO_ALVO.abaixoDaFicha) / ladoPx;
+          const fundo = vista && Array.isArray(vista.janela) && !grande ? Math.min(g.altura, (vista.y0 || 0) + vista.janela[1]) : g.altura;
+          const cx = `${((e.x + n / 2) / g.largura) * 100}%`;
+          let pos;
+          if (l.deles && l.de && l.de.x != null) {
+            const dx = l.de.x - e.x, dy = l.de.y - e.y;
+            pos = Math.abs(dx) > Math.abs(dy)
+              ? (dx < 0
+                ? { left: `${((e.x + n) / g.largura) * 100}%`, top: `${((e.y + n / 2) / g.altura) * 100}%`, transform: `translate(${DADO_NO_ALVO.entre}px, -50%)` }
+                : { left: `${(e.x / g.largura) * 100}%`, top: `${((e.y + n / 2) / g.altura) * 100}%`, transform: `translate(calc(-100% - ${DADO_NO_ALVO.entre}px), -50%)` })
+              : (dy > 0
+                ? { left: cx, top: `${(e.y / g.altura) * 100}%`, transform: `translate(-50%, calc(-100% - ${DADO_NO_ALVO.abaixoDaFicha}px))` }
+                : { left: cx, top: `${((e.y + n) / g.altura) * 100}%`, transform: `translate(-50%, ${DADO_NO_ALVO.abaixoDaFicha}px)` });
+          } else {
+            const cabePorBaixo = e.y + n + altoEmCasas <= fundo;
+            pos = cabePorBaixo
+              ? { left: cx, top: `${((e.y + n) / g.altura) * 100}%`, transform: `translate(-50%, ${DADO_NO_ALVO.abaixoDaFicha}px)` }
+              : { left: cx, top: `${(e.y / g.altura) * 100}%`, transform: `translate(-50%, calc(-100% - ${DADO_NO_ALVO.abaixoDaFicha}px))` };
+          }
+          return (
+            <span key={`dado${l.chave}`} style={{ position: "absolute", zIndex: 4, ...pos, opacity: lanceAgora.esvai ? 0 : 1, transition: `opacity ${GOLPE_SENTIDO.esvai}ms ease-in` }}>
+              <DadoNoAlvo lance={l} pousou={lanceAgora.pousou} telefone={reguaPresa} parado={parado} />
+            </span>
+          );
+        })}
+        {alvoDaPrevisao && !(lanceDoHeroi && !lanceAgora.acabou && lances.some((l) => l.heroi && l.alvo === alvoDaPrevisao)) && (() => {
           const e = inimigos.find((x) => x.nome === alvoDaPrevisao);
           if (!e || e.x == null) return null;
           const n = ladoDe(e);

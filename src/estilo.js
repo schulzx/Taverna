@@ -3969,6 +3969,35 @@ export const FILA_DA_VEZ = {               // §CB 8
   vez: 56, espera: 40, aroVez: 3, aro: 2, agiu: 0.45, caido: 0.3, entre: 6,
   marcaDaRodada: { fio: [2, 36], alfa: 0.6 }, telefone: { vez: 44, espera: 34 },
 };
+/* CB 17 (lote 2, 09/11) — o d20 do ataque rola NO ALVO, no lugar da pílula da
+   previsão (formas.md §CB 17.1; Figma 363:1649), e o turno deles contado em
+   passos (§CB 17.2; Figma 364:1449, 364:1469, 364:1470, F6 370:2104). As
+   duas tabelas leem as de §CB 11 e não copiam número delas (§CB 17.3).
+   Nenhuma cor nova: tudo nomeia T. */
+export const DADO_NO_ALVO = {              // §CB 17.1 — ms e px
+  rola: GOLPE_SENTIDO.dadoNaBandeja,       // 600
+  troca: MOVIMENTO_DO_DADO.troca,          // 60
+  entreDados: MOVIMENTO_DO_DADO.entreDados, tetoDeVarios: 780,
+  giro: -18,
+  lado: { mesa: 44, telefone: 36, deles: 28 },
+  respiro: 4, direita: 12, entre: 8, aro: 1.5, aroCritico: 2.5, tracejadoRola: [4, 3],
+  abaixoDaFicha: PREVISAO_DO_GOLPE.abaixoDaFicha,
+  erraAlfa: 0.7,
+  reduzido: MOVIMENTO_DO_DADO.semMovimento, // 120
+};
+export const TURNO_DELES = {               // §CB 17.2 — ms
+  teto: 4000, pisoDoPasso: 250,
+  realce: 120, porCasa: 60, andarTeto: 300, soproPinta: 200, respiro: 120, fim: 200,
+  sopro: { alfa: [INTENCAO_NA_MESA.area.chao, 0.45] },   // o 0,22 é o chão da área, lido de lá
+  acelerado: 0.5,
+  reduzido: { passo: 400 },
+  linhaNova: 120, intencoesNovas: 200,
+  agiu: FILA_DA_VEZ.agiu,
+  anel: { traco: 3, brilho: 0.35, raio: 8, folga: 2 },
+  origem: { aro: 1.5, tracejado: [4, 3] },
+  controlo: { ligado: 0.18 },              // a altura é a do Pé: BATALHA_EM_TRES.pe e .telefone.pe
+  preferencia: "taverna:turno-deles-2x",
+};
 
 /* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
@@ -4499,6 +4528,17 @@ export const MOVIMENTO_CSS = `
 .tv-entrada-veu { animation: tvEntradaVeu ${CARTAO_DO_ENCONTRO.entrada.veu[1] - CARTAO_DO_ENCONTRO.entrada.veu[0]}ms ease-out both; }
 .tv-entrada-cresce { animation: tvEntradaCresce ${CARTAO_DO_ENCONTRO.entrada.cresce[1] - CARTAO_DO_ENCONTRO.entrada.cresce[0]}ms ease-in-out ${CARTAO_DO_ENCONTRO.entrada.cresce[0]}ms both; }
 .tv-entrada-mesa { animation: tvEntradaMesa ${CARTAO_DO_ENCONTRO.entrada.mesa[1] - CARTAO_DO_ENCONTRO.entrada.mesa[0]}ms ease-out ${CARTAO_DO_ENCONTRO.entrada.mesa[0]}ms both; }
+/* CB 17 · O DADO NO ALVO E O TURNO DELES. O d20 balanca ate ao giro de
+   DADO_NO_ALVO enquanto rola (o numero troca por JavaScript, a cada troca);
+   o anel de quem age acende o brilho no tempo do realce; as casas do sopro
+   pulsam do chao da area ao segundo alfa de TURNO_DELES, no tempo de pintar.
+   Nada disto prende a entrada, e as tres tem saida no bloco reduzido. */
+@keyframes tvDadoNoAlvo { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(${DADO_NO_ALVO.giro}deg); } }
+@keyframes tvAnelAge { from { opacity: 0; } to { opacity: ${TURNO_DELES.anel.brilho}; } }
+@keyframes tvSoproPulsa { 0%, 100% { fill-opacity: ${TURNO_DELES.sopro.alfa[0]}; } 50% { fill-opacity: ${TURNO_DELES.sopro.alfa[1]}; } }
+.tv-dado-no-alvo { animation: tvDadoNoAlvo ${DADO_NO_ALVO.troca * 4}ms ease-in-out ${Math.ceil(DADO_NO_ALVO.tetoDeVarios / (DADO_NO_ALVO.troca * 4))}; transform-origin: 50% 50%; }
+.tv-anel-age { opacity: ${TURNO_DELES.anel.brilho}; animation: tvAnelAge ${TURNO_DELES.realce}ms ease-out both; }
+.tv-sopro-pulsa { animation: tvSoproPulsa ${TURNO_DELES.soproPinta}ms ease-in-out 1 both; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
@@ -4636,6 +4676,12 @@ export const MOVIMENTO_CSS = `
   /* CB 7 · a entrada na mesa: corte seco para a mesa, e o som fica */
   .tv-entrada-veu, .tv-entrada-cresce { animation: none; opacity: 0; }
   .tv-entrada-mesa { animation: none; opacity: 1; transform: none; }
+  /* CB 17 · o dado no alvo aparece pousado (a peca nem o poe a rolar), o
+     anel de quem age fica sem brilho e o sopro nao pulsa: a ordem e
+     informacao e fica, o movimento sai, e o som fica (WCAG 2.2, 2.3.3) */
+  .tv-dado-no-alvo { animation: none; transform: none; }
+  .tv-anel-age { animation: none; opacity: 0; }
+  .tv-sopro-pulsa { animation: none; }
 }
 `;
 

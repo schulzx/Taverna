@@ -3096,7 +3096,16 @@ export function PipDoRecurso({ recurso, estado = "livre", tamanho = ECONOMIA_DA_
   );
 }
 /* A ECONOMIA — os pips e o movimento («6 de 9 m»), na coluna Tu e na tira */
-export function Economia({ economia, recursos = null, emJogo = null, acaoBonus = false, passoM = null, passoTotal = null, compacta = false }) {
+/* CB 17 (lote 2): `vez` é economiaDaVez (vez-na-mesa.js) — o que resta da ação,
+   da bónus, da reação e do passo, numa conta só e provada em Node. Com ela, a
+   peça lê dali; sem ela, dos campos soltos de sempre. */
+export function Economia({ economia: economiaSolta, recursos: recursosSoltos = null, emJogo = null, acaoBonus: bonusSolto = false, passoM: passoSolto = null, passoTotal: totalSolto = null, compacta = false, vez = null }) {
+  const v = vez && typeof vez === "object" && vez.acao ? vez : null;
+  const economia = v ? { acao: v.acao.resta, extra: v.bonus.tem ? v.bonus.resta : null } : economiaSolta;
+  const recursos = v ? { reacao: !!v.reacao.resta } : recursosSoltos;
+  const acaoBonus = v ? !!v.bonus.tem : bonusSolto;
+  const passoM = v && v.movimento ? v.movimento.restaM : passoSolto;
+  const passoTotal = v && v.movimento ? v.movimento.totalM : totalSolto;
   const pips = pipsDaEconomia(economia, recursos, { emJogo, acaoBonus });
   const E = ECONOMIA_DA_VEZ;
   const m = Math.max(0, Number(passoM) || 0), mt = Math.max(0, Number(passoTotal) || 0);
@@ -3129,7 +3138,10 @@ export function Economia({ economia, recursos = null, emJogo = null, acaoBonus =
 /* AS 20 FACES DO D20 — as que acertam acesas em âmbar. `faces`: a lista de
    golpePorExtenso (ou do lançamento do golpe, na bandeja); `saiu`: a face
    que o dado deu, quando já pousou. */
-export function FacesDoD20({ faces, saiu = null, rotulo = "" }) {
+/* CB 17.8: `tom="salva"` acende em `ok` as faces que salvam quem leva o golpe
+   (o d20 deles que te pode derrubar); o de sempre é o âmbar do teu golpe. */
+export function FacesDoD20({ faces, saiu = null, rotulo = "", tom = "acerta" }) {
+  const acesa = tom === "salva" ? T.ok : T.amber;
   if (!Array.isArray(faces) || faces.length !== 20) return null;
   const F = PREVISAO_DO_GOLPE.faces;
   return (
@@ -3140,8 +3152,8 @@ export function FacesDoD20({ faces, saiu = null, rotulo = "" }) {
         return (
           <span key={f.n} aria-hidden="true" className="inline-flex items-center justify-center"
             style={{ width: F.lado[0], height: F.lado[1], borderRadius: F.raio, fontSize: PREVISAO_DO_GOLPE.letra.legenda, fontWeight: f.acerta ? 700 : 400,
-              background: f.acerta ? alfa(T.amber, F.acesa) : "transparent", color: f.acerta ? T.onAccent : T.inkDim,
-              border: `1px solid ${f.acerta ? T.amber : T.lineStrong}`,
+              background: f.acerta ? alfa(acesa, F.acesa) : "transparent", color: f.acerta ? T.onAccent : T.inkDim,
+              border: `1px solid ${f.acerta ? acesa : T.lineStrong}`,
               outline: caiu ? `2px solid ${T.ink}` : undefined, outlineOffset: caiu ? 1 : undefined, opacity: saiu != null && !caiu ? 0.55 : 1 }}>
             {f.n}
           </span>

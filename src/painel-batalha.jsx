@@ -60,7 +60,12 @@ import { Retrato, Glifo, Recibo, Dobra, Economia, PipDoRecurso, PilulaDaIntencao
    telefone e a câmara que enquadra quem importa. As decisões moram em
    batalha-na-tela.js; as medidas, nas tabelas de CB. */
 import { BATALHA_EM_TRES as B3, FILA_DA_VEZ, PREVISAO_DO_GOLPE, INTENCAO_NA_MESA, FECHO_DA_QUEDA } from "./estilo.js";
-import { filaDaVez, golpePorExtenso, geometriaDaMesa, camaraDoTelefone, avisoDaArea, pilulaDaPrevisao } from "./batalha-na-tela.js";
+import { filaDaVez, golpePorExtenso, geometriaDaMesa, camaraDoTelefone, avisoDaArea, pilulaDaPrevisao, variacaoDoGolpe } from "./batalha-na-tela.js";
+/* CB 17 (lote 2): a fila pela ordem em que o motor joga e a economia da vez
+   (vez-na-mesa.js), e o turno deles contado (formas.md §CB 17.2): os tempos
+   e o controlo moram em TURNO_DELES. */
+import { TURNO_DELES } from "./estilo.js";
+import { filaDaRodada, economiaDaVez } from "./vez-na-mesa.js";
 import { sementeDe, estadoDe } from "./semente.js";
 import { metrosTxt, podeDarUmPasso, garantirGrade, nomeDoLugar } from "./grid.js";
 import { mecanicaDe } from "./condicoes.js";
@@ -332,14 +337,19 @@ function FioComRuna({ dosDoisLados = false }) {
    coluna diziam o mesmo duas vezes (§CB 2). O nome acessível da fila é a
    resposta à pergunta «de quem é a vez?», e sai do módulo (`rotuloDaVez`).
    Com «Eles» em gaveta (duas colunas), o rosto do inimigo abre-a. */
-function FilaDaVez({ fila, rotulo, entes, intencaoDe, noTelefone, realce, aoRealcar, aoAbrirEles = null }) {
+/* CB 17 (lote 2): a fila segue A ORDEM EM QUE O MOTOR JOGA (`filaDaRodada`,
+   vez-na-mesa.js — o herói, os inimigos pela lista da luta, o grupo), e a
+   iniciativa rolada aparece como número ao lado do nome. No turno deles a
+   vez de quem age leva o aro `danger` (o âmbar é a vez do herói), e quem já
+   agiu fica a 45 % (§CB 17.2). */
+function FilaDaVez({ fila, rotulo, entes, intencaoDe, noTelefone, realce, aoRealcar, aoAbrirEles = null, vezDeles = false }) {
   if (!fila || !fila.rostos.length) return null;
   const F = FILA_DA_VEZ;
   const um = (r, i, proximo = false) => {
     const inimigo = r.lado === "inimigo";
     const vez = r.estado === "vez" && !proximo;
     const tam = noTelefone ? (vez ? F.telefone.vez : F.telefone.espera) : (vez ? F.vez : F.espera);
-    const anel = vez ? T.amber : inimigo ? T.danger : T.lineStrong;
+    const anel = vez ? (vezDeles ? T.danger : T.amber) : inimigo ? T.danger : T.lineStrong;
     const op = r.estado === "caido" ? F.caido : r.estado === "agiu" || proximo ? F.agiu : 1;
     const vista = inimigo && intencaoDe ? intencaoDe.get(r.nome) : null;
     const glifo = vista && INTENCAO_NA_MESA.glifo[vista.tipo];
@@ -363,7 +373,12 @@ function FilaDaVez({ fila, rotulo, entes, intencaoDe, noTelefone, realce, aoReal
         {inimigo && aoAbrirEles ? (
           <button onClick={aoAbrirEles} aria-label={`${r.nome} — ver o que eles vão fazer`} className="tv-anel-foco rounded-full">{rosto}</button>
         ) : rosto}
-        {!noTelefone && <span className="tv-mono truncate" style={{ fontSize: TIPOS.piso, color: vez ? T.amberSoft : realce === r.nome ? T.ink : T.inkMeio, fontWeight: vez ? 700 : 400, maxWidth: F.vez + 24 }}>{r.nome}</span>}
+        {!noTelefone && (
+          <span className="tv-mono truncate" style={{ fontSize: TIPOS.piso, color: vez ? (vezDeles ? T.danger : T.amberSoft) : realce === r.nome ? T.ink : T.inkMeio, fontWeight: vez ? 700 : 400, maxWidth: F.vez + 24 }}
+            title={r.iniciativa != null ? `${r.nome} · iniciativa ${r.iniciativa}` : undefined}>
+            {r.nome}{r.iniciativa != null && !proximo && <span style={{ color: T.inkDim, fontWeight: 400 }}> {r.iniciativa}</span>}
+          </span>
+        )}
       </span>
     );
   };
@@ -410,7 +425,11 @@ function FilaDaVez({ fila, rotulo, entes, intencaoDe, noTelefone, realce, aoReal
    o ⤢ (`aoPortal`). A reação (K3) continua ancorada por cima desta linha e
    cresce para cima, sobre o terço de baixo do campo. `tom`: a cor da frase
    quando ela não é a do armado nem a do repouso (o resumo da área). */
-function PeDoCampo({ texto, armado, tom = null, reacao, noTelefone, aoPortal }) {
+/* §CB 17.2: no turno deles o Pé leva a frase do passo, com o glifo do tipo
+   da intenção no lugar da mira (`glifo`, `corDoGlifo`), e os dois controlos
+   (`controlo`) à direita, antes do ⤢; no telefone o ⤢ cala-se nesse tempo
+   (`calaOPortal`), para a frase ter largura. A altura não muda. */
+function PeDoCampo({ texto, armado, tom = null, reacao, noTelefone, aoPortal, glifo = "mira", corDoGlifo = T.danger, controlo = null, calaOPortal = false }) {
   const alto = (noTelefone ? B3.telefone.pe : B3.pe) + B3.aro;
   const V = B3.vereditoNoPe;
   return (
@@ -419,16 +438,93 @@ function PeDoCampo({ texto, armado, tom = null, reacao, noTelefone, aoPortal }) 
       {reacao && (
         <div style={{ position: "absolute", left: 0, right: 0, bottom: "100%", zIndex: 40 }}>{reacao}</div>
       )}
-      <Glifo nome="mira" tamanho={M.glifoDoSelo + 4} cor={T.danger} />
+      <Glifo nome={glifo} tamanho={M.glifoDoSelo + 4} cor={corDoGlifo} />
       <span className="tv-mono min-w-0" aria-live="polite" title={texto || undefined}
         style={{ flex: "1 1 0", fontSize: TIPOS.piso, lineHeight: `${V.entrelinha}px`, maxHeight: V.entrelinha * V.linhas,
           color: tom || (armado ? T.amberSoft : T.inkDim),
           display: "-webkit-box", WebkitLineClamp: V.linhas, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
         {texto}
       </span>
-      <div ref={aoPortal} className="flex items-center min-w-0 overflow-hidden" style={{ flex: "0 1 auto", height: "100%" }} />
+      {controlo}
+      <div ref={aoPortal} className="flex items-center min-w-0 overflow-hidden" style={{ flex: "0 1 auto", height: "100%", display: calaOPortal ? "none" : undefined }} />
     </div>
   );
+}
+
+/* ============================================================
+   CB 17.2 · O CONTROLO DO TURNO DELES (Figma 364:1449) — «2×» e «Saltar ›»
+   No Pé do campo, à direita, antes do ⤢, só enquanto o turno deles se
+   conta: 32 no monitor, 44 no telefone (a altura do Pé). «2×» é um
+   interruptor (`aria-pressed`; ligado: chão âmbar a 18 % e letra
+   `amberSoft`); «Saltar ›» leva a mesa ao fim já. A preferência do 2× é de
+   quem monta (TURNO_DELES.preferencia, no localStorage, nunca no save).
+   ============================================================ */
+function ControloDoTurnoDeles({ acelerado = false, aoAcelerar, aoSaltar, noTelefone = false }) {
+  const alto = noTelefone ? B3.telefone.pe : B3.pe;
+  const base = { height: alto, minHeight: alto, borderRadius: alto / 2, fontSize: TIPOS.piso, fontWeight: 700, background: T.panelSoft, border: `1px solid ${T.lineStrong}` };
+  const chama = (f) => () => { try { if (f) f(); } catch (e) { console.warn("TelaDeBatalha: o controlo do turno deles falhou", e); } };
+  return (
+    <span className="flex items-center shrink-0" style={{ gap: M.entreVerbos }}>
+      <button type="button" onClick={chama(aoAcelerar)} aria-pressed={!!acelerado} aria-label="dobro da velocidade"
+        className="tv-anel-foco tv-mono flex items-center justify-center shrink-0"
+        style={{ ...base, width: alto, minWidth: alto, color: acelerado ? T.amberSoft : T.inkMeio,
+          background: acelerado ? alfa(T.amber, TURNO_DELES.controlo.ligado) : T.panelSoft, border: `1px solid ${acelerado ? T.amber : T.lineStrong}` }}>
+        2×
+      </button>
+      <button type="button" onClick={chama(aoSaltar)} aria-label="Saltar o turno deles"
+        className="tv-anel-foco tv-mono flex items-center justify-center shrink-0"
+        style={{ ...base, padding: `0 ${M.chipLadoX + 2}px`, color: T.ink }}>
+        Saltar ›
+      </button>
+    </span>
+  );
+}
+
+/* ============================================================
+   CB 17.2 · A FRASE DO PASSO (tabela de tela): diz o que o mundo fez, nunca
+   o nome do mecanismo. A chave é a `intencao` do passo (passosDoTurno); a
+   parte do golpe é «acerta, 5.» ou «erra.»
+   ============================================================ */
+const FRASE_DO_PASSO = {
+  cumprida: ({ anda, golpe }) => (anda ? `vem ${anda} m e ${golpe}.` : `${golpe}.`),
+  reescolhe: ({ caiu, alvo, golpe }) => `${caiu || "o alvo"} caiu; vira-se para ${alvo} e ${golpe}.`,
+  reescolheAoAlcance: ({ caiu, alvo, golpe, eraEu }) => `já não ${eraEu ? "te alcança" : `alcança ${caiu || "o alvo"}`}; vira-se para ${alvo} e ${golpe}.`,
+  provocacao: ({ golpe }) => (golpe ? `provocado, vem a ti e ${golpe}.` : "provocado, vem a ti."),
+  golpeiaSeAlcanca: ({ anda, golpe }) => (golpe ? `vem ${anda} m e ${golpe}.` : `vem ${anda} m.`),
+  perdido: () => "o sopro queima o chão vazio.",
+  aproximar: ({ anda }) => (anda ? `vem ${anda} m.` : "aproxima-se."),
+  fugir: () => "foge.",
+  caiu: () => "cai antes de agir.",
+  curar: ({ alvo, valor }) => `cura ${alvo}${valor ? `, ${valor}` : ""}.`,
+  proteger: () => "põe-se em guarda.",
+};
+/* o golpe de um passo em palavras: «acerta, 5» · «erra»; vários alvos, cada
+   um com o seu nome */
+const golpeEmPalavras = (gs) => {
+  const um = (g) => { const v = variacaoDoGolpe(g && g.evento); return !v || v.variante === "erro" ? "erra" : `acerta, ${Math.max(0, Number(g.evento.dano) || 0)}`; };
+  const alvos = [...new Set(gs.map((g) => g.alvo))];
+  return alvos.length > 1 ? gs.map((g) => `${g.alvo} ${um(g)}`).join(" · ") : gs.map(um).join(" e ");
+};
+function fraseDoPasso(passo, o) {
+  if (!passo || typeof passo !== "object" || !passo.quem) return "";
+  const c = o && typeof o === "object" ? o : {};
+  const F = FRASE_DO_PASSO;
+  const gs = Array.isArray(passo.golpes) ? passo.golpes.filter((g) => g && g.alvo) : [];
+  const anda = Array.isArray(passo.caminho) && passo.caminho.length > 1 && passo.metros ? metrosTxt(passo.metros) : "";
+  const golpe = gs.length ? golpeEmPalavras(gs) : "";
+  const alvo = gs.length ? gs[0].alvo : "";
+  const anunciado = c.anunciado || "";
+  const ctx = { anda, golpe, alvo, caiu: anunciado, eraEu: !!c.heroi && anunciado === c.heroi, valor: passo.cura ? passo.cura.valor : 0 };
+  let diz;
+  if (passo.caiu) diz = F.caiu(ctx);
+  else if (passo.lado === "aliado" && passo.tipo === "curar") diz = F.curar({ ...ctx, alvo: passo.cura ? passo.cura.alvo : alvo });
+  else if (passo.lado === "aliado" && passo.tipo === "proteger") diz = F.proteger(ctx);
+  else if (passo.tipo === "fugir") diz = F.fugir(ctx);
+  else if (passo.intencao && F[passo.intencao] && (gs.length || passo.intencao === "perdido" || passo.intencao === "golpeiaSeAlcanca" || passo.intencao === "provocacao")) diz = F[passo.intencao](ctx);
+  else if (gs.length) diz = F.cumprida(ctx);
+  else diz = F.aproximar(ctx);
+  const quemAlvo = alvo && passo.tipo !== "fugir" && passo.tipo !== "sopro" ? `${passo.quem} → ${alvo}` : passo.quem;
+  return { quem: passo.quem, alvo: passo.tipo !== "fugir" && passo.tipo !== "sopro" ? alvo : "", diz, linha: `${quemAlvo}: ${diz}` };
 }
 
 /* §CB 16.3: o resumo da área deixou de ser uma tarja no pé — é O TEXTO DO
@@ -695,17 +791,20 @@ function Recurso({ rotulo, atual, max, cor }) {
    VEZ», o nome em Cormorant 32 e a classe · PV e PM · a ECONOMIA (§CB 8:
    ● ação, ▲ bónus, ◆ reação, e o movimento). `compacto` é o patamar baixo:
    os respiros descem aos de `M.aperto`; nenhum campo sai. */
-function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = [], compacto = false, emJogo = null, passoM = null, passoTotal = null }) {
+/* §CB 17.2: no turno deles «A tua vez» passa a «A vez deles · <nome>» (`danger`,
+   `vezDeles` é o nome de quem age); no fim volta, com um pulso (tv-pulse, uma vez:
+   `pulso` é a chave que o reacende). `vez`: economiaDaVez (vez-na-mesa.js). */
+function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = [], compacto = false, emJogo = null, passoM = null, passoTotal = null, vezDeles = "", pulso = 0, vez = null }) {
   const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
   const m = compacto ? M.aperto : M;
   const linhaDaClasse = [personagem.classe, personagem.nivel ? `nv ${personagem.nivel}` : ""].filter(Boolean).join(" · ");
   return (
-    <div className="tv-mesa-vez flex flex-col shrink-0 w-full"
-      style={{ padding: m.turnoRespiro, gap: m.turnoEntre, borderRadius: M.raio, background: T.panel, border: `1px solid ${grave ? T.danger : alfa(T.amber, M.alfa.fio)}` }}>
+    <div key={pulso ? `pulso${pulso}` : undefined} className={`tv-mesa-vez flex flex-col shrink-0 w-full${pulso ? " tv-pulse" : ""}`}
+      style={{ animationIterationCount: pulso ? 1 : undefined, padding: m.turnoRespiro, gap: m.turnoEntre, borderRadius: M.raio, background: T.panel, border: `1px solid ${grave ? T.danger : alfa(T.amber, M.alfa.fio)}` }}>
       <div className="flex items-center" style={{ gap: M.cartao + 4 }}>
         <RostoNaLuta ente={personagem} tamanho={compacto ? M.aperto.retratoDoHeroi : FILA_DA_VEZ.vez + 18} anel={grave ? T.danger : T.amber} />
         <span className="flex flex-col min-w-0" style={{ gap: 2 }}>
-          <span className="tv-mono" style={{ ...LEGENDA, color: T.amber, fontWeight: 700 }}>A tua vez</span>
+          <span className="tv-mono" style={{ ...LEGENDA, color: vezDeles ? T.danger : T.amber, fontWeight: 700 }}>{vezDeles ? `A vez deles · ${vezDeles}` : "A tua vez"}</span>
           <span className="tv-display truncate" style={{ fontSize: compacto ? M.aperto.nomeDoHeroi : M.letra.nomeDoHeroi, color: T.ink, fontWeight: 600, lineHeight: 1.1 }}>{personagem.nome}</span>
           {linhaDaClasse && <span className="tv-mono truncate" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>{linhaDaClasse}</span>}
         </span>
@@ -713,7 +812,7 @@ function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = 
       <Recurso rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={grave ? T.danger : T.amber} />
       {personagem.manaMax > 0 && <Recurso rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violetSoft} />}
       <div style={{ padding: M.cartao, borderRadius: M.raioControle, background: T.panelSoft, border: `1px solid ${T.line}` }}>
-        <Economia economia={economia} recursos={recursos} emJogo={emJogo} acaoBonus={acaoBonus} passoM={passoM} passoTotal={passoTotal} />
+        <Economia economia={economia} recursos={recursos} emJogo={emJogo} acaoBonus={acaoBonus} passoM={passoM} passoTotal={passoTotal} vez={vez} />
       </div>
       {/* OS MODIFICADORES DO MOTOR (E4). `mecanicaDe` devolve sete campos
           que mexem num número; a tela da batalha esconde o HUD inteiro, e
@@ -736,7 +835,9 @@ function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = 
    DE 10, e a conta de cada linha (ACERTO, DANO…) desce para debaixo do
    número — numa linha só, a 320, as faces partiam-se em 15 + 5 e a conta
    espremia-se ao lado do número. */
-function OTeuGolpe({ previsao, estreito = false }) {
+/* §CB 17.1: `saiu` é a face do último d20 do teu lance — marca-se durante a
+   leitura (enquanto o dado rola, as faces acendem-se sem marca) */
+function OTeuGolpe({ previsao, estreito = false, saiu = null }) {
   const g = golpePorExtenso(previsao);
   if (!g) return null;
   const P = PREVISAO_DO_GOLPE;
@@ -758,8 +859,8 @@ function OTeuGolpe({ previsao, estreito = false }) {
       </span>
       {g.chance != null && linha("Acerto", `${g.chance}%`, T.amberSoft, g.bonus != null && g.defesa != null ? `d20 ${g.bonus >= 0 ? "+" : "−"}${Math.abs(g.bonus)} contra a defesa ${g.defesa}` : null, "acerto")}
       {g.faces && (estreito
-        ? <div style={{ maxWidth: larguraDeDezFaces }}><FacesDoD20 faces={g.faces} rotulo={g.legenda} /></div>
-        : <FacesDoD20 faces={g.faces} rotulo={g.legenda} />)}
+        ? <div style={{ maxWidth: larguraDeDezFaces }}><FacesDoD20 faces={g.faces} saiu={saiu} rotulo={g.legenda} /></div>
+        : <FacesDoD20 faces={g.faces} saiu={saiu} rotulo={g.legenda} />)}
       {g.legenda && <span className="tv-mono" style={{ fontSize: P.letra.legenda, color: T.inkDim }}>{g.legenda}</span>}
       {g.semCobertura != null && <span className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.mundo }}>sem cobertura: {g.semCobertura}%</span>}
       {g.dano && linha("Dano", g.dano.texto, T.ink, g.dano.medio ? `média ${g.dano.medio}` : null, "dano")}
@@ -796,7 +897,7 @@ function AvisoDaArea({ aviso, pilula = false }) {
    botão, e o retrato dentro dela não abre carta (botão dentro de botão).
    Ela ROLA na horizontal em vez de quebrar: uma tira que quebra deixa de
    ter 44 px e volta a comer o campo. */
-function TiraDoHeroi({ personagem, economia, recursos = null, acaoBonus, selos = [], adversario = null, aberta, aoAbrir, passoM = null, passoTotal = null }) {
+function TiraDoHeroi({ personagem, economia, recursos = null, acaoBonus, selos = [], adversario = null, aberta, aoAbrir, passoM = null, passoTotal = null, vez = null }) {
   const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
   return (
     <button onClick={aoAbrir} aria-expanded={aberta} aria-label={`${personagem.nome || "você"} — ver o turno e quem está nesta batalha`}
@@ -812,7 +913,7 @@ function TiraDoHeroi({ personagem, economia, recursos = null, acaoBonus, selos =
         </span>
       )}
       {/* CB 9: a tira diz PV, os três pips e o movimento */}
-      <Economia economia={economia} recursos={recursos} acaoBonus={acaoBonus} passoM={passoM} passoTotal={passoTotal} compacta />
+      <Economia economia={economia} recursos={recursos} acaoBonus={acaoBonus} passoM={passoM} passoTotal={passoTotal} vez={vez} compacta />
       {selos.map((x) => <SeloDoModificador key={x.id} selo={x} />)}
       {adversario && (
         /* a vida dele em NÚMERO: à volta da ficha ela é um arco e lê-se
@@ -832,6 +933,9 @@ function TiraDoHeroi({ personagem, economia, recursos = null, acaoBonus, selos =
    deles deixa de ser uma rajada sem rasto. `registo`: [{ quem, alvo, diz,
    teu, feriu }] (a fiação lê-o do balanço das intenções e dos golpes);
    sem ele, as linhas do rastro de sempre. Rola dentro da coluna. */
+/* §CB 17.2: no turno deles as linhas são as dos passos já mostrados — a do
+   passo corrente é a `nova` (barra de 2 px âmbar, `ink`), as outras `lidas`
+   (`inkMeio`); a que te feriu leva a barra e a letra `danger` (Figma 364:1462) */
 function ORastroDosDados({ linhas, registo = null, rodada = null }) {
   const reg = Array.isArray(registo) ? registo.filter((x) => x && x.quem) : [];
   if (!reg.length && !linhas.length) return null;
@@ -839,9 +943,11 @@ function ORastroDosDados({ linhas, registo = null, rodada = null }) {
     <div className="shrink-0" style={{ padding: M.cartao, borderRadius: M.raioControle, background: T.panel, border: `1px solid ${T.line}` }}>
       {rodada != null && rodada > 0 && <div className="tv-mono" style={{ ...LEGENDA, color: T.inkDim, marginBottom: 6 }}>A rodada {rodada}</div>}
       {reg.length > 0 ? reg.map((l, i) => (
-        <div key={i} className="flex items-baseline flex-wrap" style={{ gap: 6, marginBottom: 6 }}>
-          <span className="tv-mono" style={{ fontSize: TIPOS.piso, fontWeight: 700, color: T.inkMeio }}>{l.quem}{l.alvo ? ` → ${l.alvo}` : ""}</span>
-          <span className="tv-body" style={{ fontSize: TIPOS.corpo - 1, color: l.feriu ? T.danger : l.teu ? T.ink : T.inkMeio }}>{l.diz}</span>
+        <div key={l.chave != null ? l.chave : i} className={`flex items-baseline flex-wrap${l.nova ? " tv-fade" : ""}`}
+          style={{ gap: 6, marginBottom: 6, animationDuration: l.nova ? `${TURNO_DELES.linhaNova}ms` : undefined,
+            ...(l.nova || (l.turno && l.feriu) ? { paddingLeft: M.cartao - 2, borderLeft: `2px solid ${l.feriu ? T.danger : T.amber}` } : {}) }}>
+          <span className="tv-mono" style={{ fontSize: TIPOS.piso, fontWeight: 700, color: l.turno && !l.nova ? T.inkMeio : l.nova ? T.ink : T.inkMeio }}>{l.quem}{l.alvo ? ` → ${l.alvo}` : ""}</span>
+          <span className="tv-body" style={{ fontSize: TIPOS.corpo - 1, color: l.feriu ? T.danger : l.nova || l.teu ? T.ink : T.inkMeio }}>{l.diz}</span>
         </div>
       )) : linhas.map((l, i) => (
         <div key={i} className="tv-mono flex items-start gap-1" style={{ fontSize: M.letra.legenda, color: T.inkDim, opacity: 0.5 + (0.5 * (i + 1)) / linhas.length }}><Glifo nome="dado" tamanho={14} /> <span>{l}</span></div>
@@ -873,7 +979,10 @@ function ORastroDosDados({ linhas, registo = null, rodada = null }) {
 /* §CB 16.3: com «Eles» estreita (< 400: a coluna a 321, a gaveta, o
    telefone) a pílula da intenção desce para a SEGUNDA LINHA do cartão, por
    baixo da barra do PV — à direita ela espremia o nome e a barra. */
-function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, cede = false, intencaoDe = null, alvo = "", realce = null, aoRealcar = null, estreito = false }) {
+/* §CB 17.2: no turno deles o cartão de quem age leva aro `danger` 2 e quem já
+   agiu fica a 45 % (`age`, `agiram`) */
+function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, cede = false, intencaoDe = null, alvo = "", realce = null, aoRealcar = null, estreito = false, age = "", agiram = null }) {
+  const jaAgiu = new Set(Array.isArray(agiram) ? agiram : []);
   const m = compacto ? M.aperto : M;
   return (
     <div className="flex flex-col w-full min-h-0 overflow-hidden"
@@ -888,7 +997,8 @@ function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, c
           <div key={`i${i}`} className="flex flex-col"
             onMouseEnter={aoRealcar ? () => aoRealcar(e.nome) : undefined} onMouseLeave={aoRealcar ? () => aoRealcar(null) : undefined}
             style={{ gap: M.cartao, padding: M.cartao, borderRadius: M.raioControle, background: T.pagina,
-              border: `${eOAlvo ? 2 : 1}px solid ${eOAlvo || realce === e.nome ? T.amber : e.derrotado ? T.line : T.danger}`, opacity: e.derrotado ? 0.5 : 1 }}>
+              border: `${eOAlvo || age === e.nome ? 2 : 1}px solid ${age === e.nome ? T.danger : eOAlvo || realce === e.nome ? T.amber : e.derrotado ? T.line : T.danger}`,
+              opacity: e.derrotado ? 0.5 : jaAgiu.has(e.nome) ? TURNO_DELES.agiu : 1 }}>
             <div className="flex items-center" style={{ gap: M.chipEntre }}>
               <span style={{ filter: e.derrotado ? "grayscale(1)" : "none" }}>
                 <RostoNaLuta inimigo ente={e} tamanho={M.retratoDosOutros} anel={e.derrotado ? T.line : T.danger} />
@@ -1144,6 +1254,50 @@ export function TelaDeBatalha(props) {
   const [realce, setRealce] = React.useState(null);
   const [verboSobre, setVerboSobre] = React.useState(null);
   const [elesAberto, setElesAberto] = React.useState(false);
+
+  /* ============================================================
+     CB 17.2 · O TURNO DELES, CONTADO EM PASSOS
+     `p.turnoDeles`: { passos (passosDoTurno), indice (o passo corrente; no
+     fim, passos.length), acelerado (o 2×), aoSaltar, aoAcelerar }. O estado
+     já está aplicado quando o primeiro passo começa: contar é só leitura.
+     O relógio que anda o `indice` é de quem monta (duracaoDosPassos, com
+     TURNO_DELES); aqui só se pinta, e QUALQUER ENTRADA SALTA: Saltar ›,
+     Esc, Espaço, escrever no `como?`, um verbo (salta e arma), e um toque
+     no tabuleiro, que só salta (é consumido: o clique num inimigo anda e
+     ataca, e é irreversível). Nunca prende mais de 4 s.
+     ============================================================ */
+  const td = p.turnoDeles && typeof p.turnoDeles === "object" && Array.isArray(p.turnoDeles.passos) ? p.turnoDeles : null;
+  const indiceDoTurno = td ? Math.max(0, Number(td.indice) || 0) : 0;
+  const passoDeles = td && indiceDoTurno < td.passos.length ? td.passos[indiceDoTurno] : null;
+  const contando = !!passoDeles && !p.fim;
+  const saltarTurno = React.useCallback(() => {
+    try { if (td && td.aoSaltar) td.aoSaltar(); } catch (e) { console.warn("TelaDeBatalha: saltar o turno deles falhou", e); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [td && td.aoSaltar]);
+  React.useEffect(() => {
+    if (!contando) return undefined;
+    const ouve = (e) => {
+      const escrevendo = e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName || "");
+      if (e.key === "Escape" || e.key === " " || e.key === "Spacebar") {
+        if (e.key !== "Escape" && !escrevendo) e.preventDefault();
+        saltarTurno();
+      } else if (escrevendo) saltarTurno();
+    };
+    window.addEventListener("keydown", ouve);
+    return () => window.removeEventListener("keydown", ouve);
+  }, [contando, saltarTurno]);
+  /* o toque no tabuleiro, durante o turno deles, só salta: o pointerdown é
+     consumido, e o clique que vem atrás dele também */
+  const engolirCliqueRef = React.useRef(false);
+  /* no fim do turno deles «A tua vez» volta com um pulso (uma vez) */
+  const [pulsoDaVez, setPulsoDaVez] = React.useState(0);
+  const contavaRef = React.useRef(false);
+  React.useEffect(() => {
+    if (contavaRef.current && !contando) setPulsoDaVez((n) => n + 1);
+    contavaRef.current = contando;
+  }, [contando]);
+  /* o lance do herói na mesa (a grade di-lo): «O teu golpe» marca a face */
+  const [lanceNaMesa, setLanceNaMesa] = React.useState(null);
   /* CB 2 · A MESA INTEIRA, MEDIDA: a largura e a altura da tela da luta
      decidem o arranjo (três colunas, duas, ou o telefone) e a largura das
      colunas, que cedem até 320 para o campo ficar quadrado
@@ -1401,6 +1555,20 @@ export function TelaDeBatalha(props) {
         if (v.tipo === "atacar" && v.alvo === nomeDoHeroi) return true;
         return v.tipo === "sopro" && Array.isArray(v.area) && heroi && v.area.some((q) => q.x === heroi.x && q.y === heroi.y);
       }).map((e) => ({ nome: e.nome, x: e.x, y: e.y, lado: 1 }));
+      /* §CB 17.2: no turno deles a câmara SEGUE QUEM AGE — o retângulo passa
+         a conter quem age, o destino e o alvo; a origem pode ficar fora */
+      if (contando) {
+        const ondeAge = passoDeles.para || passoDeles.de;
+        const alvoDoPasso = Array.isArray(passoDeles.golpes) && passoDeles.golpes[0] ? passoDeles.golpes[0] : null;
+        const deles = [
+          ondeAge && ondeAge.x != null ? { nome: passoDeles.quem, x: ondeAge.x, y: ondeAge.y, lado: 1 } : null,
+          alvoDoPasso && alvoDoPasso.alvoOnde && alvoDoPasso.alvoOnde.x != null ? { nome: alvoDoPasso.alvo, x: alvoDoPasso.alvoOnde.x, y: alvoDoPasso.alvoOnde.y, lado: 1 } : null,
+        ].filter(Boolean);
+        /* quem age faz de centro (o lugar do herói na conta) e o alvo dele de alvo */
+        return camaraDoTelefone({ colunas: g ? g.largura : 14, linhas: g ? g.altura : 14, heroi: deles[0] || (heroi && heroi.x != null ? heroi : null),
+          alvo: deles[1] || null, importa: [],
+          larguraUtil: larguraDaJanela > 0 ? larguraDaJanela : 0, alturaUtil: alturaDaJanela > 0 ? alturaDaJanela : 0 });
+      }
       return camaraDoTelefone({ colunas: g ? g.largura : 14, linhas: g ? g.altura : 14, heroi: heroi && heroi.x != null ? heroi : null,
         alvo: enteDoAlvo && enteDoAlvo.x != null ? enteDoAlvo : null, importa: quemImporta,
         /* §CB 16.2: sem o −22 — no telefone a régua mora por cima das casas,
@@ -1440,7 +1608,29 @@ export function TelaDeBatalha(props) {
   /* A1: o gesto sem motor sai da fileira (lido da tabela, nunca pelo nome) */
   const verbos = fileiraDeVerbos().filter(temMotorOuNaoEGesto);
   const selos = faixaDaVez(combate, personagem.nome);
-  const fila = (() => { try { return filaDaVez(selos, combate); } catch { return null; } })();
+  /* CB 17 (lote 2): a fila pela ordem em que o motor joga (`filaDaRodada`),
+     com quem age no turno deles e quem já agiu; sem ela (um herói sem
+     nome), a fila dos selos de sempre */
+  const agiramNoTurno = td ? td.passos.slice(0, Math.min(indiceDoTurno, td.passos.length)).map((x) => String(x.quem)) : [];
+  const fila = (() => {
+    try {
+      const f = filaDaRodada(combate, { ...personagem, grupo }, { vez: contando ? passoDeles.quem : personagem.nome, agiram: td ? [personagem.nome, ...agiramNoTurno] : [] });
+      if (f) {
+        const abre = f.rostos.find((r) => r.nome === f.seguinte.abre) || null;
+        return { rostos: f.rostos, rodadaSeguinte: f.seguinte.rodada, proximo: abre ? { nome: abre.nome, lado: abre.lado, heroi: abre.heroi } : null };
+      }
+      return filaDaVez(selos, combate);
+    } catch { return null; }
+  })();
+  const rotuloDaFila = contando ? `agora: ${passoDeles.quem}` : rotuloDaVez(selos);
+  /* a economia da vez, numa conta só (o passo é o que o App mediu) */
+  const vezDoHeroi = (() => {
+    try {
+      const v = economiaDaVez(combate, personagem, { passoTotalM: p.passoTotal });
+      if (!v) return null;
+      return p.passoM != null && p.passoTotal != null ? { ...v, movimento: { ...v.movimento, restaM: p.passoM, totalM: p.passoTotal } } : v;
+    } catch { return null; }
+  })();
   const dePe = inimigos.filter((e) => !e.derrotado).length;
 
   /* AS ZONAS DA PLANTA — o vocabulário do Mestre, no topo do campo. A do
@@ -1560,6 +1750,8 @@ export function TelaDeBatalha(props) {
 
 
   const tocarVerbo = (v) => {
+    /* §CB 17.2: no turno deles um verbo SALTA E ARMA (armar é reversível) */
+    if (contando) saltarTurno();
     /* O VERBO QUE NÃO PODE ARMAR RECUSA, E A LINHA DIZ PORQUÊ. Antes ele
        aceitava o toque, ficava `aria-pressed=true` e a linha mandava
        "toque a casa onde quer parar" sem casa nenhuma para tocar. */
@@ -1624,7 +1816,21 @@ export function TelaDeBatalha(props) {
     : resumo && !vereditoForte ? resumo
       : noTelefone && aviso && aviso.texto && !vereditoForte ? aviso.texto
         : linha;
-  const tomDoPe = resumo && !vereditoForte && !esperando && !fimComEspolio ? (pegaAliado ? T.danger : T.amberSoft) : null;
+  const tomDoPe0 = resumo && !vereditoForte && !esperando && !fimComEspolio ? (pegaAliado ? T.danger : T.amberSoft) : null;
+  /* §CB 17.2: durante o turno deles o Pé é a frase do passo (no telefone, o
+   único sítio onde ela se lê durante o turno), com o glifo do tipo da
+   intenção no lugar da mira */
+  const fraseDeles = contando ? (() => { try { const it = intencaoDe.get(passoDeles.quem); return fraseDoPasso(passoDeles, { anunciado: it && it.alvo, heroi: nomeDoHeroi }); } catch { return null; } })() : null;
+  const textoDoPeAgora = fraseDeles ? fraseDeles.linha : textoDoPe;
+  const tomDoPe = fraseDeles ? (passoDeles.emTi ? T.danger : T.ink) : tomDoPe0;
+  const glifoDoPe = contando ? (INTENCAO_NA_MESA.glifo[passoDeles.tipo] || (passoDeles.lado === "aliado" ? "espadas" : "mira")) : "mira";
+  const corDoGlifoDoPe = contando && passoDeles.lado === "aliado" ? T.ok : T.danger;
+  /* as linhas do registo durante o turno: os passos até ao corrente */
+  const registoDoTurno = td ? td.passos.slice(0, Math.min(indiceDoTurno + 1, td.passos.length)).map((x, i) => {
+    let f = null; try { const it = intencaoDe.get(x.quem); f = fraseDoPasso(x, { anunciado: it && it.alvo, heroi: nomeDoHeroi }); } catch { f = null; }
+    const feriu = !!x.emTi && (x.golpes || []).some((gp) => gp && gp.alvo === nomeDoHeroi && gp.evento && Number(gp.evento.dano) > 0);
+    return f ? { chave: `${i}:${x.quem}`, quem: f.quem, alvo: f.alvo, diz: f.diz, feriu, turno: true, nova: contando && i === indiceDoTurno } : null;
+  }).filter(Boolean) : null;
 
   const titulo = comMaiuscula(zonaDoHeroi);
   /* §CB 16.2: 6 no telefone (a janela fica com 361 de largo), 16 no
@@ -1640,7 +1846,7 @@ export function TelaDeBatalha(props) {
      reticências. No patamar baixo os respiros descem aos de `M.aperto`, o
      título ao do telefone, e a pílula e os chips encolhem. No telefone,
      nada muda: a faixa continua a ser a sua linha. */
-  const faixa = (<>{!esperando && <FilaDaVez fila={fila} rotulo={rotuloDaVez(selos)} entes={enteDoSelo} intencaoDe={intencaoDe} noTelefone={noTelefone}
+  const faixa = (<>{!esperando && <FilaDaVez fila={fila} rotulo={rotuloDaFila} entes={enteDoSelo} intencaoDe={intencaoDe} noTelefone={noTelefone} vezDeles={contando}
     realce={realce} aoRealcar={setRealce} aoAbrirEles={arranjo === "duas" ? () => setElesAberto((v) => !v) : null} />}</>);
   /* CB 2: margem 24 · a fila · a fala numa linha, sem respiro por baixo (a
      mesa já tem o seu topo) */
@@ -1671,8 +1877,9 @@ export function TelaDeBatalha(props) {
         {faixa}
         {noTelefone ? (
           <span className="flex flex-col items-end shrink-0" style={{ gap: 2 }}>
-            <span className="tv-mono" style={{ ...LEGENDA, color: T.amber, fontWeight: 700 }}>A tua vez</span>
-            <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoAliado, color: T.ink, maxWidth: 120 }}>{personagem.nome}</span>
+            <span key={pulsoDaVez ? `pulso${pulsoDaVez}` : undefined} className={`tv-mono${pulsoDaVez && !contando ? " tv-pulse" : ""}`}
+              style={{ ...LEGENDA, color: contando ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : "A tua vez"}</span>
+            <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoAliado, color: T.ink, maxWidth: 120 }}>{contando ? passoDeles.quem : personagem.nome}</span>
           </span>
         ) : (
           /* §CB 16.1 nº 3: o bloco direito, que estava vazio, leva a fala */
@@ -1712,7 +1919,9 @@ export function TelaDeBatalha(props) {
           casa porque a casa fora do alcance não tem ouvinte nenhum. */}
       <div ref={janelaRef} className={`flex-1 min-h-0 min-w-0 overflow-auto tv-scroll${noTelefone ? " tv-sem-barra" : ""}`}
         style={janelaBaixa ? { flex: "0 0 auto", height: alturaDaJanelaNaBaixa } : { minHeight: ALVOS.piso * M.janelaMinima }}
-        onPointerDown={() => setArmado("")}>
+        onPointerDown={() => setArmado("")}
+        onPointerDownCapture={(e) => { if (!contando) { engolirCliqueRef.current = false; return; } e.stopPropagation(); engolirCliqueRef.current = true; saltarTurno(); }}
+        onClickCapture={(e) => { if (engolirCliqueRef.current) { engolirCliqueRef.current = false; e.stopPropagation(); e.preventDefault(); } }}>
         {/* CB 9: quem importa e ficou fora da câmara, na borda da janela */}
         {camara && camara.marcadores.map((m) => (
           <MarcadorForaDeVista key={m.nome} marcador={m} ente={inimigos.find((e) => e.nome === m.nome) || { nome: m.nome }} aoIr={() => irAoMarcador(m)} />
@@ -1740,12 +1949,18 @@ export function TelaDeBatalha(props) {
           pe={peDaArena} peCompacto={noTelefone} legendaCede={!!p.reacao}
           previsaoDoGolpe={prevGolpe} intencoes={intencoes} caminho={p.caminho || null} golpes={p.golpes || null}
           aoApontarInimigo={apontarInimigo} aoTocarInimigo={tocarInimigo} realce={realce} reguaPresa={noTelefone} heroiNome={nomeDoHeroi}
-          quedas={p.quedas || null} aoMudarQueda={p.aoMudarQueda} veuDoUltimo={p.decisao && p.ultimoGolpe ? p.ultimoGolpe : null} />
+          quedas={p.quedas || null} aoMudarQueda={p.aoMudarQueda} veuDoUltimo={p.decisao && p.ultimoGolpe ? p.ultimoGolpe : null}
+          /* CB 17: o d20 do herói no alvo, e o passo corrente do turno deles */
+          lance={p.lance || null} aoLance={setLanceNaMesa} acelerado={!!(td && td.acelerado)}
+          passo={contando ? { ...passoDeles, i: indiceDoTurno, porVir: td.passos.slice(indiceDoTurno + 1).map((x) => ({ quem: x.quem, de: x.de })) } : null}
+          agiram={td ? agiramNoTurno : null} vista={camara} />
       </div>
       {/* §CB 16.1 nº 1: o pé da arena e a linha do veredito são uma faixa só,
           de altura fixa — o Pé do campo; o tabuleiro escreve os chips e o ⤢
           na ponta direita dele (`setPeDaArena`) */}
-      <PeDoCampo texto={textoDoPe} armado={!!armado} tom={tomDoPe} reacao={esperando ? null : p.reacao} noTelefone={noTelefone} aoPortal={setPeDaArena} />
+      <PeDoCampo texto={textoDoPeAgora} armado={!!armado && !contando} tom={tomDoPe} reacao={esperando ? null : p.reacao} noTelefone={noTelefone} aoPortal={setPeDaArena}
+        glifo={glifoDoPe} corDoGlifo={corDoGlifoDoPe} calaOPortal={contando && noTelefone}
+        controlo={contando ? <ControloDoTurnoDeles acelerado={!!td.acelerado} aoAcelerar={td.aoAcelerar} aoSaltar={saltarTurno} noTelefone={noTelefone} /> : null} />
     </section>
   );
 
@@ -1809,6 +2024,12 @@ export function TelaDeBatalha(props) {
         <div ref={decisaoRef} className="shrink min-h-0 overflow-y-auto tv-scroll" style={{ flex: "0 1 auto" }}>
           {p.decisao}
         </div>
+      ) : p.dado ? (
+        /* §CB 17.1: o teste pendente que o Mestre pede no meio da luta («Rolar
+           d20») toma o lugar da fileira enquanto espera, como a decisão — a
+           barra nunca muda de altura. O d20 do golpe já não vem aqui: rola no
+           alvo (a grade). */
+        <div className="shrink-0 min-w-0 flex items-center" style={{ minHeight: altoDoVerbo }}>{p.dado}</div>
       ) : (
         <FileiraDeVerbos verbos={verbos} armado={armado} impedidos={impedidos}
           aoTocar={tocarVerbo} alto={altoDoVerbo} grelha={noTelefone}
@@ -1864,7 +2085,6 @@ export function TelaDeBatalha(props) {
           <span>{noTelefone ? "Agir" : "Agir →"}</span>
         </button>
       </div>}
-      {p.dado}
     </section>
   );
 
@@ -1877,11 +2097,12 @@ export function TelaDeBatalha(props) {
   const elesEstreita = noTelefone || arranjo === "duas" || (geo.coluna || 0) < B3.colunaEstreita.intencao;
   const tu = (
     <TurnoAtual personagem={personagem} economia={combate.economia} recursos={combate.recursos || null} acaoBonus={p.acaoBonus} selos={modificadores} compacto={baixo}
-      emJogo={emJogo} passoM={p.passoM} passoTotal={p.passoTotal} />
+      emJogo={emJogo} passoM={p.passoM} passoTotal={p.passoTotal} vez={vezDoHeroi} vezDeles={contando ? passoDeles.quem : ""} pulso={contando ? 0 : pulsoDaVez} />
   );
   const eles = (
     <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd} compacto={baixo} cede={!noTelefone}
-      intencaoDe={intencaoDe} alvo={alvoDaPrevisao} realce={realce} aoRealcar={setRealce} estreito={elesEstreita}>
+      intencaoDe={intencaoDe} alvo={alvoDaPrevisao} realce={realce} aoRealcar={setRealce} estreito={elesEstreita}
+      age={contando ? passoDeles.quem : ""} agiram={td ? agiramNoTurno : null}>
       {/* OS ALVOS DECLARADOS ficam aqui, ao lado de quem eles nomeiam:
           são CONTROLES, e um controle que desaparece é função que a tela
           não tem. Só nascem quando há o que declarar (mais de um
@@ -1890,7 +2111,7 @@ export function TelaDeBatalha(props) {
         aoDeclarar={p.aoDeclararAlvo} aoLimpar={p.aoLimparAlvos} acaoTexto={p.acaoTexto} veredito={vd} />
     </QuemEstaDePe>
   );
-  const rastro = <ORastroDosDados linhas={Array.isArray(combate.log) ? combate.log : []} registo={p.registo || null} rodada={Math.max(0, (combate.rodada || 1) - 1)} />;
+  const rastro = <ORastroDosDados linhas={Array.isArray(combate.log) ? combate.log : []} registo={registoDoTurno && registoDoTurno.length ? registoDoTurno : p.registo || null} rodada={Math.max(0, (combate.rodada || 1) - 1)} />;
   const consulta = (<>{tu}{eles}</>);
 
   /* NO TELEFONE A COLUNA VIRA A TIRA, e a tira abre a ficha por cima do
@@ -1898,7 +2119,7 @@ export function TelaDeBatalha(props) {
   const passoDaTira = { passoM: p.passoM, passoTotal: p.passoTotal };
   const lateral = noTelefone ? (
     <aside className="shrink-0 min-w-0 w-full" style={{ order: 2 }}>
-      <TiraDoHeroi personagem={personagem} economia={combate.economia} recursos={combate.recursos || null} acaoBonus={p.acaoBonus} {...passoDaTira}
+      <TiraDoHeroi personagem={personagem} economia={combate.economia} recursos={combate.recursos || null} acaoBonus={p.acaoBonus} {...passoDaTira} vez={vezDoHeroi}
         selos={modificadores} adversario={adversario} aberta={fichaAberta} aoAbrir={() => setFichaAberta((v) => !v)} />
       {/* §CB 16.3: o aviso da área já não é pílula por baixo da tira — é o
           texto do Pé do campo, quando nada está armado */}
@@ -1926,7 +2147,11 @@ export function TelaDeBatalha(props) {
     <aside className="flex flex-col min-h-0 min-w-0 shrink-0 overflow-y-auto tv-scroll"
       style={{ width: geo.coluna || M.lateral, order: 0, gap: baixo ? M.aperto.entrePaineis : M.entrePaineis, contain: janelaBaixa ? "size" : undefined }}>
       {tu}
-      <OTeuGolpe previsao={prevGolpe ? { ...prevGolpe, vidaDoAlvo: enteDoAlvo ? enteDoAlvo.vida : prevGolpe.vidaDoAlvo } : null} estreito={(geo.coluna || M.lateral) < B3.colunaEstreita.faces} />
+      {/* §CB 17.1: com o dado no alvo, as faces acendem-se enquanto ele rola e a
+          que saiu marca-se na leitura; sem previsão, as faces do próprio lance */}
+      <OTeuGolpe previsao={prevGolpe ? { ...prevGolpe, vidaDoAlvo: enteDoAlvo ? enteDoAlvo.vida : prevGolpe.vidaDoAlvo }
+        : lanceNaMesa && Array.isArray(lanceNaMesa.acertam) ? { alvo: lanceNaMesa.alvo, faces: lanceNaMesa.acertam, criticoEm: lanceNaMesa.criticoEm || 20 } : null}
+        saiu={lanceNaMesa && !lanceNaMesa.rolando ? lanceNaMesa.saiu : null} estreito={(geo.coluna || M.lateral) < B3.colunaEstreita.faces} />
       <AvisoDaArea aviso={aviso} />
       <div ref={setSobraEl} className="flex flex-col min-h-0 overflow-hidden" style={{ flex: "1 1 0", gap: baixo ? M.aperto.entrePaineis : M.entrePaineis }}>
         {!p.fim && !prevGolpe && alturaDaSobra >= ALTURA_DO_FOCO && <FocoDaEscolha />}

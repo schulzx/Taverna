@@ -670,7 +670,52 @@ sec("11. CB: todo ataque tem previsão, toda intenção tem glifo e texto, e nen
   t("nenhuma cor literal nas peças novas (o encontro, a conta da tela, as peças da batalha)", UI_CB.length > 2000 && comCor.length === 0, comCor.join(" · ") || `a secção de CB do ui.jsx tem ${UI_CB.length} caracteres`);
   t("e a tela da batalha continua sem cor literal, com as três colunas", !/#[0-9a-fA-F]{3,8}\b/.test(TEL) && !/rgba?\(/.test(TEL) && /arranjo === "tres" && colunaEles/.test(TEL));
   t("a pílula «AGORA:» aposentou-se, e a fila diz de quem é a vez a quem ouve",
-    !/function PilulaDaVez/.test(TEL) && /<FilaDaVez fila=\{fila\} rotulo=\{rotuloDaVez\(selos\)\}/.test(TEL));
+    /* MOVIDA em 09/11 (CB 17.2): o nome acessível da fila continua a sair do
+       módulo (`rotuloDaVez`), mas passa por `rotuloDaFila`, que no turno deles
+       diz «agora: <quem age>» — a resposta a «de quem é a vez?» deixou de ser
+       sempre o herói. A intenção (o rótulo vem do módulo, a pílula morreu) fica. */
+    !/function PilulaDaVez/.test(TEL) && /<FilaDaVez fila=\{fila\} rotulo=\{rotuloDaFila\}/.test(TEL)
+    && /const rotuloDaFila = contando \? `agora: \$\{passoDeles\.quem\}` : rotuloDaVez\(selos\);/.test(TEL));
+}
+
+/* ============================================================
+   CB 17 · O DADO NO ALVO E O TURNO DELES (formas.md §CB 17.6, item 5)
+   O que se prende aqui é TEXTO: onde mora o d20 do golpe, de onde vêm os
+   números do turno deles, e que as três classes novas têm saída no bloco
+   reduzido. O comportamento (o teto, a saída, o número que espera) prova-se
+   em `teste-batalha-na-tela.mjs` e em `check-turno-deles.mjs`.
+   ============================================================ */
+sec("CB 17. o dado no alvo e o turno deles");
+{
+  const GRADE = ler("src/grade-de-batalha.jsx");
+  const ESTILO = ler("src/estilo.js");
+  /* 1. A BANDEJA DO GOLPE SAIU DA BARRA. A tela já não pendura `p.dado` no fim
+     da secção da ação (a barra crescia 56 + 6 e o tabuleiro pagava); o teste
+     pendente toma o LUGAR da fileira, como a decisão */
+  t("a tela nunca pendura p.dado no fim da barra: o teste pendente toma o lugar da fileira",
+    !/<\/div>\}\s*\{p\.dado\}\s*<\/section>/.test(TEL) && /\) : p\.dado \? \(/.test(TEL));
+  t("e a tela não monta a Bandeja (o d20 do golpe rola no alvo, na grade)", !/<Bandeja\b/.test(TEL) && /<DadoNoAlvo\b/.test(GRADE));
+  /* 2. todo número do turno deles e do dado no alvo vem de tabela */
+  const semLiteral = (txt, nome) => {
+    const corpo = txt.replace(/\/\*[\s\S]*?\*\//g, "");
+    const usos = corpo.match(new RegExp(`${nome}\\.[a-zA-Z.\\[\\]0-9]+`, "g")) || [];
+    return usos.length;
+  };
+  t("a grade lê DADO_NO_ALVO e TURNO_DELES (o tempo, o tamanho, o anel, a origem)", semLiteral(GRADE, "DADO_NO_ALVO") >= 8 && semLiteral(GRADE, "TURNO_DELES") >= 6,
+    `${semLiteral(GRADE, "DADO_NO_ALVO")} · ${semLiteral(GRADE, "TURNO_DELES")}`);
+  t("a tela lê TURNO_DELES (o controlo ligado, quem agiu, a linha nova)", /TURNO_DELES\.controlo\.ligado/.test(TEL) && /TURNO_DELES\.agiu/.test(TEL) && /TURNO_DELES\.linhaNova/.test(TEL));
+  /* o peso da letra (fontWeight: 600) não é tempo: sai da conta */
+  t("nenhum 600, 4000 ou 780 escrito à mão nas peças do lote", !/\b(600|4000|780)\b/.test(GRADE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "").replace(/fontWeight: \d+/g, "")) && !/\b(4000|780)\b/.test(TEL.replace(/\/\*[\s\S]*?\*\//g, "")));
+  /* 3. as três classes novas têm saída no bloco reduzido (WCAG 2.2, 2.3.3) */
+  const blocosReduzidos = (ESTILO.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}/g) || []).join("\n");
+  for (const c of ["tv-dado-no-alvo", "tv-anel-age", "tv-sopro-pulsa"]) {
+    t(`.${c} existe e tem saída no bloco reduzido`, new RegExp(`\\.${c} \\{ animation:`).test(ESTILO) && new RegExp(`\\.${c} \\{ animation: none`).test(blocosReduzidos));
+  }
+  /* 4. a entrada nunca espera: o toque no tabuleiro só salta, e salta sempre */
+  t("o toque no tabuleiro, no turno deles, só salta (consumido) — e o clique atrás dele também",
+    /onPointerDownCapture=\{\(e\) => \{ if \(!contando\)[^}]*\} e\.stopPropagation\(\); engolirCliqueRef\.current = true; saltarTurno\(\); \}\}/.test(TEL) && /onClickCapture=/.test(TEL));
+  t("Esc e Espaço saltam, e escrever no como? também", /e\.key === "Escape" \|\| e\.key === " "/.test(TEL) && /else if \(escrevendo\) saltarTurno\(\)/.test(TEL));
+  t("um verbo salta e arma", /if \(contando\) saltarTurno\(\);/.test(TEL));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);
