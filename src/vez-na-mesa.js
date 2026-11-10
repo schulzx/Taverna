@@ -46,6 +46,7 @@ import { caminhar, adjacentes, terrenoDificil, ocupacaoDe, passoQueResta, podeDa
 import { acoesPorRodada } from "./habilidades.js";
 import { temAcaoBonus } from "./motor/combate-do-turno.js";
 import { custoDeEsconder } from "./escondido.js";
+import { perigosNoCaminho } from "./superficies.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const lista = (x) => (Array.isArray(x) ? x : []);
@@ -169,8 +170,11 @@ export function economiaDaVez(combate, pers, o) {
    o passo padrão), ignoraDificil }.
    Devolve { ok, motivo?, casas: [{ x, y, custoM (acumulado), dificil,
    alcancadoPor: [nomes] }], custoM, sobraM, golpesLivres: [nomes],
-   provoca } — `casas` sem a de partida, a última é o destino. A ocupação é
-   a do App (inimigos e aliados de pé, sem o próprio herói).
+   provoca, perigos } — `casas` sem a de partida, a última é o destino. A
+   ocupação é a do App (inimigos e aliados de pé, sem o próprio herói).
+   CB15 (10/11): `o.superficies` (combate.superficies) acende os `perigos`
+   do caminho — [{ x, y, tipo, dano, teste }], `perigosNoCaminho`
+   (superficies.js); sem elas, [].
    ============================================================ */
 export function caminhoComProvocacoes(grade, de, destino, inimigos, o) {
   const h = obj(de), d = obj(destino);
@@ -180,7 +184,7 @@ export function caminhoComProvocacoes(grade, de, destino, inimigos, o) {
   const desloc = fin(c.deslocamentoM) ? Number(c.deslocamentoM) : DESLOCAMENTO_PADRAO;
   const ocupados = ocupacaoDe([...ins, ...lista(c.aliados).filter(obj)], h);
   const chk = caminhar(grade, h, d, { ocupados, deslocamentoM: desloc, ignoraDificil: c.ignoraDificil === true });
-  if (!chk.ok) return { ok: false, motivo: chk.motivo, casas: [], custoM: 0, sobraM: desloc, golpesLivres: [], provoca: false };
+  if (!chk.ok) return { ok: false, motivo: chk.motivo, casas: [], custoM: 0, sobraM: desloc, golpesLivres: [], provoca: false, perigos: [] };
   let acc = 0;
   const casas = chk.caminho.map((q) => {
     const dificil = c.ignoraDificil !== true && !!terrenoDificil(grade, q.x, q.y);
@@ -188,5 +192,7 @@ export function caminhoComProvocacoes(grade, de, destino, inimigos, o) {
     return { x: q.x, y: q.y, custoM: Math.round(acc * 10) / 10, dificil, alcancadoPor: adjacentes({ ...h, x: q.x, y: q.y }, ins).map((e) => e.nome) };
   });
   const golpesLivres = adjacentes(h, ins).map((e) => e.nome);
-  return { ok: true, casas, custoM: chk.custoM, sobraM: Math.max(0, Math.round((desloc - chk.custoM) * 10) / 10), golpesLivres, provoca: golpesLivres.length > 0 };
+  let perigos = [];
+  try { perigos = perigosNoCaminho(c.superficies, casas, h); } catch { perigos = []; }
+  return { ok: true, casas, custoM: chk.custoM, sobraM: Math.max(0, Math.round((desloc - chk.custoM) * 10) / 10), golpesLivres, provoca: golpesLivres.length > 0, perigos };
 }

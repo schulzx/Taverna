@@ -55,7 +55,7 @@ import { valorParaHabilidade } from "./atributos.js";
 import { classeDaHabilidade } from "./classes.js";
 import { estaInvisivel } from "./gatilhos.js";
 import { oculto } from "./escondido.js";
-import { bonusDefesaEm, adjacentes } from "./grid.js";
+import { bonusDefesaEm, bonusDaAltura, adjacentes } from "./grid.js";
 
 /* ---------------- A TABELA ----------------
    `casas` — as casas decimais das probabilidades devolvidas (4: um
@@ -396,6 +396,7 @@ export function previsaoDeVariosGolpes(golpes, vida) {
      golpes      — quantos golpes o turno tem (o ataque extra, a dádiva);
      abateNoTurno— a chance de os golpes do turno, todos no alvo, o abaterem;
      cobertura   — a defesa que o lugar do alvo lhe dá;
+     alto        — o que o degrau soma ao d20 (+2 de cima, −2 de baixo, CB14);
      seVantagem  — { chance, abate } com vantagem (se ainda não a tem);
      semCobertura— { chance, abate } com o alvo em campo aberto (se a tem);
      golpesLivres— os golpes que o caminho provoca (se `andaDe`).
@@ -411,6 +412,10 @@ export function previsaoDoHeroi(pers, alvo, ctx) {
   const nv = Number(p.nivel) || 1;
   let cobertura = 0;
   try { cobertura = Number(bonusDefesaEm(grade, al)) || 0; } catch { cobertura = 0; }
+  /* CB14 (10/11): a altura de quem golpeia contra a de quem apanha — a
+     MESMA leitura que o golpe do herói soma no App (`bonusDaAltura`) */
+  let altura = 0;
+  try { altura = Number(bonusDaAltura(grade, meuLugar, al)) || 0; } catch { altura = 0; }
   const escopoImune = imunePorEscopo(gdJ, gdAlvo);
   let argsDe, golpes;
 
@@ -423,7 +428,7 @@ export function previsaoDoHeroi(pers, alvo, ctx) {
     golpes = 1;
     argsDe = (i, mudar) => ({
       alvo: al, ehAtacanteInimigo: false,
-      bonusAtaque: atr + 2 + Math.floor((nv - 1) / 4) + bonusDivino(gdJ, gdAlvo),
+      bonusAtaque: atr + 2 + Math.floor((nv - 1) / 4) + bonusDivino(gdJ, gdAlvo) + altura,
       dano, condAtacante: lista(p.condicoes), condAlvo: lista(al.condicoes),
       tipoDano: tipoDeDanoDaHabilidade(h, p), perfilAlvo: perfilDe(al), resistAlvo: resistenciasEquipadas(al),
       bonusDefesaAlvo: ignora && ignora.cobertura ? 0 : (mudar && mudar.semCobertura ? 0 : cobertura),
@@ -433,7 +438,7 @@ export function previsaoDoHeroi(pers, alvo, ctx) {
     });
   } else {
     const arma = (p.equipados && p.equipados.arma) || null;
-    const bonusAtk = modDoGolpe(p, arma) + 2 + Math.floor((nv - 1) / 4) - (Number(c.penalidade) || 0) + bonusDivino(gdJ, gdAlvo);
+    const bonusAtk = modDoGolpe(p, arma) + 2 + Math.floor((nv - 1) / 4) - (Number(c.penalidade) || 0) + bonusDivino(gdJ, gdAlvo) + altura;
     const estorvado = c.estorvado === true;
     const invisivel = estaInvisivel(p);
     golpes = ataquesPorTurno(p.classe, nv) + ataquesExtras(p);
@@ -467,7 +472,7 @@ export function previsaoDoHeroi(pers, alvo, ctx) {
     for (let i = 0; i < golpes; i++) { const r = previsaoComDist(argsDe(i, mudar)); if (r) finais.push(r.final); }
     return abateDaSoma(finais, vida);
   };
-  const out = { ...primeiro.previsao, golpes, abateNoTurno: turno(null), cobertura };
+  const out = { ...primeiro.previsao, golpes, abateNoTurno: turno(null), cobertura, alto: altura };
   if (primeiro.previsao.modo !== "vantagem") {
     const v = previsaoComDist(argsDe(0, { vantagem: true }));
     if (v) out.seVantagem = { chance: v.previsao.chance, abate: v.previsao.abate, abateNoTurno: turno({ vantagem: true }) };

@@ -177,6 +177,10 @@ export const PLANTAS = {
     /* o balcão é uma parede real: dá para se abrigar atrás dele */
     muros: [[2, 1, 8, 1]],
     estorvos: [[3, 4], [4, 4], [7, 4], [8, 4], [3, 5], [8, 5]],
+    /* CB14/CB16: o patamar da escada (quem lá está bate de cima), o
+       candeeiro em cima de uma mesa e o barril do azeite das lamparinas */
+    alturas: [[10, 7, 11, 8, 1]],
+    objetos: [[4, 4, "candeeiro"], [8, 5, "barril_de_oleo"]],
   },
   masmorra: {
     largura: 7, altura: 18,
@@ -189,6 +193,10 @@ export const PLANTAS = {
        que o bicho grande descobre que não passa */
     muros: [[0, 7, 1, 10], [5, 7, 6, 10]],
     estorvos: [[3, 3], [3, 14]],
+    /* o estrado do fundo da sala, o caixote do corredor e o barril de óleo
+       das tochas, que é a armadilha que o carcereiro deixou a si próprio */
+    alturas: [[2, 16, 4, 17, 1]],
+    objetos: [[3, 3, "caixote"], [3, 14, "barril_de_oleo"]],
   },
   floresta: {
     largura: 16, altura: 16,
@@ -199,6 +207,13 @@ export const PLANTAS = {
     ],
     muros: [],
     estorvos: [[3, 7], [6, 8], [10, 7], [13, 9], [4, 12], [11, 13]],
+    /* o penedo da clareira e o charco do matagal. Um degrau só, e é de
+       propósito: a floresta é planta SEM PAREDE, e a suíte das paredes
+       prova que nelas o passo é casa a casa o da busca antiga — o que só é
+       verdade enquanto nada tapa a vista. O que tapa mora nas plantas com
+       muro (o topo da torre, o carro da praça). */
+    alturas: [[13, 1, 14, 2, 1]],
+    superficies: [[6, 13, 7, 14, "agua"]],
   },
   estrada: {
     largura: 18, altura: 12,
@@ -209,6 +224,10 @@ export const PLANTAS = {
     ],
     muros: [],
     estorvos: [[5, 1], [12, 1]],
+    /* o alto da encosta, o barril caído na vala e o caixote que caiu da
+       carroça (nada alto: a estrada é planta sem parede, ver a floresta) */
+    alturas: [[0, 10, 17, 11, 1]],
+    objetos: [[5, 1, "barril_de_oleo"], [12, 1, "caixote"]],
   },
   cidade: {
     largura: 14, altura: 14,
@@ -219,6 +238,10 @@ export const PLANTAS = {
     ],
     muros: [[0, 11, 3, 11], [10, 11, 13, 11]],
     estorvos: [[3, 8], [6, 8], [9, 8], [12, 8]],
+    /* o degrau da fonte no meio da praça, o candeeiro da arcada e o carro
+       de feno encostado ao último pilar */
+    alturas: [[6, 2, 7, 3, 1]],
+    objetos: [[3, 8, "candeeiro"], [12, 8, "carro_de_feno"]],
   },
   caverna: {
     largura: 14, altura: 14,
@@ -229,6 +252,9 @@ export const PLANTAS = {
     ],
     muros: [[6, 6, 7, 7]],
     estorvos: [[2, 6], [4, 8], [10, 6], [12, 8]],
+    /* a saliência da boca da caverna e a poça do fundo do poço */
+    alturas: [[0, 0, 2, 1, 1]],
+    superficies: [[5, 11, 8, 12, "agua"]],
   },
   ruina: {
     largura: 16, altura: 14,
@@ -239,6 +265,10 @@ export const PLANTAS = {
     ],
     muros: [[2, 7, 6, 7], [9, 7, 13, 7]],
     estorvos: [[7, 11], [8, 11]],
+    /* os escombros da torre: um degrau, e o topo com dois — de lá vê-se por
+       cima de tudo, e de baixo não se vê quem está atrás dele */
+    alturas: [[0, 10, 3, 11, 1], [0, 12, 3, 13, 2]],
+    objetos: [[7, 11, "caixote"], [8, 11, "barril_de_oleo"]],
   },
   navio: {
     largura: 10, altura: 16,
@@ -249,6 +279,9 @@ export const PLANTAS = {
     ],
     muros: [[4, 8, 5, 9]],
     estorvos: [[1, 3], [8, 3], [1, 13], [8, 13]],
+    /* o tombadilho, o barril de água doce, o de breu e os caixotes da carga */
+    alturas: [[2, 14, 7, 15, 1]],
+    objetos: [[1, 3, "barril_de_agua"], [8, 3, "barril_de_oleo"], [1, 13, "caixote"], [8, 13, "caixote"]],
   },
   gelo: {
     largura: 16, altura: 16,
@@ -269,6 +302,8 @@ export const PLANTAS = {
     ],
     muros: [],
     estorvos: [[5, 7], [12, 7]],
+    /* a crista da duna: um degrau de areia que se sobe sem pagar */
+    alturas: [[3, 6, 14, 6, 1]],
   },
 };
 
@@ -378,7 +413,40 @@ export function montarGrade(ctx = {}) {
   /* estorvo é obstáculo baixo: não bloqueia passagem nem visão, dá cobertura
      a quem está colado nele. É a mesa virada, a estalagmite, o barril. */
   const estorvos = (p.estorvos || []).map(([x, y]) => chave(x, y));
+  /* CB14/CB16 (10/11): a ALTURA e os OBJETOS do cenário NÃO nascem aqui, e
+     é de propósito: a grade que o save guarda continua byte a byte a de
+     antes (os dourados do motor tiram foto dela). Os dois saem da PLANTA,
+     pelo nome do cenário, em `garantirGrade` — a altura é da planta e não
+     muda; os objetos mudam na luta (o barril que explode sai), e quando
+     mudam quem os mudou escreve `grade.objetos`, que passa a mandar. */
   return { cenario: id, largura: p.largura, altura: p.altura, paredes, estorvos };
+}
+
+/* A altura e os objetos de uma planta, na forma da grade: { "x,y": degrau }
+   e [{ x, y, tipo }]. Só a planta com esse nome exato (sem a estrada de
+   recurso: uma grade inventada não herda o barril de ninguém). */
+export function alturasDaPlanta(cenario) {
+  const p = Object.hasOwn(PLANTAS, cenario) ? PLANTAS[cenario] : null;
+  const out = {};
+  for (const [x0, y0, x1, y1, h] of (p && p.alturas) || []) {
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) out[chave(x, y)] = h;
+  }
+  return out;
+}
+/* O DEGRAU DA PLANTA LIDO UMA VEZ: `garantirGrade` corre milhares de vezes
+   por busca de caminho (cada `dentro`, cada `ehParede`), e refazer o mapa
+   da planta em cada uma custou à suíte das paredes o dobro do tempo. A
+   planta é tabela fixa; o mapa dela guarda-se por nome e nunca se muda
+   (quem lê só faz `get`/`size`). */
+const ALTURAS_POR_PLANTA = new Map();
+function alturasFixasDaPlanta(cenario) {
+  if (!ALTURAS_POR_PLANTA.has(cenario)) ALTURAS_POR_PLANTA.set(cenario, alturasDaGrade(alturasDaPlanta(cenario)));
+  return ALTURAS_POR_PLANTA.get(cenario);
+}
+function objetosDaPlanta(cenario, estorvos) {
+  const p = Object.hasOwn(PLANTAS, cenario) ? PLANTAS[cenario] : null;
+  if (!p || !p.objetos || !p.objetos.length || !Array.isArray(estorvos)) return [];
+  return p.objetos.filter(([x, y]) => estorvos.includes(chave(x, y))).map(([x, y, tipo]) => ({ x, y, tipo }));
 }
 
 export function garantirGrade(g) {
@@ -391,7 +459,32 @@ export function garantirGrade(g) {
     paredes: new Set(Array.isArray(g.paredes) ? g.paredes : []),
     estorvos: new Set(Array.isArray(g.estorvos) ? g.estorvos : []),
     regioes: p.regioes || [],
+    /* a escrita manda; sem ela, a planta (os objetos só onde há estorvo:
+       o barril mora num, e a grade que não o tem não tem barril) */
+    alturas: g.alturas !== undefined ? alturasDaGrade(g.alturas) : alturasFixasDaPlanta(g.cenario),
+    objetos: objetosDaGrade(Array.isArray(g.objetos) ? g.objetos : objetosDaPlanta(g.cenario, g.estorvos)),
   };
+}
+/* A altura e os objetos lidos com desconfiança: o save é de quem joga, e um
+   degrau fora da tabela ou um objeto sem tipo conhecido não entram. */
+function alturasDaGrade(a) {
+  const m = new Map();
+  if (!a || typeof a !== "object" || Array.isArray(a)) return m;
+  for (const k of Object.keys(a)) {
+    const h = Math.floor(Number(a[k]));
+    if (BONUS_DA_ALTURA.degraus.includes(h) && h > 0) m.set(k, h);
+  }
+  return m;
+}
+function objetosDaGrade(lista) {
+  const m = new Map();
+  if (!Array.isArray(lista)) return m;
+  for (const o of lista) {
+    if (!o || typeof o !== "object" || o.x == null || o.y == null) continue;
+    if (!Object.hasOwn(OBJETOS_DO_CENARIO, o.tipo)) continue;
+    m.set(chave(Number(o.x), Number(o.y)), { x: Number(o.x), y: Number(o.y), tipo: o.tipo });
+  }
+  return m;
 }
 
 export function dentro(grade, x, y) {
@@ -444,6 +537,141 @@ export function bonusDefesaEm(grade, ent) {
   return temCobertura(grade, ent.x, ent.y) ? BONUS_COBERTURA : 0;
 }
 
+/* ============================================================
+   A ALTURA (CB14, 10/11) — de cima acerta-se melhor e vê-se mais longe
+
+   A mecânica é a de BG3 e de DOS2, e é a mais simples que muda a mesa:
+   quem está mais alto que o alvo ganha +2 no d20; quem está mais baixo,
+   -2. Não importa quantos degraus: um é o muro, dois é o telhado, e a
+   vantagem é a mesma — a diferença entre os dois está no OLHAR (abaixo) e
+   na QUEDA (`DANO_DA_QUEDA`). Melee e disparo pagam igual, como na mesa.
+
+   O OLHAR. Um degrau vê-se por cima (o muro do pátio, a crista da duna).
+   Terreno de `tapaAVistaDesde` degraus para cima (o penedo, o topo da
+   torre) tapa a vista a quem está MAIS BAIXO do que ele dos dois lados — e
+   quem está lá em cima vê tudo. O objeto alto (o carro de feno) tapa a
+   vista no chão; de um degrau acima vê-se por cima dele.
+
+   SUBIR NÃO CUSTA PASSO, e é de propósito: três buscas (caminhar,
+   custosDe, o mapa dos passos) e o preço escrito na casa teriam de mudar
+   juntas, e um preço que a tela não escreve é um preço que o jogador paga
+   sem ver. A altura entra no golpe, não nas pernas.
+   ============================================================ */
+export const BONUS_DA_ALTURA = {
+  doAlto: 2,
+  deBaixo: -2,
+  /* os degraus que uma casa pode ter (o zero é o chão, implícito) */
+  degraus: [0, 1, 2],
+  /* o terreno que tapa a vista a quem está mais baixo dos dois lados */
+  tapaAVistaDesde: 2,
+  porque: "de cima acerta-se melhor e vê-se por cima do que tapa: o muro e o telhado passam a ser lugares, e não paisagem",
+};
+
+/* O degrau de uma casa (0 sem grade, sem altura ou fora do campo). */
+export function alturaEm(grade, x, y) {
+  const g = garantirGrade(grade);
+  return g ? g.alturas.get(chave(x, y)) || 0 : 0;
+}
+
+/* O degrau de um corpo: o mais alto das casas que ele ocupa — o ogro com
+   um pé no muro já está no muro. */
+function alturaDoCorpo(g, ent) {
+  if (!g || !ent || ent.x == null || ent.y == null) return 0;
+  let h = 0;
+  for (const q of quadradosDe(ent)) h = Math.max(h, g.alturas.get(chave(q.x, q.y)) || 0);
+  return h;
+}
+
+/* O que a altura soma ao d20 de `atacante` contra `alvo`: +2, -2 ou 0. É
+   a leitura única — o golpe do inimigo (`armarGolpeDoInimigo`), a previsão
+   do herói (`previsaoDoHeroi`) e o golpe do herói no App somam ESTA. */
+export function bonusDaAltura(grade, atacante, alvo) {
+  const g = garantirGrade(grade);
+  if (!g || !g.alturas.size) return 0;
+  if (!atacante || !alvo || atacante.x == null || alvo.x == null) return 0;
+  const ha = alturaDoCorpo(g, atacante), hb = alturaDoCorpo(g, alvo);
+  if (ha > hb) return BONUS_DA_ALTURA.doAlto;
+  if (ha < hb) return BONUS_DA_ALTURA.deBaixo;
+  return 0;
+}
+
+/* ============================================================
+   OS OBJETOS DO CENÁRIO (CB16, 10/11) — o barril, o candeeiro, o carro
+
+   Cada objeto mora num ESTORVO da planta (dá cobertura a quem se encosta,
+   não pára ninguém — a mesma verdade de sempre sobre o barril) e tem
+   ETIQUETA: o que faz quando um elemento lhe chega (`aoElemento`) e
+   quando alguém é empurrado contra ele (`aoEmpurrao`). Quem resolve a
+   reação é `superficies.js` — aqui fica só o que o objeto É, porque a
+   linha de visão (deste arquivo) precisa de saber quem é alto.
+
+     agente  — o que o objeto deixa no chão (uma superfície, ou o elemento
+               que reage com a que lá estiver), em `raio` casas à volta;
+     dano    — o que a explosão faz a quem está nessas casas (elemento);
+     vira    — o objeto que fica no lugar (null: desaparece, e o estorvo
+               vai com ele — o barril que explodiu já não abriga ninguém);
+     vulto   — a altura do objeto, para a vista: o carro de feno (1) tapa
+               a vista no chão e não a quem está num degrau;
+     etiquetas — o que a peça mostra do objeto (formas.md §CB 18): os
+               verbos dele (`explode`, `arde`, `derrama`, `tomba`,
+               `parte`), `tapaVista` (vulto acima de zero) e `cobre`
+               (todo o objeto mora num estorvo, e o estorvo cobre). A suíte
+               prova que as etiquetas dizem o que as reações fazem.
+
+   A lista é FECHADA: um objeto que não está aqui não existe na grade
+   (`garantirGrade` deita-o fora). Os tipos de superfície são os de
+   `SUPERFICIES` (superfícies.js); os elementos, os do bestiário. */
+export const OBJETOS_DO_CENARIO = {
+  barril_de_oleo: {
+    nome: "barril de óleo", vulto: 0, etiquetas: ["explode", "derrama", "cobre"],
+    aoElemento: { fogo: { tipo: "explode", agente: "fogo", raio: 1, dano: 6, elemento: "fogo", vira: null } },
+    aoEmpurrao: { tipo: "derrama", agente: "oleo", raio: 1, dano: 0, vira: null },
+  },
+  barril_de_agua: {
+    nome: "barril de água", vulto: 0, etiquetas: ["derrama", "cobre"],
+    aoElemento: {},
+    aoEmpurrao: { tipo: "derrama", agente: "agua", raio: 1, dano: 0, vira: null },
+  },
+  candeeiro: {
+    nome: "candeeiro", vulto: 0, etiquetas: ["tomba", "apaga", "cobre"],
+    aoElemento: { gelo: { tipo: "apaga", agente: null, raio: 0, dano: 0, vira: null } },
+    aoEmpurrao: { tipo: "tomba", agente: "fogo", raio: 0, dano: 0, vira: null },
+  },
+  carro_de_feno: {
+    nome: "carro de feno", vulto: 1, etiquetas: ["arde", "tapaVista", "cobre"],
+    aoElemento: { fogo: { tipo: "arde", agente: "fogo", raio: 1, dano: 0, vira: "carro_queimado" } },
+    aoEmpurrao: null,
+  },
+  carro_queimado: {
+    nome: "carro queimado", vulto: 1, etiquetas: ["tapaVista", "cobre"],
+    aoElemento: {},
+    aoEmpurrao: null,
+  },
+  caixote: {
+    nome: "caixote", vulto: 0, etiquetas: ["arde", "parte", "cobre"],
+    aoElemento: { fogo: { tipo: "arde", agente: "fogo", raio: 0, dano: 0, vira: null } },
+    aoEmpurrao: { tipo: "parte", agente: null, raio: 0, dano: 0, vira: null },
+  },
+};
+
+/* O objeto de uma casa, ou null. */
+export function objetoEm(grade, x, y) {
+  const g = garantirGrade(grade);
+  return g ? g.objetos.get(chave(x, y)) || null : null;
+}
+
+/* O vulto de uma casa para a vista: o terreno alto (de `tapaAVistaDesde`
+   para cima) e o objeto alto em cima do degrau dele. */
+function vultoDaCasa(g, x, y) {
+  const k = chave(x, y);
+  const h = g.alturas.get(k) || 0;
+  const terreno = h >= BONUS_DA_ALTURA.tapaAVistaDesde ? h : 0;
+  const o = g.objetos.get(k);
+  const def = o ? OBJETOS_DO_CENARIO[o.tipo] : null;
+  const doObjeto = def && def.vulto > 0 ? h + def.vulto : 0;
+  return Math.max(terreno, doObjeto);
+}
+
 /* ---------------- OCUPAÇÃO E DISTÂNCIA ----------------
    Uma criatura ocupa um quadrado do canto (x,y) até (x+lado-1, y+lado-1).
    A distância é a de mesa: Chebyshev entre os quadrados mais próximos das
@@ -478,15 +706,24 @@ export function centroDe(ent) {
 /* ---------------- LINHA DE VISÃO ----------------
    Bresenham entre os centros. Parede corta; estorvo não — o barril
    atrapalha o golpe (vira cobertura), não o olhar. */
+/* CB14 (10/11): e o vulto. Uma casa do meio tapa a vista quando o vulto
+   dela (`vultoDaCasa`: o penedo, o carro de feno) passa a altura do mais
+   alto dos dois — de cima vê-se por cima. As casas dos próprios corpos não
+   contam: quem está ao lado do carro não é tapado pelo carro em que está
+   encostado. Sem altura nem objeto alto, é a conta de sempre. */
 export function linhaDeVisao(grade, a, b) {
   const g = garantirGrade(grade);
   if (!g) return true;
   const p = centroDe(a), q = centroDe(b);
+  const comVulto = g.alturas.size > 0 || g.objetos.size > 0;
+  const topo = comVulto ? Math.max(alturaDoCorpo(g, a), alturaDoCorpo(g, b)) : 0;
+  const dosCorpos = comVulto ? new Set([...quadradosDe(a), ...quadradosDe(b)].map((c) => chave(c.x, c.y))) : null;
   const passos = Math.max(1, Math.ceil(Math.max(Math.abs(q.x - p.x), Math.abs(q.y - p.y)) * 2));
   for (let i = 1; i < passos; i++) {
     const x = Math.round(p.x + ((q.x - p.x) * i) / passos);
     const y = Math.round(p.y + ((q.y - p.y) * i) / passos);
     if (g.paredes.has(chave(x, y))) return false;
+    if (comVulto && !dosCorpos.has(chave(x, y)) && vultoDaCasa(g, x, y) > topo) return false;
   }
   return true;
 }
@@ -893,6 +1130,26 @@ export const EMPURRAO_NO_TABULEIRO = {
   estorvoPara: false,
 };
 
+/* A QUEDA E A COLISÃO (CB16, 10/11) — o empurrão passa a valer muito mais
+
+   Into the Breach e DOS2: empurrar do alto fere com a queda, e empurrar
+   contra a pedra ou contra outro corpo fere com o choque. Os números são
+   FIXOS, e não dados, porque o veredito vem antes do clique: a seta do
+   empurrão mostra «cai dois degraus, 5 de dano» e o empurrão cumpre-o à
+   letra (`previsaoDoEmpurrao`, superfícies.js).
+
+   `porDegrau[n]` é o dano de cair n degraus (o índice é o número de
+   degraus; acima do último, o último); quem cai `derrubaDesde` degraus ou
+   mais fica caído. A colisão: quem bate na parede ou noutro corpo leva
+   `parede`/`ocupado`, e o outro corpo leva o mesmo; a borda do campo não
+   fere (não há nada contra o que bater). */
+export const DANO_DA_QUEDA = {
+  porDegrau: [0, 2, 5],
+  derrubaDesde: 2,
+  elemento: "fisico",
+  colisao: { parede: 1, ocupado: 1, borda: 0 },
+};
+
 /* A DIREÇÃO, aparada a -1|0|1 por eixo — Chebyshev, que é a distância
    que este arquivo já usa: a diagonal vale o mesmo que a reta, então o
    empurrão na diagonal anda uma casa como qualquer outro.
@@ -1175,7 +1432,14 @@ export function adjacentes(ent, lista) {
 /* ---------------- A IA DE POSIÇÃO ----------------
    Quem não alcança, anda na direção de quem quer bater; quem alcança,
    fica e bate. Determinística, então o Mestre não escolhe nada. */
-export function moverInimigos(grade, inimigos, alvo, todos) {
+/* CB15 (10/11): `opcoes.evitar` — as casas onde ninguém entra de livre
+   vontade (o fogo, o veneno, a água eletrificada: `casasQueSeEvitam`,
+   superfícies.js). Contam como ocupadas para o passo; quem não tem casa
+   melhor fora delas fica onde está, e espera que o fogo se apague. Sem
+   `evitar`, byte a byte o de antes. */
+export function moverInimigos(grade, inimigos, alvo, todos, opcoes) {
+  const op = opcoes == null ? {} : opcoes;
+  const evitar = op.evitar instanceof Set ? op.evitar : new Set(Array.isArray(op.evitar) ? op.evitar : []);
   const g = garantirGrade(grade);
   if (!g || !alvo || alvo.x == null) return { inimigos: inimigos || [], movimentos: [] };
   const movimentos = [];
@@ -1209,7 +1473,7 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
        visão); o Atirador do bestiário vinha colar no herói como um ogro. O
        posto é decidido em `postoDoAtirador`, logo abaixo. */
     if (mantemDistancia(e)) {
-      const posto = postoDoAtirador(grade, e, alvo, todos, atuais);
+      const posto = postoDoAtirador(grade, e, alvo, todos, atuais, evitar);
       if (!posto) return e;
       movimentos.push(posto.movimento);
       return { ...e, x: posto.x, y: posto.y };
@@ -1217,7 +1481,8 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
     /* quem alcança fica e bate — e alcançar pede linha de visão, que é o
        que `alcanca` cobra na hora do golpe (as paredes, MM) */
     if (dist <= alcanceNatural(e) && linhaDeVisao(grade, e, alvo)) return e;
-    const ocupados = ocupacaoDe([...(todos || []), ...atuais], e);
+    const ocupados0 = ocupacaoDe([...(todos || []), ...atuais], e);
+    const ocupados = evitar.size ? new Set([...ocupados0, ...evitar]) : ocupados0;
     /* ---- CADA BICHO NO SEU PASSO (v9.44) ----
        `deslocamentoDeCriatura` existia em movimento.js desde a v9.34 com o
        comentário "um dragão voa; um zumbi arrasta", estava importada no App e
@@ -1279,7 +1544,7 @@ export function moverInimigos(grade, inimigos, alvo, todos) {
    DETERMINÍSTICO: nenhum dado. A mesma planta e as mesmas casas dão o
    mesmo posto, e o empate fica com a casa que a busca achou primeiro.
    ============================================================ */
-function postoDoAtirador(grade, e, alvo, todos, vivos) {
+function postoDoAtirador(grade, e, alvo, todos, vivos, evitar) {
   const P = POSTURA_DO_ATIRADOR;
   const W = P.pesos;
   const meus = vivos || [];
@@ -1298,7 +1563,8 @@ function postoDoAtirador(grade, e, alvo, todos, vivos) {
   if (colado(e) && !P.coladoRecua) return null;
   const passoDele = deslocamentoDeCriatura(e);
   const metrosDele = passoDele.metros || DESLOCAMENTO_PADRAO;
-  const ocupados = ocupacaoDe([...(todos || []), ...meus], e);
+  const ocupados0 = ocupacaoDe([...(todos || []), ...meus], e);
+  const ocupados = evitar && evitar.size ? new Set([...ocupados0, ...evitar]) : ocupados0;
   const custos = custosDe(grade, e, { ocupados, deslocamentoM: metrosDele, ignoraDificil: !!passoDele.voando });
   /* QUEM NÃO VÊ, VAI VER PELO CAMINHO (as paredes, MM). O degrau de baixo
      aproximava-se em linha reta, a mesma subida de encosta de

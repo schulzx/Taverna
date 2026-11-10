@@ -229,6 +229,8 @@ import { salvaDoGolpe, bonusDeSalvaguarda } from "../src/salvaguardas.js";
 import { atributoEfetivo } from "../src/regras-jogo.js";
 import { ataquesExtras, danoExtraDeDadiva, criticoMinimo } from "../src/dadivas.js";
 import { intencoesDaRodada } from "../src/intencao.js";
+import { marcaDoAtaque, feridosDoEvento, efeitoDaCasa, passarRodada } from "../src/superficies.js";
+import { ehArea } from "../src/grimorio.js";
 
 /* ============================================================
    1. AS TABELAS — se é número, é tabela
@@ -672,6 +674,33 @@ export const INTENCAO_NA_REGUA = {
   heroiLe: true,
 };
 
+/* ---------------- O CHÃO QUE ARDE, COMO PARÂMETRO (CB15, 10/11) ----------------
+
+   A Fase CB põe superfícies no chão (superficies.js): o golpe de área com
+   elemento deixa fogo, gelo ou veneno perto do impacto, e quem começa o
+   turno nele paga. O plano manda medir com os CONJURADORES COMO SUSPEITOS —
+   são eles (o Mago com a Bola de Fogo, o Engenheiro com o Frasco de Ácido)
+   que pintam o chão.
+
+   A RÉGUA NÃO TEM TABULEIRO (`TABULEIRO_NA_REGUA`), e por isso mede a PONTA
+   CARA: cada inimigo numa casa sua, longe dos outros (`espacoEntreAlvos`),
+   e NINGUÉM SAI DO CHÃO. No jogo o inimigo não entra no fogo de livre
+   vontade e sai dele quando pode (`casasQueSeEvitam` → `moverInimigos`); aqui
+   fica e arde rodada após rodada. O número que sai é o TETO do que o chão
+   soma ao grupo, e diz-se teto. As mesmas funções do jogo, sem cópia:
+   `marcaDoAtaque` (a marca), `feridosDoEvento` (a reação), `efeitoDaCasa` (o
+   começo do turno) e `passarRodada` (a duração).
+
+   `ligado: false` É O JOGO DE HOJE pela lei de N1b: o App ainda não pinta o
+   chão (a fiação é do `oficial`). Desligado, a régua é byte a byte a de
+   antes — a sorte do chão corre numa corrente própria (`|superficies`) e
+   não come os dados da luta. No dia em que o App pintar o chão, `ligado`
+   passa a true no MESMO commit da fiação. */
+export const SUPERFICIES_NA_REGUA = {
+  ligado: false,
+  espacoEntreAlvos: 4,
+};
+
 /* AS CLASSES QUE CURAM, do jeito que `lutaDaMesa` as lê (App.jsx). A
    lista existe em `combate.js` (`CURAM`) e não é exportada de lá; copiá-la
    aqui é o mesmo que o App faz, e ela fica nomeada em vez de literal no meio
@@ -899,7 +928,7 @@ function aplicarBuffDeCompanheiro(heroi, grupo, ac) {
    rola os mesmos dados com e sem elas, e a diferença medida é só a aflição.
    Desligado por omissão: as catracas de sempre mediam sem ele. A vantagem
    mental (Gnomo, Sintético) fica de fora: o herói da régua não tem raça. */
-export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comAflicoes = null, comIntencao = INTENCAO_NA_REGUA.ligado, heroiLe = INTENCAO_NA_REGUA.heroiLe } = {}) {
+export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comAflicoes = null, comIntencao = INTENCAO_NA_REGUA.ligado, heroiLe = INTENCAO_NA_REGUA.heroiLe, comSuperficies = SUPERFICIES_NA_REGUA.ligado } = {}) {
   const sorteDaAflicao = comAflicoes ? sorteDaSemente(String(semente) + "|aflicao") : null;
   const caminhada = Math.max(0, Math.floor(Number(rodadasDeCaminhada) || 0));
   const cen = typeof cenario === "string" ? CENARIOS_DA_REGUA[cenario] : cenario;
@@ -961,6 +990,29 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
         const pv = Math.max(0, (e.vida || 0) - dano);
         return { ...e, vida: pv, derrotado: pv <= 0 };
       });
+    };
+
+    /* CB15: O CHÃO (só com `comSuperficies`). Cada inimigo na sua casa, a
+       `espacoEntreAlvos` dos outros, numa grade sem parede; o chão e a sorte
+       dele vivem à parte. */
+    const sorteDoChao = comSuperficies ? sorteDaSemente(String(semente) + "|superficies") : null;
+    const ESP = SUPERFICIES_NA_REGUA.espacoEntreAlvos;
+    const gradeDoChao = comSuperficies ? { cenario: "regua", largura: 2 + inimigos.length * ESP, altura: 3, paredes: [], estorvos: [] } : null;
+    const casaDoInimigo = (nome) => { const i = inimigos.findIndex((e) => e.nome === nome); return { x: 1 + i * ESP, y: 1 }; };
+    const naCasa = () => vivosInimigos().map((e) => ({ ...e, ...casaDoInimigo(e.nome) }));
+    let chao = { grade: gradeDoChao, superficies: [], vistas: [] };
+    const marcarOChao = (habilidade, r, nomeDoAlvo) => {
+      if (!comSuperficies || !r || !r.tipoDano || r.tipoDano === "fisico") return;
+      const c = casaDoInimigo(nomeDoAlvo);
+      const area = !!habilidade && ehArea(habilidade);
+      const casas = area ? [-1, 0, 1].flatMap((dx) => [-1, 0, 1].map((dy) => ({ x: c.x + dx, y: c.y + dy }))) : [c];
+      const depois = marcaDoAtaque(chao, { elemento: r.tipoDano, casas, centro: c, area });
+      chao = { grade: depois.grade, superficies: depois.superficies, vistas: depois.vistas };
+      for (const ev of depois.eventos) {
+        for (const f of feridosDoEvento(ev, naCasa(), { sorte: sorteDoChao })) {
+          if (f.dano > 0) { const antes = (inimigos.find((e) => e.nome === f.nome) || {}).vida || 0; ferirInimigo(f.nome, f.dano); danoDesferido += Math.min(f.dano, antes); }
+        }
+      }
     };
 
     /* ---------------- A INTENÇÃO DO ADVERSÁRIO (N1b) ----------------
@@ -1099,6 +1151,16 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
          chegou até aqui — é a ordem do App: `intencaoDaLuta` já rodou e
          `intencaoRef` já vale quando `turnoDosInimigos` é chamado. */
       const prioridade = comIntencao ? prioridadeAnunciada : prioridadeDaRodada();
+      /* CB15: quem começa o turno no chão paga (o fogo arde, o gelo derruba) */
+      if (comSuperficies) {
+        for (const ent of naCasa()) {
+          const ef = efeitoDaCasa(chao.superficies, ent, { momento: "turno", sorte: sorteDoChao });
+          if (!ef) continue;
+          if (ef.dano > 0) { danoDesferido += Math.min(ef.dano, ent.vida || 0); ferirInimigo(ent.nome, ef.dano); }
+          if (ef.condicoes.length) inimigos = inimigos.map((e) => (e.nome === ent.nome ? { ...e, condicoes: [...(e.condicoes || []), ...ef.condicoes] } : e));
+        }
+        if (!vivosInimigos().length) break;
+      }
       const acoes = turnoDosInimigos({
         inimigos: vivosInimigos(), jogador: heroi, grupo: grupoDePe(),
         gdJogador: 0, grade: null, heroi: null, aliados: [],
@@ -1169,6 +1231,7 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
         };
         if ((ac.tipo === "ataque" || ac.tipo === "habilidade") && ac.r) {
           if (ac.r.dano > 0) { ferirInimigo(ac.alvoNome, ac.r.dano); danoDesferido += ac.r.dano; }
+          if (ac.tipo === "habilidade") marcarOChao(ac.habilidade, ac.r, ac.alvoNome);
           gastar(ac.custo);
         } else if (ac.tipo === "cura") {
           const valor = ac.valor || 0;
@@ -1246,6 +1309,8 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
         if (t.dano > 0) danoDesferido += Math.min(t.dano, e.vida || 0);
         return { ...e, condicoes: t.condicoes, vida: pv, derrotado: pv <= 0 };
       });
+      /* CB15: o chão perde uma rodada */
+      if (comSuperficies) chao = { ...chao, superficies: passarRodada(chao.superficies).superficies };
       /* a guarda vence por RODADA, e é o único relógio da luta */
       const eg = expirarGuardas(heroi, rodada + 1);
       heroi = eg && eg.pers ? eg.pers : heroi;
@@ -1343,9 +1408,9 @@ export function concordam(a, b) {
 /* Roda `n` combates do cenário e devolve, por métrica, {media, margem, n}.
    `prefixo` escolhe a FAMÍLIA de sementes; uma família só é uma amostra, e
    o que prova estabilidade é o acordo entre famílias independentes. */
-export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comIntencao = INTENCAO_NA_REGUA.ligado, heroiLe = INTENCAO_NA_REGUA.heroiLe } = {}) {
+export function medir(cenarioId, { n = AMOSTRA_DA_REGUA.n, prefixo = AMOSTRA_DA_REGUA.familiaDoRetrato, comAdversario = ADVERSARIO_NA_REGUA.ligado, rodadasDeCaminhada = CAMINHADA_NA_REGUA.padrao, comIntencao = INTENCAO_NA_REGUA.ligado, heroiLe = INTENCAO_NA_REGUA.heroiLe, comSuperficies = SUPERFICIES_NA_REGUA.ligado } = {}) {
   const combates = [];
-  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario, rodadasDeCaminhada, comIntencao, heroiLe }));
+  for (let i = 0; i < n; i++) combates.push(simularCombate(cenarioId, `${prefixo}|${i}`, { comAdversario, rodadasDeCaminhada, comIntencao, heroiLe, comSuperficies }));
   /* o cabeçalho carrega os DOIS parâmetros de instrumento, pelo motivo de
      N1b: uma tabela de números que não diz com qual instrumento foi medida é
      exatamente o que produziu o retrato de B1. */

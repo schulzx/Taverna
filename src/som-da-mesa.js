@@ -97,6 +97,13 @@ export const SOM_DA_MESA = Object.freeze({
       Object.freeze({ em: 0.18, freq: 120, ate: 60, onda: "triangle", dura: 0.14, ganho: 0.7 }),
       Object.freeze({ em: 0.36, freq: 110, ate: 50, onda: "triangle", dura: 0.22, ganho: 1 }),
     ]),
+    /* reacao — o chão que reage (CB15, 10/11: a explosão do óleo, a água
+       que eletrifica): o estalo agudo que cai e o ronco grave por baixo.
+       Mais curto que a queda: a queda continua a ser o som mais longo. */
+    reacao: Object.freeze([
+      Object.freeze({ em: 0, freq: 1400, ate: 200, onda: "sawtooth", dura: 0.1, ganho: 0.5 }),
+      Object.freeze({ em: 0.02, freq: 80, ate: 40, onda: "sine", dura: 0.5, ganho: 1 }),
+    ]),
     imune: Object.freeze([
       Object.freeze({ em: 0, freq: 900, ate: 300, onda: "sine", dura: 0.12, ganho: 1 }),
       Object.freeze({ em: 0.02, freq: 2093, onda: "sine", dura: 0.18, ganho: 0.4 }),

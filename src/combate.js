@@ -7,7 +7,7 @@
    vantagem/desvantagem, críticos e condições de estado.
    ============================================================ */
 import { sorteDaCasa, comSorte } from "./semente.js";
-import { alcanca, bonusDefesaEm, distanciaM, METROS_POR_QUADRADO, pegosPelaArea } from "./grid.js";
+import { alcanca, bonusDefesaEm, bonusDaAltura, distanciaM, METROS_POR_QUADRADO, pegosPelaArea } from "./grid.js";
 import { defesaDeGuarda, estaIntocavel, esquivaDeGuarda, DEFESA_NUA } from "./habilidades.js";
 
 import { xpDeCombate } from "./juiz.js";
@@ -494,7 +494,9 @@ function bandeirasDosAlvos(alvos, inim, grade, pos) {
     let golpes = 0;
     try {
       const def = defesaDe(a.ent, a.ref === "inimigo") + cobertura;
-      const chance = Math.max(CHANCE_NAS_PONTAS.min, Math.min(CHANCE_NAS_PONTAS.max, (21 + bonusDeAmeaca(inim.ameaca) - def) / 20));
+      /* CB14: a altura entra na mira pela mesma conta do golpe */
+      const alto = grade ? Number(bonusDaAltura(grade, inim, a.onde || pos)) || 0 : 0;
+      const chance = Math.max(CHANCE_NAS_PONTAS.min, Math.min(CHANCE_NAS_PONTAS.max, (21 + bonusDeAmeaca(inim.ameaca) + alto - def) / 20));
       golpes = Math.max(0, Number(a.ent.vida) || 0) / chance;
     } catch { golpes = 0; }
     const cls = (a.ent && a.ent.classe) || "";
@@ -619,7 +621,10 @@ export function armarGolpeDoInimigo(inim, alvo, o) {
     args: {
       ehAtacanteInimigo: !alvoEhInimigo,
       /* REGRA DO DEGRAU (v7.4): divindades ganham +2/degrau sobre o alvo */
-      bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (op.gdJogador || 0)) - penalidadeZona,
+      bonusAtaque: bonusDeAmeaca(inim.ameaca) + 2 * ((inim.gd || 0) - (op.gdJogador || 0)) - penalidadeZona
+        /* CB14 (10/11): de cima +2, de baixo -2 (`BONUS_DA_ALTURA`, grid.js).
+           Sem grade ou sem degrau, zero — a luta de antes, ao byte. */
+        + bonusDaAltura(grade, inim, alvo.onde || pos),
       condAtacante: inim.condicoes || [], condAlvo: alvo.ent.condicoes || [],
       tipoDano: perfilInim.ataque, resistAlvo: resistenciasEquipadas(alvo.ent),
       /* cobertura do LUGAR de quem apanha: quem luta atrás de alguma coisa
