@@ -927,8 +927,12 @@ sec("9. A RÉGUA NÃO MORA EM src/ — a fronteira, nos dois sentidos");
      com leitor na seção 11 e em teste-kit-inicial §6.
      SÃO 18 DESDE 09/11 (CB6): `INTENCAO_NA_REGUA` (o anúncio da intenção do
      inimigo como parâmetro, desligado até o App anunciar), com leitor logo
-     abaixo e a medida inteira em teste-intencao §7. */
-  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 18 && semLeitor.length === 0, semLeitor.join(", "));
+     abaixo e a medida inteira em teste-intencao §7.
+     SÃO 19 DESDE 10/11 (CB13): `CENARIOS_DO_COMECO` (os cenários do nível 1,
+     à parte dos três da casa), com leitor logo abaixo e a medida inteira em
+     teste-regua-do-nivel1.mjs. */
+  t(`os ${EXPORTADOS.length} exports da régua têm leitor nesta suíte — export morto mente`, EXPORTADOS.length === 19 && semLeitor.length === 0, semLeitor.join(", "));
+  t("os cenários do começo moram à parte dos três da casa (CENARIOS_DO_COMECO, CB13), com outro herói, de nível 1", R.CENARIOS_DO_COMECO && Object.values(R.CENARIOS_DO_COMECO).every((c) => c.heroi.nivel === 1 && c.heroi !== R.CENARIOS_DA_REGUA.duro.heroi) && !Object.keys(R.CENARIOS_DA_REGUA).some((k) => R.CENARIOS_DO_COMECO[k]));
   /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: o App passou a anunciar a
      intenção no começo de cada rodada (CB6, a fiação), e a régua mede o jogo de
      hoje — o anúncio LIGA. Era `=== false` «até o App anunciar»; o dia chegou. */

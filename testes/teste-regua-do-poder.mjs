@@ -130,14 +130,27 @@ const NIVEIS_DA_REGUA = Object.freeze([3, 7, 12, 17]);
    típico no meio (busca por bissecção no nível do inimigo, para cada
    ameaça e quantidade, 200 sementes; o escolhido é o mais perto de 50%).
    Calibrado em 09/11 com o motor de hoje — se o combate mudar, a secção 3
-   diz qual mesa saiu da faixa, e recalibra-se aqui. */
+   diz qual mesa saiu da faixa, e recalibra-se aqui.
+
+   RECALIBRADA EM 10/11 (CB lote 2), COM O ANÚNCIO DA INTENÇÃO, que é o jogo
+   (INTENCAO_NA_REGUA.ligado: o App anuncia desde a CB6). Com ele o bando
+   decide no começo da rodada, antes do golpe do herói, e a mesa fica mais
+   dura para quem bate em corpo a corpo: três mesas caíram abaixo do piso da
+   faixa. As três, e só elas, mudaram — medidas com o mesmo método (o típico
+   mais perto de 50%, 300 combates, as mesmas sementes):
+     Guerreiro|7   elite 4 nv6 → lendário 2 nv8   33,7% → 58,7%
+                   (elite 4 nv5 dava 53,7%, mas a história ia a +13,7, acima
+                   do teto de +12; lendário 2 nv9: 39,0% e +11,0; nv8: +6,0)
+     Guerreiro|17  lendário 3 nv18 → nv17 31,0% → 45,0%  (nv16: 56,0%)
+     Caçador|17    lendário 3 nv18 → nv17 31,3% → 46,0%  (nv16: 57,7%)
+   As outras dezassete ficaram na faixa com o anúncio e não se mexeram. */
 const MESA_JUSTA = Object.freeze({
   "Guerreiro|3": { ameaca: "elite", quantos: 4, nivel: 1 },
   "Ladino|3": { ameaca: "elite", quantos: 3, nivel: 2 },
   "Caçador|3": { ameaca: "elite", quantos: 2, nivel: 5 },
   "Clérigo|3": { ameaca: "lendario", quantos: 5, nivel: 1 },
   "Mago|3": { ameaca: "lendario", quantos: 5, nivel: 1 },
-  "Guerreiro|7": { ameaca: "elite", quantos: 4, nivel: 6 },
+  "Guerreiro|7": { ameaca: "lendario", quantos: 2, nivel: 8 },
   "Ladino|7": { ameaca: "lendario", quantos: 3, nivel: 3 },
   "Caçador|7": { ameaca: "elite", quantos: 3, nivel: 10 },
   "Clérigo|7": { ameaca: "lendario", quantos: 5, nivel: 5 },
@@ -147,9 +160,9 @@ const MESA_JUSTA = Object.freeze({
   "Caçador|12": { ameaca: "lendario", quantos: 2, nivel: 16 },
   "Clérigo|12": { ameaca: "lendario", quantos: 4, nivel: 15 },
   "Mago|12": { ameaca: "lendario", quantos: 4, nivel: 14 },
-  "Guerreiro|17": { ameaca: "lendario", quantos: 3, nivel: 18 },
+  "Guerreiro|17": { ameaca: "lendario", quantos: 3, nivel: 17 },
   "Ladino|17": { ameaca: "elite", quantos: 5, nivel: 20 },
-  "Caçador|17": { ameaca: "lendario", quantos: 3, nivel: 18 },
+  "Caçador|17": { ameaca: "lendario", quantos: 3, nivel: 17 },
   "Clérigo|17": { ameaca: "lendario", quantos: 5, nivel: 19 },
   "Mago|17": { ameaca: "lendario", quantos: 5, nivel: 17 },
 });
@@ -214,14 +227,18 @@ const KITS = ["tipico", "historia", "artefacto",
 const BASE_DO_KIT = (q) => (q.startsWith("noEncaixe:") && q !== "noEncaixe:armadura" ? `tipicoNo:${q.split(":")[1]}` : "tipico");
 function medirMesa(classe, nivel, n) {
   const v = Object.fromEntries(KITS.map((q) => [q, 0]));
-  /* MOVIDA (09/11, CB lote 1, oficial), E O MOTIVO: a régua de combate ligou o
-     anúncio da intenção (INTENCAO_NA_REGUA.ligado, porque o App passou a
-     anunciar). As faixas desta régua (35–65 % do típico, o +3 da arma desperta)
-     foram calibradas sem ele: com ele, três mesas caem a 31–34 % e o Ladino 12
-     a +2,0, e a suíte passa de 84 s a mais de 120 s (o relógio do rodar-tudo).
-     Fica medida como foi calibrada, com o anúncio DESLIGADO de forma explícita;
-     recalibrar as faixas com o anúncio é do sistema (está no relato do oficial). */
-  for (let i = 0; i < n; i++) for (const q of KITS) v[q] += simularCombate(mesa(classe, nivel, q, i), `${REGUA_DO_PODER.prefixo}|${i}`, { comIntencao: false }).vitoria;
+  /* MOVIDA DE NOVO (10/11, CB lote 2), E O MOTIVO: no lote 1 o oficial pôs aqui
+     `{ comIntencao: false }` — a régua de combate ligara o anúncio, as mesas
+     desta foram calibradas sem ele, e com ele três caíam a 31–34% e a suíte
+     passava dos 120 s do rodar-tudo. Era a régua a medir um jogo que já não
+     existe (a lição de N1b). Volta a medir o jogo: o anúncio vem pelo
+     omisso da régua de combate (INTENCAO_NA_REGUA), as três mesas foram
+     recalibradas (MESA_JUSTA, acima), e o tempo desceu por três vias que não
+     mudam um veredito — a régua já não faz a pílula de cada intenção
+     (`comPrevisao: false`, só a tela a lê), a soma dos golpes da ameaça
+     corre num vetor (previsao.js), e a forma sem acento dos nomes é lembrada
+     (atirador.js). */
+  for (let i = 0; i < n; i++) for (const q of KITS) v[q] += simularCombate(mesa(classe, nivel, q, i), `${REGUA_DO_PODER.prefixo}|${i}`).vitoria;
   return v;
 }
 
@@ -296,7 +313,12 @@ if (isMainThread) {
 
   /* ---------------- a medição, repartida por trabalhadores ---------------- */
   const tarefas = Object.keys(HEROI_DA_CLASSE).flatMap((classe) => NIVEIS_DA_REGUA.map((nivel) => ({ chave: `${classe}|${nivel}`, classe, nivel, n: REGUA_DO_PODER.sementes })));
-  const quantos = Math.max(1, Math.min(4, (os.cpus() || []).length - 1));
+  /* CB lote 2 (10/11): até 6 trabalhadores (eram 4). Com o anúncio a régua
+     custa mais por combate; a 4 media em 83 s, perto dos 120 do relógio do
+     rodar-tudo, que corre uma suíte de cada vez. Numa máquina de 2 núcleos
+     continua a ser 1. */
+  const TRABALHADORES = Object.freeze({ teto: 6 });
+  const quantos = Math.max(1, Math.min(TRABALHADORES.teto, (os.cpus() || []).length - 1));
   const R = {};
   await new Promise((resolve, reject) => {
     const fila = [...tarefas];
@@ -371,7 +393,17 @@ if (isMainThread) {
     const v = R[tr.chave];
     const d = (v.artefacto - v.tipico) / n, dh = (v.historia - v.tipico) / n;
     const linha = `${pts(d)} (a peça genérica da quest dava ${pts(dh)})`;
-    if (tr.nivel < 17 && REGUA_DO_PODER.pisoNasClasses.includes(tr.classe)) t(`[${tr.chave}] o mais forte: a arma com nome desperta ganha pelo menos +3 — ${linha}`, (v.artefacto - v.tipico) * 100 >= REGUA_DO_PODER.piso * n);
+    /* CB lote 2 (10/11): o Ladino do 12 com o anúncio. Sem ele media +3,3
+       (o piso, por três décimos); com ele, +2,0 — e em três mesas tentadas
+       (lendário 2 nv15 e nv16, elite 4 nv17) +0,0 a +2,3, sempre abaixo do
+       piso e dentro do ruído de 300 combates (±4). Não há mesa que o ponha
+       acima: é o artefacto, não a calibragem. A arma com nome do Ladino no
+       12 vale pouco mais que a típica (ele vive do furtivo, que a peça não
+       muda); subi-la é rebalancear os artefactos (TE8, espolios.js), e isso
+       pede a régua inteira de novo — fica impresso, e vai à pauta. */
+    const PISO_PENDENTE_COM_O_ANUNCIO = ["Ladino|12"];
+    if (PISO_PENDENTE_COM_O_ANUNCIO.includes(tr.chave)) pendente(`[${tr.chave}] o mais forte (piso +3)`, `${linha} — com o anúncio, a arma com nome do Ladino no 12 fica abaixo do piso em toda a mesa tentada (rebalancear o artefacto é da TE8)`);
+    else if (tr.nivel < 17 && REGUA_DO_PODER.pisoNasClasses.includes(tr.classe)) t(`[${tr.chave}] o mais forte: a arma com nome desperta ganha pelo menos +3 — ${linha}`, (v.artefacto - v.tipico) * 100 >= REGUA_DO_PODER.piso * n);
     else pendente(`[${tr.chave}] o mais forte (piso +3)`, `${linha} — ${tr.nivel >= 17 ? "o típico do 17 é um épico com dois poderes sorteados; sem golpe extra a arma com nome não o alcança" : "o conjurador sente pouco o aço no motor"}`);
   }
 

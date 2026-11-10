@@ -384,6 +384,19 @@ sec("1. NENHUM MÓDULO MUDO");
        passa `intencoes` a turnoDosInimigos, foge quem anunciou fugir, quem
        sopra não anda, e o balanço vai ao registo da rodada; e
        `INTENCAO_NA_REGUA.ligado` passou a true. A entrada saiu. */
+    /* 10/11 (Fase CB, lote 2, backend): dois módulos nascem e esperam o
+       `oficial` na MESMA leva. `vez-na-mesa.js` — `filaDaRodada` (CB9, a fila
+       pela ordem em que o motor joga), `economiaDaVez` (CB10, o que resta e
+       `recursosDosVerbos`, que o painel já espera) e `caminhoComProvocacoes`
+       (CB11, a linha do caminho com o custo e o golpe livre do App).
+       `turno-contado.js` — `passosDoTurno` e `duracaoDosPassos` (CB12, o
+       turno deles em passos, com o teto de 4 s) e `golpeDaHabilidade` (o d20
+       e o evento do golpe da habilidade). Credor: o `oficial`, que os liga no
+       App.jsx (a lista está no relato do backend). As entradas saem quando o
+       App os importar. `teste-vez-na-mesa.mjs` e `teste-turno-contado.mjs`
+       são os primeiros leitores. */
+    "vez-na-mesa.js": "CB lote 2 (10/11): a fila, a economia e o caminho — espera a fiação do oficial",
+    "turno-contado.js": "CB lote 2 (10/11): o turno deles em passos e o golpe da habilidade — espera a fiação do oficial",
   };
   const mudos = [];
   for (const f of arqs) {

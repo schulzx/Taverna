@@ -230,5 +230,28 @@ sec("§8 determinismo, imutabilidade, lixo");
   t("e sem ela (a régua), ninguém anuncia fuga", I.intencoesDaRodada({ ...comb, inimigos: comb.inimigos.map((e) => ({ ...e, vida: 1 })) }, ctxDe(p, "f", { sorte: () => 0 })).lista.every((x) => x.tipo !== "fugir"));
 }
 
+/* ============================================================ */
+sec("§9 sem a pílula (comPrevisao: false, CB lote 2) — a mesma escolha, ao byte");
+{
+  /* A régua do poder corre o anúncio sem a previsão de cada intenção (o
+     número da pílula, que só a tela lê): eram as convoluções da pílula a
+     metade do tempo dela. O que a régua e a execução leem — o tipo, os alvos
+     de cada golpe, a área do sopro, e a ameaça somada (`porAlvo`, que o
+     herói que lê consulta) — tem de ser o mesmo, em 60 lutas sorteadas. */
+  const TIPOS = [["Lobo", "comum"], ["Bandido", "comum"], ["Orc", "competente"], ["Ogro", "elite"], ["Dragão Jovem", "lendario"], ["Atirador", "comum"]];
+  const r = S("sem-pilula");
+  let iguais = 0, comPilula = 0;
+  const essencia = (x) => J({ lista: x.lista.map((it) => ({ inimigo: it.inimigo, tipo: it.tipo, alvos: it.alvos, alvo: it.alvo, golpes: it.golpes, area: it.area || null, vistaAlvo: it.vista.alvo, vistaTipo: it.vista.tipo })), porAlvo: x.porAlvo });
+  for (let i = 0; i < 60; i++) {
+    const n = 1 + Math.floor(r() * 4), [nome, ameaca] = TIPOS[Math.floor(r() * TIPOS.length)];
+    const { comb, p } = luta(Array.from({ length: n }, (_, k) => ({ nome: `${nome} ${k + 1}`, ameaca, nivel: 3 + Math.floor(r() * 8) })), `pil|${i}`, 3 + Math.floor(r() * 8));
+    const com = I.intencoesDaRodada(comb, ctxDe(p, `pil|${i}`)), sem = I.intencoesDaRodada(comb, ctxDe(p, `pil|${i}`, { comPrevisao: false }));
+    if (essencia(com) === essencia(sem)) iguais++;
+    if (com.lista.some((it) => it.tipo === "atacar" && it.previsao.length) && sem.lista.every((it) => it.tipo !== "atacar" || it.previsao.length === 0)) comPilula++;
+  }
+  t(`a escolha, os alvos, a área e a ameaça somada são os mesmos em ${iguais} de 60 lutas`, iguais === 60);
+  t(`e só a pílula sai (${comPilula} lutas com golpe anunciado: com a previsão, e sem ela vazia)`, comPilula > 20);
+}
+
 console.log(`\na intenção do inimigo: ${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

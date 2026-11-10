@@ -4885,8 +4885,8 @@
   },
   {
    "saida": "fbc8f24aec7a8901",
-   "refs": "159b163ff60c2ab6",
-   "portas": "b6f6844ca68c438b",
+   "refs": "609c17863a8f2e64",
+   "portas": "882801574a97df5b",
    "nPortas": 6,
    "erro": null,
    "faltas": []
@@ -4901,8 +4901,8 @@
   },
   {
    "saida": "ceeb349723c57f5d",
-   "refs": "bfc9e83cd07d77d7",
-   "portas": "9ac5417e6e1b0673",
+   "refs": "d5ef7df38041828d",
+   "portas": "cb7b2fc59d7fd756",
    "nPortas": 6,
    "erro": null,
    "faltas": []
@@ -8298,11 +8298,11 @@
    "faltas": []
   },
   {
-   "rede": "3167941fdc5829bf",
-   "tamRede": 76480,
-   "saida": "36c6dc496cc05709",
-   "refs": "5dfc1edae29557c7",
-   "portas": "96036067107bd055",
+   "rede": "8e0ff8c5619b53ff",
+   "tamRede": 76482,
+   "saida": "dd4e60fdd3817a65",
+   "refs": "1342fe3c27fec326",
+   "portas": "7189336a8657f183",
    "nPortas": 6,
    "erro": null,
    "faltas": []
@@ -8318,11 +8318,11 @@
    "faltas": []
   },
   {
-   "rede": "a9b0f666d44392fe",
-   "tamRede": 69944,
-   "saida": "daae07231c5dd8fb",
-   "refs": "a16de72f8e86ace3",
-   "portas": "5f4c5b476e9c7a10",
+   "rede": "a4b1f290b172fdc0",
+   "tamRede": 69946,
+   "saida": "5b0597d4d3eab61b",
+   "refs": "95e5e44be424ea05",
+   "portas": "18abdb760e7ee977",
    "nPortas": 6,
    "erro": null,
    "faltas": []

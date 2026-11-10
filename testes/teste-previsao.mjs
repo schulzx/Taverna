@@ -20,8 +20,7 @@
 import * as P from "../src/previsao.js";
 import {
   resolverAtaque, danoDe, danoDaClasse, vereditoDoFurtivo, oportunidadesContraOJogador,
-  eventoDoGolpe, EVENTO_DO_GOLPE, ataquesPorTurno, defesaDe,
-} from "../src/combate.js";
+  eventoDoGolpe, EVENTO_DO_GOLPE, ataquesPorTurno, defesaDe, danoBaseDaAmeaca } from "../src/combate.js";
 import { chanceDeAcerto } from "../src/fuga.js";
 import { completarInimigo } from "../src/bestiario.js";
 import { perfilDe, elementoDaArma, resistenciasEquipadas } from "../src/danos.js";
@@ -31,6 +30,11 @@ import { danoDaForma } from "../src/habilidades.js";
 import { modDoGolpe } from "../src/itens.js";
 import { valorParaHabilidade } from "../src/atributos.js";
 import { rng, hashSemente, comSorte } from "../src/semente.js";
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -236,7 +240,10 @@ sec("§5 o golpe livre que o caminho provoca");
     if (ops[0].r.dano > 0 || ops[0].r.resultado === "acerta" || ops[0].r.resultado === "critico") ac++;
   }
   t(`a chance dita (${(g.quem[0].chance * 100).toFixed(1)}%) é a rolada por oportunidadesContraOJogador (${(ac / N * 100).toFixed(1)}%)`, perto(g.quem[0].chance, ac / N, 0.03));
-  t("o dano do lobo é o da ameaça (5 + d4 − 1: 5–8)", g.quem[0].dano.min === 5 && g.quem[0].dano.max === 8);
+  /* MOVIDA (10/11, CB13), E O MOTIVO: o Lobo é comum de nível 1, e o comum do
+     começo bate mais leve (DANO_NO_COMECO, combate.js: 3 + d4 − 1). A intenção
+     fica: o dano previsto é o da leitura única que o golpe rola. */
+  t("o dano do lobo é o da ameaça, pela leitura do golpe (o comum de nível 1: 3 + d4 − 1, 3–6)", g.quem[0].dano.min === danoBaseDaAmeaca(colado) && g.quem[0].dano.max === danoBaseDaAmeaca(colado) + 3 && danoBaseDaAmeaca(colado) === 3);
   t("ninguém colado: nada a pagar", P.golpesLivresAoAndar({ x: 0, y: 0 }, [longe], heroi, {}).chanceDeAlgum === 0);
   const pv = P.previsaoDoHeroi(GUERREIRO, lobo({ vida: 10 }), { andaDe: de, inimigos: [colado, longe] });
   t("a previsão do herói que anda leva os golpes livres junto", !!pv.golpesLivres && pv.golpesLivres.quem.length === 1);
@@ -285,6 +292,36 @@ sec("§7 determinismo, imutabilidade, lixo");
   t("o dano do inimigo pela ameaça (o comum: 5–8) e o sopro vezes dois (10–16)",
     J(P.previsaoDoAtaque({ alvo, bonusAtaque: 99, dano: P.danoDoInimigo({ ameaca: "comum" }) }).dano) === J({ min: 5, medio: 6.5, max: 8 })
     && P.previsaoDoAtaque({ alvo, bonusAtaque: 99, dano: P.danoDoInimigo({ ameaca: "comum" }, 2) }).dano.max === 16);
+}
+
+/* ============================================================ */
+sec("§CB lote 2 · a soma dos golpes num vetor — a mesma conta, ao byte");
+{
+  /* CB lote 2 (10/11): `abateDaSoma` (previsao.js) passou do Map de valor →
+     chance a um vetor (a régua do poder com o anúncio somava os golpes de
+     cinco lendários a cada rodada). A prova é contra o previsao.js de ANTES,
+     lido do git no commit fixo (89a1649, o lote 1 no ar), com os mesmos
+     módulos de hoje por baixo: `previsaoDeVariosGolpes` igual, ao byte, em
+     1500 somas sorteadas (1 a 12 golpes, as cinco ameaças, o sopro dobrado,
+     vida de 0 a 220, vantagem e desvantagem). */
+  const RAIZ = new URL("..", import.meta.url);
+  const texto = execSync("git show 89a1649:src/previsao.js", { cwd: RAIZ, encoding: "utf8", maxBuffer: 1 << 26 }).split(String.fromCharCode(13)).join("")
+    .replace(/from "\.\/([^"]+)"/g, (_, m) => `from "${new URL("../src/" + m, import.meta.url).href}"`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "taverna-previsao-"));
+  const arq = path.join(dir, "previsao-antes.mjs");
+  fs.writeFileSync(arq, texto);
+  const V = await import(pathToFileURL(arq).href);
+  const r = rng(hashSemente("cb2|vetor"));
+  const amz = ["fraco", "comum", "competente", "elite", "lendario"];
+  let iguais = 0, n = 0;
+  for (let i = 0; i < 1500; i++) {
+    const ng = 1 + Math.floor(r() * 12), vida = Math.floor(r() * 221);
+    const golpes = Array.from({ length: ng }, () => ({ alvo: { vida, defesa: 10 + Math.floor(r() * 10) }, ehAtacanteInimigo: true, bonusAtaque: Math.floor(r() * 12), dano: P.danoDoInimigo({ ameaca: amz[Math.floor(r() * 5)], nivel: 5 }, r() < 0.2 ? 2 : 1), vantagem: r() < 0.2, desvantagem: r() < 0.2 }));
+    n++;
+    if (JSON.stringify(P.previsaoDeVariosGolpes(golpes, vida)) === JSON.stringify(V.previsaoDeVariosGolpes(golpes, vida))) iguais++;
+  }
+  fs.rmSync(dir, { recursive: true, force: true });
+  t(`o vetor dá o mesmo do Map de antes em ${iguais} de ${n} somas`, iguais === n);
 }
 
 console.log(`\na previsão do golpe: ${bons} ok · ${maus} falhas`);

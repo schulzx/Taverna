@@ -79,6 +79,7 @@ export const CAMPOS_DO_SERVIDOR = Object.freeze({
   golpeFinalEnvelope: C("bilhete", "golpeFinalEnvelope", "o golpe final escolhido", "o fluxo do golpe (a tela)", ["pauta"]),
   golpesDaRodada: C("bilhete", "golpesDaRodada", "os golpes desta rodada", "o fluxo do golpe (a luta)", ["pauta"]),
   intencao: C("bilhete", "intencao", "a intenção declarada na luta", "a luta (a tela)", ["pauta"]),
+  pautaDeUmTurno: C("bilhete", "pautaDeUmTurno", "o que um órgão diz ao Mestre por um turno só (o encontro da estrada)", "a tela (narrarOEncontro e quem mais precisar)", ["pauta"]),
 });
 
 /* ---------------- O NULO DO SAVE, COMO O LOAD O ABRE ----------------

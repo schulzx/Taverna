@@ -16957,3 +16957,283 @@ reaprender, e o rollback não devolve o hábito. A variante tímida é só o 190
 
 
 > **§CB 16.6 decidido pelo coordenador (09/11, com a licença da pessoa para ousar e decidir): não.** Os verbos ficam em baixo, ao centro, a convenção de Baldur’s Gate 3 e Divinity que quem joga já tem na mão; a casa de 49 px já é um alvo de dedo inteiro. Mudar onde a mão procura os verbos custa mais do que os 8 px valem.
+
+### CB 17 · O dado no alvo e o turno deles em passos (`desenho`, 09/11/2026, para o lote 2)
+
+**Os quadros** (página `341:2`, fila **F**, y 7240): **`365:1438`** F1, o d20 no alvo a 1905 · **`365:1843`** F2, o
+mesmo a 375 · **`366:1692`** F3, o d20 quadro a quadro e as variantes · **`368:1853`** F4, o turno deles a 1905 (o
+passo do Goblin) · **`369:2251`** F5, o mesmo a 375 · **`370:2104`** F6, a régua do tempo. O par comparável é a fila
+B′ (`356:794`, `358:1250`), na mesma página.
+
+**As peças novas** (todas com as variáveis de `T · Mesa C (vela)`): `Dado no alvo` **`363:1649`** (rola · acerta ·
+critico · erra · deles-acerta · deles-erra; mesa 44 · telefone 36 · deles 28) · `Controlo do turno deles`
+**`364:1449`** (2× desligado · 2× ligado · Saltar; mesa 32 · telefone 44) · `Linha do registo` **`364:1462`** (nova ·
+lida · te-feriu) · `Anel de quem age` **`364:1469`** (inimigo · aliado) · e a variante **`Casa marcada ·
+Tipo=caminho-deles`** **`364:1470`**. Usa também `Dado` (`243:26`), `Numero do golpe` e `Rosto da fila`.
+
+#### CB 17.1 · O d20 do ataque rola no alvo
+
+**O problema, medido.** O `oficial` pôs a `Bandeja` do golpe em `p.dado`, no fim da secção da ação (App.jsx, a prop
+`dado=` da `TelaDeBatalha`), porque não havia casa para ela. A barra cresce 56 + 6 no telefone e 64 + 8 a 1905, e a
+conta de §CB 16.2 paga isso com o tabuleiro:
+
+| | sem a bandeja (§CB 16.2) | com a bandeja na barra (hoje) |
+|---|---|---|
+| 375×812 | janela 453 · casa **40** · **99** casas | janela 391 · casa 35 (ou 9×9 = 81 a 40) |
+| 1905×1000 | janela 713 · casa **49** | janela 641 · casa 44 (abaixo do alvo de dedo, 48) |
+
+E a barra deixa de ter altura fixa, que era a quarta decisão de §CB 16.1.
+
+**A decisão: o d20 rola em cima do alvo, no lugar da previsão.** É uma camada por cima do tabuleiro, posta como a
+pílula da `PrevisaoDoGolpe`, e não ocupa layout nenhum. **Não se tira nenhuma casa, em nenhum tamanho**, e a barra
+volta à altura fixa (106/122 no monitor, 170 no telefone). É também o único lugar comum aos dois tamanhos: no
+telefone não há coluna Tu, e a 1905 o olho está no inimigo em que acabou de clicar. A pílula da previsão dizia
+«78%» ali mesmo, e o dado vem cumprir a promessa no sítio onde ela foi feita.
+
+As três sugestões do pedido, e o que se fez com cada uma:
+- *Sobreposição de 600 ms que se pode saltar*: é a base da decisão, mas presa ao alvo e não ao centro do tabuleiro. Um
+  dado ao centro tapa o golpe que vem a seguir, e obriga o olho a ir e voltar.
+- *Na coluna Tu a 1905*: fica a meia voz. As faces de «O teu golpe» acendem-se enquanto o dado rola, e a face que sai
+  marca-se (`FacesDoD20`, `saiu`). Não serve de casa ao dado porque a 375 a coluna não existe, e a mesma ação ficaria
+  com duas caras.
+- *Dentro da pílula da previsão*: é isto, levado ao fim. **A pílula transforma-se no dado.** Não nasce um segundo
+  objeto ao lado do primeiro.
+
+**O tempo** (F3, `366:1692`): **0** é o clique, e o estado já está aplicado. **0–600**: a pílula vira o `Dado no
+alvo · rola`, o d20 gira (−18°) e o número troca a cada 60 ms, com «precisas de 6+» (`amberSoft`). **600**: pousa, com
+a face, a conta («9 +6 = 15 contra 12») e o desfecho, e soa o dado. **600–980**: **só agora** corre o golpe sentido
+de §CB 5 (pausa, tremor, número), por cima da ficha. **980–2 080**: 900 ms de leitura e 200 a esvair
+(`GOLPE_SENTIDO`). A frase fica no Pé do campo e no registo. O número do golpe **espera pelo dado**, porque se saltasse
+antes estragava-o.
+
+**A entrada nunca espera:** qualquer toque, clique ou tecla pousa o dado já e é aceite (a regra que `Bandeja` já
+tem, `pousarRef`). Um clique noutro inimigo pousa este dado e prevê o seguinte. Com 2× (§CB 17.2) o dado rola 300.
+
+| estado | quando | a forma |
+|---|---|---|
+| `rola` | 0–600 | aro amber 1,5 tracejado 4/3; d20 a girar; «precisas de N+» `amberSoft` e «o dado rola…» `inkDim` |
+| `acerta` | pousou, acertou | aro amber 1,5; a conta `inkMeio`; «acerta» mono 13 bold `ok` |
+| `critico` | 20 no dado | aro amber 2,5; «✦ CRÍTICO» `amber`; e depois o crítico de §CB 5 |
+| `erra` | pousou, errou | aro `lineStrong`; o d20 a 70 %; «erra» `inkDim`; e depois o desvio de §CB 5 |
+| `deles-acerta` · `deles-erra` | o d20 do inimigo, no turno deles (§CB 17.2) | d20 a 28, **pousado, nunca rola**; «Goblin · 14 +4 contra 16»; aro `danger` / `lineStrong` |
+
+**Onde pousa.** A pílula do herói pousa 8 px abaixo da ficha do alvo (`PREVISAO_DO_GOLPE.abaixoDaFicha`). Se não
+cabe por baixo, por causa da borda do tabuleiro ou da janela da câmara no telefone, **sobe para cima da ficha**. A
+pílula deles pousa **do lado do alvo oposto a quem ataca**, para o caminho e o atacante ficarem à vista. **Dois
+golpes** (o Ataque Extra) dão um dado em cada alvo: rolam juntos, pousam com 90 ms entre si e nunca passam de 780 ms.
+Dois golpes no mesmo alvo dão dois d20 na mesma pílula. A habilidade de área não tem d20 do herói e fica como está.
+
+**Movimento reduzido** (WCAG 2.2, 2.3.3): o dado não rola nem gira. Aparece pousado em 120 ms
+(`MOVIMENTO_DO_DADO.semMovimento`) e o golpe sentido segue a versão reduzida de §CB 5. O som fica.
+
+**O teste pendente** (`dadoDaBatalha`, o «Rolar d20» que o Mestre pede no meio da luta) é outra coisa: um pedido
+com botão. Continua em `p.dado`, mas **toma o lugar da fileira dos verbos enquanto espera**, como o `decisao`, em vez
+de acrescentar uma linha. Assim a barra nunca muda de altura. O `oficial` confirma que, com `rolagem` pendente, os
+verbos já estão impedidos (`bloqueado`). Se não estiverem, o teste fica onde está e o caso entra no diário.
+
+#### CB 17.2 · O turno deles, contado em passos (CB12)
+
+**O que se vê, passo a passo** (F4 `368:1853`, F5 `369:2251`):
+
+1. **Quem age, realçado.** A ficha leva o `Anel de quem age` (traço 3 `danger`, brilho a 35 %; `ok` num aliado). Na
+   fila, o rosto passa a `vez` com o aro em `danger` (o amber é a vez do herói). Em Eles, o cartão leva aro `danger` 2.
+   Quem já agiu fica a 45 % na fila e no cartão. **«A TUA VEZ» passa a «A VEZ DELES»** (`danger`), na coluna Tu e no
+   canto do telefone, com o nome de quem age. No fim volta a «A TUA VEZ» com um pulso (`tv-pulse`, uma vez).
+2. **O caminho.** No começo do passo desenha-se o caminho inteiro: linha `danger` de traço 2 e tracejado 5/4 (a seta
+   da intenção, `INTENCAO_NA_MESA.seta`), um ponto em cada casa (`Casa marcada · caminho-deles`) e um aro tracejado
+   `lineStrong` na casa de onde veio. A ficha desliza a 60 ms por casa, com teto de 300. No telefone **a câmara segue
+   quem age**: o retângulo de §CB 9 passa a conter quem age, o destino e o alvo, e a origem pode ficar fora.
+3. **O golpe sentido.** O d20 deles pousa já (`Dado no alvo · deles-*`, 28), e no mesmo quadro corre o golpe sentido
+   de §CB 5 no alvo. «Em ti» acende a moldura só com `peso` ≥ 0,25, como sempre. **O sopro**: as casas da área pulsam
+   (22 → 45 → 22 %, 200 ms) e os números nascem juntos em todos os apanhados. Sopro vazio: as casas apagam-se e a linha
+   diz «o sopro queima o chão vazio».
+4. **A linha no registo.** Nasce **no começo** do passo, em «A rodada N», como `Linha do registo · nova`: barra de
+   2 px amber, ou `danger` quando o golpe te feriu, entrando em 120 ms. Passa a `lida` quando o passo seguinte nasce. A
+   mesma frase é **o texto do Pé do campo** durante o passo, com o glifo do tipo da intenção no lugar da mira. No
+   telefone o Pé é o único sítio onde ela se lê durante o turno, e a lista inteira abre-se depois na ficha da tira.
+5. **A intenção cumprida.** A pílula da intenção de quem age sai do tabuleiro (o dado tomou-lhe o lugar). As
+   intenções **da rodada nova** só aparecem quando o último passo acaba, num esvanecer de 200 ms. Durante o turno, a
+   grade recebe as intenções que foram anunciadas, para cada passo cumprir o que se viu.
+
+**A frase do passo** (tabela de tela, `FRASE_DO_PASSO`, em `painel-batalha.jsx`). Diz o que o mundo fez e nunca o
+nome do mecanismo:
+
+| `intencao` do passo | o desfecho |
+|---|---|
+| `cumprida` | «acerta, 5.» · «erra.» · com caminho: «vem 9 m e acerta, 5.» |
+| `reescolhe` | «Quorin caiu; vira-se para Bran e acerta, 5.» |
+| `reescolheAoAlcance` | «já não te alcança; vira-se para Quorin e erra.» |
+| `provocacao` | «provocado, vem a ti e acerta, 5.» |
+| `golpeiaSeAlcanca` | «vem 9 m.» (ou «vem 9 m e acerta, 5.» se chegou) |
+| `perdido` (sopro) | «o sopro queima o chão vazio.» |
+| `aproximar` / `fugir` | «vem 9 m.» · «foge.» |
+
+**Os controlos: 2× e Saltar ›** (`Controlo do turno deles`). Vivem **no Pé do campo, à direita, antes do ⤢**, e só
+enquanto o turno deles se conta. No telefone o ⤢ cala-se nesse tempo, para a frase ter largura. O sítio é aquele
+porque o Pé já é a linha do «o que está a acontecer», está à mesma distância da mão em todos os tamanhos e tem altura
+fixa (32/44), de modo que os controlos não comem casas. **2×** é um interruptor (`aria-pressed`, chão amber a 18 %
+com letra `amberSoft` quando ligado) e fica lembrado como preferência no `localStorage`, não no save. Corta tudo a
+metade, o teto incluído. **Saltar ›** leva a mesa ao fim já.
+
+**A regra: o turno deles nunca prende o jogador mais de 4 s** (F6, `370:2104`). São duas garantias:
+
+1. **Um toque salta, sempre.** Saltar ›, Esc, Espaço, escrever no `como?`, ou **um toque no tabuleiro, que só salta**
+   (a mesa mexeu-se debaixo do dedo, e o clique num inimigo é irreversível, porque anda e ataca). Um toque num
+   **verbo salta e arma**, porque armar é reversível. O estado já está aplicado quando o primeiro passo começa:
+   contar é só leitura.
+2. **Sem toque, nunca mais de `teto` (4 000 ms).** A soma dos passos é `realce` + `andar` + `golpe` + `respiro` por
+   passo, mais o `fim`. Se passar o teto: (a) cada passo encolhe por igual, até ao piso de 250; (b) se nem assim, quem
+   só anda anda junto, num passo só; (c) no teto, o resto pousa de uma vez, com as linhas todas no registo.
+
+Medido em F6: a luta da praça (4 passos) leva **3 080 ms** a 1× e **1 540** a 2×. A horda de 8 lobos (7 080 ms em
+bruto) encolhe ×0,55 e acaba **em 4 000**. Com movimento reduzido leva **1 800**. É também o que pede o WCAG 2.2,
+2.2.2 (Pause, Stop, Hide): o que se mexe sozinho mais de 5 s tem de poder parar. Aqui nada passa de 4, e tudo se
+salta.
+
+**Movimento reduzido:** sem deslizar, sem pulsar e sem brilho. A ficha salta para o destino, o caminho fica
+desenhado o passo inteiro e cada passo é **um corte de 400 ms**. A ordem é informação, por isso fica. O movimento
+sai, e o som fica.
+
+**A 1905** (F4): o realce na ficha, no rosto da fila e no cartão de Eles; o caminho no chão; o d20 deles e o número no
+alvo; a linha nova em «A rodada N» e no Pé; 2× e Saltar a 32 no Pé. **A 375** (F5): a câmara segue quem age; «A VEZ
+DELES · Goblin» no canto; a frase no Pé, em duas linhas; 2× e Saltar a 44. **As 99 casas ficam nos dois.**
+
+#### CB 17.3 · As tabelas (para `src/estilo.js`; leem as de §CB 11 e não copiam número delas)
+
+```js
+export const DADO_NO_ALVO = {              // §CB 17.1
+  rola: GOLPE_SENTIDO.dadoNaBandeja,       // 600
+  troca: MOVIMENTO_DO_DADO.troca,          // 60
+  entreDados: MOVIMENTO_DO_DADO.entreDados, tetoDeVarios: 780,
+  giro: -18,
+  lado: { mesa: 44, telefone: 36, deles: 28 },
+  respiro: 4, direita: 12, entre: 8, aro: 1.5, aroCritico: 2.5, tracejadoRola: [4, 3],
+  abaixoDaFicha: PREVISAO_DO_GOLPE.abaixoDaFicha,
+  erraAlfa: 0.7,
+  reduzido: MOVIMENTO_DO_DADO.semMovimento, // 120
+};
+export const TURNO_DELES = {               // §CB 17.2 — ms
+  teto: 4000, pisoDoPasso: 250,
+  realce: 120, porCasa: 60, andarTeto: 300, soproPinta: 200, respiro: 120, fim: 200,
+  sopro: { alfa: [0.22, 0.45] },           // o 0,22 é INTENCAO_NA_MESA.area.chao, e lê-se de lá
+  acelerado: 0.5,
+  reduzido: { passo: 400 },
+  linhaNova: 120, intencoesNovas: 200,
+  agiu: FILA_DA_VEZ.agiu,
+  anel: { traco: 3, brilho: 0.35, raio: 8, folga: 2 },
+  origem: { aro: 1.5, tracejado: [4, 3] },
+  controlo: { ligado: 0.18 },              // a altura é a do Pé: BATALHA_EM_TRES.pe e .telefone.pe
+  preferencia: "taverna:turno-deles-2x",
+};
+```
+
+O golpe de cada passo é a soma de `GOLPE_SENTIDO` para o desfecho (≤ 400), e o caminho é `INTENCAO_NA_MESA.seta`.
+**Nenhuma cor nova.**
+
+#### CB 17.4 · O contraste dos pares novos (WCAG 2.2; `T` lido em `node`)
+
+| par | razão |
+|---|---|
+| «precisas de 6+» `amberSoft` / `pagina` · a conta `inkMeio` / `pagina` | 12,42 · 10,58 |
+| «acerta» `ok` / `pagina` · «erra» `inkDim` / `pagina` · o deles «acerta» `danger` / `pagina` · «CRÍTICO» `amber` / `pagina` | 9,93 · 6,92 · 5,91 · 8,89 |
+| o aro do dado `amber` / `pagina` · `lineStrong` / `pagina` (não-texto) | 8,89 · 4,64 |
+| o d20 do erro a 70 % / `pagina` (não-texto) · o número dele sobre o corpo a 70 % | 4,90 · 4,82 |
+| «A VEZ DELES» `danger` / `panel` (coluna Tu) · / `bg` (canto do telefone) | 5,35 · 5,11 |
+| o anel e o caminho `danger` / `bg` · a origem `lineStrong` / `bg` (não-texto) | 5,11 · 4,00 |
+| 2× desligado `inkMeio` / `panelSoft` · Saltar `ink` / `panelSoft` · o aro `lineStrong` / `panelSoft` | 8,32 · 12,07 · 3,65 |
+| 2× ligado `amberSoft` / amber a 18 % sobre `panelSoft` | 6,76 |
+| a linha nova `ink` / `panel` · a que te feriu `danger` / `panel` · a lida `inkMeio` / `panel` | 13,87 · 5,35 · 9,57 |
+
+Todo o texto passa 4,5 e todo o não-texto que leva informação passa 3.
+
+#### CB 17.5 · O que a tela pede ao sistema (`mente/pedidos-ao-sistema.md`)
+
+**`passosDoTurno(acoes, ctx)`** (`backend`, ao lado de `turnoDosInimigos`; os aliados entram na mesma lista, pela
+ordem de `faixaDaVez`). Devolve uma lista de passos:
+
+```
+{ quem, lado: "inimigo" | "aliado",
+  tipo: "atacar" | "sopro" | "aproximar" | "fugir" | "nada",
+  de: {x,y}, para: {x,y}, caminho: [{x,y}, …],      // inclui de e para; [] se não andou
+  golpes: [{ alvo, alvoOnde, dado: { natural, bonus, total, defesa } | null, evento }],  // evento = eventoDoGolpe
+  area: [{x,y}] | null, intencao: "cumprida" | <RECURSO_DA_INTENCAO>, metros }
+```
+
+Hoje `turnoDosInimigos` dá `onde`/`alvoOnde`/`metros`/`intencao` por golpe, mas **não dá o caminho andado nem o d20
+separado do total**, e agrupa por golpe e não por quem age. A frase é da tela (`FRASE_DO_PASSO`). O motor só dá os
+dados. A suíte prova que a lista, aplicada por ordem, chega ao mesmo estado que a rajada de hoje (o determinismo por
+semente não muda).
+
+#### CB 17.6 · O que se constrói (por esta ordem)
+
+**O `aprendiz`, fora do `App.jsx`:**
+
+1. `src/estilo.js`: `DADO_NO_ALVO` e `TURNO_DELES` (§CB 17.3), mais as classes `tv-dado-no-alvo` (o giro e a troca),
+   `tv-anel-age` (o brilho) e `tv-sopro-pulsa`, todas desligadas no bloco de movimento reduzido. Sem crase em
+   comentário dentro de `SUPERFICIES_CSS`.
+2. `src/painel-bandeja.jsx`: exportar `DadoDoLance` (o `Corpo` já é exportado) para a peça nova o reutilizar. Nada
+   muda na `Bandeja` fora da luta.
+3. `src/grade-de-batalha.jsx`:
+   - a peça **`DadoNoAlvo`** (os seis estados, a regra de pousar por baixo/por cima/do lado oposto ao atacante, dois
+     alvos, o toque que pousa) e uma prop nova **`lance`**: `{ alvo, dados: [{ natural, bonus, total, defesa,
+     desfecho }], deles, n }`. Enquanto há `lance` do herói, a `PrevisaoDoGolpe` daquele alvo não se desenha;
+   - **`golpes`** passa a esperar pelo dado: o `Numero do golpe` daquele alvo nasce no `aoPousar` do lance (ou já, sem
+     lance);
+   - o turno deles: props **`passo`** (o passo corrente: quem, caminho, de, para, tipo, area) e **`agiram`** (os
+     nomes). Desenham o `Anel de quem age`, o caminho com a `Casa marcada · caminho-deles` e a origem, o deslizar da
+     ficha (60 ms por casa, teto 300) e o pulso do sopro;
+   - no telefone, `camaraDoTelefone` aceita «quem age» como mais um ponto a enquadrar.
+4. `src/painel-batalha.jsx`:
+   - **`p.dado` deixa de levar a `Bandeja` do golpe.** Se ainda vier o teste pendente, toma o lugar da
+     `FileiraDeVerbos` (como `p.decisao`) e não acrescenta linha;
+   - `OTeuGolpe` recebe `saiu` (a face do último d20, durante `GOLPE_SENTIDO.leitura`) e acende as faces enquanto o
+     dado rola;
+   - o turno deles: uma prop **`turnoDeles`** `{ passos, indice, acelerado, aoSaltar, aoAcelerar }`. Com ela, «A TUA
+     VEZ» passa a «A VEZ DELES · <nome>», a `FilaDaVez` marca a vez de quem age com aro `danger` e quem agiu a 45 %,
+     os cartões de Eles idem, o Pé do campo leva a frase do passo e os dois `Controlo do turno deles` antes do ⤢ (no
+     telefone o ⤢ cala-se), e «A rodada N» cresce com `Linha do registo`;
+   - os atalhos: Esc e Espaço saltam enquanto há `turnoDeles`. Um `pointerdown` na janela do campo só salta (é
+     consumido). Um verbo salta e arma.
+5. Os varredores: `check-tela-de-batalha.mjs` cresce (a `TelaDeBatalha` nunca põe a `Bandeja` em `p.dado`; todo o
+   `TURNO_DELES`/`DADO_NO_ALVO` vem de tabela; `tv-dado-no-alvo`, `tv-anel-age` e `tv-sopro-pulsa` estão no bloco
+   reduzido). E nasce `check-turno-deles.mjs`: para qualquer lista de passos, a duração planeada ≤ `teto` (e
+   ≤ `teto × acelerado` com 2×), e há sempre saída (`aoSaltar`).
+
+**O `oficial`, no `App.jsx`, com o bastão:**
+
+6. O lance do herói: na resolução do ataque, o `lance` para a grade (sai do `bandeja[0].golpe` que já se escreve) e a
+   prop `dado=` da `TelaDeBatalha` passa a levar só o `dadoDaBatalha`. O lançamento continua a entrar em `bandeja`,
+   para a bandeja de fora da luta o mostrar depois.
+7. O turno deles: `passosDoTurno` (§CB 17.5) depois da rajada, **já aplicada ao estado**. Um relógio em `calou(...)`
+   avança o `indice` pela duração planeada (uma função pura, `duracaoDosPassos(passos, { acelerado, reduzido })`,
+   provada em Node). Qualquer entrada chama `aoSaltar`, que põe o índice no fim. Ao acabar, as intenções da rodada nova
+   entram na grade. A preferência 2× é lida e escrita em `TURNO_DELES.preferencia`, dentro de `try/catch`.
+
+**O peso:** médio. Cria peças e reorganiza o que se vê sem mudar o que o jogador faz nem a ordem em que o faz (o
+turno deles já acontecia; agora vê-se). Nenhum controle sai. Reverte-se num commit.
+
+#### CB 17.7 · O «superior», escrito
+
+**Medida:** a 375, **99 casas com o d20 à vista**, contra 70 hoje (e 81 ou casa 35 com a bandeja na barra). A 1905,
+casa 49 em vez de 44. A barra volta a ter altura fixa nos cinco tamanhos de §CB 16. O d20 chega a **0 cm** do alvo, e
+hoje está a ~400 px dele a 1905 e por baixo do campo no telefone. O turno deles passa de uma rajada sem rasto para
+**passos legíveis em ≤ 4 s (3,1 s numa luta de 4)**, saltáveis com um toque.
+
+**Estudo citado:** a ação inimiga em passos, com a câmara a seguir quem age e a opção de a apressar, vem de XCOM 2
+(Firaxis, 2016) e de Baldur's Gate 3 (Larian, 2023). Into the Breach (Subset Games, 2018) resolve o turno inimigo
+como cumprimento do que anunciou, e é isso que a intenção cumprida mostra. O WCAG 2.2, 2.2.2 (Pause, Stop, Hide) e
+2.3.3 (Animation from Interactions) são o teto de 4 s, o Saltar e o movimento reduzido. A lei de Fitts (Fitts, 1954)
+explica porque o dado pousa no alvo: o tempo de ler cresce com a distância que o olho tem de percorrer, e o dado
+põe-na a zero.
+
+**A experiência jogada** é do `jogo`, depois da construção.
+
+#### CB 17.8 · Para a pessoa decidir: a proposta ambiciosa, **o dado que te pode derrubar rola**
+
+No turno deles o d20 deles pousa já, porque o teto de 4 s não deixa rolar todos. A proposta abre **uma** exceção:
+quando a intenção anunciou a caveira (`vista.abate` ≥ `INTENCAO_NA_MESA.abateQueSeAnuncia`), **esse** d20 rola
+600 ms em cima de ti, com «precisa de 14+ para te acertar» e as faces que te salvam acesas em `ok`. Antes de pousar,
+o turno pára um instante, sem relógio de resposta: é o momento em que a mesa inteira se inclina para o dado. É a ordem
+de 04/11 levada ao instante de maior risco do jogador, e liga a caveira que ele leu no começo da rodada ao dado que a
+cumpre ou não. Custa até 600 ms por golpe letal, e conta para o teto de 4 s (o teto não muda). A variante tímida é
+rolar só quando o golpe te deixa a 0.

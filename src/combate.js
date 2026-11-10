@@ -399,9 +399,31 @@ export function eventoDoGolpe(r, ctx) {
    3 ratos mais que 2 bandidos: o perigo não seguia a faixa que o jogo diz.
    Depois, segue. A catraca é `testes/teste-dano-da-ameaca.mjs`. */
 export const DANO_DA_AMEACA = Object.freeze({ fraco: 2, comum: 5, competente: 7, elite: 10, lendario: 14 });
+/* O COMUM DO COMEÇO BATE MAIS LEVE (CB13, 10/11/2026) — a outra metade de
+   `PV_NO_COMECO` (mais abaixo). Dar ao comum do nível 1 mais vida sem mais
+   nada é dar-lhe mais golpes: com o piso de 12 PV e o dano de sempre, a Iara
+   (vestida pelo kit da classe) sozinha contra dois Bandidos caía em 41,7%
+   das lutas (contra 18,6%), e com o Dunstan em 13,7% (contra 5,4%). A luta
+   ficava mais longa E mais mortal, e a planta pediu só a primeira.
+   O comum de nível baixo (o PRÓPRIO nível dele, `ateNivel`: o Bandido, o
+   Goblin batedor) bate com `dano` em vez do degrau da tabela: 3 + d4 − 1,
+   média 4,5. Com os dois juntos o perigo fica onde estava (a régua do nível
+   1: sozinha contra dois, 16,2% antes e depois; com o Dunstan, 4,5% → 3,4%)
+   e a luta dura mais (2,65 rodadas em vez de 1,86). Com 4 de dano o perigo
+   subia (com o Dunstan 7,9%, sozinha 29,8%). O comum de nível 3 para cima,
+   e todo o resto, batem como sempre. `danoBaseDaAmeaca` é a leitura única: o
+   golpe (`danoDe`) e a previsão (`danoDoInimigo`, previsao.js) leem-na, para
+   o número anunciado ser o que o dado cumpre. */
+export const DANO_NO_COMECO = Object.freeze({ ateNivel: 2, dano: Object.freeze({ comum: 3 }) });
+export function danoBaseDaAmeaca(ent) {
+  const a = ent && ent.ameaca;
+  const nv = ent && ent.nivel != null && ent.nivel !== "" ? Number(ent.nivel) : NaN;
+  if (Number.isFinite(nv) && nv <= DANO_NO_COMECO.ateNivel && Object.hasOwn(DANO_NO_COMECO.dano, a)) return DANO_NO_COMECO.dano[a];
+  return doDegrau(DANO_DA_AMEACA, a);
+}
 export function danoDe(ent, ehInimigo = false, rolar) {
   if (ehInimigo) {
-    const base = doDegrau(DANO_DA_AMEACA, ent && ent.ameaca);
+    const base = danoBaseDaAmeaca(ent);
     return base + d(4, rolar) - 1;
   }
   const arma = ent.equipados?.arma || null;
@@ -960,10 +982,43 @@ export function pvEsperadoJogador(nivel, vigor = 0) {
   // ~ classe média: 8 + (nivel-1)*5 + vigor*nivel/2  (aproximação enxuta)
   return Math.round(10 + (nivel - 1) * 6 + vigor * (1 + nivel * 0.3));
 }
+/* ---------------- A RÉGUA DO COMEÇO (CB13, 10/11/2026) ----------------
+   A pessoa jogou a primeira luta e a planta mediu (mente/plano-combate-e-
+   viagem.md §2.1 e §3.11): no nível 1 o Goblin e o Lobo têm 4 PV, o Bandido
+   8, e o Guerreiro dá 6–13 com ~80% de acerto — TODO bicho da estrada cai
+   num golpe, a luta dura uma rodada, e numa rodada não há nada a decidir.
+   A conta de baixo (0,7 do PV de um herói de nível 1 com vigor 1) dá ao
+   comum 8 PV, menos do que o golpe médio do herói marcial de nível 1
+   (`danoDoGolpe` da Espada Longa: 9,25).
+
+   A REGRA DA PLANTA: um comum aguenta 2 golpes; um fraco cai num (os bandos
+   de fracos fazem número, e é o número que os faz perigosos). O conserto é
+   um PISO para o comum nos primeiros níveis, e só ali: no nível em que a
+   conta de sempre já passa do piso, ela manda (o comum de nível 3 tem 17).
+   Não mexe no fraco, no competente, no elite nem no lendário — as réguas do
+   poder e de Uma Vida, que medem esses, ficam byte a byte.
+
+   O NÚMERO, medido na régua do começo (CENARIOS_DO_COMECO: a Iara,
+   Guerreira de 20 PV, e o Dunstan, contra Bandidos de nível 1, 1000 lutas —
+   testes/teste-regua-do-nivel1.mjs). 12 é o menor piso acima de um golpe
+   médio (9,5) e abaixo de dois: o comum aguenta 2. Com o dano do comum do
+   começo (`DANO_NO_COMECO`, acima), que segura o perigo:
+                       uma rodada só (1 · 2 Bandidos)   rodadas   a Iara cai
+     antes (8 PV)      83,3% · 34,5%                    1,19 · 1,86   4,5%
+     piso 12           59,9% ·  5,4%                    1,46 · 2,65   3,4%
+   O 14 encurtava mais a luta de um Bandido (53%), e a Iara sozinha contra
+   dois caía em 26,4%. O 12 é o que leva a luta a durar sem a tornar mais
+   mortal em nenhum dos cenários do começo. */
+export const PV_NO_COMECO = Object.freeze({
+  ateNivel: 2,
+  piso: Object.freeze({ comum: 12 }),
+  porque: "no nível 1 todo bicho caía num golpe; um comum tem de aguentar dois para haver uma decisão na luta",
+});
 export function pvEsperadoInimigo(nivelJogador, ameaca = "comum") {
   const base = pvEsperadoJogador(nivelJogador, 1);
   const mult = { fraco: 0.35, comum: 0.7, competente: 1.0, elite: 1.6, lendario: 2.6 }[ameaca] || 0.7;
-  const pv = Math.max(4, Math.round(base * mult));
+  const piso = Number(nivelJogador) <= PV_NO_COMECO.ateNivel ? Number(PV_NO_COMECO.piso[ameaca]) || 0 : 0;
+  const pv = Math.max(4, piso, Math.round(base * mult));
   /* TETO DE VEROSSIMILHANÇA: bicho fraco/comum não vira saco de PV só porque
      o herói está em nível alto (um rato gigante continua sendo um rato). A
      escala grande fica para competente/elite/lendário, onde faz sentido. */

@@ -31,7 +31,24 @@
    leem para não terem cada uma o seu 18.
    ============================================================ */
 
-const N = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+/* CB lote 2 (10/11): a forma sem acento, LEMBRADA. `atacaDeLonge` corre em
+   cada passo de cada inimigo (moverInimigos, a mira, a intenção da rodada),
+   sempre sobre os mesmos meia dúzia de nomes, e o `normalize` era a função
+   que mais tempo comia na régua do poder (243 ms em cada 1,5 s medidos). O
+   resultado é o mesmo, letra a letra; a memória tem teto (`teto`) e
+   esvazia-se ao enchê-lo, para nunca crescer sem fim numa campanha longa. */
+const MEMORIA_DA_FORMA = { teto: 512 };
+const formas = new Map();
+const N = (s) => {
+  const k = String(s || "");
+  let v = formas.get(k);
+  if (v === undefined) {
+    v = k.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    if (formas.size >= MEMORIA_DA_FORMA.teto) formas.clear();
+    formas.set(k, v);
+  }
+  return v;
+};
 
 /* ============================================================
    QUEM ATACA DE LONGE — a tabela de nomes (nasceu em fuga.js, v9.294).

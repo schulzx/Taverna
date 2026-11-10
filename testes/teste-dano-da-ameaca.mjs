@@ -43,7 +43,11 @@ sec("1. A TABELA — o dano segue a escala da ameaça");
      Antes: 4,5 / 6,5 = 0,69. */
   const razaoDano = medio("fraco") / medio("comum");
   const razaoPeso = PESO_AMEACA.fraco / PESO_AMEACA.comum;
-  const razaoPv = pvEsperadoInimigo(1, "fraco") / pvEsperadoInimigo(1, "comum");
+  /* MOVIDA (10/11, CB13), E O MOTIVO: no nível 1 e 2 o comum tem um PISO de PV
+     (PV_NO_COMECO, para aguentar dois golpes) e bate mais leve (DANO_NO_COMECO);
+     a proporção dos multiplicadores, que é o que esta regra pergunta, mede-se
+     onde o piso já não manda — o nível 3. */
+  const razaoPv = pvEsperadoInimigo(3, "fraco") / pvEsperadoInimigo(3, "comum");
   t(`o golpe médio do fraco é ${(razaoDano * 100).toFixed(0)}% do comum — a ±10 pontos do peso dele (${(razaoPeso * 100).toFixed(0)}%)`, Math.abs(razaoDano - razaoPeso) <= 0.1, `peso ${razaoPeso}, PV ${razaoPv.toFixed(2)}`);
   t(`e não morde mais, em proporção, do que aguenta (PV do fraco = ${(razaoPv * 100).toFixed(0)}% do comum)`, razaoDano <= razaoPv + 0.1);
   /* os de cima ficam ABAIXO da proporção do peso (e elite/lendário somam
@@ -91,7 +95,15 @@ const pct = (x) => (x * 100).toFixed(1) + "%";
      faixas de cima continuam a morder */
   t(`mas a luta ainda dói: ela perde em média ≥ 4 PV dos 20 (${a.dano.toFixed(1)})`, a.dano >= 4);
   t(`quatro ratos («difícil») ainda a derrubam em mais de 10% (${pct(r4.cai)})`, r4.cai > 0.1);
-  t(`e o que o conserto não tocou continua onde estava: dois Bandidos (médio) 15–35% (${pct(b2.cai)}), três (mortal) acima de 60% (${pct(b3.cai)})`, b2.cai >= 0.15 && b2.cai <= 0.35 && b3.cai > 0.6);
+  /* MOVIDA (10/11, CB13), E O MOTIVO: os Bandidos daqui são comuns de nível 2
+     contra a heroína de nível 1, e a CB13 mexeu neles de propósito — 12 PV
+     (aguentam dois golpes) e golpe de 3 + d4 − 1. Esta ficha é a da 13.ª, SEM
+     armadura; o jogo de hoje veste a Cota de Malha (KIT_INICIAL), e com ela o
+     perigo de dois Bandidos fica onde estava (5,4% → 3,8%, a régua do nível 1,
+     teste-regua-do-nivel1.mjs). Sem armadura a luta ficou mais leve: dois
+     Bandidos 24,0% → 7,3%, três 73,0% → 54,9%. A intenção fica — «médio» dói
+     e «mortal» morde a metade das lutas —, com o número medido. */
+  t(`dois Bandidos (médio) ainda derrubam a heroína sem armadura (5–35%: ${pct(b2.cai)}), e três (mortal) em metade das lutas (acima de 50%: ${pct(b3.cai)})`, b2.cai >= 0.05 && b2.cai <= 0.35 && b3.cai > 0.5);
   t("o perigo segue a faixa: 3 ratos < 4 ratos < 3 bandidos", a.cai < r4.cai && r4.cai < b3.cai);
 }
 

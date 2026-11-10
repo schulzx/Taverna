@@ -127,7 +127,12 @@ function vistaDe(int) {
      ordem de `combate.aliados`), gdJogador, provocado, prioridade (o alvo
      da intenção do bando, `intencaoPorId(...).alvo`), sorte (o gerador
      semeado: `sorteDoTurno("intencoes")`), comFuga (anunciar quem foge —
-     o App sim; a régua de combate não tem fuga de inimigo) }.
+     o App sim; a régua de combate não tem fuga de inimigo), comPrevisao
+     (CB lote 2, 10/11: `false` não faz a previsão de cada intenção — o
+     número da pílula, que só a tela lê. A escolha, a área e a ameaça somada
+     sobre cada alvo (`porAlvo`) são as mesmas, ao byte; a régua do poder
+     passa `false` porque não tem tela e as convoluções da pílula eram metade
+     do tempo dela. Omisso, a previsão vem, como sempre) }.
    Devolve { rodada, lista: [intenção] }, ou null sem combate ou sem herói.
    Cada intenção: { inimigo, tipo, alvos (o de cada golpe), alvo (o
    primeiro), golpes, previsao ([{ ref, nome, golpes, chance, dano,
@@ -146,6 +151,7 @@ export function intencoesDaRodada(combate, ctx) {
   const vivos = lista(cb.inimigos).filter(dePe);
   if (!vivos.length) return { rodada, lista: [], porAlvo: [] };
   const sorte = typeof c.sorte === "function" ? c.sorte : null;
+  const comPrevisao = c.comPrevisao !== false;
 
   return comSorte(sorte, () => {
     const saida = [];
@@ -213,7 +219,7 @@ export function intencoesDaRodada(combate, ctx) {
         const posto = porNome.get(inim.nome) || inim;
         const distintos = [];
         for (const x of alvosDosGolpes) if (!x.perdido && !distintos.some((d) => d.ref === x.ref && d.nome === x.nome)) distintos.push({ ref: x.ref, nome: x.nome });
-        const previsao = distintos.map((d) => {
+        const previsao = !comPrevisao ? [] : distintos.map((d) => {
           const a = alvos.find((x) => x.ref === d.ref && x.nome === d.nome);
           if (!a) return { ref: d.ref, nome: d.nome, golpes: 0, chance: null, dano: null, danoCritico: null, abate: null };
           const n = alvosDosGolpes.filter((x) => !x.perdido && x.ref === d.ref && x.nome === d.nome).length;

@@ -303,6 +303,27 @@ export const CENARIOS_DA_REGUA = {
     tetoDeRodadas: 20,
   },
 };
+/* ---------------- O COMEÇO (CB13, 10/11/2026) ----------------
+   Os três cenários da casa medem o nível 5, e a pessoa jogou o nível 1: lá
+   todo bicho da estrada caía num golpe (a planta, §2.1 e §3.11). Estes são
+   os cenários do começo, À PARTE dos três (que partilham herói e grupo, e
+   que teste-regua conta pelo nome): a Iara da 13.ª sessão — Guerreira de
+   nível 1, 20 PV, vestida como o jogo a veste hoje (o kit da classe,
+   KIT_INICIAL: Espada Longa e Cota de Malha) — e o Dunstan, Caçador de 12 PV
+   vestido pelo kit dele, contra o que a estrada do nível 1 dá. Quem os lê é
+   testes/teste-regua-do-nivel1.mjs, que decide os números de PV_NO_COMECO e
+   DANO_NO_COMECO (combate.js). */
+const IARA_DO_COMECO = { nome: "Iara", classe: "Guerreiro", nivel: 1, vigor: 2, vidaMax: 20, atributos: { forca: 3, destreza: 2, vigor: 2, intelecto: 0, presenca: 1, percepcao: 1 }, arma: "Espada Longa", armadura: "Cota de Malha", escudo: null };
+const DUNSTAN_DO_COMECO = { nome: "Dunstan", classe: "Caçador", nivel: 1, vigor: 2, vidaMax: 12, atributos: { forca: 1, destreza: 3, vigor: 2, intelecto: 1, presenca: 0, percepcao: 3 } };
+const doComeco = (id, diz, inimigos, comDunstan = true) => ({ id, diz, heroi: IARA_DO_COMECO, grupo: comDunstan ? [DUNSTAN_DO_COMECO] : [], inimigos, tetoDeRodadas: 20 });
+export const CENARIOS_DO_COMECO = {
+  umBandido: doComeco("umBandido", "um Bandido de nível 1 contra a Iara e o Dunstan — o perigo mais comum da estrada do começo", { quantos: 1, ameaca: "comum", nivel: 1, base: "Bandido" }),
+  doisBandidos: doComeco("doisBandidos", "dois Bandidos de nível 1 contra a Iara e o Dunstan — o «médio» do orçamento", { quantos: 2, ameaca: "comum", nivel: 1, base: "Bandido" }),
+  umBandidoSo: doComeco("umBandidoSo", "um Bandido contra a Iara sozinha", { quantos: 1, ameaca: "comum", nivel: 1, base: "Bandido" }, false),
+  doisBandidosSo: doComeco("doisBandidosSo", "dois Bandidos contra a Iara sozinha — o guarda do perigo", { quantos: 2, ameaca: "comum", nivel: 1, base: "Bandido" }, false),
+  tresLobos: doComeco("tresLobos", "três Lobos (fracos) contra a Iara e o Dunstan — o bando que faz número", { quantos: 3, ameaca: "fraco", nivel: 1, base: "Lobo" }),
+};
+
 /* O grupo e o herói são os MESMOS nos dois cenários de propósito: o que a
    régua compara é a dureza do outro lado da mesa, e mudar os dois lados de
    uma vez mediria duas coisas somadas. */
@@ -1030,6 +1051,10 @@ export function simularCombate(cenario, semente, { comAdversario = ADVERSARIO_NA
         anunciadas = intencoesDaRodada({ inimigos: vivosInimigos(), grade: null, heroi: null, aliados: [], rodada }, {
           jogador: heroi, grupo: grupoDePe(), gdJogador: 0, provocado: false, prioridade: prioridadeAnunciada,
           sorte: sorteDaSemente(`${semente}|intencao|${rodada}`),
+          /* CB lote 2 (10/11): sem a pílula de cada intenção (só a tela a lê);
+             a escolha, a área e a ameaça somada (`porAlvo`, que o herói que lê
+             consulta) são as mesmas, ao byte — teste-intencao.mjs prova-o */
+          comPrevisao: false,
         });
       }
 

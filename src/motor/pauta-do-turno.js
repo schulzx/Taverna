@@ -146,6 +146,8 @@ export const REFS_DA_PAUTA = Object.freeze({
   coracaoRitmo: Object.freeze({ ref: "coracaoRitmoRef", salvo: false, escreve: false, padrao: () => ({ ultimas: {} }) }),
   criaturaAVista: Object.freeze({ ref: "criaturaAVistaRef", salvo: false, escreve: false, padrao: () => (null) }),
   crimeDoTurno: Object.freeze({ ref: "crimeDoTurnoRef", salvo: false, escreve: true, padrao: () => (null) }),
+  /* CB lote 2 (10/11): o canal genérico de UM turno (PAUTA_DE_UM_TURNO, abaixo) */
+  pautaDeUmTurno: Object.freeze({ ref: "pautaDeUmTurnoRef", salvo: false, escreve: true, padrao: () => (null) }),
   derrotadosDaSessao: Object.freeze({ ref: "derrotadosDaSessaoRef", salvo: false, escreve: false, padrao: () => ([]) }),
   dia: Object.freeze({ ref: "diaRef", salvo: true, escreve: false, padrao: () => (1) }),
   diplomacia: Object.freeze({ ref: "diplomaciaRef", salvo: true, escreve: false, padrao: () => (garantirDiplomacia(null)) }),
@@ -210,6 +212,38 @@ export const REFS_DA_PAUTA = Object.freeze({
   vetosDoJuiz: Object.freeze({ ref: "vetosDoJuizRef", salvo: false, escreve: false, padrao: () => ([]) }),
   vilaoAgiu: Object.freeze({ ref: "vilaoAgiuRef", salvo: true, escreve: true, padrao: () => (-99) }),
 });
+
+/* ---------------- O CANAL DE UM TURNO (CB lote 2, 10/11/2026) ----------------
+   O encontro da estrada (CB3) precisava de dizer ao Mestre, por UM turno só,
+   o que acabou de acontecer e o que ele não pode fazer («não abra luta; não
+   decida»). Não havia canal para isso, e foi emprestado o do crime
+   (`crimeDoTurnoRef`, MM10): o encontro escrevia no bilhete de outro órgão,
+   e quem lesse o crime do turno lia também um dragão. Um empréstimo assim
+   apodrece no dia em que o crime mudar de forma.
+
+   Este é o canal de quem não tem canal: `{ acabou: [...], naoPode: [...] }`,
+   consumido e limpo pela pauta no mesmo sítio e com as mesmas secções do
+   crime — nenhum bloco estático, o teto do prompt não cresce. `secoes` diz
+   quais entram (as duas que a pauta já tem para isto: ACABOU DE e NÃO PODE);
+   o resto do objeto fica de fora. É bilhete (`CAMPOS_DO_SERVIDOR`): viaja com
+   a frase, a pauta lê e zera, e o save nunca o guarda.
+
+   `juntarNaPautaDeUmTurno(atual, mais)` é a escrita: junta ao que já lá
+   estiver (dois órgãos no mesmo clique não se apagam), devolve objeto novo,
+   e lixo é nada. Quem escreve: `pautaDeUmTurnoRef.current =
+   juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, { acabou, naoPode })`. */
+export const PAUTA_DE_UM_TURNO = Object.freeze({ secoes: Object.freeze(["acabou", "naoPode"]) });
+const linhasDe = (x) => (Array.isArray(x) ? x : typeof x === "string" && x.trim() ? [x] : []).filter((l) => typeof l === "string" && l.trim());
+export function juntarNaPautaDeUmTurno(atual, mais) {
+  const a = atual && typeof atual === "object" && !Array.isArray(atual) ? atual : {};
+  const m = mais && typeof mais === "object" && !Array.isArray(mais) ? mais : {};
+  const out = {};
+  for (const sec of PAUTA_DE_UM_TURNO.secoes) {
+    const l = [...linhasDe(a[sec]), ...linhasDe(m[sec])];
+    if (l.length) out[sec] = l;
+  }
+  return Object.keys(out).length ? out : null;
+}
 
 /* O ESTADO REACT QUE A PAUTA LÊ: o valor do último render, que o App passa em
    `estado.render`. Sem ele vale o do estado (no App os dois são o mesmo
@@ -1075,6 +1109,16 @@ export function aPautaDoTurno(estado, entrada, portas) {
         }
         p = porNaPauta(p, "naoPode", procuradoParaPauta($ref.lei, { cidade: $ref.cidadeAtual, dia: $ref.dia }).naoPode);
       } catch (e) { calou("crimeParaPauta", e); }
+      /* CB lote 2: o canal de um turno (PAUTA_DE_UM_TURNO) — logo a seguir ao
+         crime, com as mesmas secções; uma vez só, e depois limpo. Só escreve o
+         ref quando havia o que ler (o turno sem canal não muda nada). */
+      try {
+        if ($ref.pautaDeUmTurno) {
+          const um = $ref.pautaDeUmTurno;
+          for (const sec of PAUTA_DE_UM_TURNO.secoes) { const l = linhasDe(um[sec]); if (l.length) p = porNaPauta(p, sec, l); }
+          $ref.pautaDeUmTurno = null;
+        }
+      } catch (e) { calou("a pauta de um turno", e); }
     }
     /* MM13: O MUNDO PINGA FIOS — no máximo uma linha por turno, da primeira
        pessoa em cena que tiver algo a dizer sobre a principal. */

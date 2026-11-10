@@ -23,7 +23,9 @@
    dos refs é a do App, e o teto da pauta não mexeu.
    ============================================================ */
 import { lerODourado, correrOsCasos, casosDaPauta, fotoGuardada, mesmaFoto, osModulos, osPadroes, N_CASOS, N_GRAVADOS, N_DA_PAUTA, N_COBERTURA } from "./pauta-bloco.mjs";
-import { aPautaDoTurno, REFS_DA_PAUTA, RENDER_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
+import { aPautaDoTurno, REFS_DA_PAUTA, RENDER_DA_PAUTA, PAUTA_DE_UM_TURNO, juntarNaPautaDeUmTurno } from "../src/motor/pauta-do-turno.js";
+import { textoDaPauta } from "../src/pauta.js";
+import { CAMPOS_DO_SERVIDOR } from "../src/motor/eco-do-turno.js";
 import { SECOES, TETO_DA_PAUTA } from "../src/pauta.js";
 import { semearACasa, rng, hashSemente } from "../src/semente.js";
 import { morderEmParalelo } from "./mordidas-em-paralelo.mjs";
@@ -187,7 +189,14 @@ for (const [nome, args] of [["tudo nulo", [null, null, null]], ["nada", []], ["e
 
 sec("8. As tabelas são as do App");
 const campos = Object.values(D.refs).map((r) => r.campo).sort();
-t("REFS_DA_PAUTA tem um campo por ref do recorte, e mais nenhum", JSON.stringify(Object.keys(REFS_DA_PAUTA).sort()) === JSON.stringify(campos));
+/* MOVIDA (10/11, CB lote 2), E O MOTIVO: o recorte do App é de um commit fixo
+   (o dourado), e um campo que a pauta passou a ler DEPOIS dele não pode estar
+   lá. `pautaDeUmTurno` (PAUTA_DE_UM_TURNO, o canal de um turno) nasceu na
+   peça; os 275 casos não o trazem e a pauta sem ele é byte a byte a de antes
+   (secção 1). A intenção fica: nenhum campo na tabela que não seja do recorte
+   ou desta lista, cada um com o seu porquê. */
+const NASCIDOS_DEPOIS_DO_RECORTE = Object.freeze({ pautaDeUmTurno: "CB lote 2: o canal de um turno (o encontro da estrada deixou de ir emprestado pelo crime)" });
+t("REFS_DA_PAUTA tem um campo por ref do recorte, mais os nascidos depois dele (com o porquê), e mais nenhum", JSON.stringify(Object.keys(REFS_DA_PAUTA).filter((c) => !NASCIDOS_DEPOIS_DO_RECORTE[c]).sort()) === JSON.stringify(campos) && Object.keys(NASCIDOS_DEPOIS_DO_RECORTE).every((c) => REFS_DA_PAUTA[c] && !campos.includes(c)));
 t("cada campo diz o ref do App, se o save o guarda e se a pauta o escreve", Object.entries(D.refs).every(([ref, r]) => REFS_DA_PAUTA[r.campo].ref === ref && REFS_DA_PAUTA[r.campo].salvo === r.salvo && REFS_DA_PAUTA[r.campo].escreve === r.escreve));
 t(`o campo é o do save quando o save o guarda (contRef → contadores, aberturaMundoRef → abertura, elencoSaveRef → elenco)`, REFS_DA_PAUTA.contadores.ref === "contRef" && REFS_DA_PAUTA.abertura.ref === "aberturaMundoRef" && REFS_DA_PAUTA.elenco.ref === "elencoSaveRef");
 const padroesDoApp = osPadroes(D, mods);
@@ -205,7 +214,27 @@ t(`RENDER_DA_PAUTA é o estado React que o recorte lê (${RENDER_DA_PAUTA.join("
   t(`o mercadoAqui do render, quando vem, é o que a pauta lê; sem ele, refaz-se (${mudou} de ${compra.length} compras mudam com a banca vazia)`, compra.length > 0 && mudou > 0);
 }
 
-console.log(`\n${ok} ok, ${mal} falha(s)`);
 console.log(`(as mordidas do recorte: ${Object.entries(MORDEU_R).map(([k, v]) => `${k} ${v}`).join(" · ")})`);
+sec("9. O canal de um turno (CB lote 2) — o encontro já não vai emprestado pelo crime");
+{
+  /* CB lote 2 (10/11): `pautaDeUmTurno` ({ acabou, naoPode }) é consumido no
+     sítio do crime, com as mesmas secções, uma vez só, e limpo. */
+  t("as secções do canal são as duas que a pauta já tem para isto", JSON.stringify(PAUTA_DE_UM_TURNO.secoes) === JSON.stringify(["acabou", "naoPode"]) && PAUTA_DE_UM_TURNO.secoes.every((x) => SECOES.some((s) => s.id === x)));
+  const j = juntarNaPautaDeUmTurno({ acabou: ["o lobo uivou"] }, { acabou: "a ponte rangeu", naoPode: ["não abra luta"], outra: ["fica de fora"] });
+  t("juntar soma ao que já lá estava, sem apagar, e só as duas secções", JSON.stringify(j) === JSON.stringify({ acabou: ["o lobo uivou", "a ponte rangeu"], naoPode: ["não abra luta"] }));
+  t("juntar nada dá nada, e o lixo não estoura", juntarNaPautaDeUmTurno(null, null) === null && juntarNaPautaDeUmTurno([], "x") === null && juntarNaPautaDeUmTurno({ acabou: [3, "", null] }, {}) === null);
+  const base = CASOS.find((k) => !k.estado.combate) || CASOS[0];
+  const correr = (extra) => { semearACasa("canal"); return aPautaDoTurno({ ...JSON.parse(JSON.stringify(base.estado)), ...extra, render: base.render }, { frase: base.frase }, {}); };
+  const sem = correr({});
+  const com = correr({ pautaDeUmTurno: { acabou: ["Um vulto grande cruzou a estrada à tua frente."], naoPode: ["não abra luta: o jogador ainda escolhe"] } });
+  const txt = com.pauta ? textoDaPauta(com.pauta, { turno: 1 }) : "";
+  t("o que o canal traz chega à pauta (ACABOU DE e NÃO PODE)", txt.includes("Um vulto grande cruzou a estrada") && txt.includes("não abra luta: o jogador ainda escolhe"));
+  t("e o canal é limpo depois de lido (escreve null)", Object.prototype.hasOwnProperty.call(com.escritas, "pautaDeUmTurno") && com.escritas.pautaDeUmTurno === null);
+  t("sem canal, a pauta é a de sempre e o campo não se escreve", !Object.prototype.hasOwnProperty.call(sem.escritas, "pautaDeUmTurno"));
+  t("é bilhete: viaja com a frase, só a pauta o lê, e o save não o guarda", CAMPOS_DO_SERVIDOR.pautaDeUmTurno && CAMPOS_DO_SERVIDOR.pautaDeUmTurno.via === "bilhete" && REFS_DA_PAUTA.pautaDeUmTurno.salvo === false && REFS_DA_PAUTA.pautaDeUmTurno.escreve === true);
+}
+
+console.log(`\n${ok} ok, ${mal} falha(s)`);
+
 console.log(`(as mordidas do contrato: ${Object.entries(MORDEU_P).map(([k, v]) => `${k} ${v}`).join(" · ")})`);
 if (mal) process.exit(1);

@@ -160,7 +160,15 @@ sec("5. a armadura da classe (31/10, a 13.ª: a Guerreira nascia com defesa 11)"
   console.log(`     3 ratos com o Dunstan ${pc(r[0])} → ${pc(r[1])} · sozinha ${pc(r[2])} → ${pc(r[3])} · 3 bandidos com ele ${pc(r[4])} → ${pc(r[5])}`);
   t(`na régua: três ratos com o companheiro derrubam-na em menos de 3,5% (${pc(r[1])}; nua, ${pc(r[0])})`, r[1] < 0.035 && r[1] < r[0]);
   t(`sozinha, em menos de 15% (${pc(r[3])}; nua, ${pc(r[2])})`, r[3] < 0.15 && r[3] < r[2]);
-  t(`e o mortal continua mortal: três Bandidos derrubam-na em mais de 60% (${pc(r[5])})`, r[5] > 0.6);
+  /* MOVIDA (10/11, CB13), E O MOTIVO: os Bandidos de nível 2 contra a heroína
+     de nível 1 são o comum do começo — 12 PV (aguentam dois golpes) e golpe
+     de 3 + d4 − 1 (PV_NO_COMECO e DANO_NO_COMECO, combate.js). Medido aqui,
+     com a cota e as aflições: três Bandidos com o Dunstan 70,1% → 45,1% (nua,
+     80,2% → 57,2%). A luta de dois Bandidos fica onde estava
+     (teste-regua-do-nivel1.mjs); a de três desce, porque o golpe mais leve
+     pesa mais quanto mais gente bate. A intenção fica — o «mortal» derruba a
+     heroína quase uma vez em cada duas —, com o número de hoje. */
+  t(`e o mortal continua mortal: três Bandidos derrubam-na em mais de 40% (${pc(r[5])}; antes da CB13, 70,1%)`, r[5] > 0.4);
 }
 
 /* 6. A RÉGUA VESTE O COMPANHEIRO COMO O JOGO (31/10, resto da 13.ª). A §5

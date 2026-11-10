@@ -43,7 +43,7 @@
    ============================================================ */
 import {
   ladosDoDado, modificadoresDeCondicao, defesaDe, perfilCombate, dadosDeDano,
-  dadosDoFurtivo, vereditoDoFurtivo, ataquesPorTurno, bonusContraOJogador, DANO_DA_AMEACA,
+  dadosDoFurtivo, vereditoDoFurtivo, ataquesPorTurno, bonusContraOJogador, danoBaseDaAmeaca,
 } from "./combate.js";
 import { DEFESA_NUA, danoDaForma } from "./habilidades.js";
 import { multiplicadorDano, perfilDe, resistenciasEquipadas, elementoDaArma } from "./danos.js";
@@ -244,12 +244,51 @@ export function previsaoDoAtaque(args) {
 /* A chance de a SOMA de vários golpes chegar à vida (o turno inteiro, ou
    os golpes livres de vários inimigos). Soma-se com teto na vida: passar
    dela já é abater, e o teto mantém a conta pequena. */
-function abateDaSoma(finais, vida) {
-  if (!(vida >= 0)) return null;
-  if (vida === 0) return 1;
+/* CB lote 2 (10/11): A MESMA CONTA, NUM VETOR. Com o anúncio da intenção a
+   régua do poder somava, a cada rodada, os golpes de cinco lendários sobre
+   cada alvo (`ameacaPorAlvo`, intencao.js), e o Map de valor → chance era o
+   que mais pesava (o convolver e o mapear, um terço do tempo do anúncio).
+   O dano é inteiro e não negativo, e acima da vida tudo é «abate»: cabe num
+   vetor de vida + 1 posições, sem chaves a criar. Quando não cabe (vida
+   fracionária, valor estranho), a conta do Map de sempre. A suíte prova o
+   vetor igual ao Map antigo (teste-previsao.mjs, que guarda uma cópia dele). */
+function abateDaSomaNoMapa(finais, vida) {
   let acc = constante(0);
   for (const d of finais) acc = mapear(convolver(acc, d), (v) => Math.min(vida, v));
   return arred(acc.get(vida) || 0);
+}
+const zeros = (n) => new Array(n).fill(0);
+function abateDaSoma(finais, vida) {
+  if (!(vida >= 0)) return null;
+  if (vida === 0) return 1;
+  const listas = finais.map((d) => [...d]);
+  if (!Number.isInteger(vida) || listas.some((l) => l.some(([x]) => !Number.isInteger(x) || x < 0))) return abateDaSomaNoMapa(finais, vida);
+  /* a ordem das somas é a do Map, à letra (a chave na ordem em que nasceu, e
+     acima da vida cada valor somado à parte antes de cair na vida): a vírgula
+     flutuante soma por ordem, e outra ordem mudaria o último algarismo */
+  let acc = zeros(vida + 1), ordem = [0];
+  acc[0] = 1;
+  for (const l of listas) {
+    const ys = l.map((e) => e[0]), qs = l.map((e) => e[1]);
+    const n = ys.length;
+    let maxY = 0;
+    for (let j = 0; j < n; j++) if (ys[j] > maxY) maxY = ys[j];
+    const solta = zeros(vida + maxY + 1);
+    const visto = new Uint8Array(vida + maxY + 1);
+    const nasceu = [];
+    for (let i = 0; i < ordem.length; i++) {
+      const x = ordem[i], p = acc[x];
+      for (let j = 0; j < n; j++) { const k = x + ys[j]; if (visto[k] === 0) { visto[k] = 1; nasceu.push(k); } solta[k] += p * qs[j]; }
+    }
+    const novo = zeros(vida + 1), novaOrdem = [];
+    let teto = false;
+    for (const k of nasceu) {
+      if (k < vida) { novo[k] = solta[k]; novaOrdem.push(k); }
+      else { novo[vida] += solta[k]; if (!teto) { teto = true; novaOrdem.push(vida); } }
+    }
+    acc = novo; ordem = novaOrdem;
+  }
+  return arred(acc[vida]);
 }
 
 /* ============================================================
@@ -314,9 +353,10 @@ export function danoDaHabilidade(pers, hab, opcoes) {
    ameaça (`DANO_DA_AMEACA`, comum para o que a tabela não tem) + d4 − 1.
    `mult` (opcional): o sopro, `Math.round(danoDe × mult)` — a conta que
    `turnoDosInimigos` rola para a área anunciada (CB6). */
+/* CB13: a base é a leitura única de combate.js (`danoBaseDaAmeaca`: a tabela
+   da ameaça, e o comum do começo que bate mais leve) — a mesma de `danoDe`. */
 export function danoDoInimigo(inim, mult) {
-  const a = inim && inim.ameaca;
-  const base = Object.hasOwn(DANO_DA_AMEACA, a) && Number.isFinite(DANO_DA_AMEACA[a]) ? DANO_DA_AMEACA[a] : DANO_DA_AMEACA.comum;
+  const base = danoBaseDaAmeaca(inim);
   const f = { soma: [base - 1, { dado: 4 }] };
   return fin(mult) && Number(mult) !== 1 ? { vezes: Number(mult), de: f } : f;
 }

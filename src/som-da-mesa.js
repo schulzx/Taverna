@@ -106,10 +106,13 @@ export const SOM_DA_MESA = Object.freeze({
   /* o desfecho do evento do golpe (`EVENTO_DO_GOLPE`, combate.js) → o
      momento; o abate manda sobre o desfecho; o impedido cala (não houve golpe) */
   somDoDesfecho: Object.freeze({ critico: "critico", acerto: "golpe", erro: "erro", imune: "imune", impedido: null, abate: "queda" }),
-  /* o que o interruptor diz (ui.jsx) */
+  /* o que o interruptor diz (ui.jsx). CB lote 2 (10/11): desde a CB7 o som
+     soa também na luta (o golpe, o crítico, o erro, a queda, o tambor da
+     entrada), e o interruptor calava-o — quem o desligava não sabia que
+     desligava a luta. A frase diz agora o que de facto cala. */
   palavras: Object.freeze({
     rotulo: "Som da mesa", sim: "sim", nao: "não",
-    diz: "a carta que vira, o dado que pousa, a arma que desperta",
+    diz: "a carta que vira, o dado que pousa, a arma que desperta, o golpe que acerta e quem cai",
   }),
 });
 
