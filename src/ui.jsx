@@ -36,6 +36,9 @@ import { SOM_DA_MESA, somLigado, ligarSom } from "./som-da-mesa.js";
 /* CB (09/11): as peças da batalha leem as tabelas de CB e a conta pura da tela */
 import { PREVISAO_DO_GOLPE, INTENCAO_NA_MESA, ECONOMIA_DA_VEZ } from "./estilo.js";
 import { pilulaDaPrevisao, pilulaDaIntencao, pipsDaEconomia } from "./batalha-na-tela.js";
+/* CB 18 (lote 3): o «+2 do alto», a pílula e os rótulos do empurrão */
+import { ALTURA_NA_MESA, SUPERFICIES_NO_CHAO, EMPURRAO_NA_MESA } from "./estilo.js";
+import { altoDaPrevisao, rotulosDoEmpurrao } from "./batalha-na-tela.js";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
    máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
@@ -3042,6 +3045,8 @@ export function PilulaDaPrevisao({ previsao, caminho = null, semVista = false })
             {v.coberto > 0 && <><Glifo nome="escudo" tamanho={16} cor={T.mundo} /><span style={{ fontSize: P.letra.etiqueta, fontWeight: 700, color: T.mundo }}>−{v.coberto}</span></>}
             <Glifo nome="espadas" tamanho={16} cor={T.amber} />
             {v.chance != null && <span style={{ fontSize: P.letra.chance, fontWeight: 700, color: T.amberSoft }}>{v.chance}%</span>}
+            {/* CB 18: a seguir à percentagem, o modificador da altura */}
+            <AltoNaPrevisao alto={v.alto} />
             {v.dano && <>{fio}<span style={{ fontSize: P.letra.dano, color: T.ink }}>{v.dano}</span></>}
             {v.abate != null && <><Glifo nome="perigo" tamanho={14} cor={T.danger} /><span style={{ fontSize: TIPOS.rotulo, fontWeight: 700, color: T.danger }}>{v.abate}%</span></>}
             {v.abateCerto && <span style={{ fontSize: P.letra.etiqueta, fontWeight: 700, color: T.onAccent, background: T.danger, borderRadius: P.raio / 2, padding: `2px ${P.enchimento.y}px`, letterSpacing: 1 }}>ABATE</span>}
@@ -3071,6 +3076,70 @@ export function PilulaDaIntencao({ vista, distanciaM = null, rostoDoAlvo = null 
         {v.tipo === "atacar" && (v.alvoEscondido || !rostoDoAlvo ? <span>{v.alvoEscondido ? "?" : v.alvo}</span> : rostoDoAlvo)}
         {v.letal && <><Glifo nome={I.caveira} tamanho={14} cor={T.danger} /><span style={{ color: T.danger }}>{v.abate}%</span></>}
       </span>
+    </span>
+  );
+}
+
+/* CB 18 · O MODIFICADOR DA ALTURA (§CB 18.4 b; Figma 342:100 com a linha
+   do alto): os chevrons `degrau` 12 e «+2» em mono 13 — para cima e `ok` do
+   alto, virados para baixo e `danger` de baixo. A direção do chevron diz o
+   sinal sem a cor (9,93 e 5,91 sobre `pagina`). `alto`: o que
+   altoDaPrevisao devolve (ou null, e a peça cala-se). */
+export function AltoNaPrevisao({ alto }) {
+  if (!alto) return null;
+  const A = ALTURA_NA_MESA.previsao;
+  const cor = alto.baixo ? A.baixo : A.alto;
+  return (
+    <span className="inline-flex items-center" style={{ gap: 2, color: cor }}>
+      <span aria-hidden="true" style={{ display: "inline-flex", transform: alto.baixo ? "rotate(180deg)" : undefined }}>
+        <Glifo nome="degrau" tamanho={A.glifo} cor={cor} />
+      </span>
+      <span className="tv-mono" style={{ fontSize: A.letra, fontWeight: 700 }}>{alto.texto}</span>
+    </span>
+  );
+}
+
+/* CB 18 · A PÍLULA DO EMPURRÃO (§CB 18.4 a): a mesma caixa da previsão do
+   golpe, debaixo do alvo, com «Empurrar 64%» e o modificador da altura. A
+   caveira à frente se a soma das consequências o derruba (o aro passa a
+   `danger`, como o abate). `previsao`: previsaoDoEmpurrao do motor;
+   `vida`: a vida do alvo. */
+export function PilulaDoEmpurrao({ previsao, vida = null }) {
+  const v = rotulosDoEmpurrao(previsao, { vida });
+  if (!v) return null;
+  const P = PREVISAO_DO_GOLPE;
+  return (
+    <span role="img" aria-label={v.rotulo} className="tv-mono inline-flex items-center"
+      style={{ height: P.alto, borderRadius: P.raio, padding: `0 ${P.enchimento.x}px`, gap: P.entre, whiteSpace: "nowrap",
+        background: T.pagina, border: `${P.aro}px solid ${v.derruba ? T.danger : T.amber}`, color: T.ink }}>
+      <span aria-hidden="true" className="inline-flex items-center" style={{ gap: P.entre }}>
+        {v.derruba && <Glifo nome="perigo" tamanho={14} cor={T.danger} />}
+        <span style={{ fontSize: P.letra.etiqueta, fontWeight: 700 }}>Empurrar</span>
+        {v.chance != null && <span style={{ fontSize: P.letra.chance, fontWeight: 700, color: T.amberSoft }}>{v.chance}%</span>}
+        <AltoNaPrevisao alto={altoDaPrevisao(previsao && previsao.alto)} />
+      </span>
+    </span>
+  );
+}
+
+/* CB 18 · O RÓTULO DO EMPURRÃO (Figma 373:2274: livre · queda · fogo ·
+   colide): mono 13 sobre `pagina`, raio 12, aro `danger` quando há preço e
+   `amber` quando não acontece nada. O glifo é o da consequência: a explosão
+   da colisão, o degrau da queda, o glifo do chão onde cai (na cor do traço
+   dele). `rotulo`: um de rotulosDoEmpurrao(...).rotulos. */
+export function RotuloDoEmpurrao({ rotulo }) {
+  if (!rotulo || !rotulo.texto) return null;
+  const R = EMPURRAO_NA_MESA.rotulo;
+  const aro = rotulo.preco ? T.danger : T.amber;
+  const corDoGlifo = rotulo.tipo === "superficie" && SUPERFICIES_NO_CHAO.tipos[rotulo.superficie] ? SUPERFICIES_NO_CHAO.tipos[rotulo.superficie].traco
+    : rotulo.tipo === "colide" ? T.danger : T.ink;
+  return (
+    <span className="tv-mono inline-flex items-center"
+      style={{ borderRadius: R.raio, padding: `${R.enchimento.y}px ${R.enchimento.x}px`, gap: R.entre, fontSize: R.letra, color: T.ink,
+        background: T.pagina, border: `${R.aro}px solid ${aro}`, whiteSpace: "nowrap" }}>
+      {rotulo.caveira && <Glifo nome="perigo" tamanho={R.glifo} cor={T.danger} />}
+      {rotulo.glifo && <Glifo nome={rotulo.glifo} tamanho={R.glifo} cor={corDoGlifo} />}
+      {rotulo.texto}
     </span>
   );
 }

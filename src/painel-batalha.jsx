@@ -65,6 +65,11 @@ import { filaDaVez, golpePorExtenso, geometriaDaMesa, camaraDoTelefone, avisoDaA
    (vez-na-mesa.js), e o turno deles contado (formas.md §CB 17.2): os tempos
    e o controlo moram em TURNO_DELES. */
 import { TURNO_DELES } from "./estilo.js";
+/* CB 18 (lote 3, formas.md §CB 18): o empurrão por extenso, a folha do
+   empurrão no telefone, o «do alto +2» e a linha da reação no Pé */
+import { ALTURA_NA_MESA, EMPURRAO_NA_MESA, REACAO_NA_MESA } from "./estilo.js";
+import { RotuloDoEmpurrao, AltoNaPrevisao } from "./ui.jsx";
+import { rotulosDoEmpurrao, altoDaPrevisao, letreiroDaReacao, tempoDaReacao, chaveDaReacao } from "./batalha-na-tela.js";
 import { filaDaRodada, economiaDaVez } from "./vez-na-mesa.js";
 import { sementeDe, estadoDe } from "./semente.js";
 import { metrosTxt, podeDarUmPasso, garantirGrade, nomeDoLugar } from "./grid.js";
@@ -863,6 +868,8 @@ function OTeuGolpe({ previsao, estreito = false, saiu = null }) {
         : <FacesDoD20 faces={g.faces} saiu={saiu} rotulo={g.legenda} />)}
       {g.legenda && <span className="tv-mono" style={{ fontSize: P.letra.legenda, color: T.inkDim }}>{g.legenda}</span>}
       {g.semCobertura != null && <span className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.mundo }}>sem cobertura: {g.semCobertura}%</span>}
+      {/* CB 18.4 b: «do alto +2» · «de baixo −2» */}
+      <LinhaDoAlto alto={g.alto} />
       {g.dano && linha("Dano", g.dano.texto, T.ink, g.dano.medio ? `média ${g.dano.medio}` : null, "dano")}
       {g.abate != null && linha("Abate", `${g.abate}%`, T.danger, g.vida != null ? `cai se o dano chegar a ${g.vida}` : null, "abate")}
       {g.critico && linha("Crítico", `${g.critico.chance}%`, T.amber, g.critico.dano ? `o dobro dos dados: ${g.critico.dano}` : null, "critico")}
@@ -870,6 +877,104 @@ function OTeuGolpe({ previsao, estreito = false, saiu = null }) {
         <span key={q.nome} className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.danger }}>{q.nome} tem um golpe livre{q.dano ? ` (${q.dano})` : ""}</span>
       ))}
     </section>
+  );
+}
+
+/* ============================================================
+   CB 18 · O EMPURRÃO POR EXTENSO E A FOLHA DO EMPURRÃO (formas.md §CB 18.4;
+   Figma G1 374:2105, G2 374:2610). O veredito antes do clique: a casa
+   final, a queda, a superfície e a colisão, cada uma com o seu dano. A
+   conta (os rótulos, na ordem da peça) é rotulosDoEmpurrao, provada em
+   Node; aqui só se desenha.
+   ============================================================ */
+/* a 1905, na coluna Tu: «Empurrar → Goblin», a chance, a linha do alto e as
+   consequências por extenso, com o mesmo glifo dos rótulos do tabuleiro */
+function OEmpurraoPorExtenso({ empurrao, alvo }) {
+  const prev = empurrao && typeof empurrao === "object" ? empurrao.previsao : null;
+  const v = (() => { try { return rotulosDoEmpurrao(prev, { vida: alvo ? alvo.vida : null }); } catch { return null; } })();
+  if (!v) return null;
+  const P = PREVISAO_DO_GOLPE;
+  const alto = altoDaPrevisao(prev && prev.alto);
+  return (
+    <section aria-label={v.rotulo} className="flex flex-col shrink-0 w-full"
+      style={{ padding: M.cartao + 4, gap: M.cartao, borderRadius: M.raio, background: T.pagina, border: `1px solid ${alfa(v.derruba ? T.danger : T.amber, 0.5)}` }}>
+      <span className="tv-mono flex items-center" style={{ ...LEGENDA, color: T.amberSoft, gap: 6, fontWeight: 700 }}>
+        Empurrar{alvo ? ` → ${alvo.nome}` : ""}{alvo && alvo.vida != null ? ` · ${Math.max(0, alvo.vida)} PV` : ""}
+      </span>
+      {v.chance != null && (
+        <div className="flex items-baseline" style={{ gap: M.cartao }}>
+          <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.inkDim, width: 64 }}>Chance</span>
+          <span className="tv-mono shrink-0" style={{ fontSize: P.letra.chance, fontWeight: 700, color: T.amberSoft }}>{v.chance}%</span>
+        </div>
+      )}
+      {alto && <LinhaDoAlto alto={alto} />}
+      <div className="flex flex-col items-start" style={{ gap: EMPURRAO_NA_MESA.rotulo.entre }}>
+        {v.rotulos.map((r) => <RotuloDoEmpurrao key={r.tipo} rotulo={r} />)}
+      </div>
+    </section>
+  );
+}
+/* «do alto +2» · «de baixo −2», ao lado de «sem cobertura» (§CB 18.4 b) */
+function LinhaDoAlto({ alto }) {
+  if (!alto) return null;
+  return (
+    <span className="tv-body flex items-center" style={{ fontSize: TIPOS.rotulo, gap: 6, color: alto.baixo ? ALTURA_NA_MESA.previsao.baixo : ALTURA_NA_MESA.previsao.alto }}>
+      {alto.baixo ? "de baixo" : "do alto"} <AltoNaPrevisao alto={alto} />
+    </span>
+  );
+}
+/* no telefone, o primeiro toque num inimigo com Empurrar armado abre a
+   folha (G2): o rosto e o PV do alvo, CHANCE, QUEDA e a consequência do chão
+   («E ARDE») em Cormorant 30, a linha do alto, os rótulos e «Empurrar · 64%»
+   com «Cancelar». O segundo toque no alvo também confirma. */
+function FolhaDoEmpurrao({ empurrao, alvo, aoConfirmar, aoCancelar }) {
+  const prev = empurrao && typeof empurrao === "object" ? empurrao.previsao : null;
+  const v = (() => { try { return rotulosDoEmpurrao(prev, { vida: alvo ? alvo.vida : null }); } catch { return null; } })();
+  if (!v || !alvo) return null;
+  const P = PREVISAO_DO_GOLPE;
+  const alto = altoDaPrevisao(prev && prev.alto);
+  const num = (rotulo, valor, cor) => (
+    <span className="flex flex-col">
+      <span className="tv-display" style={{ fontSize: P.folha.numero, fontWeight: 700, color: cor, lineHeight: 1.1 }}>{valor}</span>
+      <span className="tv-mono" style={{ ...LEGENDA, color: T.inkDim }}>{rotulo}</span>
+    </span>
+  );
+  const sup = v.rotulos.find((r) => r.tipo === "superficie");
+  const gesto = `Empurrar${v.chance != null ? ` · ${v.chance}%` : ""}`;
+  /* o botão do gesto é o âmbar cheio do que vai acontecer, com o rótulo em onAccent (o da previsão) */
+  const doGesto = { minHeight: ALVOS.piso, borderRadius: M.raioControle, background: T.amber, color: T.onAccent, fontWeight: 700, fontSize: M.letra.verbo, gap: 6 };
+  return (
+    <div role="dialog" aria-label={`Empurrar ${alvo.nome}`} className="fixed flex flex-col"
+      style={{ left: 0, right: 0, bottom: 0, zIndex: 30, gap: M.cartao + 4, padding: `${M.cartao}px ${M.chipLadoX + 4}px ${M.chipLadoX + 4}px`, borderRadius: `${P.folha.raio}px ${P.folha.raio}px 0 0`, background: T.pagina, border: `1px solid ${v.derruba ? T.danger : T.amber}` }}>
+      <span aria-hidden="true" className="self-center" style={{ width: P.folha.pega[0], height: P.folha.pega[1], borderRadius: P.folha.pega[1], background: T.lineStrong }} />
+      <div className="flex items-center" style={{ gap: M.cartao }}>
+        <RostoNaLuta inimigo ente={alvo} tamanho={M.retratoDosOutros} anel={T.danger} />
+        <span className="flex flex-col min-w-0">
+          <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoInimigo + 4, color: T.ink, fontWeight: 600 }}>{alvo.nome}</span>
+          <span className="tv-mono" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>{Math.max(0, alvo.vida || 0)} PV</span>
+        </span>
+      </div>
+      <div className="flex items-end" style={{ gap: M.entreColunas }}>
+        {v.chance != null && num("Chance", `${v.chance}%`, T.amberSoft)}
+        {v.queda > 0 && num("Queda", v.danoDaQueda ? `−${v.danoDaQueda}` : `${v.queda}`, T.danger)}
+        {sup && v.danoDaSuperficie > 0 && num(sup.curto, `−${v.danoDaSuperficie}`, T.danger)}
+        {v.danoDaColisao > 0 && num("Colide", `−${v.danoDaColisao}`, T.danger)}
+      </div>
+      {alto && <LinhaDoAlto alto={alto} />}
+      <div className="flex flex-wrap" style={{ gap: EMPURRAO_NA_MESA.rotulo.entre }}>
+        {v.rotulos.map((r) => <RotuloDoEmpurrao key={r.tipo} rotulo={r} />)}
+      </div>
+      <div className="flex" style={{ gap: M.cartao }}>
+        <button onClick={aoConfirmar} className="tv-anel-foco tv-mono flex-1 flex items-center justify-center" style={doGesto}>
+          {gesto}
+        </button>
+        <button onClick={aoCancelar} className="tv-anel-foco tv-mono flex items-center justify-center"
+          style={{ minHeight: ALVOS.piso, padding: `0 ${M.chipLadoX + 4}px`, borderRadius: M.raioControle, background: T.panelSoft, color: T.ink, border: `1px solid ${T.line}`, fontSize: M.letra.verbo }}>
+          Cancelar
+        </button>
+      </div>
+      <span className="tv-mono text-center" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>tocar de novo em {alvo.nome} também confirma</span>
+    </div>
   );
 }
 
@@ -1298,6 +1403,30 @@ export function TelaDeBatalha(props) {
   }, [contando]);
   /* o lance do herói na mesa (a grade di-lo): «O teu golpe» marca a face */
   const [lanceNaMesa, setLanceNaMesa] = React.useState(null);
+  /* CB 18.5 · A LINHA DA REAÇÃO (Letreiro · repetida): só a linha, no Pé do
+     campo, a leitura e o esvanecer de REACAO_NA_MESA. A primeira de cada
+     tipo pousa no tabuleiro (a grade); a chave é a mesma dos dois lados. */
+  const reacoesVistasRef = React.useRef(new Set());
+  const [linhaDaReacao, setLinhaDaReacao] = React.useState("");
+  React.useEffect(() => {
+    if (!Array.isArray(p.reacoes) || !p.reacoes.length) return undefined;
+    let nova = null;
+    try {
+      p.reacoes.forEach((ev, i) => {
+        if (!ev || typeof ev !== "object") return;
+        const chave = chaveDaReacao(ev, i);
+        if (reacoesVistasRef.current.has(chave)) return;
+        reacoesVistasRef.current.add(chave);
+        if (!tempoDaReacao(ev, { deles: contando }).primeira) nova = ev;
+      });
+      const l = nova ? letreiroDaReacao(nova) : null;
+      if (!l) return undefined;
+      setLinhaDaReacao(`${l.titulo}${l.linha ? ` · ${l.linha}` : ""}`);
+    } catch (e) { console.warn("TelaDeBatalha: a linha da reação não se leu", e); return undefined; }
+    const tid = setTimeout(() => setLinhaDaReacao(""), REACAO_NA_MESA.leitura + REACAO_NA_MESA.esvai);
+    return () => clearTimeout(tid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [p.reacoes]);
   /* CB 2 · A MESA INTEIRA, MEDIDA: a largura e a altura da tela da luta
      decidem o arranjo (três colunas, duas, ou o telefone) e a largura das
      colunas, que cedem até 320 para o campo ficar quadrado
@@ -1533,9 +1662,24 @@ export function TelaDeBatalha(props) {
      App recebe só «prevê» e «anda e ataca». */
   const preverGolpe = (nome) => { try { if (p.aoPreverGolpe) p.aoPreverGolpe(nome); } catch (e) { console.warn("TelaDeBatalha: prever falhou", e); } };
   const andarEAtacar = (nome) => { try { if (p.aoAndarEAtacar) p.aoAndarEAtacar(nome); } catch (e) { console.warn("TelaDeBatalha: andar e atacar falhou", e); } };
-  const apontarInimigo = noTelefone ? null : (nome) => preverGolpe(nome);
+  /* CB 18.4 a · COM EMPURRAR ARMADO, o mesmo gesto prevê e confirma o
+     empurrão: o rato prevê, o clique empurra; no telefone o primeiro toque
+     prevê (a folha do empurrão) e o segundo confirma. Só quando o App dá as
+     duas portas (aoPreverEmpurrao, aoEmpurrar); sem elas, o gesto de hoje. */
+  const empurrando = armado === "empurrar" && !!p.aoPreverEmpurrao && !!p.aoEmpurrar;
+  const empAgora = p.empurrao && typeof p.empurrao === "object" && p.empurrao.previsao ? p.empurrao : null;
+  const alvoDoEmpurrao = empAgora && empAgora.alvo ? String(empAgora.alvo) : "";
+  const enteDoEmpurrao = alvoDoEmpurrao ? inimigos.find((e) => e.nome === alvoDoEmpurrao) || null : null;
+  const preverEmpurrao = (nome) => { try { if (p.aoPreverEmpurrao) p.aoPreverEmpurrao(nome); } catch (e) { console.warn("TelaDeBatalha: prever o empurrão falhou", e); } };
+  const empurrar = (nome) => { try { setArmado(""); setRecusado(""); if (p.aoEmpurrar) p.aoEmpurrar(nome); } catch (e) { console.warn("TelaDeBatalha: empurrar falhou", e); } };
+  React.useEffect(() => { if (!empurrando && alvoDoEmpurrao) preverEmpurrao(null); }, [empurrando]); // eslint-disable-line react-hooks/exhaustive-deps
+  const apontarInimigo = noTelefone ? null : (nome) => (empurrando ? preverEmpurrao(nome) : preverGolpe(nome));
   const tocarInimigo = (nome) => {
     if (!nome) return;
+    if (empurrando) {
+      if (noTelefone && alvoDoEmpurrao !== nome) { preverEmpurrao(nome); return; }
+      empurrar(nome); return;
+    }
     setArmado(""); setRecusado("");
     if (noTelefone && alvoDaPrevisao !== nome) { preverGolpe(nome); return; }
     andarEAtacar(nome);
@@ -1821,7 +1965,9 @@ export function TelaDeBatalha(props) {
    único sítio onde ela se lê durante o turno), com o glifo do tipo da
    intenção no lugar da mira */
   const fraseDeles = contando ? (() => { try { const it = intencaoDe.get(passoDeles.quem); return fraseDoPasso(passoDeles, { anunciado: it && it.alvo, heroi: nomeDoHeroi }); } catch { return null; } })() : null;
-  const textoDoPeAgora = fraseDeles ? fraseDeles.linha : textoDoPe;
+  /* CB 18.5: a reação que não é a primeira do seu tipo (e toda a do turno
+     deles) não pousa no tabuleiro: é uma linha no Pé, o tempo da leitura */
+  const textoDoPeAgora = linhaDaReacao && !vereditoForte ? linhaDaReacao : fraseDeles ? fraseDeles.linha : textoDoPe;
   const tomDoPe = fraseDeles ? (passoDeles.emTi ? T.danger : T.ink) : tomDoPe0;
   const glifoDoPe = contando ? (INTENCAO_NA_MESA.glifo[passoDeles.tipo] || (passoDeles.lado === "aliado" ? "espadas" : "mira")) : "mira";
   const corDoGlifoDoPe = contando && passoDeles.lado === "aliado" ? T.ok : T.danger;
@@ -1953,7 +2099,9 @@ export function TelaDeBatalha(props) {
           /* CB 17: o d20 do herói no alvo, e o passo corrente do turno deles */
           lance={p.lance || null} aoLance={setLanceNaMesa} acelerado={!!(td && td.acelerado)}
           passo={contando ? { ...passoDeles, i: indiceDoTurno, porVir: td.passos.slice(indiceDoTurno + 1).map((x) => ({ quem: x.quem, de: x.de })) } : null}
-          agiram={td ? agiramNoTurno : null} vista={camara} />
+          agiram={td ? agiramNoTurno : null} vista={camara}
+          /* CB 18: o degrau, o chão, os objetos, o empurrão e as reações */
+          alturas={p.alturas || null} superficies={p.superficies || null} objetos={p.objetos || null} empurrao={empAgora} reacoes={p.reacoes || null} />
       </div>
       {/* §CB 16.1 nº 1: o pé da arena e a linha do veredito são uma faixa só,
           de altura fixa — o Pé do campo; o tabuleiro escreve os chips e o ⤢
@@ -1994,7 +2142,11 @@ export function TelaDeBatalha(props) {
         <p className="tv-display text-center" style={{ fontSize: M.letra.foco + 6, color: T.ink, margin: 0, lineHeight: 1.2 }}>O último golpe é teu.</p>
       )}
       {/* CB 9 · a folha da previsão sobe por cima dos verbos, no telefone */}
-      {noTelefone && !esperando && !p.fim && enteDoAlvo && (
+      {/* CB 18.4 a · a folha do empurrão (G2): com Empurrar armado e um alvo previsto */}
+      {noTelefone && !esperando && !p.fim && empurrando && enteDoEmpurrao && (
+        <FolhaDoEmpurrao empurrao={empAgora} alvo={enteDoEmpurrao} aoConfirmar={() => empurrar(alvoDoEmpurrao)} aoCancelar={() => preverEmpurrao(null)} />
+      )}
+      {noTelefone && !esperando && !p.fim && enteDoAlvo && !(empurrando && enteDoEmpurrao) && (
         <FolhaDaPrevisao previsao={prevGolpe} alvo={enteDoAlvo} anda={!!(p.caminho && Array.isArray(p.caminho.pontos) && p.caminho.pontos.length > 1)}
           aoConfirmar={() => andarEAtacar(alvoDaPrevisao)} aoCancelar={() => preverGolpe(null)} />
       )}
@@ -2149,6 +2301,8 @@ export function TelaDeBatalha(props) {
       {tu}
       {/* §CB 17.1: com o dado no alvo, as faces acendem-se enquanto ele rola e a
           que saiu marca-se na leitura; sem previsão, as faces do próprio lance */}
+      {/* CB 18.4 a: com Empurrar armado, o empurrão por extenso */}
+      {empurrando && empAgora && <OEmpurraoPorExtenso empurrao={empAgora} alvo={enteDoEmpurrao} />}
       <OTeuGolpe previsao={prevGolpe ? { ...prevGolpe, vidaDoAlvo: enteDoAlvo ? enteDoAlvo.vida : prevGolpe.vidaDoAlvo }
         : lanceNaMesa && Array.isArray(lanceNaMesa.acertam) ? { alvo: lanceNaMesa.alvo, faces: lanceNaMesa.acertam, criticoEm: lanceNaMesa.criticoEm || 20 } : null}
         saiu={lanceNaMesa && !lanceNaMesa.rolando ? lanceNaMesa.saiu : null} estreito={(geo.coluna || M.lateral) < B3.colunaEstreita.faces} />

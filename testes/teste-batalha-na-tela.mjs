@@ -489,5 +489,118 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   t("e com a ação e a reação gastas, a peça di-lo (vinda só de `vez`)", /aria-label="ação gasta, bónus livre, reação gasta/.test(gasto), (gasto.match(/aria-label="[^"]*"/) || [""])[0]);
 }
 
+/* ============================================================
+   CB 18 · A ALTURA, AS SUPERFÍCIES E O CENÁRIO (formas.md §CB 18, lote 3)
+   A conta da tela (os patamares, as manchas, o desenho do padrão, os
+   rótulos do empurrão, o tempo da reação) e as peças renderizadas com as
+   props novas — e, sem elas, a mesa de hoje.
+   ============================================================ */
+const B18 = await import("../src/batalha-na-tela.js");
+const E18 = await import("../src/estilo.js");
+sec("11. CB 18: o degrau, o chão, os objetos, o empurrão e a reação");
+{
+  const { ALTURA_NA_MESA, SUPERFICIES_NO_CHAO, PADROES_DO_CHAO, OBJETOS_NA_MESA, EMPURRAO_NA_MESA, REACAO_NA_MESA } = E18;
+  /* --- o degrau (§CB 18.1) --- */
+  const alt = { "2,2": 2, "3,2": 2, "2,3": 1 };
+  const pt = B18.patamares(alt);
+  const de = (x, y) => pt.find((d) => d.x === x && d.y === y);
+  t("três casas altas, três patamares, na ordem da leitura (y, depois x)", pt.length === 3 && J(pt.map((d) => [d.x, d.y])) === J([[2, 2], [3, 2], [2, 3]]), J(pt));
+  t("o lume é o da tabela (6 % no 1, 10 % no 2)", de(2, 2).lume === ALTURA_NA_MESA.lume[2] && de(2, 3).lume === ALTURA_NA_MESA.lume[1]);
+  t("a face segue o patamar: sobre um degrau 1 a face do 2 é a da DIFERENÇA (0,12); sobre o chão, a dele (0,22)", de(2, 2).face === ALTURA_NA_MESA.face[1] && de(3, 2).face === ALTURA_NA_MESA.face[2] && de(2, 3).face === ALTURA_NA_MESA.face[1]);
+  t("a aresta só nos lados de cima e da esquerda que dão para mais baixo (o 2×1 lê-se como um bloco)", de(2, 2).aresta.cima && de(2, 2).aresta.esquerda && de(3, 2).aresta.cima && !de(3, 2).aresta.esquerda && !de(2, 3).aresta.cima && de(2, 3).aresta.esquerda);
+  t("a ficha num degrau sobe metade da face; no chão, nada", B18.subidaDaFicha(alt, 2, 2) === ALTURA_NA_MESA.face[2] * ALTURA_NA_MESA.fichaSobe && B18.subidaDaFicha(alt, 0, 0) === 0);
+  t("o degrau lê-se também de um Map, e um 7 vale 2 (o teto)", B18.alturaDe(new Map([["1,1", 1]]), 1, 1) === 1 && B18.alturaDe({ "0,0": 7 }, 0, 0) === 2 && B18.alturaDe(null, 0, 0) === 0);
+  /* --- as manchas (§CB 18.2) --- */
+  const sup = [{ x: 1, y: 1, tipo: "oleo", rodadas: 2 }, { x: 2, y: 1, tipo: "oleo", rodadas: 2 }, { x: 2, y: 2, tipo: "oleo", rodadas: 1 }, { x: 5, y: 5, tipo: "fogo", rodadas: null }, { x: 0, y: 0, tipo: "lava", rodadas: 1 }];
+  const mc = B18.manchasDoChao(sup, new Set(["2,1"]));
+  t("uma mancha é o mesmo tipo E as mesmas rodadas, em cruz: três manchas (o tipo desconhecido cala-se)", mc.length === 3 && mc.every((m) => SUPERFICIES_NO_CHAO.tipos[m.tipo]), J(mc.map((m) => [m.tipo, m.rodadas, m.casas.length])));
+  const oleo = mc.find((m) => m.tipo === "oleo" && m.rodadas === 2);
+  t("o contorno passa só na borda da mancha (2 casas lado a lado: 6 arestas, nenhuma no meio)", oleo.contorno.length === 6 && !oleo.contorno.some(([x1, y1, x2, y2]) => x1 === 2 && x2 === 2 && y1 === 1 && y2 === 2));
+  t("o selo mora na casa mais abaixo e mais à esquerda SEM ficha (a 2,1 tem ficha: vai para a 1,1)", oleo.ancora.x === 1 && oleo.ancora.y === 1);
+  t("a última rodada é forma (ultima), e a que não acaba tem rodadas null", mc.find((m) => m.rodadas === 1).ultima === true && mc.find((m) => m.tipo === "fogo").rodadas === null && !mc.find((m) => m.tipo === "fogo").ultima);
+  t("com todas as casas ocupadas, o selo fica na de baixo à esquerda", B18.manchasDoChao([{ x: 3, y: 3, tipo: "gelo", rodadas: 2 }], new Set(["3,3"]))[0].ancora.x === 3);
+  t("sem superfícies, nenhuma mancha (e null não parte)", B18.manchasDoChao(null).length === 0 && B18.manchasDoChao([]).length === 0);
+  t("o campo da casa: «no alto (degrau 2), óleo, mais 2 rodadas: o fogo aqui explode, barril de óleo»",
+    B18.campoDoChao({ nivel: 2, superficie: { tipo: "oleo", rodadas: 2, consequencia: "o fogo aqui explode" }, objeto: { tipo: "barril_de_oleo", nome: "barril de óleo" } }) === "no alto (degrau 2), óleo, mais 2 rodadas: o fogo aqui explode, barril de óleo");
+  t("e nunca diz «superfície» nem «reação» (o sistema não fala de si mesmo)", !/superf|rea[cç]/.test(Object.values(B18.FRASE_DO_CHAO).join(" ") + B18.campoDoChao({ superficie: { tipo: "eletrica", rodadas: 1 } })));
+  /* --- o desenho de cada padrão --- */
+  const dentro = (d) => (d.match(/-?\d+(\.\d+)?/g) || []).map(Number).every((n) => n >= 0 && n <= 1);
+  for (const p of Object.keys(PADROES_DO_CHAO)) t(`o padrão «${p}» desenha-se dentro da casa (todas as coordenadas entre 0 e 1)`, B18.desenhoDoPadrao(p).startsWith("M") && dentro(B18.desenhoDoPadrao(p).replace(/A[^A-Z]*?0 1 0 /g, "A")), B18.desenhoDoPadrao(p).slice(0, 80));
+  t("um padrão que não existe não desenha nada", B18.desenhoDoPadrao("xadrez") === "");
+  /* --- os objetos (§CB 18.3) --- */
+  t("os selos saem das ETIQUETAS (não do tipo), até dois, na ordem do motor", J(B18.selosDoObjeto({ tipo: "qualquer", etiquetas: ["explode", "derrama", "cobre"] }).map((s) => s.glifo)) === J(["explode", "oleo"]));
+  t("uma etiqueta sem selo cala-se; sem etiquetas, nenhum selo", B18.selosDoObjeto({ etiquetas: ["voa"] }).length === 0 && B18.selosDoObjeto({ tipo: "caixote" }).length === 0);
+  t("cada tipo do motor tem desenho, e o desconhecido é o caixote", B18.desenhoDoObjeto("barril_de_oleo") === "barril" && B18.desenhoDoObjeto("carro_de_feno") === "feno" && B18.desenhoDoObjeto("altar") === "caixote");
+  const po = B18.previsaoDoObjetoNaMesa({ tipo: "barril_de_oleo", nome: "barril de óleo", etiquetas: ["explode"], previsao: { casas: Array.from({ length: 9 }, (_, i) => ({ x: i % 3, y: Math.floor(i / 3) })), dano: 9, deixa: "fogo" } });
+  t("apontar o barril: «barril de óleo · explode: −9 em 9 casas, deixa fogo»", po.rotulo === "barril de óleo · explode: −9 em 9 casas, deixa fogo" && po.casas.length === 9, po && po.rotulo);
+  t("sem a previsão do motor, o objeto apontado não inventa área", B18.previsaoDoObjetoNaMesa({ tipo: "caixote" }) === null);
+  /* --- o «+2 do alto» (§CB 18.4 b) --- */
+  t("+2 do alto e −2 de baixo, e o 0 cala-se", B18.altoDaPrevisao(2).porExtenso === "do alto +2" && B18.altoDaPrevisao(-2).porExtenso === "de baixo −2" && B18.altoDaPrevisao(-2).baixo && B18.altoDaPrevisao(0) === null);
+  t("a pílula do golpe leva o alto à parte, e o ouvido ouve-o", pilulaDaPrevisao({ ...PREV, alto: 2 }).alto.texto === "+2" && /do alto \+2/.test(pilulaDaPrevisao({ ...PREV, alto: 2 }).rotulo) && pilulaDaPrevisao(PREV).alto === null);
+  t("e o golpe por extenso também", golpePorExtenso({ ...PREV, alto: -2 }).alto.porExtenso === "de baixo −2");
+  /* --- o empurrão (§CB 18.4 a) --- */
+  const EMP = { casas: 2, para: { x: 8, y: 8 }, queda: 1, dano: { queda: 3, colisao: 3, superficie: 4, total: 10 }, colideCom: { tipo: "objeto", nome: "caixote" }, superficie: "fogo", chance: 0.64 };
+  const re = B18.rotulosDoEmpurrao(EMP, { vida: 8 });
+  t("os rótulos na ordem da peça: a colisão → a queda → a superfície", J(re.rotulos.map((r) => r.tipo)) === J(EMPURRAO_NA_MESA.ordem));
+  t("cada um com o seu dano: «bate no caixote · −3», «cai 1 · −3», «no fogo · −4 por rodada»", J(re.rotulos.map((r) => r.texto)) === J(["bate no caixote · −3", "cai 1 · −3", "no fogo · −4 por rodada"]), J(re.rotulos.map((r) => r.texto)));
+  t("a soma derruba (10 ≥ 8): o primeiro rótulo começa pela caveira", re.derruba && re.rotulos[0].caveira && !re.rotulos[1].caveira);
+  t("na água eletrificada o dano é de uma vez, e no gelo o teste («Destreza 12 ou cai»)",
+    B18.rotulosDoEmpurrao({ casas: 1, superficie: "eletrica", dano: { superficie: 5 } }).rotulos[0].texto === "na água eletrificada · −5"
+    && B18.rotulosDoEmpurrao({ casas: 1, superficie: "gelo", efeito: { tipo: "escorrega", teste: { atributo: "Destreza", cd: 12 } }, dano: {} }).rotulos[0].texto === "no gelo · Destreza 12 ou cai");
+  const livre = B18.rotulosDoEmpurrao({ casas: 2, para: { x: 1, y: 1 }, dano: {}, chance: 0.64 });
+  t("quando não acontece nada: um rótulo só, «2 casas», sem preço (o aro âmbar)", livre.rotulos.length === 1 && livre.rotulos[0].texto === "2 casas" && !livre.rotulos[0].preco && !livre.derruba);
+  t("a parede diz «bate na parede»", B18.rotulosDoEmpurrao({ casas: 1, colideCom: { tipo: "parede" }, dano: { colisao: 2 } }).rotulos[0].texto === "bate na parede · −2");
+  const sx = B18.setaDoEmpurrao({ x: 5, y: 8 }, { x: 8, y: 8 }, true);
+  t("a seta: uma marca em cada casa atravessada, o fantasma na final e o impacto na borda da seguinte", J(sx.marcas) === J([{ x: 6, y: 8 }, { x: 7, y: 8 }]) && sx.impacto.x === 9 && sx.impacto.y === 8.5);
+  t("sem colisão, sem impacto; sem destino, sem seta", B18.setaDoEmpurrao({ x: 1, y: 1 }, { x: 1, y: 3 }).impacto === null && B18.setaDoEmpurrao({ x: 1, y: 1 }, null) === null);
+  /* --- o caminho que fere (§CB 18.4 c) --- */
+  const tc = B18.trocosDoCaminho([{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }], [{ x: 1, y: 0, tipo: "veneno", dano: 3 }]);
+  t("o troço que entra e o que sai da casa de perigo são `danger`; o resto âmbar", J(tc.trocos.map((x) => x.perigo)) === J([true, true, false]));
+  t("e o destino ganha o preço: «atravessa veneno · −3», com o glifo das bolhas", tc.avisos.length === 1 && tc.avisos[0].texto === "atravessa veneno · −3" && tc.avisos[0].glifo === "bolhas");
+  /* --- a reação (§CB 18.5) --- */
+  const R1 = REACAO_NA_MESA.primeira, R2 = REACAO_NA_MESA.outras;
+  t("a soma da primeira (pausa + anéis) cabe no teto do golpe sentido", R1.pausa + R1.porAnel * R1.aneis <= REACAO_NA_MESA.teto && REACAO_NA_MESA.teto === GOLPE_SENTIDO.teto);
+  t("as outras: sem pausa nem clarão, e mais curtas (160)", R2.pausa === 0 && R2.clarao === 0 && R2.pausa + R2.porAnel * R2.aneis < R1.pausa + R1.porAnel * R1.aneis);
+  const tp = B18.tempoDaReacao({ primeira: true });
+  t("a primeira daquele tipo: 360 ms do que se mexe, com clarão", tp.primeira && tp.total === R1.pausa + R1.porAnel * R1.aneis && tp.clarao === R1.clarao);
+  t("no turno deles, sempre os tempos das outras; com 2×, a metade", !B18.tempoDaReacao({ primeira: true }, { deles: true }).primeira && B18.tempoDaReacao({ primeira: false }, { acelerado: true }).total === (R2.porAnel * R2.aneis) / 2);
+  t("com movimento reduzido, corte seco: 0 ms (o letreiro fica, que é informação)", B18.tempoDaReacao({ primeira: true }, { reduzido: true }).total === 0 && B18.tempoDaReacao({ primeira: true }, { reduzido: true }).leitura === REACAO_NA_MESA.leitura);
+  const an = B18.aneisDaReacao([{ x: 5, y: 5 }, { x: 6, y: 6 }, { x: 8, y: 5 }, { x: 9, y: 9 }], { x: 5, y: 5 }, 2);
+  t("os anéis: a origem e as vizinhas no 1.º, o resto muda com o 2.º", J(an.map((q) => q.anel)) === J([0, 0, 1, 1]));
+  const lt = B18.letreiroDaReacao({ tipo: "explode", casas: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }], primeira: true, alvos: [{ nome: "Goblin", dano: 9 }], objeto: "barril" });
+  t("o letreiro: «O barril explode» e «4 casas ardem · Goblin −9»", lt.titulo === "O barril explode" && lt.linha === "4 casas ardem · Goblin −9" && lt.primeira, J(lt));
+  t("sem objeto, é o óleo que explode; a água eletrifica-se", B18.letreiroDaReacao({ tipo: "explode", casas: 3 }).titulo === "O óleo explode" && B18.letreiroDaReacao({ tipo: "eletrifica" }).titulo === "A água eletrifica-se");
+  t("um tipo sem frase cala-se (nenhum mecanismo à vista)", B18.letreiroDaReacao({ tipo: "combustao-espontanea" }) === null);
+  t("a chave da reação: a do motor, ou a posição, o tipo e a origem", B18.chaveDaReacao({ chave: 7 }) === "7" && B18.chaveDaReacao({ tipo: "apaga", origem: { x: 1, y: 2 } }, 3) === "3:apaga:1,2");
+
+  /* --- as peças renderizadas --- */
+  janela(1905);
+  const hoje = R.html(h(R.GridDeBatalha, { ...GRADE_1905 }));
+  t("sem as props novas, a mesa é a de hoje: nenhum padrão, degrau, onda, empurrão nem letreiro", !/tv-chao-|tv-reacao|Empurrar|no alto \(degrau/.test(hoje) && hoje.length > 1000);
+  const COMB18 = { ...COMBATE, grade: { ...GRADE } };
+  const g18 = R.html(h(R.GridDeBatalha, {
+    ...GRADE_1905, combate: COMB18,
+    alturas: { "5,7": 2, "6,7": 1 },
+    superficies: [{ x: 1, y: 1, tipo: "oleo", rodadas: 2 }, { x: 2, y: 1, tipo: "oleo", rodadas: 2 }, { x: 7, y: 8, tipo: "fogo", rodadas: null }, { x: 10, y: 10, tipo: "eletrica", rodadas: 1 }],
+    objetos: [{ x: 3, y: 3, tipo: "barril_de_oleo", nome: "barril de óleo", etiquetas: ["explode", "derrama"] }],
+    empurrao: { alvo: "Bandido", previsao: { ...EMP, para: { x: 8, y: 8 } } },
+  }));
+  for (const tipo of ["oleo", "fogo", "eletrica"]) t(`o padrão de «${tipo}» entra nas defs e pinta a casa`, g18.includes(`id="tv-chao-${tipo}"`) && g18.includes(`url(#tv-chao-${tipo})`));
+  t("o selo da mancha diz as rodadas (2) e cala o número de quem não acaba", (texto(g18).match(/\b2\b/g) || []).length >= 1);
+  t("a última rodada tem o selo tracejado", /border:1\.5px dashed/.test(g18));
+  t("o objeto toma o lugar do estorvo e leva os dois selos (o disco pagina)", g18.includes(`fill="${T.pagina}"`) && (g18.match(new RegExp(`stroke="${OBJETOS_NA_MESA.etiquetas.explode.cor}"`, "g")) || []).length >= 1);
+  t("o empurrão: a pílula «Empurrar 64%» debaixo do alvo, com a caveira (a soma derruba os 8 PV)", /aria-label="Empurrar 64%: bate no caixote · −3, cai 1 · −3, no fogo · −4 por rodada, e cai"/.test(g18));
+  t("e os três rótulos ao lado da casa final", texto(g18).includes("bate no caixote · −3") && texto(g18).includes("cai 1 · −3") && texto(g18).includes("no fogo · −4 por rodada"));
+  t("a pílula do golpe cala-se no alvo do empurrão", !/aria-label="Bandido: 78%/.test(R.html(h(R.GridDeBatalha, { ...GRADE_1905, previsaoDoGolpe: PREV, empurrao: { alvo: "Bandido", previsao: EMP } }))));
+  t("o campo da casa diz o degrau («no alto (degrau 2)») e o chão («óleo, mais 2 rodadas»)", /no alto \(degrau 2\)/.test(g18) && /óleo, mais 2 rodadas/.test(g18));
+  const gc = R.html(h(R.GridDeBatalha, { ...GRADE_1905, caminho: { pontos: [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 7 }], metros: 3, perigos: [{ x: 6, y: 7, tipo: "veneno", dano: 3 }] } }));
+  t("o caminho que atravessa veneno: o troço em danger, tracejado", new RegExp(`<line[^>]*stroke="${T.danger}"[^>]*stroke-dasharray="[0-9.]+ [0-9.]+"`).test(gc) && new RegExp(`<line[^>]*stroke="${T.amber}"`).test(gc));
+  t("e o rótulo diz «atravessa veneno · −3»", texto(gc).includes("atravessa veneno · −3"));
+  const pa = R.html(h(R.PilulaDaPrevisao, { previsao: { ...PREV, alto: 2 } }));
+  t("a pílula do golpe com «+2» depois da percentagem (os chevrons do degrau em ok)", texto(pa).includes("+2") && pa.includes(`stroke="${ALTURA_NA_MESA.previsao.alto}"`));
+  const pb = R.html(h(R.PilulaDaPrevisao, { previsao: { ...PREV, alto: -2 } }));
+  t("de baixo: «−2», os chevrons virados (rotate 180) e em danger", texto(pb).includes("−2") && /rotate\(180deg\)/.test(pb) && pb.includes(`stroke="${ALTURA_NA_MESA.previsao.baixo}"`));
+}
+
 console.log(`\nbatalha na tela (CB): ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

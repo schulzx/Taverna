@@ -718,5 +718,77 @@ sec("CB 17. o dado no alvo e o turno deles");
   t("um verbo salta e arma", /if \(contando\) saltarTurno\(\);/.test(TEL));
 }
 
+/* ============================================================
+   CB 18 · A ALTURA, AS SUPERFÍCIES E O CENÁRIO (formas.md §CB 18.7, item 5)
+   Toda superfície tem forma (padrão) e glifo, e nenhuma forma se repete —
+   é o que um daltónico lê (WCAG 2.2, 1.4.1); toda etiqueta do motor tem
+   selo; a reação cabe no teto; as três classes novas têm saída no bloco
+   reduzido; e as peças novas não trazem cor literal. O comportamento (as
+   manchas, os rótulos, o tempo) prova-se em teste-batalha-na-tela.mjs.
+   ============================================================ */
+sec("CB 18. o degrau, o chão, os objetos, o empurrão e a reação");
+{
+  const E = await import("../src/estilo.js");
+  const { SUPERFICIES_NO_CHAO, PADROES_DO_CHAO, OBJETOS_NA_MESA, EMPURRAO_NA_MESA, REACAO_NA_MESA, ALTURA_NA_MESA, T } = E;
+  const GRADE = ler("src/grade-de-batalha.jsx");
+  const ESTILO = ler("src/estilo.js");
+  const tipos = Object.keys(SUPERFICIES_NO_CHAO.tipos);
+  /* 1. os tipos do motor. SUPERFICIES mora em superficies.js, que o motor
+     escreve no mesmo lote: enquanto não existe, a lista é a da secção
+     (formas.md §CB 18.2), e no dia em que existir o dente passa a lê-la */
+  const temMotor = existsSync(join(RAIZ, "src/superficies.js"));
+  const doMotor = temMotor ? await import("../src/superficies.js").then((m) => m.SUPERFICIES).catch(() => null) : null;
+  const tiposDoMotor = doMotor ? (Array.isArray(doMotor) ? doMotor.map((x) => (typeof x === "string" ? x : x && (x.tipo || x.id))) : Object.keys(doMotor)) : ["oleo", "agua", "gelo", "fogo", "veneno", "eletrica"];
+  const semEntrada = tiposDoMotor.filter((x) => x && !SUPERFICIES_NO_CHAO.tipos[x]);
+  t(`todo o tipo de superfície (${doMotor ? "SUPERFICIES do motor" : "a lista de §CB 18.2"}) tem forma na tela`, semEntrada.length === 0, semEntrada.join(", "));
+  /* 2. a forma basta sozinha: nenhum padrão repetido, e a lama (a hachura)
+     não é nenhum deles */
+  const padroes = tipos.map((x) => SUPERFICIES_NO_CHAO.tipos[x].padrao);
+  t("nenhum padrão se repete, e nenhum é a hachura da lama", new Set(padroes).size === padroes.length && !padroes.includes("hachura") && /id="tv-lama"/.test(GRADE));
+  t("todo o padrão tem geometria em PADROES_DO_CHAO", padroes.every((p) => PADROES_DO_CHAO[p]) && (SUPERFICIES_NO_CHAO.tipos.eletrica.sobre ? !!PADROES_DO_CHAO[SUPERFICIES_NO_CHAO.tipos.eletrica.sobre] : true));
+  const semGlifo = tipos.filter((x) => !GLIFOS[SUPERFICIES_NO_CHAO.tipos[x].glifo]);
+  t("todo o glifo de superfície existe em glifos.js", semGlifo.length === 0, semGlifo.join(", "));
+  const glifosDoChao = tipos.map((x) => SUPERFICIES_NO_CHAO.tipos[x].glifo);
+  t("e nenhum glifo se repete (o óleo é a poça, a água da ração é a gota)", new Set(glifosDoChao).size === glifosDoChao.length && !glifosDoChao.includes("agua"));
+  t("nada no chão é âmbar (o âmbar é a mão do jogador)", tipos.every((x) => SUPERFICIES_NO_CHAO.tipos[x].chao !== T.amber && SUPERFICIES_NO_CHAO.tipos[x].traco !== T.amber));
+  /* 3. as etiquetas: toda a do motor tem selo, e todo o selo tem glifo */
+  const { OBJETOS_DO_CENARIO } = await import("../src/grid.js");
+  const etiquetasDoMotor = [...new Set(Object.values(OBJETOS_DO_CENARIO || {}).flatMap((o) => (o && Array.isArray(o.etiquetas) ? o.etiquetas : [])))];
+  /* À ESPERA DO DESENHO (10/11): o motor do lote 3 escreve também `tomba`,
+     `apaga` e `parte`, e §CB 18.3 só desenhou o selo de cinco. A mão não
+     inventa forma: até o `desenho` as desenhar, o selo delas cala-se
+     (selosDoObjeto deita fora a etiqueta sem selo) e a espera fica aqui,
+     com nome. Uma entrada que ganhar forma tem de sair da lista. */
+  const A_ESPERA_DO_DESENHO = ["tomba", "apaga", "parte"];
+  const semSelo = etiquetasDoMotor.filter((e) => !OBJETOS_NA_MESA.etiquetas[e] && !A_ESPERA_DO_DESENHO.includes(e));
+  t(`toda a etiqueta de OBJETOS_DO_CENARIO tem selo (${etiquetasDoMotor.length ? etiquetasDoMotor.join(", ") : "o motor ainda não as escreve: confere-se a tabela da tela"})`, semSelo.length === 0, semSelo.join(", "));
+  t("e a espera do desenho não guarda etiqueta que já tem selo", A_ESPERA_DO_DESENHO.every((e) => !OBJETOS_NA_MESA.etiquetas[e]));
+  t("todo o selo de objeto tem glifo desenhado, e o impacto do empurrão também", Object.values(OBJETOS_NA_MESA.etiquetas).every((e) => GLIFOS[e.glifo]) && !!GLIFOS[EMPURRAO_NA_MESA.impacto] && !!GLIFOS[ALTURA_NA_MESA.glifo]);
+  const semDesenho = Object.keys(OBJETOS_DO_CENARIO || {}).filter((k) => !OBJETOS_NA_MESA.desenho[k]);
+  t("todo o objeto do motor tem uma das quatro variantes da peça", semDesenho.length === 0 && Object.values(OBJETOS_NA_MESA.desenho).every((d) => ["barril", "candeeiro", "feno", "caixote"].includes(d)), semDesenho.join(", "));
+  /* 4. a reação cabe no teto do golpe sentido */
+  for (const k of ["primeira", "outras"]) {
+    const r = REACAO_NA_MESA[k];
+    t(`a reação «${k}»: pausa + porAnel × anéis = ${r.pausa + r.porAnel * r.aneis} ≤ ${REACAO_NA_MESA.teto}`, r.pausa + r.porAnel * r.aneis <= REACAO_NA_MESA.teto);
+  }
+  /* 5. as três classes novas têm saída no bloco reduzido (WCAG 2.2, 2.3.3) */
+  const blocosReduzidos = (ESTILO.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}/g) || []).join("\n");
+  for (const c of ["tv-chao-nasce", "tv-reacao-clarao", "tv-reacao-onda"]) {
+    t(`.${c} existe, e tem saída no bloco reduzido`, new RegExp(`\\.${c} \\{[^}]*animation:`).test(ESTILO) && new RegExp(`\\.${c} \\{ animation: none`).test(blocosReduzidos));
+  }
+  /* 6. nenhuma cor literal nas peças novas (a grade inteira conta-se em
+     check-formas: 15 → 12, as três do estorvo saíram) */
+  const ini = GRADE.indexOf("CB 18 · AS PEÇAS DO CHÃO E DO CENÁRIO");
+  const fim = GRADE.indexOf("/* CB 5 · O NÚMERO DO GOLPE (Figma 342:183)");
+  const pecas = ini > 0 && fim > ini ? GRADE.slice(ini, fim).replace(/\/\*[\s\S]*?\*\//g, "") : "";
+  t("nenhuma cor literal nas peças do chão e do cenário", pecas.length > 3000 && !/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(pecas), `a secção tem ${pecas.length} caracteres`);
+  t("e o estorvo genérico já não tem as três cores do quadro", !/#2B2540|#73628C|#5D527C/i.test(GRADE));
+  /* 7. props ausentes = a mesa de hoje */
+  t("as props novas nascem nulas (regressão zero)", /alturas = null, superficies = null, objetos = null, empurrao = null, reacoes = null \}\) \{/.test(GRADE));
+  t("e a tela passa-as à grade numa linha só delas", /alturas=\{p\.alturas \|\| null\} superficies=\{p\.superficies \|\| null\} objetos=\{p\.objetos \|\| null\} empurrao=\{empAgora\} reacoes=\{p\.reacoes \|\| null\}/.test(TEL));
+  /* 8. a entrada nunca espera: qualquer toque leva a reação ao fim */
+  t("qualquer toque ou tecla leva a reação ao fim, e não é consumido", /window\.addEventListener\("pointerdown", fim, true\)/.test(GRADE) && /window\.addEventListener\("keydown", fim, true\)/.test(GRADE));
+}
+
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

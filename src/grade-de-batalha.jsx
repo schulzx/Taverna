@@ -45,6 +45,12 @@ import { Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe } from "./semente.js";
 import { fasesDoChefe, viradaPorId } from "./masmorras.js";
 import { IconeEscudoAlerta, Glifo, PilulaDaPrevisao, PilulaDaIntencao } from "./ui.jsx";
+/* CB 18 (lote 3, formas.md §CB 18): o degrau, as superfícies, os objetos, o
+   empurrão e a reação. As peças leem por props (o contrato está no cabeçalho
+   das props); a conta é de batalha-na-tela.js, as medidas das tabelas de CB 18. */
+import { PilulaDoEmpurrao, RotuloDoEmpurrao } from "./ui.jsx";
+import { ALTURA_NA_MESA, SUPERFICIES_NO_CHAO, OBJETOS_NA_MESA, EMPURRAO_NA_MESA, REACAO_NA_MESA } from "./estilo.js";
+import { alturaDe, patamares, subidaDaFicha, manchasDoChao, campoDoChao, desenhoDoPadrao, desenhoDoObjeto, selosDoObjeto, previsaoDoObjetoNaMesa, rotulosDoEmpurrao, setaDoEmpurrao, trocosDoCaminho, tempoDaReacao, aneisDaReacao, letreiroDaReacao, chaveDaReacao } from "./batalha-na-tela.js";
 /* CB (09/11, formas.md §CB 3–§CB 5): a previsão sob o alvo, a intenção no
    canto da ficha, o caminho no chão e o golpe sentido. O que se mostra é
    decidido em batalha-na-tela.js; as medidas saem das tabelas de CB. */
@@ -53,7 +59,7 @@ import { PREVISAO_DO_GOLPE, CAMINHO_NO_CHAO, INTENCAO_NA_MESA, GOLPE_SENTIDO, FE
    sem calha (a régua presa desenha-se por cima das casas) */
 import { BATALHA_EM_TRES as B3 } from "./estilo.js";
 import { variacaoDoGolpe, pilulaDaPrevisao, chipDaQueda } from "./batalha-na-tela.js";
-import { GLIFOS } from "./glifos.js";
+import { GLIFOS, tracoNaGrelha } from "./glifos.js";
 import { tocarGolpe, tocarDado } from "./som-da-mesa.js";
 /* CB 17 (lote 2): o d20 do ataque rola NO ALVO (formas.md §CB 17.1) e o turno
    deles conta-se em passos (§CB 17.2). O corpo do dado é o da bandeja
@@ -395,6 +401,183 @@ function GlifoNaCasa({ nome, x, y, lado = 0.5, cor, px }) {
   );
 }
 
+/* ============================================================
+   CB 18 · AS PEÇAS DO CHÃO E DO CENÁRIO (formas.md §CB 18; Figma 373:2203
+   Superficie no chao, 373:2216 Degrau, 373:2259 Objeto do cenario). A conta
+   (os patamares, as manchas, o desenho do padrão, as frases) mora em
+   batalha-na-tela.js; aqui só se pinta, com as medidas de ALTURA_NA_MESA,
+   SUPERFICIES_NO_CHAO, OBJETOS_NA_MESA e EMPURRAO_NA_MESA e as tintas de T.
+   ============================================================ */
+/* o glifo de GLIFOS com o centro em (cx, cy) e `lado` em casas; o traço é o
+   da família para o tamanho em píxeis (tracoNaGrelha), como o `Glifo` */
+function GlifoEm({ nome, cx, cy, lado, cor, px, rodar = 0 }) {
+  const g = GLIFOS[nome];
+  if (!g || !(lado > 0)) return null;
+  const k = lado / 24;
+  return (
+    <path d={g.d} fill="none" stroke={cor} strokeWidth={tracoNaGrelha(lado / Math.max(px, 1e-6))} strokeLinecap="round" strokeLinejoin="round"
+      transform={`translate(${cx - lado / 2} ${cy - lado / 2}) scale(${k})${rodar ? ` rotate(${rodar} 12 12)` : ""}`} style={{ pointerEvents: "none" }} />
+  );
+}
+
+/* O PADRÃO DE CADA CHÃO, um `<pattern>` de uma casa (a malha é inteira, e o
+   padrão casa com ela). O traço e o alfa são os do tipo; a água eletrificada
+   desenha as ondas da água e o raio por cima (`sobre`). */
+function PadroesDoChao() {
+  const S = SUPERFICIES_NO_CHAO;
+  return (
+    <>
+      {Object.entries(S.tipos).map(([tipo, d]) => {
+        const sob = d.sobre ? Object.values(S.tipos).find((o) => o.padrao === d.sobre) : null;
+        return (
+          <pattern key={tipo} id={`tv-chao-${tipo}`} width="1" height="1" patternUnits="userSpaceOnUse">
+            {sob && <path d={desenhoDoPadrao(d.sobre)} fill="none" stroke={sob.traco} strokeOpacity={sob.alfaDoTraco} strokeWidth={S.traco} strokeLinecap="round" strokeLinejoin="round" />}
+            <path d={desenhoDoPadrao(d.padrao)} fill="none" stroke={d.traco} strokeOpacity={d.alfaDoTraco} strokeWidth={d.sobre ? S.tracoDoRaio : S.traco} strokeLinecap="round" strokeLinejoin="round" />
+          </pattern>
+        );
+      })}
+    </>
+  );
+}
+
+/* O OBJETO DO CENÁRIO (Figma 373:2259 — barril · candeeiro · feno ·
+   caixote), desenhado na grelha de 48 da peça e escalado à casa, como o
+   estorvo de B1. O barril de óleo leva o óleo que escorre pela tampa: é o
+   desenho que avisa antes do selo. */
+function ObjetoDoCenario({ objeto }) {
+  const O = OBJETOS_NA_MESA, C = O.cor, g = O.grelha;
+  const desenho = desenhoDoObjeto(objeto.tipo);
+  const oleo = /oleo/.test(String(objeto.tipo || ""));
+  return (
+    <svg x={objeto.x} y={objeto.y} width="1" height="1" viewBox={`0 0 ${g} ${g}`} style={{ pointerEvents: "none" }}>
+      {desenho === "barril" && (
+        <>
+          <ellipse cx="24" cy="40" rx="15" ry="4" fill={T.bg} opacity={O.sombra} />
+          <rect x="12" y="14" width="24" height="26" fill={C.corpo} />
+          <path d="M12 33H36M12 20H36" fill="none" stroke={C.aro} strokeWidth="2" />
+          <ellipse cx="24" cy="14" rx="12" ry="4.5" fill={C.tampa} stroke={C.aro} strokeWidth="1.5" />
+          {oleo && <path d="M30 16C30 16 28 19 28 20.5C28 21.6 28.9 22.5 30 22.5C31.1 22.5 32 21.6 32 20.5C32 19 30 16 30 16Z" fill={SUPERFICIES_NO_CHAO.tipos.oleo.traco} />}
+        </>
+      )}
+      {desenho === "candeeiro" && (
+        <>
+          <ellipse cx="24" cy="41" rx="9" ry="3" fill={T.bg} opacity={O.sombra} />
+          <path d="M24 40V22" fill="none" stroke={C.aro} strokeWidth="2.5" />
+          <rect x="17" y="9" width="14" height="14" fill={C.tampa} stroke={C.aro} strokeWidth="1.5" />
+          <path d="M24 12C25.3 14 26.5 15 26.5 16.8C26.5 18.3 25.4 19.5 24 19.5C22.6 19.5 21.5 18.3 21.5 16.8C21.5 15.5 22.5 14.5 24 12Z" fill={C.chama} />
+        </>
+      )}
+      {desenho === "feno" && (
+        <>
+          <ellipse cx="24" cy="41" rx="20" ry="4" fill={T.bg} opacity={O.sombra} />
+          <rect x="6" y="20" width="36" height="18" fill={C.corpo} stroke={C.aro} strokeWidth="1.5" />
+          <path d="M8 20C18.67 8 29.33 8 40 20" fill={C.corpo} stroke={C.feno} strokeWidth="1.5" />
+          <path d="M36 18L34 12M14 18L18 10M22 18L24 8M30 18L30 9" fill="none" stroke={C.feno} strokeWidth="1.25" strokeLinecap="round" />
+          <circle cx="14" cy="39" r="4" fill={C.tampa} stroke={C.aro} strokeWidth="1.5" />
+          <circle cx="34" cy="39" r="4" fill={C.tampa} stroke={C.aro} strokeWidth="1.5" />
+        </>
+      )}
+      {desenho === "caixote" && (
+        <>
+          <ellipse cx="24" cy="40.5" rx="17" ry="3.5" fill={T.bg} opacity={O.sombra} />
+          <rect x="10" y="12" width="28" height="28" fill={C.corpo} />
+          <path d="M10 12H38V40H10ZM38 12L10 40M10 12L38 40" fill="none" stroke={C.aro} strokeWidth="1.5" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/* OS SELOS DO OBJETO: até dois discos de 16 px no canto de cima à direita,
+   2 px entre eles, a subir 4 px por cima da peça — o disco `pagina`, o aro e
+   o glifo 10 na cor da etiqueta. Dizem o que ele faz antes de ser usado. */
+function SelosDoObjeto({ objeto, px }) {
+  const S = OBJETOS_NA_MESA.selo;
+  const selos = selosDoObjeto(objeto);
+  if (!selos.length) return null;
+  const r = (S.lado / 2) * px;
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      {selos.map((s, i) => {
+        const cx = objeto.x + 1 - r - i * (S.lado + S.entre) * px;
+        const cy = objeto.y - S.sobe * px + r;
+        return (
+          <g key={s.etiqueta}>
+            <circle cx={cx} cy={cy} r={r - (S.aro * px) / 2} fill={T.pagina} stroke={s.cor} strokeWidth={S.aro * px} />
+            <GlifoEm nome={s.glifo} cx={cx} cy={cy} lado={S.glifo * px} cor={s.cor} px={px} />
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+/* O SELO DA SUPERFÍCIE (`Selo da superficie`, §CB 18.2): uma vez por mancha,
+   no canto de baixo à esquerda da âncora, por cima das fichas. `pagina` a
+   0,92, o aro da cor do traço (tracejado na última rodada), o glifo 12 e as
+   rodadas que faltam em mono 12 bold `ink` — sem número quando não acaba. */
+function SeloDaSuperficie({ mancha, largura, altura }) {
+  const S = SUPERFICIES_NO_CHAO;
+  const d = S.tipos[mancha.tipo];
+  if (!d || !mancha.ancora) return null;
+  const a = mancha.ancora;
+  return (
+    <span className="tv-mono inline-flex items-center" aria-hidden="true"
+      style={{ position: "absolute", zIndex: 1, left: `${(a.x / largura) * 100}%`, top: `${((a.y + 1) / altura) * 100}%`,
+        transform: `translate(${S.selo.margem}px, calc(-100% - ${S.selo.margem}px))`,
+        height: S.selo.alto, borderRadius: S.selo.raio, padding: `0 ${S.selo.enchimento[1]}px 0 ${S.selo.enchimento[0]}px`, gap: S.selo.entre,
+        background: alfa(T.pagina, S.selo.fundo), border: `${S.contorno}px ${mancha.ultima ? "dashed" : "solid"} ${d.traco}`,
+        fontSize: TIPOS.piso, fontWeight: 700, color: T.ink, whiteSpace: "nowrap" }}>
+      <Glifo nome={d.glifo} tamanho={S.selo.glifo} cor={d.traco} />
+      {mancha.rodadas != null && <span>{mancha.rodadas}</span>}
+    </span>
+  );
+}
+
+/* A COTA DO DEGRAU: os chevrons no canto de cima à esquerda, um por nível.
+   O degrau 2 é o glifo `degrau` (os dois chevrons de `Degrau · Nivel=2`); o
+   degrau 1 é o chevron de baixo dele, centrado no quadro (no Figma o vetor
+   de `Nivel=1` sai do quadro de 10, e a forma é a mesma). */
+const CHEVRON_DO_DEGRAU_UM = "M4 15.5L12 8.5L20 15.5";
+function CotaDoDegrau({ x, y, nivel, px }) {
+  const C = ALTURA_NA_MESA.cota;
+  const lado = C.lado, k = lado / 24;
+  const d = nivel >= 2 ? GLIFOS[ALTURA_NA_MESA.glifo].d : CHEVRON_DO_DEGRAU_UM;
+  return (
+    <path d={d} fill="none" stroke={ALTURA_NA_MESA.cor.cota} strokeWidth={(C.traco * px) / k} strokeLinecap="round" strokeLinejoin="round"
+      transform={`translate(${x + C.folga} ${y + C.folga}) scale(${k})`} style={{ pointerEvents: "none" }} />
+  );
+}
+
+/* O LETREIRO DA REAÇÃO (Figma 373:2280 · primeira): Cormorant 22 `ink` sobre
+   `perigoFundo` e a linha em mono 12, por cima da área — por baixo dela se
+   couber, senão por cima (a regra de pousar do dado, §CB 17.1). Esvanece no
+   fim da leitura; com movimento reduzido sai sem transição. */
+const ENTRELINHA_DO_LETREIRO = { titulo: 1.15, linha: 1.4 };
+function LetreiroDaReacao({ reacao, largura, altura, parado, ladoPx }) {
+  const L = REACAO_NA_MESA.letreiro;
+  const l = reacao.letreiro;
+  if (!l) return null;
+  const cs = reacao.casas.length ? reacao.casas : reacao.ev.origem ? [reacao.ev.origem] : [];
+  if (!cs.length) return null;
+  const x0 = Math.min(...cs.map((q) => q.x)), x1 = Math.max(...cs.map((q) => q.x)) + 1;
+  const y0 = Math.min(...cs.map((q) => q.y)), y1 = Math.max(...cs.map((q) => q.y)) + 1;
+  const altoEmCasas = (L.titulo * ENTRELINHA_DO_LETREIRO.titulo + L.linha * ENTRELINHA_DO_LETREIRO.linha + L.enchimento.y * 3) / Math.max(1, ladoPx || 1);
+  const cabePorBaixo = y1 + altoEmCasas <= altura;
+  const pos = cabePorBaixo
+    ? { top: `${(y1 / altura) * 100}%`, transform: `translate(-50%, ${L.enchimento.y}px)` }
+    : { top: `${(y0 / altura) * 100}%`, transform: `translate(-50%, calc(-100% - ${L.enchimento.y}px))` };
+  return (
+    <span role="status" style={{ position: "absolute", zIndex: 5, left: `${(((x0 + x1) / 2) / largura) * 100}%`, ...pos,
+      display: "inline-flex", flexDirection: "column", alignItems: "center", padding: `${L.enchimento.y}px ${L.enchimento.x}px`,
+      borderRadius: L.raio, background: T.perigoFundo, border: `${L.aro}px solid ${T.danger}`, whiteSpace: "nowrap",
+      opacity: reacao.fase === "esvai" ? 0 : 1, transition: parado ? "none" : `opacity ${REACAO_NA_MESA.esvai}ms ease-in` }}>
+      <span className="tv-display" style={{ fontSize: L.titulo, color: T.ink, lineHeight: ENTRELINHA_DO_LETREIRO.titulo }}>{l.titulo}</span>
+      {l.linha && <span className="tv-mono" style={{ fontSize: L.linha, color: T.inkMeio, lineHeight: ENTRELINHA_DO_LETREIRO.linha }}>{l.linha}</span>}
+    </span>
+  );
+}
+
 /* CB 5 · O NÚMERO DO GOLPE (Figma 342:183) — substitui o flutuante. Salta
    (0,6 → 1,25), assenta e sobe 12 px; fica para se ler e esvanece. O
    crítico é maior e âmbar, com «CRÍTICO»; o erro é itálico e baço; o golpe
@@ -608,7 +791,29 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                   que não cabe por baixo do alvo sobe para cima dele;
        aoLance({ alvo, rolando, saiu, acertam, criticoEm } | null) — o estado
                   do lance do herói, para «O teu golpe» acender a face. */
-  lance = null, passo = null, agiram = null, acelerado = false, vista = null, aoLance = null }) {
+  lance = null, passo = null, agiram = null, acelerado = false, vista = null, aoLance = null,
+  /* CB 18 (formas.md §CB 18.7, item 3) — ausentes, a mesa é a de hoje:
+       alturas     — { "x,y": 1|2 } (grade.alturas): o degrau (lume, face,
+                     aresta, cota) e a ficha que sobe metade da face;
+       superficies — [{ x, y, tipo, rodadas }] (combate.superficies; tipos
+                     oleo, agua, gelo, fogo, veneno, eletrica; rodadas null =
+                     não acaba; `consequencia` opcional, texto do motor): as
+                     manchas com o padrão, o contorno e o selo;
+       objetos     — [{ x, y, tipo, etiquetas, nome?, previsao? }]
+                     (grade.objetos; previsao = previsaoDoObjeto: { casas,
+                     dano, deixa, verbo }): a peça no lugar do estorvo, os
+                     selos, e a área do objeto sob o rato;
+       empurrao    — { alvo (o nome), previsao (previsaoDoEmpurrao: { casas,
+                     para, queda, dano: { queda, colisao, superficie, total },
+                     colideCom, superficie, efeito, chance, alto?, derruba? }),
+                     de? }: a seta, o fantasma, a pílula e os rótulos;
+       reacoes     — os eventos de reação da resolução: [{ tipo, casas
+                     ([{x,y}] ou o número), dano, primeira, origem: {x,y},
+                     alvos: [{ nome, dano }], objeto, chave? }].
+     E o `caminho` ganha `perigos: [{ x, y, tipo, dano, teste }]` (o troço
+     em `danger` e o preço no rótulo do destino); a `previsaoDoGolpe`
+     ganha `alto: +2 | −2 | 0` (a pílula «+2 do alto»). */
+  alturas = null, superficies = null, objetos = null, empurrao = null, reacoes = null }) {
   const [aberto, setAberto] = React.useState(false);
   const paradoAgora = movimentoParado();
   const heroiDoGolpe = heroiNome || (heroiFicha && heroiFicha.nome) || "";
@@ -743,6 +948,73 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     return () => tids.forEach(clearTimeout);
   }, [quedas]);
 
+  /* ---------------- CB 18.5 · O MOMENTO DA REAÇÃO ----------------
+     Cada evento novo (pela chave) entra na mesa uma vez. O estado já está
+     aplicado no 0: a superfície nova já está em `superficies`, e a onda só
+     a revela anel a anel. A primeira daquele tipo na luta pausa e acende o
+     clarão (tempoDaReacao), as outras e as do turno deles só fazem a onda
+     curta; o movimento reduzido é corte seco. Os números dos atingidos
+     nascem no fim da onda, pelo GOLPE_SENTIDO; o letreiro da primeira pousa
+     no tabuleiro (o das outras é uma linha no Pé, painel-batalha.jsx).
+     NADA PRENDE A ENTRADA: qualquer toque ou tecla leva ao fim, e é aceite. */
+  const reacoesVistasRef = React.useRef(new Set());
+  const alvosDaReacaoRef = React.useRef(new Set());
+  const [reacoesNaMesa, setReacoesNaMesa] = React.useState([]);
+  const tidsDasReacoesRef = React.useRef([]);
+  React.useEffect(() => {
+    if (!Array.isArray(reacoes) || !reacoes.length) return undefined;
+    const novas = [];
+    reacoes.forEach((ev, i) => {
+      try {
+        if (!ev || typeof ev !== "object") return;
+        const chave = chaveDaReacao(ev, i);
+        if (reacoesVistasRef.current.has(chave)) return;
+        reacoesVistasRef.current.add(chave);
+        const tempo = tempoDaReacao(ev, { reduzido: paradoAgora, deles: !!passo, acelerado });
+        novas.push({ chave, ev, tempo, casas: aneisDaReacao(ev.casas, ev.origem, tempo.aneis), letreiro: letreiroDaReacao(ev), fase: "viva" });
+      } catch (e) { console.warn("GridDeBatalha: a reação não se leu", e); }
+    });
+    if (!novas.length) return undefined;
+    /* quem a reação feriu não ganha o flutuante (o número dele vem aqui) */
+    alvosDaReacaoRef.current = new Set(novas.flatMap((n) => (Array.isArray(n.ev.alvos) ? n.ev.alvos : []).map((a) => a && a.nome).filter(Boolean)));
+    tidsDasReacoesRef.current.push(setTimeout(() => { alvosDaReacaoRef.current = new Set(); }, 0));
+    setReacoesNaMesa((r) => [...r, ...novas]);
+    const heroiAgora = heroiNome || (heroiFicha && heroiFicha.nome) || "";
+    for (const n of novas) {
+      const alvos = (Array.isArray(n.ev.alvos) ? n.ev.alvos : []).filter((a) => a && a.nome && Number(a.dano) > 0);
+      if (alvos.length) {
+        tidsDasReacoesRef.current.push(setTimeout(() => {
+          try {
+            const vs = alvos.map((a, j) => {
+              const v = variacaoDoGolpe({ tipo: "golpe", alvo: a.nome, dano: Number(a.dano), desfecho: "acerta" }, { heroi: heroiAgora });
+              return v ? { ...v, chave: `reacao:${n.chave}:${j}`, alvo: a.nome } : null;
+            }).filter(Boolean);
+            setGolpesNaMesa((g) => [...g, ...vs]);
+            for (const v of vs) tidsDasReacoesRef.current.push(setTimeout(() => setGolpesNaMesa((g) => g.filter((x) => x.chave !== v.chave)), v.dura));
+          } catch (e) { console.warn("GridDeBatalha: o número da reação não pousou", e); }
+        }, n.tempo.total));
+      }
+      tidsDasReacoesRef.current.push(setTimeout(() => setReacoesNaMesa((r) => r.map((x) => (x.chave === n.chave ? { ...x, fase: "esvai" } : x))), n.tempo.total + n.tempo.leitura));
+      tidsDasReacoesRef.current.push(setTimeout(() => setReacoesNaMesa((r) => r.filter((x) => x.chave !== n.chave)), n.tempo.total + n.tempo.leitura + n.tempo.esvai));
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reacoes]);
+  React.useEffect(() => () => tidsDasReacoesRef.current.forEach(clearTimeout), []);
+  const reagindo = reacoesNaMesa.length > 0;
+  React.useEffect(() => {
+    if (!reagindo || typeof window === "undefined" || !window.addEventListener) return undefined;
+    const fim = () => { try { setReacoesNaMesa([]); } catch { /* saltar nunca custa o turno */ } };
+    window.addEventListener("pointerdown", fim, true);
+    window.addEventListener("keydown", fim, true);
+    return () => { window.removeEventListener("pointerdown", fim, true); window.removeEventListener("keydown", fim, true); };
+  }, [reagindo]);
+  /* §CB 18.2 · o chão que nasce fora de uma reação entra em 200 ms: o que
+     a mesa já tinha no quadro anterior não volta a nascer */
+  const chaoAntesRef = React.useRef(null);
+  const chaveDoChao = Array.isArray(superficies) ? superficies.filter((s) => s && s.x != null && s.y != null).map((s) => `${s.x},${s.y}:${s.tipo}`).sort().join("|") : "";
+  React.useEffect(() => { chaoAntesRef.current = new Set(chaveDoChao ? chaveDoChao.split("|") : []); }, [chaveDoChao]);
+
   /* ---------------- O DANO FLUTUA (v9.161) ----------------
      O golpe acontecia em dois lugares desligados: o número na linha do
      sistema e o anel de vida encolhendo. Agora o próprio tabuleiro diz
@@ -764,6 +1036,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     /* CB 5: o número do golpe substitui o flutuante; o flutuante fica para o
        que não vem de golpe (o veneno, a área, a cura) */
     const comGolpe = new Set((Array.isArray(golpes) ? golpes : []).filter((g) => g && g.chave != null).map((g) => g.alvo));
+    /* CB 18.5: quem a reação deste quadro feriu ganha o número dela, não o flutuante */
+    alvosDaReacaoRef.current.forEach((nome) => comGolpe.add(nome));
     for (const { ent, id } of todos) {
       const v = Math.max(0, ent.vida || 0);
       agora.set(id, v);
@@ -1005,6 +1279,35 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     else if (temCobertura(grade, x, y)) coberturas.push([x, y]);
   }
   const setParedes = new Set(paredes.map(([x, y]) => K(x, y)));
+  /* ---------------- CB 18 · O CHÃO, O DEGRAU E O CENÁRIO ----------------
+     Props ausentes = a mesa de hoje: sem alturas não há degrau, sem
+     superfícies não há mancha, sem objetos o estorvo é o genérico. */
+  const degraus = (() => { try { return patamares(alturas); } catch (e) { console.warn("GridDeBatalha: os degraus não se leram", e); return []; } })();
+  const manchas = (() => { try { return manchasDoChao(superficies, new Set(mapa.keys())); } catch (e) { console.warn("GridDeBatalha: o chão não se leu", e); return []; } })();
+  const manchaEm = new Map();
+  manchas.forEach((m) => m.casas.forEach((q) => manchaEm.set(K(q.x, q.y), m)));
+  const objetosNaMesa = Array.isArray(objetos) ? objetos.filter((o) => o && o.x != null && o.y != null) : [];
+  const objetoEm = new Map(objetosNaMesa.map((o) => [K(o.x, o.y), o]));
+  const sobeEm = (ent) => { try { return ent && ent.x != null ? subidaDaFicha(alturas, ent.x, ent.y) : 0; } catch { return 0; } };
+  const campoDaCasa = (x, y) => { try { return campoDoChao({ nivel: alturaDe(alturas, x, y), superficie: manchaEm.get(K(x, y)) || null, objeto: objetoEm.get(K(x, y)) || null }); } catch { return ""; } };
+  /* apontar um objeto mostra o que ele faria (§CB 18.3) */
+  const objetoApontado = (sobre && objetoEm.get(K(sobre.x, sobre.y))) || null;
+  const previsaoDoObjeto = objetoApontado ? (() => { try { return previsaoDoObjetoNaMesa(objetoApontado); } catch { return null; } })() : null;
+  const casasDoObjeto = new Set(previsaoDoObjeto ? previsaoDoObjeto.casas.map((q) => K(q.x, q.y)) : []);
+  /* §CB 18.4 a · o empurrão armado sobre um alvo: a seta, o fantasma, os rótulos */
+  const emp = empurrao && typeof empurrao === "object" && empurrao.previsao && typeof empurrao.previsao === "object" ? empurrao : null;
+  const alvoDoEmpurrao = emp ? (inimigos.find((e) => e.nome === emp.alvo) || aliados.find((a) => a.nome === emp.alvo) || null) : null;
+  const deDoEmpurrao = alvoDoEmpurrao && alvoDoEmpurrao.x != null ? { x: alvoDoEmpurrao.x, y: alvoDoEmpurrao.y } : (emp && emp.de) || null;
+  const setaDoEmp = emp ? (() => { try { return setaDoEmpurrao(deDoEmpurrao, emp.previsao.para, !!emp.previsao.colideCom); } catch { return null; } })() : null;
+  const rotulosDoEmp = emp ? (() => { try { return rotulosDoEmpurrao(emp.previsao, { vida: alvoDoEmpurrao ? alvoDoEmpurrao.vida : null }); } catch { return null; } })() : null;
+  /* §CB 18.4 c · o caminho que atravessa perigo */
+  const caminhoPerigoso = pontosDoCaminho.length > 1 && caminho && Array.isArray(caminho.perigos) && caminho.perigos.length
+    ? (() => { try { return trocosDoCaminho(pontosDoCaminho, caminho.perigos); } catch { return null; } })() : null;
+  /* §CB 18.5 · as casas da onda (a reação viva mais recente ganha) e o
+     chão que nasce fora dela */
+  const ondaEm = new Map();
+  reacoesNaMesa.forEach((r) => { if (r.tempo.porAnel > 0) r.casas.forEach((q) => ondaEm.set(K(q.x, q.y), { anel: q.anel, tempo: r.tempo })); });
+  const chaoAntes = chaoAntesRef.current;
 
   /* o que este turno alcança — o passo, ou o alcance da habilidade quando se
      está mirando. O quadrado de quem olha entra junto: ninguém precisa de
@@ -1211,6 +1514,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           <pattern id="tv-lama" width={MB.chao.passoDaHachura * px} height={MB.chao.passoDaHachura * px} patternUnits="userSpaceOnUse" patternTransform={`rotate(${MB.chao.anguloDaHachura})`}>
             <line x1="0" y1="0" x2="0" y2={MB.chao.passoDaHachura * px} stroke={T.amber} strokeOpacity={MB.alfa.hachura} strokeWidth={MB.chao.malha * px} />
           </pattern>
+          {/* CB 18.2: o padrão de cada superfície, uma casa por ladrilho */}
+          {manchas.length > 0 && <PadroesDoChao />}
         </defs>
 
         {/* AS REGIÕES SÃO O VOCABULÁRIO DO MESTRE (v9.125): ele narra "no vão
@@ -1253,10 +1558,51 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           );
         })}
 
+        {/* CB 18.1 · O DEGRAU, por baixo de tudo o que é chão: o lume (`ink`
+            a 6 ou 10 %) e a face (`pagina`) na borda de baixo que dá para uma
+            casa mais baixa. Decoração: quem leva a informação é a aresta e a
+            cota, mais acima. */}
+        {degraus.length > 0 && (
+          <g style={{ pointerEvents: "none" }}>
+            {degraus.map((d) => (
+              <g key={`deg${d.x},${d.y}`}>
+                <rect x={d.x} y={d.y} width="1" height="1" fill={ALTURA_NA_MESA.cor.lume} opacity={d.lume} />
+                {d.face > 0 && <rect x={d.x} y={d.y + 1 - d.face} width="1" height={d.face} fill={ALTURA_NA_MESA.cor.face} />}
+              </g>
+            ))}
+          </g>
+        )}
         {/* terreno difícil e cobertura: o chão que cobra e o chão que protege */}
         {dificeis.map(([x, y]) => <rect key={`d${x},${y}`} x={x} y={y} width="1" height="1" fill="url(#tv-lama)" />)}
         {coberturas.map(([x, y]) => <rect key={`c${x},${y}`} x={x} y={y} width="1" height="1" fill="rgba(120,140,190,0.09)" />)}
 
+        {/* CB 18.2 · AS SUPERFÍCIES: o chão (a cor do tipo, ao alfa dele) e o
+            padrão, casa a casa; depois o contorno de cada mancha (tracejado
+            na última rodada). A forma basta sozinha (WCAG 2.2, 1.4.1). Um
+            chão que nasce entra em 200 ms; numa reação, a onda revela-o anel
+            a anel a partir da origem. */}
+        {manchas.length > 0 && (
+          <g style={{ pointerEvents: "none" }}>
+            {manchas.map((m) => m.casas.map((q) => {
+              const d = SUPERFICIES_NO_CHAO.tipos[m.tipo];
+              const k = K(q.x, q.y);
+              const onda = ondaEm.get(k);
+              const nasce = !onda && !parado && chaoAntes && !chaoAntes.has(`${k}:${m.tipo}`);
+              const classe = onda ? "tv-reacao-onda" : nasce ? "tv-chao-nasce" : undefined;
+              const estilo = onda ? { "--anel": `${onda.tempo.pausa + onda.anel * onda.tempo.porAnel}ms`, "--porAnel": `${onda.tempo.porAnel}ms` } : undefined;
+              return (
+                <g key={`sup${k}`} className={classe} style={estilo}>
+                  <rect x={q.x} y={q.y} width="1" height="1" fill={d.chao} fillOpacity={d.alfa} />
+                  <rect x={q.x} y={q.y} width="1" height="1" fill={`url(#tv-chao-${m.tipo})`} />
+                </g>
+              );
+            }))}
+            {manchas.map((m, i) => (
+              <Contorno key={`cm${i}`} linhas={m.contorno} cor={SUPERFICIES_NO_CHAO.tipos[m.tipo].traco} largura={SUPERFICIES_NO_CHAO.contorno * px}
+                tracejado={m.ultima ? SUPERFICIES_NO_CHAO.ultima.contorno.map((n) => n * px).join(" ") : null} />
+            ))}
+          </g>
+        )}
         {/* a malha, fina o bastante para orientar e apagada o bastante para
             não competir com nada que esteja em cima dela */}
         {/* B1: a malha do quadro é um fio claro a 0,16, de 1 px — sobre a
@@ -1274,6 +1620,23 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           <Contorno linhas={contorno(setParedes)} cor="#463d63" largura={0.06} />
         </g>
 
+        {/* CB 18.1 · A ARESTA E A COTA DO DEGRAU, por cima da malha: a aresta
+            `inkMeio` 1,5 em cima e à esquerda (6,98 sobre o alto) e os
+            chevrons (9,13 sobre `bg`), que passam 3:1 com folga. */}
+        {degraus.length > 0 && (
+          <g style={{ pointerEvents: "none" }}>
+            {degraus.map((d) => {
+              const a = (ALTURA_NA_MESA.aresta * px) / 2;
+              return (
+                <g key={`ar${d.x},${d.y}`}>
+                  {d.aresta.cima && <line x1={d.x} y1={d.y + a} x2={d.x + 1} y2={d.y + a} stroke={ALTURA_NA_MESA.cor.aresta} strokeWidth={ALTURA_NA_MESA.aresta * px} />}
+                  {d.aresta.esquerda && <line x1={d.x + a} y1={d.y} x2={d.x + a} y2={d.y + 1 - d.face} stroke={ALTURA_NA_MESA.cor.aresta} strokeWidth={ALTURA_NA_MESA.aresta * px} />}
+                  <CotaDoDegrau x={d.x} y={d.y} nivel={d.nivel} px={px} />
+                </g>
+              );
+            })}
+          </g>
+        )}
         {/* o estorvo é a mesa virada, o barril, a estalagmite: não bloqueia
             passagem nem visão, e dá cobertura a quem se cola nele */}
         {/* B1: o "Obstáculo" do quadro — o topo, a base e a sombra, 38 × 34
@@ -1281,18 +1644,29 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             `<svg>` de dentro recorta a sombra, como o quadro recorta). A base
             é `panelSoft`; o topo e os dois fios são os do quadro, que `T` não
             tem (eram três literais e são três). */}
-        {estorvos.map(([x, y]) => {
+        {/* CB 18.3: onde a casa tem um objeto, a peça dele toma o lugar do
+            estorvo; e as três cores literais do estorvo genérico passaram a
+            `panelSoft`, `lineStrong` e `pagina` (OBJETOS_NA_MESA.cor) */}
+        {estorvos.filter(([x, y]) => !objetoEm.has(K(x, y))).map(([x, y]) => {
           const w = MB.estorvo.largura / MB.estorvo.casa, h = MB.estorvo.altura / MB.estorvo.casa;
           return (
             <svg key={`e${x},${y}`} x={x + (1 - w) / 2} y={y + (1 - h) / 2} width={w} height={h}
               viewBox={`0 0 ${MB.estorvo.largura} ${MB.estorvo.altura}`} style={{ pointerEvents: "none" }}>
-              <ellipse cx="19" cy="12.5" rx="18.5" ry="12" fill="#2B2540" stroke="#73628C" />
-              <ellipse cx="19" cy="21" rx="18" ry="12" fill={T.panelSoft} stroke="#5D527C" strokeWidth="2" />
+              <ellipse cx="19" cy="12.5" rx="18.5" ry="12" fill={OBJETOS_NA_MESA.cor.corpo} stroke={OBJETOS_NA_MESA.cor.aro} />
+              <ellipse cx="19" cy="21" rx="18" ry="12" fill={T.panelSoft} stroke={OBJETOS_NA_MESA.cor.tampa} strokeWidth="2" />
               <ellipse cx="19" cy="29" rx="23" ry="9" fill={T.bg} opacity={MB.estorvo.alfaDaSombra} />
             </svg>
           );
         })}
 
+        {/* CB 18.3 · OS OBJETOS COMO PEÇAS: no lugar do estorvo genérico,
+            com os selos das etiquetas do motor no canto de cima à direita */}
+        {objetosNaMesa.map((o) => (
+          <g key={`obj${o.x},${o.y}`}>
+            <ObjetoDoCenario objeto={o} />
+            <SelosDoObjeto objeto={o} px={px} />
+          </g>
+        ))}
         {/* O VÉU (v9.125): a primeira versão PINTAVA de dourado o que dá para
             alcançar — e o alcance quase sempre é a maior parte do tabuleiro,
             então o campo inteiro virava uma mancha de lama com buracos onde
@@ -1351,6 +1725,26 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           </g>
         )}
 
+        {/* CB 18.3 · O OBJETO APONTADO mostra o que faria: as casas pintam-se
+            como a área do sopro (`Casa marcada · area`) */}
+        {casasDoObjeto.size > 0 && (
+          <g style={{ pointerEvents: "none" }}>
+            {[...casasDoObjeto].map((k) => {
+              const [x, y] = k.split(",").map(Number);
+              const A = INTENCAO_NA_MESA.area;
+              return (
+                <rect key={`ao${k}`} x={x + (A.aro * px) / 2} y={y + (A.aro * px) / 2} width={1 - A.aro * px} height={1 - A.aro * px}
+                  fill={alfa(T.danger, A.chao)} stroke={T.danger} strokeWidth={A.aro * px} strokeDasharray={A.tracejado.map((n) => n * px).join(" ")} />
+              );
+            })}
+          </g>
+        )}
+        {/* CB 18.5 · O CLARÃO da primeira reação: `ink`, dentro da pausa */}
+        {reacoesNaMesa.filter((r) => r.tempo.clarao > 0 && r.fase === "viva").map((r) => (
+          <g key={`clarao${r.chave}`} className="tv-reacao-clarao" style={{ pointerEvents: "none" }}>
+            {r.casas.map((q) => <rect key={`cl${q.x},${q.y}`} x={q.x} y={q.y} width="1" height="1" fill={T.ink} />)}
+          </g>
+        ))}
         {/* CB 4 · AS CASAS DO SOPRO: o chão a 22 % é decoração (1,33 contra o
             feltro), e de propósito — quem leva a informação é o aro tracejado
             (5,11) e a chama (3,83), os dois acima de 3 (WCAG 2.2, 1.4.11) */}
@@ -1418,7 +1812,13 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             livre); o destino leva o aro tracejado */}
         {pontosDoCaminho.length > 1 && (
           <g style={{ pointerEvents: "none" }}>
-            <path d={viaDoCaminho(pontosDoCaminho)} fill="none" stroke={T.amber} strokeWidth={CAMINHO_NO_CHAO.traco * px} strokeLinecap="round" strokeLinejoin="round" />
+            {!caminhoPerigoso && <path d={viaDoCaminho(pontosDoCaminho)} fill="none" stroke={T.amber} strokeWidth={CAMINHO_NO_CHAO.traco * px} strokeLinecap="round" strokeLinejoin="round" />}
+            {/* CB 18.4 c: com perigos, troço a troço — o que entra (ou sai) de
+                uma casa de perigo é `danger` tracejado, o resto âmbar */}
+            {caminhoPerigoso && caminhoPerigoso.trocos.map((tr, i) => (
+              <line key={`tr${i}`} x1={tr.de.x + 0.5} y1={tr.de.y + 0.5} x2={tr.para.x + 0.5} y2={tr.para.y + 0.5} stroke={tr.perigo ? T.danger : T.amber}
+                strokeWidth={CAMINHO_NO_CHAO.traco * px} strokeLinecap="round" strokeDasharray={tr.perigo ? CAMINHO_NO_CHAO.perigo.tracejado.map((n) => n * px).join(" ") : undefined} />
+            ))}
             {pontosDoCaminho.slice(1, -1).map((q, i) => <circle key={`pc${i}`} cx={q.x + 0.5} cy={q.y + 0.5} r={(CAMINHO_NO_CHAO.ponto / 2) * px} fill={T.amber} />)}
             {[...golpeLivreEm].map((k) => {
               const [x, y] = k.split(",").map(Number);
@@ -1442,6 +1842,32 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             })()}
           </g>
         )}
+        {/* CB 18.4 a · O EMPURRÃO ANTES DO CLIQUE: a seta âmbar da borda da
+            ficha à borda do fantasma, com a ponta e uma marca em cada casa
+            atravessada; o fantasma tracejado `inkMeio` a 60 % na casa onde ele
+            pára; a explosão `danger` no impacto, se bate */}
+        {setaDoEmp && (() => {
+          const E = EMPURRAO_NA_MESA;
+          const s = setaDoEmp;
+          const comp = Math.hypot(s.para.x - s.de.x, s.para.y - s.de.y);
+          const r = E.fantasma.lado / 2;
+          if (!(comp > 0)) return null;
+          const ux = (s.para.x - s.de.x) / comp, uy = (s.para.y - s.de.y) / comp;
+          const x1 = s.de.x + 0.5 + ux * r, y1 = s.de.y + 0.5 + uy * r;
+          const x2 = s.para.x + 0.5 - ux * r, y2 = s.para.y + 0.5 - uy * r;
+          const p = E.seta.ponta * px;
+          const ponta = `${x2},${y2} ${x2 - ux * p - uy * p * 0.6},${y2 - uy * p + ux * p * 0.6} ${x2 - ux * p + uy * p * 0.6},${y2 - uy * p - ux * p * 0.6}`;
+          return (
+            <g style={{ pointerEvents: "none" }}>
+              <line x1={x1} y1={y1} x2={x2 - ux * p * 0.5} y2={y2 - uy * p * 0.5} stroke={T.amber} strokeWidth={E.seta.traco * px} strokeLinecap="round" />
+              <polygon points={ponta} fill={T.amber} />
+              {s.marcas.map((q) => <circle key={`em${q.x},${q.y}`} cx={q.x + 0.5} cy={q.y + 0.5} r={(E.seta.marca / 2) * px} fill={T.amber} />)}
+              <circle cx={s.para.x + 0.5} cy={s.para.y + 0.5} r={r - (E.fantasma.traco * px) / 2} fill="none" stroke={T.inkMeio} strokeOpacity={E.fantasma.alfa}
+                strokeWidth={E.fantasma.traco * px} strokeDasharray={E.fantasma.tracejado.map((n) => n * px).join(" ")} />
+              {s.impacto && <GlifoEm nome={E.impacto} cx={s.impacto.x} cy={s.impacto.y} lado={0.42} cor={T.danger} px={px} />}
+            </g>
+          );
+        })()}
         {/* CB 5 · quem caiu deixa a caveira na casa */}
         {caidosComCasa.map((e, i) => <GlifoNaCasa key={`caido${e.nome}-${i}`} nome={INTENCAO_NA_MESA.caveira} x={e.x + (ladoDe(e) - 1) / 2} y={e.y + (ladoDe(e) - 1) / 2} lado={0.46} cor={T.inkDim} px={px} />)}
 
@@ -1536,11 +1962,11 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         {/* AS FICHAS */}
         <g style={{ pointerEvents: "none" }}>
           {aliados.map((a, i) => (a.vida || 0) > 0 && a.x != null ? (
-            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={ondeEsta(a).x} y={ondeEsta(a).y} lado={ladoDe(a)} ms={msDoPasso(a)} grande={grande} pxDaCasa={ladoEmPx(grande)}
+            <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={ondeEsta(a).x} y={ondeEsta(a).y - sobeEm(ondeEsta(a))} lado={ladoDe(a)} ms={msDoPasso(a)} grande={grande} pxDaCasa={ladoEmPx(grande)}
               golpe={golpeEm(a.nome)} anel={realce && realce === a.nome ? T.amber : null} age={quemAge === a.nome ? T.ok : null} />
           ) : null)}
           {inimigos.map((e, i) => e.x != null ? (
-            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={ondeEsta(e).x} y={ondeEsta(e).y} lado={ladoDe(e)} ms={msDoPasso(e)} grande={grande} pxDaCasa={ladoEmPx(grande)}
+            <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={ondeEsta(e).x} y={ondeEsta(e).y - sobeEm(ondeEsta(e))} lado={ladoDe(e)} ms={msDoPasso(e)} grande={grande} pxDaCasa={ladoEmPx(grande)}
               golpe={golpeEm(e.nome)} anel={alvoDaPrevisao === e.nome || (realce && realce === e.nome) ? T.amber : null} age={quemAge === e.nome ? T.danger : null} />
           ) : null)}
           {caidosComCasa.filter((e) => { const gq = golpeEm(e.nome); return gq && gq.variante === "abate"; }).map((e, i) => (
@@ -1552,7 +1978,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                posição da grade ganha por cima, que é a verdade do turno */
             <Ficha ent={{ ...(heroiFicha || {}), ...heroi }} rotulo="você" tipo="heroi" cor={T.amber} lado={ladoDe(heroi)} grande={grande} pxDaCasa={ladoEmPx(grande)}
               x={andando ? andando.rota[andando.i].x : heroi.x}
-              y={andando ? andando.rota[andando.i].y : heroi.y}
+              y={(andando ? andando.rota[andando.i].y : heroi.y) - sobeEm(andando ? andando.rota[andando.i] : heroi)}
               ms={andando ? andando.ms : 260}
               golpe={golpeEm((heroiFicha && heroiFicha.nome) || heroiNome)} anel={realce && realce === ((heroiFicha && heroiFicha.nome) || heroiNome) ? T.amber : null} />
           )}
@@ -1643,6 +2069,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
                   nomeDoLugar(grade, x, y),
                   terrenoDificil(grade, x, y) ? "terreno difícil" : "",
                   temCobertura(grade, x, y) ? "cobertura +2" : "",
+                  /* CB 18: «no alto (degrau 2)», o chão e o objeto (FRASE_DO_CHAO) */
+                  campoDaCasa(x, y),
                 ].filter(Boolean).join(", ");
                 /* 4 · O VEREDITO, E ELE NUNCA FICA VAZIO. Antes, quando a
                    casa não dava, o `<title>` simplesmente acabava — e
@@ -1743,6 +2171,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           o rótulo do caminho junto ao destino, e o número do golpe. Fora do
           toque: o toque é das casas, por baixo. */}
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        {/* CB 18.2 · o selo de cada mancha, por cima das fichas */}
+        {manchas.map((m, i) => <SeloDaSuperficie key={`selo${i}`} mancha={m} largura={g.largura} altura={g.altura} />)}
         {[...intencaoDe.entries()].map(([nome, v]) => {
           const e = inimigos.find((x) => x.nome === nome);
           if (!e || e.x == null) return null;
@@ -1793,7 +2223,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             </span>
           );
         })}
-        {alvoDaPrevisao && !(lanceDoHeroi && !lanceAgora.acabou && lances.some((l) => l.heroi && l.alvo === alvoDaPrevisao)) && (() => {
+        {alvoDaPrevisao && !(emp && emp.alvo === alvoDaPrevisao) && !(lanceDoHeroi && !lanceAgora.acabou && lances.some((l) => l.heroi && l.alvo === alvoDaPrevisao)) && (() => {
           const e = inimigos.find((x) => x.nome === alvoDaPrevisao);
           if (!e || e.x == null) return null;
           const n = ladoDe(e);
@@ -1803,12 +2233,52 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             </span>
           );
         })()}
+        {/* CB 18.4 a · a pílula do empurrão debaixo do alvo, e os rótulos
+            empilhados ao lado da casa final (colisão → queda → superfície);
+            do lado de dentro do tabuleiro quando a casa final encosta à
+            direita */}
+        {emp && alvoDoEmpurrao && alvoDoEmpurrao.x != null && (() => {
+          const n = ladoDe(alvoDoEmpurrao);
+          return (
+            <span style={{ position: "absolute", zIndex: 3, left: `${((alvoDoEmpurrao.x + n / 2) / g.largura) * 100}%`, top: `${((alvoDoEmpurrao.y + n) / g.altura) * 100}%`, transform: `translate(-50%, ${PREVISAO_DO_GOLPE.abaixoDaFicha}px)` }}>
+              <PilulaDoEmpurrao previsao={emp.previsao} vida={alvoDoEmpurrao.vida} />
+            </span>
+          );
+        })()}
+        {setaDoEmp && rotulosDoEmp && (() => {
+          const d = setaDoEmp.para;
+          const R = EMPURRAO_NA_MESA.rotulo;
+          const aDireita = d.x + 1 < g.largura * 0.7;
+          return (
+            <span style={{ position: "absolute", zIndex: 3, display: "flex", flexDirection: "column", alignItems: aDireita ? "flex-start" : "flex-end", gap: R.entre,
+              left: `${((aDireita ? d.x + 1 : d.x) / g.largura) * 100}%`, top: `${((d.y + 0.5) / g.altura) * 100}%`,
+              transform: aDireita ? `translate(${R.entre * 2}px, -50%)` : `translate(calc(-100% - ${R.entre * 2}px), -50%)` }}>
+              {rotulosDoEmp.rotulos.map((r) => <RotuloDoEmpurrao key={r.tipo} rotulo={r} />)}
+            </span>
+          );
+        })()}
+        {/* CB 18.3 · o rótulo do objeto apontado: «barril de óleo · explode: −9 em 9 casas, deixa fogo» */}
+        {objetoApontado && previsaoDoObjeto && (
+          <span className="tv-mono" style={{ position: "absolute", zIndex: 3, left: `${((objetoApontado.x + 0.5) / g.largura) * 100}%`, top: `${(objetoApontado.y / g.altura) * 100}%`,
+            transform: `translate(-50%, calc(-100% - ${OBJETOS_NA_MESA.selo.lado}px))`, fontSize: CAMINHO_NO_CHAO.rotulo, fontWeight: 700, color: T.ink, background: T.pagina,
+            border: `${EMPURRAO_NA_MESA.rotulo.aro}px solid ${T.danger}`, borderRadius: PREVISAO_DO_GOLPE.raio, padding: `2px ${EMPURRAO_NA_MESA.rotulo.enchimento.x}px`, whiteSpace: "nowrap" }}>
+            {previsaoDoObjeto.rotulo}
+          </span>
+        )}
+        {/* CB 18.5 · o letreiro da primeira reação de cada tipo */}
+        {reacoesNaMesa.filter((r) => r.tempo.primeira && r.letreiro).map((r) => (
+          <LetreiroDaReacao key={`let${r.chave}`} reacao={r} largura={g.largura} altura={g.altura} parado={parado} ladoPx={ladoEmPx(grande)} />
+        ))}
         {pontosDoCaminho.length > 1 && caminho.metros != null && (() => {
           const d = pontosDoCaminho[pontosDoCaminho.length - 1];
           return (
             <span className="tv-mono" style={{ position: "absolute", zIndex: 2, left: `${((d.x + 0.5) / g.largura) * 100}%`, top: `${((d.y + 1) / g.altura) * 100}%`, transform: "translate(-50%, 2px)",
               fontSize: CAMINHO_NO_CHAO.rotulo, fontWeight: 700, color: T.ink, background: T.pagina, border: `1px solid ${T.amber}`, borderRadius: PREVISAO_DO_GOLPE.raio, padding: "2px 8px", whiteSpace: "nowrap" }}>
               {metrosTxt(caminho.metros)} m{caminho.sobraM != null ? ` · sobra ${metrosTxt(caminho.sobraM)}` : ""}
+              {/* CB 18.4 c: o preço do perigo no mesmo rótulo — «· [bolhas] atravessa veneno · −3» */}
+              {caminhoPerigoso && caminhoPerigoso.avisos.map((a) => (
+                <span key={`av${a.tipo}`} style={{ color: T.danger }}> · {a.glifo && <Glifo nome={a.glifo} tamanho={TIPOS.piso} cor={SUPERFICIES_NO_CHAO.tipos[a.tipo].traco} />} {a.texto}</span>
+              ))}
             </span>
           );
         })()}

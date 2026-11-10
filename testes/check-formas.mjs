@@ -98,6 +98,8 @@ import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
+/* CB 18 · os glifos do chão e do cenário (D5h.3) */
+import { SUPERFICIES_NO_CHAO, OBJETOS_NA_MESA, EMPURRAO_NA_MESA } from "../src/estilo.js";
 /* D5e lê a tabela do relógio DE VOLTA, que é a lei da casa: os números
    não são transcritos aqui, são importados. No dia em que a janela deixar
    de ser 15 000 ms, o dente muda de alvo sozinho — e é isso que separa
@@ -221,7 +223,7 @@ const TETO_DE_LITERAIS = {
      diferença é invisível a olho nu e paga duas coisas — sai um literal, e
      o vão de 2 px do anel de foco, que sobre `#141020` dava 1,04:1 e não
      se separava do fundo, volta a funcionar como foi desenhado. */
-  "src/grade-de-batalha.jsx": 15, /* 05/10 · B1, o chão do quadro 151:1662: a hachura, a alternância branca das zonas e o véu fora do passo saíram para T/MESA_DE_BATALHA, e o obstáculo foi de quatro literais para três (o topo e os dois fios do quadro, que T não tem). 19 → 15. (Linha do desenho; desceu-a o aprendiz, porque a catraca tem folga zero.) · 15/09 → 15/09 · E2, o endereço do tabuleiro */
+  "src/grade-de-batalha.jsx": 12, /* 10/11 · CB 18.3: o estorvo genérico pagou as suas três cores (o topo e os dois fios) a OBJETOS_NA_MESA.cor — panelSoft, lineStrong e pagina. 15 → 12. As doze que ficam, da parede ao véu, são dívida declarada (formas.md §CB 18.9). · 05/10 · B1, o chão do quadro 151:1662: a hachura, a alternância branca das zonas e o véu fora do passo saíram para T/MESA_DE_BATALHA, e o obstáculo foi de quatro literais para três (o topo e os dois fios do quadro, que T não tem). 19 → 15. (Linha do desenho; desceu-a o aprendiz, porque a catraca tem folga zero.) · 15/09 → 15/09 · E2, o endereço do tabuleiro */
   "src/rosto.jsx": 10, /* 24/09 · V1: os dois brilhos das lentes eram T.ink escrito à mão */
 
   /* O RESTO (10) — migalhas, e o mais barato do projeto. */
@@ -1235,7 +1237,16 @@ const lidosPelaLuz = /<Glifo nome=\{luzDaHora\(/.test(jsxQueDesenham) ? new Set(
    `rosto.jsx` chama a regra e desenha de `GLIFOS`. */
 const ROSTO_JSX = mascararComentarios(readFileSync(join(RAIZ, "src/rosto.jsx"), "utf8"), ".jsx");
 const lidosPeloRosto = /rostoDoEnte\(/.test(ROSTO_JSX) && /GLIFOS\[forma\]/.test(ROSTO_JSX) ? new Set(Object.values(ROSTO_DA_MENTE)) : new Set();
-const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome) && !lidosPelaLuz.has(nome) && !lidosPeloRosto.has(nome));
+/* CB 18 (10/11) · os glifos do chão e do cenário são lidos pelo NOME QUE A
+   TABELA DÁ, como as luzes: o selo da superfície pinta o glifo do tipo
+   (SUPERFICIES_NO_CHAO.tipos[*].glifo), o selo do objeto o da etiqueta
+   (OBJETOS_NA_MESA.etiquetas[*].glifo), e o impacto do empurrão o de
+   EMPURRAO_NA_MESA.impacto. Conta só se a grade lê as três tabelas e desenha
+   com o Glifo / GlifoEm a partir delas. */
+const GRADE_JSX = mascararComentarios(readFileSync(join(RAIZ, "src/grade-de-batalha.jsx"), "utf8"), ".jsx");
+const lidosPelaMesa = /<Glifo nome={d.glifo}/.test(GRADE_JSX) && /<GlifoEm nome={s.glifo}/.test(GRADE_JSX) && /<GlifoEm nome={E.impacto}/.test(GRADE_JSX)
+  ? new Set([...Object.values(SUPERFICIES_NO_CHAO.tipos).map((d) => d.glifo), ...Object.values(OBJETOS_NA_MESA.etiquetas).map((e) => e.glifo), EMPURRAO_NA_MESA.impacto]) : new Set();
+const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome) && !lidosPelaLuz.has(nome) && !lidosPeloRosto.has(nome) && !lidosPelaMesa.has(nome));
 t(`D5h.3 · as ${Object.keys(GLIFOS).length} entradas de GLIFOS têm, cada uma, um leitor na interface`,
   Object.keys(GLIFOS).length > 0 && semLeitor.length === 0,
   Object.keys(GLIFOS).length === 0 ? "A TABELA DESAPARECEU — renomearam GLIFOS, e o dente mede o vazio." : `sem leitor: ${semLeitor.join(", ")} — o glifo nasce com a etapa que o lê.`);

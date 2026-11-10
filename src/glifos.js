@@ -226,6 +226,27 @@ export const GLIFOS = {
   palavra: { de: "casa", d: "M21 12C20.99 13.36 20.64 14.7 19.97 15.89C19.3 17.07 18.34 18.07 17.18 18.78C16.01 19.49 14.69 19.89 13.33 19.95C11.97 20.01 10.62 19.71 9.4 19.1L4 20L5 15.4C4.55 13.28 4.96 11.06 6.14 9.25C7.32 7.43 9.18 6.15 11.3 5.7C13.42 5.25 15.64 5.66 17.45 6.84C19.27 8.02 20.55 9.88 21 12Z" },
   /* contornar por fora da estrada (CB 7) */
   contornar: { de: "casa", d: "M4 20C4 12 20 12 20 4M20 4L16 4M20 4L20 8" },
+  /* ---------------- CB 18 · A ALTURA, AS SUPERFÍCIES E O CENÁRIO (10/11/2026) — formas.md §CB 18.6 ----------------
+     Pelos vetores dos nós `Glifo/*` das peças 373:2203 (quadro 12) e
+     373:2216 · 373:2259 (quadro 10), somada a posição dentro do quadro e
+     escalados à grelha 24. Reusam-se `chama` (o fogo), `escudo` (cobre),
+     `perigo` (a caveira) e `olho` (a base do `semVista`). Uma ação, uma forma. */
+  /* o degrau: a cota do alto no chão, os «+2 do alto» na previsão, a queda do empurrão (os dois chevrons do `Degrau · Nivel=2`) */
+  degrau: { de: "casa", d: "M4 20L12 13L20 20M4 12L12 5L20 12" },
+  /* o óleo no chão e o barril que derrama: uma POÇA, não a gota (a gota é a `agua` da ração). No Figma o vetor sai 1 px do quadro de 12; aqui está centrado nele, com a mesma forma */
+  oleo: { de: "casa", d: "M2.52 12.6C2.52 8 7.12 6 11.12 6.8C14.12 4 20.32 4.8 20.72 9.6C22.72 12.8 20.71 17.6 15.91 17.2C12.71 19.6 5.92 19.2 4.72 16.8C2.92 16.2 2.52 14.4 2.52 12.6Z" },
+  /* a água no chão: duas ondas */
+  ondas: { de: "casa", d: "M2 17C5.33 14.33 8.67 14.33 12 17C15.33 19.67 18.67 19.67 22 17M2 8C5.33 5.33 8.67 5.33 12 8C15.33 10.67 18.67 10.67 22 8" },
+  /* o gelo no chão: o floco de seis braços */
+  floco: { de: "casa", d: "M3.4 17L20.6 7M12 2L12 22M3.4 7L20.6 17" },
+  /* o veneno no chão: três bolhas */
+  bolhas: { de: "casa", d: "M3 15C3 12.24 5.24 10 8 10C10.76 10 13 12.24 13 15C13 17.76 10.76 20 8 20C5.24 20 3 17.76 3 15ZM14.4 7C14.4 5.02 16.02 3.4 18 3.4C19.98 3.4 21.6 5.02 21.6 7C21.6 8.98 19.98 10.6 18 10.6C16.02 10.6 14.4 8.98 14.4 7ZM15.8 20C15.8 18.56 16.96 17.4 18.4 17.4C19.84 17.4 21 18.56 21 20C21 21.44 19.84 22.6 18.4 22.6C16.96 22.6 15.8 21.44 15.8 20Z" },
+  /* a água eletrificada: o raio */
+  raio: { de: "casa", d: "M14 2L5 14L12 14L10 22L19 10L12 10L14 2Z" },
+  /* o que explode: o selo do objeto e o impacto da colisão no empurrão (a estrela de oito pontas) */
+  explode: { de: "casa", d: "M12 1L14.6 8.4L23 6L17.6 12L23 18L14.6 15.6L12 23L9.4 15.6L1 18L6.4 12L1 6L9.4 8.4L12 1Z" },
+  /* o que tapa a vista: o olho riscado */
+  semVista: { de: "casa", d: "M2 12C8.67 5.33 15.33 5.33 22 12C15.33 18.67 8.67 18.67 2 12ZM4 21L20 3" },
 };
 
 /* ============================================================

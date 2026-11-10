@@ -3926,6 +3926,8 @@ export const CAMINHO_NO_CHAO = {           // §CB 3
   traco: 3, ponto: 10, rotulo: 12,
   golpeLivre: { chao: 0.12, aro: 1.5, tracejado: [4, 3] },
   destino: { lado: 41, raio: 6, aro: 2, tracejado: [5, 3], chao: 0.12 },
+  /* §CB 18.4 c: o troço do caminho que atravessa perigo (danger, tracejado) */
+  perigo: { tracejado: [6, 4] },
 };
 /* §CB 4 — as chaves são INTENCAO_DO_INIMIGO.tipos (intencao.js; a suíte
    confere). Os passos e a caveira já tinham glifo antes de CB: «passo» e
@@ -3997,6 +3999,77 @@ export const TURNO_DELES = {               // §CB 17.2 — ms
   origem: { aro: 1.5, tracejado: [4, 3] },
   controlo: { ligado: 0.18 },              // a altura é a do Pé: BATALHA_EM_TRES.pe e .telefone.pe
   preferencia: "taverna:turno-deles-2x",
+};
+
+/* ============================================================
+   CB 18 (lote 3, 10/11) — a altura, as superfícies e o cenário (formas.md
+   §CB 18.6; Figma G1 374:2105, G2 374:2610, G3 376:2623; as peças 373:2203
+   Superficie no chao, 373:2216 Degrau, 373:2259 Objeto do cenario, 373:2274
+   Rotulo do empurrao, 373:2280 Letreiro da reacao). As tabelas leem T e as
+   de §CB 11 e §CB 17.3, e não copiam número delas. Nenhuma cor nova.
+   No Figma o alfa do chão, do lume e do padrão está na opacidade da camada
+   (ligar uma variável repõe a da pintura a 1); aqui é fillOpacity/opacity,
+   e o número é o mesmo.
+   ============================================================ */
+export const ALTURA_NA_MESA = {            // §CB 18.1 — frações da casa
+  lume: { 1: 0.06, 2: 0.10 }, face: { 1: 0.12, 2: 0.22 }, fichaSobe: 0.5,   // metade da face
+  aresta: 1.5, cota: { lado: 0.21, traco: 2, folga: 0.08 },
+  cor: { lume: T.ink, face: T.pagina, aresta: T.inkMeio, cota: T.inkMeio },
+  glifo: "degrau",
+  previsao: { glifo: 12, letra: 13, alto: T.ok, baixo: T.danger },          // «+2 do alto» · «−2 de baixo»
+};
+export const SUPERFICIES_NO_CHAO = {       // §CB 18.2 — as chaves de tipos são as SUPERFICIES do motor (a suíte confere quando ele existir)
+  tipos: {
+    oleo:     { chao: T.pagina,    alfa: 0.60, traco: T.inkMeio,    alfaDoTraco: 0.8, padrao: "manchas", glifo: "oleo" },
+    agua:     { chao: T.mundo,     alfa: 0.18, traco: T.mundo,      alfaDoTraco: 0.8, padrao: "ondas",   glifo: "ondas" },
+    gelo:     { chao: T.mundoSoft, alfa: 0.22, traco: T.mundoSoft,  alfaDoTraco: 0.8, padrao: "flocos",  glifo: "floco" },
+    fogo:     { chao: T.danger,    alfa: 0.22, traco: T.danger,     alfaDoTraco: 1,   padrao: "linguas", glifo: "chama" },
+    veneno:   { chao: T.ok,        alfa: 0.18, traco: T.ok,         alfaDoTraco: 0.8, padrao: "bolhas",  glifo: "bolhas" },
+    eletrica: { chao: T.mundo,     alfa: 0.18, traco: T.violetSoft, alfaDoTraco: 1,   padrao: "raio",    glifo: "raio", sobre: "ondas" },
+  },
+  traco: 1.5 / 48, tracoDoRaio: 2 / 48,    // frações da casa
+  contorno: 1.5, ultima: { contorno: [4, 3], selo: [3, 2] },
+  selo: { alto: 18, raio: 8, glifo: 12, entre: 3, enchimento: [4, 5], margem: 2, fundo: 0.92 },
+  nasce: 200,
+};
+export const PADROES_DO_CHAO = {           // §CB 18.2 — geometria em frações da casa (os nós de 373:2203)
+  manchas: { arcos: [[0.17, 0.29, 0.42, 0.27], [0.54, 0.67, 0.79, 0.65], [0.21, 0.75, 0.35, 0.73]], curva: 0.1 },
+  ondas: { linhas: [0.25, 0.5, 0.75], periodo: 0.5, amplitude: 0.083, margem: 0.083 },
+  flocos: { centros: [[0.25, 0.25], [0.71, 0.375], [0.375, 0.67], [0.79, 0.79]], raio: 0.083 },
+  /* curva: os dois pontos de controlo de cada meia-língua, em frações da meia-largura e da altura
+     (o vetor do fogo em 373:2203: 0,67 e 2,33 de 5 px; 5,6 e 10,3 de 14 px) */
+  linguas: { base: 0.92, meiaLargura: 0.104, chamas: [[0.21, 0.29], [0.46, 0.42], [0.71, 0.33]], curva: [0.133, 0.4, 0.467, 0.733] },   // [x, altura]
+  bolhas: { aneis: [[0.25, 0.29, 0.083], [0.625, 0.21, 0.052], [0.75, 0.625, 0.094], [0.33, 0.71, 0.0625], [0.54, 0.5, 0.042]] },
+  raio: { pontos: [[0.625, 0.083], [0.42, 0.42], [0.58, 0.46], [0.33, 0.92]] },
+};
+export const OBJETOS_NA_MESA = {           // §CB 18.3 — grelha de 48; as etiquetas são as de OBJETOS_DO_CENARIO
+  grelha: 48, sombra: 0.55,
+  cor: { corpo: T.panelSoft, aro: T.lineStrong, tampa: T.pagina, feno: T.inkDim, chama: T.amber },
+  selo: { lado: 16, glifo: 10, aro: 1.5, sobe: 4, entre: 2, maximo: 2 },
+  etiquetas: {
+    explode: { glifo: "explode", cor: T.danger }, arde: { glifo: "chama", cor: T.danger },
+    derrama: { glifo: "oleo", cor: T.inkMeio }, tapaVista: { glifo: "semVista", cor: T.inkMeio },
+    cobre: { glifo: "escudo", cor: T.mundo },
+  },
+  /* o desenho de cada tipo do motor (grid.js OBJETOS_DO_CENARIO) entre as
+     quatro variantes da peça 373:2259; um tipo que não está aqui desenha-se
+     como o caixote, e os selos dizem o que ele faz */
+  desenho: { barril_de_oleo: "barril", barril_de_agua: "barril", candeeiro: "candeeiro", carro_de_feno: "feno", carro_queimado: "feno", caixote: "caixote" },
+};
+export const EMPURRAO_NA_MESA = {          // §CB 18.4
+  seta: { traco: CAMINHO_NO_CHAO.traco, ponta: 7, marca: 6 },
+  fantasma: { lado: 0.76, traco: 2, tracejado: [4, 3], alfa: 0.6 },
+  rotulo: { raio: 12, enchimento: { x: 10, y: 4 }, entre: 4, letra: 13, glifo: 12, aro: 1.5 },
+  ordem: ["colide", "queda", "superficie"],
+  impacto: "explode",
+};
+export const REACAO_NA_MESA = {            // §CB 18.5 — ms; a suíte prova pausa + porAnel × aneis ≤ teto
+  teto: GOLPE_SENTIDO.teto,
+  primeira: { pausa: 120, clarao: 0.35, porAnel: 120, aneis: 2 },
+  outras:   { pausa: 0,   clarao: 0,    porAnel: 80,  aneis: 2 },
+  easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+  leitura: GOLPE_SENTIDO.leitura, esvai: GOLPE_SENTIDO.esvai,
+  letreiro: { raio: 10, aro: 2, aroOutras: 1.5, titulo: 22, linha: 12, enchimento: { x: 14, y: 6 } },
 };
 
 /* ============================================================
@@ -4540,6 +4613,19 @@ export const MOVIMENTO_CSS = `
 .tv-anel-age { opacity: ${TURNO_DELES.anel.brilho}; animation: tvAnelAge ${TURNO_DELES.realce}ms ease-out both; }
 .tv-sopro-pulsa { animation: tvSoproPulsa ${TURNO_DELES.soproPinta}ms ease-in-out 1 both; }
 
+/* CB 18 · O CHAO QUE NASCE E A REACAO. Um chao novo entra em opacidade no
+   tempo de SUPERFICIES_NO_CHAO.nasce. Na reacao, o clarao (so a primeira de
+   cada tipo) cobre as casas durante a pausa, e a onda muda o chao anel a
+   anel: o atraso de cada anel vai em --anel e a duracao em --porAnel, os
+   dois postos pela peca a partir de REACAO_NA_MESA. Nada disto prende a
+   entrada, e as tres tem saida no bloco reduzido. */
+@keyframes tvChaoNasce { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tvReacaoClarao { 0% { opacity: 0; } 50% { opacity: ${REACAO_NA_MESA.primeira.clarao}; } 100% { opacity: 0; } }
+@keyframes tvReacaoOnda { from { opacity: 0; } to { opacity: 1; } }
+.tv-chao-nasce { animation: tvChaoNasce ${SUPERFICIES_NO_CHAO.nasce}ms ease-out both; }
+.tv-reacao-clarao { opacity: 0; animation: tvReacaoClarao ${REACAO_NA_MESA.primeira.pausa}ms linear both; }
+.tv-reacao-onda { animation: tvReacaoOnda var(--porAnel, ${REACAO_NA_MESA.outras.porAnel}ms) ${REACAO_NA_MESA.easing} var(--anel, 0ms) both; }
+
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
   /* TL: a mesa puxada, o veu e a gaveta do horizonte aparecem secos */
@@ -4682,6 +4768,11 @@ export const MOVIMENTO_CSS = `
   .tv-dado-no-alvo { animation: none; transform: none; }
   .tv-anel-age { animation: none; opacity: 0; }
   .tv-sopro-pulsa { animation: none; }
+  /* CB 18 · o chao novo e a onda cortam seco (o chao ja e o novo), e o
+     clarao nao acende; o letreiro fica, porque e informacao */
+  .tv-chao-nasce { animation: none; }
+  .tv-reacao-onda { animation: none; }
+  .tv-reacao-clarao { animation: none; opacity: 0; }
 }
 `;
 
