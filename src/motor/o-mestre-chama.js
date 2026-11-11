@@ -32,13 +32,26 @@
 import { custoPorAlvo, dificuldadePorId, mordidaDoDegrau, EFEITOS_DA_FALHA } from "../desafios.js";
 import { periciaPorId, resolucaoAutomatica } from "../pericias.js";
 import { nomeDoAtributo } from "../testes.js";
+import { ANTECEDENTES } from "../antecedentes.js";
 
 /* ---------------- A LINHA ----------------
    `molde`: o que o Mestre diz, nesta ordem e só isto. `{porque}` é a
    situação que pesou na CD (SITUACAO_DA_CD: «com a chuva», «no escuro»),
    e só aparece quando pesou.
-   `esperaSozinho`: com a preferência «o Mestre rola por mim», o tempo de
-   ler a linha antes de o dado se lançar sozinho (ms).
+   `esperaSozinho`: com a preferência «o Mestre rola por mim», o PISO do
+   tempo de ler a linha antes de o dado se lançar sozinho (ms). A espera
+   cresce com a fala (`esperaDoChamado`, 11/11): `esperaPorPalavra` por
+   palavra da linha, até `esperaTeto`. A conta é a de Brysbaert (2019,
+   Journal of Memory and Language 109, 104047): um adulto lê em silêncio
+   cerca de 238 palavras por minuto, 250 ms cada; a fala do rasto com chuva tem 19
+   palavras (4,75 s), e os 2,6 s de antes lançavam o dado a meio do preço
+   (formas.md §MC 8). O teto guarda a mesa de uma linha que ninguém lê.
+   `rolar` / `rolarJa` / `recuo`: os verbos da peça — «Rolar» à espera,
+   «Rolar já» com a vela acesa, e o recuo com maiúscula, como os outros da
+   casa («Agora não», «Reescrever»).
+   `condicional`: o começo do aviso que só faz sentido ANTES do dado. O
+   `cobrado` (a linha da falha, depois: «✕ falhou — a trilha se perde…»)
+   é o aviso sem ele e sem a pontuação do fim (`fimDoAviso`).
    `tetoDoAviso`: o comprimento máximo da frase do preço — uma linha, numa
    tela de 375 px.
    `ordemDoAviso`: que variante do aviso vence quando o contexto liga mais
@@ -48,8 +61,13 @@ export const O_CHAMADO = Object.freeze({
   glifo: "dado",
   dado: "d20",
   rolar: "Rolar",
-  recuo: "mudar de ideia",
+  rolarJa: "Rolar já",
+  recuo: "Mudar de ideia",
   esperaSozinho: 2600,
+  esperaPorPalavra: 250,
+  esperaTeto: 5000,
+  condicional: /^se falhar,\s*/i,
+  fimDoAviso: /[\s.!…;]+$/,
   tetoDoAviso: 60,
   ordemDoAviso: Object.freeze(["chuva", "noite", "cidade"]),
   /* a queda: 1d6 por cada dado de queda (desafios.js, quedaDe) */
@@ -150,6 +168,124 @@ export function envelopeDoSaberComum(v, sc) {
 REGRA DESTE ENVELOPE (obrigatória): responda com o que qualquer um na minha pele saberia — um ou dois factos verdadeiros, ditos como coisa sabida, em até duas frases. NÃO encene esforço de memória nem dúvida, NÃO revele segredo nem o que está escondido (isso continua a pedir dado), e devolva a palavra para mim.`;
 }
 
+/* ---------------- O SABER DO HERÓI, MONTADO (EM3, a fiação · 11/11/2026) ----------------
+   `saberComumDe` lê `ctx.saber` com NOMES; o App guarda ids (o livro de
+   factos) e fichas. Esta peça faz a ponte, e é motor para o replay montar
+   o mesmo saber que o App: a mesma ficha dá o mesmo saber, em qualquer
+   máquina.
+
+   saberDoHeroi({ personagem, lugar, cidade, jornada, factos, npcs, mapa, espinha })
+     → { lugar, terra, antecedente, factos, visitados } (congelado; cada campo
+       é null quando não há nada — e o null cala a fonte em saberComumDe)
+
+   O que o `oficial` passa, tal e qual, dos refs do App:
+     personagem  personagemRef.current   (o `antecedente` vem pelo NOME,
+                                          «Soldado Reformado»; sai o id)
+     lugar       lugarRef.current        ({ nome, cidade, dentroDe? } | null)
+     cidade      cidadeAtualRef.current
+     jornada     jornadaRef.current      (em viagem, a cidade de partida
+                                          não é «aqui» — a régua do livro,
+                                          `naEstrada` de anotarTurno)
+     factos      factosRef.current       (o livro: ids → nomes guardados)
+     npcs        npcsRef.current         (o registo: o nome de um `npc|chave`
+                                          que o livro guardou sem nome)
+     mapa        mapaRef.current         (a caixa certa do nome da cidade:
+                                          `cidade|alto negro` → «Alto Negro»)
+     espinha     espinhaRef.current      (a terra: ver SABER_DO_HEROI)
+   Tudo opcional, `null` e lixo incluídos: sem nada, o saber sai todo a
+   null e o Mestre chama como antes. */
+export const SABER_DO_HEROI = Object.freeze({
+  /* o que no livro faz de alguém uma pessoa CONHECIDA (TIPOS_DE_FACTO de
+     pessoa). O `nomeado` fica de fora de propósito: ouvir o nome não é
+     saber da pessoa — é a distinção de `conheceu` (livro-de-factos.js) */
+  daPessoa: Object.freeze(["visto", "falou", "afeicao", "derrotado", "recebeu", "prometeu", "quemE"]),
+  /* o lugar que o herói SABE (o segredo caiu com ele lá; deve-lhe um favor) */
+  doLugarSabido: Object.freeze(["descobriu", "favor"]),
+  /* o lugar por onde PASSOU */
+  doLugarVisto: Object.freeze(["esteve"]),
+  /* a terra: a ficha não tem campo de origem; a casa guarda a cidade onde a
+     campanha nasceu no registo do vilão (`cidadeInicial`, a mesma da alcunha
+     «o de <cidade>», plano-do-vilao.js). Pela ordem: os campos da ficha, se
+     um dia existirem, e depois os caminhos na espinha. */
+  terraNaFicha: Object.freeze(["terra", "origem"]),
+  terraNaEspinha: Object.freeze([
+    Object.freeze(["esqueleto", "vilao", "cidadeInicial"]),
+    Object.freeze(["fio", "vilao", "cidadeInicial"]),
+  ]),
+  /* as formas de id que se leem de volta sem o nome guardado (idDoLugar e
+     idDaPessoa, livro-de-factos.js); a do id da base (`Cidade|tipo`) não se
+     lê — o nome dela vem sempre guardado no livro */
+  idDeCidade: /^cidade\|(.+)$/,
+  idDeSitio: /^[^|]*\|sitio\|(.+)$/,
+  idDoRegisto: /^npc\|(.+)$/,
+  idDaGente: /^[^|]+\|gente\|(.+)$/,
+});
+
+/* o antecedente como a ficha o guarda (o nome) ou como o catálogo o chama
+   (o id) → o id, ou null; nunca o primeiro da lista por engano (a régua de
+   oficioDoAntecedente, antecedentes.js) */
+const idDoAntecedente = (ref) => {
+  if (typeof ref !== "string" || !ref.trim()) return null;
+  const k = semAcento(ref);
+  const a = ANTECEDENTES.find((x) => x.id === ref) || ANTECEDENTES.find((x) => semAcento(x.nome) === k);
+  return a ? a.id : null;
+};
+
+export function saberDoHeroi(entrada) {
+  const o = obj(entrada) ? entrada : {};
+  const S = SABER_DO_HEROI;
+  const txt = (x) => (typeof x === "string" && x.trim() ? x.replace(/\s+/g, " ").trim() : "");
+  const p = obj(o.personagem) ? o.personagem : {};
+  const livro = obj(o.factos) ? o.factos : {};
+  const npcs = obj(o.npcs) ? o.npcs : {};
+  const cidades = (obj(o.mapa) && Array.isArray(o.mapa.cidades) ? o.mapa.cidades : [])
+    .map((c) => (typeof c === "string" ? c : obj(c) ? txt(c.nome) : "")).filter(Boolean);
+  const daCidade = (n) => cidades.find((c) => semAcento(c) === semAcento(n)) || n;
+  const soNomes = (xs) => {
+    const vistos = new Set();
+    const out = xs.map(txt).filter((n) => { const k = semAcento(n); if (!k || vistos.has(k)) return false; vistos.add(k); return true; });
+    return out.length ? Object.freeze(out) : null;
+  };
+  const tem = (e, chaves) => !!obj(e) && chaves.some((k) => e[k] != null && e[k] !== false);
+
+  /* aqui: o sítio, o que o contém, e a cidade (fora da estrada) */
+  const l = typeof o.lugar === "string" ? { nome: o.lugar } : obj(o.lugar) ? o.lugar : {};
+  const cidade = o.jornada ? "" : txt(o.cidade) || txt(l.cidade);
+  const lugar = soNomes([txt(l.nome), txt(l.dentroDe), cidade && daCidade(cidade)]);
+
+  /* a terra */
+  const esp = obj(o.espinha) ? o.espinha : {};
+  const peloCaminho = (cam) => cam.reduce((x, k) => (obj(x) ? x[k] : undefined), esp);
+  const terra = soNomes([...S.terraNaFicha.map((k) => txt(p[k])), ...S.terraNaEspinha.map((cam) => txt(peloCaminho(cam)))].map((n) => n && daCidade(n)));
+
+  /* o livro, com os nomes */
+  const nomeDaPessoa = (id, e) => {
+    if (txt(e.nome)) return txt(e.nome);
+    const r = S.idDoRegisto.exec(id);
+    if (r) return txt(obj(npcs[r[1]]) && npcs[r[1]].nome) || r[1];
+    const g = S.idDaGente.exec(id);
+    return g ? g[1] : "";
+  };
+  const nomeDoLugar = (id, e) => {
+    if (txt(e.nome)) return txt(e.nome);
+    const c = S.idDeCidade.exec(id);
+    if (c) return daCidade(c[1]);
+    const s = S.idDeSitio.exec(id);
+    return s ? s[1] : "";
+  };
+  const pessoas = obj(livro.pessoas) ? livro.pessoas : {};
+  const lugares = obj(livro.lugares) ? livro.lugares : {};
+  const grupo = (Array.isArray(p.grupo) ? p.grupo : []).filter((g) => obj(g) && !g.invocada).map((g) => g.nome);
+  const factos = soNomes([
+    ...Object.keys(pessoas).filter((id) => tem(pessoas[id], S.daPessoa)).map((id) => nomeDaPessoa(id, pessoas[id])),
+    ...grupo,
+    ...Object.keys(lugares).filter((id) => tem(lugares[id], S.doLugarSabido)).map((id) => nomeDoLugar(id, lugares[id])),
+  ]);
+  const visitados = soNomes(Object.keys(lugares).filter((id) => tem(lugares[id], S.doLugarVisto)).map((id) => nomeDoLugar(id, lugares[id])));
+
+  return Object.freeze({ lugar, terra, antecedente: idDoAntecedente(p.antecedente), factos, visitados });
+}
+
 /* ---------------- QUANDO O MESTRE NÃO CHAMA ----------------
    A régua de §2.3. A primeira linha que cala decide, e diz porquê e o que
    acontece em vez do chamado. Todas devolvem o turno ao caminho de hoje —
@@ -234,7 +370,8 @@ function dadoDoPreco(c, v) {
    `v`: o veredito de `lerAcao`.
    `ctx`: { emCombate, bonus, mundoDisseNao, contexto: { chuva, noite, cidade } }.
    Devolve null (o Mestre não chama: o turno segue como hoje) ou
-   { pericia, periciaNome, dc, aviso, efeito, dado, chave, linha, porque }. */
+   { pericia, periciaNome, dc, aviso, cobrado, efeito, dado, chave, linha, porque }.
+   `cobrado`: o aviso no indicativo, para depois do dado (O_CHAMADO.condicional). */
 export function oChamado(v, ctx) {
   const c = obj(ctx) ? ctx : {};
   if (porQueNaoChama(v, c)) return null;
@@ -266,10 +403,22 @@ export function oChamado(v, ctx) {
     periciaNome,
     dc,
     aviso,
+    cobrado: aviso.replace(O_CHAMADO.condicional, "").replace(O_CHAMADO.fimDoAviso, ""),
     efeito,
     dado: Object.freeze({ teste: O_CHAMADO.dado, preco: dadoDoPreco(custo, v) }),
     chave: String(v.chave || ""),
     linha,
     porque,
   });
+}
+
+/* ---------------- A ESPERA DA VELA (11/11/2026, formas.md §MC 9.1) ----------------
+   Com «o Mestre rola por mim», quanto tempo a linha fica à vista antes de o
+   dado se lançar sozinho: `esperaPorPalavra` por palavra da fala, nunca
+   abaixo de `esperaSozinho` nem acima de `esperaTeto` (O_CHAMADO). Sem
+   chamado, ou sem linha, o piso. */
+export function esperaDoChamado(chamado) {
+  const linha = obj(chamado) && typeof chamado.linha === "string" ? chamado.linha : "";
+  const palavras = linha.split(/\s+/).filter(Boolean).length;
+  return Math.min(O_CHAMADO.esperaTeto, Math.max(O_CHAMADO.esperaSozinho, palavras * O_CHAMADO.esperaPorPalavra));
 }

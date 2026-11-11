@@ -13,7 +13,8 @@
    mais, o preço avisado (desafios.js: MARGEM_DA_FALHA, `comMeiaVerdade`). A
    prova dos dez mil do MC2 continua verdade nos dois ramos. */
 import { lerAcao, comoSeDiz, DESAFIOS, CUSTO_DE_FALHAR, DIFICULDADES, MARGEM_DA_FALHA, desfechoDaMargem, desfechoDaFalha, efeitosCobrados, falaDoCusto, envelopeDoCusto } from "../src/desafios.js";
-import { oChamado, porQueNaoChama, QUANDO_O_MESTRE_CHAMA, SABER_COMUM, SABER_DO_OFICIO, saberComumDe, envelopeDoSaberComum } from "../src/motor/o-mestre-chama.js";
+import { oChamado, porQueNaoChama, QUANDO_O_MESTRE_CHAMA, SABER_COMUM, SABER_DO_OFICIO, saberComumDe, envelopeDoSaberComum, saberDoHeroi, SABER_DO_HEROI } from "../src/motor/o-mestre-chama.js";
+import { TIPOS_DE_FACTO } from "../src/livro-de-factos.js";
 import { ANTECEDENTES } from "../src/antecedentes.js";
 import { envelopeDoTeste } from "../src/testes.js";
 import { rngDe } from "../src/geografia.js";
@@ -103,6 +104,59 @@ sec("4. EM3 — o saco do recém-chegado, contra o estudo");
   const frac = semDado / saco.length;
   const A = SABER_COMUM.alvo;
   t(`${semDado} em ${saco.length} sem dado (${(100 * frac).toFixed(0)}%), a ±${100 * A.tolerancia} pontos dos ${100 * A.saberSemDado}% do estudo`, Math.abs(frac - A.saberSemDado) <= A.tolerancia + 1e-9);
+}
+
+sec("4b. EM3 — o saber montado dos refs do App (saberDoHeroi, 11/11)");
+{
+  /* Um herói de exemplo, com os refs na forma em que o App os guarda: o
+     antecedente pelo NOME, o livro por ids (uns com o nome guardado, outros
+     sem), o registo, o mapa e a espinha com a cidade onde nasceu. O saber
+     que sai é o que saberComumDe espera — nomes —, e o comum sai sem dado. */
+  const refs = {
+    personagem: { antecedente: "Soldado Reformado", grupo: [{ nome: "Bruna Vel" }, { nome: "Lobo Cinzento", invocada: true }] },
+    lugar: { nome: "a Forja do Meio", cidade: "Foz do Meio" }, cidade: "Foz do Meio",
+    factos: { v: 1,
+      pessoas: { "npc|Teodoro": { nome: "Teodoro", visto: { de: 1, ate: 1, vezes: 1 } }, "npc|Corrado": { nome: "Corrado", nomeado: { de: 1 } }, "npc|Ze": { falou: { de: 1, ate: 1, vezes: 1 } } },
+      lugares: { "cidade|alto do sal": { esteve: { de: 1, ate: 1, vezes: 1 } }, "Foz do Meio|sitio|sino calado": { nome: "o Sino Calado", descobriu: { dia: 2 } } } },
+    npcs: { Ze: { nome: "Zé Pires" } },
+    mapa: { cidades: [{ nome: "Alto do Sal" }, { nome: "Foz do Meio" }, { nome: "Alto Negro" }] },
+    espinha: { esqueleto: { vilao: { cidadeInicial: "alto negro" } } },
+  };
+  const S = saberDoHeroi(refs);
+  t("o antecedente sai pelo id, lido do nome que a ficha guarda", S.antecedente === "soldado");
+  t("o sítio onde está: o lugar e a cidade", S.lugar && S.lugar.includes("a Forja do Meio") && S.lugar.includes("Foz do Meio"));
+  t("a terra vem da espinha, com a caixa do mapa", S.terra && S.terra.length === 1 && S.terra[0] === "Alto Negro");
+  t("o livro dá os nomes: o guardado, o do registo, o grupo e o lugar sabido", ["Teodoro", "Zé Pires", "Bruna Vel", "o Sino Calado"].every((n) => S.factos.includes(n)));
+  t("ouvir o nome não é saber da pessoa (o nomeado fica de fora), nem a invocação é gente", !S.factos.includes("Corrado") && !S.factos.includes("Lobo Cinzento"));
+  t("os sítios por onde passou, com o nome da cidade do mapa", S.visitados && S.visitados.length === 1 && S.visitados[0] === "Alto do Sal");
+  const semDado = [["O que sei de Alto Negro?", "terra"], ["O que sei desta cidade?", "aqui"], ["O que sei da guarnição?", "oficio"], ["O que sei do Teodoro?", "livro"], ["O que sei do Zé Pires?", "livro"], ["O que lembro de Alto do Sal?", "visto"]];
+  for (const [f, fonte] of semDado) {
+    const v = ler(f);
+    const sc = saberComumDe(v, { saber: S });
+    t(`com o saber montado, «${f}» sai sem dado (${fonte})`, sc && sc.fonte === fonte && oChamado(v, { saber: S }) === null, sc ? sc.fonte : "chama");
+  }
+  for (const f of ["O que sei do segredo de Alto Negro?", "O que sei do Corrado?", "O que sei da Mantícora das Cinzas?"]) {
+    const v = ler(f);
+    t(`e o raro continua a rolar: «${f}»`, v && v.tipo === "teste" && porQueNaoChama(v, { saber: S }) === null && oChamado(v, { saber: S }) !== null);
+  }
+  /* determinismo e imutabilidade: a mesma ficha dá o mesmo saber, e a
+     ficha não muda por ter sido lida */
+  const antes = JSON.stringify(refs);
+  t("a mesma ficha dá o mesmo saber", JSON.stringify(saberDoHeroi(refs)) === JSON.stringify(S));
+  t("e não toca na ficha (e o que devolve está congelado)", JSON.stringify(refs) === antes && Object.isFrozen(S) && Object.isFrozen(S.factos));
+  /* em viagem, a cidade de partida não é «aqui» (a régua de naEstrada) */
+  const naEstrada = saberDoHeroi({ ...refs, lugar: null, jornada: { de: "Foz do Meio", para: "Alto do Sal" } });
+  t("na estrada, «esta cidade» já não é a de onde se partiu", naEstrada.lugar === null && porQueNaoChama(ler("O que sei desta cidade?"), { saber: naEstrada }) === null);
+  /* o lixo: tudo a null, e o Mestre chama como antes */
+  const vazio = (x) => x && ["lugar", "terra", "antecedente", "factos", "visitados"].every((k) => x[k] === null);
+  t("null, {}, e refs de lixo dão o saber vazio", [null, undefined, {}, "x", 7, { personagem: null, factos: null, npcs: null, mapa: null, espinha: null, lugar: 7 }].every((x) => vazio(saberDoHeroi(x))));
+  t("o antecedente que não existe não vira o primeiro da lista", saberDoHeroi({ personagem: { antecedente: "Astronauta" } }).antecedente === null);
+  t("com o saber vazio, o Mestre chama como antes", oChamado(ler("O que sei de Alto Negro?"), { saber: saberDoHeroi(null) }) !== null);
+  /* a catraca contra o livro: as chaves que o saber lê são as de TIPOS_DE_FACTO */
+  const dePessoa = Object.keys(TIPOS_DE_FACTO).filter((k) => TIPOS_DE_FACTO[k].de === "pessoa");
+  const deLugar = Object.keys(TIPOS_DE_FACTO).filter((k) => TIPOS_DE_FACTO[k].de === "lugar");
+  t("todo facto de pessoa conta como saber, menos o nomeado", dePessoa.filter((k) => k !== "nomeado").every((k) => SABER_DO_HEROI.daPessoa.includes(k)) && SABER_DO_HEROI.daPessoa.every((k) => dePessoa.includes(k)) && !SABER_DO_HEROI.daPessoa.includes("nomeado"));
+  t("e todo facto de lugar é sabido ou visitado, sem sobrar", [...SABER_DO_HEROI.doLugarSabido, ...SABER_DO_HEROI.doLugarVisto].sort().join() === [...deLugar].sort().join());
 }
 
 sec("5. EM4 — a tabela");

@@ -15,7 +15,7 @@ import {
   lerAcao, comoSeDiz, DESAFIOS, DIFICULDADES, CUSTO_DE_FALHAR, custoPorAlvo, desfechoDaFalha,
   SITUACAO_DA_CD, EFEITOS_DA_FALHA, efeitosCobrados,
 } from "../src/desafios.js";
-import { oChamado, porQueNaoChama, O_CHAMADO, QUANDO_O_MESTRE_CHAMA } from "../src/motor/o-mestre-chama.js";
+import { oChamado, porQueNaoChama, O_CHAMADO, QUANDO_O_MESTRE_CHAMA, esperaDoChamado } from "../src/motor/o-mestre-chama.js";
 import { rngDe } from "../src/geografia.js";
 
 let ok = 0, mal = 0;
@@ -185,6 +185,27 @@ sec("6. a CD pela situação, e a régua que não cai");
   const juntos = ler("Sigo o rasto até à mata.", { chove: true, escuro: true });
   t("chuva e escuro juntos não descem abaixo da taxa da luta",
     [0, 1, 2, 3, 4, 5].every((b) => taxa(b, juntos.dc) >= taxa(b, rasto.dc + luta.delta)));
+}
+
+sec("7. o que a peça pede ao motor (formas.md §MC 9, 11/11)");
+{
+  /* o cobrado: o preço no indicativo, para a linha da falha depois do dado */
+  const todos = vereditos.flatMap(({ v }) => [{}, { contexto: { chuva: true } }, { contexto: { noite: true } }, { contexto: { cidade: true } }].map((cx) => oChamado(v, cx))).filter(Boolean);
+  t("houve chamados para provar", todos.length > 0);
+  t("o cobrado nunca começa por «Se falhar»", todos.every((c) => typeof c.cobrado === "string" && c.cobrado && !/^se falhar/i.test(c.cobrado)));
+  t("nem acaba em ponto", todos.every((c) => !/[.!…;]\s*$/.test(c.cobrado)));
+  t("e é o aviso, palavra por palavra, sem o condicional", todos.every((c) => c.aviso === "Se falhar, " + c.cobrado + "."));
+  const rasto = oChamado(ler("Sigo o rasto até à mata.", { chove: true }), {});
+  t("o rasto com chuva: «a chuva apaga a trilha e meia hora se vai»", rasto && rasto.cobrado === "a chuva apaga a trilha e meia hora se vai");
+  /* a espera cresce com a fala: 250 ms por palavra, piso e teto (Brysbaert 2019) */
+  const palavras = (c) => c.linha.split(/\s+/).filter(Boolean).length;
+  t(`a fala do rasto com chuva (${palavras(rasto)} palavras) espera ${esperaDoChamado(rasto)} ms`, esperaDoChamado(rasto) === Math.min(O_CHAMADO.esperaTeto, Math.max(O_CHAMADO.esperaSozinho, palavras(rasto) * O_CHAMADO.esperaPorPalavra)) && esperaDoChamado(rasto) > O_CHAMADO.esperaSozinho);
+  t("toda espera fica entre o piso e o teto", todos.every((c) => { const e = esperaDoChamado(c); return e >= O_CHAMADO.esperaSozinho && e <= O_CHAMADO.esperaTeto; }));
+  t("a fala curta fica no piso, a longa no teto", esperaDoChamado({ linha: "Atletismo. Precisa de 12." }) === O_CHAMADO.esperaSozinho && esperaDoChamado({ linha: "palavra ".repeat(60) }) === O_CHAMADO.esperaTeto);
+  t("sem chamado, ou com lixo, o piso", [null, undefined, {}, "x", { linha: 7 }].every((x) => esperaDoChamado(x) === O_CHAMADO.esperaSozinho));
+  t("os números da tabela: 250 por palavra, piso 2600, teto 5000", O_CHAMADO.esperaPorPalavra === 250 && O_CHAMADO.esperaSozinho === 2600 && O_CHAMADO.esperaTeto === 5000);
+  /* os verbos da peça */
+  t("«Rolar já» e o recuo com maiúscula", O_CHAMADO.rolarJa === "Rolar já" && O_CHAMADO.recuo === "Mudar de ideia" && /^[A-ZÀ-Ý]/.test(O_CHAMADO.recuo));
 }
 
 console.log(`\no Mestre chama (MC2): ${ok} passaram, ${mal} falharam`);
