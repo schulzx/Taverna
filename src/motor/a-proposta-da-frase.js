@@ -42,18 +42,31 @@
          passo?:   { nome, onde, minutos, chamado }
          viagem?:  { destino, dias, falta: { diz } | null }
          seguir?:  { para, minutos, faltam }
-         masmorra?:{ nome, linhas[] }
+         masmorra?:{ nome, linhas[], veredito?, alvo?, pers?, aBoca? }
+                    — MC8: o veredito da porta (`vereditoDaMasmorra`, boca.js)
+                    vem pronto em `veredito` (o de `idaAMasmorra`) ou é
+                    lido aqui de `alvo` (a masmorra do mundo) e `pers`;
+                    `aBoca`: o herói já está diante dela, e o verbo é entrar
          sono?:    { tipo: "longo"|"curto", preco, retorno }
          compras?: [{ fecha, total, bolsa, itens: [{ nome, quantos }] }] }
      oQueSeSabeDoSitio(estado, sitio) → [linha]
 
-   Puro, sem React. Provado em `testes/teste-a-proposta-da-frase.mjs`.
+   O VEREDITO ANTES DO CLIQUE QUE MAIS CUSTA (MC8, 11/11). A 18.ª sessão: o
+   chip «Entrar» de uma masmorra nasceu com o preço vazio, e o «DIFÍCIL…»
+   só se leu lá dentro. A proposta de masmorra leva agora a linha do
+   veredito (a da boca, à letra, uma vez só) e o patamar como preço; o
+   App passa o que já tem — o veredito de `idaAMasmorra` ou a masmorra e o
+   herói — e esta peça não deixa a linha de fora.
+
+   Puro, sem React. Provado em `testes/teste-a-proposta-da-frase.mjs` e,
+   o veredito, em `testes/teste-veredito-da-partida.mjs`.
    ============================================================ */
 import { garantirMissoes, etapaAtual, moradaDe } from "../missoes.js";
 import { garantirAbertura } from "../abertura.js";
 import { aPeEmTexto } from "../coordenadas.js";
 import { oSitioDoRegisto, aHoraDita } from "./a-pessoa-do-passo.js";
 import { contrair } from "../lugar.js";
+import { vereditoDaMasmorra } from "../boca.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -91,6 +104,8 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     seguir: "Seguir para {D}",
     masmorra: "Ir até {L}",
     masmorraSemNome: "Entrar",
+    /* MC8: à boca, o verbo é entrar — «Entrar na Cripta do Sal» */
+    masmorraNaBoca: "Entrar em {L}",
     sono: Object.freeze({ longo: "Dormir", curto: "Descansar um pouco" }),
     compra: "Comprar {I}",
     agressao: "Atacar {N}",
@@ -104,7 +119,7 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     venda: "Vender {I}",
   }),
   /* o botão que confirma — curto, o verbo de mesa */
-  confirmar: Object.freeze({ passo: "Ir", viagem: "Partir", seguir: "Seguir", masmorra: "Ir", sono: Object.freeze({ longo: "Dormir", curto: "Descansar" }), compra: "Comprar",
+  confirmar: Object.freeze({ passo: "Ir", viagem: "Partir", seguir: "Seguir", masmorra: "Ir", masmorraNaBoca: "Entrar", sono: Object.freeze({ longo: "Dormir", curto: "Descansar" }), compra: "Comprar",
     agressao: "Atacar", habilidade: "Usar", ausente: "Ir", ausenteSemSitio: "Dizer na mesma", espera: "Esperar", pagar: "Pagar", venda: "Vender" }),
   linhas: Object.freeze({
     /* {M} é a gramática do «▸ ir» (aPeEmTexto, coordenadas.js): «5 min a pé» */
@@ -124,6 +139,8 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     pagarNaoChega: "a bolsa só tem ◉ {B}",
     /* {N} já com a preposição contraída: «à Vela Silenciosa», «a Joric» */
     venda: "{N}: a bolsa fica com ◉ {B}",
+    /* MC8: o preço da masmorra é o patamar da porta — «● Difícil» */
+    desafio: "{I} {R}",
   }),
   /* O QUE SE SABE DE ONDE ANDA UMA PESSOA — o mesmo critério do sítio */
   sabeDaPessoa: Object.freeze({
@@ -263,8 +280,22 @@ function osEfeitos(l, e) {
   const V = P.verbo, C = P.confirmar, LN = P.linhas;
   const ef = {};
   if (ehObj(l.masmorra)) {
-    const n = limpo(l.masmorra.nome);
-    ef.masmorra = { verbo: n ? tpl(V.masmorra, { L: artigoMinusculo(n) }) : V.masmorraSemNome, confirmar: C.masmorra, preco: "", minutos: null, linhas: arr(l.masmorra.linhas).map(limpo).filter(Boolean) };
+    const M = l.masmorra;
+    const n = limpo(M.nome) || (ehObj(M.alvo) ? limpo(M.alvo.nome) : "");
+    /* MC8: o veredito da porta — o pronto, ou lido da masmorra e do herói */
+    let v = ehObj(M.veredito) && limpo(M.veredito.linha) && ehObj(M.veredito.dif) ? M.veredito : null;
+    if (!v && ehObj(M.alvo) && ehObj(M.pers)) { try { v = vereditoDaMasmorra(M.alvo, M.pers); } catch { v = null; } }
+    const p = v && ehObj(v.dif.patamar) ? v.dif.patamar : null;
+    const linhas = arr(M.linhas).map(limpo).filter(Boolean);
+    /* a linha da porta, uma vez só, logo depois da do caminho */
+    if (v && !linhas.includes(limpo(v.linha))) linhas.splice(Math.min(1, linhas.length), 0, limpo(v.linha));
+    const naBoca = !!M.aBoca && !!n;
+    ef.masmorra = {
+      verbo: naBoca ? contrair(tpl(V.masmorraNaBoca, { L: artigoMinusculo(n) })) : n ? tpl(V.masmorra, { L: artigoMinusculo(n) }) : V.masmorraSemNome,
+      confirmar: naBoca ? C.masmorraNaBoca : C.masmorra,
+      preco: p ? tpl(LN.desafio, { I: p.icone, R: p.rotulo }) : "", minutos: null, linhas,
+      desafio: p ? { patamar: p.id, rotulo: p.rotulo, icone: p.icone, cor: p.cor, linha: limpo(v.linha) } : null,
+    };
   }
   if (ehObj(l.seguir) && limpo(l.seguir.para)) {
     const f = Number(l.seguir.faltam);
@@ -380,6 +411,8 @@ export function aPropostaDaFrase(leitura, estado) {
     faz: ef.ausente && ef.ausente.semSitio ? "turno" : P.faz[t0] || "turno",
     tom: P.semVolta.includes(t0) ? "semVolta" : "convite",
     opcoes: cabeca.opcoes || null,
+    /* MC8: o patamar da porta, para a tela pintar o cartão (só masmorra) */
+    desafio: ef.masmorra && ef.masmorra.desafio ? { ...ef.masmorra.desafio } : null,
     impedido: imp,
     dados,
   };

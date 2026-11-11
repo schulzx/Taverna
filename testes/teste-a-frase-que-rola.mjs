@@ -57,6 +57,8 @@ sec("2. a tabela de §3.1, linha a linha");
     /* rastrear */
     ["Sigo as marcas no chão.", "rastrear"], ["Sigo as pegadas até o rio.", "rastrear"],
     ["Descubro por onde ela fugiu.", "rastrear"], ["Sigo o rasto do lobo até o rio.", "rastrear"],
+    /* MC8 (11/11): ler as marcas NO chão é rastrear (dava null) */
+    ["Leio as marcas no chão.", "rastrear"], ["Leio as pegadas.", "rastrear"],
     /* investigar, examinando o vestígio */
     ["Examino a ferida no flanco do boi.", "investigar"], ["Examino a marca na porta.", "investigar"],
     ["Examino a carcaça.", "investigar"], ["Examino o vestígio de cinza.", "investigar"],

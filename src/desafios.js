@@ -771,11 +771,14 @@ export const DESAFIOS = [
        passo da quest — devolvia null: o catálogo conhecia «rastro» e não
        «rasto», nem as marcas, nem «por onde foi». Perguntar por onde alguém
        foi a uma pessoa é conversa, e fica de fora. */
-    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu)|sigo (a|as|o|os) (gotas|pingos|manchas|rasto|rastro) de sangue|sigo (os|as|esses|essas) (arranh\w*|riscos|sulcos|fiapos)|(vou|sigo|corro|parto) atr[aá]s d(as|os|essas|esses) (pegadas|pisadas|rastr?os?|marcas|pistas|trilhas?)|at[eé] onde (as|os) (marcas|pegadas|pisadas|rastr?os?|trilhas?|gotas)( \w+)? (me |nos )?lev)/,
+    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|leio (as|os|essas|esses|aquelas|aqueles) (marcas|sinais|pegadas|pisadas|rastr?os?|trilhas?) (no|do) ch[aã]o|leio (as|os|essas|esses|aquelas|aqueles) (pegadas|pisadas|rastr?os?)|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu)|sigo (a|as|o|os) (gotas|pingos|manchas|rasto|rastro) de sangue|sigo (os|as|esses|essas) (arranh\w*|riscos|sulcos|fiapos)|(vou|sigo|corro|parto) atr[aá]s d(as|os|essas|esses) (pegadas|pisadas|rastr?os?|marcas|pistas|trilhas?)|at[eé] onde (as|os) (marcas|pegadas|pisadas|rastr?os?|trilhas?|gotas)( \w+)? (me |nos )?lev)/,
     /* EM1 (o corpus da mesa): «vou atrás das pegadas» e «avanço até onde as
        marcas me levam» — as palavras que o classificador treinado farejou
        e o catálogo não ouvia. E o rasto DA ESTRADA é a estrada: «sigo o
-       rasto da estrada proibida» é ir, não ler o chão. */
+       rasto da estrada proibida» é ir, não ler o chão.
+       MC8 (11/11, achado do outro backend): «Leio as marcas no chão.» dava
+       null — o catálogo ouvia «leio o chão» e não as marcas NO chão. As
+       marcas sem chão («leio as marcas na porta») ficam com o investigar. */
     naoSe: /\b(pergunt|quero saber|me diz|me conta|diga-me)|\brastr?os? d[aoe]s? (estrada|caminho|rio|costa|serra|calcada|via)\b/,
     pericia: "sobrevivencia", alvo: "rastro", minutos: 30, barulho: false,
     rotulo: "rastrear", dcPadrao: DC("incomum"),

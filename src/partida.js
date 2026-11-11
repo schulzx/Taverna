@@ -75,10 +75,25 @@
    `null`), sem a região que mede pela régua do chão (a v1), em viagem, lá
    dentro de uma masmorra, ou sem saber onde o herói está: `null`. Puro,
    determinístico (sem sorteio nenhum), sem tocar no que recebe.
+
+   ---------------- O DESAFIO DO LUGAR (MC8, 11/11 — o veredito antes de partir) ----------------
+
+   A 18.ª sessão (defeito 6): o mapa disse «perigo médio», e o «DIFÍCIL… 5,1×
+   menos do que isto pede» só apareceu DEPOIS do clique em Partir, à boca da
+   masmorra. O selo do mapa lia o nível ABSOLUTO do lugar (`PERIGO_POR_NIVEL`,
+   regiao.js): nível 4–7 é «médio» para quem for. O veredito que decide se
+   se vive é RELATIVO ao grupo (`avaliar`, dificuldade.js), e só a boca o lia.
+
+   Agora o veredito da partida traz `desafio`: o patamar, o porquê e a linha,
+   lidos pela MESMA função que a boca e a porta leem (`vereditoDaMasmorra`,
+   boca.js) sobre a MESMA masmorra do mundo (`masmorrasDoMundo`). Uma régua
+   só: para o mesmo herói e o mesmo lugar, o mapa diz o que a boca dirá.
+   Obedece à neblina como o perigo: o boato não tem ficha, logo não tem
+   desafio. Sem herói (`estado.ficha`), não se opina — `null`.
    ============================================================ */
 
 import { HORAS_MARCHA_POR_DIA, TETO_DE_AVANCOS, ESTADOS, andar, minutosPorAvanco, relogioDoAvanco } from "./viagem.js";
-import { rotaAteAMasmorra, jornadaAteAMasmorra, masmorraDaBoca, IDA_NA_REGIAO } from "./boca.js";
+import { rotaAteAMasmorra, jornadaAteAMasmorra, masmorraDaBoca, vereditoDaMasmorra, IDA_NA_REGIAO } from "./boca.js";
 import { pontoDoHeroi } from "./rastro.js";
 import { masmorrasDoMundo } from "./mundo-base.js";
 import { caminhoNaRegiao, origemDoHeroi, rotaDoCaminho, partidaNaRegiao } from "./marcha.js";
@@ -114,6 +129,10 @@ export const VEREDITO_DA_PARTIDA = {
   minutosDoTurno: 0,
   ondeNaoSeParte: ["viagem", "masmorra", "nenhum"],
   pontaSemNo: "povoado",
+  /* MC8: o selo de caveiras que cada patamar RELATIVO veste (`PATAMARES`,
+     dificuldade.js → os níveis de `PERIGO_POR_NIVEL`). A tela tem uma forma
+     de perigo só (`Mapa/Perigo`); o desafio usa-a com o número do herói. */
+  seloDoPatamar: { facil: "baixo", medio: "medio", dificil: "alto", impossivel: "mortal" },
 };
 
 /* ---------------- OS PRAZOS ----------------
@@ -333,6 +352,11 @@ const horasDaIda = (ida) => duas((ida.jornada ? Number(ida.jornada.totalMin) : N
        chegada: { dia, minuto, hora, fase, noite } — ou null sem relógio;
        minutosDeRelogio, avancos, modo ("a_pe" | "estrada"),
        perigoDoLugar,  — o da ficha, só se a neblina o mostra (senão null);
+       desafio,        — MC8: o patamar RELATIVO ao herói (`estado.ficha`),
+                         pela régua da boca; null sem ficha, sem herói ou
+                         destino que não é lugar:
+                         { patamar, rotulo, icone, nota, cor, selo, razao,
+                           porque, linha };
        perigoDaEstrada,— o pior das pernas, pela régua das arestas do mapa
                          vivo (null se alguma ponta o cala);
        motivoDoPerigo, — { ponta, chao, subiu } da pior perna (null com ele);
@@ -450,6 +474,24 @@ export function vereditoDaPartida(dados, destinoId, estado) {
   if (!calado && pior >= 0) perigoDaEstrada = PERIGOS[pior];
   if (calado || pior < 0) motivoDoPerigo = null;
 
+  /* ---------------- O DESAFIO (MC8) ----------------
+     A masmorra do mundo que é este lugar (pelo id da região; o nome, se o
+     id faltar), medida por `vereditoDaMasmorra` — a função da boca e da
+     porta. Só com o perigo à vista: o que a neblina cala, o desafio cala. */
+  let desafio = null;
+  try {
+    const pers = obj(e.ficha);
+    if (perigoDoLugar && pers) {
+      const m = masmorras.find((x) => obj(x) && x.id != null && String(x.id) === alvo.id)
+        || masmorras.find((x) => obj(x) && semArtigo(x.nome) === semArtigo(alvo.nome)) || null;
+      const v = m ? vereditoDaMasmorra(m, pers) : null;
+      if (v && v.dif && v.dif.patamar) {
+        const p = v.dif.patamar;
+        desafio = { patamar: p.id, rotulo: p.rotulo, icone: p.icone, nota: p.nota, cor: p.cor, selo: T.seloDoPatamar[p.id] || null, razao: v.dif.razao, porque: v.dif.porque, linha: v.linha };
+      }
+    }
+  } catch { desafio = null; }
+
   /* ---------------- A VOLTA ----------------
      De lá até aqui, pela mesma porta: chegado a uma povoação, o registo é
      ela; chegado à boca de um lugar, o herói está à boca dele (a cidade do
@@ -476,6 +518,7 @@ export function vereditoDaPartida(dados, destinoId, estado) {
     avancos: rel.avancos,
     modo: ida.rota.modo === "a_pe" ? "a_pe" : "estrada",
     perigoDoLugar,
+    desafio,
     perigoDaEstrada,
     motivoDoPerigo,
     horasDeVolta,

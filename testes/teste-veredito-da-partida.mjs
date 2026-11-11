@@ -22,7 +22,9 @@
      7. o mapa antigo e o continente; determinismo, lixo, imutabilidade;
      8. o que anda enquanto se anda: a exaustão, as invocações, as petições,
         a revolta e o passo da ameaça — e o prazo de missão, que NÃO anda;
-     9. a medida (medir-regiao.mjs, secção k).
+     9. a medida (medir-regiao.mjs, secção k);
+    10. MC8 (11/11) — o desafio do lugar: o patamar RELATIVO ao herói, e o
+        mesmo à boca, à porta e na proposta de masmorra (uma régua só).
 
    FALHA ANTES: `src/partida.js` não existe, e o import cai na primeira
    linha — o cartão não tinha veredito nenhum. */
@@ -45,6 +47,8 @@ import { gerarGeografia, TERRENO_VIAGEM } from "../src/geografia.js";
 import { moldePorId } from "../src/moldes.js";
 import { ESTRUTURAS } from "../src/historia.js";
 import { sementeDe, generoDe, medirVeredito, mediana, maximo } from "./medir-regiao.mjs";
+import { PATAMARES } from "../src/dificuldade.js";
+import { aPropostaDaFrase, A_PROPOSTA_DA_FRASE } from "../src/motor/a-proposta-da-frase.js";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 let ok = 0, mal = 0;
@@ -467,6 +471,132 @@ sec("9. a medida (medir-regiao.mjs, secção k)");
   const M = await medirVeredito(R, 60);
   for (const [k, xs] of Object.entries(M.horas)) console.log(`      ${k}: horas mediana ${mediana(xs)} / pior ${maximo(xs)} · noites mediana ${mediana(M.noites[k])} / pior ${maximo(M.noites[k])}`);
   t(`a medida corre e não acha contradição (${M.contra} em ${M.pares})`, M.pares > 5000 && M.contra === 0);
+}
+
+/* ============================================================
+   10. MC8 — O VEREDITO ANTES DE PARTIR (a 18.ª sessão, defeito 6)
+   O mapa disse «perigo médio»; o «DIFÍCIL… 5,1× menos» só apareceu à boca,
+   depois do clique. FALHA ANTES: `v.desafio` não existia (undefined), a
+   tabela `seloDoPatamar` também não, e a proposta de masmorra nascia com o
+   preço vazio e sem a linha da porta. */
+sec("10. MC8 — o desafio do lugar: o mapa diz o que a boca dirá");
+{
+  /* heróis de vários tamanhos: o patamar é do herói, não do lugar */
+  const heroi = (nivel, extra = {}) => ({ nome: "Ilsa Varn", nivel, vida: 8 + nivel * 6, vidaMax: 8 + nivel * 6,
+    atributos: { forca: 1 + (nivel >> 2), destreza: 1, vigor: 1, intelecto: 0, presenca: 0, percepcao: 1 },
+    grupo: [], suprimentos: { racoes: 3, agua: 3, tochas: 2, kit: false }, condicoes: [], ...extra });
+  const HEROIS = [heroi(1), heroi(4), heroi(9), heroi(15), heroi(3, { grupo: [{ nome: "Bran", nivel: 3, vida: 20, vidaMax: 20 }] }), heroi(5, { vida: 6, suprimentos: { racoes: 1, agua: 1, tochas: 0, kit: false } })];
+
+  /* a tabela */
+  const SP = T.seloDoPatamar || {};
+  const PER = R.PERIGO_POR_NIVEL.map((x) => x.id);
+  t("um selo por patamar, nenhum a mais", J(Object.keys(SP).sort()) === J(PATAMARES.map((p) => p.id).sort()));
+  t("cada selo é um perigo da régua do mapa", Object.values(SP).every((x) => PER.includes(x)));
+  t("e sobe com o patamar (Fácil veste menos caveiras que Impossível)", PATAMARES.map((p) => PER.indexOf(SP[p.id])).every((x, i, a) => i === 0 || x >= a[i - 1]));
+
+  let pares = 0, iguais = 0, iguaisBoca = 0, porEstrada = 0, aPe = 0, comSelo = 0, propostas = 0, propostasCertas = 0, naBoca = 0, naBocaCerta = 0;
+  let semFicha = 0, semFichaNulo = 0, povoados = 0, povoadoNulo = 0;
+  const patamaresPorLugar = new Map();
+  for (const w of mundos.slice(0, 60)) {
+    const base = w.nos.find((x) => x.tipo === "base");
+    const e0 = estadoEm(w, base);
+    const dados = dadosDe(w, e0);
+    for (const n of w.nos.filter((x) => x.id !== base.id)) {
+      if (n.tipo !== "lugar") {
+        const v = PA.vereditoDaPartida(dados, n.id, { ...e0, ficha: HEROIS[0] });
+        if (v) { povoados++; if (v.desafio === null) povoadoNulo++; }
+        continue;
+      }
+      const m = w.masmorras.find((x) => String(x.id) === n.id);
+      if (!m) continue;
+      const vSem = PA.vereditoDaPartida(dados, n.id, e0);
+      if (vSem) { semFicha++; if (vSem.desafio === null) semFichaNulo++; }
+      for (const [hi, pers] of HEROIS.entries()) {
+        const v = PA.vereditoDaPartida(dados, n.id, { ...e0, ficha: pers });
+        if (!v || !v.perigoDoLugar) continue;
+        pares++;
+        const d = v.desafio;
+        /* a porta (App: `vereditoDaMasmorra(doMapa, …)`) */
+        const porta = BO.vereditoDaMasmorra(m, pers);
+        if (d && porta && d.patamar === porta.dif.patamar.id && d.linha === porta.linha && d.porque === porta.dif.porque) iguais++;
+        if (d && d.selo === SP[d.patamar]) comSelo++;
+        /* a boca: a chegada que o jogo de facto faz — pela estrada (o alvo da
+           jornada) ou a pé (a masmorra do mundo) */
+        const origem = { x: base.src.x, y: base.src.y };
+        const rota = tenta(() => BO.rotaAteAMasmorra(m, origem, { de: base.nome, regiao: w.mapa.regiao }));
+        let boca = null;
+        if (rota && rota.modo === "estrada") {
+          const j = tenta(() => BO.jornadaAteAMasmorra({ rota, masmorra: m, origem }, { de: base.nome, dia: 4 }));
+          if (j) { porEstrada++; boca = tenta(() => BO.chegadaABoca(j.alvo, { cidade: base.nome, dia: 4, pers, jornada: j })); }
+        } else if (rota) { aPe++; boca = tenta(() => BO.chegadaABoca(m, { cidade: base.nome, dia: 4, pers, minutos: rota.minutos })); }
+        if (d && boca && boca.linhas.includes(d.linha)) iguaisBoca++;
+        /* a proposta: com a masmorra e o herói, e à boca */
+        const pr = aPropostaDaFrase({ frase: `Vou até ${m.nome}`, masmorra: { nome: m.nome, linhas: rota ? [BO.linhaDaIda(rota)].filter(Boolean) : [], alvo: m, pers } }, {});
+        propostas++;
+        if (pr && d && pr.linhas.filter((x) => x === d.linha).length === 1 && pr.desafio && pr.desafio.patamar === d.patamar && pr.preco.includes(d.rotulo)) propostasCertas++;
+        const pb = aPropostaDaFrase({ frase: "Entro.", masmorra: { nome: m.nome, linhas: [], alvo: m, pers, aBoca: true } }, {});
+        naBoca++;
+        if (pb && d && pb.linhas.includes(d.linha) && pb.verbo.startsWith("Entrar ") && pb.confirmar === A_PROPOSTA_DA_FRASE.confirmar.masmorraNaBoca) naBocaCerta++;
+        const k = `${w.i}|${n.id}`;
+        if (!patamaresPorLugar.has(k)) patamaresPorLugar.set(k, { perigo: v.perigoDoLugar, nivel: m.nivel, nome: m.nome, por: [] });
+        patamaresPorLugar.get(k).por[hi] = d ? d.patamar : null;
+      }
+    }
+  }
+  t(`o mapa dá o desafio de todo lugar com perigo à vista (${pares} pares herói × lugar)`, pares > 1000);
+  t(`uma régua só: o patamar, a linha e o porquê do mapa são os da porta (${iguais}/${pares})`, iguais === pares);
+  t(`e os da boca, pela estrada e a pé (${iguaisBoca}/${pares}; ${porEstrada} pela estrada, ${aPe} a pé)`, iguaisBoca === pares && porEstrada > 0 && aPe > 0);
+  t(`o selo de cada desafio é o da tabela (${comSelo}/${pares})`, comSelo === pares);
+  t(`nenhuma proposta de masmorra sem veredito: a linha da porta, uma vez, e o patamar como preço (${propostasCertas}/${propostas})`, propostasCertas === propostas && propostas > 0);
+  t(`e à boca o verbo é entrar, com a mesma linha (${naBocaCerta}/${naBoca})`, naBocaCerta === naBoca && naBoca > 0);
+  t(`sem ficha, o mapa não opina (${semFichaNulo}/${semFicha})`, semFicha > 50 && semFichaNulo === semFicha);
+  t(`uma povoação não tem desafio (${povoadoNulo}/${povoados})`, povoados > 50 && povoadoNulo === povoados);
+  /* o defeito da sessão: o mesmo «perigo médio» que é Fácil para um e Difícil para outro */
+  const medios = [...patamaresPorLugar.values()].filter((x) => x.perigo === "medio" && new Set(x.por.filter(Boolean)).size >= 2);
+  const exemplo = medios.find((x) => x.por[0] !== "medio") || medios[0] || null;
+  if (exemplo) console.log(`      «${exemplo.nome}» (nível ${exemplo.nivel}, «perigo médio» no mapa): ${HEROIS.map((h, i) => `nv ${h.nivel}${h.grupo.length ? "+1" : ""}${h.vida < h.vidaMax ? " ferido" : ""} → ${exemplo.por[i]}`).join(" · ")}`);
+  t(`o «perigo médio» absoluto não é um patamar: muda com o herói (${medios.length} lugares médios com dois patamares ou mais)`, medios.length > 20);
+  const todos = new Set([...patamaresPorLugar.values()].flatMap((x) => x.por.filter(Boolean)));
+  t(`os quatro patamares aparecem no mapa (${[...todos].join(", ")})`, todos.size === PATAMARES.length);
+
+  /* a proposta: o veredito pronto (o de `idaAMasmorra`) não se repete, e sem
+     nada que o diga a proposta antiga fica como era */
+  const w = mundos[0], m = w.masmorras[0], pers = HEROIS[1];
+  const pv = BO.vereditoDaMasmorra(m, pers);
+  const p1 = aPropostaDaFrase({ frase: "Vou à cripta", masmorra: { nome: m.nome, linhas: ["🧭 a caminho", pv.linha], veredito: pv } }, {});
+  t("o veredito pronto que já vem nas linhas não se repete", !!p1 && p1.linhas.filter((x) => x === pv.linha).length === 1 && p1.preco === `${pv.dif.patamar.icone} ${pv.dif.patamar.rotulo}`);
+  const p2 = aPropostaDaFrase({ frase: "Vou à cripta", masmorra: { nome: m.nome, linhas: ["🧭 a caminho"], veredito: pv } }, {});
+  t("o pronto que não vem nas linhas entra logo depois do caminho", !!p2 && p2.linhas[0] === "🧭 a caminho" && p2.linhas[1] === pv.linha);
+  const p3 = aPropostaDaFrase({ frase: "Vou à cripta", masmorra: { nome: m.nome, linhas: ["2 h"] } }, {});
+  t("sem veredito nem herói, a proposta é a de antes (preço vazio, desafio null)", !!p3 && p3.preco === "" && p3.desafio === null && J(p3.linhas) === J(["2 h"]));
+  const p4 = aPropostaDaFrase({ frase: "Vou à cripta", masmorra: { nome: m.nome, linhas: [], alvo: m, pers: null, veredito: { linha: "", dif: null } } }, {});
+  t("veredito podre e herói nulo: sem linha inventada", !!p4 && p4.desafio === null && p4.linhas.length === 0);
+  t("a proposta que não é de masmorra não leva desafio", (aPropostaDaFrase({ frase: "Durmo", sono: { tipo: "longo", preco: "", retorno: "" } }, {}) || {}).desafio === null);
+
+  /* a neblina: o boato não tem ficha, logo não tem desafio */
+  let boatos = 0, boatoNulo = 0;
+  for (const w2 of mundos.slice(0, 60)) {
+    const e = { cidadeAtual: w2.base.nome, dia: 1, minuto: 480, semente: w2.semente, mapa: w2.mapa, ficha: HEROIS[0] };
+    const dados = dadosDe(w2, e);
+    for (const no of dados.nos.filter((x) => x.tipo === "lugar" && x.estado === "boato")) {
+      const v = PA.vereditoDaPartida(dados, no.id, e);
+      if (v) { boatos++; if (v.desafio === null) boatoNulo++; }
+    }
+  }
+  t(`o boato não tem desafio (${boatoNulo}/${boatos})`, boatos > 50 && boatoNulo === boatos);
+
+  /* determinismo, lixo, imutabilidade */
+  const wd = mundos[3], bd = wd.nos.find((x) => x.tipo === "base"), ld = wd.nos.find((x) => x.tipo === "lugar");
+  const ed = { ...estadoEm(wd, bd), ficha: HEROIS[2] };
+  const dd = dadosDe(wd, ed);
+  const antes = J([ed.ficha, dd]);
+  const a1 = J(PA.vereditoDaPartida(dd, ld.id, ed)), a2 = J(PA.vereditoDaPartida(dd, ld.id, ed));
+  t("o mesmo herói no mesmo lugar dá o mesmo desafio", a1 === a2 && a1.includes('"desafio":{'));
+  t("e não toca no herói nem nos dados", J([ed.ficha, dd]) === antes);
+  for (const lixo of [null, "x", 3, []]) {
+    const v = tenta(() => PA.vereditoDaPartida(dd, ld.id, { ...ed, ficha: lixo }), "estourou");
+    t(`ficha de lixo (${J(lixo)}): sem desafio, e o resto do veredito de pé`, v !== "estourou" && !!v && v.desafio === null);
+  }
 }
 
 console.log(`\nveredito da partida: ${ok} passaram, ${mal} falharam`);
