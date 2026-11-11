@@ -144,6 +144,69 @@ O chamado pendente não vai ao save.
 MC8 → MC9 · MC10 · MC11. **Para a pessoa** (planta §7): se o Mestre completa a régua quando a frase
 não pede (a minha escolha: não, mede-se); e se a inspiração do Mestre (§6) entra nesta fase.
 
+### Fase EM — o estudo do Mestre (autorizada pela pessoa, 10/11 · corre ao lado da MC, depois da MC4)
+
+**A palavra da pessoa (10/11/2026):** *«tudo o que esse sistema conseguir fazer depois de treinado com
+as campanhas do critical role, ele deverá poder fazer, desde que fique melhor do que temos hoje».*
+**O estudo:** `mente/estudo-do-mestre.md` (o `conselheiro`, 10/11) — 159 episódios contados contra 226
+respostas nossas; as métricas lado a lado (§2), as lacunas por efeito no jogador (§3), o que muda na MC
+(§4). Nenhuma frase do programa no projeto; a semente do classificador fica no scratchpad
+(`crd3/semente-das-intencoes.json`). **O peso:** os itens `pesado` estão cobertos pela palavra de
+hoje e pela liberdade de 28/09 (todos reversíveis num commit; nenhum mexe em campo de save que já
+existe). Cada um prova-se na 19.ª sessão (o MC11) com a medida escrita.
+
+- [ ] **EM1 · a taxa de dado por intenção, como catraca** · médio (ampliar acervo em tabela existente
+  + teste faltante) · de: conselheiro · 10/11
+  O Matt rola em ~1 de 4 declarações (rastrear 57%, ler alguém 51%, procurar 43%…); nós em 4% (S18: 1
+  dado nascido da frase em 26). Um corpus etiquetado das nossas frases corre pelo `lerAcao` com
+  contexto, e a taxa por categoria fica a ±15 pontos da semente; no catálogo, «procuro ‹pessoa
+  conhecida›» é ir, não buscar, e «examino ‹coisa à mão›» vai a Investigação (o Matt divide a busca
+  42/40). Lei: *toda regra tem um teste*. Quem: backend + testes. Prova na 19.ª: ≥ 20% dos turnos fora
+  da luta com dado nascido da frase.
+- [ ] **EM2 · a resposta do tamanho da pergunta** · pesado (a voz do Narrador em massa) · de:
+  conselheiro · 10/11
+  A uma pergunta de jogo o Matt responde em 11 palavras (p75: 25); nós em 113, nunca menos de 44.
+  `TAMANHO_DA_RESPOSTA` por tipo de turno → uma linha da pauta dinâmica que **substitui** a de tamanho e o
+  `maxTokens` do pedido. Lei: *o teto de prompt é sagrado* (nada soma). Quem: backend → oficial. Prova:
+  mediana das respostas a perguntas ≤ 40 palavras, chegadas ≥ 80, custo por resposta a cair.
+- [ ] **EM3 · saber comum não se rola** · pesado (muda quando o dado sai) · de: conselheiro · 10/11
+  O Matt responde «o que sei de…» sem dado em 78%; a MC1 manda tudo a Saberes. Linha nova em
+  `QUANDO_O_MESTRE_CHAMA`: o que a origem, o ofício e o registo do lugar dariam sai como facto, sem
+  dado; o dado fica para o raro. Lei: *se é número, é tabela*. Quem: backend. Prova: suíte (cidade onde
+  estou → facto sem dado; criatura rara → dado); na 19.ª, ~1 em 4 perguntas de saber com dado.
+- [ ] **EM4 · a falha por pouco dá meia-verdade** · pesado (mecânica do desfecho) · de: conselheiro ·
+  10/11
+  Depois de um resultado baixo o Matt diz «nada» em 7% — meia-verdade em 23%, mordida em 11%, a cena
+  segue em 59%. `MARGEM_DA_FALHA`: falhar por ≤ 3 dá o facto com uma parte em falta ou com custo;
+  falhar por mais cobra o aviso; «nada acontece» nunca. Junto da MC4 (que sobe o alvo para 97%: o Matt
+  está em ~99% de sucessos com substância). Quem: backend. Prova: 10 000 rolagens semeadas; na 19.ª,
+  falhas narradas como «nada» ≤ 10%.
+- [ ] **EM5 · a oferta segue a cena** · pesado (muda o que o Mestre pede sem a frase) · de:
+  conselheiro · 10/11
+  37% dos dados do Matt vêm sem ação declarada, espalhados por cinco perícias e 10% em grupo; nós demos
+  quatro Percepções iguais em 26 turnos. Na MC6: lugar guardado → Furtividade, alguém que esconde →
+  Intuição, há o que achar → Percepção, companheiro presente → em grupo; nunca a mesma perícia duas
+  vezes seguidas. Quem: backend → oficial. Prova: em 1000 cenas nenhuma perícia > 40% das ofertas; na
+  19.ª, ≥ 3 perícias diferentes nas ofertas.
+- [ ] **EM6 · as pinceladas por turno** · pesado (a voz do Narrador em massa) · de: conselheiro · 10/11
+  48% das nossas respostas usam três sentidos (o Matt: 4%); cheiro em 27% (ele: 3%). `PINCELADAS_POR_TURNO`:
+  chegada até 2 sentidos, continuação 0–1, numa linha CENA dinâmica que troca a fixa. Quem: backend.
+  Prova: em turnos sem mudança de lugar, cheiro ou tato ≤ 20%, três sentidos ≤ 10%.
+- [ ] **EM7 · o mundo que mexe abaixo do próprio teto** · médio (medir, e ampliar acervo no mesmo
+  formato) · de: conselheiro · 10/11
+  O Matt interrompe em ~7% das declarações; o nosso envelope aparece em 2,9% dos turnos, abaixo do que
+  `RITMO_DO_MUNDO` (`oraculo.js:692`) permite. **Não provei a causa:** suspeito de `MOVIMENTOS_DO_MUNDO`
+  com poucas entradas abertas. Primeiro medir em Node os `null` por falta de movimento; se for isso,
+  ampliar. Quem: backend. Prova: movimento aberto em ≥ 80% de 1000 contextos de cidade.
+- [ ] **EM8 · o gancho de saída** · pesado (muda o que o jogador vive) · de: conselheiro · 10/11
+  64% dos episódios do Matt fecham logo depois de uma novidade ou numa luta. Não achei em `src/` momento
+  de fecho nem «da última vez» na reabertura. Ao dormir ou sair, o sistema escolhe do registo o fio mais
+  quente e a reabertura começa por ele (campo novo, aditivo, se precisar de guardar). Quem: jogo →
+  backend → oficial. Prova: o gancho sai sempre do registo; na 19.ª, reabrir e a 1.ª resposta cita-o.
+
+**A ordem:** EM1 (corre já, é a régua do MC11) · EM3 e EM4 com a MC4 · EM5 com a MC6 · EM2 e EM6 (a
+voz, juntas, medidas na mesma sessão) · EM7 · EM8.
+
 ### Fase CB — o combate e a viagem (a ordem da pessoa, 09/11 · o topo da fila do sistema)
 
 **A palavra da pessoa (09/11/2026), resumida:** partiu pelo mapa e *«instantaneamente abriu uma
