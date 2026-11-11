@@ -516,7 +516,17 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      lê no modo `ator` de MODO_DO_NARRADOR. Sai quando ela a importar. */
   /* Paga a da ficha (03/11, etapa 2, o oficial): `motor/pedido-do-ator.js`
      importa-a, e o App e o servidor importam o pedido do ator. */
-  const ESPERA_DO_MOTOR = {};
+  /* 10/11 (Fase MC, MC2, backend): `o-mestre-chama.js` nasce antes do
+     importador — `oChamado` (a linha do Mestre entre a frase e o dado: a
+     perícia, o número, o preço), a régua de quando não chama
+     (QUANDO_O_MESTRE_CHAMA, porQueNaoChama) e o molde da linha (O_CHAMADO).
+     Credor: o `oficial`, na MC3 da MESMA fase — o chamado entra entre a
+     frase e a chamada do Narrador, e o d20 espera o toque. A entrada sai
+     quando o App (ou uma peça do motor) o importar.
+     `teste-o-mestre-chama.mjs` é o primeiro leitor. */
+  const ESPERA_DO_MOTOR = {
+    "o-mestre-chama.js": "MC3 · oficial · 10/11",
+  };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   /* 03/11 (etapa 2 do Narrador ator), MUDADA E O MOTIVO: a régua só via o
      import por `/motor/x.js"` (o do App, do servidor, de src/), e uma peça

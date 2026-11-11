@@ -232,6 +232,48 @@ export function degrauDaDC(dc) {
 const DC = (id) => (dificuldadePorId(id) || { dc: 13 }).dc;
 
 /* ============================================================
+   A CD PELA SITUAÇÃO (MC2, 10/11 — «o Mestre chama o dado»)
+
+   O degrau diz o que o obstáculo é; a situação diz o que o mundo lhe
+   soma. O +3 da luta era o único, e era número solto no meio de `lerAcao`
+   desde a v9.64 — entra aqui com nome, ao lado dos dois que o Matt diria
+   antes do dado: a chuva que lavou o rasto, o escuro de quem procura sem
+   luz.
+
+   `se` é a chave do contexto (`ctx` de `lerAcao`) que liga a linha;
+   `alvos`, os alvos do catálogo a que ela pesa (sem lista, pesa a todos);
+   `diz` entra na etiqueta e no chamado.
+
+   A RÉGUA NÃO CAI ABAIXO DA DE HOJE (a prova da MC2). Sem nenhuma chave de
+   contexto ligada, a CD é a de antes, número por número. Com elas, a soma
+   das situações nunca passa do peso da luta — o pior caso que o jogo já
+   tinha: nenhuma situação nova faz um teste mais duro do que ele já podia
+   ser. A luta vem primeiro na tabela, e em luta nada mais se soma.
+   ============================================================ */
+export const SITUACAO_DA_CD = [
+  { id: "luta", se: "emCombate", alvos: null, delta: 3, diz: "no meio da luta", quando: "em luta, num desafio que não é de luta" },
+  { id: "chuva", se: "chove", alvos: ["rastro"], delta: 2, diz: "com a chuva", quando: "chuva, no rasto" },
+  { id: "escuro", se: "escuro", alvos: ["busca", "investigacao", "rastro"], delta: 2, diz: "no escuro", quando: "noite sem luz, na busca e no rasto" },
+];
+function situacoesDaCD(d, ctx) {
+  const c = ctx && typeof ctx === "object" ? ctx : {};
+  const teto = (SITUACAO_DA_CD.find((l) => l.id === "luta") || { delta: 0 }).delta;
+  const out = [];
+  let soma = 0;
+  for (const l of SITUACAO_DA_CD) {
+    if (!c[l.se]) continue;
+    if (l.alvos && !l.alvos.includes(d.alvo)) continue;
+    /* o que vale dentro da luta (lembrar a fraqueza) não paga a luta */
+    if (l.id === "luta" && d.valeEmCombate) continue;
+    const delta = Math.min(l.delta, teto - soma);
+    if (delta <= 0) continue;
+    soma += delta;
+    out.push({ id: l.id, delta, diz: l.diz });
+  }
+  return out;
+}
+
+/* ============================================================
    PROCURAR PARA IR (30/09, da prova jogada de MM13)
 
    "Procuro uma taverna" deu um teste de Percepção e um baú de 168
@@ -352,7 +394,15 @@ export const DESAFIOS = [
        cá uma palavra que ela roubaria: examinar um CORPO é Medicina,
        procurar ÁGUA no ermo é Sobrevivência, e nenhuma das duas é revirar
        um cômodo — mas as três dizem "examino" e "procuro". */
-    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b|\b(corpo|cad[aá]ver|ferimento|ferido|morto|doente|pulso)\b|\b(procuro|acho|busco)\s+(a|o|um|uma)?\s*(agua|[aá]gua|abrigo|po[cç]o|comida|caminho|norte|rumo|lenha)\b|\b(memoria|lembrancas?)\b/,
+    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b|\b(corpo|cad[aá]ver|ferimento|ferido|morto|doente|pulso)\b|\b(procuro|acho|busco)\s+(a|o|um|uma)?\s*(agua|[aá]gua|abrigo|po[cç]o|comida|caminho|norte|rumo|lenha)\b|\b(memoria|lembrancas?)\b|\bexamin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|selos?|runas?|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b/,
+    /* MC1 (10/11, a 18.ª sessão): e as duas últimas. EXAMINAR UM VESTÍGIO
+       NÃO É REVIRAR O LUGAR. «Examino o corte na carcaça» caía aqui, com a
+       chave do lugar (`|busca`) — e a oferta «Olhar à volta» do Mestre já a
+       tinha queimado: o jogador escrevia o gesto certo e ouvia «já revirei».
+       Ler um corte, uma marca, um rasgo é Investigação (`investigar`, logo
+       abaixo, com a chave do objeto); o selo e a runa são do `arcano`.
+       «Procuro rastros na lama» continua aqui (o corpus do primeiro dia
+       manda): procurar é a busca, seguir é o rasto. */
     /* MM4: a última alternativa acima. A MEMÓRIA não é um cômodo: "vasculho
        a memória atrás do nome dele" casava `vasculh` e marcava o quarto como
        revirado — o corpus do improviso achou. Lembrar é Intelecto, e cai no
@@ -373,9 +423,14 @@ export const DESAFIOS = [
   },
   {
     id: "investigar",
-    rx: /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo)/,
+    rx: /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo|examin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b)/,
     pericia: "investigacao", alvo: "investigacao", minutos: 15, barulho: false,
     rotulo: "ler os vestígios", dcPadrao: DC("incomum"), lePergunta: true,
+    /* MC1: o vestígio examinado tem a SUA tentativa. «Examino o corte na
+       carcaça» e «investigo o que aconteceu aqui» são duas perguntas, e a
+       primeira não pode fechar a segunda (nem a oferta do Mestre, que é
+       busca, fecha nenhuma delas). A chave leva as palavras do objeto. */
+    objetoDaChaveDe: /\bexamin\w*\s+(?:o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+([^.!?;:]{2,60})/,
   },
   {
     id: "escutar",
@@ -392,7 +447,10 @@ export const DESAFIOS = [
   },
   {
     id: "fraqueza",
-    rx: /\b(fraqueza|ponto fraco|vulnerab|identific\w* (o|a|esse|essa|aquele)?\s*(inimigo|criatura|monstro|bicho)|o que (eu )?sei sobre|reconhe[cç]o (o|a|esse|essa))/,
+    /* MC1: «o que sei sobre» só é a fraqueza quando o objeto é a criatura
+       («…sobre essa criatura»). «O que eu sei sobre a Agulha de Sal?» rolava
+       «lembrar o que se sabe da criatura» de um sítio — agora é `lembrar`. */
+    rx: /\b(fraqueza|ponto fraco|vulnerab|identific\w* (o|a|esse|essa|aquele)?\s*(inimigo|criatura|monstro|bicho)|o que (eu )?sei sobre (esse|essa|este|esta|aquele|aquela|o|a)\s+(criatura|monstro|bicho|fera|besta|inimigo|coisa)|reconhe[cç]o (o|a|esse|essa))/,
     /* v9.67: `reconheço esse ___` é largo demais, e a leva nova trouxe quem
        o disputa. Reconhecer a criatura é lembrar do bestiário; reconhecer
        um BRASÃO é lembrar de quem manda em quem — outra pergunta, outra
@@ -404,6 +462,27 @@ export const DESAFIOS = [
     /* este é o único que vale DENTRO da luta sem penalidade de tempo: é
        exatamente para isto que a perícia de saberes existe */
     valeEmCombate: true,
+  },
+  {
+    /* MC1 (10/11, a 18.ª sessão): «O que sei de Alto Negro, da Agulha, de
+       bichos assim?» devolvia null — o catálogo tinha Saberes para a
+       criatura e para o brasão, e nenhum para o LUGAR ou para a GENTE. É a
+       pergunta que se faz ao Matt mais vezes que qualquer outra, e a
+       resposta dele é «rola Saberes».
+
+       Só a forma da pergunta («o que sei de/sobre…», «o que lembro de…»,
+       «já ouvi falar de…»). O verbo solto fica onde estava: «tento lembrar
+       onde vi esse brasão» é o improviso de Intelecto (MM4), e «lembro ao
+       guarda que…» é fala, não memória. A chave leva o assunto: perguntar
+       por Alto Negro não fecha a pergunta pela Agulha. `sobre` viaja no
+       veredito para o facto do sucesso (MC4) achar a ficha certa — o lugar
+       na base, a pessoa no livro, o bicho no bestiário. */
+    id: "lembrar",
+    rx: /\b(o que (eu )?(sei|lembro|recordo|ouvi( dizer| falar)?) (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?)\b|j[aá] ouvi falar (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|em|no|na|nos|nas)\b)/,
+    pericia: "saberes", alvo: "lembranca", minutos: 0, barulho: false,
+    rotulo: "lembrar o que se sabe", dcPadrao: DC("comum"), dispensavel: true, lePergunta: true,
+    valeEmCombate: true,
+    objetoDaChaveDe: /\b(?:sei|lembro|recordo|ouvi(?: dizer| falar)?|falar)\s+(?:de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?|em|no|na|nos|nas)\s+([^.!?;:]{2,80})/,
   },
   {
     id: "mentira",
@@ -579,7 +658,12 @@ export const DESAFIOS = [
   },
   {
     id: "rastrear",
-    rx: /\b(rastre|sigo as pegadas|sigo o rastro|seguir o rastro|leio o ch[aã]o|farejo)/,
+    /* MC1 (10/11, a 18.ª sessão): «Sigo o rasto.» — a palavra do próprio
+       passo da quest — devolvia null: o catálogo conhecia «rastro» e não
+       «rasto», nem as marcas, nem «por onde foi». Perguntar por onde alguém
+       foi a uma pessoa é conversa, e fica de fora. */
+    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu))/,
+    naoSe: /\b(pergunt|quero saber|me diz|me conta|diga-me)/,
     pericia: "sobrevivencia", alvo: "rastro", minutos: 30, barulho: false,
     rotulo: "rastrear", dcPadrao: DC("incomum"),
     /* meia hora de mundo por tentativa: rolar contra um chão que não tem
@@ -588,13 +672,19 @@ export const DESAFIOS = [
   },
   {
     id: "estancar",
-    rx: /\b(estanco|estancar|estabilizo|estabilizar|trato o ferimento|cuido do ferimento|fa[cç]o um curativo)\b/,
+    /* MC1 (10/11, a 18.ª sessão): «Cuido das feridas de Elowen», «faço um
+       torniquete», «pressiono o ferimento», «enfaixo», «socorro a minha
+       irmã» — as cinco davam null. O catálogo só conhecia «cuido DO
+       ferimento». E com QUEM: a chave leva a pessoa (tratar Elowen não
+       fecha tratar a irmã), e `quem` viaja no veredito. */
+    rx: /\b(estanco|estancar|estabilizo|estabilizar|trato (o|a|os|as|do|da) (ferimento|ferida|corte|machucado)s?|cuido (do|da|dos|das) (ferimento|ferida|corte|machucado)s?|fa[cç]o um (curativo|torniquete)|aplico um (curativo|torniquete)|torniquete|enfaix(o|ar|ando)|pressiono (o|a|os|as) (ferimento|ferida|corte|sangramento)s?|fa[cç]o press[aã]o (no|na|sobre o|sobre a) (ferimento|ferida|corte)|socorr(o|er) (a|o|minha|meu|nossa|nosso|el[ae])|presto (os primeiros )?socorros?)\b/,
     pericia: "medicina", alvo: "medicina", minutos: 10, barulho: false,
     rotulo: "estancar", dcPadrao: DC("comum"),
+    comQuem: true,
   },
   {
     id: "arcano",
-    rx: /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examino o selo|o que (é|e) esse feiti)\b/,
+    rx: /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examin\w* (o|a) (selo|runa)|o que (é|e) esse feiti)\b/,
     pericia: "arcanismo", alvo: "arcano", minutos: 10, barulho: false,
     rotulo: "ler o arcano", dcPadrao: DC("incomum"), lePergunta: true,
   },
@@ -673,6 +763,22 @@ export const DESAFIOS = [
     rx: /\b(me equilibr(o|ar)|atravesso (a|o) (viga|corda|tronco|parapeito|beiral|telhado)|ando pel[ao] (viga|corda|beiral|parapeito)|passo pel[ao] (peitoril|beiral|parapeito))/,
     pericia: "acrobacia", alvo: "equilibrio", minutos: 2, barulho: false,
     rotulo: "atravessar sem cair", dcPadrao: DC("incomum"), corpo: true, queda: true,
+  },
+  {
+    /* MC1 (10/11, a 18.ª sessão): a prisioneira de mãos atadas a raízes.
+       «Forço os pulsos contra as raízes para arrebentá-las» só rolava pelo
+       improviso (a família de Força, com a chave de um gesto qualquer); é
+       a porta de saída do cativeiro pela força, e tem o seu lugar ao lado
+       de `escapar`, que é a mesma porta pelo jeito (Acrobacia, «me
+       contorço»). A tentativa é outra — falhar a torcer não fecha o puxar —
+       e o preço também: a força rasga a pele que a contorção poupa.
+       «Puxo a corda com toda a força» não está aqui: puxar uma corda é o
+       improviso de Força (MM4), e só forçar O QUE PRENDE é sair dele. */
+    id: "arrebentar",
+    rx: /\b(arrebent\w*|romp(o|er)|estouro|for[cç]o|tor[cç]o)\b[^.!?]{0,40}\b(amarras?|cordas?|ra[ií]zes|correntes?|grilh[oõ]es|grilh[aã]o|algemas?|n[oó]s|la[cç]os?|pulsos|cip[oó]s?|tiras?|correias?)\b/,
+    naoSe: /\b(dele|dela|deles|delas|do guarda|do bandido|do inimigo|do sino)\b/,
+    pericia: "atletismo", alvo: "arrebentar", minutos: 5, barulho: false,
+    rotulo: "arrebentar o que prende", dcPadrao: DC("comum"), corpo: true,
   },
   {
     id: "escapar",
@@ -764,6 +870,7 @@ const COMO_SE_DIZ = {
   investigar: "leio os vestígios para saber o que aconteceu aqui",
   escutar: "encosto o ouvido na porta",
   fraqueza: "tento lembrar o que sei sobre essa criatura",
+  lembrar: "o que eu sei sobre a ponte velha?",
   mentira: "tento saber se ele está mentindo",
   tranca: "forço a fechadura com a gazua",
   escalar: "escalo o muro pelo lado da hera",
@@ -784,6 +891,7 @@ const COMO_SE_DIZ = {
   saltar: "salto o vão até o outro telhado",
   forcar: "empurro a pedra que trava a passagem",
   equilibrio: "atravesso a viga sem olhar para baixo",
+  arrebentar: "forço os pulsos até arrebentar as cordas",
   escapar: "me solto das cordas torcendo os pulsos",
   aguentar: "seguro o fôlego e sigo em frente",
   cavalgar: "esporeio o cavalo por dentro do bosque",
@@ -1457,6 +1565,30 @@ export function escolhaDoTeste(v) {
   return { rolar: E.rolar, desistir: E.desistir, podeDesistir: true, risco, danoMax: Math.max(danoMax, danoDaQueda), cai, condicao, custaNoFio: !!fio };
 }
 
+/* MC1: as palavras de conteúdo de um objeto ou de uma pessoa, para a chave
+   do livro de tentativas — as mesmas vazias da chave do improviso */
+function palavrasDaChave(s) {
+  return norm(s).replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((p) => p.length > 1 && !VAZIAS_DA_CHAVE.has(p)).slice(0, 4).join("-") || "isto";
+}
+/* MC1: quem é tratado — «as feridas DE Elowen», «socorro A minha irmã».
+   Pronome («dela») não é nome: sem nome, a chave é a do lugar, como antes. */
+const RX_QUEM_SE_TRATA = [
+  /\b(?:feridas?|ferimentos?|cortes?|machucados?|bra[cç]o|perna|cabe[cç]a|ombro|peito|ventre|barriga|flanco|m[aã]o|sangramento) d(?:e|o|a)\s+([a-z][a-z'-]+(?:\s+(?:d[aeo]s?\s+)?[a-z][a-z'-]+)?)/,
+  /\bsocorr\w*\s+(?:a|o)\s+((?:minha|meu|nossa|nosso)\s+[a-z]+|[a-z][a-z'-]+)/,
+];
+function quemDoCuidado(cru) {
+  const c = String(cru || "");
+  const n = norm(c);
+  for (const rx of RX_QUEM_SE_TRATA) {
+    const m = n.match(rx);
+    if (!m) continue;
+    const ini = m.index + m[0].length - m[1].length;
+    const nome = n.length === c.length ? c.slice(ini, ini + m[1].length) : m[1];
+    return nome.replace(/[.,;:!?]+$/, "").trim();
+  }
+  return "";
+}
+
 export function lerAcao(texto, ctx = {}) {
   const cru = String(texto || "");
   if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
@@ -1580,6 +1712,11 @@ export function lerAcao(texto, ctx = {}) {
   const descrito = (d.social || d.alvoNomeado) ? alvoDescrito(cru) : null;
   const pessoa = achada && descrito && !ditoNaFrase(cru, achada.nome) && !quemADescricaoAponta(cru, [achada]) ? null : achada;
   const quemDescrito = !pessoa && descrito ? descrito.descricao : "";
+  /* MC1: quem se trata (`comQuem`) — lido da frase, nunca do elenco: com
+     uma só pessoa de fora na cena, `pessoaDe` devolveria ela, e quem sangra
+     é a irmã do grupo */
+  const quemCuidado = d.comQuem ? quemDoCuidado(cru) : "";
+  const doObjeto = d.objetoDaChaveDe ? (daAcao.match(d.objetoDaChaveDe) || [])[1] || "" : "";
 
   /* ---------------- O QUE CONVERSA NENHUMA COMPRA ----------------
      Antes do livro de tentativas de propósito: pedir a alguém que se mate
@@ -1613,7 +1750,8 @@ export function lerAcao(texto, ctx = {}) {
   const reg = garantirTentativas(tentativas);
   const chave = chaveDaTentativa(lugar, conta
     ? `${d.alvo}|${(pessoa && pessoa.nome) || "quem quer que seja"}|${conta.tamanho}`
-    : d.alvo);
+    : quemCuidado ? `${d.alvo}|${palavrasDaChave(quemCuidado)}`
+      : doObjeto ? `${d.alvo}|${palavrasDaChave(doObjeto)}` : d.alvo);
   const feito = reg[chave] || null;
 
   /* ---------------- A TRANCA E AS SUAS VIAS ---------------- */
@@ -1705,10 +1843,13 @@ export function lerAcao(texto, ctx = {}) {
     const tr = trancaDe(semente, lugar, "porta");
     dc = tr.dc + (via ? via.ajuste : 0);
     deOnde = `${tr.nome}, ${via ? via.nome : "no braço"}`;
-  } else if (achado && achado.dc) {
-    dc = achado.dc;
-    deOnde = "há algo escondido aqui, e esta é a dificuldade dele";
   } else {
+    /* MC2 (§2.6 da planta): O NÚMERO NÃO DENUNCIA O SEGREDO. Até aqui a CD
+       de uma busca com achado era a do achado, e a etiqueta dizia «há algo
+       escondido aqui, e esta é a dificuldade dele» — o número contava o
+       segredo antes do dado, e o chamado do Mestre (motor/o-mestre-chama.js)
+       mostraria isso na tela. A busca e a investigação têm a CD do lugar,
+       com e sem achado; o achado só decide o que o sucesso dá. */
     dc = d.dcBase || d.dcPadrao || DC("comum");
     /* v9.67: dizia "obstáculo comum" para tudo, inclusive para um 18. O
        jogador lia o número e a etiqueta discordando dele. Agora a etiqueta
@@ -1720,7 +1861,9 @@ export function lerAcao(texto, ctx = {}) {
   }
   const alivio = bonusDoQueMudou(mudou);
   if (alivio) { dc -= alivio; deOnde += `, ${mudou.map((m) => m.diz).join(" e ")} (−${alivio})`; }
-  if (emCombate && !d.valeEmCombate) { dc += 3; deOnde += ", no meio da luta (+3)"; }
+  /* MC2: a luta (o +3 que era solto aqui), a chuva e o escuro — SITUACAO_DA_CD */
+  const situacoes = situacoesDaCD(d, ctx);
+  for (const s of situacoes) { dc += s.delta; deOnde += `, ${s.diz} (+${s.delta})`; }
 
   const teste = {
     tipo: "teste",
@@ -1752,8 +1895,12 @@ export function lerAcao(texto, ctx = {}) {
     /* v9.65: a conta social inteira viaja junto — o que o sucesso compra,
        o que ele não compra, o que foi pago e o blefe que não colou. */
     social,
-    quem: (pessoa && pessoa.nome) || quemDescrito,
+    quem: (pessoa && pessoa.nome) || quemDescrito || quemCuidado,
     pessoa: pessoa || null,
+    /* MC1: o assunto da memória (`lembrar`), para o facto do sucesso */
+    sobre: d.id === "lembrar" ? doObjeto.trim() : "",
+    /* MC2: as situações que pesaram na CD, para o chamado dizê-las */
+    situacoes,
     /* v9.65: o que a falha cobra. Sai do ALVO e não do id, porque é o alvo
        que diz a natureza da coisa — e os alvos sociais não estão na tabela
        de propósito: ali "consegui, mas caro" já é um degrau do pedido. */
@@ -1882,9 +2029,37 @@ REGRA DESTE ENVELOPE (obrigatória): NÃO role, NÃO peça rolagem, NÃO invente
    falhou por um fio como para quem passou por um. A tabela das faixas e
    a conta que as justifica moram em FAIXAS_DA_MARGEM, mais abaixo.
    ============================================================ */
+/* ---------------- O QUE A FALHA COBRA, EM ETIQUETA (MC2, 10/11) ----------------
+   O chamado do Mestre (motor/o-mestre-chama.js) diz o preço ANTES do dado —
+   «Se falhar, a chuva apaga a trilha» —, e a lei é que o preço dito seja o
+   preço cobrado. Cada linha de CUSTO_DE_FALHAR ganhou:
+     · `aviso`: a frase do chamado, ≤ `O_CHAMADO.tetoDoAviso` caracteres;
+       um objeto quando muda com o contexto (`chuva`, `noite`, `cidade`,
+       e `base` para o resto);
+     · `efeito`: a etiqueta do que a FALHA SECA cobra — a que o jogador
+       entende por falhar. O «quase» (falhar por 1 ou 2 numa linha com
+       `porPouco`) é um SIM pago, e o preço dele é outro (`preco`).
+   Cada etiqueta sabe dizer, de um desfecho e do veredito, se foi cobrada; a
+   suíte rola dez mil falhas por linha e confere. `fecha` é o preço que
+   toda falha tem — o livro de tentativas fecha a mesma via — e só pode ser
+   a etiqueta de uma linha cuja falha não cobra mais nada. */
+export const EFEITOS_DA_FALHA = [
+  { id: "pele", diz: "fere ou derruba", cobrado: (des) => !!(des && des.pele) },
+  { id: "barulho", diz: "faz barulho", cobrado: (des, v) => !!((des && des.barulhoExtra) || (v && v.barulho)) },
+  { id: "alerta", diz: "alguém pode ver", cobrado: (des, v) => !!(v && v.testemunha) },
+  { id: "tempo", diz: "custa tempo", cobrado: (des) => !!(des && Number(des.minutosExtra) > 0) },
+  { id: "fecha", diz: "a mesma via não volta a rolar", cobrado: () => true },
+];
+/* as etiquetas que um desfecho de falha cobrou, pela ordem da tabela */
+export function efeitosCobrados(des, v) {
+  if (!des) return [];
+  return EFEITOS_DA_FALHA.filter((e) => { try { return e.cobrado(des, v || null); } catch { return false; } }).map((e) => e.id);
+}
+
 export const CUSTO_DE_FALHAR = [
   {
     alvo: "tranca", porPouco: true,
+    aviso: "Se falhar, a fechadura emperra e o tempo corre.", efeito: "tempo",
     seca: "a fechadura emperra com a tentativa malfeita",
     preco: "ela cede, mas cede errado: com estrondo, e a porta fica marcada de quem passou",
     minutosExtra: 5, barulhoExtra: true,
@@ -1897,6 +2072,7 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "escalada", porPouco: true,
+    aviso: "Se falhar, você despenca lá de cima.", efeito: "pele",
     seca: "você escorrega e volta ao chão, com as mãos em carne viva",
     preco: "você chega em cima, mas chega machucado e sem fôlego",
     minutosExtra: 5,
@@ -1911,24 +2087,28 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "busca", porPouco: true,
+    aviso: { base: "Se falhar, o tempo se vai e o lugar fica remexido.", noite: "Se falhar, o escuro esconde e o tempo se vai." }, efeito: "tempo",
     seca: "você revira o que dá e não encontra — e o lugar fica remexido, o que qualquer um nota",
     preco: "você acha, mas o dobro do tempo se foi e ficou tudo fora do lugar",
     minutosExtra: 15,
   },
   {
     alvo: "investigacao", porPouco: true,
+    aviso: "Se falhar, os vestígios não fecham e a hora se vai.", efeito: "tempo",
     seca: "os vestígios não fecham numa história; ficam pedaços soltos",
     preco: "a história fecha, mas custou o triplo do tempo debruçado ali",
     minutosExtra: 20,
   },
   {
     alvo: "rastro", porPouco: true,
+    aviso: { base: "Se falhar, a trilha se perde e meia hora com ela.", chuva: "Se falhar, a chuva apaga a trilha e meia hora se vai.", noite: "Se falhar, a trilha some no escuro e meia hora se vai." }, efeito: "tempo",
     seca: "a trilha se perde e você volta ao ponto em que ela era clara",
     preco: "você reencontra a trilha, mas perdeu meia manhã e terreno para quem vai à frente",
     minutosExtra: 30,
   },
   {
     alvo: "escuta", porPouco: false,
+    aviso: "Se falhar, só ouve pedaços, e o tempo passa ali.", efeito: "tempo",
     seca: "você ouve pedaços sem sentido, e encostar ali por tanto tempo é arriscado",
     minutosExtra: 2,
   },
@@ -1937,18 +2117,21 @@ export const CUSTO_DE_FALHAR = [
        deixar um ruído para trás — e o ruído é um preço que o código cobra:
        vira a pergunta ao oráculo ("alguém ouviu?"), cuja resposta é fato. */
     alvo: "furtividade", porPouco: true,
+    aviso: { base: "Se falhar, o corpo aparece onde não devia.", cidade: "Se falhar, alguém na rua vê você onde não devia." }, efeito: "alerta",
     seca: "o passo sai errado e o corpo aparece onde não devia",
     preco: "você passa, mas não em silêncio — um som fica para trás, e alguém pode tê-lo ouvido",
     minutosExtra: 0, barulhoExtra: true,
   },
   {
     alvo: "furto", porPouco: true,
+    aviso: "Se falhar, a mão é vista onde não devia tocar.", efeito: "alerta",
     seca: "a mão erra o tempo e toca onde não devia tocar",
     preco: "a coisa vem para a sua mão, mas vem tilintando — e o tilintar tem ouvidos à volta",
     minutosExtra: 0, barulhoExtra: true,
   },
   {
     alvo: "medicina", porPouco: false,
+    aviso: "Se falhar, o sangue volta e as suas mãos se esgotam.", efeito: "pele",
     seca: "o curativo não segura e a hemorragia recomeça pior",
     minutosExtra: 10,
     /* quem trata mal se esgota tentando: o preço é a reserva, não o sangue.
@@ -1959,13 +2142,24 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "fraqueza", porPouco: false,
+    aviso: "Se falhar, nada do que você sabe encaixa nela.", efeito: "fecha",
     seca: "nada do que você sabe encaixa nesta criatura",
+    minutosExtra: 0,
+  },
+  {
+    /* MC1: lembrar o que se sabe de um lugar, de alguém, de um bicho. Como
+       a fraqueza: falhar é só não saber — e não saber deste jeito, que a
+       mesma pergunta não volta a rolar (o livro de tentativas fecha-a). */
+    alvo: "lembranca", porPouco: false,
+    aviso: "Se falhar, a memória não devolve nada sobre isto.", efeito: "fecha",
+    seca: "o nome não acende nada — o que você sabe disto é pouco, ou é errado",
     minutosExtra: 0,
   },
   {
     /* ler a intenção de alguém: falhar não fere e não custa tempo, mas
        custa o pior dos preços numa mesa — você fica achando que sabe */
     alvo: "intuicao", porPouco: false,
+    aviso: "Se falhar, o rosto não entrega nada, e a dúvida fica.", efeito: "fecha",
     seca: "o rosto dela não entrega nada, e você fica com a sua própria desconfiança nas mãos",
     minutosExtra: 0,
   },
@@ -1981,6 +2175,7 @@ export const CUSTO_DE_FALHAR = [
        degrau e o meio com UM: quem passou raspando nunca paga mais do que
        quem falhou (era 2 fixo na seca, e nenhum meio). */
     alvo: "armadilha", porPouco: true,
+    aviso: "Se falhar, o mecanismo salta e morde a sua mão.", efeito: "pele",
     seca: "o mecanismo salta sob os seus dedos",
     preco: "o mecanismo trava, mas não antes de morder — você recua a tempo, e não inteiro",
     minutosExtra: 5,
@@ -1991,6 +2186,7 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "nado", porPouco: true,
+    aviso: "Se falhar, a correnteza devolve você à margem.", efeito: "tempo",
     seca: "a correnteza vence e devolve você à margem de onde saiu",
     preco: "você chega do outro lado, e chega sem ar",
     minutosExtra: 10,
@@ -1998,6 +2194,7 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "salto", porPouco: true,
+    aviso: "Se falhar, o pé sai antes da borda, e você cai.", efeito: "pele",
     seca: "o pé sai antes da borda",
     preco: "a mão alcança a beira e o resto do corpo bate contra ela",
     minutosExtra: 0,
@@ -2006,6 +2203,7 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "peso", porPouco: true,
+    aviso: "Se falhar, não cede, e o estrondo chega longe.", efeito: "barulho",
     seca: "não cede — e você sente onde vai doer amanhã",
     preco: "cede, e as suas costas pagam a diferença",
     minutosExtra: 5,
@@ -2013,6 +2211,7 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "equilibrio", porPouco: true,
+    aviso: "Se falhar, o pé escorrega e não há onde segurar.", efeito: "pele",
     seca: "o pé escorrega e não há onde segurar",
     preco: "você chega do outro lado de joelhos, e não de pé",
     minutosExtra: 2,
@@ -2020,19 +2219,32 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "escapar", porPouco: true,
+    aviso: "Se falhar, o nó aperta mais e o tempo corre.", efeito: "tempo",
     seca: "o nó aperta mais a cada tentativa",
     preco: "você sai, deixando pele no caminho",
     minutosExtra: 10,
     pelePorPouco: { mordida: 1, diz: "os pulsos saem em carne viva" },
   },
   {
+    /* MC1: a força contra o que prende. O meio é o do escapar com a pele
+       pela força: cede, e leva os pulsos junto. */
+    alvo: "arrebentar", porPouco: true,
+    aviso: "Se falhar, não cede, e o esforço só aperta o nó.", efeito: "tempo",
+    seca: "o que prende não cede, e cada puxão só aperta mais",
+    preco: "cede, mas leva a pele dos pulsos junto",
+    minutosExtra: 5,
+    pelePorPouco: { mordida: 1, diz: "os pulsos saem em sangue" },
+  },
+  {
     alvo: "aguentar", porPouco: false,
+    aviso: "Se falhar, o corpo cede e você sai enfraquecido.", efeito: "pele",
     seca: "o corpo tem um limite e ele acabou de aparecer",
     minutosExtra: 5,
     peleSeca: { condicao: "enfraquecido", diz: "as pernas avisam que não vão longe" },
   },
   {
     alvo: "montaria", porPouco: true,
+    aviso: "Se falhar, o bicho ganha e você vai ao chão.", efeito: "pele",
     seca: "o bicho ganha a discussão e você vai ao chão",
     preco: "você se segura, mas perde as rédeas por um trecho",
     minutosExtra: 5,
@@ -2042,6 +2254,7 @@ export const CUSTO_DE_FALHAR = [
     /* MM5: o bicho aceita a mão, e marca-a antes — o meio é uma mordida de
        verdade, do tamanho do degrau (um lobo acuado é "difícil", 1d6) */
     alvo: "bicho", porPouco: true,
+    aviso: "Se falhar, o bicho recua e não deixa mais chegar.", efeito: "tempo",
     seca: "o bicho recua, mostra os dentes e não deixa mais ninguém chegar perto",
     preco: "o bicho aceita a sua mão, mas não antes de marcá-la",
     minutosExtra: 10,
@@ -2049,39 +2262,46 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "atuacao", porPouco: true,
+    aviso: "Se falhar, a sala repara em você do jeito errado.", efeito: "barulho",
     seca: "a sala não presta atenção, e agora presta atenção no jeito errado",
     preco: "você prende a sala, mas paga com a voz",
     minutosExtra: 15,
   },
   {
     alvo: "orientar", porPouco: true,
+    aviso: { base: "Se falhar, o rumo se perde e a estrada cobra o dobro.", noite: "Se falhar, o escuro engole o rumo e a estrada cobra." }, efeito: "tempo",
     seca: "o rumo se perde e a estrada cobra o dobro",
     preco: "você acha o caminho, mas depois de andar em falso",
     minutosExtra: 60,
   },
   {
     alvo: "diagnostico", porPouco: true,
+    aviso: "Se falhar, o corpo não conta nada e a manhã se vai.", efeito: "tempo",
     seca: "o corpo não conta nada que você saiba ler",
     preco: "você entende, mas leva metade da manhã debruçado sobre ele",
     minutosExtra: 20,
   },
   {
     alvo: "heraldica", porPouco: false,
+    aviso: "Se falhar, o símbolo não diz nada, ou diz errado.", efeito: "fecha",
     seca: "o símbolo não diz nada — ou diz algo que você aprendeu errado",
     minutosExtra: 0,
   },
   {
     alvo: "falsificar", porPouco: false,
+    aviso: "Se falhar, o papel sai falso demais para passar.", efeito: "tempo",
     seca: "o papel fica bom demais para ser verdade e falso demais para passar",
     minutosExtra: 30,
   },
   {
     alvo: "perseguir", porPouco: false,
+    aviso: { base: "Se falhar, você chega perto demais e é notado.", cidade: "Se falhar, a multidão se abre e ele vê você." }, efeito: "alerta",
     seca: "a distância certa é fácil de errar, e você errou para o lado de perto",
     minutosExtra: 10,
   },
   {
     alvo: "arcano", porPouco: true,
+    aviso: "Se falhar, os símbolos não se deixam ler e cansam.", efeito: "tempo",
     seca: "os símbolos não se deixam ler, e olhar demais para eles cansa",
     preco: "você lê o selo, mas a leitura cobra: a cabeça lateja o resto do dia",
     minutosExtra: 10,
@@ -2106,12 +2326,14 @@ export const CUSTO_DE_FALHAR = [
      A queda continua fora: o improviso não sabe de que altura se cai. */
   {
     alvo: "improviso_forca", porPouco: true,
+    aviso: "Se falhar, não cede, e o esforço fica nos braços.", efeito: "fecha",
     seca: "não cede — o peso ganha, e o esforço fica nos braços",
     preco: "cede, mas cede alto: o estalo e o baque chegam longe",
     minutosExtra: 0, barulhoExtra: true,
   },
   {
     alvo: "improviso_destreza", porPouco: true,
+    aviso: "Se falhar, o corpo chega atrasado e o gesto sai torto.", efeito: "fecha",
     seca: "o corpo chega um instante atrasado, e o gesto sai torto",
     preco: "você chega, mas chega torto — o corpo bate onde não devia",
     minutosExtra: 0,
@@ -2119,6 +2341,7 @@ export const CUSTO_DE_FALHAR = [
   },
   {
     alvo: "improviso_vigor", porPouco: true,
+    aviso: "Se falhar, o corpo para antes de chegar lá.", efeito: "tempo",
     seca: "o corpo avisa antes do fim, e você para antes de chegar lá",
     preco: "você aguenta até o fim, e o fim cobra: o corpo sai vazio",
     minutosExtra: 5,
@@ -2129,17 +2352,20 @@ export const CUSTO_DE_FALHAR = [
        nenhum (a resposta não vem, e pronto), e por isso o meio precisa de
        um número próprio — senão "veio, mas tarde" custaria o mesmo zero */
     alvo: "improviso_intelecto", porPouco: true,
+    aviso: "Se falhar, a resposta não vem, por mais que procure.", efeito: "fecha",
     seca: "a resposta não vem, por mais que você a procure",
     preco: "a resposta vem, mas vem tarde — depois de um bom tempo de cabeça baixa",
     minutosExtra: 0, minutosPorPouco: 15,
   },
   {
     alvo: "improviso_percepcao", porPouco: false,
+    aviso: "Se falhar, se havia algo ali, passou por você.", efeito: "fecha",
     seca: "nada se destaca — se havia algo ali, passou por você",
     minutosExtra: 0,
   },
   {
     alvo: "improviso_presenca", porPouco: true,
+    aviso: "Se falhar, o gesto não pega, e quem viu lembra.", efeito: "fecha",
     seca: "o gesto não pega, e quem viu vai lembrar dele do jeito errado",
     preco: "o gesto pega, mas pega alto demais — quem estava por perto reparou",
     minutosExtra: 0, barulhoExtra: true,

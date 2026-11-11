@@ -58,7 +58,21 @@ export function dificuldadeDoPedido({ emCombate = false, emMasmorra = false, niv
 /* ---------------- DETECÇÃO NO TEXTO ----------------
    O jeito de mesa: o jogador simplesmente escreve "peço um teste de
    percepção". Não faz sentido obrigá-lo a caçar um botão. */
-const VERBO_PEDIDO = /(pe[çc]o|pedir|posso fazer|fa[çc]o|quero|rolar|rolo|tentar|testar)\s+(um\s+|uma\s+)?(teste|rolagem|check|chegada)?/i;
+/* MC1 (10/11, a 18.ª sessão): «Rolo de lado e forço os pulsos com toda a
+   força…» saiu `naoSePede` — o corpo que ROLA era lido como o dado que se
+   rola, e a «força» do esforço como o atributo pedido. Duas frestas, as
+   duas aqui: a palavra sem fronteira («controlo», «enrolo» têm «rolo» dentro)
+   e o OBJETO opcional (bastava «faço» ou «rolo» seguido de qualquer coisa).
+   O pedido agora precisa do que se pede: «um teste», «uma rolagem», «o dado»
+   — ou o nome de uma perícia ou atributo colado ao verbo de rolar («rolo
+   Sobrevivência», «quero rolar Intimidação»). «Rolo de lado» é o corpo. */
+const OBJETO_DO_PEDIDO = "(testes?|rolagem|rolagens|check|checagem|jogada|dados?|d20)";
+const VERBO_PEDIDO = new RegExp(`\\b(pe[çc]o|pedir|posso fazer|posso|fa[çc]o|fazer|quero|queria|rolar|rolo|tentar|testar|me d[áa])\\s+(um\\s+|uma\\s+|o\\s+|os\\s+)?${OBJETO_DO_PEDIDO}\\b`, "i");
+/* o nome colado ao verbo de rolar: lido na frase sem acento, contra os nomes
+   que a ficha tem — as perícias e os atributos, e só eles */
+const NOMES_ROLAVEIS = [...PERICIAS.map((p) => p.id), ...ATRIBUTOS.map((a) => a.id), "inteligencia", "carisma", "sabedoria", "constituicao"];
+const ROLAR_O_NOME = new RegExp(`\\b(rolo|rolar|rolando)\\s+(uma?\\s+)?(de\\s+|em\\s+)?(${NOMES_ROLAVEIS.join("|")})\\b`);
+const semAcento = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const MAPA_PALAVRA = [
   { id: "percepcao", rx: /(percep[çc][ãa]o|perceber|notar|observ|reparar|investiga|procur|vasculh|sentido|intui)/i },
   { id: "intelecto", rx: /(intelect|intelig|conhecimento|saber|lembrar|dedu[zç]|arcano|hist[óo]ria|analis|estud|identific)/i },
@@ -139,8 +153,10 @@ export function detectarPedidoDeTeste(texto) {
      de teste era ATENDIDO, um detector estreito só custava um turno solto;
      agora que ele é RECUSADO com uma explicação, ficar de fora significa
      receber silêncio em vez da regra — e a lição chega errada. */
-  if (!/(teste|rolagem|rolar|rolo|checagem|jogada)/i.test(t)) return null;
-  if (!VERBO_PEDIDO.test(t)) return null;
+  /* MC1: com fronteira de palavra — «controlo» não é «rolo», «testemunha»
+     não é «teste» — e com o objeto do pedido obrigatório (VERBO_PEDIDO) */
+  if (!/\b(testes?|rolagem|rolagens|rolar|rolo|rolando|checagem|jogada)\b/i.test(t)) return null;
+  if (!VERBO_PEDIDO.test(t) && !ROLAR_O_NOME.test(semAcento(t))) return null;
   /* o motivo é o que vem depois de "para" / "pra" / "de ver se" */
   const mm = t.match(/\b(para|pra|a fim de|de ver se|ver se|se)\s+(.{4,140})/i);
   const motivo = mm ? mm[2].replace(/[.!?]+$/, "").trim() : "";

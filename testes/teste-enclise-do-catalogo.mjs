@@ -192,8 +192,12 @@ sec("4. o hífen que não é ênclise não se mexe");
 
 sec("5. a peneira no catálogo — o que ela não tirou");
 {
-  t("só os seis desafios de saber leem a pergunta",
-    DESAFIOS.filter((d) => d.lePergunta).map((d) => d.id).sort().join(",") === ["arcano", "diagnosticar", "fraqueza", "heraldica", "investigar", "mentira"].sort().join(","));
+  /* MC1 (10/11), MUDADA E O MOTIVO: eram seis, e a 18.ª sessão achou o
+     sétimo — `lembrar` («o que sei de Alto Negro?»), Saberes de lugar, gente
+     e bicho. A pergunta é o próprio gesto, como na fraqueza e na heráldica;
+     a intenção da asserção (só os desafios de SABER leem a pergunta) fica. */
+  t("só os sete desafios de saber leem a pergunta",
+    DESAFIOS.filter((d) => d.lePergunta).map((d) => d.id).sort().join(",") === ["arcano", "diagnosticar", "fraqueza", "heraldica", "investigar", "lembrar", "mentira"].sort().join(","));
   t("\"de quem é esse brasão?\" continua a rolar Saberes", idDe(ler("de quem é esse brasão?")) === "heraldica");
   t("\"o que sei sobre essa criatura?\" também", idDe(ler("o que sei sobre essa criatura?")) === "fraqueza");
   t("\"ele está mentindo?\" é Intuição", idDe(ler("ele está mentindo?")) === "mentira");
