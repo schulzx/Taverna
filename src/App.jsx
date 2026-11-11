@@ -25501,7 +25501,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     try {
       if (s.ehIdaAMasmorra || s.ehEntradaEmMasmorra) {
         const m = s.ehIdaAMasmorra ? idaAMasmorra(acao, ctx) : null;
-        L.masmorra = { nome: (m && m.nome) || "", linhas: m && Array.isArray(m.linhas) ? m.linhas : [] };
+        /* MC8 (11/11): o veredito antes de partir — a proposta leva o veredito da
+           ida, a masmorra-alvo (a da ida, ou a da boca onde o herói já está, para o
+           «Entrar») e a ficha viva; o módulo põe a linha do desafio uma vez e devolve
+           `p.desafio` para o cartão pintar a cor */
+        const boca = !m ? masmorraDaBoca(ctx.lugar, ctx.masmorras) : null;
+        const alvo = (m && m.masmorra) || boca || null;
+        L.masmorra = { nome: (m && m.nome) || (boca && boca.nome) || "", linhas: m && Array.isArray(m.linhas) ? m.linhas : [],
+          veredito: m ? m.veredito : null, alvo, pers: ctx.pers, aBoca: !!boca };
       }
     } catch (e) { calou("a proposta: a masmorra", e); }
     try {

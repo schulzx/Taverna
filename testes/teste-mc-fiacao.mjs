@@ -118,6 +118,13 @@ const rel = corpo("avancarOsMinutos");
 t("as horas passam no relógio para o caído estancado (só se houver)", /gAntes\.some\(\(m\) => m && m\.estavel\)/.test(rel) && /passarHorasNoGrupo\(gAntes, Number\(n\) \/ 60\)/.test(rel) && rel.includes('calou("MC10 · as horas do caído", e)'));
 t("quem acorda acorda na régua do herói (SAIDA_DA_LUTA.pvAoAcordar)", /SAIDA_DA_LUTA\.pvAoAcordar/.test(rel));
 
+sec("5b. MC8 · o veredito antes de partir, na proposta da frase");
+{
+  const lf = corpo("leituraDaFrase");
+  t("a proposta da masmorra leva o veredito, o alvo (a ida ou a boca), a ficha e o «à boca»", /const boca = !m \? masmorraDaBoca\(ctx\.lugar, ctx\.masmorras\) : null;/.test(lf) && /const alvo = \(m && m\.masmorra\) \|\| boca \|\| null;/.test(lf) && /veredito: m \? m\.veredito : null, alvo, pers: ctx\.pers, aBoca: !!boca \}/.test(lf));
+  t("e continua dentro do calou da proposta", antes(lf, "const boca = !m ? masmorraDaBoca(", 'calou("a proposta: a masmorra", e)'));
+}
+
 sec("6. A pauta, em Node: o canal por turno, e nada sem o estado");
 {
   const heroi = { nome: "Ana", classe: "Guerreiro", nivel: 1, vida: 10, vidaMax: 10, grupo: [] };
