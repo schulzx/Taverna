@@ -17583,3 +17583,349 @@ de se jogar. É a ordem de 04/11 por outro caminho: o jogador arrisca porque vê
 coisa nova a saber) e pede ao motor `cadeiasPossiveis(grade, combate)`, uma busca pequena sobre `REACOES_ELEMENTARES`.
 A forma já cabe nas peças desta secção: são os selos, a `Casa marcada · area` e a seta tracejada da intenção. **A
 variante tímida** é segurar Alt e ver só os selos, sem as cadeias.
+
+
+## MC · o Mestre chama o dado (`desenho`, 10/11/2026, para MC3)
+
+**A ordem:** a Fase MC, aprovada pela pessoa a 10/11 (*«Sim, faça.»*, `mente/plano-o-mestre-chama-o-dado.md` §0). Entre a
+frase do jogador e a narração a mesa diz «Sobrevivência. Precisa de 14, com a chuva. Se falhar, a chuva apaga a trilha e
+meia hora se vai.», e o d20 fica à espera de um toque. O motor já existe (`src/motor/o-mestre-chama.js`, `54331a8`):
+`oChamado(v, ctx)` → `{ pericia, periciaNome, dc, aviso, efeito, dado: { teste, preco }, chave, linha, porque }`.
+
+**Uma correção à premissa da planta (§2.1), lida no código:** o teste da frase **já espera um toque**. `setRolagem`
+(`App.jsx`, a resolução da frase, `origem: "pedido"`) põe o dado do campo no estado Rolar, e só `tocarNoDado` o lança.
+O que falta não é a pausa. Faltam três coisas: **a voz** (hoje é uma etiqueta mono de 12, «Teste de Sobrevivência ·
+dif. 14»), **o preço dito antes** e **um lugar onde o dado espere e role**.
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página `382:2` «MC · o Mestre chama · 10/11»):
+
+| quadro | id |
+|---|---|
+| `Linha do chamado` (conjunto) · `Largura=mesa` 504 · `Largura=telefone` 327 | `382:31` (`382:3` · `382:17`) |
+| `Chamado do Mestre` (conjunto) · `Estado=espera, sozinho, rolando, sucesso, falha` × `Largura=mesa, telefone` | `382:237` |
+| … `espera` mesa · telefone | `382:32` · `382:136` |
+| … `sozinho` mesa · telefone | `382:53` · `382:156` |
+| … `rolando` mesa · telefone | `382:75` · `382:177` |
+| … `sucesso` mesa · telefone | `382:94` · `382:195` |
+| … `falha` mesa · telefone | `382:115` · `382:216` |
+| **o par** antes/depois do teste da frase, a 375 e na coluna de 600 da mesa | `382:347` (`382:238` · `382:250` · `382:292` · `382:304`) |
+| `Soleira do momento`: a descrição regista que `Momento=rolagem` se aposenta | `306:106` |
+
+As peças leem as variáveis de `T · Mesa C (vela)` (`VariableCollectionId:241:2`). O d20 e a marca são instâncias de
+`Dado` (`243:26`) e de `Marca do dado` (`243:72`). Nenhuma cor nova, nenhum dado novo.
+
+### MC 1 · O que se decidiu, numa frase cada
+
+1. **Hoje há duas caras para a mesma ação**, e esta etapa junta-as. A ação «um d20 espera o teu toque, com o número a
+   bater dito» aparece de duas formas. O pedido do Mestre usa a `Soleira do momento · Momento=rolagem` (âmbar, «Rolar
+   d20 + 3 · Olhar à volta», «Agora não»). O teste da frase usa a `LinhaDoVeredito` em mono 12, com o dado do campo
+   em Rolar e «Não era isso» (`App.jsx`, `linhaDoCampo`). As duas passam a ser **uma peça só, o `Chamado do Mestre`**,
+   o conteúdo da soleira com `Momento=chamado`. A forma `rolagem` aposenta-se.
+2. **A fala do Mestre vai para a folha**, como a última linha da página, logo abaixo da fala do jogador. É a voz da
+   página e não uma etiqueta de máquina, e assim a soleira fica nos 56 de sempre (`ALVOS.chamado`).
+3. **O d20 espera numa bandeja, de pé e sem número.** A face vazia diz que o dado ainda não falou; o número só aparece
+   depois do toque.
+4. **O dado rola onde está à espera.** Rola dentro da bandeja da soleira, pousa lá, mostra o veredito e só depois vai
+   para o histórico. Na mesa larga o olho deixa de saltar (§MC 8 tem a medida).
+5. **O dado do campo apaga-se enquanto o Mestre chama.** Fica em `repouso`, e o único d20 aceso é o da bandeja (a lei
+   de V6: um dado na tela). Tocar no dado do campo, ou carregar em Enter com o campo vazio, lança o mesmo dado.
+6. **«Mudar de ideia»** devolve a frase ao campo e é a única saída antes do toque. Leva maiúscula, como os outros
+   recuos da casa («Agora não», «Reescrever»); o motor tem de passar `O_CHAMADO.recuo` a «Mudar de ideia» (§MC 9). Nos
+   testes que o Mestre chama, este recuo substitui «Não era isso»: a frase deixa de ir ao Mestre como cena sem dado e
+   volta intacta à caixa, como a planta manda em §2.2.
+7. **Com «o Mestre rola por mim» ligado, o chamado aparece igual.** À volta do dado acende-se a **vela**, um arco âmbar
+   que se fecha em `esperaSozinho`, e o verbo passa a «Rolar já». O chamado nunca se salta: é o veredito antes do
+   clique.
+8. **A preferência fica ao lado de «Rolagens do mundo à vista»** (`PainelLateral`) e tem a mesma forma: um botão de
+   largura inteira com `aria-pressed`, 48 de alto. O rótulo é «O Mestre rola por mim: sim | não», e por baixo lê-se
+   «o dado lança-se sozinho depois de leres o preço».
+9. **Nenhuma palavra de mecanismo na tela.** Saem «Teste de», «dif.» e «falhar:», as três da linha de hoje. Ficam a
+   perícia, o número, o preço, «Rolar» e «Mudar de ideia».
+
+### MC 2 · A peça e onde mora
+
+**Na mesa (≥ 1024; medido a 1905 no quadro `309:2038`):** a soleira fica na coluna central de 600, por cima do campo
+(x 711, y 718 nesse quadro). A fala do Mestre é a última linha da folha, com 504 de largura útil (a folha tem 26 de lado).
+**No telefone (375):** a soleira tem 343 de largura (16 de cada lado) e fica por cima do campo. A fala vai na folha, com
+327 de largura útil.
+
+**De cima para baixo:** a prosa do Mestre; a fala do jogador (itálico, `tintaDoPergaminhoMeio`); **a fala do Mestre que
+chama o dado**; depois, fora da folha, **a soleira com o `Chamado do Mestre`**; e por fim o campo, com o dado do campo
+apagado.
+
+#### A fala do Mestre (`Linha do chamado`)
+
+É uma linha de prosa, sem caixa (na folha só há tinta, Mesa C §1). O motor dá as partes já separadas (`periciaNome`,
+`dc`, `porque`, `aviso`); a tela só as veste:
+
+| parte | letra | tinta |
+|---|---|---|
+| a marca à esquerda: um d20 de 18 (o `Dado · d20` sem número) | — | corpo `brasaNoPergaminho`, facetas `pergaminho` |
+| **«Sobrevivência.»** | Spectral SemiBold 17/26 | `brasaNoPergaminho` |
+| «Precisa de» | Spectral 400 17/26 | `tintaDoPergaminho` |
+| **«14»** | JetBrains Mono Bold 16 (o número é máquina, Mesa C §3) | `tintaDoPergaminho` |
+| «, com a chuva.» (`porque`, só quando pesou) | Spectral 400 17 | `tintaDoPergaminho` |
+| *«Se falhar, a chuva apaga a trilha e meia hora se vai.»* | Spectral Italic 17 | `perigoNoPergaminho` |
+
+A marca fica a 8 do texto, e a linha tem 12 por cima, o respiro entre parágrafos da folha. A cor do preço é
+redundante: quem lê o preço lê-o pelas palavras «Se falhar», não pela tinta. Por isso dispensa glifo (a regra do ✕ é
+para o veredito, não para o aviso).
+
+**Enquanto espera, a linha não vai ao save** (planta §0: recarregar devolve a frase à caixa). Depois do toque fica no
+relato como qualquer outra linha: a fala, o recibo do dado e a narração. Com «Mudar de ideia», sai, porque nada
+aconteceu.
+
+#### O `Chamado do Mestre` (a soleira em `Momento=chamado`)
+
+Tem 56 de alto nas duas larguras, como toda a soleira.
+
+- **O botão principal é a bandeja inteira.** O chão é `pagina` (o couro), com a sombra interior da Bandeja
+  (`inset 0 2px 6px` preto a 0,6), raio 12, enchimento 4 à esquerda e 14 à direita, e vão de 10. **O aro é `amber` a
+  0,55**, e é ele que diz que a bandeja se toca (3,39 contra a mesa, §MC 6).
+- **O d20** é o `DadoDoLance`/`Corpo` da Bandeja, em papel `teste`, com 40 de lado numa caixa de 48. Está de pé, **sem
+  número**, com o brilho de V6 parado (`DADO.brilho` 8, `DADO.alfaDoBrilho` 0,25).
+- **A letra** segue o arranjo de `PrincipalDoMomento`, sem nada novo. Em cima, o verbo «Rolar d20 + 2» (Spectral
+  Medium 16/20, `ink`). Em baixo, a perícia (mono 12, `inkMeio`), que cede com reticências, e à direita **o nó do preço
+  «precisa de 14»** (mono 12 Bold, `amberSoft`), que nunca encolhe.
+- **No telefone a perícia sai da bandeja.** Já está na fala da folha, 26 px acima, e com ela («Sobrevivência») a letra
+  pediria 274 px, mais do que os ~206 da bandeja, o que cortava o preço. Ficam o verbo e o nó do preço.
+- **O secundário** é «Mudar de ideia», o `SecundarioDoMomento` de sempre (chão `panel`, aro `lineStrong`, Spectral 15
+  `ink`). Só existe **antes** do toque.
+
+### MC 3 · Os estados
+
+| estado | o d20 | a letra | o aro | o secundário |
+|---|---|---|---|---|
+| **espera** | de pé, sem número, brilho 0,25 | «Rolar d20 + 2» / perícia · **precisa de 14** | `amber` 0,55 | «Mudar de ideia» |
+| espera · com o dedo por cima ou com foco | brilho a `DADO.alfaDoBrilhoAceso` (0,6) | igual | `amber` 1,0 | igual |
+| espera · premido | `scale(.96)` durante 80 ms | igual | `amber` 1,0 | igual |
+| **sozinho** (a preferência) | como em espera, **mais a vela**: arco de raio 23, traço 2, `amber` 0,85, ponta redonda; começa às 12 h e fecha-se em `esperaSozinho` | «Rolar já» / perícia · **precisa de 14** | `amber` 0,55 | «Mudar de ideia», vivo até a vela fechar |
+| **rolando** | rola no lugar (§MC 4); o número troca a cada 60 ms | a perícia em `inkMeio` / «d20 + 2» · **precisa de 14** | `amber` 0,55 | **some**: depois do toque não há volta |
+| **sucesso** | pousado, com a `Marca do dado · sucesso` (anel `ok`, selo ✓) | a conta em mono 13 `inkMeio` («d20 17 + 2 = 19 · precisa de 14») / **«✓ passa»** em Spectral Bold 15 `ok` | `line` (já não se toca) | — |
+| **falha** | a 0,5 de opacidade, com a `Marca · falha` (anel tracejado `danger`, selo ✕) | a conta / **«✕ falha — a chuva apaga a trilha e meia hora se vai»** em `danger` | `line` | — |
+| falha com mordida | o d20 e, 90 ms depois, **o dado do preço** (`dado.preco`, papel `dano`, 40 de lado) a rolar ao lado | a conta dos dois | `line` | — |
+| crítico · desastre | as marcas de sempre (raios e ✦; racha e !) | «✦ crítico» · «! desastre» | `line` | — |
+| **desistiu** | a bandeja sai | a fala sai da folha | — | a frase volta ao campo, com o cursor no fim |
+
+**A falha repete as palavras do aviso** (planta §2.5: o mesmo efeito, a mesma linha). O jogador lê o preço duas vezes,
+antes e depois, e o que o Mestre avisou é o que a mesa cobra.
+
+**Depois de pousar, o resultado fica na soleira** durante `SOLEIRA_DO_MOMENTO.mostraODado` (1 600 ms). Depois a soleira
+esvazia e o lance vai para o histórico: no telefone, o recibo debaixo da prosa; na mesa, a Bandeja da coluna da
+esquerda, **com `jaRolou`** para não rolar duas vezes. **O Narrador é chamado no pouso, não ao fim dos 1 600 ms**: a
+mostra do resultado não custa o turno.
+
+**O teclado.** Enter com o campo vazio lança o dado; Esc, com o foco no campo ou na bandeja, é «Mudar de ideia»;
+Espaço e Enter com o foco na bandeja lançam (é um botão nativo). **O foco nunca é roubado** e o campo não fecha (V6a).
+Se o jogador carregar em Enter com texto escrito, o d20 da bandeja dá o pulso único de V6 (`tv-dado-pulso`, 400 ms) e
+o texto fica.
+
+**O nome acessível** da bandeja leva tudo, sem corte: «Rolar d20 + 2. Sobrevivência, precisa de 14. Se falhar, a
+chuva apaga a trilha e meia hora se vai.» O grupo já se chama «O Mestre pede o dado» (`SoleiraDoMomento`). Nenhuma
+destas etiquetas aparece no ecrã.
+
+**Quando o motor não chama** (`oChamado` devolve `null`), não há peça: o turno segue como hoje (planta §2.3).
+**Quando o chamado estoura** (`calou`), o teste segue pelo caminho de hoje, também sem a peça.
+
+### MC 4 · O movimento, e a saída
+
+| fase | duração | curva | o que mexe |
+|---|---|---|---|
+| a fala entra na folha | 180 ms | `ease-out` | `tv-fade`, o de sempre |
+| o d20 é posto na bandeja | **260 ms**, uma vez | `MOVIMENTO_DO_DADO.curva` (o ressalto do pouso) | `translateY(-8px → 0)` + `rotate(-24deg → 0)` |
+| o convite | — | — | **nada se repete.** O que convida é a figura: o único âmbar aceso na metade de baixo do ecrã, o brilho parado e o aro |
+| dedo por cima / foco | 90 ms | `ease-out` | o brilho passa de 0,25 a 0,6 e o aro de 0,55 a 1 |
+| a vela (sozinho) | `esperaSozinho` | `linear` | o arco vai de 0 a 360° (`stroke-dashoffset`) |
+| rolar | `MOVIMENTO_DO_DADO.rolar` (520) | a mesma | `rotate(-200deg → 0)` e um salto de 6 px (`translateY 0 → -6 → 0`), **sem andar de lado**: o dado já está no lugar |
+| pousar · veredito | 140 · 180 | `ease-out` | os da Bandeja (Mesa C §5) |
+| o dado da mordida | +90 ms (`entreDados`) | a mesma | entra a rolar ao lado do d20 |
+| desistiu | **0 ms** | — | sai de vez, sem animação. Nada aconteceu, e uma saída animada faria parecer que sim |
+
+**Tocar durante a rolagem faz o dado pousar logo.** É o `pousarRef` da Bandeja, a mesma lógica e não uma cópia. Do
+toque ao veredito vão no máximo 840 ms (520 + 140 + 180); com crítico, 1,22 s, o pior caso da Bandeja.
+
+**Com `prefers-reduced-motion: reduce`:**
+
+- o d20 aparece já de pé, com `opacity 0 → 1` em 120 ms (`MOVIMENTO_DO_DADO.semMovimento`);
+- a rolagem passa direto ao pouso, já com o número final, como na Bandeja;
+- **a vela não anima**: o arco não aparece, o verbo diz «Rolar já» e **a espera mantém-se**. A espera é tempo de
+  leitura, não animação, e tirá-la tiraria o veredito a quem pediu menos movimento;
+- o pulso do Enter não corre.
+
+Os keyframes vão para `MOVIMENTO_CSS`, que é um template-literal: **nada de crase**, nem nos comentários em prosa (a
+armadilha de R17).
+
+```css
+@keyframes tvChamadoPoe { from { transform: translateY(-8px) rotate(-24deg); opacity: 0 } to { transform: none; opacity: 1 } }
+@keyframes tvChamadoRola { 0% { transform: rotate(-200deg) translateY(0) } 45% { transform: rotate(-80deg) translateY(-6px) } 100% { transform: none } }
+@keyframes tvChamadoVela { from { stroke-dashoffset: var(--tv-vela-perimetro) } to { stroke-dashoffset: 0 } }
+@media (prefers-reduced-motion: reduce) { .tv-chamado-poe, .tv-chamado-rola { animation: tvFade 120ms ease-out both } .tv-chamado-vela { display: none } }
+```
+
+### MC 5 · As tabelas (para `src/estilo.js`; leem `T`, `TIPOS`, `ALVOS`, `BANDEJA`, `DADO` e `MOVIMENTO_DO_DADO`, sem copiar números deles)
+
+```js
+/* MC · O MESTRE CHAMA O DADO (10/11/2026) — formas.md §MC; Figma 382:31 (a fala) e 382:237 (a peça).
+   A fala do Mestre na folha e o d20 à espera na bandeja da soleira (Momento=chamado).
+   O texto (o molde, «Rolar», o recuo, esperaSozinho) é do motor: O_CHAMADO. */
+export const CHAMADO_DO_MESTRE = {
+  fala: {
+    marca: 18, entre: 8, acima: 12,
+    tamanho: TIPOS.prosa, entrelinha: 26,
+    texto: T.tintaDoPergaminho,
+    pericia: { peso: 600, cor: T.brasaNoPergaminho },
+    numero: { tamanho: 16, peso: 700 },                   /* JetBrains Mono */
+    aviso: { estilo: "italic", cor: T.perigoNoPergaminho },
+    marcaCorpo: T.brasaNoPergaminho, marcaFaceta: T.pergaminho,
+  },
+  bandeja: {
+    chao: T.pagina, sombra: BANDEJA.sombraInterior, raio: BANDEJA.raio,
+    aro: T.amber, alfaDoAro: 0.55, alfaDoAroAceso: 1, aroPousado: T.line,
+    enchimento: [4, 14], vao: 10,
+  },
+  dado: {
+    caixa: ALVOS.piso, lado: 40, papel: "teste",
+    brilho: DADO.brilho, alfaDoBrilho: DADO.alfaDoBrilho, alfaDoBrilhoAceso: DADO.alfaDoBrilhoAceso,
+    premido: 0.96, dePremir: 80, sobDedo: 90,
+  },
+  poe: { dura: 260, sobe: 8, gira: -24, curva: MOVIMENTO_DO_DADO.curva },
+  rola: { gira: -200, salto: 6 },                         /* a duração é MOVIMENTO_DO_DADO.rolar */
+  vela: { raio: 23, traco: 2, cor: T.amber, alfa: 0.85 }, /* a duração é a espera do motor (§MC 9.1) */
+  telefone: { comPericia: false },                        /* a perícia fica na fala da folha */
+};
+```
+
+Na `SOLEIRA_DO_MOMENTO` muda uma linha: `prioridade: ["chamado", "dado", "escolha", "proposta"]`. O `rolagem` passa a
+`chamado`, e o pedido do Mestre entra por ele. O secundário continua a ser `SOLEIRA_DO_MOMENTO.secundario`.
+
+### MC 6 · O contraste, medido (WCAG 2.2, com a conta de `testes/conta-da-luz.mjs`, em `node`)
+
+| par | razão | piso | |
+|---|---|---|---|
+| a perícia: `brasaNoPergaminho` / `pergaminho` · no pior ponto da vinheta | **6,71** · 4,83 | 4,5 | passa |
+| o texto e o número: `tintaDoPergaminho` / `pergaminho` · pior | **12,15** · 8,74 | 4,5 | passa |
+| o aviso: `perigoNoPergaminho` / `pergaminho` · pior | **6,60** · 4,75 | 4,5 | passa |
+| o verbo: `ink` / `pagina` | **15,34** | 4,5 | passa |
+| a perícia na bandeja e a conta: `inkMeio` / `pagina` | **10,58** | 4,5 | passa |
+| o nó do preço: `amberSoft` / `pagina` | **12,42** | 4,5 | passa |
+| «✓ passa»: `ok` / `pagina` | **9,93** | 4,5 | passa |
+| «✕ falha»: `danger` / `pagina` | **5,91** | 4,5 | passa |
+| o d20 (corpo `amber`) / `pagina` (1.4.11, objeto gráfico) | **8,89** | 3 | passa |
+| o d20 da falha a 0,5 / `pagina` | 3,09 | 3 | passa (é a Bandeja de sempre) |
+| **o aro da bandeja** (`amber` a 0,55 = `#906025`) / a mesa `bg` · / `pagina` | **3,39** · 3,48 | 3 (1.4.11, limite do controlo) | passa |
+| a vela (`amber` 0,85) / `pagina` | > 7 | 3 | passa |
+| «Mudar de ideia»: `ink` / `panel` · o aro `lineStrong` / `panel` | **13,87** · 4,19 | 4,5 · 3 | passa |
+
+**O couro contra a mesa dá 1,03:** sem o aro, a bandeja não se destaca do fundo, e é por isso que o aro existe e
+mede 3,39. Com `amber` a 0,35 daria 2,10 e chumbava na 1.4.11. Fica escrito para que ninguém o «suavize».
+
+### MC 7 · A ordem de construção
+
+**0 · O motor primeiro** (os pedidos de §MC 9, em `mente/pedidos-ao-sistema.md`): quatro linhas de tabela e uma
+função. Sem elas a peça mente ou corta.
+
+**1 · `aprendiz`, fora do App** (`src/estilo.js`, `src/painel-bandeja.jsx`, `src/ui.jsx`):
+
+1. `CHAMADO_DO_MESTRE` em `estilo.js` e a nova `prioridade` da soleira (§MC 5); os keyframes em `MOVIMENTO_CSS`, sem
+   crase (§MC 4).
+2. Em `painel-bandeja.jsx`, **tirar o relógio da rolagem de dentro da `Bandeja`** para um hook partilhado
+   (`useLance(lancamento)` → `{ rolando, troca, pousar }`), que a Bandeja e o chamado usam os dois, sem cópia. Depois,
+   exportar `ChamadoDoMestre({ chamado, mod, estado, lance, sozinho, aoRolar, aoMudar, telefone })`, que desenha a
+   bandeja com o `Corpo` (legenda vazia na espera) e a `Marca`. Nenhum número dentro da peça.
+3. Em `ui.jsx`: `LinhaDoChamado({ chamado })`, a fala na folha, montada com as partes do motor (sem cortar a `linha`
+   com regex). A `SoleiraDoMomento` aprende o momento `chamado` (o `ChamadoDoMestre` com o `SecundarioDoMomento`) e o
+   ramo `rolagem` sai da `PrincipalDoMomento`.
+4. A forma provada em Node: um varredor `testes/check-chamado.mjs`, com o `testes`. Prova os pares de §MC 6 pela conta
+   da luz, que as duas peças não têm cor literal, que «teste», «dif.», «CD», «chamado» e «falhar:» não aparecem no
+   texto visível, e que `chamado` vem primeiro na `prioridade`.
+
+**2 · `oficial`, no App, com o bastão** (por âncora: `momentoPorCimaDoCampo`, `linhaDoCampo`, `tocarNoDado`,
+`desistirDoTeste`, o efeito «O MESTRE PEDE O DADO», `PainelLateral`):
+
+1. O teste da frase pára antes de lançar: `oChamado(v, ctx)` vai para um ref (não para o save), a fala entra no relato
+   como linha efémera, e a soleira recebe `momentos.chamado`.
+2. O pedido do Mestre usa a mesma peça: `oCartaoDoPedido` deixa de ir para a `PropostaDaFrase` e vai para
+   `momentos.chamado`.
+3. Enquanto houver chamado, o dado do campo fica em `repouso`. Tocar nele, ou carregar em Enter com o campo vazio,
+   lança o dado da bandeja; Esc é «Mudar de ideia».
+4. «Mudar de ideia» devolve a frase ao campo sem contar tentativa, sem gastar tempo e sem chamar o Narrador. Nos
+   testes que o Mestre chama, substitui `desistirDoTeste`.
+5. A preferência `taverna_cfg_rolaPorMim` («O Mestre rola por mim»), com a forma de «Rolagens do mundo à vista», e o
+   relógio da espera dentro de `calou`.
+6. No pouso: o lance vai para a Bandeja com `jaRolou`, o Narrador é chamado logo, e a soleira mostra o resultado
+   durante `mostraODado`. **Isto vale também na mesa larga**: hoje o momento `dado` só aparece no telefone.
+7. `teste-chamado-fiacao.mjs` (planta §5, MC3).
+
+**3 · O `jogo` joga** frase → chamado → toque → narração, a 375 e a 1905, também com reduce, e assina (ou não) o que
+§MC 8 mede.
+
+**4 · O `desenho` confere no navegador.** Abre aba nova (o HMR mente) e usa a árvore de acessibilidade (a foto congela
+com o painel oculto). Antes guarda os espaços de save, e depois repõe-nos.
+
+### MC 8 · O «superior», escrito (medida e estudo citado; a experiência jogada é do `jogo`)
+
+**A medida, no par `382:347`, com o mesmo teste antes e depois:**
+
+| | antes | depois |
+|---|---|---|
+| a letra do preço de falhar | mono **12** `amberSoft`, a seguir a «dif.» | Spectral Italic **17**, `perigoNoPergaminho` 6,60 (+42 % de corpo) |
+| palavras de mecanismo à vista | **3** («Teste de», «dif.», «falhar:») | **0** |
+| o alvo do toque, a 375 | o dado do campo, **48 × 48** (2 304 px²) | a bandeja, **~206 × 56** (~11 500 px², **5 ×**) |
+| o alvo do toque, na coluna de 600 | 48 × 48 | **~463 × 56** (11 ×) |
+| quanto o olho anda do toque ao resultado, a 1905 | toque na soleira (711, 718), resultado na Bandeja da coluna da esquerda (443, 262): **~505 px**, para cima e para o lado | **0 px**: o dado rola onde estava à espera |
+| formas para «um d20 espera o teu toque» | **2** (a soleira âmbar do pedido; a linha mono com o dado do campo e «Não era isso») | **1** |
+| altura fixa da soleira | 56 | 56 (a fala vive na folha, e a página não perde altura fixa) |
+
+**O estudo citado:**
+
+- **O alvo e a distância.** Fitts, P. M. (1954), *Journal of Experimental Psychology* 47(6), 381–391: o tempo para
+  apontar sobe com a distância e desce com a largura do alvo. A bandeja ganha nas duas. O WCAG 2.2 pede ≥ 24 × 24
+  (2.5.8, AA) e ≥ 44 × 44 (2.5.5, AAA), e a bandeja cumpre os dois nas duas larguras.
+- **O limite visível do controlo.** WCAG 2.2, 1.4.11: o aro dá 3,39 contra a mesa (§MC 6).
+- **A espera que o jogador escolhe.** WCAG 2.2, 2.2.1 (Timing Adjustable): um limite de tempo é aceitável quando o
+  utilizador o pode desligar. A vela só existe com a preferência ligada, e «Mudar de ideia» vale até ela fechar. A vela
+  é também o indicador de progresso que Nielsen pede para esperas acima de 1 s (*Response Times: The 3 Important
+  Limits*, NN/g, 1993).
+- **A polaridade da fala.** A fala fica na folha clara, tinta sobre papel, pelo argumento de Mesa C §1: Piepenbrock et
+  al., *Ergonomics* 56(7), 2013.
+
+**E um achado contra o motor, medido.** A fala real do rasto com chuva («Sobrevivência. Precisa de 14, com a chuva. Se
+falhar, a chuva apaga a trilha e meia hora se vai.») tem **19 palavras**. Um adulto lê em silêncio cerca de **238
+palavras por minuto** em texto expositivo (Brysbaert, M., 2019, *Journal of Memory and Language* 109, 104047), ou seja,
+**4,8 s** para esta fala. Os 2 600 ms de `esperaSozinho` só chegam para **~10 palavras**: o dado lançava-se a meio do
+preço, que é justamente a parte que a espera existe para deixar ler. Daí o pedido de uma espera que cresce com a fala
+(§MC 9).
+
+### MC 9 · O que a peça precisa do motor e ele não dá (para `mente/pedidos-ao-sistema.md`)
+
+1. **Uma espera que cresça com a fala.** Proposta para `O_CHAMADO`: `esperaPorPalavra: 250` (240 palavras por minuto),
+   com `esperaSozinho: 2600` como piso e `esperaTeto: 5000`, e uma função `esperaDoChamado(chamado)` que a suíte lê.
+2. **O preço depois do dado.** Na falha, o aviso diz-se no indicativo («a chuva apaga a trilha e meia hora se vai»), e
+   a tela não reescreve texto do motor. Pede-se a `oChamado` um campo `cobrado` (o aviso sem «Se falhar, » e sem o
+   ponto final), e que o lance da Bandeja aceite `consequencia` para o mostrar depois de «✕ falha —».
+3. **O pedido do Mestre pela mesma régua.** `oCartaoDoPedido` não tem `aviso` nem `efeito`, e sem eles o pedido entra
+   na peça sem fala na folha. Pede-se que o pedido passe por `oChamado`; o MC6 da planta pode trazer isto consigo.
+4. **Dois textos que faltam em `O_CHAMADO`**: `rolarJa: "Rolar já"` (o verbo da vela) e `recuo` com maiúscula,
+   «Mudar de ideia», como os outros recuos da casa.
+
+O bónus («+ 2») não se pede, porque o App já o calcula (`modDoTeste`). A `linha` pronta continua útil para o nome
+acessível; a fala visível monta-se com as partes, que o motor já separa.
+
+### MC 10 · Para a pessoa decidir: a proposta ambiciosa, **atirar o dado**
+
+**O que muda:** na bandeja, além de se tocar, o d20 **pega-se e atira-se**. O jogador arrasta o dado e larga-o, e a
+força do gesto decide quanto tempo ele rola (entre 520 e 900 ms), com um ressalto na parede da bandeja quando vai com
+força. **O resultado continua decidido pela semente**: o gesto é teatro, tal como a troca de números. O dado deixa de
+ser um botão e passa a ser uma coisa que se lança, que é *«o sentimento que você está jogando e arriscando algo»* da
+ordem de 04/11, feito com a mão.
+
+**Porque vale:** quem lança o dado com a própria mão sente mais controlo sobre um jogo de acaso (Langer, E. J., 1975,
+«The illusion of control», *Journal of Personality and Social Psychology* 32(2), 311–328). Henslin observou no terreno
+(1967, «Craps and Magic», *American Journal of Sociology* 73(3), 316–330) que os jogadores de craps atiram com mais
+força quando querem números altos. O número não muda; o que muda é o dado parecer do jogador.
+
+**O custo e a saída:** é uma peça do `aprendiz` (o gesto e uma tabela de física: velocidade → duração, a parede, o
+ressalto) e não pede nada ao motor. **O toque continua a lançar**, porque o WCAG 2.2, 2.5.1 (Pointer Gestures) exige
+que um gesto de arrastar tenha alternativa num só toque. Com reduce não há rolagem: o dado pousa. **Espera a palavra
+dela** porque é um gesto novo para aprender, mesmo que não tire nada a ninguém. **A versão tímida** é o mesmo dado com
+um som de pouso (`som-da-mesa.js`) mais forte nos números altos, sem gesto nenhum.
