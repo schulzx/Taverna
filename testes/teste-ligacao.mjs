@@ -524,9 +524,12 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      frase e a chamada do Narrador, e o d20 espera o toque. A entrada sai
      quando o App (ou uma peça do motor) o importar.
      `teste-o-mestre-chama.mjs` é o primeiro leitor. */
-  const ESPERA_DO_MOTOR = {
-    "o-mestre-chama.js": "MC3 · oficial · 10/11",
-  };
+  /* e paga na MC3 da MESMA fase (10/11), pelas peças antes do App: o
+     `aprendiz` ligou O_CHAMADO às peças do chamado — ui.jsx (a fala na
+     folha, LinhaDoChamado, e o preço do molde) e painel-bandeja.jsx
+     (ChamadoDoMestre: «Rolar», o dado, a espera). O `oficial` liga oChamado
+     ao App na etapa seguinte. A lista volta a ficar VAZIA. */
+  const ESPERA_DO_MOTOR = {};
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   /* 03/11 (etapa 2 do Narrador ator), MUDADA E O MOTIVO: a régua só via o
      import por `/motor/x.js"` (o do App, do servidor, de src/), e uma peça

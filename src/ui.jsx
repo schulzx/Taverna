@@ -39,6 +39,10 @@ import { pilulaDaPrevisao, pilulaDaIntencao, pipsDaEconomia } from "./batalha-na
 /* CB 18 (lote 3): o «+2 do alto», a pílula e os rótulos do empurrão */
 import { ALTURA_NA_MESA, SUPERFICIES_NO_CHAO, EMPURRAO_NA_MESA } from "./estilo.js";
 import { altoDaPrevisao, rotulosDoEmpurrao } from "./batalha-na-tela.js";
+/* MC (10/11): a fala do Mestre que chama o dado — a forma em CHAMADO_DO_MESTRE,
+   as palavras no molde do motor (O_CHAMADO), o d20 da marca em FORMAS_DO_DADO */
+import { CHAMADO_DO_MESTRE, FORMAS_DO_DADO, BANDEJA } from "./estilo.js";
+import { O_CHAMADO } from "./motor/o-mestre-chama.js";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
    máquina — `formas.md` pede Spectral `TIPOS.corpo` (15) para ele, e o
@@ -2207,6 +2211,14 @@ export function Soleira({ ofertas = [] }) {
    e o veredito antes do clique inteiro: o dado, o bónus, o número a bater. O
    nome acessível leva tudo, sem corte.
 
+   MC (10/11, formas.md §MC 2) · O CHAMADO: o d20 que espera o toque, com o
+   preço dito, passa à frente de tudo. O conteúdo é a bandeja do
+   ChamadoDoMestre (painel-bandeja.jsx), que quem liga passa já montada — o
+   momento monta-o `momentoDoChamado` ({ conteudo, secundario, chave }) —, e
+   ao lado vai o SecundarioDoMomento («Mudar de ideia», só antes do toque). O
+   grupo chama-se «O Mestre pede o dado». O ramo `rolagem` fica até o oficial
+   passar o pedido do Mestre para `chamado` (§MC 7, 2.2).
+
    O SECUNDÁRIO (`panel`, aro `lineStrong`) é «+N ofertas» (abre as outras) ou
    o recuo («Agora não»).
 
@@ -2216,6 +2228,7 @@ export function Soleira({ ofertas = [] }) {
    passa já montado (esta peça não importa a Bandeja: a Bandeja importa daqui).
 
    <SoleiraDoMomento momentos={{
+     chamado:  { chave, conteudo, secundario: { rotulo, aoTocar } },
      rolagem:  { verbo, cede, preco, aoPrincipal, desativado, secundario: { rotulo, aoTocar } },
      dado:     { chave, conteudo, rotulo },
      escolha:  { verbo, preco, vida, aoPrincipal, secundario: { rotulo, aoTocar } },
@@ -2231,7 +2244,7 @@ export function Soleira({ ofertas = [] }) {
    sobre danger 5,77): uma escolha que pode matar já é vermelha fechada. O
    momento monta-o `momentoDaEscolha` (painel-encruzilhada.jsx). */
 const SM = SOLEIRA_DO_MOMENTO;
-const momentoVale = (qual, m) => !!(m && typeof m === "object" && (qual === "dado" ? m.conteudo != null && m.chave != null : String(m.verbo || "").trim()));
+const momentoVale = (qual, m) => !!(m && typeof m === "object" && (qual === "dado" ? m.conteudo != null && m.chave != null : qual === "chamado" ? m.conteudo != null : String(m.verbo || "").trim()));
 
 export function SoleiraDoMomento({ momentos = null }) {
   const m = momentos && typeof momentos === "object" ? momentos : {};
@@ -2258,6 +2271,14 @@ export function SoleiraDoMomento({ momentos = null }) {
     );
   }
   const momento = m[qual];
+  if (qual === "chamado") {
+    return (
+      <div key={"chamado:" + String(momento.chave || "")} className="tv-fade" role="group" aria-label="O Mestre pede o dado" data-momento="chamado" style={caixa}>
+        {momento.conteudo}
+        <SecundarioDoMomento s={momento.secundario} />
+      </div>
+    );
+  }
   return (
     <div key={qual} className="tv-fade" role="group" aria-label={qual === "rolagem" ? "O Mestre pede o dado" : qual === "escolha" ? "Uma escolha à tua frente" : "O que o mundo oferece agora"} data-momento={qual} style={caixa}>
       <PrincipalDoMomento momento={momento} rolagem={qual === "rolagem"} escolha={qual === "escolha"} />
@@ -2311,6 +2332,115 @@ function SecundarioDoMomento({ s }) {
   return (
     <button type="button" onClick={s.aoTocar} className="tv-anel-foco tv-body flex items-center justify-center" style={{ ...caixa, fontSize: TIPOS.corpo, color: T.ink }}>
       {s.rotulo}
+    </button>
+  );
+}
+
+/* ---------------- MC · A FALA DO MESTRE QUE CHAMA O DADO (10/11/2026) ----------------
+   formas.md §MC 2 (a `Linha do chamado`), Figma 382:31 (mesa 382:3 · telefone
+   382:17). A última linha da folha, logo abaixo da fala do jogador: «Sobrevivência.
+   Precisa de 14, com a chuva. Se falhar, a chuva apaga a trilha e meia hora se vai.»
+   É prosa, sem caixa; só a tinta muda por parte.
+
+   AS PALAVRAS SÃO DO MOTOR. O molde (O_CHAMADO.molde) parte-se nos seus marcadores
+   ({pericia}, {dc}, {porque}, {aviso}) e cada parte vem já separada do chamado
+   (periciaNome, dc, porque, aviso) — a `linha` pronta nunca se corta com regex. O
+   «Precisa de» é o literal do molde; por isso o nó do preço da bandeja
+   («precisa de 14», precoDoChamado) sai do mesmo molde e não de uma segunda frase.
+
+   Enquanto espera, a linha não vai ao save (quem liga põe-na no relato como linha
+   efémera). Sem chamado, não há linha. */
+export function pedacosDoChamado(chamado) {
+  if (!chamado || typeof chamado !== "object") return [];
+  const valor = {
+    pericia: String(chamado.periciaNome || ""),
+    dc: chamado.dc == null ? "" : String(chamado.dc),
+    porque: chamado.porque ? ", " + chamado.porque : "",
+    aviso: String(chamado.aviso || ""),
+  };
+  if (!valor.pericia || !valor.dc) return [];
+  const saida = [];
+  for (const bocado of String(O_CHAMADO.molde || "").split(/(\{[a-z]+\})/)) {
+    if (!bocado) continue;
+    const m = /^\{([a-z]+)\}$/.exec(bocado);
+    if (!m) { saida.push({ parte: "texto", texto: bocado }); continue; }
+    if (valor[m[1]]) saida.push({ parte: m[1], texto: valor[m[1]] });
+  }
+  /* o ponto que fecha a perícia vai com ela, no mesmo peso («Sobrevivência.») */
+  for (let i = 0; i < saida.length - 1; i++) {
+    if (saida[i].parte === "pericia" && saida[i + 1].parte === "texto" && saida[i + 1].texto.startsWith(".")) {
+      saida[i] = { ...saida[i], texto: saida[i].texto + "." };
+      saida[i + 1] = { ...saida[i + 1], texto: saida[i + 1].texto.slice(1) };
+    }
+  }
+  return saida.filter((p) => p.texto);
+}
+
+/* «precisa de 14»: o literal do molde que vem logo antes do número, sem o fim da
+   frase anterior e com minúscula, mais o número. É o nó do preço da bandeja. */
+export function precoDoChamado(chamado) {
+  if (!chamado || typeof chamado !== "object" || chamado.dc == null) return "";
+  const bocados = String(O_CHAMADO.molde || "").split(/(\{[a-z]+\})/);
+  const i = bocados.indexOf("{dc}");
+  const antes = i > 0 ? bocados[i - 1].split(". ").pop().trim() : "";
+  const palavra = antes ? antes.charAt(0).toLowerCase() + antes.slice(1) : "";
+  return [palavra, String(chamado.dc)].filter(Boolean).join(" ");
+}
+
+/* a marca: o `Dado · d20` de 18, sem número, com a tinta da folha */
+function MarcaDoChamado() {
+  const F = CHAMADO_DO_MESTRE.fala;
+  const d20 = FORMAS_DO_DADO[20];
+  return (
+    <svg width={F.marca} height={F.marca} viewBox="0 0 48 48" aria-hidden="true"
+      style={{ flex: "none", marginTop: (F.entrelinha - F.marca) / 2 }}>
+      <polygon points={d20.corpo} fill={F.marcaCorpo} strokeLinejoin="round" />
+      {d20.facetas.map((d, i) => <path key={i} d={d} fill="none" stroke={F.marcaFaceta} strokeWidth={BANDEJA.traco} />)}
+    </svg>
+  );
+}
+
+export function LinhaDoChamado({ chamado = null }) {
+  const pedacos = pedacosDoChamado(chamado);
+  if (!pedacos.length) return null;
+  const F = CHAMADO_DO_MESTRE.fala;
+  const estilo = (parte) => (
+    parte === "pericia" ? { fontWeight: F.pericia.peso, color: F.pericia.cor }
+      : parte === "dc" ? { fontSize: F.numero.tamanho, fontWeight: F.numero.peso }
+        : parte === "aviso" ? { fontStyle: F.aviso.estilo, color: F.aviso.cor }
+          : null
+  );
+  return (
+    <div className="tv-fade tv-body" data-chamado-fala=""
+      style={{ display: "flex", alignItems: "flex-start", gap: F.entre, marginTop: F.acima, fontSize: F.tamanho, lineHeight: `${F.entrelinha}px`, color: F.texto }}>
+      <MarcaDoChamado />
+      <span style={{ minWidth: 0 }}>
+        {pedacos.map((p, i) => (p.parte === "texto"
+          ? <React.Fragment key={i}>{p.texto}</React.Fragment>
+          : <span key={i} className={p.parte === "dc" ? "tv-mono" : undefined} data-chamado-parte={p.parte} style={estilo(p.parte)}>{p.texto}</span>))}
+      </span>
+    </div>
+  );
+}
+
+/* MC (formas.md §MC 1.8) · «O MESTRE ROLA POR MIM» — a preferência fica ao lado de
+   «Rolagens do mundo à vista» (PainelLateral, no App) e tem a forma dela e do
+   InterruptorDoSom: um botão de largura inteira com aria-pressed, 48 de alto, o
+   rótulo com «sim | não» e a linha que diz o que faz. A peça não guarda nada: o
+   App é dono da preferência (taverna_cfg_rolaPorMim), porque é ele que corre o
+   relógio da espera. `aoAlternar(novo)` recebe o valor seguinte. */
+export function RolaPorMim({ ligado = false, aoAlternar = null }) {
+  const P = CHAMADO_DO_MESTRE.preferencia;
+  const alternar = () => { try { if (typeof aoAlternar === "function") aoAlternar(!ligado); } catch (e) { /* nunca custa o turno */ } };
+  return (
+    <button type="button" onClick={alternar} aria-pressed={!!ligado}
+      className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
+      style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: ligado ? T.amberSoft : T.inkDim, background: "transparent" }}>
+      <span className="inline-flex items-center" style={{ gap: 6 }}>
+        <Glifo nome="dado" tamanho={TIPOS.maquina} cor={ligado ? T.amberSoft : T.inkDim} />
+        <span>{P.rotulo}: <b>{ligado ? P.sim : P.nao}</b></span>
+      </span>
+      <span className="block" style={{ color: T.inkDim }}>{P.diz}</span>
     </button>
   );
 }

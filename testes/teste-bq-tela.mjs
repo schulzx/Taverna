@@ -45,8 +45,12 @@ sec("1. as tabelas de §BQ 8, as cores e os glifos");
   t("o botão de confirmar tem o piso de toque", E.confirmar.alto === ALVOS.piso);
   t("o movimento: dar 180 (60 entre), escolher 120, folha 220", E.movimento.dar.dura === 180 && E.movimento.dar.entre === 60 && E.movimento.escolher.dura === 120 && E.movimento.folha.dura === 220);
   t("a gravidade, da mais grave à mais leve", G.ordem.join(">") === "vida>fecha>preco>leve");
+  /* MC (10/11): o chamado do Mestre entrou à frente (formas.md §MC 5), e a
+     «rolagem» fica atrás dele até o pedido do Mestre passar a «chamado»
+     (§MC 7, 2.2). O que esta asserção guarda não mudou: a escolha entre o
+     dado e a oferta. */
   t("a soleira: a escolha entre o dado e a oferta, com o glifo da encruzilhada e o chão danger na vida",
-    SOLEIRA_DO_MOMENTO.prioridade.join(">") === "rolagem>dado>escolha>proposta" && SOLEIRA_DO_MOMENTO.escolha.glifo === "encruzilhada" && SOLEIRA_DO_MOMENTO.escolha.vida.chao === T.danger);
+    SOLEIRA_DO_MOMENTO.prioridade.join(">") === "chamado>rolagem>dado>escolha>proposta" && SOLEIRA_DO_MOMENTO.escolha.glifo === "encruzilhada" && SOLEIRA_DO_MOMENTO.escolha.vida.chao === T.danger);
   t("a etapa que virou: rosa, com o glifo da reviravolta", ETAPA_DA_MISSAO.virou && ETAPA_DA_MISSAO.virou.aro === T.rosa && ETAPA_DA_MISSAO.virou.glifo === "reviravolta");
   const L = DIARIO_DE_MISSOES.lombada;
   t("a lombada: frisos de bronze no desfecho, de ferro no luto; o selo do coração e a fita",

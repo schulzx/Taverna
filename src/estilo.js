@@ -1421,11 +1421,51 @@ export const SOLEIRA_DO_MOMENTO = {
      quest que já se aceitou a pedir uma decisão; a rolagem e o dado que pousa
      continuam primeiro. Na vida, o chão do botão passa a danger (onAccent
      sobre danger 5,77). */
-  prioridade: ["rolagem", "dado", "escolha", "proposta"],
+  /* MC (10/11, formas.md §MC 5): o chamado do Mestre passa à frente de tudo —
+     é o d20 à espera do toque, com o preço dito. «rolagem» FICA logo atrás,
+     de passagem: é o pedido do Mestre de hoje (momentoDaProposta), e só sai
+     quando o oficial o mudar para «chamado» (§MC 7, 2.2) — tirá-lo antes
+     apagava o pedido da tela (regressão zero). */
+  prioridade: ["chamado", "rolagem", "dado", "escolha", "proposta"],
   escolha: { glifo: "encruzilhada", lado: 24, vida: { chao: T.danger } },   /* lado: o glifo do 316:2063 */
   principal: { chao: T.amber, letra: T.onAccent, verbo: { tamanho: 16, peso: 500, entrelinha: 20 }, preco: { tamanho: TIPOS.maquina, entrelinha: 16 }, dado: 28 },
   secundario: { chao: T.panel, aro: T.lineStrong, enchimento: 12 },
   mostraODado: DADO_DE_USO_NA_MESA.rolar.mostra,
+};
+/* MC · O MESTRE CHAMA O DADO (10/11/2026) — formas.md §MC; Figma 382:31 (a fala) e 382:237 (a peça).
+   A fala do Mestre na folha (LinhaDoChamado, ui.jsx) e o d20 à espera na bandeja da soleira
+   (ChamadoDoMestre, painel-bandeja.jsx; Momento=chamado). Lê T, TIPOS, ALVOS, BANDEJA, DADO e
+   MOVIMENTO_DO_DADO, sem copiar números deles.
+   O texto (o molde, «Rolar», o recuo, esperaSozinho) é do motor: O_CHAMADO. `reserva` é só o que
+   o motor ainda não dá (§MC 9.4) — a peça lê O_CHAMADO primeiro e cai aqui só sem ele; quando o
+   motor der `rolarJa` e o recuo com maiúscula, a reserva cala-se sozinha. `preferencia` são as
+   palavras do botão «O Mestre rola por mim» (§MC 1.8), irmão de «Rolagens do mundo à vista». */
+export const CHAMADO_DO_MESTRE = {
+  fala: {
+    marca: 18, entre: 8, acima: 12,
+    tamanho: TIPOS.prosa, entrelinha: 26,
+    texto: T.tintaDoPergaminho,
+    pericia: { peso: 600, cor: T.brasaNoPergaminho },
+    numero: { tamanho: 16, peso: 700 },                   /* JetBrains Mono */
+    aviso: { estilo: "italic", cor: T.perigoNoPergaminho },
+    marcaCorpo: T.brasaNoPergaminho, marcaFaceta: T.pergaminho,
+  },
+  bandeja: {
+    chao: T.pagina, sombra: BANDEJA.sombraInterior, raio: BANDEJA.raio,
+    aro: T.amber, alfaDoAro: 0.55, alfaDoAroAceso: 1, aroPousado: T.line,
+    enchimento: [4, 14], vao: 10,
+  },
+  dado: {
+    caixa: ALVOS.piso, lado: 40, papel: "teste",
+    brilho: DADO.brilho, alfaDoBrilho: DADO.alfaDoBrilho, alfaDoBrilhoAceso: DADO.alfaDoBrilhoAceso,
+    premido: 0.96, dePremir: 80, sobDedo: 90,
+  },
+  poe: { dura: 260, sobe: 8, gira: -24, curva: MOVIMENTO_DO_DADO.curva },
+  rola: { gira: -200, salto: 6 },                         /* a duração é MOVIMENTO_DO_DADO.rolar */
+  vela: { raio: 23, traco: 2, cor: T.amber, alfa: 0.85 }, /* a duração é a espera do motor (§MC 9.1) */
+  telefone: { comPericia: false },                        /* a perícia fica na fala da folha */
+  reserva: { rolarJa: "Rolar já", recuo: "Mudar de ideia" },
+  preferencia: { rotulo: "O Mestre rola por mim", sim: "sim", nao: "não", diz: "o dado lança-se sozinho depois de leres o preço" },
 };
 /* EM CENA (306:11): quem está aqui, uma vez só — rostos de 32 sobrepostos 8, no
    máximo 3, o resto em «+N». UM botão de 48 de alto, que abre a gaveta «Em cena»
@@ -4405,6 +4445,26 @@ export const MOVIMENTO_CSS = `
 .tv-dado-veredito { animation: tvDadoVeredito ${MOVIMENTO_DO_DADO.veredito}ms ease-out both; transform-origin: 50% 50%; }
 .tv-bandeja { min-height: ${BANDEJA.altura.telefone}px; }
 @media (min-width: 768px) { .tv-bandeja { min-height: ${BANDEJA.altura.mesa}px; } }
+/* ---------------- O CHAMADO DO MESTRE (MC · 10/11) ----------------
+   O d20 posto na bandeja da soleira (uma vez, com o ressalto do pouso); a
+   rolagem no lugar, a girar e a saltar sem andar de lado (o dado ja esta
+   onde rola); e a vela do Mestre-rola-por-mim, um arco que se fecha na
+   espera. Os numeros sao de CHAMADO_DO_MESTRE e MOVIMENTO_DO_DADO; a
+   duracao da vela e o perimetro do arco vem da peca (--tv-vela-dura,
+   --tv-vela-perimetro), porque a espera e do motor e cresce com a fala.
+   O aro e o brilho acendem sob o dedo e com foco; premido, o d20 encolhe.
+   Tudo tem saida no bloco reduzido, la em baixo. */
+@keyframes tvChamadoPoe { from { transform: translateY(-${CHAMADO_DO_MESTRE.poe.sobe}px) rotate(${CHAMADO_DO_MESTRE.poe.gira}deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tvChamadoRola { 0% { transform: rotate(${CHAMADO_DO_MESTRE.rola.gira}deg) translateY(0); } 45% { transform: rotate(-80deg) translateY(-${CHAMADO_DO_MESTRE.rola.salto}px); } 100% { transform: none; } }
+@keyframes tvChamadoVela { from { stroke-dashoffset: var(--tv-vela-perimetro); } to { stroke-dashoffset: 0; } }
+.tv-chamado-poe { animation: tvChamadoPoe ${CHAMADO_DO_MESTRE.poe.dura}ms ${CHAMADO_DO_MESTRE.poe.curva} both; transform-origin: 50% 50%; }
+.tv-chamado-rola { animation: tvChamadoRola ${MOVIMENTO_DO_DADO.rolar}ms ${MOVIMENTO_DO_DADO.curva} both; transform-origin: 50% 50%; }
+.tv-chamado-vela { animation: tvChamadoVela var(--tv-vela-dura) linear both; }
+.tv-chamado-bandeja { border-color: ${alfa(CHAMADO_DO_MESTRE.bandeja.aro, CHAMADO_DO_MESTRE.bandeja.alfaDoAro)}; transition: border-color ${CHAMADO_DO_MESTRE.dado.sobDedo}ms ease-out; }
+.tv-chamado-bandeja:hover, .tv-chamado-bandeja:focus-visible { border-color: ${alfa(CHAMADO_DO_MESTRE.bandeja.aro, CHAMADO_DO_MESTRE.bandeja.alfaDoAroAceso)}; }
+.tv-chamado-d20 { filter: drop-shadow(0 0 ${CHAMADO_DO_MESTRE.dado.brilho}px ${alfa(T.amber, CHAMADO_DO_MESTRE.dado.alfaDoBrilho)}); transition: filter ${CHAMADO_DO_MESTRE.dado.sobDedo}ms ease-out, transform ${CHAMADO_DO_MESTRE.dado.dePremir}ms ease-out; }
+.tv-chamado-bandeja:hover .tv-chamado-d20, .tv-chamado-bandeja:focus-visible .tv-chamado-d20 { filter: drop-shadow(0 0 ${CHAMADO_DO_MESTRE.dado.brilho}px ${alfa(T.amber, CHAMADO_DO_MESTRE.dado.alfaDoBrilhoAceso)}); }
+.tv-chamado-bandeja:active .tv-chamado-d20 { transform: scale(${CHAMADO_DO_MESTRE.dado.premido}); }
 /* ---------------- A MOLDURA VIVA (AAA · 05/11) ----------------
    O lume do ouro corre o aro devagar; a gema que acende cresce acima do
    tamanho e assenta. Os tempos são de ESTADOS_DA_MOLDURA. O lume roda à
@@ -4673,6 +4733,17 @@ export const MOVIMENTO_CSS = `
      as três classes pousam no estado final porque nenhuma começa invisível */
   .tv-dado-rola, .tv-dado-pousa { animation: none; }
   .tv-dado-veredito { animation: none; opacity: 1; }
+  /* MC · o chamado parado: o d20 aparece ja de pe num esvanecer curto
+     (tv-chamado-surge, que a peca poe sempre e so aqui dentro anima, e por
+     isso vem DEPOIS da linha do none); a rolagem nem corre (a peca pousa
+     logo, como a bandeja); a vela nao aparece, e a ESPERA FICA, porque e
+     tempo de leitura e nao animacao (formas.md MC 4); o aro, o brilho e o
+     premir trocam secos */
+  .tv-chamado-poe, .tv-chamado-rola { animation: none; }
+  .tv-chamado-vela { animation: none; display: none; }
+  .tv-chamado-bandeja, .tv-chamado-d20 { transition: none; }
+  .tv-chamado-bandeja:active .tv-chamado-d20 { transform: none; }
+  .tv-chamado-surge { animation: tvFade ${MOVIMENTO_DO_DADO.semMovimento}ms ease-out both; }
   /* O D20 ROLANDO, PARADO (V6, um defeito anterior apanhado na prova jogada): a
      linha da espera, o veu do dado e a lenda rodavam sem fim com reduced-motion.
      A saida nao e so none: parado, o d20 fica escurecido, e e isso que separa o

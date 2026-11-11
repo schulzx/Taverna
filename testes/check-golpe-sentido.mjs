@@ -121,7 +121,11 @@ sec("5. a entrada nunca espera");
   t("a tela não segura o turno por causa do golpe (nenhum bloqueio pelos golpes)", !/golpes[^\n]{0,80}bloque|bloque[^\n]{0,80}golpes/.test(TELA));
   const BANDEJA = semComentarios(ler("src/painel-bandeja.jsx"));
   t("o d20 do golpe na bandeja salta com um toque, e rola pelo relógio da tabela",
-    /ultimo\.golpe \? GOLPE_SENTIDO\.dadoNaBandeja : MOVIMENTO_DO_DADO\.rolar/.test(BANDEJA) && /pousarRef\.current\(\)/.test(BANDEJA));
+    /* MC3 (10/11): o relógio do lance saiu da Bandeja para o hook useLance
+       (o chamado do Mestre rola com ele, sem cópia), e lá o lance chama-se
+       `lancamento` em vez de `ultimo`. A asserção é a mesma: o golpe rola
+       pelo relógio da tabela, e um toque faz pousar. */
+    /lancamento\.golpe \? GOLPE_SENTIDO\.dadoNaBandeja : MOVIMENTO_DO_DADO\.rolar/.test(BANDEJA) && /pousarRef\.current\(\)/.test(BANDEJA));
 }
 
 console.log(`\ngolpe sentido: ${bons} ok · ${maus} falhas`);

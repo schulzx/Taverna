@@ -69,7 +69,10 @@ sec("1. as tabelas da TL 8");
      (formas.md §BQ 2) — é a quest que já se aceitou a pedir uma decisão, e
      passa à frente da porta nova; a rolagem e o dado continuam primeiro.
      A suíte da BQ (teste-bq-tela) prova a escolha na soleira renderizada. */
-  t("a prioridade: a rolagem > o dado que pousou > a escolha > a oferta", SOLEIRA_DO_MOMENTO.prioridade.join(">") === "rolagem>dado>escolha>proposta");
+  /* MC (10/11, formas.md §MC 5): o chamado do Mestre passa à frente de tudo;
+     a «rolagem» de hoje fica logo atrás, de passagem, até o oficial mudar o
+     pedido do Mestre para «chamado» (§MC 7, 2.2) — então sai daqui também. */
+  t("a prioridade: o chamado > a rolagem > o dado que pousou > a escolha > a oferta", SOLEIRA_DO_MOMENTO.prioridade.join(">") === "chamado>rolagem>dado>escolha>proposta");
   t("o principal: onAccent sobre amber, o verbo Spectral 500 16/20, o preço mono 12/16, o d20 28",
     SOLEIRA_DO_MOMENTO.principal.chao === T.amber && SOLEIRA_DO_MOMENTO.principal.letra === T.onAccent
     && SOLEIRA_DO_MOMENTO.principal.verbo.tamanho === 16 && SOLEIRA_DO_MOMENTO.principal.verbo.peso === 500 && SOLEIRA_DO_MOMENTO.principal.verbo.entrelinha === 20
