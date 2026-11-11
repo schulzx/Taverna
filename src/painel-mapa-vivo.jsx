@@ -774,6 +774,19 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, chegada = null, telefone, 
   /* o porquê do perigo da estrada: o do veredito (a pior perna), senão o da
      aresta única até aqui */
   const porQue = motivoEmTexto((v && v.motivoDoPerigo) || (aresta1 && aresta1.perigoMotivo) || null);
+  /* MC8 — o veredito antes de partir. O perigo do lugar (`no.perigo`) é
+     absoluto: «perigo médio» para o herói de nível 1 e para o de 9, e na
+     sessão 18 o mapa disse «médio» e o «DIFÍCIL» só apareceu depois de
+     Partir. Com herói, o veredito traz `desafio` — o patamar RELATIVO a
+     ele, pela régua da porta e da boca (`vereditoDaMasmorra`) — e o selo
+     passa a vestir esse patamar (`desafio.selo`), com o rótulo, a nota e
+     a conta. Sem `desafio` (povoação, boato, sem ficha), o selo de sempre.
+     A forma é a do patamar no Diário (o rótulo em caixa alta, a cor é a
+     chave do tema que o motor deu) SEM o ícone do motor: neste painel o
+     emoji não entra, e as caveiras do selo já são o canal; as arestas não mudam: a estrada é
+     outra régua. */
+  const desafio = (v && v.desafio) || null;
+  const nivelDoLugar = (desafio && desafio.selo) || no.perigo || null;
   const idaEVolta = v ? [`ida ${textoDeHoras(v.horas)}`, v.horasDeVolta != null ? `volta ${textoDeHoras(v.horasDeVolta)}` : "", aresta1 && aresta1.km != null ? `${Math.round(aresta1.km)} km ${v.modo === "a_pe" ? "a pé" : "pela estrada"}` : ""].filter(Boolean).join(" · ") : "";
 
   /* o verbo: na estrada ou lá dentro, impedido; com o veredito, o preço
@@ -813,14 +826,17 @@ function CartaoDoLugar({ dados, no, alvoId, veredito, chegada = null, telefone, 
           <span className="tv-body" style={{ fontSize: K.quem, lineHeight: 1.4, color: boato || !no.quem ? MV.tintaMeio : MV.tinta }}>{boato || !no.quem ? SEM_FICHA : quemEmTexto(no.quem)}</span>
         </Bloco>
       ) : null}
-      {(no.perigo || (v && v.perigoDaEstrada) || idaEVolta) ? (
+      {(nivelDoLugar || desafio || (v && v.perigoDaEstrada) || idaEVolta) ? (
         <Bloco rotulo="O preço">
-          {(no.perigo || (v && v.perigoDaEstrada)) ? (
+          {(nivelDoLugar || desafio || (v && v.perigoDaEstrada)) ? (
             <span className="flex items-center flex-wrap" style={{ gap: 10 }}>
-              {no.perigo ? <SeloDePerigo nivel={no.perigo} comPalavra /> : null}
+              {nivelDoLugar ? <SeloDePerigo nivel={nivelDoLugar} comPalavra={!desafio} /> : null}
+              {desafio ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, fontWeight: 500, color: T[desafio.cor] || MV.tinta }}>{String(desafio.rotulo || "").toUpperCase()}</span> : null}
               {v && v.perigoDaEstrada ? <span className="tv-body" style={{ fontSize: K.preco, color: MV.tintaMeio }}>{`a estrada: ${rotuloDoPerigo(v.perigoDaEstrada)}${porQue ? ` · ${porQue}` : ""}`}</span> : null}
             </span>
           ) : null}
+          {desafio && desafio.nota ? <span className="tv-body" style={{ fontSize: K.preco, lineHeight: 1.4, color: MV.tintaMeio }}>{capitular(desafio.nota)}</span> : null}
+          {desafio && desafio.porque ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, lineHeight: 1.4, color: MV.tintaMeio }}>{desafio.porque}</span> : null}
           {idaEVolta ? <span className="tv-mono" style={{ fontSize: TIPOS.maquina, lineHeight: 1.4, color: MV.tintaMeio }}>{idaEVolta}</span> : null}
         </Bloco>
       ) : null}

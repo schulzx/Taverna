@@ -337,5 +337,28 @@ sec("A tela grande cabe na janela baixa (MM11 · 10.ª sessão, 13/10, foto 13)"
   t("a 768 de largura as duas cabem nos pisos", 2 * K.margem + K.minimo + C.vao + C.minimo <= MAPA_VIVO.medidas.telefoneAte);
 }
 
+sec("O preço diz o desafio do herói, não o perigo de todos (MC8)");
+{
+  /* Sessão de prova 18: o cartão dizia «perigo médio» (o nível absoluto do
+     lugar) e o «DIFÍCIL» só aparecia depois de Partir — o veredito depois do
+     clique. Com veredito.desafio (partida.js, pela régua da boca), o selo
+     veste o patamar relativo; sem ele, o selo de sempre (regressão zero). */
+  const cartao = (CODIGO.match(/function CartaoDoLugar\([\s\S]*?\n\}/) || [""])[0];
+  const preco = (cartao.match(/<Bloco rotulo="O preço">[\s\S]*?<\/Bloco>/) || [""])[0];
+  t("o desafio sai do veredito, e o selo segue-o quando existe",
+    /const desafio = \(v && v\.desafio\) \|\| null;/.test(cartao)
+    && /const nivelDoLugar = \(desafio && desafio\.selo\) \|\| no\.perigo \|\| null;/.test(cartao));
+  t("o selo do lugar lê nivelDoLugar, nunca no.perigo cru", /<SeloDePerigo nivel=\{nivelDoLugar\}/.test(preco) && !/<SeloDePerigo nivel=\{no\.perigo\}/.test(preco));
+  t("com desafio cala a palavra absoluta («perigo médio») e diz o patamar", /comPalavra=\{!desafio\}/.test(preco) && /desafio\.rotulo/.test(preco));
+  t("a cor do patamar é a chave do tema que o motor deu (nenhum hex)", /color: T\[desafio\.cor\]/.test(preco) && !/#[0-9A-Fa-f]{3,6}\b/.test(preco));
+  t("e a nota e a conta (o porquê) vêm por baixo", /desafio\.nota/.test(preco) && /desafio\.porque/.test(preco));
+  t("as arestas continuam com o perigo da estrada", /<SeloNaAresta key=\{.p-\$\{a\.id\}.\} cx=\{m\.x\} cy=\{m\.y\} nivel=\{a\.perigo\} \/>/.test(CODIGO));
+  /* as quatro cores dos patamares (dificuldade.js) leem-se no painel do cartão */
+  for (const k of ["ok", "amberSoft", "amber", "danger"]) {
+    const c = contraste(T[k], MAPA_VIVO.painel);
+    t("o patamar em " + k + " lê-se no painel do cartão (≥ 4,5)", c >= 4.5, c.toFixed(2));
+  }
+}
+
 console.log(`\n${bons} ok, ${maus} falha(s)`);
 if (maus) process.exit(1);
