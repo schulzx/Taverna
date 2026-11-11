@@ -102,6 +102,48 @@ Formato de um item:
 - [x] **a família defensiva é promessa que nenhum não-jogador cumpre** · feita em v9.233 · texto em `mente/arquivo/pauta-feitas.md`
 ## Aprovado pela pessoa — executa como fase, UMA etapa por ciclo
 
+### Fase MC — o Mestre chama o dado (aprovada pela pessoa, 10/11 · a próxima fase do sistema)
+
+**A palavra da pessoa (10/11/2026):** *«Sim, faça»* à proposta da 18.ª sessão — depois da frase e
+antes da narração, a mesa responde *«Sobrevivência. Precisa de 14. Se falhar, a chuva apaga o
+rasto.»* e o d20 fica na bandeja à espera de um toque, com saída para quem tem pressa; junto, a
+busca que encontra, a quest que manda no oráculo, o epíteto do vilão e a luta honesta (veredito
+antes de partir, cativeiro como estado). A régua é a de 04/11: um dado a cada dois ou três turnos
+fora da luta, **com sentido** — a sessão 18 cumpriu o número com quatro Percepções iguais e três
+sucessos vazios.
+
+**A planta:** `mente/plano-o-mestre-chama-o-dado.md` (o `conselheiro`, 10/11) — as sete causas
+provadas em código e em Node com as frases da sessão (§1), o compasso do chamado (§2), as tabelas
+(§3), o que vai pela pauta dinâmica (§4, nenhum bloco estático), as onze etapas (§5).
+
+**A causa, curta:** a oferta «Olhar à volta» nasce de cada sítio novo sem perguntar se há o que
+achar, e o sucesso vazio fecha o lugar com a mesma chave que o «examino» do jogador; o catálogo não
+ouve «rasto», «cuido das feridas», «o que sei de»; «rolo de lado… com força» é lido como pedido de
+teste; nem a busca nem o oráculo lêem o passo ativo (só o Narrador o vê); o veto do nome do vilão
+vai a toda a pauta da cidade da quest e escreve a alcunha; o perigo relativo só se lê à boca; o
+`presos` da derrota é só texto.
+
+**O peso:** a aprovação de hoje e a liberdade de 23/09 e 28/09. Campos novos aditivos e ignorados
+pela versão antiga: `cativeiro` no save, a preferência «o Mestre rola por mim» em `taverna_cfg_*`.
+O chamado pendente não vai ao save.
+
+**As etapas** (o pormenor, as provas e quem faz estão na planta, §5):
+- [ ] **MC1 · o catálogo ouve a frase** · B · rasto, examinar → investigar, `lembrar` (Saberes de lugar, gente, bicho), estancar com quem, as amarras; o detector de pedido com fronteira de palavra. Catraca: as frases da sessão 18.
+- [ ] **MC2 · o chamado, o módulo** · B · `o-mestre-chama.js`, `QUANDO_O_MESTRE_CHAMA`, `aviso`/`efeito` em `CUSTO_DE_FALHAR`, `SITUACAO_DA_CD` (o +3 solto entra). O efeito avisado é o cobrado; a CD não denuncia o segredo.
+- [ ] **MC3 · o chamado na mesa** · D → O · Figma antes; o d20 à espera, «mudar de ideia», «o Mestre rola por mim»; `calou` = rola como hoje.
+- [ ] **MC4 · o sucesso dá um facto** · B · `oFactoDoSucesso`: ≥ 95% dos sucessos com facto com fonte; adeus ao «revele UMA coisa».
+- [ ] **MC5 · a quest manda** · B → O · o passo planta o segredo em X e escreve `descobriu`; o oráculo lê o passo.
+- [ ] **MC6 · o Mestre pede onde há o que achar** · B → O · uma em N em lugar vazio, chave própria, a oferta vazia não queima o jogador.
+- [ ] **MC7 · o epíteto só na boca dele** · B · o veto do nome só com ele ou um servo em cena; a alcunha nunca é a cidade onde se está.
+- [ ] **MC8 · o veredito antes de partir** · B → A + O · o patamar relativo no mapa, na partida e no «Entrar»; uma régua só.
+- [ ] **MC9 · o cativeiro como estado** · B → O · `cativeiro.js`, `SAIDAS_DO_CATIVEIRO`, campo novo; a masmorra sem «sair» enquanto preso.
+- [ ] **MC10 · socorrer quem caiu** · B → O · estancar estabiliza; primeiro achar o estado do companheiro a 0 PV.
+- [ ] **MC11 · a régua medida** · J · `medir-dados.mjs` e a 19.ª sessão: 1 dado / 2–3 turnos, ≥ 5 perícias, 0 sucessos vazios no passo.
+
+**A ordem:** MC1 → MC2 → MC3 (o dado na frase) · MC4 → MC5 → MC6 · MC7 (barato, ao lado de MC2) ·
+MC8 → MC9 · MC10 · MC11. **Para a pessoa** (planta §7): se o Mestre completa a régua quando a frase
+não pede (a minha escolha: não, mede-se); e se a inspiração do Mestre (§6) entra nesta fase.
+
 ### Fase CB — o combate e a viagem (a ordem da pessoa, 09/11 · o topo da fila do sistema)
 
 **A palavra da pessoa (09/11/2026), resumida:** partiu pelo mapa e *«instantaneamente abriu uma
