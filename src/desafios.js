@@ -364,11 +364,94 @@ const RX_PROCURA_DE_IR = new RegExp(
 export function ehProcuraDeIr(texto) {
   const t = norm(texto);
   if (!t) return false;
-  if (PROCURAR_PARA_IR.revirar.test(t) || PROCURAR_PARA_IR.escondido.test(t)) return false;
+  /* EM1 (o corpus da mesa): «saio da taverna, sem remexer em mais nada, e
+     procuro o mural» — o revirar NEGADO não faz da procura uma busca */
+  const semONegado = t.replace(/\bsem (?:mais )?(?:remex|revir|vasculh|mex)\w*/g, " ");
+  if (PROCURAR_PARA_IR.revirar.test(semONegado) || PROCURAR_PARA_IR.escondido.test(semONegado)) return false;
   const verbos = [...t.matchAll(RX_VERBO_DE_PROCURAR)];
   if (!verbos.length) return false;
   return verbos.every((m) => RX_PROCURA_DE_IR.test(t.slice(m.index)));
 }
+
+/* ============================================================
+   OLHAR À VOLTA, EXAMINAR À MÃO (Fase EM, EM1 · 10/11/2026)
+
+   O estudo do Mestre (mente/estudo-do-mestre.md, L1) contou a busca numa
+   mesa a sério: quase meio a meio, Percepção 42% e Investigação 40%. O que
+   as separa é o gesto, não a palavra: OLHAR À VOLTA — o quarto, a rua, quem
+   está de guarda — é Percepção; pegar na COISA e examiná-la — a moeda de
+   perto, o esqueleto e a lança, a placa de mármore, as tiras de ferro do
+   caixote — é Investigação. O nosso catálogo dava Percepção a quase tudo
+   («examino o/a…» era a busca do LUGAR), e o corpus da mesa (439 frases
+   reais, testes/corpus-da-mesa.json) achou seis exames de coisa lidos como
+   revirar o cômodo.
+
+   A tabela diz o verbo de examinar e o que NÃO é coisa: o lugar (examinar
+   o quarto continua a ser revirá-lo, com a chave do lugar) e o que já é de
+   outro desafio — o corpo (Medicina), o selo e a runa (o arcano), o brasão
+   (a heráldica). `espolio`: «examino o que caiu no chão» depois da luta é
+   apanhar o espólio, não vasculhar — nem busca, nem exame.
+   ============================================================ */
+export const EXAMINAR_A_COISA = {
+  /* o gesto declarado, na primeira pessoa: «peço licença para examinar o
+     cadeado» é pedir, não examinar */
+  verbo: "(?:examino|examinando|inspeciono|inspecionando|analiso|analisando|folheio|folheando|observo de perto|olho de perto|(?:tento|vou|passo a|come[cç]o a|paro para) (?:examinar|inspecionar|analisar|folhear))",
+  modo: "(?:(?:de perto|com cuidado|bem|atentamente|rapidamente)\\s+)?",
+  determinante: "(?:o|a|os|as|esse|essa|esses|essas|este|esta|estes|estas|aquele|aquela|aqueles|aquelas|cada|um|uma)",
+  lugar: ["lugar", "lugares", "sala", "salas", "quarto", "quartos", "salao", "comodo", "redor", "redores", "arredores", "ambiente", "area", "beco",
+    "corredor", "cela", "chao", "parede", "paredes", "teto", "local", "cena", "terreno", "casa", "cabana", "tenda", "barraca", "celeiro",
+    "armazem", "porao", "sotao", "patio", "jardim", "rua", "praca", "caverna", "gruta", "camara", "cripta", "galeria", "acampamento",
+    "clareira", "margem", "ruina", "ruinas", "predio", "edificio", "loja", "taverna", "templo", "estabulo", "galpao", "salinha", "espaco"],
+  deOutro: ["que", "corpo", "corpos", "cadaver", "cadaveres", "ferimento", "ferimentos", "ferido", "ferida", "morto", "morta", "doente", "pulso",
+    "selo", "selos", "runa", "runas", "magia", "feitico", "encantamento", "brasao", "estandarte", "emblema", "rosto", "olhos", "cara", "expressao"],
+  espolio: /\bexamin\w*\s+o que (?:caiu|ficou|sobrou|restou|deixaram|largaram|largou|deixou)\b/,
+  /* e quando a frase PROCURA o escondido — «examino o poço: a corda, as
+     bordas… procuro o que as Celas escondem», «examino as estantes,
+     procurando um papel escondido» —, o exame é o meio e a busca é o fim:
+     fica a busca do lugar */
+  procuraOEscondido: /\b(procur\w*|busc\w*)\s+(o que|qualquer|algo|alguma|uma (porta|passagem|saida|entrada|alavanca)|um (papel|fundo|compartimento|alcapao))\b/,
+};
+const RX_EXAME_DA_COISA = new RegExp(
+  `\\b${EXAMINAR_A_COISA.verbo}\\s+${EXAMINAR_A_COISA.modo}${EXAMINAR_A_COISA.determinante}\\s+(?!(?:${[...EXAMINAR_A_COISA.lugar, ...EXAMINAR_A_COISA.deOutro].join("|")})\\b)[a-z]{3,}`,
+);
+/* A frase examina uma COISA à mão (Investigação), e não o lugar? */
+export function ehExameDaCoisa(texto) {
+  const cru = String(texto || "");
+  const t = norm(cru);
+  if (!t) return false;
+  /* o escondido que se PROCURA (não a «moeda falsa» que se tem na mão) */
+  if (PROCURAR_PARA_IR.revirar.test(t) || EXAMINAR_A_COISA.procuraOEscondido.test(t) || /\b(escondid|secret|ocult)/.test(t)) return false;
+  const m = t.match(RX_EXAME_DA_COISA);
+  if (!m) return false;
+  /* o nome próprio depois do verbo é um SÍTIO ou alguém («examino o
+     Rossio Torto com cuidado»): olha-se a letra da frase como foi escrita */
+  const ini = m.index + m[0].length - (m[0].match(/[a-z]+$/) || [""])[0].length;
+  if (cru.length === t.length && /[A-ZÀ-Ý]/.test(cru.charAt(ini))) return false;
+  return true;
+}
+
+/* ---------------- A PISTA MANDA NA PERÍCIA DO RASTRO (EM1) ----------------
+   Seguir um rasto, na contagem do estudo, é Sobrevivência em 40% e
+   Investigação em 33%: o chão é de quem sabe o mato (a pegada, a trilha, o
+   capim pisado, a lama), e a marca deixada numa COISA é de quem lê
+   vestígios (o sangue a pingar, os arranhões na porta, os fiapos no
+   espinho). A primeira linha que casa decide; o chão vem primeiro, porque
+   «as gotas de sangue na lama» ainda são lidas no chão. Sem pista dita, a
+   perícia é a do desafio. A dificuldade, o custo e o aviso não mudam — muda
+   quem rola. */
+export const PISTA_DO_RASTRO = [
+  { pista: "chão", pericia: "sobrevivencia", rx: /\b(pegadas?|pisadas?|trilhas?|trilhos?|chao|lama|lamacal|neve|terra|capim|mato|relva|erva pisada|galhos? partidos?|arrast\w*|cascos?|patas?|poças?|pocas?)\b/ },
+  { pista: "coisa", pericia: "investigacao", rx: /\b(sangue|gotas?|pingos?|manchas?|arranh\w*|marcas?|sinais|vestigios?|fiapos?|fios?|retalhos?|cinzas?|fuligem|cera|tinta)\b/ },
+];
+function periciaDaPista(d, t) {
+  if (!d || !d.pelaPista) return "";
+  for (const p of PISTA_DO_RASTRO) if (p.rx.test(t)) return p.pericia;
+  return "";
+}
+
+/* o investigar de sempre (MC1 e antes): os verbos de deduzir e o exame do
+   VESTÍGIO; o exame da coisa (EM1) soma-se a ele no catálogo */
+const RX_INVESTIGAR_DE_SEMPRE = /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo|examin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b)/;
 
 export const DESAFIOS = [
   {
@@ -380,7 +463,10 @@ export const DESAFIOS = [
        nada), de esquadrinhar e de passar os olhos. */
     /* 30/09 (MM13): `revist` — "revisto a taverna de cima a baixo" é o verbo
        mais seco que a língua tem para isto, e não casava nada. */
-    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos)/,
+    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos|(dou|deito|lanco) uma vista de olhos|soa(m)? oco|rente ao ch[aã]o)/,
+    /* EM1 (o corpus da mesa): «dou uma vista de olhos» é o «dou uma olhada»
+       de cá do mar; bater na parede «a ver se soa oco» e passar a tocha
+       «rente ao chão» são revirar o lugar sem dizer o verbo. */
     /* PROCURAR UMA PESSOA NÃO É VASCULHAR UM LUGAR, e a diferença é cara: um
        falso positivo aqui marca o quarto como revirado por causa de "procuro
        o taverneiro". A lista é de gente porque é o caso real; o falso
@@ -413,7 +499,10 @@ export const DESAFIOS = [
        nunca foi revirar um comodo. */
     /* 30/09 (MM13): e o sítio, o serviço e o ofício, que também não são
        revirar um cômodo — `PROCURAR_PARA_IR`, logo antes do catálogo. */
-    naoSeCom: (txt, ctx) => ehProcuraDeIr(txt) || !!(ctx && typeof ctx.ehPessoaConhecida === "function" && ctx.ehPessoaConhecida(txt)),
+    /* EM1: e o exame da COISA à mão (EXAMINAR_A_COISA), que é Investigação,
+       e o espólio que se apanha do chão, que não é teste nenhum. */
+    naoSeCom: (txt, ctx) => ehProcuraDeIr(txt) || ehExameDaCoisa(txt) || EXAMINAR_A_COISA.espolio.test(norm(txt))
+      || !!(ctx && typeof ctx.ehPessoaConhecida === "function" && ctx.ehPessoaConhecida(txt)),
     pericia: "percepcao", alvo: "busca", minutos: 10, barulho: false,
     rotulo: "vasculhar o lugar",
     /* a dificuldade sai do que existe aqui; sem nada, o sistema ainda deixa
@@ -423,20 +512,28 @@ export const DESAFIOS = [
   },
   {
     id: "investigar",
-    rx: /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo|examin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b)/,
+    rx: new RegExp(RX_INVESTIGAR_DE_SEMPRE.source + "|" + RX_EXAME_DA_COISA.source),
+    /* EM1: e o exame da coisa à mão (EXAMINAR_A_COISA) — a metade da busca
+       que é Investigação. A regex casa o verbo e o objeto; o que ela não vê
+       (o nome próprio, a busca do escondido) devolve a frase à busca. */
+    naoSeCom: (txt) => RX_EXAME_DA_COISA.test(norm(txt)) && !RX_INVESTIGAR_DE_SEMPRE.test(norm(txt)) && !ehExameDaCoisa(txt),
     pericia: "investigacao", alvo: "investigacao", minutos: 15, barulho: false,
     rotulo: "ler os vestígios", dcPadrao: DC("incomum"), lePergunta: true,
     /* MC1: o vestígio examinado tem a SUA tentativa. «Examino o corte na
        carcaça» e «investigo o que aconteceu aqui» são duas perguntas, e a
        primeira não pode fechar a segunda (nem a oferta do Mestre, que é
        busca, fecha nenhuma delas). A chave leva as palavras do objeto. */
-    objetoDaChaveDe: /\bexamin\w*\s+(?:o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+([^.!?;:]{2,60})/,
+    objetoDaChaveDe: new RegExp("\\b" + EXAMINAR_A_COISA.verbo + "\\s+" + EXAMINAR_A_COISA.modo + EXAMINAR_A_COISA.determinante + "\\s+([^.!?;:]{2,60})"),
   },
   {
     id: "escutar",
     /* "ouço passos" é narração, não perícia. Escutar como AÇÃO precisa de
        alvo ou de esforço declarado — sem isso, todo turno viraria teste. */
-    rx: /\b(escuto (a\b|à\b|na\b|no\b|atr[aá]s|pela|pelo)|fico escutando|encosto o ouvido|presto o ouvido|apuro os ouvidos|escuto com aten)/,
+    rx: /\b(escuto (a\b|à\b|na\b|no\b|atr[aá]s|pela|pelo)|fico escutando|encosto o ouvido|presto o ouvido|apuro os ouvidos|escuto com aten|encosto a orelha|colo (o ouvido|a orelha))/,
+    /* EM1 (o corpus da mesa): «encosto a orelha à porta» é o ouvido de cá do
+       mar. E escutar a PROPOSTA, o pedido, a história de alguém é conversa —
+       «digo a Halvard que depois escuto a proposta dele» não rola Percepção. */
+    naoSe: /\bescuto (a|o|os|as) (proposta|propostas|pedido|conselho|conselhos|historia|relato|resto|desabafo|queixa|oferta)\b|\bdepois escuto\b/,
     pericia: "percepcao", alvo: "escuta", minutos: 2, barulho: false,
     rotulo: "escutar", dcPadrao: DC("comum"),
     /* v9.64: antes do dado, o mundo diz se HÁ o que ouvir. Sem isto, este
@@ -486,7 +583,12 @@ export const DESAFIOS = [
   },
   {
     id: "mentira",
-    rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]\w*|tento saber se|desconfio|sinto se|percebo se mente)\b/,
+    rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]\w*|tento saber se|desconfio|sinto se|percebo se mente|(observo|estudo|vigio) (o rosto|a cara|a expressao|a rea[cç][aã]o|os olhos) d\w+|(perceber|ver|saber|notar|sentir) se (ele|ela|eles|elas|\w+) (esta |estao |me )?(mentindo|a mentir|mente|esconde|escondendo|engana|enganando)|como (ele|ela|eles|elas|[a-z]{3,}) reage|me mentir|me mente|me esta mentindo|esta(s)? a mentir)\b/,
+    /* EM1 (o corpus da mesa, e o classificador que o farejou): ler alguém é
+       Intuição em 78% na contagem do estudo, e quem o faz quase nunca diz
+       «intuição» — diz «observo o rosto dele», «para perceber se está
+       mentindo», «prestando atenção em como ele reage», «estás a mentir-me»
+       (a ênclise chega desfeita: «me mentir»). */
     pericia: "intuicao", alvo: "intuicao", minutos: 0, barulho: false,
     rotulo: "ler a intenção", dcPadrao: DC("incomum"), lePergunta: true,
     /* v9.65: rolar Intuição sem o mundo ter decidido se HÁ mentira é
@@ -521,7 +623,9 @@ export const DESAFIOS = [
        improviso achou. `SEM_DADO` já dizia que subir a escada é andar; o
        catálogo é que a roubava antes. "Subo PELA escadaria" (a ruína, a
        torre) continua sendo subida com queda — é o exemplo da suíte social. */
-    naoSe: /\bsubo (a|as) (escada|escadas)\b/,
+    /* EM1 (o corpus da mesa): «subo a ladeira pela rua da forja» é andar —
+       a rua, os degraus, a rampa não se escalam. */
+    naoSe: /\bsubo (a|as|o|os) (escada|escadas|ladeira|ladeiras|rua|ruas|degraus|rampa|estrada|caminho|trilha|colina|calcada|avenida)\b/,
     pericia: "atletismo", alvo: "escalada", minutos: 5, barulho: false,
     rotulo: "escalar", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -653,6 +757,9 @@ export const DESAFIOS = [
   {
     id: "mentir",
     rx: /\b(minto|mentir|blefo|blefar|engano|finjo ser|me pass(o|ar) por|disfar[cç])/,
+    /* EM1 (o corpus da mesa): «foi um engano» é o substantivo, e «chega de
+       mentir: diga…» é arrancar a verdade a quem mente — não mentir. */
+    naoSe: /\b(foi|era|houve|um|uma|por) engano\b|\b(chega|para|pare|basta) de mentir\b|\bn[aã]o (me )?(minta|mintas|mente)\b|\bsem mentir\b/,
     pericia: "enganacao", alvo: "enganacao", minutos: 5, barulho: false,
     rotulo: "enganar", dcPadrao: DC("incomum"), social: true,
   },
@@ -662,10 +769,17 @@ export const DESAFIOS = [
        passo da quest — devolvia null: o catálogo conhecia «rastro» e não
        «rasto», nem as marcas, nem «por onde foi». Perguntar por onde alguém
        foi a uma pessoa é conversa, e fica de fora. */
-    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu))/,
-    naoSe: /\b(pergunt|quero saber|me diz|me conta|diga-me)/,
+    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu)|sigo (a|as|o|os) (gotas|pingos|manchas|rasto|rastro) de sangue|sigo (os|as|esses|essas) (arranh\w*|riscos|sulcos|fiapos)|(vou|sigo|corro|parto) atr[aá]s d(as|os|essas|esses) (pegadas|pisadas|rastr?os?|marcas|pistas|trilhas?)|at[eé] onde (as|os) (marcas|pegadas|pisadas|rastr?os?|trilhas?|gotas)( \w+)? (me |nos )?lev)/,
+    /* EM1 (o corpus da mesa): «vou atrás das pegadas» e «avanço até onde as
+       marcas me levam» — as palavras que o classificador treinado farejou
+       e o catálogo não ouvia. E o rasto DA ESTRADA é a estrada: «sigo o
+       rasto da estrada proibida» é ir, não ler o chão. */
+    naoSe: /\b(pergunt|quero saber|me diz|me conta|diga-me)|\brastr?os? d[aoe]s? (estrada|caminho|rio|costa|serra|calcada|via)\b/,
     pericia: "sobrevivencia", alvo: "rastro", minutos: 30, barulho: false,
     rotulo: "rastrear", dcPadrao: DC("incomum"),
+    /* EM1: a pista diz quem rola — PISTA_DO_RASTRO (o chão, Sobrevivência;
+       a marca numa coisa, Investigação) */
+    pelaPista: true,
     /* meia hora de mundo por tentativa: rolar contra um chão que não tem
        pegada nenhuma custava caro e devolvia narração de consolo */
     oportunidade: { pergunta: "haRastro", nada: "Não há rastro aqui — o chão não guardou nada que se possa seguir." },
@@ -677,7 +791,7 @@ export const DESAFIOS = [
        irmã» — as cinco davam null. O catálogo só conhecia «cuido DO
        ferimento». E com QUEM: a chave leva a pessoa (tratar Elowen não
        fecha tratar a irmã), e `quem` viaja no veredito. */
-    rx: /\b(estanco|estancar|estabilizo|estabilizar|trato (o|a|os|as|do|da) (ferimento|ferida|corte|machucado)s?|cuido (do|da|dos|das) (ferimento|ferida|corte|machucado)s?|fa[cç]o um (curativo|torniquete)|aplico um (curativo|torniquete)|torniquete|enfaix(o|ar|ando)|pressiono (o|a|os|as) (ferimento|ferida|corte|sangramento)s?|fa[cç]o press[aã]o (no|na|sobre o|sobre a) (ferimento|ferida|corte)|socorr(o|er) (a|o|minha|meu|nossa|nosso|el[ae])|presto (os primeiros )?socorros?)\b/,
+    rx: /\b(estanco|estancar|estabilizo|estabilizar|trato (o|a|os|as|do|da) (ferimento|ferida|corte|machucado)s?|cuido (do|da|dos|das) (ferimento|ferida|corte|machucado)s?|fa[cç]o um (curativo|torniquete|garrote)|aplico um (curativo|torniquete|garrote)|torniquete|garrote|enfaix(o|ar|ando)|pressiono (o|a|os|as) (ferimento|ferida|corte|sangramento)s?|fa[cç]o press[aã]o (no|na|sobre o|sobre a) (ferimento|ferida|corte)|socorr(o|er) (a|o|minha|meu|nossa|nosso|el[ae])|presto (os primeiros )?socorros?)\b/,
     pericia: "medicina", alvo: "medicina", minutos: 10, barulho: false,
     rotulo: "estancar", dcPadrao: DC("comum"),
     comQuem: true,
@@ -735,6 +849,8 @@ export const DESAFIOS = [
   {
     id: "nadar",
     rx: /\b(nado|nadar|atravesso a nado|me jog(o|ar) n[oa] (agua|[aá]gua|rio|mar)|mergulho (n|at[eé]|para))/,
+    /* EM1 (o corpus da mesa): «pergunto a Hakon se ele sabe nadar» é conversa */
+    naoSe: /\bsabe(s|m)? nadar\b|\bse (ele|ela|eles|elas|voce|tu) nada\b/,
     pericia: "atletismo", alvo: "nado", minutos: 10, barulho: false,
     rotulo: "atravessar a nado", dcPadrao: DC("comum"), corpo: true,
   },
@@ -754,7 +870,10 @@ export const DESAFIOS = [
        do improviso achou. O que se ergue com dois dedos não é peso; a lista é
        de coisas leves e de partes do próprio corpo, que é onde "levanto" e
        "arrasto" deixam de ser esforço e viram gesto. */
-    naoSe: /\b(levanto|arrasto|empurro) (a|o) (caneca|copo|taca|mao|maos|braco|cabeca|olhar|voz|sobrancelha|vela|lanterna|tocha|chapeu|capuz|garrafa|bandeira|punho|cadeira|banco|banquinho|cortina|manga|gola|saia|capa|pe)\b|\b(seguro|empurro) a porta (para|e entro|e saio|e passo|devagar|aberta)\b/,
+    naoSe: /\b(levanto|arrasto|empurro) (a|o) (caneca|copo|taca|mao|maos|braco|cabeca|olhar|voz|sobrancelha|vela|lanterna|tocha|chapeu|capuz|garrafa|bandeira|punho|cadeira|banco|banquinho|cortina|manga|gola|saia|capa|pe)\b|\b(seguro|empurro) a porta (para|e entro|e saio|e passo|devagar|aberta)\b|\bempurro a porta\b(?![^.!?]{0,40}\b(emperrad\w*|trancad\w*|pres[ao]|travad\w*|pesad\w*|ombro|for[cç]a|n[aã]o (abre|cede)|resist\w*|enferrujad\w*|inchad\w*))/,
+    /* EM1 (o corpus da mesa): «empurro a porta do Escudo Rachado e procuro
+       a Berengária» é entrar. Empurrar uma porta só é peso quando ela
+       resiste — emperrada, trancada, inchada, ao ombro. */
     pericia: "atletismo", alvo: "peso", minutos: 5, barulho: true,
     rotulo: "vencer o peso", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -775,7 +894,7 @@ export const DESAFIOS = [
        «Puxo a corda com toda a força» não está aqui: puxar uma corda é o
        improviso de Força (MM4), e só forçar O QUE PRENDE é sair dele. */
     id: "arrebentar",
-    rx: /\b(arrebent\w*|romp(o|er)|estouro|for[cç]o|tor[cç]o)\b[^.!?]{0,40}\b(amarras?|cordas?|ra[ií]zes|correntes?|grilh[oõ]es|grilh[aã]o|algemas?|n[oó]s|la[cç]os?|pulsos|cip[oó]s?|tiras?|correias?)\b/,
+    rx: /\b(arrebent\w*|rebent\w*|romp(o|er)|estouro|for[cç]o|tor[cç]o|fa[cç]o for[cç]a)\b[^.!?]{0,40}\b(amarras?|cordas?|ra[ií]zes|correntes?|grilh[oõ]es|grilh[aã]o|algemas?|n[oó]s|la[cç]os?|pulsos|cip[oó]s?|tiras?|correias?)\b/,
     naoSe: /\b(dele|dela|deles|delas|do guarda|do bandido|do inimigo|do sino)\b/,
     pericia: "atletismo", alvo: "arrebentar", minutos: 5, barulho: false,
     rotulo: "arrebentar o que prende", dcPadrao: DC("comum"), corpo: true,
@@ -1171,6 +1290,14 @@ export const FAMILIAS_DO_IMPROVISO = [
       { rx: /\b(tento|procuro|busco|vou) (perceber|notar|reparar|distinguir|enxergar|avistar|ouvir|captar|flagrar)\b/, nucleo: /\b(tento|procuro|busco|vou) /, faz: "" },
       { rx: /\b(fico|me mantenho|permaneco|continuo) (atento|alerta|de olho|de vigia|de sentinela|vigiando|de guarda)\b/, nucleo: /\b(fico|me mantenho|permaneco|continuo)\b/, faz: "ficar", minutos: 10 },
       { rx: /\bvigio (a|o|as|os) \w+/, nucleo: /\bvigio\b/, faz: "vigiar", minutos: 10 },
+      /* EM1 (o corpus da mesa): Percepção sem verbo de procurar — o olhar de
+         quem chega e mede o sítio («paro e olho: quem está de guarda,
+         quantas saídas há, se alguém me segue»), o espreitar, o olhar sobre
+         o que alguém traz nas mãos. O estudo: «olho em volta / à espreita»
+         é Percepção; pegar na coisa e examiná-la é Investigação
+         (EXAMINAR_A_COISA). */
+      { rx: /\bespreito (pela|pelo|por|atraves|entre|para|la|o|a|os|as|de)\b/, nucleo: /\bespreito\b/, faz: "espreitar" },
+      { rx: /\b(olho|observo|reparo)\b[^.!?;]{0,24}\b(quem (esta de guarda|esta de vigia|esta a vigiar|vigia|guarda|entra|sai)|quant[oa]s \w+|se alguem (me )?(segue|vigia|observa|olha)|o lugar e quem|os arredores|o que (ele|ela|eles|elas|[a-z]{3,}) (traz|tem|carrega|leva|segura|esconde))/, nucleo: /\b(olho|observo|reparo)\b/, faz: { olho: "olhar", observo: "observar", reparo: "reparar" } },
       { rx: /\b(forco|apuro|aguco) (a vista|os olhos|o olhar|o faro|o olfato)\b/, nucleo: /\b(forco|apuro|aguco)\b/, faz: "apurar" },
       { rx: /\b(cheiro|provo|fungo) (a|o|esse|essa|este|esta) \w+ (para|pra) (ver|saber|sentir|descobrir|notar) se\b/, nucleo: /\b(cheiro|provo|fungo)\b/, faz: { cheiro: "cheirar", provo: "provar", fungo: "cheirar" } },
       { rx: /\b(pressinto|tento pressentir|sigo (o )?meu instinto|confio no meu instinto|tento sentir se)\b/, nucleo: /\b(pressinto|tento pressentir|tento sentir)\b/, faz: "pressentir", pericia: "intuicao" },
@@ -1825,7 +1952,9 @@ export function lerAcao(texto, ctx = {}) {
      na gazua é Prestidigitação — se o desafio impusesse a sua, o Ladino
      rolaria força para usar a ferramenta dele, e a escolha entre as vias
      (que é o ponto todo) deixaria de significar alguma coisa. */
-  const periciaDaVez = (via && via.pericia) || d.pericia;
+  /* EM1: e a PISTA manda na perícia do rasto (PISTA_DO_RASTRO) — o chão é
+     Sobrevivência, a marca numa coisa é Investigação */
+  const periciaDaVez = (via && via.pericia) || periciaDaPista(d, declarada) || d.pericia;
   /* o improviso diz o atributo pela família; o catálogo, pela perícia */
   const atributoDoDesafio = d.atributo || (periciaPorId(periciaDaVez) || {}).atributo || "percepcao";
   const achado = (typeof achadoDe === "function" && (d.alvo === "busca" || d.alvo === "investigacao"))
@@ -2559,6 +2688,54 @@ function peleResolvida(p, dc, opcoes) {
   return { ...resto, dano: m.dano, dado: m.dado };
 }
 
+/* ============================================================
+   A FALHA POR POUCO DÁ MEIA-VERDADE (Fase EM, EM4 · 10/11/2026)
+
+   O estudo do Mestre (mente/estudo-do-mestre.md, L6) contou o que vem
+   depois de um resultado baixo numa mesa a sério: «nada» explícito em 7%,
+   meia-verdade em 23%, mordida em 11%, e em 59% a cena simplesmente segue
+   sem o que se queria. Morder sempre é mais do que se morde lá; e «nada
+   acontece» é o desfecho que ensina o jogador a não arriscar.
+
+   A casa já tinha o lado dos GESTOS: falhar por 1 ou 2 numa linha com
+   `porPouco` é o «quase» — consegue, e paga (FAIXAS_DA_MARGEM). Faltava o
+   lado do SABER: a escuta, a intuição, a memória, a heráldica, a criatura
+   — linhas sem `porPouco` porque o que se procura é um facto, e um facto
+   não se paga em minutos. Ali, até hoje, falhar por 1 era o mesmo «não
+   revela nada» que falhar por 15.
+
+   A REGRA: numa linha de saber, falhar por 1 a `ate` dá MEIA-VERDADE —
+   um pedaço verdadeiro do que existia, e o resto em falta (ou uma dúvida
+   que só outro caminho tira). Falhar por mais cobra o preço avisado, o da
+   linha (o chamado do MC2 disse-o antes do dado, e é esse que se cobra).
+   Nas linhas de saber que já aceitam o meio, o «quase» (−1, −2) continua a
+   ser o facto com custo; a meia-verdade fica com o −3. Os gestos não mudam.
+
+   QUEM NUNCA É MEIA-VERDADE: o 1 natural (o dado manda antes da conta), a
+   luta (o turno é o preço), e a busca sem nada para achar (`fechaDepois`:
+   meia-verdade de um quarto vazio seria ordem para inventar).
+
+   A meia-verdade NÃO cobra o efeito avisado — não é a falha que o aviso
+   descreve. Cobra só o que toda tentativa cobra (a via fecha no livro de
+   tentativas: repetir do mesmo jeito não traz a outra metade).
+
+   `saber`: os alvos de CUSTO_DE_FALHAR em que o que se tenta é saber.
+   Opt-in: `desfechoDaMargem(v, { comMeiaVerdade:
+   true })`; sem a opção, o desfecho é o de antes, letra por letra — o App
+   liga-a junto do envelope (a nota ao oficial). */
+export const MARGEM_DA_FALHA = Object.freeze({
+  ate: 3,
+  saber: Object.freeze(["busca", "investigacao", "rastro", "escuta", "fraqueza", "lembranca", "intuicao", "heraldica", "diagnostico", "arcano", "orientar", "improviso_percepcao", "improviso_intelecto"]),
+  diz: "vem pela metade: um pedaço verdadeiro do que existia, e o resto em falta",
+});
+
+/* A falha desta margem, nesta linha, é meia-verdade? */
+function eMeiaVerdade(c, v, margem, { emCombate = false, desastre = false, critico = false } = {}) {
+  if (!c || !MARGEM_DA_FALHA.saber.includes(c.alvo)) return false;
+  if (emCombate || desastre || critico || (v && v.fechaDepois)) return false;
+  return margem < 0 && margem >= -MARGEM_DA_FALHA.ate;
+}
+
 /* O DESFECHO DA MARGEM — o que uma rolagem de desafio custa, dos dois
    lados da linha. Devolve:
    - null  quando não há o que cobrar: o sim limpo, o teste sem custo de
@@ -2569,7 +2746,7 @@ function peleResolvida(p, dc, opcoes) {
      forma de antes de propósito: tudo o que o App já faz com um "por
      pouco" (a fala, o relógio, o barulho, a pele) serve ao "mas" sem uma
      linha nova de fiação. `porPouco` quer dizer "é o meio": o sim, pago. */
-export function desfechoDaMargem(v, { total = null, dc = null, critico = false, desastre = false, emCombate = false, sorte = null } = {}) {
+export function desfechoDaMargem(v, { total = null, dc = null, critico = false, desastre = false, emCombate = false, sorte = null, comMeiaVerdade = false } = {}) {
   if (!v || !v.alvoDoCusto) return null;
   const c = custoPorAlvo(v.alvoDoCusto);
   if (!c) return null;
@@ -2582,6 +2759,13 @@ export function desfechoDaMargem(v, { total = null, dc = null, critico = false, 
   const aceitaMeio = !!c.porPouco && !emCombate && !v.fechaDepois;
   if (f.meio && !aceitaMeio) f = faixaDaMargemPorId(f.semMeio);
   if (f.passou && !f.meio) return null;
+  /* EM4: a falha por pouco numa linha de saber — MARGEM_DA_FALHA */
+  if (!f.passou && comMeiaVerdade && eMeiaVerdade(c, v, margem, { emCombate, desastre, critico })) {
+    return {
+      porPouco: false, meiaVerdade: true, faixa: "meiaVerdade", margem, faltou: d - t, alvo: c.alvo,
+      diz: MARGEM_DA_FALHA.diz, minutosExtra: 0, barulhoExtra: false, pele: null,
+    };
+  }
   const meio = f.meio;
   const opcoes = { sorte, semente: `${v.chave || v.id || c.alvo}|${t}|${d}` };
   const minutos = meio && c.minutosPorPouco != null ? c.minutosPorPouco : c.minutosExtra;
@@ -2600,9 +2784,9 @@ export function desfechoDaMargem(v, { total = null, dc = null, critico = false, 
 /* O desfecho de uma rolagem que NÃO bateu a dificuldade — a metade de
    baixo de `desfechoDaMargem`, com a assinatura de sempre (v9.65). Passar
    continua não tendo "desfecho de falha", nem quando o passar é pago. */
-export function desfechoDaFalha(v, total, dc, { emCombate = false, desastre = false, sorte = null } = {}) {
+export function desfechoDaFalha(v, total, dc, { emCombate = false, desastre = false, sorte = null, comMeiaVerdade = false } = {}) {
   if (!(Number(dc) - Number(total) > 0)) return null;
-  return desfechoDaMargem(v, { total, dc, emCombate, desastre, sorte });
+  return desfechoDaMargem(v, { total, dc, emCombate, desastre, sorte, comMeiaVerdade });
 }
 
 /* O que o sistema já cobrou, em palavras de mesa — para o Narrador não
@@ -2620,6 +2804,7 @@ function oQueFoiCobrado(des) {
 
 export function falaDoCusto(des) {
   if (!des) return "";
+  if (des.meiaVerdade) return `⚖ Faltaram ${des.faltou} — e fica meio caminho: ${des.diz}.`;
   if (des.porPouco && des.faixa === "mas") {
     const quanto = des.margem > 0 ? `Passou por ${des.margem}` : "Na conta exata";
     return `⚖ ${quanto} — e por um fio o mundo cobra: ${des.diz}.`;
@@ -2631,6 +2816,9 @@ export function falaDoCusto(des) {
 
 export function envelopeDoCusto(des, rotulo) {
   if (!des) return "";
+  /* EM4: a meia-verdade não cobrou preço — quem a diz ao Narrador é o
+     envelope do teste (testes.js, `meio` com a faixa), numa voz só */
+  if (des.meiaVerdade) return "";
   if (des.porPouco) {
     const como = des.faixa === "mas"
       ? `Eu passei no teste de ${rotulo || "perícia"} por um fio (${des.margem > 0 ? `sobrou ${des.margem}` : "bati a dificuldade exata"}), e por tão pouco o sistema decidiu que EU CONSIGO — mas pago.`

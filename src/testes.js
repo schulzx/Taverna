@@ -223,6 +223,14 @@ export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, 
     return `${cabeca} POR UM FIO (${doMeio.onde}) — COM PREÇO.
 REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense. Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
+  /* EM4: a falha por pouco numa linha de saber (MARGEM_DA_FALHA,
+     desafios.js) — o `meio` com a faixa «meiaVerdade». Não é o «nada»: é
+     metade do que existia, e o resto em falta. Nunca num gesto, no 1
+     natural nem no automático. */
+  if (!passou && !gesto && !desastre && !automatico && meio && meio.meiaVerdade) {
+    return `${cabeca} FALTARAM ${Number(meio.faltou) || 1} — MEIA-VERDADE.
+REGRA DESTE ENVELOPE (obrigatória): eu FALHEI POR POUCO, e fico com METADE. Revele UM pedaço verdadeiro sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo — e deixe claro o que falta: a outra metade não veio, ou ficou uma dúvida que só outro caminho tira. Em duas ou três frases. NÃO entregue a coisa inteira, NÃO invente o que não existe para encher a metade, e NÃO narre um «nada acontece». Devolva a palavra para mim, sem iniciar cena nova e sem fazer o tempo passar.`;
+  }
   if (gesto && !passou) {
     return `${cabeca}
 REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. O que eu declarei NÃO acontece como declarei — narre em duas ou três frases a tentativa falhando no corpo e no lugar, sem me dar metade do efeito nem uma saída de consolo${desastre ? ", e, como foi falha crítica, com um pequeno custo a mais: perdi tempo, chamei atenção ou fiquei em pior posição" : ""}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;

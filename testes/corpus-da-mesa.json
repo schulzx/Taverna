@@ -1,0 +1,2703 @@
+{
+ "origem": "As frases que o jogador escreveu nas sessões de prova 1–18 (mente/mm11-sessao*.md, testes/registo-s4-escuta.json, os relatórios 13–18 e as frases da 18.ª reconstruídas pelo jogo). Rotuladas à mão, uma a uma, em 10/11/2026 (o protótipo do classificador, mente/classificador-prototipo.md §1). Só frases nossas.",
+ "regua": "Um rótulo por frase: se a frase declara um gesto com risco, o id do desafio (DESAFIOS) ou imp_<família>; senão um golpe, atacar; senão o que domina — mover (ir), conversa (falar, perguntar), livre (o resto).",
+ "conhecidos": [
+  "Vando",
+  "Noé",
+  "Euzébio",
+  "Hakon",
+  "Nyla",
+  "Freya",
+  "Teodoro",
+  "Edric",
+  "Tônia",
+  "Iracema",
+  "Zeca",
+  "Petra",
+  "Jaco",
+  "Saoirse",
+  "Elowen",
+  "Sari",
+  "Godfrey",
+  "Rosalina",
+  "Lourdes",
+  "Dário",
+  "Lia",
+  "Tomas",
+  "Gualtério",
+  "Caetano",
+  "Norberto",
+  "Osric",
+  "Nira",
+  "Otávio",
+  "Marlo",
+  "Brina",
+  "Venceslau",
+  "Belmira",
+  "Frida",
+  "Ambrósio",
+  "Helga",
+  "Perrin",
+  "Clarissa",
+  "Beraldo",
+  "Carmela",
+  "Lino",
+  "Lina",
+  "Tobias",
+  "Gaspar",
+  "Torquato",
+  "Hilda",
+  "Falk",
+  "Rufo",
+  "Dara",
+  "Torvald",
+  "Berengária",
+  "Quirino",
+  "Vasco",
+  "Tristão",
+  "Halvard",
+  "Corrado",
+  "Inez",
+  "Theron",
+  "Klaus",
+  "Drogo",
+  "Ursa",
+  "Pregado"
+ ],
+ "frases": [
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Abro a trouxa sem discutir e deixo a guarda revistar. Enquanto ela mexe, pergunto: \"Que língua se fala mais por aqui? A comum serve?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Sigo pela rua principal e pergunto ao menino do peixe seco onde fica o Sino Calado. Dou-lhe uma moeda se ele me levar lá."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Sento-me ao lado do Teodoro e baixo a voz: \"Quem é aquela mulher de preto que veio falar comigo? E desde quando o senhor me conhece? Eu nunca pus os pés nesta cidade.\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Vou até o balcão e pergunto a quem está a servir: \"Quanto custa um quarto para esta noite?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Agradeço ao Teodoro e chamo a moça do pão: \"Quanto é o quarto de cima, por uma noite?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Vou ao balcão, peço uma caneca de cerveja e pago. Pergunto à Rosalina: \"Há quanto tempo a senhora tem o Sino Calado?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Bebo um gole e continuo com a Rosalina: \"E quem mais trabalha aqui, além de você?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Encosto-me ao balcão: \"E quem é gente importante em Foz do Meio? Que família manda aqui, e o que se diz dela?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Volto para a mesa do Teodoro … \"Eu vou à torre caída buscar a Branca. Mas não conheço o caminho nem a Branca. Venha comigo — o senhor conhece-a, e ela confia em quem conhece.\" Olho-o nos olhos."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "mover",
+   "frase": "Deixo uma moeda na mesa pela cerveja, pego a trouxa e saio com o Teodoro. Seguimos pelo atalho dos tanques de sal em direção à torre caída."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Espera. Eu não saí daqui. Olho para a moça do cesto: \"Tu és a Branca?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "mover",
+   "frase": "Despeço-me com um aceno, saio do Sino Calado e vou à ferraria do Campo das Cinco Torres. Preciso de uma lâmina a sério — a faca da minha mãe não é para usar."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Aponto para as facas na parede: \"Quanto custa uma adaga boa, equilibrada para lançar?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Pago a lâmina da feira, prendo-a à cintura e pergunto à Carmela: \"O Poço de Sal, a sudeste — a quantos passos daqui fica, e o que há lá dentro?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "fazer_falar",
+   "frase": "Cruzo os braços e sorrio para o Teodoro, sem pressa: \"Eu não prometi nada a ninguém, Teodoro. Mas conta-me o que há nesse pacote e quem mais vai licitar, e talvez eu venha. Convence-me.\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Deixo o Teodoro a falar sozinho e vou até à bancada de ervas. … \"Cheirou a sal? O que queres dizer com isso — e tu quem és?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "mover",
+   "frase": "\"Obrigada, Lino.\" Deixo-lhe uma moeda na banca. Tenho até ao pôr do sol. Saio pelo portão e vou a pé até ao Poço de Sal, a sudeste, para ver com os meus olhos quem anda a mexer na mina."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Saco a Lâmina de Névoa e recuo para trás de uma pilha de caixotes, sem tirar os olhos do homem da lanterna. \"Eu não te conheço. Quem és tu, e o que saiu daquela porta?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "buscar",
+   "frase": "Não guardo a lâmina. Vou até à porta do galpão e, antes de pôr o pé lá dentro, agacho-me e procuro armadilhas no chão e no batente — fios, placas soltas, qualquer coisa."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "mover",
+   "frase": "Não respondo ao Teodoro. Entro no galpão devagar, com a lâmina à frente e as costas junto à parede, e deixo os olhos habituarem-se ao escuro. O que há lá dentro?"
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "livre",
+   "frase": "Examino o que caiu no chão e guardo o frasco e o couro. Depois encosto-me a um caixote, aperto o ombro e faço uma pausa curta para recuperar o fôlego antes de seguir."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "livre",
+   "frase": "Levanto-me, limpo a mão nas calças e desta vez não toco nas outras duas: puxo só a alavanca polida, devagar, até ao fim."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "livre",
+   "frase": "Volto ao Sino Calado a pé … \"Quero o quarto de cima até ao pôr do sol. Aqui estão as seis moedas.\" E pouso-as no balcão."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Antes de subir, viro-me para a Rosalina: \"Hoje de manhã tocaram três pancadas fora de hora. Para que toca o sino assim, aqui em Foz do Meio?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Guardo as moedas e olho o Teodoro de frente: \"Há quanto tempo tocas aqui no Sino, Teodoro? E de onde vens?\""
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "livre",
+   "frase": "\"Fico esta noite\", digo ao Teodoro. Subo ao quarto de cima, tranco a porta, deito-me de botas calçadas e durmo até ao pôr do sol, com a lâmina ao alcance da mão."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "livre",
+   "frase": "Desço ao salão com a lâmina à cintura e sento-me num canto, de costas para a parede … Peço um caldo à Rosalina e fico a ver quem entra."
+  },
+  {
+   "sessao": 1,
+   "fonte": "mente/mm11-sessao.md",
+   "rotulo": "conversa",
+   "frase": "Não me mexo do canto. Chamo a Rosalina com dois dedos e pergunto baixo: \"Quem são aqueles da mesa do meio, que se calaram quando eu desci?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "Cumprimento a guarda com um aceno de soldada e pergunto-lhe: \"Quem manda de facto nesta cidade? E esse Sepulcro de Cinzas, a quanto tempo daqui fica?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "mover",
+   "frase": "Agradeço com a cabeça e subo a ladeira pela rua da forja até ao Tesouro sem Fio. Entro … e procuro um aprendiz chamado Otávio."
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "Tiro o capuz e sento-me num caixote, sem pressa. \"Por ti. Um velho companheiro de armas mandou-me atrás de ti antes de morrer, e eu devia-lhe a vida.\" … \"Há quanto tempo trabalhas aqui, Otávio? E de onde vens?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "\"Um sargento da fronteira. Só me deu o teu nome e pediu que te encontrasse.\" … \"E quem mais trabalha nesta forja, além de ti? O mestre ferreiro não está?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "\"Vou pensar no teu cartaz.\" Aponto com o queixo para o que está pendurado na parede. \"Quanto custa um escudo aqui, se tiverem algum à venda?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "Despeço-me do Otávio com um aceno e desço ao Tendal de Couro. Na primeira banca pergunto: \"Que armas se vendem por aqui, e a quanto?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "Pendo o montante às costas e atravesso a praça até à taverna, O Último Gomo. Encosto-me ao balcão e pergunto a quem serve: \"Quanto é um quarto para esta noite?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "conversa",
+   "frase": "Pouso seis moedas no balcão pelo quarto comum e baixo a voz: \"Quem é aquele que passou agora com o balde? E essas reservas — de que é que a cidade está a ficar sem?\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "fazer_falar",
+   "frase": "Pego na chave mas não saio do balcão. \"Lina, ouve. Sou soldada, sei calar o que ouço — e se essa caravana não chegar, vais querer alguém de escudo à porta. Diz-me o que se passa no Fundo do Poço. Toda a gente baixa os olhos quando o nome sai.\""
+  },
+  {
+   "sessao": 2,
+   "fonte": "mente/mm11-sessao-2.md",
+   "rotulo": "imp_percepcao",
+   "frase": "Deixo a chave no bolso, saio do Último Gomo e vou direita ao Fundo do Poço, a casa de banhos. À porta, antes de entrar, paro e olho: quem está de guarda, quantas saídas há, e se alguém me segue desde a taverna."
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "conversa",
+   "frase": "Aceno ao meirinho que conta as sacas e pergunto-lhe: \"Quem manda de facto em Vau Fincado? E essa Nave de Ferro, a quanto tempo daqui fica?\""
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "mover",
+   "frase": "Atravesso a praça com a Iracema ao lado e entro no Rabo do Diabo. Procuro a Lourdes ao balcão."
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "conversa",
+   "frase": "Sento-me ao balcão ao lado da Iracema e pouso a bússola entre nós. \"Sou o Tobias, e o mar comeu-me o navio. …\" … \"Antes do que sabes: há quanto tempo tens esta casa, Lourdes? E quanto é um quarto para esta noite?\""
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "fazer_falar",
+   "frase": "Inclino-me sobre o balcão e baixo a voz para a Lourdes, a taverneira. \"Não tenho cacos para te dar, mas tenho palavra de náufrago, e essa não se afunda. Convence-te: diz-me o que a Praça da Panela esconde e eu calo o teu nome até ao fim da estrada.\""
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "conversa",
+   "frase": "Recolho a bússola e não insisto. \"Justo.\" … \"Lourdes, quem mais trabalha nesta casa? E São do Meio, a quantos dias de marcha fica daqui?\""
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "conversa",
+   "frase": "Deixo uma moeda pelo caneco, aceno à Lourdes e saio do Rabo do Diabo com a Iracema; vou à Viela da Fome. Na primeira banca de armas pergunto: \"Que arcos se vendem aqui, e a quanto?\""
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "mover",
+   "frase": "\"Sem arco, então.\" Compro tochas e viro-me para a Iracema: \"Não vamos esperar pela estudante. A Nave de Ferro está perto, e quem proíbe uma estrada guarda alguma coisa nela.\" Saio da Viela da Fome e vou à Nave de Ferro, pela estrada do poente."
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "conversa",
+   "frase": "\"Iracema, isto não é o caminho da Nave.\" Paro, acendo uma tocha e pergunto-lhe: \"A quantas horas estamos de Vau Fincado, e há quanto tempo não comemos?\""
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "mover",
+   "frase": "\"Não volto, e também não vou a São do Meio hoje.\" Viro para o poente, sigo o rasto da estrada proibida e entro na Nave de Ferro com a Iracema, de tocha erguida."
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "conversa",
+   "frase": "Paro à soleira, de tocha baixa, e pergunto ao Mestre antes de dar um passo: o que há nesta câmara? Quantos são, a quantos metros de mim, e há alguma coisa atrás da qual me possa esconder?"
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "mover",
+   "frase": "Avanço para dentro da câmara das correntes, devagar, tocha à frente e a Iracema à minha esquerda."
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "atacar",
+   "frase": "Passo a tocha para a mão esquerda, fecho o punho direito e avanço sobre a coisa que se mexeu atrás da pedra …"
+  },
+  {
+   "sessao": 3,
+   "fonte": "mente/mm11-sessao-3.md",
+   "rotulo": "livre",
+   "frase": "Ajoelho-me junto do lobo, apanho a poção de cura do chão e guardo-a no cinto. Depois olho para a Iracema: \"O ombro, como está?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Olho para o Euzébio, sem baixar a voz: \"De onde é que a gente se conhece, afinal? E por que é que tu vieste comigo?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "\"Vim. Procuro Inocência Bordão, o músico de canto. Sabe onde o encontro?\" E pergunto: \"Quem manda de facto nesta cidade, o Sino ou a guarda?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Sento no banco, em frente a Inocência, e tiro a carta … \"Reconheço esta letra. É dos meus antigos irmãos. O que sabes de Noé Laminado, e onde ele está?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Olho para o Caetano, que ficou a meio da frase. \"Acaba o que ias dizer. Que apelido, e o que sabes de Noé Laminado?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto a Inocência, baixinho: \"Quanto tempo leva a pé daqui até à Muralha Quebrada? E onde posso dormir esta noite, e a quanto fica um quarto?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Pago a bebida … saio do Sino Quieto. Vou ao Mercado da Cinza e pergunto a um vendedor de papel quanto custa uma resma e um frasco de tinta."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Respiro fundo e conto a verdade a Inocência, diante da mulher de capa verde: fui escriba de um culto, copiei os livros dele durante anos, fugi, e ainda copio às escondidas … A carta é dos meus antigos irmãos, e não sei se me chamam para me perdoar ou para me calar."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Abro caminho pela multidão até ao pé do coreto e pergunto em voz alta … de que é que o Caetano é acusado e quem o acusa. …"
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "convencer",
+   "frase": "Subo os degraus do coreto e digo à praça: quem fecha a banca cedo e depois acusa o primeiro batedor que apanha é quem tem pesos falsos a esconder. Peço que se confira a balança coberta do cambista …"
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Deixo a praça e sigo para O Livro Morto, a biblioteca. Procuro quem lá guarda os registos e pergunto se há alguma entrada com o nome de Noé Laminado …"
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Saio com Euzébio para a rua, longe dos ouvidos, e encosto-o à parede: \"Já falaste três vezes numa dívida. Que dívida é essa, Euzébio? Quanto te devo, e desde quando?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "livre",
+   "frase": "Estendo a mão e pego o couro. … \"O teu irmão. Como se chamava, e o que lhe aconteceu nessa noite?\" Depois abro o couro devagar e leio o que lá está escrito."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "mover",
+   "frase": "\"Vamos. Vou à Rua dos Retalhos, em Rio Cinzento, procurar Noé Laminado e a botica.\" Parto a pé com Euzébio, e deixo a mulher de capa verde seguir connosco se quiser."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Vou pela rua até à botica … e entro primeiro … Pergunto ao boticário pelo óleo de mirra … e depois, em voz baixa, por Noé Laminado."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Pouso o couro escuro no balcão, diante de Noé, e leio-lhe em voz baixa a frase … \"Foi Norberto, o irmão do Euzébio, quem a escreveu? E o que quer dizer a gaveta errada?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "imp_percepcao",
+   "frase": "Pego a caixinha de chaves pretas e guardo-a no cinto. Depois espreito pelo vidro opaco os dois vultos à porta … Quantas chaves são, e há alguma marca gravada nelas?"
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Olho para o homem ferido … e para o boticário atrás do balcão: \"Quem de vocês é Noé Laminado, afinal?\" …"
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Viro-me para o boticário … \"O que é que a Muralha quer de ti, Noé Laminado? E o que abrem estas cinco chaves? Quem as pode usar, e onde fica a porta?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "conversa",
+   "frase": "Fecho a mão sobre o molho de chaves e dou um passo para ficar entre o homem da fita vermelha e o balcão. \"Quem és tu, quem te manda, e o que queres de um boticário e de um ferido?\" …"
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "mover",
+   "frase": "Não respondo ao homem da fita. … saio da botica sem pressa. Vou à Muralha Quebrada de Silêncio, procurar o que Norberto escondeu."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "mover",
+   "frase": "Respondo a Belmira … peço-lhe que volte para Alto do Sal. Depois acendo uma tocha, faço sinal ao Euzébio e entro na Muralha Quebrada de Silêncio, passo a passo, com as chaves prontas."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "mover",
+   "frase": "Passo entre os dois soldados … e atravesso o arco: entro na Muralha Quebrada de Silêncio com o Euzébio, a tocha à frente."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "mover",
+   "frase": "Respiro fundo e desço para dentro da masmorra, para as salas, com a tocha à frente. Euzébio vem logo atrás."
+  },
+  {
+   "sessao": 4,
+   "fonte": "mente/mm11-sessao-4.md",
+   "rotulo": "furtar_se",
+   "frase": "Recuo para a sombra do canto e tento esconder-me do lobo."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Hakon, de onde nos conhecemos mesmo? E por que continuas ao meu lado? Quem foi Edric para o homem que morreu?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Vamos à Candeia Faiscante falar com Osric. Quero ver como é o lugar por dentro e pergunto ao taverneiro: o que sabe de Edric?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Quanto custa um quarto por uma noite? E me diz uma coisa, taverneiro: quem manda nesta cidade, e o que eu preciso saber da lei daqui para não acabar na cadeia?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Pago a cerveja e pergunto baixo: ouvi na estrada falar de um lugar a nordeste, a Boca de Pedra Torta. Por que ninguém diz esse nome em voz alta? O que mora lá?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mover",
+   "frase": "Agradeço, termino a cerveja e saio para a praça. Procuro o mural de cartazes…"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mover",
+   "frase": "Saio da taverna, sem remexer em mais nada, e caminho até a praça. Procuro o mural de cartazes no meio dela."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Leio os cartazes do mural, um por um, com calma."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Deixo o mural. Hakon, chega de resmungar. Vamos ao mercado: quero comprar tochas, uma corda e rações para uns três dias de estrada. Quanto custa tudo?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Pago as onze cunhas pela corda boa, as tochas e as rações. Anão… viste passar alguém que procurasse um tal de Edric?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "investigar",
+   "frase": "Pego a moeda falsa e o recado e examino a moeda de perto, o fio de cobre. Pergunto ao anão onde se faz moeda assim, e quanto ele quer pelo que sabe do Edric."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Pago as cinco cunhas. Agora conta o que ainda não contou: a que horas ele passou, que direção tomou, e se ia sozinho."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mover",
+   "frase": "Chega de conversa, Hakon. Vamos atrás dele: tomamos a estrada do norte para a Ponte Lenta, em Rio Profundo."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "O draconato do balcão da Candeia era o Osric, não era? Ele nunca disse o próprio nome. Hakon, por que falas dele como se não o tivéssemos visto? E quanto falta até a Ponte Lenta?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "imp_percepcao",
+   "frase": "Continuamos a caminhar até chegarmos à Ponte Lenta. Quando a vir, paro a uma distância segura e observo o lugar e quem está nele antes de me aproximar."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Não vou ao homem ainda. Sento na margem, bebo da água do rio e pergunto a Hakon se ele sabe nadar e há quanto tempo anda com espada."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Continuo sentado. Tiro da bolsa o símbolo sagrado riscado e o viro nos dedos, em silêncio, pensando na ordem de que fugi. Hakon, o que achas que a ordem faria se me achasse aqui?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Aproveito a espera para limpar a lama das botas, contar as moedas e conferir as tochas e as rações da bolsa. Quantas tochas e rações tenho ao certo?"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Tiro um cochilo curto à sombra de uma árvore, deixando Hakon vigiar. Acordo quando o sol passar da copa."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Levanto, espreguiço e pergunto a Hakon que horas são e se vale a pena esperar até o homem sair da ponte, ou se ele pode ficar ali o dia inteiro."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Não vou a nenhum lado. Pergunto a Hakon o que ele sabe da vida dos clérigos de mosteiro, e se acha que os deuses cobram caro. Depois fico a olhar as nuvens."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Respondo a Hakon: depende de quem viesse. Fico mais um tempo sentado, brincando com uma pedra do rio, sem decidir nada. Pergunto se ele quer dividir a carne-seca."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Deito de costas na grama e fecho os olhos, ouvindo o rio. Não faço mais nada. Digo a Hakon que acorde-me se algo mudar."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Abro um olho e pergunto: alguma coisa mudou? Alguém na estrada, algum barulho? Continuo deitado, sem sair do lugar."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Respondo que tenho fome e peço a Hakon que fale de outra coisa qualquer, qualquer história de estrada. Fico onde estou, sem tocar na ponte nem no homem."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Peço outra história, Hakon. E espreguiço outra vez; ainda não quero me mexer da sombra."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Fico. Pergunto a Hakon se ele não acha esquisito que ninguém passe por esta estrada o dia inteiro."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Basta. Levanto, ajeito o símbolo no cinto e caminho devagar para a ponte, com Hakon meio passo atrás. Chego perto do homem de costas e digo: \"Procuro um homem chamado Edric. És tu?\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Digo: \"Meu nome é Gaspar Torquato. Um homem a quem devo a vida morreu me pedindo que te achasse. E a ordem de que fugi anda atrás da mesma coisa que tu. Por que ficas parado nesta ponte, e o que carregas que tilinta como vidro?\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Respondo sem tirar a mão do símbolo: \"Quero cumprir o último pedido de um moribundo. Mas ainda não me disseste se és o Edric. E quem da ordem passou por aqui, quando, e quantos eram?\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Tiro do bolso a moeda falsa de prata com o fio de cobre e a estendo na palma. \"Um anão do Mercado do Ogro guardou esta moeda que um magro de cicatriz no queixo lhe deu, há dois dias, e disse que ia à Ponte Lenta. Tu tens a cicatriz. Reconheces a moeda?\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mentira",
+   "frase": "Não acredito nele… tento ler se ele está mentindo"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "\"Disseste que não conheces nenhum homem magro de cicatriz, e foste tu quem deu a moeda ao anão. Tu és o Edric. Ninguém aqui quer te fazer mal. Sou clérigo; se estás ferido ou doente, eu cuido. Diz-me o que tens, e o que o moribundo queria que eu te dissesse.\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Respondo: \"Foi só isso. Segurou meu pulso e pediu que eu fosse a Casa da Fonte atrás de Edric. Não deu o próprio nome. Agora cumpre tua parte: por que estás parado aqui há cinco dias, e o que carregas que a ordem quer?\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "livre",
+   "frase": "Tiro da bolsa duas rações e o odre de água e entrego a Edric sem exigir nada. \"Come. Depois me diz que nome o moribundo te deu, e de quem era.\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Digo: \"Então a chave está em Osric, e Osric está na Candeia Faiscante, atrás de nós. Mas tu não podes voltar e eu não confio na estrada do norte. Um taverneiro falou da Boca de Pedra Torta, a quatro horas a nordeste, perto deste caminho. Sabes o que há lá?…"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Edric que espere escondido sob a ponte até eu voltar, e que não atravesse. Depois digo a Hakon: \"Vamos à Boca de Pedra Torta. Se há caminho por lá, quero vê-lo antes da ordem.\" E pego a estrada para a Boca."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mover",
+   "frase": "Caminhamos as quatro horas até a Boca de Pedra Torta, com pausas curtas para beber água. Quando chegar, paro diante da entrada."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "investigar",
+   "frase": "Antes de entrar, examino o esqueleto e a lança quebrada encostados na árvore: de quem foi, há quanto tempo, e se tem algo útil ou algum sinal da ordem."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mover",
+   "frase": "Acendo uma tocha, entrego outra a Hakon e entro na Boca de Pedra Torta, devagar, com ele ao meu lado. Procuro o caminho principal."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "mover",
+   "frase": "Escolho o caminho das correntes que balançam sem vento e tilintam. Vou à frente com a tocha, olhando bem o chão antes de cada passo. Hakon fica a dois passos atrás."
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "buscar",
+   "frase": "Não toco na moeda. Agacho e passo a tocha rente ao chão…"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "conversa",
+   "frase": "Bebo um gole e respondo, baixo: \"Lembro, Hakon. Mas diz-me por inteiro: quanto te devo, e por que perdeste a pousada por minha causa? Não quero morrer sem saber o tamanho da dívida.\""
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "atacar",
+   "frase": "Atacar com a maça: erro; caio a 0 PV"
+  },
+  {
+   "sessao": 5,
+   "fonte": "mente/mm11-sessao-5.md",
+   "rotulo": "atacar",
+   "frase": "Inês entra na luta aberta: Atacar; erra; cai a 0 PV"
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Vando, primeiro o Zeca. Entramos no Fogão dos Sem-Triho e pergunto ao dono: quem ele é, e o que sabe sobre o que o Fogão da Meia-Noite guarda?"
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Procuro Zeca do Fogo do Avesso, mestre Mó. Ele está aqui? E já que estou sentada: quanto custa um quarto por uma noite, e quanto uma refeição quente? Pago a refeição já."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Sim, prepare o caldo para os dois. Pago as duas fichas agora, e a de ontem fica por conta da casa, se for. Depois vamos à Banca do Avesso atrás do Zeca."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Saio para a praça e procuro o mural de cartazes. Quero ver se há algum trabalho ou aviso na cidade."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Leio o papel mais novo, o que Vando disse que fala de um calabouço, e depois os outros cartazes, um por um. O que cada um diz, de verdade? Quem assina?"
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Deixo o mural. Vou à banca de um mercador qualquer e compro duas tochas e uma corda de cinco braças. Quanto é? Pago e guardo na mochila."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Sim, amarre as tochas. Pago as sete fichas, e já enfio tudo na mochila."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Não vou atrás de ninguém agora. Sento na beira da fonte da praça, tiro o caderno de anotações e copio uns símbolos de memória. Vando, conta como foi que me ensinaste a ler estes símbolos, há seis anos."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Escuto, e conto a Vando que também aprendi com ele. Depois fico olhando os pardais e a água da fonte, sem pressa nenhuma. Não tenho nada para fazer agora."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto a Vando sobre a mulher que varre a soleira: há quanto tempo ela faz isto? Depois peço a ele que me conte uma história de quando ele era vendedor de ervas."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Agradeço a história e fico quieta um tempo. Compro uma maçã de uma vendedora ambulante e como sentada na fonte, vendo o povo passar."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto à vendedora de maçãs se vende outra, e fico conversando com ela sobre o preço das frutas este ano. Não quero saber de cambistas nem de Fogão nenhum agora."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Compro mais uma maçã, a das duas fichas, e dou um pedaço a Vando. Depois fecho os olhos e descanso um pouco ao sol, de costas na fonte."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Não me meto na confusão: não é assunto meu. Fico sentada onde estou, termino a maçã e pergunto à vendedora o que é aquilo, e se isso acontece sempre por aqui."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Chega de ficar parada. Levanto, agradeço à vendedora e digo a Vando: vamos ao Fogão dos Sem-Triho, o Zeca já deve ter voltado de onde quer que andasse."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mentira",
+   "frase": "Entro, vou direto a Zeca do Fogo do Avesso e digo meu nome. Pergunto: o que o Fogão da Meia-Noite guarda, e quem é o dono disso que anda perguntando por mim? Enquanto ele responde, observo o rosto dele para perceber se está mentindo ou escondendo algo."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Sigo Zeca para os fundos com Vando, e pergunto baixo: o que é o Fogão da Meia-Noite, como se chega a Fogão Queimada, e quanto tempo leva? E o que ele sabe do carroceiro que anda a recrutar gente por lá?"
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Quanto custa o atalho, Zeca, e o que mais você me pede em troca? Se for justo, aceito. Vando vai comigo. E me diga o que eu devo levar, porque saímos hoje."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Aceito, Zeca: eu volto e conto o que vi, e não digo que foi você. Antes de sair, passo no balcão de mantimentos e compro duas tochas pelo preço do balcão."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Vou à Banca do Avesso, ao balcão de mantimentos. Compro duas tochas e três rações. Pago agora."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Pago as sete fichas ao vendedor e guardo as duas tochas e as três rações na mochila."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Chega de balcão. Vando e eu saímos pelo portão e seguimos a estrada para Fogão Queimada, caminhando sem parar. Se o carroceiro sem rosto estiver por lá, quero ver antes de ele me ver."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Chego devagar, mãos à vista, e pergunto ao homem do chapéu: é você o carroceiro que recruta os sem-casa a moeda por cabeça? Para quem, e para onde vai a carroça? Vando fica um passo atrás de mim."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Digo ao carroceiro que não vou na carroça, agradeço a franqueza e pergunto só uma coisa: onde fica o Fogão da Meia-Noite aqui em Fogão Queimada? Depois sigo para lá com Vando, entro e procuro quem manda no lugar."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "buscar",
+   "frase": "Peço uma caneca de cerveja ao taverneiro e pergunto como ele se chama. Enquanto bebo, procuro com cuidado pelo salão alguma coisa escondida: um papel, uma tábua solta, algo que tenha sido guardado aqui."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Deixo a tábua em paz por enquanto. Pago a cerveja a Pipa, e digo a Vando que temos outra pista: vamos voltar a Serra do Bode, ao Posto da Baixa, procurar um homem chamado Elmo."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Caminhamos a noite inteira, sem parar. Quando chegamos a Serra do Bode, vou direto ao Posto da Baixa e pergunto pelo Elmo: sei que ele guarda a última ponta do texto que eu li."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Respondo que sim, venho atrás do que ele guarda, e agradeço. Sem mais paradas, Vando e eu seguimos direto até Serra do Bode e chegamos ao Posto da Baixa. Entro e procuro Elmo."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Conto a Elmo o que sei: li uma página do texto proibido no arquivo, e fugi com ela, e um homem a quem eu devia a vida me mandou atrás do que o Fogão da Meia-Noite guarda. Pergunto o que ele quer em troca de me dizer o resto, e se eu posso pagar."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Elmo que não sei o nome do homem que me mandou: ele morreu sem o dizer, só a promessa ficou. Pergunto quem Elmo pensa que era, e se ele conhece Dário da Cova ou a Fogueira da Beira. Depois pergunto como eu pego a prova do Fogão que ele diz que me escapou."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Agradeço a Elmo, prometo voltar com a prova, e saio com Vando. Vamos direto a Fogão Queimada e atravessamos a paliçada até a Fogueira da Beira, atrás de Dário da Cova. Caminhamos sem parar até chegar."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Sento-me em outra pedra, devagar, e digo a Dário: o posto falou de você porque Elmo disse que você anda com um medo antigo. Pergunto o que é essa tábua de letras que não formam palavra, e de quem é o medo."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Dário que o medo é meu também, e que vou atrás desse homem. Pergunto se há algo rondando a vila que ele queira ver morto: um cão sem pelo, uma coisa que anda perto da paliçada à noite. Se houver, eu acabo com ele agora."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Desisto de caçar no escuro: estou acordada há dezesseis horas. Peço a Dário um canto abrigado perto da casa do coveiro e Vando e eu montamos acampamento. Descansamos até de manhã, e ao acordar preparo as minhas magias."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "rastrear",
+   "frase": "Com a luz da manhã, Vando e eu seguimos para a paliçada norte, devagar, procurando o cão sem pelo pelas poças e pela lama. Quando o encontrarmos, enfrento o cão."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "atacar",
+   "frase": "Fico em guarda, de cajado erguido, olhando o cão sem pelo nos olhos, e deixo que ele venha. Vando se coloca à minha frente."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Deixo o cão em paz, não é ele que me move. Vando e eu seguimos até Alicerces de Raízes, o calabouço a noroeste, quatro horas de marcha. Chegamos à entrada e acendo uma tocha para descer."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Respondo a Vando: agora entramos. Cruzo o arco de pedra com a tocha erguida e desço a primeira passagem do calabouço, devagar, com ele logo atrás de mim."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "rastrear",
+   "frase": "Escolho a passagem estreita da esquerda e sigo por ela, com Vando atrás. Avanço até onde as marcas arrastadas me levam, em direção à respiração pesada."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "atacar",
+   "frase": "Ignoro a jarra. Sigo direto em direção ao ronco, descendo para a camada seguinte, e quando vir o que respira, não recuo: grito para chamá-lo e Vando e eu o enfrentamos."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Vou até a alcova e olho o vulto que geme: quem é, está preso, ferido? Se estiver amarrado, desamarro com cuidado e pergunto o nome dele e o que mora mais abaixo."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Peço a Nira que fique colada atrás de mim e descemos juntos, Vando na frente, em direção à voz que imita o pai dela. Não paro até ver o que fala. Se for um monstro forte, enfrento mesmo assim."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Respondo a Nira que sim, é ele, e que não o escute. Avanço pelo túnel com Vando e enfrento o que vier ao nosso encontro, sem recuar um passo."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Sem descansar, sigo adiante com Vando e Nira, descendo para a próxima sala e depois para a seguinte, sempre em direção ao portão do fundo. Se encontrar algo que não consigo vencer, enfrento mesmo assim, até o fim."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Fico imóvel no chão frio, tentando respirar, sem forças para mais nada."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Não consigo me mexer. Fico olhando o teto de pedra, e peço em voz baixa que alguém venha."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Fecho os olhos. A dor vai ficando longe, e eu só ouço o pingar da água na pedra."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "mover",
+   "frase": "Levanto com esforço, apoio Vando no ombro e saímos do calabouço com Nira, caminhando devagar de volta a Fogão Queimada até chegarmos à vila."
+  },
+  {
+   "sessao": 6,
+   "fonte": "mente/mm11-sessao-6.md",
+   "rotulo": "livre",
+   "frase": "Chego ao balcão de mantimentos da vila. Compro duas tochas."
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Como se chega ao Píer Rachado daqui, e quanto tempo leva a pé?"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "Pego o alaúde e sigo com Jaco pela ladeira do sal até o Píer Rachado"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto a Frida se conhece Tônia, e de onde vem a canção"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "toco baixinho a canção para Tônia"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Digo a verdade: aprendi com um homem que me devia a vida …"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Respondo a Frida: vou, sim. E pergunto a Tônia o nome do bar"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "Peço duas canecas, uma para mim e uma para Jaco. Quanto é?"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "Pago os dois cobres."
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Como se chega ao Peixe Cego, em Sul Molhado, e quanto tempo leva até lá?"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "Termino a cerveja … saio com Jaco do Píer Rachado, seguindo a pé pelo caminho litorâneo para Sul Molhado."
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "Pago os cinco cobres."
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "Sigo com Pregado até o Peixe Cego e procuro Ambrósio"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "toco o primeiro verso a Ambrósio"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "procuro Tônia no salão"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "corro pela porta do fundo"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Seguro Tônia pelo ombro … 'Quem vieram buscar, Tônia? Você ou eu?'"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "atacar",
+   "frase": "Mando Tônia ficar atrás de mim. Avanço com Jaco e ataco o homem da tocha."
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "meu plano é ouvir tudo … a quem ela jurou"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "voltamos ao Peixe Cego. Quanto custa um quarto com três camas?"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "Pago os três cobres"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Sento na beira da cama e peço a Tônia que me conte tudo desde o começo"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "vou até Hilda no balcão"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "vou à Rua do Sal ver o mercado; preciso comprar comida"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "pergunto quanto custa uma maçã"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "Compro três maçãs e duas rações, e pago agora"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "dou uma maçã a cada um … saímos de Sul Molhado de volta pelo caminho litorâneo"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "entramos em Quebrado do Leste … vou direto ao Píer Norte, procurar Lia Cinzela"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "escutar",
+   "frase": "caminho sozinho pela madeira molhada … ouvir o que ela faz"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "digo meu nome e canto o primeiro verso. Pergunto se ela a conhece"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "este é Jaco Faro. Fico olhando a cara dos dois"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "entro no galpão e fico olhando"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "digo que a canção é um mapa; peço licença para examinar o cadeado"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "investigar",
+   "frase": "examino o cadeado com Investigação"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "fico em silêncio, ouvindo o verso novo; olho as mãos de Lia, a bolsa"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "digo a Lia que o verso novo prova que ela conhecia o homem; estendo a mão para a bolsa"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "buscar",
+   "frase": "espero achar um caderno de música com a pauta do último verso"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "fazer_falar",
+   "frase": "… você é de quem me ensinou. Chega de mentir: diga o que é essa canção"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Jaco que não vou confiar em ninguém aqui. Depois"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "digo a Lia que fico aqui no galpão até a maré baixa"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "levo Marlo para fora do galpão, para ouvir o que ele tem contra Tônia"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Marlo que …"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "fazer_falar",
+   "frase": "entro no galpão … ponho diante dela o verso e a pena queimada. Digo que isso é a marca de quem ela serve, e quero o nome"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "conversa",
+   "frase": "Digo que sim: é melhor falar tudo … amanhã ela diz isso a Marlo, e eu fico ao lado dela"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "Aceito o desafio. Saio para a lama, sem faca, como Lia mandou, e"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "mover",
+   "frase": "saio com Jaco pela estrada atrás da fera de cicatriz de anzol"
+  },
+  {
+   "sessao": 7,
+   "fonte": "mente/mm11-sessao-7.md",
+   "rotulo": "livre",
+   "frase": "Sento num torrão seco à beira da estrada … Continuo sentado … Fico olhando as nuvens … Não me levanto, toco a mesma nota de novo"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Quanto custa uma caneca de cerveja aqui na praça? E quanto tempo leva a pé até as Celas?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Sigo para a rua sul … olho quem está lá"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Quem é aquele homem amarrado? E procuro Ursa, dá pra falar com ela?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Quanto custa um selo de visita?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "convencer",
+   "frase": "Pago duas moedas ao guarda, discretamente, para ele fechar os olhos e me deixar falar um minuto com Ursa."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Falo baixo pelo vão da porta: \"Ursa, fui mandada por quem morreu pela companhia … \""
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Vou até a banca do Martelo Velho. Quanto custa o Arco de vime? E quem é aquela mulher de capa verde?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Os Sapatos de andejo, quanto saem?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Vou à Serpente & o Elmo e peço duas canecas. Quanto é?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Pago os quatro cobres."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Quem é o homem sentado perto da lareira? E quanto tempo a pé até o Poço de Silêncio?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Deixo uma gorjeta de uma moeda e volto às Celas. Procuro Nyla, a carcereira …"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "investigar",
+   "frase": "Examino a placa de mármore fendido … Quero ler o que dá para ler."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "intimidar",
+   "frase": "Encaro Nyla … \"Ou você me diz de quem é, ou eu conto à Vigia … \""
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "atacar",
+   "frase": "Não saio. Saco a arma e ataco Falk, o recruta"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "intimidar",
+   "frase": "Me volto para Nyla, a mão ainda no cabo da arma: \"De quem é o nome que termina em elia?\""
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Que poço, Nyla? Leva a gente lá embaixo."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Empurro Nyla de lado e desço a escada dos fundos …"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "buscar",
+   "frase": "Examino o poço: a corda, as bordas, o fundo … Procuro o que as Celas escondem."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Ajudo Freya a levantar e subo a escada de volta até a guarita. Quero olhar Nyla de frente."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Quem era o mensageiro, e de que credor? Quanto tempo até o Poço de Silêncio, e há estalagem no caminho?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Chega de Nyla. Parto com Freya para o Poço de Silêncio, seguindo a estrada para o noroeste."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Cato o capuz de malha, deixo Freya recuperar o fôlego e sigo pela estrada para o Poço"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Acendo a tocha e entro na mina com Freya, pé ante pé."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Seguro Ursa pelos ombros: \" … o que você sabe sobre a companhia?\""
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Ursa que venha conosco. Viajamos de volta para Ponte Brumoso pela estrada, e eu pago um pão de viagem a ela se o povo vender."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Compro um pão para Ursa. Pago os dois cobres."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Sigo viagem para Ponte Brumoso com Freya e Ursa."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "furtar_se",
+   "frase": "Fico imóvel no escuro, deixo as duas sombras passarem, e escuto o que dizem."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "atacar",
+   "frase": "Saio do canto e ataco a que leva a corrente, por trás, antes que ela vá embora."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Foi um engano, eu queria atacar a encapuzada da corrente, não Ursa. Volto ao posto, levanto as mãos e peço desculpa a Freya e a Ursa …"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Digo a Freya que a gente não volta a se separar, e parto agora para Ponte Brumoso. Quero achar Petra Guarda-Portão, a gnoma."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Sigo pela estrada até chegar às portas de Ponte Brumoso."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Marga, caçadora, e esta é Freya. Há taxa para entrar de noite? Quanto é?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Pago as dez escamas …"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Sigo Freya até o lugar mais barato. Quanto custa uma cama para as duas esta noite?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Pago as oito escamas, subo com Freya para o quarto … durmo até o sol."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Confio … E Petra Guarda-Portão — você me disse que a julgava morta. O que aconteceu com ela?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Aceito, Ursa, mas sem lâmina entre nós. Levo você e Freya até Petra … Seguimos agora para a praça de Ponte Brumoso."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto a uma vendedora de lonas: viu uma gnoma chamada Petra, que corrige a gramática dos outros?"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Levo Freya e Ursa para perto do poço da praça e espero até a gnoma aparecer. Esperamos até o meio-dia, se for preciso."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Sigo para a banca dos peixes, atrás da tenda amarela."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "imp_percepcao",
+   "frase": "Olho com atenção o que ela traz no avental e nas mãos, sobretudo qualquer distintivo … \"Quem é você de verdade, Petra?\""
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "fazer_falar",
+   "frase": "Você me chamou pelo posto antigo, e o distintivo tem cera preta raspada por baixo do esmalte. Foi você quem deu o meu nome a quem me esperava, não foi? Quero a verdade agora, toda."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Não aceito o álibi, Petra. O posto antigo com que você me chamou e a cera preta riscada no seu distintivo dizem outra coisa. Foi você quem recrutou para o Sem-Rosto e deu o meu nome."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "intimidar",
+   "frase": "Petra, o posto antigo e a cera preta no seu distintivo: eu já sei de quem são. Diga o nome de quem te paga, agora, ou eu a levo às Celas."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "mover",
+   "frase": "Vou te tirar daqui, Petra. Saímos os quatro, com Ursa também, pelo portão norte, e paramos no primeiro abrigo da estrada."
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "livre",
+   "frase": "Monto acampamento no telheiro com Freya, Petra e Ursa, acendo o fogo …"
+  },
+  {
+   "sessao": 8,
+   "fonte": "mente/mm11-sessao-8.md",
+   "rotulo": "conversa",
+   "frase": "Quanto tempo a pé até Pedra Rasa, e que caminho? Onde se compra um frasco de antídoto, e por quanto?"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Olho em volta na praça. Quanto custa uma caneca de cerveja aqui? E quanto tempo leva a pé até a forja do Tomas?"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto à mulher do pão onde fica a estalagem mais barata e quanto custa uma cama para a noite."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Quero comprar um pão dela."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Pago as duas moedas e pego o pão."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Sigo pela rua principal até a forja do Tomas com Sari."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Digo meu nome, Rufo, e pergunto a Tomas o que a Ferraria do Leste guarda … E quanto ele cobra para afiar minha faca?"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Aguento. Pode falar. Quem quer pôr fogo nisso?"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Respondo que devo um favor à guilda … Vou até o canto e levanto a tábua solta."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "investigar",
+   "frase": "Abro o pano e folheio o livro-caixa, procurando meu nome e quem recebeu o último recado da guilda."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto a Tomas quem mexeu aqui antes de mim, e onde fica a casa da guilda dos dedos."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Respondo que vai me custar o que eu ainda não sei. Pergunto onde encontro Brina Pedra, a aprendiz …"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Vou ao Mercado das Sombras procurar Brina Pedra …"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Conto sessenta escamas na mão de Brina e pago."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Sigo até a fonte atrás da vendedora de peixe seco, e antes compro um peixe seco dela. Quanto é?"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pago duas moedas pelo peixe seco e pergunto a ela quem leva os recados da guilda."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Vou à banca dos cambistas … Peço que troque uma moeda de prata por cobres miúdos e quanto ela cobra."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Respondo que vim atrás do que ela carregava. E pergunto o que sabe do preço que a guilda pôs na minha cabeça."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Digo a Dara que não é só um recado … vou até o portão leste da cidade."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Respondo ao guarda que sim … Tento"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Pego uma tocha, acendo, e desço a escada do alçapão com Sari."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "buscar",
+   "frase": "Examino a corrente … e procuro uma porta ou passagem."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Subo do porão. Digo a Tomas que vou ao"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Mudo de ideia: o guarda disse que a mulher do embornal foi para Rio do Rio. Saímos da cidade e viajamos para Rio do Rio pela estrada do leste."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "atacar",
+   "frase": "Ataco o rato gigante da frente com a minha faca."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Digo a Sari para andar mais depressa e seguimos viagem até Rio do Rio."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Sento no banco com ela. Pergunto se viu chegar uma mulher com um embornal, e quanto custa uma cama de estalagem aqui em Rio do Rio."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Vamos ao Cão Prateado, e lá peço duas camas … Quanto é?"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pago as cinco moedas, sem jantar. E pergunto ao taverneiro em que quarto está a mulher do manto cinza."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Deixo duas moedas sobre a cama dela, agradeço, e digo a Sari que"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Paro diante do mercador ambulante e olho os frascos. Quanto custa um frasco de cura? Compro um."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto quanto custa o anel … e também as ataduras de linho."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "livre",
+   "frase": "Compro as ataduras de linho e"
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto às pessoas que passam o que houve em Vau de Pedra e sigo viagem com Sari para Buraco Norte."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Cresci na guilda dos dedos."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao taverneiro que nome o velho deixou … e qual era o nome dele."
+  },
+  {
+   "sessao": 9,
+   "fonte": "mente/mm11-sessao-9.md",
+   "rotulo": "mover",
+   "frase": "Agradeço e deixo uma moeda no balcão. Digo a Sari que vamos até Veio Gelo Fundo, a mina a oeste …"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Olho em volta na praça. Quanto custa uma caneca de cerveja aqui? E quanto tempo leva a pé daqui até a taverna Cabra Trêmula?"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "Vou com Saoirse até a Cabra Trêmula e entro. Procuro Godfrey da Foz atrás do balcão."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Falo com a mulher de cabelo preto curto que tocou meu ombro …"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "Sento no balcão, peço uma caneca de cerveja a Godfrey e"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto a Godfrey onde fica Nova Profundo, quanto tempo leva até lá a pé e quem é essa Nyla"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "Termino a cerveja … saio até a ferraria A Bigorna do Sul. Compro as botas de couro e pago o que o ferreiro pedir."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "Compro um pão,"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Paro a carroça do mercador … Quanto custa uma ração de viagem e um odre de água?"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "Compro duas rações de viagem e dois odres de água do mercador"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "… sigo com Saoirse até a entrada de Nova Profundo. Olho a aldeia e"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Respondo que viemos falar com Nyla … Sigo com Saoirse"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "… Pergunto onde posso encontrá-la …"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "buscar",
+   "frase": "examino o Rossio Torto com cuidado … procuro qualquer coisa escondida"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Respondo que vim por uma carta sem assinatura e que"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Agradeço a Torvald e digo a Saoirse que"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "… Pergunto a um vendedor de rua onde posso encontrar Nyla … , que vive em Monte Rasa."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "… sigo até a Alfândega do Norte, procurando por Nyla"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Mostro a carta … o que o Rossio Torto esconde … vou entrar com ou sem a bênção dela"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Viro-me para Helga e peço que me diga o que é o círculo de sal … e por que ela me chamou de sargenta"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "fazer_falar",
+   "frase": "Encaro Helga e digo que ela não me engana: foi ela quem entregou o meu nome a quem estava me esperando … exijo a verdade agora, diante de Nyla e de Saoirse."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto quem eram eles e onde … vou procurar na biblioteca"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "Saio da Alfândega … vou à Casa dos Papéis Rouca. Peço ao arquivista os registros da guerra"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "buscar",
+   "frase": "Digo ao arquivista que servi na guerra … examino as estantes … procurando um papel escondido"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "… sigo … até Nova Profundo"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "buscar",
+   "frase": "Sigo até o largo do Rossio Torto sob a chuva. Reviro as bancas, o chão de terra e os cantos atrás da banca dos cambistas, procurando o que o Rossio esconde."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "Enfio o relicário … Sigo até A Fivela & o Trigo e pergunto por Perrin."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Digo ao taverneiro que eu sei o que isso quer dizer."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Sento diante de Perrin e peço que conte tudo: o que ele sabe do"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "… pergunto quanto custa uma cama para mim e para Saoirse até de manhã."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "Aceito os catres … e"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "… Saio da Fivela … vou ao Rossio Torto procurar Nyla … que a esta hora já deve estar na banca."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Digo a Nyla que vim buscar a verdade … Pergunto o que ela pede em troca e se o preço cabe na minha bolsa."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Digo … que Dolmen vai com ela, vivo … onde posso encontrar Runa Sem-Medo."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Respondo que quero cobrar o que a companhia perdeu. Pergunto se ela viu por aqui"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "… Entro em Nova clara com Saoirse, procuro a ferraria e compro uma arma boa,"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "Entro em Nova clara … Quero comprar uma espada longa de aço. Pago o que o ferreiro pedir."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "Respondo ao ferreiro que procuro uma espada longa de aço, boa de equilíbrio. Pergunto quanto custa a melhor que ele tem."
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "livre",
+   "frase": "… a espada longa é cara demais. Compro então o"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "conversa",
+   "frase": "… ouviria a Runa antes de erguer a mão, mas não vou desarmar a guarda … ela é a única da companhia em quem ainda confio"
+  },
+  {
+   "sessao": 10,
+   "fonte": "mente/mm11-sessao-10.md",
+   "rotulo": "mover",
+   "frase": "Saio da estalagem … encontro a capanga do arco no portão."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "Olho em volta, afino o alaúde e pergunto a Gualtério quanto custa uma caneca … Depois vejo quanto tempo leva a pé até A Coroa Torta."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "Sento no balcão diante de Venceslau, peço uma caneca e"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "… pergunto a Venceslau se ele vende comida e água … Compro duas rações e dois odres e pago o que ele pedir."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "… digo a Venceslau que só tenho treze pratas e pergunto quanto custa cada ração e cada odre."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "Compro uma ração e um odre e conto as dez pratas … me viro para o sujeito de braço magro e pergunto o que ele sabe sobre quem guarda o Escudo Rachado."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "mover",
+   "frase": "Empurro a porta do Escudo Rachado … procuro Berengária Passo Largo atrás do balcão."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "Levanto as mãos devagar, sorrio e digo ao guarda que a regra é devolver a medalha na saída e que"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao guarda quanto é exatamente essa taxa"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "convencer",
+   "frase": "Tento convencer o guarda com lábia e charme de bardo …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "atuar",
+   "frase": "Entrego as três pratas na palma dele e canto uma cantiga curta … pergunto quem é essa Clarissa"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "… atravesso o pátio até a capitã Clarissa, me apresento como Quirino Vasco, bardo e cartógrafo, e pergunto por que ela não quer ninguém fuçando no sótão do Escudo Rachado."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "Deixo Beraldo ir. Anoto o verso estranho no meu caderno de mapas … e sigo … até o Escudo Rachado."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "… ofereço cantar para a casa em troca de um caldo e um canto no sótão … Pergunto quanto ela cobraria pela cama, se eu preferisse pagar."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "Respondo a verdade: escrevi uma canção … uma carta anônima me mandou até aqui. Mostro a carta … canto baixinho o verso que Beraldo trauteou …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "… entrego o alaúde a Gualtério, me agacho … e puxo o trinco do alçapão."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "investigar",
+   "frase": "Aproximo a vela do caixote, examino as tiras de ferro …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "buscar",
+   "frase": "… bato com os nós dos dedos nas paredes e no chão … ouvindo se algum trecho soa oco"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "mover",
+   "frase": "Subo a escada com Gualtério … e vou até o batedor de Bela do Rio. Pergunto o que ele viu …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "Peço a Tristão que termine a frase e me diga o que a carta selada tem a ver comigo …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "Estou exausto … me deito num canto abrigado do pátio e durmo até o amanhecer."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "leio o que está escrito … pergunto qual era o último verso"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "mover",
+   "frase": "Digo a Halvard que depois escuto a proposta dele … saio pela saída leste, direto para a ponte dos pedágios …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "atacar",
+   "frase": "Saco a faca da cintura … e ataco a cria de Lobo Sarnento mais próxima."
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "… Conto trinta e seis pratas na mão de Gualtério e pago o prazo do meirinho dele …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "conversa",
+   "frase": "… é para lá que eu vou. Pergunto onde fica esse ninho e por que ele só me contou agora …"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "livre",
+   "frase": "Ainda tenho o flanco aberto e três pontos de vida. … durmo até o amanhecer aqui mesmo"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "mentira",
+   "frase": "Marcho … canto baixinho a canção sem o último verso, prestando atenção em como Gualtério reage"
+  },
+  {
+   "sessao": 11,
+   "fonte": "mente/mm11-sessao-11.md",
+   "rotulo": "mover",
+   "frase": "Passo pela fita azul … empurro a porta lascada … entro depressa …"
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Respondo à mulher do alaúde: \"Vim. Procuro Inocência Bordão, o músico de canto. Sabe onde o encontro?\" E pergunto: \"Quem manda de facto nesta cidade, o Sino ou a guarda?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Sento no banco, em frente a Inocência, e tiro a carta sem assinatura do bolso. \"Reconheço esta letra. É dos meus antigos irmãos. O que sabes de Noé Laminado, e onde ele está?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Pago a bebida, agradeço a Inocência e saio do Sino Quieto. Vou ao Mercado da Cinza e pergunto a um vendedor de papel quanto custa uma resma e um frasco de tinta."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Respiro fundo e conto a verdade a Inocência, diante da mulher de capa verde: fui escriba de um culto, copiei os livros dele durante anos, fugi, e ainda copio às escondidas o que consigo para provar o que eles fizeram. A carta é dos meus antigos irmãos, e não sei se me chamam para me perdoar ou para me calar."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Abro caminho pela multidão até ao pé do coreto e pergunto em voz alta, para quem ouvir, de que é que o Caetano é acusado e quem o acusa. Se ninguém responder, peço a palavra em defesa dele."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "convencer",
+   "frase": "Subo os degraus do coreto e digo à praça: quem fecha a banca cedo e depois acusa o primeiro batedor que apanha é quem tem pesos falsos a esconder. Peço que se confira a balança coberta do cambista antes de se puxar a corda do Caetano."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Deixo a praça e sigo para O Livro Morto, a biblioteca. Procuro quem lá guarda os registos e pergunto se há alguma entrada com o nome de Noé Laminado, e que livros a casa tem sobre o Sino."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "livre",
+   "frase": "Estendo a mão e pego o couro. Antes de abrir, olho Euzébio nos olhos: \"O teu irmão. Como se chamava, e o que lhe aconteceu nessa noite?\" Depois abro o couro devagar e leio o que lá está escrito."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "mover",
+   "frase": "Guardo o couro na mochila. \"Vamos. Vou à Rua dos Retalhos, em Rio Cinzento, procurar Noé Laminado e a botica.\" Parto a pé com Euzébio, e deixo a mulher de capa verde seguir connosco se quiser."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Vou pela rua até à botica, no fim, e entro primeiro, como o Euzébio quer. Pergunto ao boticário pelo óleo de mirra para a mulher de capa verde, e depois, em voz baixa, por Noé Laminado."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "mentira",
+   "frase": "Pouso o couro escuro no balcão, diante de Noé, e leio-lhe em voz baixa a frase: \"O primeiro que ler, que diga a Noé que a chave do Sino está na gaveta errada.\" Observo o rosto dele. \"Foi Norberto, o irmão do Euzébio, quem a escreveu? E o que quer dizer a gaveta errada?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "imp_percepcao",
+   "frase": "Pego a caixinha de chaves pretas e guardo-a no cinto. Depois espreito pelo vidro opaco os dois vultos à porta e tento perceber quem são e se me seguiram desde Alto do Sal. Quantas chaves são, e há alguma marca gravada nelas?"
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Olho para o homem ferido que acaba de entrar e para o boticário atrás do balcão: \"Quem de vocês é Noé Laminado, afinal?\" E ajudo o ferido a sentar-se, para ver a ferida do flanco."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Viro-me para o boticário e pergunto sem rodeios: \"O que é que a Muralha quer de ti, Noé Laminado? E o que abrem estas cinco chaves? Quem as pode usar, e onde fica a porta?\""
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "conversa",
+   "frase": "Fecho a mão sobre o molho de chaves e dou um passo para ficar entre o homem da fita vermelha e o balcão. \"Quem és tu, quem te manda, e o que queres de um boticário e de um ferido?\" Peço ao Euzébio que fique atrás da porta e vigie a rua."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "mover",
+   "frase": "Não respondo ao homem da fita. Aperto as chaves no cinto, faço sinal ao Euzébio e saio da botica sem pressa. Vou à Muralha Quebrada de Silêncio, procurar o que Norberto escondeu."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "mover",
+   "frase": "Respondo a Belmira que ainda não sei o que enterro, e peço-lhe que volte para Alto do Sal. Depois acendo uma tocha, faço sinal ao Euzébio e entro na Muralha Quebrada de Silêncio, passo a passo, com as chaves prontas."
+  },
+  {
+   "sessao": 4,
+   "fonte": "testes/registo-s4-escuta.json",
+   "rotulo": "mover",
+   "frase": "Passo entre os dois soldados da fita vermelha, sem lhes tocar, e atravesso o arco: entro na Muralha Quebrada de Silêncio com o Euzébio, a tocha à frente."
+  },
+  {
+   "sessao": 13,
+   "fonte": "mente/sessao-13.md",
+   "rotulo": "conversa",
+   "frase": "Quanto custa a sua língua, Corrado?"
+  },
+  {
+   "sessao": 13,
+   "fonte": "mente/sessao-13.md",
+   "rotulo": "conversa",
+   "frase": "Quem é você? O que você quer de mim?"
+  },
+  {
+   "sessao": 14,
+   "fonte": "mente/sessao-14.md",
+   "rotulo": "livre",
+   "frase": "Pago a sopa"
+  },
+  {
+   "sessao": 14,
+   "fonte": "mente/sessao-14.md",
+   "rotulo": "livre",
+   "frase": "Pago um quarto comum… durmo"
+  },
+  {
+   "sessao": 14,
+   "fonte": "mente/sessao-14.md",
+   "rotulo": "livre",
+   "frase": "Rezo a Cura Leve"
+  },
+  {
+   "sessao": 14,
+   "fonte": "mente/sessao-14.md",
+   "rotulo": "conversa",
+   "frase": "Quem foi que te negou o título?"
+  },
+  {
+   "sessao": 14,
+   "fonte": "mente/sessao-14.md",
+   "rotulo": "livre",
+   "frase": "Espero pela Inez até ela chegar"
+  },
+  {
+   "sessao": 15,
+   "fonte": "mente/sessao-15.md",
+   "rotulo": "livre",
+   "frase": "Pago um quarto e durmo"
+  },
+  {
+   "sessao": 15,
+   "fonte": "mente/sessao-15.md",
+   "rotulo": "mover",
+   "frase": "Deixo o Barril e vou à sede da Companhia Tortuoso"
+  },
+  {
+   "sessao": 16,
+   "fonte": "mente/sessao-16.md",
+   "rotulo": "livre",
+   "frase": "Ponho duas moedas no balcão pela caneca"
+  },
+  {
+   "sessao": 17,
+   "fonte": "mente/sessao-17.md",
+   "rotulo": "mover",
+   "frase": "Entro na estalagem onde trabalha Godfrey"
+  },
+  {
+   "sessao": 17,
+   "fonte": "mente/sessao-17.md",
+   "rotulo": "conversa",
+   "frase": "Falo com Theron do Brejo…"
+  },
+  {
+   "sessao": 17,
+   "fonte": "mente/sessao-17.md",
+   "rotulo": "conversa",
+   "frase": "Qual é o preço de uma ração… aqui na banca?"
+  },
+  {
+   "sessao": 17,
+   "fonte": "mente/sessao-17.md",
+   "rotulo": "mover",
+   "frase": "Volto ao templo à procura do Godfrey"
+  },
+  {
+   "sessao": 17,
+   "fonte": "mente/sessao-17.md",
+   "rotulo": "mover",
+   "frase": "Volto à estalagem onde trabalha o Godfrey"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "conversa",
+   "frase": "Quem manda em Alto Negro?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "lembrar",
+   "frase": "O que sei de Alto Negro, da Agulha, de bichos assim?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "conversa",
+   "frase": "Quanto custa a noite e a refeição?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "conversa",
+   "frase": "Onde isso dorme de dia?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "conversa",
+   "frase": "Quem era esse Klaus?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "conversa",
+   "frase": "Falo com Drogo"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "imp_forca",
+   "frase": "Empurro com força"
+  },
+  {
+   "sessao": 18,
+   "fonte": "mente/sessao-18.md",
+   "rotulo": "conversa",
+   "frase": "Quem manda?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "arrebentar",
+   "frase": "Forço os pulsos contra as raízes para arrebentá-las."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "arrebentar",
+   "frase": "Forço os pulsos contra as raízes, com toda a força, para arrebentá-las."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "arrebentar",
+   "frase": "Arrebento as amarras."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "investigar",
+   "frase": "Examino o corte na carcaça."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "investigar",
+   "frase": "Examino a carcaça do carneiro."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "investigar",
+   "frase": "Me agacho e examino o corte na carcaça do carneiro."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "rastrear",
+   "frase": "Sigo o rastro até onde a besta dorme."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "rastrear",
+   "frase": "Sigo o rasto."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "estancar",
+   "frase": "Estanco o sangue de Elowen."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "estancar",
+   "frase": "Ajoelho ao lado de Elowen e estanco o sangue."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "estancar",
+   "frase": "Pressiono a ferida da minha irmã para estancar o sangue."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "lembrar",
+   "frase": "O que sei de Alto Negro, da Agulha de Sal, de bichos assim?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "lembrar",
+   "frase": "Tento lembrar o que sei sobre a Agulha de Sal."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "buscar",
+   "frase": "Olho em volta com atenção."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, frases)",
+   "rotulo": "buscar",
+   "frase": "Procuro o que o Largo do Cereal esconde."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "estancar",
+   "frase": "Deito Elowen na terra batida sob a copa gotejante e cuido das feridas dela."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "estancar",
+   "frase": "Cuido das feridas de Elowen."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "estancar",
+   "frase": "Faço um torniquete na perna de Elowen."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "estancar",
+   "frase": "Pressiono o ferimento de Elowen com um pano."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "estancar",
+   "frase": "Socorro a minha irmã."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "estancar",
+   "frase": "Enfaixo o braço de Elowen."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "investigar",
+   "frase": "Examino o rastro no chão."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "rastrear",
+   "frase": "Sigo as marcas no chão até a mata."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "lembrar",
+   "frase": "Lembro o que sei de bichos assim."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, socorro)",
+   "rotulo": "lembrar",
+   "frase": "O que eu sei sobre a Agulha de Sal?"
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, pedido)",
+   "rotulo": "arrebentar",
+   "frase": "Rolo de lado e forço os pulsos com toda a força contra as raízes para arrebentá-las."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, pedido)",
+   "rotulo": "arrebentar",
+   "frase": "Forço os pulsos contra as raízes que me enrolam, com toda a força, para arrebentá-las."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, pedido)",
+   "rotulo": "arrebentar",
+   "frase": "Quero arrebentar as raízes: forço os pulsos com toda a força, rolo o corpo e puxo."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, pedido)",
+   "rotulo": "arrebentar",
+   "frase": "Testo as amarras e forço os pulsos com toda a força para arrebentá-las."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, pedido)",
+   "rotulo": "arrebentar",
+   "frase": "Faço força com os pulsos contra as raízes, para ver se cedem."
+  },
+  {
+   "sessao": 18,
+   "fonte": "sessao-18 (reconstruída pelo jogo, pedido)",
+   "rotulo": "arrebentar",
+   "frase": "Tento arrebentar as raízes com toda a força."
+  }
+ ]
+}
