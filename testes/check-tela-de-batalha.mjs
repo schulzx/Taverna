@@ -321,9 +321,13 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
      veredito antes do clique" para uma ação irreversível: o preço já
      apareceu no primeiro toque, e desarmar no segundo faria o botão
      prometer uma coisa e fazer outra. O desarme geral continua ali para
-     todo gesto — a exceção está escrita ao lado dele, nunca escondida. */
+     todo gesto — a exceção está escrita ao lado dele, nunca escondida.
+     Movida em 10/11 (sessão 18, defeito 3): o desarme continua igual para
+     todos; só a caixa deixa de ser apagada quando o verbo é o Empurrar com
+     motor (`semFrase`), porque ele já não escreve nela — o que lá está é o
+     «como» do jogador, e desistir do verbo não o deve levar. */
   t("saída 1 — tocar o verbo outra vez desarma, exceto `fugir` — que confirma e executa",
-    /if \(armado === v\.id\) \{\s*if \(v\.id === "fugir"\) \{ setArmado\(""\); if \(p\.aoFugir\) p\.aoFugir\(\); return; \}\s*setArmado\(""\); if \(p\.aoEscrever\) p\.aoEscrever\(""\);/.test(TEL));
+    /if \(armado === v\.id\) \{\s*if \(v\.id === "fugir"\) \{ setArmado\(""\); if \(p\.aoFugir\) p\.aoFugir\(\); return; \}\s*setArmado\(""\); if \(p\.aoEscrever && !semFrase\) p\.aoEscrever\(""\);/.test(TEL));
   t("saída 2 — `Esc` desarma", /e\.key === "Escape"/.test(TEL) && /removeEventListener\("keydown"/.test(TEL));
   /* a terceira saída é a ÚNICA que existe no telefone, onde não há `Esc` —
      e mora na janela do campo, nunca na casa: a casa fora do alcance não

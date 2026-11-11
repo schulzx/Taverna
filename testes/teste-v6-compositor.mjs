@@ -116,8 +116,11 @@ sec("4. a fiação");
   /* MM14 (frontend, 30/09): quatro → cinco. A pergunta que não gasta a vez
      dentro da luta ("a quantos metros estão?") também parte para o
      Narrador — limpa a caixa e o rascunho como qualquer turno que parte,
-     só que sem mexer no tabuleiro. É o mesmo idioma, um quinto lugar. */
-  t("apaga-se quando o turno parte (os cinco que mandam) e quando se apaga o campo", (APP.match(/setEntrada\(""\); apagarORascunho\(\);/g) || []).length === 5 && /if \(!e\.target\.value\.trim\(\)\) apagarORascunho\(\);/.test(COMP));
+     só que sem mexer no tabuleiro. É o mesmo idioma, um quinto lugar.
+     Movida em 10/11 (sessão 18, defeito 3): cinco → seis. O empurrão leva o
+     «como» da caixa ao Mestre (empurrarAgora), e por isso a gasta: a caixa e
+     o rascunho limpam-se como em qualquer turno que parte. */
+  t("apaga-se quando o turno parte (os seis que mandam) e quando se apaga o campo", (APP.match(/setEntrada\(""\); apagarORascunho\(\);/g) || []).length === 6 && /if \(!e\.target\.value\.trim\(\)\) apagarORascunho\(\);/.test(COMP));
   t("o campo abre-se com foco ou texto, também na espera", /const campoAberto = campoFocado \|\| !!entrada\.trim\(\);/.test(APP));
   t("a sala a dois: a faixa e a promessa de reescrever ficam", /O turno sai quando os dois escreverem\. Dá para reescrever a sua até lá\./.test(APP));
   t("e nada disto custa o turno", /calou\("guardar o rascunho", e\)/.test(ORG) && /calou\("o toque no dado", e\)/.test(ORG) && /calou\("devolver o rascunho", e\)/.test(ORG));

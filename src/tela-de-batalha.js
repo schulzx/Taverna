@@ -263,6 +263,63 @@ export const PEDIDO_DO_VERBO = {
 };
 export const SAIDA_DO_ARMADO = "toque o verbo outra vez para desistir";
 
+/* ============================================================
+   O EMPURRÃO NA CAIXA (sessão 18, defeito 3)
+
+   Empurrar tem motor desde o lote 3 da CB, e o gesto dele é tocar no
+   inimigo. Mas a caixa do `como?` é outra porta, e por ela o empurrão
+   caía no texto livre: com um alvo declarado, o detector de ataque lia
+   «Empurro com força a bruxa» como golpe (d20 contra a CA); sem alvo, o
+   Narrador inventava o empurrão e o corpo ficava na mesma casa.
+
+   `empurraoDaFrase` diz se a caixa é um empurrão e EM QUEM, sem decidir
+   mais nada: o resto é do motor (`empurrarAgora`, no App).
+   · `exigeFrase`: só conta se o texto começa pela frase do verbo (a de
+     `VERBOS_DE_COMBATE`, a única que o sistema escreve); sem ela, o texto
+     inteiro é o `como` de um Empurrar que já está armado;
+   · o alvo é o inimigo CITADO (o nome inteiro, ou a primeira palavra dele
+     quando só um a tem), depois os `preferidos` por ordem (o que está sob
+     o rato, o alvo declarado), e por fim o único inimigo de pé;
+   · devolve `null` quando não é empurrão, e `alvo: ""` quando é e não há
+     em quem — quem chama arma o verbo e espera o toque.
+   ============================================================ */
+const SEM_ACENTO = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+const fraseDoEmpurrar = () => {
+  const v = (VERBOS_DE_COMBATE || []).find((x) => x && x.id === "empurrar");
+  return v && v.frase ? String(v.frase).trim() : "";
+};
+export function empurraoDaFrase(texto, opcoes) {
+  const o = opcoes == null ? {} : opcoes;
+  const frase = fraseDoEmpurrar();
+  const cru = String(texto == null ? "" : texto).trim();
+  const comFrase = !!frase && SEM_ACENTO(cru).startsWith(SEM_ACENTO(frase));
+  if (o.exigeFrase && !comFrase) return null;
+  const como = comFrase ? cru.slice(frase.length).trim() : cru;
+  const nomes = (Array.isArray(o.nomes) ? o.nomes : []).filter((n) => typeof n === "string" && n.trim());
+  const r = ` ${SEM_ACENTO(como)} `;
+  let citado = nomes.filter((n) => r.includes(SEM_ACENTO(n))).sort((a, b) => b.length - a.length)[0] || "";
+  if (!citado) {
+    /* «o Afogado contra a parede» cita o «Afogado do Brejo»: a primeira
+       palavra do nome basta, se for só dele e tiver corpo (≥ 4 letras) */
+    const pelaPrimeira = nomes.filter((n) => { const p = SEM_ACENTO(n).split(" ")[0]; return p.length >= 4 && r.includes(` ${p} `); });
+    if (pelaPrimeira.length === 1) citado = pelaPrimeira[0];
+  }
+  const preferido = (Array.isArray(o.preferidos) ? o.preferidos : []).find((n) => typeof n === "string" && nomes.includes(n)) || "";
+  const alvo = citado || preferido || (nomes.length === 1 ? nomes[0] : "");
+  return { alvo, como };
+}
+
+/* A FRASE QUE VAI AO MESTRE, com o `como` do jogador quando houver: o nome
+   do alvo só se repete se o `como` não o disser já. */
+export function acaoDoEmpurrao(alvo, como) {
+  const frase = fraseDoEmpurrar();
+  const nome = String(alvo == null ? "" : alvo).trim();
+  const c = String(como == null ? "" : como).trim();
+  if (!c) return `${frase} ${nome}`.trim();
+  const jaDiz = !!nome && ` ${SEM_ACENTO(c)} `.includes(` ${SEM_ACENTO(nome).split(" ")[0]}`);
+  return jaDiz ? `${frase} ${c}` : `${frase} ${nome}, ${c}`.trim();
+}
+
 /* A SAÍDA DE `Fugir`, e por que ela não é `SAIDA_DO_ARMADO`: tocar o
    verbo outra vez não desiste, EXECUTA — e dizer "para desistir" bem no
    botão que vai fazer o oposto seria o sistema mentir sobre o próprio

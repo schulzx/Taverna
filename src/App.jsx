@@ -8,7 +8,7 @@ import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCid
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao, quemDoLugar } from "./regiao.js";
 import { resolverAtaque, danoDe, defesaDe, bonusDeAmeaca, resumoDoAtaque, turnoDosInimigos, turnoDosCompanheiros, pvEsperadoJogador, pvEsperadoInimigo, gerarEspolios, patamarDe, resumoPatamar, d, severidadeDano, linhaParaMestre, perfilCombate, ataquesPorTurno, dadosDeDano, resumoAcaoDeTurno, marcosDaClasse, maiorVaoSemGanho, proximoGanho, danoDaClasse, vereditoDoFurtivo, ataquesDoInimigo, ataqueDeOportunidade, ehRetirada, oportunidadesContraOJogador, querFugir, gastarRecurso, acoesBonusDe, ECONOMIA_ACAO_PROMPT, eventoDoGolpe } from "./combate.js";
 import { vereditoDaFuga, ehFuga, linhaDaFuga, notaDaFuga, quemGolpeiaAoSair, folegoDaFuga, folegoSegura, linhaDoEscape, precoDaFrase, rolarOCustoDaFuga, consequenciaDaFuga, lutaAoEncher } from "./fuga.js";
-import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido } from "./tela-de-batalha.js";
+import { VERBO_DE_FUGA, VERBO_DE_ESPERA, convertePraTurnoDoCaido, empurraoDaFrase, acaoDoEmpurrao } from "./tela-de-batalha.js";
 /* (T1-A, 5.ª fatia) o poder único foi para motor/combate-do-turno.js, e unicas.js com ele */
 import { VOZES, VOZ_PADRAO, vozPorId, linhaDaVoz } from "./vozes.js";
 import { ESTRUTURAS, estruturaPorId, resumoHistoria, resumoQuests, garantirHistoria, envelopeDeVirada, custoDaEtapa, podeVirar, casarComVilao, capituloFechado, fecharCapitulo, abrirCapitulo, linhaDoCapitulo, envelopeDoCapitulo, tetoSemVilao, FORMAS_DE_CAPITULO, formaDeCapitulo, envelopeDoNovoCapitulo, linhaDoNovoCapitulo } from "./historia.js";
@@ -14089,6 +14089,22 @@ export default function Taverna() {
         return;
       }
     } catch (e) { calou("soPergunta na luta", e); }
+    /* SESSÃO 18 · defeito 3 (b, c): A FRASE DO EMPURRAR É DO MOTOR. Escrita
+       (ou devolvida à caixa pelo rascunho), «Empurro com força …» caía mais
+       abaixo no detector de ataque — com alvo declarado virava golpe, d20
+       contra a CA — ou ia ao Narrador como ficção, e ele inventava o
+       empurrão. Agora resolve-se aqui, pelo mesmo `empurrarAgora` do toque. */
+    try {
+      if (combateRef.current) {
+        const vivos = (combateRef.current.inimigos || []).filter((e) => e && !e.derrotado && (e.vida || 0) > 0).map((e) => e.nome);
+        const ef = empurraoDaFrase(acao, { nomes: vivos, preferidos: [(alvosGolpeRef.current || []).find(Boolean) || ""], exigeFrase: true });
+        if (ef) {
+          if (!ef.alvo) { pushMsgs([{ autor: "sistema", texto: "Empurrar: toque em quem, ou diga o nome." }]); return; }
+          empurrarAgora(ef.alvo, ef.como);
+          return;
+        }
+      }
+    } catch (e) { calou("o empurrão escrito", e); }
     /* ---------------- O DESPACHANTE (v9.61) ----------------
        A ordem do turno deixou de ser o layout deste arquivo e virou uma
        tabela em `turno.js`. Isto aqui não decide mais nada: pergunta qual
@@ -26549,41 +26565,60 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       return { grade: comb.grade, quem, alvo, entidades, superficies: chaoDaLuta(comb), vistas: vistasDaLuta(comb), lugar, caminho };
     } catch (e) { calou("o plano do empurrão", e); return null; }
   };
+  /* a recusa da distância, a mesma na previsão e no clique */
+  const recusaDoEmpurraoLonge = (nome) => `${nome} está longe demais para o empurrar nesta rodada`;
   const empurraoNaMesa = (() => {
     try {
       if (!emBatalha || !combate || !alvoDoEmpurrao) return null;
       const pl = planoDoEmpurrao(alvoDoEmpurrao);
-      if (!pl) return null;
+      /* SESSÃO 18 · defeito 3 (a): o veredito antes do clique inclui o NÃO.
+         A previsão prometia «Empurrar 1 casa» a uma criatura que o portão do
+         tamanho recusa, e o clique desarmava o verbo com a recusa escrita só
+         no registo — que a tela da luta não mostra. */
+      if (!pl) {
+        const vivo = (combate.inimigos || []).some((e) => e && e.nome === alvoDoEmpurrao && !e.derrotado && (e.vida || 0) > 0);
+        return vivo ? { alvo: alvoDoEmpurrao, recusa: recusaDoEmpurraoLonge(alvoDoEmpurrao) } : null;
+      }
+      const vdP = vereditoDoEmpurrao({ grade: pl.grade, quem: pl.quem, alvo: pl.alvo, entidades: pl.entidades });
+      if (vdP && !vdP.pode) return { alvo: pl.alvo.nome, recusa: `${pl.alvo.nome} ${vdP.porque}` };
       const prev = previsaoDoEmpurrao(pl);
       if (!prev) return null;
       return { alvo: pl.alvo.nome, de: prev.de, previsao: previsaoDoEmpurraoNaMesa(prev), caminho: pl.caminho };
     } catch (e) { calou("a previsão do empurrão", e); return null; }
   })();
-  const empurrarAgora = (nome) => {
+  /* SESSÃO 18 · defeito 3 (a): cada recusa VOLTA a quem chamou (a tela põe-na
+     na linha do veredito e deixa o verbo armado) além de ficar no registo;
+     "" quer dizer que o empurrão partiu. `como` é o que estava na caixa. */
+  const empurrarAgora = (nome, como) => {
+    const recusou = (texto) => { pushMsgs([{ autor: "sistema", texto: `${texto}.` }]); return texto; };
     try {
-      if (!nome || !combateRef.current || bloqueado) return;
-      if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return; }
+      if (!nome || !combateRef.current || bloqueado) return "";
+      if (travaODeclarar(guardadoRef.current)) { aMesaEspera(); return ""; }
       setAlvoDoEmpurrao(null);
       const recurso = CUSTO_DOS_VERBOS.empurrar;
       const eco0 = combateRef.current.economia;
       if (eco0 && recurso && typeof eco0[recurso] === "number" && eco0[recurso] <= 0) {
-        pushMsgs([{ autor: "sistema", texto: `O empurrão fica para a próxima rodada: ${RECUSA_DO_VERBO[recurso] || RECUSA_DO_VERBO.acao}.` }]);
-        return;
+        return recusou(`O empurrão fica para a próxima rodada: ${RECUSA_DO_VERBO[recurso] || RECUSA_DO_VERBO.acao}`);
       }
       let pl = planoDoEmpurrao(nome);
-      if (!pl) { pushMsgs([{ autor: "sistema", texto: `${nome} está longe demais para o empurrar nesta rodada.` }]); return; }
+      if (!pl) return recusou(recusaDoEmpurraoLonge(nome));
       const vd = vereditoDoEmpurrao({ grade: pl.grade, quem: pl.quem, alvo: pl.alvo, entidades: pl.entidades });
-      if (vd && !vd.pode) { pushMsgs([{ autor: "sistema", texto: `${pl.alvo.nome} ${vd.porque}.` }]); return; }
+      if (vd && !vd.pode) return recusou(`${pl.alvo.nome} ${vd.porque}`);
       if (pl.caminho) {
         moverPara(pl.caminho.destino);
-        if (((personagemRef.current || personagem || {}).vida || 0) <= 0) return;
+        if (((personagemRef.current || personagem || {}).vida || 0) <= 0) return "";
         pl = planoDoEmpurrao(nome);
-        if (!pl || pl.caminho) return;
+        if (!pl || pl.caminho) return recusou(recusaDoEmpurraoLonge(nome));
       }
       const persE = fichaViva() || personagem;
       const frase = (VERBOS_DE_COMBATE.find((v) => v.id === "empurrar") || {}).frase || "";
-      const acao = `${frase} ${pl.alvo.nome}`.trim();
-      try { setEntrada((t) => (String(t || "").trim() === frase ? "" : t)); } catch (e) { calou("a frase do empurrão na caixa", e); }
+      /* o «como» da caixa vai junto ao Mestre, e a caixa esvazia: foi gasto */
+      const comoDito = (() => { try { const ef = empurraoDaFrase(como, { nomes: [] }); return ef ? ef.como : ""; } catch { return ""; } })();
+      const acao = acaoDoEmpurrao(pl.alvo.nome, comoDito);
+      try {
+        if (comoDito) { setEntrada(""); apagarORascunho(); }
+        else setEntrada((t) => (String(t || "").trim() === frase ? "" : t));
+      } catch (e) { calou("a frase do empurrão na caixa", e); }
       /* a ação sai ANTES do dado, como no golpe: ganhar ou perder, foi gasta */
       const eco = combateRef.current.economia;
       if (eco && recurso && typeof eco[recurso] === "number") { combateRef.current = { ...combateRef.current, economia: { ...eco, [recurso]: eco[recurso] - 1 } }; setCombate(combateRef.current); }
@@ -26635,7 +26670,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const depoisDoRevide = (rv) => { const envelope = oEnvelopeDaFicha("combateResolvido", { desfecho, resumoInimigos: rv.texto, acao }); enviar(envelope, rv.pers); };
       if (fechou) depoisDoRevide({ pers: fichaViva() || personagem, texto: "" });
       else fecharMeuTurno(fichaViva() || personagem, depoisDoRevide);
-    } catch (e) { calou("empurrar", e); }
+      return "";
+    } catch (e) { calou("empurrar", e); return ""; }
   };
 
   /* ---------------- CB 17 (lote 2) · O QUE A MESA RECEBE DO TURNO DELES ----------------

@@ -79,7 +79,7 @@ import { tituloDe } from "./divindades.js";
 import {
   faixaDaVez, rotuloDaVez, fileiraDeVerbos, vereditoDaTela,
   ultimasLinhasDoMestre, NARRACAO, PEDIDO_DO_VERBO, impedimentosDaFileira,
-  linhaFugaArmada,
+  linhaFugaArmada, empurraoDaFrase,
 } from "./tela-de-batalha.js";
 
 /* ---------------- ONDE A MÃO TAPA O TABULEIRO ----------------
@@ -1671,12 +1671,26 @@ export function TelaDeBatalha(props) {
   const alvoDoEmpurrao = empAgora && empAgora.alvo ? String(empAgora.alvo) : "";
   const enteDoEmpurrao = alvoDoEmpurrao ? inimigos.find((e) => e.nome === alvoDoEmpurrao) || null : null;
   const preverEmpurrao = (nome) => { try { if (p.aoPreverEmpurrao) p.aoPreverEmpurrao(nome); } catch (e) { console.warn("TelaDeBatalha: prever o empurrão falhou", e); } };
-  const empurrar = (nome) => { try { setArmado(""); setRecusado(""); if (p.aoEmpurrar) p.aoEmpurrar(nome); } catch (e) { console.warn("TelaDeBatalha: empurrar falhou", e); } };
+  /* SESSÃO 18 · defeito 3 (a): o App DEVOLVE a recusa (grande demais, longe,
+     sem a ação) em vez de a deixar só no registo, que a tela da luta não
+     mostra — e o verbo fica armado, com o porquê na linha do veredito. O
+     que está na caixa vai como o «como» do empurrão. */
+  const empurrar = (nome) => {
+    try {
+      setRecusado("");
+      const recusa = p.aoEmpurrar ? p.aoEmpurrar(nome, p.entrada || "") : "";
+      if (typeof recusa === "string" && recusa) { setRecusado(recusa); return; }
+      setArmado("");
+    } catch (e) { console.warn("TelaDeBatalha: empurrar falhou", e); }
+  };
+  /* a recusa que o motor já deu na previsão (o rato por cima, ou o 1.º toque) */
+  const recusaDoEmpurrao = empurrando && p.empurrao && typeof p.empurrao === "object" && p.empurrao.recusa ? String(p.empurrao.recusa) : "";
   React.useEffect(() => { if (!empurrando && alvoDoEmpurrao) preverEmpurrao(null); }, [empurrando]); // eslint-disable-line react-hooks/exhaustive-deps
   const apontarInimigo = noTelefone ? null : (nome) => (empurrando ? preverEmpurrao(nome) : preverGolpe(nome));
   const tocarInimigo = (nome) => {
     if (!nome) return;
     if (empurrando) {
+      if (recusaDoEmpurrao && p.empurrao.alvo === nome) { setRecusado(recusaDoEmpurrao); return; }
       if (noTelefone && alvoDoEmpurrao !== nome) { preverEmpurrao(nome); return; }
       empurrar(nome); return;
     }
@@ -1852,7 +1866,7 @@ export function TelaDeBatalha(props) {
     ? linhaFugaArmada(p.linhaDaFuga)
     : vereditoDaTela({
     armado,
-    recusaDoVerbo: recusado,
+    recusaDoVerbo: recusado || recusaDoEmpurrao,
     /* O PREÇO DA FRASE DE FUGA (R21) já vem pronto do App — `p.precoDaFuga`
        só existe enquanto o campo casa `ehFuga` e a luta está aberta. Ganha
        da linha e da recusa do golpe porque, se o Enter vai fugir, mostrar
@@ -1903,12 +1917,19 @@ export function TelaDeBatalha(props) {
     if (razao) { setArmado(""); setRecusado(razao); return; }
     setRecusado("");
     if (v.id === "atacar") { setArmado(""); if (p.aoAtacar) p.aoAtacar(); return; }
+    /* SESSÃO 18 · defeito 3 (b, c): Empurrar com motor NÃO escreve a frase na
+       caixa. A frase ia pelo «Agir →» ao texto livre — com alvo declarado o
+       detector de ataque fazia dela um golpe, sem alvo o Narrador inventava o
+       empurrão — e o complemento do jogador misturava-se com ela. O gesto é
+       tocar no inimigo; a caixa fica para o «como», e é dele. */
+    const semFrase = v.id === "empurrar" && !!p.aoEmpurrar && !!p.aoPreverEmpurrao;
     if (armado === v.id) {
       if (v.id === "fugir") { setArmado(""); if (p.aoFugir) p.aoFugir(); return; }
-      setArmado(""); if (p.aoEscrever) p.aoEscrever("");
+      setArmado(""); if (p.aoEscrever && !semFrase) p.aoEscrever("");
       return;
     }
     setArmado(v.id);
+    if (semFrase) return;
     /* o verbo que arma põe a sua frase na linha do texto livre: o jogador
        acrescenta o COMO e manda pela mesma porta de sempre. A frase sai da
        tabela de `golpe.js`, nunca de uma string montada aqui. */
@@ -1918,6 +1939,29 @@ export function TelaDeBatalha(props) {
 
   /* andar desarma, e é a terceira saída */
   const mover = (destino) => { setArmado(""); setRecusado(""); if (p.aoMover) p.aoMover(destino); };
+
+  /* SESSÃO 18 · defeito 3 (b, c): A CAIXA NÃO É PORTA DO EMPURRÃO PARA O
+     TEXTO LIVRE. Com Empurrar armado — ou com a frase dele na caixa (o
+     rascunho guardado devolve-a) —, o «Agir →» e o Enter levam o empurrão ao
+     motor (aoEmpurrar), no inimigo citado, no que está sob o rato, no alvo
+     declarado ou no único de pé; sem em quem, o verbo arma e espera o toque. */
+  const empDaCaixa = (() => {
+    try {
+      if (!p.aoEmpurrar || !p.aoPreverEmpurrao || p.fim) return null;
+      const vivos = inimigos.filter((e) => e && !e.derrotado && Number(e.vida || 0) > 0).map((e) => e.nome);
+      const sob = p.empurrao && typeof p.empurrao === "object" && p.empurrao.alvo ? String(p.empurrao.alvo) : "";
+      return empurraoDaFrase(p.entrada || "", { nomes: vivos, preferidos: [sob, (p.alvosGolpe || []).find(Boolean) || ""], exigeFrase: !empurrando });
+    } catch (e) { console.warn("TelaDeBatalha: o empurrão da caixa falhou", e); return null; }
+  })();
+  const agirPelaCaixa = () => {
+    if (empDaCaixa) {
+      if (empDaCaixa.alvo) empurrar(empDaCaixa.alvo);
+      else { setRecusado(""); setArmado("empurrar"); }
+      return;
+    }
+    setArmado(""); if (p.aoAgir) p.aoAgir(p.entrada);
+  };
+  const caixaVazia = !String(p.entrada || "").trim() && !(empDaCaixa && empDaCaixa.alvo);
 
   /* A DECISÃO QUE ESPERA (MM16 nº 5): enquanto o cartão do golpe final está
      aberto, o turno está PARADO nele — nenhum verbo arma, a vez não anda, a
@@ -1954,7 +1998,7 @@ export function TelaDeBatalha(props) {
      linha do golpe. Com o cartão do golpe final aberto ou o fim da luta na
      secção, o pé cala-se: o veredito daquele clique é o cartão. */
   const resumo = (() => { try { return resumoDaArea(p.previsao); } catch { return ""; } })();
-  const vereditoForte = !!armado || !!recusado || !!p.precoDaFuga || !!p.fugiu;
+  const vereditoForte = !!armado || !!recusado || !!recusaDoEmpurrao || !!p.precoDaFuga || !!p.fugiu;
   const pegaAliado = !!(p.previsao && Array.isArray(p.previsao.aliados) && p.previsao.aliados.length);
   const textoDoPe = esperando || fimComEspolio ? ""
     : resumo && !vereditoForte ? resumo
@@ -2208,7 +2252,7 @@ export function TelaDeBatalha(props) {
           style={{ height: altoDoVerbo, minHeight: altoDoVerbo, gap: M.chipLadoX, padding: `0 ${noTelefone ? M.chipLadoX : M.compositorLado}px`, borderRadius: M.raioRedondo, background: T.pagina, border: `1px solid ${armado ? T.amber : T.line}` }}>
           <Glifo nome="pena" tamanho={M.glifo} cor={T.violetSoft} />
           <input value={p.entrada || ""} onChange={(e) => p.aoEscrever && p.aoEscrever(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && p.aoAgir) { setArmado(""); p.aoAgir(p.entrada); } }}
+            onKeyDown={(e) => { if (e.key === "Enter" && p.aoAgir && !caixaVazia) agirPelaCaixa(); }}
             placeholder={armado ? PEDIDO_DO_VERBO[armado] || "como? (opcional)" : "como? (opcional)"}
             disabled={!armado && !!p.bloqueado}
             className="tv-anel-foco flex-1 bg-transparent tv-body min-w-0" style={{ fontSize: M.letra.cena, color: T.ink, minHeight: altoDoVerbo - M.entreVerbos }} />
@@ -2229,15 +2273,15 @@ export function TelaDeBatalha(props) {
             ))}
           </>
         )}
-        <button onClick={() => { setArmado(""); if (p.aoAgir) p.aoAgir(p.entrada); }}
-          disabled={!!p.bloqueado || !String(p.entrada || "").trim()}
+        <button onClick={agirPelaCaixa}
+          disabled={!!p.bloqueado || caixaVazia}
           className="tv-anel-foco tv-mono flex items-center justify-center shrink-0"
           style={{
             height: altoDoVerbo, minHeight: altoDoVerbo, width: noTelefone ? "auto" : M.agir,
             gap: M.chipLadoX, padding: `0 ${M.chipLadoX + 6}px`, borderRadius: M.raioRedondo,
             background: alfa(T.amber, M.alfa.brilho), border: `1px solid ${alfa(T.amber, M.alfa.fio)}`,
             color: T.amberSoft, fontSize: M.letra.agir, fontWeight: 700,
-            opacity: (p.bloqueado || !String(p.entrada || "").trim()) ? 0.4 : 1,
+            opacity: (p.bloqueado || caixaVazia) ? 0.4 : 1,
           }}>
           <Glifo nome="dado" tamanho={M.glifoDoDado} cor={T.amber} />
           <span>{noTelefone ? "Agir" : "Agir →"}</span>

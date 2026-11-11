@@ -35,6 +35,8 @@ import { previsaoDoEmpurrao, empurraoNoCenario, SUPERFICIES } from "../src/super
 import { rotulosDoEmpurrao, previsaoDoObjetoNaMesa } from "../src/batalha-na-tela.js";
 import { CUSTO_DOS_VERBOS } from "../src/vez-na-mesa.js";
 import { criarCondicao } from "../src/condicoes.js";
+import { empurraoDaFrase, acaoDoEmpurrao } from "../src/tela-de-batalha.js";
+import { VERBOS_DE_COMBATE } from "../src/golpe.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra !== "" ? " — " + extra : "")); } };
@@ -228,6 +230,66 @@ sec("B7. tudo em calou: nada disto custa o turno");
   const SITIOS = ["o golpe de arma no chão", "o feitiço no chão", "o chão no começo da vez deles", "o chão de quem anda", "o chão de onde o grupo chega", "o sopro no chão", "a rodada no chão", "o chão onde paro", "o chão da luta que acabou", "a previsão do empurrão", "o degrau na mesa", "o chão na mesa", "os objetos na mesa", "prever o empurrão", "o dado do empurrão", "o som da reação"];
   const faltam = SITIOS.filter((s) => conta('calou("' + s + '"') < 1);
   t(`e os ${SITIOS.length} sítios de fiação dentro de funções que já existiam também`, faltam.length === 0, faltam.join(", "));
+}
+
+/* ================= C. O EMPURRAR PELA TELA (sessão 18, defeito 3) =================
+   Subiu na v9.635 e não se jogava: (a) tocar no inimigo com o verbo armado
+   desarmava-o, e a recusa do motor (o portão do tamanho: uma bruxa 3 × 3
+   contra um herói médio) ficava escrita só no registo, que a tela da luta
+   não mostra — com a previsão a prometer «Empurrar 1 casa»; (b) a frase
+   que o verbo escrevia na caixa ia pelo «Agir →» ao texto livre, e com um
+   alvo declarado o detector de ataque fazia dela um golpe (d20 vs CA);
+   (c) sem alvo, o Narrador inventava o empurrão. Estas asserções caem nos
+   três, na HEAD de antes do conserto. */
+sec("C1. a caixa sabe quando é empurrão e em quem (tela-de-batalha.js)");
+{
+  const frase = (VERBOS_DE_COMBATE.find((v) => v.id === "empurrar") || {}).frase;
+  const nomes = ["Afogado do Brejo", "Bruxa da Primeira Raiz"];
+  const a = empurraoDaFrase(`${frase} o Afogado contra a parede`, { nomes, exigeFrase: true });
+  t("a frase do verbo com o alvo citado pela primeira palavra", !!a && a.alvo === "Afogado do Brejo" && a.como === "o Afogado contra a parede");
+  t("sem acento e com espaço a mais também (o rascunho devolve-a assim)", (empurraoDaFrase("empurro com forca ", { nomes, exigeFrase: true }) || {}).alvo === "");
+  t("o que não começa pela frase não é empurrão (o portão morde só o necessário)", empurraoDaFrase("ataco a bruxa com força", { nomes, exigeFrase: true }) === null);
+  t("com o verbo armado, o texto inteiro é o como, e o alvo sai dos preferidos", (empurraoDaFrase("contra a parede", { nomes, preferidos: ["", "Bruxa da Primeira Raiz"] }) || {}).alvo === "Bruxa da Primeira Raiz");
+  t("o preferido que não está de pé não conta", (empurraoDaFrase("", { nomes, preferidos: ["Lobo"] }) || {}).alvo === "");
+  t("um só inimigo de pé é o alvo", (empurraoDaFrase("", { nomes: ["Goblin"] }) || {}).alvo === "Goblin");
+  t("lixo não estoura", (empurraoDaFrase(null, null) || {}).alvo === "");
+  t("a frase ao Mestre leva o como, e não repete o nome que ele já diz",
+    acaoDoEmpurrao("Goblin", "") === `${frase} Goblin`
+    && acaoDoEmpurrao("Goblin", "contra o fogo") === `${frase} Goblin, contra o fogo`
+    && acaoDoEmpurrao("Afogado do Brejo", "o Afogado contra a parede") === `${frase} o Afogado contra a parede`);
+}
+
+sec("C2. o App: o NÃO antes do clique, a recusa devolvida, a frase ao motor");
+{
+  const mesa = corpo("empurraoNaMesa");
+  t("a previsão passa pelo portão do tamanho e devolve a recusa, sem previsão",
+    mesa.includes("vereditoDoEmpurrao({") && mesa.includes("recusa: `${pl.alvo.nome} ${vdP.porque}`") && mesa.indexOf("vdP.pode") < mesa.indexOf("previsaoDoEmpurrao(pl)"));
+  t("e diz «longe demais» de quem está de pé e não se alcança", mesa.includes("recusa: recusaDoEmpurraoLonge(alvoDoEmpurrao)"));
+  const e = corpo("empurrarAgora");
+  t("cada recusa volta a quem chamou (a tela mostra-a), e o sucesso devolve \"\"",
+    (e.match(/return recusou\(/g) || []).length >= 3 && e.includes('return "";\n    } catch (e) { calou("empurrar", e); return ""; }'));
+  t("o como da caixa vai ao Mestre (acaoDoEmpurrao) e a caixa esvazia",
+    e.includes("const acao = acaoDoEmpurrao(pl.alvo.nome, comoDito);") && e.includes('setEntrada(""); apagarORascunho();'));
+  const ag = corpo("agirInterno");
+  const porta = ag.indexOf("empurraoDaFrase(acao, {");
+  t("a frase escrita do Empurrar é do motor, antes do despachante e do detector de golpe",
+    porta > 0 && porta < ag.indexOf("O DESPACHANTE")
+    && APP.indexOf("empurraoDaFrase(acao, {") < APP.indexOf("if (aplicarGolpeDoJogador(acao, fichaViva() || personagem)) return;")
+    && ag.includes("empurrarAgora(ef.alvo, ef.como);") && ag.includes('calou("o empurrão escrito"'));
+}
+
+sec("C3. a tela: o verbo não escreve, o toque recusado não desarma, o Agir não vai ao texto livre");
+{
+  const TELA = readFileSync(new URL("../src/painel-batalha.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  t("Empurrar com motor arma sem escrever a frase na caixa",
+    TELA.includes('const semFrase = v.id === "empurrar" && !!p.aoEmpurrar && !!p.aoPreverEmpurrao;') && TELA.includes("if (semFrase) return;"));
+  t("a recusa devolvida pelo App fica na linha e o verbo armado",
+    TELA.includes('const recusa = p.aoEmpurrar ? p.aoEmpurrar(nome, p.entrada || "") : "";') && TELA.includes('if (typeof recusa === "string" && recusa) { setRecusado(recusa); return; }'));
+  t("a recusa da previsão aparece já no pairar (o veredito antes do clique)", TELA.includes("recusaDoVerbo: recusado || recusaDoEmpurrao,"));
+  t("o toque num alvo já recusado não chama o motor", TELA.includes("if (recusaDoEmpurrao && p.empurrao.alvo === nome) { setRecusado(recusaDoEmpurrao); return; }"));
+  t("o Agir e o Enter passam pela caixa do empurrão, e nenhum manda a caixa crua",
+    TELA.includes("<button onClick={agirPelaCaixa}") && TELA.includes("agirPelaCaixa();")
+    && !TELA.includes('setArmado(""); p.aoAgir(p.entrada); } }}') && !TELA.includes('onClick={() => { setArmado(""); if (p.aoAgir) p.aoAgir(p.entrada); }}'));
 }
 
 console.log(`\no lote 3 da fase CB no App: ${ok} passaram, ${mal} falharam`);
