@@ -117,7 +117,7 @@ export const TIPOS_DE_FACTO = Object.freeze({
   esteve: Object.freeze({ de: "lugar", entrada: "lugar", peso: 1, forma: marcaDeDias,
     porta: "o lugar e a cidade no fim do turno (lugarRef, cidadeAtualRef)" }),
   descobriu: Object.freeze({ de: "lugar", entrada: "segredos", peso: 3, forma: "{ dia }",
-    porta: "segredosReveladosNoTurno (saga.js), com o herói no lugar" }),
+    porta: "segredosReveladosNoTurno (saga.js), com o herói no lugar; e a busca que acha o segredo do passo da quest (a-quest-manda.js, oLivroDoAchado)" }),
   /* 09/11 (as consequências caladas da BQ7b): o que uma quest deixa no
      mundo e mais nenhum órgão guardava. Pesam como a luta e o segredo: o
      teto não tira um favor por dever nem a linha que a história escreveu. */

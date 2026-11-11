@@ -23,6 +23,28 @@
    O pedido chega como o cartão da proposta (a mesma peça), com o dado e o
    número antes do toque. O jogador rola ou diz «Agora não»; o pedido não
    volta para o mesmo sítio, ou a mesma pessoa, no mesmo dia.
+
+   MC6 (11/11, Fase MC) · O MESTRE PEDE ONDE HÁ O QUE ACHAR. A 18.ª sessão
+   viu quatro ofertas iguais de «Olhar à volta» em 26 turnos, uma a cada
+   deslocação: sítio novo = chave nova = oferta nova, e nada perguntava se o
+   sítio tinha alguma coisa. E a oferta COMIA o dado do jogador: o sucesso
+   vazio fechava o lugar (`fechaDepois`, desafios.js) com a chave da busca,
+   e a seguir «procuro o que o Largo esconde» dava `vasculhado` sem rolar
+   (a planta, §1.1). Duas regras novas:
+     · a chegada pergunta se HÁ o que achar (`haOQueAchar`: um achável aqui,
+       ou o segredo de um passo da quest — a-quest-manda.js). Havendo, pede;
+       não havendo, pede uma vez em `vazioUmEm`, por sorte semeada pela
+       semente e pela chave (o mesmo sítio no mesmo dia dá sempre a mesma
+       resposta), e nunca duas vazias seguidas no mesmo dia (a lista de
+       pedidos só guarda o que se pediu, não os sítios por onde se passou:
+       «seguidas» conta-se pelo dia, senão um mundo sem nada para achar
+       calava a oferta para sempre depois da primeira). A uma-em-N existe para que a
+       oferta não denuncie o segredo: se só aparecesse onde há, aparecer
+       seria a resposta (§2.3);
+     · a oferta tem CHAVE PRÓPRIA no livro de tentativas
+       (`oVereditoDaOferta`): o que ela revira fica marcado como dela, e os
+       verbos do jogador (examinar, investigar, procurar, lembrar) continuam
+       a rolar no mesmo sítio.
    ============================================================ */
 
 export const O_MESTRE_PEDE = Object.freeze({
@@ -40,6 +62,12 @@ export const O_MESTRE_PEDE = Object.freeze({
   sinal: Object.freeze({ id: "sinal", frase: () => "Presto atenção ao que vem pela estrada.", verbo: () => "Ler os sinais da estrada" }),
   confirmar: "Rolar",
   recuo: "Agora não",
+  /* MC6: a oferta em sítio sem nada para achar — uma em N — e as marcas das
+     chaves: a da oferta vazia (no livro de pedidos, para nunca haver duas
+     seguidas) e a da tentativa da oferta (no livro de tentativas) */
+  vazioUmEm: 4,
+  marcaVazia: "vazia",
+  marcaDaOferta: "oferta",
   /* o glifo do cartão (a tabela de glifos é da peça) */
   glifo: "dado",
 });
@@ -58,9 +86,27 @@ export function aChaveDoPedido(id, { onde = "", quem = "", dia = 0 } = {}) {
    `falouCom`: o nome de quem está aqui e a quem a última frase falou —
      conversa, não ato (a conversa não se rola; ler quem fala, sim).
    `jaPedidos`: as chaves já pedidas (aceites ou recusadas). */
-export function oQueOMestrePede({ emCombate = false, ocupado = false, naEstrada = false, naMasmorra = false, onde = "", falouCom = "", dia = 0, jaPedidos = [] } = {}) {
+/* MC6: `haOQueAchar` — true (há achável ou segredo de passo aqui), false
+   (não há), null (quem chama não sabe: a régua de antes, pede sempre).
+   `semente`: a do mundo, para a sorte da oferta vazia; `sorte`, quando
+   dada, manda em vez dela (a suíte). */
+const ehVazia = (k) => typeof k === "string" && k.endsWith(`|${O_MESTRE_PEDE.marcaVazia}`);
+/* o dia de uma chave vazia: `chegada|onde|quem|dia|vazia` (aChaveDoPedido) */
+const diaDaChave = (k) => { const ps = String(k).split("|"); return Number(ps[ps.length - 2]) || 0; };
+function sorteDaOferta(semente, chave, sorte) {
+  if (typeof sorte === "function") { const x = Number(sorte()); return Number.isFinite(x) ? x : 1; }
+  /* FNV-1a da semente e da chave: o mesmo sítio, no mesmo dia, no mesmo
+     mundo, dá sempre a mesma resposta — pedir de novo não é rolar de novo */
+  let h = 2166136261;
+  for (const ch of `${semente == null ? "" : semente}|oferta|${chave}`) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  return h / 4294967296;
+}
+export function oQueOMestrePede(opcoes) {
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const { emCombate = false, ocupado = false, naEstrada = false, naMasmorra = false, onde = "", falouCom = "", dia = 0, jaPedidos = [], haOQueAchar = null, semente = "", sorte = null } = o;
   if (emCombate || ocupado || naEstrada || naMasmorra) return null;
-  const ja = new Set(Array.isArray(jaPedidos) ? jaPedidos : []);
+  const lista = Array.isArray(jaPedidos) ? jaPedidos : [];
+  const ja = new Set(lista);
   const sitio = limpo(onde);
   for (const p of O_MESTRE_PEDE.pedidos) {
     if (p.id === "intencao") {
@@ -73,11 +119,29 @@ export function oQueOMestrePede({ emCombate = false, ocupado = false, naEstrada 
     if (p.id === "chegada") {
       if (!sitio) continue;
       const chave = aChaveDoPedido(p.id, { onde: sitio, dia });
-      if (ja.has(chave)) continue;
+      const chaveVazia = `${chave}|${O_MESTRE_PEDE.marcaVazia}`;
+      if (ja.has(chave) || ja.has(chaveVazia)) continue;
+      if (haOQueAchar === false) {
+        /* nunca duas vazias seguidas: nenhuma vazia pedida neste dia */
+        if (lista.some((k) => ehVazia(k) && k.startsWith(`${p.id}|`) && diaDaChave(k) === (Number(dia) || 0))) continue;
+        if (sorteDaOferta(semente, chave, sorte) >= 1 / O_MESTRE_PEDE.vazioUmEm) continue;
+        return Object.freeze({ id: p.id, chave: chaveVazia, frase: p.frase(), verbo: p.verbo(), onde: sitio, vazia: true });
+      }
       return Object.freeze({ id: p.id, chave, frase: p.frase(), verbo: p.verbo(), onde: sitio });
     }
   }
   return null;
+}
+
+/* MC6 · A CHAVE DA OFERTA. O veredito da frase pedida (`lerAcao`) com a
+   chave da tentativa marcada como da oferta: o que a oferta revira e fecha
+   (`fechaDepois`, o `limpo`) fica no livro de tentativas com esta chave, e
+   a busca, o exame e a memória que o jogador declarar depois no mesmo sítio
+   têm a chave deles, abertos. Sem veredito de teste, o veredito como veio. */
+export function oVereditoDaOferta(v) {
+  if (!v || typeof v !== "object" || v.tipo !== "teste" || typeof v.chave !== "string" || !v.chave) return v;
+  const marca = `|${O_MESTRE_PEDE.marcaDaOferta}`;
+  return v.chave.endsWith(marca) ? v : { ...v, chave: `${v.chave}${marca}`, oferta: true };
 }
 
 /* O cartão do pedido, na forma da proposta da frase. `v` é o veredicto do

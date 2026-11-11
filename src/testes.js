@@ -191,6 +191,19 @@ export const SUCESSO_SEM_CASTIGO = "sem luta nem ferida que eu não tinha";
    (ou com um desfecho que não é o meio), o texto é o de sempre, letra por
    letra. O meio só existe do lado do sim: um `meio` com resultado de falha
    é ignorado, porque o crítico e o desastre nunca são o meio. */
+/* MC4 (11/11, Fase MC): `facto` — O SUCESSO DÁ SEMPRE UM FACTO
+   (facto-do-sucesso.js, `oFactoDoSucesso`). Com ele, o envelope do sim
+   leva o facto que o sistema achou, com a fonte, NO LUGAR de «revele UMA
+   coisa concreta e útil» — a frase que delegava ao Narrador a verdade do
+   sucesso, e que ele enchia com o plausível. Também no sim por um fio. Sem
+   `facto` (os testes que não compram saber, e quem ainda não o passa), o
+   texto é o de sempre, letra por letra. O texto do facto já vem com o teto
+   (FACTO_DO_SUCESSO.teto): o pior caso do prompt não cresce. */
+const fatoDoSim = (facto) => {
+  const f = facto && typeof facto === "object" && typeof facto.texto === "string" ? facto.texto.trim() : "";
+  return f ? `O sucesso deu isto, e é verdade do mundo: ${f}.` : "";
+};
+
 function linhaDoMeio(meio) {
   if (!meio || !meio.porPouco || !meio.diz) return null;
   const onde = meio.faixa === "mas"
@@ -199,7 +212,7 @@ function linhaDoMeio(meio) {
   return { onde, preco: String(meio.diz) };
 }
 
-export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino, gesto = false, meio = null }) {
+export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, resultado, critico, desastre, automatico, nivelTreino, gesto = false, meio = null, facto = null }) {
   const t = tipoTestePorId(tipo);
   const per = pericia ? periciaPorId(pericia) : null;
   const attr = nomeDoAtributo(t.atributo);
@@ -219,7 +232,7 @@ export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, 
   if (doMeio) {
     const oQue = gesto
       ? `O que eu declarei ACONTECE${motivo ? ` (${motivo})` : ""}, do jeito que declarei — e o efeito é esse, não maior.`
-      : `Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade inventada agora.`;
+      : fatoDoSim(facto) ? `${fatoDoSim(facto)} Narre isto, e só isto.` : `Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade inventada agora.`;
     return `${cabeca} POR UM FIO (${doMeio.onde}) — COM PREÇO.
 REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense. Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
@@ -242,6 +255,10 @@ REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. O que eu declarei ACONTECE, do j
   if (!passou) {
     return `${cabeca}
 REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. Você NÃO revela nada, NÃO entrega meia-informação, NÃO oferece uma pista "de consolo" e NÃO deixa a resposta escapar numa descrição. Narre em duas ou três frases apenas o meu esforço e o silêncio dele — ${desastre ? "e, como foi falha crítica, acrescente um pequeno custo: perdi tempo, chamei atenção ou tirei a conclusão errada" : "sem custo extra, só a ausência de resultado"}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;
+  }
+  if (fatoDoSim(facto)) {
+    return `${cabeca}
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. ${fatoDoSim(facto)} Narre só isto, em até três frases, sem outro achado, item ou aliado.${critico ? " Crítico: um pormenor a mais." : ""} Devolva a palavra para mim, sem cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
   return `${cabeca}
 REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade conveniente inventada agora, e nunca um item ou aliado de brinde. ${critico ? "Foi crítico: pode ser algo especialmente valioso ou específico." : "Uma coisa só, do tamanho de um teste bem-sucedido."} Se estivermos em combate, uma fraqueza real do inimigo serve. Diga em até três frases e devolva a palavra para mim, sem iniciar cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;

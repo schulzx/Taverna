@@ -165,6 +165,15 @@ sec("1. NENHUM MÓDULO MUDO");
      no cartão) e o verbo parte pelas portas de viagem que já existem. As
      duas entradas saíram. */
   const AGUARDANDO = {
+    /* 11/11 (Fase MC, MC4–MC6, backend): `facto-do-sucesso.js` nasce —
+       `oFactoDoSucesso` (o facto com fonte que o sucesso compra, para o
+       envelope do teste) — e espera o `oficial`, que o liga no App.jsx no
+       resolver do teste, junto de `a-quest-manda.js` (que ele já importa: o
+       passo que planta o achado, o oráculo que lê o passo, o livro que o
+       sistema escreve). Credor: o `oficial`, na MESMA leva (a nota de
+       fiação da MC4–MC6). A entrada sai quando o App o importar.
+       `teste-facto-do-sucesso.mjs` é o primeiro leitor. */
+    "facto-do-sucesso.js": "o oficial, na fiação da MC4–MC6 (11/11)",
     /* 11/10 (Fase MM-C, C2): `subtramas.js` nasce no backend — os arcos de
        três batidas, as pistas e a revelação do elo, a linha QUEM CARREGA, o
        campo `coracao` escrito, e as peças do motor da fogueira — e espera a

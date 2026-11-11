@@ -238,9 +238,14 @@ export const CONDICOES = Object.freeze({
     args: [A.lugar], le: ["ficha"], volta: true,
     portas: [P("src/motor/meio-do-turno.js", "registrarOLugar", "onde o herói está agora")],
     texto: "estar em {0}", nao: "sair de {0}" }),
+  /* MC5 (11/11): a segunda porta é a do SISTEMA — a busca que acha o
+     segredo que o passo planta (a-quest-manda.js) escreve o facto pelo id
+     do papel, diga a prosa o que disser. Antes, só o Cronista o escrevia, e
+     só com os segredos da espinha: o passo «descobrir o que X esconde» não
+     tinha quem o cumprisse pelo jogo (a 18.ª sessão, defeito 1). */
   descobriu: Object.freeze({
     args: [A.lugar], le: ["livro"], facto: "descobriu", volta: false,
-    portas: [PORTA_DO_CRONISTA],
+    portas: [PORTA_DO_CRONISTA, P("src/a-quest-manda.js", "oLivroDoAchado", "a busca que acha o segredo do passo: o sistema escreve «descobriu» no livro")],
     texto: "descobrir o que {0} esconde", nao: "deixar {0} guardar o segredo" }),
   /* 09/11 (as consequências caladas): o favor que uma quest deixou a dever
      (o efeito «favor», escrito no livro pelo motor das quests) — uma quest
