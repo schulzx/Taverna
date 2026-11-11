@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 11/11 · v9.640 · o catálogo aprende os testes que as nossas sessões nunca viram (CS) · commit e623b89 + d6b5aee
+
+A pessoa: «faça o que disse que vale a pena» — descrever em português, com palavras nossas, as situações em que o estudo do Mestre (CRD3) mostra cada perícia, para os testes que nenhuma sessão de prova tinha mostrado.
+
+- **backend:** contou as situações no scratchpad (privado) e escreveu 498 frases do zero, no nosso mundo — 391 que pedem teste e 107 quase-iguais que não pedem — cobrindo os 25 rótulos sem frase real. Sorteou-as em duas metades antes de olhar o catálogo: A (258) afina, B (240) só mede. ~75 alternativas novas em 22 desafios e quatro famílias do improviso, cada uma com o comentário «CS». Catraca nova: `testes/corpus-das-situacoes.json` + `teste-corpus-das-situacoes.mjs`.
+- **o número que conta (metade B, que nunca guiou nada):** intenção 104 → 176 /240 · perícia 66 → 133 /193 · falsos «pede dado» 4 → 3 /47. O corpus da mesa (as 439 reais) não se mexeu: 413 · 58 · 2.
+- **o classificador:** retreinado com as frases novas, empata com o catálogo na intenção e corta à metade os falsos dados nas sessões 1–10, mas perde 10 pontos de perícia. A recomendação do §6 fica: ainda não vira módulo (§8 do `classificador-prototipo.md`).
+- **decisões médias:** quatro rótulos da metade A mudados depois de medir, para seguir a lei da casa (ombro/pontapé numa tranca = tranca pela via da força; arremesso longe = improviso de força, MM4) — nenhuma frase trocou de metade, e a régua ficou escrita no corpus. Lei legal cumprida: nenhuma frase, nome ou paráfrase da Critical Role entrou; conferido por varredura de nomes antes de subir.
+- **prova limpa de d6b5aee:** build 0, 499/499 suítes, 26/26 varredores. Subiu.
+- **o que ficou (de outros):** «ferramentas de ladrão» no plural não casa `/ferramenta de ladr/` em `VIAS_DE_TRANCA`; o filtro de não-declarações come a oração «quando ele sair…» e «Sigo o Jaco quando ele sair» fica sem leitura; «Desarmo o guarda com um golpe no pulso» não é visto como ataque por `agressao.js`.
+
 ## 11/11 · v9.639 · a busca que acha, a quest que manda, o vilão calado, o preso, o caído, e o veredito antes de partir (MC4–MC10)
 - **MC4–MC6, motor (`backend`, a97c623):** em 1000 mundos, 100% dos sucessos de busca, investigação, rasto e saberes trazem facto com fonte (generoso: o saber de criatura ganha uma da região); a busca acha o segredo do passo em 26/26 lugares e escreve «descobriu» pela porta do sistema; o oráculo diz que há rasto em 5/5 passos de rasto; ofertas em lugar vazio 93/1000, nunca duas vazias no mesmo dia (**decisão do backend que aceito**: contar entre ofertas calava o lugar para sempre).
 - **MC7, MC9, MC10, motor (`backend`, 71af756):** a alcunha numa sessão simulada de 33 turnos, 25 → 5 pautas (só com servo em cena), nunca a cidade onde o herói está; `src/cativeiro.js` (arrebentar Atletismo, escapar Acrobacia +2, convencer Persuasão +3; CD do captor 10–16; teto 25); o companheiro caído não tinha estado — nasceu `estavel` aditivo em `src/socorro.js`.
