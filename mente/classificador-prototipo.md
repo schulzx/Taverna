@@ -210,3 +210,39 @@ mão) · `gerar.mjs` (os moldes) · `suites.mjs` · `rotulos.mjs` (o vocabulári
 baseline) · `modelo.mjs` (treino, tabela, leitor) · `comum.mjs` + `avaliar2.mjs` (a prova; saída em
 `resultado-final.md`) · `varrer.mjs` + `varrer-1.txt`, `varrer-2.txt` (tamanho × acerto × estudo do
 Mestre) · `sonda.mjs` · `pesos.json` (a tabela de 293 KB).
+
+## 8 · Depois do corpus das situações (11/11/2026)
+
+O §6 dizia «22 rótulos de teste sem nenhuma frase real»; contados contra `DESAFIOS`, eram **25**.
+O corpus das situações (`testes/corpus-das-situacoes.json`, catraca em
+`testes/teste-corpus-das-situacoes.mjs`) cobre os 25: **498 frases** escritas por nós a partir dos
+tipos de situação contados no estudo do Mestre (só contagem e tipo; nenhuma fala), 391 de teste e
+107 quase-iguais, divididas por semente em A (afinou o catálogo) e B (a prova). O modelo foi
+re-treinado com a mesma configuração (poda 1,6, uma casa, α 0,5, τ 0,5); a rede cai no catálogo
+**já afinado**. Origem: `…/scratchpad/classificador/avaliar3.mjs` → `resultado-cs.md`.
+
+**Metade B (240 frases que não guiaram nada):**
+
+| quem decide | intenção | perícia certa | falsos «pede dado» |
+|---|---|---|---|
+| catálogo antes da CS | 104 (43,3%) | 66/193 (34,2%) | 4/47 |
+| **catálogo depois da CS** | **176 (73,3%)** | **133/193 (68,9%)** | **3/47** |
+| modelo + rede, treino sem as situações | 167 (69,6%) | 133/193 (68,9%) | 6/47 |
+| modelo + rede, treino com a metade A | 164 (68,3%) | 130/193 (67,4%) | 10/47 |
+| modelo cru, com a metade A | 121 (50,4%) | 104/193 (53,9%) | 16/47 |
+
+**Sessões reais, cada sessão fora** (catálogo com o contexto vazio do §2, como antes):
+
+| quem decide | 1–10: intenção | 1–10: falsos | 1–10: perícia | todas: intenção | todas: falsos |
+|---|---|---|---|---|---|
+| catálogo de hoje | 89,6% | 12/317 | 50,0% (de 40) | 91,1% | 14/361 |
+| modelo + rede, sem as situações | 88,2% | 11/317 | 40,0% | 89,1% | 14/361 |
+| modelo + rede, com as situações | 89,9% | 6/317 | 40,0% | 91,1% | 7/361 |
+
+**A recomendação não muda.** As frases novas ensinaram mais ao catálogo do que ao modelo: na metade
+B o catálogo afinado com A ganha ao modelo + rede em tudo, e as frases de A **pioram** o modelo ali
+(falsos 6 → 10) — 258 frases escritas por uma só mão são pouco para 45 classes. Nas sessões reais o
+modelo + rede com as situações empata a intenção e corta os falsos para metade (12 → 6), mas perde
+10 pontos de perícia e fica longe do critério do §6.3 (≥ 5 pontos de intenção **e** ≥ 40% menos
+falsos). O papel certo continua a ser o de farejador: os 6 falsos que ele evita e o catálogo não
+são a próxima lista de lacunas a olhar.

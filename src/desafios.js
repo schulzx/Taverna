@@ -405,7 +405,11 @@ export const EXAMINAR_A_COISA = {
     "armazem", "porao", "sotao", "patio", "jardim", "rua", "praca", "caverna", "gruta", "camara", "cripta", "galeria", "acampamento",
     "clareira", "margem", "ruina", "ruinas", "predio", "edificio", "loja", "taverna", "templo", "estabulo", "galpao", "salinha", "espaco"],
   deOutro: ["que", "corpo", "corpos", "cadaver", "cadaveres", "ferimento", "ferimentos", "ferido", "ferida", "morto", "morta", "doente", "pulso",
-    "selo", "selos", "runa", "runas", "magia", "feitico", "encantamento", "brasao", "estandarte", "emblema", "rosto", "olhos", "cara", "expressao"],
+    "selo", "selos", "runa", "runas", "magia", "feitico", "encantamento", "brasao", "estandarte", "emblema", "rosto", "olhos", "cara", "expressao",
+    /* CS (11/11, o corpus das situações): o sinete, o lacre, a insígnia e a
+       bandeira são da heráldica; o glifo, o círculo, a barreira, o portal e
+       a aura, do arcano */
+    "sinete", "sinetes", "lacre", "lacres", "insignia", "insignias", "libre", "bandeira", "bandeiras", "glifo", "glifos", "circulo", "sigilo", "sigilos", "barreira", "portal", "aura", "ritual"],
   espolio: /\bexamin\w*\s+o que (?:caiu|ficou|sobrou|restou|deixaram|largaram|largou|deixou)\b/,
   /* e quando a frase PROCURA o escondido — «examino o poço: a corda, as
      bordas… procuro o que as Celas escondem», «examino as estantes,
@@ -455,6 +459,13 @@ function periciaDaPista(d, t) {
    VESTÍGIO; o exame da coisa (EM1) soma-se a ele no catálogo */
 const RX_INVESTIGAR_DE_SEMPRE = /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo|examin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b)/;
 
+/* CS (11/11, o corpus das situações): os nomes comuns que três entradas
+   novas precisam de reconhecer — a criatura (fraqueza), o bicho (acalmar o
+   bicho) e a coisa da heráldica. Só palavras; nenhuma regra mora aqui. */
+const CRIATURAS = "(criaturas?|monstros?|bichos?|feras?|bestas?|inimigos?|mortos?-vivos?|mortos? vivos?|demonios?|diabos?|espectros?|fantasmas?|espiritos?|trolls?|vampiros?|lobisomens?|dragoes|dragao|aranhas?|serpentes?|goblins?|esqueletos?|zumbis?|carnicais?|ogros?|orcs?|gigantes?|harpias?|basiliscos?|golens?|elementais?)";
+const ANIMAIS = "(cavalos?|eguas?|caes|cao|cachorros?|mulas?|bois|boi|bichos?|animal|animais|feras?|bestas?|galinhas?|ovelhas?|cabras?|lobos?|ursos?|javalis?|falcao|falcoes|corvos?|burros?|gatos?|potros?|porcos?|touros?|vacas?)";
+const HERALDICA = "(brasao|brasoes|estandartes?|emblemas?|insignias?|selos?|sinetes?|lacres?|libre|bandeiras?|divisas?|flamulas?|uniformes?|cores)";
+
 export const DESAFIOS = [
   {
     id: "buscar",
@@ -482,7 +493,13 @@ export const DESAFIOS = [
        cá uma palavra que ela roubaria: examinar um CORPO é Medicina,
        procurar ÁGUA no ermo é Sobrevivência, e nenhuma das duas é revirar
        um cômodo — mas as três dizem "examino" e "procuro". */
-    naoSe: /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b|\b(corpo|cad[aá]ver|ferimento|ferido|morto|doente|pulso)\b|\b(procuro|acho|busco)\s+(a|o|um|uma)?\s*(agua|[aá]gua|abrigo|po[cç]o|comida|caminho|norte|rumo|lenha)\b|\b(memoria|lembrancas?)\b|\bexamin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|selos?|runas?|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b/,
+    naoSe: new RegExp([
+      /\b(pessoa|gente|rosto|olhos del[ae]|taverneir|ferreir|mercador|guarda|capit[aã]|sacerdot|ac[oó]lito|estalajadeir|curandeir|algu[eé]m|homem|mulher|rapaz|mo[cç]a|velh[oa]|companheir|amig|aliad|informante|contato|comprador|vendedor|barqueir|cocheir|dono d|taverneira)|\b(verific|confiro|checo)\w*\s+(se\s+)?[^.]{0,24}\b(trancad|destrancad|fechad|abert|porta|fechadura|cadeado|tranca)\b|\b(corpo|cad[aá]ver|ferimento|ferido|morto|doente|pulso)\b|\b(procuro|acho|busco)\s+(a|o|um|uma)?\s*(agua|[aá]gua|abrigo|po[cç]o|comida|caminho|norte|rumo|lenha)\b|\b(memoria|lembrancas?)\b|\bexamin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|selos?|runas?|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b/.source,
+      /* CS (11/11, o corpus das situações): procurar A trilha ou A saída do labirinto é não se perder («procuro uma saída escondida» fica aqui); ver se alguém foi envenenado é Medicina; examinar o sinete é heráldica, e o glifo, arcano */
+      /\b(procuro|acho|busco) (a|o) (trilhas?|trilhos?|saida d[aoe]s?)\b/.source,
+      /\b(envenenad\w*|febre|doenca|infec?cionad\w*|drogad\w*)\b/.source,
+      /\bexamin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(sinetes?|lacres?|insignias?|bandeiras?|brasao|brasoes|estandartes?|emblemas?|glifos?|circulos?|sigilos?|barreira|portal|aura)\b/.source,
+    ].join("|")),
     /* MC1 (10/11, a 18.ª sessão): e as duas últimas. EXAMINAR UM VESTÍGIO
        NÃO É REVIRAR O LUGAR. «Examino o corte na carcaça» caía aqui, com a
        chave do lugar (`|busca`) — e a oferta «Olhar à volta» do Mestre já a
@@ -515,6 +532,10 @@ export const DESAFIOS = [
   {
     id: "investigar",
     rx: new RegExp(RX_INVESTIGAR_DE_SEMPRE.source + "|" + RX_EXAME_DA_COISA.source),
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): as manchas NA PELE, nos lábios, na língua são o corpo — ler o corpo */
+      /\b(na|no|nos|nas) (pele|labios|lingua|ventre|garganta|unhas|gengivas)\b/.source,
+    ].join("|")),
     /* EM1: e o exame da coisa à mão (EXAMINAR_A_COISA) — a metade da busca
        que é Investigação. A regex casa o verbo e o objeto; o que ela não vê
        (o nome próprio, a busca do escondido) devolve a frase à busca. */
@@ -535,7 +556,11 @@ export const DESAFIOS = [
     /* EM1 (o corpus da mesa): «encosto a orelha à porta» é o ouvido de cá do
        mar. E escutar a PROPOSTA, o pedido, a história de alguém é conversa —
        «digo a Halvard que depois escuto a proposta dele» não rola Percepção. */
-    naoSe: /\bescuto (a|o|os|as) (proposta|propostas|pedido|conselho|conselhos|historia|relato|resto|desabafo|queixa|oferta)\b|\bdepois escuto\b/,
+    naoSe: new RegExp([
+      /\bescuto (a|o|os|as) (proposta|propostas|pedido|conselho|conselhos|historia|relato|resto|desabafo|queixa|oferta)\b|\bdepois escuto\b/.source,
+      /* CS (11/11, o corpus das situações): escutar a música, o bardo, é estar na taverna */
+      /\bescuto (a|o|as|os) (musica|cancao|cantoria|melodia|bardo|banda|harpa|alaude|flauta|menestrel|coro)\b/.source,
+    ].join("|")),
     pericia: "percepcao", alvo: "escuta", minutos: 2, barulho: false,
     rotulo: "escutar", dcPadrao: DC("comum"),
     /* v9.64: antes do dado, o mundo diz se HÁ o que ouvir. Sem isto, este
@@ -549,13 +574,27 @@ export const DESAFIOS = [
     /* MC1: «o que sei sobre» só é a fraqueza quando o objeto é a criatura
        («…sobre essa criatura»). «O que eu sei sobre a Agulha de Sal?» rolava
        «lembrar o que se sabe da criatura» de um sítio — agora é `lembrar`. */
-    rx: /\b(fraqueza|ponto fraco|vulnerab|identific\w* (o|a|esse|essa|aquele)?\s*(inimigo|criatura|monstro|bicho)|o que (eu )?sei sobre (esse|essa|este|esta|aquele|aquela|o|a)\s+(criatura|monstro|bicho|fera|besta|inimigo|coisa)|reconhe[cç]o (o|a|esse|essa))/,
+    rx: new RegExp([
+      /\b(fraqueza|ponto fraco|vulnerab|identific\w* (o|a|esse|essa|aquele)?\s*(inimigo|criatura|monstro|bicho)|o que (eu )?sei sobre (esse|essa|este|esta|aquele|aquela|o|a)\s+(criatura|monstro|bicho|fera|besta|inimigo|coisa)|reconhe[cç]o (o|a|esse|essa))/.source,
+      /* CS (11/11, o corpus das situações): o estudo conta 33 pedidos de saberes sobre a criatura, e a pergunta quase nunca diz «fraqueza»: diz o que a mata, o que a afasta, se teme a prata, o que se sabe DESSE bicho. A criatura tem de estar na frase; sem ela, é «lembrar» */
+      /* a criatura APONTADA (o artigo ou o demonstrativo): «o que sei de
+         bichos assim» é o bestiário em geral — `lembrar`, a 18.ª sessão */
+      /\bo que (eu )?(sei|lembro|recordo) ((sobre|de) (esse|essa|este|esta|aquele|aquela|o|a|os|as) |(desse|dessa|desses|dessas|deste|desta|destes|destas|daquele|daquela|do|da|dos|das) )/.source + CRIATURAS,
+      "(?=[^.!?]*\\b" + CRIATURAS + ")" + /\b(lembro|recordo|sei|lembrar|recordar|saber|puxo pela memoria|penso no que)\b[^.!?]{0,60}\b(o que (mata|afasta|fere|funciona contra|derrota|vence|espanta)|como (se )?(mata|vence|derrota|fere|afasta|espanta)|tem(em)? medo d|teme(m)?\b|resiste(m)? a|imunes? a|pode(m)? ser ferid)/.source,
+      /* «sei se os lobisomens…»; e «sobre» só com a criatura apontada — «o que sei sobre bichos assim?» é `lembrar` (a planta da MC4) */
+      /\b(lembro|recordo|sei|lembrar|recordar|saber)\b[^.!?]{0,40}\b(se (os |as |o |a |esse |essa |esses |essas )?|sobre (os|as|o|a|esse|essa|esses|essas|este|esta|aquele|aquela) )/.source + CRIATURAS,
+    ].join("|")),
     /* v9.67: `reconheço esse ___` é largo demais, e a leva nova trouxe quem
        o disputa. Reconhecer a criatura é lembrar do bestiário; reconhecer
        um BRASÃO é lembrar de quem manda em quem — outra pergunta, outra
        cena, e as duas caem em Saberes, o que torna a confusão invisível no
        número e visível na ficção. */
-    naoSe: /\b(bras[aã]o|estandarte|emblema|bandeira|sotaque|dialeto|casa (é|e|de)|reino|ordem|selo da casa)\b/,
+    naoSe: new RegExp([
+      /\b(bras[aã]o|estandarte|emblema|bandeira|sotaque|dialeto|casa (é|e|de)|reino|ordem|selo da casa)\b/.source,
+      /* CS (11/11, o corpus das situações): reconhecer a libré, o sinete, a insígnia é heráldica; e perguntar a alguém é conversa */
+      /\b(selos?|sinetes?|lacres?|libre|insignias?|uniformes?|flamulas?|divisas?|guildas?)\b/.source,
+      /\bpergunt\w* (a|ao|as|aos|pra|pro|para)\b/.source,
+    ].join("|")),
     pericia: "saberes", alvo: "fraqueza", minutos: 0, barulho: false,
     rotulo: "lembrar o que se sabe da criatura", dcBase: DC("incomum"), dispensavel: true, lePergunta: true,
     /* este é o único que vale DENTRO da luta sem penalidade de tempo: é
@@ -586,6 +625,11 @@ export const DESAFIOS = [
   {
     id: "mentira",
     rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]\w*|tento saber se|desconfio|sinto se|percebo se mente|(observo|estudo|vigio) (o rosto|a cara|a expressao|a rea[cç][aã]o|os olhos) d\w+|(perceber|ver|saber|notar|sentir) se (ele|ela|eles|elas|\w+) (esta |estao |me )?(mentindo|a mentir|mente|esconde|escondendo|engana|enganando)|como (ele|ela|eles|elas|[a-z]{3,}) reage|me mentir|me mente|me esta mentindo|esta(s)? a mentir)\b/,
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): «sinto se há magia», «tento saber se foi envenenado» são o arcano e a Medicina, não a intenção de ninguém */
+      /\b(sinto|sentir|ver|saber) se (ha|tem|existe|resta|ainda tem) (magia|aura|encantamento)/.source,
+      /\bse (e|esta|ha|tem|existe|ainda|foi|ficou) [^.!?]{0,20}(encantad|magic|amaldicoad|aura|envenenad|drogad|doente|grave|partid)/.source,
+    ].join("|")),
     /* EM1 (o corpus da mesa, e o classificador que o farejou): ler alguém é
        Intuição em 78% na contagem do estudo, e quem o faz quase nunca diz
        «intuição» — diz «observo o rosto dele», «para perceber se está
@@ -609,7 +653,20 @@ export const DESAFIOS = [
     id: "tranca",
     /* `gazua` entra como alvo próprio: nomear a ferramenta já declara a
        ação, e "uso a gazua na porta" é como se diz na mesa. */
-    rx: /\b(arromb|destranc|for[cç]o a porta|abro a porta|abrir a porta|abro o ba[uú]|abro o cofre|abro a fechadura|for[cç]o a fechadura|for[cç]o o ba[uú]|abro o cadeado|quebro a tranca|gazua|mexo na fechadura|trabalho a fechadura|tento a fechadura)/,
+    rx: new RegExp([
+      /\b(arromb|destranc|for[cç]o a porta|abro a porta|abrir a porta|abro o ba[uú]|abro o cofre|abro a fechadura|for[cç]o a fechadura|for[cç]o o ba[uú]|abro o cadeado|quebro a tranca|gazua|mexo na fechadura|trabalho a fechadura|tento a fechadura)/.source,
+      /* CS (11/11, o corpus das situações): levantar o trinco com um arame pela fresta é abrir o trancado */
+      /\babro o trinco\b[^.!?]{0,30}\b(arame|grampo|gazua|faca|lamina)/.source,
+      /* e o pé e o ombro na porta, a tampa do baú forçada: a via da força
+         (VIAS_DE_TRANCA já os conhecia — «chut», «ombro», «pé na porta» —,
+         e a entrada é que não os ouvia) */
+      /\bchuto a porta|\bpontap\w* na porta|\b(ponho|meto|jogo|dou) o ombro (na|contra a) porta|\bfor[cç]o a tampa d[oa] (ba[uú]|arca|caixa|cofre)/.source,
+    ].join("|")),
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): comprar a gazua não é usá-la; e a porta de enigma abre-se pela cabeça (o improviso de Intelecto) */
+      /\b(compro|vendo|pago|guardo|entrego|dou|mostro|empresto|tenho|levo|peco)\b[^.!?]{0,20}\b(gazuas?|ferramentas)\b/.source,
+      /\b(logica|enigma|charada|senha|quebra.?cabeca|combinacao)\b/.source,
+    ].join("|")),
     pericia: "arrombamento", alvo: "tranca", minutos: 5, barulho: true,
     rotulo: "abrir o que está trancado", tranca: true,
     /* v9.64: ANTES da tentativa, o mundo diz se este lugar tem vigia. É o
@@ -620,7 +677,11 @@ export const DESAFIOS = [
   },
   {
     id: "escalar",
-    rx: /\b(escal|trepo|subo (o\b|a\b|pel)|me i[cç](o|ar)|galgo|escalar)/,
+    rx: new RegExp([
+      /\b(escal|trepo|subo (o\b|a\b|pel)|me i[cç](o|ar)|galgo|escalar)/.source,
+      /* CS (11/11, o corpus das situações): descer pela corda ou pela parede é a mesma escalada, ao contrário */
+      /\bdesco pel[ao]s? (corda|cordas|parede|muro|muralha|penhasco|falesia|encosta|rocha|rochas|calha|hera|corrente|fenda|ravina|mastro|arvore|tronco)\b/.source,
+    ].join("|")),
     /* MM4: "subo a escada até o quarto" rolava Atletismo — o corpus do
        improviso achou. `SEM_DADO` já dizia que subir a escada é andar; o
        catálogo é que a roubava antes. "Subo PELA escadaria" (a ruína, a
@@ -634,6 +695,11 @@ export const DESAFIOS = [
   {
     id: "furtar_se",
     rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escond(o|er|erei)\b|fico (quiet[oa],? )?escondid[oa]\b|me encolho (atr[aá]s|detr[aá]s|no escuro|nas? sombras?)|fico na sombra|sigo sem que|me mistur(o|ar) (a|na|no|com a|entre a|entre o) (multid[aã]o|turba|gente|povo|plateia|prociss[aã]o|feira|romaria|fila)|me aproxim(o|ar) (sem (fazer )?(ru[ií]do|barulho)|em sil[eê]ncio|p[eé] ante p[eé]|na ponta dos p[eé]s|de mansinho)|me (agach|abaix)(o|ar) (atr[aá]s|detr[aá]s|nas? sombras?|entre|sob|debaixo|embaixo))/,
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): seguir ALGUÉM sem ser visto é «seguir sem ser notado» (a mesma perícia, outra tentativa); seguir o corredor continua aqui */
+      /\b(sigo|persigo|acompanho)\s+(o|a|os|as|ele|ela|eles|elas|esse|essa|aquele|aquela)\s+(?!(rua|ruas|estrada|caminho|corredor|corredores|trilha|beco|margem|rio|muro|parede|tunel|tuneis|passagem|escada)\b)/.source,
+      /\b(vou|ando|fico) atras d(o|a|os|as|ele|ela|eles|elas|esse|essa|aquele|aquela)\b/.source,
+    ].join("|")),
     /* Fase MM (a ênclise): "escondo-me" não rolava nada, e "tento me
        esconder" também não — a regra só conhecia "me escondo". A ênclise
        chega aqui já desfeita (emProclise, em lerAcao); o infinitivo é que
@@ -653,7 +719,13 @@ export const DESAFIOS = [
   },
   {
     id: "bater_carteira",
-    rx: /\b(bato a carteira|surrupi|furto (a\b|o\b|dele|dela)|punguei|punho a bolsa|tiro do bolso dele|roubo a bolsa|planto)/,
+    rx: new RegExp([
+      /\b(bato a carteira|surrupi|furto (a\b|o\b|dele|dela)|punguei|punho a bolsa|tiro do bolso dele|roubo a bolsa|planto)/.source,
+      /* CS (11/11, o corpus das situações): a mão leve quase nunca diz «furto»: tira do bolso DELE, enfia no cinto DELA, sem que ninguém sinta — é o que o estudo conta (tirar ou plantar, 12 pedidos) */
+      /\b(tiro|pego|surrupio|roubo|furto|enfio|meto|escondo|deixo cair|troco|coloco|ponho)\b[^.!?]{0,50}\bsem (que )?(ele|ela|eles|elas|ninguem|o dono|a dona)( \w+)? (sentir|sinta|perceber|perceba|notar|note|ver|veja|reparar|repare|desconfiar)/.source,
+      /\b(tiro|pego|meto|enfio|ponho|coloco|deixo cair)\b[^.!?]{0,30}\b(do|no|na|da|pelo) (bolso|bolsa|cinto|algibeira|manga|capuz|alforge|avental) d(o|a|e)\b/.source,
+      /\bcorto a bolsa|\bempalm\w*|\bescamote\w*|\bescondo (o|a) \w+ na manga|\broubo (a|o) \w+ d[oa]\b/.source,
+    ].join("|")),
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
     rotulo: "mão leve", dcPadrao: DC("incomum"),
   },
@@ -733,8 +805,16 @@ export const DESAFIOS = [
        comentário antigo dizia que o degrau da cortesia resolvia isto
        sozinho; resolvia o número, e perdia a pergunta. Uma pergunta não é
        teste. */
-    rx: /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresent(o|ar) (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproxim(o|ar) d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento)|dizendo|falando)\b/,
-    naoSe: /\b(ataco|golpeio|saco a|puxo a (espada|faca|adaga)|avan[cç]o (n|sobre)|parto para cima)\b/,
+    rx: new RegExp([
+      /\b(cantada|elogi|flert|charme|gracejo|galanteio|quebr(o|ar) o gelo|puxo conversa|dou em cima|chego junto|sorrio para|pisco para|tento impressionar|me apresent(o|ar) (a|ao|para))|\b(vou (n|at[eé] )(a|o|na|no)|chego (n|at[eé] )(a|o|na|no)|me aproxim(o|ar) d|paro d(o|a)|abordo)[^.!?]{0,60}\b(e (digo|falo|solto|comento)|dizendo|falando)\b/.source,
+      /* CS (11/11, o corpus das situações): querer parecer digno, gabar-se, cair nas graças de alguém — a boa impressão dita pelo fim, não pela cantada */
+      /\b(impression(o|ar)|causar (uma )?boa impress|boa impressao|cair nas gracas|ganh(o|ar) a simpatia|me gab(o|ar)|cont(o|ar) vantagem|com toda a pompa|parecer (digno|digna|nobre|importante|rico|rica|confiante|um nobre|uma dama|da corte))/.source,
+    ].join("|")),
+    naoSe: new RegExp([
+      /\b(ataco|golpeio|saco a|puxo a (espada|faca|adaga)|avan[cç]o (n|sobre)|parto para cima)\b/.source,
+      /* CS (11/11, o corpus das situações): elogiar o pão é conversa; só é a boa impressão quando a frase diz que procura a simpatia */
+      /\belogio (o|a|os|as) (pao|vinho|comida|ensopado|cerveja|caldo|prato|sopa|bolo|queijo|estandarte|cavalo|espada|trabalho|servico)\b(?![^.!?]*(gracas|simpatia|impression))/.source,
+    ].join("|")),
     /* e a fala que é só pergunta de quem quer saber ("digo: «onde fica o
        templo?»") também não: é balcão, não cantada */
     naoSeCom: (t) => falaSoPergunta(t),
@@ -758,7 +838,11 @@ export const DESAFIOS = [
   },
   {
     id: "mentir",
-    rx: /\b(minto|mentir|blefo|blefar|engano|finjo ser|me pass(o|ar) por|disfar[cç])/,
+    rx: new RegExp([
+      /\b(minto|mentir|blefo|blefar|engano|finjo ser|me pass(o|ar) por|disfar[cç])/.source,
+      /* CS (11/11, o corpus das situações): inventar que se é da guarda, contar uma história falsa — mentir sem o verbo */
+      /\binvent(o|ar) (que|uma (historia|desculpa|mentira))|\bhistoria (falsa|inventada)|\bdesculpa (falsa|esfarrapada)|\b(conto|digo) uma mentira/.source,
+    ].join("|")),
     /* EM1 (o corpus da mesa): «foi um engano» é o substantivo, e «chega de
        mentir: diga…» é arrancar a verdade a quem mente — não mentir. */
     naoSe: /\b(foi|era|houve|um|uma|por) engano\b|\b(chega|para|pare|basta) de mentir\b|\bn[aã]o (me )?(minta|mintas|mente)\b|\bsem mentir\b/,
@@ -803,7 +887,17 @@ export const DESAFIOS = [
   },
   {
     id: "arcano",
-    rx: /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examin\w* (o|a) (selo|runa)|o que (é|e) esse feiti)\b/,
+    rx: new RegExp([
+      /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examin\w* (o|a) (selo|runa)|o que (é|e) esse feiti)\b/.source,
+      /* CS (11/11, o corpus das situações): ler as runas, entender o ritual, o que o amuleto faz, que magia prende a porta — o estudo conta 104 pedidos de arcanismo, a runa e o feitiço à frente */
+      /\b(leio|ler|decifr\w*|estud\w*|examin\w*|analis\w*|entend\w*|reconhe[cç]\w*|identific\w*|interpret\w*) (a|o|as|os|esse|essa|esses|essas|este|esta|aquele|aquela) (runas?|glifos?|circulos? (magicos?|arcanos?|de invocacao)|simbolos? arcanos?|sigilos?|ritual|feiticos?|encantamentos?|aura|barreira|portal|selo magico|magia)\b/.source,
+      /\bo que (o|a|esse|essa|este|esta) (amuleto|anel|varinha|cajado|orbe|talisma|artefato|colar|pergaminho|pocao|pedra|cristal|espada|bracelete|reliquia)( \w+)? faz\b|\b(que|qual) (tipo de )?(magia|feitico|encantamento|ritual|aura)\b/.source,
+      /\b(sinto|sentir|ver|saber) se (ha|tem|existe|resta|ainda tem) (magia|aura|encantamento)|\bse (e|esta|ainda e) (encantad[oa]|magic[oa]|amaldicoad[oa])\b|\bse ainda tem magia/.source,
+    ].join("|")),
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): perguntar ao mago é conversa */
+      /\bpergunt\w* (a|ao|as|aos|pra|pro|para)\b/.source,
+    ].join("|")),
     pericia: "arcanismo", alvo: "arcano", minutos: 10, barulho: false,
     rotulo: "ler o arcano", dcPadrao: DC("incomum"), lePergunta: true,
   },
@@ -846,14 +940,22 @@ export const DESAFIOS = [
        em cena (OBJETO_DO_TESTE). Sem ela, o catálogo segue para a próxima
        entrada, e a frase vai ao Mestre como sempre. */
     id: "desarmar",
-    rx: /\b((desarmo|desarmar|desarmando|desativo|desativar|desativando|neutralizo|neutralizar|neutralizando)\s+(?:(?:a|o|as|os|essa|esse|esta|este|aquela|aquele|uma|um)\s+)?(armadilhas?|mecanismos?|gatilhos?|travas?|bombas?|dispositivos?|placas?|fios?|molas?|alcapao|disparador|engenhos?|runas?|selos?)\b|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|cal[cç]o a placa)/,
+    rx: new RegExp([
+      /\b((desarmo|desarmar|desarmando|desativo|desativar|desativando|neutralizo|neutralizar|neutralizando)\s+(?:(?:a|o|as|os|essa|esse|esta|este|aquela|aquele|uma|um)\s+)?(armadilhas?|mecanismos?|gatilhos?|travas?|bombas?|dispositivos?|placas?|fios?|molas?|alcapao|disparador|engenhos?|runas?|selos?)\b|corto o fio|trav(o|ar) o mecanismo|prendo o gatilho|cal[cç]o a placa)/.source,
+      /* CS (11/11, o corpus das situações): travar a placa, desmontar o mecanismo, encravar um prego no gatilho, cortar o fio esticado — o estudo conta 85 pedidos, quase todos diante do mecanismo */
+      /\b(travo|calco|prendo|imobilizo|bloqueio|encravo) (a|o) (placa|gatilho|mola|mecanismo|alcapao|lamina|disparador)|\bdesmont(o|ar) (a|o) (mecanismo|armadilha|gatilho|disparador)|\b(enfio|meto|encaixo|ponho)\b[^.!?]{0,25}\bn[oa] (mecanismo|gatilho|engrenagem|mola|disparador)|\bfio esticado|\bcorto (o|a) (fio|arame|linha)\b/.source,
+    ].join("|")),
     pericia: "prestidigitacao", alvo: "armadilha", minutos: 5, barulho: false,
     rotulo: "desarmar a armadilha", dcPadrao: DC("dificil"),
     precisaDe: "armadilha",
   },
   {
     id: "nadar",
-    rx: /\b(nado|nadar|atravesso a nado|me jog(o|ar) n[oa] (agua|[aá]gua|rio|mar)|mergulho (n|at[eé]|para))/,
+    rx: new RegExp([
+      /\b(nado|nadar|atravesso a nado|me jog(o|ar) n[oa] (agua|[aá]gua|rio|mar)|mergulho (n|at[eé]|para))/.source,
+      /* CS (11/11, o corpus das situações): o gerúndio («atravesso o esgoto nadando») */
+      /\bnadando\b/.source,
+    ].join("|")),
     /* EM1 (o corpus da mesa): «pergunto a Hakon se ele sabe nadar» é conversa */
     naoSe: /\bsabe(s|m)? nadar\b|\bse (ele|ela|eles|elas|voce|tu) nada\b/,
     pericia: "atletismo", alvo: "nado", minutos: 10, barulho: false,
@@ -861,7 +963,11 @@ export const DESAFIOS = [
   },
   {
     id: "saltar",
-    rx: /\b(salto (o\b|a\b|para|por cima|sobre)|pulo (o\b|a\b|para|por cima|sobre|do\b)|dou um salto|me atir(o|ar) (para|sobre|por))/,
+    rx: new RegExp([
+      /\b(salto (o\b|a\b|para|por cima|sobre)|pulo (o\b|a\b|para|por cima|sobre|do\b)|dou um salto|me atir(o|ar) (para|sobre|por))/.source,
+      /* CS (11/11, o corpus das situações): de um telhado para o outro, pra dentro da carroça, de pedra em pedra — o vão dito pelos dois lados («salto da cama» não tem o outro lado). Só o vão: «salto do balcão para o lustre» continua a acrobacia do improviso (MM4) */
+      /\b(salto|pulo) (pra|pro)\b|\b(salto|pulo) (de|do|da) (um |uma )?(telhado|muro|galho|rocha|pedra|barco|varanda|sacada|ponte|beiral|margem|penhasco)\b[^.!?]{0,30}\b(para|pra|pro) (o|a|um|uma) (outro|outra|telhado|muro|galho|rocha|margem|barco|ponte|beiral|monte|varanda|sacada)\b|\b(salto|pulo) de (pedra|telhado|galho|rocha|tronco|barco|viga) em\b/.source,
+    ].join("|")),
     pericia: "atletismo", alvo: "salto", minutos: 0, barulho: false,
     rotulo: "saltar o vão", dcPadrao: DC("incomum"), corpo: true, queda: true,
   },
@@ -884,7 +990,16 @@ export const DESAFIOS = [
   },
   {
     id: "equilibrio",
-    rx: /\b(me equilibr(o|ar)|atravesso (a|o) (viga|corda|tronco|parapeito|beiral|telhado)|ando pel[ao] (viga|corda|beiral|parapeito)|passo pel[ao] (peitoril|beiral|parapeito))/,
+    rx: new RegExp([
+      /\b(me equilibr(o|ar)|atravesso (a|o) (viga|corda|tronco|parapeito|beiral|telhado)|ando pel[ao] (viga|corda|beiral|parapeito)|passo pel[ao] (peitoril|beiral|parapeito))/.source,
+      /* CS (11/11, o corpus das situações): a borda, a viga, o gelo, a ponte que balança, o convés que joga, o chão que escorrega — o estudo conta 29 pedidos, e o verbo é andar: o que pede o dado é o chão */
+      /\batravesso (a|o) (gelo|lago congelado|rio congelado|ponte de corda|ponte suspensa|ponte pensil|passarela|prancha|tabua|corda bamba)/.source,
+      /\b(atravesso|passo|cruzo|vou|corro|ando)\b[^.!?]{0,30}\b(ponte (de corda|suspensa|pensil|que balanca|podre|bamba)|corda (esticada|bamba))/.source,
+      /\b(caminho|ando|corro|vou|sigo|passo|avanco) (por cima |em cima )?(d?[ao]s? |pel[ao]s? )(viga|vigas|corda|beiral|parapeito|cumeeira|passarela|prancha|tabua|tronco|peitoril|ameias?|borda do telhado|beira do telhado|beira do precipicio|beira do abismo|muro estreito)\b/.source,
+      /\b(me mantenho|fico|continuo|permaneco) (em|de) pe (no|na|em cima|sobre)\b/.source,
+      /\b(ando|caminho|atravesso|passo|desco|corro|vou|sigo|avanco)\b[^.!?]{0,50}\bsem (escorregar|cair|perder o equilibrio|tropecar|olhar (pra|para) baixo)/.source,
+      /\b(ando|caminho|atravesso|passo|desco|corro|vou|sigo|avanco)\b[^.!?]{0,40}\b(pedras?|cascalho|tabuas?|telhas?|chao|piso|rochas?|lajes?|seixos?|degraus) (escorregadi\w*|solt[oa]s?|podres?|molhad[oa]s?|encerad[oa]s?|gelad[oa]s?|congelad[oa]s?)/.source,
+    ].join("|")),
     pericia: "acrobacia", alvo: "equilibrio", minutos: 2, barulho: false,
     rotulo: "atravessar sem cair", dcPadrao: DC("incomum"), corpo: true, queda: true,
   },
@@ -906,7 +1021,13 @@ export const DESAFIOS = [
   },
   {
     id: "escapar",
-    rx: /\b(me solt(o|ar)\b|me desvencilh(o|ar)|escapo (da|das|do|dos) (corda|amarra|algema|n[oó]|la[cç]o|rede|teia|agarr)|solto os pulsos|me contor[cç](o|er)|escorrego pel[ao] (grade|abertura|fresta))/,
+    rx: new RegExp([
+      /\b(me solt(o|ar)\b|me desvencilh(o|ar)|escapo (da|das|do|dos) (corda|amarra|algema|n[oó]|la[cç]o|rede|teia|agarr)|solto os pulsos|me contor[cç](o|er)|escorrego pel[ao] (grade|abertura|fresta))/.source,
+      /* CS (11/11, o corpus das situações): livrar-se da teia, desfazer o nó, tirar as mãos das correntes, passar apertado pela fresta */
+      /\bme (livr|libert)(o|ar) d|\b(desfaco|desato|afrouxo) (o|os) nos? d[ao]s? (cordas?|amarras?)|\bescorrego (as maos|os pulsos|a mao|o pulso)/.source,
+      /\b(tiro|tirar|solto|soltar|puxo|puxar) (as maos|a mao|os pulsos|o pulso|os bracos|o braco|a perna|o pe) d[ao]s? (cordas?|correntes?|algemas?|grilhoes|grilhao|amarras?|saco|rede|armadilha|teia)/.source,
+      /\bme esprem(o|er)|\b(passo|saio|entro|me enfio|rastejo|deslizo)\b[^.!?]{0,40}\b(apertad[oa]|espremid[oa])/.source,
+    ].join("|")),
     pericia: "acrobacia", alvo: "escapar", minutos: 5, barulho: false,
     rotulo: "escapar do que prende", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -916,19 +1037,40 @@ export const DESAFIOS = [
        algo; quem é envenenado está sofrendo algo. A segunda ninguém pede —
        e por isso não há aqui nenhum "resisto ao veneno". */
     id: "aguentar",
-    rx: /\b(seguro o f[oô]lego|prendo a respira[cç][aã]o|aguento (a\b|o\b|mais|firme|em p[eé])|suporto (a\b|o\b)|cerro os dentes|fico de p[eé]|marcho (a\b|sem|mais)|viro a noite|bebo com ele)/,
+    rx: new RegExp([
+      /\b(seguro o f[oô]lego|prendo a respira[cç][aã]o|aguento (a\b|o\b|mais|firme|em p[eé])|suporto (a\b|o\b)|cerro os dentes|fico de p[eé]|marcho (a\b|sem|mais)|viro a noite|bebo com ele)/.source,
+      /* CS (11/11, o corpus das situações): a marcha exausta, o fumo, a nevasca, o fedor sem vomitar — o que o herói TENTA aguentar (o estudo: frio, veneno, fôlego, cansaço) */
+      /\bseguro a respiracao|\bprendo o folego/.source,
+      /* «continuo a…» chega mascarado pelo estado (ESTADO_NAO_E_ACAO), e por isso a marcha conta pelo nome */
+      /\b(sigo|marcho|caminho|ando|remo|avanco|marcha|caminhada|viagem|subida|jornada)\b[^.!?]{0,40}\b(mesmo|apesar d[aeo]s?) (exaust\w*|cansa\w*|ferid[oa]|febre|dor|fome|sede|frio)/.source,
+      /\bsem (vomitar|desmaiar|cochilar|largar|cuspir)\b/.source,
+      /\b(caminho|ando|marcho|sigo|avanco|atravesso)\b[^.!?]{0,20}\b(debaixo|sob|contra|no meio) d[aeo]s? (tempestade|nevasca|neve|chuva|vento|granizo|temporal)/.source,
+    ].join("|")),
     pericia: "fortitude", alvo: "aguentar", minutos: 5, barulho: false,
     rotulo: "aguentar", dcPadrao: DC("incomum"), corpo: true,
   },
   {
     id: "cavalgar",
-    rx: /\b(esporeio|cavalgo|galopo|monto (no|na|o cavalo|a [eé]gua)|conduzo (a|o) (carro[cç]a|carreta|charrete|tren[oó]|barca)|guio (a|o) (carro[cç]a|carreta)|salto com o cavalo)/,
+    rx: new RegExp([
+      /\b(esporeio|cavalgo|galopo|monto (no|na|o cavalo|a [eé]gua)|conduzo (a|o) (carro[cç]a|carreta|charrete|tren[oó]|barca)|guio (a|o) (carro[cç]a|carreta)|salto com o cavalo)/.source,
+      /* CS (11/11, o corpus das situações): controlar o cavalo assustado, as rédeas, a carroça no beco, a mula no vau */
+      /\b(controlo|domino|domo|contenho|freio) (o|a) (cavalo|egua|montaria|mula|potro|burro|garanhao)|\b(puxo|aperto|firmo) (as|a) redeas?/.source,
+      /\b(guio|conduzo) (a|o) (carro de bois|carroca|carreta|charrete|carruagem|diligencia|treno)|\b(aperto|acelero|apresso|forco) (o passo d[oa] |o galope d[oa] )?(cavalo|egua|mula|montaria)\b|\bfaco (a|o) (carroca|cavalo|egua|mula|montaria|carro de bois|potro|carruagem|charrete)\b/.source,
+    ].join("|")),
     pericia: "montaria", alvo: "montaria", minutos: 5, barulho: false,
     rotulo: "dominar a montaria", dcPadrao: DC("comum"), corpo: true, queda: true,
   },
   {
     id: "acalmar_bicho",
-    rx: /\b(acalmo (o|a) (cavalo|[eé]gua|c[aã]o|cachorro|mula|boi|bicho|animal|fera|besta)|me aproxim(o|ar) devagar d|estendo a m[aã]o para (o|a) (bicho|animal|cavalo|c[aã]o)|falo baixo com (o|a) (bicho|animal|cavalo))/,
+    rx: new RegExp([
+      /\b(acalmo (o|a) (cavalo|[eé]gua|c[aã]o|cachorro|mula|boi|bicho|animal|fera|besta)|me aproxim(o|ar) devagar d|estendo a m[aã]o para (o|a) (bicho|animal|cavalo|c[aã]o)|falo baixo com (o|a) (bicho|animal|cavalo))/.source,
+      /* CS (11/11, o corpus das situações): amansar, ganhar a confiança, deixar o cão vir, o osso para o cão de guarda — o bicho pelo nome comum (ANIMAIS) */
+      "\\b(acalm|amans|seren|sosseg|tranquiliz)\\w* (o|a|os|as) (\\w+ )?" + ANIMAIS + "\\b",
+      "\\bganh(o|ar) a confianca d(o|a|os|as) (\\w+ )?" + ANIMAIS + "|\\bamizade com (o|a|os|as) (\\w+ )?" + ANIMAIS,
+      "\\bdeixo (o|a) (\\w+ )?" + ANIMAIS + " (vir|chegar|cheirar|se aproximar)",
+      "\\b(afasto|distraio) (o|a|os|as) (\\w+ )?" + ANIMAIS + "\\b[^.!?]{0,30}\\bcom (um|uma|o|a) (osso|carne|pedaco|petisco|comida|pao)",
+      "\\b(dou|ofereco|atiro|jogo)\\b[^.!?]{0,40}\\b(ao|a|aos|as) (\\w+ )?" + ANIMAIS + "\\b[^.!?]{0,40}\\b(para|pra) (ele |ela |eles |elas )?(me deixar|deixar|se acalmar|acalmar|ficar quiet|parar|nao latir|nao ladrar|confiar|andar|me seguir)",
+    ].join("|")),
     pericia: "montaria", alvo: "bicho", minutos: 5, barulho: false,
     rotulo: "acalmar o bicho", dcPadrao: DC("incomum"),
   },
@@ -946,25 +1088,64 @@ export const DESAFIOS = [
   },
   {
     id: "orientar",
-    rx: /\b(me orient(o|ar)|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/,
+    rx: new RegExp([
+      /\b(me orient(o|ar)|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/.source,
+      /* CS (11/11, o corpus das situações): o musgo, as estrelas, sem nos perdermos, a saída das catacumbas, o grupo pela neblina */
+      /\b(onde fica|para que lado fica|pra que lado fica|que lado e) (o|a) (norte|sul|leste|oeste|nascente|poente|vila|aldeia|cidade|estrada|saida|costa|mar|rio)|\bsem (me|nos) perder|\bnao (me|nos) perder/.source,
+      /\b(conduzo|guio|levo|atravesso|sigo|ando|vou)\b[^.!?]{0,40}\bsem (estrada|trilha|caminho|mapa|bussola)|\b(encontro|acho|busco|procuro|tento achar|reencontro) (o|a) (rumo|caminho de volta|caminho certo|trilhas?|trilhos?|saida d)/.source,
+      /\b(sigo|escolho|guio|navego|me guio|me oriento|descubro|atravesso)\b[^.!?]{0,50}\b(pel[oa]s?|guiando-me pel[oa]s?|me guiando pel[oa]s?) (musgo|estrelas|sol|lua|vento|corrente de ar|dunas)/.source,
+      /\b((guio|conduzo|levo) (o grupo|a caravana|o bando|os outros|todos)|nos (guio|conduzo|levo))\b[^.!?]{0,30}\b(pela|pelo|por|atraves d[ao]s?) (mata|floresta|neblina|nevoa|serra|montanha|montanhas|pantano|deserto|charneca|ermo|bosque|selva|tuneis|catacumbas|caverna|escuridao|tempestade|dunas)/.source,
+    ].join("|")),
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): perguntar o caminho a alguém é conversa */
+      /\bpergunt\w* (a|ao|as|aos|pra|pro|para)\b/.source,
+    ].join("|")),
     pericia: "sobrevivencia", alvo: "orientar", minutos: 40, barulho: false,
     rotulo: "não se perder", dcPadrao: DC("comum"), dispensavel: true,
   },
   {
     id: "diagnosticar",
-    rx: /\b(examino o (corpo|cad[aá]ver|ferimento|ferido|morto|doente)|de que (ele|ela|isso) morreu|do que (ele|ela) (est[aá] doente|padece)|vejo o que (ele|ela) tem|abro o corpo|checo o pulso)/,
+    rx: new RegExp([
+      /\b(examino o (corpo|cad[aá]ver|ferimento|ferido|morto|doente)|de que (ele|ela|isso) morreu|do que (ele|ela) (est[aá] doente|padece)|vejo o que (ele|ela) tem|abro o corpo|checo o pulso)/.source,
+      /* CS (11/11, o corpus das situações): do que morreu, se foi envenenado, se a ferida é grave, se a perna está partida — o estudo conta 46 pedidos, a causa da morte à frente */
+      /\b(vejo|verifico|confiro|checo|examino|olho|descubro|tento (ver|saber|descobrir|perceber)|percebo)\b[^.!?]{0,50}\bse\b[^.!?]{0,40}\b(drogad[oa]s?|envenenad[oa]s?|infec?cionad[oa]s?|desmaiad[oa]|doente|com febre|tem (a|uma) (febre|doenca|peste))\b/.source,
+      /\b(ferida|ferimento|corte|mordida|queimadura|lesao)\b[^.!?]{0,40}\b(grave|graves|fundo|funda|infec?cionad\w*)\b|\b(perna|braco|costelas?|osso|mao|dedos?|nariz|clavicula|pulso|tornozelo|joelho)( d[oa] \w+)? (esta|estao|foi|foram) (partid|quebrad|desloc)/.source,
+      /\b(de|do) que (doenca|mal|veneno|peste|febre)\b|\b(de|do) que [^.!?]{0,30}\bmorre(u|ram)\b|\b(ha|faz) quanto tempo (o|a) (corpo|cadaver|morto|morta)\b/.source,
+      /\bexamin\w* (o|a|os|as) \w+ (na|no|nos|nas|da|do) (pele|labios|lingua|ventre|garganta|unhas|gengivas)\b|\bavalio (a|o) (ferida|ferimento|estado d|mordida|queimadura)|\bapalpo (o|a) (ventre|barriga|perna|braco|costela|peito|ferid)/.source,
+    ].join("|")),
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): perguntar à curandeira é conversa */
+      /\bpergunt\w* (a|ao|as|aos|pra|pro|para)\b/.source,
+    ].join("|")),
     pericia: "medicina", alvo: "diagnostico", minutos: 15, barulho: false,
     rotulo: "ler o corpo", dcPadrao: DC("incomum"), dispensavel: true, lePergunta: true,
   },
   {
     id: "heraldica",
-    rx: /\b(de quem (é|e) (esse|este|aquele) (bras[aã]o|estandarte|s[ií]mbolo|emblema)|reconhe[cç]o (o|esse|este) (bras[aã]o|estandarte|emblema|sotaque|dialeto)|que casa (é|e)|de que reino|que ordem (é|e) essa)/,
+    rx: new RegExp([
+      /\b(de quem (é|e) (esse|este|aquele) (bras[aã]o|estandarte|s[ií]mbolo|emblema)|reconhe[cç]o (o|esse|este) (bras[aã]o|estandarte|emblema|sotaque|dialeto)|que casa (é|e)|de que reino|que ordem (é|e) essa)/.source,
+      /* CS (11/11, o corpus das situações): reconhecer a libré, identificar a bandeira, a que família pertence o sinete */
+      "\\b(reconhe[cç]\\w*|identific\\w*) (o|a|os|as|esse|essa|este|esta|aquele|aquela) " + HERALDICA,
+      HERALDICA + "\\b[^.!?]{0,50}\\b(de quem|de que (casa|familia|reino|ordem|guilda|cla))\\b|\\b(de quem|de que (casa|familia|reino|ordem|guilda|cla))\\b[^.!?]{0,40}\\b" + HERALDICA,
+      /\b(a que|de que|qual) (casa|familia|ordem|guilda|cla|reino) (nobre )?(pertence|e|sao|vem)\b|\bque casa nobre (e|era|sera)\b/.source,
+    ].join("|")),
+    naoSe: new RegExp([
+      /* CS (11/11, o corpus das situações): perguntar a alguém de que casa ele é é conversa, e a resposta é dele */
+      /\bpergunt\w* (a|ao|as|aos|pra|pro|para)\b/.source,
+      /\b(es tu|tu es|voce e|sois)\b/.source,
+    ].join("|")),
     pericia: "saberes", alvo: "heraldica", minutos: 2, barulho: false,
     rotulo: "reconhecer de onde vem", dcPadrao: DC("incomum"), dispensavel: true, lePergunta: true,
   },
   {
     id: "falsificar",
-    rx: /\b(falsific|forjo (a|o) (assinatura|documento|carta|ordem|salvo-conduto)|imito (a letra|a assinatura|o timbre)|adulter(o|ar) (o|a))/,
+    rx: new RegExp([
+      /\b(falsific|forjo (a|o) (assinatura|documento|carta|ordem|salvo-conduto)|imito (a letra|a assinatura|o timbre)|adulter(o|ar) (o|a))/.source,
+      /* CS (11/11, o corpus das situações): a licença falsa, a letra imitada, o carimbo, a data alterada — o estudo conta 15 pedidos de falsificação */
+      /\bforj(o|ar) (a|o|um|uma) (assinatura|documento|carta|ordem|salvo-conduto|salvo conduto|selo|lacre|licenca|passe|mapa|bilhete|recibo|carimbo|registo|registro)|\bimit(o|ar) (a|o) (letra|assinatura|timbre|caligrafia|carimbo|selo|sinete|lacre)/.source,
+      /\bcopio (o|a) (selo|sinete|lacre|assinatura|carimbo)\b[^.!?]{0,30}\b(cera|nova|novo|papel|falso|falsa)|\b(faco|escrevo|desenho|preparo|redijo) (um|uma) (licenca|carta|documento|bilhete|mapa|ordem|passe|salvo-conduto|salvo conduto|recibo|contrato|selo|copia) (falsa|falso|forjad[ao])/.source,
+      /\b(faco|cunho) moedas falsas|\brasur(o|ar)\b|\baltero (a|o) (data|nome|valor|documento|registo|registro|salvo-conduto|contrato)/.source,
+    ].join("|")),
     pericia: "enganacao", alvo: "falsificar", minutos: 40, barulho: false,
     rotulo: "falsificar", dcPadrao: DC("dificil"),
   },
@@ -973,7 +1154,12 @@ export const DESAFIOS = [
        antes no catálogo e cuida das pegadas; isto é a sombra atrás de
        alguém que ainda está andando, e falhar aqui é ser notado. */
     id: "seguir_alguem",
-    rx: /\b(sigo (ele|ela|o|a|os|as)\s*\w*\s*(sem ser|de longe|a dist[aâ]ncia|discretamente)|vou atr[aá]s del|encal[cç]o|sigo os passos del|fico na cola)/,
+    rx: new RegExp([
+      /\b(sigo (ele|ela|o|a|os|as)\s*\w*\s*(sem ser|de longe|a dist[aâ]ncia|discretamente)|vou atr[aá]s del|encal[cç]o|sigo os passos del|fico na cola)/.source,
+      /* CS (11/11, o corpus das situações): ir atrás de alguém sem ele perceber, de longe, misturado na feira — a sombra que o estudo conta (23 pedidos) */
+      /\b(sigo|persigo|acompanho|vou atras d\w*|ando atras d\w*|fico atras d\w*|vou na sombra d\w*|sigo na sombra d\w*)\b[^.!?]{0,50}\b(sem (ser (vist|notad|percebid)|que (ele|ela|eles|elas|ninguem) (perceb|not|me ve|veja|repare)|(ele|ela|eles|elas|ninguem) (perceber|notar|me ver|ver|reparar))|de longe|a distancia|discretamente|escondid[oa]|nas sombras|misturad[oa])/.source,
+      /\bna sombra d(o|a|e)\b[^.!?]{0,40}\bsem\b/.source,
+    ].join("|")),
     pericia: "furtividade", alvo: "perseguir", minutos: 20, barulho: false, testemunha: true,
     rotulo: "seguir sem ser notado", dcPadrao: DC("incomum"),
   },
@@ -1280,6 +1466,10 @@ export const FAMILIAS_DO_IMPROVISO = [
       { rx: /\b(puxo pela|puxo da|forco a|vasculho a|reviro a|busco na) memoria\b/, nucleo: /\b(puxo pela|puxo da|forco a|vasculho a|reviro a|busco na) memoria\b/, faz: "buscar na memória" },
       { rx: /\brecordo\b/, nucleo: /\brecordo\b/, faz: "recordar" },
       { rx: /\b(decifro|decifrar)\b/, nucleo: /\b(decifro|decifrar)\b/, faz: "decifrar", pericia: "investigacao" },
+      /* CS (11/11, o corpus das situações): o enigma, a charada, a senha, a lógica das alavancas — a cabeça crua, sem saber guardado (o estudo: 145 pedidos de Inteligência) */
+      { rx: /\b(resolvo|resolver|desvendo|desvendar)\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(enigma|charada|quebra-cabeca|quebra cabeca|adivinha|adivinhacao|cifra|codigo|problema)/, nucleo: /\b(resolvo|resolver|desvendo|desvendar)\b/, faz: { resolvo: "resolver", resolver: "resolver", desvendo: "desvendar", desvendar: "desvendar" } },
+      { rx: /\b(entender|entendo|perceber|percebo|descobrir|descubro|achar|acho|adivinhar|adivinho|deduzir|deduzo|encontrar|encontro)\s+(a|o)\s+(logica|truque|segredo|padrao|sequencia|ordem certa|resposta|senha|combinacao)\b/, nucleo: /\b(entender|entendo|perceber|percebo|descobrir|descubro|achar|acho|adivinhar|adivinho|deduzir|deduzo|encontrar|encontro)\b/, faz: { entendo: "entender", percebo: "perceber", descubro: "descobrir", acho: "achar", adivinho: "adivinhar", deduzo: "deduzir", encontro: "encontrar" } },
+      { rx: /\bfaco as contas d[oa] (livro|registo|registro|caderno|contabilidade)/, nucleo: /\bfaco\b/, faz: "fazer" },
       { rx: /\b(traduzo|traduzir)\b/, nucleo: /\b(traduzo|traduzir)\b/, faz: "traduzir" },
       { rx: /\b(calculo|estimo) (a|o) (distancia|altura|trajetoria|angulo|profundidade|queda)/, nucleo: /\b(calculo|estimo)\b/, faz: { calculo: "calcular", estimo: "estimar" }, pericia: "investigacao" },
       { rx: /\b(tento|procuro|vou) (entender|descobrir|compreender|deduzir|adivinhar) (como|o que|de onde|quem|por que|porque|qual|quais|onde|quando|se)\b/, nucleo: /\b(tento|procuro|vou) /, faz: "", pericia: "investigacao" },
@@ -1322,6 +1512,11 @@ export const FAMILIAS_DO_IMPROVISO = [
       { rx: /\b(conto (uma|um) (piada|causo|anedota)|improviso (uma|um) (cancao|verso|poema|rima|melodia|discurso))\b/, nucleo: /\b(conto|improviso)\b/, faz: { conto: "contar", improviso: "improvisar" }, pericia: "atuacao" },
       { rx: /\b(finjo|tento fingir) (um|uma) (desmaio|ataque|mal estar|morte|ferimento|convulsao)\b|\b(finjo|tento fingir) (estar|que estou|que sou|ser) (morto|morta|bebado|bebada|doente|ferido|ferida|dormindo|desmaiado|desmaiada|cego|cega|surdo|surda|louco|louca)\b|\b(finjo|tento fingir) (dormir|desmaiar|morrer)\b/, nucleo: /\b(finjo|tento fingir)\b/, faz: "fingir", pericia: "enganacao" },
       { rx: /\bimito (a voz|o sotaque|o canto|o grito|o uivo|o piado|a fala|o chamado)\b/, nucleo: /\bimito\b/, faz: "imitar", pericia: "enganacao" },
+      /* CS (11/11, o corpus das situações): impor-se à turba, manter a autoridade, chamar a atenção da praça — o carisma cru (o estudo: 18 pedidos) */
+      { rx: /\btento que\b[^.!?]{0,40}\bme (oucam|escutem|sigam|aceitem|respeitem|levem a serio|obedecam|deem ouvidos)\b/, nucleo: /\btento\b/, faz: "tentar" },
+      { rx: /\bme (levem|levarem) a serio\b/, nucleo: /\bme (levem|levarem) a serio\b/, faz: "fazer-se levar a sério" },
+      { rx: /\b(mantenho|manter|imponho|impor|mostro) (a|minha|a minha) (calma e a )?(autoridade|compostura|presenca|postura|pose)\b/, nucleo: /\b(mantenho|manter|imponho|impor|mostro)\b/, faz: { mantenho: "manter", manter: "manter", imponho: "impor", impor: "impor", mostro: "mostrar" } },
+      { rx: /\b(chamo|chamar|prendo|prender) a atencao d(a|o|e) (praca|sala|taverna|multidao|turba|gente|todos|plateia|mesa|rua)/, nucleo: /\b(chamo|chamar|prendo|prender)\b/, faz: { chamo: "chamar", chamar: "chamar", prendo: "prender", prender: "prender" } },
       { rx: /\b(comando|lidero|organizo) (os|as) (homens|guardas|soldados|refugiados|multidao|camponeses|aldeoes|marinheiros|mercenarios|voluntarios|criancas)\b/, nucleo: /\b(comando|lidero|organizo)\b/, faz: { comando: "comandar", lidero: "liderar", organizo: "organizar" } },
     ],
   },
@@ -1329,11 +1524,15 @@ export const FAMILIAS_DO_IMPROVISO = [
     id: "vigor", atributo: "vigor", pericia: "fortitude", minutos: 10,
     corpo: true, dispensavel: false, gesto: true, custo: "improviso_vigor",
     verbos: [
-      { rx: /\bcorro\b[^.!?]{0,30}\b(sem parar|a noite (toda|inteira)|o dia (todo|inteiro)|ate (perder o folego|nao aguentar|cair|o limite)|com todas as forcas|o mais rapido que (posso|consigo))/, nucleo: /\bcorro\b/, faz: "correr" },
-      { rx: /\b(bebo|viro|entorno|tomo)\b[^.!?]{0,30}\b(de uma vez|num gole|num so gole|de um gole|de um so gole|sem respirar|ate a ultima gota)/, nucleo: /\b(bebo|viro|entorno|tomo)\b/, faz: "beber", consome: true },
+      { rx: /\bcorro\b[^.!?]{0,30}\b(sem parar|a noite (toda|inteira)|o dia (todo|inteiro)|ate (perder o folego|nao aguentar|cair|o limite)|com todas as forcas|o mais rapido que (posso|consigo)|por (uma|duas|tres|meia|varias) (leguas?|milhas?|horas?))/, nucleo: /\bcorro\b/, faz: "correr" },
+      { rx: /\b(bebo|viro|entorno|tomo)\b[^.!?]{0,30}\b(de uma vez|num gole|num so gole|de um gole|de um so gole|sem respirar|ate a ultima gota|de um trago|num trago|de um so trago)/, nucleo: /\b(bebo|viro|entorno|tomo)\b/, faz: "beber", consome: true },
       { rx: /\b(encaro|enfrento|atravesso|suporto) (o frio|a nevasca|a neve|a chuva|o vento|a tempestade|o calor|o sol|a fumaca|o fedor|o gelo|o pantano|o deserto|a febre|a dor)\b/, nucleo: /\b(encaro|enfrento|atravesso|suporto)\b/, faz: { encaro: "encarar", enfrento: "enfrentar", atravesso: "atravessar", suporto: "suportar" } },
       { rx: /\b(mergulho fundo|fico (debaixo|embaixo) d.?agua|fico submerso|fico no fundo)\b/, nucleo: /\b(mergulho|fico)\b/, faz: { mergulho: "mergulhar", fico: "ficar" } },
       { rx: /\bfico acordado\b[^.!?]{0,20}\b(a noite|ate|o turno|de vigia)/, nucleo: /\bfico\b/, faz: "ficar" },
+      /* CS (11/11, o corpus das situações): a aposta de quem bebe mais, a pimenta sem pestanejar, carregar a noite toda, correr por uma légua (beber de um trago, acima) */
+      { rx: /\b(como|engulo|mastigo|provo)\b[^.!?]{0,40}\bsem (pestanejar|piscar|fazer careta|careta|chorar|reclamar|tossir)\b/, nucleo: /\b(como|engulo|mastigo|provo)\b/, faz: { como: "comer", engulo: "engolir", mastigo: "mastigar", provo: "provar" } },
+      { rx: /\b(entro|aceito|topo)\b[^.!?]{0,15}\b(disputa|aposta|competicao|concurso|desafio) de quem (bebe|come|aguenta|corre|nada|rema)\b/, nucleo: /\b(entro|aceito|topo)\b/, faz: { entro: "entrar", aceito: "aceitar", topo: "topar" } },
+      { rx: /\b(carrego|remo|cavo|pedalo|trabalho)\b[^.!?]{0,50}\b(sem (descansar|parar|pausa)|(pela|a|durante a) noite (toda|inteira)|o dia (todo|inteiro)|(ate|antes d)o amanhecer)/, nucleo: /\b(carrego|remo|cavo|pedalo|trabalho)\b/, faz: { carrego: "carregar", remo: "remar", cavo: "cavar", pedalo: "pedalar", trabalho: "trabalhar" } },
     ],
   },
   {
@@ -1343,7 +1542,12 @@ export const FAMILIAS_DO_IMPROVISO = [
       { rx: /\b(salto|pulo|saltar|pular)\b[^.!?]{0,40}\b((para|pra) (o|a|os|as|um|uma|outro|outra|dentro|fora|cima|baixo|tras|frente|o lado)|ate (o|a|os|as)|sobre|por cima|em (movimento|disparada|pleno)|no (lustre|rio|poco|lago|mar|abismo|vao|telhado|lombo|dorso)|na (carroca|corda|agua|viga|janela|sacada|borda)|entre (os|as))\b/, nucleo: /\b(salto|pulo|saltar|pular)\b/, faz: { salto: "saltar", pulo: "pular", saltar: "saltar", pular: "pular" } },
       { rx: /\bme (balanc(o|ar)|pendur(o|ar)|dependur(o|ar)|esquiv(o|ar)|jog(o|ar) (para o lado|no chao|atras|para tras|por baixo|por cima|para fora|de lado))\b/, nucleo: /\bme (balanc(o|ar)|pendur(o|ar)|dependur(o|ar)|esquiv(o|ar)|jog(o|ar))\b/, faz: { "me balanco": "balançar-me", "me penduro": "pendurar-me", "me dependuro": "pendurar-me", "me esquivo": "esquivar-me", "me jogo": "jogar-me", "me balancar": "balançar-me", "me pendurar": "pendurar-me", "me dependurar": "pendurar-me", "me esquivar": "esquivar-me", "me jogar": "jogar-me" } },
       { rx: /\bdesvio (d[aoe]s?|para o lado d[aoe]s?) [^.!?]{0,20}\b(flecha|dardo|lamina|faca|pedra|carroca|cavalo|galho|viga|armadilha|machado|garra|jato|chama|fogo|raio|tiro|pedregulho|destrocos|escombros|tronco|barril)/, nucleo: /\bdesvio\b/, faz: "desviar" },
-      { rx: /\b(agarro|pego|apanho|seguro)\b[^.!?]{0,30}\b(no ar|antes que (caia|toque|bata|chegue|quebre|se espatife)|em pleno voo)/, nucleo: /\b(agarro|pego|apanho|seguro)\b/, faz: "apanhar" },
+      { rx: /\b(agarro|pego|apanho|seguro)\b[^.!?]{0,30}\b(no ar|antes (que|de) (caia|cair|toque|tocar|bata|bater|chegue|chegar|quebre|quebrar|parta|partir|se espatife|se espatifar|incendeie|pegue fogo)|em pleno voo)/, nucleo: /\b(agarro|pego|apanho|seguro)\b/, faz: "apanhar" },
+      /* CS (11/11, o corpus das situações): desviar-se do balde, atirar a coisa à mão de quem a apanha (para o outro lado de um vão é a Força, MM4), o gancho na ameia, cortar a corda com uma flechada — a destreza crua (o estudo: 89 pedidos) */
+      { rx: /\bme desvi(o|ar) d/, nucleo: /\bme desvi(o|ar)\b/, faz: "desviar-me" },
+      { rx: /\b(atiro|jogo|lanco|arremesso)\b[^.!?]{0,40}\b((para|pra) (o|a) \w+ (apanhar|pegar|agarrar)|ate a mao d|pela (grade|janela|fresta|seteira))/, nucleo: /\b(atiro|jogo|lanco|arremesso)\b/, faz: { atiro: "atirar", jogo: "jogar", lanco: "lançar", arremesso: "arremessar" } },
+      { rx: /\batiro (o|a) (gancho|arpeu|laco)\b/, nucleo: /\batiro\b/, faz: "atirar" },
+      { rx: /\b(acerto|corto|apago|derrubo)\b[^.!?]{0,40}\bcom (uma|um) (flechada|pedrada|dardo|tiro)\b/, nucleo: /\b(acerto|corto|apago|derrubo)\b/, faz: { acerto: "acertar", corto: "cortar", apago: "apagar", derrubo: "derrubar" } },
       { rx: /\b(rolo|deslizo) (por baixo|por cima|pelo|pela|ate|para|entre)\b/, nucleo: /\b(rolo|deslizo)\b/, faz: { rolo: "rolar", deslizo: "deslizar" } },
       { rx: /\b(faco|dou) (um|uma) (malabarismo|pirueta|cambalhota|acrobacia|mortal|estrela|rolamento)\b/, nucleo: /\b(faco|dou)\b/, faz: { faco: "fazer", dou: "dar" } },
       { rx: /\bpasso (por|entre|pelo|pela|pelos|pelas) [^.!?]{0,30}\bsem (tocar|esbarrar|encostar|derrubar)\b/, nucleo: /\bpasso\b/, faz: "passar" },
@@ -1353,6 +1557,8 @@ export const FAMILIAS_DO_IMPROVISO = [
     id: "forca", atributo: "forca", pericia: "atletismo", minutos: 1,
     corpo: true, dispensavel: false, gesto: true, custo: "improviso_forca", leve: LEVE_DEMAIS,
     verbos: [
+      /* CS (11/11, o corpus das situações): a força dita antes do verbo («com toda a força puxo a alavanca») */
+      { rx: /\bcom (toda a |toda |muita )?forca,? (puxo|empurro|arrasto|ergo|levanto|giro|rodo|seguro)\b/, nucleo: /\b(puxo|empurro|arrasto|ergo|levanto|giro|rodo|seguro)\b/, faz: { puxo: "puxar", empurro: "empurrar", arrasto: "arrastar", ergo: "erguer", levanto: "levantar", giro: "girar", rodo: "rodar", seguro: "segurar" } },
       { rx: /\b(arremesso|lanco|arremessar|lancar)\b/, nucleo: /\b(arremesso|lanco|arremessar|lancar)\b/, faz: { arremesso: "arremessar", lanco: "lançar", arremessar: "arremessar", lancar: "lançar" }, barulho: true },
       { rx: /\b(ergo|erguer|ico|icar)\b[^.!?]{0,25}\b(bau|portao|porta|pedra|rocha|viga|tronco|barril|carroca|carro|grade|laje|tampa|pedregulho|bigorna|estatua|caixote|arca|armario|cavalo|homem|corpo|ferido|ferida|companheiro|companheira|mesa|sino|ancora|balde|rede|sozinho|com (toda|muita) forca|acima da cabeca|do chao|nas costas|com uma mao)\b/, nucleo: /\b(ergo|erguer|ico|icar)\b/, faz: { ergo: "erguer", erguer: "erguer", ico: "içar", icar: "içar" } },
       { rx: /\b(quebro|quebrar|arrebento|arrebentar|estilhaco|esmago|despedaco|parto ao meio)\b/, nucleo: /\b(quebro|quebrar|arrebento|arrebentar|estilhaco|esmago|despedaco|parto)\b/, faz: { quebro: "quebrar", quebrar: "quebrar", arrebento: "arrebentar", arrebentar: "arrebentar", estilhaco: "estilhaçar", esmago: "esmagar", despedaco: "despedaçar", parto: "partir" }, barulho: true },

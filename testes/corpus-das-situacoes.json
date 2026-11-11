@@ -1,0 +1,3079 @@
+{
+ "origem": "As situações em que o Mestre pede cada um dos testes que as nossas sessões de prova nunca viram (25 rótulos sem nenhuma frase real no corpus-da-mesa), contadas no estudo do Mestre sobre o CRD3 (159 episódios; mente/estudo-do-mestre.md) e descritas por nós em abstrato — só a contagem e o tipo de situação. As frases são escritas do zero, por nós, sobre o nosso mundo, em 11/11/2026: nenhuma fala do programa, nem tradução, nem nome de lá.",
+ "regua": "A mesma do corpus-da-mesa: se a frase declara um gesto com risco, o id do desafio (DESAFIOS) ou imp_<família>; senão um golpe, atacar; senão o que domina — mover, conversa, livre. Cada rótulo traz quase-iguais que parecem pedir o dado e não pedem. Forçar o que está fechado (a porta ao ombro ou ao pé, a tampa do baú) é a tranca pela via da força, como a casa decidiu (VIAS_DE_TRANCA): três frases do grupo «forcar» levam esse rótulo. E atirar a coisa para o outro lado de um vão é a Força, não a Destreza (MM4): uma frase do grupo «imp_destreza» leva imp_forca.",
+ "metades": "Sorteadas por semente («corpus-das-situacoes», mulberry32), estratificadas por grupo e por sinal. A afina o catálogo; B é a prova — nunca guia uma mudança.",
+ "cena": "«cena»: a coisa do mundo que o jogo diria estar à vista (ctx.objetoEmCena) — desarmar só existe diante de uma armadilha.",
+ "conhecidos": [
+  "Vando",
+  "Noé",
+  "Euzébio",
+  "Hakon",
+  "Nyla",
+  "Freya",
+  "Teodoro",
+  "Edric",
+  "Tônia",
+  "Iracema",
+  "Zeca",
+  "Petra",
+  "Jaco",
+  "Saoirse",
+  "Elowen",
+  "Sari",
+  "Godfrey",
+  "Rosalina",
+  "Lourdes",
+  "Dário",
+  "Lia",
+  "Tomas",
+  "Gualtério",
+  "Caetano",
+  "Norberto",
+  "Osric",
+  "Nira",
+  "Otávio",
+  "Marlo",
+  "Brina",
+  "Venceslau",
+  "Belmira",
+  "Frida",
+  "Ambrósio",
+  "Helga",
+  "Perrin",
+  "Clarissa",
+  "Beraldo",
+  "Carmela",
+  "Lino",
+  "Lina",
+  "Tobias",
+  "Gaspar",
+  "Torquato",
+  "Hilda",
+  "Falk",
+  "Rufo",
+  "Dara",
+  "Torvald",
+  "Berengária",
+  "Quirino",
+  "Vasco",
+  "Tristão",
+  "Halvard",
+  "Corrado",
+  "Inez",
+  "Theron",
+  "Klaus",
+  "Drogo",
+  "Ursa",
+  "Pregado"
+ ],
+ "frases": [
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Atravesso o rio a nado até a outra margem."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Com cuidado, entro na água e nado contra a corrente até à pedra do meio."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Mergulho e nado por baixo da comporta."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Nado até o barco mesmo de armadura."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Pulo no canal e nado atrás da Nyla antes que a corrente a leve."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Seguro a respiração e mergulho até ao fundo do poço para pegar a chave."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "nado ate a margem puxando o Zeca pelo colarinho"
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Caí do barco — nado de volta pro casco o mais rápido que consigo."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Atravesso o esgoto inundado nadando, com a tocha erguida."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Vou a nado até à ilhota."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Mergulho no lago e nado por baixo das raízes até a gruta."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Enfrento as ondas e nado até à praia."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Lanço-me à água e nado contra a correnteza pra alcançar a jangada."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Nado debaixo d'água o mais longe que der, pra não me verem."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Atravesso o fosso a nado durante a noite."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Com a mochila nas costas, nado pela cisterna alagada até a outra escada."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "nadar",
+   "frase": "Mergulho atrás da Petra, que afundou, e trago-a à superfície."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "nadar",
+   "frase": "Tento nadar até a corda que o Hakon atirou."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao barqueiro se o rio dá pé."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Sento na margem e molho os pés na água."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Vou de barco até a outra margem."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Lavo o rosto na fonte."
+  },
+  {
+   "grupo": "nadar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Nyla, sabes nadar?"
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Salto o vão até o outro lado da ponte quebrada."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Pulo de um telhado para o outro."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Corro e salto por cima da fenda."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Com impulso, pulo o córrego cheio."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Salto da varanda pro monte de feno lá em baixo."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Pulo pra dentro da carroça em movimento."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Dou um salto para agarrar a corda pendurada."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "salto o buraco no soalho"
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Tomo balanço e salto para a outra margem do barranco."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Pulo do muro para o telhado da estrebaria."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Salto por cima da mesa pra chegar à porta antes dele."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Atiro-me para o barco que já se afasta do cais."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Pulo o fosso de estacas."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Dou um pulo até a borda do poço do outro lado."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "saltar",
+   "frase": "Salto do galho para o telhado da torre."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Com cuidado, pulo de pedra em pedra pela ribeira."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "saltar",
+   "frase": "Salto o abismo agarrado à mão do Edric."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Salto da cama e visto-me depressa."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "mover",
+   "frase": "Pulo da carroça quando ela para na praça."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Dou um pulinho de alegria."
+  },
+  {
+   "grupo": "saltar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Salto a parte chata e vou direto ao assunto com o Vando: quanto quer?"
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Escalo o muro do convento."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Subo pela corda até à janela da torre."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Trepo na árvore pra ver por cima da mata."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Escalo a parede de rocha até a entrada da gruta."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Subo o penhasco agarrando nas raízes."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Com cuidado, subo pela calha até o telhado."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Vou escalando a fenda da pedra, devagar."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Subo pelas pedras soltas do poço."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Escalo a muralha usando o gancho e a corda."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Trepo pela hera até à varanda da Clarissa."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Subo o mastro do barco até o cesto."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "escalo o paredão sem corda"
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "escalar",
+   "frase": "Desço pela corda até o fundo do poço."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Agarro-me às saliências e subo a parede do armazém."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Subo pelo lado de fora da torre até a janela do sino."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Escalo a falésia molhada."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "escalar",
+   "frase": "Trepo no telhado da taverna pela pilha de barris."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "mover",
+   "frase": "Subo a escada até o quarto."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Subo a ladeira até à igreja."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Godfrey se dá para escalar o muro."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Admiro a torre de longe."
+  },
+  {
+   "grupo": "escalar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Subo na carroça e sigo viagem."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Arrombo a porta com o ombro."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Empurro a pedra que tapa a entrada."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "forcar",
+   "frase": "Ergo a tampa do sarcófago."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Tento dobrar as barras da cela."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Meto o pé de cabra na fresta e forço a tampa do baú."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Levanto a carroça para soltar a perna do Zeca."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Chuto a porta até ela ceder."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "forcar",
+   "frase": "Empurro o armário pesado pra frente da porta."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "forcar",
+   "frase": "Ergo a grade do esgoto."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "forcar",
+   "frase": "com toda a força puxo a alavanca enferrujada"
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Afasto a laje do chão para ver o que há em baixo."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Forço a janela emperrada."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "forcar",
+   "frase": "Arrasto o tronco caído para fora da estrada."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "forcar",
+   "frase": "Seguro a porta levadiça para os outros passarem."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Empurro o portão de ferro com o Hakon."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Levanto a viga que caiu em cima do Tobias."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "forcar",
+   "frase": "Tento abrir a porta emperrada da cave à força."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Empurro a porta e entro na loja."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Abro a janela pra entrar ar."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Levanto-me e vou ao balcão."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Puxo uma cadeira e sento-me ao lado da Iracema."
+  },
+  {
+   "grupo": "forcar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Ergo a caneca e brindo à saúde do Vando."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Atravesso pela viga sem olhar pra baixo."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Ando pela beira do telhado até a janela."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Passo pela prancha estreita entre os dois barcos."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Com cuidado, atravesso o gelo do lago."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Atravesso a ponte de corda que balança."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Caminho pelo parapeito da muralha."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Mantenho-me em pé no convés enquanto o barco joga."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Atravesso o tronco por cima do ribeiro."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Ando devagar pelo chão encerado sem escorregar."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Equilibro-me no muro estreito e sigo até à esquina."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Vou pelo beiral, encostado à parede, até a outra janela."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Passo por cima da corda esticada entre as torres."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Fico de pé em cima da carroça em movimento."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "atravesso a passarela podre pisando so nas tabuas boas"
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Desço a encosta de cascalho solto sem cair."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "equilibrio",
+   "frase": "Atravesso o leito do rio pelas pedras escorregadias."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "equilibrio",
+   "frase": "Corro pela cumeeira do telhado atrás do ladrão."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Atravesso a ponte da vila e sigo para o mercado."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Ando pela rua principal até à praça."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Encosto-me à parede e espero."
+  },
+  {
+   "grupo": "equilibrio",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Marlo se a ponte aguenta."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Tento soltar as mãos das cordas."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Torço o pulso para escapar da algema."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Me solto do aperto do brutamontes."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Me contorço para sair da rede."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Espremo-me pela fresta entre as rochas."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Tento livrar-me da teia que me prende as pernas."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Escapo do abraço do urso rolando para o lado."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Desfaço o nó das cordas com os dedos, às escondidas."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Passo pela grade estreita do esgoto, de lado."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Liberto-me das mãos do guarda e corro."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "tento tirar a mão da armadilha de urso"
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Escorrego as mãos pelas correntes até sair."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Saio pela janelinha da cela, apertado."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "escapar",
+   "frase": "Me desvencilho do homem que me agarrou pelo braço."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Contorço-me para tirar os braços do saco onde me meteram."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Rastejo por baixo da cerca apertada."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "escapar",
+   "frase": "Livro-me da corda que me enlaçou o tornozelo."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Saio pela porta dos fundos e vou pra casa."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Desamarro o cavalo e levo-o à água."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Desato o nó do saco e tiro as maçãs."
+  },
+  {
+   "grupo": "escapar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Peço ao guarda que me tire as algemas."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Aguento o frio da noite sem fogueira."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Bebo o vinho mesmo desconfiando que está envenenado."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Seguro a respiração e atravesso o fumo."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Continuo a marcha mesmo exausto."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Aguento a dor enquanto o Noé tira a flecha."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Fico a noite inteira acordado de vigia sem cochilar."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Atravesso o pântano fedorento sem vomitar."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Resisto ao veneno da mordida."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Engulo a mezinha amarga da curandeira sem cuspir."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Caminho debaixo da tempestade de neve até à cabana."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Aguento o calor da forja tempo bastante para tirar a peça do fogo."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "tento nao desmaiar com o cheiro do gás"
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "aguentar",
+   "frase": "Resisto à febre e sigo viagem."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Seguro o fôlego debaixo d'água enquanto os guardas passam."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Marcho mais um dia sem comida."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "aguentar",
+   "frase": "Aguento a sede até chegarmos ao poço."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Bebo a minha cerveja e escuto a música."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Descanso um pouco à sombra."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto à Belmira se o vinho é de confiança."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Como o ensopado e pago à Rosalina."
+  },
+  {
+   "grupo": "aguentar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Espero pelo Zeca à porta."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Abro a fechadura com a gazua."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Tento destrancar o baú."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Uso as ferramentas de ladrão na porta do armazém."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Arrombo o cadeado da arca."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Com um grampo, tento abrir as algemas."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Mexo na fechadura até ouvir o clique."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Destranco a porta da cela com o arame."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "abro o cofre do mercador sem a chave"
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Forço a fechadura da gaveta com a ponta da faca."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Tento abrir a porta trancada da cave com as gazuas."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Pego as gazuas e trabalho na fechadura do portão."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Com cuidado, abro o cadeado da corrente sem a chave."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Destranco a caixinha de joias."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "tranca",
+   "frase": "Tento abrir a fechadura do cofre."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Abro o trinco por dentro com um arame pela fresta."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "tranca",
+   "frase": "Ponho a gazua na fechadura da porta do Euzébio."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Abro a porta com a chave que o Teodoro me deu."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Tranco a porta do quarto antes de dormir."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto à Rosalina quem tem a chave da cave."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Abro o baú com a chave e tiro o mapa."
+  },
+  {
+   "grupo": "tranca",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Compro uma gazua ao Jaco."
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Corto o fio da armadilha com cuidado.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Desarmo a armadilha.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Travo a placa de pressão com uma cunha.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Tento desmontar o mecanismo das lâminas.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Com a ponta da faca, tiro a agulha envenenada da fechadura.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Prendo o gatilho da besta escondida pra não disparar.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Desativo o mecanismo antes de passar.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "enfio um prego no mecanismo pra travar",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Desarmo o alçapão para que não abra.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Corto a corda que segura a rede no teto.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Desfaço a armadilha com as ferramentas.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Com muito cuidado, solto a mola da armadilha.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Imobilizo a placa no chão antes que alguém pise.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "desarmar",
+   "frase": "Seguro o fio esticado e corto devagar.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Desligo o mecanismo dos dardos na parede.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "desarmar",
+   "frase": "Tento neutralizar a armadilha do baú.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "atacar",
+   "frase": "Desarmo o guarda com um golpe no pulso.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Passo longe da armadilha, pelo outro lado.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Aviso o Hakon da armadilha.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "desarmar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Edric se ele sabe desarmar armadilhas.",
+   "cena": "armadilha"
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Tiro a bolsa do mercador sem ele sentir."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Surrupio a chave do cinto do guarda."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Meto a mão no bolso do bêbado e tiro as moedas."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Enfio a carta no bolso do Euzébio sem ele perceber."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Escondo o anel na manga antes que vejam."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Passo pela multidão e corto a bolsa do nobre."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Pego o frasco da mesa dele enquanto ele olha pro outro lado."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Com dedos leves, tiro o selo do bolso do Teodoro."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Troco o dado dele por um viciado sem ele ver."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "furto a bolsinha da velha"
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Roubo a chave do molho do carcereiro."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Deixo cair a moeda falsa na bolsa do cambista."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Escamoteio a adaga da mesa para dentro da bota."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Bato a carteira do homem de capa."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "bater_carteira",
+   "frase": "Enquanto a Brina distrai o vendedor, empalmo o colar."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "bater_carteira",
+   "frase": "Pego a carta do bolso do mensageiro adormecido."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Pego as moedas da mesa e pago a conta."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Guardo a bolsa no bolso de dentro."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Jaco quem anda a roubar no mercado."
+  },
+  {
+   "grupo": "bater_carteira",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Dou a bolsa ao Zeca."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Esporeio o cavalo e galopo atrás da carruagem."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Monto no cavalo selvagem."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Seguro as rédeas e controlo o cavalo assustado."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Conduzo a carroça a toda a velocidade pela estrada esburacada."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Salto a cerca a cavalo."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Faço a mula atravessar o vau."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Galopo pela mata fechada desviando dos galhos."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Monto a égua sem sela."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Guio o carro de bois pela ponte estreita."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Puxo as rédeas pra o cavalo não disparar com o fogo."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Cavalgo a toda brida até à vila para avisar o Vando."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Domo o potro que ninguém consegue montar."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "cavalgar",
+   "frase": "Faço o cavalo empinar para assustar os bandidos."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "aperto o passo do cavalo na descida da serra"
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Monto o cavalo do guarda e fujo."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "cavalgar",
+   "frase": "Faço a carroça dar a volta no beco apertado."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Compro um cavalo ao Gaspar."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Vou a cavalo até a cidade."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Dou feno ao meu cavalo e escovo-o."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao cavalariço quanto custa a baia."
+  },
+  {
+   "grupo": "cavalgar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Desmonto e amarro o cavalo à porta da taverna."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Acalmo o cão que rosna, falando baixinho."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Estendo a mão devagar para o lobo cheirar."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Dou um pedaço de carne ao cão de guarda pra ele me deixar passar."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Tento acalmar o cavalo assustado com o fogo."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Aproximo-me devagar do javali ferido para o acalmar."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Ganho a confiança do corvo com migalhas de pão."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Sussurro para a égua até ela parar de escoicear."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Afasto o cão do portão com um osso."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Tento amansar o urso jovem que ficou preso."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Acalmo as galinhas pra não fazerem barulho."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Tento fazer amizade com o cão da Hilda."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Ofereço uma maçã ao burro teimoso pra ele andar."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "devagarinho, me agacho e deixo o cão vir até mim"
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "acalmar_bicho",
+   "frase": "Tento serenar o falcão que se debate na gaiola."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "acalmar_bicho",
+   "frase": "Acalmo os bois espantados antes que derrubem a cerca."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Dou de comer ao meu cavalo."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto à Hilda como se chama o cão."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Afago a cabeça do cão e sigo."
+  },
+  {
+   "grupo": "acalmar_bicho",
+   "metade": "B",
+   "rotulo": "atacar",
+   "frase": "Mato o lobo antes que ele salte."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Tento achar o caminho de volta pela floresta."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Oriento-me pelas estrelas para seguir para norte."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Uso o musgo das árvores para saber onde fica o norte."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Procuro a trilha certa no meio do pântano."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Guio o grupo pela neblina sem nos perdermos."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Leio o mapa e escolho o caminho mais curto pelas montanhas."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Tento voltar pelos túneis por onde viemos sem me perder."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Sigo pelo sol até a estrada do sul."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Atravesso o deserto de sal guiando-me pelas dunas."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Descubro pra que lado fica a vila."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Conduzo a caravana pela serra sem estrada."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "nos guio pela mata fechada até o rio"
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Encontro o rumo de casa no meio da charneca."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Marco as árvores com a faca para não nos perdermos na mata."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "orientar",
+   "frase": "Tento achar a saída das catacumbas."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Oriento-me no escuro da caverna pela corrente de ar."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "orientar",
+   "frase": "Escolho o caminho na encruzilhada pelo musgo e pelo sol."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Marlo qual é o caminho para a vila."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "B",
+   "rotulo": "mover",
+   "frase": "Sigo pela estrada real até à cidade."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Olho o mapa que comprei e guardo-o."
+  },
+  {
+   "grupo": "orientar",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Vou pelo caminho que o guarda indicou."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Tento reconhecer o brasão no escudo dele."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Olho para o estandarte e tento lembrar de que casa é."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Reconheço o selo do lacre da carta?"
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "Examino o sinete no anel para saber a que família pertence."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "De que casa é esse leão no escudo?"
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Tento identificar a insígnia no uniforme dos soldados."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Reconheço as cores do manto do cavaleiro?"
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Tento lembrar a quem pertence o brasão pintado na carruagem."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "Observo a tatuagem de ordem no braço do homem e tento saber de onde é."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Estudo o emblema gravado no punho da espada para saber a origem."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "puxo pela memória: esse brasão de três torres é de quem?"
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "heraldica",
+   "frase": "Tento reconhecer de que guilda é o símbolo na porta."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "Sei de que família é o lacre vermelho com a águia?"
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "Vejo se reconheço a libré dos criados."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "Tento identificar a bandeira do navio que chega ao porto."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "heraldica",
+   "frase": "Olho bem o selo de cera e tento lembrar de que casa nobre é."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Godfrey de que casa ele é."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Pinto o brasão da família no meu escudo."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Entrego a carta lacrada ao Venceslau."
+  },
+  {
+   "grupo": "heraldica",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Elogio o estandarte da Saoirse."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Falsifico a assinatura do capitão no salvo-conduto."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Escrevo uma carta imitando a letra do Teodoro."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Forjo um documento de passagem com o selo copiado."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Copio o selo do conde em cera nova."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Faço uma licença falsa de mercador."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Imito a caligrafia do escriba no registo."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Altero a data no salvo-conduto."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Faço uma cópia falsa do mapa pra entregar ao Drogo."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "falsifico a carta de recomendação da guilda"
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Rasuro o nome no contrato e ponho o meu."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Forjo o lacre da carta pra parecer intacto."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "falsificar",
+   "frase": "Desenho um mapa falso para enganar os bandidos."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Faço moedas falsas de chumbo pintado."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Escrevo um bilhete falso assinado pela Lourdes."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "falsificar",
+   "frase": "Imito o carimbo da alfândega no papel."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Escrevo uma carta à minha mãe."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Assino o contrato com o Ambrósio."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao escriba quanto custa uma cópia do mapa."
+  },
+  {
+   "grupo": "falsificar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Leio o salvo-conduto que me deram."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Examino o corpo pra saber do que ele morreu."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Vejo se o homem doente tem a febre do pântano."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Olho a ferida do Hakon e vejo se é grave."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Verifico se o cadáver foi envenenado."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Tomo o pulso da velha e vejo o que ela tem."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Procuro sinais de veneno nos lábios do morto."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Examino as manchas na pele da criança."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Tento descobrir há quanto tempo o corpo está ali."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Vejo se a Nyla está só desmaiada ou pior."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Analiso a mordida no braço do Zeca pra ver se infecionou."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "examino o vomito do bebado pra ver se foi veneno"
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Tento perceber de que doença morreram os animais."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Olho os olhos do Tobias e vejo se ele foi drogado."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Examino o cadáver do afogado."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "diagnosticar",
+   "frase": "Vejo se a perna do Lino está partida."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "diagnosticar",
+   "frase": "Apalpo o ventre do ferido para ver se há sangue por dentro."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Enterro o corpo atrás da capela."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto à curandeira o que o Tobias tem."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "mover",
+   "frase": "Levo o ferido para a casa do Noé."
+  },
+  {
+   "grupo": "diagnosticar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Cubro o morto com o manto."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Tento ler as runas gravadas na porta."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Examino o círculo mágico no chão."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Tento descobrir o que o amuleto faz."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Sinto se há magia na espada."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Estudo o glifo na parede pra entender o feitiço."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Tento reconhecer o feitiço que o mago lançou."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Analiso a barreira cintilante que bloqueia o túnel."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Olho o anel e tento saber se é encantado."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Tento entender o ritual desenhado no altar."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Tento identificar a aura que sai do portal."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "examino a varinha quebrada pra ver se ainda tem magia"
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Decifro os símbolos arcanos do pergaminho."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Estudo o livro de feitiços que achamos na torre."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Tento perceber que tipo de magia prende a porta."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "arcano",
+   "frase": "Toco a pedra que brilha e tento sentir o que é."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "arcano",
+   "frase": "Tento entender o sigilo queimado na pele do morto."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Compro um pergaminho de luz na loja da Frida."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto à Frida se ela vende poções."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Guardo o amuleto na mochila."
+  },
+  {
+   "grupo": "arcano",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao mago de onde vem o poder dele."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Digo ao guarda que sou sobrinho do capitão."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Minto: digo que estava em casa a noite toda."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Finjo ser um mercador de lã à procura de comprador."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Conto ao porteiro que o Vando me mandou buscar as caixas."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Blefo que tenho mais dez homens lá fora."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Faço-me passar por criado da casa."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Digo ao Teodoro que não vi nada, mas vi."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Invento que somos da guarda da cidade."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Juro ao Euzébio que o dinheiro está a caminho, mesmo sem ter um tostão."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Engano o carcereiro dizendo que o prisioneiro morreu."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "minto pro mercador que a pedra é rubi verdadeiro"
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Digo à Rosalina que perdi a bolsa, para não pagar."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Finjo estar bêbado pra ninguém desconfiar."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Disfarço-me de monge e digo que venho rezar."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Conto uma história falsa de que fui roubado na estrada."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "mentir",
+   "frase": "Nego que peguei a carta, com a cara mais séria do mundo."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "mentir",
+   "frase": "Digo ao capitão que a Petra já saiu da cidade, pra protegê-la."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Conto à Rosalina a verdade sobre o que vi."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao guarda se ele acha que estou mentindo."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Digo ao Zeca que estou cansado e vou dormir."
+  },
+  {
+   "grupo": "mentir",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Peço desculpa ao Vando pelo engano."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "O que eu sei sobre trolls? Eles têm alguma fraqueza?"
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "Tento lembrar o que mata um vampiro."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "Puxo pela memória o que sei desses mortos-vivos."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Lembro se lobisomens temem prata?"
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "Tento saber se essa criatura resiste ao fogo."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "O que sei desse bicho de pedra? Como se vence?"
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Tento recordar a fraqueza dos espectros."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "Lembro alguma coisa das aranhas gigantes das cavernas?"
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Procuro na memória onde a couraça do monstro é mais fina."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Tento lembrar o que afasta os demônios."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "o que funciona contra esqueletos? lembro de algo?"
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "Penso no que as velhas histórias dizem sobre a fraqueza dos dragões."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "fraqueza",
+   "frase": "Observo a fera e tento perceber onde ela é vulnerável."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Tento me lembrar se os goblins têm medo de luz."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Recordo o que o meu mestre dizia sobre como matar uma serpente-do-pântano."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "fraqueza",
+   "frase": "Sei se esse fantasma pode ser ferido por ferro?"
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao Halvard como se mata um troll."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "atacar",
+   "frase": "Ataco o morto-vivo com a tocha."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Conto ao Hakon a história do dragão da serra."
+  },
+  {
+   "grupo": "fraqueza",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Fujo da aranha gigante."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Faço uma vénia elegante e tento impressionar a condessa."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Conto as minhas façanhas pra impressionar os mercenários."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Tento causar boa impressão no mestre da guilda."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Visto a melhor roupa e tento parecer um nobre aos olhos do anfitrião."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Galanteio a Saoirse com um elogio bem feito."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Tento seduzir o guarda da porta."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Faço um brinde à casa e tento ganhar a simpatia da sala."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Mostro a minha espada e conto vantagem para impressionar o Torvald."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Tento parecer digno diante do rei."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Elogio o vinho e a casa, tentando cair nas graças do Ambrósio."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Flerto com a taverneira."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "tento impressionar o capitão com meus modos da corte"
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Apresento-me com toda a pompa ao barão."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Faço charme para a Clarissa."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "impressionar",
+   "frase": "Tento ganhar a simpatia da velha com boas maneiras."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "impressionar",
+   "frase": "Me gabo das minhas viagens pra impressionar os marinheiros."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Cumprimento a condessa e pergunto pelo marido."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Elogio o pão da Lourdes."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Visto a roupa nova que comprei."
+  },
+  {
+   "grupo": "impressionar",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Agradeço ao barão pela hospitalidade."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo o homem de capa à distância sem ser visto."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Vou atrás do Euzébio pelas ruelas sem ele perceber."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo a mensageira pela multidão do mercado."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo o carroceiro de longe até ao armazém."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Fico na cola do guarda sem ele notar."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo discretamente o Jaco quando ele sair da taverna."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "sigo o sujeito escondido nas sombras"
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Ando atrás da velha, misturado com a gente da feira."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Persigo o ladrão sem que ele perceba que estou atrás."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Acompanho de longe o padre até onde ele for."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Vou na sombra do Drogo pelo porto, sem ele me ver."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo os dois cultistas de longe pelas vielas."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo o rapaz que roubou o pão, sem ele perceber."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Saio logo depois do Osric e sigo-o a uma distância segura."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Vigio e sigo a Carmela até ver onde ela mora."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "seguir_alguem",
+   "frase": "Sigo o barco dele pela margem, escondido nos juncos."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Sigo o Teodoro até à casa dele, como combinámos."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Vou com a Nyla até o mercado."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Peço ao Zeca que siga o homem por mim."
+  },
+  {
+   "grupo": "seguir_alguem",
+   "metade": "B",
+   "rotulo": "mover",
+   "frase": "Sigo a estrada até a vila."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento resolver o enigma gravado na porta."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento decifrar o código da carta."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento descobrir como funciona o mecanismo das engrenagens."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "Monto as peças do mapa rasgado."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento perceber a lógica das alavancas para abrir a porta."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Resolvo o quebra-cabeça das pedras coloridas."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento entender a cifra do diário do mago."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Faço as contas do livro do mercador para ver se ele rouba."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "Descubro a ordem certa dos sinos."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "tento achar a resposta da charada do guardião"
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "Estudo o tabuleiro e planeio a jogada que vence o Klaus."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento traduzir o texto em língua antiga com o que sei."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Penso numa forma de abrir a fechadura de enigma girando os anéis."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "imp_intelecto",
+   "frase": "Tento adivinhar a senha da porta pelas pistas do poema."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Pergunto ao guardião qual é a charada."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Leio a carta que o Vando deixou."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Conto as moedas da bolsa."
+  },
+  {
+   "grupo": "imp_intelecto",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Penso um pouco antes de responder ao Teodoro."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "imp_presenca",
+   "frase": "Subo no banco e faço a multidão calar com a minha voz."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "imp_presenca",
+   "frase": "Encaro o lorde nos olhos sem baixar o olhar."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "imp_presenca",
+   "frase": "Tento manter a pose diante do conselho, sem mostrar medo."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "imp_presenca",
+   "frase": "Ponho-me à frente da turba e tento que me ouçam."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "imp_presenca",
+   "frase": "Tento liderar os aldeões assustados para a capela."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "imp_presenca",
+   "frase": "Imponho a minha presença para que a sala me respeite."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "imp_presenca",
+   "frase": "Mantenho a calma e a autoridade quando todos gritam."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "imp_presenca",
+   "frase": "Tento chamar a atenção da praça inteira."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "imp_presenca",
+   "frase": "Resisto ao olhar do vidente sem ceder."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "imp_presenca",
+   "frase": "falo bem alto para todos na taverna ouvirem e me levarem a sério"
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "imp_presenca",
+   "frase": "Tento que os marinheiros me aceitem como capitã."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "imp_presenca",
+   "frase": "Faço um discurso para levantar o ânimo dos soldados."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Falo com o Gaspar sobre o preço do trigo."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "conversa",
+   "frase": "Cumprimento todos ao entrar."
+  },
+  {
+   "grupo": "imp_presenca",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Sento-me à cabeceira da mesa."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "imp_vigor",
+   "frase": "Bebo a caneca de aguardente de um trago para ganhar a aposta."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "imp_vigor",
+   "frase": "Carrego o Zeca ferido às costas pela noite toda."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "imp_vigor",
+   "frase": "Como a pimenta mais ardida da feira sem pestanejar."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "imp_vigor",
+   "frase": "Corro sem parar até à vila para dar o aviso."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "imp_vigor",
+   "frase": "Entro na disputa de quem bebe mais com o Halvard."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "imp_vigor",
+   "frase": "Remo o barco a noite inteira contra o vento."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "imp_vigor",
+   "frase": "Cavo a cova sozinho antes do amanhecer."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "imp_vigor",
+   "frase": "Fico debaixo da água gelada da cascata o tempo que o monge mandar."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "imp_vigor",
+   "frase": "corro atrás da carroça por uma légua"
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "imp_vigor",
+   "frase": "Mergulho os braços na tina de gelo para ganhar a aposta."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "imp_vigor",
+   "frase": "Bebo o caldo fervente de uma vez, como manda o costume da casa."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "imp_vigor",
+   "frase": "Carrego os sacos de trigo até ao moinho sem descansar."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Bebo um copo de água e descanso."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "A",
+   "rotulo": "mover",
+   "frase": "Corro até o mercado."
+  },
+  {
+   "grupo": "imp_vigor",
+   "metade": "B",
+   "rotulo": "livre",
+   "frase": "Como o pão com queijo."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "Atiro a faca pra cortar a corda do lustre."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_destreza",
+   "frase": "Apanho a garrafa antes que caia no chão."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "Lanço a chave pela grade até a mão da Petra."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "Agarro a tocha no ar antes que caia no feno."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "Atiro uma pedra ao sino do outro lado da praça."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_forca",
+   "frase": "Jogo a corda para o Hakon do outro lado do rio."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "Apanho a adaga que ele me atirou pelo cabo."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_destreza",
+   "frase": "Corto a corda do barco com uma flechada."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_destreza",
+   "frase": "Desvio-me do balde que cai do andaime."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "Pego a vela que tomba antes que incendeie a cortina."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "imp_destreza",
+   "frase": "atiro o frasco para o Noé apanhar"
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_destreza",
+   "frase": "Acerto a maçã na cabeça do espantalho com uma pedra."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_destreza",
+   "frase": "Seguro o vaso que o gato derrubou antes de partir."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "imp_destreza",
+   "frase": "Atiro o gancho e prendo-o na ameia."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Atiro o resto do pão aos pombos."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "A",
+   "rotulo": "livre",
+   "frase": "Pego a garrafa da prateleira e sirvo um copo."
+  },
+  {
+   "grupo": "imp_destreza",
+   "metade": "B",
+   "rotulo": "conversa",
+   "frase": "Peço ao Noé que me atire o frasco."
+  }
+ ]
+}
