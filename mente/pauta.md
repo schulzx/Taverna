@@ -131,13 +131,13 @@ O chamado pendente não vai ao save.
 - [x] (v9.637) **MC1 · o catálogo ouve a frase** · B · rasto, examinar → investigar, `lembrar` (Saberes de lugar, gente, bicho), estancar com quem, as amarras; o detector de pedido com fronteira de palavra. Catraca: as frases da sessão 18.
 - [x] (v9.637) **MC2 · o chamado, o módulo** · B · `o-mestre-chama.js`, `QUANDO_O_MESTRE_CHAMA`, `aviso`/`efeito` em `CUSTO_DE_FALHAR`, `SITUACAO_DA_CD` (o +3 solto entra). O efeito avisado é o cobrado; a CD não denuncia o segredo.
 - [x] (v9.637) **MC3 · o chamado na mesa** · D → O · Figma antes; o d20 à espera, «mudar de ideia», «o Mestre rola por mim»; `calou` = rola como hoje.
-- [ ] **MC4 · o sucesso dá um facto** · B · `oFactoDoSucesso`: ≥ 95% dos sucessos com facto com fonte; adeus ao «revele UMA coisa».
-- [ ] **MC5 · a quest manda** · B → O · o passo planta o segredo em X e escreve `descobriu`; o oráculo lê o passo.
-- [ ] **MC6 · o Mestre pede onde há o que achar** · B → O · uma em N em lugar vazio, chave própria, a oferta vazia não queima o jogador.
-- [ ] **MC7 · o epíteto só na boca dele** · B · o veto do nome só com ele ou um servo em cena; a alcunha nunca é a cidade onde se está.
-- [ ] **MC8 · o veredito antes de partir** · B → A + O · o patamar relativo no mapa, na partida e no «Entrar»; uma régua só.
-- [ ] **MC9 · o cativeiro como estado** · B → O · `cativeiro.js`, `SAIDAS_DO_CATIVEIRO`, campo novo; a masmorra sem «sair» enquanto preso.
-- [ ] **MC10 · socorrer quem caiu** · B → O · estancar estabiliza; primeiro achar o estado do companheiro a 0 PV.
+- [x] (v9.639) **MC4 · o sucesso dá um facto** · B · `oFactoDoSucesso`: ≥ 95% dos sucessos com facto com fonte; adeus ao «revele UMA coisa».
+- [x] (v9.639) **MC5 · a quest manda** · B → O · o passo planta o segredo em X e escreve `descobriu`; o oráculo lê o passo.
+- [x] (v9.639) **MC6 · o Mestre pede onde há o que achar** · B → O · uma em N em lugar vazio, chave própria, a oferta vazia não queima o jogador.
+- [x] (v9.639) **MC7 · o epíteto só na boca dele** · B · o veto do nome só com ele ou um servo em cena; a alcunha nunca é a cidade onde se está.
+- [x] (v9.639) **MC8 · o veredito antes de partir** · B → A + O · o patamar relativo no mapa, na partida e no «Entrar»; uma régua só.
+- [x] (v9.639) **MC9 · o cativeiro como estado** · B → O · `cativeiro.js`, `SAIDAS_DO_CATIVEIRO`, campo novo; a masmorra sem «sair» enquanto preso.
+- [x] (v9.639) **MC10 · socorrer quem caiu** · B → O · estancar estabiliza; primeiro achar o estado do companheiro a 0 PV.
 - [ ] **MC11 · a régua medida** · J · `medir-dados.mjs` e a 19.ª sessão: 1 dado / 2–3 turnos, ≥ 5 perícias, 0 sucessos vazios no passo.
 
 **A ordem:** MC1 → MC2 → MC3 (o dado na frase) · MC4 → MC5 → MC6 · MC7 (barato, ao lado de MC2) ·
