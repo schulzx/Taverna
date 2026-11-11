@@ -128,9 +128,9 @@ pela versão antiga: `cativeiro` no save, a preferência «o Mestre rola por mim
 O chamado pendente não vai ao save.
 
 **As etapas** (o pormenor, as provas e quem faz estão na planta, §5):
-- [ ] **MC1 · o catálogo ouve a frase** · B · rasto, examinar → investigar, `lembrar` (Saberes de lugar, gente, bicho), estancar com quem, as amarras; o detector de pedido com fronteira de palavra. Catraca: as frases da sessão 18.
-- [ ] **MC2 · o chamado, o módulo** · B · `o-mestre-chama.js`, `QUANDO_O_MESTRE_CHAMA`, `aviso`/`efeito` em `CUSTO_DE_FALHAR`, `SITUACAO_DA_CD` (o +3 solto entra). O efeito avisado é o cobrado; a CD não denuncia o segredo.
-- [ ] **MC3 · o chamado na mesa** · D → O · Figma antes; o d20 à espera, «mudar de ideia», «o Mestre rola por mim»; `calou` = rola como hoje.
+- [x] (v9.637) **MC1 · o catálogo ouve a frase** · B · rasto, examinar → investigar, `lembrar` (Saberes de lugar, gente, bicho), estancar com quem, as amarras; o detector de pedido com fronteira de palavra. Catraca: as frases da sessão 18.
+- [x] (v9.637) **MC2 · o chamado, o módulo** · B · `o-mestre-chama.js`, `QUANDO_O_MESTRE_CHAMA`, `aviso`/`efeito` em `CUSTO_DE_FALHAR`, `SITUACAO_DA_CD` (o +3 solto entra). O efeito avisado é o cobrado; a CD não denuncia o segredo.
+- [x] (v9.637) **MC3 · o chamado na mesa** · D → O · Figma antes; o d20 à espera, «mudar de ideia», «o Mestre rola por mim»; `calou` = rola como hoje.
 - [ ] **MC4 · o sucesso dá um facto** · B · `oFactoDoSucesso`: ≥ 95% dos sucessos com facto com fonte; adeus ao «revele UMA coisa».
 - [ ] **MC5 · a quest manda** · B → O · o passo planta o segredo em X e escreve `descobriu`; o oráculo lê o passo.
 - [ ] **MC6 · o Mestre pede onde há o que achar** · B → O · uma em N em lugar vazio, chave própria, a oferta vazia não queima o jogador.
@@ -155,7 +155,7 @@ respostas nossas; as métricas lado a lado (§2), as lacunas por efeito no jogad
 hoje e pela liberdade de 28/09 (todos reversíveis num commit; nenhum mexe em campo de save que já
 existe). Cada um prova-se na 19.ª sessão (o MC11) com a medida escrita.
 
-- [ ] **EM1 · a taxa de dado por intenção, como catraca** · médio (ampliar acervo em tabela existente
+- [x] (v9.637) **EM1 · a taxa de dado por intenção, como catraca** · médio (ampliar acervo em tabela existente
   + teste faltante) · de: conselheiro · 10/11
   O Matt rola em ~1 de 4 declarações (rastrear 57%, ler alguém 51%, procurar 43%…); nós em 4% (S18: 1
   dado nascido da frase em 26). Um corpus etiquetado das nossas frases corre pelo `lerAcao` com
@@ -174,7 +174,7 @@ existe). Cada um prova-se na 19.ª sessão (o MC11) com a medida escrita.
   `QUANDO_O_MESTRE_CHAMA`: o que a origem, o ofício e o registo do lugar dariam sai como facto, sem
   dado; o dado fica para o raro. Lei: *se é número, é tabela*. Quem: backend. Prova: suíte (cidade onde
   estou → facto sem dado; criatura rara → dado); na 19.ª, ~1 em 4 perguntas de saber com dado.
-- [ ] **EM4 · a falha por pouco dá meia-verdade** · pesado (mecânica do desfecho) · de: conselheiro ·
+- [x] (v9.637) **EM4 · a falha por pouco dá meia-verdade** · pesado (mecânica do desfecho) · de: conselheiro ·
   10/11
   Depois de um resultado baixo o Matt diz «nada» em 7% — meia-verdade em 23%, mordida em 11%, a cena
   segue em 59%. `MARGEM_DA_FALHA`: falhar por ≤ 3 dá o facto com uma parte em falta ou com custo;
