@@ -156,7 +156,13 @@ let SC = null;
   t("a mesa: o ato tem quest, e «O PASSO» diz a etapa e o que falta", mesa0.comQuest && mesa0.passo.startsWith(QUESTS_DO_TURNO.passo.cabeca) && mesa0.passo.includes(protegido), mesa0.passo);
   t("«A MÃO DELE AQUI» chega, na cidade da quest, sem o nome dele", mesa0.mao.startsWith(LINHA_DO_VILAO.cabeca) && !mesa0.mao.includes(fichaDoVilao(E.espinha).nome), mesa0.mao);
   t("o nome do servo dele não chega antes de o herói o ver (a alcunha)", !J(mesa0).includes(tenente) && !J(missoesDasQuests(E, { mundo: W.mundo })).includes(tenente));
-  t("e o veto do nome do herói está em NÃO PODE", mesa0.naoPode.some((v) => /meu nome/.test(v)));
+  /* MOVIDA na MC7 (11/11, sessão 18, defeito 5): o veto do nome ia em toda a
+     pauta da cidade da quest, e o modelo leu a alcunha como o nome do herói
+     (14 de 33 respostas). Agora só vai com a boca dele em cena — ele ou um
+     servo; sem ninguém dele, a linha chega e o veto não. */
+  t("sem servo em cena, o veto do nome (e a alcunha) NÃO está em NÃO PODE", !mesa0.naoPode.some((v) => /meu nome|forasteiro/.test(v)), J(mesa0.naoPode));
+  const mesa0s = aMesaDasQuests(E, { mundo: W.mundo, cena: { presentes: [tenente] } });
+  t("com o servo dele em cena, o veto do nome está em NÃO PODE", mesa0s.naoPode.some((v) => /meu nome/.test(v)), J(mesa0s.naoPode));
 
   /* T1: ouvir quem pede (e o guarda, para o guarda não se vender) */
   ({ E, r } = turno(W, E, (e) => falar(registar(e, { nome: protegido, cidade: origem }, { nome: guarda, cidade: origem }), protegido, guarda)));

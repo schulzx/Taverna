@@ -47,6 +47,7 @@ import { degrauDaCriatura } from "./degraus.js";
 import { menteDaCriatura } from "./adversario.js";
 import { testeDeMorte, aplicarTesteMorte } from "./combate.js";
 import { distanciaM } from "./grid.js";
+import { abrirCativeiro } from "./cativeiro.js";
 
 /* ---------------- OS NÚMEROS ----------------
    · rodadasParadas — três vezes o mundo agiu e nada mudou. Duas seria
@@ -259,8 +260,13 @@ const horasDe = (rolar) => {
 /* ---------------- O DESFECHO APLICADO ----------------
    Recebe a decisão e devolve tudo NOVO — o herói, o grupo, os inimigos —,
    mais o que a tela e o Narrador dizem. Não toca relógio nem tela: quem
-   avança as horas e fecha a luta é o App. */
-export function aplicarSemSaida({ heroi = null, inimigos = null, decisao = null, rolar = null } = {}) {
+   avança as horas e fecha a luta é o App.
+   MC9 (11/11, sessão 18, defeito 4): o «presos» deixou de ser só texto.
+   O desfecho com presos, e o herói vivo, devolve «cativeiro» — o estado
+   de cativeiro.js (quem prende, a cabeça dele, as amarras da semente,
+   «lugar» e «dia» que o App passa) —, que o App guarda no save e
+   que só um dado do herói fecha. Nos outros desfechos, null. */
+export function aplicarSemSaida({ heroi = null, inimigos = null, decisao = null, rolar = null, lugar = "", dia = 0 } = {}) {
   const d = decisao && DESFECHOS_SEM_SAIDA[decisao.desfecho];
   if (!d || !heroi) return null;
   const quem = decisao.quem || "Quem ficou de pé";
@@ -314,10 +320,24 @@ export function aplicarSemSaida({ heroi = null, inimigos = null, decisao = null,
   if (horas && !h.morto) partes.push(`${horas} ${horas === 1 ? "hora" : "horas"} depois acordo com ${SAIDA_DA_LUTA.pvAoAcordar} PV${grupo.some((g) => g && num(g.vida) === SAIDA_DA_LUTA.pvAoAcordar && grupoAntes.some((a) => a && a.nome === g.nome && num(a.vida) <= 0)) ? ", e quem caiu comigo também" : ""}${d.presos ? `, de mãos atadas, nas mãos de ${quem}` : ", no mesmo lugar"}.`);
   /* o captor NÃO "já não está aqui" — é dele que o preso acorda refém */
   partes.push(`A luta NÃO continua: ${d.presos ? "acordo preso, sem arma na mão, e não há golpe a dar agora" : d.inimigoSai && decisao.desfecho !== "recuo" ? `${quem} já não está aqui` : "ninguém volta a ela"}. Narre ${h.morto ? "o fim, curto e sem consolo" : horas ? "o despertar e o que ficou" : "o silêncio depois e o que ficou"}, e não invente outro golpe.`);
+  /* o cativeiro, por último: a sorte das amarras sai depois das horas, e
+     nada do que já se rolou muda de lugar */
+  let cativeiro = null;
+  if (d.presos && caidosNossos && !h.morto) {
+    const lista = Array.isArray(inimigos) ? inimigos : [];
+    const captor = lista.find((e) => e && e.nome === decisao.quem) || quemDecide(lista) || { nome: quem };
+    let degrau = "";
+    try { degrau = degrauDaCriatura(captor); } catch { degrau = ""; }
+    cativeiro = abrirCativeiro({
+      captor: quem, degrau, onde: typeof lugar === "string" ? lugar : "", dia,
+      presos: grupo.filter((g) => g && !g.morto).map((g) => g.nome),
+      sorte: typeof rolar === "function" ? rolar : sorteDaCasa,
+    });
+  }
   return {
     desfecho: decisao.desfecho, motivo: decisao.motivo, quem,
     heroi: h, inimigos: novos, horas, moedasLevadas, mortosDoGrupo, morreu,
-    linha, envelope: partes.join(" "),
+    linha, envelope: partes.join(" "), cativeiro,
   };
 }
 

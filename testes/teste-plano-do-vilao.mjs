@@ -506,8 +506,63 @@ sec("§8 O NOME DO HERÓI — vetado até ele o aprender");
   t("e ensina como ele me chama: «o forasteiro de Foz»", vetoDoNome(antes).includes("«o forasteiro de Foz»"));
   t("antes do rosto, o veto não diz o nome dele", !vetoDoNome(antes).includes("Ilídia"));
   t("e há o veto de quem manda, com o servo em cena", antes.naoPode.some((l) => l.includes("quem manda")));
-  const semCidade = oVilaoNaPauta(fichaDe(registo({ cidadeInicial: "" })), { dia: 5 }, { cena: { mao: "pista" } });
+  /* MOVIDA na MC7 (11/11): a cena era só «mao: pista», sem ninguém dele; o
+     veto do nome passou a pedir a boca dele em cena, por isso o servo entra */
+  const semCidade = oVilaoNaPauta(fichaDe(registo({ cidadeInicial: "" })), { dia: 5 }, { cena: { mao: "pista", presentes: ["Brás do Vau"] } });
   t("sem cidade de origem, «o forasteiro»", vetoDoNome(semCidade).includes("«o forasteiro»"));
+
+  /* MC7 · o epíteto só na boca dele (sessão 18, defeito 5: a alcunha saiu da
+     boca de toda a gente em 14 de 33 respostas) */
+  const alcunhaEm = (r) => r.naoPode.some((l) => /forasteiro/.test(l));
+  const naQuest = oVilaoNaPauta(f, { dia: 5 }, { cena: { mao: "pista", cidade: "Aldeia Nova", presentes: ["Joana"] } });
+  t("MC7: na cidade da quest sem servo, a linha chega e o naoPode vai sem alcunha nem veto do nome", !!naQuest.momento && !alcunhaEm(naQuest) && !vetoDoNome(naQuest), J(naQuest.naoPode));
+  const comServo = oVilaoNaPauta(f, { dia: 5 }, { cena: { mao: "pista", cidade: "Aldeia Nova", presentes: ["Joana", "Brás do Vau"] } });
+  t("MC7: com o servo em cena, o veto do nome e a alcunha voltam", !!vetoDoNome(comServo) && alcunhaEm(comServo));
+  const comEle = oVilaoNaPauta(f, { dia: 5 }, { camada: "rosto", cena: { mao: "rosto", presentes: ["Ilídia Selamar"] } });
+  t("MC7: com ele mesmo em cena (pelo nome), o veto do nome está lá", !!vetoDoNome(comEle));
+  t("MC7: o veto diz que mais ninguém usa a alcunha", vetoDoNome(comServo).includes("mais ninguém"));
+  const emCasa = oVilaoNaPauta(f, { dia: 5 }, { cena: { cidade: "Foz", presentes: ["Brás do Vau"] } });
+  t("MC7: em Foz (a terra dele), a alcunha não é «o forasteiro de Foz» — é «o forasteiro»", vetoDoNome(emCasa).includes("«o forasteiro»") && !vetoDoNome(emCasa).includes("de Foz"), vetoDoNome(emCasa));
+  /* em 1000 mundos: a alcunha nunca nomeia a cidade onde o herói está */
+  {
+    const CIDADES = ["Alto Negro", "Foz", "Porto Velho", "Vau Seco", "Aldeia Nova", "Largo do Cereal"];
+    let h = 7, nomeiaAqui = 0, comCidade = 0, vetos = 0;
+    const sorte = () => ((h = (h * 1103515245 + 12345) % 2147483648) / 2147483648);
+    for (let i = 0; i < 1000; i++) {
+      const origem = CIDADES[Math.floor(sorte() * CIDADES.length)];
+      const aqui = sorte() < 0.5 ? origem : CIDADES[Math.floor(sorte() * CIDADES.length)];
+      const reg = nascerOVilao({ semente: "mc7-" + i, antecedente: "soldado", fio: FIO, chefes: CHEFES, cidadeInicial: origem });
+      const fi = fichaDe(reg);
+      const servo = fi.tenentes[0] ? fi.tenentes[0].nome : fi.nome;
+      const r = oVilaoNaPauta(fi, { dia: 5 }, { cena: { cidade: aqui, mao: "pista", presentes: [servo] } });
+      const v = r.naoPode.find((l) => l.includes("o meu nome"));
+      if (!v) continue;
+      vetos++;
+      if (v.includes(`forasteiro de ${aqui}»`)) nomeiaAqui++;
+      if (/forasteiro de /.test(v)) comCidade++;
+    }
+    t(`MC7: em 1000 mundos, a alcunha nunca nomeia a cidade atual (${vetos} vetos, ${comCidade} com a terra de onde veio)`, vetos >= 900 && nomeiaAqui === 0 && comCidade > 0, `${nomeiaAqui} nomeiam a cidade atual`);
+  }
+  /* MEDIDO: a fração de pautas com a alcunha numa sessão simulada. A forma da
+     18.ª: 33 respostas, quase todas na cidade da quest (a mão dele liga-se
+     ali, quests-do-turno.js), e o servo em cena poucas vezes. Antes da MC7 o
+     veto acompanhava toda linha «A MÃO DELE AQUI» (o retorno cedo era a única
+     porta); depois, só a boca dele o traz. */
+  {
+    let h = 18, linhas = 0, alcunhas = 0, servoEmCena = 0;
+    const sorte = () => ((h = (h * 1103515245 + 12345) % 2147483648) / 2147483648);
+    const TURNOS = 33;
+    for (let i = 0; i < TURNOS; i++) {
+      const naCidadeDaQuest = sorte() < 0.8;
+      const servo = sorte() < 0.12;
+      if (servo) servoEmCena++;
+      const r = oVilaoNaPauta(f, { dia: 5 }, { cena: { cidade: "Foz", ...(naCidadeDaQuest ? { mao: "pista" } : {}), presentes: ["Drogo", "Maren", ...(servo ? ["Brás do Vau"] : [])] } });
+      if (r.momento) linhas++;
+      if (alcunhaEm(r)) alcunhas++;
+    }
+    console.log(`      sessão simulada (${TURNOS} turnos): pautas com a alcunha — antes ${linhas}/${TURNOS}, depois ${alcunhas}/${TURNOS} (servo em cena em ${servoEmCena})`);
+    t(`MC7 medido: a alcunha vai a ${alcunhas}/${TURNOS} pautas (antes da MC7: ${linhas}/${TURNOS}) — só os turnos com o servo em cena`, alcunhas === servoEmCena && alcunhas < linhas);
+  }
   t("no rosto, o veto da luta, com o nome dele", oVilaoNaPauta(f, { dia: 5 }, { camada: "rosto", cena: { mao: "rosto" } }).naoPode.some((l) => l.startsWith("abrir luta com Ilídia Selamar")));
 
   /* matar o servo não lhe ensina o nome; poupá-lo, sim */

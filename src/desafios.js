@@ -62,6 +62,8 @@ import { soODeclarado, emProclise, NAO_E_DECLARACAO } from "./peneira.js";
 import { falaSoPergunta } from "./perguntas.js";
 /* MM15 (4): o segredo que a espinha guarda — quem o arranca rola */
 import { pressionaSegredo, pedidoDoSegredo, ARRANCAR } from "./segredo-guardado.js";
+/* MC9: o cativeiro diz a CD de escapar/arrebentar — a do captor */
+import { cdDaSaida } from "./cativeiro.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 /* o nome (ou um pedaço dele) dito como palavra inteira na frase */
@@ -1972,6 +1974,13 @@ export function lerAcao(texto, ctx = {}) {
     const tr = trancaDe(semente, lugar, "porta");
     dc = tr.dc + (via ? via.ajuste : 0);
     deOnde = `${tr.nome}, ${via ? via.nome : "no braço"}`;
+  } else if (cdDaSaida(ctx.cativeiro, d.alvo)) {
+    /* MC9 (11/11, sessão 18, defeito 4): preso, a CD de escapar e de
+       arrebentar é a do captor (cativeiro.js) — o nó que ele atou, não o
+       degrau genérico do catálogo. Sem `ctx.cativeiro`, como sempre. */
+    const doCativeiro = cdDaSaida(ctx.cativeiro, d.alvo);
+    dc = doCativeiro.dc;
+    deOnde = doCativeiro.deOnde;
   } else {
     /* MC2 (§2.6 da planta): O NÚMERO NÃO DENUNCIA O SEGREDO. Até aqui a CD
        de uma busca com achado era a do achado, e a etiqueta dizia «há algo

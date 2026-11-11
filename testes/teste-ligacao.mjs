@@ -420,6 +420,15 @@ sec("1. NENHUM MÓDULO MUDO");
     /* e paga na MESMA leva (11/11, oficial): o App.jsx e o turno-no-servidor.js
        importam os dois — o tamanho do turno e o pedido à rede com ele. A
        entrada saiu. */
+    /* 11/11 (Fase MC, MC10 · socorrer quem caiu, backend): `socorro.js` nasce
+       — o caído do grupo sangra até um dado de Medicina (`oSocorro`,
+       `aplicarSocorro`), o estável acorda nas horas da régua
+       (`passarHorasNoGrupo`), e a pauta leva o veto (`oSocorroNaPauta`) — e
+       espera o `oficial`, que o liga no App.jsx (o resolver do teste de
+       `estancar`, a passagem do tempo, a pauta). Credor: o `oficial`, na
+       MESMA leva. A entrada sai quando o App o importar.
+       `teste-socorro.mjs` é o primeiro leitor. */
+    "socorro.js": "o oficial, MC10 (fiação do estancar com quem, na MESMA leva)",
   };
   const mudos = [];
   for (const f of arqs) {

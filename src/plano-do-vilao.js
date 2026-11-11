@@ -807,7 +807,13 @@ export const CAMPOS_DA_CAMADA = Object.freeze({
    `teto`: a linha «A MÃO DELE AQUI» nunca passa disto (§11.6). As frases
    são modelos com {campos}; a ordem diz o que cai primeiro quando não
    cabe (o último sai primeiro). `alcunha`: como ele e os servos chamam o
-   herói até lhe saberem o nome — o forasteiro da terra de onde veio. */
+   herói até lhe saberem o nome — o forasteiro da terra de onde veio.
+   MC7 (11/11, sessão 18, defeito 5): a alcunha é DELE. O veto que a
+   escreve só vai à pauta com ele ou um servo em cena (oVilaoNaPauta), e
+   diz que mais ninguém a usa — um veto que escreve a alcunha é lido como o
+   nome do herói, e na 18.ª saiu da boca de toda a gente (14 de 33
+   respostas). E nunca nomeia a cidade onde o herói está: «o forasteiro de
+   Alto Negro», dito em Alto Negro, não é alcunha — aí é só «o forasteiro». */
 export const LINHA_DO_VILAO = Object.freeze({
   teto: 160,
   cabeca: "A MÃO DELE AQUI: ",
@@ -821,7 +827,7 @@ export const LINHA_DO_VILAO = Object.freeze({
   }),
   alcunha: Object.freeze({ comCidade: "o forasteiro de {cidade}", semCidade: "o forasteiro" }),
   vetos: Object.freeze({
-    nome: "que {quem} diga o meu nome: ainda não o sabe, e chama-me «{alcunha}»",
+    nome: "que {quem} diga o meu nome: ainda não o sabe, e chama-me «{alcunha}» — mais ninguém me chama assim",
     quemAntes: "ele ou quem o serve",
     quemManda: "que quem o serve diga quem manda: não diz, nem sob ameaça",
     semLuta: "abrir luta com {nome} nesta cena: veio falar, e vai embora inteiro",
@@ -1562,10 +1568,14 @@ export function oVilaoNaPauta(ficha, estado, opcoes) {
   const corpo = cabe(partes, L.teto - L.cabeca.length);
   const momento = corpo ? `${L.cabeca}${corpo}` : "";
 
-  /* os vetos: o nome do herói, quem manda, e a luta no rosto */
+  /* os vetos: o nome do herói, quem manda, e a luta no rosto.
+     O do nome só com a boca dele em cena — ele mesmo ou um servo (MC7):
+     a quest ou o lugar dele trazem a linha, não a alcunha. */
   const naoPode = [];
-  if (!sabeONome(f.registro, E.saber)) {
-    const c = texto(f.cidadeInicial, FICHA_DO_VILAO.nome);
+  const bocaDele = !!tenenteAqui || (!!f.nome && estaAqui("vilao", f.nome));
+  if (bocaDele && !sabeONome(f.registro, E.saber)) {
+    const origem = texto(f.cidadeInicial, FICHA_DO_VILAO.nome);
+    const c = origem && semAc(origem) !== cidade ? origem : "";
     const alcunha = c ? preencher(L.alcunha.comCidade, { cidade: c }) : L.alcunha.semCidade;
     naoPode.push(preencher(L.vetos.nome, { quem: pode("nome") ? `${f.nome} ou quem o serve` : L.vetos.quemAntes, alcunha }));
   }
