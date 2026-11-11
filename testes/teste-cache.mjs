@@ -118,8 +118,11 @@ sec("4. A JANELA ANCORADA — o histórico para de serrar");
      o pedido já arrumado (pedido.messages) — que É a janela ancorada, com a
      mensagem do turno acrescida do que vira. Procurar a chamada antiga
      literal faria esta suíte reprovar a própria melhoria. */
-  t("o App a usa na chamada", /pedido = \{ system, messages: janelaAncorada\(historico\) \}/.test(APP) && /chamarModelo\(pedido\.system, pedido\.messages, 3600/.test(APP));
-  t("e no reforço", /\[\.\.\.pedido\.messages,/.test(APP) && /chamarModelo\(pedido\.system, reforco, 3600/.test(APP));
+  /* EM2 (11/11): as duas chamadas deixaram o 3600 literal e levam o teto do
+     pedido (o do tipo do turno), com os 3600 por reserva; a janela ancorada é
+     a mesma, que é o que esta suíte guarda. */
+  t("o App a usa na chamada", /pedido = \{ system, messages: janelaAncorada\(historico\) \}/.test(APP) && /chamarModelo\(pedido\.system, pedido\.messages, teto/.test(APP) && /const teto = Number\(pedido\.maxTokens\) \|\| 3600;/.test(APP));
+  t("e no reforço", /\[\.\.\.pedido\.messages,/.test(APP) && /chamarModelo\(pedido\.system, reforco, teto/.test(APP));
   t("o slice deslizante morreu", !/historico\.slice\(-JANELA_DE_HISTORICO\)/.test(APP));
 }
 

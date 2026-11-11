@@ -259,6 +259,7 @@ import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
+import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { devolverAMochila } from "./comparar-item.js";
 import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
@@ -473,7 +474,7 @@ async function chamarModelo(system, messages, maxTokens = 1000, formato = "texto
    turno — a serra que o /custo denunciava. A conta e o porquê moram
    em janela.js: âncora fixa, salto raro, prefixo vivo. */
 
-async function chamarMestre(system, historico) {
+async function chamarMestre(system, historico, tamanho = null) {
   /* histórico no formato Messages API, recortado pela janela ancorada (janela.js). Teto 3600: com 2600 o JSON truncava; é rede, não meta —
      o tamanho pede-se na etiqueta do pedido (escuta.js, 11.ª sessão). O turno leva a ficha do cache explícito; o reforço lá embaixo
      não (a mensagem a mais faria o servidor reescrever o cache por um pedido que não volta). */
@@ -483,7 +484,13 @@ async function chamarMestre(system, historico) {
      moram em prompt.js. Se a arrumação estourar, o pedido vai como vinha. */
   let pedido = { system, messages: janelaAncorada(historico) };
   try { pedido = pedidoNaOrdemDoCache(system, pedido.messages); } catch (e) { calou("o pedido na ordem do cache", e); }
-  let texto = await chamarModelo(pedido.system, pedido.messages, 3600, "json", "narrador", true);
+  /* EM2 (11/11/2026): a resposta do tamanho da pergunta — a linha de
+     tamanho da etiqueta e o teto saem do tipo do turno (tamanho-da-resposta.js).
+     A troca é só na cópia que vai à rede: o histórico guardado não muda, e o
+     prefixo do cache fica igual. Sem tamanho, ou se estourar, os 3600 de sempre. */
+  try { if (tamanho) pedido = comOTamanho(pedido, tamanho); } catch (e) { calou("o tamanho no pedido", e); }
+  const teto = Number(pedido.maxTokens) || 3600;
+  let texto = await chamarModelo(pedido.system, pedido.messages, teto, "json", "narrador", true);
   let resp = extrairJSON(texto);
   /* REDE DE SEGURANÇA (v7.0.2): se veio JSON válido mas SEM narrativa (o "…"
      na tela), tenta UMA segunda vez com um empurrão explícito antes de
@@ -492,7 +499,7 @@ async function chamarMestre(system, historico) {
     /* o reforço vai DEPOIS do pedido já arrumado: o prefixo é o da primeira
        tentativa inteira, e sai do cache quase todo */
     const reforco = [...pedido.messages, { role: "user", content: "[SISTEMA] Sua resposta anterior chegou sem o campo \"narrativa\". Responda de novo, em JSON, com \"narrativa\" SEMPRE preenchida (é o texto que o jogador lê)." }];
-    texto = await chamarModelo(pedido.system, reforco, 3600, "json");
+    texto = await chamarModelo(pedido.system, reforco, teto, "json");
     const resp2 = extrairJSON(texto);
     if (resp2.narrativa && resp2.narrativa !== "…" && !resp2.narrativa.startsWith("O Mestre hesita")) {
       /* mantém as mudanças da primeira resposta se a segunda não trouxer */
@@ -11042,9 +11049,19 @@ export default function Taverna() {
        turno vai pelo Mestre, e as portas continuam as do modo. */
     let pedidoDoAtor = null;
     if (MODO_DA_MESA === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido(), teste: testeDoTurnoRef.current }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
+    /* EM2: o tipo do turno decide as palavras e o teto (tamanho-da-resposta.js).
+       O que o App sabe ANTES da resposta: a frase, o teste resolvido no turno,
+       e a luta que acabou entre o estado do pedido e agora. A chegada e o
+       fecho só se sabem depois da resposta (os efeitos do aplicar) — ficam de
+       fora, e o tipo cai pela frase. */
+    let tamanho = null;
+    try {
+      tamanho = oTamanhoDaResposta({ frase: conteudo, teste: testeDoTurnoRef.current, luta: !!combateAntes && !combateRef.current });
+    } catch (e) { calou("o tamanho da resposta", e); tamanho = null; }
+    if (pedidoDoAtor && tamanho) { try { pedidoDoAtor = { ...pedidoDoAtor, pedido: comOTamanho(pedidoDoAtor.pedido, tamanho) }; } catch (e) { calou("o tamanho no pedido do ator", e); } }
     let respondeu = false;
     try {
-      const resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist);
+      const resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist, tamanho);
       /* MM15 (3): O MESTRE FALOU — a partir daqui, se algo estourar, o
          tropeço é nosso, não da ligação: `destinoDaFalha` usa esta
          marca para diferençar isto de uma chamada que nunca voltou. */

@@ -272,7 +272,9 @@ sec("9. A FIAÇÃO NO APP");
 {
   t("chamarModelo leva a ficha só quando pedida", /comCache \? \{ cache: fichaDoCacheRef\.atual \|\| \{\} \}/.test(APP));
   t("e guarda a que volta", /fichaDoCacheRef\.atual = data\.cache/.test(APP));
-  t("o turno do Narrador pede o cache; o reforço não", /chamarModelo\(pedido\.system, pedido\.messages, 3600, "json", "narrador", true\)/.test(APP) && /chamarModelo\(pedido\.system, reforco, 3600, "json"\)/.test(APP));
+  /* EM2 (11/11): o 3600 literal virou o teto do pedido (o do tipo do turno,
+     com os 3600 por reserva); o cache continua só no turno, nunca no reforço. */
+  t("o turno do Narrador pede o cache; o reforço não", /chamarModelo\(pedido\.system, pedido\.messages, teto, "json", "narrador", true\)/.test(APP) && /chamarModelo\(pedido\.system, reforco, teto, "json"\)/.test(APP));
   t("a peneira da fala vem dentro de um try", /try \{\s*const ultima = [^]*?semFalaInventada\([^]*?\} catch \(e\) \{ calou\("a fala do herói", e\); \}/.test(APP));
   t("a ficha não vai ao save", !/fichaDoCacheRef\.atual[^\n]*localStorage|sv\.fichaDoCache/.test(APP));
 }

@@ -40,7 +40,10 @@ const quantas = (frag) => APP.split(frag).length - 1;
    src/motor/preludio-do-turno.js (oPreludioDoTurno). A ponta passa a ser a
    abertura de `enviar`, que continua no App. */
 const iEnviar = pos("const enviar = useCallback(async (conteudo, persAtual, histBase) => {");
-const iChamada = pos("await chamarMestre(systemRef.current, novoHist)");
+/* EM2 (11/11): a chamada ganhou o 3.º argumento (o tamanho do turno,
+   tamanho-da-resposta.js); a âncora perdeu o parêntese de fecho e acha a
+   mesma chamada, com ou sem ele — a ordem que se prova é a mesma. */
+const iChamada = pos("await chamarMestre(systemRef.current, novoHist");
 const ENVIAR = iEnviar >= 0 && iChamada > iEnviar ? APP.slice(iEnviar, iChamada) : "";
 const ord = (...frags) => {
   let ultimo = -1;

@@ -408,7 +408,9 @@ sec("1. NENHUM MÓDULO MUDO");
        sobre o pedido que já vai à rede. Credor: o `oficial`, na MESMA leva.
        A entrada sai quando o App o importar.
        `teste-tamanho-da-resposta.mjs` é o primeiro leitor. */
-    "tamanho-da-resposta.js": "o oficial, EM2 (a linha e o maxTokens no pedido do turno)",
+    /* e paga na MESMA leva (11/11, oficial): o App.jsx e o turno-no-servidor.js
+       importam os dois — o tamanho do turno e o pedido à rede com ele. A
+       entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

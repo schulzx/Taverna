@@ -142,6 +142,7 @@ import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { semFalaInventada } from "./fala-do-heroi.js";
 import { narrativaFaltou, MOTIVO_SEM_NARRATIVA } from "./guardado.js";
 import { oModoDoNarrador } from "./motor/portas-do-narrador.js";
+import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 
 export const TURNO_NO_SERVIDOR = Object.freeze({
@@ -465,7 +466,9 @@ export async function oNarradorDoServidor(pedido, chamar, opcoes) {
   let resp = extrairJSON(String(r1.texto || ""));
   if (pedeOutraEscrita(resp)) {
     const reforco = [...msgs, { role: "user", content: IA_DO_TURNO.textoDoReforco }];
-    const r2 = await ir({ system: p.system, messages: reforco, ...IA_DO_TURNO.reforco });
+    /* EM2: o reforço leva o teto do pedido (o do tipo do turno), como o
+       reforço do App leva o teto; sem ele, o de IA_DO_TURNO.reforco */
+    const r2 = await ir({ system: p.system, messages: reforco, ...IA_DO_TURNO.reforco, ...(Number(p.maxTokens) > 0 ? { maxTokens: Number(p.maxTokens) } : {}) });
     const resp2 = extrairJSON(String(r2.texto || ""));
     if (!pedeOutraEscrita(resp2)) {
       if (!resp2.mudancas && resp.mudancas) resp2.mudancas = resp.mudancas;
@@ -525,16 +528,27 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   const ia = deVerdade ? { chamadas: 0, usos: [], cache: undefined } : null;
   let resposta = obj(obj(corpo).resposta);
   const ator = m.modo === "ator";
+  /* EM2 (11/11/2026): a mesma régua do App, no mesmo ponto — a linha de
+     tamanho e o teto do tipo do turno entram na CÓPIA que vai à rede; o
+     pedido montado (m.pedido) continua o do motor, byte a byte o do caminho
+     do App. O protocolo não muda: o envio já lia p.maxTokens. O servidor
+     sabe a frase; o teste do turno é estado de tela do App e não viaja no
+     save, por isso aqui o tipo sai da frase. */
+  let pedidoNaRede = m.pedido;
+  if (deVerdade) {
+    const calouT = (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); };
+    try { pedidoNaRede = comOTamanho(m.pedido, oTamanhoDaResposta({ frase: m.frase })); } catch (x) { calouT("o tamanho no pedido"); pedidoNaRede = m.pedido; }
+  }
   if (deVerdade && m.ficha) {
     /* O ATOR PELA PORTA: a mesma peça do App (aRespostaDoAtor), sobre a
        porta do provedor; a falha sai marcada, como a do Mestre */
     const porta = async (c) => { ia.chamadas++; let r; try { r = await op.chamar(c); } catch (e) { throw falhaDoProvedor(e); } colherUso(ia.usos, r); return obj(r); };
     let n;
-    try { n = await aRespostaDoAtor(m.pedido, porta, { frase: m.frase, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } }); }
+    try { n = await aRespostaDoAtor(pedidoNaRede, porta, { frase: m.frase, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } }); }
     catch (e) { throw e && e.motivo ? e : falhaDoProvedor(e); }
     resposta = obj(n.resposta);
   } else if (deVerdade) {
-    const n = await oNarradorDoServidor(m.pedido, op.chamar, { cache: op.cache, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } });
+    const n = await oNarradorDoServidor(pedidoNaRede, op.chamar, { cache: op.cache, calou: (onde) => { if (m.calados.length < TURNO_NO_SERVIDOR.caladosMax) m.calados.push(onde); } });
     resposta = obj(n.resposta);
     ia.chamadas += n.chamadas;
     ia.usos.push(...n.usos);

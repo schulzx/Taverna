@@ -126,7 +126,12 @@ sec("1. A TABELA DA IA DO TURNO É A DO APP");
   const APP = readFileSync(aqui("../src/App.jsx"), "utf8");
   const mestre = APP.slice(APP.indexOf("async function chamarMestre("), APP.indexOf("async function chamarMestre(") + 4000);
   t("o reforço é o texto que o chamarMestre do App manda", mestre.includes(JSON.stringify(IA_DO_TURNO.textoDoReforco).slice(1, -1)));
-  t(`e com o teto dele (${IA_DO_TURNO.reforco.maxTokens}, ${IA_DO_TURNO.reforco.formato})`, mestre.includes(`chamarModelo(pedido.system, reforco, ${IA_DO_TURNO.reforco.maxTokens}, "${IA_DO_TURNO.reforco.formato}")`));
+  /* EM2 (11/11): o reforço do App deixou de levar o 3600 literal e leva o
+     teto do pedido (o do tipo do turno, tamanho-da-resposta.js), com os 3600
+     por reserva; o do servidor faz o mesmo sobre IA_DO_TURNO.reforco. A
+     promessa é a mesma — o reforço do servidor é o do App —, por isso a régua
+     passou a ler o teto e a reserva em vez do número na chamada. */
+  t(`e com o teto dele (o do pedido, ${IA_DO_TURNO.reforco.maxTokens} por reserva, ${IA_DO_TURNO.reforco.formato})`, mestre.includes(`chamarModelo(pedido.system, reforco, teto, "${IA_DO_TURNO.reforco.formato}")`) && mestre.includes(`const teto = Number(pedido.maxTokens) || ${IA_DO_TURNO.reforco.maxTokens};`));
   t("a régua da 2.ª escrita é a do App (o «…» e o «O Mestre hesita»)", mestre.includes(`resp.narrativa === "${IA_DO_TURNO.vazia}" || resp.narrativa.startsWith("${IA_DO_TURNO.hesita}")`));
   const c = IA_DO_TURNO.cronista;
   t(`o Cronista pede o que o cronistaDoTurno do App pede (${c.maxTokens}, ${c.formato}, ${c.tarefa})`, APP.includes(`chamarModelo(sys, [{ role: "user", content: user }], ${c.maxTokens}, "${c.formato}", "${c.tarefa}")`));

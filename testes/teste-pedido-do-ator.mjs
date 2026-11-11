@@ -50,6 +50,7 @@ import { diasVistosDe } from "../src/elenco.js";
 import { envelopeDoTeste } from "../src/testes.js";
 import { TAMANHO_DA_NARRATIVA } from "../src/escuta.js";
 import { MOTIVO_SEM_NARRATIVA } from "../src/guardado.js";
+import { oTamanhoDaResposta, comOTamanho } from "../src/tamanho-da-resposta.js";
 import { REDE_DE_SAIDA } from "../api/_provedor.js";
 import { oPedidoNoServidor, oTurnoNoServidor } from "../src/turno-no-servidor.js";
 import { estadoNoTurno } from "../src/sessao.js";
@@ -242,7 +243,11 @@ for (const k of casos.slice(0, nSessoes)) {
   n7++;
   if (a && a.estadoDoFim) fecham++;
   if (a.tela.narrativa === PROSA && a.narrativa === PROSA) telaCerta++;
-  if (cA.length === 1 && cA[0].formato === "texto" && cA[0].system === OF && !("cache" in cA[0])) redeCerta++;
+  /* EM2 (11/11): o ofício que vai à rede leva as palavras do tipo do turno
+     (comOTamanho troca «de 80 a 140 palavras» pelo número do tipo); a régua
+     compara com o ofício passado pela mesma peça, e não com o literal */
+  const ofNaRede = comOTamanho({ system: OF }, oTamanhoDaResposta({ frase: k.frase })).system;
+  if (cA.length === 1 && cA[0].formato === "texto" && cA[0].system === ofNaRede && !("cache" in cA[0])) redeCerta++;
   if (!a.cronista.chamado && a.ia.chamadas === 1) calado++;
   if (JSON.stringify(a.estadoDoFim) === JSON.stringify(b.estadoDoFim) && JSON.stringify(a.eco) === JSON.stringify(b.eco)) iguais++; else if (difs.length < 5) difs.push(`${k.de}: ${Object.keys(a.estadoDoFim).filter((x) => JSON.stringify(a.estadoDoFim[x]) !== JSON.stringify(b.estadoDoFim[x])).join(",")}`);
   /* a mordida: o `mestre` com a mesma tentação, num de cada cinco */
