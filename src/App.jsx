@@ -263,7 +263,13 @@ import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { devolverAMochila } from "./comparar-item.js";
 import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
-import { oQueOMestrePede, oCartaoDoPedido } from "./motor/o-mestre-pede.js";
+import { oQueOMestrePede, oCartaoDoPedido, oVereditoDaOferta } from "./motor/o-mestre-pede.js";
+/* Fase MC (11/11): o sucesso dá facto (MC4), a quest manda no achado e no oráculo (MC5),
+   o preso é um estado (MC9), quem caiu sangra até um dado (MC10) */
+import { oFactoDoSucesso } from "./facto-do-sucesso.js";
+import { osPassosDasQuests, achadoDoPasso, oPassoNoOraculo, oLivroDoAchado } from "./a-quest-manda.js";
+import { garantirCativeiro, aplicarSaida } from "./cativeiro.js";
+import { oSocorro, aplicarSocorro, passarHorasNoGrupo } from "./socorro.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, lancamentoDoAtaque } from "./motor/a-bandeja.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
@@ -5419,6 +5425,10 @@ export default function Taverna() {
   const [pulsoDoChamado, setPulsoDoChamado] = useState(0);
   /* o pedido do Mestre tocado: a frase dele parte e o chamado que ela abre nasce lançado */
   const pedidoArmadoRef = useRef(null);
+  /* MC6 · A CHAVE DA OFERTA: a frase do pedido do Mestre que está a partir agora
+     (posta no toque em «Rolar», limpa logo a seguir) — o veredito dela leva a
+     chave da oferta (oVereditoDaOferta), e a busca do jogador fica aberta */
+  const ofertaEmCursoRef = useRef(null);
   /* a nota ao Narrador ANTES do ato: «mudar de ideia» devolve-a como estava */
   const notaAntesDoAtoRef = useRef(undefined);
   const lancarOChamadoRef = useRef(null);
@@ -5669,6 +5679,15 @@ export default function Taverna() {
      save, ignorado pela versão antiga). */
   const golpesDaRodadaRef = useRef(null);
   const fimSemSaidaRef = useRef(null);
+  /* MC9 · O PRESO É UM ESTADO (cativeiro.js): quem prende, as amarras, onde.
+     Campo novo e aditivo no save (`cativeiro`); save antigo = null = livre.
+     `preso` é o espelho React, para a tela esconder «sair» enquanto dura. */
+  const cativeiroRef = useRef(null);
+  const [preso, setPreso] = useState(false);
+  const definirCativeiro = (c) => {
+    cativeiroRef.current = c || null;
+    try { setPreso(!!cativeiroRef.current); } catch (e) { calou("MC9 · o espelho do preso", e); }
+  };
   const ataqueResolvidoRef = useRef(false);
   const danoJaAplicadoRef = useRef(false); // turno em que o sistema já cobrou dano
   const mortosSessaoRef = useRef(null);   // as cinco perguntas em curso (v9.31)
@@ -6860,6 +6879,7 @@ export default function Taverna() {
   const irAoLugarPeloMapa = (alvo) => {
     if (!alvo || !alvo.nome || carregando || rolagem) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⛔ No meio da luta quem diz onde cada um está é o tabuleiro, em metros." }]); return; }
+    if (recusaDoPreso()) return; /* MC9: preso não anda pelo mapa */
     setAba(null);
     /* voltar ao meio da cidade é apagar o lugar, não ir a um lugar chamado
        "a cidade" — registrar isso como sublocal criaria o fantasma que
@@ -6896,6 +6916,9 @@ export default function Taverna() {
     if (!nome || carregando || rolagem) return;
     if (combateRef.current || jornadaRef.current || masmorraRef.current) return;
     if (semNome(nome) === semNome(cidadeAtualRef.current)) return;
+    /* MC9: preso não parte — e a recusa vem antes do envelope da partida, que
+       mandaria o Narrador contar uma estrada que o sistema não abre */
+    if (recusaDoPreso()) return;
     /* ---------------- ANTES DE PÔR O PÉ NA ESTRADA (v9.150) ----------------
        O aviso de dentro da viagem chega tarde: ali as saídas são voltar
        ou passar fome. Este é o de antes, com o balcão ainda do lado.
@@ -7644,7 +7667,9 @@ export default function Taverna() {
     questsRef, raidRef, relevanciaRef, salaRef, sinaisDoTurnoRef, systemRef, tomandoRef,
   });
   /* BQ2: o livro de factos não é ref da tabela; vai junto, e a pauta lê-o (o vilão: quem o herói poupou e matou) */
-  const estadoDoPedido = () => ({ ...oEstadoDoPedido(refsDoPedido(), { personagem, mundo, nomeCampanha, mercado, governos, historico }), factos: factosRef.current });
+  /* MC9: e o cativeiro também (campo do save, não ref da tabela): a pauta põe a linha e os vetos dele */
+  const comOCativeiro = (e) => ({ ...e, cativeiro: cativeiroRef.current });
+  const estadoDoPedido = () => comOCativeiro({ ...oEstadoDoPedido(refsDoPedido(), { personagem, mundo, nomeCampanha, mercado, governos, historico }), factos: factosRef.current });
   const aplicarDoPedido = (x) => {
     const refs = refsDoPedido();
     for (const [c, v] of Object.entries(x || {})) { const r = REFS_DO_PEDIDO[c] || REFS_DA_PAUTA[c]; if (r && refs[r.ref]) refs[r.ref].current = v; }
@@ -8530,6 +8555,17 @@ export default function Taverna() {
     }
     minutoRef.current = rel.minuto;
     setMinuto(minutoRef.current);
+    /* MC10: o companheiro estancado conta as horas, e acorda na régua do herói
+       (SAIDA_DA_LUTA.pvAoAcordar) quando elas acabam (passarHorasNoGrupo) */
+    try {
+      const gAntes = ((ficha || fichaViva() || personagem || {}).grupo) || [];
+      if (Number(n) > 0 && gAntes.some((m) => m && m.estavel)) {
+        const gDepois = passarHorasNoGrupo(gAntes, Number(n) / 60);
+        naFicha((f) => ({ ...f, grupo: gDepois }));
+        const acordaram = gDepois.filter((m) => m && m.nome && !m.estavel && (m.vida || 0) > 0 && gAntes.some((a) => a && a.nome === m.nome && a.estavel));
+        if (acordaram.length) pushMsgs(acordaram.map((m) => ({ autor: "sistema", texto: `🩹 ${m.nome} abre os olhos, com ${SAIDA_DA_LUTA.pvAoAcordar} PV.` })));
+      }
+    } catch (e) { calou("MC10 · as horas do caído", e); }
     /* O QUE O TEMPO FAZ AO CORPO (oCorpoNoRelogio, no motor, com os porquês:
        a invocação cujo prazo acabou, só fora da luta — v9.54; o aviso das
        16 h e a Exaustão das 20 h, que não se reanuncia). A escrita é a de
@@ -8937,7 +8973,7 @@ export default function Taverna() {
          lê este literal e falha se um campo nascer aqui sem nascer lá. */
       versao: ESTADO_VERSAO,
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cativeiro: cativeiroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -11536,6 +11572,7 @@ export default function Taverna() {
        as dívidas. O que muda é o calendário, o arco e quem está do outro
        lado. */
     const h = abrirCapitulo(historiaRef.current, { forma: f.id, dia: diaRef.current, anos });
+    try { definirCativeiro(null); } catch (e) { calou("MC9 · capítulo novo, livre", e); }
     historiaRef.current = h;
     diaRef.current = h.dia; setDia(h.dia);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
@@ -11771,6 +11808,7 @@ export default function Taverna() {
     muralRef.current = []; setMural(muralRef.current);
     decretosRef.current = []; setDecretos(decretosRef.current);
     const hCap = cap ? abrirCapitulo(historiaRef.current, { forma: cap.forma, dia: diaRef.current, anos: cap.anos }) : null;
+    try { definirCativeiro(null); } catch (e) { calou("MC9 · jogo novo, livre", e); }
     diaRef.current = hCap ? hCap.dia : 1; setDia(diaRef.current);
     minutoRef.current = AMANHECER + 60; setMinuto(minutoRef.current);
     /* v9.5: o herói COMEÇA descansado. Com 0 aqui, o relógio do sono contava
@@ -11970,6 +12008,8 @@ export default function Taverna() {
          campo novo e aditivo: a versão antiga ignora-o; save sem ele, nenhum) */
       try { const ep = sv.jornada && sv.jornada.encontro && typeof sv.jornada.encontro === "object" && sv.jornada.encontro.fase ? sv.jornada.encontro : null; encontroPendenteRef.current = ep; setEncontroPendente(ep); } catch (e) { calou("o encontro pendente no load", e); encontroPendenteRef.current = null; setEncontroPendente(null); }
       try { fimSemSaidaRef.current = garantirFimSemSaida(sv.fimSemSaida); } catch (e) { calou("o fim sem saída no load", e); fimSemSaidaRef.current = null; }
+      /* MC9: save antigo não tem `cativeiro` — undefined vira null, livre */
+      try { definirCativeiro(garantirCativeiro(sv.cativeiro)); } catch (e) { calou("o cativeiro no load", e); definirCativeiro(null); }
       registroRef.current = garantirRegistro(sv.registro);
       /* v9.112: o livro-razão. Sem ele o mundo cobraria de novo, a cada
          recarga, todas as contas que já cobrou. */
@@ -14761,6 +14801,8 @@ export default function Taverna() {
       if (!dec && !forcar) return null;
       const r = dec ? aplicarSemSaida({
         heroi: pers, inimigos: c.inimigos || [], decisao: dec,
+        /* MC9: onde se acorda preso, e desde quando (o desfecho «prisioneiros») */
+        lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "", dia: diaRef.current,
         rolar: rng(hashSemente(sementeMundo() + "|saida|" + diaRef.current + "|" + minutoRef.current + "|" + (c.rodada || 1))),
       }) : null;
       const fimDaLuta = r ? { ...c, inimigos: r.inimigos } : c;
@@ -14793,6 +14835,8 @@ export default function Taverna() {
         try { const extra = avancarMinutos(r.horas * 60); if (typeof extra === "string" && extra.trim()) envelope += " " + extra.trim(); } catch (e) { calou("as horas da luta sem saída", e); }
       }
       fimSemSaidaRef.current = garantirFimSemSaida({ linha: r.linha, horas: r.horas });
+      /* MC9: «prisioneiros» devolve o estado; os outros desfechos, null */
+      try { if (r.cativeiro && !pers.morto) definirCativeiro(garantirCativeiro(r.cativeiro)); } catch (e) { calou("MC9 · o cativeiro abre", e); }
       if (r.morreu && !(persBase && persBase.morto)) setTimeout(() => { try { abrirDesfechoDaMorte(); } catch (e) { calou("a morte da luta sem saída", e); } }, 400);
       return { pers, envelope, linha: r.linha };
     } catch (e) { calou("fechar a luta sem saída", e); return null; }
@@ -17403,11 +17447,17 @@ export default function Taverna() {
          comum manda "revele UMA coisa concreta", e num quarto vazio isso é
          uma ordem para inventar: exatamente o que produziu a quinta e a
          sexta Percepção da captura de tela. */
-      let env = (passou && des && des.fechaDepois && !r.achado)
+      /* MC4 (11/11): o sucesso compra uma verdade do sistema, com a fonte — no
+         lugar do «revele UMA coisa», que o Narrador enchia com o plausível. A
+         busca vazia só é vazia quando nenhuma fonte tem nada (`!facto`). */
+      const facto = passou && des ? factoDoSucessoAgora(des, r.frase || r.motivo || "") : null;
+      escreverODescobriu((facto && facto.achado) || (passou && r.achado && r.achado.especie === "passo" ? r.achado : null));
+      let env = (passou && des && des.fechaDepois && !r.achado && !facto)
         ? envelopeDeBuscaVazia(des.rotulo)
         : envelopeDoTeste({
           tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
           valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre, gesto: !!(des && des.gesto), meio: custo && (custo.porPouco || custo.meiaVerdade) ? custo : null,
+          facto,
         });
       /* ---------------- O BARULHO PARA DE SER DELEGADO (v9.62) ----------------
          O envelope antigo dizia "se houver alguém por perto, ELE OUVIU —
@@ -17510,13 +17560,19 @@ export default function Taverna() {
         ]);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu fiz barulho ao ${des.rotulo}` })}\n${env}`;
       }
+      /* MC9 · MC10: o dado decidiu a saída do cativeiro e o socorro do caído —
+         o sistema aplica, e o envelope leva a linha (o Narrador conta, não decide) */
+      { const lc = aSaidaDoTeste(des, passou); if (lc) env = `${env}\n${lc}`; }
+      { const ls = oSocorroDoTeste(des, passou); if (ls) env = `${env}\n${ls}`; }
       /* base no REF, não no estado: o prêmio de heroísmo logo acima pode ter
          acabado de mexer na ficha, e `personagem` ainda é o valor do render. */
       let persT = personagemRef.current || personagem;
       /* ACHADO (v9.14): passou E havia mesmo algo aqui — o sistema entrega,
          tira da base para sempre e escreve o fato no envelope. Falhou: nada
          acontece e o esconderijo continua lá para a próxima tentativa. */
-      if (passou && r.achado) {
+      if (passou && r.achado && r.achado.especie === "passo") {
+        /* MC5: o segredo do passo não paga moedas nem saqueia a base — o facto já leva a pista */
+      } else if (passou && r.achado) {
         const rec = recompensaDoAchado(r.achado);
         const extras = [];
         persT = { ...persT, moedas: (persT.moedas || 0) + rec.moedas };
@@ -17616,6 +17672,82 @@ export default function Taverna() {
     return { lugar: (l && l.nome) || "", dentroDe: (l && l.dentroDe) || "", foraDosMuros: !cidadeAtualRef.current || !!(l && l.distancia === "arredores") };
   };
 
+  /* ---------------- A FASE MC (11/11): OS AJUDANTES ----------------
+     MC5: os passos ativos das quests (os mesmos que a pauta vê, em dados) e
+     o «onde» com a cidade. Campanha antiga (sem esqueleto): [] — e tudo
+     abaixo se comporta como antes. */
+  const passosDasQuestsAgora = () => {
+    try {
+      return osPassosDasQuests({
+        espinha: espinhaRef.current, historia: historiaRef.current, factos: factosRef.current,
+        saber: saberRef.current, dia: diaRef.current, npcTurno: npcTurnoRef.current,
+        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current,
+        npcs: npcsRef.current, canone: canoneRef.current, mapa: mapaRef.current, personagem: fichaViva(),
+      }, { mundo: mundoDaBase() });
+    } catch (e) { calou("MC5 · os passos das quests", e); return []; }
+  };
+  const ondeDoPasso = () => ({ ...ondeSeProcura(), cidade: cidadeAtualRef.current || "" });
+  /* MC4 · O SUCESSO DÁ SEMPRE UM FACTO: a verdade que o sistema acha (o passo,
+     o achado, o livro, o bestiário, o registo do lugar), com a fonte, para o
+     envelope do teste. null = o de sempre, «revele UMA coisa». */
+  const factoDoSucessoAgora = (des, frase) => {
+    try {
+      if (!des) return null;
+      const inimigo = ((combateRef.current && combateRef.current.inimigos) || []).find((x) => x && !x.derrotado && (x.vida || 0) > 0);
+      return oFactoDoSucesso(des, {
+        semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeAtualRef.current,
+        base: baseMundoRef.current, genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico,
+        onde: ondeDoPasso(), passos: passosDasQuestsAgora(), livro: factosRef.current,
+        alvo: inimigo ? inimigo.nome : "", frase: String(frase || ""),
+      });
+    } catch (e) { calou("MC4 · o facto do sucesso", e); return null; }
+  };
+  /* MC5 · O SISTEMA ESCREVE «DESCOBRIU»: o segredo do passo achado fecha o
+     passo pelo livro de factos, diga a prosa o que disser. Uma vez por sucesso. */
+  const escreverODescobriu = (achado) => {
+    try {
+      if (achado && achado.especie === "passo")
+        factosRef.current = oLivroDoAchado(factosRef.current, achado, { dia: diaRef.current, turno: npcTurnoRef.current });
+    } catch (e) { calou("MC5 · o livro do achado do passo", e); }
+  };
+  /* MC9 · preso não sai por porta nenhuma: a recusa, dita uma vez para as três */
+  const recusaDoPreso = () => {
+    try {
+      const c = cativeiroRef.current;
+      if (!c) return false;
+      pushMsgs([{ autor: "sistema", texto: `⛓ ${c.captor} ainda o prende: antes de ir a qualquer lado, tem de se livrar.` }]);
+      return true;
+    } catch (e) { calou("MC9 · a recusa do preso", e); return false; }
+  };
+  /* MC9 · O DADO DECIDIU A SAÍDA: escapar e arrebentar, com a CD do captor
+     (lerAcao já a leu de ctx.cativeiro). O sucesso solta (null = livre); a
+     falha aperta o nó, gasta horas ou chama a vigia — e soma-se ao preço do
+     catálogo, que continua cobrado pela porta de sempre. */
+  const aSaidaDoTeste = (v, sucesso) => {
+    try {
+      const c = cativeiroRef.current;
+      if (!c || !v || (v.id !== "escapar" && v.id !== "arrebentar")) return "";
+      const s = aplicarSaida(c, v.id, { sucesso: !!sucesso });
+      definirCativeiro(s.cativeiro);
+      if (s.horas > 0 && !combateRef.current) { const tx = avancarMinutos(s.horas * 60); if (tx) pushMsgs([{ autor: "sistema", texto: tx }]); }
+      if (s.linha) pushMsgs([{ autor: "sistema", texto: `⛓ ${s.linha}` }]);
+      return s.linha || "";
+    } catch (e) { calou("MC9 · a saída do cativeiro", e); return ""; }
+  };
+  /* MC10 · O DADO DECIDIU O SOCORRO: o caído do grupo que sangrava fica
+     estancado (as horas da régua do herói) ou continua a sangrar. O preço da
+     falha é a linha `medicina` do catálogo, já cobrada pela porta de sempre. */
+  const oSocorroDoTeste = (v, sucesso) => {
+    try {
+      if (!v || v.id !== "estancar" || !v.socorro) return "";
+      const g = ((fichaViva() || personagem || {}).grupo) || [];
+      const r = aplicarSocorro(g, { quem: v.socorro.alvo, sucesso: !!sucesso, sorte: rng(hashSemente(sementeMundo() + "|socorro|" + diaRef.current + "|" + minutoRef.current)) });
+      if (r.estabilizou) mudarFicha((p) => ({ ...p, grupo: r.grupo }));
+      if (r.linha) pushMsgs([{ autor: "sistema", texto: `🩹 ${r.linha}` }]);
+      return r.linha || "";
+    } catch (e) { calou("MC10 · o socorro", e); return ""; }
+  };
+
   const ctxDesafio = () => ({
     personagem: fichaViva() || personagem,
     semente: sementeMundo(),
@@ -17631,9 +17763,15 @@ export default function Taverna() {
        pelo texto. Sem isto, todo nome proprio que o jogo conhece continua
        caindo em "vasculhar o lugar". */
     ehPessoaConhecida: (txt) => { try { return !!nomeProcurado(txt, nomesConhecidos()); } catch { return false; } },
+    /* MC9: preso, escapar e arrebentar têm a CD do captor (cdDaSaida, em lerAcao) */
+    cativeiro: cativeiroRef.current,
     achadoDe: (attr) => {
       try {
         if (combateRef.current) return null;
+        /* MC5: no lugar de um passo «descobrir», o segredo é o do passo — com a
+           vista e com a cabeça; sem passo aqui, o achado de sempre */
+        const doPasso = achadoDoPasso(passosDasQuestsAgora(), ondeDoPasso());
+        if (doPasso) return doPasso;
         return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico, ondeSeProcura());
       } catch { return null; }
     },
@@ -18016,10 +18154,25 @@ export default function Taverna() {
   const veredictoDaAcao = (acao) => {
     if (rolagem || carregando) return null;
     try {
-      const v = lerAcao(acao, ctxDesafio());
+      let v = lerAcao(acao, ctxDesafio());
       /* "livre" sem chave é conversa e caminhada: não é assunto deste código,
          e interceptar aqui inundaria o jogo de avisos sobre o óbvio. */
       if (!v || (v.tipo === "livre" && !v.chave)) return null;
+      /* MC6: a frase do pedido do Mestre que está a partir tem a chave da oferta —
+         o que ela revira fica no livro como da oferta, e o «procuro» do jogador
+         continua aberto no mesmo sítio */
+      try {
+        const marca = ofertaEmCursoRef.current;
+        if (marca && String(marca).trim() === String(acao || "").trim()) v = oVereditoDaOferta(v);
+      } catch (e) { calou("MC6 · a chave da oferta", e); }
+      /* MC10: o estancar com alguém do grupo no chão a sangrar é o socorro dele
+         (o chamado diz quem); sem caído, o teste de catálogo de sempre */
+      try {
+        if (v.id === "estancar") {
+          const so = oSocorro(v, ((fichaViva() || personagem || {}).grupo) || []);
+          if (so) v = { ...v, quem: so.alvo, socorro: so };
+        }
+      } catch (e) { calou("MC10 · há chamado de socorro?", e); }
       return v;
     } catch { return null; }
   };
@@ -18533,10 +18686,17 @@ export default function Taverna() {
       fecharTentativa(v, auto === "sucesso");
       fecharArmadilhaDoTeste(v, auto === "sucesso");
       cobrarTempoDoDesafio(v);
-      enviar(envelopeDoTeste({
+      /* MC4: o sucesso sem dado também compra o facto (antes mandava «revele
+         UMA coisa» até numa busca vazia); MC9/MC10: e decide a saída e o socorro */
+      const factoAuto = auto === "sucesso" ? factoDoSucessoAgora(v, acao) : null;
+      escreverODescobriu(factoAuto && factoAuto.achado);
+      let envAuto = envelopeDoTeste({
         tipo: v.atributo, pericia: v.pericia, motivo: v.rotulo, mod: modT, dc: v.dc,
-        resultado: auto, automatico: true, nivelTreino,
-      }), fichaViva() || personagem);
+        resultado: auto, automatico: true, nivelTreino, facto: factoAuto,
+      });
+      { const lc = aSaidaDoTeste(v, auto === "sucesso"); if (lc) envAuto = `${envAuto}\n${lc}`; }
+      { const ls = oSocorroDoTeste(v, auto === "sucesso"); if (ls) envAuto = `${envAuto}\n${ls}`; }
+      enviar(envAuto, fichaViva() || personagem);
       return;
     }
     /* ---------------- A VANTAGEM DE TRAÇO MUDA DE CASA (v9.68) ----------------
@@ -18720,8 +18880,10 @@ export default function Taverna() {
          o chamado que ela abre (o mesmo veredito) nasce já lançado */
       definirChamado(null);
       pedidoArmadoRef.current = { frase: ch.frase };
+      ofertaEmCursoRef.current = ch.frase; /* MC6: o veredito desta frase é o da oferta */
       try { partirOTurno(ch.frase); } catch (e) { calou("MC3 · o pedido do Mestre parte", e); }
       pedidoArmadoRef.current = null;
+      ofertaEmCursoRef.current = null;
       return;
     }
     try {
@@ -19219,6 +19381,7 @@ export default function Taverna() {
     try {
       if (combateRef.current) { const fimH = fecharSemSaida(p, { forcar: true }); if (fimH && fimH.pers) p = fimH.pers; }
       daLuta = fimSemSaidaRef.current; fimSemSaidaRef.current = null;
+      try { definirCativeiro(null); } catch (e) { calou("MC9 · o herdeiro está livre", e); }
     } catch (e) { calou("o fio passa com a luta fechada", e); }
     /* e a mesa de batalha sai com ela: o herdeiro abre numa cena nova, não na
        tela do fim de uma luta que não foi dele */
@@ -19487,7 +19650,7 @@ export default function Taverna() {
     if (!v || !v.oportunidade) return null;
     const cid = cidadeSobOsPes();
     const onde = lugarRef.current ? comEm(lugarRef.current.nome) : (cidadeAtualRef.current ? `em ${cidadeAtualRef.current}` : "");
-    const q = perguntarPeloSistema(v.oportunidade.pergunta, {
+    const ctxO = {
       onde,
       /* v9.65: a pergunta da mentira é sobre uma PESSOA, e leva a ficha
          dela — o que ela sente por você e se o registro diz que ela
@@ -19504,8 +19667,16 @@ export default function Taverna() {
       chuva: /chuva|tempestade|temporal|garoa/i.test((climaRef.current && climaRef.current.rotulo) || ""),
       lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
       dia: diaRef.current, cena: turnosDeMundoRef.current,
-    }, { fatos: fatosRef.current });
-    if (q && !q.reusado) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
+    };
+    /* MC5 (11/11): no lugar de um passo de rasto (ou de escuta), a história já
+       respondeu — o oráculo não pode dizer «não há rastro» onde a quest manda
+       segui-lo. A resposta do passo vem `reusado`, com a chave da pergunta, e
+       regista-se por cima de um NÃO de antes. Sem passo aqui, o mundo de sempre. */
+    let doPasso = null;
+    try { doPasso = oPassoNoOraculo(v.oportunidade.pergunta, { passos: passosDasQuestsAgora(), onde: ondeDoPasso(), contexto: ctxO }); }
+    catch (e) { calou("MC5 · o passo no oráculo", e); doPasso = null; }
+    const q = doPasso || perguntarPeloSistema(v.oportunidade.pergunta, ctxO, { fatos: fatosRef.current });
+    if (q && (!q.reusado || q.doPasso)) fatosRef.current = registrarFato(fatosRef.current, q.chave, q, { dia: diaRef.current, cena: turnosDeMundoRef.current });
     return q;
   };
 
@@ -20830,6 +21001,8 @@ export default function Taverna() {
     const mm = masmorraRef.current;
     if (!mm) return;
     if (combateRef.current) { pushMsgs([{ autor: "sistema", texto: "⚔ Não dá para fugir da masmorra no meio de um combate." }]); return; }
+    /* MC9: preso não sai pela porta — sai por um dado (escapar, arrebentar) */
+    if (recusaDoPreso()) return;
     masmorraRef.current = null; setMasmorra(null);
     /* v9.26: a luz que sobrou volta para a mochila — tocha não some porque a
        expedição acabou. Vale para a fuga e para o fim normal. */
@@ -22076,6 +22249,9 @@ export default function Taverna() {
     }
     /* VÍNCULO: conversas de fogueira aproximam (+3 para todo o grupo) */
     pers = { ...pers, grupo: aplicarVinculo(pers.grupo, "todos", 3, msgs) };
+    /* MC10: o descanso já cura o grupo (aplicarDescanso, também o caído); quem se
+       levantou perde a marca «estavel», que só vale a 0 PV — com 0 horas, só limpa */
+    try { pers = { ...pers, grupo: passarHorasNoGrupo(pers.grupo, 0) }; } catch (e) { calou("MC10 · o descanso do caído", e); }
     setPersonagem(pers);
     pushMsgs(msgs.map((t) => ({ autor: "sistema", texto: t })));
     bumpCont("descansos"); checarConquistas(pers);
@@ -23658,6 +23834,7 @@ export default function Taverna() {
     /* `let`: um encontro de perigo neste trecho troca quem responde (abaixo, antes do envelope) */
     let qr = quemResponde(opcoes && opcoes.origem);
     if (acampadoRef.current) return;
+    if (recusaDoPreso()) return; /* MC9: preso não parte */
     /* CB3: com um encontro à frente ainda por decidir, a estrada não anda — o
        cartão (ou a frase do jogador) decide primeiro */
     try {
@@ -25526,6 +25703,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         lado(f); partirOTurno(f);
         return;
       }
+      /* MC6: o cartão do pedido do Mestre parte com a chave da oferta */
+      if (p.pedido) {
+        ofertaEmCursoRef.current = p.frase;
+        try { lado(p.frase); partirOTurno(p.frase); } finally { ofertaEmCursoRef.current = null; }
+        return;
+      }
       lado(p.frase); partirOTurno(p.frase);
     } catch (e) { calou("confirmar a proposta", e); }
   };
@@ -25641,7 +25824,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         }
       } catch (e) { calou("o pedido: com quem fala", e); }
       const onde = (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "";
-      const p = oQueOMestrePede({ emCombate: !!combateRef.current, naEstrada: !!jornadaRef.current, naMasmorra: !!masmorraRef.current, onde, falouCom, dia: diaRef.current || 0, jaPedidos: pedidosFeitosRef.current });
+      /* MC6 (11/11): o «olhar à volta» só se pede onde há o que achar (o passo, o
+         esconderijo da vista ou da cabeça); a vazia é rara e semeada. null (o
+         erro) = a régua de antes: o Mestre pede. */
+      let haOQueAchar = null;
+      try {
+        const o = ondeSeProcura();
+        const aqui = (attr) => achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico, o);
+        haOQueAchar = !!(achadoDoPasso(passosDasQuestsAgora(), ondeDoPasso()) || aqui("percepcao") || aqui("intelecto"));
+      } catch (e) { calou("MC6 · há o que achar", e); haOQueAchar = null; }
+      const p = oQueOMestrePede({ emCombate: !!combateRef.current, naEstrada: !!jornadaRef.current, naMasmorra: !!masmorraRef.current, onde, falouCom, dia: diaRef.current || 0, jaPedidos: pedidosFeitosRef.current, haOQueAchar, semente: sementeMundo() });
       if (!p) return;
       falaDoPedidoRef.current = fala;
       pedidosFeitosRef.current = [...pedidosFeitosRef.current, p.chave].slice(-60);
@@ -27752,7 +27944,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                       voltar ({ROTULO_SALA[rc.tipo] || "sala"})
                     </button>
                   ))}
-                  <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Sair leva o que você já conquistou; o resto fica para trás" className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg ml-auto" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: (bloqueado || combate) ? 0.45 : 1 }}>sair</button>
+                  {/* MC9: preso, «sair» não existe — a saída é um dado */}
+                  {!preso && <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Sair leva o que você já conquistou; o resto fica para trás" className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg ml-auto" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: (bloqueado || combate) ? 0.45 : 1 }}>sair</button>}
                 </div>
                 <div className="tv-body text-[11px] mt-2" style={{ color: T.inkDim }}>Cada passagem gasta uma tocha. Você escolhe o caminho pelas pistas — e o portão do chefe só abre com a chave que alguém guarda lá dentro.</div>
               </div>

@@ -76,8 +76,21 @@ const DO_MODULO = ["LEITURA_DA_CONVERSA", "falasDoMestre"];
    o preço do balcão da rua de cima. Nos casos, as únicas fotos que podem
    mudar são as que perguntam o preço de um mantimento na estrada ou na
    masmorra (a conta está no diário de 31/10); a prova é
-   teste-balcao-so-na-rua.mjs. */
+   teste-balcao-so-na-rua.mjs.
+
+   QUEM CAIU SANGRA ATÉ UM DADO (11/11/2026, Fase MC, MC10): com alguém do
+   grupo no chão a 0 PV, a pauta diz-o em O PESO e veta em NÃO PODE que o
+   sangue pare sem um dado de Medicina (oSocorroNaPauta, src/socorro.js) —
+   antes da mão do vilão, como na peça. Nos casos, as únicas fotos que podem
+   mudar são as que têm um companheiro a 0 PV na ficha. O irmão dele, o
+   PRESO da MC9 (oCativeiroNaPauta), lê o campo `cativeiro` do save, que o
+   App de antes não tinha: nos casos é sempre nulo, e não muda foto nenhuma —
+   por isso não há conserto para ele. A prova é teste-mc-fiacao.mjs. */
 const CONSERTOS = [
+  ["import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from \"./pauta.js\";\n",
+    "import { porNaPauta, textoDaPauta, garantirPauta, cederNaCena } from \"./pauta.js\";\nimport { oSocorroNaPauta } from \"./socorro.js\";\n"],
+  ["    try { const mf = momentoDoFio(espinhaRef.current, historiaRef.current.etapa, ",
+    "    try {\n      const so = oSocorroNaPauta((fichaViva() || {}).grupo);\n      if (so.linha) p = porNaPauta(p, \"peso\", so.linha);\n      p = porNaPauta(p, \"naoPode\", so.naoPode);\n    } catch (e) { calou(\"MC10 · o caído na pauta\", e); }\n    try { const mf = momentoDoFio(espinhaRef.current, historiaRef.current.etapa, "],
   ["      if (!combateRef.current && cidadeAtualRef.current) {\n        const p0 = personagemRef.current || personagem || {};\n        const bc = balcaoParaPauta(",
     "      if (cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current && !combateRef.current) {\n        const p0 = personagemRef.current || personagem || {};\n        const bc = balcaoParaPauta("],
   ["      pc = (!combateRef.current && cidadeAtualRef.current) ? precoComumParaPauta(",

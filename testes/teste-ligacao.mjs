@@ -173,7 +173,8 @@ sec("1. NENHUM MÓDULO MUDO");
        sistema escreve). Credor: o `oficial`, na MESMA leva (a nota de
        fiação da MC4–MC6). A entrada sai quando o App o importar.
        `teste-facto-do-sucesso.mjs` é o primeiro leitor. */
-    "facto-do-sucesso.js": "o oficial, na fiação da MC4–MC6 (11/11)",
+    /* e paga na MESMA leva (11/11, oficial): o App.jsx importa-o — o facto no
+       envelope do teste (concluirRolagem e o sucesso sem dado). A entrada saiu. */
     /* 11/10 (Fase MM-C, C2): `subtramas.js` nasce no backend — os arcos de
        três batidas, as pistas e a revelação do elo, a linha QUEM CARREGA, o
        campo `coracao` escrito, e as peças do motor da fogueira — e espera a
@@ -428,7 +429,9 @@ sec("1. NENHUM MÓDULO MUDO");
        `estancar`, a passagem do tempo, a pauta). Credor: o `oficial`, na
        MESMA leva. A entrada sai quando o App o importar.
        `teste-socorro.mjs` é o primeiro leitor. */
-    "socorro.js": "o oficial, MC10 (fiação do estancar com quem, na MESMA leva)",
+    /* e paga na MESMA leva (11/11, oficial): o App.jsx importa-o (o estancar
+       com quem, as horas do caído no relógio) e a pauta do turno também (a
+       linha e o veto). A entrada saiu. */
   };
   const mudos = [];
   for (const f of arqs) {

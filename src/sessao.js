@@ -1017,6 +1017,7 @@ export const DONO_DO_CAMPO = Object.freeze({
    como os outros. */
 export const NASCERAM_DEPOIS_DA_GRAVACAO = Object.freeze({
   factos: "o livro de factos (livro-de-factos.js, BQ1–BQ2, 08/11): as sessões gravadas antes dele não o levam, e o replay não o inventa",
+  cativeiro: "o preso como estado (cativeiro.js, MC9, 11/11): as sessões gravadas antes dele não o levam, e o replay não o inventa",
 });
 
 /* fora da régua: o que não é jogo, ou o que só a tela escreve */

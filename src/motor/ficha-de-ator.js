@@ -1030,6 +1030,13 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     { de: /^(.+?): continua aqui — .*$/, vai: "aconteceu", como: (m) => { const q = m[1].split(/,\s+/).map((x) => x.replace(/ a (\d+(?:[.,]\d+)?) m\b/g, (_, d) => `, ${distancia(Number(String(d).replace(",", ".")))}`)); return `Continua${q.length > 1 ? "m" : ""} aqui: ${q.join("; ")}.`; } },
     { de: /^quem está no chão \((.+?)\) .*$/, vai: "pessoa", como: (m) => ({ quem: m[1], estado: "no chão, sem sentidos: não fala nem se move" }) },
     { de: /^O (.+?) não se levanta\.?$/, vai: "aconteceu", como: (m) => `O ${m[1]} não se levanta.` },
+    /* MC10 (11/11): os vetos do caído (SOCORRO.naoPode) */
+    { de: /^que o sangue de (.+?) pare sem um dado de Medicina que o decida$/, vai: "aconteceu", como: (m) => `O sangue de ${m[1]} não para sozinho.` },
+    { de: /^que (.+?) acorde ou se levante antes do tempo: .*$/, vai: "aconteceu", como: (m) => `${m[1]} não acorda agora: o sangue parou, mas continua sem sentidos.` },
+    /* MC9 (11/11): os vetos do preso (PAUTA_DO_CATIVEIRO.naoPode) */
+    { de: /^soltar-me, ou que alguém me solte, sem um dado meu que o decida$/, vai: "aconteceu", como: (m, c) => `Ninguém solta ${c.H}: as amarras seguram.` },
+    { de: /^dar-me chave, lâmina ou ferramenta: .*$/, vai: "aconteceu", como: (m, c) => `Tiraram a ${c.H} o que levava: não há chave, lâmina nem ferramenta à mão.` },
+    { de: /^tirar (.+?) de cena: é quem me prende$/, vai: "aconteceu", como: (m, c) => `${m[1]} não sai de cena: é quem prende ${c.H}.` },
     { de: /^sou procurad([oa]) em (.+?) \((.+?)\): há (\d+) moedas pela minha cabeça.*$/, vai: "aconteceu", como: (m, c) => { c.procurado = true; return `Há ${m[4]} moedas pela cabeça de ${c.H} em ${m[2]} (${doHeroi(m[3], c.H).replace(/^ataquei\b/, "atacou")}): ninguém trata ${c.H} como forasteiro qualquer, nem lhe dá pouso.`; } },
     { de: /^CENA DE PESO \((.+?)\)/, vai: "tom", como: () => "Ninguém fala de negócio agora; quem tem laço com isto está aqui." },
     { de: /^ninguém oferece trabalho avulso ao herói nesta cena$/, vai: "cena", como: () => "Aqui ninguém tem trabalho avulso para oferecer." },
@@ -1063,7 +1070,14 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     { de: /^A PERGUNTA/, cai: "pergunta" },
     { de: /^(?!\p{Lu}{2,})(.+)$/u, vai: "cena", como: (m) => ponto(m[1]) },
   ],
-  "O PESO": [ { de: /^Esta cena tem PESO: (\S+) — (.+?)\.\s*Quem tem la[cç]o.*$/, vai: "tom", como: (m) => `${maiuscula(m[1])}: ${ponto(m[2])}` } ],
+  "O PESO": [
+    { de: /^Esta cena tem PESO: (\S+) — (.+?)\.\s*Quem tem la[cç]o.*$/, vai: "tom", como: (m) => `${maiuscula(m[1])}: ${ponto(m[2])}` },
+    /* MC9 (11/11): o preso (cativeiro.js, PAUTA_DO_CATIVEIRO) — o estado, sem o
+       «dado»: a saída é o que o herói fizer */
+    { de: /^PRESO: atado com (.+?) por (.+?)(?:, em (.+?))?(?:; comigo, (.+?))?\. Só saio por um dado meu:/, vai: "aconteceu", como: (m, c) => `${c.H} está ${c.dela ? "presa" : "preso"}: ${c.dela ? "atada" : "atado"} com ${m[1]} por ${m[2]}${m[3] ? `, em ${m[3]}` : ""}${m[4] ? `; com ${c.dela ? "ela" : "ele"}, ${m[4]}` : ""}. Só sai disto pelo que fizer.` },
+    /* MC10 (11/11): o caído do grupo (socorro.js, SOCORRO.linha), um ou vários */
+    { de: /^(.+? está no chão, .+)$/, vai: "aconteceu", como: (m) => m[1].split(/;\s*/).map((x) => ponto(maiuscula(x.replace(/, a 0 PV,/, ",")))).join(" ") },
+  ],
   "DESFECHO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m) => ponto(m[1]) } ],
   "ACABOU DE": [ { de: /^(?:\[[^\]]+\]\s*)?(.+)$/, vai: "aconteceu", como: (m) => ponto(m[1]) } ],
   "QUEM": [ { de: /^na luta agora — (.+)$/, vai: "luta", como: (m) => m[1] } ],

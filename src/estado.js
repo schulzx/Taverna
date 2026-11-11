@@ -95,6 +95,7 @@ export const CAMPOS = Object.freeze([
   C("combate", "cena", "objeto"),
   C("registro", "memoria", "qualquer"),
   C("fimSemSaida", "cena", "qualquer"),
+  C("cativeiro", "cena", "qualquer"),   // MC9 (11/11): o preso é um estado (cativeiro.js); aditivo, save antigo = null
   C("cobradas", "historia", "lista", L),
   C("ultimaCobranca", "historia", "numero"),
   C("formasCobradas", "historia", "lista", L),

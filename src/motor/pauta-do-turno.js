@@ -97,6 +97,8 @@ import { MODO_PADRAO } from "../modos.js";
 import { MOLDE_PADRAO, moldePorId } from "../moldes.js";
 import { vetosParaAPauta } from "./correcao-do-juiz.js";
 import { aMesaDasQuests } from "./quests-do-turno.js";
+import { oCativeiroNaPauta } from "../cativeiro.js";
+import { oSocorroNaPauta } from "../socorro.js";
 import { oEnvelopeDaGente, oEnvelopeDoFio } from "./envelopes-do-turno.js";
 import { aCidadeSobOsPes } from "./tempo-do-turno.js";
 import { garantirBase, locaisDaCidade, oQueExisteAqui } from "../mundo-base.js";
@@ -992,6 +994,21 @@ export function aPautaDoTurno(estado, entrada, portas) {
        medido na suíte (teste-consequencias-caladas), a quarta linha do ONDE
        não chegava ao texto. */
     if (mesaDasQuests && mesaDasQuests.favor) p = porNaPauta(p, "volta", mesaDasQuests.favor);
+    /* MC9 · MC10 (11/11): o preso e o caído são a verdade da cena enquanto
+       duram — a linha vai em O PESO (prio 2: conteúdo, não decoração) e os
+       vetos em NÃO PODE (não solta sem dado, não estanca sem dado). Pelo canal
+       por turno; sem cativeiro e sem caído, nada — a pauta de sempre, byte a
+       byte. `cativeiro` é campo do save, e vem no estado (como o livro). */
+    try {
+      const cat = oCativeiroNaPauta($ref.cativeiro);
+      if (cat.linha) p = porNaPauta(p, "peso", cat.linha);
+      p = porNaPauta(p, "naoPode", cat.naoPode);
+    } catch (e) { calou("MC9 · o cativeiro na pauta", e); }
+    try {
+      const so = oSocorroNaPauta((fichaViva() || {}).grupo);
+      if (so.linha) p = porNaPauta(p, "peso", so.linha);
+      p = porNaPauta(p, "naoPode", so.naoPode);
+    } catch (e) { calou("MC10 · o caído na pauta", e); }
     if (mesaDasQuests) {
       p = porNaPauta(p, "momento", mesaDasQuests.mao);
       p = porNaPauta(p, "naoPode", mesaDasQuests.naoPode);
