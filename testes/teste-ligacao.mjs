@@ -400,6 +400,15 @@ sec("1. NENHUM MÓDULO MUDO");
        plano de andar e atacar; o turno deles contado em `finalizarRodada`
        (`passosDoTurno`, e o relógio com `duracaoDosPassos`); o golpe da
        habilidade na mesa (`golpeDaHabilidade`). As duas entradas saíram. */
+    /* 11/11 (Fase EM, EM2 · a resposta do tamanho da pergunta, backend):
+       `tamanho-da-resposta.js` nasce — `oTamanhoDaResposta` (o tipo do turno
+       → palavras, maxTokens e a linha) e `comOTamanho` (o pedido à rede com a
+       linha do tipo no lugar da de hoje e o teto do tipo) — e espera o
+       `oficial`, que o liga no App.jsx (e no servidor, turno-no-servidor.js)
+       sobre o pedido que já vai à rede. Credor: o `oficial`, na MESMA leva.
+       A entrada sai quando o App o importar.
+       `teste-tamanho-da-resposta.mjs` é o primeiro leitor. */
+    "tamanho-da-resposta.js": "o oficial, EM2 (a linha e o maxTokens no pedido do turno)",
   };
   const mudos = [];
   for (const f of arqs) {

@@ -46,11 +46,18 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-
 const palavras = (s) => String(s || "").split(/\s+/).filter(Boolean).length;
 
 /* A frase do jogador dentro da mensagem do turno: o que vem depois da
-   etiqueta do pedido. Sem etiqueta, nada. */
+   etiqueta do pedido. Sem etiqueta, nada.
+   A ETIQUETA JÁ NÃO É UMA SÓ (EM2, 11/11): o tamanho muda por tipo de turno
+   (tamanho-da-resposta.js troca a linha de dentro dela). Acha-se pela
+   cabeça — o que vem antes do primeiro « — » — e fecha no primeiro «]»
+   depois dela, como a régua de cobranca.js (RX_O_PEDIDO). */
+const CABECA_DA_ETIQUETA = ETIQUETA_DO_PEDIDO.slice(0, ETIQUETA_DO_PEDIDO.indexOf(" — "));
 export function fraseDoPedido(mensagem) {
   const c = String(mensagem == null ? "" : mensagem);
-  const i = c.lastIndexOf(ETIQUETA_DO_PEDIDO);
-  return i < 0 ? "" : c.slice(i + ETIQUETA_DO_PEDIDO.length).trim();
+  const i = c.lastIndexOf(CABECA_DA_ETIQUETA);
+  if (i < 0) return "";
+  const f = c.indexOf("]", i);
+  return f < 0 ? "" : c.slice(f + 1).trim();
 }
 
 const V = () => FALA_DO_HEROI.verbos.join("|");

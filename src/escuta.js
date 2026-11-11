@@ -586,7 +586,12 @@ export function separarEnvelopes(texto) {
 
    (Nada de "]" dentro: cobranca.js lê a etiqueta até ao primeiro.) */
 export const TAMANHO_DA_NARRATIVA = { min: 80, max: 140 };
-export const ETIQUETA_DO_PEDIDO = `[O QUE EU FAÇO AGORA — a narração abre por aqui. Responda em ${TAMANHO_DA_NARRATIVA.min} a ${TAMANHO_DA_NARRATIVA.max} palavras e termine antes do limite. Não ponha na minha boca fala que eu não escrevi, nem decida por mim.]`;
+/* O MOLDE DA LINHA DE TAMANHO (EM2, 11/11): o número e o jeito mudam por
+   tipo de turno (tamanho-da-resposta.js, TAMANHO_DA_RESPOSTA), e a troca
+   é feita no pedido sobre ESTA linha. A etiqueta abaixo é a de sempre,
+   letra por letra: a faixa de hoje e o «termine antes do limite». */
+export const LINHA_DO_TAMANHO = "Responda em {palavras} palavras e {jeito}.";
+export const ETIQUETA_DO_PEDIDO = `[O QUE EU FAÇO AGORA — a narração abre por aqui. ${LINHA_DO_TAMANHO.replace("{palavras}", `${TAMANHO_DA_NARRATIVA.min} a ${TAMANHO_DA_NARRATIVA.max}`).replace("{jeito}", "termine antes do limite")} Não ponha na minha boca fala que eu não escrevi, nem decida por mim.]`;
 
 export function fechoDoPedido(pedido) {
   const p = obj(pedido);
