@@ -228,7 +228,10 @@ sec("8. a fiação no App.jsx");
   const iNotaOk = APP.indexOf("if (combEsc) notaEsc = notaDoEscondido({ passou: true, ns, total, dc,", iConc);
   const iNotaMal = APP.indexOf("notaEsc = notaDoEscondido({ passou: false, total, dc,", iConc);
   const iEnv = APP.indexOf("if (notaEsc) env = passou ? notaEsc : `${env}\\n${notaEsc}`;", iConc);
-  const iCusto = APP.indexOf("if (custo && !custo.porPouco) env = `${envQueda}", iConc);
+  /* EM4 (11/11) — ÂNCORA MOVIDA, e o motivo: a linha do envelope do custo
+     ganhou `&& !custo.meiaVerdade` (a meia-verdade não tem preço); a ordem que
+     a 8.8 guarda é a mesma */
+  const iCusto = APP.indexOf("if (custo && !custo.porPouco && !custo.meiaVerdade) env = `${envQueda}", iConc);
   const iEnvia = APP.indexOf("enviar(preRefazer + env, persT);", iConc);
   t("8.6 concluirRolagem não cobra de novo o que já foi pago", iNota > iConc && iPago > iNota && iNaoCobra > iPago);
   t("8.7 passou: a nota do estado; falhou na luta: a nota da falha", iNotaOk > iNaoCobra && iNotaMal > iNotaOk && /calou\("nascerEscondido", e\)/.test(APP.slice(iNotaMal, iNotaMal + 300)));

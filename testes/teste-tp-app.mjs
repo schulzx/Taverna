@@ -66,8 +66,12 @@ t("as três chamadas do Relato passam tocaveis", relatos.length === 3 && relatos
    achado no recibo); a intenção é a mesma — o i passa tal qual, sem desconto */
 t("o Relato inteiro e a 1.ª metade levam o i tal qual",
   relatos.filter((r) => /tocaveis=\{tocaveisDaProsa\}[ />]/.test(r)).length === 2);
+/* MC3 (11/11, o oficial) — ASSERÇÃO MOVIDA, e o motivo: o Relato recebe
+   `mensagensDaFolha` (as mensagens com a frase efémera do chamado; igual a
+   `mensagens` sem chamado — teste-a1-relato diz o porquê). O corte é o mesmo
+   `k`, e a intenção desta régua (o i da prosa tocável desconta o corte) fica. */
 t("a 2.ª metade da manhã desconta o corte (i - k), como a voz e a abertura",
-  relatos.some((r) => /mensagens=\{mensagens\.slice\(k\)\}/.test(r) && /tocaveis=\{tocaveisDaProsa \? \{ \.\.\.tocaveisDaProsa, i: tocaveisDaProsa\.i - k \} : null\}/.test(r)));
+  relatos.some((r) => /mensagens=\{mensagensDaFolha\.slice\(k\)\}/.test(r) && /tocaveis=\{tocaveisDaProsa \? \{ \.\.\.tocaveisDaProsa, i: tocaveisDaProsa\.i - k \} : null\}/.test(r)));
 
 console.log("\n4 · o mesmo estado e as mesmas mãos do EmCena");
 t("a escrita é uma conta só (fichaEscrita), em calou",

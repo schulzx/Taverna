@@ -370,13 +370,18 @@ sec("10. A Aposta — três versões, e o teto");
 
   const j = corpo.indexOf("envelopeDoTeste({");
   const chamada = j >= 0 ? corpo.slice(j, corpo.indexOf("})", j)) : "";
-  t("concluirRolagem passa o meio ao envelope do teste",
-    chamada.includes("meio: custo && custo.porPouco ? custo : null"), chamada.slice(0, 200));
+  /* EM4 (11/11, o oficial) — ASSERÇÃO MOVIDA, e o motivo: a meia-verdade
+     (desafios.js, comMeiaVerdade) também é um meio — falhar por 1–3 numa linha
+     de saber dá meio caminho, e o envelope do teste tem o ramo dela. A
+     intenção fica: o meio que existe chega ao envelope do teste. */
+  t("concluirRolagem passa o meio ao envelope do teste (o sim pago e a meia-verdade)",
+    chamada.includes("meio: custo && (custo.porPouco || custo.meiaVerdade) ? custo : null"), chamada.slice(0, 200));
 
   const kEnv = corpo.indexOf("envelopeDoCusto(custo,");
   const linhaEnv = kEnv >= 0 ? corpo.slice(Math.max(0, kEnv - 80), kEnv + 120) : "";
   t("o envelope do custo só entra na falha seca (o 'mas' já foi dito pelo meio)",
-    /if \(custo && !custo\.porPouco\)/.test(linhaEnv), linhaEnv);
+    /* EM4: e nem na meia-verdade, que não tem preço (o motivo, logo acima) */
+    /if \(custo && !custo\.porPouco && !custo\.meiaVerdade\)/.test(linhaEnv), linhaEnv);
   t("e a queda (envQueda) continua entrando mesmo no sim pago",
     /else if \(envQueda\) env = /.test(linhaEnv), linhaEnv);
 

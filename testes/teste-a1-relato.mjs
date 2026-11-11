@@ -80,11 +80,17 @@ sec("2. O APP PASSA O QUE O LAÇO LIA, E SÓ ISSO");
    passar exatamente o que o laço lia (as seis abaixo); as metades passam as
    mesmas seis props (a segunda com os índices andados pelo corte). */
 const chamadas = APP.match(/<Relato [^\n]*\/>/g) || [];
-const chamada = chamadas.find((c) => c.includes("mensagens={mensagens}")) || "";
+/* MC3 (11/11, o oficial) — ASSERÇÃO MOVIDA, e o motivo: com o Mestre a chamar
+   o dado, a folha leva a frase do jogador como linha efémera ANTES do toque, e
+   cala a linha do chamado enquanto a fala viva está na folha (por null, que
+   guarda os índices). O App passa `mensagensDaFolha` — as mensagens, mais isso
+   e só isso, e igual a `mensagens` sem chamado. A intenção fica: uma chamada
+   inteira, as mesmas seis props. */
+const chamada = chamadas.find((c) => c.includes("mensagens={mensagensDaFolha}")) || "";
 t("o App renderiza `<Relato …/>` inteiro uma vez (e, na manhã da fogueira, as duas metades com as mesmas props)",
-  chamadas.filter((c) => c.includes("mensagens={mensagens}")).length === 1 && (APP.match(/<Relato /g) || []).length === chamadas.length && chamadas.length <= 3
+  chamadas.filter((c) => c.includes("mensagens={mensagensDaFolha}")).length === 1 && (APP.match(/<Relato /g) || []).length === chamadas.length && chamadas.length <= 3
   && chamadas.every((c) => ["mensagens=", "carregando=", "voz=", "abertura=", "aoAbrir=", "aoOuvir="].every((p) => c.includes(p))));
-for (const [prop, de] of [["mensagens", "mensagens"], ["carregando", "carregando"], ["voz", "voz"], ["abertura", "abertura"], ["aoAbrir", "abrirPortaDoSistema"], ["aoOuvir", "ouvirMestre"]]) {
+for (const [prop, de] of [["mensagens", "mensagensDaFolha"], ["carregando", "carregando"], ["voz", "voz"], ["abertura", "abertura"], ["aoAbrir", "abrirPortaDoSistema"], ["aoOuvir", "ouvirMestre"]]) {
   t(`  ${prop}={${de}}`, chamada.includes(`${prop}={${de}}`));
 }
 t("o App importa `Relato` de `painel-relato.jsx`", /import \{ Relato \} from "\.\/painel-relato\.jsx";/.test(APP));

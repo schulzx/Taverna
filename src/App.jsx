@@ -75,7 +75,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -229,7 +229,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, SINAIS_ABERTOS } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, InterruptorDoSom, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, InterruptorDoSom, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco, LinhaDoChamado, RolaPorMim } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -257,7 +257,8 @@ import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
-import { Bandeja } from "./painel-bandeja.jsx";
+import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
+import { oChamado, O_CHAMADO } from "./motor/o-mestre-chama.js";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { devolverAMochila } from "./comparar-item.js";
 import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
@@ -2403,7 +2404,7 @@ function mantimentosDeUso(personagem, masmorra) {
 /* quantas vezes, e de quanto em quanto, o «abrir na Bolsa» da prateleira
    procura a secção «Mantimentos» da carta enquanto ela monta */
 const PROCURA_DOS_MANTIMENTOS = Object.freeze({ tentativas: 8, passoMs: 60 });
-function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null, bolsaPedida = null, relogios = [], aoVerNoMapa = null, distanciaDoPasso = null, bq = null }) {
+function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = null, guildasMundo = [], minhaCasa = null, tarefasCasa = [], trabalhosDaCasa = [], motivoDeEntrarNaCasa, aoEntrarNaCasa, aoSairDaCasa, aoFundarCasa, aoPegarTrabalhoDaCasa, aoDelegarNaCasa, aoPromoverNaCasa, aoExpulsarDaCasa, aoAdmitirNaCasa, aoSacarDaCasa, aoDepositarNaCasa, aoPedirPazes, aba: abaPedida, fechar, personagem, mundo, equipar, desequipar, descartarItem, descartarEquip, trocarCaminho, acampado, removerDoGrupo, mapa, faccaoJogador, cidadeAtual, transferirItem, historia, quests, trocarArco, npcs, guilda, depositarCofre, sacarCofre, melhorarGuilda, convidarNpc, onBancarConvite, vereditoConvite, onDiplomacia, onPresente, recalibrarSave, mortosBase = [], conquistas, tituloAtivo, escolherTitulo, descobertas, contadores, equiparComp, desequiparComp, desmontarEquip, forjar, mural, aceitarContrato, abandonarContrato, garantirMural, decretos, pregarDecreto, cancelarDecreto, vereditoDeCartaz = null, recusaDeCartaz = null, aoVerNoDiario = null, definirRelacao, reino, famaInfo, nemesis, nomeCampanha, dia, onExportarCronica, onExportarSave, eventos, correio, enviarCarta, responderPeticao, divindade, onDespertar, onRecalibrarAsc, recalAscState, onMilagreUI, onForragear, devocao, onErguerTemplo, onUsarConsumivel, bancada = [], despensa = [], onForjar, onRitmoViagem, onForcarMarcha, marchaArmada = false, mercadoAqui, cidadeMercado, balcaoAqui = [], onComprarSuprimento, onComprar, onVender, ofertaPor, onPechinchar, comercioAqui = null, governos = {}, onImposto, onErguerObra, onGovernador, aoTomarCidade, podeTomarAqui = null, potencias = [], dip = null, veredito, onCumprirExigencia, onAprenderHab, onRespec, onEscolherSubclasse, onEscolherEspecializacao, onSubirAtributo, onRespecAtributos, onAlternarPericia, onPrepararMagia, arrumar = { ok: true, motivo: "" }, missoes = [], onResponderMissao, onEncerrarLegado, onEncararProva, onDesistirRito, bloqueado, jornada = null, masmorra = null, molde = null, sementeMundo = "", generoMundo = cenarioAtivo().generos.padrao, lexicoMundo = null, lugar = null, aoIrAoLugar = null, aoViajar = null, onAcaoDeItem = null, preferenciaReacao = "normal", aoEscolherPreferenciaReacao = null, verboDaReacao = null, preferenciaGolpeFinal = "perguntar", aoEscolherPreferenciaGolpeFinal = null, subPedida = null, paginasDoCodice = [], aoApontarPagina = null, heroismoPontos = 0, heroAberto = false, aoAbrirHeroismo = null, aoGastarHeroismo = null, contextoHeroismo = {}, mostrarRolagens = true, aoAlternarRolagens = null, rolaPorMim = false, aoAlternarRolaPorMim = null, aoIrAoMenu = null, aoGerarCronica = null, alforje = null, abertura = null, bolsaPedida = null, relogios = [], aoVerNoMapa = null, distanciaDoPasso = null, bq = null }) {
   const [invDe, setInvDe] = React.useState("eu");
   const [forjaAberta, setForjaAberta] = React.useState(false); // forja sob demanda — bolsa limpa
   const [forjaSlot, setForjaSlot] = React.useState("arma");
@@ -2607,6 +2608,9 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 🎲 Rolagens do mundo à vista: <b>{mostrarRolagens ? "sim" : "não"}</b>
                 <span className="block" style={{ color: T.inkDim }}>mostrar os dados que o Mestre rola por trás do escudo</span>
               </button>
+              {/* MC3 (10/11) · «o Mestre rola por mim», ao lado das rolagens à vista e
+                  com a forma delas (formas.md §MC 1.8); o App guarda a preferência */}
+              <RolaPorMim ligado={rolaPorMim} aoAlternar={aoAlternarRolaPorMim} />
               {/* TE (09/11) · o som da mesa: a peça guarda a preferência sozinha (taverna_cfg_som) */}
               <InterruptorDoSom />
               {aoIrAoMenu && (
@@ -5395,6 +5399,22 @@ export default function Taverna() {
   const [bandeja, setBandeja] = useState([]);
   const [bandejaVista, setBandejaVista] = useState(0);
   const bandejaRef = useRef([]);
+  /* MC3 (10/11) · O CHAMADO DO MESTRE: o teste da frase que espera o toque.
+     ESTADO DE TELA, nunca no save: { n, chamado (o de oChamado), mod, frase,
+     rolagem, linhas (as do relato, que só entram com o toque), pedido (o
+     Mestre pediu, o jogador não escreveu), lance (depois do toque), valor,
+     pousou }. O ref espelha-o para os relógios e os toques. */
+  const [chamadoVivo, setChamadoVivo] = useState(null);
+  const chamadoRef = useRef(null);
+  const definirChamado = (c) => { chamadoRef.current = c || null; setChamadoVivo(c || null); };
+  const nDoChamadoRef = useRef(0);
+  const nDoLanceRef = useRef(0);
+  const [pulsoDoChamado, setPulsoDoChamado] = useState(0);
+  /* o pedido do Mestre tocado: a frase dele parte e o chamado que ela abre nasce lançado */
+  const pedidoArmadoRef = useRef(null);
+  /* a nota ao Narrador ANTES do ato: «mudar de ideia» devolve-a como estava */
+  const notaAntesDoAtoRef = useRef(undefined);
+  const lancarOChamadoRef = useRef(null);
   /* O MESTRE PEDE O DADO (04/11): a última fala do jogador (para saber com
      quem ele conversa), as chaves já pedidas (não se pede duas vezes a mesma
      coisa no mesmo dia) e a fala em que o último pedido nasceu (um pedido
@@ -5566,6 +5586,20 @@ export default function Taverna() {
     try { const v = localStorage.getItem("taverna_cfg_rolagens"); return v === null ? true : v === "1"; } catch { return true; }
   });
   useEffect(() => { mostrarRolagensRef.current = mostrarRolagens; try { localStorage.setItem("taverna_cfg_rolagens", mostrarRolagens ? "1" : "0"); } catch {} }, [mostrarRolagens]);
+  /* MC3 (10/11) · «O MESTRE ROLA POR MIM»: conveniência de aparelho, FORA do
+     save (como as rolagens à vista). Desligada (o padrão), só o toque lança o
+     dado do chamado; ligada, o chamado aparece igual e o dado lança-se sozinho
+     depois do tempo de ler o preço. */
+  const [rolaPorMim, setRolaPorMim] = useState(() => {
+    try { return localStorage.getItem("taverna_cfg_rolaPorMim") === "1"; } catch { return false; }
+  });
+  const alternarRolaPorMim = (novo) => {
+    try {
+      const v = typeof novo === "boolean" ? novo : !rolaPorMim;
+      setRolaPorMim(v);
+      try { localStorage.setItem("taverna_cfg_rolaPorMim", v ? "1" : "0"); } catch (e) { calou("MC3 · guardar o rola por mim", e); }
+    } catch (e) { calou("MC3 · o rola por mim", e); }
+  };
   /* MM3: a preferencia do golpe final. FORA do save de proposito -- e
      conveniencia de aparelho, nao ficha de personagem, e uma pessoa que
      jogue dos dois lados de uma sala nao devia herdar a escolha da outra
@@ -17224,7 +17258,10 @@ export default function Taverna() {
          pagando. Falhar por muito continua sendo falhar, e mesmo aí cobra
          alguma coisa, para que "nada acontece" pare de ser um desfecho. */
       const bateu = critico || (!desastre && total >= dc);
-      const custo = des ? desfechoDaMargem(des, { total, dc, critico, desastre, emCombate: !!combateRef.current }) : null;
+      /* EM4 (11/11): numa linha de saber, falhar por 1–3 é meia-verdade (o herói
+         fica com meio caminho; `passou` continua false) — as três linhas entram
+         juntas: aqui, o `meio` do envelope do teste e o envelope do custo */
+      const custo = des ? desfechoDaMargem(des, { total, dc, critico, desastre, emCombate: !!combateRef.current, comMeiaVerdade: true }) : null;
       const passou = bateu || !!(custo && custo.porPouco);
       /* ---------------- O QUE A TENTATIVA CUSTA (v9.59) ----------------
          Tempo sempre, barulho onde faz sentido, e o registro no livro — os
@@ -17343,7 +17380,7 @@ export default function Taverna() {
         ? envelopeDeBuscaVazia(des.rotulo)
         : envelopeDoTeste({
           tipo: r.tipo, pericia: r.pericia, nivelTreino: r.nivelTreino, motivo: r.motivo,
-          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre, gesto: !!(des && des.gesto), meio: custo && custo.porPouco ? custo : null,
+          valor, mod, total, dc, resultado: passou ? "sucesso" : "falha", critico, desastre, gesto: !!(des && des.gesto), meio: custo && (custo.porPouco || custo.meiaVerdade) ? custo : null,
         });
       /* ---------------- O BARULHO PARA DE SER DELEGADO (v9.62) ----------------
          O envelope antigo dizia "se houver alguém por perto, ELE OUVIU —
@@ -17434,7 +17471,7 @@ export default function Taverna() {
       /* MM16 nº 6: passou, a nota substitui o "revele UMA coisa" (num
          esconder-se é ordem para inventar); falhou, soma-se ao envelope da falha */
       if (notaEsc) env = passou ? notaEsc : `${env}\n${notaEsc}`;
-      if (custo && !custo.porPouco) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`; else if (envQueda) env = `${envQueda}${env}`;
+      if (custo && !custo.porPouco && !custo.meiaVerdade) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`; else if (envQueda) env = `${envQueda}${env}`;
       if (des && des.testemunha && !passou) {
         const q = perguntarTestemunha(des);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu falhei ao ${des.rotulo}` })}\n${env}`;
@@ -17961,6 +17998,9 @@ export default function Taverna() {
   };
 
   const adjudicarAcao = (acao) => {
+    /* MC3: a nota como estava antes deste ato (o «sim» do oráculo e a vigia
+       somam-se a ela); «mudar de ideia» repõe-na, porque nada aconteceu */
+    try { notaAntesDoAtoRef.current = notaRef.current; } catch (e) { calou("MC3 · a nota antes do ato", e); }
     /* ---------------- O PASSO ANTES DO ATO (11/10, MM11 · 5.ª sessão, J6) ----------------
        "Agradeço, termino a cerveja e saio para a praça. Procuro o mural de
        cartazes" rolou Percepção DENTRO da taverna: o catálogo julgou a
@@ -18392,6 +18432,7 @@ export default function Taverna() {
        alguém está jogando o pilar social; quem força a fechadura está
        jogando o outro —, e é o que impede o holofote de apontar fome de
        conversa numa campanha inteira feita de conversa. */
+    const texturaAntes = texturaRef.current;
     texturaRef.current = { ...texturaRef.current, rolou: true, pilar: v.social ? "social" : "exploracao" };
     const p = fichaViva() || personagem;
     const { total: modT, nivelTreino } = modDoTeste(p, v.atributo, v.pericia);
@@ -18400,17 +18441,21 @@ export default function Taverna() {
       : nivelTreino === "treinada" ? " ★ treinado"
       : per ? " · sem treino" : "";
     const rotulo = per ? per.nome : nomeDoAtributo(v.atributo);
-    pushMsgs([
+    /* MC3: as linhas do teste guardam-se aqui e entram no relato DEPOIS — já,
+       se o Mestre não chamar (o caminho de hoje); com o toque, se chamar (até
+       lá a frase e a fala do Mestre são efémeras, e «mudar de ideia» não deixa
+       rasto) */
+    const linhasDoTeste = [
       { autor: "jogador", texto: acao },
       { autor: "sistema", texto: `🎯 ${v.rotulo}${v.quem ? ` ${v.quem}` : ""}${v.viaNome ? ` ${v.viaNome}` : ""} — dificuldade ${v.dc} (${v.deOnde}). Seu bônus: +${modT}${selo}.${v.mudou.length ? ` Conta a favor: ${v.mudou.join(", ")}.` : ""}` },
-    ]);
+    ];
     /* v9.65: no teste social, a linha de cima ("dificuldade 18") não basta —
        o jogador precisa ver O QUE está pedindo e o que não contou. O blefe
        que não colou é a parte mais importante: prometer ouro que não se tem
        falhava em silêncio, e o jogador achava que a oferta tinha pesado. */
     if (v.social) {
       const blefe = falaDosBlefes(v.social);
-      if (blefe) pushMsgs([{ autor: "sistema", texto: blefe }]);
+      if (blefe) linhasDoTeste.push({ autor: "sistema", texto: blefe });
     }
     /* ---------------- A PORTA VIGIADA (v9.64) ----------------
        A terceira pergunta do catálogo estava pronta desde a v9.62 e sem
@@ -18436,7 +18481,7 @@ export default function Taverna() {
        (é a CD de quem procura), e o sucesso sem dado não tem total nenhum */
     const auto = v.palavra ? null : resolucaoAutomatica(modT, v.dc, { permitir: !v.achado && !v.esconderPago });
     if (auto) {
-      pushMsgs([{ autor: "sistema", texto: auto === "sucesso"
+      pushMsgs([...linhasDoTeste, { autor: "sistema", texto: auto === "sucesso"
         ? `✓ Isto está abaixo do seu patamar — sucesso sem rolar.`
         : `✗ Nem um 20 alcança — falha sem rolar.` }]);
       fecharTentativa(v, auto === "sucesso");
@@ -18481,7 +18526,7 @@ export default function Taverna() {
         if (desv) { desv = false; porVantagem += " (anula a desvantagem)"; } else vant = true;
       }
     }
-    setRolagem({
+    const novaRolagem = {
       atributo: nomeDoAtributo(v.atributo), rotulo, pericia: v.pericia,
       nivelTreino: per && nivelTreino === "nenhum" ? "leigo" : nivelTreino,
       motivo: v.rotulo, origem: "pedido", tipo: v.atributo,
@@ -18490,8 +18535,229 @@ export default function Taverna() {
       /* MM14: a frase do jogador viaja com o teste — o envelope social
          a usa (`oQueEuDisse`) em vez do rótulo do painel */
       frase: acao,
-    });
+    };
+    setRolagem(novaRolagem);
+    /* MC3 · O MESTRE CHAMA O DADO: com chamado, o teste PÁRA aqui e espera o
+       toque (ou a preferência); sem chamado, ou se ele estourar, segue como
+       hoje — as linhas entram já e o dado do campo fica em Rolar. */
+    let abriu = false;
+    try {
+      abriu = abrirOChamado(v, novaRolagem, { mod: modT, frase: acao, linhas: linhasDoTeste, notaAntes: notaAntesDoAtoRef.current, texturaAntes });
+    } catch (e) { calou("MC3 · abrir o chamado", e); abriu = false; }
+    if (!abriu) pushMsgs(linhasDoTeste);
   };
+
+  /* ================= MC3 · O MESTRE CHAMA O DADO (10/11/2026) =================
+     formas.md §MC 7 (2 · oficial); planta mente/plano-o-mestre-chama-o-dado.md §5.
+     Entre a frase e o dado há uma linha: «Sobrevivência. Precisa de 14. Se
+     falhar, …». `oChamado` (motor/o-mestre-chama.js) diz a perícia, o número e
+     o preço; a fala entra na folha como linha efémera (LinhaDoChamado, ui.jsx)
+     e o d20 espera na soleira (momentoDoChamado, painel-bandeja.jsx).
+
+     O RESOLVER NÃO LANÇA SOZINHO: só o toque (a bandeja, o dado do campo, o
+     Enter com o campo vazio) ou o relógio da preferência «o Mestre rola por
+     mim» chamam lancarOChamado. O dado é o do Véu: a mesma semente
+     (chaveDaRolagem) e a mesma conta (dadoDo(semente, "d20")), logo o mesmo
+     número que o Véu daria. No pouso, concluirRolagem faz o resto como sempre
+     — o Narrador logo, a Bandeja com o lance já rolado (lancamentoDoTeste vem
+     com jaRolou), a tentativa e o tempo —, e a soleira mostra o resultado
+     durante SOLEIRA_DO_MOMENTO.mostraODado.
+
+     «MUDAR DE IDEIA» não regista tentativa, não passa tempo e não chama o
+     Narrador: a rolagem sai, a nota volta ao que era, e a frase volta ao campo.
+
+     Tudo em calou: um chamado que estoura rola como hoje (o Véu). */
+  const chamadoDoVeredito = (v, mod) => {
+    try {
+      const bonus = Number(mod);
+      return oChamado(v, {
+        emCombate: !!combateRef.current,
+        bonus: Number.isFinite(bonus) ? bonus : undefined,
+        mundoDisseNao: false, /* o NÃO do oráculo já saiu antes, em adjudicarAcao */
+        contexto: {
+          chuva: /chuva|tempestade|temporal|garoa/i.test((climaRef.current && climaRef.current.rotulo) || ""),
+          noite: ehNoite(minutoRef.current),
+          cidade: !!cidadeAtualRef.current,
+        },
+      }) || null;
+    } catch (e) { calou("MC3 · oChamado", e); return null; }
+  };
+  /* a espera da vela: o motor ainda não dá esperaDoChamado (formas.md §MC 9.1) */
+  const esperaDoChamadoAgora = () => O_CHAMADO.esperaSozinho;
+  /* a fala do Mestre como fica no relato depois do toque */
+  const linhaDoChamadoNoRelato = (chamado) => "🎯 " + String((chamado && chamado.linha) || "");
+  const linhasDoChamado = (ch) => (Array.isArray(ch && ch.linhas) ? ch.linhas : []).map((m) => (
+    m && m.autor === "sistema" && /^🎯 /u.test(String(m.texto || "")) ? { ...m, texto: linhaDoChamadoNoRelato(ch.chamado) } : m
+  ));
+  /* o d20 do chamado: a conta do Véu (OverlayDado), com a mesma semente */
+  const lanceDoChamado = (ch) => {
+    const r = rolagem && ch.rolagem && rolagem.desafio === ch.rolagem.desafio ? rolagem : ch.rolagem;
+    if (!r) throw new Error("chamado sem rolagem");
+    const semente = chaveDaRolagem(r);
+    const face = semente ? dadoDo(semente, "d20") : sorteDaCasa;
+    const lados = 20;
+    const vant = !!r.vantagem, desv = !!r.desvantagem;
+    const modo = vant && !desv ? "vantagem" : desv && !vant ? "desvantagem" : null;
+    let valor, posto = null;
+    if (modo) {
+      const a = 1 + Math.floor(face() * lados), b = 1 + Math.floor(face() * lados);
+      valor = modo === "vantagem" ? Math.max(a, b) : Math.min(a, b);
+      posto = valor === a ? b : a;
+    } else valor = 1 + Math.floor(face() * lados);
+    const mod = r === rolagem ? modPend : ch.mod;
+    const base = lancamentoDoTeste({ valor, mod, dc: r.dificuldade, rotulo: r.rotulo || r.motivo || "", anterior: posto });
+    if (!base) throw new Error("lance vazio");
+    nDoLanceRef.current += 1;
+    /* rola na bandeja do chamado (jaRolou false); a Bandeja recebe o seu, já rolado, no pouso */
+    return { valor, lance: { ...base, jaRolou: false, n: nDoLanceRef.current } };
+  };
+  const abrirOChamado = (v, r, o) => {
+    const op = o && typeof o === "object" ? o : {};
+    const chamado = chamadoDoVeredito(v, op.mod);
+    const armado = pedidoArmadoRef.current;
+    pedidoArmadoRef.current = null;
+    if (!chamado) return false;
+    nDoChamadoRef.current += 1;
+    const ch = {
+      n: nDoChamadoRef.current, chamado, mod: Number(op.mod) || 0, frase: String(op.frase || ""), rolagem: r,
+      linhas: Array.isArray(op.linhas) ? op.linhas : [], notaAntes: op.notaAntes, texturaAntes: op.texturaAntes,
+      pedido: false, lance: null,
+    };
+    if (armado && armado.frase === ch.frase) {
+      /* o pedido do Mestre já foi tocado: este chamado nasce lançado */
+      const { valor, lance } = lanceDoChamado(ch);
+      const desde = mensagensRef.current.length;
+      definirChamado({ ...ch, lance, valor, desde, textoDaLinha: linhaDoChamadoNoRelato(chamado) });
+      pushMsgs(linhasDoChamado(ch));
+      return true;
+    }
+    definirChamado(ch);
+    return true;
+  };
+  const lancarOChamado = () => {
+    const ch = chamadoRef.current;
+    if (!ch || ch.lance) return;
+    if (ch.pedido) {
+      /* o pedido do Mestre: a frase dele parte agora pelo caminho de sempre, e
+         o chamado que ela abre (o mesmo veredito) nasce já lançado */
+      definirChamado(null);
+      pedidoArmadoRef.current = { frase: ch.frase };
+      try { partirOTurno(ch.frase); } catch (e) { calou("MC3 · o pedido do Mestre parte", e); }
+      pedidoArmadoRef.current = null;
+      return;
+    }
+    try {
+      const { valor, lance } = lanceDoChamado(ch);
+      const desde = mensagensRef.current.length;
+      definirChamado({ ...ch, lance, valor, desde, textoDaLinha: linhaDoChamadoNoRelato(ch.chamado) });
+      pushMsgs(linhasDoChamado(ch));
+    } catch (e) {
+      /* o chamado estourou no toque: rola como hoje, pelo Véu */
+      calou("MC3 · o toque no chamado", e);
+      definirChamado(null);
+      try { pushMsgs(ch.linhas || []); } catch (er) { calou("MC3 · as linhas do teste", er); }
+      try { setDadoRolando(true); } catch (er) { calou("MC3 · o Véu de reserva", er); }
+    }
+  };
+  lancarOChamadoRef.current = lancarOChamado;
+  /* o pouso: o Narrador é chamado JÁ (a mostra do resultado não custa o turno),
+     e a soleira esvazia depois de mostraODado */
+  const pousouOChamado = () => {
+    const ch = chamadoRef.current;
+    if (!ch || !ch.lance || ch.pousou) return;
+    definirChamado({ ...ch, pousou: true });
+    try { concluirRolagem(ch.valor); } catch (e) { calou("MC3 · o pouso do chamado", e); }
+    const telefone = !mesaLarga;
+    try {
+      setTimeout(() => {
+        try {
+          if (!chamadoRef.current || chamadoRef.current.n !== ch.n) return;
+          definirChamado(null);
+          /* no telefone o lance já se mostrou na soleira: não volta como «dado» */
+          if (telefone) { const b = bandejaRef.current; setBandejaVista(b.length ? b[0].n : 0); }
+        } catch (e) { calou("MC3 · a soleira esvazia", e); }
+      }, SOLEIRA_DO_MOMENTO.mostraODado);
+    } catch (e) { calou("MC3 · o relógio da mostra", e); definirChamado(null); }
+  };
+  /* «MUDAR DE IDEIA»: nem tentativa, nem tempo, nem Narrador */
+  const mudarDeIdeia = () => {
+    try {
+      const ch = chamadoRef.current;
+      if (!ch || ch.lance) return;
+      definirChamado(null);
+      if (ch.pedido) return; /* o pedido recusado: não havia frase do jogador */
+      rolagemConsumidaRef.current = rolagem && ch.rolagem && rolagem.desafio === ch.rolagem.desafio ? rolagem : ch.rolagem;
+      setRolagem(null);
+      if (ch.notaAntes !== undefined) notaRef.current = ch.notaAntes;
+      if (ch.texturaAntes) texturaRef.current = ch.texturaAntes;
+      const frase = String(ch.frase || "");
+      setEntrada(frase);
+      setTimeout(() => {
+        try {
+          const el = campoRef.current;
+          if (!el) return;
+          el.focus();
+          if (typeof el.setSelectionRange === "function") el.setSelectionRange(frase.length, frase.length);
+        } catch (e) { calou("MC3 · o cursor no fim da frase", e); }
+      }, 0);
+    } catch (e) { calou("MC3 · mudar de ideia", e); }
+  };
+  /* Esc com o foco no campo ou na bandeja (ou noutro botão da soleira) é
+     «mudar de ideia» — um ouvido só, no documento, enquanto o chamado espera */
+  const teclaDaSoleira = (e) => {
+    try {
+      if (!e || !chamadoRef.current || chamadoRef.current.lance) return;
+      const el = soleiraRef.current;
+      const foco = typeof document !== "undefined" ? document.activeElement : null;
+      if (e.key === "Escape" && foco && ((el && el.contains(foco)) || foco === campoRef.current)) { e.preventDefault(); mudarDeIdeia(); return; }
+      /* o turno que parte devolve o campo ao repouso (tira-lhe o foco): o Enter
+         sem foco em nada é o Enter do campo vazio, e lança o d20 da soleira */
+      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.isComposing
+        && (!foco || foco === document.body)) { e.preventDefault(); enterNoChamado(); }
+    } catch (er) { calou("MC3 · a tecla com o chamado", er); }
+  };
+  /* o Enter com o Mestre a chamar: vazio lança o d20 da soleira; com texto, o
+     d20 dá o pulso e o texto fica. Devolve true quando tratou o Enter. */
+  const enterNoChamado = () => {
+    try {
+      const ch = chamadoRef.current;
+      if (!ch || ch.lance || carregando) return false;
+      if (!String(entradaRef.current || "").trim()) lancarOChamado(); else setPulsoDoChamado((n) => n + 1);
+      return true;
+    } catch (e) { calou("MC3 · o Enter com o chamado", e); return false; }
+  };
+  const teclaDaSoleiraRef = useRef(null);
+  teclaDaSoleiraRef.current = teclaDaSoleira;
+  useEffect(() => {
+    if (!chamadoVivo || chamadoVivo.lance) return undefined;
+    const ouvir = (e) => { try { if (teclaDaSoleiraRef.current) teclaDaSoleiraRef.current(e); } catch (er) { calou("MC3 · ouvir o Esc", er); } };
+    try { document.addEventListener("keydown", ouvir); } catch (e) { calou("MC3 · a soleira ouve o Esc", e); }
+    return () => { try { document.removeEventListener("keydown", ouvir); } catch (e) { /* segue */ } };
+  }, [chamadoVivo && chamadoVivo.n, !!(chamadoVivo && chamadoVivo.lance)]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* a preferência: o relógio da espera lança o dado — e só ele, além do toque */
+  useEffect(() => {
+    const ch = chamadoVivo;
+    if (!ch || ch.lance || !rolaPorMim) return undefined;
+    let fim = null;
+    try {
+      fim = setTimeout(() => {
+        try { if (lancarOChamadoRef.current) lancarOChamadoRef.current(); } catch (e) { calou("MC3 · o Mestre rola por mim", e); }
+      }, esperaDoChamadoAgora(ch.chamado));
+    } catch (e) { calou("MC3 · o relógio da vela", e); }
+    return () => { try { clearTimeout(fim); } catch (e) { /* segue */ } };
+  }, [chamadoVivo && chamadoVivo.n, !!(chamadoVivo && chamadoVivo.lance), rolaPorMim]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* o chamado à espera sai quando o teste dele sai (um load, uma campanha nova)
+     ou quando a mesa deixa de estar em jogo; o pedido sai com outro teste */
+  useEffect(() => {
+    try {
+      const ch = chamadoRef.current;
+      if (!ch) return;
+      if (fase !== "jogo") { definirChamado(null); return; }
+      if (ch.lance) return;
+      if (ch.pedido) { if (rolagem || carregando) definirChamado(null); return; }
+      if (!rolagem || !ch.rolagem || rolagem.desafio !== ch.rolagem.desafio) definirChamado(null);
+    } catch (e) { calou("MC3 · o chamado sai com o teste", e); }
+  }, [rolagem, fase, carregando]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* O tempo é o custo que toda tentativa paga, dê certo ou não — é ele que
      faz a insistência doer sem precisar de proibição. */
@@ -24912,8 +25178,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* A SALA A DOIS continua como a faixa promete (e a suíte da sala prende): com a sua
      parte já escrita, mandar de novo REESCREVE-A até o outro escrever — o dado fica
      Pronto com texto. À espera fica só quando o Mestre tece o turno dos dois. */
-  const estadoDado = estadoDoDado({ texto: entrada, carregando: carregando || oMestreTecendo, rolagem: !!rolagem, lancado });
-  const nomeDado = nomeDoDado(estadoDado, {
+  /* MC3: enquanto o Mestre chama, o dado do campo fica em repouso (um dado
+     aceso na tela: o da soleira); o toque nele lança o da soleira */
+  const estadoDado = chamadoVivo && !(carregando || oMestreTecendo) ? "repouso" : estadoDoDado({ texto: entrada, carregando: carregando || oMestreTecendo, rolagem: !!rolagem, lancado });
+  const nomeDado = chamadoVivo && !chamadoVivo.lance && estadoDado === "repouso" ? `${O_CHAMADO.rolar} ${O_CHAMADO.dado}` : nomeDoDado(estadoDado, {
     teste: rolagem ? linhaDoTeste({ ...rolagem, dificuldade: null, motivo: "" }) : "",
     dificuldade: rolagem && rolagem.dificuldade != null ? rolagem.dificuldade : null,
   });
@@ -25261,6 +25529,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   useEffect(() => {
     try {
       if (fase !== "jogo" || carregando || rolagem || propostaDaFrase || dadoRolando || salaRef.current) return;
+      if (chamadoRef.current) return; /* MC3: um chamado de cada vez */
       /* a mesa que espera o Mestre contar o turno anterior não pede dado novo:
          o «Rolar» bateria na mesma trava e o jogador leria só a espera */
       if (travaODeclarar(guardadoRef.current)) return;
@@ -25296,6 +25565,17 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (!v || v.tipo !== "teste") return;
       const mod = modDoTeste(pv, v.atributo, v.pericia).total;
       const per = periciaPorId(v.pericia);
+      /* MC3 (§MC 7, 2.2) · O PEDIDO PELA MESMA PEÇA: o pedido do Mestre passa
+         por oChamado (a fala com o preço na folha, o d20 na soleira); o toque
+         manda a frase pelo caminho de sempre e o dado lança-se logo. Sem
+         chamado (ou se ele estourar), o cartão de sempre. */
+      let chP = null;
+      try { chP = chamadoDoVeredito(v, mod); } catch (e) { calou("MC3 · o pedido pelo chamado", e); chP = null; }
+      if (chP) {
+        nDoChamadoRef.current += 1;
+        definirChamado({ n: nDoChamadoRef.current, chamado: chP, mod, frase: String(p.frase || ""), rolagem: null, linhas: [], pedido: true, lance: null });
+        return;
+      }
       const c = oCartaoDoPedido(p, v, { mod, pericia: per && per.nome });
       if (c) { setPropostaDaFrase(c); setPropostaAberta(true); }
     } catch (e) { calou("o mestre pede o dado", e); }
@@ -25343,6 +25623,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
      texto fica intacto e o dado dá um pulso (nenhum com reduce). */
   const lancarODado = () => {
+    if (enterNoChamado()) return; /* MC3: o Mestre chama (enterNoChamado) */
     if (!entrada.trim()) return;
     if (envioEspera(estadoDado)) { try { setPulsoDoDado((n) => n + 1); } catch (e) { calou("o pulso do dado", e); } return; }
     try {
@@ -25369,6 +25650,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      Pronto envia; Rolar abre o véu do dado; À espera não faz nada (o nome diz). */
   const tocarNoDado = () => {
     try {
+      /* MC3: o dado do campo, apagado enquanto o Mestre chama, lança o da soleira */
+      if (chamadoRef.current && !chamadoRef.current.lance && !carregando) { lancarOChamado(); return; }
       if (estadoDado === "repouso") { if (campoRef.current) campoRef.current.focus(); return; }
       if (estadoDado === "rolar") { if (!dadoRolando) setDadoRolando(true); return; }
       if (estadoDado === "pronto") lancarODado();
@@ -25381,7 +25664,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      isso" — o teste fecha sem rolar, nenhuma tentativa nem desfecho ficam
      escritos, e a frase vai ao Mestre como cena. O veredito antes do clique. */
   const escolhaDoTesteAgora = (() => { try { const e = rolagem && rolagem.desafio && rolagem.desafio.escolha; return e && typeof e === "object" ? e : null; } catch (err) { calou("a escolha do teste", err); return null; } })();
-  const podeDesistirDoTeste = !!(escolhaDoTesteAgora && escolhaDoTesteAgora.podeDesistir && rolagem && rolagem.frase && !carregando && !dadoRolando && !combate);
+  const podeDesistirDoTeste = !!(escolhaDoTesteAgora && escolhaDoTesteAgora.podeDesistir && rolagem && rolagem.frase && !carregando && !dadoRolando && !combate && !chamadoVivo);
   const desistirDoTeste = () => {
     try {
       const r = rolagem;
@@ -25391,7 +25674,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       enviar(String(r.frase), fichaViva() || personagem);
     } catch (e) { calou("não era isso", e); }
   };
-  const linhaDoCampo = rolagem && !carregando ? (
+  const linhaDoCampo = rolagem && !carregando && !chamadoVivo ? (
     <>{linhaDoTeste(rolagem)}{escolhaDoTesteAgora && escolhaDoTesteAgora.risco ? ` · ${escolhaDoTesteAgora.risco}` : ""}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
   ) : estadoDado === "espera" && entrada.trim() ? "Fica guardado — você manda depois de ler." : null;
 
@@ -25960,6 +26243,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       }
     } catch (e) { calou("o horizonte da chegada", e); }
   }, [fase, chaveDaChegada, mensagens]); // eslint-disable-line
+  /* MC3 · A FOLHA COM O CHAMADO: antes do toque, a frase do jogador é efémera
+     (entra no relato só com o toque); depois, a linha do chamado que o toque
+     escreveu cala-se enquanto a fala viva (LinhaDoChamado) está na folha — por
+     null, que guarda os índices (a voz, a abertura, a prosa tocável). */
+  const mensagensDaFolha = (() => {
+    try {
+      const ch = chamadoVivo;
+      if (!ch) return mensagens;
+      if (!ch.lance) return ch.frase && !ch.pedido ? [...mensagens, { autor: "jogador", texto: ch.frase }] : mensagens;
+      return mensagens.map((m, i) => (i >= (ch.desde || 0) && m && m.autor === "sistema" && m.texto === ch.textoDaLinha ? null : m));
+    } catch (e) { calou("MC3 · a folha com o chamado", e); return mensagens; }
+  })();
   const horizonteDoRelato = (() => {
     try {
       if (!chegadaNoRelato || !dadosMapaVivo || horizontePreso) return null;
@@ -26139,6 +26434,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const momentos = {};
       let doCoracao = null;
       let outras = null;
+      /* MC3 · o chamado do Mestre: o d20 à espera, à frente de tudo na soleira */
+      try {
+        const ch = chamadoVivo;
+        if (ch) {
+          const mc = momentoDoChamado({
+            chamado: ch.chamado, mod: ch.mod, lance: ch.lance || null,
+            sozinho: !!rolaPorMim && !ch.lance, espera: esperaDoChamadoAgora(ch.chamado), pulso: pulsoDoChamado,
+            aoRolar: lancarOChamado, aoMudar: mudarDeIdeia, aoPousar: pousouOChamado, telefone: !mesaLarga,
+          });
+          if (mc && mc.qual) momentos[mc.qual] = mc.momento;
+        }
+      } catch (e) { calou("MC3 · o chamado na soleira", e); }
       if (propostaDaFrase) {
         const m = momentoDaProposta(propostaDaFrase, { preco: precoDaProposta(), impedida: bloqueado,
           onAbrir: () => setPropostaAberta(true), onConfirmar: confirmarAProposta, onReescrever: reescreverAProposta });
@@ -27103,17 +27410,24 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               ) : (() => {
                 const mf = manhaDaFogueira;
                 const k = mf ? mf.inicio : -1;
-                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagens} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} achados={achadosDoRelato} />;
+                if (!mf || !(k >= 0) || k > mensagens.length) return <Relato mensagens={mensagensDaFolha} carregando={carregando} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} achados={achadosDoRelato} />;
                 return (
                   <>
                     <Relato mensagens={mensagens.slice(0, k)} carregando={false} voz={voz} abertura={abertura} aoAbrir={abrirPortaDoSistema} aoOuvir={ouvirMestre} horizonte={horizonteDoRelato} tocaveis={tocaveisDaProsa} achados={achadosDoRelato} />
                     <div className="tv-coluna">
                       <LimiteDaFogueira aoEstourar={() => setManhaDaFogueira(null)}><PainelFogueira manha={mf} /></LimiteDaFogueira>
                     </div>
-                    <Relato mensagens={mensagens.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} horizonte={horizonteDoRelato ? { ...horizonteDoRelato, i: horizonteDoRelato.i - k } : null} tocaveis={tocaveisDaProsa ? { ...tocaveisDaProsa, i: tocaveisDaProsa.i - k } : null} achados={achadosDoRelato} />
+                    <Relato mensagens={mensagensDaFolha.slice(k)} carregando={carregando} voz={voz ? { ...voz, i: voz.i - k } : null} abertura={abertura != null ? abertura - k : null} aoAbrir={abrirPortaDoSistema} aoOuvir={(i, texto) => ouvirMestre(i + k, texto)} horizonte={horizonteDoRelato ? { ...horizonteDoRelato, i: horizonteDoRelato.i - k } : null} tocaveis={tocaveisDaProsa ? { ...tocaveisDaProsa, i: tocaveisDaProsa.i - k } : null} achados={achadosDoRelato} />
                   </>
                 );
               })()}
+              {/* MC3 · a fala do Mestre que chama o dado: a última linha da folha,
+                  efémera (não vai ao save); com o toque, a linha do relato fica */}
+              {chamadoVivo && !fogueiraNaPagina ? (
+                <div className="tv-coluna" data-chamado-vivo={chamadoVivo.lance ? "lancado" : "espera"}>
+                  <LimiteDasFichas key={"chamado-na-folha:" + chamadoVivo.n}><LinhaDoChamado chamado={chamadoVivo.chamado} /></LimiteDasFichas>
+                </div>
+              ) : null}
               {/* A ESPERA, dita uma vez e onde a resposta vai nascer (V5 §9): o dado
                   que rola (o de sempre, `tv-dice`, com a saída dele no reduced
                   motion) e a voz preparando — a forma da `Voz`, que era a do topo.
@@ -27939,11 +28253,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     onKeyDown={(e) => { if (gestoDoCampo(e) !== "mandar") return; e.preventDefault(); lancarODado(); }}
                     onFocus={() => { try { setCampoFocado(true); } catch (e) { calou("abrir o campo do turno", e); } }}
                     onBlur={() => { try { setCampoFocado(false); } catch (e) { calou("fechar o campo do turno", e); } }}
-                    placeholder={rolagem && !carregando ? "Role o dado ao lado…" : carregando || oMestreTecendo ? "Pode ir escrevendo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
+                    placeholder={rolagem && !carregando && !chamadoVivo ? "Role o dado ao lado…" : carregando || oMestreTecendo ? "Pode ir escrevendo…" : milagreSel ? `Como você manifesta ${milagreSel.nome}?` : habsSel.length ? `Como você usa ${habsSel.map((h) => h.nome).join(" e ")}?` : "O que você faz? Fale, aja, explore…"}
                     className={`tv-campo-do-turno${campoAberto ? " tv-campo-aberto" : ""} w-full flex-1 bg-transparent outline-none tv-body resize-none leading-relaxed px-4 py-2 min-w-0`}
                     style={{ color: T.ink, fontSize: TIPOS.corpo }} />
                 </div>
-                <Dado estado={estadoDado} dificuldade={rolagem && rolagem.dificuldade != null ? rolagem.dificuldade : null}
+                <Dado estado={estadoDado} dificuldade={rolagem && rolagem.dificuldade != null && !chamadoVivo ? rolagem.dificuldade : null}
                   nome={nomeDado} pulso={pulsoDoDado} aoTocar={tocarNoDado} />
               </div>
               </div>
@@ -27988,7 +28302,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 inicial={telaDoMapa.inicial} aoPartir={partirPeloMapaVivo} aoFechar={() => setTelaDoMapa(null)} />
             </LimiteDoMapa>
           ) : null}
-          <LimiteErro><PainelLateral portaoFechado={portaoFechadoAgora()} subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} bolsaPedida={bolsaPedida} relogios={relogios} aoVerNoMapa={dadosMapaVivo ? (m, e) => { try { return abrirMapaVivo(alvoNoMapa(e, dadosMapaVivo)); } catch (err) { calou("ver no mapa pelo diário", err); return false; } } : null} distanciaDoPasso={(m, e) => { try { return distanciaDoPassoNoMapa(e, { cidadeAtual: cidadeAtualRef.current || "", lugar: lugarRef.current || null, dados: dadosMapaVivo }); } catch (err) { calou("a distância do passo", err); return null; } }} bq={aba === "diario" ? oDiarioDasQuests() : null} /></LimiteErro>
+          <LimiteErro><PainelLateral portaoFechado={portaoFechadoAgora()} subPedida={subPedida} paginasDoCodice={aba === "codex" ? paginasDoCodiceAgora() : []} aoApontarPagina={apontarDaPagina} abasAbertas={abasAbertas} estadoDasAbas={estadoDasAbas()} guildasMundo={guildasMundo} minhaCasa={minhaCasa()} tarefasCasa={tarefasCasa} trabalhosDaCasa={trabalhosDaMinhaCasa} motivoDeEntrarNaCasa={motivoDeEntrarNaCasa} aoEntrarNaCasa={entrarNaGuilda} aoSairDaCasa={sairDaGuilda} aoFundarCasa={fundarGuilda} aoPegarTrabalhoDaCasa={pegarTrabalhoDaCasa} aoDelegarNaCasa={delegarNaMinhaCasa} aoPromoverNaCasa={promoverNaMinhaCasa} aoExpulsarDaCasa={expulsarDaMinhaCasa} aoAdmitirNaCasa={admitirNaMinhaCasa} aoSacarDaCasa={sacarDaCasa} aoDepositarNaCasa={depositarNaCasa} aoPedirPazes={pedirPazes} aba={aba} fechar={() => setAba(null)} personagem={personagem} mundo={mundo} equipar={equipar} desequipar={desequipar} descartarItem={descartarItem} descartarEquip={descartarEquip} trocarCaminho={trocarCaminho} acampado={acampado} removerDoGrupo={removerDoGrupo} mapa={mapa} faccaoJogador={faccaoJogadorRef.current} cidadeAtual={cidadeAtualRef.current} transferirItem={transferirItem} historia={historiaRef.current} quests={quests} trocarArco={trocarArco} npcs={npcs} guilda={guilda} depositarCofre={depositarCofre} sacarCofre={sacarCofre} melhorarGuilda={melhorarGuilda} convidarNpc={convidarNpc} onBancarConvite={bancarOConvite} vereditoConvite={vereditoDoConvite} onDiplomacia={diplomacia} onPresente={presentearFaccao} potencias={potenciasAqui()} dip={diploState} veredito={vereditoDe} onCumprirExigencia={cumprirExigencia} recalibrarSave={recalibrarSave} mortosBase={(baseMundo || {}).mortos || []} conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} descobertas={descobertas} contadores={contRef.current} equiparComp={equiparComp} desequiparComp={desequiparComp} desmontarEquip={desmontarEquip} forjar={forjar} mural={mural} aceitarContrato={aceitarContrato} abandonarContrato={abandonarContrato} garantirMural={garantirMural} vereditoDeCartaz={vereditoDoMural} recusaDeCartaz={recusaDoCartaz} aoVerNoDiario={() => abrirPortaDoSistema({ aba: "diario" })} decretos={decretos} pregarDecreto={pregarDecreto} cancelarDecreto={cancelarDecreto} definirRelacao={definirRelacao} reino={reino} famaInfo={{ f: Math.round(famaAtual()), pf: patamarFama(famaAtual()) }} nemesis={nemesis} nomeCampanha={nomeCampanha} dia={dia} onExportarCronica={exportarCronica} onExportarSave={exportarSave} eventos={eventos} correio={correio} enviarCarta={enviarCarta} responderPeticao={responderPeticao} divindade={divindade} onDespertar={() => checarDespertar(personagem)} onRecalibrarAsc={recalibrarAscensao} recalAscState={recalAsc} onMilagreUI={usarMilagre} onForragear={forragearAqui} devocao={devocao} onErguerTemplo={erguerTemploUI} onUsarConsumivel={usarConsumivelUI} onRitmoViagem={definirRitmoViagem} onForcarMarcha={armarMarchaForcada} marchaArmada={marchaArmada} bancada={bancadaAqui} despensa={despensa} onForjar={forjarReceita} mercadoAqui={mercadoAqui} cidadeMercado={cidadeMercado} balcaoAqui={balcaoAqui()} onComprarSuprimento={comprarSuprimento} onComprar={comprarNoMercado} onVender={venderNoMercado} ofertaPor={ofertaPor} onPechinchar={pechincharCom} comercioAqui={vocacaoDe(cidadeMercado)} governos={governos} onImposto={definirImposto} onErguerObra={erguerObra} onGovernador={nomearGovernador} aoTomarCidade={tomarCidade} podeTomarAqui={minhaCasa() ? { ...podeTomarAqui(), emCurso: tomando ? { cidade: tomando.cidade, faltam: Math.max(0, diasDeTomar(cidadeDoMapa(tomando.cidade) || {}) - (dia - tomando.desde)) } : null } : null} onAprenderHab={aprenderHabilidade} onRespec={respecHabilidades} onEscolherSubclasse={escolherSubclasseUI} onEscolherEspecializacao={escolherEspecializacaoUI} onSubirAtributo={gastarPontoAtributo} onRespecAtributos={redistribuirAtributosFicha} onAlternarPericia={alternarPericia} onPrepararMagia={prepararMagia} arrumar={podeArrumar({ emCombate: !!combate, acampado })} missoes={missoes} onResponderMissao={responderMissao} onEncerrarLegado={encerrarMissaoAntiga} onEncararProva={encararProva} onDesistirRito={desistirDoRito} bloqueado={bloqueado} jornada={jornada} masmorra={masmorra} molde={moldeMundo()} sementeMundo={sementeMundo()} generoMundo={generoMundo()} lexicoMundo={(mundoAtual() || {}).lexico} lugar={lugar} aoIrAoLugar={irAoLugarPeloMapa} aoViajar={viajarPeloMapa} onAcaoDeItem={acaoDeItem} preferenciaReacao={preferenciaReacao} aoEscolherPreferenciaReacao={escolherPreferenciaDaReacao} verboDaReacao={verboDaReacaoDoHeroi(personagem)} preferenciaGolpeFinal={preferenciaGolpeFinal} aoEscolherPreferenciaGolpeFinal={escolherPreferenciaDoGolpeFinal} heroismoPontos={garantirHeroismo(personagem)} heroAberto={heroAberto} aoAbrirHeroismo={() => setHeroAberto((v) => !v)} aoGastarHeroismo={usarHeroismo} contextoHeroismo={{ rolagemPendente: !!rolagem, golpeRecente: !!golpeRecenteRef.current, emCombate: !!combate }} mostrarRolagens={mostrarRolagens} aoAlternarRolagens={() => setMostrarRolagens((v) => !v)} rolaPorMim={rolaPorMim} aoAlternarRolaPorMim={alternarRolaPorMim} aoIrAoMenu={irMenu} aoGerarCronica={gerarCronica} alforje={alforjeDoPainel} abertura={aberturaMundoRef.current} bolsaPedida={bolsaPedida} relogios={relogios} aoVerNoMapa={dadosMapaVivo ? (m, e) => { try { return abrirMapaVivo(alvoNoMapa(e, dadosMapaVivo)); } catch (err) { calou("ver no mapa pelo diário", err); return false; } } : null} distanciaDoPasso={(m, e) => { try { return distanciaDoPassoNoMapa(e, { cidadeAtual: cidadeAtualRef.current || "", lugar: lugarRef.current || null, dados: dadosMapaVivo }); } catch (err) { calou("a distância do passo", err); return null; } }} bq={aba === "diario" ? oDiarioDasQuests() : null} /></LimiteErro>
         {/* RECALIBRAGEM DE LENDA: proposta do arquivista, decisão do jogador */}
         {recal === "pedindo" && (
           <CerimoniaDaRecalibragem passos={PASSOS_DO_SAVE} atual={0} lendo="O arquivista relê o livro da campanha e os seus feitos…" />
