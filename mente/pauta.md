@@ -163,13 +163,13 @@ existe). Cada um prova-se na 19.ª sessão (o MC11) com a medida escrita.
   conhecida›» é ir, não buscar, e «examino ‹coisa à mão›» vai a Investigação (o Matt divide a busca
   42/40). Lei: *toda regra tem um teste*. Quem: backend + testes. Prova na 19.ª: ≥ 20% dos turnos fora
   da luta com dado nascido da frase.
-- [ ] **EM2 · a resposta do tamanho da pergunta** · pesado (a voz do Narrador em massa) · de:
+- [x] (v9.638) **EM2 · a resposta do tamanho da pergunta** · pesado (a voz do Narrador em massa) · de:
   conselheiro · 10/11
   A uma pergunta de jogo o Matt responde em 11 palavras (p75: 25); nós em 113, nunca menos de 44.
   `TAMANHO_DA_RESPOSTA` por tipo de turno → uma linha da pauta dinâmica que **substitui** a de tamanho e o
   `maxTokens` do pedido. Lei: *o teto de prompt é sagrado* (nada soma). Quem: backend → oficial. Prova:
   mediana das respostas a perguntas ≤ 40 palavras, chegadas ≥ 80, custo por resposta a cair.
-- [ ] **EM3 · saber comum não se rola** · pesado (muda quando o dado sai) · de: conselheiro · 10/11
+- [x] (v9.638) **EM3 · saber comum não se rola** · pesado (muda quando o dado sai) · de: conselheiro · 10/11
   O Matt responde «o que sei de…» sem dado em 78%; a MC1 manda tudo a Saberes. Linha nova em
   `QUANDO_O_MESTRE_CHAMA`: o que a origem, o ofício e o registo do lugar dariam sai como facto, sem
   dado; o dado fica para o raro. Lei: *se é número, é tabela*. Quem: backend. Prova: suíte (cidade onde
