@@ -41,7 +41,12 @@ const corpo = (nome) => {
 
 sec("0. O APP LÊ O MOTOR E AS PEÇAS");
 {
-  t("importa oChamado e O_CHAMADO do motor", /import \{ oChamado, O_CHAMADO \} from "\.\/motor\/o-mestre-chama\.js";/.test(APP));
+  /* EM3 (11/11): a linha do import cresceu (o saber do herói, a régua que
+     cala, o envelope e a espera da vela); a promessa é a mesma — o App lê
+     oChamado e O_CHAMADO do motor —, por isso a régua passou a aceitar mais
+     nomes na mesma linha em vez de exigir só os dois. */
+  t("importa oChamado e O_CHAMADO do motor", /import \{ oChamado, O_CHAMADO[^}]*\} from "\.\/motor\/o-mestre-chama\.js";/.test(APP));
+  t("importa o saber do herói, a régua, o envelope e a espera (EM3)", /import \{[^}]*\bsaberDoHeroi\b[^}]*\bporQueNaoChama\b[^}]*\bsaberComumDe\b[^}]*\benvelopeDoSaberComum\b[^}]*\besperaDoChamado\b[^}]*\} from "\.\/motor\/o-mestre-chama\.js";/.test(APP));
   t("importa momentoDoChamado da bandeja", /import \{ Bandeja, momentoDoChamado \} from "\.\/painel-bandeja\.jsx";/.test(APP));
   t("importa LinhaDoChamado e RolaPorMim do ui", /LinhaDoChamado, RolaPorMim \} from "\.\/ui\.jsx"/.test(APP));
   t("a fala do Mestre vai à folha (LinhaDoChamado)", /<LinhaDoChamado chamado=\{chamadoVivo\.chamado\} \/>/.test(APP));
@@ -123,6 +128,54 @@ sec("5. O CONTRATO COM O MOTOR");
   t("o número do chamado é o do veredito", !!ch && ch.dc === Number(v.dc));
   t("a linha diz a perícia, o número e o preço", !!ch && ch.linha.includes(ch.periciaNome) && ch.linha.includes(String(ch.dc)) && ch.linha.includes(ch.aviso));
   t("na luta, não chama", v ? M.oChamado(v, { emCombate: true, bonus: 2 }) === null : false);
+}
+
+/* EM3 (11/11/2026): o saber que a ficha já tem não chama nem rola; o raro
+   chama; a vela espera pelas palavras; o preço cobrado chega à falha */
+sec("6. EM3 · O HERÓI JÁ SABE, A VELA E O PREÇO COBRADO");
+{
+  const cx = corpo("ctxDoChamado");
+  t("o ctx do chamado leva o saber do herói, com os oito refs", /saber = saberDoHeroi\(\{[\s\S]*?personagem: personagemRef\.current, lugar: lugarRef\.current, cidade: cidadeAtualRef\.current,[\s\S]*?jornada: jornadaRef\.current, factos: factosRef\.current, npcs: npcsRef\.current,[\s\S]*?mapa: mapaRef\.current, espinha: espinhaRef\.current,/.test(cx));
+  t("o saber que estoura cala-se em null (o Mestre chama como antes)", /catch \(e\) \{ calou\("EM3 · o saber do herói", e\); saber = null; \}/.test(cx));
+  t("chamadoDoVeredito passa o mesmo ctx a oChamado", /return oChamado\(v, ctxDoChamado\(mod\)\) \|\| null;/.test(corpo("chamadoDoVeredito")));
+  const sc = corpo("saberComumDoVeredito");
+  t("o saber comum: um ctx só para porQueNaoChama e saberComumDe", /const ctx = ctxDoChamado\(\);[\s\S]*?porQueNaoChama\(v, ctx\) === "saberComum" \? \(saberComumDe\(v, ctx\)/.test(sc) && /calou\("EM3 · o saber comum", e\); return null;/.test(sc));
+
+  /* o ramo do saber comum em adjudicarAcao: do «if (saberComum)» ao return */
+  const ad = corpo("adjudicarAcao");
+  const m = /const saberComum = saberComumDoVeredito\(v\);\s*if \(saberComum\) \{([\s\S]*?return true;\s*\}\s*\})/.exec(ad);
+  const ramo = m ? m[1] : "";
+  t("adjudicarAcao pergunta o saber comum antes de tudo no teste", !!m && ad.indexOf("saberComumDoVeredito(v)") < ad.indexOf("seguraOTeste("));
+  t("o saber comum manda o envelope do facto ao Narrador", /envelopeDoSaberComum\(v, saberComum\)/.test(ramo) && /enviar\(envSaber, /.test(ramo));
+  t("o saber comum não rola (nem Véu, nem chamado, nem desafio)", ramo.length > 0 && !/rolarDesafio|setDadoRolando|abrirOChamado|lancarOChamado|setRolagem/.test(ramo));
+  t("nem regista tentativa, nem passa tempo", ramo.length > 0 && !/fecharTentativa|cobrarTempoDoDesafio|avancarMinutos/.test(ramo));
+  t("o sistema não fala de si: só a frase do jogador entra no relato", /pushMsgs\(\[\{ autor: "jogador", texto: acao \}\]\);/.test(ramo) && !/autor: "sistema"/.test(ramo));
+  t("o Mestre não pede dado do que o herói já sabe", /if \(!v \|\| v\.tipo !== "teste"\) return;\s*if \(saberComumDoVeredito\(v\)\) return;/.test(APP));
+
+  const es = corpo("esperaDoChamadoAgora");
+  t("a espera da vela vem de esperaDoChamado (com o piso se estourar)", /esperaDoChamado\(ch && ch\.chamado \? ch\.chamado : ch\)/.test(es) && /return O_CHAMADO\.esperaSozinho;/.test(es));
+  t("o relógio e a soleira usam a mesma espera", (APP.match(/esperaDoChamadoAgora\(ch\.chamado\)/g) || []).length === 2);
+
+  /* visto jogando (11/11): o Enter que manda a frase abre o chamado e subia até ao
+     documento, onde o ouvido da soleira o lia como o Enter do campo vazio */
+  t("o Enter que o campo já consumiu (preventDefault) não lança o d20 da soleira", /e.key === "Enter" && !e.defaultPrevented && /.test(corpo("teclaDaSoleira")));
+  t("o lance do chamado leva o cobrado como consequencia (a peça escreve «✕ falhou — …»)", /const cobrado = String\(\(ch\.chamado && ch\.chamado\.cobrado\) \|\| ""\);[\s\S]{0,200}consequencia: cobrado/.test(corpo("lanceDoChamado")));
+  t("e a Bandeja recebe o mesmo cobrado no pouso", /chP && chP\.pousou && chP\.chamado \? String\(chP\.chamado\.cobrado \|\| ""\)[\s\S]{0,120}consequencia: cobrado/.test(corpo("concluirRolagem")));
+
+  /* o contrato, pelo motor: o mesmo herói que o App monta */
+  const D = await import("../src/desafios.js");
+  const M = await import("../src/motor/o-mestre-chama.js");
+  const saber = M.saberDoHeroi({ personagem: { antecedente: "Soldado Reformado" }, cidade: "Alto Negro", mapa: { cidades: [{ nome: "Alto Negro" }] } });
+  const ctx = { emCombate: false, saber };
+  const vCidade = D.lerAcao("o que sei desta cidade?", {});
+  t("«o que sei desta cidade?» na cidade do herói: saber comum, não chama", M.porQueNaoChama(vCidade, ctx) === "saberComum" && M.oChamado(vCidade, ctx) === null);
+  const env = M.envelopeDoSaberComum(vCidade, M.saberComumDe(vCidade, ctx));
+  t("e o envelope diz que não houve dado", /SEM DADO/.test(env));
+  const vRaro = D.lerAcao("o que sei de dragões antigos?", {});
+  const chR = M.oChamado(vRaro, ctx);
+  t("«o que sei de dragões antigos?» chama Saberes", !!chR && chR.periciaNome === "Saberes", chR ? chR.periciaNome : "sem chamado");
+  t("a espera do raro sai das palavras da fala, dentro do piso e do teto", !!chR && M.esperaDoChamado(chR) >= M.O_CHAMADO.esperaSozinho && M.esperaDoChamado(chR) <= M.O_CHAMADO.esperaTeto);
+  t("o cobrado é o aviso sem «Se falhar, » e sem ponto", !!chR && typeof chR.cobrado === "string" && chR.cobrado.length > 0 && !/^Se falhar/i.test(chR.cobrado) && !/\.$/.test(chR.cobrado));
 }
 
 console.log(`\nchamado-fiacao: ${bons} passaram, ${maus} falharam`);

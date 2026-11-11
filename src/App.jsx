@@ -258,7 +258,7 @@ import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
-import { oChamado, O_CHAMADO } from "./motor/o-mestre-chama.js";
+import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { devolverAMochila } from "./comparar-item.js";
 import { gravarFeito, garantirFeitos } from "./marcas-da-moldura.js";
@@ -17204,7 +17204,17 @@ export default function Taverna() {
     if (desastre) tiquear("falha", { porque: "você falhou feio" });
     else if (dc != null && (critico || total >= dc)) tiquear("sucesso", { porque: "você conseguiu o que queria" });
     const notaBuff = notaDosBuffs(personagem, r.atributo);
-    aBandeja(lancamentoDoTeste({ valor, mod, dc, rotulo: r.rotulo || r.motivo || "", anterior: dadoAnterior }));
+    {
+      /* EM3: o teste que veio de um chamado leva à Bandeja o preço cobrado
+         (chamado.cobrado) como consequencia; sem chamado, como sempre */
+      let lt = lancamentoDoTeste({ valor, mod, dc, rotulo: r.rotulo || r.motivo || "", anterior: dadoAnterior });
+      try {
+        const chP = chamadoRef.current;
+        const cobrado = chP && chP.pousou && chP.chamado ? String(chP.chamado.cobrado || "") : "";
+        if (lt && cobrado) lt = Object.freeze({ ...lt, consequencia: cobrado });
+      } catch (e) { calou("EM3 · o preço cobrado na bandeja", e); }
+      aBandeja(lt);
+    }
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
     /* ---------------- O PREÇO DE FALHAR (v9.49) ----------------
        A terceira e última fonte de condição do jogo, agora que o Mestre
@@ -18034,6 +18044,25 @@ export default function Taverna() {
        isso a régua é só uma: o que não é teste não rende nada. */
     if (v.tipo !== "teste") ultimoDesfechoRef.current = "falha";
     if (v.tipo === "teste") {
+      /* ---------------- O HERÓI JÁ SABE (EM3, 11/11/2026) ----------------
+         «O que sei desta cidade?» na cidade onde se está não é um teste: é
+         a ficha. Quando a régua que cala o chamado é a do saber comum
+         (SABER_COMUM, motor/o-mestre-chama.js), não há dado — nem o Véu,
+         nem o chamado, nem tentativa, nem tempo — e o Narrador recebe o
+         envelope do facto pelo mesmo caminho dos outros envelopes do teste
+         (por turno; nenhum bloco estático, o teto não cresce). Para a
+         cobrança é falha: saber não rende bolsa. Com erro, segue como hoje. */
+      const saberComum = saberComumDoVeredito(v);
+      if (saberComum) {
+        let envSaber = "";
+        try { envSaber = envelopeDoSaberComum(v, saberComum); } catch (e) { calou("EM3 · o envelope do saber comum", e); envSaber = ""; }
+        if (envSaber) {
+          pushMsgs([{ autor: "jogador", texto: acao }]);
+          ultimoDesfechoRef.current = "falha";
+          enviar(envSaber, fichaViva() || personagem);
+          return true;
+        }
+      }
       /* ---------------- O MESTRE CONCEDE (v9.71) ----------------
          "Não dá para fazer um teste a cada turno, chegaria um momento que
          ficaria cansativo."
@@ -18567,23 +18596,52 @@ export default function Taverna() {
      Narrador: a rolagem sai, a nota volta ao que era, e a frase volta ao campo.
 
      Tudo em calou: um chamado que estoura rola como hoje (o Véu). */
+  /* EM3 (11/11/2026): o contexto do chamado, montado UMA vez e passado
+     igual a oChamado, porQueNaoChama e saberComumDe — as três réguas leem o
+     mesmo herói. `saber` é o que a ficha já sabe (saberDoHeroi: o sítio, a
+     terra, o ofício, o livro de factos, os sítios vistos); com erro sai null,
+     e null cala a fonte: o Mestre chama como antes. */
+  const ctxDoChamado = (mod) => {
+    const bonus = Number(mod);
+    let saber = null;
+    try {
+      saber = saberDoHeroi({
+        personagem: personagemRef.current, lugar: lugarRef.current, cidade: cidadeAtualRef.current,
+        jornada: jornadaRef.current, factos: factosRef.current, npcs: npcsRef.current,
+        mapa: mapaRef.current, espinha: espinhaRef.current,
+      });
+    } catch (e) { calou("EM3 · o saber do herói", e); saber = null; }
+    return {
+      emCombate: !!combateRef.current,
+      bonus: Number.isFinite(bonus) ? bonus : undefined,
+      mundoDisseNao: false, /* o NÃO do oráculo já saiu antes, em adjudicarAcao */
+      contexto: {
+        chuva: /chuva|tempestade|temporal|garoa/i.test((climaRef.current && climaRef.current.rotulo) || ""),
+        noite: ehNoite(minutoRef.current),
+        cidade: !!cidadeAtualRef.current,
+      },
+      saber,
+    };
+  };
   const chamadoDoVeredito = (v, mod) => {
     try {
-      const bonus = Number(mod);
-      return oChamado(v, {
-        emCombate: !!combateRef.current,
-        bonus: Number.isFinite(bonus) ? bonus : undefined,
-        mundoDisseNao: false, /* o NÃO do oráculo já saiu antes, em adjudicarAcao */
-        contexto: {
-          chuva: /chuva|tempestade|temporal|garoa/i.test((climaRef.current && climaRef.current.rotulo) || ""),
-          noite: ehNoite(minutoRef.current),
-          cidade: !!cidadeAtualRef.current,
-        },
-      }) || null;
+      return oChamado(v, ctxDoChamado(mod)) || null;
     } catch (e) { calou("MC3 · oChamado", e); return null; }
   };
-  /* a espera da vela: o motor ainda não dá esperaDoChamado (formas.md §MC 9.1) */
-  const esperaDoChamadoAgora = () => O_CHAMADO.esperaSozinho;
+  /* EM3 · O HERÓI JÁ SABE: o saber comum do veredito ({ fonte, diz, sobre })
+     quando a régua que cala o chamado é a do saber, ou null (o dado decide,
+     como hoje). Um ctx só para as duas perguntas. */
+  const saberComumDoVeredito = (v) => {
+    try {
+      const ctx = ctxDoChamado();
+      return porQueNaoChama(v, ctx) === "saberComum" ? (saberComumDe(v, ctx) || null) : null;
+    } catch (e) { calou("EM3 · o saber comum", e); return null; }
+  };
+  /* a espera da vela (formas.md §MC 9.1): esperaDoChamado, pelas palavras da
+     fala; com erro, o piso de sempre */
+  const esperaDoChamadoAgora = (ch) => {
+    try { return esperaDoChamado(ch && ch.chamado ? ch.chamado : ch); } catch (e) { calou("EM3 · a espera da vela", e); return O_CHAMADO.esperaSozinho; }
+  };
   /* a fala do Mestre como fica no relato depois do toque */
   const linhaDoChamadoNoRelato = (chamado) => "🎯 " + String((chamado && chamado.linha) || "");
   const linhasDoChamado = (ch) => (Array.isArray(ch && ch.linhas) ? ch.linhas : []).map((m) => (
@@ -18609,7 +18667,10 @@ export default function Taverna() {
     if (!base) throw new Error("lance vazio");
     nDoLanceRef.current += 1;
     /* rola na bandeja do chamado (jaRolou false); a Bandeja recebe o seu, já rolado, no pouso */
-    return { valor, lance: { ...base, jaRolou: false, n: nDoLanceRef.current } };
+    /* EM3: o aviso no indicativo (chamado.cobrado) viaja no lance como
+       consequencia — a peça escreve «✕ falhou — …» sem reescrever o texto */
+    const cobrado = String((ch.chamado && ch.chamado.cobrado) || "");
+    return { valor, lance: { ...base, jaRolou: false, n: nDoLanceRef.current, ...(cobrado ? { consequencia: cobrado } : {}) } };
   };
   const abrirOChamado = (v, r, o) => {
     const op = o && typeof o === "object" ? o : {};
@@ -18712,7 +18773,13 @@ export default function Taverna() {
       if (e.key === "Escape" && foco && ((el && el.contains(foco)) || foco === campoRef.current)) { e.preventDefault(); mudarDeIdeia(); return; }
       /* o turno que parte devolve o campo ao repouso (tira-lhe o foco): o Enter
          sem foco em nada é o Enter do campo vazio, e lança o d20 da soleira */
-      if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.isComposing
+      /* EM3 (11/11, visto jogando): o Enter que MANDOU a frase é o mesmo
+         evento que abre o chamado — o React 18 corre o efeito que liga este
+         ouvido dentro do próprio keydown, o evento ainda sobe até ao
+         documento, e o campo já descansou (foco no body): o d20 lançava-se
+         sem toque. O campo marca o Enter que consumiu (preventDefault);
+         esse não é o Enter do campo vazio. */
+      if (e.key === "Enter" && !e.defaultPrevented && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.isComposing
         && (!foco || foco === document.body)) { e.preventDefault(); enterNoChamado(); }
     } catch (er) { calou("MC3 · a tecla com o chamado", er); }
   };
@@ -25563,6 +25630,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       pedidosFeitosRef.current = [...pedidosFeitosRef.current, p.chave].slice(-60);
       const v = veredictoDaAcao(p.frase);
       if (!v || v.tipo !== "teste") return;
+      /* EM3: o Mestre não pede dado do que o herói já sabe */
+      if (saberComumDoVeredito(v)) return;
       const mod = modDoTeste(pv, v.atributo, v.pericia).total;
       const per = periciaPorId(v.pericia);
       /* MC3 (§MC 7, 2.2) · O PEDIDO PELA MESMA PEÇA: o pedido do Mestre passa
