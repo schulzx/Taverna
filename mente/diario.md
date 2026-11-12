@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 12/11 · v9.641 · todo sucesso tem dono, a busca acha onde a quest aponta, e a mesa não engole o gesto (S19) · commits 2c3b428, 604a31b, d34b95b + 5438467
+
+A 19.ª sessão (`mente/sessao-19.md`, v9.640, US$ 0,48 em 44 respostas) mediu a régua dos dados cumprida (1 d20 / 2,0 turnos fora da luta, 8 perícias, Percepção 24%) e a alcunha calada (0/44), mas o sucesso sem dono (6 de 10 com o envelope genérico) e um sucesso vazio no passo. A pessoa: «Comece as correções».
+
+- **oficial (tela, 2c3b428):** com um chamado pendente, o Enter no campo é «mudar de ideia» (`recuarOChamado`, a frase segue um render depois); o chip do poupado deixa passar o toque à grelha e cada chip tem o seu relógio; o retoque no verbo antes de `BATALHA_EM_TRES.retoqueQueDesiste` (500 ms) é eco. Emenda escrita em formas.md §MC 3.
+- **backend (motor, 604a31b):** `EFEITO_DO_SUCESSO` (um efeito por desafio) e `VETO_DO_SUCESSO` (não revela o segredo, não cria objeto, não cobra custo); o item que a quest faz nascer no lugar é o que a busca lá acha, e o RUMO aponta primeiro para o lugar do passo; a escuta ouve «seguimos», «examino» noutra oração, a coisa da cena como alvo (`ALVO_NA_CENA`), a negação na entrada da masmorra e o «enquanto»; Saberes responde sobre o assunto; EM2 passa a ir também nos turnos de envelope; EM3 ganha a fonte `perto`. Suíte `teste-sessao-19.mjs` (75 casos).
+- **oficial (fiação, d34b95b):** a semente no `saberDoHeroi`; o aviso «na rua» só dentro dos muros; o teste ganha ao chip «Ir até» no mesmo prédio; a Intuição lê a pessoa do alvo da frase.
+- **decisões médias:** o retoque de 500 ms (tempo de duplo clique por omissão do Windows) — depois disso o segundo toque continua a desistir, como a W1 manda. A guarda do Cronista contra artefato inventado NÃO entrou: precisa de comparar com bolsa, saque, livro de factos, quests e espinha, e arrisca barrar artefatos legítimos — fica para o backend.
+- **prova limpa de 5438467:** build 0, 500/500 suítes, 26/26 varredores. Subiu.
+- **o que ficou:** EM2 nas conversas (a linha chegava e o Narrador ignorou-a — só a 20.ª sessão mede); o T17 ao vivo; «Procurar nesta sala» na masmorra rola sem chamado e sem a Sorte do Halfling; o «NÃO, MAS» do oráculo apaga o preço do «por um fio»; a guarda do Cronista; e, para a pessoa decidir, «o quadro do mistério» (proposta da 19.ª).
+
 ## 11/11 · v9.640 · o catálogo aprende os testes que as nossas sessões nunca viram (CS) · commit e623b89 + d6b5aee
 
 A pessoa: «faça o que disse que vale a pena» — descrever em português, com palavras nossas, as situações em que o estudo do Mestre (CRD3) mostra cada perícia, para os testes que nenhuma sessão de prova tinha mostrado.
