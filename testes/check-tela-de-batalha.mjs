@@ -339,6 +339,12 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
        clique e desarmava-o, e o clique ia atacar em vez de empurrar */
     /onPointerDown=\{\(e\) => \{[\s\S]{0,400}?if \(empurrando && sobreInimigo\) return;\s*setArmado\(""\);/.test(TEL)
     && /const mover = \(destino\) => \{ setArmado\(""\);/.test(TEL));
+  /* 19.ª sessão, defeito 15 (o Mover alterna): o segundo toque que chega
+     dentro do tempo de duplo clique é eco do primeiro, não desistência — nem
+     desarma, nem executa a fuga. Depois dele, a saída 1 vale como sempre. */
+  t("o retoque que ecoa (dentro de B3.retoqueQueDesiste) não desiste nem executa",
+    /if \(armado === v\.id && Date\.now\(\) - armouEmRef\.current < B3\.retoqueQueDesiste\) return;\s*if \(armado === v\.id\) \{/.test(TEL)
+    && /setArmado\(v\.id\);\s*armouEmRef\.current = Date\.now\(\);/.test(TEL));
 
   /* O VERBO IMPEDIDO CONTINUA NA ORDEM DE TABULAÇÃO. `disabled` tira-o
      dela, e quem navega por teclado ou ouve a tela deixa de saber que o
@@ -439,6 +445,15 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
      propriedade a dizer que o anel existe e a tela sem anel nenhum — a
      mentira que é pior do que a ausência, porque passa na revisão. */
   const GRADE = semProsa(ler("src/grade-de-batalha.jsx"));
+  /* 19.ª sessão, defeito 5 (luta 3): o chip «cai · poupado · matar» pousava
+     por cima das casas, engolia o toque e desarmava o Mover. O texto deixa o
+     toque atravessar, só o botão do outro lado o apanha (sem desarmar), e o
+     relógio de cada chip já não morre com a limpeza do efeito. */
+  t("o chip da queda não engole o toque destinado à grelha",
+    /role="status"[^>]{0,200}?pointerEvents: "none"/.test(GRADE)
+    && /onPointerDown=\{\(ev\) => ev\.stopPropagation\(\)\}[\s\S]{0,300}?pointerEvents: "auto"/.test(GRADE));
+  t("o relógio do chip é dele (só a desmontagem o apaga)",
+    /relogiosDasQuedasRef\.current\.set\(q\.chave, id\)/.test(GRADE) && !/tids\.forEach\(clearTimeout\)/.test(GRADE));
   t("a casa do tabuleiro usa o anel de SVG, que é `outline` e não sombra",
     /className="tv-anel-foco-no-campo"/.test(GRADE)
     && /\.tv-anel-foco-no-campo:focus-visible/.test(ler("src/estilo.js")),

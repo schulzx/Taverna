@@ -5423,6 +5423,9 @@ export default function Taverna() {
   const nDoChamadoRef = useRef(0);
   const nDoLanceRef = useRef(0);
   const [pulsoDoChamado, setPulsoDoChamado] = useState(0);
+  /* S19 · defeito 5: a frase que segue depois do recuo do chamado (enterNoChamado) */
+  const fraseQueSegueRef = useRef(false);
+  const lancarODadoRef = useRef(null);
   /* o pedido do Mestre tocado: a frase dele parte e o chamado que ela abre nasce lançado */
   const pedidoArmadoRef = useRef(null);
   /* MC6 · A CHAVE DA OFERTA: a frase do pedido do Mestre que está a partir agora
@@ -18919,17 +18922,25 @@ export default function Taverna() {
       }, SOLEIRA_DO_MOMENTO.mostraODado);
     } catch (e) { calou("MC3 · o relógio da mostra", e); definirChamado(null); }
   };
-  /* «MUDAR DE IDEIA»: nem tentativa, nem tempo, nem Narrador */
+  /* o recuo do chamado, sem rasto: nem tentativa, nem tempo, nem Narrador —
+     a rolagem sai e a nota volta ao que era. Devolve o chamado que recuou,
+     ou null quando não havia nada à espera. */
+  const recuarOChamado = () => {
+    const ch = chamadoRef.current;
+    if (!ch || ch.lance) return null;
+    definirChamado(null);
+    if (ch.pedido) return ch; /* o pedido recusado: não havia frase do jogador */
+    rolagemConsumidaRef.current = rolagem && ch.rolagem && rolagem.desafio === ch.rolagem.desafio ? rolagem : ch.rolagem;
+    setRolagem(null);
+    if (ch.notaAntes !== undefined) notaRef.current = ch.notaAntes;
+    if (ch.texturaAntes) texturaRef.current = ch.texturaAntes;
+    return ch;
+  };
+  /* «MUDAR DE IDEIA»: o recuo, e a frase volta ao campo */
   const mudarDeIdeia = () => {
     try {
-      const ch = chamadoRef.current;
-      if (!ch || ch.lance) return;
-      definirChamado(null);
-      if (ch.pedido) return; /* o pedido recusado: não havia frase do jogador */
-      rolagemConsumidaRef.current = rolagem && ch.rolagem && rolagem.desafio === ch.rolagem.desafio ? rolagem : ch.rolagem;
-      setRolagem(null);
-      if (ch.notaAntes !== undefined) notaRef.current = ch.notaAntes;
-      if (ch.texturaAntes) texturaRef.current = ch.texturaAntes;
+      const ch = recuarOChamado();
+      if (!ch || ch.pedido) return;
       const frase = String(ch.frase || "");
       setEntrada(frase);
       setTimeout(() => {
@@ -18962,13 +18973,26 @@ export default function Taverna() {
         && (!foco || foco === document.body)) { e.preventDefault(); enterNoChamado(); }
     } catch (er) { calou("MC3 · a tecla com o chamado", er); }
   };
-  /* o Enter com o Mestre a chamar: vazio lança o d20 da soleira; com texto, o
-     d20 dá o pulso e o texto fica. Devolve true quando tratou o Enter. */
-  const enterNoChamado = () => {
+  /* o Enter com o Mestre a chamar: vazio lança o d20 da soleira. Com texto,
+     vindo do campo, é «mudar de ideia» — o chamado recua e a frase nova segue
+     (fraseQueSegueRef: parte no render seguinte, já sem a rolagem velha, pelo
+     caminho de sempre). Fora do campo (o foco no body) o d20 dá o pulso e o
+     texto fica. Devolve true quando tratou o Enter.
+     19.ª sessão, defeito 5 (T9a): o pedido «Percepção 13» do Largo ficou
+     pendente e o Enter de «vamos para o Terreiro Rouco» só fez o pulso — o
+     jogador mandou, e nada aconteceu, sem saber porquê. Engolir em silêncio
+     é o defeito; escrever outra coisa é já ter mudado de ideia. */
+  const enterNoChamado = (o) => {
     try {
       const ch = chamadoRef.current;
       if (!ch || ch.lance || carregando) return false;
-      if (!String(entradaRef.current || "").trim()) lancarOChamado(); else setPulsoDoChamado((n) => n + 1);
+      if (!String(entradaRef.current || "").trim()) { lancarOChamado(); return true; }
+      if (o && o.doCampo) {
+        if (!recuarOChamado()) return false;
+        fraseQueSegueRef.current = true;
+        return true;
+      }
+      setPulsoDoChamado((n) => n + 1);
       return true;
     } catch (e) { calou("MC3 · o Enter com o chamado", e); return false; }
   };
@@ -25908,7 +25932,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
      texto fica intacto e o dado dá um pulso (nenhum com reduce). */
   const lancarODado = () => {
-    if (enterNoChamado()) return; /* MC3: o Mestre chama (enterNoChamado) */
+    if (enterNoChamado({ doCampo: true })) return; /* MC3: o Mestre chama (enterNoChamado) */
     if (!entrada.trim()) return;
     if (envioEspera(estadoDado)) { try { setPulsoDoDado((n) => n + 1); } catch (e) { calou("o pulso do dado", e); } return; }
     try {
@@ -25931,6 +25955,19 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     if (proporAFrase(entrada)) return;
     partirOTurno(entrada);
   };
+  /* S19 · defeito 5: a frase escrita com o chamado à espera parte aqui, um
+     render depois do recuo — já sem o chamado e sem a rolagem velha, para que
+     a proposta, a encruzilhada e o turno a leiam como qualquer outra frase.
+     Se a rolagem não saiu (não devia), a frase fica no campo, intacta. */
+  lancarODadoRef.current = lancarODado;
+  useEffect(() => {
+    try {
+      if (!fraseQueSegueRef.current || chamadoRef.current) return;
+      fraseQueSegueRef.current = false;
+      if (rolagem || carregando) return;
+      if (lancarODadoRef.current) lancarODadoRef.current();
+    } catch (e) { calou("S19 · a frase segue depois do recuo", e); }
+  }, [chamadoVivo, rolagem]); // eslint-disable-line react-hooks/exhaustive-deps
   /* O TOQUE NO DADO — Repouso foca o campo (pegar no dado é começar a jogada);
      Pronto envia; Rolar abre o véu do dado; À espera não faz nada (o nome diz). */
   const tocarNoDado = () => {

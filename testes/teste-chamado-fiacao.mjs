@@ -70,7 +70,18 @@ sec("1. O RESOLVER NÃO LANÇA SEM TOQUE OU PREFERÊNCIA");
   /* quem chama lancarOChamado: o Enter vazio, o dado do campo, a bandeja (aoRolar) e o relógio */
   const chamadas = APP.match(/lancarOChamado\(\)/g) || [];
   t(`lancarOChamado() tem exatamente duas chamadas diretas (Enter e dado do campo): ${chamadas.length}`, chamadas.length === 2);
-  t("o Enter só lança com o campo vazio; com texto, o pulso", /if \(!String\(entradaRef\.current \|\| ""\)\.trim\(\)\) lancarOChamado\(\); else setPulsoDoChamado\(\(n\) => n \+ 1\);/.test(corpo("enterNoChamado")) && /if \(enterNoChamado\(\)\) return;/.test(corpo("lancarODado")));
+  /* movida em 12/11 (19.ª sessão, defeito 5 · T9a): o Enter com texto VINDO
+     DO CAMPO deixou de ser só o pulso — o pedido «Percepção 13» ficou à espera
+     e o Enter de «vamos para o Terreiro Rouco» não fez nada, sem aviso.
+     Escrever outra frase e mandá-la é mudar de ideia: o chamado recua e a
+     frase segue. O pulso fica para o Enter sem foco no campo (o body). */
+  const en = corpo("enterNoChamado");
+  t("o Enter só lança com o campo vazio", /if \(!String\(entradaRef\.current \|\| ""\)\.trim\(\)\) \{ lancarOChamado\(\); return true; \}/.test(en));
+  t("com texto vindo do campo, o chamado recua e a frase segue (nunca se engole)", /if \(o && o\.doCampo\) \{\s*if \(!recuarOChamado\(\)\) return false;\s*fraseQueSegueRef\.current = true;/.test(en) && /if \(enterNoChamado\(\{ doCampo: true \}\)\) return;/.test(corpo("lancarODado")));
+  t("com texto fora do campo, o pulso, e o texto fica", /setPulsoDoChamado\(\(n\) => n \+ 1\);\s*return true;/.test(en));
+  t("a frase parte um render depois do recuo, sem chamado nem rolagem, pelo envio de sempre",
+    /if \(!fraseQueSegueRef\.current \|\| chamadoRef\.current\) return;\s*fraseQueSegueRef\.current = false;\s*if \(rolagem \|\| carregando\) return;\s*if \(lancarODadoRef\.current\) lancarODadoRef\.current\(\);/.test(APP)
+    && /lancarODadoRef\.current = lancarODado;/.test(APP));
   t("o dado do campo lança o da soleira", /if \(chamadoRef\.current && !chamadoRef\.current\.lance && !carregando\) \{ lancarOChamado\(\); return; \}/.test(corpo("tocarNoDado")));
   const pelaRef = APP.match(/lancarOChamadoRef\.current\(\)/g) || [];
   t("o relógio é a única chamada pela ref", pelaRef.length === 1);
@@ -91,14 +102,18 @@ sec("2. COM ERRO, LANÇA COMO HOJE");
 
 sec("3. «MUDAR DE IDEIA» NÃO REGISTA TENTATIVA NEM PASSA TEMPO");
 {
-  const md = corpo("mudarDeIdeia");
-  t("mudarDeIdeia existe", md.length > 0);
+  /* movida em 12/11 (19.ª sessão, defeito 5): o recuo saiu de mudarDeIdeia
+     para recuarOChamado, que o Enter com frase nova também usa — as réguas
+     de «sem rasto» leem agora os dois corpos juntos */
+  const rc = corpo("recuarOChamado");
+  const md = corpo("mudarDeIdeia") + "\n" + rc;
+  t("mudarDeIdeia existe, e recua pelo recuarOChamado", rc.length > 0 && /const ch = recuarOChamado\(\);/.test(corpo("mudarDeIdeia")));
   t("não regista tentativa", !/fecharTentativa|fecharArmadilhaDoTeste/.test(md));
   t("não passa tempo", !/cobrarTempoDoDesafio|avancarMinutos|passarTempo/.test(md));
   t("não chama o Narrador nem conclui a rolagem", !/enviar\(|concluirRolagem|pushMsgs/.test(md));
   t("a rolagem sai e a frase volta ao campo", /setRolagem\(null\)/.test(md) && /setEntrada\(frase\)/.test(md));
   t("a nota ao Narrador volta ao que era antes do ato", /notaRef\.current = ch\.notaAntes/.test(md) && /notaAntesDoAtoRef\.current = notaRef\.current/.test(corpo("adjudicarAcao")));
-  t("só antes do toque (com o lance não há volta)", /if \(!ch \|\| ch\.lance\) return;/.test(md));
+  t("só antes do toque (com o lance não há volta)", /if \(!ch \|\| ch\.lance\) return null;/.test(rc));
   t("Esc no campo ou na soleira é mudar de ideia", /\(\(el && el\.contains\(foco\)\) \|\| foco === campoRef\.current\)\) \{ e\.preventDefault\(\); mudarDeIdeia\(\); return; \}/.test(corpo("teclaDaSoleira")) && /document\.addEventListener\("keydown", ouvir\)/.test(APP));
   t("o Enter sem foco (o turno partiu e o campo descansou) lança pelo mesmo caminho do campo vazio", /\(!foco \|\| foco === document\.body\)\) \{ e\.preventDefault\(\); enterNoChamado\(\); \}/.test(corpo("teclaDaSoleira")));
   t("«Não era isso» não aparece com o chamado", /&& !combate && !chamadoVivo\);/.test(APP));

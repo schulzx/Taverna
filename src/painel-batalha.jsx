@@ -1341,6 +1341,8 @@ export function TelaDeBatalha(props) {
   const janelaBaixa = usarMidia(CORTE_JANELA_BAIXA) && !noTelefone;
   const grosso = usarMidia(CORTE_GROSSO);
   const [armado, setArmado] = React.useState("");
+  /* quando o verbo armou (o retoque que ecoa, defeito 15 da 19.ª sessão) */
+  const armouEmRef = React.useRef(0);
   const [bolsaAberta, setBolsaAberta] = React.useState(false);
   /* o turno atual e NESTA BATALHA abertos por cima do campo — só no
      telefone, e estado de tela */
@@ -1923,12 +1925,17 @@ export function TelaDeBatalha(props) {
        empurrão — e o complemento do jogador misturava-se com ela. O gesto é
        tocar no inimigo; a caixa fica para o «como», e é dele. */
     const semFrase = v.id === "empurrar" && !!p.aoEmpurrar && !!p.aoPreverEmpurrao;
+    /* 19.ª sessão, defeito 15 (o Mover alterna): o toque que repete o gesto
+       de armar, dentro de B3.retoqueQueDesiste, é o mesmo toque — não desiste
+       nem executa (Fugir). Desistir é um segundo gesto, não um eco do primeiro. */
+    if (armado === v.id && Date.now() - armouEmRef.current < B3.retoqueQueDesiste) return;
     if (armado === v.id) {
       if (v.id === "fugir") { setArmado(""); if (p.aoFugir) p.aoFugir(); return; }
       setArmado(""); if (p.aoEscrever && !semFrase) p.aoEscrever("");
       return;
     }
     setArmado(v.id);
+    armouEmRef.current = Date.now();
     if (semFrase) return;
     /* o verbo que arma põe a sua frase na linha do texto livre: o jogador
        acrescenta o COMO e manda pela mesma porta de sempre. A frase sai da

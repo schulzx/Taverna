@@ -3906,6 +3906,12 @@ export const BATALHA_EM_TRES = {          // §CB 2, §CB 16
      já não entra na conta da altura (só o telefone tem a fala na sua linha,
      e essa é telefone.fala) */
   margem: 24, fila: 90, fala: 28, entre: 24, calha: 22,
+  /* 19.ª sessão, defeito 15: o segundo toque no verbo armado que chega
+     antes disto é o mesmo gesto repetido (um toque duplo, um dedo que
+     tremeu), e não desiste. 500 ms é o tempo de duplo clique por omissão do
+     Windows (Microsoft, GetDoubleClickTime: «The default is 500
+     milliseconds»). Depois dele, tocar outra vez desiste, como W1 manda. */
+  retoqueQueDesiste: 500,
   /* §CB 16.1 nº 5: o alvo mede-se pelo ponteiro, não pela largura — 40 com
      rato (WCAG 2.2, 2.5.8 AA: 24), 48 com toque (ALVOS.piso) */
   verbo: { fino: 40, grosso: ALVOS.piso },

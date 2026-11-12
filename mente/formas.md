@@ -17717,8 +17717,12 @@ mostra do resultado não custa o turno.
 
 **O teclado.** Enter com o campo vazio lança o dado; Esc, com o foco no campo ou na bandeja, é «Mudar de ideia»;
 Espaço e Enter com o foco na bandeja lançam (é um botão nativo). **O foco nunca é roubado** e o campo não fecha (V6a).
-Se o jogador carregar em Enter com texto escrito, o d20 da bandeja dá o pulso único de V6 (`tv-dado-pulso`, 400 ms) e
-o texto fica.
+~~Se o jogador carregar em Enter com texto escrito, o d20 da bandeja dá o pulso único de V6 (`tv-dado-pulso`, 400 ms) e
+o texto fica.~~ **Emenda (`oficial`, 12/11, 19.ª sessão, defeito 5 · T9a):** o pulso não chegou — com o pedido
+«Percepção 13» à espera, o Enter de *«vamos para o Terreiro Rouco»* não fez nada que a jogadora visse. **Enter com
+texto escrito no campo é «Mudar de ideia» seguido do envio:** o chamado recua sem rasto (nem tentativa, nem tempo) e a
+frase nova parte como qualquer outra. O pulso fica só para o Enter com o foco fora do campo (no corpo da página), onde
+o texto não acabou de ser escrito.
 
 **O nome acessível** da bandeja leva tudo, sem corte: «Rolar d20 + 2. Sobrevivência, precisa de 14. Se falhar, a
 chuva apaga a trilha e meia hora se vai.» O grupo já se chama «O Mestre pede o dado» (`SoleiraDoMomento`). Nenhuma

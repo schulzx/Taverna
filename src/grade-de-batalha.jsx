@@ -937,6 +937,16 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      registo da rodada; tocar no outro lado muda só aquela queda. */
   const quedasVistasRef = React.useRef(new Set());
   const [quedasNaMesa, setQuedasNaMesa] = React.useState([]);
+  /* 19.ª sessão, defeito 5: o relógio de cada chip é DELE, e só a
+     desmontagem o apaga. Antes os relógios morriam na limpeza do efeito —
+     e o efeito volta a correr a cada queda nova ou a cada «matar/poupar»
+     tocado: o chip da queda anterior perdia o relógio e ficava para sempre
+     por cima das casas (na luta 3, C8 a E8). */
+  const relogiosDasQuedasRef = React.useRef(new Map());
+  React.useEffect(() => () => {
+    relogiosDasQuedasRef.current.forEach((id) => clearTimeout(id));
+    relogiosDasQuedasRef.current.clear();
+  }, []);
   React.useEffect(() => {
     if (!Array.isArray(quedas) || !quedas.length) return undefined;
     const novas = quedas.filter((q) => q && q.chave != null && !quedasVistasRef.current.has(q.chave));
@@ -947,8 +957,14 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     }
     novas.forEach((q) => quedasVistasRef.current.add(q.chave));
     setQuedasNaMesa((qs) => [...qs, ...novas.map((q) => ({ ...q }))]);
-    const tids = novas.map((q) => setTimeout(() => setQuedasNaMesa((qs) => qs.filter((x) => x.chave !== q.chave)), FECHO_DA_QUEDA.chip));
-    return () => tids.forEach(clearTimeout);
+    novas.forEach((q) => {
+      const id = setTimeout(() => {
+        relogiosDasQuedasRef.current.delete(q.chave);
+        setQuedasNaMesa((qs) => qs.filter((x) => x.chave !== q.chave));
+      }, FECHO_DA_QUEDA.chip);
+      relogiosDasQuedasRef.current.set(q.chave, id);
+    });
+    return undefined;
   }, [quedas]);
 
   /* ---------------- CB 18.5 · O MOMENTO DA REAÇÃO ----------------
@@ -2309,14 +2325,20 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           if (!e || !c) return null;
           const n = ladoDe(e);
           return (
+            /* 19.ª sessão, defeito 5: o chip pousa SOBRE as casas de baixo, e
+               o texto dele não é alvo — o toque atravessa-o até à casa (o
+               Mover que armava e desarmava sem mexer). Só o botão do outro
+               lado apanha o toque, e esse toque não é «tocar o campo»: não
+               desarma o verbo (stopPropagation no pointerdown). */
             <span key={`queda${q.chave}`} role="status" className="tv-mono inline-flex items-center"
-              style={{ position: "absolute", zIndex: 5, pointerEvents: "auto", left: `${((e.x + n / 2) / g.largura) * 100}%`, top: `${((e.y + n) / g.altura) * 100}%`, transform: "translate(-50%, 4px)",
+              style={{ position: "absolute", zIndex: 5, pointerEvents: "none", left: `${((e.x + n / 2) / g.largura) * 100}%`, top: `${((e.y + n) / g.altura) * 100}%`, transform: "translate(-50%, 4px)",
                 minHeight: FECHO_DA_QUEDA.alto, borderRadius: FECHO_DA_QUEDA.raio, padding: `1px 2px 1px 10px`, gap: 6, whiteSpace: "nowrap",
                 fontSize: TIPOS.piso, color: T.ink, background: T.pagina, border: `1px solid ${T.lineStrong}` }}>
               {c.texto}
               {aoMudarQueda && (
-                <button onClick={() => { try { aoMudarQueda(q.chave, c.outraEscolha); } catch (er) { console.warn("GridDeBatalha: mudar a queda falhou", er); } }}
-                  className="tv-anel-foco tv-mono" style={{ minHeight: FECHO_DA_QUEDA.alto - 2, padding: "0 8px", borderRadius: FECHO_DA_QUEDA.raio, fontSize: TIPOS.piso, fontWeight: 700,
+                <button onPointerDown={(ev) => ev.stopPropagation()}
+                  onClick={() => { try { aoMudarQueda(q.chave, c.outraEscolha); } catch (er) { console.warn("GridDeBatalha: mudar a queda falhou", er); } }}
+                  className="tv-anel-foco tv-mono" style={{ pointerEvents: "auto", minHeight: FECHO_DA_QUEDA.alto - 2, padding: "0 8px", borderRadius: FECHO_DA_QUEDA.raio, fontSize: TIPOS.piso, fontWeight: 700,
                     color: c.outraEscolha === "letal" ? T.danger : T.ok, border: `1px solid ${T.line}`, background: T.panelSoft }}>
                   {c.outro}
                 </button>
