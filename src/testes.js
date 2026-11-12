@@ -174,6 +174,42 @@ export function detectarPedidoDeTeste(texto) {
    um sucesso a luta e o dano que o Narrador lá ponha. */
 export const SUCESSO_SEM_CASTIGO = "sem luta nem ferida que eu não tinha";
 
+/* TODO SUCESSO TEM DONO (12/11, a 19.ª sessão, defeito 1). Em 6 de 10
+   sucessos o Narrador recebeu só «revele UMA coisa concreta e útil» e
+   escreveu a sessão no vazio: o clímax do mistério num teste de gazua (o
+   fólio da Margarida debaixo de uma laje), uma «chave mestra» que o sistema
+   não deu e que entrou no cânone como artefato, e custos cobrados em
+   sucessos («mas o movimento cobra o seu quinhão»). O facto (ou o efeito
+   do gesto, facto-do-sucesso.js) diz o que o sucesso dá; este veto diz o
+   que ele NÃO dá, e vai em todo envelope do sim — colado ao resultado, que
+   é o canal do turno, nunca bloco estático.
+   `segredo` cala-se quando o próprio facto É o achado do passo ou do lugar
+   (aí o segredo caiu, e é o sistema que o diz); `custo` cala-se no sim por
+   um fio, onde o preço é o do sistema. */
+export const VETO_DO_SUCESSO = Object.freeze({
+  abre: "E o que este sucesso NÃO dá:",
+  segredo: "não revele o segredo do mistério nem o próximo passo da busca",
+  objeto: "não crie objeto, chave ou artefato novo, nem faça do que eu peguei mais do que é",
+  custo: "não cobre preço nem custo — passei, e passar não custa",
+});
+function vetoDoSucesso({ comPreco = false, segredoCaiu = false } = {}) {
+  const V = VETO_DO_SUCESSO;
+  const partes = [segredoCaiu ? "" : V.segredo, V.objeto, comPreco ? "" : V.custo].filter(Boolean);
+  return " " + V.abre + " " + partes.join("; ") + ".";
+}
+const segredoCaiuNo = (facto) => !!(facto && typeof facto === "object" && (facto.fonte === "passo" || facto.fonte === "achado"));
+
+/* A FALHA NÃO É «NADA» (12/11, a 19.ª sessão, EM4 e defeito 6). O envelope
+   da falha dizia «o meu esforço e o silêncio dele — sem custo extra, só a
+   ausência de resultado»: o «nada acontece» que a régua da EM4 quer em no
+   máximo 10% (houve 2 em 7), e no mesmo turno em que o envelope do CUSTO
+   mandava mostrar uma consequência (T5). Agora a falha deixa a cena seguir
+   sem o que se queria, e a consequência é a que o sistema escreveu — nem
+   nenhuma, nem outra. */
+export const FALHA_SEM_NADA = Object.freeze({
+  consequencia: "e a consequência é só a que o sistema escreveu noutro envelope deste turno, se escreveu; nunca um «nada acontece» parado",
+});
+
 /* ---------------- OS ENVELOPES ----------------
    O ponto inteiro do pedido: no fracasso o Mestre não pode ser generoso.
    "Se eu não passar no teste o mestre não inventa nada" — é regra, não estilo. */
@@ -234,7 +270,7 @@ export function envelopeDoTeste({ tipo, pericia, motivo, valor, mod, total, dc, 
       ? `O que eu declarei ACONTECE${motivo ? ` (${motivo})` : ""}, do jeito que declarei — e o efeito é esse, não maior.`
       : fatoDoSim(facto) ? `${fatoDoSim(facto)} Narre isto, e só isto.` : `Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade inventada agora.`;
     return `${cabeca} POR UM FIO (${doMeio.onde}) — COM PREÇO.
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense. Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI, e paguei. As duas metades, na mesma cena, em até três frases: ${oQue} E o preço, que o sistema já cobrou: ${doMeio.preco}. NÃO transforme em sucesso limpo (o preço aparece) nem em falha (o que eu fiz aconteceu). O preço é este e nenhum outro — não invente um maior, nem o dispense.${vetoDoSucesso({ comPreco: true, segredoCaiu: segredoCaiuNo(facto) })} Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
   /* EM4: a falha por pouco numa linha de saber (MARGEM_DA_FALHA,
      desafios.js) — o `meio` com a faixa «meiaVerdade». Não é o «nada»: é
@@ -250,18 +286,18 @@ REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. O que eu declarei NÃO acontece 
   }
   if (gesto) {
     return `${cabeca}
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. O que eu declarei ACONTECE, do jeito que declarei${motivo ? ` (${motivo})` : ""} — narre o gesto dando certo, com o corpo e o lugar, em até três frases. ${critico ? "Foi crítico: o gesto sai mais bonito ou mais limpo do que eu esperava — mas o efeito é o que eu declarei, não maior." : "O efeito é o que eu declarei, nem mais nem menos."} NÃO acrescente achado, item, aliado ou informação que eu não busquei. Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. O que eu declarei ACONTECE, do jeito que declarei${motivo ? ` (${motivo})` : ""} — narre o gesto dando certo, com o corpo e o lugar, em até três frases. ${critico ? "Foi crítico: o gesto sai mais bonito ou mais limpo do que eu esperava — mas o efeito é o que eu declarei, não maior." : "O efeito é o que eu declarei, nem mais nem menos."} NÃO acrescente achado, item, aliado ou informação que eu não busquei.${vetoDoSucesso()} Devolva a palavra para mim, sem iniciar cena nova, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
   if (!passou) {
     return `${cabeca}
-REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. Você NÃO revela nada, NÃO entrega meia-informação, NÃO oferece uma pista "de consolo" e NÃO deixa a resposta escapar numa descrição. Narre em duas ou três frases apenas o meu esforço e o silêncio dele — ${desastre ? "e, como foi falha crítica, acrescente um pequeno custo: perdi tempo, chamei atenção ou tirei a conclusão errada" : "sem custo extra, só a ausência de resultado"}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu FALHEI. Você NÃO revela nada, NÃO entrega meia-informação, NÃO oferece uma pista "de consolo" e NÃO deixa a resposta escapar numa descrição. Narre em duas ou três frases o meu esforço e a cena a seguir sem o que eu queria — ${desastre ? "e, como foi falha crítica, acrescente um pequeno custo: perdi tempo, chamei atenção ou tirei a conclusão errada" : FALHA_SEM_NADA.consequencia}. Depois devolva a palavra para mim. Não inicie cena nova, não faça o tempo passar, não mude de lugar.`;
   }
   if (fatoDoSim(facto)) {
     return `${cabeca}
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. ${fatoDoSim(facto)} Narre só isto, em até três frases, sem outro achado, item ou aliado.${critico ? " Crítico: um pormenor a mais." : ""} Devolva a palavra para mim, sem cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. ${fatoDoSim(facto)} Narre só isto, em até três frases, sem outro achado, item ou aliado.${critico ? " Crítico: um pormenor a mais." : ""}${vetoDoSucesso({ segredoCaiu: segredoCaiuNo(facto) })} Devolva a palavra para mim, sem cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
   }
   return `${cabeca}
-REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade conveniente inventada agora, e nunca um item ou aliado de brinde. ${critico ? "Foi crítico: pode ser algo especialmente valioso ou específico." : "Uma coisa só, do tamanho de um teste bem-sucedido."} Se estivermos em combate, uma fraqueza real do inimigo serve. Diga em até três frases e devolva a palavra para mim, sem iniciar cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
+REGRA DESTE ENVELOPE (obrigatória): eu PASSEI. Revele UMA coisa concreta e útil sobre ${motivo || t.pergunta} — algo que já existia na cena ou no mundo, nunca uma novidade conveniente inventada agora, e nunca um item ou aliado de brinde. ${critico ? "Foi crítico: pode ser algo especialmente valioso ou específico." : "Uma coisa só, do tamanho de um teste bem-sucedido."} Se estivermos em combate, uma fraqueza real do inimigo serve.${vetoDoSucesso()} Diga em até três frases e devolva a palavra para mim, sem iniciar cena nova, sem viagem, ${SUCESSO_SEM_CASTIGO} e sem fazer o tempo passar.`;
 }
 
 /* ============================================================

@@ -91,6 +91,24 @@ export const SINAIS_DA_CONVERSA = Object.freeze([
   /\b(?:digo|pergunto|falo|respondo|conto|peço|chamo|cumprimento|converso)\b[^.!?\n]{0,30}?\s(?:a|ao|à|aos|às|com)\s/i,
 ]);
 
+/* ---------------- O TURNO SEM A FRASE DO JOGADOR (12/11, a 19.ª sessão, EM2) ----------------
+   A 19.ª mediu: com «em 10 a 60 palavras» a mediana foi 177; SEM instrução
+   nenhuma (testes, viagem, luta) foi 196, e esses eram metade dos turnos.
+   A causa da metade sem instrução é uma: a linha de tamanho mora na
+   etiqueta do pedido do jogador (escuta.js, ETIQUETA_DO_PEDIDO), e o turno
+   que abre por um envelope do sistema ([TESTE PEDIDO…], [CHEGADA…],
+   [COMBATE…]) não leva etiqueta — `comOTamanho` não tinha o que trocar, e o
+   tipo «teste» (40 a 110) nunca chegava ao Narrador.
+   Dois remédios, os dois daqui: o tipo lê o envelope (estes sinais, pela
+   ordem da tabela), e o pedido sem etiqueta leva a linha do tipo no fim da
+   última mensagem, entre parênteses retos — nunca maior do que a etiqueta
+   que esse turno não leva (a suíte prova-o), logo o pior caso do prompt
+   não cresce. */
+export const SINAIS_DO_ENVELOPE = Object.freeze({
+  luta: /\[(COMBATE|INICIATIVA ROLADA|VITÓRIA|A LUTA VIROU|TURNO AINDA MEU)\b/,
+  chegada: /\[(CHEGADA|VIAGEM|MOVIMENTO|NA ESTRADA|MASMORRA)\b/,
+  teste: /\[(TESTE PEDIDO|SALVAGUARDA|PERGUNTA AO MUNDO)\b/,
+});
 const nPalavras = (de, ate) => (de > 0 ? `${de} a ${ate}` : `até ${ate}`);
 
 /* a linha de um tipo: o molde de hoje (LINHA_DO_TAMANHO, escuta.js) com o
@@ -127,6 +145,11 @@ export function tipoDoTurno(turno) {
   let ped = ehObj(t.pedido) ? t.pedido : null;
   if (!ped) { try { ped = lerOPedido(str(t.frase)); } catch { ped = null; } }
   const frase = ped && ped.doJogador ? str(ped.texto) : "";
+  /* S19 (EM2): o turno que abre por envelope do sistema diz o tipo pelo envelope */
+  if (!(ped && ped.doJogador)) {
+    const cru = str(t.frase);
+    for (const k of Object.keys(SINAIS_DO_ENVELOPE)) if (SINAIS_DO_ENVELOPE[k].test(cru)) sinais[k] = true;
+  }
   const testePorRolar = ehObj(t.acao) && t.acao.tipo === "teste";
   sinais.pergunta = !!(ped && ped.soPergunta) && !testePorRolar;
   if (!sinais.conversa && frase) sinais.conversa = SINAIS_DA_CONVERSA.some((rx) => rx.test(frase));
@@ -171,6 +194,10 @@ export function comOTamanho(pedido, tamanho) {
       if (k >= 0) {
         const etq = ETIQUETA_DO_PEDIDO.replace(linhaHoje, linhaNova);
         msgs[i] = { ...m, content: m.content.slice(0, k) + etq + m.content.slice(k + ETIQUETA_DO_PEDIDO.length) };
+      } else {
+        /* S19 (EM2): sem etiqueta (o turno do envelope), a linha do tipo vai no
+           fim — a última coisa que o Narrador lê, como a etiqueta iria */
+        msgs[i] = { ...m, content: m.content + linhaSemEtiqueta(tam.tipo) };
       }
       break;
     }
@@ -184,6 +211,11 @@ export function comOTamanho(pedido, tamanho) {
   return novo;
 }
 
+/* a linha do tipo para o turno sem etiqueta (S19, EM2) */
+export function linhaSemEtiqueta(tipo) {
+  if (!TAMANHO_DA_RESPOSTA[tipo]) return "";
+  return "\n[" + linhaDoTipo(tipo) + "]";
+}
 /* a linha que vai hoje na etiqueta (o molde com a faixa de sempre) */
 function linhaDeHoje() {
   return LINHA_DO_TAMANHO.replace("{palavras}", `${TAMANHO_DA_NARRATIVA.min} a ${TAMANHO_DA_NARRATIVA.max}`).replace("{jeito}", "termine antes do limite");

@@ -446,6 +446,20 @@ const escolher = (lista, semente) => (Array.isArray(lista) && lista.length ? lis
 function gentesDoFio(ctx) {
   const o = obj(ctx);
   const out = [];
+  /* A QUEST MANDA NO RUMO (12/11, a 19.ª sessão, defeito 2). O RUMO disse
+     quatro vezes «Cadeia do Pelourinho: o que lá se esconde tem dono» — o
+     marco da espinha —, e o passo da quest («Saber onde quem lê o livro à
+     noite guarda o livro») plantava o livro noutro sítio: a busca com
+     sucesso na Cadeia não achou nada, e o Narrador inventou o fólio. Dois
+     órgãos, duas verdades. O lugar que o passo ativo manda descobrir
+     (`ctx.passos`, osPassosDasQuests de a-quest-manda.js: o mesmo onde
+     `achadoDoPasso` entrega o segredo) vem primeiro; o marco da espinha, só
+     sem ele. Sem `passos`, a régua de antes, letra por letra. */
+  for (const p of Array.isArray(o.passos) ? o.passos : []) {
+    for (const l of (p && Array.isArray(p.descobrir) ? p.descobrir : [])) {
+      if (l && l.nome) out.push({ nome: l.nome, onde: l.nome, tipo: "lugar" });
+    }
+  }
   let e = null;
   try { e = garantirEspinha(o.espinha); } catch { e = null; }
   let m = null;

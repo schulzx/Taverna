@@ -476,7 +476,8 @@ export const DESAFIOS = [
        nada), de esquadrinhar e de passar os olhos. */
     /* 30/09 (MM13): `revist` — "revisto a taverna de cima a baixo" é o verbo
        mais seco que a língua tem para isto, e não casava nada. */
-    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos|(dou|deito|lanco) uma vista de olhos|soa(m)? oco|rente ao ch[aã]o)/,
+    /* S19 (12/11, defeito 3): «apalpo a fechadura atrás de alguma armadilha, agulha ou arame» é procurar a armadilha — sem isto a frase virou «Ir até as celas» e o resto perdeu-se. A alternativa nova está no fim da lista. */
+    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos|(dou|deito|lanco) uma vista de olhos|soa(m)? oco|rente ao ch[aã]o|(apalpo|tateio|examino|reviso|passo os dedos)\b[^.!?]{0,40}\b(atras de|a procura de|em busca de) (alguma |algum |uma |um |qualquer )?(armadilhas?|agulhas?|arames?|mecanismos?|gatilhos?))/,
     /* EM1 (o corpus da mesa): «dou uma vista de olhos» é o «dou uma olhada»
        de cá do mar; bater na parede «a ver se soa oco» e passar a tocha
        «rente ao chão» são revirar o lugar sem dizer o verbo. */
@@ -724,6 +725,8 @@ export const DESAFIOS = [
       /* CS (11/11, o corpus das situações): a mão leve quase nunca diz «furto»: tira do bolso DELE, enfia no cinto DELA, sem que ninguém sinta — é o que o estudo conta (tirar ou plantar, 12 pedidos) */
       /\b(tiro|pego|surrupio|roubo|furto|enfio|meto|escondo|deixo cair|troco|coloco|ponho)\b[^.!?]{0,50}\bsem (que )?(ele|ela|eles|elas|ninguem|o dono|a dona)( \w+)? (sentir|sinta|perceber|perceba|notar|note|ver|veja|reparar|repare|desconfiar)/.source,
       /\b(tiro|pego|meto|enfio|ponho|coloco|deixo cair)\b[^.!?]{0,30}\b(do|no|na|da|pelo) (bolso|bolsa|cinto|algibeira|manga|capuz|alforge|avental) d(o|a|e)\b/.source,
+      /* S19 (12/11, defeito 3): «tento aliviar a bolsa dele sem ele sentir» não deu dado nenhum, e o Narrador decidiu sozinho quem viu */
+      /\balivi\w* (a|o) (bolsa|carteira|algibeira|bolso|cinto)\b/.source,
       /\bcorto a bolsa|\bempalm\w*|\bescamote\w*|\bescondo (o|a) \w+ na manga|\broubo (a|o) \w+ d[oa]\b/.source,
     ].join("|")),
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
@@ -892,6 +895,8 @@ export const DESAFIOS = [
       /* CS (11/11, o corpus das situações): ler as runas, entender o ritual, o que o amuleto faz, que magia prende a porta — o estudo conta 104 pedidos de arcanismo, a runa e o feitiço à frente */
       /\b(leio|ler|decifr\w*|estud\w*|examin\w*|analis\w*|entend\w*|reconhe[cç]\w*|identific\w*|interpret\w*) (a|o|as|os|esse|essa|esses|essas|este|esta|aquele|aquela) (runas?|glifos?|circulos? (magicos?|arcanos?|de invocacao)|simbolos? arcanos?|sigilos?|ritual|feiticos?|encantamentos?|aura|barreira|portal|selo magico|magia)\b/.source,
       /\bo que (o|a|esse|essa|este|esta) (amuleto|anel|varinha|cajado|orbe|talisma|artefato|colar|pergaminho|pocao|pedra|cristal|espada|bracelete|reliquia)( \w+)? faz\b|\b(que|qual) (tipo de )?(magia|feitico|encantamento|ritual|aura)\b/.source,
+      /* S19 (12/11, defeito 3): «Passo a mão espalmada por cima do alçapão. Sinto alguma magia aqui, algum resíduo de feitiço?» não deu dado, e o Narrador respondeu «nada de formigamento» */
+      /\bsinto (alguma |algum |qualquer )?(magia|aura|encantamento|feitico|residuo (de )?(magia|feitico|encantamento))\b|\b(passo|corro|estendo|espalmo) a mao\b[^.!?]{0,60}\b(magia|feitico|aura|encant\w*)/.source,
       /\b(sinto|sentir|ver|saber) se (ha|tem|existe|resta|ainda tem) (magia|aura|encantamento)|\bse (e|esta|ainda e) (encantad[oa]|magic[oa]|amaldicoad[oa])\b|\bse ainda tem magia/.source,
     ].join("|")),
     naoSe: new RegExp([
@@ -1044,6 +1049,8 @@ export const DESAFIOS = [
       /* «continuo a…» chega mascarado pelo estado (ESTADO_NAO_E_ACAO), e por isso a marcha conta pelo nome */
       /\b(sigo|marcho|caminho|ando|remo|avanco|marcha|caminhada|viagem|subida|jornada)\b[^.!?]{0,40}\b(mesmo|apesar d[aeo]s?) (exaust\w*|cansa\w*|ferid[oa]|febre|dor|fome|sede|frio)/.source,
       /\bsem (vomitar|desmaiar|cochilar|largar|cuspir)\b/.source,
+      /* S19 (12/11, defeito 3): «…aguentando o frio sem bater os dentes» deu Furtividade (com o aviso «alguém na rua vê você», no ermo) */
+      /\baguent\w* (o|a) (frio|fome|sede|dor|chuva|vento|cansaco|fedor|fumo|fumaca|calor|garoa|nevasca|neve|geada)\b|\bsem bater (os )?dentes\b/.source,
       /\b(caminho|ando|marcho|sigo|avanco|atravesso)\b[^.!?]{0,20}\b(debaixo|sob|contra|no meio) d[aeo]s? (tempestade|nevasca|neve|chuva|vento|granizo|temporal)/.source,
     ].join("|")),
     pericia: "fortitude", alvo: "aguentar", minutos: 5, barulho: false,
@@ -2641,9 +2648,14 @@ export const CUSTO_DE_FALHAR = [
     minutosExtra: 30,
   },
   {
-    alvo: "perseguir", porPouco: false,
+    /* S19 (12/11, EM4): «vou atrás do Anselmo de longe, colada às paredes»
+       falhou por 1 e foi a falha seca — a única linha de seguir-sem-ser-visto
+       sem o «por um fio», ao lado da furtividade e da mão leve que o têm.
+       Por pouco, segue-se — e paga-se com o que a linha avisa: ser notado. */
+    alvo: "perseguir", porPouco: true,
     aviso: { base: "Se falhar, você chega perto demais e é notado.", cidade: "Se falhar, a multidão se abre e ele vê você." }, efeito: "alerta",
     seca: "a distância certa é fácil de errar, e você errou para o lado de perto",
+    preco: "você não o perde, mas ele olha para trás uma vez — e alguém pode ter reparado em quem vinha atrás",
     minutosExtra: 10,
   },
   {

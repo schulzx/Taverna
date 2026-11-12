@@ -33,6 +33,8 @@ import { custoPorAlvo, dificuldadePorId, mordidaDoDegrau, EFEITOS_DA_FALHA } fro
 import { periciaPorId, resolucaoAutomatica } from "../pericias.js";
 import { nomeDoAtributo } from "../testes.js";
 import { ANTECEDENTES } from "../antecedentes.js";
+import { masmorrasDoMundo } from "../mundo-base.js";
+import { masmorrasConhecidas } from "../boca.js";
 
 /* ---------------- A LINHA ----------------
    `molde`: o que o Mestre diz, nesta ordem e só isto. `{porque}` é a
@@ -106,6 +108,12 @@ export const SABER_COMUM = Object.freeze({
     Object.freeze({ id: "oficio", campo: "antecedente", diz: "é do meu ofício" }),
     Object.freeze({ id: "livro", campo: "factos", diz: "já o sei (o livro de factos tem-no)" }),
     Object.freeze({ id: "visto", campo: "visitados", diz: "já lá estive" }),
+    /* S19 (12/11, EM3): «o que eu sei do Forte Abandonado de Gelo Fundo?» —
+       a 4 h, no mapa da heroína e no primeiro parágrafo da campanha — pediu
+       Saberes 13. O que está perto e no mapa (a masmorra que a cidade aponta,
+       a cidade da estrada direta) toda a gente daqui conhece de nome e de
+       fama: é saber comum. O segredo de lá continua raro e rola. */
+    Object.freeze({ id: "perto", campo: "conhecidos", diz: "fica perto e está no meu mapa: toda a gente daqui fala disso" }),
   ]),
   raro: /\b(segredo|segredos|escondid\w*|oculto|oculta|verdade sobre|maldi[cç][aã]o|fraqueza|ponto fraco|quem (matou|mandou|traiu)|desaparecid\w*|lenda antiga|profecia)\b/,
   aquiSemNome: /^(?:(?:a|o|esta|este|essa|esse|aqui|daqui)\s+)?(cidade|vila|aldeia|lugar|sitio|terra|regiao|bairro|povoado|porto|vale)$/,
@@ -283,7 +291,25 @@ export function saberDoHeroi(entrada) {
   ]);
   const visitados = soNomes(Object.keys(lugares).filter((id) => tem(lugares[id], S.doLugarVisto)).map((id) => nomeDoLugar(id, lugares[id])));
 
-  return Object.freeze({ lugar, terra, antecedente: idDoAntecedente(p.antecedente), factos, visitados });
+  /* S19 (EM3): o que está perto e no mapa — as masmorras que a cidade aponta
+     (masmorrasConhecidas, a régua do mapa e do prompt) e as cidades da
+     estrada direta. As masmorras do continente saem da semente (`semente`,
+     opcional): sem ela, só as da região (que o mapa já traz); sem nada,
+     null, e a fonte cala-se. */
+  const conhecidos = (() => {
+    if (!obj(o.mapa) || !cidade) return null;
+    const cid = (Array.isArray(o.mapa.cidades) ? o.mapa.cidades : []).find((c) => obj(c) && semAcento(c.nome) === semAcento(cidade)) || { nome: cidade };
+    const regiao = obj(o.mapa.regiao) ? o.mapa.regiao : null;
+    let mms = [];
+    if (regiao || (o.semente != null && o.semente !== "")) {
+      try { mms = masmorrasConhecidas(masmorrasDoMundo(o.semente, o.mapa), cid, regiao ? { regiao } : null).map((m) => m.nome); } catch { mms = []; }
+    }
+    const vizinhas = (Array.isArray(o.mapa.rotas) ? o.mapa.rotas : []).filter(obj)
+      .map((r) => (semAcento(r.de) === semAcento(cidade) ? r.para : semAcento(r.para) === semAcento(cidade) ? r.de : "")).filter(Boolean);
+    return soNomes([...mms, ...vizinhas.map(daCidade)]);
+  })();
+
+  return Object.freeze({ lugar, terra, antecedente: idDoAntecedente(p.antecedente), factos, visitados, conhecidos });
 }
 
 /* ---------------- QUANDO O MESTRE NÃO CHAMA ----------------

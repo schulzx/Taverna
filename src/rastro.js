@@ -450,7 +450,13 @@ export function detectarEntradaEmMasmorra(acao, ctx = {}) {
   const txt = String(acao || "");
   if (!txt.trim()) return null;
   for (const o of oracoes(txt)) {
-    const n = norm(o);
+    /* S19 (12/11, defeito 3): «Não entro de sola. Me agacho… vigiando a
+       entrada», à boca do forte, deu o chip «Entrar · ● Difícil» — a negação
+       não anulava o verbo, e a heroína quase entrou onde disse que não ia.
+       Só o que o herói DECLAROU abre a porta: a peneira (a mesma da ida,
+       NAO_E_IDA) tira a negação, a pergunta, o plano e a fala. */
+    let n = norm(o);
+    try { n = norm(soODeclarado(o, NAO_E_IDA)); } catch { n = norm(o); }
     if (SO_INTENCAO.test(n) || !ENTRADA.test(n)) continue;
     /* o covil é a palavra (a cripta, a mina) — OU a masmorra do mundo pelo
        nome dela, ou por ser o lugar onde o herói está: "O que sobrou de

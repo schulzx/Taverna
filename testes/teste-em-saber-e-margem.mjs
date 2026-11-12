@@ -30,7 +30,11 @@ const saber = { lugar: "Foz do Meio", terra: "Alto Negro", antecedente: "soldado
 sec("1. EM3 — a tabela");
 {
   t("a linha «saberComum» está na régua do chamado, com porquê e o que acontece em vez", QUANDO_O_MESTRE_CHAMA.some((r) => r.id === "saberComum" && r.porque && r.emVez));
-  t("as cinco fontes, cada uma com o campo que lê e o que diz", SABER_COMUM.fontes.length === 5 && SABER_COMUM.fontes.every((f) => f.id && f.campo && f.diz));
+  /* S19 (12/11): eram cinco; a sexta é «perto» (o que está perto e no
+     mapa: a masmorra a 4 h que pediu Saberes na 19.ª sessão). A asserção
+     passa a contar seis, e a suíte da sessão (teste-sessao-19.mjs) prova a
+     fonte nova. */
+  t("as seis fontes, cada uma com o campo que lê e o que diz", SABER_COMUM.fontes.length === 6 && SABER_COMUM.fontes.every((f) => f.id && f.campo && f.diz));
   const semOficio = ANTECEDENTES.map((a) => a.id).filter((id) => !(SABER_DO_OFICIO[id] || []).length);
   t(`todo antecedente ensina um vocabulário${semOficio.length ? " — faltam: " + semOficio.join(", ") : ""}`, semOficio.length === 0);
   t("e nenhum ofício inventa antecedente que não existe", Object.keys(SABER_DO_OFICIO).every((id) => ANTECEDENTES.some((a) => a.id === id)));

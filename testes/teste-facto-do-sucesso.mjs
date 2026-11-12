@@ -212,7 +212,14 @@ sec("§8 o lixo não lança");
     try { oFactoDoSucesso(a, b); } catch { ok = false; }
   }
   t("null, {}, e contextos tortos: nada lança", ok);
-  t("o teste que não compra saber (o gesto, o social) não tem facto", oFactoDoSucesso({ ...v, gesto: true }, {}) === null && oFactoDoSucesso({ ...v, social: {} }, {}) === null && oFactoDoSucesso({ ...v, id: "saltar" }, {}) === null);
+  /* S19 (12/11): o «saltar» saiu daqui. Dizia-se que o teste de ação não
+     tinha facto — e era por isso que o sucesso dele chegava ao Narrador como
+     «revele UMA coisa», a página em branco da 19.ª sessão. Agora o teste de
+     ação do catálogo tem o EFEITO (fonte «efeito», EFEITO_DO_SUCESSO); o
+     improviso (gesto) e o social continuam sem facto, com o envelope deles. */
+  t("o improviso (gesto) e o social não têm facto", oFactoDoSucesso({ ...v, gesto: true }, {}) === null && oFactoDoSucesso({ ...v, social: {} }, {}) === null);
+  const salto = oFactoDoSucesso({ ...v, id: "saltar" }, {});
+  t("o teste de ação do catálogo tem o efeito, e não um facto do mundo", !!salto && salto.fonte === "efeito" && /outro lado/.test(salto.texto), JSON.stringify(salto));
   t("o veredito que não é teste não tem facto", oFactoDoSucesso({ tipo: "livre" }, {}) === null);
 }
 

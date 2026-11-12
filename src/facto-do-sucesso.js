@@ -87,11 +87,22 @@ export const FACTO_DO_SUCESSO = Object.freeze({
       saber: "{nome}: {desc}; {comportamento}",
     }),
     lugar: Object.freeze({
-      busca: "não há esconderijo, mas há o rasto de quem usa o sítio: {nome}, {oficio} {daqui}, {vontade}",
+      /* S19 (defeito 2): dizia «não há esconderijo» — e o RUMO tinha dito
+         quatro vezes que ali se escondia alguma coisa. O facto diz o que o
+         sítio mostra, e não nega o que outro órgão afirma. */
+      busca: "o que o sítio mostra é o rasto de quem o usa: {nome}, {oficio} {daqui}, {vontade}",
       rasto: "o chão daqui é o de quem o pisa todos os dias: {nome}, {oficio} {daqui}, que {modo}",
       saber: "{aqui}: {chamado}, onde está {gente}",
       rua: "o que corre na rua: {masmorra}, {rumor}",
-      cidade: "{cidade}: {porte} de {locais}",
+      /* S19: «Ribeira das Areias: capital de Taverna do Sino Rachado» lia-se
+         como se a cidade fosse a capital da taverna */
+      cidade: "{cidade} ({porte}): {locais}",
+      /* S19 (defeito 4): o sujeito da pergunta manda no facto — a masmorra, a
+         outra cidade e a pessoa que ela nomeia, antes do sítio onde se está */
+      masmorra: "{nome}: {tipo}{perto}; o que se diz de lá: {rumor}",
+      outraCidade: "{cidade}: {porte}{regiao}",
+      pessoa: "{nome}: {oficio} {daqui}",
+      bichos: "o que anda por estas terras: {lista}",
     }),
   }),
   /* o livro: as partes de uma entrada de lugar e de pessoa, em frase */
@@ -103,8 +114,61 @@ export const FACTO_DO_SUCESSO = Object.freeze({
     derrotado: "caiu às tuas mãos ({como})",
   }),
   vezes: Object.freeze({ uma: "uma vez", muitas: "{n} vezes" }),
+  /* S19 (defeito 4): a pergunta que é sobre o sítio onde se está («o que sei
+     desta cidade?») — só ela, a vazia e a que nomeia a cidade caem no
+     registo do sítio; a que nomeia outra coisa que o registo não conhece
+     não tem facto daqui (e o envelope diz o de sempre, com o veto) */
+  sobreAqui: /^(?:(?:a|o|esta|este|essa|esse|aqui|daqui)\s+)?(cidade|vila|aldeia|lugar|sitio|terra|regiao|bairro|povoado|porto|vale|sitio onde estou)$/,
+  perto: " perto de {cidade}",
+  /* a pergunta pelos bichos sem nome («bichos assim», «as feras daqui»):
+     os da região, e não a cidade; `quantos` cabe no teto */
+  bichosSemNome: /\b(bichos?|feras?|criaturas?|monstros?|bestas?|animais|coisas que andam)\b/,
+  quantosBichos: 3,
+  naRegiao: ", em {regiao}",
   quemDoLivro: 2,
   teto: 200,
+});
+
+/* ---------------- O EFEITO DO SUCESSO (12/11, a 19.ª sessão, defeito 1) ----------------
+   O facto só cobria vasculhar, investigar, rastrear e lembrar: Intuição,
+   Prestidigitação, Medicina e Furtividade caíam no «revele UMA coisa», e o
+   Narrador enchia o sucesso com o que a cena dele pedia (o fólio do
+   mistério num baú de gazua, a chave mestra, a pista do fiador). Num teste
+   de AÇÃO o sucesso não compra uma coisa do mundo: compra o EFEITO que o
+   gesto declarou, e só ele. Esta tabela é esse efeito, por desafio do
+   catálogo (desafios.js), na voz do herói como o resto do envelope;
+   `{quem}` é a pessoa do veredito (`v.quem`), e `quemSemNome` quando não
+   há. Texto de MUNDO: nunca o nome de um mecanismo. Os testes de saber que
+   não têm fonte própria (a escuta, o arcano, a heráldica, o diagnóstico)
+   têm aqui a sua régua: dizem só o que a cena já tem. */
+export const EFEITO_DO_SUCESSO = Object.freeze({
+  efeitos: Object.freeze({
+    mentira: "leio {quem} pelo rosto e pela voz: fica à vista o que sente agora; o que guarda e para onde me quer levar continua guardado",
+    escutar: "ouço o que daqui se ouve: os sons de quem e do que a cena já tem, nítidos — nenhuma voz nova",
+    tranca: "a tranca cede e abre; do outro lado está só o que lá já estava",
+    escalar: "chego lá acima, firme, sem escorregar",
+    furtar_se: "passo despercebido: ninguém me vê nem me ouve enquanto me movo assim",
+    bater_carteira: "a mão leve passa: o que eu quis tirar ou pôr muda de sítio sem que ninguém sinta — e é só isso, o que eu vi",
+    estancar: "o curativo segura: o sangue para e a ferida fica fechada",
+    arcano: "sinto o que há de arcano aqui: só o que a cena já tem de magia, e se não tem nenhuma, não há",
+    desarmar: "a armadilha fica desarmada, inofensiva",
+    nadar: "atravesso a água e chego aonde queria",
+    saltar: "chego ao outro lado, de pé",
+    forcar: "o peso cede e mexe-se",
+    equilibrio: "atravesso firme, sem cair",
+    arrebentar: "a amarra cede e solta-se",
+    escapar: "solto-me do que me prendia",
+    aguentar: "aguento: o corpo segura sem perder nada",
+    cavalgar: "a montaria obedece e faz o que eu pedi",
+    acalmar_bicho: "o bicho acalma e deixa-se chegar",
+    atuar: "a atuação pega: quem vê fica preso a mim enquanto dura",
+    orientar: "acho o rumo: sei para que lado fica o que procuro",
+    diagnosticar: "reconheço o mal pelo que o corpo mostra: os sinais que estão à vista, e nada além deles",
+    heraldica: "reconheço o símbolo pelo que ele é: de que espécie de casa, ofício ou fé, sem dono que o mundo não tenha",
+    falsificar: "o documento sai convincente a olho",
+    seguir_alguem: "sigo {quem} sem que dê por mim, até onde for",
+  }),
+  quemSemNome: "quem está à minha frente",
 });
 
 const cortar = (s) => {
@@ -117,6 +181,18 @@ const comDe = (nome) => {
   const m = String(nome || "").match(/^(O|A|Os|As)\s+(.+)$/);
   return m ? `${{ o: "do", a: "da", os: "dos", as: "das" }[m[1].toLowerCase()]} ${m[2]}` : `de ${nome}`;
 };
+
+/* S19: o teste de ação do catálogo que passou → o efeito dele, como facto
+   de fonte «efeito» (o envelope do teste leva-o no lugar do «revele»). O
+   improviso (`gesto`) tem o seu envelope; o social, o dele. */
+function oEfeitoDoSucesso(v) {
+  const x = obj(v);
+  if (!x || x.tipo !== "teste" || x.gesto || x.social) return null;
+  const molde = EFEITO_DO_SUCESSO.efeitos[x.id];
+  if (!molde) return null;
+  const quem = typeof x.quem === "string" && x.quem.trim() ? x.quem.trim() : EFEITO_DO_SUCESSO.quemSemNome;
+  return Object.freeze({ fonte: "efeito", familia: "efeito", texto: cortar(encher(molde, { quem })), de: Object.freeze({ desafio: x.id }) });
+}
 
 /* a família do veredito, ou null (o teste que não compra saber: o salto, o
    convencer — esses têm o seu envelope) */
@@ -227,7 +303,23 @@ const FONTES = {
       /* o assunto é um prédio daqui, ou a cidade, ou (sem assunto que o
          registo conheça) o sítio onde se está */
       const sobre = semArtigo(v.sobre || (obj(c.alvo) ? c.alvo.nome : c.alvo));
-      const local = (sobre && arr(q.locais).find((l) => { const n = semArtigo(l.nome); return n && (sobre.includes(n) || n.includes(sobre)); })) || localAqui(q, o);
+      const casa = (nome) => { const n = semArtigo(nome); return !!n && !!sobre && (sobre.includes(n) || n.includes(sobre)); };
+      const nomeado = sobre ? arr(q.locais).find((l) => casa(l.nome)) : null;
+      if (!nomeado && sobre) {
+        /* S19 (defeito 4): «o que sei do Forte Abandonado de Gelo Fundo?» deu
+           um facto sobre a cidade onde a heroína estava. O assunto manda: a
+           masmorra de perto, outra cidade do mapa, a pessoa daqui. */
+        const mm = arr(q.masmorras).find((m) => m && m.nome && casa(m.nome));
+        if (mm) return { texto: encher(F.masmorra, { nome: mm.nome, tipo: mm.tipo || "lugar", perto: mm.cidadeProxima ? encher(FACTO_DO_SUCESSO.perto, { cidade: mm.cidadeProxima }) : "", rumor: mm.rumor || "pouco" }).replace(/; o que se diz de lá: pouco$/, ""), de: { masmorra: mm.nome } };
+        const cid = arr(obj(c.mapa) && c.mapa.cidades).find((x) => x && x.nome && x.descoberta !== false && semArtigo(x.nome) !== semArtigo(q.cidade.nome) && casa(x.nome));
+        if (cid) return { texto: encher(F.outraCidade, { cidade: cid.nome, porte: cid.porte || cid.tipo || "terra", regiao: cid.regiao ? encher(FACTO_DO_SUCESSO.naRegiao, { regiao: cid.regiao }) : "" }), de: { cidade: cid.nome } };
+        if (FACTO_DO_SUCESSO.bichosSemNome.test(sobre) && arr(q.criaturas).length)
+          return { texto: encher(F.bichos, { lista: arr(q.criaturas).slice(0, FACTO_DO_SUCESSO.quantosBichos).map((b) => b.nome).join(", ") }), de: { regiao: (q.regiao && q.regiao.nome) || q.cidade.regiao || "" } };
+        const p = arr(q.gente).find((x) => x && x.nome && casa(x.nome));
+        if (p) return { texto: encher(F.pessoa, { nome: p.nome, oficio: oficioNoGenero(p.papel, p.genero_pessoa), daqui: comDe(p.local || q.cidade.nome) }), de: { pessoa: p.nome, local: p.local || "" } };
+        if (!casa(q.cidade.nome) && !FACTO_DO_SUCESSO.sobreAqui.test(sobre)) return null;
+      }
+      const local = nomeado || localAqui(q, o);
       if (local) {
         const gente = arr(q.gente).filter((p) => semArtigo(p.local) === semArtigo(local.nome)).map((p) => `${p.nome} (${oficioNoGenero(p.papel, p.genero_pessoa)})`);
         return { texto: encher(F.saber, { aqui: local.nome, chamado: local.chamado || local.tipo, gente: gente.join(", ") || "ninguém de nome" }), de: { local: local.nome } };
@@ -270,7 +362,7 @@ const FONTES = {
 export function oFactoDoSucesso(v, contexto) {
   try {
     const fam = familiaDe(v);
-    if (!fam) return null;
+    if (!fam) return oEfeitoDoSucesso(v);
     const c = obj(contexto) || {};
     const q = mundoDe(c);
     for (const fonte of FACTO_DO_SUCESSO.ordem[fam]) {

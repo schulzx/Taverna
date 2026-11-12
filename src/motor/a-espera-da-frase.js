@@ -22,7 +22,10 @@ export const A_ESPERA_DA_FRASE = Object.freeze({
   /* o verbo de esperar, na primeira pessoa (o «ele espera» da prosa não é meu) */
   verbo: /\b(espero|esperamos|aguardo|aguardamos|fico (a |à |a )?esper(a|ar|ando)|ficamos (a )?esper(a|ar|ando)|fico de tocaia|deixo (o tempo )?passar|deixamos (o tempo )?passar|faco hora|mato (o )?tempo)\b/,
   /* o que não é esperar: a negação, e o «espero que» do desejo */
-  naoE: /\b(nao (espero|aguardo|fico)|espero que|esperamos que|espero bem|sem esperar)\b/,
+  /* S19 (12/11, defeito 3): «Enquanto espero, estudo a cara dela» deu o chip
+     «Esperar» — o «enquanto» faz da espera o pano de fundo, e o que se faz
+     é o resto da frase (ali, ler a Margarida) */
+  naoE: /\b(nao (espero|aguardo|fico)|espero que|esperamos que|espero bem|sem esperar|enquanto (eu )?(espero|esperamos|aguardo|aguardamos)|enquanto (fico|ficamos) (a |à )?esper(a|ar|ando))\b/,
   /* as horas ditas por extenso */
   horas: Object.freeze({ uma: 1, duas: 2, "tres": 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11, doze: 12 }),
   /* os minutos por extenso, para as durações */

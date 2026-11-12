@@ -67,13 +67,27 @@ export const DESTINO_NA_ORACAO = {
   lugarDe: /\b(onde|cidade|vila|aldeia|povoado|burgo|terra|terras)\b/,
   porque: "o destino é o que a oração de partir diz, não o que o resto da frase menciona",
 };
+/* ---------------- O QUE ESTÁ NA CENA NÃO É ESTRADA (12/11, a 19.ª sessão, defeito 3) ----------------
+   «Vou até a banca de couros e pergunto: Quem levou o livro?» deu «DESTINO
+   NÃO RECONHECIDO» — o verbo de ir e nenhuma cidade com aquele nome, e o
+   envelope a falar de viagem a quem só atravessou o mercado. A banca, a
+   mesa, o balcão, a porta: o para-onde da oração é uma coisa da cena, a
+   poucos passos, e quem diz isso não pede estrada. A oração cujo destino é
+   uma destas não dá destino; se só havia ela, `naoParte` (a cascata segue
+   como se esta porta não existisse, e a frase vai à cena). */
+export const ALVO_NA_CENA = {
+  coisas: ["banca", "bancas", "barraca", "barracas", "tenda", "tendas", "bancada", "balcao", "mesa", "mesas", "porta", "janela", "fogueira", "lareira", "carroca", "canto", "esquina", "muro", "parede", "cerca", "estatua", "pilar", "palco", "fila", "escada", "carruagem", "cavalo", "carro"],
+  porque: "ir até uma coisa da cena é atravessar a cena, não tomar a estrada",
+};
+const RX_ALVO_NA_CENA = new RegExp("\\b(?:ate|para|pra|vou a|vamos a)\\s+(?:(?:a|o|as|os|um|uma|aquela|aquele|essa|esse|esta|este)\\s+)?(?:" + ALVO_NA_CENA.coisas.join("|") + ")\\b");
+
 /* o texto onde o destino pode estar: { texto, naoParte } */
 function ondeMoraODestino(texto) {
   const t = norm(texto);
   const oracoes = t.split(DESTINO_NA_ORACAO.separa).map((x) => x.trim()).filter(Boolean);
   const comVerbo = oracoes.filter((o) => DESTINO_NA_ORACAO.verbo.test(o));
   if (!comVerbo.length) return { texto: t, naoParte: false, comVerbo: false };
-  const valem = comVerbo.filter((o) => !NAO_E_PARTIDA.rx.test(o));
+  const valem = comVerbo.filter((o) => !NAO_E_PARTIDA.rx.test(o) && !RX_ALVO_NA_CENA.test(o));
   return valem.length ? { texto: valem.join(" . "), naoParte: false, comVerbo: true } : { texto: "", naoParte: true, comVerbo: true };
 }
 const palavraInteira = (t, termo) => new RegExp(`(^|[^a-z0-9])${termo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`).test(t);

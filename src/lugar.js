@@ -133,7 +133,11 @@ export function pontoDoLugar(nome, ancora, distancia = "arredores") {
    que é o erro que este arquivo inteiro existe para impedir.
    ============================================================ */
 
-const RX_VOU = /\b(vou|vamos|sigo|segui|caminho|ando|marcho|me dirijo|dirijo-?me|entro|entrar|adentro|rumo a|rumo ao|chego|chegar|visito|visitar|passo n[ao]|passar n[ao]|procuro|procurar|subo|desco|volto para|retorno a|me encaminho|encaminho-?me|parto para|atravesso ate|atravesso para)\b/;
+/* S19 (12/11, defeito 3): «Seguimos para a Cadeia do Pelourinho» deu
+   DESTINO NÃO RECONHECIDO com a Cadeia na lista de locais — o verbo só se
+   conhecia no singular («sigo»), e quem joga com companheiros diz «nós».
+   As formas do plural entram ao lado das do singular. */
+const RX_VOU = /\b(vou|vamos|sigo|segui|seguimos|caminho|caminhamos|ando|andamos|marcho|marchamos|me dirijo|dirijo-?me|nos dirigimos|entro|entramos|entrar|adentro|adentramos|rumo a|rumo ao|chego|chegamos|chegar|visito|visitamos|visitar|passo n[ao]|passamos n[ao]|passar n[ao]|procuro|procurar|subo|subimos|desco|descemos|volto para|voltamos para|retorno a|retornamos a|me encaminho|nos encaminhamos|encaminho-?me|parto para|partimos para|atravesso ate|atravessamos ate|atravesso para|atravessamos para)\b/;
 /* "até X" sozinho já é deslocamento em português falado ("até a forja!") */
 const RX_ATE = /\bat[eé]\s+[ao]?\s*\w/;
 
@@ -172,6 +176,16 @@ export const NAO_E_IDA = [
        "tento", "quero"; e "saio d…" estava lá, inteiro. Com o Cronista a
        dizer "cidade", passou a saída falsa: "De volta a Runa do Poço — O
        Último Gomo fica para trás", com a heroína ao balcão. */
+    /* S19 (12/11, defeito 3): «examino a guarita com cuidado: a mesa, as
+       gavetas…» deu o chip «Ir até a guarita · 1 min». A oração que abre
+       por um verbo de examinar olha para o que está à mão — o nome do
+       cómodo está nela como OBJETO do exame, e um «procuro» noutra oração
+       da mesma frase casava-o como destino. Quem examina não vai. */
+    id: "exame",
+    rx: /^\s*(eu\s+)?(examino|reviro|vasculho|inspeciono|revisto|apalpo|analiso|esquadrinho|remexo|estudo|observo|investigo)\b/,
+    porque: "examinar o que está à mão não é ir a outro sítio",
+  },
+  {
     id: "negaSaida",
     rx: /\b(nao|nunca|jamais|nem)\s+(me\s+)?(saio|saimos|vou embora|vamos embora|volto|voltamos|retorno|regresso|deixo|deixamos|arredo|mexo|movo)\b/,
     porque: "dizer que não sai é ficar",

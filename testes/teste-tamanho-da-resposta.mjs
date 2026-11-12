@@ -143,7 +143,13 @@ sec("§5 o pedido");
   t("o resto do pedido vai igual", n.system === "S" && n.formato === "json" && n.tarefa === "narrador" && n.comCache === true);
   t("sem tamanho, o pedido volta como veio", comOTamanho(ped, null) === ped && comOTamanho(ped, { tipo: "inventado" }) === ped);
   t("pedido lixo volta como veio", comOTamanho(null, tam) === null && comOTamanho("x", tam) === "x");
-  t("sem etiqueta na última, só o teto muda", (() => { const p = comOTamanho({ system: "S", messages: [{ role: "user", content: "[abertura]" }] }, tam); return p.messages[0].content === "[abertura]" && p.maxTokens === tam.maxTokens; })());
+  /* S19 (12/11, EM2): dizia «sem etiqueta na última, só o teto muda» — e era
+     por isso que metade dos turnos (o teste, a viagem, a luta, que abrem por
+     envelope e não levam etiqueta) iam ao Narrador SEM linha de tamanho
+     nenhuma (mediana 196 palavras na 19.ª). Agora a linha do tipo vai no fim
+     da última mensagem; a mensagem de antes fica intacta e a linha nunca é
+     maior do que a etiqueta que esse turno não leva. */
+  t("sem etiqueta na última, a linha do tipo vai no fim (e o teto muda)", (() => { const p = comOTamanho({ system: "S", messages: [{ role: "user", content: "[abertura]" }] }, tam); return p.messages[0].content.startsWith("[abertura]") && p.messages[0].content.endsWith(`[${tam.linha}]`) && p.maxTokens === tam.maxTokens; })());
   /* as réguas que leem a etiqueta */
   t("a fala do herói acha a frase depois da etiqueta nova", fraseDoPedido(n.messages[2].content) === frase);
   t("e ainda a acha na etiqueta de sempre", fraseDoPedido(`${ETIQUETA_DO_PEDIDO}\nAtaco.`) === "Ataco." && fraseDoPedido(null) === "");

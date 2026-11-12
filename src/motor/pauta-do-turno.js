@@ -97,6 +97,7 @@ import { MODO_PADRAO } from "../modos.js";
 import { MOLDE_PADRAO, moldePorId } from "../moldes.js";
 import { vetosParaAPauta } from "./correcao-do-juiz.js";
 import { aMesaDasQuests } from "./quests-do-turno.js";
+import { osPassosDasQuests } from "../a-quest-manda.js";
 import { oCativeiroNaPauta } from "../cativeiro.js";
 import { oSocorroNaPauta } from "../socorro.js";
 import { oEnvelopeDaGente, oEnvelopeDoFio } from "./envelopes-do-turno.js";
@@ -1315,7 +1316,12 @@ export function aPautaDoTurno(estado, entrada, portas) {
                    /* 12.ª sessão: quem o Mestre já nomeou está em cena, e não se apresenta de novo */
                    mostrado: falasDoMestre($ref.mensagens),
                    /* a 13.ª (29/10): quem o herói já encontrou, e onde — o passo dado não se pede outra vez */
-                   registro: $ref.registro },
+                   registro: $ref.registro,
+                   /* S19 (12/11, defeito 2): o lugar que o passo da quest manda
+                      descobrir vem antes do marco da espinha — o RUMO aponta
+                      onde a busca acha (achadoDoPasso), e os dois não se
+                      desmentem. Os mesmos passos do facto do sucesso. */
+                   passos: (() => { try { return osPassosDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() }, { mundo: mundoDaBase() }); } catch (e2) { calou("os passos no rumo", e2); return []; } })() },
         });
         if (rumo) p = porNaPauta(p, "rumo", rumo);
       }

@@ -86,6 +86,13 @@ export const PISTA_DO_PASSO = Object.freeze({
     pessoa: "o que {aqui} escondia aponta para alguém: {0}",
     item: "o que {aqui} escondia: uma pista sobre {0}",
     nada: "o que {aqui} escondia, a peça que faltava para {passo}",
+    /* S19 (12/11, defeito 2): o passo «Saber onde quem lê o livro à noite
+       guarda o livro» não plantava o livro em lado nenhum — o lugar da
+       etapa (o papel «casa») era só um sítio, e a busca lá dava uma pista
+       para «a peça que faltava». O item que a quest faz nascer nesse lugar
+       (`nasce`, biblioteca-de-quests) É o que lá se esconde: a busca com
+       sucesso acha-o ali, pelo nome, e o passo seguinte (tirá-lo) começa. */
+    guarda: "{g} está aqui: é {emAqui} que se guarda, escondido de quem não sabe onde procurar",
   }),
   prioridade: Object.freeze(["lugar", "pessoa", "item"]),
   /* os predicados de cada alvo da pista (condicoes-da-quest.js) */
@@ -148,7 +155,18 @@ export function oPassoDaQuest(ficha, registo, contexto) {
       const nome = String(a.nome || p.nome || "").trim();
       const id = String(a.id || p.id || "");
       if (!nome && !id) return null;
-      return { id, nome, cidade: typeof p.cidade === "string" ? p.cidade : "" };
+      return { id, nome, cidade: typeof p.cidade === "string" ? p.cidade : "", papel: String(a.papel || "") };
+    };
+    /* S19: o item que a quest faz nascer em cada papel de lugar (`nasce`) */
+    const nascido = (papelDoLugar) => {
+      if (!papelDoLugar || !obj(F.papeis)) return "";
+      for (const [pid, def] of Object.entries(F.papeis)) {
+        const d = obj(def);
+        if (!d || d.de !== "item" || d.nasce !== papelDoLugar) continue;
+        const nome = String((obj(papeis[pid]) && papeis[pid].nome) || d.nome || "").trim();
+        if (nome) return nome;
+      }
+      return "";
     };
     const descobrir = [], lugares = [], vistos = new Set();
     const candidatos = { lugar: [], pessoa: [], item: [] };
@@ -159,6 +177,8 @@ export function oPassoDaQuest(ficha, registo, contexto) {
         const l = lugarDe(a0);
         if (!l) continue;
         const k = l.id || semArtigo(l.nome);
+        const g = nascido(l.papel);
+        if (g) l.guarda = g;
         if (!vistos.has(k)) { vistos.add(k); lugares.push(l); }
         if (at.predicado === "descobriu" && !descobrir.some((d) => (d.id || semArtigo(d.nome)) === k)) descobrir.push(l);
       }
@@ -231,6 +251,13 @@ function pistaDe(passo, lugar) {
     if (alvo) break;
   }
   const passoTxt = String(passo.texto || "").replace(/^./, (c) => c.toLowerCase());
+  /* S19: o segredo do lugar é o item que lá nasce — antes de apontar para
+     outro sítio, o passo de «saber onde» acha a coisa onde ela está */
+  const guarda = passo.especie !== "rasto" && P.guarda && typeof lugar.guarda === "string" && lugar.guarda.trim() ? lugar.guarda.trim() : "";
+  if (guarda) {
+    const g = encher(P.guarda, { g: guarda.replace(/^./, (c) => c.toUpperCase()), emAqui: com("em", lugar.nome) }).replace(/\s+/g, " ").trim();
+    return { texto: g.length > PISTA_DO_PASSO.teto ? `${g.slice(0, PISTA_DO_PASSO.teto - 1).trimEnd()}…` : g, aponta: { tipo: "item", nome: guarda } };
+  }
   const nome = alvo ? alvo.nome : "";
   const texto = encher(alvo ? P[alvo.tipo] : P.nada, {
     aqui: lugar.nome, emAqui: com("em", lugar.nome), passo: passoTxt,
