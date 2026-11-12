@@ -193,5 +193,37 @@ sec("6. EM3 · O HERÓI JÁ SABE, A VELA E O PREÇO COBRADO");
   t("o cobrado é o aviso sem «Se falhar, » e sem ponto", !!chR && typeof chR.cobrado === "string" && chR.cobrado.length > 0 && !/^Se falhar/i.test(chR.cobrado) && !/\.$/.test(chR.cobrado));
 }
 
+sec("S19. A FIAÇÃO DA 19.ª SESSÃO (12/11/2026, mente/sessao-19.md)");
+{
+  const D = await import("../src/desafios.js");
+  const M = await import("../src/motor/o-mestre-chama.js");
+  const ctxC = corpo("ctxDoChamado");
+  /* EM3: a fonte «perto» do saber comum precisa da semente no continente */
+  t("o saber do herói recebe a semente do mundo (EM3 · perto)", /saberDoHeroi\(\{[\s\S]{0,400}semente: sementeMundo\(\),[\s\S]{0,40}\}\);/.test(ctxC));
+  /* T28/T30: à boca do Forte, nos arredores, saiu «alguém na rua vê você» */
+  t("o contexto «cidade» do chamado só vale dentro dos muros (sem jornada, sem masmorra, fora dos arredores)",
+    /cidade: !!cidadeAtualRef\.current && !jornadaRef\.current && !masmorraRef\.current\s*&& !\(lugarRef\.current && lugarRef\.current\.distancia === "arredores"\),/.test(ctxC));
+  const vF = D.lerAcao("me esgueiro pelas sombras sem ser visto", {});
+  const naRua = M.oChamado(vF, { contexto: { cidade: true } });
+  const noErmo = M.oChamado(vF, { contexto: { cidade: false } });
+  t("e é o contexto que escolhe a rua: com cidade, «na rua»; sem, outra variante", !!naRua && !!noErmo && /na rua/.test(naRua.aviso) && !/na rua/.test(noErmo.aviso), `${naRua && naRua.aviso} | ${noErmo && noErmo.aviso}`);
+  /* T17: o passo para um cómodo do prédio cedia ao teste da mesma frase */
+  const lf = corpo("leituraDaFrase");
+  t("a proposta do passo cede quando o alvo é um cómodo e a frase tem teste (T17)",
+    /if \(alvo && alvo\.onde === "comodo"\) \{[\s\S]{0,200}veredictoDaAcao\(acao\);\s*oPassoCede = !!\(vT && vT\.tipo === "teste"\)/.test(lf)
+    && /const passo = alvo && !oPassoCede \? oPassoNaCidade\(/.test(lf));
+  t("e quem move é o passo antes do ato, em adjudicarAcao, antes de julgar o teste",
+    /const passo = alvoLocalPedido\(acao\);\s*if \(passo && veredictoDaAcao\(acao\)\) moverParaLocal\(passo\);/.test(corpo("adjudicarAcao")));
+  const fT17 = D.lerAcao("desço até a porta das celas. Antes de mexer, apalpo a fechadura atrás de alguma armadilha, agulha ou arame, e desarmo o que achar", {});
+  t("a frase da T17 é um teste para o catálogo", !!fT17 && fT17.tipo === "teste", fT17 ? fT17.tipo : "nada");
+  /* T4: a Intuição sem des.pessoa e com duas pessoas em cena não lia ninguém */
+  const iI = APP.indexOf('des.pericia === "intuicao" && !combateRef.current');
+  const blocoI = iI >= 0 ? APP.slice(iI, iI + 1600) : "";
+  const iFrase = blocoI.indexOf("alvoDoEnvio(r.frase || r.motivo");
+  const iSo = blocoI.indexOf("fora.length === 1");
+  t("a leitura da Intuição procura a pessoa que a frase aponta antes do «só uma fora do grupo» (T4)", iFrase > 0 && iSo > iFrase && /\|\| alvoDaFraseL\s*\|\| \(\(\) =>/.test(blocoI));
+  t("e só aceita pessoa em cena, fora do grupo", /a\.tipo === "pessoa"[\s\S]{0,120}!x\.ehCompanheiro/.test(blocoI));
+}
+
 console.log(`\nchamado-fiacao: ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

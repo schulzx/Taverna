@@ -17491,7 +17491,18 @@ export default function Taverna() {
       try {
         if (passou && des && des.pericia === "intuicao" && !combateRef.current) {
           const cena = pessoasDaCena() || [];
+          /* S19 · T4: com mais de uma pessoa fora do grupo e sem des.pessoa, a
+             leitura não tinha alvo; a pessoa que a frase (ou a ficha tocada)
+             aponta vem antes do «só uma pessoa fora do grupo» */
+          const alvoDaFraseL = (() => {
+            try {
+              const ae = alvoDoEnvio(r.frase || r.motivo || "", emCenaRef.current);
+              const a = ae && ae.alvo;
+              return a && a.tipo === "pessoa" && a.nome ? (cena.find((x) => semNome(x.nome) === semNome(a.nome) && !x.ehCompanheiro) || null) : null;
+            } catch (e3) { calou("a leitura: quem a frase aponta", e3); return null; }
+          })();
           const alvoL = (des.pessoa && des.pessoa.nome && cena.find((x) => x.nome === des.pessoa.nome))
+            || alvoDaFraseL
             || (() => { const fora = cena.filter((x) => !x.ehCompanheiro); return fora.length === 1 ? fora[0] : null; })();
           let segL = [];
           try { segL = segredosGuardados(espinhaRef.current, mundoDaBase()); } catch (e2) { calou("segredos da leitura", e2); }
@@ -18789,6 +18800,9 @@ export default function Taverna() {
         personagem: personagemRef.current, lugar: lugarRef.current, cidade: cidadeAtualRef.current,
         jornada: jornadaRef.current, factos: factosRef.current, npcs: npcsRef.current,
         mapa: mapaRef.current, espinha: espinhaRef.current,
+        /* S19 · EM3: a fonte «perto» lê as masmorras que a cidade aponta; no
+           continente (masmorrasDoMundo) só as acha com a semente */
+        semente: sementeMundo(),
       });
     } catch (e) { calou("EM3 · o saber do herói", e); saber = null; }
     return {
@@ -18798,7 +18812,11 @@ export default function Taverna() {
       contexto: {
         chuva: /chuva|tempestade|temporal|garoa/i.test((climaRef.current && climaRef.current.rotulo) || ""),
         noite: ehNoite(minutoRef.current),
-        cidade: !!cidadeAtualRef.current,
+        /* S19 (T28/T30): nos arredores, na estrada e na masmorra o
+           cidadeAtualRef continua preenchido, e o aviso da Furtividade dizia
+           «alguém na rua vê você» à boca do Forte; a rua é só dentro dos muros */
+        cidade: !!cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current
+          && !(lugarRef.current && lugarRef.current.distancia === "arredores"),
       },
       saber,
     };
@@ -25554,7 +25572,16 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("a proposta: a estrada", e); }
     try {
       const alvo = s.temAlvoLocal ? alvoLocalPedido(acao) : null;
-      const passo = alvo ? oPassoNaCidade({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current, mapa: mapaRef.current }, alvo) : null;
+      /* S19 · T17: «desço até a porta das celas … e desarmo o que achar» —
+         o passo é um cómodo do prédio onde o herói já está (1 min) e a frase
+         tem um teste. A proposta do passo ganhava e o gesto perdia-se; agora
+         o passo não se propõe, o turno parte, e o «passo antes do ato» de
+         adjudicarAcao move primeiro e julga o teste onde o herói chegou. */
+      let oPassoCede = false;
+      if (alvo && alvo.onde === "comodo") {
+        try { const vT = veredictoDaAcao(acao); oPassoCede = !!(vT && vT.tipo === "teste"); } catch (e) { calou("a proposta: o passo cede ao teste", e); }
+      }
+      const passo = alvo && !oPassoCede ? oPassoNaCidade({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current, mapa: mapaRef.current }, alvo) : null;
       if (passo) L.passo = { nome: alvo.nome, onde: alvo.onde, minutos: passo.minutos, cidade: cidadeAtualRef.current };
     } catch (e) { calou("a proposta: o passo", e); }
     try {
