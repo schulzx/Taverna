@@ -32,7 +32,12 @@ const comTraco = (traco, semente = "mundo") => {
 
 sec("1. A DECISÃO SAIU DA IA");
 {
-  const H = APP.slice(APP.indexOf("const convidarNpc = (nome)"), APP.indexOf("const bancarOConvite"));
+  /* MOVIDA (13/11, NE4, oficial): convidarNpc ganhou o segundo argumento
+     `{ daFrase }` — o convite que vem da frase do jogador (conviteNaFrase)
+     corre o mesmo caminho sem empurrar a linha «Convido…». A âncora passa a
+     ser o prefixo da assinatura; a intenção (o código pesa, o Narrador
+     recebe fato consumado) é a mesma. */
+  const H = APP.slice(APP.indexOf("const convidarNpc = (nome"), APP.indexOf("const bancarOConvite"));
   t("o handler existe", H.length > 200);
   t("não manda mais a IA decidir", !/A decisão é dele/i.test(H));
   t("nem pedir a ficha completa", !/com a ficha completa/.test(H));

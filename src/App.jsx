@@ -24,7 +24,7 @@ import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
 import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
-import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, ICONE_OFERTA, genteDaHistoria, cartazVencido } from "./ofertas.js";
+import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, ICONE_OFERTA, genteDaHistoria, cartazVencido, objetoDoCartaz } from "./ofertas.js";
 import { vereditoDoCartaz, etapaDoDador } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO, ditosDoBando } from "./decretos.js";
 import { fatorMedioReino, fatorFelicidade, processarDiaReino } from "./reino.js";
@@ -180,15 +180,15 @@ import { SALVAGUARDAS, salvaguardaPorId, salvasDaClasse, ehProficienteNaSalva, f
 import { locaisDaCidade, garantirBase, porSituacao, matar as matarNaBase, estaMorto as estaMortoNaBase, saquear as saquearNaBase, revelar as revelarNaBase, achavelAqui, recompensaDoAchado, envelopeDoAchado, resumoDaqui, resumoChefesPrompt, chefesDoMundo, oQueExisteAqui, masmorrasDoMundo, chaveDoLugar, BASE_PROMPT } from "./mundo-base.js";
 import { envelopeDaDificuldade, pesarCompanheiro } from "./dificuldade.js";
 import { poderDe, poderDoItem, pontosDoItem, trocaDeItem, formatarPoder, contaDoPoder } from "./poder.js";
-import { montarTrama, envelopeDaTrama, quemPede } from "./tramas.js"; import { promessaEmAberto } from "./palavra-dada.js";
-import { abrirRaid, garantirRaid, envelopeDaConvocacao, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT } from "./raids.js";
+import { montarTrama, envelopeDaTrama, quemPede } from "./tramas.js"; import { promessaEmAberto, sementeDaPalavra } from "./palavra-dada.js";
+import { abrirRaid, garantirRaid, envelopeDaConvocacao, fimDaRaid, comitivaDaRaid, tirarComitiva, portePorId, papelPorId, poderDaHoste, poderDoChefe, poderDoConvocado, NIVEL_MINIMO as NIVEL_MINIMO_RAID, RAID_PROMPT, chamadoNaFrase } from "./raids.js";
 /* os detectores de cena e de ascensão agora entram pelo portão (portao.js) */
 import { registrarConfidencia, garantirConfidencias, elencoDaCena, CENA_PROMPT } from "./cena.js";
 import { violacoesDoTurno, pedidoDeConserto, aceitarConserto, lembreteDoPortao } from "./portao.js";
 import { RECEITAS, OFICIOS, receitaPorId, produtoDaReceita, comoComponente, itemComponente, contarComponentes, faltaPara, receitasDisponiveis, forjarNaBancada, aplicarCraft, textoDoCraft, envelopeDoCraft, colherComponentes, despojosDe, componentePorId } from "./craft.js";
 import { sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, abrigoDoSitio } from "./acampamento.js";
 import { garantirEspaco, posicaoDoHeroi, rastrearOTurno } from "./geografo.js";
-import { garantirEspinha, estenderEspinha, progressoDoAto, vilaoDoFio, oRostoEspera, caiuOFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
+import { garantirEspinha, estenderEspinha, progressoDoAto, marcoAtual, vilaoDoFio, oRostoEspera, caiuOFio, fatosQueFecham, segredosReveladosNoTurno } from "./saga.js";
 import { segredosGuardados, peneirarCanone } from "./segredo-guardado.js";
 /* MM13 (30/09): O MUNDO PUXA O HERÓI — a razão de estar ali (como memória,
    não como oferta), a pista concreta, o mural que espera, a menção que não
@@ -209,7 +209,7 @@ import { fechoDaNarrativa } from "./fecho.js";
 import { encontroComFio, linhaDoAcampamento, fiosNovosNaEstrada } from "./fios-da-estrada.js";
 import { calaNaMasmorra, cenaNaMasmorra, horizonteDaPergunta } from "./masmorra-sem-cidade.js";
 import { garantirElenco, jaMeViuAntes } from "./interprete.js";
-import { indoleDe, linhaDaIndole, pesarConvite, envelopeDoConvite } from "./indole.js";
+import { indoleDe, linhaDaIndole, pesarConvite, envelopeDoConvite, conviteNaFrase } from "./indole.js";
 import { escolherCorpo, corpoPorId, garantirSaber, chegouAteEle, envelopeDoCorpo } from "./antagonista.js";
 import { garantirAliados, andarVontade } from "./aliado.js";
 import { garantirRegistro, anotar, podar, resumoDoRegistro } from "./registro.js";
@@ -240,7 +240,7 @@ import { CONTAGEM_VAZIA, pontoDaSorte as pontoDaSorteDe, sorteNoPonto, chaveDaRo
 import { aplicarOTurno, notaComOTurno, contextoDoNomeCom } from "./motor/aplicar.js";
 import { julgarOCronista } from "./motor/cronista.js";
 import { oGatilhoDoCronista, oPedidoAoCronista, oAceitoDoCronista } from "./motor/cronista-do-turno.js";
-import { registrarOLugar, dadivasConcedidas, milagreInvocado, frasesDoGrupoCheio } from "./motor/meio-do-turno.js";
+import { registrarOLugar, dadivasConcedidas, milagreInvocado, frasesDoGrupoCheio, aFeDoTurno, oFimDoEventoGlobal } from "./motor/meio-do-turno.js";
 import { aplicarOCodex, aplicarAChegada, oPortaoDoTurno } from "./motor/fim-do-turno.js";
 import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./motor/juiz-do-turno.js";
 /* a praça que o Juiz julga é a que a pauta mostrou (Fase 4, trilha A, 29/10) */
@@ -249,9 +249,10 @@ import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correc
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
-import { portaAberta, oModoDoNarrador, oPesoPeloSistema, oPedidoDoModo } from "./motor/portas-do-narrador.js";
+import { portaAberta, oModoDoNarrador, oPesoPeloSistema, oPedidoDoModo, oCronistaChama } from "./motor/portas-do-narrador.js";
 import { lexicoDoMundo } from "./lexico-do-mundo.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
+import { aFichaDeAtor } from "./motor/ficha-de-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { aPropostaDaFrase, aPessoaChamada } from "./motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
@@ -11115,6 +11116,15 @@ export default function Taverna() {
     let pedidoDoAtor = null;
     /* NE2: o pedido sai da coluna `pedido` da tabela, não do nome do modo — o `boca` fecha as portas e recebe o pedido do mestre */ let pedidoDoModo = "mestre"; try { pedidoDoModo = oPedidoDoModo(MODO_DA_MESA); } catch (e) { calou("o pedido do modo", e); pedidoDoModo = "mestre"; }
     if (pedidoDoModo === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido(), teste: testeDoTurnoRef.current }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
+    /* NE4 (13/11): A GENTE DA CENA SEM O CRONISTA. No modo que fecha a porta
+       do Cronista e pede pelo `mestre` (o `boca`), quem falou com o herói e a
+       recência do elenco vinham da ficha do ator — que só existia no `ator`.
+       A ficha calcula-se aqui também (a mesma conta, sem o pedido), e vai ao
+       registo da cena e à recência. No `mestre` o Cronista lê e nada muda. */
+    let fichaDaCena = pedidoDoAtor ? pedidoDoAtor.ficha : null;
+    if (!pedidoDoAtor) {
+      try { if (!oCronistaChama(MODO_DA_MESA)) fichaDaCena = aFichaDeAtor({ nota, frase: conteudo, estado: estadoDoPedido(), teste: testeDoTurnoRef.current }); } catch (e) { calou("NE4 · a ficha da cena", e); fichaDaCena = null; }
+    }
     /* EM2: o tipo do turno decide as palavras e o teto (tamanho-da-resposta.js).
        O que o App sabe ANTES da resposta: a frase, o teste resolvido no turno,
        e a luta que acabou entre o estado do pedido e agora. A chegada e o
@@ -11185,7 +11195,11 @@ export default function Taverna() {
       } catch (e) { calou("a sessão (o pedido)", e); turnoDaSessao = null; }
       /* BQ2: a prosa que o livro lê é a resposta CRUA, a que a sessão grava (o replay lê a mesma) */
       const narrativaDoLivro = String(resp.narrativa || "");
-      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa, quemFalou: pedidoDoAtor ? pedidoDoAtor.ficha.falam : null }) || personagemRef.current || personagem;
+      /* NE4 · a fé do turno: o que os contadores contam ANTES de o turno se
+         aplicar — a diferença, depois do conferente, é o feito do turno */
+      let antesDaFe = null;
+      try { antesDaFe = retratoDaFe(); } catch (e) { calou("NE4 · o retrato da fé", e); antesDaFe = null; }
+      let pers = aplicarResposta(resp, persAtual, { envelopes: conteudo + "\n" + nota, pedido: pedidoDaBolsa, moeda: moedaDaBolsa, quemFalou: fichaDaCena ? fichaDaCena.falam : null }) || personagemRef.current || personagem;
       juizDoTurnoRef.current = null; /* um turno sem juízo não empresta o veredito da véspera ao Cronista */
       try {
         if (fotoDoJuiz) {
@@ -11213,6 +11227,31 @@ export default function Taverna() {
          ficha SEM a recompensa que a missão tinha acabado de pagar. O jogador
          via "+144 moedas" na tela e recarregava sem elas. */
       try { pers = conferirAsMissoes(pers) || pers; } catch { /* nunca derruba o turno */ }
+      /* NE4 (13/11): A FÉ PELO SISTEMA. O sinal `fe:` era a IA a dizer que o
+         feito valia fé; agora o feito que os contadores contaram neste turno
+         (o lendário caído, a missão e a principal fechadas, o marco da
+         espinha), ou o gesto devoto da frase, um por dia, entra pela mesma
+         conta (meio-do-turno.js#aFeDoTurno). A missão da lista antiga já paga
+         a fé dela no conferente (pagaDoFecho) e não conta duas vezes. */
+      try {
+        if (antesDaFe && divindadeRef.current && divindadeRef.current.despertar) {
+          const depois = retratoDaFe();
+          const novas = (missoesRef.current || []).filter((m) => m && m.status === "concluida" && !antesDaFe.concluidas.has(m.id) && m.veiculo !== VEICULO_DA_TAREFA_ANTIGA);
+          const feitos = {
+            missao: novas.length,
+            principal: novas.filter((m) => m.tipo === "principal").length,
+            lendario: Math.max(0, depois.lendarios - antesDaFe.lendarios),
+            marco: Math.max(0, depois.marcos - antesDaFe.marcos),
+          };
+          const dFe = aFeDoTurno(
+            { divindade: divindadeRef.current, devocao: devocaoRef.current, mapa: mapaRef.current, cidadeAtual: cidadeAtualRef.current, dia: diaRef.current, personagem: pers, contadores: contRef.current },
+            { frase: pedidoDaBolsa, feitos });
+          if (dFe.fe) {
+            aplicarOsEfeitos({ estado: {}, efeitos: dFe.efeitos, paraOCronista: dFe.paraOCronista });
+            if (dFe.msgs.length) pushMsgs(dFe.msgs.map((texto) => ({ autor: "sistema", texto })));
+          }
+        }
+      } catch (e) { calou("NE4 · a fé do turno", e); }
       /* v9.37: e se há espaço no diário, o mundo oferece trabalho por conta
          própria — o serviço sai montado daqui e o Mestre só encena quem pede */
       try { oferecerTrabalhoDaqui(); } catch { /* idem */ }
@@ -11353,7 +11392,7 @@ export default function Taverna() {
       } catch (e) { calou("o recibo do turno (a espera)", e); }
       try {
         let doTurnoCr = null;
-        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current, aceite: aceiteDesteTurno, fichaDoAtor: pedidoDoAtor ? pedidoDoAtor.ficha : null }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
+        try { doTurnoCr = { frase: pedidoDaBolsa, envelopes: [...String(nota || "").split("\n"), ...String(conteudo || "").split("\n")], paraASessao: turnoDaSessao, juiz: juizDoTurnoRef.current, aceite: aceiteDesteTurno, fichaDoAtor: fichaDaCena }; } catch (e) { calou("o turno para o gatilho do Cronista", e); }
         const doCronista = cronistaDoTurno(pers, narrativaFinal, doTurnoCr);
         if (fimDoCronista) Promise.resolve(doCronista).then(fimDoCronista, () => fimDoCronista(null));
         /* a linha do turno na sessão: depois do Cronista (o estado assentou), na fila.
@@ -14266,6 +14305,18 @@ export default function Taverna() {
     fraseAnteriorRef.current = "";
     try { fraseAnteriorRef.current = fraseAnteriorDoJogador(mensagensRef.current); } catch (e) { calou("a frase anterior do jogador", e); }
     try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
+    /* NE4 (13/11): A PALAVRA DO HERÓI. A promessa da frase entra no caderno
+       do prometido pelo sistema (palavra-dada.js#sementeDaPalavra) — antes só
+       entrava o que o Cronista lia na narração. A frase é do jogador: corre
+       em qualquer modo. */
+    try {
+      if (!acao.startsWith("/")) {
+        const pP = fichaViva() || personagem || {};
+        const aquiP = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pP.grupo || [] }).aqui || [];
+        const sp = sementeDaPalavra(acao, { presentes: aquiP, grupo: pP.grupo || [] });
+        if (sp) prometidoRef.current = guardarSementes(prometidoRef.current, [sp]).estado;
+      }
+    } catch (e) { calou("NE4 · a palavra do herói", e); }
     /* MM-C · 7.ª sessão (M51): a chegada inferida confirma-se quando o
        jogador nomeia a cidade ou um lugar dela — aí as missões de ir/levar
        voltam a fechar só de estar lá */
@@ -14367,6 +14418,38 @@ export default function Taverna() {
         }
       }
     } catch (e) { calou("o sono escrito", e); }
+    /* NE4 (13/11): O CONVITE E O CHAMADO PELA FRASE. «Quer vir comigo?» a quem
+       está em cena leva ao veredito do convite de sempre (o do botão); «toco o
+       sino e convoco todos» contra uma ameaça que o sistema tem à frente abre
+       o chamado. Antes só abriam pelo que a IA declarava. Vêm antes das
+       portas: a pergunta do convite cairia no oráculo, e o sino no desafio. */
+    if (!acao.startsWith("/") && !escolhaPendenteRef.current) {
+      try {
+        const pC = fichaViva() || personagem || {};
+        const livre = !raidRef.current && !combateRef.current && !(masmorraRef.current && !masmorraRef.current.encerrada) && !acampadoRef.current;
+        const ch = chamadoNaFrase(acao, { nivel: pC.nivel, ameacas: ameacasConhecidas() });
+        if (ch && ch.pode && livre) {
+          pushMsgs([{ autor: "jogador", texto: acao }]);
+          notaRef.current = [notaRef.current, oEnvelopeDoJogador("oQueEuEscrevi", { acao })].filter(Boolean).join("\n");
+          abrirONossoChamado(ch.chefe);
+          return;
+        }
+        if (ch && !ch.pode) pushMsgs([{ autor: "sistema", texto: `⚑ O chamado não é para você ainda: ${ch.motivo}.` }]);
+      } catch (e) { calou("NE4 · o chamado pela frase", e); }
+      try {
+        if (!combateRef.current) {
+          const pC = fichaViva() || personagem || {};
+          const aquiC = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pC.grupo || [] }).aqui || [];
+          const cv = conviteNaFrase(acao, { presentes: aquiC, grupo: pC.grupo || [] });
+          if (cv) {
+            pushMsgs([{ autor: "jogador", texto: acao }]);
+            notaRef.current = [notaRef.current, oEnvelopeDoJogador("oQueEuEscrevi", { acao })].filter(Boolean).join("\n");
+            convidarNpc(cv.nome, { daFrase: true });
+            return;
+          }
+        }
+      } catch (e) { calou("NE4 · o convite pela frase", e); }
+    }
     for (let i = 0; i < cascata.atalhos.length;) {
       let feito = false;
       try { feito = !!executar(cascata.atalhos[i].faz); } catch { feito = false; }
@@ -17636,6 +17719,19 @@ export default function Taverna() {
         registrarSaque(r.achado.id);
         pushMsgs([{ autor: "sistema", texto: `${r.achado.icone || "🧰"} Achado: ${r.achado.o} — ◉ ${rec.moedas} moedas${extras.length ? ` · ${extras.join(", ")}` : ""}` }]);
         env = `${envelopeDoAchado(r.achado, rec)}\n${env}`;
+        /* NE4 (13/11): O OBJETO DO CARTAZ. A etapa `achar` só fechava quando
+           o Mestre mandava o objeto por `adicionar_itens`; agora a busca que
+           acha o segredo no lugar dele entrega-o (ofertas.js#objetoDoCartaz),
+           e a etapa fecha no `conferir` seguinte, pelo item na bolsa. */
+        try {
+          const doCartaz = objetoDoCartaz(missoesRef.current, r.achado, persT.inventario);
+          if (doCartaz) {
+            persT = { ...persT, inventario: [...(persT.inventario || []), doCartaz.item] };
+            setPersonagem(persT);
+            pushMsgs([{ autor: "sistema", texto: `🔎 ${doCartaz.item} — na sua bolsa.` }]);
+            env = `${env}\n[O QUE O CARTAZ PROCURAVA — ENTREGUE PELO SISTEMA] Entre o que achei está "${doCartaz.item}": já está na minha bolsa. Use exatamente esse nome.`;
+          }
+        } catch (e) { calou("NE4 · o objeto do cartaz", e); }
       }
       /* ---------------- O BRILHO (v9.71) ----------------
          O outro lado do dado, e ele nunca existiu: 12 contra 11 e 25 contra
@@ -18506,7 +18602,11 @@ export default function Taverna() {
     let apontado = null;
     try {
       /* F2b: a ficha tocada ganha enquanto a frase a nomeia (alvoDoEnvio) */
-      const { alvo, lista } = alvoDoEnvio(acao, montarEmCena(contextoDoEmCena(acao, elenco.aqui || [])));
+      /* NE4 (13/11): com a porta `alvoDaProsa` fechada, o bicho que a prosa
+         do Mestre pôs na lista não vira `conhecidas` — ficam o encontro da
+         estrada e a sala, que são do sistema */
+      const ctxCena = contextoDoEmCena(acao, elenco.aqui || []);
+      const { alvo, lista } = alvoDoEnvio(acao, montarEmCena(portaAberta("alvoDaProsa", MODO_DA_MESA) ? ctxCena : { ...ctxCena, mostrado: [] }));
       const bicho = (alvo && alvo.tipo === "criatura" && alvo.faz === "golpe") ? lista.find((x) => x.id === alvo.id) : null;
       if (bicho) conhecidas = [{ nome: bicho.nome, ameaca: bicho.ameaca || "" }, ...conhecidas.filter((c) => c.nome !== bicho.nome)];
       if (alvo && alvo.tipo === "pessoa") { const it = lista.find((x) => x.id === alvo.id); if (it) apontado = { ...it, faz: alvo.faz }; }
@@ -20553,6 +20653,37 @@ export default function Taverna() {
      vencer, a raid seria um filme a que se assiste, e o pedido dizia o
      contrário — "o player vê tudo", não "o player olha".
      ============================================================ */
+  /* NE4 (13/11): AS AMEAÇAS CONHECIDAS, para o chamado pela frase
+     (raids.js#chamadoNaFrase). Só as três que o sistema tem — a nêmesis cujo
+     rosto o herói já viu e que ainda anda, o chefe do marco da espinha quando
+     o herói está onde o marco o põe, e o lendário (ou chefe) de pé na luta
+     aberta. Nenhuma sai da prosa. */
+  const ameacasConhecidas = () => {
+    const lista = [];
+    try {
+      const n = nemesisRef.current;
+      if (n && n.nome && n.conhecido && n.status !== "derrotada") lista.push({ nome: n.nome });
+    } catch (e) { calou("NE4 · a nêmesis à vista", e); }
+    try {
+      const m = marcoAtual(espinhaRef.current, (historiaRef.current || {}).etapa || 0);
+      const aqui = String(cidadeAtualRef.current || "").toLowerCase();
+      const ehChefe = m && m.alvo && (m.feitio === "confronto" || (m.feitio === "enfrentar" && m.quantos == null));
+      if (ehChefe && aqui && [m.cidade, m.onde].some((x) => String(x || "").toLowerCase() === aqui)) lista.push({ nome: m.alvo });
+    } catch (e) { calou("NE4 · o chefe do marco", e); }
+    try {
+      for (const e of ((combateRef.current || {}).inimigos || [])) {
+        if (e && e.nome && (e.chefe || e.ameaca === "lendario") && !e.derrotado && !e.fugiu && (e.vida || 0) > 0) lista.push({ nome: e.nome });
+      }
+    } catch (e) { calou("NE4 · o lendário da luta", e); }
+    return lista;
+  };
+  /* NE4 (13/11): o retrato da fé — o que o turno conta como feito, lido
+     antes e depois dele (a diferença é o feito) */
+  const retratoDaFe = () => ({
+    lendarios: Number((contRef.current || {}).lendariosDerrotados) || 0,
+    concluidas: new Set((missoesRef.current || []).filter((m) => m && m.status === "concluida").map((m) => m.id)),
+    marcos: (() => { try { return (garantirEspinha(espinhaRef.current).atos || []).reduce((n, a) => n + ((a && Array.isArray(a.marcos)) ? a.marcos.filter((m) => m && m.feito).length : 0), 0); } catch { return 0; } })(),
+  });
   const abrirONossoChamado = (chefeNome = "") => {
     if (raidRef.current || combateRef.current || masmorraRef.current || acampadoRef.current) return;
     const pIn = personagemRef.current || personagem;
@@ -22371,6 +22502,18 @@ export default function Taverna() {
       catch (e) { calou("a secundária planeada", e); r = processarDescansoLongoEventos(eventosRef.current, ctx, { dia: diaRef.current, secundariasAtivas: secundarias, secundarias: portaoAgora().abertas }); }
       eventosRef.current = r.eventos; setEventos(r.eventos);
       const partes = [];
+      /* NE4 (13/11): O FIM DO ARCO MAIOR. Na última etapa, o dado do descanso
+         decide o desfecho (geradores.js, ALVOS_DO_DESCANSO.desfecho) — antes
+         só acabava quando a IA mandava `evento_global_encerrar`. O fim é o
+         mesmo das duas portas (meio-do-turno.js#oFimDoEventoGlobal). */
+      if (r.globalEncerrado) {
+        try {
+          const fim = oFimDoEventoGlobal({ historia: historiaRef.current, eventos: r.eventos }, r.globalEncerrado, { motorDoArco });
+          aplicarOsEfeitos({ estado: {}, efeitos: fim.efeitos, paraOCronista: fim.paraOCronista });
+          if (fim.msgs.length) pushMsgs(fim.msgs.map((texto) => ({ autor: "sistema", texto })));
+          partes.push(oEnvelopeDoMundo("globalFim", r.globalEncerrado));
+        } catch (e) { calou("NE4 · o fim do arco maior", e); }
+      }
       if (r.globalNovo) {
         partes.push(oEnvelopeDoMundo("globalNovo", r.globalNovo));
         pushMsgs([{ autor: "sistema", texto: `🌍 Evento global: ${r.globalNovo.nome} — a região começa a mudar.` }]);
@@ -22970,11 +23113,16 @@ export default function Taverna() {
     return { ok: true, comp, personagem: np };
   };
 
-  const convidarNpc = (nome) => {
+  /* NE4 (13/11): `daFrase` — o convite que veio da frase do jogador
+     (conviteNaFrase, no agirInterno) não empurra a linha «Convido…»: a frase
+     dele já está na tela. O resto é o caminho do botão. (Sem destructuring:
+     o `= {}` não cobre o `null` de quem chamar com ele.) */
+  const convidarNpc = (nome, opcoes) => {
+    const daFrase = !!(opcoes && opcoes.daFrase);
     if (bloqueado) return;
     const v = vereditoDoConvite(nome);
     setAba(null);
-    pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para se juntar ao meu grupo.` }]);
+    if (!daFrase) pushMsgs([{ autor: "jogador", texto: `Convido ${nome} para se juntar ao meu grupo.` }]);
     if (v.resposta === "aceita") {
       const r = porNoGrupo(nome);
       if (!r.ok) { pushMsgs([{ autor: "sistema", texto: `⛔ ${r.motivo}.` }]); return; }
