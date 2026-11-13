@@ -1080,7 +1080,8 @@ export function escolherLado(coracao, nucleo, nome, ladoId, ctx) {
   if (brigas.length) {
     const e = brigas[0];
     const contra = semBastidor(encher(e.contra, { sombra }));
-    const alvo = alvoPrometido(contra, { presentes: o.presentes, mostrado: o.mostrado, sombra: e.contra === "{sombra}" });
+    /* NE2: o modo do Narrador (`ctx.modoDoNarrador`) decide se a prosa afina o nome */
+    const alvo = alvoPrometido(contra, { presentes: o.presentes, mostrado: o.mostrado, sombra: e.contra === "{sombra}", modoDoNarrador: o.modoDoNarrador });
     /* E1: a figura do arco tem nome desde a linha da crise — o cartão já não
        luta contra "Velho camarada" quando o registo e a prosa calam */
     /* 29/10 (trilha B): e o gênero dela vai junto, no vocabulário da luta

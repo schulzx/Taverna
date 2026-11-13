@@ -32,7 +32,12 @@ const casos = casosDoCronista(N_CASOS);
 const recorte = recorteDeHoje(APP);
 const hoje = blocoComoFuncao(recorte);
 const fotosDe = async (fn) => { const o = []; for (const k of casos) o.push(fotoDoCronista(await correrOBloco(fn, k, { novo: true }))); return o; };
-const divergem = (novas) => novas.filter((f, i) => !igual(f, D.fotos[i])).length;
+/* MOVIDA (13/11, NE1), com o motivo: a mordida comparava com o dourado, e
+   desde a NE1 o de hoje diverge do dourado de propósito nos casos em que o
+   cânone recusa o que o sistema não conhece. A mordida pergunta «a troca
+   muda o que sai?», e o que sai hoje é a referência: compara-se com ele
+   (que é o dourado em todo caso sem a recusa, provado na secção 1). */
+const divergem = (fotos) => fotos.filter((f, i) => !igual(f, novas[i])).length;
 const trocado = (de, para) => {
   if (recorte.split(de).length !== 2) throw new Error("a troca da mordida não bate uma vez só: " + de);
   return blocoComoFuncao(recorte.replace(de, para));
@@ -42,9 +47,25 @@ sec("1 · o cronistaDoTurno, byte a byte contra o de antes");
 const novas = await fotosDe(hoje);
 {
   t(`o dourado é do commit de antes (760fe1b), ${N_CASOS} casos`, D.commit === "760fe1b" && D.fotos.length === N_CASOS);
+  /* MOVIDA (13/11, NE1), com o motivo: o cânone deixou de guardar o
+     objeto, a gente e o lugar que o sistema não conhece
+     (motor/cronista.js#oCanoneQueExiste), e isto vale no `mestre` — o caso
+     cuja proposta trazia um assim muda de propósito. A régua fica byte a
+     byte para TODO o resto: o caso sem a recusa bate com o dourado, e o que
+     não bate é, cada um, um caso em que a NE1 recusou (espiado no próprio
+     oAceitoDoCronista que o App chama). */
+  const recusas = [];
+  for (const k of casos) {
+    const r = [];
+    await correrOBloco(hoje, k, { novo: true, embrulhar: (S) => { const f = S.oAceitoDoCronista; S.oAceitoDoCronista = (...a) => { const x = f(...a); if (x && Array.isArray(x.recusadoDoCanone)) r.push(...x.recusadoDoCanone); return x; }; } });
+    recusas.push(r);
+  }
   const batem = novas.filter((f, i) => igual(f, D.fotos[i])).length;
-  const primeira = novas.findIndex((f, i) => !igual(f, D.fotos[i]));
-  t(`${batem}/${N_CASOS} iguais ao App de antes`, batem === N_CASOS, primeira >= 0 ? `o caso ${primeira} diverge: ${JSON.stringify(novas[primeira]).slice(0, 500)} | antes ${JSON.stringify(D.fotos[primeira]).slice(0, 500)}` : "");
+  const semRecusa = novas.map((f, i) => i).filter((i) => !recusas[i].length);
+  const primeira = semRecusa.find((i) => !igual(novas[i], D.fotos[i]));
+  t(`${semRecusa.filter((i) => igual(novas[i], D.fotos[i])).length}/${semRecusa.length} casos sem a recusa da NE1 iguais ao App de antes (${batem}/${N_CASOS} no todo)`, primeira === undefined, primeira !== undefined ? `o caso ${primeira} diverge: ${JSON.stringify(novas[primeira]).slice(0, 500)} | antes ${JSON.stringify(D.fotos[primeira]).slice(0, 500)}` : "");
+  const divergentes = novas.map((f, i) => i).filter((i) => !igual(novas[i], D.fotos[i]));
+  t(`e os ${divergentes.length} que divergem são casos em que a NE1 recusou cânone (${recusas.flat().length} entradas: ${[...new Set(recusas.flat().map((x) => x.porque))].join(", ")})`, divergentes.every((i) => recusas[i].length) && divergentes.length > 0 && recusas.flat().every((x) => x.secao === "canone"));
   t("determinista", igual((await fotosDe(hoje)).slice(0, 60), novas.slice(0, 60)));
   t("nenhum nome sem dublê, antes ou hoje (nada caiu em silêncio num catch)", [...D.fotos, ...novas].every((f) => !f.faltas.length), [...new Set(novas.flatMap((f) => f.faltas))].join(", "));
   t("nada estoura para fora, antes ou hoje", [...D.fotos, ...novas].every((f) => !f.erro));

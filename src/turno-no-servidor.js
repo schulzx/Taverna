@@ -141,7 +141,7 @@ import { precoDeCompraPara } from "./profissoes.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { semFalaInventada } from "./fala-do-heroi.js";
 import { narrativaFaltou, MOTIVO_SEM_NARRATIVA } from "./guardado.js";
-import { oModoDoNarrador } from "./motor/portas-do-narrador.js";
+import { oModoDoNarrador, oPedidoDoModo } from "./motor/portas-do-narrador.js";
 import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 
@@ -260,7 +260,9 @@ async function montar(corpo, opcoes) {
   /* O PEDIDO DO ATOR, no modo que o pede: sobre o estado ANTES do adiado
      (no App o temporizador só dispara com o pedido já montado) */
   let pedido = r2.pedido, ficha = null;
-  if (modo === "ator") {
+  /* NE2 (13/11): o pedido é a coluna `pedido` do modo — o `boca` fecha as
+     portas e recebe o pedido do `mestre` */
+  if (oPedidoDoModo(modo) === "ator") {
     try { const pa = oPedidoDoAtor({ nota: obj(r2.saida).nota, frase, estado: { ...e0, ...r1.escritas, ...r2.escritas } }); pedido = pa.pedido; ficha = pa.ficha; }
     catch (x) { portas.calou("o pedido do ator", x); pedido = r2.pedido; ficha = null; }
   }
@@ -419,7 +421,7 @@ function oCronistaDoServidor(m, resposta, depoisDoMestre) {
   let frase = "";
   try { const pb = lerOPedido(m.frase); frase = pb && pb.doJogador ? pb.texto : ""; } catch { frase = ""; }
   let g = { corre: true, motivos: [] };
-  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem, ...(m.modo === "ator" ? { modoDoNarrador: m.modo } : {}) }, leitura); } catch { g = { corre: true, motivos: [] }; }
+  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem, ...(m.modo !== "mestre" ? { modoDoNarrador: m.modo } : {}) }, leitura); } catch { g = { corre: true, motivos: [] }; }
   let pedido = null;
   if (g.corre) {
     let fila = "";
@@ -527,7 +529,9 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   const deVerdade = typeof op.chamar === "function";
   const ia = deVerdade ? { chamadas: 0, usos: [], cache: undefined } : null;
   let resposta = obj(obj(corpo).resposta);
-  const ator = m.modo === "ator";
+  /* o modo segue até ao replay sempre que não é o padrão (o `boca` também
+     fecha portas); a ficha do ator só existe com o pedido do ator */
+  const comModo = m.modo !== "mestre";
   /* EM2 (11/11/2026): a mesma régua do App, no mesmo ponto — a linha de
      tamanho e o teto do tipo do turno entram na CÓPIA que vai à rede; o
      pedido montado (m.pedido) continua o do motor, byte a byte o do caminho
@@ -556,7 +560,7 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   }
   const portaDoCronista = typeof op.cronista === "function" ? op.cronista : deVerdade ? oCronistaPelaPorta(op.chamar, ia) : null;
   const L0 = aLinhaDoServidor(m, resposta, null);
-  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar(), servidor: true, ...(ator ? { modoDoNarrador: m.modo } : {}) });
+  const contexto = () => ({ semente: L0.mundo.semente, mundo: L0.mundo, so: "depois", casa: m.retomar(), servidor: true, ...(comModo ? { modoDoNarrador: m.modo } : {}) });
   const r0 = correrOTurno(m.estadoDoFim, L0.linha, contexto());
   const cr = oCronistaDoServidor(m, resposta, r0.estado);
   let proposta = null, chamado = false;

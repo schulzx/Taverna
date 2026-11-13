@@ -82,7 +82,9 @@ export function oPerigoDaResposta(estado, ctx) {
   const { fazer, descarregar, porta } = pendentes(ctx);
   let pers = e0.pers;
   const msgs = [];
-  const perigo = e0.perigo;
+  /* a porta `perigo` (NE2): a poda já o corta sempre; fechada no modo, nem
+     o que escapasse à poda abre emboscada */
+  const perigo = portaAberta("perigo", e0.modoDoNarrador) ? e0.perigo : null;
   try {
     if (perigo && !e0.combate) {
       const emb = montarEmboscada(perigo, { pers });

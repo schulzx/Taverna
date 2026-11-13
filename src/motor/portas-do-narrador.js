@@ -43,6 +43,30 @@
    livro-razão, que o App tira da prosa ("alguém morreu", o 🎲). Ficam na
    tabela com `achado`, e fecham como as outras.
 
+   A FASE NE (13/11, «nenhuma IA escreve estado de jogo» — mente/
+   plano-nada-entra.md). Três coisas mudaram a tabela:
+   - NE1: a porta `cronista` partiu-se por SECÇÃO (canal `cronista`). A
+     porta `cronista` continua a ser a chamada da 2.ª IA (o gatilho); cada
+     secção da resposta dela tem agora a sua porta, e `oAceitoPelaPorta`
+     tira do aceito a secção cuja porta o modo fecha. A secção `combate`
+     (`mortes_narradas`) não é porta: é a guarda da coesão (só corrige).
+   - NE2: as portas que viviam FORA da tabela entraram nela — a prosa que
+     põe à vista no livro de factos, o alvo do ataque e o nome da luta
+     prometida tirados da prosa, o núcleo lido das falas, o `perigo` da
+     resposta, e as três IAs que escrevem estado sem ser o Narrador (o
+     Arquivista do save e o da ascensão, o Léxico; canal `ia`). E os
+     marcadores `__*` da luta (canal `marcador`), que são do código e
+     nunca da IA: `sempreFechada`, logo `aRespostaPelaPorta` tira-os em
+     QUALQUER modo, o `mestre` incluído. Os dois Arquivistas também são
+     `sempreFechada` (NE3: a pessoa aprovou tirá-los): a tela do App lê a
+     porta (`O_ARQUIVISTA_NA_TELA`), e voltar é tirar a marca daqui.
+   - NE2: a chave ganhou duas colunas explícitas, `portas` (as que o modo
+     abre) e `pedido` (que pedido o Narrador recebe: o do `mestre`, com a
+     pauta inteira, ou o do `ator`, com a ficha). E um terceiro modo,
+     `boca`: o pedido do `mestre` com todas as portas fechadas — o
+     Narrador recebe tudo e só fala. Não é o padrão (é a NE7, depois dos
+     substitutos da NE4).
+
    Puro, sem React. Provado em `testes/teste-nada-entra-pelo-ator.mjs`.
    ============================================================ */
 import { caidosDaLuta } from "../recibo-da-luta.js";
@@ -109,19 +133,55 @@ export const PORTAS_DO_NARRADOR = Object.freeze([
   /* os achados de 03/11 */
   P("mesa", "mudancas", "ritmo", "aMesaDoTurno", "conta o turno como ganho pelos campos moedas, xp e adicionar_itens", { campos: Object.freeze(["moedas", "xp", "adicionar_itens"]), achado: "03/11: a anatomia não a contou" }),
   P("pesoDaLinha", "prosa", "ritmo", "App: a linha do turno (anotarOTurno)", "dá peso à linha do livro-razão pela morte e pelo dado que a prosa diz", { achado: "03/11: a anatomia não a contou" }),
+  /* NE1 (13/11): o Cronista, secção a secção. `chaves`: as chaves do aceito
+     (julgarOCronista) que a porta governa; `cronista.livro` não tem chave —
+     governa o que as secções da gente e da conversa dão ao livro de factos
+     (o `nomeado` e o `falou`, que satisfaz «conversou» da quest). */
+  ...[
+    ["lugar", ["lugar"], "muda o sítio em que o herói está (e, recusado, escreve a nota de correção)"],
+    ["global", ["missoes"], "encerra o evento global e vira o arco"],
+    ["canone", ["canone"], "escreve no cânone (o artefato, a gente, o lugar)"],
+    ["gente", ["pessoas"], "cria ou mescla gente no registo"],
+    ["conversa", ["falou_com"], "confere as etapas de «falar com» pela conversa que leu"],
+    ["fe", ["fe"], "dá fiéis e PF ao deus (o número é da tabela, o sinal é dele)"],
+    ["grupo", ["grupo"], "põe no grupo quem a prosa disse que veio"],
+    ["teste", ["teste_sugerido"], "abre o teste que a concessão grande exige"],
+    ["cartaz", ["missao_oferecida"], "prega no mural o trabalho que alguém pediu na prosa"],
+    ["relogio", ["relogio_novo"], "começa a contar um relógio"],
+    ["promessas", ["promessas", "promessas_pagas"], "guarda e paga as sementes do Livro de Promessas"],
+    ["livro", [], "dá ao livro de factos quem foi nomeado e com quem o herói falou"],
+  ].map(([secao, chaves, faz]) => P("cronista." + secao, "cronista", "cronista", "oAceitoDoCronista", faz, { secao, chaves: Object.freeze(chaves), achado: "13/11 (NE1): a porta «cronista» partida por secção" })),
+  /* NE2 (13/11): as nove de fora, com a peça que as fecha */
+  P("livroVistoDaProsa", "prosa", "fora", "oQueACenaDaAoLivro (livro-do-turno.js)", "põe à vista no livro de factos quem a prosa pôs a agir — o «visto» que satisfaz «conheceu» da quest", { achado: "13/11 (NE2): a auditoria" }),
+  P("alvoDaProsa", "prosa", "fora", "lerAgressao (agressao.js)", "tira da prosa o alvo do ataque: o bicho, o armado, o descrito pela arma", { achado: "13/11 (NE2): a auditoria" }),
+  P("lutaPrometida", "prosa", "fora", "escolherLado → alvoPrometido (subtramas.js, agressao.js)", "dá à luta que o lado prometeu o nome que a prosa disse", { achado: "13/11 (NE2): a auditoria" }),
+  P("nucleoDaFala", "prosa", "fora", "App: nucleoEmCena", "põe o núcleo em cena por o Mestre o citar nas duas últimas falas", { achado: "13/11 (NE2): a auditoria" }),
+  P("marcadores", "marcador", "fora", "aRespostaPelaPorta", "os __* de mudancas (__vitoriaAuto, __inimigosFinais): marcadores do código que pagam o espólio — a IA nunca os escreve", { sempreFechada: true, achado: "13/11 (NE2): a auditoria" }),
+  P("perigo", "resposta", "fora", "oPerigoDaResposta (fecho-da-resposta.js)", "abre a emboscada ou dispara o perigo que a IA descreveu (a poda já o corta sempre)", { achado: "13/11 (NE2): a auditoria" }),
+  P("arquivistaDoSave", "ia", "fora", "App: «recalibrar save antigo»", "três IAs reescrevem a ficha de um save antigo", { sempreFechada: true, fechou: "NE3 (13/11): a pessoa aprovou tirar o Arquivista; voltar é tirar o sempreFechada", achado: "13/11 (NE2): a auditoria" }),
+  P("arquivistaDaAscensao", "ia", "fora", "painel-ascensao.jsx: «Recalibrar ascensão»", "a IA reescreve a ascensão divina", { sempreFechada: true, fechou: "NE3 (13/11): a pessoa aprovou tirar o Arquivista; voltar é tirar o sempreFechada", achado: "13/11 (NE2): a auditoria" }),
+  P("lexico", "ia", "fora", "App: lerOMundo (lexico.js#pedidoDoLexico)", "a IA escreve o vocabulário e as leis do mundo (mundo.lexico) — a troca é lexico-do-mundo.js (NE6)", { achado: "13/11 (NE2): a auditoria" }),
 ]);
 
-const IDS = PORTAS_DO_NARRADOR.map((p) => p.id);
+/* as portas que algum modo pode abrir: a `sempreFechada` não abre nunca */
+const IDS = PORTAS_DO_NARRADOR.filter((p) => !p.sempreFechada).map((p) => p.id);
 const DO_CAMPO = new Map(PORTAS_DO_NARRADOR.filter((p) => p.canal === "mudancas" && !p.campos).map((p) => [p.id, p.id]));
 const DO_SINAL = new Map(PORTAS_DO_NARRADOR.filter((p) => p.canal === "sinal").map((p) => [p.id, p.id]));
 
 /* ---------------- A CHAVE ----------------
-   `abertas`: as portas que o modo abre (o Cronista é a porta `cronista`). */
+   Duas colunas (NE2, 13/11), e já não uma só: `portas` — as que o modo
+   abre (o Cronista é a porta `cronista`) — e `pedido` — que pedido o
+   Narrador recebe: `mestre` (a pauta inteira, os envelopes) ou `ator` (a
+   ficha do ator, pedido-do-ator.js). Até aqui o pedido do ator vinha
+   colado à chave das portas (`modo === "ator"`), e por isso o modo das
+   portas fechadas não podia ter o pedido de hoje. */
 export const MODO_DO_NARRADOR = Object.freeze({
-  mestre: Object.freeze({ padrao: true, abertas: Object.freeze([...IDS]),
+  mestre: Object.freeze({ padrao: true, portas: Object.freeze([...IDS]), pedido: "mestre",
     oQueE: "o de hoje: o Narrador narra e declara, e o que declara e o que a prosa diz entra no estado pelas portas" }),
-  ator: Object.freeze({ padrao: false, abertas: Object.freeze([]),
+  ator: Object.freeze({ padrao: false, portas: Object.freeze([]), pedido: "ator",
     oQueE: "o Narrador só fala: a resposta e a prosa vão à tela, e nada entra no estado por elas" }),
+  boca: Object.freeze({ padrao: false, portas: Object.freeze([]), pedido: "mestre",
+    oQueE: "o pedido do mestre, com todas as portas fechadas: o Narrador recebe a pauta inteira e só fala — o modo da NE7" }),
 });
 
 /* o nome do modo, conferido: um nome que a tabela não tem (ou nenhum) é o padrão */
@@ -131,11 +191,30 @@ export function oModoDoNarrador(nome) {
 }
 
 const doModo = (modo) => MODO_DO_NARRADOR[oModoDoNarrador(modo)];
-const abreTudo = (m) => IDS.every((id) => m.abertas.includes(id));
+const abreTudo = (m) => IDS.every((id) => m.portas.includes(id));
+
+/* que pedido o Narrador recebe neste modo: "mestre" ou "ator" (a coluna
+   `pedido`; o modo ausente é o padrão) */
+export function oPedidoDoModo(modo) {
+  return doModo(modo).pedido === "ator" ? "ator" : "mestre";
+}
 
 /* a porta está aberta neste modo? (o modo ausente é o padrão) */
 export function portaAberta(id, modo) {
-  return doModo(modo).abertas.includes(id);
+  return doModo(modo).portas.includes(id);
+}
+
+/* O ACEITO DO CRONISTA PELA PORTA (NE1): tira do aceito do juízo
+   (julgarOCronista) cada secção cuja porta `cronista.*` o modo fecha. O
+   modo que abre todas devolve o MESMO objeto. Lixo vira `{}`. */
+const DAS_SECOES = PORTAS_DO_NARRADOR.filter((p) => p.canal === "cronista");
+export function oAceitoPelaPorta(aceito, modo) {
+  const a = aceito && typeof aceito === "object" && !Array.isArray(aceito) ? aceito : {};
+  const fechadas = DAS_SECOES.filter((p) => !portaAberta(p.id, modo)).flatMap((p) => p.chaves);
+  if (!fechadas.some((k) => Object.prototype.hasOwnProperty.call(a, k))) return a;
+  const out = {};
+  for (const [k, v] of Object.entries(a)) if (!fechadas.includes(k)) out[k] = v;
+  return out;
 }
 
 /* o Cronista lê neste modo? */
@@ -149,9 +228,22 @@ export function oCronistaChama(modo) {
    uma porta com defeito nunca abre o que o modo fechou. */
 export function aRespostaPelaPorta(resp, modo) {
   const m = doModo(modo);
-  if (abreTudo(m)) return resp;
   if (!resp || typeof resp !== "object" || Array.isArray(resp)) return resp;
-  try { return filtrada(resp, m); } catch { return { narrativa: resp.narrativa, mudancas: null }; }
+  /* os marcadores do código (a porta `marcadores`, sempre fechada): em
+     qualquer modo. Sem nenhum, a resposta é a mesma (o mesmo objeto). */
+  let r;
+  try { r = semMarcadores(resp); } catch { return { narrativa: resp.narrativa, mudancas: null }; }
+  if (abreTudo(m)) return r;
+  try { return filtrada(r, m); } catch { return { narrativa: resp.narrativa, mudancas: null }; }
+}
+
+const ehMarcador = (k) => typeof k === "string" && k.startsWith("__");
+function semMarcadores(resp) {
+  const md = resp.mudancas;
+  if (!md || typeof md !== "object" || Array.isArray(md) || !Object.keys(md).some(ehMarcador)) return resp;
+  const limpa = {};
+  for (const [k, v] of Object.entries(md)) if (!ehMarcador(k)) limpa[k] = v;
+  return { ...resp, mudancas: limpa };
 }
 
 /* O PESO DA LINHA PELO SISTEMA (o Narrador ator, etapa 2, 03/11). A porta
@@ -182,12 +274,12 @@ function filtrada(resp, m) {
         const txt = String(s || "").trim();
         const ix = txt.indexOf(":");
         const chave = (ix < 0 ? txt : txt.slice(0, ix)).trim().toLowerCase();
-        return DO_SINAL.has(chave) && m.abertas.includes(chave);
+        return DO_SINAL.has(chave) && m.portas.includes(chave);
       });
       if (sinais.length) nm.sinais = sinais;
       continue;
     }
-    if (DO_CAMPO.has(campo) && m.abertas.includes(campo)) nm[campo] = v;
+    if (DO_CAMPO.has(campo) && m.portas.includes(campo)) nm[campo] = v;
   }
   return { ...resp, mudancas: Object.keys(nm).length ? nm : null };
 }

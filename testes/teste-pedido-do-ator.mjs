@@ -283,6 +283,12 @@ sec("§8 o `mestre` não muda");
   t("no `ator`, o pedido do servidor é o do ator, e a ficha vai junto", umAtor.pedido.system === OF && umAtor.pedido.formato === "texto" && umAtor.ficha && typeof umAtor.ficha.texto === "string");
   const nome = await oPedidoNoServidor({ estado: estadoNoTurno(SESSOES.s9, 3), frase: "olho em volta" }, { agora: () => 0, modoDoNarrador: "inventado" });
   t("um modo que a tabela não tem é o padrão (o Mestre)", nome.pedido.formato === "json" && !("ficha" in nome));
+  /* NE2 (13/11): o pedido é a coluna `pedido` do modo, não o nome dele — o
+     `boca` fecha as portas e recebe o pedido do Mestre, byte a byte */
+  const corpoB = { estado: estadoNoTurno(SESSOES.s9, 3), frase: "olho em volta" };
+  const boca = await oPedidoNoServidor(corpoB, { agora: () => 0, modoDoNarrador: "boca" });
+  const mestre = await oPedidoNoServidor(corpoB, { agora: () => 0, modoDoNarrador: "mestre" });
+  t("no `boca`, o pedido do servidor é o do Mestre (JSON, sem ficha), o mesmo do `mestre`", boca.pedido.formato === "json" && !boca.ficha && JSON.stringify(boca.pedido) === JSON.stringify(mestre.pedido));
 }
 
 sec("§9 as duas pontas: o peso da linha e a recência do elenco");

@@ -35,7 +35,12 @@ const ac = juizo.aceito.canone || {};
 t("o nome só da fala sai marcado `dito` pelo juízo", !!(ac["Berço de Ossos"] && ac["Berço de Ossos"].dito));
 t("o nome que a prosa pôs em cena não", !!ac["Lâmina de Varek"] && !ac["Lâmina de Varek"].dito);
 /* o aceito do motor, com o estado mínimo e as portas que esta secção lê */
-let E = { personagem: { nome: "Íris" }, npcs: {}, canone: {}, dia: 3 };
+/* MOVIDA (13/11, NE1), com o motivo: o cânone só guarda o objeto que o
+   sistema conhece (motor/cronista.js#oCanoneQueExiste), e os dois artefatos
+   desta prosa não estavam em lado nenhum. Passam a ser peças do enredo (a
+   espinha os nomeia), e a intenção fica: a marca do que só foi dito viaja do
+   juízo ao cânone, e o que a prosa mostrou entra sem ela. */
+let E = { personagem: { nome: "Íris" }, npcs: {}, canone: {}, dia: 3, espinha: { atos: [{ marcos: [{ titulo: "O Berço", item: "Berço de Ossos" }, { titulo: "A lâmina", item: "Lâmina de Varek" }] }] } };
 const aplicar = (efs) => { for (const ef of efs) if (ef.tipo === "canone") E = { ...E, canone: ef.canone }; };
 oAceitoDoCronista({ canone: ac }, [], PROPOSTA, {
   ler: () => E, aplicar, pers: E.personagem, narrativa: NARRATIVA,

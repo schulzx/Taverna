@@ -704,7 +704,8 @@ function oAceitoNoReplay(E0, juizo, proposta, ctx) {
   /* as linhas do Cronista no relato (o `pushMsgs(msgs)` do App, depois da
      peça): as do conferente que ele chamou, e as dele */
   if (fim) linhas.push(...arr(fim.msgs).map((x) => (typeof x === "string" ? x : String(obj(x).texto || ""))));
-  return { estado: E, portas, calou, linhas };
+  /* NE1 (13/11): o que o cânone não guardou por o sistema não o conhecer */
+  return { estado: E, portas, calou, linhas, recusadoDoCanone: arr(fim && fim.recusadoDoCanone) };
 }
 
 /* O TURNO DO REPLAY É ESTA TABELA: os passos que já são puros, na ordem do
@@ -885,7 +886,7 @@ export const PASSOS_DO_REPLAY = Object.freeze([
        teste-sessao). Os caídos da luta são do App, como a luta. */
     passo: "o livro de factos", de: "motor/livro-do-turno.js#oQueACenaDaAoLivro + #anotarOLivro (o fim da resposta: a presença, o lugar, a afeição)",
     faz: (E, L, ctx) => {
-      const lv = anotarOLivro(E, oQueACenaDaAoLivro(E, { narrativa: ctx.resposta.narrativa }), { mundo: ctx.mundo });
+      const lv = anotarOLivro(E, oQueACenaDaAoLivro(E, { narrativa: ctx.resposta.narrativa, modoDoNarrador: ctx.modoDoNarrador }), { mundo: ctx.mundo });
       return lv ? { ...E, factos: lv.factos } : E;
     },
   },
@@ -911,6 +912,7 @@ export const PASSOS_DO_REPLAY = Object.freeze([
       const r = oAceitoNoReplay(E, { ...juizo, aceito }, proposta, ctx);
       nota.portas = r.portas;
       nota.calouDoCronista = r.calou;
+      if (r.recusadoDoCanone.length) nota.recusadoDoCanone = r.recusadoDoCanone;
       if (nota.tela && r.linhas.length) nota.tela.linhas.push(...r.linhas);
       return r.estado;
     },
@@ -1070,7 +1072,7 @@ function diferencas(a, b, caminho, out, prof) {
    das sessões de prova usa para escrever a linha: um caminho só).
 
      correrOTurno(antes, linha, { semente, mundo?, narracoes?, doApp?, so?, casa? })
-       → { estado, juizo, juiz, veredito, tela, calou, portas, calouDoCronista, calouDoDepois, tirados }
+       → { estado, juizo, juiz, veredito, tela, calou, portas, calouDoCronista, calouDoDepois, tirados, recusadoDoCanone }
 
    `antes` é o estado do fim do turno anterior (o save v2), `linha` a linha
    do arquivo (o `estado` dela não é lido), `narracoes` as narrações de
@@ -1139,7 +1141,7 @@ export function correrOTurno(antes, linha, contexto) {
   const juiz = julgado ? dado(julgado.resumo) : null;
   const fim = comoSave(E);
   for (const campo of Object.keys(NASCERAM_DEPOIS_DA_GRAVACAO)) if (!tem(E0, campo) && fim[campo] == null) delete fim[campo];
-  return { estado: fim, juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), calouDoDepois: arr(nota.calouDoDepois), tirados: arr(nota.tirados) };
+  return { estado: fim, juizo: nota.juizo || null, juiz, veredito: julgado ? julgado.veredito : null, tela: nota.tela || null, calou, portas: arr(nota.portas), calouDoCronista: arr(nota.calouDoCronista), calouDoDepois: arr(nota.calouDoDepois), tirados: arr(nota.tirados), recusadoDoCanone: arr(nota.recusadoDoCanone) };
 }
 
 const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) => !tem(FORA_DA_REGUA, k)));
@@ -1148,20 +1150,37 @@ const naRegua = (e) => Object.fromEntries(Object.entries(obj(e)).filter(([k]) =>
 const debaixoDe = (p, c) => p === c || p.startsWith(c + ".") || p.startsWith(c + "[");
 
 /* o relatório: { valido, erros, turnos, reproduzidos, divergentes, primeira,
-   defeitos, primeiroDefeito, soOMotor, divida }. Por turno: { n, igual,
+   defeitos, primeiroDefeito, soOMotor, divida, regra }. Por turno: { n, igual,
    defeito, diferencas (as do motor), divida (as do App), porque, cronista,
-   juiz, calou, app, portas }. Ver o cabeçalho, "A DÍVIDA DO APP", e
-   PORTAS_DO_CRONISTA_NO_REPLAY (a dívida «a porta»). */
+   juiz, calou, app, portas, regra? }. Ver o cabeçalho, "A DÍVIDA DO APP", e
+   PORTAS_DO_CRONISTA_NO_REPLAY (a dívida «a porta»).
+
+   A REGRA NOVA (NE1, 13/11 — mente/plano-nada-entra.md). As sessões
+   gravadas antes da Fase NE guardam no cânone o que o Cronista daquele
+   jogo leu na prosa — a gente, o lugar e o «artefato» que o sistema nunca
+   deu. O motor de hoje recusa-os (motor/cronista.js#oCanoneQueExiste), e
+   a recusa não é defeito nem dívida do App: é a regra que mudou depois da
+   gravação. `A_REGRA_NOVA_NO_REPLAY` diz onde ela mora: a entrada
+   `canone.<nome>` que o gravado tem e o motor não, quando o motor a
+   RECUSOU nesta sessão (num turno qualquer até aqui: encadeado, a ausência
+   continua nos turnos seguintes) — sai da comparação e vai, com o nome, a
+   `regra` do turno e do relatório. Nunca silenciosa: a suíte conta-a. */
+const A_REGRA_NOVA_NO_REPLAY = Object.freeze([
+  Object.freeze({ campo: "canone", de: "recusadoDoCanone", regra: "NE1 (13/11): o cânone só guarda o objeto, a gente e o lugar que o sistema conhece (motor/cronista.js#oCanoneQueExiste)" }),
+]);
 export function reproduzirASessao(arquivo, opcoes) {
   const op = obj(opcoes);
   const v = validarASessao(arquivo);
-  const vazio = { valido: v.ok, erros: v.erros, turnos: [], reproduzidos: 0, divergentes: [], primeira: null, defeitos: [], primeiroDefeito: null, soOMotor: 0, divida: { campos: [], doTurno: [] } };
+  const vazio = { valido: v.ok, erros: v.erros, turnos: [], reproduzidos: 0, divergentes: [], primeira: null, defeitos: [], primeiroDefeito: null, soOMotor: 0, divida: { campos: [], doTurno: [] }, regra: [] };
   if (!v.ok) return vazio;
   const A = arquivo, mundo = ehObj(A.mundo) ? A.mundo : null;
   let gravado = obj(dado(A.inicio)), corrido = gravado;
   const turnos = [];
   const porCampo = new Map(AINDA_DO_APP.map((d) => [d.campo, []]));
   const doTurno = [];
+  /* a regra nova (A_REGRA_NOVA_NO_REPLAY): o que o motor recusou até aqui, por campo */
+  const recusouARegra = new Map(A_REGRA_NOVA_NO_REPLAY.map((x) => [x.campo, new Set()]));
+  const daRegraNaSessao = [];
   A.turnos.forEach((L, i) => {
     const antes = op.encadeado ? corrido : gravado;
     const r = correrOTurno(antes, L, { semente: A.semente, mundo, narracoes: narracoesDoArquivo(A.turnos, i) });
@@ -1172,8 +1191,23 @@ export function reproduzirASessao(arquivo, opcoes) {
        que o App escreveu por elas é dívida da porta, no turno em que ela foi
        chamada, e só nos campos que ela escreve */
     const portas = r.portas.filter((p) => p.campos.length).map((p) => ({ orgao: `${p.porta}, a porta que o Cronista chama (dublê no replay: ${PORTAS_DO_CRONISTA_NO_REPLAY[p.porta].porque})`, campos: p.campos, de: "a porta" }));
-    const todas = [];
-    diferencas(naRegua(gravado), naRegua(r.estado), "", todas, 0);
+    const todas0 = [];
+    diferencas(naRegua(gravado), naRegua(r.estado), "", todas0, 0);
+    for (const x of A_REGRA_NOVA_NO_REPLAY) for (const y of arr(r[x.de])) if (ehObj(y) && typeof y.o === "string") recusouARegra.get(x.campo).add(y.o);
+    /* o que a regra nova explica sai da comparação, com o nome */
+    const regra = [];
+    const todas = todas0.filter((d) => {
+      for (const x of A_REGRA_NOVA_NO_REPLAY) {
+        /* pelo nome inteiro (o nome do cânone pode ter ponto: «Sr. Vale») */
+        const nome = [...recusouARegra.get(x.campo)].find((n) => d.caminho === `${x.campo}.${n}` || d.caminho.startsWith(`${x.campo}.${n}.`) || d.caminho.startsWith(`${x.campo}.${n}[`));
+        if (nome && ehObj(obj(gravado[x.campo])[nome]) && !(nome in obj(r.estado[x.campo]))) {
+          if (!regra.some((g) => g.campo === x.campo && g.nome === nome)) regra.push({ campo: x.campo, nome, regra: x.regra });
+          return false;
+        }
+      }
+      return true;
+    });
+    if (regra.length) daRegraNaSessao.push({ n: L.n, regra });
     /* cada diferença: é dívida se a tabela a lista, ou se a linha diz que
        um órgão do App a escreveu neste turno; o resto é do motor */
     const doMotor = [], divida = new Map();
@@ -1204,7 +1238,7 @@ export function reproduzirASessao(arquivo, opcoes) {
     const dividas = [...divida.values()].map((d) => ({ ...d, caminhos: d.caminhos.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno) }));
     for (const d of dividas) if (d.de === "a tabela") porCampo.get(d.campo).push(L.n);
     if (app.length) doTurno.push({ n: L.n, app, divergiu: dividas.some((d) => d.de === "a linha") });
-    turnos.push({ n: L.n, igual, defeito, diferencas: doMotor.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno), divida: dividas, porque, cronista, juiz, calou: r.calou, app: app.length ? app : null, portas: r.portas.length ? r.portas : null });
+    turnos.push({ n: L.n, igual, defeito, diferencas: doMotor.slice(0, FORMATO_DA_SESSAO.diferencasPorTurno), divida: dividas, porque, cronista, juiz, calou: r.calou, app: app.length ? app : null, portas: r.portas.length ? r.portas : null, ...(regra.length ? { regra } : {}) });
   });
   const divergentes = turnos.filter((t) => !t.igual).map((t) => t.n);
   const defeitos = turnos.filter((t) => t.defeito).map((t) => t.n);
@@ -1215,6 +1249,8 @@ export function reproduzirASessao(arquivo, opcoes) {
     /* reproduz e nenhum órgão do App mexeu nele: o turno que o motor joga sozinho */
     soOMotor: turnos.filter((t) => t.igual && !t.app).length,
     divida: { campos: AINDA_DO_APP.map((d) => ({ ...d, turnos: porCampo.get(d.campo) })), doTurno },
+    /* a regra nova: por turno, o que ela explicou (o nome e a regra) */
+    regra: daRegraNaSessao,
   };
 }
 

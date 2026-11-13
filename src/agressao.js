@@ -36,6 +36,10 @@
    ============================================================ */
 
 import { NAO_E_DECLARACAO, soODeclarado } from "./peneira.js";
+/* NE2 (13/11): o alvo tirado da prosa e o nome da luta prometida são portas
+   da tabela (motor/portas-do-narrador.js, `alvoDaProsa` e `lutaPrometida`):
+   fechadas no modo, a prosa (`mostrado`) não conta */
+import { portaAberta } from "./motor/portas-do-narrador.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 /* 29/10 (trilha B): O GÊNERO DA PESSOA VAI COM ELA PARA A LUTA. Quem nasce do
@@ -863,7 +867,8 @@ export const LUTA_PROMETIDA = {
   porque: "o lado da decisão prometeu esta luta antes do clique, e a promessa abre-a",
 };
 export function alvoPrometido(contra, opcoes) {
-  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const o0 = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const o = portaAberta("lutaPrometida", o0.modoDoNarrador) ? o0 : { ...o0, mostrado: [] };
   const txt = String(contra || "").trim();
   const semArt = txt.replace(/^(o|a|os|as|um|uma)\s+/i, "").trim();
   if (o.sombra && semArt) return { nome: capital(semArt), ameaca: LUTA_PROMETIDA.sombra, deOnde: "sombra" };
@@ -1005,7 +1010,9 @@ export function lerAgressao(texto, opcoes) {
   const grupo = Array.isArray(o.grupo) ? o.grupo : [];
   const nomes = presentes.map((n) => n && n.nome).filter(Boolean);
   if (!ehDeclaracaoDeAtaque(texto, { nomes })) return null;
-  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado: o.mostrado, conhecidas: o.conhecidas, comigo: o.comigo, apontado: o.apontado });
+  /* a porta `alvoDaProsa` (NE2): fechada, o que o Mestre mostrou não dá alvo */
+  const mostrado = portaAberta("alvoDaProsa", o.modoDoNarrador) ? o.mostrado : [];
+  const alvo = alvoDaAgressao(texto, { presentes, grupo, recentes: o.recentes, mostrado, conhecidas: o.conhecidas, comigo: o.comigo, apontado: o.apontado });
   if (!alvo) {
     let porPronome = false;
     try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }

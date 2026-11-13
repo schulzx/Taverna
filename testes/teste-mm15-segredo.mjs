@@ -454,7 +454,11 @@ sec("6. a fiação — App.jsx");
      prova-se pelo valor exportado ou jogando a peça. */
   const CT = await import("../src/motor/cronista-do-turno.js");
   const espC = { atos: [{ marcos: [{ id: "m1", feitio: "descobrir", onde: "Gruta das Vozes", titulo: "o que a gruta guarda", feito: false }] }] };
-  const jogarC = (mundoDaBase) => { const efs = []; CT.oAceitoDoCronista({ canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Ana", grupo: [] }, narrativa: "x", ler: () => ({ canone: {}, espinha: espC, dia: 1 }), aplicar: (x) => efs.push(...x), mundoDaBase }); return { efs, canone: (efs.find((e) => e.tipo === "canone") || {}).canone || {} }; };
+  /* MOVIDA (13/11, NE1), com o motivo: o cânone só guarda o objeto que o
+     sistema conhece (motor/cronista.js#oCanoneQueExiste) — «a lâmina partida»
+     passa a estar no inventário da Ana, e a intenção fica: a peneira do
+     segredo tira a Gruta e deixa a lâmina. */
+  const jogarC = (mundoDaBase) => { const efs = []; CT.oAceitoDoCronista({ canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Ana", grupo: [], inventario: [{ nome: "a lâmina partida" }] }, narrativa: "x", ler: () => ({ canone: {}, espinha: espC, dia: 1 }), aplicar: (x) => efs.push(...x), mundoDaBase }); return { efs, canone: (efs.find((e) => e.tipo === "canone") || {}).canone || {} }; };
   const cBom = jogarC(() => null), cTorto = jogarC(() => { throw new Error("o mundo estourou"); });
   t("a porta do Cronista peneira ac.canone antes do for, com o mesmo fallback", !cBom.canone["Gruta das Vozes"] && !!cBom.canone["a lâmina partida"]
     && !!cTorto.canone["Gruta das Vozes"] && cTorto.efs.some((e) => e.tipo === "calou" && e.onde === "peneirarCanone (Cronista)"));

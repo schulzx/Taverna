@@ -59,8 +59,9 @@ import { favorJaPedido } from "../subtramas.js";
 import { aceitarProposta, tipoDe, barraDe, envelopeNovo } from "../relogios.js";
 import { segredosReveladosNoTurno } from "../saga.js";
 import { peneirarCanone } from "../segredo-guardado.js";
+import { oCanoneQueExiste } from "./cronista.js";
 import { frasesDoGrupoCheio } from "./meio-do-turno.js";
-import { portaAberta, oCronistaChama } from "./portas-do-narrador.js";
+import { portaAberta, oCronistaChama, oAceitoPelaPorta } from "./portas-do-narrador.js";
 import { oQueACenaRegista } from "./registo-da-cena.js";
 import { MAX_COMPANHEIROS, ATRIBUTOS } from "../constantes.js";
 import { pesarCompanheiro } from "../dificuldade.js";
@@ -214,7 +215,12 @@ function pendentes(ctx) {
    derruba as outras (as que calavam, calam; as que diziam ao `calou`,
    dizem). */
 export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
-  let ac = aceito || {};
+  /* AS PORTAS POR SECÇÃO (NE1, 13/11): a secção cuja porta `cronista.*` o
+     modo fecha sai do aceito antes de qualquer secção a ler. No `mestre` é
+     o mesmo objeto (portas-do-narrador.js#oAceitoPelaPorta). */
+  const modo = ctx.modoDoNarrador;
+  let ac = oAceitoPelaPorta(aceito || {}, modo);
+  const ac0 = ac;
   const recusadoDoCronista = Array.isArray(recusado) ? recusado : [];
   const r = proposta || {};
   const narrativa = ctx.narrativa;
@@ -235,6 +241,9 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   let tocouElenco = false;
   /* o que vai ao livro de factos (FACTOS_DO_CRONISTA), juntado secção a secção */
   const doLivro = { nomeados: [], falouCom: [], segredos: [] };
+  /* quem o SISTEMA pôs na gente e na conversa (a ficha do turno, abaixo):
+     com a porta `cronista.livro` fechada, só esses vão ao livro */
+  const doSistema = new Set();
   /* ---- SEÇÃO o que a cena regista (o Narrador ator, a 14.ª sessão) ----
      No modo em que o Cronista não lê, quem está na ficha e falou com o
      herói entra pelas MESMAS secções que o Cronista alimentava (`pessoas`
@@ -245,6 +254,7 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   try {
     if (!oCronistaChama(ctx.modoDoNarrador) && ctx.fichaDoAtor && typeof ctx.fichaDoAtor === "object") {
       const dc = oQueACenaRegista({ ficha: ctx.fichaDoAtor, aceite: ctx.aceite, estado: { ...ler(), personagem: p } });
+      for (const x of [...dc.pessoas.map((n) => n && n.nome), ...dc.falou_com]) if (typeof x === "string" && x.trim()) doSistema.add(x.trim().slice(0, 40).toLowerCase());
       if (dc.pessoas.length || dc.falou_com.length) ac = { ...ac, pessoas: [...(Array.isArray(ac.pessoas) ? ac.pessoas : []), ...dc.pessoas], falou_com: [...(Array.isArray(ac.falou_com) ? ac.falou_com : []), ...dc.falou_com] };
       if (dc.itens.length && p && typeof p === "object") {
         p = { ...p, inventario: [...(Array.isArray(p.inventario) ? p.inventario : []), ...dc.itens] };
@@ -264,7 +274,7 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
     if (typeof ac.lugar === "string" && ac.lugar.trim()) {
       const aviso = porta("registrarLugar", ac.lugar, "cronista");
       if (aviso) msgs.push(aviso);
-    } else if (typeof r.lugar === "string" && recusadoDoCronista.some((x) => x && x.secao === "lugar" && x.acao === "recusa")) {
+    } else if (portaAberta("cronista.lugar", modo) && typeof r.lugar === "string" && recusadoDoCronista.some((x) => x && x.secao === "lugar" && x.acao === "recusa")) {
       /* a recusa de sempre (o Cronista tirou o herói de onde ele está):
          a régua escreve a nota de correção e não move ninguém */
       porta("registrarLugar", r.lugar, "cronista");
@@ -437,6 +447,15 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
      usaram e deixavam cair, vão ao livro (oEfeitoDosFactos). Lê o estado
      de agora para o dia e o turno. */
   try {
+    /* a porta `cronista.livro` (NE1): fechada, o livro só ouve o sistema —
+       a gente e a conversa da ficha do turno, e o segredo do teste */
+    if (!portaAberta("cronista.livro", modo)) {
+      const k = (n) => String(n).trim().slice(0, 40).toLowerCase();
+      const doCronista = new Set([...(Array.isArray(ac0.pessoas) ? ac0.pessoas.map((n) => n && n.nome) : []), ...(Array.isArray(ac0.falou_com) ? ac0.falou_com : [])].filter((x) => typeof x === "string").map(k));
+      const doSist = (n) => !doCronista.has(k(n)) || doSistema.has(k(n));
+      doLivro.nomeados = doLivro.nomeados.filter(doSist);
+      doLivro.falouCom = doLivro.falouCom.filter(doSist);
+    }
     /* sem nada para o livro, nem se lê o estado: o turno corre como antes */
     const ef = Object.values(doLivro).some((xs) => xs.length) ? oEfeitoDosFactos(ler(), doLivro) : null;
     if (ef) fazer(ef);
@@ -475,6 +494,7 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
   } catch { /* seção quebrada não derruba as outras */ }
   /* ---- SEÇÃO cânone (isolada) ---- */
   let tocouCanone = false;
+  const recusadoDoCanone = [];
   try {
     if (ac.canone && typeof ac.canone === "object") {
       const E = ler();
@@ -487,6 +507,10 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
          pior para o segredo). */
       let canoneDoCronista = ac.canone;
       try { canoneDoCronista = peneirarCanone(ac.canone, { espinha: E.espinha, mundo: porta("mundoDaBase") }).canone; } catch (e) { calou("peneirarCanone (Cronista)", e); }
+      /* NE1 (13/11): só o objeto, a gente e o lugar que o sistema conhece
+         (cronista.js#oCanoneQueExiste — a «chave mestra» da 19.ª). FALHA
+         FECHADA: se a conta estourar, nada do Cronista entra no cânone. */
+      try { const ce = oCanoneQueExiste(canoneDoCronista, { ...E, personagem: p || E.personagem }); canoneDoCronista = ce.canone; recusadoDoCanone.push(...ce.recusado); } catch (e) { calou("o cânone que existe", e); canoneDoCronista = {}; }
       for (const [nome, ficha] of Object.entries(canoneDoCronista)) {
         if (!nome || !ficha || typeof ficha !== "object") continue;
         const chaveExistente = Object.keys(c).find((k) => k.toLowerCase() === String(nome).toLowerCase());
@@ -524,7 +548,9 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
        saía antes do juízo para todo nome que não fosse já do grupo.
        A régua mora em `frasesDoGrupoCheio` (src/motor/meio-do-turno.js),
        guardada por teste-grupo-cheio.mjs (3.ª fatia). */
-    msgs.push(...frasesDoGrupoCheio(recusadoDoCronista, p.grupo));
+    /* a frase do grupo cheio nasce da proposta do Cronista: com a porta do
+       grupo fechada (NE1), ninguém «tentou entrar» */
+    if (portaAberta("cronista.grupo", modo)) msgs.push(...frasesDoGrupoCheio(recusadoDoCronista, p.grupo));
     const entraram = (ac.grupo && Array.isArray(ac.grupo.entraram)) ? ac.grupo.entraram : [];
     if (entraram.length) {
       const grupoAtual = [...(p.grupo || [])];
@@ -570,5 +596,6 @@ export function oAceitoDoCronista(aceito, recusado, proposta, ctx) {
     }
   } catch { /* seção quebrada não derruba as outras */ }
   descarregar();
-  return { p, msgs, tocouCanone, tocouElenco };
+  /* `recusadoDoCanone` (NE1): o que o cânone não guardou e porquê — a medida da NE9; só existe quando houve */
+  return { p, msgs, tocouCanone, tocouElenco, ...(recusadoDoCanone.length ? { recusadoDoCanone } : {}) };
 }

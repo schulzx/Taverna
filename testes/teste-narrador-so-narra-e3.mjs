@@ -225,7 +225,11 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
       { narrativa: "Teodora Vaz enche as canecas e ri alto." }, { mundo: { semente: "x", genero: "Fantasia medieval" } }).estado.npcs;
     t("canone/npcs · os nomes que o Narrador inventava vêm dos NOMES À MÃO, registados pelo código", !!npcs["Teodora Vaz"] && /oferecidos: nomesOferecidosRef\.current/.test(app));
   }
-  t("canone · o Cronista não reescreve identidade (só preenche o vazio)", (() => { const efs = []; CT.oAceitoDoCronista({ canone: { "a coroa": { descricao: "de lata", detalhes: "com três pedras" }, "O Anel": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({ canone: canoneVisto, espinha: null, dia: 2 }), aplicar: (x) => efs.push(...x), mundoDaBase: () => null });
+  /* MOVIDA (13/11, NE1), com o motivo: o cânone só guarda o artefato que o
+     sistema conhece (motor/cronista.js#oCanoneQueExiste) — «O Anel» passa a
+     estar no inventário da Vera; a intenção fica: a identidade não se
+     reescreve, o vazio preenche-se, e o novo entra. */
+  t("canone · o Cronista não reescreve identidade (só preenche o vazio)", (() => { const efs = []; CT.oAceitoDoCronista({ canone: { "a coroa": { descricao: "de lata", detalhes: "com três pedras" }, "O Anel": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Vera", grupo: [], inventario: [{ nome: "O Anel" }] }, narrativa: "x", ler: () => ({ canone: canoneVisto, espinha: null, dia: 2 }), aplicar: (x) => efs.push(...x), mundoDaBase: () => null });
     const c = (efs.find((e) => e.tipo === "canone") || {}).canone || {}; return c["A Coroa"] && c["A Coroa"].descricao === "de ouro" && c["A Coroa"].detalhes === "com três pedras" && !!c["O Anel"] && !c["a coroa"]; })());
 }
 

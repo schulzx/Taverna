@@ -320,8 +320,11 @@ export function dublesDoCronista(k, { novo }) {
 }
 
 /* corre o bloco (de antes ou de hoje) sobre um caso, e fotografa */
-export async function correrOBloco(fazer, k, { novo } = {}) {
+export async function correrOBloco(fazer, k, { novo, embrulhar } = {}) {
   const { S, escopo, log } = dublesDoCronista(k, { novo });
+  /* 13/11 (NE1): quem corre pode embrulhar uma peça do escopo para a
+     espiar (o recusado do cânone que o oAceitoDoCronista devolve) */
+  if (typeof embrulhar === "function") embrulhar(S);
   /* o relógio aceito ganha id da reserva da casa (relogios.js): semeada por
      caso, a foto não depende de quantos casos correram antes neste processo */
   semearACasa("cronista|" + k.i);

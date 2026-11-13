@@ -23,7 +23,7 @@
        escreve. Quem delas importa entra no registo quando aparece (é o
        registo que diz que alguém existe), e daí em diante tem o id dele.
 
-     oQueACenaDaAoLivro(estado, { narrativa }) → { emCena, lugar, afeicoes }
+     oQueACenaDaAoLivro(estado, { narrativa, modoDoNarrador }) → { emCena, lugar, afeicoes }
        o fim da resposta: quem está à vista (montarEmCena, em-cena.js — a
        régua da tela — sobre o grupo e o registo daqui, e a prosa DESTE
        turno, a resposta crua do Narrador, que o App e a gravação têm
@@ -46,6 +46,7 @@ import { anotarTurno } from "../livro-de-factos.js";
 import { montarEmCena } from "../em-cena.js";
 import { elencoDaCena } from "../cena.js";
 import { chaveDoLugar } from "../mundo-base.js";
+import { portaAberta } from "./portas-do-narrador.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -87,7 +88,10 @@ export function oQueACenaDaAoLivro(estado, opcoes) {
   const grupo = arr(p.grupo).filter((g) => obj(g) && g.nome && !g.invocada);
   const cidade = typeof E.cidadeAtual === "string" ? E.cidadeAtual : "";
   const cena = elencoDaCena(obj(E.npcs) || {}, cidade, E.mapa, { comGrupo: grupo, masmorra: E.masmorra });
-  const narrativa = typeof o.narrativa === "string" ? o.narrativa : "";
+  /* a porta `livroVistoDaProsa` (NE2, 13/11): o «visto» que a prosa dá
+     satisfaz «conheceu» da quest — fechada no modo, só o grupo e o registo
+     da cena põem alguém à vista */
+  const narrativa = typeof o.narrativa === "string" && portaAberta("livroVistoDaProsa", o.modoDoNarrador) ? o.narrativa : "";
   const emCena = montarEmCena({
     cidade, grupo, presentes: cena.aqui || [], longe: cena.longe || [],
     mostrado: narrativa.trim() ? [narrativa] : [],

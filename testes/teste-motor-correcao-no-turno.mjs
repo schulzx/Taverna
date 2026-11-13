@@ -102,10 +102,17 @@ sec("3. O CÂNONE DO MESMO TURNO NÃO CONSAGRA A INVENÇÃO");
   const ac = (juizo && juizo.aceito) || {};
   t("o juízo do Cronista aceita os dois nomes no cânone (é o que entrava antes)", ac.canone && "Fiandeira" in ac.canone && "Ponte das Cinzas" in ac.canone, Js(ac));
   const cj = canoneSemInvencao(ac, juiz.veredito, { entrada: juiz.entrada, estado: { ...FOTO, canone: {} } });
-  const jogo = jogarOAceito(cj.aceito, { estado: { npcs: {}, canone: {} } });
+  /* MOVIDA (13/11, NE1), com o motivo: o cânone só guarda o lugar e a gente
+     que o sistema conhece (motor/cronista.js#oCanoneQueExiste), e a Ponte das
+     Cinzas não estava em lado nenhum — sem a correção do Juiz ela já não
+     entrava, e a mordida abaixo perdia o dente. O herói passa a estar NA
+     ponte (o lugar de agora), nos dois jogos; a intenção fica: quem a tira do
+     cânone neste turno é a correção do Juiz. */
+  const ESTADO = { npcs: {}, canone: {}, lugar: { nome: "Ponte das Cinzas" } };
+  const jogo = jogarOAceito(cj.aceito, { estado: ESTADO });
   t("aplicado o aceito corrigido, nenhum dos dois chega ao cânone", !("Fiandeira" in jogo.estado.canone) && !("Ponte das Cinzas" in jogo.estado.canone), Js(jogo.estado.canone));
   t("e a gente que a cena pôs a agir fica no registo", "Fiandeira" in jogo.estado.npcs, Js(Object.keys(jogo.estado.npcs)));
-  const antes = jogarOAceito(ac, { estado: { npcs: {}, canone: {} } });
+  const antes = jogarOAceito(ac, { estado: ESTADO });
   t("MORDE: sem a correção, os dois entram como verdade imutável", "Fiandeira" in antes.estado.canone && "Ponte das Cinzas" in antes.estado.canone, Js(antes.estado.canone));
   const vespera = julgar([], LIMPA, 3).juiz;
   t("MORDE: o veredito de OUTRO turno (a resposta limpa da véspera) não tira nada — tem de ser o do mesmo", canoneSemInvencao(ac, vespera.veredito, { entrada: vespera.entrada, estado: FOTO }).tirados.length === 0);

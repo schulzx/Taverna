@@ -281,6 +281,17 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
   const todos = [...R10.turnos, ...R8.turnos, ...R9.turnos];
   t("todo turno que diverge diz porquê, e o porquê aponta a parte do turno que é do App", todos.filter((x) => !x.igual).every((x) => x.porque.length && x.porque.every((p) => /\bApp\b/.test(p))));
   t("o juízo do Cronista sai igual em todos os 194 turnos", todos.every((x) => x.cronista && x.cronista.igual));
+  /* A REGRA NOVA (13/11, NE1): o cânone que o Cronista daquele jogo leu na
+     prosa — a gente, o lugar, o «artefato» que o sistema nunca deu — o motor
+     de hoje recusa. Não é defeito nem dívida: sai da comparação com o nome
+     (`regra`), e conta-se aqui. A medida de 13/11: 27 entradas em 18 turnos
+     (s8: 12 em 6, s9: 6 em 5, s10: 9 em 7), todas de `canone`, todas
+     recusadas pelo próprio motor nesse turno. A catraca: não desce de 20
+     (um motor que deixasse a invenção passar outra vez cairia aqui). */
+  const daRegra = [R10, R8, R9].flatMap((r) => r.regra.flatMap((x) => x.regra.map((g) => ({ n: x.n, ...g }))));
+  t(`NE1: a regra nova explica ${daRegra.length} entradas do cânone gravado (s8 ${R8.regra.length}, s9 ${R9.regra.length}, s10 ${R10.regra.length} turnos), todas de canone, e nenhum turno com ela é defeito`,
+    daRegra.length >= 20 && daRegra.every((g) => g.campo === "canone" && /NE1/.test(g.regra)) && [R10, R8, R9].every((r) => r.regra.every((x) => !r.defeitos.includes(x.n))), J(daRegra.slice(0, 4)));
+  t("…e o «artefato» inventado da 8.ª (o frasco de antídoto, T68) é um deles", daRegra.some((g) => g.nome === "frasco de antídoto"));
   t("e o Juiz, julgando outra vez a mesma prosa sobre a entrada gravada, dá o mesmo veredito nos 194", todos.every((x) => x.juiz && x.juiz.igual));
   t("nenhum passo do replay estourou", todos.every((x) => !x.calou.length), J(todos.filter((x) => x.calou.length).slice(0, 2)));
   /* encadeado: a corrida inteira a partir do save inicial */
@@ -576,7 +587,12 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   const narr = "O taberneiro baixa a voz: \"Dizem que o Berço de Ossos ainda pulsa sob a colina.\" Ao balcão, Varek Duro limpa a lâmina e o Homem da carroça espera o troco. A praça de Monte Rasa murmura o nome de Íris como prece.";
   const Lc = { n: 1, entrada: { frase: "Pergunto pelo Berço." }, sorte: { ponto: "4|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: narr, mudancas: {} },
     cronista: { proposta: {
-      canone: { "Berço de Ossos": { tipo: "artefato", descricao: "o disco que pulsa" } },
+      /* MOVIDA (13/11, NE1), com o motivo: era `tipo: "artefato"`, e o
+         cânone já não guarda o objeto que o sistema não conhece (o Berço só
+         existe na fala do taberneiro). A intenção desta linha é a marca do
+         que só foi dito e o dia em que entrou — vale para o segredo, que é o
+         que um boato é; o artefato inventado tem a sua asserção logo abaixo. */
+      canone: { "Berço de Ossos": { tipo: "segredo", descricao: "o disco que pulsa" }, "Disco de Ossos": { tipo: "artefato", descricao: "o disco que pulsa" } },
       pessoas: [{ nome: "Varek Duro", papel: "mercenário", genero: "ele" }, { nome: "Homem da carroça", papel: "carroceiro", genero: "ele" }],
       fe: { fieis: 10, pf: 1, motivo: "a praça reza" },
       promessas: [{ tipo: "frase", texto: "o Berço ainda pulsa sob a colina", quem: "o taberneiro" }],
@@ -584,6 +600,7 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   const rc = correrOTurno(Ec, Lc, { semente: "teste|cronista" });
   const Ef = rc.estado;
   t("o cânone guarda a marca do que só foi dito, e o dia em que entrou (registradoDia: a peça)", !!(Ef.canone["Berço de Ossos"] && Ef.canone["Berço de Ossos"].dito) && Ef.canone["Berço de Ossos"].registradoDia === 4, J(Ef.canone));
+  t("NE1: o artefato que o sistema não deu não entra no cânone do replay, e o turno diz porquê (recusadoDoCanone)", !("Disco de Ossos" in Ef.canone) && rc.recusadoDoCanone.some((x) => x.o === "Disco de Ossos" && x.porque === "objeto"), J([Object.keys(Ef.canone), rc.recusadoDoCanone]));
   t("a gente entra pela ficha do jogo: o gênero do registo («ele» → «homem») e o turno em que se viu", !!Ef.npcs["Varek Duro"] && Ef.npcs["Varek Duro"].genero === "homem" && Number.isInteger(Ef.npcs["Varek Duro"].ultimaVez), J(Ef.npcs["Varek Duro"]));
   t("e o descritor não vira nome (nomeComDono, como no jogo; a miniatura registava-o)", !Ef.npcs["Homem da carroça"], J(Object.keys(Ef.npcs)));
   t("a promessa dita entra no Livro (guardarSementes: a miniatura não tinha o Livro)", ehLista(Ef.prometido && Ef.prometido.sementes) && Ef.prometido.sementes.some((x) => /Berço/.test(x.texto)), J(Ef.prometido));
@@ -627,7 +644,11 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   const PROSA = "O boticário ergue o frasco. Atrás dele, uma velha a quem chamam Fiandeira tece junto à Ponte das Cinzas, e não levanta os olhos.";
   const Ej = estadoDoSave({ personagem: FOTO.personagem, npcs: {}, canone: {}, mapa: FOTO.mapa, cidadeAtual: FOTO.cidadeAtual, lugar: null, dia: 2 });
   const Lj = { n: 1, entrada: { frase: "Olho em volta." }, sorte: { ponto: "2|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: PROSA, mudancas: {} },
-    cronista: { proposta: { canone: { Fiandeira: { tipo: "pessoa", descricao: "a velha que tece" }, "Coroa de Sal": { tipo: "artefato", descricao: "a coroa do rei" } } } },
+    /* MOVIDA (13/11, NE1), com o motivo: o cânone já não guarda a pessoa
+       que o sistema não conhece, e a Fiandeira só estava no cânone. Ela entra
+       agora também pela secção da gente (o registo passa a conhecê-la), e a
+       intenção fica: quem a tira do cânone, neste turno, é o Juiz. */
+    cronista: { proposta: { pessoas: [{ nome: "Fiandeira", papel: "tecelã", genero: "ela" }], canone: { Fiandeira: { tipo: "pessoa", descricao: "a velha que tece" }, "Coroa de Sal": { tipo: "artefato", descricao: "a coroa do rei" } } } },
     juiz: { entrada: entradaDoJuiz(FOTO, { frase: "Olho em volta.", pauta: "" }), resumo: { turno: 1, dia: 2 } } };
   const rj = correrOTurno(Ej, Lj, { semente: "teste|juiz" });
   t("o nome que o Juiz deu por inventado neste turno não entra no cânone do replay (como no App)", !("Fiandeira" in rj.estado.canone) && rj.tirados.some((x) => x.nome === "Fiandeira"), J([Object.keys(rj.estado.canone), rj.tirados]));

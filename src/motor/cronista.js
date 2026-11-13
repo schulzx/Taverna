@@ -184,6 +184,151 @@ export const O_QUE_O_CRONISTA_PODE = Object.freeze({
   teste_sugerido: { quem: "depois", porque: "a dificuldade é calculada pelo perfil e pelo modificador do herói", onde: "bestiario.js:dificuldadePorPerfil" },
 });
 
+/* ---------------- O CÂNONE SÓ GUARDA O QUE EXISTE (NE1, 13/11) ----------------
+   A 19.ª sessão, T16: um teste de Prestidigitação passou, o envelope era
+   o antigo «revele UMA coisa concreta», e o Narrador deu ao herói «a chave
+   mestra de ferro forjado» — que o sistema não deu. No turno seguinte o
+   Cronista leu a prosa e a chave entrou no CÂNONE como artefato, e daí
+   voltou ao Narrador como verdade imutável. O juízo conferia o lugar, a
+   morte, o grupo, a fé e o preço; o cânone passava como fato durável.
+
+   Agora uma entrada do cânone que é um OBJETO, uma PESSOA ou um LUGAR só
+   entra se o sistema já a conhece — e isto vale no modo `mestre` também,
+   antes de qualquer modo novo. As fontes:
+   · objeto — o inventário e o equipamento do herói e do grupo, o que o
+     livro de factos diz que alguém recebeu, e o enredo (a espinha, as
+     quests do fio com os papéis já resolvidos, as missões);
+   · pessoa — o registo, o grupo, o herói, as pessoas do livro de factos,
+     o núcleo do coração e o enredo;
+   · lugar — as cidades do mapa, a cidade e o lugar de agora (e o que a
+     secção `lugar` deste mesmo turno aceitou), a masmorra, os lugares do
+     livro de factos e o enredo.
+   E em todas: o que JÁ está no cânone (a mescla de sempre, só preenche o
+   vazio). Tipo que não é nenhum dos três (promessa, segredo,
+   organização…) segue como seguia.
+
+   O NOME CASA assim: sem acento, sem artigo à frente, igual — ou um dentro
+   do outro como palavras inteiras, com o menor de `palavras` palavras ou
+   mais («o diário de Margarida» dentro de «diário de Margarida Vaz»). Uma
+   palavra só não abre a porta: «chave» no inventário não deixa entrar «a
+   chave mestra». A gente casa também pelo primeiro nome, com `letras`
+   letras ou mais (o registo diz «Tobias», o Cronista «Tobias Ferro»).
+
+   `enredo`: as chaves por onde a espinha, as quests e as missões guardam
+   nomes, e até que fundo se desce (`fundo`). O que não casa sai em
+   `recusado` (`secao: "canone"`), com o porquê da `recusa` — é a medida
+   da NE9 (objetos inventados no cânone = 0).
+
+   POR QUE NÃO DENTRO DE `julgarOCronista`: a linha da sessão grava o juízo
+   CRU, e o replay compara-o com o de hoje (teste-sessao); a régua nova
+   mudaria o juízo de toda sessão gravada. Corre por isso DEPOIS do juízo,
+   como a correção do Juiz (canoneSemInvencao): na secção do cânone de
+   `oAceitoDoCronista`, sobre o estado de agora (o lugar que a secção
+   `lugar` acabou de registar já é o lugar de agora).
+
+     oCanoneQueExiste(canone, estado, { lugarDoTurno }) → { canone, recusado } */
+export const O_CANONE_CONHECIDO = Object.freeze({
+  porque: "o Cronista lê a prosa de outra IA, e a prosa inventa: um objeto, uma pessoa ou um lugar só entram no cânone se o sistema já os tem",
+  objeto: /^(artefat|objet|item|arma|armadur|reliqu|ferrament|chave|joia|amulet|anel|livro|pergaminh|carta|document|mapa|tesour|equipament|poca|elmo|escud|cajad|espada|adaga|coroa|selo|medalh|frasc|bau|caixa|fragment)/,
+  gente: /^(pessoa|npc|personagem|gente|aliad|rival|inimig)/,
+  lugar: /^(lugar|local|cidade|vila|aldeia|povoad|vilarej|capital|fortalez|reduto|ruina|regia|edifici|templo|masmorra|caverna|gruta|torre|castelo|porto|ponte|santuari|taverna|estalagem|floresta|monte|montanha|lago|rio)/,
+  artigo: /^(o|a|os|as|um|uma|uns|umas)\s+/,
+  palavras: 2,
+  letras: 4,
+  enredo: Object.freeze(["nome", "item", "itens", "objeto", "coisa", "alvo", "onde", "titulo", "nomes", "dador"]),
+  fundo: 8,
+  recusa: Object.freeze({
+    objeto: "objeto que o sistema não deu: nem no inventário, nem no livro, nem no enredo",
+    gente: "pessoa que o sistema não conhece: nem no registo, nem no grupo, nem no enredo",
+    lugar: "lugar que o sistema não conhece: nem no mapa, nem onde o herói está, nem no enredo",
+  }),
+});
+
+const semArtigoC = (x) => norm(x).replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim().replace(O_CANONE_CONHECIDO.artigo, "");
+/* os nomes de uma árvore (a espinha, as quests, as missões), pelas chaves do enredo */
+function nomesDoEnredo(x, out, fundo) {
+  if (fundo <= 0 || x == null) return out;
+  if (Array.isArray(x)) { for (const y of x) nomesDoEnredo(y, out, fundo - 1); return out; }
+  if (typeof x !== "object") return out;
+  for (const [k, v] of Object.entries(x)) {
+    if (O_CANONE_CONHECIDO.enredo.includes(k)) {
+      for (const n of (Array.isArray(v) ? v : [v])) if (typeof n === "string" && n.trim()) out.push(n);
+    }
+    if (v && typeof v === "object") nomesDoEnredo(v, out, fundo - 1);
+  }
+  return out;
+}
+const nomesDe = (xs) => lista(xs).map((i) => (typeof i === "string" ? i : obj(i).nome)).filter((n) => typeof n === "string" && n.trim());
+const equipDe = (eq) => (Array.isArray(eq) ? nomesDe(eq) : nomesDe(Object.values(obj(eq))));
+/* o que o sistema conhece, em três listas (os nomes sem artigo) */
+function oQueOSistemaConhece(E, lugarDoTurno) {
+  const p = obj(E.personagem);
+  const grupo = lista(p.grupo).filter((g) => g && typeof g === "object");
+  const factos = obj(E.factos);
+  const pessoasF = Object.values(obj(factos.pessoas)).map(obj);
+  const lugaresF = Object.values(obj(factos.lugares)).map(obj);
+  const enredo = [
+    ...nomesDoEnredo(E.espinha, [], O_CANONE_CONHECIDO.fundo),
+    ...nomesDoEnredo(E.missoes, [], O_CANONE_CONHECIDO.fundo),
+    ...nomesDoEnredo(E.quests, [], O_CANONE_CONHECIDO.fundo),
+  ];
+  const objetos = [
+    ...nomesDe(p.inventario), ...equipDe(p.equipamento),
+    ...grupo.flatMap((g) => [...nomesDe(g.inventario), ...nomesDe(g.itens), ...equipDe(g.equipamento)]),
+    ...pessoasF.flatMap((f) => nomesDe(f.recebeu)),
+  ];
+  const gente = [
+    ...Object.keys(obj(E.npcs)), ...Object.values(obj(E.npcs)).map((n) => obj(n).nome),
+    p.nome, ...grupo.map((g) => g.nome), ...pessoasF.map((f) => f.nome),
+    ...lista(obj(E.nucleo).pessoas).map((n) => obj(n).nome),
+  ];
+  const lugares = [
+    ...lista(obj(E.mapa).cidades).map((c) => obj(c).nome), E.cidadeAtual, obj(E.lugar).nome, lugarDoTurno,
+    obj(E.masmorra).nome, ...lugaresF.map((f) => f.nome),
+  ];
+  const limpos = (xs) => [...new Set([...xs, ...enredo, ...Object.keys(obj(E.canone))].filter((n) => typeof n === "string" && n.trim()).map(semArtigoC).filter(Boolean))];
+  return { objeto: limpos(objetos), gente: limpos(gente), lugar: limpos(lugares) };
+}
+function casaONome(nome, conhecidos, deGente) {
+  const T = O_CANONE_CONHECIDO;
+  const n = semArtigoC(nome);
+  if (!n) return false;
+  const pal = (x) => x.split(" ").filter(Boolean);
+  const dentro = (menor, maior) => pal(menor).length >= T.palavras && (" " + maior + " ").includes(" " + menor + " ");
+  return conhecidos.some((k) => k === n || dentro(k, n) || dentro(n, k)
+    || (deGente && pal(n)[0] && pal(n)[0].length >= T.letras && pal(n)[0] === pal(k)[0]));
+}
+/* a família do tipo do cânone: "objeto", "gente", "lugar" ou null */
+function familiaDoTipo(tipo) {
+  const T = O_CANONE_CONHECIDO;
+  const t0 = semArtigoC(tipo).split(" ")[0] || "";
+  if (!t0) return null;
+  if (T.objeto.test(t0)) return "objeto";
+  if (T.gente.test(t0)) return "gente";
+  if (T.lugar.test(t0)) return "lugar";
+  return null;
+}
+export function oCanoneQueExiste(canone, estado, opcoes) {
+  const E = obj(estado);
+  const lugarDoTurno = obj(opcoes).lugarDoTurno;
+  const R = [];
+  let conhecidos = null;
+  const out = {};
+  for (const [nome, ficha] of Object.entries(obj(canone))) {
+    const fam = familiaDoTipo(obj(ficha).tipo);
+    if (fam) {
+      conhecidos = conhecidos || oQueOSistemaConhece(E, lugarDoTurno);
+      /* o objeto casa com tudo o que o sistema conhece: o Cronista rotula de
+         «artefato» a gente e o lugar (as sessões gravadas), e o rótulo errado
+         não é invenção — a invenção é o nome que o sistema não tem */
+      const daFamilia = fam === "objeto" ? [...conhecidos.objeto, ...conhecidos.gente, ...conhecidos.lugar] : conhecidos[fam];
+      if (!casaONome(nome, daFamilia, fam === "gente")) { R.push({ secao: "canone", o: nome, porque: fam, tipo: String(obj(ficha).tipo || "").slice(0, 40) }); continue; }
+    }
+    out[nome] = ficha;
+  }
+  return { canone: out, recusado: R };
+}
+
 /* ---------------- A TABELA DA FÉ ----------------
    A mesma do App (`TABELA_FE`, v7.5), trazida para o motor para a conta
    se provar em Node; mais a linha `gesto`, que substitui os "fieis 10 a
