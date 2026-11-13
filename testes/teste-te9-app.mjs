@@ -66,7 +66,11 @@ console.log("\n2. o feito do turno: do aplicar ao fim do turno, e só lá");
   const iP = app.indexOf("    pers = saida.estado.personagem;\n");
   t("o feito guarda-se logo a seguir ao aplicar", iA > 0 && iF > iA);
   t("com o nível de ANTES (pers ainda é a ficha da entrada)", iF > 0 && iF < iP);
-  t("o feito sai de saida.podado.mudancas.feito", app.includes("const feito = saida && saida.podado && saida.podado.mudancas ? saida.podado.mudancas.feito : null;"));
+  /* Movida a 13/11 (o feito é do sistema): o feito que a quest abate passa a ser
+     o que o aplicar PAGOU (`saida.feitoDoTurno`, do sistema ou o maior dos dois
+     em mestre); o `mudancas.feito` da IA fica só como reserva, para o turno sem
+     doSistema. A intenção é a mesma: a quest desconta o feito deste turno. */
+  t("o feito sai do que o aplicar pagou, e o da IA é reserva", app.includes("const feito = saida && saida.feitoDoTurno ? saida.feitoDoTurno.grau : (saida && saida.podado && saida.podado.mudancas ? saida.podado.mudancas.feito : null);"));
   t("o ref do feito não vai ao save", !/salvar\([^)]*feitoDoTurno/.test(app) && conta("feitoDoTurnoRef") >= 3);
   t("tomar o feito limpa o ref", corpo("tomarOFeitoDoTurno").includes("const f = feitoDoTurnoRef.current; feitoDoTurnoRef.current = null; return f || null;"));
   t("correrAsQuests passa o feito ao motor", corpo("correrAsQuests").includes("oTurnoDasQuests(estadoDasQuests(), { mundo: mundoDoLivro(), feitoDoTurno })"));

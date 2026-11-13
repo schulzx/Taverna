@@ -10364,13 +10364,14 @@ export default function Taverna() {
     }, resp, {
       envelopes: op.envelopes || "", pedido: op.pedido, moeda: op.moeda, sorte: sorteDoTurno("salvaguarda"),
       mundo: mundoDaBase, baseDoNome, motorDoArco, sorteDoTurno, modoDoNarrador: MODO_DA_MESA,
+      doSistema: { teste: testeDoTurnoRef.current, factos: factosRef.current }, /* o feito é do sistema (13/11) */
     });
     aplicarOsEfeitos(saida);
     /* TE9: o feito que este aplicar pagou, com o nível de ANTES dele (pers
        ainda é a ficha da entrada) — para a paga da quest que fechar neste
        turno o descontar. Não vai ao save: vive até ao fim do turno. */
     try {
-      const feito = saida && saida.podado && saida.podado.mudancas ? saida.podado.mudancas.feito : null;
+      const feito = saida && saida.feitoDoTurno ? saida.feitoDoTurno.grau : (saida && saida.podado && saida.podado.mudancas ? saida.podado.mudancas.feito : null);
       feitoDoTurnoRef.current = feito != null ? { grau: feito, nivel: (pers && pers.nivel) || null } : null;
     } catch (e) { calou("TE9 · guardar o feito do turno", e); }
     if (saida.semFicha) return null;
@@ -17585,6 +17586,8 @@ export default function Taverna() {
          busca vazia só é vazia quando nenhuma fonte tem nada (`!facto`). */
       const facto = passou && des ? factoDoSucessoAgora(des, r.frase || r.motivo || "") : null;
       escreverODescobriu((facto && facto.achado) || (passou && r.achado && r.achado.especie === "passo" ? r.achado : null));
+      /* O feito é do sistema (13/11): o teste do turno leva o desafio, quem e o facto que deu — a chave que impede o mesmo achado de pagar duas vezes. */
+      try { if (testeDoTurnoRef.current) testeDoTurnoRef.current = { ...testeDoTurnoRef.current, desafio: (des && des.id) || "", facto: facto || null, quem: (des && des.quem) || "" }; } catch (e) { calou("o feito do sistema · o teste", e); }
       let env = (passou && des && des.fechaDepois && !r.achado && !facto)
         ? envelopeDeBuscaVazia(des.rotulo)
         : envelopeDoTeste({
@@ -18411,7 +18414,7 @@ export default function Taverna() {
           { autor: "sistema", texto: falaDaConcessao(conc) },
         ]);
         ultimoDesfechoRef.current = "sucesso";
-        try { testeDoTurnoRef.current = { pericia: (v && v.pericia) || "", sucesso: true }; } catch (e) { calou("o teste concedido", e); }
+        try { testeDoTurnoRef.current = { pericia: (v && v.pericia) || "", sucesso: true, desafio: (v && v.id) || "" }; } catch (e) { calou("o teste concedido", e); }
         fecharTentativa(v, true);
         cobrarTempoDoDesafio(v);
         enviar(envelopeDaConcessao(conc), fichaViva() || personagem);
