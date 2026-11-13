@@ -795,7 +795,8 @@ export const PASSOS_DO_REPLAY = Object.freeze([
       if (r && nota) nota.tela = { narrativa: String(obj(r.podado).narrativa || ""), linhas: arr(r.msgs).map((x) => (typeof x === "string" ? x : String(obj(x).texto || ""))) };
       /* TE9: o `feito` que este aplicar pagou (o da resposta podada) e o nível
          de antes dele — a paga da quest que fechar no fim do turno desconta-o */
-      if (r && nota) { const fe = obj(obj(r.podado).mudancas).feito; if (typeof fe === "string" && fe) nota.feitoDoTurno = { grau: fe, nivel: obj(E.personagem).nivel }; }
+      /* 13/11: com o feito do sistema (ctx.doSistema), o aplicar diz o grau que pagou */
+      if (r && nota) { const fs0 = ehObj(r.feitoDoTurno) ? r.feitoDoTurno : null; const fe = fs0 ? fs0.grau : obj(obj(r.podado).mudancas).feito; if (typeof fe === "string" && fe) nota.feitoDoTurno = { grau: fe, nivel: fs0 && fs0.nivel ? fs0.nivel : obj(E.personagem).nivel }; }
       let E1 = r && r.estado ? r.estado : E;
       /* no servidor, o que o aplicar deixa ao Narrador (`paraOCronista`)
          vai à nota, como o App a escreve (`notaComOTurno`); no replay é

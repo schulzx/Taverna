@@ -61,6 +61,8 @@ import { aindaSoUmNome } from "../abertura.js";
 import { dadivasConcedidas, aplicarOMapa, aplicarAsMissoes, aplicarOsSinais } from "./meio-do-turno.js";
 import { aRespostaPelaPorta, portaAberta } from "./portas-do-narrador.js";
 import { oFeitoJaPago } from "./quests-do-turno.js";
+import { osFactosDoTurno, oFeitoDoTurno, lembrarOsFeitos } from "../feito-do-sistema.js";
+import { GRAUS, grauValido, xpDoFeito, falaDoFeito } from "../juiz.js";
 
 /* a nota do turno cresce como sempre cresceu no App: uma linha por vez,
    separadas por quebra, sem quebra na frente da primeira */
@@ -360,6 +362,44 @@ export function aplicar(estado, resposta, ctx = {}) {
       Object.entries(pers.habRecarga).forEach(([k, t]) => { const nt = (Number(t) || 0) - 1; if (nt > 0) rec[k] = nt; });
       pers = { ...pers, habRecarga: rec };
     }
+    /* ---------------- O FEITO É DO SISTEMA (13/11, depois da NE) ----------------
+       A porta `feito` fechou com a NE, e com ela o XP de tudo o que não é
+       luta. Agora o grau sai de factos que o sistema escreveu (o teste que
+       passou, o livro de factos, os marcos — src/feito-do-sistema.js): um
+       grau por turno, o maior; o mesmo facto não paga duas vezes; as
+       miudezas têm teto por dia. A memória vai na ficha
+       (`memoriaDosFeitos`), campo novo que a versão antiga ignora.
+
+       SÓ COM `ctx.doSistema` ({ teste, factos }: o teste do turno e o livro
+       de factos, que o estado do turno não leva). Sem ele — o replay das
+       sessões gravadas, as suítes de antes — nada muda, byte a byte.
+
+       NUNCA EM DOBRO COM O DO NARRADOR: no modo `mestre` a porta está
+       aberta e o `feito` dele ainda chega. O turno paga UM grau, o maior
+       dos dois — o do sistema entra NO LUGAR do campo (a resposta podada
+       diz o grau que pagou), ou paga sozinho quando não há `mudancas`. E
+       no turno a seguir ao fecho de uma quest (oFeitoJaPago, acima) não
+       paga nada: a paga da quest foi o feito.
+
+       `feitoDoTurno` sai no resultado ({ grau, nivel, fonte? }): o grau que
+       este aplicar pagou e o nível de antes dele — o App passa-o às quests,
+       que o abatem da paga do fecho (TE9). */
+    let feitoDoTurno = null, pagarSozinho = null;
+    const doSistema = op.doSistema && typeof op.doSistema === "object" ? op.doSistema : null;
+    if (doSistema) {
+      try {
+        const factosDoSistema = osFactosDoTurno({ teste: doSistema.teste, factos: doSistema.factos, espinha: e0.espinha, lugar: e0.lugar, cidade: e0.cidadeAtual });
+        const dia = Number.isFinite(e0.dia) ? e0.dia : null;
+        const doSis = oFeitoJaPago(e0.espinha) ? null : oFeitoDoTurno(factosDoSistema, pers.memoriaDosFeitos, { dia });
+        const doNarrador = resp.mudancas && grauValido(resp.mudancas.feito) ? String(resp.mudancas.feito) : null;
+        const ganhaOSistema = !!doSis && (!doNarrador || GRAUS[doSis.grau].fracao >= GRAUS[doNarrador].fracao);
+        if (ganhaOSistema && resp.mudancas) resp = { ...resp, mudancas: { ...resp.mudancas, feito: doSis.grau } };
+        else if (ganhaOSistema) pagarSozinho = doSis;
+        const grau = ganhaOSistema ? doSis.grau : doNarrador;
+        if (grau) feitoDoTurno = { grau, nivel: pers.nivel || 1, ...(ganhaOSistema ? { fonte: doSis.fonte } : {}) };
+        pers = { ...pers, memoriaDosFeitos: lembrarOsFeitos(pers.memoriaDosFeitos, factosDoSistema, ganhaOSistema ? doSis : null, { dia }) };
+      } catch (e) { calou("o feito do sistema", e); }
+    }
     if (resp.mudancas) {
       /* v9.154: as recusas do Juiz viajam para o Narrador. Sem isto ele
          narra o poder que o sistema acabou de negar, e o jogador ve as
@@ -367,6 +407,18 @@ export function aplicar(estado, resposta, ctx = {}) {
       const notasDoJuiz = [];
       pers = aplicarMudancas(pers, resp.mudancas, msgs, notasDoJuiz);
       for (const nt of notasDoJuiz) notas.push(nt);
+    }
+    /* o feito do sistema sem `mudancas` (o modo `boca`, o padrão): o mesmo
+       caminho do XP (aplicarMudancas: a curva, o nível, os companheiros), e
+       a linha diz o porquê em voz de mundo, no lugar do tamanho genérico */
+    if (pagarSozinho) {
+      try {
+        const antes = msgs.length;
+        pers = aplicarMudancas(pers, { feito: pagarSozinho.grau }, msgs, []);
+        const generica = falaDoFeito(pagarSozinho.grau, xpDoFeito(pagarSozinho.grau, feitoDoTurno.nivel));
+        const i = msgs.indexOf(generica, antes);
+        if (i >= 0) msgs[i] = generica.replace(GRAUS[pagarSozinho.grau].diz, pagarSozinho.porque);
+      } catch (e) { calou("o feito do sistema (a paga)", e); feitoDoTurno = null; }
     }
     /* ---------------- A COBRANÇA (v9.70) ----------------
        "Se ela disse 'você acha 100 moedas e uma poção de vida', então o
@@ -434,6 +486,7 @@ export function aplicar(estado, resposta, ctx = {}) {
     return {
       estado: { ...e0, personagem: pers, combate, danoJaAplicado: travas.danoJaAplicado, habUsada: travas.habUsada },
       efeitos: efeitosDoTurno, paraOCronista: notas, podado: resp, msgs,
+      ...(doSistema ? { feitoDoTurno } : {}),
     };
 }
 
@@ -609,7 +662,8 @@ export function aplicarORegisto(estado, resposta, ctx = {}) {
 /* ============================================================
    O TURNO NUMA ORDEM SÓ (T1-A, 3.ª fatia, 28/10)
 
-     aplicarOTurno(estado, resposta, ctx) → { estado, efeitos, paraOCronista, podado, msgs }
+     aplicarOTurno(estado, resposta, ctx) → { estado, efeitos, paraOCronista, podado, msgs, feitoDoTurno? }
+     (`feitoDoTurno` só com `ctx.doSistema` — ver O FEITO É DO SISTEMA, no `aplicar`)
 
    As peças do motor, na ORDEM que o `aplicarResposta` tinha: o `aplicar`
    (a porta da luta, as travas, o relógio, a segunda chance, as recargas, as
@@ -656,5 +710,5 @@ export function aplicarOTurno(estado, resposta, ctx = {}) {
       efeitos.push(...r.efeitos); notas.push(...r.paraOCronista); msgs.push(...r.msgs);
     } catch (e) { efeitos.push({ tipo: "calou", onde, erro: e }); }
   }
-  return { estado: st, efeitos, paraOCronista: notas, podado: resp, msgs };
+  return { estado: st, efeitos, paraOCronista: notas, podado: resp, msgs, ...("feitoDoTurno" in a ? { feitoDoTurno: a.feitoDoTurno } : {}) };
 }
