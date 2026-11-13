@@ -24,6 +24,7 @@ import * as danos from "../src/danos.js";
 import * as motorCombate from "../src/motor/combate-do-turno.js";
 import * as motorAplicar from "../src/motor/aplicar.js";
 import * as motorFecho from "../src/motor/fecho-da-resposta.js";
+import { oModoDoNarrador } from "../src/motor/portas-do-narrador.js";
 import * as mestria from "../src/mestria.js";
 
 const NOMES = {
@@ -182,6 +183,9 @@ export function dublesDoFecho(k, { novo, sorte, extras }) {
   const log = { tela: [], fichas: [], abertos: [], disparados: [], conquistas: [], calados: [] };
   const S = {
     ...osModulos({ novo }),
+    /* NE3 (13/11): o App passa o modo do Narrador à peça (MODO_DA_MESA, o
+       padrão da tabela fora do Vite); o recorte lê-o do escopo, como lá. */
+    MODO_DA_MESA: oModoDoNarrador(),
     combateRef: ref(copia(k.combate)), folegoRef: ref(copia(k.folego)), notaRef: ref(k.notaAntes), texturaRef: ref(copia(k.texturaAntes)),
     mesaRef: ref(copia(k.mesaAntes)), lugarRef: ref(copia(k.lugar)), cidadeAtualRef: ref("Vila do Sul"), diaRef: ref(k.dia), contRef: ref(copia(k.contAntes)),
     pushMsgs: (xs) => log.tela.push(copia(xs)), setPersonagem: (p) => log.fichas.push(copia(p)), calou: (onde, e) => log.calados.push([onde, String(e && e.message)]),

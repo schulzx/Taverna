@@ -33,8 +33,10 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
           {podeDespertar && (
             <div className="mt-3 space-y-2">
               <button onClick={onDespertar} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.amber, color: "#1A1206" }}><Glifo nome="ascensao" tamanho={16} /> Despertar agora</button>
-              <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>{recalibrando ? "Lendo sua lenda…" : "Recalibrar"}</button>
-              <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>Já é divindade na história? A recalibração lê o livro da aventura e o cânone e ajusta GD, fiéis, domínio e panteão pelo que de fato aconteceu — nada é inventado.</div>
+              {/* NE3 (13/11): o Recalibrar só aparece se o App o entregar — e hoje
+                  não entrega (O_ARQUIVISTA_NA_TELA): nenhuma IA escreve a ficha divina. */}
+              {onRecalibrar && <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-xs uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>{recalibrando ? "Lendo sua lenda…" : "Recalibrar"}</button>}
+              {onRecalibrar && <div className="tv-body text-[11px]" style={{ color: T.inkDim }}>Já é divindade na história? A recalibração lê o livro da aventura e o cânone e ajusta GD, fiéis, domínio e panteão pelo que de fato aconteceu — nada é inventado.</div>}
             </div>
           )}
         </div>
@@ -226,9 +228,11 @@ export function PainelAscensao({ divindade, nivel, onDespertar, onRecalibrar, re
         )}
       </div>
 
-      <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-[10px] uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>
-        {recalibrando ? "Lendo sua lenda…" : "Recalibrar ascensão"}
-      </button>
+      {onRecalibrar && (
+        <button onClick={onRecalibrar} disabled={recalibrando} className="tv-btn w-full rounded-xl py-2.5 tv-mono text-[10px] uppercase tracking-widest" style={{ background: T.panelSoft, border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>
+          {recalibrando ? "Lendo sua lenda…" : "Recalibrar ascensão"}
+        </button>
+      )}
     </div>
   );
 }

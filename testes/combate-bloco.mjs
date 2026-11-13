@@ -58,6 +58,7 @@ import * as reciboDaLuta from "../src/recibo-da-luta.js";
 import * as invocacoes from "../src/invocacoes.js";
 import * as motorCombate from "../src/motor/combate-do-turno.js";
 import * as motorLuta from "../src/motor/luta-do-turno.js";
+import { oModoDoNarrador } from "../src/motor/portas-do-narrador.js";
 import * as motorAntes from "../src/motor/antes-do-mestre.js";
 import * as motorAplicar from "../src/motor/aplicar.js";
 
@@ -278,6 +279,9 @@ export function dublesDoBloco(k, { novo, sorte, extras }) {
   const log = { tela: [], combates: [], fichas: [], codex: [], nemesis: [], masmorras: [], bases: [], npcs: [], divindades: [], chaos: [], conquistas: [], sessoes: [], salvos: [], calados: [], presencas: [], agendas: [], quedas: [], relogios: [] };
   const S = {
     ...osModulos({ novo }),
+    /* NE3 (13/11): o App passa o modo do Narrador à peça (MODO_DA_MESA, o
+       padrão da tabela fora do Vite); o recorte lê-o do escopo, como lá. */
+    MODO_DA_MESA: oModoDoNarrador(),
     personagem: null, mundo: { genero: k.semente.split("|")[1] },
     combateRef: ref(copia(k.combateB)), notaRef: ref(k.notaAntes), descobRef: ref(copia(k.descobertasB)), divindadeRef: ref(copia(k.divindadeB)),
     mapaRef: ref(copia(k.mapaN)), masmorraRef: ref(copia(k.masmorraB)), salaEmCursoRef: ref(k.salaEmCursoB), combateOciosoRef: ref(k.ociosoB),

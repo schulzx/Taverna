@@ -164,7 +164,8 @@ const C = APP.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 t("o aplicarResposta chama as duas peças, a quase-morte em calou", /const doPerigo = oPerigoDaResposta\(\{ pers, perigo: resp\.perigo, combate: combateRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\) \}, portasDoFecho\(\)\);/.test(C)
   && /const daQuaseMorte = aQuaseMorte\(\{ persDoEnvio, pers, dia: diaRef\.current \}, portasDoFecho\(\)\);[\s\S]{0,200}\} catch \(e\) \{ calou\("a quase-morte do turno", e\); \}/.test(C));
 t("e os blocos não moram mais lá", !/montarEmboscada\(resp\.perigo/.test(C) && !APP.includes("[CICATRIZ — CANON PERMANENTE]") && !/sorteDoTurno\("cicatriz"\)/.test(C));
-t("a mesa e o fôlego também: uma chamada a aMesaDoTurno, o erro do fôlego ao calou, e a textura que zera", /const daMesa = aMesaDoTurno\(\{ textura: texturaRef\.current, mudancas: resp && resp\.mudancas, combate: combateRef\.current, mesa: mesaRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\) \}\);/.test(C)
+/* (movido, NE3 13/11: a chamada passa a levar o modo do Narrador, modoDoNarrador: MODO_DA_MESA — a defesa em camadas da Fase NE; a âncora acompanha) */
+t("a mesa e o fôlego também: uma chamada a aMesaDoTurno, o erro do fôlego ao calou, e a textura que zera", /const daMesa = aMesaDoTurno\(\{ textura: texturaRef\.current, mudancas: resp && resp\.mudancas, combate: combateRef\.current, mesa: mesaRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\), modoDoNarrador: MODO_DA_MESA \}\);/.test(C)
   && /if \(daMesa\.erroFolego\) calou\("o folego da fuga", daMesa\.erroFolego\);/.test(C) && !/mesaRef\.current = anotarTurno\(/.test(C) && /texturaRef\.current = \{\};\s*return pers;/.test(C));
 
 console.log(`\nmotor · o fecho da resposta: ${ok} passaram, ${mal} falharam`);
