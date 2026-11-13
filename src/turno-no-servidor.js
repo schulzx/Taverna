@@ -129,6 +129,7 @@ import { cenarioAtivo } from "./cenario.js";
 import { moldePorId, MOLDE_PADRAO } from "./moldes.js";
 import { entradaDoJuiz } from "./motor/juiz-do-turno.js";
 import { vetosDoVeredito, andarOsVetos } from "./motor/correcao-do-juiz.js";
+import { oInventadoDaProsa, lembrarOInventado, MEMORIA_DO_INVENTADO } from "./motor/memoria-do-inventado.js";
 import { oPedidoAoCronista, oGatilhoDoCronista } from "./motor/cronista-do-turno.js";
 import { garantirLeitura, pularALeitura, lerALeitura, blocoDaFila } from "./gatilho-do-cronista.js";
 import { balcaoDeMantimentos, mapasAVenda, mercadoresDaCidade } from "./mercado.js";
@@ -583,6 +584,17 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   try {
     if (r.veredito) eco.vetosDoJuiz = andarOsVetos(arr(m.e0.vetosDoJuiz), vetosDoVeredito(r.veredito, L.juizDoTurno), L.juizDoTurno);
   } catch { m.calados.length < TURNO_NO_SERVIDOR.caladosMax && m.calados.push("a correção do juiz"); }
+  /* NE8 (13/11): A MEMÓRIA NÃO GUARDA O INVENTADO — o objeto que a prosa deu
+     ao herói e o sistema não tem (a «chave mestra» da 19.ª) vira veto no
+     mesmo livro do Juiz, sobre o estado do fim (o item que o sistema deu
+     neste turno já está na bolsa). Só escreve quando há o que lembrar: sem
+     objeto inventado nem veto dele vivo, o eco é o de antes. */
+  try {
+    const base = Array.isArray(eco.vetosDoJuiz) ? eco.vetosDoJuiz : arr(m.e0.vetosDoJuiz);
+    const fim = { ...m.estadoDoFim, ...r.estado };
+    const ctxI = { ...obj(L.juizDoTurno), frase: m.frase };
+    if (oInventadoDaProsa(resposta.narrativa, fim, ctxI).length || base.some((x) => x && x.especie === MEMORIA_DO_INVENTADO.especie)) eco.vetosDoJuiz = lembrarOInventado(base, resposta.narrativa, fim, ctxI);
+  } catch { m.calados.length < TURNO_NO_SERVIDOR.caladosMax && m.calados.push("a memória do inventado"); }
   /* o save: os campos de estado.js e o que o save de entrada já trazia */
   const doSave = new Set([...NOMES_DO_SAVE, ...Object.keys(obj(obj(corpo).estado))]);
   doSave.delete("soltos");

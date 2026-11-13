@@ -260,8 +260,11 @@ function nomesDoEnredo(x, out, fundo) {
 }
 const nomesDe = (xs) => lista(xs).map((i) => (typeof i === "string" ? i : obj(i).nome)).filter((n) => typeof n === "string" && n.trim());
 const equipDe = (eq) => (Array.isArray(eq) ? nomesDe(eq) : nomesDe(Object.values(obj(eq))));
-/* o que o sistema conhece, em três listas (os nomes sem artigo) */
-function oQueOSistemaConhece(E, lugarDoTurno) {
+/* o que o sistema conhece, em três listas (os nomes sem artigo).
+   NE8 (13/11): exportada para a memória do inventado (motor/memoria-do-inventado.js)
+   julgar a prosa do turno pela MESMA régua com que o cânone julga o Cronista —
+   duas réguas do «conhecido» acabariam por discordar. */
+export function oQueOSistemaConhece(E, lugarDoTurno) {
   const p = obj(E.personagem);
   const grupo = lista(p.grupo).filter((g) => g && typeof g === "object");
   const factos = obj(E.factos);
@@ -289,7 +292,7 @@ function oQueOSistemaConhece(E, lugarDoTurno) {
   const limpos = (xs) => [...new Set([...xs, ...enredo, ...Object.keys(obj(E.canone))].filter((n) => typeof n === "string" && n.trim()).map(semArtigoC).filter(Boolean))];
   return { objeto: limpos(objetos), gente: limpos(gente), lugar: limpos(lugares) };
 }
-function casaONome(nome, conhecidos, deGente) {
+export function casaONome(nome, conhecidos, deGente) {
   const T = O_CANONE_CONHECIDO;
   const n = semArtigoC(nome);
   if (!n) return false;
