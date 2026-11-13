@@ -77,7 +77,10 @@ sec("4. os sítios que escrevem");
    daqui e antes do Cronista — o sítio do passo «o livro de factos» do
    replay —, pela peça do motor, com a prosa crua que a sessão grava */
 {
-  const i = COD.indexOf('anotarNoLivro("o fim da resposta", oQueACenaDaAoLivro(rl, { narrativa: narrativaDoLivro }), rl)');
+  /* MOVIDA (13/11, NE2): a peça recebe também o modo do Narrador — a porta
+     `livroVistoDaProsa` fecha o «visto» lido da prosa nos modos que a fecham.
+     O sítio e a ordem são os mesmos; a âncora ganhou só o campo. */
+  const i = COD.indexOf('anotarNoLivro("o fim da resposta", oQueACenaDaAoLivro(rl, { narrativa: narrativaDoLivro, modoDoNarrador: MODO_DA_MESA }), rl)');
   t("o fim da resposta: a cena, o lugar e a afeição do grupo, pela peça do motor, no turno",
     i > 0 && i > COD.indexOf("try { oferecerTrabalhoDaqui(); }") && i < COD.indexOf("cronistaDoTurno(pers, narrativaFinal, doTurnoCr)"));
   t("a prosa é a resposta crua, tirada antes do aplicar (a que a sessão grava)",

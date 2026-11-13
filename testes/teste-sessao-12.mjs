@@ -94,7 +94,11 @@ sec("1. O LÉXICO NÃO MORRE NA REDE DO NARRADOR, E A TENTATIVA QUE FALHA ENTRA 
   t("o Narrador de turno continua na rede de 1200", gerou(turno)[0] === 1200);
   const leve = await rodar({ corpo: { maxTokens: 900, tarefa: "leve" }, roteiro: { gemini: [okGemini('{"x":1}')] } });
   t("e o Cronista no teto dele, como antes", gerou(leve)[0] === 900);
-  t("o App manda a tarefa do Léxico", /chamarModelo\(pedidoDoLexico\(m\), \[[^\]]*\], 8192, "json", "lexico"\)/.test(APP));
+  /* MOVIDA (13/11, NE6), E O MOTIVO: a pessoa aprovou «nenhuma IA escreve estado
+     de jogo», e o léxico do mundo passou a sair de tabela nossa (lexicoDoMundo,
+     pela semente da campanha). O App já não manda a tarefa do Léxico; a rede do
+     servidor para ela continua provada acima (voltar é uma linha). */
+  t("o App já não manda a tarefa do Léxico: o léxico sai da tabela", !/chamarModelo\(pedidoDoLexico\(m\)/.test(APP) && /lexicoDoMundo\(m, \{ semente: sementeMundo\(\) \}\)/.test(APP));
 
   /* a 12.ª, chamada 0: o Gemini morreu por MAX_TOKENS sem texto, e a reserva respondeu */
   const caiu = await rodar({ corpo: { maxTokens: 3600, tarefa: "narrador" }, roteiro: {

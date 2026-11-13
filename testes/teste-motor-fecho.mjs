@@ -161,7 +161,8 @@ sec("3 · as peças, jogadas");
 
 sec("4 · a fiação no App");
 const C = APP.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-t("o aplicarResposta chama as duas peças, a quase-morte em calou", /const doPerigo = oPerigoDaResposta\(\{ pers, perigo: resp\.perigo, combate: combateRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\) \}, portasDoFecho\(\)\);/.test(C)
+/* (movido, NE2 13/11: o perigo passa a levar o modo do Narrador, modoDoNarrador: MODO_DA_MESA — a porta `perigo` fecha resp.perigo nos modos que a fecham; a âncora acompanha) */
+t("o aplicarResposta chama as duas peças, a quase-morte em calou", /const doPerigo = oPerigoDaResposta\(\{ pers, perigo: resp\.perigo, combate: combateRef\.current, folego: folegoRef\.current, lugares: ondeEstou\(\), modoDoNarrador: MODO_DA_MESA \}, portasDoFecho\(\)\);/.test(C)
   && /const daQuaseMorte = aQuaseMorte\(\{ persDoEnvio, pers, dia: diaRef\.current \}, portasDoFecho\(\)\);[\s\S]{0,200}\} catch \(e\) \{ calou\("a quase-morte do turno", e\); \}/.test(C));
 t("e os blocos não moram mais lá", !/montarEmboscada\(resp\.perigo/.test(C) && !APP.includes("[CICATRIZ — CANON PERMANENTE]") && !/sorteDoTurno\("cicatriz"\)/.test(C));
 /* (movido, NE3 13/11: a chamada passa a levar o modo do Narrador, modoDoNarrador: MODO_DA_MESA — a defesa em camadas da Fase NE; a âncora acompanha) */

@@ -173,7 +173,9 @@ sec("1. NENHUM MÓDULO MUDO");
        App.jsx. Credor: o `oficial`, na MESMA fase (a troca está na nota de
        fiação da NE). A entrada sai quando o App o importar.
        `teste-lexico-do-mundo.mjs` é o primeiro leitor. */
-    "lexico-do-mundo.js": "o oficial (NE6: lerOMundo chama lexicoDoMundo no lugar da IA do Léxico)",
+    /* e paga na MESMA fase (13/11, oficial): o App.jsx importa-o — lerOMundo
+       chama lexicoDoMundo(m, { semente: sementeMundo() }) no lugar da IA do
+       Léxico. A entrada saiu. */
     /* 11/11 (Fase MC, MC4–MC6, backend): `facto-do-sucesso.js` nasce —
        `oFactoDoSucesso` (o facto com fonte que o sucesso compra, para o
        envelope do teste) — e espera o `oficial`, que o liga no App.jsx no

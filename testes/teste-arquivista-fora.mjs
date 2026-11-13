@@ -32,10 +32,20 @@ const conta = (txt, re) => (txt.match(re) || []).length;
 
 sec("1. A TABELA DESLIGA O ARQUIVISTA");
 {
-  const m = APP.match(/const O_ARQUIVISTA_NA_TELA = Object\.freeze\(\{([^}]*)\}\);/);
+  /* MOVIDA (13/11, NE2): a tabela deixou de ser o literal
+     `{ save: false, ascensao: false }` e passou a ler as portas
+     `arquivistaDoSave`/`arquivistaDaAscensao` de PORTAS_DO_NARRADOR — uma
+     verdade só, fechada em todo modo pela marca sempreFechada do motor. A
+     intenção é a mesma (os botões não aparecem); a prova passa a ser a
+     leitura da porta + o valor que a porta dá em cada modo. */
+  const m = APP.match(/const O_ARQUIVISTA_NA_TELA = \(\(\) => \{([\s\S]*?)\n\}\)\(\);/);
   t("a tabela O_ARQUIVISTA_NA_TELA existe no App", !!m);
-  t("o recalibrar do save está desligado", !!m && /\bsave:\s*false\b/.test(m[1]));
-  t("o recalibrar da ascensão está desligado", !!m && /\bascensao:\s*false\b/.test(m[1]));
+  t("o recalibrar do save lê a porta arquivistaDoSave", !!m && /\bsave:\s*portaAberta\("arquivistaDoSave",\s*MODO_DA_MESA\)/.test(m[1]));
+  t("o recalibrar da ascensão lê a porta arquivistaDaAscensao", !!m && /\bascensao:\s*portaAberta\("arquivistaDaAscensao",\s*MODO_DA_MESA\)/.test(m[1]));
+  t("se a porta estourar, os dois ficam desligados", !!m && /catch\s*\{\s*return Object\.freeze\(\{\s*save:\s*false,\s*ascensao:\s*false\s*\}\);/.test(m[1]));
+  const { portaAberta } = await import("../src/motor/portas-do-narrador.js");
+  t("e a porta dá desligado em todo modo (o mestre, o de hoje, incluído)",
+    ["mestre", "boca", "ator", undefined].every((md) => !portaAberta("arquivistaDoSave", md) && !portaAberta("arquivistaDaAscensao", md)));
 }
 
 sec("2. NENHUM CAMINHO VIVO CHEGA ÀS CHAMADAS");
@@ -100,6 +110,52 @@ sec("4. O MODO DO NARRADOR CHEGA À LUTA E À MESA");
      do motor: a catraca de teste-assercoes-de-texto proíbe suíte que lê
      src/motor/ (o motor prova-se jogando). Essa prova é da suíte da luta e
      de teste-nada-entra-pelo-ator; aqui fica só a fiação do App. */
+}
+
+sec("5. AS PORTAS DE FORA DA TABELA LEEM O MODO NO APP (NE2, 13/11)");
+{
+  /* a peça de cada porta mora no motor e já lê `modoDoNarrador`; o que só o
+     App podia fazer era passá-lo. Sem ele, a peça corre sempre no padrão. */
+  const { portaAberta, oPedidoDoModo } = await import("../src/motor/portas-do-narrador.js");
+  t("o perigo: oPerigoDaResposta recebe o modo",
+    /oPerigoDaResposta\(\{[^\n]*\bmodoDoNarrador:\s*MODO_DA_MESA\b[^\n]*\}, portasDoFecho\(\)\)/.test(APP));
+  t("o «visto» do livro: oQueACenaDaAoLivro recebe o modo",
+    /oQueACenaDaAoLivro\(rl, \{[^}]*\bmodoDoNarrador:\s*MODO_DA_MESA\b/.test(APP));
+  t("o alvo do ataque: lerAgressao recebe o modo",
+    /lerAgressao\(acao, \{[^\n]*\bmodoDoNarrador:\s*MODO_DA_MESA\b/.test(APP));
+  const prometida = APP.match(/const contextoDaLutaPrometida = \(\) => \{([\s\S]*?)\n  \};/);
+  t("a luta prometida: o contexto leva o modo",
+    !!prometida && /return \{ presentes, mostrado, modoDoNarrador: MODO_DA_MESA \};/.test(prometida[1]));
+  const nucleo = APP.match(/const nucleoEmCena = \(nucleo\) => \{([\s\S]*?)\n  \};/);
+  t("o núcleo das falas: a fala do Mestre só conta com a porta nucleoDaFala aberta",
+    !!nucleo && /portaAberta\("nucleoDaFala", MODO_DA_MESA\)/.test(nucleo[1]) && /const fala = falaAberta \? /.test(nucleo[1]));
+  t("e a porta do núcleo abre no mestre (o de hoje igual) e fecha no boca", portaAberta("nucleoDaFala", "mestre") && !portaAberta("nucleoDaFala", "boca"));
+  /* o pedido do ator ia colado ao NOME do modo; o `boca` fecha as portas e
+     recebe o pedido do mestre, e por isso o App lê a coluna `pedido` */
+  t("o pedido do ator sai da coluna pedido (oPedidoDoModo), não do nome do modo",
+    !/MODO_DA_MESA === "ator"/.test(APP) && /pedidoDoModo = oPedidoDoModo\(MODO_DA_MESA\)/.test(APP) && /if \(pedidoDoModo === "ator"\) \{ try \{ pedidoDoAtor = oPedidoDoAtor\(/.test(APP));
+  t("e a coluna dá: boca → mestre, ator → ator, mestre → mestre", oPedidoDoModo("boca") === "mestre" && oPedidoDoModo("ator") === "ator" && oPedidoDoModo("mestre") === "mestre");
+}
+
+sec("6. O LÉXICO É DA TABELA (NE6, 13/11)");
+{
+  const corpo = APP.match(/const lerOMundo = async \(m, [^\n]*\n([\s\S]*?)\n  \};/);
+  t("lerOMundo existe", !!corpo);
+  t("lerOMundo chama lexicoDoMundo com a semente da campanha", !!corpo && /lexicoDoMundo\(m, \{ semente: sementeMundo\(\) \}\)/.test(corpo[1]));
+  t("e não chama mais o modelo", !!corpo && !/chamarModelo\(/.test(corpo[1]) && !/pedidoDoLexico\(/.test(corpo[1]));
+  t("a tela de criação não fala do Léxico nem do modelo", !/O Léxico lê estas escolhas/.test(APP));
+  const { lexicoDoMundo } = await import("../src/lexico-do-mundo.js");
+  const m = { genero: "Fantasia medieval" };
+  t("a mesma semente dá o mesmo léxico (o mundo que o App grava é determinístico)",
+    JSON.stringify(lexicoDoMundo(m, { semente: "aventura|Fantasia medieval" })) === JSON.stringify(lexicoDoMundo(m, { semente: "aventura|Fantasia medieval" })));
+  t("e o léxico da tabela é sempre gerado (o «não consegui ler o mundo» deixa de acontecer)", lexicoDoMundo(m, { semente: "x" }).gerado === true && lexicoDoMundo(null, {}).gerado === true);
+}
+
+sec("7. A MEDIDA DA NE9 NA LINHA DA SESSÃO (13/11)");
+{
+  t("o cânone recusado vai à linha da sessão, depois do aceito do Cronista e em calou",
+    /doTurno\.paraASessao\.cronista\.recusadoDoCanone = fim\.recusadoDoCanone; \} catch \(e\) \{ calou\("a sessão \(o cânone recusado\)", e\); \}/.test(APP)
+    && APP.indexOf("fim.recusadoDoCanone") > APP.indexOf("fim = oAceitoDoCronista("));
 }
 
 console.log(`\no arquivista fora (NE3): ${bons} passaram, ${maus} falharam`);

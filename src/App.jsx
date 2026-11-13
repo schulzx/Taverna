@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { nomeCidade, nomePessoa, nomeTaverna, sortear } from "./nomes.js";
 import { elencoDoMundo, garantirElencoDoSave, promoverNoDia, agirForaDeCena, boatoDoForaDeCena } from "./elenco.js";
-import { pedidoDoLexico, lerLexico, lexicoDoTexto, falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
+import { falaDoLexico, envelopeDaAdaptacao, cidadesDo, tavernasDo, racaNaFicha, profissaoNaFicha, generoProprio, nomeDaMoeda, soOVocabulario } from "./lexico.js";
 import { CLASSES, PROFISSOES, racasDoGenero, classePorNome, racaPorNome, habilidadesDisponiveis, habilidadesIniciais, podePegarHabilidade, ranksDoPersonagem, pontosDisponiveis, custoRespec, classeDaHabilidade, custoJaGasto, custoEmPontos, pontosNoNivel, pontosTotais, podeEscolherSubclasse, subclasseEscolhida, habilidadesDaSubclasse, fichaDaHabilidade, podeEscolherEspecializacao, especializacaoEscolhida, DEGRAUS_ESPECIALIZACAO } from "./classes.js";
 import { criarCidade, criarFaccao, cidadesDominadas, resumoMapaParaPrompt, resumoDiplomacia, TRATADOS, RELACOES, gerarEstradas, centrosDeRegiao, blobPath } from "./mapa.js";
 import { PORTES, cidadesPisadas, gerarGeografia, garantirGeografia, descobrirCidade, formaDaCidade, descobrirRegiao, regioesDoMapa, cidadesConhecidas } from "./geografia.js";
@@ -249,7 +249,8 @@ import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correc
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
-import { portaAberta, oModoDoNarrador, oPesoPeloSistema } from "./motor/portas-do-narrador.js";
+import { portaAberta, oModoDoNarrador, oPesoPeloSistema, oPedidoDoModo } from "./motor/portas-do-narrador.js";
+import { lexicoDoMundo } from "./lexico-do-mundo.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { aPropostaDaFrase, aPessoaChamada } from "./motor/a-proposta-da-frase.js";
@@ -541,7 +542,11 @@ const MODO_DA_MESA = (() => { try { return oModoDoNarrador(import.meta.env && im
    (recalculo.js) refaz PV/PM/proficiência pelas tabelas. O código das
    chamadas fica (recalibrarSave, recalibrarAscensao): voltar é trocar um
    false por true aqui. A catraca é teste-arquivista-fora. */
-const O_ARQUIVISTA_NA_TELA = Object.freeze({ save: false, ascensao: false });
+/* NE2: a tabela lê as portas `arquivistaDoSave`/`arquivistaDaAscensao` (sempreFechada no motor, em todo modo) — uma verdade só; voltar é tirar a marca lá */
+const O_ARQUIVISTA_NA_TELA = (() => {
+  try { return Object.freeze({ save: portaAberta("arquivistaDoSave", MODO_DA_MESA), ascensao: portaAberta("arquivistaDaAscensao", MODO_DA_MESA) }); }
+  catch { return Object.freeze({ save: false, ascensao: false }); }
+})();
 
 /* O ATOR PELA PORTA DO APP: o pedido do ator (src/motor/pedido-do-ator.js)
    sobre chamarModelo, com a forma do pedido dele (PEDIDO_AO_ATOR: texto, sem
@@ -4123,7 +4128,7 @@ function TelaMundo({ concluir }) {
                 </div>
               )}
               <div className="tv-body text-xs text-center" style={{ color: T.inkDim }}>
-                O Léxico lê estas escolhas uma vez, com o modelo forte, e escreve o vocabulário e as leis deste mundo.
+                O mundo ganha o vocabulário e as leis do gênero que escolher.
               </div>
             </div>
           );
@@ -6049,11 +6054,12 @@ export default function Taverna() {
          15.371 caracteres e o modelo era cortado no meio de `nomes`.
          Resultado, achado jogando: o Mestre respondia um léxico certo,
          o JSON não fechava, e o mundo nascia medieval em silêncio. */
-      const texto = await chamarModelo(pedidoDoLexico(m), [{ role: "user", content: "Leia o mundo acima e devolva só o JSON." }], 8192, "json", "lexico");
+      /* NE6 (13/11): o léxico sai de tabela nossa (lexico-do-mundo.js), pelo gênero, o molde e a semente da campanha — nenhuma IA escreve o vocabulário do mundo. A chamada antiga (pedidoDoLexico → lexicoDoTexto → lerLexico) fica em lexico.js; voltar é uma linha. */
       /* o leitor É o do léxico, e não o do Mestre: aquele devolve só os
          campos da narração e descartaria isto inteiro, em silêncio. */
-      const lex = lerLexico(lexicoDoTexto(texto));
-      if (lex.gerado) {
+      let lex = null;
+      try { lex = lexicoDoMundo(m, { semente: sementeMundo() }); } catch (e) { calou("o léxico do mundo", e); lex = null; }
+      if (lex && lex.gerado) {
         conseguiu = true;
         /* MM13b: chegou depois de o mundo nascer? Então só o vocabulário — os nomes do que já nasceu (cidades, lugares, gente) ficam os da nascença, os que a espinha e a abertura gravaram. */ const lexAplicado = mapaRef.current !== mapaAntes ? soOVocabulario(lex) : lex; mundoRef.current = { ...(mundoRef.current || m), lexico: lexAplicado };
         setMundo((v) => ({ ...(v || m), lexico: lexAplicado }));
@@ -6140,7 +6146,10 @@ export default function Taverna() {
      estar lá quando o Mestre já os pôs a falar. */
   const nucleoEmCena = (nucleo) => {
     const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const fala = " " + sem((mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ")).replace(/[^a-z0-9]+/g, " ") + " ";
+    /* NE2 · a porta `nucleoDaFala`: fechada, a fala do Mestre não põe ninguém em cena (só o grupo); no `mestre`, o mesmo de sempre */
+    let falaAberta = true;
+    try { falaAberta = portaAberta("nucleoDaFala", MODO_DA_MESA); } catch (e) { calou("a porta do núcleo da fala", e); falaAberta = true; }
+    const fala = falaAberta ? " " + sem((mensagensRef.current || []).filter((m) => m && m.autor === "mestre").slice(-2).map((m) => m.texto).join(" ")).replace(/[^a-z0-9]+/g, " ") + " " : " ";
     const grupo = ((personagemRef.current || personagem || {}).grupo || []).filter((g) => g && g.nome && !g.invocada).map((g) => sem(g.nome));
     const out = [];
     for (const p of ((nucleo && nucleo.pessoas) || [])) {
@@ -10493,7 +10502,7 @@ export default function Taverna() {
        (teste-motor-fecho). */
     try {
       if (resp.perigo) {
-        const doPerigo = oPerigoDaResposta({ pers, perigo: resp.perigo, combate: combateRef.current, folego: folegoRef.current, lugares: ondeEstou() }, portasDoFecho());
+        const doPerigo = oPerigoDaResposta({ pers, perigo: resp.perigo, combate: combateRef.current, folego: folegoRef.current, lugares: ondeEstou(), modoDoNarrador: MODO_DA_MESA }, portasDoFecho());
         pers = doPerigo.pers;
         /* as linhas da emboscada (a fala e a iniciativa) vão à TELA: a entrega
            já pôs a lista do turno lá em cima, e o que se empurrasse nela agora
@@ -10719,6 +10728,8 @@ export default function Taverna() {
       let fim = null;
       try { fim = oAceitoDoCronista(ac, recusadoDoCronista, r, { ...portasDoCronista(), pers, narrativa, testeDoTurno, rolagem, modoDoNarrador: MODO_DA_MESA, fichaDoAtor: doTurno && doTurno.fichaDoAtor, aceite: doTurno && doTurno.aceite }); }
       catch (e) { calou("o aceito do Cronista", e); return; }
+      /* NE9: o que o cânone recusou (o objeto que não existe) vai à linha da sessão — a medida «objetos inventados no cânone = 0». Não muda estado. */
+      try { if (fim && fim.recusadoDoCanone && doTurno && doTurno.paraASessao && doTurno.paraASessao.cronista) doTurno.paraASessao.cronista.recusadoDoCanone = fim.recusadoDoCanone; } catch (e) { calou("a sessão (o cânone recusado)", e); }
       const msgs = fim.msgs, tocouCanone = fim.tocouCanone, tocouElenco = fim.tocouElenco;
       const p = fim.p;
       /* v9.36: o registro agora é MUDO (cânone e elenco entram sem avisar), e
@@ -11102,7 +11113,8 @@ export default function Taverna() {
        resposta é só prosa. No `mestre`, o de sempre. Se a ficha estourar, o
        turno vai pelo Mestre, e as portas continuam as do modo. */
     let pedidoDoAtor = null;
-    if (MODO_DA_MESA === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido(), teste: testeDoTurnoRef.current }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
+    /* NE2: o pedido sai da coluna `pedido` da tabela, não do nome do modo — o `boca` fecha as portas e recebe o pedido do mestre */ let pedidoDoModo = "mestre"; try { pedidoDoModo = oPedidoDoModo(MODO_DA_MESA); } catch (e) { calou("o pedido do modo", e); pedidoDoModo = "mestre"; }
+    if (pedidoDoModo === "ator") { try { pedidoDoAtor = oPedidoDoAtor({ nota, frase: conteudo, estado: estadoDoPedido(), teste: testeDoTurnoRef.current }); } catch (e) { calou("o pedido do ator", e); pedidoDoAtor = null; } }
     /* EM2: o tipo do turno decide as palavras e o teto (tamanho-da-resposta.js).
        O que o App sabe ANTES da resposta: a frase, o teste resolvido no turno,
        e a luta que acabou entre o estado do pedido e agora. A chegada e o
@@ -11208,7 +11220,7 @@ export default function Taverna() {
          está, a afeição do grupo — depois do conferente e do trabalho daqui,
          antes do Cronista, como o passo «o livro de factos» do replay. A
          peça é do motor (oQueACenaDaAoLivro), sobre o mesmo retrato. */
-      try { const rl = { ...retratoDoLivro(), personagem: pers }; anotarNoLivro("o fim da resposta", oQueACenaDaAoLivro(rl, { narrativa: narrativaDoLivro }), rl); } catch (e) { calou("LIVRO · o fim da resposta", e); }
+      try { const rl = { ...retratoDoLivro(), personagem: pers }; anotarNoLivro("o fim da resposta", oQueACenaDaAoLivro(rl, { narrativa: narrativaDoLivro, modoDoNarrador: MODO_DA_MESA }), rl); } catch (e) { calou("LIVRO · o fim da resposta", e); }
       /* PORTÃO (v9.12): se algum cão de guarda duro mordeu, o conserto acontece
          AQUI — antes de a narrativa chegar à tela e antes de ela entrar no
          histórico. O que o Mestre lembra na próxima vez é o texto corrigido,
@@ -18499,7 +18511,7 @@ export default function Taverna() {
       if (bicho) conhecidas = [{ nome: bicho.nome, ameaca: bicho.ameaca || "" }, ...conhecidas.filter((c) => c.nome !== bicho.nome)];
       if (alvo && alvo.tipo === "pessoa") { const it = lista.find((x) => x.id === alvo.id); if (it) apontado = { ...it, faz: alvo.faz }; }
     } catch (e) { calou("a frase contra a lista (agressão)", e); apontado = null; }
-    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo, conhecidas, apontado });
+    const a = lerAgressao(acao, { presentes: elenco.aqui || [], grupo: p.grupo || [], emCombate: !!combateRef.current, recentes, mostrado, comigo, conhecidas, apontado, modoDoNarrador: MODO_DA_MESA });
     return a ? { a, elenco, p } : null;
   };
   /* o veredito do crime, o mesmo que o cartão do crime mostra */
@@ -21970,7 +21982,7 @@ export default function Taverna() {
     let presentes = [], mostrado = [];
     try { presentes = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (fichaViva() || personagem || {}).grupo || [] }).aqui || []; } catch (e) { calou("o elenco da luta prometida", e); }
     try { mostrado = falasDoMestre(mensagensRef.current); } catch (e) { calou("o mostrado da luta prometida", e); }
-    return { presentes, mostrado };
+    return { presentes, mostrado, modoDoNarrador: MODO_DA_MESA };
   };
   const abrirLutaPrometida = (luta, pers) => {
     try {
