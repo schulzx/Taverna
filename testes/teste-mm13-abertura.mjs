@@ -33,6 +33,8 @@
    arquivo muda sob os pés desta suíte. `\r\n` normalizado para `\n`
    porque o Windows grava com final de linha diferente do que os regex
    abaixo assumem. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import {
   RAZOES_DA_ESTRUTURA, LACOS_DO_ANTECEDENTE, OBJETO_DO_FEITIO, TITULO_DO_FEITIO, O_QUE_SE_SABE,
@@ -597,7 +599,7 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
      prova-se pelo valor exportado ou jogando a peça. */
   const { oAceitoDoCronista } = await import("../src/motor/cronista-do-turno.js");
   const fechada = { abertura: { v: 1, principalId: "m1", turnos: 0, feitas: 0, semAvanco: 0 }, missoes: [{ id: "m1", tipo: "principal", status: "ativa", titulo: "x", etapas: [] }] };
-  const pregou = (est) => { let n = 0; oAceitoDoCronista({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 10, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, [], {}, { pers: { nome: "Vera", nivel: 2, grupo: [] }, narrativa: "x", ler: () => ({ ...est, cidadeAtual: "Vau", npcs: {}, coracao: null }), aplicar: () => {}, historiaDoMural: () => [], contextoDoNome: () => ({}), nucleoAgora: () => null, pregarNoMural: () => { n++; return true; } }); return n; };
+  const pregou = (est) => { let n = 0; NM.oAceitoDoCronista({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 10, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, [], {}, { pers: { nome: "Vera", nivel: 2, grupo: [] }, narrativa: "x", ler: () => ({ ...est, cidadeAtual: "Vau", npcs: {}, coracao: null }), aplicar: () => {}, historiaDoMural: () => [], contextoDoNome: () => ({}), nucleoAgora: () => null, pregarNoMural: () => { n++; return true; } }); return n; };
   t("a proposta do Cronista (missao_oferecida, em cronistaDoTurno) respeita o mural", cronista.length > 200 && muralLiberado(fechada) === false && pregou(fechada) === 0 && pregou({ abertura: undefined, missoes: [] }) === 1);
   const soleira = corpoApos(app, "const ofertasDaSoleira = () => {");
   /* MM18 (11/10): o filtro ganhou `!cartazJaVenceu(c)` — o papel pregado
@@ -635,7 +637,7 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     const { aplicarORegisto } = await import("../src/motor/aplicar.js");
     const ab = { principalId: "m_p", cidade: "Monte Rasa", pista: { nome: "Wystan", local: "o Moinho Velho" }, alvo: { quem: "Edric Vau", onde: "Ponte Lenta" } };
     const ms = [{ id: "m_p", titulo: "O fio", tipo: "principal", status: "ativa", etapas: [{ tipo: "falar_com", alvo: "Wystan", feito: false }] }];
-    const reg = (md, lugar) => aplicarORegisto({ personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, abertura: ab, lugar, missoes: ms, dia: 1 },
+    const reg = (md, lugar) => NM.aplicarORegisto({ personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, abertura: ab, lugar, missoes: ms, dia: 1 },
       { narrativa: "x", mudancas: md }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Ana" } }).estado.npcs;
     t("os NPCs que o Mestre envia não registam a pista/alvo antes da hora",
       !reg({ npcs: [{ nome: "Wystan", papel: "moleiro" }] }, null).Wystan && !!reg({ npcs: [{ nome: "Wystan", papel: "moleiro" }] }, { nome: "o Moinho Velho" }).Wystan);
@@ -654,7 +656,7 @@ sec("11. a fiação — App.jsx e painel-diario.jsx");
     const c = casosDoFim()[0];
     const abG = { principalId: "m_p", cidade: "Monte Rasa", pista: { nome: "Gwynn", local: "o Moinho Velho" }, alvo: { quem: "Edric Vau", onde: "Ponte Lenta" } };
     const msG = [{ id: "m_p", titulo: "O fio", tipo: "principal", status: "ativa", etapas: [{ tipo: "falar_com", alvo: "Gwynn", feito: false }] }];
-    const cod = (lugar) => aplicarOCodex({ ...c.estado, base: null, npcs: {}, oferecidos: [], abertura: abG, missoes: msG, lugar }, { narrativa: "Gwynn ergue os olhos e acena para você." }, c.ctx).estado;
+    const cod = (lugar) => NM.aplicarOCodex({ ...c.estado, base: null, npcs: {}, oferecidos: [], abertura: abG, missoes: msG, lugar }, { narrativa: "Gwynn ergue os olhos e acena para você." }, c.ctx).estado;
     const revelou = (e) => JSON.stringify(e.base || {}).includes("Monte Rasa|gente|Gwynn");
     t("nem quem é só mencionado na narrativa — e sai também dos ids de revelação",
       !cod(null).npcs.Gwynn && !revelou(cod(null)) && !!cod({ nome: "o Moinho Velho" }).npcs.Gwynn && revelou(cod({ nome: "o Moinho Velho" })) && aplicar.includes("const doCodex = aplicarOCodex({"));

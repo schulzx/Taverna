@@ -597,6 +597,14 @@ function gastoDoPedido(envelopes, narrativa, pedido, moeda) {
   return out;
 }
 
+/* `soOPedido` (NE7, 13/11): só a frase do JOGADOR paga. Com as portas do
+   Narrador fechadas (o padrão, motor/portas-do-narrador.js), o pagamento
+   que a prosa conta e o `moedas` que a resposta declara não entram — mas
+   «pago duas moedas ao guarda» é a entrada do jogador, que o sistema tem, e
+   continua a sair da bolsa. Nem a cena que o recusa o impede: impedir um
+   débito também é mexer no estado, e a régua da Fase NE é que a prosa não
+   mexe em nada (teste-nada-entra-pelo-ator: a resposta cheia de tentações
+   acaba igual à vazia). O Narrador sabe do débito pela nota, e narra-o. */
 export function oQueFaltaDebitar(narrativa, mudancas, opcoes = {}) {
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const vazio = { moedas: 0, frases: [], temAlgo: false, semFundos: false, narrado: 0 };
@@ -604,10 +612,11 @@ export function oQueFaltaDebitar(narrativa, mudancas, opcoes = {}) {
   if (JA_PAGO_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
   if (COMPRA_RECUSADA_PELO_SISTEMA.some((rx) => rx.test(envelopes))) return vazio;
   const moeda = typeof o.moeda === "string" ? o.moeda : "";
-  const daCena = lerGastos(narrativa, { moeda });
-  const doPedido = gastoDoPedido(envelopes, narrativa, o.pedido, moeda);
+  const soOPedido = o.soOPedido === true;
+  const daCena = soOPedido ? { moedas: 0, frases: [] } : lerGastos(narrativa, { moeda });
+  const doPedido = gastoDoPedido(envelopes, soOPedido ? "" : narrativa, o.pedido, moeda);
   const narrado = doPedido.moedas > daCena.moedas ? doPedido : daCena;
-  const m = mudancas && typeof mudancas === "object" ? mudancas : {};
+  const m = !soOPedido && mudancas && typeof mudancas === "object" ? mudancas : {};
   const declarado = Math.max(0, -(Number(m.moedas) || 0));
   const moedas = Math.max(0, narrado.moedas - declarado);
   if (!moedas) return { ...vazio, narrado: narrado.moedas };

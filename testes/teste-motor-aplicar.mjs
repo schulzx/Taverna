@@ -16,6 +16,8 @@
    3. a forma da saída: { estado, efeitos, paraOCronista, podado, msgs }.
    4. a fiação no App: o App chama `aplicar` e aplica os efeitos num lugar só. */
 
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -172,7 +174,7 @@ sec("5. o registo — o cânone e a gente, byte a byte (T1-A, 2.ª fatia)");
   for (let i = 0; i < CR.length; i++) {
     const c = JSON.parse(JSON.stringify(CR[i]));
     semearACasa(c.semente);
-    const s = aplicarORegisto(c.estado, c.resp, c.ctx);
+    const s = NM.aplicarORegisto(c.estado, c.resp, c.ctx);
     const r = oQueOAppVeDoRegisto(c, s);
     bytes += r.length;
     if (digital(r) === DR.casos[i].digital) iguais++;
@@ -189,43 +191,43 @@ sec("5. o registo — o cânone e a gente, byte a byte (T1-A, 2.ª fatia)");
     const k = CR.findIndex((c) => c.estado.espinha && c.resp.mudancas && c.resp.mudancas.canone && c.resp.mudancas.canone["Gruta das Vozes"]);
     const c = JSON.parse(JSON.stringify(CR[k]));
     semearACasa(c.semente);
-    const s = aplicarORegisto(c.estado, c.resp, c.ctx);
+    const s = NM.aplicarORegisto(c.estado, c.resp, c.ctx);
     t("…a peneira recusa o segredo de pé (e deixa passar o resto)", k >= 0 && !s.estado.canone["Gruta das Vozes"] && Object.keys(s.estado.canone).length > Object.keys(c.estado.canone).length);
   }
   {
     const k = CR.findIndex((c) => c.estado.abertura && c.resp.mudancas && Array.isArray(c.resp.mudancas.npcs) && c.resp.mudancas.npcs.some((n) => n && n.nome === "Wystan") && !(c.estado.lugar));
     const c = JSON.parse(JSON.stringify(CR[k]));
     semearACasa(c.semente);
-    const s = aplicarORegisto(c.estado, c.resp, c.ctx);
+    const s = NM.aplicarORegisto(c.estado, c.resp, c.ctx);
     t("…a menção que não é presença (a pista não entra no registo antes de chegar)", k >= 0 && !s.estado.npcs.Wystan);
   }
   /* pureza e forma */
   const c = JSON.parse(JSON.stringify(CR[2]));
   const antes = JSON.stringify(c);
-  semearACasa(c.semente); const a = aplicarORegisto(c.estado, c.resp, c.ctx);
+  semearACasa(c.semente); const a = NM.aplicarORegisto(c.estado, c.resp, c.ctx);
   t("o que entra sai intacto", JSON.stringify(c) === antes);
-  semearACasa(c.semente); const b = aplicarORegisto(c.estado, c.resp, c.ctx);
+  semearACasa(c.semente); const b = NM.aplicarORegisto(c.estado, c.resp, c.ctx);
   t("mesma entrada, mesma saída", oQueOAppVeDoRegisto(c, a) === oQueOAppVeDoRegisto(c, b));
   t("{ estado, efeitos, paraOCronista, msgs }, efeitos por tipo", a.estado && Array.isArray(a.efeitos) && a.efeitos.every((e) => e && typeof e.tipo === "string") && Array.isArray(a.paraOCronista) && Array.isArray(a.msgs));
-  t("o prompt remonta UMA vez, no fim, mesmo quando os dois blocos mexem", CR.every((k) => { const x = JSON.parse(JSON.stringify(k)); semearACasa(x.semente); const s = aplicarORegisto(x.estado, x.resp, x.ctx); const r = s.efeitos.filter((e) => e.tipo === "remontarPrompt"); return r.length <= 1 && (!r.length || s.efeitos[s.efeitos.length - 1] === r[0]); }));
+  t("o prompt remonta UMA vez, no fim, mesmo quando os dois blocos mexem", CR.every((k) => { const x = JSON.parse(JSON.stringify(k)); semearACasa(x.semente); const s = NM.aplicarORegisto(x.estado, x.resp, x.ctx); const r = s.efeitos.filter((e) => e.tipo === "remontarPrompt"); return r.length <= 1 && (!r.length || s.efeitos[s.efeitos.length - 1] === r[0]); }));
   /* (movido, T1-A 7.ª fatia: "sem mudanças, nada anda (nem o contador da gente)" descrevia o App de antes, e ele tinha duas réguas para o mesmo turno — com `mudancas: {}` o contador andava, e com as mudanças podadas a `null` não (o achado da T3-B). O contador da gente conta turnos do Narrador, e a recência de quem foi visto (`ultimaVez`) lê-o: anda uma vez por turno, com ou sem mudanças. O resto continua parado.) */
-  t("sem mudanças, só o contador da gente anda (um turno do Narrador é um turno)", (() => { const s = aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x" }, {}); return s.efeitos.length === 1 && s.efeitos[0].tipo === "npcTurno" && s.estado.npcTurno === 5; })());
-  t("e a resposta com `mudancas: {}` e a podada a `null` andam o mesmo passo", (() => { const a = aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x", mudancas: {} }, {}); const b = aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x", mudancas: null }, {}); return a.estado.npcTurno === 5 && b.estado.npcTurno === 5; })());
-  t("lixo não estoura", !!aplicarORegisto(null, null, null));
+  t("sem mudanças, só o contador da gente anda (um turno do Narrador é um turno)", (() => { const s = NM.aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x" }, {}); return s.efeitos.length === 1 && s.efeitos[0].tipo === "npcTurno" && s.estado.npcTurno === 5; })());
+  t("e a resposta com `mudancas: {}` e a podada a `null` andam o mesmo passo", (() => { const a = NM.aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x", mudancas: {} }, {}); const b = NM.aplicarORegisto({ npcTurno: 4, canone: {}, npcs: {} }, { narrativa: "x", mudancas: null }, {}); return a.estado.npcTurno === 5 && b.estado.npcTurno === 5; })());
+  t("lixo não estoura", !!NM.aplicarORegisto(null, null, null));
   /* O ESTADO SEM O CONTADOR (achado da trilha B em 28/10, jogando o estado
      v2 em Node): `npcTurno` não é campo do estado do jogo — o App guarda-o
      num ref e, no load, deriva-o das fichas (`retomarContador`). Sem ele, o
      registo somava 1 a `undefined` e gravava `NaN` em `ultimaVez`. Ausente,
      deriva-se como o load deriva. */
   {
-    const s = aplicarORegisto({ personagem: { nome: "Vera" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: { Hilda: { nome: "Hilda", ultimaVez: 7, conhecidoEm: 1 } }, dia: 3 },
+    const s = NM.aplicarORegisto({ personagem: { nome: "Vera" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: { Hilda: { nome: "Hilda", ultimaVez: 7, conhecidoEm: 1 } }, dia: 3 },
       { narrativa: "x", mudancas: { npcs: [{ nome: "Brann Ferro", papel: "ferreiro" }] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } });
     t("sem npcTurno no estado, o contador sai das fichas (nunca NaN)", s.estado.npcTurno === 8 && s.estado.npcs["Brann Ferro"] && s.estado.npcs["Brann Ferro"].ultimaVez === 8, JSON.stringify(s.estado.npcs["Brann Ferro"]));
   }
   t("o contexto do nome é o do App: a base do jogo e a metade do nome", JSON.stringify(contextoDoNomeCom({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], aqui: ["a"], heroi: "h" }, { local: "L", genero: "ela", papel: "p", notas: "n", status: "vivo" })) === JSON.stringify({ importantes: [1], conhecidos: [2], recentes: [3], grupo: [4], local: "L", genero: "ela", papel: "p", notas: "n · vivo", aqui: ["a"], heroi: "h" }));
   /* a fiação: o App chama o registo no lugar dos dois blocos */
   /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
-  t("o App chama o registo e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { canone: { "a torre": { tipo: "artefato" } }, npcs: [{ nome: "Brann" }] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.efeitos.some((e) => e.tipo === "canone") && !!s.estado.npcs["Brann"]; })());
+  t("o App chama o registo e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = NM.aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { canone: { "a torre": { tipo: "artefato" } }, npcs: [{ nome: "Brann" }] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.efeitos.some((e) => e.tipo === "canone") && !!s.estado.npcs["Brann"]; })());
   t("o cânone e a gente já não moram no App", !/let canoneDoNarrador = resp\.mudancas\.canone;/.test(APP) && !/npcTurnoRef\.current \+= 1;/.test(APP));
   t("o contextoDoNome do App é a base mais a metade do motor", /const contextoDoNome = \(n\) => contextoDoNomeCom\(baseDoNome\(\), n\);/.test(APP));
 }
@@ -274,7 +276,7 @@ sec("7. o mapa e o lugar dito, byte a byte (T1-A, 3.ª fatia)");
   for (let i = 0; i < CM.length; i++) {
     const c = JSON.parse(JSON.stringify(CM[i]));
     semearACasa(c.semente);
-    const s = aplicarOMapa(c.estado, c.resp, c.ctx);
+    const s = NM.aplicarOMapa(c.estado, c.resp, c.ctx);
     const A = oAppDoMeio(c);
     oAppAplica(A, s.efeitos);
     const F = DM.casos[i].fotos;
@@ -293,18 +295,18 @@ sec("7. o mapa e o lugar dito, byte a byte (T1-A, 3.ª fatia)");
   {
     /* a cerimónia: a primeira pisada e a faixa, as duas */
     let novo = 0, faixa = 0;
-    for (const c0 of CM) { const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente); const s = aplicarOMapa(c.estado, c.resp, c.ctx); if (s.efeitos.some((e) => e.tipo === "lugarNovo")) novo++; if (s.efeitos.some((e) => e.tipo === "chegada")) faixa++; }
+    for (const c0 of CM) { const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente); const s = NM.aplicarOMapa(c.estado, c.resp, c.ctx); if (s.efeitos.some((e) => e.tipo === "lugarNovo")) novo++; if (s.efeitos.some((e) => e.tipo === "chegada")) faixa++; }
     t(`…a cerimónia da chegada: ${novo} primeiras pisadas, ${faixa} faixas`, novo >= 20 && faixa >= 20);
   }
   /* pureza e forma */
   const c = JSON.parse(JSON.stringify(CM[3]));
   const antes = JSON.stringify(c);
-  semearACasa(c.semente); const a = aplicarOMapa(c.estado, c.resp, c.ctx);
+  semearACasa(c.semente); const a = NM.aplicarOMapa(c.estado, c.resp, c.ctx);
   t("o que entra sai intacto", JSON.stringify(c) === antes);
   t("{ estado, efeitos, paraOCronista, msgs }, efeitos por tipo", a.estado && Array.isArray(a.efeitos) && a.efeitos.every((e) => e && typeof e.tipo === "string") && Array.isArray(a.paraOCronista) && Array.isArray(a.msgs));
-  t("a chegada não leva relógio (a chave da faixa é do App)", CM.every((k) => { const x = JSON.parse(JSON.stringify(k)); semearACasa(x.semente); return aplicarOMapa(x.estado, x.resp, x.ctx).efeitos.filter((e) => e.tipo === "chegada").every((e) => !("chave" in e.chegada)); }));
-  t("sem mudanças, nada anda", (() => { const s = aplicarOMapa({ mapa: { cidades: [] } }, { narrativa: "x" }, {}); return s.efeitos.length === 0 && !s.msgs.length; })());
-  t("lixo não estoura (sem mudanças)", !!aplicarOMapa(null, null, null));
+  t("a chegada não leva relógio (a chave da faixa é do App)", CM.every((k) => { const x = JSON.parse(JSON.stringify(k)); semearACasa(x.semente); return NM.aplicarOMapa(x.estado, x.resp, x.ctx).efeitos.filter((e) => e.tipo === "chegada").every((e) => !("chave" in e.chegada)); }));
+  t("sem mudanças, nada anda", (() => { const s = NM.aplicarOMapa({ mapa: { cidades: [] } }, { narrativa: "x" }, {}); return s.efeitos.length === 0 && !s.msgs.length; })());
+  t("lixo não estoura (sem mudanças)", !!NM.aplicarOMapa(null, null, null));
   /* o lugar dito, sozinho: a régua que o Mestre e o Cronista dividem */
   const lugar = { nome: "a fazenda de Jessa", cidade: "Monte Rasa", distancia: "arredores" };
   const r1 = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades: [] }, dia: 2 }, "a fazenda de Jessa", "mestre", {});
@@ -316,7 +318,7 @@ sec("7. o mapa e o lugar dito, byte a byte (T1-A, 3.ª fatia)");
   t("na luta, o lugar dito é ignorado em silêncio", (() => { const r = registrarOLugar({ cidadeAtual: "Monte Rasa", lugar: null, mapa: { cidades: [] }, combate: { inimigos: [] } }, "a torre", "cronista", {}); return !r.mudou && !r.aviso && !r.paraOCronista.length; })());
   /* a fiação: o App chama o bloco no lugar dele, e o seu registrarLugar é a régua do motor */
   /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
-  t("o App chama o mapa e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { cidade_atual: "Vau" } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.cidadeAtual === "Vau" && s.efeitos.some((e) => e.tipo === "lugarNovo"); })());
+  t("o App chama o mapa e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = NM.aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { cidade_atual: "Vau" } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.cidadeAtual === "Vau" && s.efeitos.some((e) => e.tipo === "lugarNovo"); })());
   t("o mapa já não mora no App", !/const abreAMasmorraAgora = \(\(\) => \{/.test(APP) && !/mp\.cidades\.push\(criarCidade\(cd\.nome, cd\)\); msgs\.push/.test(APP));
   t("o registrarLugar do App é a régua do motor", /const r = registrarOLugar\(\{/.test(APP) && !/lido = lerLugarDito\(nome,/.test(APP));
 }
@@ -341,7 +343,7 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
     const est = () => ({ personagem: A.pers, fichaDoRef: A.fichaDoRef, mapa: A.mapa, cidadeAtual: A.cidadeAtual, lugar: A.lugar, jornada: A.jornada, faccaoJogador: A.faccaoJogador,
       devocao: A.devocao, divindade: A.divindade, combate: A.combate, acampado: c.estado.acampado, masmorra: c.estado.masmorra, raid: c.estado.raid, espinha: c.estado.espinha,
       ultimoPedido: c.estado.ultimoPedido, dia: c.estado.dia, eventos: A.eventos, historia: A.historia, contadores: c.estado.contadores, nivelDaFama: c.estado.nivelDaFama });
-    for (const [nome, peca] of [["mapa", aplicarOMapa], ["missoes", aplicarAsMissoes], ["sinais", aplicarOsSinais]]) {
+    for (const [nome, peca] of [["mapa", NM.aplicarOMapa], ["missoes", NM.aplicarAsMissoes], ["sinais", NM.aplicarOsSinais]]) {
       const s = peca(est(), c.resp, ctx);
       msgs.push(...s.msgs); nota = notaComOTurno(nota, s.paraOCronista);
       oAppAplica(A, s.efeitos);
@@ -370,8 +372,8 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
   {
     let virou = 0, ficha = 0, porta = 0, raid = 0;
     for (const c0 of CM) { const c = JSON.parse(JSON.stringify(c0)); semearACasa(c.semente); const ctx = ctxDoCaso(c);
-      const mi = aplicarAsMissoes({ eventos: c.estado.eventos, historia: c.estado.historia, dia: c.estado.dia }, c.resp, ctx); if (mi.efeitos.some((e) => e.tipo === "remontarPrompt")) virou++;
-      const si = aplicarOsSinais({ ...c.estado }, c.resp, ctx); if (si.efeitos.some((e) => e.tipo === "ficha")) ficha++; if (si.efeitos.some((e) => e.tipo === "sinalMasmorra")) porta++; if (si.efeitos.some((e) => e.tipo === "sinalRaid")) raid++; }
+      const mi = NM.aplicarAsMissoes({ eventos: c.estado.eventos, historia: c.estado.historia, dia: c.estado.dia }, c.resp, ctx); if (mi.efeitos.some((e) => e.tipo === "remontarPrompt")) virou++;
+      const si = NM.aplicarOsSinais({ ...c.estado }, c.resp, ctx); if (si.efeitos.some((e) => e.tipo === "ficha")) ficha++; if (si.efeitos.some((e) => e.tipo === "sinalMasmorra")) porta++; if (si.efeitos.some((e) => e.tipo === "sinalRaid")) raid++; }
     t(`…o arco que vira (${virou}), a ficha que o milagre muda (${ficha}), a porta da masmorra (${porta}), o chamado da raid (${raid})`, virou >= 5 && ficha >= 5 && porta >= 3 && raid >= 3);
   }
   /* as regras sozinhas — o que os botões e o Cronista também chamam */
@@ -382,7 +384,7 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
   {
     /* a magnitude do sinal sai da tabela (MAGNITUDE_FE · fieisPorFeito), multiplicada pela fama */
     const cont = { combatesVencidos: 10 };
-    const s = aplicarOsSinais({ personagem: { nivel: 15 }, divindade: { despertar: true, fieis: 0, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 1, contadores: cont, nivelDaFama: 1 }, { narrativa: "x", mudancas: { sinais: ["fe:proeza"] } }, {});
+    const s = NM.aplicarOsSinais({ personagem: { nivel: 15 }, divindade: { despertar: true, fieis: 0, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 1, contadores: cont, nivelDaFama: 1 }, { narrativa: "x", mudancas: { sinais: ["fe:proeza"] } }, {});
     /* MOVIDA (28/10, T1-A 4.ª fatia, o defeito 4 de 28/10): a fama era a do
        nível 1 em todo turno — o `nivelDaFama` vinha do `personagem` do render,
        nulo dentro do useCallback do aplicarResposta. Agora sai do nível da
@@ -401,7 +403,7 @@ sec("8. o meio inteiro — as dádivas, o mapa, as missões e os sinais, byte a 
   t("as dádivas pendentes saem todas, cada uma com linha e envelope", dd.personagem.dadivasPendentes === 0 && dd.msgs.length === 2 && dd.notas.length === 2);
   /* a fiação */
   /* MOVIDA (28/10, T1-A 3.ª fatia, a fusão): o App já não chama a peça; chama `aplicarOTurno`, que a corre na ordem de lá (a secção 9 prova a ordem byte a byte) — aqui fica a fiação nova e a prova, jogando, de que a peça corre dentro do turno */
-  t("o App chama as missões e os sinais e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { evento_global_encerrar: true, sinais: ["fe:feito"] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.eventos.global === null && s.msgs.some((m) => /fiéis/.test(m)); })());
+  t("o App chama as missões e os sinais e aplica os efeitos no mesmo lugar", /aplicarOsEfeitos\(saida\)/.test(corpoAR) && (() => { const s = NM.aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: { cidades: [{ nome: "Vau", populacao: 100, bioma: "costa" }], faccoes: [], rotas: [] }, canone: {}, npcs: {}, npcTurno: 0, devocao: {}, eventos: { global: { nome: "A Praga" } }, historia: {}, divindade: { despertar: true, fieis: 10, pf: 0 }, contadores: {}, nivelDaFama: 1, dia: 1 }, { narrativa: "x", mudancas: { evento_global_encerrar: true, sinais: ["fe:feito"] } }, { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } }); return s.estado.eventos.global === null && s.msgs.some((m) => /fiéis/.test(m)); })());
   /* MOVIDA NA FASE 4, trilha A (29/10), com o motivo: a fé (ganharFe) e o
      arco (marcarNoArco) saíram do App para a fábrica dos órgãos do depois
      (src/motor/depois-do-turno.js, portas também do Cronista), e o texto do
@@ -439,7 +441,7 @@ sec("9. o turno numa ordem só — a fusão, byte a byte (T1-A, 3.ª fatia)");
   const turnoNoMotor = (c) => {
     const ctx = ctxDoTurno(c);
     ctx.sorte = ctx.sorteDoTurno("salvaguarda");
-    const s = aplicarOTurno(c.estado, c.resp, ctx);
+    const s = NM.aplicarOTurno(c.estado, c.resp, ctx);
     const A = oAppDoMeio(c);
     Object.assign(A, { npcTurno: c.estado.npcTurno, textura: {}, danoJaAplicado: c.estado.danoJaAplicado, habUsada: c.estado.habUsada });
     oAppAplica(A, s.efeitos);
@@ -474,7 +476,7 @@ sec("9. o turno numa ordem só — a fusão, byte a byte (T1-A, 3.ª fatia)");
       semearACasa(c.semente);
       const ctx = ctxDoTurno(c); ctx.sorte = ctx.sorteDoTurno("salvaguarda");
       ctx.baseDoNome = () => baseDoNomeDoCaso({ mapa: c.estado.mapa, cidadeAtual: c.estado.cidadeAtual, lugar: c.estado.lugar, ficha: c.estado.fichaDoRef });
-      const s = aplicarOTurno(c.estado, c.resp, ctx);
+      const s = NM.aplicarOTurno(c.estado, c.resp, ctx);
       const A = oAppDoMeio(c); Object.assign(A, { npcTurno: c.estado.npcTurno, textura: {}, danoJaAplicado: c.estado.danoJaAplicado, habUsada: c.estado.habUsada });
       oAppAplica(A, s.efeitos);
       if ("danoJaAplicado" in s.estado) A.danoJaAplicado = s.estado.danoJaAplicado;
@@ -484,8 +486,8 @@ sec("9. o turno numa ordem só — a fusão, byte a byte (T1-A, 3.ª fatia)");
     }
     t(`…e morde: com a base do nome lida dos refs de antes do turno, ${partem} turnos partem`, partem > 0);
   }
-  t("sem ficha, não há turno", aplicarOTurno({ personagem: null }, { narrativa: "x" }, {}).semFicha === true);
-  t("uma peça que estoura vira `calou` e o turno segue", (() => { const s = aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: null }, { narrativa: "x", mudancas: { cidade_atual: "Vau" } }, {}); return s.efeitos.some((e) => e.tipo === "calou" && e.onde === "o mapa do turno") && !!s.estado.personagem; })());
+  t("sem ficha, não há turno", NM.aplicarOTurno({ personagem: null }, { narrativa: "x" }, {}).semFicha === true);
+  t("uma peça que estoura vira `calou` e o turno segue", (() => { const s = NM.aplicarOTurno({ personagem: { nome: "Vera", vida: 5, vidaMax: 10, grupo: [], efeitos: [], condicoes: [] }, mapa: null }, { narrativa: "x", mudancas: { cidade_atual: "Vau" } }, {}); return s.efeitos.some((e) => e.tipo === "calou" && e.onde === "o mapa do turno") && !!s.estado.personagem; })());
   /* a fiação: o App chama o turno uma vez e aplica os efeitos uma vez */
   /* MOVIDA (28/10, T1-A 4.ª fatia): o fim do turno (o códex, a chegada, o
      portão) também saiu para o motor e tem as suas chamadas a
@@ -509,7 +511,7 @@ sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)")
      `setPersonagem(pers)` logo abaixo apagava-o — a tela dizia "Já está na
      sua mochila" e o save ficava com o equipamento vazio */
   {
-    const s = aplicarOTurno(estadoDoTurno(), { narrativa: "x", mudancas: { sinais: ["loot:raro"] } }, ctxDoTurno());
+    const s = NM.aplicarOTurno(estadoDoTurno(), { narrativa: "x", mudancas: { sinais: ["loot:raro"] } }, ctxDoTurno());
     const achado = (s.msgs.find((m) => /◆ Achado/.test(m)) || "").replace(/^◆ Achado: /, "").replace(/ \(.*$/, "");
     t("o achado do sinal está na ficha do turno (a que o App grava)", !!achado && (s.estado.personagem.equipamento || []).some((it) => it.nome === achado));
     t("…e não depende de uma função atualizadora que a ficha do turno sobrescreve", !s.efeitos.some((e) => e.tipo === "loot"));
@@ -517,7 +519,7 @@ sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)")
   /* o mesmo, no milagre do sinal: a cura saía sobre a ficha do ref, e a
      ficha do turno (sem a cura) era a que ficava */
   {
-    const s = aplicarOTurno(estadoDoTurno(), { narrativa: "x", mudancas: { sinais: ["milagre:cura", "loot:comum"] } }, ctxDoTurno());
+    const s = NM.aplicarOTurno(estadoDoTurno(), { narrativa: "x", mudancas: { sinais: ["milagre:cura", "loot:comum"] } }, ctxDoTurno());
     const p = s.estado.personagem;
     const doMilagre = s.efeitos.filter((e) => e.tipo === "ficha").map((e) => e.personagem);
     t("a cura do milagre do sinal está na ficha do turno", p.vida > heroi().vida && doMilagre.length === 1 && doMilagre[0].vida === p.vida);
@@ -536,16 +538,16 @@ sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)")
       { nome: "Vila Funda", x: 46, y: 44, tipo: "vila", regiao: "Vale", descoberta: false },
     ], faccoes: [], regioes: [{ nome: "Vale", bioma: "planicie", cx: 42, cy: 42 }] };
     const est = { personagem: heroi(), mapa: mapa0, cidadeAtual: "Monte Rasa", lugar: null, jornada: { de: "Monte Rasa", para: "Baixo do Vigia", desde: 1 }, devocao: { cidades: {}, andarilhos: 0 }, dia: 3 };
-    const ida = aplicarOMapa(est, { narrativa: "x", mudancas: { cidade_atual: "Baixo do Vigia", mapa_cidades: [{ nome: "Torre Branca", tipo: "fortaleza", regiao: "Vale" }] } }, {});
+    const ida = NM.aplicarOMapa(est, { narrativa: "x", mudancas: { cidade_atual: "Baixo do Vigia", mapa_cidades: [{ nome: "Torre Branca", tipo: "fortaleza", regiao: "Vale" }] } }, {});
     const aqui = ida.estado.mapa.cidades.find((c) => c.nome === "Baixo do Vigia");
     t("a cidade onde se chega fica descoberta e pisada, com as cidades do Mestre no mesmo turno", aqui.descoberta === true && aqui.pisada === true && ida.estado.mapa.cidades.some((c) => c.nome === "Torre Branca"));
     t("…e a névoa da vizinhança que ela abriu fica aberta", ida.msgs.some((m) => /fica sabendo de/.test(m)) && ida.estado.mapa.cidades.find((c) => c.nome === "Vila Funda").descoberta !== false);
     t("…e a primeira pisada abre a cerimónia uma vez", ida.efeitos.some((e) => e.tipo === "lugarNovo"));
-    const sai = aplicarOMapa({ ...est, ...ida.estado, jornada: null }, { narrativa: "x", mudancas: { cidade_atual: "Monte Rasa" } }, {});
-    const volta = aplicarOMapa({ ...est, ...sai.estado, jornada: null }, { narrativa: "x", mudancas: { cidade_atual: "Baixo do Vigia", mapa_cidades: [{ nome: "Torre Branca", notas: "a torre" }] } }, {});
+    const sai = NM.aplicarOMapa({ ...est, ...ida.estado, jornada: null }, { narrativa: "x", mudancas: { cidade_atual: "Monte Rasa" } }, {});
+    const volta = NM.aplicarOMapa({ ...est, ...sai.estado, jornada: null }, { narrativa: "x", mudancas: { cidade_atual: "Baixo do Vigia", mapa_cidades: [{ nome: "Torre Branca", notas: "a torre" }] } }, {});
     t("…e na volta é a faixa da chegada, não a cerimónia de novo", volta.efeitos.some((e) => e.tipo === "chegada") && !volta.efeitos.some((e) => e.tipo === "lugarNovo"));
     /* a cidade nova do Mestre, dita e pisada no mesmo turno: entra no mapa e é pisada */
-    const nova = aplicarOMapa(est, { narrativa: "x", mudancas: { cidade_atual: "Torre Branca", mapa_cidades: [{ nome: "Torre Branca", tipo: "fortaleza", regiao: "Vale" }] } }, {});
+    const nova = NM.aplicarOMapa(est, { narrativa: "x", mudancas: { cidade_atual: "Torre Branca", mapa_cidades: [{ nome: "Torre Branca", tipo: "fortaleza", regiao: "Vale" }] } }, {});
     const tb = nova.estado.mapa.cidades.find((c) => c.nome === "Torre Branca");
     const cer = (nova.efeitos.find((e) => e.tipo === "lugarNovo") || {}).cidade || {};
     t("a cidade que o Mestre registra e o herói pisa no mesmo turno fica pisada, e a cerimónia tem a ficha dela", tb && tb.pisada === true && cer.tipo === "fortaleza");
@@ -557,7 +559,7 @@ sec("10. os defeitos da fila de antes, consertados no motor (T1-A, 4.ª fatia)")
   {
     const cont = { combatesVencidos: 4 };
     const fe = (nivel) => {
-      const s = aplicarOTurno(estadoDoTurno({ personagem: { ...heroi(), nivel }, contadores: cont, nivelDaFama: 1 }), { narrativa: "x", mudancas: { sinais: ["fe:marco"] } }, ctxDoTurno());
+      const s = NM.aplicarOTurno(estadoDoTurno({ personagem: { ...heroi(), nivel }, contadores: cont, nivelDaFama: 1 }), { narrativa: "x", mudancas: { sinais: ["fe:marco"] } }, ctxDoTurno());
       const m = s.msgs.find((x) => /fiéis/.test(x)) || "";
       return +(m.match(/\+([\d.]+) fiéis/) || [0, "0"])[1].replace(/\./g, "");
     };

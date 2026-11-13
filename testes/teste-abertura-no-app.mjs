@@ -7,6 +7,8 @@
    o motor (nunca em número de linha), e refaz em Node a conta que o App
    faz — a mesma semente e o mesmo turno abrem à mesma distância.
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { readFileSync } from "node:fs";
 import { montarGrade, posicionar, distanciaQuadrados, ABERTURA_DA_LUTA } from "../src/grid.js";
 import { rng, hashSemente } from "../src/semente.js";
@@ -48,7 +50,7 @@ sec("2. quem abre a luta diz como ela abriu");
   {
     const { oPerigoDaResposta } = await import("../src/motor/fecho-da-resposta.js");
     const abriu = [];
-    oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, { aplicar: () => {}, abrirCombate: (ins, o) => { abriu.push(o.situacao); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: () => {} });
+    NM.oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, { aplicar: () => {}, abrirCombate: (ins, o) => { abriu.push(o.situacao); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: () => {} });
     t("a emboscada do perigo abre como `emboscada`", abriu.length === 1 && abriu[0] === "emboscada" && /oPerigoDaResposta\(\{[^}]*\}, portasDoFecho\(\)\)/.test(APP) && /sorteDoTurno, abrirCombate, dispararPerigo,/.test(APP));
   }
   /* MOVIDA (trilha A, 29/10), E O MOTIVO: a emboscada devida da virada e a da volta ao território (`revelarAVirada`, `talvezVoltarAoTerritorio`) saíram do App: o trecho de `enviar` da frase às bocas mudou-se para src/motor/preludio-do-turno.js (oPreludioDoTurno) com as funções que só ele chamava; o mesmo código à letra está provado lá, byte a byte contra o recorte do App, em teste-motor-preludio-do-turno.mjs (335 casos, e a cadeia até à rede), e o texto do motor não se lê (teste-assercoes-de-texto). Ficam no App o bando da fuga que volta e a emboscada da viagem. */

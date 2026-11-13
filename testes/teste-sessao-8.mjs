@@ -99,7 +99,7 @@ sec("1. a revelação não cede à pergunta (M59–M61)");
 sec("2. o golpe na companheira (M39–M42)");
 {
   const { mostrado, m39, m41, mostradoM41 } = R8.alvo;
-  const o = { presentes: [], grupo: [{ nome: "Freya" }], recentes: mostrado, mostrado };
+  const o = { modoDoNarrador: "mestre", presentes: [], grupo: [{ nome: "Freya" }], recentes: mostrado, mostrado };
   const a39 = A.lerAgressao(m39, o) || {};
   t("M39: o alvo NÃO é Ursa (era: a criatura «Ursa», sem cartão)", a39.nome && !/ursa/i.test(a39.nome) && !a39.criatura, JSON.stringify(a39));
   t("M39: «a que leva a corrente» é quem o Mestre pôs armado — a sombra da corrente", a39.tipo === "agressao" && a39.nome === "Sombra da corrente" && a39.armadoNaProsa === true, JSON.stringify(a39));
@@ -110,10 +110,11 @@ sec("2. o golpe na companheira (M39–M42)");
   t("…e quem está na cena com nome de bicho é gente, salvo o bicho com artigo", A.criaturaMostrada("ataco o lobo", ["Lobo ri de você."], [], [{ nome: "Lobo Ferreira" }]) === null && !!A.criaturaMostrada("ataco o lobo", ["Lobo ri. O lobo cinzento rosna."], [], [{ nome: "Lobo Ferreira" }]));
   t("NOME_NAO_E_BICHO é tabela (os determinantes)", Array.isArray((A.NOME_NAO_E_BICHO || {}).determinantes) && A.NOME_NAO_E_BICHO.determinantes.includes("a"));
   t("«o do archote» também se descreve pela arma", (armadoDescrito("Ataco o do archote antes que fuja.", mostrado) || {}).nome === "Sombra do archote");
-  t("«ataco-o com a espada» não é descrição: o «o» é pronome", A.lerAgressao("Ataco-o com a espada.", { presentes: [{ nome: "Doran", relacao: "inimigo" }], mostrado: ["Doran saca a espada."], recentes: ["Doran saca a espada."] }).nome === "Doran");
+  /* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta prova mede o que a porta ABERTA faz — o comportamento de antes —, logo diz o «mestre» (a reserva da tabela); o padrão novo prova-se em teste-nada-entra-pelo-ator §10. */
+  t("«ataco-o com a espada» não é descrição: o «o» é pronome", A.lerAgressao("Ataco-o com a espada.", { modoDoNarrador: "mestre", presentes: [{ nome: "Doran", relacao: "inimigo" }], mostrado: ["Doran saca a espada."], recentes: ["Doran saca a espada."] }).nome === "Doran");
   t("sem a arma na prosa do Mestre, a descrição não inventa ninguém", armadoDescrito("Ataco a que leva a lança.", mostrado) === null);
   /* M41: o recuo */
-  t("M41: «foi um engano… peço desculpa» não é ataque (era: reabria a luta contra Ursa)", A.lerAgressao(m41, { ...o, recentes: mostradoM41, mostrado: mostradoM41 }) === null && !A.ehDeclaracaoDeAtaque(m41));
+  t("M41: «foi um engano… peço desculpa» não é ataque (era: reabria a luta contra Ursa)", A.lerAgressao(m41, { modoDoNarrador: "mestre", ...o, recentes: mostradoM41, mostrado: mostradoM41 }) === null && !A.ehDeclaracaoDeAtaque(m41));
   t("…o recuo é tabela", A.NAO_E_AGRESSAO.some((n) => n.id === "recuo"));
   t("…e só a oração do recuo cai: «Foi engano. Agora ataco o guarda.» é ataque", A.ehDeclaracaoDeAtaque("Foi engano. Agora ataco o guarda."));
   /* quem anda comigo */
@@ -123,7 +124,7 @@ sec("2. o golpe na companheira (M39–M42)");
   const card = CR.veredictoDoCrime(nomeado, { npcs: {}, presentes: [], grupo: [{ nome: "Freya" }] }, {});
   t("…e o cartão vem antes, mesmo fora da cidade (o modelo do cartão de Falk)", /anda com você/.test(card) && card.startsWith("Ursa o Andarilho"), card);
   t("…a frase do cartão é tabela", typeof CR.VEREDITO_DE_QUEM_ANDA_COMIGO === "string" && CR.VEREDITO_DE_QUEM_ANDA_COMIGO.includes("{nome}"));
-  const porPronome = A.lerAgressao("Avanço para socá-la.", { ...oc, presentes: [{ nome: "Ursa o Andarilho", relacao: "neutro" }], mostrado: [], recentes: ["Ursa o Andarilho ri de você."] }) || {};
+  const porPronome = A.lerAgressao("Avanço para socá-la.", { modoDoNarrador: "mestre", ...oc, presentes: [{ nome: "Ursa o Andarilho", relacao: "neutro" }], mostrado: [], recentes: ["Ursa o Andarilho ri de você."] }) || {};
   t("por pronome, quem anda comigo é recusado como o grupo (nunca resolvido por descrição)", porPronome.tipo === "companheiro", JSON.stringify(porPronome));
   t("M39 com Ursa a andar comigo: o alvo continua a ser a sombra da corrente", (A.lerAgressao(m39, oc) || {}).nome === "Sombra da corrente");
   t("o inimigo de sempre não ganha cartão de companheiro", !CR.veredictoDoCrime({ tipo: "agressao", nome: "Rufino" }, { npcs: { Rufino: { relacao: "inimigo" } } }, {}));

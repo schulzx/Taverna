@@ -10,6 +10,8 @@ import {
   PESO_DA_IMPORTANCIA, importanciaDe, ordemDaImportancia, ordemDaRecencia, resumoNPCsParaPrompt,
   criarNPC, firmarLaco, TETO_DAS_PESSOAS,
 } from "../src/npcs.js";
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { resumoCenaPrompt, TETO_DO_QUEM } from "../src/cena.js";
 import { formatarCanone, TETO_DO_CANONE, montarSystemPrompt } from "../src/prompt.js";
 import { elencoDoMundo, elencoParaPovoar, PARA_POVOAR, ESTREIA_POR_FONTE } from "../src/elenco.js";
@@ -196,7 +198,7 @@ sec("6. as duas contradições antigas, pelo que o código faz");
      outra metade, a entrada com esse nome, segue no App. */
   {
     const { aplicarOsSinais } = await import("../src/motor/meio-do-turno.js");
-    const r = aplicarOsSinais({ personagem: { nivel: 3 }, mapa: { cidades: [] }, cidadeAtual: "", lugar: null, jornada: { de: "x" }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["masmorra:o Poço das Vozes"] } }, {});
+    const r = NM.aplicarOsSinais({ personagem: { nivel: 3 }, mapa: { cidades: [] }, cidadeAtual: "", lugar: null, jornada: { de: "x" }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["masmorra:o Poço das Vozes"] } }, {});
     t("o código: o sinal masmorra:<nome> gera a área que o Narrador nomeou", r.efeitos.some((e) => e.tipo === "sinalMasmorra" && e.nome === "o Poço das Vozes") && /entrarMasmorra\(nomeMm[,)]/.test(APP) && /else if \(ef\.tipo === "sinalMasmorra"\) sinalMasmorraRef\.current = ef\.nome;/.test(APP));
   }
   t("o prompt já não manda semear chefes", !/semeie chefes ocultos/.test(P));

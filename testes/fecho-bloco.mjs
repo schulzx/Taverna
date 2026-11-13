@@ -184,8 +184,11 @@ export function dublesDoFecho(k, { novo, sorte, extras }) {
   const S = {
     ...osModulos({ novo }),
     /* NE3 (13/11): o App passa o modo do Narrador à peça (MODO_DA_MESA, o
-       padrão da tabela fora do Vite); o recorte lê-o do escopo, como lá. */
-    MODO_DA_MESA: oModoDoNarrador(),
+       padrão da tabela fora do Vite); o recorte lê-o do escopo, como lá.
+       NE7 (13/11): o padrão virou o «boca» (portas fechadas), e o recorte
+       mede o App de ANTES, que abria tudo — logo o «mestre» dito, como o de
+       então. A régua do padrão novo é teste-nada-entra-pelo-ator §10. */
+    MODO_DA_MESA: oModoDoNarrador("mestre"),
     combateRef: ref(copia(k.combate)), folegoRef: ref(copia(k.folego)), notaRef: ref(k.notaAntes), texturaRef: ref(copia(k.texturaAntes)),
     mesaRef: ref(copia(k.mesaAntes)), lugarRef: ref(copia(k.lugar)), cidadeAtualRef: ref("Vila do Sul"), diaRef: ref(k.dia), contRef: ref(copia(k.contAntes)),
     pushMsgs: (xs) => log.tela.push(copia(xs)), setPersonagem: (p) => log.fichas.push(copia(p)), calou: (onde, e) => log.calados.push([onde, String(e && e.message)]),

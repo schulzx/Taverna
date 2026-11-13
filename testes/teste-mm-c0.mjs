@@ -53,7 +53,8 @@ sec("1b. o alvo do golpe sai do que o Mestre mostrou (M36–M39)");
   const M36 = "Dário da Cova ergue o rosto, e pela primeira vez os olhos dele parecem menos cansados. \"Se é para ver morto, tem um cão sem pelo que anda pela paliçada norte desde a noite passada. Ronda a casa de Nira, o coveiro. Ele não dorme.\"";
   const M39 = "Você ergue o cajado, e a manhã parece prender a respiração. O cão sem pelo não avança: ele se move um passo para o lado, lento, as costelas subindo e descendo sob a pele cinzenta.";
   const recentes = [M36, "Fico em guarda, de cajado erguido.", M39];
-  const ler = (txt, mostrado) => A.lerAgressao(txt, { presentes, grupo, recentes, mostrado });
+  /* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta prova mede o que a porta ABERTA faz — o comportamento de antes —, logo diz o «mestre» (a reserva da tabela); o padrão novo prova-se em teste-nada-entra-pelo-ator §10. */
+  const ler = (txt, mostrado) => A.lerAgressao(txt, { modoDoNarrador: "mestre", presentes, grupo, recentes, mostrado });
   /* a frase da sessão: o "ele" ia ao último nome citado, Dário */
   const a1 = ler("Ataco o cão sem pelo antes que ele avance.", [M36, M39]);
   t("\"Ataco o cão sem pelo antes que ele avance\" vai ao cão, não a Dário", a1 && a1.tipo === "agressao" && a1.criatura && /^c[aã]o sem pelo$/i.test(a1.nome), J(a1));
@@ -66,7 +67,7 @@ sec("1b. o alvo do golpe sai do que o Mestre mostrou (M36–M39)");
   /* sem `mostrado` (o App de antes), o pronome vai ao último nome citado na
      conversa — Nira, a última nomeada no M36: é o defeito, preso aqui para
      se ver que a ordem nova só vale com o que o Mestre mostrou na mão */
-  const antes = A.lerAgressao("Ataco o cão sem pelo antes que ele avance.", { presentes, grupo, recentes }) || {};
+  const antes = A.lerAgressao("Ataco o cão sem pelo antes que ele avance.", { modoDoNarrador: "mestre", presentes, grupo, recentes }) || {};
   t("sem o que o Mestre mostrou, o comportamento de antes (uma pessoa pelo pronome)", antes.tipo === "agressao" && !antes.criatura && ["Nira", "Dário da Cova"].includes(antes.nome), J(antes));
   t("o bicho que o Mestre NÃO mostrou não nasce da frase", (ler("Ataco o dragão.", [M39]) || {}).tipo === "semAlvoConhecido");
   t("o bicho do marco empresta nome e ameaça", J(A.criaturaMostrada("enfrento o cão", ["um Cão sem pelo"], [{ nome: "cão sem pelo", ameaca: "fraco" }])) === J({ nome: "cão sem pelo", ameaca: "fraco", criatura: true }));

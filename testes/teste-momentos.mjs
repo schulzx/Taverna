@@ -1,3 +1,5 @@
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 /* OS MOMENTOS QUE VALEM CENA (v9.163)
 
    O jogo tinha três acontecimentos raros que passavam como linha de
@@ -60,7 +62,7 @@ sec("2. O ESPÓLIO REVELADO — raro para cima, e só");
      lendário passaria batido também */
   t("a revelação existe", /function RevelacaoDoEspolio\(\{ item, fechar \}\)/.test(APP));
   /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O sinal do achado (`loot`) mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
-  const achado = (rar) => aplicarOsSinais({ personagem: { nivel: 5 }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["loot:" + rar] } }, {}).efeitos;
+  const achado = (rar) => NM.aplicarOsSinais({ personagem: { nivel: 5 }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["loot:" + rar] } }, {}).efeitos;
   t("só raro para cima a abre", !achado("comum").some((e) => e.tipo === "espolio") && achado("lendario").some((e) => e.tipo === "espolio") && /else if \(ef\.tipo === "espolio"\) setEspolioRevelado\(ef\.item\);/.test(APP));
   t("a cor é a da raridade, da tabela de sempre", /const cor = RARIDADE_COR\[item\.raridade\]/.test(APP));
   /* v9.179 (`momento-loot-epico-v2`): a lista de poderes saiu de dentro do
@@ -86,7 +88,7 @@ sec("2. O ESPÓLIO REVELADO — raro para cima, e só");
      o item — a revelação dizia "Já está na sua mochila" e a mochila estava
      vazia. Agora o item entra na ficha do TURNO, a que o App grava; a prova é
      que o item da revelação está nela, e que já não há função atualizadora) */
-  const sl = aplicarOsSinais({ personagem: { nivel: 5 }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["loot:lendario"] } }, {});
+  const sl = NM.aplicarOsSinais({ personagem: { nivel: 5 }, mapa: { cidades: [] }, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["loot:lendario"] } }, {});
   const revelado = (sl.efeitos.find((e) => e.tipo === "espolio") || {}).item;
   t("o item entra na mochila antes da revelação", !!revelado && (sl.estado.personagem.equipamento || []).includes(revelado) && !/ef.tipo === "loot"/.test(APP));
   t("o brilho pulsa pelo CSS da casa", /\.tv-reliquia \{ animation: tvReliquia/.test(CSS));
@@ -110,7 +112,7 @@ sec("3. A CHEGADA — faixa que se apaga sozinha");
      pelo texto (a catraca da T1-B): a mesma intenção prova-se jogando o
      bloco — a faixa só nasce da troca, e leva os dados da cidade do mapa. */
   {
-    const faixa = (cidadeAtual, dita) => aplicarOMapa({ personagem: { nome: "Vera" }, mapa: MAPA_DA_CHEGADA(), cidadeAtual, lugar: null, jornada: null, devocao: {} },
+    const faixa = (cidadeAtual, dita) => NM.aplicarOMapa({ personagem: { nome: "Vera" }, mapa: MAPA_DA_CHEGADA(), cidadeAtual, lugar: null, jornada: null, devocao: {} },
       { narrativa: "x", mudancas: { cidade_atual: dita } }, {}).efeitos.filter((e) => e.tipo === "chegada" || e.tipo === "lugarNovo");
     t("só a troca de cidade dispara", faixa("Vau Alto", "Vau Alto").length === 0 && faixa("Vau Alto", "vau alto").length === 0 && faixa("Vau Alto", "Pedra Rasa").length === 1);
     const [ch] = faixa("Vau Alto", "Pedra Rasa");
@@ -147,7 +149,7 @@ sec("5. O LUGAR NOVO — a cerimônia da primeira pisada (v9.181)");
      viesse depois de pisar, toda cidade seria "já pisada" e a cerimônia
      nunca abriria. */
   {
-    const chegar = (dita) => { const s = aplicarOMapa({ personagem: { nome: "Vera" }, mapa: MAPA_DA_CHEGADA(), cidadeAtual: "Vau Alto", lugar: null, jornada: null, devocao: {} }, { narrativa: "x", mudancas: { cidade_atual: dita } }, {}); return { ...s, ceri: s.efeitos.find((e) => e.tipo === "lugarNovo"), faixa: s.efeitos.find((e) => e.tipo === "chegada") }; };
+    const chegar = (dita) => { const s = NM.aplicarOMapa({ personagem: { nome: "Vera" }, mapa: MAPA_DA_CHEGADA(), cidadeAtual: "Vau Alto", lugar: null, jornada: null, devocao: {} }, { narrativa: "x", mudancas: { cidade_atual: dita } }, {}); return { ...s, ceri: s.efeitos.find((e) => e.tipo === "lugarNovo"), faixa: s.efeitos.find((e) => e.tipo === "chegada") }; };
     const nova = chegar("Porto Lume");
     const velha = chegar("Pedra Rasa");
     t("a primeira pisada é medida antes de pisar", !!nova.ceri && !nova.faixa && nova.estado.mapa.cidades.find((c) => c.nome === "Porto Lume").pisada === true);

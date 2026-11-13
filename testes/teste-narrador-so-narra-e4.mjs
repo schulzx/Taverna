@@ -96,7 +96,8 @@ sec("2. os cinco usos, e a porta que cobre cada um");
   t("6.ª T47 · mas as garras antes da vez dele não ferem (o perigo sai)", m47.resp.perigo === null && m47.cortes.length === 1 && m47.cortes[0].campo === "perigo");
   /* e hoje o próprio sistema acha o alvo: o lagarto que o Mestre mostrou */
   const M45 = "Você responde sem desviar os olhos do lagarto que desce a parede. Vando assente, e vocês avançam. A tocha estremece quando o lagarto estala a cauda contra o chão e se arremessa.";
-  const a47 = A.lerAgressao("Ataco o lagarto que desceu pela parede, com o cajado, mirando a cabeça dele.", { presentes: [], mostrado: [M45] });
+  /* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta prova mede o que a porta ABERTA faz — o comportamento de antes —, logo diz o «mestre» (a reserva da tabela); o padrão novo prova-se em teste-nada-entra-pelo-ator §10. */
+  const a47 = A.lerAgressao("Ataco o lagarto que desceu pela parede, com o cajado, mirando a cabeça dele.", { modoDoNarrador: "mestre", presentes: [], mostrado: [M45] });
   t("6.ª T47 · hoje o golpe já abre pelo sistema (o bicho que o Mestre mostrou)", a47 && a47.tipo === "agressao" && a47.criatura === true, JSON.stringify(a47));
 
   /* 7.ª T60: o pedido respondido com "não há ninguém" */
@@ -232,9 +233,9 @@ sec("6. o App continua a saber ler (tolerante: a instrução saiu, o leitor fica
     const { oPerigoDaResposta } = await import("../src/motor/fecho-da-resposta.js");
     const portas = [];
     const ctx = { aplicar: () => {}, abrirCombate: (ins, o) => { portas.push("abrir"); return { pers: o.pers, msgs: [], nota: "" }; }, dispararPerigo: (x) => portas.push("salvaguarda:" + x) };
-    oPerigoDaResposta({ pers: { nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, ctx);
-    oPerigoDaResposta({ pers: { nivel: 10 }, perigo: "Uma armadilha de lâminas dispara do chão.", combate: null, folego: null, lugares: [] }, ctx);
-    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava em `/oPerigoDaResposta\(\{ pers, perigo: resp\.perigo/.test(app)` — o App entrega o `resp.perigo` à peça. teste-motor-fecho.mjs §4 guarda a chamada inteira (`const doPerigo = oPerigoDaResposta({ pers, perigo: resp.perigo, combate: …`). Fica o comportamento: a investida vai à emboscada, a armadilha à salvaguarda. */
+    oPerigoDaResposta({ modoDoNarrador: "mestre", pers: { nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, ctx);
+    oPerigoDaResposta({ modoDoNarrador: "mestre", pers: { nivel: 10 }, perigo: "Uma armadilha de lâminas dispara do chão.", combate: null, folego: null, lugares: [] }, ctx);
+    /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava em `/oPerigoDaResposta\(\{ pers, perigo: resp\.perigo/.test(app)` — o App entrega o `resp.perigo` à peça. teste-motor-fecho.mjs §4 guarda a chamada inteira (`const doPerigo = oPerigoDaResposta({ modoDoNarrador: "mestre", pers, perigo: resp.perigo, combate: …`). Fica o comportamento: a investida vai à emboscada, a armadilha à salvaguarda. */
     t("perigo (a emboscada e a salvaguarda)", portas[0] === "abrir" && portas[1] === "salvaguarda:Uma armadilha de lâminas dispara do chão.");
   }
   t("dano_ambiental, combate_inimigo_vida, combate_atualizar, combate_encerrar (regras-jogo.js)", /m\.dano_ambiental/.test(ler("regras-jogo.js")) && /m\.combate_inimigo_vida/.test(ler("regras-jogo.js")) && /m\.combate_atualizar/.test(ler("regras-jogo.js")) && /m\.combate_encerrar/.test(ler("regras-jogo.js")));

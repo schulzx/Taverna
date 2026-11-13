@@ -216,12 +216,17 @@ const CUSTO = { turnos: 0, narrador: 0, cronista: 0, reforcos: 0 };
   t(`o Cronista decide igual, e só vai à rede quando o gatilho acende (${cronistaIgual}/${casos})`, cronistaIgual === casos);
   t(`a narrativa devolvida é a do Narrador (${narrativaIgual}/${casos})`, narrativaIgual === casos);
   t(`A QUOTA: um uso por turno, por mais idas que o turno faça (${umUso}/${casos})`, umUso === casos);
-  t(`e a conta da licença fecha: ${usosDe("casa-de-prova")} usos para ${casos} turnos e ${CUSTO.narrador + CUSTO.cronista} idas à IA`, usosDe("casa-de-prova") === casos && CUSTO.narrador + CUSTO.cronista > casos);
+  t(`e a conta da licença fecha: ${usosDe("casa-de-prova")} usos para ${casos} turnos e ${CUSTO.narrador + CUSTO.cronista} idas à IA`, usosDe("casa-de-prova") === casos && CUSTO.narrador + CUSTO.cronista >= casos);
   /* a ficha do cache: o pedido do Narrador leva-a (comCache) e a rota devolve-a SEMPRE ao cliente — a nova, ou null quando não houve; a decisão de criar é de janela.js, provada em teste-cache-explicito */
   t(`a ficha do cache volta ao cliente em todo turno (${comFicha}/${casos})`, comFicha === casos);
   const porTurno = (x) => (x / Math.max(1, CUSTO.turnos)).toFixed(2).replace(".", ",");
   console.log(`      O CUSTO MEDIDO: ${CUSTO.narrador} idas ao Narrador (${porTurno(CUSTO.narrador)} por turno; ${CUSTO.reforcos} com 2.ª escrita) + ${CUSTO.cronista} ao Cronista (${porTurno(CUSTO.cronista)} por turno) em ${CUSTO.turnos} turnos — ${porTurno(CUSTO.narrador + CUSTO.cronista)} chamadas de IA por turno, UM uso da quota`);
-  t("o custo é 1 Narrador por turno e o Cronista em menos de 2 de 3", CUSTO.narrador === CUSTO.turnos && CUSTO.cronista > 0 && CUSTO.cronista < CUSTO.turnos * 0.7);
+  /* MOVIDAS (13/11, NE7), com o motivo: a rota corre o padrão da tabela, e o
+     padrão virou o «boca» — o Cronista não é chamado. Antes: o Cronista em
+     menos de 2 de 3 turnos, e as idas à IA acima dos turnos (a conta acima
+     dizia «>», e diz agora «>=»). A intenção fica: um Narrador por turno, e
+     o Cronista só quando o modo o chama — no padrão, nunca. */
+  t("o custo é 1 Narrador por turno, e no padrão (o `boca`, NE7) nenhuma ida ao Cronista", CUSTO.narrador === CUSTO.turnos && CUSTO.cronista === 0);
 }
 
 sec("4. A QUOTA E AS FALHAS");

@@ -23,6 +23,8 @@
 
    Tudo por semente: nenhum `Math.random` decide uma asserção.
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import * as G from "../src/segredo-guardado.js";
 import { lerAcao, DIFICULDADES } from "../src/desafios.js";
@@ -435,7 +437,7 @@ sec("6. a fiação — App.jsx");
   {
     const { aplicarORegisto } = await import("../src/motor/aplicar.js");
     const esp = { atos: [{ marcos: [{ id: "m1", feitio: "descobrir", onde: "Gruta das Vozes", titulo: "o que a gruta guarda", feito: false }] }] };
-    const jogar = (mundo) => aplicarORegisto({ personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, espinha: esp, dia: 1 },
+    const jogar = (mundo) => NM.aplicarORegisto({ personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, espinha: esp, dia: 1 },
       { narrativa: "x", mudancas: { canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } } }, { mundo });
     const r = jogar(null);
     const estoura = jogar(() => { throw new Error("o mundo estourou"); });
@@ -458,7 +460,7 @@ sec("6. a fiação — App.jsx");
      sistema conhece (motor/cronista.js#oCanoneQueExiste) — «a lâmina partida»
      passa a estar no inventário da Ana, e a intenção fica: a peneira do
      segredo tira a Gruta e deixa a lâmina. */
-  const jogarC = (mundoDaBase) => { const efs = []; CT.oAceitoDoCronista({ canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Ana", grupo: [], inventario: [{ nome: "a lâmina partida" }] }, narrativa: "x", ler: () => ({ canone: {}, espinha: espC, dia: 1 }), aplicar: (x) => efs.push(...x), mundoDaBase }); return { efs, canone: (efs.find((e) => e.tipo === "canone") || {}).canone || {} }; };
+  const jogarC = (mundoDaBase) => { const efs = []; NM.oAceitoDoCronista({ canone: { "Gruta das Vozes": { tipo: "artefato", descricao: "uma gruta que fala" }, "a lâmina partida": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Ana", grupo: [], inventario: [{ nome: "a lâmina partida" }] }, narrativa: "x", ler: () => ({ canone: {}, espinha: espC, dia: 1 }), aplicar: (x) => efs.push(...x), mundoDaBase }); return { efs, canone: (efs.find((e) => e.tipo === "canone") || {}).canone || {} }; };
   const cBom = jogarC(() => null), cTorto = jogarC(() => { throw new Error("o mundo estourou"); });
   t("a porta do Cronista peneira ac.canone antes do for, com o mesmo fallback", !cBom.canone["Gruta das Vozes"] && !!cBom.canone["a lâmina partida"]
     && !!cTorto.canone["Gruta das Vozes"] && cTorto.efs.some((e) => e.tipo === "calou" && e.onde === "peneirarCanone (Cronista)"));

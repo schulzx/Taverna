@@ -18,6 +18,8 @@
      5. a imutabilidade e o determinismo.
 
    Tudo por semente: nenhum `Math.random` decide uma asserção. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { PORTAO_DAS_SECUNDARIAS, secundariasAbertas } from "../src/portao-das-secundarias.js";
 import { abrirAbertura, MURAL } from "../src/abertura.js";
 import { gerarGeografia } from "../src/geografia.js";
@@ -153,7 +155,7 @@ sec("8. A proposta do Cronista (o cartaz do missao_oferecida)");
 {
   const { oAceitoDoCronista } = await import("../src/motor/cronista-do-turno.js");
   const AB = { principalId: "zz", turnos: 9, tocou: true };
-  const pregou = (nivel, esp) => { let n = 0; oAceitoDoCronista({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 10, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, [], {}, { pers: { nome: "Vera", nivel, grupo: [] }, narrativa: "x", ler: () => ({ abertura: AB, missoes: [], espinha: esp, cidadeAtual: "Vau", npcs: {}, coracao: null }), aplicar: () => {}, historiaDoMural: () => [], contextoDoNome: () => ({}), nucleoAgora: () => null, pregarNoMural: () => { n++; return true; } }); return n; };
+  const pregou = (nivel, esp) => { let n = 0; NM.oAceitoDoCronista({ missao_oferecida: { titulo: "Os lobos", tipo: "contrato", dador: "Hilda", paga: 10, etapas: [{ tipo: "derrotar", alvo: "Lobo", quantos: 1 }] } }, [], {}, { pers: { nome: "Vera", nivel, grupo: [] }, narrativa: "x", ler: () => ({ abertura: AB, missoes: [], espinha: esp, cidadeAtual: "Vau", npcs: {}, coracao: null }), aplicar: () => {}, historiaDoMural: () => [], contextoDoNome: () => ({}), nucleoAgora: () => null, pregarNoMural: () => { n++; return true; } }); return n; };
   t("nível 1: a proposta não vira cartaz", pregou(1, espinha) === 0);
   t("nível 3: vira", pregou(3, espinha) === 1);
 }

@@ -25,6 +25,8 @@
    O `Math.random` dos ganchos (geradores.js) é trocado por um gerador
    semeado durante a varredura 5, e devolvido no fim: nenhuma asserção
    depende da sorte. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { trocarACasa } from "../src/semente.js";
 import fs from "node:fs";
 import * as TA from "../src/tarefas-antigas.js";
@@ -390,7 +392,7 @@ sec("7. a fiação — App.jsx");
   /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O bloco das missões mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
   {
     const { aplicarAsMissoes } = await import("../src/motor/meio-do-turno.js");
-    const r = aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: { estrutura: "jornada" }, dia: 4 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, { motorDoArco: () => ({}) });
+    const r = NM.aplicarAsMissoes({ eventos: { global: { nome: "A Praga" } }, historia: { estrutura: "jornada" }, dia: 4 }, { narrativa: "x", mudancas: { evento_global_encerrar: true } }, { motorDoArco: () => ({}) });
     /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: esta asserção terminava num `&& /aplicarOTurno\(\{/.test(app)` — que o App chama o motor. É fato de fiação, e teste-motor-aplicar.mjs já o guarda por inteiro ("o aplicarResposta chama o motor": `aplicarOTurno({ personagem: pers,` dentro de aplicarResposta, uma só vez, com o efeito aplicado). A intenção desta asserção é o COMPORTAMENTO do campo, e fica só ela; a fiação não se afrouxa, só deixa de ser guardada em dois sítios. */
     t("evento_global_encerrar do Narrador continua de pé", r.estado.eventos.global === null && r.estado.eventos.semGlobalDesde === 4 && /🌍 A Praga/.test(r.msgs[0]));
   }
@@ -403,7 +405,7 @@ sec("7. a fiação — App.jsx");
      prova-se pelo valor exportado ou jogando a peça. */
   const CT = await import("../src/motor/cronista-do-turno.js");
   const efsG = [], portasG = [];
-  const fimG = CT.oAceitoDoCronista({ missoes: { global_encerrado: true } }, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({ eventos: { global: { nome: "A Praga" } }, dia: 4 }), aplicar: (x) => efsG.push(...x), marcarNoArco: (...x) => portasG.push(x) });
+  const fimG = NM.oAceitoDoCronista({ missoes: { global_encerrado: true } }, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({ eventos: { global: { nome: "A Praga" } }, dia: 4 }), aplicar: (x) => efsG.push(...x), marcarNoArco: (...x) => portasG.push(x) });
   const evG = (efsG.find((e) => e.tipo === "eventos") || {}).eventos || {};
   t("global_encerrado do Cronista continua de pé", evG.global === null && evG.semGlobalDesde === 4 && portasG.length === 1 && portasG[0][0] === "global" && fimG.msgs[0].startsWith("🌍 A Praga"));
   t("o prompt do Cronista não promete mais concluidas/falhadas/progresso — só global_encerrado",

@@ -23,6 +23,8 @@
    FALHA em HEAD (v9.379): a conversa não fecha nada, e o App não pede nem
    lê `falou_com`. */
 
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { readFileSync } from "node:fs";
 import * as M from "../src/missoes.js";
 import * as S from "../src/saga.js";
@@ -106,7 +108,7 @@ sec("4. a fiação no App");
   const CT = await import("../src/motor/cronista-do-turno.js");
   const jogarFalou = (aceito, proposta, conferir, missoesDepois) => {
     const efs = [], visto = []; let est = { missoes: ["antes"], espinha: null };
-    const fim = CT.oAceitoDoCronista(aceito, [], proposta, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => est, aplicar: (x) => efs.push(...x),
+    const fim = NM.oAceitoDoCronista(aceito, [], proposta, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => est, aplicar: (x) => efs.push(...x),
       conferirCom: (p, o) => { visto.push(o); if (conferir) conferir(); if (missoesDepois) est = { ...est, missoes: missoesDepois }; return p; } });
     return { fim, efs, visto };
   };

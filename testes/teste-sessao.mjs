@@ -301,23 +301,29 @@ const R10 = reproduzirASessao(S10), R8 = reproduzirASessao(S8), R9 = reproduzirA
 
 sec("4b. UM TURNO, CORRIDO — o passo que o replay e o gravador dividem");
 {
+  /* NE7 (13/11): o padrão do jogo virou o «boca» (portas fechadas, o Cronista
+     calado). Os turnos corridos à mão nesta suíte medem o turno de ANTES —
+     a proposta gravada do Cronista, o cartaz, a conversa que confere —, logo
+     dizem o «mestre» (o replay inteiro já o lê da cabeça da sessão:
+     FORMATO_DA_SESSAO.modoSemModo). O padrão novo prova-se em
+     teste-nada-entra-pelo-ator §10. */
   /* correrOTurno é cada linha do replay, e é com ele que o gravador das
      sessões de prova escreve os arquivos: um caminho só */
   const L = S10.turnos[3], antes = estadoNoTurno(S10, 3);
-  const um = correrOTurno(antes, L, { semente: S10.semente, narracoes: [] });
+  const um = correrOTurno(antes, L, { modoDoNarrador: "mestre", semente: S10.semente, narracoes: [] });
   t("a linha 4 da 10.ª, corrida sozinha, dá o estado gravado dela (o sítio pela frase: a Cabra Trêmula)", J(um.estado.lugar) === J(estadoNoTurno(S10, 4).lugar) && um.estado.lugar.nome === "Cabra Trêmula" && !um.calou.length);
   t("e o juízo do Cronista é o que a linha guarda", J(um.juizo) === J(L.cronista.juizo));
   /* a porta do App: o replay nunca a passa; quem a passa muda o turno */
   let viu = null;
-  const comPorta = correrOTurno(antes, L, { semente: S10.semente, doApp: { antesDoMestre: (E) => { viu = E.lugar && E.lugar.nome; return { ...E, cidadeAtual: "Nova Profundo" }; } } });
+  const comPorta = correrOTurno(antes, L, { modoDoNarrador: "mestre", semente: S10.semente, doApp: { antesDoMestre: (E) => { viu = E.lugar && E.lugar.nome; return { ...E, cidadeAtual: "Nova Profundo" }; } } });
   t("a porta do passo antes do Mestre recebe o estado depois do sítio pela frase, e o que ela devolve segue o turno", viu === "Cabra Trêmula" && comPorta.estado.cidadeAtual === "Nova Profundo");
-  const porta = correrOTurno(antes, L, { semente: S10.semente, doApp: { antesDoMestre: () => { throw new Error("a porta caiu"); } } });
+  const porta = correrOTurno(antes, L, { modoDoNarrador: "mestre", semente: S10.semente, doApp: { antesDoMestre: () => { throw new Error("a porta caiu"); } } });
   t("e a porta que estoura não leva o turno: fica em calou, com o nome do passo", porta.calou.some((c) => c.passo === "o passo antes do Mestre" && /a porta caiu/.test(c.erro)) && J(porta.estado.lugar) === J(um.estado.lugar));
   let estourou = false;
   try { for (const x of [null, undefined, 3, {}]) { correrOTurno(x, x, x); correrOTurno({}, { sorte: null, narrador: 7 }, { doApp: null }); } } catch { estourou = true; }
   t("lixo no turno corrido não estoura", !estourou);
   const congela = (x) => { if (x && typeof x === "object") { Object.values(x).forEach(congela); Object.freeze(x); } return x; };
-  t("e não mexe no estado nem na linha recebidos (correm congelados)", () => { correrOTurno(congela(copia(antes)), congela(copia(L)), { semente: S10.semente }); return true; });
+  t("e não mexe no estado nem na linha recebidos (correm congelados)", () => { correrOTurno(congela(copia(antes)), congela(copia(L)), { modoDoNarrador: "mestre", semente: S10.semente }); return true; });
 }
 
 sec("4c. O MURAL NO REPLAY E NO SERVIDOR — a porta do Cronista e o trabalho daqui (29/10, Fase 4, trilha B)");
@@ -331,16 +337,16 @@ sec("4c. O MURAL NO REPLAY E NO SERVIDOR — a porta do Cronista e o trabalho da
   const narr = "Na praça de Monte Rasa, Varek Duro aproxima-se com o chapéu na mão: — Preciso que alguém leve esta carta ao moinho velho antes do anoitecer. Pago bem, quinze moedas.";
   const Lm = { n: 1, entrada: { frase: "Ouço o homem." }, sorte: { ponto: "4|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: narr, mudancas: {} },
     cronista: { proposta: { pessoas: [{ nome: "Varek Duro", papel: "moleiro", genero: "ele" }], missao_oferecida: { titulo: "A carta do moinho", tipo: "favor", dador: "Varek Duro", descricao: "levar a carta ao moinho velho", paga: 15, prazo: 0, etapas: [{ tipo: "ir_a", alvo: "Monte Rasa", quantos: 1 }] } } } };
-  const rr = correrOTurno(Em, Lm, { semente: "teste|mural" });
+  const rr = correrOTurno(Em, Lm, { modoDoNarrador: "mestre", semente: "teste|mural" });
   const doVarek = (e) => (e.mural || []).filter((c) => c.dador === "Varek Duro");
   t("o cartaz do Cronista entra no mural pela porta do motor, com a data do dia (a dublê não pregava)", doVarek(rr.estado).length === 1 && doVarek(rr.estado)[0].titulo === "A carta do moinho" && doVarek(rr.estado)[0].pregadoEm === 4, J(rr.estado.mural));
   t("e a porta já não aparece como dublê chamada (não há dívida dela)", !rr.portas.some((p) => p.porta === "pregarNoMural") && PORTAS_DO_CRONISTA_NO_REPLAY.pregarNoMural.de === "motor");
   t("no replay o mundo não oferece (sem o dia do último trabalho, que o save não guarda), e a nota fica de fora", (rr.estado.mural || []).length === 1 && !("nota" in rr.estado) && !("ultimoTrabalhoDia" in rr.estado));
-  const dois = correrOTurno({ ...Em, mural: rr.estado.mural }, Lm, { semente: "teste|mural" });
+  const dois = correrOTurno({ ...Em, mural: rr.estado.mural }, Lm, { modoDoNarrador: "mestre", semente: "teste|mural" });
   t("o mesmo cartaz duas vezes não prega (a porta única do mural)", doVarek(dois.estado).length === 1);
   /* no servidor: o mundo oferece ANTES do Cronista (a ordem do App), e o
      recado dos dois vai à nota */
-  const rs = correrOTurno(Em, Lm, { semente: "teste|mural", servidor: true });
+  const rs = correrOTurno(Em, Lm, { modoDoNarrador: "mestre", semente: "teste|mural", servidor: true });
   const oferecido = (rs.estado.mural || []).find((c) => c.oferecido && c.dador !== "Varek Duro");
   t("no servidor, o mundo prega o seu trabalho e o Cronista o dele, nessa ordem", !!oferecido && (rs.estado.mural || []).length === 2 && rs.estado.mural[rs.estado.mural.length - 1].dador === "Varek Duro", J((rs.estado.mural || []).map((c) => c.dador)));
   t("o dia do último trabalho e o aviso que espera a cena ficam no estado (o eco os leva)", rs.estado.ultimoTrabalhoDia === 4 && J(rs.estado.trabalhoPendente) === J([`📋 ${oferecido && oferecido.dador} tem um trabalho no mural.`]));
@@ -351,7 +357,7 @@ sec("4c. O MURAL NO REPLAY E NO SERVIDOR — a porta do Cronista e o trabalho da
      figurante, uma menção); a intenção que fica: o recado do mundo vai à nota,
      e o do Cronista não se repete. */
   t("e a nota leva o recado do mundo, e não o do Cronista", recados.length === 1 && recados[0].includes(oferecido && oferecido.dador) && !recados.some((l) => l.includes("Varek Duro")), J(rs.estado.nota));
-  t("o servidor corre duas vezes igual", J(correrOTurno(Em, Lm, { semente: "teste|mural", servidor: true })) === J(rs));
+  t("o servidor corre duas vezes igual", J(correrOTurno(Em, Lm, { modoDoNarrador: "mestre", semente: "teste|mural", servidor: true })) === J(rs));
 }
 
 sec("4d. O CONFERENTE DAS MISSÕES, A FÉ E O ARCO NO REPLAY — e a queda a zero (29/10, Fase 4, trilha B)");
@@ -375,27 +381,27 @@ sec("4d. O CONFERENTE DAS MISSÕES, A FÉ E O ARCO NO REPLAY — e a queda a zer
   const narr = "A praça de Monte Rasa murmura ao fim da tarde. Odete Moleira acena da porta do moinho e diz que a farinha chegou molhada outra vez este mês.";
   const Lq = { n: 1, entrada: { frase: "Falo com a moleira." }, sorte: { ponto: "4|0|0" }, pedido: { pauta: "", envelopes: "" }, narrador: { narrativa: narr, mudancas: {} } };
   const st = (e) => (e.missoes || []).map((m) => m.status).join(",");
-  const r1 = correrOTurno(Eq, Lq, { semente: "teste|missoes" });
+  const r1 = correrOTurno(Eq, Lq, { modoDoNarrador: "mestre", semente: "teste|missoes" });
   t("no replay, a chegada cumpre a missão: concluída, a paga na ficha (◉ 10 → 40, 0 → 50 XP), o contrato contado, o arco marcado", st(r1.estado) === "concluida,ativa" && r1.estado.personagem.moedas === 40 && r1.estado.personagem.xp === 50 && r1.estado.contadores.contratosConcluidos === 1 && r1.estado.historia.feitos.some((f) => /A carta do moinho/.test(f)), J([st(r1.estado), r1.estado.personagem, r1.estado.historia]));
   t("e as linhas do conferente vão à tela, na ordem do App (o avanço, a paga)", J(r1.tela.linhas.slice(-2)) === J(["🧭 A carta do moinho: Chegar a Monte Rasa ✓ (1/1)", "🤝 MISSÃO CONCLUÍDA: A carta do moinho — +30 moedas · +50 XP"]), J(r1.tela.linhas));
   t("no replay a nota ao Narrador fica de fora, e nada que não seja do save entra (a contagem da sorte, a conversa)", !("nota" in r1.estado) && !("contagemDaSorte" in r1.estado) && !("falouCom" in r1.estado) && !r1.calou.length && !r1.calouDoDepois.length);
-  const r1s = correrOTurno(Eq, Lq, { semente: "teste|missoes", servidor: true, so: "depois" });
+  const r1s = correrOTurno(Eq, Lq, { modoDoNarrador: "mestre", semente: "teste|missoes", servidor: true, so: "depois" });
   t("no servidor, o mesmo, e a nota leva o recado da missão paga ao turno seguinte", st(r1s.estado) === "concluida,ativa" && /MISSÃO CONCLUÍDA — RECONHECIDA E PAGA PELO SISTEMA/.test(String(r1s.estado.nota || "")), J(r1s.estado.nota));
   /* a conversa que o Cronista viu: a porta conferirCom, da fábrica */
   const Lc2 = { ...Lq, cronista: { proposta: { pessoas: [{ nome: "Odete Moleira", papel: "moleira", genero: "ela" }], falou_com: ["Odete Moleira"] } } };
-  const r2 = correrOTurno(Eq, Lc2, { semente: "teste|missoes" });
+  const r2 = correrOTurno(Eq, Lc2, { modoDoNarrador: "mestre", semente: "teste|missoes" });
   t("a conversa do Cronista confere a missão de falar (conferirCom do motor; a dublê devolvia a ficha e não conferia)", st(r2.estado) === "concluida,concluida" && r2.estado.personagem.moedas === 45 && !r2.portas.some((p) => p.porta === "conferirCom"), J([st(r2.estado), r2.portas]));
   t("e as linhas do Cronista voltam na tela, depois das do turno", J(r2.tela.linhas.slice(-2)) === J(["💬 Falar com a moleira: Encontrar Odete Moleira ✓ (1/1)", "🤝 MISSÃO CONCLUÍDA: Falar com a moleira — +5 moedas · +10 XP"]), J(r2.tela.linhas));
-  t("o conferente corre duas vezes igual, e o estado recebido não muda", J(correrOTurno(Eq, Lc2, { semente: "teste|missoes" })) === J(r2) && st(Eq) === "ativa,ativa");
+  t("o conferente corre duas vezes igual, e o estado recebido não muda", J(correrOTurno(Eq, Lc2, { modoDoNarrador: "mestre", semente: "teste|missoes" })) === J(r2) && st(Eq) === "ativa,ativa");
   /* a queda a zero (motor/entrega-do-turno.js#aQueda): o herói chega ao
      fim do turno a 0 PV (o golpe que a cena deu); no App, `resolverQueda`
      logo depois da chegada. Antes, o servidor devolvia-o a 0 PV, de pé. */
   const Lz = { ...Lq, narrador: { narrativa: "O golpe do salteador entra fundo e Íris cai de joelhos na lama da praça, sem fôlego, o mundo a girar.", mudancas: {} } };
   const Ez = { ...Eq, missoes: [], personagem: { ...Eq.personagem, vida: 0 } };
-  const rz = correrOTurno(Ez, Lz, { semente: "teste|queda", servidor: true, so: "depois" });
+  const rz = correrOTurno(Ez, Lz, { modoDoNarrador: "mestre", semente: "teste|queda", servidor: true, so: "depois" });
   const pz = rz.estado.personagem;
   t("a 0 PV o herói cai e rola o teste de morte (morrendo, com a rolagem); a linha vai à tela e o recado à nota", pz.vida === 0 && pz.morrendo === true && pz.morte && Array.isArray(pz.morte.rolagens) && pz.morte.rolagens.length === 1 && /QUEDA — RESOLVIDA PELO SISTEMA|morte|caído/i.test(String(rz.estado.nota || "")) && rz.tela.linhas.length > 0, J([pz, rz.tela.linhas, rz.estado.nota]));
-  t("e a queda corre duas vezes igual (a sorte do turno, o evento «morte»)", J(correrOTurno(Ez, Lz, { semente: "teste|queda", servidor: true, so: "depois" })) === J(rz));
+  t("e a queda corre duas vezes igual (a sorte do turno, o evento «morte»)", J(correrOTurno(Ez, Lz, { modoDoNarrador: "mestre", semente: "teste|queda", servidor: true, so: "depois" })) === J(rz));
 }
 
 sec("5. DETERMINISMO — o mesmo arquivo dá o mesmo replay");
@@ -569,7 +575,7 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   const pedidas = new Set(), semLinha = new Set();
   for (const k of casosDoCronista(275)) {
     let E = { ...k };
-    const base = { ler: () => E, aplicar: (efs) => { for (const ef of efs) if (EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo]) E = { ...E, [EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo].campo]: ef[EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo].chave] }; }, pers: k.personagem, narrativa: k.narrativa, testeDoTurno: k.testeDoTurno, rolagem: k.rolagem };
+    const base = { ler: () => E, aplicar: (efs) => { for (const ef of efs) if (EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo]) E = { ...E, [EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo].campo]: ef[EFEITO_DO_CRONISTA_NO_REPLAY[ef.tipo].chave] }; }, pers: k.personagem, narrativa: k.narrativa, testeDoTurno: k.testeDoTurno, rolagem: k.rolagem, modoDoNarrador: "mestre" /* NE7 (13/11): os casos são propostas gravadas do Cronista que lia — o «mestre»; no padrão («boca») a peça lê a ficha da cena em vez delas */ };
     const ctx = new Proxy(base, { get: (o, nome) => {
       if (typeof nome !== "string" || VALORES.has(nome)) return o[nome];
       pedidas.add(nome);
@@ -597,7 +603,7 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
       fe: { fieis: 10, pf: 1, motivo: "a praça reza" },
       promessas: [{ tipo: "frase", texto: "o Berço ainda pulsa sob a colina", quem: "o taberneiro" }],
     } } };
-  const rc = correrOTurno(Ec, Lc, { semente: "teste|cronista" });
+  const rc = correrOTurno(Ec, Lc, { modoDoNarrador: "mestre", semente: "teste|cronista" });
   const Ef = rc.estado;
   t("o cânone guarda a marca do que só foi dito, e o dia em que entrou (registradoDia: a peça)", !!(Ef.canone["Berço de Ossos"] && Ef.canone["Berço de Ossos"].dito) && Ef.canone["Berço de Ossos"].registradoDia === 4, J(Ef.canone));
   t("NE1: o artefato que o sistema não deu não entra no cânone do replay, e o turno diz porquê (recusadoDoCanone)", !("Disco de Ossos" in Ef.canone) && rc.recusadoDoCanone.some((x) => x.o === "Disco de Ossos" && x.porque === "objeto"), J([Object.keys(Ef.canone), rc.recusadoDoCanone]));
@@ -610,7 +616,7 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
      dela na tabela — fica: agora a tabela diz «motor», e a divindade anda. */
   t("a fé chama a porta do motor, e a fé conta (os fiéis do deus desperto; nenhuma dublê da fé)", !rc.portas.some((x) => x.porta === "ganharFe") && PORTAS_DO_CRONISTA_NO_REPLAY.ganharFe.de === "motor" && Number(Ef.divindade.fieis) > Number(Ec.divindade.fieis || 0), J([rc.portas, Ef.divindade]));
   t("nenhuma secção calou, nenhum passo estourou", !rc.calou.length && !rc.calouDoCronista.length, J([rc.calou, rc.calouDoCronista]));
-  t("e corre duas vezes igual (determinismo)", J(correrOTurno(Ec, Lc, { semente: "teste|cronista" })) === J(rc));
+  t("e corre duas vezes igual (determinismo)", J(correrOTurno(Ec, Lc, { modoDoNarrador: "mestre", semente: "teste|cronista" })) === J(rc));
 
   /* a dívida da porta: o que o App escreveu por uma porta-dublê, no turno
      em que ela foi chamada.
@@ -622,7 +628,7 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   const juizo = rc.juizo;
   const arqDe = (proposta, estado) => {
     let a = abrirASessao({ semente: "teste|cronista", estado: Ec, origem: "a suíte" });
-    return gravarOTurno(a, { ...Lc, cronista: { proposta, juizo: proposta === Lc.cronista.proposta ? juizo : correrOTurno(Ec, { ...Lc, cronista: { proposta } }, { semente: "teste|cronista" }).juizo }, juiz: null, estado });
+    return gravarOTurno(a, { ...Lc, cronista: { proposta, juizo: proposta === Lc.cronista.proposta ? juizo : correrOTurno(Ec, { ...Lc, cronista: { proposta } }, { modoDoNarrador: "mestre", semente: "teste|cronista" }).juizo }, juiz: null, estado });
   };
   const nemDoApp = { nome: "Varek Duro", status: "derrotada" };
   const comNem = { ...Ef, nemesis: nemDoApp };
@@ -631,7 +637,7 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
   t("o que o App escreveu por uma porta-dublê (a nêmesis) é dívida «a porta», não defeito", rp.valido && !rp.defeitos.length && d1.divida.some((d) => d.de === "a porta" && d.campo === "nemesis") && d1.porque.some((x) => /sincronizarNemesis/.test(x) && /\bApp\b/.test(x)), J(d1 && [d1.diferencas, d1.divida, d1.porque]));
   t("e o turno guarda as portas que o Cronista chamou", !!d1.portas && d1.portas.some((x) => x.porta === "sincronizarNemesis"));
   const semGente = { ...Lc.cronista.proposta }; delete semGente.pessoas;
-  const rq = reproduzirASessao(arqDe(semGente, { ...correrOTurno(Ec, { ...Lc, cronista: { proposta: semGente } }, { semente: "teste|cronista" }).estado, nemesis: nemDoApp }));
+  const rq = reproduzirASessao(arqDe(semGente, { ...correrOTurno(Ec, { ...Lc, cronista: { proposta: semGente } }, { modoDoNarrador: "mestre", semente: "teste|cronista" }).estado, nemesis: nemDoApp }));
   t("sem a porta chamada, a mesma divergência é defeito do motor", J(rq.defeitos) === J([1]) && rq.turnos[0].diferencas.some((d) => d.caminho.startsWith("nemesis")), J(rq.turnos[0] && rq.turnos[0].diferencas));
 
   /* O JUIZ CORRIGE NO REPLAY (v9.531): o App passa o aceito por
@@ -650,12 +656,12 @@ sec("10. O CRONISTA DO REPLAY É A PEÇA DO JOGO — oAceitoDoCronista, com as p
        intenção fica: quem a tira do cânone, neste turno, é o Juiz. */
     cronista: { proposta: { pessoas: [{ nome: "Fiandeira", papel: "tecelã", genero: "ela" }], canone: { Fiandeira: { tipo: "pessoa", descricao: "a velha que tece" }, "Coroa de Sal": { tipo: "artefato", descricao: "a coroa do rei" } } } },
     juiz: { entrada: entradaDoJuiz(FOTO, { frase: "Olho em volta.", pauta: "" }), resumo: { turno: 1, dia: 2 } } };
-  const rj = correrOTurno(Ej, Lj, { semente: "teste|juiz" });
+  const rj = correrOTurno(Ej, Lj, { modoDoNarrador: "mestre", semente: "teste|juiz" });
   t("o nome que o Juiz deu por inventado neste turno não entra no cânone do replay (como no App)", !("Fiandeira" in rj.estado.canone) && rj.tirados.some((x) => x.nome === "Fiandeira"), J([Object.keys(rj.estado.canone), rj.tirados]));
   t("e o juízo que a linha guarda continua o cru (é ele que se compara com o gravado)", !!(rj.juizo && rj.juizo.aceito.canone && "Fiandeira" in rj.juizo.aceito.canone));
-  const semJuiz = correrOTurno(Ej, { ...Lj, juiz: null }, { semente: "teste|juiz" });
+  const semJuiz = correrOTurno(Ej, { ...Lj, juiz: null }, { modoDoNarrador: "mestre", semente: "teste|juiz" });
   t("MORDE: sem o veredito da linha, a invenção entra como verdade imutável", "Fiandeira" in semJuiz.estado.canone && !semJuiz.tirados.length);
-  const cego = correrOTurno(Ej, { ...Lj, juiz: { ...Lj.juiz, entrada: { ...Lj.juiz.entrada, papeis: [] } } }, { semente: "teste|juiz" });
+  const cego = correrOTurno(Ej, { ...Lj, juiz: { ...Lj.juiz, entrada: { ...Lj.juiz.entrada, papeis: [] } } }, { modoDoNarrador: "mestre", semente: "teste|juiz" });
   t("e o Juiz cego (a entrada sem os papéis do mundo — as sessões de prova) não tira nada", "Fiandeira" in cego.estado.canone && !cego.tirados.length);
 }
 

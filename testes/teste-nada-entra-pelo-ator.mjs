@@ -22,6 +22,12 @@
    — o pedido do `mestre` com as portas fechadas — corre os mesmos turnos
    que o `ator` e tem de acabar igual a uma resposta vazia (§5, §7).
 
+   A NE7 (13/11): o `boca` passou a ser o PADRÃO. As provas que mediam «o
+   `mestre` dito é o modo ausente» passaram a medir «o padrão dito é o modo
+   ausente» (a intenção era a mesma: a peça sem modo lê o padrão da tabela);
+   as que diziam «no `mestre` e no padrão» dizem agora «no `mestre`» e,
+   à parte, «o padrão é o `boca`». A catraca da NE7 é a §10.
+
    Nenhuma asserção lê o texto de src/motor/ nem do App (a catraca de
    teste-assercoes-de-texto): a porta do peso da linha, que mora no App,
    prova-se aqui só pela tabela; o App, pelo build. */
@@ -33,13 +39,14 @@ import { julgarOCronista, oCanoneQueExiste, O_CANONE_CONHECIDO } from "../src/mo
 import { oQueACenaDaAoLivro } from "../src/motor/livro-do-turno.js";
 import { oPerigoDaResposta } from "../src/motor/fecho-da-resposta.js";
 import { lerAgressao, alvoPrometido } from "../src/agressao.js";
-import { aplicarOTurno } from "../src/motor/aplicar.js";
+import { aplicarOTurno, aplicar } from "../src/motor/aplicar.js";
 import { aplicarOCodex, aplicarAChegada } from "../src/motor/fim-do-turno.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa } from "../src/motor/entrega-do-turno.js";
 import { aLutaDaResposta } from "../src/motor/luta-do-turno.js";
 import { aMesaDoTurno } from "../src/motor/fecho-da-resposta.js";
 import { oGatilhoDoCronista, oAceitoDoCronista } from "../src/motor/cronista-do-turno.js";
-import { correrOTurno, estadoNoTurno } from "../src/sessao.js";
+import { correrOTurno, estadoNoTurno, FORMATO_DA_SESSAO, reproduzirASessao, abrirASessao } from "../src/sessao.js";
+import { oPedidoNoServidor, oTurnoNoServidor } from "../src/turno-no-servidor.js";
 import { semearACasa } from "../src/semente.js";
 import { casosDoTurno, casosDoFim, sorteDoCaso, motorDoArcoDoCaso, baseDoNomeDoCaso } from "./aplicar-casos.mjs";
 
@@ -51,6 +58,8 @@ const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + no
 const sec = (s) => console.log("\n" + s);
 const copia = (x) => JSON.parse(JSON.stringify(x));
 const J = (x) => JSON.stringify(x);
+/* o padrão da tabela, dito pelo nome (NE7: o `boca`) */
+const PADRAO = oModoDoNarrador();
 
 /* ---------------- AS TENTAÇÕES ----------------
    Uma por porta: o que, no modo `mestre`, faz a porta abrir. A suíte exige
@@ -120,8 +129,11 @@ const VAZIA = Object.freeze({ narrativa: "" });
    tela e as `mudancas` que seguem para a luta e a mesa —, menos a prosa,
    que vai à tela nos dois modos. */
 const CT = casosDoTurno();
+/* NE7 (13/11): os casos trazem o modo em que foram gravados (o «mestre»,
+   aplicar-casos.mjs); aqui o modo é o que a prova diz, e o ausente é ausente */
+const semModo = (ctx) => { const { modoDoNarrador, ...resto } = ctx || {}; return resto; };
 const ctxDoCaso = (c, modo) => {
-  const ctx = { ...c.ctx, sorte: undefined, sorteDoTurno: sorteDoCaso(c.semente), motorDoArco: (sobre = {}) => motorDoArcoDoCaso(c.ctx.arco, sobre.eventos), baseDoNome: (s) => baseDoNomeDoCaso(s), ...(modo ? { modoDoNarrador: modo } : {}) };
+  const ctx = { ...semModo(c.ctx), sorte: undefined, sorteDoTurno: sorteDoCaso(c.semente), motorDoArco: (sobre = {}) => motorDoArcoDoCaso(c.ctx.arco, sobre.eventos), baseDoNome: (s) => baseDoNomeDoCaso(s), ...(modo ? { modoDoNarrador: modo } : {}) };
   ctx.sorte = ctx.sorteDoTurno("salvaguarda");
   return ctx;
 };
@@ -153,10 +165,13 @@ sec("1. a chave — MODO_DO_NARRADOR");
   t("a tabela tem os três modos, `mestre`, `ator` e `boca`", nomes.length === 3 && ["mestre", "ator", "boca"].every((n) => nomes.includes(n)));
   t("duas colunas explícitas em todo modo: `portas` (uma lista) e `pedido` (mestre ou ator)", nomes.every((n) => Array.isArray(MODO_DO_NARRADOR[n].portas) && ["mestre", "ator"].includes(MODO_DO_NARRADOR[n].pedido)));
   t("o `boca` é o pedido do `mestre` com todas as portas fechadas; o `ator`, o pedido do ator", oPedidoDoModo("boca") === "mestre" && MODO_DO_NARRADOR.boca.portas.length === 0 && oPedidoDoModo("ator") === "ator" && oPedidoDoModo("mestre") === "mestre" && oPedidoDoModo() === "mestre" && oPedidoDoModo("lixo") === "mestre");
-  t("o `boca` não é o padrão (é a NE7, depois dos substitutos)", MODO_DO_NARRADOR.boca.padrao === false && oModoDoNarrador("boca") === "boca" && oModoDoNarrador() === "mestre");
-  t("um só é o padrão, e é o `mestre` (o de hoje)", nomes.filter((k) => MODO_DO_NARRADOR[k].padrao).length === 1 && MODO_DO_NARRADOR.mestre.padrao === true);
-  t("o modo ausente, ou um nome que a tabela não tem, é o padrão", oModoDoNarrador(undefined) === "mestre" && oModoDoNarrador("lixo") === "mestre" && oModoDoNarrador(null) === "mestre" && oModoDoNarrador("ator") === "ator");
-  t("o Cronista lê no `mestre` (e no padrão) e não lê no `ator` nem no `boca`", oCronistaChama("mestre") && oCronistaChama() && !oCronistaChama("ator") && !oCronistaChama("boca"));
+  /* MOVIDAS (13/11, NE7), com o motivo: o `boca` virou o padrão e o
+     `mestre` ficou de reserva. A intenção fica: um só padrão, o modo
+     ausente (ou o lixo) é ele, e o Cronista só lê no modo que abre a porta. */
+  t("o `boca` é o padrão (NE7, depois dos substitutos da NE4)", MODO_DO_NARRADOR.boca.padrao === true && oModoDoNarrador("boca") === "boca" && oModoDoNarrador() === "boca");
+  t("um só é o padrão, e é o `boca`; o `mestre` fica na tabela, de reserva", nomes.filter((k) => MODO_DO_NARRADOR[k].padrao).length === 1 && MODO_DO_NARRADOR.mestre.padrao === false && oModoDoNarrador("mestre") === "mestre");
+  t("o modo ausente, ou um nome que a tabela não tem, é o padrão", oModoDoNarrador(undefined) === "boca" && oModoDoNarrador("lixo") === "boca" && oModoDoNarrador(null) === "boca" && oModoDoNarrador("ator") === "ator");
+  t("o Cronista lê no `mestre` e não lê no padrão, no `ator` nem no `boca`", oCronistaChama("mestre") && !oCronistaChama() && !oCronistaChama("ator") && !oCronistaChama("boca"));
   t("a tabela é congelada (voltar é mudar uma palavra, não um objeto vivo)", Object.isFrozen(MODO_DO_NARRADOR) && Object.isFrozen(MODO_DO_NARRADOR.ator) && Object.isFrozen(PORTAS_DO_NARRADOR));
 }
 
@@ -186,7 +201,7 @@ sec("2. a tabela das portas — PORTAS_DO_NARRADOR, contra a anatomia (mente/nar
      E os dois Arquivistas (NE3, 13/11): a pessoa aprovou tirá-los, e a porta
      fechada em todo modo é a verdade que a tela do App lê. */
   const abriveis = PORTAS_DO_NARRADOR.filter((p) => !p.sempreFechada).map((p) => p.id);
-  t("no `mestre` toda porta está aberta (menos as sempre fechadas: os marcadores e os dois Arquivistas)", abriveis.every((id) => portaAberta(id, "mestre") && portaAberta(id)) && J(PORTAS_DO_NARRADOR.filter((p) => p.sempreFechada).map((p) => p.id)) === J(["marcadores", "arquivistaDoSave", "arquivistaDaAscensao"]) && ["marcadores", "arquivistaDoSave", "arquivistaDaAscensao"].every((id) => !portaAberta(id, "mestre") && !portaAberta(id, "boca")));
+  t("no `mestre` toda porta está aberta (menos as sempre fechadas: os marcadores e os dois Arquivistas)", abriveis.every((id) => portaAberta(id, "mestre")) && J(PORTAS_DO_NARRADOR.filter((p) => p.sempreFechada).map((p) => p.id)) === J(["marcadores", "arquivistaDoSave", "arquivistaDaAscensao"]) && ["marcadores", "arquivistaDoSave", "arquivistaDaAscensao"].every((id) => !portaAberta(id, "mestre") && !portaAberta(id, "boca")));
   t("no `ator` toda porta está fechada", ids.every((id) => !portaAberta(id, "ator")), ids.filter((id) => portaAberta(id, "ator")).join(", "));
   t("no `boca` toda porta está fechada", ids.every((id) => !portaAberta(id, "boca")), ids.filter((id) => portaAberta(id, "boca")).join(", "));
   t("toda porta tem uma tentação nesta suíte, e nenhuma tentação sobra", ids.every((id) => id in TENTACAO) && Object.keys(TENTACAO).every((k) => ids.includes(k)), ids.filter((id) => !(id in TENTACAO)).join(", "));
@@ -195,7 +210,11 @@ sec("2. a tabela das portas — PORTAS_DO_NARRADOR, contra a anatomia (mente/nar
 sec("3. a resposta pela porta");
 {
   const r = tentar({ narrativa: "x", perigo: null });
-  t("no `mestre` a resposta é a mesma — o mesmo objeto, nem uma cópia", aRespostaPelaPorta(r, "mestre") === r && aRespostaPelaPorta(r) === r);
+  /* MOVIDA (13/11, NE7), com o motivo: a resposta sem modo já não é a do
+     `mestre` — é a do padrão, o `boca`. A intenção fica: o `mestre` não
+     muda um byte, e a peça sem modo lê o padrão. */
+  t("no `mestre` a resposta é a mesma — o mesmo objeto, nem uma cópia", aRespostaPelaPorta(r, "mestre") === r);
+  t("sem modo, a resposta é a do padrão (o `boca`: nenhuma `mudancas`)", J(aRespostaPelaPorta(r)) === J(aRespostaPelaPorta(r, "boca")) && aRespostaPelaPorta(r).mudancas === null);
   const a = aRespostaPelaPorta(r, "ator");
   t("no `ator` nenhuma `mudancas` entra (nem os campos que não são porta)", a !== r && a.mudancas === null && a.narrativa === r.narrativa);
   t("…e a de quem chamou não é tocada", r.mudancas.moedas === 500 && r.mudancas.sinais.length === 9);
@@ -310,12 +329,13 @@ sec("5. os 275 turnos gravados (aplicar-casos#casosDoTurno), com a resposta chei
     if (a === v) iguais++; else if (dif.length < 3) dif.push(c.id);
     if (turnoDoCaso(c, c.estado, tentacao, "boca") === turnoDoCaso(c, c.estado, VAZIA, "boca")) boca++;
     if (turnoDoCaso(c, c.estado, tentacao, "mestre") !== turnoDoCaso(c, c.estado, VAZIA, "mestre")) mordem++;
-    if (turnoDoCaso(c, c.estado, c.resp, "mestre") === turnoDoCaso(c, c.estado, c.resp, undefined)) padrao++;
+    /* MOVIDA (13/11, NE7): o padrão dito (o `boca`), e já não o `mestre` — a intenção é a mesma */
+    if (turnoDoCaso(c, c.estado, c.resp, PADRAO) === turnoDoCaso(c, c.estado, c.resp, undefined)) padrao++;
   }
   t(`no \`ator\`, ${iguais}/${CT.length} turnos acabam iguais aos de uma resposta vazia`, iguais === CT.length, dif.join(" | "));
   t(`no \`boca\` (NE2), ${boca}/${CT.length} também`, boca === CT.length);
   t(`no \`mestre\`, a tentação muda ${mordem}/${CT.length} turnos (a prova morde)`, mordem === CT.length);
-  t(`o \`mestre\` dito é o modo ausente em ${padrao}/${CT.length} turnos (a resposta gravada, intacta)`, padrao === CT.length);
+  t(`o padrão dito (\`${PADRAO}\`) é o modo ausente em ${padrao}/${CT.length} turnos (a resposta gravada)`, padrao === CT.length);
 }
 
 sec("6. o fim do turno nos 275 casos (aplicar-casos#casosDoFim): o códex e a chegada");
@@ -326,7 +346,7 @@ sec("6. o fim do turno nos 275 casos (aplicar-casos#casosDoFim): o códex e a ch
   const fim = (c, resp, modo) => {
     const m = modo ? { modoDoNarrador: modo } : {};
     semearACasa(c.semente);
-    const cx = aplicarOCodex(copia(c.estado), resp, { ...c.ctx, ...m });
+    const cx = aplicarOCodex(copia(c.estado), resp, { ...semModo(c.ctx), ...m });
     const ch = aplicarAChegada({ ...copia(c.estado), base: cx.estado.base, npcs: cx.estado.npcs }, resp, m);
     return JSON.stringify({ base: cx.estado.base, npcs: cx.estado.npcs, codex: [cx.efeitos, cx.paraOCronista, cx.msgs], cidade: ch.estado.cidadeAtual, lugar: ch.estado.lugar, mapa: ch.estado.mapa, chegada: [ch.efeitos, ch.paraOCronista, ch.msgs, ch.minutos] });
   };
@@ -337,12 +357,12 @@ sec("6. o fim do turno nos 275 casos (aplicar-casos#casosDoFim): o códex e a ch
     if (oferecidos) comNomes++;
     if (fim(c, resp, "ator") === fim(c, VAZIA, "ator")) iguais++;
     if (oferecidos && fim(c, resp, "mestre") !== fim(c, VAZIA, "mestre")) mordem++;
-    if (fim(c, c.resp, "mestre") === fim(c, c.resp)) padrao++;
+    if (fim(c, c.resp, PADRAO) === fim(c, c.resp)) padrao++; /* NE7: o padrão dito, e já não o `mestre` */
   }
   t(`no \`ator\`, ${iguais}/${CF.length} fins de turno iguais aos de uma resposta vazia`, iguais === CF.length);
   /* um caso em nove não oferece nomes à mão, e pode não ter nada que a prosa mude */
   t(`no \`mestre\`, a prosa muda ${mordem}/${comNomes} dos casos com nomes à mão oferecidos (a gente, a base, a chegada)`, comNomes > 200 && mordem === comNomes);
-  t(`o \`mestre\` dito é o modo ausente em ${padrao}/${CF.length}`, padrao === CF.length);
+  t(`o padrão dito (\`${PADRAO}\`) é o modo ausente em ${padrao}/${CF.length}`, padrao === CF.length);
 }
 
 sec("7. as sessões gravadas (o replay, src/sessao.js#correrOTurno), turno a turno");
@@ -364,7 +384,7 @@ sec("7. as sessões gravadas (o replay, src/sessao.js#correrOTurno), turno a tur
       if (fim(comTentacao, "ator") === va) iguais++; else if (dif.length < 3) dif.push(`${f}#${L.n}`);
       if (fim(comTentacao, "boca") === fim(vazia, "boca")) boca++;
       if (fim(comTentacao, "mestre") !== fim(vazia, "mestre")) mordem++;
-      if (fim(L, "mestre") === fim(L)) padrao++;
+      if (fim(L, PADRAO) === fim(L)) padrao++; /* NE7: o padrão dito, e já não o `mestre` */
       /* as peças do fim que o replay não corre (moram no App): o gatilho, a nêmesis, os vistos */
       const narr = comTentacao.narrador.narrativa;
       const g = oGatilhoDoCronista(antes, { narrativa: narr, doTurno: { frase: (L.entrada || {}).frase || "" }, pers: antes.personagem, modoDoNarrador: "ator" }, antes.leituraDoCronista || null);
@@ -377,7 +397,7 @@ sec("7. as sessões gravadas (o replay, src/sessao.js#correrOTurno), turno a tur
   t(`no \`ator\`, ${iguais}/${linhas} turnos das sessões acabam iguais aos de uma resposta vazia`, iguais === linhas, dif.join(" | "));
   t(`no \`boca\` (NE2), ${boca}/${linhas} também`, boca === linhas);
   t(`no \`mestre\`, a tentação muda ${mordem}/${linhas} (a prova morde)`, mordem === linhas);
-  t(`o \`mestre\` dito é o modo ausente em ${padrao}/${linhas} (a sessão gravada, intacta)`, padrao === linhas);
+  t(`o padrão dito (\`${PADRAO}\`) é o modo ausente em ${padrao}/${linhas} (a sessão gravada)`, padrao === linhas);
   t(`o gatilho do Cronista cala nos ${calados}/${linhas} turnos do \`ator\``, calados === linhas);
   t(`a prosa não encerra a nêmesis em nenhum dos ${nemesis}/${linhas}`, nemesis === linhas);
   t(`nem dá recência ao elenco em nenhum dos ${vistos}/${linhas}`, vistos === linhas);
@@ -446,20 +466,22 @@ sec("8. NE1 — o Cronista, secção a secção, e o cânone que só guarda o qu
 sec("9. NE2 — as portas de fora, fechadas pela peça que as tem");
 {
   const J9 = (x) => JSON.stringify(x);
+  /* MOVIDAS (13/11, NE7): «a peça sem modo é o `mestre`» passou a «a peça
+     sem modo é o padrão» — o padrão é o `boca` */
   /* o livro de factos: o «visto» que a prosa dá */
   const est = { cidadeAtual: "Vau", npcs: { "Corvo Sal": { nome: "Corvo Sal", cidade: "Vau", papel: "ferreiro" } }, personagem: { nome: "Íris", grupo: [] }, dia: 1, npcTurno: 2, lugar: null };
   const aqui = (modo) => oQueACenaDaAoLivro(est, { narrativa: TENTACAO.livroVistoDaProsa, ...(modo ? { modoDoNarrador: modo } : {}) }).emCena.filter((x) => x.aqui).map((x) => x.nome);
   const semProsa = oQueACenaDaAoLivro(est, { narrativa: "" }).emCena.filter((x) => x.aqui).map((x) => x.nome);
-  t("livroVistoDaProsa: a prosa põe o Corvo à vista no `mestre`; no `boca` é a cena sem prosa", aqui("mestre").includes("Corvo Sal") && J9(aqui()) === J9(aqui("mestre")) && J9(aqui("boca")) === J9(semProsa) && !aqui("boca").includes("Corvo Sal"), J9([aqui("mestre"), aqui("boca")]));
+  t("livroVistoDaProsa: a prosa põe o Corvo à vista no `mestre`; no `boca` é a cena sem prosa", aqui("mestre").includes("Corvo Sal") && J9(aqui()) === J9(aqui(PADRAO)) && J9(aqui("boca")) === J9(semProsa) && !aqui("boca").includes("Corvo Sal"), J9([aqui("mestre"), aqui("boca")]));
   /* o alvo do ataque */
   const ag = (modo) => lerAgressao("ataco o lobo com a espada", { presentes: [], grupo: [], mostrado: [TENTACAO.alvoDaProsa], ...(modo ? { modoDoNarrador: modo } : {}) });
-  t("alvoDaProsa: o lobo que a prosa mostrou é o alvo no `mestre`; no `boca` não há alvo conhecido", (ag("mestre") || {}).criatura === true && J9(ag()) === J9(ag("mestre")) && (ag("boca") || {}).tipo === "semAlvoConhecido", J9([ag("mestre"), ag("boca")]));
+  t("alvoDaProsa: o lobo que a prosa mostrou é o alvo no `mestre`; no `boca` não há alvo conhecido", (ag("mestre") || {}).criatura === true && J9(ag()) === J9(ag(PADRAO)) && (ag("boca") || {}).tipo === "semAlvoConhecido", J9([ag("mestre"), ag("boca")]));
   /* o nome da luta prometida */
   const lp = (modo) => alvoPrometido("o camarada", { presentes: [], mostrado: [TENTACAO.lutaPrometida], ...(modo ? { modoDoNarrador: modo } : {}) });
-  t("lutaPrometida: a prosa dá o nome no `mestre`; no `boca` fica o do cartão", lp("mestre").deOnde === "prosa" && J9(lp()) === J9(lp("mestre")) && lp("boca").deOnde === "cartao", J9([lp("mestre"), lp("boca")]));
+  t("lutaPrometida: a prosa dá o nome no `mestre`; no `boca` fica o do cartão", lp("mestre").deOnde === "prosa" && J9(lp()) === J9(lp(PADRAO)) && lp("boca").deOnde === "cartao", J9([lp("mestre"), lp("boca")]));
   /* o perigo */
   const pg = (modo) => { const ch = []; const ctx = new Proxy({ aplicar: () => {}, ler: () => ({}) }, { get: (o, k) => (k in o ? o[k] : (...a) => { ch.push(String(k)); return { pers: a[1] && a[1].pers, msgs: [], nota: "" }; }) }); oPerigoDaResposta({ pers: { nome: "Íris", nivel: 2 }, perigo: TENTACAO.perigo, combate: { inimigos: [] }, ...(modo ? { modoDoNarrador: modo } : {}) }, ctx); return ch; };
-  t("perigo: o que escapasse à poda dispara no `mestre`; no `boca` não chama porta nenhuma", pg("mestre").includes("dispararPerigo") && J9(pg()) === J9(pg("mestre")) && pg("boca").length === 0, J9([pg("mestre"), pg("boca")]));
+  t("perigo: o que escapasse à poda dispara no `mestre`; no `boca` não chama porta nenhuma", pg("mestre").includes("dispararPerigo") && J9(pg()) === J9(pg(PADRAO)) && pg("boca").length === 0, J9([pg("mestre"), pg("boca")]));
   /* os marcadores na luta: a vitória que a IA declarasse não paga espólio */
   const st = () => ({ combate: { rodada: 2, inimigos: [{ nome: "Lobo Cinzento", vida: 4, vidaMax: 12, derrotado: false, ameaca: "comum" }] }, descobertas: [], ocioso: 0, ataqueResolvido: false, derrotadosDaSessao: [], masmorra: null, salaEmCurso: null, mapa: { cidades: [] }, semente: "s|Fantasia medieval", genero: "Fantasia medieval", molde: null, lexico: null, divindade: null });
   const luta = (mud, modo) => {
@@ -474,6 +496,73 @@ sec("9. NE2 — as portas de fora, fechadas pela peça que as tem");
   /* as que moram no App: a tabela (a fiação, pelo build) */
   t("nucleoDaFala e o Léxico: abertos no `mestre`, fechados no `boca` e no `ator` (moram no App)", ["nucleoDaFala", "lexico"].every((id) => portaAberta(id, "mestre") && !portaAberta(id, "boca") && !portaAberta(id, "ator")));
   t("os dois Arquivistas: fechados em todo modo (NE3 — a tela do App lê a porta)", ["arquivistaDoSave", "arquivistaDaAscensao"].every((id) => ["mestre", "boca", "ator", undefined].every((m) => !portaAberta(id, m))));
+}
+
+sec("10. NE7 — o `boca` é o padrão: o jogo publicado fecha todas as portas");
+{
+  /* o App lê o padrão (MODO_DA_MESA = oModoDoNarrador() fora do dev), e o
+     servidor também (oModoDoNarrador(opcoes.modoDoNarrador)): a catraca é
+     sobre a tabela e sobre o servidor; a fiação do App prova-se pelo build */
+  const m = MODO_DO_NARRADOR[PADRAO];
+  const abriveis = PORTAS_DO_NARRADOR.filter((p) => !p.sempreFechada).map((p) => p.id);
+  t("o padrão fecha todas as portas que não são `sempreFechada` (e as sempre fechadas também)", m.portas.length === 0 && abriveis.length > 0 && PORTAS_DO_NARRADOR.every((p) => !portaAberta(p.id)), PORTAS_DO_NARRADOR.filter((p) => portaAberta(p.id)).map((p) => p.id).join(", "));
+  t("o pedido do padrão é o do `mestre` (a pauta inteira, os envelopes), não o do ator", m.pedido === "mestre" && oPedidoDoModo() === oPedidoDoModo("mestre") && oPedidoDoModo() === "mestre");
+  t("no padrão o Cronista não é chamado (a gente e a conversa entram pela ficha da cena)", oCronistaChama() === false && oGatilhoDoCronista({ npcs: {}, canone: {}, mapa: { cidades: [] } }, { narrativa: TENTACAO.cronista, doTurno: { frase: "olho em volta" }, pers: copia(HEROI) }, null).calado === true);
+  t("o `mestre` continua na tabela, de reserva, abrindo tudo o que um modo pode abrir", abriveis.every((id) => portaAberta(id, "mestre")) && oCronistaChama("mestre"));
+  t("…e todo modo que não abre tudo é um modo das portas fechadas (não há meio-termo escondido na tabela)", Object.values(MODO_DO_NARRADOR).every((x) => x.portas.length === 0 || abriveis.every((id) => x.portas.includes(id))));
+}
+
+sec("11. NE7 — o servidor segue o mesmo padrão (turno-no-servidor.js)");
+{
+  const S9 = ler("sessao-s9.json");
+  const corpo = { estado: estadoNoTurno(S9, 3), frase: "olho em volta" };
+  const sem = await oPedidoNoServidor(corpo, { agora: () => 0 });
+  const boca = await oPedidoNoServidor(corpo, { agora: () => 0, modoDoNarrador: "boca" });
+  const mestre = await oPedidoNoServidor(corpo, { agora: () => 0, modoDoNarrador: "mestre" });
+  t("o pedido do servidor sem modo é o do padrão, byte a byte, e é o do Mestre (JSON, sem ficha de ator)", J(sem) === J(boca) && J(sem.pedido) === J(mestre.pedido) && sem.pedido.formato === "json" && !("ficha" in sem));
+  const PROSA11 = "A chuva bate no telhado. O homem do balcão limpa as mãos e olha a porta. Lá fora um cão late duas vezes e cala. O cheiro de cebola frita sobe da cozinha.";
+  const TENT11 = JSON.stringify({ narrativa: PROSA11, mudancas: { moedas: 500, adicionar_itens: [{ nome: "Coroa de Ferro", tipo: "tesouro" }], cidade_atual: "Cidade Inventada", sinais: ["loot: lâmina lendária"] } });
+  const porta = (texto) => async () => ({ texto, uso: { entrada: 1000, saida: 200 } });
+  let cronistas = 0;
+  const espiao = async () => { cronistas++; return {}; };
+  const a = await oTurnoNoServidor(corpo, { agora: () => 0, chamar: porta(TENT11), cronista: espiao });
+  const b = await oTurnoNoServidor(corpo, { agora: () => 0, chamar: porta(JSON.stringify({ narrativa: PROSA11 })), cronista: espiao });
+  t("no servidor sem modo, a resposta cheia de campos deixa o estado igual ao da mesma prosa sem campos", J(a.estadoDoFim) === J(b.estadoDoFim));
+  t("…e o Cronista do servidor não é chamado", cronistas === 0 && !a.cronista.chamado && !b.cronista.chamado);
+  /* a prova morde, e é ela que pega o defeito da NE7: o servidor só passava
+     o modo ao replay quando ele não era "mestre" (o padrão de antes); com o
+     padrão no `boca`, o `mestre` dito caía no padrão e fechava as portas */
+  const c = await oTurnoNoServidor(corpo, { agora: () => 0, chamar: porta(TENT11), cronista: () => null, modoDoNarrador: "mestre" });
+  t("o `mestre` dito ao servidor ainda abre as portas: a mesma resposta muda o estado", J(c.estadoDoFim) !== J(b.estadoDoFim) && J(c.estadoDoFim) !== J(a.estadoDoFim));
+  /* a sessão gravada guarda o comportamento da época dela: sem modo na cabeça,
+     é de antes da NE7 e o replay corre-a no `mestre` (FORMATO_DA_SESSAO.modoSemModo) */
+  const rSem = reproduzirASessao(S9), rMestre = reproduzirASessao(S9, { modoDoNarrador: "mestre" }), rBoca = reproduzirASessao(S9, { modoDoNarrador: "boca" });
+  t("a sessão sem modo reproduz-se no `mestre` (a época dela), e no `boca` reproduz menos", FORMATO_DA_SESSAO.modoSemModo === "mestre" && J(rSem.divergentes) === J(rMestre.divergentes) && rBoca.reproduzidos < rMestre.reproduzidos, J([rMestre.reproduzidos, rBoca.reproduzidos]));
+  t("a cabeça nova diz o modo em que se joga (campo novo; sem ele, nada)", abrirASessao({ semente: "x", modoDoNarrador: "boca" }).modoDoNarrador === "boca" && !("modoDoNarrador" in abrirASessao({ semente: "x" })));
+}
+
+sec("12. NE7 — a porta fechada não cala o que o sistema sabe: a frase do jogador que paga");
+{
+  /* a porta `oQueFaltaDebitar` lia DUAS coisas: a prosa do Narrador («você
+     paga 10 moedas») e a frase do jogador («pago duas moedas ao guarda»).
+     A segunda não é da IA — é a entrada do jogador, que o sistema tem. Com
+     a porta fechada (o padrão, desde a NE7) a prosa e o `moedas` declarado
+     não entram, e a frase continua a pagar: senão, no jogo publicado,
+     pagar a alguém pela conversa não tirava nada da bolsa. */
+  const p = { nome: "Vera", vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 20, inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [] };
+  const bolsa = (resp, ctx) => aplicar({ personagem: copia(p) }, resp, ctx).estado.personagem.moedas;
+  const PAGA = "Pago duas moedas ao guarda para me deixar passar.";
+  t("no padrão, a frase do jogador que paga tira da bolsa (20 → 18)", bolsa({ narrativa: "O guarda pega as moedas.", mudancas: {} }, { pedido: PAGA }) === 18);
+  t("…igual ao `mestre` com a mesma cena", bolsa({ narrativa: "O guarda pega as moedas.", mudancas: {} }, { pedido: PAGA, modoDoNarrador: "mestre" }) === 18);
+  t("no padrão, a prosa que diz um pagamento não tira nada (sem frase do jogador)", bolsa({ narrativa: "Você paga 10 moedas ao ferreiro.", mudancas: {} }, {}) === 20);
+  t("…nem o `moedas` declarado pela IA desconta da frase (a IA não diz quanto saiu)", bolsa({ narrativa: "", mudancas: { moedas: -2 } }, { pedido: PAGA }) === 18);
+  /* nem a cena que recusa o impede: impedir também é mexer no estado, e a
+     prosa não mexe em nada (a régua da §5: a tentação acaba igual à vazia).
+     No `mestre` (a reserva) a recusa da cena ainda impedia. */
+  const RECUSA = { narrativa: "O guarda recusa as moedas e cospe no chão.", mudancas: {} };
+  t("…nem a cena que recusa o pagamento o desfaz no padrão (no «mestre» desfazia)", bolsa(RECUSA, { pedido: PAGA }) === 18 && bolsa(RECUSA, { pedido: PAGA, modoDoNarrador: "mestre" }) === 20);
+  t("o que o sistema já cobrou (o envelope «já registrada pelo sistema») não se cobra de novo", bolsa({ narrativa: "", mudancas: {} }, { pedido: PAGA, envelopes: "[COMPRA — JÁ REGISTRADA PELO SISTEMA]" }) === 20);
+  t("sem fundos, nada sai", aplicar({ personagem: { ...copia(p), moedas: 1 } }, { narrativa: "", mudancas: {} }, { pedido: PAGA }).estado.personagem.moedas === 1);
 }
 
 console.log(`\nnada entra pelo ator: ${bons} passaram, ${maus} falharam`);

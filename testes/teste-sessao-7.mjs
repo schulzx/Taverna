@@ -202,20 +202,21 @@ sec("3a. a pessoa armada que o Mestre mostra existe (M20, M61)");
 const PRESENTES = [{ nome: "Tônia Lodoso" }, { nome: "Jaco Faro" }, { nome: "Lia Cinzela" }, { nome: "Marlo", papel: "camarada de Tônia, acusador" }];
 {
   const m18 = ["Tônia, num beco: — Não era para você me achar assim. Jaco, ofegante: — Tem dois carregando tocha na ladeira do porto."];
-  const a20 = A.lerAgressao("Mando Tônia ficar atrás de mim. Avanço com Jaco e ataco o homem da tocha.", { presentes: PRESENTES, grupo: [{ nome: "Jaco Faro" }], mostrado: m18 });
+  /* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta prova mede o que a porta ABERTA faz — o comportamento de antes —, logo diz o «mestre» (a reserva da tabela); o padrão novo prova-se em teste-nada-entra-pelo-ator §10. */
+  const a20 = A.lerAgressao("Mando Tônia ficar atrás de mim. Avanço com Jaco e ataco o homem da tocha.", { modoDoNarrador: "mestre", presentes: PRESENTES, grupo: [{ nome: "Jaco Faro" }], mostrado: m18 });
   t("M20: \"ataco o homem da tocha\" abre a luta contra quem o Mestre mostrou (era «a ladeira está vazia»)", a20 && a20.tipo === "agressao" && a20.nome === "Homem da tocha", J(a20));
   t("…não contra Tônia nem Jaco, citados noutra oração", a20 && !/T[ôo]nia|Jaco/.test(a20.nome));
   t("…e não é crime: quem o Mestre armou à frente do herói não é vítima", a20 && a20.armadoNaProsa === true && CR.lerCrime(a20, { npcs: {}, presentes: PRESENTES, grupo: [] }) === null);
   const m60 = ["— Então o bardo fala por ela? Pois que fale com a lâmina, não com a língua. O pescador de barba ruiva tira uma faca de pesca do cinto. Lia: — No meu telhado não. Lá fora, na lama. E sem faca."];
-  const a61 = A.lerAgressao("Aceito o desafio. Saio para a lama, sem faca, como Lia mandou, e ataco o pescador de barba ruiva com os punhos.", { presentes: PRESENTES, grupo: [], mostrado: m60 });
+  const a61 = A.lerAgressao("Aceito o desafio. Saio para a lama, sem faca, como Lia mandou, e ataco o pescador de barba ruiva com os punhos.", { modoDoNarrador: "mestre", presentes: PRESENTES, grupo: [], mostrado: m60 });
   t("M61: \"ataco o pescador de barba ruiva\" abre a luta (era [SEM ALVO NO REGISTRO])", a61 && a61.tipo === "agressao" && a61.nome === "Pescador de barba ruiva", J(a61));
   t("…com a ameaça de gente comum", a61 && a61.ameaca === "comum");
   /* a trava da casa continua: o jogador não escreve o inimigo */
-  t("sem arma nem ameaça na prosa, a pessoa não vira alvo", A.lerAgressao("ataco o velho", { presentes: PRESENTES, mostrado: ["Um velho dorme na esquina, enrolado num xale."] }).tipo === "semAlvoConhecido");
-  t("a gente que o Mestre não mostrou não vira alvo", A.lerAgressao("ataco o soldado", { presentes: PRESENTES, mostrado: m60 }).tipo === "semAlvoConhecido");
-  t("sem as falas do Mestre, tudo como antes", A.lerAgressao("ataco o homem da tocha", { presentes: PRESENTES }).tipo === "semAlvoConhecido");
-  t("o bicho mostrado continua a vir antes", A.lerAgressao("ataco o cão sem pelo", { presentes: PRESENTES, mostrado: ["Um cão sem pelo rosna atrás do homem da faca."] }).criatura === true);
-  t("o nome do registo na oração do golpe continua a mandar", A.lerAgressao("ataco Marlo", { presentes: PRESENTES, mostrado: m60 }).nome === "Marlo");
+  t("sem arma nem ameaça na prosa, a pessoa não vira alvo", A.lerAgressao("ataco o velho", { modoDoNarrador: "mestre", presentes: PRESENTES, mostrado: ["Um velho dorme na esquina, enrolado num xale."] }).tipo === "semAlvoConhecido");
+  t("a gente que o Mestre não mostrou não vira alvo", A.lerAgressao("ataco o soldado", { modoDoNarrador: "mestre", presentes: PRESENTES, mostrado: m60 }).tipo === "semAlvoConhecido");
+  t("sem as falas do Mestre, tudo como antes", A.lerAgressao("ataco o homem da tocha", { modoDoNarrador: "mestre", presentes: PRESENTES }).tipo === "semAlvoConhecido");
+  t("o bicho mostrado continua a vir antes", A.lerAgressao("ataco o cão sem pelo", { modoDoNarrador: "mestre", presentes: PRESENTES, mostrado: ["Um cão sem pelo rosna atrás do homem da faca."] }).criatura === true);
+  t("o nome do registo na oração do golpe continua a mandar", A.lerAgressao("ataco Marlo", { modoDoNarrador: "mestre", presentes: PRESENTES, mostrado: m60 }).nome === "Marlo");
   t("a tabela é lida de volta", PESSOA_NA_PROSA.cabecas.includes("pescador") && PESSOA_NA_PROSA.armas.includes("tocha"));
   t("lixo não estoura", pessoaMostrada(null, null) === null && pessoaMostrada("ataco o homem", []) === null);
 }
@@ -240,9 +241,9 @@ sec("3b. o lado \"duelo\" do cartão diz com quem é a luta (M59–M61)");
        (FIGURA_DO_ARCO), e é esse o combatente quando o registo e a prosa
        calam. A intenção fica: sem registo, a luta tem nome e ameaça. */
     t("Defender: a luta prometida vem com nome e ameaça, mesmo sem registo (era «sem alvo»)", sem.luta && inst.figura && sem.luta.nome === inst.figura.nome && sem.luta.deOnde === "figura" && sem.luta.ameaca && sem.luta.duelo === true, J(sem.luta));
-    const comMarlo = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", { ...ctx, presentes: PRESENTES });
+    const comMarlo = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", { modoDoNarrador: "mestre", ...ctx, presentes: PRESENTES });
     t("com o camarada no registo da cena (o Marlo do Cronista), a luta é com ele", comMarlo.luta && comMarlo.luta.nome === "Marlo" && comMarlo.luta.deOnde === "registo", J(comMarlo.luta));
-    const pelaProsa = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", { ...ctx, mostrado: ["Perto da meia-noite, um velho camarada de Tônia aparece na soleira, pingando."] });
+    const pelaProsa = ST.escolherLado(posta, w.nucleo, inst.nome, "defender", { modoDoNarrador: "mestre", ...ctx, mostrado: ["Perto da meia-noite, um velho camarada de Tônia aparece na soleira, pingando."] });
     t("sem registo, pelo que o Mestre mostrou: «Camarada de Tônia»", pelaProsa.luta && pelaProsa.luta.nome === "Camarada de Tônia", J(pelaProsa.luta));
     t("o efeito continua o mesmo (o duelo contra o velho camarada)", sem.efeitos.some((e) => e.tipo === "duelo" && e.contra === "o velho camarada"));
     const conf = ST.escolherLado(posta, w.nucleo, inst.nome, "confessar", ctx);
@@ -250,7 +251,7 @@ sec("3b. o lado \"duelo\" do cartão diz com quem é a luta (M59–M61)");
     t("o coração recebido não muda", posta.arcos[inst.nome].escolha === undefined);
   }
   t("alvoPrometido nunca devolve vazio", alvoPrometido(null).nome && alvoPrometido("", {}).nome && alvoPrometido("os homens do credor").nome === "Homens do credor");
-  t("a sombra luta com a ameaça da tabela", alvoPrometido("a Mulher Sem Nome", { sombra: true }).ameaca === LUTA_PROMETIDA.sombra);
+  t("a sombra luta com a ameaça da tabela", alvoPrometido("a Mulher Sem Nome", { modoDoNarrador: "mestre", sombra: true }).ameaca === LUTA_PROMETIDA.sombra);
 }
 
 sec("4. um favor, uma forma: o mural não repete o pedido do núcleo (M26–M27)");

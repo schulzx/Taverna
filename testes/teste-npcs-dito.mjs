@@ -13,6 +13,8 @@
    pessoa chega sem ela, nunca sobe em quem já é fato), que a ficha sem a
    marca sai byte a byte igual, que um save com o campo não quebra a versão
    antiga do jogo, e o custo no pior caso. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { MARCA_DO_DITO, criarNPC, mesclarNPC, resumoNPCsParaPrompt, TETO_DAS_PESSOAS, ordemDaImportancia, normalizarRecencia, nomeComDono } from "../src/npcs.js";
 import { formatarCanone, linhasJaDitas } from "../src/prompt.js";
 import { julgarOCronista, O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
@@ -44,7 +46,7 @@ t("a que a prosa pôs em cena não", !!bento && !bento.dito);
 /* o aceito do motor, com o estado mínimo e as portas que a secção da gente lê */
 let E = { personagem: { nome: "Íris" }, npcs: {}, canone: {}, dia: 3, npcTurno: 5, cidadeAtual: "Brejo Alto" };
 const aplicar = (efs) => { for (const ef of efs) if (ef.tipo === "npcs") E = { ...E, npcs: ef.npcs }; };
-oAceitoDoCronista({ pessoas: pes }, [], PROPOSTA, {
+NM.oAceitoDoCronista({ pessoas: pes }, [], PROPOSTA, {
   ler: () => E, aplicar, pers: E.personagem, narrativa: NARRATIVA,
   mundoDaBase: () => null, registrarLugar: () => null, contextoDoNome: () => ({}),
 });
@@ -108,7 +110,7 @@ t("a mescla não muta o recebido", (() => { const a = { ...semDono }; mesclarNPC
 {
   let E2 = { personagem: { nome: "Íris" }, npcs: {}, canone: {}, dia: 3, npcTurno: 5, cidadeAtual: "" };
   const ap = (efs) => { for (const ef of efs) if (ef.tipo === "npcs") E2 = { ...E2, npcs: ef.npcs }; };
-  const ler = (pessoa) => oAceitoDoCronista({ pessoas: [pessoa] }, [], { pessoas: [pessoa] }, {
+  const ler = (pessoa) => NM.oAceitoDoCronista({ pessoas: [pessoa] }, [], { pessoas: [pessoa] }, {
     ler: () => E2, aplicar: ap, pers: E2.personagem, narrativa: "x",
     mundoDaBase: () => null, registrarLugar: () => null, contextoDoNome: () => ({}),
   });
@@ -163,17 +165,17 @@ const estadoCanone = (canone, npcs) => ({ personagem: { nome: "Ana" }, canone, m
 const CTX = { mundo: null, baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Ana" } };
 const MARCA = "dito por alguém em cena, não fato";
 const SEM_MUDANCAS = { narrativa: "x", mudancas: {} };
-const rDito = aplicarORegisto(estadoCanone({ "Clarissa do Posto Velho": { tipo: "pessoa", papel: "guia", dito: MARCA } }), SEM_MUDANCAS, CTX);
+const rDito = NM.aplicarORegisto(estadoCanone({ "Clarissa do Posto Velho": { tipo: "pessoa", papel: "guia", dito: MARCA } }), SEM_MUDANCAS, CTX);
 const fDito = (rDito.estado.npcs || {})["Clarissa do Posto Velho"];
 t("a pessoa do cânone com a marca entra no registo com a marca", fDito && fDito.dito === MARCA, Js(fDito));
 t("e a linha das PESSOAS CONHECIDAS a escreve", resumoNPCsParaPrompt(rDito.estado.npcs).includes(MARCA_DO_DITO));
-const rFato = aplicarORegisto(estadoCanone({ Lia: { tipo: "pessoa", papel: "ferreira" } }), SEM_MUDANCAS, CTX);
+const rFato = NM.aplicarORegisto(estadoCanone({ Lia: { tipo: "pessoa", papel: "ferreira" } }), SEM_MUDANCAS, CTX);
 t("a pessoa do cânone sem a marca entra como fato — sem chave dito (a ficha de antes)", rFato.estado.npcs.Lia && !("dito" in rFato.estado.npcs.Lia));
 const jaFato = criarNPC("Clarissa", { papel: "guia", ultimaVez: 1, conhecidoEm: 2 });
-const rSobe = aplicarORegisto(estadoCanone({ "Clarissa do Posto Velho": { tipo: "pessoa", dito: MARCA } }, { Clarissa: jaFato }), SEM_MUDANCAS, { ...CTX, baseDoNome: { ...CTX.baseDoNome, importantes: [{ nome: "Clarissa", onde: "Posto Velho" }] } });
+const rSobe = NM.aplicarORegisto(estadoCanone({ "Clarissa do Posto Velho": { tipo: "pessoa", dito: MARCA } }, { Clarissa: jaFato }), SEM_MUDANCAS, { ...CTX, baseDoNome: { ...CTX.baseDoNome, importantes: [{ nome: "Clarissa", onde: "Posto Velho" }] } });
 const fSobe = Object.values(rSobe.estado.npcs).find((n) => /^Clarissa/.test(n.nome));
 t("a marca nunca sobe em quem já é fato no registo (a mescla não a copia)", fSobe && !("dito" in fSobe), Js(fSobe));
-t("lixo na marca (número, objeto, null, branco) não vira marca", [5, {}, null, "  "].every((x) => { const r = aplicarORegisto(estadoCanone({ Zeferino: { tipo: "pessoa", dito: x } }), SEM_MUDANCAS, CTX); return r.estado.npcs.Zeferino && !("dito" in r.estado.npcs.Zeferino); }));
+t("lixo na marca (número, objeto, null, branco) não vira marca", [5, {}, null, "  "].every((x) => { const r = NM.aplicarORegisto(estadoCanone({ Zeferino: { tipo: "pessoa", dito: x } }), SEM_MUDANCAS, CTX); return r.estado.npcs.Zeferino && !("dito" in r.estado.npcs.Zeferino); }));
 
 sec("7. o custo, no pior caso");
 const custo = `, ${MARCA_DO_DITO}`.length;

@@ -9,6 +9,8 @@
    nunca subia à pauta e a trama nascia solta. Esta suíte lê cada ponto de
    fiação no App (falha em HEAD antes da v9.393) e corre, em Node, as
    chamadas com a forma de argumento que o App passa. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 
 const RAIZ = "../src/";
@@ -84,7 +86,7 @@ sec("3. o Cronista guarda e paga");
      (`r`) — a ordem que esta asserção guarda é a mesma, e o juízo vem
      entre o parse e o paga */
   /* 28/10 (T1-A, 9.ª fatia): no App fica a ordem parse, juízo, aceito; o paga-antes-de-guardar joga-se no motor (pagar o 2, que só nasce ao guardar, não fecha nada) */
-  const jogarProm = (aceito, ler) => { const efs = []; CT.oAceitoDoCronista(aceito, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: ler || (() => ({ prometido: comAberta })), aplicar: (x) => efs.push(...x) }); return efs; };
+  const jogarProm = (aceito, ler) => { const efs = []; NM.oAceitoDoCronista(aceito, [], {}, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: ler || (() => ({ prometido: comAberta })), aplicar: (x) => efs.push(...x) }); return efs; };
   const depoisDoPago = (jogarProm({ promessas_pagas: [2], promessas: [{ tipo: "frase", texto: "hei de voltar com o barco da Inês", quem: "Inês" }] }).find((e) => e.tipo === "prometido") || {}).prometido;
   t("paga primeiro, guarda depois, depois do parse", C.indexOf("parseObjetoTolerante(txt)") > 0 && C.indexOf("julgarOCronista(") > C.indexOf("parseObjetoTolerante(txt)") && C.indexOf("oAceitoDoCronista(") > C.indexOf("julgarOCronista(")
     && !!depoisDoPago && depoisDoPago.sementes.length === 2 && depoisDoPago.sementes.every((x) => x.estado === "aberta"));

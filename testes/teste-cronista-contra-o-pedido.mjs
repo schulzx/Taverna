@@ -21,6 +21,8 @@
    em gerar-cronista-dourado.mjs). E o turno do aceite lê sempre (§7): o
    gatilho acende "aceite", porque o aceite não viaja na fila.
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import { julgarOCronista, O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
 import { oPedidoAoCronista, oGatilhoDoCronista } from "../src/motor/cronista-do-turno.js";
@@ -150,8 +152,8 @@ sec("7 · o turno do aceite lê: o aceite não vai para a fila");
     t(`aceite ${JSON.stringify(lixo)}: não acende`, !decidirOCronista({ narrativa: QUIETA, aceite: lixo }, null).corre);
   }
   t("o gatilho do motor passa o aceite do turno (doTurno.aceite)",
-    oGatilhoDoCronista(E, { narrativa: QUIETA, doTurno: { frase: "", envelopes: [], aceite: ACEITE7 } }, null).motivos.includes("aceite")
-    && !oGatilhoDoCronista(E, { narrativa: QUIETA, doTurno: { frase: "", envelopes: [] } }, null).corre);
+    NM.oGatilhoDoCronista(E, { narrativa: QUIETA, doTurno: { frase: "", envelopes: [], aceite: ACEITE7 } }, null).motivos.includes("aceite")
+    && !NM.oGatilhoDoCronista(E, { narrativa: QUIETA, doTurno: { frase: "", envelopes: [] } }, null).corre);
 
   /* e o App de hoje (o cronistaDoTurno recortado à letra, com os dublês de
      cronista-bloco.mjs): o caso do aceite com a narração quieta e sem pulos.

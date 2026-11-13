@@ -11,10 +11,11 @@
 
    DUAS TABELAS, e as peças do turno leem as duas:
 
-   - `MODO_DO_NARRADOR` — a chave. `mestre` é o de hoje e o padrão: toda
-     porta aberta, o Cronista chamado. `ator` fecha todas: a resposta e a
-     prosa só vão para a tela. Trocar de modo é mudar uma palavra (o
-     `padrao`), e voltar é mudá-la de novo.
+   - `MODO_DO_NARRADOR` — a chave. `mestre` abre toda porta e chama o
+     Cronista (foi o padrão até à NE7, e fica como reserva); `boca` — o
+     padrão desde a NE7 — fecha todas com o pedido do `mestre`; `ator`
+     fecha todas com o pedido do ator. Trocar de modo é mudar uma palavra
+     (o `padrao`), e voltar é mudá-la de novo.
    - `PORTAS_DO_NARRADOR` — cada porta, com o canal por onde entra (um campo
      de `mudancas`, um sinal, ou a prosa), a peça do motor que a tem, e o
      que ela faz. Uma porta fechada no modo é uma porta que a peça não abre.
@@ -64,8 +65,16 @@
      abre) e `pedido` (que pedido o Narrador recebe: o do `mestre`, com a
      pauta inteira, ou o do `ator`, com a ficha). E um terceiro modo,
      `boca`: o pedido do `mestre` com todas as portas fechadas — o
-     Narrador recebe tudo e só fala. Não é o padrão (é a NE7, depois dos
-     substitutos da NE4).
+     Narrador recebe tudo e só fala.
+
+   A NE7 (13/11): o `boca` é o PADRÃO. Os substitutos da NE4 já fazem pelo
+   sistema o que só a IA declarava, logo o jogo publicado (o App lê o
+   padrão) fecha todas as portas e o Cronista deixa de ser chamado: a gente
+   e a conversa entram pela ficha da cena (registo-da-cena.js), a recência
+   pelos que a ficha pôs a falar, o peso da linha pelo sistema
+   (`oPesoPeloSistema`). O `mestre` fica na tabela como reserva — as
+   provas que medem o comportamento antigo passam-no explícito, e voltar é
+   mudar o `padrao` de sítio.
 
    Puro, sem React. Provado em `testes/teste-nada-entra-pelo-ator.mjs`.
    ============================================================ */
@@ -176,18 +185,19 @@ const DO_SINAL = new Map(PORTAS_DO_NARRADOR.filter((p) => p.canal === "sinal").m
    colado à chave das portas (`modo === "ator"`), e por isso o modo das
    portas fechadas não podia ter o pedido de hoje. */
 export const MODO_DO_NARRADOR = Object.freeze({
-  mestre: Object.freeze({ padrao: true, portas: Object.freeze([...IDS]), pedido: "mestre",
-    oQueE: "o de hoje: o Narrador narra e declara, e o que declara e o que a prosa diz entra no estado pelas portas" }),
+  mestre: Object.freeze({ padrao: false, portas: Object.freeze([...IDS]), pedido: "mestre",
+    oQueE: "a reserva (o padrão até à NE7): o Narrador narra e declara, e o que declara e o que a prosa diz entra no estado pelas portas" }),
   ator: Object.freeze({ padrao: false, portas: Object.freeze([]), pedido: "ator",
     oQueE: "o Narrador só fala: a resposta e a prosa vão à tela, e nada entra no estado por elas" }),
-  boca: Object.freeze({ padrao: false, portas: Object.freeze([]), pedido: "mestre",
-    oQueE: "o pedido do mestre, com todas as portas fechadas: o Narrador recebe a pauta inteira e só fala — o modo da NE7" }),
+  boca: Object.freeze({ padrao: true, portas: Object.freeze([]), pedido: "mestre",
+    oQueE: "o padrão desde a NE7: o pedido do mestre, com todas as portas fechadas — o Narrador recebe a pauta inteira e só fala" }),
 });
 
 /* o nome do modo, conferido: um nome que a tabela não tem (ou nenhum) é o padrão */
 export function oModoDoNarrador(nome) {
   if (typeof nome === "string" && Object.prototype.hasOwnProperty.call(MODO_DO_NARRADOR, nome)) return nome;
-  return Object.keys(MODO_DO_NARRADOR).find((k) => MODO_DO_NARRADOR[k].padrao) || "mestre";
+  /* sem padrão na tabela (não acontece: a suíte exige um), o que fecha tudo — falha fechada */
+  return Object.keys(MODO_DO_NARRADOR).find((k) => MODO_DO_NARRADOR[k].padrao) || "boca";
 }
 
 const doModo = (modo) => MODO_DO_NARRADOR[oModoDoNarrador(modo)];

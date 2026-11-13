@@ -21,6 +21,8 @@
      §6 o teto da pauta: ≤ 1400 com o anúncio cheio, e o prompt fixo intacto;
      §7 o lixo e a imutabilidade.
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import { ESPOLIO_NO_TURNO, QUESTS_DO_TURNO, garantirQuestsDaEspinha, oTurnoDasQuests, aMesaDasQuests, oFeitoJaPago } from "../src/motor/quests-do-turno.js";
 import { EFEITOS_NA_TELA, oQueOEfeitoPede } from "../src/motor/efeitos-da-quest.js";
@@ -256,16 +258,16 @@ sec("§4 a paga substitui o feito do Narrador");
   t("o replay desconta o mesmo feito que o jogo", J(pelo) === J({ ...fecho.antes, ...rp.estado }));
   const passoM = PASSOS_DO_REPLAY.find((p) => p.passo === "o turno do Mestre");
   const notaM = {};
-  try { passoM.faz({ ...fecho.antes, espinha: passos.passo.E.espinha }, {}, { resposta: { narrativa: "x", mudancas: { feito: "pequeno" } }, doMestre: {} }, notaM); } catch { /* o passo não estoura */ }
+  try { passoM.faz({ ...fecho.antes, espinha: passos.passo.E.espinha }, {}, { resposta: { narrativa: "x", mudancas: { feito: "pequeno" } }, doMestre: { modoDoNarrador: "mestre" }, modoDoNarrador: "mestre" /* NE7: o feito é porta, aberta no «mestre» */ }, notaM); } catch { /* o passo não estoura */ }
   t("o passo do Mestre no replay guarda o feito pago e o nível de antes dele", J(notaM.feitoDoTurno) === J({ grau: "pequeno", nivel: 3 }), J(notaM.feitoDoTurno));
   /* no turno seguinte: o aplicar tira o feito (o Narrador narra o fecho) */
   const base = { canone: {}, npcs: {}, npcTurno: 0, mapa: { cidades: [], faccoes: [], rotas: [] }, historia: {}, contadores: {}, dia: 3 };
   const ctx = { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } };
-  const comPaga = aplicarOTurno({ ...base, personagem: fecho.E.personagem, espinha: fecho.E.espinha }, { narrativa: "x", mudancas: { feito: "marco" } }, ctx);
-  const semPaga = aplicarOTurno({ ...base, personagem: fecho.E.personagem, espinha: passos.depois.E.espinha }, { narrativa: "x", mudancas: { feito: "marco" } }, ctx);
+  const comPaga = NM.aplicarOTurno({ ...base, personagem: fecho.E.personagem, espinha: fecho.E.espinha }, { narrativa: "x", mudancas: { feito: "marco" } }, ctx);
+  const semPaga = NM.aplicarOTurno({ ...base, personagem: fecho.E.personagem, espinha: passos.depois.E.espinha }, { narrativa: "x", mudancas: { feito: "marco" } }, ctx);
   t("no turno a seguir à paga, o feito do Narrador não entra (calado)", comPaga.estado.personagem.xp === fecho.E.personagem.xp && !("feito" in (comPaga.podado.mudancas || {})) && !comPaga.efeitos.some((e) => e.tipo === "calou"), J(comPaga.podado.mudancas));
   t("e no turno a seguir a esse volta a entrar", semPaga.estado.personagem.xp > fecho.E.personagem.xp);
-  t("o aplicar de um mundo antigo não muda (nem lê a peça das quests)", aplicarOTurno({ ...base, personagem: fecho.E.personagem, espinha: W.espinha0 }, { narrativa: "x", mudancas: { feito: "marco" } }, ctx).estado.personagem.xp > fecho.E.personagem.xp);
+  t("o aplicar de um mundo antigo não muda (nem lê a peça das quests)", NM.aplicarOTurno({ ...base, personagem: fecho.E.personagem, espinha: W.espinha0 }, { narrativa: "x", mudancas: { feito: "marco" } }, ctx).estado.personagem.xp > fecho.E.personagem.xp);
 }
 
 sec("§5 o artefacto que acorda");

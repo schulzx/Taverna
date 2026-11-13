@@ -11,6 +11,8 @@
    cânone das pessoas o teto a paga (cabe menos gente, nunca passa dos
    chars do teto). */
 /* a marca mora em npcs.js desde que a gente também a escreve (teste-npcs-dito): o import muda de casa, as asserções não */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { formatarCanone, TETO_DO_CANONE, montarSystemPrompt } from "../src/prompt.js";
 import { MARCA_DO_DITO } from "../src/npcs.js";
 import { julgarOCronista, O_QUE_O_CRONISTA_PODE } from "../src/motor/cronista.js";
@@ -42,7 +44,7 @@ t("o nome que a prosa pôs em cena não", !!ac["Lâmina de Varek"] && !ac["Lâmi
    juízo ao cânone, e o que a prosa mostrou entra sem ela. */
 let E = { personagem: { nome: "Íris" }, npcs: {}, canone: {}, dia: 3, espinha: { atos: [{ marcos: [{ titulo: "O Berço", item: "Berço de Ossos" }, { titulo: "A lâmina", item: "Lâmina de Varek" }] }] } };
 const aplicar = (efs) => { for (const ef of efs) if (ef.tipo === "canone") E = { ...E, canone: ef.canone }; };
-oAceitoDoCronista({ canone: ac }, [], PROPOSTA, {
+NM.oAceitoDoCronista({ canone: ac }, [], PROPOSTA, {
   ler: () => E, aplicar, pers: E.personagem, narrativa: NARRATIVA,
   mundoDaBase: () => null, registrarLugar: () => null,
 });

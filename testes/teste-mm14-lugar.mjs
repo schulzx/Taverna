@@ -26,6 +26,8 @@
    4. lixo, null e a imutabilidade. Tudo por semente. Os imports são por
    espaço de nomes: em HEAD os nomes novos não existem, e a suíte tem de
    falhar asserção a asserção, não num import. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import * as L from "../src/lugar.js";
 import * as R from "../src/rastro.js";
 import { gerarGeografia } from "../src/geografia.js";
@@ -300,7 +302,7 @@ sec("4. lixo, null e a imutabilidade");
     const { masmorrasDoMundo } = await import("../src/mundo-base.js");
     const mapa = { cidades: [{ nome: "Vau Alto", x: 40, y: 40, regiao: "Vale" }], regioes: [{ nome: "Vale", bioma: "planicie", cx: 40, cy: 40 }] };
     const ms = masmorrasDoMundo("mm14", mapa);
-    const sinal = (nome, lugar) => aplicarOsSinais({ personagem: { nivel: 3 }, mapa, cidadeAtual: "Vau Alto", lugar, jornada: null, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["masmorra:" + nome] } }, { mundo: { semente: "mm14" } });
+    const sinal = (nome, lugar) => NM.aplicarOsSinais({ personagem: { nivel: 3 }, mapa, cidadeAtual: "Vau Alto", lugar, jornada: null, dia: 1 }, { narrativa: "x", mudancas: { sinais: ["masmorra:" + nome] } }, { mundo: { semente: "mm14" } });
     const naBoca = sinal(ms[0].nome, { nome: ms[0].nome, cidade: "Vau Alto", distancia: "arredores" });
     const inventada = sinal("a cripta que ninguém viu", null);
     t("fiação: os dois contextos do rastro levam o lugar e as masmorras do mundo", ms.length > 0 && naBoca.efeitos.some((e) => e.tipo === "sinalMasmorra" && e.nome === ms[0].nome) && app.split("emViagem: !!jornadaRef.current, lugar: lugarRef.current, masmorras:").length - 1 >= 1);

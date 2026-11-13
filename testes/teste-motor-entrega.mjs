@@ -14,6 +14,8 @@
    sem o dia, sem o portão, com a nêmesis esquecida e com a nota escrita
    depois da porta, as fotos TÊM de divergir.
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import { N_CASOS, sorteDoCaso } from "./combate-casos.mjs";
 import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDaEntrega, casosDaEntrega, BLOCOS, CALOU_NOVO } from "./entrega-bloco.mjs";
@@ -94,10 +96,10 @@ sec("2 · a prova morde");
 
 sec("3 · as peças, sozinhas");
 {
-  t("sem nêmesis, nada", igual(aNemesisNaNarrativa(null, "x"), { paraOCronista: [], encerrar: null }));
-  t("a nêmesis morta na frase é encerrada pela porta", aNemesisNaNarrativa({ nome: "Varka" }, "Varka morreu.").encerrar === "morta na cena narrada pelo Mestre");
-  t("a morte negada não encerra", aNemesisNaNarrativa({ nome: "Varka" }, "Varka quase morreu.").encerrar === null);
-  t("os vistos com `null` nas leituras não estouram", !osVistosDaNarrativa(null, "Brás").erro);
+  t("sem nêmesis, nada", igual(NM.aNemesisNaNarrativa(null, "x"), { paraOCronista: [], encerrar: null }));
+  t("a nêmesis morta na frase é encerrada pela porta", NM.aNemesisNaNarrativa({ nome: "Varka" }, "Varka morreu.").encerrar === "morta na cena narrada pelo Mestre");
+  t("a morte negada não encerra", NM.aNemesisNaNarrativa({ nome: "Varka" }, "Varka quase morreu.").encerrar === null);
+  t("os vistos com `null` nas leituras não estouram", !NM.osVistosDaNarrativa(null, "Brás").erro);
   const p0 = null;
   t("o trabalho nulo continua nulo (o ref não é trocado)", oTrabalhoPendente(p0).pendente === null && oTrabalhoPendente(p0).msgs.length === 0);
   t("o trabalho dito esvazia o pendente", igual(oTrabalhoPendente(["a"]), { msgs: ["a"], pendente: [] }));

@@ -280,8 +280,11 @@ export function dublesDoBloco(k, { novo, sorte, extras }) {
   const S = {
     ...osModulos({ novo }),
     /* NE3 (13/11): o App passa o modo do Narrador à peça (MODO_DA_MESA, o
-       padrão da tabela fora do Vite); o recorte lê-o do escopo, como lá. */
-    MODO_DA_MESA: oModoDoNarrador(),
+       padrão da tabela fora do Vite); o recorte lê-o do escopo, como lá.
+       NE7 (13/11): o padrão virou o «boca» (portas fechadas), e o recorte
+       mede o App de ANTES, que abria tudo — logo o «mestre» dito, como o de
+       então. A régua do padrão novo é teste-nada-entra-pelo-ator §10. */
+    MODO_DA_MESA: oModoDoNarrador("mestre"),
     personagem: null, mundo: { genero: k.semente.split("|")[1] },
     combateRef: ref(copia(k.combateB)), notaRef: ref(k.notaAntes), descobRef: ref(copia(k.descobertasB)), divindadeRef: ref(copia(k.divindadeB)),
     mapaRef: ref(copia(k.mapaN)), masmorraRef: ref(copia(k.masmorraB)), salaEmCursoRef: ref(k.salaEmCursoB), combateOciosoRef: ref(k.ociosoB),
@@ -396,6 +399,10 @@ export function lutaDeBolso({ pers, mudancas, ...ler }, portas = {}) {
   const anota = (nome, devolve) => (...args) => { chamadas.push({ porta: nome, args: JSON.parse(JSON.stringify(args === undefined ? null : args)) }); return devolve(...args); };
   let n = 0;
   const ctx = {
+    /* NE7 (13/11): o padrão virou o «boca», que fecha `combate_iniciar` e
+       `combate_encerrar`; a luta de bolso joga a resposta com as portas
+       abertas — o «mestre», salvo quem diga outro nas portas */
+    modoDoNarrador: "modoDoNarrador" in portas ? portas.modoDoNarrador : "mestre",
     ler: () => ({ ...st }),
     aplicar: (efs) => {
       for (const e of efs) {

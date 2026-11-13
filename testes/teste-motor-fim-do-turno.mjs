@@ -13,6 +13,8 @@
    miniatura, tem de dar as MESMAS fotos — a base, a gente, a cidade, o
    lugar, o mapa, o relógio pedido, o portão, as linhas da tela e a nota. */
 
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -73,7 +75,7 @@ sec("1. o códex — da base para o cânone, os nomes à mão, o peso do deus �
 {
   const oCodex = (c, mexer = (x) => x) => {
     const A = oAppDoFim(c);
-    const s = aplicarOCodex(mexer(estadoDoCodex(c, A)), c.resp, c.ctx);
+    const s = NM.aplicarOCodex(mexer(estadoDoCodex(c, A)), c.resp, c.ctx);
     oAppAplica(A, s);
     return { A, s };
   };
@@ -118,10 +120,10 @@ sec("1. o códex — da base para o cânone, os nomes à mão, o peso do deus �
   /* pureza e forma */
   const c = JSON.parse(JSON.stringify(CF[0]));
   const antes = JSON.stringify(c);
-  semearACasa(c.semente); const a = aplicarOCodex(c.estado, c.resp, c.ctx);
+  semearACasa(c.semente); const a = NM.aplicarOCodex(c.estado, c.resp, c.ctx);
   t("o que entra sai intacto", JSON.stringify(c) === antes);
   t("{ estado, efeitos, paraOCronista, msgs }, efeitos por tipo", a.estado && Array.isArray(a.efeitos) && a.efeitos.every((e) => e && typeof e.tipo === "string") && Array.isArray(a.paraOCronista) && Array.isArray(a.msgs));
-  t("lixo não estoura (o códex nunca derruba o turno)", (() => { try { aplicarOCodex(null, null, null); aplicarOCodex({ personagem: null }, { narrativa: "Gwynn acena." }, { mundo: () => { throw new Error("x"); } }); return true; } catch { return false; } })());
+  t("lixo não estoura (o códex nunca derruba o turno)", (() => { try { NM.aplicarOCodex(null, null, null); NM.aplicarOCodex({ personagem: null }, { narrativa: "Gwynn acena." }, { mundo: () => { throw new Error("x"); } }); return true; } catch { return false; } })());
   /* a fiação: o App chama a peça e aplica os efeitos no lugar dela */
   t("o App chama o códex do motor e aplica os efeitos", /const doCodex = aplicarOCodex\(\{/.test(corpoAR) && /aplicarOsEfeitos\(doCodex\)/.test(corpoAR) && /calou\("o códex do turno", e\)/.test(corpoAR));
   t("o códex já não mora no App", !/const genteRevelavel = m\.gente\.filter/.test(APP) && !/const usados = nomesAMaoNaProsa\(resp\.narrativa/.test(APP));
@@ -132,8 +134,8 @@ sec("2. a chegada que ninguém anotou — byte a byte");
 {
   const aChegada = (c, mexer = (x) => x) => {
     const A = oAppDoFim(c);
-    oAppAplica(A, aplicarOCodex(estadoDoCodex(c, A), c.resp, c.ctx));
-    const ch = aplicarAChegada(mexer({ ...estadoDoCodex(c, A), combate: c.estado.combate, jornada: c.estado.jornada }), c.resp);
+    oAppAplica(A, NM.aplicarOCodex(estadoDoCodex(c, A), c.resp, c.ctx));
+    const ch = NM.aplicarAChegada(mexer({ ...estadoDoCodex(c, A), combate: c.estado.combate, jornada: c.estado.jornada }), c.resp);
     oAppAplicaAChegada(A, ch);
     return { A, ch };
   };
@@ -170,8 +172,8 @@ sec("2. a chegada que ninguém anotou — byte a byte");
     }
     t(`…e morde: sem as rotas de um passo (${partem}), e sem a luta e a jornada que a calam (${partemB}) — os casos partem`, partem > 0 && partemB > 0);
   }
-  t("lixo não estoura (a chegada nunca derruba o turno)", (() => { try { aplicarAChegada(null, null); aplicarAChegada({ cidadeAtual: "Vau", mapa: null }, { narrativa: "Você entra em Vau." }); return true; } catch { return false; } })());
-  t("sem chegada, o relógio não anda", aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [], rotas: [] } }, { narrativa: "Você fica." }).minutos === 0);
+  t("lixo não estoura (a chegada nunca derruba o turno)", (() => { try { NM.aplicarAChegada(null, null); NM.aplicarAChegada({ cidadeAtual: "Vau", mapa: null }, { narrativa: "Você entra em Vau." }); return true; } catch { return false; } })());
+  t("sem chegada, o relógio não anda", NM.aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [], rotas: [] } }, { narrativa: "Você fica." }).minutos === 0);
   /* a fiação */
   t("o App chama a chegada do motor, faz o relógio andar e só então põe a nota", /const daChegada = aplicarAChegada\(\{/.test(corpoAR)
     && corpoAR.indexOf("if (daChegada.minutos)") > corpoAR.indexOf("msgs.push(...daChegada.msgs)") && corpoAR.indexOf("notaRef.current = notaComOTurno(notaRef.current, daChegada.paraOCronista)") > corpoAR.indexOf("if (daChegada.minutos)")
@@ -185,9 +187,9 @@ sec("3. o portão — byte a byte, e as três peças em fila");
      o App em miniatura a aplicar cada uma: as três fotos têm de bater */
   const oFim = (c, mexer = (x) => x) => {
     const A = oAppDoFim(c);
-    oAppAplica(A, aplicarOCodex(estadoDoCodex(c, A), c.resp, c.ctx));
+    oAppAplica(A, NM.aplicarOCodex(estadoDoCodex(c, A), c.resp, c.ctx));
     const fCodex = foto(A);
-    oAppAplicaAChegada(A, aplicarAChegada({ ...estadoDoCodex(c, A), combate: c.estado.combate, jornada: c.estado.jornada }, c.resp));
+    oAppAplicaAChegada(A, NM.aplicarAChegada({ ...estadoDoCodex(c, A), combate: c.estado.combate, jornada: c.estado.jornada }, c.resp));
     const fChegada = foto(A);
     const p = oPortaoDoTurno(mexer({ ...estadoDoCodex(c, A), combate: c.estado.combate }), c.resp);
     oAppAplica(A, p);
@@ -240,11 +242,11 @@ sec("4. o códex sem mundo não inventa gente (defeito achado pela T3-B, consert
      num replay sem o mundo gravado, inventava. */
   const estado = { personagem: { nome: "Vera", nivel: 1 }, mapa: { cidades: [] }, cidadeAtual: "Vila do Sul", base: null, npcs: {}, npcTurno: 3, dia: 2, oferecidos: [{ nome: "Ilka Sal", genero: "ela" }] };
   const prosa = { narrativa: "Você encontra Nolan Olho-de-Corvo junto ao balcão, e Ilka Sal acena da porta." };
-  const sem = aplicarOCodex(estado, prosa, {});
+  const sem = NM.aplicarOCodex(estado, prosa, {});
   t("sem mundo, ninguém da base entra no registo, e a base não muda", !("Nolan Olho-de-Corvo" in (sem.estado.npcs || {})) && !sem.efeitos.some((e) => e.tipo === "base"));
   t("e o nome à mão que a narração usou entra igual (não precisa do mundo)", "Ilka Sal" in (sem.estado.npcs || {}));
   /* com o mundo, a mesma frase continua a ratificar a gente da base dele */
-  const comMundo = aplicarOCodex(estado, prosa, { mundo: { semente: "prova|Fantasia medieval", genero: "Fantasia medieval" } });
+  const comMundo = NM.aplicarOCodex(estado, prosa, { mundo: { semente: "prova|Fantasia medieval", genero: "Fantasia medieval" } });
   t("com o mundo, o códex continua a ler a base (a mesma chamada, a semente cheia)", comMundo.efeitos.every((e) => e.tipo !== "calou"));
 }
 

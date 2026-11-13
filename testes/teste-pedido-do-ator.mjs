@@ -250,9 +250,11 @@ for (const k of casos.slice(0, nSessoes)) {
   if (cA.length === 1 && cA[0].formato === "texto" && cA[0].system === ofNaRede && !("cache" in cA[0])) redeCerta++;
   if (!a.cronista.chamado && a.ia.chamadas === 1) calado++;
   if (JSON.stringify(a.estadoDoFim) === JSON.stringify(b.estadoDoFim) && JSON.stringify(a.eco) === JSON.stringify(b.eco)) iguais++; else if (difs.length < 5) difs.push(`${k.de}: ${Object.keys(a.estadoDoFim).filter((x) => JSON.stringify(a.estadoDoFim[x]) !== JSON.stringify(b.estadoDoFim[x])).join(",")}`);
-  /* a mordida: o `mestre` com a mesma tentação, num de cada cinco */
+  /* a mordida: o `mestre` com a mesma tentação, num de cada cinco. NE7
+     (13/11): o padrão virou o «boca», que fecha as portas — a mordida diz
+     o «mestre», que era o modo ausente quando esta prova nasceu */
   if (n7 % 5 === 1) {
-    c = await oTurnoNoServidor(corpo, { agora: () => 0, chamar: portaFalsa(TENTACAO, cC), cronista: () => null });
+    c = await oTurnoNoServidor(corpo, { agora: () => 0, chamar: portaFalsa(TENTACAO, cC), cronista: () => null, modoDoNarrador: "mestre" });
     if (cC[0] && cC[0].formato === "json") mestreJson++;
     if (JSON.stringify(c.estadoDoFim) !== JSON.stringify(b.estadoDoFim)) mordeMestre++;
   }
@@ -282,7 +284,8 @@ sec("§8 o `mestre` não muda");
   const umAtor = await oPedidoNoServidor({ estado: estadoNoTurno(SESSOES.s9, 3), frase: "olho em volta" }, { agora: () => 0, modoDoNarrador: "ator" });
   t("no `ator`, o pedido do servidor é o do ator, e a ficha vai junto", umAtor.pedido.system === OF && umAtor.pedido.formato === "texto" && umAtor.ficha && typeof umAtor.ficha.texto === "string");
   const nome = await oPedidoNoServidor({ estado: estadoNoTurno(SESSOES.s9, 3), frase: "olho em volta" }, { agora: () => 0, modoDoNarrador: "inventado" });
-  t("um modo que a tabela não tem é o padrão (o Mestre)", nome.pedido.formato === "json" && !("ficha" in nome));
+  /* NE7 (13/11): o padrão é o «boca», que tem o pedido do Mestre — o pedido é o mesmo */
+  t("um modo que a tabela não tem é o padrão (o `boca`: o pedido do Mestre)", nome.pedido.formato === "json" && !("ficha" in nome));
   /* NE2 (13/11): o pedido é a coluna `pedido` do modo, não o nome dele — o
      `boca` fecha as portas e recebe o pedido do Mestre, byte a byte */
   const corpoB = { estado: estadoNoTurno(SESSOES.s9, 3), frase: "olho em volta" };

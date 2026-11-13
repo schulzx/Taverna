@@ -14,6 +14,8 @@
    devolve sempre o retrato do começo (a ordem das leituras é o contrato),
    as fotos TÊM de divergir.
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import { N_CASOS } from "./combate-casos.mjs";
 import { recorteDeHoje, blocoComoFuncao, correrOBloco, fotoDoBloco, casosDoBloco, TROCAS_DECLARADAS } from "./combate-bloco.mjs";
@@ -94,7 +96,7 @@ t("a resposta volta como cópia: a do Narrador não é escrita", (() => {
   const mud = { combate_iniciar: [{ nome: "Lobo", ameaca: "comum" }] };
   const antes = JSON.stringify(mud);
   const st = { combate: null, descobertas: [], ocioso: 0, ataqueResolvido: false, derrotadosDaSessao: [], masmorra: null, salaEmCurso: null, mapa: { cidades: [] }, semente: "s|Fantasia medieval", genero: "Fantasia medieval", molde: null, lexico: null, divindade: null };
-  const r = aLutaDaResposta({ pers: { nome: "Vera", nivel: 2 }, mudancas: mud }, {
+  const r = NM.aLutaDaResposta({ pers: { nome: "Vera", nivel: 2 }, mudancas: mud }, {
     ler: () => st, aplicar: (efs) => { for (const e of efs) if (e.tipo === "combate") st.combate = e.combate; else if (e.tipo === "descobertas") st.descobertas = e.descobertas; else if (e.tipo === "ocioso") st.ocioso = e.ocioso; },
     abrirCombate: () => ({ pers: { nome: "Vera", nivel: 2 }, msgs: [], nota: "" }), sorteDoTurno: () => () => 0.5,
   });

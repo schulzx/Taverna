@@ -124,14 +124,18 @@ sec("3 · as peças, sozinhas");
   const ped2 = oPedidoAoCronista({ npcs: { Doran: {} }, missoes: [{ id: "x", titulo: "Os lobos", dador: "Hilda", status: "ativa", etapas: [] }], canone: {}, combate: { inimigos: [{ nome: "Lobo", vida: 4 }, { nome: "Morto", vida: 0 }] } }, { narrativa: "N", fila: "FILA\n\n" });
   t("…e com: a missão aberta, quem está de pé (o morto não), o elenco, a fila antes da narração", ped2.user.includes("\"Os lobos\" (de Hilda)") && ped2.user.includes("- Lobo — 4 PV") && !ped2.user.includes("Morto") && ped2.user.includes("Doran") && ped2.user.includes("FILA\n\nNARRATIVA DO TURNO:\nN"));
   const vazio = garantirLeitura(null);
-  t("o gatilho: o nome que o sistema conhece não acende, o novo acende", !oGatilhoDoCronista({ npcs: { "Brannoc da Foz": {} } }, { narrativa: "Você vê que o ferreiro Brannoc da Foz sorri." }, vazio).motivos.includes("nome") && oGatilhoDoCronista({ npcs: {} }, { narrativa: "Você vê que o ferreiro Brannoc da Foz sorri." }, vazio).motivos.includes("nome"));
-  t("o gatilho: a luta de pé e o deus desperto acendem; o herói vem de `pers` antes do estado", oGatilhoDoCronista({ combate: { inimigos: [{ nome: "Lobo", vida: 2 }] } }, { narrativa: "x" }, vazio).motivos.includes("luta") && oGatilhoDoCronista({ divindade: { despertar: true } }, { narrativa: "x" }, vazio).motivos.includes("fe") && !oGatilhoDoCronista({ personagem: { nome: "Outro" } }, { narrativa: "Você vê que Vera Sal sorri.", pers: { nome: "Vera Sal" } }, vazio).motivos.includes("nome"));
+  /* NE7 (13/11): o padrão virou o «boca», em que o gatilho cala e as secções
+     do Cronista fecham. Estas provas medem o Cronista que LÊ (o modo que o
+     chama), logo dizem o «mestre»; o padrão novo prova-se em
+     teste-nada-entra-pelo-ator §10. */
+  t("o gatilho: o nome que o sistema conhece não acende, o novo acende", !oGatilhoDoCronista({ npcs: { "Brannoc da Foz": {} } }, { modoDoNarrador: "mestre", narrativa: "Você vê que o ferreiro Brannoc da Foz sorri." }, vazio).motivos.includes("nome") && oGatilhoDoCronista({ npcs: {} }, { modoDoNarrador: "mestre", narrativa: "Você vê que o ferreiro Brannoc da Foz sorri." }, vazio).motivos.includes("nome"));
+  t("o gatilho: a luta de pé e o deus desperto acendem; o herói vem de `pers` antes do estado", oGatilhoDoCronista({ combate: { inimigos: [{ nome: "Lobo", vida: 2 }] } }, { modoDoNarrador: "mestre", narrativa: "x" }, vazio).motivos.includes("luta") && oGatilhoDoCronista({ divindade: { despertar: true } }, { modoDoNarrador: "mestre", narrativa: "x" }, vazio).motivos.includes("fe") && !oGatilhoDoCronista({ personagem: { nome: "Outro" } }, { modoDoNarrador: "mestre", narrativa: "Você vê que Vera Sal sorri.", pers: { nome: "Vera Sal" } }, vazio).motivos.includes("nome"));
   t("leituras `null` não estouram", !!oGatilhoDoCronista(null, null, null) && typeof oPedidoAoCronista({ npcs: {} }, null).user === "string");
   /* o aceito, com portas que gravam o que viram: os efeitos chegam ANTES de cada porta */
   const visto = [];
   let estado = { prometido: null, relogios: [], dia: 3, npcs: {}, personagem: { nome: "Vera" }, combate: null, divindade: null };
   const ctx = {
-    pers: { nome: "Vera", nivel: 3, atributos: { presenca: 2 }, grupo: [] }, narrativa: "x", testeDoTurno: null, rolagem: null,
+    pers: { nome: "Vera", nivel: 3, atributos: { presenca: 2 }, grupo: [] }, narrativa: "x", testeDoTurno: null, rolagem: null, modoDoNarrador: "mestre" /* NE7: o Cronista que lê */,
     ler: () => estado,
     aplicar: (efs) => { for (const ef of efs) { visto.push(ef.tipo); if (ef.tipo === "relogios") estado = { ...estado, relogios: ef.relogios }; if (ef.tipo === "prometido") estado = { ...estado, prometido: ef.prometido }; } },
     registrarLugar: (nome) => { visto.push("porta:lugar:" + (estado.prometido ? "com o prometido" : "sem")); return "📍 " + nome; },

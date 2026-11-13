@@ -105,7 +105,8 @@
 
    O NARRADOR ATOR (03/11, etapa 2 do plano: mente/plano-narrador-ator.md).
    `opcoes.modoDoNarrador` diz o modo (MODO_DO_NARRADOR, motor/portas-do-
-   narrador.js); sem ele, o padrão da tabela, e nada aqui muda um byte. No
+   narrador.js); sem ele, o padrão da tabela (o `boca` desde a NE7, 13/11:
+   o pedido do Mestre, as portas fechadas, o Cronista calado). No
    `ator`, o pedido à rede é o do ator (motor/pedido-do-ator.js: o ofício,
    as duas trocas e a ficha da nota e do estado do fim da montagem — antes
    do que o turno adia, como no App), a resposta é só prosa, o replay corre
@@ -422,7 +423,7 @@ function oCronistaDoServidor(m, resposta, depoisDoMestre) {
   let frase = "";
   try { const pb = lerOPedido(m.frase); frase = pb && pb.doJogador ? pb.texto : ""; } catch { frase = ""; }
   let g = { corre: true, motivos: [] };
-  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem, ...(m.modo !== "mestre" ? { modoDoNarrador: m.modo } : {}) }, leitura); } catch { g = { corre: true, motivos: [] }; }
+  try { g = oGatilhoDoCronista(E, { narrativa, doTurno: { frase, envelopes: [...nota.split("\n"), ...String(m.frase || "").split("\n")] }, pers: E.personagem, ...(m.modo !== oModoDoNarrador() ? { modoDoNarrador: m.modo } : {}) }, leitura); } catch { g = { corre: true, motivos: [] }; }
   let pedido = null;
   if (g.corre) {
     let fila = "";
@@ -530,9 +531,11 @@ export async function oTurnoNoServidor(corpo, opcoes) {
   const deVerdade = typeof op.chamar === "function";
   const ia = deVerdade ? { chamadas: 0, usos: [], cache: undefined } : null;
   let resposta = obj(obj(corpo).resposta);
-  /* o modo segue até ao replay sempre que não é o padrão (o `boca` também
-     fecha portas); a ficha do ator só existe com o pedido do ator */
-  const comModo = m.modo !== "mestre";
+  /* o modo segue até ao replay sempre que não é o padrão; a ficha do ator
+     só existe com o pedido do ator. NE7 (13/11): o padrão é o `boca`, e já
+     não o `mestre` — comparar com o nome cravado deixava o `mestre` dito
+     cair no padrão (portas fechadas). Compara-se com o padrão da tabela. */
+  const comModo = m.modo !== oModoDoNarrador();
   /* EM2 (11/11/2026): a mesma régua do App, no mesmo ponto — a linha de
      tamanho e o teto do tipo do turno entram na CÓPIA que vai à rede; o
      pedido montado (m.pedido) continua o do motor, byte a byte o do caminho

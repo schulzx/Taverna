@@ -220,6 +220,13 @@ export const FORMATO_DA_SESSAO = Object.freeze({
   diferencasPorTurno: 12,
   profundidade: 3,
   valorCitado: 80,
+  /* NE7 (13/11): o modo do Narrador em que a sessão foi jogada. A cabeça
+     pode dizê-lo (`modoDoNarrador`, campo novo e opcional: a versão antiga
+     ignora-o); a que não diz foi gravada antes da NE7, quando o padrão era
+     o `mestre` (todas as portas abertas, o Cronista a ler) — e é nesse
+     modo que o replay a corre, porque é esse o comportamento que ela
+     guarda. O padrão do jogo de hoje (o `boca`) não se aplica ao passado. */
+  modoSemModo: "mestre",
 });
 
 const TIPOS = Object.freeze({
@@ -386,6 +393,8 @@ export function abrirASessao(cfg) {
     semente: String(c.semente == null ? "" : c.semente),
     ...(ehObj(c.mundo) ? { mundo: dado(c.mundo) } : {}),
     ...(typeof c.origem === "string" && c.origem ? { origem: c.origem } : {}),
+    /* NE7: o modo em que se joga, para o replay o correr igual (FORMATO_DA_SESSAO.modoSemModo) */
+    ...(typeof c.modoDoNarrador === "string" && c.modoDoNarrador ? { modoDoNarrador: c.modoDoNarrador } : {}),
     inicio: comoSave(c.estado),
     turnos: [],
   };
@@ -1174,6 +1183,9 @@ export function reproduzirASessao(arquivo, opcoes) {
   const vazio = { valido: v.ok, erros: v.erros, turnos: [], reproduzidos: 0, divergentes: [], primeira: null, defeitos: [], primeiroDefeito: null, soOMotor: 0, divida: { campos: [], doTurno: [] }, regra: [] };
   if (!v.ok) return vazio;
   const A = arquivo, mundo = ehObj(A.mundo) ? A.mundo : null;
+  /* o modo da sessão (NE7): o que quem reproduz disser, senão o da cabeça,
+     senão o de antes da NE7 (FORMATO_DA_SESSAO.modoSemModo) */
+  const modoDoNarrador = typeof op.modoDoNarrador === "string" ? op.modoDoNarrador : typeof A.modoDoNarrador === "string" && A.modoDoNarrador ? A.modoDoNarrador : FORMATO_DA_SESSAO.modoSemModo;
   let gravado = obj(dado(A.inicio)), corrido = gravado;
   const turnos = [];
   const porCampo = new Map(AINDA_DO_APP.map((d) => [d.campo, []]));
@@ -1183,7 +1195,7 @@ export function reproduzirASessao(arquivo, opcoes) {
   const daRegraNaSessao = [];
   A.turnos.forEach((L, i) => {
     const antes = op.encadeado ? corrido : gravado;
-    const r = correrOTurno(antes, L, { semente: A.semente, mundo, narracoes: narracoesDoArquivo(A.turnos, i) });
+    const r = correrOTurno(antes, L, { semente: A.semente, mundo, narracoes: narracoesDoArquivo(A.turnos, i), modoDoNarrador });
     gravado = aplicarDiferenca(gravado, L.estado, [], "");
     corrido = r.estado;
     const app = oQueOAppFez(L.app);

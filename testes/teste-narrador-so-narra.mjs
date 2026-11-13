@@ -21,6 +21,8 @@
    Cada secção falha na árvore de v9.419 e passa nesta. A §14 (E2, 12/10)
    são os dois defeitos que a prova viva da E1 viu — "paes" sem til e NOMES
    À MÃO sem lugar nos turnos de batida —, e falha na árvore de v9.421. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -424,7 +426,7 @@ sec("13. a fiação no App.jsx (o frontend, 12/10) — o que o motor entrega che
      o App só tem de lhe passar os oferecidos. */
   {
     const { aplicarOCodex } = await import("../src/motor/fim-do-turno.js");
-    const cod = (narrativa) => aplicarOCodex({ personagem: { nome: "Ana", nivel: 3, grupo: [] }, cidadeAtual: "Vau", mapa: { cidades: [] }, npcs: {}, npcTurno: 2, dia: 4, oferecidos: [{ nome: "Bruno Sal", genero: "ele" }] },
+    const cod = (narrativa) => NM.aplicarOCodex({ personagem: { nome: "Ana", nivel: 3, grupo: [] }, cidadeAtual: "Vau", mapa: { cidades: [] }, npcs: {}, npcTurno: 2, dia: 4, oferecidos: [{ nome: "Bruno Sal", genero: "ele" }] },
       { narrativa }, { mundo: { semente: "x", genero: "Fantasia medieval" } }).estado.npcs["Bruno Sal"];
     t("ao fim do turno, o nome usado na prosa entra no registo — e morto, se a oração o pôs morto",
       !!cod("Bruno Sal limpa o balcão.") && cod("Bruno Sal limpa o balcão.").status !== "morto" && cod("Bruno Sal está morto no chão.").status === "morto"

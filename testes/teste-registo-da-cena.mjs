@@ -83,7 +83,11 @@ const doRegisto = (r) => r.efeitos.filter((e) => e.tipo === "npcs" || e.tipo ===
 const mestre = correr("mestre", T1, ACEITE);
 t("no `mestre` a mesma ficha e o mesmo aceite não registam, não conferem e não dão item (quem o faz é o Cronista)", !doRegisto(mestre).length && !mestre.conferidas.length && mestre.fim.p === BRAM && !mestre.fim.msgs.length);
 const semModo = correr(undefined, T1, ACEITE);
-t("o modo ausente é o `mestre` (o padrão não mudou)", !doRegisto(semModo).length && !semModo.conferidas.length);
+/* MOVIDA (13/11, NE7), com o motivo: o padrão virou o «boca» — o Cronista
+   não lê, e é a ficha que regista. A intenção fica: o modo ausente é o
+   padrão, e faz exatamente o que o padrão dito faz. */
+const boca = correr("boca", T1, ACEITE);
+t("o modo ausente é o padrão (o `boca`, NE7): regista pela ficha, como o `boca` dito", doRegisto(semModo).length > 0 && semModo.conferidas.length > 0 && JSON.stringify(doRegisto(semModo)) === JSON.stringify(doRegisto(boca)) && JSON.stringify(semModo.conferidas) === JSON.stringify(boca.conferidas));
 const semFicha = correr("ator", null, null);
 t("no `ator` sem ficha, nada (o turno de antes desta fiação)", !doRegisto(semFicha).length && !semFicha.conferidas.length && semFicha.fim.p === BRAM);
 

@@ -22,6 +22,8 @@
      6. o tamanho: a regra paga-se com o que saiu.
 
    Falha na árvore de v9.422 e passa nesta. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { readFileSync, readdirSync } from "node:fs";
 
 let ok = 0, mal = 0;
@@ -179,7 +181,7 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
      texto); prova-se jogando-a numa rota de um passo. */
   {
     const { aplicarAChegada } = await import("../src/motor/fim-do-turno.js");
-    const ch = aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [{ nome: "Vau" }, { nome: "Ponte Lenta", descoberta: false }], rotas: [{ de: "Vau", para: "Ponte Lenta", dias: 0.2 }] } },
+    const ch = NM.aplicarAChegada({ cidadeAtual: "Vau", mapa: { cidades: [{ nome: "Vau" }, { nome: "Ponte Lenta", descoberta: false }], rotas: [{ de: "Vau", para: "Ponte Lenta", dias: 0.2 }] } },
       { narrativa: "Ao fim da tarde você entra na Ponte Lenta pelo portão baixo." });
     /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: a asserção terminava num `&& /const daChegada = aplicarAChegada\(\{/.test(app)` — que o App chama a peça. teste-motor-fim-do-turno.mjs (§ da chegada) já guarda essa chamada, com a ordem (a chegada depois do códex, os minutos somados a seguir). Fica o comportamento: a travessia narrada é ratificada. */
     t("cidade_atual · a travessia de um passo narrada é ratificada (App: detectarChegada)", ch.estado.cidadeAtual === "Ponte Lenta" && ch.minutos > 0);
@@ -194,7 +196,7 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
   const CT = await import("../src/motor/cronista-do-turno.js");
   const { formatarCanone: fmtCanone } = await import("../src/prompt.js");
   const PED = CT.PEDIDO_DO_CRONISTA;
-  const lugaresDitos = (aceito, proposta, recusado) => { const v = []; CT.oAceitoDoCronista(aceito, recusado || [], proposta, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({}), aplicar: () => {}, registrarLugar: (n, f) => { v.push(n + "|" + f); return null; } }); return v; };
+  const lugaresDitos = (aceito, proposta, recusado) => { const v = []; NM.oAceitoDoCronista(aceito, recusado || [], proposta, { pers: { nome: "Vera", grupo: [] }, narrativa: "x", ler: () => ({}), aplicar: () => {}, registrarLugar: (n, f) => { v.push(n + "|" + f); return null; } }); return v; };
   t("lugar_atual · o Cronista tem a SEÇÃO lugar e o App regista-a", PED.includes("SEÇÃO lugar (v9.39)") && lugaresDitos({ lugar: "a fazenda" }, {}).join() === "a fazenda|cronista"
     && lugaresDitos({}, { lugar: "Outra" }, [{ secao: "lugar", acao: "recusa" }]).join() === "Outra|cronista" && lugaresDitos({}, { lugar: "Outra" }, []).length === 0);
   t("lugar_atual · o galpão pedido e contado pelo Cronista é lugar novo", lerLugarDito("o galpão de Lia Cinzela", { lugar: null, cidade: "Quebrado do Leste", pedido: "Vou ao galpão de Lia Cinzela.", fonte: "cronista" }).acao === "novo");
@@ -222,7 +224,7 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
      não se lê pelo texto); prova-se jogando o códex com um nome oferecido. */
   {
     const { aplicarOCodex } = await import("../src/motor/fim-do-turno.js");
-    const npcs = aplicarOCodex({ personagem: { nome: "Ana", nivel: 3, grupo: [] }, cidadeAtual: "Vau", mapa: { cidades: [] }, npcs: {}, npcTurno: 2, dia: 4, oferecidos: [{ nome: "Teodora Vaz", genero: "ela" }] },
+    const npcs = NM.aplicarOCodex({ personagem: { nome: "Ana", nivel: 3, grupo: [] }, cidadeAtual: "Vau", mapa: { cidades: [] }, npcs: {}, npcTurno: 2, dia: 4, oferecidos: [{ nome: "Teodora Vaz", genero: "ela" }] },
       { narrativa: "Teodora Vaz enche as canecas e ri alto." }, { mundo: { semente: "x", genero: "Fantasia medieval" } }).estado.npcs;
     t("canone/npcs · os nomes que o Narrador inventava vêm dos NOMES À MÃO, registados pelo código", !!npcs["Teodora Vaz"] && /oferecidos: nomesOferecidosRef\.current/.test(app));
   }
@@ -230,7 +232,7 @@ const pedido = (texto) => fechoDoPedido({ doJogador: true, texto });
      sistema conhece (motor/cronista.js#oCanoneQueExiste) — «O Anel» passa a
      estar no inventário da Vera; a intenção fica: a identidade não se
      reescreve, o vazio preenche-se, e o novo entra. */
-  t("canone · o Cronista não reescreve identidade (só preenche o vazio)", (() => { const efs = []; CT.oAceitoDoCronista({ canone: { "a coroa": { descricao: "de lata", detalhes: "com três pedras" }, "O Anel": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Vera", grupo: [], inventario: [{ nome: "O Anel" }] }, narrativa: "x", ler: () => ({ canone: canoneVisto, espinha: null, dia: 2 }), aplicar: (x) => efs.push(...x), mundoDaBase: () => null });
+  t("canone · o Cronista não reescreve identidade (só preenche o vazio)", (() => { const efs = []; NM.oAceitoDoCronista({ canone: { "a coroa": { descricao: "de lata", detalhes: "com três pedras" }, "O Anel": { tipo: "artefato" } } }, [], {}, { pers: { nome: "Vera", grupo: [], inventario: [{ nome: "O Anel" }] }, narrativa: "x", ler: () => ({ canone: canoneVisto, espinha: null, dia: 2 }), aplicar: (x) => efs.push(...x), mundoDaBase: () => null });
     const c = (efs.find((e) => e.tipo === "canone") || {}).canone || {}; return c["A Coroa"] && c["A Coroa"].descricao === "de ouro" && c["A Coroa"].detalhes === "com três pedras" && !!c["O Anel"] && !c["a coroa"]; })());
 }
 
@@ -246,11 +248,11 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
     const { aplicarOMapa } = await import(S + "motor/meio-do-turno.js");
     const mapa = { cidades: [{ nome: "Vau Alto", tipo: "cidade", populacao: 900, bioma: "planicie" }, { nome: "Porto Lume", tipo: "cidade", populacao: 900, bioma: "costa" }], faccoes: [], rotas: [] };
     const base = { personagem: { nome: "Vera" }, mapa, cidadeAtual: "Vau Alto", lugar: null, jornada: { de: "Vau Alto", meio: "a pé" }, devocao: {}, dia: 2, ultimoPedido: "" };
-    const ch = aplicarOMapa(base, { narrativa: "x", mudancas: { cidade_atual: "Porto Lume" } }, {});
+    const ch = NM.aplicarOMapa(base, { narrativa: "x", mudancas: { cidade_atual: "Porto Lume" } }, {});
     t("cidade_atual", ch.estado.cidadeAtual === "Porto Lume" && ch.estado.jornada === null);
-    const lu = aplicarOMapa({ ...base, jornada: null }, { narrativa: "x", mudancas: { lugar_atual: "a fazenda de Jessa" } }, {});
+    const lu = NM.aplicarOMapa({ ...base, jornada: null }, { narrativa: "x", mudancas: { lugar_atual: "a fazenda de Jessa" } }, {});
     t("lugar_atual", lu.estado.lugar && lu.estado.lugar.nome === "a fazenda de Jessa");
-    const jm = aplicarOMapa(base, { narrativa: "x", mudancas: { jornada_meio: "de carroça" } }, {});
+    const jm = NM.aplicarOMapa(base, { narrativa: "x", mudancas: { jornada_meio: "de carroça" } }, {});
     /* MOVIDA (28/10, T2-B lote 1), E O MOTIVO: esta asserção terminava num `&& /aplicarOTurno\(\{/.test(app)` — que o App chama o motor. É fato de fiação, e teste-motor-aplicar.mjs já o guarda por inteiro ("o aplicarResposta chama o motor": `aplicarOTurno({ personagem: pers,` dentro de aplicarResposta, uma só vez, com o efeito aplicado). A intenção desta asserção é o COMPORTAMENTO do campo, e fica só ela; a fiação não se afrouxa, só deixa de ser guardada em dois sítios. */
     t("jornada_meio", jm.estado.jornada.meio === "de carroça");
   }
@@ -260,7 +262,7 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
      lê os dois campos, tolerante — prova-se jogando o registo com eles. */
   {
     const { aplicarORegisto } = await import(S + "motor/aplicar.js");
-    const r = aplicarORegisto({ personagem: { nome: "Vera" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, dia: 1 },
+    const r = NM.aplicarORegisto({ personagem: { nome: "Vera" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: {}, npcTurno: 0, dia: 1 },
       { narrativa: "x", mudancas: { canone: { "a lâmina partida": { tipo: "artefato" } }, npcs: [{ nome: "Brann Ferro", papel: "ferreiro" }] } },
       { baseDoNome: { importantes: [], conhecidos: [], recentes: [], grupo: [], aqui: [], heroi: "Vera" } });
     t("canone", !!r.estado.canone["a lâmina partida"]);
@@ -274,7 +276,7 @@ sec("5. o App continua a ler os seis campos (tolerante: a instrução saiu, o le
   {
     const { aplicar } = await import(S + "motor/aplicar.js");
     const fichaDoTurno = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 34, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
-    const bolsa = (mudancas) => aplicar({ personagem: fichaDoTurno() }, { narrativa: "Você paga 5 moedas ao taberneiro.", mudancas }, {}).estado.personagem.moedas;
+    const bolsa = (mudancas) => NM.aplicar({ personagem: fichaDoTurno() }, { narrativa: "Você paga 5 moedas ao taberneiro.", mudancas }, {}).estado.personagem.moedas;
     t("moedas (e a bolsa ainda o desconta do que leu, para não cobrar duas vezes)", bolsa({}) === 29 && bolsa({ moedas: -5 }) === 29);
   }
   /* 12/10 (8.ª sessão): esta asserção passava e a bolsa não descia. Ela

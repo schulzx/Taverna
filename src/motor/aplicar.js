@@ -424,8 +424,10 @@ export function aplicar(estado, resposta, ctx = {}) {
        neste turno (a pauta, os avisos do sistema): se ele já disse "já
        registrada pelo sistema", a compra já saiu da bolsa por outro
        caminho, e debitar de novo cobraria duas vezes. */
-    if (portaAberta("oQueFaltaDebitar", modoDoNarrador)) try {
-      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "", pedido: typeof op.pedido === "string" ? op.pedido : "", moeda: typeof op.moeda === "string" ? op.moeda : "" });
+    /* NE7 (13/11): a porta fechada tira a prosa e o declarado, não a frase do
+       jogador — ela continua a pagar (cobranca.js, `soOPedido`) */
+    try {
+      const deb = oQueFaltaDebitar(resp.narrativa, resp.mudancas, { bolsa: pers.moedas || 0, envelopes: op.envelopes || "", pedido: typeof op.pedido === "string" ? op.pedido : "", moeda: typeof op.moeda === "string" ? op.moeda : "", soOPedido: !portaAberta("oQueFaltaDebitar", modoDoNarrador) });
       if (deb.temAlgo && !deb.semFundos) { pers = { ...pers, moedas: Math.max(0, (pers.moedas || 0) - deb.moedas) }; msgs.push(falaDoDebito(deb)); }
       if (deb.temAlgo) notas.push(envelopeDoDebito(deb));
     } catch (e) { calou("oQueFaltaDebitar", e); }

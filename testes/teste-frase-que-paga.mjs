@@ -17,6 +17,8 @@
    caminho do App até à v9.425; o "depois" é o de agora: a frase por
    nome (`pedido`) e a palavra do mundo (`moeda`).
    ============================================================ */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import { oQueFaltaDebitar, raizDaMoeda, lerGastos } from "../src/cobranca.js";
 
@@ -103,7 +105,7 @@ t("a moeda é a palavra do léxico", /nomeDaMoeda\(\(mundoAtual\(\) \|\| \{\}\)\
 {
   const { aplicar } = await import("../src/motor/aplicar.js");
   const fichaDoTurno = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 34, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
-  const bolsa = (op) => aplicar({ personagem: fichaDoTurno() }, { narrativa: "x", mudancas: {} }, op).estado.personagem.moedas;
+  const bolsa = (op) => NM.aplicar({ personagem: fichaDoTurno() }, { narrativa: "x", mudancas: {} }, op).estado.personagem.moedas;
   t("e o aplicar entrega as duas a oQueFaltaDebitar (34 − 10 = 24)", bolsa({ pedido: "Pago as dez escamas.", moeda: MOEDA }) === 24);
   t("sem a moeda, a frase não paga; e pedido que não é texto não é pedido", bolsa({ pedido: "Pago as dez escamas." }) === 34 && bolsa({ pedido: 42, moeda: MOEDA }) === 34);
 }

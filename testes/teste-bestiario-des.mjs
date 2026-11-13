@@ -1,3 +1,5 @@
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 /* A DESTREZA E O PERFIL POR CRIATURA (v9.152)
 
    Dois números que o bestiário não tinha, e uma dívida de 145 versões.
@@ -135,7 +137,7 @@ sec("5. A COMPATIBILIDADE DE 145 VERSÕES SAIU");
   /* MOVIDA (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO. O leitor dos sinais mudou-se do `aplicarResposta` para `src/motor/meio-do-turno.js` (puro), e o motor não se lê pelo texto (a catraca da T1-B); a mesma intenção prova-se jogando o bloco. */
   {
     const { aplicarOsSinais } = await import("../src/motor/meio-do-turno.js");
-    const r = aplicarOsSinais({ personagem: { nome: "Vera", nivel: 15 }, divindade: { despertar: true, fieis: 100, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 2, contadores: {}, nivelDaFama: 1 },
+    const r = NM.aplicarOsSinais({ personagem: { nome: "Vera", nivel: 15 }, divindade: { despertar: true, fieis: 100, pf: 0 }, devocao: { cidades: {}, andarilhos: 0 }, mapa: { cidades: [] }, dia: 2, contadores: {}, nivelDaFama: 1 },
       { narrativa: "x", mudancas: { sinais: ["fe:proeza"] } }, {});
     t("o canal vivo continua de pé", r.msgs.some((m) => /fiéis/.test(m)) && r.estado.divindade.fieis > 100);
   }

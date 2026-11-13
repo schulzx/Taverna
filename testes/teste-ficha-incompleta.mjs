@@ -1,3 +1,5 @@
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 /* teste-ficha-incompleta.mjs (Fase T1, trilha B, fatia 2 · 27/10) — a ficha incompleta não derruba o turno
 
    O DEFEITO, ACHADO PELO JOGO EM NODE (testes/jogar-em-node.mjs): o
@@ -86,10 +88,10 @@ sec("5. A FICHA COMPLETA SAI COMO SAÍA, E NADA DO QUE ENTRA É TOCADO");
 sec("6. O TURNO DO MOTOR COM UM SAVE MÍNIMO");
 {
   const minima = { nome: "Vera", vida: 12, vidaMax: 12, mana: 0, manaMax: 0, moedas: 25 };
-  const r = (() => { try { return aplicar({ personagem: minima }, { narrativa: "Você encontra 5 moedas no chão.", mudancas: { adicionar_itens: ["Pedra lisa"] } }, {}); } catch (e) { return { erro: e.message }; } })();
+  const r = (() => { try { return NM.aplicar({ personagem: minima }, { narrativa: "Você encontra 5 moedas no chão.", mudancas: { adicionar_itens: ["Pedra lisa"] } }, {}); } catch (e) { return { erro: e.message }; } })();
   t("o aplicar não estoura com a ficha sem listas (era o defeito)", !r.erro, r.erro);
   t("e a ficha sai com a bolsa nova e o achado creditado", !r.erro && J(r.estado.personagem.inventario) === J(["Pedra lisa"]) && r.estado.personagem.moedas === 30, !r.erro && J(r.estado.personagem));
-  t("com as mudanças nulas também", () => !!aplicar({ personagem: minima }, { narrativa: "x", mudancas: null }, {}).estado);
+  t("com as mudanças nulas também", () => !!NM.aplicar({ personagem: minima }, { narrativa: "x", mudancas: null }, {}).estado);
 }
 
 console.log(`\nficha incompleta: ${ok} passaram, ${mal} falharam`);

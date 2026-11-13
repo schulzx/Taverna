@@ -22,6 +22,8 @@
       do estado; a presença do fim da resposta; e o REPLAY produz o livro
       como o App (o passo «o livro de factos» e o efeito do Cronista), e
       uma sessão gravada antes do livro continua sem ele (a régua do minuto). */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -236,10 +238,10 @@ sec("§8 a escrita do turno no motor, e o replay");
   t("a ponte do lugar só com o mundo (a semente)", !("chaveDoLugar" in el) && typeof elencoDoLivro(base, { mundo: { semente: "s|Fantasia medieval", genero: "Fantasia medieval" } }).chaveDoLugar === "function");
   t("o lixo dá um elenco vazio, sem estourar", [null, undefined, 7, "x", []].every((x) => { const e = elencoDoLivro(x, x); return e.heroi === "" && e.cidade === "" && J(e.grupo) === "[]" && e.dia === undefined; }));
   /* a presença do fim da resposta */
-  const vista = oQueACenaDaAoLivro(base, { narrativa: "Corrado cruza os braços e encara-te. — As lutas são ao pôr do sol." });
+  const vista = NM.oQueACenaDaAoLivro(base, { narrativa: "Corrado cruza os braços e encara-te. — As lutas são ao pôr do sol." });
   const aqui = (oc) => oc.emCena.filter((x) => x.aqui).map((x) => x.nome);
   t("a prosa do turno com o Corrado a agir põe-no à vista (registo); o grupo está sempre (e a invocação não)", aqui(vista).includes("Corrado") && aqui(vista).includes("Brás") && !aqui(vista).includes("Lobo Espectral"));
-  t("a prosa que não o põe a agir não o põe à vista", !aqui(oQueACenaDaAoLivro(base, { narrativa: "A praça está vazia ao fim da tarde." })).includes("Corrado"));
+  t("a prosa que não o põe a agir não o põe à vista", !aqui(NM.oQueACenaDaAoLivro(base, { narrativa: "A praça está vazia ao fim da tarde." })).includes("Corrado"));
   t("o lugar e a afeição do grupo (o vínculo) vão juntos", J(vista.lugar) === J(base.lugar) && J(vista.afeicoes) === J([{ quem: "Brás", vinculo: 30 }]));
   t("só gente na presença (o livro guarda pessoas)", vista.emCena.every((x) => x.tipo === "pessoa"));
   /* anotar: sem livro, nada; o que o ocorrido traz por definir não apaga o elenco */
@@ -254,19 +256,19 @@ sec("§8 a escrita do turno no motor, e o replay");
   const linha = (narrativa, proposta) => ({ n: 1, entrada: { frase: "x" }, sorte: { ponto: "1|600|0" }, pedido: { pauta: "" }, narrador: { narrativa, mudancas: {} }, cronista: proposta ? { proposta, juizo: null } : null, juiz: null, estado: {} });
   const CTX = { semente: "s13|Fantasia medieval", mundo: null };
   const T2 = linha("Corrado cruza os braços e encara-te. — As lutas são ao pôr do sol, forasteira. Paga-se à entrada.", { falou_com: ["Corrado"] });
-  const r2 = correrOTurno({ ...base, missoes: [], factos: garantirFactos(null) }, T2, CTX);
+  const r2 = NM.correrOTurno({ ...base, missoes: [], factos: garantirFactos(null) }, T2, CTX);
   t("o replay escreve o livro como o App: a presença do fim da resposta e a conversa do Cronista", r2.calou.length === 0 && conversou(r2.estado.factos, "npc|Corrado") && conheceu(r2.estado.factos, "npc|Corrado"));
-  t("e o mesmo turno corrido duas vezes dá o mesmo livro", J(correrOTurno({ ...base, missoes: [], factos: garantirFactos(null) }, T2, CTX).estado.factos) === J(r2.estado.factos));
+  t("e o mesmo turno corrido duas vezes dá o mesmo livro", J(NM.correrOTurno({ ...base, missoes: [], factos: garantirFactos(null) }, T2, CTX).estado.factos) === J(r2.estado.factos));
   /* «Encontrar Corrado» no replay: a missão nasce depois da conversa (T5) e fecha no T6 pelo livro, num turno sem conversa e longe do Largo */
   const T6 = linha("Ilse atravessa a taverna da Âncora e senta-se perto da lareira.", null);
-  const em6 = (factos) => correrOTurno({ ...base, lugar: { nome: "A Taverna da Âncora", cidade: S13.cidadeAtual }, missoes: S13.missoes, ...(factos ? { factos } : {}) }, T6, CTX).estado.missoes[0].status;
+  const em6 = (factos) => NM.correrOTurno({ ...base, lugar: { nome: "A Taverna da Âncora", cidade: S13.cidadeAtual }, missoes: S13.missoes, ...(factos ? { factos } : {}) }, T6, CTX).estado.missoes[0].status;
   t("no replay, a conversa do T2 fecha no T6 a principal que nasceu depois dela", em6(r2.estado.factos) === "concluida");
   t("…e sem o livro, não (o que a 13.ª viveu)", em6(null) === "ativa" && em6(garantirFactos(null)) === "ativa");
   /* a régua do minuto: a sessão gravada antes do livro continua sem ele */
   t("NASCERAM_DEPOIS_DA_GRAVACAO diz o livro, e porquê", typeof NASCERAM_DEPOIS_DA_GRAVACAO.factos === "string");
-  const semLivro = correrOTurno({ ...base, missoes: [] }, T2, CTX);
+  const semLivro = NM.correrOTurno({ ...base, missoes: [] }, T2, CTX);
   t("um estado gravado sem o campo sai do turno sem ele (nem null, nem um livro que ninguém escreveu)", !("factos" in semLivro.estado) && semLivro.calou.length === 0);
-  t("o campo presente e nulo fica nulo", correrOTurno({ ...base, missoes: [], factos: null }, T2, CTX).estado.factos === null);
+  t("o campo presente e nulo fica nulo", NM.correrOTurno({ ...base, missoes: [], factos: null }, T2, CTX).estado.factos === null);
 }
 
 console.log(`\nBQ2 · a fiação do livro nos motores: ${bons} passaram, ${maus} falharam`);

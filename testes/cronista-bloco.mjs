@@ -371,6 +371,9 @@ export function jogarOAceito(aceito, o = {}) {
     ...portas,
     pers: "pers" in o ? o.pers : { nome: "Vera", nivel: 3, atributos: {}, grupo: [] },
     narrativa: o.narrativa || "x", testeDoTurno: o.testeDoTurno || null, rolagem: o.rolagem || null,
+    /* NE7 (13/11): o padrão virou o «boca», que fecha as secções do Cronista;
+       jogar o aceito é jogar o Cronista que lê — o «mestre», salvo quem diga outro */
+    modoDoNarrador: "modoDoNarrador" in o ? o.modoDoNarrador : "mestre",
     ler: () => estado,
     aplicar: (efs) => {
       for (const ef of efs) {

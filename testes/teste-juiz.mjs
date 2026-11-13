@@ -1,3 +1,5 @@
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 /* O JUIZ (v9.154) — quem paga o feito
 
    Quatro números ainda eram da IA, e o maior deles estava quebrado de um
@@ -187,7 +189,7 @@ sec("9. O CANAL DE ENVELOPES EXISTE DE VERDADE");
      `oficial` mover para lá mexe nas linhas sem mexer no jogo, e a asserção
      partiria pelo motivo errado (fragilidade 5 da auditoria do motor). */
   const { aplicar } = await import(S + "motor/aplicar.js");
-  const turno = aplicar({ personagem: { nome: "Vera", vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [] } }, { narrativa: "Você sente o poder.", mudancas: { adicionar_habilidades: [{ nome: "Bola de Fogo" }] } }, {});
+  const turno = NM.aplicar({ personagem: { nome: "Vera", vida: 10, vidaMax: 10, mana: 0, manaMax: 0, moedas: 0, inventario: [], habilidades: [], grupo: [], efeitos: [], condicoes: [] } }, { narrativa: "Você sente o poder.", mudancas: { adicionar_habilidades: [{ nome: "Bola de Fogo" }] } }, {});
   t("o motor lê as notas das mudanças, e a ficha não ganha o poder", turno.estado.personagem.habilidades.length === 0);
   /* (movido, T1-A 6.ª fatia: as notas do `processarCombate` (`const notasDoCombate = []`) saiu do App com o bloco do combate, para `aLutaDaResposta` (src/motor/luta-do-turno.js), que esta suíte não lê como texto — a catraca de teste-assercoes-de-texto. A intenção é a mesma, agora JOGADA pela luta de bolso de combate-bloco.mjs.) */
   const { lutaDeBolso } = await import("./combate-bloco.mjs");

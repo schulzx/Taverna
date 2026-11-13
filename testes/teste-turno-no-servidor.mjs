@@ -44,6 +44,8 @@
    tem atributos nem conceito (um herói do jogo sempre os tem). Como em
    pauta-bloco.mjs e pedido-bloco.mjs, o nulo fica de fora e a ficha ganha
    os dois — NOS DOIS LADOS, igual: a prova é a igualdade, não o caso. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 
@@ -229,10 +231,10 @@ sec("3. O DETERMINISMO E A IMUTABILIDADE");
   const c = await rodar({ ...corpo, frase: corpo.frase + " E olho para trás." });
   t("outra frase: outro hash", c.codigo === 200 && c.corpo.pedido.hash !== a.corpo.pedido.hash);
   const antes = JSON.stringify(corpo);
-  const m = await oPedidoNoServidor(corpo);
+  const m = await NM.oPedidoNoServidor(corpo);
   t("o corpo que entra não muda", JSON.stringify(corpo) === antes);
   t("o módulo dá o mesmo pedido que a rota mede", sha(m.pedido) === a.corpo.pedido.hash && m.casa === aCasaDoTurno(oEstadoDoServidor(corpo.estado, corpo)));
-  const outra = await oPedidoNoServidor({ ...corpo, estado: { ...corpo.estado, dia: (corpo.estado.dia || 0) + 1 } });
+  const outra = await NM.oPedidoNoServidor({ ...corpo, estado: { ...corpo.estado, dia: (corpo.estado.dia || 0) + 1 } });
   t("o estado do fim traz o que o turno escreveu (o eco sai dele)", m.estadoDoFim && typeof aRespostaDoServidor(m.estadoDoFim).eco === "object");
   t("outro dia, outra semente", outra.casa !== m.casa);
 }
@@ -344,7 +346,7 @@ const temposDoTurno = [];
       const corpo = { estado, frase, ...(eco ? { eco } : {}), resposta: L.narrador };
       const antes = JSON.stringify(corpo);
       const t0 = performance.now();
-      const sv = await oTurnoNoServidor(corpo, { cronista: () => (L.cronista ? L.cronista.proposta : null) });
+      const sv = await NM.oTurnoNoServidor(corpo, { cronista: () => (L.cronista ? L.cronista.proposta : null) });
       temposDoTurno.push(performance.now() - t0);
       casos++;
       if (JSON.stringify(corpo) === antes) imutavel++;
@@ -356,11 +358,11 @@ const temposDoTurno = [];
         const r = await rodar({ estado, frase, eco });
         if (r.corpo && r.corpo.pedido && r.corpo.pedido.hash === sha(ref.pedido)) ecoIgual++;
       }
-      const pre = aRespostaDoServidor((await oPedidoNoServidor({ estado, frase, ...(eco ? { eco } : {}) })).estadoDoFim).eco;
+      const pre = aRespostaDoServidor((await NM.oPedidoNoServidor({ estado, frase, ...(eco ? { eco } : {}) })).estadoDoFim).eco;
       if (can(pre.vetosDoJuiz) !== can(sv.eco.vetosDoJuiz)) ecoMudouPeloJuiz++;
       eco = Object.keys(sv.eco).length ? sv.eco : null;
       /* contra o replay inteiro (o mesmo estado de partida, a linha gravada) */
-      const rc = correrOTurno(estado, L, { semente: A.semente, mundo: A.mundo || null });
+      const rc = NM.correrOTurno(estado, L, { semente: A.semente, mundo: A.mundo || null });
       const d = difs(naRegua(sv.estadoDoFim), naRegua(rc.estado));
       const poupado = !sv.cronista.corre;
       if (poupado) poupados++;
@@ -406,6 +408,7 @@ const temposDoTurno = [];
   const L = A.turnos[1];
   const corpo = { estado: comoOLoadAbre(estadoNoTurno(A, 1)), frase: L.entrada.frase, resposta: L.narrador, cronista: L.cronista && L.cronista.proposta };
   const r = await rodar(corpo);
+  /* NE7: a rota corre o padrão (não diz modo), e a peça comparada também */
   const sv = await oTurnoNoServidor(corpo, { cronista: () => corpo.cronista });
   t("a rota com `resposta` devolve o eco, os soltos, a tela e o estado em hash", r.codigo === 200 && r.corpo.ensaio === true && can(r.corpo.eco) === can(sv.eco) && can(r.corpo.soltos) === can(sv.soltos) && can(r.corpo.tela) === can(sv.tela) && r.corpo.estado.hash === createHash("sha256").update(JSON.stringify(sv.estadoDoFim)).digest("hex"));
   t("e o pedido é o mesmo de sem resposta", r.corpo.pedido.hash === (await rodar({ estado: corpo.estado, frase: corpo.frase })).corpo.pedido.hash);
@@ -435,7 +438,7 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
     for (let i = 0; i < A.turnos.length; i++) {
       const L = A.turnos[i];
       const frase = L.entrada.frase || (L.entrada.toque && L.entrada.toque.conteudo) || "";
-      const sv = await oTurnoNoServidor({ estado: comoOLoadAbre(estadoNoTurno(A, i)), frase, ...(eco ? { eco } : {}), resposta: L.narrador }, { cronista: () => L.cronista.proposta });
+      const sv = await NM.oTurnoNoServidor({ estado: comoOLoadAbre(estadoNoTurno(A, i)), frase, ...(eco ? { eco } : {}), resposta: L.narrador }, { cronista: () => L.cronista.proposta });
       eco = Object.keys(sv.eco).length ? sv.eco : null;
       const g = L.juiz && L.juiz.entrada;
       if (!g || !sv.entradaDoJuiz) continue;
@@ -470,8 +473,8 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
       const estado = comoOLoadAbre(estadoNoTurno(A, i));
       const corpo = { estado, frase, ...(eco ? { eco } : {}) };
       const e0 = oEstadoDoServidor(estado, { eco });
-      const fim = (await oPedidoNoServidor(corpo)).estadoDoFim;
-      const sv = await oTurnoNoServidor({ ...corpo, resposta: L.narrador }, { cronista: () => (L.cronista ? L.cronista.proposta : null) });
+      const fim = (await NM.oPedidoNoServidor(corpo)).estadoDoFim;
+      const sv = await NM.oTurnoNoServidor({ ...corpo, resposta: L.narrador }, { cronista: () => (L.cronista ? L.cronista.proposta : null) });
       eco = Object.keys(sv.eco).length ? sv.eco : null;
       casos++;
       const pr = aPracaDoJuiz(e0, fim);
@@ -525,7 +528,7 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
     const estado = comoOLoadAbre(estadoNoTurno(A, 1));
     const moeda = nomeDaMoeda((estado.mundo || {}).lexico);
     const narrativa = `A banca do boticário fica sob um toldo verde, e o homem atrás dela limpa um frasco com a manga antes de o pousar no balcão. — O Elixir de Destreza? Trezentas ${moeda}, e nem uma a menos — diz ele, sem levantar os olhos. A praça segue no seu murmúrio de sempre.`;
-    const sv = await oTurnoNoServidor({ estado, frase: L.entrada.frase, resposta: { narrativa, mudancas: {} } }, {});
+    const sv = await NM.oTurnoNoServidor({ estado, frase: L.entrada.frase, resposta: { narrativa, mudancas: {} } }, {});
     const veto = (sv.eco.vetosDoJuiz || []).find((v) => v.especie === "preco-contra-a-mesa");
     t("o preço errado numa cidade com banca vira veto com o número da banca", !!veto && /Elixir de Destreza/.test(can(veto)) && /145/.test(can(veto)));
     const v0 = julgarAProsa(narrativa, { ...sv.entradaDoJuiz, mercado: [] });
@@ -533,7 +536,7 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
     /* (d) A MESMA COISA, UMA VEZ SÓ: quando a frase pergunta o preço, a pauta
        traz a ficha do mercado com o mesmo item da banca; somados eram dois
        elixires, e a regra da soma absolvia o «Trezentas» (≈ 145 + 145) */
-    const sv2 = await oTurnoNoServidor({ estado, frase: "Pergunto ao boticário quanto custa o Elixir de Destreza.", resposta: { narrativa, mudancas: {} } }, {});
+    const sv2 = await NM.oTurnoNoServidor({ estado, frase: "Pergunto ao boticário quanto custa o Elixir de Destreza.", resposta: { narrativa, mudancas: {} } }, {});
     const naPauta = oQueAPautaSabe(sv2.entradaDoJuiz.pauta).mercado.some((x) => /Elixir de Destreza/.test(x.nome));
     t("com a ficha do mercado na pauta E a banca na foto, o mesmo preço errado é apanhado", naPauta && (sv2.eco.vetosDoJuiz || []).some((v) => v.especie === "preco-contra-a-mesa" && /145/.test(can(v))));
     const dobro = julgarAProsa(`— O Elixir de Destreza? Trezentas ${moeda}.`, { moeda, mercado: [{ nome: "Elixir de Destreza", preco: 145 }], pauta: "MERCADO: Elixir de Destreza ◉ 145" });
@@ -556,7 +559,7 @@ sec("10. A PRAÇA DO JUIZ E O CRONISTA NO SERVIDOR");
         /* a fila do turno anterior, como o save a levaria */
         const estado = { ...comoOLoadAbre(estadoNoTurno(A, i)), ...(leitura ? { leituraDoCronista: leitura } : {}) };
         let pedidos = 0, pedidoBom = true;
-        const sv = await oTurnoNoServidor({ estado, frase, ...(eco ? { eco } : {}), resposta: L.narrador }, { cronista: (p) => { pedidos++; if (!p || typeof p.sys !== "string" || typeof p.user !== "string") pedidoBom = false; else letras += p.sys.length + p.user.length; return L.cronista ? L.cronista.proposta : null; } });
+        const sv = await NM.oTurnoNoServidor({ estado, frase, ...(eco ? { eco } : {}), resposta: L.narrador }, { cronista: (p) => { pedidos++; if (!p || typeof p.sys !== "string" || typeof p.user !== "string") pedidoBom = false; else letras += p.sys.length + p.user.length; return L.cronista ? L.cronista.proposta : null; } });
         casos++;
         const c = sv.cronista;
         if (c.pergunta) perguntas++;
@@ -602,7 +605,7 @@ sec("11. O TRABALHO QUE O MUNDO OFERECE, NO SERVIDOR (o 1.º órgão do depois)"
   const base = umaCidadeQuePrega();
   delete base.render; delete base.ultimoTrabalhoDia;
   const narrativa = "A praça segue no seu murmúrio de sempre, e o vento traz o cheiro do pão da manhã. Ninguém olha duas vezes para o forasteiro.";
-  const umTurno = (estado, eco, frase) => oTurnoNoServidor({ estado, frase, ...(eco ? { eco } : {}), resposta: { narrativa, mudancas: {} } }, {});
+  const umTurno = (estado, eco, frase) => NM.oTurnoNoServidor({ estado, frase, ...(eco ? { eco } : {}), resposta: { narrativa, mudancas: {} } }, {});
   /* o turno seguinte parte do save que este devolveu, com os soltos, como o load o abre */
   const oSeguinte = (antes, sv) => oSaveComOsSoltos(comoOLoadAbre({ ...antes, ...sv.estadoDoFim }), sv.soltos);
   const t1 = await umTurno(base, null, "Olho em volta.");
@@ -637,7 +640,7 @@ sec("11. O TRABALHO QUE O MUNDO OFERECE, NO SERVIDOR (o 1.º órgão do depois)"
   const soPartida = difFim.every((k) => t2l.estadoDoFim[k] == null && t2cru.estadoDoFim[k] != null);
   t(`e dá o pedido do turno pelo load, byte a byte; o save só difere em ${difFim.length} campos, todos nulo de um lado e a partida do load do outro`, !!t2cru && sha(t2cru.pedido) === sha(t2l.pedido) && difFim.length > 0 && soPartida && !t2cru.calados.length);
   t("e o save do fim não leva o que viaja no eco, nos soltos ou nos bilhetes, nem quando o estado de entrada o trazia", Object.keys(CAMPOS_DO_SERVIDOR).every((c) => !(c in t1.estadoDoFim) && !(c in t2cru.estadoDoFim)) && ["golpesDaRodada", "crimeDoTurno"].some((c) => c in base));
-  const p2 = await oPedidoNoServidor({ estado: e2, frase: "Espero um pouco.", eco: t1.eco });
+  const p2 = await NM.oPedidoNoServidor({ estado: e2, frase: "Espero um pouco.", eco: t1.eco });
   t("o pedido do turno seguinte leva o recado ao Narrador (a nota que o load trouxe nos soltos)", recado.test(JSON.stringify(p2.pedido)));
   /* o porquê do eco: com o mural vazio no mesmo dia, só o dia do último
      trabalho segura o órgão — sem ele, o servidor ofereceria em todo turno */

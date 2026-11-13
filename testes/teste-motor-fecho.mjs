@@ -120,9 +120,13 @@ sec("2b · a emboscada chega à tela (defeito achado na 7.ª fatia)");
 }
 
 sec("3 · as peças, jogadas");
+/* NE7 (13/11): o padrão virou o «boca», que fecha as portas `mesa` e
+   `perigo`. Estas provas medem o que as peças fazem com a porta ABERTA (o
+   ganho que conta, o perigo que abre a luta), logo dizem o «mestre»; a
+   régua do padrão novo é teste-nada-entra-pelo-ator §9 e §10. */
 {
   const m0 = { turnos: [], avisados: [], desdeFio: 2 };
-  const r = aMesaDoTurno({ textura: { rolou: true }, mudancas: { moedas: 5 }, combate: null, mesa: m0, folego: null, lugares: [] });
+  const r = aMesaDoTurno({ textura: { rolou: true }, mudancas: { moedas: 5 }, combate: null, mesa: m0, folego: null, lugares: [], modoDoNarrador: "mestre" });
   t("a mesa anota um turno: o dado, o ganho que o Mestre declarou, e a mesa de entrada fica", r.mesa.turnos.length === 1 && r.mesa.turnos[0].rolou && r.mesa.turnos[0].ganho && !r.mesa.turnos[0].luta && r.mesa.desdeFio === 3 && m0.turnos.length === 0 && r.folego === null && !r.erroFolego);
   const l = aMesaDoTurno({ textura: {}, mudancas: null, combate: { inimigos: [] }, mesa: null, folego: { lugares: ["a praça"], deixados: ["Lobo"], naResposta: true }, lugares: ["a praça"] });
   t("com a luta aberta, o pilar é o combate; e o fôlego que segue no sítio continua, sem a marca da resposta", l.mesa.turnos[0].luta && l.mesa.turnos[0].pilar === "combate" && l.folego && l.folego.naResposta === false && l.folego.deixados[0] === "Lobo");
@@ -130,15 +134,15 @@ sec("3 · as peças, jogadas");
 }
 {
   const efs = [];
-  const r = oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: ["a praça"] }, {
+  const r = oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: ["a praça"], modoDoNarrador: "mestre" }, {
     aplicar: (x) => efs.push(...x), abrirCombate: (ins, o) => ({ pers: { ...o.pers, abriu: ins.length }, msgs: ["⚔ ini"], nota: "[INI]" }), dispararPerigo: () => { throw new Error("não devia"); },
   });
   t("a investida abre a luta pela porta, com as linhas do turno, a nota e a textura", r.pers.abriu >= 1 && r.msgs.length === 2 && r.msgs[1] === "⚔ ini" && efs.some((e) => e.tipo === "nota" && e.linhas[0].startsWith("[INI]\n")) && efs.some((e) => e.tipo === "textura" && e.textura.luta === true) && !r.erro);
-  const r2 = oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [] }, {
+  const r2 = oPerigoDaResposta({ pers: { nome: "Vera", nivel: 10 }, perigo: "Três bandidos saltam do mato.", combate: null, folego: null, lugares: [], modoDoNarrador: "mestre" }, {
     aplicar: () => {}, abrirCombate: () => { throw new Error("estourou"); }, dispararPerigo: () => {},
   });
   t("o erro da porta volta em `erro`, sem subir", r2.erro && r2.erro.message === "estourou" && r2.msgs.length === 0);
-  const r3 = oPerigoDaResposta({ pers: { nivel: 3 }, perigo: "Três bandidos saltam do mato.", combate: { inimigos: [] } }, { aplicar: () => {}, dispararPerigo: (x) => efs.push({ disparou: x }) });
+  const r3 = oPerigoDaResposta({ pers: { nivel: 3 }, perigo: "Três bandidos saltam do mato.", combate: { inimigos: [] }, modoDoNarrador: "mestre" }, { aplicar: () => {}, dispararPerigo: (x) => efs.push({ disparou: x }) });
   t("com a luta aberta, a investida vai à salvaguarda", efs.some((e) => e.disparou === "Três bandidos saltam do mato.") && r3.msgs.length === 0);
 }
 {

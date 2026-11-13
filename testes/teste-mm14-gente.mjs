@@ -26,6 +26,8 @@
    A fiação no App.jsx (três chamadas de `elencoDaCena`/`resumoCenaPrompt`
    com a masmorra, o `viuAntes` em `pessoasDaCena`, e as três portas do
    registo por `nomeComDono`) é do `frontend`; esta suíte prova o motor. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import fs from "node:fs";
 import {
   QUEM_DESCE, masmorraAberta, elencoDaCena, resumoCenaPrompt, TETO_DO_QUEM,
@@ -351,7 +353,7 @@ sec("6. a fiação — App.jsx");
      pelo estado que sai. No App fica a terceira porta (a do Cronista). */
   const { aplicarORegisto } = await import("../src/motor/aplicar.js");
   const IMP = [{ nome: "Teodoro das Tábuas", onde: "Foz do Meio" }, { nome: "Delfina", onde: "A Porta Aberta, Alto do Sal" }];
-  const registo = (npcs, canone, regAntes, aqui) => aplicarORegisto(
+  const registo = (npcs, canone, regAntes, aqui) => NM.aplicarORegisto(
     { personagem: { nome: "Ana" }, canone: {}, mapa: { cidades: [], faccoes: [] }, npcs: regAntes || {}, npcTurno: 0, espinha: null, abertura: null, lugar: null, missoes: [], dia: 5 },
     { narrativa: "x", mudancas: { ...(npcs ? { npcs } : {}), ...(canone ? { canone } : {}) } },
     { mundo: null, baseDoNome: { importantes: IMP, conhecidos: [], recentes: [], grupo: [], aqui: aqui || ["Foz do Meio", "o Cais do Sal"], heroi: "Ana" } });

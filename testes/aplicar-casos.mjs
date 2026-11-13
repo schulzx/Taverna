@@ -82,6 +82,12 @@ function mudancas(i) {
   }
 }
 
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (todas as portas
+   fechadas). Estes casos são as respostas gravadas e os dourados tirados
+   do App de ANTES, com as portas abertas — logo cada caso diz o modo em
+   que foi gravado, o «mestre». Quem mede o padrão novo tira-o do ctx
+   (teste-nada-entra-pelo-ator, ctxDoCaso). */
+const MODO_DOS_CASOS = "mestre";
 export function casosDoAplicar() {
   const cron = ler("registo-s8-s10-cronista.json").turnos;
   const cena = ler("registo-s10-cena.json");
@@ -106,7 +112,7 @@ export function casosDoAplicar() {
         habUsada: i % 7 === 0,
         ultimoDesfecho: ["sucesso", "falha", null][i % 3],
       },
-      ctx: { envelopes: f.envelopes + (i % 9 === 4 ? "\n[COMPRA — já registrada pelo sistema]" : ""), pedido: f.frase, moeda: i % 10 === 7 ? "escamas" : "" },
+      ctx: { envelopes: f.envelopes + (i % 9 === 4 ? "\n[COMPRA — já registrada pelo sistema]" : ""), pedido: f.frase, moeda: i % 10 === 7 ? "escamas" : "", modoDoNarrador: MODO_DOS_CASOS },
       notaAntes: i % 4 === 1 ? "[NOTA DE ANTES]" : "",
     };
   });
@@ -190,6 +196,7 @@ export function casosDoRegisto() {
         dia: 3 + (i % 10),
       },
       ctx: {
+        modoDoNarrador: MODO_DOS_CASOS,
         mundo: { semente: `mundo|${i % 3}`, mapa: { cidades: CIDADES.map((c) => ({ ...c })), faccoes: [] }, genero: "", molde: null, lex: null, base: null },
         baseDoNome: { importantes: nomes.slice(0, 4).map((nome) => ({ nome })), conhecidos: [], recentes: [f.narrativa.slice(0, 160)], grupo: i % 2 ? [{ nome: "Freya" }] : [], aqui: ["Monte Rasa"], heroi: "Ana Cinza" },
       },
@@ -330,6 +337,7 @@ export function casosDoMeio() {
         canone: {}, npcs: {}, quests: [],
       },
       ctx: {
+        modoDoNarrador: MODO_DOS_CASOS,
         mundo: { semente, mapa: mapaDoMeio(), genero: "Fantasia medieval", molde: null, lex: null, base: null },
         arco: { marcosPendentes: i % 5 === 0 ? 2 : 0, nemesis: i % 2 ? "Vorn" : null },
       },
@@ -469,7 +477,7 @@ export function casosDoFim() {
         base, oferecidos: i % 9 === 8 ? [] : NOMES_OFERECIDOS, ultimoPedido: e.ultimoPedido || "", confidencias: i % 6 === 1 ? [{ quem: gente[0] && gente[0].nome, oQue: "o segredo da ladeira" }] : [],
         nemesis: i % 10 === 7 ? { nome: "Vorn", vivo: true } : null,
       },
-      ctx: { mundo: { semente, genero: "Fantasia medieval", molde: null, lex: null } },
+      ctx: { mundo: { semente, genero: "Fantasia medieval", molde: null, lex: null }, modoDoNarrador: MODO_DOS_CASOS },
       notaAntes: c.notaAntes,
     };
   });

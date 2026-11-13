@@ -15,6 +15,8 @@
    4. a última vaga: entra o primeiro, o segundo ouve "cheio";
    5. o invocado não ocupa vaga;
    6. a fiação no App. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { julgarOCronista } from "../src/motor/cronista.js";
 import { frasesDoGrupoCheio } from "../src/motor/meio-do-turno.js";
 import { MAX_COMPANHEIROS } from "../src/constantes.js";
@@ -81,7 +83,7 @@ sec("6. a fiação no App");
   const grupoCheio = Array.from({ length: MAX_COMPANHEIROS }, (_, i) => ({ nome: "C" + i }));
   const recusadoCheio = [{ secao: "grupo", o: "Zé", porque: "semPorta" }];
   const esperadas = frasesDoGrupoCheio(recusadoCheio, grupoCheio);
-  const doCronista = oAceitoDoCronista({}, recusadoCheio, {}, { pers: { nome: "Vera", grupo: grupoCheio }, narrativa: "x", ler: () => ({}), aplicar: () => {} }).msgs;
+  const doCronista = NM.oAceitoDoCronista({}, recusadoCheio, {}, { pers: { nome: "Vera", grupo: grupoCheio }, narrativa: "x", ler: () => ({}), aplicar: () => {} }).msgs;
   t("o Cronista do App diz as frases da régua, a partir do recusado do juízo", esperadas.length > 0 && JSON.stringify(doCronista) === JSON.stringify(esperadas) && APP.includes("oAceitoDoCronista(ac, recusadoDoCronista, r,"));
   t("e já não guarda uma cópia da régua", !/const cheioAgora = \(p\.grupo/.test(APP));
 }

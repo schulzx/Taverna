@@ -17,6 +17,8 @@
         já está lá; a cobrança lê a marca e não o paga duas vezes.
 
    Falha na árvore de v9.423 e passa nesta. */
+/* NE7 (13/11): o padrão do Narrador virou o «boca» (portas fechadas). Esta suíte mede o que as portas ABERTAS fazem — o comportamento de antes —, e por isso joga as peças no «mestre», a reserva da tabela: NM.<peça> (no-mestre.mjs) é a peça com o modo dito. O padrão novo prova-se em teste-nada-entra-pelo-ator §10 e §11. */
+import { M as NM } from "./no-mestre.mjs";
 import { readFileSync } from "node:fs";
 
 let ok = 0, mal = 0;
@@ -146,7 +148,7 @@ sec("3. o achado da estrada: entra na bolsa no rolar, e não paga duas vezes");
   {
     const { aplicar } = await import(S + "motor/aplicar.js");
     const fichaDoTurno = (x = {}) => ({ nome: "Vera", classe: "Guerreiro", nivel: 1, xp: 0, vida: 20, vidaMax: 20, mana: 0, manaMax: 0, moedas: 34, atributos: {}, inventario: [], habilidades: [], efeitos: [], condicoes: [], grupo: [], ...x });
-    const bolsa = (envelopes) => aplicar({ personagem: fichaDoTurno() }, { narrativa: narr, mudancas: {} }, { envelopes }).estado.personagem.moedas;
+    const bolsa = (envelopes) => NM.aplicar({ personagem: fichaDoTurno() }, { narrativa: narr, mudancas: {} }, { envelopes }).estado.personagem.moedas;
     t("a cobrança do motor lê os envelopes do turno: sem a marca credita o achado (34 + 12), com ela não credita de novo", bolsa("") === 46 && bolsa("◉ 12 já na bolsa (creditadas pelo sistema)") === 34);
     t("e o App não soma o achado à parte", !/jaDoAchado/.test(app));
   }
