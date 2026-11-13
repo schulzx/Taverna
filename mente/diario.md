@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 13/11 · v9.642 + v9.643 · nada entra pela IA — a Fase NE (NE1–NE8)
+
+A pessoa: «Ela não deve ter entrada de informações ou controle algum sobre o sistema… isso deve evitar objetos inventados». A auditoria achou o jogo publicado em `mestre` (46 portas abertas) e nove portas fora da tabela; ela aprovou o plano (`mente/plano-nada-entra.md`), tirar o Arquivista e trocar o Léxico por tabela.
+
+- **v9.642 (83d2cdf):** NE1 o Cronista só escreve no cânone o que o sistema conhece (`oCanoneQueExiste`), já no `mestre`; NE2 as nove portas entram na tabela, os `__*` fecham em qualquer modo, nasce o modo `boca`; NE3 os botões do Arquivista saem (oficial, e229f11); NE6 o Léxico vira tabela pela semente (f1645f2, fiação 52ac790).
+- **v9.643 (b7a4587):** NE4 os substitutos (02bfad7; fiação 4957ac0) — alvo do golpe pelo sistema, objeto do cartaz pela busca, convite pela frase, fé por regra, chamado da raid pela frase contra ameaça conhecida (decisão do coordenador: nêmesis vista, chefe do marco, lendário da luta), fim do arco maior pelo descanso, palavra dada no caderno; NE5 saem 14 frases que pediam declarações (o pior caso desce de 61.433 para 61.204); NE8 a memória do inventado vira veto por 6 turnos (2b28d3a; fiação abc2070); raças com nome no léxico (8a1102a); **NE7 o `boca` é o padrão** (575249c): o Cronista deixa de ser chamado, o `mestre` fica como reserva; a sessão gravada diz o modo (a8ad142, o coordenador com o bastão por minutos).
+- **decisões:** o pagamento que o jogador declara na frase continua a sair da bolsa no `boca` (a frase é dele, não da IA). Fotos douradas regravadas: 0 — as provas do comportamento antigo dizem `mestre` explícito (42 suítes, ~190 chamadas).
+- **prova limpa:** v9.642 502/502; v9.643 506/506, 26/26 varredores. As duas subiram.
+- **o que o jogador deixa de ver (sem substituto):** XP e moedas por feito narrado (a progressão fora da luta abranda); atacar quem só existe na prosa; gente/cidades inventadas no mapa; nêmesis morta na prosa e segredo pela pista narrada; o cartaz, o relógio e as promessas que o Narrador plantava; no Universo próprio a descrição livre já não vira vocabulário.
+- **o que ficou:** NE9 (sessão paga: objetos inventados = 0, passos só por facto do sistema) espera a pessoa; propor XP por feito pelo sistema; o replay do `/api/turno` não recebe a ficha da cena.
+
 ## 12/11 · v9.641 · todo sucesso tem dono, a busca acha onde a quest aponta, e a mesa não engole o gesto (S19) · commits 2c3b428, 604a31b, d34b95b + 5438467
 
 A 19.ª sessão (`mente/sessao-19.md`, v9.640, US$ 0,48 em 44 respostas) mediu a régua dos dados cumprida (1 d20 / 2,0 turnos fora da luta, 8 perícias, Percepção 24%) e a alcunha calada (0/44), mas o sucesso sem dono (6 de 10 com o envelope genérico) e um sucesso vazio no passo. A pessoa: «Comece as correções».
