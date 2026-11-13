@@ -29,7 +29,8 @@
      · `faccoes`, `passado`, `titulos`, `naoExiste`, `aLei`, `comoSeFala` e
        o nome do continente.
    E deixa vazios os nomes próprios, as cidades, os povos, os ofícios, as
-   criaturas, as raças, o equipamento, as profissões e os afixos: o mundo
+   criaturas, o equipamento, as profissões e os afixos (as RAÇAS, que o
+   léxico antigo rebatizava e nenhum banco nomeia, têm tabela — abaixo): o mundo
    nasce com os bancos de sempre, byte a byte os de uma campanha cujo
    Léxico falhava — que é o mundo que a casa já sabe gerar e provar.
 
@@ -60,6 +61,20 @@ export const QUANTOS_NO_LEXICO = Object.freeze({ passado: 3, titulos: 8, naoExis
    renomeia nada: é o mundo que as palavras genéricas já descrevem. */
 export const LEXICO_DOS_GENEROS = Object.freeze({
   fantasia: {
+    /* NE6+ (13/11): como cada raça do catálogo se chama neste gênero — três
+       variantes por raça, uma pela semente (RACAS_DO_LEXICO) */
+    racas: {
+      Humano: ["Gente da Lavoura","Varonês","Filho do Vale"],
+      Elfo: ["Povo da Copa","Lumério","Filho do Orvalho"],
+      "Anão": ["Povo da Bigorna","Karrúnio","Filho da Pedra"],
+      Halfling: ["Pé-de-Trevo","Sebeiro","Gente Miúda"],
+      "Meio-orc": ["Sangue-Cinza","Filho da Fronteira","Brunhado"],
+      Draconato: ["Escamado","Sangue-de-Brasa","Herdeiro da Asa"],
+      Tiefling: ["Marcado","Filho do Pacto","Chifre-Negro"],
+      Gnomo: ["Gente do Alambique","Quilhano","Filho da Toupeira"],
+      "Meio-elfo": ["Filho de Duas Margens","Entremeio","Meio-Orvalho"],
+      Goliath: ["Gente do Cume","Talhado","Filho da Neve Alta"],
+    },
     chamado: {
       heroi: ["aventureiro", "espada de aluguel", "errante"],
       taverna: ["taverna", "estalagem"],
@@ -123,6 +138,16 @@ export const LEXICO_DOS_GENEROS = Object.freeze({
   },
 
   scifi: {
+    /* NE6+ (13/11): como cada raça do catálogo se chama neste gênero — três
+       variantes por raça, uma pela semente (RACAS_DO_LEXICO) */
+    racas: {
+      Terrano: ["Nascido-em-Solo","Berçário","Filho da Terra Velha"],
+      "Colono Orbital": ["Anelar","Filho do Anel","Gente da Órbita"],
+      "Sintético": ["Tecido","Consciente de Série","Filho do Molde"],
+      Mutante: ["Reescrito","Filho da Radiação","Variante"],
+      Cromado: ["Ampliado","Filho do Implante","Liga-Viva"],
+      Vagante: ["Sem-Porto","Filho do Vácuo","Andarilho Estelar"],
+    },
     chamado: {
       heroi: ["operador independente", "contratado", "agente livre"],
       grupo: ["tripulação", "equipe"],
@@ -193,6 +218,16 @@ export const LEXICO_DOS_GENEROS = Object.freeze({
   },
 
   cyberpunk: {
+    /* NE6+ (13/11): como cada raça do catálogo se chama neste gênero — três
+       variantes por raça, uma pela semente (RACAS_DO_LEXICO) */
+    racas: {
+      Terrano: ["Carne-Pura","Gente do Térreo","Orgânico"],
+      "Colono Orbital": ["Gente da Plataforma","Alto-Nascido","Filho da Estação"],
+      "Sintético": ["Casca","Filho do Código","Réplica"],
+      Mutante: ["Gente do Esgoto","Torto-de-Fábrica","Filho da Névoa Ácida"],
+      Cromado: ["Cromo","Filho do Bisturi","Metade-Metal"],
+      Vagante: ["Gente da Margem","Sem-Registo","Filho do Viaduto"],
+    },
     chamado: {
       heroi: ["mercenário de rua", "freelancer", "runner"],
       grupo: ["equipe", "crew"],
@@ -263,6 +298,20 @@ export const LEXICO_DOS_GENEROS = Object.freeze({
   },
 
   horror: {
+    /* NE6+ (13/11): como cada raça do catálogo se chama neste gênero — três
+       variantes por raça, uma pela semente (RACAS_DO_LEXICO) */
+    racas: {
+      Humano: ["Gente da Lamparina","Desperto","Filho da Vela"],
+      Elfo: ["Pálido","Povo do Luar Velho","Esquecido"],
+      "Anão": ["Gente do Poço","Escavador","Filho do Veio Negro"],
+      Halfling: ["Gente da Soleira","Pé-Calado","Miúdo"],
+      "Meio-orc": ["Sangue-Turvo","Enjeitado","Filho do Pântano"],
+      Draconato: ["Escama-Fria","Sangue-Antigo","Filho da Cinza"],
+      Tiefling: ["Assinado","Filho do Sussurro","Tocado-do-Fundo"],
+      Gnomo: ["Gente do Relicário","Contador de Estrelas","Insone"],
+      "Meio-elfo": ["Filho do Limiar","Crepuscular","Meia-Sombra"],
+      Goliath: ["Gente do Monólito","Pétreo","Filho do Eco"],
+    },
     chamado: {
       heroi: ["investigador", "curioso", "estudioso do oculto"],
       grupo: ["círculo", "companhia"],
@@ -330,6 +379,16 @@ export const LEXICO_DOS_GENEROS = Object.freeze({
   },
 
   posapoc: {
+    /* NE6+ (13/11): como cada raça do catálogo se chama neste gênero — três
+       variantes por raça, uma pela semente (RACAS_DO_LEXICO) */
+    racas: {
+      Terrano: ["Sobrevivente","Gente do Abrigo","Filho de Antes"],
+      "Colono Orbital": ["Caído-do-Céu","Gente da Cápsula","Filho da Estrela Cadente"],
+      "Sintético": ["Ferrugento","Filho da Sucata","Máquina-Viva"],
+      Mutante: ["Gente da Cinza","Marcado-do-Ermo","Filho da Chuva Amarga"],
+      Cromado: ["Remendado","Filho da Oficina","Pele-de-Lata"],
+      Vagante: ["Gente da Estrada","Errante do Pó","Filho do Vento Seco"],
+    },
     chamado: {
       heroi: ["andarilho", "saqueador", "sobrevivente"],
       grupo: ["bando", "comboio"],
@@ -400,6 +459,20 @@ export const LEXICO_DOS_GENEROS = Object.freeze({
   },
 
   steampunk: {
+    /* NE6+ (13/11): como cada raça do catálogo se chama neste gênero — três
+       variantes por raça, uma pela semente (RACAS_DO_LEXICO) */
+    racas: {
+      Humano: ["Gente do Apito","Operário","Filho do Vapor"],
+      Elfo: ["Povo da Estufa","Alto-Jardineiro","Filho da Seiva"],
+      "Anão": ["Gente da Fornalha","Caldeireiro","Filho do Carvão"],
+      Halfling: ["Gente do Bolso","Miudeiro","Pé-Ligeiro"],
+      "Meio-orc": ["Estivador","Sangue-de-Ferro","Filho do Cais"],
+      Draconato: ["Escama-de-Cobre","Sangue-de-Caldeira","Filho do Fole"],
+      Tiefling: ["Filho do Contrato","Selado","Chifre-de-Latão"],
+      Gnomo: ["Relojoeiro","Gente da Mola","Filho da Patente"],
+      "Meio-elfo": ["Mestiço-de-Estufa","Entre-Jardins","Filho de Duas Torres"],
+      Goliath: ["Gente do Guindaste","Colosso","Filho da Bigorna Grande"],
+    },
     chamado: {
       heroi: ["aventureiro", "agente contratado", "inventor errante"],
       grupo: ["companhia", "tripulação"],
@@ -513,6 +586,38 @@ function alguns(r, xs, n) {
   return c.slice(0, Math.max(0, n));
 }
 
+/* AS RAÇAS (NE6+, 13/11): o Léxico antigo rebatizava as raças do catálogo
+   («Humano» → «Forjado»), e a NE6 deixou a lista vazia — um mundo novo
+   mostrava «Humano, Elfo, Anão…» na boca da rua. Cada gênero tem agora, na
+   sua tabela, três nomes nossos por raça, e a semente escolhe um. Corrente
+   própria (`|racas`): o resto do léxico de uma semente fica byte a byte o
+   de antes. A forma é a do léxico antigo — `{ raca, chamado }`, a raça pelo
+   nome do catálogo —, e a garantia (garantirLexico) aceita o grupo inteiro
+   ou nada: a tabela de cada gênero cobre o grupo dele (a fantasia, o horror
+   e o steampunk as dez de fantasia; a ficção, o cyberpunk e o ermo as seis
+   do futuro), e a suíte confere. A tela continua a dizer o nome do
+   catálogo (lexico.js, 20/10): o nome daqui é a cor que a prosa usa. */
+/* `repete`: quantas raças de um mesmo mundo podem abrir o nome pela mesma
+   palavra («Filho do Vapor», «Filho do Fole», «Filho da Patente»…): a
+   semente sorteia a ordem das variantes, e a primeira que não passa do teto
+   ganha — dez «Filho de» numa ficha leem como uma lista, não como um mundo. */
+export const RACAS_DO_LEXICO = Object.freeze({ variantes: 3, corrente: "racas", repete: 2 });
+function racasDoLexico(T, sem) {
+  const r = rng(hashSemente(`${sem}|lexico-do-mundo|${RACAS_DO_LEXICO.corrente}`));
+  const abre = {};
+  const out = [];
+  for (const [raca, xs] of Object.entries(T.racas || {})) {
+    const ordem = alguns(r, xs, Array.isArray(xs) ? xs.length : 0);
+    const primeira = (x) => x.split(/[\s-]/)[0];
+    const chamado = ordem.find((x) => (abre[primeira(x)] || 0) < RACAS_DO_LEXICO.repete) || ordem[0];
+    if (!chamado) continue;
+    const p = primeira(chamado);
+    abre[p] = (abre[p] || 0) + 1;
+    out.push({ raca, chamado });
+  }
+  return out;
+}
+
 /* ============================================================
    O LÉXICO DO MUNDO
 
@@ -552,5 +657,6 @@ export function lexicoDoMundo(mundo, opcoes) {
     aLei: um(r, T.aLei) || "",
     comoSeFala: um(r, T.comoSeFala) || "",
     nomes: { continente: um(r, T.continente) || "" },
+    racas: racasDoLexico(T, sem),
   });
 }

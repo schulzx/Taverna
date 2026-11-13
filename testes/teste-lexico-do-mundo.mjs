@@ -13,10 +13,11 @@
    propósito (os bancos do gênero respondem); (5) o molde muda a viagem e
    a passagem; (6) lixo não derruba. */
 import {
-  lexicoDoMundo, LEXICO_DOS_GENEROS, LEXICO_DO_MOLDE, QUANTOS_NO_LEXICO, idDoGeneroDoLexico,
+  lexicoDoMundo, LEXICO_DOS_GENEROS, LEXICO_DO_MOLDE, QUANTOS_NO_LEXICO, idDoGeneroDoLexico, RACAS_DO_LEXICO,
 } from "../src/lexico-do-mundo.js";
+import { createHash } from "node:crypto";
 import { cenarioAtivo } from "../src/cenario.js";
-import { garantirLexico, lexicoVale, lexicoPrompt, TETO_DO_BLOCO, COISAS, SISTEMAS, TIPOS_DE_LUGAR, nomeDaMoeda, continenteDo } from "../src/lexico.js";
+import { garantirLexico, lexicoVale, lexicoPrompt, TETO_DO_BLOCO, COISAS, SISTEMAS, TIPOS_DE_LUGAR, nomeDaMoeda, continenteDo, racasDoMundo, chamadoDaRaca, GRUPOS_DE_RACA } from "../src/lexico.js";
 import { GENEROS } from "../src/constantes.js";
 import { MOLDES } from "../src/moldes.js";
 
@@ -91,7 +92,11 @@ sec("3. determinístico, e com variedade");
 sec("4. o que fica vazio, fica vazio de propósito — os bancos do gênero respondem");
 {
   const x = lexicoDoMundo({ genero: ROTULO.scifi }, { semente: "v" });
-  t("sem nomes próprios, cidades, tavernas, povos, ofícios, criaturas, raças, equipamento, profissões nem afixos", !x.nomes.masc.length && !x.nomes.fem.length && !x.nomes.sobrenome.length && !x.nomes.cidadeA.length && !x.nomes.cidadeB.length && !x.cidades.length && !x.tavernas.length && !x.povos.length && !x.oficios.length && !x.criaturas.length && !x.racas.length && !Object.keys(x.equipamento).length && !x.profissoes.length && !Object.keys(x.afixos.prefixos).length);
+  /* MOVIDA (13/11, NE6+), E O MOTIVO: as raças saíram desta lista. O Léxico
+     antigo rebatizava-as e nenhum banco do gênero as nomeia — a lista vazia
+     punha «Humano, Elfo, Anão…» na boca da rua de todo mundo novo. Têm agora
+     tabela própria por gênero (secção 7). O resto continua vazio de propósito. */
+  t("sem nomes próprios, cidades, tavernas, povos, ofícios, criaturas, equipamento, profissões nem afixos", !x.nomes.masc.length && !x.nomes.fem.length && !x.nomes.sobrenome.length && !x.nomes.cidadeA.length && !x.nomes.cidadeB.length && !x.cidades.length && !x.tavernas.length && !x.povos.length && !x.oficios.length && !x.criaturas.length && !Object.keys(x.equipamento).length && !x.profissoes.length && !Object.keys(x.afixos.prefixos).length);
   t("os lugares só dão o nome do tipo (nenhum nome próprio), e nunca o tipo chamado por ele mesmo", x.lugares.length > 0 && x.lugares.every((l) => !l.nomes.length && l.chamado && l.chamado.toLowerCase() !== l.tipo));
   t("a fantasia quase não renomeia (o mundo que as palavras genéricas já descrevem)", Object.keys(lexicoDoMundo({ genero: ROTULO.fantasia }, { semente: "v" }).chamado).length <= 6);
 }
@@ -115,6 +120,43 @@ sec("6. lixo não derruba");
   t("o gênero que não existe é o do padrão; o «Universo próprio» também", J(lexicoDoMundo({ genero: "Gênero que não existe" }, { semente: "q" })) === J(lexicoDoMundo({ genero: PADRAO }, { semente: "q" })) && J(lexicoDoMundo({ genero: "Universo próprio" }, { semente: "q" })) === J(lexicoDoMundo({ genero: PADRAO }, { semente: "q" })));
   t("o lixo ainda vale (gerado e lexicoVale)", lixos.every((l) => { const x = lexicoDoMundo(l); return x.gerado && lexicoVale(x); }));
   t("e não muta o mundo recebido", (() => { const m = Object.freeze({ genero: ROTULO.cyberpunk, molde: "estelar" }); try { lexicoDoMundo(m, { semente: "f" }); return true; } catch { return false; } })());
+}
+
+sec("7. as raças têm nome neste mundo (NE6+, 13/11)");
+{
+  /* cada gênero cobre o grupo de raças que ele oferece (a garantia é tudo ou nada por grupo) */
+  for (const id of GENS) {
+    const grupo = racasDoMundo(ROTULO[id]);
+    const tab = LEXICO_DOS_GENEROS[id].racas || {};
+    t(`${ROTULO[id]}: a tabela nomeia as ${grupo.length} raças do grupo, ${RACAS_DO_LEXICO.variantes} variantes cada, e mais nenhuma`, grupo.length > 0 && grupo.every((r) => Array.isArray(tab[r]) && tab[r].length === RACAS_DO_LEXICO.variantes) && Object.keys(tab).length === grupo.length);
+    const x = lexicoDoMundo({ genero: ROTULO[id] }, { semente: `Sal|${id}` });
+    t(`${ROTULO[id]}: o mundo novo sai com as ${grupo.length} raças rebatizadas, e a garantia não tira nenhuma`, x.racas.length === grupo.length && J(garantirLexico(x).racas) === J(x.racas) && grupo.every((r) => chamadoDaRaca(x, r) !== r && tab[r].includes(chamadoDaRaca(x, r))));
+  }
+  const todos = GENS.flatMap((id) => Object.values(LEXICO_DOS_GENEROS[id].racas).flat());
+  /* a forma do léxico antigo: nome de povo, maiúscula, uma a quatro palavras, dentro do teto curto (40) */
+  t(`todo nome é nome de povo: maiúscula, até quatro palavras, até 40 letras (${todos.length} nomes)`, todos.every((n) => /^\p{Lu}/u.test(n) && n.split(" ").length <= 4 && n.length <= 40));
+  t("nenhum nome é o de uma raça do catálogo", todos.every((n) => ![...GRUPOS_DE_RACA.fantasia, ...GRUPOS_DE_RACA.futuro].includes(n)));
+  t("dentro de um gênero, nenhum nome se repete", GENS.every((id) => { const xs = Object.values(LEXICO_DOS_GENEROS[id].racas).flat(); return new Set(xs).size === xs.length; }));
+  /* determinístico, e variado */
+  const a = lexicoDoMundo({ genero: ROTULO.fantasia }, { semente: "r1" });
+  t("a mesma semente dá as mesmas raças", J(a.racas) === J(lexicoDoMundo({ genero: ROTULO.fantasia }, { semente: "r1" }).racas));
+  const vistos = new Set();
+  for (let i = 0; i < 40; i++) vistos.add(J(lexicoDoMundo({ genero: ROTULO.fantasia }, { semente: `v${i}` }).racas));
+  t(`sementes diferentes, raças diferentes (${vistos.size} conjuntos em 40 mundos de fantasia)`, vistos.size >= 30);
+  let teto = 0;
+  for (let i = 0; i < 200; i++) for (const id of GENS) {
+    const c = {};
+    for (const r of lexicoDoMundo({ genero: ROTULO[id] }, { semente: `t${i}` }).racas) { const p = r.chamado.split(/[\s-]/)[0]; c[p] = (c[p] || 0) + 1; }
+    teto = Math.max(teto, ...Object.values(c));
+  }
+  t(`nenhum mundo abre mais de ${RACAS_DO_LEXICO.repete} nomes pela mesma palavra (o pior em ${200 * GENS.length}: ${teto})`, teto <= RACAS_DO_LEXICO.repete);
+  /* a corrente das raças é só delas: o resto do léxico da semente não mudou com elas */
+  const x = lexicoDoMundo({ genero: ROTULO.fantasia }, { semente: "c" });
+  /* o hash do léxico da semente «c» ANTES das raças (02bfad7, sem `racas`): o
+     resto do léxico de uma semente não mudou com elas — 350 de 350 mundos
+     (50 sementes × 7 cartões) iguais ao de antes, tirada a lista das raças */
+  t("as raças correm numa corrente própria: o resto do léxico da semente é byte a byte o de antes delas", createHash("sha256").update(J({ ...x, racas: [] })).digest("hex").slice(0, 16) === "d4ad4eb64a29f8e7" && x.racas.length === 10);
+  t("o «Universo próprio» usa as raças do gênero padrão", J(lexicoDoMundo({ genero: "Universo próprio" }, { semente: "u" }).racas) === J(lexicoDoMundo({ genero: PADRAO }, { semente: "u" }).racas));
 }
 
 console.log(`\nléxico do mundo: ${ok} passaram, ${mal} falharam`);
