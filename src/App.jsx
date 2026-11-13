@@ -246,6 +246,7 @@ import { entradaDoJuiz, julgarOTurno, somarAFidelidade, linhaDoJuiz } from "./mo
 /* a praça que o Juiz julga é a que a pauta mostrou (Fase 4, trilha A, 29/10) */
 import { aPracaDoJuiz } from "./turno-no-servidor.js";
 import { vetosDoVeredito, andarOsVetos, canoneSemInvencao } from "./motor/correcao-do-juiz.js";
+import { lembrarOInventado } from "./motor/memoria-do-inventado.js";
 import { aLutaDaResposta } from "./motor/luta-do-turno.js";
 import { oPerigoDaResposta, aQuaseMorte, aMesaDoTurno } from "./motor/fecho-da-resposta.js";
 import { aNemesisNaNarrativa, osVistosDaNarrativa, oTrabalhoPendente, aQueda, aEntrega } from "./motor/entrega-do-turno.js";
@@ -11218,6 +11219,25 @@ export default function Taverna() {
           if (typeof console !== "undefined" && console.debug) console.debug(linhaDoJuiz(doJuiz.resumo));
         }
       } catch (e) { calou("o juiz do turno", e); }
+      /* NE8: A MEMÓRIA NÃO GUARDA O INVENTADO — o objeto que a prosa deu ao
+         herói e o sistema não tem (a «chave mestra» da 19.ª) vira veto na
+         pauta dos turnos seguintes, no mesmo livro do Juiz
+         (src/motor/memoria-do-inventado.js). FORA do «if (fotoDoJuiz)»: a
+         memória não precisa da foto. Depois de aplicarResposta: o item que o
+         sistema deu neste turno já está na bolsa e não morde. A cidade é a
+         que o Juiz usou (a da foto), para o andarOsVetos não tirar os vetos
+         de preço que ele acabou de pôr; sem foto, a do instante. */
+      try {
+        vetosDoJuizRef.current = lembrarOInventado(vetosDoJuizRef.current, narrativaDoLivro, {
+          ...retratoDoLivro(), personagem: pers, missoes: missoesRef.current, quests: questsRef.current,
+          abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo,
+        }, {
+          turno: turnoDeRegistroRef.current + 1, /* o turno da pauta, o mesmo que o Juiz usa */
+          cidade: fotoDoJuiz ? (fotoDoJuiz.cidadeAtual || "") : (cidadeAtualRef.current || ""),
+          frase: pedidoDaBolsa, /* o que o jogador nomeou não morde */
+          lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "",
+        });
+      } catch (e) { calou("NE8 · a memória do inventado", e); }
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
          na bolsa). Custa zero: é comparação com o que já está na mão.
