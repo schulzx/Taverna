@@ -158,5 +158,14 @@ sec("7. A MEDIDA DA NE9 NA LINHA DA SESSÃO (13/11)");
     && APP.indexOf("fim.recusadoDoCanone") > APP.indexOf("fim = oAceitoDoCronista("));
 }
 
+sec("8. A SESSÃO GRAVADA DIZ O MODO (NE7, 13/11)");
+{
+  /* com o `boca` como padrão, uma sessão sem modo na cabeça reproduz-se no
+     `mestre` (FORMATO_DA_SESSAO.modoSemModo, src/sessao.js): o App tem de
+     dizer o modo em que a mesa corre, senão o replay diverge */
+  t("abrirASessao recebe modoDoNarrador: MODO_DA_MESA",
+    /abrirASessao\(\{[^;]*?modoDoNarrador:\s*MODO_DA_MESA\s*\}\)/.test(APP));
+}
+
 console.log(`\no arquivista fora (NE3): ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

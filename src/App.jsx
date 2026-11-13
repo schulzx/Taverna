@@ -11021,7 +11021,7 @@ export default function Taverna() {
     const semente = sementeMundo();
     if (!arquivoDaSessaoRef.current || arquivoDaSessaoRef.current.semente !== semente) {
       const md = mundoDaBase();
-      arquivoDaSessaoRef.current = abrirASessao({ semente, estado: retratoDaSessao(), mundo: { semente: md.semente, genero: md.genero, molde: md.molde, lex: md.lex }, origem: `${SESSAO_GUARDADA.origem} (${VERSAO})` });
+      arquivoDaSessaoRef.current = abrirASessao({ semente, estado: retratoDaSessao(), mundo: { semente: md.semente, genero: md.genero, molde: md.molde, lex: md.lex }, origem: `${SESSAO_GUARDADA.origem} (${VERSAO})`, modoDoNarrador: MODO_DA_MESA /* NE7: a sessão gravada diz o modo em que correu, para o replay correr no mesmo */ });
     }
     return arquivoDaSessaoRef.current;
   };
