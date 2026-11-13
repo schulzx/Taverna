@@ -41,7 +41,7 @@ import { portaDaMasmorra } from "../rastro.js";
 import { registrarMarco, virarEtapa, envelopeDeVirada } from "../historia.js";
 import { sortearDadiva } from "../regras.js";
 import { gerarDadivaUnica, envelopeDaUnica } from "../dadivas.js";
-import { MAGNITUDE_FE, fieisPorFeito, caminhoPorId, grauDe, gdMaximoPorNivel, GRAUS, tituloDe, milagrePorId } from "../divindades.js";
+import { MAGNITUDE_FE, fieisPorFeito, caminhoPorId, grauDe, gdMaximoPorNivel, GRAUS, tituloDe, milagrePorId, aFeDoSistema } from "../divindades.js";
 import { podeAbrirRaid } from "../raids.js";
 import { gerarLoot, RARIDADE_ROTULO } from "../loot.js";
 import { empilhar, efeitoDeMilagre } from "../efeitos.js";
@@ -503,6 +503,39 @@ export function milagreInvocado(estado, id, origem = "jogador") {
   return saida;
 }
 
+/* ---------------- A FÉ DO TURNO, PELO SISTEMA (13/11, Fase NE · NE4) ----------------
+   O par do sinal `fe:` (aplicarOsSinais) sem a IA: a magnitude sai de
+   aFeDoSistema (divindades.js#FE_PELO_SISTEMA) — os feitos que os contadores
+   do turno contaram, ou o gesto devoto da frase, um por dia — e entra pela
+   MESMA conta (fieisPorFeito com a fama do nível da ficha, ganhoDeFe, e o
+   `ultimoFeitoDia` gravado). Corre em qualquer modo: no `mestre`, o sinal da
+   IA pode ainda somar até a NE7; o gesto não conta duas vezes no dia.
+   `estado`: { divindade, devocao, mapa, cidadeAtual, dia, personagem,
+   contadores }; `entrada`: { frase, feitos: { missao, principal, lendario,
+   marco } } (o que o turno contou, em número).
+     aFeDoTurno(estado, entrada) → { estado, efeitos, paraOCronista, msgs, fe } */
+export function aFeDoTurno(estado, entrada) {
+  const e0 = objeto(estado);
+  const ent = objeto(entrada);
+  const nada = { estado: e0, efeitos: [], paraOCronista: [], msgs: [], fe: null };
+  const dv = e0.divindade;
+  if (!dv || !dv.despertar) return nada;
+  const fe = aFeDoSistema({ despertar: true, dia: e0.dia, ultimoFeitoDia: dv.ultimoFeitoDia, frase: ent.frase, feitos: ent.feitos });
+  if (!fe) return nada;
+  const pers = e0.personagem;
+  const fama = calcularFama(e0.contadores, (pers && pers.nivel) || 1, dominiosDe(e0.mapa).length);
+  const divindade = { ...dv, ultimoFeitoDia: e0.dia };
+  /* a devoção do save de antes (ou nenhuma) passa pela garantia: ganhoDeFe deposita nela */
+  let devocao = e0.devocao;
+  try { devocao = garantirDevocao(e0.devocao, e0.mapa, dv); } catch { devocao = e0.devocao; }
+  const r = ganhoDeFe({ divindade, devocao, mapa: e0.mapa, cidadeAtual: e0.cidadeAtual, dia: e0.dia, nivel: pers && pers.nivel, personagem: pers }, fieisPorFeito(fe.magnitude, fama), 0, fe.motivo);
+  return {
+    estado: { ...e0, divindade: r.divindade, devocao: r.devocao },
+    efeitos: [{ tipo: "divindade", divindade }, ...r.efeitos],
+    paraOCronista: r.notas, msgs: r.msgs, fe,
+  };
+}
+
 /* ============================================================
    AS MISSÕES E O ARCO — o bloco do `aplicarResposta`, puro
 
@@ -531,17 +564,39 @@ export function aplicarAsMissoes(estado, resposta, ctx = {}) {
       const g = eventos.global;
       eventos = { ...eventos, global: null, semGlobalDesde: e0.dia };
       ef({ tipo: "eventos", eventos });
-      const a = arcoComOMarco(historia, "global", `${g.nome} chegou ao fim`, () => (typeof op.motorDoArco === "function" ? op.motorDoArco({ eventos }) : op.motorDoArco));
-      if (a.mudou) {
-        historia = a.historia; ef({ tipo: "historia", historia });
-        notas.push(...a.notas);
-        if (a.remontar) ef({ tipo: "remontarPrompt" });
-      }
-      msgs.push(`🌍 ${g.nome}: desfecho alcançado — a região entra numa nova era.`);
+      const fim = oFimDoEventoGlobal({ historia, eventos }, g, op);
+      historia = fim.historia; efeitosDoTurno.push(...fim.efeitos); notas.push(...fim.paraOCronista); msgs.push(...fim.msgs);
     }
     ef({ tipo: "quests" });
   }
   return { estado: { ...e0, eventos, historia }, efeitos: efeitosDoTurno, paraOCronista: notas, msgs };
+}
+
+/* ---------------- O FIM DO ARCO MAIOR (NE4, 13/11) ----------------
+   O que acontece quando o evento global acaba, num sítio só: o marco
+   empurra o arco da história (arcoComOMarco, com o motor do arco a ler os
+   eventos de AGORA — já sem o global) e a linha do jogador. Duas portas o
+   chamam: o campo antigo do Narrador (aplicarAsMissoes, acima, no modo
+   `mestre` até a NE7) e o desfecho que o SISTEMA decide na última etapa
+   (geradores.js#processarDescansoLongoEventos → `globalEncerrado`, que o App
+   passa aqui). `estado`: { historia, eventos } (os eventos já sem o global);
+   `g`: o arco que acabou; `ctx`: { motorDoArco }.
+     oFimDoEventoGlobal(estado, g, ctx) → { historia, efeitos, paraOCronista, msgs } */
+export function oFimDoEventoGlobal(estado, g, ctx) {
+  const e0 = objeto(estado);
+  const op = objeto(ctx);
+  const saida = { historia: e0.historia, efeitos: [], paraOCronista: [], msgs: [] };
+  const arco = g && typeof g === "object" ? g : null;
+  if (!arco || !arco.nome) return saida;
+  const eventos = e0.eventos;
+  const a = arcoComOMarco(e0.historia, "global", `${arco.nome} chegou ao fim`, () => (typeof op.motorDoArco === "function" ? op.motorDoArco({ eventos }) : op.motorDoArco));
+  if (a.mudou) {
+    saida.historia = a.historia; saida.efeitos.push({ tipo: "historia", historia: a.historia });
+    saida.paraOCronista.push(...a.notas);
+    if (a.remontar) saida.efeitos.push({ tipo: "remontarPrompt" });
+  }
+  saida.msgs.push(`🌍 ${arco.nome}: desfecho alcançado — a região entra numa nova era.`);
+  return saida;
 }
 
 /* ============================================================
@@ -650,7 +705,7 @@ export function aplicarOsSinais(estado, resposta, ctx = {}) {
           const dv2 = { ...divindade, fieis: fieisTotais(mapa, devNova), ultimoFeitoDia: e0.dia, caminho: cam.id };
           divindade = dv2; ef({ tipo: "divindade", divindade });
           msgs.push(`🌟 ASCENSÃO POR ${cam.nome.toUpperCase()} — você alcança GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}).`);
-          notas.push(`[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — registre isso no cânone e faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — registre no cânone o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`);
+          notas.push(`[ASCENSÃO — ${cam.nome.toUpperCase()} — APLICADA PELO SISTEMA] O herói subiu para GD ${grauDe(dv2)} (${tituloDe(grauDe(dv2))}) por este caminho. ${cam.id === "deicidio" ? "O culto da divindade morta jura vingança eterna — faça o mundo reagir: outros deuses passam a vigiá-lo." : cam.id === "reliquia" ? "A fonte primordial se apagou — conte o que restou dela e o preço que o ritual cobrou do herói." : ""} Narre a transformação à altura: virar deus deve doer, custar e mudar o jogo.`);
         }
       } else if (chave === "loot") {
         const rar = ["comum", "incomum", "raro", "epico", "lendario", "unico"].includes(arg.toLowerCase()) ? arg.toLowerCase() : "comum";

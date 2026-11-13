@@ -192,22 +192,20 @@ NÃO decida se alguém acertou, NÃO diga quanto doeu, NÃO mate ninguém e NÃO
 }
 
 /* A criatura fora do bestiário: o sistema não monta, mas também não
-   deixa a cena virar uma briga sem números atrás. É o mesmo formato da
-   recusa da agressão — uma ordem de duas saídas, não uma sugestão. */
+   deixa a cena virar uma briga sem números atrás.
+   NE5 (13/11, «o pedido não pede»): a saída de «declare combate_iniciar»
+   saiu — a luta abre por porta do sistema, nunca pela palavra da IA. Fica
+   a única que é fala: aquilo não me alcança agora. */
 export function envelopeSemCriatura() {
   return `[INVESTIDA SEM FICHA — DECISÃO DO SISTEMA] Você narrou algo hostil vindo para cima de mim, mas não nomeou nenhuma criatura que o sistema conheça, e ele não inventa ficha: não sabe quantos PV aquilo tem nem quanto vale no orçamento do encontro.
-REGRA DESTE ENVELOPE (obrigatória): na próxima fala, faça UMA das duas coisas e só uma:
-1) DECLARE "combate_iniciar" agora, usando um nome de criatura do bestiário desta campanha e uma ameaça compatível com o meu nível.
-2) Ou deixe claro que aquilo NÃO me alcança neste turno — ficou à distância, sumiu, era outra coisa — e devolva a palavra para mim.
+REGRA DESTE ENVELOPE (obrigatória): na próxima fala, deixe claro que aquilo NÃO me alcança neste turno — ficou à distância, sumiu, era outra coisa — e devolva a palavra para mim.
 O que você não pode é seguir narrando a briga sem painel aberto: sem número atrás, eu fico lendo uma luta que não está acontecendo.`;
 }
 
 export function envelopeDesproporcional(e) {
   if (!e || e.tipo !== "desproporcional") return "";
   return `[INVESTIDA RECUSADA — DECISÃO DO SISTEMA] Você jogou ${e.criatura} (${e.ameaca}) em cima de mim, e a conta do encontro diz que UMA só já pesa ${e.razao} vezes o que este grupo aguenta. Não há quantidade menor que um: isso não é um encontro difícil, é um acidente. O sistema não abriu combate nenhum.
-REGRA DESTE ENVELOPE (obrigatória): na próxima fala, faça UMA das duas coisas e só uma:
-1) Mantenha ${e.criatura} na cena, mas LONGE — passando ao longe, do outro lado do vale, farejando e seguindo em frente. Ameaça vista de perto e não enfrentada é das melhores coisas que uma cena tem; o que ela não pode é me alcançar agora.
-2) Ou troque por algo do tamanho do que eu sou hoje e DECLARE "combate_iniciar" com isso.
+REGRA DESTE ENVELOPE (obrigatória): na próxima fala, mantenha ${e.criatura} na cena, mas LONGE — passando ao longe, do outro lado do vale, farejando e seguindo em frente. Ameaça vista de perto e não enfrentada é das melhores coisas que uma cena tem; o que ela não pode é me alcançar agora.
 NÃO narre o golpe dela me acertando, NÃO me faça sobreviver por sorte e NÃO invente que ela perdeu o interesse depois de me ferir: nada aconteceu comigo neste turno.`;
 }
 

@@ -129,13 +129,16 @@ sec("6. os envelopes — o que a IA não pode mais fazer");
 
   const s = lerAgressao("Ataco o dragão ancião.", { presentes: [] });
   const env2 = envelopeSemAlvo(s, "Ataco o dragão ancião.");
-  t("sem alvo, o envelope dá DUAS saídas e só duas", /decida UMA das duas coisas/.test(env2));
-  /* E4 (12/10): o formato do campo saiu do prompt (o Narrador já não abre
-     luta por conta própria), e este é o único pedido que fica — o jogador
-     declarou o golpe. O envelope passa a levar o formato consigo. */
-  t("uma delas é abrir o combate agora, com o formato no próprio envelope", /DECLARE em mudancas "combate_iniciar": \[\{"nome"/.test(env2));
-  t("a outra é dizer que não há ninguém", /NÃO há alvo aqui/.test(env2));
-  t("e o que ela não pode é narrar a briga sem painel", /narrar a briga acontecendo sem abrir o combate/.test(env2));
+  /* MOVIDAS em 13/11 (NE4/NE5, «nenhuma IA escreve estado»): o envelope
+     dava ao Narrador DUAS saídas — declarar combate_iniciar com um alvo à
+     escolha dele, ou dizer que não havia ninguém. A primeira era a IA a
+     abrir a luta. Agora o sistema decide (ALVO_PELO_SISTEMA: a criatura que
+     ele pôs à vista, ou ninguém), e o envelope só diz O QUE DIZER. A
+     intenção que fica: sem alvo não há luta narrada, e o envelope nunca
+     pede o campo. */
+  t("sem alvo, o envelope já não dá ao Narrador a decisão de abrir a luta", !/decida UMA das duas coisas/.test(env2) && !/combate_iniciar/.test(env2));
+  t("sem ninguém à frente, ele diz que não há ninguém", /NÃO há alvo aqui/.test(env2));
+  t("e o que ele não pode é narrar a briga sem painel", /NÃO narre a briga acontecendo/.test(env2));
   t("sem veredicto não há envelope", envelopeDaAgressao(null) === "" && envelopeSemAlvo(null) === "");
 }
 

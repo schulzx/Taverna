@@ -64,6 +64,13 @@ const CONSERTOS = {
   viagemPassarOTempo: [["EU CONTINUO EM ${lugarRef.current.nome.toUpperCase()}", "EU CONTINUO ${contrair(\"em \" + lugarRef.current.nome).toUpperCase()}"]],
   mundoDivindade: [[", forte em ${nova.lugar}", ", forte ${contrair(\"em \" + nova.lugar)}"]],
   feGuilda: [["Fui aceito n${nova.nome.startsWith(\"A \") ? \"\" : \"a \"}${nova.nome} como", "Fui aceito ${contrair(\"em \" + (/^(o|a|os|as)\\s/i.test(nova.nome) ? nova.nome : \"a \" + nova.nome))} como"]],
+  /* O CONSERTO DECLARADO DA NE5 (13/11/2026, «o pedido não pede»): o trecho da viagem sem destino
+     pedia ao Narrador `jornada_meio` e `cidade_atual` (a chegada dele por campo), e a relação formal
+     pedia «registre no cânone». A chegada sem destino é do sistema (viagem.js#jornadaSemDestino) e
+     a relação já está no registo (o App grava-a antes do envelope): os dois sítios trocam a frase
+     no código de antes, e só ela. Os dois ficam MAIS CURTOS (o teto de prompt é sagrado). */
+  viagemTrecho: [["Se o meio de viagem mudar, registre \"jornada_meio\". Se chegarmos de fato a um destino, registre \"cidade_atual\". ${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino e, se chegarmos, registre \"cidade_atual\".` : \"Se eu estiver a caminho de algum destino, aproxime-me dele.\"}", "${destino ? `Estou a caminho de ${destino} — aproxime-me desse destino, sem me pôr lá dentro.` : \"Esta estrada não tem destino marcado: narre o caminho, sem me pôr em lugar nenhum.\"} A chegada é do sistema, e ele avisa quando for."]],
+  genteRelacaoFormal: [["Registre no cânone e trate como verdade absoluta daqui em diante.", "O sistema já a guardou: é verdade absoluta daqui em diante."]],
   caminhoMovResolvido: [["`dentro de ${nomePara}`", "`dentro ${contrair(\"de \" + nomePara)}`"], ["`de ${nomeDe} para", "`${contrair(\"de \" + nomeDe)} para"]],
 };
 const consertado = (bloco, r) => {

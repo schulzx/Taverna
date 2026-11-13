@@ -103,8 +103,12 @@ sec("2. o envelope do trecho de estrada: com destino, a chegada é do sistema");
   t("com destino, não pede o campo do meio", !/jornada_meio/.test(comDestino));
   t("com destino, diz que a chegada é do sistema", /a chegada é do sistema/.test(comDestino) && /a chegada vem no envelope do sistema/.test(comDestino));
   const semDestino = trecho({}) + " | " + trecho({ destino: "Agulha de Sal" });
-  t("sem destino, as duas instruções ficam (a única porta de chegada por palavras)", /registre "jornada_meio"/.test(semDestino) && /registre "cidade_atual"/.test(semDestino));
-  t("e a frase do meio já não vale para todos os trechos (só para o sem destino)", (semDestino.match(/registre "jornada_meio"/g) || []).length === 2 && !/jornada_meio/.test(comDestino));
+  /* MOVIDAS em 13/11 (NE5, «o pedido não pede»): sem destino, as duas instruções eram «a única porta
+     de chegada por palavras». Deixou de o ser: a jornada sem destino fecha pelo sistema na cidade de onde
+     se partiu (viagem.js#jornadaSemDestino, MM11), e o trecho já não pede campo nenhum. A intenção que
+     fica: nenhum trecho ensina o campo, e a chegada é dita como do sistema. */
+  t("sem destino, o trecho já não pede jornada_meio nem cidade_atual", !/jornada_meio/.test(semDestino) && !/cidade_atual/.test(semDestino));
+  t("e diz que a chegada é do sistema, com e sem destino", (semDestino.match(/A chegada é do sistema/g) || []).length === 2 && !/jornada_meio/.test(comDestino));
   const boca = trecho({ paraBoca: true, alvo: "a Cripta", ultimoTrecho: true }) + " | " + trecho({ paraBoca: true, alvo: "a Cripta" });
   t("a estrada até à boca de uma masmorra já não cita o campo da cidade", !/cidade_atual/.test(boca) && /a chegada à boca é do sistema/.test(boca));
 }

@@ -134,6 +134,52 @@ export function podeAbrirRaid(pers) {
   return { pode: true, motivo: "", porte: porteDoNivel(n) };
 }
 
+/* ---------------- O CHAMADO PELA FRASE (13/11, Fase NE · NE4) ----------------
+   O chamado só abria pelo sinal `raid:<nome>` da IA («diante de uma ameaça
+   que ninguém derruba sozinho, mande…»): era o Narrador quem decidia que a
+   coisa merecia uma raid, e quem lhe dava o nome. No modo `boca` a porta
+   fecha, e a raid deixava de existir.
+   Quem chama, numa mesa, é o herói: ele toca o sino, convoca os aliados,
+   pede a toda a gente que pegue em armas. A frase do JOGADOR abre o chamado,
+   e a coisa contra quem se chama é uma que o SISTEMA tem à frente (`ameacas`:
+   o App diz quais — a nêmesis à vista, o chefe do marco em cena, o lendário
+   da luta aberta): a nomeada pela frase, ou a única. Sem ameaça conhecida,
+   ou com duas e nenhuma dita, não há chamado — o sistema não inventa o
+   inimigo, a mesma trava do golpe (agressao.js). A trava do nível é a de
+   sempre (podeAbrirRaid), e vem no veredicto para o App dizer porquê.
+     chamadoNaFrase(texto, { nivel, ameacas }) → null | { chefe, pode, motivo } */
+export const CHAMADO_NA_FRASE = Object.freeze({
+  /* lido sem acento */
+  chama: Object.freeze([
+    /\b(toco|tocar|faco soar|fazer soar) (o|os) (sino|sinos|alarme|trompa|corno|berrante)\b/,
+    /\b(convoco|convocar|chamo|chamar|reuno|reunir|levanto|levantar|ergo|erguer)\b[^.!?]{0,30}\b(todos|aliados|a cidade|o povo|as milicias|a milicia|a guarda|os herois|quem puder|quem tiver|um exercito|uma hoste|a hoste|os fieis)\b/,
+    /\b(peco|pedir|grito|gritar)\b[^.!?]{0,20}\b(ajuda|socorro|reforcos)\b[^.!?]{0,30}\b(todos|aliados|a cidade|o povo|quem puder)\b/,
+    /\b(as armas|pegai em armas|peguem em armas|todos as armas)\b/,
+  ]),
+  naoE: /\b(nao|nunca|jamais) (toco|convoco|chamo|reuno|peco|grito)\b|\?\s*$/,
+  /* o tamanho mínimo da palavra do nome da ameaça que conta */
+  letras: 4,
+});
+
+export function chamadoNaFrase(texto, opcoes) {
+  const t = String(texto == null ? "" : texto).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  if (!t) return null;
+  const C = CHAMADO_NA_FRASE;
+  if (!C.chama.some((rx) => rx.test(t)) || C.naoE.test(t)) return null;
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const nomes = [...new Map((Array.isArray(o.ameacas) ? o.ameacas : [])
+    .map((a) => String((a && typeof a === "object" ? a.nome : a) || "").trim())
+    .filter((n) => n.length >= 3)
+    .map((n) => [n.toLowerCase(), n])).values()];
+  const sem = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const palavras = new Set(t.split(/[^a-z0-9]+/).filter((w) => w.length >= C.letras));
+  const dita = nomes.find((n) => t.includes(sem(n))) || nomes.find((n) => sem(n).split(/[^a-z0-9]+/).some((w) => w.length >= C.letras && palavras.has(w)));
+  const chefe = dita || (nomes.length === 1 ? nomes[0] : "");
+  if (!chefe) return null;
+  const chk = podeAbrirRaid({ nivel: o.nivel });
+  return { chefe, pode: chk.pode, motivo: chk.motivo || "" };
+}
+
 /* ---------------- OS PAPÉIS DE QUEM ATENDE ----------------
    O que cada um FAZ na frente, e é isto que o resolvedor lê. Sem papel,
    trinta convocados seriam trinta cópias com nomes diferentes, e o

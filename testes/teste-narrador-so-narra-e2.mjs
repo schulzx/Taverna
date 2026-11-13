@@ -132,9 +132,14 @@ sec("4. O CHAMADO: o único sinal sem outra porta, só para quem o alcança");
   }
   const abaixo = montarSystemPrompt("C", M, ficha(NIVEL_MINIMO - 1), {}, banco, "", "", "", "", "", "", "Mortal", tipica);
   const acima = montarSystemPrompt("C", M, ficha(NIVEL_MINIMO), {}, banco, "", "", "", "", "", "", "Mortal", tipica);
+  /* MOVIDAS em 13/11 (NE5, «o pedido não pede»): O CHAMADO era o único
+     pedido de campo que o prompt ainda fazia (o sinal raid:). A raid passou a
+     abrir pela frase do herói contra uma ameaça que o sistema conhece
+     (raids.js#chamadoNaFrase); o prompt já não pede o sinal em nível nenhum.
+     A intenção que fica: o chamado não é da IA. */
   t("abaixo do nível do chamado, a linha não vem", !/O CHAMADO: /.test(abaixo));
-  t("no nível do chamado, vem — e diz o campo", /O CHAMADO: [^\n]*"sinais": \["raid:<nome da coisa>"\]/.test(acima));
-  t("sem cena (o prompt inteiro), vem — como toda porta", /O CHAMADO: /.test(pTodo));
+  t("no nível do chamado, também não: o prompt já não pede o sinal", !/O CHAMADO: /.test(acima) && !/raid:<nome da coisa>/.test(acima));
+  t("nem sem cena (o prompt inteiro)", !/O CHAMADO: /.test(pTodo));
   t("lixo no nível não estoura (cai no 1)", !/O CHAMADO: /.test(montarSystemPrompt("C", M, { ...ficha(1), nivel: "x" }, {}, banco, "", "", "", "", "", "", "Mortal", tipica)));
 }
 

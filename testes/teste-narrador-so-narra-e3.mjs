@@ -135,7 +135,8 @@ sec("3. o que a E3 não podia tirar");
        saíram com a E4 (teste-narrador-so-narra-e4 prova quem os faz agora) */
     ["só se narra um pagamento feito ou aceite", /só narre um pagamento que eu fiz ou aceitei/],
     ["a viagem: a cidade só chega quando o sistema regista", /Só me coloque numa cidade quando o sistema registrar a chegada/],
-    ["O CHAMADO (a raid não tem outra porta)", /O CHAMADO: /],
+    /* MOVIDA em 13/11 (NE5): O CHAMADO saiu do prompt — a raid abre pela frase do herói
+       (raids.js#chamadoNaFrase), não pelo sinal da IA */
   ];
   for (const [nome, rx] of FICA) t(`fica: ${nome}`, rx.test(pTodo));
 }

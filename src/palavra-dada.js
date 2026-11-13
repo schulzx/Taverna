@@ -75,6 +75,11 @@ export const PALAVRA_DADA = {
   janela: 40,
   /* o tamanho da frase que vai ao fio */
   teto: 140,
+  /* NE4 (13/11): o tipo com que a promessa entra no caderno do prometido
+     (prometido.js, TIPOS_DE_SEMENTE), e o tamanho mínimo do nome de quem a
+     recebeu */
+  tipoDaSemente: "palavra",
+  letras: 3,
 };
 
 const casa = (lista, s) => lista.some((rx) => { try { return rx.test(s); } catch { return false; } });
@@ -161,4 +166,32 @@ export function promessaEmAberto(mensagens, { janela = PALAVRA_DADA.janela } = {
     if (p) return p.frase;
   }
   return "";
+}
+
+/* ---------------- A PALAVRA ENTRA NO CADERNO (13/11, Fase NE · NE4) ----------------
+   A promessa da heroína já era do sistema para o fio da memória
+   (promessaEmAberto, acima), mas não para o caderno do prometido
+   (prometido.js): lá só entrava o que a NARRAÇÃO plantava, pela secção
+   `promessas` do Cronista. No modo `boca` o Cronista não lê, e a palavra dada
+   não tinha quem a viesse cobrar. Aqui a frase vira semente, na forma que
+   `guardarSementes` aceita — o App guarda-a depois da frase do jogador:
+     sementeDaPalavra(texto, { presentes, grupo }) → null | { tipo, texto, quem }
+   `quem` é a quem foi dada: o nome de quem está em cena (ou anda com o
+   herói) dito na frase; sem nome, a única pessoa em cena; senão, vazio — a
+   promessa vale na mesma, e a cobrança chega sem rosto. */
+export function sementeDaPalavra(texto, opcoes) {
+  const p = promessaDaFrase(texto);
+  if (!p) return null;
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const nomeDe = (x) => String((x && typeof x === "object" ? x.nome : x) || "").trim();
+  const emCena = (Array.isArray(o.presentes) ? o.presentes : []).map(nomeDe).filter((n) => n.length >= PALAVRA_DADA.letras);
+  const comigo = (Array.isArray(o.grupo) ? o.grupo : []).map(nomeDe).filter((n) => n.length >= PALAVRA_DADA.letras);
+  const t = norm(texto);
+  const primeiro = (n) => norm(n).split(/[^a-z0-9]+/).filter(Boolean)[0] || "";
+  const palavras = new Set(t.split(/[^a-z0-9]+/).filter(Boolean));
+  const todos = [...new Set([...emCena, ...comigo])];
+  const dito = [...todos].sort((a, b) => b.length - a.length).find((n) => t.includes(norm(n)))
+    || todos.find((n) => primeiro(n).length >= PALAVRA_DADA.letras && palavras.has(primeiro(n)));
+  const quem = dito || (emCena.length === 1 ? emCena[0] : "");
+  return { tipo: PALAVRA_DADA.tipoDaSemente, texto: p.frase, quem };
 }

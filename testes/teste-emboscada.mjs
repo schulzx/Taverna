@@ -124,15 +124,18 @@ sec("5. os envelopes — o que a IA não pode mais fazer");
 
   const d = montarEmboscada("Um dragão ancião avança sobre você.", { pers: nv2 });
   const env3 = envelopeDesproporcional(d);
-  t("a recusa dá duas saídas", /faça UMA das duas coisas/.test(env3));
+  /* MOVIDAS em 13/11 (NE5, «o pedido não pede»): a recusa e a ficha que
+     falta davam duas saídas, e uma era o Narrador declarar combate_iniciar.
+     A luta abre por porta do sistema; fica a saída que é fala. */
+  t("a recusa já não pede combate_iniciar", !/combate_iniciar/.test(env3) && !/faça UMA das duas coisas/.test(env3));
   /* a primeira saída é a boa: ameaça vista de perto e não enfrentada é
      das melhores coisas que uma cena tem */
   t("uma delas é manter a ameaça, mas longe", /mas LONGE/.test(env3));
-  t("a outra é trocar por algo do meu tamanho", /troque por algo do tamanho do que eu sou hoje/.test(env3));
+  t("e já não manda trocar por outra coisa e abrir a luta", !/troque por algo do tamanho/.test(env3));
   t("e nada aconteceu comigo neste turno", /nada aconteceu comigo neste turno/.test(env3));
 
   const env4 = envelopeSemCriatura();
-  t("sem ficha, também duas saídas", /faça UMA das duas coisas/.test(env4));
+  t("sem ficha, a saída é a fala: aquilo não me alcança", /NÃO me alcança neste turno/.test(env4) && !/combate_iniciar/.test(env4));
   t("e o sistema admite que não inventa ficha", /ele não inventa ficha/.test(env4));
 
   t("sem emboscada não há envelope", envelopeDaEmboscada(null) === "" && envelopeDesproporcional(null) === "");

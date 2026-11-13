@@ -38,7 +38,10 @@ const SISTEMA = lerOPedido("[VIAGEM — tudo rolado pelas tabelas]");
 sec("1. as tabelas");
 {
   const T = P.TIPOS_DE_SEMENTE;
-  t("quatro tipos: objeto, frase, volta, ameaça", ["objeto", "frase", "volta", "ameaca"].every((id) => T.some((x) => x.id === id)) && T.length === 4);
+  /* MOVIDA em 13/11 (NE4): um quinto tipo, «palavra» — a promessa que o HERÓI faz pela frase
+     (palavra-dada.js#sementeDaPalavra), que entra pelo sistema e não pelo Cronista. As quatro
+     da narração ficam. */
+  t("cinco tipos: objeto, frase, volta, ameaça — e a palavra do herói", ["objeto", "frase", "volta", "ameaca", "palavra"].every((id) => T.some((x) => x.id === id)) && T.length === 5);
   t("cada tipo tem madura < vence < expira", T.every((x) => x.madura > 0 && x.madura < x.vence && x.vence < x.expira));
   t("cada tipo diz O QUE volta, e tem peso", T.every((x) => typeof x.volta === "string" && x.volta.length > 20 && x.peso > 0));
   t("a ameaça dita pesa mais do que a frase solta", T.find((x) => x.id === "ameaca").peso > T.find((x) => x.id === "frase").peso);

@@ -73,6 +73,12 @@ consertar("meio-do-turno", "    if (mudouMapa) {\n      mp = garantirGeografia(m
    `nivelDaFama` que o App lia no `personagem` do render (sempre o 1) */
 consertar("meio-do-turno", "  const fama = () => calcularFama(e0.contadores, e0.nivelDaFama, dominiosDe(mapa).length);", "  const fama = () => calcularFama(e0.contadores, (pers && pers.nivel) || 1, dominiosDe(mapa).length);");
 
+/* 4. NE5 (13/11/2026, «o pedido não pede»): a nota da ascensão por caminho já não pede ao
+   Narrador «registre no cânone» (o deicídio e a relíquia) — a mesma troca no código de lá
+   (meio-do-turno.js do mesmo commit), e só ela. Mudam os casos que ascendem pelo sinal. */
+consertar("meio-do-turno", "registre isso no cânone e faça o mundo reagir", "faça o mundo reagir");
+consertar("meio-do-turno", "A fonte primordial se apagou — registre no cânone o que restou dela", "A fonte primordial se apagou — conte o que restou dela");
+
 /* o motor do mesmo commit, ao lado do de hoje, com nome de rascunho */
 const rascunho = {};
 for (const nome of ["aplicar", "meio-do-turno"]) {

@@ -298,7 +298,9 @@ sec("5. O ALVO do pronome — o último citado, o único hostil, ou ninguém");
 
   const env = envelopeSemAlvo(e, "Avanço para socá-lo.");
   t("o envelope do pronome diz que não citei nome", /não citei nome/.test(env));
-  t("e mantém as duas saídas", /decida UMA das duas coisas/.test(env));
+  /* MOVIDA em 13/11 (NE4/NE5): as "duas saídas" eram o Narrador a decidir
+     se abria a luta; o sistema decide, e o envelope diz o que dizer */
+  t("e já não dá ao Narrador a decisão de abrir a luta", !/decida UMA das duas coisas/.test(env) && !/combate_iniciar/.test(env));
   t("o do nome fora do registro continua o de antes",
     /ninguém com o nome que eu citei/.test(envelopeSemAlvo(lerAgressao("Ataco o dragão ancião.", { presentes: [] }), "x")));
 }

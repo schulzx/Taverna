@@ -102,6 +102,11 @@ consertar("sinais", "setPersonagem((p) => ({ ...p, equipamento: [...(p.equipamen
    no fim, como estava */
 consertar("mapa", "      if (md.cidade_atual) {", "      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapaRef.current = mp; setMapa(mp); }\n      if (md.cidade_atual) {");
 consertar("mapa", "      if (mudouMapa) { mp = garantirGeografia(mp, pers && pers.nome ? `taverna|${pers.nome}` : \"taverna\"); mapaRef.current = mp; setMapa(mp); casarDevocaoComMapa(); }", "      if (mudouMapa) { casarDevocaoComMapa(); }");
+/* 4. NE5 (13/11/2026, «o pedido não pede»): a nota da ascensão por caminho já não pede ao
+   Narrador «registre no cânone» (o deicídio e a relíquia) — a mesma troca no código de lá
+   (o bloco dos sinais do App), e só ela. Mudam os casos que ascendem pelo sinal. */
+consertar("sinais", "registre isso no cânone e faça o mundo reagir", "faça o mundo reagir");
+consertar("sinais", "A fonte primordial se apagou — registre no cânone o que restou dela", "A fonte primordial se apagou — conte o que restou dela");
 const fechos = [
   corte("  const cidadeDoMapa = (nome) =>", "\n\n"),
   corte("  const cidadeSobOsPes = () => {", "  /* Todo lugar a que se pode ir daqui a pé"),

@@ -202,12 +202,18 @@ const pTodo = montarSystemPrompt("C", M, ficha(20), {}, banco, "", "", "", "", "
     ["o COMBATE RESOLVIDO PELO SISTEMA", /COMBATE RESOLVIDO PELO SISTEMA/],
     ["a narrativa curta na luta", /mantenha a narrativa CURTA \(2-4 frases\)\./],
     ["o formato JSON, com mudancas", /"mudancas": null/],
-    ["O CHAMADO (a raid não tem outra porta)", /O CHAMADO: /],
+    /* MOVIDA em 13/11 (NE5): O CHAMADO saiu do prompt — a raid abre pela
+       frase do herói (raids.js#chamadoNaFrase), não pelo sinal da IA. */
   ];
   for (const [nome, rx] of FICA) t(`fica: ${nome}`, rx.test(pTodo));
   t("o CONDIÇÕES já não ensina o perigo", !/"perigo"/.test(CONDICOES_PROMPT) && /NÃO APLICA NEM REMOVE CONDIÇÃO/.test(CONDICOES_PROMPT));
   t("o veto da luta sem painel manda parar, e não abrir", !/combate_iniciar/.test(A.LUTA_SEM_PAINEL.veto) && /quem abre a luta é o sistema/.test(A.LUTA_SEM_PAINEL.veto));
-  t("o pedido que fica leva o formato no próprio envelope", /"combate_iniciar": \[\{"nome":"…","ameaca":"comum"\}\]/.test(A.envelopeSemAlvo({ tipo: "semAlvoConhecido" }, "x")));
+  /* MOVIDA em 13/11 (NE5, «o pedido não pede»): o golpe sem alvo era o
+     último pedido de combate_iniciar, e levava o formato no envelope. O
+     sistema passou a decidir o alvo (agressao.js#ALVO_PELO_SISTEMA), e o
+     envelope já não pede o campo — a poda continua a aceitá-lo no modo
+     `mestre` até a NE7 (o "6.ª T47" acima). */
+  t("o golpe sem alvo já não pede combate_iniciar (nem o formato)", !/combate_iniciar/.test(A.envelopeSemAlvo({ tipo: "semAlvoConhecido" }, "x")));
   t("e o prompt.js já não importa o bestiário (a lista ia só ao abrir combate)", !/criaturasDoGenero/.test(ler("prompt.js")));
 }
 

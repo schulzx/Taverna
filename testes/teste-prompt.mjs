@@ -266,7 +266,11 @@ sec("4. nenhuma regua de numero que o sistema ja calcula");
      combate envie só o nome e a ameaça"), que saiu com a abertura do
      Narrador. A ameaça continua a ser a única coisa pedida, e só no pedido
      que fica (o golpe sem alvo), no próprio envelope. */
-  t("a ameaça viaja no envelope do pedido, não no prompt (E4)", !/fraco, comum, competente, elite, lendario/.test(P) && /"ameaca":"comum"/.test(fs.readFileSync(SRC + "agressao.js", "utf8")));
+  /* MOVIDA em 13/11 (NE5, «o pedido não pede»): o golpe sem alvo já não
+     pede combate_iniciar — o sistema decide o alvo (agressao.js#ALVO_PELO_SISTEMA)
+     —, logo a ameaça já não viaja em pedido nenhum. A intenção que fica: o
+     prompt não ensina a lista das ameaças. */
+  t("a lista das ameaças não está no prompt (E4), nem é pedida no golpe sem alvo (NE5)", !/fraco, comum, competente, elite, lendario/.test(P) && !/"ameaca":"comum"/.test(fs.readFileSync(SRC + "agressao.js", "utf8")));
 
   /* buff */
   t("nao ha teto de bonus ensinado ao Mestre", !/soma \+2 \(N[ÃA]O \+4/.test(P));
@@ -302,7 +306,8 @@ sec("6. o que NAO pode ter sido perdido na faxina");
     ["formato JSON", /UM ÚNICO objeto JSON/],
     /* E2 (12/10): a linha SINAIS saiu (a medição: 0 usos de cada sinal em
        137 turnos, e todos com outra porta); fica o único sem outra porta */
-    ["o chamado (o sinal que ficou)", /O CHAMADO: /],
+    /* MOVIDA em 13/11 (NE5): O CHAMADO saiu — era o último pedido de campo
+       do prompt; a raid abre pela frase do herói (raids.js#chamadoNaFrase) */
   ];
   for (const [nome, rx] of essenciais) t(`"${nome}" continua lá`, rx.test(P));
 }

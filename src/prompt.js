@@ -39,7 +39,7 @@ import { MOVIMENTO_PROMPT } from "./movimento.js";
 import { CHAO_PROMPT } from "./chao.js";
 import { MISSOES_PROMPT } from "./missoes.js";
 import { OFERTAS_PROMPT } from "./ofertas.js";
-import { RAID_PROMPT, NIVEL_MINIMO as NIVEL_MINIMO_DO_CHAMADO } from "./raids.js";
+import { RAID_PROMPT } from "./raids.js";
 import { PODER_PROMPT } from "./poder.js";
 import { TRAMAS_PROMPT } from "./tramas.js";
 import { LUGAR_PROMPT } from "./lugar.js";
@@ -599,9 +599,11 @@ export function montarSystemPrompt(nomeCampanha, mundo, personagem, canone, banc
      disto sai antes de o App a aplicar, e a resposta de um teste que passou
      não traz luta nem ferida. O App continua a saber ler (reversão = um
      commit). */
-  const chamado = !cena || (Number(personagem.nivel) || 1) >= NIVEL_MINIMO_DO_CHAMADO
-    ? "O CHAMADO: diante de uma ameaça que ninguém derruba sozinho, mande em mudancas \"sinais\": [\"raid:<nome da coisa>\"] — o sistema convoca quem atende, monta a horda e conduz a frente.\n"
-    : "";
+  /* NE5 (13/11, «o pedido não pede»): O CHAMADO saiu. Era a última linha do
+     prompt que pedia um campo de `mudancas` (o sinal `raid:`) — a IA a decidir
+     que uma coisa merecia raid. Quem chama agora é o herói, pela frase
+     (raids.js#chamadoNaFrase), contra uma ameaça que o sistema tem à frente.
+     O App continua a saber ler o sinal no modo `mestre` até a NE7. */
   /* MM8c-1: o cânone do Narrador tem teto nas pessoas; `recencia.npcs` é o
      registo, que diz quem foi visto por último (sem ele, conta a ordem de
      entrada no cânone) */
@@ -837,7 +839,7 @@ Responda com UM ÚNICO objeto JSON válido, começando com { e terminando com }.
   "narrativa": "texto da cena com diálogos",
   "mudancas": null
 }
-${chamado}Regras do formato: "mudancas" é null, salvo o que este texto ou um envelope do sistema pedir; nunca o coloque dentro de "narrativa", que é sempre uma string simples.
+Regras do formato: "mudancas" é sempre null (quem muda o jogo é o sistema); "narrativa" é sempre uma string simples.
 ═══════════════ REGRAS DA CENA ABERTA ═══════════════
 Os blocos daqui até ESTADO DESTE TURNO entram e saem conforme a cena e a ficha os têm: cada um só aparece quando existe no jogo a coisa que ele governa, e vale exatamente como as regras permanentes acima enquanto estiver presente.
 

@@ -227,8 +227,8 @@ function promptDaDivindade() { return `ASCENSÃO E DIVINDADES (parâmetros do si
 - A escala cósmica é GD 0–${GRAUS.length - 1}: ${escalaNoPrompt()}. O sistema rastreia fiéis e PF do jogador e avisa no rodapé; as divindades do mundo vêm prontas pelo sistema (GD, fiéis e culto JÁ DEFINIDOS — use-os como fato).
 - REGRA DO DEGRAU: cada degrau de diferença de GD dá +2 ao mais forte e −2 ao mais fraco em ataques, defesas e resistências — O SISTEMA APLICA nos dados, você só narra a disparidade (o golpe do mortal parece "invisível" ao deus, etc.).
 - Mortais (GD 0) não ferem de verdade divindades de GD 3+ sem artefato lendário ou bênção — se o jogador insistir, a ficção mostra a futilidade com honestidade (isso motiva a ascensão, não a punge).
-- GANHO DE FÉ (por SINAL, nunca por número): quando o herói fizer algo que mereça fé, mande em "sinais" a magnitude — "fe:sussurro" (gesto notado por poucos), "fe:feito" (a cidade comenta), "fe:proeza" (a região conta), "fe:marco" (muda a história do mundo). O SISTEMA converte em fiéis levando a fama dele em conta. NÃO envie quantidade de fiéis nem de PF.
-- PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis — você nunca concede PF. Para gastar, mande "milagre:<id>" (bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar): o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se o jogador pedir um milagre que ele ainda não pode pagar ou cujo grau não alcançou, o sistema recusa e você narra o silêncio do domínio.
+- GANHO DE FÉ: o SISTEMA conta a fé pelo que o herói faz (o feito cumprido, o gesto devoto, o milagre), levando a fama dele em conta, e avisa; você narra quem passa a crer. Você nunca dá fiéis nem PF.
+- PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis. O milagre sai pelo gesto do jogador: o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se ele não pode pagar ou o grau não alcança, o sistema recusa e você narra o silêncio do domínio.
 - FÉ MÍNGUA: devoção exige presença. A fé some sozinha, dia a dia, em toda cidade onde não há templo do herói nem ele em pessoa — e mesmo o clero de um templo prega com menos convicção depois de meses sem sinal dele. O sistema faz essa conta por cidade; use o resultado na ficção (templos vazios, profetas desanimados, altar coberto de pó).
 - PRESENÇA DIVINA (com moderação!): perto de uma divindade GD 3+ manifesta, mortais podem tremer — o SISTEMA rola a resistência e aplica o efeito; você narra. NUNCA aplique efeitos de presença por conta própria, e fora de combate use o pavor divino só como tempero, nunca como rotina — o jogador e o grupo íntimo dele estão protegidos pela convivência.
 - ASCENSÃO É NARRATIVA: os três estágios (${CEU.estagios[0]} → ${GRAUS[2].titulo}/${CEU.estagios[1]} → ${CEU.estagios[2]}) avançam por FEITOS na ficção (acúmulo de fé, ritual do vazio, deicídio), guiados pelos números do sistema. Quando o jogador atingir um marco, celebre à altura — virar deus deve doer, custar e mudar o jogo.`; }
@@ -286,6 +286,54 @@ export function fieisPorFeito(magnitude, fama0a100) {
   const m = MAGNITUDE_FE[magnitude] || MAGNITUDE_FE.feito;
   const mult = 1 + (Math.max(0, Math.min(100, fama0a100 || 0)) / 100) * 2; // fama triplica no topo
   return Math.round(m.base * mult);
+}
+
+/* ---------------- A FÉ PELO SISTEMA (13/11, Fase NE · NE4) ----------------
+   O sinal `fe:<magnitude>` era a única porta da fé, e era a IA que dizia
+   que um gesto merecia fé (o Narrador por sinal, o Cronista pela secção
+   `fe`). No modo `boca` as duas fecham, e um herói desperto deixava de
+   ganhar fiéis por tudo o que fazia. A fé passa a sair do que o SISTEMA já
+   conta, com a magnitude da mesma tabela (MAGNITUDE_FE):
+     · `feitos` — o que os contadores do turno dizem que aconteceu: o marco
+       da história cumprido, o lendário que caiu, a principal concluída, o
+       trabalho fechado. Vale o MAIOR do turno (um turno, um ganho);
+     · `gesto` — o gesto devoto que a FRASE do jogador declara (abençoar,
+       pregar, curar os doentes, dar de comer em nome dele): um sussurro, e
+       um por dia (`ultimoFeitoDia`: o dia do último ganho de fé, que o
+       ganho por sinal já gravava) — senão rezar a cada turno compraria fé.
+   O milagre já ganha a sua pelo botão (`efeito.fe`, milagreInvocado).
+     aFeDoSistema({ despertar, dia, ultimoFeitoDia, frase, feitos }) →
+       null | { magnitude, de: "feito" | "gesto", id, motivo } */
+export const FE_PELO_SISTEMA = Object.freeze({
+  feitos: Object.freeze([
+    Object.freeze({ id: "marco", magnitude: "marco", o: "um marco da história cumprido" }),
+    Object.freeze({ id: "lendario", magnitude: "proeza", o: "um lendário derrotado" }),
+    Object.freeze({ id: "principal", magnitude: "proeza", o: "a missão principal concluída" }),
+    Object.freeze({ id: "missao", magnitude: "feito", o: "um trabalho cumprido" }),
+  ]),
+  gesto: Object.freeze({
+    magnitude: "sussurro", o: "um gesto devoto",
+    /* lido sem acento; a negação e a pergunta desfazem-no (naoE) */
+    rx: /\b(abencoo|abencoar|prego|pregar|faco um sermao|fazer um sermao|consagro|consagrar|ergo um altar|erguer um altar|curo os (doentes|feridos|pobres|enfermos)|cuido dos (doentes|feridos|pobres|enfermos)|dou de comer|distribuo (pao|comida|esmola|moedas)|dou esmola|rezo (com|pelos|pelas|por eles|pelo povo)|oro (com|pelos|pelas)|falo em (meu )?nome d)/,
+    naoE: /\b(nao|nunca|jamais) (abencoo|prego|consagro|curo|cuido|dou|distribuo|rezo|oro|falo)\b|\?\s*$/,
+  }),
+});
+
+export function aFeDoSistema(entrada) {
+  const e = entrada && typeof entrada === "object" ? entrada : {};
+  if (!e.despertar) return null;
+  const F = FE_PELO_SISTEMA;
+  const feitos = e.feitos && typeof e.feitos === "object" ? e.feitos : {};
+  const base = (m) => (MAGNITUDE_FE[m] ? MAGNITUDE_FE[m].base : 0);
+  const houve = F.feitos.filter((f) => (Number(feitos[f.id]) || 0) > 0).sort((a, b) => base(b.magnitude) - base(a.magnitude));
+  if (houve.length) {
+    const f = houve[0];
+    return { magnitude: f.magnitude, de: "feito", id: f.id, motivo: `${f.o} — ${MAGNITUDE_FE[f.magnitude].desc}` };
+  }
+  const frase = String(e.frase == null ? "" : e.frase).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  if (!frase || !F.gesto.rx.test(frase) || F.gesto.naoE.test(frase)) return null;
+  if (Number.isFinite(Number(e.ultimoFeitoDia)) && e.ultimoFeitoDia != null && Number(e.ultimoFeitoDia) === Number(e.dia)) return null;
+  return { magnitude: F.gesto.magnitude, de: "gesto", id: "gesto", motivo: `${F.gesto.o} — ${MAGNITUDE_FE[F.gesto.magnitude].desc}` };
 }
 
 /* PF regenera sozinho por dia, proporcional aos fiéis — como a renda das
@@ -388,4 +436,4 @@ export function caminhoPorId(id) { return CAMINHOS_ASCENSAO.find((c) => c.id ===
 export const CAMINHOS_PROMPT = `CAMINHOS DE ASCENSÃO (além da fé — o sistema fornece os parâmetros; você conduz a ficção):
 - DEICÍDIO: matar um deus e tomar seu domínio. Três provas, nesta ordem: achar o corpo verdadeiro (Percepção, dif. 20), romper a proteção divina (Presença, dif. 22 — exige artefato lendário ou bênção rival) e absorver o domínio no instante da morte (Vontade, dif. 24). Cada prova é uma CENA, não uma frase. Vencer sobe UM grau e transfere metade dos fiéis do morto; o culto dele jura vingança para sempre.
 - FONTE MILENAR: drenar uma relíquia primordial por ritual. Provas: decifrar o ritual (Intelecto, dif. 20), sustentar a canalização (Vigor, dif. 22) e não se perder no que entra (Vontade, dif. 23). Vencer sobe UM grau; falhar a última prova não mata — muda quem o herói é (proponha uma consequência permanente).
-- Estes caminhos exigem PREPARAÇÃO na ficção (encontrar o alvo, reunir componentes, aliados). Nunca os conceda de imediato porque o jogador pediu: construa a jornada. Quando as provas forem vencidas, mande o sinal "ascender:deicidio" ou "ascender:reliquia" e o SISTEMA aplica o grau.`;
+- Estes caminhos exigem PREPARAÇÃO na ficção (encontrar o alvo, reunir componentes, aliados). Nunca os conceda de imediato porque o jogador pediu: construa a jornada. As provas são do sistema: vencidas, ele aplica o grau e te avisa.`;

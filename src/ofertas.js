@@ -177,10 +177,13 @@ export const MOLDES = [
     montar: ({ pessoa, segredo, objeto }) => ({
       titulo: `O que há em ${segredo.local}`,
       descricao: `${pessoa.nome} diz que há ${segredo.o}, em ${segredo.local}. Quer isso nas mãos, não na boca do povo.`,
-      /* o alvo é o nome INTEIRO do objeto, e o envelope obriga o Mestre a
-         usar exatamente esse nome ao entregá-lo: assim a etapa fecha com o
-         objeto certo e não com qualquer coisa parecida na bolsa */
-      etapas: [{ tipo: "achar", alvo: objeto }],
+      /* o alvo é o nome INTEIRO do objeto: a etapa fecha com o objeto certo
+         e não com qualquer coisa parecida na bolsa. NE4 (13/11): e ONDE ele
+         está — o lugar do segredo da base. É quem o entrega agora: a busca
+         que acha esse segredo põe o objeto na bolsa (objetoDoCartaz), e já
+         não o Mestre por `adicionar_itens`. Campo que a etapa já tinha
+         (`onde`, garantirMissoes) — nada novo no save. */
+      etapas: [{ tipo: "achar", alvo: objeto, onde: segredo.local }],
       objeto,
       gancho: `${pessoa.nome} ${pessoa.vontade}, e não quer que se saiba de onde veio a informação`,
     }),
@@ -522,7 +525,39 @@ function fatos(of) {
   const prazo = of.prazo
     ? ` Há PRAZO: ${of.prazo} noites, contadas pelo relógio do sistema. Deixe a pressa aparecer na cena, mas não conte as noites nem dê tempo extra.`
     : "";
-  return `${preco}${prazo}${of.daItem ? ` ${of.dador} entrega em mãos: ${of.daItem} (o sistema já pôs na minha bolsa — não envie itens).` : ""}${of.objeto ? ` O que se procura chama-se "${of.objeto}" — use exatamente esse nome quando eu encontrar, e mande-o com "adicionar_itens".` : ""}`;
+  /* NE5 (13/11): o objeto procurado já não se pede ao Mestre por
+     `adicionar_itens` — quem o entrega é a busca no lugar dele
+     (objetoDoCartaz). Ele só tem de o chamar pelo nome. */
+  return `${preco}${prazo}${of.daItem ? ` ${of.dador} entrega em mãos: ${of.daItem} (o sistema já pôs na minha bolsa — não envie itens).` : ""}${of.objeto ? ` O que se procura chama-se "${of.objeto}" — use exatamente esse nome; quando eu o achar, o sistema põe-no na minha bolsa.` : ""}`;
+}
+
+/* ---------------- O OBJETO DO CARTAZ, ENTREGUE PELO SISTEMA (NE4, 13/11) ----------------
+   O cartaz «O que há em …» manda achar um objeto que sai de um segredo da
+   base (OBJETO_DO_SEGREDO). Até aqui a etapa `achar` só fechava quando o
+   Mestre mandava o objeto por `adicionar_itens` — a IA a escrever na bolsa.
+   O segredo já é achável pelo sistema (`achavelAqui`, mundo-base.js): a
+   busca que passa no lugar dele dá o achado. Esta peça diz QUE OBJETO o
+   achado entrega, quando há um cartaz ativo à espera dele:
+     objetoDoCartaz(missoes, achado, inventario) → null | { item, missao }
+   Casa quando: o achado é um segredo (`especie: "segredo"`), a missão está
+   ativa, a etapa `achar` por fazer tem por alvo o objeto desse tipo de
+   segredo, e o `onde` da etapa (quando o há: os cartazes de antes não o
+   trazem) é o lugar do achado. O que já está na bolsa não volta. */
+export function objetoDoCartaz(missoes, achado, inventario) {
+  const a = achado && typeof achado === "object" && !Array.isArray(achado) ? achado : null;
+  if (!a || a.especie !== "segredo") return null;
+  const objeto = OBJETO_DO_SEGREDO[a.tipo];
+  if (!objeto) return null;
+  const bolsa = (Array.isArray(inventario) ? inventario : []).map((i) => norm(typeof i === "string" ? i : i && i.nome));
+  if (bolsa.some((n) => n && n.includes(norm(objeto)))) return null;
+  for (const m of (Array.isArray(missoes) ? missoes : [])) {
+    if (!m || typeof m !== "object" || m.status !== "ativa" || !Array.isArray(m.etapas)) continue;
+    const e = m.etapas.find((x) => x && !x.feito && x.tipo === "achar" && norm(x.alvo) === norm(objeto));
+    if (!e) continue;
+    if (e.onde && norm(e.onde) !== norm(a.local)) continue;
+    return { item: objeto, missao: m.id || "" };
+  }
+  return null;
 }
 
 /* ============================================================

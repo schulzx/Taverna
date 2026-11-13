@@ -42,7 +42,13 @@ fs.writeFileSync(path.join(tmp, "package.json"), JSON.stringify({ type: "module"
    1. CB13 (10/11/2026): o piso de PV do comum nos níveis 1 e 2 do herói
       (PV_NO_COMECO, combate.js) — muda o completarInimigo dos casos do
       bestiário (Bandido, Esqueleto, Zumbi, Lobo Atroz, Cultista…). */
+/* 2. NE5 (13/11/2026, «o pedido não pede»): o DIVINDADE_PROMPT já não pede ao
+      Narrador os sinais «fe:» e «milagre:» — a fé conta-se pelo que o herói faz
+      (divindades.js#FE_PELO_SISTEMA) e o milagre sai pelo gesto do jogador.
+      Muda só o caso `divindades.prompt`; as duas linhas trocam à letra. */
 const CONSERTOS_DECLARADOS = [
+  ["src/divindades.js", "- GANHO DE FÉ (por SINAL, nunca por número): quando o herói fizer algo que mereça fé, mande em \"sinais\" a magnitude — \"fe:sussurro\" (gesto notado por poucos), \"fe:feito\" (a cidade comenta), \"fe:proeza\" (a região conta), \"fe:marco\" (muda a história do mundo). O SISTEMA converte em fiéis levando a fama dele em conta. NÃO envie quantidade de fiéis nem de PF.", "- GANHO DE FÉ: o SISTEMA conta a fé pelo que o herói faz (o feito cumprido, o gesto devoto, o milagre), levando a fama dele em conta, e avisa; você narra quem passa a crer. Você nunca dá fiéis nem PF."],
+  ["src/divindades.js", "- PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis — você nunca concede PF. Para gastar, mande \"milagre:<id>\" (bencao, cura, presagio, juramento, furia, refugio, ressurgir, decreto, avatar): o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se o jogador pedir um milagre que ele ainda não pode pagar ou cujo grau não alcançou, o sistema recusa e você narra o silêncio do domínio.", "- PF (Pontos de Fé) é o combustível de milagres e REGENERA SOZINHO por dia, proporcional aos fiéis. O milagre sai pelo gesto do jogador: o sistema cobra o custo, aplica o efeito e te avisa; você só narra a manifestação. Se ele não pode pagar ou o grau não alcança, o sistema recusa e você narra o silêncio do domínio."],
   ["src/combate.js", "  const pv = Math.max(4, Math.round(base * mult));", "  const pv = Math.max(4, Number(nivelJogador) <= 2 && ameaca === \"comum\" ? 12 : 0, Math.round(base * mult));"],
 ];
 for (const [arq, a, b] of CONSERTOS_DECLARADOS) {

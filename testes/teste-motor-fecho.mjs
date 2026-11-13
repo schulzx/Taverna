@@ -22,6 +22,10 @@ import { osVinculos } from "../src/motor/combate-do-turno.js";
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
 const sec = (s) => console.log("\n" + s);
+/* 13/11 (NE5, «o pedido não pede»): o dourado foi regravado (gerar-fecho-dourado.mjs 3ec3364 — o
+   mesmo App de antes, com os módulos de hoje). Mudaram 22 dos 275 casos do perigo, e só a nota: os
+   envelopes da investida sem ficha e da desproporcional (emboscada.js) já não pedem combate_iniciar —
+   a luta abre por porta do sistema. A quase-morte e a mesa ficaram iguais, byte a byte. */
 const D = JSON.parse(fs.readFileSync(new URL("./fecho-dourado.json", import.meta.url), "utf8"));
 const APP = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const igual = (a, b) => JSON.stringify(a) === JSON.stringify(b);

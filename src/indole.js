@@ -726,3 +726,65 @@ export function envelopeDoConvite(nome, veredito) {
   }[v.resposta] || "";
   return `[CONVITE — RESOLVIDO PELO SISTEMA] Você convidou ${nome} para andar com você. ${corpo} O que pesou: ${(v.porques || []).join("; ")}. Narre SÓ a reação e as palavras ${nome === "ela" ? "dela" : `de ${nome}`}, em fala direta (—), aqui mesmo onde vocês estão, com ESTE desfecho e nenhum outro. Não invente outra resposta, não narre partida, despedida, preparativos nem passagem de tempo: ninguém saiu do lugar por causa de um convite.`;
 }
+
+/* ============================================================
+   O CONVITE PELA CONVERSA (13/11, Fase NE · NE4 — «nenhuma IA escreve estado»)
+
+   O convite tinha duas portas. O botão «Convidar» (convidarNpc, no App)
+   pesa o sim pelo sistema (pesarConvite). A outra era a conversa: o herói
+   dizia «quer vir comigo?», o Narrador encenava o sim, e a secção `grupo`
+   do Cronista lia a prosa e punha a pessoa no grupo — o veredicto vinha da
+   IA, com o convite do sistema só a filtrar depois. No modo `boca` essa
+   porta fecha, e a frase que convida ficava sem resposta de ninguém.
+
+   Aqui a frase do JOGADOR (nunca a narração) leva ao MESMO veredicto do
+   botão: `conviteNaFrase` diz se ela convida e a quem; o App chama o
+   caminho do convite de sempre com esse nome.
+     · CONVITE_NA_FRASE.convida — as formas de chamar alguém para andar com
+       o herói (lidas sem acento): «quer vir comigo», «venha comigo»,
+       «junte-se a mim», «convido-te para o meu grupo», «acompanhe-me»;
+     · CONVITE_NA_FRASE.naoE — o que desfaz o convite: a negação («não quero
+       que venhas comigo»), e o herói a aceitar ir com outro («vou contigo»
+       é a outra direção: quem convidou foi a outra pessoa);
+     · a quem: o nome dito, de quem está em cena e fora do grupo; sem nome,
+       só quando há UMA pessoa em cena fora do grupo (a quem mais diria?).
+       Duas sem nome, e a frase não convida ninguém — o sistema não escolhe.
+   → null | { nome, porNome }  (porNome: o nome estava na frase) */
+export const CONVITE_NA_FRASE = Object.freeze({
+  convida: Object.freeze([
+    /\b(quer|queres|queira|gostaria de|aceita|aceitas|topa|topas) (vir|viajar|andar|seguir|ir) (comigo|conosco|connosco|com a gente)\b/,
+    /\b(venha|vem|vens|anda|ande|viaje|viaja|siga|segue)(-me)? (comigo|conosco|connosco)\b/,
+    /\b(junte-se|junta-te|junte se|junta te|se junte|te juntes|te junta|se juntar|juntar-se|juntar-te) (a mim|ao meu grupo|a nos|ao grupo|conosco|connosco)\b/,
+    /\b(acompanhe-me|acompanha-me|me acompanhe|me acompanha|me acompanhar)\b/,
+    /\b(convido|chamo)(-(te|o|a|vos|lhe))?\b[^.!?]{0,40}\b(para|a) (vir comigo|viajar comigo|andar comigo|me acompanhar|se juntar|juntar-se|te juntares|entrar no (meu )?grupo|o meu grupo|meu grupo|o grupo)\b/,
+  ]),
+  naoE: Object.freeze([
+    /\b(nao|nunca|jamais) (quero|queres|quer|vou|venha|vem|vens|te juntes|se junte|convido|chamo|preciso)\b/,
+    /\b(vou|irei|sigo|vamos) (contigo|com voce|com vossemece|convosco)\b/,
+  ]),
+  /* o tamanho mínimo do nome que conta, e da palavra dele */
+  letras: 3,
+});
+
+export function conviteNaFrase(texto, opcoes) {
+  const t = norm(texto);
+  if (!t) return null;
+  const C = CONVITE_NA_FRASE;
+  if (!C.convida.some((rx) => rx.test(t))) return null;
+  if (C.naoE.some((rx) => rx.test(t))) return null;
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const doGrupo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => norm(g && typeof g === "object" ? g.nome : g)).filter(Boolean));
+  const aqui = (Array.isArray(o.presentes) ? o.presentes : [])
+    .map((p) => String((p && typeof p === "object" ? p.nome : p) || "").trim())
+    .filter((n) => n.length >= C.letras && !doGrupo.has(norm(n)));
+  const unicos = [...new Map(aqui.map((n) => [norm(n), n])).values()];
+  /* pelo nome inteiro, e depois pelo primeiro nome (o mais longo ganha) */
+  const primeiro = (n) => norm(n).split(/[^a-z0-9]+/).filter(Boolean)[0] || "";
+  const palavras = new Set(t.split(/[^a-z0-9]+/).filter(Boolean));
+  const peloNome = [...unicos].sort((a, b) => b.length - a.length).find((n) => t.includes(norm(n)))
+    || unicos.find((n) => primeiro(n).length >= C.letras && palavras.has(primeiro(n)));
+  if (peloNome) return { nome: peloNome, porNome: true };
+  /* quem é do grupo e foi nomeado: já anda com o herói, não há convite */
+  if ([...doGrupo].some((g) => g && t.includes(g))) return null;
+  return unicos.length === 1 ? { nome: unicos[0], porNome: false } : null;
+}

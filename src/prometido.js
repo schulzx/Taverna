@@ -87,6 +87,13 @@ export const TIPOS_DE_SEMENTE = [
   { id: "frase", o: "uma frase que promete", madura: 3, vence: 7, expira: 16, peso: 1, volta: "o que essa frase prometeu acontece, ou uma parte cumpre-se diante de mim" },
   { id: "volta", o: "alguém que fica de voltar", madura: 3, vence: 6, expira: 14, peso: 2, volta: "essa pessoa volta, como disse, e traz o que ficou de trazer" },
   { id: "ameaca", o: "uma ameaça dita", madura: 2, vence: 6, expira: 14, peso: 3, volta: "a ameaça dá um passo concreto contra mim ou contra quem está comigo" },
+  /* NE4 (13/11, «nenhuma IA escreve estado»): a PALAVRA DO HERÓI. As quatro
+     de cima são o que a narração planta, e só o Cronista as lia — no modo
+     `boca` o caderno ficava vazio. A promessa que o herói faz pela frase dele
+     («prometo-te que a trago de volta») é do sistema: a frase regista-a
+     (palavra-dada.js#sementeDaPalavra), e quem a recebeu vem cobrá-la. Pesa
+     como a volta (alguém espera), e espera um pouco mais: cumprir leva tempo. */
+  { id: "palavra", o: "a palavra que o herói deu", madura: 3, vence: 8, expira: 18, peso: 2, volta: "quem recebeu a minha palavra cobra-a — pergunta por ela, lembra o combinado ou age por conta da espera" },
 ];
 const tipoPorId = (id) => TIPOS_DE_SEMENTE.find((t) => t.id === id) || null;
 

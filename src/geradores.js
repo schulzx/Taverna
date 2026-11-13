@@ -168,7 +168,9 @@ export function gerarEventoGlobal(ctx, dia, sorte = null) { return comSorte(sort
    - Local: no máx. 3 ativos; nasce no descanso longo (~55%) e expira em 2–4 dias.
    - Quest sorteada: só se houver menos de 2 secundárias ativas (~40%/descanso).
    - Global: no máx. 1; ~20% por descanso longo quando vazio; avança 1 etapa por
-     descanso longo (o Mestre costura na ficção); o Mestre encerra quando resolvido. */
+     descanso longo (o Mestre costura na ficção). NE4 (13/11): na última etapa o
+     DESFECHO é do sistema — o dado do descanso decide quando a região chega ao
+     fim do arco (`desfecho`, abaixo), e já não o Mestre nem o Cronista. */
 export function garantirEventos(ev) {
   return ev && typeof ev === "object" && Array.isArray(ev.locais)
     ? { locais: ev.locais, global: ev.global && typeof ev.global === "object" ? ev.global : null, semGlobalDesde: ev.semGlobalDesde || 0, seq: ev.seq || 1 }
@@ -185,6 +187,12 @@ export const ALVOS_DO_DESCANSO = {
   maxFiosLocais: 3,      // com três fios à vista, não nasce um quarto
   secundariasMax: 2,     // com duas secundárias ativas, não nasce missão
   diasAteGarantia: 10,   // dez dias sem arco regional e ele vem sem dado
+  /* NE4 (13/11, «nenhuma IA escreve estado»): na ÚLTIMA etapa o arco chega ao
+     desfecho se o dado mandar. Até aqui só fechava pela IA (o campo
+     `evento_global_encerrar` do Narrador, a secção `missoes` do Cronista); no
+     modo `boca` ficava na última etapa para sempre. Mesmo alvo da escalada:
+     o fim chega no ritmo em que o arco andou. */
+  desfecho: 12,
 };
 
 /* `secundarias` (SQ2, 05/11): false enquanto o portão da introdução está
@@ -270,6 +278,14 @@ export function processarDescansoLongoEventos(ev, ctx, opcoes = {}) {
     const r = rolarGatilho(`Escalada de "${e.global.nome}"`, A.escalada, { sorte });
     out.bastidor.push(r);
     if (r.passou) { e.global = { ...e.global, etapa: e.global.etapa + 1 }; out.globalAvancou = true; }
+  } else {
+    /* NE4: na última etapa, o desfecho — o arco sai e o relógio da garantia
+       recomeça hoje (como no fecho pelo campo antigo, aplicarAsMissoes).
+       `globalEncerrado` leva o arco que acabou: o App vira o arco da história
+       (oFimDoEventoGlobal) e manda o envelope `globalFim`. */
+    const r = rolarGatilho(`Desfecho de "${e.global.nome}"`, A.desfecho, { sorte });
+    out.bastidor.push(r);
+    if (r.passou) { out.globalEncerrado = e.global; e.global = null; e.semGlobalDesde = dia; }
   }
 
   out.eventos = e;

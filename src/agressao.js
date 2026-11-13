@@ -26,9 +26,9 @@
 
    Quando o alvo não está registrado — a criatura que a IA acabou de
    descrever e o sistema nunca viu —, ele NÃO abre nada e devolve o turno
-   com uma ordem em vez de uma sugestão: abra o combate, ou diga que não
-   há quem atacar. O que ela não pode mais é narrar a luta se resolvendo
-   sozinha.
+   com o que dizer: quem ele tem à frente, ou que não há quem atacar (NE4,
+   13/11: a IA já não abre a luta — ALVO_PELO_SISTEMA, abaixo). O que ela
+   não pode é narrar a luta se resolvendo sozinha.
 
    E o grupo do herói fica de fora: virar um companheiro em inimigo mexe
    em ficha, vínculo e elenco, e um caminho que faz isso em silêncio, a
@@ -1001,6 +1001,64 @@ export function alvoDaAgressao(texto, opcoes) {
 }
 
 /* ============================================================
+   O ALVO PELO SISTEMA (13/11, Fase NE · NE4 — «nenhuma IA escreve estado»)
+
+   Até aqui, quando o golpe não achava alvo, o envelope mandava o Narrador
+   DECIDIR: ou declarava `combate_iniciar` com um alvo à escolha dele, ou
+   dizia que não havia ninguém. A luta abria pela palavra da IA. No modo
+   `boca` (as portas fechadas) essa porta não existe, e o golpe calava.
+
+   O sistema faz as duas metades sozinho, com o que ELE sabe da cena:
+     · a criatura que ele próprio pôs à vista — a do trecho da estrada, a da
+       sala, a do encontro (`conhecidas`, que o App já monta) — é alvo
+       quando a oração do golpe a nomeia (pela raiz: «o rato» é o Rato
+       Gigante) ou, por pronome, quando é a única à vista. Antes ela só
+       servia para dar nome e ameaça ao bicho que a PROSA mostrara; sem
+       prosa, ficava muda;
+     · sem alvo nenhum, o veredicto leva QUEM está aqui pelo registo
+       (`candidatos`: os presentes fora do grupo, as criaturas à vista), e o
+       envelope diz ao Narrador o que dizer — a cena pergunta contra quem é,
+       ou diz que não há ninguém. Ele já não decide nada.
+   A trava da casa fica inteira: nada nasce da frase, e a pessoa sozinha na
+   cena continua a não ser o «lo» por eliminação (teste-peneira-da-agressao).
+   `letras`: o tamanho mínimo da palavra do nome que conta; `candidatos`:
+   quantos nomes o envelope diz, no máximo. */
+export const ALVO_PELO_SISTEMA = Object.freeze({
+  letras: 4,
+  candidatos: 3,
+  porqueDoPeso: "a criatura que o sistema pôs à vista tem a ameaça que ele lhe deu",
+  porque: "eu declarei o primeiro golpe contra a criatura que o sistema pôs à minha frente",
+});
+
+/* a criatura à vista que a frase aponta: pelo nome, ou a única por pronome */
+export function criaturaAVistaDoGolpe(texto, conhecidas, porPronome = false) {
+  const lista = (Array.isArray(conhecidas) ? conhecidas : []).filter((c) => c && typeof c === "object" && String(c.nome || "").trim().length >= 3);
+  if (!lista.length) return null;
+  let doGolpe = "";
+  try { doGolpe = oracoesDoGolpe(texto).join(" . ") || String(texto || ""); } catch { doGolpe = String(texto || ""); }
+  const raizes = new Set(palavrasDe(doGolpe).filter((w) => w.length >= ALVO_PELO_SISTEMA.letras).map(raizDoBicho));
+  const forma = (c) => ({ nome: String(c.nome).trim(), ameaca: String(c.ameaca || CRIATURA_NA_PROSA.ameaca), criatura: true });
+  const pelaRaiz = lista.find((c) => palavrasDe(c.nome).some((w) => w.length >= ALVO_PELO_SISTEMA.letras && raizes.has(raizDoBicho(w))));
+  if (pelaRaiz) return forma(pelaRaiz);
+  if (!porPronome) return null;
+  const nomes = [...new Set(lista.map((c) => norm(c.nome).trim()))];
+  return nomes.length === 1 ? forma(lista[0]) : null;
+}
+
+/* quem o sistema sabe à frente do herói, para o envelope sem alvo: os
+   presentes fora do grupo e de quem anda com ele, e as criaturas à vista */
+function quemEstaAqui(o) {
+  const doGrupo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => norm(g && g.nome)).filter(Boolean));
+  const comigo = new Set((Array.isArray(o.comigo) ? o.comigo : []).map((x) => norm(x && typeof x === "object" ? x.nome : x)).filter(Boolean));
+  const nomes = [
+    ...(Array.isArray(o.presentes) ? o.presentes : []).map((n) => String((n && n.nome) || "").trim()).filter((n) => n.length >= 3 && !doGrupo.has(norm(n)) && !comigo.has(norm(n))),
+    ...(Array.isArray(o.conhecidas) ? o.conhecidas : []).map((c) => String((c && c.nome) || "").trim()).filter((n) => n.length >= 3),
+  ];
+  const vistos = new Set();
+  return nomes.filter((n) => (vistos.has(norm(n)) ? false : (vistos.add(norm(n)), true))).slice(0, ALVO_PELO_SISTEMA.candidatos);
+}
+
+/* ============================================================
    O VEREDICTO
    ============================================================ */
 export function lerAgressao(texto, opcoes) {
@@ -1016,10 +1074,20 @@ export function lerAgressao(texto, opcoes) {
   if (!alvo) {
     let porPronome = false;
     try { porPronome = PRONOME_DO_ALVO.rx.test(soODeclarado(texto, NAO_E_AGRESSAO)); } catch { porPronome = false; }
+    /* NE4: a criatura que o SISTEMA pôs à vista (ALVO_PELO_SISTEMA) */
+    const aVista = criaturaAVistaDoGolpe(texto, o.conhecidas, porPronome);
+    if (aVista) {
+      return {
+        tipo: "agressao", nome: aVista.nome, papel: "", criatura: true, deOnde: "sistema",
+        ameaca: aVista.ameaca, porqueDoPeso: ALVO_PELO_SISTEMA.porqueDoPeso,
+        porque: ALVO_PELO_SISTEMA.porque,
+      };
+    }
+    const candidatos = quemEstaAqui({ presentes, grupo, comigo: o.comigo, conhecidas: o.conhecidas });
     return porPronome
-      ? { tipo: "semAlvoConhecido", porPronome: true,
+      ? { tipo: "semAlvoConhecido", porPronome: true, candidatos,
           porque: "eu declarei um ataque contra alguém que só nomeei por pronome, e o sistema não sabe com certeza quem é" }
-      : { tipo: "semAlvoConhecido",
+      : { tipo: "semAlvoConhecido", candidatos,
           porque: "eu declarei um ataque e o sistema não tem, no registro deste lugar, ninguém com esse nome" };
   }
   if (alvo.doGrupo) {
@@ -1076,16 +1144,21 @@ REGRA DESTE ENVELOPE (obrigatória): narre o instante da investida em uma ou dua
 NÃO decida se o golpe acertou, NÃO diga quanto doeu e NÃO faça ${a.nome} recuar, fugir, se render ou "desviar por pouco": o dado resolve isso e ainda não foi rolado. E não desfaça o que eu fiz — não há versão desta cena em que eu não ataquei.`;
 }
 
+/* NE5 (13/11): o envelope já não pede ao Narrador que abra a luta — o
+   sistema decidiu (ALVO_PELO_SISTEMA), e ele só diz: a cena pergunta contra
+   quem é, pelos nomes que o sistema tem à frente, ou diz que não há ninguém */
 export function envelopeSemAlvo(a, oQueEuDisse = "") {
   if (!a || a.tipo !== "semAlvoConhecido") return "";
   const porque = a.porPronome
     ? "não sabe com certeza de quem eu falo — não citei nome, e há mais de uma pessoa a quem o pronome pode apontar, ou nenhuma no registro"
-    : "não tem, no registro deste lugar, ninguém com o nome que eu citei — quem está aí pode ser uma criatura que só você descreveu";
+    : "não tem, no registro deste lugar, ninguém com o nome que eu citei";
+  const quem = (Array.isArray(a.candidatos) ? a.candidatos : []).filter((n) => typeof n === "string" && n.trim()).slice(0, ALVO_PELO_SISTEMA.candidatos);
+  const diga = quem.length
+    ? `À minha frente, pelo registro, estão: ${quem.join(", ")}. Faça a cena perguntar contra quem é o golpe — o gesto que hesita entre eles — e devolva a palavra para mim.`
+    : "NÃO há alvo aqui: diga isso na ficção, curto (\"não há ninguém para atacar\"), e devolva a palavra para mim.";
   return `[ATAQUE DECLARADO — SEM ALVO NO REGISTRO] Eu disse: "${String(oQueEuDisse).slice(0, 160)}". Isso é uma declaração de violência, e não uma pergunta. O sistema não abriu o combate porque ${porque}.
-REGRA DESTE ENVELOPE (obrigatória): decida UMA das duas coisas, e só uma:
-1) HÁ alvo aqui — então DECLARE em mudancas "combate_iniciar": [{"nome":"…","ameaca":"comum"}] com ele agora, nesta mesma resposta, e narre só a investida. Não resolva a luta.
-2) NÃO há alvo aqui — então diga isso na ficção, curto ("não há ninguém para atacar"), e devolva a palavra para mim.
-O que você NÃO pode fazer é narrar a briga acontecendo sem abrir o combate: sem o painel aberto, nada do que você contar tem número atrás, e eu fico lendo uma luta que não está acontecendo.`;
+${diga}
+NÃO narre a briga acontecendo: sem o painel aberto, nada do que você contar tem número atrás.`;
 }
 
 /* ============================================================

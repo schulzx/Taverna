@@ -305,8 +305,11 @@ sec("10 · a viagem: os casos percorrem o que o texto decide, e a prova morde");
   const V = HOJE.viagemTrecho.map((f) => f.texto);
   const M = (b) => HOJE[b].map((f) => f.texto[0][0]);
   const conta = (xs, s) => xs.filter((x) => x.includes(s)).length;
-  t(`o trecho até à boca, o último (${conta(V, "Este trecho termina diante da entrada da Cripta")}) e não (${conta(V, "Estou a caminho da entrada")}); até à cidade, o último (${conta(V, "Este trecho termina em Coroa Alta")}) e não (${conta(V, "Estou a caminho de Coroa Alta")}); sem destino na jornada, com o dito (${conta(V, "Estou a caminho de Agulha de Sal — aproxime-me")}) e sem (${conta(V, "Se eu estiver a caminho")})`,
-    ["Este trecho termina diante da entrada", "Estou a caminho da entrada", "Este trecho termina em Coroa Alta", "Estou a caminho de Coroa Alta", "Estou a caminho de Agulha de Sal — aproxime-me", "Se eu estiver a caminho"].every((s) => conta(V, s) >= 20)
+  /* MOVIDA em 13/11 (NE5, «o pedido não pede»): o trecho sem destino dizia «Se eu estiver a caminho…»
+     e pedia jornada_meio e cidade_atual; o conserto declarado (gerar-envelopes-dourado.mjs) troca a
+     frase — a chegada sem destino é do sistema. A intenção que fica: os casos percorrem os dois ramos. */
+  t(`o trecho até à boca, o último (${conta(V, "Este trecho termina diante da entrada da Cripta")}) e não (${conta(V, "Estou a caminho da entrada")}); até à cidade, o último (${conta(V, "Este trecho termina em Coroa Alta")}) e não (${conta(V, "Estou a caminho de Coroa Alta")}); sem destino na jornada, com o dito (${conta(V, "Estou a caminho de Agulha de Sal — aproxime-me")}) e sem (${conta(V, "Esta estrada não tem destino marcado")})`,
+    ["Este trecho termina diante da entrada", "Estou a caminho da entrada", "Este trecho termina em Coroa Alta", "Estou a caminho de Coroa Alta", "Estou a caminho de Agulha de Sal — aproxime-me", "Esta estrada não tem destino marcado"].every((s) => conta(V, s) >= 20)
     && conta(V, "entrada do Poço das Celas") >= 10 && conta(V, "entrada da Cripta do Corvo") >= 10);
   t(`com meio (${conta(V, "(seguimos de ")}) e sem; as notas do fim na ordem`, conta(V, "(seguimos de ") >= 100 && conta(V, "(seguimos de ") < N_CASOS
     && V.every((x) => { const p = ["[MARCHA]", "[ERMOS]", "[AMBULANTE]", "[TEMPO +1h]"].map((s) => x.indexOf(s)).filter((n) => n >= 0); return p.every((n, j) => !j || n > p[j - 1]); }));
@@ -505,7 +508,9 @@ sec("15 · o mundo que anda: os casos percorrem o que o texto decide, e a prova 
      declarado contrai o artigo do lugar (", forte no Vau.") */
   t(`a divindade com o lugar forte (${conta(V, ", forte no Vau.")}) e sem, de cada grau`, conta(V, ", forte no Vau.") >= 80 && V.filter((x) => !/, forte (em|no|na|nos|nas) /.test(x)).length >= 170 && [3, 7, 12, 18].every((g) => conta(V, "— GD " + g + " (") >= 60));
   t("a quest de cada fase do arco, e o fio local com o dia em que expira", ["abertura", "meio", "climax"].every((f) => conta(N("mundoQuest"), "[QUEST GERADA PELO SISTEMA — fase \"" + f + "\" do arco]") >= 90) && conta(N("mundoLocalNovo"), "até o dia 11, o fio") >= 25);
-  t("as onze formas estão na tabela do mundo", Object.keys(ENVELOPES_DO_MUNDO).length === 11 && ["festival", "rumor", "rumorDeLonge", "eventoDeReino", "globalNovo", "globalAvancou", "localNovo", "localExpirado", "questGerada", "divindadeSeRevela", "eventoDivino"].every((q) => Object.hasOwn(ENVELOPES_DO_MUNDO, q)));
+  /* MOVIDA em 13/11 (NE4): a tabela do mundo ganhou a 12.ª forma, `globalFim` — o desfecho do arco maior
+     que o sistema decide na última etapa (geradores.js, ALVOS_DO_DESCANSO.desfecho). As onze de antes ficam. */
+  t("as doze formas estão na tabela do mundo", Object.keys(ENVELOPES_DO_MUNDO).length === 12 && ["festival", "rumor", "rumorDeLonge", "eventoDeReino", "globalNovo", "globalAvancou", "globalFim", "localNovo", "localExpirado", "questGerada", "divindadeSeRevela", "eventoDivino"].every((q) => Object.hasOwn(ENVELOPES_DO_MUNDO, q)));
   const E = oEnvelopeDoMundo;
   const mordidas = [
     ["mundoFestival", "o festival com a descrição no lugar do nome", { oEnvelopeDoMundo: (q, d) => E(q, { ...d, nome: d.descricao }) }],
@@ -792,7 +797,9 @@ sec("23 · a gente e a história: os casos percorrem o que o texto decide, e a p
   const M = N("genteMissaoPerdida");
   t("a missão perdida diz o título entre aspas e o motivo", conta(M, "\"O selo de Vau\" fracassou: o refém morreu.") >= 60 && conta(M, "\"Resgatar a filha do moleiro\" fracassou: o prazo venceu.") >= 60 && M.every((x) => x.includes("nao ofereca uma segunda chance")));
   const F = N("genteRelacaoFormal");
-  t("a relação formal em maiúscula, e o cônjuge só quando é (" + conta(F, " — CÔNJUGE: somos casados") + ")", conta(F, "minha relação com Bruna Voss é CÔNJUGE — CÔNJUGE: somos casados") >= 40 && conta(F, " é ALIADA. Registre no cânone") >= 80 && conta(F, " é RIVAL. Registre no cânone") >= 80 && conta(F, " — CÔNJUGE: somos casados") <= 100);
+  /* MOVIDA em 13/11 (NE5): «Registre no cânone» saiu — a relação já está no registo quando o envelope
+     sai (o conserto declarado no gerador do dourado). A intenção que fica: o rótulo e o cônjuge. */
+  t("a relação formal em maiúscula, e o cônjuge só quando é (" + conta(F, " — CÔNJUGE: somos casados") + ")", conta(F, "minha relação com Bruna Voss é CÔNJUGE — CÔNJUGE: somos casados") >= 40 && conta(F, " é ALIADA. O sistema já a guardou") >= 80 && conta(F, " é RIVAL. O sistema já a guardou") >= 80 && conta(F, " — CÔNJUGE: somos casados") <= 100);
   const R = N("genteRelacaoMudada");
   t("a relação mudada é a cauda do env, numa linha abaixo, com o rótulo em maiúscula", R.every((x) => /^\[PERÍCIA — RESOLVIDA PELO SISTEMA\] [^\n]+\n\[RELAÇÃO — MUDADA PELO SISTEMA\] /.test(x)) && conta(R, "o taberneiro agora me vê como DESCONFIADO.") >= 30 && new Set(R.map((x) => x.match(/me vê como ([A-Z]+)\./)[1])).size === 3);
   const A = N("genteNovoArco");
