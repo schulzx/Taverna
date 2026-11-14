@@ -409,6 +409,26 @@ function semAOrigem(t) {
   return s;
 }
 
+/* ---------------- O SÍTIO DE AGORA NÃO É DESTINO (13/11, a 20.ª sessão, T13) ----------------
+   «procuro com cuidado, laje por laje e prateleira por prateleira, qualquer
+   papel ou objeto escondido nesta sala», dentro do Arquivo Dourado, virou o
+   cartão «Ir até a sala de leitura · 1 min»: o «procuro» é verbo de ir
+   (RX_VOU), e «sala» casou o cômodo. O cartão do passo tomou o lugar do
+   dado — e, com a busca dali já feita, também do «já revistaste» —, e a
+   busca perdeu-se. «Nesta sala», «deste quarto», «aqui nesta cave» dizem o
+   sítio ONDE o herói já está: o demonstrativo de perto aponta para aqui, e
+   aqui não é para onde se vai. O que ele nomeia sai da disputa, com o
+   mesmo tamanho, como a origem (semAOrigem): «a forja desta cidade»
+   continua a ir à forja — sai só «desta cidade».
+   `rx`: o demonstrativo, e o nome que ele aponta (uma palavra, e o «de X»
+   que a complete: «nesta sala de leitura»). */
+export const SITIO_DE_AGORA = Object.freeze({
+  rx: /\b(?:aqui\s+)?(?:nest[ae]s?|dest[ae]s?|nisto|nisso)\s+[a-z0-9]+(?:\s+(?:de|do|da|dos|das)\s+[a-z0-9]+)?/g,
+});
+function semOSitioDeAgora(t) {
+  return String(t || "").replace(new RegExp(SITIO_DE_AGORA.rx.source, "g"), (m) => m.replace(/[^\n]/g, " "));
+}
+
 /* A palavra do tipo `tipo` aparece, no texto CRU (com as maiúsculas), como
    cabeça de um nome próprio? Sem acento, com caixa. */
 export const NOME_PROPRIO_DO_SITIO = { ligas: ["da", "do", "de", "das", "dos"] };
@@ -500,8 +520,9 @@ export function lugarPedido(texto, lugares = []) {
   const t = soODeclarado(texto, NAO_E_IDA);
   if (!t.trim()) return null;
   const sai = SAIDA_DOS_MUROS.rx.test(t);
-  /* MM15: a origem sai da disputa (ver `ORIGEM_DO_PASSO`, acima) */
-  const alvo = semAOrigem(t);
+  /* MM15: a origem sai da disputa (ver `ORIGEM_DO_PASSO`, acima); 20.ª
+     sessão: e o sítio de agora também (`SITIO_DE_AGORA`) */
+  const alvo = semOSitioDeAgora(semAOrigem(t));
   const vai = RX_VOU.test(alvo) || RX_ATE.test(alvo) || VOLTAR_A.rx.test(alvo) || (alvo !== t && rumoA(alvo, (Array.isArray(lugares) ? lugares : []).map((l) => l && l.nome)));
   if (!sai && !vai) return null;
   /* MM14: na frase de saída só concorre o que fica lá fora */

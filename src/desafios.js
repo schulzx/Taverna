@@ -477,7 +477,11 @@ export const DESAFIOS = [
     /* 30/09 (MM13): `revist` — "revisto a taverna de cima a baixo" é o verbo
        mais seco que a língua tem para isto, e não casava nada. */
     /* S19 (12/11, defeito 3): «apalpo a fechadura atrás de alguma armadilha, agulha ou arame» é procurar a armadilha — sem isto a frase virou «Ir até as celas» e o resto perdeu-se. A alternativa nova está no fim da lista. */
-    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos|(dou|deito|lanco) uma vista de olhos|soa(m)? oco|rente ao ch[aã]o|(apalpo|tateio|examino|reviso|passo os dedos)\b[^.!?]{0,40}\b(atras de|a procura de|em busca de) (alguma |algum |uma |um |qualquer )?(armadilhas?|agulhas?|arames?|mecanismos?|gatilhos?))/,
+    rx: /\b(vasculh|revir|revist|remexo|procur|busco|dou uma olhada|olho em volta com|examino o|examino a|examino esse|reviro|fu[cç]o|inspeciono|presto (bastante )?aten[cç][aã]o|reparo (n|em)|olho com aten[cç][aã]o|dou busca|verific|confiro|checo|esquadrinh|passo os olhos|dou uma vasculhada|dou uma geral|reviso o|corro os olhos|(dou|deito|lanco) uma vista de olhos|soa(m)? oco|rente ao ch[aã]o|(apalpo|tateio|examino|reviso|passo os dedos)\b[^.!?]{0,40}\b(atras de|a procura de|em busca de) (alguma |algum |uma |um |qualquer )?(armadilhas?|agulhas?|arames?|mecanismos?|gatilhos?)|(tateio|apalpo|remexo|esgaravato)\b[^.!?]{0,50}\b(em volta|ao redor|em redor|a volta|a minha volta|a nossa volta))/,
+    /* 20.ª sessão (T3): «tateio o cascalho e a lama em volta… Pego o que achar»
+       não deu dado — tatear o chão à volta é vasculhá-lo às cegas, e o «pego»
+       que vem depois é o que se faz com o achado, não o gesto. A alternativa
+       nova é a última da lista acima. */
     /* EM1 (o corpus da mesa): «dou uma vista de olhos» é o «dou uma olhada»
        de cá do mar; bater na parede «a ver se soa oco» e passar a tocha
        «rente ao chão» são revirar o lugar sem dizer o verbo. */
@@ -617,7 +621,10 @@ export const DESAFIOS = [
        veredito para o facto do sucesso (MC4) achar a ficha certa — o lugar
        na base, a pessoa no livro, o bicho no bestiário. */
     id: "lembrar",
-    rx: /\b(o que (eu )?(sei|lembro|recordo|ouvi( dizer| falar)?) (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?)\b|j[aá] ouvi falar (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|em|no|na|nos|nas)\b)/,
+    /* 20.ª sessão (T38): «O que é que eu sei desta Muralha Quebrada de Prata
+       Podre?» não deu Saberes — o «é que» da pergunta falada partia a forma.
+       Entra como opcional, ao lado do «eu». */
+    rx: /\b(o que (e que )?(eu )?(sei|lembro|recordo|ouvi( dizer| falar)?) (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?)\b|j[aá] ouvi falar (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|em|no|na|nos|nas)\b)/,
     pericia: "saberes", alvo: "lembranca", minutos: 0, barulho: false,
     rotulo: "lembrar o que se sabe", dcPadrao: DC("comum"), dispensavel: true, lePergunta: true,
     valeEmCombate: true,
@@ -1133,6 +1140,10 @@ export const DESAFIOS = [
       /\b(de quem (é|e) (esse|este|aquele) (bras[aã]o|estandarte|s[ií]mbolo|emblema)|reconhe[cç]o (o|esse|este) (bras[aã]o|estandarte|emblema|sotaque|dialeto)|que casa (é|e)|de que reino|que ordem (é|e) essa)/.source,
       /* CS (11/11, o corpus das situações): reconhecer a libré, identificar a bandeira, a que família pertence o sinete */
       "\\b(reconhe[cç]\\w*|identific\\w*) (o|a|os|as|esse|essa|este|esta|aquele|aquela) " + HERALDICA,
+      /* 20.ª sessão (T9): «examino o sinete contra a luz. Conheço este selo?»
+         não rolou nada, e a resposta veio da imaginação — «conheço» é o
+         reconhecer dito na primeira pessoa, à pergunta */
+      "\\b(conhe[cç]o|ja vi) (o|a|os|as|esse|essa|este|esta|aquele|aquela) " + HERALDICA,
       HERALDICA + "\\b[^.!?]{0,50}\\b(de quem|de que (casa|familia|reino|ordem|guilda|cla))\\b|\\b(de quem|de que (casa|familia|reino|ordem|guilda|cla))\\b[^.!?]{0,40}\\b" + HERALDICA,
       /\b(a que|de que|qual) (casa|familia|ordem|guilda|cla|reino) (nobre )?(pertence|e|sao|vem)\b|\bque casa nobre (e|era|sera)\b/.source,
     ].join("|")),
@@ -1810,6 +1821,37 @@ export function bonusDoQueMudou(mudou) {
    feita — o porquê está em lerAcao, junto de onde elas entram. */
 const TRAVAS_DO_CATALOGO = NAO_E_DECLARACAO.filter((n) => n && n.id !== "fraseFeita");
 
+/* ---------------- A NEGAÇÃO COLADA AO GESTO (13/11, a 20.ª sessão, defeito 3) ----------------
+   «Não arrombo porta de viúva» ofereceu Arrombamento 16. A peneira já tira
+   a oração que ABRE pela negação («Não arrombo…», a trava `negacao`), mas
+   não a negação que chega a meio: a resposta antes dela («Não, não
+   arrombo…» — o «Não,» de resposta é de propósito deixado passar pela
+   trava) e a fala que o herói diz a alguém («— Não arrombo porta de viúva
+   — digo à Fenna», «Digo à Fenna: não arrombo…»). Em todos o verbo que o
+   catálogo casou vem logo depois de um «não», e o herói disse que NÃO o
+   faz. O padrão é o de `detectarEntradaEmMasmorra` (rastro.js): só o que o
+   herói declarou abre a porta.
+   `antes`: o que, imediatamente antes do verbo casado, o nega — a
+   partícula, com um pronome átono ou o auxiliar da intenção pelo meio
+   («não o arrombo», «não vou arrombar», «nunca te minto»).
+   Um gesto só fica negado quando TODAS as vezes que ele casa na frase vêm
+   negadas: «não arrombo a porta, arrombo a janela» continua a rolar. */
+export const NEGACAO_DO_GESTO = Object.freeze({
+  antes: /(?:^|[^a-z0-9])(?:nao|nunca|jamais|nem)\s+(?:(?:me|te|se|lhe|lhes|o|a|os|as|vou|vamos|irei|quero|pretendo|ouso|tento|devo|posso|consigo)\s+)?$/,
+});
+function gestoNegado(rx, texto) {
+  const t = String(texto || "");
+  if (!(rx instanceof RegExp)) return false;
+  const todas = new RegExp(rx.source, rx.flags.includes("g") ? rx.flags : rx.flags + "g");
+  let m, viu = false;
+  while ((m = todas.exec(t))) {
+    viu = true;
+    if (!NEGACAO_DO_GESTO.antes.test(t.slice(0, m.index))) return false;
+    if (m[0] === "") todas.lastIndex++;
+  }
+  return viu;
+}
+
 /* ---------------- ESTADO NÃO É AÇÃO (13/10, MM11 · 10.ª sessão, M65) ----------------
    "pois estou desarmada", "estou cansado", "sou cuidadosa", "continuo
    escondida": o herói diz COMO está, não o que faz. Nenhum teste nasce
@@ -2003,7 +2045,9 @@ export function lerAcao(texto, ctx = {}) {
      heroína diz em voz alta), e a peneira fica com o `naoSeCom` do desafio,
      que devolve a fala e tira o resto. Não é `lePergunta`: ali a pergunta é
      o gesto; aqui ela é de graça. */
-  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta || x.leFala ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)) && temOObjeto(x.precisaDe, ctx));
+  /* 20.ª sessão: e o gesto que casou não pode vir negado (NEGACAO_DO_GESTO) */
+  let d = DESAFIOS.find((x) => x.rx.test(x.lePergunta || x.leFala ? inteira : declarada) && !(x.naoSe && x.naoSe.test(inteira)) && !(x.naoSeCom && x.naoSeCom(daAcao, ctx)) && temOObjeto(x.precisaDe, ctx)
+    && !gestoNegado(x.rx, x.lePergunta || x.leFala ? inteira : declarada));
   /* MM4: o que o catálogo não conhece, a família do verbo conhece. Vem
      DEPOIS do pedido de teste (pedir continua não sendo declarar) e ANTES do
      "sem dado" — "pego a cadeira e arremesso" tem um verbo de usar o que se

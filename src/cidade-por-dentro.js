@@ -476,8 +476,20 @@ export const PERGUNTAS_DA_CIDADE = [
   { id: "pouso", rx: /\b(diaria|pernoite|quartos?|hospedage|estalage|pousada|estabul|dormir aqui)/ },
   { id: "lingua", rx: /\b(lingua|idioma|dialeto|sotaque|traduz|mesma fala|falam (a|o|minha))/ },
   { id: "magia", rx: /\b(magia|arcan|mago|maga|feiti|academia|conjur)/ },
-  { id: "cura", rx: /\b(curandeir|quem cura|curar|medico|templo|sacerdot)/ },
-  { id: "lei", rx: /\b(guarda|milicia|xerife|autoridade|lei\b|prender|preso)/ },
+  /* 20.ª sessão (T11, T26): «Quem do templo esteve neste arquivo?» e «Procuro
+     o templo desta aldeia» levaram à pauta «quem cura», e o Narrador
+     respondeu com as casas de cura. O templo DITO é um lugar, ou gente de lá
+     — não é pedir cura. Pedir cura é dizer a cura: curar, quem cura, o
+     curandeiro, o médico, tratar a ferida. */
+  { id: "cura", rx: /\b(curandeir|quem cura|curar|cure[ms]?\b|curas?\b|medico|sarar|trat(ar|a|e|em) (d[aeo]s? )?(minhas? |as |a |esta |essa )?(feridas?|doen))/ },
+  /* 20.ª sessão (T18, T19): «O que é que o Arquivo Dourado guarda?» levou
+     «quem guarda a lei», e o Narrador respondeu com a milícia. «Guarda»
+     depois de um nome é o VERBO (o arquivo guarda papéis); a guarda da
+     cidade é o NOME, e o nome vem determinado: «a guarda», «o guarda», «há
+     guardas», «dos guardas», «nenhum guarda». Colado por UM espaço: o
+     nome próprio sai da frase em branco (assuntoDaFrase), e «o Arquivo
+     guarda» não pode virar «o guarda» pelo buraco que ele deixa. */
+  { id: "lei", rx: /(?:^|[^a-z0-9])(?:a|o|as|os|da|do|das|dos|na|no|nas|nos|pela|pelo|pelas|pelos|ao|aos|um|uma|uns|umas|sem|com|de|ha|tem|qual|quais|quantos?|quantas?|essa|esse|essas|esses|esta|este|estas|estes|aquela|aquele|nenhum|nenhuma|algum|alguma|alguns|algumas|outro|outra|outros|outras) guardas?(?![a-z0-9-])|\b(milicia|xerife|autoridade|lei\b|prender|preso)/ },
   /* 12.ª sessão (T5): "O que ronda a adega?" levou à pauta a ronda da guarda
      da cidade, e o Mestre respondeu com o Corpo de Paz — a pergunta direta
      ficou sem resposta. "Ronda" ali é o verbo (o que anda à volta de),
