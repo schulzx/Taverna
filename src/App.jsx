@@ -25777,7 +25777,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          adjudicarAcao move primeiro e julga o teste onde o herói chegou. */
       let oPassoCede = false;
       if (alvo && alvo.onde === "comodo") {
-        try { const vT = veredictoDaAcao(acao); oPassoCede = !!(vT && vT.tipo === "teste"); } catch (e) { calou("a proposta: o passo cede ao teste", e); }
+        /* S20 · T13: também cede ao «já tentaste» e ao «já revistaste» — todo veredito com chave é a resposta do sistema, e a proposta do passo escondia-a. */
+        try { const vT = veredictoDaAcao(acao); oPassoCede = !!(vT && (vT.tipo === "teste" || (vT.chave && (vT.tipo === "jaTentou" || vT.tipo === "vasculhado")))); } catch (e) { calou("a proposta: o passo cede ao teste", e); }
       }
       const passo = alvo && !oPassoCede ? oPassoNaCidade({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current, mapa: mapaRef.current }, alvo) : null;
       if (passo) L.passo = { nome: alvo.nome, onde: alvo.onde, minutos: passo.minutos, cidade: cidadeAtualRef.current };

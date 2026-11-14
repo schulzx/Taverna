@@ -209,8 +209,11 @@ sec("S19. A FIAÇÃO DA 19.ª SESSÃO (12/11/2026, mente/sessao-19.md)");
   t("e é o contexto que escolhe a rua: com cidade, «na rua»; sem, outra variante", !!naRua && !!noErmo && /na rua/.test(naRua.aviso) && !/na rua/.test(noErmo.aviso), `${naRua && naRua.aviso} | ${noErmo && noErmo.aviso}`);
   /* T17: o passo para um cómodo do prédio cedia ao teste da mesma frase */
   const lf = corpo("leituraDaFrase");
-  t("a proposta do passo cede quando o alvo é um cómodo e a frase tem teste (T17)",
-    /if \(alvo && alvo\.onde === "comodo"\) \{[\s\S]{0,200}veredictoDaAcao\(acao\);\s*oPassoCede = !!\(vT && vT\.tipo === "teste"\)/.test(lf)
+  /* Movida a 13/11 (S20 · T13): a régua alargou — o passo cede ao teste E ao
+     «já tentaste»/«já revistaste» com chave, que também são a resposta do
+     sistema. A intenção de T17 continua: com teste na frase, o passo não se propõe. */
+  t("a proposta do passo cede quando o alvo é um cómodo e a frase tem teste (T17) ou veredito com chave (S20)",
+    /if \(alvo && alvo\.onde === "comodo"\) \{[\s\S]{0,400}veredictoDaAcao\(acao\);\s*oPassoCede = !!\(vT && \(vT\.tipo === "teste" \|\| \(vT\.chave && \(vT\.tipo === "jaTentou" \|\| vT\.tipo === "vasculhado"\)\)\)\)/.test(lf)
     && /const passo = alvo && !oPassoCede \? oPassoNaCidade\(/.test(lf));
   t("e quem move é o passo antes do ato, em adjudicarAcao, antes de julgar o teste",
     /const passo = alvoLocalPedido\(acao\);\s*if \(passo && veredictoDaAcao\(acao\)\) moverParaLocal\(passo\);/.test(corpo("adjudicarAcao")));
