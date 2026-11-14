@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 14/11 · v9.646 + v9.647 · o quadro da quest entra no jogo (QQ: Q1–Q4b) · commits 8469e9a, 2aab457, f1274ff, 64f5126, 9910e68, 82ae3b2, 5b64985 → 1cd3e2f; 28cd0cd, f033f13, f211d9f, 2e9fb91 → 17f1f99
+
+A pessoa aprovou o quadro (o plano em `mente/plano-quadro.md`, a forma em `mente/formas.md` §QQ, o Figma na página `386:2`). Mãos: `backend` (Q1, Q2, Q2b, os campos da carta, os acertos), `desenho` (Q4 no Figma, fazendo também o papel do `jogo` — só havia uma mão livre), `aprendiz` (a peça e o Diário/bandeja), `oficial` (Q3, com o bastão); o coordenador ligou o pagamento a menos e as cartas no Diário (bastão duas vezes, devolvido cada uma).
+
+- **o motor:** cartas das condições das etapas, ≥2 caminhos (`CAMINHOS_DA_CARTA`); a essencial vira sempre — a falha com preço (`PRECO_DA_FALHA`: tarde, a metade, visto, pago, partido), que faz o que diz (`aplicarPrecoDoQuadro`); as extras só o sucesso vira; o juiz do teste (`aCartaDoTeste`: desafio + sítio + pessoa em cena; o caminho de qualquer sítio só se a frase nomear a coisa); pagar a quem sabe vira sem dado, pagar a menos vira incompleta (`PAGAR_A_MENOS`). Campo aditivo `estado.quadro`.
+- **a tela:** couro de costas pela forma, pergaminho virado, o carimbo, os pavios da que se ganha; o sinal «PISTAS 2 de 4» na Barra do Mestre; a gaveta; a carta que vira (≤ 4,5 s, salto por toque, saída no reduce); o leque na bandeja; no Diário as pistas que são cartas são as cartas.
+- **a pauta:** secção própria, prio 2,486 (linha) e 2,487 (o veto, `vetoDoCaso`), medida em 500 cenas: nenhuma secção existente perde linha; a linha entra em 260/500 fora da luta. Subir a prio é trocar o QUEM É pelo caso.
+- **decisões:** o PAGO usa a moeda da cinta (uma ação, uma forma); «caminho» fica nas duas frases decididas; o sinal só conta extras quando não há essencial à vista (§QQ 3); pagar a menos não vira a extra.
+- **prova limpa:** 1cd3e2f 514/515 (a régua do poder parou no relógio do rodar-tudo com três suítes em paralelo; sozinha 243 ok) — subiu; 1367cae 513/515 (duas asserções que liam o Diário à letra) → movidas → 17f1f99 515/515, 27/27 — subiu. O bump ficou um commit abaixo do topo nesta subida.
+- **o que ficou:** ninguém viu uma essencial virar ao vivo (só Node e um save com extra); a Q6 é a sessão de mistério que assina o momento e as medidas; linhas mistas do Diário mostram a pista duas vezes (39 de 426 estados); a quest do coração mostra a linha e não a carta; no telemóvel as cartas do Diário empilham (o `desenho` decide o sítio); a proposta ambiciosa do desenho — ligar duas cartas com o dedo, aceite só se for verdade no livro.
+
+---
 ## 14/11 · v9.645 · a 21.ª sessão, a pessoa do passo em cena, e o motor do quadro (Q1) · commits 8469e9a, fabb164 + c6be650
 
 A pessoa, sobre o quadro do mistério: perguntou se a falha no dado prendia a quest — prendia, na proposta da 19.ª. A versão aprovada («Ok, pode seguir»): a carta essencial vira sempre (a falha vira-a com preço), as extras só o sucesso vira, só o sistema vira cartas (GUMSHOE, de Robin D. Laws; a regra das três pistas, de Justin Alexander). Ordem acordada: a 21.ª sessão primeiro, o quadro depois, para todas as quests.
