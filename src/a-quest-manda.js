@@ -191,14 +191,20 @@ export function oPassoDaQuest(ficha, registo, contexto) {
            mora (`local`, esqueleto.js) e a cidade — é por eles que a pessoa
            do passo entra em cena (a-pessoa-do-passo.js) */
         const pp = tipo === "pessoa" ? (obj(papeis[a0.papel]) || {}) : {};
+        /* …e o que a quest diz dela (a 21.ª sessão): o rótulo do papel em
+           frase de mundo («quem tem um filho naquela barca») */
+        const rot = tipo === "pessoa" && v.rotulos && typeof v.rotulos[a0.papel] === "string" ? v.rotulos[a0.papel].trim() : "";
         candidatos[tipo].push({ tipo, nome, id: String(a0.id || ""), papel: a0.papel || "", predicado: at.predicado,
           ...(typeof pp.local === "string" && pp.local.trim() ? { onde: pp.local.trim() } : {}),
+          ...(rot ? { rotulo: rot } : {}),
           ...(tipo === "pessoa" && typeof pp.cidade === "string" && pp.cidade.trim() ? { cidade: pp.cidade.trim() } : {}) });
       }
     }
     const especie = O_PASSO_NO_ORACULO.haRastro.rx.test(semAc(`${v.etapa} ${v.etapaTexto}`)) ? "rasto" : "segredo";
     return Object.freeze({
       quest: F.id, etapa: v.etapa, texto: v.etapaTexto, especie,
+      /* o passo que vem depois deste (a 21.ª): o que quem o dá sabe */
+      depois: typeof v.depoisTexto === "string" ? v.depoisTexto : "",
       escuta: O_PASSO_NO_ORACULO.haOQueOuvir.rx.test(semAc(`${v.etapa} ${v.etapaTexto}`)),
       descobrir: Object.freeze(descobrir.map((l) => Object.freeze(l))),
       lugares: Object.freeze(lugares.map((l) => Object.freeze(l))),

@@ -233,6 +233,36 @@ export const ESQUELETO = Object.freeze({
   cobre: 3,
 });
 
+/* O SÍTIO QUE O PAPEL É (13/11, a 21.ª sessão, defeito 2). O `tipos` de um
+   papel de lugar prefere e não tranca — e o «cais» de A Barca a Meio do Rio
+   (`tipos: docas, mercado, taverna`) caiu na Bota do Ocaso: a barca gritava
+   «para A Bota do Ocaso», «Volto ao cais» não tinha resposta, e o sistema
+   desmentiu o Narrador que levou o herói à água («Não há proa aqui»). Um
+   papel cujo NOME é um tipo de sítio só cai num sítio de um destes tipos —
+   os do sobremundo e os dos moldes que dizem a mesma coisa por outra
+   palavra (o cais do arquipélago, a doca de atracação da estação). Uma
+   cidade sem nenhum não recebe a quest: o papel fica vazio e o ato procura
+   outra — nunca uma taverna a fazer de cais. Só nomes que não deixam
+   dúvida; o «arquivo» escondido numa casa de banhos, o «posto», a «casa»
+   continuam a preferir — e a «arena» também: só as capitais têm uma, e a
+   de uma vila é o terreiro da praça ou o pátio da guilda (a revanche de A
+   Cabeça Que Não Se Baixa deixava de nascer em mil campanhas). O quartel, a
+   cadeia e a cela também preferem: trancados, a partilha média de quests
+   entre duas campanhas subia de 0,92 a 1,00 (teste-esqueleto, a variedade
+   da TE4), e a guarda de uma vila sem quartel faz do pátio da guilda o
+   posto. Com estes sete trancados ela fica em 0,98 (o cais sozinho pesa
+   0,04): o preço de nenhum cais ser uma taverna. */
+export const O_SITIO_DO_PAPEL = Object.freeze({
+  cais: Object.freeze(["docas", "cais", "estaleiro", "doca de atracação"]),
+  porto: Object.freeze(["docas", "cais", "estaleiro", "doca de atracação"]),
+  forja: Object.freeze(["forja", "oficina", "oficina de casco"]),
+  templo: Object.freeze(["templo", "capela do degrau", "capela do mar", "capela do vácuo"]),
+  capela: Object.freeze(["templo", "cemitério", "capela do degrau", "capela do mar", "capela do vácuo"]),
+  taberna: Object.freeze(["taverna", "taverna do porto", "descanso"]),
+  estalagem: Object.freeze(["taverna", "taverna do porto", "descanso"]),
+});
+const tipadoDe = (papel) => (Object.prototype.hasOwnProperty.call(O_SITIO_DO_PAPEL, papel) ? O_SITIO_DO_PAPEL[papel] : null);
+
 /* ---------------- utilidades ---------------- */
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -446,10 +476,17 @@ function preencher(q, ato, S, extra) {
        capela de um velório num templo ou num cemitério, a toca de uma besta
        num cemitério ou nas docas). Prefere, não tranca: uma aldeia só tem
        taverna e mercado, e a quest nasce na mesma. Livre e do tipo, livre,
-       do tipo, qualquer — por esta ordem */
+       do tipo, qualquer — por esta ordem.
+       O PAPEL QUE É UM SÍTIO TRANCA (a 21.ª sessão, O_SITIO_DO_PAPEL): o
+       «cais» de A Barca a Meio do Rio caiu na Bota do Ocaso, uma taverna, e
+       a cena dos reféns ficou sem chão. Um papel cujo nome diz o tipo de
+       sítio só cai num sítio desse tipo; a cidade que não o tem não recebe
+       esta quest (o papel fica vazio, e o ato procura outra) */
     const pref = arr(p.tipos).filter((x) => typeof x === "string");
+    const tranca = tipadoDe(nome);
+    const aceita = (ls) => (tranca ? ls.filter((x) => tranca.includes(x.tipo)) : ls);
     const doTipo = (ls) => ls.filter((x) => pref.includes(x.tipo));
-    const l = pickDe([doTipo(livres), livres, doTipo(todos), todos].find((ls) => ls.length) || []);
+    const l = pickDe([doTipo(aceita(livres)), aceita(livres), doTipo(aceita(todos)), aceita(todos)].find((ls) => ls.length) || []);
     return l ? { c, l } : null;
   };
 

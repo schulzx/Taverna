@@ -98,6 +98,7 @@ import { MOLDE_PADRAO, moldePorId } from "../moldes.js";
 import { vetosParaAPauta } from "./correcao-do-juiz.js";
 import { aMesaDasQuests } from "./quests-do-turno.js";
 import { osPassosDasQuests } from "../a-quest-manda.js";
+import { aPessoaDoPasso } from "./a-pessoa-do-passo.js";
 import { oCativeiroNaPauta } from "../cativeiro.js";
 import { oSocorroNaPauta } from "../socorro.js";
 import { oEnvelopeDaGente, oEnvelopeDoFio } from "./envelopes-do-turno.js";
@@ -880,6 +881,13 @@ export function aPautaDoTurno(estado, entrada, portas) {
          procurar bicho nele (BICHO_DO_SITIO: a Serpente Rouca e uma casa) */
       espinha: $ref.espinha,
       lugares: vale("EM CENA · os sítios", () => lugaresDaqui().map((l) => l.nome), []),
+      /* A 21.ª SESSÃO (13/11): QUEM O PASSO PÔS AQUI. A pessoa que a missão
+         ou a quest manda ouvir, com o herói no sítio dela e à hora dela
+         (a-pessoa-do-passo.js — a mesma conta da ficha da cena, que é por
+         onde a conversa fecha o passo). Até aqui só a ficha a via: no modo
+         `boca` o Narrador recebe esta pauta, e Quorin, nove turnos no cais
+         da quest, nunca chegou à EM CENA (em-cena.js, EM_CENA_DO_PASSO) */
+      doPasso: vale("EM CENA · a pessoa do passo", () => aPessoaDoPasso({ ...$E, ...escritas }).filter((x) => x && x.aqui && x.nome), []),
     };
   };
   const pautaDoTurno = (acaoDoTurno = "") => {

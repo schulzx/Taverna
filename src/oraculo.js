@@ -642,10 +642,20 @@ export const MOVIMENTOS_DO_MUNDO = [
     fio: (c) => `${c.npcComVontade.nome} (${c.npcComVontade.vontade || "tem um assunto pendente"})`,
     diz: "alguém desta cidade avança a própria vontade",
   },
+  /* A 21.ª SESSÃO (13/11, defeito 4): o boato era o único fio sem nome —
+     «o que já se comenta por aqui», e o envelope jurava ao Narrador que
+     «este fio JÁ EXISTE no jogo». Não existia: o Narrador encheu-o com um
+     capitão, «a caixa que tiraram de—» e uma tira de couro. O boato só pode
+     abrir com o boato que o sistema guarda desta cidade, dito pelo nome (de
+     um tracker — boatos.js, o cânone «dito»), e o App ainda não lhe entrega
+     nenhum: até lá CALA. Ler aqui um campo que o App não manda seria um fio
+     mudo (teste-biblioteca §5); ligá-lo é o App passar o nome e este
+     `quando` lê-lo — e a catraca de teste-pauta-nao-pede-coisa §4 confere
+     que o fio vem do material, nunca de uma frase da tabela. */
   {
     id: "boato", peso: 2,
-    quando: (c) => !!c.emCidade,
-    fio: () => "o que já se comenta por aqui",
+    quando: () => false,
+    fio: () => "",
     diz: "a notícia de algo que já aconteceu chega até você",
   },
   /* ---------------- v9.167: A MESA FARTA ----------------
@@ -700,7 +710,11 @@ export function podeIniciativa(ctx = {}) {
 export function iniciativaDoMundo(ctx = {}, { sorte = sorteDaCasa } = {}) {
   if (!podeIniciativa(ctx)) return null;
   if (d(100, sorte) > RITMO_DO_MUNDO.chance) return null;
-  const abertos = MOVIMENTOS_DO_MUNDO.filter((m) => { try { return !!m.quando(ctx); } catch { return false; } });
+  /* o fio com nome, ou o movimento não abre (a 21.ª): a trava do «só fio
+     que existe» confere-se aqui, e não só na tabela — um material que chega
+     vazio cala o movimento em vez de mandar o Narrador inventá-lo */
+  const comFio = (m) => { try { return !!String(m.fio(ctx) || "").trim(); } catch { return false; } };
+  const abertos = MOVIMENTOS_DO_MUNDO.filter((m) => { try { return !!m.quando(ctx) && comFio(m); } catch { return false; } });
   if (!abertos.length) return null;
   /* sorteio por peso: o relógio quase cheio pesa mais que um boato,
      porque ele é o fio que o próprio jogo já disse que ia estourar */
@@ -713,7 +727,8 @@ export function iniciativaDoMundo(ctx = {}, { sorte = sorteDaCasa } = {}) {
 }
 
 export function envelopeDaIniciativa(mv) {
-  if (!mv) return "";
+  /* sem o fio dito pelo nome, o envelope não sai (a 21.ª, defeito 4) */
+  if (!mv || typeof mv.fio !== "string" || !mv.fio.trim()) return "";
   return `[O MUNDO SE MEXE — ESCOLHIDO PELO SISTEMA] Enquanto eu fazia o que fiz, ${mv.diz}: ${mv.fio}.
 REGRA DESTE ENVELOPE (obrigatória): este fio JÁ EXISTE no jogo — o sistema o escolheu entre os que estão abertos, e não é sugestão. Traga-o à cena agora, em duas ou três frases, ENTRELAÇADO com o que eu acabei de fazer (não como parágrafo separado, não como "enquanto isso, em outro lugar").
 NÃO invente uma trama nova, NÃO abra um segundo fio, NÃO resolva este aqui e NÃO transforme isto num combate por conta própria. É uma pressão chegando, não um desfecho. Depois devolva a palavra para mim.`;

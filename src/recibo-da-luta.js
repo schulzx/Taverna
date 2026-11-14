@@ -23,6 +23,7 @@
    nada a redesenhar. */
 
 import { reciboDoTurno } from "./glifos.js";
+import { GRAUS } from "./juiz.js";
 import { etapaAtual, textoDaEtapa } from "./missoes.js";
 
 /* o mesmo `calou` do App: um órgão que estoura não derruba a cena */
@@ -32,6 +33,36 @@ const calou = (onde, e) => {
 };
 
 export const DESFECHOS_DA_LUTA = ["vitoria", "fuga", "queda", "encerrada", "derrota"];
+/* O PORQUÊ DO FEITO NO RECIBO (13/11, a 21.ª sessão, defeito 3). O feito
+   dado pelo sistema (feito-do-sistema.js, motor/aplicar.js) escreve a linha
+   «✧ +17 XP — uma conversa que ficou.», e a regra de glifos.js (a morada
+   `recibo` da peça 14) cala-a, porque o porquê de antes era o comentário do
+   juiz («um feito de verdade»), bastidor. O chip ficava só «+17 XP» — o
+   jogador via o número e não o gesto que contou. A frase agora é de mundo, e
+   vai com o número: o chip de XP leva-a (`porque`, e o texto «+17 XP · uma
+   conversa que ficou»). O tamanho genérico do juiz (GRAUS[*].diz) continua
+   bastidor e não sobe.
+     `linha`: a linha do feito, com o porquê no grupo 1; `entre`: o que
+     separa o número do porquê no chip; `falado`: idem, no leitor de tela */
+export const O_PORQUE_NO_RECIBO = Object.freeze({
+  linha: /^✧ \+\d+ XP — (.+?)\.?$/u,
+  entre: " · ",
+  falado: ", ",
+});
+const porqueDoFeito = (lista, desde) => {
+  const genericos = new Set(Object.values(GRAUS).map((g) => String(g.diz || "").trim()));
+  for (let i = Math.max(0, Number(desde) || 0); i < lista.length; i++) {
+    const m = lista[i];
+    if (!m || m.autor !== "sistema" || typeof m.texto !== "string") continue;
+    const k = m.texto.trim().match(O_PORQUE_NO_RECIBO.linha);
+    const p = k ? k[1].trim() : "";
+    if (p && !genericos.has(p)) return p;
+  }
+  return "";
+};
+const comOPorque = (recibo, porque) => (!porque ? recibo : recibo.map((c) => (c && c.tipo === "xp" && !c.porque
+  ? { ...c, porque, texto: `${c.texto}${O_PORQUE_NO_RECIBO.entre}${porque}`, falado: `${c.falado || c.texto}${O_PORQUE_NO_RECIBO.falado}${porque}` }
+  : c)));
 export function mensagensComRecibo(lista, { desde = 0, texto = null, recibo = [] } = {}) {
   if (!Array.isArray(lista) || !Array.isArray(recibo) || !recibo.length) return lista;
   for (let i = Math.max(0, Number(desde) || 0); i < lista.length; i++) {
@@ -39,7 +70,9 @@ export function mensagensComRecibo(lista, { desde = 0, texto = null, recibo = []
     if (!m || m.autor !== "mestre") continue;
     if (texto != null && m.texto !== texto) continue;
     if (m.recibo) return lista;
-    return lista.map((x, k) => (k === i ? { ...x, recibo } : x));
+    let r = recibo;
+    try { if (recibo.some((c) => c && c.tipo === "xp")) r = comOPorque(recibo, porqueDoFeito(lista, desde)); } catch (e) { calou("o porquê do feito no recibo", e); r = recibo; }
+    return lista.map((x, k) => (k === i ? { ...x, recibo: r } : x));
   }
   return lista;
 }

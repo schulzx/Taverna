@@ -3050,6 +3050,20 @@ export function estadoDaQuest(ficha, registo, contexto) {
     const i = gente.findIndex((g) => g.id === um.id);
     if (i < 0) gente.push(um); else if (um.traiu && !gente[i].traiu) gente[i] = um;
   }
+  /* A 21.ª SESSÃO (13/11): O QUE A QUEST DIZ DA PESSOA DO PASSO. Quorin, na
+     Bota, nove turnos e cinco falas, nunca entrou em cena — e o Narrador,
+     sem saber quem ela era, negou-lhe o filho na barca. `rotulos`: o papel
+     de cada pessoa da quest em frase de mundo (o mesmo de `gente`, mas de
+     todas, conhecidas ou não: é o que a pessoa É, e a pauta di-lo quando
+     ela está à frente do herói); `depoisTexto`: o passo que vem depois do
+     de agora, que é o que quem dá o passo sabe (a-pessoa-do-passo.js). */
+  const rotulos = {};
+  for (const [nome, d] of Object.entries(F.papeis)) {
+    const p = crus[nome];
+    if (p.tipo === "pessoa" && typeof p.nome === "string" && p.nome && typeof d.rotulo === "string") rotulos[nome] = encher(d.rotulo, ctx.nomes);
+  }
+  const iAtual = atual ? lista.indexOf(atual) : -1;
+  const depois = iAtual >= 0 && visivel ? lista.slice(iAtual + 1).find((e) => !R.feitas[e.id]) || null : null;
   /* o «o que falta» de um «ou», caminho a caminho: o texto, os predicados e
      se é uma carta de uma escolha (o Diário mostra primeiro as cartas) */
   const comCaminhos = falta.map((f) => (f && f.predicado === "algum" && Array.isArray(f.opcoes)
@@ -3073,6 +3087,8 @@ export function estadoDaQuest(ficha, registo, contexto) {
     falta: comCaminhos,
     faltaTexto: falta.map((f) => f.texto).filter(Boolean),
     gente,
+    rotulos,
+    depoisTexto: depois ? frase(depois.texto, ctx.nomes) : "",
     escolhas: visivel ? escolhasAbertas(F, R, ctx, dia, k.quests) : [],
     /* `lida` (08/11, BQ7): o herói já abriu o Diário depois dela (`vistaEm`) */
     reviravolta: ult && rv ? { id: ult.id, dia: ult.dia, texto: (R.consequencias.find((c) => c.de === `reviravolta:${ult.id}`) || {}).texto || "", lida: !!(R.vistaEm && R.vistaEm.n >= R.reviravoltas.length) } : null,

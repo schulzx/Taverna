@@ -66,6 +66,21 @@ const semS = (w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w);
 export const EM_CENA_MAX = { pessoa: 12, criatura: 4, coisa: 40, lugar: 8 };
 export const EM_CENA_NA_PAUTA = { pessoa: 3, criatura: 2, coisa: 3, papel: 3 };
 
+/* ---------------- A PESSOA DO PASSO NA LINHA (13/11, a 21.ª sessão) ----------------
+   Quorin, «quem tem um filho naquela barca», estava no cais da quest e
+   nunca entrou na EM CENA: a linha só via o registo (quem já tem ficha), e
+   a pessoa que um passo pede é gente da base até ao herói lhe falar. Sem
+   ela na linha, o Narrador do modo `boca` pô-la a falar e negou-lhe o
+   filho (T4, T6). Agora o sistema diz quem o passo pôs ali
+   (a-pessoa-do-passo.js, `ctx.doPasso`): à vista, à frente da linha, com o
+   que a quest diz dela — o rótulo do papel inteiro (`palavras`, e não as
+   três do ofício) e o que ela sabe (`sabe`, com {S}). */
+export const EM_CENA_DO_PASSO = Object.freeze({
+  palavras: 9,
+  sabe: "sabe: {S}",
+  deOnde: "passo",
+});
+
 /* ---------------- O QUE SÓ A PROSA TROUXE (31/10, a 13.ª sessão) ----------------
    Os leitores da prosa (§4, §4b e §5 de `montarEmCena`: `vistosNaProsa`,
    `apresentadosNaProsa`) põem na lista, com `deOnde: "prosa"`, o que o
@@ -202,6 +217,7 @@ const semArtigo = (s) => String(s || "").replace(/^(o|a|os|as|um|uma)\s+/i, "").
      semente, cidade        — a campanha e onde o herói está
      presentes              — o registo de quem vive aqui ([{ nome, papel, genero, relacao, laco }])
      grupo, comigo          — quem anda com o herói (nomes ou { nome, conceito })
+     doPasso                — quem o passo pôs aqui ([{ nome, papel, rotulo, genero, sabe }], EM_CENA_DO_PASSO)
      emCena                 — os nomes que a cena põe aqui (o núcleo em cena, o elenco)
      nucleo                 — { pessoas, antecedente } (nucleo.js)
      revelados              — os nomes cujo segredo o herói já viu cair
@@ -472,6 +488,25 @@ export function montarEmCena(ctx) {
     porPessoa(nome, (p) => ({ ...p, comigo: true, aqui: true, deOnde: p.deOnde || "grupo", papel: p.papel || String(obj(g).conceito || ""), sabe: [...p.sabe, EM_CENA_TRATO.andaComigo] }));
   }
   for (const nome of comigo) porPessoa(nome, (p) => ({ ...p, comigo: true, aqui: true, deOnde: p.deOnde || "grupo", sabe: p.sabe.includes(EM_CENA_TRATO.andaComigo) ? p.sabe : [...p.sabe, EM_CENA_TRATO.andaComigo] }));
+  /* 1b. a pessoa do passo (EM_CENA_DO_PASSO): o sistema pô-la aqui — à
+     vista, com o que a quest diz dela e o que sabe */
+  for (const d of arr(c.doPasso)) {
+    const n = obj(d);
+    const nome = nomeDe(n);
+    if (!nome || comigoN.has(norm(nome))) continue;
+    const rot = String(n.rotulo || "").trim();
+    const sabeDoPasso = arr(n.sabe).map((x) => String(x || "").trim()).filter(Boolean);
+    porPessoa(nome, (p) => ({
+      ...p,
+      aqui: true,
+      deOnde: EM_CENA_DO_PASSO.deOnde,
+      papel: rot || p.papel || String(n.papel || ""),
+      ...(rot ? { doPasso: rot } : {}),
+      genero: p.genero || generoCurto(n.genero),
+      sabe: [...p.sabe, ...sabeDoPasso],
+      sabeDoPasso,
+    }));
+  }
   /* 2. o registo: à vista se a cena a põe aqui ou o Mestre a citou */
   for (const r of arr(c.presentes)) {
     const n = obj(r);
@@ -676,6 +711,11 @@ function escolher(lista, jaDito) {
 function rotuloDaPessoa(x) {
   if (x.comigo) return EM_CENA_TRATO.comigo;
   if (x.armado) return "";
+  if (x.deOnde === EM_CENA_DO_PASSO.deOnde) {
+    const rot = String(x.doPasso || x.papel || "").trim().split(/\s+/).filter(Boolean).slice(0, EM_CENA_DO_PASSO.palavras).join(" ");
+    const sabe = arr(x.sabeDoPasso).filter(Boolean).join("; ");
+    return [rot || x.genero || "", sabe ? EM_CENA_DO_PASSO.sabe.replace("{S}", sabe) : ""].filter(Boolean).join("; ");
+  }
   const papel = String(x.papel || "").split(",")[0].trim().split(/\s+/).slice(0, EM_CENA_NA_PAUTA.papel).join(" ");
   return papel || x.genero || "";
 }

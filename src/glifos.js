@@ -779,7 +779,7 @@ export const MORADA_DA_LINHA = [
   { morada: "recibo", pecas: [13], padrao: /^Você (?:gastou|recuperou) \d+ PM\.$/u,
     porque: "o mesmo que os PV: a cinta e o recibo dizem o PM" },
   { morada: "recibo", pecas: [14], padrao: /^✧ \+\d+ XP — /u,
-    porque: "o XP é o laço de recompensa e fica num chip do recibo; o comentário do juiz ('um feito de verdade') é bastidor" },
+    porque: "o XP é o laço de recompensa e fica num chip do recibo; o comentário do juiz ('um feito de verdade') é bastidor — e a frase de mundo do feito do sistema ('uma conversa que ficou') sobe para o chip com o número (recibo-da-luta.js, O_PORQUE_NO_RECIBO; a 21.ª sessão)" },
   { morada: "recibo", pecas: [15], padrao: /^✦ NÍVEL \d+ ALCANÇADO!$/u,
     porque: "o `ModalNivel` (peça 141) é o momento, e o recibo tem o chip do nível; a linha era a mesma coisa duas vezes e ainda podia sumir numa dobra" },
   { morada: "recibo", pecas: [17], padrao: /^(?:Item (?:obtido|perdido): |⚔ Equipamento encontrado: )/u,

@@ -51,8 +51,9 @@
      aPessoaDoPasso(estado)
        estado: o do instante (abertura, missoes, lugar, cidadeAtual, npcs,
                mapa, baseMundo, mundo, nomeCampanha, dia, minuto, personagem)
-     → [{ nome, papel, onde, de, aqui, agora, ausente, voz, quer, sabe, genero, missao, seguinte }]
-       de:      "pista" | "alvo" | "dador" | "etapa"
+     → [{ nome, papel, onde, de, aqui, agora, ausente, voz, quer, sabe, genero, missao, seguinte, rotulo }]
+       de:      "pista" | "alvo" | "dador" | "etapa" | "quest"
+       rotulo:  o que a quest diz da pessoa (só `de: "quest"`), ou ""
        aqui:    está em cena agora (a rotina diz que é a hora dela, ou o
                 jogo não sabe a hora)
        ausente: a frase do porquê, quando não está (A_PESSOA_DO_PASSO.ausente)
@@ -91,6 +92,23 @@
        do passo que chegou com um pedido fica no sítio onde o herói a viu —
        a rua da cidade incluída, no mesmo dia —, e `osDoPasso` diz à ficha
        quem os passos procuram, para que ninguém «chegue» a meio da estrada.
+
+   A 21.ª SESSÃO (mente/sessao-21.md §2.3, 13/11): a casa existia e o Diário
+   dizia onde, e mesmo assim 0 passos em 28 respostas. Quorin, «quem tem um
+   filho naquela barca», mora no cais da quest; o herói passou nove turnos
+   lá, falou-lhe cinco vezes, e ela nunca entrou em cena. Duas razões, as
+   duas daqui:
+     · A HORA DO OFÍCIO NÃO MANDA EM QUEM A QUEST PÔS NO SÍTIO. A gente da
+       base mora onde trabalha, e a rotina dizia «não está aqui agora» de
+       manhã — com o filho dela refém a meio do rio. A pessoa que o passo de
+       uma quest pede (`de: "quest"`) está no sítio do passo: a quest é o
+       acontecimento da vida dela, e ela espera quem vem ouvi-la. Por isso
+       "quest" não está em `aHoraConta`.
+     · O QUE A QUEST DIZ DELA vem com ela: `rotulo` (o papel em frase de
+       mundo, estadoDaQuest#rotulos) e, no «Sabe», o passo que vem depois do
+       dela (`depoisTexto`) — é isso que «ouvir» quer dizer. A pauta do modo
+       `boca` põe-na na linha EM CENA (pauta-do-turno.js, em-cena.js `doPasso`),
+       e a conversa fecha o passo pela porta de sempre.
 
    Sem sorte: tudo sai do estado e da semente do mundo. Puro, sem React.
    Provado em `testes/teste-a-pessoa-do-passo.mjs` e `testes/teste-sessao-17.mjs`.
@@ -165,6 +183,8 @@ export const A_PESSOA_DO_PASSO = Object.freeze({
      «cadê?». Voltar atrás para um tipo (a pista da abertura, por exemplo)
      é tirá-lo daqui. */
   aHoraConta: Object.freeze(["pista", "alvo", "dador", "etapa", "guarda"]),
+  /* (a 21.ª: a pessoa do passo de uma quest, `de: "quest"`, não está aqui
+     de propósito — ver o cabeçalho) */
   /* A PESSOA DO PASSO DE UMA QUEST (a 20.ª, 13/11): os predicados da falta
      que pedem a pessoa FRENTE A FRENTE — falar, consultar, encontrar. O
      acompanhar e a afeição não: são de quem já anda com o herói */
@@ -379,7 +399,8 @@ function asMissoesDasQuests(e) {
       if (c.predicado && !A_PESSOA_DO_PASSO.daQuest.includes(c.predicado)) continue;
       const [casa, cid] = l0 ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
       if (!casa && cid && limpo(e.cidadeAtual) && sem(cid) !== sem(e.cidadeAtual)) continue;
-      etapas.push({ tipo: "falar_com", alvo: nome, onde: casa ? (cid ? `${casa}, em ${cid}` : casa) : "", feito: false });
+      etapas.push({ tipo: "falar_com", alvo: nome, onde: casa ? (cid ? `${casa}, em ${cid}` : casa) : "", feito: false,
+        rotulo: limpo(c.rotulo), depois: limpo(p.depois) });
     }
     /* uma missão por pessoa: a régua anda pela etapa de agora de cada uma */
     for (const et of etapas) out.push({ id: `${MISSAO_DA_QUEST.prefixo}${limpo(p.quest)}`, titulo: limpo(p.texto), tipo: MISSAO_DA_QUEST.tipo[1], status: "ativa", dador: "", etapas: [et] });
@@ -493,7 +514,8 @@ export function aPessoaDoPasso(estado) {
           { mapa: e.mapa, genero: W.genero, lex: W.lex, molde: W.molde, base: e.baseMundo, npcs, grupo, dia: e.dia, minuto: e.minuto, cidade: str(e.cidadeAtual) });
         rot = fp.rotina; familia = fp.familia;
       } catch { rot = null; }
-      const de = ehGuarda ? "guarda" : ehPista ? "pista" : ehAlvo ? "alvo" : ehDador ? "dador" : "etapa";
+      const daQuest = str(m.id).startsWith(MISSAO_DA_QUEST.prefixo);
+      const de = ehGuarda ? "guarda" : ehPista ? "pista" : ehAlvo ? "alvo" : ehDador ? "dador" : daQuest ? "quest" : "etapa";
       const sabeAHora = !!(rot && rot.agora && rot.agora !== "morreu") && A_PESSOA_DO_PASSO.aHoraConta.includes(de);
       /* fora do posto, o sítio aonde a rotina a manda (O_FORA_COM_SITIO) —
          só para quem trabalha numa casa DESTA cidade: a gente de outra terra
@@ -516,6 +538,7 @@ export function aPessoaDoPasso(estado) {
       const seguinte = oQueSabeDe(prox, H, guardaDoProx, e.cidadeAtual, jaLa);
       if (seguinte) sabe.push(seguinte);
       else if (ehPista && limpo(a.alvo.objeto)) sabe.push(tpl(A_PESSOA_DO_PASSO.sabeDaPista, { O: a.alvo.objeto }));
+      else if (daQuest && limpo(et.depois)) sabe.push(tpl(A_PESSOA_DO_PASSO.oQueHa, { A: minuscula(et.depois) }));
       const vontade = pb ? limpo(pb.vontade) : "";
       const quer = ehDador ? tpl(A_PESSOA_DO_PASSO.querDoDador, { H, T: limpo(m.titulo) }) : /^quer /u.test(vontade) ? vontade.replace(/^quer /u, "") : "";
       /* o posto, quando o ofício o diz («atrás do balcão»); o genérico («no
@@ -537,6 +560,7 @@ export function aPessoaDoPasso(estado) {
         /* de que missão, e o índice do passo que ela sabe (a pista como
            cartão, a-pista-como-cartao.js); -1 quando não há passo a seguir */
         missao: m.id, seguinte: ehObj(prox) ? k + 1 : -1,
+        rotulo: daQuest ? limpo(et.rotulo) : "",
       });
     }
   }

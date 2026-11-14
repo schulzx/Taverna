@@ -28,12 +28,19 @@
      §3 o comportamento: o degrau do sinal num lugar sai sem «com o nome
         dito», e com a ordem de não dar nome ao que se esconde; quem vem
         buscar o herói não traz recado; o encontro da estrada não traz
-        objeto. */
+        objeto;
+     §4 (a 21.ª sessão, defeito 4) O MUNDO SE MEXE diz QUAL fio, ou não
+        pede: o envelope jurava «este fio JÁ EXISTE no jogo» com o fio
+        «o que já se comenta por aqui» — nenhum —, e o Narrador encheu-o com
+        um capitão, uma caixa e uma tira de couro. Cada movimento do mundo
+        tira o fio do material que o sistema lhe dá (um tracker), e sem ele
+        não abre; o envelope sem fio dito não sai. */
 import { DEGRAU_EM_CENA, RUMOS, ESCADA_DA_ESCUTA, linhaDoRumo } from "../src/escuta.js";
 import { COMO_O_FIO_ENTRA, NOITE_DO_ACAMPAMENTO, encontroComFio } from "../src/fios-da-estrada.js";
 import { INTERVENCOES } from "../src/encalhe.js";
 import { RESPOSTAS } from "../src/antagonista.js";
 import { EM_JOGO } from "../src/batidas.js";
+import { MOVIMENTOS_DO_MUNDO, iniciativaDoMundo, envelopeDaIniciativa } from "../src/oraculo.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -109,6 +116,34 @@ sec("§3 o comportamento: a linha que vai à pauta");
   t("o encontro da estrada traz o sinal pelo nome do fio, sem objeto", enc.detalhe.includes("Varek Sem-Medo") && !COISA_SEM_NOME.test(enc.detalhe), enc.detalhe);
   const via = encontroComFio({ tipo: "viajante", detalhe: "x" }, { fio: [{ nome: "Varek Sem-Medo", tipo: "pessoa" }] });
   t("…e o viajante traz notícia, sem coisa nenhuma na mão nem preço", via.detalhe.includes("Varek Sem-Medo") && !COISA_SEM_NOME.test(via.detalhe), via.detalhe);
+}
+
+sec("§4 O MUNDO SE MEXE diz qual fio, ou não pede (a 21.ª, defeito 4)");
+{
+  /* o material de cada tracker, com uma marca que só o sistema podia dar:
+     o fio que o movimento escolhe tem de ser uma delas — nunca uma frase
+     da própria tabela */
+  const M = "Marca-do-Sistema";
+  const cheio = {
+    desdeUltima: 99, emCidade: true,
+    relogioQuaseCheio: { nome: `${M} relógio` }, nemesis: `${M} nêmese`, missaoComPrazo: { titulo: `${M} prazo` },
+    faccaoHostil: `${M} facção`, npcComVontade: { nome: `${M} gente`, vontade: "quer ir embora" },
+    minhaGuilda: `${M} guilda`, chefeDaRegiao: `${M} chefe`, masmorraProxima: `${M} covil`, faccaoAliada: `${M} tratado`, cidadeSua: `${M} domínio`,
+  };
+  const fioDe = (m, c) => { try { return String(m.fio(c)); } catch { return "?"; } };
+  const semMaterial = MOVIMENTOS_DO_MUNDO.filter((m) => { try { return m.quando(cheio) && !fioDe(m, cheio).includes(M); } catch { return true; } }).map((m) => `${m.id}: «${fioDe(m, cheio)}»`);
+  t(`os ${MOVIMENTOS_DO_MUNDO.length} movimentos tiram o fio do material do sistema, nenhum de uma frase da tabela`, MOVIMENTOS_DO_MUNDO.length > 0 && semMaterial.length === 0, semMaterial.join(" | "));
+  /* a 21.ª: na cidade, sem nenhum material com nome, o mundo não se mexe */
+  const soCidade = [0.01, 0.2, 0.5, 0.8, 0.99].map((x) => iniciativaDoMundo({ desdeUltima: 99, emCidade: true }, { sorte: () => x }));
+  t("na cidade sem fio com nome, nenhum movimento (o boato de «o que já se comenta por aqui» calou)", soCidade.every((m) => m === null), soCidade.map((m) => m && `${m.id}: ${m.fio}`).join(" | "));
+  /* o material que chega vazio também cala o movimento */
+  const vazio = iniciativaDoMundo({ desdeUltima: 99, emCidade: true, relogioQuaseCheio: { nome: "" }, minhaGuilda: "  " }, { sorte: () => 0.01 });
+  t("o material vazio não abre o movimento", vazio === null, vazio ? `${vazio.id}: «${vazio.fio}»` : "");
+  /* e com material com nome, o fio é o nome dele */
+  const comFio = iniciativaDoMundo({ desdeUltima: 99, emCidade: true, minhaGuilda: "a Casa do Carvalho" }, { sorte: () => 0.01 });
+  t("com o material de um tracker, o fio é o nome dele", !!comFio && comFio.fio === "a Casa do Carvalho", JSON.stringify(comFio));
+  t("o envelope sem fio dito não sai", envelopeDaIniciativa({ id: "boato", diz: "x", fio: "" }) === "" && envelopeDaIniciativa({ id: "boato", diz: "x" }) === "");
+  t("…e com o fio, sai e di-lo", envelopeDaIniciativa(comFio).includes("a Casa do Carvalho"));
 }
 
 console.log(`\na pauta não pede coisa sem nome (a 20.ª, defeito 1): ${ok} passaram, ${mal} falharam`);
