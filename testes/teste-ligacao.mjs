@@ -182,6 +182,15 @@ sec("1. NENHUM MÓDULO MUDO");
        mesmo credor: o `oficial`, na Q3, chama-as em `concluirRolagem` e no
        pedido sem dado (a receita está no fim de mente/plano-quadro.md). A
        entrada sai quando o App importar o módulo. */
+    /* 14/11 (Fase QQ, Q2b · o que a tela pede, backend): no MESMO módulo
+       nascem `aplicarPrecoDoQuadro` (o preço da falha posto no estado: o
+       vilão avisado, o relógio dele, as moedas e o custo — pelas portas do
+       fim do turno, `aplicarEfeitosNoEstado` em motor/quests-do-turno.js, que
+       o próprio módulo já lê), `aCartaEmJogo` (antes do dado, se o teste vira
+       uma carta), e a forma de tela: `aCartaNaTela`, `oQuadroNaTela`,
+       `oSinalDosQuadros`. Credor: o `oficial`, na Q3 (o preço e o chamado) e
+       na Q4 (a peça, painel-quadro.jsx, lê a carta para a tela). A entrada
+       sai quando o App importar o módulo. */
     "quadro-da-quest.js": "o oficial, na Q3 da Fase QQ (mente/plano-quadro.md)",
     /* 13/11 (Fase NE, NE6 · o Léxico vira tabela, backend):
        `lexico-do-mundo.js` nasce — `lexicoDoMundo` (o `mundo.lexico` pelo

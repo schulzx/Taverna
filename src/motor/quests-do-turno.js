@@ -270,6 +270,11 @@ export const PORTAO_DA_ABERTURA = Object.freeze({ garante: "abertura", esperaMax
 export const QUESTS_DO_TURNO = Object.freeze({
   v: 1,
   aplica: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio", "laco", "rompe_laco", "aliado", "inimigo", "favor", "quem_e"]),
+  /* 14/11 (Fase QQ, Q2b): dos que o motor aplica, os que não precisam do
+     registo de uma quest (papel nenhum, ficha nenhuma) — os que outra porta
+     pode pedir pela mesma régua: o preço do quadro da quest
+     (aplicarEfeitosNoEstado; quadro-da-quest.js, aplicarPrecoDoQuadro) */
+  semQuest: Object.freeze(["moedas", "avisa_vilao", "relogio_do_fio"]),
   avisa: Object.freeze({ comOnde: "o forasteiro passou por {onde}", semOnde: "o forasteiro anda a meter-se no caminho dele", fonte: "marca", sobre: "onde" }),
   relogioDoFio: 1,
   premissas: 24,
@@ -471,6 +476,64 @@ function chaveNoRegisto(npcs, nome) {
    com a mão da ficha ao lado */
 const paraOVilao = (registos) => registos.map((r) => ({ ...r, mao: (questPorId(r.id) || {}).mao || null }));
 
+/* ---------------- AS PORTAS DE ESTADO (Q2b) ----------------
+   As três consequências que mexem só no estado — a bolsa, o livro dele e
+   o relógio dele —, escritas uma vez: o fim do turno usa-as (aplicarUm,
+   abaixo) e o preço do quadro da quest também (aplicarEfeitosNoEstado).
+   Uma régua, duas portas: o que o vilão fica a saber por uma carta mal
+   virada é a mesma linha que por uma consequência de quest. */
+const comMoedas = (p, n) => {
+  const P = obj(p);
+  return P && Number.isInteger(n) ? { ...P, moedas: Math.max(0, (inteiro(P.moedas) || 0) + n) } : p;
+};
+const avisarOVilao = (saber, E, dia) => {
+  const T = QUESTS_DO_TURNO;
+  const onde = (obj(E.lugar) && E.lugar.nome) || (typeof E.cidadeAtual === "string" ? E.cidadeAtual : "");
+  return chegouAteEle(saber, { o: onde ? encher(T.avisa.comOnde, { onde }) : T.avisa.semOnde, fonte: T.avisa.fonte, dia, sobre: T.avisa.sobre });
+};
+/* o relógio dele anda `adianta` pontos (a soma do turno: aplica-se uma vez) */
+const adiantarOFio = (fio, adianta) => {
+  const reg = garantirRegistroDoVilao(fio.vilao);
+  return reg ? { ...fio, vilao: garantirRegistroDoVilao({ ...reg, inicio: Math.max(0, reg.inicio - adianta * QUESTS_DO_TURNO.relogioDoFio * diasDoPasso({ corpo: reg.corpo })) }) } : fio;
+};
+
+/* ============================================================
+   aplicarEfeitosNoEstado(estado, efeitos) → null | {
+     estado (só os campos que mudaram: personagem, saber, espinha),
+     aplicados (os tipos que entraram, pela ordem) }
+   Os efeitos de QUESTS_DO_TURNO.semQuest fora do fim do turno (Q2b: o
+   preço do quadro da quest). Os `relogio_do_fio` somam-se e o relógio
+   anda uma vez, como no fim do turno. O resto passa calado — não é desta
+   porta. A forma do `estado` é a de oTurnoDasQuests, para a mesma fiação
+   o aplicar. O estado recebido nunca é mutado; o lixo não lança.
+   ============================================================ */
+export function aplicarEfeitosNoEstado(estado, efeitos) {
+  try {
+    const E = obj(estado);
+    if (!E) return null;
+    const dia = Math.max(0, inteiro(E.dia) || 0);
+    let personagem = E.personagem, saber = E.saber, adianta = 0;
+    const aplicados = [];
+    for (const ef of arr(efeitos)) {
+      const t = obj(ef) && ef.tipo;
+      if (!QUESTS_DO_TURNO.semQuest.includes(t) || !EFEITOS_DA_QUEST[t]) continue;
+      if (t === "moedas") { if (!Number.isInteger(ef.n) || !obj(personagem)) continue; personagem = comMoedas(personagem, ef.n); }
+      else if (t === "avisa_vilao") saber = avisarOVilao(saber, E, dia);
+      else if (t === "relogio_do_fio") { if (!Number.isInteger(ef.n)) continue; adianta += ef.n; }
+      aplicados.push(t);
+    }
+    const out = {};
+    if (personagem !== E.personagem && J(personagem) !== J(E.personagem)) out.personagem = personagem;
+    if (J(saber) !== J(E.saber)) out.saber = saber;
+    const esp = obj(E.espinha);
+    if (adianta && esp && obj(esp.fio)) {
+      const fio = adiantarOFio({ ...esp.fio }, adianta);
+      if (J(fio) !== J(esp.fio)) out.espinha = { ...esp, fio };
+    }
+    return { estado: out, aplicados };
+  } catch { return null; }
+}
+
 /* ============================================================
    O FIM DO TURNO
    ============================================================ */
@@ -563,16 +626,8 @@ function correr(E0, opcoes, antes) {
     const t = ef && ef.tipo;
     if (!EFEITOS_DA_QUEST[t]) return;
     const alvo = typeof ef.papel === "string" ? papelDe(R, ef.papel) : null;
-    if (t === "moedas") {
-      const p = obj(personagem);
-      if (p && Number.isInteger(ef.n)) personagem = { ...p, moedas: Math.max(0, (inteiro(p.moedas) || 0) + ef.n) };
-      return;
-    }
-    if (t === "avisa_vilao") {
-      const onde = (obj(E0.lugar) && E0.lugar.nome) || (typeof E0.cidadeAtual === "string" ? E0.cidadeAtual : "");
-      saber = chegouAteEle(saber, { o: onde ? encher(T.avisa.comOnde, { onde }) : T.avisa.semOnde, fonte: T.avisa.fonte, dia, sobre: T.avisa.sobre });
-      return;
-    }
+    if (t === "moedas") { personagem = comMoedas(personagem, ef.n); return; }
+    if (t === "avisa_vilao") { saber = avisarOVilao(saber, E0, dia); return; }
     if (t === "relogio_do_fio") { if (Number.isInteger(ef.n)) adianta += ef.n; return; }
     /* 09/11: o favor e o QUEM É vão ao livro de factos, pelo id do papel —
        o que se resolveu quando a quest abriu, ou, se então a pessoa ainda
@@ -660,10 +715,7 @@ function correr(E0, opcoes, antes) {
      lenda que daqui saem (7f): o servo que cai, a camada que sobe, o fim */
   const feitosDaLenda = [];
   let fio = obj(esp0.fio) ? { ...esp0.fio } : null;
-  if (fio && adianta) {
-    const reg = garantirRegistroDoVilao(fio.vilao);
-    if (reg) fio = { ...fio, vilao: garantirRegistroDoVilao({ ...reg, inicio: Math.max(0, reg.inicio - adianta * T.relogioDoFio * diasDoPasso({ corpo: reg.corpo })) }) };
-  }
+  if (fio && adianta) fio = adiantarOFio(fio, adianta);
   const ficha = fio ? fichaDoVilao({ ...esp0, fio }) : null;
   if (ficha) {
     try {

@@ -53,7 +53,7 @@ A carta (costas pela forma, virada com face e origem, o carimbo do preço, a per
 
 - **Q1** (feita): o módulo puro, as tabelas, a suíte, este plano.
 - **Q2** (backend, feita 14/11): `aCartaDoTeste(quadros, veredito, onde)` — que carta e que caminho um teste do sistema vira (o lugar, a pessoa, o desafio), provado sobre o catálogo; e `aCartaDoGesto`, o irmão sem dado (§10).
-- **Q2b** (backend, pequena, ANTES da Q3): a porta do preço que falta — `avisa_vilao` e `relogio_do_fio` só se aplicam hoje dentro de `oTurnoDasQuests` (`aplicarUm`, quests-do-turno.js); a Q3 precisa de uma função exportada (§11, passo 5).
+- **Q2b** (backend, feita 14/11): a porta do preço (`aplicarPrecoDoQuadro`, pelas portas do fim do turno: `aplicarEfeitosNoEstado`), e o que a tela pede (formas.md §QQ 8, 1–5): o sinal, a perícia e os minutos dos caminhos, os números do preço no arco, `aCartaEmJogo` antes do dado, e a carta para a tela (§12).
 - **Q3** (oficial): a fiação defensiva da §7; a entrada sai da lista de espera da `teste-ligacao`.
 - **Q4** (desenho + jogo + aprendiz): a peça da §8, no Figma primeiro.
 - **Q5** (backend): o `ganho` das extra no confronto (o número, na tabela da luta) e a fraqueza conhecida na pauta do confronto.
@@ -113,9 +113,47 @@ Tudo em `calou(...)`: um órgão que estoura não custa o turno. Ler o `App.jsx`
    **`passou`, e não `bateu`:** o «sim, pago» do catálogo (`custo.porPouco`) já cobrou o preço dele; a carta vira limpa e não cobra outro. Um preço só por dado. A falha que o catálogo não paga (os sociais, a falha seca) cai no `virarCarta`, que dá o preço leve ou o pesado pela margem.
 5. **O que a carta virada faz** (`vira`):
    - **o facto**, por `PORTA_DA_CARTA[vira.escreve.predicado]` — `descobriu`: `escreverODescobriu(vira.achado)`, **salvo** se o MC5 acima já escreveu o achado do mesmo `quest`/`etapa` (`facto.achado`); `conversou`: `anotarOLivro` (motor/livro-do-turno.js) com `falouCom`; `consultou`: `registrarConsulta(npcsRef.current, nome)` + `setNpcs`, salvo se a `consultaDeInformante` deste teste já o fez; `tem`: o objeto na bolsa pela porta do `aplicar`. **O nome para a porta é o do registo** (`vira.escreve.id`, ou `carta.juiz.nome`), nunca `escreve.nome`, que pode ser a alcunha de quem ainda não se viu;
-   - **o preço** (`vira.preco.efeitos`): `minutos` → `avancarMinutos(n)` fora da luta (e a linha que ele devolve ao chat); `moedas` → a ficha (`Math.max(0, …)`); `danificado` → a marca no objeto que entra; `incompleta` → nada (a carta e a pauta dizem-no); `avisa_vilao` e `relogio_do_fio` → **a porta da Q2b**, que ainda não existe;
-   - **o custo** (`vira.custo`): as moedas saem da ficha, **salvo** `alvo.pago`;
+   - **o preço e o custo, de uma vez** (Q2b): `const pr = aplicarPrecoDoQuadro(estadoDasQuests(), vira.preco, { custo: vira.custo, pago: !!alvo.pago, objeto: <o item que entra, no `tem`> });` → `aplicarAsQuests(pr, "Q3 · o preço")` (a forma é a de `oTurnoDasQuests`: o vilão avisado vai a `saberRef`, o relógio dele a `espinhaRef`, as moedas e o custo à ficha); depois `pr.minutos` → `avancarMinutos(pr.minutos)` fora da luta (e a linha que ele devolve ao chat); `pr.objeto` é o item a pôr na bolsa, já com a marca; `pr.incompleta` → nada (a carta e a pauta dizem-no). Importar também `aplicarPrecoDoQuadro` e `aCartaEmJogo`;
    - **a voz**: `vira.preco.linha` é o carimbo da carta, para a peça da Q4 — não vai ao chat como mecanismo.
 6. **O gesto** — em `adjudicarAcao`, na âncora `const v = veredictoDaAcao(acao);` / `if (!v) return false;`: antes do `return false`, `aCartaDoGesto(quadrosAgora(), { frase: acao, quem: <a pessoa chamada, como no pedido sem dado: aPessoaChamada(acao, { conhecidos: [], presentes })>, moedas: (fichaViva() || {}).moedas || 0 }, { ...ondeDoPasso(), emCena: presentes })` → `virarCarta(quadro, g.veredito, { carta: g.carta, caminho: g.caminho, memoria: quadroRef.current, dia: diaRef.current })` → o mesmo passo 5 (o custo cobra-se sempre: `pago` é `false`). O turno segue para o Narrador como antes. O custo já estava dito antes do clique: está no caminho da carta, à vista no quadro (Q4).
 7. **A pauta** — `src/pauta.js`, `SECOES`: `{ id: "quadro", rotulo: "O CASO", prio: 2.44, o: "o que o herói já sabe do caso e o que falta, pela forma" }` (depois do rumo 2,42 e do fecho 2,43; antes da planta da masmorra 2,45). Em `aPautaDoTurno`, em `calou`: `const qp = oQuadroNaPauta(osQuadrosDoEstado(…)); p = porNaPauta(p, "quadro", qp.linha); p = porNaPauta(p, "naoPode", qp.naoPode);`. **Medir antes de fixar a prio**, contra `TETO_DA_PAUTA` (1400), no molde de `teste-masmorra-na-pauta` (500 cenas semeadas, com e sem luta): quantas vezes a linha entra, e que secções tira. A linha tem teto de 260 e o veto é uma linha por quadro (≤2) — mas cada veto empurra os outros 0,1. A régua: não tira veto, desfecho, rumo nem fecho; se tirar a planta da masmorra ou o QUEM CARREGA em mais de 1 cena em 20, desce para 2,455.
 8. **A prova da Q3**: a `teste-estado` com o campo novo; um turno de prova (o mistério de `teste-quadro-da-quest` §7) com a busca falhada no curral pelo App; `npm run build` e `npm test` verdes.
+
+## 12. A Q2b — o que a tela pede, e o contrato da carta (feita, 14/11)
+
+**O preço faz o que diz.** `aplicarPrecoDoQuadro(estado, preco, { custo, pago, objeto, arco })` → `{ estado, efeitos: [], notas: [], linhas: [], minutos, incompleta, danificado, objeto?, aplicados } | null`. `estado` traz só os campos que mudaram (`personagem`, `saber`, `espinha`) — a forma de `oTurnoDasQuests`, que `aplicarAsQuests` já aplica. Os efeitos de `QUESTS_DO_TURNO.semQuest` (`moedas`, `avisa_vilao`, `relogio_do_fio`) entram por `aplicarEfeitosNoEstado` (motor/quests-do-turno.js), as **mesmas** portas que `aplicarUm` usa no fim do turno (`comMoedas`, `avisarOVilao`, `adiantarOFio`: o comportamento de `oTurnoDasQuests` não mudou — teste-bq7-motor, 137 verdes). Os de `EFEITOS_DO_PRECO` voltam pelo campo `devolve`: `minutos` (somados, para `avancarMinutos` — o dia que vira é porta do App), `incompleta`, `danificado` (com `objeto`, o item volta com o campo `danificado: true`, novo e aditivo). O custo do caminho cobra-se **salvo** `pago`.
+
+**Antes do dado.** `aCartaEmJogo(quadros, pedido, onde)` → `{ quest, carta, caminho, pago, tipo, forma, costas, seFalhar, restam? } | null` — o pedido do catálogo sem resultado. A carta e o caminho são os que `aCartaDoTeste` dará depois, com sucesso ou falha (o miolo é o mesmo, `oAlvoDoTeste`; provado nos 139 casos do catálogo). Para o leque na bandeja e o «se falhar» do chamado (formas.md §QQ 8, 5).
+
+**Os campos novos do quadro** (nada no save): `quadro.sinal = { sabe, de }` (as essenciais viradas ou com preço, de quantas há sem futuras nem sobras; as extra não entram); em cada caminho `pericias` (os ids, sem repetir) e `minutos` (o menor dos desafios, de `DESAFIOS`); na carta `efeitos` (os do preço, × peso; `null` sem preço); `seFalhar: [{ id, leve, efeitos }]` com os números do arco (era `[id]`). `oSinalDosQuadros(quadros)` → `{ sabe, de }` somado.
+
+**O contrato com a peça (`painel-quadro.jsx`).** A tela lê **só** isto — lista branca; o `juiz`, o `escreve`, a `chave`, a `etapa`, os `desafios` e o `ganho` nunca passam:
+
+```
+oQuadroNaTela(quadro) → null | {
+  quest,          // o id (chave de React; não se mostra)
+  titulo, pergunta,
+  misterio,       // boolean: o arco pesa mais (o momento demora-se, §QQ 4)
+  sinal: { sabe, de },
+  cartas: [aCartaNaTela] }
+
+aCartaNaTela(carta) → null | {
+  id,             // estável: o mesmo de vira.carta.id (o momento acha a carta por ele)
+  tipo,           // "essencial" | "extra" (o metal, o lacre; nunca texto)
+  forma,          // "lugar" | "pessoa" | "objeto" (o glifo)
+  costas,         // «um lugar», «uma pessoa», «um objeto»
+  estado,         // "costas" | "virada" | "preco" | "perdida"
+  viravel, futura, sobra,   // booleanos (o aro âmbar, a silhueta, «não fez falta»)
+  face, de,       // "" de costas; virada, o facto e de onde veio (já com o nome visto)
+  preco,          // null | "tempo" | "incompleta" | "alerta" | "cobra" | "danificado"
+  linha,          // a frase da carta lida, "" sem preço
+  efeitos,        // null | [{ tipo, n? }] — a conta do carimbo, já × peso
+  caminhos: [{
+    id, diz,      // diz: o caminho em mundo, para escrever no campo
+    pericias,     // ["percepcao", "investigacao"]
+    minutos,      // inteiro
+    custa?,       // { moedas }
+    seFalhar: [{ id, leve, efeitos }] }] }   // [] na extra
+```
+
+`face`, `de` e `diz` já escondem o nome de quem o herói não viu (a alcunha); provado nas 153 cartas do catálogo em que o juiz sabe outro nome.

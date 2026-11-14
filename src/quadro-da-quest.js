@@ -44,19 +44,30 @@
    O sistema não fala de si: os textos daqui são de mundo. «Carta», «quadro»
    e «preço» são nomes do bastidor e não aparecem em nenhuma frase.
 
+   O QUE A TELA PEDE (Q2b, 14/11 — formas.md §QQ 8): o sinal (`sinal`, «2
+   de 4»: as essenciais que já se sabem, de quantas há à vista), a perícia e
+   os minutos de cada caminho (do catálogo), os números do preço já
+   multiplicados pelo peso do arco, e a carta «para a tela» (aCartaNaTela,
+   oQuadroNaTela) — sem o `juiz`, sem o átomo, sem nome que o herói ainda
+   não viu. Antes da rolagem, aCartaEmJogo diz se um teste vira uma carta e
+   o que custa falhá-lo. E o preço faz o que diz: aplicarPrecoDoQuadro põe
+   no estado o vilão avisado, o relógio dele adiantado e as moedas (pelas
+   portas do fim do turno, motor/quests-do-turno.js), e devolve à fiação o
+   tempo perdido e o objeto danificado.
+
    PURO E DETERMINÍSTICO. A sorte (que extra, que vantagem, que preço) sai
    da semente do mundo pela quest e pela carta — o mesmo quadro em qualquer
    máquina. O estado recebido nunca é mutado; o `null` e o lixo não lançam.
    ============================================================ */
 import { questPorId, avancarQuest, estadoDaQuest, PAPEIS_DA_QUEST } from "./biblioteca-de-quests.js";
 import { avaliarCondicao } from "./condicoes-da-quest.js";
-import { garantirQuestsDaEspinha } from "./motor/quests-do-turno.js";
+import { garantirQuestsDaEspinha, aplicarEfeitosNoEstado, QUESTS_DO_TURNO } from "./motor/quests-do-turno.js";
 import { garantirEsqueleto } from "./esqueleto.js";
 import { garantirHistoria } from "./historia.js";
 import { garantirRegistroDoVilao, FRAQUEZAS } from "./plano-do-vilao.js";
 import { hashSemente, rng } from "./semente.js";
 import { noLugarDoPasso } from "./a-quest-manda.js";
-import { desafioPorPericia } from "./desafios.js";
+import { desafioPorPericia, desafioPorId } from "./desafios.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -143,11 +154,17 @@ export const PRECO_DA_FALHA = Object.freeze({
 
 /* Os efeitos do preço que a biblioteca não tem (os outros — avisa_vilao,
    relogio_do_fio, moedas — são de EFEITOS_DA_QUEST e entram pela mesma
-   porta que as consequências das quests). `porta`: quem o aplica. */
+   porta que as consequências das quests: QUESTS_DO_TURNO.semQuest,
+   aplicarEfeitosNoEstado). `porta`: quem o aplica. Estes três não mexem no
+   estado do quadro: aplicarPrecoDoQuadro devolve-os à fiação no campo
+   `devolve` — somados (`soma`: os minutos, porque o dia que vira é porta do
+   App, avancarMinutos, e o reino anda com ele) ou como sinal. `marca`: o
+   campo que o objeto danificado leva quando entra na bolsa (um campo NOVO
+   do item, que a versão antiga ignora). */
 export const EFEITOS_DO_PRECO = Object.freeze({
-  minutos: Object.freeze({ porta: "src/motor/tempo-do-turno.js", diz: "o relógio do mundo anda os minutos perdidos" }),
-  danificado: Object.freeze({ porta: "src/motor/aplicar.js", diz: "o objeto entra na bolsa com a marca de danificado" }),
-  incompleta: Object.freeze({ porta: null, diz: "só a carta: a face mostra a metade, e a pauta di-lo ao Narrador" }),
+  minutos: Object.freeze({ porta: "src/motor/tempo-do-turno.js", diz: "o relógio do mundo anda os minutos perdidos", devolve: "minutos", soma: true }),
+  danificado: Object.freeze({ porta: "src/motor/aplicar.js", diz: "o objeto entra na bolsa com a marca de danificado", devolve: "danificado", marca: "danificado" }),
+  incompleta: Object.freeze({ porta: null, diz: "só a carta: a face mostra a metade, e a pauta di-lo ao Narrador", devolve: "incompleta" }),
 });
 
 /* ---------------- A PORTA DE CADA CARTA ----------------
@@ -411,6 +428,25 @@ function caminhosDe(forma, ancoras, vivo) {
 function precosDe(forma, leve) {
   return Object.keys(PRECO_DA_FALHA).filter((id) => PRECO_DA_FALHA[id].formas.includes(forma) && (!leve || PRECO_DA_FALHA[id].leve));
 }
+/* Q2b: os efeitos de um preço com os números do arco (os `n` × peso) — a
+   mesma conta no quadro (o carimbo, o «se falhar») e em virarCarta */
+const efeitosDoPreco = (id, peso) => (PRECO_DA_FALHA[id] ? PRECO_DA_FALHA[id].efeitos.map((e) => (e.n == null ? { ...e } : { ...e, n: e.n * peso })) : []);
+const seFalharDe = (forma, peso) => precosDe(forma, false).map((id) => ({ id, leve: PRECO_DA_FALHA[id].leve, efeitos: efeitosDoPreco(id, peso) }));
+/* Q2b: o que um caminho pede, lido do catálogo (desafios.js, DESAFIOS): as
+   perícias (sem repetir) e os minutos (o menor dos desafios) — para a tela
+   não ir ao catálogo */
+function doCatalogo(desafios) {
+  const ds = arr(desafios).map((id) => desafioPorId(id)).filter(Boolean);
+  const mins = ds.map((d) => d.minutos).filter((m) => typeof m === "number" && Number.isFinite(m));
+  return { pericias: [...new Set(ds.map((d) => d.pericia).filter((p) => typeof p === "string" && p))], minutos: mins.length ? Math.min(...mins) : 0 };
+}
+/* Q2b: o sinal (formas.md §QQ 3) — as essenciais que já se sabem (viradas
+   ou com preço), de quantas há à vista (sem as por vir e sem as que não
+   fizeram falta). As extra não entram: ganhá-las é bónus. */
+function sinalDe(cartas) {
+  const ess = arr(cartas).filter((c) => obj(c) && c.tipo === "essencial" && !c.futura && !c.sobra);
+  return { sabe: ess.filter((c) => c.estado === "virada" || c.estado === "preco").length, de: ess.length };
+}
 
 /* ============================================================
    oQuadroDaQuest(quest, estado, opcoes) → null | quadro
@@ -421,12 +457,14 @@ function precosDe(forma, leve) {
        cartas: [{ id, chave, tipo: "essencial"|"extra", forma, costas,
                   estado: "costas"|"virada"|"preco"|"perdida",
                   etapa, viravel, futura, sobra, face, de, preco, linha,
-                  caminhos: [{ id, diz, desafios, custa?, seFalhar }],
+                  efeitos (Q2b: os do preço, × peso; null sem preço),
+                  caminhos: [{ id, diz, desafios, pericias, minutos, custa?,
+                    seFalhar: [{ id, leve, efeitos }] }],
                   escreve? (só a essencial: o átomo e o papel), ganho?,
                   juiz (Q2: os nomes e o sítio de verdade, para
                     aCartaDoTeste — bastidor, NUNCA para a tela: a tela diz
                     `diz`, que já esconde o nome de quem não se viu) }],
-       essenciais, viradas, ganhos }
+       essenciais, viradas, ganhos, sinal: { sabe, de } }
    ============================================================ */
 export function oQuadroDaQuest(quest, estado, opcoes) {
   try {
@@ -497,9 +535,10 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
           de: est === "costas" ? "" : caminho ? encher(caminho.de, { nome }) : "",
           preco: est === "preco" && m.preco ? m.preco : null,
           linha: est === "preco" && m.preco ? PRECO_DA_FALHA[m.preco].linha : "",
+          efeitos: est === "preco" && m.preco ? efeitosDoPreco(m.preco, arco.peso) : null,
           caminhos: futura ? [] : caminhosDe(P.forma, ancoras, vivo).map((c) => ({
-            id: c.id, diz: encher(c.diz, { nome }), desafios: c.desafios, ...(c.custa ? { custa: c.custa } : {}),
-            seFalhar: precosDe(P.forma, false),
+            id: c.id, diz: encher(c.diz, { nome }), desafios: c.desafios, ...doCatalogo(c.desafios), ...(c.custa ? { custa: c.custa } : {}),
+            seFalhar: seFalharDe(P.forma, arco.peso),
           })),
           escreve: { predicado: a[0], papel, tipo: p.tipo, nome, id: typeof p.id === "string" ? p.id : "", ...(typeof p.cidade === "string" ? { cidade: p.cidade } : {}) },
           juiz: juizDaEssencial(p, nome, pn),
@@ -543,8 +582,8 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
           viravel: aberta && est === "costas",
           face: est === "virada" ? encher(X.face, { o: x.o, nome: x.nome }) : "",
           de: est === "virada" && m.caminho ? encher((todos.find((c) => c.id === m.caminho) || { de: "" }).de, { sobre }) : "",
-          preco: null, linha: "",
-          caminhos: abertos.map((c) => ({ id: c.id, diz: encher(c.diz, { sobre }), desafios: c.desafios, ...(c.custa ? { custa: c.custa } : {}), seFalhar: [] })),
+          preco: null, linha: "", efeitos: null,
+          caminhos: abertos.map((c) => ({ id: c.id, diz: encher(c.diz, { sobre }), desafios: c.desafios, ...doCatalogo(c.desafios), ...(c.custa ? { custa: c.custa } : {}), seFalhar: [] })),
           ganho: X.ganho,
           juiz: juizDaExtra,
         });
@@ -559,6 +598,7 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
       essenciais: ess.length,
       viradas: cartas.filter((c) => c.estado === "virada" || c.estado === "preco").length,
       ganhos: cartas.filter((c) => c.tipo === "extra" && c.estado === "virada").map((c) => c.ganho),
+      sinal: sinalDe(cartas),
     };
   } catch { return null; }
 }
@@ -614,9 +654,7 @@ export function virarCarta(quadro, veredito, contexto) {
       const leve = V.dc - V.total <= QUADRO_DA_QUEST.porPouco;
       const ids = precosDe(carta.forma, leve);
       const id = ids[Math.floor(dadoDe(Q.semente, Q.quest, carta.id, "preco")() * ids.length)];
-      const peso = arcoDe(Q.arco).peso;
-      const P = PRECO_DA_FALHA[id];
-      preco = { id, linha: P.linha, efeitos: P.efeitos.map((e) => (e.n == null ? { ...e } : { ...e, n: e.n * peso })) };
+      preco = { id, linha: PRECO_DA_FALHA[id].linha, efeitos: efeitosDoPreco(id, arcoDe(Q.arco).peso) };
     }
     const w = carta.escreve || {};
     const achado = w.predicado === "descobriu" && w.nome
@@ -624,7 +662,7 @@ export function virarCarta(quadro, veredito, contexto) {
       : null;
     const def = arr(CAMINHOS_DA_CARTA[carta.forma]).find((x) => x.id === caminho.id) || { de: "" };
     return {
-      carta: { ...carta, estado: sucesso ? "virada" : "preco", viravel: false, preco: preco ? preco.id : null, linha: preco ? preco.linha : "",
+      carta: { ...carta, estado: sucesso ? "virada" : "preco", viravel: false, preco: preco ? preco.id : null, linha: preco ? preco.linha : "", efeitos: preco ? preco.efeitos : null,
         face: encher(FORMAS_DA_CARTA[carta.forma].face, { nome: w.nome || "" }), de: encher(def.de, { nome: w.nome || "" }) },
       preco, custo, escreve: { ...w, porta: PORTA_DA_CARTA[w.predicado] || null }, achado, perdeu: null,
       memoria: novaMemoria({ dia, como: sucesso ? "limpa" : "preco", caminho: caminho.id, ...(preco ? { preco: preco.id } : {}) }),
@@ -771,13 +809,10 @@ const afinidadeDe = (C, texto) => {
      outra vez). `null`: o teste não bate com carta nenhuma, e o turno segue
      como hoje.
    ============================================================ */
-export function aCartaDoTeste(quadros, veredito, onde) {
-  try {
-    const V = obj(veredito);
-    if (!V) return null;
-    const resultado = VEREDITO_DO_SISTEMA.resultados.includes(V.resultado) ? V.resultado
-      : typeof V.passou === "boolean" ? (V.passou ? "sucesso" : "falha") : null;
-    if (!resultado || !VEREDITO_DO_SISTEMA.numeros.every((n) => typeof V[n] === "number" && Number.isFinite(V[n]))) return null;
+/* o miolo do juiz: a carta e o caminho que um teste do catálogo vira, sem
+   olhar ao resultado (a escolha não depende dele) — por isso o mesmo antes
+   do dado (aCartaEmJogo) e depois (aCartaDoTeste) */
+function oAlvoDoTeste(quadros, V, onde) {
     const desafio = typeof V.id === "string" && V.id ? V.id
       : typeof V.desafio === "string" && V.desafio ? V.desafio
       : typeof V.pericia === "string" && V.pericia ? ((desafioPorPericia(V.pericia) || {}).id || "") : "";
@@ -805,10 +840,51 @@ export function aCartaDoTeste(quadros, veredito, onde) {
     }
     const m = oMelhor(cands);
     if (!m) return null;
+    return { m, desafio, pago: CARTA_DO_TESTE.pagos.includes(m.def.id) && pagou };
+}
+export function aCartaDoTeste(quadros, veredito, onde) {
+  try {
+    const V = obj(veredito);
+    if (!V) return null;
+    const resultado = VEREDITO_DO_SISTEMA.resultados.includes(V.resultado) ? V.resultado
+      : typeof V.passou === "boolean" ? (V.passou ? "sucesso" : "falha") : null;
+    if (!resultado || !VEREDITO_DO_SISTEMA.numeros.every((n) => typeof V[n] === "number" && Number.isFinite(V[n]))) return null;
+    const a = oAlvoDoTeste(quadros, V, onde);
+    if (!a) return null;
     return {
-      quest: m.Q.quest, carta: m.C.id, caminho: m.K.id,
-      veredito: { desafio, resultado, total: V.total, dc: V.dc },
-      pago: CARTA_DO_TESTE.pagos.includes(m.def.id) && pagou,
+      quest: a.m.Q.quest, carta: a.m.C.id, caminho: a.m.K.id,
+      veredito: { desafio: a.desafio, resultado, total: V.total, dc: V.dc },
+      pago: a.pago,
+    };
+  } catch { return null; }
+}
+
+/* ============================================================
+   aCartaEmJogo(quadros, pedido, onde) → null | {
+     quest, carta, caminho, pago, tipo, forma, costas, seFalhar, restam? }
+   Q2b (formas.md §QQ 4 e §QQ 8, 5): ANTES da rolagem, o Chamado do Mestre
+   sabe se aquele teste vira uma carta — para a bandeja mostrar o leque e o
+   veredito antes do clique dizer o preço da carta («se falhar: …»).
+   `pedido`: o do catálogo, como em aCartaDoTeste, sem o resultado (ainda
+   não há dado). A carta e o caminho são os mesmos que aCartaDoTeste dará
+   depois, com sucesso ou com falha: a escolha não olha ao resultado.
+   `seFalhar`: na essencial, os preços possíveis com os números do arco
+   ([{ id, leve, efeitos }]: o leve ou o pesado decide-o a margem); na
+   extra, [] e `restam` — os caminhos que ficam se este se queimar (0: a
+   carta perde-se). Nada de `juiz`: a forma é de tela.
+   ============================================================ */
+export function aCartaEmJogo(quadros, pedido, onde) {
+  try {
+    const V = obj(pedido);
+    if (!V) return null;
+    const a = oAlvoDoTeste(quadros, V, onde);
+    if (!a) return null;
+    const { C, K } = a.m;
+    return {
+      quest: a.m.Q.quest, carta: C.id, caminho: K.id, pago: a.pago,
+      tipo: C.tipo, forma: C.forma, costas: C.costas,
+      seFalhar: arr(K.seFalhar).map(precoNaTela),
+      ...(C.tipo === "extra" ? { restam: arr(C.caminhos).filter((x) => obj(x) && x.id !== K.id).length } : {}),
     };
   } catch { return null; }
 }
@@ -853,5 +929,126 @@ export function aCartaDoGesto(quadros, gesto, onde) {
       veredito: { desafio: m.K.desafios[0], resultado: "sucesso", total: m.preco, dc: m.preco },
       pago: false,
     };
+  } catch { return null; }
+}
+
+/* ============================================================
+   A CARTA PARA A TELA (Q2b) — o contrato com a peça (painel-quadro.jsx)
+   A tela não leva o bastidor: nem o `juiz` (o nome de verdade, a cidade,
+   onde o objeto nasce), nem o átomo que a carta escreve (`escreve`, com o
+   id do registo), nem a chave do save, nem a etapa, nem os ids dos
+   desafios. O que vai já esconde o nome de quem o herói não viu (`face`,
+   `de` e `diz` saem do nome visto, a alcunha). Lista branca: o que não
+   está aqui não passa, e um campo novo no quadro não vaza sozinho.
+   ============================================================ */
+const texto = (x) => (typeof x === "string" ? x : "");
+const precoNaTela = (p) => {
+  const P = obj(p);
+  return P ? { id: texto(P.id), leve: !!P.leve, efeitos: arr(P.efeitos).filter(obj).map((e) => ({ ...e })) } : null;
+};
+const caminhoNaTela = (k) => {
+  const K = obj(k);
+  if (!K) return null;
+  return {
+    id: texto(K.id), diz: texto(K.diz),
+    pericias: arr(K.pericias).filter((p) => typeof p === "string"),
+    minutos: inteiro(K.minutos) || 0,
+    ...(obj(K.custa) ? { custa: { ...K.custa } } : {}),
+    seFalhar: arr(K.seFalhar).map(precoNaTela).filter(Boolean),
+  };
+};
+
+/* aCartaNaTela(carta) → null | { id, tipo, forma, costas, estado, viravel,
+     futura, sobra, face, de, preco, linha, efeitos, caminhos: [{ id, diz,
+     pericias, minutos, custa?, seFalhar: [{ id, leve, efeitos }] }] } */
+export function aCartaNaTela(carta) {
+  try {
+    const C = obj(carta);
+    if (!C || !FORMAS_DA_CARTA[C.forma]) return null;
+    return {
+      id: texto(C.id), tipo: CARTA_DO_TESTE.ordem.includes(C.tipo) ? C.tipo : CARTA_DO_TESTE.ordem[0],
+      forma: C.forma, costas: texto(C.costas) || FORMAS_DA_CARTA[C.forma].costas,
+      estado: texto(C.estado), viravel: !!C.viravel, futura: !!C.futura, sobra: !!C.sobra,
+      face: texto(C.face), de: texto(C.de),
+      preco: PRECO_DA_FALHA[C.preco] ? C.preco : null, linha: texto(C.linha),
+      efeitos: Array.isArray(C.efeitos) ? C.efeitos.filter(obj).map((e) => ({ ...e })) : null,
+      caminhos: arr(C.caminhos).map(caminhoNaTela).filter(Boolean),
+    };
+  } catch { return null; }
+}
+
+/* oQuadroNaTela(quadro) → null | { quest, titulo, pergunta, misterio,
+     sinal: { sabe, de }, cartas: [aCartaNaTela] }
+   `misterio`: o arco pesa mais do que o padrão (o momento demora-se mais,
+   formas.md §QQ 4). Sem a semente, sem o tipo da quest, sem os ganhos. */
+export function oQuadroNaTela(quadro) {
+  try {
+    const Q = obj(quadro);
+    if (!Q || typeof Q.quest !== "string") return null;
+    const cartas = arr(Q.cartas);
+    return {
+      quest: Q.quest, titulo: texto(Q.titulo), pergunta: texto(Q.pergunta),
+      misterio: arcoDe(Q.arco).peso > QUADRO_POR_ARCO.padrao.peso,
+      sinal: sinalDe(cartas),
+      cartas: cartas.map(aCartaNaTela).filter(Boolean),
+    };
+  } catch { return null; }
+}
+
+/* oSinalDosQuadros(quadros) → { sabe, de } — o sinal somado de todos os
+   quadros (cada quadro traz o seu em `sinal`; a barra mostra o da quest da
+   vez, e o total serve a quem quer o caso inteiro) */
+export function oSinalDosQuadros(quadros) {
+  try {
+    return arr(quadros).reduce((s, q) => {
+      const x = sinalDe(obj(q) ? q.cartas : null);
+      return { sabe: s.sabe + x.sabe, de: s.de + x.de };
+    }, { sabe: 0, de: 0 });
+  } catch { return { sabe: 0, de: 0 }; }
+}
+
+/* ============================================================
+   aplicarPrecoDoQuadro(estado, preco, contexto) → null | {
+     estado (só os campos que mudaram: personagem, saber, espinha),
+     efeitos: [], notas: [], linhas: [],
+     minutos, incompleta, danificado, objeto?, aplicados }
+   Q2b: o preço da falha faz o que diz. `preco`: o de virarCarta ({ id,
+   linha, efeitos }, já com os números do arco) ou só o id (com
+   `contexto.arco`). Os efeitos de QUESTS_DO_TURNO.semQuest (o vilão
+   avisado, o relógio dele adiantado, as moedas) entram no estado pelas
+   MESMAS portas do fim do turno (aplicarEfeitosNoEstado) — nenhuma régua
+   repetida. Os de EFEITOS_DO_PRECO voltam à fiação pelo campo `devolve`:
+   `minutos` (para avancarMinutos), `incompleta` e `danificado`; com
+   `contexto.objeto` (o item que entra na bolsa), `objeto` volta com a
+   marca. `contexto.custo` (o `custo` de virarCarta) cobra-se também,
+   SALVO `contexto.pago` (o teste já o cobrou: aCartaDoTeste → `pago`).
+   A forma é a de oTurnoDasQuests (`estado`, `efeitos`, `notas`,
+   `linhas`): a fiação aplica-a pela mesma porta. O estado recebido nunca
+   é mutado; o lixo não lança.
+   ============================================================ */
+export function aplicarPrecoDoQuadro(estado, preco, contexto) {
+  try {
+    const E = obj(estado);
+    if (!E) return null;
+    const c = obj(contexto) || {};
+    const P = obj(preco);
+    const efeitos = (P ? arr(P.efeitos) : typeof preco === "string" ? efeitosDoPreco(preco, arcoDe(c.arco).peso) : []).filter(obj);
+    const custo = !c.pago && obj(c.custo) ? inteiro(c.custo.moedas) : null;
+    const doEstado = [...efeitos.filter((e) => QUESTS_DO_TURNO.semQuest.includes(e.tipo)), ...(custo ? [{ tipo: "moedas", n: -custo }] : [])];
+    const r = (doEstado.length ? aplicarEfeitosNoEstado(E, doEstado) : null) || { estado: {}, aplicados: [] };
+    const out = { estado: r.estado, efeitos: [], notas: [], linhas: [], aplicados: [...r.aplicados] };
+    for (const D of Object.values(EFEITOS_DO_PRECO)) out[D.devolve] = D.soma ? 0 : false;
+    for (const e of efeitos) {
+      const D = EFEITOS_DO_PRECO[e.tipo];
+      if (!D) continue;
+      if (D.soma) { if (!Number.isInteger(e.n)) continue; out[D.devolve] += e.n; } else out[D.devolve] = true;
+      out.aplicados.push(e.tipo);
+    }
+    const dano = EFEITOS_DO_PRECO.danificado;
+    if (out[dano.devolve] && c.objeto != null) {
+      const o = obj(c.objeto) || (typeof c.objeto === "string" && c.objeto.trim() ? { nome: c.objeto.trim() } : null);
+      if (o) out.objeto = { ...o, [dano.marca]: true };
+    }
+    return out;
   } catch { return null; }
 }
