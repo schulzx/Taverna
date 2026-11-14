@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 14/11 · v9.645 · a 21.ª sessão, a pessoa do passo em cena, e o motor do quadro (Q1) · commits 8469e9a, fabb164 + c6be650
+
+A pessoa, sobre o quadro do mistério: perguntou se a falha no dado prendia a quest — prendia, na proposta da 19.ª. A versão aprovada («Ok, pode seguir»): a carta essencial vira sempre (a falha vira-a com preço), as extras só o sucesso vira, só o sistema vira cartas (GUMSHOE, de Robin D. Laws; a regra das três pistas, de Justin Alexander). Ordem acordada: a 21.ª sessão primeiro, o quadro depois, para todas as quests.
+
+- **a 21.ª sessão (`mente/sessao-21.md`):** v9.644, 28 respostas, US$ 0,25. XP fora da luta 179 (20.ª: 0); dado 1/4,5 turnos (régua 2–3; 20.ª 5,8), 100% da frase, 4 perícias; inventado 0. Grave: a pessoa do passo com casa nunca entrava em cena; o cais caiu numa taverna.
+- **fabb164 (backend):** no `boca` a pauta põe a pessoa do passo no EM CENA (`EM_CENA_DO_PASSO`), a qualquer hora; papel de lugar tipado trancado (`O_SITIO_DO_PAPEL`: cais, porto, forja, templo, capela, taberna, estalagem); o recibo diz o porquê do feito (`O_PORQUE_NO_RECIBO`); movimento do oráculo sem fio com nome não abre.
+- **8469e9a (backend, Q1):** `src/quadro-da-quest.js` — cartas das condições das etapas, ≥2 caminhos, `PRECO_DA_FALHA`, extras por arco, campo aditivo `estado.quadro`. Na lista AGUARDANDO da `teste-ligacao` até a Q3 o importar.
+- **decisões:** quartel/cadeia/cela/arena ficam só a preferir (trancados matavam «A Cabeça Que Não Se Baixa»); «A Barca a Meio do Rio» passa a nascer pouco (docas em 12 de 543 cidades). Saves antigos guardam o esqueleto velho — corrigir seria formato de save, da pessoa.
+- **prova limpa:** c6be650 513/513, 26/26; subiu.
+- **o que ficou:** o boato do oráculo calado até o App passar `boatoDaqui` (~20196); o dado a 4,5 (falta chegar a 2–3); o quarto pago como acampamento; gente que segue o herói; vozes e géneros trocados; «procuro neste quarto» calado; a Persuasão com outra forma. Em curso: Q2 (backend) e Q4 (desenho, Figma).
+
+---
 ## 13/11 · v9.644 · a 20.ª sessão (NE9), e o feito volta pelo sistema · commits 0cdaf4b, 9857d2d, 09b6e53, d6021ad, 67bdcef + 438ae82
 
 A pessoa: «Pode fazer» — às duas propostas (XP por feito pelo sistema; a NE9 paga). Duas mãos em paralelo (o `jogo` na sessão, o `backend` no feito), depois duas `backend` nos defeitos; o coordenador fez a fiação do App com o bastão (duas vezes, devolvido cada uma).
