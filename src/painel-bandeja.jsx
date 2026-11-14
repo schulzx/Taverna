@@ -28,7 +28,10 @@
    soa aqui: soou lá. Um som que estoura cala-se; o dado pousa na mesma.
    ============================================================ */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, CHAMADO_DO_MESTRE, alfa } from "./estilo.js";
+import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, CHAMADO_DO_MESTRE, PALAVRAS_DO_QUADRO, alfa } from "./estilo.js";
+/* QQ (§QQ 4): o chamado que vira uma carta leva o leque do quadro — o mesmo
+   glifo do sinal da barra, não um segundo */
+import { LequeDoQuadro } from "./painel-quadro.jsx";
 import { Glifo, FacesDoD20, precoDoChamado } from "./ui.jsx";
 /* MC (10/11): o texto do chamado é do motor — «Rolar», o dado, a espera */
 import { O_CHAMADO } from "./motor/o-mestre-chama.js";
@@ -274,6 +277,11 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
      aoRolar  — o toque na espera (o App lança e devolve o lance).
      aoPousar — chamado uma vez quando o lance pousa (o Narrador vai aqui).
      telefone — a 375: a perícia sai da bandeja (já está na fala da folha).
+     chamado.carta — QQ (§QQ 4 e §QQ 8, 5): o teste vira uma carta do quadro
+                (a fiação da Q3, aCartaEmJogo). A bandeja leva o leque 24 à
+                direita do d20, e o nome acessível da espera acrescenta «Isto
+                revela uma pista.». O «se falhar» da carta já vem no chamado
+                (aviso, cobrado): a bandeja diz o que a folha diz.
    O ESTADO deriva do lance, e não é prop: sem lance, espera; com lance, a
    rolar e depois pousado com lance.desfecho.
    ============================================================ */
@@ -311,8 +319,10 @@ export function ChamadoDoMestre({ chamado = null, mod = 0, lance = null, sozinho
   const B = C.bandeja, D = C.dado, V = C.vela;
   const perimetro = 2 * Math.PI * V.raio;
   const dados = lance && Array.isArray(lance.dados) ? lance.dados : [];
+  const comPista = !!(chamado.carta && typeof chamado.carta === "object");
+  const nomeComPista = comPista && !lance ? `${nome} ${PALAVRAS_DO_QUADRO.leitor.revela}` : nome;
   return (
-    <button type="button" data-chamado={estado} aria-label={nome} aria-disabled={pousado || undefined}
+    <button type="button" data-chamado={estado} data-chamado-pista={comPista ? "" : undefined} aria-label={nomeComPista} aria-disabled={pousado || undefined}
       onClick={tocar ? () => { try { tocar(); } catch { /* um toque nunca custa o turno */ } } : undefined}
       onPointerDown={(ev) => { try { ev.preventDefault(); } catch { /* o foco fica no campo (V6a) */ } }}
       className={"tv-anel-foco flex items-center text-left min-w-0" + (tocavel ? " tv-chamado-bandeja" : "")}
@@ -342,6 +352,7 @@ export function ChamadoDoMestre({ chamado = null, mod = 0, lance = null, sozinho
           </svg>
         ) : null}
       </span>
+      {comPista ? <span style={{ display: "inline-flex", flexShrink: 0, lineHeight: 0 }}><LequeDoQuadro /></span> : null}
       <span className="flex flex-col min-w-0" aria-live="polite" style={{ flex: "1 1 0", gap: 1 }}>
         {pousado ? (
           <>

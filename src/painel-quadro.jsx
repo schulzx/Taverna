@@ -421,10 +421,10 @@ function FioDeLacre({ caixaRef, ids }) {
 
 /* `coluna`: as extra do mistério na mesa, uma por linha, à direita do fio;
    `cheia`: a fila ocupa o que sobra da linha (a etapa, ao lado do numeral) */
-function FilaDeCartas({ cartas, telefone, escolhida, ativa, aoTocar, aoFoco, coluna = false, cheia = false }) {
+function FilaDeCartas({ cartas, telefone, escolhida, ativa, aoTocar, aoFoco, coluna = false, cheia = false, rotulo = undefined }) {
   const G = Q.gaveta.grade;
   return (
-    <ul className={coluna ? "flex flex-col" : "flex flex-wrap"} style={{ columnGap: telefone ? G.telefone : G.mesa, rowGap: G.linhas, listStyle: "none", margin: 0, padding: 0, ...(cheia ? { flex: 1, minWidth: 0 } : null) }}>
+    <ul aria-label={rotulo} className={coluna ? "flex flex-col" : "flex flex-wrap"} style={{ columnGap: telefone ? G.telefone : G.mesa, rowGap: G.linhas, listStyle: "none", margin: 0, padding: 0, ...(cheia ? { flex: 1, minWidth: 0 } : null) }}>
       {cartas.map((c) => (
         <li key={c.id} style={{ lineHeight: 0 }}>
           <CartaDePista carta={c} escolhida={escolhida === c.id} tabIndex={ativa === c.id ? 0 : -1} aoTocar={aoTocar} aoFoco={() => aoFoco(c.id)} />
@@ -524,6 +524,30 @@ function andarComSetas(e, raiz) {
   e.preventDefault();
   const j = e.key === "Home" ? 0 : e.key === "End" ? todos.length - 1 : Math.max(0, Math.min(todos.length - 1, i + passos[e.key]));
   todos[j].focus();
+}
+
+/* ============================================================
+   A FILA NO DIÁRIO (§QQ 3 — uma ação, uma forma). As linhas de «o que
+   falta» que são cartas passam a ser a mesma fila de CartaDePista da etapa
+   de agora, e tocar numa carta abre o mesmo quadro. A carta é a da gaveta,
+   byte a byte, com as setas da gaveta (roving tabindex, E4 §3).
+   · `cartas`: pistasDoQueFalta(quadro, falta).cartas (quadro-na-tela.js);
+   · `aoTocar(carta)`: abrir o quadro (o App fecha o Diário e abre a gaveta
+     nessa quest); sem ele, a carta lê-se e não abre nada.
+   ============================================================ */
+export function FilaDePistas({ cartas = [], telefone = false, aoTocar = null }) {
+  const lista = Array.isArray(cartas) ? cartas.filter((c) => c && typeof c === "object" && c.id != null) : [];
+  const [ativa, setAtiva] = React.useState(null);
+  const raiz = React.useRef(null);
+  if (!lista.length) return null;
+  const focaveis = lista.filter((c) => !c.futura);
+  const idAtiva = focaveis.some((c) => c.id === ativa) ? ativa : ((focaveis.find((c) => c.viravel) || focaveis[0] || {}).id || null);
+  return (
+    <div ref={raiz} data-fila-de-pistas="" onKeyDown={(e) => calado(() => andarComSetas(e, raiz.current))}>
+      <FilaDeCartas cartas={lista} telefone={telefone} escolhida={null} ativa={idAtiva} rotulo={W.rotulo}
+        aoTocar={aoTocar ? (carta) => aoTocar(carta) : undefined} aoFoco={setAtiva} />
+    </div>
+  );
 }
 
 /* GavetaDoQuadro — o contrato com o `oficial`:

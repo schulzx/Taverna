@@ -4187,6 +4187,7 @@ export const PALAVRAS_DO_QUADRO = {
     caminho: "Escrever: {diz}.", custa: "Custa {n} moedas.", minutos: "{n} minutos",
     vira: "Sabes agora {face} — {de}.", fechou: "Esse caminho fechou-se. Restam {n}.", perdeu: "Perdeu-se o rasto: {sobre}.",
     dobra: "{numeral}, {estado}. {abrir}",
+    revela: "Isto revela uma pista.",   /* §QQ 4: o chamado com carta em jogo */
   },
 };
 

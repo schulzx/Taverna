@@ -28,8 +28,9 @@ import {
   fichasDoSeFalhar, sinalDoQuadro, estadoDoSinal, textoDoSinal, nomeDoSinal, palavrasDe, leituraDaPista, duracaoDaPista,
   cronogramaDaPista, passoAos, saltoDaPista, nomeDaCarta, falaDaPista,
 } from "../src/quadro-na-tela.js";
-import { oQuadroDaQuest, virarCarta, PRECO_DA_FALHA, CAMINHOS_DA_EXTRA, QUADRO_POR_ARCO } from "../src/quadro-da-quest.js";
-import { BIBLIOTECA_DE_QUESTS, abrirQuest, PAPEIS_DA_QUEST } from "../src/biblioteca-de-quests.js";
+import { cartaDoQueFalta, pistasDoQueFalta } from "../src/quadro-na-tela.js";
+import { oQuadroDaQuest, oQuadroNaTela, virarCarta, PRECO_DA_FALHA, CAMINHOS_DA_EXTRA, QUADRO_POR_ARCO } from "../src/quadro-da-quest.js";
+import { BIBLIOTECA_DE_QUESTS, abrirQuest, PAPEIS_DA_QUEST, estadoDaQuest } from "../src/biblioteca-de-quests.js";
 import { garantirFactos } from "../src/livro-de-factos.js";
 
 let ok = 0, mal = 0;
@@ -246,14 +247,19 @@ const SRC = path.join(AQUI, "..", "src");
 const ENTRADA = `
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { CartaDePista, SinalDoQuadro, GavetaDoQuadro, CaminhosDaCarta, CartaLida, CarimboDoPreco, LequeDoQuadro, PistaQueVira } from "./painel-quadro.jsx";
+import { CartaDePista, SinalDoQuadro, GavetaDoQuadro, CaminhosDaCarta, CartaLida, CarimboDoPreco, LequeDoQuadro, PistaQueVira, FilaDePistas } from "./painel-quadro.jsx";
+import { PainelDiario, linhasDaFalta } from "./painel-diario.jsx";
+import { ChamadoDoMestre } from "./painel-bandeja.jsx";
 export const html = (el) => renderToStaticMarkup(el);
-export { React, CartaDePista, SinalDoQuadro, GavetaDoQuadro, CaminhosDaCarta, CartaLida, CarimboDoPreco, LequeDoQuadro, PistaQueVira };
+export { React, CartaDePista, SinalDoQuadro, GavetaDoQuadro, CaminhosDaCarta, CartaLida, CarimboDoPreco, LequeDoQuadro, PistaQueVira, FilaDePistas, PainelDiario, linhasDaFalta, ChamadoDoMestre };
 `;
 const saida = path.join(AQUI, `.tmp-painel-quadro-${process.pid}.mjs`);
+/* jsx automático (14/11, §6): a bandeja (painel-bandeja.jsx) não importa o
+   React, como o Vite deixa; com o "transform" o ChamadoDoMestre não se
+   desenhava em Node. As outras peças desenham-se igual nos dois. */
 buildSync({
   stdin: { contents: ENTRADA, resolveDir: SRC, loader: "jsx", sourcefile: "entrada-quadro.jsx" },
-  bundle: true, format: "esm", platform: "node", outfile: saida, jsx: "transform", logLevel: "silent", external: ["react", "react-dom", "react-dom/server"],
+  bundle: true, format: "esm", platform: "node", outfile: saida, jsx: "automatic", logLevel: "silent", external: ["react", "react-dom", "react-dom/server", "react/jsx-runtime"],
   loader: { ".js": "jsx" }, define: { "process.env.NODE_ENV": '"production"' },
 });
 const R = await import(pathToFileURL(saida).href);
@@ -349,6 +355,101 @@ const rotulos = (s) => [...s.matchAll(/aria-label="([^"]*)"/g)].map((m) => des(m
   t("a região viva diz a face e de onde veio, e a linha do preço", fala.startsWith("Sabes agora ") && fala.includes(v.carta.de) && fala.endsWith(v.preco.linha), fala);
   const ps = cronogramaDaPista({ face: v.carta.face, de: v.carta.de, carimbo: k.palavra, misterio: true });
   t("e o momento dela cabe no teto", duracaoDaPista(ps) <= M.teto);
+}
+
+/* ============================================================ */
+sec("6. uma ação, uma forma — o Diário e o chamado (§QQ 3 e §QQ 4)");
+{
+  /* o encontro de identidade: o átomo do «o que falta» e a carta que o motor fez dele */
+  const cs = [
+    { id: "rasto:descobriu:curral", tipo: "essencial", estado: "costas" },
+    { id: "rasto:conversou:pastora", tipo: "essencial", estado: "costas" },
+    { id: "q|extra:cumplice", tipo: "extra", estado: "costas" },
+    { id: "velha:consultou:velho", tipo: "essencial", estado: "costas", sobra: true },
+  ];
+  const at = (predicado, papel, extra = {}) => ({ predicado, args: [{ papel, tipo: "pessoa", id: "", nome: "" }], texto: predicado + " " + papel, ...extra });
+  t("o átomo acha a carta que é a mesma pista (predicado e papel)", cartaDoQueFalta(at("descobriu", "curral"), cs) === cs[0] && cartaDoQueFalta(at("conversou", "pastora"), cs) === cs[1]);
+  t("o laço (contagem acima de um) nunca é carta", cartaDoQueFalta(at("conversou", "pastora", { tem: 1, precisa: 3 }), cs) === null);
+  t("o «ir a», a carta que não fez falta e a sem papel ficam linhas", cartaDoQueFalta(at("esteve", "toca"), cs) === null && cartaDoQueFalta(at("consultou", "velho"), cs) === null
+    && cartaDoQueFalta({ predicado: "descobriu", texto: "x" }, cs) === null && cartaDoQueFalta(null, cs) === null);
+
+  /* o catálogo inteiro: o motor real (estadoDaQuest + oQuadroDaQuest + oQuadroNaTela).
+     Se o motor mudar o id das cartas, ESTA prova fica vermelha antes de o
+     Diário mostrar uma pista com duas caras. */
+  const C = "Alto do Sal";
+  const e0 = { npcs: {}, cidadeAtual: C, lugar: { nome: "Praça", cidade: C }, personagem: { nome: "Vera", grupo: [], inventario: [] }, dia: 1, npcTurno: 0, factos: garantirFactos(null), baseMundo: null };
+  let estados = 0, tiradas = 0, cartasErradas = 0, lacoVirou = 0, iguaisSemQuadro = true;
+  const semPar = [];
+  const atomos = (x) => (x && Array.isArray(x.opcoes) ? x.opcoes.flat().flatMap(atomos) : [x]);
+  for (const F of BIBLIOTECA_DE_QUESTS) {
+    const papeis = {};
+    for (const [k, d] of Object.entries(F.papeis)) {
+      const tipo = (PAPEIS_DA_QUEST[d.de] || {}).tipo;
+      papeis[k] = tipo === "lugar" ? { nome: "Casa " + k, cidade: C } : tipo === "item" ? { nome: "a coisa " + k } : { nome: "Pessoa " + k };
+    }
+    const R0 = abrirQuest(F, { estado: e0, papeis });
+    if (!R0) continue;
+    F.etapas.forEach((etapa, idx) => {
+      const antes = F.etapas.slice(0, idx);
+      const reg = { ...R0, feitas: Object.fromEntries(antes.map((e) => [e.id, { dia: 1 }])), acesas: Object.fromEntries([...antes, etapa].map((e) => [e.id, 1])) };
+      for (const arco of ["misterio", "jornada"]) {
+        const quadro = oQuadroNaTela(oQuadroDaQuest(reg, e0, { arco, semente: "QQ4|d" }));
+        const v = estadoDaQuest(F, reg, { estado: e0 });
+        if (!quadro || !v || !v.etapa) continue;
+        estados++;
+        const p = pistasDoQueFalta(quadro, v.falta);
+        tiradas += R.linhasDaFalta(v.falta).length - R.linhasDaFalta(v.falta, p.ehPista).length;
+        if (p.cartas.some((c) => c.tipo === "extra" || c.futura || c.sobra)) cartasErradas++;
+        const todos = v.falta.flatMap(atomos);
+        if (todos.some((a) => a && Number(a.precisa) > 1 && cartaDoQueFalta(a, quadro.cartas))) lacoVirou++;
+        if (J(R.linhasDaFalta(v.falta)) !== J(R.linhasDaFalta(v.falta, pistasDoQueFalta(null, v.falta).ehPista))) iguaisSemQuadro = false;
+        /* a carta de costas da etapa de agora tem a sua linha no «o que falta»
+           — salvo quando a etapa espera primeiro por uma exigência (o
+           «o que falta» mostra só essa) */
+        const exige = !!v.reviravolta && (F.reviravoltas || []).some((r) => (r.efeitos || []).some((ef) => ef.tipo === "exige" && ef.etapa === v.etapa));
+        const deCostas = quadro.cartas.filter((c) => c.tipo === "essencial" && c.estado === "costas" && !c.futura && !c.sobra && c.id.startsWith(v.etapa + ":"));
+        for (const c of deCostas) if (!exige && !todos.some((a) => cartaDoQueFalta(a, [c]) === c)) semPar.push([F.id, v.etapa, arco, c.id].join("/"));
+      }
+    });
+  }
+  t("o catálogo dá estados para o Diário (" + estados + ")", estados > 100);
+  t("as linhas que são cartas saem das linhas (" + tiradas + " no catálogo)", tiradas > 50);
+  t("toda carta de costas da etapa de agora acha a sua linha (o encontro não falha)", semPar.length === 0, semPar.slice(0, 3).join(", "));
+  t("o Diário só mostra a fila da etapa de agora: nem a que se pode ganhar, nem a por vir, nem a que não fez falta", cartasErradas === 0);
+  t("nenhum laço vira carta", lacoVirou === 0);
+  t("sem quadro, as linhas são as de antes, byte a byte", iguaisSemQuadro);
+
+  /* a peça: o Diário com e sem quadros */
+  const quadroDoVau = { quest: "vau", titulo: "O Vau Negro", pergunta: "Quem guarda o vau?", misterio: false, sinal: { sabe: 0, de: 1 },
+    cartas: [{ id: "passar:descobriu:vau", tipo: "essencial", forma: "lugar", costas: "um lugar", estado: "costas", viravel: true, etapa: "e1", caminhos: [{ id: "x", diz: "perguntar no vau", seFalhar: [] }] }] };
+  const estrada = {
+    missao: { id: "quest:vau", titulo: "O Vau Negro", tipo: "principal", status: "ativa", etapas: [{ tipo: "quest", alvo: "Passar o vau", chave: "vau:passar", feito: false }], criadaEm: 1, nivel: 0, prazo: 0, recompensa: null },
+    estado: { id: "vau", tipo: 1, estado: "aberta", visivel: true, etapaTexto: "Passar o vau", falta: [
+      { predicado: "descobriu", args: [{ papel: "vau", tipo: "lugar", id: "", nome: "" }], texto: "descobrir o que o vau esconde" },
+      { predicado: "esteve", args: [{ papel: "margem", tipo: "lugar", id: "", nome: "" }], texto: "ir à margem norte" },
+    ], feitas: [], escolhas: [], gente: [] },
+  };
+  const base = { historia: { estrutura: "jornada" }, quests: [], trocarArco: () => {}, eventos: { global: null, locais: [] }, diaAtual: 3, missoes: [], relogios: [], questsDaBiblioteca: [estrada], leiaute: "mesa" };
+  const antes = R.html(h(R.PainelDiario, base));
+  const comQuadro = R.html(h(R.PainelDiario, { ...base, quadros: [quadroDoVau], aoAbrirQuadro: () => {} }));
+  t("sem `quadros`, o Diário é o de antes (nenhuma carta)", !/data-fila-de-pistas/.test(antes) && texto(antes).includes("descobrir o que o vau esconde"));
+  t("com o quadro: a linha que é carta vira a carta da gaveta", /data-fila-de-pistas/.test(comQuadro) && /data-carta="passar:descobriu:vau"/.test(comQuadro) && !texto(comQuadro).includes("descobrir o que o vau esconde"));
+  t("e a linha que não é carta (o «ir a») fica linha", texto(comQuadro).includes("ir à margem norte"));
+  t("a fila tem o nome de mundo (Pistas) e a carta o nome da gaveta", rotulos(comQuadro).includes(PALAVRAS_DO_QUADRO.rotulo) && rotulos(comQuadro).includes("Um lugar, por saber. Ver como se pode saber."));
+  t("um quadro de outra quest não toca nesta", !/data-fila-de-pistas/.test(R.html(h(R.PainelDiario, { ...base, quadros: [{ ...quadroDoVau, quest: "outra" }] }))));
+  t("um quadro torto não derruba o Diário", R.html(h(R.PainelDiario, { ...base, quadros: [null, 7, { quest: "vau", cartas: "x" }] })).length > 100);
+  const daFila = rotulos(R.html(h(R.FilaDePistas, { cartas: quadroDoVau.cartas }))).join(" ");
+  t("nenhuma palavra de mecanismo no que a fila acrescenta", !MECANISMO.test(daFila), (daFila.match(MECANISMO) || [])[0]);
+  t("a fila vazia não desenha nada", R.html(h(R.FilaDePistas, { cartas: [] })) === "");
+
+  /* o chamado com carta em jogo: o leque à direita do d20 e a frase */
+  const CH = { pericia: "investigacao", periciaNome: "Investigação", dc: 13, aviso: "Se falhar, ficas a saber na mesma.", chave: "c-1", dado: { teste: "d20", preco: null } };
+  const sem = R.html(h(R.ChamadoDoMestre, { chamado: CH, mod: 1 }));
+  const com = R.html(h(R.ChamadoDoMestre, { chamado: { ...CH, carta: { forma: "lugar", tipo: "essencial", seFalhar: ["tempo"] } }, mod: 1 }));
+  const leque = R.html(h(R.LequeDoQuadro, {}));
+  t("o chamado sem carta não leva leque", !sem.includes(leque) && !/data-chamado-pista/.test(sem));
+  t("com carta em jogo, o leque 24 (o mesmo do sinal) vai na bandeja", com.includes(leque) && /data-chamado-pista/.test(com) && /width="24"/.test(leque));
+  t("e o nome acessível da espera acrescenta «Isto revela uma pista.»", rotulos(com)[0] === rotulos(sem)[0] + " " + PALAVRAS_DO_QUADRO.leitor.revela && PALAVRAS_DO_QUADRO.leitor.revela === "Isto revela uma pista.");
 }
 
 console.log(`\n${ok} ok, ${mal} mal`);

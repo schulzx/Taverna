@@ -59,12 +59,25 @@
                        diz por escrito. NUNCA os caminhos nem a peça de cada
                        um: o jogador escolhe pela história e descobre o
                        prémio no fim.
+
+   QQ (14/11/2026, formas.md §QQ 3) · AS PISTAS NO DIÁRIO — uma ação, uma
+   forma. Props novas, e opcionais (sem elas o Diário é o de BQ, byte a byte):
+     quadros           — os quadros «para a tela» (oQuadroNaTela), os mesmos
+                       que a gaveta da Barra do Mestre recebe. Na quest da
+                       estrada, as linhas de «o que falta» que são cartas
+                       passam a ser a fila de CartaDePista da etapa de agora
+                       (pistasDoQueFalta); a Linha do que falta fica só para
+                       o que não é carta (os laços, o «ir a»).
+     aoAbrirQuadro(quest) — tocar numa carta abre o mesmo quadro (o id da
+                       quest, o `quest` do quadro); sem ele, a carta lê-se.
    ============================================================ */
 import React from "react";
 import { T } from "./constantes.js";
 import { TIPOS, ALVOS, alfa, MOLDURA_POR_DEGRAU, COR_DA_RARIDADE, ENCAIXE, ICONES_DA_ETAPA, DIARIO_DE_MISSOES, RELOGIO_DO_PRAZO, CABECALHO_DA_TELA, DIARIO_DA_QUEST, CARTAZ_DA_SOMBRA, CARTA_NO_DIARIO } from "./estilo.js";
 /* TE: a carta de costas da recompensa — a mesma peça da cerimónia */
 import { CartaDoEspolio } from "./painel-espolio.jsx";
+import { FilaDePistas } from "./painel-quadro.jsx";
+import { pistasDoQueFalta } from "./quadro-na-tela.js";
 import { cartaNoDiario } from "./espolio-na-tela.js";
 import { Glifo, VerboComPreco } from "./ui.jsx";
 import { GlifoAR, CabecalhoDaTela, AbaDaTela, EtapaDaMissao, RelogioDoPrazo, LombadaDaEstante, MissaoNoIndice, LinhaDoQueFalta, CaminhosDaEtapa, RostoDaHistoria } from "./painel-ar-pecas.jsx";
@@ -133,24 +146,30 @@ const encher = (modelo, mapa) => String(modelo || "").replace(/\{(\w+)\}/g, (_, 
 /* «o que falta» em linhas: de um «ou», até dois caminhos — primeiro os que são
    cartas de uma escolha (já estão na mesa), depois os outros pela ordem da
    ficha — e o resto calado em «ou outro caminho» (lei de v9.27: uma lista
-   inteira faria da história um checklist) */
-export function linhasDaFalta(falta) {
+   inteira faria da história um checklist).
+   QQ (§QQ 3): `ehPista(linha)` (pistasDoQueFalta, opcional) tira as linhas que
+   são pistas do quadro — a carta já as diz, e a mesma pista não tem duas
+   caras. Um ramo de um «ou» é uma linha; tira-se antes do corte dos dois,
+   para não esconder atrás de «ou outro caminho» o que não é carta. */
+const naoEPista = () => false;
+export function linhasDaFalta(falta, ehPista = null) {
   const junta = COMBINADORES.todos.junta;
+  const pista = typeof ehPista === "function" ? (x) => { try { return !!ehPista(x); } catch { return false; } } : naoEPista;
   const out = [];
   for (const f of arr(falta)) {
     if (!f || typeof f !== "object" || f.invalida) continue;
     if (f.predicado === "algum") {
       const ramos = arr(f.opcoes).map((r) => {
         const itens = arr(r).filter((x) => x && typeof x === "object");
-        return { texto: itens.map((x) => String(x.texto || "").trim()).filter(Boolean).join(junta), carta: itens.some((x) => x.predicado === "escolheu") };
-      }).filter((r) => r.texto);
+        return { texto: itens.map((x) => String(x.texto || "").trim()).filter(Boolean).join(junta), carta: itens.some((x) => x.predicado === "escolheu"), pista: itens.length > 0 && pista({ opcoes: [itens] }) };
+      }).filter((r) => r.texto && !r.pista);
       const ordenados = [...ramos.filter((r) => r.carta), ...ramos.filter((r) => !r.carta)];
       for (const r of ordenados.slice(0, Q.falta.doOu)) out.push({ estado: "falta", texto: r.texto });
       if (ordenados.length > Q.falta.doOu) out.push({ estado: "outro", texto: "" });
       continue;
     }
     const texto = String(f.texto || "").trim();
-    if (!texto) continue;
+    if (!texto || pista(f)) continue;
     out.push({ estado: "falta", texto, tem: Number.isInteger(f.tem) ? f.tem : null, precisa: Number.isInteger(f.precisa) ? f.precisa : null });
   }
   return out;
@@ -181,9 +200,11 @@ function Chip({ children, cor = T.amberSoft, borda = alfa(T.amber, 0.6) }) {
 /* ---------------- O PRÓXIMO PASSO ----------------
    O medalhão do tipo da etapa, a frase do rumo, o lugar com o pino e,
    quando o jogo o der, «Ver no mapa» com o preço (o sítio e a distância). */
-function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso, falta = null }) {
-  /* BQ: debaixo da frase da etapa, «o que falta», uma linha por coisa */
-  const linhas = linhasDaFalta(falta);
+function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso, falta = null, pistas = null, aoAbrirQuadro = null }) {
+  /* BQ: debaixo da frase da etapa, «o que falta», uma linha por coisa.
+     QQ: as que são cartas vão primeiro, como cartas (a fila da gaveta) */
+  const linhas = linhasDaFalta(falta, pistas ? pistas.ehPista : null);
+  const cartas = pistas && Array.isArray(pistas.cartas) ? pistas.cartas : [];
   const P = D.proximoPasso;
   const lado = telefone ? P.medalhao.telefone : P.medalhao.mesa;
   const onde = String((e && e.onde) || "").trim();
@@ -212,6 +233,9 @@ function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso, fa
               <GlifoAR nome="pino" tamanho={TIPOS.rotulo} />
               <span>{onde}{longe ? ` — ${longe}` : ""}</span>
             </span>
+          ) : null}
+          {cartas.length ? (
+            <div className="mt-1"><FilaDePistas cartas={cartas} telefone={telefone} aoTocar={aoAbrirQuadro} /></div>
           ) : null}
           {linhas.length ? (
             <ul className="m-0 p-0 flex flex-col mt-1" aria-label="O que falta" style={{ gap: 2 }}>
@@ -365,7 +389,7 @@ function Bilhete({ m, sec }) {
 }
 
 /* ---------------- A MISSÃO À FRENTE ---------------- */
-function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto, aoResponder, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, q: qDado = null, estadoDe = null, rostoDe = null, semGente = false, raridadeDaRecompensa = null }) {
+function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto, aoResponder, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, q: qDado = null, estadoDe = null, rostoDe = null, semGente = false, raridadeDaRecompensa = null, quadros = null, aoAbrirQuadro = null }) {
   /* BQ: a quest da biblioteca (q = a vista dela) — a estrada ou quem anda contigo */
   const q = qDado || (estadoDe ? estadoDe(m.id) : null);
   /* TE: a raridade que a quest aberta pode pagar (do sistema); sem ela, cala */
@@ -386,6 +410,18 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
   const prazo = prazoDe(m, relogios);
   const lado = !telefone && !compacto;
   const rv = porLer(q) ? reviravoltaDe(q) : null;
+  /* QQ: o quadro desta quest (o `quest` do quadro é o id da vista) — as
+     linhas que são cartas viram a fila; sem quadro, nada muda */
+  let pistas = null;
+  if (q && q.id && Array.isArray(quadros) && quadros.length) {
+    try {
+      const quadro = quadros.find((x) => x && x.quest === q.id);
+      pistas = quadro ? pistasDoQueFalta(quadro, q.falta) : null;
+    } catch { pistas = null; }
+  }
+  const abrirQuadro = pistas && typeof aoAbrirQuadro === "function"
+    ? () => { try { aoAbrirQuadro(q.id); } catch { /* abrir o quadro nunca derruba o diário */ } }
+    : null;
   return (
     <article className="flex flex-col gap-5" aria-label={m.titulo}>
       <header className="flex flex-wrap items-start justify-between gap-3">
@@ -431,7 +467,7 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
         <div className={sec && lado ? "grid gap-5 items-start" : "flex flex-col gap-5"} style={sec && lado ? { gridTemplateColumns: `minmax(0, ${D.bilhete.largura}px) minmax(0, 1fr)` } : undefined}>
           {sec ? <Bilhete m={m} sec={sec} /> : null}
           {atual && !oferta && coracao ? <QuestDoCoracao missao={m} estado={q} telefone={telefone || compacto} rosto={rostoSeguro(rostoDe, comQuemDe(q))} /> : null}
-          {atual && !oferta && !coracao ? <ProximoPasso m={m} e={atual} frase={frase} telefone={telefone || compacto} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} falta={q ? q.falta : null} /> : null}
+          {atual && !oferta && !coracao ? <ProximoPasso m={m} e={atual} frase={frase} telefone={telefone || compacto} aoVerNoMapa={aoVerNoMapa} distanciaDoPasso={distanciaDoPasso} falta={q ? q.falta : null} pistas={pistas} aoAbrirQuadro={abrirQuadro} /> : null}
         </div>
       ) : null}
 
@@ -752,7 +788,7 @@ function useLarguraDe(ref) {
 }
 
 export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, missoes = [], aoResponderMissao, aoEncerrarLegado, pers = null, abertura = null, relogios = [], aoFechar = null, aoVerNoMapa = null, distanciaDoPasso = null, leiaute: leiautePedido = null,
-  questsDaBiblioteca = [], rostoDe = null, vilaoNoDiario = null, rostoDoVilao = null, rostoDoTenente = null, raridadeDaRecompensa = null }) {
+  questsDaBiblioteca = [], rostoDe = null, vilaoNoDiario = null, rostoDoVilao = null, rostoDoTenente = null, raridadeDaRecompensa = null, quadros = [], aoAbrirQuadro = null }) {
   const raiz = React.useRef(null);
   const largura = useLarguraDe(raiz);
   const leiaute = leiautePedido || (largura >= D.corte.mesa ? "mesa" : largura >= D.corte.meia ? "meia" : "telefone");
@@ -786,7 +822,7 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   const nFios = eventos && Array.isArray(eventos.locais) ? eventos.locais.length : 0;
   const subtitulo = [plural(emCurso.length + coracaoM.length, "missão em curso", "missões em curso"), ofertasM.length ? plural(ofertasM.length, "oferta", "ofertas") : "", estanteM.length ? `${estanteM.length} na estante` : ""].filter(Boolean).join(" · ");
   const vazio = !emCurso.length && !ofertasM.length && !coracaoM.length;
-  const comum = { todas, abertura, pers, relogios, aoResponder: aoResponderMissao, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, estadoDe, rostoDe, raridadeDaRecompensa };
+  const comum = { todas, abertura, pers, relogios, aoResponder: aoResponderMissao, aoEncerrarLegado, aoVerNoMapa, distanciaDoPasso, estadoDe, rostoDe, raridadeDaRecompensa, quadros, aoAbrirQuadro };
   const escolher = (id) => { setEscolhidaId(id); setVerMundo(false); };
 
   const nadaEmCurso = <div className="tv-body italic" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Nenhuma missão em curso — elas surgem conforme a história se abre, e você decide quais aceitar.</div>;

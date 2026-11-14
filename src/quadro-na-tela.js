@@ -22,6 +22,8 @@
         por palavras com piso e teto, o teto absoluto de 4,5 s, e a saída
         para quem pediu menos movimento;
      6. o que o leitor de ecrã diz (`nomeDaCarta`, `falaDaPista`).
+     7. no Diário, que linha do «o que falta» é uma carta (`pistasDoQueFalta`,
+        `cartaDoQueFalta`) — uma ação, uma forma (§QQ 3).
 
    O campo `juiz` de cada carta é BASTIDOR (Q2): nenhuma função daqui o lê,
    e o check-quadro prova que a peça também não. Onde um campo do motor
@@ -366,4 +368,77 @@ export function falaDaPista(vira) {
   const linha = txt(c.linha) || txt(obj(v.preco) && v.preco.linha);
   const base = frase(L.vira, { face: txt(c.face), de: txt(c.de) }).replace(/\s+—\s+\.$/, ".");
   return linha ? `${base} ${linha}` : base;
+}
+
+/* ============================================================
+   7. O DIÁRIO — uma ação, uma forma (§QQ 3)
+   «No Diário, as linhas de "o que falta" que são cartas passam a ser a
+   mesma fila de Carta de pista (a da etapa de agora); a Linha do que falta
+   fica só para o que não é carta (os laços "1 de 3", o "ir a").»
+
+   QUE LINHA É UMA CARTA. A tela não decide que átomo é pista (isso é do
+   motor: PISTAS_DO_PASSO, as pistas entre pistas, o arco) — só procura,
+   para cada átomo do «o que falta», a carta que o motor JÁ fez dele. A
+   carta do motor tem o id `etapa:predicado:papel` (oQuadroDaQuest), e o
+   átomo do «o que falta» traz o predicado e o papel (julgarEtapa, `args`):
+   é um encontro de identidade, nunca uma regra. A suíte prova-o sobre o
+   catálogo inteiro (teste-quadro-na-tela §6) — se o motor mudar o id, ela
+   fica vermelha antes de o Diário mostrar uma pista com duas caras.
+   Fora do encontro: o laço (a contagem acima de um, `conversou X 2`: é
+   tempo, não carta), a que se pode ganhar, a que não fez falta e a futura.
+   ============================================================ */
+
+/* os átomos de uma linha do «o que falta»: os ramos de um «ou» e de um
+   «pelo menos» descem até ao átomo (o «nenhum» é ele próprio, e nunca é
+   carta) */
+function atomosDoQueFalta(item, fundo = 0) {
+  const f = obj(item);
+  if (!f || fundo > 8) return [];
+  if (Array.isArray(f.opcoes)) return f.opcoes.flatMap((r) => arr(r).flatMap((x) => atomosDoQueFalta(x, fundo + 1)));
+  return [f];
+}
+
+/* o átomo do «o que falta» → a carta do quadro que é a mesma pista, ou null */
+export function cartaDoQueFalta(atomo, cartas) {
+  const a = obj(atomo);
+  if (!a || typeof a.predicado !== "string" || !a.predicado || a.nega || a.invalida) return null;
+  if (Number.isFinite(a.precisa) && a.precisa > 1) return null;
+  const p = obj(arr(a.args)[0]);
+  const papel = p && typeof p.papel === "string" ? p.papel : "";
+  if (!papel) return null;
+  const fim = `:${a.predicado}:${papel}`;
+  return arr(cartas).find((c) => obj(c) && c.tipo !== "extra" && !c.sobra && !c.futura && typeof c.id === "string" && c.id.endsWith(fim)) || null;
+}
+
+/* pistasDoQueFalta(quadro, falta) → { cartas, ehPista }
+   `cartas`: a fila da etapa de agora — as cartas da mesma etapa (a chave
+   opaca `etapa`) que a primeira carta encontrada no «o que falta»; sem
+   encontro, a da carta que se pode virar agora. A etapa de agora sai assim
+   das cartas que faltam, e não da ordem das filas: uma etapa sem cartas não
+   empresta ao Diário as da etapa feita antes dela. Nem a que se pode
+   ganhar, nem a por vir, nem a que não fez falta (são da gaveta). Sem
+   etapa nenhuma conhecida, nenhuma fila — as linhas ficam como estão.
+   `ehPista(linha)`: a linha (um átomo, um ramo `{ opcoes: [ramo] }`, um
+   «pelo menos») é toda feita de cartas — e então sai das linhas, porque a
+   carta já a diz. Uma linha que mistura carta e não-carta fica linha
+   inteira (a frase é do motor, e a tela não a parte). Sem quadro: nenhuma
+   carta, e nenhuma linha muda. */
+export function pistasDoQueFalta(quadro, falta) {
+  const q = obj(quadro);
+  const vivas = arr(q && q.cartas).filter((c) => obj(c) && c.tipo !== "extra" && !c.sobra && !c.futura);
+  const ehPista = (linha) => {
+    const ats = atomosDoQueFalta(linha);
+    return vivas.length > 0 && ats.length > 0 && ats.every((a) => !!cartaDoQueFalta(a, vivas));
+  };
+  if (!vivas.length) return { cartas: [], ehPista };
+  const casadas = [];
+  for (const a of arr(falta).flatMap((f) => atomosDoQueFalta(f))) {
+    const c = cartaDoQueFalta(a, vivas);
+    if (c && !casadas.includes(c)) casadas.push(c);
+  }
+  const ancora = casadas[0] || vivas.find((c) => c.viravel) || null;
+  if (!ancora) return { cartas: [], ehPista };
+  const temEtapa = ancora.etapa != null && ancora.etapa !== "";
+  const fila = temEtapa ? vivas.filter((c) => c.etapa === ancora.etapa) : [ancora];
+  return { cartas: [...fila, ...casadas.filter((c) => !fila.includes(c))], ehPista };
 }
