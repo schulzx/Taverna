@@ -109,7 +109,9 @@ console.log("\n4. o Diário com as quests");
 {
   t("as duas portas do Diário recebem as quests da biblioteca", conta("questsDaBiblioteca={(bq && bq.quests) || []}") === 2);
   t("e o cartaz da sombra", conta("vilaoNoDiario={(bq && bq.vilao) || null}") === 2);
-  t("o App só as calcula com o Diário aberto", app.includes('bq={aba === "diario" ? oDiarioDasQuests() : null}'));
+  /* Movida a 14/11 (as cartas no Diário, 2e9fb91): o bq passou a levar também os quadros e a porta
+     para a gaveta, num invólucro em calou; a intenção — calcular só com o Diário aberto — continua. */
+  t("o App só as calcula com o Diário aberto", app.includes('bq={aba === "diario" ? (() => { try { const b = oDiarioDasQuests();'));
   const d = corpo("oDiarioDasQuests");
   t("a projeção é a do motor (missoesDasQuests) e a vista a da quest (estadoDaQuest)", d.includes("missoesDasQuests(E, { mundo })") && d.includes("estadoDaQuest(R.id, R, ctx)"));
   t("o cartaz é oVilaoDasQuests", d.includes("oVilaoDasQuests(E, { mundo })"));
