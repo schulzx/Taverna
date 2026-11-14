@@ -4118,6 +4118,78 @@ export const REACAO_NA_MESA = {            // §CB 18.5 — ms; a suíte prova p
   letreiro: { raio: 10, aro: 2, aroOutras: 1.5, titulo: 22, linha: 12, enchimento: { x: 14, y: 6 } },
 };
 
+/* QQ · O QUADRO DA QUEST NA TELA (14/11/2026) — formas.md §QQ; Figma 386:2.
+   As cartas e os estados são do motor (quadro-da-quest.js): a tela só os veste.
+   Nenhuma palavra de mecanismo; os textos de mundo vêm do motor ou de CARIMBO_DO_PRECO.
+   Lê T, TIPOS, ALVOS, HORIZONTE_DA_CENA, MOVIMENTO_DO_DADO e REVELACAO_DO_ESPOLIO
+   sem copiar números deles (§QQ 7). A única entrada que a §QQ 7 não escreve é
+   `gaveta.sombra`: o valor é o da §QQ 3 («0 10px 28px preto 0,6»), e mora aqui
+   porque sombra é profundidade e se escreve com o ajudante privado desta folha. */
+export const QUADRO_DA_TELA = {
+  carta: {
+    lado: 108, alto: 148, raio: 8, enchimento: 10, filete: 6,
+    disco: 44, glifo: 24, glifoDaFace: 16, glifoDaSilhueta: 28,
+    face: { tamanho: 13, entrelinha: 17, linhas: 3 },
+    de: { tamanho: TIPOS.piso, entrelinha: 15, linhas: 3 },
+    forma: { tamanho: TIPOS.rotulo, entrelinha: 17 },
+    metal: { essencial: "ouro", extra: "ferro" },            /* MOLDURA_POR_DEGRAU[...] .meio fora, .escuro dentro */
+    aro: { cor: T.amber, alfa: 0.55, largura: 2, fora: 3, halo: 14, alfaDoHalo: 0.45 },
+    pavio: { lado: 7, entre: 7, aceso: T.amber, apagado: T.lineStrong },
+    risco: { cor: T.danger, largura: 2.5 },
+    silhueta: { traco: 1.5, tracejado: [4, 3], chao: 0.35 },
+    lacre: 14,
+  },
+  carimbo: { giro: -5, chao: 0.88, raio: 3, letra: TIPOS.piso, glifo: 14, traco: { leve: 1.5, pesado: 2.5 },
+             cor: { leve: T.brasaNoPergaminho, pesado: T.perigoNoPergaminho } },
+  gaveta: {
+    mesa: { largura: 600, enchimento: [12, 12, 20, 20] }, telefone: { enchimento: [4, 16, 12, 16] },
+    raio: 14, entre: 14, folga: 8,                           /* folga: até à soleira ou ao campo */
+    grade: { mesa: 12, telefone: 9, linhas: 12 },
+    pergunta: { mesa: 24, telefone: 21 },
+    dura: HORIZONTE_DA_CENA.gaveta.dura,
+    sombra: `0 10px 28px ${sombra(".6")}`,                  /* §QQ 3 */
+  },
+  misterio: { papel: { giro: 0.8, percevejo: 10 }, fio: { cor: T.rosa, alfa: 0.85, largura: 1.5 }, numeral: 15 },
+  caminho: { alto: ALVOS.piso, raio: 10, verbo: TIPOS.corpo, pericias: TIPOS.maquina, pena: 16 },
+  sinal: { alvo: ALVOS.piso, leque: 24, gota: 10, acende: 600, entreDaHora: 40 },
+  momento: {
+    sobe: { de: 120, dura: 240, escalaDe: 0.6, curva: MOVIMENTO_DO_DADO.curva },
+    treme: { dura: 280, graus: 2, vezes: 2 },                /* só no mistério */
+    vira: REVELACAO_DO_ESPOLIO.vira,
+    carimbo: { dura: 200, escalaDe: 1.4, misterio: { dura: 260, escalaDe: 1.6 } },
+    leitura: { porPalavra: 250, piso: 1200, teto: 3000 },
+    voa: { dura: 360, escalaAte: 0.2 },
+    pavio: { apaga: 400, risca: 260 },
+    reduzido: MOVIMENTO_DO_DADO.semMovimento,
+    teto: 4500,                                              /* §QQ 4 «o teto absoluto, 4,5 s»; §QQ 9.1.2 */
+  },
+};
+/* a palavra do carimbo e a frase de «se falhar», pelas chaves de PRECO_DA_FALHA
+   (check-quadro.mjs prova que as chaves são as mesmas, nos dois sentidos) */
+export const CARIMBO_DO_PRECO = {
+  tempo:      { palavra: "TARDE",    glifo: "relogio", seFalhar: "as horas vão-se nisso" },
+  incompleta: { palavra: "A METADE", glifo: "metade",  seFalhar: "sabes só a metade", marca: "rasgo" },
+  alerta:     { palavra: "VISTO",    glifo: "olho",    seFalhar: "alguém vê-te" },
+  cobra:      { palavra: "PAGO",     glifo: "moeda",   seFalhar: "custa-te {n} moedas" },
+  danificado: { palavra: "PARTIDO",  glifo: "racha",   seFalhar: "chega partido", marca: "racha" },
+};
+/* as palavras da peça. `leitor`: os nomes acessíveis e a região viva, escritos
+   em §QQ 3 e §QQ 4 (o que o leitor de ecrã diz é tela, logo é tabela). */
+export const PALAVRAS_DO_QUADRO = {
+  rotulo: "Pistas", saber: "Como se pode saber", seFalhar: "Se falhar",
+  naMesma: "Ficas a saber na mesma. Mas pode custar:", fecha: "Esse caminho fecha-se e não volta.",
+  restam: "restam {n}", naoFezFalta: "não fez falta", feita: "feita", agora: "agora",
+  leitor: {
+    sinal: "Pistas: {sabe} de {de}.", novo: "Há uma nova.", abrir: "Abrir.", fechar: "Fechar.",
+    gaveta: "Pistas: {pergunta}", porVir: "e mais {n} por vir", fecharGaveta: "Fechar as pistas", voltar: "Voltar a {pergunta}",
+    costas: "{Forma}, por saber. Ver como se pode saber.", virada: "{Face}, {de}.", futura: "Por vir: {forma}.",
+    perdida: "Perdeu-se: {forma}.", sobra: "Não fez falta: {forma}.",
+    caminho: "Escrever: {diz}.", custa: "Custa {n} moedas.", minutos: "{n} minutos",
+    vira: "Sabes agora {face} — {de}.", fechou: "Esse caminho fechou-se. Restam {n}.", perdeu: "Perdeu-se o rasto: {sobre}.",
+    dobra: "{numeral}, {estado}. {abrir}",
+  },
+};
+
 /* ============================================================
    AS FONTES — e o `@import` que tem de vir primeiro.
 
@@ -4127,7 +4199,7 @@ export const REACAO_NA_MESA = {            // §CB 18.5 — ms; a suíte prova p
    erro, nenhum aviso, e as três fontes do jogo simplesmente não chegam.
    ============================================================ */
 export const FONT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;1,300&family=JetBrains+Mono:wght@400;600&family=Cinzel:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@400;600&family=Cinzel:wght@700&display=swap');
 .tv-display { font-family: 'Cormorant Garamond', Georgia, serif; }
 .tv-body { font-family: 'Spectral', Georgia, serif; }
 .tv-mono { font-family: 'JetBrains Mono', monospace; }
@@ -4691,6 +4763,28 @@ export const MOVIMENTO_CSS = `
 .tv-chao-nasce { animation: tvChaoNasce ${SUPERFICIES_NO_CHAO.nasce}ms ease-out both; }
 .tv-reacao-clarao { opacity: 0; animation: tvReacaoClarao ${REACAO_NA_MESA.primeira.pausa}ms linear both; }
 .tv-reacao-onda { animation: tvReacaoOnda var(--porAnel, ${REACAO_NA_MESA.outras.porAnel}ms) ${REACAO_NA_MESA.easing} var(--anel, 0ms) both; }
+/* QQ · A CARTA QUE VIRA (formas.md §QQ 4): sobe de costas da soleira, treme no
+   misterio, vira pelas classes da TE (tv-carta-vira-a/b), o carimbo cai, e voa
+   ao sinal. A peca poe cada classe no seu passo (cronogramaDaPista,
+   quadro-na-tela.js); a duracao de cada uma sai de QUADRO_DA_TELA.momento.
+   O pavio que apaga leva o fumo; o risco desenha-se pelo dashoffset (o
+   comprimento vai na variavel --risco); o voo vai na direcao do sinal (a
+   peca mede-a e poe --voa-x / --voa-y). O sinal aceso: o halo ambar 0,6. */
+@keyframes tvPistaSobe { from { opacity: 0; transform: scale(${QUADRO_DA_TELA.momento.sobe.escalaDe}); } to { opacity: 1; transform: none; } }
+@keyframes tvPistaTreme { 0%, 100% { transform: none; } 12.5%, 62.5% { transform: rotate(-${QUADRO_DA_TELA.momento.treme.graus}deg); } 37.5%, 87.5% { transform: rotate(${QUADRO_DA_TELA.momento.treme.graus}deg); } }
+@keyframes tvPistaCarimbo { from { opacity: 0; transform: rotate(${QUADRO_DA_TELA.carimbo.giro}deg) scale(var(--queda, ${QUADRO_DA_TELA.momento.carimbo.escalaDe})); } to { opacity: 1; transform: rotate(${QUADRO_DA_TELA.carimbo.giro}deg); } }
+@keyframes tvPistaVoa { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(var(--voa-x, 0px), var(--voa-y, 0px)) scale(${QUADRO_DA_TELA.momento.voa.escalaAte}); } }
+@keyframes tvPavioApaga { from { opacity: 1; filter: none; transform: none; } to { opacity: 0; filter: blur(2px); transform: translateY(-3px); } }
+@keyframes tvPistaRisca { from { stroke-dashoffset: var(--risco, 200); } to { stroke-dashoffset: 0; } }
+@keyframes tvSinalAcende { 0%, 100% { box-shadow: 0 0 0 ${alfa(T.amber, 0)}; } 30% { box-shadow: 0 0 ${QUADRO_DA_TELA.carta.aro.halo}px ${alfa(T.amber, 0.6)}; } }
+.tv-pista-sobe { animation: tvPistaSobe ${QUADRO_DA_TELA.momento.sobe.dura}ms ${QUADRO_DA_TELA.momento.sobe.curva} both; }
+.tv-pista-treme { animation: tvPistaTreme ${QUADRO_DA_TELA.momento.treme.dura}ms ease-in-out both; }
+.tv-pista-carimbo { animation: tvPistaCarimbo ${QUADRO_DA_TELA.momento.carimbo.dura}ms ease-in both; }
+.tv-pista-carimbo-pesado { --queda: ${QUADRO_DA_TELA.momento.carimbo.misterio.escalaDe}; animation: tvPistaCarimbo ${QUADRO_DA_TELA.momento.carimbo.misterio.dura}ms ease-in both; }
+.tv-pista-voa { animation: tvPistaVoa ${QUADRO_DA_TELA.momento.voa.dura}ms ease-in both; }
+.tv-pavio-apaga { animation: tvPavioApaga ${QUADRO_DA_TELA.momento.pavio.apaga}ms ease-out both; }
+.tv-pista-risca { animation: tvPistaRisca ${QUADRO_DA_TELA.momento.pavio.risca}ms ease-out both; }
+.tv-sinal-acende { animation: tvSinalAcende ${QUADRO_DA_TELA.sinal.acende}ms ease-out both; }
 
 @media (prefers-reduced-motion: reduce) {
   .tv-anel-fora, .tv-anel-dentro, .tv-pisca { animation: none; }
@@ -4850,6 +4944,15 @@ export const MOVIMENTO_CSS = `
   .tv-chao-nasce { animation: none; }
   .tv-reacao-onda { animation: none; }
   .tv-reacao-clarao { animation: none; opacity: 0; }
+  /* QQ · a carta ja virada e carimbada, so a entrar e a sair em 120 de
+     opacidade (tv-pista-aparece / tv-pista-sai, que so existem aqui); o
+     pavio apaga seco, o risco ja vem desenhado, o sinal sem o halo */
+  .tv-pista-sobe, .tv-pista-treme, .tv-pista-voa, .tv-sinal-acende { animation: none; opacity: 1; transform: none; }
+  .tv-pavio-apaga { animation: none; opacity: 0; }
+  .tv-pista-carimbo, .tv-pista-carimbo-pesado { animation: none; opacity: 1; transform: rotate(${QUADRO_DA_TELA.carimbo.giro}deg); }
+  .tv-pista-risca { animation: none; stroke-dashoffset: 0; }
+  .tv-pista-aparece { animation: tvCerimoniaEsvai ${QUADRO_DA_TELA.momento.reduzido}ms ease-out both; }
+  .tv-pista-sai { animation: tvCerimoniaEsvai ${QUADRO_DA_TELA.momento.reduzido}ms ease-in reverse both; }
 }
 `;
 

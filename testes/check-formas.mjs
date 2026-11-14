@@ -99,7 +99,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { T, MATERIAIS, MOVIMENTO_CSS, ALVOS, TIPOS } from "../src/estilo.js";
 /* CB 18 · os glifos do chão e do cenário (D5h.3) */
-import { SUPERFICIES_NO_CHAO, OBJETOS_NA_MESA, EMPURRAO_NA_MESA } from "../src/estilo.js";
+import { SUPERFICIES_NO_CHAO, OBJETOS_NA_MESA, EMPURRAO_NA_MESA, CARIMBO_DO_PRECO } from "../src/estilo.js";
 /* D5e lê a tabela do relógio DE VOLTA, que é a lei da casa: os números
    não são transcritos aqui, são importados. No dia em que a janela deixar
    de ser 15 000 ms, o dente muda de alvo sozinho — e é isso que separa
@@ -498,6 +498,13 @@ const COLISAO_DE_RELOGIO_ESCRITA = {
      se a janela de reação mudar ele continua certo. A regra anti-cemitério
      vale igual: no dia em que deixar de animar 600 ms, a entrada SAI. */
   ".tv-ceu-brilho": 600,
+  /* 14/11 · QQ 4 — `tvSinalAcende 600ms`, o halo âmbar do sinal das pistas
+     na Barra do Mestre quando a carta que virou chega a ele. COINCIDÊNCIA,
+     NÃO CÓPIA, pelo teste das três de cima: o número sai de formas.md §QQ 3
+     («os 600 ms da chegada», lido de QUADRO_DA_TELA.sinal.acende), o halo
+     não desenha tempo de reação nenhum, e se a janela mudar ele continua
+     certo. No dia em que deixar de animar 600 ms, a entrada SAI. */
+  ".tv-sinal-acende": 600,
   /* 09/11 · TE10 — a relíquia do confronto (formas.md §TE 5): a antecipação
      longa (treme e a luz vaza de 0,55 a 0,9, 600 ms) e o lume turquesa que
      acende no lugar do âmbar (0 → 0,10, 600 ms), lidos de
@@ -1246,7 +1253,15 @@ const lidosPeloRosto = /rostoDoEnte\(/.test(ROSTO_JSX) && /GLIFOS\[forma\]/.test
 const GRADE_JSX = mascararComentarios(readFileSync(join(RAIZ, "src/grade-de-batalha.jsx"), "utf8"), ".jsx");
 const lidosPelaMesa = /<Glifo nome={d.glifo}/.test(GRADE_JSX) && /<GlifoEm nome={s.glifo}/.test(GRADE_JSX) && /<GlifoEm nome={E.impacto}/.test(GRADE_JSX)
   ? new Set([...Object.values(SUPERFICIES_NO_CHAO.tipos).map((d) => d.glifo), ...Object.values(OBJETOS_NA_MESA.etiquetas).map((e) => e.glifo), EMPURRAO_NA_MESA.impacto]) : new Set();
-const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome) && !lidosPelaLuz.has(nome) && !lidosPeloRosto.has(nome) && !lidosPelaMesa.has(nome));
+/* QQ 4 (14/11) · os glifos do carimbo do preço são lidos pelo NOME QUE A
+   TABELA DÁ (CARIMBO_DO_PRECO[*].glifo), como os da mesa: o carimbo e as
+   fichas do «se falhar» pintam `<Glifo nome={k.glifo}` a partir de
+   carimboDaCarta / fichasDoSeFalhar (quadro-na-tela.js). Conta só se o
+   painel-quadro.jsx chama as duas e desenha assim. */
+const QUADRO_JSX = mascararComentarios(readFileSync(join(RAIZ, "src/painel-quadro.jsx"), "utf8"), ".jsx");
+const lidosPeloQuadro = /<Glifo nome={k.glifo}/.test(QUADRO_JSX) && /carimboDaCarta\(/.test(QUADRO_JSX) && /fichasDoSeFalhar\(/.test(QUADRO_JSX)
+  ? new Set(Object.values(CARIMBO_DO_PRECO).map((k) => k.glifo)) : new Set();
+const semLeitor = Object.keys(GLIFOS).filter((nome) => !jsxQueDesenham.includes(`"${nome}"`) && !lidosPeloAssunto.has(nome) && !lidosPelaLuz.has(nome) && !lidosPeloRosto.has(nome) && !lidosPelaMesa.has(nome) && !lidosPeloQuadro.has(nome));
 t(`D5h.3 · as ${Object.keys(GLIFOS).length} entradas de GLIFOS têm, cada uma, um leitor na interface`,
   Object.keys(GLIFOS).length > 0 && semLeitor.length === 0,
   Object.keys(GLIFOS).length === 0 ? "A TABELA DESAPARECEU — renomearam GLIFOS, e o dente mede o vazio." : `sem leitor: ${semLeitor.join(", ")} — o glifo nasce com a etapa que o lê.`);
