@@ -70,9 +70,11 @@ export const INTERVENCOES = [
   I("cancao_errada", 1, "o bardo canta um feito do herói com o final trocado — corrigir exige fazer"),
 
   /* ---- 2 · CONVITE (7) ---- */
-  I("carta_com_adiantamento", 2, "o correio traz proposta com moedas dentro — recusar exige devolver"),
+  /* 13/11 (a 20.ª, defeito 1): a carta com moedas punha na cena um objeto e
+     um dinheiro que o sistema não dá; a proposta chega de viva voz */
+  I("carta_com_adiantamento", 2, "um mensageiro traz, de viva voz, uma proposta ligada à principal — e quem a manda quer resposta"),
   I("quem_vem_buscar", 2, "um NPC procura o herói na taverna com pedido ligado à principal"),
-  I("testemunha_com_medo", 2, "alguém viu algo e só confia no herói — proteção com prazo"),
+  I("testemunha_com_medo", 2, "quem viu passar gente do fio principal só confia no herói — proteção com prazo"),
   I("trabalho_que_cruza", 2, "a guilda oferece contrato cujo caminho passa pelo marco parado"),
   I("guia_disponivel", 2, "aparece quem conhece o caminho travado — por preço justo"),
   I("mercador_do_excesso", 2, "comprador certo para o inventário lotado — e ele comenta o que ouviu na estrada"),

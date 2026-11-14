@@ -68,7 +68,7 @@ import { validarCondicao, avaliarCondicao, julgarEtapa, resolverPapeis, PAPEIS_D
 import { TIPOS_DE_LACO } from "./npcs.js";
 import { SITUACOES } from "./mundo-base.js";
 import { ESTRUTURAS } from "./historia.js";
-import { contrair } from "./lugar.js";
+import { contrair, comEm } from "./lugar.js";
 /* o acervo, do lote 4 em diante: um ficheiro por lote (src/acervo/) */
 import { QUESTS_LOTE_4 } from "./acervo/quests-lote-4.js";
 import { QUESTS_LOTE_5 } from "./acervo/quests-lote-5.js";
@@ -2714,7 +2714,9 @@ export function abrirQuest(ficha, contexto) {
   for (const nome of Object.keys(comTipo)) {
     const p = comTipo[nome];
     const fora = {};
-    for (const c of ["nome", "cidade", "chave", "id"]) if (typeof p[c] === "string") fora[c] = p[c];
+    /* `local` (13/11, a 20.ª sessão): a casa de quem é do elenco (esqueleto.js,
+       casaDe) — é por ela que a pessoa do passo entra em cena */
+    for (const c of ["nome", "cidade", "chave", "id", "local"]) if (typeof p[c] === "string") fora[c] = p[c];
     papeis[nome] = { ...fora, ...(r.papeis[nome] || {}), tipo: p.tipo };
   }
   const R = {
@@ -3104,7 +3106,26 @@ export const MISSAO_DA_QUEST = Object.freeze({
   tipo: Object.freeze({ 1: "principal", 2: "trama" }),
   status: Object.freeze({ aberta: "ativa", concluida: "concluida", falhada: "falhada", terminada: "concluida" }),
   juntaFalta: "; ",
+  /* A CASA DE QUEM SE OUVE (13/11, a 20.ª sessão): «Ouvir Brigid — falta
+     falar com Brigid», e o jogador foi «até a casa de Brigid» sem saber
+     qual — DESTINO NÃO RECONHECIDO. O passo de falar com alguém do elenco,
+     sem lugar na própria etapa, diz onde a pessoa mora (`local`,
+     esqueleto.js#casaDe), como a pista da abertura sempre disse. Só falar e
+     consultar: quem se ENCONTRA (conheceu) aparece onde a quest o põe, e
+     dizer-lhe a casa estragaria a espera. */
+  casa: Object.freeze({ predicados: Object.freeze(["conversou", "consultou"]), molde: "{falta}, {em}" }),
 });
+/* o «o que falta» de um átomo, com a casa da pessoa quando a etapa não tem
+   lugar (MISSAO_DA_QUEST.casa) */
+function comACasa(f, etapa, R) {
+  const texto = obj(f) && typeof f.texto === "string" ? f.texto : "";
+  const C = MISSAO_DA_QUEST.casa;
+  if (!texto || !C.predicados.includes(f.predicado) || JSON.stringify(etapa.conclui || []).includes('"lugar:')) return texto;
+  const a0 = obj(arr(f.args)[0]);
+  const p = a0 && typeof a0.papel === "string" ? obj(obj(R.papeis) && R.papeis[a0.papel]) : null;
+  const casa = p && typeof p.local === "string" ? p.local.trim() : "";
+  return casa ? C.molde.replace("{falta}", texto).replace("{em}", comEm(casa)) : texto;
+}
 export function missaoDaQuest(ficha, registo, contexto) {
   const F = fichaDe(ficha);
   if (!F || !validarQuest(F).ok) return null;
@@ -3140,7 +3161,7 @@ export function missaoDaQuest(ficha, registo, contexto) {
         chave: `${F.id}:${e.id}`,
         feito: !!feita,
         ...(feita && Number.isInteger(feita.dia) ? { feitoEm: feita.dia } : {}),
-        ...(atual && e.id === atual.id ? { rotulo: falta.map((f) => f.texto).filter(Boolean).join(M.juntaFalta) } : {}),
+        ...(atual && e.id === atual.id ? { rotulo: falta.map((f) => comACasa(f, atual, R)).filter(Boolean).join(M.juntaFalta) } : {}),
       };
     }),
     criadaEm: R.inicio,

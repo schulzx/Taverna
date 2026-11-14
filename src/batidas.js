@@ -112,14 +112,14 @@ export const EM_JOGO = {
   /* {coisa} sempre; {sombra} enche-se na hora, no tamanho do ato */
   porFeitio: {
     procurar: [
-      "{quem} sabe uma coisa sobre {coisa}; se {sombra} chegar primeiro, essa boca fecha-se",
+      "{quem} sabe de {coisa}; se {sombra} chegar primeiro, essa boca fecha-se",
       "{quem} {vontade} — e sabe mais do que diz sobre {coisa}",
       "o que {quem} cala custa {coisa}; o que diz pode custar-lhe a pele",
       "{quem} tem um preço para falar de {coisa}, e {sombra} já ofereceu mais",
       "{quem} é a última ponta viva de {coisa}; perder esta conversa é perder o rasto",
     ],
     descobrir: [
-      "o que aqui se guarda prova uma coisa sobre {coisa}; deixá-lo é deixá-lo a {sombra}",
+      "o que aqui se guarda diz respeito a {coisa}; deixá-lo é deixá-lo a {sombra}",
       "aqui está a ponta de {coisa}, e quem a guardou não a quer achada",
       "alguém escondeu aqui a verdade sobre {coisa}, e há de voltar para a buscar",
       "o que aqui se esconde é a prova de {coisa} que {sombra} quer apagada",

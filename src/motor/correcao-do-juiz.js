@@ -267,7 +267,10 @@ export function andarOsVetos(vivos, novos, ctx) {
 export function vetosParaAPauta(vivos, ctx) {
   const { turno, cidade, frase } = ctxDe(ctx);
   const f = ` ${palavrasDe(frase)} `;
-  const importa = (x) => (turno != null && x.turno != null && turno === x.turno + 1) || arr(x.toques).some((p) => typeof p === "string" && p && f.includes(` ${p} `));
+  /* `soAoToque` (13/11, a 20.ª; memoria-do-inventado.js): o objeto que o
+     Narrador só pôs na cena não vai à pauta no turno seguinte — só quando a
+     frase do jogador o toca («apanho a cera») */
+  const importa = (x) => (!x.soAoToque && turno != null && x.turno != null && turno === x.turno + 1) || arr(x.toques).some((p) => typeof p === "string" && p && f.includes(` ${p} `));
   return arr(vivos).filter((x) => vivo(x, turno, cidade) && importa(x)).slice(-CORRECAO_DO_JUIZ.naPauta).reverse().map((x) => x.linha);
 }
 

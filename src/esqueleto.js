@@ -456,7 +456,7 @@ function preencher(q, ato, S, extra) {
   /* a gente de uma cidade (e, se faltar, das vizinhas mais perto) */
   const alguem = (cidades, sitio) => {
     if (sitio) {
-      const daqui = W.genteDoSitio(sitio.l).map((g) => ({ nome: g.nome, cidade: sitio.c.nome })).filter((g) => !ocupada(g.nome));
+      const daqui = W.genteDoSitio(sitio.l).map((g) => ({ nome: g.nome, cidade: sitio.c.nome, local: sitio.l.nome })).filter((g) => !ocupada(g.nome));
       if (daqui.length) return pickDe(daqui);
     }
     for (const c of cidades) {
@@ -464,6 +464,28 @@ function preencher(q, ato, S, extra) {
       if (g.length) return pickDe(g);
     }
     return null;
+  };
+
+  /* A CASA DE QUEM É DO ELENCO (13/11, a 20.ª sessão, defeito 2). «Ouvir
+     Brigid» pedia conversou(papel:mae), e a Brigid nasceu { nome, cidade }:
+     a gente da base trazia o sítio dela (`genteDe` dá `local`) e o papel
+     deitava-o fora. Uma capital de 54 mil almas não põe ninguém em cena
+     (a-pessoa-do-passo.js), e o passo ficou inalcançável — 0 passos em 47
+     respostas. Agora quem é do elenco nasce com a casa: a da base, onde a
+     base a pôs; quem não é da base daquela cidade (o «querido do herói», do
+     núcleo) ganha um sítio dela pela semente — pelo dado do NOME, e não
+     pelo `rnd` do esqueleto, para não mexer em nenhum sorteio que já
+     existia (as campanhas de antes saem iguais, letra a letra). */
+  const casaDe = (pessoa) => {
+    const p = obj(pessoa) || {};
+    if (texto(p.local, ESQUELETO.nome)) return texto(p.local, ESQUELETO.nome);
+    const c = W.porNome.get(norm(p.cidade));
+    if (!c) return "";
+    const daBase = W.genteDe(c).find((g) => norm(g.nome) === norm(p.nome));
+    if (daBase && daBase.local) return daBase.local;
+    const ls = W.locaisDe(c);
+    if (!ls.length) return "";
+    return ls[Math.floor(dadoDo(W.semente, "casa", norm(p.nome))() * ls.length)].nome;
   };
 
   /* o servo certo para o papel: da natureza que o papel aceita (gente, por
@@ -548,7 +570,11 @@ function preencher(q, ato, S, extra) {
           const base = typeof p.proximo === "string" && cidadeDe[p.proximo] ? cidadeDe[p.proximo] : (sitio ? sitio.c : cAto);
           pessoa = alguem([base, ...W.perto(base).slice(0, ESQUELETO.vizinhas)], sitio && sitio.l ? sitio : null);
         }
-        if (pessoa) { r = { nome: pessoa.nome, cidade: pessoa.cidade }; cidadeDe[nome] = W.porNome.get(norm(pessoa.cidade)) || cAto; pessoasAqui.add(norm(pessoa.nome)); }
+        if (pessoa) {
+          const casa = casaDe(pessoa);
+          r = { nome: pessoa.nome, cidade: pessoa.cidade, ...(casa ? { local: casa } : {}) };
+          cidadeDe[nome] = W.porNome.get(norm(pessoa.cidade)) || cAto; pessoasAqui.add(norm(pessoa.nome));
+        }
       } else if (p.de === "fio") {
         if (p.papel === "vilao") {
           /* O VILÃO À MESA (lote 4, 09/11): o bicho não se senta no Convite
@@ -876,7 +902,7 @@ export function esqueletoDaCampanha(entrada) {
       ? Object.entries(pa.papeis).filter(([k]) => {
         const q = catalogo.find((x) => x.id === pa.quest);
         return q && q.papeis[k] && q.papeis[k].de === "elenco" && k !== q.mao.papel;
-      }).map(([, p]) => ({ nome: p.nome, cidade: p.cidade }))
+      }).map(([, p]) => ({ nome: p.nome, cidade: p.cidade, ...(p.local ? { local: p.local } : {}) }))
       : [];
     const extra = {
       pontePor: ponte && ponte.de === "ferida" ? ponte.com : null,
@@ -986,7 +1012,8 @@ const papeisGuardados = (x) => {
     const q = obj(p);
     if (!RX_ID.test(k) || !q) continue;
     const r = {};
-    for (const c of ["nome", "cidade", "chave"]) { const v = texto(q[c], ESQUELETO.texto); if (v) r[c] = v; }
+    /* `local` (13/11): a casa de quem é do elenco — campo novo e aditivo */
+    for (const c of ["nome", "cidade", "chave", "local"]) { const v = texto(q[c], ESQUELETO.texto); if (v) r[c] = v; }
     if (Object.keys(r).length) out[k] = r;
   }
   return out;

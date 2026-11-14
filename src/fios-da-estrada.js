@@ -103,9 +103,15 @@ export function temaDaEstrada(ctx, { soDoSistema = false } = {}) {
    Por tipo de encontro (`encontros.js#rolarEncontro`). Só os de CENA; o
    `perigo` e o `achado` não estão aqui e passam como vieram. `{tema}` é a
    promessa ou o nome; o texto é O QUE, o como é do Narrador. */
+/* 13/11 (a 20.ª sessão, defeito 1): «um rasto, um objeto, uma marca» deu,
+   no T25, «uma lasca de cedro com o sinete de Varek» — um objeto que o
+   herói apanhou e o sistema nunca teve; «carrega alguma coisa disso, e quer
+   algo em troca», o mesmo, com preço. A linha diz QUAL sinal, e é um que
+   não se leva na mão: o rasto de quem passou; e quem traz notícia traz só o
+   que ouviu, que é o nome. */
 export const COMO_O_FIO_ENTRA = {
-  viajante: "Alguém na estrada traz notícia de {tema} — ouviu, viu ou carrega alguma coisa disso, e quer algo em troca.",
-  cena: "Na estrada, um sinal que toca {tema}: um rasto, um objeto, uma marca que só faz sentido a quem segue esse fio. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.",
+  viajante: "Alguém na estrada traz notícia de {tema}: ouviu o nome dito numa estalagem do caminho, e não sabe mais do que isso.",
+  cena: "Na estrada, um sinal que toca {tema}: pegadas e as cinzas de uma fogueira recente de quem anda atrás do mesmo — nada que se leve na mão. É um gancho, não uma obrigação — descreva e deixe o jogador decidir se investiga.",
   tranquilo: "O trecho passa sem sobressaltos, e a conversa do caminho volta a {tema}: quem anda comigo tem uma lembrança, uma dúvida ou um medo sobre isso.",
 };
 export const NOITE_DO_ACAMPAMENTO = "A conversa da noite volta a {tema}: {quem} tem uma lembrança, uma dúvida ou um medo sobre isso, e di-lo.";

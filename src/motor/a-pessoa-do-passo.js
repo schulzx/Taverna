@@ -36,6 +36,18 @@
    A conferência só avança a etapa atual; quem está mais adiante na mesma
    rua continua a ser gente do mundo.
 
+   A 20.ª SESSÃO (mente/sessao-20.md §4.2, 13/11): 0 passos em 47 respostas.
+   A quest de abertura pedia «Ouvir Brigid» — conversou(papel:mae) —, e esta
+   peça só conhecia o `falar_com` das MISSÕES: a quest projeta-se no Diário
+   com etapas do tipo `quest` (missaoDaQuest), que aqui não contavam, e a
+   Brigid nasceu sem casa. Fui à porta dela, falei duas vezes, e ela nunca
+   entrou em cena. Agora a pessoa que o passo ATIVO de uma quest pede
+   (osPassosDasQuests, a-quest-manda.js: os candidatos «pessoa» da falta)
+   conta como a de um `falar_com`, no sítio onde o papel mora (`local`,
+   esqueleto.js#casaDe) — e, num save de antes da casa, onde a gente da base
+   desta cidade a põe. O passo cumpre-se pela porta de sempre: quem a frase
+   chama e está na ficha (registo-da-cena.js) vai ao livro como `falou`.
+
      aPessoaDoPasso(estado)
        estado: o do instante (abertura, missoes, lugar, cidadeAtual, npcs,
                mapa, baseMundo, mundo, nomeCampanha, dia, minuto, personagem)
@@ -93,6 +105,8 @@ import { MOLDE_PADRAO, moldePorId } from "../moldes.js";
 import { cenarioAtivo } from "../cenario.js";
 import { comEm } from "../lugar.js";
 import { oficioNoGenero } from "../nomes.js";
+import { osPassosDasQuests } from "../a-quest-manda.js";
+import { MISSAO_DA_QUEST } from "../biblioteca-de-quests.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -151,6 +165,10 @@ export const A_PESSOA_DO_PASSO = Object.freeze({
      «cadê?». Voltar atrás para um tipo (a pista da abertura, por exemplo)
      é tirá-lo daqui. */
   aHoraConta: Object.freeze(["pista", "alvo", "dador", "etapa", "guarda"]),
+  /* A PESSOA DO PASSO DE UMA QUEST (a 20.ª, 13/11): os predicados da falta
+     que pedem a pessoa FRENTE A FRENTE — falar, consultar, encontrar. O
+     acompanhar e a afeição não: são de quem já anda com o herói */
+  daQuest: Object.freeze(["conversou", "consultou", "conheceu"]),
 });
 
 /* ONDE ANDA QUEM NÃO ESTÁ NO POSTO (04/11, a 17.ª sessão, defeito 3). A
@@ -320,6 +338,7 @@ export function osDoPasso(estado) {
   const e = ehObj(estado) ? estado : {};
   let ms = [];
   try { ms = garantirMissoes(e.missoes).filter((m) => ehObj(m) && m.status === "ativa"); } catch { ms = []; }
+  ms = [...ms, ...asMissoesDasQuests(e)];
   const out = [];
   for (const m of ms) {
     const et0 = etapaAtual(m);
@@ -334,6 +353,40 @@ export function osDoPasso(estado) {
   return out;
 }
 
+/* AS PESSOAS DOS PASSOS DAS QUESTS (a 20.ª, ver o cabeçalho): cada pessoa
+   que o passo ativo de uma quest pede vira o `falar_com` de uma missão com
+   o id da projeção (MISSAO_DA_QUEST.prefixo), para correr pela mesma régua.
+   O `onde`, pela ordem: o LUGAR do próprio passo («Esperar os da cara
+   tapada em {estrada}» + conheceu(rapaz): o rapaz aparece na estrada, não
+   em casa — o desenho da quest manda); a casa do papel com a cidade dele;
+   sem nenhum, vazio (a régua procura-a no registo e na base desta cidade) —
+   mas só com o herói na cidade do papel: a Brigid de Monte do Martelo não
+   mora noutra terra. */
+function asMissoesDasQuests(e) {
+  let passos = [];
+  try {
+    const W = oMundo(e);
+    passos = osPassosDasQuests(e, { mundo: { semente: W.semente, mapa: e.mapa, genero: W.genero, molde: W.molde, lex: W.lex, base: e.baseMundo } });
+  } catch { passos = []; }
+  const out = [];
+  for (const p of arr(passos)) {
+    if (!ehObj(p)) continue;
+    const etapas = [];
+    const l0 = arr(p.lugares).find((l) => ehObj(l) && limpo(l.nome));
+    for (const c of arr(ehObj(p.candidatos) ? p.candidatos.pessoa : [])) {
+      const nome = ehObj(c) ? limpo(c.nome) : "";
+      if (!nome || etapas.some((x) => mesmo(x.alvo, nome))) continue;
+      if (c.predicado && !A_PESSOA_DO_PASSO.daQuest.includes(c.predicado)) continue;
+      const [casa, cid] = l0 ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
+      if (!casa && cid && limpo(e.cidadeAtual) && sem(cid) !== sem(e.cidadeAtual)) continue;
+      etapas.push({ tipo: "falar_com", alvo: nome, onde: casa ? (cid ? `${casa}, em ${cid}` : casa) : "", feito: false });
+    }
+    /* uma missão por pessoa: a régua anda pela etapa de agora de cada uma */
+    for (const et of etapas) out.push({ id: `${MISSAO_DA_QUEST.prefixo}${limpo(p.quest)}`, titulo: limpo(p.texto), tipo: MISSAO_DA_QUEST.tipo[1], status: "ativa", dador: "", etapas: [et] });
+  }
+  return out;
+}
+
 export function aPessoaDoPasso(estado) {
   const e = ehObj(estado) ? estado : {};
   /* sem sítio, só a rua da cidade (a chegada, defeito 4 da 17.ª): lá só
@@ -343,6 +396,8 @@ export function aPessoaDoPasso(estado) {
   const aquiAgora = ondeOHeroiEsta(e);
   let ms = [];
   try { ms = garantirMissoes(e.missoes).filter((m) => ehObj(m) && m.status === "ativa"); } catch { ms = []; }
+  /* a 20.ª: e as pessoas dos passos das quests */
+  ms = [...ms, ...asMissoesDasQuests(e)];
   if (!ms.length) return [];
   const a = garantirAbertura(e.abertura);
   const npcs = ehObj(e.npcs) ? e.npcs : {};

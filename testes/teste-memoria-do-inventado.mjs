@@ -21,6 +21,8 @@
         quando o sistema passa a conhecer o objeto;
      5. a medida nas sessões gravadas (8, 9, 10, 13 e a do navegador): uma
         mordida em 198 narrações, e ela tem razão;
+     5b. a 20.ª (13/11): o peito, o dar sem destinatário, o clítico, a cera
+        posta no chão e apanhada pelo jogador, a família só do que o herói tem;
      6. determinismo, imutabilidade, lixo. */
 import { readFileSync, readdirSync } from "node:fs";
 import { oInventadoDaProsa, lembrarOInventado, MEMORIA_DO_INVENTADO } from "../src/motor/memoria-do-inventado.js";
@@ -143,7 +145,11 @@ sec("4. o veto chega à pauta, e morre na hora");
   t("passado o prazo, sai do livro", !lembrarOInventado(L, "", E, { turno: 16 + T.vida + 1, cidade: "Ribeira das Areias" }).some((x) => x.especie === T.especie));
   const E2 = { ...E, personagem: { ...E.personagem, inventario: [...E.personagem.inventario, { nome: "Chave mestra" }] } };
   t("quando o sistema passa a conhecer o objeto (a busca achou-o), o veto sai já", !lembrarOInventado(L, "Você olha em volta.", E2, { turno: 17, cidade: "Ribeira das Areias" }).some((x) => x.especie === T.especie));
-  t("no máximo `porTurno` vetos novos por narração", lembrarOInventado([], "Você pega o anel, o colar, o broche e o frasco.", E, { turno: 3 }).filter((x) => x.especie === T.especie).length === T.porTurno);
+  /* 13/11 (a 20.ª): o livro passou a guardar também, calado, o que o
+     Narrador só pôs na cena (`soAoToque`); o teto de `porTurno` é o dos
+     vetos que vão à pauta no turno seguinte, e os calados têm o seu */
+  const L4 = lembrarOInventado([], "Você pega o anel, o colar, o broche e o frasco.", E, { turno: 3 }).filter((x) => x.especie === T.especie);
+  t("no máximo `porTurno` vetos novos por narração (e `naCenaPorTurno` calados)", L4.filter((x) => !x.soAoToque).length === T.porTurno && L4.filter((x) => x.soAoToque).length <= T.naCenaPorTurno);
   t("os vetos do Juiz andam como andavam (o livro é o mesmo andarOsVetos)", J(lembrarOInventado(vivos, "Você olha em volta.", E, { turno: 16, cidade: "Ribeira das Areias" })) === J(andarOsVetos(vivos, [], { turno: 16, cidade: "Ribeira das Areias" })));
 }
 
@@ -168,6 +174,46 @@ sec("5. a medida nas sessões gravadas");
      abertura traz a carta e ela passaria (secção 3). É mordida certa pelo
      estado que o jogo tinha. */
   t(`${turnos} narrações gravadas, uma mordida só — a carta da abertura da 10.ª, que aquele save não tinha`, turnos >= 190 && mordidas.length === 1 && mordidas[0].f === "sessao-s10.json" && mordidas[0].i === 1 && sem(mordidas[0].o.nome) === "carta", J(mordidas.map((m) => `${m.f}#${m.i} ${m.o.nome}`)));
+}
+
+sec("5b. a 20.ª sessão — o veto que nunca disparou");
+{
+  /* mente/sessao-20.md §4.1: Wulf, clérigo; o inventário que o sistema deu
+     (o símbolo do antecedente, o cordão da oferta, o retalho do espólio); a
+     quest com um «registo» no enredo (a folga da família deixava passar
+     todo diário por causa dele). As frases são as das notas da sessão,
+     postas nas orações em que o Narrador as disse. */
+  const E = {
+    personagem: { nome: "Wulf", inventario: ["Símbolo sagrado riscado", { nome: "Cordão de Ceridwen o Silencioso" }, { nome: "Retalho de Couro" }], grupo: [] },
+    missoes: [{ id: "q", status: "ativa", etapas: [{ tipo: "achar", item: "o registo dos dízimos" }] }],
+    npcs: { Fenna: { nome: "Fenna" }, Ceridwen: { nome: "Ceridwen o Silencioso" }, Varek: { nome: "Varek Sem-Medo" } }, cidadeAtual: "Monte do Martelo",
+  };
+  const um = (s, o) => oInventadoDaProsa(s, E, o || {});
+  const t15 = um("Fenna estende o Diário do Templo direto para o seu peito.");
+  t("T15: «estende o Diário do Templo direto para o seu peito» — o peito é destino do herói, e o diário morde", J(nomes(t15)) === J(["diário"]) && t15[0].como === "recebe", J(t15));
+  t("…o «registo» do enredo já não o desculpa (acima); a família vale para o que o herói TEM: com um «Livro de orações» na bolsa, o diário é o dele", !oInventadoDaProsa("Fenna estende o diário direto para o seu peito.", { ...E, personagem: { ...E.personagem, inventario: [{ nome: "Livro de orações" }] } }).length);
+  t("…mas o «registo» que a prosa nomeia é o do enredo, pela mesma cabeça", !um("Fenna estende-lhe o registo dos dízimos.").length);
+  const t21 = um("Ceridwen estende um frasco de vidro fosco, sem dizer palavra.");
+  t("T21: «Ceridwen estende um frasco de vidro fosco» — o dar de mão em mão sem destinatário é ao herói", J(nomes(t21)) === J(["frasco"]) && t21[0].como === "recebe", J(t21));
+  t("T36: «Varek enfia-lhe um bilhete selado» — pegar com o clítico do herói e outro sujeito é dar", J(nomes(um("Varek enfia-lhe um bilhete selado na mão e some na multidão."))) === J(["bilhete selado"]));
+  t("T25: «a lasca de cedro» que o herói apanha morde (a lasca está na tabela)", J(nomes(um("Você apanha a lasca de cedro com o sinete de Varek."))) === J(["lasca"]));
+  /* o portão morde só o necessário: o dar com destino de outro, a comparação */
+  t("o dar com outro destino não é ao herói: «estende o diário a Brigid», «passa o bilhete por baixo da porta»", !um("Fenna estende o diário a Brigid.").length && !um("Varek passa o bilhete por baixo da porta.").length);
+  t("o herói que estende não recebe: «Você estende o frasco a Ceridwen», «Você entrega o frasco»", !um("Você estende o frasco a Ceridwen.").length && !um("Você entrega o frasco e sai.").length);
+  t("a comparação não dá nada (a 10.ª, T32): «devolve a carta como quem devolve uma lâmina suja»", !nomes(um("Nyla devolve a carta como quem devolve uma lâmina suja.", { frase: "mostro a carta" })).length);
+  /* T8 → T9: a cera posta no chão, e o jogador apanha-a pelo nome */
+  const L8 = lembrarOInventado([], "No chão, entre as lajes, brilha um pedaço de cera vermelha com o sinete de Varek.", E, { turno: 8, frase: "olho o chão" });
+  const cera = L8.find((x) => x.especie === T.especie);
+  t("T8: a cera que o Narrador PÔS na cena vai ao livro calada (soAoToque)", !!cera && cera.soAoToque === true && cera.toques.includes("cera"), J(L8));
+  t("…e não vai à pauta no turno seguinte se a frase não a toca", !vetosParaAPauta(L8, { turno: 9, frase: "falo com Fenna sobre o templo" }).includes(cera.linha));
+  t("T9: «apanho a cera» — a linha sobe à pauta no próprio turno", vetosParaAPauta(L8, { turno: 9, frase: "apanho a cera do chão e guardo" }).includes(cera.linha));
+  const L9 = lembrarOInventado(L8, "Você guarda a cera na bolsa.", E, { turno: 9, frase: "apanho a cera do chão e guardo" });
+  t("…e o que o Narrador pôs não passa pela folga da frase: «você guarda a cera» morde", L9.some((x) => x.especie === T.especie && !x.soAoToque && /cera/.test(x.alvo)), J(L9.map((x) => x.alvo)));
+  t("sem o Narrador a ter posto antes, o que o jogador nomeia continua dele", !lembrarOInventado([], "Você guarda a cera na bolsa.", E, { turno: 9, frase: "apanho a cera do chão e guardo" }).some((x) => x.especie === T.especie && !x.soAoToque));
+  /* o livro não se enche de iscas */
+  let L = [];
+  for (let k = 1; k <= 5; k++) L = lembrarOInventado(L, `Sobre a mesa ${k} há um frasco${"o".repeat(k)} e uma adaga.`.replace(/frasco(o+)/, (m, o) => ["frasco", "anel", "colar", "broche", "amuleto"][o.length - 1]), E, { turno: k });
+  t("o livro guarda no máximo `naCenaNoLivro` calados (os mais novos)", L.filter((x) => x.soAoToque).length <= T.naCenaNoLivro, J(L.map((x) => x.alvo)));
 }
 
 sec("6. determinismo, imutabilidade, lixo");

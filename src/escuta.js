@@ -325,11 +325,11 @@ export function linhaDoRumo(opcoes) {
   /* o degrau que vira cena não depende do passo: a cena traz o seu nome e
      o seu lugar, e o passo da missão pode ser o de um sítio já deixado */
   if (d.n > 0 && mundo && DEGRAU_EM_CENA.rumo[d.id]) {
-    let cena = "", emCena = false;
-    try { ({ cena, emCena } = cenaEQuem(d, { ...obj(mundo), semente })); } catch { cena = ""; }
+    let cena = "", emCena = false, doLugar = false;
+    try { ({ cena, emCena, doLugar } = cenaEQuem(d, { ...obj(mundo), semente })); } catch { cena = ""; }
     if (cena) {
       const R = DEGRAU_EM_CENA.rumo;
-      const s = R[d.id].replace("{cena}", cena) + (R.semNome.includes(d.id) ? R.fatoSemNome : emCena ? R.fatoEmCena : R.fato);
+      const s = R[d.id].replace("{cena}", cena) + (R.semNome.includes(d.id) ? R.fatoSemNome : doLugar ? R.fatoDoLugar : emCena ? R.fatoEmCena : R.fato);
       return abre ? `${abre}; ${s}` : s;
     }
   }
@@ -379,21 +379,37 @@ export const DEGRAU_EM_CENA = {
     ],
     /* quem já está em cena não é apontado ao herói como quem ainda não o viu */
     pessoaEmCena: [
-      "{aqui}, {quem}, que já está ali, deixa escapar sem querer uma coisa que aponta para o que a história procura",
+      "{aqui}, {quem}, que já está ali, olha para o herói como quem tem mais a dizer, e espera que lho perguntem",
     ],
+    /* A 20.ª SESSÃO (13/11, defeito 1): «uma coisa fora do sítio chama o
+       olho do herói… — é fato: entra nesta resposta, com o nome dito» saiu
+       em quatro turnos (T8, T14–T16), e o Narrador, obrigado a nomear uma
+       coisa que o sistema não tinha, deu-lhe nome: um pedaço de cera
+       vermelha com sinete, o «Diário do Templo» — que durou vinte turnos na
+       prosa sem nunca existir na Bolsa. A pauta diz QUAL coisa ou não pede
+       coisa nenhuma: o sítio é o fato, e o que lá se esconde só tem nome
+       quando a busca o achar (a-quest-manda.js, achadoDoPasso). O «tem dono,
+       e o dono já pergunta» pedia uma pessoa sem nome, o mesmo defeito. */
     lugarAqui: [
-      "{aqui}, uma coisa fora do sítio chama o olho do herói: é aqui mesmo que se esconde o que a história procura",
+      "{aqui}: é aqui mesmo que se esconde o que a história procura, e só procurando se acha",
     ],
     lugarLonge: [
-      "{aqui}, quem passa fala baixo {deOnde}: o que lá se esconde tem dono, e o dono já pergunta pelo herói",
+      "{aqui}, quem passa fala baixo {deOnde}: é lá que se esconde o que a história procura",
     ],
   },
   vem_buscar: "{quem} vem ter com o herói {aqui}{vindo}: {motivo}",
   vem_buscarEmCena: "{quem}, ali mesmo, puxa o assunto por conta própria: {motivo}",
+  /* 13/11 (a 20.ª, defeito 1): «tem um recado que não confia a mais
+     ninguém» trouxe Varek Sem-Medo quatro vezes (T33–T36), e cada vez com
+     um recado inventado diferente — os pergaminhos da capela, a lâmina do
+     intendente, um bilhete selado; «traz o que sabe, e quer uma coisa em
+     troca», o mesmo, com preço. O motivo de quem vem é a VONTADE de vir,
+     nunca um conteúdo que o sistema não tem: o que a pessoa sabe é o que a
+     ficha dela diz (a-pessoa-do-passo.js), e responde ao que lhe perguntam. */
   motivos: [
-    "traz o que sabe, e quer uma coisa em troca",
+    "quer saber porque é que o herói pergunta por ele, e só depois responde ao que lhe perguntarem",
     "ouviu que o herói perguntava, e tem pressa — mais alguém o procura",
-    "tem um recado que não confia a mais ninguém",
+    "vem ver com os próprios olhos quem anda a perguntar por ele",
   ],
   cobra: "{aqui}, {assinatura} à vista onde o herói pára: os dele passaram por aqui primeiro — {fato}",
   /* sem relógio (a nêmesis do fio já fala pelos envelopes dela): a forma do
@@ -422,6 +438,9 @@ export const DEGRAU_EM_CENA = {
        Caída, o Olho Severo", durante cinco respostas, por cima do Tristão do
        save. Sem nome na linha, a ordem é a da marca, e o veto é dito. */
     fatoSemNome: " — é fato: entra nesta resposta, sem nome (não lhe dê um)",
+    /* o sítio que esconde (a 20.ª, defeito 1): o fato é o sítio; o que lá se
+       esconde não tem nome nem forma antes de achado */
+    fatoDoLugar: " — é fato: entra nesta resposta; o que lá se esconde não tem nome nem forma até ser achado (não lhe dê nenhum)",
     semNome: ["cobra"],
   },
 };
@@ -487,7 +506,7 @@ export function cenaDoDegrau(degrau, ctx) {
    e se quem nela vem já estava em cena (nomeado ali). */
 const jaMostrado = (ctx, nome) => (Array.isArray(ctx.mostrado) ? ctx.mostrado : []).some((x) => tocaOFio(x, [{ nome, tipo: "pessoa" }]));
 function cenaEQuem(degrau, ctx) {
-  const em = (cena, emCena = false) => ({ cena, emCena: !!(cena && emCena) });
+  const em = (cena, emCena = false, doLugar = false) => ({ cena, emCena: !!(cena && emCena), doLugar: !!(cena && doLugar) });
   const d = obj(degrau);
   const c = obj(ctx);
   if (!(d.n > 0) || !d.id) return em("");
@@ -505,7 +524,7 @@ function cenaEQuem(degrau, ctx) {
       aqui, quem: alvo.nome,
       emOnde: alvo.onde ? comEm(alvo.onde) : "longe daqui",
       deOnde: alvo.onde ? comDe(alvo.onde) : "de longe",
-    })), emCena);
+    })), emCena, alvo.tipo === "lugar");
   }
   if (d.id === "vem_buscar") {
     const quem = gentes.find((x) => x.tipo === "pessoa");

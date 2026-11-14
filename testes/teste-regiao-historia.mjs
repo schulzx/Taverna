@@ -184,7 +184,7 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
 {
   /* Gravados ANTES de qualquer linha desta etapa (06/10), com este laço,
      sobre a árvore de HEAD v9.356 (git archive). */
-  const HEAD = { espinha: "6e8b1ca944f99770", daqui: "3afa3ec98b995b21", existe: "3c382cb16bc77d3c", ofertas: "b73629381ed9e267", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
+  const HEAD = { espinha: "b90ee9113d4f68da", daqui: "3afa3ec98b995b21", existe: "3c382cb16bc77d3c", ofertas: "b73629381ed9e267", abertura: "ee05f6caf3c539b3", boca: "f9cd01020edb19ad", conhecidas: "5278cf26ad84c12a", rastro: "95ddfc5dc021f856", base: "d26a01a13464393a", missoes: "c77d99845557f879" };
   /* 12/10 (9.ª sessão de prova · a taverneira que o Mestre fez homem):
      `daqui` mudou de 95cd7e6d96a3b3c4 para 3afa3ec98b995b21 por uma razão
      só: a lista da gente (`resumoDaqui`) diz o ofício no género de quem o
@@ -221,6 +221,14 @@ sec("6. o continente, byte a byte (hashes de HEAD v9.356, 200 sementes × 2 mold
      porque o fecho de cada ato antes do último guarda a etapa do relógio
      (`relogio`) e o fio a `assinatura` dele. Tirando também esses dois, volta
      a f8252233ebb5614e, byte a byte. */
+  /* 13/11 (a 20.ª sessão, defeito 1 — a pauta não pede coisa sem nome):
+     `espinha` mudou de 6e8b1ca944f99770 para b90ee9113d4f68da por uma razão
+     só: duas frases do «em jogo» das batidas (batidas.js, EM_JOGO.porFeitio)
+     pediam «uma coisa» ao Narrador — «{quem} sabe uma coisa sobre {coisa}»,
+     «o que aqui se guarda prova uma coisa sobre {coisa}» — e passaram a «sabe
+     de {coisa}» e «diz respeito a {coisa}». Medido com o mesmo laço: com o
+     batidas.js de HEAD e todo o resto desta leva, o hash volta a
+     6e8b1ca944f99770, byte a byte — nenhum marco mudou. */
   /* 13/11 (NE4, o objeto do cartaz pelo sistema): `ofertas` mudou de
      fa1541a849421fc2 para b73629381ed9e267 por uma razão só: a etapa `achar`
      do molde «prova» passa a guardar `onde` (o lugar do segredo da base), que

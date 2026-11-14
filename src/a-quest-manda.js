@@ -186,7 +186,14 @@ export function oPassoDaQuest(ficha, registo, contexto) {
         if (!PISTA_DO_PASSO.alvos[tipo].includes(at.predicado)) continue;
         if (tipo === "pessoa" && doFio(a0.papel)) continue;
         const nome = String(a0.nome || "").trim();
-        if (nome) candidatos[tipo].push({ tipo, nome, id: String(a0.id || ""), papel: a0.papel || "" });
+        if (!nome) continue;
+        /* a pessoa leva a casa (13/11, a 20.ª sessão): o sítio onde o papel
+           mora (`local`, esqueleto.js) e a cidade — é por eles que a pessoa
+           do passo entra em cena (a-pessoa-do-passo.js) */
+        const pp = tipo === "pessoa" ? (obj(papeis[a0.papel]) || {}) : {};
+        candidatos[tipo].push({ tipo, nome, id: String(a0.id || ""), papel: a0.papel || "", predicado: at.predicado,
+          ...(typeof pp.local === "string" && pp.local.trim() ? { onde: pp.local.trim() } : {}),
+          ...(tipo === "pessoa" && typeof pp.cidade === "string" && pp.cidade.trim() ? { cidade: pp.cidade.trim() } : {}) });
       }
     }
     const especie = O_PASSO_NO_ORACULO.haRastro.rx.test(semAc(`${v.etapa} ${v.etapaTexto}`)) ? "rasto" : "segredo";

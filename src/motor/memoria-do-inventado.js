@@ -72,6 +72,29 @@
      O preço destas folgas está escrito na suíte: com uma «Chave» na
      bolsa, «a chave mestra» passa.
 
+   A 20.ª SESSÃO (mente/sessao-20.md §4.1, 13/11): o veto NUNCA disparou em
+   47 respostas, com quatro objetos dados ao herói na prosa — e o «Diário do
+   Templo» durou vinte turnos. Quatro razões, todas da régua estreita:
+     · «Fenna estende o Diário do Templo direto para o seu peito»: o peito
+       não era sítio do herói — agora o dar aceita o DESTINO dele (`destino`:
+       o peito, o colo, a direção, a frente);
+     · «Ceridwen estende um frasco de vidro fosco»: o dar de mão em mão sem
+       destinatário dito é ao herói (`daEmMao`), desde que o sujeito não
+       seja ele e nenhuma preposição mande a coisa para outro sítio; e o
+       «Varek enfia-lhe um bilhete» — o verbo de pegar com o clítico do herói
+       e outro sujeito — também é dar;
+     · a cera vermelha foi POSTA no chão (T8), sem posse, e no turno seguinte
+       o jogador apanhou-a pelo nome — e o que o jogador nomeia não mordia. O
+       objeto que o Narrador pôs na cena e o sistema não tem fica no livro,
+       calado (`soAoToque`), e só vai à pauta quando a frase o toca: «apanho
+       a cera» traz a linha no próprio turno. E a folga da frase não vale
+       para o que o Narrador pôs antes (`doNarrador`);
+     · a folga da família (o diário é livro, é registo) valia para qualquer
+       palavra de qualquer enredo: um «registo» numa quest deixava passar
+       todo diário. Agora a família só vale para o que o herói TEM (a bolsa,
+       o equipamento, o grupo, o que recebeu, o saque, a abertura); do
+       enredo e do cânone, só a mesma cabeça.
+
      oInventadoDaProsa(narrativa, estado, opcoes) → [{ nome, artigo, plural, cabeca, como, trecho }]
      lembrarOInventado(vivos, narrativa, estado, ctx) → o livro de vetos do turno
        ctx: { turno, cidade, frase, saque, lugarDoTurno }
@@ -111,6 +134,10 @@ export const MEMORIA_DO_INVENTADO = Object.freeze({
   junto: 5,
   modificadores: 1,
   letras: 110,
+  /* o que o Narrador pôs na cena e o sistema não tem: quantos por narração,
+     e quantos o livro guarda calados (o livro é o do Juiz, de seis) */
+  naCenaPorTurno: 1,
+  naCenaNoLivro: 2,
   /* a linha da pauta, no infinitivo como as outras do NÃO PODE */
   linha: (o) => `pôr em jogo «${o.artigo} ${o.nome}»: não ${o.plural ? "existem" : "existe"}, o herói não ${o.artigo} tem`,
   /* o objeto portátil: a cabeça do nome (sem acento, no singular) e o
@@ -127,12 +154,14 @@ export const MEMORIA_DO_INVENTADO = Object.freeze({
     pergaminho: "o", mapa: "o", bilhete: "o", documento: "o", contrato: "o", mandado: "o", sinete: "o", selo: "o",
     frasco: "o", frasquinho: "o", elixir: "o", antidoto: "o", tonico: "o", cristal: "o", orbe: "o", idolo: "o",
     relicario: "o", estojo: "o", lenco: "o", botao: "o", cachimbo: "o", artefato: "o", fragmento: "o",
+    /* a 20.ª: a cera do sinete e a lasca de cedro, que o herói apanhou */
+    cera: "a", lasca: "a",
   }),
   /* os plurais que não são «+s» */
   plurais: Object.freeze({ medalhao: "medalhoes", bastao: "bastoes", botao: "botoes", anel: "aneis", talisma: "talismas", pocao: "pocoes" }),
   /* o que junta: «o molho de chaves», «o par de luvas» — o nome leva o
      quantificador, e a cabeça é a coisa */
-  quantos: Object.freeze({ molho: "o", par: "o", maco: "o", punhado: "o", rolo: "o", feixe: "o" }),
+  quantos: Object.freeze({ molho: "o", par: "o", maco: "o", punhado: "o", rolo: "o", feixe: "o", pedaco: "o" }),
   /* nomes diferentes para a mesma coisa: a cabeça conhecida de um é a do outro */
   familias: Object.freeze([
     Object.freeze(["espada", "lamina", "adaga", "punhal", "faca"]),
@@ -157,6 +186,8 @@ export const MEMORIA_DO_INVENTADO = Object.freeze({
   corpo: Object.freeze(["dedo", "dedos", "mao", "maos", "palma", "palmas", "braco", "bracos"]),
   /* onde a coisa fica quando é dele: na manga, no bolso, na mão */
   noCorpo: Object.freeze(["manga", "bolso", "algibeira", "alforje", "mochila", "cinto", "bolsa", "mao", "maos", "palma"]),
+  /* para onde a coisa dada vai, quando é o herói (a 20.ª: «direto para o seu peito») */
+  destino: Object.freeze(["peito", "colo", "rosto", "cara", "frente", "direcao"]),
   /* a mão, a palma, a bolsa e o cinto são de qualquer um: só contam com «sua/tua» */
   comDono: Object.freeze(["mao", "maos", "palma", "bolsa", "cinto"]),
   prepLugar: Object.freeze(["na", "no", "nas", "nos", "em", "para", "dentro", "pela", "pelo"]),
@@ -166,6 +197,14 @@ export const MEMORIA_DO_INVENTADO = Object.freeze({
   da: Object.freeze([...["entrega", "estende", "passa", "joga", "atira", "deixa", "coloca", "devolve", "empresta"].map(AR), ...["oferece"].map(ER),
     { voce: ["da", "dao", "deu", "deram", "poe", "poem", "pos", "puseram"], tu: [] }]),
   revela: Object.freeze([AR("revela")]),
+  /* o dar de mão em mão: sem destinatário dito, quem recebe é o herói (a
+     20.ª: «Ceridwen estende um frasco»). Pôr, deixar, atirar não: isso é
+     pôr na cena */
+  daEmMao: Object.freeze(["entrega", "estende", "oferece", "passa", "devolve", "empresta"]),
+  /* a preposição que manda a coisa dada para OUTRO lado («a Fenna», «por
+     baixo da porta», «sobre a mesa»); «de» e «com» são do próprio objeto
+     («um frasco de vidro») e não contam */
+  paraOutroLado: Object.freeze(["a", "ao", "aos", "as", "para", "pra", "em", "na", "no", "nas", "nos", "num", "numa", "por", "pela", "pelo", "sobre", "sob", "entre", "contra", "ate", "dentro", "atras", "junto", "perto"]),
   /* o destinatário do dar: o clítico, ou a frase */
   aoHeroi: Object.freeze(["lhe", "te"]),
   /* o que nega o verbo, logo antes dele */
@@ -173,6 +212,10 @@ export const MEMORIA_DO_INVENTADO = Object.freeze({
   /* quem é sujeito entre o herói e o verbo: «você chama o guarda, que segura
      a chave», «você vê Margarida pegar» — a mão é de outro */
   outroSujeito: Object.freeze(["que", "quem", "enquanto", "quando", "onde", "cujo", "cuja", "ele", "ela", "eles", "elas"]),
+  /* a comparação não dá nada a ninguém: «devolve a carta como quem devolve
+     uma lâmina suja» (a 10.ª, T32) — o verbo até três palavras depois de
+     «como» é imagem, não gesto */
+  comparacao: Object.freeze(["como"]),
   /* o verbo no começo da frase herda o herói da frase de antes */
   abre: Object.freeze(["e", "entao", "depois", "logo", "agora", "ja"]),
   /* o texto da abertura é do sistema (abertura.js: a razão que o herói traz,
@@ -192,8 +235,9 @@ const S = (xs) => new Set(xs);
 const HEROI = S(T.heroi), POSSE = S(T.posse), CORPO = S(T.corpo), NO_CORPO = S(T.noCorpo), PREP_LUGAR = S(T.prepLugar);
 const OUTRO = S(T.outroSujeito), ABRE = S(T.abre);
 const NEGA = S(T.nega), ARTIGOS = S(T.artigos), PREPS = S(T.preposicoes), FECHA = S(T.fecha), AO_HEROI = S(T.aoHeroi);
+const DESTINO = S(T.destino), OUTRO_LADO = S(T.paraOutroLado);
 const formas = (vs) => { const voce = new Set(), tu = new Set(); for (const v of vs) { v.voce.forEach((x) => voce.add(x)); v.tu.forEach((x) => tu.add(x)); } return { voce, tu }; };
-const PEGA = formas(T.pega), DA = formas(T.da), REVELA = formas(T.revela);
+const PEGA = formas(T.pega), DA = formas(T.da), REVELA = formas(T.revela), EM_MAO = formas(T.daEmMao.map((x) => (x.endsWith("e") ? ER(x) : AR(x))));
 /* a cabeça pela forma (singular e plural) → { cabeca, plural } */
 const CABECAS = new Map();
 for (const c of Object.keys(T.objetos)) {
@@ -327,34 +371,73 @@ export function oInventadoDaProsa(narrativa, estado, opcoes) {
       else if (DA.voce.has(w.base) || DA.tu.has(w.base)) {
         const cliticoAntes = i > 0 && AO_HEROI.has(ws[i - 1].base);
         const cliticoDepois = w.cliticos.some((c) => AO_HEROI.has(c));
-        const depois = ws.slice(i + 1, i + 1 + T.janela);
+        /* o destino lê a oração inteira («estende o Diário do Templo direto
+           para o seu peito» passa a janela), até ao que a fecha */
+        const fechaEm = ws.findIndex((x, k) => k > i && FECHA.has(x.base) && x.base !== "e");
+        const depois = ws.slice(i + 1, fechaEm < 0 ? ws.length : fechaEm);
         const paraVoce = depois.some((x, k) => (x.base === "a" || x.base === "para") && depois[k + 1] && HEROI.has(depois[k + 1].base));
-        const naSuaMao = depois.some((x, k) => POSSE.has(x.base) && depois[k + 1] && CORPO.has(depois[k + 1].base));
+        const naSuaMao = depois.some((x, k) => POSSE.has(x.base) && depois[k + 1] && (CORPO.has(depois[k + 1].base) || DESTINO.has(depois[k + 1].base)));
         /* «da» é também a preposição: só é o verbo com o clítico («lhe dá», «dá-te») */
         const ambiguo = w.base === "da" && !cliticoAntes && !cliticoDepois;
         /* o herói que dá («você lhe entrega», «você entrega a carta para ela») não recebe */
         const heroiDa = heroiAntes(ws, cliticoAntes ? i - 1 : i, false);
-        if (!ambiguo && !heroiDa && (cliticoAntes || cliticoDepois || paraVoce || naSuaMao)) como = "recebe";
+        /* o dar de mão em mão sem destinatário (a 20.ª): outro sujeito, e
+           nenhuma preposição depois do objeto a mandar a coisa para outro lado */
+        const emMao = !ambiguo && (EM_MAO.voce.has(w.base) || EM_MAO.tu.has(w.base)) && !heroiAntes(ws, i, heroiNaAnterior) && semOutroDestino(ws, i);
+        if (!ambiguo && !heroiDa && (cliticoAntes || cliticoDepois || paraVoce || naSuaMao || emMao)) como = "recebe";
       } else if (REVELA.voce.has(w.base)) como = "acha";
-      if (!como || negado(ws, i)) continue;
+      /* «Varek enfia-lhe um bilhete»: o pegar com o clítico do herói e outro sujeito é dar */
+      if (!como && PEGA.voce.has(w.base) && (w.cliticos.some((c) => AO_HEROI.has(c)) || (i > 0 && AO_HEROI.has(ws[i - 1].base))) && !heroiAntes(ws, i > 0 && AO_HEROI.has(ws[i - 1].base) ? i - 1 : i, false)) como = "recebe";
+      if (!como || negado(ws, i) || [1, 2, 3].some((d) => ws[i - d] && T.comparacao.includes(ws[i - d].base))) continue;
       for (const o of objetosDepois(ws, i)) achados.push({ ...o, como, trecho: frase.slice(0, 160) });
     }
     for (const o of noCorpoDoHeroi(ws, heroiAqui)) achados.push({ ...o, como: "guarda", trecho: frase.slice(0, 160) });
     heroiNaAnterior = heroiAqui;
   }
+  return oQueOSistemaNaoTem(achados, E, O);
+}
+
+/* o objeto depois de um dar (a 20.ª): alguma preposição de lugar ou de
+   destino depois dele manda-o para outro lado («estende o frasco a Fenna»,
+   «passa o bilhete por baixo da porta») — então não é ao herói */
+function semOutroDestino(ws, i) {
+  const os = objetosDepois(ws, i);
+  if (!os.length) return false;
+  const k = os[os.length - 1].fim + 1;
+  for (let j = k; j < ws.length && j <= k + T.janela; j++) {
+    const b = ws[j].base;
+    if (FECHA.has(b) && b !== "e") break;
+    if (OUTRO_LADO.has(b)) return false;
+  }
+  return true;
+}
+
+/* O QUE O SISTEMA NÃO TEM, dos objetos achados na prosa: a régua do cânone
+   e as folgas (o cabeçalho). A FAMÍLIA só vale para o que o herói tem; do
+   enredo e do cânone, só a mesma cabeça (a 20.ª). `O.doNarrador`: os nomes
+   que o Narrador já pôs em jogo (o livro) — para esses a frase do jogador
+   não é folga: o que o jogador apanha é o que o Narrador lá pôs. */
+function oQueOSistemaNaoTem(achados, E, O) {
   if (!achados.length) return [];
-  /* o que o sistema conhece (a régua do cânone), e as folgas */
   const K = oQueOSistemaConhece(E, O.lugarDoTurno);
   const todos = [...K.objeto, ...K.gente, ...K.lugar];
+  /* o que o herói TEM: a mesma régua, sem o enredo nem o cânone */
+  const P = obj(E.personagem);
+  const Kh = oQueOSistemaConhece({ personagem: P, factos: E.factos }, "");
   const abertura = T.daAbertura.map((c) => obj(E.abertura)[c]).filter((x) => typeof x === "string");
-  const palavrasConhecidas = new Set([...K.objeto, ...abertura, ...arr(O.saque).map((x) => palavrasDe(typeof x === "string" ? x : obj(x).nome))].flatMap((n) => palavrasDe(n).split(" ")));
+  const doHeroi = new Set([...Kh.objeto, ...abertura, ...arr(O.saque).map((x) => palavrasDe(typeof x === "string" ? x : obj(x).nome))].flatMap((n) => palavrasDe(n).split(" ")));
+  const doEnredo = new Set(K.objeto.flatMap((n) => palavrasDe(n).split(" ")));
   const daFrase = ` ${palavrasDe(O.frase)} `;
+  const doNarrador = arr(O.doNarrador).map(palavrasDe).filter(Boolean);
   const chaveDaMasmorra = !!obj(E.masmorra).chave;
   const conhecido = (o) => {
     const fam = FAMILIA.get(o.cabeca) || [o.cabeca];
-    if (fam.some((c) => formasDe(c).some((f) => palavrasConhecidas.has(f)))) return true;
+    if (fam.some((c) => formasDe(c).some((f) => doHeroi.has(f)))) return true;
+    if (formasDe(o.cabeca).some((f) => doEnredo.has(f))) return true;
     if (o.cabeca === "chave" && chaveDaMasmorra) return true;
     if (casaONome(o.nome, todos, false)) return true;
+    /* o que o Narrador já pôs em jogo não passa pela frase do jogador */
+    if (doNarrador.some((n) => ` ${n} `.includes(` ${o.cabeca} `) || formasDe(o.cabeca).some((f) => ` ${n} `.includes(` ${f} `)))) return false;
     /* o que o jogador nomeou: o nome inteiro; o quantificador basta pelo miolo
        («o molho de chaves» que ele surrupiou); a cabeça sozinha, só quando a
        prosa também a disse sozinha — «chaves» na frase não deixa passar «a
@@ -372,12 +455,38 @@ export function oInventadoDaProsa(narrativa, estado, opcoes) {
   return out;
 }
 
+/* O QUE O NARRADOR PÔS NA CENA (a 20.ª, a cera no chão): o objeto portátil
+   dito na narração, fora das falas, sem negação e sem ser o lugar de outra
+   coisa, que o sistema não tem e que a prosa não deu ao herói. Não é ainda
+   invenção na mão dele — é a isca: vai ao livro calado, e só sobe à pauta
+   quando a frase do jogador o toca. */
+function oPostoNaCena(narrativa, estado, opcoes) {
+  if (typeof narrativa !== "string" || !narrativa.trim()) return [];
+  const achados = [];
+  for (const frase of frasesDe(narrativa)) {
+    const ws = palavras(frase);
+    for (let j = 0; j < ws.length; j++) {
+      const o = objetoEm(ws, j);
+      if (!o) continue;
+      /* o nome sem o adjetivo: sem verbo que o reja, o que vem depois da
+         cabeça é tanto adjetivo como advérbio («a faca devagar») */
+      if (!negado(ws, j) && !(ws[o.fim + 1] && NEGA.has(ws[o.fim + 1].base))) achados.push({ ...o, nome: o.miolo, como: "na cena", trecho: frase.slice(0, 160) });
+      j = o.fim;
+    }
+  }
+  /* as folgas são as mesmas: o que o jogador nomeou na frase deste turno
+     é dele (da escuta), não do Narrador */
+  return oQueOSistemaNaoTem(achados, obj(estado), obj(opcoes));
+}
+
 /* o veto de um objeto inventado, na forma de um veto do Juiz */
-function vetoDe(o, turno) {
+function vetoDe(o, turno, calado = false) {
   const linha = T.linha(o);
   const corta = linha.length > T.letras ? linha.slice(0, T.letras - 1) + "…" : linha;
   const toques = [...new Set([palavrasDe(o.nome), ...formasDe(o.cabeca)])].filter((x) => x.length >= 3);
-  return { especie: T.especie, alvo: `objeto:${palavrasDe(o.nome)}`, linha: corta, toques, turno, ate: turno == null ? null : turno + T.vida, cidade: "" };
+  /* `soAoToque` (a 20.ª): o posto na cena só vai à pauta quando a frase o
+     toca (vetosParaAPauta) — campo novo do veto, que a versão antiga ignora */
+  return { especie: T.especie, alvo: `objeto:${palavrasDe(o.nome)}`, linha: corta, toques, turno, ate: turno == null ? null : turno + T.vida, cidade: "", ...(calado ? { soAoToque: true } : {}) };
 }
 
 /* ============================================================
@@ -393,7 +502,9 @@ function vetoDe(o, turno) {
 export function lembrarOInventado(vivos, narrativa, estado, ctx) {
   const c = obj(ctx);
   const turno = Number.isFinite(Number(c.turno)) && c.turno !== null && c.turno !== "" ? Number(c.turno) : null;
-  const opc = { frase: c.frase, saque: c.saque, lugarDoTurno: c.lugarDoTurno };
+  /* o que o Narrador já pôs em jogo (o livro): a frase do jogador não o desculpa */
+  const doNarrador = arr(vivos).filter((x) => x && typeof x === "object" && x.especie === T.especie && typeof x.alvo === "string").map((x) => x.alvo.replace(/^objeto:/, ""));
+  const opc = { frase: c.frase, saque: c.saque, lugarDoTurno: c.lugarDoTurno, doNarrador };
   /* o objeto que deixou de ser inventado sai do livro */
   const ficam = arr(vivos).filter((x) => {
     if (!x || typeof x !== "object" || x.especie !== T.especie) return true;
@@ -404,5 +515,13 @@ export function lembrarOInventado(vivos, narrativa, estado, ctx) {
     return oInventadoDaProsa(prova, estado, { saque: c.saque, lugarDoTurno: c.lugarDoTurno }).length > 0;
   });
   const novos = oInventadoDaProsa(narrativa, estado, opc).slice(0, T.porTurno).map((o) => vetoDe(o, turno));
-  return andarOsVetos(ficam, novos, { turno, cidade: typeof c.cidade === "string" ? c.cidade : undefined });
+  /* o posto na cena, calado: o que a prosa já deu ao herói não se repete, e
+     o livro guarda no máximo `naCenaNoLivro` destes (os mais novos) */
+  const dados = new Set(novos.map((v) => v.alvo));
+  const naCena = oPostoNaCena(narrativa, estado, opc).map((o) => vetoDe(o, turno, true))
+    .filter((v) => !dados.has(v.alvo) && !novos.some((n) => n.toques.some((p) => v.toques.includes(p)))).slice(0, T.naCenaPorTurno);
+  const todosNovos = [...novos, ...naCena];
+  const calados = [...ficam.filter((x) => x && x.soAoToque && !todosNovos.some((n) => n.alvo === x.alvo)), ...naCena];
+  const sobra = new Set(calados.slice(0, Math.max(0, calados.length - T.naCenaNoLivro)));
+  return andarOsVetos(ficam.filter((x) => !sobra.has(x)), todosNovos, { turno, cidade: typeof c.cidade === "string" ? c.cidade : undefined });
 }

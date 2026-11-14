@@ -235,8 +235,8 @@ export const RESPOSTAS = [
   { id: "compra", gesto: "oferece", peso: 4, quando: (v, l) => l === "comprável", faz: "faz uma oferta — dinheiro, cargo ou informação — através de alguém que eu já conheço" },
   { id: "isola", gesto: "corta", peso: 4, quando: (v, l) => l === "sozinho" || l === "tem_alguem", faz: "corta uma das minhas portas: um contato que para de responder, uma porta que fecha, um nome que some" },
   { id: "assusta", gesto: "mostra", peso: 3, quando: (v, l) => l === "covarde" || l === "ferido", faz: "manda um aviso que não machuca ninguém e não deixa dúvida de quem mandou" },
-  { id: "imita", gesto: "mostra", peso: 3, quando: (v, l) => l === "igual_a_ele", faz: "faz alguma coisa exatamente do jeito que eu faria, e deixa isso visível" },
-  { id: "presenteia", gesto: "oferece", peso: 3, quando: (v, l) => l === "curioso" || l === "ferramenta", faz: "me manda uma coisa útil, sem remetente, e a coisa é boa demais para ser recusada" },
+  { id: "imita", gesto: "mostra", peso: 3, quando: (v, l) => l === "igual_a_ele", faz: "imita um gesto meu, exatamente do jeito que eu o faria, e deixa isso visível" },
+  { id: "presenteia", gesto: "oferece", peso: 3, quando: (v, l) => l === "curioso" || l === "ferramenta", faz: "me faz chegar, por boca de terceiros, um aviso a meu favor sem dizer de quem vem — e o aviso é bom demais para ser ignorado" },
   { id: "aperta_agora", gesto: "ataca", peso: 4, quando: (v, l) => (l === "ameaca_real" || l === "ferido") && v.perto, faz: "aperta AGORA, com o que tem à mão, sem esperar estar pronto" },
   { id: "manda_alguem", gesto: "ataca", peso: 4, quando: (v, l) => l === "ameaca_real" || l === "pessoal", faz: "manda alguém — e essa pessoa tem nome, ofício e um motivo próprio para aceitar" },
   { id: "usa_terceiro", gesto: "corta", peso: 3, quando: (v, l) => l === "trabalha_pro_outro", faz: "vira alguém contra mim contando uma verdade pela metade" },
@@ -250,7 +250,7 @@ export const RESPOSTAS = [
   { id: "despreza", gesto: "cala", peso: 3, quando: (v, l) => l === "verde_ainda", faz: "deixa correr, e o desprezo dele abre uma janela que ele vai lamentar" },
   /* a rede das respostas: as duas leituras de chão precisam ter o que
      produzir, senão o vilão volta a ficar mudo um degrau mais tarde */
-  { id: "anota", gesto: "cala", peso: 2, quando: (v, l) => l === "esta_no_caminho" || l === "vale_um_olho", faz: "não faz nada comigo, e faz alguma coisa em outro lugar que eu só vou entender depois" },
+  { id: "anota", gesto: "cala", peso: 2, quando: (v, l) => l === "esta_no_caminho" || l === "vale_um_olho", faz: "não faz nada comigo, e age em outro lugar de um jeito que eu só vou entender depois" },
   { id: "atravessa", gesto: "corta", peso: 2, quando: (v, l) => l === "esta_no_caminho", faz: "resolve um assunto dele que passa por onde eu estava indo, e chega primeiro" },
 ];
 export function respostaPorId(id) { return RESPOSTAS.find((r) => r.id === id) || null; }
