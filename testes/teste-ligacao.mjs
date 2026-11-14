@@ -165,6 +165,17 @@ sec("1. NENHUM MÓDULO MUDO");
      no cartão) e o verbo parte pelas portas de viagem que já existem. As
      duas entradas saíram. */
   const AGUARDANDO = {
+    /* 13/11 (Fase QQ, Q1 · o quadro da quest, backend): `quadro-da-quest.js`
+       nasce — as cartas de pista de cada quest (`oQuadroDaQuest`,
+       `osQuadrosDoEstado`), quem as vira (`virarCarta`: a essencial vira
+       sempre, com preço na falha; a extra só no sucesso), a memória do save
+       (`garantirQuadro`, o campo novo `estado.quadro`) e a linha da pauta
+       (`oQuadroNaPauta`) — e espera a Q2/Q3 (mente/plano-quadro.md): o
+       `oficial` liga-o no App.jsx (o resolver do teste, o save e o load, a
+       pauta). Credor: o `oficial`, na MESMA fase. A entrada sai quando o App
+       (ou o motor) o importar. `teste-quadro-da-quest.mjs` é o primeiro
+       leitor. */
+    "quadro-da-quest.js": "o oficial, na Q2/Q3 da Fase QQ (mente/plano-quadro.md)",
     /* 13/11 (Fase NE, NE6 · o Léxico vira tabela, backend):
        `lexico-do-mundo.js` nasce — `lexicoDoMundo` (o `mundo.lexico` pelo
        gênero, o molde e a semente, no formato de garantirLexico), com as
