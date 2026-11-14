@@ -326,6 +326,17 @@ export const SECOES = [
      nada de prio menor que 5 — cede à resposta, à aposta e a quem está em
      cena, e passa à frente da agenda da gente (6) e da cor. */
   { id: "vetoDoJuiz", rotulo: "NÃO PODE", prio: 4.5, o: "a invenção da resposta anterior que o sistema contradiz, e o número certo" },
+  /* QQ · Q3 (14/11): O VETO DO CASO — «revelar o que ainda está por saber
+     (…): isso só se sabe pelo dado» (oQuadroNaPauta). Secção própria com o
+     rótulo do NÃO PODE, logo depois dele, pelo motivo do veto do Juiz: A
+     PRIO É A MEDIDA. Em 500 cenas semeadas fora da luta (teste-quadro-fiacao
+     §9), o veto a 2,0 (dentro da naoPode) cortava o FECHO em 14, o RUMO em
+     1, a planta da masmorra em 48 e o QUEM CARREGA em 33 — e nenhum veto de
+     uma frase só, por curto que fosse, ficava abaixo disso. Logo atrás da
+     linha do caso (o porquê do número está nela, em O CASO) não corta
+     nenhuma secção que já existia, e chega em 212 das 500 (357 na luta,
+     onde a linha do caso cede e o veto fica). */
+  { id: "vetoDoCaso", rotulo: "NÃO PODE", prio: 2.487, o: "o que o caso ainda tem por saber, que só o dado revela" },
   /* A campanha que prende (item 1): O QUE VOLTA — a promessa que o próprio
      Narrador plantou e que o sistema traz de volta agora
      (`prometido.js#cobrarNoTurno`), uma por turno no máximo e nunca numa
@@ -369,6 +380,24 @@ export const SECOES = [
      que chegava em cada turno era o contrário: até três linhas de agenda de
      gente e um envelope a plantar outra história, e nenhuma a dizer qual
      era o destino. */
+  /* QQ · Q3 (14/11): O CASO — o que o herói já sabe do caso (as faces das
+     cartas viradas, a metade dita) e o que falta, só pela forma («um lugar»,
+     «uma pessoa»): oQuadroNaPauta, quadro-da-quest.js. A PRIO É A MEDIDA
+     (500 cenas semeadas, testes/teste-quadro-fiacao.mjs §9): a 2,44, a
+     proposta do plano, a linha tirava a planta da masmorra em 30 das 500
+     (mais de 1 em 20, a régua do plano-quadro §11); a 2,455, com o veto
+     logo atrás, tirava o QUEM CARREGA em 52; a 2,465 já não tirava nenhum
+     dos quatro (entrava em 363), mas tirava o QUEM É de quem está em cena
+     numa pauta cheia (teste-consequencias-caladas: a consequência calada do
+     guarda à porta, que chegava, deixava de chegar). A 2,486 — logo depois
+     do QUEM É (2,485), à frente da cauda do ONDE (2,49) e da economia —
+     nenhuma secção que já existia perde uma linha por ela: regressão zero,
+     e entra em 260 das 500 fora da luta. Subir é trocar o QUEM É pelo caso
+     numa cena cheia; a medida está na suíte para quem o quiser decidir. O
+     veto «não revelar o que está por saber» vai ao bloco do NÃO PODE pela
+     secção dele (vetoDoCaso). Na luta, cede (o caso não muda o golpe que
+     vem a seguir). */
+  { id: "quadro", rotulo: "O CASO", prio: 2.486, o: "o que o herói já sabe do caso e o que falta, pela forma" },
   { id: "rumo", rotulo: "O RUMO", prio: 2.42, o: "a ordem do turno: reagir e responder primeiro, depois uma ponte para o próximo passo" },
   /* A campanha que prende (item 2): O FECHO — como acaba a resposta deste
      turno (`fecho.js#escolherFecho`): uma pergunta de alguém em cena, uma
@@ -453,7 +482,9 @@ export const SECOES_QUE_CEDEM = {
      mudam o golpe que vem a seguir. */
   /* 29/10 (o boato que se confirma): e O BOATO — ninguém para a meio de um
      golpe para saber se a taberneira mentiu; ele espera o fim da luta. */
-  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena", "vetoDoJuiz", "boato"],
+  /* QQ · Q3 (14/11): e O CASO — o que se sabe do caso espera o fim da luta;
+     o veto dele (NÃO PODE) fica. */
+  luta: ["economia", "cidade", "daqui", "mundo", "momento", "quemE", "preco", "nomes", "emCena", "vetoDoJuiz", "boato", "quadro"],
   masmorra: ["economia", "cidade", "preco"],
   arredores: ["economia", "cidade", "preco"],
   /* MM18: e a cena em que EU PERGUNTEI. Quem diz a condição não é o App:

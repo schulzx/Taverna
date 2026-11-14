@@ -610,10 +610,12 @@ function SetaDeAbrir({ aberta = false }) {
    muda de forma com a hora). `clima` = { glifo, rotulo } ou null. A ameaça só
    nasce quando o sistema a dá — no telefone, só acima de zero. `emCena` é a
    ranhura do <EmCena>; `children` o que se posiciona contra a barra inteira
-   (o sinal de guardado). */
+   (o sinal de guardado). `pistas` é a ranhura do <SinalDoQuadro> (QQ · Q3,
+   formas.md §QQ 3): à esquerda da HORA na mesa (o vão de 40 do grupo é o
+   da ameaça), antes da vela no telefone; sem quadro, null e 0 px. */
 export function BarraDoMestre({ telefone = false, lugar = "", cena = "", luz = "", hora = "", minuto = 0, clima = null, ameaca = null,
   prazo = null, quantosPrazos = 0, escondidoGrave = false, falaDaHora = "", tempoAberto = false, aoAbrirTempo,
-  horizonteAberto = false, aoAbrirHorizonte, emCena = null, children }) {
+  horizonteAberto = false, aoAbrirHorizonte, emCena = null, pistas = null, children }) {
   const B = telefone ? H.telefone.barra : H.mesa.barra;
   const fase = faseDoMinuto(minuto);
   const nAmeaca = Number(ameaca);
@@ -641,6 +643,7 @@ export function BarraDoMestre({ telefone = false, lugar = "", cena = "", luz = "
         {emCena}
       </div>
       <div className="flex items-center shrink-0" style={{ gap: telefone ? 8 : 40 }}>
+        {pistas}
         <button type="button" onClick={aoAbrirTempo} aria-label={fala} aria-expanded={!!tempoAberto} title="O tempo — esperar, acampar, os prazos"
           className="tv-anel-foco flex items-center text-left" style={{ ...botao, gap: 8, minWidth: ALVOS.piso, outlineColor: tempoAberto ? T.amber : undefined }}>
           <Vela fase={fase} alto={B.velaAlta} />

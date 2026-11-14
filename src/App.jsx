@@ -75,7 +75,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, QUADRO_DA_TELA, PALAVRAS_DO_QUADRO, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -271,6 +271,12 @@ import { oQueOMestrePede, oCartaoDoPedido, oVereditoDaOferta } from "./motor/o-m
    o preso é um estado (MC9), quem caiu sangra até um dado (MC10) */
 import { oFactoDoSucesso } from "./facto-do-sucesso.js";
 import { osPassosDasQuests, achadoDoPasso, oPassoNoOraculo, oLivroDoAchado } from "./a-quest-manda.js";
+/* QQ · Q3 (14/11, oficial): o quadro da quest no jogo — o motor (as cartas,
+   quem as vira, o preço, a forma de tela) e a peça (o sinal, a gaveta, o
+   momento). mente/plano-quadro.md §11; formas.md §QQ 9, parte 2. */
+import { osQuadrosDoEstado, virarCarta, aCartaDoTeste, aCartaDoGesto, aCartaEmJogo, garantirQuadro, aplicarPrecoDoQuadro, oQuadroNaTela, aCartaNaTela } from "./quadro-da-quest.js";
+import { SinalDoQuadro, GavetaDoQuadro, PistaQueVira } from "./painel-quadro.jsx";
+import { fichasDoSeFalhar } from "./quadro-na-tela.js";
 import { garantirCativeiro, aplicarSaida } from "./cativeiro.js";
 import { oSocorro, aplicarSocorro, passarHorasNoGrupo } from "./socorro.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, lancamentoDoAtaque } from "./motor/a-bandeja.js";
@@ -5804,6 +5810,19 @@ export default function Taverna() {
   const npcsRef = useRef({});                 // registro persistente de pessoas
   const elencoSaveRef = useRef(garantirElencoDoSave(null)); // MM8e: promovidos, saídos e dias vistos (campo `elenco` do save)
   const factosRef = useRef(garantirFactos(null));            // BQ2: o livro de factos — o que aconteceu, por id (campo `factos` do save; fora da sala)
+  /* QQ · Q3: a memória do quadro da quest — como cada carta virou e os
+     caminhos que se fecharam (campo `quadro` do save: novo, aditivo, que a
+     versão antiga ignora; garantirQuadro limpa-o). O resto é estado de tela,
+     fora do save: a gaveta, o momento da carta, a gota do sinal. */
+  const quadroRef = useRef(garantirQuadro(null));
+  const [quadroAberto, setQuadroAberto] = useState(false);
+  const [pistaQueVira, setPistaQueVira] = useState(null);   /* { vira, misterio, n }: a carta que o sistema virou neste turno */
+  const [saltoDaPista, setSaltoDaPista] = useState(0);      /* sobe com o envio seguinte: o momento salta */
+  const [sinalAceso, setSinalAceso] = useState(false);      /* os 600 ms da chegada da carta ao sinal */
+  const sinalDoQuadroRef = useRef(null);                    /* o botão do sinal: a carta voa para lá, e o foco volta lá */
+  const quadroVistoRef = useRef(null);                      /* a assinatura do quadro quando se abriu (a gota; recarregar apaga-a) */
+  const quadrosCacheRef = useRef({ chave: null, valor: [] });
+  const nDaPistaRef = useRef(0);
   const memoriaRef = useRef(garantirMemoriaDoSave(null));   // F2d: a memória com rosto — cada cartão aberto vira página (campo `memoria` do save)
   /* MM10: a lei que o herói carrega perante cada cidade — quem ele atacou
      que não era inimigo, e o preço disso (campo novo do save, `lei`). */
@@ -7674,7 +7693,7 @@ export default function Taverna() {
     mercadoRef, mesaRef, minutoRef, missoesRef, modoRef, mundoRef,
     naoPodeDoTurnoRef, nemesisRef, noiteRef, nomeCampanhaRef, nomesPendentesRef, notaRef,
     npcsRef, nucleoCacheRef, pautaDeUmTurnoRef, personagemRef, posturaRef, prometidoRef, propositosDoTurnoRef,
-    quemERef, registroRef, reinoRef, relogiosRef, reviravoltaRef, saberRef,
+    quadroRef, quemERef, registroRef, reinoRef, relogiosRef, reviravoltaRef, saberRef,
     sinoDoTurnoRef, sitioRef, subtramasCacheRef, torneioRef, turnoDeRegistroRef, ultimaAcaoRef,
     ultimaCobrancaRef, ultimoPesoRef, vetosDoJuizRef, vilaoAgiuRef,
   });
@@ -8998,7 +9017,7 @@ export default function Taverna() {
          lê este literal e falha se um campo nascer aqui sem nascer lá. */
       versao: ESTADO_VERSAO,
       nomeCampanha: nomeVivo, mundo, personagem, mensagens: mensagensRef.current, historico,
-      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cativeiro: cativeiroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
+      combate: combateRef.current, registro: registroRef.current, fimSemSaida: fimSemSaidaRef.current, cativeiro: cativeiroRef.current, cobradas: cobradasRef.current, ultimaCobranca: ultimaCobrancaRef.current, formasCobradas: formasCobradasRef.current, elencoMem: elencoMemRef.current, elenco: elencoSaveRef.current, lei: leiRef.current, aliados: aliadosRef.current, memoria: memoriaRef.current, factos: factosRef.current, saber: saberRef.current, quadro: quadroRef.current, coracao: coracaoRef.current, vilaoAgiu: vilaoAgiuRef.current, canone: canoneRef.current, npcs: npcsRef.current, acampado: acampadoRef.current, sitio: sitioRef.current,
       mapa: mapaRef.current, faccaoJogador: faccaoJogadorRef.current, cidadeAtual: cidadeAtualRef.current, guilda: guildaRef.current, clima: climaRef.current,
       conquistas: conqRef.current, contadores: contRef.current, tituloAtivo: tituloAtivoRef.current, descobertas: descobRef.current,
       masmorra: masmorraRef.current, raid: raidRef.current, cacadasFeitas: cacadasFeitasRef.current, tramasFeitas: tramasFeitasRef.current, intencoesFeitas: intencoesFeitasRef.current, mural: muralRef.current, decretos: decretosRef.current, dia: diaRef.current, reino: reinoRef.current, governos: governosRef.current, tomando: tomandoRef.current, diplomacia: diplomaciaRef.current, minuto: minutoRef.current, acordouAbs: acordouAbsRef.current, nemesis: nemesisRef.current, famaPatamar: famaPatamarRef.current, correio: correioRef.current, jornada: jornadaRef.current, lugar: lugarRef.current, eventos: eventosRef.current, relogios: relogiosRef.current, diaLuta: diaLutaRef.current, divindade: divindadeRef.current,
@@ -11764,7 +11783,7 @@ export default function Taverna() {
         noiteRef.current = null; torneioRef.current = null; vereditoRef.current = null;
       } catch (e) { calou("BQ7c · os motores da campanha nova", e); }
     }
-    if (!cap) factosRef.current = garantirFactos(null); /* BQ2: o livro de factos é da campanha; um capítulo novo guarda-o */
+    if (!cap) factosRef.current = garantirFactos(null); if (!cap) { try { quadroRef.current = garantirQuadro(null); quadroVistoRef.current = null; } catch (e) { calou("o quadro da campanha nova", e); } } /* BQ2: o livro de factos é da campanha; um capítulo novo guarda-o */
     if (!cap) memoriaRef.current = garantirMemoriaDoSave(null); /* F2d: a memória com rosto é da campanha; um capítulo novo guarda-a, como o registo */
     /* MM-C C1: o coração e o ritmo da linha QUEM É começam do zero */
     try { coracaoRef.current = garantirCoracaoDoSave(null); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração da campanha nova", e); }
@@ -12105,7 +12124,7 @@ export default function Taverna() {
          recarga, todas as contas que já cobrou. */
       cobradasRef.current = Array.isArray(sv.cobradas) ? sv.cobradas.map(String).slice(-200) : [];
       ultimaCobrancaRef.current = Number.isFinite(sv.ultimaCobranca) ? sv.ultimaCobranca : -99;
-      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { factosRef.current = garantirFactos(sv.factos); } catch (e) { calou("o livro de factos do save", e); factosRef.current = garantirFactos(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
+      formasCobradasRef.current = Array.isArray(sv.formasCobradas) ? sv.formasCobradas.map(String).slice(-6) : []; elencoMemRef.current = garantirElenco(sv.elencoMem); elencoSaveRef.current = garantirElencoDoSave(sv.elenco); try { memoriaRef.current = garantirMemoriaDoSave(sv.memoria); } catch (e) { calou("a memória do save", e); memoriaRef.current = garantirMemoriaDoSave(null); } try { factosRef.current = garantirFactos(sv.factos); } catch (e) { calou("o livro de factos do save", e); factosRef.current = garantirFactos(null); } try { quadroRef.current = garantirQuadro(sv.quadro); quadroVistoRef.current = null; } catch (e) { calou("o quadro do save", e); quadroRef.current = garantirQuadro(null); } try { coracaoRef.current = garantirCoracaoDoSave(sv.coracao); quemERef.current = { ultimas: {}, cenas: {} }; nucleoCacheRef.current = null; subtramasCacheRef.current = null; coracaoRitmoRef.current = { ultimas: {} }; coracaoPendenteRef.current = null; coracaoFalaRef.current = null; fogueiraRef.current = null; setFogueira(null); setManhaDaFogueira(null); fogueiraEstourouRef.current = false; } catch (e) { calou("o coração do save", e); coracaoRef.current = garantirCoracaoDoSave(null); } leiRef.current = garantirLei(sv.lei); saberRef.current = garantirSaber(sv.saber); aliadosRef.current = garantirAliados(sv.aliados); vilaoAgiuRef.current = Number.isFinite(sv.vilaoAgiu) ? sv.vilaoAgiu : -99; turnoContRef.current = 0;
       turnoDeRegistroRef.current = registroRef.current.length ? registroRef.current[registroRef.current.length - 1].t : 0;
       canoneRef.current = sv.canone && typeof sv.canone === "object" ? sv.canone : {};
       /* MM8c-1: normaliza relógios (Date.now() antigos) e retoma o contador
@@ -13373,7 +13392,11 @@ export default function Taverna() {
   const publicarEstado = (dados) => {
     if (!souAnfitriaoRef.current || !salaRef.current) return;
     const m = garantirSala(salaRef.current);
-    mandarRecado(RECADOS.estado, { sala: { ...m, versao: m.versao + 1 }, save: dados });
+    /* QQ · Q3 (14/11): a memória das cartas de pista (`quadro`, campo novo do
+       retrato) é do herói, como o livro de factos, e não atravessa a sala —
+       o convidado recebe o mesmo objeto de antes, e o protocolo não cresce */
+    const { quadro: _quadroDoHeroi, ...save } = dados && typeof dados === "object" ? dados : {};
+    mandarRecado(RECADOS.estado, { sala: { ...m, versao: m.versao + 1 }, save });
     setSala({ ...m, versao: m.versao + 1 });
   };
 
@@ -14216,14 +14239,25 @@ export default function Taverna() {
     try { fotoInicioRef.current = fotografarOTurno({ frase: acao, retrato: { ...retratoDoJogo(), personagem: fichaViva() || personagem }, soltos: soltosDoTurno() }); } catch (e) { calou("foto do inicio do turno", e); }
     /* A PROPOSTA DA FRASE (04/11): o que ela pagou ou vendeu acontece aqui, já
        dentro do turno — se o Mestre calar, o desfeito devolve a moeda e a coisa */
+    let pagoNaProposta = 0;
     try {
       const lado = ladoDaPropostaRef.current;
       ladoDaPropostaRef.current = null;
       if (lado && lado.frase === acao) {
         if (lado.pagar && !pagarDaProposta(lado.pagar)) return;
+        if (lado.pagar) pagoNaProposta = Number(lado.pagar.total) || 0;
         if (lado.venda && lado.venda.item && !lado.venda.motivo) venderNoMercado(lado.venda.item, lado.venda.origem);
       }
     } catch (e) { calou("o que a proposta paga ou vende", e); }
+    /* QQ · Q3: O GESTO SEM DADO (plano-quadro §11, 6). A receita punha-o em
+       adjudicarAcao, no «sem teste» — mas o despachante só chama
+       adjudicarAcao quando HÁ teste, e o «pago a quem sabe» passa antes pela
+       proposta da frase, que já cobra a moeda. Por isso mora aqui: depois do
+       que a proposta pagou (e com isso conta: não se cobra duas vezes), e só
+       quando a frase não é um teste (o teste vira a carta pelo dado). */
+    try {
+      if (!acao.startsWith("/") && !combateRef.current && !veredictoDaAcao(acao)) aCartaDoGestoAgora(acao, pagoNaProposta);
+    } catch (e) { calou("Q3 · o gesto da frase", e); }
     /* F2b: a ficha tocada parte com a frase — o despachante lê-a depois de o
        campo esvaziar (o golpe, a compra, a procura), e o campo fica livre */
     try {
@@ -17585,9 +17619,28 @@ export default function Taverna() {
          lugar do «revele UMA coisa», que o Narrador enchia com o plausível. A
          busca vazia só é vazia quando nenhuma fonte tem nada (`!facto`). */
       const facto = passou && des ? factoDoSucessoAgora(des, r.frase || r.motivo || "") : null;
+      /* QQ · Q3: os quadros ANTES do MC5 escrever o achado — senão a carta que
+         este teste vira já viria virada pelo livro, e o momento não existia */
+      let quadrosDoTeste = [];
+      try { quadrosDoTeste = des ? quadrosAgora() : []; } catch (e) { calou("Q3 · os quadros do teste", e); }
+      const achadoDoTeste = (facto && facto.achado) || (passou && r.achado && r.achado.especie === "passo" ? r.achado : null);
       escreverODescobriu((facto && facto.achado) || (passou && r.achado && r.achado.especie === "passo" ? r.achado : null));
       /* O feito é do sistema (13/11): o teste do turno leva o desafio, quem e o facto que deu — a chave que impede o mesmo achado de pagar duas vezes. */
       try { if (testeDoTurnoRef.current) testeDoTurnoRef.current = { ...testeDoTurnoRef.current, desafio: (des && des.id) || "", facto: facto || null, quem: (des && des.quem) || "" }; } catch (e) { calou("o feito do sistema · o teste", e); }
+      /* QQ · Q3: A CARTA DO TESTE. O dado do sistema vira a carta cujo caminho
+         bate com ele (o desafio, o sítio, a pessoa). `passou`, e não `bateu`:
+         o «sim, pago» do catálogo já cobrou o preço dele, e a carta vira limpa
+         — um preço só por dado. A falha que o catálogo não paga cai no
+         virarCarta, que dá o preço leve ou o pesado pela margem. */
+      try {
+        if (des && quadrosDoTeste.length) {
+          const alvoQ = aCartaDoTeste(quadrosDoTeste, { ...des, resultado: passou ? "sucesso" : "falha", passou, total, dc, frase: r.frase || r.motivo || "" }, { ...ondeDoPasso(), emCena: presentesAgora() });
+          const quadroQ = alvoQ && quadrosDoTeste.find((q) => q.quest === alvoQ.quest);
+          const viraQ = quadroQ && virarCarta(quadroQ, alvoQ.veredito, { carta: alvoQ.carta, caminho: alvoQ.caminho, memoria: quadroRef.current, dia: diaRef.current });
+          const jaConsultou = des.social && des.pessoa && des.pessoa.nome && consultouInformante({ conta: des.social, pessoa: des.pessoa, passou }) ? des.pessoa.nome : "";
+          if (viraQ) aplicarACartaVirada(viraQ, quadroQ, { pago: !!alvoQ.pago, achado: achadoDoTeste, jaConsultou });
+        }
+      } catch (e) { calou("Q3 · a carta do teste", e); }
       let env = (passou && des && des.fechaDepois && !r.achado && !facto)
         ? envelopeDeBuscaVazia(des.rotulo)
         : envelopeDoTeste({
@@ -17869,6 +17922,131 @@ export default function Taverna() {
       if (achado && achado.especie === "passo")
         factosRef.current = oLivroDoAchado(factosRef.current, achado, { dia: diaRef.current, turno: npcTurnoRef.current });
     } catch (e) { calou("MC5 · o livro do achado do passo", e); }
+  };
+  /* ---------------- QQ · Q3: O QUADRO DA QUEST NO JOGO (14/11) ----------------
+     Os quadros das quests que a pauta vê (osQuadrosDoEstado), com o estado
+     dos passos e a memória do quadro. Campanha antiga: [] — e tudo abaixo se
+     cala. Quem está à vista é a conta do pedido sem dado (o elenco, sem o
+     grupo): menção não é presença. */
+  const quadrosAgora = () => {
+    try {
+      return osQuadrosDoEstado({
+        espinha: espinhaRef.current, historia: historiaRef.current, factos: factosRef.current,
+        saber: saberRef.current, dia: diaRef.current, npcTurno: npcTurnoRef.current,
+        cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, jornada: jornadaRef.current,
+        npcs: npcsRef.current, canone: canoneRef.current, mapa: mapaRef.current, personagem: fichaViva(),
+        quadro: quadroRef.current,
+      }, { mundo: mundoDaBase() });
+    } catch (e) { calou("Q3 · os quadros", e); return []; }
+  };
+  const presentesAgora = () => {
+    try {
+      return (elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: [] }).aqui || []).map((x) => x && x.nome).filter(Boolean);
+    } catch (e) { calou("Q3 · quem está à vista", e); return []; }
+  };
+  /* o momento (formas.md §QQ 4): só quando o SISTEMA virou ou fechou uma
+     carta — o dado ou o gesto. A peça lê a carta já «para a tela» (a lista
+     branca: o juiz, o átomo e a chave nunca passam). */
+  const mostrarAPista = (vira, quadro) => {
+    try {
+      /* a carta lê-se do quadro JÁ com a memória nova (e o facto escrito):
+         o virarCarta não enche a face da extra virada, e no navegador
+         (14/11) o momento disse só «Sabes agora.» */
+      let fonte = vira && vira.carta;
+      try {
+        const q2 = quadrosAgora().find((q) => q.quest === (quadro && quadro.quest));
+        const c2 = q2 && fonte && q2.cartas.find((c) => c.id === fonte.id);
+        if (c2) fonte = c2;
+      } catch (e) { calou("Q3 · a carta depois de virar", e); }
+      const carta = fonte && aCartaNaTela(fonte);
+      if (!carta) return;
+      const tela = oQuadroNaTela(quadro);
+      nDaPistaRef.current += 1;
+      setPistaQueVira({ vira: { carta, preco: vira.preco || null, perdeu: vira.perdeu || null }, misterio: !!(tela && tela.misterio), n: nDaPistaRef.current });
+    } catch (e) { calou("Q3 · o momento da carta", e); }
+  };
+  /* no fim do voo: a peça sai, e o sinal acende — só no ganho (uma perda com
+     halo mentiria; fica só a gota) */
+  const acabouAPista = (p) => {
+    try {
+      setPistaQueVira((x) => (x === p ? null : x));
+      if (p && p.vira && !p.vira.perdeu) {
+        setSinalAceso(true);
+        setTimeout(() => { try { setSinalAceso(false); } catch (e) { calou("Q3 · o sinal apaga", e); } }, QUADRO_DA_TELA.sinal.acende);
+      }
+    } catch (e) { calou("Q3 · o fim do momento", e); }
+  };
+  /* O QUE A CARTA VIRADA FAZ (plano-quadro §11, 5). A memória vai ao save; o
+     facto vai ao livro pela porta da carta (PORTA_DA_CARTA), com o nome do
+     registo (o juiz), nunca a alcunha da face; o preço e o custo entram de
+     uma vez pelas portas do fim do turno (aplicarPrecoDoQuadro →
+     aplicarAsQuests); os minutos andam o relógio fora da luta; o objeto
+     entra na bolsa, com a marca se chegou partido. `op.achado`: o achado do
+     passo que o MC5 já escreveu neste teste (não se escreve duas vezes);
+     `op.jaConsultou`: o informante que a conta social já registou; `op.pago`:
+     o teste já cobrou as moedas do caminho. Cada porta no seu calou. */
+  const aplicarACartaVirada = (vira, quadro, o) => {
+    const op = o && typeof o === "object" ? o : {};
+    if (!vira || !vira.memoria) return false;
+    try { quadroRef.current = vira.memoria; } catch (e) { calou("Q3 · a memória do quadro", e); }
+    const w = vira.escreve || null;
+    const juiz = (vira.carta && vira.carta.juiz) || {};
+    const nomeReal = String(juiz.nome || "");
+    let objeto = null;
+    try {
+      if (w && w.predicado === "descobriu" && vira.achado) {
+        const a = op.achado;
+        const ja = !!(a && a.especie === "passo" && a.quest === vira.achado.quest && a.etapa === vira.achado.etapa);
+        if (!ja) escreverODescobriu(vira.achado);
+      } else if (w && w.predicado === "conversou" && nomeReal) {
+        anotarNoLivro("Q3 · a carta", { falouCom: [nomeReal] });
+      } else if (w && w.predicado === "consultou" && nomeReal) {
+        if (String(op.jaConsultou || "").toLowerCase() !== nomeReal.toLowerCase()) {
+          npcsRef.current = registrarConsulta(npcsRef.current, nomeReal);
+          setNpcs(npcsRef.current);
+        }
+      } else if (w && w.predicado === "tem" && nomeReal) {
+        objeto = { nome: nomeReal, qtd: 1 };
+      }
+    } catch (e) { calou("Q3 · o facto da carta", e); }
+    try {
+      const pr = aplicarPrecoDoQuadro(estadoDasQuests(), vira.preco, { custo: vira.custo, pago: !!op.pago, ...(objeto ? { objeto } : {}) });
+      if (pr) aplicarAsQuests(pr, "Q3 · o preço");
+      const item = (pr && pr.objeto) || objeto;
+      if (item) {
+        const base = personagemRef.current || personagem;
+        const np = { ...base, inventario: [...(base.inventario || []), item] };
+        personagemRef.current = np; setPersonagem(np);
+      }
+      if (pr && pr.minutos > 0 && !combateRef.current) {
+        const tx = avancarMinutos(pr.minutos);
+        if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
+      }
+    } catch (e) { calou("Q3 · o preço da carta", e); }
+    mostrarAPista(vira, quadro);
+    return true;
+  };
+  /* O GESTO SEM DADO (plano-quadro §11, 6): pagar a quem sabe, comprar a quem
+     tem — «a mão que paga não erra», e o teste nunca nascia. O custo estava
+     dito antes do clique (no caminho da carta, no quadro) e cobra-se agora. */
+  /* `jaPagou`: as moedas que a proposta da frase já tirou da bolsa por esta
+     mesma frase. Contam como bolsa (o herói tinha-as) e, se cobrem o custo do
+     caminho, o custo não se cobra outra vez. Pagou MENOS do que o caminho
+     pede: a carta não vira (o que a proposta pagou fica pago, como sempre). */
+  const aCartaDoGestoAgora = (acao, jaPagou = 0) => {
+    try {
+      const qs = quadrosAgora();
+      if (!qs.length) return false;
+      const frase = String(acao || "");
+      const pago = Math.max(0, Number(jaPagou) || 0);
+      const presentes = presentesAgora();
+      const ch = aPessoaChamada(frase, { conhecidos: [], presentes });
+      const g = aCartaDoGesto(qs, { frase, quem: ch && ch.nome ? ch.nome : "", moedas: (Number((fichaViva() || {}).moedas) || 0) + pago }, { ...ondeDoPasso(), emCena: presentes });
+      if (!g || (pago > 0 && pago < g.veredito.total)) return false;
+      const quadro = qs.find((q) => q.quest === g.quest);
+      const vira = quadro && virarCarta(quadro, g.veredito, { carta: g.carta, caminho: g.caminho, memoria: quadroRef.current, dia: diaRef.current });
+      return vira ? aplicarACartaVirada(vira, quadro, { pago: pago >= g.veredito.total }) : false;
+    } catch (e) { calou("Q3 · a carta do gesto", e); return false; }
   };
   /* MC9 · preso não sai por porta nenhuma: a recusa, dita uma vez para as três */
   const recusaDoPreso = () => {
@@ -18971,6 +19149,41 @@ export default function Taverna() {
       saber,
     };
   };
+  /* QQ · Q3 (formas.md §QQ 4 e §QQ 8, 5): O CHAMADO SABE QUE HÁ CARTA EM
+     JOGO. Antes do dado, aCartaEmJogo diz se aquele teste vira uma carta; o
+     «se falhar» passa a ser o dela — a carta que o caso precisa vira na
+     mesma, e o aviso do catálogo («a memória não devolve nada») mentiria. A
+     que se pode ganhar fecha o caminho. As palavras são as do quadro
+     (PALAVRAS_DO_QUADRO, CARIMBO_DO_PRECO pela fichasDoSeFalhar): o
+     jogador lê no chamado o mesmo que leu na carta. `carta` vai no chamado
+     (aditivo) para a bandeja poder pôr o leque. */
+  const comACartaEmJogo = (ch, v, frase) => {
+    try {
+      if (!ch) return ch;
+      const qs = quadrosAgora();
+      if (!qs.length) return ch;
+      const c = aCartaEmJogo(qs, { ...v, frase: String(frase || "") }, { ...ondeDoPasso(), emCena: presentesAgora() });
+      if (!c) return ch;
+      const W = PALAVRAS_DO_QUADRO;
+      const minuscula = (s) => String(s || "").charAt(0).toLowerCase() + String(s || "").slice(1);
+      let aviso, cobrado;
+      if (c.tipo === "extra") {
+        aviso = W.seFalhar + ", " + minuscula(W.fecha);
+        cobrado = minuscula(W.fecha).replace(/\.$/, "");
+      } else {
+        const precos = fichasDoSeFalhar([{ seFalhar: c.seFalhar }]).map((f) => f.texto).filter(Boolean);
+        const naMesma = minuscula(W.naMesma);
+        aviso = W.seFalhar + ", " + (precos.length ? naMesma + " " + precos.join(" ou ") + "." : naMesma.split(".")[0] + ".");
+        cobrado = naMesma.split(".")[0];
+      }
+      const linha = String(ch.linha || "");
+      return Object.freeze({
+        ...ch, aviso, cobrado,
+        linha: ch.aviso && linha.includes(ch.aviso) ? linha.replace(ch.aviso, aviso) : linha,
+        carta: Object.freeze({ forma: c.forma, tipo: c.tipo, seFalhar: c.seFalhar, ...(c.restam != null ? { restam: c.restam } : {}) }),
+      });
+    } catch (e) { calou("Q3 · a carta no chamado", e); return ch; }
+  };
   const chamadoDoVeredito = (v, mod) => {
     try {
       return oChamado(v, ctxDoChamado(mod)) || null;
@@ -19022,7 +19235,7 @@ export default function Taverna() {
   };
   const abrirOChamado = (v, r, o) => {
     const op = o && typeof o === "object" ? o : {};
-    const chamado = chamadoDoVeredito(v, op.mod);
+    const chamado = comACartaEmJogo(chamadoDoVeredito(v, op.mod), v, op.frase);
     const armado = pedidoArmadoRef.current;
     pedidoArmadoRef.current = null;
     if (!chamado) return false;
@@ -26105,7 +26318,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          manda a frase pelo caminho de sempre e o dado lança-se logo. Sem
          chamado (ou se ele estourar), o cartão de sempre. */
       let chP = null;
-      try { chP = chamadoDoVeredito(v, mod); } catch (e) { calou("MC3 · o pedido pelo chamado", e); chP = null; }
+      try { chP = comACartaEmJogo(chamadoDoVeredito(v, mod), v, p.frase); } catch (e) { calou("MC3 · o pedido pelo chamado", e); chP = null; }
       if (chP) {
         nDoChamadoRef.current += 1;
         definirChamado({ n: nDoChamadoRef.current, chamado: chP, mod, frase: String(p.frase || ""), rolagem: null, linhas: [], pedido: true, lance: null });
@@ -26158,6 +26371,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* O ENVIO — pelo Enter ou pelo dado. Na espera e no teste não manda nada: o
      texto fica intacto e o dado dá um pulso (nenhum com reduce). */
   const lancarODado = () => {
+    /* QQ · Q3: enviar o turno seguinte salta o momento da carta (§QQ 4) */
+    try { if (pistaQueVira) setSaltoDaPista((n) => n + 1); } catch (e) { calou("Q3 · o salto da pista", e); }
     if (enterNoChamado({ doCampo: true })) return; /* MC3: o Mestre chama (enterNoChamado) */
     if (!entrada.trim()) return;
     if (envioEspera(estadoDado)) { try { setPulsoDoDado((n) => n + 1); } catch (e) { calou("o pulso do dado", e); } return; }
@@ -26295,6 +26510,62 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       armarToque({ id: ficha.id, ids: [ficha.id], nomes: [nomeNoMeioDaFrase(ficha.nome)], texto, ficha, verbo });
       setAba(null);
     } catch (e) { calou("o verbo da página", e); }
+  };
+  /* ---------------- QQ · Q3: AS PISTAS NA TELA ----------------
+     Os quadros «para a tela» (oQuadroNaTela: a lista branca do contrato), a
+     quest da vez (a do ato; sem ela, a primeira do coração), o sinal dela, e
+     a gota: o quadro mudou desde que se abriu. Calculado só quando o estado
+     que o decide mudou (o estado é substituído, nunca mutado: a identidade
+     basta). Sem quadro, null — e a barra não lhe dá um píxel. */
+  const pistasDaTela = (() => {
+    try {
+      if (fase !== "jogo") return null;
+      const chave = [espinhaRef.current, historiaRef.current, factosRef.current, saberRef.current, diaRef.current, npcsRef.current,
+        cidadeAtualRef.current, lugarRef.current, jornadaRef.current, quadroRef.current, personagemRef.current, canoneRef.current, mapaRef.current];
+      const cache = quadrosCacheRef.current;
+      let brutos;
+      if (cache.chave && cache.chave.length === chave.length && cache.chave.every((x, i) => x === chave[i])) brutos = cache.valor;
+      else { brutos = quadrosAgora(); quadrosCacheRef.current = { chave, valor: brutos }; }
+      if (!brutos.length) return null;
+      const quadros = brutos.map((q) => oQuadroNaTela(q)).filter(Boolean);
+      if (!quadros.length) return null;
+      const daVez = (brutos.find((q) => q.tipo !== 2) || brutos[0]).quest;
+      const qv = quadros.find((q) => q.quest === daVez) || quadros[0];
+      const assinatura = quadros.map((q) => q.quest + ":" + q.cartas.map((c) => c.id + "=" + c.estado).join(",")).join("|");
+      if (quadroVistoRef.current == null || quadroAberto) quadroVistoRef.current = assinatura;
+      return { quadros, daVez: qv.quest, sinal: qv.sinal, novo: assinatura !== quadroVistoRef.current, assinatura };
+    } catch (e) { calou("Q3 · as pistas na tela", e); return null; }
+  })();
+  const alternarOQuadro = () => {
+    try {
+      const abre = !quadroAberto;
+      if (abre && pistasDaTela) quadroVistoRef.current = pistasDaTela.assinatura;
+      setQuadroAberto(abre);
+    } catch (e) { calou("Q3 · abrir as pistas", e); }
+  };
+  const fecharOQuadro = () => { try { setQuadroAberto(false); } catch (e) { calou("Q3 · fechar as pistas", e); } };
+  /* tocar num caminho escreve-o no campo, com o cursor no fim, e fecha a
+     gaveta — o dado é do Chamado do Mestre, nunca do quadro */
+  const escreverOCaminho = (verbo) => {
+    try {
+      const texto = String(verbo || "");
+      if (!texto) return;
+      setEntrada(texto);
+      setQuadroAberto(false);
+      setTimeout(() => {
+        try { const c = campoRef.current; if (c) { c.focus(); if (c.setSelectionRange) c.setSelectionRange(texto.length, texto.length); } } catch (e) { calou("Q3 · o cursor no fim", e); }
+      }, 0);
+    } catch (e) { calou("Q3 · escrever o caminho", e); }
+  };
+  /* a altura da gaveta: até QUADRO_DA_TELA.gaveta.folga acima do fim da
+     página que rola (a soleira e o campo ficam sempre à vista) */
+  const alturaDaGaveta = () => {
+    try {
+      const a = areaRef.current;
+      if (!a) return null;
+      const w = a.parentElement;
+      return Math.max(ALVOS.piso * 3, (w ? w.offsetTop : 0) + a.clientHeight - QUADRO_DA_TELA.gaveta.folga);
+    } catch (e) { calou("Q3 · a altura da gaveta", e); return null; }
   };
   /* A LINHA DO VEREDITO da ficha ligada (V6): QUEM a frase aponta e o preço,
      enquanto o campo diz a frase que a ficha escreveu. Editada, a linha cala
@@ -27729,6 +28000,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               })()}
               minuto={minuto} hora={horaTxt(minuto)}
               {...(() => { try { const p = prazosDaCinta(relogios); return { prazo: p && p.length ? p[0] : null, quantosPrazos: p ? p.length : 0, escondidoGrave: !!(p && p.slice(1).some((x) => x.noites <= 1)) }; } catch (err) { calou("o prazo na barra do Mestre", err); return {}; } })()}
+              pistas={pistasDaTela && !fogueiraNaPagina ? (
+                <LimiteDasFichas key="pistas">
+                  <SinalDoQuadro sinal={pistasDaTela.sinal} telefone={!mesaLarga} novo={pistasDaTela.novo} aceso={sinalAceso}
+                    aberto={quadroAberto} aoAbrir={alternarOQuadro} botaoRef={sinalDoQuadroRef} />
+                </LimiteDasFichas>
+              ) : null}
               tempoAberto={tempoAberto} aoAbrirTempo={() => setTempoAberto((v) => !v)}
               horizonteAberto={horizonteAberto && !horizontePreso}
               aoAbrirHorizonte={dadosMapaVivo && !horizontePreso ? () => { try { setHorizonteAberto((v) => !v); } catch (err) { calou("abrir o horizonte", err); } } : undefined}
@@ -27926,10 +28203,32 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 </LimiteDoMapa>
               </div>
             ) : null}
+            {/* QQ · Q3: A GAVETA DAS PISTAS (formas.md §QQ 3) — desce da barra, por
+                cima da página e na largura da coluna dela (na mesa, a 600; no
+                telefone, inteira); a soleira e o campo nunca ficam tapados. Calada
+                pelo LimiteDasFichas: uma gaveta que estoura some, e a cena fica. */}
+            {quadroAberto && pistasDaTela && !fogueiraNaPagina ? (
+              <div data-quadro="gaveta" style={{ position: "absolute", left: 0, right: 0, top: 0, zIndex: 21, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+                <div style={{ pointerEvents: "auto", width: mesaLarga ? undefined : "100%", maxWidth: "100%" }}>
+                  <LimiteDasFichas key={"quadro|" + dia}>
+                    <GavetaDoQuadro quadros={pistasDaTela.quadros} questDaVez={pistasDaTela.daVez} aberta telefone={!mesaLarga}
+                      aoFechar={fecharOQuadro} aoEscrever={escreverOCaminho} devolverFocoA={sinalDoQuadroRef} alturaMaxima={alturaDaGaveta()} />
+                  </LimiteDasFichas>
+                </div>
+              </div>
+            ) : null}
             {/* V5 · a região que rola ganha um invólucro: é contra ele que a seta
                 do fim se posiciona, e por isso ela fica sempre ACIMA do pé do
                 cartão (a soleira), nunca por cima de uma oferta. */}
             <div className="relative flex-1 min-h-0 flex flex-col">
+            {/* QQ · Q3: O MOMENTO DA CARTA (formas.md §QQ 4) — por cima da soleira,
+                à direita da coluna; voa ao sinal e salta-se sempre. */}
+            {pistaQueVira ? (
+              <LimiteDasFichas key={"pista|" + pistaQueVira.n}>
+                <PistaQueVira vira={pistaQueVira.vira} misterio={pistaQueVira.misterio} alvoRef={sinalDoQuadroRef} saltar={saltoDaPista}
+                  aoAcabar={() => acabouAPista(pistaQueVira)} estilo={{ position: "absolute", right: 16, bottom: 8, zIndex: 25 }} />
+              </LimiteDasFichas>
+            ) : null}
             <div ref={areaRef} onScroll={(e) => { aoRolar(e); verSeChegouANova(); if (horizonteAberto) { try { setHorizonteAberto(false); } catch (err) { calou("a gaveta do horizonte fecha ao rolar", err); } } }} onWheel={tocouNaRolagem} onTouchMove={tocouNaRolagem} onKeyDown={tocouNaRolagem} onPointerDown={tocouNaRolagem} className="tv-scroll tv-esbate-topo flex-1 overflow-y-auto overflow-x-hidden min-h-0 tv-pagina" style={{ backgroundImage: luzDoMundo }}>
               {/* A VOZ (R2 → V5) — o `O MESTRE` do topo da página SAIU (o `jogo`,
                   V5 §9): estava lá sempre, `muda` fora da espera, custando ~48 px

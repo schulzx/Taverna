@@ -87,8 +87,14 @@ for (const f of PECA) for (const s of Object.keys(f.pautaObj || {})) vivos[s] = 
    baixo o diz: no dia em que um caso a pisar, ela sai daqui.
    MOVIDA (29/10, o boato que se confirma): e O BOATO — quem a escreve não é
    esta peça, é a do pedido (motor/pedido-do-turno.js#comOBoato, depois da
-   pauta), e a prova dela é teste-boatos.mjs §9–§10. */
-const FALTAM = ["forma", "boato"];
+   pauta), e a prova dela é teste-boatos.mjs §9–§10.
+   MOVIDA (14/11, QQ · Q3): e O CASO e o veto dele (quadro, vetoDoCaso) —
+   escreve-os esta peça, mas só com uma quest do esqueleto aberta e com
+   cartas (osQuadrosDoEstado), e nenhum dos casos gravados ou de cobertura a
+   tem; o dourado ficou byte a byte o de antes (secção 1). A prova dela, com
+   uma campanha de mistério pela mesma aPautaDoTurno, é
+   teste-quadro-fiacao.mjs §8, e a medida contra o teto a §9. */
+const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso"];
 const POUCOS = SECOES.map((s) => s.id).filter((s) => !FALTAM.includes(s) && !(vivos[s] >= 5));
 t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que nenhum sítio da pauta escreve)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
   SECOES.map((s) => `${s.id} ${vivos[s.id] || 0}`).join(" · "));
@@ -195,7 +201,13 @@ const campos = Object.values(D.refs).map((r) => r.campo).sort();
    peça; os 275 casos não o trazem e a pauta sem ele é byte a byte a de antes
    (secção 1). A intenção fica: nenhum campo na tabela que não seja do recorte
    ou desta lista, cada um com o seu porquê. */
-const NASCIDOS_DEPOIS_DO_RECORTE = Object.freeze({ pautaDeUmTurno: "CB lote 2: o canal de um turno (o encontro da estrada deixou de ir emprestado pelo crime)" });
+/* MOVIDA (14/11, QQ · Q3), pelo mesmo motivo: `quadro` (a memória das cartas
+   de pista, campo novo do save) nasceu depois do recorte; a pauta lê-o para
+   O CASO, e os casos do dourado não o trazem (a pauta sem ele é a de antes). */
+const NASCIDOS_DEPOIS_DO_RECORTE = Object.freeze({
+  pautaDeUmTurno: "CB lote 2: o canal de um turno (o encontro da estrada deixou de ir emprestado pelo crime)",
+  quadro: "QQ · Q3: a memória do quadro da quest (O CASO na pauta)",
+});
 t("REFS_DA_PAUTA tem um campo por ref do recorte, mais os nascidos depois dele (com o porquê), e mais nenhum", JSON.stringify(Object.keys(REFS_DA_PAUTA).filter((c) => !NASCIDOS_DEPOIS_DO_RECORTE[c]).sort()) === JSON.stringify(campos) && Object.keys(NASCIDOS_DEPOIS_DO_RECORTE).every((c) => REFS_DA_PAUTA[c] && !campos.includes(c)));
 t("cada campo diz o ref do App, se o save o guarda e se a pauta o escreve", Object.entries(D.refs).every(([ref, r]) => REFS_DA_PAUTA[r.campo].ref === ref && REFS_DA_PAUTA[r.campo].salvo === r.salvo && REFS_DA_PAUTA[r.campo].escreve === r.escreve));
 t(`o campo é o do save quando o save o guarda (contRef → contadores, aberturaMundoRef → abertura, elencoSaveRef → elenco)`, REFS_DA_PAUTA.contadores.ref === "contRef" && REFS_DA_PAUTA.abertura.ref === "aberturaMundoRef" && REFS_DA_PAUTA.elenco.ref === "elencoSaveRef");

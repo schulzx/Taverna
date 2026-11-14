@@ -98,6 +98,7 @@ import { MOLDE_PADRAO, moldePorId } from "../moldes.js";
 import { vetosParaAPauta } from "./correcao-do-juiz.js";
 import { aMesaDasQuests } from "./quests-do-turno.js";
 import { osPassosDasQuests } from "../a-quest-manda.js";
+import { garantirQuadro, osQuadrosDoEstado, oQuadroNaPauta } from "../quadro-da-quest.js";
 import { aPessoaDoPasso } from "./a-pessoa-do-passo.js";
 import { oCativeiroNaPauta } from "../cativeiro.js";
 import { oSocorroNaPauta } from "../socorro.js";
@@ -162,6 +163,7 @@ export const REFS_DA_PAUTA = Object.freeze({
   episodio: Object.freeze({ ref: "episodioRef", salvo: true, escreve: false, padrao: () => (null) }),
   escuta: Object.freeze({ ref: "escutaRef", salvo: true, escreve: false, padrao: () => (garantirEscuta(null)) }),
   espinha: Object.freeze({ ref: "espinhaRef", salvo: true, escreve: false, padrao: () => (garantirEspinha(null)) }),
+  quadro: Object.freeze({ ref: "quadroRef", salvo: true, escreve: false, padrao: () => (garantirQuadro(null)) }),
   faccaoJogador: Object.freeze({ ref: "faccaoJogadorRef", salvo: true, escreve: false, padrao: () => ("") }),
   falasDoTurno: Object.freeze({ ref: "falasDoTurnoRef", salvo: false, escreve: false, padrao: () => ([]) }),
   fatosDoPeso: Object.freeze({ ref: "fatosDoPesoRef", salvo: false, escreve: true, padrao: () => ({}) }),
@@ -1363,6 +1365,16 @@ export function aPautaDoTurno(estado, entrada, portas) {
       $ref.fecho = fx.id;
       p = porNaPauta(p, "fecho", fx.linha);
     } catch (e) { calou("o fecho na pauta", e); }
+    /* QQ · Q3 (14/11): O CASO — o que o herói já sabe do caso e o que falta,
+       pela forma (oQuadroNaPauta); os quadros são os das quests que o RUMO
+       vê, com a memória do quadro. O veto vai ao bloco do NÃO PODE pela
+       secção dele (vetoDoCaso, a prio medida em pauta.js): entra depois dos
+       vetos da cena, do rumo e do fecho, nunca no lugar deles. */
+    try {
+      const qp = oQuadroNaPauta(osQuadrosDoEstado({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva(), quadro: $ref.quadro }, { mundo: mundoDaBase() }));
+      if (qp.linha) p = porNaPauta(p, "quadro", qp.linha);
+      if (qp.naoPode.length) p = porNaPauta(p, "vetoDoCaso", ...qp.naoPode);
+    } catch (e) { calou("o caso na pauta", e); }
     /* MM16 nº 5: O QUE CEDE ONDE. A tabela é do motor (`SECOES_QUE_CEDEM`);
        aqui só se diz que cena é esta. `arredores` é FORA DOS MUROS — sem
        cidade (estrada, jornada) ou num lugar marcado `distancia: "arredores"`

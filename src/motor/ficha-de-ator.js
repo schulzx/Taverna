@@ -1044,9 +1044,16 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     /* os vetos da bolsa da frase (bolsa-da-frase.js, vetoDaCompra e
        vetoDaDadiva): o sistema decidiu que não fechou, e isso é o resultado */
     { de: /^entregar-me (.+?) ou receber moedas por isso: a compra não fechou \((.+?)\)/, vai: "aconteceu", resultado: "pagar", como: (m, c) => `A compra de ${m[1]} não fechou (${doHeroi(m[2], c.H).replace(/◉\s*/g, "").replace(/\bdisse\b/g, "ofereceu").replace(/\btenho\b/g, "tem").replace(/\bcarrego\b/g, "carrega").replace(/\bfechei\b/g, "fechou")}): quem vende diz o preço e espera.` },
+    /* QQ · Q3 (14/11): o veto do caso (QUADRO_NA_PAUTA.naoPode, na secção
+       vetoDoCaso): o que está por saber é fato — ainda não se sabe */
+    { de: /^revelar o que ainda está por saber em (.+?) ((.+?)): isso só se sabe pelo dado$/, vai: "aconteceu", como: (m) => `Em ${m[1]}, ainda está por saber: ${m[2]}.` },
     { de: /^pôr nas mãos de (.+?) o que eu não tenho: (.+?) — /, vai: "aconteceu", resultado: "dar", como: (m, c) => `${c.H} não tem o que queria dar a ${m[1]}: ${m[2].replace(/\btenho\b/g, "tem")}.` },
   ],
   "O RUMO": [ { de: /^(.*)$/, vai: "rumo", como: (m) => m[1] } ],
+  /* QQ · Q3 (14/11): O CASO (oQuadroNaPauta, quadro-da-quest.js) — o que o
+     herói já sabe do caso e o que falta, só pela forma: o fato cru, com o
+     herói pelo nome e o crivo à porta */
+  "O CASO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m, c) => ponto(maiuscula(doHeroi(m[1], c.H))) } ],
   /* o fecho do Mestre diz a FORMA da última frase; a ficha só guarda DE
      QUEM ela é (A_ULTIMA_PALAVRA): alguém em cena, ou a cena */
   "O FECHO": [

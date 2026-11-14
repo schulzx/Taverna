@@ -191,7 +191,11 @@ sec("1. NENHUM MÓDULO MUDO");
        `oSinalDosQuadros`. Credor: o `oficial`, na Q3 (o preço e o chamado) e
        na Q4 (a peça, painel-quadro.jsx, lê a carta para a tela). A entrada
        sai quando o App importar o módulo. */
-    "quadro-da-quest.js": "o oficial, na Q3 da Fase QQ (mente/plano-quadro.md)",
+    /* 14/11 (Fase QQ, Q3 · a fiação, oficial): PAGA. O App.jsx importa o
+       módulo (o teste e o gesto viram a carta, o preço entra pelas portas
+       do fim do turno, o chamado diz o «se falhar» da carta, a barra mostra
+       o sinal e a gaveta) e o motor da pauta lê-o (O CASO, e o ref no save:
+       REFS_DA_PAUTA). A entrada saiu; teste-quadro-fiacao.mjs prova a fiação. */
     /* 13/11 (Fase NE, NE6 · o Léxico vira tabela, backend):
        `lexico-do-mundo.js` nasce — `lexicoDoMundo` (o `mundo.lexico` pelo
        gênero, o molde e a semente, no formato de garantirLexico), com as

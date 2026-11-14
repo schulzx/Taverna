@@ -106,6 +106,7 @@ export const CAMPOS = Object.freeze([
   C("memoria", "memoria", "qualquer"),
   C("factos", "memoria", "qualquer"),   // BQ2: o livro de factos (livro-de-factos.js)
   C("saber", "memoria", "qualquer"),
+  C("quadro", "memoria", "qualquer"),   // QQ · Q3 (14/11): a memória do quadro da quest (quadro-da-quest.js, garantirQuadro); aditivo, save antigo = vazio
   C("coracao", "coracao", "qualquer"),
   C("vilaoAgiu", "historia", "numero"),
   C("canone", "memoria", "objeto"),
