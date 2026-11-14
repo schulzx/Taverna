@@ -358,6 +358,39 @@ export const GESTOS_DA_CARTA = Object.freeze({
   }),
 });
 
+/* ---------------- PAGAR A MENOS (14/11, achado pelo `oficial` na Q3) ----------------
+   O herói paga a quem sabe, mas menos do que o caminho pede (a proposta da
+   frase já lhe tirou as moedas: `gesto.pago`). Por tipo de carta, o preço
+   com que ela vira — ou `null`, e não vira:
+     · a essencial vira com a metade (a pista incompleta): quem vendeu deu o
+       que valia o que recebeu, e ninguém fica preso numa carta que o caso
+       pede só por ter contado mal as moedas;
+     · a extra não vira: é bónus, e um bónus só se ganha inteiro. O caminho
+       também não se queima (não houve falha, houve troco a menos), e as
+       moedas dadas ficam dadas, como em toda a proposta. */
+export const PAGAR_A_MENOS = Object.freeze({
+  essencial: "incompleta",
+  extra: null,
+});
+
+/* ---------------- O SINAL (formas.md §QQ 3) ----------------
+   O número da barra: `sabe` de `de`. Conta as cartas que o caso pede
+   (`conta`), à vista (sem as por vir e sem as que não fizeram falta). As
+   extra não entram — um «3 de 7» que nunca chega a 7 seria uma promessa que
+   o jogo não cumpre. SALVO quando não há nenhuma essencial à vista (a etapa
+   de agora não tem pistas, e as de antes já não fizeram falta): aí o quadro
+   só tem extras, e sem número ficava invisível — nem sinal nem gaveta, as
+   extras só se alcançavam às cegas (achado na Q3, 14/11: metade dos quadros
+   do catálogo). Então conta as extra (`semElas`) ainda `vivas` — a perdida
+   sai da conta, que já não se alcança, e o número nunca promete o que não
+   há. `sabe`: os estados que contam como já sabido. */
+export const SINAL_DO_QUADRO = Object.freeze({
+  conta: "essencial",
+  semElas: "extra",
+  vivas: Object.freeze(["costas", "virada", "preco"]),
+  sabe: Object.freeze(["virada", "preco"]),
+});
+
 /* ============================================================
    A MEMÓRIA — estado.quadro
    { v, cartas: { "<quest>|<carta>": { dia, como, caminho, preco?,
@@ -469,12 +502,15 @@ function doCatalogo(desafios) {
   const mins = ds.map((d) => d.minutos).filter((m) => typeof m === "number" && Number.isFinite(m));
   return { pericias: [...new Set(ds.map((d) => d.pericia).filter((p) => typeof p === "string" && p))], minutos: mins.length ? Math.min(...mins) : 0 };
 }
-/* Q2b: o sinal (formas.md §QQ 3) — as essenciais que já se sabem (viradas
-   ou com preço), de quantas há à vista (sem as por vir e sem as que não
-   fizeram falta). As extra não entram: ganhá-las é bónus. */
+/* Q2b: o sinal (formas.md §QQ 3; a régua em SINAL_DO_QUADRO) — as
+   essenciais que já se sabem, de quantas há à vista; sem nenhuma à vista,
+   as extra ainda vivas. */
 function sinalDe(cartas) {
-  const ess = arr(cartas).filter((c) => obj(c) && c.tipo === "essencial" && !c.futura && !c.sobra);
-  return { sabe: ess.filter((c) => c.estado === "virada" || c.estado === "preco").length, de: ess.length };
+  const S = SINAL_DO_QUADRO;
+  const vistas = arr(cartas).filter((c) => obj(c) && !c.futura && !c.sobra);
+  const ess = vistas.filter((c) => c.tipo === S.conta);
+  const conta = ess.length ? ess : vistas.filter((c) => c.tipo === S.semElas && S.vivas.includes(c.estado));
+  return { sabe: conta.filter((c) => S.sabe.includes(c.estado)).length, de: conta.length };
 }
 
 /* ============================================================
@@ -492,6 +528,9 @@ function sinalDe(cartas) {
                   caminhos: [{ id, diz, desafios, pericias, minutos, custa?,
                     seFalhar: [{ id, leve, efeitos }] }],
                   escreve? (só a essencial: o átomo e o papel), ganho?,
+                  revela? (só a extra: a face que mostra quando virar, já
+                    com o nome visto — para virarCarta; bastidor, NUNCA
+                    para a tela, que só lê `face`),
                   juiz (Q2: os nomes e o sítio de verdade, para
                     aCartaDoTeste — bastidor, NUNCA para a tela: a tela diz
                     `diz`, que já esconde o nome de quem não se viu) }],
@@ -609,7 +648,7 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
       const cumplice = Object.entries(F.papeis).find(([nome, d]) => obj(d) && d.de === "fio" && d.papel !== "vilao" && !usados.has(nome) && obj(papeis[nome]) && papeis[nome].nome);
       const possiveis = [];
       if (fr && !temFraquezaNaFicha) possiveis.push({ tipo: "fraqueza", forma: EXTRAS_DO_QUADRO.fraqueza.forma[vilao.fraqueza.familia], o: fr.o, nome: "", id: "vilao|fraqueza" });
-      if (cumplice) possiveis.push({ tipo: "cumplice", forma: "pessoa", o: "", nome: papeis[cumplice[0]].nome, papel: cumplice[0], id: `${F.id}|extra:cumplice` });
+      if (cumplice) possiveis.push({ tipo: "cumplice", forma: "pessoa", o: "", nome: nomeVisto(cumplice[0]), papel: cumplice[0], id: `${F.id}|extra:cumplice` });
       const rv = dadoDe(semente, F.id, "vantagem");
       possiveis.push({ tipo: "vantagem", forma: "lugar", o: VANTAGENS_DO_CONFRONTO[Math.floor(rv() * VANTAGENS_DO_CONFRONTO.length)], nome: "", id: `${F.id}|extra:vantagem` });
       /* de quem as extra falam (para o juiz do teste): o vilão e a gente do
@@ -649,6 +688,7 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
           preco: null, linha: "", efeitos: null,
           caminhos: abertos.map((c) => ({ id: c.id, diz: encher(c.diz, { sobre }), desafios: c.desafios, ...doCatalogo(c.desafios), ...(c.custa ? { custa: c.custa } : {}), seFalhar: [] })),
           ganho: X.ganho,
+          revela: encher(X.face, { o: x.o, nome: x.nome }),
           juiz: juizDaExtra,
         });
       }
@@ -680,6 +720,10 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
      PORTA_DA_CARTA), e `achado` o achado do passo para o «descobriu»;
    · a extra: o sucesso vira-a (o `ganho` vai no quadro seguinte); a falha
      queima o caminho (`perdeu`), e sem caminhos a carta perde-se.
+   · `veredito.preco` (só o de aCartaDoGesto, PAGAR_A_MENOS): na falha de
+     uma essencial, o preço já decidido — e então `custo` é o que se deu.
+   A carta devolvida já traz a face (a essencial e a extra), a mesma que o
+   quadro seguinte mostra.
    `custo`: o que o caminho cobra (o pagar), também no sucesso. `memoria`:
    o estado.quadro novo. `null`: veredito que não é do sistema, carta que
    não se pode virar agora, caminho que a carta não tem.
@@ -697,13 +741,18 @@ export function virarCarta(quadro, veredito, contexto) {
     const mem = garantirQuadro(c.memoria);
     const dia = Math.max(0, inteiro(c.dia) || 0);
     const antes = mem.cartas[carta.chave] || null;
-    const custo = caminho.custa ? { ...caminho.custa } : null;
     const sucesso = V.resultado === "sucesso";
+    /* o preço que o veredito já traz (aCartaDoGesto, PAGAR_A_MENOS): só na
+       falha de uma essencial, e só se a tabela o deixa cair nesta forma */
+    const dado = !sucesso && carta.tipo === "essencial" && PRECO_DA_FALHA[V.preco] && PRECO_DA_FALHA[V.preco].formas.includes(carta.forma) ? V.preco : null;
+    /* pagou a menos: o custo é o que deu, não o que o caminho pedia */
+    const custo = caminho.custa ? (dado ? { ...caminho.custa, moedas: Math.max(0, inteiro(V.total) || 0) } : { ...caminho.custa }) : null;
     const novaMemoria = (registo) => garantirQuadro({ ...mem, cartas: { ...mem.cartas, [carta.chave]: registo } });
 
     if (carta.tipo === "extra") {
       if (sucesso) {
-        return { carta: { ...carta, estado: "virada", viravel: false, dia }, preco: null, custo, escreve: null, achado: null, perdeu: null,
+        const defX = CAMINHOS_DA_EXTRA.find((x) => x.id === caminho.id) || { de: "" };
+        return { carta: { ...carta, estado: "virada", viravel: false, dia, face: typeof carta.revela === "string" ? carta.revela : "", de: encher(defX.de, {}) }, preco: null, custo, escreve: null, achado: null, perdeu: null,
           memoria: novaMemoria({ dia, como: "limpa", caminho: caminho.id, ...(antes && antes.queimados ? { queimados: antes.queimados } : {}) }) };
       }
       const queimados = [...new Set([...arr(antes && antes.queimados), caminho.id])];
@@ -717,7 +766,7 @@ export function virarCarta(quadro, veredito, contexto) {
     if (!sucesso) {
       const leve = V.dc - V.total <= QUADRO_DA_QUEST.porPouco;
       const ids = precosDe(carta.forma, leve);
-      const id = ids[Math.floor(dadoDe(Q.semente, Q.quest, carta.id, "preco")() * ids.length)];
+      const id = dado || ids[Math.floor(dadoDe(Q.semente, Q.quest, carta.id, "preco")() * ids.length)];
       preco = { id, linha: PRECO_DA_FALHA[id].linha, efeitos: efeitosDoPreco(id, arcoDe(Q.arco).peso) };
     }
     const w = carta.escreve || {};
@@ -963,6 +1012,11 @@ export function aCartaEmJogo(quadros, pedido, onde) {
    `veredito`: o do sistema, na forma de virarCarta — o sucesso, com o
    custo como número a bater e como total (pagou-o, e a mão que paga não
    erra). `pago: false`: o custo (virarCarta → `custo`) cobra-se agora.
+   `gesto.pago` (14/11): as moedas que a frase JÁ deu (a proposta cobrou-as).
+   Com ele, manda o que se deu e não a bolsa, e `pago: true` (não se cobra
+   outra vez). Deu menos do que o caminho pede: PAGAR_A_MENOS — a essencial
+   vira na falha com o preço da tabela (`veredito.preco`, total = o que deu,
+   dc = o custo); a extra não é candidata.
    ============================================================ */
 export function aCartaDoGesto(quadros, gesto, onde) {
   try {
@@ -972,6 +1026,8 @@ export function aCartaDoGesto(quadros, gesto, onde) {
     const id = Object.keys(GESTOS_DA_CARTA).find((k) => GESTOS_DA_CARTA[k].rx.test(frase));
     if (!id) return null;
     const moedas = typeof G.moedas === "number" && Number.isFinite(G.moedas) ? G.moedas : 0;
+    /* o que a frase já deu (a proposta cobrou-o): manda ele, não a bolsa */
+    const deu = inteiro(G.pago) > 0 ? inteiro(G.pago) : 0;
     const o = obj(onde) || {};
     const ctx = { onde: o, cena: aCena(o.emCena), quem: semArtigo(G.quem), texto: G.frase };
     const cands = [];
@@ -981,17 +1037,22 @@ export function aCartaDoGesto(quadros, gesto, onde) {
         if (!K || !GESTOS_DA_CARTA[id].caminhos.includes(K.id)) return;
         const def = defDoCaminho(x.C, K.id);
         const preco = def && def.custa ? inteiro(def.custa.moedas) : null;
-        if (preco == null || moedas < preco || !arr(K.desafios).length) return;
+        if (preco == null || !arr(K.desafios).length) return;
+        const aMenos = deu ? deu < preco : moedas < preco;
+        const comPreco = aMenos ? PAGAR_A_MENOS[x.C.tipo] : null;
+        if (aMenos && (!deu || !comPreco)) return;
         if (!aAncoraBate(x.C, def, ctx)) return;
-        cands.push({ ...x, K, def, ki, preco, pagoRank: 0, afinidade: afinidadeDe(x.C, G.frase) });
+        cands.push({ ...x, K, def, ki, preco, comPreco, pagoRank: 0, afinidade: afinidadeDe(x.C, G.frase) });
       });
     }
     const m = oMelhor(cands);
     if (!m) return null;
     return {
       quest: m.Q.quest, carta: m.C.id, caminho: m.K.id, gesto: id,
-      veredito: { desafio: m.K.desafios[0], resultado: "sucesso", total: m.preco, dc: m.preco },
-      pago: false,
+      veredito: m.comPreco
+        ? { desafio: m.K.desafios[0], resultado: "falha", total: deu, dc: m.preco, preco: m.comPreco }
+        : { desafio: m.K.desafios[0], resultado: "sucesso", total: m.preco, dc: m.preco },
+      pago: deu > 0,
     };
   } catch { return null; }
 }

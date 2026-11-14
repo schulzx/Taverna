@@ -24,6 +24,8 @@
        caminho queimado não volta; o que não bate dá null; o pago;
    §11 aCartaDoGesto: pagar e comprar sem dado, com a bolsa a cobrir.
    Q2b (14/11) — o que a tela pede, e o preço que faz o que diz:
+   §15 os três acertos da Q3 (14/11): a face da extra virada, pagar a
+       menos, e o sinal do quadro só com extras.
    §12 o sinal, a perícia e os minutos de cada caminho, os números do
        preço; a carta para a tela não leva o bastidor nem o nome que o
        herói não viu; aCartaEmJogo diz antes do dado o que o dado vira;
@@ -39,6 +41,7 @@ import {
   EXTRAS_DO_QUADRO, VANTAGENS_DO_CONFRONTO, QUADRO_POR_ARCO, QUADRO_DA_QUEST, VEREDITO_DO_SISTEMA, QUADRO_NA_PAUTA,
   garantirQuadro, oQuadroDaQuest, virarCarta, osQuadrosDoEstado, oQuadroNaPauta,
   CARTA_DO_TESTE, ASSUNTO_DA_EXTRA, GESTOS_DA_CARTA, aCartaDoTeste, aCartaDoGesto,
+  PAGAR_A_MENOS, SINAL_DO_QUADRO,
   aCartaNaTela, oQuadroNaTela, oSinalDosQuadros, aCartaEmJogo, aplicarPrecoDoQuadro,
   SOBRE_DA_EXTRA, DIA_DA_CARTA,
 } from "../src/quadro-da-quest.js";
@@ -534,8 +537,18 @@ sec("§11 aCartaDoGesto — pagar e comprar, sem dado");
 sec("§12 o que a tela pede ao motor (Q2b, formas.md §QQ 8)");
 {
   const com = quadros.filter((x) => x.q);
-  const doSinal = (q) => q.cartas.filter((c) => c.tipo === "essencial" && !c.futura && !c.sobra);
-  t(`o sinal de cada um dos ${com.length} quadros conta as essenciais à vista, e as que já se sabem`, com.every(({ q }) => q.sinal && q.sinal.de === doSinal(q).length
+  /* 14/11 (achado do `oficial` ao ligar a Q3): a asserção dizia «só as
+     essenciais à vista», e por isso metade dos quadros do catálogo — os que
+     na etapa de agora só têm extras — davam `de = 0` e não apareciam (nem
+     sinal nem gaveta). A régua passou a SINAL_DO_QUADRO: as essenciais à
+     vista; sem nenhuma, as extra ainda vivas. Com essenciais, continua a
+     não contar extra nenhuma (formas.md §QQ 3, a asserção a seguir). */
+  const vistas = (q) => q.cartas.filter((c) => !c.futura && !c.sobra);
+  const doSinal = (q) => {
+    const ess = vistas(q).filter((c) => c.tipo === "essencial");
+    return ess.length ? ess : vistas(q).filter((c) => c.tipo === "extra" && c.estado !== "perdida");
+  };
+  t(`o sinal de cada um dos ${com.length} quadros conta as essenciais à vista (sem elas, as extra vivas), e as que já se sabem`, com.every(({ q }) => q.sinal && q.sinal.de === doSinal(q).length
     && q.sinal.sabe === doSinal(q).filter((c) => c.estado === "virada" || c.estado === "preco").length && q.sinal.sabe <= q.sinal.de));
   t("as extra e as por vir não entram no sinal", com.some(({ q }) => q.cartas.some((c) => c.tipo === "extra" || c.futura) && q.sinal.de < q.cartas.length));
   const alguns = com.slice(0, 40).map((x) => x.q);
@@ -800,6 +813,87 @@ sec("§14 os quatro campos que a tela pediu (Q4: etapa, sobre, dia, tipo)");
   t("nada disto entra no save: a memória guarda o que guardava", [...campos].every((k) => ["dia", "como", "caminho", "preco", "queimados"].includes(k)), [...campos].join(","));
   t("o lixo não lança, e não inventa os campos novos", [{ forma: "lugar" }, { forma: "pessoa", tipo: "extra", sobre: 3, dia: "ontem", estado: "virada" }, { forma: "objeto", etapa: 5, chave: null }]
     .every((c) => { const k = aCartaNaTela(c); return k && k.dia === null && typeof k.sobre === "string" && (k.etapa === null); }));
+}
+
+sec("§15 os três acertos da Q3 (14/11, achados pelo `oficial` ao ligar o quadro)");
+{
+  /* 1 · A FACE DA EXTRA: virarCarta devolvia-a vazia, e o momento da tela
+     dizia só «Sabes agora.». Agora traz a face que o quadro seguinte mostra. */
+  const extras = quadros2.filter((x) => x.q).flatMap((x) => x.q.cartas.filter((c) => c.tipo === "extra" && c.viravel).map((c) => ({ x, c })));
+  const viradas = extras.map(({ x, c }) => {
+    const k = c.caminhos[0];
+    const r = virarCarta(x.q, { desafio: k.desafios[0], resultado: "sucesso", total: 18, dc: 12 }, { carta: c.id, caminho: k.id, dia: 4 });
+    const depois = r && oQuadroDaQuest(x.R, { ...e0, quadro: r.memoria }, { arco: x.arco, semente: x.semente });
+    return { x, c, r, c2: depois && depois.cartas.find((z) => z.id === c.id) };
+  });
+  const mal = viradas.filter(({ r, c2 }) => !r || !c2 || !r.carta.face || r.carta.face !== c2.face || r.carta.de !== c2.de);
+  t(`a extra virada pelo dado já traz a face e o de onde veio, os mesmos do quadro seguinte (${viradas.length} extra)`, viradas.length > 50 && mal.length === 0,
+    mal.slice(0, 3).map(({ x, c, r, c2 }) => `${x.F.id}/${c.id}: ${J(r && r.carta.face)} vs ${J(c2 && c2.face)}`).join(" | "));
+  t("e a tela recebe-a pela lista branca", viradas.every(({ r }) => aCartaNaTela(r.carta).face === r.carta.face && aCartaNaTela(r.carta).face.length > 0));
+  t("de costas, a extra continua sem face (o que revela é bastidor, e não vai à tela)", extras.every(({ c }) => c.face === "" && !("revela" in aCartaNaTela(c))));
+  /* o cúmplice que o herói não viu diz-se pela alcunha, nunca pelo nome do registo */
+  const cumplices = viradas.filter(({ c, x }) => c.id === "extra:cumplice" && x.F.papeis);
+  const comNome = cumplices.filter(({ x, r }) => Object.entries(x.F.papeis).some(([k, d]) => d && d.de === "fio" && d.papel !== "vilao" && (d.alcunha || d.rotulo)
+    && x.R.papeis[k] && x.R.papeis[k].nome && r.carta.face.includes(x.R.papeis[k].nome)));
+  t(`o cúmplice virado não diz o nome de quem o herói não viu (${cumplices.length} cartas)`, cumplices.length > 0 && comNome.length === 0,
+    comNome.slice(0, 2).map(({ x, r }) => `${x.F.id}: ${r.carta.face}`).join(" | "));
+
+  /* 2 · PAGAR A MENOS: a essencial vira com o preço da tabela (a metade), e
+     o custo é o que se deu; a extra não vira; quem dá o bastante, como antes */
+  const jor = quadros2.filter((x) => x.arco === "jornada" && x.q);
+  const L = jor.map((x) => ({ x, c: x.q.cartas.find((z) => z.tipo === "essencial" && z.viravel && z.forma === "lugar") })).find((y) => y.c);
+  const custo = CAMINHOS_DA_CARTA.lugar.find((z) => z.id === "pagar").custa.moedas;
+  const frase = `Dou umas moedas a quem me disser o que ${L.c.juiz.nome} esconde`;
+  const menos = aCartaDoGesto([L.x.q], { frase, moedas: 100, pago: custo - 1 }, { cidade: C });
+  t("pagar menos do que o caminho pede ainda acha a carta essencial, pelo pagar", menos && menos.carta === L.c.id && menos.caminho === "pagar" && menos.pago === true, J(menos));
+  t("e o veredito é a falha com o preço da tabela: total o que deu, dc o custo", menos && menos.veredito.resultado === "falha" && menos.veredito.preco === PAGAR_A_MENOS.essencial
+    && menos.veredito.total === custo - 1 && menos.veredito.dc === custo, J(menos && menos.veredito));
+  const vm = menos && virarCarta(L.x.q, menos.veredito, { carta: menos.carta, caminho: menos.caminho, dia: 3 });
+  t("virarCarta vira-a com esse preço (nunca o da sorte), e o custo é o que se deu", vm && vm.carta.estado === "preco" && vm.preco.id === PAGAR_A_MENOS.essencial
+    && vm.carta.preco === PAGAR_A_MENOS.essencial && vm.custo.moedas === custo - 1 && vm.carta.face.length > 0, J(vm && { e: vm.carta.estado, p: vm.preco, c: vm.custo }));
+  const q2 = vm && oQuadroDaQuest(L.x.R, { ...e0, quadro: vm.memoria }, { arco: L.x.arco, semente: L.x.semente });
+  t("e o quadro seguinte lembra-o: a carta com a metade, que conta no sinal", q2 && q2.cartas.find((z) => z.id === L.c.id).estado === "preco" && q2.sinal.sabe === L.x.q.sinal.sabe + 1);
+  t("pagar a menos é determinístico", J(aCartaDoGesto([L.x.q], { frase, moedas: 100, pago: custo - 1 }, { cidade: C })) === J(menos));
+  const inteiro = aCartaDoGesto([L.x.q], { frase, moedas: 0, pago: custo }, { cidade: C });
+  t("quem deu o custo inteiro vira-a limpa, e não paga outra vez (manda o que deu, não a bolsa)", inteiro && inteiro.veredito.resultado === "sucesso" && inteiro.pago === true, J(inteiro));
+  t("sem nada dado, a bolsa curta continua a não virar (ninguém paga o que não tem)", aCartaDoGesto([L.x.q], { frase, moedas: custo - 1 }, { cidade: C }) === null);
+  t("o preço dado só vale na falha de uma essencial, e só se a tabela o deixa cair nessa forma",
+    PRECO_DA_FALHA[PAGAR_A_MENOS.essencial] && Object.keys(FORMAS_DA_CARTA).every((f) => PRECO_DA_FALHA[PAGAR_A_MENOS.essencial].formas.includes(f))
+    && Object.keys(PAGAR_A_MENOS).every((k) => CARTA_DO_TESTE.ordem.includes(k)));
+  const vInventado = virarCarta(L.x.q, { ...menos.veredito, preco: "nao_existe" }, { carta: menos.carta, caminho: menos.caminho });
+  t("um preço que não é da tabela não manda: cai na sorte da semente, como antes", vInventado && vInventado.carta.estado === "preco" && PRECO_DA_FALHA[vInventado.preco.id]);
+  /* a extra: só se ganha inteira */
+  const xe = jor.map((x) => {
+    const e = x.q.cartas.find((z) => z.tipo === "extra" && z.viravel && z.caminhos.some((k) => k.id === "pagar"));
+    const nome = e && e.juiz.nomes.find((n) => n.length >= 6);
+    if (!nome) return null;
+    const fr = `pago umas moedas a quem me disser da fraqueza de ${nome}`;
+    const cheio = aCartaDoGesto([x.q], { frase: fr, moedas: 100, pago: 10 }, { cidade: C });
+    return cheio && cheio.carta === e.id ? { x, e, fr } : null;
+  }).find(Boolean);
+  t("a extra paga por inteiro vira", !!xe);
+  const ra = xe && aCartaDoGesto([xe.x.q], { frase: xe.fr, moedas: 100, pago: 9 }, { cidade: C });
+  t("a extra paga a menos não vira (nem queima o caminho: não houve falha)", xe && PAGAR_A_MENOS.extra === null && (ra === null || ra.carta !== xe.e.id), J(ra));
+
+  /* 3 · O SINAL SÓ COM EXTRAS: sem essencial à vista, conta as extra vivas */
+  const soExtras = quadros.filter((x) => x.q && !x.q.cartas.some((c) => c.tipo === "essencial" && !c.futura && !c.sobra) && x.q.cartas.some((c) => c.tipo === "extra"));
+  t(`os quadros só com extras (${soExtras.length}) aparecem: o sinal conta-as`, soExtras.length > 0
+    && soExtras.every(({ q }) => q.sinal.de === q.cartas.filter((c) => c.tipo === SINAL_DO_QUADRO.semElas && SINAL_DO_QUADRO.vivas.includes(c.estado)).length && q.sinal.de > 0));
+  t("com uma essencial à vista, as extra continuam fora do número (§QQ 3)", quadros.filter((x) => x.q && x.q.cartas.some((c) => c.tipo === "essencial" && !c.futura && !c.sobra))
+    .every(({ q }) => q.sinal.de === q.cartas.filter((c) => c.tipo === SINAL_DO_QUADRO.conta && !c.futura && !c.sobra).length));
+  const se = soExtras.find(({ q }) => q.cartas.some((c) => c.tipo === "extra" && c.viravel));
+  const ce = se.q.cartas.find((c) => c.tipo === "extra" && c.viravel);
+  const ganha = virarCarta(se.q, { desafio: ce.caminhos[0].desafios[0], resultado: "sucesso", total: 18, dc: 12 }, { carta: ce.id, caminho: ce.caminhos[0].id, dia: 2 });
+  const qg = oQuadroDaQuest(se.R, { ...e0, quadro: ganha.memoria }, { arco: se.arco, semente: se.semente });
+  t("ganhar a extra sobe o sinal uma, e o de fica", qg.sinal.sabe === se.q.sinal.sabe + 1 && qg.sinal.de === se.q.sinal.de);
+  let mem = null, q = se.q;
+  for (const k of ce.caminhos) {
+    const r = virarCarta(q, { desafio: k.desafios[0], resultado: "falha", total: 2, dc: 18 }, { carta: ce.id, caminho: k.id, memoria: mem, dia: 2 });
+    mem = r.memoria;
+    q = oQuadroDaQuest(se.R, { ...e0, quadro: mem }, { arco: se.arco, semente: se.semente });
+  }
+  t("perdê-la tira-a da conta: o número nunca promete o que já não se alcança", q.cartas.find((c) => c.id === ce.id).estado === "perdida" && q.sinal.de === se.q.sinal.de - 1);
+  t("e o sinal de tela é o mesmo do quadro", J(oQuadroNaTela(se.q).sinal) === J(se.q.sinal) && J(oSinalDosQuadros([se.q])) === J(se.q.sinal));
 }
 
 console.log(`\n${bons} ok, ${maus} falhas`);
