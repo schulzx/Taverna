@@ -17933,3 +17933,392 @@ ressalto) e não pede nada ao motor. **O toque continua a lançar**, porque o WC
 que um gesto de arrastar tenha alternativa num só toque. Com reduce não há rolagem: o dado pousa. **Espera a palavra
 dela** porque é um gesto novo para aprender, mesmo que não tire nada a ninguém. **A versão tímida** é o mesmo dado com
 um som de pouso (`som-da-mesa.js`) mais forte nos números altos, sem gesto nenhum.
+
+## QQ · o quadro da quest — as cartas de pista (`desenho` + `jogo`, 14/11/2026, para a Q4)
+
+**A ordem:** a peça da Fase QQ, aprovada pela pessoa («pode seguir», `mente/plano-quadro.md` §8). O motor é
+`src/quadro-da-quest.js` (Q1, `8469e9a`; Q2 `aCartaDoTeste` / `aCartaDoGesto`): `oQuadroDaQuest` devolve `{ quest,
+titulo, tipo, pergunta, arco, cartas: [{ id, tipo, forma, costas, estado, futura, sobra, viravel, face, de, preco, linha,
+caminhos: [{ id, diz, desafios, custa?, seFalhar }] }], essenciais, viradas, ganhos }`. Esta secção é a forma **e** o
+momento: só havia uma mão livre, por isso o `desenho` escreve aqui os dois lados (o `jogo` marca-se como tal em §QQ 4).
+
+**Figma** (`ffWFqD7TueSb88Mkeg9bhW`, página **«QQ · o quadro da quest · 14/11» `386:2`**):
+
+| peça / quadro | id |
+|---|---|
+| **`Carta de pista`** — `Estado` (costas · aVirar · virada · preco · perdida · futura · sobra) × `Tipo` (essencial · extra) = 10; propriedades `Forma`, `Face`, `De` | `387:100` |
+| `Glifo da forma` — lugar (o alfinete) · pessoa (o vulto) · objeto (o pacote, **novo**) | `386:12` (`386:3` · `386:6` · `386:9`) |
+| **`Carimbo do preço`** — tempo · incompleta · alerta · cobra · danificado | `386:56` |
+| `Glifo do carimbo/*` — relogio · olho · moeda · racha · metade | `386:13` · `386:16` · `386:19` · `386:22` · `386:25` |
+| **`Sinal do quadro`** — `Estado` (repouso · novo · aceso · completo) × `Largura` (mesa · telefone) | `388:97` |
+| `Leque do quadro` (o glifo do sinal, 24) | `388:21` |
+| **`Caminhos da carta`** — o veredito antes do clique · `Tipo` (essencial · extra) | `389:121` (`389:45` · `389:89`) |
+| mesa 1905×860 · o sinal na barra, com carta nova | `390:2067` |
+| mesa 1905×860 · o quadro aberto, **fora do mistério** | `390:2130` |
+| mesa 1905×860 · o quadro aberto, **mistério** (a pergunta pregada, as etapas, o fio) | `390:2193` |
+| 375×812 · o sinal · o quadro fora do mistério · mistério · a carta escolhida (os caminhos) | `390:2256` · `390:2280` · `390:2304` · `390:2328` |
+| **o momento**, quadro a quadro, a 375 (pouso · sobe · vira · carimbo · voa) | `393:3612` · `393:3636` · `393:3660` · `393:3684` · `393:3708` |
+
+Todas as cores estão ligadas às variáveis de `T · Mesa C (vela)` e `AAA · molduras vivas` (`mesa/couro`,
+`moldura/ouro/*`, `moldura/ferro/*`). **Nenhuma cor nova nasce nesta fase.** Soltos, de propósito (a lei de `estilo.js`:
+sombra é profundidade, não cor): as sombras da gaveta e da carta, e o halo âmbar da carta que se vira agora e do sinal
+aceso — o mesmo halo da `Carta da escolha` (BQ).
+
+### QQ 1 · O que se decidiu, numa frase cada
+
+1. **A carta é um objeto da mesa, não uma linha de lista.** Costas em couro com filete de metal (como as costas da
+   `Carta do espólio`, TE), face em pergaminho (na folha só há tinta, Mesa C §1). Uma ação, uma forma: **a viragem é a
+   do espólio** (`REVELACAO_DO_ESPOLIO.vira`), não uma segunda.
+2. **O estado lê-se pela forma antes da cor** (WCAG 1.4.1): costas = disco com a forma; a que se vira agora = o aro
+   âmbar; virada = papel; com preço = o carimbo (palavra + glifo + moldura); perdida = o risco; futura = o tracejado;
+   não fez falta = o metal apagado.
+3. **«Essencial» e «extra» nunca se escrevem: diz-o o material.** A carta que o caso precisa tem filete de **ouro**; a
+   que se pode ganhar tem filete de **ferro** e **quatro pavios** em baixo — um por caminho (`CAMINHOS_DA_EXTRA`). A
+   falha apaga um pavio; sem pavios, a carta risca-se. É assim que «caminho queimado» se vê sem se dizer. A extra virada
+   leva **o lacre** no canto: vai contigo ao fim.
+4. **Na tela principal só há o sinal**: o leque e «2 de 4» na `Barra do Mestre`, 0 px tirados à prosa. Abre o quadro
+   numa **gaveta de cima**, a mesma linguagem do horizonte (`HORIZONTE_DA_CENA.gaveta`): tocar no que a barra resume
+   abre o que ela resume.
+5. **O veredito antes do clique mora na carta.** Tocar numa carta de costas mostra **como se pode saber** (os caminhos,
+   com as perícias, os minutos e o preço em moedas) e **o que custa falhar** (os preços possíveis, ou o caminho que se
+   fecha). Tocar num caminho **escreve-o no campo** — o dado é do `Chamado do Mestre` (§MC), nunca do quadro.
+6. **No mistério o quadro pesa mais**: a pergunta vira papel pregado, as etapas viram filas numeradas, as viradas ligam-se
+   por um fio de lacre, e o momento ganha a antecipação e um carimbo mais pesado. Fora dele o quadro é uma fila só.
+7. **Nenhum nome de mecanismo no ecrã**: nem «essencial», «extra», «caminho», «queimado», «preço», «carta», «quadro»,
+   «etapa». O que se lê: «um lugar», «uma pessoa», «um objeto», «como se pode saber», «se falhar», «não fez falta»,
+   «feita», «agora», e o rótulo **PISTAS** na barra (palavra de mundo, como LUGAR e AMEAÇA).
+
+### QQ 2 · A carta (`Carta de pista`, `387:100`) — 108 × 148, raio 8
+
+**Porquê 108:** três cabem na linha do telefone (343 = 3 × 108 + 2 × 9,5) e a face leva 88 px de letra (≈ 15 caracteres
+de Spectral 13), o bastante para «o que Mécia dos Juncos sabe» em três linhas. Abaixo disto a face partia nomes ao meio.
+
+| estado (`cartas[i]`) | chão | contorno | o miolo | toque |
+|---|---|---|---|---|
+| **costas** (`estado: "costas"`, `!viravel`) | `couro` | `ouro.meio` 1,5 (extra: `ferro.meio`) + filete interior a 6, `ouro.escuro` 1 (extra: `ferro.escuro`) | disco 44 `pagina` com aro do metal; o glifo da forma 24 em `inkMeio`; por baixo `costas` («uma pessoa») em Spectral Itálico 13/17 `inkMeio`; na extra, os pavios | lê-se (abre os caminhos, mas sem o âmbar: a etapa ainda não deixa) |
+| **aVirar** (`viravel`) | idem | idem **+ o aro** `amber` 0,55, 2 px, a 3 px por fora, e o halo `0 0 14px` âmbar 0,45 | o disco com aro `amber`, o glifo em `amberSoft` | **abre os caminhos** |
+| **virada** | `pergaminho` | `pergaminhoBorda` 1,5 | o glifo da forma 16 `brasaNoPergaminho`; `face` em Spectral SemiBold 13/17 `tintaDoPergaminho`, até 3 linhas; um fio `brasaNoPergaminho` 0,35; `de` em Spectral Itálico 12/15 `tintaDoPergaminhoDim`, até 3 linhas. Extra: o lacre 14 (`lacreNoPergaminho`, aro `rosa` 0,7) no canto de cima | abre a carta lida |
+| **preco** | idem | idem | **sem** o glifo da forma; a face (até 3 linhas); **o carimbo** em fluxo, girado −5°; `de` numa linha. `incompleta` arranca o canto de baixo (o **rasgo**, a cor da gaveta por baixo); `danificado` racha a face (a **racha**, `perigoNoPergaminho` 1,5) | abre a carta lida |
+| **perdida** (extra sem caminhos) | `couro` | `ferro` | o glifo e a palavra em `inkDim`, os quatro pavios apagados, e **o risco** de canto a canto, `danger` 2,5 | lê-se |
+| **futura** (`futura: true`) | `pagina` a 0,35 | `lineStrong` 1,5 **tracejado 4·3** | só o glifo da forma 28 em `lineStrong`; nenhuma palavra | não se toca (não tem caminhos) |
+| **sobra** (`sobra: true`) | `couro` | `lineStrong` (o metal apaga-se) | o glifo e «não fez falta» em `inkDim` | lê-se |
+
+**A truncagem (a lei de §21):** a face e o `de` cortam à 3.ª linha com reticências — e nunca abaixo de 12 caracteres
+à vista (três linhas de 15). **O facto não se perde: muda de casa.** Tocar numa carta virada abre **a carta lida**, a
+mesma área dos caminhos, com a face inteira em Spectral SemiBold 17, o `de` inteiro e, se houve preço, a `linha` de
+`PRECO_DA_FALHA` em itálico («Tens o que vieste buscar — e alguém viu-te a buscá-lo.»).
+
+**O carimbo** (`Carimbo do preço`, `386:56`): chão `pergaminho` a 0,88, raio 3, a palavra em Cinzel Bold 12 (rastreio
+4 %) e a conta em JetBrains Mono Bold 12, com o glifo 14 à esquerda. **Leve** (`PRECO_DA_FALHA[id].leve`): `brasaNoPergaminho`,
+traço 1,5. **Pesado**: `perigoNoPergaminho`, traço 2,5. A palavra é de tela (`CARIMBO_DO_PRECO`, §QQ 7); a conta vem
+dos efeitos que o motor já multiplicou pelo peso do arco (pedido §QQ 8):
+
+| `preco` | palavra | glifo | conta (×1 · mistério ×2) | se falhar (antes do clique) | marca na face |
+|---|---|---|---|---|---|
+| `tempo` | TARDE | relogio | −2 h · −4 h | «as horas vão-se nisso» | — |
+| `incompleta` | A METADE | metade | −30 min · −1 h | «sabes só a metade» | o rasgo |
+| `alerta` | VISTO | olho | — | «alguém vê-te» | — |
+| `cobra` | PAGO | moeda | −15 ◉ · −30 ◉ | «custa-te 15 moedas» (30 no mistério) | — |
+| `danificado` | PARTIDO | racha | — | «chega partido» | a racha |
+
+Com «PELA METADE» e «DANIFICADO» o carimbo media 137 e 135 px e saía da carta de 108 (medido no Figma); com «A
+METADE» mede 103 e com «PARTIDO» 99, e os dois cabem nos 108, girados.
+
+### QQ 3 · O quadro e o sinal
+
+#### O sinal (`Sinal do quadro`, `388:97`)
+
+- **Onde:** na `Barra do Mestre`. Na mesa, à esquerda da HORA, a 40 dela (o vão que já separa HORA de AMEAÇA): «PISTAS»
+  em Cinzel Bold 11 `ouro.claro` (o rótulo de LUGAR, HORA, AMEAÇA) e por baixo o leque 24 + «2 de 4» em mono 12
+  `inkMeio` — **a gramática da AMEAÇA** («●○○ 1 de 3»), de propósito. No telefone, entre o `Em cena` e a vela: o leque +
+  «2/4» em mono 12 `ink`, sem rótulo (como a hora e a ameaça). **É um botão** de 48 de alto (82 × 48 na mesa, 60 × 48 no
+  telefone) com `aria-expanded`; aberto, um traço `amber` de 2 sob ele.
+- **O número:** as cartas que o caso precisa já viradas (virada ou com preço), de quantas há à vista agora (sem as
+  futuras e sem as que não fizeram falta). As extra não entram no número: ganhá-las é bónus, e um «3 de 7» que nunca
+  chega a 7 seria uma promessa que o jogo não cumpre. Pedido ao motor: `quadro.sinal = { sabe, de }` (§QQ 8).
+- **Estados:** `repouso`; **`novo`** — a gota âmbar da `MarcaDaPorta` (10, aro `panel` 2) no canto do leque, desde que
+  uma carta muda até o quadro se abrir; **`aceso`** — os 600 ms da chegada (§QQ 4): halo âmbar 0,6 e o número em
+  `amberSoft` negrito, que volta a `novo`; **`completo`** — o número em `ok` (8,19).
+- **Qual quest:** a da vez (a do ato); sem ela, a primeira do coração. **Sem quadro, 0 px** (`osQuadrosDoEstado` vazio).
+  O telefone mede o pior caso: barra 375 − 24 de lado; vela + hora ≈ 78; ameaça ≈ 38; sinal 60; vãos 24 — sobram ~150
+  ao lugar e ao `Em cena`, e o lugar trunca (nunca abaixo de 12 caracteres, §21). Por isso no telefone é «2/4» e não
+  «2 de 4»: os 21 px poupados são do nome do lugar. O nome acessível diz por extenso: «Pistas: 2 de 4. Há uma nova. Abrir.»
+
+#### A gaveta
+
+- **Onde:** desce da barra. Na mesa, **na largura da coluna da página** (600, alinhada com ela: nunca tapa o grupo, os
+  objetos nem o campo); no telefone, a largura inteira. Chão `couro`, fio `ouro.meio` 1 nos lados e em baixo, raio 14 nos
+  cantos de baixo, sombra `0 10px 28px` preto 0,6; enchimento 12 · 12 · 20 · 20 (mesa) e 4 · 16 · 12 · 16 (telefone, com a
+  pega de 36 × 4 em cima).
+- **A altura:** a do conteúdo, **até 8 px acima da soleira** (se houver momento) **ou do campo**; o resto rola por dentro.
+  O `Chamado do Mestre` e o campo nunca ficam tapados — o veredito antes do clique de um dado em espera ganha a qualquer
+  quadro. **A prosa mais nova também fica:** ela está em baixo, junto ao campo, e a gaveta tapa a de cima (a mais velha).
+- **A cabeça:** o título da quest em mono 12 `amberSoft` (rastreio 8 %), **a pergunta** (`pergunta`) em Cormorant
+  SemiBold 24/28 `ink` (21/25 no telefone), a conta à direita, e o ✕ de 48.
+- **Mais de um quadro:** uma fila de separadores por baixo da pega, um por quest (o título; a do coração com o ❦ do
+  Diário, AR 2), 48 de alto; abre na da vez.
+- **Fora do mistério** (`390:2130`, `390:2280`): a pergunta e **uma fila** de cartas (a de agora), as que o caso pede
+  primeiro e, depois de um fio `line` de 148, as que se podem ganhar. Grade de 12 na mesa, 9 no telefone (embrulha).
+- **No mistério** (`390:2193`, `390:2304`): a pergunta é **um papel pregado** (pergaminho, percevejo `rosa`, sombra
+  curta, 0,8° de giro); as cartas organizam-se **por etapa**, uma fila cada, com o numeral em Cinzel 15 e «feita» /
+  «agora» em mono 12 à esquerda (`inkDim` · `amberSoft`); as futuras vêm em silhueta; as extra numa coluna à direita,
+  depois do fio. **O fio de lacre** (`rosa` 0,85, 1,5) liga as cartas viradas pela ordem em que viraram, com um percevejo
+  no topo de cada uma. No telefone, **a etapa feita dobra-se** (`A dobra`, R15: o numeral, «feita», as mini-cartas 14 × 19
+  e o chevron), a gaveta abre com a etapa de agora no topo, e o fio só liga as cartas das etapas abertas.
+- **A carta escolhida** (`390:2328`, `Caminhos da carta`): tocar numa carta troca a grade pela área da carta, com «‹» e
+  a pergunta em Itálico 14 como regresso. **Como se pode saber**: um botão por caminho (chão `panel`, aro `lineStrong`,
+  raio 10, ≥ 48): o verbo (`diz`, com maiúscula) em Spectral Medium 15 `ink`; por baixo as perícias e os minutos em mono
+  12 `inkMeio`; à direita, num nó que nunca encolhe, `custa` («◉ 10», mono 12 negrito `amberSoft`) e a pena 16 `inkDim`.
+  **Se falhar** (chão `perigoFundo`, rótulo mono 12 `danger`): na que o caso pede, «Ficas a saber na mesma. Mas pode
+  custar:» e uma ficha por preço possível (`seFalhar`: glifo do carimbo + a frase, aro `danger`); na que se pode ganhar,
+  «Esse caminho fecha-se e não volta.» e os pavios com «restam 3».
+- **Tocar num caminho** escreve o verbo no campo (com o cursor no fim, como a ficha da cena aponta, TP) **e fecha a
+  gaveta**: a seguir vem o `Chamado do Mestre`, com o dado e o preço ditos outra vez.
+- **Fechar:** o ✕, o sinal outra vez, Esc, tocar na página fora da gaveta, arrastar a pega para cima (telefone). O foco
+  volta ao sinal. **O campo aceita escrita com a gaveta aberta** — nunca custa o turno.
+
+**A lei v9.27 e os caminhos** (BQ 3: «uma lista inteira faria da quest um checklist»): continua de pé. O que o quadro
+lista não são **os passos da quest**, são **os modos de saber uma coisa** — e só os de uma carta de cada vez, a pedido,
+com um toque. A tela principal nunca mostra caminho nenhum.
+
+**O Diário — uma ação, uma forma.** No Diário (BQ 3), as linhas de «o que falta» que são cartas passam a ser **a mesma
+fila de `Carta de pista`** (a da etapa de agora), e tocar nela abre o mesmo quadro; a `Linha do que falta` fica só para
+o que não é carta (os laços «1 de 3», o «ir a»). Sem isto, a mesma pista teria duas caras.
+
+### QQ 4 · O momento (`jogo`) — quando acende, quando vira, quanto dura
+
+**Escrito pelo `desenho` no papel do `jogo`** (a mão do `jogo` não estava livre). A experiência jogada fica para a Q6, e
+é lá que estas linhas se assinam ou se corrigem.
+
+**Quando há momento:** só quando **o sistema** virou ou fechou uma carta neste turno — o dado (`aCartaDoTeste` →
+`virarCarta`) ou o gesto sem dado (`aCartaDoGesto`: pagar, comprar). **A carta que virou por outra porta** (o livro: o
+Cronista, a busca do passo, a bolsa) **acende a gota e mais nada**: não houve lance, e fingir um momento seria mentir.
+
+**A carta que vira** (`393:3612`–`393:3708`), contado do pouso do dado (com o gesto, do envio):
+
+| ms | o quê | de que é feito |
+|---|---|---|
+| 0 | o dado pousa na soleira e o veredito aparece em letra | `Chamado do Mestre` (MC 3); **o Narrador é chamado aqui** |
+| 120 → 360 | a carta sai de trás do dado e sobe para cima da soleira, alinhada à direita da coluna, **de costas** | `scale .6 → 1`, `opacity 0 → 1`, 240 ms, `MOVIMENTO_DO_DADO.curva` |
+| (mistério) 360 → 640 | a antecipação: treme ±2°, duas vezes | 280 ms — a de `REVELACAO_DO_ESPOLIO.antecipacao`, mais curta |
+| → +320 | **vira**: `scaleX 1 → 0` (160) e `0 → 1` (160); a face troca entre as metades por estado, nunca por `backface-visibility` (TE 8) | `REVELACAO_DO_ESPOLIO.vira.meia` / `.abre` |
+| → +200 | com preço: **o carimbo cai** (`scale 1,4 → 1`, `opacity 0 → 1`); no mistério 1,6 → 1 em 260 | o peso é o tamanho da queda, não o tremor do ecrã |
+| leitura | a carta fica, para ler: **250 ms por palavra** da face + `de` + a palavra do carimbo, piso 1 200, teto 3 000 | Brysbaert 2019 (238 palavras/min); a face típica (6–9 palavras) dá 1,5–2,3 s |
+| → +360 | **voa ao sinal**: `ease-in`, encolhe a 0,2 na direção da barra | o sítio onde a carta passa a morar |
+| chegada | o sinal acende (`aceso`, 600 ms) e fica `novo` | |
+
+**Total:** fora do mistério ~2,6 s com uma face de 7 palavras; no mistério, com preço, ~3,2 s; o teto absoluto, 4,5 s.
+**Abaixo dos 5 s da WCAG 2.2.2**, e **salta-se sempre**: tocar na carta (ou Esc, ou Enter com o foco nela) salta para o
+voo; **enviar o turno seguinte** salta também. A soleira não espera pela carta — esvazia nos seus 1 600 ms
+(`mostraODado`) e a carta continua por cima, sem tapar o campo (só a carta recebe toques).
+
+**A que se pode ganhar e falha** (não vira): a carta sobe de costas como acima; **um pavio apaga-se** (âmbar → `lineStrong`
+com um fumo de 400 ms); se era o último, **o risco desenha-se** (`stroke-dashoffset`, 260) — e voa. O sinal ganha a gota
+(o quadro mudou) mas **não acende**: o halo é de ganho, e uma perda com halo mentiria.
+
+**O som** (`SOM_DA_MESA`, que já existe e já é cortado pelo interruptor «Som da mesa»): virar = a nota da carta
+`comum` (a mesma da carta do espólio); o carimbo = a pancada surda de `luta.golpe` a meio ganho; o pavio que apaga = o
+sopro de `luta.erro`. Nada de ficheiro novo, e **todo o som repete o que a tela já mostra** (TE 9).
+
+**`prefers-reduced-motion: reduce`:** a carta aparece já virada e carimbada, `opacity 0 → 1` em 120 ms
+(`MOVIMENTO_DO_DADO.semMovimento`), fica **o mesmo tempo de leitura** (ler não é movimento; tirá-lo tiraria o facto a
+quem pediu menos movimento — a mesma lição do MC 4) e sai em 120; o pavio apaga seco; o risco já vem desenhado; o sinal
+fica `novo` sem o halo de 600.
+
+**O leitor de ecrã:** uma região `aria-live="polite"` diz a carta uma vez, ao virar: «Sabes agora o que Lopo, o
+sacristão, sabe — arrancado a Lopo. Tens o que vieste buscar, e alguém viu-te a buscá-lo.» Na perda: «Esse caminho
+fechou-se. Restam dois.» / «Perdeu-se o rasto: quem lhe faz o serviço.»
+
+**A gaveta é `role="region"`, não diálogo** (o campo fica vivo, por isso nada se prende): `aria-label` «Pistas: {a
+pergunta}», o foco vai à primeira carta que se pode virar (ou à primeira) e volta ao sinal ao fechar. As cartas são uma
+lista com *roving tabindex* (setas, E4 §3); nome acessível pela forma e pelo estado — «Uma pessoa, por saber. Ver como
+se pode saber.» · «O que Mécia sabe, dito por Mécia.» · «Por vir: um lugar.» (a futura não recebe foco; a lista diz
+«e mais 2 por vir») · «Perdeu-se: um lugar.» · «Não fez falta: um objeto.» Cada caminho é um botão: «Escrever: revistar
+o celeiro dos Juncos. Percepção ou Investigação, 10 minutos. Custa 10 moedas.»
+
+**O `Chamado do Mestre` sabe que há carta em jogo.** Quando `aCartaDoTeste` diz que o teste vira uma carta, a bandeja do
+chamado leva **o leque 24** à direita do d20, e o nome acessível acrescenta «Isto revela uma pista.» O preço dito na
+folha («Se falhar, …») passa a ser o da carta (pedido §QQ 8, 5): o jogador lê no chamado o mesmo que leu no quadro.
+
+### QQ 5 · O contraste, medido (WCAG 2.2; a conta de `testes/conta-da-luz.mjs`, em `node`)
+
+| par | razão | piso | |
+|---|---|---|---|
+| a forma nas costas: `inkMeio` / `couro` | **8,73** | 4,5 | passa |
+| sobra e perdida: `inkDim` / `couro` | **5,71** | 4,5 | passa |
+| o glifo no disco: `inkMeio` · `amberSoft` / `pagina` | 10,58 · 12,42 | 3 | passa |
+| o contorno da carta na gaveta (1.4.11): `ouro.meio` · `ferro.meio` / `couro` | **7,31 · 3,28** | 3 | passa |
+| o aro da que se vira (`amber` 0,55 sobre o couro) / o feltro | **3,40** | 3 | passa |
+| pavio aceso `amber` · apagado `lineStrong` / `couro` | 7,34 · **3,82** | 3 | passa |
+| o risco `danger` / `couro` | **4,88** | 3 | passa |
+| a silhueta `lineStrong` / `pagina` 0,35 sobre o couro | **4,14** | 3 | passa |
+| a face `tintaDoPergaminho` · o `de` `tintaDoPergaminhoDim` / `pergaminho` | 12,15 · **6,56** | 4,5 | passa |
+| o carimbo leve `brasaNoPergaminho` · pesado `perigoNoPergaminho` / `pergaminho` | 6,71 · **6,60** | 4,5 | passa |
+| a carta virada contra a gaveta: `pergaminho` / `couro` | 11,42 | 3 | passa |
+| o lacre / `pergaminho` | 6,77 | 3 | passa |
+| o sinal: «2 de 4» `inkMeio` · «2/4» `ink` · aceso `amberSoft` · completo `ok` / `couro` | 8,73 · 12,65 · 10,24 · **8,19** | 4,5 | passa |
+| a gota `amber` / `couro` | 7,34 | 3 | passa |
+| a pergunta `ink` · a quest `amberSoft` · a etapa `inkDim` / `couro` | 12,65 · 10,24 · **5,71** | 4,5 | passa |
+| o fio de lacre (`rosa` 0,85) / `couro` | **3,75** | 3 | passa |
+| o caminho: verbo `ink` · perícias `inkMeio` · custa `amberSoft` / `panel` | 13,87 · 9,57 · 11,23 | 4,5 | passa |
+| o aro do caminho `lineStrong` / `panel` · / `couro` | 4,19 · **3,82** | 3 | passa |
+| «se falhar»: rótulo `danger` · texto `ink` / `perigoFundo` | **4,94** · 12,82 | 4,5 | passa |
+
+**O couro da carta sobre o couro da gaveta é a mesma cor** (1,00): a figura é o contorno de metal, e é por isso que o
+`ferro.meio` (3,28) é o piso — **o `ferro.escuro` (1,31) só pode ser o filete de dentro**, nunca o de fora. Fica escrito
+para ninguém o «suavizar».
+
+### QQ 6 · O «superior», escrito (medida e estudo citado; a experiência jogada é da Q6)
+
+**O par comparável** é o que a tela faz hoje para a mesma pergunta («o que me falta saber, e como?»): o Diário, BQ 3
+(`320:1425` a 375; `319:1233` a 1905), aba *Em curso*, a `Linha do que falta`.
+
+| | hoje (o Diário) | o quadro |
+|---|---|---|
+| toques da cena até ao que falta | **2** (a tira/coluna → o Diário; no telefone mais o rolo) | **1** (o sinal) |
+| sinal na tela principal de que algo mudou | **0** | a gota e «2 de 4», **0 px de prosa** (mora na barra, que já existe) |
+| modos de saber cada coisa, à vista | **≤ 2** de um «ou», e o resto calado | **todos os da carta** (≥ 2 sempre, `CAMINHOS_DA_CARTA`), a pedido |
+| o preço de falhar, antes do clique | **nenhum** | os preços possíveis (essencial) ou o caminho que fecha (extra) |
+| de onde veio o que se sabe | não se diz | o `de` de cada carta virada |
+| o que se perdeu | não se vê | a extra riscada, os pavios |
+| prosa à vista a 375×667 / 1280×720 (a catraca da TL) | 16,5 / 19,2 linhas | **igual**: o sinal cabe na barra e a gaveta só existe aberta |
+
+**Estudo citado:**
+- **A pista que nunca se perde, e o quadro que a mostra:** Robin D. Laws, *The GUMSHOE System* (Pelgrane Press, 2007)
+  e Justin Alexander, «The Three Clue Rule» (*The Alexandrian*, 2008) — o fundamento do motor. A tela torna-o visível:
+  o carimbo diz que a falha custou **e** que a pista chegou.
+- **O lugar vazio puxa:** as tarefas por acabar lembram-se mais e chamam a volta (Zeigarnik, B., 1927, «Das Behalten
+  erledigter und unerledigter Handlungen», *Psychologische Forschung* 9, 1–85). A carta de costas é o lugar vazio à vista,
+  com a forma do que falta.
+- **A revelação progressiva:** o sempre-útil à vista (o número), o raro a um toque (o quadro), o detalhe a dois (os
+  caminhos) — Nielsen Norman Group, *Progressive Disclosure* (2006), a lei do «momento» da TL.
+- **O tempo de ler:** Brysbaert, M. (2019), *Journal of Memory and Language* 109, 104047 — 238 palavras/min; daí os
+  250 ms por palavra.
+- **WCAG 2.2:** 1.4.1 (o estado pela forma, sete formas distintas), 1.4.11 (contornos ≥ 3, §QQ 5), 2.2.2 (o momento
+  acaba antes de 5 s e salta-se), 2.3.3 (reduced motion), 2.5.8 (alvos: a carta 108 × 148, os caminhos ≥ 48, o sinal 48),
+  4.1.3 (a carta que vira dita numa região viva).
+
+**A experiência jogada falta**, e a condição fica escrita: na Q6 (a sessão de mistério), o `jogo` mede **quantas vezes
+abre o quadro**, **quantos caminhos escreve a partir dele** e se **o momento cansa** à 4.ª carta. Se cansar, a saída é a
+tabela (`QUADRO_DA_TELA.momento.leitura.piso` desce), não a peça.
+
+### QQ 7 · As tabelas (para `src/estilo.js`; leem `T`, `TIPOS`, `ALVOS`, `HORIZONTE_DA_CENA`, `MOVIMENTO_DO_DADO` e `REVELACAO_DO_ESPOLIO`, sem copiar números deles)
+
+```js
+/* QQ · O QUADRO DA QUEST NA TELA (14/11/2026) — formas.md §QQ; Figma 386:2.
+   As cartas e os estados são do motor (quadro-da-quest.js): a tela só os veste.
+   Nenhuma palavra de mecanismo; os textos de mundo vêm do motor ou de CARIMBO_DO_PRECO. */
+export const QUADRO_DA_TELA = {
+  carta: {
+    lado: 108, alto: 148, raio: 8, enchimento: 10, filete: 6,
+    disco: 44, glifo: 24, glifoDaFace: 16, glifoDaSilhueta: 28,
+    face: { tamanho: 13, entrelinha: 17, linhas: 3 },
+    de: { tamanho: TIPOS.piso, entrelinha: 15, linhas: 3 },
+    forma: { tamanho: TIPOS.rotulo, entrelinha: 17 },
+    metal: { essencial: "ouro", extra: "ferro" },            /* MOLDURA_POR_DEGRAU[...] .meio fora, .escuro dentro */
+    aro: { cor: T.amber, alfa: 0.55, largura: 2, fora: 3, halo: 14, alfaDoHalo: 0.45 },
+    pavio: { lado: 7, entre: 7, aceso: T.amber, apagado: T.lineStrong },
+    risco: { cor: T.danger, largura: 2.5 },
+    silhueta: { traco: 1.5, tracejado: [4, 3], chao: 0.35 },
+    lacre: 14,
+  },
+  carimbo: { giro: -5, chao: 0.88, raio: 3, letra: TIPOS.piso, glifo: 14, traco: { leve: 1.5, pesado: 2.5 },
+             cor: { leve: T.brasaNoPergaminho, pesado: T.perigoNoPergaminho } },
+  gaveta: {
+    mesa: { largura: 600, enchimento: [12, 12, 20, 20] }, telefone: { enchimento: [4, 16, 12, 16] },
+    raio: 14, entre: 14, folga: 8,                           /* folga: até à soleira ou ao campo */
+    grade: { mesa: 12, telefone: 9, linhas: 12 },
+    pergunta: { mesa: 24, telefone: 21 },
+    dura: HORIZONTE_DA_CENA.gaveta.dura,
+  },
+  misterio: { papel: { giro: 0.8, percevejo: 10 }, fio: { cor: T.rosa, alfa: 0.85, largura: 1.5 }, numeral: 15 },
+  caminho: { alto: ALVOS.piso, raio: 10, verbo: TIPOS.corpo, pericias: TIPOS.maquina, pena: 16 },
+  sinal: { alvo: ALVOS.piso, leque: 24, gota: 10, acende: 600, entreDaHora: 40 },
+  momento: {
+    sobe: { de: 120, dura: 240, escalaDe: 0.6, curva: MOVIMENTO_DO_DADO.curva },
+    treme: { dura: 280, graus: 2, vezes: 2 },                /* só no mistério */
+    vira: REVELACAO_DO_ESPOLIO.vira,
+    carimbo: { dura: 200, escalaDe: 1.4, misterio: { dura: 260, escalaDe: 1.6 } },
+    leitura: { porPalavra: 250, piso: 1200, teto: 3000 },
+    voa: { dura: 360, escalaAte: 0.2 },
+    pavio: { apaga: 400, risca: 260 },
+    reduzido: MOVIMENTO_DO_DADO.semMovimento,
+  },
+};
+/* a palavra do carimbo e a frase de «se falhar», pelas chaves de PRECO_DA_FALHA
+   (check-quadro.mjs prova que as chaves são as mesmas, nos dois sentidos) */
+export const CARIMBO_DO_PRECO = {
+  tempo:      { palavra: "TARDE",    glifo: "relogio", seFalhar: "as horas vão-se nisso" },
+  incompleta: { palavra: "A METADE", glifo: "metade",  seFalhar: "sabes só a metade", marca: "rasgo" },
+  alerta:     { palavra: "VISTO",    glifo: "olho",    seFalhar: "alguém vê-te" },
+  cobra:      { palavra: "PAGO",     glifo: "moeda",   seFalhar: "custa-te {n} moedas" },
+  danificado: { palavra: "PARTIDO",  glifo: "racha",   seFalhar: "chega partido", marca: "racha" },
+};
+export const PALAVRAS_DO_QUADRO = {
+  rotulo: "Pistas", saber: "Como se pode saber", seFalhar: "Se falhar",
+  naMesma: "Ficas a saber na mesma. Mas pode custar:", fecha: "Esse caminho fecha-se e não volta.",
+  restam: "restam {n}", naoFezFalta: "não fez falta", feita: "feita", agora: "agora",
+};
+```
+
+**Os glifos novos** (`GLIFOS`, `src/glifos.js`, traço 1,75 na grelha de 24): `objeto` (o pacote), `metade`, `racha`,
+`moeda` — os paths estão nos componentes `386:9`, `386:25`, `386:22`, `386:19`. `alfinete`, `vulto`, `relogio` e `olho`
+já existem e servem como estão.
+
+**Os keyframes**, em `MOVIMENTO_CSS` (template-literal: **nada de crase**, nem em comentário — a lei de R17):
+`tv-pista-sobe`, `tv-pista-treme`, `tv-pista-carimbo`, `tv-pista-voa`, `tv-pavio-apaga`, `tv-pista-risca`, e o
+`tv-sinal-acende`; a viragem reutiliza `tv-carta-vira-a` / `tv-carta-vira-b` (TE 8). Todos com saída em
+`prefers-reduced-motion`.
+
+### QQ 8 · O que a peça pede ao motor (para `mente/pedidos-ao-sistema.md`; a tela não calcula número)
+
+1. **`quadro.sinal = { sabe, de }`** em `oQuadroDaQuest` — as essenciais viradas e o total, sem futuras nem sobras.
+2. **Nos caminhos:** `pericias` (os ids, sem repetir) e `minutos` (o menor dos desafios), lidos de `DESAFIOS` — hoje a
+   tela teria de ir ao catálogo.
+3. **Na carta com preço:** `efeitos` já multiplicados pelo peso do arco (hoje só `virarCarta` os devolve; a carta do
+   quadro traz só o id), para a conta do carimbo.
+4. **Em `seFalhar`:** `[{ id, efeitos }]` em vez de `[id]`, com os números do arco — a ficha «custa-te 30 moedas» do
+   mistério.
+5. **O chamado com carta:** que `oChamado` (ou a fiação da Q3) receba o resultado de `aCartaDoTeste` e leve `carta: {
+   forma, seFalhar }`, para o leque na bandeja e o preço da carta na fala.
+6. **`novo`** não pede save: a gota é estado de tela (o dia da última carta mudada contra o da última vez que o quadro
+   se abriu, num ref da sessão). Recarregar apaga a gota, e não se perde facto nenhum.
+
+### QQ 9 · A ordem de construção
+
+**0 · O motor** (§QQ 8, 1–4): campos novos em `oQuadroDaQuest`, com a suíte; nada no save.
+
+**1 · `aprendiz`, fora do App** (`src/estilo.js`, `src/glifos.js`, `src/painel-quadro.jsx` novo, `src/painel-mesa-do-mestre.jsx`):
+1. As tabelas de §QQ 7, os quatro glifos, os keyframes sem crase.
+2. `src/quadro-na-tela.js` (puro, como `espolio-na-tela.js`): `cronogramaDaPista({ face, de, carimbo, misterio, perdeu,
+   reduzido })` → `[{ passo, de, dura }]` (a leitura por palavras com piso e teto; o teto total ≤ 4 500) e
+   `nomeDaCarta(carta)` (o nome acessível de §QQ 4). Suíte `testes/teste-quadro-na-tela.mjs`.
+3. `painel-quadro.jsx`: `CartaDePista`, `CarimboDoPreco`, `SinalDoQuadro`, `CaminhosDaCarta`, `GavetaDoQuadro` (fora e
+   dentro do mistério; a carta escolhida e a carta lida; os separadores), `PistaQueVira` (o momento). **Tudo definido
+   fora do render.** A viragem usa as classes da TE.
+4. `BarraDoMestre` ganha a ranhura `pistas` (à esquerda da HORA na mesa, antes da vela no telefone).
+5. O varredor `testes/check-quadro.mjs` (com o `testes`): os pares de §QQ 5 pela conta da luz; nenhuma cor literal nas
+   peças; as chaves de `CARIMBO_DO_PRECO` iguais às de `PRECO_DA_FALHA`; «essencial», «extra», «queimad», «caminho»,
+   «carta», «quadro» e «preço» fora do texto visível.
+
+**2 · `oficial`, no App, com o bastão** (depois da Q3, que já põe `quadrosAgora()` e o `virarCarta` no resolver):
+1. A barra recebe o sinal de `quadrosAgora()`; a gaveta abre e fecha por ele.
+2. No resolver do teste (e no gesto), o resultado de `virarCarta` vai a um ref efémero que `PistaQueVira` lê; a região
+   viva diz a carta.
+3. Tocar num caminho escreve `diz` no campo e fecha a gaveta.
+4. O `Chamado do Mestre` com o leque quando há carta em jogo (§QQ 8, 5).
+5. No Diário, as linhas de «o que falta» que são cartas passam à fila de `CartaDePista` (§QQ 3).
+
+**3 · O `jogo` joga** uma sessão de mistério (a Q6) a 375 e a 1905, também com reduce, e assina ou corrige §QQ 4.
+
+**4 · O `desenho` confere no navegador** (aba nova — o HMR mente; a árvore de acessibilidade — a foto congela; os
+espaços de save guardados antes e repostos depois; `TAVERNA_API=http://127.0.0.1:9`).
+
+### QQ 10 · Para a pessoa decidir — a proposta ambiciosa: **o fio que o jogador puxa**
+
+No quadro do mistério, o jogador **liga duas cartas viradas com o dedo** (arrastar de uma a outra, ou tocar numa e
+depois na outra) e diz o que acha que as une — e o sistema responde **só se a ligação é verdade no livro de factos**: o
+fio fica de lacre (é verdade), ou cai (não é). A dedução deixa de ser lida e passa a ser **jogada**, com o mesmo «nada
+entra pela IA» (o juiz é o livro, nunca o Narrador). Pede ao motor uma função pura (`aLigacaoEVerdade(cartaA, cartaB,
+livro)`) e um campo de save aditivo (as ligações feitas); **espera a palavra dela** porque é uma mecânica nova que muda
+o que o jogador faz num mistério. A versão tímida: o fio de lacre que já está aqui, desenhado pelo sistema, sem gesto.
