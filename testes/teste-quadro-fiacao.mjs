@@ -120,8 +120,12 @@ sec("§4 o gesto sem dado (agirInterno)");
   t("o gancho mora em agirInterno, depois do que a proposta pagou, e conta com isso", AGIR.includes("if (lado.pagar) pagoNaProposta = Number(lado.pagar.total) || 0;") && AGIR.includes("aCartaDoGestoAgora(acao, pagoNaProposta)"));
   t("só quando a frase não é um teste (o teste vira pelo dado) e fora da luta", AGIR.includes('if (!acao.startsWith("/") && !combateRef.current && !veredictoDaAcao(acao)) aCartaDoGestoAgora'));
   t("adjudicarAcao ficou como era (o gancho morto saiu)", ADJ.includes("const v = veredictoDaAcao(acao);\n    if (!v) return false;") && !ADJ.includes("aCartaDoGestoAgora"));
-  t("o gesto lê a bolsa (mais o que a proposta já tirou), a pessoa chamada e quem está à vista", GESTO.includes("moedas: (Number((fichaViva() || {}).moedas) || 0) + pago }, { ...ondeDoPasso(), emCena: presentes })"));
-  t("pagou menos do que o caminho pede: não vira; pagou o bastante: o custo não se cobra outra vez", GESTO.includes("if (!g || (pago > 0 && pago < g.veredito.total)) return false;") && GESTO.includes("aplicarACartaVirada(vira, quadro, { pago: pago >= g.veredito.total })"));
+  /* Alargada a 14/11 (28cd0cd): o gesto passa também o `pago` da frase; a leitura da bolsa é a mesma. */
+  t("o gesto lê a bolsa (mais o que a proposta já tirou), a pessoa chamada e quem está à vista", GESTO.includes("moedas: (Number((fichaViva() || {}).moedas) || 0) + pago, ...(pago > 0 ? { pago } : {}) }, { ...ondeDoPasso(), emCena: presentes })"));
+  /* Movida a 14/11 (28cd0cd): o pagamento a menos passou a ser regra do motor (PAGAR_A_MENOS:
+     a essencial vira incompleta, a extra não vira); o App só passa o que a frase já pagou e
+     respeita o `pago` que o motor devolve — a intenção (nunca cobrar duas vezes) continua. */
+  t("o App passa o que a frase pagou, e o custo não se cobra outra vez", GESTO.includes("...(pago > 0 ? { pago } : {})") && GESTO.includes("if (!g) return false;") && GESTO.includes("aplicarACartaVirada(vira, quadro, { pago: !!g.pago })"));
   t("em calou (os dois)", GESTO.includes('calou("Q3 · a carta do gesto", e); return false;') && AGIR.includes('calou("Q3 · o gesto da frase", e);'));
 }
 

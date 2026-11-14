@@ -18041,11 +18041,12 @@ export default function Taverna() {
       const pago = Math.max(0, Number(jaPagou) || 0);
       const presentes = presentesAgora();
       const ch = aPessoaChamada(frase, { conhecidos: [], presentes });
-      const g = aCartaDoGesto(qs, { frase, quem: ch && ch.nome ? ch.nome : "", moedas: (Number((fichaViva() || {}).moedas) || 0) + pago }, { ...ondeDoPasso(), emCena: presentes });
-      if (!g || (pago > 0 && pago < g.veredito.total)) return false;
+      const g = aCartaDoGesto(qs, { frase, quem: ch && ch.nome ? ch.nome : "", moedas: (Number((fichaViva() || {}).moedas) || 0) + pago, ...(pago > 0 ? { pago } : {}) }, { ...ondeDoPasso(), emCena: presentes });
+      /* 28cd0cd: o motor decide o pagamento a menos (PAGAR_A_MENOS) — a essencial vira incompleta, a extra não vira. */
+      if (!g) return false;
       const quadro = qs.find((q) => q.quest === g.quest);
       const vira = quadro && virarCarta(quadro, g.veredito, { carta: g.carta, caminho: g.caminho, memoria: quadroRef.current, dia: diaRef.current });
-      return vira ? aplicarACartaVirada(vira, quadro, { pago: pago >= g.veredito.total }) : false;
+      return vira ? aplicarACartaVirada(vira, quadro, { pago: !!g.pago }) : false;
     } catch (e) { calou("Q3 · a carta do gesto", e); return false; }
   };
   /* MC9 · preso não sai por porta nenhuma: a recusa, dita uma vez para as três */
