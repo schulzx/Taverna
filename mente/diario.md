@@ -24,6 +24,19 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 13/11 · v9.644 · a 20.ª sessão (NE9), e o feito volta pelo sistema · commits 0cdaf4b, 9857d2d, 09b6e53, d6021ad, 67bdcef + 438ae82
+
+A pessoa: «Pode fazer» — às duas propostas (XP por feito pelo sistema; a NE9 paga). Duas mãos em paralelo (o `jogo` na sessão, o `backend` no feito), depois duas `backend` nos defeitos; o coordenador fez a fiação do App com o bastão (duas vezes, devolvido cada uma).
+
+- **a 20.ª sessão (`mente/sessao-20.md`):** v9.643 publicada, 47 respostas, US$ 0,40 (0,0085 por resposta, −23% sobre a 19.ª), mediana 4,6 s. Cronista 0, Léxico 0. **Objetos inventados no save: 0.** Mas: 0 XP fora da luta, um dado a cada 5,8 turnos (19.ª: 2,0), 0 passos de quest em 47.
+- **o feito é do sistema (0cdaf4b, fiação 9857d2d):** tabela `FEITO_DO_SISTEMA` (marco · passo/segredo/cidade nova = feito · teste/lugar/primeira conversa = pequeno), um grau por turno, o maior; facto visto não paga outra vez; teto de 4 pequenos por dia. Campo novo `personagem.memoriaDosFeitos` (aditivo). Catraca: 30 turnos no nível 5 davam 0 XP, dão 26% de nível. A quest abate o feito que o aplicar pagou.
+- **o dado volta à frase (d6021ad, 67bdcef):** não foi a NE — quatro buracos separados: «nesta sala» lido como destino (`SITIO_DE_AGORA`, lugar.js), «o que é que eu sei», «conheço este selo?», «tateio em volta»; a negação (`NEGACAO_DO_GESTO`); a escuta lê «guarda»/«templo» no papel da frase. A proposta do passo cede a todo veredito com chave. Frases da sessão que deviam rolar: 3/7 → 7/7.
+- **o inventado e a quest (09b6e53):** dez linhas de pauta pediam «uma coisa com nome» sem dizer qual (escuta, fios da estrada, encalhe, antagonista, batidas) — catraca `teste-pauta-nao-pede-coisa`; o veto NE8 tinha régua estreita (peito, gesto sem destinatário); a pessoa do passo nasce com casa e entra em cena no lugar do passo — catraca `teste-passo-alcancavel` (480 mundos, 3590 pessoas, nenhuma sem casa).
+- **decisões:** o sucesso automático sem dado não paga feito (tarefa trivial); a promessa cumprida fica fora do feito (nenhum órgão sabe hoje se foi cumprida); a ponte do rumo «uma coisa só aponta para: {passo}» fica como exceção escrita (o alvo é do sistema).
+- **o que ficou:** T12 da sessão (DESTINO NÃO RECONHECIDO) não se reproduz; o clérigo nasce sem deus; o romance corre sozinho; a promessa cobrada no turno seguinte; o quarto da estalagem vira acampamento; o replay das sessões gravadas depois desta diverge em `xp`/`memoriaDosFeitos` (o facto do teste vive no App). «Quem se encontra aparece no lugar do passo» muda o fluxo de quests como «As Botas na Estrada» — olhar na próxima sessão.
+
+---
+
 ## 13/11 · v9.642 + v9.643 · nada entra pela IA — a Fase NE (NE1–NE8)
 
 A pessoa: «Ela não deve ter entrada de informações ou controle algum sobre o sistema… isso deve evitar objetos inventados». A auditoria achou o jogo publicado em `mestre` (46 portas abertas) e nove portas fora da tabela; ela aprovou o plano (`mente/plano-nada-entra.md`), tirar o Arquivista e trocar o Léxico por tabela.
