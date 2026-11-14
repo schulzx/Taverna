@@ -144,7 +144,9 @@ sec("§6 a tela — o sinal, a gaveta e o momento");
 {
   t("a Barra do Mestre tem a ranhura `pistas`, antes da hora", /emCena = null, pistas = null, children \}\) \{/.test(BARRA) && /\{pistas\}\n\s*<button type="button" onClick=\{aoAbrirTempo\}/.test(BARRA));
   t("o App põe o sinal nela, com a gota, o aceso e o aberto", /pistas=\{pistasDaTela && !fogueiraNaPagina \? \(/.test(APP) && /<SinalDoQuadro sinal=\{pistasDaTela\.sinal\} telefone=\{!mesaLarga\} novo=\{pistasDaTela\.novo\} aceso=\{sinalAceso\}/.test(APP));
-  t("a gaveta abre do sinal; tocar num caminho escreve no campo e fecha", /<GavetaDoQuadro quadros=\{pistasDaTela\.quadros\} questDaVez=\{pistasDaTela\.daVez\} aberta/.test(APP) && /aoEscrever=\{escreverOCaminho\} devolverFocoA=\{sinalDoQuadroRef\}/.test(APP) && /setEntrada\(texto\);\s*setQuadroAberto\(false\);/.test(corpo("  const escreverOCaminho = (verbo) => {")));
+  /* Alargada a 14/11 (as cartas no Diário): a gaveta abre na quest pedida pelo Diário se houver; do
+     sinal, sempre na da vez (alternarOQuadro esquece a pedida). A intenção continua. */
+  t("a gaveta abre do sinal; tocar num caminho escreve no campo e fecha", APP.includes("<GavetaDoQuadro quadros={pistasDaTela.quadros} questDaVez={(questDoQuadro && pistasDaTela.quadros.some((q) => q.quest === questDoQuadro)) ? questDoQuadro : pistasDaTela.daVez} aberta") && /const abre = !quadroAberto;[\s\S]{0,140}setQuestDoQuadro\(null\);/.test(APP) && /aoEscrever=\{escreverOCaminho\} devolverFocoA=\{sinalDoQuadroRef\}/.test(APP) && /setEntrada\(texto\);\s*setQuadroAberto\(false\);/.test(corpo("  const escreverOCaminho = (verbo) => {")));
   t("os quadros vão à tela pela lista branca (oQuadroNaTela)", /brutos\.map\(\(q\) => oQuadroNaTela\(q\)\)/.test(APP));
   t("o momento: PistaQueVira com o turno seguinte a saltar e o voo ao sinal", /<PistaQueVira vira=\{pistaQueVira\.vira\} misterio=\{pistaQueVira\.misterio\} alvoRef=\{sinalDoQuadroRef\} saltar=\{saltoDaPista\}/.test(APP) && /if \(pistaQueVira\) setSaltoDaPista\(\(n\) => n \+ 1\);/.test(APP));
   t("o sinal acende só no ganho (uma perda não acende)", /if \(p && p\.vira && !p\.vira\.perdeu\) \{\s*setSinalAceso\(true\);/.test(APP));
@@ -308,6 +310,15 @@ for (const luta of [false, true]) {
   t(`${onde}: o teto nunca passa (${c.teto}/${N})`, c.teto === N);
   if (luta) t(`na luta, a linha do caso cede sempre (${c.entra}/${N})`, c.entra === 0);
   else t(`fora da luta, a linha do caso entra na maioria das cenas (${c.entra}/${N})`, c.entra >= N / 2);
+}
+
+sec("§10 as cartas no Diário (f211d9f): o App passa os quadros e a porta para a gaveta");
+{
+  t("o bq do Diário leva os quadros da tela e aoAbrirQuadro, em calou", APP.includes('bq={aba === "diario" ? (() => { try { const b = oDiarioDasQuests(); return b ? { ...b, quadros: (pistasDaTela && pistasDaTela.quadros) || [], aoAbrirQuadro: abrirOQuadroNa } : null; } catch (e) { calou("as cartas no Diário", e); return null; } })() : null}'));
+  t("as duas montagens do PainelDiario passam quadros e aoAbrirQuadro", APP.split("quadros={(bq && bq.quadros) || []} aoAbrirQuadro={(bq && bq.aoAbrirQuadro) || null}").length - 1 === 2);
+  t("tocar na carta fecha o Diário, marca vista e abre a gaveta nessa quest", /const abrirOQuadroNa = \(quest\) => \{\s*try \{\s*setAba\(null\);[\s\S]{0,160}setQuestDoQuadro\(quest \|\| null\);\s*setQuadroAberto\(true\);/.test(APP));
+  t("a gaveta abre na quest pedida, se ela ainda tem quadro; senão na da vez", APP.includes("questDaVez={(questDoQuadro && pistasDaTela.quadros.some((q) => q.quest === questDoQuadro)) ? questDoQuadro : pistasDaTela.daVez}"));
+  t("fechar a gaveta esquece a quest pedida", APP.includes("const fecharOQuadro = () => { try { setQuadroAberto(false); setQuestDoQuadro(null);"));
 }
 
 console.log(`\n${ok} ok, ${mal} mal`);
