@@ -175,7 +175,14 @@ sec("1. NENHUM MÓDULO MUDO");
        pauta). Credor: o `oficial`, na MESMA fase. A entrada sai quando o App
        (ou o motor) o importar. `teste-quadro-da-quest.mjs` é o primeiro
        leitor. */
-    "quadro-da-quest.js": "o oficial, na Q2/Q3 da Fase QQ (mente/plano-quadro.md)",
+    /* 14/11 (Fase QQ, Q2 · o juiz do teste, backend): no MESMO módulo
+       nascem `aCartaDoTeste` (que carta e que caminho um teste do catálogo
+       vira), `aCartaDoGesto` (pagar e comprar, sem dado) e as tabelas
+       `CARTA_DO_TESTE`, `ASSUNTO_DA_EXTRA` e `GESTOS_DA_CARTA` — e esperam o
+       mesmo credor: o `oficial`, na Q3, chama-as em `concluirRolagem` e no
+       pedido sem dado (a receita está no fim de mente/plano-quadro.md). A
+       entrada sai quando o App importar o módulo. */
+    "quadro-da-quest.js": "o oficial, na Q3 da Fase QQ (mente/plano-quadro.md)",
     /* 13/11 (Fase NE, NE6 · o Léxico vira tabela, backend):
        `lexico-do-mundo.js` nasce — `lexicoDoMundo` (o `mundo.lexico` pelo
        gênero, o molde e a semente, no formato de garantirLexico), com as

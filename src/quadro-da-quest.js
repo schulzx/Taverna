@@ -55,6 +55,8 @@ import { garantirEsqueleto } from "./esqueleto.js";
 import { garantirHistoria } from "./historia.js";
 import { garantirRegistroDoVilao, FRAQUEZAS } from "./plano-do-vilao.js";
 import { hashSemente, rng } from "./semente.js";
+import { noLugarDoPasso } from "./a-quest-manda.js";
+import { desafioPorPericia } from "./desafios.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -241,6 +243,75 @@ export const QUADRO_NA_PAUTA = Object.freeze({
   teto: 260,
 });
 
+/* ---------------- O TESTE NA CARTA (Q2) ----------------
+   Que carta, e por que caminho, um teste do sistema vira (aCartaDoTeste).
+   Um teste só vira a carta cujo caminho bate com ele, nas três coisas: o
+   DESAFIO é um dos do caminho; o SÍTIO da âncora é onde o herói está (o
+   lugar da carta, o sítio onde o objeto se guarda, a cidade); e a PESSOA
+   da âncora é o `quem` do veredito ou, sem `quem`, está em cena.
+     `ordem`: os tipos, por precedência — a essencial da etapa de agora
+       antes da extra (a carta que o caso precisa primeiro);
+     `precisao`: por âncora; entre dois caminhos que batem, o mais preciso
+       ganha (falar COM a pessoa da carta vale mais do que perguntar por um
+       lugar a quem passa). Depois disto, a ordem da tabela: o quadro, a
+       carta, o caminho — nunca a sorte;
+     `assunto`: as âncoras abertas, que batem em qualquer sítio — por isso
+       pedem que a frase do teste NOMEIE a coisa da carta (o nome do lugar,
+       da pessoa, do objeto; nas extra, o vilão ou a gente do fio). Sem
+       isto, todo regatear na praça viraria a carta de um lugar: o portão
+       morde só o necessário, e menção é a única prova de que o teste era
+       sobre aquilo;
+     `pagos`: os caminhos cujo meio É pagar — só batem num teste em que o
+       herói já pagou (a conta social com moedas: `custoEmMoedas`), e então
+       o custo já foi cobrado por lá (`pago: true`, a fiação não o cobra
+       outra vez). Os outros caminhos com custo (negociar) cobram-no como
+       preço do que se compra;
+     `palavra`/`vazias`: as palavras de um nome que contam para o assunto
+       (pelo menos `palavra` letras, e nenhuma das vazias — as que estão em
+       mil nomes e não nomeiam nenhum). */
+export const CARTA_DO_TESTE = Object.freeze({
+  ordem: Object.freeze(["essencial", "extra"]),
+  precisao: Object.freeze({ lugar: 2, pessoa: 2, nasce: 2, cidade: 1, nenhuma: 1 }),
+  assunto: Object.freeze(["cidade", "nenhuma"]),
+  pagos: Object.freeze(["pagar"]),
+  palavra: 4,
+  vazias: Object.freeze([
+    "casa", "rua", "praca", "cidade", "vila", "aldeia", "lugar", "sitio", "velho", "velha", "novo", "nova",
+    "grande", "pequeno", "pequena", "senhor", "senhora", "dona", "homem", "mulher", "pessoa", "coisa", "guarda",
+    "moeda", "moedas", "prata", "ouro", "dinheiro", "aquele", "aquela", "outro", "outra", "onde", "quem",
+  ]),
+});
+
+/* As extra não dizem o que escondem, logo o assunto delas é o vilão (nome,
+   título, a gente do fio — o juiz da carta); estas palavras só desempatam
+   ENTRE extra (quem pergunta «quem lhe faz o serviço» procura o cúmplice).
+   Sozinhas, não viram nada. */
+export const ASSUNTO_DA_EXTRA = Object.freeze({
+  fraqueza: Object.freeze(["fraqueza", "fraco", "fragil", "derrubar", "vencer", "ferir", "matar", "teme"]),
+  cumplice: Object.freeze(["cumplice", "capanga", "comparsa", "servico", "recados", "mensageiro", "trabalha"]),
+  vantagem: Object.freeze(["entrada", "entrar", "guarda", "vigia", "esconderijo", "covil", "traseiras", "janela", "passagem"]),
+});
+
+/* ---------------- O GESTO NA CARTA (Q2) ----------------
+   O que vira uma carta SEM dado (aCartaDoGesto): pagar. «A mão que paga não
+   erra» (desafios.js, naoPedeDado: o preço é decidido pelo mercado), e por
+   isso «pago a quem sabe o que o celeiro esconde» nunca chegava a teste e a
+   carta ficava de costas para sempre. O gesto é decidido pelo sistema (as
+   moedas na bolsa contra o custo do caminho, da tabela), nunca pela prosa.
+   `rx`: o gesto na frase (sem acentos); `caminhos`: os que ele percorre —
+   todos com `custa` em CAMINHOS_DA_CARTA. Ir a um sítio e falar com alguém
+   não estão aqui: viram a carta pelo livro de factos (a planta, §4). */
+export const GESTOS_DA_CARTA = Object.freeze({
+  pagar: Object.freeze({
+    rx: /\b(suborn\w*|gorjeta|(pago|pagar|pagando|ofereco|oferecer|dou|deixo|entrego|ponho)\s+(\w+\s+){0,3}(moedas?|pratas?|ouro|dinheiro|pecas?))\b/,
+    caminhos: Object.freeze(["pagar"]),
+  }),
+  comprar: Object.freeze({
+    rx: /\b(compro|comprar|compra-lo|compra-la|negocio|negociar|troco|trocar)\b/,
+    caminhos: Object.freeze(["negociar"]),
+  }),
+});
+
 /* ============================================================
    A MEMÓRIA — estado.quadro
    { v, cartas: { "<quest>|<carta>": { dia, como, caminho, preco?,
@@ -314,6 +385,16 @@ function papeisComTipo(F, R) {
   }
   return out;
 }
+/* Q2: o que o juiz do teste precisa de uma essencial — o nome de verdade
+   (o `quem` do catálogo é o nome do registo, não a alcunha) e o visto, a
+   cidade, e onde o objeto nasce. A cidade do objeto é a do sítio onde se
+   guarda. */
+const nomesUnicos = (l) => [...new Set(arr(l).filter((n) => typeof n === "string" && n.trim()).map((n) => n.trim()))];
+function juizDaEssencial(p, visto, pn) {
+  const cid = (x) => (typeof x === "string" ? x : "");
+  const nasce = pn && typeof pn.nome === "string" && pn.nome ? { id: cid(pn.id), nome: pn.nome, cidade: cid(pn.cidade) } : null;
+  return { nomes: nomesUnicos([p.nome, visto]), id: cid(p.id), nome: cid(p.nome), cidade: cid(p.cidade) || (nasce ? nasce.cidade : ""), nasce };
+}
 const arcoDe = (estrutura) => QUADRO_POR_ARCO[estrutura] || QUADRO_POR_ARCO.padrao;
 const dadoDe = (semente, ...partes) => rng(hashSemente([String(semente || ""), "quadro", ...partes].join("|")));
 
@@ -341,7 +422,10 @@ function precosDe(forma, leve) {
                   estado: "costas"|"virada"|"preco"|"perdida",
                   etapa, viravel, futura, sobra, face, de, preco, linha,
                   caminhos: [{ id, diz, desafios, custa?, seFalhar }],
-                  escreve? (só a essencial: o átomo e o papel), ganho? }],
+                  escreve? (só a essencial: o átomo e o papel), ganho?,
+                  juiz (Q2: os nomes e o sítio de verdade, para
+                    aCartaDoTeste — bastidor, NUNCA para a tela: a tela diz
+                    `diz`, que já esconde o nome de quem não se viu) }],
        essenciais, viradas, ganhos }
    ============================================================ */
 export function oQuadroDaQuest(quest, estado, opcoes) {
@@ -394,7 +478,8 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
         const p = obj(papeis[papel]) || {};
         const nome = nomeVisto(papel);
         const def = obj(F.papeis[papel]) || {};
-        const nasce = P.forma === "objeto" && typeof def.nasce === "string" ? (obj(papeis[def.nasce]) || {}).nome || "" : "";
+        const pn = P.forma === "objeto" && typeof def.nasce === "string" ? obj(papeis[def.nasce]) || {} : {};
+        const nasce = pn.nome || "";
         const vivo = P.forma !== "pessoa" || !cond(["morto", `papel:${papel}`]);
         const ancoras = { lugar: P.forma === "lugar" ? nome : "", pessoa: P.forma === "pessoa" ? nome : "", nasce };
         const id = `${etapa.id}:${k0}`;
@@ -417,6 +502,7 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
             seFalhar: precosDe(P.forma, false),
           })),
           escreve: { predicado: a[0], papel, tipo: p.tipo, nome, id: typeof p.id === "string" ? p.id : "", ...(typeof p.cidade === "string" ? { cidade: p.cidade } : {}) },
+          juiz: juizDaEssencial(p, nome, pn),
         });
       }
     });
@@ -434,6 +520,12 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
       if (cumplice) possiveis.push({ tipo: "cumplice", forma: "pessoa", o: "", nome: papeis[cumplice[0]].nome, papel: cumplice[0], id: `${F.id}|extra:cumplice` });
       const rv = dadoDe(semente, F.id, "vantagem");
       possiveis.push({ tipo: "vantagem", forma: "lugar", o: VANTAGENS_DO_CONFRONTO[Math.floor(rv() * VANTAGENS_DO_CONFRONTO.length)], nome: "", id: `${F.id}|extra:vantagem` });
+      /* de quem as extra falam (para o juiz do teste): o vilão e a gente do
+         fio, pelo nome e pela alcunha — nunca o que a carta esconde */
+      const fio = obj(esp.fio) || {};
+      const doVilao = [fio.antagonista, fio.titulo];
+      for (const [k, d] of Object.entries(F.papeis)) if (obj(d) && d.de === "fio") doVilao.push((obj(papeis[k]) || {}).nome, nomeVisto(k));
+      const juizDaExtra = { nomes: nomesUnicos(doVilao), cidade: "", nasce: null, id: "" };
       const ordem = dadoDe(semente, F.id, "extras");
       const sorteadas = possiveis.map((x) => ({ x, r: ordem() })).sort((a, b) => a.r - b.r).slice(0, arco.extras).map((y) => y.x);
       for (const x of sorteadas) {
@@ -454,6 +546,7 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
           preco: null, linha: "",
           caminhos: abertos.map((c) => ({ id: c.id, diz: encher(c.diz, { sobre }), desafios: c.desafios, ...(c.custa ? { custa: c.custa } : {}), seFalhar: [] })),
           ganho: X.ganho,
+          juiz: juizDaExtra,
         });
       }
     }
@@ -591,4 +684,174 @@ export function oQuadroNaPauta(quadros) {
     if (linha.length > N.teto) linha = `${linha.slice(0, N.teto - 1).replace(/\s+\S*$/, "")}…`;
     return { linha, naoPode: vetos };
   } catch { return { linha: "", naoPode: [] }; }
+}
+
+/* ============================================================
+   O JUIZ DO TESTE (Q2) — que carta, e por que caminho
+   ============================================================ */
+const semAc = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
+const semArtigo = (s) => semAc(s).replace(/^(o|a|os|as)\s+/, "").trim();
+const palavrasDe = (s) => semAc(s).split(/[^a-z0-9]+/).filter(Boolean);
+/* a frase nomeia um destes nomes? (uma palavra do nome que nomeia) */
+function nomeia(texto, nomes) {
+  const T = CARTA_DO_TESTE;
+  const ws = new Set(palavrasDe(texto));
+  if (!ws.size) return false;
+  return arr(nomes).some((n) => palavrasDe(n).some((w) => w.length >= T.palavra && !T.vazias.includes(w) && ws.has(w)));
+}
+/* a definição de um caminho de uma carta, na tabela (é ela que diz a âncora) */
+function defDoCaminho(carta, id) {
+  const lista = carta.tipo === "extra" ? CAMINHOS_DA_EXTRA : arr(CAMINHOS_DA_CARTA[carta.forma]);
+  return lista.find((c) => c.id === id) || null;
+}
+/* quem está em cena, pelo nome sem artigo (strings ou { nome }) */
+const aCena = (l) => new Set(arr(l).map((x) => semArtigo(typeof x === "string" ? x : (obj(x) || {}).nome)).filter(Boolean));
+/* o caminho bate com o que o herói faz, onde e com quem? (fora o desafio) */
+function aAncoraBate(carta, def, ctx) {
+  const j = obj(carta.juiz) || {};
+  const nomes = arr(j.nomes).map(semArtigo).filter(Boolean);
+  const o = ctx.onde;
+  let ok = false;
+  if (def.ancora === "lugar") ok = !!j.nome && noLugarDoPasso({ id: j.id, nome: j.nome, cidade: j.cidade }, o);
+  else if (def.ancora === "nasce") ok = !!(j.nasce && noLugarDoPasso(j.nasce, o));
+  else if (def.ancora === "pessoa") ok = ctx.quem ? nomes.includes(ctx.quem) : nomes.some((n) => ctx.cena.has(n));
+  else if (def.ancora === "cidade") ok = !!semArtigo(o.cidade) && (!j.cidade || semArtigo(j.cidade) === semArtigo(o.cidade));
+  else if (def.ancora === "nenhuma") ok = true;
+  if (!ok) return false;
+  if (CARTA_DO_TESTE.assunto.includes(def.ancora) && !nomeia(ctx.texto, j.nomes)) return false;
+  return true;
+}
+/* as cartas que se podem virar agora, com o índice do quadro e da carta */
+function asViraveis(quadros) {
+  const out = [];
+  arr(quadros).forEach((q, qi) => {
+    const Q = obj(q);
+    if (!Q || typeof Q.quest !== "string") return;
+    arr(Q.cartas).forEach((c, ci) => {
+      const C = obj(c);
+      if (C && C.viravel && C.estado === "costas" && CARTA_DO_TESTE.ordem.includes(C.tipo)) out.push({ Q, C, qi, ci });
+    });
+  });
+  return out;
+}
+/* a escolha: o tipo, a precisão, (o pago), a afinidade da extra, e a ordem
+   da tabela — tudo determinístico, nada de sorte */
+function oMelhor(cands) {
+  const T = CARTA_DO_TESTE;
+  const chave = (x) => [T.ordem.indexOf(x.C.tipo), -(T.precisao[x.def.ancora] || 0), x.pagoRank, x.afinidade, x.qi, x.ci, x.ki];
+  return cands.slice().sort((a, b) => {
+    const ka = chave(a), kb = chave(b);
+    for (let i = 0; i < ka.length; i++) if (ka[i] !== kb[i]) return ka[i] - kb[i];
+    return 0;
+  })[0] || null;
+}
+const afinidadeDe = (C, texto) => {
+  if (C.tipo !== "extra") return 0;
+  const tipo = String(C.id || "").replace(/^extra:/, "");
+  const ws = new Set(palavrasDe(texto));
+  return arr(ASSUNTO_DA_EXTRA[tipo]).some((w) => ws.has(w)) ? 0 : 1;
+};
+
+/* ============================================================
+   aCartaDoTeste(quadros, veredito, onde) → null | {
+     quest, carta, caminho, veredito, pago }
+   `quadros`: os de osQuadrosDoEstado (com a memória dentro: o caminho
+     queimado já não está na carta, e a carta virada já não se vira).
+   `veredito`: o do catálogo (lerAcao, desafios.js — `id`, `pericia`,
+     `quem`/`pessoa`, `sobre`, `social`), com o resultado do dado:
+     `resultado` ("sucesso"|"falha") ou `passou` (boolean), e `total`/`dc`;
+     `frase`: a frase do jogador (o assunto das âncoras abertas).
+   `onde`: { lugar, dentroDe, cidade, foraDosMuros } (a forma de
+     `ondeDoPasso`, App.jsx) e `emCena` (os nomes de quem está à vista).
+   → o quadro (`quest`), a carta e o caminho (os ids), e o veredito já na
+     forma de virarCarta ({ desafio, resultado, total, dc }) — a fiação
+     chama virarCarta com eles, e é ela que decide o preço da falha (por
+     pouco ou seca, na essencial) ou queima o caminho (na extra). `pago`:
+     o caminho era pagar e o teste já cobrou as moedas (não cobrar o custo
+     outra vez). `null`: o teste não bate com carta nenhuma, e o turno segue
+     como hoje.
+   ============================================================ */
+export function aCartaDoTeste(quadros, veredito, onde) {
+  try {
+    const V = obj(veredito);
+    if (!V) return null;
+    const resultado = VEREDITO_DO_SISTEMA.resultados.includes(V.resultado) ? V.resultado
+      : typeof V.passou === "boolean" ? (V.passou ? "sucesso" : "falha") : null;
+    if (!resultado || !VEREDITO_DO_SISTEMA.numeros.every((n) => typeof V[n] === "number" && Number.isFinite(V[n]))) return null;
+    const desafio = typeof V.id === "string" && V.id ? V.id
+      : typeof V.desafio === "string" && V.desafio ? V.desafio
+      : typeof V.pericia === "string" && V.pericia ? ((desafioPorPericia(V.pericia) || {}).id || "") : "";
+    if (!desafio) return null;
+    const o = obj(onde) || {};
+    const social = obj(V.social);
+    const pagou = !!(social && Number(social.custoEmMoedas) > 0);
+    const ctx = {
+      onde: o, cena: aCena(o.emCena),
+      quem: semArtigo(typeof V.quem === "string" && V.quem ? V.quem : (obj(V.pessoa) || {}).nome),
+      texto: [V.frase, V.sobre, o.frase].filter((x) => typeof x === "string").join(" "),
+    };
+    const cands = [];
+    for (const x of asViraveis(quadros)) {
+      arr(x.C.caminhos).forEach((k, ki) => {
+        const K = obj(k);
+        if (!K || !arr(K.desafios).includes(desafio)) return;
+        const def = defDoCaminho(x.C, K.id);
+        if (!def) return;
+        const doPago = CARTA_DO_TESTE.pagos.includes(def.id);
+        if (doPago && !pagou) return;
+        if (!aAncoraBate(x.C, def, ctx)) return;
+        cands.push({ ...x, K, def, ki, pagoRank: pagou ? (doPago ? 0 : 1) : 0, afinidade: afinidadeDe(x.C, ctx.texto) });
+      });
+    }
+    const m = oMelhor(cands);
+    if (!m) return null;
+    return {
+      quest: m.Q.quest, carta: m.C.id, caminho: m.K.id,
+      veredito: { desafio, resultado, total: V.total, dc: V.dc },
+      pago: CARTA_DO_TESTE.pagos.includes(m.def.id) && pagou,
+    };
+  } catch { return null; }
+}
+
+/* ============================================================
+   aCartaDoGesto(quadros, gesto, onde) → null | {
+     quest, carta, caminho, gesto, veredito, pago }
+   O irmão de aCartaDoTeste para o gesto sem dado (GESTOS_DA_CARTA): pagar a
+   quem sabe, comprar a quem tem. `gesto`: { frase, quem, moedas } — a frase
+   do jogador, com quem fala, e as moedas na bolsa. As âncoras e o assunto
+   são os mesmos do teste; a bolsa tem de cobrir o custo do caminho.
+   `veredito`: o do sistema, na forma de virarCarta — o sucesso, com o
+   custo como número a bater e como total (pagou-o, e a mão que paga não
+   erra). `pago: false`: o custo (virarCarta → `custo`) cobra-se agora.
+   ============================================================ */
+export function aCartaDoGesto(quadros, gesto, onde) {
+  try {
+    const G = obj(gesto);
+    if (!G || typeof G.frase !== "string") return null;
+    const frase = semAc(G.frase);
+    const id = Object.keys(GESTOS_DA_CARTA).find((k) => GESTOS_DA_CARTA[k].rx.test(frase));
+    if (!id) return null;
+    const moedas = typeof G.moedas === "number" && Number.isFinite(G.moedas) ? G.moedas : 0;
+    const o = obj(onde) || {};
+    const ctx = { onde: o, cena: aCena(o.emCena), quem: semArtigo(G.quem), texto: G.frase };
+    const cands = [];
+    for (const x of asViraveis(quadros)) {
+      arr(x.C.caminhos).forEach((k, ki) => {
+        const K = obj(k);
+        if (!K || !GESTOS_DA_CARTA[id].caminhos.includes(K.id)) return;
+        const def = defDoCaminho(x.C, K.id);
+        const preco = def && def.custa ? inteiro(def.custa.moedas) : null;
+        if (preco == null || moedas < preco || !arr(K.desafios).length) return;
+        if (!aAncoraBate(x.C, def, ctx)) return;
+        cands.push({ ...x, K, def, ki, preco, pagoRank: 0, afinidade: afinidadeDe(x.C, G.frase) });
+      });
+    }
+    const m = oMelhor(cands);
+    if (!m) return null;
+    return {
+      quest: m.Q.quest, carta: m.C.id, caminho: m.K.id, gesto: id,
+      veredito: { desafio: m.K.desafios[0], resultado: "sucesso", total: m.preco, dc: m.preco },
+      pago: false,
+    };
+  } catch { return null; }
 }

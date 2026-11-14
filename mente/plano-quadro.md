@@ -52,8 +52,70 @@ A carta (costas pela forma, virada com face e origem, o carimbo do preço, a per
 ## 9. As etapas
 
 - **Q1** (feita): o módulo puro, as tabelas, a suíte, este plano.
-- **Q2** (backend): `aCartaDoTeste(quadros, veredito, onde)` — que carta e que caminho um teste do sistema vira (o lugar, a pessoa, o desafio), provado sobre o catálogo.
+- **Q2** (backend, feita 14/11): `aCartaDoTeste(quadros, veredito, onde)` — que carta e que caminho um teste do sistema vira (o lugar, a pessoa, o desafio), provado sobre o catálogo; e `aCartaDoGesto`, o irmão sem dado (§10).
+- **Q2b** (backend, pequena, ANTES da Q3): a porta do preço que falta — `avisa_vilao` e `relogio_do_fio` só se aplicam hoje dentro de `oTurnoDasQuests` (`aplicarUm`, quests-do-turno.js); a Q3 precisa de uma função exportada (§11, passo 5).
 - **Q3** (oficial): a fiação defensiva da §7; a entrada sai da lista de espera da `teste-ligacao`.
 - **Q4** (desenho + jogo + aprendiz): a peça da §8, no Figma primeiro.
 - **Q5** (backend): o `ganho` das extra no confronto (o número, na tabela da luta) e a fraqueza conhecida na pauta do confronto.
 - **Q6**: a prova jogada (uma sessão de mistério; a régua: ninguém preso por azar, e quantas cartas viram por sessão).
+
+## 10. A Q2 — o juiz do teste (feita, 14/11)
+
+**`aCartaDoTeste(quadros, veredito, onde)` → `{ quest, carta, caminho, veredito, pago } | null`.** Um teste só vira a carta cujo caminho bate com ele nas três coisas (`CARTA_DO_TESTE`):
+
+- **o desafio** é um dos do caminho (o `id` do catálogo; sem ele, a perícia, por `desafioPorPericia`);
+- **o sítio** da âncora é onde o herói está — o lugar da carta (`revistar`) e o sítio onde o objeto se guarda (`procurar`) pela régua do passo (`noLugarDoPasso`: o sítio ou o prédio, e a mesma cidade); `cidade` quer uma cidade, e a da carta se ela a tem;
+- **a pessoa** da âncora é o `quem` do veredito; sem `quem`, está em `onde.emCena`. Menção não é presença;
+- **as âncoras abertas** (`cidade`, `nenhuma`: perguntar, pagar, lembrar, negociar, tirar, e todas as das extra) batem em qualquer sítio — por isso pedem que a frase (ou o `sobre` do catálogo) **nomeie** a coisa da carta; nas extra, o vilão (nome, título, a gente do fio). Sem isto, todo regatear na praça viraria a carta de um lugar.
+
+**A escolha, determinística:** a essencial (da etapa de agora: só ela é `viravel`) antes da extra → o caminho mais preciso (âncora `lugar`/`pessoa`/`nasce` antes das abertas) → com moedas pagas no teste, o `pagar` → entre extra, a que a frase pede (`ASSUNTO_DA_EXTRA`) → a ordem da tabela (o quadro, a carta, o caminho). Nada de sorte.
+
+**O resto:** o caminho queimado já não está na carta (o quadro traz a memória), logo não volta a contar; a carta virada não é `viravel`. O `pagar` só bate num teste em que o herói pagou (`social.custoEmMoedas > 0`), e então `pago: true` — o custo já saiu pela conta social. O veredito volta na forma de `virarCarta`, e é ela que decide: falha por pouco ou seca na essencial (o preço), a queima na extra. Para isto cada carta leva um `juiz` (o nome de verdade, a cidade, onde o objeto nasce) — **bastidor, nunca para a tela**.
+
+**Os caminhos que não são teste:**
+
+| caminho | quem já o cobre | |
+|---|---|---|
+| ir ao sítio | o livro (`esteve`, a porta da cena) | não é carta: é o átomo do passo. A carta `descobriu` não vira só por ir — pede revistar, perguntar, pagar ou lembrar (ou a busca do MC5, que escreve `descobriu`, e a carta vê-o pelo livro) |
+| falar com quem sabe (`conversou`) | o livro (o Cronista escreve «falou») | coberto pela Q1, sem função nova |
+| arrancar o que sabe (`consultou`) | `registrarConsulta`, quando o social passa com informante | o sucesso já está coberto; a falha é a Q2 (âncora pessoa) |
+| ter o objeto (`tem`) | a bolsa | coberto: compra no mercado, saque, presente |
+| **pagar a quem sabe, sem dado** | ninguém — «a mão que paga não erra» (`naoPedeDado`) e o teste nunca nascia | **`aCartaDoGesto`** (feita) |
+| **comprar o objeto a quem o tem** | ninguém, se o mercado não o vende (o da quest quase nunca) | **`aCartaDoGesto`** (`comprar` → `negociar`) |
+
+**`aCartaDoGesto(quadros, { frase, quem, moedas }, onde)`** → a mesma forma, com `gesto` (`GESTOS_DA_CARTA`: o gesto na frase, e os caminhos com custo que percorre). As âncoras e o assunto são os do teste; a bolsa tem de cobrir o custo. O veredito é o sucesso do sistema com o custo como número a bater (`total = dc = custo`), e `pago: false` — o `custo` de `virarCarta` cobra-se agora.
+
+## 11. A receita da Q3 (o `oficial`, com o bastão)
+
+Tudo em `calou(...)`: um órgão que estoura não custa o turno. Ler o `App.jsx` por âncora (as linhas são de 14/11 e andam).
+
+1. **O import** (junto do de `./a-quest-manda.js`): `osQuadrosDoEstado, virarCarta, aCartaDoTeste, aCartaDoGesto, garantirQuadro, oQuadroNaPauta` de `./quadro-da-quest.js`. Na mesma leva, **tirar a entrada `quadro-da-quest.js` do `AGUARDANDO`** de `testes/teste-ligacao.mjs`.
+2. **O save** — campo novo, aditivo, que a versão antiga ignora:
+   - `const quadroRef = useRef(garantirQuadro(null));` ao lado de `const factosRef = useRef(garantirFactos(null));`;
+   - `src/estado.js`, `CAMPOS`: `C("quadro", "memoria", "qualquer")` logo depois de `C("factos", …)` (a `teste-estado` lê o literal do retrato e falha se um nascer sem o outro);
+   - `retratoDoJogo`: `quadro: quadroRef.current`, na ordem de `CAMPOS`;
+   - o load (a linha do `try { factosRef.current = garantirFactos(sv.factos); }`): `try { quadroRef.current = garantirQuadro(sv.quadro); } catch (e) { calou("o quadro do save", e); quadroRef.current = garantirQuadro(null); }`;
+   - a campanha nova (`if (!cap) factosRef.current = garantirFactos(null);`): o mesmo para `quadroRef`;
+   - `src/motor/pauta-do-turno.js`, a tabela dos refs (ao lado de `espinha:`): `quadro: Object.freeze({ ref: "quadroRef", salvo: true, escreve: false, padrao: () => (garantirQuadro(null)) })`.
+3. **Os ajudantes** (ao lado de `passosDasQuestsAgora`): `quadrosAgora()` = `osQuadrosDoEstado({ …o mesmo estado de passosDasQuestsAgora, quadro: quadroRef.current }, { mundo: mundoDaBase() })`, em `calou`, `[]` no erro; e `presentesAgora()` = os nomes de `elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: [] }).aqui` (a conta que o pedido sem dado já faz).
+4. **O teste** — em `concluirRolagem`, ramo `r.origem === "pedido"`, **logo depois** de `escreverODescobriu(…)` (a âncora: `const facto = passou && des ? factoDoSucessoAgora(`):
+
+   ```js
+   try {
+     const qs = des ? quadrosAgora() : [];
+     const alvo = aCartaDoTeste(qs, { ...des, passou, total, dc, frase: r.frase || r.motivo || "" }, { ...ondeDoPasso(), emCena: presentesAgora() });
+     const quadro = alvo && qs.find((q) => q.quest === alvo.quest);
+     const vira = quadro && virarCarta(quadro, alvo.veredito, { carta: alvo.carta, caminho: alvo.caminho, memoria: quadroRef.current, dia: diaRef.current });
+     if (vira) { quadroRef.current = vira.memoria; /* o passo 5 */ }
+   } catch (e) { calou("Q3 · a carta do teste", e); }
+   ```
+
+   **`passou`, e não `bateu`:** o «sim, pago» do catálogo (`custo.porPouco`) já cobrou o preço dele; a carta vira limpa e não cobra outro. Um preço só por dado. A falha que o catálogo não paga (os sociais, a falha seca) cai no `virarCarta`, que dá o preço leve ou o pesado pela margem.
+5. **O que a carta virada faz** (`vira`):
+   - **o facto**, por `PORTA_DA_CARTA[vira.escreve.predicado]` — `descobriu`: `escreverODescobriu(vira.achado)`, **salvo** se o MC5 acima já escreveu o achado do mesmo `quest`/`etapa` (`facto.achado`); `conversou`: `anotarOLivro` (motor/livro-do-turno.js) com `falouCom`; `consultou`: `registrarConsulta(npcsRef.current, nome)` + `setNpcs`, salvo se a `consultaDeInformante` deste teste já o fez; `tem`: o objeto na bolsa pela porta do `aplicar`. **O nome para a porta é o do registo** (`vira.escreve.id`, ou `carta.juiz.nome`), nunca `escreve.nome`, que pode ser a alcunha de quem ainda não se viu;
+   - **o preço** (`vira.preco.efeitos`): `minutos` → `avancarMinutos(n)` fora da luta (e a linha que ele devolve ao chat); `moedas` → a ficha (`Math.max(0, …)`); `danificado` → a marca no objeto que entra; `incompleta` → nada (a carta e a pauta dizem-no); `avisa_vilao` e `relogio_do_fio` → **a porta da Q2b**, que ainda não existe;
+   - **o custo** (`vira.custo`): as moedas saem da ficha, **salvo** `alvo.pago`;
+   - **a voz**: `vira.preco.linha` é o carimbo da carta, para a peça da Q4 — não vai ao chat como mecanismo.
+6. **O gesto** — em `adjudicarAcao`, na âncora `const v = veredictoDaAcao(acao);` / `if (!v) return false;`: antes do `return false`, `aCartaDoGesto(quadrosAgora(), { frase: acao, quem: <a pessoa chamada, como no pedido sem dado: aPessoaChamada(acao, { conhecidos: [], presentes })>, moedas: (fichaViva() || {}).moedas || 0 }, { ...ondeDoPasso(), emCena: presentes })` → `virarCarta(quadro, g.veredito, { carta: g.carta, caminho: g.caminho, memoria: quadroRef.current, dia: diaRef.current })` → o mesmo passo 5 (o custo cobra-se sempre: `pago` é `false`). O turno segue para o Narrador como antes. O custo já estava dito antes do clique: está no caminho da carta, à vista no quadro (Q4).
+7. **A pauta** — `src/pauta.js`, `SECOES`: `{ id: "quadro", rotulo: "O CASO", prio: 2.44, o: "o que o herói já sabe do caso e o que falta, pela forma" }` (depois do rumo 2,42 e do fecho 2,43; antes da planta da masmorra 2,45). Em `aPautaDoTurno`, em `calou`: `const qp = oQuadroNaPauta(osQuadrosDoEstado(…)); p = porNaPauta(p, "quadro", qp.linha); p = porNaPauta(p, "naoPode", qp.naoPode);`. **Medir antes de fixar a prio**, contra `TETO_DA_PAUTA` (1400), no molde de `teste-masmorra-na-pauta` (500 cenas semeadas, com e sem luta): quantas vezes a linha entra, e que secções tira. A linha tem teto de 260 e o veto é uma linha por quadro (≤2) — mas cada veto empurra os outros 0,1. A régua: não tira veto, desfecho, rumo nem fecho; se tirar a planta da masmorra ou o QUEM CARREGA em mais de 1 cena em 20, desce para 2,455.
+8. **A prova da Q3**: a `teste-estado` com o campo novo; um turno de prova (o mistério de `teste-quadro-da-quest` §7) com a busca falhada no curral pelo App; `npm run build` e `npm test` verdes.

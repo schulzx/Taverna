@@ -16,11 +16,18 @@
    §6 mesma semente, mesmo quadro;
    §7 uma campanha de mistério de ponta a ponta (a fraqueza do vilão, a
       falha que não prende, o passo que anda);
-   §8 o lixo não lança, e a memória tem teto. */
+   §8 o lixo não lança, e a memória tem teto.
+   Q2 (14/11) — o juiz do teste e do gesto:
+   §9  as tabelas do juiz batem com as dos caminhos;
+   §10 aCartaDoTeste: o desafio, o sítio e a pessoa do caminho; o assunto
+       nas âncoras abertas; a essencial antes da extra; o mais preciso; o
+       caminho queimado não volta; o que não bate dá null; o pago;
+   §11 aCartaDoGesto: pagar e comprar sem dado, com a bolsa a cobrir. */
 import {
   FORMAS_DA_CARTA, PISTAS_DO_PASSO, CAMINHOS_DA_CARTA, CAMINHOS_DA_EXTRA, PRECO_DA_FALHA, EFEITOS_DO_PRECO, PORTA_DA_CARTA,
   EXTRAS_DO_QUADRO, VANTAGENS_DO_CONFRONTO, QUADRO_POR_ARCO, QUADRO_DA_QUEST, VEREDITO_DO_SISTEMA, QUADRO_NA_PAUTA,
   garantirQuadro, oQuadroDaQuest, virarCarta, osQuadrosDoEstado, oQuadroNaPauta,
+  CARTA_DO_TESTE, ASSUNTO_DA_EXTRA, GESTOS_DA_CARTA, aCartaDoTeste, aCartaDoGesto,
 } from "../src/quadro-da-quest.js";
 import { BIBLIOTECA_DE_QUESTS, abrirQuest, PAPEIS_DA_QUEST, EFEITOS_DA_QUEST } from "../src/biblioteca-de-quests.js";
 import { CONDICOES, avaliarCondicao } from "../src/condicoes-da-quest.js";
@@ -287,6 +294,10 @@ sec("§7 uma campanha de mistério de ponta a ponta");
   const q1 = osQuadrosDoEstado(E, { mundo })[0];
   const cc = q1.cartas.find((c) => c.id === "rasto:descobriu:curral");
   t("a carta do curral está na etapa de agora, e vira-se", cc && cc.viravel && cc.estado === "costas", J(q1.cartas.map((c) => [c.id, c.estado, c.viravel])));
+  /* Q2: o juiz do teste acha a mesma carta e o mesmo caminho sozinho — a
+     busca falhada, no curral, com o veredito do catálogo */
+  const juiz = aCartaDoTeste(osQuadrosDoEstado(E, { mundo }), { id: "buscar", passou: false, total: 4, dc: 16, frase: "reviro a palha" }, { lugar: curral.nome, cidade: curral.cidade });
+  t("o juiz do teste, no curral, escolhe a carta do curral pelo revistar", juiz && juiz.quest === q1.quest && juiz.carta === cc.id && juiz.caminho === "revistar" && juiz.veredito.resultado === "falha", J(juiz));
   const r = virarCarta(q1, { desafio: "buscar", resultado: "falha", total: 4, dc: 16 }, { carta: cc.id, caminho: "revistar", memoria: E.quadro, dia: E.dia });
   t("a busca falhada no curral vira a carta, com preço", r && r.carta.estado === "preco" && !!r.preco && !!r.achado);
   E = { ...E, quadro: r.memoria, factos: oLivroDoAchado(E.factos, r.achado, { dia: 1, turno: 30 }) };
@@ -320,6 +331,184 @@ sec("§8 o lixo e o teto");
   t("a memória tem teto, e sai a mais velha", Object.keys(cortada.cartas).length === QUADRO_DA_QUEST.memoria && !cortada.cartas["q|c0"] && !!cortada.cartas[`q|c${QUADRO_DA_QUEST.memoria + 19}`]);
   const grande = Array.from({ length: 12 }, () => quadros.find((x) => x.q && x.q.cartas.length > 3).q);
   t("a pauta nunca passa do teto, nem com doze quadros", oQuadroNaPauta(grande).linha.length <= QUADRO_NA_PAUTA.teto);
+}
+
+sec("§9 as tabelas do juiz (Q2)");
+{
+  const ancoras = new Set([...Object.values(CAMINHOS_DA_CARTA).flat(), ...CAMINHOS_DA_EXTRA].map((c) => c.ancora));
+  t("toda âncora dos caminhos tem precisão", [...ancoras].every((a) => typeof CARTA_DO_TESTE.precisao[a] === "number"), [...ancoras].join(","));
+  t("as âncoras que pedem assunto existem, e são as menos precisas", CARTA_DO_TESTE.assunto.every((a) => ancoras.has(a))
+    && CARTA_DO_TESTE.assunto.every((a) => [...ancoras].filter((b) => !CARTA_DO_TESTE.assunto.includes(b)).every((b) => CARTA_DO_TESTE.precisao[b] > CARTA_DO_TESTE.precisao[a])));
+  t("a ordem dos tipos põe a essencial antes da extra", CARTA_DO_TESTE.ordem.indexOf("essencial") === 0 && CARTA_DO_TESTE.ordem.includes("extra"));
+  const comCusto = new Set(Object.values(CAMINHOS_DA_CARTA).flat().filter((c) => c.custa).map((c) => c.id));
+  t("os caminhos pagos são caminhos com custo", CARTA_DO_TESTE.pagos.length > 0 && CARTA_DO_TESTE.pagos.every((id) => comCusto.has(id)));
+  t("todo gesto percorre só caminhos com custo em moedas", Object.values(GESTOS_DA_CARTA).every((g) => g.caminhos.length && g.caminhos.every((id) => Object.values(CAMINHOS_DA_CARTA).flat().some((c) => c.id === id && c.custa && c.custa.moedas > 0))));
+  t("cada extra tem as suas palavras de assunto, e só elas", J(Object.keys(ASSUNTO_DA_EXTRA).sort()) === J(Object.keys(EXTRAS_DO_QUADRO).sort()) && Object.values(ASSUNTO_DA_EXTRA).every((l) => l.length > 0));
+}
+
+/* o juiz sobre o catálogo: cada carta essencial que se vira agora, com o
+   herói no sítio de cada caminho de âncora precisa */
+/* o catálogo do juiz: os mesmos registos de §2, mas com nomes que nomeiam
+   (o «Casa lugar» das fixtures de cima é feito só de palavras vazias, e o
+   assunto das âncoras abertas não o acharia — o que está certo). Um nome
+   por papel, distinto de todos os outros. */
+let nUm = 0;
+const distinto = (tipo) => { nUm++; return tipo === "lugar" ? { nome: "Casa Ralvaxe" + nUm, cidade: C } : tipo === "item" ? { nome: "o Ulmarco" + nUm } : { nome: "Dona Corvane" + nUm }; };
+const quadros2 = [];
+for (const F of BIBLIOTECA_DE_QUESTS) {
+  const papeis = Object.fromEntries(Object.entries(F.papeis).map(([k, d]) => [k, distinto((PAPEIS_DA_QUEST[d.de] || {}).tipo)]));
+  const R = abrirQuest(F, { estado: e0, papeis });
+  if (!R) continue;
+  F.etapas.forEach((etapa, idx) => {
+    const antes = F.etapas.slice(0, idx);
+    const Rk = congelar({ ...R, feitas: Object.fromEntries(antes.map((e) => [e.id, { dia: 1 }])), acesas: Object.fromEntries([...antes, etapa].map((e) => [e.id, 1])) });
+    for (const arco of ["jornada", "misterio"]) quadros2.push({ F, etapa, R: Rk, arco, semente: SEMENTES[0], q: oQuadroDaQuest(Rk, e0, { arco, semente: SEMENTES[0] }) });
+  });
+}
+const ondeDe = (c, k) => {
+  const def = CAMINHOS_DA_CARTA[c.forma].find((z) => z.id === k.id);
+  if (def.ancora === "lugar") return { onde: { lugar: c.juiz.nome, cidade: c.juiz.cidade || C }, quem: "" };
+  if (def.ancora === "nasce") return c.juiz.nasce ? { onde: { lugar: c.juiz.nasce.nome, cidade: c.juiz.nasce.cidade || C }, quem: "" } : null;
+  if (def.ancora === "pessoa") return { onde: { lugar: "Praça", cidade: C }, quem: c.juiz.nome };
+  return null;
+};
+
+sec("§10 aCartaDoTeste — que carta e que caminho um teste vira");
+{
+  const jor = quadros2.filter((x) => x.arco === "jornada" && x.q);
+  const casos = [];
+  for (const x of jor) for (const c of x.q.cartas.filter((z) => z.tipo === "essencial" && z.viravel)) {
+    for (const k of c.caminhos) {
+      const s = ondeDe(c, k);
+      if (!s || k.custa) continue;
+      casos.push({ x, c, k, s, r: aCartaDoTeste([x.q], { id: k.desafios[0], passou: false, total: 5, dc: 15, quem: s.quem, frase: "" }, s.onde) });
+    }
+  }
+  /* empatam só cartas da mesma precisão, e aí ganha a de cima no quadro */
+  const fora = casos.filter(({ x, c, r }) => !r || (r.carta !== c.id && x.q.cartas.findIndex((z) => z.id === r.carta) > x.q.cartas.indexOf(c)));
+  t(`no sítio do caminho, com o desafio dele, o teste vira a carta (${casos.length} casos)`, casos.length > 50 && fora.length === 0, fora.slice(0, 3).map(({ x, c, k }) => `${x.F.id}/${c.id}/${k.id}`).join(", "));
+  const proprios = casos.filter(({ c, r }) => r && r.carta === c.id);
+  t("e, quando é ela, o caminho escolhido é um dos que batem com o desafio", proprios.length > 0 && proprios.every(({ c, k, r }) => c.caminhos.find((z) => z.id === r.caminho).desafios.includes(k.desafios[0])));
+  t("o veredito sai na forma de virarCarta (o desafio, o resultado, os números)", proprios.every(({ k, r }) => r.veredito.desafio === k.desafios[0] && r.veredito.resultado === "falha" && r.veredito.total === 5 && r.veredito.dc === 15));
+  /* a falha seca e a por pouco seguem o virarCarta da Q1 */
+  const seca = proprios.map(({ x, r }) => virarCarta(x.q, r.veredito, { carta: r.carta, caminho: r.caminho, dia: 2 }));
+  t("a falha seca, pelo juiz, vira a essencial com preço", seca.every((v) => v && v.carta.estado === "preco" && v.preco));
+  const pouco = proprios.map(({ x, c, k, s }) => {
+    const r = aCartaDoTeste([x.q], { id: k.desafios[0], resultado: "falha", total: 13, dc: 13 + QUADRO_DA_QUEST.porPouco, quem: s.quem }, s.onde);
+    return r && virarCarta(x.q, r.veredito, { carta: r.carta, caminho: r.caminho, dia: 2 });
+  });
+  t("a falha por pouco, pelo juiz, cobra só preço leve", pouco.every((v) => v && v.preco && PRECO_DA_FALHA[v.preco.id].leve));
+  t("o sucesso, pelo juiz, vira-a limpa", proprios.every(({ x, k, s }) => {
+    const r = aCartaDoTeste([x.q], { id: k.desafios[0], passou: true, total: 18, dc: 12, quem: s.quem }, s.onde);
+    const v = r && virarCarta(x.q, r.veredito, { carta: r.carta, caminho: r.caminho });
+    return v && v.carta.estado === "virada" && v.preco === null;
+  }));
+
+  /* o que não bate dá null — o turno segue como hoje */
+  const lug = proprios.find(({ c, k }) => c.forma === "lugar" && k.id === "revistar");
+  const pes = proprios.find(({ c, k }) => c.forma === "pessoa" && k.id === "falar");
+  t("um desafio que nenhum caminho tem: null", aCartaDoTeste([lug.x.q], { id: "nadar", passou: true, total: 18, dc: 12 }, lug.s.onde) === null);
+  t("a busca noutro sítio: null", aCartaDoTeste([lug.x.q], { id: "buscar", passou: true, total: 18, dc: 12 }, { lugar: "Moinho de Ninguém", cidade: C }) === null);
+  t("a busca no sítio certo de outra cidade: null", aCartaDoTeste([lug.x.q], { id: "buscar", passou: true, total: 18, dc: 12 }, { lugar: lug.c.juiz.nome, cidade: "Outra Terra" }) === null);
+  t("falar com outra pessoa: null", aCartaDoTeste([pes.x.q], { id: "convencer", passou: true, total: 18, dc: 12, quem: "Fulano de Tal" }, pes.s.onde) === null);
+  t("sem quem, a pessoa da carta em cena basta", (() => {
+    const r = aCartaDoTeste([pes.x.q], { id: "convencer", passou: true, total: 18, dc: 12 }, { cidade: C, emCena: ["Outro", { nome: pes.c.juiz.nome }] });
+    return r && r.carta === pes.c.id && r.caminho === "falar";
+  })());
+  t("sem quem e sem ela em cena: null (menção não é presença)", aCartaDoTeste([pes.x.q], { id: "convencer", passou: true, total: 18, dc: 12, frase: `falo de ${pes.c.juiz.nome}` }, { cidade: C, emCena: ["Outro"] }) === null);
+  t("o perito sem o id do desafio conta pela perícia (o catálogo diz qual)", (() => {
+    const r = aCartaDoTeste([pes.x.q], { pericia: "persuasao", passou: true, total: 18, dc: 12, quem: pes.c.juiz.nome }, pes.s.onde);
+    return r && r.carta === pes.c.id && r.veredito.desafio === "convencer";
+  })());
+
+  /* as âncoras abertas pedem o assunto na frase */
+  const pergunta = (frase) => aCartaDoTeste([lug.x.q], { id: "fazer_falar", passou: false, total: 6, dc: 14, quem: "Fulano de Tal", frase }, { lugar: "Praça", cidade: C });
+  const nomeado = pergunta(`pergunto ao Fulano o que sabe de ${lug.c.juiz.nome}`);
+  t("perguntar pelo lugar a quem vive perto, nomeando-o, vira a carta pelo perguntar", nomeado && nomeado.carta === lug.c.id && nomeado.caminho === "perguntar", J(nomeado));
+  t("o mesmo teste sem nomear o lugar (regatear na praça): null", pergunta("convenço o Fulano a baixar o preço") === null);
+  t("e perguntar pelo lugar noutra cidade: null", aCartaDoTeste([lug.x.q], { id: "fazer_falar", passou: false, total: 6, dc: 14, frase: `e ${lug.c.juiz.nome}?` }, { cidade: "Outra Terra" }) === null);
+  t("lembrar o lugar: o assunto do catálogo (`sobre`) basta", (() => {
+    const r = aCartaDoTeste([lug.x.q], { id: "lembrar", passou: true, total: 15, dc: 12, sobre: lug.c.juiz.nome }, { cidade: "" });
+    return r && r.carta === lug.c.id && r.caminho === "lembrar";
+  })());
+
+  /* o mais preciso ganha à ordem da tabela: o quadro do lugar vem primeiro,
+     e a frase nomeia-o — mas falar COM a pessoa da outra carta é mais preciso */
+  t("falar com a pessoa de uma carta ganha a perguntar pelo lugar de outra", (() => {
+    const r = aCartaDoTeste([lug.x.q, pes.x.q], { id: "convencer", passou: true, total: 18, dc: 12, quem: pes.c.juiz.nome, frase: `pergunto a ${pes.c.juiz.nome} por ${lug.c.juiz.nome}` }, { cidade: C });
+    return r && r.quest === pes.x.q.quest && r.carta === pes.c.id;
+  })());
+  t("na mesma precisão, a ordem da tabela: o primeiro quadro", (() => {
+    const v = { id: "lembrar", passou: true, total: 15, dc: 12, sobre: `${lug.c.juiz.nome} e ${lug.c.juiz.nome}` };
+    const a = aCartaDoTeste([lug.x.q, { ...lug.x.q, quest: "outra" }], v, {});
+    const b = aCartaDoTeste([{ ...lug.x.q, quest: "outra" }, lug.x.q], v, {});
+    return a && b && a.quest === lug.x.q.quest && b.quest === "outra";
+  })());
+
+  /* o pago: pagar só bate quando o teste cobrou moedas, e não se cobra outra vez */
+  const pagar = (social) => aCartaDoTeste([pes.x.q], { id: "convencer", passou: true, total: 16, dc: 12, quem: pes.c.juiz.nome, social }, pes.s.onde);
+  const semMoedas = pagar(null), comMoedas = pagar({ custoEmMoedas: 12 });
+  t("sem moedas na conta social, falar (o pagar não bate)", semMoedas && semMoedas.caminho === "falar" && semMoedas.pago === false);
+  t("com moedas pagas no teste, pagar — e o custo já foi cobrado", comMoedas && comMoedas.caminho === "pagar" && comMoedas.pago === true);
+
+  /* a essencial antes da extra; a extra pelo vilão nomeado; o caminho
+     queimado não volta a contar */
+  const mist = quadros2.find((x) => x.arco === "misterio" && x.q && x.q.cartas.some((c) => c.tipo === "extra" && c.viravel && c.juiz.nomes.length)
+    && x.q.cartas.some((c) => c.tipo === "essencial" && c.viravel && c.forma === "lugar"));
+  const ex = mist.q.cartas.find((c) => c.tipo === "extra" && c.viravel && c.juiz.nomes.length);
+  const el = mist.q.cartas.find((c) => c.tipo === "essencial" && c.viravel && c.forma === "lugar");
+  const doVilao = ex.juiz.nomes[0];
+  const re = aCartaDoTeste([mist.q], { id: "lembrar", passou: false, total: 4, dc: 15, sobre: doVilao }, {});
+  t("lembrar o que se conta do vilão vira uma extra", re && mist.q.cartas.find((c) => c.id === re.carta).tipo === "extra" && re.caminho === "lembrar", J(re));
+  const re2 = aCartaDoTeste([mist.q], { id: "lembrar", passou: false, total: 4, dc: 15, sobre: `${doVilao} e ${el.juiz.nome}` }, {});
+  t("se a mesma frase também nomeia uma essencial, a essencial vem primeiro", re2 && re2.carta === el.id, J(re2));
+  t("sem o vilão nem a carta nomeados, lembrar não vira nada", aCartaDoTeste([mist.q], { id: "lembrar", passou: false, total: 4, dc: 15, sobre: "as estrelas" }, {}) === null);
+  const queima = virarCarta(mist.q, re.veredito, { carta: re.carta, caminho: re.caminho, dia: 3 });
+  const qq = oQuadroDaQuest(mist.R, { ...e0, quadro: queima.memoria }, { arco: mist.arco, semente: mist.semente });
+  const depois = aCartaDoTeste([qq], { id: "lembrar", passou: true, total: 18, dc: 12, sobre: doVilao }, {});
+  t("a extra que falhou queima o caminho, e o mesmo teste já não a vira por ali", queima && queima.perdeu === "lembrar" && (!depois || depois.carta !== re.carta || depois.caminho !== "lembrar"), J(depois));
+  const afim = mist.q.cartas.filter((c) => c.tipo === "extra" && c.viravel && c.juiz.nomes.length);
+  if (afim.length > 1) {
+    const alvo = afim[afim.length - 1];
+    const tipo = alvo.id.replace(/^extra:/, "");
+    const r = aCartaDoTeste([mist.q], { id: "lembrar", passou: true, total: 18, dc: 12, sobre: `${doVilao}, ${ASSUNTO_DA_EXTRA[tipo][0]}` }, {});
+    t("entre extra, as palavras do assunto desempatam", r && r.carta === alvo.id, J(r));
+  }
+
+  /* o determinismo, a imutabilidade e o lixo */
+  t("mesma entrada, mesma escolha", casos.every(({ x, k, s }) => J(aCartaDoTeste([x.q], { id: k.desafios[0], passou: false, total: 5, dc: 15, quem: s.quem }, s.onde))
+    === J(aCartaDoTeste([x.q], { id: k.desafios[0], passou: false, total: 5, dc: 15, quem: s.quem }, s.onde))));
+  const qc = congelar(JSON.parse(J(lug.x.q)));
+  const vc = congelar({ id: "buscar", passou: true, total: 18, dc: 12 });
+  const oc = congelar({ ...lug.s.onde, emCena: ["A"] });
+  const rc = aCartaDoTeste([qc], vc, oc);
+  t("o que entra não muda (congelado, e dá na mesma)", rc && rc.carta === lug.c.id && J(qc) === J(lug.x.q));
+  t("a prosa sem números não vira nada", [{ id: "buscar", passou: true }, { id: "buscar", resultado: "vitoria", total: 18, dc: 12 }, { id: "buscar", passou: true, total: "18", dc: 12 }, "Vera revista o celeiro."].every((v) => aCartaDoTeste([lug.x.q], v, lug.s.onde) === null));
+  const lixo = [null, undefined, 0, "", "x", [], {}, { id: 3 }];
+  t("aCartaDoTeste não lança com lixo, e dá null", lixo.every((a) => aCartaDoTeste(a, a, a) === null && aCartaDoTeste(a, vc, lug.s.onde) === null && aCartaDoTeste([lug.x.q], vc, a) === null));
+}
+
+sec("§11 aCartaDoGesto — pagar e comprar, sem dado");
+{
+  const jor = quadros2.filter((x) => x.arco === "jornada" && x.q);
+  const comCarta = (forma) => jor.map((x) => ({ x, c: x.q.cartas.find((z) => z.tipo === "essencial" && z.viravel && z.forma === forma) })).find((y) => y.c);
+  const L = comCarta("lugar"), P = comCarta("pessoa"), O = comCarta("objeto");
+  const pagoLugar = aCartaDoGesto([L.x.q], { frase: `Dou dez moedas a quem me disser o que ${L.c.juiz.nome} esconde`, quem: "Fulano", moedas: 100 }, { lugar: "Praça", cidade: C });
+  t("pagar a quem sabe o que o lugar esconde vira a carta pelo pagar", pagoLugar && pagoLugar.carta === L.c.id && pagoLugar.caminho === "pagar" && pagoLugar.gesto === "pagar" && pagoLugar.pago === false, J(pagoLugar));
+  const vl = pagoLugar && virarCarta(L.x.q, pagoLugar.veredito, { carta: pagoLugar.carta, caminho: pagoLugar.caminho, dia: 2 });
+  const custoDe = (c, id) => CAMINHOS_DA_CARTA[c.forma].find((z) => z.id === id).custa;
+  t("e o virarCarta da Q1 aceita-o: limpa, com o custo do caminho a cobrar", vl && vl.carta.estado === "virada" && J(vl.custo) === J(custoDe(L.c, "pagar")));
+  t("a bolsa que não cobre o custo: null", aCartaDoGesto([L.x.q], { frase: `pago umas moedas por ${L.c.juiz.nome}`, moedas: custoDe(L.c, "pagar").moedas - 1 }, { cidade: C }) === null);
+  t("pagar sem nomear o que se quer saber: null", aCartaDoGesto([L.x.q], { frase: "dou duas moedas ao rapaz", moedas: 100 }, { cidade: C }) === null);
+  t("nomear sem pagar não é gesto: null", aCartaDoGesto([L.x.q], { frase: `o que esconde ${L.c.juiz.nome}?`, moedas: 100 }, { cidade: C }) === null);
+  const pp = aCartaDoGesto([P.x.q], { frase: "ofereço cinco moedas para ele falar", quem: P.c.juiz.nome, moedas: 50 }, { cidade: C });
+  t("pagar à pessoa da carta vira-a pelo pagar dela", pp && pp.carta === P.c.id && pp.caminho === "pagar");
+  t("pagar a outra pessoa não vira a carta dela", aCartaDoGesto([P.x.q], { frase: "ofereço cinco moedas para ele falar", quem: "Fulano", moedas: 50 }, { cidade: C }) === null);
+  if (O) {
+    const po = aCartaDoGesto([O.x.q], { frase: `compro ${O.c.juiz.nome} a quem o tiver`, moedas: 100 }, { cidade: C });
+    t("comprar o objeto a quem o tem vira-o pelo negociar, com o preço do caminho", po && po.carta === O.c.id && po.caminho === "negociar" && po.gesto === "comprar" && po.veredito.dc === custoDe(O.c, "negociar").moedas, J(po));
+  }
+  t("o gesto não lança com lixo, e dá null", [null, undefined, 0, "", "x", [], {}, { frase: 3 }].every((a) => aCartaDoGesto(a, a, a) === null && aCartaDoGesto([L.x.q], a, { cidade: C }) === null));
 }
 
 console.log(`\n${bons} ok, ${maus} falhas`);
