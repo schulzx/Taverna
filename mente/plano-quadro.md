@@ -127,11 +127,12 @@ Tudo em `calou(...)`: um órgão que estoura não custa o turno. Ler o `App.jsx`
 
 **Os campos novos do quadro** (nada no save): `quadro.sinal = { sabe, de }` (as essenciais viradas ou com preço, de quantas há sem futuras nem sobras; as extra não entram); em cada caminho `pericias` (os ids, sem repetir) e `minutos` (o menor dos desafios, de `DESAFIOS`); na carta `efeitos` (os do preço, × peso; `null` sem preço); `seFalhar: [{ id, leve, efeitos }]` com os números do arco (era `[id]`). `oSinalDosQuadros(quadros)` → `{ sabe, de }` somado.
 
-**O contrato com a peça (`painel-quadro.jsx`).** A tela lê **só** isto — lista branca; o `juiz`, o `escreve`, a `chave`, a `etapa`, os `desafios` e o `ganho` nunca passam:
+**O contrato com a peça (`painel-quadro.jsx`).** A tela lê **só** isto — lista branca; o `juiz`, o `escreve`, a `chave`, o id da `etapa`, os `desafios` e o `ganho` nunca passam:
 
 ```
 oQuadroNaTela(quadro) → null | {
   quest,          // o id (chave de React; não se mostra)
+  tipo,           // Q4: 1 | 2 (TIPOS_DE_QUEST: o enredo do lugar, o que acompanha o herói); null fora da tabela
   titulo, pergunta,
   misterio,       // boolean: o arco pesa mais (o momento demora-se, §QQ 4)
   sinal: { sabe, de },
@@ -144,6 +145,9 @@ aCartaNaTela(carta) → null | {
   costas,         // «um lugar», «uma pessoa», «um objeto»
   estado,         // "costas" | "virada" | "preco" | "perdida"
   viravel, futura, sobra,   // booleanos (o aro âmbar, a silhueta, «não fez falta»)
+  etapa,          // Q4: chave OPACA ("e1mi0bsb") — só agrupa as cartas da mesma etapa; null na extra
+  dia,            // Q4: inteiro, o dia de jogo em que virou (virada/preco); null de costas, perdida ou sem registo
+  sobre,          // Q4: do que a extra trata («o que pode derrubar quem manda o convite»); "" na essencial
   face, de,       // "" de costas; virada, o facto e de onde veio (já com o nome visto)
   preco,          // null | "tempo" | "incompleta" | "alerta" | "cobra" | "danificado"
   linha,          // a frase da carta lida, "" sem preço
@@ -157,3 +161,10 @@ aCartaNaTela(carta) → null | {
 ```
 
 `face`, `de` e `diz` já escondem o nome de quem o herói não viu (a alcunha); provado nas 153 cartas do catálogo em que o juiz sabe outro nome.
+
+**Os quatro campos da Q4 (14/11, o pedido do `aprendiz`)** — aditivos, nada no save (a memória guarda os mesmos campos; provado em teste-quadro-da-quest §14):
+
+- **`etapa`**: um resumo (`hashSemente`) da quest e do id da etapa, em base 36 com um `e` à frente. Agrupa, e só: não contém o id da etapa nem o da quest, não diz a ordem, e é estável — a mesma etapa dá a mesma chave em todos os arcos, sementes e turnos, mesmo quando uma reviravolta abre outra antes dela (78 etapas do catálogo, 2949 pares). Resolve a gaveta do mistério: a carta virada de uma etapa feita já não cai em «agora». A **ordem** das etapas é a ordem das cartas no quadro (o motor dá-as etapa a etapa: feitas, a de agora, as por vir).
+- **`sobre`** (só a extra): `SOBRE_DA_EXTRA[tipo]` com `{vilao}` — o papel do vilão na quest (o nome se o herói o viu frente a frente, a alcunha se não); sem papel, o nome do fio só depois de visto (`conheceu` pela mesma régua das condições); senão `SOBRE_DA_EXTRA.semNome`. O nome de verdade e o título do vilão nunca passam antes de ele se mostrar (provado no mundo de mistério de §13, antes e depois de visto). O `{vilao}` é sempre objeto direto — as alcunhas começam por artigo, e «chegar a o que…» não se escreve.
+- **`dia`** (virada ou com preço): a memória do quadro (`estado.quadro`, virou pelo dado; `virarCarta` já o devolve em `carta.dia`, para o momento); sem ela, o facto do livro que a virou (`DIA_DA_CARTA`: `descobriu.dia` do lugar, `falou.de` da pessoa — o primeiro dia em que falaram); o que o livro não data (a consulta, o objeto na bolsa) cai no dia em que a etapa ficou feita; sem nada disso, `null`. **Para a tela:** `arrumarOQuadro` só ordena o fio pelo dia quando *todas* as viradas o têm — com uma `null` (raro: uma consulta na etapa de agora) cai na ordem do quadro, que é a das etapas.
+- **`tipo`** no quadro de tela: o da quest, validado contra `TIPOS_DE_QUEST`.

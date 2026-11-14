@@ -29,15 +29,20 @@
        herói não viu; aCartaEmJogo diz antes do dado o que o dado vira;
    §13 aplicarPrecoDoQuadro: o vilão avisado, o relógio dele adiantado, as
        moedas e o custo pelas portas do fim do turno; o tempo, a metade e o
-       objeto danificado voltam à fiação; nada mutado. */
+       objeto danificado voltam à fiação; nada mutado.
+   Q4 (14/11) — os quatro campos que a tela pediu:
+   §14 a etapa (chave opaca que agrupa, sem o id), o `sobre` das extra (sem
+       nome que o herói não viu), o dia em que a carta virou (a memória, o
+       livro, a etapa feita) e o tipo da quest no quadro de tela. */
 import {
   FORMAS_DA_CARTA, PISTAS_DO_PASSO, CAMINHOS_DA_CARTA, CAMINHOS_DA_EXTRA, PRECO_DA_FALHA, EFEITOS_DO_PRECO, PORTA_DA_CARTA,
   EXTRAS_DO_QUADRO, VANTAGENS_DO_CONFRONTO, QUADRO_POR_ARCO, QUADRO_DA_QUEST, VEREDITO_DO_SISTEMA, QUADRO_NA_PAUTA,
   garantirQuadro, oQuadroDaQuest, virarCarta, osQuadrosDoEstado, oQuadroNaPauta,
   CARTA_DO_TESTE, ASSUNTO_DA_EXTRA, GESTOS_DA_CARTA, aCartaDoTeste, aCartaDoGesto,
   aCartaNaTela, oQuadroNaTela, oSinalDosQuadros, aCartaEmJogo, aplicarPrecoDoQuadro,
+  SOBRE_DA_EXTRA, DIA_DA_CARTA,
 } from "../src/quadro-da-quest.js";
-import { BIBLIOTECA_DE_QUESTS, abrirQuest, PAPEIS_DA_QUEST, EFEITOS_DA_QUEST } from "../src/biblioteca-de-quests.js";
+import { BIBLIOTECA_DE_QUESTS, abrirQuest, PAPEIS_DA_QUEST, EFEITOS_DA_QUEST, TIPOS_DE_QUEST } from "../src/biblioteca-de-quests.js";
 import { CONDICOES, avaliarCondicao } from "../src/condicoes-da-quest.js";
 import { DESAFIOS } from "../src/desafios.js";
 import { ESTRUTURAS, garantirHistoria } from "../src/historia.js";
@@ -561,7 +566,10 @@ sec("§12 o que a tela pede ao motor (Q2b, formas.md §QQ 8)");
   /* A CARTA PARA A TELA: lista branca, nada do bastidor */
   const todas = com.flatMap(({ q }) => q.cartas);
   const naTela = todas.map((c) => aCartaNaTela(congelar(c)));
-  const BASTIDOR = ["juiz", "escreve", "chave", "etapa", "desafios", "ganho"];
+  /* Q4 (14/11): a `etapa` saiu desta lista. A tela pediu-a para arrumar a
+     gaveta do mistério, e agora vai — mas como chave OPACA, nunca o id da
+     ficha: a prova de que o id não passa mudou-se para §14. */
+  const BASTIDOR = ["juiz", "escreve", "chave", "desafios", "ganho"];
   const chaves = (o, out = new Set()) => { if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { out.add(k); chaves(v, out); } return out; };
   const vazou = BASTIDOR.filter((k) => naTela.some((c) => chaves(c).has(k)));
   t(`nenhuma das ${naTela.length} cartas para a tela leva o bastidor`, naTela.every(Boolean) && vazou.length === 0, vazou.join(","));
@@ -679,6 +687,119 @@ sec("§13 o preço faz o que diz (Q2b: aplicarPrecoDoQuadro)");
   const lixo = [null, undefined, 0, "", "x", []];
   t("o lixo não lança", lixo.every((a) => aplicarPrecoDoQuadro(a, a, a) === null && aplicarEfeitosNoEstado(a, a) === null)
     && [null, 3, "inventado", {}, { efeitos: [null, { tipo: "voar" }] }].every((p) => { const z = aplicarPrecoDoQuadro(E, p); return z && J(z.estado) === "{}"; }));
+}
+
+sec("§14 os quatro campos que a tela pediu (Q4: etapa, sobre, dia, tipo)");
+{
+  const com = quadros.filter((x) => x.q);
+  const telas = com.map((x) => ({ ...x, t: oQuadroNaTela(congelar(x.q)) }));
+
+  /* A ETAPA: chave opaca — agrupa as cartas da mesma etapa, e só isso */
+  let pares = 0, tortos = 0;
+  for (const { q, t: qt } of telas) {
+    const es = q.cartas.map((c, i) => ({ c, k: qt.cartas[i].etapa })).filter(({ c }) => c.tipo === "essencial");
+    for (let i = 0; i < es.length; i++) for (let j = i + 1; j < es.length; j++) {
+      pares++;
+      if ((es[i].c.etapa === es[j].c.etapa) !== (es[i].k === es[j].k)) tortos++;
+    }
+  }
+  t(`a etapa de tela agrupa como a do motor: a mesma etapa, a mesma chave; outra etapa, outra chave (${pares} pares)`, pares > 0 && tortos === 0, `${tortos} tortos`);
+  const ess = telas.flatMap(({ q, t: qt }) => q.cartas.map((c, i) => ({ q, c, k: qt.cartas[i].etapa })).filter(({ c }) => c.tipo === "essencial"));
+  t("a chave não deixa ler o id da etapa nem o da quest", ess.every(({ q, c, k }) => typeof k === "string" && k.length > 0 && !k.includes(c.etapa) && !k.includes(q.quest)));
+  const porEtapa = new Map();
+  for (const { q, c, k } of ess) { const id = `${q.quest}|${c.etapa}`; if (!porEtapa.has(id)) porEtapa.set(id, new Set()); porEtapa.get(id).add(k); }
+  t(`estável: a mesma etapa dá a mesma chave em todos os arcos, sementes e momentos (${porEtapa.size} etapas)`, [...porEtapa.values()].every((s) => s.size === 1));
+  t("e etapas diferentes de quests diferentes não se confundem", new Set([...porEtapa.values()].map((s) => [...s][0])).size === porEtapa.size);
+  t("a extra não tem etapa", telas.every(({ t: qt }) => qt.cartas.filter((c) => c.tipo === "extra").every((c) => c.etapa === null)));
+
+  /* O SOBRE: do que a extra trata, com o vilão como o herói o conhece */
+  const extras = telas.flatMap(({ x, F, q, t: qt }) => q.cartas.map((c, i) => ({ F, q, c, k: qt.cartas[i] })).filter(({ c }) => c.tipo === "extra"));
+  t(`cada uma das ${extras.length} extra diz do que trata, e não é a forma`, extras.length > 0 && extras.every(({ k }) => typeof k.sobre === "string" && k.sobre.length > 0 && k.sobre !== k.costas));
+  t("a essencial não tem sobre", telas.every(({ t: qt }) => qt.cartas.filter((c) => c.tipo === "essencial").every((c) => c.sobre === "")));
+  const doFio = (F) => Object.keys(F.papeis).filter((k) => F.papeis[k].de === "fio");
+  const temVilao = (F) => Object.values(F.papeis).some((d) => d.de === "fio" && d.papel === "vilao");
+  t("nenhum nome da gente do vilão (que o herói não viu) chega ao sobre", extras.every(({ F, k }) => doFio(F).every((p) => !k.sobre.includes(`Pessoa ${p}`))));
+  const comPapel = extras.filter(({ F }) => temVilao(F));
+  t(`com o papel do vilão na quest, o sobre diz-lhe a alcunha (${comPapel.length} extra)`, comPapel.length > 0 && comPapel.every(({ k }) => !k.sobre.includes(SOBRE_DA_EXTRA.semNome)));
+  t("sem papel nem vilão sabido, o sobre não diz nome nenhum", extras.filter(({ F }) => !temVilao(F)).every(({ k }) => k.sobre.includes(SOBRE_DA_EXTRA.semNome)));
+  const tipos = new Set(extras.map(({ c }) => c.id));
+  t("as três extra têm sobre na tabela", Object.keys(EXTRAS_DO_QUADRO).every((k) => typeof SOBRE_DA_EXTRA[k] === "string") && tipos.size >= 2);
+  /* o herói viu o vilão frente a frente: o nome entra */
+  const xv = com.find((x) => temVilao(x.F) && x.q.cartas.some((c) => c.tipo === "extra"));
+  const pv = Object.keys(xv.F.papeis).find((k) => xv.F.papeis[k].papel === "vilao");
+  const nomeV = `Pessoa ${pv}`;
+  const viu = congelar({ ...e0, factos: garantirFactos({ pessoas: { [`npc|${nomeV}`]: { nome: nomeV, visto: { de: 1, ate: 1, vezes: 1, turno: 1 } } } }) });
+  const qv = oQuadroDaQuest(xv.R, viu, { arco: xv.arco, semente: xv.semente });
+  t("visto o vilão, o sobre diz-lhe o nome", oQuadroNaTela(qv).cartas.filter((c) => c.tipo === "extra").every((c) => c.sobre.includes(nomeV)));
+
+  /* o mundo de mistério com o vilão do fio (o de §13): sem papel na quest, o
+     nome dele só depois de visto */
+  const semente = "QQ1|0";
+  const mundo = { semente };
+  const cat = BIBLIOTECA_DE_QUESTS.filter((q) => ["o_que_desce_ao_anoitecer", "o_ultimo_a_sair"].includes(q.id));
+  const mapa = gerarGeografia(semente, null, null);
+  const espinha0 = estenderEspinha({ semente, mapa, estrutura: "misterio", cidadeInicial: mapa.cidades[0].nome, antecedente: "soldado", dia: 1 });
+  const nucleo = nucleoDaCampanha(semente, mapa, { espinha: espinha0, antecedente: "soldado", grupo: [] });
+  const esq = esqueletoDaCampanha({ semente, mapa, espinha: espinha0, antecedente: "soldado", nucleo, chefes: chefesDoMundo(semente, mapa), catalogo: cat });
+  let E = { espinha: comOEsqueleto(espinha0, esq), historia: garantirHistoria({ estrutura: "misterio", etapa: 0 }), mapa, cidadeAtual: mapa.cidades[0].nome, lugar: { nome: "o curral velho", cidade: mapa.cidades[0].nome }, jornada: null, personagem: { nome: "Vera", grupo: [], inventario: [], moedas: 100 }, npcs: {}, canone: {}, factos: garantirFactos(null), saber: [], dia: 6, npcTurno: 0 };
+  E = congelar({ ...E, ...oTurnoDasQuests(E, { mundo }).estado });
+  const fio = E.espinha.fio || {};
+  const doMundo = osQuadrosDoEstado(E, { mundo }).filter((q) => !temVilao(BIBLIOTECA_DE_QUESTS.find((F) => F.id === q.quest)));
+  const sobres = doMundo.flatMap((q) => oQuadroNaTela(q).cartas.filter((c) => c.tipo === "extra").map((c) => c.sobre));
+  t(`no mundo com vilão, o nome e o título dele não chegam ao sobre antes de ele se mostrar (${sobres.length} extra)`, sobres.length > 0 && !!fio.antagonista
+    && sobres.every((s) => !s.includes(fio.antagonista) && !(fio.titulo && s.includes(fio.titulo))), J(sobres));
+  const Ev = { ...E, factos: garantirFactos({ pessoas: { [`npc|${fio.antagonista}`]: { nome: fio.antagonista, visto: { de: 6, ate: 6, vezes: 1, turno: 1 } } } }) };
+  const sobresV = osQuadrosDoEstado(Ev, { mundo }).filter((q) => doMundo.some((d) => d.quest === q.quest))
+    .flatMap((q) => oQuadroNaTela(q).cartas.filter((c) => c.tipo === "extra").map((c) => c.sobre));
+  t("e depois de visto, o sobre diz-lhe o nome", sobresV.length > 0 && sobresV.every((s) => s.includes(fio.antagonista)), J(sobresV));
+
+  /* O DIA: de costas não há; virada, o dia em que virou */
+  t("de costas, perdida ou por vir, a carta não tem dia", telas.every(({ t: qt }) => qt.cartas.filter((c) => c.estado !== "virada" && c.estado !== "preco").every((c) => c.dia === null)));
+  const xm = com.find((x) => x.arco === "misterio" && x.q.cartas.some((c) => c.tipo === "essencial" && c.viravel) && x.q.cartas.some((c) => c.tipo === "extra" && c.viravel));
+  const cm = xm.q.cartas.find((c) => c.tipo === "essencial" && c.viravel);
+  const vm = virarCarta(xm.q, { desafio: cm.caminhos[0].desafios[0], resultado: "falha", total: 2, dc: 18 }, { carta: cm.id, caminho: cm.caminhos[0].id, dia: 7 });
+  const ce = xm.q.cartas.find((c) => c.tipo === "extra" && c.viravel);
+  const ve = virarCarta(xm.q, { desafio: ce.caminhos[0].desafios[0], resultado: "sucesso", total: 20, dc: 10 }, { carta: ce.id, caminho: ce.caminhos[0].id, memoria: vm.memoria, dia: 9 });
+  t("o momento da viragem já traz o dia (a essencial com preço, a extra)", vm.carta.dia === 7 && ve.carta.dia === 9 && aCartaNaTela(vm.carta).dia === 7);
+  const qm = oQuadroNaTela(oQuadroDaQuest(xm.R, { ...e0, quadro: ve.memoria }, { arco: "misterio", semente: xm.semente }));
+  t("e o quadro seguinte lê-o da memória: o fio de lacre segue a ordem real", qm.cartas.find((c) => c.id === cm.id).dia === 7 && qm.cartas.find((c) => c.id === ce.id).dia === 9);
+  const vq = virarCarta(xm.q, { desafio: ce.caminhos[0].desafios[0], resultado: "falha", total: 2, dc: 18 }, { carta: ce.id, caminho: ce.caminhos[0].id, dia: 9 });
+  t("a extra que só queimou um caminho continua sem dia", vq.carta.dia == null && aCartaNaTela(vq.carta).dia === null);
+  /* virada pelo livro, sem o dado: o dia do facto */
+  t("as marcas do livro que datam a carta existem nas pistas do passo", Object.keys(DIA_DA_CARTA).every((p) => PISTAS_DO_PASSO[p]));
+  const xd = com.find((x) => x.q.cartas.some((c) => c.tipo === "essencial" && c.escreve.predicado === "descobriu" && c.escreve.id && c.etapa === x.etapa.id));
+  const cd = xd.q.cartas.find((c) => c.tipo === "essencial" && c.escreve.predicado === "descobriu" && c.escreve.id && c.etapa === xd.etapa.id);
+  const Ed = { ...e0, factos: garantirFactos({ lugares: { [cd.escreve.id]: { nome: cd.escreve.nome, descobriu: { dia: 4 } } } }) };
+  const cd2 = oQuadroNaTela(oQuadroDaQuest(xd.R, Ed, { arco: xd.arco, semente: xd.semente })).cartas.find((c) => c.id === cd.id);
+  t("descoberta pelo livro (o Cronista, a busca), a carta traz o dia do facto", cd2.estado === "virada" && cd2.dia === 4, J(cd2 && { e: cd2.estado, d: cd2.dia }));
+  const xc = com.find((x) => x.arco === "misterio" && x.q.cartas.some((c) => c.tipo === "essencial" && c.escreve.predicado === "conversou" && c.etapa === x.etapa.id));
+  const cc = xc.q.cartas.find((c) => c.tipo === "essencial" && c.escreve.predicado === "conversou" && c.etapa === xc.etapa.id);
+  const Ec = { ...e0, factos: garantirFactos({ pessoas: { [`npc|${cc.escreve.nome}`]: { nome: cc.escreve.nome, falou: { de: 3, ate: 5, vezes: 2, turno: 9 } } } }) };
+  const cc2 = oQuadroNaTela(oQuadroDaQuest(xc.R, Ec, { arco: "misterio", semente: xc.semente })).cartas.find((c) => c.id === cc.id);
+  t("a conversa pelo livro: o primeiro dia em que falaram", cc2.estado === "virada" && cc2.dia === 3, J(cc2 && { e: cc2.estado, d: cc2.dia }));
+  /* o objeto na bolsa (o livro não o data): o dia em que a etapa ficou feita;
+     e a etapa dele não é a de agora — a gaveta já não o põe em «agora» */
+  const xt = com.find((x) => x.q.cartas.some((c) => c.tipo === "essencial" && c.escreve.predicado === "tem" && c.sobra)
+    && x.q.cartas.some((c) => c.tipo === "essencial" && c.etapa === x.etapa.id));
+  const ct = xt.q.cartas.find((c) => c.tipo === "essencial" && c.escreve.predicado === "tem" && c.sobra);
+  const Et = { ...e0, personagem: { ...e0.personagem, inventario: [{ nome: ct.escreve.nome, qtd: 1 }] } };
+  const qtv = oQuadroDaQuest(xt.R, Et, { arco: xt.arco, semente: xt.semente });
+  const tt = oQuadroNaTela(qtv);
+  const ct2 = tt.cartas.find((c) => c.id === ct.id);
+  const dAgora = tt.cartas.filter((c, i) => qtv.cartas[i].tipo === "essencial" && qtv.cartas[i].etapa === xt.etapa.id).map((c) => c.etapa);
+  t("o objeto que já se tem: virado, com o dia da etapa feita", ct2.estado === "virada" && ct2.dia === xt.R.feitas[ct.etapa].dia, J(ct2 && { e: ct2.estado, d: ct2.dia }));
+  t("e a etapa dele é outra que a de agora (a virada de uma etapa feita não cai em «agora»)", dAgora.length > 0 && dAgora.every((k) => k !== ct2.etapa));
+
+  /* O TIPO da quest no quadro de tela */
+  t("o quadro de tela diz o tipo da quest", telas.every(({ q, t: qt }) => qt.tipo === q.tipo && Object.prototype.hasOwnProperty.call(TIPOS_DE_QUEST, qt.tipo)));
+  t("e os dois tipos aparecem no catálogo", Object.keys(TIPOS_DE_QUEST).every((k) => telas.some(({ t: qt }) => String(qt.tipo) === k)));
+  t("um tipo que não é da tabela não passa", [3, "1", null, 1.5, -1].every((tp) => oQuadroNaTela({ quest: "x", tipo: tp }).tipo === null));
+
+  /* nada disto vai ao save: a memória continua com os mesmos campos */
+  const campos = new Set(Object.values(ve.memoria.cartas).flatMap((r) => Object.keys(r)));
+  t("nada disto entra no save: a memória guarda o que guardava", [...campos].every((k) => ["dia", "como", "caminho", "preco", "queimados"].includes(k)), [...campos].join(","));
+  t("o lixo não lança, e não inventa os campos novos", [{ forma: "lugar" }, { forma: "pessoa", tipo: "extra", sobre: 3, dia: "ontem", estado: "virada" }, { forma: "objeto", etapa: 5, chave: null }]
+    .every((c) => { const k = aCartaNaTela(c); return k && k.dia === null && typeof k.sobre === "string" && (k.etapa === null); }));
 }
 
 console.log(`\n${bons} ok, ${maus} falhas`);

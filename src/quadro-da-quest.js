@@ -49,7 +49,8 @@
    os minutos de cada caminho (do catálogo), os números do preço já
    multiplicados pelo peso do arco, e a carta «para a tela» (aCartaNaTela,
    oQuadroNaTela) — sem o `juiz`, sem o átomo, sem nome que o herói ainda
-   não viu. Antes da rolagem, aCartaEmJogo diz se um teste vira uma carta e
+   não viu (Q4: mais a etapa como chave opaca, o dia em que a carta virou,
+   o `sobre` das extra e o tipo da quest). Antes da rolagem, aCartaEmJogo diz se um teste vira uma carta e
    o que custa falhá-lo. E o preço faz o que diz: aplicarPrecoDoQuadro põe
    no estado o vilão avisado, o relógio dele adiantado e as moedas (pelas
    portas do fim do turno, motor/quests-do-turno.js), e devolve à fiação o
@@ -59,8 +60,8 @@
    da semente do mundo pela quest e pela carta — o mesmo quadro em qualquer
    máquina. O estado recebido nunca é mutado; o `null` e o lixo não lançam.
    ============================================================ */
-import { questPorId, avancarQuest, estadoDaQuest, PAPEIS_DA_QUEST } from "./biblioteca-de-quests.js";
-import { avaliarCondicao } from "./condicoes-da-quest.js";
+import { questPorId, avancarQuest, estadoDaQuest, PAPEIS_DA_QUEST, TIPOS_DE_QUEST } from "./biblioteca-de-quests.js";
+import { avaliarCondicao, resolverPapeis } from "./condicoes-da-quest.js";
 import { garantirQuestsDaEspinha, aplicarEfeitosNoEstado, QUESTS_DO_TURNO } from "./motor/quests-do-turno.js";
 import { garantirEsqueleto } from "./esqueleto.js";
 import { garantirHistoria } from "./historia.js";
@@ -200,6 +201,34 @@ export const CAMINHOS_DA_EXTRA = Object.freeze([
   cam("lembrar", "nenhuma", ["lembrar", "heraldica"], "puxar pelo que se conta: {sobre}", "lembrado do que se conta"),
   cam("seguir", "cidade", ["seguir_alguem", "rastrear"], "seguir quem lhe leva os recados, até {sobre}", "visto ao seguir quem lhe leva os recados"),
 ]);
+
+/* Q4 (14/11, o pedido do `aprendiz`): do que a extra trata, para a tela —
+   o subtítulo da carta e o «perdeu-se o rasto: …». Sem isto a tela caía na
+   forma («uma pessoa»), que diz o que a carta esconde e não o que se
+   procura. `{vilao}`: o vilão como o herói o conhece — o nome, se já o viu
+   frente a frente; a alcunha do papel da quest, se não; e, sem papel nem
+   encontro, `semNome` (o nome de verdade e o título dele são do bastidor
+   até ele se mostrar: plano-do-vilao.js, LINHA_DO_VILAO). O `{vilao}` é
+   sempre objeto direto: as alcunhas começam por artigo («o que desce ao
+   anoitecer»), e uma preposição antes dele daria «a o». */
+export const SOBRE_DA_EXTRA = Object.freeze({
+  fraqueza: "o que pode derrubar {vilao}",
+  cumplice: "quem serve {vilao}",
+  vantagem: "como surpreender {vilao}",
+  semNome: "quem manda nisto",
+});
+
+/* Q4: o dia em que uma essencial virou, para o fio de lacre seguir a ordem
+   real. Primeiro a memória do quadro (estado.quadro: virou pelo dado); sem
+   ela, o facto do livro que a virou, por predicado — `livro`: a entrada do
+   livro de factos, `facto`: a marca, `campo`: o dia dela (`de` é o primeiro
+   dia de uma marca que se repete). O que o livro não data (a consulta, o
+   objeto na bolsa) cai no dia em que a etapa ficou feita, e sem isso não
+   se sabe (null). */
+export const DIA_DA_CARTA = Object.freeze({
+  descobriu: Object.freeze({ livro: "lugares", facto: "descobriu", campo: "dia" }),
+  conversou: Object.freeze({ livro: "pessoas", facto: "falou", campo: "de" }),
+});
 
 /* as vantagens no confronto, em mundo (a extra «vantagem» escolhe uma pela
    semente) */
@@ -457,6 +486,8 @@ function sinalDe(cartas) {
        cartas: [{ id, chave, tipo: "essencial"|"extra", forma, costas,
                   estado: "costas"|"virada"|"preco"|"perdida",
                   etapa, viravel, futura, sobra, face, de, preco, linha,
+                  dia (Q4: o dia em que virou, DIA_DA_CARTA; null de costas
+                    ou sem registo), sobre (Q4, só a extra: SOBRE_DA_EXTRA),
                   efeitos (Q2b: os do preço, × peso; null sem preço),
                   caminhos: [{ id, diz, desafios, pericias, minutos, custa?,
                     seFalhar: [{ id, leve, efeitos }] }],
@@ -500,6 +531,27 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
     const aberta = R.estado === "aberta" && v.acesa;
     const cartas = [];
     const vistas = new Set();
+    /* Q4: o dia em que a essencial virou (DIA_DA_CARTA) — a memória, o
+       facto do livro pelo id do papel (o mesmo que as condições leem), e o
+       dia da etapa feita */
+    let ids = null;
+    const idDe = (papel) => {
+      if (!ids) { try { ids = resolverPapeis(papeis, E, { mundo: obj(o.mundo) }).papeis; } catch { ids = {}; } }
+      const x = obj(ids[papel]);
+      return x && typeof x.id === "string" ? x.id : "";
+    };
+    const diaDaEssencial = (pred, papel, m, etapa, est) => {
+      if (est === "costas") return null;
+      if (m && (m.como === "limpa" || m.como === "preco")) return m.dia;
+      const D = DIA_DA_CARTA[pred];
+      const id = D ? idDe(papel) : "";
+      const marca = id ? obj((obj((obj(E.factos) || {})[D.livro]) || {})[id]) : null;
+      const doLivro = marca && obj(marca[D.facto]) ? inteiro(marca[D.facto][D.campo]) : null;
+      if (doLivro != null) return Math.max(0, doLivro);
+      const feita = obj(obj(R.feitas) && R.feitas[etapa.id]);
+      const doPasso = feita ? inteiro(feita.dia) : null;
+      return doPasso == null ? null : Math.max(0, doPasso);
+    };
 
     /* AS ESSENCIAIS, etapa a etapa: as feitas, a de agora e (no mistério)
        as por vir */
@@ -530,6 +582,7 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
         cartas.push({
           id, chave, tipo: "essencial", forma: P.forma, costas: FORMAS_DA_CARTA[P.forma].costas,
           estado: est, etapa: etapa.id, futura, sobra: feita && est === "costas",
+          dia: diaDaEssencial(a[0], papel, m, etapa, est),
           viravel: aberta && atual && est === "costas",
           face: est === "costas" ? "" : encher(FORMAS_DA_CARTA[P.forma].face, { nome }),
           de: est === "costas" ? "" : caminho ? encher(caminho.de, { nome }) : "",
@@ -565,6 +618,15 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
       const doVilao = [fio.antagonista, fio.titulo];
       for (const [k, d] of Object.entries(F.papeis)) if (obj(d) && d.de === "fio") doVilao.push((obj(papeis[k]) || {}).nome, nomeVisto(k));
       const juizDaExtra = { nomes: nomesUnicos(doVilao), cidade: "", nasce: null, id: "" };
+      /* Q4: o vilão para a tela (SOBRE_DA_EXTRA) — o papel dele na quest
+         (o nome visto ou a alcunha); sem papel, o nome do fio só se o herói
+         já o viu frente a frente; senão, nenhum nome */
+      const pVilao = Object.keys(F.papeis).find((k) => { const d = obj(F.papeis[k]); return !!d && d.de === "fio" && d.papel === "vilao"; });
+      const antagonista = typeof fio.antagonista === "string" ? fio.antagonista.trim() : "";
+      let vilaoNaTela = pVilao ? nomeVisto(pVilao) : "";
+      if (!vilaoNaTela && antagonista) {
+        try { if (avaliarCondicao(["conheceu", "papel:vilao"], { estado: E, papeis: { vilao: { tipo: "pessoa", nome: antagonista } }, mundo: obj(o.mundo) })) vilaoNaTela = antagonista; } catch { /* sem nome */ }
+      }
       const ordem = dadoDe(semente, F.id, "extras");
       const sorteadas = possiveis.map((x) => ({ x, r: ordem() })).sort((a, b) => a.r - b.r).slice(0, arco.extras).map((y) => y.x);
       for (const x of sorteadas) {
@@ -579,6 +641,8 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
         cartas.push({
           id: `extra:${x.tipo}`, chave: x.id, tipo: "extra", forma: x.forma, costas: FORMAS_DA_CARTA[x.forma].costas,
           estado: est, etapa: null, futura: false, sobra: false,
+          dia: virou ? m.dia : null,
+          sobre: encher(SOBRE_DA_EXTRA[x.tipo], { vilao: vilaoNaTela || SOBRE_DA_EXTRA.semNome }),
           viravel: aberta && est === "costas",
           face: est === "virada" ? encher(X.face, { o: x.o, nome: x.nome }) : "",
           de: est === "virada" && m.caminho ? encher((todos.find((c) => c.id === m.caminho) || { de: "" }).de, { sobre }) : "",
@@ -639,7 +703,7 @@ export function virarCarta(quadro, veredito, contexto) {
 
     if (carta.tipo === "extra") {
       if (sucesso) {
-        return { carta: { ...carta, estado: "virada", viravel: false }, preco: null, custo, escreve: null, achado: null, perdeu: null,
+        return { carta: { ...carta, estado: "virada", viravel: false, dia }, preco: null, custo, escreve: null, achado: null, perdeu: null,
           memoria: novaMemoria({ dia, como: "limpa", caminho: caminho.id, ...(antes && antes.queimados ? { queimados: antes.queimados } : {}) }) };
       }
       const queimados = [...new Set([...arr(antes && antes.queimados), caminho.id])];
@@ -662,7 +726,7 @@ export function virarCarta(quadro, veredito, contexto) {
       : null;
     const def = arr(CAMINHOS_DA_CARTA[carta.forma]).find((x) => x.id === caminho.id) || { de: "" };
     return {
-      carta: { ...carta, estado: sucesso ? "virada" : "preco", viravel: false, preco: preco ? preco.id : null, linha: preco ? preco.linha : "", efeitos: preco ? preco.efeitos : null,
+      carta: { ...carta, estado: sucesso ? "virada" : "preco", viravel: false, dia, preco: preco ? preco.id : null, linha: preco ? preco.linha : "", efeitos: preco ? preco.efeitos : null,
         face: encher(FORMAS_DA_CARTA[carta.forma].face, { nome: w.nome || "" }), de: encher(def.de, { nome: w.nome || "" }) },
       preco, custo, escreve: { ...w, porta: PORTA_DA_CARTA[w.predicado] || null }, achado, perdeu: null,
       memoria: novaMemoria({ dia, como: sucesso ? "limpa" : "preco", caminho: caminho.id, ...(preco ? { preco: preco.id } : {}) }),
@@ -936,9 +1000,10 @@ export function aCartaDoGesto(quadros, gesto, onde) {
    A CARTA PARA A TELA (Q2b) — o contrato com a peça (painel-quadro.jsx)
    A tela não leva o bastidor: nem o `juiz` (o nome de verdade, a cidade,
    onde o objeto nasce), nem o átomo que a carta escreve (`escreve`, com o
-   id do registo), nem a chave do save, nem a etapa, nem os ids dos
-   desafios. O que vai já esconde o nome de quem o herói não viu (`face`,
-   `de` e `diz` saem do nome visto, a alcunha). Lista branca: o que não
+   id do registo), nem a chave do save, nem o id da etapa (vai só a chave
+   opaca, Q4), nem os ids dos desafios. O que vai já esconde o nome de quem
+   o herói não viu (`face`, `de`, `diz` e `sobre` saem do nome visto, a
+   alcunha). Lista branca: o que não
    está aqui não passa, e um campo novo no quadro não vaza sozinho.
    ============================================================ */
 const texto = (x) => (typeof x === "string" ? x : "");
@@ -958,17 +1023,40 @@ const caminhoNaTela = (k) => {
   };
 };
 
+/* Q4: a etapa para a tela é uma chave OPACA — serve para agrupar as cartas
+   da mesma etapa (a gaveta do mistério), e nada mais: um resumo da quest e
+   da etapa, que não deixa ler o id interno (os ids das etapas são palavras
+   da ficha) nem a ordem. Estável: a mesma etapa dá a mesma chave em todos
+   os turnos, mesmo quando uma reviravolta abre outra antes dela. */
+const etapaOpaca = (chave, etapa) => {
+  if (typeof etapa !== "string" || !etapa) return null;
+  const quest = typeof chave === "string" ? chave.split("|")[0] : "";
+  return `e${hashSemente(`${quest}|${etapa}`).toString(36)}`;
+};
+const diaNaTela = (C) => {
+  const d = C.estado === "virada" || C.estado === "preco" ? inteiro(C.dia) : null;
+  return d == null ? null : Math.max(0, d);
+};
+
 /* aCartaNaTela(carta) → null | { id, tipo, forma, costas, estado, viravel,
-     futura, sobra, face, de, preco, linha, efeitos, caminhos: [{ id, diz,
-     pericias, minutos, custa?, seFalhar: [{ id, leve, efeitos }] }] } */
+     futura, sobra, etapa, dia, sobre, face, de, preco, linha, efeitos,
+     caminhos: [{ id, diz, pericias, minutos, custa?, seFalhar: [{ id, leve,
+     efeitos }] }] }
+   Q4: `etapa` — a chave opaca (null na extra); `dia` — o dia em que virou
+   (null de costas, perdida, ou sem registo); `sobre` — do que a extra trata
+   ("" na essencial). */
 export function aCartaNaTela(carta) {
   try {
     const C = obj(carta);
     if (!C || !FORMAS_DA_CARTA[C.forma]) return null;
+    const tipo = CARTA_DO_TESTE.ordem.includes(C.tipo) ? C.tipo : CARTA_DO_TESTE.ordem[0];
     return {
-      id: texto(C.id), tipo: CARTA_DO_TESTE.ordem.includes(C.tipo) ? C.tipo : CARTA_DO_TESTE.ordem[0],
+      id: texto(C.id), tipo,
       forma: C.forma, costas: texto(C.costas) || FORMAS_DA_CARTA[C.forma].costas,
       estado: texto(C.estado), viravel: !!C.viravel, futura: !!C.futura, sobra: !!C.sobra,
+      etapa: tipo === "extra" ? null : etapaOpaca(C.chave, C.etapa),
+      dia: diaNaTela(C),
+      sobre: tipo === "extra" ? texto(C.sobre) : "",
       face: texto(C.face), de: texto(C.de),
       preco: PRECO_DA_FALHA[C.preco] ? C.preco : null, linha: texto(C.linha),
       efeitos: Array.isArray(C.efeitos) ? C.efeitos.filter(obj).map((e) => ({ ...e })) : null,
@@ -977,17 +1065,20 @@ export function aCartaNaTela(carta) {
   } catch { return null; }
 }
 
-/* oQuadroNaTela(quadro) → null | { quest, titulo, pergunta, misterio,
+/* oQuadroNaTela(quadro) → null | { quest, tipo, titulo, pergunta, misterio,
      sinal: { sabe, de }, cartas: [aCartaNaTela] }
    `misterio`: o arco pesa mais do que o padrão (o momento demora-se mais,
-   formas.md §QQ 4). Sem a semente, sem o tipo da quest, sem os ganhos. */
+   formas.md §QQ 4). `tipo` (Q4): o da quest (TIPOS_DE_QUEST: 1 o enredo do
+   lugar, 2 o que acompanha o herói), null se não for um deles. Sem a
+   semente, sem os ganhos. */
 export function oQuadroNaTela(quadro) {
   try {
     const Q = obj(quadro);
     if (!Q || typeof Q.quest !== "string") return null;
     const cartas = arr(Q.cartas);
     return {
-      quest: Q.quest, titulo: texto(Q.titulo), pergunta: texto(Q.pergunta),
+      quest: Q.quest, tipo: Object.prototype.hasOwnProperty.call(TIPOS_DE_QUEST, Q.tipo) && Number.isInteger(Q.tipo) ? Q.tipo : null,
+      titulo: texto(Q.titulo), pergunta: texto(Q.pergunta),
       misterio: arcoDe(Q.arco).peso > QUADRO_POR_ARCO.padrao.peso,
       sinal: sinalDe(cartas),
       cartas: cartas.map(aCartaNaTela).filter(Boolean),
