@@ -19419,3 +19419,398 @@ podem comparar depois («você foi pela Alfândega? eu desci ao Malho»). Custa 
 leitura de `?mesa=` na chegada; nenhum campo de save, nenhuma infra; a semente não é dado pessoal.
 É o que faz um jogo de um jogador só passar de mão em mão — e é a única porta de entrada que um
 link sozinho consegue abrir já com a mesa posta.
+
+
+---
+
+## A Mesa do Mestre · F4 · o encontro e a luta (`desenho`, 16/11/2026)
+
+O lote **F4** da planta (`mente/lancamento/arquitetura.md` §1.5 momentos 2 e 5, §2 F). Fala a língua do
+F1, do F2 e do F3 (acima): mesmas variáveis, mesmos estilos de texto, mesmas sombras. Fecha o tapete
+provisório do F2. **Só Figma e este arquivo; nenhum código tocado.** Geração de imagem por IA: **0
+chamadas** — as feras e os heróis são as matrizes PNG de `mente/figma/matrizes`, o deserto é
+`public/terrenos/deserto.jpg`, e todo o resto (tapete, chão, peças, superfícies, objetos) é vetor.
+
+**Onde está.** Arquivo `e5wJUzInAssoebx5npssKc`, página `10 · A Mesa do Mestre` (`266:67`), de y 34400
+para baixo. Imagens em `mente/lancamento/figma/F4-*.png`.
+
+| quadro | nó | imagem |
+|---|---|---|
+| 00 · Acervo (feras, capturas, os 15 ladrilhos e os ajudantes `316:10007`) | `314:10007` | — |
+| 01 · As peças da luta (componentes `A peça` `323:13441`, `A carta de ação` `323:13467`, mostruário) | `323:13364` | `F4-pecas.png` |
+| 07 · O chão das dez plantas | `323:13758` | `F4-7-chao-das-dez-plantas.png` |
+| 1 · O encontro 1440 (antes `320:11340`, medidas `320:11343`) | `320:10847` | `F4-1-encontro-1440.png` |
+| 1 · O encontro 375 | `320:11259` | `F4-1-encontro-375.png` |
+| 2.1 · O tapete se desenrola · 0 ms, o toque | `320:11351` | `F4-2-tapete-1-o-toque.png` |
+| 2.2 · 120–620 ms, a página recua e o tapete corre | `320:11722` | `F4-2-tapete-2-desenrola.png` |
+| 2.3 · 620–1 100 ms, as peças pousam | `320:12018` | `F4-2-tapete-3-as-pecas-pousam.png` |
+| 2.4 · 1 100 ms, a vez começa (medidas `320:12719`) | `320:12321` | `F4-2-tapete-4-a-vez-comeca.png` |
+| 3a · A mesa de batalha 1440 × 900 · dia (antes `319:10618`, medidas `319:10621`) | `318:10189` | `F4-3a-batalha-1440-dia.png` |
+| 3b · O dado cai ao lado do alvo | `319:10176` | `F4-3b-o-dado-no-alvo.png` |
+| 3c · A mesa de batalha 1280 × 720 | `319:10631` | `F4-3c-batalha-1280.png` |
+| 3d · De noite | `319:11026` | `F4-3d-batalha-noite.png` |
+| 3e · Na luz de tochas (caverna, as seis superfícies) | `319:11433` | `F4-3e-batalha-luz-de-tochas.png` |
+| 4 · A reação 1440 (antes `321:12444`, medidas `321:12447`) | `321:12065` | `F4-4-reacao-1440.png` |
+| 5.1 · Dano no herói | `321:12457` | `F4-5-1-dano-no-heroi.png` |
+| 5.2 · O crítico | `321:12831` | `F4-5-2-critico.png` |
+| 5.3 · O inimigo cai | `321:13252` | `F4-5-3-o-inimigo-cai.png` |
+| 5.4 · O golpe final | `321:13650` | `F4-5-4-golpe-final.png` |
+| 6 · A vitória 1440 (antes `322:13336`, medidas `322:13567`) | `322:12949` | `F4-6-vitoria-1440.png` |
+| 6 · A derrota: o cativeiro | `322:13339` | `F4-6-derrota-cativeiro-1440.png` |
+| 8 · Celular: o tapete e a mão de ações (antes `322:14123`, medidas `322:14125`) | `322:13576` | `F4-8-celular-tapete.png` |
+| 8 · Celular: a reação | `322:13765` | `F4-8-celular-reacao.png` |
+| 8 · Celular: a vitória | `322:13933` | `F4-8-celular-vitoria.png` |
+
+### 1 · As decisões que mais mudam a experiência
+
+1. **O tapete abre em 1,1 s, não em ~30 s.** «Lutar» pede a narração e desenrola o tapete no mesmo
+   toque; a narração da entrada chega depois, numa **tira do Mestre** ao lado, e nunca segura a vez.
+2. **O tapete é um objeto, e o chão é do lugar.** Couro com costura e tachas de latão, a régua A–R e
+   1–12 gravada na borda (logo, sempre à vista), o chão pintado por dentro por material (relva, terra,
+   cascalho…). Tem exatamente a altura das filas: acabou a metade vazia.
+3. **As figuras são peças.** O **aro é a vida** (um arco que encurta), o lado é a cor do aro **e** a
+   conta numerada, e **só quem age é âmbar** — de qualquer lado. Caído = a peça vira o verso de osso
+   com a caveira e fica na casa.
+4. **As intenções fundem-se por alvo**: uma etiqueta no campo («3× 2–10») e uma linha na nota do
+   Mestre («3× Rato Gigante · 2–10 cada → Saoirse · se os três acertarem, de 6 a 30»).
+5. **A mão de ações fica na beira da mesa, com o custo escrito em cada carta** («ação», «passo · até
+   9 m», «3 golpes livres»). Armada = osso com borda de tinta. O que o herói ainda tem na vez (ação,
+   reação, passo) são peças sob a carta dele: cheia = livre, tracejada = gasta.
+6. **A reação abre no lugar da mão de ações, fora do campo**, com o custo, o resultado («você leva
+   3») e uma **vela que queima**; só abre quando há escolha.
+7. **O golpe sente-se**: a carta do herói treme e saltam lascas de lacre; o 20 é a cerimônia do F2
+   sobre o tapete; a peça tomba. O golpe final **para a mesa** («Como você quer fazer isso?»).
+8. **A vitória é cerimônia e a derrota é história**: cartas que viram, XP que conta, moedas que voam,
+   o lacre; e, ao cair, o tapete enrola-se e a página volta com o cativeiro como cena.
+9. **O encontro é escrito na página** (sai o modal): os inimigos são cartas em leque, as opções são
+   propostas com dado, e tocar a proposta é a escolha — sem botão repetido.
+
+### 2 · Tokens e tabelas novas (nome → valor)
+
+Nenhuma variável nova no Figma: tudo sai das 38 do F1/F2. As cores do chão e das superfícies são
+**literais de tabela** (como `OBJETOS_DA_MESA`), porque são pintura, não interface.
+
+**`MESA_DE_BATALHA` (substitui as medidas de B1/B1b/B1c no monitor):**
+
+| | 1440 × 900 | 1280 × 720 |
+|---|---|---|
+| zona do tapete e da mão (x) | 196 → 1088 (892) | 156 → 952 (796) |
+| fila de iniciativa (y, escala) | 18 · 1 | 12 · 0,8 |
+| tapete (y, altura máxima) | 156 · 594 | 120 · 470 |
+| mão de ações (y, altura) | 762 · 112 | 600 · 100 |
+| coluna do grupo (x, y, escala da carta de pé) | 28 · 36 · 1 | 24 · 24 · 0,857 |
+| coluna direita (x, y, largura) | 1100 · 36 · 300 | 964 · 24 · 292 |
+
+`casa = mín((zona − borda − 8) ÷ colunas, (alturaMáxima − borda) ÷ filas)`, **piso 32, teto 64**;
+borda = `faixa + 14`, com `faixa` (onde vai a régua) = 28 se a casa ≥ 40, senão 24. Estrada 18 × 12:
+casa **46** a 1440 e **36** a 1280. Caverna 14 × 14: 39. Masmorra 7 × 18 a 1440: 32 (o piso; tapete de
+262 × 614, centrado — **não composto**). O tapete centra-se na zona. *Os quadros mostram o tapete em
+y 150 e a mão em y 756; vale o que está aqui (156 e 762): o nome de quem age pode ter duas linhas e
+precisa de 36 px.*
+
+**`TAPETE`** — couro `T.couroAlto`, borda `T.couroBaixo` 2, raio 10, sombra `pousado`; costura a 4 px
+da borda, `T.latao` a 55 %, 1 px, tracejado `5 4`; quatro tachas de latão de 8 a 9 px dos cantos; a
+faixa de cima e a da esquerda levam a régua (letras Cinzel 12, **números Spectral Bold 12** — o 1 do
+Cinzel lê-se I), em `T.inkMeio` (6,89 : 1 no couro); as outras duas bordas têm 14. O chão: uma camada
+por região com o ladrilho do material; a grade riscada (`#000` a 36 %, 1,25 px, mais um fio de
+`T.ink` a 10 % deslocado 1 px); borda interna `#000` a 55 %, 2 px. **Plaqueta de região**: latão,
+raio 2, Cinzel 12 em `T.couroBaixo` (6,12), a 5 px do canto da região — «NA VALA · ABRIGO», «NA
+ENCOSTA · PASSO DOBRADO». **Parede**: bloco `#241B14`, borda `#0D0907` 2, raio 3, um lume de 2 px
+(`T.ink` a 22 %) em cima.
+
+**`ALTURA_NO_TAPETE`** (forma, não cor): o calço clareia o chão `#FFF4DC` a `6 % × nível`; em cada
+lado que dá para chão mais baixo, linha `#000` a 62 % de 2,5 px + fio `T.ink` a 55 % de 1,25 px por
+dentro + **hachuras** de `3 + 2 × nível` px, a cada ⅓ de casa, apontando para o lado baixo; etiqueta
+30 × 18 em `ossoLume` com a seta e o número («↑ 1»). Chão abaixo: a mesma etiqueta com «↓».
+
+**`LUZ_DO_TAPETE`**: véu `#05080A` sobre o chão — `dia` 0 · `noite` 0,26 · `masmorra` 0,62 fora do
+halo. Na masmorra o halo centra-se em quem leva a tocha: transparente até `0,55 × raio`, véu cheio a
+`1,2 × raio`, com `raio = LUZ_DA_MESA.masmorra.haloRaio` (100 + 50 × tochas, teto 400), mais um
+radial `T.haloDaVela` 22 % → 0. **O véu escurece o chão, nunca as peças**: peças, etiquetas,
+plaquetas, objetos e selos ficam por cima.
+
+**`PECA_NO_TAPETE`** (componente `A peça`): diâmetro `0,88 × casa` (40 a 46; 32 a 36; 42 a 48); aro
+`máx(3, 0,09 × d)`; lado de 3 px por baixo (`lataoSombra` / `lacreSombra` / `#8A5A14`); sombra `#000`
+a 42 % deslocada (1, 5).
+
+| estado | o que muda |
+|---|---|
+| `nosso` | aro `T.latao` |
+| `deles` | aro `T.lacreLume` + conta de 18 (osso, borda tinta 1, número Spectral Bold 12) em baixo à direita |
+| `aVez` | aro `T.amber`, sobe 3 px, lume radial âmbar (60 % → 0) a +11 px |
+| `ferido` | o aro é um **arco** de `vida ÷ vidaMáx`, a partir das 12 h, sentido horário; o que falta é `couroBaixo` |
+| `alvo` | anel `T.ink` 2 px tracejado `4 4`, a +7 px |
+| `caido` | disco de `0,8 × d` em `T.osso` (lado `ossoSombra`, borda `tintaDim`) com a caveira em tinta; sem aro |
+| `erguido` (a pousar) | 14 px acima, sombra a 28 % |
+
+**`FILA_DE_INICIATIVA`**: cartas 60 × 84 (× 0,8 a 1280), raio 6, aro 2,5 (latão / lacre claro), sombra
+`peca`, passo **112**; a de quem age é × 1,2 (72 × 101), aro âmbar 3, sombra `erguido`; alinhadas por
+baixo. Nome **inteiro** por baixo, centrado, largura `passo − 4`, até duas linhas: Spectral 13 `T.ink`
+(quem age: Cinzel 13). Caído: carta de verso (`T.couro`, borda `lataoSombra`, caveira `inkMeio`) e nome
+riscado em `inkMeio`. Plaqueta «RODADA N» à esquerda. Com mais de 7 na fila, inimigos iguais e
+seguidos empilham numa carta com a conta («3×»). No celular: discos de 36 (quem age 44, aro âmbar 3),
+passo 42, e «A VEZ DE / NOME» em duas linhas à direita.
+
+**`INTENCAO`**: no campo, uma linha tracejada `5 4` de 1,75 px (`T.lacreLume`; o golpe em curso
+`T.amber`; o do herói `T.ink`; magia `T.violet`) de cada atacante ao alvo, e **uma** etiqueta por
+alvo: `ossoLume`, borda `perigoNaPagina` 1,5, raio 3, glifo 14 + Spectral Bold 14 `T.tinta`
+(«3× 2–10»), a 16 px da peça do alvo, do lado livre. Na coluna direita, a nota **«NESTA RODADA, ELES
+VÃO»**: papel 300 de largura, rodado −1°, uma entrada de 74 px por alvo: retratos de 30 em leque
+(passo 17), «3× Rato Gigante» (Proposta 16), «2–10 cada → Saoirse» (Spectral Bold 15,
+`perigoNaPagina`, 6,60) e, se houver mais de um, a soma («se os três acertarem, de 6 a 30»). A soma
+é conta do que já está na tela, não regra nova.
+
+**`CARTA_DE_ACAO`** (componente): 102 × 112 a 1440 (largura = `(zona − 70) ÷ 8`), 90 × 100 a 1280,
+85 × 80 no celular (2 filas de 4, 6 entre elas); raio 6; glifo 26 a 10 do topo; nome Cinzel 13 a 42;
+custo Spectral Medium 13 a 61 em `brasaNaPagina` (7,90) — ou `perigoNaPagina` (7,76) quando o custo é
+um perigo. `repouso`: chão `ossoLume`, borda `tintaDim` 1, sombra `peca`. `armada`: chão `T.osso`,
+borda `T.tinta` 2, sobe 8 px, sombra `erguido`. `impedida`: sem chão, borda `inkMeio` tracejada
+`4 4`, letra `T.ink`, **a razão no lugar do custo** («já agiu»). Foco: anel `amberSoft` 2 a 2 px.
+Ordem e textos de exemplo: Atacar · ação / Mover · passo · até 9 m / Empurrar · ação / Derrubar · ação
+/ Saltar · passo / Usar item · ação · 2 na bolsa / Esperar · guarda a ação / Fugir · 3 golpes livres.
+**Os custos vêm das tabelas de hoje; os do quadro são exemplo.**
+
+**`O_QUE_RESTA_NA_VEZ`** (sob a carta de pé do herói, 3 linhas de 28): disco de osso 22 «ação ·
+livre» · losango de osso 22 «reação · livre» · seis casas de 11 «passo · 9 de 9 m» (uma casa = 1,5 m).
+Gasto = contorno `inkMeio` tracejado e a palavra «gasta».
+
+**`TIRA_DO_MESTRE`**: papel 300 × 170 (150 a 1280), sob a bandeja; «O MESTRE» (Cinzel 12 `tintaDim`),
+a fala em Spectral itálico 14/20 `T.tinta` (até 4 linhas; a inteira fica no Diário); no pé, a regra e
+a linha da pena («diga como, se quiser…») com «dizer» 44 × 44 — **contorno `tintaDim` em repouso,
+âmbar só quando há frase escrita**. À espera: a pena + o traço que cresce + *«o Mestre escreve…»*.
+
+**`REACAO_NA_MESA`**: a caixa da mão de ações (892 × 112; no celular 363 × 212). À esquerda a **vela**:
+prato de latão 48 × 11, o contorno tracejado da vela inteira (16 × 84) e a cera que resta, com a
+chama; depois quem acerta (Cinzel 18 `T.ink`), quanto vem (Spectral Medium 16) e o que vale se a vela
+acabar (Spectral 13 `inkMeio`). À direita, uma carta por reação (250 × 104; 178 × 112 no celular):
+glifo, nome (Cinzel 18), custo (`brasaNaPagina`) e o resultado em Spectral Bold 20 `perigoNaPagina`
+(«você leva 3»). A carta que vale no fim do tempo tem borda `T.tinta` 2. A duração é a da tabela de
+hoje; a vela é só a forma dela.
+
+**`SUPERFICIES_NO_CHAO` (cores novas; a geometria é a de `PADROES_DO_CHAO`, que fica):**
+
+| tipo | chão (alfa) | traço | desenho | selo |
+|---|---|---|---|---|
+| `oleo` | `#120C07` (0,55) | `#E6D9BD` | manchas | gota |
+| `agua` | `#6FA3B8` (0,35) | `#CFE6EE` | três ondas | ondas |
+| `gelo` | `#CFE3EA` (0,42) | `#FFFFFF` | quatro flocos | floco |
+| `fogo` | `#E0654F` (0,34) | `#FFB347` | três línguas | chama |
+| `veneno` | `#8DB04A` (0,32) | `#C7E08A` | cinco bolhas | bolhas |
+| `eletrica` | `#6FA3B8` (0,35) | `#C9C2F2` (raio de 2/48) | o raio, sobre as ondas | raio |
+
+Cada casa: retângulo de `casa − 2`, raio 3, e o desenho com traço `máx(1,25, 1,5/48 × casa)`. Um selo
+por mancha, no canto da primeira casa: disco de 18, `#24160D` a 92 %, borda 1,5 e glifo 12 na cor do
+traço. Saem `T.mundo` e `T.mundoSoft` daqui (o azul-noite aposenta-se).
+
+**`OBJETOS_NA_MESA`** (caixa 48, escala `casa ÷ 48`): barril (disco `#6B4A2B`, tampo `#7D5935` com aro
+de latão), caixote (`#7A5A36`, tábuas `#4A3420`), candeeiro (latão com miolo `#FFF1C4` e halo `#FFC877`
+a 22 %), carro de feno (`#B79A4E`, quatro rodas escuras); sombra `#000` a 40 %. Selos de 18 por cima,
+até dois: explode e arde em `T.lacreLume`; derrama, abriga e tapa a vista em `T.inkMeio`.
+
+**`MATERIAIS_DO_CHAO`** — ladrilhos SVG de 96 × 96 (duas casas de 48), repetíveis; na tela:
+`background-size: (2 × casa)px`. Os desenhos estão no acervo (`ladrilho/<nome>` em `314:10007`).
+
+| material | base | marcas |
+|---|---|---|
+| `terra` | `#6B5238` | sulcos `#574229`, veio `#7B6146`, seixos `#8C7354` |
+| `relva` | `#3E552D` | tufos `#62803F` e `#2A3D1E`, flor `#C9B56A` |
+| `cascalho` | `#5C5546` | pedras `#77705E` com borda `#3E392F` |
+| `tabuas` | `#5B3E26` | juntas `#33200F` a cada 24, veio `#6E4D31`, pregos |
+| `conves` | `#7B6245` | tábuas de 16 ao alto, juntas `#4A3823` |
+| `lajes` | `#4B4C4E` | juntas `#2B2C2E`, lascas `#63656A` |
+| `calcada` | `#33302B` | paralelepípedos 21 × 13 `#5F5A52` / `#6E6960` |
+| `rocha` | `#3B3838` | facetas `#464242`, fendas `#232121` |
+| `neve` | `#B7C3C8` | dunas `#D6E0E3`, sombra `#9BAAB1` |
+| `gelo` | `#86A9B6` | fendas `#D3E5EA`, brilho `#A9C6D0` |
+| `areia` | `#A98856` | ondas `#8F7146`, grãos `#C7A772` |
+| `agua` | `#3B606C` | ondinhas `#6F98A4`, lume `#9CC0C9` |
+| `matagal` | `#2C4122` | folhas `#3D5A2D` e `#1F3018`, ramos `#5A4A2E` |
+| `entulho` | `#5A5A56` | lajes com mato `#5E7A3E` e pedras soltas |
+| `dificil` (sobreposição) | transparente | três hachuras no canto de cada casa: `#000` a 50 % + `T.ink` a 55 % |
+
+**`CHAO_DA_PLANTA`** (substitui `TERRENO_DO_TABULEIRO`; as regiões são as de `grid.js`, na ordem):
+
+| planta | região 1 | região 2 | região 3 | pintura depois? |
+|---|---|---|---|---|
+| `taverna` | tabuas | tabuas | lajes | **sim** — o chão mais visto |
+| `masmorra` | lajes | lajes | rocha | **sim** — onde mais se luta |
+| `floresta` | relva | terra | matagal | **sim** — troncos e copas |
+| `estrada` | relva | terra | cascalho | o ladrilho basta |
+| `cidade` | calcada | lajes | terra | o ladrilho basta |
+| `caverna` | cascalho | rocha | rocha | o ladrilho basta |
+| `ruina` | entulho | entulho | cascalho | o ladrilho basta |
+| `navio` | conves | conves | conves | **sim** — a forma do casco |
+| `gelo` | neve | gelo | neve | o ladrilho basta |
+| `deserto` | *pintura (já existe)* | — | — | reserva: `areia` |
+
+Região `dificil` leva a sobreposição; `agua` fica para o pântano e para poças.
+
+### 3 · Os estados e as transições (com a saída)
+
+**`POR_O_TAPETE`** (ms a contar do toque em «Lutar»):
+
+| quando | o quê | duração e curva |
+|---|---|---|
+| 0 | «Lutar» afunda 1 px; parte o pedido da narração; soa o tambor (`tocarEntrada`) | — |
+| 0 | a página recua (escala 1 → 0,94, opacidade → 0) | 200, `ease-in` |
+| 120 | o tapete desenrola da esquerda para a direita, com o rolo (38 px) na frente | 500, `cubic-bezier(.3,0,.2,1)` |
+| 200 | as cartas do grupo deslizam para a coluna; as dos inimigos voam para a fila | 420 |
+| 620 | as peças pousam — o herói, o grupo, os inimigos | 220 cada (cai 14 px, ressalta 3), 60 entre elas |
+| 900 | a fila de iniciativa ordena-se | 240 |
+| 1 100 | a mão de ações sobe da beira (16 px); **a vez começa** | 220 |
+| chegada da narração | escreve-se na tira do Mestre (`REVELAR_A_PROSA`) | nunca bloqueia |
+
+Qualquer toque ou tecla corta para o tapete posto em 120 ms. `prefers-reduced-motion`: o tapete
+aparece posto, com as peças no lugar, em 120 ms. Só `transform` e `opacity` animam; tudo em
+`calou(...)`; o estado da luta existe antes do primeiro quadro.
+
+**`GOLPE_SENTIDO`:**
+
+| o quê | como | com movimento reduzido |
+|---|---|---|
+| dano no herói | a carta de pé treme ±2°, 3 idas, 240 ms; 3 lascas de lacre saltam e ficam 600 ms; o «−N» (Spectral Bold 44, `lacreLume`) sobe 28 px e some em 1 200 ms; as contas de PV apagam uma a uma (60 ms); o aro da peça pisca em lacre (anel de 3 px, 240 ms) | o número aparece e some em 1 200 ms; o resto troca seco |
+| crítico | `CERIMONIA_DO_DADO.vinte` do F2, com a onda a correr **o chão do tapete**; a tira do golpe diz «CRÍTICO»; a peça do alvo recua 4 px e volta (160 ms) | a face âmbar e a coroa, sem onda |
+| o 1 natural | `CERIMONIA_DO_DADO.um` do F2, sem mudança | a fissura pronta |
+| o inimigo cai | a peça roda 0 → 80° em 220 ms e troca para o verso de osso; a carta dele na fila vira de verso (200 ms); a nota do Mestre refaz a conta | troca seca |
+| a vez muda | o âmbar passa de uma peça à outra (180 ms); a fila anda uma casa (240 ms) | troca seca |
+
+**O golpe final** (`painel-golpe-final`, só a forma): a mesa escurece (`#05080A` a 72 % de dia; 66 %
+sobre o modo Masmorra) em 240 ms; a carta de quem caiu (210 × 294) vem ao centro, sob um radial de
+luz; «Como você quer fazer isso?» (Cinzel 28 `T.ink`); uma linha do Mestre (Spectral Medium 16
+`inkMeio`); duas cartas 320 × 124 (`ossoLume`, sombra `erguido`) — **Poupar** e **Matar**, cada uma
+com a consequência em itálico `brasaNaPagina`; por baixo, a linha da pena. Sem relógio; Enter
+confirma a carta em foco; Esc não fecha. As consequências vêm da tabela de hoje (as do quadro são
+exemplo). Em PT-BR a pergunta é «isso», não «isto».
+
+**A máquina da reação:** `golpe acertou ∧ há reação possível` → abre a janela (a mão de ações sai em
+160 ms, a janela entra em 220) → `escolha | fim da vela` → fecha (160) → o dano resolve. Sem reação
+possível: não abre; a nota do Mestre diz por quê na primeira vez («sem reação livre»). Nos últimos
+3 s a chama treme; com movimento reduzido a cera desce em degraus de 1 s.
+
+**`CERIMONIA_DA_VITORIA`** (teto 4 s; um toque pula para o fim):
+
+| quando | o quê |
+|---|---|
+| 0 | o tapete recua (véu de 45 % sobre o chão, 240 ms); «VITÓRIA» (Cinzel 28) entra |
+| 300 | as cartas do espólio pousam de verso (160 × 224; 104 × 150 no celular), 120 ms entre elas |
+| 700 | viram uma a uma, da mais comum à mais rara: 320 ms cada, 180 entre elas; a incomum tem borda `lataoLume`, as acima disso seguem `painel-espolio.jsx` |
+| 700 | o XP conta (600 ms) e a barra enche na carta do herói: 140 × 10, raio 5, fundo `couroBaixo`, o que havia em `T.latao`, o que entra em `lataoLume` |
+| 1 300 | as moedas (6 discos de 14) voam em arco até a pilha, 500 ms, 50 entre elas; o número sobe no pouso |
+| 1 900 | o lacre bate na tira do Mestre, que guarda «A luta: três ratos gigantes caíram, em três rodadas. Você sai com 9 de 18 PV.» |
+| depois | tocar uma carta recolhe (voa para a bolsa, 320 ms); «Recolher tudo»; **«Respirar fundo»** (âmbar, 360 × 56) com o preço por baixo: *«volta à página · o que ficar no chão, fica»* |
+
+«Respirar fundo»: o tapete enrola-se (o inverso de `POR_O_TAPETE`, 420 ms) e a página volta com a
+linha da luta.
+
+**A derrota** não tem tela: o tapete enrola-se e **fica** na mesa; as cartas do grupo ficam no estado
+em que caíram, com a plaqueta do estado («PRESA · CORRENTES»); a luz passa a `noite`; a página volta
+com a cena do cativeiro e as saídas de `SAIDAS_DO_CATIVEIRO` como **propostas com dado** (perícia,
+número, chance, preço de falhar). O que foi tirado do grupo é dito numa nota onde ficavam as pilhas.
+
+### 4 · As telas, com medidas (para construir sem abrir o Figma)
+
+**O encontro (1440)**: a mesa do F1 fica como está; a página (680 × 860 em x 380, y 20) leva, de cima
+para baixo: «NA ESTRADA · UM ENCONTRO» (Cinzel 12 `brasaNaPagina`, y 20) · **o leque** — cartas de
+retrato a 1,15 (161 × 225), três com passo de 143 e ±7°, a do meio por cima com sombra `erguido`,
+topo a y 26–46 (até 5 em leque; mais que isso, uma pilha com «7×») · o título (Cinzel 28, y 268) · a
+nota do Mestre (y 306) · «O QUE VOCÊ FAZ?» (y 338) · as propostas com dado, 584 × 84, 8 entre elas
+(y 360): glifo 24, nome (Spectral Medium 16), «perícia · precisa de N · tempo» (Spectral 13
+`tintaDim`), «se falhar: …» (itálico 14 `brasaNaPagina`) e à direita a chance (Spectral Bold 24) com
+«N ou mais no d20» por baixo · a opção impedida (56 de altura, tracejada, com a razão) · duas sem
+dado lado a lado (287 × 64): «Voltar atrás» e **«Lutar» com a régua do perigo do F2** · a linha da
+pena (y 792). Tocar a proposta com dado abre o chamado do F2; as sem dado agem no toque. **A 375**:
+o leque em cartas de tira (88 × 123), as propostas a 331 × 104; a página rola.
+
+**A mesa de batalha (1440)**: coluna do grupo — «O GRUPO» (28, 36), a carta de pé do herói (28, 60),
+`O_QUE_RESTA_NA_VEZ` (28, 322), a carta do companheiro (28, 420). Centro — plaqueta da rodada (196,
+22), a fila de iniciativa centrada em x 642, o tapete (207, 156, 870 × 594), a mão de ações (196,
+762). Direita — a bandeja (1100, 36) e a vela (1312, 40) do F1, a tira do Mestre (1100, 250), a nota
+«eles vão» (1100, 440), **o alvo** (1100, ~570: carta 60 × 84, nome, dez contas de PV, «a 1,5 m · ao
+alcance», «seu golpe: 1d6 + 3 · precisa de 12»), o escudo no canto. As pilhas e os objetos do F1
+saem da mesa durante a luta (voltam com a página); «Usar item» é a porta da bolsa. **O dado na
+luta** é o do F2 (112 px, ao lado do alvo; a tira do golpe pousada no tapete).
+
+**A 1280 × 720**: as medidas da tabela; o bloco do alvo sai (fica na etiqueta e no toque).
+
+**No celular (375 × 812)**, de cima para baixo: a fila em discos (y 4–50) · **a janela do tapete**
+364 × 412 em (6, 58): 7 × 8 casas de **48**, que rolam por dentro centradas em quem age, com **as
+réguas presas** em duas faixas de 28 (fecha a dívida B4 de B1b) · a linha «eles vão» (363 × 40, y 476)
+· a faixa do herói (retrato 40, PV e PM, o que resta na vez; y 522) · a mão de ações, 2 × 4 cartas de
+85 × 80 (y 568) · a linha da pena (363 × 60, y 744). Na reação, a faixa do herói sobe para y 480 e a
+janela de reação ocupa y 530–740. Na vitória, as cartas vão sobre o tapete, o XP e as moedas na
+faixa do herói, a tira com o lacre (y 574) e «Respirar fundo» a 343 × 56 (y 680).
+
+### 5 · O «superior», por medida, estudo e par
+
+| | antes (v9.647) | depois |
+|---|---|---|
+| de «Lutar» ao tabuleiro jogável | ~30 s (à espera da narração) | 1,1 s |
+| casa a 1440 × 900 | ~36 px | 46 px (+60 % de área); 36 a 1280 × 720 |
+| quadro do tabuleiro vazio | ~170 de ~420 px | 0 |
+| rótulos de intenção sobre o campo | 3 empilhados (cortados a 375) | 1 etiqueta + 1 linha fora do campo |
+| nomes cortados (fila e cartão) | 5 | 0 |
+| casas tapadas pela reação | ~3 filas | 0 |
+| chão com textura | 1 planta de 10 | 10 de 10 (14 materiais) |
+| custo escrito na ação | não | em todas |
+| sinais do lado da peça que não são cor | 0 | 1 (a conta numerada) + o nome na fila |
+| superfícies distinguíveis sem cor | — | 6 de 6 (desenho + selo) |
+| coisas que se movem na vitória | 0 | 4 |
+| toques do encontro à ação | 2 | 1 |
+| alvos no celular | botões ~82 × 48 | cartas 85 × 80; menor alvo 44 × 44 |
+| menor contraste de texto do lote | — | 6,12 (plaqueta); custo 7,90; dano 6,60; régua 6,89 |
+
+O «−N» em `lacreLume` sobre o feltro dá 4,05 : 1 — passa só por ser texto grande (44 px; WCAG 1.4.3
+pede 3 : 1) e nunca é usado em corpo menor. Estudos: WCAG 2.2 — 1.4.1 (cor não é o único sinal),
+1.4.3 e 1.4.11 (contraste), 2.2.1 (tempo ajustável: a vela da reação precisa da opção «sem tempo» no
+escudo), 2.3.1 (um clarão só), 2.3.3 (movimento desligável), 2.5.5 / 2.5.8 (alvo); Apple HIG (44 pt).
+O par antes/depois está ao lado de cada tela no Figma. **Os blocos de medidas do Figma dizem 7,6 /
+8,1 / 8,0 para a régua, o custo e o perigo; os valores certos são os desta tabela.**
+
+**O que não está provado:** nada disto foi jogado — o `jogo` não assinou, e o movimento é storyboard.
+Os ~30 s e os ~170 px vêm de `analise-visual.md`; a casa de hoje (~36) foi medida na captura 28.
+
+### 6 · As armadilhas do Figma que F4 pagou
+
+1. **Uma imagem criada e não usada some**: `figma.createImage` devolve o hash, mas se nenhum nó a usa
+   no fim do script ela não existe na chamada seguinte. Os ladrilhos ficaram presos a amostras no
+   acervo.
+2. **O texto de uma função volta reformatado** (`toString` passa por um transpilador): um remendo por
+   âncora no código guardado tem de ser feito sobre o texto lido, não sobre o enviado.
+3. **A opacidade de `P(nome, alfa)` perdeu-se em três véus** (a armadilha 2 do F3 outra vez): véu é
+   tinta literal.
+4. **Ladrilho repetido**: tinta `IMAGE` com `scaleMode: 'TILE'` e `scalingFactor = casa ÷ 96` para um
+   PNG exportado a 2×.
+
+### 7 · O que ficou por fazer do F4, dito
+
+- **Os quadros de luta usam os construtores (`316:10007`), não instâncias** de `A peça` e `A carta de
+  ação`: os componentes existem na prancha, mas as telas não mudam se eles mudarem. Fila, etiqueta,
+  tira, nota, janela de reação, carta de espólio e tapete **não são componentes**. Code Connect por
+  fazer.
+- **A masmorra 7 × 18** não foi composta (só a regra); nem a luta a 1280 × 720 de noite, nem a faixa
+  768–1179. A vitória, a reação e o golpe a 1280 seguem a mesma caixa, sem quadro.
+- **Vantagem e desvantagem, área de magia, o caminho do «Mover» e o empurrão no tapete novo**: valem
+  as formas de hoje (`CAMINHO_NO_CHAO`, `EMPURRAO_NA_MESA`) com as cores daqui; não redesenhados.
+- **Peças maiores que uma casa** (grande, enorme): regra — diâmetro `0,88 × lado × casa`; sem quadro.
+- **Defeitos de prancha**: no quadro 5.1 o título da tira do golpe corta; no 4 e no 5.1 o nome de
+  quem age (duas linhas) encosta no tapete (daí o y 156); na vitória as peças caídas ficam sob as
+  cartas; no encontro o leque tapa os nomes das cartas de trás; o halo da tocha em 3e não ficou
+  centrado com precisão.
+- Gradientes e cores de pintura literais, como nos outros lotes. O som está só nomeado (o tambor, a
+  carta, a moeda, o lacre).
+- Textos de exemplo meus, não do sistema: as falas do Mestre, os custos das ações, as consequências
+  de Poupar e Matar, os números do cativeiro, «de 6 a 30».
+
+**O que o desenho pede ao sistema** (nenhum é de save): a intenção agrupada por alvo (quem, quantos,
+faixa de dano); a duração da reação exposta à tela, e a opção «sem tempo»; o custo de cada ação como
+frase curta de tabela; a consequência de Poupar e de Matar como frase de tabela.
+
+### 8 · A proposta ambiciosa — o tapete guarda a luta
+
+Quando a luta acaba, o tapete não some: **enrola-se com as marcas do que aconteceu** — a mancha de
+óleo queimado, as caveiras onde cada um caiu, o risco do caminho do herói — e vai para o livro como
+uma estampa pequena na página daquela noite. Abrir o Diário passa a mostrar, ao lado de «A luta: três
+ratos gigantes caíram», o desenho de **como** caíram; e o cartão da sessão (F6) pode levar a luta mais
+difícil da noite como imagem. Custa um campo de save novo e aditivo (por luta: a planta, as casas dos
+caídos, as manchas — uns 200 bytes) e um desenho em SVG que já é o do tapete, a 1/4 do tamanho. É o
+que transforma «ganhei» em «olha como foi» — a coisa que um jogador mostra a outro.
