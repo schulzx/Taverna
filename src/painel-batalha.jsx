@@ -678,7 +678,7 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
    seis gestos caberem numa linha a 1024. Uma fileira que quebra deixa de
    ter a altura da conta e come o tabuleiro. No telefone (`grelha`) é a
    grelha de 4 colunas: os gestos, e os recuos no fim da segunda linha. */
-function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, chanceDoAtaque = null, aoApontar = null, alto = B3.verbo.fino, grelha = false, passoM = null }) {
+function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, chanceDoAtaque = null, aoApontar = null, alto = B3.verbo.fino, grelha = false, passoM = null, custos = null }) {
   const gestos = verbos.filter((v) => v.papel !== "recuo");
   /* MAIS DE UM RECUO PODE VIVER AQUI: `esperar` e `fugir` são os dois
      "sair do turno sem golpe" — era `.find` quando só `esperar` existia,
@@ -692,7 +692,7 @@ function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, 
       {[...gestos, ...recuos].map((v) => (
         <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} alto={alto} grelha={grelha}
           recurso={recursos && v.papel !== "recuo" ? recursos[v.id] || null : null} chance={v.id === "atacar" ? chanceDoAtaque : null} aoApontar={v.papel !== "recuo" ? aoApontar : null}
-          custo={(() => { try { return custoEscrito(v.id, recursos ? recursos[v.id] : null, { passoM }); } catch { return ""; } })()} />
+          custo={(() => { try { return custoEscrito(v.id, (custos || recursos || {})[v.id] || null, { passoM }); } catch { return ""; } })()} />
       ))}
     </div>
   );
@@ -2253,7 +2253,9 @@ export function TelaDeBatalha(props) {
       ) : (
         <FileiraDeVerbos verbos={verbos} armado={armado} impedidos={impedidos}
           aoTocar={tocarVerbo} alto={altoDoVerbo} grelha={noTelefone}
-          recursos={comPip ? recursosDosVerbos : null} chanceDoAtaque={chanceDoAtaque} aoApontar={noTelefone ? null : setVerboSobre} passoM={p.passoM} />
+          recursos={comPip ? recursosDosVerbos : null} chanceDoAtaque={chanceDoAtaque} aoApontar={noTelefone ? null : setVerboSobre} passoM={p.passoM}
+          /* V6: o custo escreve-se mesmo onde o pip não cabe (o pip é a forma; o custo é a palavra) */
+          custos={recursosDosVerbos} />
       )}
       {/* O TEXTO LIVRE muda de papel: deixa de ser a sintaxe obrigatória e
           vira o tempero. O convite é `como? (opcional)`, e ele NUNCA é

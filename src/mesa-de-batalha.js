@@ -27,6 +27,8 @@
       mesmo ladrilho em qualquer máquina, para sempre.
    ============================================================ */
 
+import { T } from "./estilo.js";
+
 /* ---------------- 1. A FILA DO ENVIO ---------------- */
 /* `tetoDaEsperaMs`: quanto uma chamada espera pela que está no ar antes de
    seguir sozinha. A chamada do Mestre mais longa medida nas sessões fica
@@ -127,7 +129,7 @@ export const MATERIAIS_DO_CHAO = {
   terra:    { base: "#6B5238", marcas: [{ forma: "traco", cor: "#574229", n: 9, tam: 18 }, { forma: "traco", cor: "#7B6146", n: 6, tam: 12 }, { forma: "ponto", cor: "#8C7354", n: 10, tam: 2.4 }] },
   relva:    { base: "#3E552D", marcas: [{ forma: "tufo", cor: "#62803F", n: 12, tam: 8 }, { forma: "tufo", cor: "#2A3D1E", n: 9, tam: 7 }, { forma: "ponto", cor: "#C9B56A", n: 3, tam: 1.8 }] },
   cascalho: { base: "#5C5546", marcas: [{ forma: "pedra", cor: "#77705E", borda: "#3E392F", n: 16, tam: 5 }] },
-  tabuas:   { base: "#5B3E26", marcas: [{ forma: "junta", cor: "#33200F", passo: 24, deitada: true }, { forma: "traco", cor: "#6E4D31", n: 10, tam: 22 }, { forma: "ponto", cor: "#33200F", n: 6, tam: 1.4 }] },
+  tabuas:   { base: "#5B3E26", marcas: [{ forma: "junta", cor: T.couro, passo: 24, deitada: true }, { forma: "traco", cor: "#6E4D31", n: 10, tam: 22 }, { forma: "ponto", cor: T.couro, n: 6, tam: 1.4 }] },
   conves:   { base: "#7B6245", marcas: [{ forma: "junta", cor: "#4A3823", passo: 16, deitada: false }, { forma: "traco", cor: "#8A7052", n: 6, tam: 14, alto: true }] },
   lajes:    { base: "#4B4C4E", marcas: [{ forma: "tijolo", cor: "#2B2C2E", w: 48, h: 32 }, { forma: "faceta", cor: "#63656A", n: 6, tam: 7 }] },
   calcada:  { base: "#33302B", marcas: [{ forma: "tijolo", cor: "#5F5A52", outra: "#6E6960", w: 21, h: 13, cheio: true }] },
@@ -243,7 +245,9 @@ const ENDERECOS = new Map();
 export function enderecoDoLadrilho(material) {
   if (ENDERECOS.has(material)) return ENDERECOS.get(material);
   const s = ladrilhoDoChao(material);
-  const e = s ? `data:image/svg+xml;charset=utf-8,${encodeURIComponent(s)}` : "";
+  /* o SVG cabe no endereço escapando só o que o endereço não aceita (o
+     ladrilho é ASCII: cores, números e marcação) */
+  const e = s ? `data:image/svg+xml;charset=utf-8,${s.replace(/"/g, "'").replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E")}` : "";
   ENDERECOS.set(material, e);
   return e;
 }

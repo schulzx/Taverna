@@ -312,7 +312,11 @@ sec("3 · 8. as peças: a pílula, a intenção, as casas marcadas, os rótulos"
   const quantos = (s) => g.split(s).length - 1;
   t("o alvo ganha o anel tracejado âmbar (6/4)", quantos(emCasas(PREVISAO_DO_GOLPE.anelDoAlvo.tracejado)) === 1);
   t("a seta do ataque, tracejada (5/4), do Bandido ao Bran", quantos(emCasas(INTENCAO_NA_MESA.seta.tracejado)) === 1);
-  t("A INTENÇÃO no canto da ficha: as duas pílulas (o Bandido e o Dragão)", (g.match(/vai atacar Bran/g) || []).length === 1 && (g.match(/vai soprar/g) || []).length === 1);
+  /* MOVIDA (V6, 16/11), E O MOTIVO: o F4 (formas.md, INTENCAO) funde os golpes
+     por ALVO numa etiqueta junto da peça dele («2–10», com a linha «Bandido ·
+     … → Bran» no rótulo); a pílula por inimigo fica só para o que não é golpe
+     num alvo (o sopro do Dragão). A conta prova-se em teste-mesa-de-batalha. */
+  t("A INTENÇÃO: o golpe do Bandido na etiqueta do alvo, e o sopro do Dragão na pílula dele", (g.match(/→ Bran/g) || []).length >= 1 && !/vai atacar Bran/.test(g) && (g.match(/vai soprar/g) || []).length === 1);
   t("AS CASAS MARCADAS: as nove casas do sopro e a do golpe livre, com o aro tracejado (4/3)", quantos(emCasas(INTENCAO_NA_MESA.area.tracejado)) === 10, String(quantos(emCasas(INTENCAO_NA_MESA.area.tracejado))));
   t("e o destino com o aro tracejado (5/3)", quantos(emCasas(CAMINHO_NO_CHAO.destino.tracejado)) === 1);
   t("a casa do alvo diz a previsão no nome acessível", /aria-label="G9 · Bandido, 8 de 8 PV[^"]*78% de acertar, 6 a 13 de dano, 40% de o abater"/.test(g), (g.match(/aria-label="G9[^"]*"/) || [""])[0]);
@@ -360,7 +364,10 @@ sec("7 · 8. a tela da batalha: as três colunas e o telefone");
   t("a coluna Tu: «A tua vez», o nome, a economia", texto(tela).includes("Sua vez") && texto(tela).includes("Bran") && /aria-label="ação livre, bônus livre, reação livre, 6 de 9 m de passo"/.test(tela));
   t("O TEU GOLPE por extenso, com as faces e a legenda", /aria-label="Seu golpe contra Bandido"/.test(tela) && texto(tela).includes("você acerta com 6 ou mais no dado"));
   t("o aviso da área (o herói está dentro do sopro)", texto(tela).includes("Você está na área do sopro do Dragão Jovem (14–24)"));
-  t("a coluna Eles: «Nesta rodada, eles vão», com a intenção de cada um", /aria-label="Eles"/.test(tela) && texto(tela).includes("Nesta rodada, eles vão") && (tela.match(/vai atacar Bran/g) || []).length >= 2);
+  /* MOVIDA (V6, 16/11), E O MOTIVO: «vai atacar Bran» contava duas vezes — a
+     pílula da coluna Eles e a do campo. O F4 tirou a do campo (o golpe vai na
+     etiqueta do alvo, «→ Bran»); a coluna continua com a de cada um. */
+  t("a coluna Eles: «Nesta rodada, eles vão», com a intenção de cada um", /aria-label="Eles"/.test(tela) && texto(tela).includes("Nesta rodada, eles vão") && (tela.match(/vai atacar Bran/g) || []).length >= 1 && /→ Bran/.test(tela));
   t("a fila da vez diz de quem é a vez a quem ouve («agora: Bran»)", /role="group" aria-label="agora: Bran"/.test(tela));
   t("a pílula «AGORA:» aposentou-se", !/>AGORA:|agora: Bran<\/span>/.test(tela));
   t("o Atacar diz a chance («· 78%»)", texto(tela).includes("Atacar · 78%"));

@@ -122,7 +122,7 @@ sec("4. o custo escrito, e a barra que não mente");
 {
   t("ação, passo com os metros, e os dois recuos", custoEscrito("atacar", "acao") === "ação" && custoEscrito("mover", "movimento", { passoM: 9 }) === "passo · até 9 m" && custoEscrito("mover", "movimento", { passoM: 7.5 }) === "passo · até 7,5 m" && custoEscrito("esperar", null) === CUSTO_DO_RECUO.esperar && custoEscrito("fugir") === "sai da luta");
   t("sem recurso conhecido, nada escrito", custoEscrito("atacar", null) === "" && CUSTO_ESCRITO.bonus === "ação bônus");
-  t("a carta de ação mostra o custo e não usa mono", PAINEL.includes("custoEscrito(v.id, recursos ? recursos[v.id] : null, { passoM })") && PAINEL.includes('className="tv-anel-foco tv-display flex items-center justify-center"'));
+  t("a carta de ação mostra o custo e não usa mono", PAINEL.includes("custoEscrito(v.id, (custos || recursos || {})[v.id] || null, { passoM })") && PAINEL.includes("custos={recursosDosVerbos} />") && PAINEL.includes('className="tv-anel-foco tv-display flex items-center justify-center"'));
   t("com o Mestre a narrar, o Atacar diz isso — não «a luta acabou»", impedimentosDaFileira({ bloqueado: true, algumAoAlcance: true, podeAndar: true }).atacar === RECUSAS_DO_VERBO.mestreFala && RECUSAS_DO_VERBO.mestreFala !== RECUSAS_DO_VERBO.fimDaLuta);
   t("e «a luta acabou» só quando acabou", impedimentosDaFileira({ fim: true }).atacar === RECUSAS_DO_VERBO.fimDaLuta);
 }

@@ -197,6 +197,10 @@ const TETO_DE_LITERAIS = {
      dentro pelo mesmo motivo: o tamanho ainda é vigiado.
      · paga: "os pigmentos do dado de jogo" */
   "src/semente.js": 38,
+  /* V6 (16/11): os 14 ladrilhos do chão (MATERIAIS_DO_CHAO, formas.md F4) são
+     pintura, não interface — literais de tabela como OBJETOS_DA_MESA, e o
+     único que tinha nome em T já o lê (T.couro) */
+  "src/mesa-de-batalha.js": 47,
   "src/mapa.js": 13,
   "src/npcs.js": 10,
   "src/palco.js": 10,
