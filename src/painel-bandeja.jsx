@@ -28,11 +28,11 @@
    soa aqui: soou lá. Um som que estoura cala-se; o dado pousa na mesma.
    ============================================================ */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { T, TIPOS, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, CHAMADO_DO_MESTRE, PALAVRAS_DO_QUADRO, alfa } from "./estilo.js";
+import { T, TIPOS, BANDEJA, MOVIMENTO_DO_DADO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, CHAMADO_DO_MESTRE, PALAVRAS_DO_QUADRO, alfa } from "./estilo.js";
 /* QQ (§QQ 4): o chamado que vira uma carta leva o leque do quadro — o mesmo
    glifo do sinal da barra, não um segundo */
 import { LequeDoQuadro } from "./painel-quadro.jsx";
-import { Glifo, FacesDoD20, precoDoChamado } from "./ui.jsx";
+import { Glifo, FacesDoD20, precoDoChamado, DadoDeOsso } from "./ui.jsx";
 /* MC (10/11): o texto do chamado é do motor — «Rolar», o dado, a espera */
 import { O_CHAMADO } from "./motor/o-mestre-chama.js";
 /* CB 15 (decisão do coordenador, 09/11): o d20 do ataque rola AQUI, com as
@@ -62,33 +62,23 @@ function PalavraDoDesfecho({ desfecho, cor }) {
   if (!nome) return null;
   return <>{desfecho === "critico" ? <><Glifo nome="faisca" tamanho={14} cor={cor} />{" "}</> : SELO[desfecho] ? `${SELO[desfecho]} ` : ""}{nome}</>;
 }
-const RACHA = "M30 6 L26 18 L33 24 L27 36 L31 46";
 const RAIOS = [0, 45, 90, 135, 180, 225, 270, 315];
 
 const semMovimento = () => {
   try { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch { return false; }
 };
 
-/* Um corpo de dado (um d10 do d100 também): a forma, as facetas e o número.
-   Exportado (AR 12, 07/11): o dado de uso dos mantimentos é este mesmo corpo,
-   papel uso — não se desenha um segundo dado. */
-export function Corpo({ faces, legenda, papel, tam, desfecho = "livre", rolando = false, apagado = false }) {
-  const f = FORMAS_DO_DADO[faces] || FORMAS_DO_DADO[20];
-  const p = PAPEL_DO_DADO[papel] || PAPEL_DO_DADO.teste;
-  const cor = T[p.corpo], tinta = T[p.numero];
-  const tamDaLetra = String(legenda).length > 1 && faces === 10 ? FORMAS_DO_DADO[100].tamDezenas : f.tam;
+/* Um corpo de dado (um d10 do d100 também). V3 (16/11, F2 §1.1): é o Dado
+   de osso (ui.jsx) — todo dado é osso, e o papel (`papel`, que fica na
+   assinatura para quem já o passa) é dito pelo lugar e pela palavra, nunca
+   pela cor do corpo. O 1 natural racha (o estado rachado do F2).
+   Exportado (AR 12, 07/11): os mantimentos e o d20 da luta usam-no — não se
+   desenha um segundo dado. */
+export function Corpo({ faces, legenda, tam, desfecho = "livre", rolando = false, apagado = false }) {
   const opacidade = apagado ? BANDEJA.falhaApagada : desfecho === "falha" && !rolando ? BANDEJA.falhaApagada + 0.2 : 1;
   return (
-    <svg width={tam} height={tam} viewBox="0 0 48 48" aria-hidden="true" style={{ flex: "none", overflow: "visible", opacity: opacidade,
-      transform: rolando ? "rotate(-18deg)" : "none", transition: `transform ${MOVIMENTO_DO_DADO.pousar}ms ease-out` }}>
-      {f.retangulo
-        ? <rect x={f.retangulo.x} y={f.retangulo.y} width={f.retangulo.lado} height={f.retangulo.lado} rx={f.retangulo.raio} fill={cor} stroke={tinta} strokeOpacity={BANDEJA.alfaDoTraco} strokeWidth={BANDEJA.traco} strokeLinejoin="round" />
-        : <polygon points={f.corpo} fill={cor} stroke={tinta} strokeOpacity={BANDEJA.alfaDoTraco} strokeWidth={BANDEJA.traco} strokeLinejoin="round" />}
-      {(f.facetas || []).map((d, i) => <path key={i} d={d} fill="none" stroke={tinta} strokeOpacity={BANDEJA.alfaDaFaceta} strokeWidth="1" />)}
-      {desfecho === "desastre" && !rolando && <path d={RACHA} fill="none" stroke={T.perigoFundo} strokeWidth="2" strokeLinecap="round" />}
-      <text x={f.numero[0]} y={f.numero[1]} textAnchor="middle" dominantBaseline="central"
-        fontFamily="'JetBrains Mono', ui-monospace, monospace" fontWeight="700" fontSize={tamDaLetra} fill={tinta}>{legenda}</text>
-    </svg>
+    <DadoDeOsso forma={faces} lado={tam} numero={String(legenda == null ? "" : legenda)} estado={desfecho === "desastre" && !rolando ? "rachado" : "pousado"}
+      style={{ opacity: opacidade, transform: rolando ? "rotate(-18deg)" : "none", transition: `transform ${MOVIMENTO_DO_DADO.pousar}ms ease-out` }} />
   );
 }
 

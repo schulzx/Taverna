@@ -225,6 +225,9 @@ export const T = {
   osso:           "#E6D9BD",   /* dados e peças; a opção escolhida · tinta sobre osso 11,81 */
   ossoLume:       "#F6EEDD",   /* o chão da proposta (= sobreLacre, de propósito: o mesmo papel claro) */
   ossoSombra:     "#B7A27E",   /* o lado do disco */
+  /* NOVO (A Mesa do Mestre · F2 · 15/11) — a face do dado a meia-luz
+     (Figma VariableID:280:1284); tinta sobre ossoMeio 9,12 */
+  ossoMeio:       "#CFBF9F",
   violetaSombra:  "#4B3F8F",   /* a conta de PM vazia */
   haloDaVela:     "#FFC877",   /* a cor do halo (VELA.cor.halo lê daqui) */
   veuDaNoite:     "#05080A",   /* o véu sobre a página à noite (o alfa sai de LUZ_DA_MESA) */
@@ -991,37 +994,125 @@ export const ABERTURA = {
    da página escura afina demais sobre o papel).
    ============================================================ */
 /* ============================================================
-   A BANDEJA E OS SETE DADOS (Mesa C · 04/11/2026) — a forma do dado
+   O DADO DE OSSO (A Mesa do Mestre · F2 · V3 · 16/11/2026) — formas.md
+   §«A Mesa do Mestre · F2 · o dado» §2; Figma 280:1365 (as sete formas).
 
-   A spec é do `desenho` (formas.md §«A mesa à luz de vela (C)» §4–§5;
-   Figma `243:46` o Dado, `243:72` a Marca, `244:613` a Bandeja). O
-   motor (`src/motor/a-bandeja.js`) decide o lance; isto é só a cara dele.
+   Todo dado é osso: o papel no lance (teste, dano, cura, sorte, uso) é
+   dito pelo lugar onde cai e pela palavra, nunca pela cor do corpo — o
+   PAPEL_DO_DADO (corpos âmbar, vermelho, verde, violeta) aposentou-se aqui.
 
-   viewBox 48×48 (o d100 é dois d10). `corpo` é o polígono, `facetas` são
-   traços finos, `numero` é o centro da letra e `tam` o corpo dela.
+   viewBox 48×48. Cada forma: `contorno` (a silhueta, que leva a aresta de
+   fora), `faces` (polígonos fechados, na ordem de pintura, cada um com o
+   seu tom de OSSO_DO_DADO.tons), `numero` (o centro da letra, SEMPRE na
+   face lume) e `fator` (o corpo da letra = lado × fator). `corpo` é o
+   contorno com o nome antigo (o vazio dos mantimentos lê-o) e `tam` o
+   corpo da letra na caixa de 48. O d20 é um icosaedro de verdade: dez faces
+   à vista (o de antes tinha sete traços e formava quadriláteros).
    ============================================================ */
+const D20_ = { A: "24,3", B: "42.19,13.5", C: "42.19,34.5", D: "24,45", E: "5.81,34.5", F: "5.81,13.5", T: "24,9.3", R: "36.73,31.35", L: "11.27,31.35" };
+const tri_ = (n) => n.split("").map((k) => D20_[k]).join(" ");
+const D12_FORA_ = ["24,4", "43.97,18.51", "36.34,41.99", "11.66,41.99", "4.03,18.51"];
+/* o pentágono de dentro: o de antes × 1,22 em torno de (24,25) */
+const D12_DENTRO_ = ["24,11.58", "36.76,20.85", "31.89,35.86", "16.11,35.86", "11.24,20.85"];
+const trap_ = (i) => [D12_FORA_[i], D12_FORA_[(i + 1) % 5], D12_DENTRO_[(i + 1) % 5], D12_DENTRO_[i]].join(" ");
+const forma_ = (contorno, faces, numero, fator) => ({ contorno, corpo: contorno, faces, numero, fator, tam: Math.round(48 * fator * 10) / 10 });
 export const FORMAS_DO_DADO = {
-  4:  { corpo: "24,4 45,41 3,41", facetas: [], numero: [24, 30], tam: 16 },
-  6:  { retangulo: { x: 6, y: 6, lado: 36, raio: 6 }, facetas: [], numero: [24, 24], tam: 18 },
-  8:  { corpo: "24,3 45,24 24,45 3,24", facetas: ["M13.5 13.5 L34.5 13.5"], numero: [24, 26], tam: 18 },
-  10: { corpo: "24,3 44,21 24,45 4,21", facetas: ["M4 21 L24 29 L44 21", "M24 29 L24 45"], numero: [24, 19], tam: 16 },
-  12: { corpo: "24,4 43.97,18.51 36.34,41.99 11.66,41.99 4.03,18.51",
-        facetas: ["M24 14 L34.46 21.6 L30.47 33.9 L17.53 33.9 L13.54 21.6 Z", "M24 4 L24 14", "M43.97 18.51 L34.46 21.6", "M36.34 41.99 L30.47 33.9", "M11.66 41.99 L17.53 33.9", "M4.03 18.51 L13.54 21.6"],
-        numero: [24, 25], tam: 16 },
-  20: { corpo: "24,3 42.19,13.5 42.19,34.5 24,45 5.81,34.5 5.81,13.5",
-        facetas: ["M24 11 L36.5 32.5 L11.5 32.5 Z", "M24 3 L24 11", "M42.19 34.5 L36.5 32.5", "M5.81 34.5 L11.5 32.5", "M42.19 13.5 L24 11", "M5.81 13.5 L24 11", "M24 45 L36.5 32.5", "M24 45 L11.5 32.5"],
-        numero: [24, 25], tam: 16 },
-  /* o d100: dois d10 lado a lado — as dezenas («00»–«90», letra 14) e as unidades */
-  100: { de: 10, tamDezenas: 14 },
+  4: forma_("24,4 45,37 40,41 3,41", [["24,4 40,41 3,41", "lume"], ["24,4 45,37 40,41", "meio"]], [22.4, 29], 0.30),
+  6: forma_("6,11 11,6 42,6 42,37 37,42 6,42",
+    [["6,11 37,11 37,42 6,42", "lume"], ["6,11 11,6 42,6 37,11", "osso"], ["37,11 42,6 42,37 37,42", "sombra"]], [21.5, 26.5], 0.34),
+  8: forma_("24,3 45,24 24,45 3,24",
+    [["24,3 10,30 38,30", "lume"], ["24,3 45,24 38,30", "osso"], ["24,3 10,30 3,24", "meio"], ["10,30 38,30 24,45", "meio"], ["3,24 10,30 24,45", "sombra"], ["45,24 38,30 24,45", "sombra"]], [24, 22.6], 0.27),
+  10: forma_("24,3 44,21 24,45 4,21",
+    [["24,3 44,21 24,30 4,21", "lume"], ["4,21 24,30 24,45", "sombra"], ["44,21 24,30 24,45", "meio"]], [24, 18.6], 0.28),
+  12: forma_(D12_FORA_.join(" "),
+    [[trap_(0), "osso"], [trap_(1), "meio"], [trap_(2), "sombra"], [trap_(3), "sombra"], [trap_(4), "meio"], [D12_DENTRO_.join(" "), "lume"]], [24, 25.4], 0.27),
+  20: forma_([D20_.A, D20_.B, D20_.C, D20_.D, D20_.E, D20_.F].join(" "),
+    [[tri_("TRL"), "lume"], [tri_("TBR"), "osso"], [tri_("TLF"), "meio"], [tri_("LRD"), "meio"], [tri_("TAB"), "lume"],
+     [tri_("TFA"), "osso"], [tri_("RBC"), "meio"], [tri_("RCD"), "sombra"], [tri_("LDE"), "sombra"], [tri_("LEF"), "sombra"]], [24, 24.6], 0.30),
+  /* o d100: dois d10 a 0,62 do lado, o segundo deslocado (0,38 · 0,34) do lado */
+  100: { de: 10, escala: 0.62, desvio: [0.38, 0.34], tamDezenas: 14 },
 };
 
-/* A cor é do papel, por NOME de T (a mesma lei da runa): o corpo e o número */
-export const PAPEL_DO_DADO = {
-  teste: { corpo: "amber",   numero: "onAccent" },  /* 8,68 */
-  dano:  { corpo: "danger",  numero: "onAccent" },  /* 5,77 */
-  cura:  { corpo: "ok",      numero: "onAccent" },  /* 9,69 */
-  sorte: { corpo: "violet",  numero: "onSecond" },  /* 7,75 — o oráculo */
-  uso:   { corpo: "inkMeio", numero: "onAccent" },  /* 10,32 — o osso */
+/* TAMANHO_DO_DADO (substitui BANDEJA.dado 48 e dadoPequeno 20): o lado de
+   cada lugar; o número é lado × fator da forma (no histórico, × 1,15 —
+   o piso de 12 respeitado) */
+export const TAMANHO_DO_DADO = {
+  lance: 160, lanceTelefone: 128, luta: 112, bandeja: 76, dano: 44, historico: 40, botao: 36,
+  fatorDoHistorico: 1.15, pisoDaLetra: 12,
+};
+
+/* OSSO_DO_DADO — o desenho, em caixa 48 (k = lado / 48) */
+export const OSSO_DO_DADO = {
+  tons: { lume: T.ossoLume, osso: T.osso, meio: T.ossoMeio, sombra: T.ossoSombra },
+  tinta: T.tintaDoPergaminho,
+  fora: { alfa: 0.8, largura: 0.9, piso: 1 },
+  dentro: { alfa: 0.26, largura: 0.5, piso: 0.75 },
+  contato: { cx: 24, cy: 44.5, rx: 17, ry: 3.5, alfa: 0.42, desfoque: 3 },
+  /* 0 1,6k 3k rgba(0,0,0,.50) + 0 5k 8k −1k rgba(0,0,0,.45) (o −1k do
+     espalhamento não existe em drop-shadow; fica o desfoque) */
+  sombra: [{ y: 1.6, desfoque: 3, alfa: 0.5 }, { y: 5, desfoque: 8, alfa: 0.45 }],
+  letra: { familia: "'Cinzel', 'Cinzel Decorative', Georgia, serif", peso: 700 },
+};
+
+/* ESTADO_DO_DADO — o d20 do lance */
+export const ESTADO_DO_DADO = {
+  pousado: {},
+  vivo: { aro: T.amber, escala: 1.07, brilho: 7, alfa: 0.55 },
+  aceso: { face: T.amber, numero: T.onAccent, vizinhas: T.amberSoft, quais: [0, 1, 2, 3], aro: T.amber, escala: 1.1, brilho: 14, espalha: 2, alfa: 0.85 },
+  rachado: {
+    degrau: { lume: "meio", osso: "sombra", meio: "sombra", sombra: "sombra" },
+    fissura: "28,3.5 31,9 29.5,14 34,19 32.5,26 37,31 35.5,37 38.5,40.5",
+    ramo: "34,19 38.5,17.5 41.5,20",
+    largura: 1.3, piso: 1.5,
+  },
+};
+
+/* HISTORICO_DO_DADO — a 40, na bandeja. Mostra a face do dado, não o total */
+export const HISTORICO_DO_DADO = {
+  lado: 40, teto: 4,
+  /* o chão do vazado: LUZ_DA_MESA.dia.feltroFundo (a suíte prende a igualdade) */
+  falhou: { chao: "#0E2016", alfa: 0.6, aro: T.osso, largura: 1.25, traco: [3, 3], numero: T.ink },
+  coroa: { pontos: "15,3 15,-5 19.5,-1 24,-7 28.5,-1 33,-5 33,3", cor: T.lataoLume, aro: T.lataoSombra },
+};
+
+/* LANCE (substitui MOVIMENTO_DO_DADO no lance de fora da luta; o de antes
+   fica para os dados de uso e para a luta, que são de outro pacote).
+   Voo (sair + rolar) = 1 300 ms; a face lê-se aos 1 440; o veredito acaba,
+   no pior caso, aos 2 140 (somando ≤ 520 + veredito 180). Com a narração já
+   chegada no pouso, a soma colapsa para 200. */
+export const LANCE = {
+  chamadoEntra: 220,
+  esperaDoMestre: 900,
+  sair: { dura: 260, curva: "cubic-bezier(.3,0,.2,1)", sobe: 8, gira: -24 },
+  rolar: { dura: 1040, curva: "cubic-bezier(.15,.6,.25,1)", quiques: [28, 10], giro: 540, trocas: [60, 90, 140, 220] },
+  rolarTeto: 300, vooTeto: 1600, quiqueDoTeto: 6,
+  pousar: { dura: 140, ressalto: 4, po: { largura: 250, alto: 64, alfa: 0.16, dura: 180 } },
+  linha: 160,
+  soma: { bonus: 180, passo: 90, teto: 520, colapsada: 200 },
+  veredito: 180,
+  voltar: { dura: 320, curva: "cubic-bezier(.4,0,.2,1)", fila: 200 },
+  semMovimento: 120, pular: 120,
+  lado: { mesa: TAMANHO_DO_DADO.lance, telefone: TAMANHO_DO_DADO.lanceTelefone },
+  /* a espera da pena não tem relógio; este é só o teto de segurança, para um
+     Narrador que nunca chega não deixar o dado parado na página */
+  esperaTeto: 15000,
+};
+
+/* CERIMONIA_DO_DADO — o 20 e o 1 naturais. Um clarão só por 20 (abaixo
+   dos três por segundo do WCAG 2.3.1) */
+export const CERIMONIA_DO_DADO = {
+  vinte: {
+    acende: 120,
+    pulso: { dura: 240, escala: 1.1, curva: "cubic-bezier(.2,.9,.3,1.3)" },
+    raios: { n: 16, cor: T.amber, largura: 3, de: 100, ate: [122, 142], dura: 300 },
+    onda: { cor: T.haloDaVela, raios: [560, 900], alfas: [0.7, 0.45], dura: 900 },
+    halo: { fator: 1.25, dura: 900 },
+  },
+  um: {
+    fissura: 200,
+    tomba: { dura: 240, gira: -4, lascas: [{ dx: 14, dy: -12 }, { dx: -16, dy: -18 }, { dx: 20, dy: -14 }], cor: T.ossoSombra },
+    luz: { feltro: 0.34, pagina: 0.10, tetoDoVeu: 0.12, chama: 0.7, desce: 200, volta: 800 },
+  },
 };
 
 /* A faixa: 64 na mesa, 56 no telefone; o dado a 48; até 5 à vista */
@@ -1051,7 +1142,7 @@ export const DADO_DE_USO_NA_MESA = {
   ordem: ["racoes", "agua", "tochas"],
   glifo: { racoes: "racao", agua: "agua", tochas: "tocha" },     /* GLIFOS */
   nome: { racoes: "rações", agua: "água", tochas: "tochas" },
-  papel: "uso",                                                  /* PAPEL_DO_DADO.uso — o osso */
+  papel: "uso",                                                  /* o osso (V3: todo dado é osso; o glifo é OSSO_DO_DADO.tinta) */
   mesa: {
     dado: 44, folga: 8, entreLinhas: 22, linhas: [["racoes", "agua"], ["tochas"]],
     glifo: { 10: 14, 8: 22, 6: 22, 4: 17 },

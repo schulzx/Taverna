@@ -30,7 +30,7 @@ import { pathToFileURL, fileURLToPath } from "node:url";
 import { buildSync } from "esbuild";
 import {
   T, FOLHA, CONSTELACAO, FIGURAS_DA_CONSTELACAO, LUGAR_DAS_FIGURAS, GEMA_DA_SUBCLASSE, MOLDURA_POR_DEGRAU,
-  CERIMONIA_DE_APRENDER, DADO_DE_USO_NA_MESA, ALVOS, MOVIMENTO_DO_DADO, PAPEL_DO_DADO, TIRA_DA_MESA,
+  CERIMONIA_DE_APRENDER, DADO_DE_USO_NA_MESA, ALVOS, MOVIMENTO_DO_DADO, OSSO_DO_DADO, TIRA_DA_MESA,
 } from "../src/estilo.js";
 import * as GEO from "../mente/figma/constelacao-geometria.mjs";
 import {
@@ -86,7 +86,7 @@ sec("1. as tabelas, e a geometria do desenho tal qual");
   t("as 12 classes têm figura (e nenhuma figura sem classe)", nomes.length === 12 && nomes.every((n) => FIGURAS_DA_CONSTELACAO[n]) && Object.keys(FIGURAS_DA_CONSTELACAO).every((n) => nomes.includes(n)),
     nomes.filter((n) => !FIGURAS_DA_CONSTELACAO[n]).join(", "));
   t("cada figura tem nome, raiz entre as estrelas e três braços", Object.values(FIGURAS_DA_CONSTELACAO).every((f) => f.figura && f.estrelas[f.raiz] && Object.keys(f.bracos).length === 3));
-  t("DADO_DE_USO_NA_MESA: rações, água, tochas, no papel do osso", DADO_DE_USO_NA_MESA.ordem.join() === "racoes,agua,tochas" && DADO_DE_USO_NA_MESA.papel === "uso" && PAPEL_DO_DADO.uso);
+  t("DADO_DE_USO_NA_MESA: rações, água, tochas, no papel do osso", DADO_DE_USO_NA_MESA.ordem.join() === "racoes,agua,tochas" && DADO_DE_USO_NA_MESA.papel === "uso" && OSSO_DO_DADO.tons.osso); /* 16/11 (V3): o osso é OSSO_DO_DADO — o PAPEL_DO_DADO aposentou-se */
   /* MOVIDAS em 07/11 (TL 8, a tela limpa): no telefone os mantimentos mudaram
      para a Tira da mesa — o dado a 22, em colunas de 24 com 2 entre elas, e o
      alvo 76 × 56 (a altura da fila da tira). A intenção fica: o alvo do
@@ -313,7 +313,10 @@ sec("6. a prateleira dos mantimentos");
   t("é UM botão, com o nome inteiro: «Mantimentos: rações 3, dado de seis; água 9, dado de dez; tochas 2, dado de quatro, a acabar. Abrir na Bolsa.»",
     (s.match(/<button/g) || []).length === 1 && desfaz(s).includes(`aria-label="Mantimentos: rações 3, dado de seis; água 9, dado de dez; tochas 2, dado de quatro, a acabar. Abrir na Bolsa."`));
   t("cada dado diz a face que o sistema deu", /data-uso="racoes" data-face="6"/.test(s) && /data-uso="agua" data-face="10"/.test(s) && /data-uso="tochas" data-face="4"/.test(s));
-  t("o desenho é o Corpo da Bandeja (o d10 com as facetas) no papel do osso", s.includes(`fill="${T[PAPEL_DO_DADO.uso.corpo]}"`) && s.includes("M4 21 L24 29 L44 21"));
+  /* MOVIDA em 16/11 (V3, F2 §2): o Corpo é o Dado de osso — o d10 tem agora três
+     faces pintadas (lume, sombra, meio) em vez de um corpo inkMeio com facetas;
+     a asserção prende a face lume do d10 novo e o tom dela. */
+  t("o desenho é o Corpo da Bandeja (o d10 de osso, três faces)", s.includes(`fill="${OSSO_DO_DADO.tons.lume}"`) && s.includes("24,3 44,21 24,30 4,21"));
   t("dentro, o glifo do mantimento (desenhado, nunca emoji)", s.includes(GLIFOS.racao.d) && s.includes(GLIFOS.agua.d) && s.includes(GLIFOS.tocha.d) && !/🥖|💧|🕯/.test(s));
   t("a contagem «×3», e na face d4 em danger", texto(s).includes("×3") && texto(s).includes("×9") && new RegExp(`color:${T.danger}"[^>]*>×(?:<!-- -->)?2<`).test(s));
   const vazio = html(R.PrateleiraDosMantimentos, { dados: { racoes: 4, agua: 4, tochas: null }, contagens: { racoes: 3, agua: 3, tochas: 0 } });

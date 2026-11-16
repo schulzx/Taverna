@@ -10,7 +10,7 @@
    §3 os dados: os cinco corpos ≥ 3 contra o couro da bandeja, e o número
       de cada papel ≥ 4,5 sobre o seu corpo;
    §4 a noite fria saiu: nenhum dos três neons da v3 ficou em T. */
-import { T, FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO } from "../src/estilo.js";
+import { T, FORMAS_DO_DADO, OSSO_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO } from "../src/estilo.js";
 import { A_BANDEJA } from "../src/motor/a-bandeja.js";
 import { rgb, razao } from "./conta-da-luz.mjs";
 
@@ -64,12 +64,15 @@ sec("§4 a noite fria saiu");
   t("toda chave de T é uma cor de seis dígitos", Object.values(T).every((v) => /^#[0-9A-Fa-f]{6}$/.test(v)));
 }
 
-sec("§5 a forma da bandeja (FORMAS_DO_DADO, PAPEL_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO)");
+sec("§5 a forma da bandeja (FORMAS_DO_DADO, OSSO_DO_DADO, BANDEJA, MOVIMENTO_DO_DADO)");
 {
   t("toda face que o motor conhece tem forma", A_BANDEJA.faces.every((f) => FORMAS_DO_DADO[f]));
   t("toda forma desenhável tem corpo e número", Object.entries(FORMAS_DO_DADO).filter(([k]) => k !== "100").every(([, f]) => (f.corpo || f.retangulo) && Array.isArray(f.numero) && f.tam >= 12));
   t("o d100 desenha-se como d10", FORMAS_DO_DADO[100].de === 10);
-  t("todo papel do motor tem cor, e só nomeia chaves de T", A_BANDEJA.papeis.every((p) => PAPEL_DO_DADO[p] && T[PAPEL_DO_DADO[p].corpo] && T[PAPEL_DO_DADO[p].numero]));
+  /* MOVIDA em 16/11 (V3, F2 §1.1): o PAPEL_DO_DADO (um corpo de cor por papel)
+     aposentou-se — todo dado é osso, e o papel diz-se pelo lugar e pela palavra.
+     O que a asserção guardava (a cor do dado só nomeia T) passa ao osso. */
+  t("todo dado é osso, e os tons só nomeiam T", Object.values(OSSO_DO_DADO.tons).every((c) => Object.values(T).includes(c)) && Object.values(T).includes(OSSO_DO_DADO.tinta) && A_BANDEJA.papeis.length > 0);
   t("o dado da bandeja mede o piso de toque (48)", BANDEJA.dado >= 48 && BANDEJA.altura.mesa >= BANDEJA.dado);
   t("o movimento tem saída, e o lance acaba antes de 1,22 s", MOVIMENTO_DO_DADO.semMovimento > 0 && MOVIMENTO_DO_DADO.rolar + MOVIMENTO_DO_DADO.pousar + MOVIMENTO_DO_DADO.veredito < 1220);
 }

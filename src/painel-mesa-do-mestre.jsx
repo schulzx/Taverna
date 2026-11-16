@@ -17,7 +17,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { T } from "./constantes.js";
-import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, TIPOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, PAPEL_DO_DADO, TIRA_DA_MESA, MOVIMENTO_DO_DADO } from "./estilo.js";
+import { HUD_DA_MESA, VELA, MOLDURA_POR_DEGRAU, TAMANHOS_DA_MOLDURA, ALVOS, TIPOS, alfa, OBJETOS_DA_MESA, DADO_DE_USO_NA_MESA, FORMAS_DO_DADO, OSSO_DO_DADO, TIRA_DA_MESA, MOVIMENTO_DO_DADO } from "./estilo.js";
 import { DADO_DE_USO } from "./dado-de-uso.js";
 import { molduraDe } from "./moldura.js";
 import { FASES_DO_DIA } from "./mapa-vivo.js";
@@ -344,7 +344,7 @@ export function DadoDeUso({ tipo, face, n, telefone = false, lugar = null, lance
         ) : <Corpo faces={f} legenda={numero} papel={USO.papel} tam={tam} rolando={!!(L && L.rolando)} />}
         {numero ? null : (
           <span aria-hidden="true" style={{ position: "absolute", left: centro[0] * k - lado / 2, top: centro[1] * k - lado / 2, lineHeight: 0 }}>
-            <Glifo nome={USO.glifo[tipo]} tamanho={lado} cor={vazio ? USO.vazio.glifo : T[PAPEL_DO_DADO[USO.papel].numero]} />
+            <Glifo nome={USO.glifo[tipo]} tamanho={lado} cor={vazio ? USO.vazio.glifo : OSSO_DO_DADO.tinta} />
           </span>
         )}
         {L && L.selo ? <SeloDoUso tam={tam} /> : null}

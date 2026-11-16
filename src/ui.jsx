@@ -41,7 +41,7 @@ import { ALTURA_NA_MESA, SUPERFICIES_NO_CHAO, EMPURRAO_NA_MESA } from "./estilo.
 import { altoDaPrevisao, rotulosDoEmpurrao } from "./batalha-na-tela.js";
 /* MC (10/11): a fala do Mestre que chama o dado — a forma em CHAMADO_DO_MESTRE,
    as palavras no molde do motor (O_CHAMADO), o d20 da marca em FORMAS_DO_DADO */
-import { CHAMADO_DO_MESTRE, FORMAS_DO_DADO, BANDEJA } from "./estilo.js";
+import { CHAMADO_DO_MESTRE, FORMAS_DO_DADO, BANDEJA, OSSO_DO_DADO, ESTADO_DO_DADO, HISTORICO_DO_DADO, TAMANHO_DO_DADO } from "./estilo.js";
 /* V2 (16/11) · o tamanho do texto do escudo do Mestre: a prosa lê a variável */
 import { TAMANHO_DO_TEXTO } from "./estilo.js";
 import { O_CHAMADO } from "./motor/o-mestre-chama.js";
@@ -2397,8 +2397,8 @@ function MarcaDoChamado() {
   return (
     <svg width={F.marca} height={F.marca} viewBox="0 0 48 48" aria-hidden="true"
       style={{ flex: "none", marginTop: (F.entrelinha - F.marca) / 2 }}>
-      <polygon points={d20.corpo} fill={F.marcaCorpo} strokeLinejoin="round" />
-      {d20.facetas.map((d, i) => <path key={i} d={d} fill="none" stroke={F.marcaFaceta} strokeWidth={BANDEJA.traco} />)}
+      <polygon points={d20.contorno} fill={F.marcaCorpo} strokeLinejoin="round" />
+      {d20.faces.map(([p], i) => <polygon key={i} points={p} fill="none" stroke={F.marcaFaceta} strokeWidth={BANDEJA.traco} strokeLinejoin="round" />)}
     </svg>
   );
 }
@@ -3362,5 +3362,101 @@ export function FacesDoD20({ faces, saiu = null, rotulo = "", tom = "acerta" }) 
         );
       })}
     </div>
+  );
+}
+
+/* ============================================================
+   O DADO DE OSSO (A Mesa do Mestre · F2 · V3 · 16/11/2026) — formas.md
+   §«A Mesa do Mestre · F2» §2 e §5; Figma 280:1365, 280:1430, 280:1472.
+
+   UM COMPONENTE SÓ para todo dado de fora da luta: a bandeja, o lance no
+   centro da página, o histórico, o chamado, os mantimentos. SVG em caixa 48,
+   um polígono por face na ordem de FORMAS_DO_DADO, o tom de OSSO_DO_DADO,
+   o número em Cinzel 700 na face lume. Nada de canvas nem biblioteca.
+
+     forma     — 4 | 6 | 8 | 10 | 12 | 20 | 100 (o d100 são dois d10)
+     estado    — "pousado" | "vivo" (o aro âmbar do voo) | "aceso" (o 20) |
+                 "rachado" (o 1) — ESTADO_DO_DADO
+     lado      — px (TAMANHO_DO_DADO)
+     numero    — o texto da face ("" = sem número: o glifo do botão)
+     historico — null | "passou" | "falhou" | "vinte" | "um": a forma do dado
+                 na fila da bandeja (HISTORICO_DO_DADO) — o vazado é sem faces
+     sombra    — false tira a sombra de contato (o dado em voo leva-a no chão)
+   A peça não decide nada: o número e o veredito chegam prontos.
+   ============================================================ */
+const O_ = OSSO_DO_DADO;
+const tomDe_ = (tom, rachado) => O_.tons[rachado ? ESTADO_DO_DADO.rachado.degrau[tom] : tom] || O_.tons.osso;
+function CorpoDeOsso({ f, estado, k, numero, tamLetra, historico }) {
+  const rachado = estado === "rachado" || historico === "um";
+  const aceso = estado === "aceso";
+  const vazado = historico === "falhou" || historico === "um";
+  const E = ESTADO_DO_DADO, H = HISTORICO_DO_DADO;
+  const fora = Math.max(O_.fora.piso, O_.fora.largura * k) / k;
+  const dentro = Math.max(O_.dentro.piso, O_.dentro.largura * k) / k;
+  const aro = aceso ? E.aceso : estado === "vivo" ? E.vivo : null;
+  const fissura = Math.max(E.rachado.piso, E.rachado.largura * k) / k;
+  return (
+    <>
+      {aro ? (
+        <polygon points={f.contorno} fill={aro.aro} transform={`translate(24 24) scale(${aro.escala}) translate(-24 -24)`}
+          style={{ filter: `drop-shadow(0 0 ${aro.brilho}px ${alfa(aro.aro, aro.alfa)})` }} />
+      ) : null}
+      {vazado ? (
+        <polygon points={f.contorno} fill={alfa(H.falhou.chao, H.falhou.alfa)} stroke={H.falhou.aro} strokeWidth={H.falhou.largura / k}
+          strokeDasharray={H.falhou.traco.map((x) => x / k).join(" ")} strokeLinejoin="round" />
+      ) : (
+        <>
+          {f.faces.map(([p, tom], i) => (
+            <polygon key={i} points={p} strokeLinejoin="round" stroke={O_.tinta} strokeOpacity={O_.dentro.alfa} strokeWidth={dentro}
+              fill={aceso && i === 0 ? E.aceso.face : aceso && E.aceso.quais.includes(i) ? E.aceso.vizinhas : tomDe_(tom, rachado)} />
+          ))}
+          <polygon points={f.contorno} fill="none" stroke={O_.tinta} strokeOpacity={O_.fora.alfa} strokeWidth={fora} strokeLinejoin="round" />
+        </>
+      )}
+      {rachado ? (
+        <g fill="none" stroke={vazado ? H.falhou.numero : O_.tinta} strokeWidth={fissura} strokeLinecap="round" strokeLinejoin="round">
+          <polyline className="tv-fissura" points={E.rachado.fissura} pathLength="1" />
+          <polyline className="tv-fissura" points={E.rachado.ramo} pathLength="1" />
+        </g>
+      ) : null}
+      {historico === "vinte" ? <polygon points={H.coroa.pontos} fill={H.coroa.cor} stroke={H.coroa.aro} strokeWidth={1 / k} strokeLinejoin="round" /> : null}
+      {numero !== "" && numero != null ? (
+        <text x={f.numero[0]} y={f.numero[1]} textAnchor="middle" dominantBaseline="central" fontFamily={O_.letra.familia} fontWeight={O_.letra.peso}
+          fontSize={tamLetra} fill={vazado ? H.falhou.numero : aceso ? E.aceso.numero : O_.tinta}>{numero}</text>
+      ) : null}
+    </>
+  );
+}
+export function DadoDeOsso({ forma = 20, estado = "pousado", lado = TAMANHO_DO_DADO.bandeja, numero = "", historico = null, sombra = true, className, style }) {
+  const nForma = Number(forma) === 100 ? 100 : FORMAS_DO_DADO[forma] && FORMAS_DO_DADO[forma].faces ? Number(forma) : 20;
+  const k = lado / 48;
+  const fatorLetra = (lado <= TAMANHO_DO_DADO.historico ? TAMANHO_DO_DADO.fatorDoHistorico : 1);
+  const letraDe = (f) => Math.max(TAMANHO_DO_DADO.pisoDaLetra, lado * f.fator * fatorLetra) / k;
+  const C = O_.contato;
+  const vazado = historico === "falhou" || historico === "um";
+  const sombras = vazado ? "none" : O_.sombra.map((x) => `drop-shadow(0 ${x.y * k}px ${x.desfoque * k}px rgba(0,0,0,${x.alfa}))`).join(" ");
+  const chao = sombra && !vazado ? <ellipse cx={C.cx} cy={C.cy} rx={C.rx} ry={C.ry} fill={`rgba(0,0,0,${C.alfa})`} style={{ filter: `blur(${C.desfoque}px)` }} /> : null;
+  if (nForma === 100) {
+    const M = FORMAS_DO_DADO[100], f = FORMAS_DO_DADO[10];
+    const txt = String(numero == null ? "" : numero);
+    const dz = txt === "" ? "" : String(Math.floor((Number(txt) % 100) / 10) * 10).padStart(2, "0");
+    const un = txt === "" ? "" : String(Number(txt) % 10);
+    const e = M.escala, dx = M.desvio[0] * 48, dy = M.desvio[1] * 48;
+    return (
+      <svg width={lado} height={lado} viewBox="0 0 48 48" aria-hidden="true" data-dado="100" className={className}
+        style={{ flex: "none", overflow: "visible", filter: sombras, ...style }}>
+        {chao}
+        <g transform={`scale(${e})`}><CorpoDeOsso f={f} estado={estado} k={k * e} numero={dz} tamLetra={M.tamDezenas / e} historico={historico} /></g>
+        <g transform={`translate(${dx} ${dy}) scale(${e})`}><CorpoDeOsso f={f} estado={estado} k={k * e} numero={un} tamLetra={letraDe(f) / e} historico={historico} /></g>
+      </svg>
+    );
+  }
+  const f = FORMAS_DO_DADO[nForma];
+  return (
+    <svg width={lado} height={lado} viewBox="0 0 48 48" aria-hidden="true" data-dado={nForma} data-estado={estado} data-historico={historico || undefined}
+      className={className} style={{ flex: "none", overflow: "visible", filter: sombras, ...style }}>
+      {chao}
+      <CorpoDeOsso f={f} estado={estado} k={k} numero={numero} tamLetra={letraDe(f)} historico={historico} />
+    </svg>
   );
 }
