@@ -173,6 +173,11 @@ sec("7. A COSTURA NO APP");
      conteúdo sem aba na barra, e isso lê como quebrado */
   t("a selecionada cai para a Ficha se fechou", /abertasAqui\.some\(\(s\) => s\.id === subEscolhida\) \? subEscolhida : "ficha"/.test(APP));
   t("o Códex de cima tem porta", /a\.id !== "codex" \|\| codexAberto/.test(APP));
+  /* 16/11 (a prova jogada da mesa): na mesa o grimório só pousava depois da primeira luta, e o
+     jogador não sabia que existia. As duas composições da mesa (a tira do telefone e a mesa cheia)
+     pousam-no desde o primeiro turno; a porta progressiva fica só no alforje antigo. */
+  t("na mesa o grimório pousa desde o primeiro turno, nas duas composições",
+    (APP.match(/abasDoTrilho\(despertoAgora, true\)\.filter\(\(a\) => a\.id !== "gestao"\)/g) || []).length === 2);
 }
 
 console.log(`\nabas v9.148: ${bons} passaram, ${maus} falharam`);

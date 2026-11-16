@@ -84,5 +84,14 @@ console.log("4 · a fiação da porta");
   t("a passagem do portal usa a mesma conta e a mesma frase", /aSaidaDaMasmorra\(p, mm\)/.test(portal) && !/tocha\(s\)/.test(portal));
 }
 
+console.log("5 · as palavras e os pisos da masmorra na página (16/11)");
+{
+  /* a mesma prova jogada viu «Busca: d20=3+1=4» e o painel da masmorra com textos de 9–11 px */
+  t("a nota da busca é a conta em palavras, sem «d20=»", !/Busca: d20=/.test(app) && app.includes("🎲 Busca: ${rolo} ${mod < 0 ? \"−\" : \"+\"} ${Math.abs(mod)} = ${total}"));
+  const i0 = app.indexOf("{/* V5 · O PAINEL DIZ A SALA, NÃO O LUGAR");
+  const painel = app.slice(i0, app.indexOf("\n", app.indexOf("Cada passagem gasta uma tocha.", i0)));
+  t("o painel da masmorra não tem letra abaixo de 12 px", painel.length > 1000 && !/text-\[(9|10|11)px\]/.test(painel));
+}
+
 console.log(`\nsaída da masmorra: ${ok} passaram, ${falhou} falharam`);
 if (falhou) process.exit(1);

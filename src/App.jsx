@@ -21417,7 +21417,7 @@ export default function Taverna() {
     const r = resultadoBusca(sala, total);
     avancarMinutos(custoBusca());
     aBandeja(lancamento({ rotulo: "Vasculhar a sala", dados: [{ faces: 20, valor: rolo }], mod, papel: "teste" }));
-    if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🎲 Busca: d20=${rolo}+${mod}=${total}` }]);
+    if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🎲 Busca: ${rolo} ${mod < 0 ? "−" : "+"} ${Math.abs(mod)} = ${total}` }]); /* 16/11: a conta em palavras, como a bandeja — sem «d20=» */
     pushMsgs([{ autor: "sistema", texto: `🔎 ${r.texto}` }]);
     if (r.achou) {
       const salas2 = mm.salas.map((x) => x.id === sala.id ? { ...x, segredo: r.segredo } : x);
@@ -26989,7 +26989,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const objetosDaTira = () => {
     try {
       const ordem = HUD_DA_MESA.telefone.objetos.ordem;
-      const abas = abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas())).filter((a) => a.id !== "gestao");
+      /* 16/11 (a prova jogada da mesa): o grimório só pousava depois da
+         primeira luta (a porta progressiva do Códex), e o jogador não sabia
+         que ele existia. Na mesa o objeto está lá desde o primeiro turno, nas
+         duas composições; vazio, abre no estado vazio («Títulos 0/N»). */
+      const abas = abasDoTrilho(despertoAgora, true).filter((a) => a.id !== "gestao");
       const objeto = (id) => (id === "bolsa" ? "inv" : id);
       return ordem.map(objeto).map((id) => abas.find((a) => a.id === id)).filter(Boolean).map((a) => ({
         id: a.id, rotulo: a.rotulo, Glifo: GLIFO_DA_ABA[a.id],
@@ -27275,7 +27279,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const luz = luzDaMesa({ hora: (minuto || 0) / 60, emMasmorra, tochas: contagens.tochas });
       const PECA_DA_ABA = { diario: "livro", mapa: "carta", inv: "bolsa", codex: "grimorio" };
       const ORDEM = ["diario", "mapa", "inv", "codex"];
-      const abas = abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas())).filter((a) => a.id !== "gestao");
+      /* 16/11: o grimório pousa desde o primeiro turno (ver objetosDaTira) */
+      const abas = abasDoTrilho(despertoAgora, true).filter((a) => a.id !== "gestao");
       const posicao = (id) => { const k = ORDEM.indexOf(id); return k < 0 ? ORDEM.length : k; };
       const objetos = [...abas].sort((a, b) => posicao(a.id) - posicao(b.id)).map((a) => ({
         chave: a.id, objeto: PECA_DA_ABA[a.id] || a.id, rotulo: PECA_DA_ABA[a.id] ? null : a.rotulo,
@@ -28655,18 +28660,18 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                   {RITMOS.map((r) => (
                     <button key={r.id} onClick={() => mudarRitmo(r.id)} disabled={bloqueado || !!combate}
-                      className="tv-mono text-[10px] px-2 py-1 rounded-full"
+                      className="tv-mono text-[12px] px-2 py-1 rounded-full"
                       style={{ background: masmorra.ritmo === r.id ? T.violet : "transparent", color: masmorra.ritmo === r.id ? T.onSecond : T.inkDim, border: `1px solid ${masmorra.ritmo === r.id ? T.violet : T.line}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}
                       title={`${r.desc} · ${r.minutos} min por sala`}>
                       {r.nome}
                     </button>
                   ))}
-                  <span className="tv-mono text-[10px] ml-auto" style={{ color: T.amberSoft }}>
+                  <span className="tv-mono text-[12px] ml-auto" style={{ color: T.amberSoft }}>
                     <Glifo nome="procurar" tamanho={12} /> passiva {percepcaoPassiva(atributoEfetivo(personagem, "percepcao"), masmorra.ritmo)}
                   </span>
                 </div>
                 <button onClick={buscarNaSala} disabled={bloqueado || !!combate}
-                  className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg mb-2"
+                  className="w-full tv-mono text-[13px] px-3 py-2 rounded-lg mb-2"
                   style={{ background: T.panelSoft, color: T.amberSoft, border: `1px solid ${T.amber}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
                   Procurar nesta sala <span style={{ color: T.inkDim }}>(10 min · rolagem de Percepção)</span>
                 </button>
@@ -28682,7 +28687,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   const e = enigmaDaSala(aqui);
                   return (
                     <button onClick={() => abrirEnigma(aqui)} disabled={bloqueado || !!combate}
-                      className="w-full tv-mono text-[11px] px-3 py-2 rounded-lg mb-2"
+                      className="w-full tv-mono text-[13px] px-3 py-2 rounded-lg mb-2"
                       style={{ background: T.panelSoft, color: T.violetSoft, border: `1px solid ${T.violet}`, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
                       Tentar {e.artigo.toLowerCase()} {e.rotulo} de novo
                       <span style={{ color: T.inkDim }}> ({MINUTOS_POR_TENTATIVA} min{e.tentativas > 0 ? ` · ${e.tentativas} tentativa(s), −${e.tentativas * 2} na dificuldade` : ""})</span>
@@ -28701,7 +28706,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     <div className="mb-2 space-y-1.5" role="group" aria-label="A armadilha à vista">
                       {ops.map((op) => (
                         <button key={op.id} onClick={() => escolherNaArmadilha(op)} disabled={travado}
-                          className="w-full text-left tv-mono text-[11px] px-3 py-2 rounded-lg"
+                          className="w-full text-left tv-mono text-[13px] px-3 py-2 rounded-lg"
                           style={{ minHeight: ALVOS.piso, background: T.panelSoft, color: op.id === "correr" ? T.danger : T.amberSoft, border: "1px solid " + (op.id === "correr" ? T.danger : T.amber), opacity: travado ? 0.45 : 1 }}>
                           {op.rotulo} <span style={{ color: T.inkDim }}>({op.preco})</span>
                         </button>
@@ -28709,7 +28714,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                     </div>
                   );
                 })()}
-                <div className="tv-mono text-[9px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Passagens</div>
+                <div className="tv-mono text-[12px] uppercase tracking-widest mb-1.5" style={{ color: T.inkDim }}>Passagens</div>
                 <div className="space-y-1.5">
                   {saidas.length === 0 && <div className="tv-body text-xs italic" style={{ color: T.inkDim }}>Sem saídas adiante — só resta voltar ou sair.</div>}
                   {saidas.map((sd) => (
@@ -28721,7 +28726,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                         <span className="tv-body text-sm block" style={{ color: T.ink }}>
                           {sd.visitada ? (ROTULO_SALA[sd.tipo] || "Passagem") : "Passagem desconhecida"}
                         </span>
-                        <span className="tv-body text-[11px] block" style={{ color: T.inkDim }}>
+                        <span className="tv-body text-[12px] block" style={{ color: T.inkDim }}>
                           {sd.trancada ? "portão lacrado — falta a chave" : sd.pista}
                           {!sd.trancada && precoDoCaminho ? <span style={{ color: T.danger }}>{" · pela armadilha: " + precoDoCaminho}</span> : null}
                         </span>
@@ -28731,14 +28736,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 </div>
                 <div className="flex gap-2 mt-2.5 flex-wrap">
                   {recuos.map((rc) => (
-                    <button key={`v${rc.id}`} onClick={() => irParaSala(rc.id)} disabled={bloqueado || !!combate} className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
+                    <button key={`v${rc.id}`} onClick={() => irParaSala(rc.id)} disabled={bloqueado || !!combate} className="tv-mono text-[12px] px-2.5 py-1.5 rounded-lg" style={{ border: `1px solid ${T.line}`, color: T.inkDim, opacity: (bloqueado || combate) ? 0.45 : 1 }}>
                       voltar ({ROTULO_SALA[rc.tipo] || "sala"})
                     </button>
                   ))}
                   {/* MC9: preso, «sair» não existe — a saída é um dado */}
-                  {!preso && <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Sair leva o que você já conquistou; o resto fica para trás" className="tv-mono text-[10px] px-2.5 py-1.5 rounded-lg ml-auto" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: (bloqueado || combate) ? 0.45 : 1 }}>sair</button>}
+                  {!preso && <button onClick={sairDaMasmorra} disabled={bloqueado || !!combate} title="Sair leva o que você já conquistou; o resto fica para trás" className="tv-mono text-[12px] px-2.5 py-1.5 rounded-lg ml-auto" style={{ border: `1px solid ${T.danger}`, color: T.danger, opacity: (bloqueado || combate) ? 0.45 : 1 }}>sair</button>}
                 </div>
-                <div className="tv-body text-[11px] mt-2" style={{ color: T.inkDim }}>Cada passagem gasta uma tocha. Você escolhe o caminho pelas pistas — e o portão do chefe só abre com a chave que alguém guarda lá dentro.</div>
+                <div className="tv-body text-[12px] mt-2" style={{ color: T.inkDim }}>Cada passagem gasta uma tocha. Você escolhe o caminho pelas pistas — e o portão do chefe só abre com a chave que alguém guarda lá dentro.</div>
               </div>
               );
             })()}
