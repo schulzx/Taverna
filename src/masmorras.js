@@ -10,6 +10,8 @@
 import { sorteDaCasa, comSorte } from "./semente.js";
 import { criaturasDoGenero, CRIATURAS_FANTASIA, ARQUETIPOS } from "./bestiario.js";
 import { gerarLoot } from "./loot.js";
+import { garantirSuprimentos } from "./ermos.js";
+import { contagem } from "./plural.js";
 
 const d = (n) => Math.floor(sorteDaCasa() * n);
 /* v9.53: era `arr[d(arr.length)]`, e `d(n)` devolve 1..n — nunca 0. O
@@ -840,6 +842,30 @@ export function acenderTochas(mm, quantas = 3) {
   const tochas = Math.max(antes, Math.min(teto, antes + Math.max(0, quantas)));
   if (tochas === antes) return { mm, linha: `🕯 Você já carrega tochas demais para acender mais uma (${antes}).` };
   return { mm: { ...mm, tochas }, linha: `🕯 ${tochas - antes} tocha${tochas - antes > 1 ? "s" : ""} a mais na mão — ${tochas} no total.` };
+}
+
+/* ---------------- A SAÍDA PELA PORTA (16/11, a prova jogada da mesa) ----------------
+   Visto na mesa: dentro da cripta «4 tochas», o «Sair» dizia «4 tocha(s)
+   voltam para a mochila», e a mochila, a Bolsa e a barra passavam a 0 — e
+   ficavam em 0. A devolução acontecia; o turno que a seguia é que a
+   apagava: a fiação mandava ao Narrador a ficha da ÚLTIMA RENDERIZAÇÃO
+   (a de dentro, com a mochila a 0 desde a entrada), e o turno inteiro se
+   aplicava sobre ela. A conta mora aqui, e a ficha que ela devolve é a que
+   segue para o turno — uma ficha só, da porta à resposta.
+
+     aSaidaDaMasmorra(pers, mm) → { pers, tochas, aviso }
+
+   `tochas` é o que volta (as da mão, nunca negativas); `aviso` é a linha da
+   tela, em palavras e com o plural da casa («1 tocha volta», «4 tochas
+   voltam»), vazia quando não sobrou luz. Sem masmorra, a ficha volta como
+   veio. Puro; provado em testes/teste-saida-da-masmorra.mjs. */
+export function aSaidaDaMasmorra(pers, mm) {
+  const p = pers && typeof pers === "object" ? pers : {};
+  if (!mm || typeof mm !== "object") return { pers: p, tochas: 0, aviso: "" };
+  const tochas = Math.max(0, Math.floor(Number(mm.tochas) || 0));
+  const p2 = { ...p, suprimentos: { ...garantirSuprimentos(p.suprimentos), tochas } };
+  const aviso = tochas > 0 ? `🕯 ${contagem(tochas, "tocha")} ${tochas === 1 ? "volta" : "voltam"} para a mochila.` : "";
+  return { pers: p2, tochas, aviso };
 }
 
 /* ---------------- O CHEFE QUE ENFRAQUECE (v9.54) ----------------

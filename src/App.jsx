@@ -23,7 +23,7 @@ import { subtramasDoNucleo, escolhasAbertas, escolherLado, opcoesDoPedido, respo
 import { PainelFogueira } from "./painel-fogueira.jsx";
 import { VINCULO_INICIAL, VINCULO_MAX, MARCOS_VINCULO, marcoDe, proximoMarco, ganharVinculo, linhaDoVinculo } from "./vinculos.js";
 import { RARIDADES_FORJAVEIS, RARIDADE_ROTULO, CUSTO_FORJA, gerarEspolioItem, gerarLoot, essenciaDe, essenciaDeEspolio, valorDe } from "./loot.js";
-import { gerarMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
+import { gerarMasmorra, aSaidaDaMasmorra, chefeDesgastado, desgasteDoChefe, acenderTochas, ROTULO_SALA, ICONE_SALA, saidasDe, saidasDeRecuo, entrarNaSala, marcarResolvida, progressoMasmorra, noEscuro, RITMOS, ritmoPorId, percepcaoPassiva, checarPassiva, resultadoBusca, armadilhaDispara, custoBusca, enigmaDaSala, dificuldadeDoEnigma, tentarEnigma, falaDoEnigma, envelopeDoEnigma, MINUTOS_POR_TENTATIVA, viradaAoCruzar, aplicarVirada, falaDaViradaDoChefe, envelopeDaViradaDoChefe, fasesDoChefe, voltarASalaLimpa, abreLuta, linhaDaLuta as linhaDaLutaDaSala, envelopeDaLuta, desfechoDaLuta, notarArmadilha, opcoesDaArmadilha, fecharArmadilha, armadilhaNoCaminho, ARMADILHA_DA_SALA, grupoNaArmadilha } from "./masmorras.js";
 import { ofertasDaqui, propostaDaOferta, envelopeDoCartaz, ICONE_OFERTA, genteDaHistoria, cartazVencido, objetoDoCartaz } from "./ofertas.js";
 import { vereditoDoCartaz, etapaDoDador } from "./veredito-do-cartaz.js";
 import { TIPOS_DECRETO, tipoDecreto, recompensaJusta, criarDecreto, tentarAceite, resolverDecreto, ROTULO_DESFECHO, ditosDoBando } from "./decretos.js";
@@ -267,7 +267,7 @@ import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
-import { falta } from "./plural.js";
+import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
 import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
@@ -13717,7 +13717,7 @@ export default function Taverna() {
       const mm = masmorraRef.current;
       saiuDe = mm.nome;
       masmorraRef.current = null; setMasmorra(null);
-      p = { ...p, suprimentos: { ...garantirSuprimentos(p.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
+      p = aSaidaDaMasmorra(p, mm).pers;
     }
     const persP = { ...p, mana: Math.max(0, (p.mana || 0) - mag.custo) };
     setPersonagem(persP); personagemRef.current = persP;
@@ -13733,7 +13733,7 @@ export default function Taverna() {
     pushMsgs([
       { autor: "jogador", texto: `${mag.nome} — ${acao}` },
       { autor: "sistema", texto: `🌀 A passagem se abre e fecha: ${de || "onde você estava"} → ${r.destino} · −${mag.custo} PM${r.percalco ? "" : " · a estrada inteira ficou para trás"}` },
-      ...(saiuDe ? [{ autor: "sistema", texto: `🕳 Você deixa ${saiuDe} pela passagem${(p.suprimentos || {}).tochas ? ` — ${p.suprimentos.tochas} tocha(s) voltam para a mochila` : ""}.` }] : []),
+      ...(saiuDe ? [{ autor: "sistema", texto: `🕳 Você deixa ${saiuDe} pela passagem${(p.suprimentos || {}).tochas ? ` — ${contagem(p.suprimentos.tochas, "tocha")} ${p.suprimentos.tochas === 1 ? "volta" : "voltam"} para a mochila` : ""}.` }] : []),
       ...(r.percalco ? [{ autor: "sistema", texto: `⚠ ${r.percalco}.` }] : []),
     ]);
     salvar({ personagem: persP, cidadeAtual: r.destino });
@@ -21449,13 +21449,18 @@ export default function Taverna() {
     if (recusaDoPreso()) return;
     masmorraRef.current = null; setMasmorra(null);
     /* v9.26: a luz que sobrou volta para a mochila — tocha não some porque a
-       expedição acabou. Vale para a fuga e para o fim normal. */
-    const pOut = personagemRef.current || personagem;
-    const persOut = { ...pOut, suprimentos: { ...garantirSuprimentos(pOut.suprimentos), tochas: Math.max(0, mm.tochas || 0) } };
+       expedição acabou. Vale para a fuga e para o fim normal.
+       16/11 (a prova jogada da mesa): o turno da fuga ia com `personagem`, a
+       ficha da última renderização — a de dentro, mochila a 0 —, e a
+       resposta do Narrador aplicava-se sobre ela: as tochas devolvidas
+       voltavam a 0 e ficavam. A ficha da saída (aSaidaDaMasmorra) é a que
+       segue para o turno. */
+    const saida = aSaidaDaMasmorra(personagemRef.current || personagem, mm);
+    const persOut = saida.pers;
     setPersonagem(persOut); personagemRef.current = persOut;
     pushMsgs([{ autor: "jogador", texto: `Fujo de ${mm.nome}, deixando o resto para trás.` }]);
-    if ((mm.tochas || 0) > 0) pushMsgs([{ autor: "sistema", texto: `🕯 ${mm.tochas} tocha(s) voltam para a mochila.` }]);
-    enviar(oEnvelopeDaMasmorra("fuga", { masmorra: mm.nome }), personagem);
+    if (saida.aviso) pushMsgs([{ autor: "sistema", texto: saida.aviso }]);
+    enviar(oEnvelopeDaMasmorra("fuga", { masmorra: mm.nome }), persOut);
   };
 
   /* ---------------- MURAL DE CONTRATOS (v9.37 · o mundo é que oferece) ----------------
