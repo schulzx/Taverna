@@ -106,7 +106,8 @@ sec("1. a inversão: o tabuleiro saiu de dentro do rolador do log");
 
   const iTela = APP.indexOf("<TelaDeBatalha");
   const iRolador = APP.indexOf("ref={areaRef}");
-  const iMain = APP.indexOf('<main className="flex-1 flex flex-col min-w-0"') /* AAA · 4: o main ganhou o style da mesa B; a âncora é o começo da tag */;
+  /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): o className do main virou expressão (ganha tv-folha na mesa cheia); a âncora continua o começo da tag */
+  const iMain = APP.indexOf('<main className={"flex-1 flex flex-col min-w-0"') /* AAA · 4: o main ganhou o style da mesa B; a âncora é o começo da tag */;
   t("é montada UMA vez", (APP.match(/<TelaDeBatalha/g) || []).length === 1);
   t("e ANTES do rolador do log abrir — logo não é filha dele",
     iTela > 0 && iRolador > 0 && iTela < iRolador,
@@ -149,8 +150,10 @@ sec("2. a fiação nova nunca pode custar o turno");
 sec("3. o que some durante a luta — e o critério é duro");
 {
   /* o trilho inteiro: oito portas para fora da luta, todas de uma vez */
+  /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): o trilho saiu; os objetos pousam na zona da direita, que só nasce
+     de dadosDaMesaCheia — e ela devolve null na luta. A guarda é outra, a intenção a mesma. */
   t("o trilho de abas inteiro é gateado por `!emBatalha`",
-    /\{!emBatalha && mesaLarga && \(\s*\n\s*<nav aria-label="Painéis"/.test(APP)); /* AAA · 4: o trilho virou a coluna dos objetos da mesa, com a mesma guarda */
+    /if \(fase !== "jogo" \|\| !personagem \|\| !mesaLarga \|\| emBatalha\) return null;/.test(APP)); /* AAA · 4: o trilho virou a coluna dos objetos da mesa, com a mesma guarda */
   /* MOVIDA em 08/11 (TL 9, o oficial): a coluna dos objetos só existe na mesa larga; a guarda de batalha é a mesma */
   /* AS DUAS QUE TERMINAM A LUTA, e uma delas já terminou uma por engano
      numa partida de verdade — é a razão mais cara desta lista.

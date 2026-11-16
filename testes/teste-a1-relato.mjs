@@ -260,12 +260,13 @@ t("B5: a oferta do chão só existe na cena onde a coisa caiu",
   /if \(noChao && chao && chao\.cena && chao\.cena !== cenaDoChao\(\)\) noChao = 0;/.test(APP));
 /* AAA · 4 (05/11): o trilho saiu — no lugar dele, os objetos da mesa (formas.md §AAA §13).
    As asserções de B6 passam a ler quem herdou a lei: a marca acende NA PORTA DA COISA. */
-const trilho = corpoDe("const objetosDaMesa = (telefone) => {", "\n  };\n");
+/* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): objetosDaMesa saiu; os objetos da mesa larga nascem em dadosDaMesaCheia */
+const trilho = corpoDe("const dadosDaMesaCheia = (() => {", "\n  })();\n");
 const MESA_A1 = readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8");
 t("B6: o contador violeta de GESTÃO saiu do trilho e do alforje",
   !/nGrupo/.test(trilho) && !/contador: a\.id === "gestao"/.test(APP) && /contador: 0,/.test(APP));
 t("B6: o trilho acende a marca na porta da coisa (a forma da fita do alforje)",
-  /novo=\{marcasDaPorta\.includes\(a\.id\)\}/.test(trilho) && /novo && !ativo \? \([\s\S]{0,200}?<MarcaDaPorta estado="novo" \/>/.test(MESA_A1));
+  /novo: marcasDaPorta\.includes\(a\.id\)/.test(trilho) /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): a marca vai como dado ao ObjetoPousado */ && /novo && !ativo \? \([\s\S]{0,200}?<MarcaDaPorta estado="novo" \/>/.test(MESA_A1));
 /* movida (AAA · 4): os objetos estão à vista nas duas larguras, logo o herói só acende pela Gestão, que não tem objeto */
 t("B6: e o retrato só acende pelo que não tem porta própria (a Gestão)",
   /fichaNova=\{marcasDaPorta\.includes\("gestao"\) && !aba\}/.test(APP) && /\.filter\(\(a\) => a\.id !== "gestao"\)/.test(trilho));

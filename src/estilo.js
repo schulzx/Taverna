@@ -1412,6 +1412,32 @@ export const PECAS_DA_MESA = {
   movimento: { nota: 220, estampaAbre: 420, estampaRecolhe: 280, ergue: 140, vez: 180, disco: 200, lacreDesce: 320, lacreAssenta: 120, lacreEscala: 1.6, chama: 1800, halo: 2300, luz: 900, escudo: 260, reduzido: 120, sobe: 6, entraNota: 4 },
 };
 
+/* A MESA CHEIA (V4 · F1 §6) — qual composição vale em qual janela. A
+   primeira faixa cuja largura mínima a janela alcança é a que vale (de cima
+   para baixo). `larga` é o quadro 272:127 (1440 × 900), `media` o 272:780
+   (1280 × 720); abaixo de 1180 o F1 manda a composição do telefone, com a
+   página a 680 no máximo, centrada (`estreita`). As colunas da mesa são em
+   px; a página encolhe até `paginaMin` antes de a janela pedir a faixa
+   seguinte. A conta é `composicaoDaJanela` (mesa-do-mestre.js). */
+export const COMPOSICAO_DA_MESA = {
+  faixas: [
+    { nome: "larga",    aPartirDe: 1424, lado: 40, esquerda: 316, pagina: 680, paginaMin: 600, direita: 300, vao: 24, cima: 20, estampa: "aberta",    pistas: true,  cartasEntre: 24 },
+    { nome: "media",    aPartirDe: 1180, lado: 24, esquerda: 292, pagina: 600, paginaMin: 500, direita: 292, vao: 16, cima: 20, estampa: "recolhida", pistas: false, cartasEntre: 12 },
+    { nome: "estreita", aPartirDe: 768,  pagina: 680, estampa: "estreita", pistas: false },
+    { nome: "telefone", aPartirDe: 0,    pagina: 0,   estampa: "estreita", pistas: false },
+  ],
+  /* as zonas da direita: a bandeja ao lado da vela; as quatro peças numa
+     fila; os quatro objetos em 2 × 2 (32 entre colunas, 24 entre linhas) */
+  direita: { bandeja: { alto: 140, raio: 16, teto: 300 }, entreZonas: 28, objetos: { colunas: 2, entreColunas: 32, entreLinhas: 24 } },
+  /* a esquerda: o passo dos retratos em cena, a nota da quest (rodada) e as
+     cartas de pista */
+  esquerda: { entreZonas: 24, quest: { rodada: -1.2, largura: 304 }, pista: { largura: 132, alto: 150, quantas: 2 } },
+  /* o alvo do F1 §1.3: a fração da janela com conteúdo a 1440 */
+  alvoDeCobertura: 0.70,
+  /* a página: margens de 48 dos lados da prosa e do pé (F1 §6) */
+  paginaMargem: 48,
+};
+
 /* O ESCUDO DO MESTRE (§7): três folhas de couro na mesa larga, uma folha
    que rola no telefone com o pé fixo. */
 export const ESCUDO_DO_MESTRE = {
@@ -1517,7 +1543,9 @@ export const HUD_DA_MESA = {
        puxada (TIRA_DA_MESA.puxada.cartas = "telefone") e `alto` a fila velha */
     ecra: { forma: "tira", alto: 44, velaAlta: 30 },
     cartas: { heroi: 0.46, companheiro: 0.34, objetosNaFila: true, alto: 150 },
-    objetos: { tamanho: 48, rotulo: 10, ordem: ["diario", "mapa", "bolsa"] },   /* 05/11 · AAA §15: 40 → 48, o piso de toque */
+    /* V4 (F1 §6): o Códex ganha porta no telefone — o grimório entra na tira,
+       depois da bolsa (antes: só Diário, Mapa e Bolsa, e o Códex sem porta) */
+    objetos: { tamanho: 48, rotulo: 10, ordem: ["diario", "mapa", "bolsa", "codex"] },   /* 05/11 · AAA §15: 40 → 48, o piso de toque */
   },
   ameaca: { pontos: 3, cheio: "●", vazio: "○" },
   gemasDaCarta: { PV: GEMA_DA_SUBCLASSE["Bárbaro"].corpo, PM: GEMA_DA_SUBCLASSE.Arcanista.corpo, Destino: T.amber },

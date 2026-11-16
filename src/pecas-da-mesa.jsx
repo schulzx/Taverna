@@ -18,8 +18,8 @@
    nasce no estado final) e NÃO corre com prefers-reduced-motion. Tocar
    não espera animação nenhuma: nada aqui segura o turno.
 
-   Nascem SEM ligação à tela principal (isso é o pacote V4). Leitores hoje:
-   testes/teste-pecas-da-mesa.mjs e o escudo do Mestre (painel-escudo.jsx).
+   Desde o V4 (16/11) pousam na tela principal (painel-mesa.jsx). Leitores:
+   a mesa cheia, o relato (a nota e o lacre), o escudo e teste-pecas-da-mesa.
    ============================================================ */
 import React from "react";
 import { T, PECAS_DA_MESA, SOMBRA_DA_MESA, ESCALA_DA_MESA, PISOS_DA_MESA, TAMANHO_DO_TEXTO, VELA, alfa } from "./estilo.js";
@@ -294,7 +294,7 @@ export function Estampa({ cena = "", lugar = "", sub = "", estado = "aberta" }) 
    ============================================================ */
 const DESENHO_DO_OBJETO = { livro: "diario", carta: "mapa", bolsa: "bolsa", grimorio: "codex" };
 const NOME_DO_OBJETO = { livro: "O livro", carta: "A carta", bolsa: "A bolsa", grimorio: "O grimório" };
-export function ObjetoPousado({ objeto = "livro", rotulo = null, aoAbrir = null, erguido = false }) {
+export function ObjetoPousado({ objeto = "livro", rotulo = null, aoAbrir = null, erguido = false, novo = false }) {
   const O = P.objeto;
   const [sob, setSob] = React.useState(false);
   const alto = erguido || sob;
@@ -306,7 +306,8 @@ export function ObjetoPousado({ objeto = "livro", rotulo = null, aoAbrir = null,
       onPointerEnter={on(true)} onPointerLeave={on(false)} onFocus={on(true)} onBlur={on(false)}
       style={{ width: O.alvo.largura, minHeight: O.alvo.alto, display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", gap: 4, padding: 0, background: "transparent", border: 0, cursor: aoAbrir ? "pointer" : "default" }}>
       <span style={{ display: "block", borderRadius: 8, boxShadow: alto ? SOMBRA_DA_MESA.erguido : SOMBRA_DA_MESA.pousado, transform: alto && !reduz ? `translateY(-${M.sobe}px)` : "none", transition: reduz ? "none" : `transform ${M.ergue}ms ease-out, box-shadow ${M.ergue}ms ease-out` }}>
-        <DesenhoDoObjeto chave={DESENHO_DO_OBJETO[objeto] || objeto} lado={O.desenho} />
+        {/* V4: a novidade acende na porta da coisa (a gota do desenho, a de A1 · B6) */}
+        <DesenhoDoObjeto chave={DESENHO_DO_OBJETO[objeto] || objeto} lado={O.desenho} novo={!!novo} />
       </span>
       <span style={{ color: alto ? T.ink : T.inkMeio, ...letraDaMesa("rotulo") }}>{nome.replace(/^(O|A) /, "")}</span>
     </button>

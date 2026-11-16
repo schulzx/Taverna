@@ -24,6 +24,20 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — V4, a mesa cheia · commits da composição (+ luz) e da voz
+
+A mão em Opus, com o bastão do `App.jsx` das 04:32 até ao fim da fiação (devolvido antes dos commits). Sem bump e sem push.
+
+- **A composição.** `src/painel-mesa.jsx` (novo): `CascaDaMesa` abraça a página que o App já montava; nas três zonas (`larga` ≥ 1424, `media` ≥ 1180 — `COMPOSICAO_DA_MESA` em `estilo.js`, conta em `composicaoDaJanela`) a esquerda leva o grupo em `CartaDePe` (140, PV/PM em contas), quem está em cena (o `EmCena` de sempre), a nota da quest e as cartas de pista; a direita a bandeja de hoje num tabuleiro de couro, a `VelaRelogio` (abre o tempo), as quatro `PecaDeRecurso` (abrem os mantimentos) e os `ObjetoPousado` (as abas de antes, o grimório incluído). Abaixo de 1180 a casca devolve só a página (a composição do telefone, página a 680 na estreita). `useMesaLarga` passou a ler a composição. Saíram: a barra de topo na mesa larga (o lugar foi para a `Estampa` — aberta no turno de chegada, recolhida a 1280; a hora para a vela; as pistas para as cartas), a coluna do grupo de TL 3, o trilho de objetos e a função `objetosDaMesa`.
+- **A luz.** O feltro, o halo e a penumbra pela `LUZ_DA_MESA` (`fundoDaLuz`); o véu cobre a página inteira (8 % noite, 12 % masmorra); o halo da masmorra pelas tochas (`luzDaMesa`). 900 ms no feltro, troca seca com `prefers-reduced-motion`.
+- **A voz.** `painel-relato.jsx`: as linhas do sistema viram `NotaDoMestre` (tabela `TIPO_DA_NOTA`: ganho · regra · aviso) e `Lacre` na conquista; a porta é tira de papel com seta; a dobra da luta deixa a mono. A ligação partida (App) é papel com aro de cera. O pé da página veste a forma do F1 por CSS de âmbito (`cssDaPaginaNaMesa`): ofertas em papel, a pílula vira a linha da pena — o turno, o dado e a bandeja não mudam.
+- **Decisão média — a 1024–1179 a mesa deixou de ter três colunas:** o F1 manda a composição do telefone entre 768 e 1179 (a de três colunas a 236|600|120 não cabe nas medidas novas). `HUD_DA_MESA.mesa.aPartirDe` (1024) continua a ser o corte da prosa nas fichas.
+- **O Códex no telefone:** `HUD_DA_MESA.telefone.objetos.ordem` ganha `codex` (a porta aparece quando o Códex está aberto, a mesma regra da mesa).
+- **Asserções movidas, com o motivo escrito:** `check-tela-de-batalha` (2), `teste-celular` (2), `teste-a1-relato` (1 + a janela), `teste-hud-da-mesa` (6). Suíte nova `teste-painel-mesa` (58).
+- **A prova viva** (Chrome headless por CDP, IA muda, porta 5297 — a 5196 estava ocupada): 1440 dia/noite (noite pelo `/hora 22`), 1280×720, 800×451, 375×812 em `mente/lancamento/capturas/V4-mesa-*.png`. Medido no DOM: conteúdo 67,4 % a 1440 (sem ninguém em cena e uma pista só; a planta dá 71,4 %) e 70,0 % a 1280; 0 textos abaixo de 12 px; 0 caracteres mono na folha (antes 143 de 336 nesta mesma cena); sem rolagem lateral nas cinco; console sem erro.
+- **O que ficou:** o F1 do telefone (faixa de 48 com retratos e pilhas; borda de baixo com cinco portas — o escudo segue na barra de cima); `InterruptorDoSom`/`RolaPorMim` por aposentar; o destino (heroísmo) já não aparece na carta da mesa larga (mora na ficha); a nota da quest só tem título e pergunta (sem etapa feita/seguinte: o quadro não as expõe); o painel do tempo abre por cima da mesa com a forma antiga.
+- **Proposta ambiciosa:** a mesa lembra (F1 §11) passa a ter onde pousar — o canto de cima da zona da direita, por cima da bandeja, fica livre a 1440.
+
 ## 16/11 · sem versão — V1+V2, a fundação da Mesa do Mestre e o escudo · commits 7526220 (V1) e o seguinte (V2)
 
 A mão em Opus, com o bastão do `App.jsx` das 03:36 até ao fim da fiação (devolvido antes dos commits). Sem bump e sem push.

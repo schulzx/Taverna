@@ -51,8 +51,10 @@ t("as abas de hoje lêem-se do App", ids.length >= 5 && ids.includes("gestao"));
 t("os objetos da §13 são abas que existem (bolsa = inv)", H.mesa.objetos.ordem.every((o) => ids.includes(o === "bolsa" ? "inv" : o)));
 /* movida (AR1, 06/11): a carta do herói abre a casa do herói (abrirOHeroi), não a porta da novidade */
 t("a Gestão vai para dentro da ficha: a carta do herói abre a casa do herói", /aoAbrirFicha=\{abrirOHeroi\}/.test(APP) && /\.filter\(\(a\) => a\.id !== "gestao"\)/.test(APP));
-t("o Códex e a Ascensão continuam na coluna da mesa (o resto das abas)", /const resto = telefone \? \[\] : abas\.filter/.test(APP));
-t("o toque num objeto abre a mesma gaveta (setAba)", /aoTocar=\{\(\) => \{ try \{ setAba\(aba === a\.id \? null : a\.id\); \}/.test(APP));
+/* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): os objetos da mesa são todas as abas menos a Gestão, na ordem do F1 e o resto depois */
+t("o Códex e a Ascensão continuam na coluna da mesa (o resto das abas)", /const objetos = \[\.\.\.abas\]\.sort\(\(a, b\) => posicao\(a\.id\) - posicao\(b\.id\)\)/.test(APP));
+/* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): o objeto pousado recebe a porta como dado (aoAbrir) */
+t("o toque num objeto abre a mesma gaveta (setAba)", /aoAbrir: \(\) => \{ try \{ setAba\(aba === a\.id \? null : a\.id\); \}/.test(APP));
 t("o painel HORA abre O TEMPO", /aoAbrirTempo=\{\(\) => setTempoAberto\(\(v\) => !v\)\}/.test(APP));
 /* MOVIDA em 06/11 (o «Bolsa, 1 moedas» que o oficial achou ao vivo): a legenda
    ganhou o singular; a intenção fica — as moedas continuam à vista, na Bolsa */
@@ -60,7 +62,7 @@ t("as moedas continuam à vista, na legenda da Bolsa", /a\.id === "inv" \? \(\(\
 /* MOVIDA em 08/11 (TL 9, o oficial): o ecrã do Mestre passou a ser a Barra do
    Mestre, e o calou do lugar mudou de nome com ela. A intenção fica: o lugar da
    barra, os objetos e o destino da carta continuam em try/catch. */
-t("e toda a fiação nova está em try/catch", /calou\("os objetos da mesa", e\)/.test(APP) && /calou\("o lugar na barra do Mestre", err\)/.test(APP) && /calou\("o destino na carta", e\)/.test(APP));
+t("e toda a fiação nova está em try/catch", /calou\("V4 · a mesa cheia", e\)/.test(APP) /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): os objetos da mesa calam com a mesa cheia */ && /calou\("o lugar na barra do Mestre", err\)/.test(APP) && /calou\("o destino na carta", e\)/.test(APP));
 
 sec("5. os defeitos da v9.605 (a pessoa jogou a 1905 × 860, 05/11)");
 /* a página ficava com ~355 px: a mesa baixa encolhe as cartas e estreita o horizonte */
@@ -85,13 +87,15 @@ t("a fila das cartas saiu da mesa (o campo é a última linha) e a velha mede a 
    `baixa` da fila velha), e o horizonte estreito vale para a mesa do telefone
    (abaixo da mesa larga) ou baixa. A intenção fica: a altura da janela, lida da
    tabela, encolhe as cartas e estreita o horizonte. */
-t("o App lê a mesa baixa da tabela, com a altura da janela", /alturaDaJanela < HUD_DA_MESA\.mesa\.baixa\.abaixoDe/.test(APP) && /\(mesaBaixa \? HUD_DA_MESA\.mesa\.baixa\.cartas : HUD_DA_MESA\.mesa\.grupo\.cartas\)\.heroi/.test(APP) && /telefone=\{!mesaLarga \|\| mesaBaixa\}/.test(APP));
+t("o App lê a mesa baixa da tabela, com a altura da janela", /alturaDaJanela < HUD_DA_MESA\.mesa\.baixa\.abaixoDe/.test(APP) /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): as cartas em zoom da coluna de TL 3 saíram (a carta de pé tem 140 fixos); a mesa baixa segue a ler a tabela */ && /telefone=\{!mesaLarga \|\| mesaBaixa\}/.test(APP));
 /* os objetos iam parar à borda da tela: as margens automáticas saem da página e ficam por fora */
 /* MOVIDA em 08/11 (TL 9, o oficial): o contrapeso de 120 à esquerda deu lugar à
    coluna do grupo (236), que leva a margem automática da esquerda; os objetos
    levam a da direita. A intenção fica: as margens automáticas ficam POR FORA das
    três colunas, e os objetos encostam na página. */
-t("os objetos encostam na página (as margens automáticas ficam por fora)", /width: HUD_DA_MESA\.mesa\.grupo\.largura, marginLeft: "auto"/.test(APP) && /width: parseInt\(HUD_DA_MESA\.mesa\.colunas\[2\], 10\), marginRight: "auto"/.test(APP));
+/* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): as três zonas são uma grelha com a página ao centro e o que sobra repartido por fora (space-between) */
+const MESA_V4 = ler("../src/painel-mesa.jsx");
+t("os objetos encostam na página (as margens automáticas ficam por fora)", /gridTemplateColumns: `\$\{f\.esquerda\}px minmax/.test(MESA_V4) && /justifyContent: "space-between"/.test(MESA_V4));
 /* a Bolsa abria a gaveta antiga; o Fechar da carta só tirava a camada de cima */
 /* movida (AR1, 06/11): a casa abre-se nas DUAS larguras (antes o heroiNaMesa
    separava o telefone, onde a carta vivia dentro da sub-aba da Gestão) — a pessoa
@@ -119,10 +123,12 @@ t("o Fechar da carta fecha tudo e devolve à mesa", /aoFechar=\{fecharTudo\}/.te
    também o último lance de uso (`lancamento={ultimoLanceDeUso()}`), para o
    dado rodar à vista; a intenção fica — debaixo da Bolsa na mesa larga */
 t("a prateleira dos mantimentos: na mesa debaixo da Bolsa, no telefone debaixo dos objetos",
-  /<PrateleiraDosMantimentos dados=\{u\.dados\} contagens=\{u\.contagens\} telefone=\{telefone\} aoAbrir=\{abrirOsMantimentos\} lancamento=\{ultimoLanceDeUso\(\)\} \/>/.test(APP)
+  /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): na mesa larga a prateleira deu lugar às quatro pilhas (PecaDeRecurso), com a contagem
+     da mesma regra (mantimentosDeUso) e o mesmo toque (abrirOsMantimentos); no telefone a tira segue igual */
+  /contagens = mantimentosDeUso\(personagem, masmorra\)\.contagens;/.test(APP)
+  && /aoAbrirRecursos=\{abrirOsMantimentos\}/.test(APP)
   && /lancamento: ultimoLanceDeUso\(\)/.test(APP)
-  && /if \(telefone \|\| a\.id !== "inv" \|\| !prateleira\) return obj;/.test(APP)
-  && /<span className="flex items-start gap-1">\{lista\}<\/span>\{prateleira\}/.test(APP));
+  && /<PecaDeRecurso tipo="racoes"/.test(MESA_V4));
 t("a face e o «×N» saem de uma regra só (mantimentosDeUso), com as tochas da masmorra lá dentro",
   /function mantimentosDeUso\(personagem, masmorra\)/.test(APP)
   && /const tochas = masmorra && !masmorra\.encerrada \? Math\.max\(0, Number\(masmorra\.tochas\) \|\| 0\) : sup\.tochas;/.test(APP)
@@ -132,7 +138,7 @@ t("a face e o «×N» saem de uma regra só (mantimentosDeUso), com as tochas da
 t("o toque abre a Bolsa e procura «Mantimentos»; a prateleira que estoura cala-se",
   /const abrirOsMantimentos = \(\) => \{\s*try \{\s*setAba\("inv"\);/.test(APP)
   && /section\[aria-label="Mantimentos"\]/.test(APP)
-  && /calou\("a prateleira dos mantimentos", e\)/.test(APP) && /calou\("abrir os mantimentos", e\)/.test(APP));
+  && /calou\("V4 · as pilhas na mesa", err\)/.test(APP) /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): a prateleira da mesa saiu; quem cala agora são as pilhas */ && /calou\("abrir os mantimentos", e\)/.test(APP));
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

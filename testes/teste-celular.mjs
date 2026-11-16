@@ -97,7 +97,9 @@ sec("2. A RESERVA VIROU UMA DECISÃO COM NOME");
 
 sec("3. O TRILHO SÓ EXISTE NA COLUNA LARGA — no telefone, a fita é a do alforje");
 {
-  const nav = APP.slice(APP.indexOf('aria-label="Painéis"') - 700, APP.indexOf('aria-label="Painéis"') + 60);
+  /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): o trilho «Painéis» saiu; a janela passa a ser a casca da mesa cheia */
+  const nav = APP.slice(APP.indexOf("<CascaDaMesa tresZonas="), APP.indexOf("<CascaDaMesa tresZonas=") + 700);
+  const MESA_V4 = readFileSync("../src/painel-mesa.jsx", "utf8");
   /* R21: O QUE ESTA SECÇÃO MEDIA DEIXOU DE EXISTIR NO TELEFONE, e ela mede
      agora o que o substituiu. Cobrava a barra inferior (`inset-x-0 bottom-0`,
      `flex-row`, `justify-around`, o botão `flex-1`) porque o polegar alcança
@@ -112,14 +114,16 @@ sec("3. O TRILHO SÓ EXISTE NA COLUNA LARGA — no telefone, a fita é a do alfo
   /* MOVIDA em 08/11 (TL 9, o oficial): a coluna dos objetos só existe na mesa
      larga (HUD_DA_MESA.mesa.aPartirDe); abaixo dela os objetos moram na tira da
      mesa. A guarda é outra, a intenção a mesma: no telefone a coluna não existe. */
-  t("no telefone a coluna dos objetos não existe", /!emBatalha && mesaLarga && \(/.test(nav));
+  /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): a zona dos objetos só existe nas três zonas (mesaLarga e os dados da mesa) */
+  t("no telefone a coluna dos objetos não existe", /<CascaDaMesa tresZonas=\{!!\(mesaLarga && dadosDaMesaCheia\)\}/.test(nav));
   t("e nenhuma barra fixa sobrou por cima do convés", !/fixed/.test(nav));
   t("a fita do telefone é a do alforje, no pé e só no telefone", /role="tablist"/.test(ALF) && /className=\{?"md:hidden shrink-0 flex/.test(ALF));
   /* R21: a classe da fita passou a ser uma expressão (ganha `tv-fita-seis` com
      seis abas); o que a régua prende é que ela SÓ existe no telefone. */
   /* v9.170: no monitor o trilho está no fluxo, em coluna — o destino é o
      mesmo, e quem o põe lá é o layout. R21 não lhe mexeu. */
-  t("no monitor é coluna em fluxo", /<nav aria-label="Painéis" className="shrink-0 flex flex-col items-center"/.test(APP)); /* AAA · 4: a classe vem depois do rótulo, fora da janela de nav */
+  /* MOVIDA em 16/11 (V4, a mesa cheia, F1 §6): os objetos são uma grelha 2 × 2 em fluxo dentro da zona da direita (painel-mesa.jsx) */
+  t("no monitor é coluna em fluxo", /<nav aria-label="Os objetos da mesa" style=\{\{ display: "grid"/.test(MESA_V4)); /* AAA · 4: a classe vem depois do rótulo, fora da janela de nav */
   /* barra que flutua sobre o conteúdo sem fundo deixa o texto passar por
      baixo e vira ilegível nos dois */
   t("a barra tem chão próprio", /borderTop: `1px solid \$\{T\.line\}`/.test(APP));

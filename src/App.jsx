@@ -52,8 +52,10 @@ import { PainelReacao } from "./painel-reacao.jsx";
 import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, oFechoPergunta, QUANDO_O_FECHO_PERGUNTA } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { PortaDoEscudo } from "./painel-escudo.jsx";
-import { CantoDoEscudo } from "./pecas-da-mesa.jsx";
-import { quemTemOEsc, tamanhoDoTextoGuardado, multiplicadorValido } from "./mesa-do-mestre.js";
+import { CantoDoEscudo, NotaDoMestre, letraDaMesa } from "./pecas-da-mesa.jsx";
+import { quemTemOEsc, tamanhoDoTextoGuardado, multiplicadorValido, composicaoDaJanela, temTresZonas, estadoDaEstampa, cenaDaEstampa, luzDaMesa, estadoDaCarta } from "./mesa-do-mestre.js";
+import { CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina } from "./painel-mesa.jsx";
+import { retratoDe } from "./retratos.js";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta } from "./mercado.js";
 import { generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
@@ -411,7 +413,7 @@ import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHer
 import { Relato } from "./painel-relato.jsx";
 import { dadosDoMapaVivo } from "./mapa-vivo.js";
 import { FaixaDoRumo, TelaDoMapa } from "./painel-mapa-vivo.jsx";
-import { BarraDoMestre, TiraDaMesa, FilaDasCartas, ObjetoDaMesa, LuzDaVela, VinhetaDaNoite, PrateleiraDosMantimentos } from "./painel-mesa-do-mestre.jsx";
+import { BarraDoMestre, TiraDaMesa, LuzDaVela, VinhetaDaNoite } from "./painel-mesa-do-mestre.jsx";
 import { chegadaDaViagem, perigoDoTrecho } from "./partida.js";
 /* CB lote 1 (09/11, a fiação do oficial): o encontro na estrada em três tempos,
    a intenção do inimigo anunciada, a previsão do golpe e as peças do encontro */
@@ -5250,19 +5252,23 @@ function useAlturaDaJanela() {
    HUD_DA_MESA.mesa.aPartirDe (1024), não o `md:` da cinta (768): abaixo dele a
    mesa é a do telefone (a barra de 48, a soleira, a tira de 72), acima as três
    colunas (o grupo, a página, os objetos). Fora do render, como a de cima. */
-function useMesaLarga() {
-  const consulta = "(min-width: " + HUD_DA_MESA.mesa.aPartirDe + "px)";
-  const [larga, setLarga] = useState(() => { try { return window.matchMedia(consulta).matches; } catch (e) { return true; } });
+/* V4 (16/11, F1 §6): a mesa larga passa a ser a das TRÊS ZONAS do F1 —
+   larga (a partir de 1424) e media (a partir de 1180), COMPOSICAO_DA_MESA.
+   Entre 768 e 1179 o F1 manda a composição do telefone com a página a 680,
+   centrada (estreita). A conta é composicaoDaJanela (mesa-do-mestre.js). */
+function useComposicaoDaMesa() {
+  const [largura, setLargura] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 1440));
   useEffect(() => {
-    try {
-      const mm = window.matchMedia(consulta);
-      const aoMudar = () => setLarga(mm.matches);
-      aoMudar();
-      mm.addEventListener("change", aoMudar);
-      return () => mm.removeEventListener("change", aoMudar);
-    } catch (e) { return undefined; }
-  }, [consulta]);
-  return larga;
+    if (typeof window === "undefined") return undefined;
+    const medir = () => { try { setLargura(window.innerWidth); } catch (e) { /* fica a de antes */ } };
+    medir();
+    window.addEventListener("resize", medir);
+    return () => window.removeEventListener("resize", medir);
+  }, []);
+  return composicaoDaJanela(largura);
+}
+function useMesaLarga() {
+  return temTresZonas(useComposicaoDaMesa().nome);
 }
 
 class LimiteErro extends React.Component {
@@ -26912,6 +26918,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const mesaDoAlforje = useMesa();
   /* TL 3: a mesa larga (≥ HUD_DA_MESA.mesa.aPartirDe) é a das três colunas; abaixo, a do telefone */
   const mesaLarga = useMesaLarga();
+  const composicaoDaMesa = useComposicaoDaMesa();
+  /* V4 · a estampa abre no turno de chegada: guarda o lugar e quantas falas
+     do jogador havia quando ele mudou; aberta enquanto o jogador não falar */
+  const estampaDaChegadaRef = useRef({ lugar: null, falas: -1 });
   const alforjeDoPainel = (() => {
     try {
       if (fase !== "jogo" || !personagem) return null;
@@ -26924,7 +26934,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           novo: marcasDaPorta.includes(a.id), contador: 0,
         })),
         aoEscolher: setAba,
-        topo: emBatalha ? 0 : ((mesaLarga ? HUD_DA_MESA.mesa.barra.alto : HUD_DA_MESA.telefone.barra.alto) + (vivo ? CINTA.alturaViva - CINTA.altura : 0)),
+        topo: emBatalha ? 0 : ((mesaLarga ? 0 : HUD_DA_MESA.telefone.barra.alto) + (vivo ? CINTA.alturaViva - CINTA.altura : 0)),
         espreita, aoTocarEspreita: irAoInicioDaEspreita,
         reduzido: !!reduzidoRef.current,
       };
@@ -26944,39 +26954,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* AAA · 4: os objetos da mesa levam a marca nas DUAS larguras (no
      telefone vão na fila das cartas); a carta do herói só acende pela
      Gestão, que não tem objeto — mora dentro da ficha. */
-  const objetosDaMesa = (telefone) => {
-    try {
-      const ordem = (telefone ? HUD_DA_MESA.telefone : HUD_DA_MESA.mesa).objetos.ordem;
-      const abas = abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas()))
-        .filter((a) => a.id !== "gestao");
-      const objeto = (id) => (id === "bolsa" ? "inv" : id);
-      const naOrdem = ordem.map(objeto).map((id) => abas.find((a) => a.id === id)).filter(Boolean);
-      const resto = telefone ? [] : abas.filter((a) => !ordem.map(objeto).includes(a.id));
-      /* 07/11 (formas.md §AR 12): a prateleira dos mantimentos — na mesa logo
-         debaixo da Bolsa (os dois num bloco só, para a folga ser a da peça e
-         não o passo da coluna); no telefone debaixo da fila dos objetos.
-         Uma prateleira que estoura cala-se e não leva os objetos. */
-      let prateleira = null;
-      try {
-        if (personagem) {
-          const u = mantimentosDeUso(personagem, masmorra);
-          prateleira = <PrateleiraDosMantimentos dados={u.dados} contagens={u.contagens} telefone={telefone} aoAbrir={abrirOsMantimentos} lancamento={ultimoLanceDeUso()} />;
-        }
-      } catch (e) { calou("a prateleira dos mantimentos", e); prateleira = null; }
-      const lista = [...naOrdem, ...resto].map((a) => {
-        const obj = (
-        <ObjetoDaMesa key={a.id} id={a.id} rotulo={a.rotulo} telefone={telefone} Glifo={GLIFO_DA_ABA[a.id]}
-          ativo={aba === a.id} novo={marcasDaPorta.includes(a.id)}
-          legenda={a.id === "inv" ? (() => { const n = (personagem && personagem.moedas) || 0; return n + (n === 1 ? " moeda" : " moedas"); })() : ""}
-          aoTocar={() => { try { setAba(aba === a.id ? null : a.id); } catch (e) { calou("abrir um objeto da mesa", e); } }} />
-        );
-        if (telefone || a.id !== "inv" || !prateleira) return obj;
-        return <div key={a.id} className="flex flex-col items-center">{obj}{prateleira}</div>;
-      });
-      if (!telefone || !prateleira) return lista;
-      return [<span key="objetos-e-mantimentos" className="flex flex-col items-end gap-1"><span className="flex items-start gap-1">{lista}</span>{prateleira}</span>];
-    } catch (e) { calou("os objetos da mesa", e); return null; }
-  };
+  /* V4 · `objetosDaMesa` (o trilho de objetos da mesa larga, AAA · 4) SAIU: os
+     objetos pousam na zona da direita da mesa cheia (dadosDaMesaCheia, mais abaixo),
+     e no telefone vão na tira (objetosDaTira). Export morto mente; função morta também. */
   /* o toque na prateleira: abre a Bolsa (a carta na aba do equipamento) e
      leva o scroll e o foco à secção «Mantimentos», quando ela montar. Se
      não a achar, abrir a Bolsa basta. */
@@ -27178,7 +27158,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      folga 32 de cada lado e o topo a 72 (a barra 56 + 16). */
   const paginaDaFolha = (() => {
     try {
-      if (mesaLarga) return { marginLeft: HUD_DA_MESA.mesa.folga, marginRight: HUD_DA_MESA.mesa.folga, marginTop: HUD_DA_MESA.mesa.topo - HUD_DA_MESA.mesa.barra.alto };
+      /* V4: na mesa cheia o papel é a página inteira (main), e a folha encosta nela */
+      if (mesaLarga) return { margin: 0 };
       const lado = (trilhoAVista ? HUD_DA_MESA.mesa.borda : HUD_DA_MESA.telefone.borda) + HUD_DA_MESA.telefone.livro.margem;
       return { marginLeft: lado, marginRight: lado, marginTop: HUD_DA_MESA.telefone.vao };
     } catch (e) { calou("a margem da folha", e); return undefined; }
@@ -27255,6 +27236,73 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* o que o escudo mostra: as filas de hoje, com os rótulos das tabelas de
      hoje (a reação, o golpe final, RITMOS_VIAGEM). Estourar = escudo sem a
      parte que estourou, nunca sem escudo. */
+  /* ---------------- V4 · A MESA CHEIA (F1 §6) ----------------
+     O que as três zonas mostram, lido do mesmo estado que a barra, a coluna
+     do grupo e o trilho liam. As portas são as de antes (a ficha, o
+     companheiro, o painel, o tempo, as pistas, os mantimentos). Em calou:
+     uma mesa que estoura dá null, e a casca fica só com a página. */
+  const dadosDaMesaCheia = (() => {
+    try {
+      if (fase !== "jogo" || !personagem || !mesaLarga || emBatalha) return null;
+      const pm = oPMConta(personagem);
+      const cartaDe = (e, aoTocar, ehHeroi) => {
+        const vida = Number(e.vida) || 0, vidaMax = Number(e.vidaMax) || 0;
+        let retrato = null;
+        try { const r = retratoDe(e, mundo); retrato = r && r.arquivo ? r.arquivo : null; } catch (err) { calou("V4 · o retrato da carta de pé", err); }
+        const comPM = ehHeroi ? pm : (Number(e.manaMax) || 0) > 0;
+        return { nome: e.nome || "", legenda: [e.classe, e.nivel ? "nível " + e.nivel : ""].filter(Boolean).join(" · "), retrato, vida, vidaMax,
+          mana: comPM ? Number(e.mana) || 0 : 0, manaMax: comPM ? Number(e.manaMax) || 0 : 0,
+          vez: !!ehHeroi && estadoDaCarta({ vida, vidaMax }) === "repouso", aoTocar };
+      };
+      let quest = null, pistas = null;
+      try {
+        if (pistasDaTela && !fogueiraNaPagina) {
+          const qv = pistasDaTela.quadros.find((q) => q.quest === pistasDaTela.daVez) || pistasDaTela.quadros[0];
+          if (qv) {
+            quest = { titulo: qv.titulo || "", atual: qv.pergunta || "" };
+            pistas = { sabe: (qv.sinal && qv.sinal.sabe) || 0, de: (qv.sinal && qv.sinal.de) || 0, novo: !!pistasDaTela.novo, cartas: qv.cartas || [] };
+          }
+        }
+      } catch (err) { calou("V4 · a quest e as pistas na mesa", err); }
+      let contagens = { racoes: 0, agua: 0, tochas: 0 };
+      try { contagens = mantimentosDeUso(personagem, masmorra).contagens; } catch (err) { calou("V4 · as pilhas na mesa", err); }
+      const emMasmorra = !!(masmorra && !masmorra.encerrada);
+      const luz = luzDaMesa({ hora: (minuto || 0) / 60, emMasmorra, tochas: contagens.tochas });
+      const PECA_DA_ABA = { diario: "livro", mapa: "carta", inv: "bolsa", codex: "grimorio" };
+      const ORDEM = ["diario", "mapa", "inv", "codex"];
+      const abas = abasDoTrilho(despertoAgora, estaAberta("codex", abasAbertas, estadoDasAbas())).filter((a) => a.id !== "gestao");
+      const posicao = (id) => { const k = ORDEM.indexOf(id); return k < 0 ? ORDEM.length : k; };
+      const objetos = [...abas].sort((a, b) => posicao(a.id) - posicao(b.id)).map((a) => ({
+        chave: a.id, objeto: PECA_DA_ABA[a.id] || a.id, rotulo: PECA_DA_ABA[a.id] ? null : a.rotulo,
+        erguido: aba === a.id, novo: marcasDaPorta.includes(a.id),
+        aoAbrir: () => { try { setAba(aba === a.id ? null : a.id); } catch (err) { calou("V4 · abrir um objeto pousado", err); } },
+      }));
+      let estampa = null;
+      try {
+        const cena = cenaDoPalco();
+        const e = etiquetasDaPagina({ lugar: lugarDaCena(), cena, clima });
+        const partes = String(e.lugar || "").split(" · ").filter(Boolean);
+        const titulo = fogueiraNaPagina ? "A noite · " + ((sitio && sitio.nome) || partes[0] || lugarDaCena()) : (partes[0] || String(e.lugar || ""));
+        const sub = fogueiraNaPagina ? "" : [...partes.slice(1), ...(e.direita || [])].join(" · ");
+        const falas = mensagens.reduce((n, m) => n + (m && m.autor === "jogador" ? 1 : 0), 0);
+        const ch = estampaDaChegadaRef.current;
+        if (ch.lugar !== titulo) estampaDaChegadaRef.current = { lugar: titulo, falas };
+        const chegou = estampaDaChegadaRef.current.falas === falas;
+        const bioma = (cidadeDoMapa(cidadeAtualRef.current) || {}).bioma || "";
+        estampa = { lugar: titulo, sub, cena: cenaDaEstampa({ bioma, emMasmorra: emMasmorra || !!(cena && cena.subterraneo) }), estado: estadoDaEstampa(composicaoDaMesa.nome, chegou) };
+      } catch (err) { calou("V4 · a estampa da página", err); }
+      let prazo = "";
+      try { const p = prazosDaCinta(relogios); if (p && p.length) prazo = p[0].noites <= 0 ? "o prazo é hoje" : p[0].noites === 1 ? "falta 1 noite" : "faltam " + p[0].noites + " noites"; } catch (err) { calou("V4 · o prazo na vela", err); }
+      let falaDaHora = "";
+      try { const l = luzDaHora(Math.floor((minuto || 0) / 60)) || ""; falaDaHora = ["O tempo", l, horaCheiaFalada(horaTxt(minuto)), clima && clima.rotulo].filter(Boolean).join(", "); } catch (err) { calou("V4 · a fala da vela", err); }
+      return {
+        luz, estampa, prazo, falaDaHora, objetos, quest, pistas,
+        heroi: cartaDe(personagem, abrirOHeroi, true),
+        companheiros: grupoDaMesa.map((c) => cartaDe(c, () => abrirCompanheiro(c.nome), false)),
+        recursos: { ...contagens, moedas: Number(personagem.moedas) || 0 },
+      };
+    } catch (e) { calou("V4 · a mesa cheia", e); return null; }
+  })();
   const propsDoEscudo = () => {
     const p = { tamanhoDoTexto, aoTamanhoDoTexto: escolherTamanhoDoTexto, rolagens: !!mostrarRolagens, aoRolagens: (v) => setMostrarRolagens(!!v),
       rolaPorMim: !!rolaPorMim, aoRolaPorMim: (v) => alternarRolaPorMim(!!v), aoGuardar: exportarSave,
@@ -28118,6 +28166,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               o prazo e a ameaça. A luz, o clima, a cena da masmorra e a noite da
               fogueira, que o cabeçalho da página dizia, moram aqui. Calada pelo
               LimiteDasFichas: uma barra que estoura some, e a cena fica. */}
+          {/* V4 · A BARRA DE TOPO SAI DA MESA LARGA (F1 §1.1): o lugar foi para a
+              estampa da página, a hora para a vela-relógio, as pistas para as
+              cartas na mesa e quem está em cena para a coluna do grupo. No
+              telefone (e na estreita) ela fica, com o canto do escudo. */}
+          {!mesaLarga ? (
           <LimiteDasFichas>
             <BarraDoMestre telefone={!mesaLarga} {...(() => {
               try {
@@ -28167,6 +28220,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               )}
             </BarraDoMestre>
           </LimiteDasFichas>
+          ) : null}
           {/* OS ESTADOS VIVOS — a segunda fila da cinta, com a mesma forma:
               o que não cabe numa linha calma é o que tem de interromper. */}
           {(() => {
@@ -28239,31 +28293,37 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               FilaDasCartas (uma para o herói, outra para quem anda com ele), porque a
               peça ainda não aceita uma escala própria. No dia em que aceitar, o zoom
               sai daqui. */}
-          {mesaLarga ? (
-            <aside aria-label="O grupo" className="shrink-0 flex flex-col items-center"
-              style={{ width: HUD_DA_MESA.mesa.grupo.largura, marginLeft: "auto", paddingTop: HUD_DA_MESA.mesa.topo - HUD_DA_MESA.mesa.barra.alto, gap: HUD_DA_MESA.mesa.grupo.bandeja.acima }}>
-              <LimiteDasFichas key="grupo-da-mesa">
-                <div className="flex items-start justify-center" style={{ gap: HUD_DA_MESA.mesa.grupo.cartas.entre }}>
-                  <div className="shrink-0" style={{ zoom: (mesaBaixa ? HUD_DA_MESA.mesa.baixa.cartas : HUD_DA_MESA.mesa.grupo.cartas).heroi }}>
-                    <FilaDasCartas heroi={personagem} grupo={[]} comPMDoHeroi={oPMConta(personagem)} destino={destinoDaCarta}
-                      fichaAberta={!!aba} fichaNova={marcasDaPorta.includes("gestao") && !aba}
-                      aoAbrirFicha={abrirOHeroi} rotuloDoHeroi={rotuloDaCartaDoHeroi} />
-                  </div>
-                  {grupoDaMesa.length ? (
-                    <div className="shrink-0" style={{ zoom: (mesaBaixa ? HUD_DA_MESA.mesa.baixa.cartas : HUD_DA_MESA.mesa.grupo.cartas).companheiro }}>
-                      <FilaDasCartas heroi={null} grupo={grupoDaMesa} aoAbrirCompanheiro={abrirCompanheiro} />
-                    </div>
-                  ) : null}
-                </div>
+          {/* V4 · A MESA CHEIA (F1 §6): nas janelas das três zonas a página pousa
+              entre o grupo (esquerda) e as peças (direita), em painel-mesa.jsx.
+              A coluna do grupo de TL 3 e o trilho de objetos saíram; as portas
+              são as mesmas. Abaixo de 1180 a casca devolve só a página. */}
+          <CascaDaMesa tresZonas={!!(mesaLarga && dadosDaMesaCheia)} composicao={composicaoDaMesa} luz={dadosDaMesaCheia ? dadosDaMesaCheia.luz : null}
+            esquerda={dadosDaMesaCheia ? (
+              <LimiteDasFichas key="v4-esquerda">
+                <ColunaDoGrupo composicao={composicaoDaMesa} heroi={dadosDaMesaCheia.heroi} companheiros={dadosDaMesaCheia.companheiros}
+                  emCena={fogueiraNaPagina || !fichasEmCena.length ? null : (
+                    <LimiteDasFichas key={"em-cena-mesa|" + fichasEmCena.map((f) => f.id).join("|")}>
+                      <EmCena itens={fichasEmCena} escrita={fichaEscrita} aberta={cartaoNaProsa ? null : fichaAberta} nomeados={nomeadosNaProsa}
+                        onToque={tocarFicha} onAbrir={abrirNaGaveta} onFechar={fecharFicha} onVerbo={verboDaFicha} baixa={alturaDaJanela < FICHAS.baixaAltura} />
+                    </LimiteDasFichas>
+                  )}
+                  quest={dadosDaMesaCheia.quest} pistas={dadosDaMesaCheia.pistas} aoAbrirPistas={alternarOQuadro} refPistas={sinalDoQuadroRef} pistasAbertas={quadroAberto} />
               </LimiteDasFichas>
-              {bandeja.length > 0 ? (
-                <div className="w-full" style={{ maxHeight: HUD_DA_MESA.mesa.grupo.bandeja.teto, overflow: "hidden" }}>
-                  <LimiteDasFichas key="bandeja"><Bandeja lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas>
-                </div>
-              ) : null}
-            </aside>
-          ) : null}
-          <main className="flex-1 flex flex-col min-w-0" style={trilhoAVista ? { maxWidth: HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga, ...(mesaLarga ? {} : { marginLeft: "auto", marginRight: "auto" }) } : undefined}>
+            ) : null}
+            direita={dadosDaMesaCheia ? (
+              <LimiteDasFichas key="v4-direita">
+                <ColunaDasPecas bandeja={bandeja.length > 0 ? <LimiteDasFichas key="bandeja"><Bandeja lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
+                  fundoDaBandeja={dadosDaMesaCheia.luz.feltroFundo}
+                  hora={(minuto || 0) / 60} falaDaHora={dadosDaMesaCheia.falaDaHora} prazo={dadosDaMesaCheia.prazo}
+                  tempoAberto={tempoAberto} aoAbrirTempo={() => { try { setTempoAberto((v) => !v); } catch (e) { calou("V4 · a vela abre o tempo", e); } }}
+                  recursos={dadosDaMesaCheia.recursos} aoAbrirRecursos={abrirOsMantimentos} objetos={dadosDaMesaCheia.objetos}
+                  rodape={<span className="flex items-center" style={{ gap: 8, minHeight: 20 }}>
+                    <SinalDeGuardado visivel={!!guardadoAgora} />
+                    {statusSave === "erro" ? <span role="alert" style={{ color: T.lacreLume }}><Glifo nome="aviso" tamanho={12} /> não guardou</span> : null}
+                  </span>} />
+              </LimiteDasFichas>
+            ) : null}>
+          <main className={"flex-1 flex flex-col min-w-0" + (mesaLarga && dadosDaMesaCheia ? " tv-folha" : "")} style={mesaLarga && dadosDaMesaCheia ? { width: "100%", minHeight: 0 } : trilhoAVista ? { maxWidth: composicaoDaMesa.pagina || HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga, marginLeft: "auto", marginRight: "auto" } : undefined}>
             {/* ---------------- O PAINEL DA NARRATIVA (v9.170) ----------------
                 Vem de `mesa-jogo-v2`: o log deixa de flutuar no fundo da tela
                 e passa a morar numa moldura própria, com um fundo um tom
@@ -28319,6 +28379,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               style={paginaDaFolha}>
             {/* AAA · 4: a luz da vela cai de cima sobre a folha (formas.md §AAA §5) */}
             <LuzDaVela minuto={minuto} />
+            {/* V4 · O LUGAR MORA NA ESTAMPA (F1 §1.1): a cena pintada do lugar, aberta no
+                turno de chegada e recolhida depois; tocar abre o horizonte, como o
+                lugar da barra abria. (O véu da luz mora na casca: cobre a página inteira.) */}
+            {dadosDaMesaCheia && dadosDaMesaCheia.estampa ? (
+              <LimiteDasFichas key="v4-estampa">
+                <EstampaDaPagina {...dadosDaMesaCheia.estampa} aberta={horizonteAberto && !horizontePreso}
+                  aoTocar={dadosMapaVivo && !horizontePreso ? () => { try { setHorizonteAberto((v) => !v); } catch (err) { calou("V4 · a estampa abre o horizonte", err); } } : null} />
+              </LimiteDasFichas>
+            ) : null}
             {/* TL 3 · A PÁGINA É A FOLHA (07/11, formas.md §TL 3, 8). O cartão escuro à
                 volta da prosa e a folha de cada resposta eram três molduras umas dentro
                 das outras (108 px de 375, 29 % da largura); fica uma, de pergaminho
@@ -28430,8 +28499,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               )}
               {falha && !carregando && (
                 <div className="tv-fade flex flex-col items-center gap-1.5">
-                  <div className="flex items-center gap-3 rounded-full pl-4 pr-2 py-2" style={{ background: T.paginaAlta, border: `1px solid ${T.danger}` }}>
-                    <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.danger }}>{falha.casa || lerOSilencio(null).casa}</span>
+                  {/* V4 (F1 §1.2): a voz do sistema deixa a mono — a ligação partida é papel com aro de cera, na letra do Mestre */}
+                  <div className="flex items-center gap-3 rounded-full pl-4 pr-2 py-2" style={{ background: T.ossoLume, border: `1px solid ${T.lacre}` }}>
+                    <span style={{ ...letraDaMesa("notaDoMestre"), color: T.perigoNoPergaminho }}>{falha.casa || lerOSilencio(null).casa}</span>
                     {falha.podeTentar !== false && <Botao primario pequeno onClick={retentar}>Tentar de novo</Botao>}
                   </div>
                   {/* v9.256 (Fase X - X3): o motivo tecnico SAIU daqui. Ele nao some -
@@ -28443,7 +28513,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   {/* MM15 (3): a segunda metade do que o jogador le - nao
                       so a ligacao, o que aconteceu com o TURNO. */}
                   {/* TL 3: a página é a folha — a linha vai em tinta do papel, não na letra clara da mesa */}
-                  {falha.linha && <span className="tv-mono" style={{ fontSize: TIPOS.rotulo, color: T.tintaDoPergaminhoMeio }}>{falha.linha}</span>}
+                  {falha.linha && <NotaDoMestre tipo="aviso">{falha.linha}</NotaDoMestre>}
                 </div>
               )}
 
@@ -29279,14 +29349,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               </LimiteDasFichas>
             ) : null}
           </main>
+          </CascaDaMesa>
           </>)}
 
-          {!emBatalha && mesaLarga && (
-            <nav aria-label="Painéis" className="shrink-0 flex flex-col items-center"
-              style={{ width: parseInt(HUD_DA_MESA.mesa.colunas[2], 10), marginRight: "auto", gap: HUD_DA_MESA.mesa.objetos.passo - HUD_DA_MESA.mesa.objetos.alvo.alto, paddingTop: HUD_DA_MESA.mesa.topo - HUD_DA_MESA.mesa.barra.alto }}>
-              {objetosDaMesa(false)}
-            </nav>
-          )}
           {telaDoMapa && dadosMapaVivo ? (
             <LimiteDoMapa key={"tela|" + telaDoMapa.selo} aoEstourar={() => setTelaDoMapa(null)}>
               <TelaDoMapa key={telaDoMapa.selo} dados={dadosMapaVivo} estadoDaPartida={estadoDaPartidaVivo} chegada={chegadaDaViagemViva} telefone={!trilhoAVista}

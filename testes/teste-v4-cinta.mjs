@@ -159,7 +159,9 @@ sec("4. a peça e a fiação");
 sec("5. os três defeitos do antes não voltam");
 {
   /* movida: o grupo está na tela principal como cartas, e o toque abre o cartão do companheiro */
-  t("1 · os companheiros estão na tela principal (as cartas desenham o grupo)", /<FilaDasCartas [\s\S]{0,600}aoAbrirCompanheiro=\{abrirCompanheiro\}/.test(APP) && /aoAbrirCompanheiro && aoAbrirCompanheiro\(c\.nome\)/.test(MESA));
+  /* MOVIDA em 16/11 (V4, a mesa cheia): na mesa larga o grupo é a carta de pé (painel-mesa.jsx), e cada
+     companheiro abre a sua carta; no telefone a tira continua a desenhá-los. A intenção fica: o grupo está na tela. */
+  t("1 · os companheiros estão na tela principal (as cartas desenham o grupo)", /companheiros: grupoDaMesa\.map\(\(c\) => cartaDe\(c, \(\) => abrirCompanheiro\(c\.nome\), false\)\)/.test(APP) && /aoAbrirCompanheiro && aoAbrirCompanheiro\(c\.nome\)/.test(MESA));
   /* movida: a vida é a gema PV da carta, um número que não cede; nenhuma barra */
   t("2 · a vida do herói não cede: é a gema PV, e não há barra", /<GemaDaCarta cor=\{H\.gemasDaCarta\.PV\} valor=\{vida\}/.test(MESA) && !/BarraMini/.test(MESA));
   t("3 · o pulso de agonia não é infinito", !/animation: tvAgonia[^;]*infinite/.test(EST));

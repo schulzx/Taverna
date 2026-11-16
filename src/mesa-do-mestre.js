@@ -18,7 +18,7 @@
    ESCALA_DA_MESA, PISOS_DA_MESA, TAMANHO_DO_TEXTO). Nada aqui lança: o
    pior caso devolve a peça vazia, nunca derruba a cena.
    ============================================================ */
-import { LUZ_DA_MESA, TETO_DO_VEU, PECAS_DA_MESA, ESCALA_DA_MESA, PISOS_DA_MESA, TAMANHO_DO_TEXTO } from "./estilo.js";
+import { LUZ_DA_MESA, TETO_DO_VEU, PECAS_DA_MESA, ESCALA_DA_MESA, PISOS_DA_MESA, TAMANHO_DO_TEXTO, COMPOSICAO_DA_MESA } from "./estilo.js";
 import { luzDaHora } from "./hora-e-prazo.js";
 
 const num = (v, padrao = 0) => (Number.isFinite(Number(v)) ? Number(v) : padrao);
@@ -151,6 +151,87 @@ export function contornoDoLacre(lado) {
     d += ` Q${f2(pts[i][0])} ${f2(pts[i][1])} ${f2(m[0])} ${f2(m[1])}`;
   }
   return d + "Z";
+}
+
+/* ---------------- A MESA CHEIA (V4) ----------------
+   Qual composição vale numa janela: a primeira faixa de COMPOSICAO_DA_MESA
+   cuja largura mínima a janela alcança. Largura inválida é telefone (o
+   pior caso é a página inteira, nunca uma mesa que estoura). */
+export function composicaoDaJanela(largura) {
+  const L = num(largura, 0);
+  const F = COMPOSICAO_DA_MESA.faixas;
+  return F.find((f) => L >= f.aPartirDe) || F[F.length - 1];
+}
+/* a mesa das três zonas (larga e media) contra a do telefone */
+export function temTresZonas(nome) {
+  return nome === "larga" || nome === "media";
+}
+/* A ESTAMPA: aberta só no turno de chegada e só onde a faixa a abre; fora
+   disso, recolhida (ou estreita, no telefone). */
+export function estadoDaEstampa(nome, chegou) {
+  const f = COMPOSICAO_DA_MESA.faixas.find((x) => x.nome === nome) || COMPOSICAO_DA_MESA.faixas[COMPOSICAO_DA_MESA.faixas.length - 1];
+  if (f.estampa === "aberta") return chegou ? "aberta" : "recolhida";
+  return f.estampa;
+}
+/* a cena pintada do lugar: as trinta de public/cenas, uma por bioma (e a
+   masmorra). Bioma sem pintura dá "" — a estampa fica só com o título. */
+export const CENAS_DA_ESTAMPA = ["abissal", "biblioteca", "bruma", "cinturao", "colina", "costa", "deserto", "enseada", "estacao", "floresta", "forno", "gasoso", "gelo", "ilha_seca", "ilha_selva", "jardim", "mar_aberto", "masmorra", "montanha", "morto", "nebulosa", "oficina", "orbital", "pantano", "planicie", "recife", "rochoso", "salao", "santuario", "vazio"];
+export function cenaDaEstampa({ bioma = "", emMasmorra = false } = {}) {
+  if (emMasmorra) return "masmorra";
+  const b = String(bioma || "").trim().toLowerCase();
+  return CENAS_DA_ESTAMPA.includes(b) ? b : "";
+}
+/* AS CAIXAS DA COMPOSIÇÃO — onde cada zona pousa numa janela das três
+   zonas, em px (x, y, w, h). É a planta que a tela segue e a régua da
+   cobertura: o feltro morto é o que nenhuma caixa cobre. */
+export function caixasDaComposicao(largura, altura, { companheiros = 1, pistas = 2 } = {}) {
+  const f = composicaoDaJanela(largura);
+  const W = num(largura), H = num(altura);
+  if (!temTresZonas(f.nome)) return { nome: f.nome, caixas: [{ zona: "pagina", x: 0, y: 0, w: W, h: H }] };
+  const P = PECAS_DA_MESA, C = COMPOSICAO_DA_MESA;
+  const pagina = Math.max(f.paginaMin, Math.min(f.pagina, W - 2 * f.lado - f.esquerda - f.direita - 2 * f.vao));
+  const vao = Math.max(f.vao, (W - 2 * f.lado - f.esquerda - f.direita - pagina) / 2);
+  const xEsq = f.lado, xPag = xEsq + f.esquerda + vao, xDir = xPag + pagina + vao;
+  const caixas = [{ zona: "pagina", x: xPag, y: f.cima, w: pagina, h: H - 2 * f.cima }];
+  /* a esquerda: o grupo (cartas lado a lado), quem está em cena, a nota da quest, as pistas */
+  let y = 36 + 24;
+  const nCartas = 1 + Math.min(1, Math.max(0, companheiros));
+  caixas.push({ zona: "grupo", x: xEsq, y, w: nCartas * P.carta.alvo.largura + (nCartas - 1) * f.cartasEntre, h: P.carta.alvo.alto });
+  y += P.carta.alvo.alto + C.esquerda.entreZonas + 24;
+  caixas.push({ zona: "emCena", x: xEsq, y, w: Math.min(f.esquerda, 2 * 92), h: 96 });
+  y += 96 + C.esquerda.entreZonas;
+  caixas.push({ zona: "quest", x: xEsq, y, w: Math.min(f.esquerda, C.esquerda.quest.largura), h: 150 });
+  y += 150 + C.esquerda.entreZonas + 24;
+  if (f.pistas && pistas > 0) {
+    const n = Math.min(pistas, C.esquerda.pista.quantas);
+    caixas.push({ zona: "pistas", x: xEsq, y, w: n * C.esquerda.pista.largura + (n - 1) * 12, h: C.esquerda.pista.alto });
+  }
+  /* a direita: a bandeja com a vela, as peças, os objetos 2 × 2, o escudo */
+  let yd = 36;
+  caixas.push({ zona: "bandeja", x: xDir, y: yd, w: f.direita, h: Math.max(C.direita.bandeja.alto + 40, P.vela.caixa.alto) });
+  yd += Math.max(C.direita.bandeja.alto + 40, P.vela.caixa.alto) + C.direita.entreZonas + 24;
+  caixas.push({ zona: "pecas", x: xDir, y: yd, w: 4 * P.recurso.alvo.largura, h: P.recurso.alvo.alto });
+  yd += P.recurso.alvo.alto + C.direita.entreZonas;
+  const O = C.direita.objetos;
+  caixas.push({ zona: "objetos", x: xDir, y: yd, w: O.colunas * P.objeto.alvo.largura + (O.colunas - 1) * O.entreColunas, h: 2 * P.objeto.alvo.alto + O.entreLinhas });
+  caixas.push({ zona: "escudo", x: W - 28 - P.canto.alvo.largura, y: H - 24 - P.canto.alvo.alto, w: P.canto.alvo.largura, h: P.canto.alvo.alto });
+  return { nome: f.nome, pagina, vao, caixas };
+}
+/* A COBERTURA — a fração da janela que alguma caixa cobre (a união, não a
+   soma: caixas que se cruzam não contam duas vezes). Amostra numa grelha
+   de `passo` px; determinística, sem depender de máquina. */
+export function coberturaDaMesa(caixas, largura, altura, passo = 4) {
+  const W = num(largura), H = num(altura), s = Math.max(1, num(passo, 4));
+  if (W <= 0 || H <= 0) return 0;
+  const cx = Array.isArray(caixas) ? caixas.filter((c) => c && c.w > 0 && c.h > 0) : [];
+  let cheios = 0, total = 0;
+  for (let y = s / 2; y < H; y += s) {
+    for (let x = s / 2; x < W; x += s) {
+      total++;
+      if (cx.some((c) => x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h)) cheios++;
+    }
+  }
+  return total ? cheios / total : 0;
 }
 
 /* ---------------- DE QUEM É O ESC ----------------
