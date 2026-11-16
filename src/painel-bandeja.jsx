@@ -170,8 +170,11 @@ export function useLance(lancamento, aoPousar = null) {
   return { rolando: !!lancamento && rolandoN === n, troca, pousar };
 }
 
-export function Bandeja({ lancamentos = [], fresca = true, naColuna = false }) {
-  const lista = Array.isArray(lancamentos) ? lancamentos.filter(Boolean) : [];
+/* V3 (16/11): `emVoo` — o lance mais novo ainda rola no centro da página
+   (LanceDoDado); a bandeja mostra o que tinha até ele voltar, para o
+   resultado não aparecer aqui antes de pousar lá. */
+export function Bandeja({ lancamentos = [], fresca = true, naColuna = false, emVoo = false }) {
+  const lista = (Array.isArray(lancamentos) ? lancamentos.filter(Boolean) : []).slice(emVoo ? 1 : 0);
   const ultimo = lista[0] || null;
   const n = ultimo ? ultimo.n : 0;
   const { rolando, troca, pousar } = useLance(ultimo);
@@ -421,7 +424,8 @@ export function momentoDoChamado(opcoes) {
     momento: {
       chave: String(o.chamado.chave || ""),
       conteudo: <ChamadoDoMestre {...props} />,
-      secundario: o.lance ? null : { rotulo: recuoDoChamado(), aoTocar: aoMudar },
+      /* V3: sem recuo (o teste que não deixa dizer «não era isso»), sem botão morto */
+      secundario: o.lance || typeof aoMudar !== "function" ? null : { rotulo: recuoDoChamado(), aoTocar: aoMudar },
     },
   };
 }

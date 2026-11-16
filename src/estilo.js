@@ -1070,8 +1070,9 @@ export const ESTADO_DO_DADO = {
 /* HISTORICO_DO_DADO — a 40, na bandeja. Mostra a face do dado, não o total */
 export const HISTORICO_DO_DADO = {
   lado: 40, teto: 4,
-  /* o chão do vazado: LUZ_DA_MESA.dia.feltroFundo (a suíte prende a igualdade) */
-  falhou: { chao: "#0E2016", alfa: 0.6, aro: T.osso, largura: 1.25, traco: [3, 3], numero: T.ink },
+  /* o chão do vazado: LUZ_DA_MESA.dia.feltroFundo — lido na hora (a tabela
+     da luz nasce mais abaixo neste arquivo), para não haver um segundo hex */
+  falhou: { get chao() { return LUZ_DA_MESA.dia.feltroFundo; }, alfa: 0.6, aro: T.osso, largura: 1.25, traco: [3, 3], numero: T.ink },
   coroa: { pontos: "15,3 15,-5 19.5,-1 24,-7 28.5,-1 33,-5 33,3", cor: T.lataoLume, aro: T.lataoSombra },
 };
 

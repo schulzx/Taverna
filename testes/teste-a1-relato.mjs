@@ -308,9 +308,13 @@ for (const [peca, rx] of [
 ]) t(`saiu: ${peca}`, !rx.test(APP));
 t("#36: o mercado é uma porta, nas duas falas que o ditavam",
   /"▸ Mercado — há mantimentos à venda aqui"/.test(APP) && /"▸ Mercado — veja o que ele traz"/.test(APP));
-t("#27 · #140: a margem mora no véu, pela MESMA conta do desfecho",
-  /const dm = desfechoDaMargem\(rolagem\.desafio, \{ total, dc, critico, desastre, emCombate: !!emCombate \}\);/.test(APP)
-  && /fio === "quase" \? "Por um fio"/.test(APP) && /aoConcluir=\{concluirRolagem\} emCombate=\{!!combate\}/.test(APP));
+/* MOVIDA em 16/11 (V3, F2 §1.4): o Véu deixou de ser modal e virou o lance do
+   dado (LanceDoDado). A intenção fica igual — a margem que a tela diz é a
+   MESMA conta que concluirRolagem corre —: o fioDaMargem do App lê
+   desfechoDaMargem e o lance escreve «POR UM FIO» com ela. */
+t("#27 · #140: a margem mora no lance, pela MESMA conta do desfecho",
+  APP.includes("const dm = desfechoDaMargem(r.desafio, { total, dc, critico, desastre, emCombate: !!emCombate });")
+  && APP.includes("fio={fioDaMargem(") && APP.includes("aoConcluir={concluirRolagem} emCombate={!!combate}"));
 
 sec("10. B9 — a linha do golpe deles diz o dano depois da reação");
 t("a linha guarda o seu lugar e o dano que veio antes da reação",

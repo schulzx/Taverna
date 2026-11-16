@@ -269,7 +269,11 @@ import { asPropostasDaAbertura } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
-import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
+import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
+/* V3 (16/11): o lance do dado no centro da página — uma forma só para todo
+   d20 de fora da luta (o chamado, o Véu, a busca da masmorra) */
+import { LanceDoDado } from "./painel-lance.jsx";
+import { LANCE } from "./estilo.js";
 import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
 import { MARCA_DA_SUBCLASSE } from "./marca-da-subclasse.js";
 import { devolverAMochila } from "./comparar-item.js";
@@ -749,177 +753,106 @@ function entropia(teto) {
    monta da rolagem e do instante do turno; o rodopio da animação usa outro
    fio ("anima"), para que o número de quadros (que depende do relógio da
    máquina) nunca mude a face. Sem semente, a sorte da casa. */
-function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer, emCombate = false, semente = "" }) {
-  if (rolagem.auto) {
-    return (
-      <div className="fixed inset-0 z-40 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.85)", backdropFilter: "blur(3px)" }}>
-        <div className="tv-fade text-center">
-          <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.ok }}>✓ Trivial para seu patamar</div>
-          <div className="tv-display text-3xl mb-1" style={{ color: T.ink }}>{rolagem.motivo || "Você simplesmente consegue"}</div>
-          <div className="tv-body text-sm mb-5" style={{ color: T.inkDim }}>Sem rolagem necessária — sucesso.</div>
-          <button onClick={() => aoConcluir(0)} className="rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.ok, color: "#0d1a0d", fontWeight: 600 }}>Continuar →</button>
-        </div>
-      </div>
-    );
-  }
-  const [faseD, setFaseD] = useState("rolando");
-  const [valor, setValor] = useState(1);
-  const [par, setPar] = useState(null); // [a,b] quando há vantagem/desvantagem
-  const finalRef = useRef(null);
-  const setFinalRef = (v) => { finalRef.current = v; };
-  const dadosRef = useRef(null);
-  /* TE (09/11, decisão da pessoa) · O SOM DO DADO: duas batidas de madeira
-     quando o d20 pousa (som-da-mesa.js). Uma vez por véu: o ref guarda que
-     já soou, e o refazer não volta a soar (é o mesmo momento). A bandeja
-     soa o dela dentro da peça; o véu é este, e só este. */
+/* A1 · B8 (#27, #140) · A MARGEM MORA NO LANCE (V3: antes morava no Véu).
+   A linha «⚖ Passou por 1 — e por um fio o mundo cobra…» chegava ao relato
+   DEPOIS de a tela dizer «Sucesso», e dois pontos abaixo da linha a tela dizia
+   «Falha» de um teste que o motor dava por conseguido pagando. Um facto, um
+   lugar: o lance lê a MESMA conta que concluirRolagem vai correr
+   (desfechoDaMargem, desafios.js), e só ela. Devolve a faixa ou null. */
+function fioDaMargem(r, lance, emCombate = false) {
+  try {
+    if (!r || !lance || r.origem !== "pedido" || !r.desafio || lance.alvo == null) return null;
+    const dado = (Array.isArray(lance.dados) ? lance.dados : []).find((d) => d && !d.posto) || {};
+    const total = lance.total, dc = lance.alvo, critico = dado.valor === 20, desastre = dado.valor === 1;
+    const dm = desfechoDaMargem(r.desafio, { total, dc, critico, desastre, emCombate: !!emCombate });
+    return dm && dm.porPouco ? dm.faixa : null;
+  } catch (e) { calou("V3 · a margem do lance", e); return null; }
+}
+/* V3 · o trivial conclui no primeiro efeito (fora do render: componente
+   definido dentro de outro mata o estado a cada pintura) */
+function ConcluiJa({ aoConcluir }) {
+  useEffect(() => { try { aoConcluir(0); } catch (e) { calou("V3 · o trivial conclui", e); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+function OverlayDado({ rolagem, modificador, aoConcluir, heroismo = 0, destino = 0, aoRefazer, emCombate = false, semente = "", aoLancar = null, telefone = false, narrando = false }) {
+  /* V3: o trivial («Trivial para seu patamar») também deixa de ser modal de
+     tela cheia — não há dado a mostrar, e concluirRolagem já escreve o
+     sucesso no relato e chama o Mestre. Conclui já. */
+  if (rolagem.auto) return <ConcluiJa aoConcluir={aoConcluir} />;
+  /* V3 · O VÉU VIRA O LANCE (16/11, formas.md §F2 §1.4): o modal de tela
+     cheia («Teste de … · dificuldade N», o hexágono por clip-path e o
+     o botão de continuar com seta) aposentou-se. A conta é a mesma de sempre — a face da
+     semente (dadoDo(semente, "d20")), a vantagem que pega o maior, o Refazer
+     de um ponto que vale mesmo se for pior —, e a forma é a do lance: o dado
+     de osso no centro da página, a conta contra a linha do «precisa de N».
+     Sem Refazer possível, o Véu entrega o lance à página (aoLancar) e
+     conclui JÁ: a narração é pedida no toque, como no chamado. Com Refazer
+     (a social de hoje), o lance fica seguro na página com os dois botões, e
+     só «Continuar» conclui — o comportamento de hoje, na forma nova. */
   const soouRef = useRef(false);
+  const dadosRef = useRef(null);
   if (!dadosRef.current) dadosRef.current = semente ? { face: dadoDo(semente, "d20"), anima: dadoDo(semente, "anima") } : { face: sorteDaCasa, anima: sorteDaCasa };
-  /* REFAZER (v9.16): o ponto de heroísmo comprado DEPOIS de ver o dado.
-     Um só por rolagem, e o segundo resultado vale mesmo se for pior —
-     sem risco isto seria um botão de desfazer, e o dado deixaria de
-     importar. `refeito` guarda o primeiro valor só para contar a história
-     ao Mestre ("insisti"), nunca para escolher entre os dois. */
-  const [refeito, setRefeito] = useState(null);
   const vant = !!rolagem.vantagem, desv = !!rolagem.desvantagem;
   const modo = vant && !desv ? "vantagem" : desv && !vant ? "desvantagem" : null;
   const lados = 20;
-  useEffect(() => {
-    const inicio = Date.now();
-    const iv = setInterval(() => {
-      const an = dadosRef.current.anima;
-      setValor(1 + Math.floor(an() * lados));
-      if (modo) setPar([1 + Math.floor(an() * lados), 1 + Math.floor(an() * lados)]);
-      if (Date.now() - inicio > 1200) {
-        clearInterval(iv);
-        let final;
-        if (modo) {
-          const fc = dadosRef.current.face;
-          const a = 1 + Math.floor(fc() * lados), b = 1 + Math.floor(fc() * lados);
-          setPar([a, b]);
-          final = modo === "vantagem" ? Math.max(a, b) : Math.min(a, b);
-        } else {
-          final = 1 + Math.floor(dadosRef.current.face() * lados);
-        }
-        setValor(final);
-        setFinalRef(final);
-        setFaseD("resultado");
-        if (!soouRef.current) { soouRef.current = true; try { tocarDado(); } catch (e) { calou("TE · o som do dado no véu", e); } }
-      }
-    }, 70);
-    return () => clearInterval(iv);
-  }, []); // eslint-disable-line
-  const total = valor + modificador;
+  const primeiroRef = useRef(null);
+  if (!primeiroRef.current) {
+    const fc = dadosRef.current.face;
+    if (modo) {
+      const a = 1 + Math.floor(fc() * lados), b = 1 + Math.floor(fc() * lados);
+      const v = modo === "vantagem" ? Math.max(a, b) : Math.min(a, b);
+      primeiroRef.current = { valor: v, posto: v === a ? b : a };
+    } else primeiroRef.current = { valor: 1 + Math.floor(fc() * lados), posto: null };
+  }
+  const [valor, setValor] = useState(primeiroRef.current.valor);
+  const [refeito, setRefeito] = useState(null);
   const dc = rolagem.dificuldade ?? null;
-  const critico = faseD === "resultado" && valor === 20;
-  const desastre = faseD === "resultado" && valor === 1;
-  const passou = dc != null && (critico || (!desastre && total >= dc));
-  /* A1 · B8 (#27, #140): A MARGEM MORA NO VÉU. A linha "⚖ Passou por 1 — e
-     por um fio o mundo cobra…" chegava ao relato DEPOIS de o véu dizer
-     "Sucesso" — e, dois pontos abaixo da linha, o véu dizia "Falha" de um
-     teste que o motor dava por conseguido pagando. Um facto, um lugar: o
-     véu lê a MESMA conta que `concluirRolagem` vai correr
-     (`desfechoDaMargem`, desafios.js), e só ela — sem desafio, sem faixa do
-     meio, nada muda. */
-  let fio = null;
-  try {
-    if (faseD === "resultado" && dc != null && rolagem.origem === "pedido" && rolagem.desafio) {
-      const dm = desfechoDaMargem(rolagem.desafio, { total, dc, critico, desastre, emCombate: !!emCombate });
-      if (dm && dm.porPouco) fio = dm.faixa;
-    }
-  } catch (e) { calou("a margem no véu", e); }
+  const rotulo = String(rolagem.rotulo || rolagem.atributo || "sorte");
+  const podeRefazer = refeito == null && (heroismo >= 1 || destino > 0) && !rolagem.semHeroismo;
+  const seguraRef = useRef(podeRefazer);
+  const lance = (() => {
+    try {
+      const l = lancamentoDoTeste({ valor, mod: modificador, dc, rotulo, anterior: refeito != null ? refeito : primeiroRef.current.posto });
+      return l ? { ...l, n: 1 + (refeito != null ? 1 : 0) } : null;
+    } catch (e) { calou("V3 · o lance do véu", e); return null; }
+  })();
+  useEffect(() => {
+    if (seguraRef.current) return;
+    /* sem Refazer: o lance vai para a página, e o pouso do sistema corre já */
+    try { if (typeof aoLancar === "function" && lance) aoLancar({ chave: "veu:" + String(semente || "") + ":" + valor, lance, rotulo, fio: fioDaMargem(rolagem, lance, emCombate) }); } catch (e) { calou("V3 · o véu entrega o lance", e); }
+    try { aoConcluir(valor, null); } catch (e) { calou("V3 · o véu conclui", e); }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!seguraRef.current || !lance) {
+    if (!lance) { try { setTimeout(() => aoConcluir(valor, null), 0); } catch (e) { calou("V3 · o véu sem lance", e); } }
+    return null;
+  }
+  const acoes = (
+    <>
+      {podeRefazer ? (
+        <button type="button" className="tv-anel-foco"
+          onClick={() => {
+            try {
+              if (!aoRefazer || !aoRefazer()) return;
+              const novo = 1 + Math.floor(dadosRef.current.face() * lados);
+              setRefeito(valor); setValor(novo);
+            } catch (e) { calou("V3 · o refazer do véu", e); }
+          }}
+          title={destino > 0
+            ? "Dádiva do Destino: refaz de graça, uma vez por descanso longo. O segundo dado vale — mesmo se for pior."
+            : "Gasta 1 ponto de heroísmo. O segundo dado vale — mesmo se for pior."}
+          style={{ minHeight: ALVOS.piso, padding: "0 16px", borderRadius: 4, background: "transparent", border: `1.5px solid ${T.latao}`, color: T.tintaDoPergaminho, fontFamily: "'Spectral', Georgia, serif", fontSize: 16, cursor: "pointer" }}>
+          {destino > 0 ? "Refazer" : "Refazer"} <em style={{ color: T.tintaDoPergaminhoDim }}>· {destino > 0 ? "de graça" : `gasta 1 de ${Math.max(1, heroismo)}`}</em>
+        </button>
+      ) : null}
+      <button type="button" className="tv-anel-foco" onClick={() => { try { aoConcluir(valor, refeito); } catch (e) { calou("V3 · continuar o véu", e); } }}
+        style={{ minHeight: ALVOS.piso, padding: "0 20px", borderRadius: 6, background: T.amber, border: `1.5px solid ${T.brasaNoPergaminho}`, color: T.onAccent, fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, fontSize: 16, letterSpacing: "0.08em", cursor: "pointer" }}>
+        CONTINUAR
+      </button>
+    </>
+  );
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6" style={{ background: "rgba(8,6,14,0.88)", backdropFilter: "blur(4px)" }}>
-      <div className="tv-fade flex flex-col items-center text-center max-w-sm w-full">
-        <div className="tv-mono text-xs uppercase tracking-widest mb-2" style={{ color: T.violetSoft }}>
-          Teste de {rolagem.rotulo || rolagem.atributo || "sorte"}{dc != null ? ` · dificuldade ${dc}` : ""}
-        </div>
-        {rolagem.nivelTreino === "especialista" && <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.amber }}>★★ especialista</div>}
-        {rolagem.nivelTreino === "treinada" && <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.amberSoft }}>★ treinado</div>}
-        {rolagem.nivelTreino === "leigo" && <div className="tv-mono text-[10px] uppercase tracking-widest mb-1" style={{ color: T.inkDim }}>sem treino</div>}
-        {modo && (
-          <div className="tv-mono text-[11px] uppercase tracking-widest mb-1 px-2 py-0.5 rounded-full" style={{ color: modo === "vantagem" ? T.ok : T.danger, border: `1px solid ${modo === "vantagem" ? T.ok : T.danger}` }}>
-            {modo === "vantagem" ? "✦ vantagem — pega o maior" : "✧ desvantagem — pega o menor"}
-          </div>
-        )}
-        <div className="tv-display text-2xl mb-8" style={{ color: T.ink }}>{rolagem.motivo}</div>
-        {modo ? (
-          /* VANTAGEM/DESVANTAGEM: dois dados; o escolhido brilha, o outro esmaece */
-          <div className="flex items-center gap-4">
-            {[0, 1].map((idx) => {
-              const v = par ? par[idx] : valor;
-              const escolhido = faseD === "resultado" && par && ((modo === "vantagem" && v === Math.max(par[0], par[1])) || (modo === "desvantagem" && v === Math.min(par[0], par[1])));
-              const outroDescartado = faseD === "resultado" && !escolhido;
-              return (
-                <div key={idx} className={`relative flex items-center justify-center ${faseD === "rolando" ? "tv-dice" : ""}`}
-                  style={{
-                    width: 104, height: 104,
-                    clipPath: "polygon(50% 0%, 100% 27%, 100% 73%, 50% 100%, 0% 73%, 0% 27%)",
-                    background: escolhido ? (modo === "vantagem" ? T.ok : T.danger) : T.panelSoft,
-                    border: `2px solid ${escolhido ? (modo === "vantagem" ? T.ok : T.danger) : T.line}`,
-                    opacity: outroDescartado ? 0.35 : 1, transition: "all .4s",
-                  }}>
-                  <span className="tv-mono font-semibold" style={{ fontSize: 38, color: escolhido ? T.onAccent : T.ink }}>{v}</span>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className={`relative flex items-center justify-center ${faseD === "rolando" ? "tv-dice" : ""}`}
-            style={{
-              width: 148, height: 148,
-              clipPath: "polygon(50% 0%, 100% 27%, 100% 73%, 50% 100%, 0% 73%, 0% 27%)",
-              background: faseD === "resultado" ? (desastre ? T.danger : critico ? T.amberSoft : passou || dc == null ? T.amber : T.panelSoft) : T.panelSoft,
-              border: `2px solid ${T.amber}`, transition: "background .4s",
-            }}>
-            <span className="tv-mono font-semibold" style={{ fontSize: 52, color: faseD === "resultado" && (passou || critico || dc == null) && !desastre ? T.onAccent : T.ink }}>{valor}</span>
-          </div>
-        )}
-        {faseD === "resultado" && (
-          <div className="mt-6 tv-fade">
-            <div className="tv-mono text-sm" style={{ color: T.inkDim }}>
-              {valor} {modificador !== 0 ? `${modificador > 0 ? "+" : "−"} ${Math.abs(modificador)} = ` : ""}
-              <span style={{ color: T.ink, fontWeight: 600 }}>{total}</span>
-            </div>
-            <div className="tv-display text-3xl mt-1" style={{ color: desastre ? T.danger : critico ? T.amberSoft : fio === "quase" ? T.amberSoft : passou || dc == null ? T.ok : T.danger }}>
-              {critico ? "Crítico!" : desastre ? "Desastre!" : dc == null ? "Rolado" : fio === "quase" ? "Por um fio" : passou ? "Sucesso" : "Falha"}
-            </div>
-            {fio && !critico && !desastre && (
-              <div className="tv-mono text-[11px] uppercase tracking-widest mt-1" style={{ color: T.amberSoft }}>
-                {fio === "quase" ? "e paga" : "por um fio"}
-              </div>
-            )}
-            {refeito != null && (
-              <div className="tv-mono text-[10px] uppercase tracking-widest mt-1" style={{ color: T.violetSoft }}>
-                ✧ refeito — o primeiro dado deu {refeito}
-              </div>
-            )}
-            <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
-              {/* v9.32: o botão também aparece para quem tem a Dádiva do
-                  Destino e nenhum ponto de heroísmo. `destino` diz de onde
-                  vem a carga, para o rótulo não mentir sobre o preço. */}
-              {refeito == null && (heroismo >= 1 || destino > 0) && !rolagem.semHeroismo && (
-                <button
-                  onClick={() => {
-                    if (!aoRefazer || !aoRefazer()) return;
-                    const novo = 1 + Math.floor(dadosRef.current.face() * lados);
-                    setRefeito(valor); setValor(novo); setFinalRef(novo);
-                  }}
-                  title={destino > 0
-                    ? "Dádiva do Destino: refaz de graça, uma vez por descanso longo. O segundo dado vale — mesmo se for pior."
-                    : "Gasta 1 ponto de heroísmo. O segundo dado vale — mesmo se for pior."}
-                  className="rounded-xl px-4 py-2.5 tv-mono text-sm"
-                  style={{ background: "transparent", color: destino > 0 ? T.amberSoft : T.violetSoft, border: `1px solid ${destino > 0 ? T.amber : T.violet}`, fontWeight: 600 }}>
-                  {destino > 0 ? "🌠 Destino" : "✧ Refazer"} <span style={{ opacity: 0.7 }}>· {destino > 0 ? "de graça" : "1 ponto"}</span>
-                </button>
-              )}
-              <button onClick={() => aoConcluir(finalRef.current, refeito)} className="rounded-xl px-6 py-2.5 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
-                Continuar →
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+    <LanceDoDado key={"veu:" + valor + ":" + (refeito == null ? "" : refeito)} lance={lance} rotulo={rotulo} telefone={telefone} narrando={narrando} segura acoes={acoes} fio={fioDaMargem(rolagem, lance, emCombate)}
+      aoVeredito={() => { if (!soouRef.current) soouRef.current = true; }} />
   );
 }
 
@@ -5438,6 +5371,19 @@ export default function Taverna() {
   const [chamadoVivo, setChamadoVivo] = useState(null);
   const chamadoRef = useRef(null);
   const definirChamado = (c) => { chamadoRef.current = c || null; setChamadoVivo(c || null); };
+  /* V3 · O LANCE NO AR (formas.md §F2 §3): { chave, lance, rotulo } enquanto o
+     dado rola no centro da página. A narração já foi pedida no toque; isto é
+     teatro, e a Bandeja esconde o lance novo até ele voltar. Não vai ao save. */
+  const [lanceNoAr, setLanceNoArCru] = useState(null);
+  const lanceNoArTetoRef = useRef(null);
+  const setLanceNoAr = (l) => {
+    try {
+      setLanceNoArCru(l || null);
+      if (lanceNoArTetoRef.current) clearTimeout(lanceNoArTetoRef.current);
+      /* o teto: um lance que estoure no meio não esconde a bandeja para sempre */
+      if (l) lanceNoArTetoRef.current = setTimeout(() => { try { setLanceNoArCru(null); } catch (e) { calou("V3 · o teto do lance", e); } }, LANCE.esperaTeto + LANCE.vooTeto + LANCE.soma.teto);
+    } catch (e) { calou("V3 · o lance no ar", e); }
+  };
   const nDoChamadoRef = useRef(0);
   const nDoLanceRef = useRef(0);
   const [pulsoDoChamado, setPulsoDoChamado] = useState(0);
@@ -19309,6 +19255,19 @@ export default function Taverna() {
       }, SOLEIRA_DO_MOMENTO.mostraODado);
     } catch (e) { calou("MC3 · o relógio da mostra", e); definirChamado(null); }
   };
+  /* V3 · A NARRAÇÃO É PEDIDA NO TOQUE (formas.md §F2 §1.7 e §3): o chamado
+     ganhou o lance (o toque, ou o pedido que nasce lançado) — o dado sai para
+     o centro da página e, no mesmo instante, o pouso do sistema corre
+     (concluirRolagem: o Narrador, a Bandeja, a tentativa). O voo cobre a
+     espera; nunca a segura. Num efeito, para o pouso ler a rolagem já viva. */
+  useEffect(() => {
+    try {
+      const ch = chamadoVivo;
+      if (!ch || !ch.lance || ch.pousou) return;
+      setLanceNoAr({ chave: "chamado:" + ch.n + ":" + ch.lance.n, lance: ch.lance, rotulo: String((ch.chamado && ch.chamado.periciaNome) || ""), fio: fioDaMargem(ch.rolagem, ch.lance, !!combateRef.current) });
+      pousouOChamado();
+    } catch (e) { calou("V3 · o lance do chamado", e); }
+  }, [chamadoVivo]); // eslint-disable-line react-hooks/exhaustive-deps
   /* o recuo do chamado, sem rasto: nem tentativa, nem tempo, nem Narrador —
      a rolagem sai e a nota volta ao que era. Devolve o chamado que recuou,
      ou null quando não havia nada à espera. */
@@ -21416,7 +21375,11 @@ export default function Taverna() {
     const total = rolo + mod;
     const r = resultadoBusca(sala, total);
     avancarMinutos(custoBusca());
-    aBandeja(lancamento({ rotulo: "Vasculhar a sala", dados: [{ faces: 20, valor: rolo }], mod, papel: "teste" }));
+    /* V3: a busca rola pelo MESMO lance (o dado no centro da página); na
+       bandeja chega já pousado (jaRolou), para não rolar duas vezes. Sem
+       alvo exposto (resultadoBusca decide), a conta fica sem a linha. */
+    aBandeja(Object.freeze({ ...lancamento({ rotulo: "Vasculhar a sala", dados: [{ faces: 20, valor: rolo }], mod, papel: "teste" }), jaRolou: true }));
+    try { const b = bandejaRef.current[0]; if (b) setLanceNoAr({ chave: "busca:" + b.n, lance: b, rotulo: "Percepção" }); } catch (e) { calou("V3 · o lance da busca", e); }
     if (mostrarRolagensRef.current) pushMsgs([{ autor: "sistema", texto: `🎲 Busca: ${rolo} ${mod < 0 ? "−" : "+"} ${Math.abs(mod)} = ${total}` }]); /* 16/11: a conta em palavras, como a bandeja — sem «d20=» */
     pushMsgs([{ autor: "sistema", texto: `🔎 ${r.texto}` }]);
     if (r.achou) {
@@ -26521,6 +26484,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      escritos, e a frase vai ao Mestre como cena. O veredito antes do clique. */
   const escolhaDoTesteAgora = (() => { try { const e = rolagem && rolagem.desafio && rolagem.desafio.escolha; return e && typeof e === "object" ? e : null; } catch (err) { calou("a escolha do teste", err); return null; } })();
   const podeDesistirDoTeste = !!(escolhaDoTesteAgora && escolhaDoTesteAgora.podeDesistir && rolagem && rolagem.frase && !carregando && !dadoRolando && !combate && !chamadoVivo);
+  /* V3 · UMA FORMA SÓ: o teste pendente (o social, o enigma, o que o Véu
+     rolava num modal) mostra-se pelo MESMO chamado da frase, no pé da página;
+     a regra continua a dele (a CD, o bónus, o «Não era isso», o Refazer). */
+  const chamadoDaRolagemAgora = (() => {
+    try {
+      if (!rolagem || rolagem.auto || carregando || dadoRolando || combate || chamadoVivo) return null;
+      return chamadoDaRolagem(rolagem, { risco: escolhaDoTesteAgora && escolhaDoTesteAgora.risco });
+    } catch (e) { calou("V3 · o chamado da rolagem", e); return null; }
+  })();
   const desistirDoTeste = () => {
     try {
       const r = rolagem;
@@ -26530,7 +26502,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       enviar(String(r.frase), fichaViva() || personagem);
     } catch (e) { calou("não era isso", e); }
   };
-  const linhaDoCampo = rolagem && !carregando && !chamadoVivo ? (
+  const linhaDoCampo = rolagem && !carregando && !chamadoVivo && !chamadoDaRolagemAgora ? (
     <>{linhaDoTeste(rolagem)}{escolhaDoTesteAgora && escolhaDoTesteAgora.risco ? ` · ${escolhaDoTesteAgora.risco}` : ""}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
   ) : estadoDado === "espera" && entrada.trim() ? "Fica guardado — você manda depois de ler." : null;
 
@@ -27456,7 +27428,15 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       /* MC3 · o chamado do Mestre: o d20 à espera, à frente de tudo na soleira */
       try {
         const ch = chamadoVivo;
-        if (ch) {
+        if (!ch && chamadoDaRolagemAgora) {
+          const mc = momentoDoChamado({
+            chamado: chamadoDaRolagemAgora, mod: modPend, lance: null,
+            aoRolar: () => { try { if (!dadoRolando) setDadoRolando(true); } catch (e) { calou("V3 · rolar o chamado da rolagem", e); } },
+            aoMudar: podeDesistirDoTeste ? desistirDoTeste : null, telefone: !mesaLarga,
+          });
+          if (mc && mc.qual) momentos[mc.qual] = mc.momento;
+        }
+        if (ch && !ch.lance) {
           const mc = momentoDoChamado({
             chamado: ch.chamado, mod: ch.mod, lance: ch.lance || null,
             sozinho: !!rolaPorMim && !ch.lance, espera: esperaDoChamadoAgora(ch.chamado), pulso: pulsoDoChamado,
@@ -27513,7 +27493,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         } catch (e) { calou("BQ7 · a escolha na soleira", e); }
       }
       try {
-        if (!mesaLarga && bandeja[0] && bandeja[0].n !== bandejaVista) {
+        if (!mesaLarga && !lanceNoAr && bandeja[0] && bandeja[0].n !== bandejaVista) {
           momentos.dado = { chave: bandeja[0].n, conteudo: <Bandeja lancamentos={[bandeja[0]]} fresca />, rotulo: "O dado na mesa" };
         }
       } catch (e) { calou("o dado na soleira", e); }
@@ -28326,7 +28306,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             ) : null}
             direita={dadosDaMesaCheia ? (
               <LimiteDasFichas key="v4-direita">
-                <ColunaDasPecas bandeja={bandeja.length > 0 ? <LimiteDasFichas key="bandeja"><Bandeja naColuna lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
+                <ColunaDasPecas bandeja={bandeja.length > 0 ? <LimiteDasFichas key="bandeja"><Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
                   fundoDaBandeja={dadosDaMesaCheia.luz.feltroFundo}
                   hora={(minuto || 0) / 60} falaDaHora={dadosDaMesaCheia.falaDaHora} prazo={dadosDaMesaCheia.prazo}
                   tempoAberto={tempoAberto} aoAbrirTempo={() => { try { setTempoAberto((v) => !v); } catch (e) { calou("V4 · a vela abre o tempo", e); } }}
@@ -29296,7 +29276,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               {!emBatalha ? encruzilhadaDaQuest() : null}
               <div className="pt-2">
               {linhaDoCampo || !vereditoDaFicha
-                ? (podeDesistirDoTeste
+                ? (podeDesistirDoTeste && !chamadoDaRolagemAgora
                   ? <div className="flex items-center gap-2 min-w-0">
                       <div className="flex-1 min-w-0"><LinhaDoVeredito texto={linhaDoCampo} armado={!!(rolagem && !carregando)} /></div>
                       <VerboComPreco verbo={escolhaDoTesteAgora.desistir || "Não era isso"} papel="recuo" aoTocar={desistirDoTeste} className="shrink-0" />
@@ -29359,7 +29339,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   aoAbrirFicha={abrirOHeroi} rotuloDoHeroi={rotuloDaCartaDoHeroi}
                   aoAbrirCompanheiro={abrirCompanheiro}
                   objetos={objetosDaTira()} mantimentos={mantimentosDaTira()}
-                  bandeja={bandeja.length > 0 ? <Bandeja naColuna lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /> : null} />
+                  bandeja={bandeja.length > 0 ? <Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /> : null} />
               </LimiteDasFichas>
             ) : null}
           </main>
@@ -29461,7 +29441,14 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         </div>
       )}
 
-      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} semente={chaveDaRolagem(rolagem)} modificador={modPend} aoConcluir={concluirRolagem} emCombate={!!combate} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
+      {lanceNoAr ? (
+        <LimiteErro>
+          <LanceDoDado key={lanceNoAr.chave} lance={lanceNoAr.lance} rotulo={lanceNoAr.rotulo} fio={lanceNoAr.fio || null} telefone={!mesaLarga} narrando={!!carregando}
+            aoFim={() => { try { setLanceNoAr(null); } catch (e) { calou("V3 · o fim do lance", e); } }} />
+        </LimiteErro>
+      ) : null}
+      {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} semente={chaveDaRolagem(rolagem)} modificador={modPend} aoConcluir={concluirRolagem} emCombate={!!combate}
+        aoLancar={(l) => { try { setLanceNoAr(l); } catch (e) { calou("V3 · o lance do véu", e); } }} telefone={!mesaLarga} narrando={!!carregando} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} personagem={personagem} local={cenaDoPalco()} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
       {/* V2 · O ESCUDO DO MESTRE: o canto sempre à vista na tela de jogo, e a
           porta (portal no body, a mesa inert atrás, o foco preso e devolvido ao

@@ -110,6 +110,37 @@ export const SOM_DA_MESA = Object.freeze({
       Object.freeze({ em: 0.02, freq: 2093 * 2.4, onda: "sine", dura: 0.12, ganho: 0.2 }),
     ]),
   }),
+  /* O LANCE DE FORA DA LUTA (V3 · 16/11, formas.md §F2 §2 CERIMONIA_DO_DADO):
+       osso  — o dado de osso no feltro: três variações (o lance escolhe uma
+               pelo número dele, nunca ao acaso); cada uma são batidas secas e
+               agudas (o osso é mais duro que a madeira) com o abafado do feltro
+               por baixo;
+       vinte — o sino do crítico que já existe (luta.critico), de propósito o
+               mesmo: o 20 da mesa e o 20 da luta soam igual;
+       um    — o estalo seco e o tom grave que desce (o dado que racha). */
+  lance: Object.freeze({
+    osso: Object.freeze([
+      Object.freeze([
+        Object.freeze({ em: 0, freq: 1300, ate: 420, onda: "square", dura: 0.035, ganho: 0.5 }),
+        Object.freeze({ em: 0, freq: 160, ate: 80, onda: "sine", dura: 0.08, ganho: 1 }),
+        Object.freeze({ em: 0.11, freq: 1100, ate: 380, onda: "square", dura: 0.03, ganho: 0.25 }),
+      ]),
+      Object.freeze([
+        Object.freeze({ em: 0, freq: 1500, ate: 500, onda: "square", dura: 0.03, ganho: 0.5 }),
+        Object.freeze({ em: 0, freq: 150, ate: 75, onda: "sine", dura: 0.08, ganho: 1 }),
+        Object.freeze({ em: 0.07, freq: 1250, ate: 420, onda: "square", dura: 0.03, ganho: 0.3 }),
+        Object.freeze({ em: 0.15, freq: 1000, ate: 360, onda: "square", dura: 0.025, ganho: 0.15 }),
+      ]),
+      Object.freeze([
+        Object.freeze({ em: 0, freq: 1200, ate: 400, onda: "square", dura: 0.04, ganho: 0.5 }),
+        Object.freeze({ em: 0, freq: 170, ate: 85, onda: "sine", dura: 0.09, ganho: 1 }),
+      ]),
+    ]),
+    um: Object.freeze([
+      Object.freeze({ em: 0, freq: 2200, ate: 600, onda: "sawtooth", dura: 0.05, ganho: 0.45 }),
+      Object.freeze({ em: 0.04, freq: 140, ate: 55, onda: "sine", dura: 0.7, ganho: 1 }),
+    ]),
+  }),
   /* o desfecho do evento do golpe (`EVENTO_DO_GOLPE`, combate.js) → o
      momento; o abate manda sobre o desfecho; o impedido cala (não houve golpe) */
   somDoDesfecho: Object.freeze({ critico: "critico", acerto: "golpe", erro: "erro", imune: "imune", impedido: null, abate: "queda" }),
@@ -267,6 +298,19 @@ export function tocarGolpe(evento) {
 
 /* O tambor da entrada na mesa (§CB 7). */
 export function tocarEntrada() { return tocarDaLuta("entrada"); }
+
+/* 5. O LANCE (V3) — «osso» (com a variação, um inteiro: o número do lance),
+   «vinte» (o sino do crítico da luta) ou «um». Nome desconhecido cala. */
+export function tocarDoLance(momento, variacao = 0) {
+  if (momento === "vinte") return tocarDaLuta("critico");
+  const L = S.lance;
+  const vozes = momento === "osso" ? L.osso[Math.abs(Math.trunc(Number(variacao) || 0)) % L.osso.length] : momento === "um" ? L.um : null;
+  if (!vozes) return false;
+  return tocar((c, t) => {
+    const soma = vozes.reduce((a, v) => a + v.ganho, 0) || 1;
+    for (const v of vozes) voz(c, { freq: v.freq, freqFim: v.ate || null, onda: v.onda, inicio: t + v.em, dura: v.dura, pico: (tetoDoVolume() * v.ganho) / soma });
+  });
+}
 
 /* 3. O ARTEFACTO QUE DESPERTA — o sino grave */
 export function tocarDespertar() {

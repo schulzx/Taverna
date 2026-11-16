@@ -172,10 +172,14 @@ console.log("\n7. TE11 · a lenda, a carta de costas, o som, e os restos da TE10
   /* o dado do Véu soa quando pousa, uma vez, em calou */
   const iOv = app.indexOf("function OverlayDado(");
   const ov = app.slice(iOv, app.indexOf("\n}\n", iOv));
-  t("o tocarDado no Véu, quando o d20 pousa", /import \{ tocarDado \} from "\.\/som-da-mesa\.js"/.test(app)
-    && ov.indexOf("tocarDado()") > ov.indexOf('setFaseD("resultado");'));
-  t("uma vez só por véu (o refazer não volta a soar), e em calou", ov.includes('if (!soouRef.current) { soouRef.current = true; try { tocarDado(); } catch (e) { calou("TE · o som do dado no véu", e); } }')
-    && conta("tocarDado()") === 1);
+  /* MOVIDAS em 16/11 (V3, F2 §2): o Véu é o LanceDoDado, e o som do pouso
+     é o do lance — o osso no feltro (tocarDoLance, em calou na peça), uma vez
+     por lance; o refazer é um lance novo e soa o dele. O App já não toca o
+     dado do Véu; a intenção (o d20 soa quando pousa, uma vez, sem derrubar
+     nada) mora agora na peça. */
+  const lanceSrc = fs.readFileSync(new URL("../src/painel-lance.jsx", import.meta.url), "utf8");
+  t("o dado do Véu soa quando pousa (o osso, na peça do lance)", lanceSrc.includes('ir("pousado"); soar("osso", n);') && ov.includes("<LanceDoDado "));
+  t("e o som cala-se se estourar (soar em try), sem tocarDado no Véu", lanceSrc.includes("const soar = (m, v) => { try { tocarDoLance(m, v); } catch") && !ov.includes("tocarDado()"));
   t("nem a carta nem o despertar se tocam no App (já soam nas peças)", !/tocarCarta|tocarDespertar/.test(app));
   /* a carta de costas no Diário: a prop nos dois Diários, lida do sistema */
   t("a prop raridadeDaRecompensa nos dois Diários", conta("raridadeDaRecompensa={raridadeDaRecompensaDe(bq)}") === 2);

@@ -448,3 +448,36 @@ export function esperaDoChamado(chamado) {
   const palavras = linha.split(/\s+/).filter(Boolean).length;
   return Math.min(O_CHAMADO.esperaTeto, Math.max(O_CHAMADO.esperaSozinho, palavras * O_CHAMADO.esperaPorPalavra));
 }
+
+/* ---------------- UMA FORMA SÓ (V3 · 16/11/2026, formas.md §F2 §1.4) ----------------
+   O chamado das outras origens: o teste social, o enigma da masmorra e o
+   teste pendente que o Véu rolava num modal de tela cheia. A REGRA de cada um
+   continua onde estava (a CD, o bónus, o desfecho, o «Não era isso»): isto
+   só lhe dá a MESMA cara do chamado da frase — a perícia, «precisa de N», o
+   preço em palavras —, para que todo d20 de fora da luta passe pelo mesmo
+   chamado e pela mesma bandeja.
+   `r` é a rolagem pendente do App ({ rotulo, atributo, motivo, dificuldade,
+   origem, desafio }); `extra.risco` é o que custa falhar, se o desafio o
+   disser (ESCOLHA_DO_TESTE). O porquê vai em palavras (o motivo da cena),
+   nunca como «(+2)». Sem CD não há chamado: o Véu rola como sempre. */
+export function chamadoDaRolagem(r, extra = null) {
+  if (!obj(r) || r.auto) return null;
+  const dc = Number(r.dificuldade);
+  if (!Number.isFinite(dc)) return null;
+  const x = obj(extra) ? extra : {};
+  const periciaNome = String(r.rotulo || r.atributo || "").trim() || nomeDoAtributo("percepcao");
+  const origem = r.origem === "enigma" ? "enigma" : r.origem === "social" || r.social ? "social" : "teste";
+  const risco = String(x.risco || "").trim().replace(/\.$/, "");
+  const aviso = risco ? `Se falhar, ${risco.charAt(0).toLowerCase()}${risco.slice(1)}.` : "";
+  const porque = String(r.motivo || "").trim();
+  const linha = O_CHAMADO.molde
+    .replace("{pericia}", periciaNome)
+    .replace("{dc}", String(dc))
+    .replace("{porque}", porque ? `, para ${porque.charAt(0).toLowerCase()}${porque.slice(1)}` : "")
+    .replace("{aviso}", aviso).trim();
+  return Object.freeze({
+    pericia: "", periciaNome, dc, aviso, cobrado: risco, efeito: "fecha",
+    dado: Object.freeze({ teste: O_CHAMADO.dado, preco: null }),
+    chave: `${origem}|${periciaNome}|${dc}|${porque}`, linha, porque, origem,
+  });
+}

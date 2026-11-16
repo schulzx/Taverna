@@ -112,5 +112,18 @@ const html = (p) => R.html(h(R.DadoDeOsso, p));
   t("o Corpo da Bandeja é o osso (sem corpo de cor)", (() => { const s = R.html(h(R.Corpo, { faces: 20, legenda: "9", tam: 44 })); return s.includes(`fill="${T.ossoLume}"`) && !s.includes(`fill="${T.amber}"`); })());
 }
 
+sec("5. uma forma só — fora da luta, só o DadoDeOsso desenha um dado");
+{
+  /* o varredor: nenhum ficheiro de fora da luta desenha um polígono de d20 à
+     mão (o hexágono do contorno) nem um hexágono por clip-path — o dado é o
+     DadoDeOsso (ui.jsx), e quem o quer importa-o. A luta (grade, painel-batalha)
+     fica para o pacote dela e não é varrida. */
+  const LUTA = new Set(["grade-de-batalha.jsx", "painel-batalha.jsx", "batalha-na-tela.js"]);
+  const ficheiros = fs.readdirSync(SRC).filter((f) => /\.(jsx|js)$/.test(f) && !LUTA.has(f) && f !== "estilo.js");
+  const hexagono = /24,3 42\.19,13\.5|polygon\(50% 0%, 100% 27%, 100% 73%, 50% 100%, 0% 73%, 0% 27%\)/;
+  const culpados = ficheiros.filter((f) => hexagono.test(fs.readFileSync(path.join(SRC, f), "utf8")));
+  t("nenhum hexágono de d20 desenhado à mão fora da luta", culpados.length === 0, culpados.join(", "));
+}
+
 console.log(`\no dado de osso: ${ok} ok · ${mal} falhas`);
 process.exit(mal ? 1 : 0);
