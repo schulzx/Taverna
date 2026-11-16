@@ -267,7 +267,7 @@ import { aFichaDeAtor } from "./motor/ficha-de-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
-import { quemEstaAqui, contextoDeQuemEsta } from "./quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui } from "./quem-esta-aqui.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
@@ -7909,7 +7909,11 @@ export default function Taverna() {
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || personagem || {};
-      const { aqui } = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current });
+      /* S4c (16/11): quem está perto é da conta única (quem-esta-aqui.js) — a
+         procura, o alvo e quem responde leem daqui; fora dos muros a cidade
+         fica lá, num sítio está quem o posto põe nele (e o passo) */
+      let aqui;
+      try { aqui = quemAgeAqui(quemAgora()); } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: masmorraRef.current }).aqui; }
       const quantos = aqui.length;
       const daBase = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
       const confid = confidenciasRef.current || [];

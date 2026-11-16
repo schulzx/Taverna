@@ -55,7 +55,7 @@ import { arredoresDaCidade } from "../arredores.js";
 import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
-import { quemEstaAqui, contextoDeQuemEsta } from "../quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, linhaDeQuemNaoEsta } from "../quem-esta-aqui.js";
 import { fichaDaCidade, fichaParaPauta } from "../cidade-por-dentro.js";
 import { oQueAMesaFecha } from "../mesa-do-buraco.js";
 import { consultarCobrador, envelopeDoMundo, linhaDoMundo } from "../cobrador.js";
@@ -1082,7 +1082,12 @@ export function aPautaDoTurno(estado, entrada, portas) {
        cena pede. Ninguém do registo, do elenco nem do grupo. Ficam pendentes:
        só contam como oferecidos se a linha chegar ao texto. */
     $ref.nomesPendentes = null;
-    try {
+    /* S4c (16/11): fora dos muros, ou num sítio onde o posto já põe gente, não
+       há figurante a nomear — os nomes oferecidos eram por onde a 22.ª prova
+       pôs «Ursa Sombravinda» e «Godfrey o Silencioso» à fogueira na estrada, e
+       a gente que ninguém registra nunca chega à tela */
+    const semFigurante = !!(quem && (quem.fora || (Array.isArray(quem.doSitio) && quem.doSitio.length)));
+    if (!semFigurante) try {
       const p0 = $ref.personagem || $render.personagem || {};
       const usados = [...Object.values($ref.npcs || {}), ...nomesDoElenco(), ...(p0.grupo || []), p0.nome || ""].filter(Boolean);
       const nomes = nomesAMao({ semente: sementeMundo(), dia: $ref.dia, cidade: $ref.cidadeAtual || "", genero: generoMundo(), lex: (mundoAtual() || {}).lexico, usados });
@@ -1090,6 +1095,18 @@ export function aPautaDoTurno(estado, entrada, portas) {
       if (linha) { p = porNaPauta(p, "nomes", linha); $ref.nomesPendentes = { nomes, linha }; }
     } catch (e) { calou("nomesAMao", e); $ref.nomesPendentes = null; }
     p = porNaPauta(p, "naoPode", g.naoPode);
+    /* S4c (16/11): O VETO CHEGA AO NARRADOR — quem as últimas falas citaram e o
+       sistema sabe noutro sítio (o longe; a gente da base noutro local, com o
+       herói num sítio ou fora dos muros) não age nem fala nesta cena; e quem
+       está, numa linha só. Na 22.ª prova, fora dos portões, «Ivarr e Ceridwen
+       acendem uma fogueira» — a tela vazia e nenhuma linha a dizê-lo. */
+    try {
+      if (quem && !$ref.combate) {
+        const cidadeDe = $ref.cidadeAtual || ($ref.jornada && $ref.jornada.de) || "";
+        const daCidade = cidadeDe ? ((oQueExisteAqui(sementeMundo(), $ref.mapa, cidadeDe, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
+        p = porNaPauta(p, "naoPode", linhaDeQuemNaoEsta(quem, { mostrado: falasDoMestre($ref.mensagens), gente: daCidade }));
+      }
+    } catch (e) { calou("o veto de quem não está", e); }
     /* 11/10 (MM11 · 5.ª sessão, M10): a compra ou a dádiva que a frase
        declarou e o sistema não fechou — o Narrador não entrega o que a
        bolsa não pagou */
@@ -1545,9 +1562,17 @@ export function aPautaDoTurno(estado, entrada, portas) {
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || $render.personagem || {};
-      const { aqui } = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra });
-      const quantos = aqui.length;
       const daBase = oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      /* S4c (16/11): quem age aqui é da conta única (quem-esta-aqui.js) — fora
+         dos muros a cidade fica lá, e num sítio age quem o posto põe nele. Até
+         aqui o Intérprete lia a cidade inteira: na 22.ª prova, a cinco minutos
+         dos portões, A GENTE ainda fazia os moradores falarem ao herói. */
+      let aqui;
+      try {
+        aqui = quemAgeAqui(quemEstaAqui({ npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [], masmorra: $ref.masmorra,
+          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [] }));
+      } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra }).aqui; }
+      const quantos = aqui.length;
       const confid = $ref.confidencias || [];
       return aqui.map((x) => {
         const nome = typeof x === "string" ? x : x.nome;

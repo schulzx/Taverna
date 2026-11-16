@@ -41,6 +41,7 @@ import { resumoRitoPrompt } from "../ascensao.js";
 import { AMANHECER, dataTxt, ehNoite, estacaoDe, horaTxt } from "../calendario.js";
 import { celulaDaCidade, celulaDaJornada, resumoCelulaPrompt } from "../celulas.js";
 import { elencoDaCena, resumoCenaPrompt } from "../cena.js";
+import { quemEstaAqui, quemAgeAqui } from "../quem-esta-aqui.js";
 import { cenarioAtivo } from "../cenario.js";
 import { RAIO_EXAME, criarChao, envelopeDoQueFicou, pertoDaqui } from "../chao.js";
 import { oVetoDaMao } from "./a-mao-da-frase.js";
@@ -453,9 +454,17 @@ export function oPedidoDoTurno(estado, entrada, portas) {
   const pessoasDaCena = () => {
     try {
       const p0 = fichaViva() || $render.personagem || {};
-      const { aqui } = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra });
-      const quantos = aqui.length;
       const daBase = oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico);
+      /* S4c (16/11): quem age aqui é da conta única (quem-esta-aqui.js) — fora
+         dos muros a cidade fica lá, e num sítio age quem o posto põe nele. Até
+         aqui o Intérprete lia a cidade inteira: na 22.ª prova, a cinco minutos
+         dos portões, A GENTE ainda fazia os moradores falarem ao herói. */
+      let aqui;
+      try {
+        aqui = quemAgeAqui(quemEstaAqui({ npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [], masmorra: $ref.masmorra,
+          jornada: $ref.jornada, lugar: $ref.lugar, lugares: [], gente: (daBase && daBase.gente) || [] }));
+      } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra }).aqui; }
+      const quantos = aqui.length;
       const confid = $ref.confidencias || [];
       return aqui.map((x) => {
         const nome = typeof x === "string" ? x : x.nome;

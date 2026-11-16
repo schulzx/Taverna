@@ -21,6 +21,7 @@
    de src/motor/ (a catraca teste-assercoes-de-texto): a peça prova-se
    jogando.
    ============================================================ */
+import { semCena, soACena } from "./s4c-normal.mjs";
 import { lerODourado, lerOPedido, correrOsCasos, casosDoPreludio, fotoGuardada, mesmaFoto, correrAsCadeias, cadeiaGuardada, mesmaCadeia, N_CASOS, N_PRELUDIO, osModulos, osPadroes } from "./preludio-bloco.mjs";
 import { oPreludioDoTurno, REFS_DO_PRELUDIO, RENDER_DO_PRELUDIO, SAIDA_DO_PRELUDIO, PORTAS_DO_PRELUDIO } from "../src/motor/preludio-do-turno.js";
 import { oPedidoDoTurno, ENTRADA_DO_PEDIDO } from "../src/motor/pedido-do-turno.js";
@@ -66,7 +67,20 @@ sec("2. O que os casos percorrem (medido; o mínimo é a régua)");
 
 sec(`3. A peça contra o recorte: ${N_PRELUDIO}/${N_PRELUDIO}`);
 const P = await correrOsCasos(D, { lado: "peca", peca: oPreludioDoTurno });
-t(`peça = recorte em ${conta(P)}/${N_PRELUDIO} — a entrada do pedido, os refs do fim, as portas e os refs que cada uma viu`, conta(P) === N_PRELUDIO);
+/* MOVIDA (16/11, S4c — o Narrador obedece à cena), E O MOTIVO: o Intérprete
+   do prelúdio (pessoasDaCena) lê agora a conta única de quem está aqui
+   (quem-esta-aqui.js#quemAgeAqui): fora dos muros a cidade fica lá, num sítio
+   age quem o posto põe nele. O gesto que ele marca (elencoMem), o que entrega
+   ao pedido (interprete) e a foto dos refs que o pushMsgs leva mudam DE
+   PROPÓSITO onde quem age mudou (testes/s4c-normal.mjs). A régua: onde a cena
+   não mudou, a foto do dourado; e nenhuma diferença sem a cena por causa. */
+const cenaMudouP = (i) => JSON.stringify(soACena({ r: P[i].refs })) !== JSON.stringify(soACena({ r: R[i].refs })) || JSON.stringify(soACena({ r: P[i].out })) !== JSON.stringify(soACena({ r: R[i].out }));
+const restoP = (f) => JSON.stringify(semCena({ o: f.out, r: f.refs, p: f.portas, e: f.erro }));
+const daCenaP = P.map((f, i) => i).filter((i) => !mesmaFoto(fotoGuardada(P[i], CASOS[i].i), D.fotos[CASOS[i].i]) && cenaMudouP(i));
+const orfaosP = P.map((f, i) => i).filter((i) => !cenaMudouP(i) && restoP(P[i]) !== restoP(R[i]));
+console.log(`      à letra: ${conta(P)}; a cena mudou em ${daCenaP.length}; diferença sem a cena por causa: ${orfaosP.length}`);
+t(`peça = recorte onde a cena não mudou (${conta(P)} + ${daCenaP.length} da cena = ${N_PRELUDIO}) — a entrada do pedido, os refs do fim, as portas e os refs que cada uma viu`, conta(P) + daCenaP.length === N_PRELUDIO);
+t("S4c: nenhuma diferença fora da cena sem a cena ter mudado", orfaosP.length === 0, orfaosP.slice(0, 5).join(","));
 t("os que estouram estouram igual (e entregam ao App o que já tinham escrito)", P.every((f, i) => (f.erro === null) === (D.fotos[i].erro === null) && (!f.erro || f.aplicados.length > 0)));
 const asOnze = (xs) => JSON.stringify([...xs].sort());
 t("a entrada do pedido tem as chaves de ENTRADA_DO_PEDIDO, nem uma a mais", P.filter((f) => f.ret).every((f) => asOnze(Object.keys(f.ret.entradaDoPedido)) === asOnze(ENTRADA_DO_PEDIDO)) && asOnze(SAIDA_DO_PRELUDIO) === asOnze(ENTRADA_DO_PEDIDO));
@@ -89,8 +103,25 @@ sec("4. A cadeia: o prelúdio e o pedido, encadeados, dão o pedido à rede dos 
   const RS4 = await correrAsCadeias([D, DP], { lado: "recorte", casos: idxS4.map((i) => CASOS[i]) });
   const recS4 = new Map(idxS4.map((i, j) => [i, RS4[j]]));
   const iguaisS4 = (f, r) => JSON.stringify(semS4(f.redeInteira)) === JSON.stringify(semS4(r.redeInteira)) && f.portas === r.portas && f.erro === r.erro;
-  const iguais = C.reduce((a, f, i) => a + ((DE_S4(i) ? iguaisS4(f, recS4.get(i)) : mesmaCadeia(cadeiaGuardada(f), D.cadeias[i])) ? 1 : 0), 0);
-  t(`peças encadeadas = recortes encadeados em ${iguais}/${N_PRELUDIO} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_PRELUDIO);
+  /* S4c: a cadeia leva o Intérprete do prelúdio e a pauta do pedido — onde a
+     cena de um dos dois mudou (§3 e teste-motor-pedido-do-turno §2), a cadeia
+     muda com ela: o recorte corre de novo nesses casos, e a diferença tem de
+     ter a cena por causa (o Intérprete, as secções da cena na mensagem, ou o
+     system cujo módulo da gente segue quem age aqui) */
+  const igualDeSempre = (i) => (DE_S4(i) ? iguaisS4(C[i], recS4.get(i)) : mesmaCadeia(cadeiaGuardada(C[i]), D.cadeias[i]));
+  const falham = C.map((f, i) => i).filter((i) => !igualDeSempre(i));
+  const RF = await correrAsCadeias([D, DP], { lado: "recorte", casos: falham.map((i) => CASOS[i]) });
+  const msgs = (f) => (f && Array.isArray(f.redeInteira) && Array.isArray(f.redeInteira[1]) ? f.redeInteira[1].map((m) => String(m && m.content)).join("\n") : "");
+  const sys = (f) => (f && Array.isArray(f.redeInteira) ? JSON.stringify(f.redeInteira[0]) : "");
+  const daCenaC = [], orfaosC = [];
+  falham.forEach((i, j) => {
+    const r = RF[j];
+    const cena = cenaMudouP(i) || JSON.stringify(soACena({ t: msgs(C[i]) })) !== JSON.stringify(soACena({ t: msgs(r) })) || sys(C[i]) !== sys(r);
+    if (cena) daCenaC.push(i); else orfaosC.push(i);
+  });
+  const iguais = N_PRELUDIO - falham.length + daCenaC.length;
+  console.log(`      a cadeia: ${N_PRELUDIO - falham.length} à régua de sempre, ${daCenaC.length} pela cena, ${orfaosC.length} sem causa`);
+  t(`peças encadeadas = recortes encadeados em ${iguais}/${N_PRELUDIO} — o pedido à rede byte a byte, a saída, os refs do fim e as portas (onde a cena não mudou)`, iguais === N_PRELUDIO, orfaosC.slice(0, 5).join(","));
   const comRede = C.filter((f) => f.redeInteira);
   t("o pedido chega à rede em quase todos (os que estouram são o lixo, a ficha torta e o mapa sem cidades)", comRede.length >= N_PRELUDIO - 20 && D.cadeias.filter((f) => f.rede).length === comRede.length, `${comRede.length}/${N_PRELUDIO}`);
   t("o dourado da cadeia é do mesmo pedido que o pedido-dourado.json prova", D.commitDoPedido === DP.commit, `${D.commitDoPedido} / ${DP.commit}`);
@@ -138,7 +169,12 @@ for (const [nome, de, para] of MORDIDAS_DO_RECORTE) {
 
 sec("6. A prova vê o que a peça promete (chamada e escopo, sem ler o texto dela)");
 {
-  const com = async (opcoes, casos = CASOS) => diferem(await correrOsCasos(D, { lado: "peca", peca: oPreludioDoTurno, casos, opcoes }), casos);
+  /* MOVIDA (16/11, S4c), E O MOTIVO: a variante compara-se com a peça de
+     hoje, não com o dourado — o dourado é o recorte de antes do S4c, e a peça
+     já difere dele onde a cena mudou (§3); a pergunta aqui é só se a variante
+     muda a foto da peça */
+  const fotoDaPeca = new Map(CASOS.map((k, i) => [k, JSON.stringify(fotoGuardada(P[i], k.i))]));
+  const com = async (opcoes, casos = CASOS) => (await correrOsCasos(D, { lado: "peca", peca: oPreludioDoTurno, casos, opcoes })).reduce((a, f, j) => a + (JSON.stringify(fotoGuardada(f, casos[j].i)) === fotoDaPeca.get(casos[j]) ? 0 : 1), 0);
   const semAplicar = await com({ semAplicar: true });
   t(`o App sem \`aplicar\` não vê o que o prelúdio escreveu — muda ${semAplicar} fotos`, semAplicar > 0);
   /* o servidor não tem a lista do App: a peça junta as mensagens ela mesma, e a foto é a mesma */

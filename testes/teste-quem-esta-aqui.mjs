@@ -192,5 +192,64 @@ sec("6. (S4b) a proposta é do sítio onde nasceu");
   t("o App leva-a embora quando o lugar, a estrada ou a masmorra mudam", /propostaAindaVale\(propostaDaFrase, estadoDoPedido\(\)\)[\s\S]{0,200}\}, \[lugar, jornada, masmorra\]\)/.test(app));
 }
 
+sec("7. (S4c) dentro da cidade a cena tem gente — a mesma na tela e na pauta");
+{
+  /* A 22.ª prova (16/11, IA real): quatro sítios da cidade, ~15 turnos, e a
+     tela nunca disse EM CENA — a gente do posto (a base do local) não
+     entrava. A catraca corre os locais das cidades dos mundos da prova da
+     pauta (pauta-bloco.mjs), com e sem registo, com e sem grupo. */
+  const { casoDaPauta, N_GRAVADOS } = await import("./pauta-bloco.mjs");
+  const { oQueExisteAqui } = await import(S + "mundo-base.js");
+  const { quemAgeAqui, naoEstaoAqui, linhaDeQuemNaoEsta } = await import(S + "quem-esta-aqui.js");
+  let cenas = 0, comPosto = 0, vaziasComPosto = 0, vaziasAntes = 0, iguais = 0;
+  for (let w = 0; w < 6; w++) {
+    const k = casoDaPauta(N_GRAVADOS + w * 7 + 2);
+    const e = k.estado, cidade = e.cidadeAtual;
+    const base = oQueExisteAqui(e.nomeCampanha + "|" + (e.mundo || {}).genero, e.mapa, cidade, null, (e.mundo || {}).genero);
+    if (!base || !cidade) continue;
+    const lugaresC = base.locais.map((l) => ({ nome: l.nome, onde: "dentro" }));
+    for (let v = 0; v < 8; v++) for (const l of base.locais) {
+      const grupoV = v % 2 ? grupo : [];
+      const npcsV = v % 4 < 2 ? e.npcs || {} : { ...(e.npcs || {}), Odo: { nome: "Odo", local: l.nome + ", " + cidade, papel: "estalajadeiro" } };
+      const ctx = { npcs: npcsV, cidadeAtual: cidade, mapa: e.mapa, grupo: grupoV, lugares: lugaresC, gente: base.gente, lugar: { nome: v % 3 === 2 ? l.nome.replace(/^(O|A|Os|As) /, "") : l.nome, distancia: "dentro" } };
+      const q = quemEstaAqui(ctx);
+      const lista = montarEmCena({ semente: "s4c", cidade, grupo: grupoV, ...contextoDeQuemEsta(q) });
+      const tela = pessoasAqui(lista).filter((x) => !x.comigo).map((x) => x.nome);
+      const linha = emCenaParaPauta(lista);
+      const naPauta = tela.filter((nm) => linha.includes(nm));
+      cenas++;
+      if (naPauta.length === Math.min(tela.length, EM_CENA_NA_PAUTA.pessoa)) iguais++;
+      const temPosto = base.gente.some((p) => p.local === l.nome) || npcsV.Odo;
+      if (temPosto) { comPosto++; if (!tela.length) vaziasComPosto++; }
+      /* a conta de antes: sem a gente do posto */
+      const antes = montarEmCena({ semente: "s4c", cidade, grupo: grupoV, ...contextoDeQuemEsta({ ...q, doSitio: [] }) });
+      if (temPosto && !pessoasAqui(antes).filter((x) => !x.comigo).length) vaziasAntes++;
+    }
+  }
+  console.log(`      ${cenas} cenas em sítios da cidade; com gente no posto: ${comPosto}; vazias — antes: ${vaziasAntes}, agora: ${vaziasComPosto}; tela = pauta em ${iguais}`);
+  t("há cenas bastantes para a catraca valer (≥ 300)", cenas >= 300);
+  t("a conta de antes deixava a cena vazia com gente no posto — o defeito existia", vaziasAntes > 0);
+  t("CATRACA: todo sítio com gente no posto tem gente em cena", vaziasComPosto === 0, String(vaziasComPosto));
+  t("CATRACA: a gente da tela é a da pauta em 100 % das cenas (até ao teto da linha)", iguais === cenas, `${iguais}/${cenas}`);
+
+  const gente = [{ nome: "Ivarr Voz-Grave", local: "O Mercado de Cordas" }, { nome: "Ceridwen Passo-de-Gato", local: "O Mercado de Cordas" }, { nome: "Fenna Sem-Medo", local: "A Roda dos Insones" }];
+  const lugaresR = [{ nome: "O Mercado de Cordas", onde: "dentro" }, { nome: "A Roda dos Insones", onde: "dentro" }];
+  const naRoda = quemEstaAqui({ npcs: moradores, cidadeAtual: A, mapa, grupo, lugares: lugaresR, gente, lugar: { nome: "A Roda dos Insones", distancia: "dentro" } });
+  t("na Roda dos Insones, a Fenna (o posto dela) está em cena", naRoda.doSitio.some((x) => x.nome === "Fenna Sem-Medo"));
+  /* o grupo não está no registo deste caso: quemAgeAqui só o leva quando a ficha o tem (a regra de elencoDaCena) */
+  t("…e quem age lá é o posto — o morador de paradeiro «a cidade» não", quemAgeAqui(naRoda).map((x) => x.nome).join() === "Fenna Sem-Medo", quemAgeAqui(naRoda).map((x) => x.nome).join());
+  const lado = quemEstaAqui({ npcs: moradores, cidadeAtual: A, mapa, grupo, lugares: lugaresR, gente, lugar: { nome: "o lado de fora dos portões", distancia: "perto" } });
+  const fala = "Ivarr Voz-Grave e Ceridwen Passo-de-Gato estão perto da porta. Ivarr e Ceridwen acendem uma fogueira pequena.";
+  t("fora dos portões, ninguém do posto vem junto", !lado.doSitio.length && !quemAgeAqui(lado).some((x) => x.nome !== "Nolan o Silencioso"));
+  t("o veto lista quem a prosa citou e o sistema sabe na cidade (a frase real da prova)", naoEstaoAqui(lado, { mostrado: [fala], gente }).map((x) => x.nome).join() === "Ivarr Voz-Grave,Ceridwen Passo-de-Gato");
+  const linhaV = linhaDeQuemNaoEsta(lado, { mostrado: [fala], gente });
+  t("a linha diz quem não está, onde ficou, e quem está", /Ivarr Voz-Grave, Ceridwen Passo-de-Gato \(ficou em O Mercado de Cordas\); aqui estão Nolan o Silencioso/.test(linhaV), linhaV);
+  t("a linha cabe no teto dela", linhaV.length <= QUEM_ESTA_AQUI_TABELA.naoEstao.letras);
+  t("o portão morde só o necessário: sem nome citado, nenhuma linha", linhaDeQuemNaoEsta(lado, { mostrado: ["A estrada está vazia."], gente }) === "");
+  t("quem está em cena nunca é vetado (a Fenna na Roda)", !naoEstaoAqui(naRoda, { mostrado: ["Fenna Sem-Medo serve a cerveja."], gente }).length);
+  t("na rua da cidade a gente da base não é vetada (pode passar)", !naoEstaoAqui(quemEstaAqui({ npcs: moradores, cidadeAtual: A, mapa, grupo, lugares: lugaresR, gente }), { mostrado: [fala], gente }).length);
+  t("lixo não estoura", () => { naoEstaoAqui(null, null); linhaDeQuemNaoEsta(undefined, { mostrado: "x" }); quemAgeAqui(7); return true; });
+}
+
 console.log(`\nquem está aqui (S4): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

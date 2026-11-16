@@ -508,6 +508,18 @@ export function montarEmCena(ctx) {
       sabeDoPasso,
     }));
   }
+  /* 1c. S4c (16/11): quem o posto põe NESTE sítio (quem-esta-aqui.js,
+     `doSitio`: a gente da base do local, a ficha que o nomeia) — à vista
+     sem a prosa precisar de a mostrar: o taverneiro está na taverna. Antes
+     disto a cena de um sítio da cidade ficava vazia, e o Narrador enchia-a
+     com nomes que o sistema não tinha. */
+  for (const d of arr(c.doSitio)) {
+    const n = obj(d);
+    const nome = nomeDe(n);
+    if (!nome || comigoN.has(norm(nome)) || pessoas.has(norm(nome))) continue;
+    porPessoa(nome, (p) => ({ ...p, aqui: true, deOnde: String(n.deOnde || "sitio"), papel: String(n.rotulo || n.papel || p.papel || ""), genero: p.genero || generoCurto(n.genero),
+      sabe: [...p.sabe, ...(n.rotulo ? [String(n.rotulo)] : [])] }));
+  }
   /* 2. o registo: à vista se a cena a põe aqui ou o Mestre a citou */
   for (const r of arr(c.presentes)) {
     const n = obj(r);

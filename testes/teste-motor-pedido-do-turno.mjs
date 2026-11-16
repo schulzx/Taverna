@@ -20,6 +20,7 @@
    recorte acusa todo nome sem dublê. A suíte não lê o texto de src/motor/
    (a catraca teste-assercoes-de-texto): a peça prova-se jogando.
    ============================================================ */
+import { soACena } from "./s4c-normal.mjs";
 import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto, N_CASOS, osModulos, osPadroes } from "./pedido-bloco.mjs";
 import { N_DA_PAUTA } from "./pauta-bloco.mjs";
 import { oPedidoDoTurno, REFS_DO_PEDIDO, RENDER_DO_PEDIDO, ENTRADA_DO_PEDIDO, PEDIDO_AO_NARRADOR } from "../src/motor/pedido-do-turno.js";
@@ -77,7 +78,22 @@ const semS4 = (v) => typeof v === "string" ? v.split("\n").filter((l) => !/^EM C
 /* a saída e os refs vão por impressão digital: compara-se a pauta em texto, e
    dos refs saem os dois que a lista do EM CENA alimenta (emCena, relevancia) */
 const fotoS4 = (f) => JSON.stringify(semS4({ rede: f.redeInteira, pauta: f.pauta, nota: f.nota, refs: { ...f.refs, relevancia: null }, portas: f.portas, erro: f.erro }));
-const iguais = P.reduce((a, f, i) => a + ((DE_S4(i) ? fotoS4(f) === fotoS4(R[i]) : mesmaFoto(fotoGuardada(f, i), D.fotos[i])) ? 1 : 0), 0);
+/* MOVIDA (16/11, S4c — o Narrador obedece à cena), E O MOTIVO: a pauta que o
+   pedido monta tem agora a gente do posto no sítio, A GENTE da conta única, os
+   nomes à mão só onde há figurante a nomear e a linha de quem não está
+   (testes/s4c-normal.mjs). Onde a cena da pauta mudou, o pedido muda com ela
+   (a mensagem à rede leva a pauta) — e a prova de que nada mais mudou é a da
+   pauta (teste-motor-pauta-do-turno §2: nenhuma diferença sem a cena por
+   causa). Aqui: onde a cena NÃO mudou, a régua de sempre. */
+const cenaMudou = (i) => JSON.stringify(soACena({ t: String(P[i].pauta == null ? "" : P[i].pauta), r: P[i].refs })) !== JSON.stringify(soACena({ t: String(R[i].pauta == null ? "" : R[i].pauta), r: R[i].refs }));
+/* e o system muda sozinho quando o módulo da gente (cenaDoPrompt, temGente) segue
+   quem age aqui: num sítio sem ninguém do posto, o morador de paradeiro «a
+   cidade» já não conta como gente presente — o resto do pedido, igual */
+const soOSystem = (i) => { const e = CASOS[i].estado || {}; if (!(e.lugar || e.jornada) || P[i].pauta !== R[i].pauta || JSON.stringify(P[i].portas) !== JSON.stringify(R[i].portas)) return false; const ks = Object.keys({ ...(P[i].refs || {}), ...(R[i].refs || {}) }).filter((k) => JSON.stringify((P[i].refs || {})[k]) !== JSON.stringify((R[i].refs || {})[k])); return ks.length === 1 && ks[0] === "system"; };
+const comCena = P.map((f, i) => i).filter((i) => cenaMudou(i) || soOSystem(i));
+console.log(`      a cena da pauta mudou em ${comCena.length} pedidos`);
+t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada", comCena.every((i) => !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))));
+const iguais = P.reduce((a, f, i) => a + ((cenaMudou(i) || soOSystem(i) || (DE_S4(i) ? fotoS4(f) === fotoS4(R[i]) : mesmaFoto(fotoGuardada(f, i), D.fotos[i]))) ? 1 : 0), 0);
 t(`peça = recorte em ${iguais}/${N_DA_PAUTA} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_DA_PAUTA);
 t("os que estouram estouram igual (e entregam ao App o que já tinham escrito)", P.every((f, i) => (f.erro === null) === (D.fotos[i].erro === null)));
 {

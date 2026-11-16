@@ -29,6 +29,7 @@ import { CAMPOS_DO_SERVIDOR } from "../src/motor/eco-do-turno.js";
 import { SECOES, TETO_DA_PAUTA } from "../src/pauta.js";
 import { semearACasa, rng, hashSemente } from "../src/semente.js";
 import { morderEmParalelo } from "./mordidas-em-paralelo.mjs";
+import { semCena, soACena } from "./s4c-normal.mjs";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -76,12 +77,30 @@ const DE_S4 = (i) => !!(CASOS[i] && CASOS[i].estado && CASOS[i].estado.jornada);
 const linhaEmCena = (l) => /^EM CENA\s/.test(l);
 const semEmCena = (tx) => String(tx).split("\n").filter((l) => !linhaEmCena(l)).join("\n");
 const semRefEmCena = (r) => JSON.stringify({ ...r, emCena: null });
-const ficaram = PECA.reduce((a, f, i) => a + (DE_S4(i) || mesmaFoto(fotoGuardada(f, i), D.fotos[i]) ? 1 : 0), 0);
-t(`as fotos da peça são as do dourado (${ficaram}/${N_DA_PAUTA}, com os ${CASOS.filter((c, i) => DE_S4(i)).length} da jornada pela régua de baixo): o texto, a pauta, os refs do fim, as portas`, ficaram === N_DA_PAUTA);
-t(`o texto ao Narrador é o mesmo, byte a byte, nos ${N_DA_PAUTA} (na jornada, tirada a linha EM CENA)`, PECA.every((f, i) => DE_S4(i) ? semEmCena(f.texto) === semEmCena(RECORTE[i].texto) : f.texto === RECORTE[i].texto));
-t("os refs do fim são os mesmos, campo a campo (na jornada, tirado o emCena)", PECA.every((f, i) => DE_S4(i) ? semRefEmCena(f.refs) === semRefEmCena(RECORTE[i].refs) : JSON.stringify(f.refs) === JSON.stringify(RECORTE[i].refs)));
-t("S4: na jornada a linha EM CENA da peça nunca traz quem o recorte não trazia (só tira a cidade)", PECA.every((f, i) => { if (!DE_S4(i)) return true; const nomes = (tx) => ((String(tx).split("\n").find(linhaEmCena) || "").match(/[A-ZÁÉÍÓÚ][\wÀ-ú]+(?: [A-ZÁÉÍÓÚo][\wÀ-ú]+)*(?= \()/g) || []); const a = nomes(RECORTE[i].texto); return nomes(f.texto).every((n) => a.includes(n)); }));
-t("as portas na mesma ordem (calou, setPersonagem, pushMsgs com a foto dos refs)", PECA.every((f, i) => JSON.stringify(f.portas) === JSON.stringify(RECORTE[i].portas)));
+/* MOVIDA (16/11, S4c — o Narrador obedece à cena), E O MOTIVO: a cena de um
+   sítio passou a ter a gente do posto, o Intérprete (A GENTE) lê a conta única,
+   os nomes à mão saem fora dos muros e onde o posto já põe gente, e o NÃO PODE
+   ganha a linha de quem não está (testes/s4c-normal.mjs diz o quê e porquê).
+   Quando a cena muda, mudam com ela o que lê quem está (o fecho que pede
+   alguém em cena, o ANTES do arquivista, o aliado que age) e o que o teto
+   deixa caber (a linha mais curta deixa entrar O PREÇO; o veto empurra a
+   cauda da MASMORRA). A régua passa a ser: onde a cena NÃO mudou, byte a
+   byte, como sempre; e nenhuma diferença fora da cena num caso em que a
+   cena ficou igual — a diferença tem sempre a cena por causa. */
+const cenaMudou = (i) => JSON.stringify(soACena({ t: PECA[i].texto, r: PECA[i].refs })) !== JSON.stringify(soACena({ t: RECORTE[i].texto, r: RECORTE[i].refs }));
+const restoMudou = (i) => JSON.stringify(semCena({ t: PECA[i].texto, r: PECA[i].refs, p: PECA[i].portas, e: PECA[i].erro })) !== JSON.stringify(semCena({ t: RECORTE[i].texto, r: RECORTE[i].refs, p: RECORTE[i].portas, e: RECORTE[i].erro }));
+const IDX_S4C = PECA.map((f, i) => i);
+const aLetra = IDX_S4C.filter((i) => mesmaFoto(fotoGuardada(PECA[i], i), D.fotos[i])).length;
+const daCena = IDX_S4C.filter(cenaMudou).length;
+const orfaos = IDX_S4C.filter((i) => restoMudou(i) && !cenaMudou(i));
+console.log(`      à letra: ${aLetra}; a cena mudou em ${daCena}, e o resto com ela em ${IDX_S4C.filter(restoMudou).length}; diferença sem a cena por causa: ${orfaos.length}`);
+t(`as fotos da peça são as do dourado onde a cena não mudou (${IDX_S4C.filter((i) => !cenaMudou(i) && mesmaFoto(fotoGuardada(PECA[i], i), D.fotos[i])).length}/${IDX_S4C.filter((i) => !cenaMudou(i)).length})`, IDX_S4C.every((i) => cenaMudou(i) || mesmaFoto(fotoGuardada(PECA[i], i), D.fotos[i])));
+t("o texto ao Narrador é o mesmo, byte a byte, onde a cena não mudou", IDX_S4C.every((i) => cenaMudou(i) || PECA[i].texto === RECORTE[i].texto));
+t("os refs do fim são os mesmos, campo a campo, onde a cena não mudou", IDX_S4C.every((i) => cenaMudou(i) || JSON.stringify(PECA[i].refs) === JSON.stringify(RECORTE[i].refs)));
+t("S4c: nenhuma diferença fora da cena sem a cena ter mudado (o texto, os refs, as portas, o erro)", orfaos.length === 0, orfaos.slice(0, 5).join(","));
+t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua da cidade, nada)", IDX_S4C.every((i) => !cenaMudou(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))), IDX_S4C.filter((i) => cenaMudou(i) && !(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))).slice(0, 5).join(","));
+t("S4: na jornada a linha EM CENA da peça nunca traz quem o recorte não trazia (só tira a cidade)", PECA.every((f, i) => { if (!DE_S4(i)) return true; /* S4c: o grupo («com você») cabe quando os nomes à mão saem — não é gente da cidade */ const nomes = (tx) => ((String(tx).split("\n").find(linhaEmCena) || "").replace(/[^·;]*\(com você\)/g, "").match(/[A-ZÁÉÍÓÚ][\wÀ-ú]+(?: [A-ZÁÉÍÓÚo][\wÀ-ú]+)*(?= \()/g) || []); const a = nomes(RECORTE[i].texto); return nomes(f.texto).every((n) => a.includes(n)); }));
+t("as portas na mesma ordem onde a cena não mudou (calou, setPersonagem, pushMsgs com a foto dos refs)", PECA.every((f, i) => cenaMudou(i) || JSON.stringify(f.portas) === JSON.stringify(RECORTE[i].portas)));
 t("os que estouram estouram igual (6, com a mesma mensagem)", PECA.filter((f) => f.erro).length === 6 && PECA.every((f, i) => f.erro === RECORTE[i].erro));
 
 sec("3. O que os casos percorrem");

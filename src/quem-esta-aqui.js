@@ -33,6 +33,23 @@
      · o núcleo da cidade só conta como «daqui» dentro dos muros
        (`foraDaCidade`, lido em em-cena.js §3 e na fogueira).
 
+   S4c (16/11, a prova jogada com a IA real): DENTRO da cidade a tela
+   nunca disse «EM CENA» em quatro sítios, e a prosa pôs gente em cada um
+   (Fenna na Roda dos Insones, Ivarr e Ceridwen no Mercado de Cordas). A
+   causa: quem o sistema põe NUM sítio é a gente da base daquele local
+   (mundo-base.js#genteDoLocal: o taverneiro, a serviçal) — e ela só
+   entrava aqui pela carta do quadro; o registo de gente tem por paradeiro
+   a cidade (fim-do-turno.js cria-a com «local: cidadeAtual»), e em-cena.js
+   só a dá à vista com a prosa a mostrá-la. A cena ficava sem ninguém, a
+   pauta oferecia «a quem não tem nome: …» e o Narrador inventava. Agora:
+     · «doSitio»: num sítio da cidade, a gente da base daquele local e quem
+       a ficha do registo põe ali ESTÃO em cena — a mesma lista na tela e na
+       pauta (em-cena.js §1c);
+     · «naoEstaoAqui»: quem a prosa recente citou e o sistema sabe noutro
+       sítio (o longe, a gente da base de outro local) — o veto da pauta;
+     · «quemAgeAqui»: a lista que o Intérprete (A GENTE) e quem pergunta
+       «há gente aqui?» leem — num sítio, só quem está nele.
+
    Puro, sem React, determinístico (nenhum sorteio). Provado em
    testes/teste-quem-esta-aqui.mjs.
    ============================================================ */
@@ -61,6 +78,12 @@ export const QUEM_ESTA_AQUI_TABELA = Object.freeze({
   ondeArredor: "arredores",
   sitioMinimo: 4,
   daCarta: Object.freeze({ deOnde: "carta", formas: Object.freeze(["pessoa"]), estados: Object.freeze(["costas"]) }),
+  /* S4c: quem o posto põe neste sítio entra assim (em-cena.js §1c) */
+  doSitio: Object.freeze({ deOnde: "sitio", max: 4 }),
+  /* S4c: o veto de quem não está — quantas falas do Mestre se releem, quantos
+     nomes cabem na linha, o primeiro nome que basta sozinho, o teto da linha */
+  naoEstao: Object.freeze({ falas: 2, max: 3, primeiroMinimo: 4, letras: 200,
+    linha: (nomes, onde, aqui) => "pôr a agir ou a falar quem não está nesta cena: " + nomes.join(", ") + (onde ? " (ficou em " + onde + ")" : "") + (aqui.length ? "; aqui estão " + aqui.join(", ") : "; aqui só está você") }),
   porque: "quem está aqui é quem está no lugar onde o herói está: a cidade não vai atrás dele para fora dos muros",
 });
 
@@ -161,13 +184,87 @@ export function quemEstaAqui(estado) {
     }
   }
   /* quem entra pelo passo ou pela carta não fica no longe */
-  const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)));
-  return { aqui, longe: longe2, doPasso, fora, grupo: grupo.map((g) => nomeDe(g)) };
+  /* S4c: quem o posto põe NESTE sítio (a gente da base do local, e a ficha do
+     registo que o nomeia) — dentro dos muros, fora da masmorra */
+  const doSitio = [];
+  const noSitio = !!L && !fora && !masmorraAberta(e.masmorra);
+  if (noSitio) {
+    const conhecido = arr(e.lugares).find((l) => ehObj(l) && nomeDe(l) && (semArtigo(l.nome) === semArtigo(L.nome) || (l.chamado && semArtigo(l.chamado) === semArtigo(L.nome))));
+    const sitios = [L.nome, conhecido && conhecido.nome].filter(Boolean);
+    const ali = (local) => sitios.some((x) => nomeiaSitio(local, x));
+    const por = (nome, rotulo, genero) => {
+      if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => mesmo(x.nome, nome)) || doSitio.some((x) => mesmo(x.nome, nome))) return;
+      if (doSitio.length >= QUEM_ESTA_AQUI_TABELA.doSitio.max) return;
+      doSitio.push({ nome, rotulo: str(rotulo).trim(), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde });
+    };
+    for (const n of aqui) if (ehObj(n) && ali(n.local)) por(nomeDe(n), n.papel, n.genero);
+    for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero);
+  }
+  /* quem entra pelo passo, pela carta ou pelo posto não fica no longe */
+  const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)) && !doSitio.some((x) => mesmo(x.nome, n && n.nome)));
+  return { aqui, longe: longe2, doPasso, doSitio, noSitio, fora, grupo: grupo.map((g) => nomeDe(g)) };
+}
+
+/* S4c · QUEM AGE AQUI: a lista que o Intérprete (A GENTE) lê. Num sítio da
+   cidade, só quem o sistema põe nele (o grupo, o posto, o passo) — o
+   morador de paradeiro «a cidade» é plausível na rua, mas não age na
+   estalagem sem a prosa o trazer; na rua, a de sempre.
+   → [{ nome, ... }] (o formato de elencoDaCena(...).aqui) */
+export function quemAgeAqui(q) {
+  const x = ehObj(q) ? q : {};
+  const grupo = new Set(arr(x.grupo).map(sem));
+  const base = x.noSitio ? arr(x.aqui).filter((n) => ehObj(n) && grupo.has(sem(n.nome))) : arr(x.aqui).filter(ehObj);
+  const out = [...base];
+  for (const p of [...arr(x.doSitio), ...arr(x.doPasso)]) if (ehObj(p) && nomeDe(p) && !out.some((n) => mesmo(n.nome, p.nome))) out.push({ nome: nomeDe(p), papel: str(p.rotulo), deOnde: p.deOnde });
+  return out;
+}
+
+/* S4c · QUEM NÃO ESTÁ E A PROSA CITOU: o longe do registo, e a gente da base
+   da cidade que o posto põe noutro local (com o herói num sítio ou fora dos
+   muros), cujo nome está nas últimas falas do Mestre — a menção basta para
+   o veto existir, porque o veto não acusa: lembra. ctx: { mostrado: [texto],
+   gente: a gente da base da cidade de onde o herói é }. → [{ nome, onde }] */
+export function naoEstaoAqui(q, ctx) {
+  const x = ehObj(q) ? q : {};
+  const c = ehObj(ctx) ? ctx : {};
+  const T = QUEM_ESTA_AQUI_TABELA.naoEstao;
+  const textos = arr(c.mostrado).map(str).slice(-T.falas);
+  if (!textos.length) return [];
+  const naProsa = " " + sem(textos.join(" ")).replace(/[^a-z0-9]+/g, " ") + " ";
+  const presentes = [...arr(x.aqui), ...arr(x.doSitio), ...arr(x.doPasso)].map(nomeDe).concat(arr(x.grupo));
+  const esta = (nome) => presentes.some((p) => mesmo(p, nome));
+  const cand = [];
+  const por = (nome, onde) => { if (nome && !esta(nome) && !cand.some((y) => mesmo(y.nome, nome))) cand.push({ nome, onde: str(onde).trim() }); };
+  for (const n of arr(x.longe)) if (ehObj(n)) por(nomeDe(n), n.laFora || n.onde || n.local);
+  if (x.noSitio || x.fora) for (const p of arr(c.gente)) if (ehObj(p)) por(nomeDe(p), p.local);
+  const palavrasDoNome = (nome) => sem(str(nome).split(",")[0]).replace(/[^a-z0-9]+/g, " ").trim();
+  const primeiros = new Map();
+  for (const n of [...cand.map((y) => y.nome), ...presentes]) { const p = palavrasDoNome(n).split(" ")[0]; if (p) primeiros.set(p, (primeiros.get(p) || 0) + 1); }
+  const citado = (nome) => {
+    const ps = palavrasDoNome(nome);
+    if (!ps) return false;
+    if (naProsa.includes(" " + ps + " ")) return true;
+    const p1 = ps.split(" ")[0];
+    return p1.length >= T.primeiroMinimo && primeiros.get(p1) === 1 && naProsa.includes(" " + p1 + " ");
+  };
+  return cand.filter((y) => citado(y.nome)).slice(0, T.max);
+}
+
+/* a linha do veto (pauta, NÃO PODE): "" quando ninguém de fora foi citado */
+export function linhaDeQuemNaoEsta(q, ctx) {
+  const nao = naoEstaoAqui(q, ctx);
+  if (!nao.length) return "";
+  const T = QUEM_ESTA_AQUI_TABELA.naoEstao;
+  const ondes = [...new Set(nao.map((y) => y.onde).filter(Boolean))];
+  /* o grupo anda com o herói (e só entra em quemAgeAqui quando o registo o tem) */
+  const aqui = [...new Set([...arr(ehObj(q) ? q.grupo : []), ...quemAgeAqui(q).map((n) => nomeDe(n))].filter(Boolean))].slice(0, T.max);
+  const linha = T.linha(nao.map((y) => y.nome), ondes.length === 1 ? ondes[0] : "", aqui);
+  return linha.length > T.letras ? linha.slice(0, T.letras - 1) + "…" : linha;
 }
 
 /* O pedaço do contexto de `montarEmCena` que é desta conta — o MESMO para a
    pauta (motor/pauta-do-turno.js) e para a tela (App#contextoDoEmCena). */
 export function contextoDeQuemEsta(q) {
   const x = ehObj(q) ? q : {};
-  return { presentes: arr(x.aqui), longe: arr(x.longe), doPasso: arr(x.doPasso), foraDaCidade: !!x.fora };
+  return { presentes: arr(x.aqui), longe: arr(x.longe), doPasso: arr(x.doPasso), doSitio: arr(x.doSitio), foraDaCidade: !!x.fora };
 }
