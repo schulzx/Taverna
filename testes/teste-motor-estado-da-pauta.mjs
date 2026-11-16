@@ -56,8 +56,14 @@ sec("1 · o estado que o App monta");
 sec("2 · os 275 casos, com o estado montado como o App o monta, contra o dourado");
 const agora = CASOS.map((k) => correrAPeca(comoOAppDeAgora, k, D, padroes));
 const antes = CASOS.map((k) => correrAPeca(comoOAppDeAntes, k, D, padroes));
-const batem = agora.filter((r, j) => mesmaFoto(foto(r, CASOS[j]), D.fotos[j])).length;
-const primeira = agora.findIndex((r, j) => !mesmaFoto(foto(r, CASOS[j]), D.fotos[j]));
+/* MOVIDA (16/11, S4), E O MOTIVO: nos casos com a jornada aberta ou um sítio a
+   linha EM CENA e os refs da lista mudam DE PROPÓSITO (quem-esta-aqui.js: fora
+   dos muros a cidade fica lá). Esses casos provam-se pela régua do S4 em
+   teste-motor-pauta-do-turno §2 e teste-motor-pedido-do-turno §2 (a peça contra o
+   recorte corrido agora, sem a linha EM CENA); aqui contam-se como batidos. */
+const DE_S4 = (j) => !!(CASOS[j] && CASOS[j].estado && (CASOS[j].estado.jornada || CASOS[j].estado.lugar));
+const batem = agora.filter((r, j) => DE_S4(j) || mesmaFoto(foto(r, CASOS[j]), D.fotos[j])).length;
+const primeira = agora.findIndex((r, j) => !DE_S4(j) && !mesmaFoto(foto(r, CASOS[j]), D.fotos[j]));
 /* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
    cobertura da pauta (pauta-bloco.mjs, COBERTURA: ENTRETANTO e O QUE VOLTA),
    depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275

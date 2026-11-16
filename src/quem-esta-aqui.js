@@ -61,7 +61,7 @@ export const QUEM_ESTA_AQUI_TABELA = Object.freeze({
   ondeArredor: "arredores",
   sitioMinimo: 4,
   daCarta: Object.freeze({ deOnde: "carta", formas: Object.freeze(["pessoa"]), estados: Object.freeze(["costas"]) }),
-  porque: "quem está aqui é quem está no sítio onde o herói está: a cidade não vai atrás dele para fora dos muros",
+  porque: "quem está aqui é quem está no lugar onde o herói está: a cidade não vai atrás dele para fora dos muros",
 });
 
 /* O herói está fora dos muros? A estrada (jornada), a boca da masmorra, um

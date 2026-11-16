@@ -862,7 +862,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
     return quemEstaAqui({
       npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [],
       masmorra: $ref.masmorra, jornada: $ref.jornada, lugar: $ref.lugar,
-      lugares: vale("QUEM ESTÁ · os sítios", () => lugaresDaqui(), []),
+      lugares: vale("QUEM ESTÁ · os lugares", () => lugaresDaqui(), []),
       doPasso: vale("EM CENA · a pessoa do passo", () => aPessoaDoPasso({ ...$E, ...escritas }).filter((x) => x && x.aqui && x.nome), []),
       quadros: $ref.lugar ? vale("QUEM ESTÁ · as cartas", () => osQuadrosDoEstado({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva(), quadro: $ref.quadro }, { mundo: mundoDaBase() }), []) : [],
       gente: $ref.lugar ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],

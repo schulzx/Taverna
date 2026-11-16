@@ -24,6 +24,16 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — a cena verdadeira, S4 e S3 · commits f2d82d3, 6ba804a, 66f15e3
+
+A mão do motor, de `cce9c1f`. Bastão do `App.jsx` («S4+S3») tomado três vezes, devolvido a cada fecho (S4 e S4b ~11:45–12:20; S3 duas vezes, minutos). Sem `VERSAO`, sem push.
+
+- **S4 · uma só verdade de quem está aqui (f2d82d3).** Causa: `cena.js#elencoDaCena` decide só pela CIDADE; a boca da masmorra («perto») e o arredor mudam o `lugarRef` e não o `cidadeAtualRef` — Monte Profundo inteira ia atrás do herói até à Paliçada (19 km). A fogueira (`App#rodaDaFogueira`) lia a mesma cidade para chamar o núcleo; a tela (`App#contextoDoEmCena`) não tinha a pessoa do passo que a pauta do motor tinha. Conserto: `src/quem-esta-aqui.js#quemEstaAqui` (fora dos muros a cidade vai para o longe com `laFora`; no sítio, quem a ficha põe noutro sítio conhecido está no posto; a pessoa do passo e a da carta do quadro de costas entram em cena no sítio delas; o núcleo só é «daqui» dentro dos muros) — pauta, chip «Em cena» e fogueira leem-na. Catraca `teste-quem-esta-aqui`: 1985 moradores colados em 397 cenas fora → 0; tela = pauta em 600/600. **Decisão média:** o arredor só conta como fora quando o sistema o conhece (`lugares` com `onde: arredores`) — `distanciaPorTexto` dá «arredores» a todo nome desconhecido, e a casa do moleiro do Cronista não pode levar a cidade embora (o portão morde só o necessário). Os dourados da pauta, do pedido e da cadeia aceitam, com o motivo escrito, a linha EM CENA mudada só nos casos com jornada ou sítio.
+- **S4b · a cena não fica velha (6ba804a).** «Ir até Raízes · ☠ Impossível» grudava porque a proposta só saía com um turno enviado e a impedida nunca parte; a viagem pelo mapa não envia turno. A proposta nasce com a chave do sítio (`chaveDoSitio`) e sai quando lugar/estrada/masmorra mudam. **Não achado:** a «retirada limpa» na estalagem — a masmorra é anulada à saída (`sairDaMasmorra`), e nenhuma linha da pauta a leva depois; sem a sessão gravada não consegui reproduzir. Fica para a próxima prova jogada (ver se vem do histórico de mensagens).
+- **S3 · a pauta não pede invenção (66f15e3).** A forma «objeto» da estante pedia «um objeto que fala sozinho» → o sino. As formas que põem coisa na cena dizem agora QUAL ({coisa} do chão, {posse} da mochila) e sem ela não saem; duas exigências novas; sete formas reescritas. Catraca: `teste-pauta-nao-pede-coisa` §5 sobre as 191 formas. O dourado do prelúdio regravado sobre o mesmo recorte (7e18e4a).
+- **Prompt:** PIOR CENA REAL 63 866 antes e depois; com gente, 70 554 antes e depois (o que mudou vai pela pauta dinâmica, nada estático).
+- **Não feito (o limite de tokens):** S3b (o veto da gente inventada), o fato do rastro que vira acusação, gênero e nomes repetidos. Ficam na ordem do pedido.
+
 ## 16/11 · sem versão — V6, a luta · commits d7b5313 e o do fecho
 
 A mão, com o bastão do App.jsx («V6») das 09:48 ao fecho do código. O desenho estava escrito (formas.md §«A Mesa do Mestre · F4», imagens F4-*). Orçamento curto (a pessoa bateu no limite): fiz as etapas de mais impacto e deixei as outras ditas abaixo.

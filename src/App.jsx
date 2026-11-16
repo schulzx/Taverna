@@ -7219,7 +7219,7 @@ export default function Taverna() {
     return quemEstaAqui({
       npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, grupo: p0.grupo || [],
       masmorra: masmorraRef.current, jornada: jornadaRef.current, lugar: lugarRef.current,
-      lugares: vale("QUEM ESTÁ · os sítios", () => lugaresDaqui(), []),
+      lugares: vale("QUEM ESTÁ · os lugares", () => lugaresDaqui(), []),
       doPasso: vale("QUEM ESTÁ · a pessoa do passo", () => aPessoaDoPasso(est).filter((x) => x && x.aqui && x.nome), []),
       quadros: lugarRef.current ? vale("QUEM ESTÁ · as cartas", () => quadrosAgora(), []) : [],
       gente: lugarRef.current ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
