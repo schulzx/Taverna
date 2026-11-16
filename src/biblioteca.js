@@ -153,6 +153,11 @@ export function garantirSituacao(s) {
        a v9.72. Faltava a estante olhar para esse sinal. */
     pilarRecente: t("pilarRecente"),
     temObjetos: b("temObjetos"),
+    /* S3 (16/11): A COISA É DO SISTEMA. A forma que põe uma coisa na cena
+       diz QUAL ({coisa}: a que está no chão, perto; {posse}: uma que eu
+       carrego) — o nome sai do estado, nunca da IA. */
+    coisaDoSistema: t("coisaDoSistema"),
+    coisaMinha: t("coisaMinha"),
     temLugarVisitado: b("temLugarVisitado"),
     /* NÃO há `lacosDePe` aqui, e é a TERCEIRA vez nesta sessão que um
        campo meu nasce sem leitor — depois de `bioma` e `longeDeCasa` na
@@ -281,6 +286,8 @@ export const EXIGENCIAS = [
   { precisa: "passado", campo: "temPassado", porque: "colher exige ter plantado: numa campanha que mal começou, 'traga de volta uma coisa desta campanha' só pode ser respondido inventando a coisa que voltaria" },
   { precisa: "fala", campo: "temFalaAnterior", porque: "repetir uma frase que já foi dita exige que se tenha conversado o bastante para haver frase — e o eco de uma campanha de dois diálogos é a IA escrevendo a frase original agora" },
   { precisa: "objeto", campo: "temObjetos", porque: "um objeto desta campanha só reaparece em outras mãos se ele existir; sem inventário nenhum, quem inventa o objeto que volta é quem narra" },
+  { precisa: "coisa", campo: "coisaDoSistema", porque: "a forma que põe uma coisa na cena precisa da coisa: sem nada no chão, perto, quem a escolhia era o Narrador — e na 15/11 escolheu um sino de ferro que tilinta sozinho" },
+  { precisa: "posse", campo: "coisaMinha", porque: "a forma que põe a resolver uma coisa que eu carrego precisa de uma: sem nada na mochila, quem a escolhia era o Narrador" },
   { precisa: "lugar", campo: "temLugarVisitado", porque: "lembrar de um lugar exige ter ido a mais de um: no primeiro, toda semelhança com 'outro onde estive' é um lugar novo nascendo" },
 ];
 export function exigenciaDe(precisa) { return EXIGENCIAS.find((x) => x.precisa === precisa) || null; }
@@ -547,9 +554,25 @@ export function zerarCadenciaDaCena(estante) {
    envelopes de iniciativa carregam um FATO ("o relógio andou", "ele pôs
    a mão em alguém") e por isso podem mandar. Este não carrega fato
    nenhum: ele só molda. Então ele pede, diz o que não fazer, e sai. */
-export function envelopeDaCena(j) {
+/* S3: os nomes que a forma pede ({coisa}, {posse}) saem da situação; a
+   forma que pede um nome que o sistema não tem NÃO SAI (devolve ""). */
+export const NOMES_DA_FORMA = Object.freeze({ coisa: "coisaDoSistema", posse: "coisaMinha" });
+export function formaComNomes(forma, sit) {
+  const s = sit && typeof sit === "object" ? sit : {};
+  let falta = false;
+  const out = String(forma || "").replace(/\{(\w+)\}/g, (m, k) => {
+    const campo = NOMES_DA_FORMA[k];
+    const v = campo && typeof s[campo] === "string" ? s[campo].trim() : "";
+    if (!v) { falta = true; return m; }
+    return v;
+  });
+  return falta ? "" : out.charAt(0).toUpperCase() + out.slice(1);
+}
+export function envelopeDaCena(j, sit) {
   if (!j || !j.forma) return "";
-  return `[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] ${j.forma}
+  const forma = formaComNomes(j.forma, sit);
+  if (!forma) return "";
+  return `[A FORMA DESTA CENA — ESCOLHIDA PELO SISTEMA] ${forma}
 E nesta: ${j.evite}.
 Isto NÃO é um acontecimento: é o formato da cena que você já ia narrar. NÃO abra trama nova, NÃO invente missão, item, moeda nem nome de gente que o jogo não tenha, e NÃO mencione que houve uma escolha de forma. Depois devolva a palavra para mim.`;
 }
@@ -567,9 +590,12 @@ Isto NÃO é um acontecimento: é o formato da cena que você já ia narrar. NÃ
    v9.84. O vazamento nunca é dizer o nome: é escrever a etiqueta em vez
    da cena.
    ============================================================ */
-export function trechoDaJogada(j) {
+export function trechoDaJogada(j, sit) {
   if (!j || !j.forma) return "";
-  return `\nA FORMA (escolhida pelo sistema, obrigatória): ${j.forma}\nE nesta: ${j.evite}.`;
+  /* S3: a forma que pede um nome que o sistema não tem não sai */
+  const forma = formaComNomes(j.forma, sit);
+  if (!forma) return "";
+  return `\nA FORMA (escolhida pelo sistema, obrigatória): ${forma}\nE nesta: ${j.evite}.`;
 }
 
 /* O jogador não vê nada. Está aqui por simetria com os outros módulos —

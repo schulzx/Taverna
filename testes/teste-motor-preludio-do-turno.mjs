@@ -74,7 +74,22 @@ t("a entrada do pedido tem as chaves de ENTRADA_DO_PEDIDO, nem uma a mais", P.fi
 sec("4. A cadeia: o prelúdio e o pedido, encadeados, dão o pedido à rede dos dois recortes");
 {
   const C = await correrAsCadeias([D, DP], { lado: "peca", pecas: [oPreludioDoTurno, oPedidoDoTurno] });
-  const iguais = C.reduce((a, f, i) => a + (mesmaCadeia(cadeiaGuardada(f), D.cadeias[i]) ? 1 : 0), 0);
+  /* MOVIDA (16/11, S4 — a cena verdadeira), E O MOTIVO: o pedido da cadeia
+     monta a pauta, e a pauta lê agora quem-esta-aqui.js (fora dos muros a
+     cidade fica lá; no sítio, quem a ficha põe noutro posto está lá). Nos
+     casos com a jornada aberta ou um sítio, a linha EM CENA e os refs que a
+     lista alimenta mudam DE PROPÓSITO: compara-se com a cadeia dos recortes
+     corrida agora, o pedido à rede sem a linha EM CENA, as portas e o erro
+     (os refs e a saída vão por impressão digital e levam a lista dentro).
+     Nos outros, o dourado byte a byte, como sempre (a régua de
+     teste-motor-pedido-do-turno §2). */
+  const DE_S4 = (i) => !!(CASOS[i] && CASOS[i].estado && (CASOS[i].estado.jornada || CASOS[i].estado.lugar));
+  const semS4 = (v) => typeof v === "string" ? v.split("\n").filter((l) => !/^EM CENA\s/.test(l)).join("\n") : Array.isArray(v) ? v.map(semS4) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, semS4(x)])) : v;
+  const idxS4 = CASOS.map((k, i) => i).filter(DE_S4);
+  const RS4 = await correrAsCadeias([D, DP], { lado: "recorte", casos: idxS4.map((i) => CASOS[i]) });
+  const recS4 = new Map(idxS4.map((i, j) => [i, RS4[j]]));
+  const iguaisS4 = (f, r) => JSON.stringify(semS4(f.redeInteira)) === JSON.stringify(semS4(r.redeInteira)) && f.portas === r.portas && f.erro === r.erro;
+  const iguais = C.reduce((a, f, i) => a + ((DE_S4(i) ? iguaisS4(f, recS4.get(i)) : mesmaCadeia(cadeiaGuardada(f), D.cadeias[i])) ? 1 : 0), 0);
   t(`peças encadeadas = recortes encadeados em ${iguais}/${N_PRELUDIO} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_PRELUDIO);
   const comRede = C.filter((f) => f.redeInteira);
   t("o pedido chega à rede em quase todos (os que estouram são o lixo, a ficha torta e o mapa sem cidades)", comRede.length >= N_PRELUDIO - 20 && D.cadeias.filter((f) => f.rede).length === comRede.length, `${comRede.length}/${N_PRELUDIO}`);

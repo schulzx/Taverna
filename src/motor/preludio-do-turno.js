@@ -65,7 +65,7 @@ import { chegadaABoca } from "../boca.js";
 import { AMANHECER, dataTxt, ehNoite, estacaoDe, festivalDe, horaTxt } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
 import { cenarioAtivo } from "../cenario.js";
-import { criarChao } from "../chao.js";
+import { criarChao, pertoDaqui } from "../chao.js";
 import { ECONOMIA_ACAO_PROMPT, acoesBonusDe, patamarDe, perfilCombate, resumoAcaoDeTurno } from "../combate.js";
 import { comodosDoLocal } from "../comodos.js";
 import { avancarCompasso, envelopeDoCompasso, garantirCompasso, resumoCompasso } from "../compasso.js";
@@ -2064,6 +2064,10 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
          devolver a pergunta a ela seria defensavel. */
       temFalaAnterior: ($ref.mensagens || []).filter((m) => m && m.autor === "mestre" && /[“"”]|—s/.test(String(m.texto || ""))).length >= 8,
       temObjetos: (p0.inventario || []).length >= 3,
+      /* S3 (16/11): a coisa que a forma põe na cena é a do sistema — a do
+         chão, perto, e uma que eu carrego (biblioteca.js#NOMES_DA_FORMA) */
+      coisaDoSistema: (() => { try { const x = pertoDaqui($ref.chao, null)[0]; return x && x.nome ? String(x.nome) : ""; } catch { return ""; } })(),
+      coisaMinha: (() => { const inv = (p0.inventario || []).map((i) => (typeof i === "string" ? i : (i && i.nome) || "")).filter(Boolean); return inv.length ? inv[inv.length - 1] : ""; })(),
       temLugarVisitado: cidadesPisadas($ref.mapa).length >= 2,
       ...lugarDaMesa(),
       pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
@@ -2073,10 +2077,11 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
   };
   const formaDoMestre = ({ fio = "", preferir = null } = {}) => {
     try {
-      const j = consultarBiblioteca(situacaoDaMesa({ fio }), { estante: $ref.estante, preferir });
+      const sit = situacaoDaMesa({ fio });
+      const j = consultarBiblioteca(sit, { estante: $ref.estante, preferir });
       if (!j) return "";
       $ref.estante = marcarJogada($ref.estante, j.id, j.gesto);
-      return trechoDaJogada(j);
+      return trechoDaJogada(j, sit);
     } catch { return ""; /* a forma nunca pode custar o turno */ }
   };
   /* ---------------- A FORMA DA CENA COMUM (v9.86) ----------------
@@ -2222,7 +2227,7 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
       const j = consultarBiblioteca(sit, { estante: $ref.estante, soSozinhas: true });
       if (!j) return "";
       $ref.estante = zerarCadenciaDaCena(marcarJogada($ref.estante, j.id, j.gesto));
-      return envelopeDaCena(j);
+      return envelopeDaCena(j, sit);
     } catch { return ""; }
   };
   /* UMA RODADA POR TURNO DO JOGADOR. Não é um laço: se a frente

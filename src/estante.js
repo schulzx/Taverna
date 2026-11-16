@@ -137,8 +137,13 @@ export const JOGADAS = [
   {
     id: "objeto", gesto: "chega_coisa", escola: "formacao", serve: "exploracao", peso: 3, sozinha: true,
     quando: () => true,
-    forma: "Isto chega como COISA, não como pessoa nem como palavra: um objeto que está onde não devia, e que fala sozinho.",
-    evite: "não explique a origem do objeto e não deixe ninguém interpretá-lo para mim nesta cena",
+    /* S3 (16/11): «um objeto que está onde não devia, e que fala sozinho» fez
+       o Narrador inventar um sino de ferro que tilinta sozinho (a prova de
+       15/11, T17). A coisa agora é a do sistema — a que está no chão, perto
+       ({coisa}, biblioteca.js#envelopeDaCena) —, e sem ela a forma não abre */
+    precisa: "coisa",
+    forma: "Isto chega como COISA, não como pessoa nem como palavra: {coisa}, que está aqui e chama o olho antes de qualquer palavra.",
+    evite: "não explique a origem da coisa, não lhe dê voz nem poder, e não deixe ninguém interpretá-la para mim nesta cena",
   },
   {
     id: "no_meio_do_pequeno", gesto: "emoldura", escola: "mesa", serve: "social", peso: 3, sozinha: true,
@@ -161,8 +166,9 @@ export const JOGADAS = [
   {
     id: "carta", gesto: "chega_coisa", escola: "formacao", serve: "exploracao", peso: 2,
     quando: (s) => s.emCidade || s.emViagem,
-    forma: "Isto chega por escrito, e o texto é CURTO demais para o assunto — falta uma informação que quem escreveu achou óbvia.",
-    evite: "não escreva a carta inteira e não faça ela explicar o contexto; o que falta nela é o ponto",
+    /* S3: «chega por escrito» pedia uma carta que o jogo não tem */
+    forma: "Isto chega de segunda mão, numa frase CURTA demais para o assunto — falta uma informação que quem a passou achou óbvia.",
+    evite: "não complete a frase, não a ponha num papel e não faça ninguém explicar o contexto; o que falta nela é o ponto",
   },
   {
     id: "atraso", gesto: "cheguei_tarde", escola: "saga", serve: "exploracao", peso: 3, sozinha: true,
@@ -419,7 +425,7 @@ export const JOGADAS = [
   {
     id: "detalhe_solto", gesto: "planta", escola: "formacao", serve: "exploracao", peso: 4, sozinha: true,
     quando: (s) => s.momento < 0.6,
-    forma: "Dê a UM detalhe concreto mais atenção do que ele merece agora — um objeto, um hábito, uma marca, uma palavra. Sem sublinhar, sem comentar. Só demore um segundo a mais nele.",
+    forma: "Dê a UM detalhe concreto mais atenção do que ele merece agora — um hábito, um gesto, uma marca do lugar, uma palavra. Sem sublinhar, sem comentar. Só demore um segundo a mais nele.",
     evite: "não diga que é importante, não faça personagem nenhum reparar nele, e não volte a ele nesta cena",
   },
   {
@@ -473,8 +479,9 @@ export const JOGADAS = [
   {
     id: "material_errado", gesto: "planta", escola: "misterio", serve: "exploracao", peso: 2, sozinha: true,
     quando: (s) => s.emCidade || s.emMasmorra,
-    forma: "Uma coisa aqui é feita do material ERRADO para o que ela é — bom demais, velho demais, caro demais para o lugar.",
-    evite: "não explique de onde veio e não deixe ninguém avaliar o objeto para mim",
+    /* S3: o material errado é o do PRÓPRIO lugar (a parede, a porta, o chão), não um objeto novo */
+    forma: "O próprio lugar é feito do material ERRADO para o que é — uma parede, uma porta, um chão bom demais, velho demais, caro demais para ele.",
+    evite: "não explique de onde veio, não ponha objeto novo na cena e não deixe ninguém avaliar o lugar para mim",
   },
   {
     id: "promessa_de_terceiro", gesto: "planta", escola: "formacao", serve: "social", peso: 3,
@@ -517,8 +524,9 @@ export const JOGADAS = [
   {
     id: "objeto_volta", gesto: "colhe", escola: "formacao", serve: "exploracao", peso: 3, precisa: "objeto",
     quando: (s) => s.momento >= 0.4,
-    forma: "Um objeto que já apareceu nesta campanha reaparece em OUTRAS MÃOS, e ninguém acha isso notável.",
-    evite: "não explique o percurso do objeto e não me deixe recuperá-lo nesta cena",
+    /* S3: o objeto é um que eu carrego ({posse}, do inventário), não um que o Narrador escolha */
+    forma: "Uma peça igual a {posse}, que eu carrego, aparece em OUTRAS MÃOS, e ninguém acha isso notável.",
+    evite: "não explique de onde veio a outra peça, não a ponha nas minhas mãos e não a faça especial",
   },
   {
     id: "lugar_mudado", gesto: "colhe", escola: "saga", serve: "exploracao", peso: 4, precisa: "lugar",
@@ -539,10 +547,11 @@ export const JOGADAS = [
     evite: "não faça essa pessoa descobrir e não me dê crédito por isso na cena",
   },
   {
-    id: "ferramenta_velha", gesto: "colhe", escola: "formacao", serve: "combate", peso: 3,
+    id: "ferramenta_velha", gesto: "colhe", escola: "formacao", serve: "combate", peso: 3, precisa: "posse",
     quando: (s) => s.momento >= 0.45 && s.nivel >= 4,
-    forma: "Uma coisa antiga e humilde que eu carrego resolve o problema de agora, e o resolve sem cerimônia.",
-    evite: "não invente um item que eu não tenho; se não houver um, mostre um hábito antigo servindo",
+    /* S3: a coisa que resolve é uma que eu carrego, dita pelo sistema ({posse}) */
+    forma: "{posse}, que eu carrego, resolve o problema de agora, e o resolve sem cerimônia.",
+    evite: "não troque a coisa por outra que eu não tenho e não a faça mágica",
   },
   {
     id: "quem_aprendeu", gesto: "colhe", escola: "mesa", serve: "social", peso: 3, precisa: "gente",
@@ -555,8 +564,10 @@ export const JOGADAS = [
   {
     id: "calmaria_com_dente", gesto: "respira", escola: "mesa", serve: "exploracao", peso: 4, sozinha: true,
     quando: (s) => s.temperatura === "fria" || s.temperatura === "morna",
-    forma: "Cena calma, de verdade calma — e UMA coisa fora do lugar dentro dela, que a cena não comenta.",
-    evite: "não faça a coisa fora do lugar virar perigo agora; ela fica lá, e é só",
+    /* S3: a coisa fora do lugar é a do chão ({coisa}); sem ela, a forma não abre */
+    precisa: "coisa",
+    forma: "Cena calma, de verdade calma — e {coisa} fora do lugar dentro dela, que a cena não comenta.",
+    evite: "não faça a coisa fora do lugar virar perigo agora, nem lhe dê voz; ela fica lá, e é só",
   },
   {
     id: "gente_querendo", gesto: "respira", escola: "mesa", serve: "social", peso: 4, sozinha: true,

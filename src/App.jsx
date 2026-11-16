@@ -20358,6 +20358,10 @@ export default function Taverna() {
          devolver a pergunta a ela seria defensavel. */
       temFalaAnterior: (mensagensRef.current || []).filter((m) => m && m.autor === "mestre" && /[“"”]|—s/.test(String(m.texto || ""))).length >= 8,
       temObjetos: (p0.inventario || []).length >= 3,
+      /* S3 (16/11): a coisa que a forma põe na cena é a do sistema — a do
+         chão, perto, e uma que eu carrego (biblioteca.js#NOMES_DA_FORMA) */
+      coisaDoSistema: (() => { try { const x = pertoDaqui(chaoRef.current, null, RAIO_EXAME)[0]; return x && x.nome ? String(x.nome) : ""; } catch (e) { calou("S3 · a coisa do chão", e); return ""; } })(),
+      coisaMinha: (() => { const inv = (p0.inventario || []).map((i) => (typeof i === "string" ? i : (i && i.nome) || "")).filter(Boolean); return inv.length ? inv[inv.length - 1] : ""; })(),
       temLugarVisitado: cidadesPisadas(mapaRef.current).length >= 2,
       ...lugarDaMesa(),
       pvBaixo: (p0.vida || 0) > 0 && (p0.vida || 0) <= Math.ceil((p0.vidaMax || 1) / 3),
@@ -20368,10 +20372,13 @@ export default function Taverna() {
 
   const formaDoMestre = ({ fio = "", preferir = null } = {}) => {
     try {
-      const j = consultarBiblioteca(situacaoDaMesa({ fio }), { estante: estanteRef.current, preferir });
+      /* S3 (16/11): a forma que pede um nome ({coisa}, {posse}) leva-o da
+         situação, e sem ele não sai (biblioteca.js#formaComNomes) */
+      const sit = situacaoDaMesa({ fio });
+      const j = consultarBiblioteca(sit, { estante: estanteRef.current, preferir });
       if (!j) return "";
       estanteRef.current = marcarJogada(estanteRef.current, j.id, j.gesto);
-      return trechoDaJogada(j);
+      return trechoDaJogada(j, sit);
     } catch { return ""; /* a forma nunca pode custar o turno */ }
   };
 

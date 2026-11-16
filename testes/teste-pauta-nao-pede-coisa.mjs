@@ -146,5 +146,34 @@ sec("§4 O MUNDO SE MEXE diz qual fio, ou não pede (a 21.ª, defeito 4)");
   t("…e com o fio, sai e di-lo", envelopeDaIniciativa(comFio).includes("a Casa do Carvalho"));
 }
 
+sec("§5 (S3, 16/11) a estante: a forma diz QUAL coisa, ou não sai");
+{
+  /* A prova de 15/11 (T17): «Isto chega como COISA […] um objeto que está
+     onde não devia, e que fala sozinho» (estante.js, a forma «objeto») — e
+     o Narrador inventou um sino de ferro sem badalo que tilinta sozinho. Na
+     estante, «uma coisa» quase sempre é um FEITO do herói (guardado pela
+     exigência «passado»); a régua daqui é a do OBJETO pedido: a coisa que
+     entra na cena sem nome. A forma que a pede tem de trazer o nome do
+     sistema ({coisa}: a do chão, perto; {posse}: uma que eu carrego) e a
+     exigência que o garante. */
+  const { JOGADAS } = await import("../src/estante.js");
+  const { envelopeDaCena, trechoDaJogada, formaComNomes, NOMES_DA_FORMA, EXIGENCIAS } = await import("../src/biblioteca.js");
+  const OBJETO_PEDIDO = /\b(um objeto|uns objetos|um item|um recado|uma carta|um bilhete|chega como coisa|chega por escrito|uma coisa (fora do lugar|que está onde|aqui é feita))\b|\buma coisa fora\b/iu;
+  t("a régua morde a forma da 15/11 e a da carta", OBJETO_PEDIDO.test("Isto chega como COISA, não como pessoa nem como palavra: um objeto que está onde não devia, e que fala sozinho.") && OBJETO_PEDIDO.test("Isto chega por escrito, e o texto é CURTO demais"));
+  t("e não morde o feito do herói («uma coisa que eu fiz»)", !OBJETO_PEDIDO.test("Alguém conta uma coisa que EU fiz, sem saber que sou eu"));
+  const precisaDe = { coisa: ["coisa"], posse: ["posse", "objeto"] };
+  const mordem = JOGADAS.filter((j) => [j.forma, j.evite].some((x) => OBJETO_PEDIDO.test(String(x || ""))) && !/\{(coisa|posse)\}/.test(j.forma));
+  t(`as ${JOGADAS.length} formas: nenhuma pede objeto sem nome do sistema`, mordem.length === 0, mordem.map((j) => `${j.id}: «${j.forma.slice(0, 80)}»`).join(" | "));
+  const comNome = JOGADAS.filter((j) => /\{(\w+)\}/.test(j.forma));
+  t(`as ${comNome.length} formas com nome do sistema levam a exigência que o garante`, comNome.length >= 4 && comNome.every((j) => [...j.forma.matchAll(/\{(\w+)\}/g)].every((m) => NOMES_DA_FORMA[m[1]] && precisaDe[m[1]].includes(j.precisa))), comNome.map((j) => j.id + ":" + j.precisa).join(", "));
+  t("a exigência «coisa» existe na tabela (o veto a conhece)", EXIGENCIAS.some((x) => x.precisa === "coisa" && x.campo === NOMES_DA_FORMA.coisa));
+  const objeto = JOGADAS.find((j) => j.id === "objeto");
+  t("a forma «objeto» sem coisa no chão não sai (envelope vazio)", envelopeDaCena(objeto, {}) === "" && trechoDaJogada(objeto, {}) === "");
+  const env = envelopeDaCena(objeto, { coisaDoSistema: "Anel de Ouro" });
+  t("com o Anel de Ouro no chão, a forma diz o Anel e não pede objeto", env.includes("Anel de Ouro") && !OBJETO_PEDIDO.test(env.replace(/chega como COISA/i, "")), env.slice(0, 160));
+  t("a {posse} sai do inventário dito", formaComNomes(JOGADAS.find((j) => j.id === "ferramenta_velha").forma, { coisaMinha: "Corda de Cânhamo" }).startsWith("Corda de Cânhamo, que eu carrego"));
+  t("lixo não estoura", formaComNomes(null, null) === "" && envelopeDaCena(null) === "");
+}
+
 console.log(`\na pauta não pede coisa sem nome (a 20.ª, defeito 1): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

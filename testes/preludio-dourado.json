@@ -4652,9 +4652,9 @@
    "faltas": []
   },
   {
-   "saida": "e9b39480ea14cfb2",
-   "refs": "8a122b760020b8d4",
-   "portas": "872636884bd31c79",
+   "saida": "5811b4c051efd768",
+   "refs": "ecd1299aec4bc81d",
+   "portas": "909090f1a89a96f4",
    "nPortas": 3,
    "erro": null,
    "faltas": []
@@ -4684,8 +4684,8 @@
    "faltas": []
   },
   {
-   "saida": "9c07577d93c6a8b7",
-   "refs": "3980267248f8f6a8",
+   "saida": "43b88c459b844e12",
+   "refs": "4b1df5fabce7499a",
    "portas": "3fb75e1d3456e74a",
    "nPortas": 1,
    "erro": null,
@@ -4708,8 +4708,8 @@
    "faltas": []
   },
   {
-   "saida": "ab63c3eab581d6a2",
-   "refs": "f6a2f040fd49e596",
+   "saida": "aff73cdaf85ac01d",
+   "refs": "13b68466289e70c5",
    "portas": "4f53cda18c2baa0c",
    "nPortas": 0,
    "erro": null,
@@ -4724,8 +4724,8 @@
    "faltas": []
   },
   {
-   "saida": "13a64b7bc8fa12d0",
-   "refs": "06db780f1c63013e",
+   "saida": "99d19bf29b5b875e",
+   "refs": "0fadb9c00bd61a55",
    "portas": "75fa3ba714244831",
    "nPortas": 1,
    "erro": null,
@@ -8011,8 +8011,8 @@
    "rede": "0dd6cc04aa4f6778",
    "tamRede": 62538,
    "saida": "3f464a3f681057ae",
-   "refs": "aff3847c1f7cebe6",
-   "portas": "b40409fafc512be3",
+   "refs": "3b826f73da49194d",
+   "portas": "f7cb8bc3051ed802",
    "nPortas": 3,
    "erro": null,
    "faltas": []
@@ -8051,7 +8051,7 @@
    "rede": "6dd0417fe5150de0",
    "tamRede": 63150,
    "saida": "2aeea2919668fbe8",
-   "refs": "6c8d3ad988c67c4a",
+   "refs": "d8efd2c63085a5af",
    "portas": "3fb75e1d3456e74a",
    "nPortas": 1,
    "erro": null,
@@ -8078,10 +8078,10 @@
    "faltas": []
   },
   {
-   "rede": "ebccef32da8afa3f",
-   "tamRede": 54551,
-   "saida": "8c1da143888bf8b0",
-   "refs": "8119f888ebf04c88",
+   "rede": "7432f956ef432e0c",
+   "tamRede": 54549,
+   "saida": "413d98a8d48349f2",
+   "refs": "b1c970b33eedcbd3",
    "portas": "4f53cda18c2baa0c",
    "nPortas": 0,
    "erro": null,
@@ -8098,10 +8098,10 @@
    "faltas": []
   },
   {
-   "rede": "cc7fc8f9290ec47f",
-   "tamRede": 56643,
-   "saida": "7c035de4fee6de8e",
-   "refs": "fc6ccbb725094566",
+   "rede": "72fb8b2c4bef947a",
+   "tamRede": 56644,
+   "saida": "8fd49b7acc0442c4",
+   "refs": "8ffc1973b5d08497",
    "portas": "75fa3ba714244831",
    "nPortas": 1,
    "erro": null,

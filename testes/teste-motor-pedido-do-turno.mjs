@@ -63,7 +63,21 @@ t("a frase do jogador vai na última mensagem", comRede.filter((f, j) => { const
 
 sec(`2. A peça contra o recorte: ${N_DA_PAUTA}/${N_DA_PAUTA}`);
 const P = await correrOsCasos(D, { lado: "peca", peca: oPedidoDoTurno });
-const iguais = conta(P);
+/* MOVIDA (16/11, S4 — a cena verdadeira), E O MOTIVO: o pedido monta a pauta
+   (aPautaDoTurno), e a pauta agora lê quem-esta-aqui.js — fora dos muros a
+   cidade fica lá, e no sítio quem a ficha põe noutro posto está lá. Nos
+   casos da prova com a jornada aberta ou um sítio (e só neles) a
+   linha EM CENA e o ref `emCena` mudam DE PROPÓSITO (a mesma régua de
+   teste-motor-pauta-do-turno §2). Nesses casos compara-se a peça com o
+   recorte corrido agora, tirada a linha EM CENA; nos outros, o dourado
+   byte a byte, como sempre. */
+const DE_S4 = (i) => !!(CASOS[i] && CASOS[i].estado && (CASOS[i].estado.jornada || CASOS[i].estado.lugar));
+const semS4 = (v) => typeof v === "string" ? v.split("\n").filter((l) => !/^EM CENA\s/.test(l)).join("\n")
+  : Array.isArray(v) ? v.map(semS4) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== "emCena").map(([k, x]) => [k, semS4(x)])) : v;
+/* a saída e os refs vão por impressão digital: compara-se a pauta em texto, e
+   dos refs saem os dois que a lista do EM CENA alimenta (emCena, relevancia) */
+const fotoS4 = (f) => JSON.stringify(semS4({ rede: f.redeInteira, pauta: f.pauta, nota: f.nota, refs: { ...f.refs, relevancia: null }, portas: f.portas, erro: f.erro }));
+const iguais = P.reduce((a, f, i) => a + ((DE_S4(i) ? fotoS4(f) === fotoS4(R[i]) : mesmaFoto(fotoGuardada(f, i), D.fotos[i])) ? 1 : 0), 0);
 t(`peça = recorte em ${iguais}/${N_DA_PAUTA} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_DA_PAUTA);
 t("os que estouram estouram igual (e entregam ao App o que já tinham escrito)", P.every((f, i) => (f.erro === null) === (D.fotos[i].erro === null)));
 {

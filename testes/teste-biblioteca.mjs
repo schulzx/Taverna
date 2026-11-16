@@ -408,7 +408,11 @@ sec("7. A LIGAÇÃO — o mestre consulta nas quatro portas");
   /* a situação virou função própria porque agora tem dois chamadores, e
      duplicá-la seria criar o segundo lugar onde esquecer de um campo novo */
   t("a situação é montada num lugar só", (app.match(/const situacaoDaMesa = /g) || []).length === 1);
-  t("e os dois canais a usam", /consultarBiblioteca\(situacaoDaMesa\(/.test(app) && /const sit = situacaoDaMesa\(\);/.test(app));
+  /* MOVIDA (16/11, S3), E O MOTIVO: a forma do Mestre guarda agora a
+     situação numa constante (`const sit = situacaoDaMesa({ fio })`) para a
+     passar também a trechoDaJogada, que tira dela os nomes da coisa ({coisa},
+     {posse}). A intenção fica: os dois canais consultam com a MESMA situação. */
+  t("e os dois canais a usam", /const sit = situacaoDaMesa\(\{ fio \}\);\s+const j = consultarBiblioteca\(sit,/.test(app) && /const sit = situacaoDaMesa\(\);/.test(app));
   /* v9.91: a forma da cena CEDE A VEZ ao compasso. Não por hierarquia: o
      envelope do compasso já diz do que a cena trata e em que tempo da onda
      ela está, e uma forma por cima disso seria o sistema dando duas
