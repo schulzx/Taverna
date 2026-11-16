@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 15/11 · sem versão — lote 2 do lançamento (C1, S6b, S1 em parte) · commits 3953b22, 463d40f, 3c5ee60, 5b9b129
+
+A mão em Opus, com o bastão do `App.jsx` de 23:57 a 01:40 (renovado às 01:32 depois da pausa por limite de uso, e devolvido no fim). O Figma andou em paralelo, noutro agente. Sem bump e sem push.
+
+- **C1 (3953b22, 463d40f):** o link passa a ter cara: description, Open Graph, cartão grande do Twitter, favicon SVG e PNG, ícone de 180, theme-color no feltro e um manifest. Os arquivos vêm do Figma para `public/`. A suíte nova é `teste-cara-do-link`. O teto de cor literal do `index.html` em check-formas sobe de 1 para 2: o theme-color é a mesma T.bg e não pode importar T.
+- **S6b (3c5ee60):** a camada diz-se em palavras (entrada, primeiro subsolo, fundo), por tabela em `palco.js`. A Bolsa lê as tochas da mesma regra do cabeçalho. A Navegação lê o chão da marcha, e não o bioma da cidade. A terceira porta da abertura é a masmorra mais perto («Explorar X»), não «Olhar à volta». A moeda e a essência têm rótulo, e a essência zerada some. Suíte nova: `teste-s6b-miudos`.
+- **S6b, o que ficou:** «Monte clara». O nome da cidade é semente (`rngDe(semente|nome)`) de tudo o que nasce depois dele, e corrigir a caixa do banco CIDADE_B mudou os mundos novos e quebrou seis suítes com hash e dourado. Revertido; precisa de uma etapa própria que repine os hashes. Também ficou «Bastião» na narração contra «Muralha Quebrada» no mapa: os dois nomes existem em `TIPOS_MASMORRA` (forte), e sem a sessão gravada não achei por onde o primeiro chega ao Narrador.
+- **S1 (5b9b129), primeira etapa:** a catraca `check-pt-br.mjs` começa com TETO por arquivo, que só desce. São 2108 marcas em 114 arquivos, contra 2336 na medição com as regras finais. Reescritas: o XP do primeiro passo, o Diário, o encontro, a pílula do d20, a vez na mesa, a fogueira e o grupo.
+- **S1, o que se tentou e se recuou:** a reescrita por AST (`mente/lancamento/ptbr-reescrita.mjs`) passada na árvore toda baixava para 1514 marcas, todas na prosa das quests. Mas quebrou ~40 suítes. A maior parte comparava texto; outras eram do motor (jogar-em-node, a-quest-manda, chegada), e há texto do motor que é lido de volta. Sem história para consertar uma a uma, fica a ferramenta e não o resultado. **Decisão média:** guardar só as telas que a suíte prova, e não um lote vermelho.
+- **S1, o que falta, por arquivo** (o TETO do varredor tem a lista inteira): biblioteca-de-quests 459, quests-lote-6 441, quests-lote-4 271, quests-lote-5 230, artefactos-lote-1 79, plano-do-vilao 60, subtramas 35, lexico-do-mundo 34, estilo 32 (as frases da carta, do quadro e da Bolsa: «A tua escolha», «Ganhas», «da tua bolsa»), planos-lote-5 28, planos-lote-4 24, nucleo 23, saida-da-luta 19, condicoes-da-quest 17, painel-batalha 12 («A tua vez», «O teu golpe»), painel-talentos 11, e mais ~90 arquivos com menos de 10. Pela ordem da pessoa, o próximo passo é `estilo.js` + `painel-batalha.jsx` + `painel-mercado.jsx` + `quadro-da-quest.js` + `ui.jsx`, com as suítes de render (bq-tela, quadro-na-tela, mercado-ar, talentos-ar, painel-espolio, espolio-na-tela, constelacao, batalha-na-tela) movidas junto.
+- **prova:** `npm run build` limpo e `npm test` com 519/519 suítes e 29/29 varredores na árvore final. Pior prompt: 63866 antes e 63866 depois (o prompt fixo não mudou).
+
 ## 15/11 · sem versão — lote 1 do lançamento (C3, S5, S2, C5, S6) · commits d5233df, ab4e4fb, a0a379c, 90ef650, 6f899ea
 
 A mão em Opus, com o bastão do `App.jsx` das 22:36 às 23:47 (devolvido no fim do lote). O Figma andou em paralelo, noutro agente, sem tocar em código. Sem bump e sem push: são de quem sobe.
