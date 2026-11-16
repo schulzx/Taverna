@@ -18936,3 +18936,486 @@ gesto que falta para a mesa deixar de ser olhada e passar a ser mexida, e é o q
 segundos mostra. «Rolar» fica para teclado e para quem não quer arrastar. Custa só interface (a
 trajetória já é CSS com variáveis), nenhum campo de save. O momento é do `jogo`: se o gesto cansar
 ao décimo dado, fica só como opção do escudo.
+
+---
+
+## A Mesa do Mestre · F3 · a chegada e a criação (`desenho`, 15–16/11/2026)
+
+O lote **F3** da planta (`mente/lancamento/arquitetura.md` §2 A e B; `analise-visual.md` §1.1–1.3,
+§3.1–3.3 e §6). Fala a língua do F1 e do F2 (acima): mesmas variáveis, mesmos estilos de texto,
+mesmas sombras. Destrava os pacotes de código da chegada e da porta (trilho C) e da criação.
+**Só Figma e este arquivo; nenhum código tocado.** Geração de imagem por IA: **0 chamadas** — a
+arte de abertura é composta com o acervo (as pinturas de `mente/figma/matrizes`, a cena
+`public/cenas/colina`, o d20 do F2, a vela e as moedas do F1).
+
+**Onde está.** Arquivo `e5wJUzInAssoebx5npssKc`, página `10 · A Mesa do Mestre` (`266:67`), de
+y 20300 para baixo. Imagens em `mente/lancamento/figma/F3-*.png` (28 arquivos).
+
+| quadro | nó | imagem |
+|---|---|---|
+| 00 · Acervo do F3 (21 pinturas de herói, 4 matrizes, 7 capturas) | `292:8126` | — |
+| 01 · As peças da chegada e da criação (8 componentes) | `294:8126` | `F3-pecas.png` |
+| 1 · A abertura instantânea · 0 ms (1440) | `297:8133` | `F3-1-abertura-0ms-1440.png` |
+| 1 · A abertura instantânea · a vela acende (1440) | `297:8159` | `F3-1-abertura-acesa-1440.png` |
+| 1 · A abertura instantânea (375) · antes `297:8215` · medidas `298:8329` | `297:8185` | `F3-1-abertura-375.png` |
+| 2 · A primeira visita (1440) · antes `297:8409` · medidas `298:8338` | `297:8216` | `F3-2-primeira-visita-1440.png` |
+| 2 · A primeira visita (375) · antes `297:8410` | `297:8337` | `F3-2-primeira-visita-375.png` |
+| A arte de abertura, solta (852 × 840, fundo transparente) | `297:8235` | `F3-arte-de-abertura.png` |
+| 3 · Quem volta (1440) · medidas `298:8539` | `298:8349` | `F3-3-quem-volta-1440.png` |
+| 3 · Quem volta (375) | `298:8493` | `F3-3-quem-volta-375.png` |
+| 4 · O sorteio (1440) · antes `299:8667`, `299:8668` · medidas `299:8669` | `299:8473` | `F3-4-sorteio-1440.png` |
+| 4 · O sorteio (375) | `299:8607` | `F3-4-sorteio-375.png` |
+| 5a · O herói em cartas: raça e classe (1440) | `300:8555` | `F3-5a-heroi-em-cartas-1440.png` |
+| 5a · O herói em cartas (375) | `300:8746` | `F3-5a-heroi-em-cartas-375.png` |
+| 5b · Do que é feita: os atributos (1440) · antes `301:9029` · medidas `301:9030` | `301:8761` | `F3-5b-atributos-1440.png` |
+| 5b · Do que é feita (375) | `301:8914` | `F3-5b-atributos-375.png` |
+| 6a · O mundo em quatro cartas (1440) · medidas `302:9181` | `302:8955` | `F3-6a-mundo-em-cartas-1440.png` |
+| 6b · A voz do Mestre: as oito (1440) | `302:9049` | `F3-6b-as-oito-vozes-1440.png` |
+| 6 · O mundo em cartas (375) | `302:9121` | `F3-6-mundo-375.png` |
+| 7.1 · A passagem: a ficha sai (1440) | `305:9014` | `F3-7-1-a-ficha-sai-1440.png` |
+| 7.2 · A passagem: a mesa é posta (1440) · antes `305:10017` · medidas `305:10018` | `305:9053` | `F3-7-2-a-mesa-e-posta-1440.png` |
+| 7.3 · A passagem: a primeira linha chega (1440) | `305:9440` | `F3-7-3-a-primeira-linha-1440.png` |
+| 7 · A passagem (375) | `305:9830` | `F3-7-passagem-375.png` |
+| 8a · Erro de rede na chegada (1440 · 375) · medidas `307:10236` | `307:9508` · `307:9775` | `F3-8a-erro-de-rede-*.png` |
+| 8b · A campanha que não abre (1440 · 375) | `307:9953` · `307:10103` | `F3-8b-nao-abre-*.png` |
+| 8c · «A campanha mora neste navegador» (1440 · 375) | `307:10143` · `307:10184` | `F3-8c-mora-neste-navegador-*.png` |
+
+**As peças (componentes, todos em `294:8126`):**
+
+| peça | nó | variantes |
+|---|---|---|
+| A carta de retrato | `294:8182` | Tamanho Leque × Estado Repouso `294:8135` · Escolhida `294:8147` · Foco `294:8156`; Tamanho Tira × Repouso `294:8162` · Escolhida `294:8172` · Foco `294:8179` |
+| A carta do herói | `294:8200` | — |
+| A carta do mundo | `294:8233` | Face: Frente `294:8212` · Virada `294:8221` · Deitada `294:8230` |
+| A peça de atributo | `294:8299` | De pé: Normal `294:8249` · No piso `294:8265` · No teto `294:8281`; Deitada `294:8296` |
+| O botão da mesa | `294:8322` | Principal: Repouso `294:8302` · Foco `294:8306` · Pressionado `294:8309`; Secundário: `294:8312` · `294:8316` · `294:8319` |
+| O vínculo | `294:8329` | Sobre: Feltro `294:8325` · Página `294:8328` |
+| A opção da mesa | `294:8336` | Estado: Escolhida `294:8332` · Livre `294:8335` |
+| A ficha de ponto | `294:8340` | — |
+
+Os quadros **instanciam** estas peças (a carta de retrato aparece mais de 40 vezes; nenhuma foi redesenhada
+por dentro de um quadro) e as do F1 e do F2: a marca `270:503`, a vela-relógio `268:288`, a peça de
+recurso `268:225`, o d20 no lance `280:1430`, a bandeja `282:1974`, o lacre `268:159`, o escudo do
+canto `270:383`.
+
+### 1 · As decisões que mais mudam a experiência
+
+1. **Do link ao jogo em dois toques.** «Sentar à mesa» sorteia mundo e herói pela semente; a tela
+   seguinte mostra tudo pronto e um «Começar». Eram 17 cliques e duas frases escritas. Quem quer
+   escolher toca «trocar» no campo que quer mudar — e só nele.
+2. **A primeira visita tem uma ação.** «Continuar», «Jogar em dois» e «A campanha em arquivo» só
+   existem quando há o que abrir. O aviso do arquivo deixa de ser a terceira coisa que um
+   desconhecido lê e passa a ser um bilhete para quem já tem campanha.
+3. **A pintura do herói entra na criação, e fica à vista.** A carta grande (340 × 476) é a mesma em
+   «Continuar», no sorteio, na criação e — encolhida a 140 — na mesa de jogo. Raça e classe são 10 +
+   12 cartas pintadas; tocar uma troca o rosto de todas e o da carta grande.
+4. **Os atributos são peças e os pontos são fichas.** Disco de osso com o valor, − e + de 44, os
+   pontos por pôr como fichas de latão «na mão». O que cada ponto muda está escrito.
+5. **O mundo são quatro cartas; a do Mestre vira.** Cenário, forma, arco e voz. A voz vira ao toque
+   e mostra a frase de exemplo no pergaminho. Nenhum emoji do sistema.
+6. **A espera é a mesa sendo posta.** «Começar» pede a cena na hora; nos 5–8 s seguintes a carta
+   voa para o grupo, a página chega, a luz passa da vela para a hora da cena, as peças pousam e a
+   página ganha uma linha verdadeira. Nunca uma barra.
+7. **O primeiro pixel é a casa.** Antes de qualquer JS: feltro, marca, vela que acende — 2 839
+   bytes de HTML e CSS, nas mesmas posições do menu, para nada saltar.
+8. **A chegada e a criação acontecem à noite.** `LUZ_DA_MESA.noite` com o halo aberto; a mesa só
+   clareia quando a história começa. É a única mudança de luz do fluxo, e ela marca o início.
+9. **O âmbar é um por tela**: «Sentar à mesa», «Continuar», «Começar», «Pronto», «Tentar de novo»,
+   «Atualizar a página». Quando «Pronto» está impedido, a tela fica sem âmbar e diz por quê.
+
+### 2 · O fluxo — estados e transições, toque a toque
+
+    abertura (HTML puro)  --o JS montou-->  chegada
+    chegada:  sem campanha guardada  -->  primeiraVisita
+              com campanha           -->  quemVolta        (+ o bilhete, se couber: §7)
+              campanha que não abre  -->  naoAbre
+    primeiraVisita  --«Sentar à mesa» (toque 1)-->  sorteio
+    quemVolta  --«Continuar» (toque 1)-->  jogo
+               --«Ouvir o Mestre contar»-->  jogo, com o resumo narrado (pede a narração)
+               --«Nova aventura»-->  sorteio            (a campanha atual fica guardada)
+               --«A campanha em arquivo»-->  a tela de arquivo que já existe
+    sorteio  --«Começar» (toque 2)-->  passagem  --a narração chegou-->  jogo
+             --«sortear outro nome»-->  sorteio          (só o nome muda)
+             --«trocar» em «quem é»-->  heroiEmCartas
+             --«trocar» em «de onde vem» ou «do que é feita»-->  atributos
+             --«trocar» em «o mundo»-->  mundoEmCartas   --toque na carta da voz-->  vozes
+             --«Sortear tudo de novo»-->  sorteio        (outra semente; tudo muda)
+    heroiEmCartas | atributos | mundoEmCartas | vozes  --«Pronto»-->  sorteio
+    passagem  --erro de rede, ou 12 s sem resposta-->  erroDeRede
+    erroDeRede  --«Tentar de novo»-->  passagem   (mesma semente, mesmo herói: não sorteia outra vez)
+                --«Voltar à ficha»-->  sorteio
+    naoAbre  --«Atualizar a página»-->  recarrega ;  --«Guardar em arquivo»-->  baixa o arquivo ;
+             --«Nova aventura»-->  sorteio
+
+- **Contagem de toques:** primeira vez, 2. Trocar uma coisa: +3 (trocar, escolher, «Pronto»).
+- **O que «trocar» preserva:** tudo o que não foi tocado. Trocar a raça não mexe no nome, nos
+  atributos nem no mundo. O nome sorteado **ouve o sexo**: se o jogador não o escreveu, trocar de
+  sexo sorteia outro nome daquele sexo; se o escreveu, fica.
+- **Determinismo:** mundo, herói, nome, antecedente, atributos e conceito saem da semente; «Sortear
+  tudo de novo» troca a semente. A semente nunca aparece na tela.
+- **Nunca custa o turno:** toda coreografia é teatro sobre um estado já decidido; tocar pula; tudo
+  em `calou(...)`. Se a animação estoura, a tela seguinte aparece.
+- **Teclado e leitor:** cada leque é um `radiogroup` (setas movem, Enter ou Espaço escolhem); a
+  carta diz «Humana ladina»; a carta grande fala em `aria-live="polite"` («Agora: anã ladina»); − e +
+  dizem «mais Vigor, fica +2»; o impedido usa `aria-disabled` e aponta a razão com
+  `aria-describedby`. Esc volta à ficha. O foco é o anel âmbar-suave de 2 px a 2 px de distância.
+
+### 3 · Tokens e tabelas novas (nome → valor)
+
+Nenhuma cor nova: tudo sai das 38 variáveis do F1 e do F2.
+
+**`ABERTURA`** — onde ficam a marca e a vela, na abertura instantânea **e** no menu (é uma tabela só,
+lida pelo CSS em linha e pelo componente):
+
+| | marca | vela | halo (centro · raio) | frase |
+|---|---|---|---|---|
+| de 768 para cima | empilhada, × 1,25 (selo 110, letra 60/81), canto em (6,67 vw, 16,67 vh), 349 de largura | × 1,4 (123 × 241), canto em (49,3 vw, 14,44 vh) | (58,6 vw, 27,8 vh) · 620 | Spectral itálico 22/30, 46 abaixo da marca |
+| abaixo de 768 | deitada, × 0,8 (selo 51, letra 32/43), centrada, topo 28 | × 1 (88 × 172), canto em (36, 102) | (80, 150) · 330 | Spectral itálico 18/26, centrada, topo 528 |
+
+**`LUZ_DA_CHEGADA`**: modo `noite` de `LUZ_DA_MESA` com `haloRaio` 600 (330 no celular) em vez de
+400. O halo centra-se na vela; nas telas sem vela (o herói em cartas), na carta grande. Regra medida:
+**o aro de latão não fica no centro do halo** (2,88 : 1 ali; 6,01 fora) — por isso os botões
+secundários vivem na metade de baixo da mesa.
+
+**`CARTA_DE_RETRATO`**:
+
+| | largura × altura | raio | aro | fio interno | o nome |
+|---|---|---|---|---|---|
+| `leque` | 140 × 196 | 8 | 3 `T.latao` | a 5, 1 px `T.lataoLume` a 45 % | na carta: Cinzel 13 `T.ink` sobre o pé (64 px, `couroBaixo` 0 → 96 %) |
+| `tira` | 88 × 123 (alvo 88 × 147) | 6 | 2 `T.latao` | — | por baixo: Spectral 13 `T.ink`, a 4 da carta |
+
+Escolhida: aro `T.osso`; o chão do nome vira `T.osso` com letra `T.tinta` (28 de altura no leque; no
+da tira, uma plaqueta 88 × 21, raio 3); marca redonda de 26 (22 na tira) em `ossoLume` com aro
+`tinta` 1,5 e o visto, no canto de cima à direita, 6 para fora; sombra `erguido`; sobe 6 px. Foco:
+anel `amberSoft` 2 px a 2 px da carta. **Abaixo de 140 de largura o nome sai da carta** (escalar o
+leque furaria o piso de 13). Pinturas: `public/retratos/gente/<raça>-<sexo>-<classe>-1.webp`, 320 px.
+
+**`CARTA_DO_HEROI`**: 340 × 476 (5:7), raio 14, aro 4 `T.latao`, fio a 8 (`lataoLume` a 50 %); a
+pintura cobre a carta inteira; o pé são 210 px de `couroBaixo` 0 → 100 %; nome Cinzel 22 `T.ink`
+centrado a 98 do fundo; filete de latão 56 × 1; raça e classe em Spectral itálico 14 `inkMeio` a 52
+do fundo; lacre do nível (32) a 14 do canto; sombra `erguido`. Escalas: `1` no sorteio e em «quem
+volta» (rodada 2°) · `0,9` na criação · `0,7` em voo · `0,47` no celular (160 × 224) — **abaixo de
+0,86 a linha de raça e classe sai da carta; abaixo de 0,6 saem também o nome e o lacre**, e vão
+escritos ao lado. Na mesa de jogo é a carta de pé do F1 (140).
+
+**`CARTA_DO_MUNDO`**: frente 280 × 400, raio 12, chão `ossoLume`, aro 3 `T.latao`, fio a 8 (`tintaDim`
+a 35 %); rótulo Cinzel 12 `tintaDim` a 30 do topo; glifo 88 em `tinta`, traço 3, a 76; nome Cinzel 22
+a 196; filete 56 × 1 a 262; a dica em Spectral itálico 14 `tintaDim` a 276 (228 de largura, até 4
+linhas). Virada: chão `pergaminho`, «ASSIM FALA O MESTRE» em `brasaNoPergaminho`, a frase em Spectral
+itálico 17/26 `tinta` (228 de largura), a pena e o nome da voz no pé; sombra `erguido`, rodada −2°.
+Deitada (celular): 343 × 92, raio 8, aro 2, glifo 44, rótulo 12, nome Spectral Medium 18, dica 14
+numa linha com reticências, seta à direita. Por baixo de cada carta a 1440: duas setas de 44 (aro de
+latão) e a conta («1 DE 7») em Cinzel 12.
+
+**`PECA_DE_ATRIBUTO`**: de pé 284 × 176 — nome Cinzel 18 `T.ink` no topo; − (44) · disco de osso 72
+(com 4 px de lado em `ossoSombra`) · + (44), 16 entre eles; valor Cinzel 22 `T.tinta`; a dica em
+itálico 14 `inkMeio` a 124; «o próximo ponto…» em itálico 14 `T.ink` a 146. Deitada (celular) 343 ×
+68: disco 48, nome Cinzel 13, dica 14, − e + de 44 à direita (8 entre eles). No piso e no teto o
+botão fica com aro `inkMeio` tracejado `3 3` e a razão toma o lugar da dica. Limites reais:
+`ATRIBUTO_MAX_CRIACAO` (3) e 0.
+
+**`BOTAO_DA_MESA`**: principal — 56 de altura, raio 6, chão `T.amber`, aro `brasaNoPergaminho` 1,5,
+letra Cinzel 16 caixa alta `T.onAccent`, 28 de respiro lateral. Secundário — 52, sem chão, aro
+`T.latao` 1,5, letra Spectral Medium 16 `T.ink`. Foco: anel `amberSoft` 2 px a 2 px. Pressionado:
+`+ preto a 16 %` (principal) ou `preto a 30 %` (secundário) e desce 1 px. Impedido: sem chão, aro
+`inkMeio` tracejado `4 4`, letra cheia, **a razão escrita ao lado** (a lei do `Botao` de D4). Sobre
+papel (o bilhete): aro `T.tinta` 1,5, letra `T.tinta`, 44 de altura, raio 4.
+
+**`O_VINCULO`**: Spectral Medium 16 sublinhado, `T.ink` no feltro e `T.tinta` na página, alvo de 44
+de altura. **`A_OPCAO`**: 44 de altura, raio 4; escolhida = chão `T.osso`, letra `T.tinta` em
+negrito; livre = aro `T.latao` 1,5, letra `T.ink`. **`FICHA_DE_PONTO`**: 24 de diâmetro, `T.latao`
+com aro `lataoLume` 1,5 e 3 px de lado em `lataoSombra`; a bandeja «NA MÃO» é couro 244 × 56 (343 no
+celular), raio 10, aro de latão 1.
+
+**`POR_A_MESA`** (a passagem; tempos em ms a contar do toque em «Começar»):
+
+| quando | o quê | duração e curva |
+|---|---|---|
+| 0 | o pedido da primeira cena parte; a ficha recolhe (opacidade + 12 px para baixo) | 320, `ease-in` |
+| 120 | a carta do herói voa para o lugar do grupo, de 340 para 140 | 500, `cubic-bezier(.3,0,.2,1)` |
+| 200 | a página em branco desce ao centro (de −24 px, opacidade 0) | 420, `ease-out` |
+| 500 | a luz passa de `noite` para a hora da cena | 900 (a do F1) |
+| 700 | a estampa abre com o lugar (sai da semente) | 420 (a do F1) |
+| 900 · 1 050 · 1 200 · 1 350 | as quatro pilhas pousam | 220 cada: cai 16 px, ressalta 3 |
+| 1 500 · 1 650 · 1 800 · 1 950 | livro, carta, bolsa, grimório pousam | 220 cada |
+| 2 100 | a bandeja pousa com o d20 | 260 |
+| 2 300 | a vela-relógio acende | 600 |
+| 2 600 | a nota do Mestre escreve-se na página; a pena começa (laço de 1 200) | 220 |
+| chegada da narração | a prosa revela-se (`REVELAR_A_PROSA`); no fim, propostas e linha da pena | — |
+| 12 000 sem resposta | a página passa a `erroDeRede` | — |
+
+Se a narração chegar antes dos 2 900 ms, o que falta colapsa em 400 ms. Com
+`prefers-reduced-motion`: a mesa aparece posta em 120 ms e a prosa inteira de uma vez.
+**`REVELAR_A_PROSA`** = 24 caracteres a cada 40 ms, teto de 1 800 ms por parágrafo; um toque mostra
+tudo. A nota verdadeira da espera: *«Monte Profundo, de manhã. Você chega com 8 rações, 8 de água,
+4 tochas e 150 moedas.»* — lugar, hora e o que se carrega, lidos do estado, nunca da IA.
+
+**`GLIFOS` novos** (grelha 24, traço redondo, sem enchimento — a gramática da tabela):
+
+- `castelo`: `M4 21V9h3V6h2v3h6V6h2v3h3v12M3 21h18M10 21v-5a2 2 0 0 1 4 0v5M4 9V6M20 9V6` (ou o
+  `IconeCastelo` de `ui.jsx`, que já existe)
+- `torre`: `M8 21V8L6 6V3h2v2h2V3h4v2h2V3h2v3l-2 2v13M5 21h14M11 21v-4a1 1 0 0 1 2 0v4M12 10v3`
+- `caneca`: `M5 8h10v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM15 10h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2M5 8c0-2 1.5-3 3-3 .5-1.5 3.5-1.5 4 0 1.5 0 3 1 3 3`
+- `folha`: `M5 19C5 10 10 5 20 4c0 10-5 15-14 15zM5 19l8-8`
+- `vela`: `M9 21V11h6v10M7 21h10M12 11V9M12 3c1.5 1.8 2 2.8 2 4a2 2 0 0 1-4 0c0-1.2.5-2.2 2-4z`
+- `mascara`: `M4 5c5 2 11 2 16 0v7a8 8 0 0 1-16 0zM8 10h2M14 10h2M9 15c2 1.5 4 1.5 6 0`
+- `arquivo`: `M4 7h16v13H4zM2 3h20v4H2zM9 12h6`
+
+**`GLIFO_DA_VOZ`** (substitui o campo `icone` de `VOZES`): `epico` → `espadas` · `taverneiro` →
+`caneca` · `quieto` → `folha` · `sombrio` → `vela` · `picaresco` → `mascara` · `cronista` →
+`trabalho` · `febril` → `chama` · `fabula` → `noite`. **`GLIFO_DO_MOLDE`** (o `icone` de
+`moldes.js`): `sobremundo` → `mapa` · `torre` → `torre` · `arquipelago` → `ondas` · `estelar` →
+`estrela`. **`GLIFO_DO_ARCO`**: `jornada` → `encruzilhada` · `arquipelago` → `ondas` · `reinado` →
+`coroa` · `misterio` → `procurar`. Os gêneros já têm glifo (`cenario-padrao.js`).
+
+**Textos que o desenho pede ao sistema** (campo novo em tabela que existe; nenhum é de save):
+`ATRIBUTOS[i].porPonto` (o que o próximo ponto muda, em uma frase — as do quadro são de exemplo) ·
+`ANTECEDENTES[i].nomeF` (hoje só «Órfão da Estrada») · `MOTIVO_DO_SAVE` (uma frase por motivo de um
+save não abrir; está desenhado «versão mais nova») · a origem, sem custo, do texto de
+«Anteriormente, em…» (proponho o último resumo que o save já guarda; se não houver, lugar, dia e
+quest).
+
+### 4 · As telas, com medidas (para construir sem abrir o Figma)
+
+Em todas: feltro da noite, penumbra, borda de couro de 8 com fio de latão a 9 (a 1440; nenhuma a
+375). A 1440 o escudo do canto fica a (1340, 792) na chegada. Não há barra de topo.
+
+**2 · A primeira visita (1440).** Coluna esquerda em x 96: a marca (`ABERTURA`) · a frase
+*«Sente-se à mesa. / O Mestre já abriu o livro.»* em Spectral itálico 30/40 `T.ink`, y 400 · «Sentar
+à mesa» 320 × 56, y 516 · por baixo, em itálico 14 `inkMeio`, 340 de largura: *«O Mestre sorteia um
+mundo e um herói para você. Dá para trocar tudo antes de começar.»* · no pé (y 824), Cinzel 12:
+«RPG DE MESA · NO NAVEGADOR · EM PORTUGUÊS». **A arte** ocupa (560, 60) 820 × 780: a vela a (150,
+70) × 1,4; a pilha de moedas a (44, 318); a página 400 × 540 a (306, 62), rodada 3° (estampa de 150,
+o lugar em Cinzel 18 `brasa`, a prosa em Spectral 15/24, uma nota do Mestre); o leque de quatro
+cartas de retrato a 190 × 266 em (0, 522) · (164, 494) · (328, 486) · (490, 498), rodadas 9° · 3° ·
+−3° · −9°; o d20 de osso a 147 em (676, 380). Em código pode ser **uma imagem só**
+(`F3-arte-de-abertura.png`, transparente, sobre o feltro; alvo em WebP: até 200 KB) ou as peças
+vivas — a imagem basta. **A 375:** a marca deitada no topo; a arte recortada em (0, 96) 375 × 400
+(vela, página 220 × 290, leque de quatro a 97 × 135 sem nome, d20 a 80); a frase em itálico 22/30
+centrada a y 528; «Sentar à mesa» 343 × 56 a y 632; a nota centrada a y 704.
+
+**3 · Quem volta (1440).** A marca deitada × 0,75 em (56, 40). A carta do herói em (140, 206),
+rodada 2°. **A página «Anteriormente»** em (540, 150) 560 × 556, sombra `pousado`: estampa recolhida
+de 96 com esbatido · «ANTERIORMENTE, EM» (Cinzel 12 `tintaDim`, y 110) · o lugar (Cinzel 28, y 130) ·
+dia, hora e sítio (itálico 14, y 170) · o resumo (Prosa 18/30, y 206, 464 de largura, até 6 linhas) ·
+fio a y 404 · «A SEGUIR» (Cinzel 12 `brasa`) e a etapa atual da quest (Spectral Medium 16) · no pé, a
+pena com «Jogado ontem à noite · 3 sessões à mesa» e, à direita, o vínculo «Ouvir o Mestre contar».
+Por baixo: «Continuar» 280 × 56 em (540, 734) e «Nova aventura» 264 × 52 em (836, 736), com *«A
+campanha de Saoirse fica guardada.»* por baixo. À direita: a vela em (1210, 110); «A MESA COMO VOCÊ
+DEIXOU» (Cinzel 12, y 420) e as quatro peças de recurso com os números do save, a partir de (1132,
+448), passo 72. No canto de baixo à esquerda o vínculo «A campanha em arquivo» (64, 808); se houver
+outras campanhas guardadas, «Outras campanhas» ao lado. **A 375:** marca; carta a 160 × 224 em (16,
+88), sem nome; ao lado (x 192): o nome (Cinzel 13), raça · classe · nível (itálico 14), «ANTERIORMENTE,
+EM», o lugar (Cinzel 18), dia e última sessão; a página 359 × 258 em (8, 330) com o resumo (Prosa
+17/28) e «A SEGUIR»; «Continuar» 343 × 56 a y 608; «Nova aventura» 343 × 52 a y 678; o vínculo
+centrado a y 744.
+
+**4 · O sorteio (1440).** A carta do herói em (130, 196), rodada 2°. **A ficha** é uma página em
+(540, 96) 620 × 612, margens de 48, um fio de 1 px (`tinta` a 25 %) entre blocos e um «trocar»
+encostado à direita de cada um: (1) a pena + «O MESTRE SORTEOU PARA VOCÊ»; o nome em Cinzel 28;
+«sortear outro nome»; raça · classe · sexo em Spectral Medium 16 com «trocar» · (2) «DE ONDE VEM», o
+antecedente (16) e **o gancho em uma frase** (Spectral itálico 17/26) · (3) «DO QUE É FEITA»: seis
+discos de 44 com o valor (Cinzel 16) e o nome (Spectral 13) por baixo, passo 88 · (4) «O MUNDO»:
+cenário · forma · arco numa linha (16) e, por baixo, *«O Mestre fala em tom Épico: «…»»* com o começo
+da frase de exemplo · (5) a nota: *«Tudo aqui pode mudar antes de começar. Depois, é a história que
+muda.»* Por baixo: «Começar» 280 × 56 em (540, 736); o glifo do dado + «Sortear tudo de novo» em
+(852, 742); a nota *«O Mestre escreve a primeira cena em alguns segundos.»* a y 804. À direita: a
+vela e o d20 pousado a 128 em (1196, 430), com «o dado que sorteou». **A 375:** carta a 160 × 224 +
+ao lado o nome (Cinzel 18), raça · classe · sexo, «trocar o herói», «sortear outro nome»; a página
+359 × 232 em (8, 348) com «de onde vem» (gancho em itálico 16/24) e «o mundo»; «Começar» 343 × 56 a
+y 620; «Sortear tudo de novo» a y 690. No celular os atributos vivem em «trocar o herói».
+
+**5a · O herói em cartas (1440).** Esquerda (x 64–384): «Voltar à ficha» (vínculo com seta) no topo;
+a carta grande × 0,9 em (76, 96), rodada 2°; «O NOME» + a tira do nome (papel `ossoLume` 250 × 48,
+Spectral Medium 16) + o botão redondo do dado (44, aro de latão) + *«O dado sorteia um nome de
+mulher deste mundo.»*; as duas opções de sexo (146 × 44 cada, 10 entre elas) a y 690. Direita (x
+460–1384): «A RAÇA» + as dez cartas `tira` a y 68, passo 93 · «A CLASSE» a y 240 + as doze cartas
+`leque` em 6 × 2, passo 157 × 216, a partir de y 268 · por baixo (y 712): a classe escolhida em
+Cinzel 18, a descrição de `CLASSES[i].desc` (Spectral Medium 16) e *«O que mais pesa nela:
+Destreza.»* (o `atributoChave`, por extenso) · no pé: «Do que é feita» (secundário, 204 × 52) e
+«Pronto» (principal, 280 × 56) em (1104, 802). **A 375:** a tela rola; carta a 160 × 224 com nome,
+dado e sexo ao lado; a raça é uma tira que se arrasta (cartas de 88, passo 96, a escolhida ao
+centro, a seguinte cortada na borda para dizer que há mais; «7 de 10 · arraste»); a classe é uma
+grade de 3 colunas de 106 × 148 com o nome por baixo, passo 118 × 186; o pé é fixo (couro de 84,
+fio de latão) com «Pronto» 343 × 56.
+
+**5b · Do que é feita (1440).** Esquerda: a carta grande e, por baixo, **a tira do antecedente**
+(papel 320 × 196: «DE ONDE VEM · 1 DE 12», o nome em Spectral Medium 18, o gancho em itálico 14, *«Leva:
+faca herdada.»* e duas setas de 44 com aro `tintaDim`). Direita: «DO QUE É FEITA» (Cinzel 22) e a
+frase; «NA MÃO» com as fichas e a conta em (1140, 36); as seis peças em 3 × 2, passo 320 × 206, a
+partir de (460, 140); «O CONCEITO (SE QUISER)» + a tira do conceito (papel 924 × 84: o conceito em
+Spectral itálico 17, já escrito pelo sistema; à direita «o Mestre escreve outro»; por baixo *«Escreva
+por cima, ou deixe…»*). No pé: «Raça e classe» (secundário) e «Pronto». **Com pontos por pôr,
+«Pronto» está impedido**, a razão («Faltam 2 pontos por pôr.») fica à esquerda dele e, por baixo, o
+vínculo «O Mestre põe os que faltam». **A 375:** «NA MÃO» no topo (343 × 56), seis peças deitadas com
+passo 76, a tira do conceito, o pé fixo com a razão e o «Pronto».
+
+**6a · O mundo em quatro cartas (1440).** «Voltar à ficha»; o título em Cinzel 28 a (112, 92) e a
+frase de uso; quatro cartas a y 196, passo 312 a partir de x 112 (a da voz, virada, 10 px acima e
+rodada −2°); setas e conta por baixo (y 616); a nota *«O Mestre fala assim a campanha inteira; o que
+acontece na história não muda com a voz.»*; no pé «Sortear o mundo» (secundário) e «Pronto». As
+opções são as de hoje: 7 cenários (`generos.criacao`), 4 formas (`moldes.js`), 4 arcos (as espinhas
+de `historia.js`), 8 vozes (`VOZES`). «Universo próprio» vira a carta do cenário e abre a linha da
+pena para uma frase. **6b · As oito vozes:** grade 4 × 2 de cartas 316 × 284 (pergaminho, raio 10,
+aro de latão 2), passo 332 × 300 a partir de (64, 140): glifo 28 + nome (Cinzel 18), a frase
+(`VOZES[i].exemplo`, Spectral itálico 17/26), fio, o resumo (`.resumo`, itálico 14 `tintaDim`). A
+escolhida: aro de osso 4, a marca, sobe 6. **A 375:** quatro cartas deitadas com passo 104 a partir
+de y 60; tocar a da voz abre por baixo a carta virada (343 × 164) com a frase.
+
+**7 · A passagem.** A coreografia é `POR_A_MESA`. 7.1: o destino da carta é o lugar do grupo da
+mesa do F1 (40, 66); a página chega a (380, 20) 680 × 860. 7.2: a mesa do F1 de dia, só com o herói
+no grupo, bandeja vazia (o d20 em repouso, sem histórico nem legenda); na página, a estampa aberta, a
+nota verdadeira a (48, 236) e **a pena que escreve logo abaixo dela, onde a prosa vai nascer** (48,
+282). 7.3: a prosa revela-se; a pena desce para o pé até a última frase; as propostas e a linha da
+pena só entram no fim. A 375: a mesma coisa na composição do celular do F1, com um só herói na
+faixa.
+
+**8 · Os estados.** *8a · erro de rede:* a mesa posta; na página, a (48, 240): o glifo de aviso +
+«O MESTRE NÃO RESPONDEU» (Cinzel 18 `perigoNoPergaminho`); *«A ligação caiu antes de a primeira cena
+chegar. A mesa está posta e Saoirse está guardada: nada se perdeu.»* (Prosa); «Tentar de novo» 260 ×
+56 (a largura toda no celular) e o vínculo «Voltar à ficha»; a nota *«Se voltar a falhar, veja a sua
+internet. Esta mesa fica guardada neste navegador.»* · *8b · a campanha que não abre:* a tela de
+«quem volta» com outra página — «A CAMPANHA GUARDADA» · «Esta campanha não abre aqui» (Cinzel 28) ·
+*«Ela foi guardada por uma versão mais nova do jogo do que a desta página. Nada foi apagado: a
+campanha continua neste navegador.»* · «O QUE DÁ PARA FAZER» + as duas saídas; os botões passam a
+«Atualizar a página» (principal) e «Guardar em arquivo» (secundário, com *«Leva a campanha inteira
+num arquivo seu.»*); «Nova aventura» desce a vínculo. **Nenhum estado oferece apagar.** · *8c · o
+bilhete:* papel `ossoLume` de 284 de largura, rodado −1,5°, em (1118, 566), sombra `pousado`: o
+glifo `arquivo` + «ESTA CAMPANHA MORA NESTE NAVEGADOR» (Cinzel 12 `brasa`), *«Limpar os dados do
+navegador, ou trocar de aparelho, leva a campanha junto. Um arquivo guarda tudo.»* (itálico 14
+`tinta`), o botão sobre papel «Guardar em arquivo» e o vínculo «Agora não». **Aparece só para quem
+tem campanha**, na primeira volta; some ao guardar ou ao recusar; volta depois de cinco sessões sem
+arquivo. No celular (359 de largura) toma o lugar da página «Anteriormente» até ser respondido.
+
+### 5 · A abertura instantânea, por extenso
+
+Vai dentro do `<body>` do `index.html`, antes de `<div id="root">`. São **2 839 bytes** minificados
+(2 863 com as quebras de linha abaixo), nenhuma imagem, nenhum JS. O `App` remove `#tv` no primeiro
+quadro em que o menu estiver pintado (as posições coincidem: nada salta). `theme-color` passa a
+`#0F1E16`. As classes de uma letra só valem dentro de `#tv`; se colidirem com Tailwind, prefixar.
+
+    <style>
+    html,body{margin:0;height:100%;background:#0F1E16}
+    #tv{position:fixed;inset:0;overflow:hidden;font:italic 22px/30px Spectral,Georgia,serif;color:#D2C0A4;background:radial-gradient(50% 50%,transparent 62%,rgba(0,0,0,.6)),#0F1E16;box-shadow:inset 0 0 0 8px #24160D,inset 0 0 0 9px #B8934C}
+    #tv:before{content:"";position:absolute;left:58.6vw;top:27.8vh;width:1240px;height:1240px;margin:-620px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,200,119,.29),rgba(255,200,119,.18) 45%,transparent);animation:h .6s .15s both}
+    #tv i{position:absolute}
+    #tv div{position:absolute;left:6.67vw;top:16.67vh;width:349px;text-align:center}
+    #tv svg{display:block;width:110px;margin:0 auto 17px}
+    #tv b{display:block;font:700 60px/81px Cinzel,Georgia,serif;letter-spacing:.16em;margin-right:-.16em;color:#F2E7D2}
+    #tv p{margin:46px 0 0;text-align:left}
+    #tv u{position:absolute;left:49.3vw;top:14.44vh;width:123px;height:241px}
+    .p{left:22px;top:174px;width:78px;height:22px;border-radius:50%;background:#B8934C;box-shadow:inset 0 -3px #6B5226}
+    .c{left:48px;top:125px;width:28px;height:60px;border-radius:3px 3px 0 0;background:linear-gradient(90deg,#EFE3C8 65%,#C9B48E 0)}
+    .w{left:60px;top:117px;width:2px;height:9px;background:#2A1C11}
+    .x{left:55px;top:95px;width:13px;height:24px;border-radius:50%/60% 60% 40% 40%;background:radial-gradient(at 50% 70%,#FFF1C4 30%,#FFB347 72%);box-shadow:0 0 40px 26px rgba(255,200,119,.22);transform-origin:50% 100%;animation:a .6s .15s both}
+    @keyframes a{0%{opacity:0;transform:scale(.2)}}
+    @keyframes h{0%{opacity:0}}
+    @media(max-width:767px){#tv{box-shadow:none;font-size:18px;line-height:26px}#tv:before{left:80px;top:150px;width:660px;height:660px;margin:-330px}#tv div{left:0;top:28px;width:100%}#tv svg,#tv b{display:inline-block;vertical-align:middle}#tv svg{width:51px;margin:0 14px 0 0}#tv b{font-size:32px;line-height:43px}#tv p{position:absolute;top:500px;width:100%;margin:0;text-align:center}#tv u{left:36px;top:102px;transform:scale(.714);transform-origin:0 0}}
+    @media(prefers-reduced-motion:reduce){#tv:before,#tv *{animation:none}}
+    </style>
+    <div id="tv" role="status">
+    <div><svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M43 5C47 7 53 9 56 13C59 17 59 23 60 28C61 33 62 38 60 43C58 47 54 51 50 55C46 58 41 62 37 63C32 63 26 61 22 59C17 57 12 54 9 51C5 47 2 41 2 37C1 32 4 26 5 22C7 17 10 12 13 9C17 6 23 4 28 3C32 3 38 3 43 5Z" fill="#9B2A22"/><path d="M32 11 50 21.5v21L32 53 14 42.5v-21zM32 19 44.5 40.5h-25zM32 11v8M50 42.5l-5.5-2M14 42.5l5.5-2M50 21.5 32 19 14 21.5M44.5 40.5 32 53 19.5 40.5" stroke="#F6EEDD" stroke-width="2" stroke-linejoin="round"/></svg><b>TAVERNA</b><p>O Mestre está pondo a mesa…</p></div>
+    <u aria-hidden="true"><i class="p"></i><i class="c"></i><i class="w"></i><i class="x"></i></u>
+    <noscript>O Taverna precisa de JavaScript para abrir.</noscript>
+    </div>
+
+O que é o quê: `#tv` é o feltro da noite com a penumbra (um gradiente) e a borda de couro com o fio
+de latão (duas sombras internas); `#tv:before` é o halo; o `div` é a marca (o lacre com o d20, a
+palavra e a frase); `u` é a vela — `.p` o prato, `.c` a cera, `.w` o pavio, `.x` a chama. Uma
+animação só: a chama cresce e o halo abre em 600 ms, 150 ms depois do primeiro quadro. A palavra
+escreve-se em Georgia até a Cinzel chegar (o `FONT_CSS` precisa de `font-display: swap`).
+**Conferido no navegador** (página de teste com `charset` e `viewport`): a 1440 × 900 a marca cai em
+(96, 150), a frase em (96, 404) e a vela em (710, 130); a 375 × 812 o selo em y 28, a vela em (36,
+102) e a frase em y 528 — os números do quadro. A frase de ligação lenta («Ainda pondo a mesa…» aos
+4 s) foi desenhada e **cortada para caber nos 3 KB**; custa cerca de 170 bytes, se a casa a quiser.
+
+### 6 · O «superior», por medida, estudo e par
+
+| | antes (v9.647) | depois |
+|---|---|---|
+| o primeiro pixel com sentido | depois de 5 336 KB de JS (~9 s em 4G lento, pela conta da análise) | no primeiro quadro: 2 839 bytes em linha |
+| ações na primeira tela | 5 | 1 |
+| do link à primeira narração | 17 cliques + 2 frases escritas | 2 toques, 0 frases |
+| seções de decisão antes de jogar | 7 de mundo + 6 de herói | 0 obrigatórias |
+| pinturas de herói vistas ao criar | 0 de 240 | 1 no sorteio; 23 ao escolher |
+| raça e profissão | duas listas suspensas nativas | 10 + 12 cartas à vista |
+| − e + dos atributos | 24 × 24 | 44 × 44 |
+| emoji do sistema na criação | 12 | 0 |
+| a espera pela abertura | 5–8 s de página vazia, texto a 12 px | 12 acontecimentos à vista; uma linha verdadeira aos 2,6 s |
+| o aviso do arquivo | cartão fixo na primeira visita | um bilhete, só para quem tem campanha |
+| chão da ação principal | rosa (`T.rosa`) | âmbar, um por tela |
+| menor contraste de texto do lote | — | **4,65** (`inkMeio` no ponto mais claro do halo); fora dele 9,70 |
+| alvos | — | ≥ 44 em tudo o que se toca |
+
+Contrastes medidos (WCAG, por script): `ink` no feltro da noite 14,07 (6,74 no centro do halo) ·
+`inkMeio` 9,70 (4,65) · `amberSoft` 11,39 (5,46) · «SENTAR À MESA» 8,68 · `tinta` no pergaminho
+12,15 · `tintaDim` 6,56 (5,54 sob o véu de 8 %) · `brasa` 6,71 (5,67) · `perigo` sob o véu 5,58 ·
+`tinta` sobre `ossoLume` 14,30 e `tintaDim` 7,72 (6,52 sob o véu) · `tinta` sobre `osso` 11,81 · o
+nome na carta (`ink` sobre o pé de couro) 11,91 no pior caso · `ink` no couro 12,65 · o aro de
+`osso` no feltro 12,34 · o aro de latão 6,01 no feltro e **2,88 no centro do halo** (por isso a
+regra do §3).
+
+Estudos: lei de Hick (Hick, 1952; Hyman, 1953) — decidir demora mais com mais opções · Nielsen,
+*«Response Times: The 3 Important Limits»* (1993) — 0,1 s, 1 s e 10 s · web.dev, *«First Contentful
+Paint»* — bom até 1,8 s · Nielsen Norman Group, *«Dropdowns: Design Guidelines»* — a lista suspensa
+esconde as opções; com poucas, mostrar todas · Harrison, Yeo e Hudson, *«Faster Progress Bars:
+Manipulating Perceived Duration with Visual Augmentations»* (CHI 2010) — a espera ocupada parece
+mais curta · WCAG 2.2: 1.4.1 (a escolhida não depende de cor: aro, chão, marca, altura), 1.4.3,
+1.4.11, 2.3.3, 2.5.8 · Apple HIG (alvo de 44 pt). O par antes/depois está ao lado de cada quadro no
+Figma, com o bloco de medidas.
+
+**O que não está provado:** nada disto foi jogado — o `jogo` não assinou, o fluxo é novo e a
+passagem é storyboard. Os «menos de 90 s» só se medem com o jogo construído. O peso da arte em WebP
+(alvo de 200 KB) não foi medido: o PNG exportado tem 628 KB. A carga de 22 pinturas de uma vez
+(cerca de 230 KB) pede medida em rede lenta. Não há captura de hoje de «quem volta» com campanha
+guardada: o «antes» desse quadro é a descrição da análise (§3.1).
+
+### 7 · As armadilhas do Figma que F3 pagou
+
+1. **O WebP dos retratos não abre no Figma.** O envio aceita o arquivo e devolve um hash; o nó fica
+   preto e `getSizeAsync` diz «Could not read image size from image metadata». As 21 pinturas
+   entraram pelas matrizes PNG de `mente/figma/matrizes`.
+2. **A opacidade de uma tinta ligada a variável perde-se ao atribuir** quando a tinta vem de
+   `setBoundVariableForPaint` — mesmo reaplicando a opacidade no objeto (a nota de D4 já não basta).
+   O que funciona de uma vez: escrever a tinta à mão, com `boundVariables: { color: { type:
+   'VARIABLE_ALIAS', id } }` e a `opacity` ao lado.
+3. **Um erro desfaz o script inteiro**: nada do que ele criou fica na página. Vale repetir tudo.
+4. **Os ajudantes de construção moram num nó de texto** escondido do acervo (`293:8126`) e cada
+   chamada carrega-os com o construtor de função assíncrona. Poupa reenviar 13 KB por chamada.
+5. **Não se troca um vetor dentro de uma instância**: o glifo da carta do mundo é escondido na
+   instância e desenhado por cima. A saída certa é um componente por glifo e troca de instância.
+6. **Texto dentro de quadro com auto-layout** entra na pilha: o que se acrescenta a uma página do
+   F1 precisa de `layoutPositioning = 'ABSOLUTE'`.
+
+### 8 · O que ficou por fazer do F3, dito
+
+- **Entre 768 e 1179 de largura, e a 1280 × 720**: nenhuma tela do F3 foi composta. Regra
+  provisória: a composição do celular centrada, com 680 de largura no máximo.
+- **A tela de arquivo** (importar e exportar) não foi redesenhada; só as portas para ela.
+- **Os leques abertos de cenário, forma e arco** (o que o toque na carta abre): só o da voz foi
+  desenhado; os outros seguem a mesma grade, com a carta do mundo de frente.
+- **«Universo próprio»** (a frase livre) e **o nome escrito à mão**: descritos, não compostos.
+- **O caminho da classe** (a subclasse: Cavaleiro, Bárbaro, Gladiador…) não tem lugar no quadro 5a.
+  Proponho que saia da criação e seja escolhido no jogo, quando fizer diferença — **é decisão do
+  `jogo`**; se ficar, é uma terceira fila de três opções sob a descrição da classe.
+- **As duas «apresentações»** e **o nome da campanha** saíram da criação (§ medidas do quadro 6): a
+  confirmar com o `jogo`.
+- **Os estados Foco e Pressionado** de carta, seta, − e + estão só nos componentes, não nos quadros;
+  o estado **Impedido** do botão está desenhado no quadro 5b e não é variante do componente.
+- **A versão 9:16 da imagem de link** continua por fazer (vinha do F1).
+- Gradientes (halo, penumbra, pé das cartas) literais, como no F1 e no F2. **Code Connect** por
+  fazer. Os textos de exemplo (o resumo de «Anteriormente», o conceito, «o próximo ponto…») são
+  meus, não do sistema.
+- O herói do F3 é a ladina humana; a mesa do F1 mostra outra pintura com o mesmo nome. Vale a do F3.
+
+### 9 · A proposta ambiciosa — a mesa convida
+
+O mundo inteiro cabe numa semente, e a semente cabe num link. **«Chamar alguém para esta mesa»**: no
+fim do sorteio e no escudo do Mestre, um vínculo copia um endereço com a semente do mundo. Quem o
+abre não vê o menu de sempre: vê **aquela** mesa posta — a estampa daquele lugar, o nome daquele
+mundo, *«Saoirse começou aqui. Sente-se também.»* — e, com um toque, ganha um herói seu no mesmo
+mundo. Não é jogar em dois (não há sala nem servidor): são duas campanhas no mesmo mundo, que se
+podem comparar depois («você foi pela Alfândega? eu desci ao Malho»). Custa só interface e uma
+leitura de `?mesa=` na chegada; nenhum campo de save, nenhuma infra; a semente não é dado pessoal.
+É o que faz um jogo de um jogador só passar de mão em mão — e é a única porta de entrada que um
+link sozinho consegue abrir já com a mesa posta.
