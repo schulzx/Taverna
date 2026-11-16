@@ -74,6 +74,7 @@ export const CAMPOS_DO_SERVIDOR = Object.freeze({
   ultimoPeso: C("solto", "ultimoPeso", "o peso da última cena, e o dia dele", "o fim do turno", ["pauta", "preludio"]),
   fatosDoPeso: C("solto", "fatosDoPeso", "os fatos que pesaram a cena", "o fim do turno e a luta", ["pauta", "preludio"]),
   /* ---- os bilhetes: viajam com a frase, a pauta lê e zera ---- */
+  daUltimaVez: C("bilhete", "daUltimaVez", "a linha «Da última vez…» da volta (V10)", "o load (continuar); a pauta lê e zera", ["pauta"]),
   crimeDoTurno: C("bilhete", "crimeDoTurno", "a agressão declarada na tela", "declararAgressao (a tela)", ["pauta"]),
   naoPodeDoTurno: C("bilhete", "naoPodeDoTurno", "o que o agir vetou neste clique", "agirInterno (a tela)", ["pauta"]),
   golpeFinalEnvelope: C("bilhete", "golpeFinalEnvelope", "o golpe final escolhido", "o fluxo do golpe (a tela)", ["pauta"]),

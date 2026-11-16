@@ -398,6 +398,14 @@ export const SECOES = [
      secção dele (vetoDoCaso). Na luta, cede (o caso não muda o golpe que
      vem a seguir). */
   { id: "quadro", rotulo: "O CASO", prio: 2.486, o: "o que o herói já sabe do caso e o que falta, pela forma" },
+  /* V10 (16/11): DA ÚLTIMA VEZ — só no primeiro turno depois de reabrir a
+     campanha: os fatos verdadeiros da sessão anterior e o fio mais quente
+     (registro-da-sessao.js, linhaDaUltimaVez), para a primeira narração da
+     volta retomar o que o jogador viu na página «Da última vez…» e não
+     inventar outro passado. Corta com 2,44: depois do rumo (2,42) e do fecho
+     (2,43), que são do turno; à frente da planta da masmorra (2,45) e do resto. Linha de um
+     turno só, dentro do TETO_DA_PAUTA — o pior prompt não cresce. */
+  { id: "ultimaVez", rotulo: "DA ÚLTIMA VEZ", prio: 2.44, o: "o que aconteceu na sessão anterior e o fio que ficou aberto (só no primeiro turno da volta)" },
   { id: "rumo", rotulo: "O RUMO", prio: 2.42, o: "a ordem do turno: reagir e responder primeiro, depois uma ponte para o próximo passo" },
   /* A campanha que prende (item 2): O FECHO — como acaba a resposta deste
      turno (`fecho.js#escolherFecho`): uma pergunta de alguém em cena, uma

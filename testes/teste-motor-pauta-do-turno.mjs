@@ -135,7 +135,13 @@ for (const f of PECA) for (const s of Object.keys(f.pautaObj || {})) vivos[s] = 
    propósito (elenco-do-lugar.js, ELENCO_DO_LUGAR.nomesAMao = false): quem
    atende um sítio é o figurante que o sistema escala e põe na tela, e quem
    passa na rua não tem nome. A prova é teste-elenco-do-lugar.mjs §1. */
-const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso", "nomes"];
+/* MOVIDA (16/11, V10 — o cartão da sessão): e DA ÚLTIMA VEZ — a secção só
+   se escreve no primeiro turno depois de reabrir a campanha (o bilhete
+   daUltimaVez, que o load enche e a pauta zera), e nenhum dos casos
+   gravados é um turno de volta; o dourado fica byte a byte o de antes. A
+   prova dela pela mesma aPautaDoTurno, e a medida contra o teto, é
+   teste-registro-da-sessao.mjs (a secção «a linha da volta na pauta»). */
+const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso", "nomes", "ultimaVez"];
 const POUCOS = SECOES.map((s) => s.id).filter((s) => !FALTAM.includes(s) && !(vivos[s] >= 5));
 t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que nenhum sítio da pauta escreve)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
   SECOES.map((s) => `${s.id} ${vivos[s.id] || 0}`).join(" · "));
@@ -248,6 +254,8 @@ const campos = Object.values(D.refs).map((r) => r.campo).sort();
 const NASCIDOS_DEPOIS_DO_RECORTE = Object.freeze({
   pautaDeUmTurno: "CB lote 2: o canal de um turno (o encontro da estrada deixou de ir emprestado pelo crime)",
   quadro: "QQ · Q3: a memória do quadro da quest (O CASO na pauta)",
+  /* MOVIDA (16/11, V10), pelo mesmo motivo: o bilhete da volta nasceu depois do recorte */
+  daUltimaVez: "V10: a linha «Da última vez…» do primeiro turno da volta (DA ÚLTIMA VEZ na pauta)",
 });
 t("REFS_DA_PAUTA tem um campo por ref do recorte, mais os nascidos depois dele (com o porquê), e mais nenhum", JSON.stringify(Object.keys(REFS_DA_PAUTA).filter((c) => !NASCIDOS_DEPOIS_DO_RECORTE[c]).sort()) === JSON.stringify(campos) && Object.keys(NASCIDOS_DEPOIS_DO_RECORTE).every((c) => REFS_DA_PAUTA[c] && !campos.includes(c)));
 t("cada campo diz o ref do App, se o save o guarda e se a pauta o escreve", Object.entries(D.refs).every(([ref, r]) => REFS_DA_PAUTA[r.campo].ref === ref && REFS_DA_PAUTA[r.campo].salvo === r.salvo && REFS_DA_PAUTA[r.campo].escreve === r.escreve));

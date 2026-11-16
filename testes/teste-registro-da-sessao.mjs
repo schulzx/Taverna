@@ -12,6 +12,9 @@ import {
   oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, osFatosDaUltimaVez, linhaDaUltimaVez,
 } from "../src/registro-da-sessao.js";
 import { lancamentoDoTeste, lancamento } from "../src/motor/a-bandeja.js";
+import { aPautaDoTurno, REFS_DA_PAUTA } from "../src/motor/pauta-do-turno.js";
+import { SECOES, TETO_DA_PAUTA, textoDaPauta } from "../src/pauta.js";
+import { anotarFio, haQuantoTempo, QUANDO_DA_VOLTA } from "../src/registro-da-sessao.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => {
@@ -116,6 +119,36 @@ sec("«Da última vez…»: até três fatos, todos do resumo");
   t("a linha do Narrador cabe no teto", linha.length > 0 && linha.length <= LINHA_DA_ULTIMA_VEZ.teto, String(linha.length));
   t("e leva o fio", /Fica por dizer: A ponte caída/.test(linha));
   t("sem resumo, nada", linhaDaUltimaVez(null, null) === "" && osFatosDaUltimaVez(null).length === 0);
+}
+
+sec("o fio guardado com a sessão, e há quanto tempo");
+{
+  const f = anotarFio(reg, { tipo: "missao", pergunta: "A ponte caída", passo: "Achar o pedreiro." });
+  t("o fio fica na sessão e passa pelo JSON", garantirRegistroDaSessao(JSON.parse(JSON.stringify(f))).atual.fio.pergunta === "A ponte caída");
+  t("o resumo leva-o (é o que a chegada mostra)", oResumoDaSessao(f.atual, inicio).fio.passo === "Achar o pedreiro.");
+  t("null apaga: sem fio, nada no lugar", anotarFio(f, null).atual.fio === null);
+  const H = 3600000;
+  t("há quanto tempo, por tabela", haQuantoTempo(1, 1 + 10 * 60000) === "HÁ POUCO" && haQuantoTempo(1, 1 + 5 * H) === "HÁ 5 HORAS" && haQuantoTempo(1, 1 + 30 * H) === "ONTEM" && haQuantoTempo(1, 1 + 50 * H) === "HÁ DOIS DIAS");
+  t("a tabela fecha no infinito", QUANDO_DA_VOLTA[QUANDO_DA_VOLTA.length - 1].ate === Infinity && haQuantoTempo(1, 1 + 400 * 24 * H) === "HÁ MUITO TEMPO");
+  t("sem instante, nada", haQuantoTempo(0, 5) === "" && haQuantoTempo(null, null) === "");
+}
+
+sec("a linha da volta na pauta (o primeiro turno depois de reabrir)");
+{
+  const s = SECOES.find((x) => x.id === "ultimaVez");
+  t("a secção existe antes do FECHO (que continua o último)", !!s && s.rotulo === "DA ÚLTIMA VEZ" && SECOES[SECOES.length - 1].id === "fecho");
+  t("o bilhete está na tabela da pauta, de um turno (não vai ao save)", REFS_DA_PAUTA.daUltimaVez && REFS_DA_PAUTA.daUltimaVez.salvo === false && REFS_DA_PAUTA.daUltimaVez.padrao() === "");
+  const E = {};
+  for (const [c, i] of Object.entries(REFS_DA_PAUTA)) E[c] = inicio[c] != null ? inicio[c] : i.padrao();
+  const linha = linhaDaUltimaVez(oResumoDaSessao(reg.atual, inicio), { pergunta: "A ponte caída", passo: "Achar o pedreiro." });
+  E.daUltimaVez = linha;
+  const r = aPautaDoTurno({ ...E, render: { personagem: E.personagem, mundo: inicio.mundo } }, { frase: "olho à volta" }, {});
+  t("a pauta do turno leva a linha, inteira", Array.isArray(r.pauta.ultimaVez) && r.pauta.ultimaVez[0] === linha);
+  t("…e apaga o bilhete (vai uma vez só)", r.escritas.daUltimaVez === "");
+  const txt = textoDaPauta(r.pauta, { turno: 1 });
+  t("o texto da pauta mostra-a dentro do teto (o pior prompt não cresce)", txt.includes("DA ÚLTIMA VEZ") && txt.length <= TETO_DA_PAUTA, String(txt.length));
+  const sem = aPautaDoTurno({ ...E, daUltimaVez: "", render: { personagem: E.personagem, mundo: inicio.mundo } }, { frase: "olho à volta" }, {});
+  t("sem volta, nenhuma linha", !(sem.pauta.ultimaVez || []).length);
 }
 
 console.log(`\nregistro da sessão: ${ok} passaram, ${mal} falharam`);

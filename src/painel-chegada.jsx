@@ -16,6 +16,7 @@ import { T, VELA, LUZ_DA_CHEGADA, ABERTURA_INSTANTANEA, CARTA_DO_HEROI, BOTAO_DA
 import { letraDaMesa } from "./mesa-do-mestre.js";
 import { retratoDe } from "./retratos.js";
 import { noSexo } from "./criacao-da-mesa.js";
+import { haQuantoTempo } from "./registro-da-sessao.js";
 import arteDeAbertura from "./assets/arte-de-abertura.webp";
 
 /* O PEDIDO DA PORTA: o que o jogador escolheu na chegada antes de o jogo descer
@@ -212,6 +213,31 @@ function PrimeiraVisita({ telefone, aoSentar, aoArquivo }) {
   );
 }
 
+/* V10 · «DA ÚLTIMA VEZ…» (F6, DA_ULTIMA_VEZ): «HÁ DOIS DIAS · SESSÃO 4», até
+   três fatos do registro, a régua, «O FIO MAIS QUENTE» com a pergunta e o
+   próximo passo, e onde você está. Tudo do save; nada de IA. */
+function DaUltimaVez({ d, salvoEm, aoOuvir }) {
+  const quando = haQuantoTempo(d.fim || salvoEm, Date.now());
+  return (
+    <>
+      <div style={{ ...ROTULO, color: T.tintaDoPergaminhoDim }}>{[quando, `sessão ${d.n}`].filter(Boolean).join(" · ")}</div>
+      <h2 style={{ ...letraDaMesa("titulo"), margin: "8px 0 14px", color: T.tintaDoPergaminho }}>Da última vez…</h2>
+      {d.fatos.map((f, i) => <p key={i} style={{ ...letraDaMesa("prosa"), margin: "0 0 10px" }}>{f}</p>)}
+      {d.fio && d.fio.pergunta ? (
+        <>
+          <div style={{ height: 1, background: alfa(T.tintaDoPergaminho, 0.25), margin: "16px 0 12px" }} />
+          <div style={{ ...ROTULO, color: T.brasaNoPergaminho }}>O fio mais quente</div>
+          <div style={{ ...letraDaMesa("titulo"), margin: "6px 0 4px", color: T.tintaDoPergaminho }}>{d.fio.pergunta}</div>
+          {d.fio.passo ? <div style={{ fontFamily: "'Spectral', Georgia, serif", fontWeight: 500, fontSize: 16, lineHeight: "24px", color: T.tintaDoPergaminho }}>{d.fio.passo}</div> : null}
+        </>
+      ) : null}
+      {d.lugar ? <div style={{ ...letraDaMesa("notaDoMestre"), color: T.tintaDoPergaminhoDim, marginTop: 14 }}>{`Você está em ${d.lugar}.`}</div> : null}
+      <div style={{ height: 1, background: alfa(T.tintaDoPergaminho, 0.25), margin: "18px 0 10px" }} />
+      <Vinculo sobrePapel onClick={aoOuvir}>Ouvir o Mestre contar</Vinculo>
+    </>
+  );
+}
+
 /* a página «Anteriormente» de quem volta (ou a da campanha que não abre) */
 function PaginaDeQuemVolta({ resumo, naoAbre, aoOuvir }) {
   const quando = resumo.salvoEm ? new Date(resumo.salvoEm) : null;
@@ -226,6 +252,8 @@ function PaginaDeQuemVolta({ resumo, naoAbre, aoOuvir }) {
             ? "Ela foi guardada por uma versão mais nova do jogo do que a desta página. Nada foi apagado: a campanha continua neste navegador."
             : "O que está guardado neste navegador não se deixa ler. Nada foi apagado: a campanha continua aqui, e um arquivo a leva inteira."}</p>
         </>
+      ) : resumo.daUltimaVez && resumo.daUltimaVez.fatos && resumo.daUltimaVez.fatos.length ? (
+        <DaUltimaVez d={resumo.daUltimaVez} salvoEm={resumo.salvoEm} aoOuvir={aoOuvir} />
       ) : (
         <>
           <div style={{ ...ROTULO, color: T.tintaDoPergaminhoDim }}>Anteriormente, em</div>

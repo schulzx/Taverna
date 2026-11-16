@@ -52,6 +52,9 @@ import { PainelReacao } from "./painel-reacao.jsx";
 import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, oFechoPergunta, QUANDO_O_FECHO_PERGUNTA } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { PortaDoEscudo } from "./painel-escudo.jsx";
+/* V10 (16/11): levantar da mesa — o cartão da sessão (composição pura em cartao-da-sessao.js, o canvas em painel-cartao.jsx) */
+import { LevantarDaMesa } from "./painel-cartao.jsx";
+import { oCartaoDaSessao, vilaoDoCartao } from "./cartao-da-sessao.js";
 import { CantoDoEscudo, NotaDoMestre, letraDaMesa } from "./pecas-da-mesa.jsx";
 import { quemTemOEsc, tamanhoDoTextoGuardado, multiplicadorValido, composicaoDaJanela, temTresZonas, estadoDaEstampa, cenaDaEstampa, luzDaMesa, estadoDaCarta } from "./mesa-do-mestre.js";
 import { CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina, FaixaDoTelefone, BordaDoTelefone, BandejaDeBolso, GavetaDaBandeja } from "./painel-mesa.jsx";
@@ -299,7 +302,7 @@ import { garantirCativeiro, aplicarSaida } from "./cativeiro.js";
 import { oSocorro, aplicarSocorro, passarHorasNoGrupo } from "./socorro.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, lancamentoDoAtaque } from "./motor/a-bandeja.js";
 /* V10 (16/11): o registro da sessão — o que aconteceu desde que a mesa abriu (cartão e «Da última vez…») */
-import { abrirSessao, anotarTurno, anotarLance, anotarLuta, oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, linhaDaUltimaVez } from "./registro-da-sessao.js";
+import { abrirSessao, anotarTurno, anotarLance, anotarLuta, anotarFio, oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, linhaDaUltimaVez } from "./registro-da-sessao.js";
 import { fichaDoVilao } from "./plano-do-vilao.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
@@ -5354,6 +5357,8 @@ export default function Taverna() {
   const [mensagens, setMensagens] = useState([]);
   const [historico, setHistorico] = useState([]);
   const [rolagem, setRolagem] = useState(null);
+  /* V10: a tela «Levantar da mesa» — { cartao, fio } composto no toque, ou null */
+  const [levantar, setLevantar] = useState(null);
   const [combate, setCombate] = useState(null); // null | { inimigos: [{nome, vida, vidaMax, ameaca}] }
   const [carregando, setCarregando] = useState(false);
   /* v9.5: marca as respostas que NÃO fecham a rodada (meu turno continua) —
@@ -5661,6 +5666,14 @@ export default function Taverna() {
       if (!fv) return null;
       return { nome: fv.nome || "", camada: (((esp || {}).fio || {}).vilao || {}).camada || "rumor" };
     } catch (e) { calou("V10 · o vilão do registro", e); return null; }
+  };
+  const guardarOFio = () => {
+    try {
+      const v = vilaoDoRegistro();
+      const fio = oFioMaisQuente(estadoDoRegistro(), { passos: passosDasQuestsAgora(), vilao: v && vilaoDoCartao(v).revelado ? v : null });
+      noRegistro((r) => anotarFio(r, fio));
+      return fio;
+    } catch (e) { calou("V10 · o fio no registro", e); return null; }
   };
   const noRegistro = (f) => {
     try {
@@ -7711,7 +7724,7 @@ export default function Taverna() {
     aberturaMundoRef, acampadoRef, aliadosRef, atoDoTurnoRef, baseMundoRef, cidadeAtualRef,
     climaRef, cobradasRef, cobrouAgoraRef, combateRef, compassoRef, confidenciasRef,
     contRef, coracaoRef, coracaoFalaRef, coracaoPendenteRef, coracaoRitmoRef, criaturaAVistaRef,
-    crimeDoTurnoRef, derrotadosDaSessaoRef, diaRef, diplomaciaRef, elencoSaveRef, elencoCacheRef,
+    crimeDoTurnoRef, daUltimaVezRef, derrotadosDaSessaoRef, diaRef, diplomaciaRef, elencoSaveRef, elencoCacheRef,
     elencoMemRef, emCenaRef, episodioRef, escutaRef, espinhaRef, faccaoJogadorRef,
     falasDoTurnoRef, fatosDoPesoRef, fechoRef, formaRef, formasCobradasRef, golpeFinalEnvelopeRef,
     golpesDaRodadaRef, governosRef, guildasRef, historiaRef, intencaoRef, interpreteRef,
@@ -9064,6 +9077,7 @@ export default function Taverna() {
         ultimaFraseDoJogadorRef.current = m.texto;
         const e = estampaDaSessaoRef.current || {};
         noRegistro((r) => anotarTurno(r, { frase: m.texto, agora: Date.now(), lugar: e.lugar || "", cena: e.cena || "" }));
+        guardarOFio();
       }
     } catch (e) { calou("V10 · a frase no registro", e); }
     if (seguraRef.current) { seguraRef.current = [...seguraRef.current, ...novas]; return; }
@@ -12511,7 +12525,7 @@ export default function Taverna() {
       try {
         const lembrar = aSessaoParaLembrar(sv.registroDaSessao);
         const v = vilaoDoRegistro();
-        daUltimaVezRef.current = lembrar ? linhaDaUltimaVez(oResumoDaSessao(lembrar, sv), oFioMaisQuente(sv, { passos: passosDasQuestsAgora(), vilao: v && v.camada && ["rosto", "guerra", "queda"].includes(v.camada) ? v : null })) : "";
+        daUltimaVezRef.current = lembrar ? linhaDaUltimaVez(oResumoDaSessao(lembrar, sv), lembrar.fio || oFioMaisQuente(sv, { passos: passosDasQuestsAgora(), vilao: v && vilaoDoCartao(v).revelado ? v : null })) : "";
         registroDaSessaoRef.current = abrirSessao(sv.registroDaSessao, sv);
       } catch (e) { calou("V10 · o registro na volta", e); registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; }
       /* e a CENA só é reaberta a pedido: é a única parte disto que o
@@ -25243,6 +25257,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* v9.256 (Fase X - X3): sair para o menu solta o turno preso. Quem carrega
      um save o recebe de volta na restauracao; quem comeca outra campanha nao
      herda a trava de uma mesa que nao e a dele. */
+  /* V10 · LEVANTAR DA MESA: compõe o cartão do que o registro viu nesta
+     visita (o estado de agora contra a base da abertura) e o gancho (o fio
+     mais quente). Sessão sem jogo nenhum não tem cartão: sai direto. */
+  const abrirOLevantar = () => {
+    try {
+      const reg = registroDaSessaoRef.current;
+      const a = reg && reg.atual;
+      if (!a || !(a.turnos > 0 || (a.dados && a.dados.rolados > 0))) return false;
+      const resumo = oResumoDaSessao(a, estadoDoRegistro());
+      const cartao = oCartaoDaSessao(resumo, { semente: sementeMundo(), vilao: vilaoDoRegistro() });
+      const fio = guardarOFio();
+      try { salvar(); } catch (e) { calou("V10 · guardar ao levantar", e); }
+      setLevantar({ cartao, fio });
+      return true;
+    } catch (e) { calou("V10 · compor o cartão", e); return false; }
+  };
   const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); guardarORascunho(); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("chegada"); };
 
   /* ---------------- O CORPO SENTE (v9.160 → V4) ----------------
@@ -27516,7 +27546,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const propsDoEscudo = () => {
     const p = { tamanhoDoTexto, aoTamanhoDoTexto: escolherTamanhoDoTexto, rolagens: !!mostrarRolagens, aoRolagens: (v) => setMostrarRolagens(!!v),
       rolaPorMim: !!rolaPorMim, aoRolaPorMim: (v) => alternarRolaPorMim(!!v), aoGuardar: exportarSave,
-      aoSair: () => { try { setEscudoAberto(false); irMenu(); } catch (e) { calou("V2 · sair pelo escudo", e); } } };
+      aoSair: () => { try { setEscudoAberto(false); if (!abrirOLevantar()) irMenu(); } catch (e) { calou("V2 · sair pelo escudo", e); irMenu(); } } };
     try {
       const verbo = verboDaReacaoDoHeroi(personagem);
       p.reacao = { titulo: "Quando um golpe chega", escolhida: preferenciaReacao || "normal",
@@ -29745,6 +29775,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             </div>
           ) : null}
           <PortaDoEscudo aberto={escudoAberto} aoFechar={() => { try { setEscudoAberto(false); } catch (e) { calou("V2 · fechar o escudo", e); } }} refDevolver={cantoDoEscudoRef} {...(escudoAberto ? propsDoEscudo() : {})} />
+        </LimiteErro>
+      ) : null}
+      {fase === "jogo" && levantar ? (
+        <LimiteErro>
+          <LevantarDaMesa cartao={levantar.cartao} fio={levantar.fio}
+            aoVoltar={() => { try { setLevantar(null); } catch (e) { calou("V10 · voltar à mesa", e); } }}
+            aoSair={() => { try { setLevantar(null); irMenu(); } catch (e) { calou("V10 · só levantar", e); } }} />
         </LimiteErro>
       ) : null}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}

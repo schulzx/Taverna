@@ -28,6 +28,7 @@ import { ESTRUTURAS } from "./historia.js";
 import { GENEROS, ATRIBUTOS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO } from "./constantes.js";
 import { nomePessoa } from "./nomes.js";
 import { hashSemente, rng } from "./semente.js";
+import { aSessaoParaLembrar, oResumoDaSessao, osFatosDaUltimaVez } from "./registro-da-sessao.js";
 
 /* ---------------- as tabelas do sorteio ----------------
    `generos`: de onde o sorteio tira o mundo. Só a fantasia, de propósito:
@@ -304,7 +305,20 @@ export function resumoDoSave(bruto, versaoConhecida = 2) {
     campanha: typeof sv.nomeCampanha === "string" ? sv.nomeCampanha : "",
     lugar: texto(sv.lugar), salvoEm: num(sv.salvoEm),
     recursos: { racoes: num(sup.racoes), agua: num(sup.agua), tochas: num(sup.tochas), moedas: num(p.moedas) },
+    daUltimaVez: daUltimaVezDoSave(sv),
   };
+}
+
+/* V10 · «DA ÚLTIMA VEZ…» (formas.md F6, DA_ULTIMA_VEZ): o resumo VERDADEIRO
+   da sessão que se lembra — os fatos do registro, o fio guardado com ela,
+   onde parou. Save sem registro (o antigo): null, e a página é a de antes. */
+function daUltimaVezDoSave(sv) {
+  try {
+    const s = aSessaoParaLembrar(sv.registroDaSessao);
+    if (!s) return null;
+    const r = oResumoDaSessao(s, sv);
+    return { n: r.n, fatos: osFatosDaUltimaVez(r), fio: r.fio, fim: r.fim, lugar: r.lugar };
+  } catch { return null; }
 }
 
 /* ---------------- a semente da visita ----------------

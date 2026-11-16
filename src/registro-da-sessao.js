@@ -53,6 +53,7 @@ function sessaoVazia(n, base) {
     caidos: {}, lutasVencidas: 0,
     lugares: [], cena: "", lugar: "",
     ultimaFrase: "",
+    fio: null,
     base: base || null,
   };
 }
@@ -78,6 +79,7 @@ function garantirSessao(s) {
     lugares: arr(o.lugares).map((l) => texto(l, 80)).filter(Boolean).slice(-R.tetoDeLugares),
     cena: texto(o.cena, 40), lugar: texto(o.lugar, 80),
     ultimaFrase: texto(o.ultimaFrase, R.tetoDaFrase),
+    fio: obj(o.fio) && texto(o.fio.pergunta, 70) ? { tipo: texto(o.fio.tipo, 12), pergunta: texto(o.fio.pergunta, 70), passo: texto(o.fio.passo, 160) } : null,
     base: b ? {
       moedas: inteiro(b.moedas), xp: inteiro(b.xp), nivel: Math.max(1, inteiro(b.nivel, 1)),
       fechadas: arr(b.fechadas).filter((x) => typeof x === "string").slice(0, 200),
@@ -173,6 +175,16 @@ export function anotarLance(registro, lance, { frase = "", agora = 0 } = {}) {
   });
 }
 
+/* O fio mais quente do instante (oFioMaisQuente), guardado com a sessão:
+   é o que a chegada mostra na volta, sem refazer a régua da quest a partir
+   do save cru. null apaga (não há fio: nada se inventa no lugar). */
+export function anotarFio(registro, fio) {
+  return comAtual(registro, (a) => {
+    const f = obj(fio);
+    return { ...a, fio: f && texto(f.pergunta, 70) ? { tipo: texto(f.tipo, 12), pergunta: texto(f.pergunta, 70), passo: texto(f.passo, 160) } : null };
+  });
+}
+
 /* O fecho da luta: quem caiu (os nomes do combate: «Rato gigante 2» conta
    como «Rato gigante») e se foi vencida. */
 const tipoDoCaido = (nome) => texto(String(nome || "").replace(/\s*(#\s*)?\d+$/, ""), 60);
@@ -226,6 +238,7 @@ export function oResumoDaSessao(sessao, estado) {
     queda,
     diasEmFerros: cat ? Math.max(0, inteiro(cat.dias, 0)) : 0,
     ultimaFrase: s.ultimaFrase,
+    fio: s.fio,
     heroi: E ? { nome: texto(p.nome, 60), raca: nomeDe(p.raca), classe: nomeDe(p.classe), sexo: p.genero === "mulher" ? "mulher" : "homem", semente: p.semente || p.nome || "", nivel: Math.max(1, inteiro(p.nivel, 1)) } : null,
   };
 }
@@ -310,4 +323,22 @@ export function linhaDaUltimaVez(resumo, fio) {
   if (fatos.length) partes.push(`O jogador volta à mesa. Da última vez: ${fatos.join(" ")}`);
   if (f && f.pergunta) partes.push(`Fica por dizer: ${f.pergunta}${f.passo ? ` — ${f.passo}` : ""}`);
   return partes.join(" ").slice(0, LINHA_DA_ULTIMA_VEZ.teto);
+}
+
+/* ---------------- há quanto tempo ----------------
+   O rótulo de «Da última vez…» («HÁ DOIS DIAS · SESSÃO 4»): a distância
+   entre a última jogada e agora, por tabela. Os dois instantes entram de
+   fora (o módulo não lê o relógio). Sem instante, "". */
+export const QUANDO_DA_VOLTA = Object.freeze([
+  Object.freeze({ ate: 60 * 60000, diz: () => "HÁ POUCO" }),
+  Object.freeze({ ate: 20 * 3600000, diz: (ms) => { const h = Math.max(1, Math.round(ms / 3600000)); return h === 1 ? "HÁ UMA HORA" : `HÁ ${h} HORAS`; } }),
+  Object.freeze({ ate: 44 * 3600000, diz: () => "ONTEM" }),
+  Object.freeze({ ate: 14 * 86400000, diz: (ms) => { const d = Math.max(2, Math.round(ms / 86400000)); return d === 2 ? "HÁ DOIS DIAS" : `HÁ ${d} DIAS`; } }),
+  Object.freeze({ ate: Infinity, diz: (ms) => { const sem = Math.round(ms / (7 * 86400000)); return sem < 8 ? `HÁ ${sem} SEMANAS` : "HÁ MUITO TEMPO"; } }),
+]);
+export function haQuantoTempo(entao, agora) {
+  const a = Number(entao), b = Number(agora);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return "";
+  const ms = Math.max(0, b - a);
+  return QUANDO_DA_VOLTA.find((q) => ms < q.ate).diz(ms);
 }

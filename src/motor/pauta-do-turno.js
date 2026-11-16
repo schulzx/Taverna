@@ -153,6 +153,7 @@ export const REFS_DA_PAUTA = Object.freeze({
   coracaoRitmo: Object.freeze({ ref: "coracaoRitmoRef", salvo: false, escreve: false, padrao: () => ({ ultimas: {} }) }),
   criaturaAVista: Object.freeze({ ref: "criaturaAVistaRef", salvo: false, escreve: false, padrao: () => (null) }),
   crimeDoTurno: Object.freeze({ ref: "crimeDoTurnoRef", salvo: false, escreve: true, padrao: () => (null) }),
+  daUltimaVez: Object.freeze({ ref: "daUltimaVezRef", salvo: false, escreve: true, padrao: () => ("") }),
   /* CB lote 2 (10/11): o canal genérico de UM turno (PAUTA_DE_UM_TURNO, abaixo) */
   pautaDeUmTurno: Object.freeze({ ref: "pautaDeUmTurnoRef", salvo: false, escreve: true, padrao: () => (null) }),
   derrotadosDaSessao: Object.freeze({ ref: "derrotadosDaSessaoRef", salvo: false, escreve: false, padrao: () => ([]) }),
@@ -1066,6 +1067,8 @@ export function aPautaDoTurno(estado, entrada, portas) {
     /* MM13: o prenúncio do sino é um aviso de UM turno — a pauta o consome
        e apaga, para não repeti-lo enquanto ele espera para encher de vez. */
     if ($ref.sinoDoTurno) { p = porNaPauta(p, "momento", $ref.sinoDoTurno); $ref.sinoDoTurno = ""; }
+    /* V10: a linha da volta vai uma vez, no primeiro turno depois de reabrir, e apaga-se */
+    if ($ref.daUltimaVez) { p = porNaPauta(p, "ultimaVez", $ref.daUltimaVez); $ref.daUltimaVez = ""; }
     /* v9.118: a vizinhança tem seção própria e prioridade baixa — numa cena
        cheia a gente presente ganha dela, e é isso que se quer */
     p = porNaPauta(p, "daqui", g.daqui);

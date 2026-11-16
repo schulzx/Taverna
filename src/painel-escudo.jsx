@@ -43,7 +43,8 @@ export const PALAVRAS_DO_ESCUDO = {
   rolaPorMim: { rotulo: "O Mestre rola por mim", diz: "Ele lança; você só vê pousar." },
   guardar: { rotulo: "Guardar em arquivo", diz: "Baixa um arquivo com a campanha inteira. O save deste aparelho continua aqui." },
   voltar: { rotulo: "Voltar à mesa", diz: "Esc também volta." },
-  sair: { rotulo: "Sair para o início", diz: "Nada se perde: a campanha fica guardada neste aparelho." },
+  /* V10: «Sair para o início» ganhou a cena de levantar da mesa (o cartão da sessão) */
+  sair: { rotulo: "Levantar da mesa", diz: "O cartão da noite, para guardar. A campanha fica neste aparelho." },
 };
 const W = PALAVRAS_DO_ESCUDO;
 
