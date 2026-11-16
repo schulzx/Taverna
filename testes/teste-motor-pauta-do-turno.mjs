@@ -64,9 +64,23 @@ t(`nenhum nome do recorte ficou sem dublê (faltas vazias nos ${N_DA_PAUTA})`, R
 
 sec(`2. A peça contra o recorte: ${N_DA_PAUTA}/${N_DA_PAUTA}`);
 const PECA = await correrOsCasos(D, { lado: "peca", peca: aPautaDoTurno, casos: CASOS });
-t(`as fotos da peça são as do dourado (${conta(PECA)}/${N_DA_PAUTA}): o texto, a pauta, os refs do fim, as portas`, conta(PECA) === N_DA_PAUTA);
-t(`o texto ao Narrador é o mesmo, byte a byte, nos ${N_DA_PAUTA}`, PECA.every((f, i) => f.texto === RECORTE[i].texto));
-t("os refs do fim são os mesmos, campo a campo", PECA.every((f, i) => JSON.stringify(f.refs) === JSON.stringify(RECORTE[i].refs)));
+/* MOVIDA (16/11, S4 — a cena verdadeira), E O MOTIVO: o recorte é a pauta do
+   App de um commit fixo, e nele quem está aqui era só pela CIDADE — o herói
+   na estrada levava a cidade consigo (Doran, o ferreiro, «em cena» no moinho
+   com a jornada aberta). A peça agora lê quem-esta-aqui.js: fora dos muros a
+   cidade fica lá. Nos casos da prova com a jornada aberta (e só neles) a
+   linha EM CENA e o ref `emCena` mudam DE PROPÓSITO; tudo o resto — as
+   outras linhas, os outros refs, as portas — continua byte a byte o do
+   dourado. A intenção fica: a peça é o recorte, salvo a correção escrita. */
+const DE_S4 = (i) => !!(CASOS[i] && CASOS[i].estado && CASOS[i].estado.jornada);
+const linhaEmCena = (l) => /^EM CENA\s/.test(l);
+const semEmCena = (tx) => String(tx).split("\n").filter((l) => !linhaEmCena(l)).join("\n");
+const semRefEmCena = (r) => JSON.stringify({ ...r, emCena: null });
+const ficaram = PECA.reduce((a, f, i) => a + (DE_S4(i) || mesmaFoto(fotoGuardada(f, i), D.fotos[i]) ? 1 : 0), 0);
+t(`as fotos da peça são as do dourado (${ficaram}/${N_DA_PAUTA}, com os ${CASOS.filter((c, i) => DE_S4(i)).length} da jornada pela régua de baixo): o texto, a pauta, os refs do fim, as portas`, ficaram === N_DA_PAUTA);
+t(`o texto ao Narrador é o mesmo, byte a byte, nos ${N_DA_PAUTA} (na jornada, tirada a linha EM CENA)`, PECA.every((f, i) => DE_S4(i) ? semEmCena(f.texto) === semEmCena(RECORTE[i].texto) : f.texto === RECORTE[i].texto));
+t("os refs do fim são os mesmos, campo a campo (na jornada, tirado o emCena)", PECA.every((f, i) => DE_S4(i) ? semRefEmCena(f.refs) === semRefEmCena(RECORTE[i].refs) : JSON.stringify(f.refs) === JSON.stringify(RECORTE[i].refs)));
+t("S4: na jornada a linha EM CENA da peça nunca traz quem o recorte não trazia (só tira a cidade)", PECA.every((f, i) => { if (!DE_S4(i)) return true; const nomes = (tx) => ((String(tx).split("\n").find(linhaEmCena) || "").match(/[A-ZÁÉÍÓÚ][\wÀ-ú]+(?: [A-ZÁÉÍÓÚo][\wÀ-ú]+)*(?= \()/g) || []); const a = nomes(RECORTE[i].texto); return nomes(f.texto).every((n) => a.includes(n)); }));
 t("as portas na mesma ordem (calou, setPersonagem, pushMsgs com a foto dos refs)", PECA.every((f, i) => JSON.stringify(f.portas) === JSON.stringify(RECORTE[i].portas)));
 t("os que estouram estouram igual (6, com a mesma mensagem)", PECA.filter((f) => f.erro).length === 6 && PECA.every((f, i) => f.erro === RECORTE[i].erro));
 

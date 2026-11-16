@@ -218,6 +218,7 @@ const semArtigo = (s) => String(s || "").replace(/^(o|a|os|as|um|uma)\s+/i, "").
      presentes              — o registo de quem vive aqui ([{ nome, papel, genero, relacao, laco }])
      grupo, comigo          — quem anda com o herói (nomes ou { nome, conceito })
      doPasso                — quem o passo pôs aqui ([{ nome, papel, rotulo, genero, sabe }], EM_CENA_DO_PASSO)
+     foraDaCidade           — fora dos muros (quem-esta-aqui.js): o núcleo da cidade não é «daqui»
      emCena                 — os nomes que a cena põe aqui (o núcleo em cena, o elenco)
      nucleo                 — { pessoas, antecedente } (nucleo.js)
      revelados              — os nomes cujo segredo o herói já viu cair
@@ -532,7 +533,9 @@ export function montarEmCena(ctx) {
     const nome = nomeDe(n);
     if (!nome || n.morto || ehLonge(nome)) continue;
     const emCena = emCenaN.has(norm(nome)) || comigoN.has(norm(nome));
-    const daqui = !!cidade && norm(n.cidade) === cidade;
+    /* S4 (16/11): fora dos muros o núcleo da cidade não é «daqui» — a cidade
+       não vai atrás do herói até à boca da masmorra (quem-esta-aqui.js) */
+    const daqui = !!cidade && !c.foraDaCidade && norm(n.cidade) === cidade;
     /* o vilão só entra com o rosto conhecido (o nome só depois do rosto) */
     if (n.papel === "vilao" && !c.vilaoConhecido) continue;
     if (!emCena && !daqui) continue;

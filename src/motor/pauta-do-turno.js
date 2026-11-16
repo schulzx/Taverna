@@ -55,6 +55,7 @@ import { arredoresDaCidade } from "../arredores.js";
 import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
+import { quemEstaAqui, contextoDeQuemEsta } from "../quem-esta-aqui.js";
 import { fichaDaCidade, fichaParaPauta } from "../cidade-por-dentro.js";
 import { oQueAMesaFecha } from "../mesa-do-buraco.js";
 import { consultarCobrador, envelopeDoMundo, linhaDoMundo } from "../cobrador.js";
@@ -851,16 +852,32 @@ export function aPautaDoTurno(estado, entrada, portas) {
       .filter((n) => n && n.nome && String(n.relacao || "").toLowerCase() === "companheiro" && String(n.status || "vivo").toLowerCase() === "vivo" && !doGrupo.has(String(n.nome).toLowerCase()))
       .map((n) => n.nome);
   };
-  const contextoDoEmCena = (frase, aqui) => {
+  /* S4 (16/11): QUEM ESTÁ AQUI, uma conta só (quem-esta-aqui.js) — a mesma
+     que a tela (App#contextoDoEmCena) e a fogueira leem. A cidade não vai
+     atrás do herói para fora dos muros; a pessoa do passo e a da carta do
+     quadro, com o herói no sítio dela, estão aqui. Cada fonte num calou. */
+  const quemAgora = () => {
     const p0 = $ref.personagem || $render.personagem || {};
     const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    return quemEstaAqui({
+      npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [],
+      masmorra: $ref.masmorra, jornada: $ref.jornada, lugar: $ref.lugar,
+      lugares: vale("QUEM ESTÁ · os sítios", () => lugaresDaqui(), []),
+      doPasso: vale("EM CENA · a pessoa do passo", () => aPessoaDoPasso({ ...$E, ...escritas }).filter((x) => x && x.aqui && x.nome), []),
+      quadros: $ref.lugar ? vale("QUEM ESTÁ · as cartas", () => osQuadrosDoEstado({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva(), quadro: $ref.quadro }, { mundo: mundoDaBase() }), []) : [],
+      gente: $ref.lugar ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
+    });
+  };
+  const contextoDoEmCena = (frase, quem) => {
+    const p0 = $ref.personagem || $render.personagem || {};
+    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    const q = quem && typeof quem === "object" && !Array.isArray(quem) ? quem : vale("QUEM ESTÁ", () => quemAgora(), null);
     const nucleo = vale("EM CENA · o núcleo", () => nucleoAgora(), null);
     const mm = $ref.masmorra;
     return {
       semente: sementeMundo(),
       turno: $ref.turnoDeRegistro + 1,
       cidade: $ref.cidadeAtual || "",
-      presentes: aqui || [],
       grupo: p0.grupo || [],
       comigo: vale("EM CENA · quem anda comigo", () => quemAndaComigo(p0.grupo), []),
       emCena: nucleo ? vale("EM CENA · o núcleo em cena", () => nucleoEmCena(nucleo), []) : [],
@@ -872,7 +889,6 @@ export function aPautaDoTurno(estado, entrada, portas) {
       /* 10.ª sessão (v9.455, EM_CENA_DO_LUGAR): quem o sistema sabe longe não
          entra na lista do que está à frente, por mais que a prosa o nomeie —
          a MESMA conta da linha LONGE da pauta */
-      longe: vale("EM CENA · quem está longe", () => elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: mm }).longe || [], []),
       bancas: vale("EM CENA · as bancas", () => bancasDaCena(), []),
       moeda: moedaDoMundo(),
       frase: String(frase || ""),
@@ -889,7 +905,9 @@ export function aPautaDoTurno(estado, entrada, portas) {
          onde a conversa fecha o passo). Até aqui só a ficha a via: no modo
          `boca` o Narrador recebe esta pauta, e Quorin, nove turnos no cais
          da quest, nunca chegou à EM CENA (em-cena.js, EM_CENA_DO_PASSO) */
-      doPasso: vale("EM CENA · a pessoa do passo", () => aPessoaDoPasso({ ...$E, ...escritas }).filter((x) => x && x.aqui && x.nome), []),
+      /* S4: o registo daqui, o longe, a pessoa do passo e a da carta, e o
+         fora dos muros — da conta única (quem-esta-aqui.js) */
+      ...contextoDeQuemEsta(q),
     };
   };
   const pautaDoTurno = (acaoDoTurno = "") => {
@@ -898,7 +916,10 @@ export function aPautaDoTurno(estado, entrada, portas) {
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
        dali em vez de refazer a conta, porque duas versões da mesma
        verdade é como nasce o balanceamento fantasma desta casa */
-    const { longe, aqui } = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: ($ref.personagem || $render.personagem || {}).grupo || [], masmorra: $ref.masmorra });
+    /* S4 (16/11): o LONGE e o EM CENA da mesma conta (quem-esta-aqui.js) */
+    let quem = null;
+    try { quem = quemAgora(); } catch (e) { calou("QUEM ESTÁ", e); quem = null; }
+    const { longe, aqui } = quem || elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: ($ref.personagem || $render.personagem || {}).grupo || [], masmorra: $ref.masmorra });
     const g = paraPauta({
       ...contextoDoEspaco(),
       espaco: espacoDaMesa(),
@@ -1389,7 +1410,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
        deles, que vai dentro). Depois do cederNaCena: na luta não entra (a
        vista da luta já é a lista), e a linha encolhe até não tirar nada. */
     try {
-      const lista = montarEmCena(contextoDoEmCena(acaoDoTurno, aqui));
+      const lista = montarEmCena(contextoDoEmCena(acaoDoTurno, quem));
       $ref.emCena = lista;
       p = pautaComEmCena(p, lista, { luta: !!$ref.combate, turno: $ref.turnoDeRegistro + 1 });
     } catch (e) { calou("EM CENA", e); }

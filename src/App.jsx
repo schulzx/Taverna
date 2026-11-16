@@ -267,6 +267,7 @@ import { aFichaDeAtor } from "./motor/ficha-de-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { aPropostaDaFrase, aPessoaChamada } from "./motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
+import { quemEstaAqui, contextoDeQuemEsta } from "./quem-esta-aqui.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
@@ -7204,16 +7205,33 @@ export default function Taverna() {
       .filter((n) => n && n.nome && String(n.relacao || "").toLowerCase() === "companheiro" && String(n.status || "vivo").toLowerCase() === "vivo" && !doGrupo.has(String(n.nome).toLowerCase()))
       .map((n) => n.nome);
   };
-  const contextoDoEmCena = (frase, aqui) => {
+  /* S4 (16/11): QUEM ESTÁ AQUI, a conta única (quem-esta-aqui.js) — a MESMA
+     que a pauta do Narrador faz no motor (pauta-do-turno.js#quemAgora) e que
+     a fogueira lê. A tela deixou de ter a sua lista: o que o chip «Em cena»
+     mostra e o que o Narrador recebe saem daqui. Cada fonte num calou. */
+  const quemAgora = () => {
     const p0 = personagemRef.current || personagem || {};
     const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    const est = vale("QUEM ESTÁ · o estado", () => estadoDoPedido(), {});
+    return quemEstaAqui({
+      npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, grupo: p0.grupo || [],
+      masmorra: masmorraRef.current, jornada: jornadaRef.current, lugar: lugarRef.current,
+      lugares: vale("QUEM ESTÁ · os sítios", () => lugaresDaqui(), []),
+      doPasso: vale("QUEM ESTÁ · a pessoa do passo", () => aPessoaDoPasso(est).filter((x) => x && x.aqui && x.nome), []),
+      quadros: lugarRef.current ? vale("QUEM ESTÁ · as cartas", () => quadrosAgora(), []) : [],
+      gente: lugarRef.current ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
+    });
+  };
+  const contextoDoEmCena = (frase, quem) => {
+    const p0 = personagemRef.current || personagem || {};
+    const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    const q = quem && typeof quem === "object" && !Array.isArray(quem) ? quem : vale("QUEM ESTÁ", () => quemAgora(), null);
     const nucleo = vale("EM CENA · o núcleo", () => nucleoAgora(), null);
     const mm = masmorraRef.current;
     return {
       semente: sementeMundo(),
       turno: turnoDeRegistroRef.current + 1,
       cidade: cidadeAtualRef.current || "",
-      presentes: aqui || [],
       grupo: p0.grupo || [],
       comigo: vale("EM CENA · quem anda comigo", () => quemAndaComigo(p0.grupo), []),
       emCena: nucleo ? vale("EM CENA · o núcleo em cena", () => nucleoEmCena(nucleo), []) : [],
@@ -7225,7 +7243,6 @@ export default function Taverna() {
       /* 10.ª sessão (v9.455, EM_CENA_DO_LUGAR): quem o sistema sabe longe não
          entra na lista do que está à frente, por mais que a prosa o nomeie —
          a MESMA conta da linha LONGE da pauta */
-      longe: vale("EM CENA · quem está longe", () => elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p0.grupo || [], masmorra: mm }).longe || [], []),
       bancas: vale("EM CENA · as bancas", () => bancasDaCena(), []),
       moeda: moedaDoMundo(),
       frase: String(frase || ""),
@@ -7236,6 +7253,9 @@ export default function Taverna() {
          procurar bicho nele (BICHO_DO_SITIO: a Serpente Rouca e uma casa) */
       espinha: espinhaRef.current,
       lugares: vale("EM CENA · os lugares", () => lugaresDaqui().map((l) => l.nome), []),
+      /* S4: o registo daqui, o longe, a pessoa do passo e a da carta, e o
+         fora dos muros — da conta única */
+      ...contextoDeQuemEsta(q),
     };
   };
   /* ---------------- F2b · AS FICHAS DA CENA ----------------
@@ -7247,13 +7267,15 @@ export default function Taverna() {
   const contextoDasFichas = () => {
     const p = fichaViva() || personagemRef.current || personagem || {};
     const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
-    const presentes = vale("FICHAS · quem está aqui", () => elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], masmorra: masmorraRef.current }).aqui || [], []);
+    /* S4: a mesma conta que a pauta (quem-esta-aqui.js) */
+    const quem = vale("FICHAS · quem está aqui", () => quemAgora(), null);
+    const presentes = quem ? quem.aqui : vale("FICHAS · quem está aqui (cidade)", () => elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: p.grupo || [], masmorra: masmorraRef.current }).aqui || [], []);
     const crime = vale("FICHAS · o contexto do crime", () => ({
       ctx: { npcs: npcsRef.current, presentes, grupo: p.grupo || [], hostis: [], elenco: nomesDoElenco() },
       mundo: { semente: sementeMundo(), mapa: mapaRef.current, cidade: cidadeDoMapa(cidadeAtualRef.current), genero: generoMundo(), lex: (mundoAtual() || {}).lexico, molde: moldeMundo(), noite: ehNoite(minutoRef.current), elencoCtx: contextoDoElenco() },
     }), null);
     return {
-      presentes,
+      presentes, quem,
       ctx: {
         mostrado: vale("FICHAS · o que o Mestre mostrou", () => falasDoMestre(mensagensRef.current), []),
         bolsa: p.moedas || 0,
@@ -7272,10 +7294,10 @@ export default function Taverna() {
      ANTES da resposta, e as fichas apontariam a cena de antes (a ordem da
      prosa seria a da fala velha, e o bicho que a resposta trouxe faltaria). */
   const montarAsFichas = () => {
-    const { presentes, ctx } = contextoDasFichas();
+    const { quem, ctx } = contextoDasFichas();
     let frase = "";
     try { const ms = mensagensRef.current || []; for (let i = ms.length - 1; i >= 0; i--) if (ms[i] && ms[i].autor === "jogador") { frase = String(ms[i].texto || ""); break; } } catch (e) { calou("FICHAS · a última frase", e); }
-    const lista = montarEmCena(contextoDoEmCena(frase, presentes));
+    const lista = montarEmCena(contextoDoEmCena(frase, quem));
     return { lista, fichas: fichasDaCena(lista, ctx), ctx };
   };
   /* TP · AS MARCAS DA PROSA (formas.md §TP 10, oficial 1): os nomes da
@@ -18825,7 +18847,7 @@ export default function Taverna() {
       /* NE4 (13/11): com a porta `alvoDaProsa` fechada, o bicho que a prosa
          do Mestre pôs na lista não vira `conhecidas` — ficam o encontro da
          estrada e a sala, que são do sistema */
-      const ctxCena = contextoDoEmCena(acao, elenco.aqui || []);
+      const ctxCena = contextoDoEmCena(acao, null);
       const { alvo, lista } = alvoDoEnvio(acao, montarEmCena(portaAberta("alvoDaProsa", MODO_DA_MESA) ? ctxCena : { ...ctxCena, mostrado: [] }));
       const bicho = (alvo && alvo.tipo === "criatura" && alvo.faz === "golpe") ? lista.find((x) => x.id === alvo.id) : null;
       if (bicho) conhecidas = [{ nome: bicho.nome, ameaca: bicho.ameaca || "" }, ...conhecidas.filter((c) => c.nome !== bicho.nome)];
@@ -22998,7 +23020,12 @@ export default function Taverna() {
       if (!nucleo || !(nucleo.pessoas || []).length) return null;
       const sem = (x) => String(x == null ? "" : x).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
       const presentes = (pers.grupo || []).filter((g) => g && g.nome && !g.invocada).map((g) => g.nome);
-      const cidade = !jornadaRef.current ? sem(cidadeAtualRef.current) : "";
+      /* S4 (16/11): fora dos muros (a boca da masmorra, o arredor) a cidade
+         fica lá — Isen e Ceridwen não se sentam à fogueira da Paliçada. A
+         conta é a de quem-esta-aqui.js, a mesma da pauta e do chip */
+      let fora = !!jornadaRef.current;
+      try { fora = fora || !!quemAgora().fora; } catch (e) { calou("a fogueira: fora dos muros", e); }
+      const cidade = !fora ? sem(cidadeAtualRef.current) : "";
       if (cidade) for (const p of nucleo.pessoas) if (p && p.nome && sem(p.cidade) === cidade && !presentes.includes(p.nome)) presentes.push(p.nome);
       if (!presentes.length) return null;
       const ctx = { ...contextoDoCoracao(nucleo), coracao: coracaoRef.current, presentes };
