@@ -878,7 +878,12 @@ export function dublesDosEnvelopes(k, { novo, bloco }) {
   PECAS.forEach((n, j) => { S[n] = peca(n, j); });
   if (bloco && bloco !== "rodape") {
     const g = GRUPO(bloco);
-    if (g === "masmorra") Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
+    /* 16/11 (as tochas que zeravam na saída): a fuga já não manda `personagem` ao turno, manda
+       `persOut` — a ficha da saída, com as tochas na mochila (aSaidaDaMasmorra). Este bloco prova o
+       TEXTO do envelope, byte a byte; o dublê de persOut leva o nome do render só para o dourado
+       continuar a comparar o texto. Que a ficha certa segue para o turno prova-o
+       teste-saida-da-masmorra.mjs §4. */
+    if (g === "masmorra") Object.assign(S, masmorraDoCaso(k.i), { personagem: { nome: "Vera do render" }, persOut: { nome: "Vera do render" }, personagemRef: ref(k.refVazio ? null : { nome: "Vera do ref" }) });
     else if (g === "correio") Object.assign(S, correioDoCaso(k.i), { personagem: { nome: "Vera do render" } });
     else if (g === "acampamento") Object.assign(S, acampamentoDoCaso(k.i), { personagem: { nome: "Vera do render" }, fecharANoite: (manha, txt) => { enviados.push([txt, seguro(manha)]); } });
     else if (g === "abertura") Object.assign(S, aberturaDoCaso(k.i));
