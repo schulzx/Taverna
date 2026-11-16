@@ -108,6 +108,10 @@ const FORA = [/\/acervo\/.*\.json$/];
    reescrita literária e não troca por lista. É a próxima etapa, e o teto
    só desce. */
 const TETO = {
+  /* S1b (16/11): estes três voltaram ao texto de antes — a nota da forma, a dádiva e as descrições das classes saem nos dourados do motor (o bloco do App de antes) e no hash dos heróis prontos do cenário. Descem com a etapa da voz do motor. */
+  "src/classes.js": 4,
+  "src/habilidades.js": 2,
+  "src/regras.js": 1,
   "src/biblioteca-de-quests.js": 459,
   "src/acervo/quests-lote-6.js": 441,
   "src/acervo/quests-lote-4.js": 271,
