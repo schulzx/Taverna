@@ -238,6 +238,20 @@ sec("7. (S4c) dentro da cidade a cena tem gente — a mesma na tela e na pauta")
   t("na Roda dos Insones, a Fenna (o posto dela) está em cena", naRoda.doSitio.some((x) => x.nome === "Fenna Sem-Medo"));
   /* o grupo não está no registo deste caso: quemAgeAqui só o leva quando a ficha o tem (a regra de elencoDaCena) */
   t("…e quem age lá é o posto — o morador de paradeiro «a cidade» não", quemAgeAqui(naRoda).map((x) => x.nome).join() === "Fenna Sem-Medo", quemAgeAqui(naRoda).map((x) => x.nome).join());
+  /* S4d: o posto lê a hora — a rotina (gente-por-dentro.js) diz quando a Fenna
+     está de turno, e fora dele ela não está na Roda; quem o passo já sabe fora
+     (`ausentes`) também não entra pelo posto */
+  {
+    const { fichaDaPessoa } = await import(S + "gente-por-dentro.js");
+    const rotF = (m) => fichaDaPessoa("s4d", { nome: "Fenna Sem-Medo", papel: "", local: "A Roda dos Insones" }, { dia: 3, minuto: m, cidade: A, mapa }).rotina;
+    const mins = Array.from({ length: 48 }, (_, i) => i * 30);
+    const naHora = mins.find((m) => rotF(m).noTurno), foraHora = mins.find((m) => !rotF(m).noTurno);
+    const comRelogio = (m) => quemEstaAqui({ npcs: moradores, cidadeAtual: A, mapa, grupo, lugares: lugaresR, gente, lugar: { nome: "A Roda dos Insones", distancia: "dentro" }, relogio: { semente: "s4d", dia: 3, minuto: m, cidade: A, mapa } });
+    t("a rotina da Fenna tem hora dentro e hora fora do turno (o caso vale)", naHora != null && foraHora != null);
+    t("à hora dela, a Fenna está no posto", comRelogio(naHora).doSitio.some((x) => x.nome === "Fenna Sem-Medo"));
+    t("fora da hora dela, a Fenna não está no posto (S4d: o defeito do 9104a18)", !comRelogio(foraHora).doSitio.some((x) => x.nome === "Fenna Sem-Medo"));
+    t("quem o passo sabe fora (ausentes) não entra pelo posto", !quemEstaAqui({ npcs: moradores, cidadeAtual: A, mapa, grupo, lugares: lugaresR, gente, lugar: { nome: "A Roda dos Insones", distancia: "dentro" }, ausentes: ["Fenna Sem-Medo"] }).doSitio.length);
+  }
   const lado = quemEstaAqui({ npcs: moradores, cidadeAtual: A, mapa, grupo, lugares: lugaresR, gente, lugar: { nome: "o lado de fora dos portões", distancia: "perto" } });
   const fala = "Ivarr Voz-Grave e Ceridwen Passo-de-Gato estão perto da porta. Ivarr e Ceridwen acendem uma fogueira pequena.";
   t("fora dos portões, ninguém do posto vem junto", !lado.doSitio.length && !quemAgeAqui(lado).some((x) => x.nome !== "Nolan o Silencioso"));

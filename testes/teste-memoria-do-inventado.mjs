@@ -235,6 +235,83 @@ sec("6. determinismo, imutabilidade, lixo");
   t("nenhum lixo estoura (a prosa, o estado, o livro, o contexto)", !estourou, estourou);
   t("prosa vazia não morde nada; estado vazio ainda julga (o jogo novo)", oInventadoDaProsa("", E).length === 0 && J(nomes(oInventadoDaProsa("Você pega o anel.", null))) === J(["anel"]));
 }
+sec("7. S4d — a pessoa nomeada pela IA");
+{
+  const { aGenteInventadaDaProsa } = await import("../src/motor/memoria-do-inventado.js");
+  const { aFichaDeAtor } = await import("../src/motor/ficha-de-ator.js");
+  const P = MEMORIA_DO_INVENTADO.pessoa;
+  /* o mundo do caso: a Orla Sombravinda existe (a espinha), a Ceridwen está no
+     registo, o Piotr anda com o herói, o Magnus é o vilão com alcunha, a Helga
+     morreu (o livro de factos), e a Ponte do Martelo é cidade */
+  const E = {
+    personagem: { nome: "Vera Lume", grupo: [{ nome: "Piotr Ventoforte" }] },
+    npcs: { "Ceridwen Passo-de-Gato": { nome: "Ceridwen Passo-de-Gato", local: "O Mercado de Cordas" } },
+    mapa: { cidades: [{ nome: "Ponte do Martelo" }, { nome: "Pedra Clara" }] },
+    espinha: { atos: [{ marcos: [{ quem: "Orla Sombravinda", onde: "A Ermida da Viúva" }] }], vilao: { nome: "Magnus da Torre", alcunha: "o Sem-Rosto" } },
+    factos: { pessoas: { helga: { nome: "Helga Voz-Grave", morto: true } } },
+  };
+  const nomes = (f, o) => aGenteInventadaDaProsa(f, E, o || {}).map((x) => x.nome).join(" | ");
+  /* as frases reais da sessão jogada */
+  t("«Ursa Sombravinda… trouxe um pão duro e o partiu com as mãos» — inventada", nomes("Ursa Sombravinda chegou com a manhã, trouxe um pão duro e o partiu com as mãos.") === "Ursa Sombravinda");
+  t("«Godfrey o Silencioso apareceu antes do sol, sentou perto do fogo e ficou» — inventado", nomes("Godfrey o Silencioso apareceu antes do sol, sentou perto do fogo e ficou.") === "Godfrey o Silencioso");
+  t("dois coordenados agem com o verbo do segundo", nomes("Ivarr Voz-Grave e Tomas Mão-Leve acendem uma fogueira pequena.") === "Ivarr Voz-Grave | Tomas Mão-Leve");
+  t("o começo de frase não é nome: «Então Ursa Sombravinda sorri» acha a Ursa, não o «Então»", nomes("Então Ursa Sombravinda sorri.") === "Ursa Sombravinda");
+  /* os contraexemplos: o que NÃO é gente inventada */
+  const nao = [
+    ["quem o registo tem", "Ceridwen Passo-de-Gato acena da porta."],
+    ["quem anda com o herói", "Piotr Ventoforte ri baixo e cutuca o seu ombro."],
+    ["o herói", "Vera Lume olha em volta."],
+    ["quem a espinha conhece", "Orla Sombravinda aparece no alto da escada."],
+    ["o vilão", "Magnus da Torre sorri do outro lado da sala."],
+    ["o morto do livro de factos", "Helga Voz-Grave aparece no sonho, e fala."],
+    ["a cidade", "Ponte do Martelo dorme sob a chuva."],
+    ["um lugar com cabeça de lugar", "A Torre Quebrada range ao vento, e o Monte Escuro observa."],
+    ["um grupo", "A Liga do Corvo chega à cidade com bandeiras."],
+    ["a menção (de alguém)", "Você pega a tira de couro de Ceridwen Passo-de-Gato."],
+    ["a menção de um nome que ninguém traz", "Você pensa em Godfrey o Silencioso e na dívida dele."],
+    ["a fala com travessão", "— Godfrey o Silencioso me deve dinheiro — diz ela."],
+    ["a fala entre aspas", "O taverneiro resmunga: «Ursa Sombravinda chegou ontem.»"],
+    ["a fala a meio da linha", "A voz baixa: — Runa Sem-Medo não aparece quando chamam."],
+    ["o negado", "Ursa Sombravinda não aparece."],
+    ["o nome sem epíteto", "Ursa chega com o pão."],
+    ["o infinitivo a abrir", "Poupar o Troll volta à mesa."],
+    ["o artigo plural (coisa)", "Você deixa as Celas Trêmulas para trás, e o vento sopra."],
+    ["artigo depois de preposição (lugar)", "Chegou direto para o Cão Prateado, e ninguém mais o viu."],
+    ["outro sujeito no meio", "Godfrey o Silencioso, e você responde por ele."],
+    ["quem a base do mundo conhece (conhecidos)", "Dagmar Braço-de-Ferro serve a cerveja."],
+  ];
+  for (const [porque, f] of nao) t(`não marca: ${porque}`, nomes(f, porque.startsWith("quem a base") ? { conhecidos: ["Dagmar Braço-de-Ferro"] } : {}) === "", nomes(f));
+  t(`contraexemplos bastantes (${nao.length} ≥ 15)`, nao.length >= 15);
+  /* o livro: o veto vai ao NÃO PODE no turno seguinte e quando a frase toca o nome */
+  const livro = lembrarOInventado([], "Ursa Sombravinda trouxe um pão duro. Godfrey o Silencioso sentou perto do fogo.", E, { turno: 7 });
+  const vP = livro.filter((x) => x.especie === P.especie);
+  t("a narração deixa dois vetos de gente, no formato do livro do Juiz", vP.length === 2 && vP[0].linha === P.linha("Ursa Sombravinda") && vP[0].ate === 7 + P.vida && vP[0].toques.includes("ursa"));
+  t("…e o turno seguinte leva-os à pauta («não existe aqui: Ursa Sombravinda»)", vetosParaAPauta(livro, { turno: 8, frase: "" }).some((l) => l.endsWith("não existe aqui: Ursa Sombravinda")));
+  t("…dois turnos depois, só se a frase do jogador toca o nome", !vetosParaAPauta(livro, { turno: 9, frase: "durmo" }).some((l) => /Ursa/.test(l)) && vetosParaAPauta(livro, { turno: 9, frase: "Pergunto à Ursa pelo pão" }).some((l) => /Ursa/.test(l)));
+  const E2 = { ...E, npcs: { ...E.npcs, "Ursa Sombravinda": { nome: "Ursa Sombravinda" } } };
+  t("quem o sistema passa a conhecer sai do livro", !lembrarOInventado(livro, "", E2, { turno: 8 }).some((x) => x.alvo === "pessoa:ursa sombravinda"));
+  /* a ficha do ator traduz o veto como fato */
+  const fz = aFichaDeAtor({ frase: "Olho em volta.", nota: `ONDE      n'O Barril Rachado, dentro de Cimo Negro\nNÃO PODE  ${P.linha("Ursa Sombravinda")}`, estado: { personagem: { nome: "Vera" } } });
+  t("a ficha do ator diz «Não há ninguém aqui chamado Ursa Sombravinda.»", fz.partes["AS FRONTEIRAS"].includes("Não há ninguém aqui chamado Ursa Sombravinda."));
+  /* a medida: as narrações gravadas, com o estado e o mundo de cada uma */
+  const D = new URL(".", import.meta.url);
+  let turnos = 0; const marcados = [];
+  for (const f of readdirSync(D).filter((x) => /^sessao-.*\.json$/.test(x)).sort()) {
+    let A; try { A = JSON.parse(readFileSync(new URL(f, D), "utf8")); } catch { continue; }
+    if (!Array.isArray(A.turnos)) continue;
+    A.turnos.forEach((L, i) => {
+      const nar = L && L.narrador && L.narrador.narrativa;
+      if (typeof nar !== "string" || !nar.trim()) return;
+      let e; try { e = estadoNoTurno(A, i + 1); } catch { e = {}; }
+      turnos++;
+      for (const x of aGenteInventadaDaProsa(nar, e, { mundo: A.mundo || {} })) marcados.push(`${f}#${i + 1} ${x.nome}`);
+    });
+  }
+  console.log(`      ${turnos} narrações gravadas; gente inventada marcada: ${marcados.length}${marcados.length ? " — " + marcados.join("; ") : ""}`);
+  /* o portão morde só o necessário: nas sessões gravadas toda a gente que
+     age com epíteto é do registo, da base ou do enredo — nenhum falso positivo */
+  t(`CATRACA: ${turnos} narrações gravadas, 0 pessoas marcadas (o falso positivo custa a cena)`, turnos >= 190 && marcados.length === 0, marcados.join("; "));
+}
 
 console.log(`\na memória do inventado (NE8): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

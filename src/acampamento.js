@@ -70,6 +70,9 @@ export const ABRIGOS = [
   { nivel: 1, rotulo: "sob algum teto", nota: "coberto, ainda que improvisado — dá para dormir de verdade", dados: 0 },
   { nivel: 2, rotulo: "cama de verdade", nota: "paredes, porta e um colchão: o corpo relaxa como não relaxa na estrada", dados: 1 },
 ];
+/* S4d: o lugar nomeado que fica a céu aberto — a boca da masmorra («perto»,
+   boca.js) e o nome que o diz — dorme-se nele ao relento, não «dentro» */
+export const LUGAR_A_CEU_ABERTO = Object.freeze({ distancias: Object.freeze(["perto"]), nome: /^(os+)?lado de fora/i, abrigo: 0 });
 export function abrigoPorNivel(n) {
   const i = Math.max(0, Math.min(ABRIGOS.length - 1, Math.round(Number(n) || 0)));
   return ABRIGOS[i];
@@ -207,11 +210,15 @@ export function escolherSitio(ctx = {}, sorte = sorteDaCasa) {
     };
   }
 
-  /* 2. LUGAR NOMEADO — o herói está num ponto dos arredores, e ele tem nome */
+  /* 2. LUGAR NOMEADO — o herói está num ponto dos arredores, e ele tem nome.
+     S4d: o lugar a céu aberto (a boca da masmorra, «o lado de fora dos
+     portões») não tem «dentro» nem teto — saía «Você monta acampamento
+     dentro do lado de fora dos portões — sob algum teto». */
   if (c.lugar && c.lugar.nome) {
+    const aCeu = LUGAR_A_CEU_ABERTO.distancias.includes(String(c.lugar.distancia || "")) || LUGAR_A_CEU_ABERTO.nome.test(String(c.lugar.nome));
     return {
-      id: "no_lugar", icone: "⛺", abrigo: 1, chave, tipo: "lugar",
-      nome: `dentro ${comDe(c.lugar.nome)}`,
+      id: "no_lugar", icone: "⛺", abrigo: aCeu ? LUGAR_A_CEU_ABERTO.abrigo : 1, chave, tipo: "lugar",
+      nome: aCeu ? comEm(c.lugar.nome) : `dentro ${comDe(c.lugar.nome)}`,
       dentro: "o próprio lugar serve de abrigo — use o que ele tem, não invente outro sítio",
       texto: `${comEm(c.lugar.nome)}${c.cidade ? ` (nos arredores de ${c.cidade})` : ""}`,
       proibido: `Não me leve de volta para ${c.cidade || "a cidade"} para dormir: eu estou ${comEm(c.lugar.nome)} e é aqui que se arma o acampamento.`,

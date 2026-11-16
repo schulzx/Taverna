@@ -24,6 +24,16 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — S4d, o vermelho fechado e a gente inventada com veto
+
+A mão do motor, de `e41f9aa`. Bastão do `App.jsx` («S4d») tomado às 15:00 para três fiações curtas (o relógio do posto, a rede do `pessoasDaCena`, o mundo na memória do inventado), devolvido no fecho. Sem `VERSAO`, sem push, sem IA real, sem navegador.
+
+- **Etapa 1 · o vermelho do S4c (523/528 → 528/528).** (a) `doSitio` punha a gente da base no posto a qualquer hora: `quemEstaAqui` lê agora `relogio` (a rotina de `fichaDaPessoa`, turno/folga/morte) e `ausentes` (quem o passo sabe fora da hora) — a pauta e o App passam os dois. (b) A ficha do ator partia a linha EM CENA no «;» de dentro dos parênteses («Lucan (alguém…; sabe: …)» virava duas pessoas e empurrava a de verdade para o «Também aqui») — `partesForaDeParenteses`. (c) A linha nova do NÃO PODE tem tradução («X não está aqui: ficou em Y»). (d) O «40/100» era o apreço das potências (`diplomacia.js#envelopeDasPotencias`, secção O MUNDO): sai em palavras pela tabela `APRECO_FALADO`, e o «poder N» sai. (e) `teste-mm14-gente`: asserção movida com o motivo (a conta única, a rede com a masmorra).
+- **Etapa 2 · a pessoa nomeada pela IA.** `memoria-do-inventado.js` ganha `MEMORIA_DO_INVENTADO.pessoa` e `aGenteInventadaDaProsa`: nome com epíteto, fora das falas, sujeito de verbo de quem age, que nem o registo, o grupo, o enredo (vilão, alcunha, quest), o livro de factos, a gente da base do mundo (todas as cidades + chefes) conhece → veto no livro do Juiz («pôr em cena quem não existe aqui: Ursa Sombravinda»), à pauta no turno seguinte e ao toque do nome; sai do livro quando o sistema passa a conhecê-la. A ficha traduz («Não há ninguém aqui chamado …»). Catraca: 198 narrações gravadas com o estado e o mundo delas → **0 marcadas**; 21 contraexemplos. Nos relatos das provas (`mente/*sessao*.md`, sem estado — mede só o padrão) 47 → 15 candidatos, 13 deles gente.
+- **Etapa 4 (parte) · o acampamento a céu aberto.** `LUGAR_A_CEU_ABERTO` (acampamento.js): na boca («perto») e «o lado de fora dos portões» → «Você monta acampamento no lado de fora dos portões — ao relento» (antes «dentro do… — sob algum teto»).
+- **Prompt:** PIOR CENA REAL 63 866 antes e depois; com gente (solto) 70 371 antes e depois — tudo pela pauta dinâmica.
+- **Não feito (orçamento):** a poda (etapa 3, o juiz de coerência); «doande-1» (o molde não se achou por grep rápido); «Ombro Amigo» ao entrar no Mercado (o berço do S5 já existe — falta ver porque não segurou).
+
 ## 16/11 · sem versão — S4c, o Narrador obedece à cena · commit 9104a18
 
 A mão do motor, de `e0a4ae3`. Bastão do `App.jsx` («S4c») tomado às 14:28 para trocar o `pessoasDaCena` do App pela conta única, devolvido no fecho. Sem `VERSAO`, sem push, sem IA real, sem navegador.

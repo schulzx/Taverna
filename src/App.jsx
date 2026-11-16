@@ -7221,11 +7221,15 @@ export default function Taverna() {
     const p0 = personagemRef.current || personagem || {};
     const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
     const est = vale("QUEM ESTÁ · o estado", () => estadoDoPedido(), {});
+    const passo = vale("QUEM ESTÁ · a pessoa do passo", () => aPessoaDoPasso(est).filter((x) => x && x.nome), []);
     return quemEstaAqui({
       npcs: npcsRef.current, cidadeAtual: cidadeAtualRef.current, mapa: mapaRef.current, grupo: p0.grupo || [],
       masmorra: masmorraRef.current, jornada: jornadaRef.current, lugar: lugarRef.current,
       lugares: vale("QUEM ESTÁ · os lugares", () => lugaresDaqui(), []),
-      doPasso: vale("QUEM ESTÁ · a pessoa do passo", () => aPessoaDoPasso(est).filter((x) => x && x.aqui && x.nome), []),
+      doPasso: passo.filter((x) => x.aqui),
+      /* S4d: quem o passo sabe fora da hora, e a hora de quem o posto põe — a mesma conta da pauta */
+      ausentes: passo.filter((x) => !x.aqui).map((x) => x.nome),
+      relogio: vale("QUEM ESTÁ · o relógio", () => ({ semente: sementeMundo(), dia: diaRef.current, minuto: minutoRef.current, cidade: String(cidadeAtualRef.current || ""), mapa: mapaRef.current, npcs: npcsRef.current, base: baseMundoRef.current }), null),
       quadros: lugarRef.current ? vale("QUEM ESTÁ · as cartas", () => quadrosAgora(), []) : [],
       gente: lugarRef.current ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
     });
@@ -11304,9 +11308,10 @@ export default function Taverna() {
       try {
         vetosDoJuizRef.current = lembrarOInventado(vetosDoJuizRef.current, narrativaDoLivro, {
           ...retratoDoLivro(), personagem: pers, missoes: missoesRef.current, quests: questsRef.current,
-          abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo,
+          abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo, baseMundo: baseMundoRef.current,
         }, {
           turno: turnoDeRegistroRef.current + 1, /* o turno da pauta, o mesmo que o Juiz usa */
+          mundo: mundoDoLivro(), /* S4d: a gente da base do mundo não é inventada */
           cidade: fotoDoJuiz ? (fotoDoJuiz.cidadeAtual || "") : (cidadeAtualRef.current || ""),
           frase: pedidoDaBolsa, /* o que o jogador nomeou não morde */
           lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "",

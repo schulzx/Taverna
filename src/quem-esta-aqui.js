@@ -54,6 +54,7 @@
    testes/teste-quem-esta-aqui.mjs.
    ============================================================ */
 import { elencoDaCena, masmorraAberta } from "./cena.js";
+import { fichaDaPessoa } from "./gente-por-dentro.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -192,13 +193,25 @@ export function quemEstaAqui(estado) {
     const conhecido = arr(e.lugares).find((l) => ehObj(l) && nomeDe(l) && (semArtigo(l.nome) === semArtigo(L.nome) || (l.chamado && semArtigo(l.chamado) === semArtigo(L.nome))));
     const sitios = [L.nome, conhecido && conhecido.nome].filter(Boolean);
     const ali = (local) => sitios.some((x) => nomeiaSitio(local, x));
-    const por = (nome, rotulo, genero) => {
+    /* S4d: o posto só põe quem está de turno — a rotina (gente-por-dentro.js)
+       diz a hora dela; quem o passo já sabe fora (`ausentes`) também não está */
+    const ausentes = arr(e.ausentes).map(nomeDe);
+    const R = ehObj(e.relogio) ? e.relogio : null;
+    const deTurno = (nome, rotulo, local) => {
+      if (!R) return true;
+      let rot = null;
+      try { rot = fichaDaPessoa(R.semente, { nome, papel: str(rotulo), local: str(local) }, { ...R, grupo: grupo }).rotina; } catch { rot = null; }
+      if (!rot || !str(rot.agora)) return true;
+      return rot.agora !== "morreu" && !!rot.noTurno;
+    };
+    const por = (nome, rotulo, genero, local) => {
       if (!nome || noGrupo.has(sem(nome)) || doPasso.some((x) => mesmo(x.nome, nome)) || doSitio.some((x) => mesmo(x.nome, nome))) return;
+      if (ausentes.some((a) => mesmo(a, nome)) || !deTurno(nome, rotulo, local)) return;
       if (doSitio.length >= QUEM_ESTA_AQUI_TABELA.doSitio.max) return;
       doSitio.push({ nome, rotulo: str(rotulo).trim(), genero: str(genero).trim(), aqui: true, deOnde: QUEM_ESTA_AQUI_TABELA.doSitio.deOnde });
     };
-    for (const n of aqui) if (ehObj(n) && ali(n.local)) por(nomeDe(n), n.papel, n.genero);
-    for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero);
+    for (const n of aqui) if (ehObj(n) && ali(n.local)) por(nomeDe(n), n.papel, n.genero, n.local);
+    for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero, p.local);
   }
   /* quem entra pelo passo, pela carta ou pelo posto não fica no longe */
   const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)) && !doSitio.some((x) => mesmo(x.nome, n && n.nome)));

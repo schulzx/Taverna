@@ -197,6 +197,14 @@ export const DISTANCIA_FALADA = Object.freeze([
   { ate: 15, o: "a uma corrida curta" },
   { ate: Infinity, o: "longe" },
 ]);
+/* S4d: o apreço de uma potência (diplomacia.js, envelopeDasPotencias, 0–100)
+   como se diz — o «40/100» chegava ao ator cru; e o «poder N» sai */
+export const APRECO_FALADO = Object.freeze([
+  { ate: 29, o: "desconfia de {H}" },
+  { ate: 59, o: "ainda não sabe o que pensar de {H}" },
+  { ate: Infinity, o: "tem {H} em boa conta" },
+]);
+const aprecoFalado = (n, H) => (APRECO_FALADO.find((x) => Number(n) <= x.ate) || APRECO_FALADO[APRECO_FALADO.length - 1]).o.replace(/\{H\}/g, H);
 /* a hora, em minutos do dia, como se diz */
 export const PERIODO_DO_DIA = Object.freeze([
   { ate: 300, o: "de madrugada" },
@@ -1022,6 +1030,11 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
   "PERGUNTOU": [ { de: /^(.+)$/, vai: "pessoa", como: (m) => ({ sabe: m[1].replace(MARCA_DO_FATO, "") }) } ],
   "NÃO PODE": [
     { de: /^o lugar não comporta:/, cai: "regra" },
+    /* S4d: o veto de quem não está (quem-esta-aqui.js, naoEstao.linha) — a
+       fronteira dita como fato: quem não está, e onde ficou */
+    { de: /^pôr a agir ou a falar quem não está nesta cena: ([^(;…]+?)(?: \(ficou em ([^)]+)\))?(?:[;…].*)?$/, vai: "fronteira", como: (m) => { const n = m[1].split(/,\s+/).filter(Boolean); const v = n.length > 1; return `${n.join(", ")} não ${v ? "estão" : "está"} aqui${m[2] ? `: ${v ? "ficaram" : "ficou"} em ${m[2]}` : ""}.`; } },
+    /* S4d: a gente que a prosa inventou (memoria-do-inventado.js, MEMORIA_DO_INVENTADO.pessoa) */
+    { de: /^pôr em cena quem não existe aqui: (.+?)…?$/, vai: "fronteira", como: (m) => `Não há ninguém aqui chamado ${m[1]}.` },
     { de: /^(.+?) está em (.+?), a (\d+) dias? daqui — .*$/, vai: "fronteira", como: (m) => `${m[1]} está longe, em ${m[2]}, a ${porExtenso(Number(m[3]))} dia${m[3] === "1" ? "" : "s"} daqui.` },
     { de: /^Não entregue (a|o) (.+?) que a bolsa não pagou\.?$/, vai: "aconteceu", como: (m) => `${maiuscula(m[1])} ${m[2]} não foi pag${m[1]}: continua com quem a vende.` },
     { de: /^narrar a luta a começar/, vai: "aconteceu", como: () => "Ninguém trocou golpe: a luta não começou." },
@@ -1093,7 +1106,9 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
   "A CIDADE": [ { de: /^língua: (.+)$/, vai: "cena", como: (m) => `A língua: ${ponto(m[1])}`, extra: true }, { de: /^(.+)$/, vai: "cena", como: (m) => ponto(maiuscula(m[1])), extra: true } ],
   "O PREÇO": [ { de: /^na rua, em moedas: (.+)$/, vai: "cena", como: (m) => `Na rua, em moedas: ${ponto(m[1].replace(/◉\s*/g, ""))}`, extra: true } ],
   "ANTES": [ { de: /^(.+)$/, vai: "aconteceu", como: (m) => `Já aconteceu aqui: ${ponto(m[1])}` } ],
-  "O MUNDO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m) => ponto(maiuscula(m[1])) } ],
+  "O MUNDO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m, c) => ponto(maiuscula(m[1]
+    .replace(/ \(poder \d+(?:, ([^)]*))?\)/g, (_, t) => (t ? ` (${t.replace(/\bcom você/, `com ${c.H}`)})` : ""))
+    .replace(/Apreço por você: (\d+)\/100\./g, (_, n) => `${maiuscula(aprecoFalado(n, c.H))}.`))) } ],
   "ENTRETANTO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m) => ponto(maiuscula(m[1])) } ],
   "O QUE VOLTA": [
     { de: /^(".+?") \((.+?)\) volta agora: (.+)$/, vai: "diz", como: (m) => ({ quem: m[2], o: `cumpre agora o que disse — ${m[1]}` }) },
@@ -1320,12 +1335,33 @@ function oTesteEmPalavras(t, c, motivo) {
 
 /* ---------------- quem está ---------------- */
 const SEP_NOME = /\s*·\s*/;
+/* S4d: o «;» que separa as partes da linha EM CENA só conta fora de
+   parênteses — «Lucan (alguém…; sabe: o caminho)» é UMA pessoa, e partida
+   ao meio virava duas, com o nome cortado, e empurrava a de verdade para
+   o «Também aqui». */
+function partesForaDeParenteses(t) {
+  const out = [];
+  let fundo = 0, cur = "";
+  for (const ch of str(t)) {
+    if (ch === "(") fundo++;
+    else if (ch === ")") fundo = Math.max(0, fundo - 1);
+    if (ch === ";" && fundo === 0) { out.push(cur); cur = ""; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out.map((x) => x.trim()).filter(Boolean);
+}
 function lerEmCena(t) {
   const [antes, semNome] = str(t).split(/;?\s*a quem não tem nome:\s*/);
   const pessoas = [], venda = [];
-  for (const parte of str(antes).split(/;\s*/)) {
+  for (const parte of partesForaDeParenteses(antes)) {
     if (/^à venda/.test(parte)) { venda.push(parte.replace(/◉\s*/g, "").replace(/^à venda, em moedas: /, "")); continue; }
-    for (const it of parte.split(SEP_NOME)) { const m = it.match(/^(.+?)\s*\((.+?)\)$/); if (m) pessoas.push({ nome: m[1].trim(), papel: m[2].trim() }); else if (it.trim()) pessoas.push({ nome: it.trim(), papel: "" }); }
+    for (const it of parte.split(SEP_NOME)) {
+      const m = it.match(/^(.+?)\s*\((.+)\)$/);
+      if (!m) { if (it.trim()) pessoas.push({ nome: it.trim(), papel: "" }); continue; }
+      const [papel, ...sabe] = m[2].split(/;\s*sabe:\s*/);
+      pessoas.push({ nome: m[1].trim(), papel: papel.trim(), ...(sabe.length ? { sabe: sabe.join("; ").trim() } : {}) });
+    }
   }
   const nomes = str(semNome).split(SEP_NOME).map((x) => x.replace(/\s*\((ele|ela)\)$/, "").trim()).filter(Boolean);
   return { pessoas, venda, nomes };
@@ -1459,7 +1495,7 @@ export function aFichaDeAtor(entrada) {
         }
       } else if (r.vai === "diz") { if (v.quem && !v.semNome) pessoa(v.quem, { oque: v.oque ? doHeroi(v.oque, H).replace(/\bdo herói\b/g, `de ${H}`) : undefined, chega: v.chega ? "chega agora" : undefined }); diz.push({ quem: v.semNome ? "" : v.quem, o: (v.semNome ? `${v.quem} chega e ` : "") + v.o }); }
       else if (r.vai === "pessoa") {
-        if (v.emCena != null) { const ec = lerEmCena(v.emCena); for (const p of ec.pessoas) pessoa(p.nome, p.papel === "com você" ? { comVoce: true } : { oque: p.papel }); nomesAMao.push(...ec.nomes); venda.push(...ec.venda); }
+        if (v.emCena != null) { const ec = lerEmCena(v.emCena); for (const p of ec.pessoas) { const q = pessoa(p.nome, p.papel === "com você" ? { comVoce: true } : { oque: p.papel }); if (q && p.sabe && !q.sabe.includes(p.sabe)) q.sabe.push(p.sabe); } nomesAMao.push(...ec.nomes); venda.push(...ec.venda); }
         else if (v.quemE != null) { const q = lerQuemE(v.quemE); if (q) pessoa(q.nome, { quer: q.quer, teme: q.teme, vozDaPauta: q.voz }); }
         else if (v.agora != null) {
           const t = doHeroi(v.agora, H);

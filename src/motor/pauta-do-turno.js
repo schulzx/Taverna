@@ -859,11 +859,15 @@ export function aPautaDoTurno(estado, entrada, portas) {
   const quemAgora = () => {
     const p0 = $ref.personagem || $render.personagem || {};
     const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou(rotulo, e); return seNao; } };
+    const passo = vale("EM CENA · a pessoa do passo", () => aPessoaDoPasso({ ...$E, ...escritas }).filter((x) => x && x.nome), []);
     return quemEstaAqui({
       npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [],
       masmorra: $ref.masmorra, jornada: $ref.jornada, lugar: $ref.lugar,
       lugares: vale("QUEM ESTÁ · os lugares", () => lugaresDaqui(), []),
-      doPasso: vale("EM CENA · a pessoa do passo", () => aPessoaDoPasso({ ...$E, ...escritas }).filter((x) => x && x.aqui && x.nome), []),
+      doPasso: passo.filter((x) => x.aqui),
+      /* S4d: quem o passo sabe fora da hora, e a hora de quem o posto põe */
+      ausentes: passo.filter((x) => !x.aqui).map((x) => x.nome),
+      relogio: vale("QUEM ESTÁ · o relógio", () => ({ semente: sementeMundo(), dia: $ref.dia, minuto: $ref.minuto, cidade: String($ref.cidadeAtual || ""), mapa: $ref.mapa, npcs: $ref.npcs, base: $ref.baseMundo }), null),
       quadros: $ref.lugar ? vale("QUEM ESTÁ · as cartas", () => osQuadrosDoEstado({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva(), quadro: $ref.quadro }, { mundo: mundoDaBase() }), []) : [],
       gente: $ref.lugar ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
     });

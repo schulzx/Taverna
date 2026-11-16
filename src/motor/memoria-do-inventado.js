@@ -104,6 +104,7 @@
    ============================================================ */
 import { oQueOSistemaConhece, casaONome } from "./cronista.js";
 import { andarOsVetos } from "./correcao-do-juiz.js";
+import { oQueExisteAqui, chefesDoMundo } from "../mundo-base.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -227,6 +228,34 @@ export const MEMORIA_DO_INVENTADO = Object.freeze({
   artigos: Object.freeze(["o", "a", "os", "as", "um", "uma", "uns", "umas", "este", "esta", "esse", "essa", "aquele", "aquela", "outro", "outra", "seu", "sua", "teu", "tua", "mesmo", "mesma", "velho", "velha", "pequeno", "pequena", "grande", "unico", "unica"]),
   preposicoes: Object.freeze(["de", "do", "da", "dos", "das", "na", "no", "nas", "nos", "em", "ao", "aos", "a", "pela", "pelo", "com", "sob", "sobre", "entre", "atras", "ate", "contra", "para", "por", "dentro", "perto", "junto", "num", "numa", "dum", "duma"]),
   fecha: Object.freeze(["que", "enquanto", "quando", "mas", "porem", "onde", "se", "porque", "como", "ate", "e", "ou", "nem", "sem", "com", "dele", "dela", "deles", "delas"]),
+  /* S4d (16/11): A PESSOA NOMEADA PELA IA. Na sessão jogada, «Ursa
+     Sombravinda… trouxe um pão duro» e «Godfrey o Silencioso apareceu antes
+     do sol» — gente que não existe no registo, na base do mundo nem em cena;
+     o sistema só reagiu quando o jogador tentou agir sobre ela, e o nome
+     voltava pelo histórico. A régua é estreita (menção não é presença): nome
+     com epíteto («Ursa Sombravinda», «Godfrey o Silencioso», «Lucan da
+     Torre»), fora das falas, sujeito de um verbo de quem age ou fala.
+     `especie`/`linha`: o veto, no livro do Juiz como o do objeto. `naoNome`:
+     a primeira palavra que não é nome (o começo de frase, o pronome, o
+     título). `cabecaDeLugar`: a primeira palavra de um lugar ou de um grupo
+     («Ponte do Martelo», «Liga do Corvo») — não é gente. `pula`: o que pode
+     estar entre o nome e o verbo. `ate`: quantas palavras se olham depois do
+     nome. `irregulares`: as formas que os geradores não dão. */
+  pessoa: Object.freeze({
+    especie: "pessoa-inventada",
+    porTurno: 2,
+    vida: 6,
+    letras: 110,
+    ate: 6,
+    linha: (nome) => `pôr em cena quem não existe aqui: ${nome}`,
+    naoNome: Object.freeze(["o", "a", "os", "as", "um", "uma", "voce", "ele", "ela", "eles", "elas", "eu", "tu", "nos", "entao", "mas", "quando", "la", "aqui", "ali", "depois", "antes", "agora", "nem", "se", "e", "ou", "do", "da", "no", "na", "em", "com", "por", "para", "ao", "sem", "seu", "sua", "teu", "tua", "este", "esta", "esse", "essa", "aquele", "aquela", "nenhum", "ninguem", "alguem", "cada", "todo", "toda", "tudo", "isso", "isto", "enquanto", "onde", "como", "porque", "ja", "ainda", "talvez", "sim", "nao", "senhor", "senhora", "dom", "dona", "mestre", "mestra", "sir", "lady", "irmao", "irma", "padre", "madre", "capitao", "capita", "rei", "rainha", "lorde", "deus", "deusa", "santo", "santa", "sao", "pai", "mae", "meu", "minha", "quem", "que", "num", "numa", "pelo", "pela", "pelos", "pelas", "nas", "nos", "aos", "dos", "das", "uns", "umas", "sob", "sobre", "entre", "atras", "perto", "longe", "dentro", "fora", "mais", "menos", "muito", "pouco", "so", "apenas", "logo", "cedo", "tarde", "hoje", "ontem", "amanha", "noite", "dia", "manha"]),
+    cabecaDeLugar: Object.freeze(["ponte", "monte", "rio", "vale", "porto", "torre", "forte", "pedra", "bosque", "floresta", "lago", "mar", "serra", "colina", "campo", "campos", "passo", "vau", "cova", "cimo", "fenda", "palicada", "guarnicao", "templo", "casa", "mercado", "praca", "largo", "rua", "estalagem", "taverna", "igreja", "capela", "ordem", "liga", "confraria", "guilda", "irmandade", "coroa", "cidade", "vila", "aldeia", "castelo", "fortaleza", "muralha", "portao", "porta", "estrada", "caminho", "trilha", "ermo", "pantano", "charco", "deserto", "ilha", "baia", "cabo", "pico", "gruta", "caverna", "mina", "minas", "ruinas", "cripta", "catacumba", "salao", "sala", "corte", "conselho", "companhia", "bando", "cla", "cais", "doca", "feira", "bastiao", "fogao", "fundo", "ultimo", "ultima", "primeiro", "primeira", "sino", "peixe", "pier", "buraco", "torneio", "jornada", "cao", "cabra", "gato", "galo", "celas", "cela", "roda", "cruz", "poco", "fonte", "moinho", "ferraria", "forja", "biblioteca", "arquivo", "academia", "colegio", "mosteiro", "abadia", "santuario", "altar", "oratorio", "jardim", "horta", "quinta", "herdade", "solar", "palacio", "paco", "cadeia", "prisao", "masmorra", "quartel", "barril", "espada", "escudo", "lanca", "martelo", "corvo", "lobo", "dragao", "leao", "urso", "javali", "aguia", "serpente", "fivela", "ferro", "ouro", "prata", "sangue", "noite", "sol", "lua", "estrela", "norte", "sul", "leste", "oeste", "alto", "baixo", "velho", "velha", "novo", "nova", "grande", "pequeno"]),
+    pula: Object.freeze(["se", "lhe", "lhes", "me", "te", "o", "a", "nao", "ja", "ainda", "entao", "tambem", "logo", "so", "apenas", "devagar", "enfim"]),
+    /* os verbos de quem age ou fala, na 3.ª do singular do presente (os
+       geradores dão o plural e o pretérito) */
+    age: Object.freeze(["aparece", "chega", "entra", "senta", "fala", "olha", "acena", "levanta", "estende", "ergue", "pega", "murmura", "resmunga", "suspira", "observa", "aproxima", "acende", "espera", "serve", "empurra", "dorme", "canta", "encara", "inclina", "oferece", "entrega", "ajeita", "chama", "aponta", "avanca", "recua", "responde", "pergunta", "sorri", "grita", "sussurra", "assente", "aguarda", "cumprimenta", "franze", "pousa", "tira", "come", "bebe", "mastiga", "anda", "caminha", "corre", "trabalha", "esfrega", "arrasta", "examina", "estuda", "ouve", "escuta", "repete", "explica", "insiste", "hesita", "pigarreia", "limpa", "atende", "enche", "cutuca", "debruca", "agacha", "ajoelha", "boceja", "pisca", "esfrega"]),
+    irregulares: Object.freeze(["trouxe", "trouxeram", "traz", "trazem", "disse", "disseram", "diz", "dizem", "riu", "ri", "riem", "riram", "veio", "vieram", "vem", "ouviu", "ouviram", "sentou", "sentaram", "tossiu", "tosse", "cuspiu", "cospe", "serviu", "dormiu", "sorriu", "sorriram"]),
+  }),
 });
 
 /* ---------------- os índices da tabela ---------------- */
@@ -490,6 +519,125 @@ function vetoDe(o, turno, calado = false) {
 }
 
 /* ============================================================
+   S4d · A PESSOA NOMEADA PELA IA (a tabela: MEMORIA_DO_INVENTADO.pessoa)
+   aGenteInventadaDaProsa(narrativa, estado, opcoes) → [{ nome, trecho }]:
+   o nome com epíteto que a narração pôs a agir ou a falar, fora das
+   falas, e que o sistema não conhece — nem o registo, nem o grupo, nem o
+   enredo (o vilão, a alcunha, a quest), nem o livro de factos (os mortos
+   incluídos), nem a gente da base do mundo, nem os nomes que quem chama
+   der (`conhecidos`). opcoes: { lugarDoTurno, mundo: { semente, genero,
+   molde, lex }, conhecidos: [nome] }.
+   ============================================================ */
+const PS = T.pessoa;
+const NAO_NOME = S(PS.naoNome), DE_LUGAR = S(PS.cabecaDeLugar);
+const AGE = S([...PS.irregulares, ...PS.age.flatMap((v) => (v.endsWith("e") ? ER(v) : AR(v)).voce)]);
+const PREP_ANTES = S([...T.preposicoes, "a"]);
+const LIGA = /^(o|a|da|do|de|dos|das)$/;
+const PARTE = "\\p{Lu}[\\p{Ll}]+(?:-\\p{L}[\\p{Ll}]*)*";
+const NOME_RX = new RegExp(`${PARTE}(?:\\s+(?:(?:o|a|da|do|de|dos|das)\\s+)?${PARTE}){1,2}`, "gu");
+
+/* a gente da base do mundo (mundo-base.js): a de cada cidade do mapa e os chefes */
+function genteDaBase(E, mundo) {
+  const m = obj(mundo);
+  if (!m.semente) return [];
+  const out = [];
+  for (const c of arr(obj(E.mapa).cidades)) {
+    if (!c || !c.nome) continue;
+    try { for (const p of arr(obj(oQueExisteAqui(m.semente, E.mapa, c.nome, E.baseMundo, m.genero || undefined, m.molde || null, m.lex || null)).gente)) if (p && p.nome) out.push(p.nome); } catch { /* a base não abre: segue sem ela */ }
+  }
+  try { for (const c of chefesDoMundo(m.semente, E.mapa, m.genero || undefined, m.lex || null)) out.push(c.nome, c.nomeCurto); } catch { /* idem */ }
+  return out.filter((x) => typeof x === "string" && x.trim());
+}
+
+function conhecidoDaPessoa(E, O) {
+  const K = oQueOSistemaConhece(E, O.lugarDoTurno);
+  const todos = [...K.gente, ...K.lugar, ...K.objeto];
+  const extra = [...genteDaBase(E, O.mundo), ...arr(O.conhecidos)].filter((x) => typeof x === "string" && x.trim()).map(palavrasDe);
+  let blob = "";
+  try { blob = ` ${palavrasDe(JSON.stringify([E.espinha, E.missoes, E.quests, E.factos, E.nucleo, E.abertura, E.canone, E.npcs, obj(E.personagem).grupo]))} `; } catch { blob = ""; }
+  return (nome) => casaONome(nome, todos, true) || casaONome(nome, extra, true) || blob.includes(` ${palavrasDe(nome)} `);
+}
+function pessoaConhecida(nome, estado, opcoes) {
+  if (!String(nome || "").trim()) return true;
+  try { return conhecidoDaPessoa(obj(estado), obj(opcoes))(nome); } catch { return true; }
+}
+
+/* os nomes com epíteto de uma frase, com o que vem antes e depois */
+function nomesDaFrase(frase) {
+  const f = String(frase);
+  const out = [];
+  for (const m of f.matchAll(NOME_RX)) {
+    let ws = m[0].split(/\s+/);
+    /* o começo («Então», «O», «Senhor») não é nome: corta e vê o resto */
+    while (ws.length && (NAO_NOME.has(sem(ws[0])) || LIGA.test(ws[0]))) ws = ws.slice(1);
+    const partes = ws.filter((w) => !LIGA.test(w));
+    if (partes.length < 2) continue;
+    /* o verbo no infinitivo a abrir («Poupar o Troll», «Tirar Branca»): é ordem, não gente */
+    if (!f.slice(0, f.indexOf(ws[0], m.index)).trim() && /(ar|er|ir)$/.test(sem(ws[0]))) continue;
+    if (DE_LUGAR.has(sem(partes[0]).split("-")[0])) continue;
+    if (partes.some((w) => NAO_NOME.has(sem(w)))) continue;
+    const nome = ws.join(" ");
+    const pos = f.indexOf(nome, m.index);
+    out.push({ nome, antes: f.slice(0, pos), depois: f.slice(pos + nome.length) });
+  }
+  return out;
+}
+
+/* o nome é sujeito de quem age? não depois de preposição (a tira de couro
+   DE Ceridwen); e um verbo de quem age até `ate` palavras depois, sem o que
+   fecha a oração no meio (o «e» de «Ivarr e Ceridwen acendem» não fecha) */
+const depoisDePreposicao = (n) => { const a = palavras(n.antes); const u = a[a.length - 1]; return !!u && PREP_ANTES.has(u.base); };
+const OUTRO_SUJEITO = S(["voce", "ele", "ela", "eles", "elas", "ninguem", "alguem", "eu", "tu", "nos"]);
+function age(n) {
+  const ws = palavras(n.depois).slice(0, PS.ate);
+  for (let k = 0; k < ws.length; k++) {
+    const w = ws[k];
+    /* «não aparece»: o negado não está */
+    if (AGE.has(w.base)) return !(k > 0 && NEGA.has(ws[k - 1].base));
+    if (FECHA.has(w.base) || OUTRO_SUJEITO.has(w.base)) return false;
+  }
+  return false;
+}
+/* na fala a meio da linha («A voz baixa: — Runa não aparece»): o nome depois
+   de um número ímpar de travessões é dito, não está */
+const naFala = (n) => ((n.antes.match(/[—–]/g) || []).length % 2) === 1;
+/* «para o Cão Prateado», «as Celas»: o artigo plural, ou o artigo depois de
+   preposição, diz lugar ou coisa — não gente */
+const comArtigoDeCoisa = (n) => { const a = palavras(n.antes); const u = a[a.length - 1], p = a[a.length - 2]; return !!u && (["os", "as", "uns", "umas"].includes(u.base) || (["o", "a", "um", "uma"].includes(u.base) && !!p && PREP_ANTES.has(p.base))); };
+
+export function aGenteInventadaDaProsa(narrativa, estado, opcoes) {
+  if (typeof narrativa !== "string" || !narrativa.trim()) return [];
+  const E = obj(estado), O = obj(opcoes);
+  const achados = [];
+  for (const frase of frasesDe(narrativa)) {
+    const ns = nomesDaFrase(frase);
+    for (let i = 0; i < ns.length; i++) {
+      const n = ns[i];
+      if (depoisDePreposicao(n) || naFala(n) || comArtigoDeCoisa(n)) continue;
+      /* «Ivarr e Ceridwen acendem»: o primeiro de dois coordenados age com o verbo do segundo */
+      const prox = ns[i + 1];
+      const coord = prox && /^\s*e\s*$/.test(n.depois.slice(0, Math.max(0, n.depois.indexOf(prox.nome)))) ? prox : null;
+      if (age(n) || (coord && age(coord))) achados.push({ nome: n.nome, trecho: frase.slice(0, 160) });
+    }
+  }
+  if (!achados.length) return [];
+  const conhecido = conhecidoDaPessoa(E, O);
+  const out = [];
+  for (const a of achados) {
+    if (out.some((x) => palavrasDe(x.nome) === palavrasDe(a.nome)) || conhecido(a.nome)) continue;
+    out.push(a);
+  }
+  return out;
+}
+
+function vetoDaPessoa(p, turno) {
+  const linha = PS.linha(p.nome);
+  const corta = linha.length > PS.letras ? linha.slice(0, PS.letras - 1) + "…" : linha;
+  const toques = [...new Set(palavrasDe(p.nome).split(" ").filter((x) => x.length >= 4))];
+  return { especie: PS.especie, alvo: `pessoa:${palavrasDe(p.nome)}`, nome: p.nome, linha: corta, toques, turno, ate: turno == null ? null : turno + PS.vida, cidade: "" };
+}
+
+/* ============================================================
    lembrarOInventado(vivos, narrativa, estado, ctx) → o livro de vetos
    do turno: os vivos (os do Juiz e os daqui), sem os objetos que o
    sistema entretanto passou a conhecer (a quest plantou-o, a busca
@@ -507,6 +655,8 @@ export function lembrarOInventado(vivos, narrativa, estado, ctx) {
   const opc = { frase: c.frase, saque: c.saque, lugarDoTurno: c.lugarDoTurno, doNarrador };
   /* o objeto que deixou de ser inventado sai do livro */
   const ficam = arr(vivos).filter((x) => {
+    /* S4d: a pessoa que o sistema entretanto passou a conhecer sai do livro */
+    if (x && typeof x === "object" && x.especie === T.pessoa.especie) return !pessoaConhecida(x.nome || String(x.alvo || "").replace(/^pessoa:/, ""), estado, c);
     if (!x || typeof x !== "object" || x.especie !== T.especie) return true;
     const nome = String(x.alvo || "").replace(/^objeto:/, "");
     const cab = palavrasDe(nome).split(" ").map((p) => CABECAS.get(p)).find(Boolean);
@@ -520,7 +670,10 @@ export function lembrarOInventado(vivos, narrativa, estado, ctx) {
   const dados = new Set(novos.map((v) => v.alvo));
   const naCena = oPostoNaCena(narrativa, estado, opc).map((o) => vetoDe(o, turno, true))
     .filter((v) => !dados.has(v.alvo) && !novos.some((n) => n.toques.some((p) => v.toques.includes(p)))).slice(0, T.naCenaPorTurno);
-  const todosNovos = [...novos, ...naCena];
+  /* S4d: a gente que a prosa nomeou e o sistema não tem */
+  let gente = [];
+  try { gente = aGenteInventadaDaProsa(narrativa, estado, c).slice(0, T.pessoa.porTurno).map((p) => vetoDaPessoa(p, turno)); } catch { gente = []; }
+  const todosNovos = [...novos, ...naCena, ...gente];
   const calados = [...ficam.filter((x) => x && x.soAoToque && !todosNovos.some((n) => n.alvo === x.alvo)), ...naCena];
   const sobra = new Set(calados.slice(0, Math.max(0, calados.length - T.naCenaNoLivro)));
   return andarOsVetos(ficam.filter((x) => !sobra.has(x)), todosNovos, { turno, cidade: typeof c.cidade === "string" ? c.cidade : undefined });

@@ -1,7 +1,7 @@
 import {
   SITIOS_DO_ERMO, SITIOS_DE_MASMORRA, SITIOS_EMBARCADOS, SITIOS_DE_COMBOIO, SITIOS_DE_ESTRADA,
   chaveDoSitio, escolherSitio, sitioDaVez, falaDoSitio, envelopeDoSitio, podeArrumar, ACAMPAMENTO_PROMPT,
-  ABRIGOS, abrigoPorNivel, abrigoDoSitio,
+  ABRIGOS, abrigoPorNivel, abrigoDoSitio, LUGAR_A_CEU_ABERTO,
 } from "../src/acampamento.js";
 import { aplicarLongo, dadosQueVoltam } from "../src/descanso.js";
 import { TROCA_DE_SLOT, SEGUNDOS_DA_RODADA, trocaDeSlot, podeTrocarAgora } from "../src/itens.js";
@@ -339,6 +339,17 @@ sec("O DIA QUE SE COME (29/10, a 13.ª sessão): o que o botão cobra é o que a
   const iManha = corpo.indexOf("pers = { ...pers, ultimoLongo: diaRef.current };");
   ok(iCome > 0 && /pers = comeu\.pers;/.test(corpo) && iManha > iCome, "o descanso come na ficha que segue (antes da manhã gravar a dela)");
   ok(!/setPersonagem\(\(pp\) => \(\{\s*\.\.\.pp,\s*suprimentos:/.test(corpo), "e não sobra a escrita funcional que a manhã apagava");
+}
+
+/* S4d: a boca da masmorra e «o lado de fora dos portões» ficam a céu aberto —
+   nem «dentro de», nem «sob algum teto» (a frase vinha desta tabela) */
+{
+  const fora = escolherSitio({ lugar: { nome: "o lado de fora dos portões", distancia: "perto" }, cidade: "Ponte do Martelo" });
+  ok(falaDoSitio(fora) === "⛺ Você monta acampamento no lado de fora dos portões — " + ABRIGOS[LUGAR_A_CEU_ABERTO.abrigo].rotulo + ".", "S4d: fora dos portões, ao relento e sem «dentro» — " + falaDoSitio(fora));
+  const boca = escolherSitio({ lugar: { nome: "A Boca do Poço", distancia: "perto" }, cidade: "Ponte do Martelo" });
+  ok(!/dentro|sob algum teto/.test(falaDoSitio(boca)), "S4d: a boca da masmorra («perto») também — " + falaDoSitio(boca));
+  const torre = escolherSitio({ lugar: { nome: "A Torre Velha", distancia: "arredores" }, cidade: "Ponte do Martelo" });
+  ok(falaDoSitio(torre) === "⛺ Você monta acampamento dentro da Torre Velha — sob algum teto.", "S4d: o lugar com teto continua «dentro», sob teto");
 }
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\ntudo verde");

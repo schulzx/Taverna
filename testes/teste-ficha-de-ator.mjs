@@ -37,7 +37,7 @@ import {
   REGISTOS_DE_FALA, TRATO_DO_HEROI, ORDEM_DO_CORTE, ROTULOS_PROIBIDOS, CRIVO_DA_ORDEM, FRASE_DO_SISTEMA,
   TRADUCAO_DA_PAUTA, TRADUCAO_DOS_ENVELOPES, A_ULTIMA_PALAVRA, O_DADO_NA_FRASE, oDadoDaFrase, A_LUTA_DITA,
   O_QUE_A_FRASE_FAZ, A_INTENCAO_DITA, A_VOZ_DO_NUMERO, O_COMBINADO, A_CONVERSA_DA_FRASE, A_RESPOSTA_DITA,
-  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA, A_VOZ_QUE_MARCA, A_VEZ_DA_MARCA, A_ESTRADA_DITA,
+  A_VOZ_QUE_PERGUNTA, A_ABERTURA_DITA, A_VOZ_QUE_MARCA, A_VEZ_DA_MARCA, A_ESTRADA_DITA, APRECO_FALADO,
 } from "../src/motor/ficha-de-ator.js";
 import { abrirViagem, ESTADOS as ESTADOS_DA_VIAGEM } from "../src/viagem.js";
 import { QUER, nucleoDaCampanha } from "../src/nucleo.js";
@@ -579,6 +579,13 @@ const tSD = aFichaDeAtor({ frase: "[SEM DADO — DECISÃO DO SISTEMA] Isto que e
 t("o teste que o sistema concedeu (SEM DADO) chega como fato, e não fica sem tradução", ac(tSD).includes("Irene tentou vasculhar, e conseguiu.") && tSD.rastro.every((x) => x.cai !== "semTraducao"));
 const tJS = aFichaDeAtor({ frase: "Olho em volta.", nota: `${BARRIL}\nMOMENTO   JÁ SE SABE (do sistema — o herói achou-o em O Largo do Cardo; se a cena ainda não o mostrou, mostre-o agora): um túnel com pegadas de poucas noites.`, estado: IRENE });
 t("o JÁ SE SABE do momento (o que o herói achou no marco) chega como fato, sem a ordem", ac(tJS).includes("Irene já sabe o que achou: um túnel com pegadas de poucas noites.") && !/mostre-o/.test(tJS.texto) && verificarAFicha(tJS.texto).length === 0);
+
+/* S4d: o veto de quem não está (quem-esta-aqui.js) e o apreço das potências chegam como fato */
+const tNE = aFichaDeAtor({ frase: "Olho em volta.", nota: `${BARRIL}\nNÃO PODE  pôr a agir ou a falar quem não está nesta cena: Ivarr Voz-Grave, Ceridwen (ficou em O Mercado de Cordas); aqui estão Yvete Perna-Seca`, estado: IRENE });
+t("S4d: a linha de quem não está vira fronteira: quem, e onde ficou", tNE.partes["AS FRONTEIRAS"].includes("Ivarr Voz-Grave, Ceridwen não estão aqui: ficaram em O Mercado de Cordas.") && verificarAFicha(tNE.texto).length === 0);
+const tMU = aFichaDeAtor({ frase: "Olho em volta.", nota: `${BARRIL}\nO MUNDO   A Liga do Corvo (poder 52, aliança com você): quer ouro. Apreço por você: 20/100. A Ordem (poder 47): quer almas. Apreço por você: 75/100.`, estado: IRENE });
+const desconfia = APRECO_FALADO[0].o.replace("{H}", "Irene");
+t("S4d: o apreço sai em palavras (APRECO_FALADO), sem «N/100» nem «poder N»", ac(tMU).includes(`A Liga do Corvo (aliança com Irene): quer ouro. ${desconfia[0].toUpperCase() + desconfia.slice(1)}.`) && ac(tMU).includes("Tem Irene em boa conta.") && !/\d+\/100|poder \d/.test(tMU.texto) && verificarAFicha(tMU.texto).length === 0);
 
 console.log(`\nficha de ator: ${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);
