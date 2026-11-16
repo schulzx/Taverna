@@ -10,7 +10,8 @@
    §5 a mesa: três à vista, o novo à frente, imutável, o número de ordem;
    §6 o dado falso não pousa (face desconhecida, valor fora, NaN);
    §7 a linha que o jogador lê, e o teto de dados. */
-import { A_BANDEJA, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, naBandeja, aLinhaDoLancamento, NOME_DO_DESFECHO } from "../src/motor/a-bandeja.js";
+import { A_BANDEJA, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, naBandeja, aLinhaDoLancamento, asLinhasDoLancamento, NOME_DO_DESFECHO } from "../src/motor/a-bandeja.js";
+import { readFileSync } from "node:fs";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -95,6 +96,25 @@ sec("§7 o teto e os nomes");
   t("a linha não fala do sistema (nem «rolagem», nem «sistema»)", !/rolagem|sistema|bandeja/i.test(aLinhaDoLancamento(lancamentoDoTeste({ valor: 5, dc: 9, rotulo: "Escalar" }))));
   /* MOVIDA em 04/11 (a spec da bandeja, Mesa C): o tempo do movimento saiu do motor para MOVIMENTO_DO_DADO (estilo.js) — é forma, não lance; a suíte da mesa C prende-o */
   t("o motor não guarda tempo de animação", A_BANDEJA.rolarMs === undefined && A_BANDEJA.pousoMs === undefined);
+}
+
+/* 16/11 (a prova jogada da mesa): na zona direita a linha única saía em mono
+   e cortada dos dois lados («cepção · 19 + 1 = 20 · pre»), e as 20 faces
+   vazavam. A bandeja estreita põe as partes uma por linha, na letra da mesa. */
+console.log("\nas três linhas na coluna (16/11)");
+{
+  const l = lancamentoDoTeste({ valor: 19, mod: 1, dc: 13, rotulo: "Percepção" });
+  const L = asLinhasDoLancamento(l);
+  t("a perícia, a conta e o alvo, cada um na sua linha", L.pericia === "Percepção" && L.conta === "19 + 1 = 20" && L.alvo === "precisa de 13", JSON.stringify(L));
+  t("a linha única é a junção das três (uma regra só)", aLinhaDoLancamento(l) === "Percepção · 19 + 1 = 20 · precisa de 13", aLinhaDoLancamento(l));
+  t("lixo dá partes vazias", asLinhasDoLancamento(null).conta === "" && asLinhasDoLancamento({}).pericia === "");
+  const pb = readFileSync(new URL("../src/painel-bandeja.jsx", import.meta.url), "utf8");
+  const i0 = pb.indexOf("if (naColuna) {");
+  const ramo = pb.slice(i0, pb.indexOf("\n  }\n  return (", i0));
+  t("em coluna: a letra da mesa, sem mono, sem corte, sem as 20 faces",
+    ramo.length > 100 && /letraDaMesa\("contagem"\)/.test(ramo) && !/tv-mono/.test(ramo) && !/ellipsis|nowrap/.test(ramo) && !/FacesDoD20/.test(ramo));
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("a zona direita e a tira do telefone pedem a bandeja em coluna", (app.match(/<Bandeja naColuna /g) || []).length === 2);
 }
 
 console.log(`\na bandeja: ${bons} ok · ${maus} falhas`);

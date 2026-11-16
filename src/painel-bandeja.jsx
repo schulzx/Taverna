@@ -42,7 +42,8 @@ import { O_CHAMADO } from "./motor/o-mestre-chama.js";
    (`golpePorExtenso`). Rola GOLPE_SENTIDO.dadoNaBandeja, um toque na bandeja
    salta, e nada disto prende a entrada: o golpe já está aplicado. */
 import { golpePorExtenso } from "./batalha-na-tela.js";
-import { aLinhaDoLancamento, NOME_DO_DESFECHO } from "./motor/a-bandeja.js";
+import { aLinhaDoLancamento, asLinhasDoLancamento, NOME_DO_DESFECHO } from "./motor/a-bandeja.js";
+import { letraDaMesa } from "./pecas-da-mesa.jsx";
 import { tocarDado } from "./som-da-mesa.js";
 
 /* o dado pousou: o som, e nunca o turno */
@@ -179,7 +180,7 @@ export function useLance(lancamento, aoPousar = null) {
   return { rolando: !!lancamento && rolandoN === n, troca, pousar };
 }
 
-export function Bandeja({ lancamentos = [], fresca = true }) {
+export function Bandeja({ lancamentos = [], fresca = true, naColuna = false }) {
   const lista = Array.isArray(lancamentos) ? lancamentos.filter(Boolean) : [];
   const ultimo = lista[0] || null;
   const n = ultimo ? ultimo.n : 0;
@@ -207,6 +208,45 @@ export function Bandeja({ lancamentos = [], fresca = true }) {
   /* o golpe: as 20 faces, as que acertam acesas; pousado, a que saiu marcada */
   const doGolpe = ultimo.golpe && Array.isArray(ultimo.acertam) ? golpePorExtenso({ faces: ultimo.acertam, criticoEm: ultimo.criticoEm }) : null;
   const natural = (ultimo.dados.find((d) => !d.posto) || {}).valor;
+  /* A BANDEJA EM COLUNA (16/11, a prova jogada da mesa): na zona direita da
+     mesa (e na tira do telefone) a fileira horizontal cortava a frase dos
+     dois lados e as 20 faces vazavam. Em coluna: os dados ao centro, e a
+     frase em três linhas que quebram — a perícia, a conta, o alvo com o
+     desfecho —, na letra da mesa (ESCALA_DA_MESA), nunca mono nem cortada.
+     As 20 faces do golpe não cabem em 236 px: em coluna ficam de fora (a
+     conta e o desfecho dizem o mesmo). O lance novo é do V3. */
+  if (naColuna) {
+    const L = asLinhasDoLancamento(ultimo);
+    return (
+      <div className="tv-fade tv-bandeja" role="group" aria-label="Os dados na mesa" data-bandeja-em-coluna=""
+        onClick={rolando ? pousar : undefined}
+        title={rolando ? "toque para o dado pousar já" : undefined}
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: BANDEJA.espaco, width: "100%", boxSizing: "border-box",
+          padding: `${BANDEJA.espaco + 4}px ${BANDEJA.espaco + 2}px`, textAlign: "center", overflowWrap: "anywhere" }}>
+        <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: BANDEJA.espaco + 4, alignItems: "center", padding: "4px 0" }}>
+          {ultimo.dados.map((d, i) => <DadoDoLance key={`${n}-${i}`} d={d} tam={tam} rolando={rolando && !d.posto} desfecho={ultimo.desfecho} troca={troca + i} />)}
+        </span>
+        <span aria-live="polite" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 0, maxWidth: "100%" }}>
+          {L.pericia && <span style={{ ...letraDaMesa("rotulo"), color: T.inkMeio }}>{L.pericia}</span>}
+          {!rolando && <span style={{ ...letraDaMesa("contagem"), color: T.ink }}>{L.conta}</span>}
+          {!rolando && (L.alvo || desfecho) && (
+            <span className="tv-dado-veredito" style={{ ...letraDaMesa("servico"), color: corD, animationDuration: `${MOVIMENTO_DO_DADO.veredito}ms` }}>
+              {L.alvo}{L.alvo && desfecho ? " — " : ""}{desfecho && <PalavraDoDesfecho desfecho={ultimo.desfecho} cor={corD} />}
+            </span>
+          )}
+        </span>
+        {anteriores.length > 0 && (
+          <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: BANDEJA.espaco }} aria-hidden="true">
+            {anteriores.map((l) => (
+              <span key={l.n} style={{ display: "inline-flex", gap: 2, opacity: 0.45 }}>
+                {l.dados.filter((d) => !d.posto).slice(0, 2).map((d, j) => <Corpo key={j} faces={d.faces === 100 ? 10 : d.faces} legenda={d.faces === 100 ? String(d.valor % 10) : String(d.valor)} papel={d.papel} tam={BANDEJA.dadoPequeno} />)}
+              </span>
+            ))}
+          </span>
+        )}
+      </div>
+    );
+  }
   return (
     <div className="tv-fade tv-bandeja" role="group" aria-label="Os dados na mesa"
       onClick={rolando ? pousar : undefined}

@@ -28317,7 +28317,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             ) : null}
             direita={dadosDaMesaCheia ? (
               <LimiteDasFichas key="v4-direita">
-                <ColunaDasPecas bandeja={bandeja.length > 0 ? <LimiteDasFichas key="bandeja"><Bandeja lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
+                <ColunaDasPecas bandeja={bandeja.length > 0 ? <LimiteDasFichas key="bandeja"><Bandeja naColuna lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
                   fundoDaBandeja={dadosDaMesaCheia.luz.feltroFundo}
                   hora={(minuto || 0) / 60} falaDaHora={dadosDaMesaCheia.falaDaHora} prazo={dadosDaMesaCheia.prazo}
                   tempoAberto={tempoAberto} aoAbrirTempo={() => { try { setTempoAberto((v) => !v); } catch (e) { calou("V4 · a vela abre o tempo", e); } }}
@@ -29350,7 +29350,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   aoAbrirFicha={abrirOHeroi} rotuloDoHeroi={rotuloDaCartaDoHeroi}
                   aoAbrirCompanheiro={abrirCompanheiro}
                   objetos={objetosDaTira()} mantimentos={mantimentosDaTira()}
-                  bandeja={bandeja.length > 0 ? <Bandeja lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /> : null} />
+                  bandeja={bandeja.length > 0 ? <Bandeja naColuna lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /> : null} />
               </LimiteDasFichas>
             ) : null}
           </main>

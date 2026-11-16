@@ -210,13 +210,25 @@ export function naBandeja(bandeja, l) {
    «Saltar o muro · 14 + 2 = 16 · precisa de 13»; o d100 diz a chance. */
 export function aLinhaDoLancamento(l) {
   if (!l) return "";
+  const { pericia, conta, alvo } = asLinhasDoLancamento(l);
+  return `${pericia ? pericia + " · " : ""}${conta}${alvo ? " · " + alvo : ""}`;
+}
+
+/* AS TRÊS LINHAS DO LANCE (16/11, a prova jogada da mesa): na coluna da
+   direita a linha única saía cortada dos dois lados («cepção · 19 + 1 = 20 ·
+   pre»). As mesmas partes, separadas, para a bandeja estreita as pôr uma
+   por linha: a perícia; a conta («19 + 1 = 20», com o além); o alvo
+   («precisa de 13» ou «chance 40%»). A linha única é a junção delas — uma
+   regra só. Lixo dá partes vazias. */
+export function asLinhasDoLancamento(l) {
+  if (!l || !Array.isArray(l.dados)) return { pericia: "", conta: "", alvo: "" };
   const contados = l.dados.filter((d) => !d.posto);
   const soma = contados.map((d) => d.valor).join(" + ");
   const comMod = l.mod ? `${soma} ${l.mod > 0 ? "+" : "−"} ${Math.abs(l.mod)} = ${l.total}` : (contados.length > 1 && !l.serie ? `${soma} = ${l.total}` : `${l.total}`);
   const conta = l.serie ? contados.map((d) => d.valor).join(" · ") : comMod;
-  const alvo = l.alvo == null ? "" : l.menorGanha ? ` · chance ${l.alvo}%` : ` · precisa de ${l.alvo}`;
+  const alvo = l.alvo == null ? "" : l.menorGanha ? `chance ${l.alvo}%` : `precisa de ${l.alvo}`;
   const alem = l.alem > 0 ? ` (+${l.alem})` : "";
-  return `${l.rotulo ? l.rotulo + " · " : ""}${conta}${alem}${alvo}`;
+  return { pericia: l.rotulo ? String(l.rotulo) : "", conta: `${conta}${alem}`, alvo };
 }
 
 /* O nome do desfecho, como a mesa o diz. */
