@@ -191,6 +191,8 @@ export const CAMPOS = Object.freeze([
   C("abasAbertas", "bastidor", "lista"),
   C("preferenciaDaReacao", "bastidor", "texto"),
   C("sessao", "bastidor", "objeto"),
+  /* V10 (16/11): o registro da sessão (registro-da-sessao.js) — { v, atual, ultima }; aditivo, save antigo = null (abre a sessão 1) */
+  C("registroDaSessao", "bastidor", "objeto"),
   C("guardado", "cena", "objeto"),
   C("backupEm", "bastidor", "qualquer"),
   C("rolagem", "cena", "objeto"),

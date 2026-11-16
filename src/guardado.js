@@ -966,10 +966,13 @@ const destinoPorId = (id) => DESTINOS_DA_FALHA.find((d) => d.id === id) || DESTI
    · `abasAbertas`, `preferenciaDaReacao` — escolhas da pessoa, não do
      mundo; abrir uma aba durante a espera não é parte do turno.
    · `backupEm`, `salvoEm` — marcas da gravação, não do jogo.
+   · `registroDaSessao` (V10) — o que a sessão já rolou: a exceção de X3 é
+     sempre a mesma, o que os dados já rolaram não desfaz, e o cartão da
+     sessão conta o dado que o jogador viu pousar.
    ------------------------------------------------------------ */
 export const SOBREVIVEM_AO_DESFEITO = [
   "custo", "provedor", "provedores", "guardado",
-  "abasAbertas", "preferenciaDaReacao", "backupEm", "salvoEm",
+  "abasAbertas", "preferenciaDaReacao", "backupEm", "salvoEm", "registroDaSessao",
 ];
 
 /* ------------------------------------------------------------

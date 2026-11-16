@@ -298,6 +298,9 @@ import { fichasDoSeFalhar } from "./quadro-na-tela.js";
 import { garantirCativeiro, aplicarSaida } from "./cativeiro.js";
 import { oSocorro, aplicarSocorro, passarHorasNoGrupo } from "./socorro.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, lancamentoDoAtaque } from "./motor/a-bandeja.js";
+/* V10 (16/11): o registro da sessão — o que aconteceu desde que a mesa abriu (cartão e «Da última vez…») */
+import { abrirSessao, anotarTurno, anotarLance, anotarLuta, oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, linhaDaUltimaVez } from "./registro-da-sessao.js";
+import { fichaDoVilao } from "./plano-do-vilao.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
 import { SO_ISSO, oEnvelopeDaMasmorra, oEnvelopeDoCorreio, oEnvelopeDoAcampamento, oEnvelopeDaAbertura, oEnvelopeDaViagem, oEnvelopeDoFio, oEnvelopeDaFicha, oEnvelopeDoMundo, oEnvelopeDosPoderes, oEnvelopeDoMercado, oEnvelopeDoDominio, oEnvelopeDoTempo, oEnvelopeDaFe, oEnvelopeDoCaminho, oEnvelopeDaGente, oEnvelopeDoJogador, oEnvelopeDoCorpo, oEnvelopeDoDesfecho, generoDoAlvo } from "./motor/envelopes-do-turno.js";
@@ -5413,7 +5416,8 @@ export default function Taverna() {
      estava a morrer, que missões já estavam concluídas, a última luta. É a
      TRANSIÇÃO que grava o feito; o primeiro olhar (null) só aprende. */
   const antesDasMarcasRef = useRef({ morrendo: null, concluidas: null, combate: null });
-  const aBandeja = (l) => { try { if (!l) return; const b = naBandeja(bandejaRef.current, l); bandejaRef.current = b; setBandeja(b); } catch (err) { calou("a bandeja", err); } };
+  const aBandeja = (l) => { try { if (!l) return; const b = naBandeja(bandejaRef.current, l); bandejaRef.current = b; setBandeja(b); } catch (err) { calou("a bandeja", err); }
+    if (l) noRegistro((r) => anotarLance(r, l, { frase: ultimaFraseDoJogadorRef.current, agora: Date.now() })); };
   const [propostaAberta, setPropostaAberta] = useState(false);
   /* S4b (16/11): a proposta é do sítio onde nasceu — mudou o lugar, a cidade,
      a estrada ou a masmorra, ela sai (a-proposta-da-frase.js#propostaAindaVale).
@@ -5637,6 +5641,33 @@ export default function Taverna() {
      `sugeriu` guardam o outro lado — um clímax por sessão, e não antes
      de o jogador ter jogado alguma coisa. */
   const sessaoRef = useRef({ ateODia: 0, turnos: 0, sugeriu: false });
+  /* V10 · O REGISTRO DA SESSÃO (registro-da-sessao.js): campo de save novo
+     e aditivo, `registroDaSessao`. Abre no load (a virada da visita) e na
+     campanha nova; anota o turno (a frase do jogador, em pushMsgs), o lance
+     (todo dado que a bandeja pousa) e o fecho da luta. A frase do maior
+     dado é a do jogador, guardada no instante em que ele a escreveu. */
+  const registroDaSessaoRef = useRef(null);
+  const ultimaFraseDoJogadorRef = useRef("");
+  const estampaDaSessaoRef = useRef(null);
+  const daUltimaVezRef = useRef("");
+  const estadoDoRegistro = () => ({
+    personagem: personagemRef.current, missoes: missoesRef.current, espinha: espinhaRef.current,
+    cativeiro: cativeiroRef.current, fimSemSaida: fimSemSaidaRef.current, lugar: lugarRef.current,
+  });
+  const vilaoDoRegistro = () => {
+    try {
+      const esp = espinhaRef.current;
+      const fv = fichaDoVilao(esp);
+      if (!fv) return null;
+      return { nome: fv.nome || "", camada: (((esp || {}).fio || {}).vilao || {}).camada || "rumor" };
+    } catch (e) { calou("V10 · o vilão do registro", e); return null; }
+  };
+  const noRegistro = (f) => {
+    try {
+      const atual = registroDaSessaoRef.current || abrirSessao(null, estadoDoRegistro());
+      registroDaSessaoRef.current = f(atual);
+    } catch (e) { calou("V10 · o registro da sessão", e); }
+  };
   const abasAbertasRef = useRef([]);
   const [abasAbertas, setAbasAbertas] = useState([]);
 
@@ -8966,6 +8997,7 @@ export default function Taverna() {
         noChao: [],
       };
       fechoDaLutaRef.current = fecho;
+      noRegistro((r) => anotarLuta(r, { caidos: fecho.caidos, desfecho: fecho.desfecho }));
       /* A luta fechou FORA de um turno (o golpe que derruba o último, a fuga):
          o turno que a narra começa já a seguir, no mesmo clique. Se nenhum
          começar, o fecho não pode ficar a carimbar o que vier depois — no
@@ -9026,6 +9058,14 @@ export default function Taverna() {
     try {
       novas = carimbarALuta(novas, combateRef.current || fechoDaLutaRef.current); /* T2-A (28/10): a regra mora em src/motor/carimbo-da-luta.js */
     } catch (e) { calou("carimbar naLuta na mensagem", e); }
+    try {
+      for (const m of Array.isArray(novas) ? novas : []) {
+        if (!m || m.autor !== "jogador" || typeof m.texto !== "string" || !m.texto.trim()) continue;
+        ultimaFraseDoJogadorRef.current = m.texto;
+        const e = estampaDaSessaoRef.current || {};
+        noRegistro((r) => anotarTurno(r, { frase: m.texto, agora: Date.now(), lugar: e.lugar || "", cena: e.cena || "" }));
+      }
+    } catch (e) { calou("V10 · a frase no registro", e); }
     if (seguraRef.current) { seguraRef.current = [...seguraRef.current, ...novas]; return; }
     mensagensRef.current = [...mensagensRef.current, ...novas];
     setMensagens(mensagensRef.current);
@@ -9081,6 +9121,7 @@ export default function Taverna() {
          viaja no save. Sem ela a janela nao tem desligador (WCAG 2.2.1). */
       preferenciaDaReacao: preferenciaDaReacaoRef.current,
       sessao: sessaoRef.current,
+      registroDaSessao: registroDaSessaoRef.current,
       /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
          contou viaja no save. Sem isto, cair a rede e recarregar apagava um
          golpe ja aplicado - ou o turno se completa, ou nao comecou. */
@@ -12026,6 +12067,7 @@ export default function Taverna() {
     diplomaciaRef.current = garantirDiplomacia(null); setDiploState(diplomaciaRef.current);
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
+    registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; ultimaFraseDoJogadorRef.current = "";
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     esquecerAsCerimonias();
@@ -12464,6 +12506,14 @@ export default function Taverna() {
       } else {
         sessaoRef.current = { ateODia: (sv.sessao && sv.sessao.ateODia) || 0, turnos: 0, sugeriu: false };
       }
+      /* V10: a sessão que se lembra (a do save, antes da virada) vira a linha
+         «DA ÚLTIMA VEZ» do primeiro turno da volta; e abre a sessão nova */
+      try {
+        const lembrar = aSessaoParaLembrar(sv.registroDaSessao);
+        const v = vilaoDoRegistro();
+        daUltimaVezRef.current = lembrar ? linhaDaUltimaVez(oResumoDaSessao(lembrar, sv), oFioMaisQuente(sv, { passos: passosDasQuestsAgora(), vilao: v && v.camada && ["rosto", "guerra", "queda"].includes(v.camada) ? v : null })) : "";
+        registroDaSessaoRef.current = abrirSessao(sv.registroDaSessao, sv);
+      } catch (e) { calou("V10 · o registro na volta", e); registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; }
       /* e a CENA só é reaberta a pedido: é a única parte disto que o
          código não sabe fazer, e a única que custa uma chamada. */
       if (comResumo && !sv.rolagem) {
@@ -27450,6 +27500,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         try { masmorrasAqui = lugarRef.current ? masmorrasDoMundo(sementeMundo(), mapaRef.current) : []; } catch (err) { calou("V4 · as masmorras da estampa", err); }
         estampa = { lugar: titulo, sub, cena: cenaDaEstampa({ bioma, emMasmorra: emMasmorra || !!(cena && cena.subterraneo), jornada: jornadaRef.current, lugar: lugarRef.current, masmorras: masmorrasAqui }), estado: estadoDaEstampa(composicaoDaMesa.nome, chegou) };
       } catch (err) { calou("V4 · a estampa da página", err); }
+      if (estampa) estampaDaSessaoRef.current = { lugar: estampa.lugar, cena: estampa.cena };
       let prazo = "";
       try { const p = prazosDaCinta(relogios); if (p && p.length) prazo = p[0].noites <= 0 ? "o prazo é hoje" : p[0].noites === 1 ? "falta 1 noite" : "faltam " + p[0].noites + " noites"; } catch (err) { calou("V4 · o prazo na vela", err); }
       let falaDaHora = "";
