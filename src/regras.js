@@ -81,7 +81,7 @@ export const DADIVAS_EPICAS = [
   { id: "vigor", nome: "Dádiva do Vigor Irreal", desc: "Imune a exaustão, veneno e doença. O cansaço é coisa de mortais.", efeito: { imunidades: ["exaustao", "veneno", "doenca"] } },
   { id: "presenca", nome: "Dádiva da Presença", desc: "+2 em todos os testes sociais; multidões se calam quando você fala.", efeito: { bonusSocial: 2 } },
   { id: "vontade", nome: "Dádiva da Vontade de Ferro", desc: "Vantagem em todas as resistências mentais e contra medo.", efeito: { vantagemMental: true } },
-  { id: "passos", nome: "Dádiva dos Passos Longos", desc: "Move-se o dobro e ignora terreno difícil — nada mais te atrasa.", efeito: { movimento: 2 } },
+  { id: "passos", nome: "Dádiva dos Passos Longos", desc: "Anda o dobro e ignora terreno difícil — nada mais o atrasa.", efeito: { movimento: 2 } },
   { id: "sorte", nome: "Dádiva da Sorte Impossível", desc: "Críticos acontecem com 19 ou 20, não só no 20.", efeito: { criticoEm: 19 } },
 ];
 export const CHANCE_DADIVA_UNICA = 0.15; // 15% de o Mestre criar uma exclusiva

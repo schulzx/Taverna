@@ -414,7 +414,7 @@ export function falaDoAtivoNegado(r) { return r && r.porque ? `⛔ ${r.porque}` 
    um turno só e nunca bloco estático. */
 export const ENVELOPE_DO_GESTO = Object.freeze({
   reliquia: Object.freeze({ cabeca: "RELÍQUIA", eE: "E trate a relíquia como o que ela é: existe UMA no mundo, ela tem história ({historia}) e quem a vê reconhece." }),
-  artefacto: Object.freeze({ cabeca: "ARTEFACTO", eE: "E trate a peça como o que ela é: não há outra igual, porque é a memória desta campanha — tem história ({historia}) e quem a viu nos feitos dela reconhece-a.", lenda: 2, abreLenda: " O que ela já viu (do sistema): " }),
+  artefacto: Object.freeze({ cabeca: "ARTEFACTO", eE: "E trate a peça como o que ela é: não há outra igual, porque é a memória desta campanha — tem história ({historia}) e quem a viu nos feitos dela a reconhece.", lenda: 2, abreLenda: " O que ela já viu (do sistema): " }),
 });
 export function envelopeDoAtivo(rel, texto) {
   if (!rel) return "";

@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-painel-espolio.mjs (TE10, 09/11/2026) — as peças dos espólios na
    tela (src/painel-espolio.jsx), formas.md §TE, renderizadas de verdade.
 
@@ -161,7 +162,7 @@ sec("4. o quadro final (o reduce, e o primeiro toque)");
     equipar[2] && des(equipar[2]).startsWith(W.equipar) && new RegExp(`id="${equipar[1]}"[^>]*>Sai `).test(des(s)), equipar[0]);
   t("«Guardar na mochila» e «Continuar»", texto(s).includes(W.guardar) && texto(s).includes(W.continuar));
   t("o veredito do artefacto: o estado com o nível, e os poderes por acordar", texto(s).includes(`Adormecida · ${W.acorda.replace("{n}", promessaDoArtefacto(ART, 7).nivelQueAcorda)}`) && texto(s).includes(W.porAcordar));
-  t("o favor tem o lugar («A capela fica a dever-te»)", texto(s).includes("A capela fica a dever-te"));
+  t("o favor tem o lugar («A capela fica a dever-te»)", texto(s).includes("A capela fica te devendo"));
   t("a barra mostra o que havia a 0,55 e o que entra cheio", s.includes("width:33.33") && s.includes(`background:rgba(240,162,59,0.55)`));
   t("no telefone, as cartas a ×0,8 (96 de largo) e o veredito de 343", s.includes("width:96px") && s.includes(`max-width:${VEREDITO_DO_ESPOLIO.largura.telefone}px`));
   mundo({ reduce: true, largo: true });
@@ -193,7 +194,7 @@ sec("5. a relíquia, o despertar, o achado e o fecho");
   t("nada mudou, nada se desenha", R.html(h(R.PainelDespertar, { antes: ART, depois: ART, nivel: 7 })) === "");
 
   const chip = R.html(h(R.ChipDoAchado, { achado: { item: { nome: "Anel do astrónomo", tipo: "anel", raridade: "comum", atributos: { defesa: 1 } } }, heroi: { equipados: {} } }));
-  t("o chip do achado é um botão: «Achaste: …, melhor que o teu (CA mais 1). Examinar.»", /^<button/.test(chip) && rotulos(chip)[0] === "Achaste: Anel do astrónomo, comum, melhor que o teu (CA mais 1). Examinar.", rotulos(chip)[0]);
+  t("o chip do achado é um botão: «Achaste: …, melhor que o teu (CA mais 1). Examinar.»", /^<button/.test(chip) && rotulos(chip)[0] === "Você achou: Anel do astrónomo, comum, melhor que o seu (CA mais 1). Examinar.", rotulos(chip)[0]);
   t("pousa, alarga o toque, e leva «▲ CA +1»", /tv-achado-pousa/.test(chip) && /tv-chip-do-achado/.test(chip) && texto(chip).includes("▲ CA +1"));
   const moedas = R.html(h(R.ChipDoAchado, { achado: { diz: "uma dívida escrita, assinada", moedas: 65 }, pousa: false }));
   t("as moedas: a borda de controlo, sem brilho, e já pousado quando não é a primeira vez", moedas.includes(`border:1px solid ${T.lineStrong}`) && !/tv-achado-(pousa|brilho)/.test(moedas));

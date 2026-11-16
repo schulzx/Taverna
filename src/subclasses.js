@@ -159,7 +159,7 @@ export const SUBCLASSES = {
     S("Punho da Montanha", 8, "ataque", "Um único impacto capaz de derrubar um gigante."),
   ],
   "Andarilho": [
-    S("Pés Ligeiros", 3, "utilidade", "Em disparada, move-se muito além do normal, ignora terreno difícil e fica apressado."),
+    S("Pés Ligeiros", 3, "utilidade", "Em disparada, se move muito além do normal, ignora terreno difícil e fica apressado."),
     S("Dança das Sombras", 4, "defesa", "Esquiva do próximo ataque e reaparece atrás do inimigo."),
     S("Corrida Impossível", 5, "utilidade", "Atravessa a cena inteira sem ser tocado."),
     S("Cem Passos", 8, "ataque", "Atinge todos os inimigos em movimento, um após o outro."),
@@ -200,7 +200,7 @@ export const SUBCLASSES = {
   ],
   "Alma da Tempestade": [
     S("Toque Estático", 3, "ataque", "Descarga que atordoa o alvo."),
-    S("Passo do Relâmpago", 4, "utilidade", "Move-se como um raio: fica apressado e sai de cercos."),
+    S("Passo do Relâmpago", 4, "utilidade", "Se move como um raio: fica apressado e sai de cercos."),
     S("Corrente Saltitante", 5, "ataque", "O raio salta de inimigo em inimigo."),
     S("Olho do Furacão", 8, "ataque", "Uma tempestade fechada castiga todos ao redor."),
   ],

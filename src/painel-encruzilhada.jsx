@@ -99,7 +99,7 @@ function nomeDaCarta(o, bolsa) {
   const custo = custoDe(o);
   if (custo > 0) {
     const f = impedidaDe(o) ? faltamDe(o, bolsa) : null;
-    partes.push(impedidaDe(o) ? (f ? `Faltam ${f} moedas.` : `${custo} moedas da tua bolsa, e não chegam.`) : `${custo} moedas da tua bolsa.`);
+    partes.push(impedidaDe(o) ? (f ? `Faltam ${f} moedas.` : `${custo} moedas da sua bolsa, e não chegam.`) : `${custo} moedas da sua bolsa.`);
   }
   if (o.fecha) partes.push(G.fecha.frase);
   const vida = fraseDaVida(o);

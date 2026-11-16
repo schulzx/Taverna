@@ -215,7 +215,7 @@ function VereditoDaCompra({ pers, banca, item, moedas, aoComprar }) {
         O preço: <Moedas n={item.preco} />{porque ? ` — ${porque}` : ""}.{banca && banca.barganha ? ` ${maiuscula(banca.barganha.texto)}.` : ""}{slot ? ` ${fraseDaTroca(slot)}` : ""}
       </p>
       {pode
-        ? <VerboComPreco papel="armado" verbo={`Comprar ${item.nome}`} preco={`${mo(item.preco)} · ${destino} · ficas com ${mo(moedas - item.preco)}`} aoTocar={aoComprar} />
+        ? <VerboComPreco papel="armado" verbo={`Comprar ${item.nome}`} preco={`${mo(item.preco)} · ${destino} · você fica com ${mo(moedas - item.preco)}`} aoTocar={aoComprar} />
         : <VerboComPreco verbo={`Comprar ${item.nome}`} preco={`${mo(item.preco)}`} impedido={`faltam ${mo(item.preco - moedas)}`} />}
     </div>
   );
@@ -232,7 +232,7 @@ function VereditoDaVenda({ v, oferta, vestido, moedas, aoVender }) {
         <Encaixe raridade={r} icone={iconeDoItem(v.it, ICONES_DE_ITEM)} lado={M.encaixeGrande} canto={v.qtd > 1 ? v.qtd : null} />
         <div className="flex flex-col min-w-0">
           <h3 className="tv-titulo" style={{ fontSize: TIPOS.titulo, color: cor, margin: 0 }}>{v.nome}</h3>
-          <span className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>{[v.it && v.it.raridade ? maiuscula(v.it.raridade) : "", rotuloDoTipo(v.it), v.qtd > 1 ? `tens ${v.qtd}` : ""].filter(Boolean).join(" · ") || "da tua bolsa"}</span>
+          <span className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio }}>{[v.it && v.it.raridade ? maiuscula(v.it.raridade) : "", rotuloDoTipo(v.it), v.qtd > 1 ? `você tem ${v.qtd}` : ""].filter(Boolean).join(" · ") || "da sua bolsa"}</span>
         </div>
       </div>
       {of.quem ? <LinhaDaComparacao rotulo="Moedas" antes={`${mo(moedas)}`} depois={`${mo(moedas + of.valor)}`} sinal="melhora" /> : null}
@@ -262,7 +262,7 @@ function Balcao({ balcao, moedas, aoComprar }) {
           </span>
           {[1, 5].map((q) => (s.id === "kit" && q > 1) ? null : (
             moedas >= s.preco * q
-              ? <VerboComPreco key={q} verbo={q > 1 ? `Comprar ${q}` : "Comprar"} preco={`${mo(s.preco * q)} · ficas com ${mo(moedas - s.preco * q)}`} aoTocar={() => aoComprar(s.id, q)} />
+              ? <VerboComPreco key={q} verbo={q > 1 ? `Comprar ${q}` : "Comprar"} preco={`${mo(s.preco * q)} · você fica com ${mo(moedas - s.preco * q)}`} aoTocar={() => aoComprar(s.id, q)} />
               : <VerboComPreco key={q} verbo={q > 1 ? `Comprar ${q}` : "Comprar"} preco={`${mo(s.preco * q)}`} impedido={`faltam ${mo(s.preco * q - moedas)}`} />
           ))}
         </div>
@@ -358,7 +358,7 @@ export function PainelMercado({ personagem, bancas = [], cidade = null, balcao =
     <div className="flex flex-wrap items-start justify-between" style={{ gap: M.peca.folga * 2 }}>
       <div className="flex flex-col min-w-0">
         <h3 className="tv-titulo" style={{ fontSize: TIPOS.titulo, color: OURO.claro, margin: 0 }}>{ativa.nome}</h3>
-        <span className="tv-body" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>{[ativa.rotulo, `${ativa.estoque.length} peça${ativa.estoque.length === 1 ? "" : "s"} hoje`, "a mercadoria renova-se a cada semana"].filter(Boolean).join(" · ")}</span>
+        <span className="tv-body" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>{[ativa.rotulo, `${ativa.estoque.length} peça${ativa.estoque.length === 1 ? "" : "s"} hoje`, "a mercadoria se renova a cada semana"].filter(Boolean).join(" · ")}</span>
         <span className="tv-mono" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>a gaveta dele hoje: <Moedas n={ativa.caixa || 0} /></span>
       </div>
       {ativa.barganha
@@ -389,7 +389,7 @@ export function PainelMercado({ personagem, bancas = [], cidade = null, balcao =
 
   const secaoDaBolsa = bolsa.length ? (
     <div className="flex flex-col" style={{ gap: M.peca.folga * 2 }}>
-      <Rotulo>A tua bolsa · o que te pagam aqui · {vendaveis.length}</Rotulo>
+      <Rotulo>Sua bolsa · o que pagam aqui · {vendaveis.length}</Rotulo>
       <div className="flex flex-wrap" style={{ gap: M.peca.folga * 2 }}>
         {bolsa.map((v) => (
           <PecaDaBolsa key={`${v.origem}|${v.nome}`} v={v} oferta={ofertaDe(v.it)}

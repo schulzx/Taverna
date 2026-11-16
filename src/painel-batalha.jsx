@@ -492,16 +492,16 @@ function ControloDoTurnoDeles({ acelerado = false, aoAcelerar, aoSaltar, noTelef
    ============================================================ */
 const FRASE_DO_PASSO = {
   cumprida: ({ anda, golpe }) => (anda ? `vem ${anda} m e ${golpe}.` : `${golpe}.`),
-  reescolhe: ({ caiu, alvo, golpe }) => `${caiu || "o alvo"} caiu; vira-se para ${alvo} e ${golpe}.`,
-  reescolheAoAlcance: ({ caiu, alvo, golpe, eraEu }) => `já não ${eraEu ? "te alcança" : `alcança ${caiu || "o alvo"}`}; vira-se para ${alvo} e ${golpe}.`,
-  provocacao: ({ golpe }) => (golpe ? `provocado, vem a ti e ${golpe}.` : "provocado, vem a ti."),
+  reescolhe: ({ caiu, alvo, golpe }) => `${caiu || "o alvo"} caiu; se vira para ${alvo} e ${golpe}.`,
+  reescolheAoAlcance: ({ caiu, alvo, golpe, eraEu }) => `já não ${eraEu ? "te alcança" : `alcança ${caiu || "o alvo"}`}; se vira para ${alvo} e ${golpe}.`,
+  provocacao: ({ golpe }) => (golpe ? `provocado, vem a você e ${golpe}.` : "provocado, vem a você."),
   golpeiaSeAlcanca: ({ anda, golpe }) => (golpe ? `vem ${anda} m e ${golpe}.` : `vem ${anda} m.`),
   perdido: () => "o sopro queima o chão vazio.",
   aproximar: ({ anda }) => (anda ? `vem ${anda} m.` : "aproxima-se."),
   fugir: () => "foge.",
   caiu: () => "cai antes de agir.",
   curar: ({ alvo, valor }) => `cura ${alvo}${valor ? `, ${valor}` : ""}.`,
-  proteger: () => "põe-se em guarda.",
+  proteger: () => "se põe em guarda.",
 };
 /* o golpe de um passo em palavras: «acerta, 5» · «erra»; vários alvos, cada
    um com o seu nome */
@@ -809,7 +809,7 @@ function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = 
       <div className="flex items-center" style={{ gap: M.cartao + 4 }}>
         <RostoNaLuta ente={personagem} tamanho={compacto ? M.aperto.retratoDoHeroi : FILA_DA_VEZ.vez + 18} anel={grave ? T.danger : T.amber} />
         <span className="flex flex-col min-w-0" style={{ gap: 2 }}>
-          <span className="tv-mono" style={{ ...LEGENDA, color: vezDeles ? T.danger : T.amber, fontWeight: 700 }}>{vezDeles ? `A vez deles · ${vezDeles}` : "A tua vez"}</span>
+          <span className="tv-mono" style={{ ...LEGENDA, color: vezDeles ? T.danger : T.amber, fontWeight: 700 }}>{vezDeles ? `A vez deles · ${vezDeles}` : "Sua vez"}</span>
           <span className="tv-display truncate" style={{ fontSize: compacto ? M.aperto.nomeDoHeroi : M.letra.nomeDoHeroi, color: T.ink, fontWeight: 600, lineHeight: 1.1 }}>{personagem.nome}</span>
           {linhaDaClasse && <span className="tv-mono truncate" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>{linhaDaClasse}</span>}
         </span>
@@ -857,10 +857,10 @@ function OTeuGolpe({ previsao, estreito = false, saiu = null }) {
     </div>
   );
   return (
-    <section aria-label={`O teu golpe${g.alvo ? ` contra ${g.alvo}` : ""}`} className="flex flex-col shrink-0 w-full"
+    <section aria-label={`Seu golpe${g.alvo ? ` contra ${g.alvo}` : ""}`} className="flex flex-col shrink-0 w-full"
       style={{ padding: M.cartao + 4, gap: M.cartao, borderRadius: M.raio, background: T.pagina, border: `1px solid ${alfa(T.amber, 0.5)}` }}>
       <span className="tv-mono flex items-center" style={{ ...LEGENDA, color: T.amberSoft, gap: 6, fontWeight: 700 }}>
-        <Glifo nome="espadas" tamanho={16} cor={T.amber} />O teu golpe{g.alvo ? ` → ${g.alvo}` : ""}{g.vida != null ? ` · ${g.vida} PV` : ""}
+        <Glifo nome="espadas" tamanho={16} cor={T.amber} />Seu golpe{g.alvo ? ` → ${g.alvo}` : ""}{g.vida != null ? ` · ${g.vida} PV` : ""}
       </span>
       {g.chance != null && linha("Acerto", `${g.chance}%`, T.amberSoft, g.bonus != null && g.defesa != null ? `d20 ${g.bonus >= 0 ? "+" : "−"}${Math.abs(g.bonus)} contra a defesa ${g.defesa}` : null, "acerto")}
       {g.faces && (estreito
@@ -1126,7 +1126,7 @@ function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, c
           </div>
         );
       })}
-      {grupo.length > 0 && <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.inkDim, marginTop: 4 }}>Contigo</span>}
+      {grupo.length > 0 && <span className="tv-mono shrink-0" style={{ ...LEGENDA, color: T.inkDim, marginTop: 4 }}>Com você</span>}
       {grupo.map((g, gi) => {
         const pv = Math.max(0, g.vida || 0), pvMax = Math.max(1, g.vidaMax || 1);
         const caido = pv <= 0;
@@ -1239,7 +1239,7 @@ function FolhaDaPrevisao({ previsao, alvo, anda = false, aoConfirmar, aoCancelar
     /* sobe do fundo POR CIMA dos verbos: fixa no pé, e o campo fica com a
        altura dele (medido a 375 × 812: dentro do fluxo, a folha empurrava o
        campo até zero) */
-    <div role="dialog" aria-label={`O teu golpe contra ${alvo.nome}`} className="fixed flex flex-col"
+    <div role="dialog" aria-label={`Seu golpe contra ${alvo.nome}`} className="fixed flex flex-col"
       style={{ left: 0, right: 0, bottom: 0, zIndex: 30, gap: M.cartao + 4, padding: `${M.cartao}px ${M.chipLadoX + 4}px ${M.chipLadoX + 4}px`, borderRadius: `${P.folha.raio}px ${P.folha.raio}px 0 0`, background: T.pagina, border: `1px solid ${T.amber}` }}>
       <span aria-hidden="true" className="self-center" style={{ width: P.folha.pega[0], height: P.folha.pega[1], borderRadius: P.folha.pega[1], background: T.lineStrong }} />
       <div className="flex items-center" style={{ gap: M.cartao }}>
@@ -2075,7 +2075,7 @@ export function TelaDeBatalha(props) {
         {noTelefone ? (
           <span className="flex flex-col items-end shrink-0" style={{ gap: 2 }}>
             <span key={pulsoDaVez ? `pulso${pulsoDaVez}` : undefined} className={`tv-mono${pulsoDaVez && !contando ? " tv-pulse" : ""}`}
-              style={{ ...LEGENDA, color: contando ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : "A tua vez"}</span>
+              style={{ ...LEGENDA, color: contando ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : "Sua vez"}</span>
             <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoAliado, color: T.ink, maxWidth: 120 }}>{contando ? passoDeles.quem : personagem.nome}</span>
           </span>
         ) : (
@@ -2196,7 +2196,7 @@ export function TelaDeBatalha(props) {
       {/* CB 6 · O ÚLTIMO GOLPE É TEU: o véu cobre o campo (menos a casa dele),
           e o cartão do golpe final de sempre fica por baixo desta linha */}
       {esperando && p.ultimoGolpe && (
-        <p className="tv-display text-center" style={{ fontSize: M.letra.foco + 6, color: T.ink, margin: 0, lineHeight: 1.2 }}>O último golpe é teu.</p>
+        <p className="tv-display text-center" style={{ fontSize: M.letra.foco + 6, color: T.ink, margin: 0, lineHeight: 1.2 }}>O último golpe é seu.</p>
       )}
       {/* CB 9 · a folha da previsão sobe por cima dos verbos, no telefone */}
       {/* CB 18.4 a · a folha do empurrão (G2): com Empurrar armado e um alvo previsto */}

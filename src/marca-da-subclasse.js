@@ -31,7 +31,7 @@ export const MARCA_DA_SUBCLASSE = Object.freeze({
   /* Guerreiro */
   "Cavaleiro": M("fortitude", "o juramento aguenta o que o corpo não aguentaria"),
   "Bárbaro": M("intimidacao", "a fúria chega antes do golpe"),
-  "Gladiador": M("atuacao", "luta para quem está a ver"),
+  "Gladiador": M("atuacao", "luta para quem está vendo"),
   /* Mago */
   "Elementalista": M("arcanismo", "lê os elementos como quem lê um livro"),
   "Necromante": M("medicina", "conhece o corpo por dentro, vivo ou não"),
@@ -39,7 +39,7 @@ export const MARCA_DA_SUBCLASSE = Object.freeze({
   /* Ladino */
   "Assassino": M("furtividade", "ninguém o ouve chegar"),
   "Batedor": M("percepcao", "vê o perigo antes de todos"),
-  "Trapaceiro": M("enganacao", "a mentira sai-lhe a sorrir"),
+  "Trapaceiro": M("enganacao", "a mentira lhe sai a sorrir"),
   /* Clérigo */
   "Sacerdote": M("medicina", "as mãos sabem fechar feridas"),
   "Paladino": M("persuasao", "a fé dele convence"),
@@ -57,15 +57,15 @@ export const MARCA_DA_SUBCLASSE = Object.freeze({
   "Andarilho": M("acrobacia", "o vento não o apanha"),
   "Asceta": M("intuicao", "vê o que os outros escondem de si"),
   /* Druida */
-  "Metamorfo": M("atletismo", "o corpo lembra-se de ser fera"),
+  "Metamorfo": M("atletismo", "o corpo se lembra de ser fera"),
   "Xamã": M("medicina", "as ervas e os espíritos curam"),
   "Guardião": M("sobrevivencia", "a mata é a casa dele"),
   /* Feiticeiro */
   "Linhagem Dracônica": M("intimidacao", "o sangue do dragão assusta"),
-  "Alma da Tempestade": M("acrobacia", "move-se como o relâmpago"),
+  "Alma da Tempestade": M("acrobacia", "se move como o relâmpago"),
   "Magia Selvagem": M("arcanismo", "sente a magia antes de ela chegar"),
   /* Bruxo */
-  "Pacto Infernal": M("enganacao", "o patrono ensinou-lhe a mentir"),
+  "Pacto Infernal": M("enganacao", "o patrono lhe ensinou a mentir"),
   "Pacto Feérico": M("persuasao", "o encanto das fadas fala por ele"),
   "Pacto do Abismo": M("saberes", "sabe coisas que não devia saber"),
   /* Engenheiro */
@@ -75,7 +75,7 @@ export const MARCA_DA_SUBCLASSE = Object.freeze({
   /* Invocador */
   "Mestre das Feras": M("montaria", "as feras seguem-no"),
   "Conjurador Elemental": M("arcanismo", "chama o que os outros só estudam"),
-  "Chamador de Espíritos": M("intuicao", "os mortos sussurram-lhe"),
+  "Chamador de Espíritos": M("intuicao", "os mortos lhe sussurram"),
 });
 
 const txt = (x) => (typeof x === "string" ? x.trim() : "");

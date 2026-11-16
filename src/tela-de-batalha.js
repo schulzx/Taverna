@@ -68,7 +68,7 @@ export const FORA_DA_TELA_DA_LUTA = [
   { id: "examinar",  porque: "catar do chão no meio do golpe" },
   { id: "tempo",     porque: "passa horas" },
   { id: "acampar",   porque: "ENCERRA A LUTA — e já encerrou uma, por engano" },
-  { id: "cronica",   porque: "escreve a lenda enquanto ela ainda está a acontecer" },
+  { id: "cronica",   porque: "escreve a lenda enquanto ela ainda está acontecendo" },
 ];
 
 /* ============================================================

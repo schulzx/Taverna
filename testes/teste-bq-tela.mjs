@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-bq-tela.mjs (BQ, 08/11/2026) — as quests na tela: a encruzilhada e
    o Diário das duas histórias (formas.md «## BQ · as quests na tela»).
 
@@ -174,9 +175,9 @@ sec("2. o veredito antes do clique");
   const s = html(R.Encruzilhada, { aberta: true, veredito: VEREDITO_GIL, quest: "O Salvo-Conduto", titulo: "O que Gil merece", aoConfirmar: () => {}, aoDepois: () => {} });
   const tx = texto(s);
   t("as três cartas, cada uma com as duas faces", VEREDITO_GIL.opcoes.every((o) => tx.includes(o.texto) && tx.includes(o.ganha) && tx.includes(o.custa)));
-  t("os rótulos das faces ficam (GANHAS e CUSTA, um por carta)", (tx.match(/Ganhas/g) || []).length >= 3 && (tx.match(/Custa/g) || []).length >= 3);
+  t("os rótulos das faces ficam (GANHAS e CUSTA, um por carta)", (tx.match(/Você ganha/g) || []).length >= 3 && (tx.match(/Custa/g) || []).length >= 3);
   t("a cabeça: «Uma escolha · O Salvo-Conduto», o título e o que está em jogo", tx.includes("Uma escolha · O Salvo-Conduto") && tx.includes("O que Gil merece") && tx.includes(VEREDITO_GIL.contexto));
-  t("o preço na carta: a ficha «60 da tua bolsa», com a moeda desenhada", /data-ficha="preco"/.test(s) && tx.includes("60 da tua bolsa") && /aria-label="moedas"/.test(s));
+  t("o preço na carta: a ficha «60 da sua bolsa», com a moeda desenhada", /data-ficha="preco"/.test(s) && tx.includes("60 da sua bolsa") && /aria-label="moedas"/.test(s));
   t("o que fecha diz-se na carta: «Esta história acaba aqui.»", tx.includes(GRAVIDADE_DA_ESCOLHA.fecha.frase));
   t("a carta virada diz que há outras maneiras, sem as contar", tx.includes(ENCRUZILHADA.textos.virada.titulo) && /data-carta="virada"/.test(s));
   t("sem carta escolhida, o botão cala: «Escolhe uma carta», desligado", /data-confirmar="calado"/.test(s) && /disabled=""[^>]*data-confirmar="calado"|data-confirmar="calado"[^>]*disabled/.test(s) || (/<button[^>]*disabled=""[^>]*>/.test(s) && tx.includes("Escolhe uma carta")));
@@ -429,13 +430,13 @@ sec("8. os rótulos acessíveis, e o sistema não fala de si");
   const rs = rotulos(s);
   const daVida = rs.find((r) => r.startsWith("Deixá-los acertar contas"));
   t("cada carta é um botão com o nome inteiro: o verbo, o ganho, o custo e o risco",
-    !!daVida && daVida.includes("Ganhas: A conta é deles.") && daVida.includes("Custa: Só um costuma") && daVida.endsWith("Pode custar a vida de Brash."));
+    !!daVida && daVida.includes("Você ganha: A conta é deles.") && daVida.includes("Custa: Só um costuma") && daVida.endsWith("Pode custar a vida de Brash."));
   t("a do preço diz quanto falta, em palavras", rs.some((r) => r.startsWith("Pagar a dívida de Brash") && r.includes("Faltam 12 moedas.")));
   t("a carta virada diz-se inteira", rs.includes(`${ENCRUZILHADA.textos.virada.titulo} ${ENCRUZILHADA.textos.virada.linha}`));
   t("o cartão é um diálogo com o nome da escolha", rs.includes("Uma escolha: Brash e Tomé, frente a frente") && /role="dialog"/.test(s));
   t("os glifos sem rótulo ficam calados ao leitor", /aria-hidden="true"/.test(s));
   const sol = html(R.SoleiraDoMomento, { momentos: { escolha: R.momentoDaEscolha(VEREDITO_BRASH, { titulo: "Brash e Tomé" }).momento } });
-  t("a soleira diz-se: «Uma escolha à tua frente», e o botão leva o verbo e quem", rotulos(sol).includes("Uma escolha à tua frente") && rotulos(sol).some((r) => r.includes("Decidir · Brash e Tomé") && r.includes("pode custar Brash")));
+  t("a soleira diz-se: «Uma escolha à sua frente», e o botão leva o verbo e quem", rotulos(sol).includes("Uma escolha à sua frente") && rotulos(sol).some((r) => r.includes("Decidir · Brash e Tomé") && r.includes("pode custar Brash")));
   /* nada de «quest», «predicado» ou «camada» no que se lê ou se ouve */
   const tudoVisto = [s, sol, html(R.PainelDiario, { historia: {}, missoes: [], leiaute: "mesa", questsDaBiblioteca: [{ missao: { id: "quest:a", titulo: "A", tipo: "principal", status: "ativa", etapas: [{ tipo: "quest", alvo: "b", chave: "a:b", feito: false }] }, estado: { tipo: 1, etapaTexto: "b", falta: [{ predicado: "esteve", texto: "ir ao poço" }] } }], vilaoNoDiario: { camada: "rumor", linhas: [{ texto: "Alguém compra o medo.", nova: true }] } })];
   const lido = tudoVisto.map((x) => texto(x) + " " + rotulos(x).join(" ")).join(" ");

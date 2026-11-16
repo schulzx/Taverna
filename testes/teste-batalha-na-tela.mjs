@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-batalha-na-tela.mjs (CB, 09/11/2026) — a batalha na tela, formas.md
    §CB: a conta pura (src/batalha-na-tela.js) e as peças renderizadas de
    verdade (ui.jsx, grade-de-batalha.jsx, painel-batalha.jsx,
@@ -76,7 +77,7 @@ sec("1. a previsão do golpe sobre o alvo (§CB 3)");
   t("sem previsão, a pílula cala-se", pilulaDaPrevisao(null) === null);
   const g = golpePorExtenso(PREV);
   t("o teu golpe: as 20 faces, acesas as que acertam (6 a 20 com +6 contra 12)", g.faces.length === 20 && g.faces.filter((f) => f.acerta).map((f) => f.n).join(",") === "6,7,8,9,10,11,12,13,14,15,16,17,18,19,20");
-  t("a legenda em coisa de mesa: «acertas com 6 ou mais no dado · o 20 é crítico»", g.legenda === "acertas com 6 ou mais no dado · o 20 é crítico", g.legenda);
+  t("a legenda em coisa de mesa: «acertas com 6 ou mais no dado · o 20 é crítico»", g.legenda === "você acerta com 6 ou mais no dado · o 20 é crítico", g.legenda);
   t("o crítico em 19 diz «19–20 é crítico»", golpePorExtenso({ ...PREV, faces: facesQueAcertam(6, 12, 19), criticoEm: 19 }).legenda.endsWith("19–20 é crítico"));
   t("sem as faces do motor, a fileira cala-se (null), o resto fica", (() => { const x = golpePorExtenso({ ...PREV, faces: undefined }); return x.faces === null && x.legenda === null && x.chance === 78; })());
   t("o dano com a média por extenso («9,5»), o abate e o crítico", g.dano.texto === "6–13" && g.dano.medio === "9,5" && g.abate === 40 && g.critico.chance === 5 && g.critico.dano === "7–21");
@@ -224,7 +225,7 @@ sec("8. a economia, a fila e o aviso da área (§CB 8, §CB 2)");
   t("os tamanhos da fila: 56 a vez, 40 os outros; 44 e 34 no telefone", FILA_DA_VEZ.vez === 56 && FILA_DA_VEZ.espera === 40 && FILA_DA_VEZ.telefone.vez === 44 && FILA_DA_VEZ.caido === 0.3 && FILA_DA_VEZ.agiu === 0.45);
   const area = [{ x: 4, y: 4 }, { x: 5, y: 4 }, { x: 4, y: 5 }, { x: 5, y: 5 }, { x: 3, y: 4 }, { x: 3, y: 5 }, { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 3, y: 3 }];
   const av = avisoDaArea({ x: 4, y: 4 }, [{ inimigo: "Dragão Jovem", vista: { tipo: "sopro", dano: { min: 14, max: 24 }, area } }], { colunas: 14, linhas: 14 });
-  t("dentro do sopro: «Estás na área do sopro do Dragão Jovem (14–24). Sai duas casas para escapar.»", av && av.texto === "Estás na área do sopro do Dragão Jovem (14–24). Sai duas casas para escapar.", av && av.texto);
+  t("dentro do sopro: «Estás na área do sopro do Dragão Jovem (14–24). Sai duas casas para escapar.»", av && av.texto === "Você está na área do sopro do Dragão Jovem (14–24). Saia duas casas para escapar.", av && av.texto);
   t("fora da área, nenhum aviso", avisoDaArea({ x: 9, y: 9 }, [{ inimigo: "Dragão Jovem", vista: { tipo: "sopro", area } }], {}) === null);
 }
 
@@ -298,10 +299,10 @@ sec("3 · 8. as peças: a pílula, a intenção, as casas marcadas, os rótulos"
   const ie = R.html(h(R.PilulaDaIntencao, { vista: { tipo: "atacar", alvo: null, dano: { min: 7, max: 12 } } }));
   t("o alvo escondido diz «→ ?»", texto(ie).includes("→") && texto(ie).includes("?"));
   const e = R.html(h(R.Economia, { economia: { acao: 1, extra: 1 }, recursos: { reacao: true }, emJogo: "acao", passoM: 6, passoTotal: 9 }));
-  t("a economia diz-se a quem ouve («ação em jogo, bónus livre, reação livre, 6 de 9 m de passo»)", /aria-label="ação em jogo, bónus livre, reação livre, 6 de 9 m de passo"/.test(e), e.slice(0, 200));
+  t("a economia diz-se a quem ouve («ação em jogo, bônus livre, reação livre, 6 de 9 m de passo»)", /aria-label="ação em jogo, bônus livre, reação livre, 6 de 9 m de passo"/.test(e), e.slice(0, 200));
   t("o pip em jogo é tracejado (3/2)", e.includes(`stroke-dasharray="${ECONOMIA_DA_VEZ.tracejado.join(" ")}"`));
   const fc = R.html(h(R.FacesDoD20, { faces: golpePorExtenso(PREV).faces, rotulo: golpePorExtenso(PREV).legenda }));
-  t("as faces: 20 casas, 15 acesas, com o rótulo da legenda", (fc.match(/<span aria-hidden="true"/g) || []).length === 20 && /aria-label="acertas com 6 ou mais no dado · o 20 é crítico"/.test(fc));
+  t("as faces: 20 casas, 15 acesas, com o rótulo da legenda", (fc.match(/<span aria-hidden="true"/g) || []).length === 20 && /aria-label="você acerta com 6 ou mais no dado · o 20 é crítico"/.test(fc));
 
   const g = R.html(h(R.GridDeBatalha, { combate: COMBATE, heroiFicha: HEROI, previsaoDoGolpe: PREV, intencoes: INTENCOES, ladoFixo: 32, larguraDaJanela: 869, alturaDaJanela: 740, tetoDoLado: 64,
     caminho: { pontos: [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 8 }], metros: 3, sobraM: 6, golpeLivreEm: [{ x: 6, y: 7 }] }, heroiNome: "Bran", aoTocarInimigo: () => {} }));
@@ -356,17 +357,17 @@ sec("7 · 8. a tela da batalha: as três colunas e o telefone");
 {
   janela(1905);
   const tela = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], previsaoDoGolpe: PREV, intencoes: INTENCOES, passoM: 6, passoTotal: 9, lugar: "Baixo da Fonte" }));
-  t("a coluna Tu: «A tua vez», o nome, a economia", texto(tela).includes("A tua vez") && texto(tela).includes("Bran") && /aria-label="ação livre, bónus livre, reação livre, 6 de 9 m de passo"/.test(tela));
-  t("O TEU GOLPE por extenso, com as faces e a legenda", /aria-label="O teu golpe contra Bandido"/.test(tela) && texto(tela).includes("acertas com 6 ou mais no dado"));
-  t("o aviso da área (o herói está dentro do sopro)", texto(tela).includes("Estás na área do sopro do Dragão Jovem (14–24)"));
+  t("a coluna Tu: «A tua vez», o nome, a economia", texto(tela).includes("Sua vez") && texto(tela).includes("Bran") && /aria-label="ação livre, bônus livre, reação livre, 6 de 9 m de passo"/.test(tela));
+  t("O TEU GOLPE por extenso, com as faces e a legenda", /aria-label="Seu golpe contra Bandido"/.test(tela) && texto(tela).includes("você acerta com 6 ou mais no dado"));
+  t("o aviso da área (o herói está dentro do sopro)", texto(tela).includes("Você está na área do sopro do Dragão Jovem (14–24)"));
   t("a coluna Eles: «Nesta rodada, eles vão», com a intenção de cada um", /aria-label="Eles"/.test(tela) && texto(tela).includes("Nesta rodada, eles vão") && (tela.match(/vai atacar Bran/g) || []).length >= 2);
   t("a fila da vez diz de quem é a vez a quem ouve («agora: Bran»)", /role="group" aria-label="agora: Bran"/.test(tela));
   t("a pílula «AGORA:» aposentou-se", !/>AGORA:|agora: Bran<\/span>/.test(tela));
   t("o Atacar diz a chance («· 78%»)", texto(tela).includes("Atacar · 78%"));
   janela(375);
   const tel = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], previsaoDoGolpe: PREV, intencoes: INTENCOES, passoM: 6, passoTotal: 9 }));
-  t("no telefone: «A tua vez · Bran» no canto, sem a coluna Eles", texto(tel).includes("A tua vez") && !/aria-label="Eles"/.test(tel));
-  t("A FOLHA DA PREVISÃO sobe: «Atacar · 78%», «Cancelar», e o segundo toque também confirma", /role="dialog" aria-label="O teu golpe contra Bandido"/.test(tel) && texto(tel).includes("Atacar · 78%") && texto(tel).includes("Cancelar") && texto(tel).includes("tocar de novo em Bandido também confirma"));
+  t("no telefone: «A tua vez · Bran» no canto, sem a coluna Eles", texto(tel).includes("Sua vez") && !/aria-label="Eles"/.test(tel));
+  t("A FOLHA DA PREVISÃO sobe: «Atacar · 78%», «Cancelar», e o segundo toque também confirma", /role="dialog" aria-label="Seu golpe contra Bandido"/.test(tel) && texto(tel).includes("Atacar · 78%") && texto(tel).includes("Cancelar") && texto(tel).includes("tocar de novo em Bandido também confirma"));
   t("os três números grandes (Acerto, Dano, Abate)", texto(tel).includes("78%") && texto(tel).includes("6–13") && texto(tel).includes("40%"));
 }
 
@@ -376,7 +377,7 @@ sec("9. o d20 do golpe na bandeja (§CB 15)");
   janela(1905, true);
   const l = { n: 1, rotulo: "Golpe → Bandido", dados: [{ faces: 20, valor: 14, papel: "teste" }], mod: 6, total: 20, alvo: 12, desfecho: "sucesso", golpe: true, acertam: facesQueAcertam(6, 12, 20), criticoEm: 20, jaRolou: false };
   const b = R.html(h(R.Bandeja, { lancamentos: [l] }));
-  t("a bandeja acende as faces que acertam, com a legenda «acertas com 6 ou mais»", /aria-label="acertas com 6 ou mais no dado · o 20 é crítico"/.test(b));
+  t("a bandeja acende as faces que acertam, com a legenda «acertas com 6 ou mais»", /aria-label="você acerta com 6 ou mais no dado · o 20 é crítico"/.test(b));
   t("pousado, a face que saiu fica marcada (o 14)", /outline:2px solid/.test(b));
   t("o relógio do dado do golpe é a tabela (600 ms), e não é CSS", GOLPE_SENTIDO.dadoNaBandeja === 600);
 }
@@ -447,7 +448,7 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   /* --- o turno deles, passo a passo --- */
   janela(1905);
   const p1 = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1) }));
-  t("«A TUA VEZ» passa a «A VEZ DELES · Bandido» na coluna Tu", texto(p1).includes("A vez deles · Bandido") && !texto(p1).includes("A tua vez"));
+  t("«A TUA VEZ» passa a «A VEZ DELES · Bandido» na coluna Tu", texto(p1).includes("A vez deles · Bandido") && !texto(p1).includes("Sua vez"));
   t("a fila diz a quem ouve que a vez é deles («agora: Bandido»)", /role="group" aria-label="agora: Bandido"/.test(p1));
   t("o Pé do campo leva a frase do passo («Bandido → Bran: vem 4,5 m e acerta, 5.»)", texto(p1).includes("Bandido → Bran: vem 4,5 m e acerta, 5."));
   t("os dois controlos no Pé: «2×» (interruptor, desligado) e «Saltar ›», a 32", /aria-pressed="false" aria-label="dobro da velocidade"/.test(p1) && texto(p1).includes("Saltar ›") && p1.includes(`height:${BATALHA_EM_TRES.pe}px;min-height:${BATALHA_EM_TRES.pe}px;border-radius:${BATALHA_EM_TRES.pe / 2}px`));
@@ -459,7 +460,7 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   const p1x2 = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1, true) }));
   t("com 2× o interruptor liga (aria-pressed, chão âmbar a 18 %)", /aria-pressed="true" aria-label="dobro da velocidade"/.test(p1x2));
   const fim = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(PASSOS.length) }));
-  t("NO FIM, A TUA VEZ: sem controlos, e a fila volta ao herói", texto(fim).includes("A tua vez") && !texto(fim).includes("Saltar ›") && /aria-label="agora: Bran"/.test(fim));
+  t("NO FIM, A TUA VEZ: sem controlos, e a fila volta ao herói", texto(fim).includes("Sua vez") && !texto(fim).includes("Saltar ›") && /aria-label="agora: Bran"/.test(fim));
   janela(375);
   const pt = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1) }));
   t("no telefone: «A vez deles» e o nome no canto, 2× e Saltar a 44, e o ⤢ cala-se", texto(pt).includes("A vez deles") && pt.includes(`height:${BATALHA_EM_TRES.telefone.pe}px;min-height:${BATALHA_EM_TRES.telefone.pe}px`) && /display:none/.test(pt));
@@ -486,9 +487,9 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   t(`A FILA SEGUE A ORDEM DO MOTOR (${ordem.join(" → ")}), e não a iniciativa`, posicoes.every((p, i) => p >= 0 && (i === 0 || p > posicoes[i - 1])), J(posicoes));
   t("a iniciativa aparece como número ao lado do nome («Bandido 12»)", texto(grupoDaFila).includes("Bandido 12") && texto(grupoDaFila).includes("Bran 15"));
   const eco = economiaDaVez(COMBATE, HEROI, { passoTotalM: 9 });
-  t("A ECONOMIA LÊ economiaDaVez: ação, bónus e reação como o motor os conta", eco.acao.resta === 1 && eco.bonus.tem && /aria-label="ação livre, bónus livre, reação livre, 6 de 9 m de passo"/.test(tela));
+  t("A ECONOMIA LÊ economiaDaVez: ação, bónus e reação como o motor os conta", eco.acao.resta === 1 && eco.bonus.tem && /aria-label="ação livre, bônus livre, reação livre, 6 de 9 m de passo"/.test(tela));
   const gasto = R.html(h(R.Economia, { vez: economiaDaVez({ ...COMBATE, economia: { acao: 0, extra: 1 }, recursos: { reacao: false } }, HEROI, { passoTotalM: 9 }) }));
-  t("e com a ação e a reação gastas, a peça di-lo (vinda só de `vez`)", /aria-label="ação gasta, bónus livre, reação gasta/.test(gasto), (gasto.match(/aria-label="[^"]*"/) || [""])[0]);
+  t("e com a ação e a reação gastas, a peça di-lo (vinda só de `vez`)", /aria-label="ação gasta, bônus livre, reação gasta/.test(gasto), (gasto.match(/aria-label="[^"]*"/) || [""])[0]);
 }
 
 /* ============================================================
@@ -571,7 +572,7 @@ sec("11. CB 18: o degrau, o chão, os objetos, o empurrão e a reação");
   t("os anéis: a origem e as vizinhas no 1.º, o resto muda com o 2.º", J(an.map((q) => q.anel)) === J([0, 0, 1, 1]));
   const lt = B18.letreiroDaReacao({ tipo: "explode", casas: [{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }], primeira: true, alvos: [{ nome: "Goblin", dano: 9 }], objeto: "barril" });
   t("o letreiro: «O barril explode» e «4 casas ardem · Goblin −9»", lt.titulo === "O barril explode" && lt.linha === "4 casas ardem · Goblin −9" && lt.primeira, J(lt));
-  t("sem objeto, é o óleo que explode; a água eletrifica-se", B18.letreiroDaReacao({ tipo: "explode", casas: 3 }).titulo === "O óleo explode" && B18.letreiroDaReacao({ tipo: "eletrifica" }).titulo === "A água eletrifica-se");
+  t("sem objeto, é o óleo que explode; a água eletrifica-se", B18.letreiroDaReacao({ tipo: "explode", casas: 3 }).titulo === "O óleo explode" && B18.letreiroDaReacao({ tipo: "eletrifica" }).titulo === "A água se eletrifica");
   t("um tipo sem frase cala-se (nenhum mecanismo à vista)", B18.letreiroDaReacao({ tipo: "combustao-espontanea" }) === null);
   t("a chave da reação: a do motor, ou a posição, o tipo e a origem", B18.chaveDaReacao({ chave: 7 }) === "7" && B18.chaveDaReacao({ tipo: "apaga", origem: { x: 1, y: 2 } }, 3) === "3:apaga:1,2");
 

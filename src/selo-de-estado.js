@@ -94,7 +94,7 @@ export const CAMPOS_DA_MECANICA = [
   {
     campo: "vantagem", tom: "bom", liquido: true,
     escreve: () => "🎲 vantagem",
-    porque: "o dado sobe — e é líquido: vantagem e desvantagem juntas cancelam-se (5e)",
+    porque: "o dado sobe — e é líquido: vantagem e desvantagem juntas se cancelam (5e)",
   },
   {
     campo: "desvantagem", tom: "perigo", liquido: true,

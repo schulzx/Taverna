@@ -2280,7 +2280,7 @@ export function SoleiraDoMomento({ momentos = null }) {
     );
   }
   return (
-    <div key={qual} className="tv-fade" role="group" aria-label={qual === "rolagem" ? "O Mestre pede o dado" : qual === "escolha" ? "Uma escolha à tua frente" : "O que o mundo oferece agora"} data-momento={qual} style={caixa}>
+    <div key={qual} className="tv-fade" role="group" aria-label={qual === "rolagem" ? "O Mestre pede o dado" : qual === "escolha" ? "Uma escolha à sua frente" : "O que o mundo oferece agora"} data-momento={qual} style={caixa}>
       <PrincipalDoMomento momento={momento} rolagem={qual === "rolagem"} escolha={qual === "escolha"} />
       <SecundarioDoMomento s={momento.secundario} />
     </div>

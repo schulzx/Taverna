@@ -143,15 +143,15 @@ export const CAMINHOS_DA_CARTA = Object.freeze({
 const ef = (tipo, n) => Object.freeze(n == null ? { tipo } : { tipo, n });
 export const PRECO_DA_FALHA = Object.freeze({
   tempo: Object.freeze({ formas: Object.freeze(["lugar", "pessoa", "objeto"]), leve: true, efeitos: Object.freeze([ef("minutos", 120)]),
-    linha: "Chegaste lá, mas as horas foram-se nisso." }),
+    linha: "Você chegou lá, mas as horas se foram nisso." }),
   incompleta: Object.freeze({ formas: Object.freeze(["lugar", "pessoa", "objeto"]), leve: true, efeitos: Object.freeze([ef("incompleta"), ef("minutos", 30)]),
-    linha: "Tens a metade que importa; o resto ficou por ler." }),
+    linha: "Você tem a metade que importa; o resto ficou por ler." }),
   alerta: Object.freeze({ formas: Object.freeze(["lugar", "pessoa"]), leve: false, efeitos: Object.freeze([ef("avisa_vilao"), ef("relogio_do_fio", 1)]),
-    linha: "Tens o que vieste buscar — e alguém viu-te a buscá-lo." }),
+    linha: "Você tem o que veio buscar — e alguém viu você buscando." }),
   cobra: Object.freeze({ formas: Object.freeze(["pessoa"]), leve: false, efeitos: Object.freeze([ef("moedas", -15)]),
-    linha: "Contou tudo, mas só depois de lhe encheres a mão." }),
+    linha: "Contou tudo, mas só depois de você lhe encher a mão." }),
   danificado: Object.freeze({ formas: Object.freeze(["objeto"]), leve: false, efeitos: Object.freeze([ef("danificado")]),
-    linha: "Está nas tuas mãos, mas não inteiro." }),
+    linha: "Está nas suas mãos, mas não inteiro." }),
 });
 
 /* Os efeitos do preço que a biblioteca não tem (os outros — avisa_vilao,
@@ -166,7 +166,7 @@ export const PRECO_DA_FALHA = Object.freeze({
 export const EFEITOS_DO_PRECO = Object.freeze({
   minutos: Object.freeze({ porta: "src/motor/tempo-do-turno.js", diz: "o relógio do mundo anda os minutos perdidos", devolve: "minutos", soma: true }),
   danificado: Object.freeze({ porta: "src/motor/aplicar.js", diz: "o objeto entra na bolsa com a marca de danificado", devolve: "danificado", marca: "danificado" }),
-  incompleta: Object.freeze({ porta: null, diz: "só a carta: a face mostra a metade, e a pauta di-lo ao Narrador", devolve: "incompleta" }),
+  incompleta: Object.freeze({ porta: null, diz: "só a carta: a face mostra a metade, e a pauta o diz ao Narrador", devolve: "incompleta" }),
 });
 
 /* ---------------- A PORTA DE CADA CARTA ----------------
@@ -254,7 +254,7 @@ export const VANTAGENS_DO_CONFRONTO = Object.freeze([
   "a janela alta que dá para o lado de dentro",
   "o caminho velho que chega por trás",
   "quem lá dentro abre a porta por umas moedas",
-  "o sítio onde a luz não chega ao fim da tarde",
+  "o lugar onde a luz não chega ao fim da tarde",
   "o sinal com que eles se chamam uns aos outros",
 ]);
 

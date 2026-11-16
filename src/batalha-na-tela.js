@@ -96,7 +96,7 @@ export function golpePorExtenso(prev) {
   const menor = naoCriticas.length ? Math.min(...naoCriticas) : null;
   const legenda = !faces ? null
     : !lista.length ? "nenhuma face do dado acerta"
-      : `${menor != null ? `acertas com ${menor} ou mais no dado` : "só o crítico acerta"} · ${criticoEm >= 20 ? "o 20 é crítico" : `${criticoEm}–20 é crítico`}`;
+      : `${menor != null ? `você acerta com ${menor} ou mais no dado` : "só o crítico acerta"} · ${criticoEm >= 20 ? "o 20 é crítico" : `${criticoEm}–20 é crítico`}`;
   const livres = obj(p.golpesLivres) && Array.isArray(p.golpesLivres.quem) ? p.golpesLivres.quem : [];
   return {
     alvo: p.alvo || null,
@@ -326,7 +326,7 @@ export function pipsDaEconomia(economia, recursos, o) {
   const c = obj(o) || {};
   const estado = (id, livre) => (!livre ? "gasto" : c.emJogo === id ? "emJogo" : "livre");
   const pips = [{ recurso: "acao", estado: estado("acao", (Number(e.acao) || 0) > 0), rotulo: "ação" }];
-  if (e.extra != null && ((Number(e.extra) || 0) > 0 || c.acaoBonus)) pips.push({ recurso: "bonus", estado: estado("bonus", (Number(e.extra) || 0) > 0), rotulo: "bónus" });
+  if (e.extra != null && ((Number(e.extra) || 0) > 0 || c.acaoBonus)) pips.push({ recurso: "bonus", estado: estado("bonus", (Number(e.extra) || 0) > 0), rotulo: "bônus" });
   if (r && Object.prototype.hasOwnProperty.call(r, "reacao")) pips.push({ recurso: "reacao", estado: estado("reacao", r.reacao !== false), rotulo: "reação" });
   return pips;
 }
@@ -401,7 +401,7 @@ export function faixaDaAmeaca(estado) {
   const e = obj(estado);
   if (!e) return null;
   if (e.lendario) return { tipo: "lenda", texto: "Uma lenda · foge disto" };
-  if (e.aEvitar) return { tipo: "a-evitar", texto: "Ameaça a evitar · não é para ti" };
+  if (e.aEvitar) return { tipo: "a-evitar", texto: "Ameaça a evitar · não é para você" };
   const n = Math.max(1, Number(e.quantos) || 1);
   return { tipo: "a-vista", texto: n > 1 ? `À vista · são ${n}` : "À vista · está só" };
 }
@@ -448,7 +448,7 @@ export function avisoDaArea(heroi, intencoes, tabuleiro) {
     const quem = it.inimigo ? ` do ${it.inimigo}` : "";
     return {
       inimigo: it.inimigo || null, passos,
-      texto: `Estás na área do sopro${quem}${dano ? ` (${dano})` : ""}.${passos ? ` Sai ${POR_EXTENSO[passos] || `${passos} casas`} para escapar.` : ""}`,
+      texto: `Você está na área do sopro${quem}${dano ? ` (${dano})` : ""}.${passos ? ` Saia ${POR_EXTENSO[passos] || `${passos} casas`} para escapar.` : ""}`,
     };
   }
   return null;
@@ -637,10 +637,10 @@ export function altoDaPrevisao(alto) {
 export const FRASE_DO_EMPURRAO = {
   superficie: {
     oleo: { em: "no óleo", curto: "e escorrega", porRodada: false },
-    agua: { em: "na água", curto: "e molha-se", porRodada: false },
+    agua: { em: "na água", curto: "e se molha", porRodada: false },
     gelo: { em: "no gelo", curto: "e escorrega", porRodada: false },
     fogo: { em: "no fogo", curto: "e arde", porRodada: true },
-    veneno: { em: "no veneno", curto: "e envenena-se", porRodada: true },
+    veneno: { em: "no veneno", curto: "e se envenena", porRodada: true },
     eletrica: { em: "na água eletrificada", curto: "e leva choque", porRodada: false },
   },
   efeito: { escorrega: "ou cai", atordoa: "ou fica atordoado", arde: "" },
@@ -740,14 +740,14 @@ const nomeComArtigo = (objeto, padrao) => {
 };
 export const FRASE_DA_REACAO = {
   explode: { titulo: (e) => `${nomeComArtigo(e.objeto, "O óleo")} explode`, casas: (n) => plural(n, "casa arde", "casas ardem") },
-  eletrifica: { titulo: () => "A água eletrifica-se", casas: (n) => plural(n, "casa eletrificada", "casas eletrificadas") },
+  eletrifica: { titulo: () => "A água se eletrifica", casas: (n) => plural(n, "casa eletrificada", "casas eletrificadas") },
   congela: { titulo: () => "A água gela", casas: (n) => plural(n, "casa gelada", "casas geladas") },
   derrete: { titulo: () => "O gelo derrete", casas: (n) => plural(n, "casa de água", "casas de água") },
   apaga: { titulo: () => "A água apaga o fogo", casas: (n) => plural(n, "casa apagada", "casas apagadas") },
   arde: { titulo: (e) => `${nomeComArtigo(e.objeto, "O chão")} arde`, casas: (n) => plural(n, "casa arde", "casas ardem") },
-  derrama: { titulo: (e) => `${nomeComArtigo(e.objeto, "O barril")} derrama-se`, casas: (n) => plural(n, "casa coberta", "casas cobertas") },
+  derrama: { titulo: (e) => `${nomeComArtigo(e.objeto, "O barril")} se derrama`, casas: (n) => plural(n, "casa coberta", "casas cobertas") },
   tomba: { titulo: (e) => `${nomeComArtigo(e.objeto, "O candeeiro")} tomba`, casas: (n) => plural(n, "casa arde", "casas ardem") },
-  parte: { titulo: (e) => `${nomeComArtigo(e.objeto, "O caixote")} parte-se`, casas: () => "" },
+  parte: { titulo: (e) => `${nomeComArtigo(e.objeto, "O caixote")} se parte`, casas: () => "" },
 };
 const casasDoEvento = (e) => (Array.isArray(e.casas) ? e.casas.filter((q) => obj(q) && fin(q.x) && fin(q.y)) : []);
 export function letreiroDaReacao(evento) {

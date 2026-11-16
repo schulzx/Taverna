@@ -104,7 +104,7 @@ export function assumirForma(pers, hab, rodada = 1) {
   return {
     ok: true, pers: p,
     linha: `🐾 ${f.nome} — ${f.conceito}. +${ganho} PV de fôlego, +${p.forma.dano} de dano${f.semMagia ? ", e sem conjurar enquanto durar" : ""} · ${f.turnos} turnos.`,
-    nota: `[FORMA ASSUMIDA PELO SISTEMA] Virei ${f.nome}: ${f.conceito}. É um CORPO diferente e o sistema já ajustou os números — narre a transformação e trate-me como essa criatura enquanto durar (o que eu alcanço, o que eu derrubo, o que eu não consigo mais fazer${f.semMagia ? ", inclusive falar e conjurar" : ""}). Não me devolva ao corpo antigo por conta própria: o prazo é do sistema.`,
+    nota: `[FORMA ASSUMIDA PELO SISTEMA] Virei ${f.nome}: ${f.conceito}. É um CORPO diferente e o sistema já ajustou os números — narre a transformação e me trate como essa criatura enquanto durar (o que eu alcanço, o que eu derrubo, o que eu não consigo mais fazer${f.semMagia ? ", inclusive falar e conjurar" : ""}). Não me devolva ao corpo antigo por conta própria: o prazo é do sistema.`,
   };
 }
 
@@ -119,7 +119,7 @@ export function desfazerForma(pers, motivo = "prazo") {
   return {
     pers: p,
     linha: `🐾 ${f.nome} se desfaz — você volta ao seu corpo${motivo === "luta" ? "" : " (o prazo acabou)"}.`,
-    nota: `[FORMA DESFEITA PELO SISTEMA] Voltei ao meu corpo: ${f.nome} acabou. Narre a reversão em uma frase e trate-me como eu de novo — não me deixe com garras nem com o tamanho da criatura.`,
+    nota: `[FORMA DESFEITA PELO SISTEMA] Voltei ao meu corpo: ${f.nome} acabou. Narre a reversão em uma frase e me trate como eu de novo — não me deixe com garras nem com o tamanho da criatura.`,
   };
 }
 

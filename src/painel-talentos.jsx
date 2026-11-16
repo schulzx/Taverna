@@ -130,7 +130,7 @@ function modeloDaArvore(pers, classe) {
       const id = "esp:" + e;
       for (const h of lista) nos.push({ banda: id, linha: 0, degrau: h.nivel || RANK_PARA_ESPECIALIZACAO, ramo: "especializacao", h });
       bandas.push({ id, tipo: "especializacao", nome: e, linhas: 1, escolhida: e === escolhida, fechada: !!escolhida && e !== escolhida,
-        nota: e === escolhida ? "a tua especialização" : escolhida ? `seguiste ${escolhida}` : `especialização · escolhe uma aos ${RANK_PARA_ESPECIALIZACAO}` });
+        nota: e === escolhida ? "a sua especialização" : escolhida ? `você seguiu ${escolhida}` : `especialização · escolhe uma aos ${RANK_PARA_ESPECIALIZACAO}` });
     }
   } else if (c && (c.subclasses || []).length) {
     /* ainda sem subclasse: os caminhos são nós de escolha, lado a lado */
@@ -484,7 +484,7 @@ function Grimorio({ grim, pers, escolhido, aprendeu, aoTocar }) {
       {grim.naCabeca ? (
         <p className="tv-body" style={{ fontSize: TIPOS.rotulo, color: T.inkMeio, margin: 0 }}>
           <b style={{ color: T.ink }}>Na cabeça hoje: {grim.naCabeca.preparadas} de {grim.naCabeca.limite}</b>
-          <span style={{ color: T.inkDim }}> · <Glifo nome="faisca" tamanho={TIPOS.piso} rotulo="preparada" /> = preparada · troca-se ao acampar</span>
+          <span style={{ color: T.inkDim }}> · <Glifo nome="faisca" tamanho={TIPOS.piso} rotulo="preparada" /> = preparada · troca ao acampar</span>
         </p>
       ) : null}
       {grim.circulos.map((c) => {
@@ -586,7 +586,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
   const escolherEsp = (nome) => { try { if (onEscolherEspecializacao) onEscolherEspecializacao(abaClasse, nome); } catch { /* idem */ } setSel(null); };
   const recomecar = () => { try { if (onRespec) onRespec(); } catch { /* idem */ } setSel(null); setAprendeu(null); };
 
-  const pe = <>Fica tua. {soSaiSe(custo)}</>;
+  const pe = <>Fica sua. {soSaiSe(custo)}</>;
   const linhaPontos = (gasta) => ({ rotulo: "Pontos por gastar", antes: pontos, depois: Math.max(0, pontos - gasta), sinal: "igual" });
 
   /* o veredito do que está escolhido — tudo o que diz vem das regras */
@@ -600,12 +600,12 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
       const no = { ramo: n.ramo, estado, custo: h.custoPontos, glifo: glifoDoTipo(h.tipo), gema: n.gema || null };
       const dono = n.ramo === "classe" ? abaClasse : n.banda === "subclasse" ? `${abaClasse} · ${modelo.sub}` : `${abaClasse} · ${n.banda.slice(4)}`;
       const base = { no, titulo: h.nome, linha: `${dono} · degrau ${h.nivel || 1} · ${h.tipo}`, efeito: h.descricao };
-      if (h.dominada) return { ...base, pe: "Já é tua." };
+      if (h.dominada) return { ...base, pe: "Já é sua." };
       const comparacao = [linhaPontos(h.custoPontos), { rotulo: `Habilidades de ${abaClasse}`, antes: rank, depois: rank + 1, sinal: "melhora" }];
       if (nova) comparacao.push({ rotulo: "Classes abertas", antes: abertas.length, depois: abertas.length + 1, sinal: "melhora" });
       if (h.custo != null) comparacao.push({ rotulo: "Custa a usar", depois: `${h.custo} PM`, sinal: "igual" });
       const verbo = h.pode
-        ? <VerboComPreco papel="armado" verbo={`Aprender ${h.nome}`} preco={`${pontosDito(h.custoPontos)} · ficas com ${pontos - h.custoPontos}`} aoTocar={() => aprender(h.nome)} />
+        ? <VerboComPreco papel="armado" verbo={`Aprender ${h.nome}`} preco={`${pontosDito(h.custoPontos)} · você fica com ${pontos - h.custoPontos}`} aoTocar={() => aprender(h.nome)} />
         : <VerboComPreco verbo={`Aprender ${h.nome}`} preco={pontosDito(h.custoPontos)} impedido={h.motivo || "ainda não"} />;
       return { ...base, comparacao, verbo, pe: h.pode ? pe : null };
     }
@@ -616,11 +616,11 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
       const no = { ramo: "magia", estado, custo: m.custoPontos, glifo: glifoDaMagia(m.tipo) };
       const base = { no, titulo: m.nome, linha: [`Círculo ${m.circulo}`, m.forma, m.tipo].filter(Boolean).join(" · "), efeito: m.efeito };
       const preparar = grim && grim.naCabeca ? "Aprender não é preparar: para a lançar amanhã, põe-na na cabeça ao acampar." : null;
-      if (estado === "aprendido") return { ...base, pe: m.preparada ? "Na cabeça hoje." : preparar || "Já é tua." };
+      if (estado === "aprendido") return { ...base, pe: m.preparada ? "Na cabeça hoje." : preparar || "Já é sua." };
       const sabidas = c.magias.filter((x) => ESTADO_DA_MAGIA[x.estado] === "aprendido").length;
       const comparacao = [linhaPontos(m.custoPontos), { rotulo: "Custa a usar", depois: `${m.custoPM} PM`, sinal: "igual" }, { rotulo: `Magias do ${m.circulo}.º círculo`, antes: sabidas, depois: sabidas + 1, sinal: "melhora" }];
       const verbo = estado === "disponivel"
-        ? <VerboComPreco papel="armado" verbo={`Aprender ${m.nome}`} preco={`${pontosDito(m.custoPontos)} · ficas com ${pontos - m.custoPontos}`} aoTocar={() => aprender(m.nome)} />
+        ? <VerboComPreco papel="armado" verbo={`Aprender ${m.nome}`} preco={`${pontosDito(m.custoPontos)} · você fica com ${pontos - m.custoPontos}`} aoTocar={() => aprender(m.nome)} />
         : <VerboComPreco verbo={`Aprender ${m.nome}`} preco={pontosDito(m.custoPontos)} impedido={m.motivo || "ainda não"} />;
       return { ...base, comparacao, verbo, pe: estado === "disponivel" ? preparar || pe : null };
     }
@@ -649,7 +649,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
       const chk = podeEscolherEspecializacao(pers, abaClasse);
       return {
         no: { ramo: "especializacao", estado: chk.pode ? "disponivel" : "bloqueado", custo: 0, glifo: "passiva" },
-        titulo: sel.nome, linha: `especialização de ${modelo.sub}`, efeito: "O que fizeste tantas vezes que virou o teu nome.",
+        titulo: sel.nome, linha: `especialização de ${modelo.sub}`, efeito: "O que você fez tantas vezes que virou o seu nome.",
         comparacao: [{ rotulo: "Habilidades novas", antes: 0, depois: habs.length, sinal: "melhora" }, { rotulo: "Fica fechada", depois: outras.join(" e ") || "nenhuma", sinal: "piora" }],
         lista: habs.map((h) => `${h.nome} (${h.nivel})`).join(" · "),
         verbo: chk.pode
@@ -904,7 +904,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
     const fechou = !!aprendeuAqui && daClasseToda.some((n) => n.h.nome === aprendeu.nome) && daClasseToda.every((n) => n.h.dominada);
     const textoDaFrase = fechou
       ? `${figura.charAt(0).toUpperCase()}${figura.slice(1)} está ${figura.startsWith("a ") ? "completa" : "completo"}`
-      : aprendeuAqui ? `${aprendeu.nome} é tua` : null;
+      : aprendeuAqui ? `${aprendeu.nome} é sua` : null;
     /* sem pontos: o próximo nível que dá pontos (pontosNoNivel) */
     let proximo = nivel + 1;
     while (pontosNoNivel(proximo) <= 0 && proximo < nivel + COLS[COLS.length - 1] * 2) proximo++;
@@ -929,7 +929,7 @@ export function PainelTalentos({ personagem, onAprender, onRespec, onEscolherSub
     return moldura(
       <div className="grid gap-5 items-start" style={{ gridTemplateColumns: `${A.mesa.esquerda}px minmax(0, 1fr) ${A.mesa.veredito}px` }}>
         <div className="flex flex-col gap-3">
-          {rotuloMono("A tua classe")}
+          {rotuloMono("Sua classe")}
           {abertas.map(cartaoDaClasse)}
           {abrirOutra}
           <div className="mt-6 flex flex-col gap-2">{rotuloMono("Recomeçar")}{recomecarVerbo}</div>

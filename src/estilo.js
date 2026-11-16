@@ -1465,7 +1465,7 @@ export const CHAMADO_DO_MESTRE = {
   vela: { raio: 23, traco: 2, cor: T.amber, alfa: 0.85 }, /* a duração é a espera do motor (§MC 9.1) */
   telefone: { comPericia: false },                        /* a perícia fica na fala da folha */
   reserva: { rolarJa: "Rolar já", recuo: "Mudar de ideia" },
-  preferencia: { rotulo: "O Mestre rola por mim", sim: "sim", nao: "não", diz: "o dado lança-se sozinho depois de leres o preço" },
+  preferencia: { rotulo: "O Mestre rola por mim", sim: "sim", nao: "não", diz: "o dado se lança sozinho depois de ler o preço" },
 };
 /* EM CENA (306:11): quem está aqui, uma vez só — rostos de 32 sobrepostos 8, no
    máximo 3, o resto em «+N». UM botão de 48 de alto, que abre a gaveta «Em cena»
@@ -1900,9 +1900,9 @@ export const ENCRUZILHADA = {
   movimento: { dar: { dura: 180, entre: 60, sobe: 12, giro: 2 }, escolher: { dura: 120 }, folha: { dura: 220 } },  /* reduzido: tudo seco */
   /* as palavras da cabeça, da carta e do rodapé (318:900 · 317:11) */
   textos: {
-    cabeca: "Uma escolha", ganhas: "Ganhas", custa: "Custa", escolhida: "A tua escolha",
-    virada: { titulo: "Há outras maneiras.", linha: "Fá-lo à tua maneira: escreve o que fazes." },
-    rodape: { mesa: "Ou escreve o que fazes — o campo continua aberto, e a tua frase pode ser uma destas cartas.", telefone: "Ou escreve o que fazes no campo, aqui em baixo." },
+    cabeca: "Uma escolha", ganhas: "Você ganha", custa: "Custa", escolhida: "Sua escolha",
+    virada: { titulo: "Há outras maneiras.", linha: "Faça do seu jeito: escreva o que você faz." },
+    rodape: { mesa: "Ou escreve o que você faz — o campo continua aberto, e a sua frase pode ser uma destas cartas.", telefone: "Ou escreve o que você faz no campo, aqui em baixo." },
   },
 };
 export const GRAVIDADE_DA_ESCOLHA = {
@@ -1912,7 +1912,7 @@ export const GRAVIDADE_DA_ESCOLHA = {
     frase: { pode: "Pode custar a vida de {quem}.", certo: "Com o que há hoje entre vocês, custa a vida de {quem}." },
     noSoleira: "pode custar {quem}", verbo: "Escolher, e arriscar {quem}" },
   fecha: { cor: T.perigoNoPergaminho, selo: 24, frase: "Esta história acaba aqui." },
-  preco: { chao: T.couro, letra: T.amberSoft, frase: "◉ {n} da tua bolsa", impedida: { chao: T.perigoFundo, letra: T.ink, frase: "faltam ◉ {n}", tracejado: [4, 3] } },
+  preco: { chao: T.couro, letra: T.amberSoft, frase: "◉ {n} da sua bolsa", impedida: { chao: T.perigoFundo, letra: T.ink, frase: "faltam ◉ {n}", tracejado: [4, 3] } },
   leve: {},
 };
 export const DIARIO_DA_QUEST = {
@@ -1924,7 +1924,7 @@ export const DIARIO_DA_QUEST = {
   coracao: { chao: T.pergaminho, raio: 6, fita: { cor: T.rosa, largura: 6 }, marca: T.lacreNoPergaminho,
     rosto: { mesa: 44, telefone: 36, aro: MOLDURA_POR_DEGRAU.bronze.meio }, titulo: { mesa: 22, telefone: 20 },
     rosario: { conta: 12, entre: 6 }, passo: { mesa: 17, telefone: 16 }, com: "Com {quem}" },
-  indice: { estrada: "A ESTRADA", coracao: "QUEM ANDA CONTIGO", glifoDoCoracao: "❦" },
+  indice: { estrada: "A ESTRADA", coracao: "QUEM ANDA COM VOCÊ", glifoDoCoracao: "❦" },
 };
 export const CARTAZ_DA_SOMBRA = {
   largura: 420, raio: 12, enchimento: 16, vao: 12, retrato: { largura: 64, alto: 80, arco: 32 },
@@ -3833,13 +3833,13 @@ export const PALAVRAS_DO_ESPOLIO = {
   concluida: "CONCLUÍDA", coracao: "O QUE FICA", desperta: "DESPERTA", exalta: "EXALTA",
   saltar: "Toque para saltar", continuar: "Continuar", equipar: "Equipar já", guardar: "Guardar na mochila",
   naMochila: "Já está na mochila.", sai: "Sai {nome} — vai para a mochila.",
-  dorme: "O poder dorme: pede sintonia, e as tuas três já estão em uso. Serve de peça desde já.",
-  acorda: "acorda na próxima prova à altura, ou no nível {n}", exaltaQuando: "exalta-se no confronto, ou no nível {n}",
+  dorme: "O poder dorme: pede sintonia, e as suas três já estão em uso. Serve de peça desde já.",
+  acorda: "acorda na próxima prova à altura, ou no nível {n}", exaltaQuando: "se exalta no confronto, ou no nível {n}",
   porAcordar: "o segundo poder, quando acordar", gesto: "o gesto, quando se exaltar",
-  reliquia: "Há {n} no mundo. Esta é tua.", achaste: "Achaste",
-  acordaSo: "acorda na próxima prova à altura", exaltaSo: "exalta-se no confronto",
-  favor: "{nome} fica a dever-te", experiencia: "EXPERIÊNCIA", nivel: "Nível {n}", moedas: "{n} moedas",
-  temNome: "tem nome", lembranca: "lembrança", consumivel: "Consumível", metaReliquia: "há {n} no mundo, e esta é tua",
+  reliquia: "Há {n} no mundo. Esta é sua.", achaste: "Você achou",
+  acordaSo: "acorda na próxima prova à altura", exaltaSo: "se exalta no confronto",
+  favor: "{nome} fica te devendo", experiencia: "EXPERIÊNCIA", nivel: "Nível {n}", moedas: "{n} moedas",
+  temNome: "tem nome", lembranca: "lembrança", consumivel: "Consumível", metaReliquia: "há {n} no mundo, e esta é sua",
   porDia: "uma vez por dia", aindaDorme: "Ainda dorme: {nome} — {quando}", continuarToque: "Toque para continuar",
   feita: "✓", examinar: "Examinar", pecas: "As peças", melhor: "melhor",
   raridade: { comum: "comum", incomum: "incomum", raro: "raro", epico: "épico", lendario: "lendário", unico: "relíquia" },
@@ -3850,10 +3850,10 @@ export const PALAVRAS_DO_ESPOLIO = {
     exaltado: { f: "Exaltada", m: "Exaltado" },
   },
   leitor: {
-    ganhaste: "Ganhaste", experiencia: "{n} de experiência", moedas: "{n} moedas", e: " e ",
+    ganhaste: "Você ganhou", experiencia: "{n} de experiência", moedas: "{n} moedas", e: " e ",
     peca: "{q} peça", pecas: "{q} peças", quantas: ["", "Uma", "Duas", "Três", "Quatro", "Cinco", "Seis"],
-    melhor: "melhor que o teu", sobe: "sobe", desce: "desce", mais: "mais", menos: "menos",
-    desperta: "{nome} desperta.", exalta: "{nome} exalta-se.", ganha: "Ganha {nome}: {diz}.",
+    melhor: "melhor que o seu", sobe: "sobe", desce: "desce", mais: "mais", menos: "menos",
+    desperta: "{nome} desperta.", exalta: "{nome} se exalta.", ganha: "Ganha {nome}: {diz}.",
   },
 };
 
@@ -4167,25 +4167,25 @@ export const QUADRO_DA_TELA = {
 /* a palavra do carimbo e a frase de «se falhar», pelas chaves de PRECO_DA_FALHA
    (check-quadro.mjs prova que as chaves são as mesmas, nos dois sentidos) */
 export const CARIMBO_DO_PRECO = {
-  tempo:      { palavra: "TARDE",    glifo: "relogio", seFalhar: "as horas vão-se nisso" },
-  incompleta: { palavra: "A METADE", glifo: "metade",  seFalhar: "sabes só a metade", marca: "rasgo" },
-  alerta:     { palavra: "VISTO",    glifo: "olho",    seFalhar: "alguém vê-te" },
-  cobra:      { palavra: "PAGO",     glifo: "moeda",   seFalhar: "custa-te {n} moedas" },
+  tempo:      { palavra: "TARDE",    glifo: "relogio", seFalhar: "as horas se vão nisso" },
+  incompleta: { palavra: "A METADE", glifo: "metade",  seFalhar: "você sabe só a metade", marca: "rasgo" },
+  alerta:     { palavra: "VISTO",    glifo: "olho",    seFalhar: "alguém te vê" },
+  cobra:      { palavra: "PAGO",     glifo: "moeda",   seFalhar: "custa {n} moedas" },
   danificado: { palavra: "PARTIDO",  glifo: "racha",   seFalhar: "chega partido", marca: "racha" },
 };
 /* as palavras da peça. `leitor`: os nomes acessíveis e a região viva, escritos
    em §QQ 3 e §QQ 4 (o que o leitor de ecrã diz é tela, logo é tabela). */
 export const PALAVRAS_DO_QUADRO = {
   rotulo: "Pistas", saber: "Como se pode saber", seFalhar: "Se falhar",
-  naMesma: "Ficas a saber na mesma. Mas pode custar:", fecha: "Esse caminho fecha-se e não volta.",
+  naMesma: "Você fica sabendo na mesma. Mas pode custar:", fecha: "Esse caminho se fecha e não volta.",
   restam: "restam {n}", naoFezFalta: "não fez falta", feita: "feita", agora: "agora",
   leitor: {
     sinal: "Pistas: {sabe} de {de}.", novo: "Há uma nova.", abrir: "Abrir.", fechar: "Fechar.",
     gaveta: "Pistas: {pergunta}", porVir: "e mais {n} por vir", fecharGaveta: "Fechar as pistas", voltar: "Voltar a {pergunta}",
     costas: "{Forma}, por saber. Ver como se pode saber.", virada: "{Face}, {de}.", futura: "Por vir: {forma}.",
-    perdida: "Perdeu-se: {forma}.", sobra: "Não fez falta: {forma}.",
+    perdida: "Se perdeu: {forma}.", sobra: "Não fez falta: {forma}.",
     caminho: "Escrever: {diz}.", custa: "Custa {n} moedas.", minutos: "{n} minutos",
-    vira: "Sabes agora {face} — {de}.", fechou: "Esse caminho fechou-se. Restam {n}.", perdeu: "Perdeu-se o rasto: {sobre}.",
+    vira: "Você sabe agora {face} — {de}.", fechou: "Esse caminho se fechou. Restam {n}.", perdeu: "O rastro se perdeu: {sobre}.",
     dobra: "{numeral}, {estado}. {abrir}",
     revela: "Isto revela uma pista.",   /* §QQ 4: o chamado com carta em jogo */
   },

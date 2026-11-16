@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-talentos-ar.mjs (AR4, 06/11/2026) — os Talentos como árvore
    (formas.md §AR 3, §AR 5, §AR 6, §AR 7; Figma 276:685, 278:1047, 278:1537,
    280:1556, 280:1858).
@@ -222,7 +223,7 @@ sec("4c. o veredito antes do clique");
   const v = texto(html(R.PainelTalentos, { personagem: thalia, leiaute: "mesa", inicial: disp.nome }));
   t("diz o nome, a classe, o degrau e o tipo", v.includes(`Mago · degrau ${disp.nivel} · ${disp.tipo}`));
   t(`diz os pontos antes e depois (${pontos} → ${pontos - disp.custoPontos})`, v.includes(`Pontos por gastar ${pontos} → ${pontos - disp.custoPontos}`));
-  t("o verbo diz o preço e o que sobra", v.includes(`Aprender ${disp.nome}`) && v.includes(`${disp.custoPontos} ponto${disp.custoPontos > 1 ? "s" : ""} · ficas com ${pontos - disp.custoPontos}`));
+  t("o verbo diz o preço e o que sobra", v.includes(`Aprender ${disp.nome}`) && v.includes(`${disp.custoPontos} ponto${disp.custoPontos > 1 ? "s" : ""} · você fica com ${pontos - disp.custoPontos}`));
   /* na prosa o ◉ é o Glifo da moeda (check-formas D5h.2): o texto dá o número, o nome acessível dá «moedas» */
   t(`e o que não se desfaz (◉ ${custoRespec(6)})`, v.includes(`Só sai se recomeçares do zero ( ${custoRespec(6)})`) && /aria-label="moedas"/.test(html(R.PainelTalentos, { personagem: thalia, leiaute: "mesa", inicial: disp.nome })));
   const bloq = daClasse.find((x) => !x.pode && !x.dominada && x.motivo);

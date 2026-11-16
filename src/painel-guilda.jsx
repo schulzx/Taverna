@@ -106,7 +106,7 @@ export function PainelGuilda({
         )}
 
         <div className="rounded-xl p-3" style={{ background: T.panelSoft, border: `1px solid ${podeF ? T.amber : T.line}` }}>
-          <Rotulo cor={podeF ? T.amber : T.inkDim}>A sua própria casa</Rotulo>
+          <Rotulo cor={podeF ? T.amber : T.inkDim}>Sua própria casa</Rotulo>
           {!podeF ? (
             <div className="tv-body text-xs" style={{ color: T.inkDim }}>
               Nível {NIVEL_PARA_FUNDAR} e ◉ {CUSTO_DE_FUNDAR} abrem as portas de uma casa sua. Você tem nível {nivel}.

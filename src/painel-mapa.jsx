@@ -474,7 +474,7 @@ export function PainelMapa({ mapa, faccaoJogador, cidadeAtual, devocao, divindad
             {elenco.slice(0, 14).map((e, i) => (
               <div key={"el-" + i} className="rounded-lg px-3 py-1.5 flex items-baseline justify-between gap-2" style={{ background: T.panelSoft, border: `1px solid ${T.line}` }}>
                 <span className="tv-body text-xs truncate" style={{ color: T.ink }}>
-                  {e.comigo ? <><Glifo nome="grupo" tamanho={12} rotulo="anda contigo" /> </> : e.suposto ? "· " : <><Glifo nome="alfinete" tamanho={12} rotulo="paradeiro registrado" /> </>}{e.nome}
+                  {e.comigo ? <><Glifo nome="grupo" tamanho={12} rotulo="anda com você" /> </> : e.suposto ? "· " : <><Glifo nome="alfinete" tamanho={12} rotulo="paradeiro registrado" /> </>}{e.nome}
                   {e.papel ? <span style={{ color: T.inkDim }}> · {e.papel}</span> : null}
                 </span>
                 <span className="tv-mono text-[9px] shrink-0" style={{ color: e.comigo ? T.amberSoft : T.inkDim }}>

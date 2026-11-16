@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-espolio-na-tela.mjs (TE10, 09/11/2026) — a conta da cerimónia do
    espólio (src/espolio-na-tela.js), formas.md §TE.
 
@@ -216,7 +217,7 @@ sec("9. o que cada peça diz");
   t("e as linhas ditas: «Iniciativa sobe 3»", nomeDaCarta({ ...eArt, linhas: [linhaOk] }).endsWith("Iniciativa sobe 3."));
 
   const r = resumoDoEspolio(ENT, { nomeDoFavor: () => "a capela" });
-  t("o resumo da §TE 6: o ganho, o favor com o lugar, e as três peças", r.startsWith("Ganhaste 269 de experiência e 98 moedas. A capela fica a dever-te. Três peças: ") && r.endsWith(`${PALAVRAS_DO_ESPOLIO.temNome}.`), r);
+  t("o resumo da §TE 6: o ganho, o favor com o lugar, e as três peças", r.startsWith("Você ganhou 269 de experiência e 98 moedas. A capela fica te devendo. Três peças: ") && r.endsWith(`${PALAVRAS_DO_ESPOLIO.temNome}.`), r);
   t("sem o nome do lugar, o favor cala-se (o papel cru é palavra do motor)", !resumoDoEspolio(ENT).includes("capela"));
   t("a peça melhor diz-se melhor", resumoDoEspolio([{ ...eAnel, linhas: [linhaOk] }]).includes(PALAVRAS_DO_ESPOLIO.leitor.melhor));
 

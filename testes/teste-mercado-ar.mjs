@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-mercado-ar.mjs (AR6, 06/11/2026) — o Mercado como banca e veredito
    (formas.md §AR 1, §AR 4, §AR 5, §AR 6, §AR 7; Figma 282:3205, 282:3534,
    282:3839, a Peça da banca 271:134).
@@ -146,10 +147,10 @@ sec("4. a mesa (1905): a banca, a peça, o veredito antes do clique");
   t("sem dinheiro, as moedas não descem de zero: dizem o que falta", /◉ 168 → faltam ◉ 72/.test(texto(html({ ...base, leiaute: "mesa", inicial: { banca: "ferreiro|1", item: "Cota de escamas" } }))));
   t("o porquê do preço sai de `porques`", /a serra tem ferro de sobra/.test(s));
   t("o tempo de vestir sai de TROCA_DE_SLOT", /Trocar leva/.test(s));
-  t("AÇÃO comprar: o verbo armado com o preço e o que sobra", /Comprar Elmo de ferro batido ◉ 120 · vai para a bolsa · ficas com ◉ 48/.test(s));
+  t("AÇÃO comprar: o verbo armado com o preço e o que sobra", /Comprar Elmo de ferro batido ◉ 120 · vai para a bolsa · você fica com ◉ 48/.test(s));
   t("AÇÃO pechinchar: com o preço de falhar", /Pechinchar uma proposta por dia · se ele se ofender, o preço sobe/.test(s));
   t("a gaveta do mercador à vista (◉ 340)", /a gaveta dele hoje: ◉ 340/.test(s));
-  t("a bolsa por baixo, com o que pagam (ofertaPor)", /A tua bolsa · o que te pagam aqui/.test(s) && /paga ◉ 37/.test(s) && /não compra/.test(s));
+  t("a bolsa por baixo, com o que pagam (ofertaPor)", /Sua bolsa · o que pagam aqui/.test(s) && /paga ◉ 37/.test(s) && /não compra/.test(s));
   t("o painel pergunta a oferta ao sistema por cada coisa da bolsa", ["Capuz de couro", "Machado velho", "Tocha", "Poção de cura"].every((n) => chamadas.includes(n)));
 }
 
@@ -163,7 +164,7 @@ sec("4b. vender, o balcão e a pechincha já feita");
   const nin = texto(html({ ...base, leiaute: "mesa", inicial: { banca: "ferreiro|1", venda: "Tocha", origem: "inventario" } }));
   t("ninguém compra: diz porquê, e o verbo vem impedido", /Ninguém aqui lida com isso/.test(nin) && /ninguém aqui compra/.test(nin));
   const b = texto(html({ ...base, leiaute: "mesa", inicial: { banca: "balcao" } }));
-  t("AÇÃO mantimento: 1 e 5, com o preço do balcão", /Ração.*Comprar ◉ 2 · ficas com ◉ 166.*Comprar 5 ◉ 10 · ficas com ◉ 158/.test(b));
+  t("AÇÃO mantimento: 1 e 5, com o preço do balcão", /Ração.*Comprar ◉ 2 · você fica com ◉ 166.*Comprar 5 ◉ 10 · você fica com ◉ 158/.test(b));
   t("o kit vende-se um só", !/Kit de viagem.*Comprar 5 ◉ 75/.test(b));
   t("o porquê do balcão", /outono numa vila agrícola/.test(b));
   const p = texto(html({ ...base, leiaute: "mesa", inicial: { banca: "boticario|1" } }));

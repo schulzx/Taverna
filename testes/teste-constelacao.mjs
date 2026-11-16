@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-constelacao.mjs (AR 11 e AR 12, 07/11/2026) — a constelação do herói
    e a prateleira dos mantimentos (formas.md §AR 11, §AR 12; Figma 298:4457,
    299:4688, 300:4812, 302:4813 · 294:3628, 294:4040, 294:4080).
@@ -255,9 +256,9 @@ sec("5b. o clique leva ao veredito");
   t("tocar entrega ao painel a estrela e onde ela está", tocadas.length === 1 && tocadas[0].e.chave === "classe:Contramágica" && Number.isFinite(tocadas[0].p.x) && Number.isFinite(tocadas[0].p.y));
   /* o painel usa a MESMA função para o toque e para a porta `inicial`: a chave da estrela */
   const v = texto(html(R.PainelTalentos, { personagem: thalia, leiaute: "mesa", vistaInicial: "ceu", inicial: tocadas[0] ? tocadas[0].e.chave : "classe:Contramágica" }));
-  t("o veredito é o da árvore: o nome, «Mago · degrau 6 · defesa», o verbo armado com o preço", v.includes("Contramágica") && v.includes("Mago · degrau 6 · defesa") && v.includes("Aprender Contramágica") && v.includes("2 pontos · ficas com"));
+  t("o veredito é o da árvore: o nome, «Mago · degrau 6 · defesa», o verbo armado com o preço", v.includes("Contramágica") && v.includes("Mago · degrau 6 · defesa") && v.includes("Aprender Contramágica") && v.includes("2 pontos · você fica com"));
   const vArv = texto(html(R.PainelTalentos, { personagem: thalia, leiaute: "mesa", inicial: "Contramágica" }));
-  const corte = (s) => s.slice(s.indexOf("Cancela"), s.indexOf("Fica tua"));
+  const corte = (s) => s.slice(s.indexOf("Cancela"), s.indexOf("Fica sua"));
   t("e diz o mesmo que o veredito aberto pela árvore", corte(v).length > 0 && corte(v) === corte(vArv));
   const ms = html(R.PainelTalentos, { personagem: thalia, leiaute: "mesa", vistaInicial: "ceu", inicial: "classe:Contramágica" });
   t("a estrela escolhida leva o anel de ouro e fica pressionada", /data-chave="classe:Contramágica" aria-label="[^"]+" aria-pressed="true"/.test(ms) && ms.includes(`r="${CONSTELACAO.escolhida.anel.mesa}" fill="none" stroke="${CONSTELACAO.escolhida.cor}"`));

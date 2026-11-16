@@ -1,3 +1,4 @@
+/* PT-BR, ordem de 15/11 (S1b): as asserções de texto desta suíte passaram a ler a tela em português do Brasil («você», «sua», próclise). A intenção de cada uma é a mesma. */
 /* teste-quadro-na-tela.mjs (QQ · Q4, 14/11/2026) — a conta da peça do
    quadro da quest (src/quadro-na-tela.js) e a peça em si
    (src/painel-quadro.jsx), formas.md §QQ.
@@ -199,10 +200,10 @@ sec("3. o carimbo, o veredito antes do clique e o sinal");
   t("o nome acessível do caminho (§QQ 4)", l.nome === "Escrever: revistar o celeiro dos Juncos. Percepção ou Investigação, 10 minutos. Custa 10 moedas.", l.nome);
   t("sem os campos novos do motor, a linha cala-se (nunca os calcula)", linhaDoCaminho({ id: "x", diz: "falar com ela", desafios: ["convencer"] }).linha === "");
   const f1 = fichasDoSeFalhar([{ seFalhar: ["tempo", "incompleta", "alerta"] }, { seFalhar: ["tempo"] }]);
-  t("as fichas do «se falhar»: um preço por ficha, sem repetir", J(f1.map((f) => f.id)) === J(["tempo", "incompleta", "alerta"]) && f1[2].glifo === "olho" && f1[0].texto === "as horas vão-se nisso");
+  t("as fichas do «se falhar»: um preço por ficha, sem repetir", J(f1.map((f) => f.id)) === J(["tempo", "incompleta", "alerta"]) && f1[2].glifo === "olho" && f1[0].texto === "as horas se vão nisso");
   const f2 = fichasDoSeFalhar([{ seFalhar: [{ id: "cobra", efeitos: [{ tipo: "moedas", n: -30 }] }] }]);
-  t("com os efeitos do motor (§QQ 8, 4), a moeda do mistério escreve-se", f2[0].texto === "custa-te 30 moedas");
-  t("sem eles, a frase cala o número (não o inventa)", fichasDoSeFalhar([{ seFalhar: ["cobra"] }])[0].texto === "custa-te moedas");
+  t("com os efeitos do motor (§QQ 8, 4), a moeda do mistério escreve-se", f2[0].texto === "custa 30 moedas");
+  t("sem eles, a frase cala o número (não o inventa)", fichasDoSeFalhar([{ seFalhar: ["cobra"] }])[0].texto === "custa moedas");
 
   t("sem `quadro.sinal`, sem sinal", sinalDoQuadro({ cartas: [] }) === null && sinalDoQuadro({ sinal: { sabe: 1, de: 0 } }) === null);
   const s = sinalDoQuadro({ sinal: { sabe: 2, de: 4 } });
@@ -217,13 +218,13 @@ sec("4. o que o leitor de ecrã diz");
 {
   t("costas: «Uma pessoa, por saber. Ver como se pode saber.»", nomeDaCarta({ estado: "costas", costas: "uma pessoa" }) === "Uma pessoa, por saber. Ver como se pode saber.");
   t("virada: «O que Mécia sabe, dito por Mécia.»", nomeDaCarta({ estado: "virada", face: "o que Mécia sabe", de: "dito por Mécia" }) === "O que Mécia sabe, dito por Mécia.");
-  t("futura, perdida, não fez falta", nomeDaCarta({ futura: true, costas: "um lugar" }) === "Por vir: um lugar." && nomeDaCarta({ estado: "perdida", costas: "um lugar" }) === "Perdeu-se: um lugar."
+  t("futura, perdida, não fez falta", nomeDaCarta({ futura: true, costas: "um lugar" }) === "Por vir: um lugar." && nomeDaCarta({ estado: "perdida", costas: "um lugar" }) === "Se perdeu: um lugar."
     && nomeDaCarta({ sobra: true, costas: "um objeto" }) === "Não fez falta: um objeto.");
   t("com preço, a linha do preço vem atrás", nomeDaCarta({ estado: "preco", face: "x", de: "y", linha: PRECO_DA_FALHA.alerta.linha }).endsWith(PRECO_DA_FALHA.alerta.linha));
   t("a região viva diz a carta que vira", falaDaPista({ carta: { face: "o que Lopo, o sacristão, sabe", de: "arrancado a Lopo", linha: PRECO_DA_FALHA.alerta.linha } })
-    === `Sabes agora o que Lopo, o sacristão, sabe — arrancado a Lopo. ${PRECO_DA_FALHA.alerta.linha}`);
-  t("e a perda: o caminho que se fecha e os que restam", falaDaPista({ perdeu: "seguir", carta: { estado: "costas", caminhos: [1, 2] } }) === "Esse caminho fechou-se. Restam 2.");
-  t("e o rasto perdido", falaDaPista({ perdeu: "seguir", carta: { estado: "perdida", caminhos: [], costas: "uma pessoa", sobre: "quem lhe faz o serviço" } }) === "Perdeu-se o rasto: quem lhe faz o serviço.");
+    === `Você sabe agora o que Lopo, o sacristão, sabe — arrancado a Lopo. ${PRECO_DA_FALHA.alerta.linha}`);
+  t("e a perda: o caminho que se fecha e os que restam", falaDaPista({ perdeu: "seguir", carta: { estado: "costas", caminhos: [1, 2] } }) === "Esse caminho se fechou. Restam 2.");
+  t("e o rasto perdido", falaDaPista({ perdeu: "seguir", carta: { estado: "perdida", caminhos: [], costas: "uma pessoa", sobre: "quem lhe faz o serviço" } }) === "O rastro se perdeu: quem lhe faz o serviço.");
 
   /* nenhuma palavra de mecanismo em nada do que a tela escreve */
   const escritos = [];
@@ -317,7 +318,7 @@ const rotulos = (s) => [...s.matchAll(/aria-label="([^"]*)"/g)].map((m) => des(m
 
   const c = R.html(h(R.CaminhosDaCarta, { carta: { ...cartas.aVirar, caminhos: [{ id: "pagar", diz: "pagar a quem sabe", desafios: ["convencer"], custa: { moedas: 10 }, pericias: ["persuasao"], minutos: 10, seFalhar: ["tempo", "cobra"] }] } }));
   t("os caminhos: «Como se pode saber», o verbo, a pena, a moeda", texto(c).includes(PALAVRAS_DO_QUADRO.saber) && texto(c).includes("Pagar a quem sabe") && texto(c).includes("10"));
-  t("«Se falhar»: «Ficas a saber na mesma» e as fichas", texto(c).includes(PALAVRAS_DO_QUADRO.naMesma) && texto(c).includes("as horas vão-se nisso") && texto(c).includes("custa-te moedas"));
+  t("«Se falhar»: «Ficas a saber na mesma» e as fichas", texto(c).includes(PALAVRAS_DO_QUADRO.naMesma) && texto(c).includes("as horas se vão nisso") && texto(c).includes("custa moedas"));
   const ce = R.html(h(R.CaminhosDaCarta, { carta: { ...cartas.aVirar, tipo: "extra", caminhos: [{ id: "a", diz: "perguntar por aí", desafios: ["convencer"] }, { id: "b", diz: "seguir", desafios: ["rastrear"] }] } }));
   t("na que se pode ganhar: o caminho que se fecha e «restam 2»", texto(ce).includes(PALAVRAS_DO_QUADRO.fecha) && texto(ce).includes("restam 2"));
 
@@ -352,7 +353,7 @@ const rotulos = (s) => [...s.matchAll(/aria-label="([^"]*)"/g)].map((m) => des(m
   })(), J(v.preco));
   t("o mistério dobra (o peso é do motor)", QUADRO_POR_ARCO.misterio.peso === 2);
   const fala = falaDaPista(v);
-  t("a região viva diz a face e de onde veio, e a linha do preço", fala.startsWith("Sabes agora ") && fala.includes(v.carta.de) && fala.endsWith(v.preco.linha), fala);
+  t("a região viva diz a face e de onde veio, e a linha do preço", fala.startsWith("Você sabe agora ") && fala.includes(v.carta.de) && fala.endsWith(v.preco.linha), fala);
   const ps = cronogramaDaPista({ face: v.carta.face, de: v.carta.de, carimbo: k.palavra, misterio: true });
   t("e o momento dela cabe no teto", duracaoDaPista(ps) <= M.teto);
 }

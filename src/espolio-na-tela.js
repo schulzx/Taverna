@@ -42,8 +42,8 @@ const R = REVELACAO_DO_ESPOLIO, P = PALAVRAS_DO_ESPOLIO, L = P.leitor;
    do desenho tem estilo.js aberto; o lugar delas é PALAVRAS_DO_ESPOLIO, e
    mudam-se para lá na volta seguinte da tela. */
 const PALAVRAS_DA_PAGA = Object.freeze({
-  dormeComVaga: "O poder dorme até o sintonizares — tens {n} de {max} lugares livres. Serve de peça desde já.",
-  noChao: "Não coube na mochila: ficou no chão, à tua espera.",
+  dormeComVaga: "O poder dorme até o sintonizares — você tem {n} de {max} lugares livres. Serve de peça desde já.",
+  noChao: "Não coube na mochila: ficou no chão, à sua espera.",
 });
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
