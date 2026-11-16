@@ -135,6 +135,8 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     pm: "PM {A} → {B}",
     semPM: "falta PM: tem {A}, custa {B}",
     ausente: "{N} não está aqui",
+    /* S4e: o nome que ninguém no mundo tem — o sistema não o põe em cena */
+    desconhecido: "não há ninguém aqui chamado {N}",
     pagarTotal: "a bolsa fica com ◉ {B}",
     pagarNaoChega: "a bolsa só tem ◉ {B}",
     /* {N} já com a preposição contraída: «à Vela Silenciosa», «a Joric» */
@@ -150,7 +152,9 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     viu: "você conheceu {N} {L}",
   }),
   /* os verbos de ter com alguém (o «procuro» é da porta da procura) */
-  chama: /\b(falo|falar|converso|conversar|pergunto|perguntar|chamo|chamar|digo|dizer|peco|pedir|aproximo-me|cumprimento|saudo|vou ter com|interpelo)\b/,
+  chama: /\b(falo|falar|converso|conversar|pergunto|perguntar|chamo|chamar|digo|dizer|peco|pedir|aproximo-me|cumprimento|saudo|vou ter com|interpelo|entrego|entregar|mostro|mostrar|aceno|acenar)\b/,
+  /* S4e: o nome próprio que ninguém tem só conta com estas letras ou mais */
+  nomeMinimo: 3,
   /* O QUE SE SABE DO SÍTIO — só o que o herói ouviu ou viu */
   sabe: Object.freeze({
     trabalha: "{N}{P} trabalha aqui",
@@ -267,9 +271,27 @@ export function aPessoaChamada(frase, ctx) {
   for (const n of arr(c.conhecidos).map(limpo).filter(Boolean)) {
     const inteiro = sem(n), primeiro = inteiro.split(/[\s,]+/)[0];
     const casa = depois.includes(inteiro) ? inteiro.length : primeiro.length >= 4 && new RegExp(`\\b${primeiro}\\b`).test(depois) ? primeiro.length : 0;
-    if (casa && (!achado || casa > achado.casa)) achado = { nome: n, casa };
+    /* S4e: quem a frase chama é o primeiro nome depois do verbo («Pergunto à
+       Orla se viu o Varek» chama a Orla); no empate, o nome mais longo */
+    const onde = casa ? depois.search(new RegExp(`\\b${primeiro}\\b`)) : -1;
+    if (casa && (!achado || onde < achado.onde || (onde === achado.onde && casa > achado.casa))) achado = { nome: n, casa, onde };
   }
-  if (!achado) return null;
+  if (!achado) {
+    /* S4e (16/11): «Falo com Kolvar» — um nome próprio logo depois do verbo
+       (e da ligação), que nem quem está, nem quem o herói conhece, nem o mundo
+       (`mundo`: a gente da base, os sítios, as cidades) tem. O sistema diz que
+       não há, em vez de deixar o Narrador inventar a pessoa. */
+    const orig = limpo(frase);
+    const iv = sem(orig).search(P.chama);
+    if (iv < 0) return null;
+    const m = orig.slice(iv).match(/^\S+(?:\s+(?:com|a|ao|à|para|pra))?\s+(?:o\s+|a\s+)?(\p{Lu}[\p{Ll}\p{M}'-]+(?:\s+(?:d[aeo]s?\s+)?\p{Lu}[\p{Ll}\p{M}'-]+)?)/u);
+    if (!m || sem(m[1]).length < P.nomeMinimo) return null;
+    const nome = m[1];
+    const todos = [...arr(c.conhecidos), ...presentes, ...arr(c.mundo)].map(limpo).filter(Boolean);
+    const p1 = sem(nome).split(/\s+/)[0];
+    if (todos.some((n) => sem(n).includes(sem(nome)) || sem(n).split(/[\s,]+/)[0] === p1)) return null;
+    return { nome, desconhecido: true };
+  }
   if (presentes.some((p) => mesmaPessoa(p, achado.nome) || sem(p).split(/[\s,]+/)[0] === sem(achado.nome).split(/[\s,]+/)[0])) return null;
   return { nome: achado.nome };
 }
@@ -345,13 +367,16 @@ function osEfeitos(l, e) {
     const N = limpo(l.ausente.nome);
     let sabe = [];
     try { sabe = oQueSeSabeDaPessoa(e, N); } catch { sabe = []; }
+    /* S4e: quem o sistema põe num posto (a gente da base, o figurante) — a
+       leitura traz o posto, e o herói fica a saber onde a pessoa trabalha */
+    if (!sabe.length && limpo(l.ausente.posto)) sabe = [{ linha: tpl(P.sabeDaPessoa.trabalha, { N, L: emLugar(limpo(l.ausente.posto)) }), lugar: limpo(l.ausente.posto), cidade: "" }];
     const aqui = limpo(e.cidadeAtual);
     const sitios = arr(l.ausente.sitios).filter((x) => ehObj(x) && limpo(x.nome));
     const daqui = sabe.find((x) => (!x.cidade || !aqui || mesmoNome(x.cidade, aqui)) && sitios.some((q) => mesmoNome(q.nome, x.lugar)));
     const alvo = daqui ? sitios.find((q) => mesmoNome(q.nome, daqui.lugar)) : null;
     ef.ausente = alvo
       ? { verbo: tpl(V.ausente, { L: artigoMinusculo(alvo.nome) }), confirmar: C.ausente, preco: "", minutos: minutosDe(alvo.minutos), linhas: [tpl(LN.ausente, { N }), ...sabe.map((x) => x.linha)], alvo }
-      : { verbo: tpl(V.ausenteSemSitio, { N }), confirmar: C.ausenteSemSitio, preco: "", minutos: null, linhas: sabe.map((x) => x.linha), semSitio: true };
+      : { verbo: tpl(V.ausenteSemSitio, { N }), confirmar: C.ausenteSemSitio, preco: "", minutos: null, linhas: l.ausente.desconhecido ? [tpl(LN.desconhecido, { N })] : sabe.map((x) => x.linha), semSitio: true };
   }
   if (ehObj(l.espera) && (Number(l.espera.minutos) > 0 || arr(l.espera.opcoes).length)) {
     const min = minutosDe(l.espera.minutos);

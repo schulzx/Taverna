@@ -105,6 +105,7 @@
 import { oQueOSistemaConhece, casaONome } from "./cronista.js";
 import { andarOsVetos } from "./correcao-do-juiz.js";
 import { oQueExisteAqui, chefesDoMundo } from "../mundo-base.js";
+import { figurantesDaCidade } from "../elenco-do-lugar.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : {});
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -543,7 +544,12 @@ function genteDaBase(E, mundo) {
   const out = [];
   for (const c of arr(obj(E.mapa).cidades)) {
     if (!c || !c.nome) continue;
-    try { for (const p of arr(obj(oQueExisteAqui(m.semente, E.mapa, c.nome, E.baseMundo, m.genero || undefined, m.molde || null, m.lex || null)).gente)) if (p && p.nome) out.push(p.nome); } catch { /* a base não abre: segue sem ela */ }
+    try {
+      const b = obj(oQueExisteAqui(m.semente, E.mapa, c.nome, E.baseMundo, m.genero || undefined, m.molde || null, m.lex || null));
+      for (const p of arr(b.gente)) if (p && p.nome) out.push(p.nome);
+      /* S4e: o figurante que o sistema escala para atender cada sítio (elenco-do-lugar.js) é gente do sistema */
+      for (const f of figurantesDaCidade({ semente: m.semente, cidade: c.nome, locais: b.locais, genero: m.genero || undefined, lex: m.lex || null, usados: arr(b.gente) })) out.push(f.nome);
+    } catch { /* a base não abre: segue sem ela */ }
   }
   try { for (const c of chefesDoMundo(m.semente, E.mapa, m.genero || undefined, m.lex || null)) out.push(c.nome, c.nomeCurto); } catch { /* idem */ }
   return out.filter((x) => typeof x === "string" && x.trim());

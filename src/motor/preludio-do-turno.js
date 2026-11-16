@@ -641,7 +641,7 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
       let aqui;
       try {
         aqui = quemAgeAqui(quemEstaAqui({ npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [], masmorra: $ref.masmorra,
-          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [] }));
+          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [], nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico } }));
       } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra }).aqui; }
       const quantos = aqui.length;
       const confid = $ref.confidencias || [];

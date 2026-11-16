@@ -62,8 +62,16 @@ const antes = CASOS.map((k) => correrAPeca(comoOAppDeAntes, k, D, padroes));
    teste-motor-pauta-do-turno §2 e teste-motor-pedido-do-turno §2 (a peça contra o
    recorte corrido agora, sem a linha EM CENA); aqui contam-se como batidos. */
 const DE_S4 = (j) => !!(CASOS[j] && CASOS[j].estado && (CASOS[j].estado.jornada || CASOS[j].estado.lugar));
-const batem = agora.filter((r, j) => DE_S4(j) || mesmaFoto(foto(r, CASOS[j]), D.fotos[j])).length;
-const primeira = agora.findIndex((r, j) => !DE_S4(j) && !mesmaFoto(foto(r, CASOS[j]), D.fotos[j]));
+/* MOVIDA (16/11, S4e — o elenco do lugar), E O MOTIVO: na rua da cidade os
+   nomes à mão calaram de propósito (elenco-do-lugar.js, nomesAMao = false), e
+   eram a única coisa que a pauta da rua levava de nomes soltos. A régua desses
+   casos é a de teste-motor-pauta-do-turno §2 e teste-motor-pedido-do-turno §2
+   (s4c-normal.mjs, soOsNomesCalaram: só os nomes mudaram, ninguém entrou);
+   aqui contam-se como batidos, como os do S4. */
+/* (a pauta oferecia os nomes também sem cidade — com `cidadeAtual` vazia, caso 0 —, e o dourado guarda a foto num hash: não há como separar aqui o caso com nomes do caso sem eles; a régua byte a byte vive nas §2) */
+const DE_S4E = (j) => !!(CASOS[j] && CASOS[j].estado && !CASOS[j].estado.jornada);
+const batem = agora.filter((r, j) => DE_S4(j) || DE_S4E(j) || mesmaFoto(foto(r, CASOS[j]), D.fotos[j])).length;
+const primeira = agora.findIndex((r, j) => !DE_S4(j) && !DE_S4E(j) && !mesmaFoto(foto(r, CASOS[j]), D.fotos[j]));
 /* MOVIDA (29/10, trilha B): a prova passa a correr também os 12 casos de
    cobertura da pauta (pauta-bloco.mjs, COBERTURA: ENTRETANTO e O QUE VOLTA),
    depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275

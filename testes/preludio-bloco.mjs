@@ -285,7 +285,11 @@ export async function correrACadeiaDasPecas(pecas, k, dourados, padroes, { sorte
 export function fotoDaCadeia(f) {
   const o = f.saida || {};
   return { rede: f.rede ? sha(f.rede) : null, tamRede: f.rede ? JSON.stringify(f.rede).length : -1, saida: sha(Object.fromEntries(Object.keys(o).sort().map((n) => [n, o[n]]))),
-    refs: sha(fotoDosRefs(f.valores)), portas: sha(f.log.portas), nPortas: f.log.portas.length, erro: f.erro, faltas: [...new Set(f.log.faltas)], redeInteira: f.rede };
+    refs: sha(fotoDosRefs(f.valores)), portas: sha(f.log.portas), nPortas: f.log.portas.length, erro: f.erro, faltas: [...new Set(f.log.faltas)], redeInteira: f.rede,
+    /* S4e: as portas sem a foto dos refs do pushMsgs e sem o calou dos nomes à mão — o
+       que o bloco dos nomes calado ainda deixa comparar (teste-motor-preludio-do-turno §4) */
+    refsSemNomes: sha(Object.fromEntries(Object.entries(fotoDosRefs(f.valores)).filter(([k]) => !["nomesPendentes", "nomesOferecidos", "elencoCache", "emCena", "relevancia", "genteNaPauta"].includes(k)))),
+    portasSemNomes: sha(f.log.portas.filter((p) => JSON.stringify(p) !== JSON.stringify(["calou", "nomesAMao"])).map((p) => (Array.isArray(p) && p[0] === "pushMsgs" ? p.slice(0, 2) : p))) };
 }
 export const mesmaCadeia = (a, b) => a.rede === b.rede && a.saida === b.saida && a.refs === b.refs && a.portas === b.portas && a.erro === b.erro && JSON.stringify(a.faltas) === JSON.stringify(b.faltas);
 export const cadeiaGuardada = (f) => { const { redeInteira, ...resto } = f; void redeInteira; return resto; };

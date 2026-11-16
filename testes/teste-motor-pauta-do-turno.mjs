@@ -29,7 +29,7 @@ import { CAMPOS_DO_SERVIDOR } from "../src/motor/eco-do-turno.js";
 import { SECOES, TETO_DA_PAUTA } from "../src/pauta.js";
 import { semearACasa, rng, hashSemente } from "../src/semente.js";
 import { morderEmParalelo } from "./mordidas-em-paralelo.mjs";
-import { semCena, soACena } from "./s4c-normal.mjs";
+import { semCena, soACena, soOsNomesCalaram } from "./s4c-normal.mjs";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
@@ -98,7 +98,11 @@ t(`as fotos da peça são as do dourado onde a cena não mudou (${IDX_S4C.filter
 t("o texto ao Narrador é o mesmo, byte a byte, onde a cena não mudou", IDX_S4C.every((i) => cenaMudou(i) || PECA[i].texto === RECORTE[i].texto));
 t("os refs do fim são os mesmos, campo a campo, onde a cena não mudou", IDX_S4C.every((i) => cenaMudou(i) || JSON.stringify(PECA[i].refs) === JSON.stringify(RECORTE[i].refs)));
 t("S4c: nenhuma diferença fora da cena sem a cena ter mudado (o texto, os refs, as portas, o erro)", orfaos.length === 0, orfaos.slice(0, 5).join(","));
-t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua da cidade, nada)", IDX_S4C.every((i) => !cenaMudou(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))), IDX_S4C.filter((i) => cenaMudou(i) && !(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))).slice(0, 5).join(","));
+/* MOVIDA (16/11, S4e — o elenco do lugar), E O MOTIVO: os nomes à mão calaram
+   (ELENCO_DO_LUGAR.nomesAMao = false) e eles saíam justamente na rua da cidade;
+   a rua pode mudar agora, mas só por eles (s4c-normal.mjs, soOsNomesCalaram). */
+const soNomes = (i) => soOsNomesCalaram({ t: PECA[i].texto, r: PECA[i].refs }, { t: RECORTE[i].texto, r: RECORTE[i].refs });
+t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua da cidade, só os nomes à mão que calaram)", IDX_S4C.every((i) => !cenaMudou(i) || soNomes(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))), IDX_S4C.filter((i) => cenaMudou(i) && !(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))).slice(0, 5).join(","));
 t("S4: na jornada a linha EM CENA da peça nunca traz quem o recorte não trazia (só tira a cidade)", PECA.every((f, i) => { if (!DE_S4(i)) return true; /* S4c: o grupo («com você») cabe quando os nomes à mão saem — não é gente da cidade */ const nomes = (tx) => ((String(tx).split("\n").find(linhaEmCena) || "").replace(/[^·;]*\(com você\)/g, "").match(/[A-ZÁÉÍÓÚ][\wÀ-ú]+(?: [A-ZÁÉÍÓÚo][\wÀ-ú]+)*(?= \()/g) || []); const a = nomes(RECORTE[i].texto); return nomes(f.texto).every((n) => a.includes(n)); }));
 t("as portas na mesma ordem onde a cena não mudou (calou, setPersonagem, pushMsgs com a foto dos refs)", PECA.every((f, i) => cenaMudou(i) || JSON.stringify(f.portas) === JSON.stringify(RECORTE[i].portas)));
 t("os que estouram estouram igual (6, com a mesma mensagem)", PECA.filter((f) => f.erro).length === 6 && PECA.every((f, i) => f.erro === RECORTE[i].erro));
@@ -127,7 +131,11 @@ for (const f of PECA) for (const s of Object.keys(f.pautaObj || {})) vivos[s] = 
    tem; o dourado ficou byte a byte o de antes (secção 1). A prova dela, com
    uma campanha de mistério pela mesma aPautaDoTurno, é
    teste-quadro-fiacao.mjs §8, e a medida contra o teto a §9. */
-const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso"];
+/* MOVIDA (16/11, S4e — o elenco do lugar): e NOMES À MÃO — a secção calou de
+   propósito (elenco-do-lugar.js, ELENCO_DO_LUGAR.nomesAMao = false): quem
+   atende um sítio é o figurante que o sistema escala e põe na tela, e quem
+   passa na rua não tem nome. A prova é teste-elenco-do-lugar.mjs §1. */
+const FALTAM = ["forma", "boato", "quadro", "vetoDoCaso", "nomes"];
 const POUCOS = SECOES.map((s) => s.id).filter((s) => !FALTAM.includes(s) && !(vivos[s] >= 5));
 t(`toda secção da pauta aparece em ≥5 casos, salvo ${FALTAM.join(", ")} (que nenhum sítio da pauta escreve)${POUCOS.length ? " — poucos: " + POUCOS.join(",") : ""}`, POUCOS.length === 0,
   SECOES.map((s) => `${s.id} ${vivos[s.id] || 0}`).join(" · "));

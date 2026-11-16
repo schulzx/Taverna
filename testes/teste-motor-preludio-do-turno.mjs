@@ -116,7 +116,13 @@ sec("4. A cadeia: o prelúdio e o pedido, encadeados, dão o pedido à rede dos 
   const daCenaC = [], orfaosC = [];
   falham.forEach((i, j) => {
     const r = RF[j];
-    const cena = cenaMudouP(i) || JSON.stringify(soACena({ t: msgs(C[i]) })) !== JSON.stringify(soACena({ t: msgs(r) })) || sys(C[i]) !== sys(r);
+    /* S4e (16/11): e a cadeia onde só o bloco dos nomes à mão mudou (o calou
+       dele, que já não pode soar, e o elencoCache que ele enchia) — tudo o
+       resto igual depois de semCena (s4c-normal.mjs). A cadeia guarda as
+       portas num hash; portasSemNomes (preludio-bloco.mjs) é o mesmo hash sem
+       esse calou e sem a foto dos refs que o pushMsgs leva */
+    const soOsNomes = (() => { const x = semCena(C[i]), y = semCena(r); const ks = Object.keys({ ...x, ...y }).filter((k) => JSON.stringify(x[k]) !== JSON.stringify(y[k])); return ks.every((k) => ["portas", "nPortas", "portasSemNomes", "refs"].includes(k)) && x.portasSemNomes === y.portasSemNomes && x.refsSemNomes === y.refsSemNomes; })();
+    const cena = cenaMudouP(i) || JSON.stringify(soACena({ t: msgs(C[i]) })) !== JSON.stringify(soACena({ t: msgs(r) })) || sys(C[i]) !== sys(r) || soOsNomes;
     if (cena) daCenaC.push(i); else orfaosC.push(i);
   });
   const iguais = N_PRELUDIO - falham.length + daCenaC.length;

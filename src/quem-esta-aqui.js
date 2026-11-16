@@ -55,6 +55,7 @@
    ============================================================ */
 import { elencoDaCena, masmorraAberta } from "./cena.js";
 import { fichaDaPessoa } from "./gente-por-dentro.js";
+import { quemAtende } from "./elenco-do-lugar.js";
 
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -212,6 +213,17 @@ export function quemEstaAqui(estado) {
     };
     for (const n of aqui) if (ehObj(n) && ali(n.local)) por(nomeDe(n), n.papel, n.genero, n.local);
     for (const p of arr(e.gente)) if (ehObj(p) && ali(p.local) && !/morto/i.test(str(p.status))) por(nomeDe(p), p.papel || p.oficio, p.genero_pessoa || p.genero, p.local);
+    /* S4e: o posto vazio num lugar com função, à hora do expediente — o
+       sistema escala quem o atende (elenco-do-lugar.js). Antes a estalagem
+       antes das 11h e no dia da folga de todos ficava sem ninguém, e a prosa
+       punha lá quem quisesse. */
+    if (!doSitio.length) {
+      const N = ehObj(e.nomes) ? e.nomes : {};
+      let fig = [];
+      try { fig = quemAtende(conhecido || L, { semente: R ? R.semente : str(N.semente), cidade, minuto: R ? R.minuto : undefined, genero: N.genero, lex: N.lex, gente: e.gente }); } catch { fig = []; }
+      if (!fig.length && conhecido && conhecido !== L) { try { fig = quemAtende(L, { semente: R ? R.semente : str(N.semente), cidade, minuto: R ? R.minuto : undefined, genero: N.genero, lex: N.lex, gente: e.gente }); } catch { fig = []; } }
+      for (const f of fig) if (!ausentes.some((a) => mesmo(a, f.nome)) && !noGrupo.has(sem(f.nome))) doSitio.push({ nome: f.nome, rotulo: f.rotulo, genero: f.genero, aqui: true, deOnde: f.deOnde });
+    }
   }
   /* quem entra pelo passo, pela carta ou pelo posto não fica no longe */
   const longe2 = longe.filter((n) => !doPasso.some((x) => mesmo(x.nome, n && n.nome)) && !doSitio.some((x) => mesmo(x.nome, n && n.nome)));

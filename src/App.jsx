@@ -7244,6 +7244,8 @@ export default function Taverna() {
       relogio: vale("QUEM ESTÁ · o relógio", () => ({ semente: sementeMundo(), dia: diaRef.current, minuto: minutoRef.current, cidade: String(cidadeAtualRef.current || ""), mapa: mapaRef.current, npcs: npcsRef.current, base: baseMundoRef.current }), null),
       quadros: lugarRef.current ? vale("QUEM ESTÁ · as cartas", () => quadrosAgora(), []) : [],
       gente: lugarRef.current ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
+      /* S4e: os nomes do mundo, para o figurante que atende o sítio (elenco-do-lugar.js) — a mesma conta da pauta */
+      nomes: vale("QUEM ESTÁ · os nomes", () => ({ semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico }), null),
     });
   };
   const contextoDoEmCena = (frase, quem) => {
@@ -26257,17 +26259,31 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         try { const ab = aberturaMundoRef.current || {}; if (ab.pista && ab.pista.nome) conhecidos.add(ab.pista.nome); if (ab.alvo && ab.alvo.quem) conhecidos.add(ab.alvo.quem); } catch (e) { calou("a proposta: os nomes da abertura", e); }
         for (const m of (missoesRef.current || [])) if (m && m.status === "ativa") for (const et of (m.etapas || [])) if (et && !et.feito && et.tipo === "falar_com" && et.alvo) conhecidos.add(et.alvo);
         const presentes = [];
-        try { for (const x of (elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: (fichaViva() || personagem || {}).grupo || [] }).aqui || [])) if (x && x.nome) presentes.push(x.nome); } catch (e) { calou("a proposta: quem está à vista", e); }
+        /* S4e (16/11): quem está à vista é a conta única (quem-esta-aqui.js) — a
+           cidade inteira contava como presente, e «Falo com Orla» na Feira, com a
+           Orla na estalagem, passava ao Narrador como se ela lá estivesse */
+        let q0 = null;
+        try { q0 = quemAgora(); for (const x of quemAgeAqui(q0)) if (x && x.nome) presentes.push(x.nome); } catch (e) { calou("a proposta: quem está à vista", e); }
+        /* a gente do mundo: a base desta cidade (com o posto de cada um), os
+           sítios e as cidades — quem a frase nomeia e o mundo não tem é recusado */
+        const postos = new Map(); const mundo = [];
+        try {
+          const b = oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {};
+          for (const p of (b.gente || [])) if (p && p.nome) { conhecidos.add(p.nome); if (p.local) postos.set(p.nome, p.local); }
+          for (const l of (b.locais || [])) if (l && l.nome) mundo.push(l.nome);
+          for (const c of ((mapaRef.current || {}).cidades || [])) if (c && c.nome) mundo.push(c.nome);
+          for (const l of lugaresDaqui()) if (l && l.nome) mundo.push(l.nome);
+        } catch (e) { calou("a proposta: a gente do mundo", e); }
         try { for (const x of aPessoaDoPasso(est)) if (x && x.aqui && x.nome) presentes.push(x.nome); } catch (e) { calou("a proposta: a pessoa do passo à vista", e); }
         for (const g of ((fichaViva() || personagem || {}).grupo || [])) if (g && g.nome) presentes.push(g.nome);
-        const chamada = aPessoaChamada(acao, { conhecidos: [...conhecidos], presentes });
+        const chamada = aPessoaChamada(acao, { conhecidos: [...conhecidos], presentes, mundo: [...mundo, (fichaViva() || personagem || {}).nome || ""] });
         if (chamada) {
           const sitios = lugaresDaqui().filter((l) => l && l.nome && l.onde !== "comodo").map((l) => {
             let minutos = null;
             try { const ps = oPassoNaCidade({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, dia: diaRef.current, mapa: mapaRef.current }, l); minutos = ps ? ps.minutos : null; } catch (e) { minutos = null; }
             return { ...l, minutos };
           });
-          L.ausente = { nome: chamada.nome, sitios };
+          L.ausente = { nome: chamada.nome, sitios, ...(chamada.desconhecido ? { desconhecido: true } : {}), ...(postos.get(chamada.nome) ? { posto: postos.get(chamada.nome) } : {}) };
         }
       }
     } catch (e) { calou("a proposta: quem não está", e); }

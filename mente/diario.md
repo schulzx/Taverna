@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — S4e, o elenco do lugar
+
+A mão do motor, de `ee8ec4a`. Bastão do `App.jsx` («S4e») tomado às 17:33 para duas fiações curtas (os nomes do mundo no `quemAgora`; a proposta lê a conta única e a base da cidade), devolvido no fecho. Sem `VERSAO`, sem push, sem IA real, sem navegador.
+
+- **Diagnóstico (Node, 6 mundos da prova da pauta).** A **estalagem** nascia vazia porque a gente da base de uma taverna é toda da família «balcao» (`gente-por-dentro.js:163`, turno 11h–2h) e cada um tem folga semanal: o posto (`quem-esta-aqui.js`, `deTurno`) tirava-os com razão e não punha ninguém — 126 de 378 cenas de taverna, 780 de 2646 cenas de sítio. A **chegada** nascia vazia porque chegar é ficar no meio da cidade sem `lugar` (`App`, `alvo.onde === "cidade"`), e o posto só existe com o herói num sítio (`noSitio`) — 378 de 378.
+- **1 · o elenco do lugar.** `src/elenco-do-lugar.js`: tabela `ELENCO_DO_LUGAR` (expediente e ofício por tipo, + o portão), `quemAtende` → o figurante com nome, ofício e género, por semente do mundo/cidade/tipo (sempre o mesmo; sem save). Entra no `doSitio` (tela e pauta pela mesma lista); a memória do inventado conhece-o (`figurantesDaCidade`). **Os nomes à mão calam** (`nomesAMao: false`). Catraca: 2737 cenas de sítio com função no expediente — vazias antes 877, agora 0; tela = pauta 2737/2737. A rua e o beco ficam sem ninguém escalado (a chegada continua «um guarda sem nome» — é o certo para lugar sem função).
+- **2 · a recusa do ausente.** O cartão de «quem não está» já existia (`aPessoaChamada`), mas lia a cidade inteira como «à vista» e não conhecia a gente da base: «Falo com Orla» na Feira passava. Agora: presentes = `quemAgeAqui`; conhecidos += a base da cidade (com o posto → «Orla trabalha na Roda dos Insones» e «Ir até…»); nome que o mundo não tem → «não há ninguém aqui chamado Kolvar»; o primeiro nome depois do verbo é o chamado. Corpus 35 frases, 100 %.
+- **Decisão média (dourados):** `s4c-normal.mjs` conta NOMES À MÃO no lado da cena, mais o `elencoCache`, o calou dos nomes e — na rua — a A GENTE que o teto arruma; `preludio-bloco` ganha dois hashes sem os nomes. Cada asserção movida leva o motivo.
+- **Prompt:** PIOR CENA REAL 63 866 antes e depois; com gente (solto) 70 371 antes e depois.
+- **Não feito (orçamento):** 3 (a poda do ausente na prosa), 4 (género numa palavra na linha EM CENA; «Poupar» para mortos-vivos), e o «portão» que não existe com nome (mover ou dizer que não há).
+
 ## 16/11 · sem versão — V9, as cerimônias · commits 7e2f5cf · 0ec19e9 · 2ac4f99 · 6b40204
 
 A mão, com o bastão do `App.jsx` das 16:12 até ao commit 0ec19e9 (devolvido depois dele). Pacote V9 (F6 de `formas.md`), feito pela ordem de valor; o orçamento fechou antes das etapas 2, 3, 5 e 6.

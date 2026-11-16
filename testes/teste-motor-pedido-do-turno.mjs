@@ -20,7 +20,7 @@
    recorte acusa todo nome sem dublê. A suíte não lê o texto de src/motor/
    (a catraca teste-assercoes-de-texto): a peça prova-se jogando.
    ============================================================ */
-import { soACena } from "./s4c-normal.mjs";
+import { soACena, soOsNomesCalaram, semCena } from "./s4c-normal.mjs";
 import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto, N_CASOS, osModulos, osPadroes } from "./pedido-bloco.mjs";
 import { N_DA_PAUTA } from "./pauta-bloco.mjs";
 import { oPedidoDoTurno, REFS_DO_PEDIDO, RENDER_DO_PEDIDO, ENTRADA_DO_PEDIDO, PEDIDO_AO_NARRADOR } from "../src/motor/pedido-do-turno.js";
@@ -92,8 +92,14 @@ const cenaMudou = (i) => JSON.stringify(soACena({ t: String(P[i].pauta == null ?
 const soOSystem = (i) => { const e = CASOS[i].estado || {}; if (!(e.lugar || e.jornada) || P[i].pauta !== R[i].pauta || JSON.stringify(P[i].portas) !== JSON.stringify(R[i].portas)) return false; const ks = Object.keys({ ...(P[i].refs || {}), ...(R[i].refs || {}) }).filter((k) => JSON.stringify((P[i].refs || {})[k]) !== JSON.stringify((R[i].refs || {})[k])); return ks.length === 1 && ks[0] === "system"; };
 const comCena = P.map((f, i) => i).filter((i) => cenaMudou(i) || soOSystem(i));
 console.log(`      a cena da pauta mudou em ${comCena.length} pedidos`);
-t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada", comCena.every((i) => !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))));
-const iguais = P.reduce((a, f, i) => a + ((cenaMudou(i) || soOSystem(i) || (DE_S4(i) ? fotoS4(f) === fotoS4(R[i]) : mesmaFoto(fotoGuardada(f, i), D.fotos[i]))) ? 1 : 0), 0);
+/* MOVIDA (16/11, S4e — o elenco do lugar), E O MOTIVO: os nomes à mão calaram
+   (ELENCO_DO_LUGAR.nomesAMao = false), e saíam justamente na rua da cidade; a
+   rua pode mudar agora, mas só por eles (s4c-normal.mjs, soOsNomesCalaram). */
+const soNomes = (i) => soOsNomesCalaram({ t: String(P[i].pauta == null ? "" : P[i].pauta), r: P[i].refs }, { t: String(R[i].pauta == null ? "" : R[i].pauta), r: R[i].refs });
+t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua, só os nomes à mão que calaram)", comCena.every((i) => soNomes(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))));
+/* S4e: e onde a única diferença é o calou("nomesAMao") que já não pode soar (o bloco dos nomes calou) */
+const soAPortaDosNomes = (i) => { const x = fotoGuardada(P[i], i), y = D.fotos[i]; return Object.keys(x).every((k) => k === "portas" || k === "nPortas" || JSON.stringify(x[k]) === JSON.stringify(y[k])) && JSON.stringify(semCena(P[i].portas)) === JSON.stringify(semCena(R[i].portas)); };
+const iguais = P.reduce((a, f, i) => a + ((cenaMudou(i) || soOSystem(i) || soAPortaDosNomes(i) || (DE_S4(i) ? fotoS4(f) === fotoS4(R[i]) : mesmaFoto(fotoGuardada(f, i), D.fotos[i]))) ? 1 : 0), 0);
 t(`peça = recorte em ${iguais}/${N_DA_PAUTA} — o pedido à rede byte a byte, a saída, os refs do fim e as portas`, iguais === N_DA_PAUTA);
 t("os que estouram estouram igual (e entregam ao App o que já tinham escrito)", P.every((f, i) => (f.erro === null) === (D.fotos[i].erro === null)));
 {

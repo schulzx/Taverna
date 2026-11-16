@@ -16,9 +16,17 @@
    Tudo o resto — as outras linhas, os outros refs, a ordem das portas, os
    erros — continua byte a byte. A intenção fica: a peça é o recorte, salvo
    a correção escrita. */
-const SECOES_DA_CENA = /^(EM CENA|A GENTE)\s/;
+/* S4e (16/11, o elenco do lugar): a secção NOMES À MÃO cala de propósito
+   (elenco-do-lugar.js, ELENCO_DO_LUGAR.nomesAMao = false) — quem atende um
+   sítio é o figurante que o sistema escala, e onde ninguém atende quem passa
+   não tem nome. É a mesma correção do S4c («a pauta oferecia nomes a
+   figurantes em qualquer sítio»), levada ao fim: entra no lado da cena. */
+const SECOES_DA_CENA = /^(EM CENA|A GENTE|NOMES À MÃO)\s/;
 const LINHA_DO_VETO = /quem não está nesta cena/;
-const REFS_DA_CENA = new Set(["emCena", "elencoMem", "nomesPendentes", "nomesOferecidos", "interprete", "relevancia", "genteNaPauta"]);
+/* S4e: e o elencoCache — o bloco dos nomes à mão era quem o enchia (nomesDoElenco), e com os nomes calados ele fica
+   como estava; e o calou("nomesAMao"), que deixa de poder soar */
+const REFS_DA_CENA = new Set(["emCena", "elencoMem", "nomesPendentes", "nomesOferecidos", "interprete", "relevancia", "genteNaPauta", "elencoCache"]);
+const PORTA_DOS_NOMES = JSON.stringify(["calou", "nomesAMao"]);
 
 /* o texto da pauta sem as secções da cena: uma secção começa com o rótulo
    na coluna 0 e continua nas linhas indentadas */
@@ -44,7 +52,7 @@ export function semCena(v) {
   if (typeof v === "string") return textoSemCena(v);
   if (Array.isArray(v)) {
     if (v[0] === "pushMsgs") return v.slice(0, 2);
-    return v.map(semCena);
+    return v.filter((x) => JSON.stringify(x) !== PORTA_DOS_NOMES).map(semCena);
   }
   if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).filter(([k]) => !REFS_DA_CENA.has(k)).map(([k, x]) => [k, semCena(x)]));
   return v;
@@ -62,4 +70,27 @@ export function soACena(v) {
   }
   const refs = o.r && typeof o.r === "object" ? Object.fromEntries(Object.entries(o.r).filter(([k]) => REFS_DA_CENA.has(k))) : {};
   return { linhas, refs };
+}
+
+/* S4e (16/11): a cena mudou SÓ porque os nomes à mão calaram? (a secção NOMES
+   À MÃO, a cauda «a quem não tem nome: …» da linha EM CENA e os refs dela).
+   É a única mudança que a rua da cidade pode ter — os testes da regra «a cena
+   muda só onde há sítio…» leem esta, com o motivo escrito ao lado. */
+const semNomes = (tx) => String(tx == null ? "" : tx).split("\n").filter((l) => !/^NOMES À MÃO\s/.test(l)).map((l) => (/^EM CENA\s/.test(l) ? l.replace(/;?\s*a quem não tem nome:.*$/, "") : l)).filter((l) => !/^EM CENA\s*$/.test(l)).join("\n");
+const semRefsDosNomes = (r) => (r && typeof r === "object" ? Object.fromEntries(Object.entries(r).filter(([k]) => !["nomesPendentes", "nomesOferecidos", "elencoCache", "emCena", "relevancia", "genteNaPauta"].includes(k))) : r);
+export function soOsNomesCalaram(a, b) {
+  const x = a && typeof a === "object" ? a : {}, y = b && typeof b === "object" ? b : {};
+  const p = soACena({ t: semNomes(x.t), r: semRefsDosNomes(x.r) }), q = soACena({ t: semNomes(y.t), r: semRefsDosNomes(y.r) });
+  /* A GENTE vem e vai com o arrumo do teto (pautaComEmCena: a linha EM CENA,
+     com os nomes, trazia-a consigo; sem eles, a economia da praça ocupa o
+     lugar — medido nos casos 120 e 140 da prova da pauta). O que tem de ficar
+     igual: a linha EM CENA sem os nomes, o veto, e os refs da cena. */
+  /* e a linha EM CENA entra «no lugar dos NOMES À MÃO» (em-cena.js,
+     pautaComEmCena): sem eles, a linha só do grupo («Saoirse (com você)»,
+     caso 146) pode não entrar, e o grupo de dois troca de vez (caso 198). A
+     régua é a da jornada no S4: ninguém de fora do grupo entra na peça sem
+     estar no recorte, e os refs da cena são os mesmos. */
+  const gente = (ls) => ls.filter((l) => /^EM CENA\s/.test(l)).flatMap((l) => l.replace(/^EM CENA\s+/, "").split(/ · |; /)).filter((x) => x && !/\(com você\)/.test(x));
+  const antes = gente(q.linhas);
+  return JSON.stringify(p.refs) === JSON.stringify(q.refs) && gente(p.linhas).every((x) => antes.includes(x));
 }

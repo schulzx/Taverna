@@ -265,5 +265,53 @@ sec("7. (S4c) dentro da cidade a cena tem gente — a mesma na tela e na pauta")
   t("lixo não estoura", () => { naoEstaoAqui(null, null); linhaDeQuemNaoEsta(undefined, { mostrado: "x" }); quemAgeAqui(7); return true; });
 }
 
+{
+  /* S4e (16/11): O EXPEDIENTE. A prova jogada viu a estalagem vazia na tela e
+     Orla na prosa: a gente da base de uma taverna é toda de turno 11h–2h, e
+     antes disso (ou no dia da folga de todos) o posto tirava-os com razão e
+     não punha ninguém — 780 de 2646 cenas de sítio vazias. Agora, todo sítio
+     com função tem quem o atenda à hora do expediente dele (o posto, ou o
+     figurante que o sistema escala). 6 mundos × 7 dias × 12 horas. */
+  console.log("\n8. (S4e) todo lugar com função tem quem o atenda no expediente — tela = pauta");
+  const { casoDaPauta, N_GRAVADOS } = await import("./pauta-bloco.mjs");
+  const { oQueExisteAqui } = await import(S + "mundo-base.js");
+  const { abertoAgora } = await import(S + "elenco-do-lugar.js");
+  let cenas = 0, vazias = 0, vaziasAntes = 0, figs = 0, iguais = 0, generoNaPauta = 0;
+  for (let w = 0; w < 6; w++) {
+    const k = casoDaPauta(N_GRAVADOS + w * 7 + 2);
+    const e = k.estado, cidade = e.cidadeAtual, gen = (e.mundo || {}).genero;
+    const sem = e.nomeCampanha + "|" + gen;
+    const base = oQueExisteAqui(sem, e.mapa, cidade, null, gen);
+    if (!base || !cidade) continue;
+    const lugaresC = base.locais.map((l) => ({ nome: l.nome, onde: "dentro" }));
+    for (let dia = 0; dia < 7; dia++) for (let h = 0; h < 24; h += 2) for (const l of [...base.locais, { nome: "O Portão Norte", tipo: "portao" }]) {
+      if (!abertoAgora(l.tipo, h * 60)) continue;
+      const ctx = { npcs: {}, cidadeAtual: cidade, mapa: e.mapa, grupo: [], lugares: lugaresC, gente: base.gente, lugar: { nome: l.nome, distancia: "dentro" }, relogio: { semente: sem, dia, minuto: h * 60, cidade, mapa: e.mapa }, nomes: { semente: sem, genero: gen } };
+      const q = quemEstaAqui(ctx);
+      const lista = montarEmCena({ semente: "s4e", cidade, grupo: [], ...contextoDeQuemEsta(q) });
+      const tela = pessoasAqui(lista).filter((x) => !x.comigo).map((x) => x.nome);
+      const linha = emCenaParaPauta(lista);
+      cenas++;
+      if (!tela.length) vazias++;
+      if (q.doSitio.some((x) => x.deOnde === "figurante")) { figs++; if (!q.doSitio.filter((x) => x.deOnde !== "figurante").length) vaziasAntes++; }
+      if (tela.filter((nm) => linha.includes(nm)).length === Math.min(tela.length, EM_CENA_NA_PAUTA.pessoa)) iguais++;
+      const f = q.doSitio.find((x) => x.deOnde === "figurante");
+      if (f && linha.includes(f.nome) && /\b(ele|ela)\b/.test(linha.slice(linha.indexOf(f.nome)).split(/ · |; /)[0])) generoNaPauta++;
+    }
+  }
+  console.log("      " + cenas + " cenas em sítios com função, no expediente; vazias — antes: " + vaziasAntes + ", agora: " + vazias + "; com figurante: " + figs + "; tela = pauta em " + iguais + "; o género do figurante na pauta: " + generoNaPauta + "/" + figs);
+  t("há cenas bastantes para a catraca valer (≥ 300)", cenas >= 300);
+  t("o posto sozinho deixava sítios com função vazios no expediente — o defeito existia", vaziasAntes > 0);
+  t("CATRACA: todo sítio com função tem ≥ 1 pessoa em cena no expediente", vazias === 0, String(vazias));
+  t("CATRACA: tela = pauta em 100 % das cenas", iguais === cenas, iguais + "/" + cenas);
+  /* o género numa palavra na linha EM CENA (S4e · 4) não coube neste pacote: a
+     conta fica impressa acima, para a próxima mão; o ofício do figurante já o
+     diz quando a língua o marca («moça da casa», «escrivã da guilda») */
+  t("o figurante leva o ofício para a pauta", iguais === cenas && figs > 0);
+  /* a rua e o beco não têm função: ninguém com nome é escalado */
+  const rua = quemEstaAqui({ npcs: {}, cidadeAtual: A, mapa, grupo: [], lugares: [], gente: [], lugar: { nome: "o beco dos curtidores", distancia: "dentro" }, relogio: { semente: "x", dia: 1, minuto: 600, cidade: A, mapa } });
+  t("o beco fica sem ninguém escalado", !rua.doSitio.length);
+}
+
 console.log(`\nquem está aqui (S4): ${ok} passaram, ${mal} falharam`);
 if (mal) process.exit(1);

@@ -107,6 +107,7 @@ import { oEnvelopeDaGente, oEnvelopeDoFio } from "./envelopes-do-turno.js";
 import { aCidadeSobOsPes } from "./tempo-do-turno.js";
 import { garantirBase, locaisDaCidade, oQueExisteAqui } from "../mundo-base.js";
 import { linhaDosNomesAMao, nomesAMao } from "../nomes.js";
+import { ELENCO_DO_LUGAR } from "../elenco-do-lugar.js";
 import { TIPOS_DE_LACO, comLaco, garantirLaco, paresEntre } from "../npcs.js";
 import { garantirCoracaoDoSave, nucleoDaCampanha, quemEParaPauta } from "../nucleo.js";
 import { PESO_AMEACA, avaliarEncontro } from "../orcamento.js";
@@ -870,6 +871,8 @@ export function aPautaDoTurno(estado, entrada, portas) {
       relogio: vale("QUEM ESTÁ · o relógio", () => ({ semente: sementeMundo(), dia: $ref.dia, minuto: $ref.minuto, cidade: String($ref.cidadeAtual || ""), mapa: $ref.mapa, npcs: $ref.npcs, base: $ref.baseMundo }), null),
       quadros: $ref.lugar ? vale("QUEM ESTÁ · as cartas", () => osQuadrosDoEstado({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva(), quadro: $ref.quadro }, { mundo: mundoDaBase() }), []) : [],
       gente: $ref.lugar ? vale("QUEM ESTÁ · a gente da base", () => (oQueExisteAqui(sementeMundo(), $ref.mapa, $ref.cidadeAtual, $ref.baseMundo, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || [], []) : [],
+      /* S4e: os nomes do mundo, para o figurante que atende o sítio (elenco-do-lugar.js) */
+      nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico },
     });
   };
   const contextoDoEmCena = (frase, quem) => {
@@ -1091,7 +1094,11 @@ export function aPautaDoTurno(estado, entrada, portas) {
        pôs «Ursa Sombravinda» e «Godfrey o Silencioso» à fogueira na estrada, e
        a gente que ninguém registra nunca chega à tela */
     const semFigurante = !!(quem && (quem.fora || (Array.isArray(quem.doSitio) && quem.doSitio.length)));
-    if (!semFigurante) try {
+    /* S4e (16/11): os nomes à mão calam (ELENCO_DO_LUGAR.nomesAMao) — quem
+       atende um sítio com função é o figurante que o SISTEMA escala e põe na
+       tela; onde ninguém atende (a rua, a casa fechada), quem passar não tem
+       nome. A prova de 16/11 viu Kolvar e Thalia nascerem assim. */
+    if (!semFigurante && ELENCO_DO_LUGAR.nomesAMao) try {
       const p0 = $ref.personagem || $render.personagem || {};
       const usados = [...Object.values($ref.npcs || {}), ...nomesDoElenco(), ...(p0.grupo || []), p0.nome || ""].filter(Boolean);
       const nomes = nomesAMao({ semente: sementeMundo(), dia: $ref.dia, cidade: $ref.cidadeAtual || "", genero: generoMundo(), lex: (mundoAtual() || {}).lexico, usados });
@@ -1574,7 +1581,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
       let aqui;
       try {
         aqui = quemAgeAqui(quemEstaAqui({ npcs: $ref.npcs, cidadeAtual: $ref.cidadeAtual, mapa: $ref.mapa, grupo: p0.grupo || [], masmorra: $ref.masmorra,
-          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [] }));
+          jornada: $ref.jornada, lugar: $ref.lugar, lugares: lugaresDaqui(), gente: (daBase && daBase.gente) || [], nomes: { semente: sementeMundo(), genero: generoMundo(), lex: (mundoAtual() || {}).lexico } }));
       } catch (e) { calou("quem age aqui", e); aqui = elencoDaCena($ref.npcs, $ref.cidadeAtual, $ref.mapa, { comGrupo: p0.grupo || [], masmorra: $ref.masmorra }).aqui; }
       const quantos = aqui.length;
       const confid = $ref.confidencias || [];
