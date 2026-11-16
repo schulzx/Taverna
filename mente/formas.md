@@ -18322,3 +18322,269 @@ fio fica de lacre (é verdade), ou cai (não é). A dedução deixa de ser lida 
 entra pela IA» (o juiz é o livro, nunca o Narrador). Pede ao motor uma função pura (`aLigacaoEVerdade(cartaA, cartaB,
 livro)`) e um campo de save aditivo (as ligações feitas); **espera a palavra dela** porque é uma mecânica nova que muda
 o que o jogador faz num mistério. A versão tímida: o fio de lacre que já está aqui, desenhado pelo sistema, sem gesto.
+
+---
+
+## A Mesa do Mestre · F1 (`desenho`, 15/11/2026 — a fundação e a mesa)
+
+A ordem de 15/11: *«nosso design precisa ser autêntico e original, uma experiência imersiva em um
+mundo de RPG… Use a língua PT-BR em tudo.»* A planta é `mente/lancamento/arquitetura.md` (§1, §2 C
+e I, §3). Este é o lote **F1**; destrava **V1, V2, V4 e C1**. Só Figma e este arquivo: nenhum
+código foi tocado.
+
+**Onde está.** Arquivo único `e5wJUzInAssoebx5npssKc`, página **`10 · A Mesa do Mestre`**
+(`266:67`). As imagens de cada quadro estão em `mente/lancamento/figma/` (`F1-*.png`), para
+construir sem abrir o Figma. Geração de imagem por IA: **0 chamadas** — tudo é acervo
+(`mente/figma/matrizes`, `public/cenas`, `OBJETOS_DA_MESA` de `estilo.js`).
+
+| quadro | nó | imagem |
+|---|---|---|
+| 01 · Os materiais e a luz | `271:67` | `F1-materiais-e-luz.png` |
+| 02 · A tipografia | `271:227` | `F1-tipografia.png` |
+| 03 · As peças novas (13 componentes) | `268:67` | `F1-pecas.png` |
+| C · A mesa 1440 × 900 · dia (antes `272:455`, medidas `277:1284`) | `272:127` | `F1-mesa-1440-dia.png` |
+| C · A mesa 1440 × 900 · noite | `272:458` | `F1-mesa-1440-noite.png` |
+| C · A mesa 1280 × 720 (antes `272:1100`, medidas `277:1326`) | `272:780` | `F1-mesa-1280.png` |
+| C · A mesa 375 × 812 (antes `275:1147`, medidas `277:1344`) | `275:951` | `F1-mesa-375.png` |
+| I · O escudo do Mestre 1440 × 900 (antes `276:1259`, medidas `277:1366`) | `276:1008` | `F1-escudo-1440.png` |
+| I · O escudo do Mestre 375 × 812 | `276:1165` | `F1-escudo-375.png` |
+| 07 · A marca (lockups, favicon, imagem de link `275:1210`) | `275:1150` | `imagem-de-link-1200x630.png`, `favicon.svg`, `favicon-32.png`, `icone-180.png` |
+| 00 · Acervo (as pinturas e as capturas carregadas) | `266:131` | — |
+
+### 1 · As cinco decisões que mais mudam a cara
+
+1. **A barra de topo sai.** O lugar vai para a **estampa**, a hora para a **vela-relógio**, as
+   pistas para **cartas na mesa**. São 40 px devolvidos à página e três rótulos de 11 px a menos.
+2. **A voz do sistema deixa de ser máquina.** Toda linha mono em caixa escura vira **nota do
+   Mestre** (Spectral itálico 14, na margem, com um traço de pena) ou **lacre**. Medido: 84 % dos
+   caracteres visíveis sem IA eram mono; no quadro novo são **0**.
+3. **A mesa enche com objetos, não com painéis.** Grupo de pé a 140 px, bandeja no feltro, pilhas
+   que se contam, livro/carta/bolsa/grimório pousados. Conteúdo: **70,2 %** da tela a 1440 de dia,
+   **75,0 %** a 1280 (antes ~40 %). De noite sem ninguém em cena: 68,7 % — abaixo do alvo, dito.
+4. **A luz é um modo, não um enfeite.** Uma coleção de variáveis com três modos (Dia · Noite ·
+   Masmorra) troca o feltro, o halo e o véu da página. Na masmorra o raio do halo sai da pilha de
+   tochas.
+5. **O âmbar passa a ser raro.** Uma peça âmbar por tela (o botão «dizer»; no escudo, «Voltar à
+   mesa») mais a carta de quem tem a vez. Selecionado é **osso com tinta**, nunca cor sozinha; o
+   violeta fica só para magia; o rosa sai de chão de botão; o azul-noite aposenta-se.
+
+### 2 · Os tokens que F1 pede a `T` (nome → valor)
+
+No Figma: coleção **`A Mesa do Mestre (T · LUZ_DA_MESA)`** (`VariableCollectionId:266:68`), modos
+`Dia 266:0` · `Noite 266:1` · `Masmorra 266:2`, cada variável com `codeSyntax` WEB igual ao caminho
+abaixo. 37 cores + 7 números.
+
+**Novos em `T`:**
+
+| token | valor | papel | contraste medido |
+|---|---|---|---|
+| `T.latao` | `#B8934C` | moldura, canto, fivela — **nunca texto** | 4,82 no feltro · 3,83 sob o halo |
+| `T.lataoLume` | `#E5C67E` | a luz do latão; a impressão dourada no lacre | 9,39 no couro · ~5,0 na cera |
+| `T.lataoSombra` | `#6B5226` | a borda da moeda | — |
+| `T.lacre` | `#9B2A22` | a cera: selo, perigo, dano | 5,63 no pergaminho · **1,67 no feltro** |
+| `T.lacreLume` | `#E0654F` | o aro claro da cera; a conta de PV; o aro de «ferido» | 4,05 no feltro · 3,21 sob o halo |
+| `T.lacreSombra` | `#5E1512` | a sombra da cera; a conta vazia | — |
+| `T.sobreLacre` | `#F6EEDD` | letra/desenho sobre a cera | 6,62 |
+| `T.osso` | `#E6D9BD` | dados e peças; a opção escolhida | tinta sobre osso 11,81 · no feltro 9,90 |
+| `T.ossoLume` | `#F6EEDD` | o chão da proposta | — |
+| `T.ossoSombra` | `#B7A27E` | o lado do disco | — |
+| `T.violetaSombra` | `#4B3F8F` | a conta de PM vazia | — |
+| `T.haloDaVela` | `#FFC877` | a cor do halo (= `VELA.cor.halo`) | — |
+| `T.veuDaNoite` | `#05080A` | o véu sobre a página à noite | — |
+
+**Nova tabela `LUZ_DA_MESA`** (o modo vem da fase do relógio e de estar ou não em masmorra):
+
+| | `feltro` | `feltroFundo` | `haloAlfa` | `haloRaio` | `veuDaPagina` |
+|---|---|---|---|---|---|
+| `dia` | `#183222` | `#0E2016` | 0,10 | 750 | 0 |
+| `noite` | `#0F1E16` | `#08120D` | 0,18 | 400 | 0,08 |
+| `masmorra` | `#090F0C` | `#040806` | 0,16 | `100 + 50 × tochas`, teto 400 | 0,12 |
+
+`T.bg` passa a ler `LUZ_DA_MESA[luz].feltro` (hoje `#12241B` fixo). O halo é um radial de
+`T.haloDaVela`: alfa `haloAlfa × 1,6` no centro, `haloAlfa` a 45 %, 0 na borda, centrado entre a
+página e a vela. A penumbra das bordas é um radial preto 0 → 0 a 62 % → 0,38 (dia) / 0,60 (noite).
+
+**Nova tabela `SOMBRA_DA_MESA`** (estilos de efeito `Mesa/Sombra · …`):
+
+- `peca`: `0 1px 0 rgba(0,0,0,.55), 0 3px 5px -1px rgba(0,0,0,.50)`
+- `pousado`: `0 1px 0 rgba(0,0,0,.50), 0 6px 10px -2px rgba(0,0,0,.45), 0 18px 28px -10px rgba(0,0,0,.50)`
+- `erguido`: `0 2px 2px rgba(0,0,0,.35), 0 14px 22px -4px rgba(0,0,0,.45), 0 34px 48px -14px rgba(0,0,0,.55)`
+
+**Regras de papel, medidas e não negociáveis:**
+
+- **No feltro a letra é `ink` ou `inkMeio`.** `inkDim` sai do feltro: sob o halo cai a **4,05:1**.
+  `inkMeio` dá 7,78 e, no pior ponto do halo, **6,18**.
+- **O lacre nunca pousa direto no feltro** (1,67:1). Pousa em página, carta ou livro; a marca usa o
+  aro `lacreLume`.
+- **O véu da página tem teto de 12 %.** A 12 % `tintaDim` ainda dá 5,10 e `perigoNoPergaminho`
+  5,13; a 15 % `tintaDim` cai a 4,74 e a 20 % a 4,23. Na masmorra a nota do Mestre continua
+  legível porque o teto existe.
+- **O âmbar sozinho não é borda sobre pergaminho** (1,6:1): leva aro `brasaNoPergaminho` (6,71).
+- **Aposentam-se:** `rosa` como chão de botão; `mundo`/`mundoSoft`/`onMundo` quando o mapa for para
+  o pergaminho (F5); `violet` como «selecionado».
+
+### 3 · A tipografia (estilos de texto `Mesa/…`)
+
+| estilo | família · peso | corpo/entrelinha | entreletra | onde |
+|---|---|---|---|---|
+| Dado | Cinzel Bold | 64/64 | 0 | o número do dado no centro |
+| Marca | Cinzel Bold | 40/44 | +16 % (caixa alta) | «TAVERNA» |
+| Título | Cinzel Bold | 28/34 | +3 % | quest, objeto aberto, cerimónia |
+| Título de objeto | Cinzel Bold | 22/28 | +3 % | o escudo, cabeçalhos |
+| Lugar | Cinzel Bold | 18/24 | +10 % | a estampa |
+| Contagem | Cinzel Bold | 16/20 | +2 % | o número de uma pilha |
+| **Nome** | Cinzel Bold | **13**/16 | +4 % | **piso de nome** |
+| **Rótulo** | Cinzel Bold | **12**/16 | +10 % | **piso de rótulo** |
+| Prosa | Spectral Regular | 18/30 (17/28 no telefone) | 0 | a narração |
+| Fala do jogador | Spectral Italic | 17/26 | 0 | a sua frase, com fio de tinta à esquerda |
+| Proposta | Spectral Medium | 16/22 | 0 | a proposta e todo rótulo de controle |
+| **Nota do Mestre** | Spectral Italic | 14/20 | 0 | a voz do sistema na página |
+| Serviço | Spectral Medium | 13/18 | 0 | o nome por baixo de uma peça |
+
+A mono sai da vista do jogador (fica a semente no cartão da sessão e a tela de arquivo). O
+multiplicador do escudo é `0,9 · 1 · 1,15 · 1,3` sobre toda a escala, e **o piso vale depois do
+multiplicador** (a 0,9 o rótulo fica em 12, não em 10,8). O número de nível no lacre é **Spectral
+Bold**, não Cinzel: o 1 do Cinzel lê-se I (a mesma lei do selo de pontos). `FONT_CSS` precisa de
+`Spectral` com `ital,wght@1,400` (hoje só carrega itálico 300) e `Cinzel:wght@700` já serve.
+
+### 4 · As peças (todas em `268:67`)
+
+| peça | nó | variantes | medidas |
+|---|---|---|---|
+| **A nota do Mestre** | `268:81` | Tipo: Ganho · Regra · Aviso | linha de largura livre; traço da pena 18 × 20 + 10 de folga; Spectral itálico 14/20 em `tintaDoPergaminhoDim` (6,56). A cor do traço: musgo (ganho), brasa (regra), perigo (aviso) — a frase já diz o tipo, a cor só confirma |
+| **O lacre** | `268:159` | Tamanho G 96 · M 56 · P 32 × Tipo Quest (estrela) · Nível (número) · Conquista (coroa) | borrão irregular de 12 pontos; aro interno; impressão em `lataoLume`; sombra `peca` |
+| **A peça de recurso** | `268:225` | Tipo: Rações · Água · Tochas · Moedas | alvo 72 × 112; disco 40 × 13, passo 4; 1 disco = 1 unidade, passa de 10 nasce a 2.ª pilha; moedas: 1 disco = 10, pilha cheia = 100; número Cinzel 16 `ink`, nome Spectral 13 `inkMeio` |
+| **A vela-relógio** | `268:288` | Hora: Amanhecer · Meio-dia · Entardecer · Noite · Madrugada | 88 × 172; cera 20 de largura; altura = `8 + 96 × (1 − horasDesdeAs6 / 24)`; 4 marcas de vigília; prato de latão 56 × 16; rótulo Cinzel 12 |
+| **A carta de pé** | `270:199` | Estado: Repouso · A vez · Ferido · Caído | carta 140 × 196 raio 8, aro 3 (latão / âmbar / lacreLume), fio interno a 5; pé 124 × 44 em `couroBaixo`; PV = 10 contas redondas de 7, PM = 10 losangos de 6; número Cinzel 12; alvo 140 × 252 |
+| **A estampa** | `270:215` | Estado: Aberta · Recolhida · Recolhida estreita | aberta 212 (188 de pintura, esbate para o pergaminho nos últimos 96); recolhida 48; estreita 48 com miniatura de 96 |
+| **O objeto pousado** | `270:380` | Objeto: O livro · A carta · A bolsa · O grimório × Estado: Pousado · Erguido | desenho 96 de `OBJETOS_DA_MESA`; alvo 104 × 128; rótulo Cinzel 12 |
+| **O escudo do Mestre (canto)** | `270:383` | — | 64 × 64, alvo 72 × 84, rótulo «ESC»; 46 no telefone |
+| **A proposta** | `270:439` | Com dado: Sim · Não × Estado: Repouso · Foco · Pressionada | altura 48 (60 com dado); raio 3; chão `ossoLume`, borda `tintaDoPergaminhoDim` 1 px (2 px `tinta` no foco); a 2.ª linha diz perícia, número e preço em `brasaNoPergaminho` itálico 14 |
+| **A linha da pena** | `270:457` | Estado: Vazia · Escrevendo | 56 de altura; regra de 1 px (2 px ao escrever); Spectral itálico 17; «dizer» 44 × 44 âmbar com aro brasa |
+| **A bandeja no feltro** | `270:460` | — (provisória: F2 fecha) | couro 216 × 140 raio 16, fio de latão; fundo `feltroFundo` afundado; d20 de osso a 76; conta Cinzel 13, veredito Spectral itálico 14 |
+| **O retrato em cena** | em `268:67` | — | 72 × 72 raio 6, aro latão 2; nome Cinzel 13; alvo 72 × 96 |
+| **A marca** | `270:503` | Forma: Horizontal · Empilhada · Selo | selo 64 / 88 / 96; «TAVERNA» Cinzel Bold 40 / 48, +16 % |
+
+**Estados (valem para todo controle da mesa):** repouso · foco (borda `tinta` 2 px sobre papel, anel
+`amberSoft` 2 px a 2 de distância sobre feltro e couro) · pressionado (o chão escurece para
+`pergaminhoBorda`; o objeto desce 1 px) · desabilitado (sem preenchimento, tinta cheia, com a razão
+escrita ao lado — a lei do `Botao` de D4, nunca opacidade).
+
+### 5 · O movimento, e a saída
+
+| o quê | duração e curva | com `prefers-reduced-motion` |
+|---|---|---|
+| a nota do Mestre entra | 220 ms, opacidade + 4 px, `ease-out` | aparece |
+| a estampa abre / recolhe | 420 ms / 280 ms, altura + opacidade | troca seca |
+| o objeto ergue (ponteiro, foco, toque) | 140 ms, −6 px, sombra `pousado` → `erguido` | só a sombra e a cor |
+| a carta de quem tem a vez | 180 ms, −6 px, aro âmbar | só o aro |
+| a peça perde um disco | 200 ms, o disco de cima desliza e some | troca seca |
+| o lacre bate | 320 ms a descer (escala 1,6 → 1, `cubic-bezier(.2,.9,.3,1.2)`) + 120 ms de assentar | opacidade em 120 ms |
+| a chama | laço de 1800 ms (`VELA.tempos.tremor`); o halo respira em 2300 ms | parada; halo fixo |
+| a luz muda de modo | 900 ms no feltro e no halo | troca seca |
+| o escudo abre | 260 ms, as três folhas desdobram do centro | opacidade em 120 ms |
+
+Nada bloqueia: tocar pula qualquer animação, e nenhuma delas segura o turno.
+
+### 6 · V4 — a mesa cheia, sem abrir o Figma
+
+**A 1440 × 900** (`272:127`): borda de couro de 8 (`couroBaixo`) com fio de latão a 9.
+
+- **Esquerda — x 40, largura 316.** «O GRUPO» (y 36) · duas cartas de pé (y 60, 24 entre elas) ·
+  «EM CENA» + retratos em cena (92 de passo) · a nota da quest (papel 304 de largura, rodado −1,2°:
+  título Cinzel 13 brasa, etapa feita riscada, etapa atual Spectral Medium 16, a seguinte em
+  itálico) · «PISTAS · 1 DE 2» + cartas de pista 132 × 150 (a virada em `ossoLume`, a por virar em
+  couro com o losango de latão).
+- **Centro — a página: x 380, y 20, 680 × 860**, raio 3, sombra `pousado`. De cima para baixo: a
+  estampa (aberta só no turno de chegada) · a prosa com margens de 48 e 13 entre blocos · o pé
+  (uma proposta com dado a toda a largura; duas sem dado lado a lado, 10 entre elas; a linha da
+  pena), 18 do fundo. **Três propostas no máximo.**
+- **Direita — x 1100, largura 300.** A bandeja (y 36) e a vela-relógio encostada à direita ·
+  «NA MESA» + as quatro peças numa fila · os quatro objetos em 2 × 2 (32 entre colunas, 24 entre
+  linhas) · o escudo no canto de baixo, a 28 da direita e 24 do fundo.
+
+**A 1280 × 720** (`272:780`): esquerda x 24 largura 292 · página x 340, 600 × 680, estampa
+recolhida · direita x 964 largura 292, grelha de objetos encostada à esquerda para o escudo caber
+no canto. O grimório acaba em y 634 (**86 px de folga**; hoje o Códex cabe por 3). Saem as cartas
+de pista; nada mais.
+
+**A 375 × 812** (`275:951`): faixa de 48 no alto (dois retratos de 44 com PV e PM em Cinzel 12, as
+quatro pilhas, a vela com a hora) · a página 359 × 664 a 8 das bordas, estampa estreita, prosa
+17/28 com margens de 18, as três propostas empilhadas · a borda da mesa em baixo, 76 de altura, com
+**cinco portas de 70 × 68: Livro · Carta · Bolsa · Grimório · Escudo**. O Códex ganha porta: o
+livro é Diário + Códex.
+
+**Entre 768 e 1179 de largura (e a 800 × 451): não foi desenhado.** A regra provisória é usar a
+composição do telefone com a página a 680 no máximo, centrada. Fica por fazer.
+
+**O que V4 tira da tela:** a barra LUGAR · PISTAS · HORA; os chips e caixas mono da folha; a
+bandeja sob a folha; o trilho direito de ícones com rótulo de 11 px; os dados de uso a 11 px.
+
+### 7 · V2 — o escudo do Mestre
+
+Abre pelo objeto do canto, por ⚙ e por **Esc**; Esc fecha. A mesa fica atrás, parada (`inert`),
+sob um véu de 66 %; o foco fica preso no escudo e volta ao objeto do canto ao fechar.
+
+- **A 1440:** três folhas de couro (`T.couro`, borda `couroBaixo` 3, fio de latão a 10, costura
+  tracejada a 16, sombra `erguido`): **Na luta + Na estrada** (336 × 600, x 140, y 170) · **A
+  casa** (460 × 680, x 490, y 110, com o selo e o título Cinzel 22 em `amberSoft`) · **A campanha**
+  (336 × 600, x 964, y 170).
+- **A 375:** uma folha só que rola, na ordem A casa · Na luta · Na estrada · A campanha, e um pé
+  fixo de 84 com «Voltar à mesa».
+- **Controles:** o interruptor é uma linha de 52 com o rótulo (Spectral Medium 16), a descrição
+  (itálico 14 `inkMeio`), **a palavra «ligado/desligado»** e o trilho 52 × 28 (âmbar ligado,
+  `couroBaixo` com aro de latão desligado; botão de osso 22). A escolha é uma fila de opções de 44
+  de altura, raio 4: a escolhida em **osso com tinta SemiBold**, as outras com aro de latão e
+  `ink`. Botões de 52: principal âmbar («Voltar à mesa»), secundário com aro de latão («Guardar em
+  arquivo»), sair com aro `lacreLume` e a frase do preço por baixo: *«Nada se perde: a campanha
+  fica guardada neste aparelho.»*
+- **O conteúdo:** Som · Tamanho do texto (quatro «A» crescentes) · Rolagens à vista · O Mestre rola
+  por mim · Na luta (reação, golpe final) · Na estrada (marcha) · Guardar em arquivo · Sair.
+  **Os rótulos das opções de luta e de marcha no quadro são de exemplo**: o `oficial` usa os que as
+  tabelas de hoje têm, sem inventar opção nova.
+
+### 8 · A marca
+
+«TAVERNA» em Cinzel Bold, caixa alta, +16 %, com um **d20 impresso num lacre**. `favicon.svg` é o
+selo sem fundo (64 de caixa); `favicon-32.png` o mesmo a 32; `icone-180.png` o selo sobre feltro
+com halo; `imagem-de-link-1200x630.png` é a mesa: a marca à esquerda, *«Sente-se à mesa. O Mestre
+já abriu o livro.»*, a página com a estampa e quatro heróis do acervo em leque. `theme-color`:
+`#183222`. Não foi feita a versão 9:16.
+
+### 9 · O «superior», por medida e por par
+
+O par antes/depois está ao lado de cada tela no Figma, com o bloco de medidas (`277:1284`,
+`277:1326`, `277:1344`, `277:1366`). Em resumo: conteúdo na tela 40 % → 70,2 % (1440) e 75,0 %
+(1280); textos abaixo de 12 px 14 → 0; mono à vista 84 % → 0; grupo 90 → 140 px; toques até Som ou
+Sair 3 + rolagem → 1; folga do último objeto a 1280 × 720 3 → 86 px; Códex sem porta no telefone →
+com porta. Contraste mínimo de texto em todo o lote: **5,10:1** (a nota do Mestre sob o véu da
+masmorra). A medida da linha (≈ 66 caracteres a 680 px) está dentro dos 45–75 de Bringhurst,
+*The Elements of Typographic Style*; os alvos de 44 px seguem a diretriz de alvo mínimo da Apple
+(HIG) e ficam acima dos 24 px do WCAG 2.2 (2.5.8).
+
+**O que não está provado:** a experiência jogada — o `jogo` não jogou o antes e o depois, porque o
+depois ainda não existe em código. A cobertura é a soma das caixas das peças, não pixels pintados.
+
+### 10 · O que ficou por fazer do F1, dito
+
+- A composição entre 768 e 1179 de largura (e a 800 × 451).
+- A tela inteira em modo **Masmorra** (só a prancha de luz a mostra) e a noite a 375.
+- A versão 9:16 da imagem de link.
+- Os gradientes (halo, véu, esbatimento da estampa, pé da carta) e parte das cores dos objetos
+  vindos de `OBJETOS_DA_MESA` estão **literais** no Figma: a API não liga variável a parada de
+  gradiente. Os valores são os das tabelas acima.
+- As peças antigas da biblioteca (`Botao`, `O interruptor`, `A escolha`) não foram reencapadas na
+  paleta nova; o escudo usa controles desenhados no próprio quadro. Code Connect por fazer.
+- A bandeja é só a moldura: o lance, o 20, o 1 e o «Refazer» são do F2. No telefone a bandeja não
+  tem lugar fixo.
+- Os riscos de «sai» na prancha de materiais ficaram desalinhados dos discos (defeito de prancha,
+  não de peça).
+
+### 11 · A proposta ambiciosa — a mesa lembra
+
+Cada quest fechada deixa **um objeto pousado na mesa para sempre**: a coleira da besta, o sino sem
+badalo da paliçada, o anel que não se vendeu. Ficam no canto de cima à esquerda, pequenos, com a
+sombra de sempre; tocar num deles abre a página do Diário daquela noite. Ao fim de vinte horas a
+mesa de cada jogador é diferente da de todos os outros, e é ela — não uma lista — que o cartão da
+sessão (F6) fotografa. Custa um campo de save novo e aditivo (a lista de troféus) e ~40 ícones por
+família, os mesmos que a banca do mercado já pede em F5.
