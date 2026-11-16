@@ -15,7 +15,9 @@
      4. o núcleo da cidade não é «daqui» fora dos muros (a fogueira);
      5. a tela e a pauta leem a MESMA conta: as duas fiações espalham
         `contextoDeQuemEsta`, e em 600 cenas a gente da linha da pauta é a
-        gente da tela (100 %).
+        gente da tela (100 %);
+     6. (S4b) a cena não fica velha: a proposta é do sítio onde nasceu —
+        «Ir até Raízes · ☠ Impossível» sai quando o herói viaja.
 
    Falha antes (cce9c1f): o elenco era só pela cidade — a secção 1 conta os
    moradores que a conta velha punha em cena e mostra-os (>0). */
@@ -167,6 +169,24 @@ sec("5. a tela e a pauta: a MESMA conta");
   }
   console.log(`      a gente da tela na linha da pauta: ${iguais} de ${total}`);
   t("CATRACA: a gente da tela é a da pauta em 100 % das cenas (até ao teto da linha)", iguais === total, `${iguais}/${total}`);
+}
+
+sec("6. (S4b) a proposta é do sítio onde nasceu");
+{
+  const { chaveDoSitio, propostaAindaVale } = await import(S + "motor/a-proposta-da-frase.js");
+  const ali = { cidadeAtual: A, lugar: { nome: "A Praça da Alfândega", distancia: "dentro" } };
+  const p = { verbo: "Ir até Raízes", impedido: true, sitio: chaveDoSitio(ali) };
+  t("no mesmo sítio, a proposta vale", propostaAindaVale(p, { ...ali }));
+  t("o herói foi a outro sítio da cidade: sai", !propostaAindaVale(p, { cidadeAtual: A, lugar: { nome: "A Estalagem do Sino" } }));
+  t("o herói pôs-se na estrada: sai", !propostaAindaVale(p, { ...ali, jornada: { de: A, para: B } }));
+  t("o herói chegou a outra cidade: sai", !propostaAindaVale(p, { cidadeAtual: B }));
+  t("o herói desceu à masmorra: sai", !propostaAindaVale(p, { ...ali, masmorra: { nome: "Paliçada" } }));
+  t("a proposta de antes desta lei (sem sítio) vale como sempre valeu", propostaAindaVale({ verbo: "x" }, { cidadeAtual: B }));
+  t("lixo não estoura", !propostaAindaVale(null, null) && typeof chaveDoSitio(null) === "string");
+  const fr = fs.readFileSync(new URL("../src/motor/a-proposta-da-frase.js", import.meta.url), "utf8");
+  t("toda proposta nasce com o sítio", /sitio: chaveDoSitio\(e\)/.test(fr));
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("o App leva-a embora quando o lugar, a estrada ou a masmorra mudam", /propostaAindaVale\(propostaDaFrase, estadoDoPedido\(\)\)[\s\S]{0,200}\}, \[lugar, jornada, masmorra\]\)/.test(app));
 }
 
 console.log(`\nquem está aqui (S4): ${ok} passaram, ${mal} falharam`);

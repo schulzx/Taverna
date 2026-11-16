@@ -384,6 +384,28 @@ function osEfeitos(l, e) {
 
 const aChave = (frase) => `proposta|${sem(frase).slice(0, 80)}`;
 
+/* ---------------- A PROPOSTA É DO SÍTIO ONDE NASCEU (S4b, 16/11) ----------------
+   A prova jogada de 16/11: «Ir até Raízes · ☠ Impossível» ficou grudada na
+   mesa depois de o herói viajar para OUTRO lugar. A proposta impedida não
+   parte (confirmarAProposta sai cedo), e só um turno enviado a limpava — a
+   viagem pelo mapa, o passo pela planta, a saída da masmorra não. A proposta
+   leva agora a chave do sítio onde nasceu (a cidade, o lugar, a estrada, a
+   masmorra), e o que muda o sítio leva-a embora: o que valia lá não vale aqui. */
+export function chaveDoSitio(estado) {
+  const e = ehObj(estado) ? estado : {};
+  const s = (x) => limpo(x).toLowerCase();
+  const j = ehObj(e.jornada) ? `${s(e.jornada.de)}>${s(e.jornada.para)}` : "";
+  const mm = ehObj(e.masmorra) && !e.masmorra.encerrada ? s(e.masmorra.nome) : "";
+  const lg = ehObj(e.lugar) ? s(e.lugar.nome) : "";
+  return [s(e.cidadeAtual), lg, j, mm].join("|");
+}
+export function propostaAindaVale(proposta, estado) {
+  if (!ehObj(proposta)) return false;
+  /* a proposta de antes desta lei (sem chave) vale como sempre valeu */
+  if (typeof proposta.sitio !== "string") return true;
+  return proposta.sitio === chaveDoSitio(estado);
+}
+
 export function aPropostaDaFrase(leitura, estado) {
   const l = ehObj(leitura) ? leitura : {};
   const frase = limpo(l.frase);
@@ -415,5 +437,7 @@ export function aPropostaDaFrase(leitura, estado) {
     desafio: ef.masmorra && ef.masmorra.desafio ? { ...ef.masmorra.desafio } : null,
     impedido: imp,
     dados,
+    /* S4b: o sítio onde a proposta nasceu (propostaAindaVale) */
+    sitio: chaveDoSitio(e),
   };
 }

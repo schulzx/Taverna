@@ -265,7 +265,7 @@ import { lexicoDoMundo } from "./lexico-do-mundo.js";
 import { oPedidoDoAtor, aRespostaDoAtor } from "./motor/pedido-do-ator.js";
 import { aFichaDeAtor } from "./motor/ficha-de-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
-import { aPropostaDaFrase, aPessoaChamada } from "./motor/a-proposta-da-frase.js";
+import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { quemEstaAqui, contextoDeQuemEsta } from "./quem-esta-aqui.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
@@ -5410,6 +5410,9 @@ export default function Taverna() {
   const antesDasMarcasRef = useRef({ morrendo: null, concluidas: null, combate: null });
   const aBandeja = (l) => { try { if (!l) return; const b = naBandeja(bandejaRef.current, l); bandejaRef.current = b; setBandeja(b); } catch (err) { calou("a bandeja", err); } };
   const [propostaAberta, setPropostaAberta] = useState(false);
+  /* S4b (16/11): a proposta é do sítio onde nasceu — mudou o lugar, a cidade,
+     a estrada ou a masmorra, ela sai (a-proposta-da-frase.js#propostaAindaVale).
+     «Ir até Raízes · ☠ Impossível» ficava na mesa depois da viagem pelo mapa. */
   /* F2b · F2c: as fichas do pé da página (trocam a cada resposta do Mestre,
      ficam durante a espera), a ficha cuja frase está no campo — `{ id, ids,
      texto, ficha, verbo }`, NUNCA no save — e a do cartão aberto. O ref
@@ -8294,6 +8297,10 @@ export default function Taverna() {
      voltar a ser verdade. */
   const lugarRef = useRef(null); // { nome, cidade, distancia, desde } | null
   const [lugar, setLugar] = useState(null);
+  /* S4b: a proposta que ficou de outro sítio sai quando o herói se move */
+  useEffect(() => {
+    try { if (propostaDaFrase && !propostaAindaVale(propostaDaFrase, estadoDoPedido())) { setPropostaDaFrase(null); setPropostaAberta(false); } } catch (e) { calou("S4b · a proposta de outro sítio", e); }
+  }, [lugar, jornada, masmorra]); // eslint-disable-line react-hooks/exhaustive-deps
   /* GERADORES DE VIDA (v7.2): eventos locais (máx. 3, expiram) e o evento
      global (máx. 1, escala por etapas) — sorteados por código, o mestre só narra. */
   const eventosRef = useRef({ locais: [], global: null, semGlobalDesde: 0, seq: 1 });
