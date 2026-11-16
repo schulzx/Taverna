@@ -48,12 +48,13 @@ import {
   FAIXA_DO_FECHO, CHIP_DO_ACHADO, DESPERTAR_DA_TELA, RELIQUIA_DA_TELA, PALAVRAS_DO_ESPOLIO, LENDA_DO_ARTEFACTO,
 } from "./estilo.js";
 import { tocarCarta, tocarDespertar } from "./som-da-mesa.js";
+import { useTetoDaCerimonia, paginaOculta } from "./palco-da-cerimonia.jsx";
 import { GLIFOS } from "./glifos.js";
 import { Botao, Glifo } from "./ui.jsx";
 import { IconeDeItem } from "./painel-moldura.jsx";
 import { raridadeDoItem, iconeDoItem } from "./comparar-item.js";
 import { RELIQUIAS } from "./relicas.js";
-import {
+import { duracaoDoCronograma,
   frase, cartasDoEspolio, ganhoDoEspolio, cronogramaDoEspolio, fioDoArtefacto, vereditoDoEspolio,
   nomeDaCarta, resumoDoEspolio, barraDoGanho, chipDoAchado, despertarNaTela, linhasDaLenda,
 } from "./espolio-na-tela.js";
@@ -442,7 +443,8 @@ function CartaNoGrupo({ entrada, i, k, vivo, virada, escolhida, tempos, ehAUltim
 export function PainelEspolio({ entradas = [], titulo = "", coracao = false, nivel = null, xpAntes = null, xpParaSubir = null, nivelNovo = null, nomeDoFavor = null, aoEquipar = () => {}, aoFechar = () => {} }) {
   const mesa = useMesaDoEspolio();
   const idTitulo = React.useId();
-  const [estado, setEstado] = React.useState(() => (querParado() ? "parado" : "correndo")); /* correndo | final | parado */
+  /* V9: a página que nasce oculta abre no último quadro — sem animação a correr, o animationend nunca chegaria */
+  const [estado, setEstado] = React.useState(() => (querParado() || paginaOculta() ? "parado" : "correndo")); /* correndo | final | parado */
   const vivo = estado === "correndo";
   const cartas = React.useMemo(() => cartasDoEspolio(entradas), [entradas]);
   const n = cartas.length;
@@ -472,6 +474,10 @@ export function PainelEspolio({ entradas = [], titulo = "", coracao = false, niv
   try { resumo = resumoDoEspolio(entradas, { nomeDoFavor }); } catch (e) { resumo = ""; }
 
   const saltar = React.useCallback(() => setEstado((e) => (e === "correndo" ? "final" : e)), []);
+  /* V9 · o teto: o cronograma inteiro e o silêncio da fila; depois, o último quadro, haja animationend ou não */
+  let tetoDoCronograma = 0;
+  try { tetoDoCronograma = duracaoDoCronograma(passos); } catch (e) { tetoDoCronograma = 0; }
+  useTetoDaCerimonia(tetoDoCronograma || "espolioRaro", vivo, saltar);
   const fechar = React.useCallback(() => { try { aoFechar(); } catch (e) { /* nunca custa o turno */ } }, [aoFechar]);
   React.useEffect(() => {
     const tecla = (e) => { if (e.key === "Escape") { if (estado === "correndo") saltar(); else fechar(); } };
@@ -635,8 +641,10 @@ export function PainelEspolio({ entradas = [], titulo = "", coracao = false, niv
    ============================================================ */
 export function PainelDespertar({ antes, depois, nivel = null, aoFechar = () => {} }) {
   const idNome = React.useId();
-  const [estado, setEstado] = React.useState(() => (querParado() ? "parado" : "correndo"));
+  const [estado, setEstado] = React.useState(() => (querParado() || paginaOculta() ? "parado" : "correndo"));
   const vivo = estado === "correndo";
+  const acabarDespertar = React.useCallback(() => setEstado((e) => (e === "correndo" ? "final" : e)), []);
+  useTetoDaCerimonia("despertar", vivo, acabarDespertar);
   const botao = React.useRef(null);
   let d = null;
   try { d = despertarNaTela(antes, depois, nivel); } catch (e) { d = null; }

@@ -20,22 +20,54 @@
    quadro 5, num esvanecer, com a moldura nova e a gema já acesas.
 
    Os tempos são todos de CERIMONIA_DO_NIVEL e vivem no CSS
-   (.tv-cerimonia-*); aqui só se põe o atraso de cada um. Nenhum relógio de
-   JavaScript: o fim da entrada da escolha (animationend) é o fim da
-   cerimónia. Tudo chega por props; nada se lê do App.
+   (.tv-cerimonia-*); aqui só se põe o atraso de cada um. O fim da entrada
+   da escolha (animationend) é o fim da cerimónia — e, desde V9, o teto da
+   fila (useTetoDaCerimonia, palco-da-cerimonia.jsx) garante que ele chega
+   mesmo sem animação a correr. O «Confirmar» mora no pé fixo (PE_DA_SUBIDA).
+   Tudo chega por props; nada se lê do App.
    ============================================================ */
 import React from "react";
 import { T, ATRIBUTOS } from "./constantes.js";
-import { CERIMONIA_DO_NIVEL, CERIMONIA_DA_TELA, TAMANHOS_DA_MOLDURA, VB_DA_MOLDURA, TIPOS, FICHA_CARTA, alfa } from "./estilo.js";
-import { Botao, Retrato } from "./ui.jsx";
+import { CERIMONIA_DO_NIVEL, CERIMONIA_DA_TELA, PE_DA_SUBIDA, TAMANHOS_DA_MOLDURA, VB_DA_MOLDURA, TIPOS, FICHA_CARTA, alfa } from "./estilo.js";
+import { Retrato } from "./ui.jsx";
 import { Moldura, Gema, Disco } from "./painel-moldura.jsx";
 import { molduraDe, degrauDaMoldura } from "./moldura.js";
 import { sementeDe } from "./semente.js";
 import { subclasseDoHeroi } from "./marca-da-subclasse.js";
 import { tetoAtributo, podeSubirAtributo } from "./atributos.js";
+import { useTetoDaCerimonia, paginaOculta } from "./palco-da-cerimonia.jsx";
 import { degrauMudou, gemaQueAcendeu, ganhosDaSubida, alternarPonto, planoDosPontos, rotuloDoConfirmar } from "./subida-de-nivel.js";
 
-const C = CERIMONIA_DO_NIVEL, V = CERIMONIA_DA_TELA;
+const C = CERIMONIA_DO_NIVEL, V = CERIMONIA_DA_TELA, PE = PE_DA_SUBIDA;
+
+/* O PÉ DA SUBIDA (V9 · PE_DA_SUBIDA): fixo no fundo do palco, fora da folha
+   que rola — o «Confirmar» nunca sai da tela, a 768 nem a 375 de altura.
+   Impedido, não morre calado: fica aria-disabled e diz o que falta dentro
+   do próprio botão. O clique no pé não salta a cerimônia (é do pé). */
+const CSS_DO_PE = "@media (max-width: " + (PE.telefone - 1) + "px) { [data-pe-da-subida] .tv-pe-texto { display: none; } [data-pe-da-subida] .tv-pe-botoes { width: 100%; } [data-pe-da-subida] .tv-pe-botoes > button { flex: 1 1 0; width: auto !important; font-size: " + PE.letraNoTelefone + "px !important; padding: 0 " + PE.vao + "px !important; line-height: " + PE.resumo.entrelinha + "; } }";
+function PeDaSubida({ passo, resumo, rotulo, falado, impedido, aoConfirmar, aoDepois }) {
+  return (
+    <div data-pe-da-subida="" onClick={(e) => e.stopPropagation()} className="flex items-center"
+      style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: PE.alto, background: PE.chao, borderTop: PE.espessuraDoFio + "px solid " + PE.fio, padding: "0 " + PE.lado + "px", gap: PE.lado }}>
+      <style>{CSS_DO_PE}</style>
+      <div className="tv-pe-texto flex-1 min-w-0 flex flex-col">
+        <span className="tv-titulo uppercase" style={{ color: PE.passo.cor, fontSize: PE.passo.tamanho, letterSpacing: PE.passo.entreletra }}>{passo}</span>
+        <span className="tv-body" aria-live="polite" style={{ color: PE.resumo.cor, fontSize: PE.resumo.tamanho, lineHeight: PE.resumo.entrelinha }}>{resumo}</span>
+      </div>
+      <div className="tv-pe-botoes flex items-center" style={{ gap: PE.vao }}>
+        {aoDepois ? (
+          <button type="button" onClick={aoDepois} className="tv-anel-foco tv-body"
+            style={{ height: PE.botao.alto, padding: "0 " + PE.folgaDoDepois + "px", background: "transparent", color: PE.passo.cor, border: PE.espessuraDoFio + "px solid " + PE.fio, borderRadius: PE.raio, fontSize: PE.resumo.tamanho, cursor: "pointer" }}>Gastar depois</button>
+        ) : null}
+        <button type="button" aria-disabled={impedido ? "true" : undefined} aria-label={falado || rotulo} onClick={impedido ? undefined : aoConfirmar}
+          className="tv-anel-foco tv-titulo"
+          style={{ width: PE.botao.largura, height: PE.botao.alto, borderRadius: PE.raio, fontSize: PE.resumo.tamanho, cursor: impedido ? "not-allowed" : "pointer",
+            background: impedido ? "transparent" : T.amber, color: impedido ? PE.resumo.cor : T.onAccent,
+            border: impedido ? PE.botao.impedido.espessura + "px solid " + PE.botao.impedido.contorno : PE.bordaDoPrimario + "px solid " + T.amber }}>{rotulo}</button>
+      </div>
+    </div>
+  );
+}
 const sinal = (n) => (n >= 0 ? "+" : "−") + Math.abs(n);
 const atraso = (ms) => ({ animationDelay: `${ms}ms` });
 
@@ -114,7 +146,8 @@ function MedalhaoDaCerimonia({ p, nivel, gemaNova, vivo, lex }) {
 export function PainelSubidaDeNivel({ nivel, antes = null, depois, pontos = null, ganhos = null, subclasse = null, aoEscolher = () => {}, aoFechar = () => {}, aoGastarDepois = () => {}, lex = null }) {
   const p = depois || {};
   const nv = Math.max(1, Number(nivel) || Number(p.nivel) || 1);
-  const [estado, setEstado] = React.useState(() => (querParado() ? "parado" : "correndo")); /* correndo | saltou | acabou | parado */
+  /* V9: a página que nasce oculta abre no último quadro (sem animação a correr, o animationend nunca chegaria) */
+  const [estado, setEstado] = React.useState(() => (querParado() || paginaOculta() ? "parado" : "correndo")); /* correndo | saltou | acabou | parado */
   const [escolhas, setEscolhas] = React.useState([]);
   const vivo = estado === "correndo";
   const base = React.useMemo(() => ({ ...p, pontosAtr: pontos != null ? Math.max(0, Number(pontos) || 0) : Number(p.pontosAtr) || 0 }), [p, pontos]);
@@ -130,6 +163,9 @@ export function PainelSubidaDeNivel({ nivel, antes = null, depois, pontos = null
   const primeiroDisco = React.useRef(null);
 
   const saltar = React.useCallback(() => setEstado((e) => (e === "correndo" ? "saltou" : e)), []);
+  /* V9 · o teto da fila (CERIMONIAS.nivel): o animationend continua a ser o fim de sempre; o relógio só garante que ele chega */
+  const acabar = React.useCallback(() => setEstado((e) => (e === "correndo" ? "acabou" : e)), []);
+  useTetoDaCerimonia("nivel", vivo, acabar);
   React.useEffect(() => {
     const tecla = (e) => { if (e.key === "Escape") saltar(); };
     window.addEventListener("keydown", tecla);
@@ -154,7 +190,7 @@ export function PainelSubidaDeNivel({ nivel, antes = null, depois, pontos = null
         style={{ background: `radial-gradient(ellipse at 50% 100%, ${alfa(T.amber, V.luz)}, ${alfa(T.amber, 0)} 70%)`, ...(vivo ? atraso(C.luz.de) : null) }} />
       {/* o rolar é por fora e a coluna por dentro: num flex-col que rola, os
           filhos encolhem para caber, e o medalhão media 92 px em vez de 262 */}
-      <div className="relative h-full tv-scroll overflow-y-auto">
+      <div className="absolute inset-x-0 top-0 tv-scroll overflow-y-auto" style={{ bottom: PE.alto }}>
       <div className="flex flex-col items-center" style={{ padding: V.enchimento, gap: FICHA_CARTA.folga }}>
         <MedalhaoDaCerimonia p={p} nivel={nv} gemaNova={gemaNova} vivo={vivo} lex={lex} />
         <div className={`flex flex-col items-center ${vivo ? "tv-cerimonia-numero" : ""}`} style={vivo ? atraso(C.numero.de) : undefined}>
@@ -196,18 +232,25 @@ export function PainelSubidaDeNivel({ nivel, antes = null, depois, pontos = null
                   );
                 })}
               </div>
-              <div className="w-full flex flex-col gap-2">
-                <Botao corpo primario desativado={!plano.linhas.length} onClick={() => { if (plano.linhas.length) confirmar(); }}>{rotuloDoConfirmar(plano.linhas)}</Botao>
-                <Botao corpo onClick={() => { try { aoGastarDepois(); } catch (e) { /* nunca custa o turno */ } }}>Gastar depois</Botao>
-              </div>
             </>
-          ) : (
-            <Botao corpo primario onClick={() => { try { aoFechar(); } catch (e) { /* idem */ } }}>Continuar</Botao>
-          )}
+          ) : null}
         </div>
         {vivo ? <span className="tv-mono" style={{ color: T.inkDim, fontSize: TIPOS.maquina }}>Toque para saltar</span> : null}
       </div>
       </div>
+      {quantos > 0 ? (
+        <PeDaSubida passo={quantos === 1 ? "Um ponto de atributo" : quantos + " pontos de atributo"}
+          resumo={plano.linhas.length
+            ? plano.linhas.map((l) => l.rotulo + " de " + sinal(l.antes) + " para " + sinal(l.depois)).join(" · ") + (plano.restam > 0 ? " · " + (plano.restam === 1 ? "1 ponto fica" : plano.restam + " pontos ficam") + " para depois" : "")
+            : "Toque num atributo para pôr um ponto."}
+          rotulo={plano.linhas.length ? "Confirmar" : "Confirmar · falta pôr 1 ponto"}
+          falado={plano.linhas.length ? rotuloDoConfirmar(plano.linhas) : "Confirmar · falta pôr 1 ponto"}
+          impedido={!plano.linhas.length} aoConfirmar={confirmar}
+          aoDepois={() => { try { aoGastarDepois(); } catch (e) { /* nunca custa o turno */ } }} />
+      ) : (
+        <PeDaSubida passo={"Nível " + nv} resumo="Os ganhos já estão na sua ficha." rotulo="Continuar" impedido={false}
+          aoConfirmar={() => { try { aoFechar(); } catch (e) { /* idem */ } }} />
+      )}
     </div>
   );
 }

@@ -2008,6 +2008,19 @@ export const DISCO_DE_ATRIBUTO = {
    «NÍVEL» em Cinzel 15 espaçado, o número em Cinzel 64. As faíscas saltam
    até `alcance` × o aro a partir do centro; a luz âmbar sobe de baixo a
    `luz`. Os tempos são todos de CERIMONIA_DO_NIVEL. */
+/* PE_DA_SUBIDA (V9 · formas.md §F6): o «Confirmar» da subida num pé FIXO,
+   sempre à vista — na prova de 15/11 ele estava a y=640 numa janela de 768.
+   88 px de couro baixo com o fio de latão em cima; à esquerda o passo e o
+   resumo (o de–para por extenso), à direita o botão de 320 × 56. Impedido,
+   o botão diz o que falta e leva o contorno de latão. Abaixo de `telefone`
+   o pé é só o botão, a toda a largura. */
+export const PE_DA_SUBIDA = {
+  alto: 88, chao: T.couroBaixo, fio: T.latao, espessuraDoFio: 1, lado: 24,
+  passo: { tamanho: 12, cor: T.inkMeio, entreletra: "0.08em" }, resumo: { tamanho: 16, cor: T.ink, entrelinha: 1.3 },
+  raio: 8, vao: 8, folgaDoDepois: 16, bordaDoPrimario: 2,
+  botao: { largura: 320, alto: 56, impedido: { contorno: T.latao, espessura: 1.5 } },
+  telefone: 600, letraNoTelefone: 13,
+};
 export const CERIMONIA_DA_TELA = {
   escalaDoMedalhao: 2.4, rotulo: 15, espacoDoRotulo: 0.32, numero: 64,
   faisca: 4, alcance: 0.75, luz: 0.42, forjaDe: 1.08, pulso: 1.06, subida: 8,

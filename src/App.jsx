@@ -317,6 +317,8 @@ import { BolsaDaCarta } from "./painel-bolsa-da-carta.jsx";
 import { PainelSubidaDeNivel } from "./painel-subida-de-nivel.jsx";
 /* TE10 (09/11): os espólios na tela — a cerimónia, o despertar e a faixa do fecho (formas.md §TE) */
 import { PainelEspolio, PainelDespertar, FaixaDoFecho } from "./painel-espolio.jsx";
+import { PalcoDaCerimonia } from "./palco-da-cerimonia.jsx";
+import { filaVazia, jaConhecida, pousar } from "./fila-de-cerimonias.js";
 import { formaDoEspolio, ganhoDoEspolio, barraDoGanho, entrarNaFila, proximaCerimonia, despertarNaTela, chipDoAchado } from "./espolio-na-tela.js";
 import { tocarDado } from "./som-da-mesa.js";
 /* CB15 (lote 3): o som da reação do chão — em linha própria, para a do Véu ficar como a TE11 a ancorou */
@@ -5516,6 +5518,16 @@ export default function Taverna() {
      aplicar deste turno já pagou (TE9), para a paga da quest o descontar. */
   const [filaDasCerimonias, setFilaDasCerimonias] = useState([]);
   const [fechoDaQuest, setFechoDaQuest] = useState(null);
+  /* V9 · as cerimônias que já passaram (fila-de-cerimonias.js, pousar): uma
+     cerimônia aparece UMA vez. A da quest voltou três vezes na prova de 15/11
+     — a fila só recusava a repetida enquanto ela estava na fila. */
+  const cerimoniasVistasRef = useRef(filaVazia().vistas);
+  const cerimoniaJaPassou = (fila, chave) => {
+    try { return jaConhecida({ fila: Array.isArray(fila) ? fila : [], emCena: null, vistas: cerimoniasVistasRef.current }, chave); } catch (e) { calou("V9 · a cerimônia já passou?", e); return false; }
+  };
+  const cerimoniaPousou = (chave) => {
+    try { cerimoniasVistasRef.current = pousar({ fila: [], emCena: null, vistas: cerimoniasVistasRef.current }, chave).vistas; } catch (e) { calou("V9 · a cerimônia pousa", e); }
+  };
   const feitoDoTurnoRef = useRef(null);
   const golpeRecenteRef = useRef(null);
   /* v9.5: um turno pode carregar mais de uma habilidade, uma por movimento */
@@ -8991,7 +9003,7 @@ export default function Taverna() {
      envio, e a paga de uma escolha confirmada antes dele continua dada, logo
      a cerimónia dela também. A paga que ficou no chão continua lá. */
   const esquecerAsCerimonias = () => {
-    try { setFilaDasCerimonias([]); setFechoDaQuest(null); feitoDoTurnoRef.current = null; } catch (e) { calou("TE10 · esquecer as cerimónias", e); }
+    try { setFilaDasCerimonias([]); setFechoDaQuest(null); feitoDoTurnoRef.current = null; cerimoniasVistasRef.current = filaVazia().vistas; } catch (e) { calou("TE10 · esquecer as cerimónias", e); }
   };
 
   const pushMsgs = useCallback((novas) => {
@@ -19697,7 +19709,10 @@ export default function Taverna() {
       const xpParaSubir = n0 != null ? XP_POR_NIVEL(n0) : null;
       const nivelNovo = n0 != null && Number.isFinite(agora.nivel) && agora.nivel > n0 ? agora.nivel : null;
       const chave = "espolio:" + String(o.quest || o.titulo || "");
+      /* V9: a paga desta quest já foi mostrada — não volta */
+      if (cerimoniaJaPassou([], chave)) return;
       if (forma === "fecho") {
+        cerimoniaPousou(chave);
         let barra = null;
         try { barra = xpParaSubir != null ? barraDoGanho(xpAntes, xpParaSubir, g.xp) : null; } catch (e) { barra = null; }
         /* a escolha confirmada manda logo o turno que a narra (partirOTurno):
@@ -19712,7 +19727,7 @@ export default function Taverna() {
       const coracao = typeof o.tom === "string" && o.tom ? o.tom === "coracao"
         : entradas.some((e) => e && e.tipo === "item" && e.item && e.item.artefacto && e.item.artefacto.genero === "lembranca");
       const c = { tipo: "espolio", chave, quest: String(o.quest || ""), titulo: String(o.titulo || ""), entradas, coracao, nivel: Number.isFinite(agora.nivel) ? agora.nivel : null, xpAntes, xpParaSubir, nivelNovo };
-      setFilaDasCerimonias((f) => (f.some((x) => x && x.chave === chave) ? f : entrarNaFila(f, c)));
+      setFilaDasCerimonias((f) => (cerimoniaJaPassou(f, chave) ? f : entrarNaFila(f, c)));
     } catch (e) { calou("TE10 · o espólio na tela", e); }
   };
   /* O DESPERTAR: o motor acorda o artefacto (despertarArtefacto, no fim de
@@ -19737,12 +19752,12 @@ export default function Taverna() {
         if (!tela) continue;
         const chave = "despertar:" + id + ":" + tela.estado;
         const c = { tipo: "despertar", chave, antes: velho, depois: novo, nivel: depois && Number.isFinite(depois.nivel) ? depois.nivel : null };
-        setFilaDasCerimonias((f) => (f.some((x) => x && x.chave === chave) ? f : entrarNaFila(f, c)));
+        setFilaDasCerimonias((f) => (cerimoniaJaPassou(f, chave) ? f : entrarNaFila(f, c)));
       }
     } catch (e) { calou("TE10 · o despertar na fila", e); }
   };
   const sairDaCerimonia = (c) => {
-    try { setFilaDasCerimonias((f) => f.filter((x) => !(x && c && x.chave === c.chave))); } catch (e) { calou("TE10 · sair da cerimónia", e); }
+    try { if (c && c.chave) cerimoniaPousou(c.chave); setFilaDasCerimonias((f) => f.filter((x) => !(x && c && x.chave === c.chave))); } catch (e) { calou("TE10 · sair da cerimónia", e); }
   };
   /* a peça DESTA paga que não coube na mochila (`noChao` na entrada: o motor
      pô-la no chão com o título da quest por origem) sai do chão pelo
@@ -29686,10 +29701,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       {fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo lugar={lugarNovo} fechar={() => setLugarNovo(null)} />}
       {fase === "jogo" && cerimoniaDoNivel && (
         <LimiteDaCerimonia aoEstourar={() => { setCerimoniaDoNivel(null); setCerimoniaCalou(true); }}>
+          {/* V9: no palco (portal acima de tudo, a mesa inerte por baixo) — nunca atrás da página */}
+          <PalcoDaCerimonia>
           <PainelSubidaDeNivel nivel={cerimoniaDoNivel.nivel} antes={cerimoniaDoNivel.antes} depois={cerimoniaDoNivel.depois} pontos={cerimoniaDoNivel.pontos}
             aoEscolher={(attr) => { try { gastarPontoAtributo(attr); } catch (e) { calou("ponto da cerimonia", e); } }}
             aoFechar={() => setCerimoniaDoNivel(null)} aoGastarDepois={() => setCerimoniaDoNivel(null)}
             lex={(mundoAtual() || {}).lexico} />
+          </PalcoDaCerimonia>
         </LimiteDaCerimonia>
       )}
       {/* TE10: a cerimónia da vez (o espólio ou o despertar); a que estoura cala-se e sai da fila, e a paga continua dada */}
@@ -29698,20 +29716,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         if (!c) return null;
         if (c.tipo === "espolio") return (
           <LimiteDaCerimonia key={c.chave} aoEstourar={(err) => { calou("TE10 · a cerimónia do espólio", err); sairDaCerimonia(c); }}>
+            <PalcoDaCerimonia>
             <PainelEspolio entradas={c.entradas} titulo={c.titulo} coracao={c.coracao} nivel={c.nivel} xpAntes={c.xpAntes} xpParaSubir={c.xpParaSubir} nivelNovo={c.nivelNovo}
               nomeDoFavor={(p) => { try { return ganhoDoEspolio(c.entradas).nomesDosFavores[p] || ""; } catch (e) { calou("TE10 · o nome do favor", e); return ""; } }}
               aoEquipar={(item) => equiparDoEspolio(c, item)} aoFechar={() => fecharOEspolio(c)} />
+            </PalcoDaCerimonia>
           </LimiteDaCerimonia>
         );
         if (c.tipo === "despertar") return (
           <LimiteDaCerimonia key={c.chave} aoEstourar={(err) => { calou("TE10 · a cerimónia do despertar", err); sairDaCerimonia(c); }}>
-            <PainelDespertar antes={c.antes} depois={c.depois} nivel={c.nivel} aoFechar={() => sairDaCerimonia(c)} />
+            <PalcoDaCerimonia><PainelDespertar antes={c.antes} depois={c.depois} nivel={c.nivel} aoFechar={() => sairDaCerimonia(c)} /></PalcoDaCerimonia>
           </LimiteDaCerimonia>
         );
         return null;
       })()}
       {fase === "jogo" && cerimoniaCalou && !cerimoniaDoNivel && personagem?.nivelPendentes > 0 && !carregando && !dadoRolando && (
-        <ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} />
+        <PalcoDaCerimonia><ModalNivel nivel={personagem.nivel - personagem.nivelPendentes + 1} personagem={personagem} escolher={confirmarNivel} lex={(mundoAtual() || {}).lexico} /></PalcoDaCerimonia>
       )}
 
       {/* CB3 · O CARTÃO DO ENCONTRO (formas.md §CB 7): a escolha com o preço à
