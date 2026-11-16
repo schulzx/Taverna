@@ -10,7 +10,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { buildSync } from "esbuild";
-import { T, PECAS_DA_MESA, ESCUDO_DO_MESTRE, TAMANHO_DO_TEXTO, SOMBRA_DA_MESA } from "../src/estilo.js";
+import { T, PECAS_DA_MESA, ESCUDO_DO_MESTRE, TAMANHO_DO_TEXTO, SOMBRA_DA_MESA, RECIBO } from "../src/estilo.js";
+import { razao, rgb } from "./conta-da-luz.mjs";
 import { RITMOS_VIAGEM } from "../src/ermos.js";
 import { PREFERENCIAS_DO_GOLPE_FINAL } from "../src/golpe-final.js";
 
@@ -63,6 +64,16 @@ sec("2. A nota do Mestre");
   t("sem mono", !/JetBrains|tv-mono/.test(s));
   const a = html(R.NotaDoMestre, { tipo: "aviso", children: "Não chega." });
   t("aviso usa o perigo no pergaminho", a.includes(`stroke="${T.perigoNoPergaminho}"`));
+  /* 16/11 (a prova jogada da mesa): o «+17 XP» debaixo da prosa saiu bege (inkMeio, rgb 210,192,164) sobre o
+     pergaminho — era o Recibo, que pintava a segunda voz do feltro. Toda tinta do Mestre na página mede ≥ 4,5. */
+  const naFolha = (cor) => razao(rgb(cor), rgb(T.pergaminho));
+  t("a nota do Mestre: ≥ 4,5 sobre o pergaminho", naFolha(PECAS_DA_MESA.nota.tinta) >= 4.5, naFolha(PECAS_DA_MESA.nota.tinta).toFixed(2));
+  t("o recibo na página (tinta, momento, e mais): ≥ 4,5", Object.values(RECIBO.naPagina).every((c) => naFolha(c) >= 4.5), Object.values(RECIBO.naPagina).map((c) => naFolha(c).toFixed(2)).join(" "));
+  t("e o bege de antes não passaria (a conta morde)", naFolha(T.inkMeio) < 4.5, naFolha(T.inkMeio).toFixed(2));
+  const rel = fs.readFileSync(path.join(SRC, "painel-relato.jsx"), "utf8");
+  t("o recibo da resposta pede a tinta da página", rel.split("<Recibo chips={resto} telefone={!mesa} naPagina />").length - 1 === 2);
+  const ui = fs.readFileSync(path.join(SRC, "ui.jsx"), "utf8");
+  t("o Recibo lê a tinta da página da tabela", ui.includes("naPagina ? (momento ? RECIBO.naPagina.momento : RECIBO.naPagina.tinta)"));
 }
 
 sec("3. O lacre: G 96 · M 56 · P 32");

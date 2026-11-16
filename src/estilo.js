@@ -3468,6 +3468,11 @@ export const RECIBO = {
   avancoMono: 0.6,   /* JetBrains Mono: 600/1000 em — é o que deixa a conta ser pura */
   pisoDoNome: 12,    /* §21: o teto de 45 caracteres ÷ 4, arredondado para cima */
   entrelinha: 18,    /* TIPOS.maquina × 1,5 */
+  /* 16/11 (a prova jogada da mesa): o recibo debaixo da prosa pousa no
+     pergaminho, e lia-se em inkMeio (o bege da segunda voz no feltro):
+     «+17 XP» quase invisível. Na página, a tinta do papel — 6,56:1 (pior
+     4,72) o recibo e o «e mais», 12,15 o momento. */
+  naPagina: { tinta: T.tintaDoPergaminhoDim, momento: T.tintaDoPergaminho, resto: T.tintaDoPergaminhoDim },
 };
 
 /* A1 · O FIM DA LUTA (`formas.md` §A1 3, Figma `255:295`) — o momento do

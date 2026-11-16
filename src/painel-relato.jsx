@@ -298,14 +298,14 @@ function ReciboDaResposta({ chips, achados = null, pousa = false }) {
   if (!deAchado.length) {
     return (
       <div style={{ marginTop: PAGINA.entreParagrafos }}>
-        <Recibo chips={resto} telefone={!mesa} />
+        <Recibo chips={resto} telefone={!mesa} naPagina />
       </div>
     );
   }
   return (
     <div className="flex items-center flex-wrap" style={{ marginTop: PAGINA.entreParagrafos, gap: mesa ? RECIBO.entre : RECIBO.entreTelefone }}>
       {deAchado.map((c, i) => <ChipDoAchado key={"a" + i} achado={c.achado} heroi={achados.heroi || null} aoTocar={achados.aoTocar} pousa={pousa} />)}
-      {resto.length ? <div className="flex-1 min-w-0"><Recibo chips={resto} telefone={!mesa} /></div> : null}
+      {resto.length ? <div className="flex-1 min-w-0"><Recibo chips={resto} telefone={!mesa} naPagina /></div> : null}
     </div>
   );
 }

@@ -1906,7 +1906,7 @@ function DobraComConteudo({ conteudo, cabecalho = "", recibo = null, telefone = 
    Recibo vazio não se desenha: 0 px, nem a margem. */
 const GLIFO_DO_MOMENTO = 16;
 const TETO_DA_ENTRADA = 480;
-export function Recibo({ chips, telefone = false, momento = false }) {
+export function Recibo({ chips, telefone = false, momento = false, naPagina = false }) {
   const lista = Array.isArray(chips) ? chips.filter((c) => c && typeof c.texto === "string") : [];
   const ref = React.useRef(null);
   const [largura, setLargura] = React.useState(0);
@@ -1929,7 +1929,7 @@ export function Recibo({ chips, telefone = false, momento = false }) {
   const atraso = (i) => ({ animationDelay: `${Math.min(i * FIM_DA_LUTA.passo, TETO_DA_ENTRADA - FIM_DA_LUTA.entra)}ms` });
   return (
     <div ref={ref} role="list" aria-label="o que mudou" className="tv-mono flex items-center min-w-0 w-full overflow-hidden whitespace-nowrap"
-      style={{ gap: telefone ? RECIBO.entreTelefone : RECIBO.entre, fontSize: letra, lineHeight: `${RECIBO.entrelinha}px`, fontWeight: momento ? 700 : 400, color: momento ? T.ink : T.inkMeio }}>
+      style={{ gap: telefone ? RECIBO.entreTelefone : RECIBO.entre, fontSize: letra, lineHeight: `${RECIBO.entrelinha}px`, fontWeight: momento ? 700 : 400, color: naPagina ? (momento ? RECIBO.naPagina.momento : RECIBO.naPagina.tinta) : momento ? T.ink : T.inkMeio }}>
       {visiveis.map((c, i) => (
         <span key={i} role="listitem" aria-label={c.falado || c.texto} className={"inline-flex items-center shrink-0" + (momento ? " tv-fim-entra" : "")}
           style={{ gap: c.glifo ? CINTA.entreNumeroEGlifo : 0, ...(momento ? atraso(i) : null) }}>
@@ -1938,7 +1938,7 @@ export function Recibo({ chips, telefone = false, momento = false }) {
       ))}
       {resto.length > 0 && (
         <>
-          <span aria-hidden="true" className="shrink-0" style={{ color: T.inkDim, fontWeight: 400 }}>e mais {resto.length}</span>
+          <span aria-hidden="true" className="shrink-0" style={{ color: naPagina ? RECIBO.naPagina.resto : T.inkDim, fontWeight: 400 }}>e mais {resto.length}</span>
           {resto.map((c, i) => <span key={`r${i}`} role="listitem" className="sr-only">{c.falado || c.texto}</span>)}
         </>
       )}
