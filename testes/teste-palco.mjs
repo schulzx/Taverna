@@ -87,7 +87,8 @@ sec("3. CADA ESTADO DO JOGO TEM O SEU CABEÇALHO");
   const mm = P.cabecalhoDaCena({ cidade: "Forte Rasa", lugar: { nome: "x" }, masmorra: { nome: "Cripta dos Sussurros", atual: 3, tochas: 2, salas: [{ id: 3, camada: 2 }] }, minuto: 600 });
   t("na masmorra, ela manda", mm.titulo === "Cripta dos Sussurros");
   t("e a cidade some", !/Forte Rasa/.test(mm.onde));
-  t("mostra a camada", /camada 2/.test(mm.onde));
+  /* S6b (15/11): a camada diz-se em palavras — a única sala da planta é o fundo */
+  t("mostra a camada", /\bfundo\b/.test(mm.onde));
   /* a tocha é o recurso daquele lugar: ela pertence ao cabeçalho */
   t("e as tochas", /2 tochas/.test(mm.onde));
   t("uma tocha no singular", /1 tocha$/.test(P.cabecalhoDaCena({ masmorra: { nome: "X", tochas: 1, salas: [] }, minuto: 0 }).onde));

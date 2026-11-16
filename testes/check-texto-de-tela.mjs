@@ -37,6 +37,8 @@ const PROIBIDOS = [
   ["as vezes com casa decimal", /\d[.,]\d×/],
   ["a coordenada da grade", /⌖/],
   ["o índice a partir de zero", /camada 0\b/i],
+  /* S6b (15/11): nenhum índice de camada na tela, nem o 1 */
+  ["o índice da camada", /\bcamada \d/i],
   ["a palavra sem cedilha", /\bavancos?\b/i],
   ["a contagem de um sem concordância", /\bfaltam 1 /],
   ["o modificador entre parêntesis", /\([+−-]\d+\)/],
@@ -86,7 +88,8 @@ sec("2. o cabeçalho da masmorra");
   }
   const ach = varrer(linhas);
   t("nenhum cabeçalho diz «camada 0»", ach.length === 0, ach.join("\n      "));
-  t("a camada 0 é a entrada", camadaEmPalavras(0) === "entrada" && camadaEmPalavras(2) === "camada 2");
+  /* S6b (15/11): a camada 2 já não se diz «camada 2» — é o segundo subsolo, ou o fundo quando é a última */
+  t("a camada 0 é a entrada", camadaEmPalavras(0) === "entrada" && camadaEmPalavras(2) === "segundo subsolo" && camadaEmPalavras(2, 2) === "fundo" && camadaEmPalavras(1, 3) === "primeiro subsolo");
   t("a entrada aparece na etiqueta da página", linhas.some((l) => /^entrada\b/.test(l)));
 }
 

@@ -117,14 +117,15 @@ sec("3. o que as etiquetas dizem — em Node, contra o palco.js real");
   const mm = cabecalhoDaCena({ masmorra: { nome: "Andar 1 — do Silêncio", atual: 3, tochas: 3, salas: [{ id: 3, camada: 1 }] }, minuto: 1320 });
   const baixo = e({ lugar: "Andar 1 — do Silêncio", cena: mm, luz: "noite", clima: { id: "chuva", rotulo: "chuva" } });
   t("na masmorra: a camada e as tochas, nesta ordem — e sem luz nem clima (lá em baixo não há hora)",
-    baixo.direita.join("|") === "camada 1|3 tochas", JSON.stringify(baixo) + " · onde=" + JSON.stringify(mm && mm.onde));
+    /* S6b (15/11): a camada diz-se em palavras; com uma sala só na planta, ela é o fundo */
+    baixo.direita.join("|") === "fundo|3 tochas", JSON.stringify(baixo) + " · onde=" + JSON.stringify(mm && mm.onde));
   t("e lá em baixo quem cede é o INÍCIO (a camada), para a tocha ficar", baixo.cede === "inicio");
   t("uma tocha no singular, como o palco a escreve",
     e({ cena: cabecalhoDaCena({ masmorra: { nome: "X", tochas: 1, salas: [] } }) }).direita.join("|") === "1 tocha");
   t("zero tochas diz `sem tochas` — `0` lê-se como contagem, `sem` lê-se como perigo",
     e({ cena: cabecalhoDaCena({ masmorra: { nome: "X", tochas: 0, salas: [] } }) }).direita.join("|") === "sem tochas");
   t("sem tochas conhecidas, fica a camada",
-    e({ cena: cabecalhoDaCena({ masmorra: { nome: "X", atual: 1, salas: [{ id: 1, camada: 2 }] } }) }).direita.join("|") === "camada 2");
+    e({ cena: cabecalhoDaCena({ masmorra: { nome: "X", atual: 1, salas: [{ id: 1, camada: 2 }] } }) }).direita.join("|") === "fundo"); /* S6b (15/11): em palavras */
   /* NADA SABIDO, NADA MOSTRADO — e nunca lança. */
   const vazio = e(null);
   t("nada sabido, nada mostrado — e `null` não lança", vazio.lugar === "" && vazio.direita.length === 0);

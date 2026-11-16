@@ -43,8 +43,11 @@ export const PROPOSTAS_DA_ABERTURA = Object.freeze({
   passo: Object.freeze({ verbo: "Ir até {nome}", frase: "Vou até {nome}." }),
   passoPessoa: Object.freeze({ verbo: "Procurar {nome}", frase: "Procuro {nome}." }),
   pessoa: Object.freeze({ verbo: "Falar com {nome}", frase: "Falo com {nome}." }),
-  risco: Object.freeze({ verbo: "Perguntar por {nome}", frase: "O que se conta de {nome}?" }),
-  semNome: Object.freeze({ verbo: "Olhar à volta", frase: "Olho à volta, com atenção." }),
+  /* S6b (15/11): «Perguntar por» era conversa, não risco. O risco à vista
+     é ir lá — a ida mostra o veredito (a dificuldade, o preço) antes do
+     passo, e lá dentro o dado decide. */
+  risco: Object.freeze({ verbo: "Explorar {nome}", frase: "Vou até {nome}." }),
+  semNome: Object.freeze({ verbo: "Olhar em volta", frase: "Olho em volta, com atenção." }),
   teto: 40,
 });
 

@@ -55,14 +55,18 @@ function Titulo({ children, direita = null }) {
   );
 }
 
+/* S6b (15/11): a prova jogada viu «34» e «0» lado a lado sem rótulo — a
+   moeda e a essência só com o glifo, e a essência zerada a ocupar lugar.
+   Agora cada número diz o que conta, e a essência só aparece quando há. */
 export function BolsaDaCarta({ itens = [], moedas = null, essencia = null, sintonia = [], oficina = null, vazio = "Bolsos vazios." }) {
   const lista = Array.isArray(itens) ? itens : [];
+  const temEssencia = essencia != null && Number(essencia) > 0;
   return (
     <section aria-label="O que se leva" className="flex flex-col" style={{ gap: F }}>
-      <Titulo direita={moedas != null || essencia != null ? (
+      <Titulo direita={moedas != null || temEssencia ? (
         <span className="tv-mono inline-flex items-center" style={{ gap: F / 2, color: T.amberSoft, fontSize: TIPOS.maquina }}>
-          {moedas != null ? <span className="inline-flex items-center" style={{ gap: F / 4 }}><Glifo nome="moeda" tamanho={TIPOS.maquina} rotulo="moedas" />{moedas}</span> : null}
-          {essencia != null ? <span className="inline-flex items-center" style={{ gap: F / 4, color: T.violetSoft }}><Glifo nome="essencia" tamanho={TIPOS.maquina} rotulo="essência" />{essencia}</span> : null}
+          {moedas != null ? <span className="inline-flex items-center" style={{ gap: F / 4 }}><Glifo nome="moeda" tamanho={TIPOS.maquina} />{moedas}<span style={{ color: T.inkDim }}>{Number(moedas) === 1 ? "moeda" : "moedas"}</span></span> : null}
+          {temEssencia ? <span className="inline-flex items-center" style={{ gap: F / 4, color: T.violetSoft }}><Glifo nome="essencia" tamanho={TIPOS.maquina} />{essencia}<span style={{ color: T.inkDim }}>de essência</span></span> : null}
         </span>
       ) : null}>O que se leva</Titulo>
       {lista.length === 0 ? <p className="tv-body italic" style={{ color: T.inkDim, fontSize: TIPOS.rotulo }}>{vazio}</p> : (

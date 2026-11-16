@@ -453,7 +453,7 @@ export function etiquetasDaPagina(dados) {
   if (cena && cena.subterraneo) {
     const partes = String(cena.onde || "").split(" · ").map((x) => x.trim()).filter(Boolean);
     const tochas = partes.find((x) => /tocha/.test(x));
-    const camada = partes.find((x) => /^(camada\b|entrada$)/.test(x));
+    const camada = partes.find((x) => !/tocha/.test(x)); /* S6b: a camada diz-se em palavras (palco.js) — é o termo que não é tocha */
     return { lugar, direita: limpo([camada, tochas && /^0 tochas?$/.test(tochas) ? "sem tochas" : tochas]), cede: "inicio" };
   }
   const clima = d.clima && typeof d.clima === "object" ? d.clima : null;

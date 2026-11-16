@@ -105,7 +105,7 @@ sec("3. A CHEGADA — faixa que se apaga sozinha");
   /* o tom do bioma vem da tabela do palco — a mesma do cabeçalho de cena */
   t("o tom é o do palco", /const tom = \(TONS\[chegada\.bioma\] \|\| TOM_PADRAO\)/.test(APP));
   /* S6 (15/11): o import do palco ganhou camadaEmPalavras (a camada 0 é a entrada) — a tabela continua a única */
-  t("importado da tabela única", /import \{ cabecalhoDaCena, TONS, TOM_PADRAO(?:, camadaEmPalavras)? \} from "\.\/palco\.js"/.test(APP));
+  t("importado da tabela única", /import \{ cabecalhoDaCena, TONS, TOM_PADRAO(?:, camadaEmPalavras)?(?:, fundoDaPlanta)? \} from "\.\/palco\.js"/.test(APP));
   /* só TROCAR de cidade chega — reafirmar a cidade em que já estou, não.
      MOVIDAS (28/10, T1-A 3.ª fatia, o oficial): DE TEXTO PARA COMPORTAMENTO.
      O bloco do mapa mudou-se do `aplicarResposta` para

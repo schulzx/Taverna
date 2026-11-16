@@ -148,7 +148,7 @@ sec("§4 a abertura termina com três portas tocáveis");
   t("três portas, na ordem da tabela", ps.length === 3 && ps.map((p) => p.tipo).join() === PROPOSTAS_DA_ABERTURA.ordem.join(), J(ps));
   t("o passo da quest: ir ao lugar da etapa", ps[0].verbo === "Ir até Malho das Cinzas" && ps[0].frase === "Vou até Malho das Cinzas.");
   t("a pessoa em cena não é do grupo", ps[1].verbo === "Falar com Cedric");
-  t("o risco à vista: a masmorra perto", ps[2].verbo === "Perguntar por Forte de Gelo Fundo");
+  t("o risco à vista: a masmorra perto", ps[2].verbo === "Explorar Forte de Gelo Fundo" && ps[2].frase === "Vou até Forte de Gelo Fundo."); /* S6b (15/11): o risco é ir lá (dado e preço), não perguntar */
   t("cada porta é uma frase do jogador (o toque passa pelo campo)", ps.every((p) => typeof p.frase === "string" && p.frase.length > 4));
   t("ids distintos", new Set(ps.map((p) => p.id)).size === 3);
   t("depois do primeiro gesto, nenhuma", asPropostasDaAbertura({ passos, emCena, riscos: ["X"], jogou: true }).length === 0);

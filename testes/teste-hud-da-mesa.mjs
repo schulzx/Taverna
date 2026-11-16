@@ -126,7 +126,8 @@ t("a prateleira dos mantimentos: na mesa debaixo da Bolsa, no telefone debaixo d
 t("a face e o «×N» saem de uma regra só (mantimentosDeUso), com as tochas da masmorra lá dentro",
   /function mantimentosDeUso\(personagem, masmorra\)/.test(APP)
   && /const tochas = masmorra && !masmorra\.encerrada \? Math\.max\(0, Number\(masmorra\.tochas\) \|\| 0\) : sup\.tochas;/.test(APP)
-  && /dados: mantimentosDeUso\(personagem, masmorra\)\.dados/.test(APP)
+  /* S6b (15/11): a carta lê também a contagem das tochas da mesma regra (uma fonte só com o cabeçalho) */
+  && /const u = mantimentosDeUso\(personagem, masmorra\);\s*mantimentos = \{ \.\.\.mantimentos, tochas: u\.contagens\.tochas, dados: u\.dados \};/.test(APP)
   && (APP.match(/faceDoDadoDeUso\("tochas"/g) || []).length === 1);
 t("o toque abre a Bolsa e procura «Mantimentos»; a prateleira que estoura cala-se",
   /const abrirOsMantimentos = \(\) => \{\s*try \{\s*setAba\("inv"\);/.test(APP)

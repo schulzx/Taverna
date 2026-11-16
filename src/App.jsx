@@ -218,7 +218,7 @@ import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { custoRef, ultimoProvedorRef } from "./bastidor.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
-import { cabecalhoDaCena, TONS, TOM_PADRAO, camadaEmPalavras } from "./palco.js";
+import { cabecalhoDaCena, TONS, TOM_PADRAO, camadaEmPalavras, fundoDaPlanta } from "./palco.js";
 import { janelaAncorada, memoriaDoTurno } from "./janela.js"; import { garantirLeitura, decidirOCronista, pularALeitura, lerALeitura, blocoDaFila } from "./gatilho-do-cronista.js"; import { semFalaInventada } from "./fala-do-heroi.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
@@ -3653,7 +3653,12 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                  de mantimentosDeUso (a mesma da prateleira da mesa). Estourar
                  deixa os mantimentos sem dado, nunca sem casa. */
               try {
-                mantimentos = { ...mantimentos, dados: mantimentosDeUso(personagem, masmorra).dados };
+                /* S6b (15/11): o cabeçalho dizia «4 tochas» e a Bolsa «0 tochas» no
+                   mesmo instante — dentro da masmorra as tochas moram em mm.tochas
+                   (saem da mochila à entrada). A contagem é a de mantimentosDeUso,
+                   a mesma do cabeçalho e da prateleira: uma fonte só. */
+                const u = mantimentosDeUso(personagem, masmorra);
+                mantimentos = { ...mantimentos, tochas: u.contagens.tochas, dados: u.dados };
               } catch (e) { calou("os dados de uso na carta", e); mantimentos = { ...mantimentos, dados: null }; }
             } catch (e) { calou("os mantimentos na carta", e); }
             try {
@@ -21157,7 +21162,7 @@ export default function Taverna() {
     masmorraRef.current = mm2; setMasmorra(mm2);
     if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t })));
     if (msgsDaTocha.length) pushMsgs(msgsDaTocha.map((t) => ({ autor: "sistema", texto: t })));
-    if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} · ${camadaEmPalavras(sala.camada)} · ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala já resolvida não se refaz (a luta, o tesouro, o santuário, a armadilha, o enigma) */
+    if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} · ${camadaEmPalavras(sala.camada, fundoDaPlanta(mm.salas))} · ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala já resolvida não se refaz (a luta, o tesouro, o santuário, a armadilha, o enigma) */
     /* PERCEPÇÃO PASSIVA (5e): o que estiver abaixo do seu limiar você nota
        sozinho, sem rolar. O apressado enxerga menos; o cauteloso, mais. */
     const modPerc = atributoEfetivo(personagem, "percepcao");
@@ -21178,7 +21183,7 @@ export default function Taverna() {
     }
     const prog = progressoMasmorra(mm2);
     const escuro = noEscuro(mm2) ? " NO ESCURO (a última tocha se apagou — descreva a cegueira e o perigo)." : "";
-    const pos = `${mm.nome} · ${camadaEmPalavras(sala.camada)} · ${prog.visitadas}/${prog.total} salas${escuro}`;
+    const pos = `${mm.nome} · ${camadaEmPalavras(sala.camada, fundoDaPlanta(mm.salas))} · ${prog.visitadas}/${prog.total} salas${escuro}`;
     /* 13/10 (v9.461, ARMADILHA_DA_SALA): notada (ou ja a vista de uma visita
        de antes), a armadilha nao dispara: a sala fica armada e por
        resolver, o painel mostra as tres saidas com o preco, e o envelope
@@ -21360,7 +21365,7 @@ export default function Taverna() {
        minutos de tocha e o save nao sabe. */
     salvar({});
     const prog = progressoMasmorra(masmorraRef.current);
-    enviar(envelopeDoEnigma(r, e, `${mm.nome} · ${camadaEmPalavras(sala.camada)} · ${prog.visitadas}/${prog.total} salas`), personagemRef.current || personagem);
+    enviar(envelopeDoEnigma(r, e, `${mm.nome} · ${camadaEmPalavras(sala.camada, fundoDaPlanta(mm.salas))} · ${prog.visitadas}/${prog.total} salas`), personagemRef.current || personagem);
   };
 
   /* FORRAGEAR (5e): caçar e colher pela trilha. Gasta tempo, mas repõe. */
@@ -24333,7 +24338,18 @@ export default function Taverna() {
     /* NAVEGAÇÃO (5e): terreno difícil pode fazer o grupo se perder. */
     let notaErmos = "";
     {
-      const bioma = biomaDaqui();
+      /* S6b (15/11): o veredito dizia «de marcha por gelo» e a Navegação logo a
+         seguir «em floresta» — ela lia o bioma da cidade de onde se parte, e o
+         veredito, o chão da rota. Uma leitura só: o chão da marcha (a jornada,
+         a ida à boca, a rota do mapa); sem nenhum, o bioma daqui. */
+      let chaoDaMarcha = "";
+      try {
+        const alvoN = destino || destinoViagemRef.current || "";
+        const jN = jornadaRef.current;
+        const rN = !(jN && jN.terreno) && !(opcoes && opcoes.ida && opcoes.ida.terreno) && alvoN ? rotaEntre(cidadeAtualRef.current, alvoN) : null;
+        chaoDaMarcha = (jN && jN.terreno) || (opcoes && opcoes.ida && opcoes.ida.terreno) || (rN && rN.terreno) || "";
+      } catch (e) { calou("o chão da navegação", e); chaoDaMarcha = ""; }
+      const bioma = chaoDaMarcha || biomaDaqui();
       /* v9.44: o Cartógrafo soma no teste de rota — "reduz a chance de se
          perder" era a promessa, e este é o único dado que decide isso. */
       const nav = testarNavegacao(bioma, atributoEfetivo(personagem, "percepcao") + bonusDeNavegacao(personagem), (mapaRef.current.cidades || []).length > 3);
@@ -25291,8 +25307,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         if (!jogou && !combate && !jornada) {
           let riscos = [];
           try {
-            const mm = masmorrasDoMundo(sementeMundo(), mapaRef.current).find((x) => x.cidadeProxima === cidadeAtualRef.current);
-            if (mm && mm.nome) riscos = [mm.nome];
+            /* S6b (15/11): a prova jogada viu «Olhar à volta» — só valia a
+               masmorra cuja cidade-próxima era esta, e quase nunca há. Agora é a
+               mais perto da cidade (a de cá primeiro): um risco com dado e preço. */
+            const todas = masmorrasDoMundo(sementeMundo(), mapaRef.current).filter((x) => x && x.nome);
+            const cid = ((mapaRef.current && mapaRef.current.cidades) || []).find((c) => c && c.nome === cidadeAtualRef.current);
+            const dist = (x) => (x.cidadeProxima === cidadeAtualRef.current ? -1 : cid && Number.isFinite(x.x) && Number.isFinite(cid.x) ? Math.hypot(x.x - cid.x, x.y - cid.y) : Infinity);
+            riscos = [...todas].sort((a, b) => dist(a) - dist(b)).filter((x) => dist(x) < Infinity).slice(0, 2).map((x) => x.nome);
           } catch (e) { calou("S5 · o risco à vista", e); }
           const props = asPropostasDaAbertura({
             jogou, passos: passosDasQuestsAgora(),

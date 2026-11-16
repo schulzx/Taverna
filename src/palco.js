@@ -99,11 +99,29 @@ export function tomDaCena({ bioma = "", minuto = 0, subterraneo = false } = {}) 
    de 15/11 — o índice da planta (masmorras.js: a entrada é a camada 0)
    dito ao jogador como se fosse andar. A camada 0 é a entrada; as outras
    dizem-se pelo número que já têm (a 1.ª sala depois da entrada é a 1). */
-export const CAMADA_EM_PALAVRAS = Object.freeze({ entrada: "entrada", camada: "camada {n}" });
-export function camadaEmPalavras(n) {
-  const c = Number(n);
+/* S6b (15/11): a prova jogada viu «camada 1 · 4 tochas» — o lote 1 tirara
+   só o zero, e o índice continuava na tela. Agora nenhuma camada se diz por
+   número: a entrada, os subsolos por ordinal, e a mais funda é o «fundo»
+   (quando se sabe qual é — `fundo`, a maior camada da planta). Além dos
+   ordinais da tabela, «subsolo profundo». */
+export const CAMADA_EM_PALAVRAS = Object.freeze({
+  entrada: "entrada",
+  fundo: "fundo",
+  ordinais: Object.freeze(["primeiro subsolo", "segundo subsolo", "terceiro subsolo", "quarto subsolo", "quinto subsolo"]),
+  alem: "subsolo profundo",
+});
+export function camadaEmPalavras(n, fundo = null) {
+  const c = Math.round(Number(n));
   if (!Number.isFinite(c) || c < 0) return "";
-  return c === 0 ? CAMADA_EM_PALAVRAS.entrada : CAMADA_EM_PALAVRAS.camada.replace("{n}", String(Math.round(c)));
+  if (c === 0) return CAMADA_EM_PALAVRAS.entrada;
+  const f = Math.round(Number(fundo));
+  if (fundo != null && Number.isFinite(f) && f > 0 && c >= f) return CAMADA_EM_PALAVRAS.fundo;
+  return CAMADA_EM_PALAVRAS.ordinais[c - 1] || CAMADA_EM_PALAVRAS.alem;
+}
+/* a camada mais funda da planta (a do chefe), ou null sem planta */
+export function fundoDaPlanta(salas) {
+  const cs = (Array.isArray(salas) ? salas : []).map((s) => Number(s && s.camada)).filter(Number.isFinite);
+  return cs.length ? Math.max(...cs) : null;
 }
 
 export function cabecalhoDaCena(dados) {
@@ -121,7 +139,8 @@ export function cabecalhoDaCena(dados) {
     titulo = masmorra.nome;
     icone = "🕳";
     const sala = (masmorra.salas || []).find((s) => s && s.id === masmorra.atual);
-    if (sala && sala.camada != null && camadaEmPalavras(sala.camada)) onde.push(camadaEmPalavras(sala.camada));
+    const fundo = fundoDaPlanta(masmorra.salas);
+    if (sala && sala.camada != null && camadaEmPalavras(sala.camada, fundo)) onde.push(camadaEmPalavras(sala.camada, fundo));
     if (masmorra.tochas != null) onde.push(`${masmorra.tochas} tocha${masmorra.tochas === 1 ? "" : "s"}`);
   } else if (jornada && (jornada.destino || jornada.para)) {
     titulo = `a caminho de ${jornada.destino || jornada.para}`;
