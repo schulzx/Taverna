@@ -32,6 +32,7 @@ import { T, ESCALA_DA_MESA, LANCE, CERIMONIA_DO_DADO, TAMANHO_DO_DADO, alfa } fr
 import { DadoDeOsso } from "./ui.jsx";
 import { vereditoDoLance, facesDoRolar, giroDoRolar, tempoDoLance, passosDaSoma, quadrosDoVoo, fraseDoVeredito, PALAVRAS_DO_LANCE } from "./lance-do-dado.js";
 import { tocarDoLance } from "./som-da-mesa.js";
+import { ESTADOS_DA_PENA, estadoDaPena } from "./fila-de-cerimonias.js";
 
 const W = PALAVRAS_DO_LANCE;
 const C = CERIMONIA_DO_DADO;
@@ -159,12 +160,30 @@ function LascasDoUm({ lado }) {
   );
 }
 
-/* A PENA QUE ESCREVE (a espera; sem relógio) */
+/* A PENA QUE ESCREVE (V9 · ESTADOS_DA_PENA do F6): a espera tem quatro
+   caras pelo tempo desde o envio — «molha» (até 2 s: só o traço curto, sem
+   texto), «escreve» (o traço que corre e a frase de sempre) e «demora» (8 s
+   sem narração: a nota que diz que a jogada e o dado estão guardados). A
+   falha não é daqui: a página já a diz com o «Tentar de novo». O dado fica
+   sempre à vista por cima — nenhum dos caminhos rola de novo. */
 function PenaQueEscreve() {
+  const [ms, setMs] = useState(0);
+  useEffect(() => {
+    /* conta os passos, sem ler relógio de parede (o lance não lê Date.now) */
+    const id = setInterval(() => { try { setMs((m) => m + ESTADOS_DA_PENA.passo); } catch (e) { /* segue */ } }, ESTADOS_DA_PENA.passo);
+    return () => clearInterval(id);
+  }, []);
+  let estado = "escreve";
+  try { estado = estadoDaPena(ms); } catch (e) { estado = "escreve"; }
+  const cor = T.tintaDoPergaminhoDim;
+  if (estado === "demora") {
+    return <span className="tv-fade" role="status" style={{ display: "block", maxWidth: ESTADOS_DA_PENA.nota, fontFamily: "'Spectral', Georgia, serif", fontStyle: "italic", fontSize: 14, color: cor }}>{ESTADOS_DA_PENA.demora.frase}</span>;
+  }
+  const largura = estado === "molha" ? ESTADOS_DA_PENA.traco : 130;
   return (
-    <span className="tv-fade" aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", gap: 10, fontFamily: "'Spectral', Georgia, serif", fontStyle: "italic", fontSize: 14, color: T.tintaDoPergaminhoDim }}>
-      <svg width="130" height="10" viewBox="0 0 130 10"><path className="tv-lance-pena" d="M0 5 Q 8 0 16 5 T 32 5 T 48 5 T 64 5 T 80 5 T 96 5 T 112 5 T 128 5" fill="none" stroke={T.tintaDoPergaminhoDim} strokeWidth="1.5" pathLength="1" /></svg>
-      {W.escreve}
+    <span className="tv-fade" aria-hidden="true" data-pena={estado} style={{ display: "inline-flex", alignItems: "center", gap: 10, fontFamily: "'Spectral', Georgia, serif", fontStyle: "italic", fontSize: 14, color: cor }}>
+      <svg width={largura} height="10" viewBox={"0 0 " + largura + " 10"}><path className="tv-lance-pena" d="M0 5 Q 8 0 16 5 T 32 5 T 48 5 T 64 5 T 80 5 T 96 5 T 112 5 T 128 5" fill="none" stroke={cor} strokeWidth="1.5" pathLength="1" /></svg>
+      {estado === "escreve" ? W.escreve : null}
     </span>
   );
 }

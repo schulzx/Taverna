@@ -133,5 +133,13 @@ sec("6. o som das cerimônias (SOM_DA_MESA.cerimonia, F6)");
   t("nome desconhecido cala", tocarDaCerimonia("modal") === false);
 }
 
+sec("7. a pena que escreve (painel-lance.jsx)");
+{
+  const lance = semComentario(ler("src/painel-lance.jsx"));
+  t("a pena lê o estado da tabela (estadoDaPena), não decide sozinha", /estadoDaPena\(ms\)/.test(lance) && /ESTADOS_DA_PENA\.passo/.test(lance));
+  t("«molha» é só o traço curto, sem texto", /estado === "molha" \? ESTADOS_DA_PENA\.traco/.test(lance) && /estado === "escreve" \? W\.escreve : null/.test(lance));
+  t("«demora» diz que a jogada e o dado estão guardados, numa região de estado", /ESTADOS_DA_PENA\.demora\.frase/.test(lance) && /role="status"/.test(lance));
+}
+
 console.log(`\n${ok} ok · ${mal} falhas`);
 if (mal) process.exit(1);
