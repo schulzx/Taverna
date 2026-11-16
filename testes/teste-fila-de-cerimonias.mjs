@@ -109,6 +109,7 @@ sec("4. a catraca: com cerimônia em cena, nenhum botão morre calado");
   t("as três cerimônias têm o relógio do teto (não só o animationend)", (espolio.match(/useTetoDaCerimonia\(/g) || []).length === 2 && /useTetoDaCerimonia\("nivel"/.test(nivel));
   t("a página que nasce oculta abre no último quadro", /paginaOculta\(\)/.test(espolio) && /paginaOculta\(\)/.test(nivel));
   t("o impedido não é disabled: é aria-disabled com o porquê no próprio botão", /aria-disabled=\{impedido \? "true"/.test(nivel) && /Confirmar · falta pôr 1 ponto/.test(nivel) && !/[^-]disabled=\{/.test(nivel.slice(nivel.indexOf("function PeDaSubida"), nivel.indexOf("export function PainelSubidaDeNivel"))));
+  t("uma de cada vez: com a subida aberta, a cerimônia da fila espera (eram dois diálogos juntos)", /if \(cerimoniaDoNivel \|\| \(cerimoniaCalou && /.test(app));
   t("a paga da quest pergunta à fila se já passou, e pousa ao sair", /cerimoniaJaPassou\(\[\], chave\)/.test(app) && /cerimoniaPousou\(c\.chave\)/.test(app) && (app.match(/cerimoniaJaPassou\(f, chave\)/g) || []).length === 2);
 }
 

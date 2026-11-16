@@ -19787,6 +19787,9 @@ export default function Taverna() {
   const cerimoniaDaFilaAgora = () => {
     try {
       if (carregando || dadoRolando || !filaDasCerimonias.length) return null;
+      /* V9: uma de cada vez — o espólio que chega com a subida já aberta espera
+         ela pousar (antes, os dois diálogos abriam juntos, um por cima do outro) */
+      if (cerimoniaDoNivel || (cerimoniaCalou && ((personagem && personagem.nivelPendentes) || 0) > 0)) return null;
       const nivelNaFila = !!cerimoniaDoNivel || ((personagem && personagem.nivelPendentes) || 0) > 0;
       const fila = nivelNaFila ? entrarNaFila(filaDasCerimonias, { tipo: "nivel" }) : filaDasCerimonias;
       const c = proximaCerimonia(fila, { lutaAberta: !!combate });
