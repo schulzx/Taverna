@@ -4240,6 +4240,16 @@ export const INTENCAO_NA_MESA = {
   seta: { traco: 2, tracejado: [5, 4] },
   discoNaFila: 18,
 };
+/* V6 · A ETIQUETA DA INTENÇÃO POR ALVO (formas.md, F4 §2 «INTENCAO»): os
+   golpes que vão cair no MESMO alvo fundem-se numa etiqueta só, junto da
+   peça dele («3× 2–10») — eram três pílulas empilhadas, cortadas a 375 px.
+   Papel de osso, borda de perigo, a letra da página (Spectral Bold 14, não
+   mono): tinta sobre osso 11,8 : 1. `folga`: a distância à peça do alvo. */
+export const ETIQUETA_DA_INTENCAO = {
+  chao: T.ossoLume, aro: T.perigoNoPergaminho, aroPx: 1.5, raio: 3,
+  glifo: 14, letra: 14, tinta: T.tintaDoPergaminho, perigo: T.perigoNoPergaminho,
+  alto: 24, enchimentoX: 7, entre: 5, folga: 16,
+};
 export const GOLPE_SENTIDO = {             // §CB 5 — ms; a suíte soma pausa + tremor.ms + assenta ≤ teto
   teto: 400,
   acerto:  { pausa: 70,  tremor: { px: 3, ms: 120, vaivens: 3 }, assenta: 190 },
@@ -4267,6 +4277,11 @@ export const CARTAO_DO_ENCONTRO = {        // §CB 7
 export const FILA_DA_VEZ = {               // §CB 8
   vez: 56, espera: 40, aroVez: 3, aro: 2, agiu: 0.45, caido: 0.3, entre: 6,
   marcaDaRodada: { fio: [2, 36], alfa: 0.6 }, telefone: { vez: 44, espera: 34 },
+  /* V6 (F4 §2 FILA_DE_INICIATIVA): o nome INTEIRO por baixo, em Spectral 13
+     (era mono a 12 cortado a 80 px: «Rato Gigan…»). Uma linha: a fila tem
+     90 de alto, e 56 + 4 + 16 + 2 × 6 = 88 cabem; o que não couber na
+     largura, a fila rola por dentro, nunca corta o nome. */
+  nome: { letra: 13, entrelinha: 16 },
 };
 /* CB 17 (lote 2, 09/11) — o d20 do ataque rola NO ALVO, no lugar da pílula da
    previsão (formas.md §CB 17.1; Figma 363:1649), e o turno deles contado em

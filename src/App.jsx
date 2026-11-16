@@ -336,6 +336,7 @@ import { potenciasDoMundo, garantirDiplomacia, aprecoDe, fichaDe, mexerNoApreco,
 import { PainelMapa } from "./painel-mapa.jsx";
 import { GridDeBatalha } from "./grade-de-batalha.jsx";
 import { TelaDeBatalha } from "./painel-batalha.jsx";
+import { esperarAVez } from "./mesa-de-batalha.js";
 import { selosDaMecanica } from "./selo-de-estado.js";
 import { PainelHabilidades, PainelCaderno } from "./painel-habilidades.jsx";
 import { criarSala, garantirSala, sentarNaSala, sairDaSala, sentarFicha, assentoDe, ocupados as ocupadosDaSala, todosProntos, porAcao, acaoDe, turnoCompleto, textoDoTurno, limparTurno, normalizarCodigo, codigoValido, RECADOS, recadoValido, envelopeDaSala, LUGARES } from "./sala.js";
@@ -9298,6 +9299,28 @@ export default function Taverna() {
   const [escolhaNoEncontro, setEscolhaNoEncontro] = useState(null);
   const [entradaNaMesa, setEntradaNaMesa] = useState(null);
   const abrirAMesaDoEncontroRef = useRef(null);
+  /* V6 · O TAPETE ABRE JÁ (formas.md, F4 §1 nº 1). «Lutar» desenrola a mesa
+     no mesmo toque e a narração da entrada chega depois, na fala do Mestre:
+     enquanto ela está no ar (falaDaEntrada) a vez é do jogador. A fila do
+     envio (mesa-de-batalha.js) põe o golpe que ele der à espera da fala que
+     está no ar: duas chamadas ao Mestre ao mesmo tempo pisavam-se. E a fala
+     da entrada não desfaz nada se cair (semDesfeitoRef): a luta já está
+     posta, e o que os dados rolarem nela não volta atrás. */
+  const [falaDaEntrada, setFalaDaEntrada] = useState(false);
+  const semDesfeitoRef = useRef(false);
+  const envioNoArRef = useRef(null);
+  const enviarRef = useRef(null);
+  const tomarAVez = () => {
+    let solta = null;
+    const minha = new Promise((r) => { solta = r; });
+    envioNoArRef.current = minha;
+    return () => { if (envioNoArRef.current === minha) envioNoArRef.current = null; try { solta(); } catch { /* nada */ } };
+  };
+  const depoisDaVez = async (conteudo, persAtual, histBase) => {
+    const porque = await esperarAVez(envioNoArRef.current);
+    if (porque === "teto") envioNoArRef.current = null;
+    return enviarRef.current ? enviarRef.current(conteudo, persAtual, histBase) : undefined;
+  };
   /* estável de propósito: a peça da entrada refaz os relógios quando o
      `aoFim` muda, e um App que repinta a cada segundo nunca a deixaria acabar */
   const aoFimDaEntrada = useCallback(() => { try { if (abrirAMesaDoEncontroRef.current) abrirAMesaDoEncontroRef.current(); } catch (e) { calou("o fim da entrada na mesa", e); } }, []);
@@ -11045,12 +11068,13 @@ export default function Taverna() {
     catch (e) { try { localStorage.removeItem(chave); } catch { /* idem */ } calou("guardar a sessão", e); }
   };
   const enviar = useCallback(async (conteudo, persAtual, histBase) => {
+    if (envioNoArRef.current) return depoisDaVez(conteudo, persAtual, histBase);
+    const soltarAVez = tomarAVez();
     setCarregando(true); setFalha(null);
     const aceiteDesteTurno = aceiteDoTurnoRef.current; aceiteDoTurnoRef.current = null;
     /* MM15 (3): A FOTO DO ENVIO — antes de qualquer coisa que este turno
-       ainda vai mexer (a caminhada da cidade, a frente, a virada). Se o
-       Mestre calar mais adiante, é a este instante que o desfeito volta
-       quando não há foto do início (ou ela não é deste turno); a foto do
+       ainda vai mexer. Se o Mestre calar mais adiante, é a este instante que o desfeito volta
+       quando não há foto do início; a foto do
        início, quando existe, continua a primeira escolha — a exceção de
        X3 é sempre a mesma: o que os dados já rolaram não desfaz.
        `fotoInicioRef` só vale para ESTE turno, e por isso sai da ref
@@ -11061,6 +11085,8 @@ export default function Taverna() {
       fotoInicio = fotoInicioRef.current;
       fotoInicioRef.current = null;
     } catch (e) { calou("foto do envio", e); }
+    /* V6: a fala da entrada não tem desfeito — a luta já está posta */
+    if (semDesfeitoRef.current) { semDesfeitoRef.current = false; fotoEnvio = null; fotoInicio = null; }
     /* a sessão como arquivo: o que este turno vai gravar, juntado aqui */
     let turnoDaSessao = null;
     try { if (abrirASessaoSePreciso()) turnoDaSessao = { lugaresDaqui: lugaresDaqui(), conteudo }; } catch (e) { calou("a sessão (o envio)", e); turnoDaSessao = null; }
@@ -11539,8 +11565,10 @@ export default function Taverna() {
         }
       } catch (e) { calou("o fim do turno no recibo", e); }
       setCarregando(false);
+      try { soltarAVez(); } catch { /* a fila nunca prende um turno */ }
     }
   }, [historico, mensagens, aplicarResposta, salvar, nomeCampanha, mundo]);
+  enviarRef.current = enviar;
 
   /* ---------------- TENTAR DE NOVO (v9.256, Fase X - X3) ----------------
      O que volta ao Mestre e o ENVELOPE GUARDADO, byte por byte. Remontar o
@@ -24099,10 +24127,24 @@ export default function Taverna() {
       if (quemResponde("encontro").chamadas) enviar("[NA ESTRADA — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]", p || fichaViva() || personagem);
     } catch (er) { calou("a narração do encontro", er); }
   };
+  /* V6 · A FALA DA ENTRADA: parte no toque de «Lutar» e não segura a vez.
+     Vai sem ficha do envio (null): quando a resposta chegar, a ficha é a de
+     ENTÃO (personagemRef) — a luta pode já ter mexido nela. */
+  const narrarAEntrada = (e) => {
+    try {
+      porNaPautaDoTurno(pautaDoEncontro(e));
+      if (!quemResponde("encontro").chamadas) return;
+      semDesfeitoRef.current = true;
+      setFalaDaEntrada(true);
+      Promise.resolve(enviar("[NA ESTRADA — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]", null))
+        .catch((er) => calou("a fala da entrada", er))
+        .finally(() => { try { setFalaDaEntrada(false); } catch { /* nada */ } });
+    } catch (er) { calou("a narração da entrada", er); try { setFalaDaEntrada(false); } catch { /* nada */ } }
+  };
   /* O ENCONTRO SEGUE, pela fase que o motor devolveu:
        escolha   — a criatura à vista; o Mestre narra, e o cartão vem depois;
-       resolvido com luta — o Mestre narra a descida, e a mesa abre DEPOIS da
-                   narração (o efeito da entrada, que espera o Mestre calar);
+       resolvido com luta — a mesa abre JÁ (V6) e o Mestre narra a descida
+                   enquanto ela se desenrola (narrarAEntrada);
        resolvido sem luta — o preço cobra-se (as horas, o tributo, o recuo), a
                    jornada retoma, a criatura fica à vista, e o Mestre narra. */
   const seguirOEncontro = (e, p0) => {
@@ -24117,7 +24159,7 @@ export default function Taverna() {
         return;
       }
       if (e.fase !== "resolvido" || !e.desfecho) { pousarOEncontro(e); return; }
-      if (e.desfecho.luta) { pousarOEncontro(e); narrarOEncontro(e, p); return; }
+      if (e.desfecho.luta) { pousarOEncontro(e); narrarAEntrada(e); return; }
       let pv = p;
       const custo = e.desfecho.custo || {};
       const horas = Math.max(0, Number(custo.horas) || 0);
@@ -26290,9 +26332,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     try { if (p && p.frase) { setEntrada(p.frase); setCampoFocado(true); } } catch (e) { calou("a frase volta ao campo", e); }
   };
 
-  /* ---------------- CB3 · A MESA ABRE DEPOIS DA NARRAÇÃO ----------------
-     O encontro resolvido com luta espera o Mestre calar (a descida foi
-     narrada), e só então a ENTRADA NA MESA corre (1,2 s, saltável) e a luta
+  /* ---------------- CB3 · A MESA ABRE (V6: JÁ, NÃO DEPOIS DA NARRAÇÃO) ----------------
+     O encontro resolvido com luta já não espera o Mestre calar: com a fala
+     da entrada no ar (falaDaEntrada), a ENTRADA NA MESA corre (1,2 s, saltável) e a luta
      abre pela porta única, com a abertura do desfecho: a situação, de que
      lado está a surpresa, e a fuga aberta perante um lendário. Vale também
      para o save que fechou entre a narração e a mesa. A rede de segurança:
@@ -26317,10 +26359,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     try {
       const e = encontroPendente;
       if (!e || e.fase !== "resolvido" || !e.desfecho || !e.desfecho.luta) return;
-      if (fase !== "jogo" || carregando || combate || entradaNaMesa) return;
+      if (fase !== "jogo" || (carregando && !falaDaEntrada) || combate || entradaNaMesa) return;
       setEntradaNaMesa((Array.isArray(e.inimigos) && e.inimigos[0]) || { nome: e.criatura });
     } catch (er) { calou("a entrada na mesa do encontro", er); }
-  }, [encontroPendente, carregando, combate, entradaNaMesa, fase]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [encontroPendente, carregando, falaDaEntrada, combate, entradaNaMesa, fase]); // eslint-disable-line react-hooks/exhaustive-deps
   /* CB: A LUTA QUE NASCE (por qualquer porta: o encontro, a frase, o Narrador,
      o load). Mora num efeito e não em `abrirCombate` de propósito: a porta é
      recortada e jogada byte a byte contra o App de antes (teste-motor-luta), e
@@ -28075,7 +28117,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       grupo={personagem.grupo || []}
       mensagens={mensagens}
       carregando={carregando}
-      bloqueado={bloqueado}
+      bloqueado={bloqueado && !(falaDaEntrada && !rolagem)}
       entrada={entrada}
       aoEscrever={setEntrada}
       aoAgir={(txt) => { try { agir(txt); } catch (e) { calou("agir na batalha", e); } }}

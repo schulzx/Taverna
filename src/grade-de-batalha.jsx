@@ -79,6 +79,9 @@ import { casasQueSurpreendem, legendaDoPasso } from "./glifos.js";
    andar abaixo. As vinte letras cobrem tudo: a planta mais larga tem 18
    colunas. */
 import { LETRAS_DA_GRADE } from "./coordenadas.js";
+/* V6 · as intenções fundidas por alvo, e o chão das dez plantas */
+import { intencoesPorAlvo, chaoDasRegioes, enderecoDoLadrilho, VEU_DO_LADRILHO } from "./mesa-de-batalha.js";
+import { ETIQUETA_DA_INTENCAO } from "./estilo.js";
 
 const K = (x, y) => `${x},${y}`;
 
@@ -1241,6 +1244,11 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      da mesa (cumpriu-se; o dado e o caminho dizem-no agora) */
   const jaCumpriu = new Set([...(Array.isArray(agiram) ? agiram.map(String) : []), ...(passo && passo.quem ? [String(passo.quem)] : [])]);
   const intencaoDe = new Map((Array.isArray(intencoes) ? intencoes : []).filter((i) => i && i.inimigo && i.vista && !jaCumpriu.has(i.inimigo)).map((i) => [i.inimigo, i.vista]));
+  /* V6: as intenções fundidas por alvo (mesa-de-batalha.js), uma vez por pintura */
+  const fusaoDasIntencoes = (() => {
+    try { return intencoesPorAlvo([...intencaoDe.entries()].map(([inimigo, vista]) => ({ inimigo, vista }))); }
+    catch (e) { console.warn("GridDeBatalha: fundir as intenções falhou", e); return { porAlvo: [], outras: [...intencaoDe.entries()].map(([inimigo, vista]) => ({ inimigo, vista })) }; }
+  })();
   const casasDoSopro = new Set();
   for (const v of intencaoDe.values()) if (v.tipo === "sopro" && Array.isArray(v.area)) v.area.forEach((q) => casasDoSopro.add(K(q.x, q.y)));
   const alvoDaPrevisao = previsaoDoGolpe && previsaoDoGolpe.alvo ? String(previsaoDoGolpe.alvo) : "";
@@ -1428,6 +1436,9 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     const zonaDoHeroi = heroi && heroi.x != null ? nomeDoLugar(grade, heroi.x, heroi.y) : "";
     /* a textura do quadro — só a planta que a pessoa desenhou tem uma */
     const chao = TERRENO_DO_TABULEIRO[g.cenario] || null;
+    /* V6 · O CHÃO DAS DEZ PLANTAS (F4, CHAO_DA_PLANTA): onde não há pintura,
+       cada região leva o ladrilho do seu material (relva, terra, lajes…) */
+    const chaoPintado = chao ? null : (() => { try { return chaoDasRegioes(g.cenario, g.regioes.length); } catch { return null; } })();
     const parado = movimentoParado();
     /* O NÚMERO SÓ SE ESCREVE ONDE ELE SE LÊ. Era "abaixo do piso do alvo,
        nada", porque o corpo escalava com a casa (numa casa de 24 px o 10
@@ -1549,6 +1560,21 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           <g style={{ pointerEvents: "none" }}>
             <image href={chao} x="0" y="0" width={g.largura} height={g.altura} preserveAspectRatio="xMidYMid slice" />
             <rect x="0" y="0" width={g.largura} height={g.altura} fill={T.bg} opacity={MB.alfa.veuDoTerreno} />
+          </g>
+        )}
+        {chaoPintado && (
+          <g style={{ pointerEvents: "none" }}>
+            <defs>
+              {[...new Set(chaoPintado)].map((m) => (
+                <pattern key={m} id={`tv-mat-${m}`} width="2" height="2" patternUnits="userSpaceOnUse">
+                  <image href={enderecoDoLadrilho(m)} x="0" y="0" width="2" height="2" />
+                </pattern>
+              ))}
+            </defs>
+            {g.regioes.map((r, i) => (
+              <rect key={`mat${i}`} x={r.x0} y={r.y0} width={r.x1 - r.x0 + 1} height={r.y1 - r.y0 + 1} fill={`url(#tv-mat-${chaoPintado[i]})`} />
+            ))}
+            <rect x="0" y="0" width={g.largura} height={g.altura} fill={T.bg} opacity={VEU_DO_LADRILHO} />
           </g>
         )}
         {g.regioes.map((r, i) => {
@@ -2192,7 +2218,30 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
         {/* CB 18.2 · o selo de cada mancha, por cima das fichas */}
         {manchas.map((m, i) => <SeloDaSuperficie key={`selo${i}`} mancha={m} largura={g.largura} altura={g.altura} />)}
-        {[...intencaoDe.entries()].map(([nome, v]) => {
+        {/* V6 · UMA ETIQUETA POR ALVO: os golpes que vão cair no mesmo alvo
+            fundem-se («3× 2–10»), junto da peça DELE e não de cada atacante.
+            O que não é golpe num alvo (sopro, aproximar, fugir) fica na
+            pílula de cada um, como estava. */}
+        {fusaoDasIntencoes.porAlvo.map((gr) => {
+          const ehHeroi = gr.alvo === ((heroiFicha && heroiFicha.nome) || heroiNome);
+          const para = ehHeroi ? heroi : aliados.find((a) => a.nome === gr.alvo);
+          if (!para || para.x == null) return null;
+          const n = ladoDe(para);
+          const EI = ETIQUETA_DA_INTENCAO;
+          const emCima = para.y > 0;
+          const pos = emCima
+            ? { left: `${((para.x + n / 2) / g.largura) * 100}%`, top: `${(para.y / g.altura) * 100}%`, transform: `translate(-50%, calc(-100% - ${EI.folga / 2}px))` }
+            : { left: `${((para.x + n / 2) / g.largura) * 100}%`, top: `${((para.y + n) / g.altura) * 100}%`, transform: `translate(-50%, ${EI.folga / 2}px)` };
+          return (
+            <span key={`intAlvo${gr.alvo}`} role="img" aria-label={`${gr.linha}${gr.soma ? ` — ${gr.soma}` : ""}`} title={`${gr.linha}${gr.soma ? ` — ${gr.soma}` : ""}`} className="tv-body inline-flex items-center"
+              style={{ position: "absolute", zIndex: 2, ...pos, height: EI.alto, gap: EI.entre, padding: `0 ${EI.enchimentoX}px`, borderRadius: EI.raio, whiteSpace: "nowrap",
+                background: EI.chao, border: `${EI.aroPx}px solid ${EI.aro}`, color: EI.tinta, fontSize: EI.letra, fontWeight: 700 }}>
+              <Glifo nome={INTENCAO_NA_MESA.glifo.atacar} tamanho={EI.glifo} cor={EI.perigo} />
+              <span>{gr.etiqueta}</span>
+            </span>
+          );
+        })}
+        {fusaoDasIntencoes.outras.map(({ inimigo: nome, vista: v }) => {
           const e = inimigos.find((x) => x.nome === nome);
           if (!e || e.x == null) return null;
           const n = ladoDe(e);

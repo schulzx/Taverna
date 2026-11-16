@@ -83,8 +83,14 @@ sec("3. a narração antes da mesa");
      `qr` do trecho que cede à chamada própria do encontro, antes do envelope */
   t("a viagem com encontro chama o Mestre agora", APP.includes('if (encontroDaEstrada && !qr.chamadas && quemResponde("encontro").chamadas) qr = quemResponde("encontro");') && APP.includes("    if (qr.chamadas) enviar(textoDaViagem, persV);"));
   const s = corpo("seguirOEncontro");
-  t("com luta, o Mestre narra a descida e NÃO abre a mesa", s.includes("if (e.desfecho.luta) { pousarOEncontro(e); narrarOEncontro(e, p); return; }") && !s.includes("abrirCombate("));
-  t("a entrada só corre com o Mestre calado (o efeito espera o carregando)", APP.includes('if (fase !== "jogo" || carregando || combate || entradaNaMesa) return;'));
+  /* MOVIDAS (V6, 16/11), E O MOTIVO: o F4 (formas.md §1 nº 1) põe o tapete na
+     mesa JÁ — eram ~30 s de espera muda entre «Lutar» e o tabuleiro. A descida
+     continua narrada pela chamada própria (narrarAEntrada, com a mesma pauta),
+     mas o efeito da entrada já não espera o Mestre calar: espera só que não
+     haja OUTRA fala no ar (carregando && !falaDaEntrada). A prova da ordem nova
+     está em teste-mesa-de-batalha.mjs. */
+  t("com luta, o Mestre narra a descida (narrarAEntrada) e a porta não abre a mesa por si", s.includes("if (e.desfecho.luta) { pousarOEncontro(e); narrarAEntrada(e); return; }") && !s.includes("abrirCombate("));
+  t("a entrada corre com a fala da entrada no ar (o efeito só espera outra fala)", APP.includes('if (fase !== "jogo" || (carregando && !falaDaEntrada) || combate || entradaNaMesa) return;'));
   t("e a mesa abre pela porta única, com a abertura do desfecho", APP.includes('abrirCombate(e.inimigos || [], { pers: p0, situacao: e.desfecho.situacao || "encontro", iniciativa: e.desfecho.iniciativa || null, fugaAberta: e.desfecho.fugaAberta === true })'));
   t("a porta leva a iniciativa e a fuga aberta ao motor", APP.includes("pers: persEntra || fichaViva() || personagem, situacao, iniciativa, fugaAberta,"));
   t("a entrada na mesa tem um aoFim estável (useCallback) e uma rede se a peça calar", APP.includes("const aoFimDaEntrada = useCallback(") && APP.includes("CARTAO_DO_ENCONTRO.entrada.total * 3"));

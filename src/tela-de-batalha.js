@@ -365,6 +365,9 @@ export const RECUSAS_DO_VERBO = {
   semSaida:   "não há casa livre à sua volta",
   semAlcance: "ninguém ao seu alcance",
   fimDaLuta:  "a luta acabou",
+  /* V6 (16/11): com o Mestre a narrar, o Atacar dizia «a luta acabou» — a
+     barra mentia com a luta em curso. A razão de verdade é esta. */
+  mestreFala: "o Mestre ainda está narrando",
   /* ACHADO NUM SAVE INJETADO (24/09), a mesma pergunta que abriu a fase: um
      personagem a 0 PV, "morrendo" — o próprio sistema escreve ao Narrador
      "eu não vejo, não ouço e não ajo" (App.jsx, `resolverQueda`) —, e a
@@ -412,7 +415,7 @@ export function impedimentosDaFileira(estado) {
   return {
     atacar: fim ? RECUSAS_DO_VERBO.fimDaLuta
       : inconsciente ? RECUSAS_DO_VERBO.inconsciente
-      : e.bloqueado ? RECUSAS_DO_VERBO.fimDaLuta
+      : e.bloqueado ? RECUSAS_DO_VERBO.mestreFala
       : e.algumAoAlcance === false ? RECUSAS_DO_VERBO.semAlcance : "",
     mover: razaoDoPasso,
     fugir: fim ? RECUSAS_DO_VERBO.fimDaLuta : inconsciente ? RECUSAS_DO_VERBO.inconsciente : (e.razaoDaFuga ? String(e.razaoDaFuga) : ""),

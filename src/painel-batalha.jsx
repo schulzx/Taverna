@@ -73,6 +73,7 @@ import { rotulosDoEmpurrao, altoDaPrevisao, letreiroDaReacao, tempoDaReacao, cha
 import { filaDaRodada, economiaDaVez } from "./vez-na-mesa.js";
 import { sementeDe, estadoDe } from "./semente.js";
 import { metrosTxt, podeDarUmPasso, garantirGrade, nomeDoLugar } from "./grid.js";
+import { custoEscrito } from "./mesa-de-batalha.js";
 import { mecanicaDe } from "./condicoes.js";
 import { selosDaMecanica } from "./selo-de-estado.js";
 import { tituloDe } from "./divindades.js";
@@ -379,7 +380,7 @@ function FilaDaVez({ fila, rotulo, entes, intencaoDe, noTelefone, realce, aoReal
           <button onClick={aoAbrirEles} aria-label={`${r.nome} — ver o que eles vão fazer`} className="tv-anel-foco rounded-full">{rosto}</button>
         ) : rosto}
         {!noTelefone && (
-          <span className="tv-mono truncate" style={{ fontSize: TIPOS.piso, color: vez ? (vezDeles ? T.danger : T.amberSoft) : realce === r.nome ? T.ink : T.inkMeio, fontWeight: vez ? 700 : 400, maxWidth: F.vez + 24 }}
+          <span className={vez ? "tv-display" : "tv-body"} style={{ fontSize: F.nome.letra, lineHeight: `${F.nome.entrelinha}px`, whiteSpace: "nowrap", color: vez ? (vezDeles ? T.danger : T.amberSoft) : realce === r.nome ? T.ink : T.inkMeio, fontWeight: vez ? 700 : 400, textDecoration: r.estado === "caido" ? "line-through" : undefined }}
             title={r.iniciativa != null ? `${r.nome} · iniciativa ${r.iniciativa}` : undefined}>
             {r.nome}{r.iniciativa != null && !proximo && <span style={{ color: T.inkDim, fontWeight: 400 }}> {r.iniciativa}</span>}
           </span>
@@ -577,7 +578,11 @@ function resumoDaArea(pv) {
    recurso só chega com `recurso` (o centro ≥ 660, §CB 16.1 nº 4); quem
    gasta passo («movimento») leva o glifo dos passos como preço. As
    espadas do Atacar saíram: o pip e o «· 78%» já o distinguem. */
-function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, aoApontar = null, alto = B3.verbo.fino, grelha = false }) {
+/* V6 (F4 §2 CARTA_DE_ACAO): o custo ESCRITO por baixo do nome («ação»,
+   «passo · até 9 m»), e o nome na letra da mesa (Cinzel), não em mono. No
+   telefone (`grelha`) a casa é pequena demais para as duas linhas: fica o
+   nome, e a chance por baixo do Atacar, como estava. */
+function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, aoApontar = null, alto = B3.verbo.fino, grelha = false, custo = "" }) {
   const recuo = v.papel === "recuo";
   const P = B3.verboComPip;
   return (
@@ -606,7 +611,7 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
          aqui em circunstância nenhuma: estilo inline vence SEMPRE a folha,
          e o anel também é `box-shadow` — foi assim que a pílula da ficha
          apagou o seu anel em todos os estados sem ninguém notar (K4). */
-      className="tv-anel-foco tv-mono flex items-center justify-center"
+      className="tv-anel-foco tv-display flex items-center justify-center"
       style={{
         /* o alvo sai da tabela, nunca de aritmética de padding */
         minHeight: alto, height: alto,
@@ -636,10 +641,15 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
           <span aria-hidden="true" style={{ fontWeight: 700 }}>{chance}%</span>
         </span>
       ) : (
-        <>
-          {v.rotulo}
-          {chance != null && <span aria-hidden="true" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>· {chance}%</span>}
-        </>
+        <span className="flex flex-col items-start" style={{ lineHeight: 1.15 }}>
+          <span style={{ whiteSpace: "nowrap" }}>
+            {v.rotulo}
+            {chance != null && <span aria-hidden="true" style={{ fontWeight: 700, whiteSpace: "nowrap" }}> · {chance}%</span>}
+          </span>
+          {!grelha && custo && (
+            <span className="tv-body" style={{ fontSize: M.letra.verbo - 2, fontWeight: 500, whiteSpace: "nowrap", color: armado ? T.onAccent : impedido ? T.inkDim : T.amberSoft }}>{custo}</span>
+          )}
+        </span>
       )}
       {/* o bico: um triângulo encostado à aresta de cima, a apontar para a
           linha do veredito. Não diz só "estou armado": diz "aquela linha é
@@ -668,7 +678,7 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
    seis gestos caberem numa linha a 1024. Uma fileira que quebra deixa de
    ter a altura da conta e come o tabuleiro. No telefone (`grelha`) é a
    grelha de 4 colunas: os gestos, e os recuos no fim da segunda linha. */
-function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, chanceDoAtaque = null, aoApontar = null, alto = B3.verbo.fino, grelha = false }) {
+function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, chanceDoAtaque = null, aoApontar = null, alto = B3.verbo.fino, grelha = false, passoM = null }) {
   const gestos = verbos.filter((v) => v.papel !== "recuo");
   /* MAIS DE UM RECUO PODE VIVER AQUI: `esperar` e `fugir` são os dois
      "sair do turno sem golpe" — era `.find` quando só `esperar` existia,
@@ -681,7 +691,8 @@ function FileiraDeVerbos({ verbos, armado, impedidos, aoTocar, recursos = null, 
       style={grelha ? { gridTemplateColumns: `repeat(${TT.colunasDosVerbos}, minmax(0, 1fr))`, gap: TT.entre } : { height: alto, gap: M.entreVerbos }}>
       {[...gestos, ...recuos].map((v) => (
         <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => aoTocar(v)} alto={alto} grelha={grelha}
-          recurso={recursos && v.papel !== "recuo" ? recursos[v.id] || null : null} chance={v.id === "atacar" ? chanceDoAtaque : null} aoApontar={v.papel !== "recuo" ? aoApontar : null} />
+          recurso={recursos && v.papel !== "recuo" ? recursos[v.id] || null : null} chance={v.id === "atacar" ? chanceDoAtaque : null} aoApontar={v.papel !== "recuo" ? aoApontar : null}
+          custo={(() => { try { return custoEscrito(v.id, recursos ? recursos[v.id] : null, { passoM }); } catch { return ""; } })()} />
       ))}
     </div>
   );
@@ -2242,7 +2253,7 @@ export function TelaDeBatalha(props) {
       ) : (
         <FileiraDeVerbos verbos={verbos} armado={armado} impedidos={impedidos}
           aoTocar={tocarVerbo} alto={altoDoVerbo} grelha={noTelefone}
-          recursos={comPip ? recursosDosVerbos : null} chanceDoAtaque={chanceDoAtaque} aoApontar={noTelefone ? null : setVerboSobre} />
+          recursos={comPip ? recursosDosVerbos : null} chanceDoAtaque={chanceDoAtaque} aoApontar={noTelefone ? null : setVerboSobre} passoM={p.passoM} />
       )}
       {/* O TEXTO LIVRE muda de papel: deixa de ser a sintaxe obrigatória e
           vira o tempero. O convite é `como? (opcional)`, e ele NUNCA é
@@ -2276,7 +2287,7 @@ export function TelaDeBatalha(props) {
           <>
             <span aria-hidden="true" className="shrink-0" style={{ width: B3.aro, height: M.separador, background: T.line }} />
             {recuosDaBarra.map((v) => (
-              <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => tocarVerbo(v)} alto={altoDoVerbo} />
+              <Verbo key={v.id} v={v} armado={armado === v.id} impedido={!!impedidos[v.id]} aoTocar={() => tocarVerbo(v)} alto={altoDoVerbo} custo={custoEscrito(v.id, null)} />
             ))}
           </>
         )}
