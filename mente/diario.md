@@ -24,6 +24,17 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — S1b, as telas em PT-BR · commits 5aefa27, 14a9469
+
+A mão em Opus, sem o bastão do `App.jsx` (o `App.jsx` já tem zero marcas; não foi tocado). Sem bump e sem push.
+
+- **feito (5aefa27):** as telas falam português do Brasil — painel da batalha («Sua vez», «Seu golpe», «você acerta com 6 ou mais no dado», «Saia duas casas»), a folha de estilo (as tabelas de palavras: «Você ganha», «Sua escolha», «da sua bolsa», «Você achou», «custa 30 moedas», «O rastro se perdeu»), mercado, talentos, encruzilhada, guilda, quadro da quest, `ui.jsx`, e as descrições de subclasse. Oito suítes de render movidas, com o motivo no topo. Marcas: 2108 → 2004 no total; fora da prosa das quests, 481 → 377. O teto do check-pt-br desceu junto.
+- **o conserto do lote (14a9469):** a prova inteira deu 515/519 — `classes.js`, `habilidades.js` e `regras.js` também falam pelo motor (a nota da forma desfeita, a dádiva «Move-se o dobro», os heróis prontos do hash do cenário), e o bloco do App de antes guarda o texto velho. Os três voltaram ao texto de antes, com o teto de volta e o motivo escrito no varredor.
+- **tentado e recuado (decisão média):** a voz do motor (os outros 77 arquivos: núcleo, saída da luta, condições da quest, sessão, `src/motor/*`, léxico do mundo, prompt…). Com `ptbr-reescrita.mjs --modo tudo` mais os pares à mão, ficava em ~127 marcas fora das quests, mas **42 suítes caíam, e quase todas pelo mesmo motivo: os dourados e os replays fixam os bytes do texto.** `teste-motor-*` comparam com o bloco do App de antes, corrido com os módulos de hoje (o literal que mudou de casa para `src/motor/` nunca mais bate); `teste-sessao`/`jogar-em-node` comparam com as sessões gravadas (a catraca «64 de 77» cai a cada frase traduzida); `regiao-historia`/`ficha-e-planta`/`cenario` têm hash. Sem isso resolvido, traduzir é apagar a prova. Recuado inteiro; nada disso está na árvore.
+- **o que falta, e o caminho que proponho:** (1) dar aos comparadores um passo de normalização: o lado gravado (o App de antes, a sessão de antes) passa pela MESMA reescrita (`trocar` da ferramenta) antes de comparar — a prova continua a dizer «o motor faz o que o App fazia», e o texto pode mudar; (2) depois disso, rodar a ferramenta + `mente/lancamento/ptbr-maos-s1b.cjs` (os pares à mão já escritos, com filtro `SO=`) nos 77 arquivos, e regenerar os dourados de hash (`gerar-*-dourado.mjs`). Por arquivo: léxico-do-mundo 34, núcleo 23, saída-da-luta 19, condições-da-quest 17, sessão 13, fato-do-sucesso 12, eco-do-turno 10, o-mestre-chama 10, posturas 10, batidas 9, fichas 9, e ~60 arquivos com menos de 9.
+- **prompt:** pior cena real 63866 antes e 63866 depois (o prompt não foi tocado neste lote).
+- **prova:** `npm run build` limpo; `npm test` 519/519 suítes e 29/29 varredores na árvore final (o lote da mesa do Figma, 3934695, entrou entre os dois commits, noutra mente).
+
 ## 15/11 · sem versão — lote 2 do lançamento (C1, S6b, S1 em parte) · commits 3953b22, 463d40f, 3c5ee60, 5b9b129
 
 A mão em Opus, com o bastão do `App.jsx` de 23:57 a 01:40 (renovado às 01:32 depois da pausa por limite de uso, e devolvido no fim). O Figma andou em paralelo, noutro agente. Sem bump e sem push.
