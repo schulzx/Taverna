@@ -141,7 +141,7 @@ fs.rmSync(saida, { force: true });
   t("a narração é pedida no toque: o efeito do lance chama pousouOChamado", /setLanceNoAr\(\{ chave: "chamado:"[\s\S]{0,200}pousouOChamado\(\);/.test(APP));
   t("o Véu já não é modal: nem o hexágono por clip-path, nem «Continuar →»", !/function OverlayDado[\s\S]*?clipPath: "polygon\(50% 0%/.test(APP.slice(APP.indexOf("function OverlayDado"), APP.indexOf("/* ---------------- Modal de nível"))) && !/Continuar →/.test(APP.slice(APP.indexOf("function OverlayDado"), APP.indexOf("/* ---------------- Modal de nível"))));
   t("a busca da masmorra rola pelo mesmo lance", /setLanceNoAr\(\{ chave: "busca:"/.test(APP));
-  t("o teste pendente (social, enigma) passa pelo mesmo chamado na soleira", /chamado: chamadoDaRolagemAgora/.test(APP) && /linhaDoCampo = rolagem && !carregando && !chamadoVivo && !chamadoDaRolagemAgora/.test(APP));
+  t("o teste pendente (social, enigma) passa pelo mesmo chamado na soleira", /chamado: chamadoDaRolagemAgora/.test(APP) && /linhaDoCampo = rolagem && !carregando && !chamadoVivo && !chamadoDaRolagemAgora && !dadoRolando/.test(APP));
   t("a Bandeja esconde o lance que voa (as duas colunas)", (APP.match(/<Bandeja naColuna emVoo=\{!!lanceNoAr\}/g) || []).length === 2);
   t("o lance do chamado não rola duas vezes (a soleira só mostra o chamado sem lance)", /if \(ch && !ch\.lance\) \{\s*const mc = momentoDoChamado/.test(APP));
 }

@@ -26502,7 +26502,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       enviar(String(r.frase), fichaViva() || personagem);
     } catch (e) { calou("não era isso", e); }
   };
-  const linhaDoCampo = rolagem && !carregando && !chamadoVivo && !chamadoDaRolagemAgora ? (
+  /* V3: enquanto o lance do Véu corre (dadoRolando), a linha velha do teste não volta por baixo */
+  const linhaDoCampo = rolagem && !carregando && !chamadoVivo && !chamadoDaRolagemAgora && !dadoRolando ? (
     <>{linhaDoTeste(rolagem)}{escolhaDoTesteAgora && escolhaDoTesteAgora.risco ? ` · ${escolhaDoTesteAgora.risco}` : ""}{modPend !== 0 ? ` · +${modPend}` : ""}{rolagem.porVantagem ? <span style={{ color: T.violetSoft }}> · <Glifo nome="faisca" tamanho={12} /> {rolagem.porVantagem}</span> : null}</>
   ) : estadoDado === "espera" && entrada.trim() ? "Fica guardado — você manda depois de ler." : null;
 

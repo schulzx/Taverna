@@ -80,7 +80,7 @@ function ContaContraALinha({ v, passo, rotulo, estado, telefone, fio = null }) {
         <span style={{ position: "absolute", left: 0, top: 0, ...letra("lugar"), color: v.veredito === "vinte" ? T.brasaNoPergaminho : T.perigoNoPergaminho }}>{natural}</span>
       ) : null}
       {/* a face e o bónus, sentados na linha */}
-      <span style={{ position: "absolute", left: 0, top: linhaY - 46, display: "flex", alignItems: "flex-end", gap: 10 }}>
+      <span style={{ position: "absolute", left: 0, bottom: 200 - linhaY + 6, display: "flex", alignItems: "flex-end", gap: 10 }}>
         <span style={{ ...letra("marca"), letterSpacing: 0, color: T.tintaDoPergaminho }}>{estado === "rolando" || estado === "saindo" ? "" : v.face}</span>
         {mostraBonus ? (
           <span className="tv-fade" style={{ display: "inline-flex", flexDirection: "column", alignItems: "flex-start" }}>
@@ -137,7 +137,7 @@ function RaiosDoVinte({ lado }) {
   const k = lado / TAMANHO_DO_DADO.lance;
   const meio = lado / 2;
   return (
-    <svg className="tv-lance-raios" aria-hidden="true" width={lado} height={lado} style={{ position: "absolute", left: 0, top: 0, overflow: "visible", pointerEvents: "none" }}>
+    <svg className="tv-lance-raios" aria-hidden="true" width={lado} height={lado} style={{ position: "absolute", left: 0, top: 0, overflow: "visible", pointerEvents: "none", opacity: 0 }}>
       {Array.from({ length: R.n }, (_, i) => {
         const a = (i / R.n) * Math.PI * 2;
         const ate = R.ate[i % 2] * k, de = R.de * k;
@@ -212,7 +212,6 @@ export function LanceDoDado({ lance, rotulo = "", telefone = false, narrando = f
     ir("veredito");
     if (v.veredito === "vinte") soar("vinte");
     else if (v.veredito === "um") soar("um");
-    try { cerimonia(); } catch { /* a cerimónia cala-se; o veredito fica */ }
     try { if (typeof aoVereditoRef.current === "function") aoVereditoRef.current(); } catch { /* nunca custa o turno */ }
     depois(reduzido ? LANCE.semMovimento : LANCE.veredito, () => ir("esperando"));
   };
@@ -241,6 +240,13 @@ export function LanceDoDado({ lance, rotulo = "", telefone = false, narrando = f
       if (veu && !reduzido) veu.animate([{ opacity: 0 }, { opacity: 1, offset: L.desce / (L.desce + L.volta) }, { opacity: 0 }], { duration: L.desce + L.volta, easing: "ease-out", fill: "forwards" });
     }
   };
+
+  /* a cerimónia corre DEPOIS da pintura do veredito (os raios, a onda, as
+     lascas e a fissura só existem a partir dela) */
+  useEffect(() => {
+    if (estado !== "veredito") return;
+    try { cerimonia(); } catch { /* a cerimónia cala-se; o veredito fica */ }
+  }, [estado]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* o voo: da bandeja ao centro da arena */
   useLayoutEffect(() => {
@@ -356,7 +362,7 @@ export function LanceDoDado({ lance, rotulo = "", telefone = false, narrando = f
     <div ref={raizRef} data-lance={estado} data-veredito={temVeredito ? v.veredito : undefined} role="group" aria-label={rotulo || "O dado"}
       style={{ position: "fixed", left: "50%", top: "50%", transform: "translate(-50%, -50%)", zIndex: 45, pointerEvents: "none" }}>
       <div onClick={tocar} style={{ pointerEvents: "auto", cursor: "pointer", display: "flex", flexDirection: telefone ? "column" : "row", alignItems: "center", gap: telefone ? 12 : 32,
-        padding: telefone ? "16px 18px" : "20px 28px", borderRadius: 14, background: temVeredito || estado === "somando" || estado === "pousado" ? alfa(T.pergaminho, 0.94) : "transparent",
+        padding: telefone ? "16px 18px" : "20px 28px", borderRadius: 14, background: temVeredito || estado === "somando" || estado === "pousado" ? alfa(T.pergaminho, 0.98) : "transparent",
         boxShadow: temVeredito ? `0 10px 30px ${alfa(T.veuDaNoite, 0.28)}` : "none", transition: `background ${LANCE.pousar.dura}ms ease-out` }}>
         <span ref={dadoRef} style={{ position: "relative", display: "inline-flex", width: lado, height: lado, willChange: "transform" }}>
           <span ref={corpoRef} style={{ display: "inline-flex", transformOrigin: "50% 50%" }}>
