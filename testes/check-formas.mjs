@@ -236,8 +236,11 @@ const TETO_DE_LITERAIS = {
      Possivelmente o único perdão ETERNO do projeto: o `index.html` é
      servido antes do bundle e não tem como importar `T`.
      · paga: "a cor do primeiro pixel sai de uma fonte só" — gerar a
-     linha no build, ou aceitar por escrito. */
-  "index.html": 1,
+     linha no build, ou aceitar por escrito.
+     15/11 · C1 (a cara do link): sobe para 2 — o `<meta name="theme-color">`
+     é a mesma cor do feltro, lida pelo navegador antes de qualquer bundle.
+     teste-cara-do-link.mjs prova que as duas são T.bg. */
+  "index.html": 2,
 };
 /* total 330 (24/09 · V1: era 332 — os dois brilhos de rosto.jsx viraram
    T.ink e saíram do dente) · `api/*.js` mede 0 hoje e NÃO recebe
@@ -265,8 +268,9 @@ const TETO_DE_COR_DE_T = {
   /* 24/09 · V1 — `index.html` ENTRA (nasceu, não voltou): o primeiro
      pixel passou a ser T.bg de verdade (§4); o `index.html` é servido
      antes do bundle e não pode importar T — o perdão eterno de D5a,
-     agora com a cor certa. */
-  "index.html": 1,
+     agora com a cor certa. 15/11 · C1: 2 — o theme-color da cara do
+     link, a mesma T.bg (teste-cara-do-link.mjs confere). */
+  "index.html": 2,
   /* SAÍRAM (ENTRADA MORTA seria pior que ausência): `src/grade-de-batalha.jsx`
      (era 5), `src/painel-ascensao.jsx` (era 1, `#7BC98F` = ok antigo) e
      `src/rosto.jsx` (era 2, `#EAE4D6`×2 = ink antigo) mediram ZERO depois
