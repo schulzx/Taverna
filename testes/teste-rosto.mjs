@@ -79,7 +79,9 @@ sec("3. NO MUNDO LIVRE, UMA MINORIA SEMEADA");
   }
   t("com `fixo`, as 700 obedecem a ficha", fixos === 700);
   /* a criação grava a marca do escolhido, e o rosto a lê */
-  t("a criação grava genero e feicoesFixas", /genero: sexo, feicoesFixas: true,/.test(APP));
+  /* 16/11 · V5: o objeto da ficha nova mudou-se para ficha-da-criacao.js (montarFicha,
+     a conta das duas criações); a asserção lê de lá — a intenção é a mesma */
+  t("a criação grava genero e feicoesFixas", /genero: e\.sexo, feicoesFixas: true,/.test(readFileSync(new URL("../src/ficha-da-criacao.js", import.meta.url), "utf8")));
   t("e o rosto respeita a marca", /fixo: fixo \|\| e\.feicoesFixas === true,/.test(ROSTO));
   /* barba é traço da apresentação masculina; o sorteio nunca põe uma na
      apresentação feminina */

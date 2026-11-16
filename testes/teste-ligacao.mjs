@@ -480,7 +480,11 @@ sec("1. NENHUM MÓDULO MUDO");
     if (FOLHAS.test(f)) continue;
     if (AGUARDANDO[f]) continue;
     const base = f.replace(/\.jsx?$/, "");
-    const quem = arqs.filter((g) => g !== f && (fonte[g].includes(`from "./${f}"`) || fonte[g].includes(`from "./${base}"`)));
+    /* 16/11 · V5+C2: e o import() também liga — o App passou a ser carregado
+       pela porta (main.jsx) com React.lazy(() => import("./App.jsx")), para a
+       primeira tela não esperar por ele; a catraca só lia o import estático e
+       acusava o jogo inteiro de mudo. */
+    const quem = arqs.filter((g) => g !== f && (fonte[g].includes(`from "./${f}"`) || fonte[g].includes(`from "./${base}"`) || fonte[g].includes(`import("./${f}")`)));
     /* T1-A, 5.ª fatia (28/10): o motor (src/motor/) também é leitor — o
        Juiz de fidelidade é o primeiro módulo da raiz que só o motor importa
        (juiz-do-turno.js), e a catraca, que só lia a raiz, acusava-o de mudo */

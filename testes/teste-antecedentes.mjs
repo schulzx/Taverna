@@ -148,11 +148,16 @@ sec("4. REGRESSÃO ZERO — o campo novo não tocou em nada");
   /* OS QUATRO CANAIS DE BÔNUS NO APP continuam sendo os mesmos quatro, e
      nenhum deles sabe que existe ofício. É onde o `moedas` mora — nenhum
      pronto o usa, e sem esta linha o quarto canal ficaria sem prova. */
-  t("o App soma o PV do antecedente", /vidaMax: vidaMax \+ \(antObj\.pv \|\| 0\)/.test(APP));
-  t("e o PM", /manaMax: manaMax \+ \(antObj\.pm \|\| 0\)/.test(APP));
-  t("e as moedas", /moedas: MOEDAS_INICIAIS \+ \(antObj\.moedas \|\| 0\)/.test(APP));
-  t("e o item", /inventario: antObj\.item \? \[antObj\.item\] : \[\]/.test(APP));
-  t("e a ficha guarda o NOME do antecedente, não o id", /antecedente: antObj\.nome/.test(APP));
+  /* 16/11 · V5: as cinco asserções leem ficha-da-criacao.js em vez do App — o
+     objeto da ficha mudou-se para lá (montarFicha), sem mudar um campo, e o App
+     chama-o (concluir(montarFicha(...))). A intenção é a mesma: o passado PAGA. */
+  const FICHA = fs.readFileSync("../src/ficha-da-criacao.js", "utf8");
+  t("o App cria a ficha por montarFicha", APP.includes("concluir(montarFicha({"));
+  t("o App soma o PV do antecedente", /vidaMax: vidaMax \+ \(antObj\.pv \|\| 0\)/.test(FICHA));
+  t("e o PM", /manaMax: manaMax \+ \(antObj\.pm \|\| 0\)/.test(FICHA));
+  t("e as moedas", /moedas: MOEDAS_INICIAIS \+ \(antObj\.moedas \|\| 0\)/.test(FICHA));
+  t("e o item", /inventario: antObj\.item \? \[antObj\.item\] : \[\]/.test(FICHA));
+  t("e a ficha guarda o NOME do antecedente, não o id", /antecedente: antObj\.nome/.test(FICHA));
   /* O SISTEMA NÃO FALA DE SI MESMO: a tela de criação lista o que o
      antecedente DÁ — PV, PM, moedas, item. O ofício não é bônus e não
      aparece ali; o jogador o sentirá pelo efeito, quando R2 o ler. */

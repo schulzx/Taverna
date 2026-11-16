@@ -240,7 +240,9 @@ sec("8. a abertura da campanha (v9.120)");
      digita, e um rótulo que some é um rótulo que não estava lá. O campo
      separado continua existindo, que é o que esta linha protege. */
   t("o sobrenome existe na criação", /<CampoRotulado rotulo="Sobrenome \(opcional\)">/.test(APP));
-  t("e viaja separado do nome inteiro", /primeiroNome: nome\.trim\(\), sobrenome: sobrenome\.trim\(\)/.test(APP));
+  /* 16/11 · V5: o objeto da ficha mudou-se para ficha-da-criacao.js (montarFicha); a tela
+     antiga passa-lhe nome e sobrenome separados, e é lá que viajam separados */
+  t("e viaja separado do nome inteiro", /concluir\(montarFicha\(\{ nome, sobrenome,/.test(APP) && /nome: nomeInteiro, primeiroNome: nome, sobrenome,/.test(readFileSync(new URL("../src/ficha-da-criacao.js", import.meta.url), "utf8")));
 }
 
 sec("9. o fio que atravessa a internet (v9.121)");

@@ -69,7 +69,9 @@ const MEDIDA = {
    ============================================================ */
 const NAO_E_CURA = [
   {
-    arquivo: "App.jsx", ancora: "atributos: attrFinais, vida: vidaMax + (antObj.pv || 0)",
+    /* 16/11 · V5: a âncora mudou de arquivo — o nascimento da ficha saiu do App para
+       ficha-da-criacao.js (montarFicha), sem mudar um campo */
+    arquivo: "ficha-da-criacao.js", ancora: "atributos: attrFinais, vida: vidaMax + (antObj.pv || 0)",
     porque: "NASCIMENTO DE FICHA: a criação do personagem monta um corpo novo. Ficha que nasce não tem condição para limpar — a lista começa vazia porque nunca houve nada nela.",
   },
   {

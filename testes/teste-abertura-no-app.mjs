@@ -89,13 +89,19 @@ sec("3. a conta do App, refeita: a mesma semente e o mesmo turno, a mesma casa")
 
 sec("4. o kit inicial: na criação e no companheiro que nasce");
 {
-  t("a tela de criação equipa a ficha nova: concluir(equiparKitInicial(comDom({...})))", APP.includes("onClick={() => concluir(equiparKitInicial(comDom({"));
+  /* 16/11 · V5: a asserção MUDOU de casa — o objeto da ficha nova saiu do onClick
+     para ficha-da-criacao.js (montarFicha), que as duas criações (a antiga e a
+     mesa do F3) partilham. A intenção fica: a ficha que NASCE é armada, ali e
+     só ali. */
+  const FICHA = readFileSync(new URL("../src/ficha-da-criacao.js", import.meta.url), "utf8");
+  t("a tela de criação equipa a ficha nova: montarFicha devolve equiparKitInicial(comDom({...}))", FICHA.includes("return equiparKitInicial(comDom({") && APP.includes("concluir(montarFicha({"));
   /* 13/10 (v9.463): a asserção era «uma chamada só». Moveu-se para duas
      porque o companheiro recrutado também nasce armado (fichaDeCompanheiro,
      a pendência 3 da prova viva v9.462); a intenção fica: o LOAD nunca arma
      (garantirFichaCompanheiro e migrarPersonagem seguem sem kit). */
   t("o companheiro recrutado nasce armado: equiparKitInicial(garantirFichaCompanheiro(...))", APP.includes("try { return equiparKitInicial(garantirFichaCompanheiro({ ...f, genero:"));
-  t("…e em mais lado nenhum (duas chamadas, além do import)", conta("equiparKitInicial(") === 2);
+  /* 16/11 · V5: no App sobra uma chamada (o companheiro); a da criação mudou-se para montarFicha */
+  t("…e em mais lado nenhum (uma no App, uma em montarFicha)", conta("equiparKitInicial(") === 1 && (FICHA.match(/equiparKitInicial\(/g) || []).length === 1);
   const g = equiparKitInicial({ classe: "Guerreiro", equipados: {} });
   t("o Guerreiro nasce com a Espada Longa na mão", g.equipados && g.equipados.arma && g.equipados.arma.nome === "Espada Longa");
 }

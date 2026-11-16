@@ -23,29 +23,16 @@
    ============================================================ */
 import React from "react";
 import { T, PECAS_DA_MESA, SOMBRA_DA_MESA, ESCALA_DA_MESA, PISOS_DA_MESA, TAMANHO_DO_TEXTO, VELA, alfa } from "./estilo.js";
-import { pilhasDoRecurso, alturaDaVela, vigiliasQueFaltam, rotuloDaVela, contasAcesas, estadoDaCarta, contornoDoLacre } from "./mesa-do-mestre.js";
+import { letraDaMesa, pilhasDoRecurso, alturaDaVela, vigiliasQueFaltam, rotuloDaVela, contasAcesas, estadoDaCarta, contornoDoLacre } from "./mesa-do-mestre.js";
 import { DesenhoDoObjeto } from "./painel-mesa-do-mestre.jsx";
 
 const P = PECAS_DA_MESA;
 const M = P.movimento;
 
-/* a letra de um estilo da escala, com o multiplicador e o piso */
-export function letraDaMesa(estilo, telefone = false) {
-  const E = ESCALA_DA_MESA[estilo] || ESCALA_DA_MESA.rotulo;
-  const corpo = telefone && E.telefone ? E.telefone.corpo : E.corpo;
-  const entrelinha = telefone && E.telefone ? E.telefone.entrelinha : E.entrelinha;
-  const piso = E.piso === "nome" ? PISOS_DA_MESA.nome : PISOS_DA_MESA.rotulo;
-  const v = `var(${TAMANHO_DO_TEXTO.variavel}, 1)`;
-  return {
-    fontFamily: E.familia === "Cinzel" ? "'Cinzel', 'Cormorant Garamond', Georgia, serif" : "'Spectral', Georgia, serif",
-    fontWeight: E.peso,
-    fontStyle: E.italico ? "italic" : "normal",
-    fontSize: `max(${piso}px, calc(${corpo}px * ${v}))`,
-    lineHeight: `max(${piso + 4}px, calc(${entrelinha}px * ${v}))`,
-    letterSpacing: E.entreletra ? `${E.entreletra}em` : 0,
-    textTransform: E.caixaAlta || E.familia === "Cinzel" ? "uppercase" : "none",
-  };
-}
+/* a letra de um estilo da escala, com o multiplicador e o piso — mora em
+   mesa-do-mestre.js desde V5 (a chegada usa-a sem carregar as peças); daqui
+   continua a sair para quem já a lia */
+export { letraDaMesa };
 
 /* prefers-reduced-motion, lido na hora (nunca lança; no servidor é «parado») */
 function poucoMovimento() {

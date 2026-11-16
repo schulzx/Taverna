@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Taverna — toda lenda começa aqui</title>
     <meta name="description" content="Um RPG de mesa em que o Mestre não inventa: cada dado, cada moeda e cada morte são verdade." />
-    <meta name="theme-color" content="#12241B" />
+    <meta name="theme-color" content="#0F1E16" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
@@ -25,9 +25,37 @@
     <meta name="twitter:title" content="Taverna — toda lenda começa aqui" />
     <meta name="twitter:description" content="Um RPG de mesa em que o Mestre não inventa: cada dado, cada moeda e cada morte são verdade." />
     <meta name="twitter:image" content="/imagem-de-link.png" />
-    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body style="margin:0;background:#12241B">
+  <body style="margin:0;background:#0F1E16">
+<!-- C2 · A ABERTURA INSTANTÂNEA (F3 §5 de mente/formas.md): o primeiro pixel é a
+     casa — feltro, marca e a vela que acende, antes de qualquer JS. Mesmas
+     posições da chegada (ABERTURA_INSTANTANEA em src/estilo.js; a suíte
+     teste-criacao-da-mesa confere que os números batem). main.jsx remove #tv
+     no primeiro quadro pintado. -->
+<style>
+html,body{margin:0;height:100%;background:#0F1E16}
+#tv{position:fixed;inset:0;overflow:hidden;font:italic 22px/30px Spectral,Georgia,serif;color:#D2C0A4;background:radial-gradient(transparent 62%,rgba(0,0,0,.6)),#0F1E16;box-shadow:inset 0 0 0 8px #24160D,inset 0 0 0 9px #B8934C}
+#tv:before{content:"";position:absolute;left:58.6vw;top:27.8vh;width:1240px;height:1240px;margin:-620px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,200,119,.29),rgba(255,200,119,.18) 45%,transparent);animation:h .6s .15s both}
+#tv i{position:absolute}
+#tv div{position:absolute;left:6.67vw;top:16.67vh;width:349px;text-align:center}
+#tv svg{display:block;width:110px;margin:0 auto 17px}
+#tv b{display:block;font:700 60px/81px Cinzel,Georgia,serif;letter-spacing:.16em;margin-right:-.16em;color:#F2E7D2}
+#tv p{margin:46px 0 0;text-align:left}
+#tv u{position:absolute;left:49.3vw;top:14.44vh;width:123px;height:241px}
+#tv .p{left:22px;top:174px;width:78px;height:22px;border-radius:50%;background:#B8934C;box-shadow:inset 0 -3px #6B5226}
+#tv .c{left:48px;top:125px;width:28px;height:60px;border-radius:3px 3px 0 0;background:linear-gradient(90deg,#EFE3C8 65%,#C9B48E 0)}
+#tv .w{left:60px;top:117px;width:2px;height:9px;background:#2A1C11}
+#tv .x{left:55px;top:95px;width:13px;height:24px;border-radius:50%/60% 60% 40% 40%;background:radial-gradient(at 50% 70%,#FFF1C4 30%,#FFB347 72%);box-shadow:0 0 40px 26px rgba(255,200,119,.22);transform-origin:50% 100%;animation:a .6s .15s both}
+@keyframes a{0%{opacity:0;transform:scale(.2)}}
+@keyframes h{0%{opacity:0}}
+@media(max-width:767px){#tv{box-shadow:none;font-size:18px;line-height:26px}#tv:before{left:80px;top:150px;width:660px;height:660px;margin:-330px}#tv div{left:0;top:28px;width:100%}#tv svg,#tv b{display:inline-block;vertical-align:middle}#tv svg{width:51px;margin:0 14px 0 0}#tv b{font-size:32px;line-height:43px}#tv p{position:absolute;top:500px;width:100%;margin:0;text-align:center}#tv u{left:36px;top:102px;transform:scale(.714);transform-origin:0 0}}
+@media(prefers-reduced-motion:reduce){#tv:before,#tv *{animation:none}}
+</style>
+<div id="tv" role="status">
+<div><svg viewBox="0 0 64 64" fill="none" aria-hidden="true"><path d="M43 5C47 7 53 9 56 13C59 17 59 23 60 28C61 33 62 38 60 43C58 47 54 51 50 55C46 58 41 62 37 63C32 63 26 61 22 59C17 57 12 54 9 51C5 47 2 41 2 37C1 32 4 26 5 22C7 17 10 12 13 9C17 6 23 4 28 3C32 3 38 3 43 5Z" fill="#9B2A22"/><path d="M32 11 50 21.5v21L32 53 14 42.5v-21zM32 19 44.5 40.5h-25zM32 11v8M50 42.5l-5.5-2M14 42.5l5.5-2M50 21.5 32 19 14 21.5M44.5 40.5 32 53 19.5 40.5" stroke="#F6EEDD" stroke-width="2" stroke-linejoin="round"/></svg><b>TAVERNA</b><p>O Mestre está pondo a mesa…</p></div>
+<u aria-hidden="true"><i class="p"></i><i class="c"></i><i class="w"></i><i class="x"></i></u>
+<noscript>O Taverna precisa de JavaScript para abrir.</noscript>
+</div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

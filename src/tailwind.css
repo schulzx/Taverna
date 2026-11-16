@@ -1,0 +1,4 @@
+/* C2: o Tailwind compilado no build (antes vinha da CDN em tempo de execução) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

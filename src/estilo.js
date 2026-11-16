@@ -5816,3 +5816,131 @@ export const SUPERFICIES_CSS = `
    folha — fora do topo ele é descartado em silêncio, e o jogo inteiro
    cai para a fonte de fallback sem um aviso. */
 export const FOLHA = FONT_CSS + MOVIMENTO_CSS + SUPERFICIES_CSS;
+
+/* ============================================================
+   A MESA DO MESTRE · F3 · A CHEGADA E A CRIAÇÃO (V5, 16/11/2026)
+   formas.md §«A Mesa do Mestre · F3» §3–§5 e as imagens em
+   mente/lancamento/figma/F3-*.png. A conta (o sorteio, os pontos, o
+   que «trocar» preserva) mora em criacao-da-mesa.js; as telas em
+   painel-chegada.jsx e painel-criacao.jsx. A abertura instantânea do
+   index.html repete ABERTURA_INSTANTANEA à mão (o HTML não lê JS): a
+   suíte teste-criacao-da-mesa confere que os números batem.
+   ============================================================ */
+
+/* ABERTURA (F3 §3) — chamada aqui ABERTURA_INSTANTANEA porque `ABERTURA`
+   já é a cerimônia da frase (V5e). Marca e vela nas mesmas posições na
+   abertura em HTML e na chegada: nada salta quando o React monta. */
+export const ABERTURA_INSTANTANEA = {
+  mesa: { marca: { x: "6.67vw", y: "16.67vh", largura: 349, selo: 110, letra: 60, entrelinha: 81 }, vela: { x: "49.3vw", y: "14.44vh", escala: 1.4 }, halo: { x: "58.6vw", y: "27.8vh", raio: 620 }, frase: { corpo: 22, entrelinha: 30, abaixo: 46 } },
+  telefone: { marca: { topo: 28, selo: 51, letra: 32, entrelinha: 43 }, vela: { x: 36, y: 102, escala: 1 }, halo: { x: 80, y: 150, raio: 330 }, frase: { corpo: 18, entrelinha: 26, topo: 528 } },
+  quebra: 768,
+  borda: { couro: 8, fio: 9 },
+  feltro: LUZ_DA_MESA.noite.feltro,
+};
+
+/* LUZ_DA_CHEGADA (F3 §3): a noite de LUZ_DA_MESA com o halo aberto — a
+   chegada e a criação acontecem à noite; a mesa só clareia quando a
+   história começa. */
+export const LUZ_DA_CHEGADA = { ...LUZ_DA_MESA.noite, haloRaio: 600, haloRaioTelefone: 330 };
+
+export const CARTA_DE_RETRATO = {
+  leque: { largura: 140, altura: 196, raio: 8, aro: 3, fioA: 5, pe: 64, nome: 13 },
+  tira: { largura: 88, altura: 123, raio: 6, aro: 2, nome: 13, plaqueta: 21 },
+  sobe: 6, marca: 26, marcaTira: 22,
+  telefone: { colunas: 3, largura: 106, altura: 148 },
+};
+
+export const CARTA_DO_HEROI = {
+  largura: 340, altura: 476, raio: 14, aro: 4, fio: 8, pe: 210, nome: 22, linha: 14, rodada: 2,
+  escala: { sorteio: 1, criacao: 0.9, telefone: 0.47 },
+  /* abaixo de 0,86 a linha de raça e classe sai da carta; abaixo de 0,6 o nome também */
+  semLinhaAbaixo: 0.86, semNomeAbaixo: 0.6,
+};
+
+export const CARTA_DO_MUNDO = {
+  largura: 280, altura: 400, raio: 12, aro: 3, glifo: 88, nome: 22, dica: 14, rodadaVirada: -2,
+  deitada: { largura: 343, altura: 92, raio: 8, aro: 2, glifo: 44 },
+  voz: { largura: 316, altura: 284, colunas: 4 },
+};
+
+export const PECA_DE_ATRIBUTO = {
+  largura: 284, altura: 176, disco: 72, lado: 4, botao: 44, entre: 16,
+  deitada: { altura: 68, disco: 48, entre: 8 },
+  ficha: 24, bandeja: { largura: 244, altura: 56, raio: 10 },
+};
+
+export const BOTAO_DA_MESA = {
+  principal: { altura: 56, raio: 6, aro: 1.5, respiro: 28, letra: 16, aperto: 0.16 },
+  secundario: { altura: 52, raio: 6, aro: 1.5, letra: 16, aperto: 0.3 },
+  papel: { altura: 44, raio: 4, aro: 1.5 },
+  vinculo: { altura: 44, letra: 16 },
+  opcao: { altura: 44, raio: 4 },
+};
+
+/* POR_A_MESA (F3 §3): a passagem — tempos em ms a contar de «Começar» */
+export const POR_A_MESA = {
+  ficha: { em: 0, dura: 320 },
+  carta: { em: 120, dura: 500 },
+  pagina: { em: 200, dura: 420 },
+  luz: { em: 500, dura: 900 },
+  estampa: { em: 700, dura: 420 },
+  pilhas: [900, 1050, 1200, 1350],
+  objetos: [1500, 1650, 1800, 1950],
+  pousa: 220,
+  bandeja: { em: 2100, dura: 260 },
+  vela: { em: 2300, dura: 600 },
+  nota: { em: 2600, dura: 220 },
+  pena: 1200,
+  colapso: 400,
+  semResposta: 12000,
+  reduzido: 120,
+};
+export const REVELAR_A_PROSA = { caracteres: 24, passo: 40, teto: 1800 };
+
+/* OS GLIFOS NOVOS (F3 §3) — grelha 24, traço redondo, sem enchimento */
+export const GLIFOS_DA_CHEGADA = {
+  castelo: "M4 21V9h3V6h2v3h6V6h2v3h3v12M3 21h18M10 21v-5a2 2 0 0 1 4 0v5M4 9V6M20 9V6",
+  torre: "M8 21V8L6 6V3h2v2h2V3h4v2h2V3h2v3l-2 2v13M5 21h14M11 21v-4a1 1 0 0 1 2 0v4M12 10v3",
+  caneca: "M5 8h10v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3zM15 10h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2M5 8c0-2 1.5-3 3-3 .5-1.5 3.5-1.5 4 0 1.5 0 3 1 3 3",
+  folha: "M5 19C5 10 10 5 20 4c0 10-5 15-14 15zM5 19l8-8",
+  vela: "M9 21V11h6v10M7 21h10M12 11V9M12 3c1.5 1.8 2 2.8 2 4a2 2 0 0 1-4 0c0-1.2.5-2.2 2-4z",
+  mascara: "M4 5c5 2 11 2 16 0v7a8 8 0 0 1-16 0zM8 10h2M14 10h2M9 15c2 1.5 4 1.5 6 0",
+  arquivo: "M4 7h16v13H4zM2 3h20v4H2zM9 12h6",
+  /* a cópia dos de GLIFOS (glifos.js) que a chegada usa: glifos.js puxa a grelha
+     e o motor, e a primeira tela não pode esperar por eles. A suíte
+     teste-criacao-da-mesa prende cada um ao original, byte a byte. */
+  dado: "M12 2l8.66 5v10L12 22l-8.66-5V7zM12 5.82l5.35 9.27H6.65zM12 2v3.82M3.34 17l3.31-1.91M20.66 17l-3.31-1.91",
+  espadas: "M13 19l6-6M14.5 17.5 3.586 6.586A2 2 0 013 5.172V3h2.172a2 2 0 011.414.586L17.5 14.5M14.828 6.172l2.586-2.586A2 2 0 0118.828 3H21v2.172a2 2 0 01-.586 1.414l-2.586 2.586M16 16l4 4M19 21l2-2M5 14l4 4M5 21l-2-2M7.5 16.5 4 20",
+  trabalho: "M15 12h-5M15 8h-5M19 17V5a2 2 0 0 0-2-2H4M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3",
+  chama: "M8.5 14.5C9.16 14.5 9.8 14.24 10.27 13.77C10.74 13.3 11 12.66 11 12C11 10.6 10.5 10 10 9C8.9 6.9 9.8 5 12 3C12.5 5.5 14 7.9 16 9.5C18 11.1 19 13 19 15C19 15.92 18.82 16.83 18.47 17.68C18.12 18.53 17.6 19.3 16.95 19.95C16.3 20.6 15.53 21.12 14.68 21.47C13.83 21.82 12.92 22 12 22C11.08 22 10.17 21.82 9.32 21.47C8.47 21.12 7.7 20.6 7.05 19.95C6.4 19.3 5.88 18.53 5.53 17.68C5.18 16.83 5 15.92 5 15C5 13.8 5.4 12.7 6 12C6 12.66 6.26 13.3 6.73 13.77C7.2 14.24 7.84 14.5 8.5 14.5Z",
+  noite: "M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401",
+  mapa: "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0M16.24 7.76l-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z",
+  ondas: "M2 17C5.33 14.33 8.67 14.33 12 17C15.33 19.67 18.67 19.67 22 17M2 8C5.33 5.33 8.67 5.33 12 8C15.33 10.67 18.67 10.67 22 8",
+  estrela: "M12 3C12.5 9 15 11.5 21 12C15 12.5 12.5 15 12 21C11.5 15 9 12.5 3 12C9 11.5 11.5 9 12 3Z",
+  encruzilhada: "M12 22v-9M12 13L5 5M12 13l7-8M5 9V5h4M19 9V5h-4",
+  coroa: "M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294zM5 21h14",
+  procurar: "M21 21l-4.34-4.34M3 11a8 8 0 1 0 16 0a8 8 0 1 0 -16 0",
+  pena: "M13 21h8M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+  aviso: "M21.73 18l-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3M12 9v4M12 17h.01",
+};
+/* o glifo de cada escolha do mundo (substitui o emoji do sistema) */
+export const GLIFO_DA_VOZ = { epico: "espadas", taverneiro: "caneca", quieto: "folha", sombrio: "vela", picaresco: "mascara", cronista: "trabalho", febril: "chama", fabula: "noite" };
+export const GLIFO_DO_MOLDE = { sobremundo: "mapa", torre: "torre", arquipelago: "ondas", estelar: "estrela" };
+export const GLIFO_DO_ARCO = { jornada: "encruzilhada", arquipelago: "ondas", reinado: "coroa", misterio: "procurar" };
+
+/* a folha da chegada: o foco, o pouso das peças, a vela que acende, a pena */
+export const CSS_DA_CHEGADA = `
+.tv-mesa-foco:focus-visible{outline:2px solid ${T.amberSoft};outline-offset:2px}
+.tv-mesa-aperta:active{transform:translateY(1px)}
+@keyframes tvPousa{0%{opacity:0;transform:translateY(-16px)}70%{opacity:1;transform:translateY(3px)}100%{opacity:1;transform:none}}
+@keyframes tvDesce{0%{opacity:0;transform:translateY(-24px)}100%{opacity:1;transform:none}}
+@keyframes tvAcende{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:none}}
+@keyframes tvRecolhe{0%{opacity:1;transform:none}100%{opacity:0;transform:translateY(12px)}}
+@keyframes tvPena{0%,100%{transform:translateX(0) rotate(0)}50%{transform:translateX(18px) rotate(-6deg)}}
+.tv-pousa{animation:tvPousa ${POR_A_MESA.pousa}ms ease-out both}
+.tv-desce{animation:tvDesce ${POR_A_MESA.pagina.dura}ms ease-out both}
+.tv-acende{animation:tvAcende ${POR_A_MESA.vela.dura}ms ease-out both;transform-origin:50% 100%}
+.tv-recolhe{animation:tvRecolhe ${POR_A_MESA.ficha.dura}ms ease-in both}
+.tv-pena{animation:tvPena ${POR_A_MESA.pena}ms ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.tv-pousa,.tv-desce,.tv-acende{animation:none;opacity:1;transform:none}.tv-recolhe{animation:none;opacity:0}.tv-pena{animation:none}}
+`;

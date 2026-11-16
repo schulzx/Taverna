@@ -272,3 +272,23 @@ export function quemTemOEsc(estado) {
   for (const dono of DONOS_DO_ESC) if (e[dono]) return dono;
   return "abrir";
 }
+
+/* V5: mudou-se de pecas-da-mesa.jsx para cá (é conta de tabela, sem React),
+   para a chegada e a criação a lerem sem puxar as peças da mesa. */
+/* a letra de um estilo da escala, com o multiplicador e o piso */
+export function letraDaMesa(estilo, telefone = false) {
+  const E = ESCALA_DA_MESA[estilo] || ESCALA_DA_MESA.rotulo;
+  const corpo = telefone && E.telefone ? E.telefone.corpo : E.corpo;
+  const entrelinha = telefone && E.telefone ? E.telefone.entrelinha : E.entrelinha;
+  const piso = E.piso === "nome" ? PISOS_DA_MESA.nome : PISOS_DA_MESA.rotulo;
+  const v = `var(${TAMANHO_DO_TEXTO.variavel}, 1)`;
+  return {
+    fontFamily: E.familia === "Cinzel" ? "'Cinzel', 'Cormorant Garamond', Georgia, serif" : "'Spectral', Georgia, serif",
+    fontWeight: E.peso,
+    fontStyle: E.italico ? "italic" : "normal",
+    fontSize: `max(${piso}px, calc(${corpo}px * ${v}))`,
+    lineHeight: `max(${piso + 4}px, calc(${entrelinha}px * ${v}))`,
+    letterSpacing: E.entreletra ? `${E.entreletra}em` : 0,
+    textTransform: E.caixaAlta || E.familia === "Cinzel" ? "uppercase" : "none",
+  };
+}

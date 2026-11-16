@@ -4,7 +4,7 @@
    que apontam para arquivos que existem em public/, e que a cor do tema é a
    do feltro (T.bg). Roda de testes/ (o rodar-tudo faz chdir). */
 import { readFileSync, existsSync, statSync } from "node:fs";
-import { T } from "../src/estilo.js";
+import { T, LUZ_DA_MESA } from "../src/estilo.js";
 
 let falhas = 0;
 const ok = (cond, msg) => { if (!cond) { falhas++; console.log("✗ " + msg); } else console.log("✓ " + msg); };
@@ -26,7 +26,12 @@ ok(meta("property", "og:description") === FRASE, "og:description");
 ok(meta("property", "og:type") === "website", "og:type");
 ok(meta("property", "og:image") === "/imagem-de-link.png", "og:image pelo caminho de raiz");
 ok(meta("name", "twitter:card") === "summary_large_image", "twitter:card grande");
-ok((meta("name", "theme-color") || "").toLowerCase() === String(T.bg).toLowerCase(), "theme-color é o feltro (T.bg)");
+/* 16/11 · V5+C2 (F3 §5): a asserção MUDOU de cor, e o motivo fica aqui — a
+   chegada e a criação acontecem à noite, e o desenho pôs o theme-color no
+   feltro da noite (LUZ_DA_MESA.noite.feltro, #0F1E16), o mesmo da abertura
+   instantânea. O manifesto (abaixo) continua T.bg: é a cor da mesa de dia,
+   a do jogo instalado. */
+ok((meta("name", "theme-color") || "").toLowerCase() === String(LUZ_DA_MESA.noite.feltro).toLowerCase(), "theme-color é o feltro da noite (LUZ_DA_MESA.noite.feltro)");
 
 const links = [...html.matchAll(/<link\s+rel="([^"]+)"[^>]*href="([^"]+)"/g)].map((m) => ({ rel: m[1], href: m[2] }));
 ok(links.some((l) => l.rel === "icon" && l.href.endsWith(".svg")), "ícone SVG");

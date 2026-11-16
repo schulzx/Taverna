@@ -235,9 +235,14 @@ import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, SINAIS_ABERTOS } from "./prompt.js";
 import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco, LinhaDoChamado } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
-import heroTaverna from "./assets/taverna-hero.png";
+import heroTaverna from "./assets/taverna-hero.webp";
 import brilhoDourado from "./assets/brilho-dourado.svg";
-import marcaTaverna from "./assets/taverna-marca.jpg";
+import marcaTaverna from "./assets/taverna-marca.webp";
+/* V5 (F3): a chegada e a criação em cartas, fora do App; a ficha sai da conta que as duas criações partilham */
+import { Chegada, PedidoDaPorta } from "./painel-chegada.jsx";
+import { Criacao, MesaSendoPosta } from "./painel-criacao.jsx";
+import { mundoDaMesa, nomeDaCampanhaDaMesa, escolhasDaMesa, resumoDoSave, sementeDaVisita, sementeSeguinte } from "./criacao-da-mesa.js";
+import { montarFicha } from "./ficha-da-criacao.js";
 import { CartaDeTaro, CartaVerso } from "./carta-taro.jsx";
 import { AjusteDoRetrato, Rosto } from "./rosto.jsx";
 import { sementeDe, estadoDe, hashSemente, rng, escolher, tracos, dadoDo, semearACasa, sorteDaCasa } from "./semente.js";
@@ -4339,30 +4344,10 @@ function TelaPersonagem({ mundo, concluir, lendoMundo = false, mundoLido = false
             /* S10b (13/10): a ficha nasce com a arma da classe na mão
                (`equiparKitInicial`, kit-inicial.js). SÓ AQUI: o load nunca a
                chama — quem vendeu a espada não a vê voltar. */
-            onClick={() => concluir(equiparKitInicial(comDom({
-              /* o retrato lê estes dois: o sexo dá a geometria, e `feicoesFixas`
-                 diz que esta cara foi ESCOLHIDA — nem no mundo plural o sorteio
-                 da apresentação passa por cima de quem decidiu a própria */
-              genero: sexo, feicoesFixas: true,
-              /* `nome` continua sendo o nome INTEIRO, e tem de continuar: cento e
-                 poucos lugares deste código casam pessoa por ele — elenco, missão,
-                 combate, laço, cânone. O primeiro e o de família viajam ao lado,
-                 para quem precisa escolher entre os dois. */
-              nome: nomeInteiro, primeiroNome: nome.trim(), sobrenome: sobrenome.trim(),
-              conceito: conceito.trim(), historia: historia.trim(),
-              raca, classe, subclasse, profissao,
-              antecedente: antObj.nome, antecedenteGancho: antObj.gancho,
-              semente: `${nomeInteiro}|${conceito.trim()}|${Math.floor(sorteDaCasa() * 100000)}`,
-              atributos: attrFinais, vida: vidaMax + (antObj.pv || 0), vidaMax: vidaMax + (antObj.pv || 0), mana: manaMax + (antObj.pm || 0), manaMax: manaMax + (antObj.pm || 0),
-              /* a criação é o piso da ficha: nem o respec desce abaixo dela (v9.6) */
-              baseAtributos: { ...attrFinais }, pontosAtr: 0, atributosVersao: 1,
-              nivel: 1, xp: 0, moedas: MOEDAS_INICIAIS + (antObj.moedas || 0), nivelPendentes: 0,
-              inventario: antObj.item ? [antObj.item] : [], habilidades: habsIniciais, grupo: [],
-              efeitos: [], condicoes: [], equipamento: [], equipados: {},
-              /* v9.15: nasce treinado no que a classe e o passado justificam.
-                 Redistribui livremente na ficha depois — a criação não é armadilha. */
-              pericias: periciasIniciais({ classe, antecedente: antObj.nome }), periciasVersao: 1,
-            })))}>ENTRAR NA TAVERNA →</Botao>
+            /* V5: o objeto da ficha mudou-se para ficha-da-criacao.js (montarFicha), sem
+               mudar um campo — a mesa nova usa a MESMA conta, e a suíte
+               teste-criacao-da-mesa guarda a cópia do objeto antigo e compara */
+            onClick={() => concluir(montarFicha({ nome, sobrenome, sexo, conceito, historia, raca, classe, subclasse, profissao, antecedenteId, pontos: atributos, numeroDaSorte: Math.floor(sorteDaCasa() * 100000) }))}>ENTRAR NA TAVERNA →</Botao>
           {/* v9.195: e aqui também. Esta tela é ainda mais longa que a do
               mundo, e o campo que faltava na campanha de teste — o sexo do
               herói — fica no meio dela, entre o conceito e os atributos. */}
@@ -5264,6 +5249,10 @@ function useVistaDoEstado(estadoRef, campo, inicial) {
 }
 
 export default function Taverna() {
+  /* V5: o que o jogador pediu na porta (main.jsx) — «continuar», «começar» com a
+     mesa sorteada, ou o arquivo. Chega por contexto, e não por prop, para a
+     assinatura de Taverna() continuar a que as suítes leem. */
+  const pedidoDaPorta = React.useContext(PedidoDaPorta);
   /* T0: O ESTADO DO JOGO, UM OBJETO SÓ. Nasce vazio (`estadoVazio`, o
      estado v2 de estado.js) e é a casa dos grupos que já passaram a ler
      dele — os refs desses grupos são vistas (`useVistaDoEstado`). Os
@@ -5272,7 +5261,13 @@ export default function Taverna() {
      cada grupo que se muda para cá é um commit. */
   const estadoRef = useRef(null);
   if (estadoRef.current === null) estadoRef.current = estadoVazio();
-  const [fase, setFase] = useState("menu"); // menu | mundo | personagem | jogo
+  /* V5: a porta (main.jsx) diz para onde se vai — «abrindo» é o quadro de espera
+     (a mesa da noite, vazia) enquanto o save abre ou a mesa começa */
+  const [fase, setFase] = useState(() => (pedidoDaPorta && pedidoDaPorta.tipo === "arquivo" ? "menu" : pedidoDaPorta ? "abrindo" : "chegada")); // chegada | criacao | menu (o arquivo) | mundo | personagem | jogo
+  const [sementeDaMesa, setSementeDaMesa] = useState(() => (pedidoDaPorta && pedidoDaPorta.mesa ? pedidoDaPorta.mesa.semente : sementeDaVisita(Date.now())));
+  /* a passagem (F3 §7): a mesa sendo posta até a primeira narração chegar */
+  const [passagem, setPassagem] = useState(() => !!(pedidoDaPorta && pedidoDaPorta.tipo === "comecar"));
+  const [fichaPendente, setFichaPendente] = useState(null);
   const faseRef = useRef(fase);
   const avisoPodaRef = useRef(false);
   const salvarRef2 = useRef(null);
@@ -8676,6 +8671,50 @@ export default function Taverna() {
       if (bruto) { const sv = lerSave(JSON.parse(bruto)); modoRef.current = modoDoSave(sv); saveRef.current = sv; setTemSave(sv); }
     } catch { /* save corrompido: ignora */ }
   }, []);
+
+  /* ---------------- V5 · A ENTRADA PELA PORTA ----------------
+     A porta (main.jsx) já mostrou a chegada e a criação; aqui o jogo cumpre
+     o que o jogador pediu lá. Corre DEPOIS do efeito de cima, que já pôs o
+     save no saveRef. Nunca custa a cena: o que estourar volta à chegada. */
+  const entradaFeitaRef = useRef(false);
+  useEffect(() => {
+    const p = pedidoDaPorta;
+    if (entradaFeitaRef.current || !p) return;
+    entradaFeitaRef.current = true;
+    try {
+      if (p.tipo === "continuar") { if (saveRef.current) continuar(!!p.comResumo); else setFase("chegada"); }
+      else if (p.tipo === "comecar" && p.mesa) comecarDaMesa(p.mesa);
+      else if (p.tipo !== "arquivo") setFase("chegada");
+    } catch (e) { calou("V5 · a entrada pela porta", e); setPassagem(false); setFase("chegada"); }
+  }, []);
+  /* a ficha espera um quadro: o iniciar lê o mundo do estado, e o estado
+     do mundo só existe no render seguinte ao setMundo */
+  useEffect(() => {
+    if (!fichaPendente) return;
+    const f = fichaPendente;
+    setFichaPendente(null);
+    try { iniciar(f); } catch (e) { calou("V5 · iniciar pela mesa", e); setPassagem(false); setFase("criacao"); }
+  }, [fichaPendente]);
+  /* «Começar» na mesa: o mesmo que a tela antiga do mundo fazia ao concluir
+     (o mundo, o nome da campanha, a casa semeada, o léxico), e a ficha da
+     MESMA conta da tela antiga do herói (montarFicha) */
+  const comecarDaMesa = (mesa) => {
+    try {
+      largarASala(); modoRef.current = MODO_PADRAO;
+      const m = mundoDaMesa(mesa);
+      const nome = nomeDaCampanhaDaMesa(mesa);
+      setMundo(m); mundoRef.current = m; setNomeCampanha(nome); nomeCampanhaRef.current = nome;
+      try { semearACasa((nome || "aventura") + "|" + ((m && m.genero) || "")); } catch (e) { calou("semear a casa (a mesa começa)", e); }
+      lerOMundo(m);
+      setSementeDaMesa(mesa.semente);
+      setPassagem(true);
+      setFichaPendente(montarFicha(escolhasDaMesa(mesa)));
+    } catch (e) { calou("V5 · começar pela mesa", e); setPassagem(false); setFase("criacao"); }
+  };
+  /* a primeira narração chegou: a passagem acaba */
+  useEffect(() => {
+    if (passagem && (mensagens || []).some((m) => m && m.autor === "mestre")) setPassagem(false);
+  }, [mensagens, passagem]);
 
   /* ao entrar no jogo, posiciona direto na última mensagem (sem animação) */
   useEffect(() => {
@@ -25037,7 +25076,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   /* v9.256 (Fase X - X3): sair para o menu solta o turno preso. Quem carrega
      um save o recebe de volta na restauracao; quem comeca outra campanha nao
      herda a trava de uma mesa que nao e a dele. */
-  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); guardarORascunho(); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("menu"); };
+  const irMenu = () => { setAba(null); setHabAbertas(false); setHabsSel([]); guardarORascunho(); setDadoRolando(false); guardadoRef.current = SEM_GUARDADO; setFalha(null); setFase("chegada"); };
 
   /* ---------------- O CORPO SENTE (v9.160 → V4) ----------------
      Aqui morava o clarão do bloco do herói: um efeito que comparava a vida
@@ -28123,10 +28162,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           da ficha, o `📜` para a aba Diário, e o `✓ salvo` para a cinta.
           As OUTRAS fases continuam a tê-lo: ali ele ainda é a única coisa
           que diz onde se está. */}
-      {!emBatalha && fase !== "jogo" && (
+      {!emBatalha && fase !== "jogo" && fase !== "chegada" && fase !== "criacao" && fase !== "abrindo" && (
       <header className="flex items-center justify-between px-4 md:px-5 py-3 shrink-0 sticky top-0 z-30" style={{ borderBottom: `1px solid ${T.line}`, background: T.panel }}>
         <div className="flex items-center gap-2 min-w-0">
-          {fase !== "menu" && (
+          {fase !== "chegada" && (
             <button onClick={irMenu} className="tv-anel-foco rounded-lg shrink-0 flex items-center justify-center" style={{ width: ALVOS.piso, height: ALVOS.piso, border: `1px solid ${T.line}` }} title="Início">
               <IconeCaneca tamanho={18} cor={T.amberSoft} />
             </button>
@@ -28251,7 +28290,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       )}
       {fase === "jogo" && personagem && !emBatalha && <VinhetaDaNoite minuto={minuto} />}
 
-      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setFase("mundo"); }} irNoite={() => { largarASala(); setFase("noite"); }} irDuelo={() => { largarASala(); setFase("duelo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
+      {/* V5 (F3): a chegada e a criação em cartas — as mesmas da porta (main.jsx) */}
+      {fase === "chegada" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><Chegada resumo={(() => { try { return resumoDoSave(localStorage.getItem(espacoDoSave(MODO_PADRAO)), ESTADO_VERSAO); } catch (e) { calou("V5 · a porta vista do jogo", e); return { estado: "nenhum" }; } })()}
+        aoSentar={() => { setSementeDaMesa(sementeDaVisita(Date.now())); setFase("criacao"); }} aoContinuar={() => { largarASala(); continuar(false); }} aoOuvir={() => { largarASala(); continuar(true); }}
+        aoArquivo={() => setFase("menu")} aoAtualizar={() => { try { window.location.reload(); } catch (e) { calou("V5 · atualizar a página", e); } }} /></div>}
+      {fase === "criacao" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><Criacao semente={sementeDaMesa} aoComecar={comecarDaMesa} aoNovaSemente={() => setSementeDaMesa((x) => sementeSeguinte(x))} /></div>}
+      {fase === "menu" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaMenu irNovo={() => { largarASala(); modoRef.current = MODO_PADRAO; setSementeDaMesa(sementeDaVisita(Date.now())); setFase("criacao"); }} irNoite={() => { largarASala(); setFase("noite"); }} irDuelo={() => { largarASala(); setFase("duelo"); }} continuar={(r) => { largarASala(); continuar(r); }} temSave={temSave} aoLerArquivo={lerArquivoDeSave} aoConfirmarImportacao={confirmarImportacao} aoDesfazerImportacao={desfazerImportacao} aoExportar={exportarSave} criarSala={criarSalaDeDois} entrarSala={() => { souAnfitriaoRef.current = false; setSala(null); setCodigoDigitado(""); setErroDaSala(""); setFase("sala"); }} /></div>}
       {fase === "noite" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaNoite concluir={(esc) => iniciarNoite(esc)} voltar={() => setFase("menu")} /></div>}
       {fase === "duelo" && <div className="flex-1 min-h-0 overflow-y-auto tv-scroll flex flex-col"><TelaDuelo voltar={() => setFase("menu")} /></div>}
       {fase === "veredito" && <div className="flex-1 min-h-0 flex flex-col"><TelaVeredito v={vereditoRef.current}
@@ -29466,6 +29510,25 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       ) : null}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}
+      {/* V5 · A PASSAGEM (F3 §7): até a primeira narração, a mesa sendo posta; se
+          o Mestre não responde, o erro de rede na mesma página, com «Tentar de novo» */}
+      {passagem && (fase === "jogo" || fase === "abrindo") && (() => {
+        let heroi = null, nota = "";
+        try {
+          const p = personagem;
+          if (p) {
+            const sup = p.suprimentos || {};
+            heroi = { ...p, sexo: p.genero, carga: { racoes: sup.racoes || 0, agua: sup.agua || 0, tochas: sup.tochas || 0, moedas: p.moedas || 0 } };
+            const onde = lugarRef.current && (lugarRef.current.nome || lugarRef.current.cidade);
+            nota = (onde ? onde + ". " : "") + "Você chega com " + (sup.racoes || 0) + " rações, " + (sup.agua || 0) + " de água, " + (sup.tochas || 0) + " tochas e " + (p.moedas || 0) + " moedas.";
+          }
+        } catch (e) { calou("V5 · a nota da passagem", e); }
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 90, overflowY: "auto" }}>
+            <MesaSendoPosta heroi={heroi} nota={nota} erro={!!(falha && !carregando)} aoTentar={retentar} aoVoltar={() => { setPassagem(false); setFase("criacao"); }} />
+          </div>
+        );
+      })()}
       {fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo lugar={lugarNovo} fechar={() => setLugarNovo(null)} />}
       {fase === "jogo" && cerimoniaDoNivel && (
         <LimiteDaCerimonia aoEstourar={() => { setCerimoniaDoNivel(null); setCerimoniaCalou(true); }}>

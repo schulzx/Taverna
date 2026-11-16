@@ -239,8 +239,13 @@ const TETO_DE_LITERAIS = {
      linha no build, ou aceitar por escrito.
      15/11 · C1 (a cara do link): sobe para 2 — o `<meta name="theme-color">`
      é a mesma cor do feltro, lida pelo navegador antes de qualquer bundle.
-     teste-cara-do-link.mjs prova que as duas são T.bg. */
-  "index.html": 2,
+     teste-cara-do-link.mjs prova que as duas são T.bg.
+     16/11 · V5+C2: sobe para 21 — a abertura instantânea do F3 (§5) é HTML e
+     CSS puros, 2,8 KB servidos antes de qualquer bundle: o feltro da noite, o
+     couro, o latão, o lacre, a cera e a chama da vela. Não há T no HTML; a
+     fonte única é ABERTURA_INSTANTANEA, e teste-criacao-da-mesa prova que as
+     posições e o feltro batem. */
+  "index.html": 21,
 };
 /* total 330 (24/09 · V1: era 332 — os dois brilhos de rosto.jsx viraram
    T.ink e saíram do dente) · `api/*.js` mede 0 hoje e NÃO recebe
@@ -269,8 +274,10 @@ const TETO_DE_COR_DE_T = {
      pixel passou a ser T.bg de verdade (§4); o `index.html` é servido
      antes do bundle e não pode importar T — o perdão eterno de D5a,
      agora com a cor certa. 15/11 · C1: 2 — o theme-color da cara do
-     link, a mesma T.bg (teste-cara-do-link.mjs confere). */
-  "index.html": 2,
+     link, a mesma T.bg (teste-cara-do-link.mjs confere). 16/11 · V5+C2: 12 —
+     as cores da abertura instantânea do F3 que já têm nome em T (o couro, o
+     latão, o lacre, a tinta, o osso): o HTML não importa T. */
+  "index.html": 12,
   /* SAÍRAM (ENTRADA MORTA seria pior que ausência): `src/grade-de-batalha.jsx`
      (era 5), `src/painel-ascensao.jsx` (era 1, `#7BC98F` = ok antigo) e
      `src/rosto.jsx` (era 2, `#EAE4D6`×2 = ink antigo) mediram ZERO depois
@@ -454,6 +461,7 @@ const TETO_DE_CONTADOR_DE_QUADRO = {
   "src/painel-batalha.jsx": 2,   /* o enquadramento de abertura espera o leiaute, não conta tempo */
   "src/painel-fichas.jsx": 1,    /* 12/10 · F2b: o cartão das fichas mede onde pousa no quadro SEGUINTE ao resize — no próprio evento o leiaute ainda é o de antes (medido: a folha pousava 37 px à esquerda ao passar da Mesa ao telefone). Uma batida por medida, cancelada ao sair; não conta tempo, a mesma razão do enquadramento de cima */
   "src/ui.jsx": 2,               /* as brasas, e elas estão certas: `performance.now()` */
+  "src/main.jsx": 1,             /* 16/11 · V5+C2: uma batida só, para tirar a abertura em HTML (#tv) no primeiro quadro pintado pelo React; não conta tempo nem se repete */
   "src/painel-bandeja.jsx": 1,   /* 04/11 · a bandeja: o número que troca enquanto o dado rola lê o relógio (`Date.now() - inicio`), não conta tiques; numa aba de fundo ele salta, e o resultado já veio da semente */
   "src/App.jsx": 1,              /* 16/11 · V3: o d20 do Véu (`Date.now() - inicio > 1200`) saiu — o Véu é o LanceDoDado, cujo tempo é LANCE. 2 → 1 */
   "src/grade-de-batalha.jsx": 3, /* 09/11 · CB 17 (+2): o número do dado no alvo e o deslizar da ficha de quem age no turno deles — os dois LEEM o relógio (`Date.now() - inicio`), não contam tiques; numa aba de fundo saltam para onde já deviam estar. O terceiro é a dívida de baixo. */

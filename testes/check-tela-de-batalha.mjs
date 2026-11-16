@@ -190,7 +190,8 @@ sec("3. o que some durante a luta — e o critério é duro");
      jogo inteira**, e as outras fases (menu, mundo, ficha, sala) continuam a
      tê-lo, que é onde ele ainda diz onde se está. */
   t("e o cabeçalho inteiro sai da tela do jogo: a marca e o `salvo` são moldura, não jogo",
-    /\{!emBatalha && fase !== "jogo" && \(\s*<header /.test(APP));
+    /* 16/11 · V5: e também da chegada e da criação (F3: «não há barra de topo») */
+    /\{!emBatalha && fase !== "jogo" && (fase !== "\w+" && )*\(\s*<header /.test(APP));
 
   /* Nenhum dos treze nomes da lista pode aparecer como CONTROLE dentro da
      tela da batalha. Mede-se o arquivo da tela, que é onde um controle
