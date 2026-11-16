@@ -3434,8 +3434,8 @@ export function DadoDeOsso({ forma = 20, estado = "pousado", lado = TAMANHO_DO_D
   const letraDe = (f) => Math.max(TAMANHO_DO_DADO.pisoDaLetra, lado * f.fator * fatorLetra) / k;
   const C = O_.contato;
   const vazado = historico === "falhou" || historico === "um";
-  const sombras = vazado ? "none" : O_.sombra.map((x) => `drop-shadow(0 ${x.y * k}px ${x.desfoque * k}px rgba(0,0,0,${x.alfa}))`).join(" ");
-  const chao = sombra && !vazado ? <ellipse cx={C.cx} cy={C.cy} rx={C.rx} ry={C.ry} fill={`rgba(0,0,0,${C.alfa})`} style={{ filter: `blur(${C.desfoque}px)` }} /> : null;
+  const sombras = vazado ? "none" : O_.sombra.map((x) => `drop-shadow(0 ${x.y * k}px ${x.desfoque * k}px ${alfa(T.veuDaNoite, x.alfa)})`).join(" ");
+  const chao = sombra && !vazado ? <ellipse cx={C.cx} cy={C.cy} rx={C.rx} ry={C.ry} fill={alfa(T.veuDaNoite, C.alfa)} style={{ filter: `blur(${C.desfoque}px)` }} /> : null;
   if (nForma === 100) {
     const M = FORMAS_DO_DADO[100], f = FORMAS_DO_DADO[10];
     const txt = String(numero == null ? "" : numero);
