@@ -18588,3 +18588,351 @@ sombra de sempre; tocar num deles abre a página do Diário daquela noite. Ao fi
 mesa de cada jogador é diferente da de todos os outros, e é ela — não uma lista — que o cartão da
 sessão (F6) fotografa. Custa um campo de save novo e aditivo (a lista de troféus) e ~40 ícones por
 família, os mesmos que a banca do mercado já pede em F5.
+
+---
+
+## A Mesa do Mestre · F2 · o dado (`desenho`, 15/11/2026)
+
+O lote **F2** da planta (`mente/lancamento/arquitetura.md` §1.5, §2 D e E). Fala a língua do F1
+(acima): mesmas variáveis, mesmos estilos de texto, mesmas sombras. Destrava o pacote de código do
+dado (P0-4 «uma forma só», o lance, o 20 e o 1). **Só Figma e este arquivo; nenhum código tocado.**
+Geração de imagem por IA: **0 chamadas** — todo dado é vetor.
+
+**Onde está.** Arquivo `e5wJUzInAssoebx5npssKc`, página `10 · A Mesa do Mestre` (`266:67`), de
+y 9300 para baixo. Imagens em `mente/lancamento/figma/F2-*.png`.
+
+| quadro | nó | imagem |
+|---|---|---|
+| 01 · O dado como objeto + todas as peças do F2 | `280:1285` | `F2-dado-objeto-e-pecas.png` |
+| O lance 1 · o chamado (1440) | `283:1894` | `F2-lance-1-chamado.png` |
+| O lance 2 · o dado sai da bandeja | `283:2326` | `F2-lance-2-sai-da-bandeja.png` |
+| O lance 3 · rola no centro | `283:2759` | `F2-lance-3-rola.png` |
+| O lance 4 · pousa | `283:3198` | `F2-lance-4-pousa.png` |
+| O lance 5 · a soma conta | `283:3609` | `F2-lance-5-soma.png` |
+| O lance 6 · passou, e a pena ainda escreve | `283:4023` | `F2-lance-6-passou-e-a-pena.png` |
+| O lance 7 · volta à bandeja, vira histórico | `283:4441` | `F2-lance-7-volta-a-bandeja.png` |
+| O lance 8 · falhou | `283:4828` | `F2-lance-8-falhou.png` |
+| O lance 9 · o «Refazer» na bandeja | `283:5247` | `F2-lance-9-refazer.png` |
+| ANTES · o chamado e o dado de hoje (capturas 06 e 22) | `283:5658`, `283:5661` | — |
+| 20 natural 1 · a face acende / 2 · a onda corre o feltro | `284:4887`, `284:5315` | `F2-20-natural-1.png`, `-2.png` |
+| 1 natural 1 · o dado racha / 2 · o tom cai | `284:5737`, `284:6153` | `F2-1-natural-1.png`, `-2.png` |
+| O histórico depois da cerimônia (coroa, fissura) | `284:6578` | `F2-historico-depois-da-cerimonia.png` |
+| Uma forma só · as quatro origens + «O Mestre rola» | `285:6346` | `F2-uma-forma-quatro-origens.png` |
+| E · a proposta da frase e o veredito do perigo (antes `285:7298`) | `285:6839` | `F2-perigo-e-proposta-1440.png` |
+| O dado na luta 1 · acerta + dano / 2 · o 1 natural (antes `286:7936`) | `286:7076`, `286:7508` | `F2-luta-1-acerta.png`, `F2-luta-2-um-natural.png` |
+| 375 · 1 chamado · 2 rola · 3 veredito · 4 falhou + gaveta · 5 repouso · 6 tela E (antes `287:9283`) | `287:7819`, `287:8069`, `287:8325`, `287:8560`, `287:8852`, `287:9042` | `F2-375-1…6-*.png` |
+
+**As peças (componentes, todos em `280:1285`):**
+
+| peça | nó | variantes |
+|---|---|---|
+| O dado de osso | `280:1365` | Forma: d4 `280:1290` · d6 `280:1297` · d8 `280:1305` · d10 `280:1316` · d12 `280:1324` · d20 `280:1335` · d100 `280:1350` |
+| O d20 no lance | `280:1430` | Estado: Pousado `280:1366` · Vivo `280:1381` · 20 natural `280:1397` · 1 natural `280:1413` |
+| O dado no histórico (40) | `280:1472` | Veredito: Passou `280:1431` · Falhou `280:1446` · 20 natural `280:1450` · 1 natural `280:1466` |
+| A bandeja (fecha a provisória `270:460`, aposentada) | `282:1974` | Estado: Repouso `282:1635` · Chamado (o dado saiu) `282:1721` · Falhou, com Refazer `282:1793` · O Mestre rola `282:1886` |
+| O chamado do Mestre | `282:2042` | Quem rola: Você `282:1976` · O Mestre `282:2010` |
+| O selo do veredito (28) | `282:1633` | Passou `282:1626` · Falhou `282:1629` |
+| A ficha de heroísmo (16) | `282:1622` | — |
+| A régua do perigo | `285:6344` | Grau 0 `285:6270` · 1 `285:6287` · 2 `285:6305` · 3 `285:6324` |
+| A bandeja de bolso (celular) | `287:7734` | Passou `287:7705` · Falhou `287:7723` · Vazia `287:7730` |
+| A gaveta da bandeja (celular) | `287:7736` | — |
+
+### 1 · As decisões que mais mudam a experiência
+
+1. **O dado é um objeto de osso, não uma chapa âmbar.** Sete formas com volume (quatro tons, luz
+   de cima e da direita, sombra de contato + sombra de pousado). 48 px → **160 px** no lance
+   (11 × a área). `PAPEL_DO_DADO` (corpo âmbar / vermelho / verde / violeta) **aposenta-se**: todo
+   dado é osso; o papel é dito pelo lugar onde cai e pela palavra.
+2. **O âmbar da tela, durante o lance, é o dado.** No chamado a peça âmbar é «Rolar» (com o dado
+   dentro); ao toque o âmbar passa para o aro do dado em voo (estado *Vivo*) e sai dele no veredito.
+   Só no 20 natural o âmbar pinta o dado por dentro.
+3. **O veredito é uma posição.** A conta escreve-se contra **a linha do «precisa de N»**: o total
+   fica **acima** da linha (passou) ou **afunda abaixo** dela (falhou). Mais o selo (aro cheio ×
+   aro de traço interrompido) e a palavra. Três sinais sem cor (WCAG 2.2, 1.4.1 *Use of Color*).
+4. **Uma forma só para todo d20 fora da luta**: o *chamado do Mestre*, no pé da página, no lugar
+   das propostas — perícia da frase, social, enigma e busca. «Não era isso» = «Mudar de ideia».
+   O modificador de bastidor «(+2)» vira frase do Mestre: *«Ela não conhece você…»*.
+5. **O «Refazer» mora na bandeja, e as fichas de heroísmo também**: fichas de latão dentro do
+   feltro; depois de uma falha, o botão aparece sob a legenda com o preço («gasta 1 de 2»).
+6. **O histórico lê-se**: até 4 dados a 40 px com o número a 14; passou = cheio, falhou = vazado
+   de traço interrompido, 20 = coroa de latão, 1 = fissura.
+7. **O voo cobre a espera**: a narração é pedida no toque; o dado fica pousado na página com a
+   conta enquanto **a pena escreve**. Não há relógio nesse estado.
+8. **No celular a bandeja mora na estampa recolhida** (bandeja de bolso 56 × 48, ponta direita) e
+   abre como **gaveta** que sobe da borda da mesa; o lance toma a página a 128 px.
+9. **O perigo é dito como se sente**: régua de três caveiras + frase, à porta e no fundo; o
+   número só em «ver a conta».
+
+### 2 · Tokens e tabelas novas (nome → valor)
+
+**Em `T`:** `T.ossoMeio` = `#CFBF9F` (variável `VariableID:280:1284`, `codeSyntax` WEB `T.ossoMeio`)
+— a face a meia-luz. Contrastes medidos (WCAG): tinta sobre `ossoLume` **14,30** · `osso` 11,81 ·
+`ossoMeio` **9,12** · `ossoSombra` **6,67** (o pior caso: o número do 1 natural, face um degrau
+abaixo) · `sobreAmbar` sobre `ambar` 8,68 (o 20) · osso sobre `feltroFundo` 12,15 (o contorno do
+dado vazado) · `ink` sobre `feltroFundo` 13,85 (o número do vazado) · `ink` sobre `couro` 12,65 e
+`inkMeio` 8,73 (a legenda da gaveta) · `couroBaixo` sobre `latao` 6,12 (a plaqueta) · na página:
+`brasa` 6,71 · `perigo` 6,60 · `musgo` 6,54 · `tintaDim` 6,56 · `lacre` 5,63 (a caveira).
+
+**`TAMANHO_DO_DADO`** (substitui `BANDEJA.dado: 48` e `dadoPequeno: 20`):
+
+| chave | lado | número (Cinzel Bold) |
+|---|---|---|
+| `lance` | 160 | 48 |
+| `lanceTelefone` | 128 | 38 |
+| `luta` | 112 | 34 |
+| `bandeja` | 76 | 23 |
+| `dano` | 44 | 13 |
+| `historico` | 40 | 14 (fator 1,15 — piso de 12 respeitado) |
+| `botao` | 36 | sem número (é glifo) |
+
+Número = lado × `numero` da forma: d4 0,30 · d6 0,34 · d8 0,27 · d10 0,28 · d12 0,27 · d20 0,30.
+O d100 são dois d10 a 0,62 do lado, o segundo deslocado (0,38 · 0,34) do lado.
+
+**`OSSO_DO_DADO`** — o desenho, em caixa 48 (multiplique por lado/48):
+
+- aresta de fora: traço `tinta` a 80 %, espessura `max(1, 0,9 × k)`; arestas de dentro: `tinta` a
+  26 %, `max(0,75, 0,5 × k)`; cantos e pontas arredondados (`stroke-linejoin: round`).
+- sombra de contato: elipse 34 × 7 em (7, 41), preto a 42 %, desfoque `3 × k`. Sombra do corpo:
+  `0 1,6k 3k rgba(0,0,0,.50)` + `0 5k 8k -1k rgba(0,0,0,.45)`.
+- tons por face: `lume` = `T.ossoLume`, `osso` = `T.osso`, `meio` = `T.ossoMeio`, `sombra` =
+  `T.ossoSombra`. **O número vai sempre na face `lume`.**
+
+**`FORMAS_DO_DADO` nova (substitui a de hoje; polígonos fechados, na ordem de pintura):**
+
+- **d20** — hexágono A(24,3) B(42.19,13.5) C(42.19,34.5) D(24,45) E(5.81,34.5) F(5.81,13.5);
+  triângulo T(24,9.3) R(36.73,31.35) L(11.27,31.35) (raio 14,7 = 0,70 do raio 21). **Dez faces**
+  (a de hoje tinha sete traços e formava quadriláteros — não era um icosaedro): `TRL` lume ·
+  `TBR` osso · `TLF` meio · `LRD` meio · `TAB` lume · `TFA` osso · `RBC` meio · `RCD` sombra ·
+  `LDE` sombra · `LEF` sombra. Número em (24, 24.6).
+- **d4** — fora (24,4)(45,37)(40,41)(3,41); frente (24,4)(40,41)(3,41) lume; lado (24,4)(45,37)(40,41)
+  meio; número (22.4, 29).
+- **d6** — frente (6,11)(37,11)(37,42)(6,42) lume; topo (6,11)(11,6)(42,6)(37,11) osso; lado
+  (37,11)(42,6)(42,37)(37,42) sombra; número (21.5, 26.5).
+- **d8** — A(24,3) B(45,24) D(24,45) E(3,24) P(38,30) Q(10,30): `APQ` lume · `ABP` osso · `AQE`
+  meio · `QPD` meio · `EQD` sombra · `BPD` sombra; número (24, 22.6).
+- **d10** — A(24,3) B(44,21) M(24,30) E(4,21) D(24,45): `ABME` lume · `EMD` sombra · `BMD` meio;
+  número (24, 18.6).
+- **d12** — pentágono de fora igual ao de hoje; o de dentro, o de hoje **× 1,22 em torno de
+  (24,25)**: dentro lume; os cinco trapézios, a partir do de cima à direita: osso · meio · sombra
+  · sombra · meio; número (24, 25.4).
+
+**Estados do d20 (`ESTADO_DO_DADO`):**
+
+| estado | o que muda |
+|---|---|
+| `pousado` | o osso, nada mais |
+| `vivo` | por trás, o hexágono × 1,07 em `T.amber` com brilho `0 0 7k rgba(âmbar,.55)` — o aro de luz |
+| `aceso` (20) | face `TRL` em `T.amber`, número em `T.onAccent`; faces `TBR`, `TLF`, `LRD` em `T.amberSoft`; aro × 1,10 com brilho `0 0 14k 2k rgba(âmbar,.85)` |
+| `rachado` (1) | todos os tons um degrau abaixo (lume→meio, osso→sombra, meio→sombra); fissura `tinta`, `max(1,5, 1,3k)`: (28,3.5)(31,9)(29.5,14)(34,19)(32.5,26)(37,31)(35.5,37)(38.5,40.5) + ramo (34,19)(38.5,17.5)(41.5,20). **A fissura passa ao lado do número.** |
+
+**`HISTORICO_DO_DADO`** (a 40): `passou` = o dado cheio · `falhou` = sem faces, chão `feltroFundo`
+a 60 %, contorno `T.osso` 1,25 px tracejado `3 3`, número em `T.ink` · `vinte` = cheio + coroa
+`T.lataoLume` com aro `lataoSombra`: (15,3)(15,−5)(19.5,−1)(24,−7)(28.5,−1)(33,−5)(33,3) ·
+`um` = o vazado + a fissura em `T.ink`. Mostra **a face do dado**, não o total (o total está na
+legenda). Teto de 4 na bandeja; o mais novo em cima à esquerda.
+
+**`LANCE`** (substitui `MOVIMENTO_DO_DADO`; os valores antigos entre parênteses):
+
+| passo | duração | curva / detalhe |
+|---|---|---|
+| `chamado.entra` | 220 ms | opacidade + 8 px, `ease-out` |
+| `esperaDoMestre` | 900 ms | só com «O Mestre rola por mim»; «Mudar de ideia» vale nesse tempo |
+| `sair` | 260 ms | `cubic-bezier(.3,0,.2,1)`; ergue 8 px, gira −24°, cresce 76 → 160 |
+| `rolar` | **1 040 ms** (era 520) | dois quiques (28 px e 10 px); rotação 540° → 0 com `cubic-bezier(.15,.6,.25,1)`; a face troca a 60 → 90 → 140 → 220 ms (era 60 fixo) |
+| `rolarTeto` | +300 ms | um terceiro quique, **só** se a narração ainda não chegou; o voo nunca passa de 1 600 ms |
+| `pousar` | 140 ms | ressalto de 4 px, `ease-out`; anel de pó 250 × 64, `tinta` a 16 %, abre e some em 180 ms |
+| `linha` | 160 ms | a linha do «precisa de» risca-se da esquerda para a direita (junto com `pousar`) |
+| `soma.bonus` | 180 ms | «+1» e o nome da perícia entram |
+| `soma.passo` | 90 ms por unidade | teto `soma.teto` = 420 ms para qualquer bônus |
+| `veredito` | 180 ms | o total assenta acima ou abaixo da linha; selo e palavra entram |
+| `voltar` | 320 ms | `cubic-bezier(.4,0,.2,1)`; 160 → 76, de volta à bandeja; o lance anterior desce à fila em 200 ms |
+| `semMovimento` | 120 ms | fica como está |
+
+Voo (`sair + rolar`) = **1 300 ms** (dentro dos 1,2–1,6 s da planta). A face lê-se aos 1 440 ms;
+o veredito aos **2 140 ms**. **Se a narração já chegou no pouso, a soma colapsa para 200 ms.**
+Na luta: `sair` 180 + `rolar` 500 = 680 ms, `soma.teto` 240, dado a 112.
+
+**`CERIMONIA_DO_DADO`:**
+
+| | o quê | tempo |
+|---|---|---|
+| `vinte.acende` | a face passa a âmbar | 120 ms |
+| `vinte.pulso` | escala 1 → 1,10 → 1 | 240 ms, `cubic-bezier(.2,.9,.3,1.3)` |
+| `vinte.raios` | 16 raios `T.amber` 3 px, de 100 a 122/142 px do centro (alternados) | abrem e somem em 300 ms |
+| `vinte.onda` | dois anéis de `T.haloDaVela` por baixo das peças, raio 0 → 560 e 0 → 900, alfa 0,70 / 0,45 → 0 | 900 ms, `ease-out` |
+| `vinte.halo` | `haloAlfa × 1,25` e volta | 900 ms |
+| `um.fissura` | o traço desenha-se (`stroke-dashoffset`) | 200 ms |
+| `um.tomba` | −4°; tons um degrau abaixo; 3 lascas (`ossoSombra`) saltam 12–20 px e ficam | 240 ms |
+| `um.luz` | o feltro escurece 34 %, a página 10 % (teto do véu é 12 %); a chama cai a 0,7 e volta | 200 ms a descer, 800 ms a voltar |
+
+Um clarão só por 20 (abaixo dos três por segundo do WCAG 2.3.1). Som (nomes; a síntese é de
+`som-da-mesa.js`): `vinte` = o sino do crítico que já existe; `um` = estalo seco + tom grave que
+desce; o rolar = osso no feltro, três variações.
+
+### 3 · A máquina de estados do lance
+
+```
+repouso ──chamado──▶ chamado ──«Mudar de ideia»──▶ repouso   (sem custo, sem dado)
+chamado ──«Rolar» | fim de esperaDoMestre──▶ saindo          (a narração é pedida AQUI)
+saindo ─260─▶ rolando ─1040(+300)─▶ pousado ─140─▶ somando ─≤520─▶ veredito
+veredito ∈ { passou, falhou, vinte, um }   (vinte e um disparam a cerimônia em paralelo)
+veredito ──▶ esperando   (o dado pousado, a conta, a pena que escreve; sem relógio)
+esperando ──1.ª linha da narração | toque──▶ voltando ─320─▶ repouso
+repouso [falhou ∧ fichas > 0] mostra «Refazer» até a próxima ação
+   «Refazer» ──▶ a ficha sai da bandeja, a nota da falha é riscada, volta a `saindo`
+```
+
+- **Pular:** toque, clique, Enter ou Espaço em `saindo`…`somando` corta para `veredito` em 120 ms.
+- **`prefers-reduced-motion`:** de `chamado` direto a `veredito` em 120 ms (face, conta e selo de
+  uma vez); 20 = a face âmbar e a coroa, sem onda; 1 = a fissura pronta, sem luz a cair.
+- **Nunca custa o turno:** o resultado vem da semente antes do primeiro quadro; a animação é
+  teatro. A narração que chega antes do veredito espera por ele (no máximo 2 140 ms do toque; com
+  a soma colapsada, ~1 700). Tudo em `calou(...)`: se a animação estoura, mostra-se o veredito.
+- **O «Refazer» e a IA — decisão que é do `jogo` e do sistema:** como a narração é pedida no
+  toque, refazer descarta uma narração e pede outra (uma chamada a mais por ficha gasta). A
+  alternativa é segurar o pedido enquanto houver ficha e falha. Recomendo a primeira (a espera
+  curta vale mais que a chamada), mas **toca custo de IA: avisar antes de ligar.**
+
+### 4 · As peças, com medidas (para construir sem abrir o Figma)
+
+**O chamado do Mestre** (pé da página; 584 de largura a 1440, 331 a 375; altura 165 / 185):
+fio de 1 px `tinta` a 30 % no topo, 14 de respiro, 10 entre linhas.
+1. traço da pena (18 × 10, `brasaNoPergaminho`) + «O MESTRE PEDE UM DADO» (Rótulo 12, `tintaDim`).
+   Social acrescenta « · COM NESA»; no celular, « · VOCÊ SOMA +1» (a linha do bônus some).
+2. à esquerda a perícia (Título 28, `tinta`) e por baixo o preço: *«Se falhar, …»* (Spectral
+   itálico 16/22, `brasaNoPergaminho`, quebra em linhas). À direita «PRECISA DE» (Rótulo 12) +
+   o número (Cinzel Bold 40/44) + a régua 96 × 2 `tinta`.
+3. «Rolar»: 52 de altura, raio 6, chão `T.amber` com aro `brasaNoPergaminho` 1,5; dentro, o d20 a
+   36 sem número + «ROLAR» (Contagem 16, `onAccent`). Ao lado, «você soma +1 de Percepção» (nota
+   14, `tintaDim`). À direita «Mudar de ideia» (Proposta 16 sublinhada, alvo 44 de altura).
+   Com «O Mestre rola»: no lugar do botão, o d20 a 36 + *«O Mestre rola por você…»*.
+Foco: aro `tinta` 2 px (a lei do F1). A linha da pena e as propostas **somem** enquanto há
+chamado: a tela tem uma ação principal. O texto é o do catálogo (`oChamado`): perícia, número,
+preço; a razão da dificuldade entra como frase antes do «Se falhar», nunca como «(+2)».
+
+**A conta contra a linha** (página; 320 de largura, 300 no celular): a linha `tinta` 2 px em
+y 100; o valor do dado (Cinzel 40, `tinta`) e o bônus (Cinzel 40, `tintaDim`, com o nome da
+perícia em Rótulo 12 `brasa` por cima) assentam nela; seta de 20 px; **passou** → total (Dado 64,
+`tinta`) acima da linha, «PRECISA DE N» por baixo à direita, selo cheio + «PASSOU» (Lugar 18,
+`musgoNoPergaminho`) + *«por N»*; **falhou** → total em `perigoNoPergaminho` **abaixo** da linha,
+«PRECISA DE N» por cima, selo de traço interrompido + «FALHOU» + *«faltaram N»*. 20 e 1: «20
+NATURAL» / «1 NATURAL» (Lugar 18, brasa / perigo) acima do valor. A 1440 o dado pousa com o
+centro em (210, 552) da página e a linha fica em y 580, x 320–640; a zona entre a fala do jogador
+e o pé é a **arena** — fica vazia de propósito durante o chamado. A 375 o dado vai em cima
+(centro em y 356 da página) e a conta por baixo.
+
+**A pena que escreve** (a espera): a pena de `A linha da pena` + um traço ondulado `tintaDim`
+1,5 px que cresce (130 px por 1 200 ms, em laço) + *«o Mestre escreve…»* (nota 14). No pé da
+página, x 48.
+
+**A bandeja** (`BANDEJA` nova; 1440 e 1280, x 1100 · y 36): couro 216 × 140 raio 16; feltro
+196 × 120 em (10,10). No feltro: o dado da vez a 76 com centro em (48,48); a fila em 2 × 2 a 40,
+centros x 120 / 168 · y 32 / 82; fichas de heroísmo a 16 em (14 + 20 i, 98), até 5. Vazio do dado:
+hexágono tracejado `osso` a 32 %. Por baixo: a conta (Nome 13, `ink`, y 150) e o veredito (nota
+14, `inkMeio`, y 170). **Com «Refazer»**: legenda em y 148 / 166 e o botão 216 × 44 em y 188,
+raio 4, aro `latao` 1,5: ficha + «Refazer» (Proposta 16, `ink`) + *«gasta 1 de 2»* — a peça
+inteira tem 232 de altura e para 4 px antes de «NA MESA». **Plaqueta «O MESTRE ROLA»**: 18 de
+altura em (18, −9), chão `latao`, letra Rótulo 12 `couroBaixo`; tocá-la abre o escudo nessa
+linha. Tocar um dado da fila troca a legenda pela daquele lance.
+
+**No celular**: *bandeja de bolso* 56 × 48 (couro raio 10, feltro 46 × 38) em (299, 0) da página,
+sobre a estampa recolhida; o nome do lugar ganha `max-width` = faixa − 96 − 64 e reticências.
+Mostra o último dado a 40 com a forma do veredito. *Gaveta*: couro 359 × 210 (162 sem
+«Refazer»), raio 14, sobe da borda da mesa em 260 ms `cubic-bezier(.2,.8,.2,1)`; feltro 339 × 84;
+dado a 76, fila de 4 numa linha (passo 48), fichas à direita; legenda em `ink` / `inkMeio` sobre o
+couro; «Refazer» 331 × 48. Abre ao toque no bolso e **sozinha** depois de falha com ficha; fecha
+ao toque fora.
+
+**A régua do perigo** (`REGUA_DO_PERIGO`, tela E): três caveiras de 24 (6 entre elas) + a frase
+(Proposta 16; `perigoNoPergaminho` do grau 2 para cima). Cheia = `T.lacre` com olhos na cor da
+página; vazada = traço `tintaDim` 1,5 tracejado `2,5 2,5`.
+
+| grau | `PATAMARES.id` | frase (grupo / sozinho) |
+|---|---|---|
+| 0 | `facil` | Abaixo de vocês / de você |
+| 1 | `medio` | Do tamanho de vocês / de você |
+| 2 | `dificil` | Acima de vocês / de você |
+| 3 | `impossivel` | Fora do alcance |
+
+A frase é campo novo de `PATAMARES` (o `sentido`), nunca texto na tela. **A proposta de caminho**
+(a antiga «Ir até X · Difícil · Reescrever»): mesma ossatura do chamado — «O MESTRE AVISA, ANTES DE
+VOCÊ IR» · «Ir até a Fenda de Silêncio» (Título 28; Título de objeto 22 no celular) · *o caminho*
+(itálico 16) · «À PORTA» + régua · «NO FUNDO» + régua (lado a lado a 1440, empilhadas a 375) ·
+*«Três vezes acima de vocês. Sem plano, terreno ou ajuda, é onde se morre.»* (`porqueAssim` +
+`nota`) com «ver a conta» (nota 14 sublinhada, alvo 44) · «Ir» (âmbar, 52) com o preço ao lado
+(*«custa 1 dia de marcha e 2 rações»*) e «Reescrever». A conta aberta é uma nota do Mestre: *«A
+conta: a força de vocês, 187; o que isto pede, 515.»* Altura 285 (1440) / 405 (375, aberta).
+
+**O dado na luta**: o d20 de osso a 112 pousa **ao lado do alvo marcado** (anel `ink` tracejado
+72); uma linha tracejada liga quem golpeia ao alvo. A conta vive na **tira do golpe**: papel
+318 × 150 pousado no tapete, rodado −1°, com a mesma gramática — «13 +3 → 16» contra a linha
+«DEFESA 14», selo + «ACERTOU»; o dado de dano (d8 a 44) cai na tira e «−6 PV» (Cinzel 22,
+`perigo`) parte dela para a carta do alvo. 1 natural: o dado racha ali mesmo, «ERROU FEIO». O
+tapete do quadro é **provisório** (é do F3); a tira e o dado, não.
+
+### 5 · Como fazer o d20 sem dependência nova
+
+- **SVG, um componente só** (`<Dado forma estado lado numero />` em `ui.jsx`): `viewBox="0 0 48
+  48"`, um `<polygon>` por face na ordem de `FORMAS_DO_DADO`, `fill` pelo tom, e o número num
+  `<text text-anchor="middle" dominant-baseline="central">` em Cinzel 700. O aro do *Vivo* é o
+  hexágono repetido atrás com `transform="translate(24 24) scale(1.07) translate(-24 -24)"` e
+  `filter: drop-shadow(0 0 … )`. Nada de canvas, nada de biblioteca de física.
+- **O voo é CSS**: um invólucro `position: fixed` com `@keyframes` de `transform` (translate ao
+  longo de três pontos + `rotate`), do retângulo da bandeja ao centro da arena — medidos com
+  `getBoundingClientRect()` e passados por variáveis CSS (`--dx`, `--dy`). Os quiques são dois
+  keyframes de `translateY` com `scaleY(.94)` no contato. **2D, não 3D**: um SVG plano a girar em
+  `rotateX/Y` parece moeda; a troca de face a cada N ms (texto) é o que vende o rolar.
+- **A fissura** desenha-se com `stroke-dasharray` = comprimento e `stroke-dashoffset` → 0. **A
+  onda** são dois `<div>` com `radial-gradient` e `transform: scale()` + opacidade, atrás das
+  peças (`z-index` do feltro). **A linha e a soma** são texto: `setInterval` de `soma.passo`, com
+  o total em `aria-live="polite"` dito **uma vez** no fim («Percepção: 14 contra 13, passou»).
+- Só `transform` e `opacity` animam (nada de `top/left`, nada de `box-shadow` animada).
+
+### 6 · O «superior», por medida, estudo e par
+
+| | antes (v9.647) | depois |
+|---|---|---|
+| lado do dado no lance | 48 px | 160 (128 no celular) |
+| do gesto ao pouso | ~680 ms, sem suspense | 1 440 ms, pulável; o veredito aos 2 140 |
+| formas de d20 fora da luta | 3 e uma escondida | 1 |
+| «Refazer» | só na carta social | na bandeja, para os quatro |
+| sinais do veredito que não são cor | 1 (anel tracejado) | 3 (posição, aro, palavra) |
+| histórico | hexágonos de ~12 px sem número | 40 px, número a 14, quatro formas |
+| 20 e 1 naturais | sem forma (1 na luta: linha de 12 px) | 2 quadros cada + marca permanente |
+| o perigo | «187 de poder … 2.8×» | frase + régua; número ao toque |
+| menor contraste de texto do lote | — | 6,54 (`musgo` na página); número de dado 6,67 no pior caso |
+| alvos | — | ≥ 44 em tudo o que se toca |
+
+Estudos: WCAG 2.2 — 1.4.1 (cor não é o único sinal), 1.4.3 / 1.4.11 (contraste de texto e de
+forma), 2.3.1 (clarões), 2.3.3 (movimento desligável), 2.5.8 (alvo); Apple HIG (alvo de 44 pt). A
+Nielsen Norman Group recomenda 100–500 ms para animação de interface (*«Executing UX Animations:
+Duration and Motion Characteristics»*): **o rolar passa disso de propósito** — não é transição, é
+o momento do jogo, cobre uma espera que já existe e pula-se com um toque. O par antes/depois está
+ao lado de cada quadro-chave no Figma.
+
+**O que não está provado:** nada disto foi jogado — o `jogo` não assinou, e o movimento é
+storyboard (quadros parados com a trajetória anotada), não protótipo animado. Os tempos são
+proposta medida contra a planta, a confirmar na primeira sessão jogada.
+
+### 7 · O que ficou por fazer do F2, dito
+
+- **Vantagem e desvantagem (dois d20)**: não desenhado. Regra provisória: dois dados a 128 lado a
+  lado, o descartado vira vazado antes da soma.
+- **Vários dados de dano de uma vez** e o **d100 em voo**: só as peças paradas.
+- O lance a **1280 × 720**, à **noite** e na **masmorra**: não compostos (a arena e as medidas são
+  as mesmas; a noite pede conferir o véu sob o dado).
+- O **tapete de batalha** é provisório (F3); o **som** está só nomeado.
+- As mesas do F1 (`272:127` etc.) ainda mostram a bandeja provisória.
+- **Code Connect** por fazer; os brilhos e gradientes (aro âmbar, onda, luz que foge) estão
+  literais no Figma, como no F1.
+- As legendas dos quadros 9 e 375·4 no Figma ainda dizem «1 ponto · fica com 1»; **vale o que está
+  aqui: «gasta 1 de 2»**.
+
+### 8 · A proposta ambiciosa — lançar com a mão
+
+O dado **arrasta-se para fora da bandeja e solta-se**: a direção e a força do gesto (dedo ou
+ponteiro) decidem a trajetória e o número de quiques; o resultado continua a ser o da semente. É o
+gesto que falta para a mesa deixar de ser olhada e passar a ser mexida, e é o que um vídeo de dez
+segundos mostra. «Rolar» fica para teclado e para quem não quer arrastar. Custa só interface (a
+trajetória já é CSS com variáveis), nenhum campo de save. O momento é do `jogo`: se o gesto cansar
+ao décimo dado, fica só como opção do escudo.
