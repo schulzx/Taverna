@@ -142,7 +142,9 @@ fs.rmSync(saida, { force: true });
   t("o Véu já não é modal: nem o hexágono por clip-path, nem «Continuar →»", !/function OverlayDado[\s\S]*?clipPath: "polygon\(50% 0%/.test(APP.slice(APP.indexOf("function OverlayDado"), APP.indexOf("/* ---------------- Modal de nível"))) && !/Continuar →/.test(APP.slice(APP.indexOf("function OverlayDado"), APP.indexOf("/* ---------------- Modal de nível"))));
   t("a busca da masmorra rola pelo mesmo lance", /setLanceNoAr\(\{ chave: "busca:"/.test(APP));
   t("o teste pendente (social, enigma) passa pelo mesmo chamado na soleira", /chamado: chamadoDaRolagemAgora/.test(APP) && /linhaDoCampo = rolagem && !carregando && !chamadoVivo && !chamadoDaRolagemAgora && !dadoRolando/.test(APP));
-  t("a Bandeja esconde o lance que voa (as duas colunas)", (APP.match(/<Bandeja naColuna emVoo=\{!!lanceNoAr\}/g) || []).length === 2);
+  /* V4b (16/11): eram duas colunas (a zona direita e a tira do telefone); a gaveta da
+     bandeja do telefone é a terceira, e a tira ficou só de rede. As três escondem o lance que voa. */
+  t("a Bandeja esconde o lance que voa (a zona direita, a gaveta do telefone e a tira de rede)", (APP.match(/<Bandeja naColuna emVoo=\{!!lanceNoAr\}/g) || []).length === 3);
   t("o lance do chamado não rola duas vezes (a soleira só mostra o chamado sem lance)", /if \(ch && !ch\.lance\) \{\s*const mc = momentoDoChamado/.test(APP));
 }
 

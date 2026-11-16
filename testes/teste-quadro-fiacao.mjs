@@ -150,7 +150,7 @@ sec("§6 a tela — o sinal, a gaveta e o momento");
   t("os quadros vão à tela pela lista branca (oQuadroNaTela)", /brutos\.map\(\(q\) => oQuadroNaTela\(q\)\)/.test(APP));
   t("o momento: PistaQueVira com o turno seguinte a saltar e o voo ao sinal", /<PistaQueVira vira=\{pistaQueVira\.vira\} misterio=\{pistaQueVira\.misterio\} alvoRef=\{sinalDoQuadroRef\} saltar=\{saltoDaPista\}/.test(APP) && /if \(pistaQueVira\) setSaltoDaPista\(\(n\) => n \+ 1\);/.test(APP));
   t("o sinal acende só no ganho (uma perda não acende)", /if \(p && p\.vira && !p\.vira\.perdeu\) \{\s*setSinalAceso\(true\);/.test(APP));
-  t("cada peça calada pelo seu limite (uma que estoura não leva a cena)", (APP.match(/<LimiteDasFichas key=\{?"(?:pistas|quadro\||pista\|)/g) || []).length === 3);
+  t("cada peça calada pelo seu limite (uma que estoura não leva a cena)", (APP.match(/<LimiteDasFichas key=\{?"(?:pistas|quadro\||pista\|)/g) || []).length === 4); /* V4b (16/11): eram 3; as pistas do telefone («pistas-tel», na linha da estampa) são a quarta peça calada */
   t("nenhuma peça do quadro nasce dentro do App (a lei do foco)", !/function (SinalDoQuadro|GavetaDoQuadro|PistaQueVira|CartaDePista)\b/.test(APP) && !/const (SinalDoQuadro|GavetaDoQuadro|PistaQueVira) =/.test(APP));
 }
 

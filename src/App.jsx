@@ -54,7 +54,7 @@ import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
 import { PortaDoEscudo } from "./painel-escudo.jsx";
 import { CantoDoEscudo, NotaDoMestre, letraDaMesa } from "./pecas-da-mesa.jsx";
 import { quemTemOEsc, tamanhoDoTextoGuardado, multiplicadorValido, composicaoDaJanela, temTresZonas, estadoDaEstampa, cenaDaEstampa, luzDaMesa, estadoDaCarta } from "./mesa-do-mestre.js";
-import { CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina } from "./painel-mesa.jsx";
+import { CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina, FaixaDoTelefone, BordaDoTelefone, BandejaDeBolso, GavetaDaBandeja } from "./painel-mesa.jsx";
 import { retratoDe } from "./retratos.js";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta } from "./mercado.js";
@@ -1629,6 +1629,9 @@ function emTempo(minutos) {
    E ele abre em ABSOLUTO, por baixo da cinta: a página não se move um
    pixel para o painel nascer. A mesma lei que o tabuleiro já tinha.
    ============================================================ */
+/* V4b (16/11): o painel do tempo abria na forma antiga, em letra mono. Veste a
+   letra da mesa (letraDaMesa: Cinzel nos rótulos, Spectral no resto, piso 12)
+   e o couro da mesa; os botões, a ordem e o que cada um faz não mudam. */
 function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampado, emLuta, bloqueado, aoAcampar, aoPassarTempo, precoDoAcampamento }) {
   if (!aberto) return null;
   let est = null;
@@ -1637,11 +1640,11 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampa
   const paradoAgora = !!(bloqueado || acampado || emLuta);
   return (
     <div className="tv-fade absolute left-0 right-0 px-3 pb-3" style={{ top: "100%", zIndex: 45 }}>
-      <div className="rounded-2xl p-3" style={{ background: T.panel, border: "1px solid " + T.mundo, boxShadow: "0 18px 40px rgba(0,0,0,.55)" }}>
+      <div data-painel-do-tempo="" className="rounded-2xl p-3" style={{ background: T.couroBaixo, border: "1px solid " + T.latao, boxShadow: "0 18px 40px rgba(0,0,0,.55)" }}>
         <div className="flex items-center justify-between gap-3 mb-2">
-          <span className="tv-mono uppercase tracking-widest" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>O tempo</span>
-          <button onClick={aoFechar} aria-label="Fechar o tempo" className="tv-anel-foco tv-mono rounded-lg px-3"
-            style={{ minWidth: ALVOS.piso, minHeight: ALVOS.piso, fontSize: TIPOS.maquina, color: T.inkDim, border: "1px solid " + T.line }}>fechar</button>
+          <span style={{ ...letraDaMesa("rotulo"), color: T.inkMeio }}>O tempo</span>
+          <button onClick={aoFechar} aria-label="Fechar o tempo" className="tv-anel-foco rounded-lg px-3"
+            style={{ minWidth: ALVOS.piso, minHeight: ALVOS.piso, ...letraDaMesa("servico"), color: T.ink, border: "1px solid " + T.latao }}>fechar</button>
         </div>
 
         {/* 1 · O ÚNICO QUE MUDA O ESTADO DO HERÓI, logo o primeiro. E ele
@@ -1656,7 +1659,7 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampa
                 cortado — logo o único controlo desta etapa cujo trabalho É
                 dizer o que custa ficava sem o dizer. Uma linha por coisa. */}
             <span className="tv-body flex items-center gap-2" style={{ fontSize: TIPOS.corpo, color: T.ink }}><Glifo nome="descanso" tamanho={16} />Montar acampamento</span>
-            <span className="tv-mono block" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>{precoDoAcampamento}</span>
+            <span className="block" style={{ ...letraDaMesa("notaDoMestre"), color: T.inkMeio }}>{precoDoAcampamento}</span>
           </button>
         )}
 
@@ -1664,12 +1667,12 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampa
                que o campo de texto NÃO resolve — escrever "espero doze
                horas" faz o Mestre narrar doze horas e não move o relógio,
                não vira o dia, não cobra a renda nem muda o clima. */}
-        <div className="tv-mono uppercase tracking-widest mb-1.5" style={{ fontSize: TIPOS.maquina, color: T.inkDim }}>Esperar · quanto o mundo se move</div>
+        <div className="mb-1.5" style={{ ...letraDaMesa("rotulo"), color: T.inkMeio }}>Esperar · quanto o mundo se move</div>
         <div className="flex flex-wrap gap-2 mb-2.5">
           {[1, 2, 4, 6, 8, 12, 24].map((h) => (
             <button key={h} onClick={() => aoPassarTempo(h)} disabled={paradoAgora} aria-label={`Esperar ${h}h, até ${luzDaHora(Math.floor(minuto / 60) + h)}`}
-              className="tv-anel-foco tv-mono rounded-lg px-3 flex flex-col items-center justify-center gap-0.5"
-              style={{ minWidth: ALVOS.piso, minHeight: ALVOS.piso, fontSize: TIPOS.maquina, background: T.panelSoft, border: "1px solid " + T.line, color: T.ink, opacity: paradoAgora ? 0.45 : 1 }}><Glifo nome={luzDaHora(Math.floor(minuto / 60) + h)} tamanho={12} />{h}h</button>
+              className="tv-anel-foco rounded-lg px-3 flex flex-col items-center justify-center gap-0.5"
+              style={{ minWidth: ALVOS.piso, minHeight: ALVOS.piso, ...letraDaMesa("rotulo"), background: T.couro, border: "1px solid " + alfa(T.latao, 0.6), color: T.ink, opacity: paradoAgora ? 0.45 : 1 }}><Glifo nome={luzDaHora(Math.floor(minuto / 60) + h)} tamanho={12} />{h}h</button>
           ))}
         </div>
 
@@ -1683,7 +1686,7 @@ function OPainelDoTempo({ aberto, aoFechar, dia, minuto, clima, relogios, acampa
                o diz por palavras em todos os turnos. Recolher é mudar de
                casa, nunca apagar — e entre A e B ele teria ficado sem
                nenhuma, que é a razão de ter passado por aqui.) */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 tv-mono" style={{ fontSize: TIPOS.maquina, color: T.mundo }}>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1" style={{ ...letraDaMesa("servico"), color: T.ink }}>
           <span className="inline-flex items-center gap-1.5" title={est ? est.nome + " — " + est.nota : ""}><Glifo nome={luzDaHora(horaTxt(minuto))} tamanho={16} rotulo={luzDaHora(horaTxt(minuto))} />{horaTxt(minuto)} · {dataTxt(dia)}{est ? " · " + est.nome.toLowerCase() : ""}</span>
           {clima && clima.id !== "ensolarado" && <span title={clima.nota}>{clima.rotulo}</span>}
         </div>
@@ -5601,6 +5604,8 @@ export default function Taverna() {
      novo e aditivo da config (taverna_cfg_texto), fora do save, como as
      rolagens: a página lê-o pela variável CSS --tv-texto. */
   const [escudoAberto, setEscudoAberto] = useState(false);
+  /* V4b · a gaveta da bandeja no telefone (F2: sobe da borda da mesa) */
+  const [gavetaAberta, setGavetaAberta] = useState(false);
   const cantoDoEscudoRef = useRef(null);
   const [tamanhoDoTexto, setTamanhoDoTexto] = useState(() => { try { return tamanhoDoTextoGuardado(localStorage.getItem(TAMANHO_DO_TEXTO.chave)); } catch { return TAMANHO_DO_TEXTO.padrao; } });
   useEffect(() => { try { document.documentElement.style.setProperty(TAMANHO_DO_TEXTO.variavel, String(tamanhoDoTexto)); } catch (e) { calou("V2 · o tamanho do texto na página", e); } }, [tamanhoDoTexto]);
@@ -27263,7 +27268,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
   const paginaDaFolha = (() => {
     try {
       /* V4: na mesa cheia o papel é a página inteira (main), e a folha encosta nela */
-      if (mesaLarga) return { margin: 0 };
+      /* V4b: no telefone também — a casca do telefone põe a página a 8 das bordas */
+      if (mesaLarga || !emBatalha) return { margin: 0 };
       const lado = (trilhoAVista ? HUD_DA_MESA.mesa.borda : HUD_DA_MESA.telefone.borda) + HUD_DA_MESA.telefone.livro.margem;
       return { marginLeft: lado, marginRight: lado, marginTop: HUD_DA_MESA.telefone.vao };
     } catch (e) { calou("a margem da folha", e); return undefined; }
@@ -27347,7 +27353,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
      uma mesa que estoura dá null, e a casca fica só com a página. */
   const dadosDaMesaCheia = (() => {
     try {
-      if (fase !== "jogo" || !personagem || !mesaLarga || emBatalha) return null;
+      /* V4b (16/11): também no telefone — a faixa, a estampa e as portas leem daqui */
+      if (fase !== "jogo" || !personagem || emBatalha) return null;
       const pm = oPMConta(personagem);
       const cartaDe = (e, aoTocar, ehHeroi) => {
         const vida = Number(e.vida) || 0, vidaMax = Number(e.vidaMax) || 0;
@@ -27616,7 +27623,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         } catch (e) { calou("BQ7 · a escolha na soleira", e); }
       }
       try {
-        if (!mesaLarga && !lanceNoAr && bandeja[0] && bandeja[0].n !== bandejaVista) {
+        /* V4b: com a mesa do telefone o último dado mora na bandeja de bolso */
+        if (!mesaLarga && !dadosDaMesaCheia && !lanceNoAr && bandeja[0] && bandeja[0].n !== bandejaVista) {
           momentos.dado = { chave: bandeja[0].n, conteudo: <Bandeja lancamentos={[bandeja[0]]} fresca />, rotulo: "O dado na mesa" };
         }
       } catch (e) { calou("o dado na soleira", e); }
@@ -28287,7 +28295,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               estampa da página, a hora para a vela-relógio, as pistas para as
               cartas na mesa e quem está em cena para a coluna do grupo. No
               telefone (e na estreita) ela fica, com o canto do escudo. */}
-          {!mesaLarga ? (
+          {/* V4b · A FAIXA DO TELEFONE (F1 a 375): o grupo com PV e PM, as quatro pilhas e a
+              vela com a hora, em 48. A barra de antes (o lugar, as pistas, a hora em mono)
+              aposentou-se: o lugar mora na estampa, quem está em cena e as pistas logo
+              por baixo dela, o escudo na quinta porta da borda. A barra só volta se os
+              dados da mesa calarem (rede, nunca a tela de todo dia). */}
+          {!mesaLarga && dadosDaMesaCheia ? (
+          <LimiteDasFichas key="v4b-faixa">
+            <FaixaDoTelefone heroi={dadosDaMesaCheia.heroi} companheiros={dadosDaMesaCheia.companheiros} recursos={dadosDaMesaCheia.recursos}
+              hora={horaTxt(minuto)} prazo={dadosDaMesaCheia.prazo} falaDaHora={dadosDaMesaCheia.falaDaHora}
+              tempoAberto={tempoAberto} aoAbrirTempo={() => { try { setTempoAberto((v) => !v); } catch (e) { calou("V4b · a vela da faixa abre o tempo", e); } }}
+              aoAbrirRecursos={abrirOsMantimentos}>
+              <span style={{ position: "absolute", left: "50%", bottom: 2, transform: "translateX(-50%)", pointerEvents: "none" }}><SinalDeGuardado visivel={!!guardadoAgora} /></span>
+              {statusSave === "erro" ? <span role="alert" style={{ position: "absolute", left: "50%", bottom: 2, transform: "translateX(-50%)", color: T.lacreLume, background: T.couroBaixo, padding: "0 6px", ...letraDaMesa("rotulo") }}><Glifo nome="aviso" tamanho={12} /> não guardou</span> : null}
+            </FaixaDoTelefone>
+          </LimiteDasFichas>
+          ) : !mesaLarga ? (
           <LimiteDasFichas>
             <BarraDoMestre telefone={!mesaLarga} {...(() => {
               try {
@@ -28419,7 +28442,20 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
               entre o grupo (esquerda) e as peças (direita), em painel-mesa.jsx.
               A coluna do grupo de TL 3 e o trilho de objetos saíram; as portas
               são as mesmas. Abaixo de 1180 a casca devolve só a página. */}
-          <CascaDaMesa tresZonas={!!(mesaLarga && dadosDaMesaCheia)} composicao={composicaoDaMesa} luz={dadosDaMesaCheia ? dadosDaMesaCheia.luz : null}
+          <CascaDaMesa tresZonas={!!(mesaLarga && dadosDaMesaCheia)} telefone={!!(!mesaLarga && dadosDaMesaCheia)} composicao={composicaoDaMesa} luz={dadosDaMesaCheia ? dadosDaMesaCheia.luz : null}
+            borda={!mesaLarga && dadosDaMesaCheia ? (
+              <LimiteDasFichas key="v4b-borda">
+                <BordaDoTelefone objetos={dadosDaMesaCheia.objetos} escudoAberto={escudoAberto} refEscudo={cantoDoEscudoRef} largura={composicaoDaMesa.pagina ? composicaoDaMesa.pagina + 16 : 0}
+                  aoAbrirEscudo={() => { try { setEscudoAberto(true); } catch (e) { calou("V4b · abrir o escudo pela porta", e); } }} />
+              </LimiteDasFichas>
+            ) : null}
+            gaveta={!mesaLarga && dadosDaMesaCheia ? (
+              <LimiteDasFichas key="v4b-gaveta">
+                <GavetaDaBandeja aberta={gavetaAberta} aoFechar={() => { try { setGavetaAberta(false); } catch (e) { calou("V4b · fechar a gaveta", e); } }}>
+                  {bandeja.length > 0 ? <Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca /> : null}
+                </GavetaDaBandeja>
+              </LimiteDasFichas>
+            ) : null}
             esquerda={dadosDaMesaCheia ? (
               <LimiteDasFichas key="v4-esquerda">
                 <ColunaDoGrupo composicao={composicaoDaMesa} heroi={dadosDaMesaCheia.heroi} companheiros={dadosDaMesaCheia.companheiros}
@@ -28429,6 +28465,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                         onToque={tocarFicha} onAbrir={abrirNaGaveta} onFechar={fecharFicha} onVerbo={verboDaFicha} baixa={alturaDaJanela < FICHAS.baixaAltura} />
                     </LimiteDasFichas>
                   )}
+                  ninguemEmCena={!fogueiraNaPagina && !fichasEmCena.length}
                   quest={dadosDaMesaCheia.quest} pistas={dadosDaMesaCheia.pistas} aoAbrirPistas={alternarOQuadro} refPistas={sinalDoQuadroRef} pistasAbertas={quadroAberto} />
               </LimiteDasFichas>
             ) : null}
@@ -28445,7 +28482,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   </span>} />
               </LimiteDasFichas>
             ) : null}>
-          <main className={"flex-1 flex flex-col min-w-0" + (mesaLarga && dadosDaMesaCheia ? " tv-folha" : "")} style={mesaLarga && dadosDaMesaCheia ? { width: "100%", minHeight: 0 } : trilhoAVista ? { maxWidth: composicaoDaMesa.pagina || HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga, marginLeft: "auto", marginRight: "auto" } : undefined}>
+          <main className={"flex-1 flex flex-col min-w-0" + (dadosDaMesaCheia ? " tv-folha" : "")} style={dadosDaMesaCheia ? { width: "100%", minHeight: 0 } : trilhoAVista ? { maxWidth: composicaoDaMesa.pagina || HUD_DA_MESA.mesa.livro.largura + 2 * HUD_DA_MESA.mesa.folga, marginLeft: "auto", marginRight: "auto" } : undefined}>
             {/* ---------------- O PAINEL DA NARRATIVA (v9.170) ----------------
                 Vem de `mesa-jogo-v2`: o log deixa de flutuar no fundo da tela
                 e passa a morar numa moldura própria, com um fundo um tom
@@ -28507,8 +28544,31 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             {dadosDaMesaCheia && dadosDaMesaCheia.estampa ? (
               <LimiteDasFichas key="v4-estampa">
                 <EstampaDaPagina {...dadosDaMesaCheia.estampa} aberta={horizonteAberto && !horizontePreso}
-                  aoTocar={dadosMapaVivo && !horizontePreso ? () => { try { setHorizonteAberto((v) => !v); } catch (err) { calou("V4 · a estampa abre o horizonte", err); } } : null} />
+                  aoTocar={dadosMapaVivo && !horizontePreso ? () => { try { setHorizonteAberto((v) => !v); } catch (err) { calou("V4 · a estampa abre o horizonte", err); } } : null}
+                  bolso={!mesaLarga ? (<>
+                    {pistasDaTela && !fogueiraNaPagina ? (
+                      <span style={{ flex: "none", alignSelf: "center" }}><LimiteDasFichas key="pistas-tel">
+                        <SinalDoQuadro sinal={pistasDaTela.sinal} telefone novo={pistasDaTela.novo} aceso={sinalAceso}
+                          aberto={quadroAberto} aoAbrir={alternarOQuadro} botaoRef={sinalDoQuadroRef} />
+                      </LimiteDasFichas></span>
+                    ) : null}
+                    <BandejaDeBolso lancamentos={bandeja} emVoo={!!lanceNoAr} aberta={gavetaAberta}
+                      aoTocar={() => { try { setGavetaAberta((v) => !v); setBandejaVista(bandeja[0] ? bandeja[0].n : bandejaVista); } catch (err) { calou("V4b · o bolso abre a gaveta", err); } }} />
+                  </>) : null} />
               </LimiteDasFichas>
+            ) : null}
+            {/* V4b · no telefone, quem está em cena mora logo por baixo da estampa (a
+                barra de 48 que o levava aposentou-se); sem ninguém, nada. As pistas
+                pousam na linha da estampa, ao lado do bolso. */}
+            {!mesaLarga && dadosDaMesaCheia && !fogueiraNaPagina && fichasEmCena.length ? (
+              <div data-em-cena-no-telefone="" className="flex items-center" style={{ position: "relative", zIndex: 2, flex: "none", gap: 8, padding: "4px 18px 0", minHeight: 44 }}>
+                {fichasEmCena.length ? (
+                  <LimiteDasFichas key={"em-cena-tel|" + fichasEmCena.map((x) => x.id).join("|")}>
+                    <EmCena itens={fichasEmCena} escrita={fichaEscrita} aberta={cartaoNaProsa ? null : fichaAberta} nomeados={nomeadosNaProsa}
+                      onToque={tocarFicha} onAbrir={abrirNaGaveta} onFechar={fecharFicha} onVerbo={verboDaFicha} baixa={alturaDaJanela < FICHAS.baixaAltura} />
+                  </LimiteDasFichas>
+                ) : null}
+              </div>
             ) : null}
             {/* TL 3 · A PÁGINA É A FOLHA (07/11, formas.md §TL 3, 8). O cartão escuro à
                 volta da prosa e a folha de cada resposta eram três molduras umas dentro
@@ -29460,7 +29520,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 Puxar a pega abre a mesa inteira (307:805) — as cartas grandes, a
                 Bandeja, os rótulos. Na mesa larga as cartas sobem para a coluna do
                 grupo e esta fila sai. Calada pelo LimiteDasFichas. */}
-            {!mesaLarga ? (
+            {/* V4b: a tira aposentou-se — as portas moram na borda da mesa (CascaDaMesa);
+                ela só volta se os dados da mesa calarem */}
+            {!mesaLarga && !dadosDaMesaCheia ? (
               <LimiteDasFichas key="tira-da-mesa">
                 <TiraDaMesa heroi={personagem} grupo={grupoDaMesa} comPMDoHeroi={oPMConta(personagem)} destino={destinoDaCarta}
                   fichaAberta={!!aba} fichaNova={marcasDaPorta.includes("gestao") && !aba}

@@ -21,6 +21,7 @@
 import React from "react";
 import { T } from "./constantes.js";
 import { tipoDe, GATILHOS } from "./relogios.js";
+import { TIPOS } from "./estilo.js";
 
 const COR = { danger: T.danger, ok: T.ok, amber: T.amber };
 
@@ -66,10 +67,10 @@ export function FaixaRelogios({ relogios = [] }) {
             style={{ background: T.panel, border: `1px solid ${quase ? cor : T.line}` }}>
             <Anel r={r} />
             <div className="min-w-0">
-              <div className="tv-body text-[11px] leading-tight truncate" style={{ color: T.ink, maxWidth: 180 }}>
+              <div className="tv-body leading-tight truncate" style={{ color: T.ink, maxWidth: 180, fontSize: TIPOS.rotulo }}>
                 {t.icone} {r.nome}
               </div>
-              <div className="tv-mono text-[8px] leading-tight" style={{ color: quase ? cor : T.inkDim }}>
+              <div className="tv-body leading-tight" style={{ color: quase ? cor : T.inkDim, fontSize: TIPOS.rotulo }}>
                 {r.cheios}/{r.segmentos}{quase ? " · quase lá" : ""}
               </div>
             </div>

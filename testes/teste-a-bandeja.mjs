@@ -114,7 +114,9 @@ console.log("\nas três linhas na coluna (16/11)");
   t("em coluna: a letra da mesa, sem mono, sem corte, sem as 20 faces",
     ramo.length > 100 && /letraDaMesa\("contagem"\)/.test(ramo) && !/tv-mono/.test(ramo) && !/ellipsis|nowrap/.test(ramo) && !/FacesDoD20/.test(ramo));
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-  t("a zona direita e a tira do telefone pedem a bandeja em coluna", (app.match(/<Bandeja naColuna /g) || []).length === 2);
+  /* V4b (16/11): a gaveta da bandeja do telefone é a terceira casa em coluna (a tira de 72
+     ficou só de rede, quando os dados da mesa calam) — antes eram duas. */
+  t("a zona direita, a gaveta do telefone e a tira de rede pedem a bandeja em coluna", (app.match(/<Bandeja naColuna /g) || []).length === 3);
 }
 
 console.log(`\na bandeja: ${bons} ok · ${maus} falhas`);

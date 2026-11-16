@@ -12,13 +12,17 @@
    · o Códex com porta a 375 (o grimório na tira);
    · a voz do sistema na folha: nota do Mestre ou lacre, nunca mono;
    · a fiação no App: a barra de topo fora da mesa larga, o trilho antigo
-     fora, a casca à volta da página.
+     fora, a casca à volta da página;
+   · V4b (16/11) — a mesa no celular: a faixa de 48, a estampa com a
+     bandeja de bolso, as cinco portas da borda, a gaveta, a janela baixa,
+     um âmbar só, o piso de letra; e a 1440 o «Em cena» vazio e o painel do
+     tempo na letra da mesa.
 */
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { buildSync } from "esbuild";
-import { COMPOSICAO_DA_MESA, HUD_DA_MESA, PECAS_DA_MESA, LUZ_DA_MESA } from "../src/estilo.js";
+import { COMPOSICAO_DA_MESA, HUD_DA_MESA, PECAS_DA_MESA, LUZ_DA_MESA, MESA_NO_TELEFONE, T } from "../src/estilo.js";
 import { composicaoDaJanela, temTresZonas, estadoDaEstampa, cenaDaEstampa, CENAS_DA_ESTAMPA, caixasDaComposicao, coberturaDaMesa, luzDaMesa } from "../src/mesa-do-mestre.js";
 
 let bons = 0, maus = 0;
@@ -80,11 +84,12 @@ sec("4 · o render das três zonas");
 const ENTRADA = `
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { MesaCheia, CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina, VeuDaPagina, fundoDaLuz, cssDaPaginaNaMesa } from "./painel-mesa.jsx";
+import { MesaCheia, CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina, VeuDaPagina, fundoDaLuz, cssDaPaginaNaMesa, FaixaDoTelefone, BordaDoTelefone, BandejaDeBolso, GavetaDaBandeja } from "./painel-mesa.jsx";
+import { DesenhoDoEscudo } from "./pecas-da-mesa.jsx";
 import { TiraDaMesa, ObjetoDaMesa } from "./painel-mesa-do-mestre.jsx";
 import { tipoDaNota, TIPO_DA_NOTA } from "./painel-relato.jsx";
 export const html = (el) => renderToStaticMarkup(el);
-export { React, MesaCheia, CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina, VeuDaPagina, fundoDaLuz, cssDaPaginaNaMesa, TiraDaMesa, ObjetoDaMesa, tipoDaNota, TIPO_DA_NOTA };
+export { React, MesaCheia, CascaDaMesa, ColunaDoGrupo, ColunaDasPecas, EstampaDaPagina, VeuDaPagina, fundoDaLuz, cssDaPaginaNaMesa, TiraDaMesa, ObjetoDaMesa, tipoDaNota, TIPO_DA_NOTA, FaixaDoTelefone, BordaDoTelefone, BandejaDeBolso, GavetaDaBandeja, DesenhoDoEscudo };
 `;
 const saida = path.join(AQUI, `.tmp-painel-mesa-${process.pid}.mjs`);
 buildSync({
@@ -148,7 +153,10 @@ t("a linha do sistema é NotaDoMestre; a porta é tira de papel com seta", relat
 
 sec("7 · a fiação no App");
 const APP = ler("App.jsx");
-t("a barra de topo só fora da mesa larga", /\{!mesaLarga \? \(\s*<LimiteDasFichas>\s*<BarraDoMestre/.test(APP));
+/* V4b (16/11): no telefone a faixa de 48 do F1 toma o lugar da barra; a barra de antes
+   fica só de rede, quando os dados da mesa calam (antes: «a barra de topo só fora da
+   mesa larga», que deixou de ser verdade — fora da mesa larga quem aparece é a faixa). */
+t("fora da mesa larga, a faixa; a barra só se os dados da mesa calarem", /\{!mesaLarga && dadosDaMesaCheia \? \(\s*<LimiteDasFichas key="v4b-faixa">\s*<FaixaDoTelefone/.test(APP) && /\) : !mesaLarga \? \(\s*<LimiteDasFichas>\s*<BarraDoMestre/.test(APP));
 t("o trilho antigo e a coluna do grupo de TL 3 saíram", !APP.includes('<nav aria-label="Painéis"') && !APP.includes('<aside aria-label="O grupo" className="shrink-0'));
 t("a casca abraça a página", APP.includes("<CascaDaMesa tresZonas={!!(mesaLarga && dadosDaMesaCheia)}") && /<\/main>\s*<\/CascaDaMesa>/.test(APP));
 t("os dados da mesa em calou", /const dadosDaMesaCheia = \(\(\) => \{[\s\S]{0,200}try \{/.test(APP) && APP.includes('calou("V4 · a mesa cheia", e)'));
@@ -167,6 +175,83 @@ console.log("\n8 · o telefone: a placa e o nome do lugar (16/11)");
   t("o nome do lugar no telefone quebra em até duas linhas, sem corte numa linha só",
     /WebkitLineClamp: BARRA_LETRA\.lugar\.linhas/.test(barra) && /telefone \? "tv-display" : "tv-display truncate"/.test(barra));
   t("o nome longo desce para a letra longa (≥ piso 13)", /telefoneLongo: (1[3-9])/.test(barra));
+}
+
+/* V4b (16/11/2026) — A MESA NO CELULAR. O público chega por link no celular, e a 375 a
+   tela estava pela metade do redesenho: a barra e a tira antigas, dois botões âmbar
+   juntos, sem a cena no alto da página, sem a casa da bandeja. Medido por CDP a 375 × 812
+   (IA muda): a prosa útil passou de 372 px (com a fila das pistas) a 424, um âmbar só,
+   cinco portas de 70 × 68, nenhum texto abaixo de 12 px, sem rolagem lateral. */
+console.log("\n9 · a mesa no celular (V4b)");
+{
+  const MT = MESA_NO_TELEFONE;
+  t("as medidas do F1 a 375: faixa 48, retratos de 44, borda 76", MT.faixa.alto === 48 && MT.faixa.retrato === 44 && MT.borda.alto === 76);
+  t("cinco portas, nesta ordem: Livro · Carta · Bolsa · Grimório · Escudo", JSON.stringify(MT.borda.portas) === JSON.stringify(["livro", "carta", "bolsa", "grimorio", "escudo"]));
+  t("cada porta tem 70 × 68 (alvo ≥ 44 nos dois lados)", MT.borda.porta.largura === 70 && MT.borda.porta.alto === 68 && Math.min(MT.borda.porta.largura, MT.borda.porta.alto) >= 44);
+  t("a bandeja de bolso tem 56 × 48 com feltro 46 × 38 e o dado a 40 (F2)", MT.bolso.largura === 56 && MT.bolso.alto === 48 && MT.bolso.feltro.largura === 46 && MT.bolso.feltro.alto === 38 && MT.bolso.dado === 40);
+  t("a página a 8 das bordas, prosa com margens de 18", MT.pagina.margem === 8 && MT.pagina.prosa === 18);
+  t("768, 800 e 1024 são a estreita (página a 680, centrada); 375 e 390, o telefone", ["768", "800", "1024"].every((w) => composicaoDaJanela(+w).nome === "estreita") && composicaoDaJanela(390).nome === "telefone");
+
+  const faixa = R.html(h(R.FaixaDoTelefone, { heroi, companheiros: [comp, { nome: "Terceiro", vida: 5, vidaMax: 5 }], recursos: { racoes: 8, agua: 8, tochas: 4, moedas: 150 }, hora: "08:10", prazo: "falta 1 noite", falaDaHora: "O tempo, de manhã", aoAbrirTempo: () => {}, aoAbrirRecursos: () => {} }));
+  t("a faixa: dois retratos (o terceiro fica de fora), com PV e PM por extenso", (faixa.match(/Abrir a ficha\./g) || []).length === 2 && faixa.includes("Saoirse: 18 de 18 de vida, 6 de 6 de magia") && !faixa.includes("Terceiro"));
+  t("a faixa: as quatro pilhas e a vela com a hora e o prazo", (faixa.match(/data-pilha=/g) || []).length === 4 && faixa.includes(">08:10<") && faixa.includes("data-prazo") && faixa.includes("falta 1 noite"));
+  t("a faixa tem 48 de altura", faixa.includes("height:48px"));
+
+  const objetosTel = ["livro", "carta", "bolsa", "grimorio"].map((o) => ({ chave: o, objeto: o, aoAbrir: () => {}, erguido: o === "carta" }));
+  const borda = R.html(h(R.BordaDoTelefone, { objetos: objetosTel, aoAbrirEscudo: () => {} }));
+  t("a borda: as cinco portas, todas presentes e tocáveis", ["livro", "carta", "bolsa", "grimorio", "escudo"].every((p) => borda.includes(`data-porta="${p}"`)) && !borda.includes("disabled"));
+  t("a borda: cada porta tem nome acessível e rótulo escrito", ["Livro", "Carta", "Bolsa", "Grimório", "Escudo"].every((n) => borda.includes(`>${n}<`)) && borda.includes("O escudo do Mestre"));
+  t("a porta aberta diz que está aberta", /data-porta="carta" aria-label="Carta" aria-expanded="true"/.test(borda));
+  t("o escudo é o mesmo desenho do canto (DesenhoDoEscudo)", typeof R.DesenhoDoEscudo === "function" && borda.includes("M32 22l7 4v8l-7 4-7-4v-8z"));
+  t("sem objetos a porta fica, mas não finge que abre", (() => { const b = R.html(h(R.BordaDoTelefone, { objetos: [] })); return (b.match(/data-porta=/g) || []).length === 5 && (b.match(/disabled=""/g) || []).length === 5; })());
+
+  /* um âmbar por tela: nada da faixa, da borda ou do bolso pinta o chão de âmbar —
+     a ação principal (o dizer, ou o «Tentar de novo» da falha) é a única */
+  const vazia = R.html(h(R.BandejaDeBolso, { lancamentos: [] }));
+  const cheia = R.html(h(R.BandejaDeBolso, { lancamentos: [{ n: 3, dados: [{ faces: 20, valor: 14 }], desfecho: "sucesso" }] }));
+  const amb = new RegExp("background:\\s*" + T.amber.replace("#", "#?"), "i");
+  t("um âmbar só: a faixa, a borda e o bolso não pintam âmbar", ![faixa, borda, vazia, cheia].some((x) => amb.test(x)));
+  t("as propostas no pé vestem o papel (osso), não o âmbar, também no telefone", (() => { const c = R.cssDaPaginaNaMesa("[data-mesa-telefone]", 18); return c.includes("[data-mesa-telefone] [aria-label='O que o mundo oferece agora'] button { background: " + T.ossoLume) && c.includes("padding-inline: 18px"); })());
+  t("o bolso: vazio diz que espera; cheio diz o último dado", vazia.includes('data-bandeja-de-bolso="vazia"') && cheia.includes('data-bandeja-de-bolso="cheia"') && cheia.includes("o último deu 14") && vazia.includes("width:56px;height:48px"));
+  t("o bolso mostra o de antes enquanto o lance novo rola (emVoo)", R.html(h(R.BandejaDeBolso, { emVoo: true, lancamentos: [{ n: 4, dados: [{ faces: 20, valor: 2 }] }, { n: 3, dados: [{ faces: 20, valor: 14 }] }] })).includes("o último deu 14"));
+
+  const fechada = R.html(h(R.GavetaDaBandeja, { aberta: false }, h("span", null, "historico")));
+  const aberta = R.html(h(R.GavetaDaBandeja, { aberta: true, aoFechar: () => {} }, h("span", null, "historico")));
+  t("a gaveta fechada fica montada, escondida e fora da leitura", fechada.includes('data-gaveta-da-bandeja="fechada"') && fechada.includes('aria-hidden="true"') && fechada.includes("translateY(110%)") && fechada.includes("historico"));
+  t("a gaveta aberta sobe da borda (260 ms) e fecha ao toque fora (o véu)", aberta.includes("translateY(0)") && aberta.includes("data-veu-da-gaveta") && MT.gaveta.sobe === 260 && MT.gaveta.curva === "cubic-bezier(.2,.8,.2,1)" && aberta.includes("bottom:" + MT.borda.alto + "px"));
+
+  const est = R.html(h(R.EstampaDaPagina, { estado: "estreita", cena: "floresta", lugar: "Monte Profundo", sub: "de manhã", aoTocar: () => {}, bolso: h("span", { "data-um-bolso": "" }) }));
+  t("no telefone a estampa leva a cena e o bolso na ponta (dois botões irmãos)", est.includes("data-estampa-com-bolso") && est.includes("/cenas/floresta.webp") && est.includes("data-um-bolso") && est.includes("Abrir o horizonte."));
+
+  const tel = (nome) => R.html(h(R.CascaDaMesa, { telefone: true, composicao: COMPOSICAO_DA_MESA.faixas.find((x) => x.nome === nome), luz: luzDaMesa({ hora: 9 }), borda: h("nav", { "data-borda-do-telefone": "" }), gaveta: h("i", { "data-g": "" }) }, h("main", null, "a página")));
+  /* o React escreve o > da folha de estilo como &gt; no HTML do servidor; o navegador lê > */
+  const c375 = tel("telefone").replace(/&gt;/g, ">").replace(/&#x27;/g, "'"), c800 = tel("estreita");
+  t("a casca do telefone: a página, a gaveta e a borda, e o pé do F1 por CSS", c375.includes('data-mesa-telefone="telefone"') && c375.includes("a página") && c375.includes("data-g") && c375.includes("data-borda-do-telefone") && c375.includes("[data-mesa-telefone] .tv-pilula-do-campo"));
+  t("entre 768 e 1179 a página para em 680 (+ as margens de 8), centrada; no telefone, sem teto", c800.includes("max-width:696px") && !c375.includes("max-width:696px"));
+  t("quando o Mestre pede o dado, «Rolar» é o âmbar da tela (F2-375-1)", c375.includes("[aria-label='O Mestre pede o dado'] button[aria-label^='Rolar'] { background: " + T.amber));
+  t("o nome do lugar no bolso corta com reticências (F2: faixa − bolso)", c375.includes("tv-estampa-no-telefone figcaption > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }"));
+  t("a janela baixa: deitada, a borda vira trilho à direita; com o teclado, sai de vista", c375.includes("@media (max-height: 519px) and (min-width: 568px)") && c375.includes("flex-direction: row !important") && c375.includes("@media (max-height: 519px) and (max-width: 567px) { [data-mesa-telefone] > [data-borda-do-telefone] { display: none; }"));
+  t("a régua da janela baixa é tabela (≥ 6 linhas de 28)", MT.janelaBaixa.linhasMinimas === 6 && MT.janelaBaixa.entrelinha === 28 && MT.janelaBaixa.alto === 520);
+  const tam = [...(faixa + borda + cheia + est).matchAll(/font-size:(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
+  t("nenhuma letra fixa abaixo de 12 px no telefone (o piso vem de letraDaMesa)", tam.every((n) => n >= 12), tam.filter((n) => n < 12).join(","));
+  t("nada de mono na faixa, na borda e no bolso", !/Mono|tv-mono/.test(faixa + borda + cheia));
+
+  const APP = ler("App.jsx");
+  t("os dados da mesa valem também no telefone (não pedem mais a mesa larga)", APP.includes('if (fase !== "jogo" || !personagem || emBatalha) return null;') && !APP.includes('if (fase !== "jogo" || !personagem || !mesaLarga || emBatalha) return null;'));
+  t("a casca do telefone abraça a página com a borda e a gaveta, caladas", APP.includes("telefone={!!(!mesaLarga && dadosDaMesaCheia)}") && APP.includes('<LimiteDasFichas key="v4b-borda">') && APP.includes('<LimiteDasFichas key="v4b-gaveta">') && APP.includes('calou("V4b · abrir o escudo pela porta"'));
+  t("a tira de 72 só de rede, quando os dados da mesa calam", /\{!mesaLarga && !dadosDaMesaCheia \? \(\s*<LimiteDasFichas key="tira-da-mesa">/.test(APP));
+  t("o bolso abre a gaveta em calou; o dado já não se repete na soleira", APP.includes('calou("V4b · o bolso abre a gaveta"') && APP.includes("if (!mesaLarga && !dadosDaMesaCheia && !lanceNoAr && bandeja[0]"));
+  t("o teclado virtual encolhe a página, não a cobre (interactive-widget)", fs.readFileSync(path.join(AQUI, "..", "index.html"), "utf8").includes("interactive-widget=resizes-content"));
+
+  /* a 1440, o resto */
+  const f1440 = COMPOSICAO_DA_MESA.faixas[0];
+  const sem = R.html(h(R.ColunaDoGrupo, { composicao: f1440, heroi, companheiros: [comp], emCena: null, ninguemEmCena: true }));
+  t("a 1440 sem ficha em cena a zona fica, o lugar vazio sem palavra (a cobertura passa de 68 a 71 %)", sem.includes(">Em cena<") && sem.includes("data-em-cena-vazio") && !sem.includes("Ninguém") && sem.includes("min-height:" + COMPOSICAO_DA_MESA.esquerda.emCenaVazio.alto + "px"));
+  t("na fogueira (ninguemEmCena falso) a zona não aparece", !R.html(h(R.ColunaDoGrupo, { composicao: f1440, heroi, emCena: null })).includes("Em cena"));
+  const tempo = APP.slice(APP.indexOf("function OPainelDoTempo("), APP.indexOf("R13-B · O TOPO DO PAPEL"));
+  t("o painel do tempo veste a letra da mesa: nada de mono nem da letra de máquina", tempo.length > 500 && !tempo.includes("tv-mono") && !tempo.includes("TIPOS.maquina") && tempo.includes('letraDaMesa("rotulo")'));
+  const rel = ler("painel-relogios.jsx");
+  t("os prazos do painel saem dos 8 e 11 px (sobem ao piso)", !rel.includes("text-[8px]") && !rel.includes("text-[11px]"));
 }
 
 console.log(`\n${bons} ok, ${maus} falharam`);

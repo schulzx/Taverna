@@ -1525,11 +1525,34 @@ export const COMPOSICAO_DA_MESA = {
   direita: { bandeja: { alto: 140, raio: 16, teto: 300 }, entreZonas: 28, objetos: { colunas: 2, entreColunas: 32, entreLinhas: 24 } },
   /* a esquerda: o passo dos retratos em cena, a nota da quest (rodada) e as
      cartas de pista */
-  esquerda: { entreZonas: 24, quest: { rodada: -1.2, largura: 304 }, pista: { largura: 132, alto: 150, quantas: 2 } },
+  esquerda: { entreZonas: 24, quest: { rodada: -1.2, largura: 304 }, pista: { largura: 132, alto: 150, quantas: 2 }, emCenaVazio: { alto: 96 } },
   /* o alvo do F1 §1.3: a fração da janela com conteúdo a 1440 */
   alvoDeCobertura: 0.70,
   /* a página: margens de 48 dos lados da prosa e do pé (F1 §6) */
   paginaMargem: 48,
+};
+
+/* A MESA NO TELEFONE (V4b · F1 §6 a 375 · F2 «no celular» · 16/11/2026) —
+   a composição de baixo de 1180 (telefone e estreita). Uma faixa de 48 no
+   alto (dois retratos de 44 com PV e PM, as quatro pilhas, a vela com a
+   hora); a página a 8 das bordas, prosa com margens de 18; a borda da mesa
+   em baixo, 76, com CINCO portas de 70 × 68 (Livro · Carta · Bolsa ·
+   Grimório · Escudo). A bandeja de bolso (56 × 48, feltro 46 × 38, o
+   último dado a 40) mora na ponta da estampa recolhida; tocar abre a gaveta
+   (couro 359 de largura, raio 14, sobe da borda em 260 ms). Entre 768 e
+   1179 a mesma composição com a página a 680 no máximo, centrada (a
+   `pagina` da faixa estreita de COMPOSICAO_DA_MESA). */
+export const MESA_NO_TELEFONE = {
+  faixa: { alto: 48, retrato: 44, raio: 6, aro: 2, lado: 8, retratos: 2, pilha: { largura: 32, disco: { largura: 22, alto: 7 }, passo: 3, discos: 3 }, vela: { largura: 40, cera: 6, alto: 22 } },
+  pagina: { margem: 8, prosa: 18 },
+  borda: { alto: 76, porta: { largura: 70, alto: 68 }, desenho: 40, portas: ["livro", "carta", "bolsa", "grimorio", "escudo"] },
+  bolso: { largura: 56, alto: 48, raio: 10, feltro: { largura: 46, alto: 38 }, dado: 40 },
+  gaveta: { raio: 14, sobe: 260, curva: "cubic-bezier(.2,.8,.2,1)", lado: 8, teto: 0.6 },
+  /* a janela baixa (800 × 451, ou o teclado aberto): abaixo de `alto`, deitada
+     (a partir de `deitada` de largura) a borda vira trilho de `trilho` à
+     direita com portas de `portaNoTrilho`; estreita, a borda sai de vista. A
+     régua: ≥ `linhasMinimas` linhas de `entrelinha` de prosa visíveis. */
+  janelaBaixa: { alto: 520, deitada: 568, trilho: 84, portaNoTrilho: 60, linhasMinimas: 6, entrelinha: 28 },
 };
 
 /* O ESCUDO DO MESTRE (§7): três folhas de couro na mesa larga, uma folha

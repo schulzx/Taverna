@@ -305,6 +305,19 @@ export function ObjetoPousado({ objeto = "livro", rotulo = null, aoAbrir = null,
    O CANTO DO ESCUDO — o objeto que abre o escudo do Mestre. 64 × 64,
    alvo 72 × 84, rótulo «ESC»; 46 no telefone. Sempre no canto.
    ============================================================ */
+/* o desenho do escudo (três folhas de couro com o losango de latão) — o do
+   canto e o da quinta porta da borda do telefone (V4b), um desenho só */
+export function DesenhoDoEscudo({ lado = 64 }) {
+  return (
+    <svg aria-hidden="true" width={lado} height={lado} viewBox="0 0 64 64" style={{ filter: `drop-shadow(0 3px 4px ${alfa(T.couroBaixo, 0.9)})` }}>
+      <path d="M6 14l16-4v44l-16 4z" fill={T.couro} stroke={T.latao} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M22 10h20v44H22z" fill={T.couroAlto} stroke={T.latao} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M42 10l16 4v44l-16-4z" fill={T.couro} stroke={T.latao} strokeWidth="2" strokeLinejoin="round" />
+      <path d="M32 22l7 4v8l-7 4-7-4v-8z" fill="none" stroke={T.lataoLume} strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M32 22v16M25 26l14 8M39 26l-14 8" stroke={T.lataoLume} strokeWidth="1" />
+    </svg>
+  );
+}
 export function CantoDoEscudo({ aoAbrir, telefone = false, aberto = false, refBotao = null }) {
   const C = P.canto;
   const lado = telefone ? C.telefone : C.lado;
@@ -312,13 +325,7 @@ export function CantoDoEscudo({ aoAbrir, telefone = false, aberto = false, refBo
     <button ref={refBotao} type="button" onClick={aoAbrir} aria-label="O escudo do Mestre: som, texto, preferências e sair (Esc)" aria-keyshortcuts="Escape" aria-haspopup="dialog" aria-expanded={aberto}
       className="tv-anel-foco" title="O escudo do Mestre (Esc)"
       style={{ width: telefone ? Math.max(lado, 44) : C.alvo.largura, minHeight: telefone ? Math.max(lado, 44) : C.alvo.alto, display: "inline-flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, padding: 0, background: "transparent", border: 0, cursor: "pointer" }}>
-      <svg aria-hidden="true" width={lado} height={lado} viewBox="0 0 64 64" style={{ filter: `drop-shadow(0 3px 4px ${alfa(T.couroBaixo, 0.9)})` }}>
-        <path d="M6 14l16-4v44l-16 4z" fill={T.couro} stroke={T.latao} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M22 10h20v44H22z" fill={T.couroAlto} stroke={T.latao} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M42 10l16 4v44l-16-4z" fill={T.couro} stroke={T.latao} strokeWidth="2" strokeLinejoin="round" />
-        <path d="M32 22l7 4v8l-7 4-7-4v-8z" fill="none" stroke={T.lataoLume} strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M32 22v16M25 26l14 8M39 26l-14 8" stroke={T.lataoLume} strokeWidth="1" />
-      </svg>
+      <DesenhoDoEscudo lado={lado} />
       {telefone ? null : <span style={{ color: T.inkMeio, ...letraDaMesa("rotulo") }}>Esc</span>}
     </button>
   );
