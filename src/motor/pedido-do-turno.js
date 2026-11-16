@@ -43,6 +43,7 @@ import { celulaDaCidade, celulaDaJornada, resumoCelulaPrompt } from "../celulas.
 import { elencoDaCena, resumoCenaPrompt } from "../cena.js";
 import { cenarioAtivo } from "../cenario.js";
 import { RAIO_EXAME, criarChao, envelopeDoQueFicou, pertoDaqui } from "../chao.js";
+import { oVetoDaMao } from "./a-mao-da-frase.js";
 import { ranksDoPersonagem } from "../classes.js";
 import { ECONOMIA_ACAO_PROMPT, acoesBonusDe, patamarDe, perfilCombate, resumoAcaoDeTurno } from "../combate.js";
 import { resumoCombosPrompt } from "../combos.js";
@@ -313,6 +314,15 @@ export function oPedidoDoTurno(estado, entrada, portas) {
   /* E O VETO ANTES DELA (a 13.ª, 29/10): sem revelação neste turno, se a
      frase ou a cena tocam um boato que o herói conhece, o Mestre não o decide
      (boatos.js#oVetoDoBoato, uma linha no NÃO PODE). */
+  /* S2 (15/11) · O VETO DA MÃO: o que ficou no chão perto (depois do
+     recolhimento da frase, que já correu) não passou à mão do herói — o
+     Narrador não o põe lá, nem pinta coisa nova na bolsa (a-mao-da-frase.js) */
+  const comAMao = (p) => {
+    try {
+      const vetoDaMao = oVetoDaMao(pertoDaqui($ref.chao, $ref.combate ? $ref.combate.heroi : null, RAIO_EXAME));
+      return vetoDaMao ? porNaPauta(p, "naoPode", vetoDaMao) : p;
+    } catch (e) { calou("S2 · o veto da mão", e); return p; }
+  };
   const comOBoato = (p, frase) => {
     boatoDoTurno = null;
     try {
@@ -911,7 +921,7 @@ export function oPedidoDoTurno(estado, entrada, portas) {
   const oficina = $in.oficina;
   const pedidoEsc = $in.pedidoEsc;
   const persAtual = $in.persAtual;
-    const pauta = textoDaPauta(comOBoato(pautaDoTurno(conteudo), conteudo), { turno: $ref.turnoDeRegistro + 1 }); try { const b = oBoatoQueChegou(boatoDoTurno, pauta); boatoDoTurno = null; if (b) { $ref.canone = b.canone; if (b.npcs !== $ref.npcs) { $ref.npcs = b.npcs; setNpcs(b.npcs); } } } catch (e) { calou("o boato da chegada", e); } try { const q = $ref.quemE || {}; const pq = q.pendente; if (pq) $ref.quemE = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = $ref.nomesPendentes; $ref.nomesPendentes = null; if (np && np.linha && pauta.includes(np.linha)) $ref.nomesOferecidos = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
+    const pauta = textoDaPauta(comAMao(comOBoato(pautaDoTurno(conteudo), conteudo)), { turno: $ref.turnoDeRegistro + 1 }); try { const b = oBoatoQueChegou(boatoDoTurno, pauta); boatoDoTurno = null; if (b) { $ref.canone = b.canone; if (b.npcs !== $ref.npcs) { $ref.npcs = b.npcs; setNpcs(b.npcs); } } } catch (e) { calou("o boato da chegada", e); } try { const q = $ref.quemE || {}; const pq = q.pendente; if (pq) $ref.quemE = pauta.includes(pq.linha) ? { ultimas: { ...(q.ultimas || {}), [pq.quem]: pq.turno }, cenas: { ...(q.cenas || {}), [pq.quem]: (Number((q.cenas || {})[pq.quem]) || 0) + 1 }, pendente: null } : { ...q, pendente: null }; } catch (e) { calou("o ritmo do QUEM É", e); } try { confirmarCoracao(pauta); } catch (e) { calou("confirmar o coração", e); } try { const np = $ref.nomesPendentes; $ref.nomesPendentes = null; if (np && np.linha && pauta.includes(np.linha)) $ref.nomesOferecidos = np.nomes; } catch (e) { calou("confirmar os nomes à mão", e); } /* E1: o teto corta a linha dos nomes num turno cheio, e o Narrador ainda tem os da véspera na história (a prova viva: Alba da Pedra, oferecida no turno 7, usada no 8 com a linha cortada) — os oferecidos ficam até a linha voltar com outros */ /* MM-C C2: a batida só conta se coube */ /* MM-C C1: a ficha só conta se chegou ao texto */
     /* guardado antes da resposta: "a luta acabou neste turno" é a
        diferença entre o que havia e o que ficou */
     const combateAntes = !!$ref.combate;

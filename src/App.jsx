@@ -261,6 +261,7 @@ import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura } from "./propostas-da-abertura.js";
+import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
 import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
@@ -26169,6 +26170,23 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       if (salaRef.current || combateRef.current || carregando || rolagem) return false;
       const pm = fichaViva();
       if (pm && pm.morto) return false;
+      /* S2 (15/11) · A MÃO DA FRASE: «apanho o anel» recolhe pelo caminho do
+         botão (recolherDoChao — o envelope «JÁ APLICADO» vai com o turno), e
+         vender ou dar o que não está na bolsa é recusado aqui, antes do
+         Narrador, como a compra sem dinheiro (a-mao-da-frase.js) */
+      try {
+        const nomeDe = (r) => (typeof r === "string" ? r : (r && r.nome) || "");
+        const f0 = pm || personagem || {};
+        const bolsa = [...(f0.inventario || []), ...(f0.equipamento || []), ...Object.values(f0.equipados || {})].map(nomeDe).filter(Boolean);
+        const perto = pertoDaqui(chaoRef.current, null, RAIO_EXAME).map((x) => ({ id: x.id, nome: x.nome }));
+        const mao = aMaoDaFrase(acao, { chao: perto, bolsa });
+        if (mao.pegar.length) recolherDoChao(mao.pegar);
+        if (mao.recusa) {
+          pushMsgs([{ autor: "sistema", texto: mao.recusa.linha }]);
+          setEntrada("");
+          return true;
+        }
+      } catch (e) { calou("S2 · a mão da frase", e); }
       const p = aPropostaDaFrase(leituraDaFrase(acao), estadoDoPedido());
       if (!p) { setPropostaDaFrase(null); setPropostaAberta(false); return false; }
       setPropostaDaFrase(p); setPropostaAberta(false);
