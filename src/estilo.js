@@ -5242,7 +5242,22 @@ export const SUPERFICIES_CSS = `
 
    ESTA CLASSE E SO PARA O QUE VIVE DENTRO DE UM SVG. Fora dele o anel e
    o de cima, e a diferenca nao e gosto: e o que cada superficie sabe
-   pintar. */
+   pintar.
+
+   C5 (15/11, o disco branco): depois de Mover, o App devolve o foco a uma
+   casa por script, e esse foco programatico nao casava com a regra de
+   baixo, so com a do navegador: num Chromium real a casa ganhou
+   outline auto de 4.8px no acento do sistema, e o anel do navegador,
+   escalado pelo viewBox, virou um disco de ~180 px por cima do heroi e
+   das fichas. Por isso o foco simples tem aqui o seu estilo escrito, com
+   outline-style explicito e sem anel nenhum (o foco existe, o leitor de
+   tela anuncia a casa pelo aria-label); o anel da casa e so o de baixo,
+   o do teclado, e vem depois para ganhar no empate. */
+.tv-anel-foco-no-campo:focus {
+  outline-style: solid;
+  outline-width: 0;
+  outline-color: transparent;
+}
 .tv-anel-foco-no-campo:focus-visible {
   outline: ${TELA_DE_BATALHA.casa.anelDoFoco}px solid ${T.ink};
   outline-offset: -${TELA_DE_BATALHA.casa.anelDoFoco}px;

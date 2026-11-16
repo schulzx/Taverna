@@ -458,6 +458,18 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
     /className="tv-anel-foco-no-campo"/.test(GRADE)
     && /\.tv-anel-foco-no-campo:focus-visible/.test(ler("src/estilo.js")),
     "`box-shadow` não pinta em `<rect>`: o anel do SVG tem de ser `outline`.");
+  /* C5 (15/11, o disco branco depois de Mover): o foco programático da casa
+     não pode cair no anel do navegador (outline auto, escalado pelo viewBox).
+     O :focus simples tem o seu estilo escrito — outline-style explícito, sem
+     largura — e vem ANTES do :focus-visible, que ganha no empate. */
+  {
+    const css = ler("src/estilo.js");
+    const iFoco = css.search(/\.tv-anel-foco-no-campo:focus \{[^}]*outline-style: solid;[^}]*outline-width: 0;[^}]*\}/);
+    const iVisivel = css.indexOf(".tv-anel-foco-no-campo:focus-visible");
+    t("a casa no foco programático não ganha o anel do navegador (C5)", iFoco >= 0 && iVisivel > iFoco,
+      "falta .tv-anel-foco-no-campo:focus { outline-style: solid; outline-width: 0 } antes do :focus-visible");
+    t("o anel do teclado continua sólido", /\.tv-anel-foco-no-campo:focus-visible \{\s*outline: \$\{TELA_DE_BATALHA\.casa\.anelDoFoco\}px solid/.test(css));
+  }
   /* e o controle que abre a única vista onde a luta inteira se vê não pode
      ser o mais pequeno da tela: media 68 × 19 contra o piso de 48 */
   /* MOVIDA EM B1b (06/10), com o motivo: no pé da arena do MONITOR o
