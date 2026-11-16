@@ -310,6 +310,28 @@ novo de save, aditivo e ignorado pela versão antiga.
 **3. A impressão é critério.** Entre duas formas que jogam igual, ganha a que
 faz quem abre o jogo pela primeira vez querer jogá-lo.
 
+## A ordem de 15/11 — o lançamento, e a Mesa do Mestre
+
+A pessoa, depois da análise do produto jogado (`mente/lancamento/`): *"arquitete tudo, inclusive uma
+melhoria nas telas que temos para que o Taverna seja realmente um jogo AAA… nosso design precisa ser
+autêntico e original, uma experiência imersiva em um mundo de rpg. Use a língua PT-BR em tudo. Você
+tem minha permissão para qualquer alteração que precise ser feita."*
+
+**1. A planta é `mente/lancamento/arquitetura.md`** (a direção «A Mesa do Mestre», as telas, os lotes
+do Figma F1–F6 e os pacotes de código S, C e V); a ordem das ondas e os portões estão em
+`mente/lancamento/plano-de-lancamento.md`. As duas filas andam, e só com isto.
+
+**2. PT-BR em tudo o que o jogador lê** — tela, tabelas de texto do motor, falas do sistema. «Você»,
+nunca «tu»; «tela», «celular», «bônus». Texto novo em PT-PT é defeito. (Os comentários e os diários
+antigos ficam como estão; os novos, em PT-BR.)
+
+**3. Quem faz:** o Figma é de um agente em **Fable**, antes do código; o código é de um agente em
+**Opus**. Uma onda só fecha com **uma sessão jogada** contra o portão dela — a suíte verde não basta
+(em 15/11 estavam 515 de 515 verdes com dez defeitos P0 à vista em minutos de jogo).
+
+**4. O limite é o de sempre:** o que um commit revertido não desfaz — dinheiro novo, infra, campo de
+save que já existe, dado de jogador — avisa-se e espera-se.
+
 ## A fila pode ser pausada
 
 A pessoa para as duas filas com uma frase, e parou em **16/09/2026** para
