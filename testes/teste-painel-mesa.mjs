@@ -60,6 +60,19 @@ t("media: sempre recolhida (F1 a 1280); telefone: estreita", estadoDaEstampa("me
 const cenas = fs.readdirSync(path.join(AQUI, "..", "public", "cenas")).filter((f) => f.endsWith(".webp")).map((f) => f.replace(/\.webp$/, "")).sort();
 t("as trinta cenas da tabela são as trinta de public/cenas", cenas.length === 30 && JSON.stringify(cenas) === JSON.stringify([...CENAS_DA_ESTAMPA].sort()));
 t("a cena é a do bioma; masmorra ganha; bioma sem pintura dá só o título", cenaDaEstampa({ bioma: "floresta" }) === "floresta" && cenaDaEstampa({ bioma: "floresta", emMasmorra: true }) === "masmorra" && cenaDaEstampa({ bioma: "lua" }) === "");
+/* 16/11 (a prova jogada): da cidade ao Ossuário o nome trocou e a pintura ficou a da cidade; ao sair
+   da cripta voltou à da cidade. A cena sai do lugar onde o herói está — a mesma fonte do nome. */
+{
+  const mundo = [{ nome: "Ossuário de Vel", bioma: "pantano" }, { nome: "Cripta Funda", bioma: "colina" }];
+  t("na estrada, o chão da estrada (não a cidade de onde partiu)", cenaDaEstampa({ bioma: "planicie", jornada: { para: "Ossuário de Vel", terreno: "pantano" } }) === "pantano");
+  t("estrada sem chão pintado cai na cidade", cenaDaEstampa({ bioma: "planicie", jornada: { para: "X", terreno: "" } }) === "planicie");
+  t("à boca de uma masmorra do mundo, a masmorra (o mesmo nome, sem acento nem caixa)", cenaDaEstampa({ bioma: "planicie", lugar: { nome: "ossuario de vel" }, masmorras: mundo }) === "masmorra");
+  t("ao sair da cripta, diante da porta, continua a da masmorra — não a cidade", cenaDaEstampa({ bioma: "planicie", emMasmorra: false, lugar: { nome: "Cripta Funda" }, masmorras: mundo }) === "masmorra");
+  t("outro lugar com bioma próprio, esse; sem ele, o da cidade", cenaDaEstampa({ bioma: "planicie", lugar: { nome: "Fazenda", bioma: "floresta" } }) === "floresta" && cenaDaEstampa({ bioma: "planicie", lugar: { nome: "Fazenda" } }) === "planicie");
+  t("null e lixo não estouram", cenaDaEstampa(null) === "" && cenaDaEstampa({ lugar: null, jornada: null, masmorras: null }) === "");
+  const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  t("a fiação passa a estrada, o lugar e as masmorras do mundo", /cenaDaEstampa\(\{ bioma, emMasmorra: [^}]*jornada: jornadaRef\.current, lugar: lugarRef\.current, masmorras: masmorrasAqui \}\)/.test(app));
+}
 t("na masmorra o halo sai das tochas, com teto", luzDaMesa({ emMasmorra: true, tochas: 2 }).haloRaio === 200 && luzDaMesa({ emMasmorra: true, tochas: 99 }).haloRaio === LUZ_DA_MESA.masmorra.haloRaio.teto);
 t("à noite o véu da página é 8 %; nunca passa de 12 %", luzDaMesa({ hora: 22 }).veuDaPagina === 0.08 && luzDaMesa({ emMasmorra: true }).veuDaPagina <= 0.12);
 

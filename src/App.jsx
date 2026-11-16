@@ -27294,7 +27294,11 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         if (ch.lugar !== titulo) estampaDaChegadaRef.current = { lugar: titulo, falas };
         const chegou = estampaDaChegadaRef.current.falas === falas;
         const bioma = (cidadeDoMapa(cidadeAtualRef.current) || {}).bioma || "";
-        estampa = { lugar: titulo, sub, cena: cenaDaEstampa({ bioma, emMasmorra: emMasmorra || !!(cena && cena.subterraneo) }), estado: estadoDaEstampa(composicaoDaMesa.nome, chegou) };
+        /* 16/11: a pintura sai do lugar onde o herói está — a mesma fonte do nome
+           (a estrada, a boca da masmorra do mundo, o lugar, a cidade) */
+        let masmorrasAqui = [];
+        try { masmorrasAqui = lugarRef.current ? masmorrasDoMundo(sementeMundo(), mapaRef.current) : []; } catch (err) { calou("V4 · as masmorras da estampa", err); }
+        estampa = { lugar: titulo, sub, cena: cenaDaEstampa({ bioma, emMasmorra: emMasmorra || !!(cena && cena.subterraneo), jornada: jornadaRef.current, lugar: lugarRef.current, masmorras: masmorrasAqui }), estado: estadoDaEstampa(composicaoDaMesa.nome, chegou) };
       } catch (err) { calou("V4 · a estampa da página", err); }
       let prazo = "";
       try { const p = prazosDaCinta(relogios); if (p && p.length) prazo = p[0].noites <= 0 ? "o prazo é hoje" : p[0].noites === 1 ? "falta 1 noite" : "faltam " + p[0].noites + " noites"; } catch (err) { calou("V4 · o prazo na vela", err); }

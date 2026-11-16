@@ -176,10 +176,31 @@ export function estadoDaEstampa(nome, chegou) {
 /* a cena pintada do lugar: as trinta de public/cenas, uma por bioma (e a
    masmorra). Bioma sem pintura dá "" — a estampa fica só com o título. */
 export const CENAS_DA_ESTAMPA = ["abissal", "biblioteca", "bruma", "cinturao", "colina", "costa", "deserto", "enseada", "estacao", "floresta", "forno", "gasoso", "gelo", "ilha_seca", "ilha_selva", "jardim", "mar_aberto", "masmorra", "montanha", "morto", "nebulosa", "oficina", "orbital", "pantano", "planicie", "recife", "rochoso", "salao", "santuario", "vazio"];
-export function cenaDaEstampa({ bioma = "", emMasmorra = false } = {}) {
-  if (emMasmorra) return "masmorra";
-  const b = String(bioma || "").trim().toLowerCase();
-  return CENAS_DA_ESTAMPA.includes(b) ? b : "";
+/* 16/11 (a prova jogada da mesa): ao viajar da cidade para o Ossuário o
+   nome trocou e a pintura ficou a da cidade; só mudou ao entrar na cripta,
+   e ao sair voltou à da cidade. A cena lia sempre o bioma da CIDADE de
+   referência, enquanto o nome lia o lugar onde o herói está. Agora as duas
+   saem da mesma fonte, na mesma ordem do cabeçalho (palco.js):
+     dentro da masmorra → a masmorra;
+     na estrada → o chão da estrada (jornada.terreno);
+     num lugar → a boca de uma masmorra do mundo (o mesmo nome) é a
+       masmorra; outro lugar com bioma próprio, esse; sem ele, o da cidade;
+     na cidade → o bioma dela.
+   `masmorras` é a lista das masmorras do mundo (masmorrasDoMundo). */
+const normDaCena = (x) => String(x || "").trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const pintada = (b) => { const x = String(b || "").trim().toLowerCase(); return CENAS_DA_ESTAMPA.includes(x) ? x : ""; };
+export function cenaDaEstampa(dados) {
+  const d = dados && typeof dados === "object" ? dados : {};
+  if (d.emMasmorra) return "masmorra";
+  const j = d.jornada && typeof d.jornada === "object" ? d.jornada : null;
+  if (j && (j.destino || j.para)) return pintada(j.terreno) || pintada(d.bioma);
+  const l = d.lugar && typeof d.lugar === "object" ? d.lugar : null;
+  if (l && l.nome) {
+    const lista = Array.isArray(d.masmorras) ? d.masmorras : [];
+    if (lista.some((m) => m && m.nome && normDaCena(m.nome) === normDaCena(l.nome))) return "masmorra";
+    return pintada(l.bioma) || pintada(d.bioma);
+  }
+  return pintada(d.bioma);
 }
 /* AS CAIXAS DA COMPOSIÇÃO — onde cada zona pousa numa janela das três
    zonas, em px (x, y, w, h). É a planta que a tela segue e a régua da
