@@ -5109,8 +5109,9 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
           </span>
         </button>}
 
-        {/* ---------------- A SEGUNDA CADEIRA (v9.120) ---------------- */}
-        <div className="w-full flex flex-col gap-4 p-5 rounded-2xl" style={{ background: T.panel, border: `1px solid ${T.violetSoft}` }}>
+        {/* ---------------- A SEGUNDA CADEIRA (v9.120) ----------------
+            C3 (15/11): atrás da mesma porta do beta — nunca foi provada a dois */}
+        {modoNaPorta("sala") && <div className="w-full flex flex-col gap-4 p-5 rounded-2xl" style={{ background: T.panel, border: `1px solid ${T.violetSoft}` }}>
           <div className="flex items-center gap-3">
             <IconeDois tamanho={20} />
             <span className="tv-display text-xl leading-[1.25]" style={{ color: T.violetSoft }}>Jogar em dois</span>
@@ -5122,7 +5123,7 @@ function TelaMenu({ irNovo, irNoite, irDuelo, continuar, temSave, criarSala, ent
             <button onClick={criarSala} className={botaoPequeno} style={{ background: T.violetSoft, color: T.bg }}>Criar uma sala</button>
             <button onClick={entrarSala} className={botaoPequeno} style={{ border: `1px solid ${T.violetSoft}`, color: T.violetSoft }}>Entrar com código</button>
           </div>
-        </div>
+        </div>}
 
         {/* ---------------- A CAMPANHA EM ARQUIVO (v9.147) ---------------- */}
         <div className="w-full flex flex-col gap-4 p-5 rounded-2xl" style={cartao}>

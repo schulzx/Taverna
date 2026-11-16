@@ -102,6 +102,9 @@ sec("MM0 · a porta do beta — sai a porta, não o código");
   t("todo id da porta existe em MODOS", M.MODOS_DO_BETA.every((id) => M.MODOS.some((m) => m.id === id)));
   t("historia está na porta", M.modoNaPorta("historia") === true);
   t("rapida e duelo saem do menu", M.modoNaPorta("rapida") === false && M.modoNaPorta("duelo") === false);
+  /* C3 (15/11): a sala a dois é porta sem modo de save — existe, mas
+     está fechada no beta (nunca foi provada a dois). */
+  t("a sala a dois sai do menu (C3)", M.modoNaPorta("sala") === false);
   t("lixo não abre porta", [
     "lixo", null, undefined, 42, {}, "", "HISTORIA",
   ].every((x) => M.modoNaPorta(x) === false));
@@ -122,6 +125,10 @@ sec("MM0 · a porta do beta — sai a porta, não o código");
     TELA_MENU && /modoNaPorta\(\s*"rapida"\s*\)\s*&&\s*<button onClick=\{irNoite\}/.test(TELA_MENU));
   t("o cartão de Duelo (onClick={irDuelo}) está atrás da porta \"duelo\"",
     TELA_MENU && /modoNaPorta\(\s*"duelo"\s*\)\s*&&\s*<button onClick=\{irDuelo\}/.test(TELA_MENU));
+  t("o bloco «Jogar em dois» está atrás da porta \"sala\" (C3)",
+    TELA_MENU && /modoNaPorta\(\s*"sala"\s*\)\s*&&\s*<div[^>]*>[\s\S]{0,400}Jogar em dois/.test(TELA_MENU));
+  t("os botões da sala ainda existem (sai a porta, não o código)",
+    TELA_MENU && /onClick=\{criarSala\}/.test(TELA_MENU) && /onClick=\{entrarSala\}/.test(TELA_MENU));
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

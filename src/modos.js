@@ -97,11 +97,22 @@ export const MODOS = [
    espaço de localStorage, e nada o apaga. */
 export const MODOS_DO_BETA = ["historia"];
 
-/* o modo é oferecido no menu? Tem de existir em MODOS e estar na porta
-   do beta; lixo é false (nunca saneia para o padrão — aqui não se
-   carrega nada, só se pergunta se a porta está aberta). */
+/* As portas do menu que não são um modo de save (C3, 15/11): a sala a
+   dois («Jogar em dois») nunca foi provada a dois e ficava incondicional
+   no menu. Ela passa pela mesma porta que Uma Noite e o Duelo — fechada
+   no beta, porque "sala" não está em MODOS_DO_BETA. Sai a porta, não o
+   código: sala.js, api/sala e a tela da sala ficam onde estão, e voltar
+   é pôr "sala" em MODOS_DO_BETA. */
+const PORTAS_SEM_MODO = ["sala"];
+
+/* o modo (ou a porta sem modo) é oferecido no menu? Tem de existir em
+   MODOS ou em PORTAS_SEM_MODO e estar na porta do beta; lixo é false
+   (nunca saneia para o padrão — aqui não se carrega nada, só se pergunta
+   se a porta está aberta). */
 export function modoNaPorta(id) {
-  return typeof id === "string" && MODOS.some((m) => m.id === id) && MODOS_DO_BETA.includes(id);
+  if (typeof id !== "string") return false;
+  const existe = MODOS.some((m) => m.id === id) || PORTAS_SEM_MODO.includes(id);
+  return existe && MODOS_DO_BETA.includes(id);
 }
 
 export function modoPorId(id) {
