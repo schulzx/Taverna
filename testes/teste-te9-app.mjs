@@ -92,7 +92,10 @@ console.log("\n3. a ordem «revelacao» vai à fila; a desconhecida, ao calou");
      a narra, e o envio desse turno apagava a faixa no mesmo clique */
   t("a faixa da escolha sobrevive ao envio que a escolha partiu", re.includes('vaiComOEnvio: !!(ctx && ctx.onde === "a escolha")'));
   t("com peça: a cerimónia entra na fila (entrarNaFila)", re.includes('tipo: "espolio"') && re.includes("entrarNaFila(f, c)"));
-  t("a mesma paga não entra duas vezes (a chave)", re.includes("f.some((x) => x && x.chave === chave) ? f : entrarNaFila(f, c)"));
+  /* V9 (16/11): a recusa da chave repetida passou à fila de cerimônias
+     (cerimoniaJaPassou: na fila OU já mostrada — a da quest voltava depois
+     de sair). A intenção é a mesma, agora mais forte. */
+  t("a mesma paga não entra duas vezes (a chave)", re.includes("cerimoniaJaPassou(f, chave) ? f : entrarNaFila(f, c)"));
   /* a ordem é a do módulo puro: provada aqui sobre um efeito de verdade */
   const ef = { tipo: "espolio", quest: "q1", titulo: "A Capela", paga: { chave: "espolio:q1", xp: 40, moedas: 12, itens: [{ nome: "Lâmina Curta", tipo: "arma", raridade: "raro", atributos: { dano: 2 } }], efeitos: [], achados: [] } };
   const ord = oQueOEfeitoPede(ef, { personagem: { nome: "Vera", equipados: {}, equipamento: [] }, combate: null });

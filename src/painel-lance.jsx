@@ -167,11 +167,12 @@ function LascasDoUm({ lado }) {
    falha não é daqui: a página já a diz com o «Tentar de novo». O dado fica
    sempre à vista por cima — nenhum dos caminhos rola de novo. */
 function PenaQueEscreve() {
+  /* dois marcos e nenhum contador de quadro: o relógio acorda a pena aos 2 s
+     e aos 8 s (as fronteiras da tabela), sem ler o relógio de parede */
   const [ms, setMs] = useState(0);
   useEffect(() => {
-    /* conta os passos, sem ler relógio de parede (o lance não lê Date.now) */
-    const id = setInterval(() => { try { setMs((m) => m + ESTADOS_DA_PENA.passo); } catch (e) { /* segue */ } }, ESTADOS_DA_PENA.passo);
-    return () => clearInterval(id);
+    const ids = [ESTADOS_DA_PENA.molha.ate, ESTADOS_DA_PENA.escreve.ate].map((m) => setTimeout(() => { try { setMs(m); } catch (e) { /* segue */ } }, m));
+    return () => ids.forEach(clearTimeout);
   }, []);
   let estado = "escreve";
   try { estado = estadoDaPena(ms); } catch (e) { estado = "escreve"; }

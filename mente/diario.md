@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — V9, as cerimônias · commits 7e2f5cf · 0ec19e9 · 2ac4f99 · 6b40204
+
+A mão, com o bastão do `App.jsx` das 16:12 até ao commit 0ec19e9 (devolvido depois dele). Pacote V9 (F6 de `formas.md`), feito pela ordem de valor; o orçamento fechou antes das etapas 2, 3, 5 e 6.
+
+- **A causa do «Partir» morto (P0-8, prova de 15/11).** As cerimônias (`painel-subida-de-nivel.jsx:151`, `painel-espolio.jsx:579/617`) eram camadas de tela cheia que só saíam de «correndo» pelo `animationend`; enquanto corriam estavam no primeiro quadro (véu e conteúdo a opacidade 0) e a raiz comia todo clique. Sem animação a correr (aba ou painel oculto, como na prova), nunca acabavam. Provado no navegador com as animações congeladas: aos 0,5 s o véu a opacidade 0 por cima da mesa; antes do V9, nada o tirava dali. Segunda metade, achada na prova de hoje: com a subida aberta, o espólio que chegava abria **ao mesmo tempo** (`cerimoniaDaFilaAgora`, App), dois diálogos empilhados. Terceira: a da quest voltava porque a fila só recusava a chave repetida enquanto ela estava na fila.
+- **O conserto (7e2f5cf, 0ec19e9):** `src/fila-de-cerimonias.js` (puro — CERIMONIAS, FILA_DE_CERIMONIAS, VEU_DA_CERIMONIA, ESTADOS_DA_PENA, a máquina com as vistas); `src/palco-da-cerimonia.jsx` (portal no body acima de tudo, `#root` inerte e a 30 %/10 % por baixo, teto de relógio, página oculta abre no último quadro); o «Confirmar» num pé fixo (`PE_DA_SUBIDA`, 88 px), impedido com `aria-disabled` e o que falta dentro do botão; uma cerimônia de cada vez.
+- **O som (2ac4f99):** lacre, moeda e nível em `SOM_DA_MESA.cerimonia`, sintetizados.
+- **A pena (6b40204):** molha (até 2 s, só o traço), escreve, demora (8 s: «a sua jogada e o dado estão guardados»). Conta passos, não lê `Date.now` (a suíte do lance proíbe).
+- **Decisões médias:** (1) o teto do espólio é o próprio cronograma dele (já com teto de 4 s na TE10), não o da tabela, que não conhece o número de cartas; (2) o pé diz «falta pôr 1 ponto» só quando nada foi escolhido — confirmar com pontos sobrando continua permitido (é a regra de hoje), e o resumo diz quantos ficam para depois; (3) a linha da pena «o Mestre está batendo o lacre» existe (`fraseDaEspera`) mas não está ligada: com o `#root` inerte e a 30 % ela não se leria — a cerimônia já diz «Toque para saltar»; (4) a moeda soa na faixa do fecho; a contagem que sobe (etapa 2) não foi feita.
+- **Prova:** `teste-fila-de-cerimonias.mjs` (63 — tabelas, máquina, catraca, pé, som, pena); uma asserção movida com motivo em `teste-painel-espolio.mjs` (o import do som ganhou `tocarDaCerimonia`). Navegador CDP próprio (9371), IA muda: `V9-nivel-1024x768`, `V9-nivel-375x812`, `V9-nivel-sem-animacao-teto`, `V9-fila-1..3` (nível primeiro, espólio depois, a mesa livre e o «Explorar» clicável no mesmo ponto). Sessão real curta (4 respostas): a pena em «molha» ao vivo; **nenhuma etapa se cumpriu** — depois de ouvir Sable duas vezes, «Ouvir Sable Mão-Torta» continuou aberta (é do sistema; não investigado) — `V9-real-0`, `V9-real-3`.
+- **Não feito:** etapa 2 (as cinco de página: a nota, a barra que enche, o número que conta, a conquista que pousa), 3 (o lacre da busca na página e a encruzilhada na CARTA_DE_ESCOLHA), 5 (a vitória como cerimônia), 6 (a queda), e no nível a carta do herói com lacre e o talento como cartas.
+
 ## 16/11 · sem versão — S4d, o vermelho fechado e a gente inventada com veto
 
 A mão do motor, de `e41f9aa`. Bastão do `App.jsx` («S4d») tomado às 15:00 para três fiações curtas (o relógio do posto, a rede do `pessoasDaCena`, o mundo na memória do inventado), devolvido no fecho. Sem `VERSAO`, sem push, sem IA real, sem navegador.

@@ -84,7 +84,6 @@ export const VEU_DA_CERIMONIA = Object.freeze({
 
 /* ESTADOS_DA_PENA — a espera pela narração (F6 §2), em ms desde o envio. */
 export const ESTADOS_DA_PENA = Object.freeze({
-  passo: 500, /* de quanto em quanto a pena olha o relógio */
   traco: 46, /* o traço de tinta do «molha», em px */
   nota: 320, /* a largura da nota do «demora» */
   molha: { ate: 2000 },
