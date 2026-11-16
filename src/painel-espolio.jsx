@@ -47,7 +47,7 @@ import {
   REVELACAO_DO_ESPOLIO, LUZ_DA_RARIDADE, CARTA_DO_ESPOLIO, VEREDITO_DO_ESPOLIO, FIO_DO_DESPERTAR, FAIXA_DO_GANHO,
   FAIXA_DO_FECHO, CHIP_DO_ACHADO, DESPERTAR_DA_TELA, RELIQUIA_DA_TELA, PALAVRAS_DO_ESPOLIO, LENDA_DO_ARTEFACTO,
 } from "./estilo.js";
-import { tocarCarta, tocarDespertar } from "./som-da-mesa.js";
+import { tocarCarta, tocarDespertar, tocarDaCerimonia } from "./som-da-mesa.js";
 import { useTetoDaCerimonia, paginaOculta } from "./palco-da-cerimonia.jsx";
 import { GLIFOS } from "./glifos.js";
 import { Botao, Glifo } from "./ui.jsx";
@@ -478,6 +478,8 @@ export function PainelEspolio({ entradas = [], titulo = "", coracao = false, niv
   let tetoDoCronograma = 0;
   try { tetoDoCronograma = duracaoDoCronograma(passos); } catch (e) { tetoDoCronograma = 0; }
   useTetoDaCerimonia(tetoDoCronograma || "espolioRaro", vivo, saltar);
+  /* V9 · a busca fechada bate o lacre ao abrir (o som do F6), uma vez */
+  React.useEffect(() => { try { tocarDaCerimonia("lacre"); } catch (e) { /* um som que estoura cala-se */ } }, []);
   const fechar = React.useCallback(() => { try { aoFechar(); } catch (e) { /* nunca custa o turno */ } }, [aoFechar]);
   React.useEffect(() => {
     const tecla = (e) => { if (e.key === "Escape") { if (estado === "correndo") saltar(); else fechar(); } };
@@ -771,6 +773,8 @@ export function ChipDoAchado({ achado, heroi = null, aoTocar = () => {}, pousa =
    ============================================================ */
 export function FaixaDoFecho({ quest = "", xp = 0, moedas = 0, barra = null }) {
   const H = FAIXA_DO_FECHO;
+  /* V9 · as moedas tilintam (SOM_DA_MESA.cerimonia.moeda), uma vez por faixa */
+  React.useEffect(() => { try { if (moedas > 0) tocarDaCerimonia("moeda", moedas); } catch (e) { /* cala-se */ } }, []); // eslint-disable-line react-hooks/exhaustive-deps
   if (!(xp > 0) && !(moedas > 0)) return null;
   return (
     <div className="inline-flex items-center tv-fim-entra" style={{ height: H.alto, borderRadius: H.raio, padding: "0 12px", gap: 8, background: T.panel, border: `1px solid ${T.lineStrong}` }}>

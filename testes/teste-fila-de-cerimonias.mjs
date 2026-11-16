@@ -18,6 +18,7 @@ import {
   tetoDe, faseNoTempo, teclaSalta, fraseDaEspera, conquistaPodeEntrar, estadoDaPena,
 } from "../src/fila-de-cerimonias.js";
 import { PE_DA_SUBIDA, ALVOS } from "../src/estilo.js";
+import { SOM_DA_MESA, tocarDaCerimonia } from "../src/som-da-mesa.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond) => { if (cond) { ok++; console.log("  ok  " + nome); } else { mal++; console.log("  MAL " + nome); } };
@@ -120,6 +121,16 @@ sec("5. o pé fixo (PE_DA_SUBIDA)");
   const nivel = ler("src/painel-subida-de-nivel.jsx");
   t("a folha rola por dentro e termina onde o pé começa", /style=\{\{ bottom: PE\.alto \}\}/.test(nivel) && /bottom: 0, height: PE\.alto/.test(nivel));
   t("o que mudou é dito de–para, por extenso", /" de " \+ sinal\(l\.antes\) \+ " para " \+ sinal\(l\.depois\)/.test(nivel));
+}
+
+sec("6. o som das cerimônias (SOM_DA_MESA.cerimonia, F6)");
+{
+  const K = SOM_DA_MESA.cerimonia;
+  t("o lacre: o seno que cai de 96 a 48 em 120 ms", K.lacre[0].freq === 96 && K.lacre[0].ate === 48 && K.lacre[0].dura === 0.12);
+  t("o nível: o lacre e três notas que sobem (392, 523, 784)", K.nivel.slice(2).map((v) => v.freq).join() === "392,523,784" && K.nivel[2].em < K.nivel[3].em && K.nivel[3].em < K.nivel[4].em);
+  t("a moeda: 3,1 e 4,7 kHz, até quatro seguidas a 70 ms", K.moeda.map((v) => v.freq).join() === "3100,4700" && K.moedasSeguidas === 4 && K.entreMoedas === 0.07);
+  t("sem som no Node (sem gesto, sem contexto): cala, nunca lança", tocarDaCerimonia("lacre") === false && tocarDaCerimonia("moeda", 9) === false);
+  t("nome desconhecido cala", tocarDaCerimonia("modal") === false);
 }
 
 console.log(`\n${ok} ok · ${mal} falhas`);

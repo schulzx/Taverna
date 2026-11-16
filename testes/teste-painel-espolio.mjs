@@ -250,7 +250,10 @@ sec("6. a lenda do artefacto e o som (as decisões da pessoa de 09/11)");
      o som prova-se em teste-som-da-mesa; aqui prova-se a fiação) */
   const fonte = semComentarios(PAINEL);
   t("a carta toca a nota da sua raridade quando a face aparece (no virar), uma vez por carta",
-    /import \{ tocarCarta, tocarDespertar \} from "\.\/som-da-mesa\.js"/.test(PAINEL) && /const virar = React\.useCallback\(\(i\) => \{ soarCarta\(i\);/.test(fonte) && /soaram\.current\.has\(i\)/.test(fonte) && /tocarCarta\(raridadeDoItem\(cartas\[i\]\.item\)\)/.test(fonte));
+    /* V9 (16/11): o import ganhou tocarDaCerimonia (o lacre da busca e as
+       moedas da faixa, F6 SOM_DA_MESA); a intenção — a carta e o sino vêm
+       do som da mesa — é a mesma, por isso o import só tem de os trazer */
+    /import \{ tocarCarta, tocarDespertar(, tocarDaCerimonia)? \} from "\.\/som-da-mesa\.js"/.test(PAINEL) && /const virar = React\.useCallback\(\(i\) => \{ soarCarta\(i\);/.test(fonte) && /soaram\.current\.has\(i\)/.test(fonte) && /tocarCarta\(raridadeDoItem\(cartas\[i\]\.item\)\)/.test(fonte));
   t("saltar, ou o reduce, toca só a mais rara (a última), uma vez", /if \(!vivo && n\) soarCarta\(n - 1\)/.test(fonte));
   t("o sino toca quando a runa acende (a primeira faísca), ou no quadro final, nunca duas", /onAnimationStart=\{i === 0 \? soarSino : undefined\}/.test(fonte) && /if \(soou\.current\) return;/.test(fonte) && /if \(!vivo && temDespertar\) soarSino\(\)/.test(fonte));
   t("um som que estoura cala-se: as duas chamadas em try", /try \{ tocarCarta\(/.test(fonte) && /try \{ tocarDespertar\(\); \}/.test(fonte));

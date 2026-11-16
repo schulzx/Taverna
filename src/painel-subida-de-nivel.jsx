@@ -36,6 +36,7 @@ import { sementeDe } from "./semente.js";
 import { subclasseDoHeroi } from "./marca-da-subclasse.js";
 import { tetoAtributo, podeSubirAtributo } from "./atributos.js";
 import { useTetoDaCerimonia, paginaOculta } from "./palco-da-cerimonia.jsx";
+import { tocarDaCerimonia } from "./som-da-mesa.js";
 import { degrauMudou, gemaQueAcendeu, ganhosDaSubida, alternarPonto, planoDosPontos, rotuloDoConfirmar } from "./subida-de-nivel.js";
 
 const C = CERIMONIA_DO_NIVEL, V = CERIMONIA_DA_TELA, PE = PE_DA_SUBIDA;
@@ -166,6 +167,8 @@ export function PainelSubidaDeNivel({ nivel, antes = null, depois, pontos = null
   /* V9 · o teto da fila (CERIMONIAS.nivel): o animationend continua a ser o fim de sempre; o relógio só garante que ele chega */
   const acabar = React.useCallback(() => setEstado((e) => (e === "correndo" ? "acabou" : e)), []);
   useTetoDaCerimonia("nivel", vivo, acabar);
+  /* V9 · o som do nível (o lacre e três notas), uma vez, ao abrir */
+  React.useEffect(() => { try { tocarDaCerimonia("nivel"); } catch (e) { /* um som que estoura cala-se */ } }, []);
   React.useEffect(() => {
     const tecla = (e) => { if (e.key === "Escape") saltar(); };
     window.addEventListener("keydown", tecla);

@@ -141,6 +141,30 @@ export const SOM_DA_MESA = Object.freeze({
       Object.freeze({ em: 0.04, freq: 140, ate: 55, onda: "sine", dura: 0.7, ganho: 1 }),
     ]),
   }),
+  /* AS CERIMÔNIAS (V9 · 16/11, formas.md §F6 SOM_DA_MESA): só osciladores,
+     sem arquivo, como o resto da mesa. O ruído do F6 (a cera, o chiado) fica
+     aproximado por um triângulo grave e curto — a síntese é ponto de partida.
+       lacre — cera e madeira: o seno que cai de 96 a 48 e o baque abafado;
+       moeda — latão que tilinta: dois senos agudos, até quatro a 70 ms;
+       nivel — o lacre e três notas que sobem (392, 523, 784). */
+  cerimonia: Object.freeze({
+    lacre: Object.freeze([
+      Object.freeze({ em: 0, freq: 96, ate: 48, onda: "sine", dura: 0.12, ganho: 1 }),
+      Object.freeze({ em: 0, freq: 400, ate: 120, onda: "triangle", dura: 0.06, ganho: 0.35 }),
+    ]),
+    moeda: Object.freeze([
+      Object.freeze({ em: 0, freq: 3100, onda: "sine", dura: 0.18, ganho: 0.6 }),
+      Object.freeze({ em: 0, freq: 4700, onda: "sine", dura: 0.12, ganho: 0.4 }),
+    ]),
+    nivel: Object.freeze([
+      Object.freeze({ em: 0, freq: 96, ate: 48, onda: "sine", dura: 0.12, ganho: 1 }),
+      Object.freeze({ em: 0, freq: 400, ate: 120, onda: "triangle", dura: 0.06, ganho: 0.35 }),
+      Object.freeze({ em: 0.26, freq: 392, onda: "sine", dura: 0.18, ganho: 0.5 }),
+      Object.freeze({ em: 0.44, freq: 523, onda: "sine", dura: 0.18, ganho: 0.5 }),
+      Object.freeze({ em: 0.62, freq: 784, onda: "sine", dura: 0.18, ganho: 0.5 }),
+    ]),
+    moedasSeguidas: 4, entreMoedas: 0.07,
+  }),
   /* o desfecho do evento do golpe (`EVENTO_DO_GOLPE`, combate.js) → o
      momento; o abate manda sobre o desfecho; o impedido cala (não houve golpe) */
   somDoDesfecho: Object.freeze({ critico: "critico", acerto: "golpe", erro: "erro", imune: "imune", impedido: null, abate: "queda" }),
@@ -309,6 +333,21 @@ export function tocarDoLance(momento, variacao = 0) {
   return tocar((c, t) => {
     const soma = vozes.reduce((a, v) => a + v.ganho, 0) || 1;
     for (const v of vozes) voz(c, { freq: v.freq, freqFim: v.ate || null, onda: v.onda, inicio: t + v.em, dura: v.dura, pico: (tetoDoVolume() * v.ganho) / soma });
+  });
+}
+
+/* 6. AS CERIMÔNIAS (V9) — «lacre», «nivel», ou «moeda» (com quantas, até
+   moedasSeguidas, a entreMoedas). Nome desconhecido cala. */
+export function tocarDaCerimonia(momento, quantas = 1) {
+  const K = S.cerimonia;
+  if (!["lacre", "moeda", "nivel"].includes(momento)) return false;
+  const vozes = K[momento];
+  const vezes = momento === "moeda" ? Math.max(1, Math.min(K.moedasSeguidas, Math.trunc(Number(quantas) || 1))) : 1;
+  return tocar((c, t) => {
+    const soma = vozes.reduce((a, v) => a + v.ganho, 0) || 1;
+    for (let i = 0; i < vezes; i++) {
+      for (const v of vozes) voz(c, { freq: v.freq, freqFim: v.ate || null, onda: v.onda, inicio: t + i * K.entreMoedas + v.em, dura: v.dura, pico: (tetoDoVolume() * v.ganho) / soma });
+    }
   });
 }
 
