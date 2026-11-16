@@ -24,6 +24,20 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — consertos da prova jogada da mesa · commits 06c9565, f85518c, 3d8b996, bbd1eaf, 9992acd, 03d4d2d, 8f0e525
+
+A mão, com o bastão do App.jsx («consertos V4») de ponta a ponta — tomado no início, devolvido no fim.
+
+- **1 · as tochas zeravam na saída (no ar desde a v9.26, logo também na v9.650).** A causa não era o S6b: `sairDaMasmorra` devolvia as tochas ao ref e mandava o turno da fuga com `personagem` (a ficha da última renderização, mochila a 0 desde a entrada); a resposta aplicava-se sobre ela. Conta pura `aSaidaDaMasmorra` (masmorras.js), a ficha da saída segue para o turno; o portal usa a mesma. Prova: `teste-saida-da-masmorra.mjs` (falha em 825c276). O fecho pelo chefe (motor) já fazia certo e ficou intocado — mudar a frase lá mexe no dourado de duas suítes.
+- **2 · a bandeja em coluna** (`naColuna`, `asLinhasDoLancamento`): três linhas na letra da mesa, sem mono, sem corte, sem as 20 faces. `teste-a-bandeja.mjs`.
+- **3 · o «+17 XP» bege** era o Recibo (inkMeio) e não a nota: tinta da página por `RECIBO.naPagina`; contraste medido em `teste-pecas-da-mesa.mjs`.
+- **4 · a estampa segue o lugar** (estrada → chão; boca de masmorra do mundo → masmorra; lugar → bioma dele ou da cidade). `teste-painel-mesa.mjs`.
+- **5+6 · o grimório desde o primeiro turno** nas duas composições da mesa; painel da masmorra ao piso 12/13; «Busca: 3 + 1 = 4»; «4 tochas voltam para a mochila».
+- **7 · telefone:** o nome na placa da carta; o nome do lugar em até duas linhas.
+- **decisões médias:** a porta progressiva do Códex fica só no alforje antigo (na mesa o objeto pousa sempre — o jogador não sabia que ele existia). A boca da masmorra mostra a pintura da masmorra também por fora (é o lugar onde o herói está, e o nome já diz a masmorra).
+- **o que ficou:** o «●» solto da nota de viagem não foi achado sem a sessão gravada (o único ● visto foi o do veredito «Ir · ● Difícil», que é o patamar e fica); a frase do fecho pelo chefe ainda diz «tocha(s)». A bandeja capturada foi montada por cima da bandeja real (a IA muda não deixa rolar o turno). Capturas: `mente/lancamento/capturas/V4c-*.png`.
+- **prova:** build limpo; a 1.ª corrida inteira deu 522/523 (o dublê da fuga em envelopes-bloco.mjs não conhecia persOut — 8f0e525, com o motivo); a 2.ª, 523/523 suítes e 29/29 varredores, numa corrida só. Fecha também as duas asserções movidas do agente anterior.
+
 ## 16/11 · sem versão — V4, a mesa cheia · commits da composição (+ luz) e da voz
 
 A mão em Opus, com o bastão do `App.jsx` das 04:32 até ao fim da fiação (devolvido antes dos commits). Sem bump e sem push.
