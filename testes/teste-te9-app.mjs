@@ -159,12 +159,16 @@ console.log("\n6. tudo em calou (nunca custa o turno nem a recompensa)");
 
 console.log("\n7. TE11 · a lenda, a carta de costas, o som, e os restos da TE10");
 {
-  /* o interruptor do som mora no menu, logo abaixo das rolagens do mundo */
-  const iRol = app.indexOf("mostrar os dados que o Mestre rola por trás do escudo");
-  const iSom = app.indexOf("<InterruptorDoSom />");
-  const iMenu = app.indexOf("⌂ Sair para o início");
-  t("o interruptor do som no menu, logo abaixo das rolagens", iRol > 0 && iSom > iRol && iSom < iMenu && conta("<InterruptorDoSom") === 1);
-  t("e vem da peça (ui.jsx), sem estado no App", /import \{[^}]*\bInterruptorDoSom\b[^}]*\} from "\.\/ui\.jsx"/.test(app) && !/["']taverna_cfg_som["']/.test(app));
+  /* 16/11 · V2: o som saiu de Bolsa › Perícias e detalhes para o escudo do
+     Mestre (painel-escudo.jsx), primeiro interruptor de «A casa», acima das
+     rolagens à vista — a ordem do quadro I do F1. A intenção desta asserção
+     sobrevive: o som está no menu, ao lado das rolagens, e o App não guarda
+     estado dele (a porta do escudo lê e grava pelo som-da-mesa.js). */
+  const esc = fs.readFileSync(new URL("../src/painel-escudo.jsx", import.meta.url), "utf8");
+  const iSom = esc.indexOf("<Interruptor rotulo={W.som.rotulo}");
+  const iRol = esc.indexOf("<Interruptor rotulo={W.rolagens.rotulo}");
+  t("o interruptor do som no menu (o escudo), logo acima das rolagens", iSom > 0 && iRol > iSom && conta("<PortaDoEscudo") === 1);
+  t("e o estado é do som-da-mesa.js, sem estado no App", /import \{ somLigado, ligarSom \} from "\.\/som-da-mesa\.js"/.test(esc) && !/["']taverna_cfg_som["']/.test(app));
   /* o dado do Véu soa quando pousa, uma vez, em calou */
   const iOv = app.indexOf("function OverlayDado(");
   const ov = app.slice(iOv, app.indexOf("\n}\n", iOv));

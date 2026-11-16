@@ -48,10 +48,14 @@ sec("0. O APP LÊ O MOTOR E AS PEÇAS");
   t("importa oChamado e O_CHAMADO do motor", /import \{ oChamado, O_CHAMADO[^}]*\} from "\.\/motor\/o-mestre-chama\.js";/.test(APP));
   t("importa o saber do herói, a régua, o envelope e a espera (EM3)", /import \{[^}]*\bsaberDoHeroi\b[^}]*\bporQueNaoChama\b[^}]*\bsaberComumDe\b[^}]*\benvelopeDoSaberComum\b[^}]*\besperaDoChamado\b[^}]*\} from "\.\/motor\/o-mestre-chama\.js";/.test(APP));
   t("importa momentoDoChamado da bandeja", /import \{ Bandeja, momentoDoChamado \} from "\.\/painel-bandeja\.jsx";/.test(APP));
-  t("importa LinhaDoChamado e RolaPorMim do ui", /LinhaDoChamado, RolaPorMim \} from "\.\/ui\.jsx"/.test(APP));
+  /* 16/11 · V2: «o Mestre rola por mim» saiu da Bolsa para o escudo do Mestre
+     (painel-escudo.jsx, o interruptor de F1). O App já não desenha RolaPorMim;
+     a promessa — a preferência à vista e guardada pelo App — continua, agora
+     provada pela linha que o escudo recebe. */
+  t("importa LinhaDoChamado do ui", /LinhaDoChamado \} from "\.\/ui\.jsx"/.test(APP));
   t("a fala do Mestre vai à folha (LinhaDoChamado)", /<LinhaDoChamado chamado=\{chamadoVivo\.chamado\} \/>/.test(APP));
   t("a soleira recebe momentos.chamado (momentoDoChamado)", /momentoDoChamado\(\{[\s\S]{0,400}aoRolar: lancarOChamado, aoMudar: mudarDeIdeia, aoPousar: pousouOChamado, telefone: !mesaLarga/.test(APP));
-  t("a preferência mora no PainelLateral, ao lado das rolagens à vista", /<RolaPorMim ligado=\{rolaPorMim\} aoAlternar=\{aoAlternarRolaPorMim\} \/>/.test(APP));
+  t("a preferência mora no escudo do Mestre, ao lado das rolagens à vista", /rolagens: !!mostrarRolagens, aoRolagens: [^\n]*\n\s*rolaPorMim: !!rolaPorMim, aoRolaPorMim: \(v\) => alternarRolaPorMim\(!!v\)/.test(APP));
 }
 
 sec("1. O RESOLVER NÃO LANÇA SEM TOQUE OU PREFERÊNCIA");

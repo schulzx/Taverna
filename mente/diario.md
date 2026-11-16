@@ -24,6 +24,19 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — V1+V2, a fundação da Mesa do Mestre e o escudo · commits 7526220 (V1) e o seguinte (V2)
+
+A mão em Opus, com o bastão do `App.jsx` das 03:36 até ao fim da fiação (devolvido antes dos commits). Sem bump e sem push.
+
+- **V1 · a fundação.** `T` ganha os 13 tokens do F1 (latão, lacre, osso, halo, véu…); os aposentados (`rosa` como chão, `mundo*`, `violet` como selecionado) ficam marcados até a última tela sair deles. Tabelas novas em `estilo.js`: `LUZ_DA_MESA` (+ `TETO_DO_VEU`), `SOMBRA_DA_MESA`, `ESCALA_DA_MESA` + `PISOS_DA_MESA` (12/13 depois do multiplicador), `TAMANHO_DO_TEXTO` (`taverna_cfg_texto`, campo novo de config, fora do save), `PECAS_DA_MESA`, `ESCUDO_DO_MESTRE`. `FONT_CSS` carrega Spectral itálico 400 e bold 700. A conta em `src/mesa-do-mestre.js` (pilhas, vela, luz, letra, carta, lacre, donos do Esc); as nove peças em `src/pecas-da-mesa.jsx`, sem ligação à tela principal (é o V4). `check-formas` conhece as zonas `LUZ_DA_MESA` e `SOMBRA_DA_MESA`; o piso da `VELA` desceu 6 → 5 porque o halo virou `T.haloDaVela`.
+- **V2 · o escudo.** `src/painel-escudo.jsx`: três folhas a ≥ 1180 px, uma folha com pé fixo abaixo disso; abre pelo canto (sempre à vista; no telefone, último objeto da barra do Mestre) e por Esc; fecha por Esc, «Voltar à mesa» e toque no véu; `inert` na raiz, foco preso e devolvido ao canto. Som, rolagens à vista, «o Mestre rola por mim», reação, golpe final e ritmo de marcha **saíram da Bolsa** (uma ação, uma forma) com as mesmas chaves. O tamanho do texto já mexe na prosa (`--tv-texto` em `Prosa`).
+- **Decisão média — de quem é o Esc:** tabela `DONOS_DO_ESC` (escudo · escrita · janela · mapa · luta · cerimônia). A luta é dona inteira, não só «com seleção»: a seleção mora dentro de `painel-batalha.jsx` e o App não a vê; na luta o escudo abre pelo canto.
+- **Asserções movidas, com o motivo escrito:** `teste-te9-app` (o som no menu = no escudo) e `teste-chamado-fiacao` (o «rola por mim» mora no escudo).
+- **A prova (números):** build limpo; `npm test` 519/521 na corrida inteira e 29/29 varredores — as duas vermelhas eram réguas que liam o `fontSize` literal da prosa, movidas com o motivo e verdes sozinhas (76/76 e 58/58); suítes novas 83 + 71.
+- **A prova:** o painel do Claude estava oculto e qualquer aba do Taverna travava lá (a de `HEAD` também — não é do código); a prova viva foi num Chrome headless por CDP, com a IA muda: Esc e canto abrem, Esc/véu fecham, foco volta ao canto, Tab dá a volta, Esc com a Bolsa aberta fecha a Bolsa e não abre o escudo. Capturas `mente/lancamento/capturas/V2-escudo-1440.png` e `V2-escudo-375.png`.
+- **O que ficou:** `InterruptorDoSom` e `RolaPorMim` (ui.jsx) saíram da tela e ficam só com leitores de suíte — aposentar de vez é do próximo que tocar o ui; o ritmo de marcha ainda solta a mensagem antiga com emoji ao mudar; o lacre do escudo usa a estrela (o d20 da marca não é peça ainda).
+- **Proposta ambiciosa:** o escudo como o lugar do «diário de sessão» — a última noite resumida numa ficha do lado de cá do escudo, para quem volta depois de dias.
+
 ## 16/11 · sem versão — S1b, as telas em PT-BR · commits 5aefa27, 14a9469
 
 A mão em Opus, sem o bastão do `App.jsx` (o `App.jsx` já tem zero marcas; não foi tocado). Sem bump e sem push.

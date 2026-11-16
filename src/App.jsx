@@ -51,6 +51,9 @@ import { PainelReacao } from "./painel-reacao.jsx";
    `painel-golpe-final.jsx`, pelo mesmo molde do cartao da reacao). */
 import { PREFERENCIAS_DO_GOLPE_FINAL, PREFERENCIA_PADRAO, haEscolhaNoGolpe, decidirGolpeFinal, aplicarEscolha, envelopeDoGolpeFinal, quedasComEscolhaNaRodada, oFechoPergunta, QUANDO_O_FECHO_PERGUNTA } from "./golpe-final.js";
 import { PainelGolpeFinal } from "./painel-golpe-final.jsx";
+import { PortaDoEscudo } from "./painel-escudo.jsx";
+import { CantoDoEscudo } from "./pecas-da-mesa.jsx";
+import { quemTemOEsc, tamanhoDoTextoGuardado, multiplicadorValido } from "./mesa-do-mestre.js";
 import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortearConsumivel, melhorCuraPara, CONSUMIVEIS } from "./pocoes.js";
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta } from "./mercado.js";
 import { generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
@@ -75,7 +78,7 @@ import { MOLDES, MOLDE_PADRAO, moldePorId, moldesDisponiveis, resumoMoldePrompt,
 /* o gênero padrão do mundo em uso (29/10, trilha A): os recuos do App caem nele, não na Fantasia medieval */
 import { cenarioAtivo, tomDoGenero } from "./cenario.js";
 import { BRAND, SLOGAN, VERSAO, LEVA, XP_POR_NIVEL, MOEDAS_INICIAIS, PONTOS_TOTAIS, ATRIBUTO_MAX_CRIACAO, ATRIBUTO_MAX, MAX_COMPANHEIROS, T, GENEROS, ATRIBUTOS } from "./constantes.js";
-import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, QUADRO_DA_TELA, PALAVRAS_DO_QUADRO, alfa, luzAmbiente } from "./estilo.js";
+import { FICHA_CARTA, DIARIO_DE_MISSOES, FOLHA, TIPOS, ALVOS, CINTA, ANEL, VEU, ESBATIMENTO, ALFORJE, ABERTURA, FOCO_NA_GAVETA, CHEGADA, DADO, COMPOSITOR, FICHAS, COR_DA_RARIDADE, HUD_DA_MESA, CARTAO_DO_ENCONTRO, TURNO_DELES, DADO_NO_ALVO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, QUADRO_DA_TELA, PALAVRAS_DO_QUADRO, TAMANHO_DO_TEXTO, ESCUDO_DO_MESTRE, alfa, luzAmbiente } from "./estilo.js";
 import { Alforje } from "./painel-alforje.jsx";
 import { fotoDoAcervo, marcasQueAcendem, abaDaPorta, nomeDaPorta, ROTULOS_DA_PORTA } from "./marca-da-porta.js";
 import { pontosAtributoNoNivel, pontosAtributoDisponiveis, tetoAtributo, tabelaDeAtributos, subirAtributo as subirAtributoFicha, redistribuirAtributos, atributoDaHabilidade, valorParaHabilidade, conselhoDeBuild, resumoAtributosPrompt, migrarAtributos, ATRIBUTOS_PROMPT } from "./atributos.js";
@@ -229,7 +232,7 @@ import { MAGIAS, magiaPorNome, ehMagiaDoGrimorio, ehArea, geometriaDe, formaDef,
 import { avaliarEquipar, podeTrocarAgora, penalidadesAtivas, conjuracaoBloqueada, fichaDoItem, proficienciasDoHeroi, armasRecomendadas, armadurasRecomendadas, danoDaArma, modDoGolpe, fichaDeCombateTexto, ITENS_PROMPT } from "./itens.js";
 import { extrairJSON, parseObjetoTolerante } from "./json.js";
 import { fichaTexto, formatarCanone, montarSystemPrompt, PORTAS_DA_CENA, pedidoNaOrdemDoCache, SINAIS_ABERTOS } from "./prompt.js";
-import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, InterruptorDoSom, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco, LinhaDoChamado, RolaPorMim } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
+import { Botao, CampoDeBrasas, IconeD20, IconeCaneca, BarraMini, Retrato, IconeSeta, IconeLivro, IconeFaiscas, IconeDois, IconeArquivo, IconeAviso, PontoAtivo, IconeBandeira, IconeEspada, IconeBolsa, IconeMochila, IconeMapa, IconeGota, IconeCirculoX, IconeLosango, IconeEscudoAlerta, IconeEscudo, IconeSetaEsq, IconeFrasco, DivisoriaRunica, IconeDado, IconeAlfinete, IconeChevronEsq, IconeCheck, IconeMaisGente, IconePartilhar, IconePlay, RotuloDoCampo, TituloDeSecao, CabecalhoDeSecao, CampoRotulado, DescricaoCurta, CartaoDeEscolha, Consequencia, PilulaDeEscolha, LinhaDoCartao, glifoDoGenero, duasColunas, Oferta, Soleira, Voz, IconeAmpulheta, SeloDePrazo, SinalDeGuardado, MarcaDaPorta, Glifo, FimDaPagina, useMesa, SoleiraDoMomento, SetaDaLeitura, Dado, LinhaDoVeredito, VerboComPreco, LinhaDoChamado } from "./ui.jsx"; import { assuntoDaLinha, retornoDaSoleira, etiquetasDaPagina, GLIFO_DA_SALA, estaNoFim, pousoDaVista, comportamentoDaRolagem, estadoDoDado, envioEspera, nomeDoDado, linhaDoTeste, chaveDoRascunho, rascunhoPara, rascunhoDe, reciboDoTurno, reciboQueCabe, itensMostrados, horaNaCinta } from "./glifos.js"; import { luzDaHora, palavraDoPrazo } from "./hora-e-prazo.js";
 import heroTaverna from "./assets/taverna-hero.png";
 import brilhoDourado from "./assets/brilho-dourado.svg";
 import marcaTaverna from "./assets/taverna-marca.jpg";
@@ -2641,26 +2644,11 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 <PainelHeroismo pontos={heroismoPontos} contexto={contextoHeroismo}
                   aoGastar={aoGastarHeroismo} aoFechar={aoAbrirHeroismo} />
               )}
-              <button onClick={aoAlternarRolagens}
-                className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
-                aria-pressed={!!mostrarRolagens}
-                style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px solid ${T.line}`, color: mostrarRolagens ? T.amberSoft : T.inkDim }}>
-                🎲 Rolagens do mundo à vista: <b>{mostrarRolagens ? "sim" : "não"}</b>
-                <span className="block" style={{ color: T.inkDim }}>mostrar os dados que o Mestre rola por trás do escudo</span>
-              </button>
-              {/* MC3 (10/11) · «o Mestre rola por mim», ao lado das rolagens à vista e
-                  com a forma delas (formas.md §MC 1.8); o App guarda a preferência */}
-              <RolaPorMim ligado={rolaPorMim} aoAlternar={aoAlternarRolaPorMim} />
-              {/* TE (09/11) · o som da mesa: a peça guarda a preferência sozinha (taverna_cfg_som) */}
-              <InterruptorDoSom />
-              {aoIrAoMenu && (
-                <button onClick={aoIrAoMenu}
-                  className="tv-anel-foco w-full tv-mono rounded-lg px-3 text-left"
-                  style={{ minHeight: ALVOS.piso, fontSize: TIPOS.maquina, border: `1px dashed ${T.line}`, color: T.inkDim }}>
-                  ⌂ Sair para o início
-                  <span className="block" style={{ color: T.inkDim }}>a campanha fica guardada — dá para continuar de onde parou</span>
-                </button>
-              )}
+              {/* V2 (16/11) · as rolagens à vista, «o Mestre rola por mim», o som e
+                  «Sair para o início» SAÍRAM daqui para o escudo do Mestre
+                  (painel-escudo.jsx): um toque (o canto ou Esc) em vez de três e
+                  uma rolagem. Uma ação, uma forma — o estado e as chaves são os
+                  mesmos. */}
             </div>
     </div>
   );
@@ -3645,9 +3633,9 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               const dias = Math.min(Math.floor(sup.racoes / c.racoes), Math.floor(sup.agua / c.agua));
               mantimentos = { racoes: sup.racoes, agua: sup.agua, tochas: sup.tochas, kit: !!sup.kit, bocas, dias,
                 exaustao: efeitoExaustao(personagem.exaustao || 0), exaustaoMax: EXAUSTAO.length - 1,
-                ritmos: RITMOS_VIAGEM, ritmo: personagem.ritmoViagem || "normal", marchaArmada: !!marchaArmada, bloqueado: !!bloqueado,
+                marchaArmada: !!marchaArmada, bloqueado: !!bloqueado,
                 aoForragear: onForragear ? () => { try { onForragear(); } catch (e) { calou("forragear pela carta", e); } } : null,
-                aoRitmo: onRitmoViagem ? (id) => { try { onRitmoViagem(id); } catch (e) { calou("o ritmo de marcha pela carta", e); } } : null,
+                /* V2 · o ritmo de marcha saiu para o escudo do Mestre (Na estrada) */
                 aoForcarMarcha: onForcarMarcha ? () => { try { onForcarMarcha(); } catch (e) { calou("forçar a marcha pela carta", e); } } : null };
               /* 07/11 (os dados de uso): a face de cada mantimento, pela regra
                  de mantimentosDeUso (a mesma da prateleira da mesa). Estourar
@@ -3661,17 +3649,8 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
                 mantimentos = { ...mantimentos, tochas: u.contagens.tochas, dados: u.dados };
               } catch (e) { calou("os dados de uso na carta", e); mantimentos = { ...mantimentos, dados: null }; }
             } catch (e) { calou("os mantimentos na carta", e); }
-            try {
-              const verbo = verboDaReacao;
-              escolhas = [
-                { id: "reacao", titulo: "Quando um golpe chega", escolhida: preferenciaReacao || "normal",
-                  fila: [{ id: "normal", rotulo: "Eu decido" }, { id: "parado", rotulo: "Eu decido, sem pressa" }, ...(verbo ? [{ id: verbo.id, rotulo: verbo.nome + " sempre" }] : []), { id: "deixar_passar", rotulo: "Deixar passar" }],
-                  aoEscolher: (id) => { try { if (aoEscolherPreferenciaReacao) aoEscolherPreferenciaReacao(id); } catch (e) { calou("a reação pela carta", e); } } },
-                { id: "golpe", titulo: "Ao derrubar um inimigo", escolhida: preferenciaGolpeFinal || PREFERENCIA_PADRAO,
-                  fila: Object.values(PREFERENCIAS_DO_GOLPE_FINAL).map((p) => ({ id: p.id, rotulo: p.rotulo })),
-                  aoEscolher: (id) => { try { if (aoEscolherPreferenciaGolpeFinal) aoEscolherPreferenciaGolpeFinal(id); } catch (e) { calou("o golpe final pela carta", e); } } },
-              ];
-            } catch (e) { calou("as escolhas de combate na carta", e); }
+            /* V2 · «Quando um golpe chega» e «Ao derrubar um inimigo» saíram para
+               o escudo do Mestre (Na luta): escolhas fica null e a carta não as desenha. */
             try {
               dadivas = { linhas: linhasDeDadivas(personagem), progresso: (personagem.nivel || 1) >= 20 ? { xp: personagem.xp || 0, por: XP_POR_DADIVA } : null };
             } catch (e) { calou("as dádivas na carta", e); }
@@ -5664,6 +5643,16 @@ export default function Taverna() {
   const preferenciaGolpeFinalRef = useRef(PREFERENCIA_PADRAO);
   useEffect(() => { preferenciaGolpeFinalRef.current = preferenciaGolpeFinal; try { localStorage.setItem("taverna_cfg_golpe_final", preferenciaGolpeFinal); } catch {} }, [preferenciaGolpeFinal]);
   const escolherPreferenciaDoGolpeFinal = (id) => { setPreferenciaGolpeFinal(PREFERENCIAS_DO_GOLPE_FINAL[id] ? id : PREFERENCIA_PADRAO); };
+  /* V2 (16/11) · O ESCUDO DO MESTRE (formas.md §F1 §7): o menu e a pausa que
+     não havia. Abre pelo canto e por Esc; as preferências moram nele (saíram
+     da Bolsa), com o estado e as chaves de sempre. O TAMANHO DO TEXTO é campo
+     novo e aditivo da config (taverna_cfg_texto), fora do save, como as
+     rolagens: a página lê-o pela variável CSS --tv-texto. */
+  const [escudoAberto, setEscudoAberto] = useState(false);
+  const cantoDoEscudoRef = useRef(null);
+  const [tamanhoDoTexto, setTamanhoDoTexto] = useState(() => { try { return tamanhoDoTextoGuardado(localStorage.getItem(TAMANHO_DO_TEXTO.chave)); } catch { return TAMANHO_DO_TEXTO.padrao; } });
+  useEffect(() => { try { document.documentElement.style.setProperty(TAMANHO_DO_TEXTO.variavel, String(tamanhoDoTexto)); } catch (e) { calou("V2 · o tamanho do texto na página", e); } }, [tamanhoDoTexto]);
+  const escolherTamanhoDoTexto = (m) => { try { const v = multiplicadorValido(m); setTamanhoDoTexto(v); localStorage.setItem(TAMANHO_DO_TEXTO.chave, String(v)); } catch (e) { calou("V2 · guardar o tamanho do texto", e); } };
   const [temSave, setTemSave] = useState(null);
   /* quando foi a última cópia em arquivo — carregado do save, carimbado
      por exportarSave, e persistido por salvar() como qualquer campo */
@@ -27243,6 +27232,52 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     return () => { try { document.removeEventListener("keydown", tecla); } catch (e) { /* segue */ } };
   }, [outrasOfertasAbertas]);
   useEffect(() => { try { if (carregando) setOutrasOfertasAbertas(false); } catch (e) { calou("as outras ofertas fecham com o turno", e); } }, [carregando]);
+  /* V2 · ESC ABRE O ESCUDO — só quando ninguém mais a quer. A ordem é
+     DONOS_DO_ESC (quemTemOEsc, provada em teste-mesa-do-mestre): o escudo
+     aberto (que fecha a si mesmo e não deixa a tecla passar), o campo de
+     escrita, qualquer janela por cima da mesa (o alforje, as gavetas, toda
+     caixa role=dialog/menu na tela), e a luta. Ouve no window, depois dos
+     donos de sempre; uma tecla já tratada (defaultPrevented) não abre nada. */
+  useEffect(() => {
+    const tecla = (e) => {
+      try {
+        if (e.key !== "Escape" || e.defaultPrevented) return;
+        const ativo = document.activeElement;
+        const escrita = !!(ativo && (ativo.tagName === "INPUT" || ativo.tagName === "TEXTAREA" || ativo.tagName === "SELECT" || ativo.isContentEditable));
+        const caixa = !!document.querySelector('[role="dialog"]:not([data-escudo]), [role="alertdialog"], [role="menu"], [aria-modal="true"]:not([data-escudo])');
+        const dono = quemTemOEsc({ fora: fase !== "jogo" || !personagem, escudo: escudoAberto, escrita, janela: caixa || !!aba || horizonteAberto || outrasOfertasAbertas, luta: !!combate });
+        if (dono === "abrir") { e.preventDefault(); setEscudoAberto(true); }
+      } catch (er) { calou("V2 · o Esc do escudo", er); }
+    };
+    try { window.addEventListener("keydown", tecla); } catch (e) { calou("V2 · o escudo ouve o Esc", e); }
+    return () => { try { window.removeEventListener("keydown", tecla); } catch (e) { /* segue */ } };
+  }, [fase, personagem, escudoAberto, aba, horizonteAberto, outrasOfertasAbertas, combate]);
+  /* o que o escudo mostra: as filas de hoje, com os rótulos das tabelas de
+     hoje (a reação, o golpe final, RITMOS_VIAGEM). Estourar = escudo sem a
+     parte que estourou, nunca sem escudo. */
+  const propsDoEscudo = () => {
+    const p = { tamanhoDoTexto, aoTamanhoDoTexto: escolherTamanhoDoTexto, rolagens: !!mostrarRolagens, aoRolagens: (v) => setMostrarRolagens(!!v),
+      rolaPorMim: !!rolaPorMim, aoRolaPorMim: (v) => alternarRolaPorMim(!!v), aoGuardar: exportarSave,
+      aoSair: () => { try { setEscudoAberto(false); irMenu(); } catch (e) { calou("V2 · sair pelo escudo", e); } } };
+    try {
+      const verbo = verboDaReacaoDoHeroi(personagem);
+      p.reacao = { titulo: "Quando um golpe chega", escolhida: preferenciaReacao || "normal",
+        fila: [{ id: "normal", rotulo: "Eu decido" }, { id: "parado", rotulo: "Eu decido, sem pressa" }, ...(verbo ? [{ id: verbo.id, rotulo: verbo.nome + " sempre" }] : []), { id: "deixar_passar", rotulo: "Deixar passar" }],
+        aoEscolher: (id) => { try { escolherPreferenciaDaReacao(id); } catch (e) { calou("V2 · a reação pelo escudo", e); } } };
+    } catch (e) { calou("V2 · a reação no escudo", e); }
+    try {
+      p.golpe = { titulo: "Ao derrubar um inimigo", escolhida: preferenciaGolpeFinal || PREFERENCIA_PADRAO,
+        fila: Object.values(PREFERENCIAS_DO_GOLPE_FINAL).map((g) => ({ id: g.id, rotulo: g.rotulo })),
+        aoEscolher: (id) => { try { escolherPreferenciaDoGolpeFinal(id); } catch (e) { calou("V2 · o golpe final pelo escudo", e); } } };
+    } catch (e) { calou("V2 · o golpe final no escudo", e); }
+    try {
+      const atual = (personagem && personagem.ritmoViagem) || "normal";
+      p.marcha = { titulo: "Ritmo de marcha", escolhida: atual, fila: RITMOS_VIAGEM.map((r) => ({ id: r.id, rotulo: r.nome })), diz: ritmoViagem(atual).desc,
+        aoEscolher: (id) => { try { definirRitmoViagem(id); } catch (e) { calou("V2 · a marcha pelo escudo", e); } } };
+    } catch (e) { calou("V2 · a marcha no escudo", e); }
+    try { p.campanha = [personagem && personagem.nome, "dia " + dia].filter(Boolean).join(" · "); } catch (e) { calou("V2 · a linha da campanha", e); }
+    return p;
+  };
 
   /* O MOMENTO POR CIMA DO CAMPO (TL 3–5). Mora aqui tudo o que vivia no pé do
      cartão, na mesma ordem de decisão de antes:
@@ -28121,6 +28156,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                 </LimiteDasFichas>
               )}>
               <SinalDeGuardado visivel={!!guardadoAgora} />
+              {/* V2 · no telefone o canto do escudo é o último objeto da barra (fixo no
+                  canto, cobria a hora); V4 dá-lhe a porta na borda da mesa */}
+              {!mesaLarga ? <LimiteErro><CantoDoEscudo aoAbrir={() => { try { setEscudoAberto(true); } catch (e) { calou("V2 · abrir o escudo pela barra", e); } }} telefone aberto={escudoAberto} refBotao={cantoDoEscudoRef} /></LimiteErro> : null}
               {statusSave === "erro" && (
                 <span className="tv-mono" role="alert"
                   style={{ position: "absolute", right: CINTA.enchimento, bottom: 4, fontSize: TIPOS.maquina, color: T.danger,
@@ -29346,6 +29384,19 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
 
       {dadoRolando && rolagem && <OverlayDado rolagem={rolagem} semente={chaveDaRolagem(rolagem)} modificador={modPend} aoConcluir={concluirRolagem} emCombate={!!combate} heroismo={garantirHeroismo(personagem)} destino={refazerDisponivel(personagem) + refazerDeTracoDisponivel(personagem)} aoRefazer={pagarRefazer} />}
       {desfechoMorte && <OverlayMorte estado={desfechoMorte} nomeMorto={personagem.nome} personagem={personagem} local={cenaDoPalco()} aoVoltar={voltarDosMortos} aoHerdar={seguirComHerdeiro} />}
+      {/* V2 · O ESCUDO DO MESTRE: o canto sempre à vista na tela de jogo, e a
+          porta (portal no body, a mesa inert atrás, o foco preso e devolvido ao
+          canto). No seu LimiteErro: um escudo que estoure não leva a cena. */}
+      {fase === "jogo" && personagem ? (
+        <LimiteErro>
+          {mesaLarga || emBatalha ? (
+            <div style={{ position: "fixed", zIndex: 45, right: mesaLarga ? ESCUDO_DO_MESTRE.canto.mesa.direita : ESCUDO_DO_MESTRE.canto.telefone.direita, ...(mesaLarga ? { bottom: ESCUDO_DO_MESTRE.canto.mesa.baixo } : { top: ESCUDO_DO_MESTRE.canto.telefone.cima }) }}>
+              <CantoDoEscudo aoAbrir={() => { try { setEscudoAberto(true); } catch (e) { calou("V2 · abrir o escudo", e); } }} telefone={!mesaLarga} aberto={escudoAberto} refBotao={cantoDoEscudoRef} />
+            </div>
+          ) : null}
+          <PortaDoEscudo aberto={escudoAberto} aoFechar={() => { try { setEscudoAberto(false); } catch (e) { calou("V2 · fechar o escudo", e); } }} refDevolver={cantoDoEscudoRef} {...(escudoAberto ? propsDoEscudo() : {})} />
+        </LimiteErro>
+      ) : null}
       {fase === "jogo" && espolioRevelado && <RevelacaoDoEspolio item={espolioRevelado} fechar={() => setEspolioRevelado(null)} />}
       {fase === "jogo" && <FaixaDeChegada chegada={chegada} limpar={() => setChegada(null)} />}
       {fase === "jogo" && lugarNovo && <CerimoniaDoLugarNovo lugar={lugarNovo} fechar={() => setLugarNovo(null)} />}
