@@ -89,7 +89,7 @@ sec("2. as contas — em Node");
 /* ============================================================ */
 sec("3. as peças");
 {
-  t("A prosa: parágrafos a PAGINA.entreParagrafos, na letra de TIPOS.prosa", /gap: PAGINA\.entreParagrafos/.test(PROSA) && /fontSize: TIPOS\.prosa, lineHeight: PAGINA\.entrelinha/.test(PROSA) && /partesDaProsa\(texto\)/.test(PROSA));
+  t("A prosa: parágrafos a PAGINA.entreParagrafos, na letra de TIPOS.prosa", /gap: PAGINA\.entreParagrafos/.test(PROSA) && /* 16/11 · V2: TIPOS.prosa vezes o multiplicador do escudo (a 1, os 17 de sempre) */ /fontSize: "calc\(" \+ TIPOS\.prosa \+ "px \* var\(" \+ TAMANHO_DO_TEXTO\.variavel \+ ", 1\)\)", lineHeight: PAGINA\.entrelinha/.test(PROSA) && /partesDaProsa\(texto\)/.test(PROSA));
   t("a cerimônia é a primeira FRASE, num parágrafo seu, com a letra de ABERTURA",
     /primeiraFrase\(partes\[0\]\)/.test(PROSA) && /data-abertura="cerimonia"/.test(PROSA)
     && /fontSize: longa \? ABERTURA\.letraLonga : ABERTURA\.letra, lineHeight: ABERTURA\.entrelinha, fontWeight: ABERTURA\.peso/.test(PROSA)

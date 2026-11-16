@@ -329,7 +329,18 @@ const ZONAS_DE_TABELA = [
   { arquivo: "src/estilo.js", tabela: "PECAS_DA_MOLDURA", d5a: "isenta", d5b: "VARRE", piso: 4 },
   { arquivo: "src/estilo.js", tabela: "GEMA_DA_SUBCLASSE", d5a: "isenta", d5b: "VARRE" },
   { arquivo: "src/estilo.js", tabela: "COR_DA_RARIDADE", d5a: "isenta", d5b: "VARRE" },
-  { arquivo: "src/estilo.js", tabela: "VELA", d5a: "isenta", d5b: "VARRE", piso: 6 },
+  /* 16/11 · V1 (F1): o piso da VELA desce de 6 para 5 — o halo #FFC877 virou
+     T.haloDaVela (a cor ganhou dono em T, e D5b varreria a cópia). Não sumiu
+     cor nenhuma: mudou para onde a cor tem direito de nascer. */
+  { arquivo: "src/estilo.js", tabela: "VELA", d5a: "isenta", d5b: "VARRE", piso: 5 },
+  /* 16/11 · V1 · A Mesa do Mestre (formas.md §F1 §2): LUZ_DA_MESA é o feltro,
+     o fundo do feltro por modo de luz (dia · noite · masmorra) — material, como
+     a VELA; e SOMBRA_DA_MESA são as três sombras das peças (o preto a alfa,
+     profundidade e não cor do tema). D5a isenta as duas (é onde estas cores têm
+     direito de nascer) e D5b VARRE-as: o que repetir T escreve-se T.x. Piso =
+     a conta de cada uma hoje (6 hex; 8 rgba). */
+  { arquivo: "src/estilo.js", tabela: "LUZ_DA_MESA", d5a: "isenta", d5b: "VARRE", piso: 6 },
+  { arquivo: "src/estilo.js", tabela: "SOMBRA_DA_MESA", d5a: "isenta", d5b: "VARRE", piso: 8 },
   /* 05/11 · AAA §15: os materiais dos objetos da mesa (o couro do Diário, da Bolsa, do Códex, o rolo, o contorno) */
   { arquivo: "src/estilo.js", tabela: "MATERIAIS_DOS_OBJETOS", d5a: "isenta", d5b: "VARRE", piso: 6 },
   /* 07/11 · AR 11 (a constelação do herói, aprovada pela pessoa): o céu e as

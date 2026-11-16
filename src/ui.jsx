@@ -42,6 +42,8 @@ import { altoDaPrevisao, rotulosDoEmpurrao } from "./batalha-na-tela.js";
 /* MC (10/11): a fala do Mestre que chama o dado — a forma em CHAMADO_DO_MESTRE,
    as palavras no molde do motor (O_CHAMADO), o d20 da marca em FORMAS_DO_DADO */
 import { CHAMADO_DO_MESTRE, FORMAS_DO_DADO, BANDEJA } from "./estilo.js";
+/* V2 (16/11) · o tamanho do texto do escudo do Mestre: a prosa lê a variável */
+import { TAMANHO_DO_TEXTO } from "./estilo.js";
 import { O_CHAMADO } from "./motor/o-mestre-chama.js";
 
 /* `corpo` (R2, NOVO — padrão false): o verbo de `A Oferta` é fala, não
@@ -727,7 +729,8 @@ export function BotaoDeOuvir({ estado = "muda", aoOuvir, naFolha = false }) {
    desenha. */
 export function Prosa({ texto = "", abertura = "nenhuma", marcas = null }) {
   const partes = partesDaProsa(texto);
-  const normal = { fontSize: TIPOS.prosa, lineHeight: PAGINA.entrelinha, margin: 0 };
+  /* V2 · a prosa cresce com o multiplicador do escudo (a entrelinha é relativa e acompanha) */
+  const normal = { fontSize: "calc(" + TIPOS.prosa + "px * var(" + TAMANHO_DO_TEXTO.variavel + ", 1))", lineHeight: PAGINA.entrelinha, margin: 0 };
   /* TP (09/11): com `marcas`, a 1.ª ocorrência de cada palavra vira o nome
      tocável que o `no` desenha (também dentro da frase da cerimônia). Sem
      marcas, `tinta` devolve o parágrafo tal e qual: a peça é a de antes. */

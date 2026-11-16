@@ -281,7 +281,10 @@ t("e não voltaram as percentagens que partiam os dois aparelhos",
 /* V5: a prosa passou para a peça `Prosa` (ui.jsx) — parágrafos a 16, como o
    nó da pessoa. O tamanho continua `TIPOS.prosa`; a régua o lê onde ele mora. */
 { const UI = readFileSync(new URL("../src/ui.jsx", import.meta.url), "utf8");
-  t("a prosa nasce em `TIPOS.prosa`", /const normal = \{ fontSize: TIPOS\.prosa, lineHeight: PAGINA\.entrelinha/.test(UI)
+  /* 16/11 · V2: o tamanho passa a ser TIPOS.prosa VEZES o multiplicador do
+     escudo do Mestre (calc com a variável de TAMANHO_DO_TEXTO). A intenção fica:
+     a prosa nasce em TIPOS.prosa, e a 1 (o padrão) é exatamente 17. */
+  t("a prosa nasce em `TIPOS.prosa`", /const normal = \{ fontSize: "calc\(" \+ TIPOS\.prosa \+ "px \* var\(" \+ TAMANHO_DO_TEXTO\.variavel \+ ", 1\)\)", lineHeight: PAGINA\.entrelinha/.test(UI)
     && /<Prosa texto=\{m\.texto\}/.test(RELATO) && TIPOS.prosa === 17); }
 /* V5: eram três usos de `A voz` — o timbre no topo da página, a prosa do Mestre
    e a fala do jogador. O do topo DESCEU para onde a resposta vai nascer (é o

@@ -211,6 +211,28 @@ export const T = {
   /* NOVO (TP · 09/11) · o nome apontado na prosa: o rosa da tua mão a 30 %
      sobre o pergaminho (Figma VariableID:327:3) — tinta 9,37 · lacre 5,22 */
   marcaNoPergaminho:     "#DFBCAC",
+
+  /* NOVO (A Mesa do Mestre · F1 · 15/11) — os materiais da mesa inteira,
+     formas.md §«A Mesa do Mestre · F1» §2, com o contraste medido lá. Os
+     pares de cada material: o corpo, o lume (a luz) e a sombra. */
+  latao:          "#B8934C",   /* moldura, canto, fivela — NUNCA texto · 4,82 no feltro */
+  lataoLume:      "#E5C67E",   /* a luz do latão; a impressão dourada no lacre · 9,39 no couro */
+  lataoSombra:    "#6B5226",   /* a borda da moeda */
+  lacre:          "#9B2A22",   /* a cera: selo, perigo, dano · 5,63 no pergaminho · 1,67 no feltro (nunca pousa nele) */
+  lacreLume:      "#E0654F",   /* o aro claro da cera; a conta de PV; o aro de «ferido» · 4,05 no feltro */
+  lacreSombra:    "#5E1512",   /* a sombra da cera; a conta vazia */
+  sobreLacre:     "#F6EEDD",   /* letra/desenho sobre a cera · 6,62 */
+  osso:           "#E6D9BD",   /* dados e peças; a opção escolhida · tinta sobre osso 11,81 */
+  ossoLume:       "#F6EEDD",   /* o chão da proposta (= sobreLacre, de propósito: o mesmo papel claro) */
+  ossoSombra:     "#B7A27E",   /* o lado do disco */
+  violetaSombra:  "#4B3F8F",   /* a conta de PM vazia */
+  haloDaVela:     "#FFC877",   /* a cor do halo (VELA.cor.halo lê daqui) */
+  veuDaNoite:     "#05080A",   /* o véu sobre a página à noite (o alfa sai de LUZ_DA_MESA) */
+  /* APOSENTAM-SE com o F1, e ficam até a última tela sair deles (as telas de
+     hoje ainda os leem; apagar agora quebraria a mesa antiga):
+     · `rosa` como chão de botão (fica como marca);
+     · `mundo` / `mundoSoft` / `onMundo` quando o mapa for para o pergaminho (F5);
+     · `violet` como «selecionado» — selecionado passa a ser `osso` com tinta. */
 };
 
 /* O PRETO E O BRANCO DE SEMPRE. Sombra e brilho não são cor do tema:
@@ -1290,7 +1312,7 @@ export const VELA = {
   cor: {
     chama: "#FFB347",
     nucleo: "#FFF1C4",
-    halo: "#FFC877",
+    halo: T.haloDaVela,
     cera: "#EFE3C8",
     ceraSombra: "#C9B48E",
     pavio: T.tintaDoPergaminho,
@@ -1306,6 +1328,106 @@ export const VELA = {
   },
   tempos: { tremor: 1800, respiroDaLuz: 2300, acender: 700, fumo: 2600, reduzido: 200 },
   luzNoPapel: { raioDaFolha: 0.9, vinhetaDaMesa: 0.32 },
+};
+
+/* ============================================================
+   A MESA DO MESTRE · F1 (15/11/2026) — a fundação do redesenho.
+   formas.md §«A Mesa do Mestre · F1» §2–§5 e as imagens em
+   mente/lancamento/figma/F1-*.png. Cada número abaixo é o do quadro;
+   a conta que os usa (quantos discos, a altura da vela, o modo da luz,
+   o tamanho com o multiplicador) mora em mesa-do-mestre.js e é provada
+   em Node (teste-mesa-do-mestre.mjs); as peças em pecas-da-mesa.jsx.
+   ============================================================ */
+
+/* A LUZ É UM MODO (§2): o feltro, o halo e o véu da página por modo. Na
+   masmorra o raio do halo sai da pilha de tochas (`raioPorTocha`), com
+   teto. Material, não significado: zona própria em check-formas. */
+export const LUZ_DA_MESA = {
+  dia:      { feltro: "#183222", feltroFundo: "#0E2016", haloAlfa: 0.10, haloRaio: 750, veuDaPagina: 0, penumbra: 0.38 },
+  noite:    { feltro: "#0F1E16", feltroFundo: "#08120D", haloAlfa: 0.18, haloRaio: 400, veuDaPagina: 0.08, penumbra: 0.60 },
+  masmorra: { feltro: "#090F0C", feltroFundo: "#040806", haloAlfa: 0.16, haloRaio: { base: 100, porTocha: 50, teto: 400 }, veuDaPagina: 0.12, penumbra: 0.60 },
+};
+/* o véu da página tem teto de 12 % (a 15 % `tintaDim` cai a 4,74:1) — a
+   suíte prova que nenhum modo passa dele */
+export const TETO_DO_VEU = 0.12;
+
+/* AS TRÊS SOMBRAS (§2): o que separa «objeto pousado» de «retângulo
+   desenhado». `peca` (disco, lacre), `pousado` (carta, livro, página),
+   `erguido` (o objeto sob o dedo, o escudo aberto). */
+export const SOMBRA_DA_MESA = {
+  peca:    "0 1px 0 rgba(0,0,0,.55), 0 3px 5px -1px rgba(0,0,0,.50)",
+  pousado: "0 1px 0 rgba(0,0,0,.50), 0 6px 10px -2px rgba(0,0,0,.45), 0 18px 28px -10px rgba(0,0,0,.50)",
+  erguido: "0 2px 2px rgba(0,0,0,.35), 0 14px 22px -4px rgba(0,0,0,.45), 0 34px 48px -14px rgba(0,0,0,.55)",
+};
+
+/* A TIPOGRAFIA (§3): família, peso, corpo/entrelinha e entreletra (em em).
+   O PISO vale DEPOIS do multiplicador do escudo: 12 para toda letra, 13
+   para nome. `tamanhoNaEscala` (mesa-do-mestre.js) é quem aplica. */
+export const ESCALA_DA_MESA = {
+  dado:         { familia: "Cinzel", peso: 700, corpo: 64, entrelinha: 64, entreletra: 0 },
+  marca:        { familia: "Cinzel", peso: 700, corpo: 40, entrelinha: 44, entreletra: 0.16, caixaAlta: true },
+  titulo:       { familia: "Cinzel", peso: 700, corpo: 28, entrelinha: 34, entreletra: 0.03 },
+  tituloObjeto: { familia: "Cinzel", peso: 700, corpo: 22, entrelinha: 28, entreletra: 0.03 },
+  lugar:        { familia: "Cinzel", peso: 700, corpo: 18, entrelinha: 24, entreletra: 0.10 },
+  contagem:     { familia: "Cinzel", peso: 700, corpo: 16, entrelinha: 20, entreletra: 0.02 },
+  nome:         { familia: "Cinzel", peso: 700, corpo: 13, entrelinha: 16, entreletra: 0.04, piso: "nome" },
+  rotulo:       { familia: "Cinzel", peso: 700, corpo: 12, entrelinha: 16, entreletra: 0.10, piso: "rotulo" },
+  prosa:        { familia: "Spectral", peso: 400, corpo: 18, entrelinha: 30, entreletra: 0, telefone: { corpo: 17, entrelinha: 28 } },
+  falaDoJogador:{ familia: "Spectral", peso: 400, italico: true, corpo: 17, entrelinha: 26, entreletra: 0 },
+  proposta:     { familia: "Spectral", peso: 500, corpo: 16, entrelinha: 22, entreletra: 0 },
+  notaDoMestre: { familia: "Spectral", peso: 400, italico: true, corpo: 14, entrelinha: 20, entreletra: 0 },
+  servico:      { familia: "Spectral", peso: 500, corpo: 13, entrelinha: 18, entreletra: 0 },
+  /* o número de nível no lacre é Spectral Bold: o 1 do Cinzel lê-se I */
+  numeroDoLacre:{ familia: "Spectral", peso: 700, corpo: 0, entrelinha: 0, entreletra: 0 },
+};
+export const PISOS_DA_MESA = { rotulo: 12, nome: 13 };
+
+/* O TAMANHO DO TEXTO (o escudo do Mestre): a preferência do jogador,
+   guardada em `taverna_cfg_texto` (campo NOVO e aditivo da config, que a
+   versão antiga ignora). Os quatro «A» do escudo, do menor ao maior. */
+export const TAMANHO_DO_TEXTO = {
+  opcoes: [0.9, 1, 1.15, 1.3],
+  padrao: 1,
+  chave: "taverna_cfg_texto",
+  variavel: "--tv-texto",   /* a variável CSS que a página lê */
+};
+
+/* AS PEÇAS (§4) — as medidas de cada uma, em px. */
+export const PECAS_DA_MESA = {
+  nota:    { traco: { largura: 18, alto: 20 }, folga: 10, cores: { ganho: T.musgoNoPergaminho, regra: T.brasaNoPergaminho, aviso: T.perigoNoPergaminho }, tinta: T.tintaDoPergaminhoDim },
+  /* o borrão irregular de 12 pontos: o raio de cada ponta, fração do raio
+     cheio (fixo — mesma cera em toda máquina, sem sorteio) */
+  lacre:   { tamanhos: { G: 96, M: 56, P: 32 }, pontas: [1, 0.93, 0.99, 0.9, 0.97, 0.92, 1, 0.91, 0.98, 0.94, 0.99, 0.9], aroInterno: 0.72 },
+  recurso: { alvo: { largura: 72, alto: 112 }, disco: { largura: 40, alto: 13 }, passo: 4, porPilha: 10, tetoDePilhas: 3, unidadePorDisco: { racoes: 1, agua: 1, tochas: 1, moedas: 10 } },
+  /* a altura da cera = base + curso × (1 − horasDesdeAs6 / 24) */
+  vela:    { caixa: { largura: 88, alto: 172 }, cera: 20, base: 8, curso: 96, vigilias: 4, prato: { largura: 56, alto: 16 } },
+  carta:   { largura: 140, alto: 196, raio: 8, aro: 3, fio: 5, pe: { largura: 124, alto: 44 }, contas: 10, conta: 7, losango: 6, alvo: { largura: 140, alto: 252 }, feridoAbaixoDe: 0.5 },
+  estampa: { aberta: 212, pintura: 188, esbate: 96, recolhida: 48, miniatura: 96 },
+  objeto:  { desenho: 96, alvo: { largura: 104, alto: 128 } },
+  canto:   { lado: 64, alvo: { largura: 72, alto: 84 }, telefone: 46 },
+  proposta:{ alto: 48, altoComDado: 60, raio: 3 },
+  pena:    { alto: 56, dizer: 44 },
+  /* §5 — ms; com prefers-reduced-motion cada um vira troca seca ou o
+     esvanecer de `reduzido` */
+  movimento: { nota: 220, estampaAbre: 420, estampaRecolhe: 280, ergue: 140, vez: 180, disco: 200, lacreDesce: 320, lacreAssenta: 120, lacreEscala: 1.6, chama: 1800, halo: 2300, luz: 900, escudo: 260, reduzido: 120, sobe: 6, entraNota: 4 },
+};
+
+/* O ESCUDO DO MESTRE (§7): três folhas de couro na mesa larga, uma folha
+   que rola no telefone com o pé fixo. */
+export const ESCUDO_DO_MESTRE = {
+  veu: 0.66,
+  folha: { borda: 3, fio: 10, costura: 16, raio: 6, padding: 24 },
+  folhas: { lado: { largura: 336, alto: 600 }, centro: { largura: 460, alto: 680 }, entre: 14 },
+  telefone: { pe: 84, ate: 1180 },  /* abaixo de `ate` px de largura, a folha única (F1: 768–1179 usa a composição do telefone) */
+  interruptor: { linha: 52, trilho: { largura: 52, alto: 28 }, botao: 22 },
+  escolha: { alto: 44, raio: 4 },
+  botao: { alto: 52, raio: 4 },
+  selo: 48,
+  /* onde mora o canto (o objeto que abre o escudo): na mesa, o canto de baixo
+     à direita (28 da direita, 24 do fundo, §6); no telefone mora na barra do
+     Mestre (até V4 lhe dar a porta na borda da mesa), e só na luta, sem barra,
+     vem para o canto de cima à direita */
+  canto: { mesa: { direita: 28, baixo: 24 }, telefone: { direita: 8, cima: 8 } },
 };
 
 /* OS TRÊS TAMANHOS, UMA FAMÍLIA (formas.md §AAA §1): o aro em px, desde
@@ -4200,7 +4322,7 @@ export const PALAVRAS_DO_QUADRO = {
    erro, nenhum aviso, e as três fontes do jogo simplesmente não chegam.
    ============================================================ */
 export const FONT_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@400;600&family=Cinzel:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=JetBrains+Mono:wght@400;600&family=Cinzel:wght@700&display=swap');
 .tv-display { font-family: 'Cormorant Garamond', Georgia, serif; }
 .tv-body { font-family: 'Spectral', Georgia, serif; }
 .tv-mono { font-family: 'JetBrains Mono', monospace; }
