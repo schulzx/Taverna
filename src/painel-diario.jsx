@@ -128,12 +128,12 @@ function partirOGancho(g) {
   return i > 0 ? { voz: s.slice(0, i).trim(), custo: s.slice(i + 1).trim() } : { voz: s, custo: "" };
 }
 /* O fecho de uma secundária, dito como o que se ganha. */
-const FECHO_DO_LACO = { amizade: "passa a confiar em ti", divida: "fica a dever-te um favor", aprendizado: "ensina-te o que nunca ensinou" };
+const FECHO_DO_LACO = { amizade: "passa a confiar em você", divida: "fica te devendo um favor", aprendizado: "te ensina o que nunca ensinou" };
 function fraseDoFecho(f) {
   if (!f) return "";
-  if (f.tipo === "laco") return `e ${f.quem} ${FECHO_DO_LACO[f.laco] || "não esquece o que fizeste"}`;
-  if (f.tipo === "lugar") return `e ${String(f.nome || "").replace(/^(O|A|Os|As) /, (x) => x.toLowerCase())} fica no teu mapa`;
-  if (f.tipo === "porta") return `e a estrada para ${f.cidade} abre-se`;
+  if (f.tipo === "laco") return `e ${f.quem} ${FECHO_DO_LACO[f.laco] || "não esquece o que você fez"}`;
+  if (f.tipo === "lugar") return `e ${String(f.nome || "").replace(/^(O|A|Os|As) /, (x) => x.toLowerCase())} fica no seu mapa`;
+  if (f.tipo === "porta") return `e a estrada para ${f.cidade} se abre`;
   return "";
 }
 const NOME_DA_RARIDADE = { comum: "comum", incomum: "incomum", raro: "raro", epico: "épico", lendario: "lendário", unico: "único" };
@@ -211,7 +211,7 @@ function ProximoPasso({ m, e, frase, telefone, aoVerNoMapa, distanciaDoPasso, fa
   /* a distância é do jogo (o mapa vivo); sem ela, a linha diz só o lugar */
   let dist = null;
   if (distanciaDoPasso) { try { const d = distanciaDoPasso(m, e); dist = d && typeof d === "object" && d.rotulo ? d : null; } catch { dist = null; } }
-  const longe = !dist ? "" : dist.tipo === "aqui" ? "estás aqui" : dist.tipo === "zonas" ? `${dist.rotulo} daqui` : dist.rotulo;
+  const longe = !dist ? "" : dist.tipo === "aqui" ? "você está aqui" : dist.tipo === "zonas" ? `${dist.rotulo} daqui` : dist.rotulo;
   const sitio = (dist && dist.nome) || (onde ? onde.split(",")[0].trim() : String((e && e.alvo) || ""));
   const precoDoMapa = [sitio, !dist ? "" : dist.tipo === "zonas" && Number.isFinite(dist.zonas) ? plural(dist.zonas, "zona", "zonas") : dist.rotulo].filter(Boolean).join(" · ");
   /* «Ver no mapa» só quando o mapa sabe onde é o sítio */
@@ -272,7 +272,7 @@ function LinhaDoTempo({ m, frase, compacto, comAtual = false, q = null }) {
       const onde = String(e.onde || "").trim();
       return { i, estado: "atual", tipo: e.tipo, texto: frase, nota: onde ? `${onde} — é o passo de agora` : "é o passo de agora", ramos: temRamos(q) };
     }
-    return { i, estado: "silhueta", tipo: e.tipo, texto: "Ainda não se sabe", nota: i === iAtual + 1 ? "abre-se quando a de cima se cumprir" : "" };
+    return { i, estado: "silhueta", tipo: e.tipo, texto: "Ainda não se sabe", nota: i === iAtual + 1 ? "se abre quando a de cima se cumprir" : "" };
   });
   /* BQ: a reviravolta já lida é um marco próprio, no sítio em que aconteceu
      (depois da última etapa cumprida até ao dia dela); por ler, mora no topo */
@@ -480,7 +480,7 @@ function MissaoAFrente({ m, todas, abertura, pers, relogios, telefone, compacto,
 
       {(m.etapas || []).length > 0 ? (
         <div>
-          {!compacto ? <Rotulo extra={`${p.feitas} de ${p.total}${p.total - p.feitas > 1 ? " · as que faltam abrem-se pelo caminho" : ""}`}>{sec ? "Os atos" : "As etapas"}</Rotulo> : null}
+          {!compacto ? <Rotulo extra={`${p.feitas} de ${p.total}${p.total - p.feitas > 1 ? " · as que faltam se abrem pelo caminho" : ""}`}>{sec ? "Os atos" : "As etapas"}</Rotulo> : null}
           <LinhaDoTempo m={m} frase={frase} compacto={compacto} comAtual={oferta} q={q} />
         </div>
       ) : null}
@@ -602,7 +602,7 @@ export function QuestDoCoracao({ missao, estado, telefone = false, rosto = null,
    Sem camada, o cartaz não existe (0 px). */
 const ORDEM_DA_CAMADA = Object.fromEntries(CAMADAS_DO_VILAO.map((f) => [f.id, f.ordem]));
 const PLANO_DO_CARTAZ = { feito: "feito", travado: "travado", agora: "agora", por_vir: "porVir", porVir: "porVir" };
-const PALAVRA_DO_PASSO = { feito: "feito", travado: "travado por ti", agora: "o de agora", porVir: "por vir" };
+const PALAVRA_DO_PASSO = { feito: "feito", travado: "travado por você", agora: "o de agora", porVir: "por vir" };
 function Silhueta({ lado }) {
   return (
     <svg width={lado} height={lado} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -755,7 +755,7 @@ function MundoNaoEspera({ eventos, diaAtual }) {
       ) : null}
       {locais.length ? (
         <>
-          <div className="tv-body mb-2" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Fios que se resolvem sem ti</div>
+          <div className="tv-body mb-2" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>Fios que se resolvem sem você</div>
           <ul className="m-0 p-0 flex flex-col gap-2">
             {locais.map((l) => (
               <li key={l.id} title={l.gancho || undefined} className="flex items-baseline justify-between gap-3 rounded-xl px-3 py-3"
@@ -849,7 +849,7 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
       ) : null}
       {ofertasM.length ? (
         <div>
-          <Rotulo cor={T.violetSoft}>Ofereceram-te</Rotulo>
+          <Rotulo cor={T.violetSoft}>Ofereceram a você</Rotulo>
           <ul className="m-0 p-0 flex flex-col gap-2">{ofertasM.map((m) => <ItemDoIndice key={m.id} m={m} q={estadoDe(m.id)} escolhida={escolhida && escolhida.id === m.id} aoEscolher={escolher} relogios={relogios} todas={todas} abertura={abertura} />)}</ul>
         </div>
       ) : null}
@@ -863,7 +863,7 @@ export function PainelDiario({ historia, quests, trocarArco, eventos, diaAtual, 
   /* BQ: a história do coração (sempre à vista: à direita na mesa, por baixo
      da estrada no telefone) e o cartaz da sombra */
   const blocoDoCoracao = coracaoM.length ? (
-    <section aria-label="Quem anda contigo">
+    <section aria-label="Quem anda com você">
       <Rotulo>{Q.indice.coracao}</Rotulo>
       <div className="flex flex-col gap-3">
         {coracaoM.map((m) => <QuestDoCoracao key={m.id} missao={m} estado={estadoDe(m.id)} telefone={telefone}

@@ -67,10 +67,10 @@ export const CUSTO_DOS_VERBOS = Object.freeze({
    veredito (o sistema fala de jogo, nunca do mecanismo) */
 export const RECUSA_DO_VERBO = Object.freeze({
   acao: "já agiste nesta rodada",
-  bonus: "já usaste a ação bónus nesta rodada",
-  semBonus: "não tens ação bónus",
+  bonus: "você já usou a ação bônus nesta rodada",
+  semBonus: "você não tem ação bônus",
   reacao: "a reação já foi gasta nesta rodada",
-  movimento: "já não tens passo nesta rodada",
+  movimento: "você já não tem passo nesta rodada",
 });
 
 /* ============================================================

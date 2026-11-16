@@ -773,7 +773,7 @@ export const MORADA_DA_LINHA = [
   { morada: "cala", pecas: [22], padrao: /^✧ .+ ativo \(\+\d+ em .+, \d+ turnos?\)$/u,
     porque: "o tique de todo turno: o chip da cinta (peça 138) já diz o efeito ativo; o fim dele ('se dissipou') fica, porque muda a próxima decisão" },
   { morada: "cala", pecas: [44], padrao: /^(?!.*Começou a contar).*(?:●○|○●)/u,
-    porque: "o tique do relógio ('●●○○ — 4 noites') o selo da cinta (peça 136) já diz; avisa-se só quando aperta — 'Começou a contar' e o relógio cheio ficam" },
+    porque: "o tique do relógio ('●●○○ — 4 noites') o selo da cinta (peça 136) já diz; se avisa só quando aperta — 'Começou a contar' e o relógio cheio ficam" },
   { morada: "cala", pecas: [65], padrao: /^▸ Códex — /u,
     porque: "a aba nasce no trilho, com marca; a frase nomeava o mecanismo e, na T8, nasceu no meio do golpe" },
   { morada: "cala", pecas: [53], padrao: /^🧺 No chão: .+ toque em EXAMINAR/u,
@@ -809,7 +809,7 @@ export const MORADA_DA_LINHA = [
   { morada: "recibo", pecas: [53], padrao: /^(?:◉ Espólios: |🤲 Você recolhe: )/u,
     porque: "a vitória chegava como linha mono entre outras seis; o ganho vai ao recibo da luta (e ao fim da luta, A6)" },
   { morada: "recibo", pecas: [56], padrao: /^(?:Você gastou \d+ PM|✦ .+ · gastou \d+ PM) · restam /u,
-    porque: "o preço vê-se ANTES (a pílula armada #79), não depois; o gasto vai à cinta e ao recibo, e a recarga a gaveta mostra" },
+    porque: "o preço se vê ANTES (a pílula armada #79), não depois; o gasto vai à cinta e ao recibo, e a recarga a gaveta mostra" },
 
   /* ---------------- dia: a dobra "O dia" ---------------- */
   { morada: "dia", pecas: [39], padrao: /^👑 .+ em .+: /u,
@@ -835,11 +835,11 @@ export const MORADA_DA_LINHA = [
 
   /* ---------------- cena que fura a dobra ---------------- */
   { morada: "cena", pecas: [55], padrao: /^(?:💥 Seus PV chegam a zero|☠ Teste de morte: |💀 Você tomba\.|✨ Você volta |Você estabiliza — )/u,
-    porque: "a queda e a morte do herói: a vida está em jogo, e o regente decidiu que furam a dobra da luta — ficam na cena, no sítio onde aconteceram" },
+    porque: "a queda e a morte do herói: a vida está em jogo, e o regente decidiu que furam a dobra da luta — ficam na cena, no lugar onde aconteceram" },
   { morada: "cena", pecas: [54], padrao: /^🌟 PODER ÚNICO DESPERTOU/u,
     porque: "raro e é momento; furam a dobra da luta como a morte (decisão do regente sobre as perguntas abertas)" },
   { morada: "cena", pecas: [65], padrao: /^▸ /u,
-    porque: "a porta para uma sub-aba é a única porta dela e é convite; nenhuma porta nasce dentro da dobra da luta, por isso fura-a" },
+    porque: "a porta para uma sub-aba é a única porta dela e é convite; nenhuma porta nasce dentro da dobra da luta, por isso a fura" },
 
   /* ---------------- a declaração por prefixo (V3b estendida) ---------------- */
   { morada: "cena", prefixos: ["⚔", "⚡", "💢", "💥", "🏹", "🎯", "🏃", "👣", "📏", "🛡", "🪨", "⛰", "🎲", "🍀", "☠", "💀", "⚰", "🪤", "🪂"],
@@ -929,7 +929,7 @@ export const RECIBO_DO_TURNO = [
   { tipo: "moedas", campo: "moedas", glifo: "moeda", falado: "moedas", forma: "numero", porque: "a bolsa; número primeiro e o glifo depois, como a cinta escreve `1.240 ◉`" },
   { tipo: "pv", campo: "vida", rotulo: "PV", forma: "numero", porque: "a ferida do turno, lida do anel e não da soma da frase (T8: 3, não 6)" },
   { tipo: "pm", campo: "mana", glifo: "mana", falado: "PM", forma: "numero", porque: "o que a magia custou; o glifo da cinta (`85 ◆`)" },
-  { tipo: "xp", campo: "xp", rotulo: "XP", forma: "numero", porque: "o laço de recompensa; conta o vão de cada nível atravessado, porque `aplicarNivel` desconta-o do XP" },
+  { tipo: "xp", campo: "xp", rotulo: "XP", forma: "numero", porque: "o laço de recompensa; conta o vão de cada nível atravessado, porque `aplicarNivel` o desconta do XP" },
   { tipo: "nivel", campo: "nivel", rotulo: "nível", forma: "marco", porque: "o nível novo, dito pelo número a que se chegou; o momento é do `ModalNivel`" },
   { tipo: "heroismo", campo: "heroismo", rotulo: "heroísmo", forma: "numero", porque: "o recurso do destino, que a linha '✧ +1 ponto de heroísmo' dizia (#29)" },
   { tipo: "essencia", campo: "essencia", rotulo: "essência", forma: "numero", porque: "a moeda do ofício" },

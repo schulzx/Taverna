@@ -261,7 +261,7 @@ function LugarLivre({ telefone }) {
       style={{ width: telefone ? "100%" : C.largura.mesa * 0.75, maxWidth: "100%", minHeight: telefone ? ALVOS.piso * 2 : undefined, alignSelf: "stretch",
         padding: telefone ? C.enchimento.telefone : C.enchimento.mesa, gap: C.barra, border: `1px dashed ${T.lineStrong}`, borderRadius: C.raio }}>
       <span className="tv-titulo" style={{ fontSize: TIPOS.rotulo, color: OURO.claro }}>Um lugar à fogueira</span>
-      <span className="tv-body" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>Quem se junta ao grupo encontra-se pelo caminho: nas tavernas, nas missões, às vezes depois de uma luta.</span>
+      <span className="tv-body" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>Quem se junta ao grupo se encontra pelo caminho: nas tavernas, nas missões, às vezes depois de uma luta.</span>
     </div>
   );
 }

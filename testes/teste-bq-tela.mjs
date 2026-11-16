@@ -417,7 +417,7 @@ sec("7. o cartaz que não passa da camada");
   const rosto = em("rosto");
   t("rosto: o nome e a pintura, e o aro de ouro; o plano ainda não", rosto.includes("Vesper Malho") && /data-pintura/.test(rosto) && rosto.includes(CARTAZ_DA_SOMBRA.aro.comRosto) && !/data-passo/.test(rosto));
   const guerra = em("guerra");
-  t("guerra: o plano, seis traços, cada um com o seu estado", (guerra.match(/data-passo=/g) || []).length === 6 && /data-passo="porVir"/.test(guerra) && /aria-label="O plano dele: feito, travado por ti, o de agora, por vir/.test(guerra));
+  t("guerra: o plano, seis traços, cada um com o seu estado", (guerra.match(/data-passo=/g) || []).length === 6 && /data-passo="porVir"/.test(guerra) && /aria-label="O plano dele: feito, travado por você, o de agora, por vir/ /* PT-BR, ordem de 15/11 */.test(guerra));
   t("o aro de ferro enquanto não tem rosto", em("marca").includes(CARTAZ_DA_SOMBRA.aro.semRosto));
   const muitas = html(R.CartazDaSombra, { vilao: { camada: "rosto", nome: "V", linhas: [1, 2, 3, 4, 5].map((i) => ({ texto: `linha ${i}`, nova: i === 1 })) } });
   t("três linhas à vista, a mais nova marcada, as outras um toque abaixo", texto(muitas).includes("linha 3") && !texto(muitas).includes("linha 4") && texto(muitas).includes("e mais 2") && (muitas.match(/data-nova="sim"/g) || []).length === 1);

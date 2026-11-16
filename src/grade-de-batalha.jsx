@@ -652,7 +652,7 @@ function DadoNoAlvo({ lance, pousou, telefone = false, parado = false }) {
     : deles ? `${d.natural} ${sinal(d.bonus)} contra ${d.defesa}`
       : `${d.natural} ${sinal(d.bonus)} = ${d.total != null ? d.total : d.natural + (Number(d.bonus) || 0)} contra ${d.defesa}`);
   const linha1 = rolando
-    ? (deles ? `precisa de ${precisaDe(d0)}+ para te acertar` : `precisas de ${precisaDe(d0)}+`)
+    ? (deles ? `precisa de ${precisaDe(d0)}+ para te acertar` : `você precisa de ${precisaDe(d0)}+`)
     : `${deles ? `${lance.deles} · ` : ""}${dados.map(conta).join(" · ")}`;
   const desfechoDe = (d) => (d.desfecho === "critico" && !deles ? "CRÍTICO" : d.desfecho === "acerta" || d.desfecho === "critico" ? "acerta" : "erra");
   const corDoDesfecho = !acertou ? T.inkDim : deles ? T.danger : critico ? T.amber : T.ok;

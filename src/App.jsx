@@ -7298,7 +7298,7 @@ export default function Taverna() {
          (longeDaHistoria), e os sitios daqui saem do texto antes de se
          procurar bicho nele (BICHO_DO_SITIO: a Serpente Rouca e uma casa) */
       espinha: espinhaRef.current,
-      lugares: vale("EM CENA · os sítios", () => lugaresDaqui().map((l) => l.nome), []),
+      lugares: vale("EM CENA · os lugares", () => lugaresDaqui().map((l) => l.nome), []),
     };
   };
   /* ---------------- F2b · AS FICHAS DA CENA ----------------
@@ -12384,7 +12384,7 @@ export default function Taverna() {
          invencao mais educada. Em `calou` porque nunca pode custar a
          abertura de uma campanha. */
       try {
-        if (salvoSemNome(sv)) pushMsgs([{ autor: "sistema", texto: "💾 Esta campanha foi gravada sem nome e voltou como “" + nomeDaCampanha(sv) + "” — se ela tinha outro, dê-lhe o certo ao exportar." }]);
+        if (salvoSemNome(sv)) pushMsgs([{ autor: "sistema", texto: "💾 Esta campanha foi gravada sem nome e voltou como “" + nomeDaCampanha(sv) + "” — se ela tinha outro, lhe dê o certo ao exportar." }]);
       } catch (e) { calou("avisar o save sem nome", e); }
       const volta = houveIntervalo(sv.salvoEm);
       const recap = (volta.sim || comResumo) ? recapitular({
@@ -12501,7 +12501,7 @@ export default function Taverna() {
       if (!vd.algumAoAlcance) {
         return { semAlcance: true, veredito: vd, motivo: armaLonge
           ? "não há ninguém à vista para acertar — ou há parede no caminho"
-          : `ninguém está ao alcance do seu golpe — ${vd.alvos.map((a) => `${a.nome} está em ${a.lugar}, a uns ${a.metrosRedondos} m`).join("; ")}. Aproxime-se primeiro.` };
+          : `ninguém está ao alcance do seu golpe — ${vd.alvos.map((a) => `${a.nome} está em ${a.lugar}, a uns ${a.metrosRedondos} m`).join("; ")}. Chegue mais perto primeiro.` };
       }
       /* a mesma preferência de sempre: declarado > citado > o primeiro ao
          alcance. O `indice` do veredito aponta de volta para a lista que
@@ -23356,7 +23356,7 @@ export default function Taverna() {
        o companheiro sumia do save no mesmo segundo em que entrou.
        O jogo dizia "juntou-se ao grupo" e o save dizia `grupo: []`. */
     const peso = pesarCompanheiro(comp, np);
-    pushMsgs([{ autor: "sistema", texto: `⚑ ${nome} juntou-se ao grupo — ⚡ ${formatarPoder(peso.poder)} de poder, ${peso.veredito}.` }]);
+    pushMsgs([{ autor: "sistema", texto: `⚑ ${nome} se juntou ao grupo — ⚡ ${formatarPoder(peso.poder)} de poder, ${peso.veredito}.` }]);
     notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${notaDoRecrutamento(comp)}`;
     salvar({ personagem: np });
     return { ok: true, comp, personagem: np };
@@ -24312,7 +24312,7 @@ export default function Taverna() {
     /* CB3: com um encontro à frente ainda por decidir, a estrada não anda — o
        cartão (ou a frase do jogador) decide primeiro */
     try {
-      if (encontroPendenteRef.current && !combateRef.current) { pushMsgs([{ autor: "sistema", texto: "Há alguma coisa na estrada à frente: primeiro, o que fazes?" }]); return; }
+      if (encontroPendenteRef.current && !combateRef.current) { pushMsgs([{ autor: "sistema", texto: "Há alguma coisa na estrada à frente: primeiro, o que você faz?" }]); return; }
     } catch (e) { calou("a estrada com um encontro à frente", e); }
     /* v9.165: a quarta boca do porteiro — botões e sinais do Mestre chegam
        direto aqui, sem passar pela interceptação. Confere ANTES de qualquer

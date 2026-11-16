@@ -95,7 +95,7 @@ const PALAVRAS = {
   dormirJa: { verbo: "Dormir já", preco: "a noite passa em silêncio" },
   dormir: { verbo: "Dormir", preco: "até de manhã" },
   adiar: { verbo: "Dormir sem responder", preco: "a pergunta fica para amanhã" },
-  ficar: { verbo: "Ficar mais um pouco, só vocês dois", preco: "a conversa continua · a fogueira apaga-se devagar" },
+  ficar: { verbo: "Ficar mais um pouco, só vocês dois", preco: "a conversa continua · a fogueira se apaga devagar" },
   aFogueira: "à fogueira",
   aoRedor: "ao redor do fogo",
   sentar: "Sentar-me com",

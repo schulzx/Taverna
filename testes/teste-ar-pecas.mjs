@@ -205,7 +205,7 @@ sec("4. o Diário: o portal de missões");
   t("o gancho em bilhete, na voz de quem pediu", ts.includes("«Ilsa Corvo quer que alguém de fora fale com Bram antes que acabe em sangue.»") && ts.includes("— Ilsa Corvo"));
   t("o custo de falhar por baixo do bilhete", ts.includes("Se as noites passarem, Bram some de Vila Clara."));
   t("o prazo diz o que resta, e não só o total", ts.includes("faltam 4 noites") && ts.includes("de 6"));
-  t("o fecho entra no que se ganha", ts.includes("e Ilsa Corvo fica a dever-te um favor"));
+  t("o fecho entra no que se ganha", ts.includes("e Ilsa Corvo fica te devendo um favor") /* PT-BR, ordem de 15/11 */);
   t("a reviravolta NUNCA aparece", !/REVIRAVOLTA/.test(sec1));
   t("o nome do mecanismo nunca aparece", !/planead|molde|port[ãa]o|secundaria_/i.test(ts));
 

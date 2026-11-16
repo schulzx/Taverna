@@ -166,7 +166,7 @@ export function CartaoDoEncontro({ estado, escolhas = [], pergunta = "", diz = "
     </svg>
   );
   const lista = (
-    <div role="radiogroup" aria-label="O que fazes" className="flex flex-col" style={{ gap: 8 }}>
+    <div role="radiogroup" aria-label="O que você faz" className="flex flex-col" style={{ gap: 8 }}>
       {linhas.map((l) => <LinhaDaEscolha key={l.id} linha={l} escolhida={escolhida === l.id} aoTocar={aoEscolher} />)}
     </div>
   );
@@ -176,14 +176,14 @@ export function CartaoDoEncontro({ estado, escolhas = [], pergunta = "", diz = "
         className="tv-anel-foco tv-mono flex items-center justify-center"
         style={{ minHeight: ALVOS.piso, borderRadius: C.linha.raio, background: aEscolhida ? T.amber : T.panelSoft, color: aEscolhida ? T.onAccent : T.inkDim, fontWeight: 700, fontSize: TIPOS.rotulo, gap: 6, border: `1px solid ${aEscolhida ? T.amber : T.line}` }}>
         {aEscolhida && <Glifo nome={GLIFO_DA_ESCOLHA[aEscolhida.id] || "espadas"} tamanho={16} cor={T.onAccent} />}
-        {botao || "Escolhe o que fazes"}
+        {botao || "Escolha o que você faz"}
       </button>
-      <span className="tv-body text-center" style={{ fontSize: TIPOS.rotulo, color: T.inkDim, fontStyle: "italic" }}>ou escreve o que fazes — o campo continua aberto</span>
+      <span className="tv-body text-center" style={{ fontSize: TIPOS.rotulo, color: T.inkDim, fontStyle: "italic" }}>ou escreva o que você faz — o campo continua aberto</span>
     </div>
   );
   const titulo = (
     <span className="flex flex-col" style={{ gap: 4 }}>
-      <span className="tv-display" style={{ fontSize: TIPOS.display, color: T.ink, lineHeight: 1.15 }}>{pergunta || "O que fazes?"}</span>
+      <span className="tv-display" style={{ fontSize: TIPOS.display, color: T.ink, lineHeight: 1.15 }}>{pergunta || "O que você faz?"}</span>
       {diz && <span className="tv-body" style={{ fontSize: TIPOS.rotulo + 1, color: T.inkMeio, fontStyle: "italic" }}>{diz}</span>}
     </span>
   );

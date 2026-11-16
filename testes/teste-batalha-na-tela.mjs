@@ -331,13 +331,15 @@ sec("6 · 8. o encontro, renderizado");
   janela(1905);
   const c = R.html(h(R.CartaoDoEncontro, { estado: LENDA, escolhas: ESC_LENDA, pergunta: "Uma sombra enorme no céu. O que fazes?", escolhida: "esconder" }));
   t("o cartão é um diálogo com nome, e o rótulo «Na estrada · um encontro»", /role="dialog" aria-label="Na estrada: Dragão Ancião"/.test(c) && texto(c).includes("Na estrada · um encontro"));
-  t("as seis linhas são rádios num grupo «O que fazes»", /role="radiogroup" aria-label="O que fazes"/.test(c) && (c.match(/role="radio"/g) || []).length === 6);
+  /* PT-BR, ordem de 15/11: «O que fazes» passa a «O que você faz» */
+  t("as seis linhas são rádios num grupo «O que você faz»", /role="radiogroup" aria-label="O que você faz"/.test(c) && (c.match(/role="radio"/g) || []).length === 6);
   t("a fuga à vista perante a lenda: «CERTO», em musgo, tocável", texto(c).includes("CERTO") && c.includes(`color:${T.musgoNoPergaminho}`) && /role="radio" aria-checked="false" tabindex="0" aria-label="Voltar atrás/.test(c));
   t("e lutar com a faixa «Isto não é um encontro. É uma lenda.»", texto(c).includes("Isto não é um encontro. É uma lenda."));
   t("o botão diz a escolha e o preço («Esconder-se · N% · 1 h»)", /Esconder-se · \d+% · 1 h/.test(texto(c)));
   t("a faixa da lenda e o chip «ainda não te viu»", texto(c).includes("Uma lenda · foge disto") && texto(c).includes("ainda não te viu"));
   t("a carta do retrato a 300 × 380 (o retrato que a pessoa elogiou)", c.includes(`width="${CARTAO_DO_ENCONTRO.cartao.carta[0]}" height="${CARTAO_DO_ENCONTRO.cartao.carta[1]}"`));
-  t("o campo continua aberto («ou escreve o que fazes»)", texto(c).includes("ou escreve o que fazes"));
+  /* PT-BR, ordem de 15/11 */
+  t("o campo continua aberto («ou escreva o que você faz»)", texto(c).includes("o que você faz"));
   janela(375);
   const ct = R.html(h(R.CartaoDoEncontro, { estado: LENDA, escolhas: ESC_LENDA, telefone: true }));
   t("no telefone: a folha de 363 com o retrato 84, as seis linhas e o rodapé", ct.includes(`max-width:${CARTAO_DO_ENCONTRO.folha.largura}px`) && (ct.match(/role="radio"/g) || []).length === 6 && ct.includes(`width="${CARTAO_DO_ENCONTRO.rosto}"`));
@@ -404,7 +406,7 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   janela(1905);
   const g = R.html(h(R.GridDeBatalha, { ...GRADE_1905, previsaoDoGolpe: PREV, lance: LANCE }));
   t("O D20 ROLA NO ALVO: a pílula da previsão vira o dado («precisas de 6+», «o dado rola…»)",
-    /role="status" aria-label="o dado rola contra Bandido; precisas de 6\+"/.test(g) && texto(g).includes("o dado rola…"), (g.match(/role="status"[^>]*>/) || [""])[0]);
+    /role="status" aria-label="o dado rola contra Bandido; você precisa de 6\+"/ /* PT-BR, ordem de 15/11 */.test(g) && texto(g).includes("o dado rola…"), (g.match(/role="status"[^>]*>/) || [""])[0]);
   t("a rolar: o d20 balança (tv-dado-no-alvo) e o aro é âmbar tracejado 4/3", g.includes("tv-dado-no-alvo") && g.includes(`stroke-dasharray="${DADO_NO_ALVO.tracejadoRola.join(" ")}"`));
   t("enquanto há lance do herói, a pílula da previsão daquele alvo não se desenha (o dado tomou-lhe o lugar)", !/role="img" aria-label="Bandido: 78% de acertar/.test(g));
   t("o d20 da mesa mede 44 (o corpo da bandeja, DadoDoLance)", g.includes(`width="${DADO_NO_ALVO.lado.mesa}" height="${DADO_NO_ALVO.lado.mesa}"`));
