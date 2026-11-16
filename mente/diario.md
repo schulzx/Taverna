@@ -24,6 +24,21 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 15/11 · sem versão — lote 1 do lançamento (C3, S5, S2, C5, S6) · commits d5233df, ab4e4fb, a0a379c, 90ef650, 6f899ea
+
+A mão em Opus, com o bastão do `App.jsx` das 22:36 às 23:47 (devolvido no fim do lote). O Figma andou em paralelo, noutro agente, sem tocar em código. Sem bump e sem push: são de quem sobe.
+
+- **C3 (d5233df):** «Jogar em dois» sai do menu do beta pela mesma porta de Uma Noite e do Duelo (`modoNaPorta("sala")`, `PORTAS_SEM_MODO` em `modos.js`). O código da sala fica. Voltar é pôr `"sala"` em `MODOS_DO_BETA`.
+- **S5 (ab4e4fb):** a extra da fraqueza fica de costas e sem caminhos até a camada do vilão chegar à `mao` (`FRAQUEZA_NO_QUADRO`). Em 1000 mundos ela nunca vira antes disso, e o juiz do Saberes nunca a escolhe. A terra natal não paga XP. As conquistas ganham o berço: o que o herói traz de casa é descontado (campo novo e aditivo `conquistas.berco`). A abertura mostra três portas tocáveis (`propostas-da-abertura.js`), e o toque passa pela proposta da frase.
+- **S2 (a0a379c):** `motor/a-mao-da-frase.js`. «Apanho o anel» faz o recolhimento do botão. Vender ou dar o que não está na bolsa é recusado antes do Narrador. Com coisa no chão, o veto vai ao `naoPode`. Corpus: 43 frases, 100 %.
+- **C5 (90ef650):** `.tv-anel-foco-no-campo:focus` passa a ter `outline-style` explícito e largura 0, declarado antes do `:focus-visible`.
+- **S6 (6f899ea):** o veredito do perigo diz-se em palavras («três vezes acima de vocês, sem uma tocha»), e a conta passa a `conta`. A estrada não mostra a coordenada. O oráculo não mostra os fatores. A camada 0 diz «entrada». Nova régua `plural.js` («3 Ratos Gigantes», «falta 1 avanço»). O porquê social sai sem «(+N)». Varredor novo: `check-texto-de-tela`.
+- **decisões:** a carta da fraqueza continua no sorteio, só que trancada, para o quadro não trocar de cartas a meio. Seis asserções antigas foram movidas, cada uma com o motivo escrito (pendentes-ligados, dificuldade, masmorra-certa, momentos, a1-moradas, nave-destino, soleira-verbos). As duas que liam o texto de `pedido-do-turno` caíram, porque a casa proíbe asserção sobre texto do motor.
+- **prova:** o build passa limpo e a árvore final deu 517/517 suítes e 28/28 varredores. Os commits intermédios não foram provados um a um: a prova é a da árvore final, e cada commit foi separado por blob.
+- **o que ficou:** «PODER 121 / grupo 102» no `painel-ficha` ficou como está, porque foi um pedido explícito da pessoa (v9.116); tirá-lo é decisão dela e do desenho. O `⌖` do `painel-mapa` também ficou. O disco branco não foi visto num Chromium real depois da correção. As três portas não foram vistas na tela, e a medida dos «≤ 10 s até ao 1.º toque» falta. Falta uma sessão jogada contra o portão.
+
+---
+
 ## 14/11 · v9.646 + v9.647 · o quadro da quest entra no jogo (QQ: Q1–Q4b) · commits 8469e9a, 2aab457, f1274ff, 64f5126, 9910e68, 82ae3b2, 5b64985 → 1cd3e2f; 28cd0cd, f033f13, f211d9f, 2e9fb91 → 17f1f99
 
 A pessoa aprovou o quadro (o plano em `mente/plano-quadro.md`, a forma em `mente/formas.md` §QQ, o Figma na página `386:2`). Mãos: `backend` (Q1, Q2, Q2b, os campos da carta, os acertos), `desenho` (Q4 no Figma, fazendo também o papel do `jogo` — só havia uma mão livre), `aprendiz` (a peça e o Diário/bandeja), `oficial` (Q3, com o bastão); o coordenador ligou o pagamento a menos e as cartas no Diário (bastão duas vezes, devolvido cada uma).
