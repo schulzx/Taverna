@@ -1905,7 +1905,9 @@ export const CERIMONIA_DA_TELA = {
    o equipamento são uma tela só, em três colunas. */
 export const FICHA_CARTA = {
   carta: { telefone: 120, mesa: 256 },
-  nome: { telefone: 22, mesa: 26 },
+  /* placaTelefone (16/11, a prova jogada): a 375 a carta abria com a placa vazia e preta, e o nome
+     ao lado; o nome passa a pousar na placa (105 × 42 px), e ao lado ficam a classe e o nível */
+  nome: { telefone: 22, mesa: 26, placaTelefone: 14 },
   barra: 8, folga: 16, colunas: 3,
   /* as letras da ficha e da gaveta: o nome do item (Cinzel), a linha da
      comparação, a nota miúda (a raridade, o tempo da troca, a secção) */

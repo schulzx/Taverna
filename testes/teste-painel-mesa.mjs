@@ -156,5 +156,18 @@ t("a mesa larga é a das três zonas (useMesaLarga lê a composição)", /functi
 t("as portas de antes continuam: a vela abre o tempo, as pistas o quadro, a estampa o horizonte", APP.includes("aoAbrirTempo={() => { try { setTempoAberto((v) => !v);") && APP.includes("aoAbrirPistas={alternarOQuadro}") && APP.includes("calou(\"V4 · a estampa abre o horizonte\""));
 t("a ligação partida deixou a mono (papel com aro de cera, nota do Mestre)", APP.includes('{falha.linha && <NotaDoMestre tipo="aviso">{falha.linha}</NotaDoMestre>}'));
 
+/* 16/11 (a prova jogada a 375): a carta do herói abria com a placa do nome vazia e preta, e o
+   nome do lugar saía cortado no topo («Ossuário …», ~100 px numa linha só). */
+console.log("\n8 · o telefone: a placa e o nome do lugar (16/11)");
+{
+  const ficha = fs.readFileSync(new URL("../src/painel-ficha-carta.jsx", import.meta.url), "utf8");
+  t("no telefone a carta é a carta com placa, e o nome pousa nela", /<CartaComPlaca p=\{p\} largura=\{FICHA_CARTA\.carta\.telefone\} lex=\{lex\} telefone \/>/.test(ficha) && /soNome/.test(ficha));
+  t("e ao lado ficam a classe e o nível, sem repetir o nome", /<QuemE p=\{p\} tamanho=\{FICHA_CARTA\.nome\.telefone\} semNome \/>/.test(ficha));
+  const barra = fs.readFileSync(new URL("../src/painel-mesa-do-mestre.jsx", import.meta.url), "utf8");
+  t("o nome do lugar no telefone quebra em até duas linhas, sem corte numa linha só",
+    /WebkitLineClamp: BARRA_LETRA\.lugar\.linhas/.test(barra) && /telefone \? "tv-display" : "tv-display truncate"/.test(barra));
+  t("o nome longo desce para a letra longa (≥ piso 13)", /telefoneLongo: (1[3-9])/.test(barra));
+}
+
 console.log(`\n${bons} ok, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

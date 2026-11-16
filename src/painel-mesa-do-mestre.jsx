@@ -590,7 +590,9 @@ export function FilaDasCartas({ telefone = false, baixa = false, heroi, grupo = 
 /* a letra da barra, do Figma (306:14, 306:38, 306:33, 306:59) — a TL 8 não a
    tabelou; é a do ecrã de antes, subida ao tamanho que a faixa única deixa */
 const BARRA_LETRA = {
-  lugar: { telefone: 19, mesa: 22 },
+  /* 16/11 (a prova jogada): a 375 o nome cabia em ~100 px e «Ossuário …» saía cortado. No telefone o
+     nome quebra em até duas linhas, e o nome longo (mais de `longo` letras) desce para `telefoneLongo`. */
+  lugar: { telefone: 19, mesa: 22, telefoneLongo: 15, longo: 12, linhas: 2 },
   hora: { telefone: 14, mesa: 15 },
   lado: { telefone: 12, mesa: 28 },
 };
@@ -635,7 +637,8 @@ export function BarraDoMestre({ telefone = false, lugar = "", cena = "", luz = "
           className="tv-anel-foco flex items-center text-left min-w-0" style={{ ...botao, gap: 6 }}>
           <span className="flex flex-col min-w-0">
             {telefone ? null : <TituloDoPainel>Lugar</TituloDoPainel>}
-            <span className="tv-display truncate" style={{ fontSize: telefone ? BARRA_LETRA.lugar.telefone : BARRA_LETRA.lugar.mesa, fontWeight: 600, color: T.ink, lineHeight: 1.1 }}>{nome}</span>
+            <span className={telefone ? "tv-display" : "tv-display truncate"} data-nome-do-lugar="" style={{ fontSize: telefone ? (String(nome || "").length > BARRA_LETRA.lugar.longo ? BARRA_LETRA.lugar.telefoneLongo : BARRA_LETRA.lugar.telefone) : BARRA_LETRA.lugar.mesa, fontWeight: 600, color: T.ink, lineHeight: 1.1,
+              ...(telefone ? { display: "-webkit-box", WebkitLineClamp: BARRA_LETRA.lugar.linhas, WebkitBoxOrient: "vertical", overflow: "hidden", whiteSpace: "normal", overflowWrap: "anywhere" } : null) }}>{nome}</span>
             {!telefone && cena ? <span className="tv-mono truncate" style={{ fontSize: TIPOS.maquina, color: T.inkDim, lineHeight: 1.2 }}>{cena}</span> : null}
           </span>
           <SetaDeAbrir aberta={horizonteAberto} />

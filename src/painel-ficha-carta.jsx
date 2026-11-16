@@ -47,27 +47,27 @@ function Barra({ rotulo, atual, max, cor }) {
 }
 
 /* QUEM É: o nome, a classe e a subclasse, o nível e a raça */
-function QuemE({ p, tamanho, centro = false }) {
+function QuemE({ p, tamanho, centro = false, semNome = false, soNome = false }) {
   let sub = null;
   try { const m = marcaDe(p); sub = m ? m.subclasse : null; } catch (e) { sub = null; }
   return (
     <div className={centro ? "text-center" : ""}>
-      <div className="tv-titulo leading-tight" style={{ color: T.ink, fontSize: tamanho }}>{p.nome}</div>
-      <div className="tv-display" style={{ color: T.amberSoft, fontSize: TIPOS.corpo }}>{[p.classe, sub].filter(Boolean).join(" · ")}</div>
-      <div className="tv-mono" style={{ color: T.inkDim, fontSize: TIPOS.maquina }}>Nível {p.nivel || 1}{p.raca ? ` · ${p.raca}` : ""}</div>
+      {semNome ? null : <div className="tv-titulo leading-tight" style={{ color: T.ink, fontSize: tamanho, overflowWrap: "anywhere" }}>{p.nome}</div>}
+      {soNome ? null : <div className="tv-display" style={{ color: T.amberSoft, fontSize: TIPOS.corpo }}>{[p.classe, sub].filter(Boolean).join(" · ")}</div>}
+      {soNome ? null : <div className="tv-mono" style={{ color: T.inkDim, fontSize: TIPOS.maquina }}>Nível {p.nivel || 1}{p.raca ? ` · ${p.raca}` : ""}</div>}
     </div>
   );
 }
 
 /* A CARTA com o nome na placa (a mesa, §2): o texto pousa no rect da placa
    da carta (FICHA_CARTA.placa, em unidades da carta) */
-function CartaComPlaca({ p, largura, lex }) {
+function CartaComPlaca({ p, largura, lex, telefone = false }) {
   const vb = VB_DA_MOLDURA.carta, k = largura / TAMANHOS_DA_MOLDURA.carta.largura, pl = FICHA_CARTA.placa;
   return (
     <div className="relative shrink-0" style={{ width: vb[2] * k, height: vb[3] * k }}>
       <RostoNaMoldura personagem={p} tamanho="carta" aro={largura} lex={lex} />
       <div className="absolute flex items-center justify-center" style={{ left: (pl.x - vb[0]) * k, top: (pl.y - vb[1]) * k, width: pl.largura * k, height: pl.altura * k }}>
-        <QuemE p={p} tamanho={FICHA_CARTA.nome.mesa} centro />
+        {telefone ? <QuemE p={p} tamanho={FICHA_CARTA.nome.placaTelefone} centro soNome /> : <QuemE p={p} tamanho={FICHA_CARTA.nome.mesa} centro />}
       </div>
     </div>
   );
@@ -383,9 +383,10 @@ export function PainelFichaCarta({ personagem, emCombate = false, aoEquipar, aoD
       ) : (
         <>
           <div className="flex items-start" style={{ gap: FICHA_CARTA.folga * 0.75 }}>
-            <RostoNaMoldura personagem={p} tamanho="carta" aro={FICHA_CARTA.carta.telefone} lex={lex} />
+            {/* 16/11: o nome pousa na placa da carta (antes vazia e preta); ao lado, a classe e o nível */}
+            <CartaComPlaca p={p} largura={FICHA_CARTA.carta.telefone} lex={lex} telefone />
             <div className="flex-1 min-w-0 flex flex-col" style={{ gap: FICHA_CARTA.folga * 0.75 }}>
-              <QuemE p={p} tamanho={FICHA_CARTA.nome.telefone} />
+              <QuemE p={p} tamanho={FICHA_CARTA.nome.telefone} semNome />
               <Vitais p={p} comXP={!companheiro} />
             </div>
           </div>
