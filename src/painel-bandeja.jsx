@@ -28,7 +28,7 @@
    soa aqui: soou lá. Um som que estoura cala-se; o dado pousa na mesma.
    ============================================================ */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { T, TIPOS, BANDEJA, MOVIMENTO_DO_DADO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, CHAMADO_DO_MESTRE, PALAVRAS_DO_QUADRO, alfa } from "./estilo.js";
+import { T, TIPOS, BANDEJA, MOVIMENTO_DO_DADO, TAMANHO_DO_DADO, HISTORICO_DO_DADO, GOLPE_SENTIDO, SOLEIRA_DO_MOMENTO, CHAMADO_DO_MESTRE, PALAVRAS_DO_QUADRO, alfa } from "./estilo.js";
 /* QQ (§QQ 4): o chamado que vira uma carta leva o leque do quadro — o mesmo
    glifo do sinal da barra, não um segundo */
 import { LequeDoQuadro } from "./painel-quadro.jsx";
@@ -45,6 +45,32 @@ import { golpePorExtenso } from "./batalha-na-tela.js";
 import { aLinhaDoLancamento, asLinhasDoLancamento, NOME_DO_DESFECHO } from "./motor/a-bandeja.js";
 import { letraDaMesa } from "./pecas-da-mesa.jsx";
 import { tocarDado } from "./som-da-mesa.js";
+
+/* V3 · O HISTÓRICO QUE SE LÊ (formas.md §F2 §1.6, HISTORICO_DO_DADO): cada
+   lance antigo é um dado a 40 com a FACE legível a 14 (o total está na
+   legenda), na forma do veredito — passou cheio, falhou vazado de traço
+   interrompido, o 20 com a coroa de latão, o 1 vazado com a fissura. Até 4,
+   o mais novo primeiro. */
+const FORMA_DO_HISTORICO = { sucesso: "passou", falha: "falhou", critico: "vinte", desastre: "um" };
+function DadoDoHistorico({ l }) {
+  const d = (Array.isArray(l.dados) ? l.dados : []).find((x) => x && !x.posto);
+  if (!d) return null;
+  const face = d.faces === 100 ? d.valor % 100 : d.valor;
+  return (
+    <span title={aLinhaDoLancamento(l)} data-historico-do-dado={FORMA_DO_HISTORICO[l.desfecho] || "passou"} style={{ display: "inline-flex" }}>
+      <DadoDeOsso forma={d.faces} lado={HISTORICO_DO_DADO.lado} numero={String(face)} historico={FORMA_DO_HISTORICO[l.desfecho] || "passou"} />
+    </span>
+  );
+}
+function FilaDoHistorico({ lista }) {
+  if (!lista.length) return null;
+  return (
+    <span role="list" aria-label={`Dados anteriores: ${lista.map(aLinhaDoLancamento).join("; ")}`}
+      style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: BANDEJA.espaco }}>
+      {lista.slice(0, HISTORICO_DO_DADO.teto).map((l) => <span key={l.n} role="listitem" style={{ display: "inline-flex" }}><DadoDoHistorico l={l} /></span>)}
+    </span>
+  );
+}
 
 /* o dado pousou: o som, e nunca o turno */
 const soarDado = () => { try { tocarDado(); } catch { /* um som que estoura cala-se */ } };
@@ -185,19 +211,19 @@ export function Bandeja({ lancamentos = [], fresca = true, naColuna = false, emV
   const anteriores = lista.slice(1);
 
   if (!fresca) {
+    /* V3: recolhida, a bandeja é o histórico legível (40, a face a 14), e a
+       legenda do último lance por baixo — não a fileira de 20 sem número */
     return (
-      <div role="group" aria-label={`Últimos dados: ${lista.map(aLinhaDoLancamento).join("; ")}`}
-        style={{ display: "flex", alignItems: "center", gap: BANDEJA.espaco + 4, padding: "4px 2px" }}>
-        {lista.map((l, i) => (
-          <span key={l.n} style={{ display: "inline-flex", gap: 2, opacity: i === 0 ? 0.9 : 0.5 }}>
-            {l.dados.filter((d) => !d.posto).slice(0, 3).map((d, j) => <Corpo key={j} faces={d.faces === 100 ? 10 : d.faces} legenda={d.faces === 100 ? String(d.valor % 10) : String(d.valor)} papel={d.papel} tam={BANDEJA.dadoPequeno} />)}
-          </span>
-        ))}
+      <div role="group" aria-label="Os dados na mesa" data-bandeja-historico=""
+        style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: BANDEJA.espaco, padding: "6px 2px", width: naColuna ? "100%" : undefined }}>
+        <FilaDoHistorico lista={lista} />
+        <span style={{ ...letraDaMesa("rotulo"), color: T.inkMeio, textAlign: "center", overflowWrap: "anywhere" }}>{aLinhaDoLancamento(ultimo)}</span>
       </div>
     );
   }
 
-  const tam = ultimo.dados.length > 3 ? BANDEJA.dado - 12 : BANDEJA.dado;
+  /* V3: o dado da vez a 76 (TAMANHO_DO_DADO.bandeja); vários, a 48 como antes */
+  const tam = ultimo.dados.length > 1 ? (ultimo.dados.length > 3 ? BANDEJA.dado - 12 : BANDEJA.dado) : TAMANHO_DO_DADO.bandeja;
   /* o golpe: as 20 faces, as que acertam acesas; pousado, a que saiu marcada */
   const doGolpe = ultimo.golpe && Array.isArray(ultimo.acertam) ? golpePorExtenso({ faces: ultimo.acertam, criticoEm: ultimo.criticoEm }) : null;
   const natural = (ultimo.dados.find((d) => !d.posto) || {}).valor;
@@ -228,15 +254,7 @@ export function Bandeja({ lancamentos = [], fresca = true, naColuna = false, emV
             </span>
           )}
         </span>
-        {anteriores.length > 0 && (
-          <span style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: BANDEJA.espaco }} aria-hidden="true">
-            {anteriores.map((l) => (
-              <span key={l.n} style={{ display: "inline-flex", gap: 2, opacity: 0.45 }}>
-                {l.dados.filter((d) => !d.posto).slice(0, 2).map((d, j) => <Corpo key={j} faces={d.faces === 100 ? 10 : d.faces} legenda={d.faces === 100 ? String(d.valor % 10) : String(d.valor)} papel={d.papel} tam={BANDEJA.dadoPequeno} />)}
-              </span>
-            ))}
-          </span>
-        )}
+        <FilaDoHistorico lista={anteriores.slice(0, HISTORICO_DO_DADO.teto - 1)} />
       </div>
     );
   }

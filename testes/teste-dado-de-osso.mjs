@@ -75,9 +75,10 @@ const ENTRADA = `
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { DadoDeOsso } from "./ui.jsx";
-import { Corpo } from "./painel-bandeja.jsx";
+import { Corpo, Bandeja } from "./painel-bandeja.jsx";
+import { lancamentoDoTeste } from "./motor/a-bandeja.js";
 export const html = (el) => renderToStaticMarkup(el);
-export { React, DadoDeOsso, Corpo };
+export { React, DadoDeOsso, Corpo, Bandeja, lancamentoDoTeste };
 `;
 const saida = path.join(AQUI, `.tmp-dado-de-osso-${process.pid}.mjs`);
 buildSync({
@@ -110,6 +111,19 @@ const html = (p) => R.html(h(R.DadoDeOsso, p));
   t("as sete formas renderizam", [4, 6, 8, 10, 12, 20, 100].every((f) => /<svg/.test(html({ forma: f, lado: 76, numero: "3" }))));
   t("o d100: dois d10 (dezenas e unidades)", (() => { const s = html({ forma: 100, lado: 76, numero: "47" }); return />40</.test(s) && />7</.test(s); })());
   t("o Corpo da Bandeja é o osso (sem corpo de cor)", (() => { const s = R.html(h(R.Corpo, { faces: 20, legenda: "9", tam: 44 })); return s.includes(`fill="${T.ossoLume}"`) && !s.includes(`fill="${T.amber}"`); })());
+}
+
+sec("4b. o histórico na bandeja (HISTORICO_DO_DADO)");
+{
+  const L = (valor, dc, n) => ({ ...R.lancamentoDoTeste({ valor, mod: 1, dc, rotulo: "Percepção" }), n });
+  const lista = [L(20, 30, 5), L(6, 15, 4), L(1, 2, 3), L(14, 10, 2), L(9, 9, 1)];
+  const s = R.html(h(R.Bandeja, { lancamentos: lista, fresca: false, naColuna: true }));
+  const formas = [...s.matchAll(/data-historico-do-dado="([a-z]+)"/g)].map((m) => m[1]);
+  t("recolhida, a bandeja é o histórico: até 4, o mais novo primeiro, na forma do veredito", JSON.stringify(formas) === JSON.stringify(["vinte", "falhou", "um", "passou"]), formas.join(","));
+  t("cada dado do histórico tem 40 e a face legível (não o total)", (s.match(/width="40"/g) || []).length === 4 && />20</.test(s) && />6</.test(s) && !/>21</.test(s));
+  const f = R.html(h(R.Bandeja, { lancamentos: lista, fresca: true, naColuna: true }));
+  t("fresca, o dado da vez a 76 e a fila dos anteriores a 40 (até 3)", /width="76"/.test(f) && (f.match(/width="40"/g) || []).length === 3);
+  t("em voo, a bandeja ainda não mostra o lance novo", !/data-historico-do-dado="vinte"/.test(R.html(h(R.Bandeja, { lancamentos: lista, fresca: false, naColuna: true, emVoo: true }))));
 }
 
 sec("5. uma forma só — fora da luta, só o DadoDeOsso desenha um dado");
