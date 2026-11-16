@@ -160,10 +160,46 @@ export function avaliar({ nivel = 1, tamanho = 0, rotulo = "" } = {}, pers, esta
     grupo,
     estado: e,
     porque: porqueAssim(grupo, conteudo, razao, e),
+    /* S6: a conta com os números, para quem a pede (um title, o detalhe ao
+       toque) — nunca a linha da tela */
+    conta: contaDoPerigo(grupo, conteudo, razao, e),
   };
 }
 
+/* ---------------- O PERIGO EM PALAVRAS (S6, 15/11) ----------------
+   «187 de poder (você 126 + 1 no grupo) contra 515 — 2.8× menos do que
+   isto pede» foi o que a tela disse na sessão de 15/11: parêntesis dentro
+   de parêntesis, o ponto decimal inglês, e a conta do programador no
+   lugar do que o jogador sente. O porquê da tela diz agora a distância em
+   palavras — «três vezes acima de vocês» — e o que rebaixou quem entra
+   («sem uma tocha»). A conta com os números fica em `conta`, ao toque.
+   `vezes`: as palavras de 2 a 10 (acima de 10, `muito`); `quem`: «você»
+   sozinho, «vocês» com grupo. */
+export const PERIGO_EM_PALAVRAS = Object.freeze({
+  igual: "do tamanho de {quem}",
+  acima: "{n} acima de {quem}",
+  abaixo: "{n} abaixo de {quem}",
+  vezes: Object.freeze(["", "um pouco", "duas vezes", "três vezes", "quatro vezes", "cinco vezes", "seis vezes", "sete vezes", "oito vezes", "nove vezes", "dez vezes"]),
+  muito: "muito",
+  quem: Object.freeze({ so: "você", grupo: "vocês" }),
+});
+
 export function porqueAssim(grupo, conteudo, razao, estado = null) {
+  const P = PERIGO_EM_PALAVRAS;
+  const g = grupo && typeof grupo === "object" ? grupo : {};
+  const quem = g.quantos ? P.quem.grupo : P.quem.so;
+  const r = Number.isFinite(razao) && razao > 0 ? razao : 0.01;
+  const vezes = (x) => { const n = Math.round(x); return n >= 2 && n < P.vezes.length ? P.vezes[n] : n < 2 ? P.vezes[1] : P.muito; };
+  /* a mesma faixa do empate de sempre: entre 0,8 e 1,25 não há distância */
+  const quanto = r >= 0.8 && r <= 1.25 ? P.igual.replace("{quem}", quem)
+    : r > 1.25 ? P.abaixo.replace("{n}", vezes(r)).replace("{quem}", quem)
+      : P.acima.replace("{n}", vezes(1 / r)).replace("{quem}", quem);
+  const motivos = estado && estado.fator < 1 && Array.isArray(estado.motivos) ? estado.motivos.filter(Boolean) : [];
+  return motivos.length ? `${quanto}, ${motivos.join(", ")}` : quanto;
+}
+
+/* a conta de antes, com os números — vai em `conta`, nunca na linha */
+function contaDoPerigo(grupo, conteudo, razao, estado = null) {
   const daFicha = grupo.quantos
     ? `${formatarPoder(grupo.total)} de poder (você ${formatarPoder(grupo.heroi)} + ${grupo.quantos} no grupo${grupo.aparado ? ", aparado pelo teto" : ""})`
     : `${formatarPoder(grupo.total)} de poder`;

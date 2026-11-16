@@ -414,19 +414,22 @@ export function dificuldadeSocial({ texto = "", pessoa = null, pers = null, peri
   if (pessoa) {
     const rel = (pessoa.relacao || "desconhecido").toLowerCase();
     const pr = PESO_DA_RELACAO[rel];
-    if (pr) { dc += pr; partes.push(`${relacaoNPC(rel).rotulo.toLowerCase()} (${pr > 0 ? "+" : ""}${pr})`); }
+    /* S6 (15/11): «(um favor que lhe custa pouco, desconhecido (+2))» — o
+       modificador ia à tela entre parêntesis dentro de parêntesis. O porquê
+       diz-se em palavras; o número já está na dificuldade, que é a conta */
+    if (pr) { dc += pr; partes.push(relacaoNPC(rel).rotulo.toLowerCase()); }
     const pp = pesoDoPapel(pessoa.papel);
-    if (pp) { dc += pp.delta; partes.push(`${pp.diz} (${pp.delta > 0 ? "+" : ""}${pp.delta})`); }
+    if (pp) { dc += pp.delta; partes.push(pp.diz); }
   }
 
   /* o nome do herói só pesa quando já existe. Fama alta abre porta e fama
      nenhuma não fecha nada — por isso a escada é assimétrica. */
   const f = Math.max(0, Math.min(100, Number(fama) || 0));
-  if (f >= 70) { dc -= 3; partes.push("seu nome chega antes de você (−3)"); }
-  else if (f >= 40) { dc -= 1; partes.push("já ouviram falar de você (−1)"); }
+  if (f >= 70) { dc -= 3; partes.push("seu nome chega antes de você"); }
+  else if (f >= 40) { dc -= 1; partes.push("já ouviram falar de você"); }
 
   const { valem, vazias } = alavancasNaMesa(texto, { pessoa, pers, pericia, pedido });
-  for (const a of valem) { dc += a.delta; partes.push(`${a.rotulo} (${a.delta})`); }
+  for (const a of valem) { dc += a.delta; partes.push(a.rotulo); }
 
   return {
     dc: Math.max(5, dc),

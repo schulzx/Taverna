@@ -231,7 +231,10 @@ export function vereditoDaMasmorra(masmorra, pers) {
   const dif = dificuldadeDaMasmorra(masmorra, pers);
   if (!dif) return null;
   const p = dif.patamar;
-  return { dif, linha: `${p.icone} ${masmorra.nome} — ${p.rotulo.toUpperCase()}: ${p.nota}. (${dif.porque})` };
+  /* S6 (15/11): a linha diz o perigo em palavras (dif.porque); a conta com
+     os números vai em `conta`, para o detalhe ao toque */
+  const porque = String(dif.porque || "");
+  return { dif, conta: dif.conta || "", linha: `${p.icone} ${masmorra.nome} — ${p.rotulo.toUpperCase()}: ${p.nota}.${porque ? ` ${porque.charAt(0).toUpperCase()}${porque.slice(1)}.` : ""}` };
 }
 
 /* ---------------- A JORNADA ATÉ A BOCA ----------------

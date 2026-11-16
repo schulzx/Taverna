@@ -60,8 +60,12 @@ t("e o jogo não imprime mais a senha que ela substitui",
 t("o preço sai de `minutosPorAvanco`, que é o que `andar()` consome",
   /preco: emTempo\(minutosPorAvanco\(jornada\)\)/.test(R),
   "duas contas para o mesmo número seriam duas verdades");
+/* MOVIDA EM S6 (15/11), com o motivo: a gramática copiada («avanco», sem
+   cedilha, e «faltam 1») era a segunda verdade. A oferta e linhaDaViagem
+   leem agora a mesma régua (plural.js, `falta`) — a intenção (uma gramática
+   só para as duas) fica, e é mais forte. */
 t("o retorno usa a gramática de `linhaDaViagem`",
-  /turnosRestantes === 1 \? "avanco" : "avancos"/.test(R));
+  /retorno: falta\(p\.turnosRestantes, "avanço"\)/.test(R));
 /* MM16 nº 2 (v9.351): `viajar` ganhou um segundo argumento — quem pediu a
    estrada (`{ origem: "toque" }`, QUEM_RESPONDE em rastro.js: o toque é a
    única origem que chama o Mestre ela mesma, porque não tem frase onde colar

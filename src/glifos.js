@@ -51,6 +51,7 @@ import { ANEL, CHEGADA, CINTA, RECIBO, TIPOS } from "./estilo.js";
    tabuleiro; o relato arrumado reusa a forma de hoje da corrida (o saldo). */
 import { METROS_POR_QUADRADO, metrosTxt, terrenoDificil, nomeDoLugar } from "./grid.js";
 import { dividirBloco } from "./resumo.js";
+import { contagem } from "./plural.js";
 /* A1 · o recibo do turno conta o XP que atravessou um nível: a curva é a
    mesma que `aplicarNivel` (regras-jogo.js) usa para descontar o vão. */
 import { XP_POR_NIVEL } from "./constantes.js";
@@ -452,7 +453,7 @@ export function etiquetasDaPagina(dados) {
   if (cena && cena.subterraneo) {
     const partes = String(cena.onde || "").split(" · ").map((x) => x.trim()).filter(Boolean);
     const tochas = partes.find((x) => /tocha/.test(x));
-    const camada = partes.find((x) => /^camada\b/.test(x));
+    const camada = partes.find((x) => /^(camada\b|entrada$)/.test(x));
     return { lugar, direita: limpo([camada, tochas && /^0 tochas?$/.test(tochas) ? "sem tochas" : tochas]), cede: "inicio" };
   }
   const clima = d.clima && typeof d.clima === "object" ? d.clima : null;
@@ -1335,7 +1336,9 @@ export function quemCaiu(caidos) {
   if (nomes.length === 1) return `${nomes[0]} caiu`;
   const bases = nomes.map((n) => n.replace(RX_NUMERO_DO_NOME, ""));
   const base = bases[0];
-  if (bases.every((b) => b === base) && /[aeiouáéíóúâêô]$/i.test(base) && !/ão$/i.test(base)) return `${nomes.length} ${base}s caíram`;
+  /* S6 (15/11): «3 Rato Gigantes» — o «s» ia para a última palavra do nome
+     composto. O plural é o da tela (plural.js): «3 Ratos Gigantes caíram» */
+  if (bases.every((b) => b === base)) return `${contagem(nomes.length, base)} caíram`;
   const lista = nomes.length === 2 ? `${nomes[0]} e ${nomes[1]}` : `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
   return `${lista} caíram`;
 }

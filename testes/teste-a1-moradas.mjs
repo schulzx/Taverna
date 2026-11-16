@@ -522,7 +522,11 @@ sec("9. A1/A3 — o relato arrumado: quem mora onde, numa conta só");
   t("quem caiu: um, vários do mesmo nome, nomes diferentes, ninguém",
     quemCaiu(["lobo 1"]) === "lobo 1 caiu" && quemCaiu(["lobo 1", "lobo 2"]) === "2 lobos caíram"
     && quemCaiu(["Kolvar", "lobo 1"]) === "Kolvar e lobo 1 caíram" && quemCaiu(["a", "b", "c"]) === "a, b e c caíram" && quemCaiu([]) === "" && quemCaiu(null) === "");
-  t("o plural só onde não se adivinha (ão, consoante → lista)", quemCaiu(["ladrão 1", "ladrão 2"]) === "ladrão 1 e ladrão 2 caíram" && quemCaiu(["Kobold 1", "Kobold 2"]) === "Kobold 1 e Kobold 2 caíram");
+  /* MOVIDA EM S6 (15/11), com o motivo: o plural «só onde se adivinha» punha
+     o «s» na última palavra do nome composto («3 Rato Gigantes», sessão de
+     15/11). O plural passou à régua da tela (plural.js), que sabe o «ão», a
+     consoante e o composto — e por isso já não precisa de cair na lista. */
+  t("o plural é o da régua da tela (ão, consoante, composto)", quemCaiu(["ladrão 1", "ladrão 2"]) === "2 ladrões caíram" && quemCaiu(["Kobold 1", "Kobold 2"]) === "2 Kobolds caíram" && quemCaiu(["Rato Gigante 1", "Rato Gigante 2"]) === "2 Ratos Gigantes caíram");
   t("o cabeçalho da T8: `A luta · 2 lobos caíram · 2 rodadas`", cabecalhoDaLuta({ caidos: ["lobo 1", "lobo 2"], rodadas: 2 }) === "A luta · 2 lobos caíram · 2 rodadas");
   t("no telefone as rodadas saem do cabeçalho", cabecalhoDaLuta({ caidos: ["lobo 1", "lobo 2"], rodadas: 2 }, { telefone: true }) === "A luta · 2 lobos caíram");
   t("sem ninguém caído e sem campo: `A luta`", cabecalhoDaLuta({ caidos: [], rodadas: 1 }) === "A luta · 1 rodada" && cabecalhoDaLuta(null) === "A luta");

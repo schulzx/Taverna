@@ -146,7 +146,13 @@ sec("4. o veredito à porta conta o corpo que entra");
   const E = D.ESTADO_NA_PORTA || { desvantagem: {}, escuro: {} };
   t("o fator é a desvantagem vezes o escuro (as duas desvantagens não somam)", comoFoi && comoFoi.estado && Math.abs(comoFoi.estado.fator - E.desvantagem.fator * E.escuro.fator) < 0.002, comoFoi && JSON.stringify(comoFoi.estado));
   const linha = (tenta(() => B.vereditoDaMasmorra(FORTALEZA, EXAUSTA), {}) || {}).linha || "";
-  t("a linha da tela diz porquê: exausto, sem uma tocha, e o poder que entra", /exausto/.test(linha) && /sem uma tocha/.test(linha) && /entram \d/.test(linha), linha);
+  /* MOVIDA EM S6 (15/11), com o motivo: «entram 91 contra 490 — 5.4×» era a
+     conta na tela, e a ordem de 15/11 tirou-a dali. A linha continua a dizer
+     o porquê (exausto, sem uma tocha) e a distância em palavras; o poder que
+     entra, com o número, passou ao `conta` do veredito, para o detalhe. */
+  const vd = tenta(() => B.vereditoDaMasmorra(FORTALEZA, EXAUSTA), {}) || {};
+  t("a linha da tela diz porquê: exausto, sem uma tocha, e quanto acima", /exausto/.test(linha) && /sem uma tocha/.test(linha) && /acima de voc/.test(linha) && !/entram \d/.test(linha), linha);
+  t("e o poder que entra fica na conta, ao toque", /entram \d/.test(vd.conta || ""), vd.conta);
   const ferida = tenta(() => D.estadoNaPorta({ ...SIBILA, suprimentos: { tochas: 3 }, vida: 3 }), null);
   t("PV baixos pesam (3 de 10), e a linha os nomeia", ferida && ferida.fator < 1 && ferida.fator >= E.pv.piso && ferida.motivos.some((m) => /3 de 10 PV/.test(m)), JSON.stringify(ferida));
   const zero = tenta(() => D.estadoNaPorta({ ...SIBILA, suprimentos: { tochas: 3 }, vida: 0 }), null);

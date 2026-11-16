@@ -141,18 +141,24 @@ t("masmorra com nível devolve patamar", !!D.dificuldadeDaMasmorra({ nome: "x", 
    nível, arruma gente ou troca de espada. */
 {
   const av = D.avaliar({ nivel: 16 }, { ...heroi, grupo: [ficha(12)] });
-  t("o porquê traz o poder do grupo", av.porque.includes(P.formatarPoder(av.poderDoGrupo)));
-  t("o porquê traz o poder do conteúdo", av.porque.includes(P.formatarPoder(av.poderDoConteudo)));
-  t("o porquê cita o grupo quando há grupo", /no grupo/.test(av.porque), av.porque);
-  t("e não cita grupo quando se está só", !/no grupo/.test(D.avaliar({ nivel: 16 }, heroi).porque));
-  t("o porquê diz quantas vezes", /×/.test(av.porque), av.porque);
+  /* MOVIDAS EM S6 (15/11), com o motivo: «187 de poder (você 126 + 1 no
+     grupo) contra 515 — 2.8× menos do que isto pede» era o porquê que a tela
+     mostrava, e a ordem de 15/11 tirou a conta da tela. Os números não
+     somem: passaram a `conta`, para o detalhe ao toque, e é lá que se
+     provam. O porquê (a linha da tela) diz a distância em palavras. */
+  t("a conta traz o poder do grupo", av.conta.includes(P.formatarPoder(av.poderDoGrupo)));
+  t("a conta traz o poder do conteúdo", av.conta.includes(P.formatarPoder(av.poderDoConteudo)));
+  t("a conta cita o grupo quando há grupo", /no grupo/.test(av.conta), av.conta);
+  t("e não cita grupo quando se está só", !/no grupo/.test(D.avaliar({ nivel: 16 }, heroi).conta));
+  t("o porquê diz quantas vezes, em palavras e no plural do grupo", /vezes acima de vocês|um pouco acima de vocês|muito acima de vocês/.test(av.porque) && !/×|\d/.test(av.porque), av.porque);
   /* e NÃO diz "1,1× menos" quando é empate: perto de um, a conta não tem
      o que dizer além de "é do seu tamanho" — foi o que apareceu na tela
      na primeira vez que isto rodou. */
   {
     const empate = D.avaliar({ nivel: 12 }, heroi);
     if (empate.razao >= 0.8 && empate.razao <= 1.25) {
-      t("perto de um, não se diz em vezes", /mesmo tamanho/.test(empate.porque), empate.porque);
+      /* S6: «praticamente do mesmo tamanho» virou «do tamanho de você» (a linha em palavras) */
+      t("perto de um, não se diz em vezes", /do tamanho de você/.test(empate.porque), empate.porque);
       t("e não sai um '1× menos'", !/1[,.]\d× menos/.test(empate.porque), empate.porque);
     } else { ok += 2; }
   }

@@ -218,7 +218,7 @@ import { CUSTO_ZERO, somarChamada, linhasDoCusto } from "./custo.js";
 import { custoRef, ultimoProvedorRef } from "./bastidor.js";
 import { textoDoArquivo, nomeDoArquivo, abrir as abrirArquivo, linhaDoResumo, nomeDaCampanha, salvoSemNome } from "./arquivo.js";
 import { abrir as abrirAbas, estaAberta, subsAbertas, novidades, falaDaNovidade, TODAS_AS_PORTAS } from "./abas.js";
-import { cabecalhoDaCena, TONS, TOM_PADRAO } from "./palco.js";
+import { cabecalhoDaCena, TONS, TOM_PADRAO, camadaEmPalavras } from "./palco.js";
 import { janelaAncorada, memoriaDoTurno } from "./janela.js"; import { garantirLeitura, decidirOCronista, pularALeitura, lerALeitura, blocoDaFila } from "./gatilho-do-cronista.js"; import { semFalaInventada } from "./fala-do-heroi.js";
 import { houveIntervalo, recapitular, textoDoRecap, envelopeDaRetomada, ehHoraDeParar, falaDoFim } from "./sessoes.js";
 import { interpretar, lerNumero, textoDeAjuda, textoDesconhecido, cravarNivel, cravarGD } from "./godmode.js";
@@ -262,6 +262,7 @@ import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
+import { falta } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
 import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
@@ -19863,7 +19864,9 @@ export default function Taverna() {
     pushMsgs([
       { autor: "jogador", texto: r.pergunta },
       ...((() => { aBandeja(lancamentoDoOraculo(r)); return []; })()),
-      { autor: "sistema", texto: linhaDaConsulta(r) + (!r.reusado && r.porque.length ? `\n   ${r.porque.join(" · ")}` : "") },
+      /* S6 (15/11): «+8 cidade tem de tudo» — os fatores do oráculo são a conta
+         dele, e a tela diz só a pergunta e a resposta (linhaDaConsulta) */
+      { autor: "sistema", texto: linhaDaConsulta(r) },
     ]);
     enviar(envelopeDoOraculo(r), p);
   };
@@ -21154,7 +21157,7 @@ export default function Taverna() {
     masmorraRef.current = mm2; setMasmorra(mm2);
     if (r.msgs.length) pushMsgs(r.msgs.map((t) => ({ autor: "sistema", texto: t })));
     if (msgsDaTocha.length) pushMsgs(msgsDaTocha.map((t) => ({ autor: "sistema", texto: t })));
-    if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} · camada ${sala.camada} · ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala já resolvida não se refaz (a luta, o tesouro, o santuário, a armadilha, o enigma) */
+    if (r.jaLimpa) { try { const progL = progressoMasmorra(mm2); const vl = voltarASalaLimpa(sala, { pos: `${mm.nome} · ${camadaEmPalavras(sala.camada)} · ${progL.visitadas}/${progL.total} salas${noEscuro(mm2) ? " NO ESCURO" : ""}` }); const tempoL = avancarMinutos(ritmoPorId(mm2.ritmo).minutos); if (vl) { pushMsgs([{ autor: "sistema", texto: vl.linha }]); enviar(`${vl.envelope}${tempoL}`, personagem); } } catch (e) { calou("voltar a uma sala limpa", e); } return; } /* MM14: a sala já resolvida não se refaz (a luta, o tesouro, o santuário, a armadilha, o enigma) */
     /* PERCEPÇÃO PASSIVA (5e): o que estiver abaixo do seu limiar você nota
        sozinho, sem rolar. O apressado enxerga menos; o cauteloso, mais. */
     const modPerc = atributoEfetivo(personagem, "percepcao");
@@ -21175,7 +21178,7 @@ export default function Taverna() {
     }
     const prog = progressoMasmorra(mm2);
     const escuro = noEscuro(mm2) ? " NO ESCURO (a última tocha se apagou — descreva a cegueira e o perigo)." : "";
-    const pos = `${mm.nome} · camada ${sala.camada} · ${prog.visitadas}/${prog.total} salas${escuro}`;
+    const pos = `${mm.nome} · ${camadaEmPalavras(sala.camada)} · ${prog.visitadas}/${prog.total} salas${escuro}`;
     /* 13/10 (v9.461, ARMADILHA_DA_SALA): notada (ou ja a vista de uma visita
        de antes), a armadilha nao dispara: a sala fica armada e por
        resolver, o painel mostra as tres saidas com o preco, e o envelope
@@ -21357,7 +21360,7 @@ export default function Taverna() {
        minutos de tocha e o save nao sabe. */
     salvar({});
     const prog = progressoMasmorra(masmorraRef.current);
-    enviar(envelopeDoEnigma(r, e, `${mm.nome} · camada ${sala.camada} · ${prog.visitadas}/${prog.total} salas`), personagemRef.current || personagem);
+    enviar(envelopeDoEnigma(r, e, `${mm.nome} · ${camadaEmPalavras(sala.camada)} · ${prog.visitadas}/${prog.total} salas`), personagemRef.current || personagem);
   };
 
   /* FORRAGEAR (5e): caçar e colher pela trilha. Gasta tempo, mas repõe. */
@@ -24556,7 +24559,10 @@ export default function Taverna() {
          desenhava o herói cravado no meio do trecho — agora as duas contam a
          mesma marcha, e o jogador vê a casa da grade mudar embaixo do pé. */
       const r = (() => { try { return rastrearOTurno(contextoDoEspaco()); } catch (e) { calou("rastreioDaEstrada", e); return null; } })();
-      if (linha) pushMsgs([{ autor: "sistema", texto: `${linha}${r ? ` · ⌖ ${r.endereco}` : ""}` }]);
+      /* S6 (15/11): a coordenada da grade (o endereço da casa) é do Mestre,
+         não da tela — o jogador lê o caminho que falta, e o mapa mostra onde está */
+      void r;
+      if (linha) pushMsgs([{ autor: "sistema", texto: linha }]);
     }
     /* MERCADOR AMBULANTE (v9.2): uma carroça na estrada, com estoque de
        verdade. Sai por sorteio do sistema — sem envelope, não há mercador. */
@@ -25348,7 +25354,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             fila: "B",
             verbo: `Seguir para ${jornada.para}`,
             preco: emTempo(minutosPorAvanco(jornada)),
-            retorno: `faltam ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanco" : "avancos"}`,
+            /* S6 (15/11): «faltam 1 avanco», sem cedilha e sem concordância — a contagem é a da tela (plural.js) */
+            retorno: falta(p.turnosRestantes, "avanço"),
             tom: "preco",
             precisaDoNarrador: true,
             /* do ref e nao do estado: entre montar a lista e o dedo cair

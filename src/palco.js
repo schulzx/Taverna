@@ -95,6 +95,17 @@ export function tomDaCena({ bioma = "", minuto = 0, subterraneo = false } = {}) 
    em `sessoes.js` na v9.149 — e pela mesma razão de fundo: o que se passa
    aqui é estado de jogo, que é exatamente o tipo de coisa que chega nula
    no dia em que um save vem pela metade. */
+/* S6 (15/11): «camada 0 · 5 tochas» foi o cabeçalho da masmorra na sessão
+   de 15/11 — o índice da planta (masmorras.js: a entrada é a camada 0)
+   dito ao jogador como se fosse andar. A camada 0 é a entrada; as outras
+   dizem-se pelo número que já têm (a 1.ª sala depois da entrada é a 1). */
+export const CAMADA_EM_PALAVRAS = Object.freeze({ entrada: "entrada", camada: "camada {n}" });
+export function camadaEmPalavras(n) {
+  const c = Number(n);
+  if (!Number.isFinite(c) || c < 0) return "";
+  return c === 0 ? CAMADA_EM_PALAVRAS.entrada : CAMADA_EM_PALAVRAS.camada.replace("{n}", String(Math.round(c)));
+}
+
 export function cabecalhoDaCena(dados) {
   const d = dados && typeof dados === "object" ? dados : {};
   const cidade = d.cidade || "", regiao = d.regiao || "", bioma = d.bioma || "";
@@ -110,7 +121,7 @@ export function cabecalhoDaCena(dados) {
     titulo = masmorra.nome;
     icone = "🕳";
     const sala = (masmorra.salas || []).find((s) => s && s.id === masmorra.atual);
-    if (sala && sala.camada != null) onde.push(`camada ${sala.camada}`);
+    if (sala && sala.camada != null && camadaEmPalavras(sala.camada)) onde.push(camadaEmPalavras(sala.camada));
     if (masmorra.tochas != null) onde.push(`${masmorra.tochas} tocha${masmorra.tochas === 1 ? "" : "s"}`);
   } else if (jornada && (jornada.destino || jornada.para)) {
     titulo = `a caminho de ${jornada.destino || jornada.para}`;

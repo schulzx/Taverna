@@ -309,7 +309,12 @@ sec("4. o veredito antes da porta");
       const aberta = R.detectarEntradaEmMasmorra(`Entro ${comEm(m.nome)}.`, { ...ctx, lugar: ch.lugar });
       if (aberta && aberta.nome === m.nome && R.portaDaMasmorra({ nome: "" }, { cidadeAtual: cid.nome, lugar: ch.lugar, masmorras: todas }).ok) c.abreNaBoca++;
       const p = v.dif.patamar;
-      if (v.linha === `${p.icone} ${m.nome} — ${p.rotulo.toUpperCase()}: ${p.nota}. (${v.dif.porque})`) c.forma++;
+      /* MOVIDA EM S6 (15/11), com o motivo: o porquê deixou de ir entre
+         parêntesis (era a conta do poder) e passou a ser uma frase em
+         palavras, capitalizada, depois da nota. A forma continua a de
+         boca.js — o ícone, o nome, o patamar, a nota e o porquê. */
+      const pq = String(v.dif.porque || "");
+      if (v.linha === `${p.icone} ${m.nome} — ${p.rotulo.toUpperCase()}: ${p.nota}.${pq ? ` ${pq.charAt(0).toUpperCase()}${pq.slice(1)}.` : ""}`) c.forma++;
     }
   }
   console.log(`       idas ${c.idas} · veredito na partida ${c.vereditoNaPartida} · porta fechada na estrada ${c.portaFechadaNaEstrada} · chegadas ${c.chegadas} · veredito à boca ${c.vereditoNaBoca} · abre à boca ${c.abreNaBoca}`);

@@ -39,6 +39,8 @@
    discordância era o bug.
    ============================================================ */
 
+import { falta } from "./plural.js";
+
 export const HORAS_MARCHA_POR_DIA = 8;
 export const MINUTOS_ESTRADA_POR_TURNO = 240;      // 4 h de marcha efetiva
 export const MINUTOS_RELOGIO_POR_TURNO = 720;      // meio dia de calendário
@@ -340,7 +342,8 @@ export function linhaDaViagem(jornada) {
   if (p.estado === ESTADOS.pausada) return `🧭 ${rota} · PAUSADA (${p.pct}%) — ${jornada.motivoPausa}`;
   if (p.chegou) return `🧭 ${rota} · chegando`;
   const cheias = Math.max(0, Math.min(8, Math.round(p.fracao * 8)));
-  return `🧭 ${rota} · ${"▰".repeat(cheias)}${"▱".repeat(8 - cheias)} ${p.pct}% · faltam ${p.turnosRestantes} ${p.turnosRestantes === 1 ? "avanço" : "avanços"}`;
+  /* S6 (15/11): «faltam 1 avanço» não concorda — a contagem é a da tela (plural.js) */
+  return `🧭 ${rota} · ${"▰".repeat(cheias)}${"▱".repeat(8 - cheias)} ${p.pct}% · ${falta(p.turnosRestantes, "avanço")}`;
 }
 
 export const VIAGEM_PROMPT = `VIAGEM (v9.56 — o sistema mede, você narra):
