@@ -58,6 +58,8 @@
    motor/aplicar.js (`ctx.doSistema`).
    ============================================================ */
 import { GRAUS } from "./juiz.js";
+import { idDoLugar } from "./livro-de-factos.js";
+import { SABER_DO_HEROI } from "./motor/o-mestre-chama.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -109,6 +111,26 @@ function impressao(chave) {
   return h.toString(36);
 }
 
+/* S5 (15/11, os três primeiros minutos): a terra onde o herói nasce não
+   paga. Na sessão de 15/11 o 1.º turno deu «+60 XP · uma terra onde nunca
+   tinhas posto o pé» pela cidade onde a campanha começa — o herói é de lá,
+   e a memória dele nasce com ela. O facto dela não entra na lista.
+   O id do livro da terra natal (`cidade|<nome>`), ou "" — a entrada
+   `terra`, senão os mesmos caminhos que o saber do herói usa
+   (SABER_DO_HEROI.terraNaEspinha). */
+function idDaTerraNatal(e) {
+  let terra = txt(e.terra);
+  const esp = obj(e.espinha);
+  if (!terra && esp) {
+    for (const cam of SABER_DO_HEROI.terraNaEspinha) {
+      const v = cam.reduce((x, k) => (obj(x) ? x[k] : undefined), esp);
+      if (txt(v)) { terra = txt(v); break; }
+    }
+  }
+  if (!terra) return "";
+  try { return idDoLugar(null, { cidade: terra }) || ""; } catch { return ""; }
+}
+
 /* ---------------- OS FACTOS DO TURNO ----------------
    osFactosDoTurno(entrada) → [{ fonte, chave }]
    `entrada` (tudo opcional):
@@ -139,10 +161,12 @@ export function osFactosDoTurno(entrada) {
   /* o livro: os lugares (a terra, o sítio, o segredo) e a conversa */
   const lv = obj(e.factos);
   const lugares = obj(lv && lv.lugares) || {};
+  const natal = idDaTerraNatal(e);
   for (const id of Object.keys(lugares).sort()) {
     const x = obj(lugares[id]);
     if (!x) continue;
-    if (obj(x.esteve)) por(id.startsWith("cidade|") ? "cidade" : "lugar", `esteve|${id}`);
+    /* S5: a terra natal não é «uma terra onde nunca tinhas posto o pé» */
+    if (obj(x.esteve) && id !== natal) por(id.startsWith("cidade|") ? "cidade" : "lugar", `esteve|${id}`);
     if (obj(x.descobriu)) por("segredo", `descobriu|${id}`);
   }
   const pessoas = obj(lv && lv.pessoas) || {};

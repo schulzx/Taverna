@@ -16,7 +16,7 @@ import { criaturasDoGenero, completarInimigo, dificuldadePorPerfil } from "./bes
 import { criarNPC, mesclarNPC, relacaoNPC, resumoNPCsParaPrompt, comLaco, firmarLaco, romperLaco, afrouxarLaco, paresEntre, garantirLaco, registrarConsulta, TIPOS_DE_LACO, normalizarRecencia, retomarContador, ordemDaRecencia, nomeComDono, notaDoHomonimo, primeiroNome, fichaDoCronista } from "./npcs.js";
 import { dominiosDe, rendaDominios, rendaDiariaTotal, custoUpgradeGuilda, multGuilda, efeitoTratados, NIVEL_GUILD_MAX } from "./gestao.js";
 import { rolarClima, rolarEncontro, investidaDaEstrada, envelopeDaInvestida } from "./encontros.js";
-import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId } from "./conquistas.js";
+import { CONQUISTAS, CONTADORES_INICIAIS, avaliarConquistas, conquistaPorId, oBercoDasConquistas } from "./conquistas.js";
 import { ANTECEDENTES, antecedentePorId } from "./antecedentes.js";
 import { nucleoDaCampanha, garantirCoracaoDoSave } from "./nucleo.js";
 import { subtramasDoNucleo, escolhasAbertas, escolherLado, opcoesDoPedido, responderPedido, sementesDoElo, quemAoFogo, sentarAoFogo, aguentaANoite, portaAberta as portaDoCoracaoAberta, fraseDaManha, favorJaPedido } from "./subtramas.js";
@@ -260,6 +260,7 @@ import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
+import { asPropostasDaAbertura } from "./propostas-da-abertura.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado } from "./motor/o-mestre-chama.js";
 import { oTamanhoDaResposta, comOTamanho } from "./tamanho-da-resposta.js";
@@ -23979,9 +23980,17 @@ export default function Taverna() {
       vinculoProfundo: (p.grupo || []).filter((g) => (g.vinculo || 0) >= 100).length,
       itemLendario: [...(p.equipamento || []), ...Object.values(p.equipados || {}), ...(p.grupo || []).flatMap((g) => [...(g.equipamento || []), ...Object.values(g.equipados || {})])].some((i) => i && i.raridade === "lendario"),
     };
-    const novas = avaliarConquistas(stats, conqRef.current.desbloqueadas);
+    /* S5 (15/11): o berço — o que o herói traz de casa não é conquista
+       (oBercoDasConquistas, conquistas.js); campo novo e aditivo no save */
+    let berco = conqRef.current.berco || null;
+    try {
+      const jogou = (mensagensRef.current || []).some((m) => m && m.autor === "jogador");
+      const novo = oBercoDasConquistas(stats, berco, { jogou });
+      if (novo !== berco) { berco = novo; conqRef.current = { ...conqRef.current, berco }; }
+    } catch (e) { calou("o berço das conquistas", e); }
+    const novas = avaliarConquistas(stats, conqRef.current.desbloqueadas, berco);
     if (!novas.length) return;
-    const c = { desbloqueadas: { ...conqRef.current.desbloqueadas }, ordem: [...conqRef.current.ordem] };
+    const c = { desbloqueadas: { ...conqRef.current.desbloqueadas }, ordem: [...conqRef.current.ordem], ...(berco ? { berco } : {}) };
     const msgs = novas.map((n) => {
       c.desbloqueadas[n.id] = true; c.ordem.push(n.id);
       return { autor: "sistema", texto: `🏆 Conquista desbloqueada: ${n.icone} ${n.nome} — título "${n.titulo}"` };
@@ -25264,6 +25273,41 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          regua existe para o dia em que competirem. */
       const lista = [];   /* fila A — o que FECHA */
       const filaB = [];   /* fila B — o que COBRA, no maximo UMA */
+
+      /* S5 (15/11) · AS TRÊS PORTAS DA ABERTURA: antes do primeiro gesto, o
+         passo da quest, uma pessoa em cena e um risco à vista
+         (propostas-da-abertura.js). O toque manda a frase pelo caminho do
+         campo — a proposta da frase, o chamado, o turno —, nunca por um
+         atalho. Somem com o primeiro gesto do jogador. */
+      try {
+        const jogou = (mensagens || []).some((m) => m && m.autor === "jogador");
+        if (!jogou && !combate && !jornada) {
+          let riscos = [];
+          try {
+            const mm = masmorrasDoMundo(sementeMundo(), mapaRef.current).find((x) => x.cidadeProxima === cidadeAtualRef.current);
+            if (mm && mm.nome) riscos = [mm.nome];
+          } catch (e) { calou("S5 · o risco à vista", e); }
+          const props = asPropostasDaAbertura({
+            jogou, passos: passosDasQuestsAgora(),
+            aqui: (lugarRef.current && lugarRef.current.nome) || "", cidade: cidadeAtualRef.current || "",
+            emCena: listaDasFichasRef.current || [],
+            grupo: ((personagem && personagem.grupo) || []).map((g) => g && g.nome),
+            riscos,
+          });
+          for (const p of props) {
+            lista.push({
+              id: p.id, verbo: p.verbo, tom: "convite", precisaDoNarrador: true,
+              aoClicar: () => {
+                try {
+                  if (carregando || rolagem) return;
+                  if (proporAFrase(p.frase)) return;
+                  partirOTurno(p.frase);
+                } catch (e) { calou("S5 · a porta da abertura", e); }
+              },
+            });
+          }
+        }
+      } catch (e) { calou("S5 · as portas da abertura", e); }
 
       /* 0a · A ESTRADA (fila B) — E O MAIOR ITEM DESTA ETAPA.
 
@@ -27288,6 +27332,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         if (vivas.length) {
           const jaTinha = soleiraAntesRef.current;
           const o = vivas[0];
+          /* S5: as três portas da abertura ficam todas à vista, sem «+N» */
+          const daAbertura = String(o.id || "").startsWith("abertura|");
           const j = typeof o.janela === "number" ? { quanto: o.janela } : (o.janela || {});
           let prazo = "";
           try { if (Number.isFinite(j.quanto) || j.urgente === true) prazo = palavraDoPrazo(j.quanto, j.urgente === true, j.conta || "noites"); } catch (e) { calou("o prazo da oferta na soleira", e); }
@@ -27297,9 +27343,9 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             preco: [o.preco, prazo].filter(Boolean).join(" · "),
             aoPrincipal: o.aoClicar,
             desativado: !!(o.precisaDoNarrador && bloqueado),
-            secundario: vivas.length > 1 ? { quantos: vivas.length - 1, aoTocar: () => { try { setOutrasOfertasAbertas((v) => !v); } catch (e) { calou("abrir as outras ofertas", e); } } } : null,
+            secundario: vivas.length > 1 && !daAbertura ? { quantos: vivas.length - 1, aoTocar: () => { try { setOutrasOfertasAbertas((v) => !v); } catch (e) { calou("abrir as outras ofertas", e); } } } : null,
           };
-          if (vivas.length > 1 && outrasOfertasAbertas) {
+          if (vivas.length > 1 && (outrasOfertasAbertas || daAbertura)) {
             outras = (
               <Soleira ofertas={vivas.slice(1).map((x) => (
                 <Oferta key={x.id} verbo={x.verbo} preco={x.preco} retorno={x.retorno}

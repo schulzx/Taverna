@@ -106,9 +106,52 @@ export const CONQUISTAS = [
   { id: "nv20", icone: "🌌", nome: "O Mítico", titulo: "o Mítico", dica: "Alcance o nível 20.", segredo: true, quando: (s) => s.nivel >= 20 },
 ];
 
-/* Avalia as conquistas: devolve as recém-desbloqueadas (que ainda não estavam). */
-export function avaliarConquistas(stats, jaDesbloqueadas) {
-  return CONQUISTAS.filter((c) => !jaDesbloqueadas[c.id] && c.quando(stats));
+/* ---------------- O BERÇO (S5, 15/11 — os três primeiros minutos) ----------------
+   Na sessão de 15/11 a primeira linha depois da abertura foi «Conquista
+   desbloqueada: Ombro Amigo» — no turno zero, sem gesto nenhum: o
+   companheiro inicial já nasce com o vínculo de amizade (companheiro-
+   inicial.js, laço «armas»/«sangue»), e o mundo já traz gente no registo
+   e moedas na bolsa. Conquista é o que o herói FEZ, não o que trouxe.
+   O berço é a fotografia dos contadores que se trazem de casa, tirada
+   enquanto o jogador ainda não agiu; daí em diante as conquistas desses
+   contadores contam só o que se ganhou depois. Save antigo (já jogado e
+   sem berço): nenhum desconto, como antes. `descontar`: os contadores que
+   o herói pode trazer de casa. */
+export const BERCO_DAS_CONQUISTAS = Object.freeze({
+  descontar: Object.freeze(["vinculoAmizade", "vinculoProfundo", "companheiros", "npcs", "moedas", "fama"]),
+});
+
+/* oBercoDasConquistas(stats, anterior, { jogou }) → { contador: n } | null
+   Enquanto o jogador não agiu (`jogou` falso), o berço acompanha os
+   contadores (a abertura ainda está a montar o grupo e o registo). Depois
+   de agir, fica o que havia — e sem berço anterior, null (save antigo). */
+export function oBercoDasConquistas(stats, anterior, opcoes) {
+  const jogou = !!(opcoes && opcoes.jogou);
+  const ant = anterior && typeof anterior === "object" && !Array.isArray(anterior) ? anterior : null;
+  if (jogou) return ant;
+  const s = stats && typeof stats === "object" ? stats : {};
+  const out = {};
+  for (const k of BERCO_DAS_CONQUISTAS.descontar) {
+    const v = Number(s[k]);
+    out[k] = Number.isFinite(v) && v > 0 ? v : 0;
+  }
+  return Object.freeze(out);
+}
+
+/* Avalia as conquistas: devolve as recém-desbloqueadas (que ainda não estavam).
+   `berco` (opcional): os contadores trazidos de casa, descontados antes da
+   conta (BERCO_DAS_CONQUISTAS). */
+export function avaliarConquistas(stats, jaDesbloqueadas, berco) {
+  const ja = jaDesbloqueadas && typeof jaDesbloqueadas === "object" ? jaDesbloqueadas : {};
+  let s = stats && typeof stats === "object" ? stats : {};
+  if (berco && typeof berco === "object") {
+    s = { ...s };
+    for (const k of BERCO_DAS_CONQUISTAS.descontar) {
+      const b = Number(berco[k]);
+      if (Number.isFinite(b) && b > 0 && Number.isFinite(Number(s[k]))) s[k] = Math.max(0, Number(s[k]) - b);
+    }
+  }
+  return CONQUISTAS.filter((c) => !ja[c.id] && c.quando(s));
 }
 
 export function conquistaPorId(id) { return CONQUISTAS.find((c) => c.id === id) || null; }

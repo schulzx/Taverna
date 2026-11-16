@@ -61,7 +61,11 @@ sec("2 · a janela baixa: fichas e ofertas numa linha");
   const MOMENTO = (CODIGO_APP.match(/const momentoPorCimaDoCampo = \(\) => \{[\s\S]*?calou\("o momento por cima do campo", e\); return null; \}\s*\};/) || [""])[0];
   t("as fichas moram na barra, as ofertas por cima do campo (nunca na mesma linha)", /emCena=\{fogueiraNaPagina \? null : \(\s*<LimiteDasFichas key=\{"em-cena\|"/.test(CODIGO_APP) && /const vivas = ofertasDaSoleira\(\) \|\| \[\];/.test(MOMENTO) && !/<FileiraAVista /.test(CODIGO_APP));
   t("a primeira oferta é o momento, com o verbo, o preço e o prazo", /const o = vivas\[0\];/.test(MOMENTO) && /momentos\.proposta = \{\s*verbo: o\.verbo,/.test(MOMENTO) && /preco: \[o\.preco, prazo\]\.filter\(Boolean\)\.join\(" · "\),/.test(MOMENTO));
-  t("e as outras abrem-se atrás do «+N», as mesmas <Oferta> com as mesmas props", /secundario: vivas\.length > 1 \? \{ quantos: vivas\.length - 1,/.test(MOMENTO) && /<Soleira ofertas=\{vivas\.slice\(1\)\.map\(\(x\) => \(\s*<Oferta key=\{x\.id\} verbo=\{x\.verbo\} preco=\{x\.preco\} retorno=\{x\.retorno\}/.test(MOMENTO));
+  /* S5 (15/11): o «+N» passou a calar-se para as três portas da abertura
+     (`!daAbertura`) — elas ficam todas à vista sem toque, porque a régua do
+     lançamento é o 1.º toque em ≤ 10 s sem escrever. Fora da abertura, o
+     «+N» é o de sempre: a asserção aceita a guarda e prova o resto igual. */
+  t("e as outras abrem-se atrás do «+N», as mesmas <Oferta> com as mesmas props", /secundario: vivas\.length > 1(?: && !daAbertura)? \? \{ quantos: vivas\.length - 1,/.test(MOMENTO) && /<Soleira ofertas=\{vivas\.slice\(1\)\.map\(\(x\) => \(\s*<Oferta key=\{x\.id\} verbo=\{x\.verbo\} preco=\{x\.preco\} retorno=\{x\.retorno\}/.test(MOMENTO));
   t("as ofertas lêem-se uma vez por render (uma lista, um lugar)", (CODIGO_APP.match(/ofertasDaSoleira\(\) \|\| \[\]/g) || []).length === 1);
   t("se as fichas estouram, a soleira fica (cada uma no seu limite)", /<LimiteDasFichas key="soleira-do-momento"><SoleiraDoMomento momentos=\{momentos\} \/><\/LimiteDasFichas>/.test(MOMENTO) && /this\.state\.erro \? \(this\.props\.reserva \|\| null\)/.test(CODIGO_APP));
 }

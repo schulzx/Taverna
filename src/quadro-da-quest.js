@@ -66,6 +66,7 @@ import { garantirQuestsDaEspinha, aplicarEfeitosNoEstado, QUESTS_DO_TURNO } from
 import { garantirEsqueleto } from "./esqueleto.js";
 import { garantirHistoria } from "./historia.js";
 import { garantirRegistroDoVilao, FRAQUEZAS } from "./plano-do-vilao.js";
+import { FASES as FASES_DO_VILAO } from "./vilao.js";
 import { hashSemente, rng } from "./semente.js";
 import { noLugarDoPasso } from "./a-quest-manda.js";
 import { desafioPorPericia, desafioPorId } from "./desafios.js";
@@ -191,6 +192,20 @@ export const EXTRAS_DO_QUADRO = Object.freeze({
   cumplice: Object.freeze({ forma: "pessoa", face: "quem lhe faz o serviço: {nome}", ganho: "cumplice", global: false, sobre: "quem lhe faz o serviço" }),
   vantagem: Object.freeze({ forma: "lugar", face: "{o}", ganho: "vantagem", global: false, sobre: "como lhe chegar sem ser visto" }),
 });
+
+/* S5 (15/11, os três primeiros minutos): a fraqueza do vilão não é a
+   resposta do primeiro Saberes. Na sessão de 15/11, «o que é que eu sei
+   sobre o que desce do morro?» (T1, o 1.º dado do jogo) virou a extra da
+   fraqueza — a alcunha do vilão é o assunto, e o caminho «lembrar» bateu —
+   e o desfecho da campanha ficou dito ao minuto 2. A carta continua no
+   sorteio das extra (o quadro não muda de cartas a meio), mas fica de
+   costas e sem caminhos até a camada do vilão (vilao.js, FASES) chegar a
+   `desdeACamada`: o herói tem de ter estado frente a frente com um servo
+   dele. A carta que já virou num save antigo continua virada. */
+export const FRAQUEZA_NO_QUADRO = Object.freeze({
+  desdeACamada: "mao",
+});
+const ordemDaCamada = (id) => { const f = FASES_DO_VILAO.find((x) => x.id === id); return f ? f.ordem : 0; };
 
 /* Os caminhos de uma extra: investigar, nunca ir direto à coisa (não se
    sabe ainda qual é). Todos de âncora aberta — a extra perde-se por falhar,
@@ -675,18 +690,22 @@ export function oQuadroDaQuest(quest, estado, opcoes) {
         const queimados = arr(m && m.queimados);
         const abertos = todos.filter((c) => !queimados.includes(c.id));
         const virou = m && m.como === "limpa";
-        const est = virou ? "virada" : abertos.length ? "costas" : "perdida";
+        /* S5: a fraqueza fica trancada antes da camada (FRAQUEZA_NO_QUADRO) */
+        const trancada = x.tipo === "fraqueza" && !virou
+          && ordemDaCamada(vilao && vilao.camada) < ordemDaCamada(FRAQUEZA_NO_QUADRO.desdeACamada);
+        const est = virou ? "virada" : (abertos.length || trancada) ? "costas" : "perdida";
         const sobre = X.sobre;
         cartas.push({
           id: `extra:${x.tipo}`, chave: x.id, tipo: "extra", forma: x.forma, costas: FORMAS_DA_CARTA[x.forma].costas,
           estado: est, etapa: null, futura: false, sobra: false,
           dia: virou ? m.dia : null,
           sobre: encher(SOBRE_DA_EXTRA[x.tipo], { vilao: vilaoNaTela || SOBRE_DA_EXTRA.semNome }),
-          viravel: aberta && est === "costas",
+          viravel: aberta && est === "costas" && !trancada,
+          ...(trancada ? { trancada: true } : {}),
           face: est === "virada" ? encher(X.face, { o: x.o, nome: x.nome }) : "",
           de: est === "virada" && m.caminho ? encher((todos.find((c) => c.id === m.caminho) || { de: "" }).de, { sobre }) : "",
           preco: null, linha: "", efeitos: null,
-          caminhos: abertos.map((c) => ({ id: c.id, diz: encher(c.diz, { sobre }), desafios: c.desafios, ...doCatalogo(c.desafios), ...(c.custa ? { custa: c.custa } : {}), seFalhar: [] })),
+          caminhos: trancada ? [] : abertos.map((c) => ({ id: c.id, diz: encher(c.diz, { sobre }), desafios: c.desafios, ...doCatalogo(c.desafios), ...(c.custa ? { custa: c.custa } : {}), seFalhar: [] })),
           ganho: X.ganho,
           revela: encher(X.face, { o: x.o, nome: x.nome }),
           juiz: juizDaExtra,
