@@ -58,6 +58,25 @@ import { T, TIPOS, ALVOS, ESBATIMENTO, LADRILHO, PAGINA, RECIBO } from "./estilo
 const TINTA = { meio: T.tintaDoPergaminhoMeio, dim: T.tintaDoPergaminhoDim, porta: T.brasaNoPergaminho };
 import { DivisoriaRunica, Prosa, BotaoDeOuvir, Glifo, LadrilhoDoAssunto, Recibo, Dobra, useMesa } from "./ui.jsx";
 import { FaixaDoRumo } from "./painel-mapa-vivo.jsx";
+import { NotaDoMestre, Lacre, letraDaMesa } from "./pecas-da-mesa.jsx";
+
+/* V4 · A VOZ DO SISTEMA DEIXA DE SER MÁQUINA (F1 §1.2). Até aqui toda linha
+   do sistema na folha era JetBrains Mono 12 numa caixa escura (84 % dos
+   caracteres visíveis sem IA, analise-visual §3.4): o terminal dentro do
+   livro. Agora é a nota do Mestre (Spectral itálico 14, na margem, com um
+   traço de pena) e, quando é selo, o lacre. A frase já diz o tipo; o traço
+   só confirma: ganho (musgo), regra (brasa), aviso (perigo). A ordem desta
+   tabela é a ordem do teste: o primeiro que casa decide. */
+export const TIPO_DA_NOTA = [
+  { tipo: "aviso", tom: "impedido" },
+  { tipo: "ganho", lacre: "conquista", casa: /^(Conquista|T[íi]tulo)\b/i },
+  { tipo: "ganho", casa: /(^\+|\bXP\b|\bmoedas?\b|\bganh|\bachou|\bencontrou|\bsubiu)/i },
+  { tipo: "regra" },
+];
+export function tipoDaNota(texto, tom = "neutro") {
+  const linha = String(texto == null ? "" : texto);
+  return TIPO_DA_NOTA.find((r) => (r.tom ? r.tom === tom : r.casa ? r.casa.test(linha) : true)) || TIPO_DA_NOTA[TIPO_DA_NOTA.length - 1];
+}
 import { ChipDoAchado } from "./painel-espolio.jsx";
 import { marcasParaProsa, CartaoNaProsa } from "./painel-fichas.jsx";
 import { assuntoDaLinha, arrumarORelato, cabecalhoDaLuta, linhasDaLuta } from "./glifos.js";
@@ -146,21 +165,23 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
   const linha = (txt, i) => {
     const bruto = String(txt);
     const porta = aoAbrir ? portaDaLinhaDeSistema(bruto) : null;
-    const { glifo, tom, resto } = assuntoDaLinha(semSetaQueMente(bruto));
-    const impedido = tom === "impedido", bloco = resto.includes("\n");
-    const miolo = (
-      <>
-        {porta ? <LadrilhoDoAssunto tom="porta" /> : glifo || impedido ? <LadrilhoDoAssunto glifo={glifo} tom={tom} /> : <span aria-hidden="true" className="shrink-0" style={{ width: LADRILHO.lado }} />}
-        <span className={(bloco ? "whitespace-pre-line " : "") + (porta ? "min-w-0" : "flex-1 min-w-0")} style={{ color: porta ? TINTA.porta : impedido ? TINTA.dim : TINTA.meio }}>{resto}</span>
-        {/* a seta da porta mora no ladrilho, à esquerda: a coluna dos assuntos fica inteira */}
-      </>
+    const { tom, resto } = assuntoDaLinha(semSetaQueMente(bruto));
+    const bloco = resto.includes("\n");
+    /* V4: a porta é uma tira de papel com a seta de brasa (a forma da
+       Proposta, F1 §4), Spectral itálico 14; o alvo continua ALVOS.piso */
+    if (porta) return (
+      <button key={i} type="button" onClick={() => aoAbrir(porta)} className="tv-fade tv-anel-foco w-fit max-w-full text-left flex items-center"
+        style={{ ...letraDaMesa("notaDoMestre"), color: TINTA.porta, minHeight: ALVOS.piso, gap: LADRILHO.espaco, cursor: "pointer", background: T.ossoLume, border: "1px solid " + TINTA.dim, borderRadius: 3, padding: "0 14px 0 10px" }}>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" style={{ flex: "none" }}><path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke={TINTA.porta} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        <span className={bloco ? "whitespace-pre-line min-w-0" : "min-w-0"}>{resto}</span>
+      </button>
     );
-    return porta ? (
-      <button key={i} type="button" onClick={() => aoAbrir(porta)} className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"
-        style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, cursor: "pointer", border: "1px solid " + TINTA.dim, borderRadius: LADRILHO.raio, padding: "0 12px 0 5px", marginLeft: -6 }}>{miolo}</button>
-    ) : (
-      <div key={i} className={"tv-fade tv-mono flex " + (bloco ? "items-start" : "items-center")}
-        style={{ fontSize: TIPOS.maquina, gap: LADRILHO.espaco, minHeight: LADRILHO.lado }}>{miolo}</div>
+    const nota = tipoDaNota(resto, tom);
+    return (
+      <div key={i} className={"tv-fade flex items-start" + (bloco ? " whitespace-pre-line" : "")} style={{ gap: 10 }} data-nota={nota.tipo}>
+        {nota.lacre ? <span className="shrink-0" style={{ marginTop: -4 }}><Lacre tamanho="P" tipo={nota.lacre} bate /></span> : null}
+        <NotaDoMestre tipo={nota.tipo}>{resto}</NotaDoMestre>
+      </div>
     );
   };
   const doSaldo = assuntoDaLinha(saldo);
@@ -171,8 +192,8 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
         <div className="tv-fade flex flex-col gap-1.5">
           <button onClick={() => setAberto((v) => !v)}
             title={aberto ? "Esconder as rolagens e os golpes" : "Ver rolagem por rolagem, golpe por golpe"}
-            className="tv-anel-foco tv-mono w-full text-left flex items-center rounded-xl"
-            style={{ fontSize: TIPOS.maquina, minHeight: ALVOS.piso, gap: LADRILHO.espaco, color: TINTA.meio }}>
+            className="tv-anel-foco w-full text-left flex items-center rounded-xl"
+            style={{ ...letraDaMesa("notaDoMestre"), minHeight: ALVOS.piso, gap: LADRILHO.espaco, color: TINTA.meio }}>
             <LadrilhoDoAssunto glifo={doSaldo.glifo || "dado"} />
             <span style={{ color: TINTA.porta }}>{doSaldo.resto}</span>
             <span style={{ opacity: 0.7 }}>{aberto ? "▴ esconder" : `▾ ${dobradas.length} linhas`}</span>
@@ -180,7 +201,7 @@ function BlocoSistema({ visiveis = [], dobradas = [], saldo = "", aoAbrir }) {
           {aberto && (
             <div className="w-full space-y-1" style={{ paddingLeft: LADRILHO.lado + LADRILHO.espaco }}>
               {dobradas.map((t, i) => { const d = assuntoDaLinha(t); return (
-                <div key={i} className="tv-mono flex items-center gap-2" style={{ fontSize: TIPOS.maquina, color: TINTA.dim }}>
+                <div key={i} className="flex items-center gap-2" style={{ ...letraDaMesa("notaDoMestre"), color: TINTA.dim }}>
                   {d.glifo ? <Glifo nome={d.glifo} tamanho={14} /> : null}<span>{d.resto}</span>
                 </div>
               ); })}
@@ -228,13 +249,13 @@ const ENTRE_GLIFO_E_LINHA = 8;
 function LinhaDaLuta({ linha }) {
   const altura = { lineHeight: `${RECIBO.entrelinha}px` };
   if (linha.rotulo) {
-    return <div className="tv-mono" style={{ ...altura, fontSize: TIPOS.maquina, color: T.inkDim, letterSpacing: 1, textTransform: "uppercase" }}>{linha.rotulo}</div>;
+    return <div style={{ ...letraDaMesa("rotulo"), ...altura, color: T.inkMeio }}>{linha.rotulo}</div>;
   }
   if (linha.voz === "jogador") {
     return <div className="tv-body" style={{ ...altura, fontSize: TIPOS.rotulo, fontStyle: "italic", color: T.inkMeio }}>{linha.texto}</div>;
   }
   return (
-    <div className="tv-mono flex items-start" style={{ ...altura, gap: ENTRE_GLIFO_E_LINHA, fontSize: TIPOS.maquina, color: T.inkMeio }}>
+    <div className="flex items-start" style={{ ...letraDaMesa("servico"), ...altura, gap: ENTRE_GLIFO_E_LINHA, color: T.inkMeio }}>
       <span aria-hidden="true" className="inline-flex items-center shrink-0" style={{ height: RECIBO.entrelinha, width: TIPOS.piso, color: T.inkDim }}>
         {linha.glifo ? <Glifo nome={linha.glifo} tamanho={TIPOS.piso} /> : null}
       </span>

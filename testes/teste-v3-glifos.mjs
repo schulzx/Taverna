@@ -205,11 +205,13 @@ sec("7. V3b · a tela principal");
   const LAD = corpo("LadrilhoDoAssunto");
   t("LadrilhoDoAssunto: Neutro cheio com fio line e glifo âmbar; Impedido oco com fio lineStrong e glifo inkDim",
     /background: impedido \? "transparent" : T\.panelSoft/.test(LAD) && /impedido \? T\.lineStrong : T\.line/.test(LAD) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD) && /aria-hidden="true"/.test(LAD));
-  t("o BlocoSistema traduz cada fala por assuntoDaLinha e desenha o ladrilho", /const \{ glifo, tom, resto \} = assuntoDaLinha\(semSetaQueMente\(bruto\)\);/.test(RELATO) && /<LadrilhoDoAssunto glifo=\{glifo\} tom=\{tom\} \/>/.test(RELATO));
+  /* MOVIDA em 16/11 (V4, F1 §1.2: a voz do sistema deixa de ser máquina): a fala continua a passar por assuntoDaLinha (o emoji do motor nunca chega à tela), mas a forma
+     deixou de ser o ladrilho: é a nota do Mestre, com o tipo tirado do tom e da frase (TIPO_DA_NOTA) */
+  t("o BlocoSistema traduz cada fala por assuntoDaLinha e desenha o ladrilho", /const \{ tom, resto \} = assuntoDaLinha\(semSetaQueMente\(bruto\)\);/.test(RELATO) && /<NotaDoMestre tipo=\{nota\.tipo\}>/.test(RELATO));
   /* A asserção mudou depois da prova jogada (v3-jogo.md §9.2-1): a seta saiu do fim da
      linha e foi para o ladrilho (tom "porta"). O que ela guarda fica: alvo a ALVOS.piso,
      e a seta desenhada, não o carácter do motor. */
-  t("a porta continua um botão a ALVOS.piso, e a seta é desenhada", /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(RELATO) && /\{porta \? <LadrilhoDoAssunto tom="porta" \/>/.test(RELATO) && /tom === "porta" \? <IconeSeta /.test(LAD));
+  t("a porta continua um botão a ALVOS.piso, e a seta é desenhada", /minHeight: ALVOS\.piso, gap: LADRILHO\.espaco, cursor: "pointer"/.test(RELATO) && /<path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke=\{TINTA\.porta\}/.test(RELATO) && /tom === "porta" \? <IconeSeta /.test(LAD)); /* MOVIDA em 16/11 (V4, F1 §1.2: a voz do sistema deixa de ser máquina): a seta desenhada mora na tira de papel da porta, não no ladrilho */
   { const i = RELATO.indexOf("function BlocoSistema"); const BLOCO = RELATO.slice(i, RELATO.indexOf("\n}\n", i));
     t("a pílula centrada morreu: nenhum rounded-full no BlocoSistema", i > 0 && !/rounded-full/.test(BLOCO)); }
   /* V5: o botão de ouvir saiu de `A voz` para a ponta da runa, e é uma peça
@@ -269,7 +271,8 @@ sec("9. V3b · os consertos da prova jogada");
      tinta discreta do papel (tintaDim, 6,56). A intenção fica: a porta tem
      fio, o raio do ladrilho e a largura do texto. */
   t("a porta leva fio (a tinta do papel), raio do ladrilho e a largura do texto",
-    /className="tv-fade tv-anel-foco tv-mono w-fit max-w-full text-left flex items-center"/.test(RELATO) && /border: "1px solid " \+ TINTA\.dim, borderRadius: LADRILHO\.raio/.test(RELATO) && /dim: T\.tintaDoPergaminhoDim/.test(RELATO)); }
+    /* MOVIDA em 16/11 (V4, F1 §1.2: a voz do sistema deixa de ser máquina): a porta perde a mono e ganha o chão de osso da Proposta (raio 3); o fio e a largura do texto ficam */
+    /className="tv-fade tv-anel-foco w-fit max-w-full text-left flex items-center"/.test(RELATO) && /background: T\.ossoLume, border: "1px solid " \+ TINTA\.dim, borderRadius: 3/.test(RELATO) && /dim: T\.tintaDoPergaminhoDim/.test(RELATO)); }
   /* 6 — o Impedido ganha marca: o ladrilho oco sem assunto desenha o círculo cortado */
   { const i = UI3.indexOf("export function LadrilhoDoAssunto("); const LAD2 = UI3.slice(i, UI3.indexOf("\n}\n", i));
     t("o Impedido sem assunto desenha ban, em inkDim", !!GLIFOS.ban && /<Glifo nome=\{glifo \|\| "ban"\}/.test(LAD2) && /cor=\{impedido \? T\.inkDim : T\.amber\}/.test(LAD2)); }
