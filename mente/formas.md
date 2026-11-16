@@ -20101,3 +20101,307 @@ linha do que aconteceu ali (a primeira frase que o sistema já guarda daquela ce
 IA). Ao fim de vinte horas a carta de cada jogador é o retrato da campanha dele, e é ela que o cartão da
 sessão (F6) mostra ao lado da mesa que lembra (F1 §11). Custa um campo de save novo e aditivo (as notas
 por lugar) e a régua de `FAIXA_DO_RUMO` aplicada às notas de margem.
+
+---
+
+## A Mesa do Mestre · F6 · as cerimônias (`desenho`, 16/11/2026)
+
+O lote **F6**, o último da planta (`mente/lancamento/arquitetura.md` §1.5, §1.6 e §2 J; plano §4 T2, T7 e
+Onda 5). Fala a língua do F1 ao F5: mesmas variáveis, mesmos estilos de texto, mesmas sombras, as mesmas
+peças (o lacre `268:159`, a nota do Mestre, a carta do herói `294:8200`, o d20 `280:1430`, a casa de item
+`326:13553`, o livro do F5). **Só Figma e este arquivo; nenhum código tocado.** Geração de imagem por IA:
+**0 chamadas** — retratos e cenas são o acervo já carregado; fogueira, silhueta, capa e cartão são vetor.
+
+**Onde está.** Arquivo `e5wJUzInAssoebx5npssKc`, página `10 · A Mesa do Mestre` (`266:67`), de y 58200 para
+baixo, uma seção por linha (`F6 · linha · N`). Imagens em `mente/lancamento/figma/F6-*.png` (40 quadros; os
+três cartões em 1080 × 1350 reais). Ajudantes do lote no nó de texto `334:16647` (carregam-se depois dos do
+F3, F4 e F5).
+
+| quadro | nó | imagem (`F6-…png`) |
+|---|---|---|
+| 1 · A gramática das cerimônias (prancha) | `334:16650` | `1-a-gramatica-das-cerimonias` |
+| 2a · Etapa cumprida, XP e moedas (a mesa não para) | `335:16647` | `2a-etapa-cumprida-xp-e-moedas` |
+| 2b·1 / 2b·2 · Busca fechada: o lacre desce / bate na página | `335:16981`, `335:17295` | `2b-1-…`, `2b-2-…` |
+| 2c · A conquista pousa no canto e vai para Feitos | `335:17621` | `2c-a-conquista-pousa-no-canto` |
+| 2d · Busca fechada no celular | `335:17953` | `2d-busca-fechada-375` |
+| 3·1 / 3·2 · A encruzilhada: as cartas pousam / a carta erguida | `335:18141`, `335:18245` | `3-1-…`, `3-2-…` |
+| 3·3 · A encruzilhada no celular | `335:18352` | `3-3-encruzilhada-375` |
+| 4·1 · Nível: a carta e o lacre | `336:18256` | `4-1-nivel-a-carta-e-o-lacre` |
+| 4·2 · Nível: o que mudou e os pontos | `336:18341` | `4-2-nivel-o-que-mudou-e-os-pontos` |
+| 4·3 · Nível: o talento como cartas | `336:18493` | `4-3-nivel-o-talento-como-cartas` |
+| 4·4 · Nível a 1024 × 768 (o pé fixo) | `336:18588` | `4-4-nivel-1024x768-o-pe-fixo` |
+| 4·5 · Nível no celular | `336:18636` | `4-5-nivel-375` |
+| 5·1 · O espólio: quatro intensidades | `336:18880` | `5-1-espolio-quatro-intensidades` |
+| 5·2 / 5·3 · Lendária: a carta sobe / virada, com o que fazer | `336:18997`, `336:19058` | `5-2-…`, `5-3-…` |
+| 5·4 · O despertar da arma | `336:19140` | `5-4-o-despertar-da-arma` |
+| 5·5 · Lendária no celular | `336:19209` | `5-5-lendaria-375` |
+| 6·1 / 6·2 · A fogueira: a roda / amanhece | `337:20340`, `337:20718` | `6-1-…`, `6-2-…` |
+| 6·3 · A fogueira no celular | `337:21033` | `6-3-fogueira-375` |
+| 7·1 / 7·2 · «Da última vez…» 1440 / 375 | `337:21233`, `337:21566` | `7-1-…`, `7-2-…` |
+| 8 · O cartão da sessão: vitória · derrota e cativeiro · 20 natural | `338:22071`, `338:22167`, `338:22247` | `8-cartao-da-sessao-{vitoria,derrota,20-natural}-1080x1350` |
+| 8·1 / 8·2 · Levantar da mesa 1440 / 375 | `338:22309`, `338:22665` | `8-1-…`, `8-2-…` |
+| 9·1 · O fim: a última página | `338:22883` | `9-1-o-fim-a-ultima-pagina` |
+| 9·2 / 9·3 · A crônica: a capa / a página dupla | `338:23202`, `338:23530` | `9-2-…`, `9-3-…` |
+| 9·4 · O fim no celular | `338:23912` | `9-4-o-fim-375` |
+| 10·1 / 10·2 / 10·3 · O herói cai: a mesa escurece / o cativeiro / o fim | `337:21743`, `337:22070`, `337:22395` | `10-1-…`, `10-2-…`, `10-3-…` |
+| 10·4 · O cativeiro no celular | `337:22717` | `10-4-o-cativeiro-375` |
+| 11 / 11·2 · A pena que escreve: os quatro estados / celular | `337:22916`, `337:22984` | `11-a-pena-que-escreve`, `11-2-a-pena-375` |
+| 12 · O som, nomeado (prancha) | `334:16744` | `12-o-som-nomeado` |
+
+### 1 · As decisões que mais mudam a experiência
+
+1. **Há uma fila, e uma lei de quando a mesa para.** Só param a mesa: busca fechada, espólio raro e
+   lendário, despertar, encruzilhada, nível, fogueira e a queda. Etapa, XP, moedas, conquista e espólio
+   comum/incomum acontecem **na página**, sem segurar a linha da pena. Hoje toda cerimônia para tudo.
+2. **Toda cerimônia deixa um objeto.** O lacre fica na página (e no livro), a carta vai para a bolsa, o
+   número novo fica no lacre da carta do herói. Nada é só um aviso que some.
+3. **Teto de 4 s, um toque pula.** Pular leva ao último quadro; nunca pula a escolha nem o preço.
+4. **A encruzilhada, o talento e o veredito da queda são a mesma carta**: título, uma frase, e blocos
+   rotulados («VOCÊ GANHA», «CUSTA», «VOCÊ PERDE», «VOCÊ GUARDA», «O QUE MUDA»). O primeiro toque ergue; o
+   âmbar só aparece então, num botão que leva o nome do caminho. A linha da pena é sempre a quarta carta.
+5. **O «Confirmar» da subida de nível é um pé fixo** (88 px, com o passo, o resumo e o botão). Impedido,
+   diz o que falta. A folha rola por dentro; o pé nunca sai da tela.
+6. **A raridade é moldura, palavra e tempo** — nunca só cor. A lendária e o 20 natural são os dois únicos
+   momentos em que a luz da vela muda.
+7. **A fogueira é cena**: a roda no feltro, as cartas de quem está, o contorno tracejado de quem caiu.
+8. **Quem volta lê «Da última vez…»**, feito só de fatos do sistema (zero chamada à IA).
+9. **Sair mostra o gancho e o cartão da sessão** — a mesa inteira num retrato 1080 × 1350.
+10. **O fim existe**: última página, lacre final, e a crônica como livro com o dado por capitular.
+11. **Cair é cena, não erro**: a mesa escurece até a vela e a carta; o depois vem como veredito.
+12. **A espera é a pena**, em quatro estados, e a prosa entra frase a frase.
+
+### 2 · Tokens e tabelas novas (nome → valor)
+
+**Nenhuma cor nova e nenhuma variável nova no Figma.** Tudo sai das 38 do F1/F2 e das 3 do F5. As cores
+literais do lote são pintura (a fogueira `#FFB347`, `#FFF0B8`, lenha `#3A2415`; a silhueta `#05080A` com
+olhos `#B8934C`) e os véus (`T.veuDaNoite` `#05080A` com alfa).
+
+**`VEU_DA_CERIMONIA`** (alfa de `T.veuDaNoite` sobre a mesa; a página da história cai a 30 % de opacidade
+por baixo, 10 % no celular): `leve` 0,35 (o lacre que desce) · `palco` 0,80 (encruzilhada, nível, espólio
+raro) · `noite` 0,90 (lendária, despertar, levantar da mesa, a queda: 0,92; o fim: 0,94).
+
+**`CERIMONIAS`** — a tabela que a fila lê (ordem = prioridade; tempos em ms; «para» = a mesa fica `inert`):
+
+| chave | para? | fases (ms) | teto | pede toque? | o que fica |
+|---|---|---|---|---|---|
+| `queda` | sim | escurece 0–1200 · espera | 3000 + toque | sim (veredito) | o veredito na página |
+| `buscaFechada` | sim | véu 0–120 · lacre desce 120–440 (escala 1,6 → 1) · assenta 440–560 · notas 560–1400 · fica até 2400 | 2400 | não (toque segue antes) | lacre G (96) na página e no livro |
+| `nivel` | sim | carta ao centro 0–600 · lacre 600–920 · espera | 2800 + escolha | sim (pontos, talento) | lacre do nível na carta |
+| `despertar` | sim | sobe 0–400 · nome velho riscado 400–1200 · nome novo escreve 1200–2400 · fica até 3200 | 3200 | não | o nome na casa do item |
+| `espolioLendario` | sim | escurece e sobe 0–900 · vira 900–1600 · lacre 1600–1920 · espera | 3600 | sim (empunhar/guardar) | a carta na bolsa |
+| `espolioRaro` | sim | sobe 0–400 · vira 400–820 · espera | 2000 | sim | a carta na bolsa |
+| `encruzilhada` | sim | 3 cartas × 180, com 90 entre elas · espera | 1200 + escolha | sim | a carta escolhida na nota da busca |
+| `fogueira` | sim | a luz muda 0–900 · a roda entra 900–1400 · cena | 1400 + cena | sim | a vela inteira |
+| `conquista` | não | etiqueta entra 0–220 · lacre 220–540 · fica 1600 · vai ao livro 360 | 1600 | não | lacre em «Feitos»; marca no livro |
+| `espolioComum`, `espolioIncomum` | não | vira na página 0–420 · escorrega para a bolsa 420–600 (+ brilho do aro 300 no incomum) | 600 | não | o item na mochila |
+| `etapa` | não | nota 0–220 · lacre P 120–440 | 440 | não | lacre P (32) na etapa riscada |
+| `xp`, `moedas` | não | nota 0–220 · a barra/pilha conta até 900 | 900 | não | o número novo |
+
+**`FILA_DE_CERIMONIAS`** — a máquina de estados (um módulo puro; a tela só desenha o estado):
+
+- estados: `livre` → `naFila` → `emCena` → (`pedeEscolha`) → `pousa` → `livre`.
+- `enfileirar(c)`: entra na fila ordenada pela prioridade da tabela; duas iguais não se fundem, salvo
+  `xp` e `moedas` (somam-se numa nota só).
+- `livre → emCena` só no **silêncio**: sem luta aberta, sem lance de dado em voo, sem reação aberta, e sem
+  texto por enviar na linha da pena. As que **não param** a mesa não esperam o silêncio, só a vez.
+- `emCena`: corre as fases; um toque, Espaço, Enter ou Esc salta para o fim da última fase.
+- `pedeEscolha`: sem relógio. Esc não fecha (a escolha não tem «cancelar»); a única saída é escolher.
+- `pousa`: 240 ms de silêncio, o objeto vai para o seu lugar, e a próxima da fila entra.
+- Enquanto uma cerimônia que para a mesa está em cena, a linha da pena mostra *«o Mestre está batendo o
+  lacre · toque para seguir»* e, se houver fila, *«a seguir: nível novo»*. **Nenhum botão fica morto sem
+  frase.**
+- **Nunca atrás da página:** a camada da cerimônia é a mais alta da mesa (acima do objeto aberto do F5; se
+  um objeto está aberto, a cerimônia espera ele pousar).
+- `prefers-reduced-motion`: cada cerimônia que para a mesa é **um quadro só** (o último), que entra em
+  120 ms de opacidade e fica até o toque; as que não param viram só a nota do Mestre e o lacre já batido.
+- A primeira conquista nunca entra antes do terceiro turno (hoje entra no primeiro, em mono).
+
+**`CARTA_DE_ESCOLHA`** (encruzilhada, talento): 320 × 430 a 1440 (290 × 400 a 1024; tira de 343 × 194 no
+celular), raio 8, chão `ossoLume`, borda `tintaDim` 1, fio `latao` a 5 px, sombra `pousado`. Rótulo
+(Cinzel 12 `tintaDim`) · título (Cinzel 22 `tinta`) · frase (Spectral Medium 16) · régua · blocos (rótulo
+Cinzel 12 em `musgoNaPagina` para ganho, `perigoNaPagina` para custo, `brasaNaPagina` para mudança; texto
+Spectral Medium 16) · pé em itálico 14 `brasaNaPagina`: «sem dado» ou «Rastrear · precisa de 13 · se
+falhar, o rastro esfria». **Erguida:** chão `osso`, borda `tinta` 2, sombra `erguido`, sobe 12 px, e sob
+ela nasce o botão âmbar com o nome do caminho e a frase «Esta escolha não volta. As outras duas cartas saem
+da mesa.» Três cartas: x 200, 560, 920; y 164. Linha «ou escreva outra coisa…»: papel 760 × 68 em x 340,
+y 648.
+
+**`PE_DA_SUBIDA`** (o pé fixo): 88 px, `couroBaixo`, fio `latao` de 1 px em cima; à esquerda o passo
+(Cinzel 12 `inkMeio`) e o resumo (Spectral Medium 16 `ink`); à direita o botão de 320 × 56. Impedido:
+contorno `latao` 1,5 com a razão dentro («Confirmar · falta pôr 1 ponto»). No celular o pé é só o botão, a
+toda a largura. A folha (860 × 730 em x 470, y 60 a 1440) rola por dentro; a 768 de altura sobram 680 px.
+**Atributo:** linha de 382 × 56 (327 no celular), nome Cinzel 13, «−» e «+» de **44 × 44**, valor Cinzel
+22; com ponto posto: chão `osso`, borda `tinta` 2 e «de 16 para 17» em itálico `musgoNaPagina`. O que
+mudou é sempre dito **de–para, por extenso**.
+
+**`CARTA_DO_ESPOLIO`**: 240 × 336, raio 8, chão `ossoLume`; a palavra da raridade (Cinzel 12) no alto, a
+casa de item a 96, nome Cinzel 19, uma frase Spectral Medium 15, pé em itálico 14. Moldura por
+`RARIDADE_DA_CASA` do F5 levada à carta: comum borda `ossoSombra` 1 · incomum aro `latao` 2 · rara aro +
+quatro cantos de latão (22 px) · lendária aro + cantos + lacre M (56) no canto e a palavra em
+`brasaNaPagina`. No palco: 1,4 × a 1440 (336 × 470), 1,2 × no celular. Verso: `couro`, aro `latao` 2, fio a
+8 px, losango de latão. Halo da lendária: radial `T.haloDaVela`, alfa 0,5 no centro, raio 460.
+
+**`FOGUEIRA_NA_MESA`**: véu 0,78 sobre a mesa de noite; a roda é uma elipse tracejada de 760 × 620 (`latao`
+35 %); o fogo em (460, 480) com halo de raio 570; as cartas são a carta do herói a 0,46 (156 × 219),
+rodadas 8°, 3°, −3°; **o lugar vazio** é um contorno tracejado do mesmo tamanho (`inkMeio` 1,5, traço 6 6)
+com um objeto do ausente (glifo de 40), o nome em Cinzel 13 e a frase em itálico 14. A página da fogueira:
+480 × 780 em x 900, y 60 — prosa, «COM QUEM VOCÊ FALA?» com até três propostas de 48, a linha da pena, e o
+bloco «O DESCANSO» com o preço escrito acima do botão «Dormir até o amanhecer». Ao acordar, o ganho e o
+gasto voltam como notas do Mestre, a vela volta inteira em 900 ms e saem três discos de cada pilha.
+
+**`DA_ULTIMA_VEZ`**: abre se passaram **mais de 4 h** desde a última jogada. Na página: «HÁ DOIS DIAS ·
+SESSÃO 4» (Cinzel 12) · «Da última vez…» (Cinzel 28) · **até três fatos**, uma frase cada (Prosa) · régua ·
+«O FIO MAIS QUENTE» + a pergunta (Cinzel 28) + o próximo passo (Spectral Medium 16) · a nota de onde você
+está · «Continuar» (300 × 56, âmbar) e o vínculo «Reler a crônica desde o começo». A carta do herói a 0,5,
+rodada 3°, no canto de cima à direita da página. A narração nova só é pedida depois de «Continuar».
+
+**`A_QUEDA`**: quadro 1 — véu 0,92, a carta do herói a 1 × no centro com a pintura a 42 % e aro
+`lacreLume` 3, a vela-relógio a 1,5 × ao lado com halo de raio 260, «Saoirse cai.» (Cinzel 28), «vida: 0
+de 24 · a luta acabou». Quadro 2 — a carta a 0,8 à esquerda e a página do veredito (700 × 660 em x 560,
+y 110): rótulo `perigoNaPagina`, título, uma prosa curta, e os blocos «VOCÊ PERDE», «VOCÊ GUARDA», «O QUE
+MUDA»; botão «Acordar». O fim usa a mesma página com «O QUE FICA» e «O QUE SE PODE FAZER», botão «Ler o
+fim». **Nunca a palavra «erro», nunca «game over».**
+
+**`ESTADOS_DA_PENA`** (a espera pela narração; ms desde o envio):
+
+| estado | quando | o que a página mostra |
+|---|---|---|
+| `molha` | 0–2000 | a pena (glifo 20, `brasaNaPagina`) e um traço de tinta de 46 px; sem texto, sem relógio |
+| `escreve` | 2000–8000, ou assim que chega a primeira frase | cada frase entra **inteira** em 180 ms (a que entra a 55 % de opacidade), a pena segue a ponta; um toque na página revela tudo o que já chegou |
+| `demora` | ≥ 8000 sem frase | nota do Mestre: «O Mestre está demorando mais que o costume. A sua jogada e o dado estão guardados.» + «Continuar esperando» (escolhida) e «Tentar de novo» |
+| `falhou` | erro da chamada | glifo de aviso `perigoNaPagina` + «A pena falhou desta vez. Nada se perdeu: a sua frase e o dado continuam aqui.» + botão âmbar «Tentar de novo» + vínculo «Mudar a minha frase» |
+
+O resultado do dado fica sempre à vista por cima (a nota «Furtividade · 17 + 3 = 20 · passou»): nenhum dos
+caminhos rola de novo. Com movimento reduzido: as frases aparecem sem transição e a pena não se move.
+
+**`SOM_DA_MESA`** (tudo sintetizado; volume relativo ao dado pousando = 0 dB; o conjunto a −18 dB do teto):
+
+| momento | caráter | duração | volume | síntese |
+|---|---|---|---|---|
+| `dadoRola` | osso no feltro, batidas secas cada vez mais juntas | 1,2–1,6 s | −6 | ruído passa-banda 380 Hz (Q 2) em rajadas de 18 ms; intervalo 220 → 60 ms; três variações pela semente |
+| `dadoPousa` | um toque surdo | 140 ms | 0 | seno 150 → 70 Hz + ruído passa-baixa 900 Hz |
+| `vinteNatural` | sino pequeno e limpo | 1,4 s | +3 | senos 880, 1320, 2640 Hz, batimento 3 Hz, ataque 4 ms |
+| `umNatural` | osso que racha, tom que cai | 600 ms | 0 | estalo de ruído 8 ms (passa-alta 2 kHz) + triângulo 220 → 82 Hz |
+| `lacre` | cera e madeira, grave e abafado | 260 ms | +2 | seno 96 → 48 Hz (120 ms) + ruído passa-baixa 400 Hz (60 ms) + 30 ms de chiado a −14 |
+| `carta` | papel grosso: sopro e toque | 220 ms | −8 | ruído passa-banda 2,4 → 1,2 kHz em 160 ms + toque de 40 ms |
+| `cartaLendaria` | a carta, e um acorde que abre | 1,8 s | −2 | `carta` + senos 220, 330, 440 Hz entrando em 300 ms |
+| `pena` | arranhar leve, irregular | laço 1,2 s | −20 | ruído passa-alta 3 kHz, 30–90 ms ligado, 40–160 ms calado; para na primeira frase |
+| `tapete` | couro correndo e um baque | 500 ms | −4 | ruído passa-baixa 300 → 900 Hz (440 ms) + seno 70 Hz (60 ms) |
+| `golpe` | seco, com peso | 160 ms | 0 | ruído passa-banda 700 Hz (40 ms) + seno 120 → 60 Hz |
+| `moeda` | latão que tilinta | 180 ms | −10 | senos 3,1 e 4,7 kHz; até quatro seguidas a 70 ms |
+| `xp` | contas num fio | ≤ 900 ms | −14 | tique de 12 ms (seno 1,2 kHz) a cada 5 % da barra, meio tom acima por tique |
+| `nivel` | o lacre e três notas que sobem | 1,6 s | +2 | `lacre` + senos 392, 523, 784 Hz de 180 ms |
+| `fogueira` | brasa: estalos sobre um sopro | laço 4 s | −16 | ruído castanho passa-baixa 500 Hz + 2 a 5 estalos de 6 ms |
+| `queda` | um grave que desce, e silêncio | 1,2 s | −3 | seno 110 → 41 Hz; todos os laços calam em 400 ms |
+
+### 3 · O cartão da sessão, campo a campo (`CARTAO_DA_SESSAO`, 1080 × 1350, em canvas)
+
+Fundo `LUZ_DA_MESA[dia|noite].feltro` (noite se a sessão acabou em queda ou cativeiro), halo radial de
+`T.haloDaVela` centrado em (540, 520), raio 800 (alfa 0,20 de dia, 0,30 de noite), penumbra radial preta
+0 → 0 a 60 % → 0,40 (0,60 de noite), borda de `couroBaixo` de 14 e fio de `latao` de 1,5 a 18 px.
+**Piso de letra: 34 px** — num celular a imagem aparece a ~36 % (1080 → 390), e 34 px viram 12.
+
+| campo | onde (x, y, tamanho) | de onde vem | se falta |
+|---|---|---|---|
+| a marca | lacre de 64 com o d20 em (60, 48); «TAVERNA» Cinzel Bold 40, +16 %, em (140, 58), `ink` | fixo | — |
+| o título da noite | Cinzel 34 `ink`, alinhado à direita em x 1020, y 62 | tabela: queda/cativeiro → «UMA NOITE EM FERROS»; houve 20 natural em teste que passou → «A NOITE DO VINTE»; busca fechada ou luta vencida → «UMA NOITE DE VITÓRIA»; senão «UMA NOITE À MESA» | o último |
+| a estampa | 960 × 440 em (60, 140), raio 6, aro `latao` 3, véu `veuDaNoite` 12 % (30 % de noite) | a cena pintada do lugar onde a sessão acabou (`public/cenas`) | a cena do bioma; sem bioma, o feltro com o halo |
+| a carta do herói | a carta do F3 a 1,2 × (408 × 571) em (78, 318), rodada 4°, com o lacre do nível | retrato, nome, raça e classe, nível | sempre existe |
+| a tira da queda | papel 440 × 64 sobre a carta, rodado 4°, Cinzel 34 `perigoNaPagina`; a pintura cai a 45 % | só se houve queda: «LEVADA VIVA» ou «CAIU» | não aparece |
+| a silhueta do vilão | carta 280 × 392 em (716, 168), rodada −5°, `couroBaixo`, aro `latao` 2; silhueta `#05080A` com dois pontos de latão; nome Cinzel 34 `ink` | o vilão da campanha: o nome **só se o sistema já o revelou** ao jogador | «SEM ROSTO»; sem vilão eleito, a carta não aparece |
+| a etiqueta do lugar | `ossoLume`, 58 de altura, largura = texto + 48, encostada à direita (x 1020), y 602; Cinzel 34 `tinta` | o nome do lugar | o nome da região |
+| os números da noite | até **quatro** linhas de 86 a partir de y 668: peça de 88 em x 548, número Cinzel 60 em x 652 (130 de largura), rótulo Spectral Medium 34 em x 790 | o registro da sessão, nesta ordem de preferência: vinte naturais (d20 aceso) · um natural (d20 rachado) · inimigos caídos, pelo tipo mais numeroso (peça de osso com a caveira) · buscas fechadas (lacre) · moedas ganhas ou perdidas, com sinal (pilha) · dias em ferros (peça com cadeado) | linha com zero não entra; com menos de duas linhas, entra «N turnos jogados» |
+| a variação do 20 | no lugar dos números: o d20 «20 natural» a 300 em (780, 820) com onda de luz de raio 300, e uma linha Spectral 34 centrada em y 968 («2 vintes · 1 busca fechada») | quando o maior dado da noite foi um 20 natural que passou | usa a lista comum |
+| a melhor frase | papel 960 × 200 em (60, 1022), rodado −1°; a frase em Spectral itálico 40/50 (duas linhas no máximo, corta com «…»); a origem em itálico 34 `tintaDim` | **a frase que o jogador escreveu no turno do maior dado da noite** (desempate: o mais recente); origem = «perícia · o dado deu N» | a proposta escolhida nesse turno; sem dado na sessão, a última frase escrita |
+| o pé | Spectral Medium 34 `inkMeio` em (60, 1258): «sessão 4 · 1 h 42 · semente 7F3A·91C2»; à direita, itálico 34 `ink`: «Sente-se à mesa.» | contador de sessões, duração entre o primeiro e o último turno, a semente do mundo em grupos de quatro | sem duração, só sessão e semente |
+
+A semente sai da mono também (Spectral Medium): o cartão não tem letra de máquina. **Nada pessoal entra no
+cartão** (nem nome de conta, nem data). O texto do jogador entra tal como foi escrito: por isso a tela mostra
+o cartão **antes** de guardar.
+
+**A tela «Levantar da mesa»** (abre por «Sair» no escudo; véu 0,88): o cartão a 52 % (562 × 702) em
+(170, 99), sombra `erguido`; à direita, em x 820: «LEVANTAR DA MESA» · «Até a próxima, Saoirse.» · o papel
+do gancho (480 × 150, rodado −1°: «FICA POR DIZER» + a pergunta do fio mais quente + uma linha) ·
+**«Guardar imagem»** (âmbar, 480 × 56; baixa o PNG) · **«Compartilhar»** (contorno; folha de partilha do
+aparelho com o arquivo, e onde ela não existe, copia a imagem) · a nota «A imagem é feita aqui, no seu
+aparelho…» · vínculos «Só levantar» e «Voltar à mesa» · «Nada se perde: a campanha fica guardada neste
+aparelho.» No celular: o cartão a 30 % (324 × 405), o gancho, os dois botões empilhados a 343, o vínculo.
+
+### 4 · O fim da campanha e a crônica
+
+- **A última página** (`9·1`): «EPÍLOGO» · o título · dois parágrafos · o **lacre G** centrado com «FIM»
+  (Cinzel 28) · a nota dos números da campanha · «Abrir a crônica» (âmbar) · vínculo «Nova aventura».
+- **A capa** (`9·2`): livro fechado de 524 × 724 em (300, 88), `couroBaixo`, aro `latao` 2, lombada
+  escurecida de 44, cantos de latão de 36; «A CRÔNICA DE» + o nome (Cinzel 34 `ink`), o retrato em oval
+  (200 × 260), o lacre G, o mundo, as noites e a semente. Ao lado: «Abrir o livro», «Guardar como arquivo»,
+  «Nova aventura» e a frase «Nova aventura não apaga esta: a crônica fica na estante.»
+- **A página dupla** (`9·3`): o livro do F5 na fita «A crônica». Cada capítulo: a **estampa** do lugar
+  (478 × 210) no alto · «CAPÍTULO IV · LUGAR» + o título · **a capitular é o dado que decidiu a virada**
+  (o d20 a 80 px, com «perícia · N» em Cinzel 12 por baixo; o parágrafo corre ao lado dele, 378 de largura,
+  e depois volta à largura toda) · **retratos na margem de fora** (72 × 96, nome em Cinzel 12) na altura
+  do parágrafo em que a pessoa ou a fera entra · o lacre M onde a busca fechou · prosa 17/28 · número da
+  página.
+
+### 5 · O «superior», por medida
+
+- **Tempo parado:** nenhuma cerimônia segura a mesa por mais de 4 s sem pedir uma escolha (tabela acima);
+  cinco das doze não a seguram de todo. Toques para sair de qualquer uma: **1**.
+- **«Confirmar» fora da tela a 768 de altura → sempre à vista** (pé de 88 px; quadro `4·4`).
+- **Letra:** nenhum texto abaixo de 12 px nos quadros; no cartão, nenhum abaixo de 34 px (= 12 px a 36 %).
+- **Contraste** (pares já medidos no F1, F2 e F5, sem cor nova): `tinta` no pergaminho 12:1 e em `ossoLume`
+  14,30 · `tintaDim` 6,56 · `brasaNaPagina` 6,71 · `perigoNaPagina` 6,60 · `musgoNaPagina` 6,54 ·
+  `sobreAmbar` no âmbar 8,68 · `ink` em `couro` 12,65 e no feltro 9,90 · `inkMeio` no feltro 7,78 (sobre
+  os véus o chão é mais escuro, logo mais). O pior par do lote é a nota do Mestre: **6,56**.
+- **Sinal sem cor só** (WCAG 2.2, 1.4.1): ganho e custo têm rótulo escrito; raridade tem palavra e
+  moldura; impedido tem a razão dentro do botão.
+- **Alvos:** todo controle ≥ 44 px (HIG da Apple; acima dos 24 px do WCAG 2.2, 2.5.8).
+- **Antes/depois:** não há captura do antes para estas telas — a análise (`analise-visual.md` §3.16) não as
+  viu em 15 turnos. O par fica por fazer quando houver captura. **A experiência jogada não está provada.**
+
+### 6 · O que o desenho pede ao sistema
+
+1. **O registro da sessão** — campo de save **novo e aditivo**: início e fim, contagem de 20 e de 1
+   naturais, inimigos caídos por tipo, buscas fechadas, moedas ganhas e perdidas, e o **maior dado** com a
+   perícia, o valor e a frase do jogador daquele turno.
+2. **O fio mais quente** — função pura que elege uma busca ou pista aberta e devolve a pergunta numa linha
+   e o próximo passo (serve ao gancho, ao «da última vez» e ao cartão).
+3. **Os três fatos do «da última vez»** — do livro de fatos, os três mais pesados desde a sessão anterior.
+4. **O estado de fim de campanha** (vitória final ou queda sem cativeiro) e o epílogo; os números da
+   campanha.
+5. **O «de–para» da subida de nível** como lista de frases de tabela; e a linha de efeito de cada atributo.
+6. **O veredito da queda** antes da cena: o que se perde, o que se guarda, o que muda (frases de tabela).
+7. **Quem está na roda da fogueira e quem se foi** (com o objeto do ausente), e o custo do descanso.
+8. **O dado que decidiu cada capítulo** da crônica (o maior dado do capítulo) e quem entrou nele.
+
+### 7 · As armadilhas do Figma que F6 pagou
+
+1. **O véu não apaga a página**: o pergaminho sob 80 % de preto ainda se lê e briga com o palco. A página
+   da história precisa cair a 30 % de opacidade (10 % no celular) por baixo do véu.
+2. **A captura de uma seção vem com 40 px de margem de cada lado**: uma folha por linha e um recorte local
+   por quadro poupam trinta chamadas de exportação.
+3. **Rótulo de largura fixa quebra com o nome do lugar**: a etiqueta mede o texto (largura automática + 48).
+4. **Prévia por clone** (`clone` + `rescale`) não segue o original: refaz-se depois de cada acerto no cartão.
+
+### 8 · O que ficou por fazer do F6, dito
+
+- **Os quadros usam os construtores, não componentes novos**: a carta de escolha, a carta do espólio, o pé
+  da subida, o lugar vazio e o cartão **não são componentes**. O lacre, a carta do herói, o d20, a casa de
+  item e os botões são instâncias. Code Connect por fazer.
+- **Não compostos:** a faixa 768–1179 e 1280 × 720 (fora o `4·4`); o espólio comum virando na página (só
+  descrito); a conversa da fogueira em curso; o «da última vez» de noite; a página dupla e a capa a 375; a
+  encruzilhada com quatro cartas; a queda de um companheiro (segue a forma do lugar vazio).
+- **Storyboard:** cada cerimônia tem 2–3 quadros com as durações na plaqueta e na tabela; não há protótipo
+  em movimento.
+- **O som está nomeado, não ouvido**: os valores de síntese são ponto de partida para o programador afinar.
+- **Defeitos de prancha:** em `5·1` a casa lendária leva o lacre pequeno dela e a carta leva outro; a fogueira é um desenho simples.
+- Textos de exemplo meus, não do sistema: os fatos, o epílogo, os talentos, os preços, os vereditos.
+  Gradientes e pintura literais, como nos outros lotes.
+
+### 9 · A proposta ambiciosa — a estante
+
+Toda campanha que acaba vira **um livro na estante**, e a estante é a primeira coisa que se vê ao chegar: as
+lombadas com o nome do herói, o lacre do fim e o número de noites. Abrir um livro é ler a crônica ilustrada;
+e um herói novo **no mesmo mundo** encontra o anterior — o túmulo na colina, a estalagem de Nolan com a
+caneca virada, a adaga com nome numa banca. É o que faz a segunda campanha valer mais que a primeira, e é o
+que um jogador mostra a outro («olha a minha estante»). Custa um campo de save novo e aditivo por campanha
+encerrada (a crônica e três ou quatro marcas no mundo) e a leitura dele pelo `legado.js`, que já existe.
