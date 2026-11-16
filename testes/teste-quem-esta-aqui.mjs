@@ -148,9 +148,10 @@ sec("4. o núcleo da cidade não é «daqui» fora dos muros (a fogueira)");
 sec("5. a tela e a pauta: a MESMA conta");
 {
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
-  const mot = fs.readFileSync(new URL("../src/motor/pauta-do-turno.js", import.meta.url), "utf8");
+  /* a pauta do motor não se lê como texto (teste-assercoes-de-texto): a prova
+     dela é o dourado de teste-motor-pauta-do-turno §2, com a régua do S4 */
   const ctxDe = (src) => { const i = src.indexOf("const contextoDoEmCena = (frase, quem) =>"); return i < 0 ? "" : src.slice(i, src.indexOf("\n  };", i)); };
-  for (const [nome, src] of [["a tela (App)", app], ["a pauta (motor)", mot]]) {
+  for (const [nome, src] of [["a tela (App)", app]]) {
     const c = ctxDe(src);
     t(`${nome}: o contexto do EM CENA espalha contextoDeQuemEsta`, c.includes("...contextoDeQuemEsta(q)"));
     t(`${nome}: e não tem presentes/longe/doPasso próprios`, !/\n\s+(presentes|longe|doPasso):/.test(c));
@@ -183,8 +184,10 @@ sec("6. (S4b) a proposta é do sítio onde nasceu");
   t("o herói desceu à masmorra: sai", !propostaAindaVale(p, { ...ali, masmorra: { nome: "Paliçada" } }));
   t("a proposta de antes desta lei (sem sítio) vale como sempre valeu", propostaAindaVale({ verbo: "x" }, { cidadeAtual: B }));
   t("lixo não estoura", !propostaAindaVale(null, null) && typeof chaveDoSitio(null) === "string");
-  const fr = fs.readFileSync(new URL("../src/motor/a-proposta-da-frase.js", import.meta.url), "utf8");
-  t("toda proposta nasce com o sítio", /sitio: chaveDoSitio\(e\)/.test(fr));
+  /* toda proposta nasce com o sítio — provado por comportamento, não pelo texto */
+  const { aPropostaDaFrase } = await import(S + "motor/a-proposta-da-frase.js");
+  const nascidas = ["vou ao Moinho de Baixo", "compro uma corda", "ataco o guarda"].map((frase) => aPropostaDaFrase({ frase, passo: { nome: "O Moinho de Baixo", minutos: 30 } }, ali)).filter(Boolean);
+  t("toda proposta nasce com o sítio onde foi feita", nascidas.every((p) => p.sitio === chaveDoSitio(ali)));
   const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   t("o App leva-a embora quando o lugar, a estrada ou a masmorra mudam", /propostaAindaVale\(propostaDaFrase, estadoDoPedido\(\)\)[\s\S]{0,200}\}, \[lugar, jornada, masmorra\]\)/.test(app));
 }

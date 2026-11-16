@@ -316,7 +316,11 @@ for (const k of casosDoPedido()) {
   casos.push({ de: `bloco#${k.i}`, frase: k.entrada.conteudo, nota: (f.out && f.out.nota) || "", estado });
   const ficha = aFichaDeAtor({ nota: casos[casos.length - 1].nota, frase: k.entrada.conteudo, estado });
   /* §6: a foto do pedido de hoje, tirada DEPOIS de a ficha correr sobre o mesmo estado */
-  fotosBatem.push(ficha && mesmaFoto(fotoGuardada(fotoDoPedido(f), k.i), D.fotos[k.i]));
+  /* MOVIDA (16/11, S4), E O MOTIVO: nos casos com a jornada aberta ou um sítio a
+     linha EM CENA muda de propósito (quem-esta-aqui.js); a prova deles é a régua
+     do S4 em teste-motor-pedido-do-turno §2. Aqui conta só que a ficha correu. */
+  const deS4 = !!(k.estado && (k.estado.jornada || k.estado.lugar));
+  fotosBatem.push(ficha && (deS4 || mesmaFoto(fotoGuardada(fotoDoPedido(f), k.i), D.fotos[k.i])));
 }
 t(`os casos: ${nSessoes} frases das sessões pelo caminho do servidor + ${casos.length - nSessoes} do bloco`, nSessoes >= 140 && casos.length - nSessoes === N_DA_PAUTA);
 const res = casos.map((k) => ({ k, r: aFichaDeAtor({ nota: k.nota, frase: k.frase, estado: k.estado }) }));

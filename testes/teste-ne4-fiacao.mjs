@@ -39,7 +39,10 @@ sec("§1 o golpe sem alvo: a porta `alvoDaProsa` fechada tira o mostrado da list
   const L = corpo("  const leituraDaAgressao = (acao) => {");
   t("a lista do golpe lê a porta alvoDaProsa do modo da mesa",
     /montarEmCena\(portaAberta\("alvoDaProsa", MODO_DA_MESA\) \? ctxCena : \{ \.\.\.ctxCena, mostrado: \[\] \}\)/.test(L));
-  t("e o contexto da cena é o de sempre (contextoDoEmCena), com o encontro e a sala dentro", /const ctxCena = contextoDoEmCena\(acao, elenco\.aqui \|\| \[\]\);/.test(L));
+  /* MOVIDA (16/11, S4), E O MOTIVO: o contexto da cena deixou de receber o
+     elenco da cidade — contextoDoEmCena(acao, null) pede a conta única de quem
+     está aqui (quem-esta-aqui.js). A intenção fica: é o contexto de sempre. */
+  t("e o contexto da cena é o de sempre (contextoDoEmCena), com o encontro e a sala dentro", /const ctxCena = contextoDoEmCena\(acao, null\);/.test(L));
   t("a porta: aberta no `mestre` (o de hoje igual), fechada no `boca`", portaAberta("alvoDaProsa", "mestre") && !portaAberta("alvoDaProsa", "boca"));
 }
 
