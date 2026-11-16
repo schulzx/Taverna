@@ -1,0 +1,15 @@
+{
+  "name": "Taverna — toda lenda começa aqui",
+  "short_name": "Taverna",
+  "description": "Um RPG de mesa em que o Mestre não inventa: cada dado, cada moeda e cada morte são verdade.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12241B",
+  "theme_color": "#12241B",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+    { "src": "/favicon-32.png", "type": "image/png", "sizes": "32x32" },
+    { "src": "/apple-touch-icon.png", "type": "image/png", "sizes": "180x180" }
+  ]
+}
