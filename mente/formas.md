@@ -19814,3 +19814,290 @@ ratos gigantes caíram», o desenho de **como** caíram; e o cartão da sessão 
 difícil da noite como imagem. Custa um campo de save novo e aditivo (por luta: a planta, as casas dos
 caídos, as manchas — uns 200 bytes) e um desenho em SVG que já é o do tapete, a 1/4 do tamanho. É o
 que transforma «ganhei» em «olha como foi» — a coisa que um jogador mostra a outro.
+
+---
+
+## A Mesa do Mestre · F5 · os objetos e o mapa (`desenho`, 16/11/2026)
+
+O lote **F5** da planta (`mente/lancamento/arquitetura.md` §2 G e H). Fala a língua do F1 ao F4: mesmas
+variáveis, mesmos estilos de texto, mesmas sombras. **Só Figma e este arquivo; nenhum código tocado.**
+Geração de imagem por IA: **0 chamadas** — retratos e feras são as matrizes do acervo, e livro, bolsa,
+pano, carta, glifos e mapa são vetor.
+
+**Onde está.** Arquivo `e5wJUzInAssoebx5npssKc`, página `10 · A Mesa do Mestre` (`266:67`), de y 50000
+para baixo. Imagens em `mente/lancamento/figma/F5-*.png`; os glifos em
+`mente/lancamento/figma/glifos-de-item/` (42 SVG de 24 × 24, `currentColor`, mais `glifos-de-item.json`).
+
+| quadro | nó | imagem |
+|---|---|---|
+| 01 · As peças (glifos `Glifo de item/…`, `A casa de item` `326:13553`, `A fita marcadora` `326:13563`, ajudantes `327:13368`, acervo do antes) | `326:13364` | `F5-pecas.png` |
+| 0 · O objeto aberto sobre a mesa: pegar, abrir, pousar | `331:16094` | `F5-0-objeto-aberto-transicao.png` |
+| 1 · O livro · As buscas 1440 (antes: Diário `328:14180`, Códex `328:14182`) | `327:13369` | `F5-1-livro-as-buscas-1440.png` |
+| 2 · O livro · Gente | `328:13654` | `F5-2-livro-gente-1440.png` |
+| 3 · O livro · Bestiário | `328:13771` | `F5-3-livro-bestiario-1440.png` |
+| 4 · O livro · Feitos | `328:13921` | `F5-4-livro-feitos-1440.png` |
+| 5 · O livro · A crônica | `328:14080` | `F5-5-livro-cronica-1440.png` |
+| 6 · A bolsa 1440 (antes `329:15086`) | `329:14802` | `F5-6-bolsa-1440.png` |
+| 7 · A banca 1440 (antes `329:15295`) | `329:15088` | `F5-7-banca-1440.png` |
+| 8 · A carta 1440 · dia (antes `330:16114`) | `330:15483` | `F5-8-carta-1440-dia.png` |
+| 9 · A hora pinta só a luz (dia · entardecer · noite) | `330:15703` | `F5-9-a-hora-pinta-so-a-luz.png` |
+| 10 · A faixa do rumo: a regra (antes `330:16116`) | `330:16078` | `F5-10-faixa-do-rumo-regra.png` |
+| 11 · Celular · o livro | `331:15762` | `F5-11-celular-livro-375.png` |
+| 12 · Celular · a bolsa | `331:15811` | `F5-12-celular-bolsa-375.png` |
+| 13 · Celular · a banca | `331:15894` | `F5-13-celular-banca-375.png` |
+| 14 · Celular · a carta | `331:15952` | `F5-14-celular-carta-375.png` |
+| 15 · Estados vazios (gente, bestiário 0 de 23, mochila, banca sem moedas) | `331:16340` | `F5-15-estados-vazios.png` |
+| Medidas do lote | `331:16394` | — |
+
+### 1 · As decisões que mais mudam a experiência
+
+1. **Uma forma de painel só: o objeto aberto sobre a mesa.** Livro, bolsa, banca e carta abrem do mesmo
+   jeito, no mesmo lugar e do mesmo tamanho. A mesa fica à vista (148 px de cada lado) sob um véu; a
+   página da história recua, não some. Saem o modal castanho, a gaveta lateral e o painel na folha.
+2. **Diário e Códex são um livro com cinco fitas:** As buscas · Gente · Bestiário · Feitos · A crônica.
+   «Trocar o arco» sai daqui (vai para o escudo). Conquista é **lacre**, não linha cinza: o que falta é
+   o lugar vazio do lacre, e os de Lenda só mostram o nome depois de lacrados.
+3. **Todo item tem cara:** 41 famílias de glifo mais «desconhecido», numa casa de osso; a raridade é
+   moldura (aro de latão, cantos de latão, lacre), e o nome dela vem sempre escrito.
+4. **A banca diz o preço sem cor só:** glifo + palavra + cor («✕ faltam 7», «✓ você paga»). O botão que
+   não pode é contorno com a razão escrita dentro («Comprar Loriga Segmenteira · faltam 7 moedas»).
+5. **A carta é pergaminho.** Tinta sépia, aguadas por bioma, montanha com perfil, crista e hachura; o
+   não visto é papel em branco com hachura. **A luz fica por baixo da tinta**: o papel muda com a hora,
+   a letra não. A paleta azul-noite aposenta-se inteira.
+6. **A bolsa é só herói e carga.** Carta do herói, PV/PM/XP, sete casas no corpo, atributos como peças,
+   mochila, mantimentos em pilhas, talentos. Preferências de luta e marcha ficaram no escudo (F1).
+
+### 2 · Tokens e tabelas novas (nome → valor)
+
+**Novos em `T`:** `linho` `#D8CBAA` (o pano da banca) · `linhoSombra` `#B9A983` (a bainha, 2 px) ·
+`linhoBarra` `#8E7F5C` a 50 % (as duas barras tecidas, 8 px). Medido sobre `linho`: `tinta` 10,25 ·
+`tintaDim` 5,53 · `perigoNaPagina` 5,57 · `musgoNaPagina` 5,52 · `brasaNaPagina` 5,66.
+
+**`OBJETO_ABERTO`** (vale para os quatro): corpo `1144 × 756` em `x 148, y 80` a 1440 × 900 · véu
+`#05080A` a `0,58` sobre a mesa (mesa `inert`) · sombra `erguido` · conteúdo a 40 px das bordas ·
+fechar: disco de osso 44 × 44 em `x 1340, y 28` com «POUSAR · ESC» (Cinzel 12, `ink`). A 1280 × 720:
+`1040 × 620` em `x 120, y 50` (regra, não desenhado). A 375: tela inteira, aba «‹ A MESA» de 96 × 52
+numa barra de 52 em `couroBaixo`, título Cinzel 13 centrado; o detalhe do que se escolheu **sobe de
+baixo** como folha de `ossoLume` (raio 6, sombra `erguido`).
+
+| objeto | corpo | letra |
+|---|---|---|
+| o livro | capa `couroBaixo` raio 10, fio `latao`; três cortes de folha `ossoSombra`; duas páginas `pergaminho` de 558 × 732; sombra da lombada 80 px (castanho 0 → 22 % → 0) | `tinta`, `tintaDim`, `brasaNaPagina` |
+| a bolsa | `couro` raio 28, borda `couroBaixo` 3, costura tracejada `latao` 55 % a 14 px | `ink`, `inkMeio` (8,73 no couro; 6,89 em `couroAlto`) |
+| a banca | `linho` raio 6, bainha `linhoSombra`, duas barras tecidas | `tinta`, `tintaDim` |
+| a carta | `pergaminho` raio 3, dois rolos de 28 × 772 (`#A98F64` → `#F1E6CC` → `#A98F64`) | `tinta`, `tintaDim` |
+
+**`FITAS_DO_LIVRO`** = `["As buscas", "Gente", "Bestiário", "Feitos", "A crônica"]`. Fita `150 × 52`
+(passo 160, a partir de 60 px da borda da capa), rabo de andorinha de 9 px no topo, `couroAlto` com letra
+`ink`; **aberta** `150 × 64` em `lacre` com letra `sobreLacre` (6,62) e sobe 12 px. A 375: `104 × 52`,
+fila que rola na horizontal, a próxima sempre a espreitar. A fita aberta é o único lacre da tela que não
+é selo — é a marca de «onde o livro está aberto», e leva sempre o nome escrito.
+
+**`RARIDADE_DA_CASA`** — a casa é `64 × 64`, raio 6, chão `osso`, glifo 32 em `tinta`, sombra `peca`:
+
+| raridade | moldura |
+|---|---|
+| `comum` | borda `ossoSombra` 1 |
+| `incomum` | aro `latao` 2 |
+| `rara` | aro `latao` 2 + quatro cantos de latão (triângulos de 13) |
+| `lendaria` | o da rara + um lacre de 18 no canto de cima à direita (`lacre`, aro `lacreLume`) |
+| vazia | chão `couroBaixo` 35 %, tracejado `latao` 60 %; no corpo, o glifo do encaixe a 45 % |
+
+Tamanhos: 64 (mochila) · 96 (banca, ×1,5) · 48 (comparação) · 44 (corpo a 375). Estados: repouso · foco
+(anel de F1) · **escolhida** (aro de 2 px a 4 de distância: `ink` sobre couro, `tinta` sobre linho e
+papel; ergue 2 px) · pressionada (desce 1 px).
+
+**`FAMILIA_DO_ITEM`** — 41 famílias + `desconhecido`. Pedido ao sistema: um módulo puro
+`familia-do-item.js` com `familiaDoItem(item)`, resolvendo nesta ordem (a primeira que casar):
+
+1. **Equipamento, pela ficha** (`fichaDoItem`/`formaDoItem` de `itens.js`):
+   `escudo` → `escudo` · armadura `panos` → `veste` · `leve` → `armadura_leve` · `media` →
+   `armadura_media` · `pesada` → `armadura_pesada` · `elmo`, `botas`, `anel`, `amuleto` → o mesmo nome ·
+   foco de uma mão → `varinha` · foco de duas → `cajado` · arma `marcial_dist`/`simples_dist` com «arco»
+   → `arco`, com «besta» → `besta`, o resto à distância → `arremesso` · corpo a corpo por nome: machado →
+   `machado`; maça, martelo, clava, mangual → `maca`; lança, alabarda, pique, tridente → `haste`; simples
+   com a propriedade `leve` → `adaga`; **todo o resto → `lamina`**.
+2. **Itens úteis, pela classe e pelo nome** (`itens-uteis.js`): poção, elixir → `pocao` · veneno, óleo,
+   ácido, frasco → `frasco` · pergaminho, contrato → `pergaminho` · livro, tomo, diário → `livro` · ração,
+   pão, carne → `comida` · cantil, odre → `agua` · vinho, cerveja → `bebida` · tocha, lanterna, vela →
+   `tocha` · erva, raiz, flor → `erva` · kit, gazua, ferramenta → `ferramenta` · corda, gancho → `corda` ·
+   chave → `chave` · mapa → `mapa` · alaúde, flauta, caixa de música → `instrumento` · saco, baú, aljava →
+   `recipiente` · flecha, virote → `flechas` · moedas → `moeda` · gema, joia → `gema` · dente, garra, pele,
+   chifre → `trofeu` · classe `insumo` → `componente` · classe `mercadoria` sem nome que case →
+   `reliquia` · classe `semente` sem nome que case → `carta_lacrada`.
+3. Nada casou → `desconhecido` (o losango com «?»), e a suíte lista o item para a tabela crescer.
+
+As 42: `lamina adaga machado maca haste cajado varinha arco besta arremesso flechas escudo veste
+armadura_leve armadura_media armadura_pesada elmo botas anel amuleto pocao frasco pergaminho livro comida
+agua bebida tocha erva ferramenta corda chave mapa instrumento recipiente moeda gema reliquia trofeu
+componente carta_lacrada desconhecido`. Traço 2 em grelha de 24, pontas redondas (a lei de `glifos.js`).
+**A cobertura do acervo real não foi medida**: a ordem acima é a regra, e a prova é a suíte contar
+quantos itens caem em `desconhecido`.
+
+**`AGUADA_DA_CARTA`** (elipses com desfoque de 28 sobre o `pergaminho`; cor → alfa): `mar` `#6F93A0`
+0,42 · `floresta` `#7E8F5A` 0,40 · `montanha` `#9A8B78` 0,36 · `pantano` `#7C8468` 0,38 · `gelo`
+`#C9D6DA` 0,60 · `deserto` `#D9B77A` 0,45. Pior caso de letra sobre aguada: `tintaDim` no mar, 4,64.
+
+**`TINTA_DA_CARTA`**: sépia = `tintaDim` `#5A4632`; a rota escolhida = `tinta` 3 px. Costa 1,8 + duas
+linhas de água paralelas (deslocadas 9 e 19 px, a 60 % e 35 %). Montanha: perfil 1,4 com chão de papel
+(a de trás fica tapada: desenham-se de cima para baixo), crista 0,9 e três hachuras no lado da sombra;
+lado de 22 a 38 px. Mata: copa de 8 px e tronco, traço 1. Brejo: linha de 10 e três hastes. Deserto:
+pontos de 1,8. Não visto: hachura a 45° em traço 0,8 a 50 %, sem aguada, e «terra não vista» em itálico.
+Caminhos: estrada cheia 2 · trilha `7 5` 1,6 · a pé `1 5` 1,6. Rosa dos ventos de 52 com «N»; régua de
+quatro segmentos de 36 × 6 e «20 km · 5 h de marcha».
+
+Lugar: disco de 34 (alvo 44). Visitado: `osso`, borda `tinta` 1,5, glifo da casa a 18, nome em Cinzel 13.
+Só ouvido: `pergaminho`, tracejado `tintaDim`, «?», nome em Spectral itálico 14. Destino escolhido: borda
+`tinta` 2,5. **Todo nome pousa num respiro**: retângulo `pergaminho` a 82 %, 3 px de folga, raio 2. O
+herói é uma peça de 36 com o retrato, aro de `osso` 3 e sombra `pousado`; a perna da viagem leva uma
+pílula de osso com o tempo («4 h»).
+
+**`LUZ_DA_CARTA`** — a camada entra **entre as aguadas e a tinta**:
+
+| | camada | letra | pior contraste medido |
+|---|---|---|---|
+| `dia` (6 h–17 h) | nenhuma | `tinta` e `tintaDim` | 6,56 (`tintaDim`) |
+| `entardecer` (17 h–20 h) | `#C8642A` a 14 % + radial `#3A1A08` 0 → 0 a 55 % → 22 % na borda | **só `tinta`** | 6,98 |
+| `noite` (20 h–6 h) | `veuDaNoite` a 12 % + radial `haloDaVela` 10 % no centro → 0 a 40 % → `veuDaNoite` 28 % na borda | **só `tinta`** | 5,09 |
+
+Com o papel tingido a `tintaDim` cai a 3,77 e 2,75 na borda: por isso sai. Com a camada **por cima** da
+tinta (a primeira tentativa) a `tinta` caía a 4,20 — recusado. Sobre o respiro do nome o contraste fica
+acima de 9.
+
+**`FAIXA_DO_RUMO`**: `folga` 12 · `passoDaFila` 24 · altura 72 com uma fila, 96 com duas · fio 1 px
+`tintaDim`. A regra, para `faixa-do-rumo.js`: (1) mede-se a largura real de cada nome (Cinzel 12, +10 %);
+(2) «você está aqui» e o destino pousam primeiro, na 1.ª fila, alinhados pela borda da faixa; os outros
+entram da esquerda para a direita; (3) um nome fica na 1.ª fila se sobrar `folga` até o vizinho, senão
+desce para a 2.ª com um fio até a sua marca; (4) se nem na 2.ª cabe, fica só a marca e o nome aparece ao
+tocar ou focar (alvo 44 × 44); (5) nenhum nome é cortado nem encolhe. No caso da captura («TERRAS DAS
+BRUMAS» x 818–969, «FRONTEIRAS DO ESTIO» x 894–1063): **75 px sobrepostos → 0**.
+
+**Aposentam-se:** `mundo`, `mundoSoft`, `onMundo` e a paleta fria de `MAPA_VIVO`; a gaveta lateral do
+Códex; o modal de tela inteira do Diário, da Bolsa e do Mercado.
+
+### 3 · Os estados e as transições (com a saída)
+
+| o quê | duração e curva | com `prefers-reduced-motion` |
+|---|---|---|
+| pegar o objeto pousado | 140 ms, −6 px, sombra `pousado` → `erguido` (F1) | só a sombra |
+| abrir | 320 ms, `cubic-bezier(.2,.8,.2,1)`: do lugar do objeto ao centro, de 96 px ao corpo inteiro; o véu vai a 58 % em 220 ms | opacidade em 120 ms |
+| as fitas saem | aos 200 ms, 120 ms cada, 30 ms de escada | aparecem |
+| trocar de fita | a folha vira em 260 ms (a página da direita roda sobre a lombada); a fita nova sobe 12 px em 140 ms | troca seca |
+| escolher uma casa | 120 ms, −2 px e o aro | só o aro |
+| a folha do detalhe (375) | sobe de baixo em 260 ms | opacidade em 120 ms |
+| comprar / vender | a peça voa da banca à bolsa (ou volta) em 280 ms; as moedas contam em 400 ms | troca seca do número |
+| a carta muda de luz | 900 ms na camada (a mesma de `LUZ_DA_MESA`) | troca seca |
+| pousar (fechar) | 220 ms, o caminho de volta | opacidade em 120 ms |
+
+Fechar: **Esc**, o disco «Pousar», tocar no feltro à volta, e no celular a aba «A MESA» ou o gesto de
+voltar. O foco fica preso no objeto e volta ao objeto pousado (ou à porta, no celular). Abrir um objeto
+com outro aberto troca-os sem passar pela mesa (180 ms). Nada disto segura o turno: tocar pula. O que não
+pode agora é contorno `tinta` 1 px sem chão, com a razão em `perigoNaPagina` itálico 14 dentro do botão.
+
+### 4 · As telas, com medidas (para construir sem abrir o Figma)
+
+**O livro (1440).** Capa em `x 148, y 80`. Página esquerda: conteúdo em `x 202`, largura 478; página
+direita: `x 760`, largura 478; primeira linha em `y 128`. A esquerda é sempre o **índice** (a lista), a
+direita é sempre o **escolhido**. Linha escolhida: chão `ossoLume`, borda `tinta` 2 (nunca cor só).
+
+- **As buscas.** Esquerda: «AS BUSCAS · 1 EM CURSO» · a busca (76 de altura, nome em Spectral Medium 16,
+  o passo de agora em itálico `brasaNaPagina`) · «NA ESTANTE» com o lugar vago do lacre (40) · «A MÃO POR
+  TRÁS»: nicho 120 × 150 com a silhueta, «ALGUÉM» em Cinzel 22, a frase · «A fraqueza», trancada
+  (tracejado, cadeado, *«As pistas certas a abrem.»*). Direita: título Cinzel 22 · a prosa 18/30 · «O
+  PRÓXIMO PASSO» (folha `ossoLume` de 84 com fio de brasa de 4) · «AS ETAPAS · 0 DE 4» (a de agora com a
+  estrela de brasa; as outras *«Ainda não se sabe»* com círculo tracejado) · «AS PISTAS · 1 DE 3» e «A
+  RECOMPENSA»: quatro cartas de 104 × 140 (a virada em `ossoLume`; de costas em `couro` com o losango de
+  latão e o que é em itálico: «uma pessoa», «um lugar», «no fim»).
+- **Gente.** Esquerda: «Procurar» (campo de 44 com a lupa) · linhas de 96 com retrato 76, nome Cinzel 13,
+  ofício e lugar, e a última lembrança em itálico. Direita: retrato 150 × 190, nome Cinzel 22, onde está
+  agora, «O QUE VOCÊ SABE DELE», «O QUE ELE LEMBRA DE VOCÊ» (Spectral itálico 17), «ONDE VOCÊS SE
+  CRUZARAM», e o elo «Mostrar na carta».
+- **Bestiário.** Esquerda: grelha 4 × 4 de cartas 104 × 140 (passo 124 × 156); vista = pintura 94 e nome;
+  não vista = carta de costas. Direita: pintura 190, nome, «vista 3 vezes · 2 abatidas», «O QUE VOCÊ JÁ
+  SABE», o que ainda não se sabe com cadeado e o gesto que abre, «ONDE VIVE», «TROFÉUS» (a casa de item).
+- **Feitos.** Esquerda: seis famílias (as de `conquistas.js`: Lâmina, Estrada, Coração, Ouro, Coroa,
+  Lenda), seis lugares de 56 por linha (passo 76 × 104); lacrado = lacre com o glifo da família; por
+  lacrar = círculo tracejado; Lenda = «?». Direita: lacre de 96, nome, quando e onde, o que deu, «TÍTULO
+  EM USO» (opções de 150 × 44), «O PRÓXIMO DESTA FAMÍLIA» com a conta («1 de 10»).
+- **A crônica.** Esquerda: os capítulos (linhas de 64, com «escrita» / «por escrever») · **«Gerar
+  crônica»** (52 de altura, a pena, borda `tinta`) com o preço dito: *«Leva cerca de um minuto, e você
+  pode fechar o livro enquanto isso.»* · «Guardar em arquivo». Direita: a prosa 18/30 e o número da folha.
+
+**A bolsa (1440).** Três colunas dentro do couro. **x 184, 289 de largura:** a carta do herói (`294:8200`
+a 0,85) · classe e nível (Spectral 13) · PV (10 contas de 10 em `lacreLume`), PM (`violeta`), XP (trilho
+154 × 6) com o número em Cinzel 13 · a marca da subclasse em itálico. **x 520, 340:** «NO CORPO · CA 12»:
+sete casas em volta do corpo (Elmo ao centro em cima; Amuleto, Armadura, Botas à esquerda; Arma, Escudo,
+Anel à direita; passo 100; rótulo Cinzel 12 por baixo) · «ATRIBUTOS»: seis peças de osso de 44 com o
+valor em Cinzel 16 e o nome ao lado, 3 × 2 (passo 116 × 54) · «TALENTOS E HABILIDADES»: linhas de 44 em
+`couroAlto`, glifo, nome, custo à direita. **x 900, 352:** «NA MOCHILA · 9 DE 20»: 5 × 4 casas de 64
+(passo 72) · a ficha do item escolhido (`ossoLume`, 352 × 180: nome, família e raridade, o efeito, o
+verbo principal em âmbar e «Largar» com *«não tem volta»*) · «MANTIMENTOS» com as quatro pilhas do F1.
+**A 375:** retrato 120 × 160 e os números; o corpo numa fila de sete casas de 44 (o nome do encaixe vai
+na ficha ao tocar); a mochila 5 × n de 64 (passo 68); a ficha sobe de baixo. Os mantimentos já estão na
+faixa de cima da mesa.
+
+**A banca (1440).** **x 184, 220:** o mercador como carta (retrato 220 × 260, nome Cinzel 13, ofício e
+lugar, a gaveta em moedas) · «Pechinchar» com o preço dito · «OUTRAS BANCAS»: linhas de 44 com retrato —
+trocar de banca é trocar de carta. **x 450, 440:** «SOBRE O PANO · 8 PEÇAS» e «NA SUA BOLSA ◉ 15»; 2 × 4
+peças (passo 224 × 166): casa de 96, e ao lado o nome (Spectral 13), o preço (moeda de 14 + Cinzel 16),
+**o glifo ✓/✕ + «você paga» / «faltam 7»** e o que acontece («vai para a mochila», «CA cai de 12 para
+11»). **x 916, 344:** o veredito em `ossoLume`: a peça · «AGORA NO CORPO» · «SE VOCÊ COMPRAR» (= / ▲ / ▼
+como glifo, mais a palavra) · «O PREÇO» · o botão; por baixo, «VOCÊ VENDE AQUI» com o que ela paga e
+«Vender · recebe 9». **A 375:** linhas de 84 e o veredito a subir de baixo (252).
+
+**A carta (1440).** O mapa em `x 176, y 108`, `720 × 640`; a legenda por baixo (y 764 e 794). **x 924,
+340:** a região em Cinzel 22, dia e hora em itálico, «Você está em…», e o cartão do lugar (`ossoLume`,
+384): disco 44, nome Cinzel 18, o que é, por que importa em `brasaNaPagina`, «O PREÇO» com a régua de
+três caveiras (cheias em `perigoNaPagina`, vazias em contorno) **e a palavra** («perigo baixo»), ida,
+volta e distância, **«Partir para Baixo Escura»** em âmbar e, colado por baixo, *«4 h de estrada · chega
+às 12:10 · sem noite ao relento»*. **A 375:** janela de 343 × 400 que arrasta, centrada no herói; o
+cartão sobe de baixo (328).
+
+**Estados vazios** (`331:16340`): dizem o que falta e o gesto que preenche — *«Você ainda não conhece
+ninguém pelo nome. Pergunte o nome a quem cruzar o seu caminho…»* · *«Nenhuma fera vista. A primeira que
+você enfrentar ou observar vira a primeira carta.»* · *«A mochila está vazia… Há 20 lugares.»* · *«Sem
+moedas hoje. Você ainda pode olhar, pechinchar e vender…»*.
+
+### 5 · O «superior», por medida, estudo e par
+
+Formas de painel 3 → **1** · portas para o que hoje são Diário e Códex 2 → **1 livro, 5 fitas** · glifos
+de item 1 → **42** · «pode pagar» por cor → glifo + palavra + cor (WCAG 2.2, 1.4.1 *Use of Color*) ·
+contraste mínimo de texto no lote **5,09** (a `tinta` na borda da carta à noite; WCAG 1.4.3 pede 4,5) ·
+menor letra 12 px (Cinzel) e 13 px (Spectral) · menor alvo 44 × 44 (Apple HIG; acima dos 24 px do WCAG
+2.5.8) · nomes sobrepostos na faixa 75 px → **0** · toques: Gente 2, comprar 3, partir 3 · âmbar por
+tela: 0 no livro, 1 na bolsa, 1 na banca, 1 na carta. O par antes/depois está ao lado de cada tela.
+**Não provado:** a experiência jogada (o depois não existe em código) e a cobertura dos glifos no acervo.
+
+### 6 · As armadilhas do Figma que F5 pagou
+
+1. **Os ajudantes do F5 moram em `327:13368`** (texto escondido em `326:13364`); carregam-se depois dos do
+   F3 (`293:8126`), com o construtor de função assíncrona.
+2. **Um componente de glifo a 32 px** evita reescalar a instância aninhada: a casa troca o glifo com
+   `swapComponent` e o tamanho fica.
+3. **Trocar o desenho de um componente** (a tocha saiu parecida com um peão) é remover o vetor e pôr
+   outro: as instâncias seguem sozinhas.
+4. **A camada de luz criada por cima** tem de ser levada para dentro do desenho (`insertChild` logo acima
+   das aguadas), senão escurece a tinta junto com o papel.
+
+### 7 · O que ficou por fazer do F5, dito
+
+- Gente, Bestiário, Feitos e A crônica **a 375**, e os quatro objetos **a 1280 × 720** (só a regra).
+- A carta inteira ao entardecer e à noite (há as três amostras a 60 %), e a carta dentro da masmorra.
+- A **pintura pequena para os itens raros** (a planta pede; ficou a moldura). Zero créditos gastos.
+- Livro, bolsa, pano e carta estão desenhados nos quadros, **não são componentes**; a régua de caveiras
+  e o lacre dos feitos foram redesenhados no quadro em vez de instanciar os do F1/F2. Code Connect por
+  fazer. Cores de SVG, gradientes e aguadas estão literais (são as das tabelas acima).
+- **A bancada e a forja** saíram da bolsa e não ganharam porta neste lote.
+- No celular, as casas do corpo não têm rótulo à vista (só na ficha).
+- Os textos de exemplo (nomes de talentos, o que se sabe do rato, os títulos) são de exemplo: o
+  `oficial` usa o que as tabelas têm. «A fraqueza trancada» diz só o que o sistema já sabe.
+- O bloco de medidas é um só para o lote (`331:16394`), não um por tela.
+
+### 8 · A proposta ambiciosa — a carta se desenha
+
+A carta começa quase em branco e **é a viagem que a desenha**: cada estrada andada passa de tracejado a
+tinta cheia, cada lugar visitado ganha o seu glifo, e o Mestre escreve na margem, na letra dele, uma
+linha do que aconteceu ali (a primeira frase que o sistema já guarda daquela cena — sem chamada nova à
+IA). Ao fim de vinte horas a carta de cada jogador é o retrato da campanha dele, e é ela que o cartão da
+sessão (F6) mostra ao lado da mesa que lembra (F1 §11). Custa um campo de save novo e aditivo (as notas
+por lugar) e a régua de `FAIXA_DO_RUMO` aplicada às notas de margem.
