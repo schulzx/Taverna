@@ -141,7 +141,7 @@ const marcaTempo = (a, agora) => {
 
 /* ---------------- anotar ----------------
    O turno: a frase do jogador e onde a cena estava. */
-export function anotarTurno(registro, { frase = "", agora = 0, lugar = "", cena = "" } = {}) {
+export function anotarAJogada(registro, { frase = "", agora = 0, lugar = "", cena = "" } = {}) {
   return comAtual(registro, (a0) => {
     const a = marcaTempo(a0, agora);
     const l = texto(lugar, 80);
@@ -303,12 +303,14 @@ export function osFatosDaUltimaVez(resumo) {
   const r = obj(resumo);
   if (!r) return [];
   const f = [];
-  if (r.queda === "levada") f.push("Você foi levado vivo, e acordou em ferros.");
+  const a = r.heroi && r.heroi.sexo === "mulher" ? "a" : "o";
+  if (r.queda === "levada") f.push(`Você foi levad${a} viv${a}, e acordou em ferros.`);
   else if (r.queda === "caiu") f.push("Você caiu, e a história parou ali.");
   if (r.buscas && r.buscas.length) f.push(`Você fechou «${r.buscas[0]}»${r.buscas.length > 1 ? ` e mais ${plural(r.buscas.length - 1, "busca", "buscas")}` : ""}.`);
   if (r.maior && r.maior.natural) f.push(`O maior dado da noite: ${r.maior.natural}${r.maior.pericia ? ` em ${r.maior.pericia}` : ""}${r.maior.natural === 20 ? " — um vinte natural" : ""}.`);
   if (r.caidosTotal) f.push(`${plural(r.caidosTotal, "inimigo caiu", "inimigos caíram")} pela sua mão.`);
   if (r.nivel) f.push(`Você chegou ao nível ${r.nivel.para}.`);
+  else if (r.xp > 0) f.push(`Você ganhou ${r.xp} de experiência.`);
   if (r.lugar) f.push(`Você parou em ${r.lugar}.`);
   return f.slice(0, FATOS_DA_ULTIMA_VEZ.teto);
 }

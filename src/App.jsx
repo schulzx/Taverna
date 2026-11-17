@@ -302,7 +302,7 @@ import { garantirCativeiro, aplicarSaida } from "./cativeiro.js";
 import { oSocorro, aplicarSocorro, passarHorasNoGrupo } from "./socorro.js";
 import { naBandeja, lancamento, lancamentoDoTeste, lancamentoDoOraculo, lancamentoDoDadoDeVida, lancamentoDaSerie, lancamentoDoAtaque } from "./motor/a-bandeja.js";
 /* V10 (16/11): o registro da sessão — o que aconteceu desde que a mesa abriu (cartão e «Da última vez…») */
-import { abrirSessao, anotarTurno, anotarLance, anotarLuta, anotarFio, oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, linhaDaUltimaVez } from "./registro-da-sessao.js";
+import { abrirSessao, anotarAJogada, anotarLance, anotarLuta, anotarFio, oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, linhaDaUltimaVez } from "./registro-da-sessao.js";
 import { fichaDoVilao } from "./plano-do-vilao.js";
 import { oRelogioDoMundo, oSinoDoTurno, cenaDoChao as cenaDoChaoDe, oMundoAndaNoTurno } from "./motor/antes-do-mestre.js";
 import { osMinutosAndam, oCorpoNoRelogio, comAExaustao, oPassoNaCidade, aCidadeSobOsPes, aEscalaDoTempo, aChanceDoClimaAoPassar, CHANCES_DA_NOITE } from "./motor/tempo-do-turno.js";
@@ -9067,19 +9067,21 @@ export default function Taverna() {
        o golpe final, o espólio e o "acabou" eram as únicas linhas da luta
        que ficavam de fora da dobra, porque chegavam com `combateRef` já
        vazio. */
-    try { acompanharALuta(); } catch (e) { calou("acompanhar a luta", e); }
-    try {
-      novas = carimbarALuta(novas, combateRef.current || fechoDaLutaRef.current); /* T2-A (28/10): a regra mora em src/motor/carimbo-da-luta.js */
-    } catch (e) { calou("carimbar naLuta na mensagem", e); }
+    /* V10: a frase do jogador entra no registro da sessão (antes do carimbo, que
+       tem de ficar colado à retenção do portão — teste-a1-relato) */
     try {
       for (const m of Array.isArray(novas) ? novas : []) {
         if (!m || m.autor !== "jogador" || typeof m.texto !== "string" || !m.texto.trim()) continue;
         ultimaFraseDoJogadorRef.current = m.texto;
         const e = estampaDaSessaoRef.current || {};
-        noRegistro((r) => anotarTurno(r, { frase: m.texto, agora: Date.now(), lugar: e.lugar || "", cena: e.cena || "" }));
+        noRegistro((r) => anotarAJogada(r, { frase: m.texto, agora: Date.now(), lugar: e.lugar || "", cena: e.cena || "" }));
         guardarOFio();
       }
     } catch (e) { calou("V10 · a frase no registro", e); }
+    try { acompanharALuta(); } catch (e) { calou("acompanhar a luta", e); }
+    try {
+      novas = carimbarALuta(novas, combateRef.current || fechoDaLutaRef.current); /* T2-A (28/10): a regra mora em src/motor/carimbo-da-luta.js */
+    } catch (e) { calou("carimbar naLuta na mensagem", e); }
     if (seguraRef.current) { seguraRef.current = [...seguraRef.current, ...novas]; return; }
     mensagensRef.current = [...mensagensRef.current, ...novas];
     setMensagens(mensagensRef.current);

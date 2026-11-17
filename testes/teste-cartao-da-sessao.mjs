@@ -6,10 +6,10 @@
    determinismo (mesmo resumo ⇒ mesmo cartão).
    ============================================================ */
 import {
-  CARTAO_DA_SESSAO, VARIACOES_DO_CARTAO, TIRA_DA_QUEDA, oCartaoDaSessao, osNumerosDaNoite, vilaoDoCartao,
+  CARTAO_DA_SESSAO, NUMEROS_DE_RESERVA, VARIACOES_DO_CARTAO, TIRA_DA_QUEDA, oCartaoDaSessao, osNumerosDaNoite, vilaoDoCartao,
   sementeDoCartao, duracaoDoCartao, pluralDaCriatura, nomeDoArquivoDoCartao, quebrarEmLinhas,
 } from "../src/cartao-da-sessao.js";
-import { abrirSessao, anotarTurno, anotarLance, anotarLuta, oResumoDaSessao } from "../src/registro-da-sessao.js";
+import { abrirSessao, anotarAJogada, anotarLance, anotarLuta, oResumoDaSessao } from "../src/registro-da-sessao.js";
 import { lancamentoDoTeste } from "../src/motor/a-bandeja.js";
 
 let ok = 0, mal = 0;
@@ -26,7 +26,7 @@ function sessao(passos) {
   for (const p of passos) r = p(r);
   return r;
 }
-const turno = (frase, min) => (r) => anotarTurno(r, { frase, agora: 1e12 + min * 60000, lugar: "Colina do Enforcado", cena: "colina" });
+const turno = (frase, min) => (r) => anotarAJogada(r, { frase, agora: 1e12 + min * 60000, lugar: "Colina do Enforcado", cena: "colina" });
 const dado = (valor, dc, rotulo, frase) => (r) => anotarLance(r, lancamentoDoTeste({ valor, mod: 3, dc, rotulo }), { frase });
 
 sec("a tabela");
@@ -51,11 +51,12 @@ const vitoria = sessao([turno("Entro na cripta.", 0), dado(14, 12, "Atletismo", 
 const estadoV = { ...estado0, personagem: { ...heroi, moedas: 40 }, missoes: [{ id: 1, titulo: "A coleira", status: "concluida" }] };
 const cVit = oCartaoDaSessao(oResumoDaSessao(vitoria.atual, estadoV), { semente: "mundo|1" });
 t("busca fechada ou luta vencida: «UMA NOITE DE VITÓRIA»", cVit.variacao === "vitoria" && cVit.titulo === "UMA NOITE DE VITÓRIA");
-t("os números: caídos pelo tipo (no plural), a busca, as moedas com sinal", cVit.numeros.map((n) => `${n.mostra} ${n.rotulo}`).join("|") === "3 ratos gigantes|1 busca fechada|+30 moedas ganhas", cVit.numeros.map((n) => `${n.mostra} ${n.rotulo}`).join("|"));
+t("os números: caídos pelo tipo (no plural), a busca, as moedas com sinal", cVit.numeros.map((n) => `${n.mostra} ${n.rotulo}`).join("|") === "3 ratos gigantes|1 busca fechada|+30 moedas no bolso", cVit.numeros.map((n) => `${n.mostra} ${n.rotulo}`).join("|"));
 
 const queda = sessao([turno("Corro para a porta.", 0), dado(1, 14, "Acrobacia", "Corro para a porta.")]);
 const cQueda = oCartaoDaSessao(oResumoDaSessao(queda.atual, { ...estado0, cativeiro: { dias: 2 } }), { semente: "mundo|1" });
-t("a queda manda sobre tudo: «UMA NOITE EM FERROS», à noite, com a tira", cQueda.variacao === "ferros" && cQueda.noite && cQueda.tira === TIRA_DA_QUEDA.levada);
+t("a queda manda sobre tudo: «UMA NOITE EM FERROS», à noite, com a tira", cQueda.variacao === "ferros" && cQueda.noite && cQueda.tira === TIRA_DA_QUEDA.levada.mulher);
+t("…no gênero do herói («LEVADO VIVO» para ele)", oCartaoDaSessao(oResumoDaSessao(queda.atual, { ...estado0, personagem: { ...heroi, genero: "homem" }, cativeiro: { dias: 2 } }), {}).tira === "LEVADO VIVO");
 t("…e conta os dias em ferros", cQueda.numeros.some((n) => n.peca === "cadeado" && n.n === 2));
 t("o 1 natural entra (d20 rachado)", cQueda.numeros[0].peca === "um" && cQueda.numeros[0].rotulo === "um natural");
 
@@ -65,6 +66,11 @@ t("sem nada disso: «UMA NOITE À MESA»", cComum.variacao === "comum" && cComum
 
 sec("o campo que falta: nunca um buraco, nunca texto inventado");
 t("menos de duas linhas: entra «N turnos jogados»", cComum.numeros.length === 1 && cComum.numeros[0].rotulo === "turnos jogados" && cComum.numeros[0].n === 2);
+{
+  const magra = sessao([turno("Olho a porta.", 0), dado(12, 10, "Percepção", "Olho a porta."), turno("Entro.", 4)]);
+  const cM = oCartaoDaSessao(oResumoDaSessao(magra.atual, { ...estado0, personagem: { ...heroi, xp: 17 } }), {});
+  t("a noite magra completa até " + NUMEROS_DE_RESERVA.ate + " linhas com o que é verdade (dados, XP, turnos) — sem buraco", cM.numeros.map((n) => n.rotulo).join("|") === "dados rolados|de experiência|turnos jogados" || cM.numeros.map((n) => n.rotulo).join("|") === "dado rolado|de experiência|turnos jogados", cM.numeros.map((n) => n.rotulo).join("|"));
+}
 t("sem dado: a última frase escrita, e a origem diz que foi a última jogada", cComum.frase === "Pergunto pelo ferreiro." && cComum.origem === "a última jogada da noite");
 t("sem semente: o pé fica com sessão e duração", cComum.pe === "sessão 1 · 20 min");
 const vazio = oCartaoDaSessao(null, null);

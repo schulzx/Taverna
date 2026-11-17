@@ -231,7 +231,7 @@ function DaUltimaVez({ d, salvoEm, aoOuvir }) {
           {d.fio.passo ? <div style={{ fontFamily: "'Spectral', Georgia, serif", fontWeight: 500, fontSize: 16, lineHeight: "24px", color: T.tintaDoPergaminho }}>{d.fio.passo}</div> : null}
         </>
       ) : null}
-      {d.lugar ? <div style={{ ...letraDaMesa("notaDoMestre"), color: T.tintaDoPergaminhoDim, marginTop: 14 }}>{`Você está em ${d.lugar}.`}</div> : null}
+      {d.lugar && !d.fatos.some((f) => f.includes(d.lugar)) ? <div style={{ ...letraDaMesa("notaDoMestre"), color: T.tintaDoPergaminhoDim, marginTop: 14 }}>{`Você está em ${d.lugar}.`}</div> : null}
       <div style={{ height: 1, background: alfa(T.tintaDoPergaminho, 0.25), margin: "18px 0 10px" }} />
       <Vinculo sobrePapel onClick={aoOuvir}>Ouvir o Mestre contar</Vinculo>
     </>

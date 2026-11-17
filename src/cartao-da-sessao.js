@@ -54,9 +54,11 @@ export const CARTAO_DA_SESSAO = Object.freeze({
 
 /* A TELA «LEVANTAR DA MESA» (F6 §3): o véu, o cartão a 52 % na mesa (562 de
    largura) e a 30 % no celular (324), a coluna de 480 à direita, o papel do
-   gancho rodado −1°. */
+   gancho rodado −1°. O véu no celular é quase opaco: a prova a 375 (16/11)
+   mostrou a prosa da página a ler-se por baixo dos 0,88 e a brigar com o
+   título — a armadilha 1 do F6 («o véu não apaga a página»). */
 export const LEVANTAR_DA_MESA = Object.freeze({
-  veu: 0.88,
+  veu: Object.freeze({ mesa: 0.88, telefone: 0.97 }),
   cartao: Object.freeze({ mesa: 562, telefone: 324 }),
   coluna: 480,
   vao: 88,
@@ -74,7 +76,10 @@ export const VARIACOES_DO_CARTAO = Object.freeze([
 ]);
 
 /* a tira da queda, sobre a carta */
-export const TIRA_DA_QUEDA = Object.freeze({ levada: "LEVADA VIVA", caiu: "CAIU" });
+export const TIRA_DA_QUEDA = Object.freeze({
+  levada: Object.freeze({ mulher: "LEVADA VIVA", homem: "LEVADO VIVO" }),
+  caiu: Object.freeze({ mulher: "CAIU", homem: "CAIU" }),
+});
 
 /* ---------------- utilidades ---------------- */
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
@@ -128,8 +133,14 @@ export function vilaoDoCartao(vilao) {
 }
 
 /* ---------------- os números da noite ----------------
-   Até quatro linhas, nesta ordem de preferência; linha com zero não entra;
-   com menos de duas, entra «N turnos jogados». `peca`: a forma da peça. */
+   Até quatro linhas, nesta ordem de preferência; linha com zero não entra.
+   Com menos de duas, o F6 punha só «N turnos jogados» — e a primeira prova
+   jogada (16/11, V10-cartao-real.png) mostrou a coluna da direita vazia
+   numa noite comum, com uma linha só: um buraco. Agora a noite magra
+   completa até TRES linhas com o que o registro também sabe, nesta ordem:
+   os dados rolados, o XP ganho e os turnos (NUMEROS_DE_RESERVA). Tudo
+   verdade do estado; nada inventado. `peca`: a forma da peça. */
+export const NUMEROS_DE_RESERVA = Object.freeze({ ate: 3 });
 export function osNumerosDaNoite(r) {
   const out = [];
   const d = r.dados || {};
@@ -138,10 +149,16 @@ export function osNumerosDaNoite(r) {
   const c = arr(r.caidos)[0];
   if (c && c.n > 0) out.push({ peca: "caveira", n: c.n, rotulo: pluralDaCriatura(c.tipo, c.n) });
   if (r.buscasFechadas > 0) out.push({ peca: "lacre", n: r.buscasFechadas, rotulo: r.buscasFechadas === 1 ? "busca fechada" : "buscas fechadas" });
-  if (r.moedas) out.push({ peca: "moedas", n: r.moedas, sinal: true, rotulo: r.moedas > 0 ? "moedas ganhas" : "moedas perdidas" });
+  if (r.moedas) out.push({ peca: "moedas", n: r.moedas, sinal: true, rotulo: r.moedas > 0 ? "moedas no bolso" : "moedas a menos" });
   if (r.diasEmFerros > 0) out.push({ peca: "cadeado", n: r.diasEmFerros, rotulo: r.diasEmFerros === 1 ? "dia em ferros" : "dias em ferros" });
   const lista = out.slice(0, CARTAO_DA_SESSAO.numeros.linhas);
-  if (lista.length < 2 && r.turnos > 0) lista.push({ peca: "vela", n: r.turnos, rotulo: r.turnos === 1 ? "turno jogado" : "turnos jogados" });
+  if (lista.length < 2) {
+    const reserva = [];
+    if (d.rolados > 0) reserva.push({ peca: "dado", n: d.rolados, rotulo: d.rolados === 1 ? "dado rolado" : "dados rolados" });
+    if (r.xp > 0) reserva.push({ peca: "xp", n: r.xp, rotulo: "de experiência" });
+    if (r.turnos > 0) reserva.push({ peca: "vela", n: r.turnos, rotulo: r.turnos === 1 ? "turno jogado" : "turnos jogados" });
+    for (const x of reserva) if (lista.length < NUMEROS_DE_RESERVA.ate) lista.push(x);
+  }
   return lista.map((x) => Object.freeze({ ...x, mostra: x.sinal && x.n > 0 ? `+${x.n}` : x.sinal ? `−${Math.abs(x.n)}` : String(x.n) }));
 }
 
@@ -151,7 +168,7 @@ export function osNumerosDaNoite(r) {
 export function oCartaoDaSessao(resumo, opcoes) {
   const r0 = obj(resumo) || {};
   const o = obj(opcoes) || {};
-  const r = { dados: { rolados: 0, vintes: 0, uns: 0, vinteQuePassou: 0 }, caidos: [], buscasFechadas: 0, lutasVencidas: 0, moedas: 0, diasEmFerros: 0, turnos: 0, ...r0 };
+  const r = { dados: { rolados: 0, vintes: 0, uns: 0, vinteQuePassou: 0 }, caidos: [], buscasFechadas: 0, lutasVencidas: 0, moedas: 0, xp: 0, diasEmFerros: 0, turnos: 0, ...r0 };
   r.dados = { rolados: 0, vintes: 0, uns: 0, vinteQuePassou: 0, ...(obj(r0.dados) || {}) };
   const variacao = VARIACOES_DO_CARTAO.find((v) => v.vale(r));
   const noite = !!r.queda;
@@ -172,9 +189,9 @@ export function oCartaoDaSessao(resumo, opcoes) {
     cena: texto(r.cena, 40),
     lugar: texto(r.lugar, 60).toUpperCase(),
     heroi: Object.freeze({ nome: texto(h.nome, 60), raca: texto(h.raca, 30), classe: texto(h.classe, 30), sexo: h.sexo === "mulher" ? "mulher" : "homem", semente: h.semente || h.nome || "", nivel: Math.max(1, inteiro(h.nivel, 1)) }),
-    tira: r.queda ? TIRA_DA_QUEDA[r.queda] || "" : "",
+    tira: r.queda && TIRA_DA_QUEDA[r.queda] ? TIRA_DA_QUEDA[r.queda][h.sexo === "mulher" ? "mulher" : "homem"] : "",
     vilao: vilaoDoCartao(o.vilao),
-    vinte: vinteGrande ? Object.freeze({ linha: numeros.filter((x) => x.peca !== "vinte" && x.peca !== "vela").slice(0, 2).map((x) => `${x.mostra} ${x.rotulo}`).concat(r.dados.vintes > 1 ? [`${r.dados.vintes} vintes`] : []).slice(0, 2).join(" · ") || "um vinte natural" }) : null,
+    vinte: vinteGrande ? Object.freeze({ linha: numeros.filter((x) => !["vinte", "vela", "dado", "xp"].includes(x.peca)).slice(0, 2).map((x) => `${x.mostra} ${x.rotulo}`).concat(r.dados.vintes > 1 ? [`${r.dados.vintes} vintes`] : []).slice(0, 2).join(" · ") || "um vinte natural" }) : null,
     numeros: vinteGrande ? [] : numeros,
     frase, origem,
     pe,

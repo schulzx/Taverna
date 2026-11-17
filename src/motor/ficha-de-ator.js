@@ -1110,6 +1110,8 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     .replace(/ \(poder \d+(?:, ([^)]*))?\)/g, (_, t) => (t ? ` (${t.replace(/\bcom você/, `com ${c.H}`)})` : ""))
     .replace(/Apreço por você: (\d+)\/100\./g, (_, n) => `${maiuscula(aprecoFalado(n, c.H))}.`))) } ],
   "ENTRETANTO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m) => ponto(maiuscula(m[1])) } ],
+  /* V10 (16/11): a linha da volta (registro-da-sessao.js, linhaDaUltimaVez) — fato do passado, com o herói pelo nome */
+  "DA ÚLTIMA VEZ": [ { de: /^(.+)$/, vai: "aconteceu", como: (m, c) => ponto(m[1].replace(/^O jogador volta à mesa\. /, "").replace(/(^|[^\p{L}])[Vv]ocê(?![\p{L}])/gu, (_, a) => a + c.H)) } ],
   "O QUE VOLTA": [
     { de: /^(".+?") \((.+?)\) volta agora: (.+)$/, vai: "diz", como: (m) => ({ quem: m[2], o: `cumpre agora o que disse — ${m[1]}` }) },
     { de: /^(".+?") volta agora: (.+)$/, vai: "aconteceu", como: (m) => `${m[1]}: o objeto mostra agora o que é.` },

@@ -16,6 +16,7 @@
      ela aceita arquivos. Nenhuma rede, nenhuma IA.
    ============================================================ */
 import React from "react";
+import { createPortal } from "react-dom";
 import { T, SOMBRA_DA_MESA, alfa } from "./estilo.js";
 import { letraDaMesa } from "./mesa-do-mestre.js";
 import { retratoDe } from "./retratos.js";
@@ -42,7 +43,7 @@ export async function prepararOCartao(cartao) {
   } catch { /* sem fontes: pinta com o que houver */ }
   const carregar = (src) => new Promise((ok) => {
     if (!src) { ok(null); return; }
-    const img = new Image();
+    const img = new window.Image();
     img.decoding = "async";
     img.onload = () => ok(img);
     img.onerror = () => ok(null);
@@ -95,6 +96,7 @@ function peca(ctx, tipo, cx, cy, d) {
   const r = d / 2;
   if (tipo === "vinte") { ctx.save(); ctx.shadowColor = alfa(K.halo, 0.8); ctx.shadowBlur = 24; d20(ctx, cx, cy, r * 0.92, { chao: T.amberSoft, aro: K.latao, numero: 20, corDoNumero: K.naPagina }); ctx.restore(); return; }
   if (tipo === "um") { d20(ctx, cx, cy, r * 0.92, { chao: T.osso, aro: T.ossoSombra, numero: 1, corDoNumero: K.naPagina, rachado: true }); return; }
+  if (tipo === "dado") { d20(ctx, cx, cy, r * 0.92, { chao: T.osso, aro: T.ossoSombra, numero: "", corDoNumero: K.naPagina }); return; }
   ctx.save();
   if (tipo === "lacre") {
     ctx.beginPath(); ctx.arc(cx, cy, r * 0.92, 0, Math.PI * 2); ctx.fillStyle = K.lacre; ctx.fill();
@@ -110,6 +112,9 @@ function peca(ctx, tipo, cx, cy, d) {
     if (tipo === "caveira") {
       ctx.beginPath(); ctx.arc(cx, cy - r * 0.08, r * 0.4, Math.PI, 0); ctx.lineTo(cx + r * 0.32, cy + r * 0.3); ctx.lineTo(cx - r * 0.32, cy + r * 0.3); ctx.closePath(); ctx.fill();
       ctx.fillStyle = T.osso; ctx.beginPath(); ctx.arc(cx - r * 0.16, cy - r * 0.02, r * 0.1, 0, Math.PI * 2); ctx.arc(cx + r * 0.16, cy - r * 0.02, r * 0.1, 0, Math.PI * 2); ctx.fill();
+    } else if (tipo === "xp") {
+      ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 4; const rr = i % 2 ? r * 0.18 : r * 0.5; const px = cx + rr * Math.cos(a), py = cy + rr * Math.sin(a); if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+      ctx.closePath(); ctx.fill();
     } else if (tipo === "cadeado") {
       ctx.lineWidth = r * 0.12; ctx.beginPath(); ctx.arc(cx, cy - r * 0.1, r * 0.25, Math.PI, 0); ctx.stroke();
       ctx.fillRect(cx - r * 0.38, cy - r * 0.1, r * 0.76, r * 0.5);
@@ -133,7 +138,7 @@ export function desenharOCartao(canvas, cartao, imagens) {
   g.addColorStop(0, alfa(K.halo, C.halo.alfa[vez])); g.addColorStop(1, alfa(K.halo, 0));
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.hypot(W, H) / 2);
-  g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(0.6, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,0,${C.penumbra[vez]})`);
+  g.addColorStop(0, alfa(K.veu, 0)); g.addColorStop(0.6, alfa(K.veu, 0)); g.addColorStop(1, alfa(K.veu, C.penumbra[vez]));
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   ctx.lineWidth = C.borda.couro; ctx.strokeStyle = K.couro; ctx.strokeRect(C.borda.couro / 2, C.borda.couro / 2, W - C.borda.couro, H - C.borda.couro);
   ctx.lineWidth = C.borda.fio; ctx.strokeStyle = K.latao; ctx.strokeRect(C.borda.fioEm, C.borda.fioEm, W - 2 * C.borda.fioEm, H - 2 * C.borda.fioEm);
@@ -167,16 +172,16 @@ export function desenharOCartao(canvas, cartao, imagens) {
       ctx.beginPath(); ctx.moveTo(V.x + 30, V.y + V.h - 8); ctx.quadraticCurveTo(V.x + 40, V.y + 200, cx, V.y + 196); ctx.quadraticCurveTo(V.x + V.w - 40, V.y + 200, V.x + V.w - 30, V.y + V.h - 8); ctx.closePath(); ctx.fill();
       ctx.fillStyle = K.latao; ctx.beginPath(); ctx.arc(cx - 22, V.y + 118, 5, 0, Math.PI * 2); ctx.arc(cx + 22, V.y + 118, 5, 0, Math.PI * 2); ctx.fill();
       letra(ctx, { familia: CINZEL, peso: 700, tamanho: V.tamanho, cor: K.ink, alinha: "center" });
-      const nome = cartao.vilao.nome;
-      let t = V.tamanho; while (t > C.pisoDaLetra - 0.5 && ctx.measureText(nome).width > V.w - 24) { t -= 1; ctx.font = `700 ${t}px ${CINZEL}`; }
-      ctx.fillText(nome, cx, V.y + V.h - 56);
+      /* o nome que não cabe numa linha vai a duas, no piso — nunca abaixo dele */
+      const linhasDoNome = quebrarEmLinhas(cartao.vilao.nome, V.w - 28, 2, (x) => ctx.measureText(x).width);
+      linhasDoNome.forEach((l, i) => ctx.fillText(l, cx, V.y + V.h - 56 - (linhasDoNome.length - 1 - i) * (V.tamanho + 6)));
     });
   }
 
   /* a carta do herói: a pintura, o pé de couro, o nome, o lacre do nível */
   const P = C.carta;
   girar(ctx, P.x + P.w / 2, P.y + P.h / 2, P.rodada, () => {
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.55)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
+    ctx.save(); ctx.shadowColor = alfa(K.veu, 0.55); ctx.shadowBlur = 30; ctx.shadowOffsetY = 12;
     retanguloRedondo(ctx, P.x, P.y, P.w, P.h, 14); ctx.fillStyle = K.couro; ctx.fill(); ctx.restore();
     ctx.save(); retanguloRedondo(ctx, P.x, P.y, P.w, P.h, 14); ctx.clip();
     if (imagens.retrato) { ctx.globalAlpha = cartao.tira ? C.tiraDaQueda.pintura : 1; cobrir(ctx, imagens.retrato, P.x, P.y, P.w, P.h); ctx.globalAlpha = 1; }
@@ -214,7 +219,7 @@ export function desenharOCartao(canvas, cartao, imagens) {
     const G = C.etiqueta;
     letra(ctx, { familia: CINZEL, peso: 700, tamanho: G.tamanho, cor: K.naPagina, alinha: "right", espaco: 1 });
     const w = Math.min(ctx.measureText(cartao.lugar).width + G.folga, 1020 - 520);
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 10; ctx.fillStyle = K.osso; ctx.fillRect(G.direita - w, G.y, w, G.h); ctx.restore();
+    ctx.save(); ctx.shadowColor = alfa(K.veu, 0.4); ctx.shadowBlur = 10; ctx.fillStyle = K.osso; ctx.fillRect(G.direita - w, G.y, w, G.h); ctx.restore();
     ctx.fillStyle = K.naPagina; ctx.fillText(cartao.lugar, G.direita - G.folga / 2, G.y + G.h / 2 + 2, w - G.folga);
   }
 
@@ -237,14 +242,14 @@ export function desenharOCartao(canvas, cartao, imagens) {
       letra(ctx, { familia: CINZEL, peso: 700, tamanho: N.numero, cor: K.ink, alinha: "center" });
       ctx.fillText(n.mostra, N.numeroX + 65, cy + 4, 130);
       letra(ctx, { familia: SPECTRAL, peso: 500, tamanho: N.rotulo, cor: K.ink });
-      ctx.fillText(n.rotulo, N.rotuloX - 30, cy + 2, 1020 - N.rotuloX + 30);
+      ctx.fillText(n.rotulo, N.rotuloX, cy + 2, 1020 - N.rotuloX);
     });
   }
 
   /* a melhor frase: a do jogador, num papel */
   const F = C.frase;
   girar(ctx, F.x + F.w / 2, F.y + F.h / 2, F.rodada, () => {
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8; ctx.fillStyle = K.papel; ctx.fillRect(F.x, F.y, F.w, F.h); ctx.restore();
+    ctx.save(); ctx.shadowColor = alfa(K.veu, 0.5); ctx.shadowBlur = 24; ctx.shadowOffsetY = 8; ctx.fillStyle = K.papel; ctx.fillRect(F.x, F.y, F.w, F.h); ctx.restore();
     letra(ctx, { familia: SPECTRAL, italico: true, tamanho: F.tamanho, cor: K.naPagina, base: "top" });
     const linhas = quebrarEmLinhas(cartao.origem ? `«${cartao.frase}»` : cartao.frase, F.w - 80, F.linhas, (s) => ctx.measureText(s).width);
     const ult = linhas.length - 1;
@@ -307,14 +312,14 @@ export function LevantarDaMesa({ cartao, fio = null, aoVoltar, aoSair }) {
     setCanvas(cv);
     try {
       const b = await emBlob(cv);
-      const f = b ? new File([b], cartao.nomeDoArquivo, { type: "image/png" }) : null;
+      const f = b ? new window.File([b], cartao.nomeDoArquivo, { type: "image/png" }) : null;
       setPartilha(!!(f && navigator.canShare && navigator.canShare({ files: [f] })));
     } catch { setPartilha(false); }
   }, [cartao]);
   const guardar = async () => {
     try {
       const b = canvas ? await emBlob(canvas) : null;
-      if (!b) { setAviso("A imagem ainda está a ser feita. Tente de novo num instante."); return; }
+      if (!b) { setAviso("A imagem ainda está sendo feita. Tente de novo em um instante."); return; }
       baixar(b, cartao.nomeDoArquivo); setAviso("");
     } catch { setAviso("A imagem não saiu desta vez. Nada se perdeu."); }
   };
@@ -322,7 +327,7 @@ export function LevantarDaMesa({ cartao, fio = null, aoVoltar, aoSair }) {
     try {
       const b = canvas ? await emBlob(canvas) : null;
       if (!b) return;
-      await navigator.share({ files: [new File([b], cartao.nomeDoArquivo, { type: "image/png" })], title: "Taverna" });
+      await navigator.share({ files: [new window.File([b], cartao.nomeDoArquivo, { type: "image/png" })], title: "Taverna" });
     } catch { /* o jogador fechou a folha: nada a dizer */ }
   };
   React.useEffect(() => {
@@ -358,13 +363,16 @@ export function LevantarDaMesa({ cartao, fio = null, aoVoltar, aoSair }) {
       <span style={{ ...letraDaMesa("notaDoMestre"), color: T.inkMeio }}>Nada se perde: a campanha fica guardada neste aparelho.</span>
     </div>
   );
-  return (
+  /* no portal do body (como o escudo): dentro da árvore da mesa, o contexto de
+     empilhamento de um ancestral deixava a página passar por cima do véu */
+  const tela = (
     <div role="dialog" aria-modal="true" aria-label="Levantar da mesa"
-      style={{ position: "fixed", inset: 0, zIndex: 80, background: alfa(T.veuDaNoite, Lv.veu), overflowY: "auto", display: "flex", justifyContent: "center", alignItems: telefone ? "flex-start" : "center" }}>
+      style={{ position: "fixed", inset: 0, zIndex: 80, background: alfa(T.veuDaNoite, telefone ? Lv.veu.telefone : Lv.veu.mesa), overflowY: "auto", display: "flex", justifyContent: "center", alignItems: telefone ? "flex-start" : "center" }}>
       <div style={{ display: "flex", flexDirection: telefone ? "column" : "row", alignItems: telefone ? "center" : "center", gap: telefone ? 20 : Lv.vao, padding: telefone ? "24px 16px 40px" : "40px", boxSizing: "border-box", width: telefone ? "100%" : "auto" }}>
         <CartaoDaSessao cartao={cartao} largura={telefone ? Lv.cartao.telefone : Lv.cartao.mesa} aoPronto={aoPronto} />
         {coluna}
       </div>
     </div>
   );
+  return typeof document !== "undefined" && document.body ? createPortal(tela, document.body) : tela;
 }

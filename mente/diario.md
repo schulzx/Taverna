@@ -24,6 +24,18 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 16/11 · sem versão — V10, o cartão da sessão
+
+A mão do sistema, de `9e35696`. Bastão do `App.jsx` («V10») tomado às 19:12, devolvido às ~19:50 (fiação do registro, de levantar da mesa e da volta). Sem `VERSAO`, sem push. Commits: `8e12e83` (o registro), `2748f93` (cartão, levantar, «Da última vez…»), e o fecho com as correções da prova jogada.
+
+- **o que mudou para quem joga:** «Sair para o início» virou **«Levantar da mesa»**: a tela mostra o cartão da noite (1080 × 1350, canvas), o gancho («Fica por dizer» + o próximo passo), «Guardar imagem» (PNG `taverna-sessao-N-nome.png`, feito no aparelho) e «Compartilhar» (só onde a folha do aparelho aceita arquivo). Quem reabre a campanha vê **«Da última vez…»** no lugar de «lugar e data»: até três fatos do registro, o fio mais quente, onde parou. A mesma linha vai ao Narrador no 1.º turno da volta.
+- **de onde sai cada campo:** registro novo (`registroDaSessao`, aditivo): o turno em `pushMsgs` (a frase do jogador), o lance em `aBandeja` (todo dado), a luta no fecho; moedas/XP/nível/buscas pela diferença com a base da abertura. Título por tabela (`VARIACOES_DO_CARTAO`); vilão só com nome a partir da camada «rosto»; semente = FNV da semente do mundo.
+- **médio, com motivo:** (1) a noite magra completa até 3 linhas com dados rolados, XP e turnos — o F6 punha só os turnos, e a prova real mostrou a coluna vazia; (2) o véu no celular a 0,97 e a tela num portal do body — a 375 a prosa da página passava por cima (armadilha 1 do F6); (3) a pergunta do gancho é o **título da busca** (a biblioteca não tem «pergunta»); (4) a promessa não entra no fio — as do Livro guardam segredo, as do Prometido são texto do Cronista (IA); (5) «Da última vez…» aparece sempre na chegada de quem volta (a chegada já é a porta da volta), não só depois de 4 h.
+- **prova:** suítes novas `teste-registro-da-sessao` (47) e `teste-cartao-da-sessao` (34); duas asserções movidas em `teste-motor-pauta-do-turno`, com o motivo. Jogado com IA real (7 narrações, 3 dados: Persuasão 14, Atletismo 15, Furtividade 19): o PNG exportado de verdade tem Cinzel e Spectral, o retrato do tiefling e a cena do lugar, e a frase da Furtividade 19. 1.º pedido da volta: 63 771 caracteres, com «DA ÚLTIMA VEZ» dentro da pauta (teto 1400). Capturas `mente/lancamento/capturas/V10-*`.
+- **o fecho (a corrida inteira pegou quatro):** o bloco do registro em `pushMsgs` foi para antes do carimbo (teste-a1-relato exige o carimbo colado à retenção); `anotarTurno` → `anotarAJogada` (o App já tinha um `anotarOTurno` local e o BQ2 veta chamar `anotarTurno`); a secção nova ganhou tradução na ficha de ator (o Narrador ator lê a pauta pela ficha: «Da última vez: … Varek ganhou 51 de experiência»); PT-BR («moedas no bolso», «está sendo feita»), cores do canvas por `alfa(T.veuDaNoite)`, `window.Image`/`window.File`. `teste-regua-do-poder` e `varredura-exports` estouraram o relógio de 120 s na máquina carregada — verdes sozinhos.
+- **o que ficou:** a crônica como livro e o fim da campanha (outro pacote); link/og:image por sessão (infra, da pessoa); «Compartilhar» copia a imagem onde não há folha (o F6 pede; aqui o botão só some).
+- **proposta ambiciosa (para a pessoa):** o cartão do **fim da campanha** — o mesmo canvas com a crônica inteira (o maior dado de cada capítulo como capitular), como o Wrapped do ano.
+
 ## 16/11 · sem versão — S4e, o elenco do lugar
 
 A mão do motor, de `ee8ec4a`. Bastão do `App.jsx` («S4e») tomado às 17:33 para duas fiações curtas (os nomes do mundo no `quemAgora`; a proposta lê a conta única e a base da cidade), devolvido no fecho. Sem `VERSAO`, sem push, sem IA real, sem navegador.

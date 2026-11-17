@@ -8,7 +8,7 @@
 import { readFileSync } from "node:fs";
 import {
   REGISTRO_DA_SESSAO, PRIORIDADE_DO_FIO, FATOS_DA_ULTIMA_VEZ, LINHA_DA_ULTIMA_VEZ,
-  garantirRegistroDaSessao, abrirSessao, anotarTurno, anotarLance, anotarLuta,
+  garantirRegistroDaSessao, abrirSessao, anotarAJogada, anotarLance, anotarLuta,
   oResumoDaSessao, aSessaoParaLembrar, oFioMaisQuente, osFatosDaUltimaVez, linhaDaUltimaVez,
 } from "../src/registro-da-sessao.js";
 import { lancamentoDoTeste, lancamento } from "../src/motor/a-bandeja.js";
@@ -40,7 +40,7 @@ sec("o campo do save: novo, aditivo, nunca lança");
 sec("a sessão gravada: as frases e os dados");
 let reg = abrirSessao(null, inicio);
 const T0 = 1_700_000_000_000;
-frases.slice(0, 12).forEach((f, i) => { reg = anotarTurno(reg, { frase: f, agora: T0 + i * 5 * 60000, lugar: i < 6 ? "Porto das Pedras" : "A Estrada do Sal", cena: "costa" }); });
+frases.slice(0, 12).forEach((f, i) => { reg = anotarAJogada(reg, { frase: f, agora: T0 + i * 5 * 60000, lugar: i < 6 ? "Porto das Pedras" : "A Estrada do Sal", cena: "costa" }); });
 const fraseDo20 = frases[3];
 reg = anotarLance(reg, lancamentoDoTeste({ valor: 14, mod: 2, dc: 13, rotulo: "Percepção" }), { frase: frases[1], agora: T0 + 60000 });
 reg = anotarLance(reg, lancamentoDoTeste({ valor: 20, mod: 3, dc: 15, rotulo: "Furtividade" }), { frase: fraseDo20, agora: T0 + 16 * 60000 });
@@ -77,7 +77,7 @@ sec("as buscas fechadas, pela diferença com a base");
 {
   const antes = { ...inicio, missoes: [{ id: 1, titulo: "O Salvo-Conduto da Ponte", status: "ativa" }, { id: 2, titulo: "Já feita", status: "concluida" }] };
   let r3 = abrirSessao(null, antes);
-  r3 = anotarTurno(r3, { frase: "Entrego o salvo-conduto.", agora: T0 });
+  r3 = anotarAJogada(r3, { frase: "Entrego o salvo-conduto.", agora: T0 });
   const depois = { ...antes, missoes: [{ id: 1, titulo: "O Salvo-Conduto da Ponte", status: "concluida" }, { id: 2, titulo: "Já feita", status: "concluida" }] };
   const r = oResumoDaSessao(r3.atual, depois);
   t("só a que fechou nesta sessão conta", r.buscasFechadas === 1 && r.buscas[0] === "O Salvo-Conduto da Ponte");
