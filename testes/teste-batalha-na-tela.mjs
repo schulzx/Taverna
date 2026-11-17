@@ -39,7 +39,7 @@ import {
 } from "../src/estilo.js";
 import {
   pilulaDaPrevisao, golpePorExtenso, pilulaDaIntencao, variacaoDoGolpe, somaDoGolpe, geometriaDaMesa, camaraDoTelefone,
-  pipsDaEconomia, filaDaVez, chipDaQueda, linhaDaEscolha, faixaDaAmeaca, chipDoAvistamento, botaoDoEncontro, avisoDaArea,
+  pipsDaEconomia, filaDaVez, caiuNaLuta, chipDaQueda, linhaDaEscolha, faixaDaAmeaca, chipDoAvistamento, botaoDoEncontro, avisoDaArea,
 } from "../src/batalha-na-tela.js";
 import { INTENCAO_DO_INIMIGO } from "../src/intencao.js";
 import { facesQueAcertam } from "../src/previsao.js";
@@ -222,6 +222,11 @@ sec("8. a economia, a fila e o aviso da área (§CB 8, §CB 2)");
   const comb = { rodada: 3, ordem: [{ nome: "Bran", iniciativa: 15 }, { nome: "Bandido", iniciativa: 12 }, { nome: "Lobo", iniciativa: 9 }], inimigos: [{ nome: "Bandido", vida: 8, vidaMax: 8 }, { nome: "Lobo", vida: 0, vidaMax: 6, derrotado: true }] };
   const f = filaDaVez(faixaDaVez(comb, "Bran"), comb);
   t("a fila: a vez é o herói, quem caiu volta a 30 %, e «R4» abre a seguinte", f.rostos[0].estado === "vez" && f.rostos.some((r) => r.nome === "Lobo" && r.estado === "caido") && f.rodadaSeguinte === 4 && f.proximo.nome === "Bran");
+  /* S7c: a Quimera que venceu e levou a bolsa sai com derrotado+fugiu+saiuDePe — viva, não caída */
+  const comb2 = { rodada: 2, ordem: [{ nome: "Bran", iniciativa: 15 }], inimigos: [{ nome: "Quimera", vida: 30, vidaMax: 40, derrotado: true, fugiu: true, saiuDePe: true }, { nome: "Lobo", vida: 0, vidaMax: 6, derrotado: true }] };
+  const f2 = filaDaVez(faixaDaVez(comb2, "Bran"), comb2);
+  t("quem saiu de pé (a besta que levou a bolsa) não volta à fila como caída; o lobo no chão volta", !f2.rostos.some((r) => r.nome === "Quimera" && r.estado === "caido") && f2.rostos.some((r) => r.nome === "Lobo" && r.estado === "caido"));
+  t("caiuNaLuta: no chão sim; fugido ou saído de pé não; lixo não", caiuNaLuta({ vida: 0 }) && caiuNaLuta({ vida: 5, derrotado: true }) && !caiuNaLuta({ vida: 5, derrotado: true, fugiu: true }) && !caiuNaLuta({ vida: 9, derrotado: true, saiuDePe: true }) && !caiuNaLuta(null));
   t("os tamanhos da fila: 56 a vez, 40 os outros; 44 e 34 no telefone", FILA_DA_VEZ.vez === 56 && FILA_DA_VEZ.espera === 40 && FILA_DA_VEZ.telefone.vez === 44 && FILA_DA_VEZ.caido === 0.3 && FILA_DA_VEZ.agiu === 0.45);
   const area = [{ x: 4, y: 4 }, { x: 5, y: 4 }, { x: 4, y: 5 }, { x: 5, y: 5 }, { x: 3, y: 4 }, { x: 3, y: 5 }, { x: 4, y: 3 }, { x: 5, y: 3 }, { x: 3, y: 3 }];
   const av = avisoDaArea({ x: 4, y: 4 }, [{ inimigo: "Dragão Jovem", vista: { tipo: "sopro", dano: { min: 14, max: 24 }, area } }], { colunas: 14, linhas: 14 });

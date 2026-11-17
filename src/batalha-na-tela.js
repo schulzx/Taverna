@@ -338,11 +338,17 @@ export function pipsDaEconomia(economia, recursos, o) {
    agiu fica a 45 % quando o motor o disser (`agiu`), e no fim a marca da
    rodada seguinte com quem abre a próxima.
    ============================================================ */
+/* S7c (17/11): QUEM CAIU, para a tela — no chão, ou derrotado; nunca quem
+   saiu da luta pelo próprio pé (`fugiu`: o vencedor que levou a bolsa e foi
+   embora, o que fugiu ferido). A sessão jogada desenhou a Quimera viva
+   riscada e com caveira, porque a saída da luta a marca `derrotado`. */
+export const caiuNaLuta = (x) => !!obj(x) && !x.fugiu && !x.saiuDePe && (!!x.derrotado || Number(x.vida || 0) <= 0);
+
 export function filaDaVez(selos, combate) {
   const lista = Array.isArray(selos) ? selos.filter(obj) : [];
   const cb = obj(combate) || {};
   const inimigos = Array.isArray(cb.inimigos) ? cb.inimigos : [];
-  const caidos = inimigos.filter((x) => obj(x) && x.nome && (x.derrotado || Number(x.vida || 0) <= 0) && !lista.some((s) => s.nome === x.nome));
+  const caidos = inimigos.filter((x) => caiuNaLuta(x) && x.nome && !lista.some((s) => s.nome === x.nome));
   const rostos = [
     ...lista.map((s) => ({ nome: s.nome, lado: s.lado, heroi: !!s.heroi, estado: s.agora ? "vez" : s.agiu ? "agiu" : "espera" })),
     ...caidos.map((x) => ({ nome: x.nome, lado: "inimigo", heroi: false, estado: "caido" })),

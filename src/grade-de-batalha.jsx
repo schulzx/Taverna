@@ -58,7 +58,7 @@ import { PREVISAO_DO_GOLPE, CAMINHO_NO_CHAO, INTENCAO_NA_MESA, GOLPE_SENTIDO, FE
 /* §CB 16: o Pé do campo (a altura dos botões dele, os chips) e o telefone
    sem calha (a régua presa desenha-se por cima das casas) */
 import { BATALHA_EM_TRES as B3 } from "./estilo.js";
-import { variacaoDoGolpe, pilulaDaPrevisao, chipDaQueda } from "./batalha-na-tela.js";
+import { variacaoDoGolpe, pilulaDaPrevisao, chipDaQueda, caiuNaLuta } from "./batalha-na-tela.js";
 import { GLIFOS, tracoNaGrelha } from "./glifos.js";
 import { tocarGolpe, tocarDado } from "./som-da-mesa.js";
 /* CB 17 (lote 2): o d20 do ataque rola NO ALVO (formas.md §CB 17.1) e o turno
@@ -1254,7 +1254,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
   const alvoDaPrevisao = previsaoDoGolpe && previsaoDoGolpe.alvo ? String(previsaoDoGolpe.alvo) : "";
   const pontosDoCaminho = caminho && Array.isArray(caminho.pontos) ? caminho.pontos.filter((q) => q && q.x != null) : [];
   const golpeLivreEm = new Set((caminho && Array.isArray(caminho.golpeLivreEm) ? caminho.golpeLivreEm : []).map((q) => K(q.x, q.y)));
-  const caidosComCasa = ((combate.inimigos) || []).filter((e) => e && e.x != null && (e.derrotado || (e.vida || 0) <= 0));
+  /* S7c: quem saiu de pé (fugiu, levou a bolsa) não deixa caveira */
+  const caidosComCasa = ((combate.inimigos) || []).filter((e) => e && e.x != null && caiuNaLuta(e));
   const noAlcance = (alcanceMira && alcanceMira.quadrados) || new Set();
   /* CB 17.2 · quem age, quem já agiu e onde cada um se vê durante o passo:
      quem age no caminho (no começo dele antes de deslizar), quem ainda não

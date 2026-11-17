@@ -60,7 +60,7 @@ import { Retrato, Glifo, Recibo, Dobra, Economia, PipDoRecurso, PilulaDaIntencao
    telefone e a câmara que enquadra quem importa. As decisões moram em
    batalha-na-tela.js; as medidas, nas tabelas de CB. */
 import { BATALHA_EM_TRES as B3, FILA_DA_VEZ, PREVISAO_DO_GOLPE, INTENCAO_NA_MESA, FECHO_DA_QUEDA } from "./estilo.js";
-import { filaDaVez, golpePorExtenso, geometriaDaMesa, camaraDoTelefone, avisoDaArea, pilulaDaPrevisao, variacaoDoGolpe } from "./batalha-na-tela.js";
+import { filaDaVez, golpePorExtenso, geometriaDaMesa, camaraDoTelefone, avisoDaArea, pilulaDaPrevisao, variacaoDoGolpe, caiuNaLuta } from "./batalha-na-tela.js";
 /* CB 17 (lote 2): a fila pela ordem em que o motor joga e a economia da vez
    (vez-na-mesa.js), e o turno deles contado (formas.md §CB 17.2): os tempos
    e o controlo moram em TURNO_DELES. */
@@ -1121,7 +1121,7 @@ function QuemEstaDePe({ grupo, inimigos, veredito, children, compacto = false, c
               </span>
               <span className="flex flex-col flex-1 min-w-0" style={{ gap: 4 }}>
                 <span className="flex items-baseline gap-1.5 min-w-0">
-                  <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoInimigo, color: e.derrotado ? T.inkDim : T.ink, fontWeight: 600, lineHeight: 1.1, textDecoration: e.derrotado ? "line-through" : "none" }}>{e.nome}</span>
+                  <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoInimigo, color: caiuNaLuta(e) ? T.inkDim : T.ink, fontWeight: 600, lineHeight: 1.1, textDecoration: caiuNaLuta(e) ? "line-through" : "none" }}>{e.nome}</span>
                   {(e.gd || 0) > 0 && <span className="tv-mono" title={tituloDe(e.gd)} style={{ fontSize: M.letra.legenda, color: T.amber }}>GD {e.gd}</span>}
                   {vz && !e.derrotado && (
                     <span className="tv-mono shrink-0" style={{ fontSize: M.letra.valorDoOutro, color: vz.ok ? T.amberSoft : T.inkDim }}>
