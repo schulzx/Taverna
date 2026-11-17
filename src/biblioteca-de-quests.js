@@ -2572,7 +2572,7 @@ export const O_CLIMAX_DA_QUEST = Object.freeze({
   porque: "a sessão de 15/11: a caçada fechou sem a besta em cena — quatro etapas em treze ações, nenhuma luta",
 });
 const semAcClimax = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const cacheClimax = new WeakMap();
+const cacheClimax = new Map();
 /* oClimaxDaQuest(ficha) → { [etapa]: { hostil, covil, rasto, exige } } —
    só as etapas a que a regra toca. `hostil`: o papel do fio; `covil`: o
    papel de lugar onde ele está (null: a ficha não o diz — validarQuest

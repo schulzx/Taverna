@@ -41,7 +41,9 @@ sec("1. o tapete antes da narração");
   const n = corpo("const narrarAEntrada = (e) => {");
   t("a fala da entrada leva a pauta do encontro (o canal por turno, nunca bloco estático)", n.includes("porNaPautaDoTurno(pautaDoEncontro(e));"));
   t("e vai pela chamada própria do encontro (QUEM_RESPONDE.encontro)", n.includes('quemResponde("encontro").chamadas') && n.includes("enviar("));
-  t("sem ficha do envio: a resposta lê a ficha de ENTÃO (a luta pode tê-la mexido)", /enviar\("\[NA ESTRADA[^"]*\]", null\)/.test(n));
+  /* MOVIDA no S7 (17/11): o envelope passou a template — «FRENTE A FRENTE» no
+     confronto da quest, «NA ESTRADA» na estrada —, e continua sem ficha do envio */
+  t("sem ficha do envio: a resposta lê a ficha de ENTÃO (a luta pode tê-la mexido)", /enviar\(`[^`]*NA ESTRADA[^`]*\]`, null\)/.test(n));
   t("e sem desfeito: se a fala cair, a luta posta não volta atrás", n.includes("semDesfeitoRef.current = true;"));
   t("a fala da entrada marca-se no ar e desmarca-se no fim, caia ou não", n.includes("setFalaDaEntrada(true);") && n.includes(".finally(") && n.includes("setFalaDaEntrada(false)"));
   t("tudo em calou: uma fala que estoura nunca custa o turno", n.includes('calou("a fala da entrada"') && n.includes('calou("a narração da entrada"'));
