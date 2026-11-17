@@ -48,6 +48,11 @@ export const PROPOSTAS_DA_ABERTURA = Object.freeze({
      passo, e lá dentro o dado decide. */
   risco: Object.freeze({ verbo: "Explorar {nome}", frase: "Vou até {nome}." }),
   semNome: Object.freeze({ verbo: "Olhar em volta", frase: "Olho em volta, com atenção." }),
+  /* 17/11 (a abertura alcançável): o passo pede alguém AO LADO
+     («Sair de Vega Zênite com Saoirse») e essa pessoa está nesta cidade — a
+     porta é levá-la; a frase é a do convite (conviteNaFrase, indole.js), e o
+     veredito é o da balança, que aceita quem a história manda levar */
+  levar: Object.freeze({ verbo: "Levar {nome} junto", frase: "{nome}, vem comigo." }),
   teto: 40,
 });
 
@@ -118,6 +123,12 @@ export function oRumoDaBusca(entrada) {
     if (e.emLuta || e.naEstrada) return null;
     const P = PROPOSTAS_DA_ABERTURA;
     const aqui = chave(e.aqui);
+    /* quem o passo pede ao lado, e está nesta cidade, vem antes do lugar */
+    for (const p0 of arr(e.passos)) {
+      const c = arr(obj(obj(p0) && p0.candidatos) && p0.candidatos.pessoa).map(obj).filter(Boolean)
+        .find((x) => x.predicado === "acompanha" && cabe(txt(x.nome)) && (!txt(x.cidade) || !txt(e.cidade) || chave(x.cidade) === chave(e.cidade)));
+      if (c) return Object.freeze({ id: `rumo|levar|${chave(c.nome)}`, tipo: "rumo", verbo: encher(P.levar.verbo, txt(c.nome)), frase: encher(P.levar.frase, txt(c.nome)) });
+    }
     for (const p0 of arr(e.passos)) {
       const p = obj(p0);
       if (!p) continue;

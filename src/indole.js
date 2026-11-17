@@ -630,11 +630,29 @@ export const CONVITE_TALVEZ = 35;
    DIAS_ATE_QUALQUER_PLANO): quem lê é esta balança, e a prova a lê na fonte. */
 const TEMPO_NO_CONVITE = { teto: 20, porDia: 1.5 };
 
+/* QUEM A HISTÓRIA MANDA LEVAR (17/11, a abertura alcançável). O protegido
+   do Salvo-Conduto pediu a escolta — «Sair de Vega Zênite com Saoirse» —, e
+   a balança pesava-o como a um estranho que se convida para a estrada: em
+   520 campanhas da chegada nova, o protegido vinha no 1.º dia em 1 das 62
+   do Salvo-Conduto (as outras: recusa, ou «quer tempo»). Quando o passo da história em curso pede esta pessoa AO
+   LADO (`acompanha`, nos `passos` de osPassosDasQuests), ela vem: foi ela
+   quem pediu. Fora disso, a balança de sempre. Não é export: quem lê é esta
+   balança, e a prova lê-a pelo veredito. */
+const PEDIDO_DA_HISTORIA = { predicado: "acompanha", porque: "foi {N} quem pediu para ir com você" };
+const pedidoDaHistoria = (nome, passos) => {
+  const n = norm(nome);
+  if (!n || !Array.isArray(passos)) return false;
+  return passos.some((p) => p && typeof p === "object" && p.candidatos && Array.isArray(p.candidatos.pessoa)
+    && p.candidatos.pessoa.some((x) => x && x.predicado === PEDIDO_DA_HISTORIA.predicado && norm(x.nome) === n));
+};
+
 export function pesarConvite(indole, opcoes) {
   const { convivio = {}, fama = 0, grupoCheio = false } = opcoes || {};
   const i = garantirIndole(indole);
   const c = garantirConvivio(convivio);
   if (grupoCheio) return { resposta: "recusa", porques: ["não há lugar no seu grupo"], exigencia: null };
+  const o = opcoes && typeof opcoes === "object" ? opcoes : {};
+  if (pedidoDaHistoria(o.nome, o.passos)) return { resposta: "aceita", porques: [PEDIDO_DA_HISTORIA.porque.replace("{N}", String(o.nome).trim())], exigencia: null };
   const { peso, porques } = pesoDoConvite(i, c, fama);
   if (peso >= CONVITE_ACEITA) return { resposta: "aceita", porques, exigencia: null };
   if (peso >= CONVITE_TALVEZ) return { resposta: "exige", porques, exigencia: exigenciaDoConvite(i, c, fama) };
