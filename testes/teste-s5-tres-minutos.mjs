@@ -25,7 +25,7 @@ import { chefesDoMundo } from "../src/mundo-base.js";
 import { osFactosDoTurno, oFeitoDoTurno } from "../src/feito-do-sistema.js";
 import { SABER_DO_HEROI } from "../src/motor/o-mestre-chama.js";
 import { avaliarConquistas, oBercoDasConquistas, BERCO_DAS_CONQUISTAS } from "../src/conquistas.js";
-import { asPropostasDaAbertura, PROPOSTAS_DA_ABERTURA } from "../src/propostas-da-abertura.js";
+import { asPropostasDaAbertura, PROPOSTAS_DA_ABERTURA, oRumoDaBusca } from "../src/propostas-da-abertura.js";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -160,10 +160,22 @@ sec("§4 a abertura termina com três portas tocáveis");
   const PALAVRAS = /\b(proposta|sugest|quest|passo|sistema|mecanismo)\b/i;
   t("o sistema não fala de si nos verbos", ps.every((p) => !PALAVRAS.test(p.verbo)));
   /* a fiação: a soleira lê as portas, e o toque passa pela proposta da frase */
-  t("o App importa asPropostasDaAbertura", /import \{ asPropostasDaAbertura \} from "\.\/propostas-da-abertura\.js"/.test(APP));
+  /* S7c (17/11): o import ganhou oRumoDaBusca ao lado — a asserção aceita a lista; a intenção (o App lê a abertura) fica */
+  t("o App importa asPropostasDaAbertura", /import \{ asPropostasDaAbertura(, [A-Za-z]+)* \} from "\.\/propostas-da-abertura\.js"/.test(APP));
   t("as portas entram na soleira, dentro de calou", /asPropostasDaAbertura\(\{[\s\S]{0,400}\}\);[\s\S]{0,900}calou\("S5 · as portas da abertura"/.test(APP));
   t("o toque passa por proporAFrase e partirOTurno", /if \(proporAFrase\(p\.frase\)\) return;\s*partirOTurno\(p\.frase\);/.test(APP));
   t("as três ficam à vista, sem «+N»", /secundario: vivas\.length > 1 && !daAbertura/.test(APP));
+}
+
+/* S7c (17/11): O RUMO DA BUSCA — a sessão jogada não viu «Ir até Roda dos Punhos» depois da abertura */
+{
+  const passoCovil = { quest: "o_que_desce_ao_anoitecer", etapa: "fera", lugares: [], confronto: { papel: "fera", nome: "Quimera", quem: "o que desce ao anoitecer", covil: { nome: "Roda dos Punhos", cidade: "Doca Seca" } } };
+  const r = oRumoDaBusca({ passos: [passoCovil], aqui: "Feira Velha", cidade: "Doca Seca" });
+  t("S7c · o covil conhecido vira a porta «Ir até Roda dos Punhos», pela frase da abertura", r && r.verbo === "Ir até Roda dos Punhos" && r.frase === "Vou até Roda dos Punhos." && r.tipo === "rumo", JSON.stringify(r));
+  t("S7c · um lugar da etapa (estar em / esteve) também", oRumoDaBusca({ passos: [{ lugares: [{ nome: "Curral da Ladeira", cidade: "Doca Seca" }] }], aqui: "" , cidade: "Doca Seca" }).verbo === "Ir até Curral da Ladeira");
+  t("S7c · some ao chegar", oRumoDaBusca({ passos: [passoCovil], aqui: "Roda dos Punhos", cidade: "Doca Seca" }) === null);
+  t("S7c · uma por vez: só o primeiro passo com lugar", oRumoDaBusca({ passos: [{ lugares: [] }, passoCovil, { lugares: [{ nome: "Outro Sítio" }] }], aqui: "" }).verbo === "Ir até Roda dos Punhos");
+  t("S7c · na luta e na estrada, nada; lixo, nada", oRumoDaBusca({ passos: [passoCovil], emLuta: true }) === null && oRumoDaBusca({ passos: [passoCovil], naEstrada: true }) === null && oRumoDaBusca(null) === null && oRumoDaBusca({ passos: "x" }) === null);
 }
 
 console.log(`\n${bons} ok · ${maus} falhas`);

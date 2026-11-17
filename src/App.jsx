@@ -276,7 +276,7 @@ import { oBatismo } from "./motor/o-batismo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
-import { asPropostasDaAbertura } from "./propostas-da-abertura.js";
+import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
@@ -25637,6 +25637,26 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           }
         }
       } catch (e) { calou("S5 · as portas da abertura", e); }
+      /* S7c · O RUMO DA BUSCA: depois da abertura, enquanto o passo pede estar
+         num lugar conhecido (o covil, um lugar da etapa), uma porta «Ir até…»
+         — a mesma frase, o mesmo caminho (o veredito da ida antes do passo).
+         Some ao chegar. */
+      try {
+        const jogou = (mensagens || []).some((m) => m && m.autor === "jogador");
+        const rumo = jogou ? oRumoDaBusca({ passos: passosDasQuestsAgora(), aqui: (lugarRef.current && lugarRef.current.nome) || "", cidade: cidadeAtualRef.current || "", emLuta: !!combate, naEstrada: !!jornada }) : null;
+        if (rumo) {
+          lista.push({
+            id: rumo.id, verbo: rumo.verbo, tom: "convite", precisaDoNarrador: true,
+            aoClicar: () => {
+              try {
+                if (carregando || rolagem) return;
+                if (proporAFrase(rumo.frase)) return;
+                partirOTurno(rumo.frase);
+              } catch (e) { calou("S7c · o rumo da busca", e); }
+            },
+          });
+        }
+      } catch (e) { calou("S7c · o rumo da busca", e); }
 
       /* 0a · A ESTRADA (fila B) — E O MAIOR ITEM DESTA ETAPA.
 

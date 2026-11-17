@@ -98,3 +98,36 @@ export function asPropostasDaAbertura(entrada) {
     return P.ordem.filter((k) => out[k]).map((k) => Object.freeze({ id: out[k].id, tipo: out[k].tipo, verbo: out[k].verbo, frase: out[k].frase }));
   } catch { return []; }
 }
+
+/* ---------------- O RUMO DA BUSCA (S7c, 17/11) ----------------
+   A sessão jogada de 17/11: depois da abertura, «Ir até Roda dos Punhos»
+   nunca voltou ao pé da página — só o Livro e o Mapa diziam para onde ir, e
+   o Narrador acabou a narrar a ida sem o sistema a fazer. Agora, enquanto o
+   passo da busca ativa pede estar num lugar conhecido (os lugares do passo,
+   ou o covil do confronto), o pé da página oferece UMA porta: «Ir até
+   <lugar>», pela mesma frase da abertura — o toque passa pela proposta da
+   frase, e é lá que o veredito (o tempo, o perigo) aparece antes do passo.
+   Some ao chegar (o lugar onde já se está não é para onde ir), na luta e na
+   estrada.
+
+   oRumoDaBusca({ passos, aqui, cidade, emLuta, naEstrada }) → { id, tipo,
+   verbo, frase } | null */
+export function oRumoDaBusca(entrada) {
+  try {
+    const e = obj(entrada) || {};
+    if (e.emLuta || e.naEstrada) return null;
+    const P = PROPOSTAS_DA_ABERTURA;
+    const aqui = chave(e.aqui);
+    for (const p0 of arr(e.passos)) {
+      const p = obj(p0);
+      if (!p) continue;
+      const covil = obj(obj(p.confronto) && p.confronto.covil);
+      const nomes = [...arr(p.lugares).map(obj).filter(Boolean), ...(covil ? [covil] : [])].map((l) => txt(l.nome));
+      const lugar = nomes.find((n) => cabe(n));
+      if (!lugar) continue;
+      if ((aqui && chave(lugar) === aqui) || (!aqui && chave(lugar) === chave(e.cidade))) return null;
+      return Object.freeze({ id: `rumo|${chave(lugar)}`, tipo: "rumo", verbo: encher(P.passo.verbo, lugar), frase: encher(P.passo.frase, lugar) });
+    }
+    return null;
+  } catch { return null; }
+}
