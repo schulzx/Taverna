@@ -135,7 +135,7 @@ export function avisoDaSeta(s, peca) {
     return FALA_DA_SETA[baseDe(f.para)] || FALA_DA_SETA.continua;
   }
   if (f.preco) {
-    const linha = { tempo: "o tempo vai-se nisso", incompleta: "fica com a metade", alerta: "alguém vai ver você", cobra: "vai custar moedas", danificado: "não sai inteiro" }[f.preco];
+    const linha = { tempo: "o tempo se vai nisso", incompleta: "fica com a metade", alerta: "alguém vai ver você", cobra: "vai custar moedas", danificado: "não sai inteiro" }[f.preco];
     return linha ? `Se falhar, ${linha}.` : FALA_DA_SETA.continua;
   }
   return FALA_DA_SETA.continua;

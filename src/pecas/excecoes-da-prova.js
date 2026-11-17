@@ -96,7 +96,6 @@ export const EXCECOES_DA_PROVA = Object.freeze({
         acalmar: "{nome} baixa a cabeça a quem lhe conhece o assobio",
         lutar: "{nome} defende a entrada da toca, e não recua",
         intimidar: "{nome} recua diante do fogo e do barulho, mas só uma vez",
-        capturar: "{nome} é forte, mas pesada: uma corda bem atirada a prende",
         sondar: "a terra na boca da toca está remexida de um lado só: é por ali que {nome} entra e sai",
         espreitar: "o vento sopra da toca para fora: quem chegar por baixo dele chega sem cheiro",
       }),

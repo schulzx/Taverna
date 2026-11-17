@@ -132,7 +132,10 @@ sec("§4 o gesto sem dado (agirInterno)");
 /* ============================================================ */
 sec("§5 o veredito antes do clique — o chamado sabe que há carta em jogo");
 {
-  t("as duas portas do chamado passam por comACartaEmJogo, com a frase (chamadoDoVeredito fica como era)", APP.includes("const chamado = comACartaEmJogo(chamadoDoVeredito(v, op.mod), v, op.frase);") && APP.includes("chP = comACartaEmJogo(chamadoDoVeredito(v, mod), v, p.frase);") && APP.includes("return oChamado(v, ctxDoChamado(mod)) || null;"));
+  t("as duas portas do chamado passam por comACartaEmJogo, com a frase (chamadoDoVeredito fica como era)", /* peças B (17/11): a porta do abrirOChamado ganhou um ramo à frente — com a
+     marca da peça (v.peca), o chamado é o da peça (a seta no aviso); sem ela,
+     o mesmo comACartaEmJogo com a frase, à letra */
+  APP.includes(": comACartaEmJogo(chamadoDoVeredito(v, op.mod), v, op.frase); } catch (e) { calou(\"peças B · o chamado\"") && APP.includes("chP = comACartaEmJogo(chamadoDoVeredito(v, mod), v, p.frase);") && APP.includes("return oChamado(v, ctxDoChamado(mod)) || null;"));
   t("a carta é a de aCartaEmJogo (a mesma que o dado virará)", /aCartaEmJogo\(qs, \{ \.\.\.v, frase: String\(frase \|\| ""\) \}, \{ \.\.\.ondeDoPasso\(\), emCena: presentesAgora\(\) \}\)/.test(CHAMADO));
   t("o «se falhar» sai das palavras do quadro (uma ação, uma forma)", /PALAVRAS_DO_QUADRO/.test(CHAMADO) && /fichasDoSeFalhar\(\[\{ seFalhar: c\.seFalhar \}\]\)/.test(CHAMADO));
   t("e a carta vai no chamado (aditivo: a bandeja pode pôr o leque)", /carta: Object\.freeze\(\{ forma: c\.forma, tipo: c\.tipo, seFalhar: c\.seFalhar/.test(CHAMADO));

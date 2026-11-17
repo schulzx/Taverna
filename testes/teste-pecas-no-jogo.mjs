@@ -61,8 +61,9 @@ t("o chamado só muda com a marca da peça", app.includes("v && v.peca ? oChamad
 t("a poda só muda com o pacote da peça do turno", app.includes("const ausPP = pacP ? ausentesDaPeca(ausP, conhecP, pacP) : ausP;"));
 t("a chegada só se tira com o interruptor ligado", /pecasLigadas\(\) && !pecaEscreveuRef\.current/.test(app));
 t("o desafio e o oráculo só calam no aquecimento da peça", app.includes("if ((faz === \"desafio\" || faz === \"oraculo\") && pecaCalaRef.current) return false;"));
-const pauta = ler("src/motor/pauta-do-turno.js");
-t("a pauta só troca o caso pela cena da peça quando o canal a traz", pauta.includes("if (typeof um.peca === \"string\" && um.peca.trim()) aCenaDaPeca = um.peca;") && pauta.includes("if (aCenaDaPeca) {"));
+/* a troca do caso pela cena da peça na pauta (o canal `peca` de um turno)
+   prova-se pela suíte da pauta, não lendo o texto do motor
+   (teste-assercoes-de-texto: nenhuma suíte lê src/motor/) */
 
 sec("§3 o estado novo no save e no replay");
 t("o campo `pecas` está na tabela do estado, no grupo historia", CAMPOS.some((c) => c.campo === "pecas" || c.id === "pecas" || c.nome === "pecas" || (Array.isArray(c) && c[0] === "pecas")) || ler("src/estado.js").includes("C(\"pecas\", \"historia\", \"objeto\")"));

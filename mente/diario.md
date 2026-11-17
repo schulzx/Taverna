@@ -24,6 +24,10 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 17/11 · sem versão — peças, fase B · commits c10a67f · 51cc69b
+
+A mão do sistema, com o bastão do App das ~19h30 até à devolução, depois dos dois commits («peças B»). O motor das peças fica ligado ao turno atrás de um interruptor: só a quest de abertura, e só com `taverna_cfg_pecas` / `?pecas=1`; em produção, desligado. A ponte (`src/pecas/no-jogo.js`) decide em Node, e o App só executa, tudo dentro de `calou`. A chegada já não fecha a etapa, o chamado diz a seta como preço, e a cena fechada vai pelo canal de um turno no lugar do caso, com o rumo e o fecho fora nesse turno (≈ −80 caracteres por turno; teste-prompt verde). Falsos encaixes: 10/60 → 1/60, e 2/51 nos novos. Em Node, as duas passagens chegam à encruzilhada sem nenhuma etapa fechar sem facto do sistema. **Ficou por fazer: a partida com o Narrador real** (a verdade e a leitura «mesa ou trilho»). Decisões médias: o piso das soluções do corpus passou de 100 a 90 e o teto do livre de 360 a 430, as duas com o motivo na suíte; a bolsa e a espada nunca se impõem pelo relógio. Tudo em `mente/lancamento/pecas-fase-b.md`.
+
 ## 17/11 · sem versão — S7c, a derrota no confronto · commits a204ea6 · 8f3cdf3 · 76be534 · 3376c8e · 2532d9e
 
 A mão do motor, com o bastão do App das 16:42 às ~17:50 (S7c), devolvido. Sem `VERSAO`, sem push, sem IA real, sem navegador.
