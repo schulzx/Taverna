@@ -129,10 +129,23 @@ t("toda frase do corpus dá um dos três (nenhuma fica sem nada)", m.total.nulo 
    «procuro a Lourdes» era revistar, «de que fugi» era fugir. O piso desce para 100 e
    o teto dos frios para 100; o teste de cena (o 4.º destino) ganha piso, e
    o livre teto — os quatro só andam para melhor. */
-t("piso das soluções nas peças da prova (100)", m.total.solucao >= 100, String(m.total.solucao));
+/* FASE B (17/11): o piso desce de 100 para 90, e de propósito. Saíram as
+   soluções falsas que a leitura das 60 achou (a pergunta de rumo ou preço, a
+   pessoa olhada lida como revistar, o acampamento, a saída sem nome, o
+   estranho, o ataque a quem a cena não tem, o esconder-se lido como ir às
+   escondidas) e entrou o «sondar» da toca (a exceção da quest da prova). Um
+   encaixe errado abre um dado e queima uma solução: perder um falso vale
+   mais do que ganhar um número. */
+t("piso das soluções nas peças da prova (90; era 100)", m.total.solucao >= 90, String(m.total.solucao));
 t("teto dos frios nas peças da prova (100)", m.total.frio <= 100, String(m.total.frio));
 t("piso dos testes de cena (70)", m.total.cena >= 70, String(m.total.cena));
-t("teto do livre (360; era 586)", m.total.livre <= 360, String(m.total.livre));
+/* FASE B (17/11): o teto sobe de 360 para 430, e de propósito. A pergunta de
+   rumo, preço ou hora («onde fica a estalagem», «quanto custa») passou a ser
+   livre (era a conversa da etapa: 3 dos 10 falsos encaixes da A2), «vou pela
+   rua até» e «continuamos a caminhar até» passaram a ser ir (furo 1 da A2), e
+   o acampamento é o descanso. As soluções não caíram (101) e o frio desceu
+   (96 → 68): o livre que cresceu é o que a fase A2 contava como falso. */
+t("teto do livre (430; era 360, e 586 na fase A)", m.total.livre <= 430, String(m.total.livre));
 t("os números somam", m.total.solucao + m.total.cena + m.total.aquecimento + m.total.livre === m.total.n && m.total.esquenta + m.total.frio === m.total.aquecimento);
 
 sec("§7 os cinco furos da fase A, em catraca (A2)");

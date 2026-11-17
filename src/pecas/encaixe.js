@@ -73,7 +73,7 @@ export const SAIDAS_LIVRES = Object.freeze({
   comercio: Object.freeze({ rx: /\b(compro|comprar|vendo|vender|quanto custa|quanto e\b|quanto sai|pechincho|regateio|encomendo|pago)\b/, porque: "o balcão tem a sua porta (a bolsa da frase)" }),
   espera: Object.freeze({ rx: /\b(espero|esperamos|aguardo|aguardamos)\b/, porque: "esperar é o tempo do mundo (a espera da frase)" }),
   ir: Object.freeze({
-    rx: /\b(vou|volto|voltamos|vamos|sigo|seguimos|corro|parto|partimos|regresso|caminho|ando|dirijo-me|me dirijo|rumo|retorno|subo|desco|atravesso)\s+(direto\s+|logo\s+|depressa\s+|de volta\s+)?(ate|para|pra|ao|aos|a|as|rumo|em direcao)\s(?!(ver|falar|perguntar|procurar|buscar|tentar|conversar|dar|fazer|investigar|examinar)\b)|\b(entro|entramos|saio|saimos)\s+(no|na|nos|nas|em|do|da|para|pela|pelo)\b|\b(sigo|seguimos|parto|partimos)\s+(viagem|caminho|estrada|pela estrada)\b|\b(avanco|avancamos|sigo|seguimos|parto|partimos|saio|saimos|desco|descemos|subo|subimos|caminho|caminhamos|corro|corremos|volto|voltamos|vamos|regresso|tomamos|tomo)\b(?!\s+(ver|falar|perguntar|procurar|buscar|tentar|conversar|dar|fazer|investigar|examinar|pensar|as pegadas|o rastro|o rasto|as marcas)\b)[^.!?"“”«»]{0,50}?\b(ate|para|pra|pela estrada|pelo caminho|pela rua|pela ladeira|pelo tunel|pelo portao|pela porta|em direcao|rumo|adiante|de volta|atras dele|atras dela)\b/,
+    rx: /\b(vou|volto|voltamos|vamos|sigo|seguimos|corro|parto|partimos|regresso|caminho|ando|dirijo-me|me dirijo|rumo|retorno|subo|desco|atravesso)\s+(direto\s+|logo\s+|depressa\s+|de volta\s+)?(ate|para|pra|ao|aos|a|as|rumo|em direcao)\s(?!(ver|falar|perguntar|procurar|buscar|tentar|conversar|dar|fazer|investigar|examinar)\b)|\b(entro|entramos|saio|saimos)\s+(no|na|nos|nas|em|do|da|para|pela|pelo)\b|\b(sigo|seguimos|parto|partimos)\s+(viagem|caminho|estrada|pela estrada)\b|\b(avanco|avancamos|sigo|seguimos|parto|partimos|saio|saimos|desco|descemos|subo|subimos|caminho|caminhamos|corro|corremos|volto|voltamos|vou|vamos|regresso|tomamos|tomo|continuo|continuamos)\b(?!\s+(ver|falar|perguntar|procurar|buscar|tentar|conversar|dar|fazer|investigar|examinar|pensar|as pegadas|o rastro|o rasto|as marcas)\b)[^.!?"“”«»]{0,50}?\b(ate|para|pra|pela estrada|pelo caminho|pela rua|pela ladeira|pelo tunel|pelo portao|pela porta|em direcao|rumo|adiante|de volta|atras dele|atras dela)\b/,
     porque: "ir é a porta do passo e da estrada (a proposta da frase)",
   }),
 });
@@ -120,6 +120,36 @@ export const LEITURAS_QUE_NAO_SAO = Object.freeze({
   fugaPassada: /\b(fugi|fugiu|fugimos|fugiram|de que fugi|tinha fugido)\b/,
   procuraDeAlguem: /\b(?:[Pp]rocuro|[Pp]rocurando|[Pp]rocurar|à procura d[eoa]s?|a procura d[eoa]s?|[Ee]m busca d[eoa]s?)\s+(?:o |a |pel[oa] |por )?(?:mestre |dona |seu |senhor |senhora )?[A-ZÁÉÍÓÚÂÊÔÃÕ][a-zà-ÿ]/,
   porque: "a palavra do catálogo acerta o verbo e erra a cena: a procura de alguém é conversa, a fuga contada é passado",
+});
+
+/* FASE B · OS FALSOS ENCAIXES (as 60 soluções lidas na A2: 10 erradas, 17 %).
+   Um encaixe errado abre um dado e queima uma solução — é o defeito que mais
+   pesa neste modelo. Cada linha é um dos cinco tipos que a leitura achou;
+   lidas sobre a frase (ou a oração) sem acento, salvo o estranho. */
+export const FALSOS_ENCAIXES = Object.freeze({
+  /* «onde fica a estalagem», «quanto custa», «que horas são»: pedir rumo,
+     preço ou hora é o balcão e a rua, não a conversa da etapa (3 de 10) */
+  rumoPrecoHora: /\b(onde fica|onde e que fica|onde e|onde posso|onde encontro|como (eu )?chego|qual (e )?o caminho|para que lado|por onde se vai|que horas|a que horas|quanto custa|quanto cobra|quanto e\b|quanto sai|qual (e )?o preco)\b/,
+  /* «olho com atenção o que ela traz no avental»: olhar uma PESSOA da cena
+     é lê-la, não revistar o sítio (2 de 10) */
+  olharAPessoa: /\b(olho|observo|reparo|examino|estudo|fito|encaro|analiso|vejo)\b/,
+  /* «monto acampamento»: o acampamento é o descanso, não orientar-se nem
+     ler pegadas (2 de 10; a leitura é do catálogo, a correção é daqui) */
+  acampar: /\b(monto|montamos|armo|armamos|faco|fazemos|levanto|levantamos|preparo|preparamos)\s+(o |um |uma |nosso |meu )?(acampamento|bivaque|tenda|barraca)\b|\b(acampo|acampamos)\b/,
+  /* «seguimos para a paliçada norte»: a saída sem nome próprio também sai
+     da cena — o destino comum que não é este sítio nem coisa dele (2 de 10) */
+  destinoComum: /\b(?:ate|para|pra|rumo a|em direcao a)\s+(?:o|a|os|as)\s+([a-z]{4,})/,
+  /* o que se diz «ir até» sem sair: as coisas de dentro do próprio sítio */
+  dentroDoSitio: Object.freeze(["porta", "balcao", "fundo", "mesa", "janela", "canto", "lareira", "entrada", "parede", "cerca", "palha", "escada", "banco", "estante", "estantes", "prateleira", "fogo", "fogueira", "cama", "catre", "poco", "portao"]),
+  /* «olho o vulto que geme: quem é?»: o estranho que a cena não tem é
+     aquecimento, nunca a conversa da etapa (1 de 10) */
+  estranho: /\b(o|um|uma|a|aquele|aquela|esse|essa|este|esta)\s+(vulto|estranho|estranha|desconhecid[oa]|figura|silhueta|encapuzad[oa]|forasteir[oa])\b/,
+  /* «ataco o rato gigante»: o alvo do ataque dito por uma palavra que
+     ninguém da cena veste */
+  ataqueA: /\b(ataco|golpeio|acerto|avanco sobre|investo contra|disparo contra|atiro em)\s+(?:o|a|os|as|um|uma)\s+([a-z]{3,})/,
+  /* «tento esconder-me do lobo»: esconder-se onde se está */
+  esconderSe: /\b(esconder-me|me esconder|escondo-me|me escondo|escondemo-nos|nos escondemos)\b/,
+  porque: "o verbo certo no alvo errado: a pergunta de rumo, a pessoa olhada, o acampamento, a saída sem nome e o estranho não são a etapa",
 });
 
 /* a família que o improviso diz pelo atributo */
@@ -366,7 +396,13 @@ function saiDaCena(f, t, nomeados, peca) {
     || peca.solucoes.some((s) => s.alvo.tipo === "lugar" && s.alvo.papel && chaveDoAlvo(s) !== aqui && descreve(t, sem(s.alvo.papel)));
   const m = String(f).match(SAIDA_DA_CENA.destino);
   const destinoFora = !!m && !sem(peca.cena.onde.nome).includes(sem(m[1])) && !peca.cena.quem.some((q) => sem(q.nome).includes(sem(m[1])));
-  return SAIDA_DA_CENA.rx.test(t) || outroSitio || destinoFora;
+  /* FASE B: o destino comum («para a paliçada norte») que não é este sítio,
+     nem coisa de dentro dele, nem um lugar da peça que está aqui */
+  const mc = t.match(FALSOS_ENCAIXES.destinoComum);
+  const w = mc ? mc[1] : "";
+  const comumFora = !!w && !FALSOS_ENCAIXES.dentroDoSitio.includes(w) && !sem(peca.cena.onde.nome).includes(w)
+    && !peca.solucoes.some((s) => s.alvo.tipo === "lugar" && chaveDoAlvo(s) === aqui && sem(s.alvo.nome).includes(w));
+  return SAIDA_DA_CENA.rx.test(t) || outroSitio || destinoFora || comumFora;
 }
 
 /* ---------------- O ENCAIXE DE UMA ORAÇÃO ---------------- */
@@ -380,17 +416,34 @@ function encaixarOracao(f, C, herdado) {
   const leitura0 = aLeitura(f, peca.cena, E);
   /* a procura de alguém pelo nome não é o «buscar» do sítio: é conversa */
   const procuraAlguem = ["buscar", "investigar"].includes(leitura0.acao) && LEITURAS_QUE_NAO_SAO.procuraDeAlguem.test(f) && !peca.solucoes.some((s) => s.alvo.tipo === "lugar" && nomeados.has(chaveDoAlvo(s)));
-  const leitura = soAquece ? { acao: null, familia: leitura0.familia, v: null } : procuraAlguem ? { acao: null, familia: "social", v: null } : leitura0;
   const desc = aDescricao(f, peca.cena, { semPronome: !!C.outroNome || herdado === "fora" });
+  /* FASE B: «olhar X» com X pessoa da cena é ler a pessoa, não revistar */
+  const pessoaDaCena = [...nomeados].some((id) => id.startsWith("q:") && naCena.has(id)) || [...desc.ids].some((id) => naCena.has(id));
+  /* a pessoa olhada pode vir pelo pronome mesmo quando a frase chama alguém
+     de fora pelo nome («o que ela traz no avental… Petra?»): é gente, não sítio */
+  const olhaGente = pessoaDaCena || ALVO_POR_DESCRICAO.pronome.homem.test(t) || ALVO_POR_DESCRICAO.pronome.mulher.test(t) || FALSOS_ENCAIXES.estranho.test(t);
+  const olhaAPessoa = ["buscar", "investigar"].includes(leitura0.acao) && FALSOS_ENCAIXES.olharAPessoa.test(t) && olhaGente && !peca.solucoes.some((s) => s.alvo.tipo === "lugar" && nomeados.has(chaveDoAlvo(s)));
+  const acampa = FALSOS_ENCAIXES.acampar.test(t);
+  if (acampa && !soAquece) return { tipo: "livre", porque: "acampar é a porta do descanso", qual: "descanso", _nomeados: [], _fora: false };
+  const leitura = soAquece ? { acao: null, familia: leitura0.familia, v: null } : procuraAlguem ? { acao: null, familia: "social", v: null } : olhaAPessoa ? { acao: null, familia: "intuicao", v: null } : leitura0;
   const temPessoa = () => [...nomeados].some((id) => id.startsWith("q:"));
   /* o nome dito pela descrição conta como dito; sem nome nenhum, herda-se
      o da oração anterior («Cumprimento Torvald e pergunto…») */
   if (!temPessoa()) for (const id of desc.ids) nomeados.add(id);
-  if (!temPessoa() && !desc.fora) for (const id of arr(herdado)) nomeados.add(id);
+  if (!temPessoa() && !desc.fora && !FALSOS_ENCAIXES.estranho.test(t)) for (const id of arr(herdado)) nomeados.add(id);
+  /* FASE B: a pessoa da cena achada pelo nome verdadeiro ou pela descrição
+     («a fera» → Quimera) é o alvo das soluções do papel dela, que a peça
+     chama pela alcunha («o que desce ao anoitecer») — o mesmo papel, a
+     mesma pessoa */
+  for (const id of [...nomeados]) {
+    const q = peca.cena.quem.find((x) => "q:" + sem(x.nome) === id && x.papel);
+    if (q) for (const s of peca.solucoes) if (s.alvo.tipo === "pessoa" && s.alvo.papel === q.papel) nomeados.add(chaveDoAlvo(s));
+  }
   const nomeiaFora = [...nomeados].some((id) => id.startsWith("q:") && !naCena.has(id) && !peca.solucoes.some((s) => chaveDoAlvo(s) === id));
   /* quem a oração anterior pôs fora («convencer o guarda com lábia e charme»)
      continua fora na seguinte, que não diz outra pessoa */
-  const descritoFora = desc.fora && ![...nomeados].some((id) => naCena.has(id));
+  const estranho = FALSOS_ENCAIXES.estranho.test(t) && ![...nomeados].some((id) => naCena.has(id));
+  const descritoFora = (desc.fora || estranho) && ![...nomeados].some((id) => naCena.has(id));
   /* a herança só tira a solução, a cena e a conversa direta — a oração ainda aquece pelas palavras */
   const bloqueia = descritoFora || (herdado === "fora" && !temPessoa());
   const pistaDe = (id) => (peca.pistas.find((p) => p.solucao === id) || {}).diz || "";
@@ -414,6 +467,9 @@ function encaixarOracao(f, C, herdado) {
   const rumoDaAcao = !!leitura.acao && peca.solucoes.some((s) => s.pede === "rumo" && acoesQueTrocamCom(leitura.acao).includes(s.acao) && !queimadas.has(s.id));
   if (saidaJa && saidaJa.qual === "ir" && !rumoDaAcao && saiDaCena(f, t, nomeados, peca)) return fim({ tipo: "livre", porque: saidaJa.porque, qual: "ir", _sai: true });
 
+  /* FASE B: pedir rumo, preço ou hora é livre (o balcão e a rua) */
+  if (!soAquece && FALSOS_ENCAIXES.rumoPrecoHora.test(t) && (!leitura.acao || FAMILIAS_QUE_AQUECEM[leitura.familia] === "conversa")) { const lv = aSaidaLivre(f, E); return fim({ tipo: "livre", porque: lv ? lv.porque : FALSOS_ENCAIXES.porque, qual: lv ? lv.qual : "rumo" }); }
+
   /* 1. a solução que a frase aciona: a ação exata, ou uma que troca com
      ela (ACOES_QUE_SE_TROCAM) — nunca a «mesma família» larga */
   if (leitura.acao) {
@@ -430,7 +486,12 @@ function encaixarOracao(f, C, herdado) {
       if (s.pede === "alguem" && s.alvo.tipo === "lugar") return !nomeiaFora && !bloqueia;
       return !nomeiaAlguem && !nomeiaFora;
     };
-    const vivas0 = mesmas.filter((s) => viva(s) && alvoOk(s));
+    /* FASE B: o ataque a quem a cena não tem («ataco o rato gigante», «o
+       homem da tocha») não é a luta da etapa; e esconder-se aqui não é ir
+       às escondidas até outro sítio */
+    const atacaOutro = leitura.acao === "lutar" && ![...nomeados].some((id) => id.startsWith("q:")) && (() => { const m = t.match(FALSOS_ENCAIXES.ataqueA); if (!m) return false; const w = m[2]; return !peca.cena.quem.some((q) => palavrasDe(q).some((x) => raiz(x).length >= 3 && raiz(w).startsWith(raiz(x)))) && !ALVO_POR_DESCRICAO.doCovil.includes(w); })();
+    const esconde = FALSOS_ENCAIXES.esconderSe.test(t);
+    const vivas0 = atacaOutro ? [] : mesmas.filter((s) => viva(s) && alvoOk(s) && !(esconde && s.pede === "rumo"));
     const comNome = vivas0.filter((s) => nomeados.has(chaveDoAlvo(s)));
     const vivas = comNome.length ? comNome : bloqueia ? [] : vivas0;
     const porAlvo = [...new Map(vivas.map((s) => [chaveDoAlvo(s), s])).values()];
