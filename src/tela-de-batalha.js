@@ -380,6 +380,42 @@ export const RECUSAS_DO_VERBO = {
   inconsciente: "você está desacordado — não pode agir",
 };
 
+/* O HERÓI CAÍDO (S7c, 17/11). Jogado: o herói chegou a 0 PV, e a tela
+   mostrava «SUA VEZ» com PV 0/13, «Atacar» e «Fugir» apagados, e nada a
+   dizer que ele estava no chão nem o que fazer. A forma diz agora o estado e
+   o que está a acontecer — os testes de morte, quem ainda luta, e o toque
+   que faz a rodada correr (Esperar, que nunca se apaga). Só texto: nenhuma
+   regra de combate muda. `limite`: os 3 sucessos / 3 falhas de
+   aplicarTesteMorte (combate.js) — a suíte lê-os de volta. */
+export const O_HEROI_CAIDO = Object.freeze({
+  limite: 3,
+  legenda: { morrendo: "Caído · morrendo", estavel: "Caído · estável", morto: "Caído" },
+  testes: "testes de morte: {s} de {n} sucessos · {f} de {n} falhas",
+  linha: {
+    morrendo: "Você está no chão, a 0 PV, e não pode agir. A cada rodada, um teste de morte: {n} sucessos e você se estabiliza, {n} falhas e é o fim.",
+    estavel: "Você está no chão, estável, a 0 PV: não pode agir até acordar.",
+    morto: "Você não se levanta mais.",
+  },
+  aliados: "{quem} ainda luta por você.",
+  toque: "Toque em Esperar para a rodada correr.",
+});
+const encherHC = (tpl, v) => String(tpl).replace(/\{(\w+)\}/g, (m, k) => (v[k] == null ? m : String(v[k])));
+/* oHeroiCaido(personagem, grupo) → null (de pé) | { estado, legenda,
+   testes, linha } */
+export function oHeroiCaido(personagem, grupo) {
+  const p = personagem && typeof personagem === "object" ? personagem : null;
+  if (!p || (!p.morto && (Number(p.vida) || 0) > 0 && !p.morrendo)) return null;
+  const H = O_HEROI_CAIDO;
+  const m = p.morte && typeof p.morte === "object" ? p.morte : {};
+  const estado = p.morto ? "morto" : m.estavel ? "estavel" : "morrendo";
+  const v = { n: H.limite, s: Math.max(0, Number(m.sucessos) || 0), f: Math.max(0, Number(m.falhas) || 0) };
+  const dePe = (Array.isArray(grupo) ? grupo : []).filter((g) => g && g.nome && !g.morto && (Number(g.vida) || 0) > 0).map((g) => g.nome);
+  const partes = [encherHC(H.linha[estado], v)];
+  if (estado !== "morto" && dePe.length) partes.push(encherHC(H.aliados, { quem: dePe.join(" e ") }));
+  if (estado !== "morto") partes.push(H.toque);
+  return { estado, legenda: H.legenda[estado], testes: estado === "morrendo" ? encherHC(H.testes, v) : "", linha: partes.join(" ") };
+}
+
 /* O TECTO DOS 54 CARACTERES vale para estas também: elas entram na linha
    do veredito, que é a mesma linha e a mesma largura. */
 export const TETO_DA_RECUSA = 54;

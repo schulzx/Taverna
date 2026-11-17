@@ -19,7 +19,9 @@ import {
   SAIDA_DO_ARMADO, NARRACAO, ultimasLinhasDoMestre,
   RECUSAS_DO_VERBO, TETO_DA_RECUSA, impedimentosDaFileira, LINHA_DO_FIM_DA_FUGA,
   convertePraTurnoDoCaido,
+  oHeroiCaido, O_HEROI_CAIDO,
 } from "../src/tela-de-batalha.js";
+import { testeDeMorte, aplicarTesteMorte } from "../src/combate.js";
 import { TELA_DE_BATALHA, ALVOS } from "../src/estilo.js";
 import { VERBOS_DE_COMBATE } from "../src/golpe.js";
 
@@ -418,6 +420,21 @@ sec("R21. o fim fala de fuga, e a frase de fuga mostra o preço antes");
     vereditoDaTela({ precoDaFuga: "Você escapa.", recusaDoVerbo: RECUSAS_DO_VERBO.semPasso }) === RECUSAS_DO_VERBO.semPasso);
   t("sem frase de fuga, nada muda — a cadeia de antes continua inteira",
     vereditoDaTela({ linha: "Bandido a 1,5 m — ao alcance." }) === "Bandido a 1,5 m — ao alcance.");
+}
+
+/* S7c (17/11): o herói caído é dito — jogado: «SUA VEZ» a 0/13 PV com os botões apagados e nada a dizer porquê */
+{
+  const h = { nome: "Varek", vida: 0, vidaMax: 13, morrendo: true, morte: { sucessos: 1, falhas: 2 } };
+  const c = oHeroiCaido(h, [{ nome: "Ilsa", vida: 6 }, { nome: "Tom", vida: 0 }]);
+  t("S7c · a 0 PV a legenda é «Caído · morrendo», não «Sua vez»", c && c.legenda === "Caído · morrendo" && c.estado === "morrendo");
+  t("S7c · os testes de morte à vista, com o limite da regra", c.testes === "testes de morte: 1 de 3 sucessos · 2 de 3 falhas", c.testes);
+  t("S7c · a linha diz o que acontece, quem ainda luta e o toque que faz a rodada correr", /não pode agir/.test(c.linha) && /Ilsa ainda luta por você/.test(c.linha) && !/Tom/.test(c.linha) && /Esperar/.test(c.linha), c.linha);
+  t("S7c · estável: sem testes; morto: o fim, sem toque", oHeroiCaido({ vida: 0, morte: { estavel: true } }).testes === "" && oHeroiCaido({ vida: 0, morto: true }).linha === "Você não se levanta mais.");
+  t("S7c · de pé, nada (a forma de sempre); lixo, nada", oHeroiCaido({ vida: 5 }) === null && oHeroiCaido(null) === null);
+  /* o limite lido de volta da regra: aplicarTesteMorte estabiliza no 3.º sucesso e mata na 3.ª falha */
+  const suc = { rolo: 15, tipo: "sucesso" }, fal = { rolo: 3, tipo: "falha" };
+  const l = O_HEROI_CAIDO.limite;
+  t("S7c · O_HEROI_CAIDO.limite é o da regra (combate.js)", aplicarTesteMorte({ sucessos: l - 1, falhas: 0 }, suc).desfecho === "estavel" && aplicarTesteMorte({ sucessos: 0, falhas: l - 1 }, fal).desfecho === "morto" && aplicarTesteMorte({ sucessos: l - 2, falhas: 0 }, suc).desfecho === "morrendo" && typeof testeDeMorte === "function");
 }
 
 console.log(`\ntela da batalha E3: ${bons} passaram, ${maus} falharam`);

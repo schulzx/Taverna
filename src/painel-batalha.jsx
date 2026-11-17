@@ -80,7 +80,7 @@ import { tituloDe } from "./divindades.js";
 import {
   faixaDaVez, rotuloDaVez, fileiraDeVerbos, vereditoDaTela,
   ultimasLinhasDoMestre, NARRACAO, PEDIDO_DO_VERBO, impedimentosDaFileira,
-  linhaFugaArmada, empurraoDaFrase,
+  linhaFugaArmada, empurraoDaFrase, oHeroiCaido,
 } from "./tela-de-batalha.js";
 
 /* ---------------- ONDE A MÃO TAPA O TABULEIRO ----------------
@@ -810,8 +810,10 @@ function Recurso({ rotulo, atual, max, cor }) {
 /* §CB 17.2: no turno deles «A tua vez» passa a «A vez deles · <nome>» (`danger`,
    `vezDeles` é o nome de quem age); no fim volta, com um pulso (tv-pulse, uma vez:
    `pulso` é a chave que o reacende). `vez`: economiaDaVez (vez-na-mesa.js). */
-function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = [], compacto = false, emJogo = null, passoM = null, passoTotal = null, vezDeles = "", pulso = 0, vez = null }) {
+function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = [], compacto = false, emJogo = null, passoM = null, passoTotal = null, vezDeles = "", pulso = 0, vez = null, grupo = null }) {
   const grave = personagem.vidaMax > 0 && personagem.vida / personagem.vidaMax <= 1 / 3;
+  /* S7c: o herói a 0 PV não tem «Sua vez» — a forma diz que caiu, e o que acontece */
+  const caido = oHeroiCaido(personagem, grupo);
   const m = compacto ? M.aperto : M;
   const linhaDaClasse = [personagem.classe, personagem.nivel ? `nv ${personagem.nivel}` : ""].filter(Boolean).join(" · ");
   return (
@@ -820,11 +822,17 @@ function TurnoAtual({ personagem, economia, recursos = null, acaoBonus, selos = 
       <div className="flex items-center" style={{ gap: M.cartao + 4 }}>
         <RostoNaLuta ente={personagem} tamanho={compacto ? M.aperto.retratoDoHeroi : FILA_DA_VEZ.vez + 18} anel={grave ? T.danger : T.amber} />
         <span className="flex flex-col min-w-0" style={{ gap: 2 }}>
-          <span className="tv-mono" style={{ ...LEGENDA, color: vezDeles ? T.danger : T.amber, fontWeight: 700 }}>{vezDeles ? `A vez deles · ${vezDeles}` : "Sua vez"}</span>
+          <span className="tv-mono" style={{ ...LEGENDA, color: vezDeles ? T.danger : T.amber, fontWeight: 700 }}>{caido ? caido.legenda : vezDeles ? `A vez deles · ${vezDeles}` : "Sua vez"}</span>
           <span className="tv-display truncate" style={{ fontSize: compacto ? M.aperto.nomeDoHeroi : M.letra.nomeDoHeroi, color: T.ink, fontWeight: 600, lineHeight: 1.1 }}>{personagem.nome}</span>
           {linhaDaClasse && <span className="tv-mono truncate" style={{ fontSize: TIPOS.piso, color: T.inkDim }}>{linhaDaClasse}</span>}
         </span>
       </div>
+      {caido && (
+        <div role="status" className="flex flex-col" style={{ gap: 2 }}>
+          <span className="tv-body" style={{ fontSize: TIPOS.piso, color: T.ink, lineHeight: 1.35 }}>{caido.linha}</span>
+          {caido.testes && <span className="tv-mono" style={{ fontSize: TIPOS.piso, color: T.danger }}>{caido.testes}</span>}
+        </div>
+      )}
       <Recurso rotulo="PV" atual={personagem.vida} max={personagem.vidaMax} cor={grave ? T.danger : T.amber} />
       {personagem.manaMax > 0 && <Recurso rotulo="PM" atual={personagem.mana} max={personagem.manaMax} cor={T.violetSoft} />}
       <div style={{ padding: M.cartao, borderRadius: M.raioControle, background: T.panelSoft, border: `1px solid ${T.line}` }}>
@@ -2086,7 +2094,7 @@ export function TelaDeBatalha(props) {
         {noTelefone ? (
           <span className="flex flex-col items-end shrink-0" style={{ gap: 2 }}>
             <span key={pulsoDaVez ? `pulso${pulsoDaVez}` : undefined} className={`tv-mono${pulsoDaVez && !contando ? " tv-pulse" : ""}`}
-              style={{ ...LEGENDA, color: contando ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : "Sua vez"}</span>
+              style={{ ...LEGENDA, color: contando || oHeroiCaido(personagem, grupo) ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : oHeroiCaido(personagem, grupo) ? oHeroiCaido(personagem, grupo).legenda : "Sua vez"}</span>
             <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoAliado, color: T.ink, maxWidth: 120 }}>{contando ? passoDeles.quem : personagem.nome}</span>
           </span>
         ) : (
@@ -2319,7 +2327,7 @@ export function TelaDeBatalha(props) {
   const elesEstreita = noTelefone || arranjo === "duas" || (geo.coluna || 0) < B3.colunaEstreita.intencao;
   const tu = (
     <TurnoAtual personagem={personagem} economia={combate.economia} recursos={combate.recursos || null} acaoBonus={p.acaoBonus} selos={modificadores} compacto={baixo}
-      emJogo={emJogo} passoM={p.passoM} passoTotal={p.passoTotal} vez={vezDoHeroi} vezDeles={contando ? passoDeles.quem : ""} pulso={contando ? 0 : pulsoDaVez} />
+      emJogo={emJogo} passoM={p.passoM} passoTotal={p.passoTotal} vez={vezDoHeroi} vezDeles={contando ? passoDeles.quem : ""} pulso={contando ? 0 : pulsoDaVez} grupo={grupo} />
   );
   const eles = (
     <QuemEstaDePe grupo={grupo} inimigos={inimigos} veredito={vd} compacto={baixo} cede={!noTelefone}
