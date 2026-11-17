@@ -231,6 +231,14 @@ export const ESQUELETO = Object.freeze({
   nome: 60,
   texto: 120,
   cobre: 3,
+  /* A ABERTURA NASCE ONDE O HERÓI ESTÁ (17/11, a abertura alcançável): os
+     atos até este índice (inclusive) ficam na cidade de partida, e não na
+     mais repetida dos marcos. Em 520 campanhas da chegada nova (a v9.656, no
+     ar), o 1.º passo pedia alguém ou um sítio noutra cidade — na névoa, sem
+     viagem possível — em 70% (a torre 96%, o arquipélago 68%, o braço
+     estelar 65%, o sobremundo 48%). Prova: testes/teste-abertura-alcancavel.mjs.
+     -1 desliga (volta à cidade dos marcos). */
+  atoDaCasa: 0,
 });
 
 /* O SÍTIO QUE O PAPEL É (13/11, a 21.ª sessão, defeito 2). O `tipos` de um
@@ -389,6 +397,11 @@ function mundoDe(o, espinha, mapa) {
     for (const [nome, k] of conta) if (k > n) { melhor = nome; n = k; }
     cidadeDoAto.push(porNome.get(norm(melhor)) || cidadeDoAto[i - 1] || cidades[0] || null);
   });
+  /* a abertura alcançável (ESQUELETO.atoDaCasa): a quest de abertura nasce
+     na cidade onde o herói começa — a dos marcos podia ser outra, longe e na
+     névoa, e o 1.º passo pedia alguém que nenhum caminho do sistema alcança */
+  const casa = porNome.get(norm(o.cidadeInicial));
+  if (casa) for (let i = 0; i <= ESQUELETO.atoDaCasa && i < cidadeDoAto.length; i++) cidadeDoAto[i] = casa;
   const km = (a, b) => { const d = kmEntre(a, b); return Number.isFinite(d) ? d : Infinity; };
   const perto = (c) => cidades.filter((x) => x !== c).sort((a, b) => km(c, a) - km(c, b) || norm(a.nome).localeCompare(norm(b.nome)));
   return { semente, cidades, porNome, locaisDe, genteDoSitio, genteDe, cidadeDoAto, km, perto };
