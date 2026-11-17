@@ -24,6 +24,16 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 17/11 · sem versão — S7c, a derrota no confronto · commits a204ea6 · 8f3cdf3 · 76be534 · 3376c8e · 2532d9e
+
+A mão do motor, com o bastão do App das 16:42 às ~17:50 (S7c), devolvido. Sem `VERSAO`, sem push, sem IA real, sem navegador.
+- **1 · a derrota não fecha** (`a204ea6`). Duas portas: `saida-da-luta.js` marcava o vencedor que sai de pé com `fugiu`, e o livro escrevia-o como queda («derrotado», como fugiu) — o «poupou» fechava a etapa pela lâmina (foi a porta da sessão: «Quimera cai de lado na lama» → «arrasta Quimera»); e `oLivroDoEncontro` escrevia «encontrado» no desfecho com luta (o assobio fechava). Agora `saiuDePe` (aditivo) + `COMO_CAIU.naoCaiu`, e o desfecho com luta não escreve. Perder/fugir: `aDerrotaNoConfronto` — um passo do relógio do vilão (porta do preço do quadro), a besta ALERTA (chave no save, campo novo `confrontosAlertas`) e o cartão seguinte sem Espreitar (`so: "naoViram"`), o covil não reabre até sair dele, e a pauta diz «X me venceu e foi embora; segue viva e solta». Suíte nova `teste-a-derrota-no-confronto` (32): 8 falhas no HEAD antigo.
+- **2 · o herói caído é dito** (`8f3cdf3`): `oHeroiCaido`/`O_HEROI_CAIDO` (tela-de-batalha.js) — «Caído · morrendo», os testes de morte, quem ainda luta, «toque em Esperar». Só forma e texto.
+- **3 · o rumo** (`76be534`): `oRumoDaBusca` — uma porta «Ir até <lugar>» (lugar do passo ou o covil) pela frase da abertura e a proposta da frase (o veredito da ida). Some ao chegar.
+- **4 · a ida sem o sistema** (`3376c8e`): `aIdaSemOSistema` (lugar.js) — frase de ir/seguir/atrás de → NÃO PODE «estou em X». Decisão média: a régua da rua em `teste-motor-pauta-do-turno` aceita a linha (motivo escrito); nos casos 275/281 o teto rearruma e a QUEM CARREGA cede.
+- **5 · a peça viva** (`2532d9e`): `caiuNaLuta` — fila, caveira e nome riscado não leem quem fugiu/saiu de pé.
+- **Não feito:** a pista falsa de outro esconderijo («Bateria Alta») não tem veto próprio; o covil não muda de sítio (nenhuma quest declara para onde a fera iria). `src/pecas/` (não rastreado, de outra mão) põe o `check-pt-br` vermelho na árvore.
+
 ## 17/11 · sem versão — S7b, a poda e a porta · commits 7ef3573 · a9e68e1
 
 A mão do motor, com o bastão do App das 15:23 às 15:47 (S7b), devolvido.
