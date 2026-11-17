@@ -222,7 +222,11 @@ t("o Cronista devolve a ficha que deixou", /if \(!msgs\.length && !tocouCanone &
 t("os 'antes' esquecem-se na campanha nova, no save carregado e no turno desfeito",
   (APP.match(/try \{ esquecerORecibo\(\); \} catch \(e\) \{ calou\("esquecer o recibo/g) || []).length === 3);
 t("quem fecha a luta e sabe como diz: a vitória do golpe e a vitória declarada",
-  /notarFechoDaLuta\(\{ combate: c, desfecho: caidosDaLuta\(c\)\.length \? "vitoria" : "encerrada" \}\);\s*\n\s*combateRef\.current = null;/.test(APP)
+  /notarFechoDaLuta\(\{ combate: c, desfecho: caidosDaLuta\(c\)\.length \? "vitoria" : "encerrada" \}\);\s*\n(\s*\/\*[^\n]*\*\/\s*\n)?\s*confrontoEmLutaRef\.current = null;\s*\n\s*combateRef\.current = null;/.test(APP)
+  /* (movido, S7c 17/11: entre o fecho dito e o combate fechado entrou o
+     esquecer do confronto (`confrontoEmLutaRef.current = null`, com o seu
+     comentário) — a vitória não cobra a derrota do confronto. A intenção é a
+     mesma: quem fecha a luta diz o desfecho, e só então a luta se fecha.) */
   /* (A1 · as pontas) o retrato da vitória declarada passou de `combateAntes`
      a `retratoComOsFinais(combateAntes, finais)`: a tela do fim desenha esse
      retrato, e com o de antes o último lobo ficava de pé. A intenção da

@@ -140,7 +140,11 @@ console.log("\n[6. A FIAÇÃO: A VEZ DO MUNDO PERGUNTA, E O ESTÁVEL FICA QUIETO
   ok(/\$\{morteTxt\}\$\{envelopeSemSaida\}/.test(corpo) && /\(!envelopeSemSaida && persAtual\.vida <= 0\)/.test(corpo), "o Narrador recebe o desfecho, e não o 'um aliado pode me estabilizar' de quem já acordou");
   const fss = APP.slice(APP.indexOf("const fecharSemSaida = (persBase, { forcar = false } = {}) => {"), APP.indexOf("const fecharSeTodosCairam = (persBase = null) => {"));
   ok(fss.length > 500 && !/fecharSeTodosCairam\(/.test(fss) && !/concluirMasmorraDoChefe|gerarEspolios/.test(fss), "a luta perdida NÃO passa pela porta da vitória: nada de espólio nem de tesouro do chefe");
-  ok(/notarFechoDaLuta\(\{ combate: fimDaLuta, desfecho: [^}]*"derrota"[^}]*linha:/.test(fss), "e a tela do fim recebe o desfecho e a frase do que o inimigo fez");
+  /* (movido, S7c 17/11: o desfecho deixou de ser escrito dentro da chamada e
+     virou a const `desfechoDoFecho`, porque a derrota no confronto também o
+     lê (`cobrarADerrotaNoConfronto`). A intenção é a mesma: a tela do fim
+     recebe a derrota e a frase do que o inimigo fez.) */
+  ok(/const desfechoDoFecho = [^;]*"derrota";/.test(fss) && /notarFechoDaLuta\(\{ combate: fimDaLuta, desfecho: desfechoDoFecho, linha:/.test(fss), "e a tela do fim recebe o desfecho e a frase do que o inimigo fez");
   ok(/combateRef\.current = null;/.test(fss) && /calou\("fechar a luta sem saída", e\)/.test(fss), "fecha a luta de verdade, em try/calou");
   /* (movido, T1-A 8.ª fatia: a regra da queda saiu do resolverQueda do App
      para aQueda, src/motor/entrega-do-turno.js — o resolverQueda ficou

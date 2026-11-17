@@ -165,7 +165,12 @@ sec("8. A COSTURA NO APP");
   t("e sai do registro", /registro: registroRef\.current, dia: diaRef\.current/.test(APP));
   /* o "Continuar aventura" simples não fazia chamada nenhuma e continua
      não fazendo: o recap é de graça */
-  const bloco = APP.slice(APP.indexOf("const volta = houveIntervalo"), APP.indexOf("const volta = houveIntervalo") + 1800);
+  /* (movido, S7c 17/11: o bloco era uma janela fixa de 1800 caracteres, e a
+     linha do load dos confrontos alerta (`garantirAlertas(sv.confrontosAlertas)`)
+     empurrou o `if (comResumo` para além dela — ~1926. A janela vai agora até
+     esse if; a intenção é a mesma: o recap sai antes, e só a cena custa.) */
+  const iVolta = APP.indexOf("const volta = houveIntervalo"), iResumo = APP.indexOf("if (comResumo && !sv.rolagem)", iVolta);
+  const bloco = APP.slice(iVolta, iResumo < 0 ? iVolta + 1800 : iResumo + 40);
   t("mostrar o recap não custa chamada", bloco.indexOf("pushMsgs([{ autor: \"sistema\", texto: textoDoRecap") < bloco.indexOf("if (comResumo"));
   t("só reabrir a cena custa", /if \(comResumo && !sv\.rolagem\)/.test(bloco));
   t("o que já foi contado fica marcado", /ateODia: diaRef\.current/.test(APP));

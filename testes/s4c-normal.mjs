@@ -72,6 +72,31 @@ export function soACena(v) {
   return { linhas, refs };
 }
 
+/* S7c (17/11, a ida que o sistema não fez): a frase de ir que o turno não
+   levou a outro sítio ganha no NÃO PODE a linha «estou em X, e daqui só saio
+   quando o sistema me mover» (lugar.js, aIdaSemOSistema) — também na rua da
+   cidade, onde o recorte não a tinha. A folga cobre SÓ essa linha: tirada
+   ela (o rótulo NÃO PODE passa à linha seguinte, como no veto de quem não
+   está), o resto tem de ser o do recorte. Lê-se em qualquer valor: o texto
+   da pauta, as mensagens do pedido à rede, os refs. */
+export const LINHA_DA_IDA = "daqui só saio quando o sistema me mover";
+export function semAIda(v) {
+  if (typeof v === "string") {
+    if (!v.includes(LINHA_DA_IDA)) return v;
+    const out = [];
+    for (const l of v.split("\n")) {
+      if (l.includes(LINHA_DA_IDA)) { if (/^NÃO PODE\s/.test(l)) out.push("§rotulo-da-ida"); continue; }
+      if (out[out.length - 1] === "§rotulo-da-ida") { out.pop(); out.push("NÃO PODE  " + l.trim()); continue; }
+      out.push(l);
+    }
+    return out.filter((l) => l !== "§rotulo-da-ida").join("\n");
+  }
+  if (Array.isArray(v)) return v.map(semAIda);
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, semAIda(x)]));
+  return v;
+}
+export const temAIda = (v) => JSON.stringify(v === undefined ? null : v).includes(LINHA_DA_IDA);
+
 /* S4e (16/11): a cena mudou SÓ porque os nomes à mão calaram? (a secção NOMES
    À MÃO, a cauda «a quem não tem nome: …» da linha EM CENA e os refs dela).
    É a única mudança que a rua da cidade pode ter — os testes da regra «a cena

@@ -20,7 +20,7 @@
    recorte acusa todo nome sem dublê. A suíte não lê o texto de src/motor/
    (a catraca teste-assercoes-de-texto): a peça prova-se jogando.
    ============================================================ */
-import { soACena, soOsNomesCalaram, semCena } from "./s4c-normal.mjs";
+import { soACena, soOsNomesCalaram, semCena, semAIda, temAIda } from "./s4c-normal.mjs";
 import { lerODourado, correrOsCasos, casosDoPedido, fotoGuardada, mesmaFoto, N_CASOS, osModulos, osPadroes } from "./pedido-bloco.mjs";
 import { N_DA_PAUTA } from "./pauta-bloco.mjs";
 import { oPedidoDoTurno, REFS_DO_PEDIDO, RENDER_DO_PEDIDO, ENTRADA_DO_PEDIDO, PEDIDO_AO_NARRADOR } from "../src/motor/pedido-do-turno.js";
@@ -96,7 +96,17 @@ console.log(`      a cena da pauta mudou em ${comCena.length} pedidos`);
    (ELENCO_DO_LUGAR.nomesAMao = false), e saíam justamente na rua da cidade; a
    rua pode mudar agora, mas só por eles (s4c-normal.mjs, soOsNomesCalaram). */
 const soNomes = (i) => soOsNomesCalaram({ t: String(P[i].pauta == null ? "" : P[i].pauta), r: P[i].refs }, { t: String(R[i].pauta == null ? "" : R[i].pauta), r: R[i].refs });
-t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua, só os nomes à mão que calaram)", comCena.every((i) => soNomes(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))));
+/* MOVIDA (17/11, S7c — a ida que o sistema não fez), E O MOTIVO: a frase de
+   ir que o turno não levou a outro sítio ganha no NÃO PODE a linha «estou em
+   X» (lugar.js, aIdaSemOSistema) — também na rua da cidade. A rua pode mudar
+   agora por ela, e só por ela: tirada a linha (s4c-normal.mjs, semAIda), a
+   cena é a do recorte, ou o que entra a mais é só a linha EM CENA que o teto
+   rearrumou — a mesma régua de teste-motor-pauta-do-turno (casos 275/281). */
+const pautaDe = (f) => String(f.pauta == null ? "" : f.pauta);
+const soAIda = (i) => temAIda(pautaDe(P[i])) && (semAIda(pautaDe(P[i])) === pautaDe(R[i])
+  || JSON.stringify(soACena({ t: semAIda(pautaDe(P[i])) }).linhas) === JSON.stringify(soACena({ t: pautaDe(R[i]) }).linhas)
+  || (() => { const a = semAIda(pautaDe(P[i])).split("\n"), b = pautaDe(R[i]).split("\n"); return a.filter((l) => !b.includes(l)).every((l) => /^EM CENA\s/.test(l)); })());
+t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua, só os nomes à mão que calaram, ou a ida sem o sistema)", comCena.every((i) => soNomes(i) || soAIda(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))));
 /* S4e: e onde a única diferença é o calou("nomesAMao") que já não pode soar (o bloco dos nomes calou) */
 const soAPortaDosNomes = (i) => { const x = fotoGuardada(P[i], i), y = D.fotos[i]; return Object.keys(x).every((k) => k === "portas" || k === "nPortas" || JSON.stringify(x[k]) === JSON.stringify(y[k])) && JSON.stringify(semCena(P[i].portas)) === JSON.stringify(semCena(R[i].portas)); };
 const iguais = P.reduce((a, f, i) => a + ((cenaMudou(i) || soOSystem(i) || soAPortaDosNomes(i) || (DE_S4(i) ? fotoS4(f) === fotoS4(R[i]) : mesmaFoto(fotoGuardada(f, i), D.fotos[i]))) ? 1 : 0), 0);

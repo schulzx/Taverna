@@ -21,7 +21,7 @@
    de src/motor/ (a catraca teste-assercoes-de-texto): a peça prova-se
    jogando.
    ============================================================ */
-import { semCena, soACena } from "./s4c-normal.mjs";
+import { semCena, soACena, semAIda, temAIda } from "./s4c-normal.mjs";
 import { lerODourado, lerOPedido, correrOsCasos, casosDoPreludio, fotoGuardada, mesmaFoto, correrAsCadeias, cadeiaGuardada, mesmaCadeia, N_CASOS, N_PRELUDIO, osModulos, osPadroes } from "./preludio-bloco.mjs";
 import { oPreludioDoTurno, REFS_DO_PRELUDIO, RENDER_DO_PRELUDIO, SAIDA_DO_PRELUDIO, PORTAS_DO_PRELUDIO } from "../src/motor/preludio-do-turno.js";
 import { oPedidoDoTurno, ENTRADA_DO_PEDIDO } from "../src/motor/pedido-do-turno.js";
@@ -123,7 +123,18 @@ sec("4. A cadeia: o prelúdio e o pedido, encadeados, dão o pedido à rede dos 
        esse calou e sem a foto dos refs que o pushMsgs leva */
     const soOsNomes = (() => { const x = semCena(C[i]), y = semCena(r); const ks = Object.keys({ ...x, ...y }).filter((k) => JSON.stringify(x[k]) !== JSON.stringify(y[k])); return ks.every((k) => ["portas", "nPortas", "portasSemNomes", "refs"].includes(k)) && x.portasSemNomes === y.portasSemNomes && x.refsSemNomes === y.refsSemNomes; })();
     const cena = cenaMudouP(i) || JSON.stringify(soACena({ t: msgs(C[i]) })) !== JSON.stringify(soACena({ t: msgs(r) })) || sys(C[i]) !== sys(r) || soOsNomes;
-    if (cena) daCenaC.push(i); else orfaosC.push(i);
+    /* MOVIDA (17/11, S7c — a ida que o sistema não fez), E O MOTIVO: a frase de
+       ir que o turno não levou a outro sítio ganha no NÃO PODE da pauta a linha
+       «estou em X» (s4c-normal.mjs, semAIda) — também na rua, onde o recorte não
+       a tinha (casos 118, 212, 272). A folga cobre só ela: tirada a linha, a
+       mensagem não tem nada a mais que o recorte, e o que lhe falta é só uma
+       secção inteira que o teto deixou cair para lhe dar lugar (212 e 272: a
+       QUEM — a regra do teto, como os casos 275/281 de teste-motor-pauta-do-turno). */
+    const soAIda = temAIda(msgs(C[i])) && sys(C[i]) === sys(r) && (() => {
+      const a = semAIda(msgs(C[i])).split("\n"), b = msgs(r).split("\n");
+      return a.every((l) => b.includes(l)) && b.filter((l) => !a.includes(l)).every((l) => /^[A-ZÀ-Ú][A-ZÀ-Ú ]*\s{2,}\S/.test(l));
+    })();
+    if (cena || soAIda) daCenaC.push(i); else orfaosC.push(i);
   });
   const iguais = N_PRELUDIO - falham.length + daCenaC.length;
   console.log(`      a cadeia: ${N_PRELUDIO - falham.length} à régua de sempre, ${daCenaC.length} pela cena, ${orfaosC.length} sem causa`);

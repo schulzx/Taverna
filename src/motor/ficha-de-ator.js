@@ -1060,7 +1060,10 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     /* QQ · Q3 (14/11): o veto do caso (QUADRO_NA_PAUTA.naoPode, na secção
        vetoDoCaso): o que está por saber é fato — ainda não se sabe */
     { de: /^revelar o que ainda está por saber em (.+?) ((.+?)): isso só se sabe pelo dado$/, vai: "aconteceu", como: (m) => `Em ${m[1]}, ainda está por saber: ${m[2]}.` },
-    { de: /^pôr nas mãos de (.+?) o que eu não tenho: (.+?) — /, vai: "aconteceu", resultado: "dar", como: (m, c) => `${c.H} não tem o que queria dar a ${m[1]}: ${m[2].replace(/\btenho\b/g, "tem")}.` },
+    /* S7c (17/11): a ida que o sistema não fez (lugar.js, A_IDA_SEM_O_SISTEMA.linha)
+       — o fato: o herói continua onde está */
+    { de: /^narrar a chegada a outro lugar: estou em (.+?), e daqui .*$/, vai: "cena", como: (m, c) => `${c.H} continua em ${m[1]}: a ida ainda não aconteceu.` },
+    { de: /^pôr nas mãos de (.+?) o que eu não tenho:(.+?) — /, vai: "aconteceu", resultado: "dar", como: (m, c) => `${c.H} não tem o que queria dar a ${m[1]}: ${m[2].replace(/\btenho\b/g, "tem")}.` },
   ],
   "O RUMO": [ { de: /^(.*)$/, vai: "rumo", como: (m) => m[1] } ],
   /* QQ · Q3 (14/11): O CASO (oQuadroNaPauta, quadro-da-quest.js) — o que o
