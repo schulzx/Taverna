@@ -1188,3 +1188,38 @@ export const LUGAR_PROMPT = `ONDE O HERÓI ESTÁ (v9.39):
 - SAIR DE UM LUGAR É UM MOVIMENTO, e movimento é do jogador: o herói só volta à cidade quando ele próprio escreveu que sai.
 - DENTRO DE UM COMBATE o lugar não muda, em hipótese nenhuma: enquanto a luta corre quem diz onde cada um está é o tabuleiro do sistema, em metros. Nada de arrastar o herói um andar acima entre dois golpes.
 - Lugar assim NÃO é viagem: ir e voltar custa HORAS. Nunca invente dias de marcha para o que fica nos arredores — viagem de verdade tem sistema próprio e começa por outro caminho.`;
+
+/* ============================================================
+   A IDA QUE O SISTEMA NÃO FEZ (S7c, 17/11, a sessão jogada)
+
+   «Sigo o rastro até Roda dos Punhos», com o herói em Doca Seca: o sistema
+   não o moveu (o sítio não era um passo daqui), e o Narrador narrou a
+   chegada — e deu, a seguir, a pista de outro esconderijo. A frase que
+   declara ir ou seguir (o verbo de ir, o «até», o «atrás de», o rastro) e
+   o herói que continua onde está: a pauta diz ao Narrador onde ele está.
+   O lugar dito é SEMPRE o de agora, depois de o turno ter movido o que
+   tinha a mover — logo a linha é verdade mesmo quando o passo aconteceu
+   (o herói que chegou à forja «está na forja»: narrar a chegada lá é
+   permitido; a outro sítio, não). Na estrada e na masmorra, nada: lá
+   quem move é a viagem e a sala.
+
+   aIdaSemOSistema(frase, { aqui, cidade, naEstrada, naMasmorra }) →
+     a linha do NÃO PODE, ou null
+   ============================================================ */
+export const A_IDA_SEM_O_SISTEMA = Object.freeze({
+  atras: /\batras d[aeo]s?\b|\bno encalco\b/,
+  linha: "narrar a chegada a outro lugar: estou em {aqui}, e daqui só saio quando o sistema me mover",
+});
+export function aIdaSemOSistema(frase, o) {
+  try {
+    const c = o && typeof o === "object" ? o : {};
+    if (c.naEstrada || c.naMasmorra) return null;
+    const cru = String(frase || "");
+    if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
+    const t = norm(cru);
+    const aqui = String(c.aqui || "").trim() || String(c.cidade || "").trim();
+    if (!aqui) return null;
+    if (!RX_VOU.test(t) && !RX_ATE.test(t) && !VOLTAR_A.rx.test(t) && !A_IDA_SEM_O_SISTEMA.atras.test(t)) return null;
+    return A_IDA_SEM_O_SISTEMA.linha.replace("{aqui}", aqui);
+  } catch { return null; }
+}

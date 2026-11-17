@@ -86,7 +86,7 @@ import { estruturaPorId, garantirHistoria } from "../historia.js";
 import { paraPauta as interpreteParaPauta, jaMeViuAntes, marcarMovimento } from "../interprete.js";
 import { garantirForma, leiParaPauta } from "../lei-da-forma.js";
 import { nomeDaMoeda } from "../lexico.js";
-import { tiposPedidos } from "../lugar.js";
+import { tiposPedidos, aIdaSemOSistema } from "../lugar.js";
 import { luzDaLuta, luzParaPauta } from "../luz.js";
 import { horizonteDaPergunta, linhaDaFicha } from "../masmorra-sem-cidade.js";
 import { masmorraParaPauta, saidasDe } from "../masmorras.js";
@@ -1190,6 +1190,12 @@ export function aPautaDoTurno(estado, entrada, portas) {
         }
         p = porNaPauta(p, "naoPode", procuradoParaPauta($ref.lei, { cidade: $ref.cidadeAtual, dia: $ref.dia }).naoPode);
       } catch (e) { calou("crimeParaPauta", e); }
+      /* S7c: a frase de ir que o sistema não levou a outro sítio — o herói está
+         onde o turno o deixou (lugar.js, aIdaSemOSistema) */
+      try {
+        const ida = aIdaSemOSistema(acaoDoTurno, { aqui: ($ref.lugar && $ref.lugar.nome) || "", cidade: $ref.cidadeAtual || "", naEstrada: !!$ref.jornada, naMasmorra: !!$ref.masmorra });
+        if (ida) p = porNaPauta(p, "naoPode", [ida]);
+      } catch (e) { calou("a ida sem o sistema", e); }
       /* CB lote 2: o canal de um turno (PAUTA_DE_UM_TURNO) — logo a seguir ao
          crime, com as mesmas secções; uma vez só, e depois limpo. Só escreve o
          ref quando havia o que ler (o turno sem canal não muda nada). */

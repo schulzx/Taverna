@@ -16,7 +16,8 @@
    §1 a sessão refeita: espreitar falha → luta → derrota → nada fecha;
    §2 o preço e a pauta;
    §3 o segundo confronto: a besta alerta (sem Espreitar), e vencer fecha;
-   §4 o null e o lixo. */
+   §4 o null e o lixo;
+   §5 a ida que o sistema não fez: a pauta diz onde o herói está. */
 import { questPorId, abrirQuest, avancarQuest, estadoDaQuest } from "../src/biblioteca-de-quests.js";
 import { oConfrontoAqui, oLivroDoEncontro, aDerrotaNoConfronto, garantirAlertas, aChaveDoConfronto, O_CONFRONTO_DA_QUEST } from "../src/o-confronto-da-quest.js";
 import { escolhasDoEncontro, resolverEscolha } from "../src/encontro-na-estrada.js";
@@ -25,6 +26,7 @@ import { garantirFactos, encontrou, derrotou, COMO_CAIU } from "../src/livro-de-
 import { anotarOLivro } from "../src/motor/livro-do-turno.js";
 import { aplicarEfeitosNoEstado } from "../src/motor/quests-do-turno.js";
 import { registrarConsulta } from "../src/npcs.js";
+import { aIdaSemOSistema, A_IDA_SEM_O_SISTEMA } from "../src/lugar.js";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -107,6 +109,18 @@ e = livro(e, { derrotados: [{ nome: "Quimera", vida: 0, derrotado: true }] });
 av();
 /* morta, a solução «matou» da ficha fecha a quest inteira (fecha: concluida) */
 t("vencida, a etapa fecha pela lâmina (matou: a quest conclui)", R.feitas.fera && R.feitas.fera.ramo === "lamina" && R.feitas.fera.variante === "matou" && R.estado === "concluida", J({ f: R.feitas, e: R.estado }));
+
+sec("§5 a ida que o sistema não fez (as frases da sessão)");
+{
+  const ctx = { aqui: "", cidade: "Doca Seca" };
+  const l1 = aIdaSemOSistema("Sigo o rastro até Roda dos Punhos", ctx);
+  t("«Sigo o rastro até Roda dos Punhos» em Doca Seca: a pauta veta a chegada, o herói continua em Doca Seca", l1 === "narrar a chegada a outro lugar: estou em Doca Seca, e daqui só saio quando o sistema me mover", l1);
+  t("«Vou atrás dela»: o mesmo veto", !!aIdaSemOSistema("Vou atrás dela", ctx));
+  t("o lugar dito é o de agora (o turno já moveu o que tinha a mover)", /estou em Forja do Gaspar/.test(aIdaSemOSistema("Vou até a forja", { aqui: "Forja do Gaspar", cidade: "Doca Seca" })));
+  t("a frase sem ida não leva veto (examinar, perguntar)", aIdaSemOSistema("Examino as pegadas no chão", ctx) === null && aIdaSemOSistema("Pergunto ao ferreiro o preço", ctx) === null);
+  t("na estrada e na masmorra, nada (lá quem move é a viagem e a sala); lixo, nada", aIdaSemOSistema("Sigo em frente", { ...ctx, naEstrada: true }) === null && aIdaSemOSistema("Vou até a porta", { ...ctx, naMasmorra: true }) === null && aIdaSemOSistema(null, ctx) === null && aIdaSemOSistema("[sistema] vou", ctx) === null);
+  t("a tabela: o «atrás de» e o «no encalço» contam como ida", A_IDA_SEM_O_SISTEMA.atras.test("atras da quimera") && A_IDA_SEM_O_SISTEMA.atras.test("no encalco dela"));
+}
 
 sec("§4 o null e o lixo");
 t("aDerrotaNoConfronto com lixo dá null", aDerrotaNoConfronto(null, "derrota") === null && aDerrotaNoConfronto({ quest: {} }, "derrota") === null && aDerrotaNoConfronto("x", null) === null);

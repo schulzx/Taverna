@@ -102,7 +102,19 @@ t("S4c: nenhuma diferença fora da cena sem a cena ter mudado (o texto, os refs,
    (ELENCO_DO_LUGAR.nomesAMao = false) e eles saíam justamente na rua da cidade;
    a rua pode mudar agora, mas só por eles (s4c-normal.mjs, soOsNomesCalaram). */
 const soNomes = (i) => soOsNomesCalaram({ t: PECA[i].texto, r: PECA[i].refs }, { t: RECORTE[i].texto, r: RECORTE[i].refs });
-t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua da cidade, só os nomes à mão que calaram)", IDX_S4C.every((i) => !cenaMudou(i) || soNomes(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))), IDX_S4C.filter((i) => cenaMudou(i) && !(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))).slice(0, 5).join(","));
+/* MOVIDA (17/11, S7c — a ida que o sistema não fez), E O MOTIVO: a frase de
+   ir que o turno não levou a outro sítio ganha no NÃO PODE a linha «estou em
+   X» (lugar.js, aIdaSemOSistema) — também na rua da cidade. A rua pode mudar
+   agora por ela; tirada essa linha, a cena é a do recorte (ou só os nomes). */
+const semAIda = (tx) => String(tx).split("\n").filter((l) => !l.includes("daqui só saio quando o sistema me mover")).join("\n");
+/* (os refs da cena que guardam o hash do texto — o elencoCache, os nomes
+   pendentes — mudam com a linha; a régua é o texto sem ela, e as linhas da cena) */
+const soAIda = (i) => PECA[i].texto.includes("daqui só saio quando o sistema me mover")
+  && (semAIda(PECA[i].texto) === RECORTE[i].texto || JSON.stringify(soACena({ t: semAIda(PECA[i].texto) }).linhas) === JSON.stringify(soACena({ t: RECORTE[i].texto }).linhas)
+    /* a ida junta-se aos nomes que calaram (casos 275 e 281: a linha EM CENA
+       entra, e o teto deixa a QUEM CARREGA de fora — a regra do teto) */
+    || (() => { const a = semAIda(PECA[i].texto).split("\n"), b = RECORTE[i].texto.split("\n"); return a.filter((l) => !b.includes(l)).every((l) => /^EM CENA\s/.test(l)); })());
+t("S4c: a cena muda só onde há sítio, fora dos muros, masmorra ou estrada (na rua da cidade, só os nomes à mão que calaram, ou a ida sem o sistema)", IDX_S4C.every((i) => !cenaMudou(i) || soNomes(i) || soAIda(i) || !!(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))), IDX_S4C.filter((i) => cenaMudou(i) && !soNomes(i) && !soAIda(i) && !(CASOS[i].estado && (CASOS[i].estado.lugar || CASOS[i].estado.jornada || CASOS[i].estado.masmorra || !CASOS[i].estado.cidadeAtual))).slice(0, 5).join(","));
 t("S4: na jornada a linha EM CENA da peça nunca traz quem o recorte não trazia (só tira a cidade)", PECA.every((f, i) => { if (!DE_S4(i)) return true; /* S4c: o grupo («com você») cabe quando os nomes à mão saem — não é gente da cidade */ const nomes = (tx) => ((String(tx).split("\n").find(linhaEmCena) || "").replace(/[^·;]*\(com você\)/g, "").match(/[A-ZÁÉÍÓÚ][\wÀ-ú]+(?: [A-ZÁÉÍÓÚo][\wÀ-ú]+)*(?= \()/g) || []); const a = nomes(RECORTE[i].texto); return nomes(f.texto).every((n) => a.includes(n)); }));
 t("as portas na mesma ordem onde a cena não mudou (calou, setPersonagem, pushMsgs com a foto dos refs)", PECA.every((f, i) => cenaMudou(i) || JSON.stringify(f.portas) === JSON.stringify(RECORTE[i].portas)));
 t("os que estouram estouram igual (6, com a mesma mensagem)", PECA.filter((f) => f.erro).length === 6 && PECA.every((f, i) => f.erro === RECORTE[i].erro));
