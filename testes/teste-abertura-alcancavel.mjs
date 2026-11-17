@@ -20,14 +20,19 @@
      §4 o nome com hífen inteiro («Alaric Barba-Ruiva», não «Alaric Barba-»);
      §5 quem a frase chama e a história pôs noutra cidade: o sistema diz onde;
      §6 a medida «fechável sem a IA» (o modelo de passos, escrito abaixo),
-        por molde — e a lista dos factos sem caminho do sistema. */
+        por molde — e a lista dos factos sem caminho do sistema;
+     §7 a fiação do App (os três patches do relato): o convite e a proposta
+        recebem os passos, a gente da história é conhecida, e as cidades da
+        quest aberta entram no mapa por descobrirCidade — o mesmo laço que a
+        medida «com as cidades» do §6 corre aqui em Node. */
 import { sortearMesa, mundoDaMesa, nomeDaCampanhaDaMesa, escolhasDaMesa } from "../src/criacao-da-mesa.js";
 import { montarFicha } from "../src/ficha-da-criacao.js";
 import { aFichaAberta, comACidadePisada } from "../src/abrir-o-save.js";
 import { lexicoDoMundo } from "../src/lexico-do-mundo.js";
 import { moldePorId } from "../src/moldes.js";
 import { mapaDaCriacao, mapaDaCampanhaNova, espinhaNaRegiao } from "../src/regiao.js";
-import { gerarGeografia } from "../src/geografia.js";
+import { gerarGeografia, descobrirCidade } from "../src/geografia.js";
+import { readFileSync } from "node:fs";
 import { estenderEspinha } from "../src/saga.js";
 import { guildasDoMundo } from "../src/guildas.js";
 import { nucleoDaCampanha } from "../src/nucleo.js";
@@ -110,7 +115,12 @@ function fechavel(c, { comAHistoria, comAsCidades }) {
   const R = { papeis: c.a0.papeis || {} };
   const viz = (nome) => (c.mapa.rotas || []).filter((r) => r && Number(r.dias) <= 12 && (norm(r.de) === norm(nome) || norm(r.para) === norm(nome))).map((r) => (norm(r.de) === norm(nome) ? r.para : r.de));
   const conhecidas = new Set([norm(c.cidade)]);
-  if (comAsCidades) for (const p of Object.values(R.papeis)) if (p && p.cidade) conhecidas.add(norm(p.cidade));
+  if (comAsCidades) {
+    /* o laço do patch 3 (aplicarAsQuests, App.jsx), em Node: o que o mapa passa a dar por descoberto é o que o resolver deixa viajar */
+    let m = c.mapa;
+    for (const p of Object.values(R.papeis)) if (p && p.cidade) { const d = descobrirCidade(m, p.cidade); if (d.nova) m = d.mapa; }
+    for (const x of (m.cidades || [])) if (x && x.descoberta !== false) conhecidas.add(norm(x.nome));
+  }
   let aqui = norm(c.cidade);
   const visitar = (cid) => { aqui = norm(cid); conhecidas.add(aqui); for (const v of viz(cid)) conhecidas.add(norm(v)); };
   const folha = (pred, args) => {
@@ -260,6 +270,27 @@ sec("§6 fechável sem a IA (o modelo do cabeçalho), por molde");
   t("com ele, o que ainda não fecha é só a cidade fora do mapa conhecido", Object.keys(depois.faltas).every((k) => /na névoa|sair da cidade/.test(k)), Object.keys(depois.faltas).join(" | "));
   t("e com ele ≥ 90% fecham sem a IA", td.f >= 0.9 * td.n, pct(td.f, td.n));
   t("com as cidades da quest no mapa, todas fecham", tp.f === tp.n, Object.keys(comPatch.faltas).join(" | "));
+}
+
+sec("§7 a fiação do App: os três patches da abertura");
+{
+  const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
+  const trecho = (ancora, n = 900) => { const i = app.indexOf(ancora); return i < 0 ? "" : app.slice(i, i + n); };
+  const conv = trecho("const vereditoDoConvite = (nome) => pesarConvite(", 600);
+  t("1 · o convite passa o nome e os passos da história a pesarConvite", /\bnome, passos: \(\(\) => \{ try \{ return passosDasQuestsAgora\(\); \} catch \(e\) \{ calou\(/.test(conv), conv.slice(0, 200));
+  const conh = trecho("const conhecidos = new Set();", 2200);
+  t("2 · a gente que os passos nomeiam entra nos conhecidos da recusa", /for \(const p of passosDasQuestsAgora\(\)\) for \(const c of \(\(p && p\.candidatos && p\.candidatos\.pessoa\) \|\| \[\]\)\) if \(c && c\.nome\) conhecidos\.add\(c\.nome\); \} catch \(e\) \{ calou\(/.test(conh));
+  t("2 · e a proposta da frase recebe os passos", /aPropostaDaFrase\(leituraDaFrase\(acao\), \{ \.\.\.estadoDoPedido\(\), passos: \(\(\) => \{ try \{ return passosDasQuestsAgora\(\);/.test(app));
+  const aq = trecho("const aplicarAsQuests = (r, onde) => {", 2400);
+  t("3 · aplicarAsQuests põe no mapa as cidades dos papéis da quest aberta", /R\.estado !== "aberta"[\s\S]*Object\.values\(R\.papeis[\s\S]*descobrirCidade\(mapaRef\.current, p\.cidade\)[\s\S]*setMapa\(d\.mapa\)[\s\S]*calou\("BQ7 · " \+ onde \+ " · as cidades da quest no mapa"/.test(aq));
+  /* o laço do patch 3 numa campanha real: a cidade de cada papel sai da névoa */
+  const c = mundos.find((x) => x.a0 && x.a0.papeis && Object.values(x.a0.papeis).some((p) => p && p.cidade && norm(p.cidade) !== norm(x.cidade) && (x.mapa.cidades || []).some((k) => norm(k.nome) === norm(p.cidade) && k.descoberta === false)));
+  if (c) {
+    let m = c.mapa;
+    for (const p of Object.values(c.a0.papeis)) if (p && p.cidade) { const d = descobrirCidade(m, p.cidade); if (d.nova) m = d.mapa; }
+    const fora = Object.values(c.a0.papeis).filter((p) => p && p.cidade && !(m.cidades || []).some((k) => norm(k.nome) === norm(p.cidade) && k.descoberta !== false));
+    t("3 · numa campanha com papel longe (" + c.s + "), toda cidade de papel fica conhecida", fora.length === 0, fora.map((p) => p.cidade).join(", "));
+  } else t("3 · há campanha com papel numa cidade na névoa, para o laço ter o que abrir", false);
 }
 
 console.log(`\na abertura alcançável: ${ok} passaram, ${mal} falharam`);

@@ -7595,6 +7595,17 @@ export default function Taverna() {
     const fichaAntes = personagemRef.current || personagem;
     try { if (e.personagem) acordouNaQuest(fichaAntes, e.personagem); } catch (err) { calou("TE10 · " + onde + " · o despertar", err); }
     try { if (e.espinha) espinhaRef.current = e.espinha; } catch (err) { calou("BQ7 · " + onde + " · a espinha", err); }
+    /* a abertura alcançável: a cidade que a quest aberta nomeia (o destino da escolta, a ilha do passo) entra no mapa — sem ela, o resolver não deixa viajar */
+    try {
+      for (const R of garantirQuestsDaEspinha((espinhaRef.current || {}).quests).registos) {
+        if (!R || R.estado !== "aberta") continue;
+        for (const p of Object.values(R.papeis || {})) {
+          if (!p || !p.cidade) continue;
+          const d = descobrirCidade(mapaRef.current, p.cidade);
+          if (d.nova) { mapaRef.current = d.mapa; setMapa(d.mapa); }
+        }
+      }
+    } catch (err) { calou("BQ7 · " + onde + " · as cidades da quest no mapa", err); }
     try { if (e.saber) saberRef.current = e.saber; } catch (err) { calou("BQ7 · " + onde + " · o saber", err); }
     try { if (e.historia) historiaRef.current = e.historia; } catch (err) { calou("BQ7 · " + onde + " · o arco", err); }
     try { if (e.personagem) { personagemRef.current = e.personagem; setPersonagem(e.personagem); } } catch (err) { calou("BQ7 · " + onde + " · a ficha", err); }
@@ -23594,6 +23605,8 @@ export default function Taverna() {
 
   const vereditoDoConvite = (nome) => pesarConvite(indoleDe(sementeMundo(), { nome }), {
     convivio: convivioCom(nome), fama: famaAtual(),
+    /* a abertura alcançável: quem o passo da história pede ao lado vem (indole.js) */
+    nome, passos: (() => { try { return passosDasQuestsAgora(); } catch (e) { calou("o convite: os passos da história", e); return []; } })(),
     grupoCheio: (personagem.grupo || []).filter((g) => !g.invocada).length >= MAX_COMPANHEIROS,
   });
 
@@ -26558,6 +26571,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         for (const n of Object.values(npcsRef.current || {})) if (n && n.nome && !n.morto) conhecidos.add(n.nome);
         try { const ab = aberturaMundoRef.current || {}; if (ab.pista && ab.pista.nome) conhecidos.add(ab.pista.nome); if (ab.alvo && ab.alvo.quem) conhecidos.add(ab.alvo.quem); } catch (e) { calou("a proposta: os nomes da abertura", e); }
         for (const m of (missoesRef.current || [])) if (m && m.status === "ativa") for (const et of (m.etapas || [])) if (et && !et.feito && et.tipo === "falar_com" && et.alvo) conhecidos.add(et.alvo);
+        /* a abertura alcançável: a gente que os passos da história nomeiam é conhecida — a recusa diz onde anda, em vez de «não há ninguém aqui» */
+        try { for (const p of passosDasQuestsAgora()) for (const c of ((p && p.candidatos && p.candidatos.pessoa) || [])) if (c && c.nome) conhecidos.add(c.nome); } catch (e) { calou("a proposta: a gente da história", e); }
         const presentes = [];
         /* S4e (16/11): quem está à vista é a conta única (quem-esta-aqui.js) — a
            cidade inteira contava como presente, e «Falo com Orla» na Feira, com a
@@ -26648,7 +26663,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
           return true;
         }
       } catch (e) { calou("S2 · a mão da frase", e); }
-      const p = aPropostaDaFrase(leituraDaFrase(acao), estadoDoPedido());
+      const p = aPropostaDaFrase(leituraDaFrase(acao), { ...estadoDoPedido(), passos: (() => { try { return passosDasQuestsAgora(); } catch (e) { calou("a proposta: os passos", e); return []; } })() });
       if (!p) { setPropostaDaFrase(null); setPropostaAberta(false); return false; }
       setPropostaDaFrase(p); setPropostaAberta(false);
       setEntrada("");

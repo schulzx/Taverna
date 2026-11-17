@@ -119,6 +119,8 @@ sec("§5 a ida que o sistema não fez (as frases da sessão)");
   t("o lugar dito é o de agora (o turno já moveu o que tinha a mover)", /estou em Forja do Gaspar/.test(aIdaSemOSistema("Vou até a forja", { aqui: "Forja do Gaspar", cidade: "Doca Seca" })));
   t("a frase sem ida não leva veto (examinar, perguntar)", aIdaSemOSistema("Examino as pegadas no chão", ctx) === null && aIdaSemOSistema("Pergunto ao ferreiro o preço", ctx) === null);
   t("na estrada e na masmorra, nada (lá quem move é a viagem e a sala); lixo, nada", aIdaSemOSistema("Sigo em frente", { ...ctx, naEstrada: true }) === null && aIdaSemOSistema("Vou até a porta", { ...ctx, naMasmorra: true }) === null && aIdaSemOSistema(null, ctx) === null && aIdaSemOSistema("[sistema] vou", ctx) === null);
+  /* 17/11: na luta quem move é a luta — a linha da ida tomava o lugar do QUEM na luta agora */
+  t("na luta, nada (a fuga e o recuo são da luta)", aIdaSemOSistema("Vou atrás dela", { ...ctx, naLuta: true }) === null && aIdaSemOSistema("Corro até a porta", { ...ctx, naLuta: true }) === null);
   t("a tabela: o «atrás de» e o «no encalço» contam como ida", A_IDA_SEM_O_SISTEMA.atras.test("atras da quimera") && A_IDA_SEM_O_SISTEMA.atras.test("no encalco dela"));
 }
 

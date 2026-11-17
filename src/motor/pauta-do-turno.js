@@ -1196,7 +1196,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
       /* S7c: a frase de ir que o sistema não levou a outro sítio — o herói está
          onde o turno o deixou (lugar.js, aIdaSemOSistema) */
       try {
-        const ida = aIdaSemOSistema(acaoDoTurno, { aqui: ($ref.lugar && $ref.lugar.nome) || "", cidade: $ref.cidadeAtual || "", naEstrada: !!$ref.jornada, naMasmorra: !!$ref.masmorra });
+        const ida = aIdaSemOSistema(acaoDoTurno, { aqui: ($ref.lugar && $ref.lugar.nome) || "", cidade: $ref.cidadeAtual || "", naEstrada: !!$ref.jornada, naMasmorra: !!$ref.masmorra, naLuta: !!$ref.combate });
         if (ida) p = porNaPauta(p, "naoPode", [ida]);
       } catch (e) { calou("a ida sem o sistema", e); }
       /* CB lote 2: o canal de um turno (PAUTA_DE_UM_TURNO) — logo a seguir ao

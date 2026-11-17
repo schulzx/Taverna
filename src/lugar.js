@@ -1201,9 +1201,11 @@ export const LUGAR_PROMPT = `ONDE O HERÓI ESTÁ (v9.39):
    tinha a mover — logo a linha é verdade mesmo quando o passo aconteceu
    (o herói que chegou à forja «está na forja»: narrar a chegada lá é
    permitido; a outro sítio, não). Na estrada e na masmorra, nada: lá
-   quem move é a viagem e a sala.
+   quem move é a viagem e a sala. Na luta, nada também: quem move é a
+   luta (a fuga, o recuo), e a linha da ida tomava o lugar do QUEM na luta
+   agora na pauta (17/11).
 
-   aIdaSemOSistema(frase, { aqui, cidade, naEstrada, naMasmorra }) →
+   aIdaSemOSistema(frase, { aqui, cidade, naEstrada, naMasmorra, naLuta }) →
      a linha do NÃO PODE, ou null
    ============================================================ */
 export const A_IDA_SEM_O_SISTEMA = Object.freeze({
@@ -1213,7 +1215,7 @@ export const A_IDA_SEM_O_SISTEMA = Object.freeze({
 export function aIdaSemOSistema(frase, o) {
   try {
     const c = o && typeof o === "object" ? o : {};
-    if (c.naEstrada || c.naMasmorra) return null;
+    if (c.naEstrada || c.naMasmorra || c.naLuta) return null;
     const cru = String(frase || "");
     if (!cru.trim() || cru.trimStart().startsWith("[")) return null;
     const t = norm(cru);
