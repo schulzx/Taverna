@@ -195,6 +195,8 @@ export const CAMPOS = Object.freeze([
   C("registroDaSessao", "bastidor", "objeto"),
   /* S7c (17/11): as bestas que me venceram e seguem ALERTA (o-confronto-da-quest.js) — lista de chaves; aditivo, save antigo = [] */
   C("confrontosAlertas", "historia", "lista"),
+  /* As peças, fase B (17/11): a memória das peças (src/pecas/calor.js) — o calor por solução, o relógio da etapa, as queimadas, as cobranças do mundo, por «quest|etapa»; aditivo, só existe com o interruptor ligado (PECAS_LIGADAS), save antigo = sem o campo */
+  C("pecas", "historia", "objeto"),
   C("guardado", "cena", "objeto"),
   C("backupEm", "bastidor", "qualquer"),
   C("rolagem", "cena", "objeto"),

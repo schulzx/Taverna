@@ -272,6 +272,7 @@ import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-p
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui } from "./quem-esta-aqui.js";
 import { osAusentes, podarOAusente } from "./motor/poda-do-ausente.js";
+import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oChamadoDaPeca, ausentesDaPeca, foraDaCenaNaProsa, semAChegadaDaPeca } from "./pecas/no-jogo.js";
 import { oBatismo } from "./motor/o-batismo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
@@ -297,7 +298,7 @@ import { osPassosDasQuests, achadoDoPasso, oPassoNoOraculo, oLivroDoAchado } fro
 /* QQ · Q3 (14/11, oficial): o quadro da quest no jogo — o motor (as cartas,
    quem as vira, o preço, a forma de tela) e a peça (o sinal, a gaveta, o
    momento). mente/plano-quadro.md §11; formas.md §QQ 9, parte 2. */
-import { osQuadrosDoEstado, virarCarta, aCartaDoTeste, aCartaDoGesto, aCartaEmJogo, garantirQuadro, aplicarPrecoDoQuadro, oQuadroNaTela, aCartaNaTela } from "./quadro-da-quest.js";
+import { osQuadrosDoEstado, virarCarta, aCartaDoTeste, aCartaDoGesto, aCartaEmJogo, garantirQuadro, aplicarPrecoDoQuadro, oQuadroNaTela, aCartaNaTela, PRECO_DA_FALHA } from "./quadro-da-quest.js";
 import { SinalDoQuadro, GavetaDoQuadro, PistaQueVira } from "./painel-quadro.jsx";
 import { fichasDoSeFalhar } from "./quadro-na-tela.js";
 import { garantirCativeiro, aplicarSaida } from "./cativeiro.js";
@@ -7621,6 +7622,15 @@ export default function Taverna() {
   const correrAsQuests = (onde, feitoDoTurno = null) => {
     try {
       if (!comEsqueleto()) return null;
+      /* AS PEÇAS, FASE B: na etapa com peça, chegar é a cena — o «esteve» que o
+         Cronista escreveu sai, e o facto escreve-o a solução (no turno em que
+         a peça escreveu, nada se tira) */
+      try {
+        if (/^o fim do turno/.test(onde) && pecasLigadas() && !pecaEscreveuRef.current) {
+          const f2 = semAChegadaDaPeca({ ...estadoDasQuests(), pecas: pecasRef.current }, { mundo: mundoDoLivro() });
+          if (f2) factosRef.current = f2;
+        }
+      } catch (e) { calou("peças B · a chegada não fecha a etapa", e); }
       const r = oTurnoDasQuests(estadoDasQuests(), { mundo: mundoDoLivro(), feitoDoTurno });
       if (r) aplicarAsQuests(r, onde);
       setEscolhaAdiada("");
@@ -9143,6 +9153,7 @@ export default function Taverna() {
       sessao: sessaoRef.current,
       registroDaSessao: registroDaSessaoRef.current,
       confrontosAlertas: confrontosAlertasRef.current,
+      pecas: pecasRef.current,
       /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
          contou viaja no save. Sem isto, cair a rede e recarregar apagava um
          golpe ja aplicado - ou o turno se completa, ou nao comecou. */
@@ -9421,6 +9432,15 @@ export default function Taverna() {
      confrontos perdidos — a besta fica ALERTA (no save, campo novo e aditivo) */
   const confrontoEmLutaRef = useRef(null);
   const confrontosAlertasRef = useRef([]);
+  /* AS PEÇAS, FASE B (17/11, src/pecas/no-jogo.js): a memória das peças (campo
+     novo e aditivo do save, só escrito com o interruptor ligado), o
+     interruptor (lido uma vez: taverna_cfg_pecas, ou ?pecas=1), o pacote da
+     peça neste turno (a régua da poda) e se a peça escreveu o facto */
+  const pecasRef = useRef(null);
+  const pecasLigadasRef = useRef(null);
+  const pecaDoTurnoRef = useRef(null);
+  const pecaEscreveuRef = useRef(false);
+  const pecaCalaRef = useRef(false);
   const [entradaNaMesa, setEntradaNaMesa] = useState(null);
   const abrirAMesaDoEncontroRef = useRef(null);
   /* V6 · O TAPETE ABRE JÁ (formas.md, F4 §1 nº 1). «Lutar» desenrola a mesa
@@ -11330,7 +11350,12 @@ export default function Taverna() {
           const genteP = cidadeP ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeP, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
           const ausP = osAusentes(qP, { gente: genteP, npcs: npcsRef.current, heroi: pP, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
           const fraseP = (() => { try { const pb = lerOPedido(conteudo); return pb && pb.doJogador ? pb.texto : ""; } catch { return ""; } })();
-          const pd = podarOAusente(resp.narrativa, ausP, { frase: fraseP, turno: turnoDeRegistroRef.current + 1, outros: quemAgeAqui(qP).map((x) => x && x.nome) });
+          const pacP = pecaDoTurnoRef.current;
+          const conhecP = pacP ? [...Object.keys(npcsRef.current || {}), ...genteP.map((g) => g && g.nome).filter(Boolean)] : [];
+          const ausPP = pacP ? ausentesDaPeca(ausP, conhecP, pacP) : ausP;
+          const outrosP = pacP && pacP.podeCitar ? pacP.podeCitar.quem : quemAgeAqui(qP).map((x) => x && x.nome);
+          const pd = podarOAusente(resp.narrativa, ausPP, { frase: fraseP, turno: turnoDeRegistroRef.current + 1, outros: outrosP });
+          if (pacP) { try { console.info("[pecas] verdade " + JSON.stringify({ antes: foraDaCenaNaProsa(resp.narrativa, conhecP, pacP), depois: foraDaCenaNaProsa(pd.podadas.length && !pd.recusou ? pd.narrativa : resp.narrativa, conhecP, pacP), podadas: pd.podadas.length, cena: pacP.podeCitar && pacP.podeCitar.quem })); } catch (e) { calou("peças B · a medida da verdade", e); } }
           if (pd.podadas.length && !pd.recusou) resp = { ...resp, narrativa: pd.narrativa };
           if (pd.vetos.length) vetosDoJuizRef.current = andarOsVetos(vetosDoJuizRef.current, pd.vetos, { turno: turnoDeRegistroRef.current + 1 });
         }
@@ -12119,7 +12144,7 @@ export default function Taverna() {
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; ultimaFraseDoJogadorRef.current = "";
-    confrontoEmLutaRef.current = null; confrontosAlertasRef.current = [];
+    confrontoEmLutaRef.current = null; confrontosAlertasRef.current = []; pecasRef.current = null;
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     esquecerAsCerimonias();
@@ -12567,6 +12592,7 @@ export default function Taverna() {
         registroDaSessaoRef.current = abrirSessao(sv.registroDaSessao, sv);
       } catch (e) { calou("V10 · o registro na volta", e); registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; }
       try { confrontosAlertasRef.current = garantirAlertas(sv.confrontosAlertas); confrontoEmLutaRef.current = null; } catch (e) { calou("S7c · os confrontos alerta na volta", e); confrontosAlertasRef.current = []; }
+      try { pecasRef.current = sv.pecas && typeof sv.pecas === "object" && !Array.isArray(sv.pecas) ? sv.pecas : null; } catch (e) { calou("peças B · a memória na volta", e); pecasRef.current = null; }
       /* e a CENA só é reaberta a pedido: é a única parte disto que o
          código não sabe fazer, e a única que custa uma chamada. */
       if (comResumo && !sv.rolagem) {
@@ -14649,6 +14675,7 @@ export default function Taverna() {
       if (faz === "reliquia") return acionarReliquia(acao);
       if (faz === "consumir") return beberDaBolsa(acao);
       if (faz === "agressao") return declararAgressao(acao);
+      if ((faz === "desafio" || faz === "oraculo") && pecaCalaRef.current) return false;
       if (faz === "desafio") return adjudicarAcao(acao);
       /* ORÁCULO (v9.24): pergunta FECHADA sobre o que o mundo ainda não
          estabeleceu. Depois da ação declarada de propósito — "peço um teste
@@ -14707,6 +14734,16 @@ export default function Taverna() {
         }
       } catch (e) { calou("NE4 · o convite pela frase", e); }
     }
+    /* AS PEÇAS, FASE B (17/11, src/pecas/no-jogo.js): com a quest da prova
+       aberta e o interruptor ligado, a frase encaixa na peça ANTES das portas.
+       A solução chama o dado (o chamado de sempre, com a seta por preço); o
+       aquecimento só aquece (e cala o desafio e o oráculo neste turno); a
+       cena, a luta e o livre seguem o turno de hoje. Em calou: se as peças
+       estourarem, o turno segue como hoje. */
+    try {
+      pecaDoTurnoRef.current = null; pecaEscreveuRef.current = false; pecaCalaRef.current = false;
+      if (!acao.startsWith("/") && !escolhaPendenteRef.current && !combateRef.current && !encontroPendenteRef.current && pecasLigadas() && turnoDasPecas(acao)) return;
+    } catch (e) { calou("peças B · o turno", e); }
     for (let i = 0; i < cascata.atalhos.length;) {
       let feito = false;
       try { feito = !!executar(cascata.atalhos[i].faz); } catch { feito = false; }
@@ -17839,8 +17876,9 @@ export default function Taverna() {
          o «sim, pago» do catálogo já cobrou o preço dele, e a carta vira limpa
          — um preço só por dado. A falha que o catálogo não paga cai no
          virarCarta, que dá o preço leve ou o pesado pela margem. */
+      try { if (des && des.peca) resolverAPeca(des, passou); } catch (e) { calou("peças B · o dado pousou", e); }
       try {
-        if (des && quadrosDoTeste.length) {
+        if (des && !des.peca && quadrosDoTeste.length) {
           const alvoQ = aCartaDoTeste(quadrosDoTeste, { ...des, resultado: passou ? "sucesso" : "falha", passou, total, dc, frase: r.frase || r.motivo || "" }, { ...ondeDoPasso(), emCena: presentesAgora() });
           const quadroQ = alvoQ && quadrosDoTeste.find((q) => q.quest === alvoQ.quest);
           const viraQ = quadroQ && virarCarta(quadroQ, alvoQ.veredito, { carta: alvoQ.carta, caminho: alvoQ.caminho, memoria: quadroRef.current, dia: diaRef.current });
@@ -19443,7 +19481,8 @@ export default function Taverna() {
   };
   const abrirOChamado = (v, r, o) => {
     const op = o && typeof o === "object" ? o : {};
-    const chamado = comACartaEmJogo(chamadoDoVeredito(v, op.mod), v, op.frase);
+    let chamado = null;
+    try { chamado = v && v.peca ? oChamadoDaPeca(chamadoDoVeredito(v, op.mod), v.peca, v) : comACartaEmJogo(chamadoDoVeredito(v, op.mod), v, op.frase); } catch (e) { calou("peças B · o chamado", e); chamado = comACartaEmJogo(chamadoDoVeredito(v, op.mod), v, op.frase); }
     const armado = pedidoArmadoRef.current;
     pedidoArmadoRef.current = null;
     if (!chamado) return false;
@@ -24320,6 +24359,65 @@ export default function Taverna() {
      PODE). Nenhum bloco estático: o teto do prompt é sagrado. Junta-se ao que
      lá estiver. CB lote 2: era o canal do crime, emprestado — dois órgãos no
      mesmo ref apagavam-se um ao outro. */
+  /* ---------------- AS PEÇAS, FASE B (17/11) ----------------
+     A ponte é src/pecas/no-jogo.js (provada em Node); aqui só se executa. */
+  const pecasLigadas = () => {
+    if (pecasLigadasRef.current == null) {
+      try { pecasLigadasRef.current = lerOInterruptor(window.localStorage, window.location.search); } catch (e) { pecasLigadasRef.current = false; }
+    }
+    return pecasLigadasRef.current;
+  };
+  const estadoDasPecas = () => ({ ...estadoDasQuests(), pecas: pecasRef.current });
+  const conhecidosDasPecas = () => Object.keys(npcsRef.current || {});
+  const porAPecaNaPauta = (pauta) => {
+    try {
+      if (!pauta) return;
+      porNaPautaDoTurno({ acabou: pauta.acabou, naoPode: pauta.naoPode });
+      if (pauta.quadro) pautaDeUmTurnoRef.current = { ...(pautaDeUmTurnoRef.current || {}), peca: pauta.quadro };
+    } catch (e) { calou("peças B · a pauta", e); }
+  };
+  const precoDaPeca = (precoId, custo, onde) => {
+    try {
+      const P = precoId ? PRECO_DA_FALHA[precoId] : null;
+      if (!P && !custo) return;
+      const pr = aplicarPrecoDoQuadro(estadoDasQuests(), P ? { id: precoId, linha: P.linha, efeitos: P.efeitos.map((x) => ({ ...x })) } : null, custo ? { custo } : {});
+      if (pr) aplicarAsQuests(pr, onde);
+      if (pr && Number(pr.minutos) > 0) { const tx = avancarMinutos(Number(pr.minutos)); if (typeof tx === "string" && tx.trim()) notaRef.current = notaComOTurno(notaRef.current, [tx.trim()]); }
+    } catch (e) { calou("peças B · o preço (" + onde + ")", e); }
+  };
+  const turnoDasPecas = (acao) => {
+    const r = oTurnoDaPeca(acao, estadoDasPecas(), { ligado: true, mundo: mundoDoLivro(), conhecidos: conhecidosDasPecas() });
+    if (!r) return false;
+    try { console.info("[pecas] turno " + JSON.stringify({ frase: acao, etapa: r.peca.etapa, tipo: r.tipo, solucao: r.solucao ? r.solucao.id : null, esquenta: r.leitura && r.leitura.esquenta, abre: r.abre ? r.abre.solucao.id : null, cobranca: r.cobranca })); } catch (e) { calou("peças B · o registo", e); }
+    pecasRef.current = (r.estado && r.estado.pecas) || pecasRef.current;
+    pecaDoTurnoRef.current = r.pacote || null;
+    if (r.cobranca) precoDaPeca(r.cobranca.precoId, null, "peças B · o mundo cobra");
+    porAPecaNaPauta(r.pauta);
+    const abrir = (sol, ch) => {
+      let vCasa = null;
+      try { vCasa = lerAcao(acao, ctxDesafio()); } catch (e) { vCasa = null; }
+      const v = oVereditoDaSolucao(sol, ch, r.peca, vCasa);
+      if (!v) return false;
+      rolarDesafio(v, acao);
+      return true;
+    };
+    if (r.tipo === "solucao" && r.solucao && r.chamado) return abrir(r.solucao, r.chamado);
+    if (r.tipo === "aquecimento") {
+      if (r.abre && r.abre.solucao && r.abre.chamado) return abrir(r.abre.solucao, r.abre.chamado);
+      pecaCalaRef.current = true;
+    }
+    return false;
+  };
+  const resolverAPeca = (des, passou) => {
+    const r = resolverNoJogo(des.peca, passou, estadoDasPecas(), { mundo: mundoDoLivro(), dia: diaRef.current, turno: npcTurnoRef.current });
+    try { console.info("[pecas] dado " + JSON.stringify({ solucao: des.peca.solucao, passou: !!passou, tipo: r && r.resultado.tipo, fatos: r && r.resultado.fatos, preco: r && r.resultado.preco, para: r && r.resultado.para })); } catch (e) { calou("peças B · o registo do dado", e); }
+    if (!r) return;
+    pecasRef.current = (r.estado && r.estado.pecas) || pecasRef.current;
+    if (r.escreveu && r.estado.factos) { factosRef.current = r.estado.factos; pecaEscreveuRef.current = true; }
+    if (r.resultado.preco) precoDaPeca(r.resultado.preco.id, null, "peças B · o preço da falha");
+    pecaDoTurnoRef.current = r.pacote || pecaDoTurnoRef.current;
+    porAPecaNaPauta(r.pauta);
+  };
   const porNaPautaDoTurno = (pa) => {
     try {
       if (!pa || (!(pa.acabou || []).length && !(pa.naoPode || []).length)) return;

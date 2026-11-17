@@ -921,6 +921,9 @@ export function aPautaDoTurno(estado, entrada, portas) {
   };
   const pautaDoTurno = (acaoDoTurno = "") => {
     let p = garantirPauta(null);
+    /* as peças, fase B: a cena fechada da peça, vinda pelo canal de um turno
+       (a chave «peca»), entra no lugar do caso — nunca ao lado dele */
+    let aCenaDaPeca = "";
     $ref.cobrouAgora = false;
     /* quem está longe já é calculado pelo elenco da cena — o Geógrafo lê
        dali em vez de refazer a conta, porque duas versões da mesma
@@ -1203,6 +1206,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
         if ($ref.pautaDeUmTurno) {
           const um = $ref.pautaDeUmTurno;
           for (const sec of PAUTA_DE_UM_TURNO.secoes) { const l = linhasDe(um[sec]); if (l.length) p = porNaPauta(p, sec, l); }
+          if (typeof um.peca === "string" && um.peca.trim()) aCenaDaPeca = um.peca;
           $ref.pautaDeUmTurno = null;
         }
       } catch (e) { calou("a pauta de um turno", e); }
@@ -1392,7 +1396,9 @@ export function aPautaDoTurno(estado, entrada, portas) {
                       desmentem. Os mesmos passos do facto do sucesso. */
                    passos: (() => { try { return osPassosDasQuests({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva() }, { mundo: mundoDaBase() }); } catch (e2) { calou("os passos no rumo", e2); return []; } })() },
         });
-        if (rumo) p = porNaPauta(p, "rumo", rumo);
+        /* as peças, fase B: com a cena fechada, o rumo (a ponte para o próximo
+           passo) sai — o caminho é do sistema, não da prosa */
+        if (rumo && !aCenaDaPeca) p = porNaPauta(p, "rumo", rumo);
       }
     } catch (e) { calou("o rumo na pauta", e); }
     /* A CAMPANHA QUE PRENDE (item 1): O QUE VOLTA — a promessa que a narração
@@ -1422,14 +1428,15 @@ export function aPautaDoTurno(estado, entrada, portas) {
         sorte: rng(hashSemente(sementeMundo() + "|fecho|" + $ref.turnoDeRegistro)),
       });
       $ref.fecho = fx.id;
-      p = porNaPauta(p, "fecho", fx.linha);
+      if (!aCenaDaPeca) p = porNaPauta(p, "fecho", fx.linha); /* peças B: o fecho que pergunta ou abre caminho sai com a cena fechada */
     } catch (e) { calou("o fecho na pauta", e); }
     /* QQ · Q3 (14/11): O CASO — o que o herói já sabe do caso e o que falta,
        pela forma (oQuadroNaPauta); os quadros são os das quests que o RUMO
        vê, com a memória do quadro. O veto vai ao bloco do NÃO PODE pela
        secção dele (vetoDoCaso, a prio medida em pauta.js): entra depois dos
        vetos da cena, do rumo e do fecho, nunca no lugar deles. */
-    try {
+    if (aCenaDaPeca) { try { p = porNaPauta(p, "quadro", aCenaDaPeca); } catch (e) { calou("a cena da peça na pauta", e); } }
+    else try {
       const qp = oQuadroNaPauta(osQuadrosDoEstado({ espinha: $ref.espinha, historia: $ref.historia, factos: $ref.factos, saber: $ref.saber, dia: $ref.dia, npcTurno: $ref.npcTurno, cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, jornada: $ref.jornada, npcs: $ref.npcs, canone: $ref.canone, mapa: $ref.mapa, personagem: fichaViva(), quadro: $ref.quadro }, { mundo: mundoDaBase() }));
       if (qp.linha) p = porNaPauta(p, "quadro", qp.linha);
       if (qp.naoPode.length) p = porNaPauta(p, "vetoDoCaso", ...qp.naoPode);
