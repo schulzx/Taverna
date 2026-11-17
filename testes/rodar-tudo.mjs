@@ -45,7 +45,14 @@ const varredores = readdirSync(".").filter((f) => /^(check|varredura)-.*\.mjs$/.
    matá-la. O conserto foi torná-las rápidas (mordidas-em-paralelo.mjs, as
    mordidas repartidas por trabalhadores: 69 s e 81 s); isto é só para que,
    da próxima vez, o vermelho diga o nome certo. */
-const RELOGIO = Object.freeze({ ms: 120000 });
+/* 16/11: 120 → 240 s. `teste-regua-do-poder` e `varredura-exports` passam
+   (243 ok; saída 0), mas levam 147 s e 155 s sozinhas na máquina de 6 GB com
+   a memória comprimida — três provas de subida seguidas morreram no relógio
+   sem nenhuma asserção vermelha. O relógio existe para pegar suíte PRESA, não
+   para reprovar suíte lenta; a 240 s ele continua a pegar a presa. Fica a
+   dívida, que é a de 29/10: torná-las rápidas outra vez (a régua repartida
+   por trabalhadores; a varredura sem reler a árvore por export). */
+const RELOGIO = Object.freeze({ ms: 240000 });
 
 const rodar = (arqs, rotulo) => {
   let ok = 0; const ruins = [];
