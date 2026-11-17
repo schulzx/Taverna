@@ -150,6 +150,10 @@ export const A_PROPOSTA_DA_FRASE = Object.freeze({
     procurar: "«{T}»: procurar {N} {L}",
     trabalha: "{N} trabalha {L}",
     viu: "você conheceu {N} {L}",
+    /* 17/11 (a abertura alcançável): a casa que a história deu à pessoa do
+       passo (`passos`, osPassosDasQuests) — com a cidade quando é outra */
+    daHistoria: "{N} anda {L}",
+    daHistoriaLonge: "{N} anda {L}, em {C}",
   }),
   /* os verbos de ter com alguém (o «procuro» é da porta da procura) */
   chama: /\b(falo|falar|converso|conversar|pergunto|perguntar|chamo|chamar|digo|dizer|peco|pedir|aproximo-me|cumprimento|saudo|vou ter com|interpelo|entrego|entregar|mostro|mostrar|aceno|acenar)\b/,
@@ -252,6 +256,19 @@ export function oQueSeSabeDaPessoa(estado, nome) {
     const r = k ? npcs[k] : null;
     if (ehObj(r) && !r.morto && limpo(r.local)) poe(S.viu, {}, oSitioDoRegisto(r.local, e), "");
   }
+  /* 17/11 (a abertura alcançável): a pessoa que o passo da história pede
+     tem casa (esqueleto.js, `local` e `cidade`) — sem isto quem a frase
+     chamava e estava noutra cidade só tinha «não está aqui», e o Narrador
+     inventava onde. `e.passos`: os de osPassosDasQuests (a-quest-manda.js). */
+  if (!out.length) {
+    for (const p of arr(e.passos)) {
+      const c = arr(ehObj(p) && ehObj(p.candidatos) ? p.candidatos.pessoa : []).find((x) => ehObj(x) && mesmaPessoa(x.nome, N) && limpo(x.onde));
+      if (!c) continue;
+      const longe = limpo(c.cidade) && limpo(e.cidadeAtual) && !mesmoNome(c.cidade, e.cidadeAtual);
+      poe(longe ? S.daHistoriaLonge : S.daHistoria, { C: limpo(c.cidade) }, c.onde, limpo(c.cidade));
+      break;
+    }
+  }
   return out;
 }
 
@@ -284,7 +301,10 @@ export function aPessoaChamada(frase, ctx) {
     const orig = limpo(frase);
     const iv = sem(orig).search(P.chama);
     if (iv < 0) return null;
-    const m = orig.slice(iv).match(/^\S+(?:\s+(?:com|a|ao|à|para|pra))?\s+(?:o\s+|a\s+)?(\p{Lu}[\p{Ll}\p{M}'-]+(?:\s+(?:d[aeo]s?\s+)?\p{Lu}[\p{Ll}\p{M}'-]+)?)/u);
+    /* 17/11 (a abertura alcançável): o pedaço depois do hífen pode começar
+       por maiúscula — «Alaric Barba-Ruiva» saía «Alaric Barba-», e a tela
+       dizia «Alaric Barba- não está aqui» */
+    const m = orig.slice(iv).match(/^\S+(?:\s+(?:com|a|ao|à|para|pra))?\s+(?:o\s+|a\s+)?(\p{Lu}[\p{Ll}\p{M}']+(?:-\p{L}[\p{Ll}\p{M}']*)*(?:\s+(?:d[aeo]s?\s+)?\p{Lu}[\p{Ll}\p{M}']+(?:-\p{L}[\p{Ll}\p{M}']*)*)?)/u);
     if (!m || sem(m[1]).length < P.nomeMinimo) return null;
     const nome = m[1];
     const todos = [...arr(c.conhecidos), ...presentes, ...arr(c.mundo)].map(limpo).filter(Boolean);
