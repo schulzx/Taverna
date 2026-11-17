@@ -614,6 +614,9 @@ const A_MAO_QUE_MUDOU_DE_LADO = quest({
     vitima: { de: "elenco", feridoPor: "desertor", rotulo: "quem {desertor} feriu" },
   },
   mao: { tipo: "pista", contra: [4], papel: "cacador" },
+  /* S7: o caçador encontra-se onde o desertor se esconde, não no refúgio
+     para onde se foge (O_CLIMAX_DA_QUEST: o dado próprio da quest) */
+  covil: "esconderijo",
   temperatura: "fogueira",
   gancho: "{desertor} serviu sete anos a mão que anda por trás de tudo o que corre mal nesta terra, e uma noite saiu pela janela com o que sabia. Manda dizer, de {esconderijo}, que fala contigo e com mais ninguém — e só uma vez. {cacador} já pergunta por {desertor} nas tabernas, com uma moeda numa mão e uma corda na outra. E {vitima}, que enterrou um irmão por ordem de {desertor}, também pergunta.",
   etapas: [
@@ -1323,9 +1326,9 @@ const O_QUE_DESCE_AO_ANOITECER = quest({
   gancho: "Desce todas as noites quando o sino acaba de tocar, e nunca à mesma porta duas vezes. Ontem foi às traseiras de {curral}, onde {pastora} guardava o que lhe restava do rebanho: já não sobra um animal de pé, e {pastora} deixou-os lá para que vejas com os teus olhos. Na aldeia diz-se que é bicho do monte. {pastora} diz que bicho do monte não escolhe as portas.",
   etapas: [
     { id: "ver", texto: "Ver o que ficou em {curral}", conclui: ["esteve", "lugar:curral"] },
-    { id: "rasto", texto: "Seguir o rasto até onde a besta dorme",
+    { id: "rasto", texto: "Seguir o rastro até onde a besta dorme",
       conclui: ["pelo_menos", 2, ["descobriu", "lugar:curral"], ["conversou", "papel:pastora"], ["esteve", "lugar:toca"]] },
-    { id: "fera", texto: "Pôr {fera} ao alcance da tua mão",
+    { id: "fera", texto: "Encarar {fera} na toca",
       conclui: ["algum", ["derrotou", "papel:fera"], ["todos", ["consultou", "papel:tratador"], ["esteve", "lugar:toca"]]],
       ramos: ["lamina", "assobio"] },
     { id: "destino", texto: "Decidir o que fica de {fera}",
@@ -2519,8 +2522,103 @@ export function validarQuest(ficha) {
     });
   }
 
+  /* S7: o clímax — o `covil` da ficha é um lugar declarado, e toda etapa
+     de confronto sabe onde o encontro acontece */
+  if (F.covil !== undefined && !(typeof F.covil === "string" && decl[F.covil] && decl[F.covil].tipo === "lugar")) err("o «covil» é um papel de lugar declarado");
+  if (!erros.length) {
+    for (const [id, c] of Object.entries(oClimaxDaQuest(F))) if (c.hostil && !c.covil) err(`a etapa «${id}» é de confronto com «${c.hostil}» e não diz onde (o «covil» da ficha, ou um lugar no texto ou nas condições)`);
+  }
   const r = { ok: erros.length === 0, erros };
   if (Object.isFrozen(F)) cacheValidacao.set(F, r);
+  return r;
+}
+
+/* ============================================================
+   O CLÍMAX DA QUEST (S7, 17/11/2026)
+
+   A sessão jogada de 15/11 (mente/lancamento/sessao-de-hoje.md, T5 e T14):
+   «O Que Desce ao Anoitecer» fechou SEM A BESTA APARECER. A etapa «Seguir o
+   rastro até onde a besta dorme» fechou numa praça (duas pistas de três
+   bastavam, e nenhuma era a toca), e «Pôr a fera ao alcance» fechou com
+   informação — o tratador consultado e a toca visitada —, nunca com um
+   encontro. Quatro etapas em treze ações, nenhuma luta, nenhuma falha que
+   custasse. O clímax de uma caçada não pode ser uma conversa.
+
+   A REGRA, PELO MOLDE (nunca quest a quest):
+     · A ETAPA DE CONFRONTO é a que tem por objeto alguém do vilão — um
+       papel do fio pedido por `derrotou`, `poupou` ou `conheceu`
+       (`marca`). Ela só fecha com ele EM CENA: vencido, ou encontrado de
+       verdade pelo cartão do encontro (`presenca`: o facto «encontrado»,
+       que só o cartão escreve — o-confronto-da-quest.js). Os outros
+       caminhos da ficha (o assobio, a escolha, o desvio) continuam a ser
+       caminhos, mas DEPOIS de a besta estar à frente — e as escolhas da
+       etapa só abrem então (o `exige` de sempre, etapasDe).
+     · O COVIL é o lugar onde o encontro acontece: o `covil` da ficha,
+       quando a quest precisa de dado próprio; senão o primeiro lugar que o
+       texto da etapa nomeia; senão o primeiro lugar que as condições dela
+       pedem. Etapa de confronto sem covil não passa em `validarQuest`.
+     · A ETAPA DE RASTRO (a frase diz rastro, pegadas, seguir) que vem antes
+       de um confronto fecha NO COVIL dele (`esta_em`), não onde a pista
+       apontou.
+   `semConfronto`: as mãos do vilão cujo papel aparece por cena própria,
+   escolhida por ele (o rosto: a oferta, a demonstração) — ali não há
+   encontro a vencer, há uma conversa marcada.
+   ============================================================ */
+export const O_CLIMAX_DA_QUEST = Object.freeze({
+  marca: Object.freeze(["derrotou", "poupou", "conheceu"]),
+  presenca: Object.freeze(["derrotou", "encontrou"]),
+  rasto: /\b(rastr?o|rastos|pegadas?|seguir)\b/,
+  semConfronto: Object.freeze(["rosto"]),
+  porque: "a sessão de 15/11: a caçada fechou sem a besta em cena — quatro etapas em treze ações, nenhuma luta",
+});
+const semAcClimax = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const cacheClimax = new WeakMap();
+/* oClimaxDaQuest(ficha) → { [etapa]: { hostil, covil, rasto, exige } } —
+   só as etapas a que a regra toca. `hostil`: o papel do fio; `covil`: o
+   papel de lugar onde ele está (null: a ficha não o diz — validarQuest
+   recusa); `exige`: as condições que a etapa ganha, antes das dela. */
+export function oClimaxDaQuest(ficha) {
+  const F = fichaDe(ficha);
+  if (!F || !obj(F.papeis)) return {};
+  if (cacheClimax.has(F)) return cacheClimax.get(F);
+  const papeis = F.papeis;
+  const C = O_CLIMAX_DA_QUEST;
+  const doFio = (n) => obj(papeis[n]) && papeis[n].de === "fio";
+  const deLugar = (n) => obj(papeis[n]) && PAPEIS_DA_QUEST[papeis[n].de] && PAPEIS_DA_QUEST[papeis[n].de].tipo === "lugar";
+  const daCena = (n) => obj(F.mao) && C.semConfronto.includes(F.mao.tipo) && F.mao.papel === n;
+  const lugarDaEtapa = (e) => {
+    const doTexto = [...String(e.texto || "").matchAll(/\{([a-z0-9_]+)\}/g)].map((m) => m[1]).find(deLugar);
+    if (doTexto) return doTexto;
+    const at = atomos(e.conclui).find((a) => a.positivo && typeof a.cond[1] === "string" && a.cond[1].startsWith("lugar:") && deLugar(a.cond[1].slice(6)));
+    return at ? at.cond[1].slice(6) : null;
+  };
+  /* o covil, pela ordem: o da ficha; o lugar da própria etapa; o da etapa
+     de antes mais perto (onde a história levou o herói); o primeiro lugar
+     que a quest declara */
+  const covilDe = (i) => {
+    if (typeof F.covil === "string" && deLugar(F.covil)) return F.covil;
+    for (let k = i; k >= 0; k--) { const l = lugarDaEtapa(etapas[k]); if (l) return l; }
+    return Object.keys(papeis).find(deLugar) || null;
+  };
+  const out = {};
+  const etapas = arr(F.etapas).filter(obj);
+  const confrontos = etapas.map((e) => {
+    const a = atomos(e.conclui).find((x) => x.positivo && C.marca.includes(x.cond[0]) && typeof x.cond[1] === "string" && x.cond[1].startsWith("papel:") && doFio(x.cond[1].slice(6)) && !daCena(x.cond[1].slice(6)));
+    return a ? a.cond[1].slice(6) : null;
+  });
+  etapas.forEach((e, i) => {
+    const hostil = confrontos[i];
+    const rasto = C.rasto.test(semAcClimax(e.id + " " + e.texto));
+    const j = confrontos.findIndex((h, k) => k >= i && h);
+    if (!hostil && !(rasto && j >= 0)) return;
+    const covil = covilDe(hostil ? i : j);
+    const exige = [];
+    if (rasto && covil) exige.push(["esta_em", "lugar:" + covil]);
+    if (hostil) exige.push(["algum", ...C.presenca.map((p) => [p, "papel:" + hostil])]);
+    out[e.id] = Object.freeze({ hostil: hostil || null, covil, rasto, exige: Object.freeze(exige) });
+  });
+  const r = Object.freeze(out);
+  if (Object.isFrozen(F)) cacheClimax.set(F, r);
   return r;
 }
 
@@ -2564,14 +2662,17 @@ const diaDe = (E) => Math.max(0, inteiro(obj(E) && E.dia) || 0);
 /* as etapas como estão agora: as da ficha, mais as que uma reviravolta
    abriu (antes da que diz), cada uma com o que uma reviravolta lhe exige */
 function etapasDe(F, R) {
-  let lista = arr(F.etapas).map((e) => ({ ...e, exige: [] }));
+  /* S7: o clímax entra pelo molde — a etapa de confronto e a de rastro
+     ganham o que O_CLIMAX_DA_QUEST lhes exige, antes do resto */
+  const climax = oClimaxDaQuest(F);
+  let lista = arr(F.etapas).map((e) => { const ex = arr(climax[e.id] && climax[e.id].exige); return { ...e, exige: [...ex], doClimax: ex.length }; });
   for (const { id } of R.reviravoltas) {
     const rv = arr(F.reviravoltas).find((x) => x.id === id);
     if (!rv) continue;
     for (const ef of arr(rv.efeitos)) {
       if (ef.tipo === "abre_etapa" && !lista.some((e) => e.id === ef.etapa.id)) {
         const i = lista.findIndex((e) => e.id === ef.antes);
-        const nova = { ...ef.etapa, exige: [] };
+        const nova = { ...ef.etapa, exige: [], doClimax: 0 };
         lista = i < 0 ? [...lista, nova] : [...lista.slice(0, i), nova, ...lista.slice(i)];
       }
       if (ef.tipo === "exige") lista = lista.map((e) => (e.id === ef.etapa ? { ...e, exige: [...e.exige, ef.condicao] } : e));
@@ -3026,8 +3127,14 @@ export function estadoDaQuest(ficha, registo, contexto) {
   const visivel = F.tipo === 1 || (primeira && R.acesas[primeira.id] != null);
   let falta = [];
   if (atual && acesa && visivel) {
-    const exige = atual.exige.flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
-    falta = [...exige, ...(exige.length ? [] : julgarEtapa({ conclui: atual.conclui }, ctx).falta)];
+    /* S7: o que o clímax exige (estar no covil, a besta em cena) vai À FRENTE
+       do resto e não o esconde — o passo continua a plantar as pistas da
+       etapa (a-quest-manda.js); o que uma reviravolta exige esconde-o, como
+       sempre (as escolhas da etapa esperam por ele) */
+    const nClimax = atual.doClimax || 0;
+    const doClimax = atual.exige.slice(0, nClimax).flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
+    const exige = atual.exige.slice(nClimax).flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
+    falta = [...doClimax, ...exige, ...(exige.length ? [] : julgarEtapa({ conclui: atual.conclui }, ctx).falta)];
   }
   const ult = R.reviravoltas[R.reviravoltas.length - 1];
   const rv = ult ? arr(F.reviravoltas).find((x) => x.id === ult.id) : null;
@@ -3158,8 +3265,14 @@ export function missaoDaQuest(ficha, registo, contexto) {
   const atual = R.estado === "aberta" ? etapaAtual(lista, R) : null;
   let falta = [];
   if (atual && estaAcesa(atual, R, ctx, dia, k.quests)) {
-    const exige = atual.exige.flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
-    falta = [...exige, ...(exige.length ? [] : julgarEtapa({ conclui: atual.conclui }, ctx).falta)];
+    /* S7: o que o clímax exige (estar no covil, a besta em cena) vai À FRENTE
+       do resto e não o esconde — o passo continua a plantar as pistas da
+       etapa (a-quest-manda.js); o que uma reviravolta exige esconde-o, como
+       sempre (as escolhas da etapa esperam por ele) */
+    const nClimax = atual.doClimax || 0;
+    const doClimax = atual.exige.slice(0, nClimax).flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
+    const exige = atual.exige.slice(nClimax).flatMap((c) => julgarEtapa({ conclui: c }, ctx).falta);
+    falta = [...doClimax, ...exige, ...(exige.length ? [] : julgarEtapa({ conclui: atual.conclui }, ctx).falta)];
   }
   const M = MISSAO_DA_QUEST;
   return {

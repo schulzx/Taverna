@@ -70,7 +70,7 @@
    ============================================================ */
 import {
   idDaPessoa, idDoLugar, pessoaDoLivro, grauDeAfeicao,
-  conheceu, conversou, derrotou, poupou, afeicaoAlcancada, esteve, descobriu, deveFavor,
+  conheceu, conversou, derrotou, poupou, afeicaoAlcancada, esteve, descobriu, deveFavor, encontrou,
 } from "./livro-de-factos.js";
 import { elencoDoLivro } from "./motor/livro-do-turno.js";
 import { situacaoDe, SITUACOES, lugarConcluido } from "./mundo-base.js";
@@ -208,6 +208,13 @@ export const CONDICOES = Object.freeze({
     args: [A.pessoa], le: ["livro"], facto: "derrotado", volta: true,
     portas: [PORTA_DA_LUTA],
     texto: "vencer {0} e deixar com vida", nao: "não poupar {0}" }),
+  /* S7 (17/11, o clímax da quest): o encontro de verdade — a besta EM CENA,
+     pelo cartão do encontro (a luta, a palavra, a espreita, a captura). É o
+     que a etapa de confronto exige (O_CLIMAX_DA_QUEST, biblioteca-de-quests) */
+  encontrou: Object.freeze({
+    args: [A.pessoa], le: ["livro"], facto: "encontrado", volta: false,
+    portas: [P("src/o-confronto-da-quest.js", "oLivroDoEncontro", "o cartão do encontro com quem a quest põe à frente: o sistema escreve «encontrado» no livro")],
+    texto: "dar de cara com {0}", nao: "nunca dar de cara com {0}" }),
   morto: Object.freeze({
     args: [A.pessoa], le: ["livro", "base", "ficha"], facto: "derrotado", volta: false,
     portas: [P("src/mundo-base.js", "matar", "o nome riscado no registo do mundo"), PORTA_DA_LUTA],
@@ -516,6 +523,7 @@ const LEITURAS = {
   },
   derrotou: (c, [p]) => ({ v: derrotou(c.factos, p.id) }),
   poupou: (c, [p]) => ({ v: poupou(c.factos, p.id) }),
+  encontrou: (c, [p]) => ({ v: encontrou(c.factos, p.id) }),
   morto: (c, [p]) => ({ v: estaMorto(c, p) }),
   situacao: (c, [p, s]) => ({ v: (estaMorto(c, p) ? SITUACOES.morta : situacaoDe(c.base, nomeDaBase(p))) === s }),
   relacao: (c, [p, lado]) => {

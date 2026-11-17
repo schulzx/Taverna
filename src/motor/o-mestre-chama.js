@@ -206,7 +206,7 @@ export const SABER_DO_HEROI = Object.freeze({
   /* o que no livro faz de alguém uma pessoa CONHECIDA (TIPOS_DE_FACTO de
      pessoa). O `nomeado` fica de fora de propósito: ouvir o nome não é
      saber da pessoa — é a distinção de `conheceu` (livro-de-factos.js) */
-  daPessoa: Object.freeze(["visto", "falou", "afeicao", "derrotado", "recebeu", "prometeu", "quemE"]),
+  daPessoa: Object.freeze(["visto", "falou", "afeicao", "derrotado", "encontrado", "recebeu", "prometeu", "quemE"]),
   /* o lugar que o herói SABE (o segredo caiu com ele lá; deve-lhe um favor) */
   doLugarSabido: Object.freeze(["descobriu", "favor"]),
   /* o lugar por onde PASSOU */

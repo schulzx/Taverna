@@ -447,6 +447,7 @@ import { empurrar, TABELA_DA_DISPUTA } from "./disputa.js";
 import { chaoDaLuta, vistasDaLuta, combateDoSave, entidadesDaLuta, feridasNaLuta, feridasDoChao, linhaDoChao, alturasNaMesa, objetosNaMesa, reacoesNaMesa, previsaoDoEmpurraoNaMesa } from "./motor/o-chao-na-mesa.js";
 import { letreiroDaReacao } from "./batalha-na-tela.js";
 import { CartaoDoEncontro, SinalNaFolha, EntradaNaMesa } from "./painel-encontro.jsx";
+import { oConfrontoAqui, oLivroDoEncontro, aChaveDoConfronto, aFichaDoEncontrado } from "./o-confronto-da-quest.js";
 /* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
 import { equiparKitInicial } from "./kit-inicial.js";
 
@@ -9410,6 +9411,8 @@ export default function Taverna() {
   const [encontroPendente, setEncontroPendente] = useState(null);
   const encontroPendenteRef = useRef(null);
   const [escolhaNoEncontro, setEscolhaNoEncontro] = useState(null);
+  /* S7: os confrontos da quest de que o herói recuou, no covil onde está (sai do covil, esquece-os) */
+  const confrontosRecusadosRef = useRef({ onde: "", chaves: [] });
   const [entradaNaMesa, setEntradaNaMesa] = useState(null);
   const abrirAMesaDoEncontroRef = useRef(null);
   /* V6 · O TAPETE ABRE JÁ (formas.md, F4 §1 nº 1). «Lutar» desenrola a mesa
@@ -24265,7 +24268,7 @@ export default function Taverna() {
   const narrarOEncontro = (e, p) => {
     try {
       porNaPautaDoTurno(pautaDoEncontro(e));
-      if (quemResponde("encontro").chamadas) enviar("[NA ESTRADA — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]", p || fichaViva() || personagem);
+      if (quemResponde("encontro").chamadas) enviar(`[${e && e.tabela === "confronto" ? "FRENTE A FRENTE" : "NA ESTRADA"} — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]`, p || fichaViva() || personagem);
     } catch (er) { calou("a narração do encontro", er); }
   };
   /* V6 · A FALA DA ENTRADA: parte no toque de «Lutar» e não segura a vez.
@@ -24277,7 +24280,7 @@ export default function Taverna() {
       if (!quemResponde("encontro").chamadas) return;
       semDesfeitoRef.current = true;
       setFalaDaEntrada(true);
-      Promise.resolve(enviar("[NA ESTRADA — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]", null))
+      Promise.resolve(enviar(`[${e && e.tabela === "confronto" ? "FRENTE A FRENTE" : "NA ESTRADA"} — o sistema resolveu o que a pauta diz em ACABOU DE; narre só esse instante, em poucas frases]`, null))
         .catch((er) => calou("a fala da entrada", er))
         .finally(() => { try { setFalaDaEntrada(false); } catch { /* nada */ } });
     } catch (er) { calou("a narração da entrada", er); try { setFalaDaEntrada(false); } catch { /* nada */ } }
@@ -24292,6 +24295,19 @@ export default function Taverna() {
     try {
       if (!e) return;
       const p = p0 || fichaViva() || personagem;
+      /* S7 · O CONFRONTO DA QUEST resolvido escreve o encontro no livro de
+         factos (o «encontrado» que a etapa de confronto exige); o recuo
+         guarda a chave, para o mesmo cartão não reabrir no mesmo covil */
+      if (e.quest && e.fase === "resolvido") {
+        try { factosRef.current = oLivroDoEncontro(factosRef.current, e, { dia: diaRef.current, turno: npcTurnoRef.current }); } catch (er) { calou("S7 · o encontro no livro", er); }
+        try {
+          const ficha = e.desfecho && e.desfecho.id !== "recuou" ? aFichaDoEncontrado(e, npcsRef.current, { dia: diaRef.current }) : null;
+          if (ficha) { npcsRef.current = { ...npcsRef.current, [ficha.nome]: ficha }; setNpcs(npcsRef.current); }
+        } catch (er) { calou("S7 · a ficha de quem se encontrou", er); }
+        try {
+          if (e.desfecho && e.desfecho.id === "recuou") { const r = confrontosRecusadosRef.current; confrontosRecusadosRef.current = { ...r, chaves: [...r.chaves, aChaveDoConfronto(e)] }; }
+        } catch (er) { calou("S7 · o recuo do confronto", er); }
+      }
       const trechoDe = () => { const j = jornadaRef.current; return e.trecho || (j ? (j.de || "") + ">" + (j.para || "") : ""); };
       if (e.fase === "escolha") {
         pousarOEncontro(e);
@@ -26534,6 +26550,22 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       setEntradaNaMesa((Array.isArray(e.inimigos) && e.inimigos[0]) || { nome: e.criatura });
     } catch (er) { calou("a entrada na mesa do encontro", er); }
   }, [encontroPendente, carregando, falaDaEntrada, combate, entradaNaMesa, fase]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* S7 · O CONFRONTO DA QUEST: com o herói no covil de uma etapa que pede a
+     besta em cena (O_CLIMAX_DA_QUEST), o cartão do encontro abre — o
+     veredito de cada escolha antes do clique, como na estrada. Recuar
+     guarda a chave até ele sair dali. Fora de um sítio, na estrada e na
+     masmorra, nada. */
+  useEffect(() => {
+    try {
+      if (fase !== "jogo" || carregando || combate || encontroPendente || entradaNaMesa) return;
+      const l = lugarRef.current;
+      const ondeK = l && l.nome ? `${l.nome}|${cidadeAtualRef.current || ""}` : "";
+      if (confrontosRecusadosRef.current.onde !== ondeK) confrontosRecusadosRef.current = { onde: ondeK, chaves: [] };
+      if (!ondeK || jornadaRef.current || masmorraRef.current) return;
+      const e = oConfrontoAqui(passosDasQuestsAgora(), ondeDoPasso(), { mundo: mundoDaBase(), recusados: confrontosRecusadosRef.current.chaves });
+      if (e) seguirOEncontro(e, fichaViva() || personagem);
+    } catch (er) { calou("S7 · o confronto da quest", er); }
+  }, [lugar, fase, carregando, combate, encontroPendente, entradaNaMesa]); // eslint-disable-line react-hooks/exhaustive-deps
   /* CB: A LUTA QUE NASCE (por qualquer porta: o encontro, a frase, o Narrador,
      o load). Mora num efeito e não em `abrirCombate` de propósito: a porta é
      recortada e jogada byte a byte contra o App de antes (teste-motor-luta), e

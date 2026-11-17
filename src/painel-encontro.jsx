@@ -40,7 +40,11 @@ const semMovimento = () => {
 const GLIFO_DO_SINAL = { rasto: "rasto", som: "som", cheiro: "cheiro", vulto: "vulto", silencio: "silencio", sombra: "sombra" };
 /* as seis escolhas, pelo glifo (Figma 343:208): contornar, o vulto de quem se
    esconde, a palavra, os passos da emboscada, o recuo, as espadas */
-const GLIFO_DA_ESCOLHA = { evitar: "contornar", esconder: "vulto", negociar: "palavra", emboscar: "passo", fugir: "recuo", lutar: "espadas" };
+const GLIFO_DA_ESCOLHA = { evitar: "contornar", esconder: "vulto", negociar: "palavra", emboscar: "passo", fugir: "recuo", lutar: "espadas",
+  /* S7: as do confronto da quest (ESCOLHAS_DO_CONFRONTO) */
+  espreitar: "vulto", capturar: "passo", recuar: "recuo" };
+/* S7: a cabeça do cartão diz onde se está — a estrada, ou o covil da quest */
+const CABECA_DO_CARTAO = { estrada: "Na estrada · um encontro", confronto: "Frente a frente" };
 /* SOBRE O PERGAMINHO o glifo veste a cor da letra ao lado (currentColor): as
    tintas do pergaminho são da folha, não das superfícies escuras que a régua
    dos glifos mede (check-formas D5h.4) */
@@ -150,7 +154,7 @@ export function CartaoDoEncontro({ estado, escolhas = [], pergunta = "", diz = "
   const nome = estado.quantos > 1 ? `${estado.quantos}× ${estado.criatura}` : estado.criatura;
   const cabeca = (
     <span className="tv-mono flex items-center" style={{ ...LEGENDA, gap: 6, color: T.amberSoft }}>
-      <Glifo nome="sombra" tamanho={16} cor={T.amberSoft} />Na estrada · um encontro
+      <Glifo nome="sombra" tamanho={16} cor={T.amberSoft} />{estado.tabela === "confronto" ? CABECA_DO_CARTAO.confronto : CABECA_DO_CARTAO.estrada}
     </span>
   );
   const chipDeVista = chip && (

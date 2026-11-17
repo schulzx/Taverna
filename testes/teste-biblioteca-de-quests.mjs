@@ -46,7 +46,7 @@ import {
   BIBLIOTECA_DE_QUESTS, TIPOS_DE_QUEST, QUANDO_DA_QUEST, ESTADOS_DA_QUEST, PAPEIS_DA_QUEST, MAOS_DO_VILAO,
   LIMITES_DA_QUEST, EFEITOS_DA_QUEST, EFEITOS_DA_REVIRAVOLTA, ATOS_DO_HEROI,
   questPorId, validarQuest, abrirQuest, avancarQuest, escolherNaQuest, vereditoDaEscolha, estadoDaQuest, NATUREZAS_DO_FIO,
-  TEMPERATURAS, TEMPERATURA_DO_QUANDO, PRESSUPOSTOS, PREMISSAS,
+  TEMPERATURAS, TEMPERATURA_DO_QUANDO, PRESSUPOSTOS, PREMISSAS, oClimaxDaQuest,
 } from "../src/biblioteca-de-quests.js";
 import { ARQUETIPOS, FASES } from "../src/vilao.js";
 import { SOBE_A_CAMADA } from "../src/plano-do-vilao.js";
@@ -95,11 +95,31 @@ const consulta = (e, nome) => ({ ...e, npcs: registrarConsulta(e.npcs, nome) });
 const naEstrada = (e) => ({ ...e, jornada: { para: FOZ }, lugar: null });
 
 /* ---------------- o motor de prova: um turno é escrever o livro e avançar ---------------- */
+/* S7 (17/11, o clímax da quest): a etapa de confronto passou a exigir quem
+   é do vilão EM CENA — o «encontrado» que só o cartão do encontro escreve
+   (O_CLIMAX_DA_QUEST). Esta suíte prova os RAMOS DA FICHA (a lâmina, o
+   assobio, a portagem, o desvio…), e o encontro no covil é provado à parte,
+   com a regra inteira, em teste-o-confronto-da-quest.mjs. Por isso o motor
+   de prova dá o encontro como feito: escreve «encontrado» (cru, sem «visto»
+   — a alcunha antes do rosto continua a ser provada aqui) para cada papel
+   hostil que já tem id. A intenção de cada guião não muda; o que muda é que
+   a besta esteve à frente do herói antes de o ramo fechar. */
+const comOEncontroFeito = (F, R, e) => {
+  try {
+    const hostis = [...new Set(Object.values(oClimaxDaQuest(F)).map((c) => c.hostil).filter(Boolean))];
+    const ids = hostis.map((h) => R && R.papeis && R.papeis[h] && R.papeis[h].id).filter(Boolean);
+    if (!ids.length || !e || !e.factos) return e;
+    const pessoas = { ...(e.factos.pessoas || {}) };
+    for (const id of ids) if (!(pessoas[id] && pessoas[id].encontrado)) pessoas[id] = { ...(pessoas[id] || {}), encontrado: { dia: 0, como: "guiao" } };
+    return { ...e, factos: { ...e.factos, pessoas } };
+  } catch { return e; }
+};
 function jogo(id, papeis, e0, extra) {
   const F = questPorId(id);
   const j = { F, e: e0, R: abrirQuest(F, { estado: e0, papeis, ...(extra || {}) }), extra: extra || {} };
+  j.e = comOEncontroFeito(F, j.R, j.e);
   j.ctx = () => ({ estado: j.e, ...j.extra });
-  j.turno = (f) => { if (f) j.e = f(j.e); j.R = avancarQuest(F, j.R, j.ctx()); return j; };
+  j.turno = (f) => { if (f) j.e = f(j.e); j.e = comOEncontroFeito(F, j.R, j.e); j.R = avancarQuest(F, j.R, j.ctx()); j.e = comOEncontroFeito(F, j.R, j.e); return j; };
   j.escolher = (k, op) => { j.R = escolherNaQuest(F, j.R, k, op, j.ctx()); return j; };
   j.ver = () => estadoDaQuest(F, j.R, j.ctx());
   return j;
@@ -992,11 +1012,15 @@ const ULT = "o_ultimo_a_sair";
 const ateAbel = [(e) => segredo(ir(e, FORJA), FORJA), (e) => falar(e, "Abel")];
 const u1 = g3(ULT, "achou · a praça", [...ateAbel, (e) => falar(ir(e, MOINHO), "Inês"), ["escolher", "voz", "praca"]]);
 t("o Último: a ruína, o rasto, quem saiu com vida achada, e a praça — concluída", u1.R.estado === "concluida" && u1.R.feitas.sobrevivente.ramo === "achou" && u1.R.feitas.voz.ramo === "praca", J(u1.R.feitas));
-const u2 = g3(ULT, "lâmina poupando · longe", [...ateAbel, (e) => lutar(e, { nome: "Nuno", rendido: true }), ["escolher", "voz", "longe"]]);
+/* MOVIDA no S7 (17/11): a etapa de rastro fecha no covil (O_CLIMAX_DA_QUEST) —
+   o rastro de quem saiu com vida acaba no esconderijo, e a luta com Nuno é lá */
+const u2 = g3(ULT, "lâmina poupando · longe", [...ateAbel, (e) => ir(e, MOINHO), (e) => lutar(e, { nome: "Nuno", rendido: true }), ["escolher", "voz", "longe"]]);
 t("o Último: quem acaba o serviço vencido e poupado, e a testemunha levada para longe", u2.R.feitas.sobrevivente.variante === "poupou" && u2.R.feitas.voz.ramo === "longe" && u2.R.estado === "concluida");
 const u3 = g3(ULT, "o barulho · guardar", [...ateAbel, (e) => falar(ir(e, MOINHO), "Inês"), (e) => consulta(e, "Inês"), (e) => segredo(ir(e, MOEDA), MOEDA), ["escolher", "voz", "guardar"]]);
 t("o Último: o desastre era o barulho — abre-se o que levaram do outro lado da rua", u3.R.reviravoltas.some((r) => r.id === "o_barulho") && !!u3.R.feitas.alvo && u3.R.feitas.voz.ramo === "guardar" && u3.R.estado === "concluida", J(u3.R));
-const u4 = g3(ULT, "a marca na porta", [(e) => segredo(ir(e, FORJA), FORJA), (e) => levar(e, "O recibo meio queimado"), (e) => falar(ir(e, MOINHO), "Inês")]);
+/* MOVIDA no S7 (17/11): o rastro fecha no covil (O_CLIMAX_DA_QUEST) — o herói
+   chega ao esconderijo um turno antes de falar com Inês, e é aí que vê a marca */
+const u4 = g3(ULT, "a marca na porta", [(e) => segredo(ir(e, FORJA), FORJA), (e) => levar(e, "O recibo meio queimado"), (e) => ir(e, MOINHO), (e) => falar(e, "Inês")]);
 t("o Último: quem não pergunta a quem esconde encontra a marca na porta, e a testemunha espera por quem a caça", u4.R.reviravoltas.some((r) => r.id === "a_marca_na_porta") && !u4.R.feitas.sobrevivente, J(u4.R));
 u4.turno((e) => falar(e, "Nuno")).escolher("voz", "praca");
 t("até olhar quem acaba o serviço nos olhos: aí chega à testemunha", !!u4.R.feitas.sobrevivente && u4.R.estado === "concluida");

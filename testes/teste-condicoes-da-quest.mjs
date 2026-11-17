@@ -141,6 +141,9 @@ function cheio() {
   e = { ...e, factos: doCronista(e, { falouCom: ["Teodoro", "Lia"], segredos: [{ nome: "Covil de Espinhos", cidade: CIDADE }] }, 2, 4) };
   /* os caídos pelo fim da luta: Brás rendido, Delfina morta */
   e = { ...e, factos: anotarOLivro(e, { tipo: "factos", dia: 3, turno: 6, derrotados: caidosParaOLivro([{ nome: "Brás", rendido: true }, { nome: "Delfina" }]) }).factos };
+  /* S7 (17/11): o encontro de verdade com o tenente, pela porta do cartão
+     do confronto (o-confronto-da-quest.js escreve a entrada «encontros») */
+  e = { ...e, factos: anotarTurno(e.factos, { dia: 3, turno: 7, encontros: [{ quem: "npc|Brás", como: "espreitou" }] }).factos };
   /* a base: a masmorra concluída, o Teodoro ferido; a ficha: o laço e a consulta */
   let base = concluirLugar(null, "Covil de Espinhos");
   base = porSituacao(base, "Teodoro", SITUACOES.ferida);
@@ -163,6 +166,7 @@ const VERDADE = {
   afeicao: ["afeicao", "papel:protegido", 3],
   derrotou: ["derrotou", "papel:tenente"],
   poupou: ["poupou", "papel:tenente"],
+  encontrou: ["encontrou", "papel:tenente"],
   morto: ["morto", "papel:sumida"],
   situacao: ["situacao", "papel:informante", "ferida"],
   relacao: ["relacao", "papel:protegido", "aliado"],

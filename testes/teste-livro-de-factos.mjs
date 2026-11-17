@@ -51,7 +51,10 @@ sec("§1 as tabelas: cada tipo de facto diz de onde vem, e escreve-se");
      factos que as quests deixam e mais nenhum órgão guardava — o favor que um
      lugar deve (`favor`) e a linha durável do QUEM É (`quemE`). A intenção
      fica: a lista é fechada, e quem a alarga tem de vir aqui dizê-lo. */
-  t("os tipos de facto são os da planta (§3/§4), o nomeado à parte, e os dois das quests", J(tipos) === J(["nomeado", "visto", "falou", "afeicao", "derrotado", "recebeu", "prometeu", "esteve", "descobriu", "favor", "quemE"]));
+  /* MOVIDA no S7 (17/11): o «encontrado» entrou — o encontro de verdade com
+     quem a quest põe à frente (o cartão do confronto), a prova de que a besta
+     esteve em cena (O_CLIMAX_DA_QUEST) */
+  t("os tipos de facto são os da planta (§3/§4), o nomeado à parte, os dois das quests e o encontro (S7)", J(tipos) === J(["nomeado", "visto", "falou", "afeicao", "derrotado", "encontrado", "recebeu", "prometeu", "esteve", "descobriu", "favor", "quemE"]));
   t("cada tipo é de uma pessoa ou de um lugar", tipos.every((k) => ["pessoa", "lugar"].includes(TIPOS_DE_FACTO[k].de)));
   t("cada tipo tem um peso numérico e uma forma no save", tipos.every((k) => Number.isFinite(TIPOS_DE_FACTO[k].peso) && typeof TIPOS_DE_FACTO[k].forma === "string"));
   /* a causa (d) da planta: o que o jogo ainda não escreve DIZ que não escreve */
@@ -69,6 +72,7 @@ sec("§1 as tabelas: cada tipo de facto diz de onde vem, e escreve-se");
     falou: { falouCom: ["Bruna"] },
     afeicao: { afeicoes: [{ quem: "Bruna", laco: { tipo: "divida", forca: 2 } }] },
     derrotado: { derrotados: [{ nome: "Bruna", rendido: true }] },
+    encontrado: { encontros: [{ quem: "Bruna", como: "espreitou" }] },
     recebeu: { entregas: [{ a: "Bruna", item: "Anel de cobre" }] },
     prometeu: { promessas: [{ a: "Bruna", o: "achar o irmão dela" }] },
     esteve: { lugar: { nome: "A Lanterna", cidade: "Foz" } },

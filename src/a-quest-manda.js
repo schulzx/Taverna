@@ -38,7 +38,7 @@
    PURO E DETERMINÍSTICO. Nada de sorte nem relógio; o `null` e o lixo dão
    lista vazia, `null` ou o livro de antes — nunca lançam.
    ============================================================ */
-import { questPorId, estadoDaQuest } from "./biblioteca-de-quests.js";
+import { questPorId, estadoDaQuest, oClimaxDaQuest } from "./biblioteca-de-quests.js";
 import { garantirQuestsDaEspinha } from "./motor/quests-do-turno.js";
 import { garantirEsqueleto } from "./esqueleto.js";
 import { garantirHistoria } from "./historia.js";
@@ -201,11 +201,28 @@ export function oPassoDaQuest(ficha, registo, contexto) {
       }
     }
     const especie = O_PASSO_NO_ORACULO.haRastro.rx.test(semAc(`${v.etapa} ${v.etapaTexto}`)) ? "rasto" : "segredo";
+    /* S7 · O CLÍMAX: a etapa de confronto que ainda pede a besta em cena (o
+       «encontrou» por cumprir) diz quem é, como o herói o conhece (o nome só
+       depois de o ver; antes, o rótulo), e o covil onde o encontro acontece */
+    let confronto = null;
+    try {
+      const c = oClimaxDaQuest(F)[v.etapa];
+      const pede = c && c.hostil && atomos(v.falta).some((a) => a.predicado === "encontrou");
+      if (pede) {
+        const p = obj(papeis[c.hostil]) || {};
+        const cv = c.covil ? lugarDe({ papel: c.covil }) : null;
+        const viu = arr(v.gente).some((g) => obj(g) && g.papel === c.hostil);
+        const nome = String(p.nome || "").trim();
+        const quem = (viu && nome) || (v.rotulos && typeof v.rotulos[c.hostil] === "string" && v.rotulos[c.hostil].trim()) || nome;
+        if (quem && cv) confronto = Object.freeze({ papel: c.hostil, id: String(p.id || ""), nome, quem, covil: Object.freeze(cv) });
+      }
+    } catch { confronto = null; }
     return Object.freeze({
       quest: F.id, etapa: v.etapa, texto: v.etapaTexto, especie,
       /* o passo que vem depois deste (a 21.ª): o que quem o dá sabe */
       depois: typeof v.depoisTexto === "string" ? v.depoisTexto : "",
       escuta: O_PASSO_NO_ORACULO.haOQueOuvir.rx.test(semAc(`${v.etapa} ${v.etapaTexto}`)),
+      confronto,
       descobrir: Object.freeze(descobrir.map((l) => Object.freeze(l))),
       lugares: Object.freeze(lugares.map((l) => Object.freeze(l))),
       candidatos: Object.freeze(candidatos),

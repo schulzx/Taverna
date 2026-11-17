@@ -110,6 +110,12 @@ export const TIPOS_DE_FACTO = Object.freeze({
     porta: "o vínculo do companheiro (vinculos.js) e o laço dos outros (npcs.js), lidos por grauDeAfeicao" }),
   derrotado: Object.freeze({ de: "pessoa", entrada: "derrotados", peso: 3, forma: "{ dia, como }",
     porta: "o fim da luta (App.jsx e motor/luta-do-turno.js): os caídos, com rendido, desacordado e fugiu" }),
+  /* S7 (17/11, o clímax da quest): o encontro de verdade com quem é hostil
+     — a luta, a palavra, a espreita ou a captura, pelo cartão do encontro
+     (o-confronto-da-quest.js). É a prova de que a besta esteve EM CENA: a
+     etapa cujo objeto é ela só fecha com isto (O_CLIMAX_DA_QUEST). */
+  encontrado: Object.freeze({ de: "pessoa", entrada: "encontros", peso: 3, forma: "{ dia, como }",
+    porta: "o cartão do encontro com quem a quest põe à frente (o-confronto-da-quest.js, oLivroDoEncontro)" }),
   recebeu: Object.freeze({ de: "pessoa", entrada: "entregas", peso: 2, forma: "[item]",
     porta: null }),
   prometeu: Object.freeze({ de: "pessoa", entrada: "promessas", peso: 2, forma: "[{ o, dia }]",
@@ -362,6 +368,8 @@ function pessoaLimpa(p) {
   if (af) { const g = grauDeAfeicao({ grau: af.grau }); if (g > 0) out.afeicao = { grau: g, dia: inteiro(af.dia) }; }
   const d = obj(o.derrotado);
   if (d && Object.prototype.hasOwnProperty.call(COMO_CAIU.pesos, d.como)) out.derrotado = { dia: inteiro(d.dia), como: d.como };
+  const en = obj(o.encontrado);
+  if (en) out.encontrado = { dia: inteiro(en.dia), como: limpo(en.como, LIVRO_DE_FACTOS.id) || "encontro" };
   const rec = [...new Set(arr(o.recebeu).map((i) => limpo(i)).filter(Boolean))].slice(-LIVRO_DE_FACTOS.recebeu);
   if (rec.length) out.recebeu = rec;
   const pro = arr(o.prometeu).map((x) => obj(x)).filter((x) => x && limpo(x.o, LIVRO_DE_FACTOS.texto))
@@ -569,6 +577,16 @@ export function anotarTurno(livro, ocorrido) {
     tocar(r, (e) => (e.derrotado && COMO_CAIU.pesos[e.derrotado.como] >= COMO_CAIU.pesos[como] ? e : { ...e, derrotado: { dia, como } }));
     ver(r);
   }
+  /* S7: o encontro de verdade — o primeiro fica (o dia em que a besta
+     esteve à frente do herói); `quem`: o id do papel, ou o nome */
+  for (const a of arr(o.encontros)) {
+    const x = obj(a);
+    const r = x && resolver(x.quem);
+    if (!r) continue;
+    const como = limpo(x.como, LIVRO_DE_FACTOS.id) || "encontro";
+    tocar(r, (e) => (e.encontrado ? e : { ...e, encontrado: { dia, como } }));
+    ver(r);
+  }
   for (const a of arr(o.afeicoes)) {
     const x = obj(a);
     const r = x && resolver(x.quem);
@@ -665,6 +683,8 @@ export function conversou(livro, id, n = 1) {
 }
 /* caiu numa luta com o herói, de qualquer forma */
 export const derrotou = (livro, id) => !!obj((daPessoa(livro, id) || {}).derrotado);
+/* S7: esteve frente a frente com o herói num encontro de verdade (o cartão) */
+export const encontrou = (livro, id) => !!obj((daPessoa(livro, id) || {}).encontrado);
 /* caiu e ficou vivo (COMO_CAIU.poupado) */
 export function poupou(livro, id) {
   const d = obj((daPessoa(livro, id) || {}).derrotado);

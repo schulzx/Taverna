@@ -115,6 +115,23 @@ export const ESCOLHAS_DO_ENCONTRO = {
   },
 };
 
+/* O CONFRONTO DA QUEST (S7, 17/11): o mesmo cartão, quando a quest põe o
+   herói no covil de quem é do vilão (o-confronto-da-quest.js). O herói
+   chega primeiro — é ele quem procura —, e cada escolha que não é lutar
+   nem recuar tem um dado, e o dado falhado é luta: não há clímax sem
+   risco. `so: "naoLendario"`: o que é grande demais para uma corda. */
+export const ESCOLHAS_DO_CONFRONTO = {
+  ordem: ["espreitar", "negociar", "capturar", "lutar", "recuar"],
+  escolhas: {
+    espreitar: { rotulo: "Espreitar", pericia: "furtividade", cd: "passiva", maisCd: 0, custo: { horas: 1 }, sucesso: "espreitou", falha: "descoberto" },
+    negociar: { rotulo: "Falar", pericia: "persuasao", cd: { fraco: 11, comum: 12, competente: 13, elite: 15, lendario: 17 }, so: "fala", custo: {}, sucesso: "negociou", falha: "palavraQuebrada" },
+    capturar: { rotulo: "Capturar", pericia: "atletismo", cd: { fraco: 11, comum: 13, competente: 15, elite: 17, lendario: 20 }, so: "naoLendario", custo: { horas: 1 }, sucesso: "capturou", falha: "capturaFalhada" },
+    lutar: { rotulo: "Lutar", pericia: null, custo: {}, sucesso: "frenteAFrente", falha: "frenteAFrente" },
+    recuar: { rotulo: "Recuar", pericia: null, custo: {}, sucesso: "recuou", falha: "recuou" },
+  },
+};
+const tabelaDe = (estado) => (estado && estado.tabela === "confronto" ? ESCOLHAS_DO_CONFRONTO : ESCOLHAS_DO_ENCONTRO);
+
 /* ---------------- 3. O DESFECHO ----------------
    `situacao`: a chave de `ABERTURA_DA_LUTA.situacoes` (grid.js) — a
    distância a que a luta abre. `iniciativa`: o lado que tem a surpresa
@@ -133,6 +150,12 @@ export const DESFECHOS_DO_ENCONTRO = {
     emboscadaContra: { luta: true, situacao: "emboscada", iniciativa: "inimigos", frase: "não vi a tempo, e a investida já vem" },
     alcancado: { luta: true, situacao: "emboscada", iniciativa: "inimigos", frase: "fui alcançado na fuga" },
     frenteAFrente: { luta: true, situacao: "encontro", iniciativa: null, frase: "fui ao encontro, de frente" },
+    /* S7: os do confronto da quest (ESCOLHAS_DO_CONFRONTO) */
+    espreitou: { luta: false, frase: "cheguei perto sem ser visto e vi com meus próprios olhos o que procurava" },
+    negociou: { luta: false, frase: "conversamos frente a frente, e ninguém puxou o aço" },
+    capturou: { luta: false, frase: "a corda prendeu, e está à minha mercê" },
+    capturaFalhada: { luta: true, situacao: "encontro", iniciativa: "inimigos", frase: "a corda falhou, e veio direto para cima de mim" },
+    recuou: { luta: false, frase: "recuei antes de ser visto" },
   },
   bonusDeIniciativa: 5,
   porque: "a luta da estrada abre pelo que se decidiu antes dela: quem viu primeiro, quem escolheu, quem falhou",
@@ -248,12 +271,13 @@ function desfechoDe(id, estado, custo = null) {
 /* O veredito de uma escolha, antes do toque: a perícia, a CD, a chance, o
    custo e o que acontece de cada lado. */
 function vereditoDe(id, estado, c) {
-  const E = ESCOLHAS_DO_ENCONTRO.escolhas[id];
+  const E = tabelaDe(estado).escolhas[id];
   const naoViram = estado.quemViu === "heroi";
   const ameaca = ameacaDe(estado.ameaca);
   let disponivel = true, porqueNao = null;
   if (E.so === "naoViram" && !naoViram) { disponivel = false; porqueNao = "já te viu"; }
   if (E.so === "fala" && !estado.fala) { disponivel = false; porqueNao = "não ouve propostas"; }
+  if (E.so === "naoLendario" && estado.lendario) { disponivel = false; porqueNao = "grande demais para isso"; }
   const tributo = E.custo.tributo ? TRIBUTO[ameaca] * Math.max(1, Number(estado.quantos) || 1) : 0;
   if (disponivel && tributo && Number.isFinite(Number(c.moedas)) && Number(c.moedas) < tributo) { disponivel = false; porqueNao = "faltam moedas"; }
   const custo = { horas: E.custo.horas || 0, moedas: tributo, ...(E.custo.recuo ? { recuo: true } : {}) };
@@ -281,14 +305,14 @@ function vereditoDe(id, estado, c) {
 export function escolhasDoEncontro(estado, ctx) {
   if (!obj(estado) || estado.fase !== "escolha") return [];
   const c = obj(ctx) ? ctx : {};
-  return ESCOLHAS_DO_ENCONTRO.ordem.map((id) => vereditoDe(id, estado, c));
+  return tabelaDe(estado).ordem.map((id) => vereditoDe(id, estado, c));
 }
 
 /* O toque. `o`: { d20 | sorte, bonus, moedas }. Devolve o estado
    resolvido, com o teste e o desfecho; `null` para a escolha que não
    existe ou não está disponível (quem chama fica com o estado que tinha). */
 export function resolverEscolha(estado, id, o) {
-  if (!obj(estado) || estado.fase !== "escolha" || !Object.prototype.hasOwnProperty.call(ESCOLHAS_DO_ENCONTRO.escolhas, id)) return null;
+  if (!obj(estado) || estado.fase !== "escolha" || !Object.prototype.hasOwnProperty.call(tabelaDe(estado).escolhas, id)) return null;
   const op = obj(o) ? o : {};
   const v = vereditoDe(id, estado, op);
   if (!v.disponivel) return null;
@@ -303,6 +327,8 @@ export function resolverEscolha(estado, id, o) {
 export const PAUTA_DO_ENCONTRO = {
   sinal: { acabou: "na estrada, um sinal: {sinal}. Ainda não se sabe o que é.", naoPode: "dizer o que deixou o sinal, abrir luta ou fazer alguma coisa atacar: o sistema pede o dado e decide" },
   escolha: { acabou: "{quem} na estrada, à frente ({ameaca}); {viu}. A escolha é minha.", naoPode: "abrir luta, fazer {criatura} atacar ou escolher por mim: a escolha é do jogador" },
+  /* S7: o confronto da quest — no covil, não na estrada */
+  confronto: { acabou: "{quem}, aqui, à minha frente ({ameaca}); {viu}. A escolha é minha.", naoPode: "abrir luta, fazer {criatura} atacar ou fugir, ou escolher por mim: a escolha é do jogador" },
   luta: { acabou: "{quem}: {frase}. Narre esse instante em uma ou duas frases; a luta abre depois.", naoPode: "resolver golpes, dano ou quem cai: o dado decide na mesa" },
   semLuta: { acabou: "{quem}: {frase}.", naoPode: "fazer {criatura} voltar a aparecer neste trecho" },
   viu: { heroi: "ainda não me viu", eles: "já me viu" },
@@ -321,7 +347,7 @@ export function pautaDoEncontro(estado) {
     viu: P.viu[estado.quemViu] || P.viu.eles,
     frase: estado.desfecho ? estado.desfecho.frase : "",
   };
-  const t = estado.fase === "sinal" ? P.sinal : estado.fase === "escolha" ? P.escolha : estado.desfecho && estado.desfecho.luta ? P.luta : P.semLuta;
+  const t = estado.fase === "sinal" ? P.sinal : estado.fase === "escolha" ? (estado.tabela === "confronto" ? P.confronto : P.escolha) : estado.desfecho && estado.desfecho.luta ? P.luta : P.semLuta;
   if (estado.fase === "resolvido" && !estado.desfecho) return { acabou: [], naoPode: [] };
   return { acabou: [encher(t.acabou, v)], naoPode: [encher(t.naoPode, v)] };
 }

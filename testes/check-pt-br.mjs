@@ -112,7 +112,7 @@ const TETO = {
   "src/classes.js": 4,
   "src/habilidades.js": 2,
   "src/regras.js": 1,
-  "src/biblioteca-de-quests.js": 459,
+  "src/biblioteca-de-quests.js": 458,
   "src/acervo/quests-lote-6.js": 441,
   "src/acervo/quests-lote-4.js": 271,
   "src/acervo/quests-lote-5.js": 230,

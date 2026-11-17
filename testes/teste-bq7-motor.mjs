@@ -37,6 +37,7 @@ import { chefesDoMundo } from "../src/mundo-base.js";
 import { garantirFactos } from "../src/livro-de-factos.js";
 import { caidosParaOLivro } from "../src/motor/luta-do-turno.js";
 import { anotarOLivro } from "../src/motor/livro-do-turno.js";
+import { oLivroDoEncontro, aFichaDoEncontrado } from "../src/o-confronto-da-quest.js";
 import { PASSOS_DO_REPLAY, correrOTurno, DONO_DO_CAMPO } from "../src/sessao.js";
 import { aPautaDoTurno } from "../src/motor/pauta-do-turno.js";
 import { textoDaPauta, TETO_DA_PAUTA } from "../src/pauta.js";
@@ -227,10 +228,24 @@ sec("§4 as escolhas: o veredito antes do clique");
   const P = registoDe(E, "o_salvo_conduto").papeis;
   ({ E } = turno(W, E, (e) => falar(registar(e, { nome: P.protegido.nome, cidade: P.origem.cidade }, { nome: P.guarda.nome, cidade: P.origem.cidade }), P.protegido.nome, P.guarda.nome)));
   ({ E } = turno(W, E, (e) => naEstrada(comGrupo(e, P.protegido.nome), P.destino.cidade)));
+  /* MOVIDA no S7 (17/11): a portagem paga-se A QUEM a cobra — a escolha da
+     etapa de confronto só abre com o tenente em cena (O_CLIMAX_DA_QUEST).
+     Antes do encontro, nenhuma carta e nenhum nome; o encontro pelo cartão
+     (o «encontrado», aqui escrito pela mesma entrada do livro) abre-a. */
+  const semEle = escolhasDasQuests(E, { mundo: W.mundo });
+  t("antes do encontro, a escolha da portagem não abre — e o nome do servo que o herói não viu não aparece", !semEle.some((x) => x.quest === "o_salvo_conduto" && x.chave === "passo") && !J(semEle).includes(P.tenente.nome), J(semEle));
+  {
+    const enc = { fase: "resolvido", tabela: "confronto", escolha: "negociar", desfecho: { id: "negociou", luta: false }, quest: { quest: "o_salvo_conduto", etapa: "passo", papel: "tenente", alvo: P.tenente.id || "", nome: P.tenente.nome, covil: P.passo.nome } };
+    ({ E } = turno(W, E, (e) => {
+      const ficha = aFichaDoEncontrado(enc, e.npcs, { dia: e.dia });
+      return { ...e, npcs: ficha ? { ...e.npcs, [ficha.nome]: ficha } : e.npcs, factos: oLivroDoEncontro(e.factos, enc, { dia: e.dia, turno: (nTurno += 10) }) };
+    }));
+  }
   const ab = escolhasDasQuests(E, { mundo: W.mundo });
   const portagem = ab.find((x) => x.quest === "o_salvo_conduto" && x.chave === "passo");
   t("no passo, a escolha da portagem está aberta, com os dois lados e o preço", !!portagem && portagem.opcoes[0].custo === 40 && portagem.opcoes[0].podeEscolher && portagem.opcoes[0].ganha.length > 10 && portagem.opcoes[0].custa.length > 10, J(ab));
-  t("e o veredito não diz o nome do servo que o herói não viu", !J(ab).includes(P.tenente.nome));
+  /* MOVIDA no S7: «o veredito não diz o nome do servo que o herói não viu»
+     passou para antes do encontro (acima) — depois dele, o herói já o viu */
   const antes = J(E);
   const r = escolherNaQuestDoEstado(E, "o_salvo_conduto", "passo", "portagem", { mundo: W.mundo });
   t("escolher: o preço sai da bolsa já no clique", r && r.estado.personagem && r.estado.personagem.moedas === 60, J(r && r.estado.personagem));
@@ -386,7 +401,14 @@ sec("§10 os pedidos do desenho (formas.md «## BQ · as quests na tela», §BQ 
   const PSC = { protegido: { nome: "Lia" }, origem: { cidade: CID }, destino: { cidade: FOZ }, passo: { nome: "Vau Negro", cidade: CID }, desvio: { nome: "Trilho do Vau", cidade: CID }, tenente: { nome: "Brás" }, guarda: { nome: "Teodoro" } };
 
   /* 1. o veredito por opção */
-  const E0 = base();
+  /* MOVIDA no S7 (17/11): a etapa do passo é de confronto — a portagem, o
+     desvio e a lâmina só contam com o tenente já encontrado
+     (O_CLIMAX_DA_QUEST, provado em teste-o-confronto-da-quest.mjs). Aqui
+     prova-se a forma do veredito e do «o que falta», e por isso o encontro
+     entra feito (cru, sem «visto»: o servo continua por ver) — o do Brás e o do Teodoro,
+     que a troca de papel pode pôr no lugar dele */
+  const comOEncontro = (e) => ({ ...e, factos: { ...e.factos, pessoas: { ...e.factos.pessoas, "npc|Brás": { encontrado: { dia: 1, como: "guiao" } }, "npc|Teodoro": { encontrado: { dia: 1, como: "guiao" } } } } });
+  const E0 = comOEncontro(base());
   const R0 = abrirQuest("o_salvo_conduto", { estado: E0, papeis: PSC });
   const noPasso = { ...R0, feitas: { aceitar: { dia: 1 }, estrada: { dia: 1 } } };
   const vp = vereditoDaEscolha("o_salvo_conduto", noPasso, "passo", { estado: E0 });
