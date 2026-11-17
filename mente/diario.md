@@ -24,6 +24,15 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 17/11 · sem versão — S7b, a poda e a porta · commits 7ef3573 · a9e68e1
+
+A mão do motor, com o bastão do App das 15:23 às 15:47 (S7b), devolvido.
+- **a poda do ausente** (`motor/poda-do-ausente.js`): depois da resposta e antes da tela, a frase em que alguém que o sistema sabe noutro sítio, ou morto, age ou fala sai (com a fala colada); o nome vai ao livro de vetos do Juiz. Travas: >40 % do texto ou a única fala de uma pergunta — não poda, veta. Nas 198 narrações gravadas: **0 frases podadas**; 1 achada e só vetada (a Helga da 10.ª, #55, pelo limiar — o registo dela diz Monte Rasa). Decisão média: quem o jogador nomeia na frase não se poda (ele foi procurá-lo; a recusa do ausente responde antes).
+- **o batismo** (`motor/o-batismo.js`): «Como você se chama?» sem ninguém com nome em cena — o sistema escala o figurante por semente, regista-o no sítio do herói e o `naoPode` diz o nome. Campo novo nenhum de save (o registo já existia).
+- **o retrato preso:** a fala do Mestre leva `onde` (campo novo, aditivo); o «à vista» da tela e da pauta só lê as deste sítio.
+- **a porta** (`boca.js#osNiveisDaPorta`): o veredito diz «À porta: … No fundo: …» pela mesma conta; o fundo (o selo) não mudou. Catraca 1000 plantas: 97,7 % na faixa (708 em faixa de dois patamares). Das 698 difíceis no fundo, 232 têm a porta fácil. Medido, não reequilibrado.
+- **prompt:** 63 866 / 70 371, antes e depois. **Não feito:** o «(a)» cru do ofício; «Me chamo Fendrel» na memória do inventado (nome de uma palavra só ainda não vai ao livro).
+
 ## 17/11 · sem versão — S7, o clímax, a porta e a poda · commit 5671fe1 (só o 1 de 3)
 
 A mão do motor, com o bastão do `App.jsx` das 14:05 até ao fim do item 1 (devolvido antes da corrida inteira).
