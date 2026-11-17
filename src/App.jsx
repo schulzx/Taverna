@@ -13996,7 +13996,7 @@ export default function Taverna() {
         if ((ida.linhas || []).length) pushMsgs(ida.linhas.map((texto) => ({ autor: "sistema", texto })));
         if (ida.rota.modo === "a_pe") {
           const tempo = avancarMinutos(Number(ida.rota.minutos) || 0);
-          const ch = chegadaABoca(ida.masmorra, { cidade: cidadeAtualRef.current, dia: diaRef.current, pers: fichaViva(), minutos: ida.rota.minutos });
+          const ch = chegadaABoca(ida.masmorra, { cidade: cidadeAtualRef.current, dia: diaRef.current, pers: fichaViva(), minutos: ida.rota.minutos, mapa: mapaRef.current });
           if (ch) {
             lugarRef.current = ch.lugar; setLugar(ch.lugar);
             pushMsgs(ch.linhas.map((texto) => ({ autor: "sistema", texto })));
@@ -21087,7 +21087,7 @@ export default function Taverna() {
        nome no mapa continua a mostrá-la aqui, como sempre mostrou. */
     let dif = null;
     try {
-      const v = vereditoDaMasmorra(doMapa || mm, { ...persIn, suprimentos: supIn }); /* v9.385: as tochas que levo (persIn já as tirou da mochila para a planta; a masmorra do mundo lê-as da ficha) */
+      const v = vereditoDaMasmorra(doMapa || mm, { ...persIn, suprimentos: supIn }, { mapa: mapaRef.current, genero: (mundo && mundo.genero) || undefined }); /* S7b: à porta, os bichos da ficha do lugar */ /* v9.385: as tochas que levo (persIn já as tirou da mochila para a planta; a masmorra do mundo lê-as da ficha) */
       dif = v ? v.dif : null;
       const jaLido = !!doMapa && !!masmorraDaBoca(lugarRef.current, [doMapa]);
       if (v && !jaLido) pushMsgs([{ autor: "sistema", texto: v.linha }]);
@@ -26305,7 +26305,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         const boca = !m ? masmorraDaBoca(ctx.lugar, ctx.masmorras) : null;
         const alvo = (m && m.masmorra) || boca || null;
         L.masmorra = { nome: (m && m.nome) || (boca && boca.nome) || "", linhas: m && Array.isArray(m.linhas) ? m.linhas : [],
-          veredito: m ? m.veredito : null, alvo, pers: ctx.pers, aBoca: !!boca };
+          veredito: m ? m.veredito : null, alvo, pers: ctx.pers, aBoca: !!boca, mapa: mapaRef.current };
       }
     } catch (e) { calou("a proposta: a masmorra", e); }
     try {

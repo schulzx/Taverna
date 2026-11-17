@@ -314,7 +314,9 @@ sec("4. o veredito antes da porta");
          palavras, capitalizada, depois da nota. A forma continua a de
          boca.js — o ícone, o nome, o patamar, a nota e o porquê. */
       const pq = String(v.dif.porque || "");
-      if (v.linha === `${p.icone} ${m.nome} — ${p.rotulo.toUpperCase()}: ${p.nota}.${pq ? ` ${pq.charAt(0).toUpperCase()}${pq.slice(1)}.` : ""}`) c.forma++;
+      /* S7b (17/11): com a porta, a linha diz as duas medidas («À porta: …. No fundo: ….»); sem ela, a de sempre */
+      const duas = v.porta ? ` À porta: ${v.porta.porque}. No fundo: ${pq}.` : (pq ? ` ${pq.charAt(0).toUpperCase()}${pq.slice(1)}.` : "");
+      if (v.linha === `${p.icone} ${m.nome} — ${p.rotulo.toUpperCase()}: ${p.nota}.${duas}`) c.forma++;
     }
   }
   console.log(`       idas ${c.idas} · veredito na partida ${c.vereditoNaPartida} · porta fechada na estrada ${c.portaFechadaNaEstrada} · chegadas ${c.chegadas} · veredito à boca ${c.vereditoNaBoca} · abre à boca ${c.abreNaBoca}`);

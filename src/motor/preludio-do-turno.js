@@ -823,7 +823,7 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
     if (j.alvo && j.alvo.tipo === "masmorra") {
       $ref.jornada = null; setJornada(null);
       try {
-        const ch = chegadaABoca(j.alvo, { cidade: $ref.cidadeAtual, dia: $ref.dia, pers: $ref.personagem || $render.personagem, jornada: j });
+        const ch = chegadaABoca(j.alvo, { cidade: $ref.cidadeAtual, dia: $ref.dia, pers: $ref.personagem || $render.personagem, jornada: j, mapa: $ref.mapa });
         if (ch) {
           $ref.lugar = ch.lugar; setLugar(ch.lugar);
           pushMsgs(ch.linhas.map((texto) => ({ autor: "sistema", texto })));

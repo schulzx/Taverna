@@ -39,6 +39,7 @@
    ============================================================ */
 
 import { masmorraAberta } from "./cena.js";
+import { vereditoDaMasmorra } from "./boca.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\s+/g, " ").trim();
 const semArtigo = (s) => norm(s).replace(/^(o|a|os|as)\s+/, "");
@@ -133,7 +134,16 @@ export function linhaDaFicha(mapa, masmorra, opcoes) {
   const quem = (Array.isArray(f.quem) ? f.quem : []).filter((q) => q && q.nome)
     .map((q) => (Number.isFinite(Number(q.nivel)) ? `${q.nome} (nv ${q.nivel})` : String(q.nome))).join(", ");
   const base = String(obj(obj(obj(mapa).regiao).base).nome || "").trim();
-  const perigo = f.perigoRotulo || (f.perigo ? `perigo ${f.perigo}` : "");
+  let perigo = f.perigoRotulo || (f.perigo ? `perigo ${f.perigo}` : "");
+  /* S7b (17/11): com o herói, o perigo é o do veredito — a MESMA função do
+     cartão do lugar (boca.js#vereditoDaMasmorra): à porta (o primeiro
+     encontro) e no fundo (o lugar inteiro). A 15/11 a pauta dizia «perigo
+     médio» e o cartão «DIFÍCIL», e os dois falavam do mesmo lugar. */
+  try {
+    const pers = opcoes && typeof opcoes === "object" ? opcoes.pers : null;
+    const v = pers ? vereditoDaMasmorra(masmorra, pers, { quem: f.quem, mapa }) : null;
+    if (v && v.porta) perigo = `à porta ${v.porta.patamar.rotulo.toLowerCase()}, no fundo ${v.dif.patamar.rotulo.toLowerCase()}`;
+  } catch { /* sem veredito, a ficha de sempre */ }
   const passo = FICHA_NA_MASMORRA.passoDasHoras;
   const horas = Number.isFinite(f.horas) ? Math.max(passo, Math.round(f.horas / passo) * passo) : NaN;
   const ida = Number.isFinite(horas) && base ? `; fica a ${decimal(horas)} h de marcha${f.rumo ? ` ${f.rumo}` : ""} de ${base}` : "";

@@ -948,7 +948,7 @@ export function aPautaDoTurno(estado, entrada, portas) {
        (a ficha: o tipo, o perigo, quem anda por lá, as horas até à base).
        Na luta não entra: lá a secção é a linha do tabuleiro. */
     try {
-      p = porNaPauta(p, "masmorra", linhaDaFicha($ref.mapa, $ref.masmorra, { luta: !!$ref.combate }));
+      p = porNaPauta(p, "masmorra", linhaDaFicha($ref.mapa, $ref.masmorra, { luta: !!$ref.combate, pers: fichaViva() }));
     } catch (e) { calou("linhaDaFicha", e); }
     /* 06/10: A LUZ DA LUTA — o escuro, a minha tocha, quem enxerga no
        escuro. Vazia com tudo claro; prio barata (pauta.js). */

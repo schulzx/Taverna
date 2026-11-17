@@ -93,7 +93,7 @@
    ============================================================ */
 
 import { HORAS_MARCHA_POR_DIA, TETO_DE_AVANCOS, ESTADOS, andar, minutosPorAvanco, relogioDoAvanco } from "./viagem.js";
-import { rotaAteAMasmorra, jornadaAteAMasmorra, masmorraDaBoca, vereditoDaMasmorra, IDA_NA_REGIAO } from "./boca.js";
+import { rotaAteAMasmorra, jornadaAteAMasmorra, masmorraDaBoca, vereditoDaMasmorra, IDA_NA_REGIAO, PERIGO_A_PORTA } from "./boca.js";
 import { pontoDoHeroi } from "./rastro.js";
 import { masmorrasDoMundo } from "./mundo-base.js";
 import { caminhoNaRegiao, origemDoHeroi, rotaDoCaminho, partidaNaRegiao } from "./marcha.js";
@@ -484,10 +484,15 @@ export function vereditoDaPartida(dados, destinoId, estado) {
     if (perigoDoLugar && pers) {
       const m = masmorras.find((x) => obj(x) && x.id != null && String(x.id) === alvo.id)
         || masmorras.find((x) => obj(x) && semArtigo(x.nome) === semArtigo(alvo.nome)) || null;
-      const v = m ? vereditoDaMasmorra(m, pers) : null;
+      /* S7b: com o mapa, a porta é a dos bichos da ficha do lugar (boca.js#osNiveisDaPorta) */
+      const v = m ? vereditoDaMasmorra(m, pers, { mapa }) : null;
       if (v && v.dif && v.dif.patamar) {
         const p = v.dif.patamar;
-        desafio = { patamar: p.id, rotulo: p.rotulo, icone: p.icone, nota: p.nota, cor: p.cor, selo: T.seloDoPatamar[p.id] || null, razao: v.dif.razao, porque: v.dif.porque, linha: v.linha };
+        desafio = { patamar: p.id, rotulo: p.rotulo, icone: p.icone, nota: p.nota, cor: p.cor, selo: T.seloDoPatamar[p.id] || null, razao: v.dif.razao,
+          /* S7b: o porquê que o cartão mostra diz as duas («À porta: … No fundo: …»), a mesma frase da linha */
+          porque: v.porta ? `${PERIGO_A_PORTA.porta}: ${v.porta.porque}. ${PERIGO_A_PORTA.fundo}: ${v.dif.porque}` : v.dif.porque, linha: v.linha,
+          /* S7b: as duas medidas da mesma conta — o primeiro encontro e o lugar inteiro */
+          porta: v.porta ? { patamar: v.porta.patamar.id, rotulo: v.porta.patamar.rotulo, razao: v.porta.razao, porque: v.porta.porque } : null };
       }
     }
   } catch { desafio = null; }

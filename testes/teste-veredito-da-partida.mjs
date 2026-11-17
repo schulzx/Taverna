@@ -517,8 +517,12 @@ sec("10. MC8 — o desafio do lugar: o mapa diz o que a boca dirá");
         pares++;
         const d = v.desafio;
         /* a porta (App: `vereditoDaMasmorra(doMapa, …)`) */
-        const porta = BO.vereditoDaMasmorra(m, pers);
-        if (d && porta && d.patamar === porta.dif.patamar.id && d.linha === porta.linha && d.porque === porta.dif.porque) iguais++;
+        /* S7b (17/11): a porta lê a ficha do lugar pelo mapa (todas as portas o recebem,
+           e esta prova também), e o porquê do cartão diz as duas medidas («À porta: …
+           No fundo: …»), a mesma frase da linha — a régua continua uma só */
+        const porta = BO.vereditoDaMasmorra(m, pers, { mapa: w.mapa });
+        const porqueDaPorta = porta && porta.porta ? `${BO.PERIGO_A_PORTA.porta}: ${porta.porta.porque}. ${BO.PERIGO_A_PORTA.fundo}: ${porta.dif.porque}` : porta && porta.dif.porque;
+        if (d && porta && d.patamar === porta.dif.patamar.id && d.linha === porta.linha && d.porque === porqueDaPorta) iguais++;
         if (d && d.selo === SP[d.patamar]) comSelo++;
         /* a boca: a chegada que o jogo de facto faz — pela estrada (o alvo da
            jornada) ou a pé (a masmorra do mundo) */
@@ -527,14 +531,14 @@ sec("10. MC8 — o desafio do lugar: o mapa diz o que a boca dirá");
         let boca = null;
         if (rota && rota.modo === "estrada") {
           const j = tenta(() => BO.jornadaAteAMasmorra({ rota, masmorra: m, origem }, { de: base.nome, dia: 4 }));
-          if (j) { porEstrada++; boca = tenta(() => BO.chegadaABoca(j.alvo, { cidade: base.nome, dia: 4, pers, jornada: j })); }
-        } else if (rota) { aPe++; boca = tenta(() => BO.chegadaABoca(m, { cidade: base.nome, dia: 4, pers, minutos: rota.minutos })); }
+          if (j) { porEstrada++; boca = tenta(() => BO.chegadaABoca(j.alvo, { cidade: base.nome, dia: 4, pers, jornada: j, mapa: w.mapa })); }
+        } else if (rota) { aPe++; boca = tenta(() => BO.chegadaABoca(m, { cidade: base.nome, dia: 4, pers, minutos: rota.minutos, mapa: w.mapa })); }
         if (d && boca && boca.linhas.includes(d.linha)) iguaisBoca++;
         /* a proposta: com a masmorra e o herói, e à boca */
-        const pr = aPropostaDaFrase({ frase: `Vou até ${m.nome}`, masmorra: { nome: m.nome, linhas: rota ? [BO.linhaDaIda(rota)].filter(Boolean) : [], alvo: m, pers } }, {});
+        const pr = aPropostaDaFrase({ frase: `Vou até ${m.nome}`, masmorra: { nome: m.nome, linhas: rota ? [BO.linhaDaIda(rota)].filter(Boolean) : [], alvo: m, pers, mapa: w.mapa } }, {});
         propostas++;
         if (pr && d && pr.linhas.filter((x) => x === d.linha).length === 1 && pr.desafio && pr.desafio.patamar === d.patamar && pr.preco.includes(d.rotulo)) propostasCertas++;
-        const pb = aPropostaDaFrase({ frase: "Entro.", masmorra: { nome: m.nome, linhas: [], alvo: m, pers, aBoca: true } }, {});
+        const pb = aPropostaDaFrase({ frase: "Entro.", masmorra: { nome: m.nome, linhas: [], alvo: m, pers, aBoca: true, mapa: w.mapa } }, {});
         naBoca++;
         if (pb && d && pb.linhas.includes(d.linha) && pb.verbo.startsWith("Entrar ") && pb.confirmar === A_PROPOSTA_DA_FRASE.confirmar.masmorraNaBoca) naBocaCerta++;
         const k = `${w.i}|${n.id}`;

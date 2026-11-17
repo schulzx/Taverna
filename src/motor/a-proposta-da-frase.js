@@ -306,7 +306,7 @@ function osEfeitos(l, e) {
     const n = limpo(M.nome) || (ehObj(M.alvo) ? limpo(M.alvo.nome) : "");
     /* MC8: o veredito da porta — o pronto, ou lido da masmorra e do herói */
     let v = ehObj(M.veredito) && limpo(M.veredito.linha) && ehObj(M.veredito.dif) ? M.veredito : null;
-    if (!v && ehObj(M.alvo) && ehObj(M.pers)) { try { v = vereditoDaMasmorra(M.alvo, M.pers); } catch { v = null; } }
+    if (!v && ehObj(M.alvo) && ehObj(M.pers)) { try { v = vereditoDaMasmorra(M.alvo, M.pers, { mapa: M.mapa }); } catch { v = null; } }
     const p = v && ehObj(v.dif.patamar) ? v.dif.patamar : null;
     const linhas = arr(M.linhas).map(limpo).filter(Boolean);
     /* a linha da porta, uma vez só, logo depois da do caminho */

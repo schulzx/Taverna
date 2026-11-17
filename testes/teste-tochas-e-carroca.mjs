@@ -63,8 +63,10 @@ sec("1. as tochas à porta da masmorra do mundo");
   const semNenhuma = { ...HEROINA, suprimentos: { ...supIn, tochas: 0 } };
   t("e quem de facto não leva tocha continua a ler o escuro", /sem uma tocha/.test((tenta(() => B.vereditoDaMasmorra(MURALHA, { ...semNenhuma, suprimentos: garantirSuprimentos(semNenhuma.suprimentos) }), {}) || {}).linha || ""));
   const entrar = corpoApos("const entrarMasmorra = (nomeSugerido = \"\", opcoes = null) => {");
-  t("a fiação: o veredito recebe a ficha com as tochas (supIn)", /vereditoDaMasmorra\(doMapa \|\| mm, \{ \.\.\.persIn, suprimentos: supIn \}\)/.test(entrar));
-  t("dentro do try com calou de sempre", /vereditoDaMasmorra\(doMapa \|\| mm, \{ \.\.\.persIn, suprimentos: supIn \}\)[\s\S]{0,400}calou\("veredito da masmorra"/.test(entrar));
+  /* S7b (17/11): o veredito ganhou um terceiro argumento (o mapa, para a porta ler a
+     ficha do lugar); a âncora fecha na ficha com as tochas, que é o que esta prova guarda */
+  t("a fiação: o veredito recebe a ficha com as tochas (supIn)", /vereditoDaMasmorra\(doMapa \|\| mm, \{ \.\.\.persIn, suprimentos: supIn \}[,)]/.test(entrar));
+  t("dentro do try com calou de sempre", /vereditoDaMasmorra\(doMapa \|\| mm, \{ \.\.\.persIn, suprimentos: supIn \}[,)][\s\S]{0,500}calou\("veredito da masmorra"/.test(entrar));
 }
 
 sec("2. a carroça da estrada sai da semente");
