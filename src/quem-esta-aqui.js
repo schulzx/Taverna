@@ -293,3 +293,29 @@ export function contextoDeQuemEsta(q) {
   const x = ehObj(q) ? q : {};
   return { presentes: arr(x.aqui), longe: arr(x.longe), doPasso: arr(x.doPasso), doSitio: arr(x.doSitio), foraDaCidade: !!x.fora };
 }
+
+/* ============================================================
+   S7b · O RETRATO PRESO (17/11/2026). A prova de 16/11 viu o retrato de
+   Merek — com quem o jogador falara na oficina — preso em «EM CENA» no
+   mercado, depois de o herói mudar de lugar, sem aparecer na prosa. A
+   causa: o registo fica «à vista» pela prosa (em-cena.js §2,
+   `aVistaPelaProsa`), e a prosa lida era a das últimas falas do Mestre —
+   as da oficina. Agora cada fala do Mestre leva o sítio onde foi dita
+   (entrega-do-turno.js#aEntrega, campo novo `onde`, que a versão antiga
+   ignora), e o «à vista» só lê as falas DESTE sítio. Fala sem `onde` (o
+   save de antes) conta como sempre contou.
+   ============================================================ */
+/* o sítio da cena numa chave: a cidade, o lugar, a masmorra, a estrada */
+export function ondeDaCena(estado) {
+  const e = ehObj(estado) ? estado : {};
+  const j = ehObj(e.jornada) ? `${str(e.jornada.de)}>${str(e.jornada.para)}` : "";
+  const m = ehObj(e.masmorra) && !e.masmorra.encerrada ? str(e.masmorra.nome || e.masmorra.id) : "";
+  return [sem(e.cidadeAtual), semArtigo(nomeDe(e.lugar)), sem(m), sem(j)].join("|");
+}
+
+/* as últimas `n` falas do Mestre ditas NESTE sítio (as sem sítio contam) */
+export function falasDoMestreAqui(msgs, onde, n = 2) {
+  const aqui = str(onde);
+  return arr(msgs).filter((m) => ehObj(m) && m.autor === "mestre" && typeof m.texto === "string" && m.texto.trim())
+    .slice(-n).filter((m) => !aqui || typeof m.onde !== "string" || m.onde === aqui).map((m) => m.texto);
+}

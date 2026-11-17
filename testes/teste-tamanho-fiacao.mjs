@@ -48,7 +48,9 @@ sec("0. O APP E O SERVIDOR LEEM A PEÇA");
 sec("1. O TIPO DO TURNO, ANTES DA RESPOSTA");
 {
   const i = APP.indexOf("oPedidoDoTurno(estadoDoPedido(),");
-  const j = APP.indexOf("const resp = pedidoDoAtor ?", i);
+  /* S7b (17/11): a resposta passou a `let` — a poda do ausente troca-a pela
+     podada logo depois da chamada; a âncora é a chamada, não o `const` */
+  const j = APP.indexOf("let resp = pedidoDoAtor ?", i);
   const trecho = i > 0 && j > i ? APP.slice(i, j) : "";
   t("o tamanho monta-se entre o pedido do turno e a chamada", trecho.length > 0 && /tamanho = oTamanhoDaResposta\(\{/.test(trecho));
   t("com a frase, o teste do turno e a luta que acabou", /oTamanhoDaResposta\(\{ frase: conteudo, teste: testeDoTurnoRef\.current, luta: !!combateAntes && !combateRef\.current \}\)/.test(trecho));

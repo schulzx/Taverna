@@ -270,7 +270,9 @@ import { aFichaDeAtor } from "./motor/ficha-de-ator.js";
 import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao.js";
 import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
-import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui } from "./quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui } from "./quem-esta-aqui.js";
+import { osAusentes, podarOAusente } from "./motor/poda-do-ausente.js";
+import { oBatismo } from "./motor/o-batismo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
@@ -7307,7 +7309,8 @@ export default function Taverna() {
       comigo: vale("EM CENA · quem anda comigo", () => quemAndaComigo(p0.grupo), []),
       emCena: nucleo ? vale("EM CENA · o núcleo em cena", () => nucleoEmCena(nucleo), []) : [],
       nucleo,
-      mostrado: vale("EM CENA · o que o Mestre mostrou", () => falasDoMestre(mensagensRef.current), []),
+      /* S7b · o retrato preso: só as falas ditas NESTE sítio (quem-esta-aqui.js#falasDoMestreAqui) */
+      mostrado: vale("EM CENA · o que o Mestre mostrou", () => falasDoMestreAqui(mensagensRef.current, ondeDaCena({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, masmorra: masmorraRef.current, jornada: jornadaRef.current }), LEITURA_DA_CONVERSA.falasDoMestre), []),
       encontro: vale("EM CENA · a criatura da estrada", () => { const v = criaturaAVistaRef.current, j = jornadaRef.current; return (v && j && v.trecho === (j.de || "") + ">" + (j.para || "")) ? v : null; }, null),
       combate: combateRef.current,
       sala: vale("EM CENA · a sala", () => (mm && !mm.encerrada && Array.isArray(mm.salas)) ? (mm.salas.find((x) => x.id === mm.atual) || null) : null, null),
@@ -10525,6 +10528,11 @@ export default function Taverna() {
     if (saida.semFicha) return null;
     resp = saida.podado;
     pers = saida.estado.personagem;
+    /* S7b · o retrato preso: o sítio onde esta fala do Mestre é dita (o de
+       depois do turno aplicado — a chegada narra-se no sítio novo); a
+       entrega lá embaixo põe-no na linha (entrega-do-turno.js#aEntrega) */
+    let ondeDaFala = "";
+    try { ondeDaFala = ondeDaCena({ cidadeAtual: cidadeAtualRef.current, lugar: lugarRef.current, masmorra: masmorraRef.current, jornada: jornadaRef.current }); } catch (e) { calou("S7b · o sítio da fala", e); }
     const msgs = [...saida.msgs];
     setPersonagem(pers);
     /* ---------------- A LUTA DO TURNO, NO MOTOR (T1-A, 6.ª fatia, 28/10) ----------------
@@ -10638,7 +10646,7 @@ export default function Taverna() {
       if (pers !== antes) { personagemRef.current = pers; setPersonagem(pers); }
     }
     {
-      const daEntrega = aEntrega({ narrativa: resp.narrativa, msgs, portao: portaoRef.current });
+      const daEntrega = aEntrega({ narrativa: resp.narrativa, msgs, portao: portaoRef.current, onde: ondeDaFala });
       if (daEntrega.segurar) { seguraRef.current = []; entregaRef.current = daEntrega.linhas; }
       else { entregaRef.current = null; pushMsgs(daEntrega.linhas); }
     }
@@ -11290,7 +11298,26 @@ export default function Taverna() {
     if (pedidoDoAtor && tamanho) { try { pedidoDoAtor = { ...pedidoDoAtor, pedido: comOTamanho(pedidoDoAtor.pedido, tamanho) }; } catch (e) { calou("o tamanho no pedido do ator", e); } }
     let respondeu = false;
     try {
-      const resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist, tamanho);
+      let resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist, tamanho);
+      /* S7b (17/11): A PODA DO AUSENTE (src/motor/poda-do-ausente.js). A frase
+         em que alguém que o sistema sabe noutro lugar, ou morto, age como
+         presente sai antes da tela — sem IA, sem segunda chamada —, e o nome
+         vai ao livro de vetos (o do Juiz) para o turno seguinte. As travas
+         (o limiar, a única fala de uma pergunta) moram no módulo: lá, não
+         poda e só veta. Se estourar, a prosa passa como veio. */
+      try {
+        if (resp && typeof resp.narrativa === "string" && resp.narrativa.trim() && !combateRef.current) {
+          const qP = quemAgora();
+          const pP = personagemRef.current || personagem || {};
+          const cidadeP = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
+          const genteP = cidadeP ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidadeP, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
+          const ausP = osAusentes(qP, { gente: genteP, npcs: npcsRef.current, heroi: pP, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
+          const fraseP = (() => { try { const pb = lerOPedido(conteudo); return pb && pb.doJogador ? pb.texto : ""; } catch { return ""; } })();
+          const pd = podarOAusente(resp.narrativa, ausP, { frase: fraseP, turno: turnoDeRegistroRef.current + 1, outros: quemAgeAqui(qP).map((x) => x && x.nome) });
+          if (pd.podadas.length && !pd.recusou) resp = { ...resp, narrativa: pd.narrativa };
+          if (pd.vetos.length) vetosDoJuizRef.current = andarOsVetos(vetosDoJuizRef.current, pd.vetos, { turno: turnoDeRegistroRef.current + 1 });
+        }
+      } catch (e) { calou("S7b · a poda do ausente", e); }
       /* MM15 (3): O MESTRE FALOU — a partir daqui, se algo estourar, o
          tropeço é nosso, não da ligação: `destinoDaFalha` usa esta
          marca para diferençar isto de uma chamada que nunca voltou. */
@@ -14536,6 +14563,30 @@ export default function Taverna() {
       const vv = vetoDaViagemQueNaoHouve(acao, { ...ctxDoRastro(), masmorra: (masmorraRef.current && masmorraRef.current.nome) || "" });
       if (vv && vv.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vv];
     } catch (e) { calou("o veto da viagem que não houve", e); }
+    /* S7b (17/11): O BATISMO (src/motor/o-batismo.js). «Como você se chama?»
+       sem ninguém com nome em cena: o nome é do sistema, e chega antes do
+       Narrador — o figurante entra no registo, no sítio onde o herói está
+       (logo em cena), e o `naoPode` diz ao Narrador como ele se chama. */
+    try {
+      if (!acao.startsWith("/") && !combateRef.current) {
+        const pB = fichaViva() || personagem || {};
+        const ec = Array.isArray(emCenaRef.current) ? emCenaRef.current : [];
+        const daProsa = ec.filter((x) => x && x.tipo === "pessoa" && x.deOnde === "prosa" && x.aqui).pop();
+        const jB = jornadaRef.current;
+        const bt = oBatismo(acao, {
+          quem: quemAgora(), semente: sementeMundo(), cidade: cidadeAtualRef.current || "",
+          lugar: (lugarRef.current && lugarRef.current.nome) || (jB ? `a estrada de ${jB.de || ""} a ${jB.para || ""}` : ""),
+          dia: diaRef.current, genero: generoMundo(), lex: (mundoAtual() || {}).lexico, heroi: pB.nome,
+          usados: [...Object.keys(npcsRef.current || {}), ...(pB.grupo || []).map((g) => g && g.nome), pB.nome].filter(Boolean),
+          masmorra: !!(masmorraRef.current && !masmorraRef.current.encerrada), generoDaProsa: daProsa ? daProsa.genero : "",
+        });
+        if (bt) {
+          npcsRef.current = { ...(npcsRef.current || {}), [bt.nome]: criarNPC(bt.nome, bt.ficha) };
+          setNpcs(npcsRef.current);
+          naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), bt.linha];
+        }
+      }
+    } catch (e) { calou("S7b · o batismo", e); }
     ultimoDesfechoRef.current = null;
     testeDoTurnoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do

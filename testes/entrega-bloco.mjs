@@ -203,6 +203,10 @@ export function dublesDaEntrega(k, { novo, sorte, extras }) {
        (`op.quemFalou`, do aplicarResposta) às peças da nêmesis e dos vistos.
        O dublê é o do jogo de hoje: o `mestre`, e nenhum nome do sistema. */
     MODO_DA_MESA: "mestre", op: {},
+    /* S7b (17/11): o sítio da fala, que o aplicarResposta calcula ANTES do
+       recorte (o retrato preso). O dublê é vazio: sem sítio, a entrega dá a
+       linha de sempre, e o dourado continua byte a byte. */
+    ondeDaFala: "",
     ...(extras || {}),
   };
   return { S, log };

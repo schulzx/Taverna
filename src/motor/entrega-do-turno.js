@@ -187,7 +187,9 @@ export function aQueda(pers, opcoes) {
    aqui ainda faltaria o que o Cronista cobra.
    → { linhas, segurar } */
 export function aEntrega(ler) {
-  const { narrativa, msgs, portao } = ler || {};
-  const linhas = [{ autor: "mestre", texto: narrativa || "…" }, ...(msgs || []).map((t) => ({ autor: "sistema", texto: t }))];
+  const { narrativa, msgs, portao, onde } = ler || {};
+  /* S7b: o sítio onde a fala foi dita (quem-esta-aqui.js#ondeDaCena) — só
+     quando quem chama o dá; sem ele a linha é a de sempre, byte a byte */
+  const linhas = [{ autor: "mestre", texto: narrativa || "…", ...(typeof onde === "string" && onde ? { onde } : {}) }, ...(msgs || []).map((t) => ({ autor: "sistema", texto: t }))];
   return { linhas, segurar: (portao || []).length > 0 };
 }

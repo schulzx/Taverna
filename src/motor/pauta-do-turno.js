@@ -55,7 +55,7 @@ import { arredoresDaCidade } from "../arredores.js";
 import { balcaoParaPauta } from "../bolsa-da-frase.js";
 import { AMANHECER, ehNoite } from "../calendario.js";
 import { elencoDaCena } from "../cena.js";
-import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, linhaDeQuemNaoEsta } from "../quem-esta-aqui.js";
+import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, linhaDeQuemNaoEsta, ondeDaCena, falasDoMestreAqui } from "../quem-esta-aqui.js";
 import { fichaDaCidade, fichaParaPauta } from "../cidade-por-dentro.js";
 import { oQueAMesaFecha } from "../mesa-do-buraco.js";
 import { consultarCobrador, envelopeDoMundo, linhaDoMundo } from "../cobrador.js";
@@ -890,7 +890,8 @@ export function aPautaDoTurno(estado, entrada, portas) {
       comigo: vale("EM CENA · quem anda comigo", () => quemAndaComigo(p0.grupo), []),
       emCena: nucleo ? vale("EM CENA · o núcleo em cena", () => nucleoEmCena(nucleo), []) : [],
       nucleo,
-      mostrado: vale("EM CENA · o que o Mestre mostrou", () => falasDoMestre($ref.mensagens), []),
+      /* S7b · o retrato preso: só as falas ditas NESTE sítio, a mesma conta da tela */
+      mostrado: vale("EM CENA · o que o Mestre mostrou", () => falasDoMestreAqui($ref.mensagens, ondeDaCena({ cidadeAtual: $ref.cidadeAtual, lugar: $ref.lugar, masmorra: $ref.masmorra, jornada: $ref.jornada }), LEITURA_DA_CONVERSA.falasDoMestre), []),
       encontro: vale("EM CENA · a criatura da estrada", () => { const v = $ref.criaturaAVista, j = $ref.jornada; return (v && j && v.trecho === (j.de || "") + ">" + (j.para || "")) ? v : null; }, null),
       combate: $ref.combate,
       sala: vale("EM CENA · a sala", () => (mm && !mm.encerrada && Array.isArray(mm.salas)) ? (mm.salas.find((x) => x.id === mm.atual) || null) : null, null),
