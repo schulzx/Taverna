@@ -138,7 +138,12 @@ t("a pauta do confronto diz «aqui, à minha frente», não «na estrada»", /aq
   t("recuar não escreve nada: quem recuou não esteve frente a frente", oLivroDoEncontro(garantirFactos(null), rr, { dia: 3 }) && !encontrou(oLivroDoEncontro(garantirFactos(null), rr, { dia: 3 }), "npc|Lobo Cinzento"));
   const rl = resolverEscolha(c0, "lutar", {});
   const Ll = oLivroDoEncontro(garantirFactos(null), rl, { dia: 3 });
-  t("lutar escreve o encontro (e a luta escreve a queda depois)", rl.desfecho.luta && encontrou(Ll, "npc|Lobo Cinzento") && conheceu(Ll, "npc|Lobo Cinzento"));
+  /* S7c (17/11): a asserção mudou de sentido. Antes «lutar escreve o
+     encontro»; na sessão jogada, o encontro escrito antes da luta deixou a
+     derrota fechar a etapa (o assobio bastava). Agora o desfecho com luta
+     não escreve nada: quem decide é o fim da luta (vencer escreve a queda,
+     perder ou fugir não escreve) — teste-a-derrota-no-confronto.mjs. */
+  t("lutar abre a luta e NÃO escreve o encontro: o fim da luta decide", rl.desfecho.luta && !encontrou(Ll, "npc|Lobo Cinzento") && !conheceu(Ll, "npc|Lobo Cinzento"));
 }
 t("O_CONFRONTO_DA_QUEST: recuar não escreve; capturar rende", J(O_CONFRONTO_DA_QUEST.naoEscreve) === J(["recuou"]) && J(O_CONFRONTO_DA_QUEST.rendido) === J(["capturou"]));
 

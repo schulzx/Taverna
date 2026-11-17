@@ -119,11 +119,14 @@ export const ESCOLHAS_DO_ENCONTRO = {
    herói no covil de quem é do vilão (o-confronto-da-quest.js). O herói
    chega primeiro — é ele quem procura —, e cada escolha que não é lutar
    nem recuar tem um dado, e o dado falhado é luta: não há clímax sem
-   risco. `so: "naoLendario"`: o que é grande demais para uma corda. */
+   risco. `so: "naoLendario"`: o que é grande demais para uma corda.
+   S7c (17/11): `so: "naoViram"` no espreitar — a besta que já venceu o
+   herói uma vez fica ALERTA (o-confronto-da-quest.js: `quemViu: "eles"`),
+   e não se espreita quem já te viu. */
 export const ESCOLHAS_DO_CONFRONTO = {
   ordem: ["espreitar", "negociar", "capturar", "lutar", "recuar"],
   escolhas: {
-    espreitar: { rotulo: "Espreitar", pericia: "furtividade", cd: "passiva", maisCd: 0, custo: { horas: 1 }, sucesso: "espreitou", falha: "descoberto" },
+    espreitar: { rotulo: "Espreitar", pericia: "furtividade", cd: "passiva", maisCd: 0, so: "naoViram", custo: { horas: 1 }, sucesso: "espreitou", falha: "descoberto" },
     negociar: { rotulo: "Falar", pericia: "persuasao", cd: { fraco: 11, comum: 12, competente: 13, elite: 15, lendario: 17 }, so: "fala", custo: {}, sucesso: "negociou", falha: "palavraQuebrada" },
     capturar: { rotulo: "Capturar", pericia: "atletismo", cd: { fraco: 11, comum: 13, competente: 15, elite: 17, lendario: 20 }, so: "naoLendario", custo: { horas: 1 }, sucesso: "capturou", falha: "capturaFalhada" },
     lutar: { rotulo: "Lutar", pericia: null, custo: {}, sucesso: "frenteAFrente", falha: "frenteAFrente" },

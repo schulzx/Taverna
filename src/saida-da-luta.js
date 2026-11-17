@@ -303,7 +303,12 @@ export function aplicarSemSaida({ heroi = null, inimigos = null, decisao = null,
   }
   h = { ...h, grupo };
 
-  const novos = (Array.isArray(inimigos) ? inimigos : []).map((e) => (inimigoDePe(e) && d.inimigoSai ? { ...e, derrotado: true, fugiu: true } : e));
+  /* S7c (17/11): quem sai da luta DE PÉ leva também `saiuDePe` — a marca
+     que diz que não caiu. `derrotado`/`fugiu` ficam (a luta fechada não o
+     conta como de pé), mas o livro de factos não o escreve como queda
+     (COMO_CAIU.naoCaiu) e o tabuleiro não o desenha caído. A Quimera que
+     levou a bolsa fechava a etapa «Encarar» como se tivesse sido vencida. */
+  const novos = (Array.isArray(inimigos) ? inimigos : []).map((e) => (inimigoDePe(e) && d.inimigoSai ? { ...e, derrotado: true, fugiu: true, saiuDePe: true } : e));
   const nomesGrupo = grupoAntes.filter(dePe).map((g) => g.nome);
   const campos = { quem, grupo: nomesGrupo.length ? nomesGrupo.join(" e ") : "O grupo" };
   /* sozinho, a frase é de um só — "leva-os consigo" a quem caiu só era a

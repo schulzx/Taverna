@@ -144,6 +144,10 @@ export const COMO_CAIU = Object.freeze({
   pesos: Object.freeze({ fugiu: 0, rendido: 1, desacordado: 2, morto: 3 }),
   poupado: Object.freeze(["fugiu", "rendido", "desacordado"]),
   deFlags: Object.freeze(["fugiu", "rendido", "desacordado"]),
+  /* S7c (17/11): as marcas de quem NÃO caiu — o vencedor que sai da luta
+     de pé (saida-da-luta.js: a besta que levou a bolsa e foi embora). Não
+     é queda nenhuma: o livro não o escreve em `derrotados`. */
+  naoCaiu: Object.freeze(["saiuDePe"]),
 });
 
 /* ---------------- DO NOME AO ID: A REGRA DE DESEMPATE ----------------
@@ -571,6 +575,7 @@ export function anotarTurno(livro, ocorrido) {
     ver(r);
   }
   for (const d of arr(o.derrotados)) {
+    if (obj(d) && COMO_CAIU.naoCaiu.some((f) => d[f])) continue;
     const r = resolver(d);
     if (!r) continue;
     const como = comoDe(d);

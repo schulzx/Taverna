@@ -449,7 +449,7 @@ import { empurrar, TABELA_DA_DISPUTA } from "./disputa.js";
 import { chaoDaLuta, vistasDaLuta, combateDoSave, entidadesDaLuta, feridasNaLuta, feridasDoChao, linhaDoChao, alturasNaMesa, objetosNaMesa, reacoesNaMesa, previsaoDoEmpurraoNaMesa } from "./motor/o-chao-na-mesa.js";
 import { letreiroDaReacao } from "./batalha-na-tela.js";
 import { CartaoDoEncontro, SinalNaFolha, EntradaNaMesa } from "./painel-encontro.jsx";
-import { oConfrontoAqui, oLivroDoEncontro, aChaveDoConfronto, aFichaDoEncontrado } from "./o-confronto-da-quest.js";
+import { oConfrontoAqui, oLivroDoEncontro, aChaveDoConfronto, aFichaDoEncontrado, aDerrotaNoConfronto, garantirAlertas } from "./o-confronto-da-quest.js";
 /* S10b (13/10): a arma da classe na mão da ficha nova — só na criação */
 import { equiparKitInicial } from "./kit-inicial.js";
 
@@ -9142,6 +9142,7 @@ export default function Taverna() {
       preferenciaDaReacao: preferenciaDaReacaoRef.current,
       sessao: sessaoRef.current,
       registroDaSessao: registroDaSessaoRef.current,
+      confrontosAlertas: confrontosAlertasRef.current,
       /* v9.256 (Fase X - X3): o turno que o motor resolveu e o Mestre nao
          contou viaja no save. Sem isto, cair a rede e recarregar apagava um
          golpe ja aplicado - ou o turno se completa, ou nao comecou. */
@@ -9416,6 +9417,10 @@ export default function Taverna() {
   const [escolhaNoEncontro, setEscolhaNoEncontro] = useState(null);
   /* S7: os confrontos da quest de que o herói recuou, no covil onde está (sai do covil, esquece-os) */
   const confrontosRecusadosRef = useRef({ onde: "", chaves: [] });
+  /* S7c: o confronto cuja luta está na mesa (a derrota lê-o no fecho), e os
+     confrontos perdidos — a besta fica ALERTA (no save, campo novo e aditivo) */
+  const confrontoEmLutaRef = useRef(null);
+  const confrontosAlertasRef = useRef([]);
   const [entradaNaMesa, setEntradaNaMesa] = useState(null);
   const abrirAMesaDoEncontroRef = useRef(null);
   /* V6 · O TAPETE ABRE JÁ (formas.md, F4 §1 nº 1). «Lutar» desenrola a mesa
@@ -12114,6 +12119,7 @@ export default function Taverna() {
     if (!cap) bancoNomesRef.current = gerarBancoNomes(mundoAtual());
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; ultimaFraseDoJogadorRef.current = "";
+    confrontoEmLutaRef.current = null; confrontosAlertasRef.current = [];
     mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     esquecerAsCerimonias();
@@ -12560,6 +12566,7 @@ export default function Taverna() {
         daUltimaVezRef.current = lembrar ? linhaDaUltimaVez(oResumoDaSessao(lembrar, sv), lembrar.fio || oFioMaisQuente(sv, { passos: passosDasQuestsAgora(), vilao: v && vilaoDoCartao(v).revelado ? v : null })) : "";
         registroDaSessaoRef.current = abrirSessao(sv.registroDaSessao, sv);
       } catch (e) { calou("V10 · o registro na volta", e); registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; }
+      try { confrontosAlertasRef.current = garantirAlertas(sv.confrontosAlertas); confrontoEmLutaRef.current = null; } catch (e) { calou("S7c · os confrontos alerta na volta", e); confrontosAlertasRef.current = []; }
       /* e a CENA só é reaberta a pedido: é a única parte disto que o
          código não sabe fazer, e a única que custa uma chamada. */
       if (comResumo && !sv.rolagem) {
@@ -15181,7 +15188,9 @@ export default function Taverna() {
       anotarNoLivro("os caídos da luta sem saída", { derrotados: (fimDaLuta.inimigos || []).filter((e) => e && (e.fugiu || e.rendido || e.desacordado || e.derrotado || (e.vida || 0) <= 0)) });
       /* quem não acordou tombou: o título do fim é dele, e não muda quando a
          ficha viva passar a ser a do herdeiro */
-      notarFechoDaLuta({ combate: fimDaLuta, desfecho: (!r || dec.motivo === "parada") ? "encerrada" : (r.heroi && r.heroi.morto) ? "queda" : "derrota", linha: r ? r.linha : null });
+      const desfechoDoFecho = (!r || dec.motivo === "parada") ? "encerrada" : (r.heroi && r.heroi.morto) ? "queda" : "derrota";
+      notarFechoDaLuta({ combate: fimDaLuta, desfecho: desfechoDoFecho, linha: r ? r.linha : null });
+      cobrarADerrotaNoConfronto(desfechoDoFecho);
       combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
       territorioEmLutaRef.current = null;
       golpesDaRodadaRef.current = null;
@@ -15230,6 +15239,8 @@ export default function Taverna() {
        retrato, o último em que o golpe final ainda está. Ninguém caiu (todos
        fugiram) não é vitória. */
     notarFechoDaLuta({ combate: c, desfecho: caidosDaLuta(c).length ? "vitoria" : "encerrada" });
+    /* S7c: todos caíram (ou fugiram de nós) — o confronto não cobra nada */
+    confrontoEmLutaRef.current = null;
     combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
     /* A LUTA DO TERRITÓRIO FECHA O RELÓGIO QUE A ABRIU (fuga.js): vencida,
        o bando que guardava o lugar já não guarda mais nada. */
@@ -15542,6 +15553,7 @@ export default function Taverna() {
          podem abrir luta, e a resposta tem de ja estar pronta. */
       folegoRef.current = folegoDaFuga(v, ondeEstou());
       fugaAoSairRef.current = true;
+      cobrarADerrotaNoConfronto("fuga");
       combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0; setCombate(null); combateOciosoRef.current = 0;
       let base0 = pers;
       personagemRef.current = base0;
@@ -24314,6 +24326,24 @@ export default function Taverna() {
       pautaDeUmTurnoRef.current = juntarNaPautaDeUmTurno(pautaDeUmTurnoRef.current, pa);
     } catch (e) { calou("a pauta do encontro", e); }
   };
+  /* S7c · A DERROTA NO CONFRONTO: a luta perdida (ou fugida) não fecha a
+     etapa. A besta fica alerta (o cartão seguinte nasce sem Espreitar), não
+     reabre neste covil até o herói sair dele (foi embora), o relógio do
+     vilão anda um passo (a porta do preço do quadro) e a pauta do turno diz
+     ao Narrador o que de facto aconteceu. A bolsa, as horas e o cativeiro,
+     cobra-os a saída da luta. */
+  const cobrarADerrotaNoConfronto = (como) => {
+    try {
+      const e = confrontoEmLutaRef.current;
+      confrontoEmLutaRef.current = null;
+      const d = e ? aDerrotaNoConfronto(e, como) : null;
+      if (!d) return;
+      confrontosAlertasRef.current = garantirAlertas([...confrontosAlertasRef.current, d.chave]);
+      try { const r = confrontosRecusadosRef.current; if (!r.chaves.includes(d.chave)) confrontosRecusadosRef.current = { ...r, chaves: [...r.chaves, d.chave] }; } catch (er) { calou("S7c · o covil vazio", er); }
+      try { const pr = aplicarPrecoDoQuadro(estadoDasQuests(), { efeitos: d.efeitos }); if (pr) aplicarAsQuests(pr, "S7c · o preço da derrota"); } catch (er) { calou("S7c · o preço da derrota", er); }
+      porNaPautaDoTurno({ acabou: d.acabou, naoPode: d.naoPode });
+    } catch (er) { calou("S7c · a derrota no confronto", er); }
+  };
   /* A CHAMADA DO MESTRE PARA O ENCONTRO (QUEM_RESPONDE.encontro): uma, própria,
      antes de a mesa abrir. O que narrar vai na pauta; o envelope só o chama. */
   const narrarOEncontro = (e, p) => {
@@ -24358,6 +24388,9 @@ export default function Taverna() {
         try {
           if (e.desfecho && e.desfecho.id === "recuou") { const r = confrontosRecusadosRef.current; confrontosRecusadosRef.current = { ...r, chaves: [...r.chaves, aChaveDoConfronto(e)] }; }
         } catch (er) { calou("S7 · o recuo do confronto", er); }
+        /* S7c: a luta do confronto abre — o fim dela decide (vencer escreve a
+           queda; perder ou fugir cobra, e a etapa fica aberta) */
+        try { confrontoEmLutaRef.current = e.desfecho && e.desfecho.luta ? e : null; } catch (er) { calou("S7c · a luta do confronto", er); }
       }
       const trechoDe = () => { const j = jornadaRef.current; return e.trecho || (j ? (j.de || "") + ">" + (j.para || "") : ""); };
       if (e.fase === "escolha") {
@@ -26613,7 +26646,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       const ondeK = l && l.nome ? `${l.nome}|${cidadeAtualRef.current || ""}` : "";
       if (confrontosRecusadosRef.current.onde !== ondeK) confrontosRecusadosRef.current = { onde: ondeK, chaves: [] };
       if (!ondeK || jornadaRef.current || masmorraRef.current) return;
-      const e = oConfrontoAqui(passosDasQuestsAgora(), ondeDoPasso(), { mundo: mundoDaBase(), recusados: confrontosRecusadosRef.current.chaves });
+      const e = oConfrontoAqui(passosDasQuestsAgora(), ondeDoPasso(), { mundo: mundoDaBase(), recusados: confrontosRecusadosRef.current.chaves, alertas: confrontosAlertasRef.current });
       if (e) seguirOEncontro(e, fichaViva() || personagem);
     } catch (er) { calou("S7 · o confronto da quest", er); }
   }, [lugar, fase, carregando, combate, encontroPendente, entradaNaMesa]); // eslint-disable-line react-hooks/exhaustive-deps

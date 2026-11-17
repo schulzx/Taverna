@@ -23,7 +23,20 @@
        O encontro resolvido escreve «encontrado» no livro de factos, pelo id
        do papel — é o facto que a etapa de confronto exige. A captura
        escreve também a queda (rendido: o «poupou» da ficha). Recuar não
-       escreve nada: quem recuou não esteve frente a frente.
+       escreve nada: quem recuou não esteve frente a frente. E o desfecho
+       que abre luta também não (S7c): quem decide é o fim da luta — vencer
+       escreve a queda; perder ou fugir não escreve nada.
+
+     aDerrotaNoConfronto(estado, como) → { chave, efeitos, acabou, naoPode } | null
+       S7c (17/11, a sessão jogada): a luta do confronto PERDIDA, ou fugida,
+       não fecha nada — a besta segue viva e solta, a etapa continua aberta
+       e o confronto pode ser tentado de novo. O que ela devolve: a chave do
+       confronto (o App guarda-a: a besta fica ALERTA, e o cartão seguinte
+       nasce com ela já a ver o herói — o Espreitar some, pela regra de
+       sempre do cartão), o preço que não é da luta (o relógio do vilão anda
+       um passo, pela porta de EFEITOS_DA_QUEST) e a linha da pauta que diz
+       ao Narrador o que de facto aconteceu. A bolsa, as horas e o cativeiro
+       já os cobra a saída da luta (saida-da-luta.js) — aqui não se repete.
 
    PURO E DETERMINÍSTICO. Nenhuma sorte aqui (o dado é do App, pela semente
    do turno); o `null` e o lixo dão null ou o livro de antes — nunca lançam.
@@ -41,6 +54,17 @@ export const O_CONFRONTO_DA_QUEST = Object.freeze({
   ameacaSemFicha: "competente",
   naoEscreve: Object.freeze(["recuou"]),
   rendido: Object.freeze(["capturou"]),
+  /* S7c: o desfecho com luta não escreve o encontro — a derrota passava
+     por aqui (o «descoberto» do Espreitar falhado escrevia «encontrado», e
+     o assobio fechava a etapa com a besta livre) */
+  lutaNaoEscreve: true,
+  /* S7c: os fins de luta que não são vitória, e o que custam além da
+     saída da luta: um passo do relógio do vilão */
+  derrota: Object.freeze({
+    comos: Object.freeze(["derrota", "queda", "encerrada", "fuga"]),
+    efeitos: Object.freeze([Object.freeze({ tipo: "relogio_do_fio", n: 1 })]),
+    tetoDeAlertas: 24,
+  }),
   porque: "a etapa de confronto só fecha com a besta em cena (O_CLIMAX_DA_QUEST); o encontro no covil é o que a põe lá",
 });
 
@@ -54,12 +78,14 @@ export function oConfrontoAqui(passos, onde, opcoes) {
     const o = obj(opcoes) || {};
     const W = obj(o.mundo) || {};
     const recusados = new Set(arr(o.recusados).map(String));
+    const alertas = new Set(arr(o.alertas).map(String));
     for (const p of arr(passos)) {
       const c = obj(p) && obj(p.confronto);
       if (!c || !limpo(c.quem) || !obj(c.covil)) continue;
       if (!noLugarDoPasso(c.covil, onde)) continue;
       const quest = { quest: limpo(p.quest), etapa: limpo(p.etapa), papel: limpo(c.papel) };
       if (recusados.has(chaveDe(quest))) continue;
+      const alerta = alertas.has(chaveDe(quest));
       let ficha = null;
       try { ficha = c.nome ? chefePorNome(W.semente, W.mapa, W.genero, c.nome, W.lex) : null; } catch { ficha = null; }
       const ameaca = (ficha && ficha.ameaca) || O_CONFRONTO_DA_QUEST.ameacaSemFicha;
@@ -79,7 +105,8 @@ export function oConfrontoAqui(passos, onde, opcoes) {
         importante: true, lendario: ameaca === "lendario", aEvitar: false, razao: null,
         fala, fugaAberta: true, naoInveste: "importante",
         clima: null, sinal: null, pedido: null,
-        quemViu: "heroi",
+        quemViu: alerta ? "eles" : "heroi",
+        ...(alerta ? { alerta: true } : {}),
         percepcao: null,
         escolha: null, teste: null, desfecho: null,
         quest: { ...quest, alvo: limpo(c.id), nome: nomeNaLuta, covil: limpo(c.covil.nome) },
@@ -119,6 +146,7 @@ export function oLivroDoEncontro(livro, estado, opcoes) {
     const d = e && obj(e.desfecho);
     if (!q || !d || e.fase !== "resolvido" || !ESCOLHAS_DO_CONFRONTO.escolhas[e.escolha]) return livro;
     if (O_CONFRONTO_DA_QUEST.naoEscreve.includes(d.id)) return livro;
+    if (O_CONFRONTO_DA_QUEST.lutaNaoEscreve && d.luta) return livro;
     /* o servo que ainda não entrou no registo não tem id: escreve-se pelo id
        que o registo lhe vai dar (`npc|Nome`, RESOLVER_NOME) — o mesmo que o
        papel resolve quando a ficha dele entra (aFichaDoEncontrado) */
@@ -129,4 +157,34 @@ export function oLivroDoEncontro(livro, estado, opcoes) {
     if (O_CONFRONTO_DA_QUEST.rendido.includes(d.id)) ocorrido.derrotados = [{ nome: quem, como: "rendido" }];
     return anotarTurno(livro, ocorrido).factos;
   } catch { return livro; }
+}
+
+/* A DERROTA NO CONFRONTO (S7c). `como`: o desfecho do fecho da luta
+   (notarFechoDaLuta: derrota, queda, encerrada) ou «fuga». A vitória e o
+   lixo dão null — nada a cobrar. */
+export function aDerrotaNoConfronto(estado, como) {
+  try {
+    const e = obj(estado);
+    const q = e && obj(e.quest);
+    const D = O_CONFRONTO_DA_QUEST.derrota;
+    if (!q || !limpo(q.quest) || !D.comos.includes(como)) return null;
+    const nome = limpo(q.nome) || limpo(e.criatura) || "a besta";
+    const fugiu = como === "fuga";
+    return {
+      chave: chaveDe(q),
+      efeitos: D.efeitos.map((x) => ({ ...x })),
+      acabou: [fugiu
+        ? `fugi de ${nome}; segue viva e solta, e agora sabe de mim`
+        : `${nome} me venceu e foi embora; segue viva e solta, e agora sabe de mim`],
+      naoPode: [`narrar ${nome} vencida, presa, domada ou levada: segue solta`],
+    };
+  } catch { return null; }
+}
+
+/* as chaves guardadas no save (campo novo e aditivo): só texto, sem
+   repetir, as mais novas até ao teto */
+export function garantirAlertas(x) {
+  const vistos = [];
+  for (const c of arr(x)) { const k = limpo(c); if (k && !vistos.includes(k)) vistos.push(k); }
+  return vistos.slice(-O_CONFRONTO_DA_QUEST.derrota.tetoDeAlertas);
 }
