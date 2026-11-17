@@ -121,7 +121,9 @@ t("quem acorda acorda na régua do herói (SAIDA_DA_LUTA.pvAoAcordar)", /SAIDA_D
 sec("5b. MC8 · o veredito antes de partir, na proposta da frase");
 {
   const lf = corpo("leituraDaFrase");
-  t("a proposta da masmorra leva o veredito, o alvo (a ida ou a boca), a ficha e o «à boca»", /const boca = !m \? masmorraDaBoca\(ctx\.lugar, ctx\.masmorras\) : null;/.test(lf) && /const alvo = \(m && m\.masmorra\) \|\| boca \|\| null;/.test(lf) && /veredito: m \? m\.veredito : null, alvo, pers: ctx\.pers, aBoca: !!boca \}/.test(lf));
+  t("a proposta da masmorra leva o veredito, o alvo (a ida ou a boca), a ficha e o «à boca»", /const boca = !m \? masmorraDaBoca\(ctx\.lugar, ctx\.masmorras\) : null;/.test(lf) && /const alvo = \(m && m\.masmorra\) \|\| boca \|\| null;/.test(lf) && /veredito: m \? m\.veredito : null, alvo, pers: ctx\.pers, aBoca: !!boca[,}]/.test(lf));
+  /* S7b (17/11): a proposta ganhou `mapa` depois do «à boca» (a porta lê a ficha do
+     lugar pelo mapa); a âncora fecha no «à boca», que é o que esta prova guarda */
   t("e continua dentro do calou da proposta", antes(lf, "const boca = !m ? masmorraDaBoca(", 'calou("a proposta: a masmorra", e)'));
 }
 

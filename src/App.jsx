@@ -11299,6 +11299,18 @@ export default function Taverna() {
     let respondeu = false;
     try {
       let resp = pedidoDoAtor ? await chamarOAtor(pedidoDoAtor.pedido, conteudo) : await chamarMestre(systemRef.current, novoHist, tamanho);
+      /* MM15 (3): O MESTRE FALOU — a partir daqui, se algo estourar, o
+         tropeço é nosso, não da ligação: `destinoDaFalha` usa esta
+         marca para diferençar isto de uma chamada que nunca voltou. */
+      respondeu = true;
+      /* O MESTRE FALOU: o turno guardado morre AQUI (v9.256, Fase X - X3),
+         antes do `salvar` la embaixo - que le a ref e grava o vazio junto,
+         sem um salvamento a mais no caminho feliz. Sem try/catch de
+         proposito: atribuir o vazio a uma ref nao estoura, e um guardado que
+         sobrevivesse ao sucesso trancaria o declarar para sempre, em
+         silencio. E o pior modo de falhar desta etapa, e ele nao pode
+         depender de mais nada dar certo. */
+      guardadoRef.current = SEM_GUARDADO;
       /* S7b (17/11): A PODA DO AUSENTE (src/motor/poda-do-ausente.js). A frase
          em que alguém que o sistema sabe noutro lugar, ou morto, age como
          presente sai antes da tela — sem IA, sem segunda chamada —, e o nome
@@ -11318,18 +11330,6 @@ export default function Taverna() {
           if (pd.vetos.length) vetosDoJuizRef.current = andarOsVetos(vetosDoJuizRef.current, pd.vetos, { turno: turnoDeRegistroRef.current + 1 });
         }
       } catch (e) { calou("S7b · a poda do ausente", e); }
-      /* MM15 (3): O MESTRE FALOU — a partir daqui, se algo estourar, o
-         tropeço é nosso, não da ligação: `destinoDaFalha` usa esta
-         marca para diferençar isto de uma chamada que nunca voltou. */
-      respondeu = true;
-      /* O MESTRE FALOU: o turno guardado morre AQUI (v9.256, Fase X - X3),
-         antes do `salvar` la embaixo - que le a ref e grava o vazio junto,
-         sem um salvamento a mais no caminho feliz. Sem try/catch de
-         proposito: atribuir o vazio a uma ref nao estoura, e um guardado que
-         sobrevivesse ao sucesso trancaria o declarar para sempre, em
-         silencio. E o pior modo de falhar desta etapa, e ele nao pode
-         depender de mais nada dar certo. */
-      guardadoRef.current = SEM_GUARDADO;
       /* MEMÓRIA ENXUTA: no histórico vai SÓ a narrativa (dentro do molde JSON,
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,

@@ -21,6 +21,7 @@ import { avaliar, estadoNaPorta, dificuldadeDaMasmorra } from "../src/dificuldad
 import { gerarMasmorra, bichosDaFicha } from "../src/masmorras.js";
 import { criaturasDoGenero } from "../src/bestiario.js";
 import { rngDe } from "../src/geografia.js";
+import { linhaDaFicha } from "../src/masmorra-sem-cidade.js";
 
 let ok = 0, mal = 0;
 const t = (nome, cond, extra = "") => { if (cond) { ok++; console.log(`  ✓ ${nome}`); } else { mal++; console.log(`  ✗ ${nome}${extra ? `\n      ${extra}` : ""}`); } };
@@ -74,10 +75,19 @@ sec("4. a fiação: o cartão, a boca e a pauta leem a mesma função");
   const partida = readFileSync(new URL("../src/partida.js", import.meta.url), "utf8");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const msc = readFileSync(new URL("../src/masmorra-sem-cidade.js", import.meta.url), "utf8");
-  const pauta = readFileSync(new URL("../src/motor/pauta-do-turno.js", import.meta.url), "utf8");
   t("o cartão do lugar (partida.js): a ficha entra, e o porquê diz À porta e No fundo", /vereditoDaMasmorra\(m, pers, \{ mapa \}\)/.test(partida) && /PERIGO_A_PORTA\.porta\}: \$\{v\.porta\.porque\}\. \$\{PERIGO_A_PORTA\.fundo\}/.test(partida));
   t("a boca no App: a ficha do lugar entra no veredito da entrada", /vereditoDaMasmorra\(doMapa \|\| mm, \{ \.\.\.persIn, suprimentos: supIn \}, \{ mapa: mapaRef\.current/.test(app) && /chegadaABoca\(ida\.masmorra, \{[^}]*mapa: mapaRef\.current \}\)/.test(app) && /aBoca: !!boca, mapa: mapaRef\.current/.test(app));
-  t("a pauta: a linha da ficha lê o mesmo veredito (com o herói)", /vereditoDaMasmorra\(masmorra, pers, \{ quem: f\.quem, mapa \}\)/.test(msc) && /linhaDaFicha\(\$ref\.mapa, \$ref\.masmorra, \{ luta: !!\$ref\.combate, pers: fichaViva\(\) \}\)/.test(pauta));
+  t("a pauta: a linha da ficha lê o mesmo veredito (com o herói)", /vereditoDaMasmorra\(masmorra, pers, \{ quem: f\.quem, mapa \}\)/.test(msc) /* a chamada da pauta (motor) não se lê como texto (teste-assercoes-de-texto): a linha prova-se pelo comportamento, abaixo */);
+}
+
+{
+  /* a pauta pelo comportamento: a linha da ficha com o herói diz à porta e no fundo,
+     e sem herói é a de sempre (o perigo absoluto da ficha) */
+  const mapa = { regiao: { base: { nome: "Vau" }, lugares: [{ id: "l1", nome: "Fosso dos Afogados", tipo: "cripta", ficha: { quem: [{ nome: "Zumbi", nivel: 2 }, { nome: "Bandido", nivel: 2 }, { nome: "Carniçal Antigo", ameaca: "elite", nivel: 6 }], perigo: "medio", perigoRotulo: "perigo médio", horas: 2 } }] } };
+  const mm = { nome: "Fosso dos Afogados", nivel: 6, salas: 8 };
+  const comHeroi = linhaDaFicha(mapa, mm, { pers: { nome: "Hilde", nivel: 1 } }), sem = linhaDaFicha(mapa, mm, {});
+  const v = vereditoDaMasmorra(mm, { nome: "Hilde", nivel: 1 }, { mapa });
+  t("a linha da ficha da pauta lê o mesmo veredito (à porta e no fundo); sem herói, a de sempre", comHeroi.includes(`à porta ${v.porta.patamar.rotulo.toLowerCase()}, no fundo ${v.dif.patamar.rotulo.toLowerCase()}`) && sem.includes("perigo médio"), comHeroi);
 }
 
 sec("5. CATRACA — 1000 masmorras por semente: o primeiro encontro cai na faixa da porta");

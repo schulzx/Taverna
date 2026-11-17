@@ -197,7 +197,7 @@ sec("7. a fiação — no App, cada uma num calou");
   t("…dentro de um calou, e o veto entra no livro do Juiz", /calou\("S7b · a poda do ausente"/.test(app) && /pd\.vetos\.length\) vetosDoJuizRef\.current = andarOsVetos/.test(app));
   t("o batismo corre antes do Narrador (no começo do turno) e vai ao naoPode", /calou\("S7b · o batismo"/.test(app) && /naoPodeDoTurnoRef\.current = \[\.\.\.\(naoPodeDoTurnoRef\.current \|\| \[\]\), bt\.linha\]/.test(app));
   t("a entrega leva o sítio da fala, e a tela e a pauta leem as falas do sítio", /aEntrega\(\{ narrativa: resp\.narrativa, msgs, portao: portaoRef\.current, onde: ondeDaFala \}\)/.test(app)
-    && /falasDoMestreAqui\(mensagensRef\.current, ondeDaCena/.test(app) && /falasDoMestreAqui\(\$ref\.mensagens, ondeDaCena/.test(readFileSync(new URL("../src/motor/pauta-do-turno.js", import.meta.url), "utf8")));
+    && /falasDoMestreAqui\(mensagensRef\.current, ondeDaCena/.test(app));
 }
 
 sec("8. a medida nas narrações gravadas (o estado de antes de cada turno)");

@@ -53,7 +53,7 @@ export const O_BATISMO = Object.freeze({
   tentativas: 24,
   deOnde: "batismo",
   relacao: "desconhecido",
-  linha: (nome, rotulo) => `dar outro nome a quem o herói perguntou: chama-se ${nome}${rotulo ? `, ${rotulo}` : ""}; diga este nome`,
+  linha: (nome, rotulo) => `dar outro nome a quem o herói perguntou: ele se chama ${nome}${rotulo ? `, ${rotulo}` : ""}; diga este nome`,
   porque: "o nome de quem o herói conhece é do sistema: o Narrador não batiza",
 });
 
