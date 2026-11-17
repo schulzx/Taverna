@@ -43,6 +43,11 @@ export const CALOR_DAS_PECAS = Object.freeze({
      que o melhor que a interpretação dá */
   bonusPorPasso: 1,
   tetoDoBonus: VANTAGEM_DA_SETA.emboscada,
+  /* A2: a solução que o calor abriu aciona-se pela frase seguinte que
+     aponta para ela — «o Mestre abre essa solução e pede o dado» (as-pecas
+     §3.4). Na fase A só a «oferta» a rolava, e quem só conversa nunca a
+     aceitava: 63 turnos, 7 cobranças. `false` volta à fase A */
+  abertaAcionaPelaFrase: true,
   porque: "o calor é o «conjunto de ações» da pessoa, em número",
 });
 
@@ -51,12 +56,26 @@ export const RELOGIO_DAS_PECAS = Object.freeze({
      etapa aberta (o mundo não espera por quem tenta e erra). A saída livre
      (ir, descansar, comprar) gasta o relógio do mundo, não o da etapa */
   porAquecimento: 1,
+  /* A2: a frase que não aponta para nada (o aquecimento frio) é tempo que
+     se dá ao mundo — conta dois. Quem conversa NA direção de uma solução
+     paga o passo de sempre; quem enrola chega mais cedo à cobrança, que é
+     o que o solta (o conversador da fase A gastou 8 turnos frios por
+     cobrança na toca, depois de já ter feito tudo com o tratador) */
+  porAquecimentoFrio: 2,
   porFalhaQueContinua: 1,
   /* o tamanho do relógio pela temperatura da quest: na brasa ninguém do
      vilão está à vista e o mundo anda devagar: 2 × cheio + 2, e o jogador
      que só conversa vê duas soluções abrirem antes de o mundo cobrar. Cada
      grau acima tira um; no incêndio, 2 × cheio − 1 ainda abre uma e meia */
-  porTemperatura: Object.freeze({ brasa: 8, chama: 7, fogueira: 6, incendio: 5 }),
+  /* A2: 8/7/6/5 → 6/5/4/4. A margem de +2 da fase A existia porque a
+     conversa só virava dado pelo calor (três frases); agora a conversa
+     certa é dado na hora (CONVERSA_DIRETA) e a solução aberta rola pela
+     frase seguinte — a brasa fica em 2 × cheio (duas soluções podem abrir
+     antes de o mundo cobrar), e cada grau acima tira um, com piso em
+     cheio + 1 (uma abre sempre antes da cobrança). Medido (A2): 4 a 8 de
+     brasa e 2 ou 3 de cheio dão 22 a 39 turnos ao conversador; 6/3 dá 23
+     com 2 cobranças, e o direto e o azarado não mudam em nenhuma */
+  porTemperatura: Object.freeze({ brasa: 6, chama: 5, fogueira: 4, incendio: 4 }),
   /* a etapa reaberta fica pior pelo degrau com que a casa pesa a situação
      (SITUACAO_DA_CD: o escuro e a chuva somam 2) — guardado na memória
      (`pior`), e somado ao dado pelo encaixe */
@@ -65,10 +84,14 @@ export const RELOGIO_DAS_PECAS = Object.freeze({
      juntos). Sem teto, a terceira cobrança punha a CD fora do d20, e a
      etapa ficava presa pelo próprio relógio que existe para a soltar */
   tetoDoPior: 2 * deltaDaSituacao,
-  /* à segunda cobrança o mundo não espera mais: a forçada rola-se sozinha
-     (a besta vem a você; a testemunha vem dizer o que viu, a preço). É o
-     que garante que ninguém fica preso numa etapa, nem quem nunca age */
-  impoeNa: 2,
+  /* quando o mundo cobra, não espera mais: a forçada rola-se sozinha (a
+     besta vem a você; a testemunha vem dizer o que viu, a preço). É o que
+     garante que ninguém fica preso numa etapa, nem quem nunca age.
+     A2: 2 → 1. Na fase A a primeira cobrança só punha a forçada à vista, e
+     quem só conversa nunca a pegava — cada etapa travada custava DUAS
+     cobranças (7 na quest). Medido com 6/1/2 (brasa, impoeNa, frio): o
+     conversador fecha em 23 turnos com 2 cobranças; com 6/2/1, 51 e 5. O direto e o azarado não mudam em nenhuma */
+  impoeNa: 1,
   porque: "quem trava paga: o relógio é o teto do aquecimento (as-pecas.md §6.1)",
 });
 
@@ -87,14 +110,14 @@ export const EVENTO_DO_RELOGIO = Object.freeze({
   derrotou: "{nome} age outra vez enquanto você hesita",
   encontrou: "{nome} muda de covil, e volta a descer",
   poupou: "{nome} age outra vez enquanto você hesita",
-  descobriu: "o rasto em {nome} esfria, e alguém nota quem andou a perguntar",
-  conversou: "{nome} cansa-se de esperar e fecha-se",
-  consultou: "{nome} cansa-se de esperar e fecha-se",
+  descobriu: "o rastro em {nome} esfria, e alguém nota quem andou perguntando",
+  conversou: "{nome} se cansa de esperar e se fecha",
+  consultou: "{nome} se cansa de esperar e se fecha",
   conheceu: "{nome} deixa a cidade por uns dias",
   afeicao: "{nome} esfria com a demora",
   acompanha: "{nome} parte sem você",
-  esteve: "o caminho até {nome} fecha-se com a noite",
-  esta_em: "o caminho até {nome} fecha-se com a noite",
+  esteve: "o caminho até {nome} se fecha com a noite",
+  esta_em: "o caminho até {nome} se fecha com a noite",
   tem: "{nome} muda de mãos",
   escolheu: "a decisão adiada pesa a quem espera",
 });
@@ -152,7 +175,8 @@ export function aquecer(memoria, peca, leitura) {
   }
   const abertas = { ...m.abertas };
   for (const id of abriu) abertas[id] = 0;
-  return { memoria: { ...m, calor, abertas, relogio: m.relogio + RELOGIO_DAS_PECAS.porAquecimento }, abriu };
+  const frio = !arr(l.esquenta).some((id) => validas.has(id));
+  return { memoria: { ...m, calor, abertas, relogio: m.relogio + (frio ? RELOGIO_DAS_PECAS.porAquecimentoFrio : RELOGIO_DAS_PECAS.porAquecimento) }, abriu };
 }
 
 /* o bónus que o calor dá ao dado de uma solução */

@@ -153,7 +153,7 @@ export function jogarAProva(roteiroId, opcoes) {
   const { F, mundo } = W;
   let { E, R } = W;
   let nRolagem = 0;
-  const rel = { roteiro: rot.id, turnos: 0, concluida: false, presa: false, porEtapa: {}, precos: [], cobrancas: 0, frases: { solucao: 0, aquecimento: 0, livre: 0 }, log: [] };
+  const rel = { roteiro: rot.id, turnos: 0, concluida: false, presa: false, porEtapa: {}, precos: [], cobrancas: 0, frases: { solucao: 0, cena: 0, aquecimento: 0, livre: 0 }, log: [] };
   const daEtapa = (id) => rel.porEtapa[id] || (rel.porEtapa[id] = { turnos: 0, dados: 0, comPreco: 0, precos: 0, cobrou: 0, impostos: 0, fechouCom: null, carta: false });
   const rolar = (peca, s, extra) => {
     nRolagem++;
@@ -220,6 +220,11 @@ export function jogarAProva(roteiroId, opcoes) {
             if (destino) E = { ...E, lugar: { nome: destino.nome, cidade: destino.cidade || E.cidadeAtual }, cidadeAtual: destino.cidade || E.cidadeAtual };
             rel.log.push(`${peca.etapa} · livre · ${frase}`);
             como = "livre";
+          } else if (r && r.tipo === "cena") {
+            /* o teste de cena rola como hoje: não gasta o relógio da etapa
+               nem aquece nada (A2, ajuste 1) */
+            rel.log.push(`${peca.etapa} · cena · ${r.acao}`);
+            como = "cena";
           } else {
             const a = aquecer(memoriaDe(E, peca), peca, r || {});
             E = comMemoria(E, peca, a.memoria);
@@ -248,11 +253,11 @@ export function jogarAProva(roteiroId, opcoes) {
    aponta para nada (o furo a relatar). */
 export function medirOEncaixe(frases, pecas, opcoes) {
   const o = obj(opcoes) || {};
-  const total = { n: 0, solucao: 0, aquecimento: 0, esquenta: 0, frio: 0, livre: 0, nulo: 0 };
+  const total = { n: 0, solucao: 0, cena: 0, aquecimento: 0, esquenta: 0, frio: 0, livre: 0, nulo: 0 };
   const porPeca = {};
-  const exemplos = { solucao: [], aquecimento: [], livre: [], frio: [] };
+  const exemplos = { solucao: [], cena: [], aquecimento: [], livre: [], frio: [] };
   for (const { nome, peca, estado } of arr(pecas)) {
-    const c = { n: 0, solucao: 0, aquecimento: 0, esquenta: 0, frio: 0, livre: 0, nulo: 0 };
+    const c = { n: 0, solucao: 0, cena: 0, aquecimento: 0, esquenta: 0, frio: 0, livre: 0, nulo: 0 };
     arr(frases).forEach((f, i) => {
       const r = encaixar(f, peca, estado || o.estado || {}, { conhecidos: o.conhecidos });
       c.n++;

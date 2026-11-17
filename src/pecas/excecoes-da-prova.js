@@ -48,8 +48,8 @@ export const EXCECOES_DA_PROVA = Object.freeze({
     }),
     rasto: Object.freeze({
       evento: Object.freeze({
-        descobriu: "a besta desce outra vez, e o rasto de ontem fica por baixo do de hoje",
-        conversou: "{nome} cansa-se de esperar e vai pregar um prego por cima da porta",
+        descobriu: "a besta desce outra vez, e o rastro de ontem fica por baixo do de hoje",
+        conversou: "{nome} se cansa de esperar e vai pregar um prego por cima da porta",
         esteve: "a noite cai antes de você chegar, e a besta já não está na toca",
         esta_em: "a noite cai antes de você chegar, e a besta já não está na toca",
       }),

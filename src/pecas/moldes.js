@@ -61,12 +61,35 @@ export const FAMILIA_DA_ACAO = Object.freeze({
   furtar_se: "furtiva", seguir_alguem: "furtiva", bater_carteira: "furtiva",
   buscar: "olhar", investigar: "olhar", escutar: "olhar",
   rastrear: "caminho", orientar: "caminho",
-  lembrar: "saber", mentira: "saber", heraldica: "saber", arcano: "saber", fraqueza: "saber", diagnosticar: "saber",
+  /* A2 (17/11): «saber» juntava o que o herói SABE (lembrar, os brasões, o
+     arcano) e o que ele LÊ numa pessoa presente (a intuição: «está a
+     mentir?»). Juntas, «O que sei de Alto Negro?» encaixava em «ler o
+     tratador» — um falso encaixe que a medida da fase A mostrou. */
+  lembrar: "saber", heraldica: "saber", arcano: "saber", fraqueza: "saber", diagnosticar: "saber",
+  mentira: "intuicao",
   escalar: "corpo", tranca: "corpo", saltar: "corpo", forcar: "corpo", arrebentar: "corpo", nadar: "corpo", equilibrio: "corpo", escapar: "corpo", aguentar: "corpo",
   estancar: "cuidado", acalmar_bicho: "cuidado", cavalgar: "cuidado",
   desarmar: "furtiva",
   escolher: "escolha",
 });
+
+/* AS AÇÕES QUE SE TROCAM (A2, 17/11). A regra da fase A — «sem a ação
+   exata, encaixa a da mesma família» — dava falso encaixe: «sorrio para
+   ele» (impressionar) virava «perguntar aos vizinhos» (fazer_falar), e
+   «o que sei de…» (lembrar) virava «ler o tratador». Agora só se trocam as
+   ações que esta tabela declara a MESMA via com outra força; fora daqui,
+   a ação exata ou nada (o resto aquece). Uma linha a menos aqui e a troca
+   some. */
+export const ACOES_QUE_SE_TROCAM = Object.freeze({
+  conversa: Object.freeze({ acoes: Object.freeze(["convencer", "fazer_falar"]), porque: "pedir e arrancar são a mesma conversa com outra força" }),
+  vasculhar: Object.freeze({ acoes: Object.freeze(["buscar", "investigar"]), porque: "revirar e examinar o mesmo lugar: o catálogo distingue pela palavra, a cena não" }),
+  rumo: Object.freeze({ acoes: Object.freeze(["rastrear", "orientar"]), porque: "seguir o rastro e achar o caminho levam ao mesmo lugar" }),
+});
+/* as ações que trocam com `acao` (ela incluída); [acao] se nenhuma */
+export function acoesQueTrocamCom(acao) {
+  const g = Object.values(ACOES_QUE_SE_TROCAM).find((x) => x.acoes.includes(acao));
+  return g ? [...g.acoes] : acao ? [acao] : [];
+}
 
 /* A vantagem que uma seta dá ou tira (somada ao dado da solução para onde
    aponta). 2 é o degrau que a régua da casa usa para «a situação ajuda»

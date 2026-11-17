@@ -51,13 +51,13 @@ export const PISTA_DA_ACAO = Object.freeze({
   atuar: "{nome} gosta de quem sabe contar uma história",
   seguir_alguem: "seguir {nome} sem ser notado diria muito",
   rastrear: "há marcas no chão que levam a {nome}",
-  orientar: "o caminho para {nome} conhece-se pelas ruas de trás",
-  escalar: "por cima chega-se a {nome} sem passar pela porta",
+  orientar: "o caminho para {nome} se conhece pelas ruas de trás",
+  escalar: "por cima se chega a {nome} sem passar pela porta",
   tranca: "a entrada de {nome} cede a quem a forçar",
-  escutar: "em {nome} ouve-se o que ninguém conta",
+  escutar: "em {nome} se ouve o que ninguém conta",
   investigar: "em {nome} os vestígios contam o que aconteceu",
   bater_carteira: "{nome} anda à cinta de quem não repara",
-  acalmar_bicho: "{nome} acalma-se com quem lhe conhece os modos",
+  acalmar_bicho: "{nome} se acalma com quem conhece os modos dele",
   escolher: "a escolha é sua, e custa dos dois lados",
 });
 
@@ -109,7 +109,9 @@ export function aCenaDaPeca(F, R, etapa, E) {
   const L = obj(E.lugar) || (typeof E.lugar === "string" ? { nome: E.lugar } : null);
   const ondeNome = L && typeof L.nome === "string" ? L.nome : "";
   let presentes = [];
-  try { presentes = quemAgeAqui(quemEstaAqui(E)).map((n) => ({ nome: String(n.nome), papel: String(n.papel || ""), deOnde: n.deOnde || "elenco" })); } catch { presentes = []; }
+  /* A2: o ofício (o `rotulo` do sítio) e o género viajam com a pessoa — é
+     por eles que «o tratador», «a taverneira», «ela» acham alguém da cena */
+  try { presentes = quemAgeAqui(quemEstaAqui(E)).map((n) => ({ nome: String(n.nome), papel: String(n.papel || ""), deOnde: n.deOnde || "elenco", oficio: String(n.rotulo || n.oficio || ""), genero: String(n.genero || "") })); } catch { presentes = []; }
   const quem = [...presentes];
   const climax = obj(oClimaxDaQuest(F)[etapa.id]) || null;
   const covil = climax && climax.covil ? obj(R.papeis[climax.covil]) : null;
@@ -118,8 +120,12 @@ export function aCenaDaPeca(F, R, etapa, E) {
     const p = obj(R.papeis[k]) || {};
     if (!p.nome || (d.de !== "elenco" && d.de !== "fio")) continue;
     const aqui = d.de === "fio" ? noCovil && climax && climax.hostil === k : !!ondeNome && nomeiaSitio(p.local || "", ondeNome);
-    if (!aqui || quem.some((x) => sem(x.nome) === sem(p.nome))) continue;
-    quem.push({ nome: p.nome, papel: k, deOnde: d.de === "fio" ? "covil" : "papel" });
+    if (!aqui) continue;
+    /* quem já está pelo sítio e É o papel da quest leva o papel consigo
+       (A2: sem isto «o tratador» não achava Corwin, que entrou pelo sítio) */
+    const ja = quem.findIndex((x) => sem(x.nome) === sem(p.nome));
+    if (ja >= 0) { if (!quem[ja].papel) quem[ja] = { ...quem[ja], papel: k }; continue; }
+    quem.push({ nome: p.nome, papel: k, deOnde: d.de === "fio" ? "covil" : "papel", oficio: "", genero: "" });
   }
   const oQue = [];
   if (ondeNome) oQue.push({ tipo: "lugar", nome: ondeNome });

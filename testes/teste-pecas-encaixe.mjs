@@ -12,10 +12,10 @@
       contra a peça-molde de cada facto — a medida da fase A, em catraca;
    §6 lixo e determinismo. */
 import fs from "node:fs";
-import { encaixar, aLeitura, aSaidaLivre, SAIDAS_LIVRES, VERBOS_DA_PECA, PALAVRAS_DO_CALOR } from "../src/pecas/encaixe.js";
+import { encaixar, aLeitura, aSaidaLivre, SAIDAS_LIVRES, VERBOS_DA_PECA, PALAVRAS_DO_CALOR, partirEmOracoes, aDescricao, PESO_DO_ENCAIXE, ORACAO, NAO_E_ACAO, SAIDA_DA_CENA, CONVERSA_DIRETA, ALVO_POR_DESCRICAO, FAMILIAS_QUE_AQUECEM, FAMILIAS_QUE_PEDEM_A_PALAVRA, CENA_SEM_CATALOGO, PAPEIS_DO_ELENCO, LEITURAS_QUE_NAO_SAO } from "../src/pecas/encaixe.js";
 import { aPecaDoMolde } from "../src/pecas/peca.js";
-import { comMemoria } from "../src/pecas/calor.js";
-import { MOLDE_DO_FATO, FAMILIA_DA_ACAO } from "../src/pecas/moldes.js";
+import { comMemoria, CALOR_DAS_PECAS } from "../src/pecas/calor.js";
+import { MOLDE_DO_FATO, FAMILIA_DA_ACAO, ACOES_QUE_SE_TROCAM, acoesQueTrocamCom } from "../src/pecas/moldes.js";
 import { asPecasDaProva, medirOEncaixe, conhecidosDoCorpus } from "../src/pecas/a-prova.js";
 
 let bons = 0, maus = 0;
@@ -47,9 +47,12 @@ t("a luta sem a besta na cena (o rasto) não aciona nada", a1.tipo !== "solucao"
 const longe = asPecasDaProva()[2];
 const naoEsta = encaixar("Tento convencer o taverneiro a falar.", ver.peca, ver.estado);
 t("a ação plausível com o alvo descrito e fora da cena é aquecimento", naoEsta.tipo === "aquecimento", J(naoEsta));
-/* o furo que a medida mostrou: o catálogo só descreve pelos ofícios que conhece
-   (alvoDescrito) — «o tratador» não é um deles, e a frase cai em quem está */
-t("(furo registado) «o tratador» não é descrição que o catálogo leia", encaixar("Tento convencer o tratador a falar.", ver.peca, ver.estado).tipo === "solucao");
+/* MOVIDA (A2, furo 4 fechado): era «(furo registado) o tratador não é
+   descrição que o catálogo leia» e esperava SOLUÇÃO no curral — a frase caía
+   em quem estava. Agora o papel da quest descreve: sem tratador na cena, é
+   aquecimento; na toca, onde ele está, é a solução dele. */
+t("«o tratador» onde ele não está: aquecimento (o alvo está fora)", encaixar("Tento convencer o tratador a falar.", ver.peca, ver.estado).tipo === "aquecimento");
+t("«o tratador» na toca: a solução dele", encaixar("Tento convencer o tratador a falar.", fera.peca, fera.estado).solucao === "convencer@tratador");
 /* duas pessoas na cena, a mesma ação, sem nome: aquece as duas */
 const duas = aPecaDoMolde("conversou", { tipo: "pessoa", nome: "Edric", papel: "edric" }, { quem: [{ nome: "Edric" }, { nome: "Lysa" }], onde: { nome: "a praça" } });
 const duasLysa = { ...duas, solucoes: [...duas.solucoes, ...aPecaDoMolde("conversou", { tipo: "pessoa", nome: "Lysa", papel: "lysa" }, { quem: [{ nome: "Edric" }, { nome: "Lysa" }], onde: { nome: "a praça" } }).solucoes], pistas: duas.pistas };
@@ -57,7 +60,10 @@ const d1 = encaixar("Tento convencer a pessoa à minha frente a falar.", duasLys
 t("a frase que cabe em duas aquece as duas — sem perguntar", d1.tipo === "aquecimento" && d1.esquenta.includes("convencer@edric") && d1.esquenta.includes("convencer@lysa") && d1.porque === "duas", J(d1));
 const d2 = encaixar("Tento convencer Lysa a falar.", duasLysa, {});
 t("com o nome, é dela", d2.tipo === "solucao" && d2.solucao === "convencer@lysa", J(d2));
-const c1 = enc(`Cumprimento ${pastora} e pergunto como vai o inverno.`, rasto);
+/* MOVIDA (A2): era «Cumprimento X e pergunto como vai o inverno» — com a
+   conversa direta, a pergunta a quem a etapa pede já é a solução (§7). O
+   aquecimento pela conversa fica para a fala sem pergunta nem pedido. */
+const c1 = enc(`Cumprimento ${pastora} e digo que a noite promete ser fria.`, rasto);
 t("a conversa aquece as vias da conversa de quem ela nomeia", c1.tipo === "aquecimento" && c1.esquenta.length > 0 && c1.esquenta.every((id) => id.endsWith("@pastora")) && c1.nomeadas.length > 0, J(c1));
 const c2 = encaixar("Respondo ao Teodoro que não sei.", rasto.peca, rasto.estado, { conhecidos: ["Teodoro"] });
 t("quem fala com alguém que existe e não está aqui não aquece quem está", c2.tipo === "aquecimento" && c2.esquenta.length === 0 && c2.porque === "nomeiaQuemNaoEsta", J(c2));
@@ -95,7 +101,7 @@ const frases = CORPUS.frases.map((f) => f.frase);
 const pecas = asPecasDaProva();
 const m = medirOEncaixe(frases, pecas);
 const estrito = medirOEncaixe(frases, pecas, { conhecidos: conhecidosDoCorpus(CORPUS) });
-const fmt = (x) => `n ${x.n} · solução ${x.solucao} · aquecimento ${x.aquecimento} (aquece ${x.esquenta}, frio ${x.frio}) · livre ${x.livre}`;
+const fmt = (x) => `n ${x.n} · solução ${x.solucao} · cena ${x.cena} · aquecimento ${x.aquecimento} (aquece ${x.esquenta}, frio ${x.frio}) · livre ${x.livre}`;
 console.log("     as três peças da prova:", fmt(m.total));
 for (const [k, v] of Object.entries(m.porPeca)) console.log(`       ${k}: ${fmt(v)}`);
 console.log("     estrito (o nome de quem não está não aquece):", fmt(estrito.total));
@@ -115,9 +121,70 @@ for (const [k, v] of Object.entries(mm.porPeca)) console.log(`       ${k}: ${fmt
    O furo é o aquecimento FRIO: piso das soluções e teto dos frios, que só
    andam para melhor. */
 t("toda frase do corpus dá um dos três (nenhuma fica sem nada)", m.total.nulo === 0 && mm.total.nulo === 0);
-t("piso das soluções nas peças da prova (131)", m.total.solucao >= 131, String(m.total.solucao));
-t("teto dos frios nas peças da prova (114)", m.total.frio <= 114, String(m.total.frio));
-t("os números somam", m.total.solucao + m.total.aquecimento + m.total.livre === m.total.n && m.total.esquenta + m.total.frio === m.total.aquecimento);
+/* MOVIDA (A2, 17/11 — mente/lancamento/pecas-fase-a2.md): o piso era 131
+   soluções e o teto 114 frios. A fase A contava soluções que eram falsas
+   (a família larga: «sorrio para ele» virava «perguntar aos vizinhos»; a
+   conversa sem ninguém virava a da etapa); a A2 tirou essas e somou as
+   certas (a conversa direta, o alvo pelo papel), e as falsas pesavam mais:
+   «procuro a Lourdes» era revistar, «de que fugi» era fugir. O piso desce para 100 e
+   o teto dos frios para 100; o teste de cena (o 4.º destino) ganha piso, e
+   o livre teto — os quatro só andam para melhor. */
+t("piso das soluções nas peças da prova (100)", m.total.solucao >= 100, String(m.total.solucao));
+t("teto dos frios nas peças da prova (100)", m.total.frio <= 100, String(m.total.frio));
+t("piso dos testes de cena (70)", m.total.cena >= 70, String(m.total.cena));
+t("teto do livre (360; era 586)", m.total.livre <= 360, String(m.total.livre));
+t("os números somam", m.total.solucao + m.total.cena + m.total.aquecimento + m.total.livre === m.total.n && m.total.esquenta + m.total.frio === m.total.aquecimento);
+
+sec("§7 os cinco furos da fase A, em catraca (A2)");
+const tipo = (f, p) => { const r = enc(f, p); return r ? r.tipo : null; };
+/* furo 1: a ação legítima fora da etapa é TESTE DE CENA — não aquece, não gasta o relógio */
+for (const [f, p, acao] of [["Pressiono o ferimento de Elowen com um pano.", ver, "estancar"], ["Faço um torniquete na perna de Elowen.", rasto, "estancar"], ["Arrebento as amarras.", ver, "arrebentar"], ["Rezo a Cura Leve sobre Elowen.", fera, "magia"]]) {
+  const r = enc(f, p);
+  t(`furo 1: «${f}» é teste de cena (${acao})`, r.tipo === "cena" && r.acao === acao && !!r.dado, J(r));
+}
+t("o teste de cena traz o dado do catálogo", (() => { const r = enc("Arrebento as amarras.", ver); return r.dado.pericia === "atletismo" && r.dado.dc === 13; })());
+t("a ação da peça não é cena (investigar no curral é solução)", tipo("Examino com cuidado a porta, à procura de vestígios.", ver) === "solucao");
+/* furo 2: a frase composta, por oração; a negação não é ação */
+t("partirEmOracoes: e, vírgula, ponto, depois", J(partirEmOracoes("Pego a tocha, desço e escuto. Depois volto.")) === J(["Pego a tocha", "desço", "escuto", "volto"]), J(partirEmOracoes("Pego a tocha, desço e escuto. Depois volto.")));
+t("partirEmOracoes: nunca dentro de aspas, nem entre dois nomes", partirEmOracoes("Digo: «vem, e já» e saio").length === 2 && partirEmOracoes("Vou a Sal e Pedra").length === 1);
+const comp = enc(`Vou até ${pastora} e pergunto o que viu.`, rasto);
+t("furo 2: «vou até X e pergunto Y» é a pergunta (a solução), e o ir segue em saidas", comp.tipo === "solucao" && comp.solucao === "fazer_falar@pastora" && !!comp.saidas && comp.saidas[0].qual === "ir", J(comp));
+const nao = enc("Não vou ao homem ainda. Sento na margem.", ver);
+t("furo 2: «Não vou ao homem ainda» não é ir", nao.tipo !== "livre", J(nao));
+t("furo 2: «penso em ir até a ponte» não é ir", tipo("Penso em ir até a ponte.", ver) !== "livre");
+const sai = enc("Vou à toca e procuro rastos.", rasto);
+t("quem sai da cena age na chegada: é ir, e a busca fica para lá", sai.tipo === "livre" && sai.qual === "ir" && J(sai.naChegada) === J(["procuro rastos"]), J(sai));
+t("a solução à vista ainda ganha ao ir que fica na cena", tipo("Vou até ao fundo do armazém e vasculho a palha.", ver) === "solucao");
+/* furo 3: a conversa certa é solução na hora */
+const dir = enc(`Pergunto a ${pastora} se ouviu o sino.`, rasto);
+t("furo 3: perguntar a quem a etapa pede é a solução, com dado", dir.tipo === "solucao" && dir.solucao === "fazer_falar@pastora" && dir.dado.dc != null, J(dir));
+t("furo 3: pedir é convencer", (enc(`Peço a ${pastora} que me conte tudo.`, rasto) || {}).solucao === "convencer@pastora", J(enc(`Peço a ${pastora} que me conte tudo.`, rasto)));
+t("furo 3: a pergunta com preço é do balcão, não da etapa", tipo(`Pergunto a ${pastora} quanto custa um pão.`, rasto) === "livre");
+t("furo 3: com quem a frase chama por um nome de fora, a conversa não cai em quem está", tipo("Hakon, de onde nos conhecemos? Pergunto isso a ele.", rasto) !== "solucao");
+t("a tabela desliga numa linha", CONVERSA_DIRETA.ligada === true && typeof CONVERSA_DIRETA.porque === "string");
+/* furo 4: o alvo por descrição */
+const pela = (f) => [...aDescricao(f, fera.peca.cena).ids];
+t("furo 4: «o tratador» acha Corwin pela cena", pela("Falo com o tratador.").length === 1);
+t("furo 4: «a fera», «a besta», «o bicho» acham quem veio do covil", ["Ataco a fera.", "Olho a besta.", "Assusto o bicho."].every((f) => pela(f).length === 1 && pela(f)[0] !== pela("Falo com o tratador.")[0]));
+t("furo 4: «ele» com um só candidato (no curral)", aDescricao("Pergunto a ele o que viu.", ver.peca.cena).ids.size === 1);
+t("furo 4: o ofício de fora («o boticário») é alguém que não está", aDescricao("Pergunto ao boticário.", ver.peca.cena).fora === true);
+/* furo 5: as famílias */
+const sei = enc("O que sei de Alto Negro, da Agulha, de bichos assim?", fera);
+t("furo 5: «O que sei de…» na toca não é ler o tratador (é teste de cena: lembrar)", sei.tipo === "cena" && sei.acao === "lembrar", J(sei));
+t("furo 5: a intuição tem família própria", FAMILIA_DA_ACAO.mentira === "intuicao" && FAMILIA_DA_ACAO.lembrar === "saber");
+t("furo 5: só trocam as ações que a tabela declara", J(acoesQueTrocamCom("convencer")) === J(["convencer", "fazer_falar"]) && J(acoesQueTrocamCom("impressionar")) === J(["impressionar"]) && Object.values(ACOES_QUE_SE_TROCAM).every((g) => typeof g.porque === "string"));
+t("furo 5: sorrir para alguém não é perguntar aos vizinhos", tipo("Cruzo os braços e sorrio para o Teodoro.", ver) !== "solucao");
+/* os falsos encaixes que a leitura das 60 soluções da A2 achou */
+t("procurar ALGUÉM pelo nome não é revistar o sítio", tipo("Procuro a Lourdes ao balcão.", ver) !== "solucao" && tipo("Procuro o que o armazém esconde.", ver) === "solucao");
+t("a fuga contada no passado não é fugir", tipo("Conto a verdade: fui escriba de um culto e fugi da ordem.", fera) !== "solucao" && LEITURAS_QUE_NAO_SAO.fugaPassada.test("de que fugi"));
+t("prender a lâmina à cintura não é capturar", tipo("Pago a lâmina e prendo-a à cintura.", fera) !== "solucao");
+t("o pronome depois de alguém de fora é dele («pergunto ao taverneiro como ele se chama»)", tipo("Peço uma caneca ao taverneiro e pergunto como ele se chama.", ver) !== "solucao");
+t("as tabelas dos ajustes dizem porquê", [ORACAO, NAO_E_ACAO, SAIDA_DA_CENA, ALVO_POR_DESCRICAO, CENA_SEM_CATALOGO.magia].every((x) => typeof x.porque === "string") && PESO_DO_ENCAIXE.solucao > PESO_DO_ENCAIXE.cena && PESO_DO_ENCAIXE.cena > PESO_DO_ENCAIXE.aquece && PESO_DO_ENCAIXE.livre > PESO_DO_ENCAIXE.frio);
+t("as famílias que aquecem e as que pedem a palavra são famílias de ação", [...Object.keys(FAMILIAS_QUE_AQUECEM), ...FAMILIAS_QUE_PEDEM_A_PALAVRA].every((f) => Object.values(FAMILIA_DA_ACAO).includes(f)) && PAPEIS_DO_ELENCO.includes("tratador"));
+/* a solução que o calor já abriu rola pela frase que aponta para ela */
+const aberto = comMemoria(rasto.estado, rasto.peca, { abertas: { "impressionar@pastora": 0 }, calor: { "impressionar@pastora": 3 }, queimadas: ["convencer@pastora", "fazer_falar@pastora"] });
+const ab = encaixar(`Digo a ${pastora} que admiro a coragem dela.`, rasto.peca, aberto);
+t("a solução aberta pelo calor aciona-se pela frase que aponta para ela", !!ab && ab.tipo === "solucao" && ab.solucao === "impressionar@pastora" && CALOR_DAS_PECAS.abertaAcionaPelaFrase === true, J(ab));
 
 sec("§6 lixo e determinismo");
 t("lixo dá null", [null, "", "   "].every((f) => encaixar(f, rasto.peca, {}) === null) && encaixar("ataco", null, {}) === null);

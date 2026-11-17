@@ -66,7 +66,10 @@ const pac = oQueONarradorRecebe(ver, caro.resultado);
 t("a cena fechada, o que aconteceu e a pista", pac.cena.onde.nome === R.papeis.curral.nome && pac.aconteceu.passou === false && pac.aconteceu.preco === PRECO_DA_FALHA.incompleta.linha && pac.pista.length > 0);
 t("ele pode citar a pastora e o curral; não o tratador nem a besta", pac.podeCitar.quem.includes(R.papeis.pastora.nome) && pac.podeCitar.lugares.includes(R.papeis.curral.nome)
   && !pac.podeCitar.quem.includes(R.papeis.tratador.nome) && !pac.podeCitar.quem.includes(R.papeis.fera.nome));
-t("no aquecimento, só o tipo e a pista", (() => { const a = encaixar("Pergunto se a família está bem.", ver, E); const p = oQueONarradorRecebe(ver, a); return J(p.aconteceu) === J({ tipo: "aquecimento" }) && p.pista === a.pista; })());
+/* MOVIDA (A2): a frase era «Pergunto se a família está bem.» — com a
+   conversa direta, perguntar a quem está no curral já é a solução. A
+   intenção da asserção (o pacote do aquecimento) fica com uma fala sem pergunta. */
+t("no aquecimento, só o tipo e a pista", (() => { const a = encaixar("Comento que a noite promete ser fria.", ver, E); const p = oQueONarradorRecebe(ver, a); return J(p.aconteceu) === J({ tipo: "aquecimento" }) && p.pista === a.pista; })());
 t("na toca, a besta entra pela alcunha", oQueONarradorRecebe(fera, perde.resultado).aconteceu.alvo === F.papeis.fera.alcunha);
 t("lixo: null", oQueONarradorRecebe(null, {}) === null);
 
@@ -94,10 +97,18 @@ sec("§4 o conversador");
 const conv = jogarAProva("conversador");
 console.log("     " + linha(conv));
 regras(conv);
-t("ele nunca aciona uma solução pela frase (só aquecimento)", conv.frases.solucao === 0 && conv.frases.livre === 0 && conv.frases.aquecimento > 0, J(conv.frases));
-t("o calor abriu soluções (o Mestre ofereceu o dado)", conv.log.some((l) => l.includes("· abriu ")));
-t("o relógio encheu e o mundo cobrou, em cada etapa com dado", ["ver", "rasto", "fera"].every((k) => conv.porEtapa[k].cobrou >= 1));
-t("e impôs a forçada — é isso que o solta", ["ver", "rasto", "fera"].every((k) => conv.porEtapa[k].impostos >= 1 && conv.porEtapa[k].fechouCom === "imposta"));
+/* MOVIDAS (A2, 17/11 — pecas-fase-a2.md): a fase A provava que o
+   conversador NUNCA acionava uma solução pela frase, e que o relógio enchia
+   e impunha em cada etapa — 63 turnos e 7 cobranças. A A2 mudou isso de
+   propósito: a pergunta a quem a etapa pede é solução (CONVERSA_DIRETA), a
+   solução aberta rola pela frase, a fria conta dobrado e o mundo impõe na
+   primeira cobrança. A intenção que fica: ele conversa, nunca fica preso, e
+   o mundo cobra — agora 2 a 3 vezes e não 7, em ≤ 25 turnos. */
+t("ele só conversa: nenhuma frase dele é ir nem cena", conv.frases.livre === 0 && conv.frases.cena === 0 && conv.frases.aquecimento > 0, J(conv.frases));
+t("a conversa certa vira dado pela frase (a solução direta)", conv.frases.solucao >= 3, J(conv.frases));
+t("o mundo cobrou, e não mais de 3 vezes", conv.cobrancas >= 1 && conv.cobrancas <= 3, String(conv.cobrancas));
+t("e a cobrança impôs a forçada onde ele travou — é isso que o solta", Object.values(conv.porEtapa).filter((v) => v.cobrou).every((v) => v.impostos >= 1));
+t("o ritmo do conversador: ≤ 25 turnos (eram 63)", conv.turnos <= 25, String(conv.turnos));
 t("nunca preso: bem abaixo do teto de turnos", conv.turnos < A_PROVA.tetoDeTurnos / 2, String(conv.turnos));
 
 sec("§5 o azarado");
@@ -119,7 +130,9 @@ t("a mesma prova dá o mesmo relatório", J(jogarAProva("direto")) === J(direto)
 t("o d20 da semente é de 1 a 20, e o mesmo para a mesma rolagem", Array.from({ length: 200 }, (_, i) => d20DaSemente("x", i)).every((n) => n >= 1 && n <= 20) && d20DaSemente("x", 7) === d20DaSemente("x", 7));
 t("os três roteiros existem, e só o conversador recusa a oferta", Object.keys(ROTEIROS).length === 3 && Object.values(ROTEIROS).filter((r) => !r.aceitaOferta).map((r) => r.id).join() === "conversador");
 t("o direto tem frase para toda ação que os moldes da prova usam", aPecaDaEtapa(R, "fera", naToca, { mundo }).solucoes.filter((s) => s.fecha).every((s) => !!FRASE_DO_DIRETO[s.acao]));
-t("as frases do conversador são todas aquecimento no curral", FRASES_DO_CONVERSADOR.every((f) => encaixar(f.replace("{quem}", R.papeis.pastora.nome), ver, E).tipo === "aquecimento"));
+/* MOVIDA (A2): eram «todas aquecimento no curral»; com a conversa direta,
+   as que perguntam à pastora são solução — as outras continuam aquecimento */
+t("as frases do conversador: as que perguntam são solução, as outras aquecimento", FRASES_DO_CONVERSADOR.every((f) => { const r = encaixar(f.replace("{quem}", R.papeis.pastora.nome), ver, E); return /pergunto/i.test(f) ? r.tipo === "solucao" : r.tipo === "aquecimento"; }));
 t("ondeFica: a pessoa no sítio dela, o lugar nele mesmo", ondeFica(rasto.solucoes.find((s) => s.id === "convencer@pastora"), F, R, "rasto").nome === R.papeis.pastora.local
   && ondeFica(rasto.solucoes.find((s) => s.id === "revistar@curral"), F, R, "rasto").nome === R.papeis.curral.nome);
 t("roteiro que não existe: null", jogarAProva("nao_ha") === null);
