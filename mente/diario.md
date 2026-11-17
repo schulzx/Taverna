@@ -24,6 +24,13 @@ O coordenador, com o bastão das 21:55 às 22:05. A prova viva do mapa (v9.443) 
 
 ---
 
+## 17/11 · sem versão — S7, o clímax, a porta e a poda · commit 5671fe1 (só o 1 de 3)
+
+A mão do motor, com o bastão do `App.jsx` das 14:05 até ao fim do item 1 (devolvido antes da corrida inteira).
+- **1 · o clímax da quest (feito):** auditoria das 52 quests — 36 de tipo 1, 16 do coração; **28 com etapa de confronto, e as 28 fechavam sem o hostil em cena** por algum caminho (o assobio, a portagem, o desvio, a escolha). Regra pelo molde (`O_CLIMAX_DA_QUEST`, `etapasDe`): a etapa de confronto exige o hostil vencido ou **encontrado** (facto novo e aditivo do livro, que só o cartão escreve), as escolhas dela só abrem depois; o rastro antes de um confronto fecha no covil. Encontro = o cartão da estrada com `ESCOLHAS_DO_CONFRONTO` (espreitar, falar, capturar, lutar, recuar), todo dado falhado é luta. Fiação: o App abre o cartão quando o herói pisa o covil, escreve o encontro e põe o hostil no registo (tudo em `calou`). Catraca: 1000 mundos, 4848 confrontos, 100 % com encontro de risco; 650 rastros, todos no covil.
+- **Decisão média:** as suítes que provam os ramos da ficha (`teste-biblioteca-de-quests`, `teste-bq7-motor`) dão o encontro como feito, com o motivo escrito — a regra inteira é provada em `teste-o-confronto-da-quest.mjs`. Dois guiões do Último a Sair passaram pelo esconderijo (o rastro fecha lá).
+- **2 · a porta e 3 · a poda: NÃO feitos** — o limite de tokens do agente chegou ao fim do item 1. Ficam para um agente novo.
+
 ## 16/11 · sem versão — V10, o cartão da sessão
 
 A mão do sistema, de `9e35696`. Bastão do `App.jsx` («V10») tomado às 19:12, devolvido às ~19:50 (fiação do registro, de levantar da mesa e da volta). Sem `VERSAO`, sem push. Commits: `8e12e83` (o registro), `2748f93` (cartão, levantar, «Da última vez…»), e o fecho com as correções da prova jogada.
