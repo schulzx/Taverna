@@ -38,13 +38,23 @@
    mesmo catálogo: o de HOJE (`porQueNaoChama`, a conversa pela escada) e o
    da RÉGUA (motor/a-regua-do-momento.js), que recebe a cena do item inteira
    (cena-do-momento.js) — medo, pressa, testemunha, vigia, perigo, motivo
-   para negar, o que antes não tinha porta. */
+   para negar, o que antes não tinha porta.
+
+   RODADA 2 (18/11/2026) — A PROVA RENOVADA.
+   Os 14 itens da B que a suíte da M2 imprimiu frase a frase (antes da
+   repartição) passaram para a A com o par de cada um (a mesma frase vazou
+   junto), e 14 pares novos da mesma situação e da mesma cena tomaram o lugar
+   deles. A cena que só existia na nota virou estado da tabela (muro molhado
+   é perigo_fisico, ponte podre é fragil, o que espreita é algo_se_aproxima,
+   o símbolo obscuro é assunto_raro), e `cenaDoExame` passa a levar à régua
+   QUALQUER estado da tabela escrito na cena, cada um ao seu dono. E a B
+   ganhou 90 itens novos (rodada 2), escritos sem abrir o catálogo. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
 import { porQueNaoChama, oChamado } from "../src/motor/o-mestre-chama.js";
 import { valeRolagem, oQueACenaChama, familiaDaAcao } from "../src/motor/a-regua-do-momento.js";
-import { lerCena } from "../src/cena-do-momento.js";
+import { lerCena, estadoPorId } from "../src/cena-do-momento.js";
 import { PERICIAS } from "../src/pericias.js";
 
 let ok = 0, mal = 0;
@@ -70,19 +80,31 @@ const SITUACOES = JSON.parse(fs.readFileSync(new URL("./corpus-das-situacoes.jso
    hoje lê com o mesmo catálogo. Ouvir mais faz ele pedir mais — onde a mesa
    pediria e onde não pediria (pé ante pé com e sem guarda). É por isso que
    o seu «pede indevido» sobe: é o buraco que a régua fecha, e a catraca de
-   hoje passa a guardar o número novo, não o antigo. */
+   hoje passa a guardar o número novo, não o antigo.
+
+   MOVIDAS de novo na RODADA 2 (18/11/2026), e o motivo: o exame mudou de
+   tamanho e de dono das frases — 28 itens passaram da B para a A (os 14 que
+   vazaram na M2 e os seus pares), a B ganhou 118 itens novos (14 pares de
+   troca e 90 itens) e a cena de 25 itens antigos ganhou o estado que só
+   estava na nota. Pela regra da rodada, a catraca da rodada nova recomeça
+   da medida dela: os números abaixo são os da primeira medida da rodada 2,
+   com o mesmo catálogo e a mesma régua da M3+M4 (nada em src/ mudou).
+   O piso da rodada 1, para comparar: hoje A 92 · 20 · 27 · cat 83 · per 47 ·
+   pares 2 · esp 4; hoje B 79 · 15 · 42 · cat 50 · per 24 · pares 1 · esp 6;
+   régua A 107 · 4 · 28 · cat 83 · per 46 · pares 16 · esp 7; régua B 86 · 4 ·
+   46 · cat 50 · per 22 · pares 9 · esp 10. */
 const CATRACA_DO_EXAME = {
-  data: "2026-11-18",
+  data: "2026-11-18 (rodada 2)",
   /* o de hoje com o catálogo antigo (ebf0f64), para comparar: A 75 · 11 · 53 ·
      cat 47 · per 21 · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 ·
      pares 1 · esp 6 */
   hoje: {
-    A: { rolaCerto: 92, pedeIndevido: 20, deixaDePedir: 27, categoria: 83, pericia: 47, paresQueSeparam: 2, espontaneosCertos: 4 },
-    B: { rolaCerto: 79, pedeIndevido: 15, deixaDePedir: 42, categoria: 50, pericia: 24, paresQueSeparam: 1, espontaneosCertos: 6 },
+    A: { rolaCerto: 106, pedeIndevido: 24, deixaDePedir: 37, categoria: 91, pericia: 51, paresQueSeparam: 2, espontaneosCertos: 4 },
+    B: { rolaCerto: 120, pedeIndevido: 22, deixaDePedir: 72, categoria: 69, pericia: 32, paresQueSeparam: 1, espontaneosCertos: 12 },
   },
   regua: {
-    A: { rolaCerto: 107, pedeIndevido: 4, deixaDePedir: 28, categoria: 83, pericia: 46, paresQueSeparam: 16, espontaneosCertos: 7 },
-    B: { rolaCerto: 86, pedeIndevido: 4, deixaDePedir: 46, categoria: 50, pericia: 22, paresQueSeparam: 9, espontaneosCertos: 10 },
+    A: { rolaCerto: 126, pedeIndevido: 4, deixaDePedir: 37, categoria: 91, pericia: 51, paresQueSeparam: 21, espontaneosCertos: 8 },
+    B: { rolaCerto: 133, pedeIndevido: 6, deixaDePedir: 75, categoria: 69, pericia: 32, paresQueSeparam: 15, espontaneosCertos: 24 },
   },
 };
 /* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje
@@ -95,7 +117,10 @@ const FORMATO = {
   minPares: 60,
   situacoes: 65,
   minPorSituacao: 2,      // com os pares, a maioria passa de 3; ver §1
-  espontaneos: [15, 25],
+  /* MOVIDO na rodada 2 (18/11): era [15, 25]; a rodada 2 pôs 12 espontâneos
+     novos na B (o dado espontâneo é um terço dos pedidos da mesa real, §6),
+     e o exame foi de 20 para 32. */
+  espontaneos: [25, 40],
   fracaoNaoRola: [0.4, 0.6],
   bases: ["numero", "padrao", "fraco"],
   categorias: ["procurar", "esgueirar", "ler_pessoa", "saber", "arcano", "forcar", "travessia", "rastrear", "socorrer", "furtar",
@@ -207,7 +232,7 @@ function lerNoJogo(item, extraDoChamado) {
    - trancado, vigiado, armadilhado, o achado e a suspeita de armadilha são
      do lugar; pressa, testemunhas, perigo e o som claro são da cena. */
 const CRIATURA_DO_EXAME = /\b(cavalo|egua|lobo|corvo|cao|cachorro|fera|urso|mula)\b/;
-const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar"];
+const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar", "do_grupo"];
 const NA_CRIATURA = { com_medo: "assustada", disposta: "mansa", hostil: "territorial" };
 const DO_LUGAR = { trancado: "trancado", vigiado: "vigiado", armadilhado: "armadilhado", ha_algo_escondido: "ha_algo_escondido", suspeita_de_armadilha: "suspeito" };
 const DA_CENA = ["com_pressa", "com_testemunhas", "perigo_fisico"];
@@ -225,6 +250,16 @@ function cenaDoExame(c) {
   const doLugar = Object.keys(DO_LUGAR).filter((k) => c[k] === true).map((k) => DO_LUGAR[k]);
   const daCena = DA_CENA.filter((k) => c[k] === true);
   if (String(c.som || "") === "claro") daCena.push("som_claro");
+  /* rodada 2: todo estado da tabela escrito na cena vai ao seu dono (a
+     coisa é o lugar, o da cena é da cena, o da criatura é do primeiro bicho);
+     os de pessoa já foram, acima, ao primeiro de `quem` */
+  for (const k of Object.keys(c)) {
+    const e = c[k] === true ? estadoPorId(k) : null;
+    if (!e) continue;
+    if (e.de === "coisa" && !doLugar.includes(k)) doLugar.push(k);
+    else if (e.de === "cena" && !daCena.includes(k)) daCena.push(k);
+    else if (e.de === "criatura" && criaturas[0] && !criaturas[0].estados.includes(k)) criaturas[0].estados.push(k);
+  }
   return { pessoas, criaturas, coisas: [{ nome: c.lugar || "o lugar", estados: doLugar }], cena: { estados: daCena } };
 }
 
@@ -348,7 +383,16 @@ sec("1. o exame é o que diz ser");
     && !!EXAME.metades && /\S/.test(EXAME.metades.semente || "") && /prova/.test(EXAME.metades.regra || ""));
   t("o par nunca se parte entre as metades", listaPares.every((p) => p.every((i) => i.metade === p[0].metade)));
   const nA = ITENS.filter((i) => i.metade === "A").length;
-  t(`as metades se equilibram (${nA} e ${ITENS.length - nA})`, Math.abs(2 * nA - ITENS.length) <= ITENS.length * 0.1);
+  /* MOVIDO na rodada 2 (18/11): a asserção era «as metades se equilibram»
+     (diferença ≤ 10%). A rodada 2 pôs na B todos os itens novos e passou para
+     a A os que vazaram: a B é a prova e é ela que precisa de frase nova, então
+     agora ela é maior de propósito. O que se guarda é que a prova não encolha
+     para menos que a metade que afina, e que a A siga com o bastante para
+     afinar (≥ 40% do exame). */
+  t(`a prova não é menor que a metade que afina (A ${nA}, B ${ITENS.length - nA}), e a A tem o bastante para afinar`,
+    ITENS.length - nA >= nA && nA >= ITENS.length * 0.4);
+  t("todo item da rodada 2 está na B, e nenhum item que vazou na M2 ficou na B",
+    ITENS.filter((i) => i.rodada === 2).every((i) => i.metade === "B") && ITENS.filter((i) => i.rodada_2).every((i) => i.metade === "A"));
   t("a contagem do cabeçalho bate com as metades", EXAME.contagem.metade_A === nA && EXAME.contagem.metade_B === ITENS.length - nA);
   t("a família da régua e a categoria do exame falam a mesma língua (todo id do catálogo)",
     DESAFIOS.every((d) => d.id === "improviso" || familiaDaAcao({ tipo: "teste", id: d.id }) === CATEGORIA_DO_ROTULO[d.id]));

@@ -1,28 +1,29 @@
 {
  "nome": "o exame do Mestre",
- "versao_do_exame": 1,
+ "versao_do_exame": 2,
  "data": "2026-11-18",
  "origem": "O veredito de cada item (rola, qual teste, por quê) vem do estudo das mesas reais, mente/lancamento/estudo-das-mesas.md §6 (as regras) e §8 (65 situações com veredito). As frases foram escritas por nós, em PT-BR, sem abrir o catálogo nem os corpus do projeto, para não serem moldadas pelas regex. Nenhuma frase de mesa real está aqui: das sessões vêm só contagens e padrões descritos por nós.",
  "regra_da_rodada": "Frase usada para afinar o Mestre sai do exame e entra outra no lugar, com a rodada seguinte marcada. O exame mede o que o Mestre nunca viu; frase vista vira treino.",
  "campos": {
-  "cena": "estados de §4 do o-mestre-vivo (quem, esconde_algo, hostil, disposta, com_medo, trancado, vigiado, com_pressa, com_testemunhas, ha_algo_escondido, perigo_fisico, motivo_para_negar, deve_favor), lugar, hora, clima, heroi, nota",
+  "cena": "estados da tabela fechada de src/cena-do-momento.js (ESTADOS_DA_CENA), escritos planos: os de pessoa (disposta, desconfiada, com_medo, hostil, esconde_algo, deve_favor, motivo_para_negar, do_grupo) valem para o primeiro de `quem`; os de coisa (trancado, vigiado, fragil, escuro, armadilhado, ha_algo_escondido, suspeito; e suspeita_de_armadilha, que é o suspeito) são do lugar; os de cena (com_pressa, com_testemunhas, territorio_de_alguem, perigo_fisico, som_claro, algo_se_aproxima, assunto_raro) são da cena. Mais lugar, hora, clima, heroi, nota. Desde a rodada 2, o que decide o veredito está em estado, não só na nota.",
   "esperado": "rola, categoria, pericias (ids do projeto), porque (a regra de §6), base (numero/padrao/fraco)",
   "par": "a mesma frase em duas cenas com vereditos opostos",
   "espontaneo": "sem ação de teste declarada: o dado viria do estado da cena"
  },
  "contagem": {
-  "itens": 295,
-  "pares": 80,
-  "espontaneos": 20,
-  "nao_rola": 136,
+  "itens": 413,
+  "pares": 132,
+  "espontaneos": 32,
+  "nao_rola": 193,
   "situacoes_cobertas": 65,
   "situacoes_faltando": [],
-  "metade_A": 147,
-  "metade_B": 148
+  "metade_A": 175,
+  "metade_B": 238,
+  "rodada_2": 118
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
-  "regra": "Os grupos (o par inteiro, ou o item sozinho) são ordenados pelo FNV-1a de semente|grupo e alternados A, B, A, B. A metade A afina o Mestre: só os erros dela são lidos frase a frase. A metade B é a prova: é medida em número e nunca lida frase a frase."
+  "regra": "Os grupos (o par inteiro, ou o item sozinho) são ordenados pelo FNV-1a de semente|grupo e alternados A, B, A, B. A metade A afina o Mestre: só os erros dela são lidos frase a frase. A metade B é a prova: é medida em número e nunca lida frase a frase. Na rodada 2 a B cresceu à mão (os itens novos entram todos nela): a B é a prova, e a prova é a que precisa de frase nova."
  },
  "itens": [
   {
@@ -481,8 +482,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P05"
+   "metade": "A",
+   "par": "P05",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E022",
@@ -508,8 +510,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P05"
+   "metade": "A",
+   "par": "P05",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E023",
@@ -732,8 +735,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P09"
+   "metade": "A",
+   "par": "P09",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E033",
@@ -755,8 +759,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P09"
+   "metade": "A",
+   "par": "P09",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E034",
@@ -879,8 +884,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P12"
+   "metade": "A",
+   "par": "P12",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E039",
@@ -900,8 +906,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P12"
+   "metade": "A",
+   "par": "P12",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E040",
@@ -938,7 +945,7 @@
     "quem": [
      "multidão"
     ],
-    "ha_algo_escondido": true,
+    "ha_algo_escondido": false,
     "nota": "o contrabandista está sozinho no meio da praça, à vista"
    },
    "frase": "procuro o contrabandista de chapéu vermelho no meio do povo",
@@ -1064,8 +1071,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P14"
+   "metade": "A",
+   "par": "P14",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E047",
@@ -1086,8 +1094,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P14"
+   "metade": "A",
+   "par": "P14",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E048",
@@ -1871,8 +1880,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P21"
+   "metade": "A",
+   "par": "P21",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E082",
@@ -1895,8 +1905,9 @@
     "base": "fraco"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P21"
+   "metade": "A",
+   "par": "P21",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E083",
@@ -1970,8 +1981,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P23"
+   "metade": "A",
+   "par": "P23",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E086",
@@ -1993,8 +2005,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P23"
+   "metade": "A",
+   "par": "P23",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E087",
@@ -2676,8 +2689,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P30"
+   "metade": "A",
+   "par": "P30",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E116",
@@ -2703,8 +2717,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P30"
+   "metade": "A",
+   "par": "P30",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E117",
@@ -3151,7 +3166,8 @@
    "cena": {
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
-    "heroi": "aventureiro comum"
+    "heroi": "aventureiro comum",
+    "assunto_raro": true
    },
    "frase": "eu reconheço esse simbolo?",
    "esperado": {
@@ -3173,7 +3189,8 @@
    "cena": {
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
-    "heroi": "foi sacerdote desse culto"
+    "heroi": "foi sacerdote desse culto",
+    "assunto_raro": true
    },
    "frase": "eu reconheço esse simbolo?",
    "esperado": {
@@ -3193,7 +3210,8 @@
    "cena": {
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
-    "heroi": "aventureiro comum"
+    "heroi": "aventureiro comum",
+    "assunto_raro": true
    },
    "frase": "esse desenho é de algum culto que eu conheça?",
    "esperado": {
@@ -3215,7 +3233,8 @@
    "cena": {
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
-    "heroi": "foi sacerdote desse culto"
+    "heroi": "foi sacerdote desse culto",
+    "assunto_raro": true
    },
    "frase": "esse desenho é de algum culto que eu conheça?",
    "esperado": {
@@ -3235,7 +3254,8 @@
    "cena": {
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
-    "heroi": "aventureiro comum"
+    "heroi": "aventureiro comum",
+    "assunto_raro": true
    },
    "frase": "tento lembrar se já vi esse símbolo em algum livro",
    "esperado": {
@@ -3256,7 +3276,8 @@
    "cena": {
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
-    "heroi": "aventureiro comum"
+    "heroi": "aventureiro comum",
+    "assunto_raro": true
    },
    "frase": "sei alguma coisa sobre esse olho com chifres?",
    "esperado": {
@@ -3384,7 +3405,8 @@
    "situacao": 37,
    "cena": {
     "lugar": "biblioteca",
-    "nota": "o herói acabou de passar num bom teste sobre dragões"
+    "nota": "o herói acabou de passar num bom teste sobre dragões",
+    "assunto_raro": true
    },
    "frase": "e dragão tem medo de raio?",
    "esperado": {
@@ -3395,15 +3417,17 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P38"
+   "metade": "A",
+   "par": "P38",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E149",
    "situacao": 37,
    "cena": {
     "lugar": "biblioteca",
-    "nota": "assunto novo, sem teste anterior"
+    "nota": "assunto novo, sem teste anterior",
+    "assunto_raro": true
    },
    "frase": "e dragão tem medo de raio?",
    "esperado": {
@@ -3417,15 +3441,17 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P38"
+   "metade": "A",
+   "par": "P38",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E150",
    "situacao": 37,
    "cena": {
     "lugar": "biblioteca",
-    "nota": "o herói acabou de passar num bom teste sobre dragões"
+    "nota": "o herói acabou de passar num bom teste sobre dragões",
+    "assunto_raro": true
    },
    "frase": "esses dragões, raio machuca eles?",
    "esperado": {
@@ -3444,7 +3470,8 @@
    "situacao": 37,
    "cena": {
     "lugar": "biblioteca",
-    "nota": "assunto novo, sem teste anterior"
+    "nota": "assunto novo, sem teste anterior",
+    "assunto_raro": true
    },
    "frase": "esses dragões, raio machuca eles?",
    "esperado": {
@@ -3539,7 +3566,8 @@
    "situacao": 39,
    "cena": {
     "lugar": "covil",
-    "nota": "proteção mágica rara, de ofício esquecido"
+    "nota": "proteção mágica rara, de ofício esquecido",
+    "assunto_raro": true
    },
    "frase": "sei quem faz esse tipo de amuleto de proteção?",
    "esperado": {
@@ -3580,7 +3608,8 @@
    "situacao": 39,
    "cena": {
     "lugar": "covil",
-    "nota": "proteção mágica rara, de ofício esquecido"
+    "nota": "proteção mágica rara, de ofício esquecido",
+    "assunto_raro": true
    },
    "frase": "quem fabrica uma proteção dessas?",
    "esperado": {
@@ -3718,7 +3747,8 @@
    "situacao": 42,
    "cena": {
     "lugar": "biblioteca da torre",
-    "nota": "grimório em sinais estranhos"
+    "nota": "grimório em sinais estranhos",
+    "assunto_raro": true
    },
    "frase": "dá pra eu ler esse livro de feitiços?",
    "esperado": {
@@ -3731,8 +3761,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P42"
+   "metade": "A",
+   "par": "P42",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E166",
@@ -3750,15 +3781,17 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P42"
+   "metade": "A",
+   "par": "P42",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E167",
    "situacao": 42,
    "cena": {
     "lugar": "biblioteca da torre",
-    "nota": "grimório em sinais estranhos"
+    "nota": "grimório em sinais estranhos",
+    "assunto_raro": true
    },
    "frase": "folheio o grimório tentando entender os simbolos",
    "esperado": {
@@ -3778,7 +3811,8 @@
    "situacao": 42,
    "cena": {
     "lugar": "biblioteca da torre",
-    "nota": "grimório em sinais estranhos"
+    "nota": "grimório em sinais estranhos",
+    "assunto_raro": true
    },
    "frase": "tento decifrar as runas do grimorio",
    "esperado": {
@@ -3883,8 +3917,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P43"
+   "metade": "A",
+   "par": "P43",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E173",
@@ -3894,7 +3929,8 @@
     "quem": [],
     "com_pressa": false,
     "clima": "chuva",
-    "nota": "muro liso e molhado"
+    "nota": "muro liso e molhado",
+    "perigo_fisico": true
    },
    "frase": "pulo o muro",
    "esperado": {
@@ -3907,8 +3943,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P43"
+   "metade": "A",
+   "par": "P43",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E174",
@@ -3939,7 +3976,8 @@
     "quem": [],
     "com_pressa": false,
     "clima": "chuva",
-    "nota": "muro liso e molhado"
+    "nota": "muro liso e molhado",
+    "perigo_fisico": true
    },
    "frase": "escalo o muro pra entrar no quintal",
    "esperado": {
@@ -3984,7 +4022,8 @@
     "quem": [],
     "com_pressa": false,
     "clima": "chuva",
-    "nota": "muro liso e molhado"
+    "nota": "muro liso e molhado",
+    "perigo_fisico": true
    },
    "frase": "subo esse muro ai",
    "esperado": {
@@ -4029,7 +4068,8 @@
     "quem": [],
     "com_pressa": false,
     "clima": "chuva",
-    "nota": "muro liso e molhado"
+    "nota": "muro liso e molhado",
+    "perigo_fisico": true
    },
    "frase": "dá pra eu escalar o muro?",
    "esperado": {
@@ -4112,8 +4152,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P48"
+   "metade": "A",
+   "par": "P48",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E183",
@@ -4132,8 +4173,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P48"
+   "metade": "A",
+   "par": "P48",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E184",
@@ -4243,7 +4285,8 @@
    "situacao": 47,
    "cena": {
     "lugar": "ponte de corda podre sobre o abismo",
-    "perigo_fisico": true
+    "perigo_fisico": true,
+    "fragil": true
    },
    "frase": "atravesso a ponte",
    "esperado": {
@@ -4283,7 +4326,8 @@
    "situacao": 47,
    "cena": {
     "lugar": "ponte de corda podre sobre o abismo",
-    "perigo_fisico": true
+    "perigo_fisico": true,
+    "fragil": true
    },
    "frase": "passo a ponte correndo",
    "esperado": {
@@ -4323,7 +4367,8 @@
    "situacao": 47,
    "cena": {
     "lugar": "ponte de corda podre sobre o abismo",
-    "perigo_fisico": true
+    "perigo_fisico": true,
+    "fragil": true
    },
    "frase": "vou passando devagarinho pela ponte, segurando firme nas cordas",
    "esperado": {
@@ -4766,8 +4811,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P57"
+   "metade": "A",
+   "par": "P57",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E213",
@@ -4787,8 +4833,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P57"
+   "metade": "A",
+   "par": "P57",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E214",
@@ -5109,8 +5156,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P61"
+   "metade": "A",
+   "par": "P61",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E228",
@@ -5131,8 +5179,9 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P61"
+   "metade": "A",
+   "par": "P61",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E229",
@@ -5351,8 +5400,9 @@
     "base": "fraco"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P65"
+   "metade": "A",
+   "par": "P65",
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
   },
   {
    "id": "E239",
@@ -5373,8 +5423,9 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "B",
-   "par": "P65"
+   "metade": "A",
+   "par": "P65",
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
   },
   {
    "id": "E240",
@@ -5902,7 +5953,8 @@
     "quem": [],
     "com_pressa": false,
     "clima": "chuva",
-    "nota": "muro liso e molhado"
+    "nota": "muro liso e molhado",
+    "perigo_fisico": true
    },
    "frase": "pulo o muro e corro direto pro estábulo",
    "esperado": {
@@ -6147,7 +6199,8 @@
    "cena": {
     "lugar": "estrada da serra",
     "nota": "planta estranha",
-    "heroi": "estudou ervas"
+    "heroi": "estudou ervas",
+    "assunto_raro": true
    },
    "frase": "que planta é essa?",
    "esperado": {
@@ -6168,7 +6221,8 @@
    "cena": {
     "lugar": "clareira",
     "perigo_fisico": true,
-    "nota": "lobos espreitam na mata"
+    "nota": "lobos espreitam na mata",
+    "algo_se_aproxima": true
    },
    "frase": "seguimos pela trilha até a clareira",
    "esperado": {
@@ -6212,7 +6266,8 @@
     "lugar": "acampamento",
     "hora": "noite",
     "perigo_fisico": true,
-    "nota": "algo se aproxima no escuro"
+    "nota": "algo se aproxima no escuro",
+    "algo_se_aproxima": true
    },
    "frase": "montamos acampamento e vamos dormir",
    "esperado": {
@@ -6256,7 +6311,8 @@
    "cena": {
     "lugar": "estrada da serra",
     "nota": "planta estranha à beira do caminho",
-    "heroi": "estudou ervas"
+    "heroi": "estudou ervas",
+    "assunto_raro": true
    },
    "frase": "seguimos pela estrada da serra",
    "esperado": {
@@ -6398,7 +6454,8 @@
      "batedor de carteira se aproximando"
     ],
     "perigo_fisico": false,
-    "nota": "alguém vai tentar furtar o herói"
+    "nota": "alguém vai tentar furtar o herói",
+    "algo_se_aproxima": true
    },
    "frase": "fico sentado no balcão bebendo minha cerveja",
    "esperado": {
@@ -6491,7 +6548,8 @@
      "velho"
     ],
     "nota": "assunto obscuro aparece",
-    "heroi": "estudou história"
+    "heroi": "estudou história",
+    "assunto_raro": true
    },
    "frase": "o velho começa a falar da Ordem do Corvo e eu fico ouvindo",
    "esperado": {
@@ -6540,7 +6598,8 @@
      "guia"
     ],
     "perigo_fisico": true,
-    "nota": "algo espreita na água"
+    "nota": "algo espreita na água",
+    "algo_se_aproxima": true
    },
    "frase": "a gente atravessa o pantano seguindo o guia",
    "esperado": {
@@ -6586,7 +6645,8 @@
    "cena": {
     "lugar": "estrada do norte",
     "perigo_fisico": true,
-    "nota": "bandidos de tocaia nas pedras"
+    "nota": "bandidos de tocaia nas pedras",
+    "algo_se_aproxima": true
    },
    "frase": "seguimos viagem pela estrada do norte",
    "esperado": {
@@ -6622,6 +6682,2699 @@
    "metade": "B",
    "par": "P80",
    "espontaneo": true
+  },
+  {
+   "id": "E296",
+   "situacao": 4,
+   "cena": {
+    "lugar": "beco, depois da luta",
+    "quem": [
+     "bandido caído"
+    ],
+    "com_pressa": false,
+    "ha_algo_escondido": true,
+    "nota": "bilhete costurado no forro do gibão"
+   },
+   "frase": "apalpo as roupas do sujeito caído pra ver o que ele leva",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "busca rola se há algo escondido ou perigo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P81"
+  },
+  {
+   "id": "E297",
+   "situacao": 4,
+   "cena": {
+    "lugar": "beco, depois da luta",
+    "quem": [
+     "bandido caído"
+    ],
+    "com_pressa": false,
+    "ha_algo_escondido": false
+   },
+   "frase": "apalpo as roupas do sujeito caído pra ver o que ele leva",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P81"
+  },
+  {
+   "id": "E298",
+   "situacao": 8,
+   "cena": {
+    "lugar": "porta dos fundos da taverna fechada",
+    "hora": "noite",
+    "quem": [
+     "contrabandistas conversando"
+    ],
+    "som": "abafado",
+    "importa": true
+   },
+   "frase": "colo a orelha na madeira e tento pegar a conversa deles",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao"
+    ],
+    "porque": "busca rola se há algo escondido ou perigo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P82"
+  },
+  {
+   "id": "E299",
+   "situacao": 8,
+   "cena": {
+    "lugar": "porta dos fundos da taverna fechada",
+    "hora": "noite",
+    "quem": [
+     "contrabandistas discutindo aos gritos"
+    ],
+    "som": "claro",
+    "som_claro": true
+   },
+   "frase": "colo a orelha na madeira e tento pegar a conversa deles",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P82"
+  },
+  {
+   "id": "E300",
+   "situacao": 9,
+   "cena": {
+    "lugar": "praça do mercado",
+    "hora": "meio-dia",
+    "quem": [
+     "multidão"
+    ],
+    "ha_algo_escondido": true,
+    "nota": "o contrabandista está na multidão"
+   },
+   "frase": "dou uma rodada de olho pela praça atras de rosto que eu conheça",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao"
+    ],
+    "porque": "busca rola se há algo escondido ou perigo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P83"
+  },
+  {
+   "id": "E301",
+   "situacao": 9,
+   "cena": {
+    "lugar": "praça do mercado",
+    "hora": "madrugada",
+    "ha_algo_escondido": false
+   },
+   "frase": "dou uma rodada de olho pela praça atras de rosto que eu conheça",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P83"
+  },
+  {
+   "id": "E302",
+   "situacao": 11,
+   "cena": {
+    "lugar": "cidade grande",
+    "hora": "fim de tarde, lojas fechando",
+    "com_pressa": true
+   },
+   "frase": "preciso de corda e tocha, vou rodar as lojas atras disso",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao"
+    ],
+    "porque": "o resultado é incerto, algo resiste e falhar custa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P84"
+  },
+  {
+   "id": "E303",
+   "situacao": 11,
+   "cena": {
+    "lugar": "cidade grande",
+    "hora": "tarde",
+    "com_pressa": false
+   },
+   "frase": "preciso de corda e tocha, vou rodar as lojas atras disso",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "encenação e logística não rolam",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P84"
+  },
+  {
+   "id": "E304",
+   "situacao": 19,
+   "cena": {
+    "lugar": "feira de cavalos",
+    "quem": [
+     "vendedor de cavalos"
+    ],
+    "motivo_para_negar": true
+   },
+   "frase": "e se eu levar os dois cavalos, cê faz um precinho melhor?",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P85"
+  },
+  {
+   "id": "E305",
+   "situacao": 19,
+   "cena": {
+    "lugar": "feira de cavalos",
+    "quem": [
+     "vendedor de cavalos"
+    ],
+    "disposta": true,
+    "deve_favor": true,
+    "nota": "o herói salvou a filha dele"
+   },
+   "frase": "e se eu levar os dois cavalos, cê faz um precinho melhor?",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P85"
+  },
+  {
+   "id": "E306",
+   "situacao": 21,
+   "cena": {
+    "lugar": "casa do contrabandista",
+    "quem": [
+     "contrabandista",
+     "capangas"
+    ],
+    "hostil": true,
+    "motivo_para_negar": true
+   },
+   "frase": "fala logo, senão a coisa vai ficar feia pro seu lado",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P86"
+  },
+  {
+   "id": "E307",
+   "situacao": 20,
+   "cena": {
+    "lugar": "beco",
+    "quem": [
+     "ladrãozinho derrubado"
+    ],
+    "com_medo": true,
+    "nota": "já caído e apavorado"
+   },
+   "frase": "fala logo, senão a coisa vai ficar feia pro seu lado",
+   "esperado": {
+    "rola": false,
+    "categoria": "intimidar",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P86"
+  },
+  {
+   "id": "E308",
+   "situacao": 27,
+   "cena": {
+    "lugar": "cela",
+    "quem": [
+     "preso"
+    ],
+    "hostil": true,
+    "motivo_para_negar": true,
+    "nota": "se recusa a falar"
+   },
+   "frase": "aperto o cara até ele cuspir onde fica o esconderijo",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P87"
+  },
+  {
+   "id": "E309",
+   "situacao": 27,
+   "cena": {
+    "lugar": "cela",
+    "quem": [
+     "preso"
+    ],
+    "disposta": true,
+    "nota": "já convencido a colaborar"
+   },
+   "frase": "aperto o cara até ele cuspir onde fica o esconderijo",
+   "esperado": {
+    "rola": false,
+    "categoria": "intimidar",
+    "pericias": [],
+    "porque": "já resolvido antes: não se rola de novo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P87"
+  },
+  {
+   "id": "E310",
+   "situacao": 37,
+   "cena": {
+    "lugar": "biblioteca",
+    "assunto_raro": true,
+    "nota": "assunto novo, sem teste anterior"
+   },
+   "frase": "raio funciona contra dragão?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "saber obscuro, que o herói não tem de berço: rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P88"
+  },
+  {
+   "id": "E311",
+   "situacao": 37,
+   "cena": {
+    "lugar": "biblioteca",
+    "assunto_raro": true,
+    "nota": "o herói acabou de passar num bom teste sobre dragões"
+   },
+   "frase": "raio funciona contra dragão?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "o herói já sabe (passado dele, teste anterior, ou a mesa lembra)",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P88"
+  },
+  {
+   "id": "E312",
+   "situacao": 42,
+   "cena": {
+    "lugar": "biblioteca da torre",
+    "assunto_raro": true,
+    "nota": "grimório em sinais estranhos"
+   },
+   "frase": "consigo entender o que ta escrito nesse grimorio?",
+   "esperado": {
+    "rola": true,
+    "categoria": "arcano",
+    "pericias": [
+     "arcanismo"
+    ],
+    "porque": "o resultado é incerto, algo resiste e falhar custa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P89"
+  },
+  {
+   "id": "E313",
+   "situacao": 42,
+   "cena": {
+    "lugar": "acampamento",
+    "nota": "é o grimório do próprio herói"
+   },
+   "frase": "consigo entender o que ta escrito nesse grimorio?",
+   "esperado": {
+    "rola": false,
+    "categoria": "arcano",
+    "pericias": [],
+    "porque": "o herói já sabe (passado dele, teste anterior, ou a mesa lembra)",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P89"
+  },
+  {
+   "id": "E314",
+   "situacao": 44,
+   "cena": {
+    "lugar": "muro de três metros do quintal",
+    "com_pressa": false,
+    "clima": "chuva",
+    "perigo_fisico": true,
+    "nota": "muro liso e molhado"
+   },
+   "frase": "trepo nesse muro e passo pro outro lado",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P90"
+  },
+  {
+   "id": "E315",
+   "situacao": 44,
+   "cena": {
+    "lugar": "muro de três metros do quintal",
+    "com_pressa": false,
+    "clima": "seco"
+   },
+   "frase": "trepo nesse muro e passo pro outro lado",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P90"
+  },
+  {
+   "id": "E316",
+   "situacao": 45,
+   "cena": {
+    "lugar": "muro alto do castelo",
+    "quem": [
+     "guardas vindo"
+    ],
+    "com_pressa": true,
+    "perigo_fisico": true
+   },
+   "frase": "escorrego muro abaixo agarrado na corda",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P91"
+  },
+  {
+   "id": "E317",
+   "situacao": 44,
+   "cena": {
+    "lugar": "muro do quintal",
+    "com_pressa": false
+   },
+   "frase": "escorrego muro abaixo agarrado na corda",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P91"
+  },
+  {
+   "id": "E318",
+   "situacao": 53,
+   "cena": {
+    "lugar": "acampamento orc",
+    "hora": "noite",
+    "quem": [
+     "orcs de vigia"
+    ],
+    "vigiado": true
+   },
+   "frase": "vou rastejando ate as tendas dos orcs sem fazer barulho",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P92"
+  },
+  {
+   "id": "E319",
+   "situacao": 53,
+   "cena": {
+    "lugar": "acampamento orc abandonado",
+    "hora": "noite",
+    "vigiado": false
+   },
+   "frase": "vou rastejando ate as tendas dos orcs sem fazer barulho",
+   "esperado": {
+    "rola": false,
+    "categoria": "esgueirar",
+    "pericias": [],
+    "porque": "sem ninguém para notar, o mestre narra",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P92"
+  },
+  {
+   "id": "E320",
+   "situacao": 56,
+   "cena": {
+    "lugar": "taverna",
+    "quem": [
+     "bêbado adormecido"
+    ],
+    "com_testemunhas": false
+   },
+   "frase": "meto a mao na bolsa do sujeito",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P93"
+  },
+  {
+   "id": "E321",
+   "situacao": 56,
+   "cena": {
+    "lugar": "beco",
+    "quem": [
+     "bandido morto"
+    ],
+    "nota": "depois da luta"
+   },
+   "frase": "meto a mao na bolsa do sujeito",
+   "esperado": {
+    "rola": false,
+    "categoria": "furtar",
+    "pericias": [],
+    "porque": "encenação e logística não rolam",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P93"
+  },
+  {
+   "id": "E322",
+   "situacao": 58,
+   "cena": {
+    "lugar": "trilha na mata",
+    "ha_algo_escondido": true,
+    "nota": "pegadas frescas na lama"
+   },
+   "frase": "da pra ver marca de bota por aqui?",
+   "esperado": {
+    "rola": true,
+    "categoria": "rastrear",
+    "pericias": [
+     "sobrevivencia"
+    ],
+    "porque": "busca rola se há algo escondido ou perigo",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P94"
+  },
+  {
+   "id": "E323",
+   "situacao": 59,
+   "cena": {
+    "lugar": "pomar",
+    "quem": [
+     "colhedores trabalhando à vista"
+    ],
+    "ha_algo_escondido": false
+   },
+   "frase": "da pra ver marca de bota por aqui?",
+   "esperado": {
+    "rola": false,
+    "categoria": "rastrear",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P94"
+  },
+  {
+   "id": "E324",
+   "situacao": 17,
+   "cena": {
+    "lugar": "quartel",
+    "quem": [
+     "capitão da guarda"
+    ],
+    "desconfiada": true,
+    "motivo_para_negar": true
+   },
+   "frase": "a gente precisa muito trocar uma palavrinha com o prisioneiro, libera ai?",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P95"
+  },
+  {
+   "id": "E325",
+   "situacao": 17,
+   "cena": {
+    "lugar": "quartel",
+    "quem": [
+     "capitão da guarda"
+    ],
+    "disposta": true,
+    "deve_favor": true
+   },
+   "frase": "a gente precisa muito trocar uma palavrinha com o prisioneiro, libera ai?",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P95"
+  },
+  {
+   "id": "E326",
+   "situacao": 17,
+   "cena": {
+    "lugar": "cadeia",
+    "quem": [
+     "carcereiro"
+    ],
+    "desconfiada": true,
+    "motivo_para_negar": true
+   },
+   "frase": "deixa eu levar um pão pro preso, coisa rapida",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P96"
+  },
+  {
+   "id": "E327",
+   "situacao": 17,
+   "cena": {
+    "lugar": "cadeia",
+    "quem": [
+     "carcereiro"
+    ],
+    "disposta": true,
+    "deve_favor": true
+   },
+   "frase": "deixa eu levar um pão pro preso, coisa rapida",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P96"
+  },
+  {
+   "id": "E328",
+   "situacao": 18,
+   "cena": {
+    "lugar": "estalagem",
+    "quem": [
+     "estalajadeira"
+    ],
+    "hostil": true,
+    "motivo_para_negar": true,
+    "nota": "o herói quebrou a estalagem dela na semana passada"
+   },
+   "frase": "me arruma um prato de sopa e um canto pra sentar",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P97"
+  },
+  {
+   "id": "E329",
+   "situacao": 18,
+   "cena": {
+    "lugar": "estalagem",
+    "quem": [
+     "estalajadeira"
+    ],
+    "disposta": true
+   },
+   "frase": "me arruma um prato de sopa e um canto pra sentar",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P97"
+  },
+  {
+   "id": "E330",
+   "situacao": 22,
+   "cena": {
+    "lugar": "portão da cidade",
+    "quem": [
+     "guarda do portão"
+    ],
+    "desconfiada": true,
+    "motivo_para_negar": true,
+    "nota": "ordem de barrar estranhos"
+   },
+   "frase": "sou primo do barão, ele ta me esperando la dentro",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P98"
+  },
+  {
+   "id": "E331",
+   "situacao": 22,
+   "cena": {
+    "lugar": "portão da cidade",
+    "hora": "dia de feira",
+    "quem": [
+     "guarda do portão"
+    ],
+    "disposta": true,
+    "nota": "o guarda deixa todo mundo passar"
+   },
+   "frase": "sou primo do barão, ele ta me esperando la dentro",
+   "esperado": {
+    "rola": false,
+    "categoria": "enganar",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P98"
+  },
+  {
+   "id": "E332",
+   "situacao": 22,
+   "cena": {
+    "lugar": "portão da cidade",
+    "quem": [
+     "guarda do portão"
+    ],
+    "desconfiada": true,
+    "motivo_para_negar": true,
+    "nota": "ordem de barrar estranhos"
+   },
+   "frase": "o pessoal do barão mandou eu buscar uma encomenda, posso passar?",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P99"
+  },
+  {
+   "id": "E333",
+   "situacao": 22,
+   "cena": {
+    "lugar": "portão da cidade",
+    "hora": "dia de feira",
+    "quem": [
+     "guarda do portão"
+    ],
+    "disposta": true,
+    "nota": "o guarda deixa todo mundo passar"
+   },
+   "frase": "o pessoal do barão mandou eu buscar uma encomenda, posso passar?",
+   "esperado": {
+    "rola": false,
+    "categoria": "enganar",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P99"
+  },
+  {
+   "id": "E334",
+   "situacao": 25,
+   "cena": {
+    "lugar": "festa do conde",
+    "hora": "noite",
+    "quem": [
+     "estranha elegante"
+    ],
+    "motivo_para_negar": true
+   },
+   "frase": "moça, me faz um favor, me leva até o conde?",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P100"
+  },
+  {
+   "id": "E335",
+   "situacao": 25,
+   "cena": {
+    "lugar": "festa do conde",
+    "hora": "noite",
+    "quem": [
+     "estranha elegante"
+    ],
+    "disposta": true,
+    "deve_favor": true,
+    "nota": "o herói a tirou de uma briga no começo da festa"
+   },
+   "frase": "moça, me faz um favor, me leva até o conde?",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P100"
+  },
+  {
+   "id": "E336",
+   "situacao": 21,
+   "cena": {
+    "lugar": "casa do contrabandista",
+    "quem": [
+     "contrabandista",
+     "capangas"
+    ],
+    "hostil": true,
+    "motivo_para_negar": true
+   },
+   "frase": "olha bem pros meus amigos aqui e pensa no que vai responder",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P101"
+  },
+  {
+   "id": "E337",
+   "situacao": 20,
+   "cena": {
+    "lugar": "beco",
+    "quem": [
+     "ladrãozinho derrubado"
+    ],
+    "com_medo": true,
+    "nota": "já caído e apavorado"
+   },
+   "frase": "olha bem pros meus amigos aqui e pensa no que vai responder",
+   "esperado": {
+    "rola": false,
+    "categoria": "intimidar",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P101"
+  },
+  {
+   "id": "E338",
+   "situacao": 19,
+   "cena": {
+    "lugar": "feira de cavalos",
+    "quem": [
+     "vendedor de cavalos"
+    ],
+    "motivo_para_negar": true
+   },
+   "frase": "fecho negocio se você deixar a sela de brinde",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P102"
+  },
+  {
+   "id": "E339",
+   "situacao": 19,
+   "cena": {
+    "lugar": "feira de cavalos",
+    "quem": [
+     "vendedor de cavalos"
+    ],
+    "disposta": true,
+    "deve_favor": true
+   },
+   "frase": "fecho negocio se você deixar a sela de brinde",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P102"
+  },
+  {
+   "id": "E340",
+   "situacao": 19,
+   "cena": {
+    "lugar": "ferraria",
+    "quem": [
+     "ferreiro"
+    ],
+    "motivo_para_negar": true
+   },
+   "frase": "quanto cê quer nessa espada? dou vinte e não se fala mais nisso",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P103"
+  },
+  {
+   "id": "E341",
+   "situacao": 19,
+   "cena": {
+    "lugar": "ferraria",
+    "quem": [
+     "ferreiro"
+    ],
+    "disposta": true,
+    "deve_favor": true,
+    "nota": "o herói recuperou as ferramentas roubadas dele"
+   },
+   "frase": "quanto cê quer nessa espada? dou vinte e não se fala mais nisso",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P103"
+  },
+  {
+   "id": "E342",
+   "situacao": 32,
+   "cena": {
+    "lugar": "quartel da milícia",
+    "quem": [
+     "chefe da milícia"
+    ],
+    "motivo_para_negar": true,
+    "nota": "dois companheiros presos"
+   },
+   "frase": "vamos fazer assim: eu pago a fiança deles e ainda trago o bandido amarrado pro senhor",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P104"
+  },
+  {
+   "id": "E343",
+   "situacao": 17,
+   "cena": {
+    "lugar": "quartel da milícia",
+    "quem": [
+     "chefe da milícia"
+    ],
+    "disposta": true,
+    "deve_favor": true,
+    "nota": "dois companheiros presos; o chefe deve a vida ao herói"
+   },
+   "frase": "vamos fazer assim: eu pago a fiança deles e ainda trago o bandido amarrado pro senhor",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P104"
+  },
+  {
+   "id": "E344",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "multidão aflita"
+    ],
+    "motivo_para_negar": true,
+    "com_testemunhas": true,
+    "nota": "o povo não quer largar as casas"
+   },
+   "frase": "falo alto pro povo: quem ficar aqui não vê o sol de amanhã, bora todo mundo junto!",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P105"
+  },
+  {
+   "id": "E345",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "multidão aflita"
+    ],
+    "disposta": true,
+    "com_testemunhas": true,
+    "nota": "o povo já quer ir, só espera alguém tomar a frente"
+   },
+   "frase": "falo alto pro povo: quem ficar aqui não vê o sol de amanhã, bora todo mundo junto!",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P105"
+  },
+  {
+   "id": "E346",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "multidão aflita"
+    ],
+    "motivo_para_negar": true,
+    "com_testemunhas": true,
+    "nota": "o povo não quer largar as casas"
+   },
+   "frase": "junto o pessoal na praça e explico por que tem que largar tudo e ir pro forte",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P106"
+  },
+  {
+   "id": "E347",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "multidão aflita"
+    ],
+    "disposta": true,
+    "com_testemunhas": true,
+    "nota": "o povo já quer ir, só espera alguém tomar a frente"
+   },
+   "frase": "junto o pessoal na praça e explico por que tem que largar tudo e ir pro forte",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P106"
+  },
+  {
+   "id": "E348",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "aldeões"
+    ],
+    "motivo_para_negar": true,
+    "com_testemunhas": true,
+    "nota": "têm medo de lutar"
+   },
+   "frase": "peço pra vila inteira segurar o portão comigo essa noite",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P107"
+  },
+  {
+   "id": "E349",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "aldeões"
+    ],
+    "disposta": true,
+    "com_testemunhas": true,
+    "nota": "já pegaram as forquilhas"
+   },
+   "frase": "peço pra vila inteira segurar o portão comigo essa noite",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "com quem está disposto, a conversa não rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P107"
+  },
+  {
+   "id": "E350",
+   "situacao": 33,
+   "cena": {
+    "lugar": "cais",
+    "heroi": "forasteiro, nunca esteve no porto"
+   },
+   "frase": "esses estivadores, eu conheço o chefe deles?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "saber obscuro, que o herói não tem de berço: rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P108"
+  },
+  {
+   "id": "E351",
+   "situacao": 33,
+   "cena": {
+    "lugar": "cais",
+    "heroi": "cresceu no porto"
+   },
+   "frase": "esses estivadores, eu conheço o chefe deles?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "o herói já sabe (passado dele, teste anterior, ou a mesa lembra)",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P108"
+  },
+  {
+   "id": "E352",
+   "situacao": 34,
+   "cena": {
+    "lugar": "parede da cripta",
+    "assunto_raro": true,
+    "nota": "símbolo de olho com chifres",
+    "heroi": "aventureiro comum"
+   },
+   "frase": "ja vi essa marca de olho com chifres em algum lugar?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "saber obscuro, que o herói não tem de berço: rola",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P109"
+  },
+  {
+   "id": "E353",
+   "situacao": 34,
+   "cena": {
+    "lugar": "parede da cripta",
+    "assunto_raro": true,
+    "nota": "símbolo de olho com chifres",
+    "heroi": "foi sacerdote desse culto"
+   },
+   "frase": "ja vi essa marca de olho com chifres em algum lugar?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "o herói já sabe (passado dele, teste anterior, ou a mesa lembra)",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P109"
+  },
+  {
+   "id": "E354",
+   "situacao": 39,
+   "cena": {
+    "lugar": "covil",
+    "assunto_raro": true,
+    "nota": "talismã de ofício esquecido"
+   },
+   "frase": "quem faz um talisma desses?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "saber obscuro, que o herói não tem de berço: rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P110"
+  },
+  {
+   "id": "E355",
+   "situacao": 39,
+   "cena": {
+    "lugar": "feira",
+    "nota": "talismã comum, vendido em toda barraca"
+   },
+   "frase": "quem faz um talisma desses?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "saber comum: o mestre responde",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P110"
+  },
+  {
+   "id": "E356",
+   "situacao": 39,
+   "cena": {
+    "lugar": "covil",
+    "assunto_raro": true,
+    "nota": "veneno de aranha-lobo, coisa de poucos"
+   },
+   "frase": "o que eu sei sobre esse veneno?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "saber obscuro, que o herói não tem de berço: rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P111"
+  },
+  {
+   "id": "E357",
+   "situacao": 39,
+   "cena": {
+    "lugar": "armazém",
+    "nota": "veneno de rato, vendido em todo armazém"
+   },
+   "frase": "o que eu sei sobre esse veneno?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "saber comum: o mestre responde",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P111"
+  },
+  {
+   "id": "E358",
+   "situacao": 36,
+   "cena": {
+    "lugar": "serra",
+    "clima": "nevasca",
+    "nota": "sem sol à vista"
+   },
+   "frase": "da pra saber pra que lado fica o norte?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "sobrevivencia",
+     "saberes"
+    ],
+    "porque": "o resultado é incerto, algo resiste e falhar custa",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P112"
+  },
+  {
+   "id": "E359",
+   "situacao": 36,
+   "cena": {
+    "lugar": "serra",
+    "clima": "céu limpo",
+    "nota": "sol bem visível"
+   },
+   "frase": "da pra saber pra que lado fica o norte?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "não há obstáculo: o resultado é certo",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P112"
+  },
+  {
+   "id": "E360",
+   "situacao": 47,
+   "cena": {
+    "lugar": "tábua podre sobre o fosso",
+    "perigo_fisico": true,
+    "fragil": true
+   },
+   "frase": "cruzo pro outro lado pela tabua",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "acrobacia"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P113"
+  },
+  {
+   "id": "E361",
+   "situacao": 47,
+   "cena": {
+    "lugar": "tábua larga sobre a vala rasa"
+   },
+   "frase": "cruzo pro outro lado pela tabua",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P113"
+  },
+  {
+   "id": "E362",
+   "situacao": 48,
+   "cena": {
+    "lugar": "rio",
+    "clima": "cheia, correnteza forte",
+    "perigo_fisico": true
+   },
+   "frase": "atravesso o rio a nado",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P114"
+  },
+  {
+   "id": "E363",
+   "situacao": 48,
+   "cena": {
+    "lugar": "rio",
+    "clima": "remanso calmo"
+   },
+   "frase": "atravesso o rio a nado",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P114"
+  },
+  {
+   "id": "E364",
+   "situacao": 44,
+   "cena": {
+    "lugar": "fundos da estalagem",
+    "clima": "chuva",
+    "com_pressa": false,
+    "perigo_fisico": true,
+    "nota": "telhas soltas e molhadas"
+   },
+   "frase": "dá pra eu subir no telhado pela calha?",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P115"
+  },
+  {
+   "id": "E365",
+   "situacao": 44,
+   "cena": {
+    "lugar": "fundos da estalagem",
+    "clima": "seco",
+    "com_pressa": false
+   },
+   "frase": "dá pra eu subir no telhado pela calha?",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P115"
+  },
+  {
+   "id": "E366",
+   "situacao": 46,
+   "cena": {
+    "lugar": "estrada",
+    "perigo_fisico": true,
+    "nota": "os dois em disparada"
+   },
+   "frase": "pulo do cavalo pra dentro da carroça",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "acrobacia"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P116"
+  },
+  {
+   "id": "E367",
+   "situacao": 46,
+   "cena": {
+    "lugar": "estrada",
+    "nota": "os dois parados"
+   },
+   "frase": "pulo do cavalo pra dentro da carroça",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "não há obstáculo: o resultado é certo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P116"
+  },
+  {
+   "id": "E368",
+   "situacao": 45,
+   "cena": {
+    "lugar": "torre da estalagem",
+    "quem": [
+     "guardas subindo a escada"
+    ],
+    "com_pressa": true,
+    "perigo_fisico": true
+   },
+   "frase": "desço pela janela usando o lençol",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P117"
+  },
+  {
+   "id": "E369",
+   "situacao": 44,
+   "cena": {
+    "lugar": "janela do primeiro andar",
+    "com_pressa": false
+   },
+   "frase": "desço pela janela usando o lençol",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P117"
+  },
+  {
+   "id": "E370",
+   "situacao": 47,
+   "cena": {
+    "lugar": "trilha estreita no penhasco",
+    "perigo_fisico": true,
+    "fragil": true,
+    "nota": "pedra solta"
+   },
+   "frase": "passo pela beirada do penhasco",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "acrobacia"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P118"
+  },
+  {
+   "id": "E371",
+   "situacao": 47,
+   "cena": {
+    "lugar": "trilha larga no alto do morro"
+   },
+   "frase": "passo pela beirada do penhasco",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P118"
+  },
+  {
+   "id": "E372",
+   "situacao": 44,
+   "cena": {
+    "lugar": "cerca do pasto",
+    "quem": [
+     "cães da fazenda"
+    ],
+    "com_pressa": true,
+    "nota": "os cães vêm atrás"
+   },
+   "frase": "salto a cerca e sigo correndo",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P119"
+  },
+  {
+   "id": "E373",
+   "situacao": 44,
+   "cena": {
+    "lugar": "cerca do pasto",
+    "com_pressa": false
+   },
+   "frase": "salto a cerca e sigo correndo",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "travessia sem perigo nem pressa costuma não rolar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P119"
+  },
+  {
+   "id": "E374",
+   "situacao": 55,
+   "cena": {
+    "lugar": "corredor da guilda",
+    "quem": [
+     "guarda cochilando na cadeira"
+    ],
+    "vigiado": true
+   },
+   "frase": "vou na surdina ate a porta do escritorio",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P120"
+  },
+  {
+   "id": "E375",
+   "situacao": 55,
+   "cena": {
+    "lugar": "corredor da guilda",
+    "vigiado": false
+   },
+   "frase": "vou na surdina ate a porta do escritorio",
+   "esperado": {
+    "rola": false,
+    "categoria": "esgueirar",
+    "pericias": [],
+    "porque": "sem ninguém para notar, o mestre narra",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P120"
+  },
+  {
+   "id": "E376",
+   "situacao": 54,
+   "cena": {
+    "lugar": "salão",
+    "quem": [
+     "anfitrião",
+     "convidados"
+    ],
+    "com_testemunhas": true
+   },
+   "frase": "dou um jeito de sumir dali sem ninguem reparar",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P121"
+  },
+  {
+   "id": "E377",
+   "situacao": 55,
+   "cena": {
+    "lugar": "salão vazio",
+    "vigiado": false
+   },
+   "frase": "dou um jeito de sumir dali sem ninguem reparar",
+   "esperado": {
+    "rola": false,
+    "categoria": "esgueirar",
+    "pericias": [],
+    "porque": "sem ninguém para notar, o mestre narra",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P121"
+  },
+  {
+   "id": "E378",
+   "situacao": 55,
+   "cena": {
+    "lugar": "pátio do forte",
+    "hora": "noite",
+    "quem": [
+     "sentinela na muralha"
+    ],
+    "vigiado": true
+   },
+   "frase": "passo encostado na parede, devagarinho, ate o portao",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P122"
+  },
+  {
+   "id": "E379",
+   "situacao": 55,
+   "cena": {
+    "lugar": "pátio do forte abandonado",
+    "hora": "noite",
+    "vigiado": false
+   },
+   "frase": "passo encostado na parede, devagarinho, ate o portao",
+   "esperado": {
+    "rola": false,
+    "categoria": "esgueirar",
+    "pericias": [],
+    "porque": "sem ninguém para notar, o mestre narra",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P122"
+  },
+  {
+   "id": "E380",
+   "situacao": 57,
+   "cena": {
+    "lugar": "armaria",
+    "quem": [
+     "armeiro olhando"
+    ],
+    "com_testemunhas": true
+   },
+   "frase": "coloco a adaga dele no meu cinto, discretamente",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P123"
+  },
+  {
+   "id": "E381",
+   "situacao": 57,
+   "cena": {
+    "lugar": "armaria",
+    "com_testemunhas": false,
+    "nota": "o dono saiu"
+   },
+   "frase": "coloco a adaga dele no meu cinto, discretamente",
+   "esperado": {
+    "rola": false,
+    "categoria": "furtar",
+    "pericias": [],
+    "porque": "sem ninguém para notar, o mestre narra",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P123"
+  },
+  {
+   "id": "E382",
+   "situacao": 1,
+   "cena": {
+    "lugar": "escritório do tesoureiro",
+    "ha_algo_escondido": true,
+    "nota": "gaveta de fundo falso"
+   },
+   "frase": "dou uma fuçada na escrivaninha",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao"
+    ],
+    "porque": "busca rola se há algo escondido ou perigo",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P124"
+  },
+  {
+   "id": "E383",
+   "situacao": 2,
+   "cena": {
+    "lugar": "escritório do tesoureiro",
+    "ha_algo_escondido": false
+   },
+   "frase": "dou uma fuçada na escrivaninha",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P124"
+  },
+  {
+   "id": "E384",
+   "situacao": 62,
+   "cena": {
+    "lugar": "campo de batalha",
+    "quem": [
+     "Lia (companheira), sangrando muito"
+    ],
+    "com_pressa": true,
+    "perigo_fisico": true
+   },
+   "frase": "costuro o corte da perna dela",
+   "esperado": {
+    "rola": true,
+    "categoria": "socorrer",
+    "pericias": [
+     "medicina"
+    ],
+    "porque": "o resultado é incerto, algo resiste e falhar custa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P125"
+  },
+  {
+   "id": "E385",
+   "situacao": 62,
+   "cena": {
+    "lugar": "acampamento, depois da luta",
+    "quem": [
+     "Lia (companheira), perna cortada"
+    ],
+    "com_pressa": false
+   },
+   "frase": "costuro o corte da perna dela",
+   "esperado": {
+    "rola": false,
+    "categoria": "socorrer",
+    "pericias": [],
+    "porque": "magia, talento e item resolvem pela própria regra",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P125"
+  },
+  {
+   "id": "E386",
+   "situacao": 60,
+   "cena": {
+    "lugar": "estrada",
+    "quem": [
+     "o próprio cavalo, assustado"
+    ],
+    "com_medo": true
+   },
+   "frase": "seguro firme as redeas e tento acalmar o bicho",
+   "esperado": {
+    "rola": true,
+    "categoria": "animal",
+    "pericias": [
+     "montaria"
+    ],
+    "porque": "o resultado é incerto, algo resiste e falhar custa",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P126"
+  },
+  {
+   "id": "E387",
+   "situacao": 60,
+   "cena": {
+    "lugar": "estábulo",
+    "quem": [
+     "o próprio cavalo, calmo"
+    ],
+    "disposta": true
+   },
+   "frase": "seguro firme as redeas e tento acalmar o bicho",
+   "esperado": {
+    "rola": false,
+    "categoria": "animal",
+    "pericias": [],
+    "porque": "não há obstáculo: o resultado é certo",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P126"
+  },
+  {
+   "id": "E388",
+   "situacao": 6,
+   "cena": {
+    "lugar": "riacho",
+    "algo_se_aproxima": true,
+    "nota": "um urso desce pela margem"
+   },
+   "frase": "paramos pra dar agua pros cavalos no riacho",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao"
+    ],
+    "porque": "dado espontâneo: o estado da cena muda e o mestre chama",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P127",
+   "espontaneo": true
+  },
+  {
+   "id": "E389",
+   "situacao": 6,
+   "cena": {
+    "lugar": "riacho",
+    "nota": "tarde tranquila"
+   },
+   "frase": "paramos pra dar agua pros cavalos no riacho",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada mudou na cena: não há dado espontâneo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P127",
+   "espontaneo": true
+  },
+  {
+   "id": "E390",
+   "situacao": 6,
+   "cena": {
+    "lugar": "floresta",
+    "algo_se_aproxima": true,
+    "perigo_fisico": true,
+    "nota": "goblins de tocaia nas árvores"
+   },
+   "frase": "cortamos caminho pela floresta",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao"
+    ],
+    "porque": "dado espontâneo: o estado da cena muda e o mestre chama",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P128",
+   "espontaneo": true
+  },
+  {
+   "id": "E391",
+   "situacao": 6,
+   "cena": {
+    "lugar": "floresta",
+    "nota": "mata vazia"
+   },
+   "frase": "cortamos caminho pela floresta",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada mudou na cena: não há dado espontâneo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P128",
+   "espontaneo": true
+  },
+  {
+   "id": "E392",
+   "situacao": 6,
+   "cena": {
+    "lugar": "acampamento",
+    "hora": "noite",
+    "algo_se_aproxima": true,
+    "nota": "passos no escuro"
+   },
+   "frase": "fico de guarda enquanto o pessoal dorme",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao"
+    ],
+    "porque": "dado espontâneo: o estado da cena muda e o mestre chama",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P129",
+   "espontaneo": true
+  },
+  {
+   "id": "E393",
+   "situacao": 6,
+   "cena": {
+    "lugar": "acampamento",
+    "hora": "noite",
+    "nota": "noite tranquila"
+   },
+   "frase": "fico de guarda enquanto o pessoal dorme",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada mudou na cena: não há dado espontâneo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P129",
+   "espontaneo": true
+  },
+  {
+   "id": "E394",
+   "situacao": 35,
+   "cena": {
+    "lugar": "ruínas do templo",
+    "assunto_raro": true,
+    "heroi": "estudou história",
+    "nota": "inscrição numa língua morta"
+   },
+   "frase": "chegamos nas ruinas do templo antigo",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "dado espontâneo: o estado da cena muda e o mestre chama",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P130",
+   "espontaneo": true
+  },
+  {
+   "id": "E395",
+   "situacao": 35,
+   "cena": {
+    "lugar": "ruínas do templo",
+    "heroi": "estudou história",
+    "nota": "só pedra e mato"
+   },
+   "frase": "chegamos nas ruinas do templo antigo",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "nada mudou na cena: não há dado espontâneo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P130",
+   "espontaneo": true
+  },
+  {
+   "id": "E396",
+   "situacao": 35,
+   "cena": {
+    "lugar": "barraca do mercador",
+    "quem": [
+     "mercador"
+    ],
+    "assunto_raro": true,
+    "heroi": "estudou história",
+    "nota": "um ídolo de pedra de um povo esquecido no meio das bugigangas"
+   },
+   "frase": "vou com o mercador ate a barraca dele",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "dado espontâneo: o estado da cena muda e o mestre chama",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P131",
+   "espontaneo": true
+  },
+  {
+   "id": "E397",
+   "situacao": 35,
+   "cena": {
+    "lugar": "barraca do mercador",
+    "quem": [
+     "mercador"
+    ],
+    "heroi": "estudou história",
+    "nota": "bugigangas comuns"
+   },
+   "frase": "vou com o mercador ate a barraca dele",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "nada mudou na cena: não há dado espontâneo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P131",
+   "espontaneo": true
+  },
+  {
+   "id": "E398",
+   "situacao": 53,
+   "cena": {
+    "lugar": "armazém do porto",
+    "hora": "noite",
+    "quem": [
+     "vigias do armazém"
+    ],
+    "vigiado": true,
+    "territorio_de_alguem": true
+   },
+   "frase": "a gente entra no armazem do porto pela janela",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "dado espontâneo: o estado da cena muda e o mestre chama",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P132",
+   "espontaneo": true
+  },
+  {
+   "id": "E399",
+   "situacao": 53,
+   "cena": {
+    "lugar": "armazém do porto abandonado",
+    "hora": "noite",
+    "vigiado": false
+   },
+   "frase": "a gente entra no armazem do porto pela janela",
+   "esperado": {
+    "rola": false,
+    "categoria": "esgueirar",
+    "pericias": [],
+    "porque": "nada mudou na cena: não há dado espontâneo",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B",
+   "par": "P132",
+   "espontaneo": true
+  },
+  {
+   "id": "E400",
+   "situacao": 16,
+   "cena": {
+    "lugar": "barraca do mercador",
+    "quem": [
+     "mercador"
+    ],
+    "esconde_algo": true
+   },
+   "frase": "ele parece estar falando a verdade?",
+   "esperado": {
+    "rola": true,
+    "categoria": "ler_pessoa",
+    "pericias": [
+     "intuicao"
+    ],
+    "porque": "ler pessoa rola quando o jogador pede",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E401",
+   "situacao": 28,
+   "cena": {
+    "lugar": "posto da guarda",
+    "quem": [
+     "sargento"
+    ],
+    "esconde_algo": true,
+    "nota": "recebe dos ladrões"
+   },
+   "frase": "da pra sacar se esse sargento ta de rolo com os ladroes?",
+   "esperado": {
+    "rola": true,
+    "categoria": "ler_pessoa",
+    "pericias": [
+     "intuicao"
+    ],
+    "porque": "ler pessoa rola quando o jogador pede",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E402",
+   "situacao": 16,
+   "cena": {
+    "lugar": "taverna",
+    "quem": [
+     "taverneiro"
+    ],
+    "esconde_algo": true
+   },
+   "frase": "falo do sumiço da menina e reparo se o taverneiro muda de cara",
+   "esperado": {
+    "rola": true,
+    "categoria": "ler_pessoa",
+    "pericias": [
+     "intuicao"
+    ],
+    "porque": "ler pessoa rola quando o jogador pede",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E403",
+   "situacao": 28,
+   "cena": {
+    "lugar": "salão do nobre",
+    "quem": [
+     "nobre contratante"
+    ],
+    "esconde_algo": true
+   },
+   "frase": "quero sacar qual é a desse nobre",
+   "esperado": {
+    "rola": true,
+    "categoria": "ler_pessoa",
+    "pericias": [
+     "intuicao"
+    ],
+    "porque": "ler pessoa rola quando o jogador pede",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E404",
+   "situacao": 28,
+   "cena": {
+    "lugar": "salão do nobre",
+    "quem": [
+     "nobre contratante"
+    ],
+    "esconde_algo": true
+   },
+   "frase": "fecho o acordo e peço metade adiantado",
+   "esperado": {
+    "rola": false,
+    "categoria": "outro",
+    "pericias": [],
+    "porque": "encenação e logística não rolam",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E405",
+   "situacao": 15,
+   "cena": {
+    "lugar": "casa da viúva",
+    "quem": [
+     "viúva"
+    ],
+    "esconde_algo": true,
+    "com_medo": true,
+    "nota": "reconheceu o assassino"
+   },
+   "frase": "a senhora já tinha visto aquele homem antes?",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola: responde-se; se há segredo, a resposta é evasiva ou falsa",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E406",
+   "situacao": 24,
+   "cena": {
+    "lugar": "praça da vila",
+    "quem": [
+     "multidão aflita"
+    ],
+    "motivo_para_negar": true,
+    "com_testemunhas": true,
+    "nota": "o povo não quer largar as casas"
+   },
+   "frase": "trepo na carroça e grito que a ponte vai cair, todo mundo pro outro lado do rio",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E407",
+   "situacao": 26,
+   "cena": {
+    "lugar": "taverna",
+    "hora": "noite",
+    "quem": [
+     "velho caçador"
+    ]
+   },
+   "frase": "pago um trago pro velho e fico de papo pra ele ir com a minha cara",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "o resultado é incerto, algo resiste e falhar custa",
+    "base": "fraco"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E408",
+   "situacao": 37,
+   "cena": {
+    "lugar": "biblioteca",
+    "assunto_raro": true,
+    "nota": "assunto novo, sem teste anterior"
+   },
+   "frase": "o que eu sei de lobisomem? prata funciona mesmo?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes"
+    ],
+    "porque": "saber obscuro, que o herói não tem de berço: rola",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E409",
+   "situacao": 53,
+   "cena": {
+    "lugar": "templo",
+    "hora": "noite",
+    "quem": [
+     "sacerdotes em vigília"
+    ],
+    "vigiado": true,
+    "territorio_de_alguem": true
+   },
+   "frase": "entramos pela porta dos fundos do templo sem fazer barulho",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar (e furtar) rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E410",
+   "situacao": 51,
+   "cena": {
+    "lugar": "beira do barranco",
+    "quem": [
+     "Joca (companheiro) escorregando"
+    ],
+    "perigo_fisico": true,
+    "com_pressa": true
+   },
+   "frase": "seguro a corda pro Joca não despencar",
+   "esperado": {
+    "rola": true,
+    "categoria": "socorrer",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "travessia rola com perigo ou pressa",
+    "base": "padrao"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E411",
+   "situacao": 64,
+   "cena": {
+    "lugar": "mercado",
+    "quem": [
+     "peleiro"
+    ],
+    "disposta": true
+   },
+   "frase": "vendo as peles de lobo e compro sal com o dinheiro",
+   "esperado": {
+    "rola": false,
+    "categoria": "logistica",
+    "pericias": [],
+    "porque": "encenação e logística não rolam",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E412",
+   "situacao": 65,
+   "cena": {
+    "lugar": "estrada",
+    "quem": [
+     "guia"
+    ]
+   },
+   "frase": "falta muito pra ponte?",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "encenação e logística não rolam",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
+  },
+  {
+   "id": "E413",
+   "situacao": 13,
+   "cena": {
+    "lugar": "estalagem",
+    "quem": [
+     "estalajadeira"
+    ],
+    "disposta": true
+   },
+   "frase": "cê sabe onde tem um curandeiro aqui perto?",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola: responde-se; se há segredo, a resposta é evasiva ou falsa",
+    "base": "numero"
+   },
+   "rodada": 2,
+   "metade": "B"
   }
- ]
+ ],
+ "rodada_2": {
+  "data": "2026-11-18",
+  "o_que_mudou": [
+   "Os 14 itens da B que a suíte da M2 imprimiu frase a frase (antes da repartição) passaram para a A, cada um com o seu par (a mesma frase vazou junto): 28 itens. No lugar deles, 14 pares novos na B, da mesma situação e da mesma cena, com frase nova.",
+   "A cena que só existia na nota virou estado: muro liso e molhado (perigo_fisico), ponte podre (fragil), o que espreita (algo_se_aproxima), o símbolo, a proteção, o grimório, a planta e o assunto obscuro (assunto_raro); o contrabandista à vista no meio da praça deixou de ter ha_algo_escondido.",
+   "90 itens novos na B, todos da rodada 2, escritos sem abrir o catálogo: conversa com e sem motivo para negar, barganha, discurso para multidão, travessia com e sem perigo, esgueirar, ler pessoa, saber, e 12 espontâneos."
+  ],
+  "estados_que_faltam": "Ver o relatório da rodada 2: céu encoberto (sem sol para se orientar), coisa rara de achar, coisa do próprio herói, pessoa morta ou desacordada. Os itens que dependem deles continuam com a cena em nota."
+ }
 }
