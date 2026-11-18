@@ -220,7 +220,11 @@ sec("§3 o rumo: «Levar X junto» quando o passo pede X ao lado");
   const r = oRumoDaBusca({ passos, cidade: "Vega Zênite" });
   t("a porta é levá-la, com a frase do convite", r && r.verbo === "Levar Saoirse junto" && r.frase === "Saoirse, vem comigo.", JSON.stringify(r));
   const longe = oRumoDaBusca({ passos: [{ lugares: [{ nome: "O Cais" }], candidatos: { pessoa: [{ nome: "Saoirse", predicado: "acompanha", cidade: "Nix" }] } }], cidade: "Vega Zênite" });
-  t("se ela está noutra cidade, o rumo é o do lugar", longe && longe.verbo === "Ir até O Cais", JSON.stringify(longe));
+  /* MOVIDA (17/11, os dois becos da quest): era «o rumo é o do lugar» («Ir até
+     O Cais»). Mas o passo pede-a AO LADO, e ir a um sítio sem ela não fecha
+     nada — o herói tem de ir buscá-la: partir para a cidade dela (e lá, ir
+     até à casa, e levá-la). A régua inteira está em teste-quest-fechavel §1. */
+  t("se ela está noutra cidade, o rumo é partir para lá", longe && longe.verbo === "Partir para Nix", JSON.stringify(longe));
   t("na estrada e na luta, nada", oRumoDaBusca({ passos, cidade: "Vega Zênite", naEstrada: true }) === null && oRumoDaBusca({ passos, cidade: "Vega Zênite", emLuta: true }) === null);
   t("o rumo do lugar continua como era", (oRumoDaBusca({ passos: [{ lugares: [{ nome: "Roda dos Punhos" }] }], cidade: "X" }) || {}).verbo === "Ir até Roda dos Punhos");
 }

@@ -53,6 +53,15 @@ export const PROPOSTAS_DA_ABERTURA = Object.freeze({
      porta é levá-la; a frase é a do convite (conviteNaFrase, indole.js), e o
      veredito é o da balança, que aceita quem a história manda levar */
   levar: Object.freeze({ verbo: "Levar {nome} junto", frase: "{nome}, vem comigo." }),
+  /* 17/11 (os dois becos da quest): o sítio do passo é de OUTRA cidade (o
+     «Anel de Carga» do Salvo-Conduto cai entre a origem e o destino) — «Ir
+     até» um sítio que a planta daqui não tem repetia a cena sem mover o
+     herói. A porta é partir: a frase que o mapa entende (detectarPartida),
+     com o veredito da estrada antes do passo */
+  partir: Object.freeze({ verbo: "Partir para {nome}", frase: "Parto para {nome}." }),
+  /* os predicados de quem o rumo vai buscar à casa dela (os de
+     A_PESSOA_DO_PASSO.daQuest que não são levar) */
+  irTer: Object.freeze(["conversou", "consultou", "conheceu"]),
   teto: 40,
 });
 
@@ -115,29 +124,54 @@ export function asPropostasDaAbertura(entrada) {
    Some ao chegar (o lugar onde já se está não é para onde ir), na luta e na
    estrada.
 
-   oRumoDaBusca({ passos, aqui, cidade, emLuta, naEstrada }) → { id, tipo,
-   verbo, frase } | null */
+   oRumoDaBusca({ passos, aqui, cidade, grupo, emLuta, naEstrada }) → { id,
+   tipo, verbo, frase } | null
+
+   17/11 (os dois becos da quest), a régua de cada porta, pela ordem:
+     1. quem o passo pede AO LADO e ainda não anda com o herói (`grupo`):
+        noutra cidade, partir; noutro sítio desta, ir até à casa dela; com o
+        herói lá (ou sem casa dita), levá-la — o convite;
+     2. o covil do confronto (quem guarda o passo: o encontro é lá), e só
+        depois os outros lugares do passo (o desvio);
+     3. quem o passo pede frente a frente, na casa dela;
+   e em todas: o sítio de outra cidade é «Partir para <cidade>», nunca «Ir
+   até» (o botão que mente); o sítio onde já se está, nada. */
+const oDestino = (P, nome, cidade, e) => {
+  const aqui = chave(e.aqui);
+  const cid = txt(cidade);
+  if (cid && txt(e.cidade) && chave(cid) !== chave(e.cidade) && cabe(cid)) return Object.freeze({ id: `rumo|partir|${chave(cid)}`, tipo: "rumo", verbo: encher(P.partir.verbo, cid), frase: encher(P.partir.frase, cid) });
+  if ((aqui && chave(nome) === aqui) || chave(nome) === chave(e.cidade)) return null;
+  return Object.freeze({ id: `rumo|${chave(nome)}`, tipo: "rumo", verbo: encher(P.passo.verbo, nome), frase: encher(P.passo.frase, nome) });
+};
 export function oRumoDaBusca(entrada) {
   try {
     const e = obj(entrada) || {};
     if (e.emLuta || e.naEstrada) return null;
     const P = PROPOSTAS_DA_ABERTURA;
     const aqui = chave(e.aqui);
-    /* quem o passo pede ao lado, e está nesta cidade, vem antes do lugar */
+    const doGrupo = new Set(arr(e.grupo).map((g) => chave(obj(g) ? g.nome : g)).filter(Boolean));
+    const pessoas = (p0) => arr(obj(obj(p0) && p0.candidatos) && p0.candidatos.pessoa).map(obj).filter((x) => x && cabe(txt(x.nome)) && !doGrupo.has(chave(x.nome)));
+    /* 1. quem o passo pede ao lado */
     for (const p0 of arr(e.passos)) {
-      const c = arr(obj(obj(p0) && p0.candidatos) && p0.candidatos.pessoa).map(obj).filter(Boolean)
-        .find((x) => x.predicado === "acompanha" && cabe(txt(x.nome)) && (!txt(x.cidade) || !txt(e.cidade) || chave(x.cidade) === chave(e.cidade)));
-      if (c) return Object.freeze({ id: `rumo|levar|${chave(c.nome)}`, tipo: "rumo", verbo: encher(P.levar.verbo, txt(c.nome)), frase: encher(P.levar.frase, txt(c.nome)) });
+      const c = pessoas(p0).find((x) => x.predicado === "acompanha");
+      if (!c) continue;
+      const longe = txt(c.cidade) && txt(e.cidade) && chave(c.cidade) !== chave(e.cidade);
+      if (longe || (txt(c.onde) && chave(c.onde) !== aqui)) { const r = oDestino(P, txt(c.onde) || txt(c.cidade), c.cidade, e); if (r) return r; }
+      return Object.freeze({ id: `rumo|levar|${chave(c.nome)}`, tipo: "rumo", verbo: encher(P.levar.verbo, txt(c.nome)), frase: encher(P.levar.frase, txt(c.nome)) });
     }
+    /* 2. o covil, depois os lugares */
     for (const p0 of arr(e.passos)) {
       const p = obj(p0);
       if (!p) continue;
       const covil = obj(obj(p.confronto) && p.confronto.covil);
-      const nomes = [...arr(p.lugares).map(obj).filter(Boolean), ...(covil ? [covil] : [])].map((l) => txt(l.nome));
-      const lugar = nomes.find((n) => cabe(n));
-      if (!lugar) continue;
-      if ((aqui && chave(lugar) === aqui) || (!aqui && chave(lugar) === chave(e.cidade))) return null;
-      return Object.freeze({ id: `rumo|${chave(lugar)}`, tipo: "rumo", verbo: encher(P.passo.verbo, lugar), frase: encher(P.passo.frase, lugar) });
+      const l = [...(covil ? [covil] : []), ...arr(p.lugares).map(obj).filter(Boolean)].find((x) => cabe(txt(x.nome)));
+      if (!l) continue;
+      return oDestino(P, txt(l.nome), l.cidade, e);
+    }
+    /* 3. quem o passo pede frente a frente, na casa dela */
+    for (const p0 of arr(e.passos)) {
+      const c = pessoas(p0).find((x) => P.irTer.includes(x.predicado) && cabe(txt(x.onde)));
+      if (c) return oDestino(P, txt(c.onde), c.cidade, e);
     }
     return null;
   } catch { return null; }

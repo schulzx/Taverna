@@ -14734,7 +14734,9 @@ export default function Taverna() {
       try {
         if (!combateRef.current) {
           const pC = fichaViva() || personagem || {};
-          const aquiC = elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pC.grupo || [] }).aqui || [];
+          const aquiC = [...(elencoDaCena(npcsRef.current, cidadeAtualRef.current, mapaRef.current, { comGrupo: pC.grupo || [] }).aqui || [])];
+          /* os dois becos da quest (17/11): quem está EM CENA (a pessoa do passo, a do posto) também ouve o convite — antes só o registo, e a Ylva do passo ficava de fora */
+          try { const qC = quemAgora() || {}; for (const x of [...(qC.doPasso || []), ...(qC.doSitio || [])]) if (x && x.nome) aquiC.push(x); } catch (e) { calou("o convite pela frase: quem está em cena", e); }
           const cv = conviteNaFrase(acao, { presentes: aquiC, grupo: pC.grupo || [] });
           if (cv) {
             pushMsgs([{ autor: "jogador", texto: acao }]);
@@ -25754,7 +25756,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
          Some ao chegar. */
       try {
         const jogou = (mensagens || []).some((m) => m && m.autor === "jogador");
-        const rumo = jogou ? oRumoDaBusca({ passos: passosDasQuestsAgora(), aqui: (lugarRef.current && lugarRef.current.nome) || "", cidade: cidadeAtualRef.current || "", emLuta: !!combate, naEstrada: !!jornada }) : null;
+        const rumo = jogou ? oRumoDaBusca({ passos: passosDasQuestsAgora(), aqui: (lugarRef.current && lugarRef.current.nome) || "", cidade: cidadeAtualRef.current || "", grupo: (personagemRef.current || personagem || {}).grupo || [], emLuta: !!combate, naEstrada: !!jornada }) : null;
         if (rumo) {
           lista.push({
             id: rumo.id, verbo: rumo.verbo, tom: "convite", precisaDoNarrador: true,
