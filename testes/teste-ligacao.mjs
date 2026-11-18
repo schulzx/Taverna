@@ -607,7 +607,19 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      folha, LinhaDoChamado, e o preço do molde) e painel-bandeja.jsx
      (ChamadoDoMestre: «Rolar», o dado, a espera). O `oficial` liga oChamado
      ao App na etapa seguinte. A lista volta a ficar VAZIA. */
-  const ESPERA_DO_MOTOR = {};
+  /* 18/11 (M3+M4, o Mestre vivo, backend): `a-regua-do-momento.js` nasce
+     antes do importador — `valeRolagem` (a régua do momento: «isto vale uma
+     rolagem?», com a conversa dentro e a cena lida por cena-do-momento.js)
+     e `oQueACenaChama` (o dado espontâneo). Sem cena devolve o Mestre de
+     hoje, frase a frase (teste-a-regua-do-momento.mjs prova sobre os dois
+     corpus). Credor: a etapa da fiação (mente/lancamento/o-mestre-vivo.md
+     §9 e §12) — o `oficial` liga-o no App atrás de uma chave desligada,
+     com a cena escrita pelo mundo. A entrada sai quando o App (ou uma peça
+     do motor) o importar. Leitores hoje: teste-a-regua-do-momento.mjs e
+     teste-exame-do-mestre.mjs. */
+  const ESPERA_DO_MOTOR = {
+    "a-regua-do-momento.js": "a fiação no App, atrás de chave (o-mestre-vivo.md §12)",
+  };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   /* 03/11 (etapa 2 do Narrador ator), MUDADA E O MOTIVO: a régua só via o
      import por `/motor/x.js"` (o do App, do servidor, de src/), e uma peça

@@ -457,6 +457,11 @@ function periciaDaPista(d, t) {
 
 /* o investigar de sempre (MC1 e antes): os verbos de deduzir e o exame do
    VESTÍGIO; o exame da coisa (EM1) soma-se a ele no catálogo */
+/* M3 (18/11, o exame do Mestre, metade A): a pergunta que é o gesto de olhar — «tem alguma armadilha
+   nessa porta?», «tem algum gatilho no chão?». O jogador de mesa pergunta
+   pelo vestígio em vez de dizer «examino»; o investigar lê a pergunta
+   (lePergunta). Só o vestígio e o mecanismo: «tem alguém aí?» não entra. */
+const RX_PERGUNTA_DO_VESTIGIO = /\b(tem|ha|existe) (alguma |algum |uma |um )?(armadilhas?|mecanismos?|gatilhos?|fundos? falsos?|compartimentos? secretos?)\b/;
 const RX_INVESTIGAR_DE_SEMPRE = /\b(investig|deduzo|dedu[zç]|junto as pistas|analiso a cena|leio os vest[ií]gios|procuro pistas|o que aconteceu aqui|reconstruo|examin\w*\s+(o|a|os|as|esse|essa|este|esta|aquele|aquela)\s+(cortes?|feridas?|marcas?|carca[cç]as?|vest[ií]gios?|rasgos?|manchas?|sangue|pegadas?|rastr?os?|arranh[oõ]es|arranh[aã]o|garras?|mordidas?|dentadas?|ossos?|ossada|restos|cinzas?|fragmentos?|peda[cç]os?|pistas?|sinais|sinal|entalhes?|s[ií]mbolos?|inscri[cç][aã]o|inscri[cç][oõ]es|l[aâ]minas?|flechas?|setas?|cicatriz|cicatrizes)\b)/;
 
 /* CS (11/11, o corpus das situações): os nomes comuns que três entradas
@@ -536,7 +541,7 @@ export const DESAFIOS = [
   },
   {
     id: "investigar",
-    rx: new RegExp(RX_INVESTIGAR_DE_SEMPRE.source + "|" + RX_EXAME_DA_COISA.source),
+    rx: new RegExp(RX_INVESTIGAR_DE_SEMPRE.source + "|" + RX_EXAME_DA_COISA.source + "|" + RX_PERGUNTA_DO_VESTIGIO.source),
     naoSe: new RegExp([
       /* CS (11/11, o corpus das situações): as manchas NA PELE, nos lábios, na língua são o corpo — ler o corpo */
       /\b(na|no|nos|nas) (pele|labios|lingua|ventre|garganta|unhas|gengivas)\b/.source,
@@ -624,15 +629,27 @@ export const DESAFIOS = [
     /* 20.ª sessão (T38): «O que é que eu sei desta Muralha Quebrada de Prata
        Podre?» não deu Saberes — o «é que» da pergunta falada partia a forma.
        Entra como opcional, ao lado do «eu». */
-    rx: /\b(o que (e que )?(eu )?(sei|lembro|recordo|ouvi( dizer| falar)?) (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?)\b|j[aá] ouvi falar (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|em|no|na|nos|nas)\b)/,
+    rx: /\b(o que (e que )?(eu )?(sei|lembro|recordo|ouvi( dizer| falar)?) (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?)\b|j[aá] ouvi falar (de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|em|no|na|nos|nas)\b|\b(eu )?sei (alguma coisa|algo|quem|de onde|o que)\b[^.!?]{0,60}\?|\b(eu )?(conhe[cç]o|reconhe[cç]o) (esse|essa|esses|essas|este|esta|estes|estas|aquele|aquela|aqueles|aquelas) (?!(selos?|brasao|brasoes|sinetes?|lacres?|insignias?|estandartes?|emblemas?|bandeiras?|runas?|glifos?|sigilos?|criaturas?|bichos?|feras?|monstros?)\b)[^.!?]{0,50}\?|\bque eu (conhe[cç]a|saiba|lembre)\b)/,
+    /* M3 (18/11, o exame do Mestre, metade A): as três formas de perguntar à memória que o jogador usa e o
+       catálogo não ouvia — «eu conheço essa guilda?», «sei alguma coisa
+       sobre esse olho?», «de algum culto que eu conheça?». As duas primeiras
+       só com o ponto de interrogação: «conheço esse lugar» afirma, não
+       pergunta. E «conheço este selo?» fica com a heráldica, a runa com o
+       arcano, a criatura com a fraqueza (a 20.ª sessão, T9). */
     pericia: "saberes", alvo: "lembranca", minutos: 0, barulho: false,
     rotulo: "lembrar o que se sabe", dcPadrao: DC("comum"), dispensavel: true, lePergunta: true,
     valeEmCombate: true,
-    objetoDaChaveDe: /\b(?:sei|lembro|recordo|ouvi(?: dizer| falar)?|falar)\s+(?:de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?|em|no|na|nos|nas)\s+([^.!?;:]{2,80})/,
+    /* M3 (18/11): o assunto também vem de «eu conheço essa guilda?» e de
+       «sei alguma coisa sobre…?» — sem ele, a régua do saber comum
+       (SABER_COMUM, o herói que cresceu no porto) não tinha o que comparar,
+       e o herói rolava para lembrar a própria terra */
+    objetoDaChaveDe: /\b(?:sei|lembro|recordo|ouvi(?: dizer| falar)?|falar|conhe[cç]o|reconhe[cç]o)\s+(?:(?:de|do|da|dos|das|dest[ae]s?|dess[ae]s?|daquel[ae]s?|sobre|a respeito d[aeo]s?|em|no|na|nos|nas)\s+)?([^.!?;:]{2,80})/,
   },
   {
     id: "mentira",
-    rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]\w*|tento saber se|desconfio|sinto se|percebo se mente|(observo|estudo|vigio) (o rosto|a cara|a expressao|a rea[cç][aã]o|os olhos) d\w+|(perceber|ver|saber|notar|sentir) se (ele|ela|eles|elas|\w+) (esta |estao |me )?(mentindo|a mentir|mente|esconde|escondendo|engana|enganando)|como (ele|ela|eles|elas|[a-z]{3,}) reage|me mentir|me mente|me esta mentindo|esta(s)? a mentir)\b/,
+    rx: /\b(ele est[aá] mentindo|ela est[aá] mentindo|se ele mente|se ela mente|leio (as )?inten[cç]\w*|tento saber se|desconfio|sinto se|percebo se mente|(observo|estudo|vigio) (o rosto|a cara|a expressao|a rea[cç][aã]o|os olhos) d\w+|(perceber|ver|saber|notar|sentir) se (ele|ela|eles|elas|\w+) (esta |estao |me )?(mentindo|a mentir|mente|esconde|escondendo|engana|enganando)|como (ele|ela|eles|elas|[a-z]{3,}) reage|me mentir|me mente|me esta mentindo|esta(s)? a mentir|(ele|ela) (ta|t[aá]) mentindo|(outra|outras|segunda|segundas) inten[cç]\w*)\b/,
+    /* M3 (18/11, o exame do Mestre, metade A): «ela tá mentindo?» (o «tá» do jogador) e «se ele tem outra
+       intenção nisso» — ler a pessoa dito pelo que se suspeita */
     naoSe: new RegExp([
       /* CS (11/11, o corpus das situações): «sinto se há magia», «tento saber se foi envenenado» são o arcano e a Medicina, não a intenção de ninguém */
       /\b(sinto|sentir|ver|saber) se (ha|tem|existe|resta|ainda tem) (magia|aura|encantamento)/.source,
@@ -668,7 +685,7 @@ export const DESAFIOS = [
       /* e o pé e o ombro na porta, a tampa do baú forçada: a via da força
          (VIAS_DE_TRANCA já os conhecia — «chut», «ombro», «pé na porta» —,
          e a entrada é que não os ouvia) */
-      /\bchuto a porta|\bpontap\w* na porta|\b(ponho|meto|jogo|dou) o ombro (na|contra a) porta|\bfor[cç]o a tampa d[oa] (ba[uú]|arca|caixa|cofre)/.source,
+      /\bchuto a porta|\bpontap\w* na porta|\b(ponho|meto|jogo|dou) o ombro (na|no|contra a|contra o) (porta|portao|portinhola|grade|alcapao)|\bfor[cç]o a tampa d[oa] (ba[uú]|arca|caixa|cofre)/.source,
     ].join("|")),
     naoSe: new RegExp([
       /* CS (11/11, o corpus das situações): comprar a gazua não é usá-la; e a porta de enigma abre-se pela cabeça (o improviso de Intelecto) */
@@ -702,7 +719,11 @@ export const DESAFIOS = [
   },
   {
     id: "furtar_se",
-    rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escond(o|er|erei)\b|fico (quiet[oa],? )?escondid[oa]\b|me encolho (atr[aá]s|detr[aá]s|no escuro|nas? sombras?)|fico na sombra|sigo sem que|me mistur(o|ar) (a|na|no|com a|entre a|entre o) (multid[aã]o|turba|gente|povo|plateia|prociss[aã]o|feira|romaria|fila)|me aproxim(o|ar) (sem (fazer )?(ru[ií]do|barulho)|em sil[eê]ncio|p[eé] ante p[eé]|na ponta dos p[eé]s|de mansinho)|me (agach|abaix)(o|ar) (atr[aá]s|detr[aá]s|nas? sombras?|entre|sob|debaixo|embaixo))/,
+    rx: /\b(me esgueiro|esgueir|na surdina|sem ser vist|sorrateir|em sil[eê]ncio at[eé]|me escond(o|er|erei)\b|fico (quiet[oa],? )?escondid[oa]\b|me encolho (atr[aá]s|detr[aá]s|no escuro|nas? sombras?)|fico na sombra|sigo sem que|me mistur(o|ar) (a|na|no|com a|entre a|entre o) (multid[aã]o|turba|gente|povo|plateia|prociss[aã]o|feira|romaria|fila)|me aproxim(o|ar) (sem (fazer )?(ru[ií]do|barulho)|em sil[eê]ncio|p[eé] ante p[eé]|na ponta dos p[eé]s|de mansinho)|me (agach|abaix)(o|ar) (atr[aá]s|detr[aá]s|nas? sombras?|entre|sob|debaixo|embaixo)|na ponta dos p[eé]s|sem fazer (barulho|ru[ií]do)|de fininho|de mansinho)/,
+    /* M3 (18/11, o exame do Mestre, metade A): o jeito de andar é o verbo — «na ponta dos pés», «sem fazer barulho», «saio de fininho». Antes só valiam depois
+       de «me aproximo»; o resto do catálogo (a tranca, a busca) vem antes
+       na lista e continua com a frase dele. Se alguém pode notar, quem
+       decide é a régua do momento, não a frase. */
     naoSe: new RegExp([
       /* CS (11/11, o corpus das situações): seguir ALGUÉM sem ser visto é «seguir sem ser notado» (a mesma perícia, outra tentativa); seguir o corredor continua aqui */
       /\b(sigo|persigo|acompanho)\s+(o|a|os|as|ele|ela|eles|elas|esse|essa|aquele|aquela)\s+(?!(rua|ruas|estrada|caminho|corredor|corredores|trilha|beco|margem|rio|muro|parede|tunel|tuneis|passagem|escada)\b)/.source,
@@ -734,7 +755,8 @@ export const DESAFIOS = [
       /\b(tiro|pego|meto|enfio|ponho|coloco|deixo cair)\b[^.!?]{0,30}\b(do|no|na|da|pelo) (bolso|bolsa|cinto|algibeira|manga|capuz|alforge|avental) d(o|a|e)\b/.source,
       /* S19 (12/11, defeito 3): «tento aliviar a bolsa dele sem ele sentir» não deu dado nenhum, e o Narrador decidiu sozinho quem viu */
       /\balivi\w* (a|o) (bolsa|carteira|algibeira|bolso|cinto)\b/.source,
-      /\bcorto a bolsa|\bempalm\w*|\bescamote\w*|\bescondo (o|a) \w+ na manga|\broubo (a|o) \w+ d[oa]\b/.source,
+      /\bcorto a bolsa|\bempalm\w*|\bescamote\w*|\bescondo (o|a) \w+ na manga|\broubo (a|o) \w+ d[oa]\b|\bafan\w*/.source,
+      /* M3 (18/11, o exame do Mestre, metade A): «afano», o verbo do jogador para a mão leve */
     ].join("|")),
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
     rotulo: "mão leve", dcPadrao: DC("incomum"),
@@ -744,7 +766,12 @@ export const DESAFIOS = [
     /* Conversa não se rola — só o que a conversa TENTA arrancar contra
        resistência. "Peço uma cerveja" não é Persuasão; "tento convencer o
        guarda a me deixar passar" é. A régua é o verbo de esforço. */
-    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch)/,
+    /* M3 (18/11, o exame do Mestre, metade A): o pedido que pede alguma coisa a alguém — «deixa a gente
+       falar com o preso», «peço ao capitão pra liberar a cela», «peço pra
+       ela me levar», «com uma boa lábia». Pedir uma cerveja continua de
+       fora (não há a quem nem o quê). Se quem ouve tem motivo para negar,
+       quem decide é a régua do momento. */
+    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b)/,
     pericia: "persuasao", alvo: "persuasao", minutos: 10, barulho: false,
     rotulo: "convencer", dcPadrao: DC("incomum"), social: true,
   },
@@ -842,7 +869,9 @@ export const DESAFIOS = [
        ("rendam-se!", "larguem as armas!") e não casava nada: ia ao Narrador
        sem dado. Só a ordem aos OUTROS — "me rendo" é o herói a render-se, e
        não entra. As duas formas, porque a ênclise chega desfeita. */
-    rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para|envergonh|humilh|rendam-se|renda-se|rende-te|te rende(?! (nada|mais|menos|muito|pouco|bem|dinheiro|lucro|moedas))|se rendam|te rendas|larguem as armas|larga a arma|largue a arma|baixem as armas|abaixem as armas)|\bencaro (o|a|os|as|ele|ela|eles|elas|aquele|aquela|esse|essa)\b[^.!?]{0,30}\b(nos olhos|sem piscar|at[eé] (ele|ela|eles|elas) (desviar|baixar|recuar|desistir|ceder)|de cima a baixo)/,
+    rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para|envergonh|humilh|rendam-se|renda-se|rende-te|te rende(?! (nada|mais|menos|muito|pouco|bem|dinheiro|lucro|moedas))|se rendam|te rendas|larguem as armas|larga a arma|largue a arma|baixem as armas|abaixem as armas)|\bencaro (o|a|os|as|ele|ela|eles|elas|aquele|aquela|esse|essa)\b[^.!?]{0,30}\b(nos olhos|sem piscar|at[eé] (ele|ela|eles|elas) (desviar|baixar|recuar|desistir|ceder)|de cima a baixo)|\bmando (ele |ela )?(falar|abrir o bico|desembuchar|confessar)\b|\b(encosto|ponho|aponto|colo) (a|o|minha|meu) (faca|lamina|adaga|punhal|espada)\b[^.!?]{0,25}\b(pescoco|garganta|cara|peito)/,
+    /* M3 (18/11, o exame do Mestre, metade A): «encosto a faca no pescoço dele e mando falar» — a ameaça
+       dita pelo gesto, sem a palavra «ameaço» */
     pericia: "intimidacao", alvo: "intimidacao", minutos: 5, barulho: true,
     rotulo: "intimidar", dcPadrao: DC("incomum"), social: true,
   },
@@ -865,7 +894,7 @@ export const DESAFIOS = [
        passo da quest — devolvia null: o catálogo conhecia «rastro» e não
        «rasto», nem as marcas, nem «por onde foi». Perguntar por onde alguém
        foi a uma pessoa é conversa, e fica de fora. */
-    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|leio (as|os|essas|esses|aquelas|aqueles) (marcas|sinais|pegadas|pisadas|rastr?os?|trilhas?) (no|do) ch[aã]o|leio (as|os|essas|esses|aquelas|aqueles) (pegadas|pisadas|rastr?os?)|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu)|sigo (a|as|o|os) (gotas|pingos|manchas|rasto|rastro) de sangue|sigo (os|as|esses|essas) (arranh\w*|riscos|sulcos|fiapos)|(vou|sigo|corro|parto) atr[aá]s d(as|os|essas|esses) (pegadas|pisadas|rastr?os?|marcas|pistas|trilhas?)|at[eé] onde (as|os) (marcas|pegadas|pisadas|rastr?os?|trilhas?|gotas)( \w+)? (me |nos )?lev)/,
+    rx: /\b(rastre|sigo (o|os|esse|este|aquele|aqueles|esses) (rastr?os?|trilhos?)|seguir (o|os) rastr?os?|sigo (a|as|essas|aquelas) (pegadas|marcas|pistas|trilha|trilhas)|sigo (as )?marcas no ch[aã]o|leio o ch[aã]o|leio (as|os|essas|esses|aquelas|aqueles) (marcas|sinais|pegadas|pisadas|rastr?os?|trilhas?) (no|do) ch[aã]o|leio (as|os|essas|esses|aquelas|aqueles) (pegadas|pisadas|rastr?os?)|farejo|por onde (ele|ela|eles|elas|o bicho|a besta|a fera|o animal|a coisa)?\s?(foi|fugiu|passou|seguiu)|sigo (a|as|o|os) (gotas|pingos|manchas|rasto|rastro) de sangue|sigo (os|as|esses|essas) (arranh\w*|riscos|sulcos|fiapos)|(vou|sigo|corro|parto) atr[aá]s d(as|os|essas|esses|o|a|esse|essa|este|esta) (pegadas|pisadas|rastr?os?|marcas|pistas|trilhas?)|at[eé] onde (as|os) (marcas|pegadas|pisadas|rastr?os?|trilhas?|gotas)( \w+)? (me |nos )?lev)/,
     /* EM1 (o corpus da mesa): «vou atrás das pegadas» e «avanço até onde as
        marcas me levam» — as palavras que o classificador treinado farejou
        e o catálogo não ouvia. E o rasto DA ESTRADA é a estrada: «sigo o
@@ -899,6 +928,9 @@ export const DESAFIOS = [
     id: "arcano",
     rx: new RegExp([
       /\b(identific\w* (a|o) (magia|feiti|selo|runa|encant)|reconhe[cç]o (a|o) (magia|selo|runa)|leio a runa|examin\w* (o|a) (selo|runa)|o que (é|e) esse feiti)\b/.source,
+      /* M3 (18/11, o exame do Mestre, metade A): a pergunta pela magia da coisa («esse colar tem algum
+         encantamento?») e o para-que-serve do objeto mágico */
+      /\b(tem|ha|carrega|guarda) (algum |alguma |um |uma )?(encantamento|magia|feiti[cç]o|aura)\b|\b(pra|para) que serve (o|a|esse|essa|este|esta|aquele|aquela) (amuleto|anel|varinha|cajado|orbe|talisma|artefato|colar|pergaminho|pocao|pedra|cristal|bracelete|reliquia)\b/.source,
       /* CS (11/11, o corpus das situações): ler as runas, entender o ritual, o que o amuleto faz, que magia prende a porta — o estudo conta 104 pedidos de arcanismo, a runa e o feitiço à frente */
       /\b(leio|ler|decifr\w*|estud\w*|examin\w*|analis\w*|entend\w*|reconhe[cç]\w*|identific\w*|interpret\w*) (a|o|as|os|esse|essa|esses|essas|este|esta|aquele|aquela) (runas?|glifos?|circulos? (magicos?|arcanos?|de invocacao)|simbolos? arcanos?|sigilos?|ritual|feiticos?|encantamentos?|aura|barreira|portal|selo magico|magia)\b/.source,
       /\bo que (o|a|esse|essa|este|esta) (amuleto|anel|varinha|cajado|orbe|talisma|artefato|colar|pergaminho|pocao|pedra|cristal|espada|bracelete|reliquia)( \w+)? faz\b|\b(que|qual) (tipo de )?(magia|feitico|encantamento|ritual|aura)\b/.source,
@@ -988,7 +1020,9 @@ export const DESAFIOS = [
        a tranca está antes no catálogo. Aqui mora o resto do que é peso —
        a pedra, a grade, o que precisa ser segurado antes de cair. */
     id: "forcar",
-    rx: /\b(empurro (a\b|o\b)|arrasto (a\b|o\b)|levanto (a\b|o\b|esse|essa)|movo (a\b|a pedra|o bloco)|seguro (a|o) (porta|port[aã]o|grade|pedra|viga|corda)|entorto|arranco (a|o) (grade|barra|tabua|t[aá]bua))/,
+    rx: /\b(empurro (a\b|o\b)|arrasto (a\b|o\b)|levanto (a\b|o\b|esse|essa)|movo (a\b|a pedra|o bloco)|seguro (a|o) (porta|port[aã]o|grade|pedra|viga|corda)|entorto|arranco (a|o) (grade|barra|tabua|t[aá]bua)|fa[cç]o alavanca|queda de bra[cç]o)/,
+    /* M3 (18/11, o exame do Mestre, metade A): a alavanca na fresta e a queda de braço — força contra coisa
+       ou contra alguém */
     /* MM4: "levanto a caneca e brindo" rolava Atletismo contra 15 — o corpus
        do improviso achou. O que se ergue com dois dedos não é peso; a lista é
        de coisas leves e de partes do próprio corpo, que é onde "levanto" e
@@ -1079,7 +1113,11 @@ export const DESAFIOS = [
     rx: new RegExp([
       /\b(acalmo (o|a) (cavalo|[eé]gua|c[aã]o|cachorro|mula|boi|bicho|animal|fera|besta)|me aproxim(o|ar) devagar d|estendo a m[aã]o para (o|a) (bicho|animal|cavalo|c[aã]o)|falo baixo com (o|a) (bicho|animal|cavalo))/.source,
       /* CS (11/11, o corpus das situações): amansar, ganhar a confiança, deixar o cão vir, o osso para o cão de guarda — o bicho pelo nome comum (ANIMAIS) */
-      "\\b(acalm|amans|seren|sosseg|tranquiliz)\\w* (o|a|os|as) (\\w+ )?" + ANIMAIS + "\\b",
+      "\\b(acalm|amans|seren|sosseg|tranquiliz)\\w* (o|a|os|as|meu|minha|meus|minhas) (\\w+ )?" + ANIMAIS + "\\b",
+      /* M3 (18/11, o exame do Mestre, metade A): o bicho é muitas vezes o do herói («acalmo meu cavalo»), e
+         acalmá-lo também se diz falando baixinho ou segurando a montaria */
+      "\\bfalo (baixo|baixinho|manso|mansinho|com calma|com jeito) com (o|a|os|as|meu|minha) (\\w+ )?" + ANIMAIS,
+      "\\b(seguro|controlo|contenho|domino|segurar|controlar|conter|dominar) (o|a|meu|minha) (\\w+ )?(cavalo|egua|mula|burro|potro|montaria)\\b",
       "\\bganh(o|ar) a confianca d(o|a|os|as) (\\w+ )?" + ANIMAIS + "|\\bamizade com (o|a|os|as) (\\w+ )?" + ANIMAIS,
       "\\bdeixo (o|a) (\\w+ )?" + ANIMAIS + " (vir|chegar|cheirar|se aproximar)",
       "\\b(afasto|distraio) (o|a|os|as) (\\w+ )?" + ANIMAIS + "\\b[^.!?]{0,30}\\bcom (um|uma|o|a) (osso|carne|pedaco|petisco|comida|pao)",
@@ -1090,7 +1128,7 @@ export const DESAFIOS = [
   },
   {
     id: "atuar",
-    rx: /\b(canto (para|na|no|uma)|toco (para|a|o|na|no) (m[uú]sica|ala[uú]de|flauta|harpa|tambor|sala|taverna|gente|mesa)|conto uma hist[oó]ria|declamo|recito|dan[cç]o para|fa[cç]o um n[uú]mero|subo no palco|puxo uma can[cç][aã]o)/,
+    rx: /\b(canto (para|na|no|uma)|toco (para|a|o|na|no) (m[uú]sica|ala[uú]de|flauta|harpa|tambor|sala|taverna|gente|mesa)|conto uma hist[oó]ria|declamo|recito|dan[cç]o (para|pra|pro)|fa[cç]o um n[uú]mero|subo no palco|puxo uma can[cç][aã]o)/,
     pericia: "atuacao", alvo: "atuacao", minutos: 15, barulho: true,
     rotulo: "prender a sala", dcPadrao: DC("incomum"),
     /* NÃO é `social`, e a suíte flagrou isto: `social` liga a escada do
@@ -1104,6 +1142,8 @@ export const DESAFIOS = [
     id: "orientar",
     rx: new RegExp([
       /\b(me orient(o|ar)|acho o (norte|caminho|rumo)|leio o c[eé]u|leio as estrelas|procuro (a|um)?\s*(um )?(po[cç]o|abrigo|[aá]gua|agua)|monto acampamento no|escolho onde acampar|ca[cç]o (algo|comida|bicho))/.source,
+      /* M3 (18/11, o exame do Mestre, metade A): calcular a hora ou o rumo pelo que se vê */
+      /\b(calcul|estim|adivinh|descobr)\w* (a hora|que horas sao|o rumo|a direcao)\b/.source,
       /* CS (11/11, o corpus das situações): o musgo, as estrelas, sem nos perdermos, a saída das catacumbas, o grupo pela neblina */
       /\b(onde fica|para que lado fica|pra que lado fica|que lado e) (o|a) (norte|sul|leste|oeste|nascente|poente|vila|aldeia|cidade|estrada|saida|costa|mar|rio)|\bsem (me|nos) perder|\bnao (me|nos) perder/.source,
       /\b(conduzo|guio|levo|atravesso|sigo|ando|vou)\b[^.!?]{0,40}\bsem (estrada|trilha|caminho|mapa|bussola)|\b(encontro|acho|busco|procuro|tento achar|reencontro) (o|a) (rumo|caminho de volta|caminho certo|trilhas?|trilhos?|saida d)/.source,

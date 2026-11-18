@@ -282,3 +282,96 @@ catálogo perguntam ao mundo (escutar, ler a intenção, rastrear), e a busca n�
 ligada (não há quest nas frases) e as declarações seguidas de dado numa sessão jogada — as três
 pedem jogo, não frase. O dado espontâneo fica medido à parte: hoje não há porta por onde o estado da
 cena chame o dado sozinho.
+
+## 12. A régua e a cena, medidas (M3+M4)
+
+**18/11/2026, módulos puros, sem fiação.** Três peças novas e uma afinação, nenhuma lida pelo jogo:
+
+- `src/cena-do-momento.js` — a tabela fechada de estados (`ESTADOS_DA_CENA`: 8 de pessoa, 6 de
+  criatura, 7 de coisa ou lugar, 7 de cena), cada um com o que significa para a régua (opõe, cede,
+  facilita, esconde, pune, espalha, nota, apressa, revela, e a perícia que ele chama ao aparecer) e o
+  efeito que o jogador sente na narração. As perguntas: `haOposicao`, `haOQueAchar`, `haSegredo`,
+  `haPerigo`, `alguemPodeNotar`, `haPlateia`, `cenaRevela`, `custoDeFalhar`, `respostaDaPergunta`.
+- `src/motor/a-regua-do-momento.js` — `valeRolagem(veredito, cena, ctx)`: as linhas do Mestre de
+  hoje (menos a da conversa) e depois `REGUA_DO_MOMENTO`, uma tabela ordenada com a conversa dentro,
+  linha a linha do estudo §6. `oQueACenaChama(antes, depois)`: o dado espontâneo. **Sem cena, devolve
+  exatamente o Mestre de hoje** — provado frase a frase sobre os dois corpus, em quatro contextos.
+- O exame repartido por semente em metade A (afina; só os erros dela se leem) e B (a prova; só
+  número). O par nunca se parte. A: 147 itens, B: 148.
+- O catálogo (`src/desafios.js`) aprendeu verbos que a metade A mostrou e ele não ouvia; as catracas
+  dos dois corpus ficaram exatamente onde estavam (mesa 413 · 58 · 2; situações A 240 · 188 · 0,
+  B 176 · 133 · 3).
+
+**A medida** (com ação declarada; espontâneos à parte). «Antes» é o Mestre de hoje com o catálogo da
+M2; as duas colunas do meio separam o que veio do catálogo e o que veio da régua.
+
+| metade A (afina) | antes | só o catálogo | só a régua | **régua + catálogo** |
+|---|---|---|---|---|
+| rola certo (de 139) | 75 (54%) | 92 | 84 | **107 (77%)** |
+| pede onde a mesa não pediria (de 62) | 11 | 20 | 1 | **4 (6%)** |
+| não pede onde a mesa pediria (de 77) | 53 | 27 | 54 | **28 (36%)** |
+| pares que separa (de 35) | 1 | 2 | 9 | **16** |
+| espontâneos certos (de 8) | 4 (pediu 0 de 4) | 4 | 7 | **7 (pediu 3 de 4)** |
+
+| metade B (a prova) | antes | só o catálogo | só a régua | **régua + catálogo** |
+|---|---|---|---|---|
+| rola certo (de 136) | 75 (55%) | 79 | 82 | **86 (63%)** |
+| pede onde a mesa não pediria (de 64) | 15 | 15 | 4 | **4 (6%)** |
+| não pede onde a mesa pediria (de 72) | 46 | 42 | 50 | **46 (64%)** |
+| pares que separa (de 35) | 1 | 1 | 9 | **9** |
+| espontâneos certos (de 12) | 6 (pediu 0 de 6) | 6 | 10 | **10 (pediu 4 de 6)** |
+
+No exame inteiro: rola certo 150 → 193, indevido 26 → 8, omitido 99 → 74, pares 2 → 25 de 70,
+espontâneos 10 → 17 de 20. **A M3 fecha pelo critério do §9** — o exame sobe sem aumentar o dado
+indevido, e na metade que ninguém afinou o indevido cai de 15 para 4. As metas do §8 ainda estão
+longe: indevido 6% (meta ≤ 2%), omitido 50% (meta ≤ 15%).
+
+**O que ainda erra, e por quê** (a leitura é só da metade A):
+
+1. **O catálogo ainda não ouve** a maior parte do que falta (os 28 omitidos da A são quase todos
+  `lerAcao` devolvendo nada): o «dá pra eu…?» que a peneira lê como pergunta e o exame lê como
+  declaração; a ameaça e a mentira sem verbo («digo pro guarda que venho a serviço do barão», «se
+  ele não abrir o jogo a guarda vai saber»); o grito para a multidão; a barganha («vc solta os dois
+  e eu te entrego o mapa»); o «consigo ouvir…?».
+2. **Formas que só a régua pode ouvir.** «Pulo da carroça» e «passo a ponte correndo» foram
+  ensinadas e tiradas de volta: o corpus das situações tem a mesma forma numa cena calma («pulo da
+  carroça quando ela para», «atravesso a ponte da vila») e pune o falso «pede dado» — sem cena, o
+  catálogo não tem como distinguir. Com a régua ligada, ouvir essas formas fica seguro; ouvi-las
+  antes disso é pedir dado na ponte da vila.
+3. **A cena do exame que só existe em nota.** Muro liso e molhado, sol visível, amuleto comum de
+  feira contra raro, carroça em movimento, a planta estranha à beira da estrada (o espontâneo de
+  saber): a régua lê estado, e ali o estado não foi escrito. No jogo é o mundo que escreverá; no
+  exame, a rodada 2 deve escrever esses casos como estado (`fragil`, `perigo_fisico`, `assunto_raro`)
+  ou trocá-los.
+4. **Na B, o omitido sobe de 42 para 46 com a régua** — quatro rolagens que a mesa pediria e a régua
+  cortou. Não foram lidas (é a prova); pela A, o mais provável é a mesma família do item 3: o perigo
+  que mora na nota, e a régua diz «travessia calma».
+
+**Uma ressalva de honestidade.** Antes de repartir, a suíte da M2 imprimia os 25 erros mais
+instrutivos do exame inteiro (seis estão citados no §11); 14 desses caíram na metade B. Nenhum foi
+usado para afinar — os verbos ensinados saíram da lista da metade A —, mas a B já não é inteiramente
+virgem. A rodada 2 do exame deve renovar esses 14 itens.
+
+**O que a fiação no jogo vai precisar** (de onde cada estado virá):
+
+| estado | quem o escreve no jogo |
+|---|---|
+| disposta, desconfiada, hostil | a relação da pessoa (`pessoaDe` → `relacao`) e a fama |
+| deve_favor | o livro de promessas / as notas da pessoa |
+| esconde_algo | o segredo da pessoa (`segredo`, `segredos` da espinha) e a verdade eleita da quest |
+| motivo_para_negar | o papel (o guarda com ordem, o chefe da milícia) e o tamanho do pedido (`social.js`) |
+| com_medo | o resultado de uma intimidação que passou, a pessoa rendida, o caído na luta |
+| do_grupo | o grupo (companheiros) |
+| criaturas | o encontro (`encontro-na-estrada`, o bestiário): faminta, acuada, territorial, ferida, mansa; a montaria assustada |
+| trancado | a tranca da porta (`trancaDe`) e a sala da masmorra |
+| vigiado, territorio_de_alguem | a ronda e o dono do lugar (a masmorra, a casa nobre, o acampamento) |
+| armadilhado, ha_algo_escondido | a armadilha à vista (`objetoEmCena`) e o achado (`achadoDe`) |
+| fragil, escuro | o lugar e a hora (`escuro` já existe no contexto) |
+| com_pressa | o relógio da quest (§6) e a perseguição |
+| com_testemunhas | a cena na cidade, a multidão, a taverna cheia |
+| perigo_fisico, algo_se_aproxima | o terreno da viagem, a queda, a criatura que espreita |
+| som_claro | a cena (a discussão aos gritos) |
+| assunto_raro | o fato novo que aparece (o livro de fatos sabe o que o herói ainda não viu) |
+
+A ligação entra atrás de uma chave desligada; com a chave desligada a régua recebe `null` e o jogo é
+o de hoje.

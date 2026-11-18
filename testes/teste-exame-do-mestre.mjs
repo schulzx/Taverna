@@ -26,11 +26,25 @@
    descem, os erros não sobem. Quando um número melhorar, move-se o piso para
    o novo valor, com a data — e só para esse lado. Pela regra da rodada, frase
    usada para afinar o Mestre sai do exame e entra outra (e a catraca da
-   rodada nova recomeça da medida dela). */
+   rodada nova recomeça da medida dela).
+
+   M3+M4 (18/11/2026) — AS DUAS METADES E OS DOIS MESTRES.
+   O exame foi repartido por semente fixa (`metades` no JSON; o par inteiro
+   cai do mesmo lado): a metade A afina o Mestre, e só os erros DELA são
+   impressos frase a frase (secção 3); a metade B é a prova, medida só em
+   número. É a honestidade do exame: o que se afina contra a B deixa de
+   medir frase nova.
+   E a suíte mede dois Mestres lado a lado, sobre a mesma frase lida pelo
+   mesmo catálogo: o de HOJE (`porQueNaoChama`, a conversa pela escada) e o
+   da RÉGUA (motor/a-regua-do-momento.js), que recebe a cena do item inteira
+   (cena-do-momento.js) — medo, pressa, testemunha, vigia, perigo, motivo
+   para negar, o que antes não tinha porta. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
 import { porQueNaoChama, oChamado } from "../src/motor/o-mestre-chama.js";
+import { valeRolagem, oQueACenaChama, familiaDaAcao } from "../src/motor/a-regua-do-momento.js";
+import { lerCena } from "../src/cena-do-momento.js";
 import { PERICIAS } from "../src/pericias.js";
 
 let ok = 0, mal = 0;
@@ -43,17 +57,37 @@ const MESA = JSON.parse(fs.readFileSync(new URL("./corpus-da-mesa.json", import.
 const SITUACOES = JSON.parse(fs.readFileSync(new URL("./corpus-das-situacoes.json", import.meta.url), "utf8"));
 
 /* ---------------- AS CATRACAS (rodada 1, 18/11/2026) ----------------
-   Contagens inteiras. Acertos: «não desce de». Erros: «não sobe de». */
+   Contagens inteiras. Acertos: «não desce de». Erros: «não sobe de».
+
+   MOVIDAS em 18/11 (M3+M4), e o motivo, como manda a lei: a catraca da M2
+   era uma só, sobre o exame inteiro (rola certo 150, indevido 26, omitido
+   99, categoria 93, perícia 41, pares 2, espontâneos 10). Com o exame
+   repartido, um número só misturaria a metade que afina com a que prova —
+   melhorar a A empurraria o total e esconderia uma B parada. Agora cada
+   metade tem a sua, e cada Mestre a dele.
+   E o Mestre de HOJE mudou de piso por um motivo que não é a régua: a M3
+   ensinou o catálogo (desafios.js) a ouvir mais verbos da metade A, e o de
+   hoje lê com o mesmo catálogo. Ouvir mais faz ele pedir mais — onde a mesa
+   pediria e onde não pediria (pé ante pé com e sem guarda). É por isso que
+   o seu «pede indevido» sobe: é o buraco que a régua fecha, e a catraca de
+   hoje passa a guardar o número novo, não o antigo. */
 const CATRACA_DO_EXAME = {
   data: "2026-11-18",
-  rolaCerto: 150,          // dos itens com ação declarada (fora os espontâneos)
-  pedeIndevido: 26,       // pediu onde a mesa não pediria
-  deixaDePedir: 99,       // não pediu onde a mesa pediria
-  categoria: 93,          // a intenção certa
-  pericia: 41,            // perícia certa, entre os que rolam dos dois lados
-  paresQueSeparam: 2,    // pares em que o Mestre dá vereditos diferentes
-  espontaneosCertos: 10,  // espontâneos: rola certo (hoje só os «não» acertam)
+  /* o de hoje com o catálogo antigo (ebf0f64), para comparar: A 75 · 11 · 53 ·
+     cat 47 · per 21 · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 ·
+     pares 1 · esp 6 */
+  hoje: {
+    A: { rolaCerto: 92, pedeIndevido: 20, deixaDePedir: 27, categoria: 83, pericia: 47, paresQueSeparam: 2, espontaneosCertos: 4 },
+    B: { rolaCerto: 79, pedeIndevido: 15, deixaDePedir: 42, categoria: 50, pericia: 24, paresQueSeparam: 1, espontaneosCertos: 6 },
+  },
+  regua: {
+    A: { rolaCerto: 107, pedeIndevido: 4, deixaDePedir: 28, categoria: 83, pericia: 46, paresQueSeparam: 16, espontaneosCertos: 7 },
+    B: { rolaCerto: 86, pedeIndevido: 4, deixaDePedir: 46, categoria: 50, pericia: 22, paresQueSeparam: 9, espontaneosCertos: 10 },
+  },
 };
+/* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje
+   com o catálogo de ebf0f64), para a linha de comparação */
+const MEDIDA_DA_M2 = { rolaCerto: 150, pedeIndevido: 26, deixaDePedir: 99, paresQueSeparam: 2, espontaneosCertos: 10 };
 
 /* ---------------- O FORMATO DO EXAME ---------------- */
 const FORMATO = {
@@ -156,14 +190,72 @@ function lerNoJogo(item, extraDoChamado) {
   try { por = porQueNaoChama(v, cx); } catch { por = "erro"; }
   let chamado = null;
   try { chamado = oChamado(v, cx); } catch { chamado = null; }
-  return { rot, pede: ROLA_MESMO_SEM_CHAMADO.includes(por), pericia: v.pericia || "", por: por || "chama", social: !!v.social, comPreco: !!chamado, dc: v.dc };
+  return { rot, pede: ROLA_MESMO_SEM_CHAMADO.includes(por), pericia: v.pericia || "", por: por || "chama", social: !!v.social, comPreco: !!chamado, dc: v.dc, v };
+}
+
+/* ---------------- A CENA DO ITEM, NA FORMA QUE A RÉGUA LÊ ----------------
+   O exame escreve a cena plana (os estados de §4 como booleanos, `quem`
+   como lista de papéis). Aqui ela vira a forma de cena-do-momento.js — só
+   pelos ESTADOS e pelo papel de quem está; a `nota` em texto livre não
+   entra (ela é a descrição do autor do exame, e o mundo do jogo não terá
+   nota: terá estado). O que só a nota diz é erro que a régua assume.
+   - pessoa ou criatura: o papel; criatura é o bicho pelo nome comum, e
+     «(companheiro)» é do grupo;
+   - os estados de pessoa vão para o primeiro de `quem` (é sempre dele que
+     o item fala); numa criatura, o medo é susto, a boa vontade é mansidão
+     e a hostilidade é território;
+   - trancado, vigiado, armadilhado, o achado e a suspeita de armadilha são
+     do lugar; pressa, testemunhas, perigo e o som claro são da cena. */
+const CRIATURA_DO_EXAME = /\b(cavalo|egua|lobo|corvo|cao|cachorro|fera|urso|mula)\b/;
+const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar"];
+const NA_CRIATURA = { com_medo: "assustada", disposta: "mansa", hostil: "territorial" };
+const DO_LUGAR = { trancado: "trancado", vigiado: "vigiado", armadilhado: "armadilhado", ha_algo_escondido: "ha_algo_escondido", suspeita_de_armadilha: "suspeito" };
+const DA_CENA = ["com_pressa", "com_testemunhas", "perigo_fisico"];
+function cenaDoExame(c) {
+  if (!c || typeof c !== "object") return null;
+  const quem = (Array.isArray(c.quem) ? c.quem : c.quem ? [c.quem] : []).filter((q) => typeof q === "string" && q.trim());
+  const pessoas = [], criaturas = [];
+  quem.forEach((q, k) => {
+    const ehBicho = CRIATURA_DO_EXAME.test(nrm(q));
+    const estados = [];
+    if (/companheiro/.test(nrm(q))) estados.push("do_grupo");
+    if (k === 0) for (const s of DE_PESSOA) if (c[s] === true) estados.push(ehBicho ? NA_CRIATURA[s] : s);
+    (ehBicho ? criaturas : pessoas).push({ nome: q, papel: q, estados: estados.filter(Boolean) });
+  });
+  const doLugar = Object.keys(DO_LUGAR).filter((k) => c[k] === true).map((k) => DO_LUGAR[k]);
+  const daCena = DA_CENA.filter((k) => c[k] === true);
+  if (String(c.som || "") === "claro") daCena.push("som_claro");
+  return { pessoas, criaturas, coisas: [{ nome: c.lugar || "o lugar", estados: doLugar }], cena: { estados: daCena } };
+}
+
+/* ---------------- A LEITURA DO MESTRE DA RÉGUA ----------------
+   A mesma frase, o mesmo catálogo e o mesmo contexto do chamado; a decisão
+   de rolar é da régua, com a cena do item. No espontâneo, o dado vem também
+   do que a cena chama ao aparecer (a cena antes é o lugar vazio). */
+function lerComRegua(item) {
+  const r = lerNoJogo(item);
+  const it = item && typeof item === "object" ? item : null;
+  const c = it && it.cena && typeof it.cena === "object" ? it.cena : null;
+  const cena = cenaDoExame(c);
+  if (r.por === "luta") return { ...r, porRegua: "luta" };
+  let veredito = null;
+  try { veredito = valeRolagem(r.v || null, cena, ctxDoChamado(it)); } catch { veredito = null; }
+  let pede = !!(veredito && veredito.rola), pericia = r.pericia, porRegua = veredito ? veredito.porque : "erro";
+  if (it && it.espontaneo && !pede) {
+    let chama = null;
+    try { chama = oQueACenaChama({ coisas: [{ nome: c && c.lugar, estados: [] }] }, cena); } catch { chama = null; }
+    if (chama) { pede = true; pericia = chama.pericia; porRegua = "espontaneo:" + chama.estado; }
+  }
+  return { ...r, pede, pericia, porRegua };
 }
 
 /* ---------------- A MEDIDA ---------------- */
 const ITENS = EXAME.itens;
+const METADES = ["A", "B"];
 const declarados = ITENS.filter((i) => !i.espontaneo);
 const espontaneos = ITENS.filter((i) => i.espontaneo);
-const lido = new Map(ITENS.map((i) => [i.id, lerNoJogo(i)]));
+const LEITORES = { hoje: lerNoJogo, regua: lerComRegua };
+const lido = { hoje: new Map(ITENS.map((i) => [i.id, lerNoJogo(i)])), regua: new Map(ITENS.map((i) => [i.id, lerComRegua(i)])) };
 
 function medir(lista, leitura) {
   const m = { n: lista.length, rolaCerto: 0, nNao: 0, pedeIndevido: 0, nSim: 0, deixaDePedir: 0, categoria: 0, nPericia: 0, pericia: 0, comPreco: 0, social: 0 };
@@ -178,28 +270,41 @@ function medir(lista, leitura) {
   }
   return m;
 }
-const M = medir(declarados, (i) => lido.get(i.id));
-const E = medir(espontaneos, (i) => lido.get(i.id));
 
 /* os pares: a mesma frase, duas cenas, vereditos opostos na mesa real */
 const pares = {};
 for (const i of ITENS) if (i.par) (pares[i.par] = pares[i.par] || []).push(i);
 const listaPares = Object.values(pares);
 const paresDecl = listaPares.filter((p) => !p[0].espontaneo);
-const separa = (p) => lido.get(p[0].id).pede !== lido.get(p[1].id).pede;
-const acertaOsDois = (p) => p.every((i) => lido.get(i.id).pede === i.esperado.rola);
-const paresQueSeparam = paresDecl.filter(separa).length;
-const paresCertos = paresDecl.filter(acertaOsDois).length;
-const paresMetade = paresDecl.filter((p) => !acertaOsDois(p) && p.some((i) => lido.get(i.id).pede === i.esperado.rola)).length;
+const separa = (quem, p) => lido[quem].get(p[0].id).pede !== lido[quem].get(p[1].id).pede;
+const acertaOsDois = (quem, p) => p.every((i) => lido[quem].get(i.id).pede === i.esperado.rola);
 
-/* por categoria e por base (rola certo) */
-const porChave = (f) => {
+/* tudo de um Mestre numa metade (ou no exame inteiro, metade null) */
+function medidaDe(quem, metade) {
+  const daMetade = (i) => metade == null || i.metade === metade;
+  const ler = (i) => lido[quem].get(i.id);
+  const M = medir(declarados.filter(daMetade), ler);
+  const E = medir(espontaneos.filter(daMetade), ler);
+  const pp = paresDecl.filter((p) => daMetade(p[0]));
+  return {
+    M, E, nPares: pp.length,
+    paresQueSeparam: pp.filter((p) => separa(quem, p)).length,
+    paresCertos: pp.filter((p) => acertaOsDois(quem, p)).length,
+  };
+}
+const MEDIDA = {};
+for (const quem of Object.keys(LEITORES)) { MEDIDA[quem] = { tudo: medidaDe(quem, null) }; for (const h of METADES) MEDIDA[quem][h] = medidaDe(quem, h); }
+
+/* por categoria (rola certo), só da metade A e só para o da régua: é a
+   lista que afina; a B não se lê por dentro */
+const porCategoriaA = (() => {
   const o = {};
-  for (const i of declarados) { const k = f(i); const x = (o[k] = o[k] || [0, 0]); x[1]++; if (lido.get(i.id).pede === i.esperado.rola) x[0]++; }
+  for (const i of declarados.filter((x) => x.metade === "A")) {
+    const k = i.esperado.categoria; const x = (o[k] = o[k] || [0, 0]); x[1]++;
+    if (lido.regua.get(i.id).pede === i.esperado.rola) x[0]++;
+  }
   return o;
-};
-const porCategoria = porChave((i) => i.esperado.categoria);
-const porBase = porChave((i) => i.esperado.base);
+})();
 
 /* E SE O MUNDO SOUBESSE A CENA? Uma linha só de comparação, sem catraca: o
    oráculo de hoje é sorteio; aqui ele responderia «não» quando a cena diz que
@@ -238,41 +343,65 @@ sec("1. o exame é o que diz ser");
   t("a origem diz de onde vem o veredito e que não há frase de mesa real; a regra da rodada existe",
     /estudo-das-mesas/.test(EXAME.origem) && /Nenhuma frase de mesa real/.test(EXAME.origem) && /sai do exame/.test(EXAME.regra_da_rodada));
   t("todo rótulo que o catálogo devolve tem categoria", DESAFIOS.every((d) => d.id === "improviso" || CATEGORIA_DO_ROTULO[d.id]));
+  /* M3: as metades */
+  t("todo item tem metade A ou B, e a regra das metades diz a semente", ITENS.every((i) => METADES.includes(i.metade))
+    && !!EXAME.metades && /\S/.test(EXAME.metades.semente || "") && /prova/.test(EXAME.metades.regra || ""));
+  t("o par nunca se parte entre as metades", listaPares.every((p) => p.every((i) => i.metade === p[0].metade)));
+  const nA = ITENS.filter((i) => i.metade === "A").length;
+  t(`as metades se equilibram (${nA} e ${ITENS.length - nA})`, Math.abs(2 * nA - ITENS.length) <= ITENS.length * 0.1);
+  t("a contagem do cabeçalho bate com as metades", EXAME.contagem.metade_A === nA && EXAME.contagem.metade_B === ITENS.length - nA);
+  t("a família da régua e a categoria do exame falam a mesma língua (todo id do catálogo)",
+    DESAFIOS.every((d) => d.id === "improviso" || familiaDaAcao({ tipo: "teste", id: d.id }) === CATEGORIA_DO_ROTULO[d.id]));
+  t("toda cena do exame vira uma cena que a régua lê", ITENS.every((i) => lerCena(cenaDoExame(i.cena)) !== null));
 }
 
-sec("2. a medida (o Mestre de hoje contra a mesa real)");
+sec("2. a medida, por metade (o Mestre de hoje e o da régua, contra a mesa real)");
 const C = CATRACA_DO_EXAME;
-console.log(`     com ação declarada: ${M.n} itens (${M.nSim} rolam na mesa, ${M.nNao} não)`);
-console.log(`     1. rola certo ............ ${M.rolaCerto}/${M.n} (${pct(M.rolaCerto, M.n)})`);
-console.log(`        pede onde a mesa não . ${M.pedeIndevido}/${M.nNao} (${pct(M.pedeIndevido, M.nNao)})`);
-console.log(`        não pede onde a mesa . ${M.deixaDePedir}/${M.nSim} (${pct(M.deixaDePedir, M.nSim)})`);
-console.log(`     2. categoria certa ....... ${M.categoria}/${M.n} (${pct(M.categoria, M.n)})`);
-console.log(`     3. perícia certa ......... ${M.pericia}/${M.nPericia} (${pct(M.pericia, M.nPericia)}) — entre os que rolam dos dois lados`);
-console.log(`        dos pedidos, com o preço dito antes (oChamado): ${M.comPreco}/${M.nSim - M.deixaDePedir + M.pedeIndevido} · pela escada social, sem chamado: ${M.social}`);
-console.log(`     4. pares que o Mestre separa: ${paresQueSeparam}/${paresDecl.length} (${pct(paresQueSeparam, paresDecl.length)}) · acerta os dois lados: ${paresCertos} · acerta só um: ${paresMetade}`);
-console.log(`     5. por categoria (rola certo): ` + Object.entries(porCategoria).map(([k, [a, b]]) => `${k} ${a}/${b}`).join(" · "));
-console.log(`        por base: ` + Object.entries(porBase).map(([k, [a, b]]) => `${k} ${a}/${b} (${pct(a, b)})`).join(" · "));
-console.log(`     6. espontâneos: rola certo ${E.rolaCerto}/${E.n} · dos ${E.nSim} que a mesa rolaria, o Mestre pediu ${E.nSim - E.deixaDePedir} · pediu indevido ${E.pedeIndevido}/${E.nNao}`);
-console.log(`     (comparação, sem catraca) se o oráculo soubesse a cena: rola certo ${comOraculo.rolaCerto}/${comOraculo.n} · pede indevido ${comOraculo.pedeIndevido}/${comOraculo.nNao}`);
+const linha = (rot, d) => {
+  const { M, E } = d;
+  return `     ${rot} rola certo ${M.rolaCerto}/${M.n} (${pct(M.rolaCerto, M.n)}) · indevido ${M.pedeIndevido}/${M.nNao} · omitido ${M.deixaDePedir}/${M.nSim}`
+    + ` · categoria ${M.categoria} · perícia ${M.pericia}/${M.nPericia} · pares ${d.paresQueSeparam}/${d.nPares} (os dois lados ${d.paresCertos}) · espontâneos ${E.rolaCerto}/${E.n} (pediu ${E.nSim - E.deixaDePedir} de ${E.nSim})`;
+};
+console.log(`     a M2 (o exame inteiro, o de hoje com o catálogo antigo): rola certo ${MEDIDA_DA_M2.rolaCerto} · indevido ${MEDIDA_DA_M2.pedeIndevido} · omitido ${MEDIDA_DA_M2.deixaDePedir} · pares ${MEDIDA_DA_M2.paresQueSeparam} · espontâneos ${MEDIDA_DA_M2.espontaneosCertos}`);
+for (const h of [...METADES, null]) {
+  console.log(h ? `     metade ${h}${h === "A" ? " (afina)" : " (a prova)"}:` : "     o exame inteiro:");
+  console.log(linha("hoje .", MEDIDA.hoje[h || "tudo"]));
+  console.log(linha("régua ", MEDIDA.regua[h || "tudo"]));
+}
+console.log(`     (comparação, sem catraca) o de hoje, se o oráculo soubesse a cena: rola certo ${comOraculo.rolaCerto}/${comOraculo.n} · pede indevido ${comOraculo.pedeIndevido}/${comOraculo.nNao}`);
+console.log(`     metade A, por categoria (régua, rola certo): ` + Object.entries(porCategoriaA).map(([k, [a, b]]) => `${k} ${a}/${b}`).join(" · "));
 
-t(`rola certo não desce de ${C.rolaCerto} (${C.data})`, M.rolaCerto >= C.rolaCerto, `${M.rolaCerto}`);
-t(`pede indevido não sobe de ${C.pedeIndevido} (${C.data})`, M.pedeIndevido <= C.pedeIndevido, `${M.pedeIndevido}`);
-t(`deixa de pedir não sobe de ${C.deixaDePedir} (${C.data})`, M.deixaDePedir <= C.deixaDePedir, `${M.deixaDePedir}`);
-t(`categoria certa não desce de ${C.categoria} (${C.data})`, M.categoria >= C.categoria, `${M.categoria}`);
-t(`perícia certa não desce de ${C.pericia} (${C.data})`, M.pericia >= C.pericia, `${M.pericia}`);
-t(`pares que o Mestre separa não descem de ${C.paresQueSeparam} (${C.data})`, paresQueSeparam >= C.paresQueSeparam, `${paresQueSeparam}`);
-t(`espontâneos certos não descem de ${C.espontaneosCertos} (${C.data})`, E.rolaCerto >= C.espontaneosCertos, `${E.rolaCerto}`);
+for (const quem of ["hoje", "regua"]) for (const h of METADES) {
+  const c = C[quem][h], d = MEDIDA[quem][h], nome = `${quem === "hoje" ? "hoje" : "régua"}, metade ${h}`;
+  t(`${nome}: rola certo não desce de ${c.rolaCerto} (${C.data})`, d.M.rolaCerto >= c.rolaCerto, `${d.M.rolaCerto}`);
+  t(`${nome}: pede indevido não sobe de ${c.pedeIndevido} (${C.data})`, d.M.pedeIndevido <= c.pedeIndevido, `${d.M.pedeIndevido}`);
+  t(`${nome}: deixa de pedir não sobe de ${c.deixaDePedir} (${C.data})`, d.M.deixaDePedir <= c.deixaDePedir, `${d.M.deixaDePedir}`);
+  t(`${nome}: categoria certa não desce de ${c.categoria} (${C.data})`, d.M.categoria >= c.categoria, `${d.M.categoria}`);
+  t(`${nome}: perícia certa não desce de ${c.pericia} (${C.data})`, d.M.pericia >= c.pericia, `${d.M.pericia}`);
+  t(`${nome}: pares que separa não descem de ${c.paresQueSeparam} (${C.data})`, d.paresQueSeparam >= c.paresQueSeparam, `${d.paresQueSeparam}`);
+  t(`${nome}: espontâneos certos não descem de ${c.espontaneosCertos} (${C.data})`, d.E.rolaCerto >= c.espontaneosCertos, `${d.E.rolaCerto}`);
+}
+/* a promessa da M3 (o-mestre-vivo.md §9: «o exame sobe sem aumentar o dado
+   indevido»), dita contra o Mestre de hoje na MESMA metade e com o MESMO
+   catálogo — e na metade B, a que ninguém afinou */
+for (const h of METADES) {
+  const a = MEDIDA.hoje[h].M, b = MEDIDA.regua[h].M;
+  t(`metade ${h}: a régua acerta mais que o de hoje (${b.rolaCerto} contra ${a.rolaCerto}) e não pede mais indevido (${b.pedeIndevido} contra ${a.pedeIndevido})`,
+    b.rolaCerto > a.rolaCerto && b.pedeIndevido <= a.pedeIndevido);
+}
 
-sec("3. os erros mais instrutivos");
+sec("3. os erros da metade A (a régua; a metade B não se lê frase a frase)");
 {
+  const L = lido.regua;
   const rotulo = (rola, cat) => `${rola ? "rola" : "não rola"}/${cat}`;
   const resumo = (c) => Object.entries(c || {}).filter(([k, v]) => v === true || k === "nota").map(([k, v]) => (v === true ? k : v)).join(", ");
-  const erros = declarados.filter((i) => lido.get(i.id).pede !== i.esperado.rola || !categoriaCerta(i.esperado.categoria, categoriaObtida(lido.get(i.id).rot)));
-  /* os mais instrutivos primeiro: o par que o Mestre não separou, a base
+  const daA = ITENS.filter((i) => i.metade === "A");
+  const erros = daA.filter((i) => L.get(i.id).pede !== i.esperado.rola || (!i.espontaneo && !categoriaCerta(i.esperado.categoria, categoriaObtida(L.get(i.id).rot))));
+  /* os mais instrutivos primeiro: o par que a régua não separou, a base
      forte, o veredito errado antes da categoria errada; uma situação só por
      vez, para a lista não ser vinte vezes a mesma lacuna */
-  const peso = (i) => (i.par && !separa(pares[i.par]) ? 4 : 0) + ({ numero: 2, padrao: 1, fraco: 0 }[i.esperado.base] || 0)
-    + (lido.get(i.id).pede !== i.esperado.rola ? 3 : 0);
+  const peso = (i) => (i.par && !separa("regua", pares[i.par]) ? 4 : 0) + ({ numero: 2, padrao: 1, fraco: 0 }[i.esperado.base] || 0)
+    + (L.get(i.id).pede !== i.esperado.rola ? 3 : 0);
   erros.sort((a, b) => peso(b) - peso(a) || a.situacao - b.situacao);
   const vistas = new Set(), lista = [];
   for (const passo of [1, 2]) for (const i of erros) {
@@ -281,13 +410,13 @@ sec("3. os erros mais instrutivos");
     vistas.add(i.situacao); lista.push(i);
   }
   for (const i of lista) {
-    const r = lido.get(i.id);
-    console.log(`     #${i.situacao} ${rotulo(i.esperado.rola, i.esperado.categoria)} → ${rotulo(r.pede, categoriaObtida(r.rot))}${r.rot ? " (" + r.rot + ", " + r.por + ")" : ""} · «${i.frase}» [${resumo(i.cena)}]`);
+    const r = L.get(i.id);
+    console.log(`     #${i.situacao} ${rotulo(i.esperado.rola, i.esperado.categoria)} → ${rotulo(r.pede, categoriaObtida(r.rot))}${r.rot ? " (" + r.rot + ", " + r.porRegua + ")" : ""} · «${i.frase}» [${resumo(i.cena)}]`);
   }
 }
 
 sec("4. a medida não estoura com lixo");
-t("frase vazia, null e lixo devolvem sem dado", [null, "", "   ", 42, {}, { frase: null }, { frase: "pulo", cena: null }].every((x) => lerNoJogo(x).pede === false));
+for (const [nome, ler] of Object.entries(LEITORES)) t(`${nome}: frase vazia, null e lixo devolvem sem dado`, [null, "", "   ", 42, {}, { frase: null }, { frase: "pulo", cena: null }].every((x) => ler(x).pede === false));
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);
