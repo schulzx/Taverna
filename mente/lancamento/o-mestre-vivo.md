@@ -187,12 +187,12 @@ estudo, e **renovado a cada rodada** (frase usada para afinar sai do exame).
 
 | medida | hoje | meta para ligar as quests |
 |---|---|---|
-| intenção certa em frase nova | 73% | **≥ 90%** |
-| perícia certa em frase nova | 69% | **≥ 85%** |
-| pede dado onde um mestre real não pediria | 6% | **≤ 2%** |
-| deixa de pedir onde um mestre real pediria | não medido | **≤ 15%** |
+| intenção certa em frase nova | 73% (corpus) · **34% no exame** (M2, §11) | **≥ 90%** |
+| perícia certa em frase nova | 69% (corpus) · 82% no exame, só entre os 50 que rolam dos dois lados | **≥ 85%** |
+| pede dado onde um mestre real não pediria | 6% (corpus) · **21% no exame** (26 de 126) | **≤ 2%** |
+| deixa de pedir onde um mestre real pediria | **66% no exame** (99 de 149) | **≤ 15%** |
 | declarações fora da luta seguidas de dado, em sessão jogada | 4,3% (10/11) | **20% a 30%** (a mesa real: 26,5%) |
-| perguntas de «o que sei de…» respondidas sem dado | — | **≥ 70%** (a mesa real: 78%) |
+| perguntas de «o que sei de…» respondidas sem dado | 76% no exame (22 de 29), mas quase sempre porque não leu a frase; o veredito certo sai em 17 de 29 | **≥ 70%** (a mesa real: 78%) |
 | falha que dá «nada» | — | **≤ 10%** (a mesa real: 7%) |
 | o chamado muda quando a quest liga | — | **0 diferenças** |
 
@@ -226,3 +226,59 @@ como as peças hoje.
 3. **A etapa que fecha sem dado.** Este desenho aceita que uma conversa sem oposição feche uma etapa
    sem rolagem. Proposta: sim, com uma medida de autoria — nenhuma quest inteira sem ao menos uma
    cena com oposição.
+
+## 11. A primeira medida do exame (M2)
+
+**18/11/2026, rodada 1.** O exame é `testes/exame-do-mestre.json`: 295 itens sobre as 65 situações do
+estudo (`estudo-das-mesas.md` §8), com o veredito tirado das regras da mesa real (§6). As frases são
+nossas e foram escritas antes de abrir o catálogo; nenhuma está nos corpus que afinaram o Mestre.
+São 80 pares (a mesma frase em duas cenas com vereditos opostos; 70 com ação declarada) e 20 itens
+de dado espontâneo, medidos à parte. A suíte é `testes/teste-exame-do-mestre.mjs`.
+
+O Mestre recebe a frase como o jogo a passa (`lerAcao` → `porQueNaoChama`; o social pela escada do
+pedido) e, da cena, só o que tem porta hoje: a pessoa (relação, papel, segredo), o achado
+escondido, a armadilha em cena, a chuva, o escuro e o que o herói já sabe. Medo, pressa,
+testemunha, vigia, perigo e motivo para negar não têm porta e não vão.
+
+| medida | hoje | catraca |
+|---|---|---|
+| rola certo (275 itens com ação declarada) | **150 (55%)** | não desce de 150 |
+| pede onde a mesa não pediria | 26 de 126 (21%) | não sobe de 26 |
+| não pede onde a mesa pediria | **99 de 149 (66%)** | não sobe de 99 |
+| categoria (intenção) certa | 93 de 275 (34%) | não desce de 93 |
+| perícia certa, entre os que rolam dos dois lados | 41 de 50 (82%) | não desce de 41 |
+| dos 76 pedidos, com o preço dito antes (`oChamado`) | 65; os outros 11 vão pela escada social, sem chamado | — |
+| **pares em que o Mestre dá vereditos diferentes** | **2 de 70 (3%)** · acerta os dois lados em 2, só um em 68 | não desce de 2 |
+| espontâneos: rola certo | 10 de 20 (os 10 «não»; dos 10 que a mesa rolaria, pediu 0) | não desce de 10 |
+| por base: número · padrão · fraco | 56/92 (61%) · 79/148 (53%) · 15/35 (43%) | — |
+
+Por categoria (rola certo): perguntar 17/17 · logística 8/8 · arcano 15/21 · saber 17/29 ·
+procurar 26/49 · travessia 14/29 · convencer 13/29 · atuar 7/12 · intimidar 6/12 · furtar 6/11 ·
+esgueirar 4/13 · forçar 3/10 · ler a pessoa 2/7 · rastrear 3/7 · animal 1/4.
+
+**O que o exame mostra, em três buracos:**
+
+1. **O Mestre não lê o momento.** Em 68 dos 70 pares ele dá o mesmo veredito às duas cenas: «vou pé
+   ante pé pelo corredor» não rola com o guarda na outra ponta e não rolaria sem ele; «pulo o muro»
+   rola no muro seco e no molhado; «ameaço ele: ou fala ou apanha» rola contra o ladrãozinho já caído
+   e apavorado tanto quanto contra o contrabandista cercado de capangas. É o tamanho da lacuna que a
+   M4 (a cena) tem de fechar, e a régua de M3 tem de saber usar.
+2. **O catálogo não ouve a maior parte das frases.** 66% dos «rola» da mesa ficam sem dado, quase
+   todos porque `lerAcao` devolve nada: «reviro o quarto todo atrás de qualquer coisa», «encosto a
+   faca no pescoço dele e mando falar», «capitão, deixa a gente falar com o preso», «ela tá
+   mentindo?», «dá pra eu ler esse livro de feitiços?», «desço o muro pela corda». A intenção certa
+   cai de 73% no corpus para 34% aqui: o corpus mediu frases parecidas com as regras; o exame, frases
+   de jogador.
+3. **Quando ouve, pede onde a mesa não pede.** 21% dos «não rola» viram dado: a busca num quarto onde
+   não há nada (a casa rola uma vez de propósito, `fechaDepois`; a mesa real descreve), «eu abro o
+   baú» lido como tranca, «encosto o ouvido na porta» com a discussão aos gritos do outro lado, e a
+   intimidação de quem já está com medo.
+
+**A porta do oráculo não fecha a lacuna da busca.** A suíte mede também o Mestre com o mundo dizendo
+«não há nada» sempre que a cena não esconde nada: o número não muda (150), porque só três testes do
+catálogo perguntam ao mundo (escutar, ler a intenção, rastrear), e a busca não é um deles.
+
+**O que o exame não mede ainda:** a falha que dá «nada» (não há dado lançado), o chamado com a quest
+ligada (não há quest nas frases) e as declarações seguidas de dado numa sessão jogada — as três
+pedem jogo, não frase. O dado espontâneo fica medido à parte: hoje não há porta por onde o estado da
+cena chame o dado sozinho.
