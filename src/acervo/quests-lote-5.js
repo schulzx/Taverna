@@ -71,8 +71,12 @@ const O_PAO_QUE_SAI_DE_NOITE = quest({
     { id: "decisao", texto: "Decidir o que se faz com o que {crianca} alimenta",
       conclui: ["algum", ["derrotou", "papel:fera"], ["escolheu", "pao", "afastar"], ["escolheu", "pao", "isca"]],
       ramos: ["lamina", "afastar", "isca"] },
+    /* 17/11 (os dois becos da quest): o texto diz LEVAR e o facto não pedia a
+       criança — o jogador convidava-a, ninguém vinha, e o passo fechava (ou
+       não) por uma conversa com a mãe. Agora levar é levar: a criança no grupo
+       (o convite, que aceita quem o passo pede ao lado) e a conversa com a mãe */
     { id: "manha", texto: "Levar {crianca} de volta a {mae}",
-      conclui: ["todos", ["conversou", "papel:mae", 2], ["nenhum", ["esta_em", "lugar:covil"]]] },
+      conclui: ["todos", ["acompanha", "papel:crianca"], ["conversou", "papel:mae", 2], ["nenhum", ["esta_em", "lugar:covil"]]] },
   ],
   escolhas: {
     pao: { etapa: "decisao", opcoes: {

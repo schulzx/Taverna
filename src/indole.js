@@ -782,13 +782,54 @@ export const CONVITE_NA_FRASE = Object.freeze({
   ]),
   /* o tamanho mínimo do nome que conta, e da palavra dele */
   letras: 3,
+  /* A ORAÇÃO DO CONVITE (17/11, os dois becos da quest). «Convido Ylva a vir
+     comigo, de volta a casa de Wystan», com só o Wystan na cena (a Ylva fora
+     do EM CENA), registou «⚑ Wystan recusou»: o nome era procurado na frase
+     INTEIRA, e o único presente nomeado era o da casa para onde se ia. Agora
+     o convidado é quem a oração do verbo chama — do começo da frase até ao
+     fim do convite («Ylva, vem comigo»; «Convido Ylva a vir comigo»), mais o
+     vocativo solto depois da vírgula («Vem comigo, Ylva.»). Um nome dito ali
+     que não está em cena não convida ninguém — nem «o único da cena», que é
+     outra pessoa. `naoSaoNomes`: as palavras que abrem a frase com
+     maiúscula sem serem gente (os verbos do convite, o vocativo comum). */
+  naoSaoNomes: Object.freeze(["convido", "chamo", "venha", "vem", "vens", "anda", "ande", "viaje", "viaja", "siga", "segue",
+    "quer", "queres", "queira", "gostaria", "aceita", "aceitas", "topa", "topas", "junte-se", "junta-te", "acompanhe-me",
+    "acompanha-me", "eu", "voce", "tu", "entao", "olha", "ei", "por", "favor", "agora", "bem", "sim", "vamos", "digo",
+    "amigo", "amiga", "senhor", "senhora", "moco", "moca", "rapaz", "menina", "menino", "pequeno", "pequena", "velho", "velha"]),
 });
+
+/* o texto em minúsculas e sem acento, letra a letra — do MESMO tamanho do
+   original, para a oração achada num caber no outro */
+const alinhado = (s) => String(s || "").split("").map((ch) => { const x = ch.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); return x.length === 1 ? x : (x[0] || " "); }).join("");
+/* onde a palavra inteira `p` está em `s` (os dois já normalizados), ou -1 */
+const ondeEsta = (s, p) => {
+  if (!p) return -1;
+  for (let i = s.indexOf(p); i >= 0; i = s.indexOf(p, i + 1)) {
+    if (!/[a-z0-9]/.test(s.charAt(i - 1) || "") && !/[a-z0-9]/.test(s.charAt(i + p.length) || "")) return i;
+  }
+  return -1;
+};
+/* a oração do convite: [o original, o normalizado] — ou null */
+function aOracaoDoConvite(texto, rx) {
+  const o = String(texto || "");
+  const l = alinhado(o);
+  const m = rx.exec(l);
+  if (!m) return null;
+  const ini = Math.max(...[".", "!", "?", ";"].map((p) => l.lastIndexOf(p, m.index - 1))) + 1;
+  const fim = m.index + m[0].length;
+  const resto = o.slice(fim);
+  const k = resto.search(/[.!?;]/);
+  const voc = /^\s*,\s*([^,]+?)\s*$/.exec(k < 0 ? resto : resto.slice(0, k));
+  const vocativo = voc && /^\p{Lu}/u.test(voc[1]) ? voc[1] : "";
+  return [o.slice(ini, fim) + (vocativo ? " " + vocativo : ""), l.slice(ini, fim) + (vocativo ? " " + alinhado(vocativo) : "")];
+}
 
 export function conviteNaFrase(texto, opcoes) {
   const t = norm(texto);
   if (!t) return null;
   const C = CONVITE_NA_FRASE;
-  if (!C.convida.some((rx) => rx.test(t))) return null;
+  const rxConvite = C.convida.find((rx) => rx.test(t));
+  if (!rxConvite) return null;
   if (C.naoE.some((rx) => rx.test(t))) return null;
   const o = opcoes && typeof opcoes === "object" ? opcoes : {};
   const doGrupo = new Set((Array.isArray(o.grupo) ? o.grupo : []).map((g) => norm(g && typeof g === "object" ? g.nome : g)).filter(Boolean));
@@ -796,12 +837,21 @@ export function conviteNaFrase(texto, opcoes) {
     .map((p) => String((p && typeof p === "object" ? p.nome : p) || "").trim())
     .filter((n) => n.length >= C.letras && !doGrupo.has(norm(n)));
   const unicos = [...new Map(aqui.map((n) => [norm(n), n])).values()];
-  /* pelo nome inteiro, e depois pelo primeiro nome (o mais longo ganha) */
   const primeiro = (n) => norm(n).split(/[^a-z0-9]+/).filter(Boolean)[0] || "";
-  const palavras = new Set(t.split(/[^a-z0-9]+/).filter(Boolean));
-  const peloNome = [...unicos].sort((a, b) => b.length - a.length).find((n) => t.includes(norm(n)))
-    || unicos.find((n) => primeiro(n).length >= C.letras && palavras.has(primeiro(n)));
-  if (peloNome) return { nome: peloNome, porNome: true };
+  /* quem a oração do convite chama: o primeiro nome dela (o inteiro, ou o
+     primeiro nome da pessoa); nomeado e fora da cena, ninguém */
+  const oracao = aOracaoDoConvite(texto, rxConvite);
+  if (oracao) {
+    const [orig, nl] = oracao;
+    const achados = unicos.map((n) => {
+      const i = ondeEsta(nl, norm(n));
+      const j = primeiro(n).length >= C.letras ? ondeEsta(nl, primeiro(n)) : -1;
+      return { n, i: i >= 0 ? i : j };
+    }).filter((x) => x.i >= 0).sort((a, b) => a.i - b.i || b.n.length - a.n.length);
+    if (achados.length) return { nome: achados[0].n, porNome: true };
+    const ditos = (orig.match(/\p{Lu}[\p{L}'-]{2,}/gu) || []).map(norm).filter((w) => !C.naoSaoNomes.includes(w) && !doGrupo.has(w) && ![...doGrupo].some((g) => primeiro(g) === w));
+    if (ditos.length) return null;
+  }
   /* quem é do grupo e foi nomeado: já anda com o herói, não há convite */
   if ([...doGrupo].some((g) => g && t.includes(g))) return null;
   return unicos.length === 1 ? { nome: unicos[0], porNome: false } : null;

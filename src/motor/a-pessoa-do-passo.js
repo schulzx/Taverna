@@ -186,9 +186,16 @@ export const A_PESSOA_DO_PASSO = Object.freeze({
   /* (a 21.ª: a pessoa do passo de uma quest, `de: "quest"`, não está aqui
      de propósito — ver o cabeçalho) */
   /* A PESSOA DO PASSO DE UMA QUEST (a 20.ª, 13/11): os predicados da falta
-     que pedem a pessoa FRENTE A FRENTE — falar, consultar, encontrar. O
-     acompanhar e a afeição não: são de quem já anda com o herói */
-  daQuest: Object.freeze(["conversou", "consultou", "conheceu"]),
+     que pedem a pessoa FRENTE A FRENTE — falar, consultar, encontrar. A
+     afeição não: é de quem já anda com o herói.
+     O ACOMPANHAR SIM (17/11, os dois becos da quest): «Sair de {origem} com
+     {protegido}», «Levar {crianca} de volta a {mae}» pedem a pessoa no
+     grupo, e o único caminho do sistema para o grupo é o convite — que
+     pede a pessoa em cena. Fora daqui, ela só aparecia se a rotina a pusesse
+     no posto à hora certa (a prova jogada de 17/11: «Ylva está aqui», e Ylva
+     fora do EM CENA e sem botão). Quem já anda com o herói não entra: o
+     grupo sai antes (aPessoaDoPasso). */
+  daQuest: Object.freeze(["conversou", "consultou", "conheceu", "acompanha"]),
 });
 
 /* ONDE ANDA QUEM NÃO ESTÁ NO POSTO (04/11, a 17.ª sessão, defeito 3). A
@@ -397,7 +404,9 @@ function asMissoesDasQuests(e) {
       const nome = ehObj(c) ? limpo(c.nome) : "";
       if (!nome || etapas.some((x) => mesmo(x.alvo, nome))) continue;
       if (c.predicado && !A_PESSOA_DO_PASSO.daQuest.includes(c.predicado)) continue;
-      const [casa, cid] = l0 ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
+      /* quem o passo pede AO LADO está em casa dela (não no destino da escolta,
+         nem no desvio: lá só chega com o herói) */
+      const [casa, cid] = l0 && c.predicado !== "acompanha" ? [limpo(l0.nome), limpo(l0.cidade)] : [limpo(c.onde), limpo(c.cidade)];
       if (!casa && cid && limpo(e.cidadeAtual) && sem(cid) !== sem(e.cidadeAtual)) continue;
       etapas.push({ tipo: "falar_com", alvo: nome, onde: casa ? (cid ? `${casa}, em ${cid}` : casa) : "", feito: false,
         rotulo: limpo(c.rotulo), depois: limpo(p.depois) });

@@ -1591,7 +1591,11 @@ sec("§12 o acervo, lote 5 (BQ8) — cada quest por cada ramo, e a cobertura con
   const PAO = "o_pao_que_sai_de_noite";
   const ouvirMae = (e) => falar(e, "Ludovina");
   const seguir = (e) => avista(ir(e, COVA5), "Javali Negro");
-  const voltarAMae = (e) => falar(em(e, PRACA), "Ludovina");
+  /* MUDADA (17/11, os dois becos da quest): voltar à mãe era só falar com ela
+     longe do covil; «Levar {crianca} de volta a {mae}» passou a pedir a criança
+     ao lado (acompanha), porque o texto diz levar e o jogador a convidava sem
+     efeito. Voltar é agora levar o Tito junto e falar com a Ludovina. */
+  const voltarAMae = (e) => falar(em(juntar(e, { nome: "Tito" }), PRACA), "Ludovina");
   const a51 = g5(PAO, "lâmina poupando", [ouvirMae, seguir, (e) => lutar(e, { nome: "Javali Negro", rendido: true }), voltarAMae]);
   t("o Pão: ouvir quem conta os pães, seguir até ao bicho (visto, sem lhe falar), vencê-lo e poupá-lo, voltar — concluída",
     a51.R.estado === "concluida" && a51.R.feitas.decisao?.ramo === "lamina" && a51.R.feitas.decisao?.variante === "poupou", J(a51.R.feitas));
