@@ -80,7 +80,7 @@ que hoje está em dois lugares (`QUANDO_O_MESTRE_CHAMA` e a escada do pedido).
 
 | peso | efeito |
 |---|---|
-| **segredo** — a pessoa ou a coisa esconde algo | perguntar deixa de ser cortesia e passa a ter oposição |
+| **segredo** — a pessoa ou a coisa esconde algo | a busca rola (há o que achar); **a pergunta continua sem dado**, e a resposta sai evasiva ou falsa — o dado vem quando o jogador lê a pessoa ou pressiona (corrigido pelo estudo M1: 65 perguntas em 65 sem dado, `estudo-das-mesas.md` §5) |
 | **pressa** — algo acontece se demorar | a falha gasta tempo que o mundo cobra |
 | **testemunha** — alguém vê | a falha se espalha (fama, alarme) |
 | **vantagem ganha** — o jogador preparou o terreno | bônus no dado (é aqui que o calor entra, §6) |
@@ -88,9 +88,12 @@ que hoje está em dois lugares (`QUANDO_O_MESTRE_CHAMA` e a escada do pedido).
 **Não rola**, e diz por quê (a lista de hoje, mantida): não há obstáculo; o herói já sabe; o
 resultado é certo; o mundo disse que aquilo não existe; a luta tem o seu próprio dado.
 
-**O que muda para a conversa.** Perguntar a quem quer responder continua sem dado (é a «cortesia» e
-a «conversa» sem segredo). Pedir a quem tem motivo para negar passa pelo mesmo chamado de qualquer
-outra ação: perícia, número e o preço dito antes. A escada do pedido continua dando o número.
+**O que muda para a conversa.** Perguntar nunca rola: quem quer responder responde, e quem esconde
+algo desconversa ou mente (a cena sabe a verdade; o Narrador recebe a resposta evasiva pronta).
+**Pedir** a quem tem motivo para negar, **pressionar** e **ler a pessoa** passam pelo mesmo chamado de
+qualquer outra ação: perícia, número e o preço dito antes. A escada do pedido continua dando o
+número. As regras que a mesa real sustenta, com a força de cada uma, estão em
+`estudo-das-mesas.md` §6 — a régua de M3 parte delas.
 
 ## 4. A cena que o Mestre lê
 
