@@ -39,13 +39,20 @@
      revela    a cena já entrega o que se procuraria (o grito do outro lado)
      chama     o estado, ao aparecer, provoca um teste sozinho (o dado
                espontâneo, `oQueACenaChama` na régua): a perícia que chama
+   M5 (18/11/2026), «o treino» — quatro marcas que o exame pediu:
+     inerte    não nota, não responde, não resiste (o morto, o desacordado)
+     cobre     o céu não ajuda: sem sol nem estrela para se orientar
+     proprio   é do próprio herói: ele conhece, não há o que descobrir
+     escasso   é raro de achar: procurar custa, e a falha custa tempo
+     comum     é coisa de toda feira: saber dela não pede dado
    `efeito`: como o jogador sente o estado na narração — em PT-BR, sem o
    nome do mecanismo (lei «o sistema não fala de si mesmo»). */
 const E = (id, de, marcas, efeito, chama) => Object.freeze({
   id, de,
   opoe: !!marcas.opoe, cede: !!marcas.cede, facilita: !!marcas.facilita, esconde: !!marcas.esconde,
   pune: !!marcas.pune, espalha: !!marcas.espalha, nota: !!marcas.nota, apressa: !!marcas.apressa,
-  revela: !!marcas.revela, chama: chama || "", efeito,
+  revela: !!marcas.revela, inerte: !!marcas.inerte, cobre: !!marcas.cobre, proprio: !!marcas.proprio,
+  escasso: !!marcas.escasso, comum: !!marcas.comum, chama: chama || "", efeito,
 });
 
 export const ESTADOS_DA_CENA = Object.freeze([
@@ -58,6 +65,9 @@ export const ESTADOS_DA_CENA = Object.freeze([
   E("deve_favor", "pessoa", { facilita: true }, "lembra do que você fez por ela"),
   E("motivo_para_negar", "pessoa", { opoe: true }, "tem o que perder se disser sim"),
   E("do_grupo", "pessoa", { facilita: true }, "é dos seus, viaja com você"),
+  /* M5: quem não pode notar nem responder */
+  E("morta", "pessoa", { inerte: true }, "não se mexe, e não vai mais se mexer"),
+  E("desacordada", "pessoa", { inerte: true }, "respira, mas não está aqui"),
   /* criatura */
   E("faminta", "criatura", { opoe: true, pune: true }, "fareja o ar e baba"),
   E("acuada", "criatura", { opoe: true, pune: true }, "encolhida contra a parede, mostra os dentes"),
@@ -73,6 +83,11 @@ export const ESTADOS_DA_CENA = Object.freeze([
   E("armadilhado", "coisa", { esconde: true, pune: true }, "uma fresta fina demais, um fio que brilha"),
   E("ha_algo_escondido", "coisa", { esconde: true }, "algo ali não está como deveria"),
   E("suspeito", "coisa", { esconde: true }, "algo nele não parece certo"),
+  /* M5: a coisa do herói, a coisa rara, a coisa comum, o chão que trai */
+  E("do_heroi", "coisa", { proprio: true }, "é seu, você conhece cada canto"),
+  E("raro_de_achar", "coisa", { escasso: true }, "não é coisa que se ache em qualquer canto"),
+  E("coisa_comum", "coisa", { comum: true }, "coisa de toda feira, qualquer um conhece"),
+  E("escorregadio", "coisa", { pune: true }, "liso e molhado, não dá onde firmar"),
   /* a cena */
   E("com_pressa", "cena", { apressa: true }, "o tempo aperta"),
   E("com_testemunhas", "cena", { nota: true, espalha: true }, "há olhos em toda parte"),
@@ -81,6 +96,8 @@ export const ESTADOS_DA_CENA = Object.freeze([
   E("som_claro", "cena", { revela: true }, "dá para ouvir tudo daqui"),
   E("algo_se_aproxima", "cena", { pune: true }, "um galho estala perto demais", "percepcao"),
   E("assunto_raro", "cena", {}, "uma coisa que nem todo mundo reconheceria", "saberes"),
+  /* M5: o céu fechado */
+  E("ceu_encoberto", "cena", { cobre: true }, "nem sol nem estrela atravessam as nuvens"),
 ]);
 
 /* o lugar de cada um na cena, e a chave da lista */
@@ -131,6 +148,8 @@ const tem = (ser, marca) => !!ser && ser.estados.some((id) => (estadoPorId(id) |
 const todos = (c) => [...c.pessoas, ...c.criaturas, ...c.coisas];
 const daCena = (c, marca) => c.cena.estados.some((id) => (estadoPorId(id) || {})[marca]);
 const deFora = (p) => !p.estados.includes("do_grupo");
+/* M5: o morto e o desacordado estão em cena, mas não notam nem respondem */
+const vivo = (p) => !tem(p, "inerte");
 
 /* ---------------- O ALVO ----------------
    Sobre quem (ou o quê) a ação cai: `sobre` é "pessoa", "criatura" ou
@@ -158,8 +177,8 @@ export function haOposicao(cena, alvo = {}) {
   if (!c) return vazio;
   const a = alvoDaAcao(c, obj(alvo) ? alvo : {});
   if (!a) return vazio;
-  const opoe = tem(a, "opoe");
-  return Object.freeze({ opoe, cede: tem(a, "cede"), facilita: !opoe && tem(a, "facilita"), quem: a.nome || a.papel, estados: a.estados });
+  const opoe = tem(a, "opoe") && vivo(a);
+  return Object.freeze({ opoe, cede: tem(a, "cede"), facilita: !opoe && tem(a, "facilita"), inerte: !vivo(a), quem: a.nome || a.papel, estados: a.estados });
 }
 
 /* Há o que achar? Uma coisa que esconde (o compartimento, a armadilha). */
@@ -185,14 +204,14 @@ export function haPerigo(cena) {
 export function alguemPodeNotar(cena) {
   const c = lida(cena);
   if (!c) return false;
-  return daCena(c, "nota") || todos(c).some((x) => tem(x, "nota"))
-    || c.pessoas.some(deFora) || c.criaturas.some((x) => !tem(x, "facilita"));
+  return daCena(c, "nota") || todos(c).filter(vivo).some((x) => tem(x, "nota"))
+    || c.pessoas.some((p) => deFora(p) && vivo(p)) || c.criaturas.some((x) => vivo(x) && !tem(x, "facilita"));
 }
 
 /* Há quem assista de fora? (a plateia de uma encenação) */
 export function haPlateia(cena) {
   const c = lida(cena);
-  return !!c && (c.cena.estados.includes("com_testemunhas") || c.pessoas.some(deFora));
+  return !!c && (c.cena.estados.includes("com_testemunhas") || c.pessoas.some((p) => deFora(p) && vivo(p)));
 }
 
 /* A cena já entrega o que se procuraria? (o som claro do outro lado) */
@@ -218,6 +237,8 @@ export function custoDeFalhar(cena) {
    responde («recusa»), o resto responde («franca»). É sinal para o
    Narrador, nunca dado. */
 export const RESPOSTAS_DA_PERGUNTA = Object.freeze([
+  /* M5: o morto e o desacordado não respondem */
+  Object.freeze({ id: "silencio", se: "inerte", diz: "não responde: não pode" }),
   Object.freeze({ id: "recusa", se: "opoe", so: "hostil", diz: "não responde, ou responde com uma ameaça" }),
   Object.freeze({ id: "evasiva", se: "esconde", diz: "desconversa ou mente: a verdade fica guardada" }),
   Object.freeze({ id: "franca", se: "", diz: "responde o que sabe" }),
@@ -233,6 +254,15 @@ export function respostaDaPergunta(cena, quem = "") {
     if (r.so ? a.estados.includes(r.so) : tem(a, r.se)) return r;
   }
   return null;
+}
+
+/* M5: a cena (ou alguém, ou algo nela) carrega esta marca? É a pergunta
+   genérica das marcas novas (cobre, proprio, escasso, comum, inerte): a
+   régua pergunta por elas sem uma função para cada. */
+export function temMarca(cena, marca) {
+  const c = lida(cena);
+  if (!c || typeof marca !== "string") return false;
+  return daCena(c, marca) || todos(c).some((x) => tem(x, marca));
 }
 
 /* Os estados que, ao aparecerem, chamam um teste — na ordem da tabela. */

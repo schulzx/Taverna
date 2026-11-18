@@ -92,9 +92,19 @@ const SITUACOES = JSON.parse(fs.readFileSync(new URL("./corpus-das-situacoes.jso
    O piso da rodada 1, para comparar: hoje A 92 · 20 · 27 · cat 83 · per 47 ·
    pares 2 · esp 4; hoje B 79 · 15 · 42 · cat 50 · per 24 · pares 1 · esp 6;
    régua A 107 · 4 · 28 · cat 83 · per 46 · pares 16 · esp 7; régua B 86 · 4 ·
-   46 · cat 50 · per 22 · pares 9 · esp 10. */
+   46 · cat 50 · per 22 · pares 9 · esp 10.
+
+   MOVIDAS na M5 (18/11/2026, «o treino»), só a da régua e só para cima: a
+   régua ganhou a escuta da cena (a-escuta-da-cena.js), sete estados novos e
+   oito linhas, e a medida subiu nas duas metades sem o indevido subir. O de
+   hoje não mudou (nada da M5 toca o Mestre sem cena), e a catraca dele fica.
+   A régua da rodada 2, para comparar: A 126 · 4 · 37 · cat 91 · per 51 ·
+   pares 21 · esp 8; B 133 · 6 · 75 · cat 69 · per 32 · pares 15 · esp 24.
+   Seis itens da A trocaram a aproximação pelo estado novo (E155, E157:
+   coisa_comum; E166: do_heroi; E173, E175, E179: escorregadio no lugar de
+   perigo_fisico); nenhum item da B foi tocado. */
 const CATRACA_DO_EXAME = {
-  data: "2026-11-18 (rodada 2)",
+  data: "2026-11-18 (M5)",
   /* o de hoje com o catálogo antigo (ebf0f64), para comparar: A 75 · 11 · 53 ·
      cat 47 · per 21 · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 ·
      pares 1 · esp 6 */
@@ -103,8 +113,8 @@ const CATRACA_DO_EXAME = {
     B: { rolaCerto: 120, pedeIndevido: 22, deixaDePedir: 72, categoria: 69, pericia: 32, paresQueSeparam: 1, espontaneosCertos: 12 },
   },
   regua: {
-    A: { rolaCerto: 126, pedeIndevido: 4, deixaDePedir: 37, categoria: 91, pericia: 51, paresQueSeparam: 21, espontaneosCertos: 8 },
-    B: { rolaCerto: 133, pedeIndevido: 6, deixaDePedir: 75, categoria: 69, pericia: 32, paresQueSeparam: 15, espontaneosCertos: 24 },
+    A: { rolaCerto: 164, pedeIndevido: 0, deixaDePedir: 3, categoria: 147, pericia: 83, paresQueSeparam: 48, espontaneosCertos: 8 },
+    B: { rolaCerto: 162, pedeIndevido: 5, deixaDePedir: 47, categoria: 108, pericia: 54, paresQueSeparam: 37, espontaneosCertos: 24 },
   },
 };
 /* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje
@@ -232,7 +242,13 @@ function lerNoJogo(item, extraDoChamado) {
    - trancado, vigiado, armadilhado, o achado e a suspeita de armadilha são
      do lugar; pressa, testemunhas, perigo e o som claro são da cena. */
 const CRIATURA_DO_EXAME = /\b(cavalo|egua|lobo|corvo|cao|cachorro|fera|urso|mula)\b/;
-const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar", "do_grupo"];
+const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar", "do_grupo", "morta", "desacordada"];
+/* M5 (18/11/2026): dois estados que o exame dizia por campo estruturado, e
+   não por nota — o papel de quem está («guarda morto») e o clima («neve
+   fechada»). O jogo os terá pelo estado da pessoa e pelo tempo do dia; aqui
+   saem do campo, como a criatura sai do papel (CRIATURA_DO_EXAME). */
+const MORTO_DO_EXAME = /\b(morto|morta|mortos|mortas|cadaver|defunto)\b/;
+const CEU_ENCOBERTO_DO_EXAME = /\b(neve|nevasca|neblina|nevoa|nublad\w*|encobert\w*|tempestade|cerracao|chuva)\b/;
 const NA_CRIATURA = { com_medo: "assustada", disposta: "mansa", hostil: "territorial" };
 const DO_LUGAR = { trancado: "trancado", vigiado: "vigiado", armadilhado: "armadilhado", ha_algo_escondido: "ha_algo_escondido", suspeita_de_armadilha: "suspeito" };
 const DA_CENA = ["com_pressa", "com_testemunhas", "perigo_fisico"];
@@ -245,11 +261,13 @@ function cenaDoExame(c) {
     const estados = [];
     if (/companheiro/.test(nrm(q))) estados.push("do_grupo");
     if (k === 0) for (const s of DE_PESSOA) if (c[s] === true) estados.push(ehBicho ? NA_CRIATURA[s] : s);
+    if (!ehBicho && MORTO_DO_EXAME.test(nrm(q)) && !estados.includes("morta")) estados.push("morta");
     (ehBicho ? criaturas : pessoas).push({ nome: q, papel: q, estados: estados.filter(Boolean) });
   });
   const doLugar = Object.keys(DO_LUGAR).filter((k) => c[k] === true).map((k) => DO_LUGAR[k]);
   const daCena = DA_CENA.filter((k) => c[k] === true);
   if (String(c.som || "") === "claro") daCena.push("som_claro");
+  if (CEU_ENCOBERTO_DO_EXAME.test(nrm(c.clima || ""))) daCena.push("ceu_encoberto");
   /* rodada 2: todo estado da tabela escrito na cena vai ao seu dono (a
      coisa é o lugar, o da cena é da cena, o da criatura é do primeiro bicho);
      os de pessoa já foram, acima, ao primeiro de `quem` */
@@ -274,14 +292,20 @@ function lerComRegua(item) {
   const cena = cenaDoExame(c);
   if (r.por === "luta") return { ...r, porRegua: "luta" };
   let veredito = null;
-  try { veredito = valeRolagem(r.v || null, cena, ctxDoChamado(it)); } catch { veredito = null; }
-  let pede = !!(veredito && veredito.rola), pericia = r.pericia, porRegua = veredito ? veredito.porque : "erro";
+  /* M5: a régua recebe também a frase e o contexto da leitura, para a escuta
+     da cena (a-escuta-da-cena.js) ouvir o que o catálogo não ouviu; o que ela
+     ouviu passa a ser o rótulo e a perícia deste Mestre */
+  try { veredito = valeRolagem(r.v || null, cena, { ...ctxDoChamado(it), frase: it ? it.frase : "", leitura: ctxDe(it) }); } catch { veredito = null; }
+  const ouviu = veredito && veredito.ouviu;
+  let rot = r.rot;
+  if (ouviu) { rot = ouviu.id; if (ouviu.id === "improviso") { const p = String(ouviu.chave || "").split("|"); rot = "imp_" + p[p.indexOf("improviso") + 1]; } }
+  let pede = !!(veredito && veredito.rola), pericia = ouviu ? ouviu.pericia : r.pericia, porRegua = veredito ? veredito.porque : "erro";
   if (it && it.espontaneo && !pede) {
     let chama = null;
     try { chama = oQueACenaChama({ coisas: [{ nome: c && c.lugar, estados: [] }] }, cena); } catch { chama = null; }
     if (chama) { pede = true; pericia = chama.pericia; porRegua = "espontaneo:" + chama.estado; }
   }
-  return { ...r, pede, pericia, porRegua };
+  return { ...r, rot, pede, pericia, porRegua: (ouviu ? ouviu.porta + ":" : "") + porRegua };
 }
 
 /* ---------------- A MEDIDA ---------------- */

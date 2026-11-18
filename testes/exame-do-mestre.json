@@ -3547,7 +3547,8 @@
    "situacao": 39,
    "cena": {
     "lugar": "feira",
-    "nota": "amuleto de proteção comum, vendido em toda feira"
+    "nota": "amuleto de proteção comum, vendido em toda feira",
+    "coisa_comum": true
    },
    "frase": "sei quem faz esse tipo de amuleto de proteção?",
    "esperado": {
@@ -3589,7 +3590,8 @@
    "situacao": 39,
    "cena": {
     "lugar": "feira",
-    "nota": "amuleto de proteção comum, vendido em toda feira"
+    "nota": "amuleto de proteção comum, vendido em toda feira",
+    "coisa_comum": true
    },
    "frase": "quem fabrica uma proteção dessas?",
    "esperado": {
@@ -3770,7 +3772,8 @@
    "situacao": 42,
    "cena": {
     "lugar": "acampamento",
-    "nota": "é o grimório do próprio herói"
+    "nota": "é o grimório do próprio herói",
+    "do_heroi": true
    },
    "frase": "dá pra eu ler esse livro de feitiços?",
    "esperado": {
@@ -3930,7 +3933,7 @@
     "com_pressa": false,
     "clima": "chuva",
     "nota": "muro liso e molhado",
-    "perigo_fisico": true
+    "escorregadio": true
    },
    "frase": "pulo o muro",
    "esperado": {
@@ -3977,7 +3980,7 @@
     "com_pressa": false,
     "clima": "chuva",
     "nota": "muro liso e molhado",
-    "perigo_fisico": true
+    "escorregadio": true
    },
    "frase": "escalo o muro pra entrar no quintal",
    "esperado": {
@@ -4069,7 +4072,7 @@
     "com_pressa": false,
     "clima": "chuva",
     "nota": "muro liso e molhado",
-    "perigo_fisico": true
+    "escorregadio": true
    },
    "frase": "dá pra eu escalar o muro?",
    "esperado": {

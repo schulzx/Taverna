@@ -18,7 +18,7 @@ import { TAMANHOS_DO_PEDIDO } from "../src/social.js";
 import { porQueNaoChama } from "../src/motor/o-mestre-chama.js";
 import {
   FAMILIA_DO_DESAFIO, FAMILIA_DO_IMPROVISO, familiaDaAcao, PERGUNTA_DA_ESCADA, CEDE_COM_MEDO, REGUA_DO_MOMENTO,
-  valeRolagem, PORQUE_DO_ESPONTANEO, oQueACenaChama,
+  valeRolagem, PORQUE_DO_ESPONTANEO, oQueACenaChama, FAMILIAS_DA_CONVERSA, FAMILIAS_DO_SABER,
 } from "../src/motor/a-regua-do-momento.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
@@ -172,6 +172,50 @@ sec("6. o módulo é puro, e não estoura com lixo");
   const antes = JSON.stringify(c);
   const a = vale("tento convencer o guarda a me deixar passar", c), b = vale("tento convencer o guarda a me deixar passar", c);
   t("mesma frase e mesma cena, mesmo veredito; a cena não é mutada", JSON.stringify(a) === JSON.stringify(b) && JSON.stringify(c) === antes);
+}
+
+sec("M5. o treino: as linhas novas e a escuta da cena (18/11/2026)");
+{
+  const ouve = (frase, cena, ctx) => valeRolagem(ler(frase), cena, { ...(ctx || {}), frase, leitura: CTX });
+  t("as famílias da conversa e do saber são famílias da régua", [...FAMILIAS_DA_CONVERSA, ...FAMILIAS_DO_SABER].every((f) => Object.values(FAMILIA_DO_DESAFIO).includes(f)));
+  /* a escuta só existe com cena: sem cena, a frase é ignorada e o Mestre é o de hoje */
+  const semCena = valeRolagem(ler("dá pra eu trepar na árvore?"), null, { frase: "dá pra eu trepar na árvore?", leitura: CTX });
+  t("sem cena, a frase não muda nada (a escuta não corre)", semCena.porque === (porQueNaoChama(ler("dá pra eu trepar na árvore?"), {}) || "chama") && !("ouviu" in semCena));
+  /* a moldura */
+  const mold = ouve("será que consigo escalar a torre?", cenaDe({ cena: { estados: ["perigo_fisico"] } }));
+  t("a moldura sai e o ato de dentro é lido: com perigo, rola", mold.rola && mold.ouviu && mold.ouviu.id === "escalar" && mold.ouviu.porta === "moldura", JSON.stringify(mold.ouviu));
+  t("a mesma moldura num chão calmo não rola", ouve("será que consigo escalar a torre?", cenaDe({})).porque === "travessiaCalma");
+  /* a fala que pede */
+  const pedido = "eu te pago o dobro se você abrir o portão";
+  t("o pedido sem verbo de conversa, a quem tem motivo para negar, rola", ouve(pedido, cenaDe({ pessoas: [P("porteiro", "motivo_para_negar")] })).porque === "motivoParaNegar");
+  t("o mesmo pedido a um estranho sem motivo não rola (a fala ouvida pela escuta é a leitura mais fraca)", ouve(pedido, cenaDe({ pessoas: [P("porteiro")] })).porque === "falaSemOposicao");
+  t("o mesmo pedido sem ninguém em cena não é ouvido", ouve(pedido, cenaDe({})).porque === "naoETeste");
+  /* o morto */
+  t("quem ouviria não pode responder: sem dado", ouve(pedido, cenaDe({ pessoas: [P("porteiro", "motivo_para_negar", "morta")] })).rola === false);
+  const fur = "surrupio a bolsa do cinto dele";
+  t("a mão leve com alguém que pode notar rola", vale(fur, cenaDe({ pessoas: [P("mercador")] })).rola);
+  t("a mão leve no morto não rola: ninguém nota", vale(fur, cenaDe({ pessoas: [P("mercador", "morta")] })).porque === "maoLeveSemOlhos");
+  /* o céu */
+  const ceu = "leio o céu para achar o rumo";
+  t("orientar-se com o céu encoberto rola", vale(ceu, cenaDe({ cena: { estados: ["ceu_encoberto"] } })).porque === "ceuEncoberto");
+  t("orientar-se com o céu à vista, sem perigo nem pressa, não rola", vale(ceu, cenaDe({})).porque === "ceuAVista");
+  t("com pressa, orientar-se rola mesmo com o céu à vista", vale(ceu, cenaDe({ cena: { estados: ["com_pressa"] } })).rola);
+  /* a coisa do herói, a de toda feira, a rara */
+  t("examinar a magia da coisa do próprio herói não rola", vale("examino o selo para reconhecer a magia", cenaDe({ coisas: [{ nome: "selo", estados: ["do_heroi"] }] })).porque === "doProprioHeroi");
+  t("lembrar o que é coisa de toda feira não rola", vale("o que eu sei sobre a ponte velha?", cenaDe({ coisas: [{ nome: "ponte", estados: ["coisa_comum"] }] })).porque === "coisaComum");
+  t("procurar a coisa rara de achar rola; a comum, sem nada escondido, não", vale("vasculho o mercado", cenaDe({ coisas: [{ nome: "mercado", estados: ["raro_de_achar"] }] })).rola
+    && !vale("vasculho o mercado", cenaDe({})).rola);
+  /* o que a ficha já sabe, em qualquer desafio de saber */
+  const sab = "tento lembrar se troll tem medo de fogo";
+  const vSab = ler(sab);
+  t("o saber que a ficha já tem cala também a fraqueza (não só o lembrar)", vSab && vSab.id === "fraqueza"
+    && valeRolagem(vSab, cenaDe({}), { frase: sab, saber: { factos: ["troll"] } }).porque === "jaSabeOAssunto"
+    && valeRolagem(vSab, cenaDe({}), { frase: sab }).rola, vSab && vSab.id);
+  /* o discurso lido pelo improviso é conversa: quem já quer, cede */
+  const disc = "faço um discurso inflamado para a vila";
+  const vDisc = ler(disc);
+  t("o discurso que o catálogo leu pela Presença passa pela conversa: com quem está disposto, não rola", vDisc && vDisc.tipo === "teste"
+    && valeRolagem(vDisc, cenaDe({ pessoas: [P("aldeões", "disposta")] }), {}).porque === "dispostoCede", vDisc && vDisc.id);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

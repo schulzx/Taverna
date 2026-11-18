@@ -8,7 +8,7 @@ import fs from "node:fs";
 import {
   ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, lerCena, alvoDaAcao, haOposicao, haOQueAchar, haSegredo,
   haPerigo, alguemPodeNotar, haPlateia, cenaRevela, custoDeFalhar, RESPOSTAS_DA_PERGUNTA, respostaDaPergunta,
-  estadosQueChamam,
+  estadosQueChamam, temMarca,
 } from "../src/cena-do-momento.js";
 import { PERICIAS } from "../src/pericias.js";
 
@@ -110,7 +110,11 @@ sec("4. as perguntas da régua");
 
 sec("5. a pergunta não rola: a resposta");
 {
-  t("a tabela de respostas: recusa, evasiva, franca (a última sem condição)", igual(RESPOSTAS_DA_PERGUNTA.map((r) => r.id), ["recusa", "evasiva", "franca"]) && RESPOSTAS_DA_PERGUNTA[2].se === "");
+  /* MOVIDO na M5 (18/11/2026): eram três respostas (recusa, evasiva, franca).
+     A M5 pôs à frente o «silêncio» — o morto e o desacordado não respondem,
+     e isso vem antes de qualquer humor. A intenção fica: a última é a franca,
+     sem condição, e nenhuma pergunta fica sem resposta. */
+  t("a tabela de respostas: silêncio, recusa, evasiva, franca (a última sem condição)", igual(RESPOSTAS_DA_PERGUNTA.map((r) => r.id), ["silencio", "recusa", "evasiva", "franca"]) && RESPOSTAS_DA_PERGUNTA[3].se === "");
   t("quem esconde desconversa", respostaDaPergunta(cenaDe({ pessoas: [P("viúva", "esconde_algo", "com_medo")] })).id === "evasiva");
   t("quem é hostil recusa", respostaDaPergunta(cenaDe({ pessoas: [P("contrabandista", "hostil", "esconde_algo")] })).id === "recusa");
   t("o resto responde", respostaDaPergunta(cenaDe({ pessoas: [P("taverneiro", "disposta")] })).id === "franca");
@@ -127,6 +131,27 @@ sec("7. o módulo é puro");
 {
   const src = fs.readFileSync(new URL("../src/cena-do-momento.js", import.meta.url), "utf8");
   t("sem sorteio, sem relógio, sem React", !/Math\.random|Date\.now|new Date|from "react"/.test(src));
+}
+
+sec("M5. os estados que o exame pediu (18/11/2026)");
+{
+  const ids = ["ceu_encoberto", "morta", "desacordada", "do_heroi", "raro_de_achar", "coisa_comum", "escorregadio"];
+  t("os sete estados novos existem, cada um do seu dono", ids.every((id) => estadoPorId(id))
+    && estadoPorId("ceu_encoberto").de === "cena" && estadoPorId("morta").de === "pessoa" && estadoPorId("desacordada").de === "pessoa"
+    && ["do_heroi", "raro_de_achar", "coisa_comum", "escorregadio"].every((id) => estadoPorId(id).de === "coisa"));
+  t("cada um diz o que significa para a régua (uma marca)", estadoPorId("ceu_encoberto").cobre && estadoPorId("morta").inerte && estadoPorId("desacordada").inerte
+    && estadoPorId("do_heroi").proprio && estadoPorId("raro_de_achar").escasso && estadoPorId("coisa_comum").comum && estadoPorId("escorregadio").pune);
+  const morto = cenaDe({ pessoas: [P("bandido", "morta")] });
+  t("o morto não nota quem se esgueira nem quem lhe tira a bolsa", alguemPodeNotar(morto) === false);
+  t("o desacordado também não; o vivo que dorme sim", alguemPodeNotar(cenaDe({ pessoas: [P("guarda", "desacordada")] })) === false && alguemPodeNotar(cenaDe({ pessoas: [P("bêbado adormecido")] })) === true);
+  t("o morto não é plateia", haPlateia(morto) === false);
+  t("o morto não responde: silêncio, antes do humor", respostaDaPergunta(cenaDe({ pessoas: [P("guarda", "hostil", "morta")] })).id === "silencio");
+  t("o morto hostil não se opõe a nada, e a oposição diz que é inerte", haOposicao(cenaDe({ pessoas: [P("guarda", "hostil", "morta")] })).opoe === false && haOposicao(morto).inerte === true);
+  t("o muro escorregadio pune o corpo", haPerigo(cenaDe({ coisas: [{ nome: "muro", estados: ["escorregadio"] }] })) === true);
+  t("temMarca acha a marca na cena, na coisa ou na pessoa; null e lixo dão falso", temMarca(cenaDe({ cena: { estados: ["ceu_encoberto"] } }), "cobre")
+    && temMarca(cenaDe({ coisas: [{ nome: "grimório", estados: ["do_heroi"] }] }), "proprio") && temMarca(morto, "inerte")
+    && !temMarca(null, "cobre") && !temMarca(cenaDe({}), "cobre") && !temMarca(morto, 42));
+  t("todo estado novo tem efeito em PT-BR, sem o nome do mecanismo", ids.every((id) => { const e = estadoPorId(id).efeito; return typeof e === "string" && e.length > 8 && !e.includes(id) && !/\b(tu|teu|tua)\b/.test(e); }));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);
