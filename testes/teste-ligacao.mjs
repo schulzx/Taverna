@@ -474,6 +474,16 @@ sec("1. NENHUM MÓDULO MUDO");
     /* e paga na MESMA leva (11/11, oficial): o App.jsx importa-o (o estancar
        com quem, as horas do caído no relógio) e a pauta do turno também (a
        linha e o veto). A entrada saiu. */
+    /* 18/11 (o preparo da fiação do Mestre novo, backend): `a-cena-do-jogo.js`
+       nasce — `cenaDoJogo` (o retrato do jogo → a cena que a régua lê, cada
+       estado pela sua fonte em DERIVACAO_DA_CENA), `chamadoDoMomento` (a
+       chamada única: catálogo → cena → régua → o chamado, a conversa
+       incluída) e `chamadoQueOMundoProvoca` (o dado espontâneo). Espera o
+       `oficial`, que o liga no App.jsx atrás da chave do Mestre novo, pelo
+       roteiro de mente/lancamento/o-mestre-vivo.md §15. Credor: o `oficial`,
+       na etapa seguinte. A entrada sai quando o App o importar.
+       `teste-a-cena-do-jogo.mjs` é o primeiro leitor. */
+    "a-cena-do-jogo.js": "o oficial, na fiação do Mestre novo (o-mestre-vivo.md §15)",
   };
   const mudos = [];
   for (const f of arqs) {
@@ -617,8 +627,13 @@ sec("2b. O MOTOR (src/motor/) — a mesma catraca, uma pasta abaixo");
      com a cena escrita pelo mundo. A entrada sai quando o App (ou uma peça
      do motor) o importar. Leitores hoje: teste-a-regua-do-momento.mjs e
      teste-exame-do-mestre.mjs. */
+  /* 18/11 (o preparo da fiação, backend): a entrada de `a-regua-do-momento.js`
+     SAIU — quem a importa agora é `src/a-cena-do-jogo.js` (a ponte entre o
+     retrato do jogo e a cena), que leva a régua ao App numa chamada só
+     (`chamadoDoMomento`). A dívida não sumiu: mudou de casa. Quem espera o
+     App é `a-cena-do-jogo.js`, na lista AGUARDANDO da secção 1, com o mesmo
+     credor (o-mestre-vivo.md §15). A lista volta a ficar VAZIA. */
   const ESPERA_DO_MOTOR = {
-    "a-regua-do-momento.js": "a fiação no App, atrás de chave (o-mestre-vivo.md §12)",
   };
   const todos = [...Object.values(fonte), ...Object.values(fonteM)];
   /* 03/11 (etapa 2 do Narrador ator), MUDADA E O MOTIVO: a régua só via o

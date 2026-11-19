@@ -136,8 +136,23 @@ sec("3. sem cena não há escuta; lixo não estoura");
   t("frase vazia, null e lixo devolvem null", ["", "   ", null, 42, {}].every((f) => escutarComCena(f, cenaDe({}), CTX) === null));
   t("leitura null não estoura", escutarComCena("reviro a despensa", cenaDe({}), null) !== undefined);
   t("a mesma frase e a mesma cena dão o mesmo veredito", JSON.stringify(ouve("reviro a despensa", cenaDe({}))) === JSON.stringify(ouve("reviro a despensa", cenaDe({}))));
-  const src = fs.readFileSync(new URL("../src/motor/a-escuta-da-cena.js", import.meta.url), "utf8");
-  t("sem sorteio, sem relógio, sem React", !/Math\.random|Date\.now|new Date|from "react"/.test(src));
+  /* 18/11 (preparo da fiação, MUDADA E O MOTIVO): esta asserção lia o TEXTO
+     do módulo (readFileSync + regex), e teste-assercoes-de-texto proíbe ler o
+     texto de src/motor/ — o motor se prova jogando. A intenção fica: o módulo
+     não sorteia nem lê o relógio. Agora prova-se pelo comportamento: Math.random
+     e Date.now trocados por espiões que contam, o módulo jogado, e nenhuma
+     chamada. (O «sem React» já se prova pelo próprio import em Node; o
+     «new Date» não se espiona sem trocar o construtor global, e a repetição
+     idêntica, provada nesta mesma secção, cobre o que ele mudaria.) */
+  const sorte0 = Math.random, agora0 = Date.now;
+  let tocou = 0;
+  Math.random = () => { tocou++; return 0.5; };
+  Date.now = () => { tocou++; return 0; };
+  try {
+    for (const f of ["dá pra eu escalar a árvore?", "reviro a despensa", "vou tentar convencer o guarda", "consigo ouvir o que dizem?", "mando uma percepção"])
+      for (const c of [cenaDe({}), cenaDe({ pessoas: [P("guarda", "desconfiada")], coisas: [{ nome: "lugar", estados: ["ha_algo_escondido"] }] })]) escutarComCena(f, c, CTX);
+  } finally { Math.random = sorte0; Date.now = agora0; }
+  t("sem sorteio, sem relógio: a escuta jogada nunca chama Math.random nem Date.now", tocou === 0, String(tocou));
 }
 
 sec("4. a catraca dos nossos corpus");

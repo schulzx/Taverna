@@ -160,8 +160,25 @@ sec("5. o dado espontâneo");
 
 sec("6. o módulo é puro, e não estoura com lixo");
 {
-  const src = fs.readFileSync(new URL("../src/motor/a-regua-do-momento.js", import.meta.url), "utf8");
-  t("sem sorteio, sem relógio, sem React", !/Math\.random|Date\.now|new Date|from "react"/.test(src));
+  /* 18/11 (preparo da fiação, MUDADA E O MOTIVO): esta asserção lia o TEXTO
+     do módulo (readFileSync + regex), e teste-assercoes-de-texto proíbe ler o
+     texto de src/motor/ — o motor se prova jogando. A intenção fica: o módulo
+     não sorteia nem lê o relógio. Agora prova-se pelo comportamento: Math.random
+     e Date.now trocados por espiões que contam, o módulo jogado, e nenhuma
+     chamada. (O «sem React» já se prova pelo próprio import em Node; o
+     «new Date» não se espiona sem trocar o construtor global, e a repetição
+     idêntica, provada nesta mesma secção, cobre o que ele mudaria.) */
+  const sorte0 = Math.random, agora0 = Date.now;
+  let tocou = 0;
+  Math.random = () => { tocou++; return 0.5; };
+  Date.now = () => { tocou++; return 0; };
+  try {
+    const cs = [cenaDe({}), cenaDe({ pessoas: [P("guarda", "desconfiada")], cena: { estados: ["perigo_fisico", "algo_se_aproxima"] } })];
+    for (const f of ["tento convencer o guarda a me deixar passar", "vasculho o baú", "escalo o muro", "o frasco sobreviveu?", "posso me esgueirar até a porta?"])
+      for (const c of cs) valeRolagem(ler(f), c, { frase: f, leitura: CTX });
+    oQueACenaChama(cs[0], cs[1]); oDadoDoDestino("s", "o frasco sobreviveu?");
+  } finally { Math.random = sorte0; Date.now = agora0; }
+  t("sem sorteio, sem relógio: a régua jogada nunca chama Math.random nem Date.now", tocou === 0, String(tocou));
   let estourou = false;
   try {
     for (const v of [undefined, null, 42, "x", {}, { tipo: "teste" }, { tipo: "teste", id: "buscar", dc: 13 }])

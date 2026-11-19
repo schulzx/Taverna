@@ -296,7 +296,13 @@ export function ePerguntaDoDestino(frase, cena) {
      `porque`: o id da linha que decidiu (do Mestre de hoje, ou da régua);
      `pesos`: o que pesa no número e no preço (null sem cena);
      `resposta`: para a pergunta que não rola, como a pessoa responde
-       (franca, evasiva, recusa) — sinal para o Narrador, nunca dado. */
+       (franca, evasiva, recusa) — sinal para o Narrador, nunca dado.
+   Preparo da fiação (18/11/2026, o-mestre-vivo.md §15): COM cena, vem
+   também `veredito` — o veredito inteiro que a régua julgou (o do
+   catálogo, o que a escuta ouviu, ou o do ato da frase encadeada), com o
+   `dc`, o `social` e a `pessoa`, para o App o passar a `oChamado` sem
+   chamar a escuta de novo (`null` no dado do destino). Campo aditivo: nada
+   do que já se media muda. Sem cena, a resposta fica a de hoje, byte a byte. */
 export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
   const c = obj(ctx) ? ctx : {};
   const lida = lerCena(cena);
@@ -332,7 +338,7 @@ function decidir(vereditoDoCatalogo, lida, c) {
   if ((!veredito || veredito.tipo !== "teste") && typeof c.frase === "string" && ePerguntaDoDestino(c.frase, lida)) {
     const destino = oDadoDoDestino(obj(c.leitura) ? c.leitura.semente : "", c.frase);
     return Object.freeze({ rola: true, porque: "destino", diz: "a sorte decide: o Mestre rola sem perícia", pesos, resposta: null,
-      ouviu: Object.freeze({ id: "destino", pericia: "", chave: "", porta: "destino" }), destino, moldura });
+      ouviu: Object.freeze({ id: "destino", pericia: "", chave: "", porta: "destino" }), destino, moldura, veredito: null });
   }
   /* M5: o catálogo não ouviu ato nenhum — a escuta da cena tenta pela
      estrutura da frase (`ctx.frase`, lida com `ctx.leitura`, o contexto de
@@ -354,7 +360,7 @@ function decidir(vereditoDoCatalogo, lida, c) {
     try { cala = !!r.cala(veredito, c); } catch { cala = true; }
     if (cala) {
       const resposta = r.id === "naoETeste" ? respostaDaPergunta(lida, "") : null;
-      return Object.freeze({ rola: false, porque: r.id, diz: r.porque, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura });
+      return Object.freeze({ rola: false, porque: r.id, diz: r.porque, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura, veredito: veredito || null });
     }
   }
   const v = veredito;
@@ -373,10 +379,10 @@ function decidir(vereditoDoCatalogo, lida, c) {
     try { vale = !!r.quando(x); } catch { vale = false; }
     if (vale) {
       const resposta = r.id === "pergunta" ? respostaDaPergunta(lida, quem) : null;
-      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura });
+      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura, veredito: v });
     }
   }
-  return Object.freeze({ rola: true, porque: "comoSempre", diz: "", pesos, resposta: null, ouviu, moldura });
+  return Object.freeze({ rola: true, porque: "comoSempre", diz: "", pesos, resposta: null, ouviu, moldura, veredito: v });
 }
 
 /* ---------------- O DADO ESPONTÂNEO ----------------

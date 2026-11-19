@@ -651,3 +651,159 @@ Narrador, nunca o dado direto):
 | `heroi_penalizado` | as condições do herói (bêbado, ferido, exausto) |
 
 É campo novo e aditivo; a versão antiga o ignora.
+
+## 15. A cena do jogo (o preparo da fiação)
+
+**18/11/2026, módulo puro + suíte, sem tocar no App.** Faltava quem montasse a cena a partir do estado
+real do jogo. Agora é `src/a-cena-do-jogo.js`:
+
+- `cenaDoJogo(retrato)` → a cena no formato que a régua lê, ou `null` quando o retrato não diz onde o
+  herói está (sem `lugar`, `cidade`, `jornada`, `masmorra` nem `encontro`) — e aí o jogo fica como hoje.
+- `chamadoDoMomento(frase, leitura, retrato, ctx)` → `{ rola, chamado | null, porque, diz, resposta,
+  espontaneo: null, destino | null, cena, veredito, pesos, ouviu }`. O `chamado` tem a forma de `oChamado`,
+  **a conversa incluída**: a que rola ganha o número da escada do pedido e o preço dito antes
+  (`O_CHAMADO_DA_CONVERSA`: «Se falhar, a resposta é não, e pedir igual não muda nada.» — é o que o livro de
+  tentativas de fato cobra; a relação que piora não é cobrada pelo jogo, e o aviso não a promete).
+- `chamadoQueOMundoProvoca(retratoAntes, retratoDepois)` → `{ pericia, estado, porque, chamado }` | null: o
+  dado espontâneo, com a cara de `chamadoDaRolagem`, contra o degrau «comum» da tabela de dificuldades, o
+  preço que falhar É (não perceber, ser notado, não lembrar) e uma chave própria (`espontaneo|<estado>`):
+  o livro de tentativas não ganha uma busca que o jogador não fez.
+- `valeRolagem` ganhou um campo **aditivo**, `veredito`: com cena, o veredito inteiro que a régua julgou (o
+  do catálogo, o que a escuta ouviu, ou o do ato da frase encadeada — com `dc`, `social` e `pessoa`); `null`
+  no destino. Sem cena a resposta segue a de hoje, byte a byte. O exame saiu **idêntico** antes e depois
+  (régua A 346/381, B 158/196; indevido 2 e 6; pares 97 e 54).
+
+### 15.1 De onde vem cada estado (`DERIVACAO_DA_CENA`)
+
+A tabela é do módulo, e a suíte prova cada linha com um retrato que a acende e um que não.
+
+| estado | de onde vem no jogo |
+|---|---|
+| `disposta` · `desconfiada` · `hostil` | a relação do NPC na escada (`social.js`): um laço acima do «neutro» · rival · inimigo; e o inimigo de pé na luta é hostil |
+| `com_medo` | o inimigo que se rendeu (`rendido`, sem-espada) ou a condição `amedrontado` |
+| `esconde_algo` | quem do lugar sabe o que a espinha guarda (`segredosGuardados(...).gente`), ou quem a **etapa da quest declara** que esconde |
+| `deve_favor` | o livro de fatos guarda um `favor` deste lugar, e a pessoa é do posto (`doSitio`) |
+| `do_grupo` | os companheiros da ficha |
+| `morta` | o status sem volta (`estadoSemVolta`), ou o inimigo caído sem ter sido poupado |
+| `desacordada` · `moribunda` | o poupado do golpe final; o companheiro caído estável · a sangrar (`caidosDoGrupo`) |
+| `dormindo` | a rotina da pessoa a esta hora (`DORMINDO`, gente-por-dentro) |
+| `ferida` · `assustada` | a vida do inimigo abaixo da máxima · `amedrontado` (ou o bicho rendido) |
+| `territorial` | a besta do confronto da quest, com o herói no covil (`passo.confronto` + `noLugarDoPasso`) |
+| `trancado` | fora da masmorra, a tranca que o mundo deriva de toda porta (`trancaDe`); na masmorra, só a sala de enigma por abrir; e o que a etapa declara trancado |
+| `vigiado` | só o que a etapa declara (o mundo não guarda a ronda) |
+| `armadilhado` · `ha_algo_escondido` | a sala de armadilha que não disparou, o segredo de perigo não visto · o achado (`achadoDe`, lugar ou passo), o segredo da sala não revelado |
+| `escuro` | a masmorra sem tochas (`noEscuro`), ou a noite ao ar livre (`ehNoite`) |
+| `escorregadio` · `ceu_encoberto` · `perigo_fisico` | o clima ao ar livre (`CLIMAS`): chuva/tempestade/granizo · o céu fechado · a tempestade |
+| `rastro_fresco` · `rastro_velho` | o sinal de rastro do encontro da estrada antes de ser visto · o passo de rastro da quest com o herói num lugar dele |
+| `com_pressa` · `algo_se_aproxima` | um relógio de ameaça · de caçada a um segmento de encher |
+| `com_testemunhas` · `territorio_de_alguem` | dentro dos muros, de dia, na rua ou num lugar público aberto (`abertoAgora`) · num quartel/cadeia, ou num lugar fechado a esta hora |
+| `heroi_penalizado` | uma condição do herói com `desvantagem` |
+
+**A porta é sempre a primeira coisa**: a régua lê `haOposicao(cena, { sobre: "coisa" })` na primeira coisa
+da lista, e é a porta que o «arrombo a porta» procura.
+
+### 15.2 Os estados sem fonte (`ESTADOS_SEM_FONTE`, 24 de 53)
+
+Três razões, cada uma escrita estado a estado no módulo:
+
+1. **Não há fonte no jogo:** `faminta`, `acuada`, `mansa`, `fragil`, `suspeito`, `em_movimento` (a viagem
+   anda por trechos), `ameacado` (o motor da consequência ainda não escreve o tranco), `som_claro`,
+   `som_abafado`, `assunto_raro`.
+2. **A fonte é de UMA coisa ou UM assunto, e a régua lê a marca na cena INTEIRA** (`temMarca`): escrita
+   pela fonte, calaria dados que nada têm a ver — `ja_convencida` e `ja_resolvido` (a linha `jaResolvido`
+   calaria a escalada do muro), `do_heroi`, `raro_de_achar`, `coisa_comum`, `selado`, `sem_resistencia`,
+   `a_vista`, `rastro_obvio`, `heroi_treinado`, `heroi_tem_alavanca`. **Isto é um achado para a régua:**
+   estas linhas precisam de ler o alvo da ação (como `haOposicao` já faz) antes de o jogo as poder escrever.
+3. **O catálogo já faz, e o estado desfaria:** `ja_testado` (o livro de tentativas já cala no catálogo, e o
+   estado calaria também a via nova que ele reabre), `heroi_ja_sabe` (o saber da ficha já entra por
+   `ctx.saber`), `motivo_para_negar` (o papel já pesa no número pela escada; como estado, sem o tamanho do
+   pedido, faria a pergunta de cortesia ao guarda rolar).
+
+### 15.3 A previsão: o corpus da mesa numa cena calma
+
+A taverna aberta, de dia, céu limpo, a taverneira do posto e um companheiro. Das **439** frases de
+`corpus-da-mesa.json`, **54 mudam** contra o Mestre de hoje e 385 ficam iguais:
+
+- **deixam de rolar: 46** — a busca sem nada escondido (`buscaVazia`, **36**): o Mestre descreve; o curativo
+  sem pressa nem perigo (`socorroCalmo`, 9); orientar-se com o céu à vista (1);
+- **passam a rolar: 6** — escutar onde há gente (`haOQueOuvir`, 3), esgueirar-se onde alguém pode notar
+  (`alguemPodeNotar`, 2), um ato de frase encadeada (1);
+- **ganham o chamado: 2** — a conversa com um estranho, que antes rolava sem o preço dito.
+
+É a nossa previsão do que o jogador vai sentir: menos dado de rotina na busca, o mesmo onde há risco, e a
+conversa com o número e o preço à vista. A queda da busca é a régua de §3 a funcionar («senão o Mestre
+descreve») — e é exatamente o que a sessão jogada tem de confirmar que não esvazia a mesa: com a cena
+viva, o achado do lugar (`achadoDe`) e o passo da quest é que reacendem a busca.
+
+### 15.4 O roteiro da fiação no App (para o `oficial`)
+
+**A chave.** Uma preferência desligada por omissão (o mesmo padrão de `pecasLigadasRef`: lida uma vez,
+`taverna_cfg_mestre_vivo` ou `?mestrevivo=1`). Desligada, **nada disto é chamado** e o turno é o de hoje.
+Tudo em `try/catch` com `calou(...)`; qualquer falha devolve o caminho de hoje.
+
+**1. O retrato** — uma função `retratoAgora()` ao lado de `ctxDesafio`/`ctxDoChamado`, que monta o objeto
+de `FORMA_DO_RETRATO` só com refs:
+
+| campo | o que entra |
+|---|---|
+| `lugar`, `cidade`, `jornada`, `minuto`, `clima` | `lugarRef.current`, `cidadeAtualRef.current`, `!!jornadaRef.current`, `minutoRef.current`, `climaRef.current` |
+| `pessoas` | `quemAgeAqui(quemEstaAqui({...}))`, cada nome cruzado com `npcsRef.current[nome]` (`papel`, `relacao`, `status`, `condicoes`), `agora` = `fichaDaPessoa(...).rotina.agora`, `doPosto` = veio de `doSitio` |
+| `grupo` | `(fichaViva() \|\| personagem).grupo` |
+| `inimigos` | `combateRef.current?.inimigos` |
+| `encontro` | `encontroPendenteRef.current` |
+| `masmorra` | `masmorraRef.current` |
+| `achado` | `!!(ctxDesafio().achadoDe("percepcao") \|\| ctxDesafio().achadoDe("intelecto"))` |
+| `segredos` | `segredosGuardados(espinhaRef.current, mundoDaBase())` |
+| `favorAqui` | `factosRef.current.lugares[<id do lugar>]?.favor` |
+| `relogios` | `relogiosRef.current` |
+| `heroi` | `{ condicoes: (fichaViva() \|\| personagem).condicoes }` |
+| `passos`, `onde` | `passosDasQuestsAgora()`, `ondeDoPasso()` |
+| `quest` | a declaração da etapa ativa (`{ esconde, trancado, vigiado }`); nenhuma etapa declara ainda — fica `{}` até a biblioteca de quests ganhar o campo |
+
+**2. Na frase do jogador** — em `adjudicarAcao`, no ponto em que hoje se chama `veredictoDaAcao(acao)` e
+depois `chamadoDoVeredito(v, op.mod)`:
+
+```js
+const m = chamadoDoMomento(acao, ctxDesafio(), retratoAgora(), {
+  ...ctxDoChamado(), bonusDe: (v) => /* o mesmo op.mod de hoje, pela perícia de v */,
+});
+// m.cena === null            → o caminho de hoje, sem mudar nada
+// !m.rola                    → não rola: narra-se acontecendo (m.porque diz por quê; m.resposta vai à pauta)
+// m.destino                  → a bandeja mostra o d6 de m.destino.dado; o Narrador recebe só m.destino.diz
+// m.rola && m.chamado        → o chamado de sempre com m.veredito (a carta em jogo e a peça por cima, como hoje:
+//                              comACartaEmJogo(m.chamado, m.veredito, acao) / oChamadoDaPeca)
+// m.rola && !m.chamado       → o teste rola como hoje, sem linha (não havia preço a dizer)
+// m.porque começa "encadeada:" → o dado cai no ato arriscado; o Narrador narra os outros atos acontecendo
+```
+
+O veredito que vai à bandeja, ao livro de tentativas e ao envelope é **`m.veredito`**, nunca o do catálogo
+de novo: é o que a escuta ouviu. A conversa que rola passa pela bandeja como qualquer chamado; o
+resultado continua a ser resolvido pela escada (`envelopeSocial`), que já sabe o que o sucesso compra.
+
+**3. Entre dois turnos (o espontâneo)** — guardar o retrato do fim do turno anterior num ref
+(`retratoAntesRef`, só memória, não vai ao save) e, depois que o mundo aplicou o turno (o relógio andou,
+o lugar mudou, a hora virou), chamar `chamadoQueOMundoProvoca(retratoAntesRef.current, retratoAgora())`.
+Se vier `chamado`, ele entra pela mesma bandeja das outras origens (`chamadoDaRolagem`). **Não** chamar
+enquanto o encontro da estrada tem o pedido dele em aberto (`encontroPendenteRef.current?.pedido`): ele já
+pede a Percepção do sinal.
+
+**4. O save** — **nada de campo existente muda.** Só entra, aditivo e ignorado pela versão antiga, a
+preferência da chave. O retrato e a cena são **derivados** a cada turno dos refs que já estão no save — não
+se guardam (guardar a cena criaria uma segunda verdade que envelhece). `retratoAntesRef` é memória de
+sessão: ao carregar um save, começa `null`, e o primeiro turno não provoca espontâneo.
+
+**5. A pauta do Narrador** — pelo canal por turno (`pauta`, SECOES com prio, dentro de `TETO_DA_PAUTA`),
+**nunca bloco estático**:
+
+- `m.resposta === "evasiva"`: uma linha curta — a pessoa desconversa ou mente, a verdade fica guardada
+  (`RESPOSTAS_DA_PERGUNTA[...].diz`); `"recusa"`: não responde, ou responde com uma ameaça; `"silencio"`:
+  não pode responder. Vetos que forem preciso (não revelar o segredo) vão em `naoPode`.
+- `m.destino`: só o `diz` («a sorte levou», «em parte», «a sorte ajudou») — nunca o número.
+- `!m.rola` com veredito de teste: o envelope de «acontece» que o catálogo já tem para o livre, com
+  `m.diz` como o porquê (bastidor: o Narrador lê, o jogador sente pelo efeito).
+- O efeito dos estados (`ESTADOS_DA_CENA[...].efeito`: «desvia os olhos», «há passos de ronda») **pode**
+  entrar como uma linha da cena, de prioridade baixa, cortável pelo teto. O nome do estado nunca.
+
+**6. A prova** — a onda só fecha com uma sessão jogada com a chave ligada, contando: dados fora da luta
+por turno (a régua de 04/11: um a cada dois ou três), buscas que deixaram de rolar e se a mesa esvaziou,
+conversas com o preço dito, espontâneos pedidos.
