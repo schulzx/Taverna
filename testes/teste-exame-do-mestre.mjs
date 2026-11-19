@@ -48,7 +48,23 @@
    é perigo_fisico, ponte podre é fragil, o que espreita é algo_se_aproxima,
    o símbolo obscuro é assunto_raro), e `cenaDoExame` passa a levar à régua
    QUALQUER estado da tabela escrito na cena, cada um ao seu dono. E a B
-   ganhou 90 itens novos (rodada 2), escritos sem abrir o catálogo. */
+   ganhou 90 itens novos (rodada 2), escritos sem abrir o catálogo.
+
+   RODADA 3 (18/11/2026) — A PROVA DE NOVO VIRGEM.
+   Na M5, quem afinava manteve ou tirou famílias de formas olhando o número
+   agregado da B (o-mestre-vivo.md §13, a ressalva de honestidade): a B deixou
+   de ser prova. E a A esgotou (164 de 167): já não tinha o que ensinar. Então
+   a B inteira passou para a A (veio_da_b: 3), e uma B nova, toda da rodada 3,
+   foi escrita do zero sem abrir o catálogo, a escuta nem a régua — as 97
+   situações do estudo (§8 e §10.5) nos padrões de como o jogador brasileiro
+   diz o que faz (§10.4).
+   Duas marcas novas ficam FORA da catraca e são impressas à parte:
+   `mesas_discordam` (a mesa em português rola bem menos a ação disputada; o
+   veredito é o de §6, a base é fraca) e `destino` (o dado do destino, §10
+   nº 93: o mestre rola sem perícia — o Mestre de hoje não tem como acertar).
+   Os espontâneos também passam a ser medida à parte, sem catraca.
+   E a suíte NUNCA imprime frase, cena nem id de item da B: os erros que se
+   leem são só da A, e as asserções sobre a B dizem só números. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
@@ -102,19 +118,31 @@ const SITUACOES = JSON.parse(fs.readFileSync(new URL("./corpus-das-situacoes.jso
    pares 21 · esp 8; B 133 · 6 · 75 · cat 69 · per 32 · pares 15 · esp 24.
    Seis itens da A trocaram a aproximação pelo estado novo (E155, E157:
    coisa_comum; E166: do_heroi; E173, E175, E179: escorregadio no lugar de
-   perigo_fisico); nenhum item da B foi tocado. */
+   perigo_fisico); nenhum item da B foi tocado.
+
+   MOVIDAS na RODADA 3 (18/11/2026), e o motivo: as duas metades mudaram de
+   dono — a B da rodada 2 passou inteira para a A, e a B é outra, nova, de
+   frases que ninguém viu. Pela regra da rodada, a catraca recomeça da medida
+   dela: os números abaixo são os da primeira medida da rodada 3, com o mesmo
+   catálogo, a mesma escuta e a mesma régua da M5 (nada em src/ mudou). Saem
+   da catraca os espontâneos (agora medida à parte, impressa), e ela conta só
+   os itens sem `mesas_discordam` nem `destino`.
+   Os pisos da M5, para comparar (as metades de então):
+   hoje A 106 · 24 · 37 · cat 91 · per 51 · pares 2 · esp 4;
+   hoje B 120 · 22 · 72 · cat 69 · per 32 · pares 1 · esp 12;
+   régua A 164 · 0 · 3 · cat 147 · per 83 · pares 48 · esp 8;
+   régua B 162 · 5 · 47 · cat 108 · per 54 · pares 37 · esp 24.
+   O de hoje com o catálogo antigo (ebf0f64): A 75 · 11 · 53 · cat 47 · per 21
+   · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 · pares 1 · esp 6. */
 const CATRACA_DO_EXAME = {
-  data: "2026-11-18 (M5)",
-  /* o de hoje com o catálogo antigo (ebf0f64), para comparar: A 75 · 11 · 53 ·
-     cat 47 · per 21 · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 ·
-     pares 1 · esp 6 */
+  data: "2026-11-18 (rodada 3)",
   hoje: {
-    A: { rolaCerto: 106, pedeIndevido: 24, deixaDePedir: 37, categoria: 91, pericia: 51, paresQueSeparam: 2, espontaneosCertos: 4 },
-    B: { rolaCerto: 120, pedeIndevido: 22, deixaDePedir: 72, categoria: 69, pericia: 32, paresQueSeparam: 1, espontaneosCertos: 12 },
+    A: { rolaCerto: 226, pedeIndevido: 46, deixaDePedir: 109, categoria: 160, pericia: 83, paresQueSeparam: 3 },
+    B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
   },
   regua: {
-    A: { rolaCerto: 164, pedeIndevido: 0, deixaDePedir: 3, categoria: 147, pericia: 83, paresQueSeparam: 48, espontaneosCertos: 8 },
-    B: { rolaCerto: 162, pedeIndevido: 5, deixaDePedir: 47, categoria: 108, pericia: 54, paresQueSeparam: 37, espontaneosCertos: 24 },
+    A: { rolaCerto: 326, pedeIndevido: 5, deixaDePedir: 50, categoria: 255, pericia: 137, paresQueSeparam: 85 },
+    B: { rolaCerto: 143, pedeIndevido: 7, deixaDePedir: 46, categoria: 99, pericia: 42, paresQueSeparam: 40 },
   },
 };
 /* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje
@@ -122,15 +150,23 @@ const CATRACA_DO_EXAME = {
 const MEDIDA_DA_M2 = { rolaCerto: 150, pedeIndevido: 26, deixaDePedir: 99, paresQueSeparam: 2, espontaneosCertos: 10 };
 
 /* ---------------- O FORMATO DO EXAME ---------------- */
+/* MOVIDO na rodada 3 (18/11): o exame foi de 413 para 678 itens, e a B nova
+   cobre as 97 situações (as 65 da §8 e as 32 da §10.5). Era: minItens 250,
+   minPares 60, situacoes 65 (≥ 2 cada, sobre o exame inteiro), espontâneos
+   [25, 40]. As 65 antigas continuam com ≥ 2 itens no exame inteiro; a B nova
+   tem de ter todas as 97, ≥ 1 cada (o corte da redação ao alvo de ~260 deixou
+   várias com um item só). */
 const FORMATO = {
-  minItens: 250,
-  minPares: 60,
+  minItens: 600,
+  minPares: 180,
   situacoes: 65,
   minPorSituacao: 2,      // com os pares, a maioria passa de 3; ver §1
-  /* MOVIDO na rodada 2 (18/11): era [15, 25]; a rodada 2 pôs 12 espontâneos
-     novos na B (o dado espontâneo é um terço dos pedidos da mesa real, §6),
-     e o exame foi de 20 para 32. */
-  espontaneos: [25, 40],
+  situacoesDaB: 97,
+  minItensDaB: 240,
+  minParesDaB: 90,
+  minEspontaneosDaB: 25,
+  destinoDaB: [12, 20],
+  espontaneos: [50, 75],
   fracaoNaoRola: [0.4, 0.6],
   bases: ["numero", "padrao", "fraco"],
   categorias: ["procurar", "esgueirar", "ler_pessoa", "saber", "arcano", "forcar", "travessia", "rastrear", "socorrer", "furtar",
@@ -311,8 +347,11 @@ function lerComRegua(item) {
 /* ---------------- A MEDIDA ---------------- */
 const ITENS = EXAME.itens;
 const METADES = ["A", "B"];
-const declarados = ITENS.filter((i) => !i.espontaneo);
-const espontaneos = ITENS.filter((i) => i.espontaneo);
+/* rodada 3: a catraca conta só o que as três mesas sustentam; a discordância
+   e o dado do destino são medidas à parte (secção 2b) */
+const aParte = (i) => !!(i.mesas_discordam || i.destino);
+const declarados = ITENS.filter((i) => !i.espontaneo && !aParte(i));
+const espontaneos = ITENS.filter((i) => i.espontaneo && !aParte(i));
 const LEITORES = { hoje: lerNoJogo, regua: lerComRegua };
 const lido = { hoje: new Map(ITENS.map((i) => [i.id, lerNoJogo(i)])), regua: new Map(ITENS.map((i) => [i.id, lerComRegua(i)])) };
 
@@ -334,7 +373,7 @@ function medir(lista, leitura) {
 const pares = {};
 for (const i of ITENS) if (i.par) (pares[i.par] = pares[i.par] || []).push(i);
 const listaPares = Object.values(pares);
-const paresDecl = listaPares.filter((p) => !p[0].espontaneo);
+const paresDecl = listaPares.filter((p) => !p[0].espontaneo && !p.some(aParte));
 const separa = (quem, p) => lido[quem].get(p[0].id).pede !== lido[quem].get(p[1].id).pede;
 const acertaOsDois = (quem, p) => p.every((i) => lido[quem].get(i.id).pede === i.esperado.rola);
 
@@ -382,18 +421,22 @@ sec("1. o exame é o que diz ser");
   const sits = {};
   for (const i of ITENS) sits[i.situacao] = (sits[i.situacao] || 0) + 1;
   const nNao = ITENS.filter((i) => !i.esperado.rola).length;
-  t(`${ITENS.length} itens, ${listaPares.length} pares (${paresDecl.length} com ação declarada), ${espontaneos.length} espontâneos`,
-    ITENS.length >= FORMATO.minItens && paresDecl.length >= FORMATO.minPares);
+  t(`${ITENS.length} itens, ${listaPares.length} pares (${paresDecl.length} com ação declarada, na catraca), ${ITENS.filter((i) => i.espontaneo).length} espontâneos`,
+    ITENS.length >= FORMATO.minItens && listaPares.length >= FORMATO.minPares);
   t("todo item tem id, situação, cena, frase, esperado e rodada", ITENS.every((i) => i.id && Number.isInteger(i.situacao) && i.cena && typeof i.cena === "object"
     && typeof i.frase === "string" && i.frase.trim() && i.esperado && typeof i.esperado.rola === "boolean" && i.rodada >= 1));
   t("ids únicos", new Set(ITENS.map((i) => i.id)).size === ITENS.length);
   t(`as ${FORMATO.situacoes} situações do estudo estão todas, cada uma com ≥ ${FORMATO.minPorSituacao} itens`,
     Array.from({ length: FORMATO.situacoes }, (_, k) => sits[k + 1] || 0).every((n) => n >= FORMATO.minPorSituacao), JSON.stringify(sits));
   t(`cerca de metade não rola (${nNao} de ${ITENS.length})`, nNao / ITENS.length >= FORMATO.fracaoNaoRola[0] && nNao / ITENS.length <= FORMATO.fracaoNaoRola[1]);
-  t(`espontâneos entre ${FORMATO.espontaneos.join(" e ")}`, espontaneos.length >= FORMATO.espontaneos[0] && espontaneos.length <= FORMATO.espontaneos[1]);
+  const nEsp = ITENS.filter((i) => i.espontaneo).length;
+  t(`espontâneos entre ${FORMATO.espontaneos.join(" e ")}`, nEsp >= FORMATO.espontaneos[0] && nEsp <= FORMATO.espontaneos[1]);
   t("categorias e bases do vocabulário fechado", ITENS.every((i) => FORMATO.categorias.includes(i.esperado.categoria) && FORMATO.bases.includes(i.esperado.base)));
-  t("as perícias são ids do projeto, e só quem rola tem perícia", ITENS.every((i) => i.esperado.pericias.every((p) => ids.has(p))
-    && (i.esperado.rola ? i.esperado.pericias.length > 0 : i.esperado.pericias.length === 0)));
+  /* MOVIDO na rodada 3: era «só quem rola tem perícia, e quem rola tem ao
+     menos uma». O dado do destino rola SEM perícia (§10, nº 93: um dado de
+     sorte), então para ele a perícia é vazia dos dois lados. */
+  t("as perícias são ids do projeto, e só quem rola tem perícia (o dado do destino rola sem)", ITENS.every((i) => i.esperado.pericias.every((p) => ids.has(p))
+    && (i.esperado.rola && !i.destino ? i.esperado.pericias.length > 0 : i.esperado.pericias.length === 0)));
   t("todo item diz a regra que decide (porque)", ITENS.every((i) => typeof i.esperado.porque === "string" && i.esperado.porque.length > 10));
   t("cada par é a mesma frase em duas cenas diferentes, com vereditos opostos", listaPares.every((p) => p.length === 2 && p[0].frase === p[1].frase
     && p[0].esperado.rola !== p[1].esperado.rola && JSON.stringify(p[0].cena) !== JSON.stringify(p[1].cena)));
@@ -408,16 +451,43 @@ sec("1. o exame é o que diz ser");
   t("o par nunca se parte entre as metades", listaPares.every((p) => p.every((i) => i.metade === p[0].metade)));
   const nA = ITENS.filter((i) => i.metade === "A").length;
   /* MOVIDO na rodada 2 (18/11): a asserção era «as metades se equilibram»
-     (diferença ≤ 10%). A rodada 2 pôs na B todos os itens novos e passou para
-     a A os que vazaram: a B é a prova e é ela que precisa de frase nova, então
-     agora ela é maior de propósito. O que se guarda é que a prova não encolha
-     para menos que a metade que afina, e que a A siga com o bastante para
-     afinar (≥ 40% do exame). */
-  t(`a prova não é menor que a metade que afina (A ${nA}, B ${ITENS.length - nA}), e a A tem o bastante para afinar`,
-    ITENS.length - nA >= nA && nA >= ITENS.length * 0.4);
-  t("todo item da rodada 2 está na B, e nenhum item que vazou na M2 ficou na B",
-    ITENS.filter((i) => i.rodada === 2).every((i) => i.metade === "B") && ITENS.filter((i) => i.rodada_2).every((i) => i.metade === "A"));
-  t("a contagem do cabeçalho bate com as metades", EXAME.contagem.metade_A === nA && EXAME.contagem.metade_B === ITENS.length - nA);
+     (diferença ≤ 10%); na rodada 2 virou «a prova não é menor que a metade
+     que afina». MOVIDO de novo na rodada 3: a B antiga inteira passou para a
+     A (afinar precisa de frase, e a A de 175 esgotou), e a B nova é toda de
+     frase nova — logo a A é agora a maior, de propósito. O que se guarda é o
+     tamanho da prova nova (FORMATO.minItensDaB) e a fronteira das rodadas. */
+  const daB = ITENS.filter((i) => i.metade === "B");
+  t(`a prova nova tem tamanho de prova (A ${nA}, B ${daB.length} ≥ ${FORMATO.minItensDaB})`, daB.length >= FORMATO.minItensDaB && nA >= daB.length);
+  /* MOVIDO na rodada 3: era «todo item da rodada 2 está na B». A rodada 2
+     agora é A; a fronteira é a da rodada 3. */
+  t("a B é toda da rodada 3 e toda a rodada 3 é B; o que veio da B antiga está na A, e nenhum item que vazou na M2 voltou à B",
+    daB.every((i) => i.rodada === 3) && ITENS.filter((i) => i.rodada === 3).every((i) => i.metade === "B")
+    && ITENS.filter((i) => i.veio_da_b === 3).every((i) => i.metade === "A" && i.rodada < 3) && ITENS.filter((i) => i.rodada_2).every((i) => i.metade === "A"));
+  t("a contagem do cabeçalho bate com as metades", EXAME.contagem.metade_A === nA && EXAME.contagem.metade_B === ITENS.length - nA
+    && EXAME.contagem.itens === ITENS.length && EXAME.contagem.rodada_3 === daB.length);
+  /* rodada 3: a B nova, dita só em número (nenhuma frase, cena ou id dela sai daqui) */
+  {
+    const sitB = {};
+    for (const i of daB) sitB[i.situacao] = (sitB[i.situacao] || 0) + 1;
+    const faltamB = Array.from({ length: FORMATO.situacoesDaB }, (_, k) => k + 1).filter((s) => !sitB[s]).length;
+    t(`a B nova cobre as ${FORMATO.situacoesDaB} situações do estudo (faltam ${faltamB})`, faltamB === 0);
+    const paresB = listaPares.filter((p) => p[0].metade === "B").length;
+    const espB = daB.filter((i) => i.espontaneo).length, desB = daB.filter((i) => i.destino).length;
+    const nNaoB = daB.filter((i) => !i.esperado.rola).length;
+    t(`a B nova: ${paresB} pares (≥ ${FORMATO.minParesDaB}), ${espB} espontâneos (≥ ${FORMATO.minEspontaneosDaB}), ${desB} do dado do destino, ${nNaoB} de ${daB.length} não rolam`,
+      paresB >= FORMATO.minParesDaB && espB >= FORMATO.minEspontaneosDaB && desB >= FORMATO.destinoDaB[0] && desB <= FORMATO.destinoDaB[1]
+      && nNaoB / daB.length >= FORMATO.fracaoNaoRola[0] && nNaoB / daB.length <= FORMATO.fracaoNaoRola[1]);
+    t("a discordância das mesas tem base fraca e diz o que a mesa em português faria; destino e discordância só existem na B nova",
+      ITENS.filter((i) => i.mesas_discordam).every((i) => i.esperado.base === "fraco" && typeof i.veredito_pt === "string" && i.veredito_pt.length > 5)
+      && ITENS.filter(aParte).every((i) => i.rodada === 3));
+    /* a honestidade da prova: nenhuma frase da B nova pode ter sido vista —
+       nem na A (que afina), nem nos dois corpus que afinaram o catálogo. A
+       falha diz só quantas, nunca quais. */
+    const daA = new Set(ITENS.filter((i) => i.metade === "A").map((i) => nrm(i.frase)));
+    const dosCorpus = new Set([...MESA.frases, ...SITUACOES.frases].map((f) => nrm(f.frase)));
+    const vistasNaA = daB.filter((i) => daA.has(nrm(i.frase))).length, vistasNosCorpus = daB.filter((i) => dosCorpus.has(nrm(i.frase))).length;
+    t(`nenhuma frase da B nova aparece na A nem nos dois corpus (na A ${vistasNaA}, nos corpus ${vistasNosCorpus})`, vistasNaA === 0 && vistasNosCorpus === 0);
+  }
   t("a família da régua e a categoria do exame falam a mesma língua (todo id do catálogo)",
     DESAFIOS.every((d) => d.id === "improviso" || familiaDaAcao({ tipo: "teste", id: d.id }) === CATEGORIA_DO_ROTULO[d.id]));
   t("toda cena do exame vira uma cena que a régua lê", ITENS.every((i) => lerCena(cenaDoExame(i.cena)) !== null));
@@ -447,7 +517,32 @@ for (const quem of ["hoje", "regua"]) for (const h of METADES) {
   t(`${nome}: categoria certa não desce de ${c.categoria} (${C.data})`, d.M.categoria >= c.categoria, `${d.M.categoria}`);
   t(`${nome}: perícia certa não desce de ${c.pericia} (${C.data})`, d.M.pericia >= c.pericia, `${d.M.pericia}`);
   t(`${nome}: pares que separa não descem de ${c.paresQueSeparam} (${C.data})`, d.paresQueSeparam >= c.paresQueSeparam, `${d.paresQueSeparam}`);
-  t(`${nome}: espontâneos certos não descem de ${c.espontaneosCertos} (${C.data})`, d.E.rolaCerto >= c.espontaneosCertos, `${d.E.rolaCerto}`);
+  /* MOVIDO na rodada 3: a catraca dos espontâneos saiu — eles são medida à
+     parte (secção 2b), impressa sem piso, como a discordância e o destino. */
+}
+
+sec("2b. as medidas à parte (sem catraca): a discordância das mesas, o dado do destino e os espontâneos");
+{
+  const ver = (quem, lista) => {
+    const m = medir(lista, (i) => lido[quem].get(i.id));
+    return `rola certo ${m.rolaCerto}/${m.n} · indevido ${m.pedeIndevido}/${m.nNao} · omitido ${m.deixaDePedir}/${m.nSim}`;
+  };
+  for (const h of METADES) {
+    const dela = ITENS.filter((i) => i.metade === h);
+    const disc = dela.filter((i) => i.mesas_discordam), des = dela.filter((i) => i.destino), esp = dela.filter((i) => i.espontaneo && !aParte(i));
+    if (!disc.length && !des.length && !esp.length) continue;
+    console.log(`     metade ${h}:`);
+    for (const quem of ["hoje", "regua"]) {
+      const rot = quem === "hoje" ? "hoje ." : "régua ";
+      if (disc.length) {
+        /* contra a mesa em português: o que ela faria (veredito_pt começa por «rola» ou «não rola») */
+        const pt = disc.filter((i) => (lido[quem].get(i.id).pede) === /^rola/.test(i.veredito_pt)).length;
+        console.log(`     ${rot} mesas discordam: ${ver(quem, disc)} (contra a regra de §6) · com a mesa em português ${pt}/${disc.length}`);
+      }
+      if (des.length) console.log(`     ${rot} o dado do destino: ${ver(quem, des)}`);
+      if (esp.length) console.log(`     ${rot} espontâneos: ${ver(quem, esp)}`);
+    }
+  }
 }
 /* a promessa da M3 (o-mestre-vivo.md §9: «o exame sobe sem aumentar o dado
    indevido»), dita contra o Mestre de hoje na MESMA metade e com o MESMO
