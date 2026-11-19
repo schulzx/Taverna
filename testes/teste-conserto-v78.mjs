@@ -116,7 +116,10 @@ sec("6. a banca: a chance da pechincha antes do clique, e a praça que sente a c
   /* a venda aperta a mesma procura (venderNoMercado → apertarProcura), e a
      sessão viu a Soqueira ir de 139 a 147 depois de vender uma besta: o
      veredito da venda tem de dizer também que comprar fica mais caro */
-  t("vender avisa também que comprar o gênero fica mais caro", v && v.sobe === p.pct && /comprar metal fica 6% mais caro/.test(v.texto), v && v.texto);
+  /* asserção trocada em 19/11: aqui se provava que a venda avisava «comprar
+     fica 6% mais caro». A pessoa decidiu que isso era deslize de regra: a
+     venda mexe só no lado de vender, e o aviso deixou de ter o que dizer. */
+  t("vender não encarece a compra, e o aviso não fala de comprar", v && !/comprar/.test(v.texto) && CO.pressaoAtual(CO.apertarProcura(null, cidade, v.genero, 1, "venda"), cidade, v.genero, 1) === 0, v && v.texto);
   let cheia = null;
   for (let i = 0; i < Math.ceil(PRESSAO_TETO / PRESSAO_POR_COMPRA) + 2; i++) cheia = apertarProcura(cheia, cidade, "metal", 1);
   t("com a procura no teto, nada sobe e nada se avisa", oQueAPracaSente(armadura, { cidade, dia: 1, pressoes: cheia }) === null);

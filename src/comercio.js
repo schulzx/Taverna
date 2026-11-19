@@ -197,28 +197,37 @@ export const PRESSAO_POR_COMPRA = 0.06;
 export const PRESSAO_TETO = 0.5;
 export const DIAS_PARA_CEDER = 4;
 
-export const chaveDaPressao = (cidade, genero) =>
-  `${String((cidade && cidade.nome) || cidade || "").toLowerCase().trim()}|${genero}`;
+/* OS DOIS LADOS DA PRAÇA (19/11, decisão da pessoa). Havia uma pressão só, e
+   a venda apertava a mesma conta da compra: vender uma besta encarecia em 6%
+   a compra seguinte do gênero. Quem vende enche a prateleira, não a esvazia.
+   Agora cada lado tem a sua conta: comprar encarece a compra; vender barateia
+   a venda. A da venda mora numa chave própria do mesmo mapa (sufixo da
+   tabela), que a versão antiga ignora; a pressão que um save antigo já traz
+   continua a ser a da compra, e cede com os dias. */
+export const LADOS_DA_PRACA = { compra: "", venda: "|venda" };
 
-/* quantas compras ainda pesam, já descontado o que o tempo levou */
-function aindaPesa(pressoes, cidade, genero, dia) {
-  const p = (pressoes || {})[chaveDaPressao(cidade, genero)];
+export const chaveDaPressao = (cidade, genero, lado = "compra") =>
+  `${String((cidade && cidade.nome) || cidade || "").toLowerCase().trim()}|${genero}${LADOS_DA_PRACA[lado] || ""}`;
+
+/* quantas compras (ou vendas) ainda pesam, já descontado o que o tempo levou */
+function aindaPesa(pressoes, cidade, genero, dia, lado) {
+  const p = (pressoes || {})[chaveDaPressao(cidade, genero, lado)];
   if (!p || !p.n) return 0;
   const cedeu = Math.max(0, (dia || 1) - (p.dia || 1)) / DIAS_PARA_CEDER;
   return Math.max(0, p.n - cedeu);
 }
 
-export function pressaoAtual(pressoes, cidade, genero, dia) {
-  return Math.min(PRESSAO_TETO, aindaPesa(pressoes, cidade, genero, dia) * PRESSAO_POR_COMPRA);
+export function pressaoAtual(pressoes, cidade, genero, dia, lado = "compra") {
+  return Math.min(PRESSAO_TETO, aindaPesa(pressoes, cidade, genero, dia, lado) * PRESSAO_POR_COMPRA);
 }
 
-export function apertarProcura(pressoes, cidade, genero, dia) {
+export function apertarProcura(pressoes, cidade, genero, dia, lado = "compra") {
   if (!genero) return pressoes || {};
   const teto = PRESSAO_TETO / PRESSAO_POR_COMPRA;
   return {
     ...(pressoes || {}),
-    [chaveDaPressao(cidade, genero)]: {
-      n: Math.min(teto, aindaPesa(pressoes, cidade, genero, dia) + 1),
+    [chaveDaPressao(cidade, genero, lado)]: {
+      n: Math.min(teto, aindaPesa(pressoes, cidade, genero, dia, lado) + 1),
       dia: dia || 1,
     },
   };
@@ -250,10 +259,10 @@ export function fatorDoLugar(item, cidade, { dia = 1, pressoes = null, vendendo 
     f *= fe;
     porques.push(`${nomeDaEstacao(dia)} ${fe > 1 ? "encareceu" : "barateou"} ${generoPorId(g).nome}`);
   }
-  const pr = pressaoAtual(pressoes, cidade, g, dia);
+  const pr = pressaoAtual(pressoes, cidade, g, dia, vendendo ? "venda" : "compra");
   if (pr > 0) {
-    /* quem esvaziou a prateleira PAGA mais para comprar e RECEBE menos para
-       vender: é o mesmo fato visto dos dois lados, e ele mora num lugar só */
+    /* quem esvaziou a prateleira PAGA mais para comprar; quem a encheu
+       RECEBE menos para vender. São dois fatos, e cada um tem a sua conta */
     f *= vendendo ? 1 - Math.min(0.35, pr) : 1 + pr;
     porques.push(vendendo ? `a praça está cheia de ${generoPorId(g).nome}` : `procuraram muito ${generoPorId(g).nome} aqui`);
   }
@@ -359,23 +368,22 @@ export function chancesDaPechincha({ bonus = 0, dificuldade = 12 } = {}) {
    cidade, e cede com os dias), e ela tem de estar no veredito. A conta é a
    de `fatorDoLugar`, antes e depois de apertar. `null` quando nada muda
    (sem gênero, ou a procura já no teto).
-   A venda aperta a MESMA procura (venderNoMercado): a próxima venda paga
-   menos e, pela mesma pressão, comprar fica mais caro — o veredito da venda
-   diz os dois lados, porque a regra faz os dois. */
+   A venda aperta só o lado dela (LADOS_DA_PRACA): a próxima venda do gênero
+   paga menos, e o preço de comprar não se mexe. */
 export function oQueAPracaSente(item, { cidade = null, dia = 1, pressoes = null, vendendo = false } = {}) {
   const g = generoDoItem(item);
   if (!g) return null;
-  const antes = pressaoAtual(pressoes, cidade, g, dia);
-  const depois = pressaoAtual(apertarProcura(pressoes, cidade, g, dia), cidade, g, dia);
+  const lado = vendendo ? "venda" : "compra";
+  const antes = pressaoAtual(pressoes, cidade, g, dia, lado);
+  const depois = pressaoAtual(apertarProcura(pressoes, cidade, g, dia, lado), cidade, g, dia, lado);
   const fator = (pr) => (vendendo ? 1 - Math.min(0.35, pr) : 1 + pr);
   const pct = Math.round(Math.abs(fator(depois) / fator(antes) - 1) * 100);
-  const sobe = Math.round(((1 + depois) / (1 + antes) - 1) * 100);
   if (!pct) return null;
   const nome = (generoPorId(g) || {}).nome || g;
   return {
-    genero: g, pct, sobe,
+    genero: g, pct,
     texto: vendendo
-      ? `Depois desta venda, ${nome} paga ${pct}% menos aqui${sobe ? `, e comprar ${nome} fica ${sobe}% mais caro` : ""}, por uns dias.`
+      ? `Depois desta venda, ${nome} paga ${pct}% menos aqui por uns dias.`
       : `Depois desta compra, ${nome} fica ${pct}% mais caro aqui por uns dias.`,
   };
 }

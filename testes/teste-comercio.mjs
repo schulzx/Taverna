@@ -111,10 +111,20 @@ sec("5. A PROCURA DO PRÓPRIO HERÓI");
   t("a pressão cede com os dias", C.pressaoAtual(p, PORTO, "erva", 40) === 0);
   t("outro gênero não é afetado", C.pressaoAtual(p, PORTO, "metal", 10) === 0);
   t("nem a mesma erva noutra cidade", C.pressaoAtual(p, SERRA, "erva", 10) === 0);
-  /* vender é o mesmo fato do outro lado do balcão */
-  const vend = C.fatorDoLugar(POCAO, PORTO, { dia: 10, pressoes: p, vendendo: true }).fator;
-  t("quem despeja na praça recebe menos", vend < C.fatorDoLugar(POCAO, PORTO, { dia: 10, vendendo: true }).fator);
-  t("e o motivo é o outro lado do mesmo fato", /praça está cheia/.test(C.linhaDoPreco(C.fatorDoLugar(POCAO, PORTO, { dia: 10, pressoes: p, vendendo: true }).porques)));
+  /* asserções trocadas em 19/11. Aqui se provava que as CINCO COMPRAS acima
+     baixavam o preço de venda («o mesmo fato do outro lado do balcão»). A
+     pessoa decidiu que os lados são dois: comprar mexe só na compra, vender
+     só na venda (LADOS_DA_PRACA). */
+  const semNada = C.fatorDoLugar(POCAO, PORTO, { dia: 10, vendendo: true }).fator;
+  t("comprar não barateia a venda", C.fatorDoLugar(POCAO, PORTO, { dia: 10, pressoes: p, vendendo: true }).fator === semNada);
+  let v = {};
+  for (let i = 0; i < 5; i++) v = C.apertarProcura(v, PORTO, "erva", 10, "venda");
+  const vend = C.fatorDoLugar(POCAO, PORTO, { dia: 10, pressoes: v, vendendo: true });
+  t("quem despeja na praça recebe menos", vend.fator < semNada);
+  t("e o motivo é a praça cheia", /praça está cheia/.test(C.linhaDoPreco(vend.porques)));
+  t("vender não encarece a compra", C.fatorDoLugar(POCAO, PORTO, { dia: 10, pressoes: v }).fator === antes && C.pressaoAtual(v, PORTO, "erva", 10) === 0);
+  t("a praça cheia também esvazia com os dias", C.pressaoAtual(v, PORTO, "erva", 40, "venda") === 0);
+  t("a conta da venda mora numa chave própria, que a da compra não lê", C.chaveDaPressao(PORTO, "erva", "venda") === C.chaveDaPressao(PORTO, "erva") + C.LADOS_DA_PRACA.venda && C.LADOS_DA_PRACA.compra === "");
   t("acento e caixa não criam duas praças", C.chaveDaPressao({ nome: " Vau Das Redes " }, "erva") === C.chaveDaPressao({ nome: "vau das redes" }, "erva"));
 }
 

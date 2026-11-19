@@ -24553,7 +24553,7 @@ export default function Taverna() {
        na mesma vila recebe menos pela décima */
     mercadoRef.current = {
       ...mercadoRef.current, gastos,
-      pressoes: apertarProcura(mercadoRef.current.pressoes, cidadeMercado, generoDoItem(typeof item === "string" ? { nome: item } : item), diaRef.current),
+      pressoes: apertarProcura(mercadoRef.current.pressoes, cidadeMercado, generoDoItem(typeof item === "string" ? { nome: item } : item), diaRef.current, "venda"),
     };
     setMercado(mercadoRef.current);
     const p = {
