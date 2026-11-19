@@ -17,6 +17,9 @@ import React from "react";
 import { T, ALVOS } from "./constantes.js";
 import { TEMPOS_DO_CARTAO, temRelogio, janelaExpirouEm } from "./ritmo-da-reacao.js";
 import { precoDoVerbo } from "./palavras-da-reacao.js";
+/* V6 parte 2 (F4 «REACAO_NA_MESA»): a vela que queima e a carta por reação */
+import { VELA_DA_REACAO, ceraDaVela, CARTA_DE_ACAO } from "./luta-na-mesa.js";
+import { SOMBRA_DA_MESA, alfa } from "./estilo.js";
 
 /* A LARGURA MÁXIMA NO MONITOR (decisão do `desenho`, K3 §4). A região do
    veredito mede até 1400 px a 1536×816 (`mente/k3-jogo.md` §4.3), e o
@@ -28,7 +31,7 @@ const LARGURA_MAXIMA_PX = 560;
 
 /* Fora do render, sempre: um componente definido dentro do corpo de
    outro reinicia a cada render e mata o foco (armadilha da casa). */
-function LinhaDoRecuo({ refExterno, onClick, disabled, comoMenuItem, focado }) {
+function LinhaDoRecuo({ refExterno, onClick, disabled, comoMenuItem, focado, naMesa = false }) {
   return (
     <button
       ref={refExterno}
@@ -37,12 +40,12 @@ function LinhaDoRecuo({ refExterno, onClick, disabled, comoMenuItem, focado }) {
       tabIndex={comoMenuItem ? (focado ? 0 : -1) : undefined}
       disabled={disabled}
       onClick={onClick}
-      className="tv-anel-foco tv-body text-xs"
+      className="tv-anel-foco tv-body text-sm"
       style={{
         display: "block", width: "100%", textAlign: "left",
-        padding: "10px 12px", minHeight: ALVOS.piso, marginTop: 6,
-        background: "transparent", border: `1px solid ${T.line}`, borderRadius: 8,
-        color: T.inkDim, cursor: disabled ? "default" : "pointer",
+        padding: "10px 12px", minHeight: naMesa ? ALVOS.chamado : ALVOS.piso, marginTop: naMesa ? 0 : 6,
+        background: "transparent", border: `1px dashed ${T.lineStrong}`, borderRadius: CARTA_DE_ACAO.raio,
+        color: T.inkMeio, cursor: disabled ? "default" : "pointer",
       }}
     >
       deixar passar
@@ -52,7 +55,18 @@ function LinhaDoRecuo({ refExterno, onClick, disabled, comoMenuItem, focado }) {
 
 /* O verbo armado com o preço — a peça que se repete no chamado (uma
    reação) e em cada linha do leque (duas ou mais). */
+/* V6 parte 2 (F4 «REACAO_NA_MESA»): a linha vira CARTA de osso — o nome em
+   Cinzel e, por baixo, o preço e o que ela faz em brasa («3 PM — anula»).
+   O texto continua a ser o de precoDoVerbo (a prosa da tabela), partido em
+   duas: o verbo em cima, o resto em baixo. */
+function partesDoPreco(reacao) {
+  const p = precoDoVerbo(reacao);
+  const i = p.indexOf(" · ");
+  return i < 0 ? { nome: p, resto: "" } : { nome: (reacao && reacao.nome) || p.slice(0, i), resto: p.slice(i + 3) };
+}
 function LinhaDoVerbo({ innerRef, reacao, onClick, disabled, comoMenuItem, focado }) {
+  const { nome, resto } = partesDoPreco(reacao);
+  const C = CARTA_DE_ACAO;
   return (
     <button
       ref={innerRef}
@@ -61,16 +75,57 @@ function LinhaDoVerbo({ innerRef, reacao, onClick, disabled, comoMenuItem, focad
       tabIndex={comoMenuItem ? (focado ? 0 : -1) : undefined}
       disabled={disabled}
       onClick={onClick}
-      className="tv-anel-foco tv-mono text-xs"
+      aria-label={precoDoVerbo(reacao)}
+      className="tv-anel-foco"
       style={{
         display: "block", width: "100%", textAlign: "left",
-        padding: "12px 12px", minHeight: ALVOS.chamado, borderRadius: 8,
-        background: T.panelSoft, border: `1px solid ${T.amber}`,
-        color: T.ink, fontWeight: 600, cursor: disabled ? "default" : "pointer",
+        padding: "8px 12px", minHeight: ALVOS.chamado, borderRadius: C.raio,
+        background: T[C.chao], border: `${C.bordaArmadaPx}px solid ${T[C.bordaArmada]}`,
+        /* a sombra é filter: o anel de foco da folha é box-shadow, e o inline o apagaria */
+        filter: `drop-shadow(0 2px 3px ${alfa(T.veuDaNoite, 0.5)})`,
+        color: T[C.letra], cursor: disabled ? "default" : "pointer",
       }}
     >
-      {reacao.icone} {precoDoVerbo(reacao)}
+      <span aria-hidden="true" className="tv-display" style={{ display: "block", fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>{reacao.icone} {nome}</span>
+      {resto && <span aria-hidden="true" className="tv-body" style={{ display: "block", fontSize: 14, fontWeight: 600, lineHeight: 1.3, color: T[C.custo] }}>{resto}</span>}
     </button>
+  );
+}
+
+/* A VELA (F4 «REACAO_NA_MESA»): o prato de latão, o contorno tracejado da
+   vela inteira e a cera que resta, com a chama. A cera é o MESMO relógio do
+   trilho (a classe tv-janela-tempo, rodada a −90°: o que encolhia para a
+   esquerda encolhe para baixo) — a duração continua a ser a da tabela, e
+   com movimento reduzido a cera desce em degraus de 1 s (ceraDaVela). */
+function VelaDaReacao({ oferta, passou, reduzido, aperto, curta = false }) {
+  const V = VELA_DA_REACAO;
+  const cera = ceraDaVela(oferta, passou, { reduzido });
+  if (!cera.tem) return null;
+  const chama = aperto ? T[V.chamaAperto] : T[V.chama];
+  const h = curta ? V.vela.curta : V.vela.altura, w = V.vela.largura, P = V.pavio;
+  const topoDaCera = reduzido ? h * (1 - cera.fracao) : 0;
+  const formaDaChama = { position: "absolute", left: w / 2 - P.largura / 2, width: P.largura, height: P.altura, borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%", background: chama };
+  return (
+    <div aria-hidden="true" className="shrink-0 flex flex-col items-center" style={{ width: V.prato.largura }}>
+      <div style={{ position: "relative", width: w, height: h + P.folga }}>
+        <span style={{ position: "absolute", left: 0, top: P.folga, width: w, height: h, border: `1px dashed ${alfa(T[V.contorno], V.alfaDoContorno)}`, borderRadius: 3, boxSizing: "border-box" }} />
+        {reduzido ? (
+          <>
+            <span style={{ position: "absolute", left: 0, top: P.folga + topoDaCera, width: w, height: h - topoDaCera, background: T[V.cera], borderRadius: 3 }} />
+            <span style={{ ...formaDaChama, top: P.folga - P.altura + topoDaCera }} />
+          </>
+        ) : (
+          <>
+            <span style={{ position: "absolute", left: (w - h) / 2, top: P.folga + (h - w) / 2, width: h, height: w, transform: "rotate(-90deg)" }}>
+              <span className="tv-janela-tempo" style={{ display: "block", width: "100%", height: "100%", background: T[V.cera], borderRadius: 3,
+                "--tv-trilho-ms": `${oferta.trilhoMs}ms`, "--tv-trilho-desde": `${-Math.max(0, passou - oferta.folgaMs)}ms` }} />
+            </span>
+            <span className={aperto ? "tv-chama-treme" : undefined} style={{ ...formaDaChama, top: P.folga - P.altura, "--tv-treme-ms": `${V.tremeMs}ms`, boxShadow: `0 0 10px ${alfa(T.haloDaVela, 0.6)}` }} />
+          </>
+        )}
+      </div>
+      <span style={{ width: V.prato.largura, height: V.prato.altura, borderRadius: "50%", background: T[V.corDoPrato], marginTop: -4 }} />
+    </div>
   );
 }
 
@@ -85,6 +140,7 @@ export function PainelReacao({
   aoResponder,        // (reacao | null) => void  ·  null = o relógio acabou, SEM GESTO
   aoRecusar,          // () => void               ·  o recuo: é um gesto, e uma resposta
   aoSair,             // () => void               ·  o cartão cumpriu a vida; pode desmontar
+  naMesa = false,     // V6 parte 2: no lugar da mão de ações (a largura da mão, as cartas lado a lado)
 }) {
   const [aberto, setAberto] = React.useState(false);   // Chamando -> Escolhendo
   const [focoIndex, setFocoIndex] = React.useState(0); // roving tabindex do leque
@@ -229,32 +285,27 @@ export function PainelReacao({
   const abrirOuResponder = () => { if (reacoes.length <= 1) responder(reacoes[0]); else setAberto(true); };
 
   const corDoTrilho = noAperto ? T.danger : T.amber;
-  const trilho = trilhoVisivel && (
-    reduzido ? (
-      <div className="tv-mono" style={{ color: corDoTrilho, fontSize: 18, marginTop: 6 }} aria-hidden="true">{numeralContagem}</div>
-    ) : (
-      <div className="tv-trilho-entra" style={{ width: "100%", height: 4, marginTop: 8, borderRadius: 2, background: T.line, overflow: "hidden" }}>
-        <div
-          className="tv-janela-tempo"
-          style={{
-            width: "100%", height: "100%", background: corDoTrilho,
-            "--tv-trilho-ms": `${oferta.trilhoMs}ms`,
-            "--tv-trilho-desde": `${-Math.max(0, passou - oferta.folgaMs)}ms`,
-          }}
-        />
-      </div>
-    )
+  /* V6 parte 2: o tempo é a VELA ao lado (VelaDaReacao); com movimento
+     reduzido fica também o numeral da contagem, que é o relógio que se lê */
+  const trilho = trilhoVisivel && reduzido && (
+    <div className="tv-mono" style={{ color: corDoTrilho, fontSize: 18, marginTop: 6 }} aria-hidden="true">{numeralContagem}</div>
   );
+  const vela = trilhoVisivel ? <VelaDaReacao oferta={oferta} passou={passou} reduzido={reduzido} aperto={noAperto} curta={naMesa} /> : null;
+  const cartasLadoALado = naMesa ? { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${VELA_DA_REACAO.cartaMinima}px, 1fr))`, gap: 6 } : null;
 
   return (
     <div
       role={etapa === "Escolhendo" ? "menu" : undefined}
       onKeyDown={onKeyDownDoCartao}
       className={etapa === "Resolvida" ? "tv-resolve" : aberto ? "tv-leque-abre" : "tv-chamado-entra"}
-      style={{ width: "100%", maxWidth: LARGURA_MAXIMA_PX, textAlign: "left" }}
+      style={{ width: "100%", maxWidth: naMesa ? "none" : LARGURA_MAXIMA_PX, textAlign: "left",
+        display: "flex", gap: 12, alignItems: "stretch", padding: naMesa ? 8 : 10, minHeight: naMesa ? "100%" : undefined, flex: naMesa ? "1 0 auto" : undefined, boxSizing: "border-box", borderRadius: CARTA_DE_ACAO.raio,
+        background: T.pagina, border: `1px solid ${T.line}`, boxShadow: naMesa ? "none" : SOMBRA_DA_MESA.erguido }}
     >
+      {etapa !== "Resolvida" && vela}
+      <div style={{ flex: "1 1 0", minWidth: 0 }}>
       {etapa !== "Resolvida" && (
-        <div className="tv-body text-sm" style={{ color: T.ink }}>{linhaDoGolpe}</div>
+        <div className="tv-display" style={{ color: T.ink, fontSize: 17, lineHeight: 1.25 }}>{linhaDoGolpe}</div>
       )}
 
       {/* O saldo de PM: só quando alguma reação oferecida custa PM — é a
@@ -266,16 +317,19 @@ export function PainelReacao({
 
       {(etapa === "Direta" || etapa === "Chamando") && (
         <div style={{ marginTop: 6 }}>
-          <LinhaDoVerbo innerRef={chamadoRef} reacao={reacoes[0]} onClick={abrirOuResponder} />
+          <div style={cartasLadoALado || undefined}>
+            <LinhaDoVerbo innerRef={chamadoRef} reacao={reacoes[0]} onClick={abrirOuResponder} />
+            {naMesa && <LinhaDoRecuo refExterno={recuoDiretoRef} onClick={recusar} naMesa />}
+          </div>
           {trilho}
-          <LinhaDoRecuo refExterno={recuoDiretoRef} onClick={recusar} />
+          {!naMesa && <LinhaDoRecuo refExterno={recuoDiretoRef} onClick={recusar} />}
         </div>
       )}
 
       {etapa === "Escolhendo" && (
-        <div style={{ marginTop: 6 }}>
+        <div style={{ marginTop: 6, ...(cartasLadoALado || {}) }}>
           {reacoes.map((r, i) => (
-            <div key={r.id} style={{ marginTop: i ? 6 : 0 }}>
+            <div key={r.id} style={{ marginTop: i && !naMesa ? 6 : 0 }}>
               <LinhaDoVerbo
                 innerRef={(el) => { itensDoLequeRef.current[i] = el; }}
                 reacao={r}
@@ -286,7 +340,7 @@ export function PainelReacao({
             </div>
           ))}
           {trilho}
-          <LinhaDoRecuo refExterno={recuoDoLequeRef} onClick={recusar} comoMenuItem focado={focoIndex === reacoes.length} />
+          <LinhaDoRecuo refExterno={recuoDoLequeRef} onClick={recusar} comoMenuItem focado={focoIndex === reacoes.length} naMesa={naMesa} />
         </div>
       )}
 
@@ -303,6 +357,7 @@ export function PainelReacao({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

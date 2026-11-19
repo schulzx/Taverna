@@ -330,7 +330,10 @@ sec("6. A FIAÇÃO NO App E O CARTÃO NO ECRÃ (texto, corpo por âncora)");
        que fica sempre montado (o tabuleiro escreve lá os chips e o ⤢); o que
        sai enquanto a decisão espera é a FRASE dele e a reação ancorada nele */
     /\{!esperando && <FilaDaVez /.test(TEL) && /const textoDoPe = esperando \|\| fimComEspolio \? ""/.test(TEL)
-    && /reacao=\{esperando \? null : p\.reacao\}/.test(TEL) && /\{!\(esperando && noTelefone\) && lateral\}/.test(TEL));
+    /* MOVIDA (19/11, V6 parte 2): a reação já não se ancora no Pé — abre no
+       lugar da mão de ações (F4 «REACAO_NA_MESA»). O que se guarda é o mesmo:
+       enquanto a decisão espera, a reação não aparece. */
+    && /const reacaoNaMao = !esperando && p\.reacao \?/.test(TEL) && /reacao=\{null\}/.test(TEL) && /\{!\(esperando && noTelefone\) && lateral\}/.test(TEL));
 }
 
 console.log(`\ncomo chega (MM16 nº 5): ${ok} passaram, ${mal} falharam`);

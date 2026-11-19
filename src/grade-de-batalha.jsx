@@ -82,6 +82,10 @@ import { LETRAS_DA_GRADE } from "./coordenadas.js";
 /* V6 · as intenções fundidas por alvo, e o chão das dez plantas */
 import { intencoesPorAlvo, chaoDasRegioes, enderecoDoLadrilho, VEU_DO_LADRILHO } from "./mesa-de-batalha.js";
 import { ETIQUETA_DA_INTENCAO } from "./estilo.js";
+/* V6 parte 2 (F4 «TAPETE» e «PECA_NO_TAPETE»): o couro com a costura e as
+   tachas, a régua gravada na faixa, e a peça cujo aro é a vida */
+import { TAPETE, PECA_NO_TAPETE, estadoDaPeca, contasDosInimigos } from "./luta-na-mesa.js";
+import { SOMBRA_DA_MESA } from "./estilo.js";
 
 const K = (x, y) => `${x},${y}`;
 
@@ -211,7 +215,9 @@ const LADO_QUE_CABE_UM_ROTULO = 30;
    mesmo `grau`, nunca como caminho separado: no dia em que o motor
    nascer, quem a chama é ele, e nada aqui muda de forma. */
 const GRAUS_DA_REGUA = {
-  repouso:   { cor: T.inkDim,    filete: null },
+  /* V6 parte 2: a régua é gravada no couro do tapete — `inkMeio` (6,89 : 1
+     no couro, F4 «TAPETE»), não `inkDim` */
+  repouso:   { cor: T[TAPETE.regua.cor], filete: null },
   procurada: { cor: T.ink,       filete: T.lineStrong },
   realcada:  { cor: T.amberSoft, filete: T.amber },
 };
@@ -241,7 +247,9 @@ function RotuloDaRegua({ texto, grau, coluna, parado, canto = false }) {
       paddingTop: canto ? (!coluna ? CANTO_DA_REGUA.recuo + CANTO_DA_REGUA.linhaDaLetra : CANTO_DA_REGUA.recuo) : 0,
       opacity: canto ? CANTO_DA_REGUA.alfa : 1 }}>
       {texto ? (
-        <span className="tv-mono" style={{ fontSize: CORPO_DA_REGUA, fontWeight: 700, lineHeight: 1, color: d.cor, transition: `color ${anda}` }}>{texto}</span>
+        /* V6 parte 2 (F4 «TAPETE»): no couro, letras em Cinzel e números em
+           Spectral Bold (o 1 do Cinzel lê-se I); presa no telefone, o mono de sempre */
+        <span className={canto ? "tv-mono" : coluna ? "tv-display" : "tv-body"} style={{ fontSize: canto ? CORPO_DA_REGUA : TAPETE.regua.corpo, fontWeight: 700, lineHeight: 1, color: d.cor, transition: `color ${anda}` }}>{texto}</span>
       ) : (
         /* a que não é rotulada leva só um traço — é o que uma régua de
            verdade faz quando não cabe uma etiqueta em cada risco */
@@ -330,17 +338,28 @@ const Contorno = ({ linhas, cor, largura = 0.05, tracejado = null, opacidade = 1
 /* CB 17.2 · `age`: o `Anel de quem age` (Figma 364:1469) — traço 3 em `danger`
    (`ok` num aliado), a `folga` px por fora do disco, e o brilho a 35 % por
    baixo dele (tv-anel-age, que sai com o movimento reduzido). */
-function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0, golpe = null, anel = null, age = null }) {
+/* V6 parte 2 · A PEÇA (F4 «PECA_NO_TAPETE»): o aro É a vida — um arco a
+   partir das 12 h, sentido horário, e o que falta é couro; o lado é a cor do
+   aro (latão nosso, lacre deles) E a conta numerada; só quem age é âmbar, de
+   qualquer lado, e sobe 3 px com o lume. A cara sai de `estadoDaPeca`
+   (luta-na-mesa.js), que a suíte prova em Node. `conta`: o número do inimigo
+   entre os iguais; `aVez`: é a vez dele. */
+function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa = 0, golpe = null, anel = null, age = null, aVez = false, conta = 0 }) {
   /* o clipPath precisa de id único e ESTÁVEL: derivado de x,y ele trocaria
      no meio do deslizamento e o rosto piscaria a cada passo */
   const uid = React.useId();
-  const r = lado * 0.40;
+  const r = lado * PECA_NO_TAPETE.diametro / 2;
   const cx = x + lado / 2, cy = y + lado / 2;
   const pv = Math.max(0, ent.vida || 0), pvMax = Math.max(0, ent.vidaMax || 0);
   const frac = pvMax > 0 ? Math.max(0, Math.min(1, pv / pvMax)) : null;
-  const rArco = r + lado * 0.07;
+  const peca = estadoDaPeca(ent, { tipo, aVez: aVez || !!age, conta });
+  const umPxDaPeca = 1 / Math.max(1, pxDaCasa || 1);
+  const aroPx = Math.max(PECA_NO_TAPETE.aroMinimoPx, PECA_NO_TAPETE.aroDaCasa * 2 * r * (pxDaCasa || 1));
+  const aro = aroPx * umPxDaPeca;
+  const rArco = r - aro / 2;
   const volta = 2 * Math.PI * rArco;
-  const corVida = frac == null ? cor : frac <= 1 / 3 ? T.danger : frac <= 2 / 3 ? T.amber : T.ok;
+  const corVida = T[peca.aro] || cor;
+  const S = PECA_NO_TAPETE.sombra;
   /* O ROSTO, E NÃO A INICIAL (v9.161): a inicial da v9.125 era o certo
      enquanto o rosto era desenho animado — "T" dizia mais que um boneco.
      A xilogravura inverteu a conta: Troll 1 e Troll 2 têm caras diferentes
@@ -351,7 +370,11 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
   const umPx = 1 / Math.max(1, pxDaCasa || 1);
   const tremorPx = golpe ? (GOLPE_SENTIDO[golpe.variante] && GOLPE_SENTIDO[golpe.variante].tremor ? GOLPE_SENTIDO[golpe.variante].tremor.px : 0) : 0;
   return (
-    <g style={{ transform: `translate(${cx}px, ${cy}px)`, transition: `transform ${ms}ms linear` }}>
+    <g style={{ transform: `translate(${cx}px, ${cy - peca.sobe * umPxDaPeca}px)`, transition: `transform ${ms}ms linear` }}>
+      {/* a sombra da peça pousada no chão, e o lado (3 px por baixo) */}
+      <circle cx={S.dx * umPxDaPeca} cy={(S.dy + peca.sobe) * umPxDaPeca} r={r} fill={T.veuDaNoite} opacity={S.alfa} />
+      <circle cy={3 * umPxDaPeca} r={r} fill={T[PECA_NO_TAPETE.lado[peca.sobe ? "aVez" : peca.lado]]} />
+      {peca.sobe > 0 && <circle className="tv-anel-age" r={r + 11 * umPxDaPeca} fill={T.amber} opacity={PECA_NO_TAPETE.aVez.lume * 0.35} />}
       {anel && (
         <circle r={r + lado * 0.13} fill="none" stroke={anel} strokeWidth={PREVISAO_DO_GOLPE.anelDoAlvo.traco * umPx}
           strokeDasharray={PREVISAO_DO_GOLPE.anelDoAlvo.tracejado.map((n) => n * umPx).join(" ")} />
@@ -368,9 +391,8 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
       })()}
       <g key={golpe ? golpe.chave : "quieta"} className={golpe ? [golpe.classes.tremor, golpe.classes.afunda].filter(Boolean).join(" ") : undefined}
         style={golpe ? { "--tremor": `${tremorPx * umPx}px` } : undefined}>
-      {tipo === "heroi" && <circle r={r * 1.5} fill={T.amber} opacity={0.12} />}
-      <circle r={r} fill="#100e1a" stroke={cor} strokeWidth={lado * 0.055} />
-      <clipPath id={uid}><circle r={r * 0.94} /></clipPath>
+      <circle r={r} fill={T.couroBaixo} />
+      <clipPath id={uid}><circle r={r - aro} /></clipPath>
       <g clipPath={`url(#${uid})`} style={{ pointerEvents: "none" }}>
         <g transform={`translate(${-32 * s} ${-30.5 * s}) scale(${s})`}>
           {/* A1: o rosto sabe em quantos píxeis é desenhado — o disco da ficha
@@ -379,10 +401,20 @@ function Ficha({ ent, tipo, cor, x, y, lado, ms, grande, rotulo = null, pxDaCasa
           <Rosto semente={sementeDe(ent)} estado={estadoDe(pv, pvMax, tipo === "inimigo")} ente={ent} lado={2 * r * (pxDaCasa || 1)} />
         </g>
       </g>
-      {frac != null && (
-        <circle r={rArco} fill="none" stroke={corVida} strokeWidth={0.075} strokeLinecap="round"
-          strokeDasharray={`${volta * frac} ${volta}`} transform="rotate(-90)" opacity={0.85} />
-      )}
+      {/* o aro: o que falta em couro, o que resta na cor do lado */}
+      <circle r={rArco} fill="none" stroke={T[peca.falta]} strokeWidth={aro} />
+      <circle r={rArco} fill="none" stroke={corVida} strokeWidth={aro}
+        strokeDasharray={`${volta * (frac == null ? 1 : frac)} ${volta}`} transform="rotate(-90)" />
+      {/* a conta numerada (F4: 18 px, osso, número em Spectral Bold 12): o lado sem cor */}
+      {peca.conta > 0 && (() => {
+        const C = PECA_NO_TAPETE.conta, q = C.ladoPx * umPxDaPeca;
+        return (
+          <g transform={`translate(${r * 0.62} ${r * 0.62})`}>
+            <circle r={q / 2} fill={T[C.chao]} stroke={T[C.borda]} strokeWidth={umPxDaPeca} />
+            <text className="tv-body" textAnchor="middle" dominantBaseline="central" fill={T[C.letra]} style={{ fontSize: C.corpo * umPxDaPeca, fontWeight: 700 }}>{peca.conta}</text>
+          </g>
+        );
+      })()}
       {grande && (
         <text className="tv-mono" textAnchor="middle" y={r + lado * 0.4} fill={cor} opacity={0.8}
           style={{ fontSize: 0.26, pointerEvents: "none" }}>{rotulo || ent.nome}</text>
@@ -1261,6 +1293,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      quem age no caminho (no começo dele antes de deslizar), quem ainda não
      agiu na casa de onde parte (`porVir`), os outros onde o estado os pôs */
   const quemAge = passo && passo.quem ? String(passo.quem) : "";
+  /* V6 parte 2: a conta numerada dos inimigos iguais (o segundo sinal do lado) */
+  const contasDaMesa = (() => { try { return contasDosInimigos([...(combate.inimigos || [])]); } catch { return {}; } })();
   const camDoPasso = passo && Array.isArray(passo.caminho) ? passo.caminho.filter((q) => q && q.x != null) : [];
   const porVir = new Map((passo && Array.isArray(passo.porVir) ? passo.porVir : []).filter((x) => x && x.quem && x.de && x.de.x != null && x.quem !== quemAge).map((x) => [String(x.quem), x.de]));
   const ondeEsta = (ent) => {
@@ -1392,8 +1426,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      em cima e à esquerda —, com `tetoDoLado` por cima e `ladoFixo` por
      baixo. O piso ganha sempre: abaixo dele é a janela que rola. Sem altura
      (o telefone), é a conta de B1, byte a byte. */
-  const ladoPelaLargura = larguraDaJanela > 0 ? Math.floor((larguraDaJanela - CALHA_DA_REGUA) / g.largura) : Infinity;
-  const ladoPelaAltura = alturaDaJanela > 0 ? Math.floor((alturaDaJanela - CALHA_DA_REGUA) / g.altura) : Infinity;
+  /* V6 parte 2 · O TAPETE: o couro tem borda (2 px de cada lado) e a faixa de
+     14 nas duas bordas sem régua — sai da largura e da altura da casa, para o
+     tapete inteiro caber na janela como cabia o tabuleiro nu */
+  const BORDA_DO_TAPETE = reguaPresa ? 0 : TAPETE.faixa.resto + TAPETE.bordaPx * 2;
+  const ladoPelaLargura = larguraDaJanela > 0 ? Math.floor((larguraDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE) / g.largura) : Infinity;
+  const ladoPelaAltura = alturaDaJanela > 0 ? Math.floor((alturaDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE) / g.altura) : Infinity;
   const ladoNaJanela = ladoFixo > 0 && larguraDaJanela > 0
     ? Math.max(ladoFixo, Math.min(tetoDoLado > 0 ? tetoDoLado : Infinity, ladoPelaLargura, ladoPelaAltura))
     : ladoFixo;
@@ -1473,17 +1511,37 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
     };
     const grauDaColuna = (x) => (apontada && apontada.x === x ? "realcada" : "repouso");
     const grauDaLinha = (y) => (apontada && apontada.y === y ? "realcada" : "repouso");
+    /* V6 parte 2 · O TAPETE É UM OBJETO (F4 §1 nº 2): couro com costura e
+       tachas de latão, a régua gravada na faixa de cima e na da esquerda. Só
+       fora do telefone: lá a régua é presa à janela e o couro não tem borda. */
+    const comCouro = !presa;
+    const Tp = TAPETE;
+    const couro = comCouro ? {
+      background: T[Tp.couro], border: `${Tp.bordaPx}px solid ${T[Tp.borda]}`, borderRadius: Tp.raio,
+      boxShadow: SOMBRA_DA_MESA.pousado, paddingRight: Tp.faixa.resto, paddingBottom: Tp.faixa.resto, position: "relative",
+    } : null;
+    const extraDoCouro = comCouro ? Tp.faixa.resto + Tp.bordaPx * 2 : 0;
     return (
     /* A CALHA: o canto, as letras em cima, os números à esquerda, e o campo
        no quadrante que sobra. O `maxWidth` cresce os 22 px da calha para
        que o tabuleiro fique do mesmo tamanho que tinha antes dela. */
-    <div style={{ display: "grid", gridTemplateColumns: `${calha}px 1fr`, gridTemplateRows: `${calha}px auto`,
+    <div data-tapete={comCouro ? "" : undefined} style={{ ...(couro || {}), boxSizing: "border-box", display: "grid", gridTemplateColumns: `${calha}px 1fr`, gridTemplateRows: `${calha}px auto`,
       /* com lado imposto a caixa NÃO encolhe: é a janela que corta o campo,
          e é o rolador do pai que mostra o resto. Sem ele, `width: 100%`
          devolveria a casa ao tamanho do buraco — o defeito que E1 mediu. */
-      width: !grande && ladoFixo > 0 ? larguraDoCampo + calha : "100%",
+      width: !grande && ladoFixo > 0 ? larguraDoCampo + calha + extraDoCouro : "100%",
       flexShrink: 0,
-      maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA}px)` : larguraDoCampo + calha, margin: "0 auto", background: T.bg }}>
+      maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA + extraDoCouro}px)` : larguraDoCampo + calha + extraDoCouro, margin: "0 auto", ...(comCouro ? {} : { background: T.bg }) }}>
+      {comCouro && (
+        /* a costura a 4 px da borda e as quatro tachas — decoração, sem toque */
+        <>
+          <span aria-hidden="true" style={{ position: "absolute", inset: Tp.costura.recuo, borderRadius: Tp.raio - Tp.costura.recuo, border: `${Tp.costura.px}px dashed ${alfa(T[Tp.costura.cor], Tp.costura.alfa)}`, pointerEvents: "none" }} />
+          {[["left", "top"], ["right", "top"], ["left", "bottom"], ["right", "bottom"]].map(([h, v]) => (
+            <span key={h + v} aria-hidden="true" style={{ position: "absolute", [h]: Tp.tacha.recuo - Tp.tacha.lado / 2, [v]: Tp.tacha.recuo - Tp.tacha.lado / 2, width: Tp.tacha.lado, height: Tp.tacha.lado, borderRadius: "50%",
+              background: `radial-gradient(circle at 35% 35%, ${T[Tp.tacha.lume]}, ${T[Tp.tacha.cor]} 60%)`, pointerEvents: "none" }} />
+          ))}
+        </>
+      )}
       {/* o canto é `bg` e não leva rótulo: `A1` não se escreve duas vezes */}
       <div aria-hidden="true" style={presa ? { position: "sticky", top: 0, left: 0, zIndex: 4 } : undefined} />
       {/* presa: a faixa tem altura zero na grelha e a régua pende dela por
@@ -1537,7 +1595,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           e paga duas coisas de uma vez: sai um literal da contagem, e o vão de
           2 px do anel de foco — que sobre `#141020` dava 1,04:1 e simplesmente
           não se separava do fundo — volta a funcionar como foi desenhado. */}
-      <svg viewBox={`0 0 ${g.largura} ${g.altura}`} style={{ width: "100%", height: "100%", display: "block", borderRadius: 10, background: T.bg, border: `1px solid ${T.line}` }}>
+      <svg viewBox={`0 0 ${g.largura} ${g.altura}`} style={{ width: "100%", height: "100%", display: "block", borderRadius: comCouro ? 3 : 10, background: T.bg,
+        border: comCouro ? `${Tp.bordaDoChao.px}px solid ${alfa(T.veuDaNoite, Tp.bordaDoChao.alfa)}` : `1px solid ${T.line}` }}>
         <defs>
           {/* B1: as "Hachuras da areia" do quadro — o fio âmbar a 0,125, a
               37,5°, com o passo medido em píxeis. Era um castanho literal a
@@ -1915,7 +1974,19 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           );
         })()}
         {/* CB 5 · quem caiu deixa a caveira na casa */}
-        {caidosComCasa.map((e, i) => <GlifoNaCasa key={`caido${e.nome}-${i}`} nome={INTENCAO_NA_MESA.caveira} x={e.x + (ladoDe(e) - 1) / 2} y={e.y + (ladoDe(e) - 1) / 2} lado={0.46} cor={T.inkDim} px={px} />)}
+        {/* V6 parte 2 (F4 «caido»): a peça vira o verso de osso — disco de
+            0,8 × a peça, lado `ossoSombra`, borda de tinta — com a caveira */}
+        {caidosComCasa.map((e, i) => {
+          const n = ladoDe(e), C = PECA_NO_TAPETE.caido, rr = n * PECA_NO_TAPETE.diametro * C.escala / 2;
+          const cx = e.x + n / 2, cy = e.y + n / 2;
+          return (
+            <g key={`caido${e.nome}-${i}`} style={{ pointerEvents: "none" }}>
+              <circle cx={cx} cy={cy + 2 * px} r={rr} fill={T[C.lado]} />
+              <circle cx={cx} cy={cy} r={rr} fill={T[C.chao]} stroke={T[C.borda]} strokeWidth={px} />
+              <GlifoNaCasa nome={INTENCAO_NA_MESA.caveira} x={e.x + (n - 1) / 2} y={e.y + (n - 1) / 2} lado={0.46 * n} cor={T[C.caveira]} px={px} />
+            </g>
+          );
+        })}
 
         {/* o caminho: o previsto pontilhado, o andado inteiro */}
         {rotaPrevista && (
@@ -2009,11 +2080,12 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
         <g style={{ pointerEvents: "none" }}>
           {aliados.map((a, i) => (a.vida || 0) > 0 && a.x != null ? (
             <Ficha key={`al${i}`} ent={a} tipo="aliado" cor={T.ok} x={ondeEsta(a).x} y={ondeEsta(a).y - sobeEm(ondeEsta(a))} lado={ladoDe(a)} ms={msDoPasso(a)} grande={grande} pxDaCasa={ladoEmPx(grande)}
-              golpe={golpeEm(a.nome)} anel={realce && realce === a.nome ? T.amber : null} age={quemAge === a.nome ? T.ok : null} />
+              golpe={golpeEm(a.nome)} anel={realce && realce === a.nome ? T.ink : null} age={quemAge === a.nome ? T.amber : null} />
           ) : null)}
           {inimigos.map((e, i) => e.x != null ? (
             <Ficha key={`in${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={ondeEsta(e).x} y={ondeEsta(e).y - sobeEm(ondeEsta(e))} lado={ladoDe(e)} ms={msDoPasso(e)} grande={grande} pxDaCasa={ladoEmPx(grande)}
-              golpe={golpeEm(e.nome)} anel={alvoDaPrevisao === e.nome || (realce && realce === e.nome) ? T.amber : null} age={quemAge === e.nome ? T.danger : null} />
+              golpe={golpeEm(e.nome)} anel={alvoDaPrevisao === e.nome || (realce && realce === e.nome) ? T.ink : null} age={quemAge === e.nome ? T.amber : null}
+              conta={contasDaMesa[e.nome] || 0} />
           ) : null)}
           {caidosComCasa.filter((e) => { const gq = golpeEm(e.nome); return gq && gq.variante === "abate"; }).map((e, i) => (
             <Ficha key={`cai${e.nome}-${i}`} ent={e} tipo="inimigo" cor={T.danger} x={e.x} y={e.y} lado={ladoDe(e)} ms={0} grande={grande} pxDaCasa={ladoEmPx(grande)} golpe={golpeEm(e.nome)} />
@@ -2026,7 +2098,8 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
               x={andando ? andando.rota[andando.i].x : heroi.x}
               y={(andando ? andando.rota[andando.i].y : heroi.y) - sobeEm(andando ? andando.rota[andando.i] : heroi)}
               ms={andando ? andando.ms : 260}
-              golpe={golpeEm((heroiFicha && heroiFicha.nome) || heroiNome)} anel={realce && realce === ((heroiFicha && heroiFicha.nome) || heroiNome) ? T.amber : null} />
+              golpe={golpeEm((heroiFicha && heroiFicha.nome) || heroiNome)} anel={realce && realce === ((heroiFicha && heroiFicha.nome) || heroiNome) ? T.ink : null}
+              aVez={!quemAge} />
           )}
         </g>
 

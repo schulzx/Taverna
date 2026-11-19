@@ -74,6 +74,9 @@ import { filaDaRodada, economiaDaVez } from "./vez-na-mesa.js";
 import { sementeDe, estadoDe } from "./semente.js";
 import { metrosTxt, podeDarUmPasso, garantirGrade, nomeDoLugar } from "./grid.js";
 import { custoEscrito } from "./mesa-de-batalha.js";
+/* V6 parte 2: a mão de ações em cartas de osso, com a linha do dado */
+import { CARTA_DE_ACAO } from "./luta-na-mesa.js";
+import { FimDaLuta, SaidaDaLuta } from "./painel-fim-da-luta.jsx";
 import { mecanicaDe } from "./condicoes.js";
 import { selosDaMecanica } from "./selo-de-estado.js";
 import { tituloDe } from "./divindades.js";
@@ -181,106 +184,10 @@ const temMotorOuNaoEGesto = (v) => !(v.papel === "gesto" && !v.motor);
    sem o jogador ver o que ganhou. Depois, o `Tab` passa pelos `Recolher` e
    chega ao `Respirar fundo`; ao recolher, o foco segue para o próximo
    `Recolher` ou para o `Respirar fundo`, nunca para o vazio. */
-const DESFECHOS = {
-  vitoria:   { titulo: "Vitória",        recibo: "tudo",  chao: true },
-  fuga:      { titulo: "Você escapou",   recibo: "perda", chao: false },
-  queda:     { titulo: "Você tombou",    recibo: "perda", chao: false },
-  encerrada: { titulo: "A luta acabou",  recibo: "tudo",  chao: false },
-  /* MM (a luta tem saída, 11/10): o meu lado inteiro caiu e acordou — quem
-     ficou de pé fez o que quis com os caídos, e a frase de baixo diz o quê.
-     "Derrota" e não "Vocês caíram": o par de "Vitória", e serve a quem caiu
-     sozinho (a segunda prova viva lia "Vocês" sobre uma heroína só). */
-  derrota:   { titulo: "Derrota",        recibo: "perda", chao: false },
-};
-const ENTRE_DESFECHO_E_RECIBO = { mesa: 24, telefone: 12 };
-
-function CoisaNoChao({ coisa, recolhida, aoRecolher, telefone }) {
-  return (
-    <div className="flex items-center min-w-0" style={{ minHeight: ALVOS.piso, gap: telefone ? M.entreVerbos : M.chipLadoX }}>
-      <span className="tv-mono shrink-0" style={{ ...LEGENDA, fontSize: TIPOS.maquina, color: T.inkDim }}>no chão</span>
-      <span className="tv-body flex-1 min-w-0 truncate" style={{ fontSize: TIPOS.corpo, color: recolhida ? T.inkDim : T.ink }}>{coisa.nome}</span>
-      {recolhida ? (
-        <span className="tv-mono shrink-0" style={{ fontSize: TIPOS.rotulo, color: T.inkDim }}>na bolsa</span>
-      ) : (
-        <button type="button" data-recolher="" onClick={aoRecolher}
-          className="tv-anel-foco tv-mono shrink-0"
-          style={{ minHeight: ALVOS.piso, padding: "0 16px", borderRadius: M.raioControle, background: T.panelSoft, border: `1px solid ${T.lineStrong}`, fontSize: TIPOS.rotulo, color: T.ink, cursor: "pointer" }}>
-          Recolher
-        </button>
-      )}
-    </div>
-  );
-}
-
-/* `linha` (MM, a luta tem saída): o que quem ficou de pé fez com os caídos —
-   "o Dragão Jovem, ferido, foge e deixa vocês no chão". É gameplay, não o
-   nome da regra; vazia, 0 px. */
-function FimDaLuta({ desfecho = "encerrada", recibo = [], chao = [], linha = "", aoRecolher, aoSair, telefone = false }) {
-  const d = DESFECHOS[desfecho] || DESFECHOS.encerrada;
-  const tituloRef = React.useRef(null);
-  const faixaRef = React.useRef(null);
-  const sairRef = React.useRef(null);
-  const [recolhidas, setRecolhidas] = React.useState([]);
-  const [chaoAberto, setChaoAberto] = React.useState(false);
-  React.useEffect(() => { try { if (tituloRef.current) tituloRef.current.focus(); } catch (e) { /* sem foco, a tela continua */ } }, []);
-  const chips = (Array.isArray(recibo) ? recibo : []).filter((c) => c && (d.recibo === "tudo" || Number(c.delta) < 0));
-  /* o que foi recolhido continua na lista (a dizer "na bolsa") mesmo que o
-     App o tire do chão: a linha não some debaixo do dedo */
-  const coisas = (() => {
-    const vindas = (Array.isArray(chao) ? chao : []).filter((c) => c && c.id != null);
-    const ids = new Set(vindas.map((c) => String(c.id)));
-    return [...vindas, ...recolhidas.filter((c) => !ids.has(String(c.id)))];
-  })();
-  const recolhida = (c) => !!c.recolhido || recolhidas.some((r) => String(r.id) === String(c.id));
-  const recolher = (c, k) => {
-    try {
-      setRecolhidas((rs) => (rs.some((r) => String(r.id) === String(c.id)) ? rs : [...rs, { id: c.id, nome: c.nome }]));
-      if (aoRecolher) aoRecolher(c.id);
-    } catch (e) { console.warn("FimDaLuta: recolher falhou", e); }
-    /* depois de o React pintar a linha "na bolsa" (um tique do relógio, não um quadro contado) */
-    setTimeout(() => {
-      try {
-        const botoes = faixaRef.current ? [...faixaRef.current.querySelectorAll("[data-recolher]")] : [];
-        const proximo = botoes[k];
-        const alvo = proximo || sairRef.current; if (alvo) alvo.focus();
-      } catch (e) { /* o foco é cortesia; nunca custa a saída */ }
-    }, 0);
-  };
-  const teto = telefone ? FIM_DA_LUTA.tetoDoChaoNoTelefone : FIM_DA_LUTA.tetoDoChao;
-  const vistas = chaoAberto ? coisas : coisas.slice(0, teto);
-  const vencedor = desfecho === "vitoria";
-  return (
-    <>
-      <div className="flex items-center min-w-0" style={{ gap: telefone ? ENTRE_DESFECHO_E_RECIBO.telefone : ENTRE_DESFECHO_E_RECIBO.mesa }}>
-        <h3 ref={tituloRef} tabIndex={-1} role="status" className="tv-display tv-fim-entra shrink-0"
-          style={{ fontSize: telefone ? TIPOS.titulo : TIPOS.display, color: vencedor ? T.amberSoft : T.ink, fontWeight: 600, lineHeight: 1.2, margin: 0 }}>
-          {d.titulo}
-        </h3>
-        {chips.length > 0 && <div className="flex-1 min-w-0"><Recibo chips={chips} telefone={telefone} momento /></div>}
-      </div>
-      {typeof linha === "string" && linha.trim() && (
-        <p data-fim-linha="" className="tv-body min-w-0" style={{ fontSize: TIPOS.corpo, color: T.ink, lineHeight: 1.45, margin: 0 }}>{linha}</p>
-      )}
-      {d.chao && coisas.length > 0 && (
-        <div ref={faixaRef} className="flex flex-col min-w-0" style={{ gap: telefone ? M.entreVerbos : M.chipLadoX }}>
-          {vistas.map((c, k) => (
-            <CoisaNoChao key={String(c.id)} coisa={c} recolhida={recolhida(c)} telefone={telefone}
-              aoRecolher={() => recolher(c, vistas.slice(0, k).filter((x) => !recolhida(x)).length)} />
-          ))}
-          {coisas.length > teto && (
-            <Dobra quantos={coisas.length - teto} singular="coisa" plural="coisas"
-              estado={chaoAberto ? "aberta" : "dobrada"} aoAlternar={() => setChaoAberto((v) => !v)} />
-          )}
-        </div>
-      )}
-      <button ref={sairRef} onClick={aoSair} className="tv-anel-foco tv-display text-lg w-full"
-        style={{ minHeight: ALVOS.piso, borderRadius: M.raioControle, background: T.amber, color: T.onAccent, fontWeight: 600 }}>
-        Respirar fundo →
-      </button>
-    </>
-  );
-}
-
+/* V6 parte 2 (19/11): o FimDaLuta, o CoisaNoChao e os DESFECHOS saíram para
+   casa própria — src/painel-fim-da-luta.jsx —, e o fim virou cerimônia: a
+   vitória cobre o tapete (as cartas do espólio pousam e viram, o XP conta) e
+   o «Respirar fundo» mora onde estava a mão de ações, com o preço por baixo. */
 /* "na areia solta" → "Na areia solta": o título da cena é o lugar do
    herói, com a mesma preposição que o Mestre usa. */
 const comMaiuscula = (s) => { const t = String(s || ""); return t ? t[0].toUpperCase() + t.slice(1) : ""; };
@@ -582,9 +489,17 @@ function resumoDaArea(pv) {
    «passo · até 9 m»), e o nome na letra da mesa (Cinzel), não em mono. No
    telefone (`grelha`) a casa é pequena demais para as duas linhas: fica o
    nome, e a chance por baixo do Atacar, como estava. */
+/* V6 parte 2 (F4 «CARTA_DE_ACAO»): o verbo vira CARTA — osso com borda de
+   tinta, o nome em Cinzel e, por baixo, o custo em brasa; armada, chão de
+   osso, borda de tinta de 2 e sobe; impedida, sem chão e tracejada. O Atacar continua a
+   dizer a chance ao lado do nome (CB 2). A altura é a do verbo de sempre (a
+   geometria da mesa conta com ela). A SOMBRA é `filter`, nunca a sombra de caixa
+   inline: o anel de foco da folha é box-shadow, e o inline apagá-lo-ia. */
 function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, aoApontar = null, alto = B3.verbo.fino, grelha = false, custo = "" }) {
   const recuo = v.papel === "recuo";
   const P = B3.verboComPip;
+  const C = CARTA_DE_ACAO;
+  const sombraDaCarta = (px) => `drop-shadow(0 ${px}px ${px + 1}px ${alfa(T.veuDaNoite, 0.5)})`;
   return (
     <button
       /* O BOTÃO NÃO DECIDE, E ISTO CUSTOU UMA LUTA PARA SE VER. Ele
@@ -615,30 +530,35 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
       style={{
         /* o alvo sai da tabela, nunca de aritmética de padding */
         minHeight: alto, height: alto,
-        padding: `0 ${P.lado}px`, gap: P.entre, borderRadius: M.raioControle,
-        fontSize: M.letra.verbo, fontWeight: armado ? 600 : 500, whiteSpace: "nowrap",
+        padding: `0 ${armado ? P.lado - (C.bordaArmadaPx - C.bordaPx) : P.lado}px`, gap: P.entre, borderRadius: CARTA_DE_ACAO.raio,
+        /* F4 «CARTA_DE_ACAO»: o nome em Cinzel 13 e o custo em Spectral 13 (no telefone, a grelha de sempre) */
+        fontSize: grelha ? M.letra.verbo : C.nome, fontWeight: armado ? 600 : 500, whiteSpace: "nowrap",
         /* `Atacar` é o primeiro entre iguais, e paga-se na LARGURA — nunca
            no preenchimento, que pertence ao armado. Na grelha do telefone
            cada verbo enche a sua casa, e os quatro são iguais. */
         flex: grelha ? undefined : v.primeiro ? "1 1 0" : recuo ? "0 0 auto" : "0 1 auto",
         minWidth: grelha ? 0 : v.primeiro ? 120 : 0,
-        background: armado ? T.amber : T.panelSoft,
+        /* V6 parte 2: a carta de osso. O recuo (Esperar · Fugir) fica no couro,
+           do outro lado do fio: é saída, não gesto, e a mão é dos gestos */
+        background: impedido ? "transparent" : recuo && !armado ? T.panelSoft : armado ? T[C.chaoArmada] : T[C.chao],
         /* §CB 16.4: Esperar `inkMeio` (8,32), o recuo impedido `inkDim` (5,45) —
            a grelha do telefone não tem fio, e o papel diz-se pela letra */
-        color: armado ? T.onAccent : impedido ? T.inkDim : recuo ? T.inkMeio : T.ink,
-        /* o armado HERDA o contorno do repouso do mesmo `Papel`: o traço é
-           o que segura a largura, e tirá-lo encolheria o botão ao armar-se */
-        border: `1px solid ${armado ? T.amber : T.line}`,
-        opacity: impedido ? 0.45 : 1,
+        color: impedido ? T[C.impedida.letra] : recuo && !armado ? T.inkMeio : T[C.letra],
+        /* armada: a borda de tinta passa a 2 (F4); o enchimento perde 1 px de
+           cada lado, para a carta não mudar de largura ao armar-se */
+        border: impedido ? `1px dashed ${T[C.impedida.borda]}` : armado ? `${C.bordaArmadaPx}px solid ${T[C.bordaArmada]}` : `${C.bordaPx}px solid ${recuo ? T.line : T[C.borda]}`,
+        filter: impedido || (recuo && !armado) ? undefined : sombraDaCarta(armado ? 4 : 2),
+        transform: armado ? `translateY(-${C.sobeArmada}px)` : undefined,
+        opacity: impedido ? 0.7 : 1,
         position: "relative",
       }}>
       {recurso === "movimento"
-        ? <Glifo nome="passo" tamanho={P.passos} cor={armado ? T.onAccent : T.amberSoft} />
+        ? <Glifo nome="passo" tamanho={P.passos} cor={impedido ? T.inkMeio : T[C.custo]} />
         : recurso && <PipDoRecurso recurso={recurso} estado={impedido ? "gasto" : "livre"} tamanho={P.pip} />}
       {grelha && chance != null ? (
         <span className="flex flex-col items-center" style={{ lineHeight: `${B3.vereditoNoPe.entrelinha}px` }}>
           <span>{v.rotulo}</span>
-          <span aria-hidden="true" style={{ fontWeight: 700 }}>{chance}%</span>
+          <span aria-hidden="true" style={{ fontWeight: 700, color: T[C.custo] }}>{chance}%</span>
         </span>
       ) : (
         <span className="flex flex-col items-start" style={{ lineHeight: 1.15 }}>
@@ -647,7 +567,7 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
             {chance != null && <span aria-hidden="true" style={{ fontWeight: 700, whiteSpace: "nowrap" }}> · {chance}%</span>}
           </span>
           {!grelha && custo && (
-            <span className="tv-body" style={{ fontSize: M.letra.verbo - 2, fontWeight: 500, whiteSpace: "nowrap", color: armado ? T.onAccent : impedido ? T.inkDim : T.amberSoft }}>{custo}</span>
+            <span className="tv-body" style={{ fontSize: C.custoCorpo, fontWeight: 500, whiteSpace: "nowrap", color: impedido ? T.inkMeio : recuo && !armado ? T.amberSoft : T[C.custo] }}>{custo}</span>
           )}
         </span>
       )}
@@ -660,7 +580,7 @@ function Verbo({ v, armado, impedido, aoTocar, recurso = null, chance = null, ao
           position: "absolute", top: -6, left: "50%", marginLeft: -6,
           width: 0, height: 0,
           borderLeft: "6px solid transparent", borderRight: "6px solid transparent",
-          borderBottom: `6px solid ${T.amber}`,
+          borderBottom: `6px solid ${T[C.bordaArmada]}`,
         }} />
       )}
     </button>
@@ -2182,9 +2102,17 @@ export function TelaDeBatalha(props) {
       {/* §CB 16.1 nº 1: o pé da arena e a linha do veredito são uma faixa só,
           de altura fixa — o Pé do campo; o tabuleiro escreve os chips e o ⤢
           na ponta direita dele (`setPeDaArena`) */}
-      <PeDoCampo texto={textoDoPeAgora} armado={!!armado && !contando} tom={tomDoPe} reacao={esperando ? null : p.reacao} noTelefone={noTelefone} aoPortal={setPeDaArena}
+      {/* V6 parte 2 (F4 §1 nº 6): a reação já não sobe do Pé por cima das casas
+          — abre no lugar da mão de ações (ver `reacaoNaMao`, abaixo) */}
+      <PeDoCampo texto={textoDoPeAgora} armado={!!armado && !contando} tom={tomDoPe} reacao={null} noTelefone={noTelefone} aoPortal={setPeDaArena}
         glifo={glifoDoPe} corDoGlifo={corDoGlifoDoPe} calaOPortal={contando && noTelefone}
         controlo={contando ? <ControloDoTurnoDeles acelerado={!!td.acelerado} aoAcelerar={td.aoAcelerar} aoSaltar={saltarTurno} noTelefone={noTelefone} /> : null} />
+      {/* V6 parte 2 (F4 «CERIMONIA_DA_VITORIA»): o tapete recua sob o véu, e o
+          fim da luta acontece em cima dele */}
+      {fimComEspolio && (
+        <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao} linha={p.espolio.linha || ""}
+          aoRecolher={p.aoRecolher} telefone={noTelefone} />
+      )}
     </section>
   );
 
@@ -2202,16 +2130,26 @@ export function TelaDeBatalha(props) {
   /* §CB 16.2: a barra mede aro + respiro 8 + verbo + 8 + verbo + respiro 8
      + aro em todos os patamares do monitor (106 com rato, 122 com toque); no
      telefone, a grelha de três linhas de 48 com respiro e vão de 6 (170) */
-  const respiroDaAcao = { order: 3, gap: noTelefone ? B3.telefone.entre : B3.entreFileiras, padding: noTelefone ? B3.telefone.respiro : B3.barraRespiro, borderRadius: M.raio, background: T.panel, border: `${B3.aro}px solid ${T.line}` };
+  const respiroDaAcao = { order: 3, gap: noTelefone ? B3.telefone.entre : B3.entreFileiras, padding: noTelefone ? B3.telefone.respiro : B3.barraRespiro, borderRadius: M.raio, background: T.panel, border: `${B3.aro}px solid ${T.line}`, position: "relative" };
+  /* V6 parte 2 · A REAÇÃO NA MÃO (F4 §1 nº 6, «REACAO_NA_MESA»): a janela
+     cobre a caixa da mão de ações — a mesma caixa, a mesma altura —, e por
+     isso nem o campo nem a casa se mexem um píxel quando ela abre (a lei de
+     K3), e nenhuma casa fica tapada (eram ~3 filas, medidas no F4). No
+     celular, quando a reação não cabe nos 170 da mão, ela cresce PARA CIMA,
+     por cima da faixa do herói — nunca do campo. */
+  const reacaoNaMao = !esperando && p.reacao ? (
+    <div data-reacao-na-mao="" style={{ position: "absolute", left: 0, right: 0, bottom: 0, minHeight: "100%", zIndex: 40, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>{p.reacao}</div>
+  ) : null;
   const recuosDaBarra = verbos.filter((v) => v.papel === "recuo");
   const acaoDoFim = fimComEspolio ? (
     <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
-      <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao} linha={p.espolio.linha || ""}
-        aoRecolher={p.aoRecolher} aoSair={p.aoSair} telefone={noTelefone} />
+      <SaidaDaLuta aoSair={p.aoSair} telefone={noTelefone}
+        comChao={p.espolio.desfecho === "vitoria" && Array.isArray(p.espolio.noChao) && p.espolio.noChao.some((c) => c && !c.recolhido)} />
     </section>
   ) : null;
   const acao = (
     <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
+      {reacaoNaMao}
       {/* CB 6 · O ÚLTIMO GOLPE É TEU: o véu cobre o campo (menos a casa dele),
           e o cartão do golpe final de sempre fica por baixo desta linha */}
       {esperando && p.ultimoGolpe && (

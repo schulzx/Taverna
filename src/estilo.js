@@ -5072,6 +5072,15 @@ export const MOVIMENTO_CSS = `
 .tv-dado-no-alvo { animation: tvDadoNoAlvo ${DADO_NO_ALVO.troca * 4}ms ease-in-out ${Math.ceil(DADO_NO_ALVO.tetoDeVarios / (DADO_NO_ALVO.troca * 4))}; transform-origin: 50% 50%; }
 .tv-anel-age { opacity: ${TURNO_DELES.anel.brilho}; animation: tvAnelAge ${TURNO_DELES.realce}ms ease-out both; }
 .tv-sopro-pulsa { animation: tvSoproPulsa ${TURNO_DELES.soproPinta}ms ease-in-out 1 both; }
+/* V6 parte 2 · a chama da vela da reacao treme nos ultimos segundos, e as
+   cartas do espolio pousam de verso e viram (luta-na-mesa.js: os tempos
+   chegam por variavel, a folha nao guarda numero nenhum deles) */
+@keyframes tvChamaTreme { 0%, 100% { transform: scale(1, 1) rotate(0deg); } 50% { transform: scale(0.85, 1.15) rotate(6deg); } }
+@keyframes tvCartaPousa { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes tvCartaVira { from { transform: rotateY(180deg); } to { transform: rotateY(0deg); } }
+.tv-chama-treme { animation: tvChamaTreme var(--tv-treme-ms, 0ms) ease-in-out infinite; transform-origin: 50% 100%; }
+.tv-carta-pousa { animation: tvCartaPousa var(--tv-pousa-ms, 0ms) ease-out var(--tv-pousa-em, 0ms) both; }
+.tv-carta-vira { animation: tvCartaVira var(--tv-vira-ms, 0ms) ease-out var(--tv-vira-em, 0ms) both; transform-style: preserve-3d; }
 
 /* CB 18 · O CHAO QUE NASCE E A REACAO. Um chao novo entra em opacidade no
    tempo de SUPERFICIES_NO_CHAO.nasce. Na reacao, o clarao (so a primeira de
@@ -5261,6 +5270,9 @@ export const MOVIMENTO_CSS = `
   .tv-dado-no-alvo { animation: none; transform: none; }
   .tv-anel-age { animation: none; opacity: 0; }
   .tv-sopro-pulsa { animation: none; }
+  /* V6 parte 2 · a chama nao treme (a cera desce em degraus), e as cartas
+     do espolio aparecem ja viradas, no lugar */
+  .tv-chama-treme, .tv-carta-pousa, .tv-carta-vira { animation: none; opacity: 1; transform: none; }
   /* CB 18 · o chao novo e a onda cortam seco (o chao ja e o novo), e o
      clarao nao acende; o letreiro fica, porque e informacao */
   .tv-chao-nasce { animation: none; }

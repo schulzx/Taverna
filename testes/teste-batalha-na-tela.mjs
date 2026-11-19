@@ -312,8 +312,13 @@ sec("3 · 8. as peças: a pílula, a intenção, as casas marcadas, os rótulos"
   const g = R.html(h(R.GridDeBatalha, { combate: COMBATE, heroiFicha: HEROI, previsaoDoGolpe: PREV, intencoes: INTENCOES, ladoFixo: 32, larguraDaJanela: 869, alturaDaJanela: 740, tetoDoLado: 64,
     caminho: { pontos: [{ x: 5, y: 7 }, { x: 6, y: 7 }, { x: 7, y: 8 }], metros: 3, sobraM: 6, golpeLivreEm: [{ x: 6, y: 7 }] }, heroiNome: "Bran", aoTocarInimigo: () => {} }));
   t("A PREVISÃO POUSA SOBRE O ALVO: a pílula na camada de cima do tabuleiro", g.includes("de acertar") && texto(g).includes("78%"));
-  /* a casa mede 51 (869 × 740 de janela, 14 × 14): o tracejado em píxeis de tela vira casas ÷ 51 */
-  const emCasas = (lista) => `stroke-dasharray="${lista.map((n) => n / 51).join(" ")}"`;
+  /* a casa mede 50 (869 × 740 de janela, 14 × 14): o tracejado em píxeis de tela vira casas ÷ 50.
+     Movida no V6 parte 2 (19/11): era 51. O tapete de couro (F4 «TAPETE») tem
+     borda de 2 px dos dois lados e a faixa de 14 sem régua, que saem da
+     janela antes da conta da casa — (740 − 22 − 18) ÷ 14 = 50. A intenção (o
+     tracejado medido em píxeis de tela, convertido pela casa real) é a mesma. */
+  const CASA_NA_JANELA = 50;
+  const emCasas = (lista) => `stroke-dasharray="${lista.map((n) => n / CASA_NA_JANELA).join(" ")}"`;
   const quantos = (s) => g.split(s).length - 1;
   t("o alvo ganha o anel tracejado âmbar (6/4)", quantos(emCasas(PREVISAO_DO_GOLPE.anelDoAlvo.tracejado)) === 1);
   t("a seta do ataque, tracejada (5/4), do Bandido ao Bran", quantos(emCasas(INTENCAO_NA_MESA.seta.tracejado)) === 1);
@@ -326,7 +331,7 @@ sec("3 · 8. as peças: a pílula, a intenção, as casas marcadas, os rótulos"
   t("e o destino com o aro tracejado (5/3)", quantos(emCasas(CAMINHO_NO_CHAO.destino.tracejado)) === 1);
   t("a casa do alvo diz a previsão no nome acessível", /aria-label="G9 · Bandido, 8 de 8 PV[^"]*78% de acertar, 6 a 13 de dano, 40% de o abater"/.test(g), (g.match(/aria-label="G9[^"]*"/) || [""])[0]);
   t("o caminho no chão: o rótulo «3 m · sobra 6» junto ao destino", texto(g).includes("3 m · sobra 6"));
-  t("o caminho desenha a linha pelos centros, traço 3", g.includes(`<path d="M5.5 7.5 L6.5 7.5 L7.5 8.5" fill="none" stroke="${T.amber}" stroke-width="${CAMINHO_NO_CHAO.traco / 51}"`));
+  t("o caminho desenha a linha pelos centros, traço 3", g.includes(`<path d="M5.5 7.5 L6.5 7.5 L7.5 8.5" fill="none" stroke="${T.amber}" stroke-width="${CAMINHO_NO_CHAO.traco / CASA_NA_JANELA}"`));
   t("os glifos desenhados na casa: as nove chamas, as espadas do golpe livre e a caveira de quem caiu", (g.match(/scale\(0\.01[0-9]*\)/g) || []).length >= 11);
   t("o inimigo diz «toque para prever o golpe» a quem ouve", /aria-label="J3[^"]*Dragão Jovem[^"]*toque para prever o golpe"/.test(g), (g.match(/aria-label="J3[^"]*"/) || [""])[0]);
   const gv = R.html(h(R.GridDeBatalha, { combate: COMBATE, heroiFicha: HEROI, veuDoUltimo: "Bandido", ladoFixo: 32, larguraDaJanela: 869, alturaDaJanela: 740 }));
@@ -485,7 +490,10 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   /* --- o movimento reduzido --- */
   janela(1905, true);
   const pr = R.html(h(R.GridDeBatalha, { ...GRADE_1905, passo: { ...PASSOS[1], i: 1 }, agiram: ["Dragão Jovem"] }));
-  t("REDUZIDO: a ficha de quem age já está no destino (sem deslizar), e o caminho fica desenhado", /<circle cx="6\.5" cy="11\.5" r="0\.4"/.test(pr) && pr.includes("transform:translate(6.5px, 8.5px)"));
+  t("REDUZIDO: a ficha de quem age já está no destino (sem deslizar), e o caminho fica desenhado", /<circle cx="6\.5" cy="11\.5" r="0\.4"/.test(pr) && pr.includes(`transform:translate(6.5px, ${8.5 - 3 / 50}px)`));
+  /* Movida no V6 parte 2 (19/11): era translate(6.5px, 8.5px). A peça de quem
+     age SOBE 3 px (F4 «PECA_NO_TAPETE», estado aVez) — a casa de destino é a
+     mesma (6,5 · 8,5), só a peça se ergue 3 ÷ 50 de casa. Sem deslizar, ainda. */
   const reduzido = (FOLHA.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}/g) || []).join("\n");
   t("e as três classes novas param no bloco reduzido (o dado, o anel, o sopro)", ["tv-dado-no-alvo", "tv-anel-age", "tv-sopro-pulsa"].every((c) => reduzido.includes(`.${c} { animation: none`)));
 

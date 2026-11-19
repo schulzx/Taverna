@@ -227,7 +227,7 @@ const TETO_DE_LITERAIS = {
      diferença é invisível a olho nu e paga duas coisas — sai um literal, e
      o vão de 2 px do anel de foco, que sobre `#141020` dava 1,04:1 e não
      se separava do fundo, volta a funcionar como foi desenhado. */
-  "src/grade-de-batalha.jsx": 12, /* 10/11 · CB 18.3: o estorvo genérico pagou as suas três cores (o topo e os dois fios) a OBJETOS_NA_MESA.cor — panelSoft, lineStrong e pagina. 15 → 12. As doze que ficam, da parede ao véu, são dívida declarada (formas.md §CB 18.9). · 05/10 · B1, o chão do quadro 151:1662: a hachura, a alternância branca das zonas e o véu fora do passo saíram para T/MESA_DE_BATALHA, e o obstáculo foi de quatro literais para três (o topo e os dois fios do quadro, que T não tem). 19 → 15. (Linha do desenho; desceu-a o aprendiz, porque a catraca tem folga zero.) · 15/09 → 15/09 · E2, o endereço do tabuleiro */
+  "src/grade-de-batalha.jsx": 11, /* 19/11 · V6 parte 2: o fundo #100e1a da ficha saiu (a peça do F4 pinta o miolo com T.couroBaixo). 12 → 11. · 10/11 · CB 18.3: o estorvo genérico pagou as suas três cores (o topo e os dois fios) a OBJETOS_NA_MESA.cor — panelSoft, lineStrong e pagina. 15 → 12. As doze que ficam, da parede ao véu, são dívida declarada (formas.md §CB 18.9). · 05/10 · B1, o chão do quadro 151:1662: a hachura, a alternância branca das zonas e o véu fora do passo saíram para T/MESA_DE_BATALHA, e o obstáculo foi de quatro literais para três (o topo e os dois fios do quadro, que T não tem). 19 → 15. (Linha do desenho; desceu-a o aprendiz, porque a catraca tem folga zero.) · 15/09 → 15/09 · E2, o endereço do tabuleiro */
   "src/rosto.jsx": 10, /* 24/09 · V1: os dois brilhos das lentes eram T.ink escrito à mão */
 
   /* O RESTO (10) — migalhas, e o mais barato do projeto. */

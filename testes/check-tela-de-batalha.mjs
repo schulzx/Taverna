@@ -133,7 +133,12 @@ sec("1. a inversão: o tabuleiro saiu de dentro do rolador do log");
        App passa), que toma a secção inteira — e a porta continua UMA só, o
        `Respirar fundo`, nas duas formas, e só quando a luta acabou */
     && /const fimComEspolio = !!p\.fim && /.test(TEL) && /\{acaoDoFim \|\| acao\}/.test(TEL)
-    && (TEL.match(/Respirar fundo →/g) || []).length === 2);
+    /* MOVIDA (19/11, V6 parte 2): o momento do fim saiu para
+       painel-fim-da-luta.jsx (a cerimônia sobre o tapete e a SaidaDaLuta onde
+       estava a mão). A porta continua UMA só, nas duas formas: uma aqui (o fim
+       sem espólio) e uma lá. */
+    && (TEL.match(/Respirar fundo →/g) || []).length === 1
+    && (semProsa(ler("src/painel-fim-da-luta.jsx")).match(/Respirar fundo →/g) || []).length === 1);
 }
 
 sec("2. a fiação nova nunca pode custar o turno");
@@ -317,8 +322,13 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
   t("o verbo armado diz que está armado a quem ouve", /aria-pressed=\{armado\}/.test(TEL));
   /* `ink` sobre `amber` dá 1,701:1 e reprova o AA. O rótulo do verbo
      armado é `onAccent`, e só `onAccent`. */
-  t("e o rótulo do armado é `onAccent`, nunca `ink` sobre âmbar",
-    /color: armado \? T\.onAccent/.test(TEL) && !/background: T\.amber[^;]*color: T\.ink\b/.test(TEL));
+  /* MOVIDA (19/11, V6 parte 2): o verbo armado deixou de ser âmbar — é a
+     carta de osso com borda de tinta (F4 «CARTA_DE_ACAO»), letra de tinta
+     (11,81 : 1 sobre osso). A armadilha que esta linha guardava continua
+     guardada: nenhum ink sobre âmbar. */
+  t("e o rótulo do armado é tinta sobre osso, nunca `ink` sobre âmbar",
+    /armado \? T\[C\.chaoArmada\]/.test(TEL) && /color: impedido \? T\[C\.impedida\.letra\] : recuo && !armado \? T\.inkMeio : T\[C\.letra\]/.test(TEL)
+    && !/background: T\.amber[^;]*color: T\.ink\b/.test(TEL));
 
   /* AS TRÊS SAÍDAS, vivas ao mesmo tempo. Um véu sem saída que não diz que
      tem saída é a armadilha que a peça `Véu sem retorno` existe para
@@ -596,8 +606,10 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
      tabuleiro caber inteiro (o pedido da pessoa, com foto). O que a
      asserção guardava continua: quadrada, medida, nunca abaixo do piso. */
   t("a casa cabe na janela (largura E altura), com teto, e nunca abaixo do piso",
-    /const ladoPelaLargura = larguraDaJanela > 0 \? Math\.floor\(\(larguraDaJanela - CALHA_DA_REGUA\) \/ g\.largura\) : Infinity;/.test(GRADE_B1)
-    && /const ladoPelaAltura = alturaDaJanela > 0 \? Math\.floor\(\(alturaDaJanela - CALHA_DA_REGUA\) \/ g\.altura\) : Infinity;/.test(GRADE_B1)
+    /* MOVIDA (19/11, V6 parte 2): a borda do tapete de couro sai da janela
+       junto com a calha, para o tapete inteiro caber como cabia o tabuleiro */
+    /const ladoPelaLargura = larguraDaJanela > 0 \? Math\.floor\(\(larguraDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE\) \/ g\.largura\) : Infinity;/.test(GRADE_B1)
+    && /const ladoPelaAltura = alturaDaJanela > 0 \? Math\.floor\(\(alturaDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE\) \/ g\.altura\) : Infinity;/.test(GRADE_B1)
     && /Math\.max\(ladoFixo, Math\.min\(tetoDoLado > 0 \? tetoDoLado : Infinity, ladoPelaLargura, ladoPelaAltura\)\)/.test(GRADE_B1)
     && /larguraDaJanela=\{larguraDaJanela\}/.test(TEL) && /new ResizeObserver\(/.test(TEL));
   /* B1b · A MESA CABE NA JANELA. O monitor passa a altura e o teto; o

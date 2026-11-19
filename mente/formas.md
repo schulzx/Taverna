@@ -19815,6 +19815,46 @@ difícil da noite como imagem. Custa um campo de save novo e aditivo (por luta: 
 caídos, as manchas — uns 200 bytes) e um desenho em SVG que já é o do tapete, a 1/4 do tamanho. É o
 que transforma «ganhei» em «olha como foi» — a coisa que um jogador mostra a outro.
 
+### 9 · V6 parte 2 — o que o código construiu do F4, e as lacunas (19/11/2026)
+
+Só código; nenhum quadro do Figma tocado. A tabela é `src/luta-na-mesa.js` (TAPETE, PECA_NO_TAPETE,
+CARTA_DE_ACAO, VELA_DA_REACAO, CERIMONIA_DA_VITORIA); a suíte é `testes/teste-luta-na-mesa.mjs`;
+as capturas, `mente/lancamento/V6p2-*.png` (1440 e 375).
+
+**Construído como está acima:** o tapete de couro com costura, tachas e régua gravada (letras
+Cinzel, números Spectral, `inkMeio`) fora do celular; a peça com o aro que é a vida, o lado em
+latão/lacre, a conta numerada dos iguais, só quem age em âmbar e a subir 3 px, o caído no verso de
+osso com a caveira; a carta de ação em osso com borda de tinta e o custo em brasa (Cinzel 13 /
+Spectral 13); a reação no lugar da mão, com a vela e uma carta por reação; a vitória sobre o tapete
+(véu 45 %, «Vitória» Cinzel 28, as cartas 160 × 224 / 104 × 150 que pousam de verso e viram da
+mais comum à mais rara, «Recolher tudo», «Respirar fundo» 360 × 56 com o preço por baixo).
+
+**Medidas que o código teve de escolher, para validar no Figma** (não estão no F4, ou o F4 não
+coube):
+1. A carta de ação tem a **altura do verbo de hoje (40 rato / 48 toque)**, não 112: a mão a 112
+   come a casa, porque o «como?» ainda está na mão (o F4 o põe na tira do Mestre, que não existe).
+2. A vela da reação na mão é **«curta», 56 px** (o F4 diz 84 numa caixa de 112; a caixa de hoje
+   mede 104). No celular a janela da reação cresce para cima, por cima da faixa do herói.
+3. Na carta da reação o resultado é **a frase da tabela** («2 PM — corta o grosso»), não «você
+   leva 3»: o dano que chega não está exposto à tela antes da escolha.
+4. A face da carta do espólio é **glifo da bolsa + nome (Cinzel 14) + raridade em palavra**; o
+   verso é couro com aro `lataoSombra`, sem desenho. O F4 não desenhou a face.
+5. O recibo da vitória é **a peça `Recibo` de A1 em tamanho de momento** (largura 560), não a
+   barra de XP de 140 × 10 nem as moedas que voam.
+6. A régua continua na **calha de 22** (o F4 pede faixa de 28/24 conforme a casa).
+
+**Lacunas — peças do F4 que este lote NÃO construiu** (a decisão existe; falta a estrutura onde
+ela mora, ou a forma da peça no celular):
+- a mão como 8 cartas 102 × 112 com Esperar e Fugir **dentro** da mão (hoje ficam no couro, ao lado
+  do «como?») e os glifos das cartas; `O_QUE_RESTA_NA_VEZ` sob a carta de pé;
+- a tira do Mestre, a nota «nesta rodada, eles vão» em papel, o bloco do alvo, a coluna do grupo
+  com cartas de pé — e com elas a casa de 46 a 1440 (o tapete ainda não enche a altura);
+- a luz do tapete (noite, masmorra), as superfícies novas, os objetos novos, a plaqueta de região;
+- o golpe sentido novo e «Como você quer fazer isso?»; o encontro em leque; a derrota com o
+  tapete enrolado; o tapete que desenrola (`POR_O_TAPETE`) e o que se enrola em «Respirar fundo»;
+- **no celular**: o tapete de couro (a régua presa não tem borda — o F4 não diz como o couro fica
+  na janela que rola), as cartas 85 × 80 em 2 × 4, a janela da reação a y 530–740.
+
 ---
 
 ## A Mesa do Mestre · F5 · os objetos e o mapa (`desenho`, 16/11/2026)

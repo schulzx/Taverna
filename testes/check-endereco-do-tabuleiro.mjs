@@ -171,7 +171,11 @@ t("e o canto de 22×22 não leva rótulo", /\{\/\* o canto é `bg` e não leva r
 sec("4. os três graus existem, e o filete é o canal que não é cor");
 t("a tabela dos graus tem os três",
   /repouso:\s*\{/.test(CODIGO) && /procurada:\s*\{/.test(CODIGO) && /realcada:\s*\{/.test(CODIGO));
-t("Repouso é inkDim e não tem filete", /repouso:\s*\{ cor: T\.inkDim,\s*filete: null \}/.test(CODIGO));
+/* MOVIDA (19/11, V6 parte 2): a régua é gravada no couro do tapete, e no
+   couro a cor de repouso é a da tabela TAPETE (inkMeio, 6,89 : 1; F4
+   «TAPETE»), não inkDim. O que se guarda é o mesmo: o repouso não tem filete,
+   e a cor sai de T por nome. */
+t("Repouso sai de T pela tabela do tapete e não tem filete", /repouso:\s*\{ cor: T\[TAPETE\.regua\.cor\],\s*filete: null \}/.test(CODIGO));
 t("Procurada é ink com filete de lineStrong", /procurada:\s*\{ cor: T\.ink,\s*filete: T\.lineStrong \}/.test(CODIGO));
 t("Realçada é amberSoft com filete de amber", /realcada:\s*\{ cor: T\.amberSoft,\s*filete: T\.amber \}/.test(CODIGO));
 t("o filete tem 2 px nos dois eixos", /height: 2 \}/.test(CODIGO) && /width: 2 \}/.test(CODIGO));
@@ -234,7 +238,10 @@ sec("6. o fundo do tabuleiro saiu da cabeça de quem digitou e foi para a tabela
    diferença é invisível a olho nu. */
 t("o `#141020` não existe mais no arquivo", !/#141020/i.test(CODIGO),
   "o vão de 2 px do anel de foco dá 1,04:1 sobre ele, e não se separa.");
-t("e o fundo do <svg> sai de T", /background: T\.bg, border: `1px solid \$\{T\.line\}`/.test(CODIGO));
+/* MOVIDA (19/11, V6 parte 2): o chão por dentro do couro leva a borda
+   escura do tapete; fora dele (o telefone), a linha de sempre. O fundo
+   continua a sair de T. */
+t("e o fundo do <svg> sai de T", /background: T\.bg,\s*border: comCouro \?/.test(CODIGO) && /: `1px solid \$\{T\.line\}`/.test(CODIGO));
 
 console.log(`\n${bons} ok · ${maus} falhas`);
 process.exit(maus ? 1 : 0);

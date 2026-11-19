@@ -9170,7 +9170,7 @@ export default function Taverna() {
       const ja = new Set((f.noChao || []).map((x) => x.id));
       const novos = ((chaoRef.current && chaoRef.current.itens) || [])
         .filter((it) => it && it.id && !(f.idsNoChao || []).includes(it.id) && !ja.has(it.id))
-        .map((it) => ({ id: it.id, nome: it.nome }));
+        .map((it) => ({ id: it.id, nome: it.nome, raridade: it.raridade || null }));
       if (novos.length) fechoDaLutaRef.current = { ...f, noChao: [...(f.noChao || []), ...novos] };
       setFechoNaTela(fechoDaLutaRef.current);
     }
@@ -28641,6 +28641,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         aoResponder={janelaReacao.aoResponder}
         aoRecusar={janelaReacao.aoRecusar}
         aoSair={janelaReacao.aoSair}
+        naMesa
       />
     </LimiteErro>
   ) : null);
@@ -28671,7 +28672,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         desfecho: desfechoDoFecho(fechoNaTela, personagem, !!fugiuNoFim),
         linha: typeof fechoNaTela.linha === "string" ? fechoNaTela.linha : "",
         recibo: reciboDoTurno(fechoNaTela.fichaNaAbertura, personagem),
-        noChao: (fechoNaTela.noChao || []).map((it) => ({ id: it.id, nome: it.nome, recolhido: !noChaoAgora.has(it.id) })),
+        noChao: (fechoNaTela.noChao || []).map((it) => ({ id: it.id, nome: it.nome, raridade: it.raridade || null, recolhido: !noChaoAgora.has(it.id) })),
       };
     } catch (e) { calou("o espólio do fim da luta", e); return null; }
   })();
