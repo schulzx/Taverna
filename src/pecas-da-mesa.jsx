@@ -25,6 +25,7 @@ import React from "react";
 import { T, PECAS_DA_MESA, SOMBRA_DA_MESA, ESCALA_DA_MESA, PISOS_DA_MESA, TAMANHO_DO_TEXTO, VELA, alfa } from "./estilo.js";
 import { letraDaMesa, pilhasDoRecurso, alturaDaVela, vigiliasQueFaltam, rotuloDaVela, contasAcesas, estadoDaCarta, contornoDoLacre } from "./mesa-do-mestre.js";
 import { DesenhoDoObjeto } from "./painel-mesa-do-mestre.jsx";
+import { OBJETO_ABERTO, FITA, CASA, RARIDADE_DA_CASA, GLIFOS_DE_ITEM, corpoDoObjeto, familiaDoItem, molduraDaCasa } from "./objetos-abertos.js";
 
 const P = PECAS_DA_MESA;
 const M = P.movimento;
@@ -388,5 +389,161 @@ export function LinhaDaPena({ valor = "", aoMudar = null, aoDizer = null, convit
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke={T.onAccent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
     </form>
+  );
+}
+
+/* ============================================================
+   V7 (18/11) · O OBJETO ABERTO, O GLIFO DE ITEM E A CASA DE ITEM
+   formas.md §«F5» §1–§3. Livro, bolsa e banca abrem do mesmo jeito, no
+   mesmo lugar, do mesmo tamanho: a mesa fica à vista sob o véu e a página
+   recua, não some. As medidas e a conta do corpo saem de objetos-abertos.js.
+   Leitores: painel-livro.jsx, painel-bolsa.jsx, painel-banca.jsx.
+   ============================================================ */
+function medirJanela() {
+  try { return { l: window.innerWidth || 1440, a: window.innerHeight || 900 }; } catch (e) { return { l: 1440, a: 900 }; }
+}
+export function useJanela() {
+  const [j, setJ] = React.useState(medirJanela);
+  React.useEffect(() => {
+    const medir = () => setJ(medirJanela());
+    try { window.addEventListener("resize", medir); } catch (e) { return undefined; }
+    return () => { try { window.removeEventListener("resize", medir); } catch (e) { /* segue */ } };
+  }, []);
+  return j;
+}
+
+/* o corpo de cada objeto: o material, a borda, o raio (§2, a tabela dos quatro) */
+function materialDoObjeto(objeto) {
+  const R = OBJETO_ABERTO.raio;
+  if (objeto === "bolsa") return { background: T.couro, border: `3px solid ${T.couroBaixo}`, borderRadius: R.bolsa };
+  if (objeto === "banca") return { background: T.linho, borderTop: `2px solid ${T.linhoSombra}`, borderBottom: `2px solid ${T.linhoSombra}`, borderRadius: R.banca };
+  return { background: T.couroBaixo, border: `1px solid ${T.latao}`, borderRadius: R.livro };
+}
+/* o enfeite que faz o material: a costura da bolsa, as barras tecidas da banca */
+function EnfeiteDoObjeto({ objeto }) {
+  const C = OBJETO_ABERTO.costura;
+  if (objeto === "bolsa") return <span aria-hidden="true" className="absolute pointer-events-none" style={{ inset: C.traco, borderRadius: OBJETO_ABERTO.raio.bolsa - C.traco / 2, border: `${C.espessura}px dashed ${alfa(T.latao, C.alfa)}` }} />;
+  if (objeto === "banca") return (
+    <>
+      <span aria-hidden="true" className="absolute pointer-events-none" style={{ top: 0, bottom: 0, left: OBJETO_ABERTO.barra.margem, width: OBJETO_ABERTO.barra.largura, background: alfa(T.linhoBarra, OBJETO_ABERTO.barra.alfa) }} />
+      <span aria-hidden="true" className="absolute pointer-events-none" style={{ top: 0, bottom: 0, right: OBJETO_ABERTO.barra.margem, width: OBJETO_ABERTO.barra.largura, background: alfa(T.linhoBarra, OBJETO_ABERTO.barra.alfa) }} />
+    </>
+  );
+  return null;
+}
+
+/* O OBJETO ABERTO. `acima` é o que sai por cima do corpo (as fitas do livro);
+   `aoPousar` fecha (Esc, o disco «Pousar», o feltro à volta, a aba do
+   telefone). O foco entra no objeto ao abrir. */
+export function ObjetoAberto({ objeto = "livro", titulo = "", aoPousar = null, acima = null, children }) {
+  const j = useJanela();
+  const c = corpoDoObjeto(j.l, j.a);
+  const caixa = React.useRef(null);
+  const pousar = React.useCallback(() => { try { if (aoPousar) aoPousar(); } catch (e) { /* fechar nunca derruba a tela */ } }, [aoPousar]);
+  React.useEffect(() => {
+    const tecla = (ev) => { if (ev.key === "Escape" && !ev.defaultPrevented) { ev.preventDefault(); pousar(); } };
+    try { window.addEventListener("keydown", tecla); } catch (e) { return undefined; }
+    return () => { try { window.removeEventListener("keydown", tecla); } catch (e) { /* segue */ } };
+  }, [pousar]);
+  React.useEffect(() => { try { if (caixa.current) caixa.current.focus({ preventScroll: true }); } catch (e) { /* segue */ } }, [objeto]);
+  const Mv = OBJETO_ABERTO.movimento;
+  useEntrada(caixa, [{ opacity: 0, transform: "translateY(18px) scale(.97)" }, { opacity: 1, transform: "none" }], { duration: Mv.abre, easing: "cubic-bezier(.2,.8,.2,1)" }, objeto);
+  const material = materialDoObjeto(objeto);
+  if (c.modo === "telefone") {
+    const Tf = OBJETO_ABERTO.telefone;
+    return (
+      <div ref={caixa} role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} data-objeto={objeto} className="fixed inset-0 z-50 flex flex-col" style={{ background: T.bg, outline: "none" }}>
+        <div className="flex items-center shrink-0" style={{ height: Tf.barra, background: T.couroBaixo }}>
+          <button type="button" onClick={pousar} className="tv-anel-foco flex items-center" style={{ width: Tf.aba, height: Tf.barra, paddingLeft: Tf.folga / 2, gap: 6, color: T.ink, background: "transparent", border: 0, ...letraDaMesa("rotulo", true) }}>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 14 14"><path d="M9 2L4 7l5 5" fill="none" stroke={T.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            A mesa
+          </button>
+          <span className="flex-1 text-center" style={{ color: T.ink, ...letraDaMesa("nome", true) }}>{titulo}</span>
+          <span aria-hidden="true" style={{ width: Tf.aba }} />
+        </div>
+        <div className="flex-1 min-h-0 overflow-y-auto tv-scroll" style={{ padding: `${Tf.folga / 2}px ${Tf.folga / 2}px ${Tf.folga}px` }}>
+          {acima}
+          <div className="relative" style={{ ...material, overflow: "hidden" }}>
+            <EnfeiteDoObjeto objeto={objeto} />
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const F = OBJETO_ABERTO.fechar;
+  const desce = acima ? FITA.aberta / 2 : 0;
+  return (
+    <div className="fixed inset-0 z-50" data-objeto={objeto}>
+      <div aria-hidden="true" onClick={pousar} className="absolute inset-0" style={{ background: alfa(T.veuDaNoite, OBJETO_ABERTO.veu) }} />
+      <div ref={caixa} role="dialog" aria-modal="true" aria-label={titulo} tabIndex={-1} className="absolute flex flex-col"
+        style={{ left: c.x, top: c.y + desce, width: c.largura, height: c.altura - desce, boxShadow: SOMBRA_DA_MESA.erguido, outline: "none", ...material }}>
+        <EnfeiteDoObjeto objeto={objeto} />
+        {acima ? <div className="absolute" style={{ left: 0, right: 0, bottom: "100%", marginBottom: -FITA.rabo }}>{acima}</div> : null}
+        <div className="relative flex-1 min-h-0 flex flex-col">{children}</div>
+      </div>
+      <button type="button" onClick={pousar} aria-label="Pousar (Esc)" className="tv-anel-foco absolute flex flex-col items-center"
+        style={{ top: F.margem, right: F.margem, gap: 6, background: "transparent", border: 0, color: T.ink }}>
+        <span className="inline-flex items-center justify-center" style={{ width: F.lado, height: F.lado, borderRadius: "50%", background: T.osso, boxShadow: SOMBRA_DA_MESA.peca }}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" stroke={T.tintaDoPergaminho} strokeWidth="2" strokeLinecap="round" /></svg>
+        </span>
+        <span style={{ color: T.ink, ...letraDaMesa("rotulo") }}>Pousar · Esc</span>
+      </button>
+    </div>
+  );
+}
+
+/* O GLIFO DE ITEM — 42 desenhos, um por família (objetos-abertos.js) */
+export function GlifoDeItem({ familia = "desconhecido", tamanho = 24, cor = T.tintaDoPergaminho, opacidade = 1 }) {
+  const d = GLIFOS_DE_ITEM[familia] || GLIFOS_DE_ITEM.desconhecido;
+  return (
+    <svg aria-hidden="true" width={tamanho} height={tamanho} viewBox="0 0 24 24" style={{ flex: "none", opacity: opacidade }}>
+      <path d={d} fill="none" stroke={cor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* A CASA DE ITEM — o chão de osso, o glifo da família e a moldura da
+   raridade (aro, cantos de latão, lacre). Vazia: o tracejado, e no corpo o
+   glifo do encaixe a 45 %. `sobre` diz de que é o chão à volta (o aro da
+   escolhida é ink no couro, tinta no linho e no papel). */
+export function CasaDeItem({ item = null, familia = null, lado = CASA.mochila, escolhida = false, aoTocar = null, rotulo = "", qtd = 0, glifoVazio = null, sobre = "couro" }) {
+  const vazia = !item;
+  const fam = vazia ? glifoVazio : familia || familiaDoItem(item);
+  const moldura = vazia ? null : RARIDADE_DA_CASA[molduraDaCasa(item)];
+  const k = lado / CASA.mochila;
+  const corEscolha = sobre === "couro" ? T.ink : T.tintaDoPergaminho;
+  const E = CASA.escolhida;
+  const estilo = {
+    position: "relative", width: lado, height: lado, flex: "none", borderRadius: CASA.raio,
+    display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0,
+    background: vazia ? alfa(T.couroBaixo, 0.35) : T.osso,
+    border: vazia ? `1.5px dashed ${alfa(T.latao, 0.6)}` : `${moldura.aro}px solid ${moldura.aro > 1 ? T.latao : T.ossoSombra}`,
+    boxShadow: vazia ? "none" : SOMBRA_DA_MESA.peca,
+    outline: escolhida ? `${E.aro}px solid ${corEscolha}` : "none", outlineOffset: E.distancia,
+    transform: escolhida ? `translateY(-${E.sobe}px)` : "none", transition: "transform 120ms ease",
+    cursor: aoTocar ? "pointer" : "default",
+  };
+  const miolo = (
+    <>
+      {fam ? <GlifoDeItem familia={fam} tamanho={Math.round(lado * CASA.glifo)} cor={vazia ? T.latao : T.tintaDoPergaminho} opacidade={vazia ? 0.45 : 1} /> : null}
+      {moldura && moldura.cantos ? (
+        <svg aria-hidden="true" className="absolute pointer-events-none" style={{ inset: 0 }} width={lado} height={lado} viewBox={`0 0 ${lado} ${lado}`}>
+          {[[0, 0, 1, 1], [lado, 0, -1, 1], [0, lado, 1, -1], [lado, lado, -1, -1]].map(([x, y, sx, sy], i) => (
+            <path key={i} d={`M${x} ${y}h${sx * CASA.canto * k}L${x} ${y + sy * CASA.canto * k}z`} fill={T.latao} />
+          ))}
+        </svg>
+      ) : null}
+      {moldura && moldura.lacre ? (
+        <span aria-hidden="true" className="absolute" style={{ top: -CASA.lacre / 3, right: -CASA.lacre / 3, width: CASA.lacre, height: CASA.lacre, borderRadius: "50%", background: T.lacre, border: `2px solid ${T.lacreLume}` }} />
+      ) : null}
+      {qtd > 1 ? (
+        <span aria-hidden="true" className="absolute" style={{ right: 4, bottom: 2, color: T.tintaDoPergaminho, ...letraDaMesa("rotulo") }}>{qtd}</span>
+      ) : null}
+    </>
+  );
+  if (!aoTocar) return <span role={rotulo ? "img" : undefined} aria-label={rotulo || undefined} style={estilo}>{miolo}</span>;
+  return (
+    <button type="button" onClick={aoTocar} aria-pressed={escolhida ? "true" : "false"} aria-label={rotulo || undefined} className="tv-anel-foco" style={estilo}>{miolo}</button>
   );
 }

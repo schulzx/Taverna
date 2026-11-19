@@ -20,7 +20,8 @@ const DEGRAU_DA_AMEACA = { fraco: 1, comum: 2, competente: 3, elite: 4, lendario
 const corDaAmeaca = (a) => (a === "lendario" ? T.amber : a === "elite" ? T.violetSoft : T.inkDim);
 
 const ROTULO_AMEACA = { fraco: "fraca", comum: "comum", competente: "competente", elite: "elite", lendario: "lendária" };
-const CATEGORIAS_CONQUISTA = [
+/* V7: exportada — o livro (painel-livro.jsx, a fita Feitos) lê as mesmas famílias */
+export const CATEGORIAS_CONQUISTA = [
   { id: "lamina", rotulo: "Lâmina", ids: ["primeiro_sangue", "dez_abatidos", "cinquenta_abatidos", "cem_abatidos", "matador_elite", "cinco_elites", "matador_lendario", "tres_lendarios", "primeiro_critico", "dez_criticos", "primeiro_desastre", "cinco_vitorias", "quinze_vitorias", "fio_da_morte", "primeira_cicatriz", "cinco_cicatrizes"] },
   { id: "estrada", rotulo: "Estrada", ids: ["primeira_viagem", "dez_viagens", "vintecinco_viagens", "dez_perigos", "dez_criaturas", "vinte_criaturas", "primeira_masmorra", "cinco_masmorras", "primeiro_contrato", "dez_contratos", "trinta_dias", "ano_inteiro"] },
   { id: "coracao", rotulo: "Coração", ids: ["primeiro_companheiro", "tres_companheiros", "cinco_pessoas", "quinze_pessoas", "trinta_pessoas", "primeiro_presente", "cinco_presentes", "vinculo_amizade", "vinculos_tres", "vinculo_profundo"] },

@@ -20102,6 +20102,37 @@ IA). Ao fim de vinte horas a carta de cada jogador é o retrato da campanha dele
 sessão (F6) mostra ao lado da mesa que lembra (F1 §11). Custa um campo de save novo e aditivo (as notas
 por lugar) e a régua de `FAIXA_DO_RUMO` aplicada às notas de margem.
 
+
+### 9 · V7 em código (18/11/2026) — o livro, a bolsa e a banca
+
+**O que foi construído e onde.** O módulo puro `src/objetos-abertos.js` (as tabelas `OBJETO_ABERTO`,
+`FITAS_DO_LIVRO`, `RARIDADE_DA_CASA`, os 42 `GLIFOS_DE_ITEM`, `familiaDoItem`, a ordem da mochila, as
+páginas do Códex e `vereditoDaCompra`/`vereditoDaVenda`), provado em `testes/teste-objetos-abertos.mjs`.
+As peças comuns em `src/pecas-da-mesa.jsx`: `ObjetoAberto` (véu 0,58, corpo 1144 × 756 a 1440 e 1040 × 620
+a 1280, disco «Pousar · Esc», tela inteira com a aba «‹ A mesa» abaixo de 768), `GlifoDeItem` e `CasaDeItem`.
+Os painéis: `src/painel-livro.jsx`, `src/painel-bolsa.jsx`, `src/painel-banca.jsx`. Os tokens `linho`,
+`linhoSombra`, `linhoBarra` entraram em `T`. No `App.jsx` só a fiação: `objetoDaPorta` decide o objeto
+(Diário e Códex → livro, a bolsa do herói → bolsa, mercado → banca) e o alforje não abre por baixo dele.
+**A forma de antes continua inteira** e volta mudando `OBJETOS_NA_MESA`.
+
+**O que ficou diferente da prancha, e por quê.**
+- **As buscas** são o miolo do Diário de sempre (`PainelDiario`, leiaute «meia»), pousado no couro de dentro
+  da capa, e não a página de pergaminho do quadro 1: refazer aceitar/recusar ofertas, o legado, o arco e as
+  cartas do quadro custaria uma regressão; as outras quatro fitas já são pergaminho.
+- **Sem «9 DE 20» na mochila:** o jogo não tem teto de carga; um teto escrito seria regra que o motor não tem.
+  As casas vazias só fecham a fila («8 coisas»).
+- **Um veredito por vez na banca:** a prancha mostra o veredito da compra e o «Vender · recebe 9» juntos, em
+  âmbar os dois; ficou o que se tocou por último, e a tela tem uma ação âmbar só.
+- **As vistas à frente no Bestiário:** em ordem de catálogo, as duas vistas ficavam abaixo de dezesseis cartas
+  de costas (visto na prova a 1440).
+- **A carta do mercador** é o retrato pela semente do nome da banca (o motor não tem mercador com rosto).
+- **As fitas do Códex só aparecem com a porta do Códex aberta** (abas.js); antes disso o livro tem só As buscas.
+- A bolsa de um **companheiro** continua na carta antiga; a **bancada e a forja** ficaram dobradas no pé da bolsa.
+- Sem as animações de virar a folha, da peça que voa à bolsa e das moedas que contam (só a entrada do objeto).
+
+**Visto** (Chrome headless por CDP, IA muda): `mente/lancamento/capturas/V7-*.png` — livro nas cinco fitas a
+1440, bolsa a 1280/1440 com equipar, banca com compra e venda, e livro, bolsa e banca a 375.
+
 ---
 
 ## A Mesa do Mestre · F6 · as cerimônias (`desenho`, 16/11/2026)

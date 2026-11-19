@@ -231,6 +231,12 @@ export const T = {
   violetaSombra:  "#4B3F8F",   /* a conta de PM vazia */
   haloDaVela:     "#FFC877",   /* a cor do halo (VELA.cor.halo lê daqui) */
   veuDaNoite:     "#05080A",   /* o véu sobre a página à noite (o alfa sai de LUZ_DA_MESA) */
+  /* NOVO (A Mesa do Mestre · F5 · V7 · 18/11) — o pano da banca, formas.md
+     §«F5» §2. Medido sobre linho: tinta 10,25 · tintaDim 5,53 · perigo 5,57 ·
+     musgo 5,52 · brasa 5,66. A bainha e as barras nunca são chão de letra. */
+  linho:          "#D8CBAA",
+  linhoSombra:    "#B9A983",   /* a bainha, 2 px */
+  linhoBarra:     "#8E7F5C",   /* as duas barras tecidas, 8 px, a 50 % */
   /* APOSENTAM-SE com o F1, e ficam até a última tela sair deles (as telas de
      hoje ainda os leem; apagar agora quebraria a mesa antiga):
      · `rosa` como chão de botão (fica como marca);

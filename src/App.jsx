@@ -70,6 +70,11 @@ import { soPergunta } from "./perguntas.js";
 import { garantirFichaCompanheiro } from "./companheiros.js";
 import { PainelTalentos } from "./painel-talentos.jsx";
 import { PainelMercado } from "./painel-mercado.jsx";
+/* V7 (18/11) · os objetos sobre a mesa: o livro (Diário + Códex), a bolsa e a banca */
+import { PainelLivro } from "./painel-livro.jsx";
+import { PainelBolsa } from "./painel-bolsa.jsx";
+import { PainelBanca } from "./painel-banca.jsx";
+import { objetoDaPorta } from "./objetos-abertos.js";
 import { PainelGrupo, SeletorCaminho } from "./painel-grupo.jsx";
 import { criarCondicao, limparPorDescanso, mecanicaDe, portaDeSaida, removerPelaPorta } from "./condicoes.js";
 import { ESCONDIDO, nascerEscondido, oculto, revisarEscondido, revelarPorAto, custoDeEsconder, vereditoDoEsconder, notaDoEscondido } from "./escondido.js";
@@ -2480,6 +2485,13 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
   const al = alforje || {};
   mundo = mundo || { genero: cenarioAtivo().generos.padrao };
   if (!aba) return null;
+  /* V7 (18/11) · O OBJETO ABERTO (formas.md §«F5» §1.1): o Diário e o Códex
+     são o livro, a bolsa do herói é a bolsa, o mercado é a banca — os três
+     abrem sobre a mesa, nas duas larguras, e o alforje fica fechado por baixo.
+     A tabela OBJETOS_NA_MESA (objetos-abertos.js) desliga cada um, e então
+     volta a forma de antes, que continua inteira abaixo. */
+  let objetoV7 = null;
+  try { objetoV7 = objetoDaPorta({ aba, sub: subGestao, quem: invDe }); } catch (e) { calou("V7 · que objeto abre", e); objetoV7 = null; }
   const equipados = personagem.equipados || {};
   const equipDisponivel = (personagem.equipamento || []).filter((e) => !Object.values(equipados).some((x) => x?.nome === e.nome));
   /* AAA · a carta lê a mochila em `inventario`, mas o que se veste mora em
@@ -2617,7 +2629,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
           O miolo é este, sem uma linha duplicada — o alforje é só a
           moldura. O fundo `rgba(0,0,0,.45)` morreu com a moldura velha: o
           véu é `T.bg` a `VEU.leve`, a peça `Veu` que existia para isso. */}
-      <Alforje aberto={!!abaPedida} abas={al.abas || []} abaAtiva={aba}
+      <Alforje aberto={!!abaPedida && !objetoV7} abas={al.abas || []} abaAtiva={aba}
         aoEscolher={al.aoEscolher} aoFechar={fechar} topo={al.topo}
         espreita={al.espreita || null} aoTocarEspreita={al.aoTocarEspreita} reduzido={!!al.reduzido}
         titulo={aba === "gestao" ? ((abertasAqui.find((x) => x.id === subGestao) || {}).rotulo || "Ficha") : aba === "diario" ? "Diário" : aba === "mapa" ? "Mapa" : aba === "codex" ? "Códex" : aba === "ascensao" ? "Ascensão" : "Bolsa"}>
@@ -3533,7 +3545,7 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
             } else {
               const destinos = grupoAqui.map((g) => g.nome);
               const dar = (origem, nome) => (destinos.length ? { destinos, fazer: (d) => { try { transferirItem("eu", d, origem, nome); } catch (e) { calou("dar a um companheiro", e); } } } : null);
-              const pecas = equipDisponivel.map((it, i) => ({ chave: "e" + i + it.nome, nome: it.nome, nota: notaDaPeca(it), descricao: it.descricao || "",
+              const pecas = equipDisponivel.map((it, i) => ({ chave: "e" + i + it.nome, nome: it.nome, nota: notaDaPeca(it), descricao: it.descricao || "", item: it, peca: true,
                 acoes: [
                   { id: "desmontar", rotulo: "Desmontar", dica: "+" + essenciaDe(it) + " de essência", fazer: seguro("desmontar na carta", () => desmontarEquip("eu", it.nome)) },
                   { id: "soltar", rotulo: "Soltar", fazer: seguro("soltar peça na carta", () => descartarEquip(it.nome)) },
@@ -3612,6 +3624,20 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
               dadivas = { linhas: linhasDeDadivas(personagem), progresso: (personagem.nivel || 1) >= 20 ? { xp: personagem.xp || 0, por: XP_POR_DADIVA } : null };
             } catch (e) { calou("as dádivas na carta", e); }
           }
+          /* V7 · a bolsa do herói abre como objeto da mesa, com as mesmas linhas, o
+             mesmo equipar e os mesmos mantimentos que a carta montou acima. A de um
+             companheiro continua na carta (escolher outra pessoa troca de casa). */
+          if (objetoV7 === "bolsa" && !comp) {
+            return (
+              <LimiteDasFichas key="bolsa-v7">
+                <PainelBolsa personagem={carta} linhas={linhas} aoEquipar={aoEquiparAqui} aoDesequipar={aoDesequiparAqui}
+                  aoSubirAtributo={onSubirAtributo ? (attr) => { try { onSubirAtributo(attr); } catch (e) { calou("V7 · ponto na bolsa", e); } } : null}
+                  mantimentos={mantimentos} moedas={personagem.moedas || 0} pessoas={pessoas} quem={invDe}
+                  aoTrocarQuem={(id) => { try { setInvDe(id); } catch (e) { calou("V7 · de quem é a bolsa", e); } }}
+                  oficina={oficina} lex={lexicoMundo} aoPousar={fecharTudo} />
+              </LimiteDasFichas>
+            );
+          }
           /* na saída (o alforje desce em VEU.sai) a carta esbate-se no mesmo tempo, e não
              recebe toque: nunca reaparece a gaveta que estava por baixo */
           return (
@@ -3636,13 +3662,36 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
       })()}
       {(() => {
         try {
+          /* V7 (18/11) · O LIVRO (formas.md §«F5» §1.2): o Diário e o Códex num
+             livro só, com cinco fitas. As buscas leem a porta do Diário (o bq das
+             quests nasce com ela) e as outras a do Códex (as páginas da memória):
+             trocar de fita troca a porta, e o livro fica aberto. */
+          if (objetoV7 !== "livro") return null;
+          const fecharLivro = () => { try { if (fechar) fechar(); } catch (e) { calou("V7 · pousar o livro", e); } };
+          const comCodex = (al.abas || []).some((x) => x && x.id === "codex");
+          const trocarFita = (id) => { try { const alvo = id === "buscas" ? "diario" : "codex"; if (alvo !== aba && al.aoEscolher) al.aoEscolher(alvo); } catch (e) { calou("V7 · trocar a fita do livro", e); } };
+          const diarioDoLivro = { historia, quests, trocarArco, eventos, diaAtual: dia, missoes, aoResponderMissao: onResponderMissao, aoEncerrarLegado: onEncerrarLegado, pers: personagem, abertura, relogios, aoVerNoMapa, distanciaDoPasso,
+            questsDaBiblioteca: (bq && bq.quests) || [], vilaoNoDiario: (bq && bq.vilao) || null, rostoDe: (bq && bq.rostoDe) || null, raridadeDaRecompensa: raridadeDaRecompensaDe(bq), quadros: (bq && bq.quadros) || [], aoAbrirQuadro: (bq && bq.aoAbrirQuadro) || null };
+          const dadosDaCronica = { nomeCampanha: nomeCampanha || "Campanha", mundo, personagem, conquistasIds: Object.keys((conquistas && conquistas.desbloqueadas) || {}), contadores: contadores || {}, npcs, mapa, faccaoJogador, guilda, reino, dia: dia || 1, nemesis, tituloAtivo, descobertas };
+          return (
+            <LimiteDasFichas key="livro-v7">
+              <PainelLivro fita={aba === "codex" ? "gente" : "buscas"} aoTrocarFita={trocarFita} comCodex={comCodex} diario={diarioDoLivro}
+                paginas={paginasDoCodice} npcs={npcs} aoApontar={aoApontarPagina} mundo={mundo} descobertas={descobertas}
+                conquistas={conquistas} tituloAtivo={tituloAtivo} escolherTitulo={escolherTitulo} dadosDaCronica={dadosDaCronica}
+                onExportarCronica={onExportarCronica} onExportarSave={onExportarSave} aoGerarCronica={aoGerarCronica} aoPousar={fecharLivro} />
+            </LimiteDasFichas>
+          );
+        } catch (e) { calou("V7 · o livro sobre a mesa", e); return null; }
+      })()}
+      {(() => {
+        try {
           /* AR2 (06/11) · O DIÁRIO EM TELA INTEIRA. Na mesa a gaveta de 320 dava
              ao Diário o leiaute do telefone (ele mede a largura dele, não a da
              janela); aqui abre por cima de tudo, como a carta do herói, e a
              1905 cabem as três colunas. O «Fechar» do cabeçalho dele (e o Esc)
              FECHA TUDO e devolve à mesa — nunca a gaveta por baixo (v9.605).
              «Ver no mapa» abre o mapa vivo, que já fecha a aba. */
-          if (!(aba === "diario" && heroiNaMesa)) return null;
+          if (objetoV7 || !(aba === "diario" && heroiNaMesa)) return null;
           const fecharDiario = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar o diário", e); } };
           const gerar = aoGerarCronica ? () => { try { aoGerarCronica(); } catch (e) { calou("a crônica pelo diário", e); } } : null;
           return (
@@ -3687,10 +3736,24 @@ function PainelLateral({ abasAbertas = [], estadoDasAbas = {}, portaoFechado = n
       })()}
       {(() => {
         try {
+          /* V7 (18/11) · A BANCA (formas.md §«F5» §4): o mercado como pano sobre a
+             mesa, com as mesmas funções que pagam e cobram. */
+          if (objetoV7 !== "banca") return null;
+          const fecharBanca = () => { try { if (fechar) fechar(); } catch (e) { calou("V7 · pousar a banca", e); } };
+          return (
+            <LimiteDasFichas key="banca-v7">
+              <PainelBanca personagem={personagem} bancas={mercadoAqui || []} cidade={cidadeMercado} balcao={balcaoAqui || []} ofertaPor={ofertaPor}
+                onComprar={onComprar} onVender={onVender} onPechinchar={onPechinchar} onComprarSuprimento={onComprarSuprimento} aoPousar={fecharBanca} />
+            </LimiteDasFichas>
+          );
+        } catch (e) { calou("V7 · a banca sobre a mesa", e); return null; }
+      })()}
+      {(() => {
+        try {
           /* AR6 (06/11) · O MERCADO EM TELA INTEIRA, pelo caminho dos Talentos:
              a 1905 cabem as bancas à esquerda, a banca ao meio e o veredito
              fixo à direita. O «Fechar» (e o Esc) devolve à mesa. */
-          if (!(aba === "gestao" && subGestao === "mercado" && heroiNaMesa)) return null;
+          if (objetoV7 || !(aba === "gestao" && subGestao === "mercado" && heroiNaMesa)) return null;
           const fecharMercado = () => { try { if (fechar) fechar(); } catch (e) { calou("fechar o mercado", e); } };
           return (
             <div role="dialog" aria-modal="true" aria-label="Mercado" className="fixed inset-0 z-50 tv-scroll overflow-y-auto"
