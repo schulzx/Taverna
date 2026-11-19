@@ -98,13 +98,20 @@ sec("d. A VOLTA NÃO É «VILA CLARA → VILA CLARA»");
 {
   const ida = VI.abrirViagem({ de: "Vila clara", para: "Vila clara", rota: { dias: 1 } });
   const l = VI.linhaDaViagem(ida);
-  t("de = para: «de volta a Vila clara»", l.startsWith("🧭 de volta a Vila clara ·") && !/Vila clara → Vila clara/.test(l), l);
-  t("…e o Mestre também não lê «de Vila clara para Vila clara»", !/de Vila clara para Vila clara/.test(VI.resumoViagemPrompt(ida)) && /de volta a Vila clara/.test(VI.resumoViagemPrompt(ida)));
+  /* MOVIDA (19/11, conserto V7/V8 — 9c2a07c), E O MOTIVO: o fixture usa o nome
+     como o banco de geografia.js o faz («Vila clara»), e a linha da viagem
+     passou a mostrá-lo pela apresentação (viagem.js, nomeDeLugar): «Vila
+     Clara». O que esta secção guarda não mudou — a volta é «de volta a X»,
+     nunca «X → X», e com percurso a origem é a primeira escala. Só a caixa do
+     nome na saída. O «X → X» e o «de X para X» passam a ser procurados sem
+     caixa, para que nenhuma das duas grafias escape. */
+  t("de = para: «de volta a Vila Clara»", l.startsWith("🧭 de volta a Vila Clara ·") && !/Vila clara → Vila clara/i.test(l), l);
+  t("…e o Mestre também não lê «de Vila Clara para Vila Clara»", !/de Vila clara para Vila clara/i.test(VI.resumoViagemPrompt(ida)) && /de volta a Vila Clara/.test(VI.resumoViagemPrompt(ida)));
   const comPercurso = { ...ida, percurso: [{ nome: "Cripta Funda" }, { nome: "Vila clara" }] };
-  t("com percurso, a origem é a primeira escala: «Cripta Funda → Vila clara»", VI.linhaDaViagem(comPercurso).startsWith("🧭 Cripta Funda → Vila clara") && VI.origemDaViagem(comPercurso) === "Cripta Funda");
+  t("com percurso, a origem é a primeira escala: «Cripta Funda → Vila Clara»", VI.linhaDaViagem(comPercurso).startsWith("🧭 Cripta Funda → Vila Clara") && VI.origemDaViagem(comPercurso) === "Cripta Funda");
   const normal = VI.abrirViagem({ de: "Porto", para: "Vau", rota: { dias: 1 } });
   t("a ida normal não muda: «Porto → Vau»", VI.linhaDaViagem(normal).startsWith("🧭 Porto → Vau ·") && VI.origemDaViagem(normal) === "Porto");
-  t("pausada e chegando usam a mesma origem", /de volta a Vila clara · PAUSADA/.test(VI.linhaDaViagem(VI.pausarViagem(ida, "chuva"))));
+  t("pausada e chegando usam a mesma origem", /de volta a Vila Clara · PAUSADA/.test(VI.linhaDaViagem(VI.pausarViagem(ida, "chuva"))));
   t("a tabela das formas", VI.ROTULO_DA_ROTA.volta === "de volta a {para}" && VI.origemDaViagem(null) === "");
 }
 

@@ -336,7 +336,13 @@ sec("10. o envelope do gesto — o sucesso é o gesto acontecendo");
   const { readFileSync } = await import("node:fs");
   const app = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
   const i = app.indexOf("const concluirRolagem = (");
-  const corpo = i >= 0 ? app.slice(i, i + 20000) : "";
+  /* 19/11: a janela fixa de 20 000 caracteres deixou de alcançar a chamada —
+     o corpo de concluirRolagem cresceu (05b2a02) e o envelopeDoTeste({ ficou
+     a ~20 300 do início. A chamada e a marca não mudaram; o corte passa a ser
+     o fim da função (a próxima const no nível do componente), que é o que a
+     asserção sempre quis dizer com "corpo". */
+  const fim = i >= 0 ? app.indexOf("\n  const ", i + 10) : -1;
+  const corpo = i >= 0 ? app.slice(i, fim > i ? fim : i + 40000) : "";
   const j = corpo.indexOf("envelopeDoTeste({");
   const chamada = j >= 0 ? corpo.slice(j, corpo.indexOf("})", j)) : "";
   t("concluirRolagem passa a marca do gesto ao envelope do teste", chamada.includes("gesto: !!(des && des.gesto)"), chamada.slice(0, 160));

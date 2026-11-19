@@ -73,7 +73,14 @@ ok(v.oportunidade && v.oportunidade.pergunta === "estaMentindo" && v.quem === "E
 console.log("\n[a fiação no App]");
 const app = fs.readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8");
 ok(/const deFora = vivos\.filter\(\(n\) => !doGrupo\.has\(n\.nome\)\);\s*return deFora\.length === 1 \? deFora\[0\] : null;/.test(app), "à frente está o único de fora do grupo");
-ok(/if \(v\.oportunidade\.pergunta === "estaMentindo"\) menteDoMundo = "sim";/.test(app) && /rolarDesafio\(menteDoMundo \? \{ \.\.\.v, mente: menteDoMundo \} : v, acao\);/.test(app), "o 'sim, mente' viaja com o dado");
+/* 19/11: a asserção mudou de forma, não de sentido. O conserto do Mestre vivo
+   (05b2a02) passa o veredito por marcarDoMomento antes do dado, e o objeto que
+   rola chama-se agora vDoDado (= v quando o Mestre vivo está desligado). O
+   contrato guardado é o mesmo: o "sim, mente" vai junto ao veredito que rola —
+   e vDoDado tem de nascer de v, para nada se perder no caminho. */
+ok(/if \(v\.oportunidade\.pergunta === "estaMentindo"\) menteDoMundo = "sim";/.test(app)
+  && /let vDoDado = v;/.test(app)
+  && /rolarDesafio\(menteDoMundo \? \{ \.\.\.vDoDado, mente: menteDoMundo \} : vDoDado, acao\);/.test(app),"o 'sim, mente' viaja com o dado");
 const iLeit = app.indexOf('calou("a leitura da pessoa"');
 const iEnv = app.indexOf("let env = (passou && des && des.fechaDepois");
 ok(iLeit > iEnv && /if \(passou && des && des\.pericia === "intuicao"/.test(app) && /env = `\$\{env\}\\n\$\{envelopeDaLeitura\(l\)\}`/.test(app), "a leitura entra no envelope do sucesso, em try/calou");

@@ -54,6 +54,15 @@ const R = await correrOsCasos(D, { lado: "recorte" });
    depois dos 275 — o dourado foi regenerado contra o mesmo commit e as 275
    fotos antigas ficaram iguais; só entraram casos */
 t(`o dourado tem as ${N_DA_PAUTA} fotos, de um commit`, D.fotos.length === N_DA_PAUTA && /^[0-9a-f]{7,}$/.test(D.commit), D.commit);
+/* 19/11 (conserto V7/V8, 9c2a07c), E O MOTIVO: o nome do lugar na linha da
+   viagem passou pela apresentação (viagem.js, nomeDeLugar: «Casa valente» →
+   «Casa Valente»), e doze casos com a jornada aberta (13, 49, 67, 103, 121,
+   139, 175, 193, 211, 229, 247, 265) mandam esse rodapé à rede. As fotos
+   deles (rede e saida) foram refeitas com o MESMO recorte guardado — o
+   gerador não corre mais contra HEAD —, depois de provar caso a caso que o
+   pedido de antes e o de agora têm o mesmo tamanho, são iguais sem caixa, e a
+   pauta, a nota, os refs e as portas não mudaram. As outras 275 fotos ficaram
+   byte a byte. */
 t("o recorte corre de novo e dá as mesmas fotos (o dourado não é de outra árvore)", conta(R) === N_DA_PAUTA, `${conta(R)}/${N_DA_PAUTA}`);
 t("o escopo do recorte não achou nome sem dublê (faltas: 0)", R.every((f) => f.faltas.length === 0), R.flatMap((f) => f.faltas).slice(0, 5).join());
 const comRede = R.filter((f) => f.redeInteira);

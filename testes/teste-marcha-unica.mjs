@@ -365,7 +365,15 @@ sec("8. a região v1 e o continente, byte a byte (hashes de HEAD v9.363)");
         if (ida && ida.rota && ida.rota.modo === "estrada") {
           const j = BO.jornadaAteAMasmorra(ida, { de: base.nome, dia: 3 });
           h(`${k}:jornada`, j);
-          h(`${k}:prompt`, VI.resumoViagemPrompt({ ...j, andadoMin: Math.round(j.totalMin / 3) }));
+          /* 19/11 (MOVIDO, com o motivo, pela mesma regra do mapaVivo): o
+             conserto V7/V8 (9c2a07c) passou o nome do lugar pela apresentação
+             na linha da viagem (viagem.js, nomeDeLugar: «Casa valente» →
+             «Casa Valente»). O hash guarda o que guardava: devolve-se SÓ a
+             caixa dos nomes do mundo antes de medir — bater com o hash antigo
+             prova que a caixa foi a única coisa que mudou. */
+          const nomes = [...mapa.cidades.map((c) => c.nome), ...mms.map((x) => x.nome)];
+          const semCaixa = (s) => nomes.reduce((a, n) => { const N = VI.nomeDeLugar(n); return N === n ? a : a.split(N).join(n); }, s);
+          h(`${k}:prompt`, semCaixa(VI.resumoViagemPrompt({ ...j, andadoMin: Math.round(j.totalMin / 3) })));
           h(`${k}:ponto`, RA.pontoDoHeroi({ cidadeAtual: base.nome, jornada: { ...j, andadoMin: Math.round(j.totalMin / 3) }, mapa }));
         }
         const lugar = { nome: m.nome, coord: { x: m.x, y: m.y }, distancia: "perto", cidade: base.nome };
