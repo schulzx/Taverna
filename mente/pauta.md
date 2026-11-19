@@ -108,8 +108,8 @@ Formato de um item:
 antes da narração, a mesa responde *«Sobrevivência. Precisa de 14. Se falhar, a chuva apaga o
 rasto.»* e o d20 fica na bandeja à espera de um toque, com saída para quem tem pressa; junto, a
 busca que encontra, a quest que manda no oráculo, o epíteto do vilão e a luta honesta (veredito
-antes de partir, cativeiro como estado). A régua é a de 04/11: um dado a cada dois ou três turnos
-fora da luta, **com sentido** — a sessão 18 cumpriu o número com quatro Percepções iguais e três
+antes de partir, cativeiro como estado). A régua era a de 04/11, um dado a cada dois ou três turnos
+fora da luta (contagem desfeita pela pessoa em 19/11: vale o mestre real, não a frequência), **com sentido** — a sessão 18 cumpriu o número com quatro Percepções iguais e três
 sucessos vazios.
 
 **A planta:** `mente/plano-o-mestre-chama-o-dado.md` (o `conselheiro`, 10/11) — as sete causas

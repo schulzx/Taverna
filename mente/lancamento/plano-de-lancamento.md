@@ -107,9 +107,11 @@ no WhatsApp.
 | 3.1 | **Uma forma só** (J-P0-4) | a carta social, o enigma e a busca da masmorra passam pelo chamado (`o-mestre-chama.js`); o «Refazer» também na bandeja | M · backend → desenho → oficial |
 | 3.2 | **O dado é um momento** (V-P0-8) | no centro da mesa a 160 px, 1,2–1,6 s, tocar salta, cerimónia do 20 e do 1; a animação **cobre** a espera pelo Narrador em vez de a somar | M · desenho → aprendiz |
 | 3.3 | **O d20 que se pode provar** (T1) | ver secção 4 | M–G |
-| 3.4 | **O ritmo da régua** | hoje 1 dado a cada 3,25 frases; ligar as frases que pediam dado e não tiveram (falar com a pessoa da carta, força bruta, agressão) — J-P1-3, J-P1-8 | S+M · backend |
+| 3.4 | **O dado que faltou** (era «o ritmo da régua»; sem cota desde 19/11) | ligar as frases que pediam dado e não tiveram (falar com a pessoa da carta, força bruta, agressão) — J-P1-3, J-P1-8 | S+M · backend |
 
-**Portão:** 100 % dos d20 fora da luta na bandeja; um dado a cada 2–3 frases numa sessão de 40;
+**Portão:** 100 % dos d20 fora da luta na bandeja; nenhuma ação arriscada sem dado e nenhum dado
+indevido numa sessão de 40 (a contagem «um dado a cada 2–3 frases» saiu em 19/11, por decisão da
+pessoa: a régua é o mestre real, não a frequência);
 um GIF de 20 natural que se queira partilhar.
 
 ### Onda 4 — O clímax e a mesa cheia (o jogo parece e age como jogo)

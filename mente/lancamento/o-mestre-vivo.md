@@ -191,7 +191,7 @@ estudo, e **renovado a cada rodada** (frase usada para afinar sai do exame).
 | perícia certa em frase nova | 69% (corpus) · 82% no exame, só entre os 50 que rolam dos dois lados | **≥ 85%** |
 | pede dado onde um mestre real não pediria | 6% (corpus) · **21% no exame** (26 de 126) | **≤ 2%** |
 | deixa de pedir onde um mestre real pediria | **66% no exame** (99 de 149) | **≤ 15%** |
-| declarações fora da luta seguidas de dado, em sessão jogada | 4,3% (10/11) | **20% a 30%** (a mesa real: 26,5%) |
+| declarações fora da luta seguidas de dado, em sessão jogada | 4,3% (10/11) | **sem meta** (19/11, decisão da pessoa): a mesa real deu 26,5%, e isso é o que se observa, não o que se persegue. Quantos dados caem é consequência de acertar o momento; cota por turno ou por sessão confunde o Mestre. Tampouco «maior sequência sem dado» é defeito: defeito é a ação arriscada que passou sem dado |
 | perguntas de «o que sei de…» respondidas sem dado | 76% no exame (22 de 29), mas quase sempre porque não leu a frase; o veredito certo sai em 17 de 29 | **≥ 70%** (a mesa real: 78%) |
 | falha que dá «nada» | — | **≤ 10%** (a mesa real: 7%) |
 | o chamado muda quando a quest liga | — | **0 diferenças** |

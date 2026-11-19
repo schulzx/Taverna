@@ -5,7 +5,8 @@
    pessoa aprovou hoje: as rações, a água e as tochas saem da linha de
    texto e ficam na mesa como dados — d10, d8, d6, d4 —, e o dado rola à
    vista ao fim do dia e quando uma tocha nova se acende. A ordem de 04/11
-   já pedira «um dado a cada dois ou três turnos fora da luta», e o jogador
+   já pedira que o dado aparecesse mais (sem cota por turno: essa contagem
+   foi desfeita pela pessoa em 19/11), e o jogador
    passa a ver a comida acabar sem abrir nada.
 
    A CONTAGEM CONTINUA A SER A VERDADE. `suprimentos.racoes/agua/tochas`

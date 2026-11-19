@@ -146,8 +146,9 @@ físico e a pressa fazem rolar; buscar o que está escondido rola e buscar à to
 talento resolvem pela própria regra; encenação não rola.
 
 **Onde discordam** (e é estilo, não regra): quanto o mestre oferece o dado por conta própria, e quanto a
-conversa vira dado. O nosso Mestre fica mais perto da Critical Role — é a mesa que a pessoa citou e é a
-que gera o «um dado a cada dois ou três turnos» da ordem de 04/11.
+conversa vira dado. O nosso Mestre fica mais perto da Critical Role — é a mesa que a pessoa citou. (Aqui
+se lia que ela «gera o um dado a cada dois ou três turnos da ordem de 04/11»; a pessoa desfez essa
+contagem em 19/11: o Mestre pede quando o momento pede, e a frequência é consequência, não meta.)
 
 **A cautela de sempre:** as duas jogam D&D 5e. Aprende-se *quando* e *por que* rolar; perícia e número
 traduzem-se para as nossas tabelas.

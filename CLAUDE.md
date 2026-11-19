@@ -303,8 +303,16 @@ liberdade da ordem de 23/09, e o backup dela continua a ser a rede.
 
 **2. O dado é do sistema, e aparece.** O Mestre pede rolagens (o pedido é uma
 frase que o catálogo já julga), e todo dado lançado pousa à vista, com a forma
-dele. A régua: **um dado a cada dois ou três turnos fora da luta**, medido numa
-sessão. Os dados de uso (tochas, rações, flechas) estão aprovados, e são campo
+dele. **A régua é o mestre real, e não uma contagem** (corrigida pela pessoa em
+19/11): *«se o mestre real não pediria dado, o nosso não precisa pedir só porque
+tem x turnos que não rola algum dado… estava rolando muito pouco dado, mas não
+por conta da quantidade de turnos, e sim pelo fato de o mestre ainda não estar
+preparado.»* Esta linha dizia «um dado a cada dois ou três turnos fora da luta»,
+e esse número **não era dela**: foi a leitura de quem escreveu a ordem, e virou
+meta de sessão e portão de onda. **Nenhuma cota de dado por turno, por frase ou
+por sessão**, em código, em meta ou em portão. O que se mede é o acerto: pediu
+onde um mestre real pediria, e não pediu onde ele não pediria. Uma cena de dez
+turnos de conversa sem dado, se ninguém arriscou nada, está certa. Os dados de uso (tochas, rações, flechas) estão aprovados, e são campo
 novo de save, aditivo e ignorado pela versão antiga.
 
 **3. A impressão é critério.** Entre duas formas que jogam igual, ganha a que
