@@ -807,3 +807,60 @@ sessão: ao carregar um save, começa `null`, e o primeiro turno não provoca es
 **6. A prova** — a onda só fecha com uma sessão jogada com a chave ligada, contando: dados fora da luta
 por turno (a régua de 04/11: um a cada dois ou três), buscas que deixaram de rolar e se a mesa esvaziou,
 conversas com o preço dito, espontâneos pedidos.
+
+## 16. A fiação (atrás da chave)
+
+**19/11/2026, o `oficial`.** O Mestre que lê o momento está ligado no jogo, atrás de uma chave desligada
+por omissão. Com ela desligada, a única função nova chamada é a que lê a chave; o resto do turno é o de hoje.
+
+**Como ligar para jogar:** abrir o jogo com `?mestre=1` na URL (grava `taverna_cfg_mestre_vivo=1` no
+localStorage de configuração; `?mestrevivo=1` também serve, o nome do roteiro de §15.4). `?mestre=0` desliga.
+A chave é lida uma vez por montagem: depois de mudar, recarregue. Ela não vai ao save e não aparece em tela
+nenhuma.
+
+**A ponte pura:** `src/o-mestre-vivo-no-jogo.js`, provada por `testes/teste-mestre-vivo-fiacao.mjs` (80 asserções).
+Contém a chave (`MESTRE_VIVO`, `lerAChaveDoMestreVivo`), o retrato a partir dos valores dos refs
+(`retratoDosRefs`, só com as chaves de `FORMA_DO_RETRATO`), as quatro portas do momento (`oQueOMomentoFaz`:
+hoje · destino · acontece · rola), o «livre» do que acontece (`vereditoDoQueAcontece`), a pauta de um turno
+(`pautaDoMomento`), o d6 e o envelope do destino, e o espontâneo (`podeOMundoProvocar`, `rolagemDoEspontaneo`).
+
+**O que foi ligado no `App.jsx` (por âncora):**
+
+| onde | o quê |
+|---|---|
+| refs, junto a `pecaCalaRef` | `mestreVivoRef`, `momentoDoTurnoRef`, `momentoAdjudicadoRef`, `chamadoDoMomentoRef`, `retratoAntesRef`: só memória de sessão |
+| ao lado de `ctxDesafio` | `mestreVivoLigado`, `retratoAgora` (cada leitura no seu `calou`, e null se estourar), `momentoDaFrase` (`chamadoDoMomento` com `ctxDoChamado` e `bonusDe` pela perícia), `momentoDaAdjudicacao`, `acontecerSemDado`, `destinoDoMomento` |
+| `agirInterno`, antes de `sinaisDoTurno` | o momento é lido uma vez, fora da luta, sem escolha nem encontro pendente; o veredito da régua passa a ser o que `veredictoDaAcao` devolve neste turno (é assim que o que a escuta ouviu abre a porta do desafio) |
+| `agirInterno`, antes das peças | o destino resolve o turno (o d6 na bandeja, o Narrador só com o `diz`); a pergunta que não rola leva a resposta (evasiva/recusa/silêncio) por `porNaPautaDoTurno` |
+| `veredictoDaAcao` | lê `momentoAdjudicadoRef` quando a frase é a mesma; sem a chave o ref é null e é o catálogo de hoje |
+| `adjudicarAcao` | depois do passo antes do ato, o momento julga onde o herói chegou; não rola → `acontecerSemDado` (só a frase na tela, o envelope do «livre» com o porquê da régua, o tempo passa, sem tentativa, desfecho «falha» para a cobrança); rola → o Mestre de hoje não concede por cima (`seguraOTeste` só sem `m`), e o chamado do momento vai a `chamadoDoMomentoRef` |
+| `chamadoDoVeredito` | entrega o chamado do momento uma vez (mesmo `id` e `chave`), e por cima continuam `comACartaEmJogo` / `oChamadoDaPeca` como hoje; `null` = rola sem linha |
+| efeito em `[carregando]`, depois do V3 | o espontâneo: quando o Narrador acaba, o retrato de agora contra `retratoAntesRef`; abre uma rolagem pela soleira de sempre (`chamadoDaRolagem`), sem chave no desafio |
+| `pecasLigadas` | `pecasLigadasRef.current && !mestreVivoLigado()`: com as duas chaves, o Mestre vivo ganha e as peças ficam de fora |
+| carregar / jogo novo | `retratoAntesRef.current = null` |
+
+**Visto no jogo** (IA muda, `TAVERNA_API=http://127.0.0.1:9`, Chrome headless). Sem a chave: «procuro algo
+escondido no balcão» → Percepção 13; «me esgueiro até os fundos» → Furtividade 15; «arrombo a porta dos
+fundos» → Arrombamento 16, os três com o chamado de hoje. Com `?mestre=1`, na rua e depois numa taverna: a
+busca não rolou (o envelope foi «Isto não pede dado: nada escondido nem perigo…», e o relógio andou 10 min);
+a pergunta à companheira e ao taverneiro não rolaram (foram ao Narrador sem envelope); «peço ao taverneiro que
+me empreste 50 moedas» → «Persuasão. Precisa de 14. Se falhar, a resposta é não, e pedir igual não muda
+nada.»; esgueirar-se na taverna → Furtividade 15. Consola sem erro e sem nenhum `calou` do Mestre vivo.
+
+**O que ficou de fora, e por quê:**
+
+- **Na luta**, o Mestre vivo não entra: `rolarDesafio` tem caminhos próprios para a palavra e o esconder-se.
+- **O que acontece sem dado não aplica efeito de sucesso** (o socorro, o «sim» da conversa a quem está
+  disposto): narra-se acontecendo, e a cobrança é falha. A conversa que não rola com quem quer ajudar merece
+  o envelope social de sucesso. É a primeira coisa a medir na sessão jogada.
+- **`quest: {}`**: nenhuma etapa declara quem esconde, o que está trancado ou vigiado (§15.4).
+- **O efeito dos estados como linha da cena** (§15.4 nº 5, prioridade baixa) não entrou: é opcional e mexe no
+  peso da pauta.
+- **A quest que escuta (§5)** e a convivência com as peças são a etapa seguinte.
+
+**Do retrato no jogo real:** `clima` sai `null` até à primeira viagem, porque o clima só rola na estrada.
+Então `escorregadio`, `ceu_encoberto` e `perigo_fisico` (e com eles o destino, que pede perigo) ficam calados
+na cidade no começo da campanha. `relogios` vazio numa campanha nova. A rotina da gente do posto veio como
+«no que faz», que nunca é `DORMINDO` de dia. `favorAqui` depende de o id do favor bater com o `idDoLugar` do
+lugar atual, e isso não foi visto com um favor de verdade. O aviso de Furtividade dentro da taverna diz «alguém
+na rua vê você»: é o `contexto.cidade` de `ctxDoChamado`, que já era assim antes desta etapa.

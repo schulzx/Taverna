@@ -63,7 +63,7 @@ import { comoConsumivel, usarConsumivel, descricaoCurta, itemConsumivel, sortear
 import { mercadoresDaCidade, talvezAmbulante, precoQueOferecem, precoQueOferecemComMotivo, mapasAVenda, tipoMercador, balcaoDeMantimentos, precoDoSuprimento, faltaComidaParaPartir, mercadoParaPauta, precoComumParaPauta } from "./mercado.js";
 import { generoDoItem, generoPorId, apertarProcura, podePagar, pechinchar, dificuldadeDaPechincha, linhaDoPreco, vocacaoDe } from "./comercio.js";
 import { fichaParaPauta, fichaDaCidade } from "./cidade-por-dentro.js";
-import { genteParaPauta } from "./gente-por-dentro.js";
+import { genteParaPauta, fichaDaPessoa } from "./gente-por-dentro.js";
 /* MM14: as perguntas ao Mestre — perguntar é de graça, e as várias fichas
    juntam a resposta pela ordem em que a frase as pediu */
 import { soPergunta } from "./perguntas.js";
@@ -123,6 +123,9 @@ import { ehDeclaracaoDeAtaque, lerAgressao, falaDaAgressao, falaDoCompanheiro, e
 import { montarEmCena, quemNaFrase } from "./em-cena.js";
 import { fichasDaCena, marcasDaProsa, quemNoEnvio, bancasDoToque, garantirMemoriaDoSave, lembrarFicha, lembrarCompra, paginasDoCodice, procuraNaMemoria } from "./fichas.js";
 import { garantirFactos } from "./livro-de-factos.js";
+import { idDoLugar } from "./livro-de-factos.js";
+import { chamadoDoMomento, chamadoQueOMundoProvoca } from "./a-cena-do-jogo.js";
+import { lerAChaveDoMestreVivo, retratoDosRefs, oQueOMomentoFaz, vereditoDoQueAcontece, pautaDoMomento, lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, rolagemDoEspontaneo } from "./o-mestre-vivo-no-jogo.js";
 import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
 import { EmCena, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
@@ -9558,6 +9561,16 @@ export default function Taverna() {
   const pecaDoTurnoRef = useRef(null);
   const pecaEscreveuRef = useRef(false);
   const pecaCalaRef = useRef(false);
+  /* O MESTRE VIVO (19/11, o-mestre-vivo.md §16): a chave (lida uma vez:
+     taverna_cfg_mestre_vivo, ou ?mestre=1), o momento da frase deste turno,
+     o veredito que a régua julgou (o de veredictoDaAcao neste turno), o
+     chamado que o momento deu ao teste, e o retrato do fim do turno anterior
+     (o espontâneo). Memória de sessão: nada disto vai ao save. */
+  const mestreVivoRef = useRef(null);
+  const momentoDoTurnoRef = useRef(null);
+  const momentoAdjudicadoRef = useRef(null);
+  const chamadoDoMomentoRef = useRef(null);
+  const retratoAntesRef = useRef(null);
   const [entradaNaMesa, setEntradaNaMesa] = useState(null);
   const abrirAMesaDoEncontroRef = useRef(null);
   /* V6 · O TAPETE ABRE JÁ (formas.md, F4 §1 nº 1). «Lutar» desenrola a mesa
@@ -12262,7 +12275,7 @@ export default function Taverna() {
     systemRef.current = montarSystemPrompt(nomeCampanhaRef.current || nomeCampanha, mundoAtual(), pers, {}, bancoNomesRef.current, (resumoMapaParaPrompt(mapaRef.current, faccaoJogadorRef.current) + "\n" + resumoDiplomacia(mapaRef.current, faccaoJogadorRef.current)).trim(), resumoDoArco(), resumoQuests(questsRef.current), resumoNPCsParaPrompt(npcsRef.current), tempoInfoPrompt(), infoDivindade(), infoTitulo(), cenaDoPrompt());
     registroDaSessaoRef.current = null; daUltimaVezRef.current = ""; ultimaFraseDoJogadorRef.current = "";
     confrontoEmLutaRef.current = null; confrontosAlertasRef.current = []; pecasRef.current = null;
-    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
+    mensagensRef.current = []; setMensagens([]); setHistorico([]); setRolagem(null); retratoAntesRef.current = null; bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
     try { esquecerORecibo(); } catch (e) { calou("esquecer o recibo (campanha nova)", e); }
     esquecerAsCerimonias();
     setCombate(null); combateRef.current = null; intencaoRef.current = ""; impressionouRef.current = 0;   /* fim de campanha: nao ha ficha para limpar */
@@ -12420,7 +12433,7 @@ export default function Taverna() {
       esquecerAsCerimonias();
       mensagensRef.current = Array.isArray(sv.mensagens) ? sv.mensagens : [];
       setMensagens(mensagensRef.current); setHistorico(Array.isArray(sv.historico) ? sv.historico : []);
-      setRolagem(sv.rolagem || null); bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
+      setRolagem(sv.rolagem || null); retratoAntesRef.current = null; bandejaRef.current = []; setBandeja([]); setBandejaVista(0); antesDasMarcasRef.current = { morrendo: null, concluidas: null, combate: null };
       /* CB lote 3: `combate.superficies` e `combate.reacoesVistas` são campos
          novos e aditivos — o lixo e a ausência valem a planta (combateDoSave) */
       { let cSv = sv.combate || null; try { cSv = combateDoSave(sv.combate); } catch (e) { calou("o chão da luta no load", e); } setCombate(cSv); combateRef.current = cSv; }
@@ -14737,6 +14750,16 @@ export default function Taverna() {
         }
       }
     } catch (e) { calou("S7b · o batismo", e); }
+    /* O MESTRE VIVO (19/11, o-mestre-vivo.md §16): com a chave ligada, o
+       momento da frase lê-se antes das portas — o veredito que a régua julgou
+       é o de veredictoDaAcao neste turno (a escuta abre a porta do desafio),
+       e o destino e a resposta saem adiante, depois de o campo esvaziar. */
+    if (mestreVivoLigado()) {
+      try {
+        momentoDoTurnoRef.current = null; momentoAdjudicadoRef.current = null; chamadoDoMomentoRef.current = null;
+        if (!acao.startsWith("/") && !combateRef.current && !escolhaPendenteRef.current && !encontroPendenteRef.current) momentoDoTurnoRef.current = momentoDaAdjudicacao(acao);
+      } catch (e) { calou("Mestre vivo · o momento do turno", e); momentoDoTurnoRef.current = null; momentoAdjudicadoRef.current = null; }
+    }
     ultimoDesfechoRef.current = null;
     testeDoTurnoRef.current = null;
     /* v9.72: o pilar do turno sai do que o JOGADOR escreveu, e não só do
@@ -14852,6 +14875,17 @@ export default function Taverna() {
           }
         }
       } catch (e) { calou("NE4 · o convite pela frase", e); }
+    }
+    /* O MESTRE VIVO: o dado do destino resolve o turno (o d6 à vista, o
+       Narrador só com o diz); a pergunta que não rola leva a resposta da
+       pessoa (evasiva, recusa, silêncio) pelo canal de um turno — nunca
+       bloco estático. */
+    if (mestreVivoLigado()) {
+      try {
+        const mv = momentoDoTurnoRef.current;
+        if (mv && oQueOMomentoFaz(mv) === "destino" && destinoDoMomento(acao, mv)) return;
+        if (mv && !mv.rola) { const pa = pautaDoMomento(mv); if (pa) porNaPautaDoTurno(pa); }
+      } catch (e) { calou("Mestre vivo · o destino e a resposta", e); }
     }
     /* AS PEÇAS, FASE B (17/11, src/pecas/no-jogo.js): com a quest da prova
        aberta e o interruptor ligado, a frase encaixa na peça ANTES das portas.
@@ -18495,6 +18529,103 @@ export default function Taverna() {
     },
   });
 
+  /* ================= O MESTRE VIVO (19/11/2026) =================
+     mente/lancamento/o-mestre-vivo.md §15.4 e §16. O Mestre que lê o MOMENTO
+     (a cena) além da frase, atrás de uma chave desligada por omissão
+     (src/o-mestre-vivo-no-jogo.js). Desligada, nada daqui é chamado e o
+     turno é o de hoje. Tudo em calou: qualquer falha devolve o Mestre de hoje. */
+  const mestreVivoLigado = () => {
+    if (mestreVivoRef.current == null) {
+      try { mestreVivoRef.current = lerAChaveDoMestreVivo(window.localStorage, window.location.search); } catch (e) { mestreVivoRef.current = false; }
+    }
+    return mestreVivoRef.current;
+  };
+  /* O RETRATO: só refs, campo a campo (FORMA_DO_RETRATO, a-cena-do-jogo.js);
+     a montagem é de retratoDosRefs. Cada leitura no seu calou; o retrato que
+     estoura é null, e o turno segue pelo Mestre de hoje. Nunca se guarda:
+     é derivado dos refs que já estão no save. A quest ainda não declara
+     nada (quest: {}) — fica para quando a biblioteca ganhar o campo. */
+  const retratoAgora = () => {
+    try {
+      const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou("Mestre vivo · " + rotulo, e); return seNao; } };
+      const p0 = fichaViva() || personagem || {};
+      const presentes = vale("quem age aqui", () => quemAgeAqui(quemAgora()), []);
+      const rotinas = vale("a rotina de quem está", () => {
+        const reg = npcsRef.current || {};
+        const ctxG = { mapa: mapaRef.current, genero: generoMundo(), lex: (mundoAtual() || {}).lexico, base: baseMundoRef.current, npcs: reg, grupo: p0.grupo || [], dia: diaRef.current, minuto: minutoRef.current, cidade: cidadeAtualRef.current };
+        const out = {};
+        for (const x of presentes) {
+          const nome = x && x.nome;
+          if (!nome) continue;
+          const f = fichaDaPessoa(sementeMundo(), { ...(reg[nome] || {}), nome, papel: (reg[nome] || {}).papel || x.papel || "" }, ctxG);
+          if (f && f.rotina && f.rotina.agora) out[nome] = f.rotina.agora;
+        }
+        return out;
+      }, {});
+      const cd = vale("o contexto do desafio", () => ctxDesafio(), null);
+      const lugar = lugarRef.current;
+      const cid = cidadeAtualRef.current || "";
+      const ctxL = { cidade: cid, chaveDoLugar: (n, c) => chaveDoLugar(sementeMundo(), mapaRef.current, n, { genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, cidade: c || cid }) };
+      return retratoDosRefs({
+        lugar, cidade: cid, jornada: jornadaRef.current, minuto: minutoRef.current, clima: climaRef.current,
+        presentes, npcs: npcsRef.current, rotinas, grupo: p0.grupo || [],
+        inimigos: (combateRef.current && combateRef.current.inimigos) || [],
+        encontro: encontroPendenteRef.current, masmorra: masmorraRef.current,
+        achado: vale("o achado", () => !!(cd && (cd.achadoDe("percepcao") || cd.achadoDe("intelecto"))), false),
+        segredos: vale("os segredos", () => segredosGuardados(espinhaRef.current, mundoDaBase()), []),
+        favorAqui: vale("o favor do lugar", () => {
+          const ls = (factosRef.current && factosRef.current.lugares) || {};
+          const id = lugar ? idDoLugar({ ...lugar, cidade: lugar.cidade || cid }, ctxL) : "";
+          return !!(id && ls[id] && ls[id].favor);
+        }, false),
+        relogios: relogiosRef.current, condicoes: p0.condicoes || [],
+        passos: vale("os passos", () => passosDasQuestsAgora(), []), onde: vale("o onde do passo", () => ondeDoPasso(), null),
+        quest: {},
+      });
+    } catch (e) { calou("Mestre vivo · o retrato", e); return null; }
+  };
+  /* O MOMENTO DA FRASE: catálogo → cena → régua → chamado (chamadoDoMomento),
+     com o mesmo contexto do chamado de hoje e o bônus pela perícia do
+     veredito que a régua julgou. Com o teste já à espera, nada. */
+  const momentoDaFrase = (acao) => {
+    if (rolagem || carregando) return null;
+    const p = fichaViva() || personagem;
+    return chamadoDoMomento(acao, ctxDesafio(), retratoAgora(), {
+      ...ctxDoChamado(), bonusDe: (v) => modDoTeste(p, v.atributo, v.pericia).total,
+    });
+  };
+  /* o momento, e o veredito dele posto onde veredictoDaAcao o lê neste turno
+     (só quando a régua decidiu: rola ou acontece) */
+  const momentoDaAdjudicacao = (acao) => {
+    momentoAdjudicadoRef.current = null; chamadoDoMomentoRef.current = null;
+    const m = momentoDaFrase(acao);
+    const porta = oQueOMomentoFaz(m);
+    if (porta === "rola" || porta === "acontece") momentoAdjudicadoRef.current = { frase: acao, v: m.veredito || null };
+    return m;
+  };
+  /* NÃO ROLA: narra-se acontecendo — o envelope do «livre» do catálogo, com
+     o porquê da régua (bastidor: o Narrador lê, o jogador sente pelo efeito).
+     Na tela só a frase do jogador. Sem dado não há tentativa; o tempo passa;
+     para a cobrança é falha (o que a narração prometer não entra na bolsa). */
+  const acontecerSemDado = (v, m, acao) => {
+    pushMsgs([{ autor: "jogador", texto: acao }]);
+    ultimoDesfechoRef.current = "falha";
+    try { cobrarTempoDoDesafio(v); } catch (e) { calou("Mestre vivo · o tempo do que acontece", e); }
+    let env = "";
+    try { env = envelopeDeVeredicto(vereditoDoQueAcontece(v, m), acao); } catch (e) { calou("Mestre vivo · o envelope do que acontece", e); env = ""; }
+    enviar(env || acao, fichaViva() || personagem);
+    return true;
+  };
+  /* O DADO DO DESTINO: o d6 cai na bandeja, e o Narrador recebe só o diz */
+  const destinoDoMomento = (acao, m) => {
+    const env = envelopeDoDestino(m);
+    if (!env) return false;
+    pushMsgs([{ autor: "jogador", texto: acao }]);
+    try { aBandeja(lanceDoDestino(m)); } catch (e) { calou("Mestre vivo · o d6 na bandeja", e); }
+    enviar(env, fichaViva() || personagem);
+    return true;
+  };
+
   /* Devolve true quando ela própria resolveu o turno. É a porta única: o
      teste que nasce de uma frase e o que nasce do hábito antigo ("peço um
      teste de Percepção") passam os dois por aqui, porque uma regra que mora
@@ -18857,7 +18988,11 @@ export default function Taverna() {
   const veredictoDaAcao = (acao) => {
     if (rolagem || carregando) return null;
     try {
-      let v = lerAcao(acao, ctxDesafio());
+      /* O MESTRE VIVO: com a chave ligada e a régua decidida, o veredito deste
+         turno é o que ela julgou (o do catálogo, o da escuta ou o do ato da
+         frase encadeada); desligada, o ref fica null e é o catálogo de hoje */
+      const dm = momentoAdjudicadoRef.current;
+      let v = dm && dm.frase === acao ? dm.v : lerAcao(acao, ctxDesafio());
       /* "livre" sem chave é conversa e caminhada: não é assunto deste código,
          e interceptar aqui inundaria o jogo de avisos sobre o óbvio. */
       if (!v || (v.tipo === "livre" && !v.chave)) return null;
@@ -18900,12 +19035,28 @@ export default function Taverna() {
       const passo = alvoLocalPedido(acao);
       if (passo && veredictoDaAcao(acao)) moverParaLocal(passo);
     } catch (e) { calou("o passo antes do ato", e); }
+    /* O MESTRE VIVO (o-mestre-vivo.md §15.4 nº 2, §16): com a chave ligada e
+       fora da luta, o momento julga a frase onde o herói chegou; o veredito
+       dele é o que veredictoDaAcao devolve abaixo (e é ele que vai à bandeja,
+       ao livro de tentativas e ao envelope). «hoje» e o destino seguem o
+       caminho de hoje (o destino já saiu antes das portas). */
+    let m = null;
+    if (mestreVivoLigado()) {
+      try {
+        if (!combateRef.current) m = momentoDaAdjudicacao(acao);
+        const porta = oQueOMomentoFaz(m);
+        if (porta !== "rola" && porta !== "acontece") m = null;
+      } catch (e) { calou("Mestre vivo · o momento da frase", e); m = null; momentoAdjudicadoRef.current = null; }
+    }
     /* a procura vem ANTES: se a frase nomeia gente, ela nunca foi um desafio
        de vasculhar, e deixar o catalogo julgar primeiro era exatamente o
        caminho que pagava tesouro por perguntar de alguem */
     if (procurarAlguem(acao)) return true;
     const v = veredictoDaAcao(acao);
     if (!v) return false;
+    if (m && !m.rola && v.tipo === "teste") {
+      try { return acontecerSemDado(v, m, acao); } catch (e) { calou("Mestre vivo · o que acontece", e); }
+    }
     /* v9.70: TODA recusa do sistema conta como falha para a cobrança, não
        só o dado que não passou. Visto na tela: o veredicto foi "você já
        tentou isso aqui", nenhum dado foi rolado, o Mestre narrou o roubo
@@ -18950,7 +19101,7 @@ export default function Taverna() {
          Conceder é um movimento de mestre, não o sistema desistindo — e
          por isso conta como SUCESSO para a cobrança: o que a narração
          entregar aqui é legítimo. */
-      const conc = seguraOTeste(v, mesaRef.current, { emCombate: !!combateRef.current });
+      const conc = m ? { segura: false } : seguraOTeste(v, mesaRef.current, { emCombate: !!combateRef.current });
       if (conc.segura) {
         pushMsgs([
           { autor: "jogador", texto: acao },
@@ -19004,6 +19155,10 @@ export default function Taverna() {
       }
       /* 11/10 (MM11 · 5.ª sessão, M32): o "sim, essa pessoa mente" chega
          ao fim do dado — é ele que a leitura diz quando o teste passa */
+      if (m) {
+        chamadoDoMomentoRef.current = { id: v.id || "", chave: v.chave || "", chamado: m.chamado || null };
+        try { const pa = pautaDoMomento(m); if (pa) porNaPautaDoTurno(pa); } catch (e) { calou("Mestre vivo · a pauta do ato", e); }
+      }
       rolarDesafio(menteDoMundo ? { ...v, mente: menteDoMundo } : v, acao);
       return true;
     }
@@ -19551,6 +19706,10 @@ export default function Taverna() {
   };
   const chamadoDoVeredito = (v, mod) => {
     try {
+      /* O MESTRE VIVO: o teste que o momento mandou rolar leva o chamado dele
+         (a conversa incluída, com o preço dito antes); null = rola sem linha */
+      const dm = chamadoDoMomentoRef.current;
+      if (dm && v && dm.id === (v.id || "") && dm.chave === (v.chave || "")) { chamadoDoMomentoRef.current = null; return dm.chamado; }
       return oChamado(v, ctxDoChamado(mod)) || null;
     } catch (e) { calou("MC3 · oChamado", e); return null; }
   };
@@ -19682,6 +19841,26 @@ export default function Taverna() {
       pousouOChamado();
     } catch (e) { calou("V3 · o lance do chamado", e); }
   }, [chamadoVivo]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* O MESTRE VIVO · O ESPONTÂNEO (o-mestre-vivo.md §15.4 nº 3, §16): quando o
+     Narrador acaba de falar, o retrato de agora contra o do fim do turno
+     anterior; se a cena nova chama um teste (chamadoQueOMundoProvoca), ele
+     abre pela mesma rolagem das outras origens (a soleira mostra o chamado).
+     Nunca em luta, nem com teste, chamado, escolha ou o pedido do encontro
+     em aberto; o retrato de antes é só memória (ao carregar, null). */
+  useEffect(() => {
+    if (carregando || !mestreVivoLigado()) return;
+    try {
+      const agora = retratoAgora();
+      const antes = retratoAntesRef.current;
+      retratoAntesRef.current = agora;
+      if (!podeOMundoProvocar({ antes, emCombate: !!combateRef.current, rolagem, chamado: chamadoRef.current, escolha: escolhaPendenteRef.current, carregando, encontro: encontroPendenteRef.current })) return;
+      const prov = chamadoQueOMundoProvoca(antes, agora);
+      const r = prov ? rolagemDoEspontaneo(prov, periciaPorId(prov.pericia)) : null;
+      if (!r) return;
+      const { nivelTreino } = modDoTeste(fichaViva() || personagem, r.tipo, r.pericia);
+      setRolagem({ ...r, atributo: nomeDoAtributo(r.tipo), nivelTreino: nivelTreino === "nenhum" ? "leigo" : nivelTreino });
+    } catch (e) { calou("Mestre vivo · o espontâneo", e); }
+  }, [carregando]); // eslint-disable-line react-hooks/exhaustive-deps
   /* o recuo do chamado, sem rasto: nem tentativa, nem tempo, nem Narrador —
      a rolagem sai e a nota volta ao que era. Devolve o chamado que recuou,
      ou null quando não havia nada à espera. */
@@ -24486,7 +24665,10 @@ export default function Taverna() {
     if (pecasLigadasRef.current == null) {
       try { pecasLigadasRef.current = lerOInterruptor(window.localStorage, window.location.search); } catch (e) { pecasLigadasRef.current = false; }
     }
-    return pecasLigadasRef.current;
+    /* O MESTRE VIVO (19/11): com as duas chaves ligadas, quem decide o dado é
+       o Mestre vivo, e as peças ficam de fora (as duas pedem o dado da mesma
+       frase; juntá-las é etapa da quest que escuta, §5) */
+    return pecasLigadasRef.current && !mestreVivoLigado();
   };
   const estadoDasPecas = () => ({ ...estadoDasQuests(), pecas: pecasRef.current });
   const conhecidosDasPecas = () => Object.keys(npcsRef.current || {});

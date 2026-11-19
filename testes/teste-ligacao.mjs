@@ -483,7 +483,12 @@ sec("1. NENHUM MÓDULO MUDO");
        roteiro de mente/lancamento/o-mestre-vivo.md §15. Credor: o `oficial`,
        na etapa seguinte. A entrada sai quando o App o importar.
        `teste-a-cena-do-jogo.mjs` é o primeiro leitor. */
-    "a-cena-do-jogo.js": "o oficial, na fiação do Mestre novo (o-mestre-vivo.md §15)",
+    /* e paga na etapa seguinte (19/11, oficial): o App.jsx importa-o
+       (chamadoDoMomento na adjudicação e no momento do turno,
+       chamadoQueOMundoProvoca no espontâneo), atrás da chave do Mestre vivo,
+       e `src/o-mestre-vivo-no-jogo.js` também (FORMA_DO_RETRATO, o dado do
+       mundo). A entrada SAIU — a catraca volta a vigiá-lo como a qualquer
+       módulo ligado (o-mestre-vivo.md §16). */
   };
   const mudos = [];
   for (const f of arqs) {

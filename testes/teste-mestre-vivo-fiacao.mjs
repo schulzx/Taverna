@@ -1,0 +1,258 @@
+/* A FIAÇÃO DO MESTRE VIVO (19/11/2026) — o Mestre que lê o momento, no App
+
+   O desenho é mente/lancamento/o-mestre-vivo.md §15.4 e §16. A régua
+   (motor/a-regua-do-momento.js) e a cena do jogo (a-cena-do-jogo.js) já
+   estavam provadas; esta suíte prende a ponte nova (src/o-mestre-vivo-no-jogo.js)
+   e lê o App como texto, no padrão de teste-chamado-fiacao:
+
+     1. A CHAVE existe, nasce desligada e mora fora do save e fora da tela.
+     2. O RETRATO sai só do que os refs dão, na forma de FORMA_DO_RETRATO.
+     3. O MOMENTO vira uma de quatro portas, e as quatro situações da prova
+        (a busca sem nada, a pergunta, o pedido com motivo para negar, o
+        esgueirar-se com gente) saem como a régua promete.
+     4. A PAUTA vai pelo canal de UM turno — nenhum bloco estático.
+     5. COM A CHAVE DESLIGADA O CAMINHO DE HOJE NÃO MUDA: toda chamada nova
+        vive dentro da guarda da chave, e toda guarda está em calou.
+     6. As peças e o Mestre vivo não andam juntos (o Mestre vivo ganha). */
+import fs from "node:fs";
+import path from "node:path";
+import {
+  MESTRE_VIVO, lerAChaveDoMestreVivo, retratoDosRefs, PORTAS_DO_MOMENTO, oQueOMomentoFaz,
+  O_QUE_ACONTECE, vereditoDoQueAcontece, PAUTA_DO_MESTRE_VIVO, pautaDoMomento, O_DESTINO_NA_MESA,
+  lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, MOTIVO_DO_ESPONTANEO, rolagemDoEspontaneo,
+} from "../src/o-mestre-vivo-no-jogo.js";
+import { FORMA_DO_RETRATO, cenaDoJogo, chamadoDoMomento, chamadoQueOMundoProvoca, O_DADO_DO_MUNDO, O_CHAMADO_DA_CONVERSA } from "../src/a-cena-do-jogo.js";
+import { RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
+import { periciaPorId } from "../src/pericias.js";
+
+let bons = 0, maus = 0;
+const t = (nome, cond, extra) => { if (cond) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? " — " + extra : "")); } };
+const sec = (s) => console.log("\n" + s);
+
+/* um localStorage de brincar */
+const caixa = (ini = {}) => {
+  const m = new Map(Object.entries(ini));
+  return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+};
+
+sec("1. A CHAVE");
+{
+  t("a chave é taverna_cfg_mestre_vivo, e ?mestre=1 a liga", MESTRE_VIVO.chave === "taverna_cfg_mestre_vivo" && MESTRE_VIVO.parametros.includes("mestre") && MESTRE_VIVO.liga === "1");
+  t("nasce desligada (sem configuração)", lerAChaveDoMestreVivo(caixa(), "") === false);
+  t("sem storage, desligada (nunca lança)", lerAChaveDoMestreVivo(null, "?mestre=1") === false);
+  const c = caixa();
+  t("?mestre=1 liga e grava a configuração local", lerAChaveDoMestreVivo(c, "?mestre=1") === true && c.getItem(MESTRE_VIVO.chave) === "1");
+  t("a configuração gravada vale sem o parâmetro", lerAChaveDoMestreVivo(c, "") === true);
+  t("?mestre=0 apaga", lerAChaveDoMestreVivo(c, "?x=2&mestre=0") === false && c.getItem(MESTRE_VIVO.chave) === null);
+  t("?mestrevivo=1 (o nome do roteiro de §15.4) também liga", lerAChaveDoMestreVivo(caixa(), "?mestrevivo=1") === true);
+  t("outro valor não liga", lerAChaveDoMestreVivo(caixa({ [MESTRE_VIVO.chave]: "sim" }), "") === false);
+  t("?mestre=10 não é ?mestre=1", lerAChaveDoMestreVivo(caixa(), "?mestre=10") === false);
+}
+
+sec("2. O RETRATO (só o que os refs dão)");
+const npcs = { Marta: { nome: "Marta", papel: "taverneira", relacao: "amigo", status: "viva" } };
+const crus = {
+  lugar: { nome: "Taverna do Javali" }, cidade: "Vila", jornada: null, minuto: 14 * 60, clima: "limpo",
+  presentes: [{ nome: "Marta", papel: "taverneira", deOnde: "sitio" }, { nome: "Rui", papel: "guarda" }],
+  npcs, rotinas: { Marta: "a servir no balcão" }, grupo: [], inimigos: [], encontro: null, masmorra: null,
+  achado: false, segredos: [], favorAqui: false, relogios: [], condicoes: [], passos: [], onde: null, quest: {},
+};
+{
+  t("lixo devolve null", retratoDosRefs(null) === null && retratoDosRefs(7) === null && retratoDosRefs([]) === null);
+  t("sem saber onde o herói está, null (o Mestre de hoje)", retratoDosRefs({ ...crus, lugar: null, cidade: "", jornada: null }) === null);
+  const r = retratoDosRefs(crus);
+  t("o retrato só tem chaves de FORMA_DO_RETRATO", !!r && Object.keys(r).every((k) => k in FORMA_DO_RETRATO), r && Object.keys(r).join(","));
+  t("e tem todas elas", !!r && Object.keys(FORMA_DO_RETRATO).every((k) => k in r));
+  const marta = r && r.pessoas.find((p) => p.nome === "Marta");
+  t("a pessoa cruza o registo: papel, relação, status", !!marta && marta.papel === "taverneira" && marta.relacao === "amigo" && marta.status === "viva");
+  t("a rotina de agora vem de fora (fichaDaPessoa), e o posto de deOnde", !!marta && marta.agora === "a servir no balcão" && marta.doPosto === true);
+  const rui = r && r.pessoas.find((p) => p.nome === "Rui");
+  t("quem não está no registo fica com o papel do elenco e sem relação inventada", !!rui && rui.papel === "guarda" && !("relacao" in rui) && rui.doPosto === false);
+  t("a jornada é só um sim ou não", retratoDosRefs({ ...crus, jornada: { de: "A", para: "B" } }).jornada === true && r.jornada === false);
+  const antes = JSON.stringify(crus);
+  retratoDosRefs(crus);
+  t("não mexe no que entra", JSON.stringify(crus) === antes);
+  t("o retrato vira cena (a cena do jogo o lê)", !!cenaDoJogo(r));
+  t("o mesmo retrato dá a mesma cena", JSON.stringify(cenaDoJogo(retratoDosRefs(crus))) === JSON.stringify(cenaDoJogo(r)));
+}
+
+sec("3. O MOMENTO: as quatro portas e as situações da prova");
+const leitura = {
+  semente: "prova", lugar: "Taverna do Javali", personagem: { nome: "Herói", atributos: {}, pericias: [] },
+  pessoaDe: (x) => (/marta/i.test(x) ? { nome: "Marta", papel: "taverneira", relacao: "desconhecido" } : /rui|guarda/i.test(x) ? { nome: "Rui", papel: "guarda", relacao: "desconhecido" } : null),
+  fama: 0, tentativas: {}, achadoDe: () => null, ehPessoaConhecida: (x) => /marta|rui/i.test(x), segredos: () => [], objetoEmCena: () => false,
+};
+const calmo = retratoDosRefs({ ...crus, npcs: {}, rotinas: {} });
+{
+  t("as portas são quatro, e a de hoje é a primeira", PORTAS_DO_MOMENTO.length === 4 && PORTAS_DO_MOMENTO[0] === "hoje");
+  t("sem resposta ou sem cena, «hoje»", oQueOMomentoFaz(null) === "hoje" && oQueOMomentoFaz({ rola: true, cena: null }) === "hoje");
+  t("a régua que estoura é «hoje»", oQueOMomentoFaz({ rola: false, cena: {}, porque: "erro" }) === "hoje");
+  const busca = chamadoDoMomento("Procuro algo escondido no balcão", leitura, calmo, { bonus: 2 });
+  t("a busca num lugar sem nada escondido não rola (acontece)", oQueOMomentoFaz(busca) === "acontece" && busca.veredito && busca.veredito.tipo === "teste", busca.porque);
+  const pergunta = chamadoDoMomento("Pergunto à Marta onde fica o templo", leitura, calmo, { bonus: 2 });
+  t("a pergunta a alguém não rola", oQueOMomentoFaz(pergunta) === "acontece" && pergunta.resposta === "franca", pergunta.porque);
+  const pedido = chamadoDoMomento("Peço ao guarda Rui que me deixe entrar no quartel", leitura, calmo, { bonus: 2 });
+  t("o pedido a quem tem motivo para negar rola, com o chamado", oQueOMomentoFaz(pedido) === "rola" && !!pedido.chamado, pedido.porque);
+  t("e o chamado diz o preço antes do dado", !!pedido.chamado && pedido.chamado.aviso === O_CHAMADO_DA_CONVERSA.aviso && pedido.chamado.linha.includes(String(pedido.chamado.dc)));
+  const esgueirar = chamadoDoMomento("Me esgueiro até os fundos sem ser visto", leitura, calmo, { bonus: 2 });
+  t("esgueirar-se onde há gente rola", oQueOMomentoFaz(esgueirar) === "rola" && !!esgueirar.chamado, esgueirar.porque);
+  const destino = chamadoDoMomento("Será que o frasco sobreviveu?", leitura, retratoDosRefs({ ...crus, lugar: null, cidade: "Vila", jornada: { de: "Vila", para: "Porto" }, clima: "tempestade", presentes: [] }), {});
+  t("a pergunta pela sorte, sob a tempestade, é o destino", oQueOMomentoFaz(destino) === "destino" && destino.destino.faces === 6, destino.porque);
+  const v = { tipo: "teste", id: "buscar", chave: "buscar|x", rotulo: "procurar" };
+  const livre = vereditoDoQueAcontece(v, busca);
+  t("o que acontece vira o «livre» do catálogo, com o porquê da régua", livre.tipo === "livre" && livre.porque === busca.diz && livre.chave === v.chave);
+  t("sem porquê, o padrão da tabela", vereditoDoQueAcontece(v, {}).porque === O_QUE_ACONTECE.porquePadrao && vereditoDoQueAcontece(null, busca) === null);
+}
+
+sec("4. A PAUTA (o canal de um turno, nunca bloco estático)");
+{
+  const evasiva = { rola: false, resposta: "evasiva", porque: "naoETeste", cena: {} };
+  const pa = pautaDoMomento(evasiva);
+  const R = RESPOSTAS_DA_PERGUNTA.find((x) => x.id === "evasiva");
+  t("a pergunta a quem esconde algo: a resposta sai evasiva", !!pa && pa.acabou.some((l) => l.includes(R.diz)));
+  t("e o veto de entregar a verdade vai em naoPode", !!pa && pa.naoPode.includes(PAUTA_DO_MESTRE_VIVO.resposta.naoPode.evasiva));
+  t("recusa e silêncio também ganham linha", !!pautaDoMomento({ rola: false, resposta: "recusa" }) && !!pautaDoMomento({ rola: false, resposta: "silencio" }));
+  t("a resposta franca não ganha linha (responder é o normal)", pautaDoMomento({ rola: false, resposta: "franca" }) === null);
+  t("o que rola não leva resposta", pautaDoMomento({ rola: true, resposta: "evasiva", porque: "comoSempre" }) === null);
+  const pd = pautaDoMomento({ rola: true, porque: "destino", destino: { dado: 2, faces: 6, diz: "a sorte levou: não resistiu" } });
+  t("o destino: só o diz, nunca o número", !!pd && pd.acabou.length === 1 && pd.acabou[0].includes("a sorte levou") && !/\d/.test(pd.acabou[0]));
+  t("a frase encadeada: os outros atos acontecem", (pautaDoMomento({ rola: true, porque: "encadeada:alguemPodeNotar" }) || { acabou: [] }).acabou.includes(PAUTA_DO_MESTRE_VIVO.encadeada));
+  t("lixo é null", pautaDoMomento(null) === null && pautaDoMomento({}) === null);
+  /* nenhum bloco estático: as palavras da pauta só moram no módulo dela */
+  const SRC = "../src";
+  const todos = [...fs.readdirSync(SRC).filter((f) => /\.(js|jsx)$/.test(f)).map((f) => path.join(SRC, f)), ...fs.readdirSync(path.join(SRC, "motor")).filter((f) => /\.js$/.test(f)).map((f) => path.join(SRC, "motor", f))];
+  const frases = [PAUTA_DO_MESTRE_VIVO.resposta.acabou.split("{")[0], PAUTA_DO_MESTRE_VIVO.destino.split("{")[0], PAUTA_DO_MESTRE_VIVO.encadeada, ...Object.values(PAUTA_DO_MESTRE_VIVO.resposta.naoPode)];
+  const fora = todos.filter((f) => !f.endsWith("o-mestre-vivo-no-jogo.js") && frases.some((x) => fs.readFileSync(f, "utf8").includes(x)));
+  t("as linhas da pauta não moram em prompt nem em bloco nenhum fora do módulo", fora.length === 0, fora.join(", "));
+}
+
+sec("5. O DESTINO NA MESA E O ESPONTÂNEO");
+{
+  const m = { rola: true, porque: "destino", cena: {}, destino: { dado: 5, faces: 6, id: "sim", diz: "a sorte ajudou: resistiu" } };
+  const l = lanceDoDestino(m);
+  t("o d6 cai na bandeja, com a cor da sorte", !!l && l.dados[0].faces === 6 && l.dados[0].valor === 5 && l.papel === O_DESTINO_NA_MESA.papel);
+  const env = envelopeDoDestino(m);
+  t("o envelope do destino diz o diz e nenhum número", env.includes("a sorte ajudou") && !/\d/.test(env));
+  t("sem destino, nada", lanceDoDestino({ rola: true }) === null && envelopeDoDestino({}) === "");
+  const ok = { antes: {}, emCombate: false, rolagem: null, chamado: null, escolha: null, carregando: false, encontro: null };
+  t("a mesa livre deixa o mundo provocar", podeOMundoProvocar(ok) === true);
+  t("sem retrato de antes (o save acabou de carregar), não provoca", podeOMundoProvocar({ ...ok, antes: null }) === false);
+  t("nunca em luta", podeOMundoProvocar({ ...ok, emCombate: true }) === false);
+  t("nunca com o pedido do encontro em aberto", podeOMundoProvocar({ ...ok, encontro: { pedido: { pericia: "percepcao" } } }) === false);
+  t("nunca com teste, chamado, escolha ou o Narrador a falar", [{ rolagem: {} }, { chamado: {} }, { escolha: {} }, { carregando: true }].every((x) => podeOMundoProvocar({ ...ok, ...x }) === false));
+  const antes = { cidade: "Vila", jornada: true, relogios: [{ tipo: "cacada", segmentos: 4, cheios: 2 }] };
+  const depois = { ...antes, relogios: [{ tipo: "cacada", segmentos: 4, cheios: 3 }] };
+  const prov = chamadoQueOMundoProvoca(antes, depois);
+  const r = rolagemDoEspontaneo(prov, periciaPorId(prov && prov.pericia));
+  t("a caçada que fecha o cerco pede Percepção", !!prov && prov.pericia === "percepcao");
+  t("a rolagem do espontâneo tem a dificuldade do chamado e o motivo da tabela", !!r && r.dificuldade === prov.chamado.dc && r.motivo === MOTIVO_DO_ESPONTANEO.percepcao && r.tipo === periciaPorId("percepcao").atributo);
+  t("e diz o preço que falhar É (o risco de O_DADO_DO_MUNDO)", !!r && r.desafio.escolha.risco === O_DADO_DO_MUNDO.risco.percepcao);
+  t("sem chave no desafio: o livro de tentativas não ganha o teste que o jogador não fez", !!r && !("chave" in r.desafio));
+  t("lixo é null", rolagemDoEspontaneo(null, null) === null && rolagemDoEspontaneo(prov, null) === null);
+}
+
+/* ------------------------------------------------------------------ */
+/* SEM COMENTÁRIO: as réguas procuram chamadas, e a história escrita nos
+   comentários do App diria os mesmos nomes. */
+const semComentarios = (x) => x.replace(/\{\/\*[\s\S]*?\*\/\}/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
+const APP = semComentarios(fs.readFileSync("../src/App.jsx", "utf8"));
+const corpo = (nome) => {
+  const i = APP.indexOf(`\n  const ${nome} = `);
+  if (i < 0) return "";
+  const resto = APP.slice(i + 1);
+  const m = /\n  (?:const |useEffect\(|let |function )/.exec(resto.slice(10));
+  return m ? resto.slice(0, m.index + 10) : resto;
+};
+/* o bloco entre chaves que abre no índice dado */
+const bloco = (txt, i) => {
+  const a = txt.indexOf("{", i);
+  if (a < 0) return [i, i];
+  let d = 0;
+  for (let k = a; k < txt.length; k++) {
+    if (txt[k] === "{") d++;
+    else if (txt[k] === "}") { d--; if (d === 0) return [i, k + 1]; }
+  }
+  return [i, txt.length];
+};
+
+sec("6. O APP: a chave, os imports, o save e a tela");
+{
+  t("o App importa a cena do jogo (chamadoDoMomento e o espontâneo)", /import \{ chamadoDoMomento, chamadoQueOMundoProvoca \} from "\.\/a-cena-do-jogo\.js";/.test(APP));
+  t("e a ponte nova", /from "\.\/o-mestre-vivo-no-jogo\.js";/.test(APP));
+  t("a chave lê-se uma vez, pelo localStorage e pela URL", /mestreVivoRef\.current = lerAChaveDoMestreVivo\(window\.localStorage, window\.location\.search\)/.test(corpo("mestreVivoLigado")));
+  t("e um erro a lê como desligada", /catch \(e\) \{ mestreVivoRef\.current = false; \}/.test(corpo("mestreVivoLigado")));
+  /* o sistema não fala de si: a chave e o nome do mecanismo não vão à tela */
+  const telas = fs.readdirSync("../src").filter((f) => /\.jsx$/.test(f) && f !== "App.jsx").map((f) => fs.readFileSync(path.join("../src", f), "utf8"));
+  t("nenhum painel fala da chave ou do Mestre vivo", telas.every((x) => !/mestre_vivo|mestre vivo|mestrevivo/i.test(x)));
+  const literais = (APP.match(/"[^"\n]*"/g) || []).filter((x) => /mestre vivo|mestre_vivo/i.test(x));
+  t("no App, «Mestre vivo» só aparece no rótulo do calou (consola)", literais.every((x) => /^"Mestre vivo · /.test(x) || x === `"${MESTRE_VIVO.chave}"`), literais.join(" | "));
+  /* o save: nem a chave, nem o retrato, nem o momento */
+  const estado = fs.readFileSync("../src/estado.js", "utf8") + fs.readFileSync("../src/sessao.js", "utf8");
+  t("o save não ganhou campo (estado.js e sessao.js não falam do Mestre vivo)", !/mestreVivo|mestre_vivo|retratoAntes|momentoDoTurno/i.test(estado));
+  t("os refs novos não entram no salvar", !/salvar\(\{[^}]*(retratoAntes|momentoDoTurno|mestreVivo)/.test(APP));
+  t("ao carregar e no jogo novo, o retrato de antes começa null", (APP.match(/retratoAntesRef\.current = null;/g) || []).length >= 2);
+}
+
+sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
+{
+  /* as funções novas: só se chamam dentro da guarda da chave (ou dentro umas
+     das outras). As regiões guardadas são: o corpo de cada uma delas, cada
+     `if (mestreVivoLigado()) { … }`, o efeito do espontâneo depois da sua
+     guarda e, em adjudicarAcao, os ramos do `m` (que só a guarda enche). */
+  const NOVAS = ["retratoAgora", "momentoDaFrase", "momentoDaAdjudicacao", "acontecerSemDado", "destinoDoMomento",
+    "chamadoDoMomento", "chamadoQueOMundoProvoca", "retratoDosRefs", "oQueOMomentoFaz", "vereditoDoQueAcontece",
+    "pautaDoMomento", "lanceDoDestino", "envelopeDoDestino", "podeOMundoProvocar", "rolagemDoEspontaneo"];
+  const regioes = [];
+  for (const n of NOVAS) { const c = corpo(n); if (c) { const i = APP.indexOf(c); regioes.push([i, i + c.length]); } }
+  for (let i = APP.indexOf("if (mestreVivoLigado()) {"); i >= 0; i = APP.indexOf("if (mestreVivoLigado()) {", i + 1)) regioes.push(bloco(APP, i));
+  const iEf = APP.indexOf("if (carregando || !mestreVivoLigado()) return;");
+  t("o efeito do espontâneo para logo sem a chave", iEf > 0);
+  if (iEf > 0) regioes.push([iEf, APP.indexOf("}, [carregando]);", iEf)]);
+  const ad = corpo("adjudicarAcao");
+  const iAd = APP.indexOf(ad);
+  for (const rx of [/if \(m && !m\.rola && v\.tipo === "teste"\) \{/g, /\n      if \(m\) \{/g]) for (const x of ad.matchAll(rx)) regioes.push(bloco(APP, iAd + x.index));
+  const dentro = (i) => regioes.some(([a, b]) => i >= a && i < b);
+  const soltas = [];
+  for (const n of NOVAS) {
+    const rx = new RegExp(`\\b${n}\\(`, "g");
+    for (const x of APP.matchAll(rx)) {
+      const antes = APP.slice(Math.max(0, x.index - 12), x.index);
+      if (/const $/.test(antes) || /import \{[^}]*$/.test(APP.slice(Math.max(0, x.index - 400), x.index))) continue;
+      if (!dentro(x.index)) soltas.push(n + "@" + APP.slice(0, x.index).split("\n").length);
+    }
+  }
+  t("toda chamada nova vive dentro da guarda da chave", soltas.length === 0, soltas.join(", "));
+  /* m e os refs do momento só se enchem na guarda */
+  t("em adjudicarAcao, m nasce null e só a guarda o enche", /let m = null;\n    if \(mestreVivoLigado\(\)\) \{/.test(ad) && (ad.match(/\bm = momentoDaAdjudicacao\(acao\)/g) || []).length === 1);
+  t("o veredito do momento só se escreve em momentoDaAdjudicacao", (APP.match(/momentoAdjudicadoRef\.current = \{/g) || []).length === 1 && /momentoAdjudicadoRef\.current = \{/.test(corpo("momentoDaAdjudicacao")));
+  t("o chamado do momento só se escreve com m", (APP.match(/chamadoDoMomentoRef\.current = \{/g) || []).length === 1 && /if \(m\) \{\n\s*chamadoDoMomentoRef\.current = \{/.test(ad));
+  t("o espontâneo só abre rolagem depois da guarda", APP.indexOf("rolagemDoEspontaneo(prov") > iEf && iEf > 0);
+  /* o caminho de hoje, letra a letra, onde a chave desligada passa */
+  t("sem o ref do momento, veredictoDaAcao é o catálogo de hoje", /let v = dm && dm\.frase === acao \? dm\.v : lerAcao\(acao, ctxDesafio\(\)\);/.test(corpo("veredictoDaAcao")));
+  t("adjudicarAcao: a procura e o veredito de hoje continuam colados", /if \(procurarAlguem\(acao\)\) return true;\s*const v = veredictoDaAcao\(acao\);\n    if \(!v\) return false;/.test(ad));
+  t("sem m, o Mestre de hoje concede como sempre", /const conc = m \? \{ segura: false \} : seguraOTeste\(v, mesaRef\.current, \{ emCombate: !!combateRef\.current \}\);/.test(ad));
+  t("sem o chamado do momento, chamadoDoVeredito é o de hoje", /return oChamado\(v, ctxDoChamado\(mod\)\) \|\| null;/.test(corpo("chamadoDoVeredito")) && /if \(dm && v && dm\.id === \(v\.id \|\| ""\) && dm\.chave === \(v\.chave \|\| ""\)\) \{ chamadoDoMomentoRef\.current = null; return dm\.chamado; \}/.test(corpo("chamadoDoVeredito")));
+  /* toda guarda está em try/catch com calou */
+  const guardas = [];
+  for (let i = APP.indexOf("if (mestreVivoLigado()) {"); i >= 0; i = APP.indexOf("if (mestreVivoLigado()) {", i + 1)) guardas.push(APP.slice(...bloco(APP, i)));
+  t("há as três guardas (o momento do turno, o destino e a resposta, a adjudicação)", guardas.length === 3, String(guardas.length));
+  t("toda guarda abre em try e cala em calou", guardas.every((g) => /^if \(mestreVivoLigado\(\)\) \{\s*try \{/.test(g) && /catch \(e\) \{ calou\("Mestre vivo · /.test(g)));
+  t("o efeito do espontâneo também", /if \(carregando \|\| !mestreVivoLigado\(\)\) return;\n    try \{[\s\S]*?catch \(e\) \{ calou\("Mestre vivo · o espontâneo", e\); \}/.test(APP));
+  t("o retrato cala o que estoura e devolve null", /catch \(e\) \{ calou\("Mestre vivo · o retrato", e\); return null; \}/.test(corpo("retratoAgora")));
+  t("o que acontece e o ato da pauta, em calou", /try \{ return acontecerSemDado\(v, m, acao\); \} catch \(e\) \{ calou\("Mestre vivo · o que acontece", e\); \}/.test(ad) && /catch \(e\) \{ calou\("Mestre vivo · a pauta do ato", e\); \}/.test(ad));
+  /* a pauta: só pelo canal de um turno */
+  const usos = APP.match(/pautaDoMomento\(/g) || [];
+  const peloCanal = APP.match(/const pa = pautaDoMomento\((?:m|mv)\); if \(pa\) porNaPautaDoTurno\(pa\);/g) || [];
+  t("a pauta do momento vai só pelo canal de um turno (porNaPautaDoTurno)", usos.length === peloCanal.length && peloCanal.length === 2, `${usos.length}/${peloCanal.length}`);
+}
+
+sec("8. AS PEÇAS E O MESTRE VIVO NÃO ANDAM JUNTOS");
+{
+  /* §16: as duas chaves pedem o dado da mesma frase; juntá-las é a etapa da
+     quest que escuta (§5). Até lá, com as duas ligadas, ganha o Mestre vivo. */
+  t("com as duas chaves ligadas, as peças ficam de fora", /return pecasLigadasRef\.current && !mestreVivoLigado\(\);/.test(corpo("pecasLigadas")));
+  t("e o turno das peças continua a perguntar pelo interruptor como antes", /pecasLigadas\(\) && turnoDasPecas\(acao\)/.test(APP));
+}
+
+console.log(`\n${bons} ok, ${maus} falha(s)`);
+if (maus) process.exit(1);
