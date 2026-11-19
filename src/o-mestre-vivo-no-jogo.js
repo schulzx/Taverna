@@ -144,12 +144,58 @@ export function oQueOMomentoFaz(m) {
 /* O veredito que não rola vira o «livre» do catálogo, com o porquê da régua
    — o envelope de «acontece» que o catálogo já tem (envelopeDeVeredicto). O
    porquê é bastidor: vai ao Narrador, nunca à tela. */
+/* 19/11 (o-mestre-vivo.md §18): o porquê que vai ao Narrador é FATO DE
+   CENA, nunca a regra. Até aqui ia o `diz` da linha da régua («ninguém tem
+   motivo para negar: a conversa resolve», «o bónus torna o resultado
+   certo»), e o Narrador o repetia em voz alta («o sucesso te garante o
+   favor sem risco», sessão mv-2, T16). `naCena`: por linha da régua (ou veto
+   do Mestre de hoje) que não rola, o que é verdade na cena, na voz do
+   jogador (o envelope é na primeira pessoa). Sem linha aqui, o padrão. A
+   suíte confere que nenhuma frase fala de dado, teste, sucesso, sorte, risco
+   ou regra, e que toda linha da régua que não rola tem a sua. */
 export const O_QUE_ACONTECE = Object.freeze({
   porquePadrao: "não há nada em jogo aqui",
+  naCena: Object.freeze({
+    naoETeste: "não há nada em jogo aqui",
+    saberComum: "eu já sei isto",
+    trivial: "não há nada que se oponha",
+    automatico: "eu faço isto sem esforço",
+    mundoDisseNao: "isso não existe aqui",
+    jaResolvido: "isto já ficou acertado antes",
+    jaTestado: "o que aconteceu da outra vez continua valendo",
+    impossivel: "não cede, e não vai ceder",
+    alavanca: "o que eu trago (a senha, a chave, o papel certo) abre o caminho",
+    aVista: "está à vista, bem diante dos olhos",
+    semResposta: "quem ouviria não pode responder",
+    pergunta: "quem sabe responde; quem esconde, desconversa",
+    medoCede: "quem me ouve já está com medo, e cede",
+    dispostoCede: "quem me ouve está do meu lado, e aceita",
+    falaSemOposicao: "quem me ouve não perde nada com isso, e aceita",
+    ouvirQuemFala: "a pessoa fala comigo, e eu ouço o que ela diz",
+    somClaro: "dá para ouvir tudo daqui",
+    silencio: "não há nada para ouvir além do silêncio do lugar",
+    buscaVazia: "não há nada escondido aqui: só o que está à vista",
+    ninguemVe: "não há ninguém por perto para notar",
+    travessiaCalma: "o caminho é firme e não há pressa",
+    semTranca: "não há tranca: abre",
+    socorroCalmo: "não há pressa nem perigo, e o cuidado é feito com calma",
+    entreOsSeus: "é entre os meus, sem ninguém de fora para conquistar",
+    bichoManso: "o bicho é manso e chega sem medo",
+    maoLeveSemOlhos: "não há ninguém que possa notar a minha mão",
+    ceuAVista: "o céu está aberto e diz a hora e o rumo",
+    jaSabeOAssunto: "eu já conheço o assunto",
+    doProprioHeroi: "é meu: eu conheço cada canto",
+    coisaComum: "é coisa de toda feira: qualquer um conhece",
+    heroiJaSabe: "eu já sei isto",
+    semResistencia: "não há o que resista: basta um empurrão",
+  }),
+  /* o que nenhuma frase do porquê pode dizer: é a regra falando */
+  proibidas: /\b(dado|dados|rol\w+|teste|testes|sucesso|sorte|risco|regra|mestre|b[oô]nus|per[ií]cia)\b/i,
 });
 export function vereditoDoQueAcontece(v, m) {
   if (!obj(v)) return null;
-  const porque = (obj(m) && txt(m.diz)) || O_QUE_ACONTECE.porquePadrao;
+  const id = obj(m) ? txt(m.porque).replace(/^encadeada:/, "") : "";
+  const porque = O_QUE_ACONTECE.naCena[id] || O_QUE_ACONTECE.porquePadrao;
   return Object.freeze({ ...v, tipo: "livre", porque });
 }
 
@@ -168,8 +214,12 @@ export const PAUTA_DO_MESTRE_VIVO = Object.freeze({
       silencio: "fazer quem não pode responder falar",
     }),
   }),
-  destino: "A sorte decidiu, sem perícia: {diz}. Conte isso, sem número.",
-  encadeada: "Da minha frase, só um ato pediu dado; os outros acontecem, sem dado.",
+  /* 19/11 (§18): sem palavra de mecânica — o Narrador repete o que lê */
+  destino: "Como a coisa ficou: {diz}. Conte isso sem número.",
+  encadeada: "Da minha frase, só um ato estava em jogo; os outros acontecem como eu disse.",
+  /* o veto de todo turno que acontece sem dado (a porta «acontece»): o
+     Narrador não explica a regra na boca de ninguém */
+  semMecanica: "explicar por que deu certo ou por que não havia o que temer: ninguém na cena fala em sucesso, teste, dado, sorte, folga ou risco",
 });
 export function pautaDoMomento(m) {
   try {
@@ -183,6 +233,7 @@ export function pautaDoMomento(m) {
       if (P.resposta.naoPode[m.resposta]) naoPode.push(P.resposta.naoPode[m.resposta]);
     }
     if (m.rola && /^encadeada:/.test(String(m.porque || ""))) acabou.push(P.encadeada);
+    if (!m.rola && m.cena && !obj(m.destino)) naoPode.push(P.semMecanica);
     return acabou.length || naoPode.length ? Object.freeze({ acabou, naoPode }) : null;
   } catch {
     return null;
@@ -363,6 +414,38 @@ export const O_QUE_ACONTECE_SEM_DADO = Object.freeze({
    convencer o guarda…»), e o sim compraria o que ela pede, não o que o
    jogador pediu (visto no jogo, 19/11: «quebrar uma regra pequena» por uma
    chave de fenda emprestada). `quem`: a pessoa que a frase nomeia. */
+/* 19/11 (§18): O SIM SEM DADO TEM O SEU ENVELOPE. O sim chegava ao Narrador
+   pelo envelope do teste social (social.js#envelopeSocial: «O QUE O SUCESSO
+   COMPROU… o teste já foi»), e não houve teste: o Narrador escreveu «O
+   sucesso te garante o favor sem risco» dentro da fala (sessão mv-2, T16 —
+   o «sem risco» era o «um favor de quem não arrisca nada» do degrau). Aqui
+   o sim é fato de cena: o que a pessoa faz e o que não faz, sem a palavra
+   sucesso nem teste. «e CONSEGUI» fica, porque é por ele que a ficha do ator
+   e a janela leem o desfecho (ficha-de-ator.js, janela.js). */
+export const O_SIM_SEM_DADO = Object.freeze({
+  envelope: "[SOCIAL — RESOLVIDO PELO SISTEMA]{disse} Falei com {quem} e CONSEGUI: a pessoa aceita.{pago}\nO QUE ELA FAZ POR MIM, exatamente: {cede}.\nO QUE ELA NÃO FAZ: {nunca}.\nREGRA DESTE ENVELOPE (obrigatória): mostre a pessoa aceitando, na voz e no jeito dela, e entregue o que está na primeira linha, inteiro. Não entregue nada da segunda. E não explique por que deu certo: ninguém na cena fala em sucesso, teste, sorte ou risco.",
+  pago: " Já paguei {moedas} moedas por isto, e elas já saíram da minha bolsa.",
+  quemPadrao: "essa pessoa",
+});
+export function envelopeDoSimSemDado(conta, o) {
+  try {
+    if (!obj(conta) || !txt(conta.cede)) return "";
+    const op = obj(o) ? o : {};
+    const S = O_SIM_SEM_DADO;
+    const disse = txt(op.oQueEuDisse) ? ` Eu disse: "${txt(op.oQueEuDisse)}".` : "";
+    const moedas = num(conta.custoEmMoedas);
+    return S.envelope
+      .replace("{disse}", disse)
+      .replace("{quem}", txt(op.quem) || S.quemPadrao)
+      .replace("{pago}", moedas && moedas > 0 ? S.pago.replace("{moedas}", String(moedas)) : "")
+      /* o degrau diz primeiro o que ele É («um favor de quem não arrisca nada
+         com ele: …») e depois o que compra; ao Narrador vai só o que compra */
+      .replace("{cede}", txt(conta.cede).includes(":") ? txt(conta.cede).split(":").slice(1).join(":").trim() : txt(conta.cede))
+      .replace("{nunca}", txt(conta.nunca) || "nada além disso");
+  } catch {
+    return "";
+  }
+}
 export function oQueAconteceSemDado(v, m, o) {
   const porque = obj(m) ? txt(m.porque) : "";
   const vale = obj(v) && v.tipo === "teste";
@@ -371,7 +454,10 @@ export function oQueAconteceSemDado(v, m, o) {
     const pessoa = obj(v.pessoa) ? v.pessoa : null;
     let conta = v.social;
     try { if (txt(op.frase)) conta = dificuldadeSocial({ texto: txt(op.frase), pessoa, pers: obj(op.pers) ? op.pers : null, pericia: txt(v.pericia) }) || v.social; } catch { conta = v.social; }
-    return Object.freeze({ efeito: "social", desfecho: "sucesso", fecha: true, conta, quem: (pessoa && txt(pessoa.nome)) || txt(v.quem) || "" });
+    const quem = (pessoa && txt(pessoa.nome)) || txt(v.quem) || "";
+    /* `envelope`: o sim como fato de cena (O_SIM_SEM_DADO) — o App o prefere
+       ao envelope do teste social */
+    return Object.freeze({ efeito: "social", desfecho: "sucesso", fecha: true, conta, quem, envelope: envelopeDoSimSemDado(conta, { quem, oQueEuDisse: txt(op.frase) }) });
   }
   if (vale && O_QUE_ACONTECE_SEM_DADO.socorro.includes(porque)) return Object.freeze({ efeito: "socorro", desfecho: "sucesso", fecha: true });
   return Object.freeze({ efeito: "nenhum", desfecho: "falha", fecha: false });

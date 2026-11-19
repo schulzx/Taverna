@@ -22,6 +22,7 @@ import {
   MOLDURAS_DE_RISCO, FAMILIAS_DO_IMPOSSIVEL, FAMILIAS_DA_ALAVANCA, FAMILIAS_DO_EVIDENTE,
   PERGUNTA_DO_DESTINO, FAIXAS_DO_DESTINO, oDadoDoDestino, ePerguntaDoDestino,
   RISCO_DO_ATO, MOTIVO_PARA_NEGAR_DO_ALVO, A_VITIMA_DO_FURTO, OUVIR_QUEM_FALA, CALA_POR_AUSENCIA,
+  O_ALVO_DA_FALA, MENTIRA_E_AMEACA, quemAFraseNomeia, estranhoAQuemSeFala,
 } from "../src/motor/a-regua-do-momento.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
@@ -347,6 +348,49 @@ sec("S17. o conserto depois da primeira sessão jogada (19/11/2026, o-mestre-viv
   const espiar = comFrase("escuto a conversa da mesa ao lado", cenaDe({ pessoas: [P("mercador")] }));
   t("escutar a conversa dos outros continua a rolar", espiar.rola && espiar.porque === "haOQueOuvir", espiar.porque);
   t("a regra de segurança cala só pela ausência de estado", CALA_POR_AUSENCIA.every((id) => REGUA_DO_MOMENTO.some((r) => r.id === id && r.rola === false)));
+}
+
+sec("S18. o conserto depois da segunda sessão jogada (19/11/2026, o-mestre-vivo.md §18)");
+{
+  /* as frases são nossas, escritas sobre os turnos da sessão mv-2
+     (mestre-vivo-sessao-2.md): cada uma falhava antes e passa agora */
+  const comFrase = (frase, cena, ctx) => valeRolagem(ler(frase), cena, { ...(ctx || {}), frase, leitura: CTX });
+  const G = (nome) => ({ nome, papel: "ladino", estados: ["do_grupo"] });
+  const N = (nome, papel, ...estados) => ({ nome, papel, estados });
+  t("as tabelas novas são congeladas", [O_ALVO_DA_FALA, O_ALVO_DA_FALA.naoEPessoa, MENTIRA_E_AMEACA, MENTIRA_E_AMEACA.familias].every(Object.isFrozen));
+  t("as famílias da mentira e da ameaça são famílias da conversa", MENTIRA_E_AMEACA.familias.every((f) => FAMILIAS_DA_CONVERSA.includes(f))
+    && MENTIRA_E_AMEACA.contraODisposto.every((f) => MENTIRA_E_AMEACA.familias.includes(f)));
+  /* (d) a quem a fala se dirige */
+  const soOGrupo = cenaDe({ pessoas: [G("Jasper")] });
+  t("o nome na frase diz o alvo: «peço pro Jasper…» é o companheiro", (quemAFraseNomeia("peço pro Jasper dar uma volta", cenaDe({ pessoas: [N("Wilhelmina Hartley", "artilheiro"), G("Jasper")] })) || {}).nome === "Jasper");
+  t("o papel inteiro também, sem o gênero: «a artilheira» é quem tem o papel de artilheiro", (quemAFraseNomeia("seguro a artilheira pelo braço", cenaDe({ pessoas: [G("Jasper"), N("Wilhelmina Hartley", "artilheiro")] })) || {}).nome === "Wilhelmina Hartley");
+  t("só com o grupo em cena, «pro cobrador» é um estranho fora do retrato", estranhoAQuemSeFala("digo pro cobrador que sou enviado do conselho", soOGrupo) === "cobrador");
+  t("mas não «pra fugir», «pra ele», nem o companheiro pelo nome", estranhoAQuemSeFala("corro pra fugir", soOGrupo) === "" && estranhoAQuemSeFala("falo pra ele que sim", soOGrupo) === ""
+    && estranhoAQuemSeFala("digo pro Jasper que vamos", soOGrupo) === "");
+  t("e com alguém de fora em cena, não há estranho a inventar", estranhoAQuemSeFala("digo pro cobrador que sim", cenaDe({ pessoas: [G("Jasper"), N("Bruno", "taverneiro")] })) === "");
+  const mentiraAusente = comFrase("digo pro cobrador que eu sou enviado do conselho e que ele tem que me deixar passar sem pagar", soOGrupo);
+  t("a mentira ao cobrador que o retrato não tem rola (caía em Jasper, que cedia: T5)", mentiraAusente.rola, mentiraAusente.porque);
+  const descontoAusente = comFrase("vou la no armazem e peço um desconto no elixir pro vendedor, to meio sem grana", soOGrupo);
+  t("o desconto pedido ao vendedor ausente rola (caía no companheiro: T3)", descontoAusente.rola && descontoAusente.porque === "motivoParaNegar", descontoAusente.porque);
+  const favorAoGrupo = comFrase("peço pro Jasper dar uma volta entre os soldados e descobrir quem anda pensando em desertar, sem ninguem notar", cenaDe({ pessoas: [N("Wilhelmina Hartley", "artilheiro"), G("Jasper")] }));
+  t("o favor pedido ao companheiro pelo nome não rola, nem pelo que ele vai fazer depois (era Persuasão 18: T13)", !favorAoGrupo.rola && favorAoGrupo.porque === "dispostoCede", favorAoGrupo.porque);
+  /* (e) mentira e ameaça não são pedido */
+  const fiscal = comFrase("falo pra Seraphina que sou fiscal do porto mandado pelo conselho e que preciso ver o pacote agora", cenaDe({ pessoas: [N("Seraphina Pennington", "mestre do porto")] }));
+  t("a mentira sobre quem se é, a uma estranha sem estado, rola (era falaSemOposicao: T16)", fiscal.rola && fiscal.porque === "mentiraOuAmeaca", fiscal.porque);
+  const ameaca = comFrase("seguro a artilheira pelo braço e digo que ou ela me conta pra onde some a polvora ou eu mesmo conto pro conselho", cenaDe({ pessoas: [N("Wilhelmina Hartley", "artilheiro")] }));
+  t("a ameaça a uma estranha sem estado rola (era falaSemOposicao: T14)", ameaca.rola && ameaca.porque === "mentiraOuAmeaca", ameaca.porque);
+  const aAmiga = comFrase("chego bem perto dela e falo baixo que se ela nao me disser esse nome agora as chaves voltam pro conselho", cenaDe({ pessoas: [N("Prudence Cranborne", "sacerdotisa", "disposta")] }));
+  t("ameaçar quem está do seu lado rola: ameaça não é favor (T8)", aAmiga.rola && aAmiga.porque === "ameacaAoDisposto", aAmiga.porque);
+  const comMedo = comFrase("chego bem perto dela e falo baixo que se ela nao me disser esse nome agora as chaves voltam pro conselho", cenaDe({ pessoas: [N("Prudence Cranborne", "sacerdotisa", "com_medo")] }));
+  t("quem já está com medo continua cedendo sem dado", !comMedo.rola && comMedo.porque === "medoCede", comMedo.porque);
+  const mentiraAoAmigo = comFrase("digo pro guarda que venho a serviço do barão", cenaDe({ pessoas: [P("guarda do portão", "disposta")] }));
+  t("mentir a quem já deixa passar continua sem dado (o exame, E094)", !mentiraAoAmigo.rola && mentiraAoAmigo.porque === "dispostoCede", mentiraAoAmigo.porque);
+  const verdade = comFrase("sento na cadeira e explico que a Helga me mandou e que quero um salvo-conduto", cenaDe({ pessoas: [P("cartógrafa")] }));
+  t("dizer quem mandou pode ser verdade: sem título nem cargo, a conversa de sempre (o exame, E696)", !verdade.rola, verdade.porque);
+  /* a barganha pelo valor */
+  const pagarMenos = comFrase("pergunto pra Seraphina quanto ela quer pela mao de engenho e tento pagar bem menos", cenaDe({ pessoas: [N("Seraphina Pennington", "mestre do porto")] }));
+  t("«tento pagar bem menos» é barganha, e rola (era sem leitura: T17)", pagarMenos.rola && pagarMenos.porque === "motivoParaNegar", pagarMenos.porque);
+  t("e o preço do motivo para negar o ouve", MOTIVO_PARA_NEGAR_DO_ALVO.preco.test("tento pagar bem menos"));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

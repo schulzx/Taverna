@@ -237,7 +237,7 @@ export const DERIVACAO_DA_CENA = Object.freeze([
     (x) => estadoSemVolta(x.status) || (!!x.deLuta && !vivoDeLuta(x) && x.desacordado !== true && x.rendido !== true)),
   L("desacordada", "pessoa", "o poupado do golpe final (golpe-final.js: desacordado), ou o companheiro caído e estável (socorro.js)",
     (x) => x.desacordado === true || x.caido === "estavel"),
-  L("moribunda", "pessoa", "o companheiro caído a sangrar (socorro.js: caidosDoGrupo)", (x) => x.caido === "sangrando"),
+  L("moribunda", "pessoa", "o companheiro caído sangrando (socorro.js: caidosDoGrupo)", (x) => x.caido === "sangrando"),
   L("dormindo", "pessoa", "a rotina da pessoa a esta hora (gente-por-dentro.js: DORMINDO)", (x) => txt(x.agora) === DORMINDO),
   /* criatura */
   L("ferida", "criatura", "a vida do inimigo na luta abaixo da máxima (combateRef)",
@@ -468,11 +468,18 @@ export const O_DADO_DO_MUNDO = Object.freeze({
    ESTADOS_DA_CENA). O estado sem linha aqui não provoca. */
 const relogioDoTipo = (s, tipos) => arr(s.relogios).filter(obj).find((r) => tipos.includes(r.tipo) && num(r.segmentos) != null && num(r.cheios) != null
   && r.cheios < r.segmentos && r.segmentos - r.cheios <= R_.faltaParaAPressa) || null;
+/* 19/11 (§18): o nome do relógio é uma frase inteira («Vesna fecha o
+   cerco», «A Liga põe um preço na sua cabeça»), e o molde antigo o lia como
+   um nome («é Vesna fecha o cerco, e está perto»). Os moldes agora o usam
+   como a frase que ele é. E o território que está ABERTO agora (o quartel,
+   a cadeia, o portão, de plantão a qualquer hora) não provoca: quem entra
+   pela porta da frente é visto e recebido, e um mestre não pede Furtividade
+   a quem não está se escondendo — só o lugar fechado a esta hora é invasão. */
 export const O_QUE_O_MUNDO_MOSTRA = Object.freeze({
   algo_se_aproxima: Object.freeze({
     oQue: (s) => { const r = relogioDoTipo(s, R_.relogioQueSeAproxima); return r ? txt(r.nome) : ""; },
-    passou: "Eu percebo a tempo: {efeito} — é {oQue}, e está perto.",
-    falhou: "Eu não percebo a tempo: {oQue} chega mais perto sem que eu note.",
+    passou: "Eu percebo a tempo: {efeito}. A caçada está perto: {oQue}.",
+    falhou: "Eu não percebo a tempo que a caçada chegou perto: {oQue}.",
   }),
   perigo_fisico: Object.freeze({
     oQue: (s) => (R_.climaQueFere.includes(idDoClima(s.clima)) ? "a " + (txt(obj(s.clima) ? s.clima.rotulo || s.clima.id : s.clima) || "tempestade") : ""),
@@ -480,8 +487,14 @@ export const O_QUE_O_MUNDO_MOSTRA = Object.freeze({
     falhou: "Eu não percebo a tempo o que {oQue} prepara: {efeito}.",
   }),
   territorio_de_alguem: Object.freeze({
-    oQue: (s) => (obj(s.lugar) ? txt(s.lugar.nome) : txt(s.lugar)),
-    passou: "Eu entro em {oQue} sem que ninguém repare em mim — por enquanto.",
+    oQue: (s) => {
+      const nome = obj(s.lugar) ? txt(s.lugar.nome) : txt(s.lugar);
+      if (!nome) return "";
+      let tipo = "";
+      try { tipo = tipoDoSitio(obj(s.lugar) ? s.lugar : { nome }); } catch { tipo = ""; }
+      return tipo && abertoAgora(tipo, num(s.minuto)) ? "" : nome;
+    },
+    passou: "Ninguém repara em mim quando entro: {oQue} tem dono, mas por enquanto ninguém me viu.",
     falhou: "{oQue} tem dono, e alguém de lá repara em mim onde eu não devia estar.",
   }),
   vigiado: Object.freeze({

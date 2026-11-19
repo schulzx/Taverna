@@ -190,5 +190,18 @@ sec("4. a catraca dos nossos corpus");
   }
 }
 
+sec("S18. as formas da segunda sessão jogada (19/11/2026, o-mestre-vivo.md §18)");
+{
+  /* frases nossas, escritas sobre os turnos da sessão mv-2: o catálogo não
+     as ouvia, e a escuta também não */
+  const gente = cenaDe({ pessoas: [P("sacerdotisa")] });
+  t("a ameaça pela condição, com a consequência depois (T8)", idDe("chego bem perto dela e falo baixo que se ela nao me disser esse nome agora as chaves voltam pro conselho", gente) === "intimidar");
+  t("a ameaça pelo fim prometido: «ou não sai daqui inteiro» (T30)", idDe("puxo ele pela gola, faca na mao, e falo que ele vai me contar quem manda o embrulho ou nao sai daqui inteiro", gente) === "intimidar");
+  t("a condição dentro de uma pergunta não é ameaça", idDe("pergunto se ela nao me diz o caminho ate a ponte velha", gente) !== "intimidar");
+  t("o furto por «tirar» e pelo cinto de alguém (T9)", idDe("enquanto ele se ajeita no banco eu tento tirar a bolsa de moedas do cinto dele sem ele sentir", gente) === "bater_carteira");
+  t("a mentira dita direto, pelo parentesco (o exame, E330)", idDe("sou primo do barão, ele ta me esperando la dentro", gente) === "mentir");
+  t("a barganha por «pagar bem menos» (T17)", idDe("pergunto quanto ela quer pela peça e tento pagar bem menos", gente) === "convencer");
+}
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

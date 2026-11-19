@@ -985,3 +985,80 @@ hoje, como em §16. Consola sem `calou` do Mestre vivo.
   vem «já conseguiu». É regra antiga do livro, que o sim sem dado agora alimenta.
 - O espontâneo não foi provocado no jogo (pede território fechado, tempestade ou caçada a um passo): está provado
   nas suítes, não jogado.
+
+## 18. O conserto depois da segunda sessão
+
+**19/11/2026.** A segunda sessão jogada (`mestre-vivo-sessao-2.md`) deixou quatro pontos para o Mestre vivo. Cada
+causa foi procurada rodando as frases da sessão contra `chamadoDoMomento` com o retrato da cena; cada conserto tem
+um caso nas suítes que falhava antes e passa agora. Vale a regra nova da pessoa (19/11): **não existe cota de
+dado**. Só há dois erros — a ação arriscada sem dado e o dado onde um mestre real não pediria.
+
+**1. Mentira, ameaça e barganha sem dado.** Três causas, nenhuma de estado:
+- *O alvo da fala era o companheiro.* Sem nome no veredito, a régua tomava o primeiro de fora do grupo e, sem
+  ninguém de fora, o companheiro: «digo pro cobrador que sou enviado do conselho» (T5) e o desconto pedido «pro
+  vendedor» (T3) caíram em Jasper, que está do seu lado, e passaram. O inverso também: «peço pro Jasper…» (T13)
+  caiu na artilheira e rolou Persuasão 18. Pior, a fala que só a escuta ouvia chegava com o «guarda» da
+  frase-modelo do catálogo como alvo. *Conserto* (`O_ALVO_DA_FALA`, `quemAFraseNomeia`, `estranhoAQuemSeFala`):
+  o alvo sai da frase — quem ela nomeia (o nome próprio ou o papel inteiro, sem o gênero); só com gente do grupo
+  em cena, o «pro X» que não é do grupo é um estranho fora do retrato, sem estado; o «guarda» da frase-modelo é
+  ignorado. O pedido ao companheiro não deixa a régua julgar como ato do herói o que ele vai fazer depois.
+- *Mentira e ameaça eram «conversa sem oposição».* A fala que só a escuta ouvia («falo pra Seraphina que sou
+  fiscal do porto», T16; «ou ela me conta, ou eu conto pro conselho», T14) caía em `falaSemOposicao`. *Conserto*
+  (`MENTIRA_E_AMEACA`): a oposição é do próprio ato — quem ouve a mentira perde algo se acreditar, quem ouve a
+  ameaça resiste —, como a queda é da muralha. Linhas novas `mentiraOuAmeaca` e `ameacaAoDisposto` (ameaçar quem
+  está do seu lado não é favor: T8). Ficam sem dado quem já tem medo, quem já cedeu, quem não pode responder, e a
+  mentira a quem já deixa passar (o exame, E094). A mentira que a escuta ouve pela forma só é certa quando o herói
+  se dá título, cargo ou licença (`quemSeDiz`): «explico que a Helga me mandou» pode ser verdade (E696).
+- *A escuta não ouvia.* A ameaça pela condição com a consequência depois (T8) e pelo fim prometido («ou não sai
+  daqui inteiro», T30); o furto por «tirar» e pelo cinto de alguém (T9); a barganha por «pagar bem menos» (T17);
+  e, da metade A, a mentira dita direto (E330), «pensa no que vai responder» (E336), «aperto o cara até ele
+  cuspir» (E308).
+
+**2. Texto de sistema na narração.** «O sucesso te garante o favor sem risco» (T16) era o sim sem dado chegando ao
+Narrador pelo envelope do **teste** social (`envelopeSocial`: «O QUE O SUCESSO COMPROU… o teste já foi»), com o
+«favor de quem não arrisca nada» do degrau. E o «livre» do que acontece levava o `diz` da linha da régua — a regra
+em palavras («ninguém tem motivo para negar: a conversa resolve», «o bónus torna o resultado certo»). *Conserto*
+(`o-mestre-vivo-no-jogo.js`): `O_QUE_ACONTECE.naCena` — por linha que não rola, o **fato de cena** («quem me ouve
+está do meu lado, e aceita»), e a suíte prova que nenhum fala de dado, teste, sucesso, sorte, risco, Mestre, bônus
+ou perícia; `O_SIM_SEM_DADO`/`envelopeDoSimSemDado` — o sim como fato (o que a pessoa faz e o que não faz), sem a
+palavra da regra e guardando o «e CONSEGUI» que a ficha do ator lê; o veto `semMecanica` em `naoPode`, pelo canal
+de um turno, em todo turno que acontece sem dado; as linhas da pauta do destino e da frase encadeada sem «dado» nem
+«perícia». **Falta o App** (abaixo). As linhas «⚖ Faltaram 1 — e fica meio caminho» (desafios.js) e «✨ com dez de
+folga — a folga compra alguma coisa» (mestria.js) são falas de tela do Mestre de hoje, com ou sem a chave: não foram
+mexidas aqui.
+
+**3. PT-PT.** Nos módulos do Mestre vivo, o que vai ao Narrador ou à tela já era PT-BR; a única forma lusa em texto
+era bastidor («o companheiro caído a sangrar», na fonte da derivação), agora «sangrando». Os «tu», «teu», «leva»
+da sessão estão na prosa do Narrador. Os textos novos têm asserção contra tu/teu/tua.
+
+**4. O espontâneo que não apareceu.** A regra não disparou porque **nenhum estado que chama nasceu**: as quatro
+chegadas (templo, bateria, trapiche, feira) de dia e a estrada de garoa não têm território fechado, tempestade nem
+caçada a um passo; `vigiado` só a quest declara (e nenhuma declara) e `assunto_raro` não tem fonte. Isto é a regra
+a funcionar — sem mundo que se mexa, não há dado de graça —, e a emboscada da estrada e a armadilha da masmorra já
+têm o seu dado (o encontro e a Percepção passiva da sala). Dois defeitos achados no módulo, consertados: o
+território de **portas abertas** (o quartel de plantão) chamava Furtividade a quem entra pela frente — um mestre não
+pede isso a quem não se esconde; agora só o lugar fechado a esta hora provoca. E o nome do relógio da caçada é uma
+frase («Vesna fecha o cerco»), e o molde o lia como nome («é Vesna fecha o cerco, e está perto»).
+
+**Cota de dado.** Nenhuma lógica que conte turnos para provocar dado nos módulos do Mestre vivo. Fora deles, no
+Mestre de hoje: a temperatura da mesa (`mestria.js`) conta cinco turnos — «quente» (três dados em cinco) dispensa o
+teste dispensável, e no Mestre vivo já está desligada (`seguraOTeste` só sem o momento); «fria» (cinco sem dado) faz
+o mundo puxar um fio, não rolar. Nenhuma das duas força dado; ficaram.
+
+**A medida.**
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A (412) | 378 · 2 · 32 · cat 303 · per 171 · pares 97 | **381 · 2 · 29 · cat 309 · per 174 · pares 100** |
+| régua, metade B (medida duas vezes, só o agregado) | 158 · 6 · 32 · cat 119 · per 53 · pares 54 | **igual** |
+| frases da sessão mv-2 no retrato da cena (11 de risco, 3 de controle) | 2 de 11 rolam; 1 controle indevido (T13) | **10 de 11** rolam (fica T22); controles certos |
+
+A B não se mexeu: o que mudou é, quase todo, a cena que o jogo real fornece (o companheiro como único presente, o
+estranho que o retrato não tem), e o exame descreve a cena com a pessoa sempre presente.
+
+**O que fica para o App** (`acontecerSemDado`): usar o envelope do sim que o módulo já devolve —
+`env = q.envelope || envelopeSocial(conta, { passou: true, quem: q.quem || "essa pessoa", oQueEuDisse: acao });`.
+
+**O que ficou de fora.** T22 (atravessar o cais pulando de barco em barco, em fuga): o catálogo não ouve «pulando
+por cima dos barcos», e a fuga não é estado da cena — família da travessia, fora deste pacote. As frases da sessão
+mv-2 não entraram no exame. Nada disto foi jogado: está provado nas suítes e no retrato montado à mão.

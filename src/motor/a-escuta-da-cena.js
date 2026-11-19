@@ -240,13 +240,23 @@ export const FORMAS_DA_FALA = Object.freeze([
      condicional já estava na linha seguinte) */
   Object.freeze({ id: "intimidar", diz: "ameaço ele:", rx: /^(?!.*\batac).*\b((mostro|ergo|levanto|aponto|encosto|exibo|bato com) (a|o|minha|meu|as|os)\s+(\w+\s+)?(faca|adaga|espada|machado|lamina|arma|punhal|cabeca|besta|arco|martelo|clava|porrete))\b/ }),
   Object.freeze({ id: "intimidar", diz: "ameaço ele:", rx: /\b(se (ele|ela|voce|vc|tu|o senhor) nao\b[^?.!]{0,60}\b(vai|vou|a guarda|morre|quebro|conto|acabo)|pressiono|aperto (ele|ela)|encosto (ele|ela) na parede|bato (a mao|o punho|com a mao) na mesa|ameac\w*|senao (eu|a guarda|vai)|ou (ele|ela|voce|vc) (me )?(fala|diz|conta|abre|entrega)|ou eu (te |lhe |a |o )?(levo|conto|entrego|mato|quebro|corto|chamo))\b/ }),
+  /* 19/11 (o-mestre-vivo.md §18): a ameaça pela condição com a consequência
+     depois («se ela não me disser o nome agora, as chaves voltam — a vírgula
+     some na normalização, então conta o que vem depois da exigência
+     pro conselho»), e pelo fim que a frase promete («ou não sai daqui
+     inteiro», «ou vai se arrepender») — sessão mv-2, T8 e T30 */
+  Object.freeze({ id: "intimidar", diz: "ameaço ele:", rx: /^(?!.*\bpergunt).*\b(se (ele|ela|voce|o senhor|a senhora) nao (me |nos )?(diz|disser|conta|contar|fala|falar|abre|abrir|entrega|entregar|der|devolve|devolver|paga|pagar|obedece|obedecer|sai|sair)\b(\s+[a-z]+){4,}|ou (ele |ela |voce )?(nao )?(sai|saira) (daqui |dali )?(vivo|viva|inteiro|inteira|de pe)|ou (ele |ela |voce )?vai se arrepender|pensa (bem )?no que vai (responder|dizer|fazer)|aperto (o|a) \w+ ate (ele|ela) (cuspir|falar|contar|abrir|entregar))/ }),
+  /* 19/11 (§18): a mentira dita direto, sem verbo de dizer — «sou primo do
+     barão, ele tá me esperando» (exame A, E330): o herói se dá um parentesco,
+     um cargo ou uma licença logo de saída */
+  Object.freeze({ id: "mentir", diz: "minto para ele:", rx: /^(?:eu )?sou (?:o |a |um |uma )?(?:primo|prima|sobrinho|sobrinha|filho|filha|irmao|irma|enviado|enviada|mensageiro|mensageira|fiscal|inspetor|inspetora|agente|emissario|emissaria|oficial|representante|criado|criada)\b/ }),
   Object.freeze({ id: "mentir", diz: "minto para ele:", rx: /\b((digo|falo|afirmo|juro|garanto|conto|explico)\b[^?.!]{0,40}\bque\b[^?.!]{0,30}\b(venho|sou|estou|trabalho|fui mandad\w*|me mand\w*|me espera\w*|a servico d\w*|em nome d\w*|autorizad\w*|tenho permissao|sou amigo)|me faco passar|faco-me passar|me passo por|finjo ser|nego que)\b/ }),
   /* rodada 3: a barganha (§10.4 nº 15): «e se eu…», «pelo menos…» */
   Object.freeze({ id: "convencer", diz: "tento convencer ele:", rx: /\b(e se eu (te |lhe )?[a-z]+(ar|er|ir)|pelo menos (me )?(deixa|da|libera|vende|conta|mostra))\b/ }),
   Object.freeze({ id: "convencer", diz: "tento convencer ele:", rx: /\b(peco|pecar|insisto|imploro|suplico|negocio|pechincho|barganh\w*|descont\w*|suborn\w*|exijo|chega de mentir|quero o nome|e eu (te |lhe )?(dou|entrego|pago|limpo|ajudo|conto)|eu (te |lhe )?(dou|entrego|pago) [^?.!]{0,20}se|pago [^?.!]{0,30}(pra|para) (ele|ela) (fechar|deixar|esquecer|me deixar|olhar)|vamos conversar|vamos fazer um trato|(vc|voce|ele|ela|o senhor) (solta|soltar|deixa|libera|abre|me da|me vende)|grito (pra|para) (todo mundo|todos|a multidao|o povo|a gente)|virar (amigo|parceiro|camarada)|faco amizade|conto umas piadas)\b/ }),
   /* 19/11 (o-mestre-vivo.md §17): a barganha pelo preço — «faz pelo preço
      normal ou eu procuro outro», «pela metade do preço» (sessão mv-1) */
-  Object.freeze({ id: "convencer", diz: "tento convencer ele:", rx: /\b(preco (normal|justo|de sempre|de tabela|certo|menor)|metade do preco|(faz|deixa|fica|sai) (por )?mais barato|abatimento|faz (por|pelo) (menos|\d+|dez|vinte|trinta|quarenta|cinquenta)|baix\w* o preco)\b/ }),
+  Object.freeze({ id: "convencer", diz: "tento convencer ele:", rx: /\b(preco (normal|justo|de sempre|de tabela|certo|menor)|metade do preco|(faz|deixa|fica|sai) (por )?mais barato|abatimento|faz (por|pelo) (menos|\d+|dez|vinte|trinta|quarenta|cinquenta)|baix\w* o preco|(pagar|pago|ofereco|oferecer) (bem |muito |um pouco )?menos)\b/ }),
   /* a fala dirigida sem forma de pedido: o verbo de dizer, a quem tem motivo
      para negar. A pergunta fica de fora (pergunta não rola). */
   Object.freeze({ id: "convencer", diz: "tento convencer ele:", se: (c) => c.pessoas.some((p) => !inerte(p) && p.estados.some((e) => OPOEM_A_FALA.includes(e))),
@@ -284,6 +294,10 @@ export const FORMAS_DO_ATO = Object.freeze([
      vítima está na frase («do bolso de um bêbado»), e a régua decide se
      alguém pode notar (A_VITIMA_DO_FURTO); por isso sem condição de cena */
   Object.freeze({ id: "bater_carteira", rx: /\b(roub\w*|furt(o|ar|ei)|bato a carteira|bater a carteira)\b[^?.!]{0,30}\b(bolsa|bolsinha|bolso|carteira|algibeira|moedas|anel|colar)\b/ }),
+  /* 19/11 (§18): o furto dito por «tirar» e por DE ONDE se tira — «tento
+     tirar a bolsa de moedas do cinto dele sem ele sentir» (sessão mv-2, T9):
+     o cinto, o bolso, o pescoço de alguém é a vítima na frase */
+  Object.freeze({ id: "bater_carteira", rx: /\b(tiro|tirar|pego|pegar|puxo|puxar|surrupio|surrupiar|afano|afanar|arranco|arrancar|solto|soltar)\b[^?.!]{0,40}\b(bolsa|bolsinha|carteira|algibeira|moedas|anel|colar|chaves?|amuleto|medalhao)\b[^?.!]{0,30}\b(d[oa] (bolso|cinto|cinturao|pescoco|pulso|dedo|mao) (dele|dela|d[oa] \w+)|sem (que )?(ele|ela) (sentir|sinta|perceber|perceba|notar|note|ver|veja))/ }),
   /* a mão leve sem o verbo do catálogo: guardar escondido o que é de outro */
   Object.freeze({ id: "bater_carteira", se: temPessoaQueNota, rx: /\b(embolso|escondo na manga|enfio no bolso|guardo no bolso|passo a mao n\w*|afano|surrupio)\b/ }),
   Object.freeze({ id: "saltar", rx: /\b((pulo|salto|pular|saltar|me jogo|me atiro)\s+(da|do|de|das|dos|pela|pelo|para fora)|dou um (pulo|salto))\b/ }),

@@ -163,7 +163,12 @@ const CATRACA_DO_EXAME = {
        frases da sessão mv-1 na A (31 de 31 certas) e uma barganha a mais da A
        antiga («faz por 30?»). Nas 381 frases que já eram da A, 347 (era 346),
        com o mesmo indevido 2. */
-    A: { rolaCerto: 378, pedeIndevido: 2, deixaDePedir: 32, categoria: 303, pericia: 171, paresQueSeparam: 97 },
+    /* SUBIU em 19/11/2026 (o conserto depois da segunda sessão, §18), só a A
+       e só para cima: a mentira dita direto (E330), a ameaça pelo «pensa no
+       que vai responder» (E336) e pelo «aperto o cara até ele cuspir» (E308)
+       — mesmo indevido 2. Era 378 · 2 · 32 · cat 303 · per 171 · pares 97. A B
+       foi medida e ficou igual (158 · 6 · 32 · 119 · 53 · 54). */
+    A: { rolaCerto: 381, pedeIndevido: 2, deixaDePedir: 29, categoria: 309, pericia: 174, paresQueSeparam: 100 },
     B: { rolaCerto: 158, pedeIndevido: 6, deixaDePedir: 32, categoria: 119, pericia: 53, paresQueSeparam: 54 },
   },
 };

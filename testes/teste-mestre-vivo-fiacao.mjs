@@ -22,7 +22,11 @@ import {
   lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, MOTIVO_DO_ESPONTANEO, rolagemDoEspontaneo,
   O_ESPONTANEO_NA_MESA, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, PEDIDOS_QUE_O_MESTRE_VIVO_CALA, oMestreVivoCalaOPedido,
   SEM_FIO_NO_MOMENTO, semFioNoMomento, marcarDoMomento, O_QUE_ACONTECE_SEM_DADO, oQueAconteceSemDado,
+  O_SIM_SEM_DADO, envelopeDoSimSemDado,
 } from "../src/o-mestre-vivo-no-jogo.js";
+import { REGUA_DO_MOMENTO } from "../src/motor/a-regua-do-momento.js";
+import { QUANDO_O_MESTRE_CHAMA } from "../src/motor/o-mestre-chama.js";
+import { tamanhoPorId } from "../src/social.js";
 import { desfechoDaMargem, lerAcao } from "../src/desafios.js";
 import { PODA_DO_AUSENTE } from "../src/motor/poda-do-ausente.js";
 import { FORMA_DO_RETRATO, cenaDoJogo, chamadoDoMomento, chamadoQueOMundoProvoca, O_DADO_DO_MUNDO, O_CHAMADO_DA_CONVERSA } from "../src/a-cena-do-jogo.js";
@@ -104,7 +108,13 @@ const calmo = retratoDosRefs({ ...crus, npcs: {}, rotinas: {} });
   t("a pergunta pela sorte, sob a tempestade, é o destino", oQueOMomentoFaz(destino) === "destino" && destino.destino.faces === 6, destino.porque);
   const v = { tipo: "teste", id: "buscar", chave: "buscar|x", rotulo: "procurar" };
   const livre = vereditoDoQueAcontece(v, busca);
-  t("o que acontece vira o «livre» do catálogo, com o porquê da régua", livre.tipo === "livre" && livre.porque === busca.diz && livre.chave === v.chave);
+  /* MOVIDA em 19/11 (o-mestre-vivo.md §18), e o motivo: o porquê que vai ao
+     Narrador era o `diz` da linha da régua — a regra em palavras («nada
+     escondido nem perigo: o Mestre descreve») —, e o Narrador a repetia na
+     cena (sessão mv-2: «o sucesso te garante o favor sem risco»). Agora é o
+     fato de cena da linha (O_QUE_ACONTECE.naCena). A intenção fica: o «livre»
+     do catálogo, com o porquê de ESTA linha da régua. */
+  t("o que acontece vira o «livre» do catálogo, com o fato de cena da linha da régua", livre.tipo === "livre" && livre.porque === O_QUE_ACONTECE.naCena[busca.porque] && livre.chave === v.chave, livre.porque);
   t("sem porquê, o padrão da tabela", vereditoDoQueAcontece(v, {}).porque === O_QUE_ACONTECE.porquePadrao && vereditoDoQueAcontece(null, busca) === null);
 }
 
@@ -321,6 +331,36 @@ sec("9. O CONSERTO DEPOIS DA PRIMEIRA SESSÃO (19/11/2026, o-mestre-vivo.md §17
     && /const pa = pautaDoEspontaneo\(des, aus, PODA_DO_AUSENTE\.linha\);\s*if \(pa\) porNaPautaDoTurno\(pa\);/.test(APP));
   t("a oferta da chegada cala só dentro da guarda", /if \(mestreVivoLigado\(\)\) \{\s*try \{ if \(oMestreVivoCalaOPedido\(p\.id\)\) return; \}/.test(APP));
   t("a vantagem do momento só vem do veredito marcado", /if \(v\.vantagemDoMomento && !vant && !desv\)/.test(corpo("rolarDesafio")));
+}
+
+sec("S18. o que vai ao Narrador é fato de cena (19/11/2026, o-mestre-vivo.md §18)");
+{
+  /* a sessão mv-2 viu a regra virar fala: «O sucesso te garante o favor sem
+     risco» (T16) — o envelope do teste social num sim que não teve teste, e o
+     «um favor de quem não arrisca nada» do degrau */
+  const N = O_QUE_ACONTECE.naCena;
+  const semRolar = [...REGUA_DO_MOMENTO.filter((r) => r.rola === false).map((r) => r.id), ...QUANDO_O_MESTRE_CHAMA.filter((r) => !["luta", "conversa"].includes(r.id)).map((r) => r.id)];
+  t("toda linha da régua (e veto do Mestre de hoje) que não rola tem o seu fato de cena", semRolar.every((id) => typeof N[id] === "string" && N[id].length > 0), semRolar.filter((id) => !N[id]).join(", "));
+  t("nenhum fato de cena fala da regra (dado, teste, sucesso, sorte, risco, Mestre, bônus, perícia)", Object.values(N).every((s) => !O_QUE_ACONTECE.proibidas.test(s)) && !O_QUE_ACONTECE.proibidas.test(O_QUE_ACONTECE.porquePadrao),
+    Object.values(N).filter((s) => O_QUE_ACONTECE.proibidas.test(s)).join(" | "));
+  t("e todos são PT-BR (sem tu, teu, tua, «a fazer»)", Object.values(N).every((s) => !/\b(tu|teu|tua|teus|tuas|contigo)\b|\ba (fazer|falar|sangrar|olhar)\b/.test(s)));
+  t("a frase encadeada leva o fato da linha que decidiu", vereditoDoQueAcontece({ tipo: "teste", id: "x" }, { porque: "encadeada:ninguemVe" }).porque === N.ninguemVe);
+  /* a pauta: o veto de explicar a regra, em todo turno que acontece sem dado */
+  const pa = pautaDoMomento({ rola: false, porque: "dispostoCede", cena: {} });
+  t("o turno que acontece sem dado leva em naoPode o veto de explicar a regra", !!pa && pa.naoPode.includes(PAUTA_DO_MESTRE_VIVO.semMecanica));
+  t("o que rola e o destino não o levam (lá a bandeja já falou)", pautaDoMomento({ rola: true, porque: "comoSempre", cena: {} }) === null
+    && !(pautaDoMomento({ rola: true, porque: "destino", cena: {}, destino: { dado: 3, faces: 6, diz: "em parte" } }) || { naoPode: [] }).naoPode.includes(PAUTA_DO_MESTRE_VIVO.semMecanica));
+  t("as linhas da pauta não falam de dado nem de perícia", ![PAUTA_DO_MESTRE_VIVO.destino, PAUTA_DO_MESTRE_VIVO.encadeada].some((s) => /\b(dado|per[ií]cia|rol\w+)\b/i.test(s)));
+  /* o envelope do sim sem dado */
+  const favor = tamanhoPorId("favor");
+  const env = envelopeDoSimSemDado(favor, { quem: "Seraphina", oQueEuDisse: "peço que guarde a caixa" });
+  t("o sim sem dado tem envelope próprio: a pessoa aceita, o que ela faz e o que não faz", env.includes("Seraphina") && env.includes("O QUE ELA FAZ POR MIM") && env.includes("O QUE ELA NÃO FAZ"), env);
+  t("sem «sucesso», «teste» nem «não arrisca»: a palavra da regra não chega ao Narrador como fato", !/SUCESSO COMPROU|o teste já foi|não arrisca/i.test(env), env);
+  t("e guarda o «e CONSEGUI» que a ficha do ator e a janela leem", /\[SOCIAL — [^\]]*\][^[]*? e CONSEGUI\b/u.test(env));
+  t("as moedas pagas entram na linha; lixo dá vazio", envelopeDoSimSemDado({ ...favor, custoEmMoedas: 5 }, {}).includes("5 moedas") && envelopeDoSimSemDado(null) === "" && envelopeDoSimSemDado({}) === "");
+  const simEnv = oQueAconteceSemDado({ tipo: "teste", id: "convencer", social: favor, dc: 14 }, { porque: "dispostoCede" }, { frase: "peço à Wren que me arrume uma corda" });
+  t("o sim de oQueAconteceSemDado já traz o envelope (o App o prefere ao do teste social)", typeof simEnv.envelope === "string" && simEnv.envelope.includes("CONSEGUI"));
+  t("a tabela do sim é congelada e PT-BR", Object.isFrozen(O_SIM_SEM_DADO) && !/\b(tu|teu|tua)\b/.test(O_SIM_SEM_DADO.envelope));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

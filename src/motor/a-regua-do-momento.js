@@ -153,7 +153,7 @@ export const MOTIVO_PARA_NEGAR_DO_ALVO = Object.freeze({
   degraus: Object.freeze(["favor", "risco", "traicao"]),
   degrausDaAutoridade: Object.freeze(["simpatia", "favor", "risco", "traicao"]),
   magia: /\b(conjur\w*|lanc\w* (um |uma |o |a )?(feitic\w*|magia|encant\w*|amizade)|feitic\w*|encanto)\b/,
-  preco: /\b(barganh\w*|pechinch\w*|descont\w*|abatimento|(faz|deixa|fica|sai) (por )?mais barato|metade do preco|preco (normal|justo|de sempre|de tabela|certo|menor)|baix\w* o preco|faz (por|pelo) (menos|\d+|dez|vinte|trinta|quarenta|cinquenta))\b/,
+  preco: /\b(barganh\w*|pechinch\w*|descont\w*|abatimento|(faz|deixa|fica|sai) (por )?mais barato|metade do preco|preco (normal|justo|de sempre|de tabela|certo|menor)|baix\w* o preco|faz (por|pelo) (menos|\d+|dez|vinte|trinta|quarenta|cinquenta)|(pagar|pago|ofereco|oferecer|dou|dar) (bem |muito |um pouco )?menos)\b/,
   /* pressionar: a ameaça, ou a conversa que insiste («insisto», «exijo»,
      «te encaro até você falar») — pedir a quem guarda segredo não é pressionar */
   pressao: /\b(insist\w*|exij\w*|exigir|pression\w*|encaro|nao saio daqui|ate (ele|ela|voce|vc) (falar|contar|dizer|abrir o bico)|fala logo|desembucha)\b/,
@@ -165,7 +165,9 @@ function motivoParaNegarDoAlvo(x) {
   if (!t || M.magia.test(t)) return false;
   const pergunta = /\?\s*$/.test(t);
   if (M.preco.test(t)) return true;
-  const alvo = alvoDaAcao(x.cena, { sobre: "pessoa", quem: x.quem });
+  /* 19/11 (§18): o alvo já resolvido pela frase (quem ela nomeia, ou o
+     estranho a quem ela se dirige e que não está no retrato) */
+  const alvo = x.alvo || alvoDaAcao(x.cena, { sobre: "pessoa", quem: x.quem });
   const papel = alvo ? pesoDoPapel(alvo.papel || alvo.nome) : null;
   const degraus = papel && papel.delta > 0 ? M.degrausDaAutoridade : M.degraus;
   if (TAMANHOS_DO_PEDIDO.some((d) => degraus.includes(d.id) && d.rx.test(t))) return true;
@@ -192,6 +194,98 @@ const tem = (p, marca) => p.estados.some((id) => (estadoPorId(id) || {})[marca])
    desmentida pela fala inteira na linha seguinte. Ouvir quem fala COM você é
    conversa, não escuta: não rola. */
 export const OUVIR_QUEM_FALA = /\bouvir\b[^?.!]{0,40}\b(?:(?:me|nos) (?:contar|dizer|falar)|tem (?:pra|para|a) (?:me |nos )?(?:contar|dizer|falar))\b/;
+
+/* ---------------- O CONSERTO DEPOIS DA SEGUNDA SESSÃO (19/11/2026) ----------------
+   mente/lancamento/o-mestre-vivo.md §18. Mentira, ameaça e barganha passaram
+   sem dado (mestre-vivo-sessao-2.md, T3, T5, T8, T14, T16, T17, T30), e um
+   favor pedido ao companheiro rolou Persuasão 18 (T13). Duas causas.
+
+   (d) A QUEM A FALA SE DIRIGE. A régua tomava por alvo o primeiro de fora do
+   grupo, e sem ninguém de fora, o companheiro: «digo pro cobrador que sou
+   enviado do conselho» caiu em Jasper, que está do seu lado, e passou de
+   graça; «peço pro Jasper dar uma volta entre os soldados» caiu na
+   artilheira, e rolou. Agora o alvo sai da frase:
+     - quem a frase NOMEIA e está na cena (o nome próprio, ou o papel inteiro),
+       o primeiro a aparecer na frase;
+     - sem nome, quando só há gente do grupo e a frase se dirige a outra
+       pessoa («pro vendedor», «ao guarda»), essa pessoa é um estranho que o
+       retrato não tem — sem estado nenhum, como todo estranho.
+   `dirigida`: a preposição e a palavra; `naoEPessoa`: as palavras que vêm
+   depois da preposição e não são gente; o verbo no infinitivo («pra fugir»)
+   também não é. `minimo`: o tamanho mínimo de um pedaço de nome. */
+export const O_ALVO_DA_FALA = Object.freeze({
+  dirigida: /\b(?:pro|pros|pra|pras|ao|aos|para o|para a|para os|para as)\s+(?:seu |sua |esse |essa |este |esta |aquele |aquela |tal |o |a )?([a-z]{3,})\b/g,
+  naoEPessoa: Object.freeze(["ele", "ela", "eles", "elas", "mim", "voce", "voces", "gente", "dentro", "fora", "frente", "tras", "cima",
+    "baixo", "lado", "cidade", "rua", "porta", "casa", "alto", "chao", "mesa", "ali", "aqui", "onde", "quem", "isso", "isto", "aquilo",
+    "todo", "toda", "todos", "todas", "mais", "menos", "nada", "tudo", "outro", "outra", "meu", "minha", "nosso", "nossa"]),
+  minimo: 3,
+});
+/* «-or» fica de fora de propósito: «cobrador», «vendedor», «senhor» são gente */
+const ehInfinitivo = (w) => /(ar|er|ir)$/.test(w);
+/* o papel sem a vogal do gênero: «artilheiro» e «artilheira» são o mesmo */
+const raizDoPapel = (s) => semAcento(s).replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim().split(" ").map((w) => w.replace(/(o|a|os|as)$/, "")).join(" ");
+const noTexto = (t, pedaco) => {
+  if (!pedaco) return -1;
+  const m = new RegExp(`\\b${pedaco.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).exec(t);
+  return m ? m.index : -1;
+};
+/* quem da cena a frase nomeia → a pessoa (a primeira que aparece) ou null */
+export function quemAFraseNomeia(frase, cena) {
+  const c = lerCena(cena);
+  if (!c || typeof frase !== "string") return null;
+  const t = semAcento(frase);
+  const tRaiz = raizDoPapel(frase);
+  let melhor = null, onde = Infinity;
+  for (const p of c.pessoas) {
+    /* o nome próprio: os pedaços que começam com maiúscula */
+    const pedacos = String(p.nome || "").split(/[\s,()]+/).filter((w) => /^[A-ZÀ-Ý]/.test(w) && w.length >= O_ALVO_DA_FALA.minimo).map(semAcento);
+    for (const w of pedacos) { const i = noTexto(t, w); if (i >= 0 && i < onde) { melhor = p; onde = i; } }
+    /* o papel inteiro, sem o gênero */
+    const r = p.papel ? raizDoPapel(p.papel) : "";
+    if (r.length >= O_ALVO_DA_FALA.minimo) { const i = noTexto(tRaiz, r); if (i >= 0 && i < onde) { melhor = p; onde = i; } }
+  }
+  return melhor;
+}
+/* o estranho a quem a frase se dirige quando só há gente do grupo → a
+   palavra («vendedor») ou "" */
+export function estranhoAQuemSeFala(frase, cena) {
+  const c = lerCena(cena);
+  if (!c || typeof frase !== "string") return "";
+  const vivos = c.pessoas.filter((p) => !p.estados.some((id) => (estadoPorId(id) || {}).inerte));
+  if (!vivos.length || vivos.some((p) => !p.estados.includes("do_grupo"))) return "";
+  const t = semAcento(frase);
+  for (const m of t.matchAll(O_ALVO_DA_FALA.dirigida)) {
+    const w = m[1];
+    if (O_ALVO_DA_FALA.naoEPessoa.includes(w) || ehInfinitivo(w)) continue;
+    if (vivos.some((p) => semAcento(p.nome).split(/\s+/).includes(w) || raizDoPapel(p.papel || "") === raizDoPapel(w))) continue;
+    return w;
+  }
+  return "";
+}
+
+/* (e) MENTIRA E AMEAÇA NÃO SÃO PEDIDO. A fala que só a escuta ouviu
+   («digo pra Seraphina que sou fiscal do porto», «ou ela me conta, ou eu
+   conto pro conselho») caía em `falaSemOposicao`: sem estado que dissesse
+   motivo para negar, a conversa «resolvia». Mas quem ouve a mentira perde
+   alguma coisa se acreditar, e quem ouve a ameaça resiste a ceder: a
+   oposição é do próprio ato, como a queda é da muralha. `familias`: as que
+   têm oposição no ato; `contraODisposto`: as que nem a boa vontade dispensa
+   (ameaçar quem está do seu lado não é pedir um favor — o exame, E094 e E096,
+   diz que mentir a quem já deixa passar não rola, e isso fica). Quem já está
+   com medo, quem já cedeu e quem não pode responder continuam sem dado. */
+/* `quemSeDiz`: a mentira que a escuta ouve pela forma («digo que…») só é
+   mentira certa quando o herói se dá um título, um cargo ou uma licença
+   («sou fiscal do porto», «venho a serviço do barão»). «Explico que a Helga
+   me mandou» (exame, E696) pode ser verdade, e o sistema não tem como saber:
+   ali fica a conversa de sempre. A mentira que o catálogo ouve pelo verbo
+   («minto», «invento», «finjo ser») é sempre mentira. */
+export const MENTIRA_E_AMEACA = Object.freeze({
+  familias: Object.freeze(["enganar", "intimidar"]),
+  contraODisposto: Object.freeze(["intimidar"]),
+  quemSeDiz: /\b((eu )?sou|somos) (?!so\b)\w+|\b(a servico|em nome|a mando) d\w*|\bautorizad\w*|\btenho (permissao|autorizacao|ordem|ordens)\b/,
+});
+const mentiraOuAmeaca = (x) => MENTIRA_E_AMEACA.familias.includes(x.familia)
+  && (x.familia !== "enganar" || x.v.escuta !== "fala" || MENTIRA_E_AMEACA.quemSeDiz.test(semAcento(x.frase)));
 
 /* A REGRA DE SEGURANÇA. As linhas que dizem «não» pela AUSÊNCIA de um estado
    (ninguém escreveu motivo para negar) não ganham do Mestre de hoje: se ele
@@ -227,12 +321,18 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.social && PERGUNTA_DA_ESCADA.includes(x.v.social && x.v.social.tamanho) && !x.op.opoe && !x.nega }),
   Object.freeze({ id: "medoCede", rola: false, diz: "quem já está com medo cede sem dado",
     quando: (x) => x.social && CEDE_COM_MEDO.includes(x.familia) && x.op.cede }),
+  /* 19/11 (§18): ameaçar quem está do seu lado não é pedir um favor */
+  Object.freeze({ id: "ameacaAoDisposto", rola: true, diz: "a ameaça vira quem estava do seu lado contra você",
+    quando: (x) => x.social && MENTIRA_E_AMEACA.contraODisposto.includes(x.familia) && x.op.facilita }),
   Object.freeze({ id: "dispostoCede", rola: false, diz: "com quem está disposto, a conversa resolve sem dado",
     quando: (x) => x.social && x.op.facilita }),
   /* 19/11 (§17): o motivo também se lê no alvo da fala — o papel e o tamanho
      do pedido (MOTIVO_PARA_NEGAR_DO_ALVO), e não só o estado escrito */
   Object.freeze({ id: "motivoParaNegar", rola: true, diz: "quem ouve tem motivo para negar",
     quando: (x) => x.social && (x.op.opoe || x.nega) }),
+  /* 19/11 (§18): a mentira e a ameaça têm oposição no próprio ato */
+  Object.freeze({ id: "mentiraOuAmeaca", rola: true, diz: "quem ouve a mentira ou a ameaça tem o que perder se ceder",
+    quando: (x) => x.social && mentiraOuAmeaca(x) }),
   /* M5: a fala que só a escuta ouviu (nenhum verbo de conversa na frase:
      «peço…», «vc solta e eu…») é a leitura mais fraca de uma tentativa.
      Ela rola pela regra mais forte do estudo — quem ouve tem motivo para
@@ -412,7 +512,7 @@ export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
     return Object.freeze({ rola: ROLA_HOJE.includes(por), porque: por || "chama", diz: "", pesos: null, resposta: null });
   }
   const r = decidir(vereditoDoCatalogo, lida, c);
-  if (r.rola || typeof c.frase !== "string" || c.parte) return r;
+  if (r.rola || typeof c.frase !== "string" || c.parte || r.aoGrupo) return r;
   /* rodada 3: as ações encadeadas («aí eu…», «vou fazer o seguinte:») — a
      régua julga cada ato e fica com o primeiro que tem oposição na cena */
   let atos = [];
@@ -475,10 +575,29 @@ function decidir(vereditoDoCatalogo, lida, c) {
   }
   const v = veredito;
   const familia = familiaDaAcao(v);
-  const quem = (v.pessoa && v.pessoa.nome) || v.quem || "";
+  /* 19/11 (§18): sem nome no veredito, o alvo sai da frase — quem ela nomeia,
+     ou o estranho a quem ela se dirige quando só há gente do grupo */
+  const frase = typeof c.frase === "string" ? c.frase : "";
+  let quem = (v.pessoa && v.pessoa.nome) || v.quem || "";
+  /* a escuta devolve o veredito da frase-modelo do catálogo («tento
+     convencer o guarda…»): o «guarda» dela não é de quem o jogador falou */
+  if (quem && ouvido && frase && !semAcento(frase).includes(semAcento(quem).replace(/^(o|a|os|as) /, ""))) quem = "";
+  let alvo = null, op = null;
+  if (!quem && frase) {
+    let nomeado = null, estranho = "";
+    try { nomeado = quemAFraseNomeia(frase, lida); } catch { nomeado = null; }
+    if (nomeado) { quem = nomeado.nome || nomeado.papel; alvo = nomeado; }
+    else {
+      try { estranho = estranhoAQuemSeFala(frase, lida); } catch { estranho = ""; }
+      if (estranho) {
+        quem = estranho; alvo = Object.freeze({ nome: estranho, papel: estranho, estados: Object.freeze([]) });
+        op = Object.freeze({ opoe: false, cede: false, facilita: false, inerte: false, quem: estranho, estados: alvo.estados });
+      }
+    }
+  }
   const x = {
     v, familia, social: !!v.social || FAMILIAS_DA_CONVERSA.includes(familia), cena: lida,
-    op: haOposicao(lida, { sobre: "pessoa", quem }),
+    op: op || haOposicao(lida, { sobre: "pessoa", quem }), alvo,
     bicho: haOposicao(lida, { sobre: "criatura", quem }),
     coisa: haOposicao(lida, { sobre: "coisa" }),
     custo: custoDeFalhar(lida),
@@ -496,7 +615,11 @@ function decidir(vereditoDoCatalogo, lida, c) {
         return Object.freeze({ rola: true, porque: "comoHoje", diz: "o Mestre de hoje rolaria, e a cena não diz por que não", pesos, resposta: null, ouviu, moldura, veredito: v });
       }
       const vantagem = r.rola && x.familia === "furtar" ? vantagemDoFurto(x) : "";
-      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura, veredito: v, ...(vantagem ? { vantagem } : {}) });
+      /* 19/11 (§18): o pedido ao companheiro — o que vem depois dele na frase
+         («…e descobrir quem anda pensando em desertar, sem ninguém notar») é o
+         que ELE vai fazer, e não um ato do herói para a régua julgar */
+      const aoGrupo = r.id === "dispostoCede" && x.op.estados.includes("do_grupo");
+      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura, veredito: v, ...(vantagem ? { vantagem } : {}), ...(aoGrupo ? { aoGrupo } : {}) });
     }
   }
   return Object.freeze({ rola: true, porque: "comoSempre", diz: "", pesos, resposta: null, ouviu, moldura, veredito: v });

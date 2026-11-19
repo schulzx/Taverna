@@ -359,5 +359,27 @@ sec("9. o conserto depois da primeira sessão jogada (19/11/2026, o-mestre-vivo.
     /alvo da fala/.test((ESTADOS_SEM_FONTE.find((s) => s.estado === "motivo_para_negar") || {}).porque || ""));
 }
 
+sec("S18. o espontâneo depois da segunda sessão jogada (19/11/2026, o-mestre-vivo.md §18)");
+{
+  /* a sessão mv-2 passou por quatro chegadas (templo, bateria, trapiche,
+     feira) e uma estrada de garoa, de dia: nenhum estado que chama nasceu,
+     e o espontâneo do Mestre vivo não apareceu. Isto é a regra a funcionar:
+     sem mundo que se mexa, não há dado de graça. */
+  const chega = (lugar) => ({ cidade: "Ponta das Gaivotas", lugar: { nome: lugar }, minuto: 9 * 60 });
+  t("as chegadas da sessão, de dia, não provocam dado", [["Altar Afogado", "Bateria Alta"], ["Trapiche do Sal", "Feira do Saque"]].every(([a, b]) => chamadoQueOMundoProvoca(chega(a), chega(b)) === null));
+  t("nem a estrada de garoa", chamadoQueOMundoProvoca(chega("Feira do Saque"), { jornada: true, minuto: 15 * 60, clima: { id: "garoa", rotulo: "garoa fina" } }) === null);
+  t("a tempestade que cai na estrada provoca Percepção", (chamadoQueOMundoProvoca({ jornada: true, clima: "chuva" }, { jornada: true, clima: { id: "tempestade", rotulo: "tempestade" } }) || {}).pericia === "percepcao");
+  /* o quartel de portas abertas: quem entra pela frente é visto, e não se
+     esconde — um mestre não pede Furtividade a ele */
+  t("o quartel aberto não provoca Furtividade; a forja fechada de madrugada, sim",
+    chamadoQueOMundoProvoca(chega("Largo do Sino"), chega("Quartel da Guarda")) === null
+    && (chamadoQueOMundoProvoca(chega("Largo do Sino"), { ...chega("Forja do Anão"), minuto: 23 * 60 }) || {}).pericia === "furtividade");
+  /* o nome do relógio é uma frase inteira, e o molde a usa como frase */
+  const vesna = chamadoQueOMundoProvoca(BASE, com({ relogios: [{ tipo: "cacada", nome: "Vesna fecha o cerco", segmentos: 4, cheios: 3 }] }));
+  const lido = vesna ? vesna.mostra.passou.replace("{oQue}", vesna.mostra.oQue).replace("{efeito}", vesna.mostra.efeito) : "";
+  t("a caçada se lê como frase («A caçada está perto: Vesna fecha o cerco.»), nunca «é Vesna fecha o cerco»", /A caçada está perto: Vesna fecha o cerco\.$/.test(lido) && !/é Vesna/.test(lido), lido);
+  t("os textos do que o mundo mostra são PT-BR (sem tu, teu, tua)", Object.values(O_QUE_O_MUNDO_MOSTRA).every((m) => !/\b(tu|teu|tua|teus|tuas|contigo)\b/i.test(m.passou + " " + m.falhou)));
+}
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);
