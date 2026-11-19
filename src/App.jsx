@@ -18658,7 +18658,9 @@ export default function Taverna() {
     if (q.efeito === "social") {
       try {
         const conta = q.conta || v.social;
-        env = envelopeSocial(conta, { passou: true, quem: q.quem || "essa pessoa", oQueEuDisse: acao });
+        /* 19/11: o sim sem dado é fato de cena. O envelope do teste vencido («o
+           sucesso comprou…») fazia o Narrador repetir a regra em voz alta. */
+        env = q.envelope || envelopeSocial(conta, { passou: true, quem: q.quem || "essa pessoa", oQueEuDisse: acao });
         if (conta.custoEmMoedas > 0) {
           const base = personagemRef.current || personagem;
           const pago = Math.min(base.moedas || 0, conta.custoEmMoedas);
