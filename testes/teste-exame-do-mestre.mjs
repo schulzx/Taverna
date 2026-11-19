@@ -64,7 +64,14 @@
    nº 93: o mestre rola sem perícia — o Mestre de hoje não tem como acertar).
    Os espontâneos também passam a ser medida à parte, sem catraca.
    E a suíte NUNCA imprime frase, cena nem id de item da B: os erros que se
-   leem são só da A, e as asserções sobre a B dizem só números. */
+   leem são só da A, e as asserções sobre a B dizem só números.
+
+   O TREINO DA RODADA 3 (18/11/2026). Quem afinou mediu a B exatamente duas
+   vezes (antes e depois) e trabalhou com a A repartida por semente em
+   A-treino (2/3) e A-validação (1/3), por par, num script fora da suíte: os
+   erros lidos foram só os da A-treino, e o que ficou foi o que a
+   A-validação sustentou. 39 itens da A trocaram a nota pelo estado novo da
+   tabela (marcados `estado_da_rodada_3`); a B não foi tocada. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
@@ -135,14 +142,20 @@ const SITUACOES = JSON.parse(fs.readFileSync(new URL("./corpus-das-situacoes.jso
    O de hoje com o catálogo antigo (ebf0f64): A 75 · 11 · 53 · cat 47 · per 21
    · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 · pares 1 · esp 6. */
 const CATRACA_DO_EXAME = {
-  data: "2026-11-18 (rodada 3)",
+  data: "2026-11-18 (treino da rodada 3)",
   hoje: {
     A: { rolaCerto: 226, pedeIndevido: 46, deixaDePedir: 109, categoria: 160, pericia: 83, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
   },
   regua: {
-    A: { rolaCerto: 326, pedeIndevido: 5, deixaDePedir: 50, categoria: 255, pericia: 137, paresQueSeparam: 85 },
-    B: { rolaCerto: 143, pedeIndevido: 7, deixaDePedir: 46, categoria: 99, pericia: 42, paresQueSeparam: 40 },
+    /* SUBIU no treino da rodada 3 (18/11/2026), só a régua da A e só para
+       cima: a moldura como sinal, o palpite da cena, as formas brasileiras
+       que a A-validação sustentou e 39 itens da A com o estado novo no lugar
+       da nota (o-mestre-vivo.md §14). Era 326 · 5 · 50 · cat 255 · per 137 ·
+       pares 85. A da B subiu com a segunda (e última) medida dela, o
+       «depois»: era 143 · 7 · 46 · cat 99 · per 42 · pares 40. */
+    A: { rolaCerto: 346, pedeIndevido: 2, deixaDePedir: 33, categoria: 275, pericia: 152, paresQueSeparam: 97 },
+    B: { rolaCerto: 158, pedeIndevido: 6, deixaDePedir: 32, categoria: 119, pericia: 53, paresQueSeparam: 54 },
   },
 };
 /* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje
@@ -278,7 +291,12 @@ function lerNoJogo(item, extraDoChamado) {
    - trancado, vigiado, armadilhado, o achado e a suspeita de armadilha são
      do lugar; pressa, testemunhas, perigo e o som claro são da cena. */
 const CRIATURA_DO_EXAME = /\b(cavalo|egua|lobo|corvo|cao|cachorro|fera|urso|mula)\b/;
-const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar", "do_grupo", "morta", "desacordada"];
+/* MOVIDO no treino da rodada 3 (18/11/2026): a lista ganhou os três estados
+   novos de pessoa (ja_convencida, moribunda, dormindo), que vão ao primeiro
+   de `quem` como os outros. Os estados novos de coisa e de cena (o do herói
+   incluído, que é de dono «cena») já iam pelo laço da rodada 2, abaixo. */
+const DE_PESSOA = ["disposta", "desconfiada", "com_medo", "hostil", "esconde_algo", "deve_favor", "motivo_para_negar", "do_grupo", "morta", "desacordada",
+  "ja_convencida", "moribunda", "dormindo"];
 /* M5 (18/11/2026): dois estados que o exame dizia por campo estruturado, e
    não por nota — o papel de quem está («guarda morto») e o clima («neve
    fechada»). O jogo os terá pelo estado da pessoa e pelo tempo do dia; aqui

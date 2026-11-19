@@ -154,5 +154,33 @@ sec("M5. os estados que o exame pediu (18/11/2026)");
   t("todo estado novo tem efeito em PT-BR, sem o nome do mecanismo", ids.every((id) => { const e = estadoPorId(id).efeito; return typeof e === "string" && e.length > 8 && !e.includes(id) && !/\b(tu|teu|tua)\b/.test(e); }));
 }
 
+sec("R3. os estados que faltavam (rodada_3.estados_que_faltam do exame, 18/11/2026)");
+{
+  /* cada estado novo, o seu dono e a marca que a régua lê */
+  const NOVOS = {
+    som_abafado: ["cena", "abafa"], ja_testado: ["cena", "testado"], ja_resolvido: ["cena", "resolvido"],
+    ja_convencida: ["pessoa", "resolvido"], moribunda: ["pessoa", "morrendo"], dormindo: ["pessoa", "nota"],
+    selado: ["coisa", "impossivel"], sem_resistencia: ["coisa", "livre"], a_vista: ["coisa", "evidente"],
+    rastro_fresco: ["coisa", "rastro"], rastro_velho: ["coisa", "rastro"], rastro_obvio: ["coisa", "evidente"],
+    em_movimento: ["coisa", "apressa"], ameacado: ["coisa", "ameaca"],
+    heroi_treinado: ["cena", "treinado"], heroi_ja_sabe: ["cena", "sabe"], heroi_tem_alavanca: ["cena", "alavanca"], heroi_penalizado: ["cena", "penaliza"],
+  };
+  const MARCAS_R3 = ["abafa", "treinado", "sabe", "testado", "resolvido", "alavanca", "impossivel", "morrendo", "penaliza", "evidente", "rastro", "ameaca", "livre"];
+  t(`os ${Object.keys(NOVOS).length} estados novos existem, cada um do seu dono e com a sua marca`,
+    Object.entries(NOVOS).every(([id, [de, marca]]) => estadoPorId(id) && estadoPorId(id).de === de && estadoPorId(id)[marca] === true),
+    Object.entries(NOVOS).filter(([id, [de, marca]]) => !(estadoPorId(id) && estadoPorId(id).de === de && estadoPorId(id)[marca] === true)).map(([id]) => id).join(","));
+  t("as marcas novas são booleanas em todo estado", ESTADOS_DA_CENA.every((e) => MARCAS_R3.every((m) => typeof e[m] === "boolean")));
+  t("o herói não ganha lugar novo na forma da cena: os estados dele são da cena, com o prefixo", ESTADOS_DA_CENA.filter((e) => e.id.startsWith("heroi_")).every((e) => e.de === "cena")
+    && JSON.stringify(Object.keys(lerCena({}))) === JSON.stringify(["pessoas", "criaturas", "coisas", "cena"]));
+  t("quem dorme pode notar; o moribundo não opõe nada; a pessoa já convencida está do seu lado",
+    alguemPodeNotar(cenaDe({ pessoas: [P("bêbado", "dormindo")] })) && !haOposicao(cenaDe({ pessoas: [P("ferido", "moribunda")] })).opoe
+    && haOposicao(cenaDe({ pessoas: [P("preso", "ja_convencida")] })).facilita);
+  t("o que se move pune e apressa: falhar custa corpo e tempo", custoDeFalhar(cenaDe({ coisas: [{ nome: "carroça", estados: ["em_movimento"] }] })).pune
+    && custoDeFalhar(cenaDe({ coisas: [{ nome: "carroça", estados: ["em_movimento"] }] })).apressa);
+  t("temMarca acha o estado do herói na cena", temMarca(cenaDe({ cena: { estados: ["heroi_penalizado"] } }), "penaliza") && !temMarca(cenaDe({}), "penaliza"));
+  t("todo estado novo tem efeito em PT-BR, sem o nome do mecanismo",
+    Object.keys(NOVOS).every((id) => { const e = estadoPorId(id).efeito; return typeof e === "string" && e.length > 8 && !e.includes("_") && !/\b(tu|teu|tua)\b/.test(e); }));
+}
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

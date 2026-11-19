@@ -483,3 +483,171 @@ omitido 42% (≤ 15%). A leitura:
 
 A A em 98% contra a B em 76% é o sinal de afinação que a etapa pedia para vigiar; os +29 da B são o
 que generalizou.
+
+## 14. O treino, rodada 3
+
+**18/11/2026, módulos puros, sem fiação.** A regra de honra desta vez foi mais dura: a B nova (265 itens,
+ninguém viu) foi medida **exatamente duas vezes**, no começo e no fim, e nunca entre as duas. Para
+trabalhar, a metade A foi repartida por semente (`treino-r3|particao|2026-11-18`, FNV-1a do par ou do
+item, um terço para cada lado) em **A-treino** (2/3) e **A-validação** (1/3), num script fora da suíte que
+filtra o JSON na leitura (a B nunca é carregada). Erros lidos: só os da A-treino. O que ficou: o que a
+A-validação sustentou.
+
+**A medida** (régua + cena, com ação declarada; o Mestre de hoje não mudou):
+
+| | rola certo | indevido | omitido | pares que separa |
+|---|---|---|---|---|
+| A-treino, antes | 215/248 (87%) | 2/119 | 31/129 | 60/77 |
+| **A-treino, depois** | **228/248 (92%)** | **0/119** | **20/129** | **66/77** |
+| A-validação, antes | 111/133 (83%) | 3/58 | 19/75 | 25/39 |
+| **A-validação, depois** | **118/133 (89%)** | **2/58** | **13/75** | **31/39** |
+| B, antes | 143/196 (73%) | 7/102 | 46/94 | 40/79 |
+| **B, depois** | **158/196 (81%)** | **6/102** | **32/94** | **54/79** |
+
+Categoria certa B 99 → 119, perícia certa B 42 → 53. A inteira: 326 → 346 (91%), indevido 5 → 2.
+
+**As medidas à parte da B** (sem catraca): espontâneos 27/27 antes e depois (a régua já pedia os 15);
+**o dado do destino 4/15 → 7/15**, indevido 0/4 nos dois (pede 3 dos 11 que rolam); **mesas discordam**
+13/27 → 15/27 contra a regra de §6 (indevido 0/10 → 1/10), e contra o que a mesa em português faria
+24/27 → 20/27 — a régua pede mais onde a nossa mesa pede menos, como a calibragem da §3 manda.
+
+**O que cada passo rendeu na A-validação** (rola certo · indevido · omitido, em ordem):
+
+| passo | A-validação | ficou? |
+|---|---|---|
+| partida | 111 · 3 · 19 | |
+| a escuta brasileira em lote (a escrita do chat, «tu acha que…», «preciso rolar… pra…», «quero…», «vou + infinitivo», a perícia nomeada, e formas de fala e de ato tiradas da A-treino) + os estados novos + as linhas novas | 113 · 3 · 17 (+2) | a ablação disse de onde: **ler a pessoa pela cara** (+1) e **a furtividade pelo advérbio** (+1) |
+| as ações encadeadas («aí eu», «vou fazer o seguinte:», a pergunta no meio) | 0 | ficou: é estrutura do §10.4, não frase da A |
+| a pergunta pela magia da coisa | 0 | **saiu** (decoreba) |
+| a hora e o rumo («que horas são», «pra que lado fica») | +1 | ficou |
+| a encenação pelo verbo do ofício | 0, e +1 indevido na A-treino | **saiu** (a M5 já tinha visto o mesmo) |
+| a moldura como peso: o anúncio ao estranho não rola | 0 | **saiu** |
+| a moldura como peso: a travessia calma pedida com licença rola | −1, +1 indevido | **saiu** |
+| **o palpite da cena** (a moldura de risco sem ato ouvido; a cena diz o risco) | **+3** | ficou |
+| 39 itens da A com o estado novo no lugar da nota | +1, indevido 3 → 2 | ficou (dado, não forma) |
+| o palpite só com a moldura que abre a frase (o corpus mostrava «tentando respirar» virar busca) | −1 | ficou: sem isto a catraca dos corpus subia |
+| **a fala com licença** (a fala que só a escuta ouviu, com «posso…?», a quem não está do seu lado, rola) | **+1** | ficou |
+| desfazer o que deu zero e nasceu dos erros da A-treino | 0 (a A-treino caiu 244 → 227) | — |
+| «a gente pode…?» · o palpite de ler a pessoa · «quero» no palpite | 0 · 0 · 0 (+1 falsa no corpus) | **saíram**; três seguidas paradas: o treino parou |
+
+**O que foi desfeito, e por quê.** A A-treino chegou a 244/248 com a A-validação parada em 118: a
+ablação mostrou que a mentira sobre quem se é, a mão leve «sem ninguém ver», o curativo pelo gesto,
+segurar quem cai, o pé de cabra, a pergunta pela magia, a família corrigida (o «examino» que vira arcano),
+a barganha de feira («faz por 30», «precinho») e as frases de ameaça do treino («pensa no que vai
+responder») davam **zero** na A-validação. Era decoreba, e saiu. Ficaram, mesmo com zero, as portas que o
+§10.4 descreve e que não saíram da A: o «vou + infinitivo», a perícia nomeada, as encadeadas, a escrita do
+chat, «e se eu…» / «pelo menos…» e a arma à mostra — a A tem poucas frases assim, e a B nova é escrita
+nesses padrões.
+
+**O que mudou no código:**
+
+- `src/motor/a-escuta-da-cena.js` — `ESCRITA_DA_MESA` (vc, cê, q, n…); molduras novas; `molduraDe` (o
+  sinal: pedido, licença, tentativa, anúncio); `noPresente` + `PRESENTE_IRREGULAR` (o infinitivo volta ao
+  presente, também dentro da moldura); `atosDaFrase` (as encadeadas); `periciaNomeada` +
+  `PERICIA_NOMEADA` (português e inglês); o **palpite da cena** (`PALPITE_DA_CENA`, `MOLDURA_DO_PALPITE`,
+  `PERGUNTA_DE_INFORMACAO`); formas de barganha, arma à mostra, advérbio, cara, hora e rumo.
+- `src/cena-do-momento.js` — **18 estados novos** com 13 marcas: `som_abafado`, `ja_testado`,
+  `ja_resolvido`, `ja_convencida`, `moribunda`, `dormindo`, `selado`, `sem_resistencia`, `a_vista`,
+  `rastro_fresco` / `rastro_velho` / `rastro_obvio`, `em_movimento`, `ameacado`, e os do herói —
+  `heroi_treinado`, `heroi_ja_sabe`, `heroi_tem_alavanca`, `heroi_penalizado` — de dono «cena» (a forma
+  lida da cena não mudou).
+- `src/motor/a-regua-do-momento.js` — linhas `jaResolvido`, `jaTestado`, `impossivel`, `alavanca` (salvo
+  contra quem é hostil, nº 75), `aVista`, `falaComLicenca`, `somAbafado`, `corpoQueFalha`, `heroiJaSabe`,
+  `semResistencia`; o moribundo faz o socorro urgente; a coisa comum cala também o arcano; o pedido de
+  dado (`naoSePede`) passa pela escuta quando há cena; as encadeadas (`valeRolagem` parte a frase e fica com
+  o ato que tem oposição); `pesos.penalidade`; e **o dado do destino** (`ePerguntaDoDestino`,
+  `PERGUNTA_DO_DESTINO`, `oDadoDoDestino`, `FAIXAS_DO_DESTINO`: um d6 pela semente, três faixas). Ele só
+  entrou porque não pediu nada indevido na A (não disparou em item nenhum dela).
+- Sem cena, tudo isto fica calado: a asserção da regressão zero ficou, sobre os dois corpus.
+- Suítes: `teste-a-escuta-da-cena` 56, `teste-a-regua-do-momento` 97, `teste-cena-do-momento` 66. A
+  catraca dos corpus da escuta subiu no «ouve» (10 → 11, 26 → 31) com o «ouve onde é sem teste» parado
+  em 31 e 9. A catraca do exame subiu nas duas metades da régua.
+
+**O que falta para as metas do §8** (B): rola certo 81% (meta ≥ 90%), indevido 5,9% (≤ 2%), omitido 34%
+(≤ 15%).
+
+1. **O omitido continua a ser surdez, e a A já não ensina.** A A-validação parou em 118/133 e três
+   tentativas seguidas não a moveram. O que generaliza é estrutura (a moldura, o palpite da cena, a
+   licença), não vocabulário — e a estrutura que a A ensina está gasta. O próximo salto pede frase nova
+   de afinar (a do beta, a proposta do protótipo, que é da pessoa) ou a cena viva do jogo: muitos omitidos
+   são frases que a cena tornaria óbvias.
+2. **O indevido é do catálogo**, como a M5 viu: a régua só cala onde a cena tem linha. As linhas novas
+   (selado, à vista, sem resistência, já sabe, já testado) cobrem as famílias de saber, arcano e força —
+   **mas só quando o mundo escreve o estado**. No exame a cena da B foi escrita antes destes estados
+   existirem, e a nota não entra; no jogo, a fiação é que vai pagar isto.
+3. **O destino rola 3 dos 11.** A pergunta do destino na B nem sempre tem a cena do tranco (perigo ou a
+   coisa `ameacado`), e sem ela a régua não arrisca: a A-validação não deu licença para rolar só pela
+   frase. No jogo, quem escreve `ameacado` é o motor da consequência (o barco virou), e aí rola.
+
+### 14.1 O que a fiação no jogo precisa
+
+**As funções que o `App.jsx` vai chamar** (todas puras; tudo em `try/catch` com `calou`):
+
+```js
+// 1. o catálogo, como hoje
+lerAcao(frase, leitura) // → veredito | null
+// 2. a régua, com a cena e a frase (sem cena = o Mestre de hoje, byte a byte)
+valeRolagem(veredito, cena, {
+  emCombate, bonus, mundoDisseNao, saber, vantagem, // os de porQueNaoChama
+  frase,     // o que o jogador escreveu (liga a escuta, a moldura, as encadeadas e o destino)
+  leitura,   // o mesmo contexto de lerAcao (semente, personagem, pessoaDe, achadoDe…)
+})
+// → { rola, porque, diz, pesos: { segredo, pressa, testemunha, perigo, vantagem, penalidade },
+//     resposta /* franca|evasiva|recusa|silencio, só na pergunta */,
+//     ouviu /* { id, pericia, chave, porta } | null */, moldura, destino? }
+// 3. o dado espontâneo, quando a cena muda entre dois turnos
+oQueACenaChama(cenaAntes, cenaDepois) // → { pericia, estado, porque } | null
+// 4. (opcional, para a pauta) o sinal da moldura
+molduraDe(frase) // → "pedido" | "licenca" | "tentativa" | "anuncio" | ""
+```
+
+Três cuidados da fiação:
+
+- **Quando `ouviu` vem preenchido, o teste é o que a escuta ouviu**, não o veredito do catálogo (que era
+  nulo, «livre» ou «não se pede»). `ouviu` traz só `id`, `pericia` e `chave`; o chamado precisa do
+  veredito inteiro (o `dc`, o `social`, a `pessoa`). A forma mais barata: `valeRolagem` devolver também o
+  veredito que decidiu (um campo a mais, aditivo) — ou o App chamar `escutarComCena(frase, cena, leitura)`
+  quando `ouviu` vier. É a primeira coisa a decidir na fiação.
+- **`porque === "destino"`**: não há perícia nem número a bater. `destino` é `{ dado, faces: 6, id, diz }`,
+  já resolvido pela semente (`oDadoDoDestino(leitura.semente, frase)`): a bandeja mostra o d6 cair, e o
+  Narrador recebe só o `diz` («a sorte levou», «em parte», «a sorte ajudou»).
+- **`porque` começando por `encadeada:`**: o ato que rola é uma parte da frase; o Narrador narra os outros
+  atos acontecendo e o dado cai no arriscado.
+
+**De onde cada estado da cena deve vir** (o Mestre só lê; quem escreve é o mundo ou a quest — nunca o
+Narrador, nunca o dado direto):
+
+| estado | quem escreve |
+|---|---|
+| `disposta` · `deve_favor` · `hostil` · `desconfiada` | a relação da pessoa e a fama (o que `pessoaDe` já sabe) |
+| `motivo_para_negar` | o papel da pessoa e o tamanho do pedido (a escada de `social.js`), e a quest |
+| `com_medo` | o resultado de uma intimidação, ou a luta (o inimigo caído) |
+| `esconde_algo` | o segredo da pessoa (a quest, o livro de factos) |
+| `ja_convencida` | o sucesso de antes com a mesma pessoa e o mesmo pedido (o livro de tentativas) |
+| `morta` · `desacordada` | a luta (PV a zero, nocaute) |
+| `moribunda` | o socorro (o caído com as horas a correr) |
+| `dormindo` | a rotina e a hora da pessoa |
+| `do_grupo` | os companheiros |
+| as criaturas (`faminta`, `acuada`, `territorial`, `ferida`, `mansa`, `assustada`) | o encontro e a luta |
+| `trancado` · `selado` · `sem_resistencia` | o objeto em cena e a quest (o cofre, a porta selada por magia, o portão entreaberto, a carroça sabotada) |
+| `vigiado` · `territorio_de_alguem` · `com_testemunhas` | o lugar, o dono dele e a hora (a ronda, a praça cheia) |
+| `armadilhado` · `ha_algo_escondido` · `suspeito` | o que `objetoEmCena` e `achadoDe` já dizem |
+| `fragil` · `escorregadio` · `perigo_fisico` | o terreno e o clima (a chuva molha o muro) |
+| `escuro` | a hora e a luz (o que `escuro` já diz ao catálogo) |
+| `em_movimento` | o veículo ou a montaria em marcha |
+| `ameacado` | o motor da consequência: o tranco que acabou de acontecer (o barco virou, a queda, o fogo) |
+| `a_vista` | o que a cena já mostrou (a narração do turno de antes, a lista do que se vê) |
+| `rastro_fresco` · `rastro_velho` · `rastro_obvio` | o rastro da quest com a idade em horas (a chuva apaga, a lama marca) |
+| `do_heroi` · `raro_de_achar` · `coisa_comum` | o inventário do herói e a raridade do item no catálogo |
+| `com_pressa` · `algo_se_aproxima` | o relógio da quest e o encontro iminente (a emboscada) |
+| `som_claro` · `som_abafado` | o que há entre o herói e a fonte (porta aberta ou fechada, parede) |
+| `assunto_raro` | a quest e o livro de factos (o assunto que nem todo mundo reconhece) |
+| `ceu_encoberto` | o clima |
+| `ja_testado` | o livro de tentativas (`tentativas` de `lerAcao`: a mesma chave já rolada) |
+| `ja_resolvido` | a etapa da quest já fechada |
+| `heroi_treinado` | as perícias treinadas da ficha |
+| `heroi_ja_sabe` | o saber comum da ficha (o livro de factos, a terra, o ofício — `saberComumDe`) |
+| `heroi_tem_alavanca` | o inventário cruzado com a quest (a chave, a senha, o documento que abre ISTO) |
+| `heroi_penalizado` | as condições do herói (bêbado, ferido, exausto) |
+
+É campo novo e aditivo; a versão antiga o ignora.

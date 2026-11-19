@@ -27,13 +27,24 @@
    exame pediu (o morto não responde, a mão leve sem olhos, o céu, a coisa
    do herói e a de toda feira, a coisa rara de achar).
 
+   RODADA 3 DO TREINO (18/11/2026): a moldura da frase entra como PESO
+   (`molduraDe`: «posso…?» empurra para o dado, «eu vou + verbo» para o
+   «acontece»), nunca sozinha contra a cena; as ações encadeadas se partem e
+   a régua fica com o ato que tem oposição; o pedido de dado e a perícia
+   nomeada passam pela escuta; linhas novas para os estados que faltavam
+   (o selado, o já resolvido, o já testado, a alavanca, o à vista, o som
+   abafado, o moribundo, o herói penalizado, o que não resiste); e o DADO
+   DO DESTINO — a pergunta pelo que a sorte fez com uma coisa, que o Mestre
+   rola sem perícia (estudo §10.3 nº 3, §10.5 nº 93).
+
    Este módulo não é lido pelo App ainda: a fiação é a etapa seguinte. */
 import { QUANDO_O_MESTRE_CHAMA, porQueNaoChama, saberComumDe } from "./o-mestre-chama.js";
 import {
   lerCena, haOposicao, haOQueAchar, haSegredo, haPerigo, alguemPodeNotar, haPlateia, cenaRevela,
   custoDeFalhar, respostaDaPergunta, estadosQueChamam, estadoPorId, temMarca,
 } from "../cena-do-momento.js";
-import { escutarComCena } from "./a-escuta-da-cena.js";
+import { escutarComCena, molduraDe, atosDaFrase } from "./a-escuta-da-cena.js";
+import { lerAcao } from "../desafios.js";
 
 /* ---------------- A FAMÍLIA DA AÇÃO ----------------
    O id do catálogo (desafios.js), na língua do estudo. O improviso diz a
@@ -87,7 +98,33 @@ export const FAMILIAS_DO_SABER = Object.freeze(["saber", "arcano"]);
    A primeira linha cujo `quando` é verdade decide. `x` é o que a régua já
    leu: { v, familia, social, cena, op (oposição da pessoa), bicho (oposição
    da criatura), coisa (oposição da coisa), custo }. */
+/* rodada 3: as molduras que pedem licença ou já sinalizam risco (§10.3) */
+export const MOLDURAS_DE_RISCO = Object.freeze(["pedido", "licenca", "tentativa"]);
+/* rodada 3: as famílias que o mundo pode tornar impossíveis (o selado, o
+   sabotado), e as que a alavanca do herói resolve */
+export const FAMILIAS_DO_IMPOSSIVEL = Object.freeze(["forcar", "travessia"]);
+export const FAMILIAS_DA_ALAVANCA = Object.freeze(["forcar", "convencer", "intimidar", "enganar"]);
+/* rodada 3: o que está à vista não se procura nem se adivinha */
+export const FAMILIAS_DO_EVIDENTE = Object.freeze(["procurar", "rastrear", "saber"]);
+
 export const REGUA_DO_MOMENTO = Object.freeze([
+  /* rodada 3: o que já ficou acertado, ou já foi tentado, não rola de novo
+     (§8 nº 27, 37, 38) */
+  Object.freeze({ id: "jaResolvido", rola: false, diz: "isto já ficou acertado: não há o que rolar",
+    quando: (x) => temMarca(x.cena, "resolvido") && (!x.social || x.op.facilita || x.cena.cena.estados.includes("ja_resolvido")) }),
+  Object.freeze({ id: "jaTestado", rola: false, diz: "o teste de antes já cobre isto",
+    quando: (x) => temMarca(x.cena, "testado") }),
+  /* rodada 3: o mundo decide que não (selado por magia, sabotado — §10.5
+     nº 84, 85): não há dado que abra */
+  Object.freeze({ id: "impossivel", rola: false, diz: "não cede, e não vai ceder: o mundo decide",
+    quando: (x) => FAMILIAS_DO_IMPOSSIVEL.includes(x.familia) && temMarca(x.cena, "impossivel") }),
+  /* rodada 3: o preparo do herói resolve (a senha, a chave, o documento
+     bom — nº 73, 74, 76); contra quem é hostil, o papel não basta (nº 75) */
+  Object.freeze({ id: "alavanca", rola: false, diz: "o seu preparo resolve: a senha, a chave, o papel certo",
+    quando: (x) => FAMILIAS_DA_ALAVANCA.includes(x.familia) && temMarca(x.cena, "alavanca") && !(x.social && x.op.estados.includes("hostil")) }),
+  /* rodada 3: o que está à vista (nº 70, 59) */
+  Object.freeze({ id: "aVista", rola: false, diz: "está à vista: o Mestre conta o que se vê",
+    quando: (x) => FAMILIAS_DO_EVIDENTE.includes(x.familia) && temMarca(x.cena, "evidente") }),
   /* M5: quem não pode responder (o morto, o desacordado) não é convencido
      nem enganado: não há conversa, e não há dado */
   Object.freeze({ id: "semResposta", rola: false, diz: "quem ouviria não pode responder",
@@ -106,6 +143,8 @@ export const REGUA_DO_MOMENTO = Object.freeze([
      Ela rola pela regra mais forte do estudo — quem ouve tem motivo para
      negar —, e não pela escada do estranho: sem oposição, o pedido se
      conversa e o Mestre narra a resposta */
+  Object.freeze({ id: "falaComLicenca", rola: true, diz: "você pede licença: sabe que pode ouvir um não",
+    quando: (x) => x.social && x.v.escuta === "fala" && MOLDURAS_DE_RISCO.includes(x.moldura) && !x.op.facilita }),
   Object.freeze({ id: "falaSemOposicao", rola: false, diz: "ninguém tem motivo para negar: a conversa resolve",
     quando: (x) => x.social && x.v.escuta === "fala" }),
   Object.freeze({ id: "conversaComEstranho", rola: true, diz: "um estranho que não te deve nada: a escada do pedido dá o número",
@@ -116,6 +155,9 @@ export const REGUA_DO_MOMENTO = Object.freeze([
   /* escutar */
   Object.freeze({ id: "somClaro", rola: false, diz: "dá para ouvir tudo daqui: o Mestre conta o que se ouve",
     quando: (x) => x.v.id === "escutar" && cenaRevela(x.cena) }),
+  /* rodada 3: o som abafado — há o que ouvir, e custa (§8 nº 8) */
+  Object.freeze({ id: "somAbafado", rola: true, diz: "há vozes, mas abafadas: ouvir custa",
+    quando: (x) => x.v.id === "escutar" && temMarca(x.cena, "abafa") }),
   Object.freeze({ id: "haOQueOuvir", rola: true, diz: "há o que ouvir, e não é fácil",
     quando: (x) => x.v.id === "escutar" && (haSegredo(x.cena) || x.cena.pessoas.length > 0 || x.cena.criaturas.length > 0) }),
   Object.freeze({ id: "silencio", rola: false, diz: "não há o que ouvir: o Mestre descreve o silêncio",
@@ -133,6 +175,9 @@ export const REGUA_DO_MOMENTO = Object.freeze([
   /* travessia */
   Object.freeze({ id: "travessiaArriscada", rola: true, diz: "o chão pune ou o tempo aperta",
     quando: (x) => x.familia === "travessia" && (x.custo.pune || x.custo.apressa) }),
+  /* rodada 3: o herói mal (bêbado, ferido) faz do calmo um risco (nº 91) */
+  Object.freeze({ id: "corpoQueFalha", rola: true, diz: "o corpo não obedece como devia",
+    quando: (x) => ["travessia", "esgueirar", "rastrear"].includes(x.familia) && temMarca(x.cena, "penaliza") }),
   Object.freeze({ id: "travessiaCalma", rola: false, diz: "sem perigo nem pressa: você passa",
     quando: (x) => x.familia === "travessia" }),
   /* a tranca */
@@ -142,7 +187,7 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.v.id === "tranca" }),
   /* socorrer */
   Object.freeze({ id: "socorroUrgente", rola: true, diz: "a vida está em jogo, ou o tempo aperta",
-    quando: (x) => x.familia === "socorrer" && (x.custo.pune || x.custo.apressa) }),
+    quando: (x) => x.familia === "socorrer" && (x.custo.pune || x.custo.apressa || temMarca(x.cena, "morrendo")) }),
   Object.freeze({ id: "socorroCalmo", rola: false, diz: "sem pressa nem perigo, o cuidado acontece",
     quando: (x) => x.familia === "socorrer" }),
   /* encenação */
@@ -174,7 +219,14 @@ export const REGUA_DO_MOMENTO = Object.freeze([
   Object.freeze({ id: "doProprioHeroi", rola: false, diz: "é seu: você conhece",
     quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && temMarca(x.cena, "proprio") }),
   Object.freeze({ id: "coisaComum", rola: false, diz: "é coisa de toda feira: qualquer um sabe",
-    quando: (x) => x.familia === "saber" && temMarca(x.cena, "comum") }),
+    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && temMarca(x.cena, "comum") }),
+  /* rodada 3: o que o herói já sabe, dito pela cena (o teste de antes, o
+     passado dele) — a ficha nem sempre tem o assunto escrito */
+  Object.freeze({ id: "heroiJaSabe", rola: false, diz: "você já sabe isto",
+    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && temMarca(x.cena, "sabe") }),
+  /* rodada 3: a força contra o que não resiste (o portão entreaberto) */
+  Object.freeze({ id: "semResistencia", rola: false, diz: "não há o que resista: basta um empurrão",
+    quando: (x) => x.familia === "forcar" && temMarca(x.cena, "livre") && !x.coisa.opoe }),
   /* o resto: a ação tem oposição própria (o saber, o arcano, o rastro, a
      mão leve, a força), e rola como o Mestre de sempre a faria rolar */
   Object.freeze({ id: "comoSempre", rola: true, diz: "a ação tem a sua própria oposição",
@@ -195,7 +247,40 @@ function pesosDe(cena, ctx) {
     testemunha: custo.espalha,
     perigo: custo.pune,
     vantagem: !!(obj(ctx) && ctx.vantagem),
+    /* rodada 3: o herói mal (bêbado, ferido) pesa contra ele no número */
+    penalidade: temMarca(cena, "penaliza"),
   });
+}
+
+/* ---------------- O DADO DO DESTINO ----------------
+   Rodada 3 (estudo §10.3 nº 3, §10.5 nº 93): na mesa em português o mestre
+   rola um dado SEM perícia para saber o que a sorte fez — o frasco que
+   sobreviveu ao barco virado, qual arma restou, de que lado caiu. É uma
+   pergunta (não um gesto), sobre uma COISA, a ninguém da cena, e logo
+   depois de um tranco (algo ameaçou a coisa, ou a cena tem perigo).
+   `oDadoDoDestino` diz o resultado, determinístico pela semente: o mesmo
+   d6, a mesma faixa, em qualquer máquina. */
+export const PERGUNTA_DO_DESTINO = /\b(sobreviveu|sobreviveram|se salvou|se salvaram|resistiu|resistiram|aguentou|aguentaram|(ficou|ficaram|ta|esta|estao|tao|continua|continuam|chegou|chegaram) (inteir|intact|bem|sec)\w*|quebrou|quebraram|se quebrou|rachou|racharam|molhou|molharam|estragou|estragaram|se perdeu|se perderam|afundou|afundaram|sobrou|sobraram|restou|restaram|escapou|escaparam|de que lado (caiu|ficou)|caiu de que lado|caiu (de pe|em pe|aberto|fechado)|cara ou coroa)\b/;
+const A_ALGUEM = /["“”«»]|\b(pergunto|digo|falo|peco|voce|vc|tu|senhor|senhora)\b/;
+export const FAIXAS_DO_DESTINO = Object.freeze([
+  Object.freeze({ ate: 2, id: "nao", diz: "a sorte levou: não resistiu" }),
+  Object.freeze({ ate: 4, id: "em_parte", diz: "em parte: resistiu, mas com um preço" }),
+  Object.freeze({ ate: 6, id: "sim", diz: "a sorte ajudou: resistiu" }),
+]);
+const fnv = (s) => { let h = 0x811c9dc5; for (const ch of String(s)) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; } return h; };
+export function oDadoDoDestino(semente, pergunta) {
+  const d = (fnv(String(semente == null ? "" : semente) + "|destino|" + String(pergunta == null ? "" : pergunta)) % 6) + 1;
+  const f = FAIXAS_DO_DESTINO.find((x) => d <= x.ate) || FAIXAS_DO_DESTINO[FAIXAS_DO_DESTINO.length - 1];
+  return Object.freeze({ dado: d, faces: 6, id: f.id, diz: f.diz });
+}
+const semAcento = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+export function ePerguntaDoDestino(frase, cena) {
+  const c = lerCena(cena);
+  if (!c || typeof frase !== "string") return false;
+  const t = semAcento(frase).trim();
+  if (!/\?\s*$/.test(t) && !/^(sera que|e ai)\b/.test(t)) return false;
+  if (A_ALGUEM.test(t) || !PERGUNTA_DO_DESTINO.test(t)) return false;
+  return temMarca(c, "ameaca") || haPerigo(c);
 }
 
 /* ---------------- VALE ROLAGEM? ----------------
@@ -213,20 +298,47 @@ function pesosDe(cena, ctx) {
      `resposta`: para a pergunta que não rola, como a pessoa responde
        (franca, evasiva, recusa) — sinal para o Narrador, nunca dado. */
 export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
-  let veredito = vereditoDoCatalogo;
   const c = obj(ctx) ? ctx : {};
   const lida = lerCena(cena);
   if (!lida) {
     let por = null;
-    try { por = porQueNaoChama(veredito, c); } catch { por = "erro"; }
+    try { por = porQueNaoChama(vereditoDoCatalogo, c); } catch { por = "erro"; }
     return Object.freeze({ rola: ROLA_HOJE.includes(por), porque: por || "chama", diz: "", pesos: null, resposta: null });
   }
+  const r = decidir(vereditoDoCatalogo, lida, c);
+  if (r.rola || typeof c.frase !== "string" || c.parte) return r;
+  /* rodada 3: as ações encadeadas («aí eu…», «vou fazer o seguinte:») — a
+     régua julga cada ato e fica com o primeiro que tem oposição na cena */
+  let atos = [];
+  try { atos = atosDaFrase(c.frase); } catch { atos = []; }
+  for (const ato of atos) {
+    let v = null;
+    try { v = lerAcao(ato, obj(c.leitura) ? c.leitura : {}); } catch { v = null; }
+    let p = null;
+    try { p = decidir(v, lida, { ...c, frase: ato, parte: true }); } catch { p = null; }
+    if (p && p.rola) {
+      const ouviu = p.ouviu || (v && v.tipo === "teste" ? Object.freeze({ id: v.id, pericia: v.pericia || "", chave: v.chave || "", porta: "ato" }) : null);
+      return Object.freeze({ ...p, porque: "encadeada:" + p.porque, ouviu });
+    }
+  }
+  return r;
+}
+
+function decidir(vereditoDoCatalogo, lida, c) {
+  let veredito = vereditoDoCatalogo;
   const pesos = pesosDe(lida, c);
+  const moldura = typeof c.frase === "string" ? molduraDe(c.frase) : "";
+  /* rodada 3: o dado do destino — só quando o catálogo não ouviu ato */
+  if ((!veredito || veredito.tipo !== "teste") && typeof c.frase === "string" && ePerguntaDoDestino(c.frase, lida)) {
+    const destino = oDadoDoDestino(obj(c.leitura) ? c.leitura.semente : "", c.frase);
+    return Object.freeze({ rola: true, porque: "destino", diz: "a sorte decide: o Mestre rola sem perícia", pesos, resposta: null,
+      ouviu: Object.freeze({ id: "destino", pericia: "", chave: "", porta: "destino" }), destino, moldura });
+  }
   /* M5: o catálogo não ouviu ato nenhum — a escuta da cena tenta pela
      estrutura da frase (`ctx.frase`, lida com `ctx.leitura`, o contexto de
      `lerAcao`). Sem frase, nada muda. */
   let ouvido = null;
-  if ((!veredito || veredito.tipo === "livre") && typeof c.frase === "string") {
+  if ((!veredito || veredito.tipo === "livre" || veredito.tipo === "naoSePede") && typeof c.frase === "string") {
     try { ouvido = escutarComCena(c.frase, lida, c.leitura); } catch { ouvido = null; }
     if (ouvido) veredito = ouvido;
   }
@@ -242,7 +354,7 @@ export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
     try { cala = !!r.cala(veredito, c); } catch { cala = true; }
     if (cala) {
       const resposta = r.id === "naoETeste" ? respostaDaPergunta(lida, "") : null;
-      return Object.freeze({ rola: false, porque: r.id, diz: r.porque, pesos, resposta: resposta ? resposta.id : null, ouviu });
+      return Object.freeze({ rola: false, porque: r.id, diz: r.porque, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura });
     }
   }
   const v = veredito;
@@ -254,17 +366,17 @@ export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
     bicho: haOposicao(lida, { sobre: "criatura", quem }),
     coisa: haOposicao(lida, { sobre: "coisa" }),
     custo: custoDeFalhar(lida),
-    ctx: c, frase: typeof c.frase === "string" ? c.frase : "",
+    ctx: c, frase: typeof c.frase === "string" ? c.frase : "", moldura,
   };
   for (const r of REGUA_DO_MOMENTO) {
     let vale = false;
     try { vale = !!r.quando(x); } catch { vale = false; }
     if (vale) {
       const resposta = r.id === "pergunta" ? respostaDaPergunta(lida, quem) : null;
-      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu });
+      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura });
     }
   }
-  return Object.freeze({ rola: true, porque: "comoSempre", diz: "", pesos, resposta: null, ouviu });
+  return Object.freeze({ rola: true, porque: "comoSempre", diz: "", pesos, resposta: null, ouviu, moldura });
 }
 
 /* ---------------- O DADO ESPONTÂNEO ----------------

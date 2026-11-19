@@ -19,6 +19,8 @@ import { porQueNaoChama } from "../src/motor/o-mestre-chama.js";
 import {
   FAMILIA_DO_DESAFIO, FAMILIA_DO_IMPROVISO, familiaDaAcao, PERGUNTA_DA_ESCADA, CEDE_COM_MEDO, REGUA_DO_MOMENTO,
   valeRolagem, PORQUE_DO_ESPONTANEO, oQueACenaChama, FAMILIAS_DA_CONVERSA, FAMILIAS_DO_SABER,
+  MOLDURAS_DE_RISCO, FAMILIAS_DO_IMPOSSIVEL, FAMILIAS_DA_ALAVANCA, FAMILIAS_DO_EVIDENTE,
+  PERGUNTA_DO_DESTINO, FAIXAS_DO_DESTINO, oDadoDoDestino, ePerguntaDoDestino,
 } from "../src/motor/a-regua-do-momento.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
@@ -216,6 +218,63 @@ sec("M5. o treino: as linhas novas e a escuta da cena (18/11/2026)");
   const vDisc = ler(disc);
   t("o discurso que o catálogo leu pela Presença passa pela conversa: com quem está disposto, não rola", vDisc && vDisc.tipo === "teste"
     && valeRolagem(vDisc, cenaDe({ pessoas: [P("aldeões", "disposta")] }), {}).porque === "dispostoCede", vDisc && vDisc.id);
+}
+
+sec("R3. o treino da rodada 3: a moldura, os estados que faltavam e o dado do destino (18/11/2026)");
+{
+  const ouve = (frase, cena, ctx) => valeRolagem(ler(frase), cena, { ...(ctx || {}), frase, leitura: CTX });
+  const C = (estados) => cenaDe({ cena: { estados } });
+  const coisa = (...estados) => cenaDe({ coisas: [{ nome: "a coisa", estados }] });
+  t("as famílias das linhas novas são famílias da régua; as molduras de risco são sinais da escuta",
+    [...FAMILIAS_DO_IMPOSSIVEL, ...FAMILIAS_DA_ALAVANCA, ...FAMILIAS_DO_EVIDENTE].every((f) => Object.values(FAMILIA_DO_DESAFIO).includes(f))
+    && MOLDURAS_DE_RISCO.every((m) => ["pedido", "licenca", "tentativa"].includes(m)));
+  /* os estados que faltavam, cada um com a sua linha */
+  t("o que já foi tentado não rola de novo", ouve("escalo o muro pelo lado da hera", C(["perigo_fisico", "ja_testado"])).porque === "jaTestado");
+  t("a pessoa já convencida não precisa de dado", ouve("tento convencer o guarda a me deixar passar", cenaDe({ pessoas: [P("guarda", "ja_convencida")] })).porque === "jaResolvido");
+  t("o selado não cede: o mundo decide", ouve("empurro a pedra que trava a passagem", coisa("selado")).porque === "impossivel"
+    && ouve("empurro a pedra que trava a passagem", coisa()).rola);
+  t("a alavanca do herói resolve a tranca e a conversa — salvo contra quem é hostil",
+    ouve("forço a fechadura com a gazua", cenaDe({ coisas: [{ nome: "cofre", estados: ["trancado"] }], cena: { estados: ["heroi_tem_alavanca"] } })).porque === "alavanca"
+    && ouve("tento convencer o guarda a me deixar passar", cenaDe({ pessoas: [P("guarda", "motivo_para_negar")], cena: { estados: ["heroi_tem_alavanca"] } })).porque === "alavanca"
+    && ouve("tento convencer o guarda a me deixar passar", cenaDe({ pessoas: [P("guarda", "hostil")], cena: { estados: ["heroi_tem_alavanca"] } })).rola);
+  t("o que está à vista não se procura", ouve("vasculho o mercado", cenaDe({ coisas: [{ nome: "mercado", estados: ["ha_algo_escondido", "a_vista"] }] })).porque === "aVista");
+  t("o som abafado rola; o claro não", ouve("encosto o ouvido na porta para ouvir a conversa", C(["som_abafado"])).porque === "somAbafado"
+    && !ouve("encosto o ouvido na porta para ouvir a conversa", C(["som_claro"])).rola);
+  t("o moribundo faz o curativo rolar mesmo sem perigo nem pressa", ouve("trato o ferimento antes que ele piore", cenaDe({ pessoas: [P("ferido", "moribunda")] })).porque === "socorroUrgente"
+    && !ouve("trato o ferimento antes que ele piore", cenaDe({ pessoas: [P("ferido")] })).rola);
+  t("o herói mal (bêbado, ferido) faz a travessia calma rolar, e a penalidade pesa", ouve("escalo o muro pelo lado da hera", C(["heroi_penalizado"])).porque === "corpoQueFalha"
+    && ouve("escalo o muro pelo lado da hera", C(["heroi_penalizado"])).pesos.penalidade === true && ouve("escalo o muro pelo lado da hera", C([])).porque === "travessiaCalma");
+  t("o que o herói já sabe, dito pela cena, não rola; o que não resiste não se força",
+    ouve("o que eu sei sobre a ponte velha?", C(["heroi_ja_sabe"])).porque === "heroiJaSabe"
+    && ouve("empurro a pedra que trava a passagem", coisa("sem_resistencia")).porque === "semResistencia");
+  t("o que se move pune e apressa: saltar da carroça em movimento rola", ouve("pulo da carroça para a estrada", coisa("em_movimento")).rola
+    && !ouve("pulo da carroça para a estrada", coisa()).rola);
+  /* a moldura como peso, nunca sozinha contra a cena */
+  t("a fala que só a escuta ouviu, com licença, a quem não está do seu lado, rola", ouve("posso pedir pra ele, eu te pago o dobro se você abrir o portão?", cenaDe({ pessoas: [P("porteiro")] })).porque === "falaComLicenca");
+  t("a mesma licença a quem está disposto não rola", !ouve("posso pedir pra ele, eu te pago o dobro se você abrir o portão?", cenaDe({ pessoas: [P("porteiro", "disposta")] })).rola);
+  t("com a cena calma, «posso abrir a porta?» não rola (a moldura não decide sozinha)", !ouve("posso abrir a porta?", cenaDe({})).rola);
+  /* as ações encadeadas: fica o ato que tem oposição */
+  const enc = ouve("reviro a despensa. aí eu sigo pé ante pé até a escada", coisa("vigiado"));
+  t("as ações encadeadas se partem, e a régua fica com o ato que tem oposição", enc.rola && /^encadeada:/.test(enc.porque) && enc.ouviu && enc.ouviu.id === "furtar_se", enc.porque);
+  t("encadeadas numa cena calma não rolam", !ouve("reviro a despensa. aí eu sigo pé ante pé até a escada", coisa()).rola);
+  /* o jogador pede o dado ou nomeia a perícia: a régua decide pela cena */
+  t("«mando uma percepção» com algo escondido rola; sem nada, não", ouve("mando uma percepção", coisa("ha_algo_escondido")).rola && !ouve("mando uma percepção", coisa()).rola);
+  t("«preciso rolar alguma coisa pra forçar a fechadura do baú?»: trancado rola, aberto não",
+    ouve("preciso rolar alguma coisa pra forçar a fechadura do baú?", coisa("trancado")).rola && !ouve("preciso rolar alguma coisa pra forçar a fechadura do baú?", coisa()).rola);
+  /* o dado do destino */
+  const dest = "o frasco que eu levava sobreviveu?";
+  const d1 = ouve(dest, coisa("ameacado"));
+  t("a pergunta pelo que a sorte fez com a coisa, logo depois do tranco, é o dado do destino (sem perícia)", d1.rola && d1.porque === "destino" && d1.ouviu.pericia === "" && d1.destino && d1.destino.faces === 6);
+  t("sem tranco nem perigo, a mesma pergunta não rola", !ouve(dest, coisa()).rola);
+  t("dirigida a alguém, é pergunta, não destino", !ouve("você acha que o frasco sobreviveu?", coisa("ameacado")).rola);
+  t("ePerguntaDoDestino só com cena; PERGUNTA_DO_DESTINO conhece o «sobrou?»", !ePerguntaDoDestino(dest, null) && PERGUNTA_DO_DESTINO.test("qual das flechas sobrou?"));
+  const faces = new Set(Array.from({ length: 60 }, (_, k) => oDadoDoDestino("s" + k, dest).dado));
+  t("o dado do destino é um d6 determinístico, e as faixas cobrem as seis faces",
+    JSON.stringify(oDadoDoDestino("x", dest)) === JSON.stringify(oDadoDoDestino("x", dest)) && faces.size === 6 && [...faces].every((d) => d >= 1 && d <= 6)
+    && FAIXAS_DO_DESTINO[FAIXAS_DO_DESTINO.length - 1].ate === 6 && Object.isFrozen(FAIXAS_DO_DESTINO));
+  /* sem cena, nada disto corre */
+  const semCena = valeRolagem(ler(dest), null, { frase: dest, leitura: CTX });
+  t("sem cena, a frase do destino é o Mestre de hoje", semCena.porque === (porQueNaoChama(ler(dest), {}) || "chama") && !("destino" in semCena));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

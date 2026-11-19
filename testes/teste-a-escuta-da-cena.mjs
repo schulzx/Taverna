@@ -20,6 +20,8 @@ import { lerAcao, comoSeDiz } from "../src/desafios.js";
 import {
   MOLDURAS_DO_ATO, ATO_EM_SUBSTANTIVO, FORMAS_DA_FALA, FORMAS_DO_ATO, PERGUNTAS_QUE_SAO_GESTO, PLURAL_QUE_FICA,
   escutarComCena,
+  ESCRITA_DA_MESA, MOLDURAS_COMO_SINAL, molduraDe, PRESENTE_IRREGULAR, noPresente, CONECTORES_DE_ATOS, atosDaFrase,
+  PERICIA_NOMEADA, periciaNomeada, MOLDURA_DO_PALPITE, PERGUNTA_DE_INFORMACAO, PALPITE_DA_CENA,
 } from "../src/motor/a-escuta-da-cena.js";
 
 let ok = 0, mal = 0;
@@ -88,6 +90,46 @@ sec("2. as portas");
     && idDe("tem pegada nessa lama?", nada) === null);
 }
 
+sec("R3. como o jogador brasileiro diz o que faz (estudo §10.4; rodada 3, 18/11/2026)");
+{
+  const nada = cenaDe({});
+  t("as tabelas novas são congeladas", [ESCRITA_DA_MESA, MOLDURAS_COMO_SINAL, PRESENTE_IRREGULAR, PERICIA_NOMEADA, PALPITE_DA_CENA].every(Object.isFrozen)
+    && CONECTORES_DE_ATOS instanceof RegExp && MOLDURA_DO_PALPITE instanceof RegExp && PERGUNTA_DE_INFORMACAO instanceof RegExp);
+  /* a moldura como sinal */
+  t("a moldura diz o sinal: licença, tentativa, anúncio, pedido do dado",
+    molduraDe("posso subir no muro?") === "licenca" && molduraDe("dá pra eu pular?") === "licenca" && molduraDe("vou tentar pular pro telhado") === "tentativa"
+    && molduraDe("vou pegar a tocha") === "anuncio" && molduraDe("deixa eu ver isso") === "anuncio" && molduraDe("preciso rolar alguma coisa?") === "pedido"
+    && molduraDe("mando uma percepção") === "pedido" && molduraDe("reviro a despensa") === "" && molduraDe(null) === "");
+  /* o infinitivo no presente */
+  t("o infinitivo volta ao presente: regular, por grafia e irregular",
+    noPresente("escalar") === "escalo" && noPresente("esconder") === "escondo" && noPresente("subir") === "subo" && noPresente("seguir") === "sigo"
+    && noPresente("proteger") === "protejo" && noPresente("conhecer") === "conheco" && noPresente("fazer") === "faco" && noPresente("") === "");
+  t("«vou + infinitivo» é ouvido pelo verbo de dentro", idDe("vou me esconder atrás da carroça", nada) === "furtar_se" && (ouve("vou me esconder atrás da carroça", nada) || {}).escuta === "futuro");
+  t("«a gente vai…» também", idDe("a gente vai escalar o muro pelo lado da hera", nada) === "escalar");
+  /* a escrita e o tu */
+  t("«tu acha que dá pra eu…?» sai, e o ato de dentro é ouvido", idDe("tu acha que dá pra eu escalar a árvore?", nada) === "escalar");
+  t("a escrita do chat vira a palavra inteira", ESCRITA_DA_MESA.some((x) => x.por === "voce") && idDe("vc acha que da pra eu escalar a arvore?", nada) === "escalar");
+  /* as ações encadeadas */
+  t("as ações encadeadas se partem nos conectores", JSON.stringify(atosDaFrase("aí eu pego a tocha. depois eu desço a escada")) === JSON.stringify(["pego a tocha", "desco a escada"])
+    && JSON.stringify(atosDaFrase("vou fazer o seguinte: distraio o guarda e vocês passam")) === JSON.stringify(["distraio o guarda", "voce passam"]) && atosDaFrase("reviro a despensa").length === 0);
+  t("o ato que começa no infinitivo herda a tentativa", atosDaFrase("tento acalmar o povo e convencer eles a fugir").includes("tento convencer eles a fugir"));
+  /* a perícia nomeada, também em inglês */
+  t("a perícia nomeada, em português ou em inglês", periciaNomeada("mando uma percepção") === "percepcao" && periciaNomeada("meu stealth") === "furtividade"
+    && periciaNomeada("jogo um intimidante nele") === "intimidacao" && periciaNomeada("vou na estrada") === "");
+  t("a perícia nomeada diz o desafio do catálogo", idDe("mando uma percepção", nada) === "buscar" || idDe("mando uma percepção", nada) === "investigar");
+  /* a barganha, a ameaça pelo objeto à mostra, a furtividade pelo advérbio, ler a cara */
+  const porteiro = cenaDe({ pessoas: [P("porteiro", "motivo_para_negar")] });
+  t("«e se eu…» é barganha", idDe("e se eu oferecer metade do ouro?", porteiro) === "convencer");
+  t("a arma à mostra é ameaça; sacada para atacar, não", idDe("mostro o machado ainda sujo de sangue", porteiro) === "intimidar" && idDe("mostro o machado e ataco", porteiro) !== "intimidar");
+  t("o advérbio diz a furtividade", idDe("vou devagarinho até a carroça, sem chamar atenção", nada) === "furtar_se");
+  t("ler a pessoa pela cara dela", idDe("reparo se o mercador muda de cara", cenaDe({ pessoas: [P("mercador")] })) === "mentira");
+  /* o palpite da cena: a moldura de risco, sem ato ouvido, e a cena que se opõe */
+  const vigia = cenaDe({ coisas: [{ nome: "pátio", estados: ["vigiado"] }] });
+  t("o palpite: «posso passar ali?» onde há vigia é esgueirar; sem vigia, nada", idDe("posso passar ali do outro lado?", vigia) === "furtar_se" && idDe("posso passar ali do outro lado?", nada) === null
+    && (ouve("posso passar ali do outro lado?", vigia) || {}).escuta === "palpite");
+  t("o palpite nunca é a pergunta pela informação", idDe("posso saber quem mora ali?", vigia) === null && PALPITE_DA_CENA.every((p) => typeof p.se === "function"));
+}
+
 sec("3. sem cena não há escuta; lixo não estoura");
 {
   t("cena null devolve null", ouve("dá pra eu escalar a árvore?", null) === null);
@@ -106,10 +148,16 @@ sec("4. a catraca dos nossos corpus");
      indevido: é o teto do que a régua teria de calar. */
   const GENEROSA = cenaDe({ pessoas: [P("guarda")], coisas: [{ nome: "lugar", estados: ["ha_algo_escondido"] }], cena: { estados: ["assunto_raro"] } });
   const SEM_TESTE = ["mover", "conversa", "livre", "atacar", "naoSePede"];
+  /* SUBIU no treino da rodada 3 (18/11/2026), só o «ouve», e só para cima:
+     a escrita da mesa, o «vou + infinitivo», a perícia nomeada, as molduras
+     novas e o palpite da cena ouvem mais do que o catálogo perde (era 10 e
+     26). O «ouve onde o rótulo é sem teste» ficou onde estava: duas formas
+     que o subiam (o palpite com «tentando» no meio da narração, a arma
+     sacada antes do ataque) foram apertadas até ele voltar a 31 e 9. */
   const CATRACA = {
-    data: "2026-11-18 (M5)",
-    "corpus-da-mesa": { ouveMin: 10, falsasMax: 31 },
-    "corpus-das-situacoes": { ouveMin: 26, falsasMax: 9 },
+    data: "2026-11-18 (rodada 3)",
+    "corpus-da-mesa": { ouveMin: 11, falsasMax: 31 },
+    "corpus-das-situacoes": { ouveMin: 31, falsasMax: 9 },
   };
   for (const nome of ["corpus-da-mesa", "corpus-das-situacoes"]) {
     const C = JSON.parse(fs.readFileSync(new URL(`./${nome}.json`, import.meta.url), "utf8"));

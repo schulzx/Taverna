@@ -45,6 +45,31 @@
      proprio   é do próprio herói: ele conhece, não há o que descobrir
      escasso   é raro de achar: procurar custa, e a falha custa tempo
      comum     é coisa de toda feira: saber dela não pede dado
+   Rodada 3 do treino (18/11/2026) — as marcas dos estados que o exame
+   listou como faltando (rodada_3.estados_que_faltam no JSON):
+     abafa      há som, mas abafado: ouvir custa (rola)
+     treinado   o herói estudou o campo: a pergunta de saber sobre o
+                assunto da cena vira gesto (rola) — sem isto, responde-se o
+                que todo mundo sabe (estudo §10.4 nº 10, §10.5 nº 69)
+     sabe       o herói já sabe ESTE assunto (o teste anterior, o passado
+                dele): não rola
+     testado    a ação já foi tentada aqui e o resultado ficou: não rola de
+                novo (§8 nº 37, 38)
+     resolvido  já está resolvido (a pessoa já convencida): não rola (nº 27)
+     alavanca   o preparo do herói resolve (a senha, a chave, o documento
+                bom, a prova à mostra): não rola — salvo contra quem é hostil
+                (nº 73, 74, 76 contra nº 75)
+     impossivel o mundo decide que não: selado, sabotado; não rola (nº 84, 85)
+     morrendo   a vida de alguém se esvai: socorrer rola (nº 62)
+     penaliza   o herói está mal (bêbado, ferido): o que seria calmo, rola,
+                e a penalidade pesa no número (nº 91)
+     evidente   está à vista: procurar, rastrear ou saber não rolam (nº 70, 59)
+     rastro     há rastro a seguir (fresco ou velho): rastrear tem o que achar
+     ameaca     a coisa acabou de passar por um tranco (o barco virou, a
+                queda): a pergunta pelo que a sorte fez é o dado do destino
+     livre      a coisa não resiste (entreaberta, solta): forçar não rola
+   O herói não tem lugar próprio na forma da cena: os estados dele são da
+   CENA, com o prefixo «heroi_» (a forma lida fica a mesma, e o save também).
    `efeito`: como o jogador sente o estado na narração — em PT-BR, sem o
    nome do mecanismo (lei «o sistema não fala de si mesmo»). */
 const E = (id, de, marcas, efeito, chama) => Object.freeze({
@@ -52,7 +77,12 @@ const E = (id, de, marcas, efeito, chama) => Object.freeze({
   opoe: !!marcas.opoe, cede: !!marcas.cede, facilita: !!marcas.facilita, esconde: !!marcas.esconde,
   pune: !!marcas.pune, espalha: !!marcas.espalha, nota: !!marcas.nota, apressa: !!marcas.apressa,
   revela: !!marcas.revela, inerte: !!marcas.inerte, cobre: !!marcas.cobre, proprio: !!marcas.proprio,
-  escasso: !!marcas.escasso, comum: !!marcas.comum, chama: chama || "", efeito,
+  escasso: !!marcas.escasso, comum: !!marcas.comum,
+  abafa: !!marcas.abafa, treinado: !!marcas.treinado, sabe: !!marcas.sabe, testado: !!marcas.testado,
+  resolvido: !!marcas.resolvido, alavanca: !!marcas.alavanca, impossivel: !!marcas.impossivel,
+  morrendo: !!marcas.morrendo, penaliza: !!marcas.penaliza, evidente: !!marcas.evidente,
+  rastro: !!marcas.rastro, ameaca: !!marcas.ameaca, livre: !!marcas.livre,
+  chama: chama || "", efeito,
 });
 
 export const ESTADOS_DA_CENA = Object.freeze([
@@ -68,6 +98,11 @@ export const ESTADOS_DA_CENA = Object.freeze([
   /* M5: quem não pode notar nem responder */
   E("morta", "pessoa", { inerte: true }, "não se mexe, e não vai mais se mexer"),
   E("desacordada", "pessoa", { inerte: true }, "respira, mas não está aqui"),
+  /* rodada 3: quem já disse sim, quem está morrendo, quem dorme (e pode
+     acordar: nota, mas não responde a quem fala baixo) */
+  E("ja_convencida", "pessoa", { facilita: true, resolvido: true }, "já disse sim, e vai cumprir"),
+  E("moribunda", "pessoa", { morrendo: true }, "a respiração falha, e o sangue não para"),
+  E("dormindo", "pessoa", { nota: true }, "ressona; um barulho mais alto e acorda"),
   /* criatura */
   E("faminta", "criatura", { opoe: true, pune: true }, "fareja o ar e baba"),
   E("acuada", "criatura", { opoe: true, pune: true }, "encolhida contra a parede, mostra os dentes"),
@@ -88,6 +123,16 @@ export const ESTADOS_DA_CENA = Object.freeze([
   E("raro_de_achar", "coisa", { escasso: true }, "não é coisa que se ache em qualquer canto"),
   E("coisa_comum", "coisa", { comum: true }, "coisa de toda feira, qualquer um conhece"),
   E("escorregadio", "coisa", { pune: true }, "liso e molhado, não dá onde firmar"),
+  /* rodada 3: o selado, o que não resiste, o que está à vista, o rastro, o
+     que se move, o que acabou de passar por um tranco */
+  E("selado", "coisa", { impossivel: true }, "não cede, e não vai ceder: algo mais forte o prende"),
+  E("sem_resistencia", "coisa", { livre: true }, "já está aberto, ou solto: basta um empurrão"),
+  E("a_vista", "coisa", { evidente: true }, "está ali, bem diante dos olhos"),
+  E("rastro_fresco", "coisa", { rastro: true }, "marcas ainda úmidas, de pouco tempo"),
+  E("rastro_velho", "coisa", { rastro: true }, "marcas gastas, que a chuva e o vento já comeram"),
+  E("rastro_obvio", "coisa", { rastro: true, evidente: true }, "um caminho de marcas que qualquer um seguiria"),
+  E("em_movimento", "coisa", { pune: true, apressa: true }, "corre, sacode, não espera ninguém"),
+  E("ameacado", "coisa", { ameaca: true }, "acabou de levar um tranco, e ninguém sabe ainda como ficou"),
   /* a cena */
   E("com_pressa", "cena", { apressa: true }, "o tempo aperta"),
   E("com_testemunhas", "cena", { nota: true, espalha: true }, "há olhos em toda parte"),
@@ -98,6 +143,15 @@ export const ESTADOS_DA_CENA = Object.freeze([
   E("assunto_raro", "cena", {}, "uma coisa que nem todo mundo reconheceria", "saberes"),
   /* M5: o céu fechado */
   E("ceu_encoberto", "cena", { cobre: true }, "nem sol nem estrela atravessam as nuvens"),
+  /* rodada 3: o som abafado, o já tentado, o já resolvido */
+  E("som_abafado", "cena", { abafa: true }, "vozes do outro lado, mas as palavras se perdem"),
+  E("ja_testado", "cena", { testado: true }, "você já tentou isto, e o resultado ficou"),
+  E("ja_resolvido", "cena", { resolvido: true }, "isto já ficou acertado antes"),
+  /* rodada 3: o herói (de dono «cena»; veja as marcas acima) */
+  E("heroi_treinado", "cena", { treinado: true }, "você estudou isto, e o olho sabe onde procurar"),
+  E("heroi_ja_sabe", "cena", { sabe: true }, "você já sabe isto: aprendeu antes"),
+  E("heroi_tem_alavanca", "cena", { alavanca: true }, "você traz o que abre esta porta: a senha, a chave, o papel certo"),
+  E("heroi_penalizado", "cena", { penaliza: true }, "a cabeça gira e o corpo não obedece como devia"),
 ]);
 
 /* o lugar de cada um na cena, e a chave da lista */

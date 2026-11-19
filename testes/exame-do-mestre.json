@@ -967,7 +967,8 @@
      "multidão"
     ],
     "ha_algo_escondido": false,
-    "nota": "o contrabandista está sozinho no meio da praça, à vista"
+    "nota": "o contrabandista está sozinho no meio da praça, à vista",
+    "a_vista": true
    },
    "frase": "procuro o contrabandista de chapéu vermelho no meio do povo",
    "esperado": {
@@ -980,7 +981,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P13",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "a_vista"
+   ]
   },
   {
    "id": "E042",
@@ -2681,7 +2685,8 @@
      "preso"
     ],
     "disposta": true,
-    "nota": "já convencido a colaborar"
+    "nota": "já convencido a colaborar",
+    "ja_convencida": true
    },
    "frase": "agora me diz, onde fica o covil?",
    "esperado": {
@@ -2692,7 +2697,10 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "A"
+   "metade": "A",
+   "estado_da_rodada_3": [
+    "ja_convencida"
+   ]
   },
   {
    "id": "E114",
@@ -2703,7 +2711,8 @@
      "preso"
     ],
     "disposta": true,
-    "nota": "já convencido a colaborar"
+    "nota": "já convencido a colaborar",
+    "ja_convencida": true
    },
    "frase": "pergunto pro preso onde a gangue se esconde e quantos são",
    "esperado": {
@@ -2715,7 +2724,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "ja_convencida"
+   ]
   },
   {
    "id": "E115",
@@ -2726,7 +2738,8 @@
      "preso"
     ],
     "disposta": true,
-    "nota": "já convencido a colaborar"
+    "nota": "já convencido a colaborar",
+    "ja_convencida": true
    },
    "frase": "pressiono ele pra entregar o esconderijo",
    "esperado": {
@@ -2739,7 +2752,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P30",
-   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto",
+   "estado_da_rodada_3": [
+    "ja_convencida"
+   ]
   },
   {
    "id": "E116",
@@ -3097,7 +3113,8 @@
    "situacao": 33,
    "cena": {
     "lugar": "cais",
-    "heroi": "cresceu no porto"
+    "heroi": "cresceu no porto",
+    "heroi_ja_sabe": true
    },
    "frase": "eu conheço essa guilda dos estivadores?",
    "esperado": {
@@ -3109,7 +3126,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "par": "P31"
+   "par": "P31",
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E132",
@@ -3138,7 +3158,8 @@
    "situacao": 33,
    "cena": {
     "lugar": "cais",
-    "heroi": "cresceu no porto"
+    "heroi": "cresceu no porto",
+    "heroi_ja_sabe": true
    },
    "frase": "o que eu sei sobre a guilda do porto?",
    "esperado": {
@@ -3151,7 +3172,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P32",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E134",
@@ -3181,7 +3205,8 @@
    "situacao": 33,
    "cena": {
     "lugar": "cais",
-    "heroi": "cresceu no porto"
+    "heroi": "cresceu no porto",
+    "heroi_ja_sabe": true
    },
    "frase": "ja ouvi falar desses estivadores?",
    "esperado": {
@@ -3193,7 +3218,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "par": "P33"
+   "par": "P33",
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E136",
@@ -3248,7 +3276,8 @@
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
     "heroi": "foi sacerdote desse culto",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_ja_sabe": true
    },
    "frase": "eu reconheço esse simbolo?",
    "esperado": {
@@ -3261,7 +3290,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P34",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E139",
@@ -3293,7 +3325,8 @@
     "lugar": "parede da cripta",
     "nota": "símbolo de olho com chifres",
     "heroi": "foi sacerdote desse culto",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_ja_sabe": true
    },
    "frase": "esse desenho é de algum culto que eu conheça?",
    "esperado": {
@@ -3305,7 +3338,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "par": "P35"
+   "par": "P35",
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E141",
@@ -3469,7 +3505,8 @@
    "cena": {
     "lugar": "biblioteca",
     "nota": "o herói acabou de passar num bom teste sobre dragões",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_ja_sabe": true
    },
    "frase": "e dragão tem medo de raio?",
    "esperado": {
@@ -3482,7 +3519,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P38",
-   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto"
+   "rodada_2": "par de um item que vazou na lista de erros da M2 (a mesma frase); passou da B para a A junto",
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E149",
@@ -3514,7 +3554,8 @@
    "cena": {
     "lugar": "biblioteca",
     "nota": "o herói acabou de passar num bom teste sobre dragões",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_ja_sabe": true
    },
    "frase": "esses dragões, raio machuca eles?",
    "esperado": {
@@ -3526,7 +3567,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "par": "P39"
+   "par": "P39",
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E151",
@@ -3556,7 +3600,8 @@
    "situacao": 38,
    "cena": {
     "lugar": "estrada",
-    "nota": "fato dito em jogo na sessão anterior"
+    "nota": "fato dito em jogo na sessão anterior",
+    "heroi_ja_sabe": true
    },
    "frase": "como era mesmo o nome do capitão que a gente conheceu ontem?",
    "esperado": {
@@ -3567,14 +3612,18 @@
     "base": "padrao"
    },
    "rodada": 1,
-   "metade": "A"
+   "metade": "A",
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E153",
    "situacao": 38,
    "cena": {
     "lugar": "estrada",
-    "nota": "fato dito em jogo na sessão anterior"
+    "nota": "fato dito em jogo na sessão anterior",
+    "heroi_ja_sabe": true
    },
    "frase": "lembro o que o velho falou sobre a mina?",
    "esperado": {
@@ -3586,14 +3635,18 @@
    },
    "rodada": 1,
    "metade": "A",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E154",
    "situacao": 38,
    "cena": {
     "lugar": "estrada",
-    "nota": "fato dito em jogo na sessão anterior"
+    "nota": "fato dito em jogo na sessão anterior",
+    "heroi_ja_sabe": true
    },
    "frase": "qual era a senha que o porteiro deu pra gente?",
    "esperado": {
@@ -3605,7 +3658,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E155",
@@ -4258,7 +4314,8 @@
    "cena": {
     "lugar": "estrada",
     "nota": "carroça em movimento",
-    "perigo_fisico": true
+    "perigo_fisico": true,
+    "em_movimento": true
    },
    "frase": "pulo da carroça",
    "esperado": {
@@ -4272,7 +4329,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "par": "P49"
+   "par": "P49",
+   "estado_da_rodada_3": [
+    "em_movimento"
+   ]
   },
   {
    "id": "E185",
@@ -4299,7 +4359,8 @@
    "cena": {
     "lugar": "estrada",
     "nota": "carroça em movimento",
-    "perigo_fisico": true
+    "perigo_fisico": true,
+    "em_movimento": true
    },
    "frase": "salto da carroça e corro pro mato",
    "esperado": {
@@ -4314,7 +4375,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P50",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "em_movimento"
+   ]
   },
   {
    "id": "E187",
@@ -4342,7 +4406,8 @@
    "cena": {
     "lugar": "estrada",
     "nota": "carroça em movimento",
-    "perigo_fisico": true
+    "perigo_fisico": true,
+    "em_movimento": true
    },
    "frase": "me jogo da carroça antes dela entrar na ponte",
    "esperado": {
@@ -4356,7 +4421,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "em_movimento"
+   ]
   },
   {
    "id": "E189",
@@ -4628,7 +4696,8 @@
    "cena": {
     "lugar": "portão do armazém",
     "trancado": false,
-    "nota": "portão entreaberto"
+    "nota": "portão entreaberto",
+    "sem_resistencia": true
    },
    "frase": "empurro o portão com força",
    "esperado": {
@@ -4641,7 +4710,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P56",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "sem_resistencia"
+   ]
   },
   {
    "id": "E202",
@@ -5424,7 +5496,8 @@
    "cena": {
     "lugar": "trilha na mata",
     "nota": "pegadas frescas na lama",
-    "ha_algo_escondido": true
+    "ha_algo_escondido": true,
+    "rastro_fresco": true
    },
    "frase": "sigo as pegadas na lama",
    "esperado": {
@@ -5437,7 +5510,10 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "A"
+   "metade": "A",
+   "estado_da_rodada_3": [
+    "rastro_fresco"
+   ]
   },
   {
    "id": "E236",
@@ -5445,7 +5521,8 @@
    "cena": {
     "lugar": "trilha na mata",
     "nota": "pegadas frescas na lama",
-    "ha_algo_escondido": true
+    "ha_algo_escondido": true,
+    "rastro_fresco": true
    },
    "frase": "vou atrás do rastro",
    "esperado": {
@@ -5458,7 +5535,10 @@
     "base": "numero"
    },
    "rodada": 1,
-   "metade": "A"
+   "metade": "A",
+   "estado_da_rodada_3": [
+    "rastro_fresco"
+   ]
   },
   {
    "id": "E237",
@@ -5466,7 +5546,8 @@
    "cena": {
     "lugar": "trilha na mata",
     "nota": "pegadas frescas na lama",
-    "ha_algo_escondido": true
+    "ha_algo_escondido": true,
+    "rastro_fresco": true
    },
    "frase": "dá pra seguir essas pegadas? quero saber pra onde foram",
    "esperado": {
@@ -5480,7 +5561,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "rastro_fresco"
+   ]
   },
   {
    "id": "E238",
@@ -5511,7 +5595,8 @@
    "cena": {
     "lugar": "trilha na mata",
     "nota": "pegadas frescas na lama",
-    "ha_algo_escondido": true
+    "ha_algo_escondido": true,
+    "rastro_fresco": true
    },
    "frase": "tem rastro por aqui?",
    "esperado": {
@@ -5526,7 +5611,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P65",
-   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B"
+   "rodada_2": "vazou na lista de erros da M2 (antes da repartição); passou da B para a A, e um par novo tomou o lugar dele na B",
+   "estado_da_rodada_3": [
+    "rastro_fresco"
+   ]
   },
   {
    "id": "E240",
@@ -5557,7 +5645,8 @@
    "cena": {
     "lugar": "trilha na mata",
     "nota": "pegadas frescas na lama",
-    "ha_algo_escondido": true
+    "ha_algo_escondido": true,
+    "rastro_fresco": true
    },
    "frase": "procuro pegadas no chão",
    "esperado": {
@@ -5572,7 +5661,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P66",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "rastro_fresco"
+   ]
   },
   {
    "id": "E242",
@@ -6317,7 +6409,8 @@
     "lugar": "estrada da serra",
     "nota": "planta estranha",
     "heroi": "estudou ervas",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_treinado": true
    },
    "frase": "que planta é essa?",
    "esperado": {
@@ -6331,7 +6424,10 @@
    },
    "rodada": 1,
    "metade": "A",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E276",
@@ -6432,7 +6528,8 @@
     "lugar": "estrada da serra",
     "nota": "planta estranha à beira do caminho",
     "heroi": "estudou ervas",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_treinado": true
    },
    "frase": "seguimos pela estrada da serra",
    "esperado": {
@@ -6447,7 +6544,10 @@
    "rodada": 1,
    "metade": "A",
    "par": "P73",
-   "espontaneo": true
+   "espontaneo": true,
+   "estado_da_rodada_3": [
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E281",
@@ -6673,7 +6773,8 @@
     ],
     "nota": "assunto obscuro aparece",
     "heroi": "estudou história",
-    "assunto_raro": true
+    "assunto_raro": true,
+    "heroi_treinado": true
    },
    "frase": "o velho começa a falar da Ordem do Corvo e eu fico ouvindo",
    "esperado": {
@@ -6689,7 +6790,10 @@
    "metade": "A",
    "par": "P78",
    "espontaneo": true,
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E291",
@@ -7146,7 +7250,8 @@
      "preso"
     ],
     "disposta": true,
-    "nota": "já convencido a colaborar"
+    "nota": "já convencido a colaborar",
+    "ja_convencida": true
    },
    "frase": "aperto o cara até ele cuspir onde fica o esconderijo",
    "esperado": {
@@ -7159,7 +7264,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P87",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "ja_convencida"
+   ]
   },
   {
    "id": "E310",
@@ -7190,7 +7298,8 @@
    "cena": {
     "lugar": "biblioteca",
     "assunto_raro": true,
-    "nota": "o herói acabou de passar num bom teste sobre dragões"
+    "nota": "o herói acabou de passar num bom teste sobre dragões",
+    "heroi_ja_sabe": true
    },
    "frase": "raio funciona contra dragão?",
    "esperado": {
@@ -7203,7 +7312,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P88",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E312",
@@ -7233,7 +7345,8 @@
    "situacao": 42,
    "cena": {
     "lugar": "acampamento",
-    "nota": "é o grimório do próprio herói"
+    "nota": "é o grimório do próprio herói",
+    "do_heroi": true
    },
    "frase": "consigo entender o que ta escrito nesse grimorio?",
    "esperado": {
@@ -7246,7 +7359,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P89",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "do_heroi"
+   ]
   },
   {
    "id": "E314",
@@ -7441,7 +7557,8 @@
    "cena": {
     "lugar": "trilha na mata",
     "ha_algo_escondido": true,
-    "nota": "pegadas frescas na lama"
+    "nota": "pegadas frescas na lama",
+    "rastro_fresco": true
    },
    "frase": "da pra ver marca de bota por aqui?",
    "esperado": {
@@ -7456,7 +7573,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P94",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "rastro_fresco"
+   ]
   },
   {
    "id": "E323",
@@ -8171,7 +8291,8 @@
    "situacao": 33,
    "cena": {
     "lugar": "cais",
-    "heroi": "cresceu no porto"
+    "heroi": "cresceu no porto",
+    "heroi_ja_sabe": true
    },
    "frase": "esses estivadores, eu conheço o chefe deles?",
    "esperado": {
@@ -8184,7 +8305,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P108",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E352",
@@ -8217,7 +8341,8 @@
     "lugar": "parede da cripta",
     "assunto_raro": true,
     "nota": "símbolo de olho com chifres",
-    "heroi": "foi sacerdote desse culto"
+    "heroi": "foi sacerdote desse culto",
+    "heroi_ja_sabe": true
    },
    "frase": "ja vi essa marca de olho com chifres em algum lugar?",
    "esperado": {
@@ -8230,7 +8355,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P109",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_ja_sabe"
+   ]
   },
   {
    "id": "E354",
@@ -8260,7 +8388,8 @@
    "situacao": 39,
    "cena": {
     "lugar": "feira",
-    "nota": "talismã comum, vendido em toda barraca"
+    "nota": "talismã comum, vendido em toda barraca",
+    "coisa_comum": true
    },
    "frase": "quem faz um talisma desses?",
    "esperado": {
@@ -8273,7 +8402,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P110",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "coisa_comum"
+   ]
   },
   {
    "id": "E356",
@@ -8303,7 +8435,8 @@
    "situacao": 39,
    "cena": {
     "lugar": "armazém",
-    "nota": "veneno de rato, vendido em todo armazém"
+    "nota": "veneno de rato, vendido em todo armazém",
+    "coisa_comum": true
    },
    "frase": "o que eu sei sobre esse veneno?",
    "esperado": {
@@ -8316,7 +8449,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P111",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "coisa_comum"
+   ]
   },
   {
    "id": "E358",
@@ -8500,7 +8636,8 @@
    "cena": {
     "lugar": "estrada",
     "perigo_fisico": true,
-    "nota": "os dois em disparada"
+    "nota": "os dois em disparada",
+    "em_movimento": true
    },
    "frase": "pulo do cavalo pra dentro da carroça",
    "esperado": {
@@ -8515,7 +8652,10 @@
    "rodada": 2,
    "metade": "A",
    "par": "P116",
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "em_movimento"
+   ]
   },
   {
    "id": "E367",
@@ -9141,7 +9281,8 @@
     "lugar": "ruínas do templo",
     "assunto_raro": true,
     "heroi": "estudou história",
-    "nota": "inscrição numa língua morta"
+    "nota": "inscrição numa língua morta",
+    "heroi_treinado": true
    },
    "frase": "chegamos nas ruinas do templo antigo",
    "esperado": {
@@ -9157,7 +9298,10 @@
    "metade": "A",
    "par": "P130",
    "espontaneo": true,
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E395",
@@ -9165,7 +9309,8 @@
    "cena": {
     "lugar": "ruínas do templo",
     "heroi": "estudou história",
-    "nota": "só pedra e mato"
+    "nota": "só pedra e mato",
+    "heroi_treinado": true
    },
    "frase": "chegamos nas ruinas do templo antigo",
    "esperado": {
@@ -9179,7 +9324,10 @@
    "metade": "A",
    "par": "P130",
    "espontaneo": true,
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E396",
@@ -9191,7 +9339,8 @@
     ],
     "assunto_raro": true,
     "heroi": "estudou história",
-    "nota": "um ídolo de pedra de um povo esquecido no meio das bugigangas"
+    "nota": "um ídolo de pedra de um povo esquecido no meio das bugigangas",
+    "heroi_treinado": true
    },
    "frase": "vou com o mercador ate a barraca dele",
    "esperado": {
@@ -9207,7 +9356,10 @@
    "metade": "A",
    "par": "P131",
    "espontaneo": true,
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E397",
@@ -9218,7 +9370,9 @@
      "mercador"
     ],
     "heroi": "estudou história",
-    "nota": "bugigangas comuns"
+    "nota": "bugigangas comuns",
+    "coisa_comum": true,
+    "heroi_treinado": true
    },
    "frase": "vou com o mercador ate a barraca dele",
    "esperado": {
@@ -9232,7 +9386,11 @@
    "metade": "A",
    "par": "P131",
    "espontaneo": true,
-   "veio_da_b": 3
+   "veio_da_b": 3,
+   "estado_da_rodada_3": [
+    "coisa_comum",
+    "heroi_treinado"
+   ]
   },
   {
    "id": "E398",
@@ -15428,6 +15586,7 @@
    "rastro fresco, velho ou óbvio (nº 58): só pela nota",
    "disputa de várias rodadas (nº 32, 52): sem estado",
    "a carroça em movimento (nº 46): escrita como perigo_fisico com pressa"
-  ]
+  ],
+  "estados_novos": "Treino da rodada 3 (18/11/2026): a tabela de src/cena-do-momento.js ganhou som_abafado, ja_testado, ja_resolvido, ja_convencida, moribunda, dormindo, selado, sem_resistencia, a_vista, rastro_fresco, rastro_velho, rastro_obvio, em_movimento, ameacado e os do herói (heroi_treinado, heroi_ja_sabe, heroi_tem_alavanca, heroi_penalizado, de dono «cena»). Os itens da A que diziam isto só pela nota ou pelo campo heroi ganharam o estado (marcados estado_da_rodada_3); nenhum item da B foi tocado."
  }
 }
