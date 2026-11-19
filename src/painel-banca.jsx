@@ -306,7 +306,7 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
   const outras = portas.length > 1 ? (
     <nav aria-label="As bancas">
       <Rotulo>{telefone ? "As bancas" : "Outras bancas"}</Rotulo>
-      <div className={telefone ? "flex tv-scroll" : "flex flex-col"} style={{ gap: 6, overflowX: telefone ? "auto" : undefined }}>
+      <div className={telefone ? "flex tv-sem-barra" : "flex flex-col"} style={{ gap: 6, overflowX: telefone ? "auto" : undefined }}>
         {portas.filter((p) => telefone || p.id !== idAtivo).map((p) => (
           <button key={p.id} type="button" onClick={() => trocarBanca(p.id)} aria-pressed={p.id === idAtivo ? "true" : "false"}
             className="tv-anel-foco flex items-center text-left shrink-0"

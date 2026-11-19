@@ -34,9 +34,11 @@ sec("2. que objeto cada porta abre (e a tabela que desliga)");
   t("Diário → livro; Códex → livro", objetoDaPorta({ aba: "diario" }) === "livro" && objetoDaPorta({ aba: "codex" }) === "livro");
   t("a bolsa do herói → bolsa; a de um companheiro → nada (fica na carta)", objetoDaPorta({ aba: "inv", quem: "eu" }) === "bolsa" && objetoDaPorta({ aba: "inv", quem: "Hilda" }) === null);
   t("o mercado → banca; outra sala da Gestão → nada", objetoDaPorta({ aba: "gestao", sub: "mercado" }) === "banca" && objetoDaPorta({ aba: "gestao", sub: "ficha" }) === null);
-  t("o mapa não é deste pacote", objetoDaPorta({ aba: "mapa" }) === null);
+  /* MOVIDO em 18/11 (V8): «o mapa não é deste pacote» valia no V7; o V8 é o pacote do
+     mapa, e a carta abre pela mesma moldura — a intenção (uma porta, um objeto) fica. */
+  t("o mapa → a carta (V8)", objetoDaPorta({ aba: "mapa" }) === "carta");
   t("desligar na tabela devolve a forma de antes", objetoDaPorta({ aba: "diario" }, { ...OBJETOS_NA_MESA, livro: false }) === null && objetoDaPorta({ aba: "inv" }, { livro: true, bolsa: false, banca: true }) === null);
-  t("hoje os três estão ligados", OBJETOS_NA_MESA.livro && OBJETOS_NA_MESA.bolsa && OBJETOS_NA_MESA.banca);
+  t("hoje os quatro estão ligados (a carta entrou no V8)", OBJETOS_NA_MESA.livro && OBJETOS_NA_MESA.bolsa && OBJETOS_NA_MESA.banca && OBJETOS_NA_MESA.carta);
 }
 
 sec("3. o livro — cinco fitas");

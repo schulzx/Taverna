@@ -29,9 +29,11 @@ export const OBJETO_ABERTO = Object.freeze({
   pequeno: { largura: 1040, altura: 620, margemX: 120, margemY: 50 },
   veu: 0.58,
   conteudo: 40,
-  fechar: { lado: 44, margem: 28 },
+  fechar: { lado: 44, margem: 28, respiro: 12 },
   telefone: { barra: 52, aba: 96, folga: 16 },
-  raio: { livro: 10, bolsa: 28, banca: 6 },
+  raio: { livro: 10, bolsa: 28, banca: 6, carta: 3 },
+  /* V8 · a carta: dois rolos de 28 nas bordas (formas.md §F5 §2), metade para fora do papel */
+  rolo: { largura: 28, sai: 14 },
   costura: { espessura: 2, traco: 14, alfa: 0.55 },
   barra: { largura: 8, margem: 12, alfa: 0.5 },
   movimento: { abre: 320, veu: 220, pousa: 220, folha: 260, fita: 140 },
@@ -40,12 +42,13 @@ export const OBJETO_ABERTO = Object.freeze({
 /* QUAIS OBJETOS ABREM SOBRE A MESA. Voltar à forma de antes (o modal do
    Diário, a gaveta do Códex, a carta-bolsa, o mercado em tela inteira) é
    mudar esta tabela — o código antigo continua no App, inteiro. */
-export const OBJETOS_NA_MESA = Object.freeze({ livro: true, bolsa: true, banca: true });
+export const OBJETOS_NA_MESA = Object.freeze({ livro: true, bolsa: true, banca: true, carta: true });
 
 /* o objeto que uma porta do App abre: o Diário e o Códex são o livro; a
-   bolsa do herói (não a de um companheiro) é a bolsa; o mercado é a banca */
+   bolsa do herói (não a de um companheiro) é a bolsa; o mercado é a banca;
+   o mapa é a carta (V8) */
 export function objetoDaPorta({ aba = null, sub = null, quem = "eu" } = {}, ligados = OBJETOS_NA_MESA) {
-  const o = aba === "diario" || aba === "codex" ? "livro" : aba === "inv" && quem === "eu" ? "bolsa" : aba === "gestao" && sub === "mercado" ? "banca" : null;
+  const o = aba === "diario" || aba === "codex" ? "livro" : aba === "inv" && quem === "eu" ? "bolsa" : aba === "gestao" && sub === "mercado" ? "banca" : aba === "mapa" ? "carta" : null;
   return o && ligados && ligados[o] ? o : null;
 }
 

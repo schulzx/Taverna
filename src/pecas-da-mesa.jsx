@@ -417,12 +417,26 @@ function materialDoObjeto(objeto) {
   const R = OBJETO_ABERTO.raio;
   if (objeto === "bolsa") return { background: T.couro, border: `3px solid ${T.couroBaixo}`, borderRadius: R.bolsa };
   if (objeto === "banca") return { background: T.linho, borderTop: `2px solid ${T.linhoSombra}`, borderBottom: `2px solid ${T.linhoSombra}`, borderRadius: R.banca };
+  /* V8 · a carta: pergaminho de raio 3; os rolos são o enfeite */
+  if (objeto === "carta") return { background: T.pergaminho, borderRadius: R.carta };
   return { background: T.couroBaixo, border: `1px solid ${T.latao}`, borderRadius: R.livro };
 }
 /* o enfeite que faz o material: a costura da bolsa, as barras tecidas da banca */
 function EnfeiteDoObjeto({ objeto }) {
   const C = OBJETO_ABERTO.costura;
   if (objeto === "bolsa") return <span aria-hidden="true" className="absolute pointer-events-none" style={{ inset: C.traco, borderRadius: OBJETO_ABERTO.raio.bolsa - C.traco / 2, border: `${C.espessura}px dashed ${alfa(T.latao, C.alfa)}` }} />;
+  if (objeto === "carta") {
+    /* os dois rolos de 28 (formas.md §F5 §2): metade sai do papel, as pontas
+       em roloDaCarta e o meio no pergaminho, como madeira enrolada */
+    const Ro = OBJETO_ABERTO.rolo;
+    const rolo = { top: -10, bottom: -10, width: Ro.largura, borderRadius: Ro.largura / 2, background: `linear-gradient(90deg, ${T.roloDaCarta}, ${T.pergaminho} 50%, ${T.roloDaCarta})`, boxShadow: SOMBRA_DA_MESA.peca };
+    return (
+      <>
+        <span aria-hidden="true" className="absolute pointer-events-none" style={{ ...rolo, left: -Ro.sai }} />
+        <span aria-hidden="true" className="absolute pointer-events-none" style={{ ...rolo, right: -Ro.sai }} />
+      </>
+    );
+  }
   if (objeto === "banca") return (
     <>
       <span aria-hidden="true" className="absolute pointer-events-none" style={{ top: 0, bottom: 0, left: OBJETO_ABERTO.barra.margem, width: OBJETO_ABERTO.barra.largura, background: alfa(T.linhoBarra, OBJETO_ABERTO.barra.alfa) }} />
@@ -464,7 +478,7 @@ export function ObjetoAberto({ objeto = "livro", titulo = "", aoPousar = null, a
         <div className="flex-1 min-h-0 overflow-y-auto tv-scroll" style={{ padding: `${Tf.folga / 2}px ${Tf.folga / 2}px ${Tf.folga}px` }}>
           {acima}
           <div className="relative" style={{ ...material, overflow: "hidden" }}>
-            <EnfeiteDoObjeto objeto={objeto} />
+            {objeto !== "carta" ? <EnfeiteDoObjeto objeto={objeto} /> : null}
             {children}
           </div>
         </div>
@@ -473,6 +487,13 @@ export function ObjetoAberto({ objeto = "livro", titulo = "", aoPousar = null, a
   }
   const F = OBJETO_ABERTO.fechar;
   const desce = acima ? FITA.aberta / 2 : 0;
+  /* V8 (miúdo do V7): a 1280 o rótulo «Pousar · Esc» colava no canto do objeto.
+     O disco mora no meio da margem direita, com respiro de F.respiro dos dois
+     lados; o rótulo quebra em duas linhas se a margem for estreita. */
+  const sobraDoRolo = objeto === "carta" ? OBJETO_ABERTO.rolo.sai : 0;
+  const margemDireita = j.l - (c.x + c.largura + sobraDoRolo);
+  const larguraDoPousar = Math.max(F.lado, margemDireita - 2 * F.respiro);
+  const pousarNaMargem = margemDireita >= F.lado + 2 * F.respiro;
   return (
     <div className="fixed inset-0 z-50" data-objeto={objeto}>
       <div aria-hidden="true" onClick={pousar} className="absolute inset-0" style={{ background: alfa(T.veuDaNoite, OBJETO_ABERTO.veu) }} />
@@ -483,7 +504,9 @@ export function ObjetoAberto({ objeto = "livro", titulo = "", aoPousar = null, a
         <div className="relative flex-1 min-h-0 flex flex-col">{children}</div>
       </div>
       <button type="button" onClick={pousar} aria-label="Pousar (Esc)" className="tv-anel-foco absolute flex flex-col items-center"
-        style={{ top: F.margem, right: F.margem, gap: 6, background: "transparent", border: 0, color: T.ink }}>
+        style={pousarNaMargem
+          ? { top: Math.max(F.respiro, c.y + desce - F.respiro), left: c.x + c.largura + sobraDoRolo + F.respiro, width: larguraDoPousar, gap: 6, background: "transparent", border: 0, color: T.ink, textAlign: "center" }
+          : { top: F.margem, right: F.margem, gap: 6, background: "transparent", border: 0, color: T.ink }}>
         <span className="inline-flex items-center justify-center" style={{ width: F.lado, height: F.lado, borderRadius: "50%", background: T.osso, boxShadow: SOMBRA_DA_MESA.peca }}>
           <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" stroke={T.tintaDoPergaminho} strokeWidth="2" strokeLinecap="round" /></svg>
         </span>

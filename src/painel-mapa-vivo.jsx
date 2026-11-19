@@ -78,7 +78,7 @@ const ALFA_DA_NEVOA = Math.min(1, MAPA_VIVO.carta.nevoaAlfa / luminancia(T.ink))
    Grade 24, traço 1,75. Um por porte e por tipo de lugar; a base usa o da
    capital; "?" é o que só se ouviu; a caveira é o perigo; o selo é o fim.
    O emoji do motor não entra: emoji não herda a cor da tinta. */
-const CAMINHOS_DO_GLIFO = {
+export const CAMINHOS_DO_GLIFO = {
   capital: "M3 21H21M5 21V11L8 9V6H10V8H14V6H16V9L19 11V21M10 21V17C10 16.47 10.21 15.96 10.59 15.59C10.96 15.21 11.47 15 12 15C12.53 15 13.04 15.21 13.41 15.59C13.79 15.96 14 16.47 14 17V21M12 6V2L16 3.5L12 5",
   fortaleza: "M10 21V17H14V21M4 21V8H7V5H10V8H14V5H17V8H20V21H4Z",
   cidade: "M3 21V11L7 8L11 11V21V7L16 3L21 7V21M6 14H8M15 10H17M15 14H17M2 21H22",
@@ -99,7 +99,7 @@ const CAMINHOS_DO_GLIFO = {
 /* o porte e o tipo do motor → o glifo (sem acento na chave: "ruína" do
    motor e "ruina" de PORTES caem no mesmo desenho) */
 const GLIFO_DO_SUBTIPO = { metropole: "capital", "ruína": "ruina" };
-function glifoDoNo(no) {
+export function glifoDoNo(no) {
   if (!no) return "ruina";
   if (no.estado === "boato") return "boato";
   if (no.tipo === "base") return "capital";

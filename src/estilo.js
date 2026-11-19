@@ -237,6 +237,19 @@ export const T = {
   linho:          "#D8CBAA",
   linhoSombra:    "#B9A983",   /* a bainha, 2 px */
   linhoBarra:     "#8E7F5C",   /* as duas barras tecidas, 8 px, a 50 % */
+  /* NOVO (A Mesa do Mestre · F5 · V8 · 18/11) — a carta em pergaminho,
+     formas.md §«F5» §2 (`AGUADA_DA_CARTA`, `LUZ_DA_CARTA`, o rolo). As aguadas
+     são chão de papel a 36–60 % (o alfa mora em carta-do-mapa.js); o pior
+     caso de letra sobre elas é tintaDim no mar, 4,64. Nunca são letra. */
+  aguadaMar:          "#6F93A0",
+  aguadaMata:         "#7E8F5A",
+  aguadaMonte:        "#9A8B78",
+  aguadaBrejo:        "#7C8468",
+  aguadaGelo:         "#C9D6DA",
+  aguadaAreia:        "#D9B77A",
+  roloDaCarta:        "#A98F64",   /* as pontas dos dois rolos (o meio é o pergaminho) */
+  tomDoEntardecer:    "#C8642A",   /* o papel ao entardecer, a 14 % */
+  sombraDoEntardecer: "#3A1A08",   /* a borda do papel ao entardecer, a 22 % */
   /* APOSENTAM-SE com o F1, e ficam até a última tela sair deles (as telas de
      hoje ainda os leem; apagar agora quebraria a mesa antiga):
      · `rosa` como chão de botão (fica como marca);
@@ -5861,6 +5874,9 @@ export const SUPERFICIES_CSS = `
    câmara enquadra e a régua fica presa; a barra só tapava casas) */
 .tv-sem-barra { scrollbar-width: none; }
 .tv-sem-barra::-webkit-scrollbar { display: none; }
+/* V8 (miúdo do V7) · o campo escrito no papel: o texto de espera na tinta
+   fina da folha, e não no cinza-azulado do navegador */
+.tv-campo-de-papel::placeholder { color: ${T.tintaDoPergaminhoDim}; opacity: 1; }
 `;
 
 /* A FOLHA INTEIRA, na ordem em que o navegador tem de recebê-la.

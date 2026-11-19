@@ -71,7 +71,7 @@ function BotaoDePapel({ children, nota = "", aoTocar, desligado = false, razao =
 function Fitas({ fitas, aberta, aoAbrir, telefone }) {
   const largura = telefone ? FITA.telefone : FITA.largura;
   return (
-    <div role="tablist" aria-label="As fitas do livro" className={telefone ? "flex tv-scroll" : "flex"}
+    <div role="tablist" aria-label="As fitas do livro" className={telefone ? "flex tv-sem-barra" : "flex"}
       style={telefone ? { gap: 6, overflowX: "auto", paddingTop: FITA.sobe, marginBottom: -FITA.rabo } : { gap: FITA.passo - FITA.largura, paddingLeft: 60, alignItems: "flex-end", height: FITA.aberta + FITA.sobe }}>
       {fitas.map((f) => {
         const viva = f.id === aberta;
@@ -134,7 +134,7 @@ function PaginaDaGente({ paginas, npcs, aoApontar, telefone }) {
         <>
           <label className="flex items-center" style={{ gap: 8, minHeight: 44, padding: "0 12px", marginBottom: 12, borderRadius: 4, border: `1px solid ${TINTA_DIM}`, background: T.ossoLume }}>
             <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" fill="none" stroke={TINTA_DIM} strokeWidth="1.6" /><path d="M11 11l3.5 3.5" stroke={TINTA_DIM} strokeWidth="1.6" strokeLinecap="round" /></svg>
-            <input value={procura} onChange={(e) => setProcura(e.target.value)} placeholder="Procurar" aria-label="Procurar alguém pelo nome"
+            <input value={procura} onChange={(e) => setProcura(e.target.value)} placeholder="Procurar" aria-label="Procurar alguém pelo nome" className="tv-campo-de-papel"
               style={{ flex: 1, minWidth: 0, background: "transparent", border: 0, outline: "none", color: TINTA, ...letraDaMesa("servico") }} />
           </label>
           <div className="flex flex-col" style={{ gap: 4 }}>
@@ -142,7 +142,10 @@ function PaginaDaGente({ paginas, npcs, aoApontar, telefone }) {
               const rosto = rostoDaPessoa(g);
               return (
                 <LinhaDoIndice key={g.id} escolhida={!!escolhida && escolhida.id === g.id} aoTocar={() => setId(g.id)} rotulo={g.nome}>
-                  <Retrato semente={rosto.semente} ente={rosto.ente} semCarta tamanho={telefone ? 48 : 56} anel={T.latao} />
+                  {/* V8 (miúdo do V7): o retrato não encolhe na linha estreita — era um oval fino */}
+                  <span aria-hidden="true" style={{ flex: "none", width: telefone ? 48 : 56, height: telefone ? 48 : 56, borderRadius: "50%", overflow: "hidden" }}>
+                    <Retrato semente={rosto.semente} ente={rosto.ente} semCarta tamanho={telefone ? 48 : 56} anel={T.latao} />
+                  </span>
                   <span className="flex flex-col min-w-0">
                     <span style={{ color: TINTA, ...letraDaMesa("nome") }}>{g.nome}</span>
                     {g.papel ? <span style={{ color: TINTA_DIM, ...letraDaMesa("servico"), fontWeight: 400 }}>{g.papel}</span> : null}
@@ -165,7 +168,9 @@ function PaginaDaGente({ paginas, npcs, aoApontar, telefone }) {
     direita = (
       <>
         <div className="flex items-start" style={{ gap: 20, marginBottom: 16 }}>
-          <Retrato semente={rosto.semente} ente={rosto.ente} semCarta tamanho={telefone ? 96 : 150} recorte="cartao" anel={T.latao} />
+          <span aria-hidden="true" style={{ flex: "none", width: telefone ? 96 : 150, height: telefone ? 96 : 150, borderRadius: "50%", overflow: "hidden" }}>
+            <Retrato semente={rosto.semente} ente={rosto.ente} semCarta tamanho={telefone ? 96 : 150} recorte="cartao" anel={T.latao} />
+          </span>
           <div className="flex flex-col min-w-0">
             <Titulo>{escolhida.nome}</Titulo>
             {escolhida.papel ? <Prosa>{escolhida.papel}</Prosa> : null}

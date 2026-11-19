@@ -20133,6 +20133,53 @@ Os painéis: `src/painel-livro.jsx`, `src/painel-bolsa.jsx`, `src/painel-banca.j
 **Visto** (Chrome headless por CDP, IA muda): `mente/lancamento/capturas/V7-*.png` — livro nas cinco fitas a
 1440, bolsa a 1280/1440 com equipar, banca com compra e venda, e livro, bolsa e banca a 375.
 
+### 10 · V8 em código (18/11/2026) — a carta
+
+**O que foi construído e onde.** A conta em `src/carta-do-mapa.js` (as tabelas `CARTA_DO_MAPA`,
+`AGUADA_DA_CARTA`, `LUZ_DA_CARTA`, `CAVEIRAS_DO_PERIGO`; `desenhoDaCarta`, `partidaNaCarta`,
+`mantimentosDaViagem`, `dadosDaCartaDoContinente`, `vereditoNoContinente`), provada em
+`testes/teste-carta-do-mapa.mjs`. O desenho em `src/painel-carta.jsx` (`PainelCarta`), aberto por
+`ObjetoAberto` com o objeto novo **«carta»**: pergaminho de raio 3 entre dois rolos de 28
+(`OBJETO_ABERTO.rolo`, `T.roloDaCarta`). As aguadas e a luz entraram em `T` (`aguadaMar` …
+`aguadaAreia`, `tomDoEntardecer`, `sombraDoEntardecer`). No App só a fiação: na região, a tela
+grande do mapa (`TelaDoMapa`) dá lugar à carta com os mesmos dados (`dadosDoMapaVivo`) e o mesmo
+veredito (`vereditoDaPartida`); fora dela (arquipélago, estelar, save antigo) a porta «mapa» abre a
+carta pelo `objetoDaPorta`, com os dados lidos do mapa guardado e a partida por `viajarPeloMapa`. A
+Torre (vertical) mantém a escada de sempre, pousada na mesma moldura. `OBJETOS_NA_MESA.carta`
+devolve as formas de antes.
+
+**O que a carta faz.** O que o herói conhece é desenhado (aguadas por chão sob máscara, picos e
+matas de `fundoDaCarta` em tinta sépia); o resto é papel em branco com hachura e «terra não
+vista» num canto livre. Lugar visto em osso, ouvido em tracejado com «?»; a peça do herói é o
+retrato; a rota do destino em tinta 3; o caminho até onde a história chama em brasa tracejada; a
+pílula do tempo só na perna onde cabe. O cartão: o que é, quem anda lá, o preço (caveiras e
+palavra), e o **veredito antes do clique** — horas ou dias, chegada, noites fora, o que vence pelo
+caminho, **os mantimentos que a viagem come** (`consumoDiario` × noites, com a falta em número), por
+onde passa e o perigo da estrada. Setas andam de lugar em lugar; Enter parte.
+
+**O que ficou diferente da prancha, e por quê.**
+- **Nenhum nome sobre outro:** quando nem a segunda fila cabe, o nome some e fica a marca (regra 4
+  de `FAIXA_DO_RUMO`); o destino nunca some. No mundo de montanha a 1440 isso escondeu um nome.
+- **A régua e o horizonte** só na região (o continente não tem escala de marcha nem horizonte); os
+  nomes do horizonte só em cima e embaixo (os laterais pediam letra rodada).
+- **No continente o preço é «N dias de viagem»** (é o que a rota guardada sabe); sem rota direta, o
+  botão fica em contorno e diz que os dias só se sabem andando. A lei do molde (a maré do
+  arquipélago) continua a morder no clique, não na carta.
+- **A planta da cidade não entrou:** a `PlantaCidade` é escura, em mono de 10 px; levá-la para o
+  pergaminho é um pacote à parte.
+- **No celular a carta rola junto com o cartão** (a janela de 400 não fica presa: o `overflow:
+  hidden` do objeto aberto desliga o `sticky`).
+
+**Miúdos do V7 fechados:** a barra das fitas do livro e das bancas no celular (`tv-sem-barra`); o
+«Procurar» na tinta fina (`.tv-campo-de-papel::placeholder`); o retrato de Gente que encolhia em
+oval (casca `flex: none`); o «Pousar · Esc» no meio da margem direita, com respiro de 12
+(`OBJETO_ABERTO.fechar.respiro`). **As buscas continuam no couro** (o Diário escuro): passá-las ao
+pergaminho pede um tema de papel no `PainelDiario` inteiro — ficou por fazer.
+
+**Visto** (Chrome headless por CDP, IA muda): `mente/lancamento/capturas/V8-*.png` — terras
+abertas de dia, à noite e na estrada (1280, 1440, 375), o arquipélago com veredito, sem estrada e
+reaberto (1280, 375), e a Torre na escada.
+
 ---
 
 ## A Mesa do Mestre · F6 · as cerimônias (`desenho`, 16/11/2026)
