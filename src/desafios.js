@@ -3060,7 +3060,11 @@ function eMeiaVerdade(c, v, margem, { emCombate = false, desastre = false, criti
      forma de antes de propósito: tudo o que o App já faz com um "por
      pouco" (a fala, o relógio, o barulho, a pele) serve ao "mas" sem uma
      linha nova de fiação. `porPouco` quer dizer "é o meio": o sim, pago. */
-export function desfechoDaMargem(v, { total = null, dc = null, critico = false, desastre = false, emCombate = false, sorte = null, comMeiaVerdade = false } = {}) {
+/* 19/11 (o-mestre-vivo.md §17): `semMeio` — opt-in, desligado por omissão (o
+   desfecho de sempre, letra por letra). Ligado, a margem não tem meio: o
+   «quase» é falha e o «mas» é limpo. É o «falha nunca paga» do Mestre vivo
+   (o-mestre-vivo-no-jogo.js#semFioNoMomento), onde o sucesso é achar. */
+export function desfechoDaMargem(v, { total = null, dc = null, critico = false, desastre = false, emCombate = false, sorte = null, comMeiaVerdade = false, semMeio = false } = {}) {
   if (!v || !v.alvoDoCusto) return null;
   const c = custoPorAlvo(v.alvoDoCusto);
   if (!c) return null;
@@ -3070,7 +3074,7 @@ export function desfechoDaMargem(v, { total = null, dc = null, critico = false, 
   const margem = t - d;
   let f = faixaDaMargem(margem, { critico: !!critico, desastre: !!desastre });
   if (!f) return null;
-  const aceitaMeio = !!c.porPouco && !emCombate && !v.fechaDepois;
+  const aceitaMeio = !!c.porPouco && !emCombate && !v.fechaDepois && !semMeio;
   if (f.meio && !aceitaMeio) f = faixaDaMargemPorId(f.semMeio);
   if (f.passou && !f.meio) return null;
   /* EM4: a falha por pouco numa linha de saber — MARGEM_DA_FALHA */

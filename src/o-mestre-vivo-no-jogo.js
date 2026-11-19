@@ -26,6 +26,7 @@
 import { FORMA_DO_RETRATO, ONDE_DO_RETRATO, O_DADO_DO_MUNDO } from "./a-cena-do-jogo.js";
 import { RESPOSTAS_DA_PERGUNTA } from "./cena-do-momento.js";
 import { lancamento } from "./motor/a-bandeja.js";
+import { dificuldadeSocial } from "./social.js";
 
 const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -231,10 +232,13 @@ export const MOTIVO_DO_ESPONTANEO = Object.freeze({
    (setRolagem), ou null. `prov`: chamadoQueOMundoProvoca(...); `pericia`:
    periciaPorId(prov.pericia). A dificuldade é a do chamado (o degrau
    «comum»); o preço dito é o risco de O_DADO_DO_MUNDO. Sem `chave` no
-   desafio: o livro de tentativas não ganha um teste que o jogador não fez. */
+   desafio: o livro de tentativas não ganha um teste que o jogador não fez.
+   19/11 (§17): o desafio leva a marca do mundo (`doMundo`) e o que o mundo
+   mostra (`mostra`, O_QUE_O_MUNDO_MOSTRA) — é por eles que o resultado pousa
+   no envelope do espontâneo, e nunca no da busca. Sem o que mostrar, null. */
 export function rolagemDoEspontaneo(prov, pericia) {
   try {
-    if (!obj(prov) || !obj(prov.chamado) || !obj(pericia)) return null;
+    if (!obj(prov) || !obj(prov.chamado) || !obj(pericia) || !obj(prov.mostra) || !txt(prov.mostra.oQue)) return null;
     const dc = num(Number(prov.chamado.dc));
     if (dc == null) return null;
     const motivo = MOTIVO_DO_ESPONTANEO[prov.pericia] || txt(prov.porque);
@@ -242,9 +246,133 @@ export function rolagemDoEspontaneo(prov, pericia) {
     return Object.freeze({
       rotulo: txt(pericia.nome), pericia: txt(pericia.id), tipo: txt(pericia.atributo),
       motivo, origem: "pedido", dificuldade: dc,
-      desafio: Object.freeze({ id: O_DADO_DO_MUNDO.chave, rotulo: motivo, pericia: txt(pericia.id), atributo: txt(pericia.atributo), escolha: Object.freeze({ risco, podeDesistir: false }) }),
+      desafio: Object.freeze({
+        id: O_DADO_DO_MUNDO.chave, rotulo: motivo, pericia: txt(pericia.id), atributo: txt(pericia.atributo),
+        escolha: Object.freeze({ risco, podeDesistir: false }),
+        doMundo: true, estado: txt(prov.estado), mostra: prov.mostra,
+      }),
     });
   } catch {
     return null;
   }
+}
+
+/* ---------------- O CONSERTO DEPOIS DA PRIMEIRA SESSÃO (19/11/2026) ----------------
+   mente/lancamento/o-mestre-vivo.md §17. */
+
+/* 1. O ESPONTÂNEO POUSA NO SEU ENVELOPE. O resultado do dado que o mundo
+   provocou: o herói PERCEBE (ou não) o que o mundo fez, e não age — nem
+   revista, nem mexe, nem anda. O texto do que se percebe vem do estado
+   (O_QUE_O_MUNDO_MOSTRA, a-cena-do-jogo.js); o veto vai em `naoPode`, pelo
+   canal de UM turno, com quem o sistema sabe que não está aqui (a poda do
+   ausente, motor/poda-do-ausente.js: a mesma linha que ela escreve). Perceber
+   não paga: nada entra na bolsa por este dado. */
+export const O_ESPONTANEO_NA_MESA = Object.freeze({
+  envelope: "[O MUNDO SE MEXEU — DECIDIDO PELO SISTEMA] Eu não fiz nada: o mundo é que se mexeu, e o sistema rolou {pericia} por mim, sem que eu pedisse. {resultado} Narre só o que eu percebo (ou deixo de perceber), em uma ou duas frases, e devolva a palavra para mim.",
+  passou: "Passei.",
+  falhou: "Falhei.",
+  naoPode: Object.freeze([
+    "dizer que eu revistei, mexi, toquei, peguei, abri ou fiz qualquer coisa que eu não escrevi",
+    "me dar achado, moeda ou item por este dado: perceber não paga",
+  ]),
+  ausentes: 3,
+});
+export function ehDoMundo(des) {
+  return obj(des) && des.doMundo === true && des.id === O_DADO_DO_MUNDO.chave && obj(des.mostra) && !!txt(des.mostra.oQue);
+}
+const encher = (molde, m) => String(molde || "").replace(/\{oQue\}/g, txt(m.oQue)).replace(/\{efeito\}/g, txt(m.efeito));
+const maiuscula = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
+export function envelopeDoEspontaneo(des, passou) {
+  try {
+    if (!ehDoMundo(des)) return "";
+    const m = des.mostra;
+    const P = O_ESPONTANEO_NA_MESA;
+    const oQueVe = maiuscula(encher(passou ? m.passou : m.falhou, m));
+    const resultado = `${passou ? P.passou : P.falhou} ${oQueVe}`;
+    return P.envelope.replace("{pericia}", txt(des.rotulo) ? `um teste para ${txt(des.rotulo)}` : "um teste").replace("{resultado}", resultado);
+  } catch {
+    return "";
+  }
+}
+/* a pauta do turno do espontâneo: os vetos, e os ausentes (`ausentes`: o
+   que osAusentes devolve — [{ nome, onde, morto }]) pela linha da poda */
+export function pautaDoEspontaneo(des, ausentes, linhaDoAusente) {
+  try {
+    if (!ehDoMundo(des)) return null;
+    const naoPode = [...O_ESPONTANEO_NA_MESA.naoPode];
+    if (typeof linhaDoAusente === "function") {
+      for (const a of arr(ausentes).filter(obj).slice(0, O_ESPONTANEO_NA_MESA.ausentes)) {
+        const l = txt(linhaDoAusente(txt(a.nome), txt(a.onde), !!a.morto));
+        if (l && txt(a.nome)) naoPode.push(l);
+      }
+    }
+    return Object.freeze({ acabou: [], naoPode });
+  } catch {
+    return null;
+  }
+}
+
+/* 1b. O MESTRE VIVO CALA A OFERTA DA CHEGADA. Os dois «espontâneos» da
+   sessão (a chegada ao posto da estrada e à Sala das Cartas) não eram do
+   Mestre vivo: eram o «Olhar à volta» do Mestre de hoje (motor/o-mestre-pede.js),
+   uma BUSCA posta na boca do herói — e o envelope da busca narrou-o a revirar
+   a mesa e o baú de quem ele queria por cliente. Com a chave ligada, o dado
+   que vem sem ação é o do mundo (o espontâneo, acima), e a oferta da chegada
+   cala. A de ler a pessoa fica: é o jogador que aceita ler alguém. */
+export const PEDIDOS_QUE_O_MESTRE_VIVO_CALA = Object.freeze({
+  chegada: "a chegada não é um gesto do herói: o dado sem ação é o que o mundo provoca (chamadoQueOMundoProvoca)",
+});
+export function oMestreVivoCalaOPedido(id) {
+  return typeof id === "string" && Object.prototype.hasOwnProperty.call(PEDIDOS_QUE_O_MESTRE_VIVO_CALA, id);
+}
+
+/* 2. FALHA NUNCA PAGA. O «sim, pago» da margem (desafios.js#desfechoDaMargem:
+   falhar por um ou dois é conseguir pagando) pôs 168 moedas na bolsa de um
+   herói cujo dado dizia «✕ falhou». No Mestre vivo, onde o sucesso é achar,
+   ouvir ou perceber, a falha é falha: o desafio que o momento julgou
+   (`doMomento`) não ganha o meio. A força e o corpo continuam com o «sim,
+   pago» (a porta cede errada, o muro sobe machucado): ali o preço é pele,
+   e não um achado de graça. */
+export const SEM_FIO_NO_MOMENTO = Object.freeze(["busca", "investigacao", "escuta", "rastro", "improviso_percepcao", "improviso_intelecto"]);
+export function semFioNoMomento(des) {
+  return obj(des) && des.doMomento === true && SEM_FIO_NO_MOMENTO.includes(txt(des.alvoDoCusto));
+}
+/* o veredito que vai ao dado, marcado pelo momento: `doMomento` e a
+   vantagem que a cena dá (a régua: quem vai ser roubado dorme) */
+export function marcarDoMomento(v, m) {
+  if (!obj(v)) return v;
+  const vantagem = obj(m) ? txt(m.vantagem) : "";
+  return Object.freeze({ ...v, doMomento: true, ...(vantagem ? { vantagemDoMomento: vantagem } : {}) });
+}
+
+/* 4. O QUE ACONTECE SEM DADO APLICA O QUE ACONTECEU. Sem dado é sucesso sem
+   risco — e o efeito do sucesso quem aplica é o sistema, como aplicaria ao
+   dado que passou: a conversa com quem está disposto ganha o envelope social
+   do sim (o que o sim compra, e o que não compra) e o livro de tentativas
+   fecha-a como conseguida; o curativo calmo fecha como feito. O que não tem
+   efeito de sistema (a busca sem nada escondido, o passo sem ninguém que
+   note) narra-se acontecendo, e para a cobrança continua sem ganho: não
+   havia nada a ganhar ali. `efeito`: "social" | "socorro" | "nenhum". */
+export const O_QUE_ACONTECE_SEM_DADO = Object.freeze({
+  social: Object.freeze(["dispostoCede", "medoCede", "falaSemOposicao", "alavanca"]),
+  socorro: Object.freeze(["socorroCalmo"]),
+});
+/* `o.frase` / `o.pers`: a frase do jogador e a ficha. A conta do sim social
+   refaz-se pela FRASE do jogador (social.js#dificuldadeSocial): a fala que só
+   a escuta ouviu chega com o veredito da frase-modelo do catálogo («tento
+   convencer o guarda…»), e o sim compraria o que ela pede, não o que o
+   jogador pediu (visto no jogo, 19/11: «quebrar uma regra pequena» por uma
+   chave de fenda emprestada). `quem`: a pessoa que a frase nomeia. */
+export function oQueAconteceSemDado(v, m, o) {
+  const porque = obj(m) ? txt(m.porque) : "";
+  const vale = obj(v) && v.tipo === "teste";
+  if (vale && obj(v.social) && Number.isFinite(Number(v.dc)) && O_QUE_ACONTECE_SEM_DADO.social.includes(porque)) {
+    const op = obj(o) ? o : {};
+    const pessoa = obj(v.pessoa) ? v.pessoa : null;
+    let conta = v.social;
+    try { if (txt(op.frase)) conta = dificuldadeSocial({ texto: txt(op.frase), pessoa, pers: obj(op.pers) ? op.pers : null, pericia: txt(v.pericia) }) || v.social; } catch { conta = v.social; }
+    return Object.freeze({ efeito: "social", desfecho: "sucesso", fecha: true, conta, quem: (pessoa && txt(pessoa.nome)) || txt(v.quem) || "" });
+  }
+  if (vale && O_QUE_ACONTECE_SEM_DADO.socorro.includes(porque)) return Object.freeze({ efeito: "socorro", desfecho: "sucesso", fecha: true });
+  return Object.freeze({ efeito: "nenhum", desfecho: "falha", fecha: false });
 }

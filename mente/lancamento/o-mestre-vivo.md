@@ -864,3 +864,124 @@ na cidade no começo da campanha. `relogios` vazio numa campanha nova. A rotina 
 «no que faz», que nunca é `DORMINDO` de dia. `favorAqui` depende de o id do favor bater com o `idDoLugar` do
 lugar atual, e isso não foi visto com um favor de verdade. O aviso de Furtividade dentro da taverna diz «alguém
 na rua vê você»: é o `contexto.cidade` de `ctxDoChamado`, que já era assim antes desta etapa.
+
+## 17. O conserto depois da primeira sessão
+
+**19/11/2026.** A sessão jogada (`mestre-vivo-sessao.md`) mostrou o que o Mestre vivo faz bem — a conversa
+com o preço dito antes — e seis falhas. Cada uma teve a causa procurada no código antes do conserto, e cada
+conserto tem um caso nas suítes que falhava antes e passa agora. **Com a chave desligada o turno é o de
+hoje:** as funções novas vivem dentro de guardas `if (mestreVivoLigado())` (agora cinco, contadas pela suíte da
+fiação), e o que corre fora delas devolve o mesmo que antes (`semFioNoMomento` é `false` para todo desafio que o
+momento não marcou; `desfechoDaMargem` só ganhou uma opção desligada por omissão).
+
+**1. O dado «espontâneo» contado como ação do herói.** *Causa:* os dois espontâneos da sessão (a chegada ao
+posto da estrada e à Sala das Cartas) **não eram do Mestre vivo**: eram a oferta «Olhar à volta» do Mestre de
+hoje (`motor/o-mestre-pede.js`), que manda a frase «Olho em volta com atenção.» pelo caminho do jogador — uma
+**busca** na boca do herói, com o aviso e o envelope da busca («você revira o que dá…»). O Narrador fez o que o
+envelope dizia: o herói revirou a mesa e o baú. *O que mudou:* com a chave ligada, a oferta da chegada cala
+(`PEDIDOS_QUE_O_MESTRE_VIVO_CALA`); a de ler a pessoa fica (é o jogador que a aceita). O espontâneo do Mestre vivo
+(`chamadoQueOMundoProvoca`) ganhou o que mostra (`O_QUE_O_MUNDO_MOSTRA`, a-cena-do-jogo.js): o nome da coisa sai
+do estado que provocou o dado — o relógio da caçada diz o que se aproxima, o céu diz a tempestade, o lugar diz de
+quem é — e **sem nome, o espontâneo não é chamado**. A rolagem leva a marca do mundo (`doMundo`, `mostra`), e ao
+pousar vai ao seu envelope (`envelopeDoEspontaneo`: «Eu não fiz nada: o mundo é que se mexeu…», e o que o herói
+percebe ou deixa de perceber), antes de qualquer custo do catálogo; a pauta de um turno leva os vetos (`naoPode`:
+não revistou, não mexeu, nada de achado por este dado) e quem o sistema sabe noutro lugar, pela linha da poda do
+ausente (`PODA_DO_AUSENTE.linha`). Perceber não paga: para a cobrança, nada a ganhar.
+
+**2. O resultado não respondia à pergunta do teste.** *Causa:* as 168 moedas vieram da **margem**: a busca da
+oferta falhou por 2 (11 contra 13), e `desfechoDaMargem` dá à busca o «sim, pago» («por tão pouco o mundo
+negocia: você acha»); o `passou` virou verdadeiro e o achado do lugar (`r.achado`) foi pago — com a bandeja a
+dizer «✕ falhou». A voz atrás do rochedo era do Narrador, não do teste. E o «ouvir» que falhou com pedaços sem
+sentido era Percepção para ouvir **quem falava com o herói**: a régua rolava escutar sempre que havia alguém em
+cena (`haOQueOuvir`). *O que mudou:* (a) no Mestre vivo, a falha não paga: o desafio que o momento julgou leva a
+marca (`marcarDoMomento`), e onde o sucesso é achar, ouvir ou perceber (`SEM_FIO_NO_MOMENTO`: busca, investigação,
+escuta, rastro, os improvisos de percepção e intelecto) a margem não tem meio (`desfechoDaMargem(…, { semMeio })`)
+— a força e o corpo continuam com o «sim, pago», porque ali o preço é pele; (b) uma linha nova na régua,
+`ouvirQuemFala`: ouvir o que alguém tem para contar a você é conversa e não rola (`OUVIR_QUEM_FALA`); escutar a
+conversa dos outros continua a rolar; (c) o espontâneo tem envelope próprio (item 1), e a busca nunca mais é o
+molde dele.
+
+**3. Risco claro que passou sem dado.** Cada causa verificada com a frase da sessão:
+- *Escalar o muro do forte* caiu em `travessiaCalma`: só estado dizia perigo. O veredito do catálogo já traz a
+  queda (`v.queda`). Linha nova, `riscoDoAto` (`RISCO_DO_ATO`): a queda de uma **fortificação** (muralha, forte,
+  castelo, torre…) é o risco do próprio ato. **Não** a de toda altura: o exame (E174 «escalo o muro pra entrar no
+  quintal», E365 o telhado pela calha, E371 a trilha larga do penhasco) e o estudo das mesas dizem que a
+  travessia calma não rola, e a regra «todo risco intrínseco rola» teria subido o pedido indevido da A em mais de
+  quinze frases. Fica escrito o desacordo: entre a frase do pedido e a mesa real, ficou a mesa real para a altura
+  comum, e o risco do ato para a fortificação.
+- *Roubar a bolsa de um bêbado* não era ouvido por ninguém: nem o catálogo nem a escuta conheciam «roubar … do
+  bolso». Forma nova na escuta (o verbo de roubar e o que se tira), e na régua a vítima da frase
+  (`A_VITIMA_DO_FURTO`): quem a frase diz que é roubado pode notar, esteja ou não no retrato; só o morto ou o
+  desacordado sem mais ninguém dispensa o dado; quem dorme dá **vantagem** (o campo `vantagem` da régua vai ao
+  dado como `vantagemDoMomento`, e o App só o lê no veredito marcado).
+- *Pedir desconto* rolava numa frase e não noutra: «posso pedir…» rolava pela licença; «pergunto ao anão se ele
+  faz um desconto» caía em `falaSemOposicao`; «pergunto quanto custa e tento barganhar pela metade» caía na linha
+  da **pergunta** (a escada leu «quanto custa» como cortesia e não ouviu «barganhar»: o `\b` depois de «barganh»
+  nunca casa); «faz pelo preço normal ou eu procuro outro» não era ouvido. O motivo para negar passou a ser lido
+  **no alvo da fala**, por frase (`MOTIVO_PARA_NEGAR_DO_ALVO`): o dinheiro de quem vende (a barganha), um degrau
+  da escada do pedido **dito** na frase (favor, risco, traição — o padrão não conta), a farda/batina/brasão (para
+  quem pesa contra na escada, até a simpatia), e quem guarda segredo sob pressão («insisto», «até você falar»). A
+  pergunta de cortesia continua sem dado, e a magia («conjuro amizade antes de pedir o desconto») resolve pela
+  própria regra. Na cena o estado continua sem fonte (`ESTADOS_SEM_FONTE`), com o porquê novo: é da fala.
+- *Mentira e ameaça de graça* no trecho de nove turnos: as frases da sessão, no retrato, **rolam** pela régua
+  (`conversaComEstranho`); o que as calou no jogo foi o caminho antes do momento — «procuro um barqueiro…» é
+  tomado por `procurarAlguem`, e a gente de que se falava (o tropeiro, o homem da capa) não estava no retrato
+  (o Narrador pô-los lá). Isso é a família «nome na frase rouba a frase», fora deste pacote.
+- **A regra de segurança** (`CALA_POR_AUSENCIA`): a linha que diz «não» só pela ausência de estado
+  (`falaSemOposicao`) não ganha do Mestre de hoje — se ele rolaria, rola (`comoHoje`). As outras linhas que calam
+  têm estado positivo (a pessoa disposta, nada escondido que o mundo conheça, ninguém que note, a altura comum).
+
+**4. A ação sem dado não aplicava o que aconteceu.** *Causa:* `acontecerSemDado` só narrava, e marcava a
+cobrança como falha. *O que mudou:* `oQueAconteceSemDado` diz o efeito: o sim de quem está do seu lado
+(`dispostoCede`, `medoCede`, `falaSemOposicao`, `alavanca`) é sucesso — o envelope social do sim (o que compra e o
+que não compra), o ouro da alavanca sai da bolsa, o livro de tentativas fecha-o como conseguido e a cobrança é
+sucesso; o curativo calmo fecha como feito (e o socorro de sistema corre com sucesso). A conta do sim refaz-se
+pela **frase do jogador** (visto no jogo: a fala ouvida pela escuta chegava com a frase-modelo do catálogo, e o
+sim compraria «quebrar uma regra pequena» por uma chave de fenda emprestada). O que não tem efeito de sistema (a
+busca vazia, o passo sem testemunha) narra-se e não rende.
+
+**5. PT-PT na fala.** Procurei em tudo o que o Mestre vivo põe na pauta (as respostas evasiva/recusa/silêncio,
+os `diz` da régua que vão ao envelope do «acontece», o chamado da conversa, os textos novos deste conserto): a
+única segunda pessoa era «um estranho que não **te** deve nada» (a linha `conversaComEstranho`), agora «não deve
+nada a você»; os textos novos têm uma asserção contra «tu/teu/tua/sabes». Os «teu», «sabes», «larga» da sessão
+estavam na prosa do Narrador, não no que o sistema lhe mandou; a escada do pedido (`social.js`, «a boa vontade de
+quem não te deve nada») é do Mestre de hoje também e ficou como está (mexer nela muda o jogo sem a chave).
+
+**6. As frases da sessão viraram matéria de afinar.** 31 frases das duas sessões entraram na metade A do exame
+(`origem: "sessao-mv-1"`, rodada 4), com a cena em estados e o veredito que o jogador julgou. A metade B não foi
+tocada nem lida; foi medida uma vez, no fim.
+
+**A medida.**
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A antiga (381 declaradas) | 346 certo · 2 indevido · 33 omitido · pares 97 | 347 · 2 · 32 · 97 |
+| as 31 frases da sessão, régua | 23/31 | 31/31 (afinadas nelas: é treino) |
+| as 31 frases da sessão, Mestre de hoje | 17/31 | 17/31 |
+| régua, metade A inteira (412) | — | 378 · 2 · 32 · cat 303 · per 171 · pares 97 |
+| régua, metade B (medida uma vez) | 158 · 6 · 32 · cat 119 · per 53 · pares 54 | **igual** |
+
+A catraca da A subiu (régua 378 · 2 · 32 · 303 · 171 · 97) e a do Mestre de hoje mudou de lugar com o tamanho da A
+(243 · 49 · 120 · 179 · 90 · 3), com o motivo escrito na suíte. A previsão do corpus da mesa numa cena calma passou
+de 54 para 55 frases que mudam (uma barganha a mais rola).
+
+**Visto no jogo** (Chrome headless por CDP; `TAVERNA_API=http://127.0.0.1:9`, servido por um Narrador mudo local
+que devolve sempre a mesma linha — nenhuma IA chamada; com a porta recusada, o turno é desfeito e a cena não anda).
+Com `?mestre=1`: «vou escalar a muralha da cidade pra espiar de cima» → Atletismo 15, «Se falhar, você despenca lá
+de cima»; «tento roubar a bolsa de moedas do bolso do Bruno» → Prestidigitação 15; «posso pedir um desconto pro
+Bruno?» → Persuasão 18 e «pergunto ao comerciante se ele faz um desconto» → Persuasão 15, as duas com o preço dito;
+«pergunto ao Bruno onde fica a capela» → sem dado; «peço à Wren que me empreste uma chave de fenda» → sem dado, o
+envelope «[SOCIAL — RESOLVIDO PELO SISTEMA] … CONSEGUI», e o pedido seguinte à Wren já veio «Isso você já conseguiu
+aqui — sem dado» (o livro guardou o sim). Com `?mestre=0`: a muralha → Atletismo 15; o furto e o desconto → sem dado;
+«procuro algo escondido nas prateleiras» → Percepção 13; «me esgueiro até os fundos» → Furtividade 15 — o Mestre de
+hoje, como em §16. Consola sem `calou` do Mestre vivo.
+
+**O que ficou por fazer.**
+- «pergunto ao Bruno se ele faz um desconto» — com o **nome** de quem está em cena — vai a `procurarAlguem` antes do
+  veredito («Bruno está aqui») e não rola: é a família «nome na frase rouba a frase», fora deste pacote.
+- Numa cena só com o companheiro, a fala dirigida a quem não está (o vendedor) cai no companheiro, que está do seu
+  lado, e é concedida: o alvo da fala precisava de saber quando a frase descreve outra pessoa.
+- O livro de tentativas fecha **a pessoa**, não o pedido: depois de um sim da Wren, o segundo favor diferente também
+  vem «já conseguiu». É regra antiga do livro, que o sim sem dado agora alimenta.
+- O espontâneo não foi provocado no jogo (pede território fechado, tempestade ou caçada a um passo): está provado
+  nas suítes, não jogado.

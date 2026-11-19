@@ -125,7 +125,7 @@ import { fichasDaCena, marcasDaProsa, quemNoEnvio, bancasDoToque, garantirMemori
 import { garantirFactos } from "./livro-de-factos.js";
 import { idDoLugar } from "./livro-de-factos.js";
 import { chamadoDoMomento, chamadoQueOMundoProvoca } from "./a-cena-do-jogo.js";
-import { lerAChaveDoMestreVivo, retratoDosRefs, oQueOMomentoFaz, vereditoDoQueAcontece, pautaDoMomento, lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, rolagemDoEspontaneo } from "./o-mestre-vivo-no-jogo.js";
+import { lerAChaveDoMestreVivo, retratoDosRefs, oQueOMomentoFaz, vereditoDoQueAcontece, pautaDoMomento, lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, rolagemDoEspontaneo, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, oMestreVivoCalaOPedido, semFioNoMomento, marcarDoMomento, oQueAconteceSemDado } from "./o-mestre-vivo-no-jogo.js";
 import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
 import { EmCena, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
@@ -283,7 +283,7 @@ import { asPistasDoPasso, perguntarPelaPista } from "./motor/a-pista-como-cartao
 import { aPropostaDaFrase, aPessoaChamada, propostaAindaVale } from "./motor/a-proposta-da-frase.js";
 import { aPessoaDoPasso } from "./motor/a-pessoa-do-passo.js";
 import { quemEstaAqui, contextoDeQuemEsta, quemAgeAqui, ondeDaCena, falasDoMestreAqui } from "./quem-esta-aqui.js";
-import { osAusentes, podarOAusente } from "./motor/poda-do-ausente.js";
+import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ausente.js";
 import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oChamadoDaPeca, ausentesDaPeca, foraDaCenaNaProsa, semAChegadaDaPeca } from "./pecas/no-jogo.js";
 import { oBatismo } from "./motor/o-batismo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
@@ -17888,6 +17888,33 @@ export default function Taverna() {
     if (r.origem === "pedido") {
       const provaAsc = r.provaAscensao || null;
       const des = r.desafio || null;
+      /* O MESTRE VIVO · O ESPONTÂNEO POUSA (o-mestre-vivo.md §17): o dado que
+         o mundo provocou não é busca nem gesto — o herói percebe, ou não, o que
+         o mundo fez (o envelope do espontâneo), e os vetos vão pela pauta de um
+         turno: não revistou, não mexeu, e quem o sistema sabe noutro lugar não
+         entra. Perceber não paga: para a cobrança, nada a ganhar. */
+      if (mestreVivoLigado()) {
+        try {
+          if (des && ehDoMundo(des)) {
+            const percebeu = critico || (!desastre && total >= dc);
+            let aus = [];
+            try {
+              const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
+              const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
+              aus = osAusentes(quemAgora(), { gente: genteA, npcs: npcsRef.current, heroi: personagemRef.current || personagem, lugar: lugarRef.current, protegidos: [divindadeRef.current && divindadeRef.current.nome].filter(Boolean) });
+            } catch (e) { calou("Mestre vivo · os ausentes do espontâneo", e); aus = []; }
+            const envE = envelopeDoEspontaneo(des, percebeu);
+            if (envE) {
+              ultimoDesfechoRef.current = "falha";
+              testeDoTurnoRef.current = { pericia: (r && r.pericia) || "", sucesso: !!percebeu };
+              const pa = pautaDoEspontaneo(des, aus, PODA_DO_AUSENTE.linha);
+              if (pa) porNaPautaDoTurno(pa);
+              enviar(preRefazer + envE, personagemRef.current || personagem);
+              return;
+            }
+          }
+        } catch (e) { calou("Mestre vivo · o espontâneo pousa", e); }
+      }
       /* ---------------- O QUE A FALHA COBRA (v9.65) ----------------
          Antes de decidir se passou, porque a decisão depende disto: falhar
          por um ou dois, onde a ficção tem preço, não é falhar — é conseguir
@@ -17897,7 +17924,7 @@ export default function Taverna() {
       /* EM4 (11/11): numa linha de saber, falhar por 1–3 é meia-verdade (o herói
          fica com meio caminho; `passou` continua false) — as três linhas entram
          juntas: aqui, o `meio` do envelope do teste e o envelope do custo */
-      const custo = des ? desfechoDaMargem(des, { total, dc, critico, desastre, emCombate: !!combateRef.current, comMeiaVerdade: true }) : null;
+      const custo = des ? desfechoDaMargem(des, { total, dc, critico, desastre, emCombate: !!combateRef.current, comMeiaVerdade: true, semMeio: semFioNoMomento(des) }) : null;
       const passou = bateu || !!(custo && custo.porPouco);
       /* ---------------- O QUE A TENTATIVA CUSTA (v9.59) ----------------
          Tempo sempre, barulho onde faz sentido, e o registro no livro — os
@@ -18607,12 +18634,42 @@ export default function Taverna() {
      o porquê da régua (bastidor: o Narrador lê, o jogador sente pelo efeito).
      Na tela só a frase do jogador. Sem dado não há tentativa; o tempo passa;
      para a cobrança é falha (o que a narração prometer não entra na bolsa). */
+  /* 19/11 (§17): sem dado é sucesso sem risco, e o efeito do sucesso quem
+     aplica é o sistema (oQueAconteceSemDado): a conversa com quem está do seu
+     lado ganha o envelope social do sim, o ouro da alavanca sai da bolsa, e o
+     livro de tentativas fecha-a como conseguida; o curativo calmo fecha como
+     feito. O que não tem efeito (a busca vazia, o passo sem testemunha) narra-se
+     acontecendo, e para a cobrança continua sem ganho. */
   const acontecerSemDado = (v, m, acao) => {
     pushMsgs([{ autor: "jogador", texto: acao }]);
-    ultimoDesfechoRef.current = "falha";
+    let q = { efeito: "nenhum", desfecho: "falha", fecha: false };
+    try { q = oQueAconteceSemDado(v, m, { frase: acao, pers: fichaViva() || personagem }); } catch (e) { calou("Mestre vivo · o que o sem-dado aplica", e); }
+    ultimoDesfechoRef.current = q.desfecho;
     try { cobrarTempoDoDesafio(v); } catch (e) { calou("Mestre vivo · o tempo do que acontece", e); }
+    if (q.fecha) {
+      try { fecharTentativa(v, true); } catch (e) { calou("Mestre vivo · o livro do que aconteceu", e); }
+      try { testeDoTurnoRef.current = { pericia: (v && v.pericia) || "", sucesso: true, desafio: (v && v.id) || "" }; } catch (e) { calou("Mestre vivo · o teste do que aconteceu", e); }
+    }
     let env = "";
-    try { env = envelopeDeVeredicto(vereditoDoQueAcontece(v, m), acao); } catch (e) { calou("Mestre vivo · o envelope do que acontece", e); env = ""; }
+    if (q.efeito === "social") {
+      try {
+        const conta = q.conta || v.social;
+        env = envelopeSocial(conta, { passou: true, quem: q.quem || "essa pessoa", oQueEuDisse: acao });
+        if (conta.custoEmMoedas > 0) {
+          const base = personagemRef.current || personagem;
+          const pago = Math.min(base.moedas || 0, conta.custoEmMoedas);
+          if (pago > 0) {
+            const np = { ...base, moedas: (base.moedas || 0) - pago };
+            personagemRef.current = np; setPersonagem(np);
+            pushMsgs([{ autor: "sistema", texto: `◉ ${pago} moedas mudaram de mão.` }]);
+          }
+        }
+      } catch (e) { calou("Mestre vivo · o sim da conversa", e); env = ""; }
+    }
+    let ls = "";
+    if (q.efeito === "socorro") { try { ls = oSocorroDoTeste(v, true); } catch (e) { calou("Mestre vivo · o curativo feito", e); ls = ""; } }
+    if (!env) { try { env = envelopeDeVeredicto(vereditoDoQueAcontece(v, m), acao); } catch (e) { calou("Mestre vivo · o envelope do que acontece", e); env = ""; } }
+    if (env && ls) env = env + "\n" + ls;
     enviar(env || acao, fichaViva() || personagem);
     return true;
   };
@@ -19155,11 +19212,14 @@ export default function Taverna() {
       }
       /* 11/10 (MM11 · 5.ª sessão, M32): o "sim, essa pessoa mente" chega
          ao fim do dado — é ele que a leitura diz quando o teste passa */
+      let vDoDado = v;
       if (m) {
         chamadoDoMomentoRef.current = { id: v.id || "", chave: v.chave || "", chamado: m.chamado || null };
         try { const pa = pautaDoMomento(m); if (pa) porNaPautaDoTurno(pa); } catch (e) { calou("Mestre vivo · a pauta do ato", e); }
+        /* 19/11 (§17): a marca do momento (a falha que não paga) e a vantagem da cena */
+        try { vDoDado = marcarDoMomento(v, m); } catch (e) { calou("Mestre vivo · a marca do momento", e); vDoDado = v; }
       }
-      rolarDesafio(menteDoMundo ? { ...v, mente: menteDoMundo } : v, acao);
+      rolarDesafio(menteDoMundo ? { ...vDoDado, mente: menteDoMundo } : vDoDado, acao);
       return true;
     }
     pushMsgs([
@@ -19594,6 +19654,9 @@ export default function Taverna() {
         if (desv) { desv = false; porVantagem += " (anula a desvantagem)"; } else vant = true;
       }
     }
+    /* 19/11 (§17): a vantagem do momento — quem vai ser roubado dorme. Só o
+       veredito que o Mestre vivo marcou a traz; sem a chave, o campo não existe */
+    if (v.vantagemDoMomento && !vant && !desv) { vant = true; porVantagem = String(v.vantagemDoMomento); }
     const novaRolagem = {
       atributo: nomeDoAtributo(v.atributo), rotulo, pericia: v.pericia,
       nivelTreino: per && nivelTreino === "nenhum" ? "leigo" : nivelTreino,
@@ -27152,6 +27215,12 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       } catch (e) { calou("MC6 · há o que achar", e); haOQueAchar = null; }
       const p = oQueOMestrePede({ emCombate: !!combateRef.current, naEstrada: !!jornadaRef.current, naMasmorra: !!masmorraRef.current, onde, falouCom, dia: diaRef.current || 0, jaPedidos: pedidosFeitosRef.current, haOQueAchar, semente: sementeMundo() });
       if (!p) return;
+      /* O MESTRE VIVO (§17): com a chave, o dado sem ação é o que o mundo
+         provoca; a oferta da chegada («Olhar à volta», uma busca na boca do
+         herói) cala */
+      if (mestreVivoLigado()) {
+        try { if (oMestreVivoCalaOPedido(p.id)) return; } catch (e) { calou("Mestre vivo · a chegada calada", e); }
+      }
       falaDoPedidoRef.current = fala;
       pedidosFeitosRef.current = [...pedidosFeitosRef.current, p.chave].slice(-60);
       const v = veredictoDaAcao(p.frase);

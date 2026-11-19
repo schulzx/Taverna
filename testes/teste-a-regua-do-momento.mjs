@@ -21,6 +21,7 @@ import {
   valeRolagem, PORQUE_DO_ESPONTANEO, oQueACenaChama, FAMILIAS_DA_CONVERSA, FAMILIAS_DO_SABER,
   MOLDURAS_DE_RISCO, FAMILIAS_DO_IMPOSSIVEL, FAMILIAS_DA_ALAVANCA, FAMILIAS_DO_EVIDENTE,
   PERGUNTA_DO_DESTINO, FAIXAS_DO_DESTINO, oDadoDoDestino, ePerguntaDoDestino,
+  RISCO_DO_ATO, MOTIVO_PARA_NEGAR_DO_ALVO, A_VITIMA_DO_FURTO, OUVIR_QUEM_FALA, CALA_POR_AUSENCIA,
 } from "../src/motor/a-regua-do-momento.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
@@ -203,11 +204,22 @@ sec("M5. o treino: as linhas novas e a escuta da cena (18/11/2026)");
   /* a moldura */
   const mold = ouve("será que consigo escalar a torre?", cenaDe({ cena: { estados: ["perigo_fisico"] } }));
   t("a moldura sai e o ato de dentro é lido: com perigo, rola", mold.rola && mold.ouviu && mold.ouviu.id === "escalar" && mold.ouviu.porta === "moldura", JSON.stringify(mold.ouviu));
-  t("a mesma moldura num chão calmo não rola", ouve("será que consigo escalar a torre?", cenaDe({})).porque === "travessiaCalma");
+  /* MOVIDA em 19/11 (o-mestre-vivo.md §17), e o motivo: a torre é uma
+     fortificação, e a queda dela passou a ser o risco do próprio ato
+     (RISCO_DO_ATO — «vou escalar o muro do forte» passava de graça na sessão
+     jogada). A intenção desta asserção — a moldura lida num chão calmo não
+     rola — fica, com um muro comum no lugar da torre. */
+  t("a mesma moldura num chão calmo não rola", ouve("será que consigo escalar o muro?", cenaDe({})).porque === "travessiaCalma");
   /* a fala que pede */
   const pedido = "eu te pago o dobro se você abrir o portão";
   t("o pedido sem verbo de conversa, a quem tem motivo para negar, rola", ouve(pedido, cenaDe({ pessoas: [P("porteiro", "motivo_para_negar")] })).porque === "motivoParaNegar");
-  t("o mesmo pedido a um estranho sem motivo não rola (a fala ouvida pela escuta é a leitura mais fraca)", ouve(pedido, cenaDe({ pessoas: [P("porteiro")] })).porque === "falaSemOposicao");
+  /* MOVIDA em 19/11 (§17), e o motivo: «abrir o portão» é o degrau do risco
+     na escada do pedido (quebrar uma regra pequena), e desde o conserto o
+     motivo para negar se lê no alvo da fala pelo tamanho do pedido — pedir
+     isso a um estranho rola. A intenção (a fala que só a escuta ouviu, sem
+     motivo nenhum, não rola) fica, com um pedido que não custa a quem ouve. */
+  t("o pedido a um estranho que nada lhe custa não rola (a fala ouvida pela escuta é a leitura mais fraca)", ouve("eu te pago o dobro se voce me ajudar a carregar isso", cenaDe({ pessoas: [P("porteiro")] })).porque === "falaSemOposicao");
+  t("e o pedido que lhe custa (abrir o portão), ao mesmo estranho, rola pelo motivo do alvo", ouve(pedido, cenaDe({ pessoas: [P("porteiro")] })).porque === "motivoParaNegar");
   t("o mesmo pedido sem ninguém em cena não é ouvido", ouve(pedido, cenaDe({})).porque === "naoETeste");
   /* o morto */
   t("quem ouviria não pode responder: sem dado", ouve(pedido, cenaDe({ pessoas: [P("porteiro", "motivo_para_negar", "morta")] })).rola === false);
@@ -267,7 +279,9 @@ sec("R3. o treino da rodada 3: a moldura, os estados que faltavam e o dado do de
   t("o que se move pune e apressa: saltar da carroça em movimento rola", ouve("pulo da carroça para a estrada", coisa("em_movimento")).rola
     && !ouve("pulo da carroça para a estrada", coisa()).rola);
   /* a moldura como peso, nunca sozinha contra a cena */
-  t("a fala que só a escuta ouviu, com licença, a quem não está do seu lado, rola", ouve("posso pedir pra ele, eu te pago o dobro se você abrir o portão?", cenaDe({ pessoas: [P("porteiro")] })).porque === "falaComLicenca");
+  /* MOVIDA em 19/11 (§17): rola como antes, mas agora pela linha do motivo
+     (o pedido de abrir o portão custa a quem ouve), que vem antes da licença */
+  t("a fala que só a escuta ouviu, com licença, a quem não está do seu lado, rola", ["falaComLicenca", "motivoParaNegar"].includes(ouve("posso pedir pra ele, eu te pago o dobro se você abrir o portão?", cenaDe({ pessoas: [P("porteiro")] })).porque));
   t("a mesma licença a quem está disposto não rola", !ouve("posso pedir pra ele, eu te pago o dobro se você abrir o portão?", cenaDe({ pessoas: [P("porteiro", "disposta")] })).rola);
   t("com a cena calma, «posso abrir a porta?» não rola (a moldura não decide sozinha)", !ouve("posso abrir a porta?", cenaDe({})).rola);
   /* as ações encadeadas: fica o ato que tem oposição */
@@ -292,6 +306,47 @@ sec("R3. o treino da rodada 3: a moldura, os estados que faltavam e o dado do de
   /* sem cena, nada disto corre */
   const semCena = valeRolagem(ler(dest), null, { frase: dest, leitura: CTX });
   t("sem cena, a frase do destino é o Mestre de hoje", semCena.porque === (porQueNaoChama(ler(dest), {}) || "chama") && !("destino" in semCena));
+}
+
+sec("S17. o conserto depois da primeira sessão jogada (19/11/2026, o-mestre-vivo.md §17)");
+{
+  /* as frases são as da sessão mv-1 (nossas), cada uma o caso que falhava
+     antes (a sessão: mestre-vivo-sessao.md §5) e passa agora */
+  const comFrase = (frase, cena, ctx) => valeRolagem(ler(frase), cena, { ...(ctx || {}), frase, leitura: CTX });
+  t("as tabelas novas são congeladas", [RISCO_DO_ATO, MOTIVO_PARA_NEGAR_DO_ALVO, A_VITIMA_DO_FURTO, CALA_POR_AUSENCIA].every(Object.isFrozen));
+  /* (a) o risco do ato */
+  const forte = comFrase("eu vou escalar o muro do forte pra espiar de cima", cenaDe({ pessoas: [P("artilheira")] }));
+  t("escalar o muro do forte rola sem estado nenhum: a queda da fortificação é o risco do ato (era travessiaCalma)", forte.rola && forte.porque === "riscoDoAto", forte.porque);
+  const quintal = comFrase("escalo o muro pra entrar no quintal", cenaDe({}));
+  t("o muro do quintal, calmo, continua sem dado (o exame, E174)", !quintal.rola && quintal.porque === "travessiaCalma", quintal.porque);
+  /* (b) a vítima do furto */
+  const furto = comFrase("tento roubar uma bolsa de moedas do bolso de um bebado", cenaDe({ pessoas: [P("caçador", "do_grupo")] }));
+  t("roubar do bolso de alguém rola mesmo com só o grupo em cena: a vítima está na frase (era sem dado)", furto.rola && furto.veredito && furto.veredito.id === "bater_carteira", furto.porque);
+  const morto = comFrase("roubo a bolsa do bandido", cenaDe({ pessoas: [P("bandido", "morta")] }));
+  t("do morto, sem ninguém que note, a mão leve não rola", !morto.rola && morto.porque === "maoLeveSemOlhos", morto.porque);
+  const dorme = comFrase("pego a bolsa dele", cenaDe({ pessoas: [P("marinheiro", "dormindo"), P("taverneira")] }));
+  t("quem dorme dá vantagem e não dispensa o dado", dorme.rola && dorme.vantagem === A_VITIMA_DO_FURTO.diz, JSON.stringify([dorme.porque, dorme.vantagem]));
+  /* (c) o motivo para negar, no alvo da fala */
+  const ferreiro = cenaDe({ pessoas: [P("ferreiro anão")] });
+  const d1 = comFrase("posso pedir um desconto pra quem vende por aqui?", ferreiro);
+  const d2 = comFrase("pergunto ao anao da Bigorna de Ferro se ele faz um desconto", ferreiro);
+  t("pedir desconto rola nas duas formas de dizer (a segunda era falaSemOposicao)", d1.rola && d2.rola && d2.porque === "motivoParaNegar", JSON.stringify([d1.porque, d2.porque]));
+  const barg = comFrase("antes de assinar, pergunto quanto custa e tento barganhar pela metade do preco", cenaDe({ pessoas: [P("cartógrafa")] }));
+  t("barganhar pela metade rola, mesmo com «pergunto quanto custa» na frase (era a linha da pergunta)", barg.rola && barg.porque === "motivoParaNegar", barg.porque);
+  const tropeiro = comFrase("nao pago o dobro. digo pro tropeiro que a adaga de guarda vale mais que isso e que ele faz pelo preco normal ou eu vou procurar outro", cenaDe({ pessoas: [P("tropeiro")] }));
+  t("o «faz pelo preço normal» é barganha, e rola (era sem leitura)", tropeiro.rola, tropeiro.porque);
+  const caminho = comFrase("pergunto onde fica o templo", cenaDe({ pessoas: [P("guarda")] }));
+  t("perguntar o caminho ao guarda continua sem dado", !caminho.rola, caminho.porque);
+  const amigo = comFrase("peço ao Aldric que vigie a porta enquanto eu durmo", cenaDe({ pessoas: [{ nome: "Aldric", papel: "caçador", estados: ["do_grupo"] }] }));
+  t("o favor a quem está do seu lado acontece sem dado", !amigo.rola && amigo.porque === "dispostoCede", amigo.porque);
+  const magia = comFrase("conjuro amizade nele antes de pedir o desconto", cenaDe({ pessoas: [P("mercador")] }));
+  t("a magia resolve pela própria regra: o desconto depois do feitiço não rola (o exame, E122)", !magia.rola, magia.porque);
+  /* (3) ouvir quem fala com você */
+  const ouvir = comFrase("pago as dez pecas e assino. depois digo que quero ouvir o que ela tem pra me contar", cenaDe({ pessoas: [P("cartógrafa")] }));
+  t("ouvir o que a pessoa tem para contar não rola: é conversa (era haOQueOuvir)", !ouvir.rola && ouvir.porque === "ouvirQuemFala", ouvir.porque);
+  const espiar = comFrase("escuto a conversa da mesa ao lado", cenaDe({ pessoas: [P("mercador")] }));
+  t("escutar a conversa dos outros continua a rolar", espiar.rola && espiar.porque === "haOQueOuvir", espiar.porque);
+  t("a regra de segurança cala só pela ausência de estado", CALA_POR_AUSENCIA.every((id) => REGUA_DO_MOMENTO.some((r) => r.id === id && r.rola === false)));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

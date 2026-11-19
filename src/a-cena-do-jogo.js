@@ -35,7 +35,7 @@
 import { lerAcao, dificuldadePorId, EFEITOS_DA_FALHA } from "./desafios.js";
 import { valeRolagem, oQueACenaChama } from "./motor/a-regua-do-momento.js";
 import { oChamado, porQueNaoChama, O_CHAMADO, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
-import { lerCena } from "./cena-do-momento.js";
+import { lerCena, estadoPorId } from "./cena-do-momento.js";
 import { ESCADA_DA_RELACAO } from "./social.js";
 import { estadoSemVolta } from "./npcs.js";
 import { condicaoPorId } from "./condicoes.js";
@@ -280,7 +280,7 @@ export const DERIVACAO_DA_CENA = Object.freeze([
    muro); (3) o catálogo já faz o trabalho, e o estado o desfaria. */
 const S = (estado, porque) => Object.freeze({ estado, porque });
 export const ESTADOS_SEM_FONTE = Object.freeze([
-  S("motivo_para_negar", "o papel já pesa no número pela escada do pedido (social.js: pesoDoPapel); como estado, sem o tamanho do pedido, faria a pergunta de cortesia ao guarda rolar"),
+  S("motivo_para_negar", "é da fala, não da pessoa: como estado, sem o tamanho do pedido, faria a pergunta de cortesia ao guarda rolar — desde 19/11 a régua o lê por frase, no alvo da fala, pelo papel e pelo tamanho do pedido (MOTIVO_PARA_NEGAR_DO_ALVO, motor/a-regua-do-momento.js)"),
   S("ja_convencida", "o catálogo já devolve «isso você já conseguiu» pelo livro de tentativas; e a régua lê a marca na cena inteira (jaResolvido calaria toda ação de outra família)"),
   S("faminta", "o bestiário e o encontro não guardam o apetite da criatura"),
   S("acuada", "nada no jogo guarda que a criatura está sem saída"),
@@ -430,6 +430,8 @@ export function chamadoDoMomento(frase, leitura, retrato, ctx) {
   return Object.freeze({
     rola: !!r.rola, chamado: chamado || null, porque: r.porque, diz: r.diz || "", resposta: r.resposta || null,
     espontaneo: null, destino: r.destino || null, cena, veredito: vEf || null, pesos: r.pesos || null, ouviu: r.ouviu || null,
+    /* 19/11 (§17): a vantagem que a cena dá (quem vai ser roubado dorme) */
+    ...(r.vantagem ? { vantagem: r.vantagem } : {}),
   });
 }
 
@@ -453,14 +455,57 @@ export const O_DADO_DO_MUNDO = Object.freeze({
   chave: "espontaneo",
 });
 
-/* → { pericia, estado, porque, chamado } | null. `retratoAntes` null: tudo
-   o que chama na cena nova chama. Nunca lança. */
+/* ---------------- O QUE O MUNDO MOSTRA (19/11/2026, §17) ----------------
+   A primeira sessão jogada viu o espontâneo virar ação do herói: um dado de
+   Percepção que o mundo provocou ao chegar foi narrado como «você revira a
+   mesa e o baú». O espontâneo não é um gesto: o herói PERCEBE (ou não) algo
+   que o mundo fez. O que ele percebe sai do estado que provocou o dado, e de
+   nada mais — o relógio da caçada diz o que se aproxima, o céu diz o raio, o
+   lugar diz de quem é. oQue(retrato): o nome da coisa, tirado do retrato
+   depois; sem nome, o espontâneo NÃO é chamado (um dado sobre nada seria um
+   convite ao Narrador para inventar). passou / falhou: o que o herói percebe,
+   na primeira pessoa do envelope, com {oQue} e {efeito} (o efeito do estado,
+   ESTADOS_DA_CENA). O estado sem linha aqui não provoca. */
+const relogioDoTipo = (s, tipos) => arr(s.relogios).filter(obj).find((r) => tipos.includes(r.tipo) && num(r.segmentos) != null && num(r.cheios) != null
+  && r.cheios < r.segmentos && r.segmentos - r.cheios <= R_.faltaParaAPressa) || null;
+export const O_QUE_O_MUNDO_MOSTRA = Object.freeze({
+  algo_se_aproxima: Object.freeze({
+    oQue: (s) => { const r = relogioDoTipo(s, R_.relogioQueSeAproxima); return r ? txt(r.nome) : ""; },
+    passou: "Eu percebo a tempo: {efeito} — é {oQue}, e está perto.",
+    falhou: "Eu não percebo a tempo: {oQue} chega mais perto sem que eu note.",
+  }),
+  perigo_fisico: Object.freeze({
+    oQue: (s) => (R_.climaQueFere.includes(idDoClima(s.clima)) ? "a " + (txt(obj(s.clima) ? s.clima.rotulo || s.clima.id : s.clima) || "tempestade") : ""),
+    passou: "Eu percebo a tempo: {efeito} — {oQue} pesa sobre o caminho, e eu vejo onde não pisar.",
+    falhou: "Eu não percebo a tempo o que {oQue} prepara: {efeito}.",
+  }),
+  territorio_de_alguem: Object.freeze({
+    oQue: (s) => (obj(s.lugar) ? txt(s.lugar.nome) : txt(s.lugar)),
+    passou: "Eu entro em {oQue} sem que ninguém repare em mim — por enquanto.",
+    falhou: "{oQue} tem dono, e alguém de lá repara em mim onde eu não devia estar.",
+  }),
+  vigiado: Object.freeze({
+    oQue: (s) => arr(obj(s.quest) ? s.quest.vigiado : []).map((n) => txt(obj(n) ? n.nome : n)).find(Boolean) || "",
+    passou: "Eu passo por {oQue} sem ser visto: {efeito}, e ninguém me nota.",
+    falhou: "Alguém que vigia {oQue} me nota.",
+  }),
+});
+
+/* → { pericia, estado, porque, chamado, mostra } | null. `retratoAntes` null:
+   tudo o que chama na cena nova chama. Sem o que mostrar (O_QUE_O_MUNDO_MOSTRA,
+   acima), null: o espontâneo não é chamado. Nunca lança. */
 export function chamadoQueOMundoProvoca(retratoAntes, retratoDepois) {
   try {
     const depois = cenaDoJogo(retratoDepois);
     if (!depois) return null;
     const pede = oQueACenaChama(cenaDoJogo(retratoAntes), depois);
     if (!pede) return null;
+    const M = O_QUE_O_MUNDO_MOSTRA[pede.estado];
+    let oQue = "";
+    try { oQue = M ? txt(M.oQue(retratoDepois)) : ""; } catch { oQue = ""; }
+    if (!oQue) return null;
+    const e = estadoPorId(pede.estado);
+    const mostra = Object.freeze({ estado: pede.estado, oQue, efeito: (e && e.efeito) || "", passou: M.passou, falhou: M.falhou });
     const per = periciaPorId(pede.pericia);
     const deg = dificuldadePorId(O_DADO_DO_MUNDO.degrau);
     let chamado = null;
@@ -468,6 +513,6 @@ export function chamadoQueOMundoProvoca(retratoAntes, retratoDepois) {
       const ch = chamadoDaRolagem({ rotulo: per.nome, dificuldade: deg.dc, origem: "teste" }, { risco: O_DADO_DO_MUNDO.risco[pede.pericia] || "" });
       if (ch) chamado = Object.freeze({ ...ch, pericia: pede.pericia, chave: O_DADO_DO_MUNDO.chave + "|" + pede.estado });
     }
-    return Object.freeze({ pericia: pede.pericia, estado: pede.estado, porque: pede.porque, chamado });
+    return Object.freeze({ pericia: pede.pericia, estado: pede.estado, porque: pede.porque, chamado, mostra });
   } catch { return null; }
 }

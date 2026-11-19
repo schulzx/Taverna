@@ -24,7 +24,7 @@
 import fs from "node:fs";
 import {
   REGRAS_DA_CENA_DO_JOGO, FORMA_DO_RETRATO, ONDE_DO_RETRATO, CAMPOS_DA_QUEST, DERIVACAO_DA_CENA, ESTADOS_SEM_FONTE,
-  cenaDoJogo, O_CHAMADO_DA_CONVERSA, chamadoDoMomento, O_DADO_DO_MUNDO, chamadoQueOMundoProvoca,
+  cenaDoJogo, O_CHAMADO_DA_CONVERSA, chamadoDoMomento, O_DADO_DO_MUNDO, chamadoQueOMundoProvoca, O_QUE_O_MUNDO_MOSTRA,
 } from "../src/a-cena-do-jogo.js";
 import { ESTADOS_DA_CENA, estadoPorId } from "../src/cena-do-momento.js";
 import { valeRolagem, PORQUE_DO_ESPONTANEO } from "../src/motor/a-regua-do-momento.js";
@@ -282,11 +282,16 @@ sec("7. o chamado do momento");
   t("o bônus pelo veredito (bonusDe): o resultado certo não rola", !auto.rola && auto.porque === "automatico", auto.porque);
   const luta = chamadoDoMomento("escalo o muro", CTX, com({ clima: "chuva" }), { emCombate: true });
   t("na luta, a luta tem o seu dado", !luta.rola && luta.porque === "luta");
-  const esp = chamadoQueOMundoProvoca(BASE, com({ relogios: [{ tipo: "cacada", segmentos: 4, cheios: 3 }] }));
+  /* MOVIDA em 19/11 (o-mestre-vivo.md §17), e o motivo: o espontâneo só é
+     chamado quando o estado que o provoca tem o que mostrar (O_QUE_O_MUNDO_MOSTRA)
+     — o relógio da caçada sem nome não diz o que se aproxima, e um dado sobre
+     nada era o convite ao Narrador para inventar. A caçada ganha um nome; a
+     intenção (a caçada a um passo chama Percepção) fica. */
+  const esp = chamadoQueOMundoProvoca(BASE, com({ relogios: [{ tipo: "cacada", nome: "os batedores do Barão", segmentos: 4, cheios: 3 }] }));
   t("o mundo provoca: a caçada a um passo chama Percepção, com o degrau da tabela e a chave do espontâneo",
     esp && esp.pericia === "percepcao" && esp.estado === "algo_se_aproxima" && esp.chamado && esp.chamado.dc === dificuldadePorId(O_DADO_DO_MUNDO.degrau).dc
     && esp.chamado.chave.startsWith(O_DADO_DO_MUNDO.chave + "|") && esp.chamado.aviso.includes(O_DADO_DO_MUNDO.risco.percepcao), J(esp));
-  const ja = com({ relogios: [{ tipo: "cacada", segmentos: 4, cheios: 3 }] });
+  const ja = com({ relogios: [{ tipo: "cacada", nome: "os batedores do Barão", segmentos: 4, cheios: 3 }] });
   t("o que já estava na cena não chama de novo; sem retrato depois, nada", chamadoQueOMundoProvoca(ja, ja) === null && chamadoQueOMundoProvoca(BASE, null) === null);
   t("o sítio fechado, ao entrar, chama Furtividade (o território de alguém)", (chamadoQueOMundoProvoca(BASE, com({ lugar: { nome: "Taverna do Javali" }, minuto: 3 * 60 })) || {}).pericia === "furtividade");
 }
@@ -319,6 +324,39 @@ sec("8. a previsão: o corpus da mesa numa cena calma, contra o Mestre de hoje")
   }
   t("a previsão contou todas as frases", mudam + iguais === MESA.length);
   t("todo chamado novo diz o preço numa linha", semAviso === 0, String(semAviso));
+}
+
+sec("9. o conserto depois da primeira sessão jogada (19/11/2026, o-mestre-vivo.md §17)");
+{
+  /* 1. o espontâneo mostra o que o mundo fez, e só quando há o que mostrar */
+  const semNome = chamadoQueOMundoProvoca(BASE, com({ relogios: [{ tipo: "cacada", segmentos: 4, cheios: 3 }] }));
+  t("a caçada sem nome não chama: não há o que mostrar (antes chamava Percepção sobre nada)", semNome === null);
+  const comNome = chamadoQueOMundoProvoca(BASE, com({ relogios: [{ tipo: "cacada", nome: "os batedores do Barão", segmentos: 4, cheios: 3 }] }));
+  t("com nome, o espontâneo traz o que mostra: o estado, o nome e o efeito", !!comNome && comNome.mostra && comNome.mostra.estado === "algo_se_aproxima"
+    && comNome.mostra.oQue === "os batedores do Barão" && comNome.mostra.efeito === estadoPorId("algo_se_aproxima").efeito, J(comNome && comNome.mostra));
+  t("todo estado que chama tem a sua linha do que mostra, ou não provoca (assunto_raro não tem fonte)",
+    ESTADOS_DA_CENA.filter((e) => e.chama).every((e) => !!O_QUE_O_MUNDO_MOSTRA[e.id] || ESTADOS_SEM_FONTE.some((s) => s.estado === e.id)));
+  t("o que se percebe é percepção, nunca gesto: nenhum texto fala em revirar, revistar ou procurar",
+    Object.values(O_QUE_O_MUNDO_MOSTRA).every((m) => ![m.passou, m.falhou].some((x) => /revir|revist|procur|vasculh|mex/i.test(x))));
+  const terr = chamadoQueOMundoProvoca(BASE, com({ lugar: { nome: "Taverna do Javali" }, minuto: 3 * 60 }));
+  t("o território mostra de quem é: o lugar", !!terr && terr.mostra.oQue === "Taverna do Javali");
+  /* 3. o risco claro que passava sem dado, pelo retrato do jogo */
+  const forte = { cidade: "Baía do Enforcado", lugar: { nome: "Bateria Alta" }, minuto: 9 * 60, grupo: [{ nome: "Aldric", papel: "caçador", vida: 12, vidaMax: 12 }], pessoas: [{ nome: "Helga", papel: "artilheira" }] };
+  const muro = chamadoDoMomento("eu vou escalar o muro do forte pra espiar de cima", CTX, forte, { bonus: 2 });
+  t("no forte, escalar o muro rola, com o chamado de Atletismo (na sessão passou de graça)", muro.rola && muro.porque === "riscoDoAto" && !!muro.chamado, muro.porque);
+  const roubo = chamadoDoMomento("tento roubar uma bolsa de moedas do bolso de um bebado", CTX, forte, { bonus: 2 });
+  t("roubar a bolsa de alguém rola (na sessão foi um ato garantido)", roubo.rola && roubo.veredito && roubo.veredito.id === "bater_carteira", roubo.porque);
+  const banca = { ...forte, lugar: { nome: "Bigorna de Ferro" }, pessoas: [{ nome: "Thorin", papel: "ferreiro anão" }] };
+  const d1 = chamadoDoMomento("posso pedir um desconto pra quem vende por aqui?", CTX, banca, { bonus: 0 });
+  const d2 = chamadoDoMomento("pergunto ao anao da Bigorna de Ferro se ele faz um desconto", CTX, banca, { bonus: 0 });
+  t("o desconto ao comerciante rola nas duas formas de dizer, com o preço dito", d1.rola && d2.rola && !!d1.chamado && !!d2.chamado, J([d1.porque, d2.porque]));
+  const caminho = chamadoDoMomento("pergunto onde fica o templo", CTX, banca, { bonus: 0 });
+  t("perguntar o caminho não rola", !caminho.rola, caminho.porque);
+  const dormindo = { ...forte, pessoas: [{ nome: "Ivo", papel: "marinheiro", agora: DORMINDO }, { nome: "Helga", papel: "artilheira" }] };
+  const furtoV = chamadoDoMomento("tento roubar a bolsa do Ivo", CTX, dormindo, { bonus: 2 });
+  t("quem dorme dá vantagem ao furto, e o furto ainda rola (Helga vê)", furtoV.rola && typeof furtoV.vantagem === "string" && furtoV.vantagem.length > 5, J([furtoV.porque, furtoV.vantagem]));
+  t("o motivo para negar continua sem fonte na cena, e diz que mora na régua, lido no alvo da fala",
+    /alvo da fala/.test((ESTADOS_SEM_FONTE.find((s) => s.estado === "motivo_para_negar") || {}).porque || ""));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

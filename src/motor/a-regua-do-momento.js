@@ -41,10 +41,11 @@
 import { QUANDO_O_MESTRE_CHAMA, porQueNaoChama, saberComumDe } from "./o-mestre-chama.js";
 import {
   lerCena, haOposicao, haOQueAchar, haSegredo, haPerigo, alguemPodeNotar, haPlateia, cenaRevela,
-  custoDeFalhar, respostaDaPergunta, estadosQueChamam, estadoPorId, temMarca,
+  custoDeFalhar, respostaDaPergunta, estadosQueChamam, estadoPorId, temMarca, alvoDaAcao,
 } from "../cena-do-momento.js";
 import { escutarComCena, molduraDe, atosDaFrase } from "./a-escuta-da-cena.js";
 import { lerAcao } from "../desafios.js";
+import { TAMANHOS_DO_PEDIDO, pesoDoPapel } from "../social.js";
 
 /* ---------------- A FAMÍLIA DA AÇÃO ----------------
    O id do catálogo (desafios.js), na língua do estudo. O improviso diz a
@@ -107,6 +108,98 @@ export const FAMILIAS_DA_ALAVANCA = Object.freeze(["forcar", "convencer", "intim
 /* rodada 3: o que está à vista não se procura nem se adivinha */
 export const FAMILIAS_DO_EVIDENTE = Object.freeze(["procurar", "rastrear", "saber"]);
 
+/* ---------------- O CONSERTO DEPOIS DA PRIMEIRA SESSÃO (19/11/2026) ----------------
+   mente/lancamento/o-mestre-vivo.md §17. Quatro tabelas, cada uma de um
+   defeito que a sessão jogada mostrou (mestre-vivo-sessao.md §5). */
+
+/* (a) O RISCO DO ATO. «vou escalar o muro do forte pra espiar de cima» rolou
+   no Mestre de hoje e passou de graça no novo: a régua só via perigo em
+   ESTADO (o chão liso, a pressa), e nenhum estado dizia altura. O veredito do
+   catálogo já traz a queda (`v.queda`, desafios.js#quedaDe); quando ela é de
+   uma fortificação, cair é o preço do próprio ato, sem estado nenhum. A
+   altura comum (o muro do quintal, o telhado, a beirada de uma trilha larga)
+   continua calma — o exame (E174, E365, E371) e o estudo das mesas dizem que
+   a travessia sem perigo nem pressa não rola. `ids`: os desafios que caem;
+   `altura`: as palavras da frase que dizem fortificação; `quedaQuePune`: o
+   nome da altura (ALTURA_POR_LUGAR) que já é de torre. */
+export const RISCO_DO_ATO = Object.freeze({
+  ids: Object.freeze(["escalar", "saltar", "equilibrio"]),
+  altura: /\b(muralhas?|forte|fortaleza|castelo|torres?|torreao|bastiao|baluarte|ameias?|atalaia|campanario|farol|mastro)\b/,
+  quedaQuePune: Object.freeze(["a torre"]),
+});
+const riscoDoAto = (x) => !!x.v && RISCO_DO_ATO.ids.includes(x.v.id) && !!x.v.queda
+  && (RISCO_DO_ATO.altura.test(semAcento(x.frase)) || RISCO_DO_ATO.quedaQuePune.includes(x.v.queda.nome));
+
+/* (c) O MOTIVO PARA NEGAR, LIDO NO ALVO DA FALA. Era um estado sem fonte
+   (a-cena-do-jogo.js, ESTADOS_SEM_FONTE): como estado da pessoa, sem o
+   tamanho do pedido, faria a pergunta de cortesia ao guarda rolar. Aqui ele é
+   da FALA: o papel de quem ouve e o tamanho do que se pede, para o alvo da
+   frase (alvoDaAcao), nunca para a cena inteira. Quem ouve tem motivo para
+   negar quando não está do seu lado (nem disposto, nem com medo, nem fora de
+   si) e:
+     - o pedido custa a ele (os degraus da escada do pedido, social.js,
+       DITOS na frase — o degrau padrão não conta: frase que não diz o que
+       pede não é pedido grande);
+     - é o dinheiro dele que está em jogo (`preco`: a barganha, o desconto —
+       a escada não ouvia «barganhar» nem «pelo preço normal»);
+     - veste farda, batina ou brasão (o papel que pesa contra na escada,
+       social.js#pesoDoPapel, delta > 0): para ele, até a boa vontade pedida
+       a um estranho (o degrau da simpatia) já custa;
+     - guarda um segredo e a frase o pressiona (insistir, ameaçar, não
+       perguntar) — o dado vem quando o jogador pressiona (§3, o segredo).
+   Nunca quando a frase resolve pela magia («conjuro amizade nele antes de
+   pedir»): a magia resolve pela própria regra (estudo das mesas §6). */
+export const MOTIVO_PARA_NEGAR_DO_ALVO = Object.freeze({
+  degraus: Object.freeze(["favor", "risco", "traicao"]),
+  degrausDaAutoridade: Object.freeze(["simpatia", "favor", "risco", "traicao"]),
+  magia: /\b(conjur\w*|lanc\w* (um |uma |o |a )?(feitic\w*|magia|encant\w*|amizade)|feitic\w*|encanto)\b/,
+  preco: /\b(barganh\w*|pechinch\w*|descont\w*|abatimento|(faz|deixa|fica|sai) (por )?mais barato|metade do preco|preco (normal|justo|de sempre|de tabela|certo|menor)|baix\w* o preco|faz (por|pelo) (menos|\d+|dez|vinte|trinta|quarenta|cinquenta))\b/,
+  /* pressionar: a ameaça, ou a conversa que insiste («insisto», «exijo»,
+     «te encaro até você falar») — pedir a quem guarda segredo não é pressionar */
+  pressao: /\b(insist\w*|exij\w*|exigir|pression\w*|encaro|nao saio daqui|ate (ele|ela|voce|vc) (falar|contar|dizer|abrir o bico)|fala logo|desembucha)\b/,
+});
+function motivoParaNegarDoAlvo(x) {
+  const M = MOTIVO_PARA_NEGAR_DO_ALVO;
+  if (!x.social || x.op.facilita || x.op.cede || x.op.inerte || !x.op.quem) return false;
+  const t = semAcento(x.frase);
+  if (!t || M.magia.test(t)) return false;
+  const pergunta = /\?\s*$/.test(t);
+  if (M.preco.test(t)) return true;
+  const alvo = alvoDaAcao(x.cena, { sobre: "pessoa", quem: x.quem });
+  const papel = alvo ? pesoDoPapel(alvo.papel || alvo.nome) : null;
+  const degraus = papel && papel.delta > 0 ? M.degrausDaAutoridade : M.degraus;
+  if (TAMANHOS_DO_PEDIDO.some((d) => degraus.includes(d.id) && d.rx.test(t))) return true;
+  const pressiona = x.familia === "intimidar" || (x.familia === "convencer" && M.pressao.test(t));
+  return pressiona && !pergunta && x.op.estados.includes("esconde_algo");
+}
+
+/* (b) A VÍTIMA DO FURTO. «tento roubar uma bolsa do bolso de um bêbado»: a
+   frase diz de quem se tira, e a vítima pode notar — é oposição por
+   definição, esteja ou não no retrato. Só a vítima fora de si (morta,
+   desacordada) e sem mais ninguém que note deixa a mão leve sem dado. Quem
+   dorme ou está desacordado dá vantagem, e não dispensa o dado se há outro
+   alguém. */
+export const A_VITIMA_DO_FURTO = Object.freeze({
+  rx: /\b(bolso|bolsa|bolsinha|algibeira|carteira|cinto|cinturao|mochila|sacola)\s+(d[eoa]s?\s+|dele|dela|deles|delas)/,
+  vantagem: Object.freeze(["dormindo", "desacordada"]),
+  diz: "quem vai ser roubado não está atento",
+});
+const vitimaNaFrase = (x) => A_VITIMA_DO_FURTO.rx.test(semAcento(x.frase)) && !x.cena.pessoas.some((p) => tem(p, "inerte"));
+const tem = (p, marca) => p.estados.some((id) => (estadoPorId(id) || {})[marca]);
+
+/* (3) QUEM FALA COM VOCÊ SE OUVE. «quero ouvir o que ela tem pra me contar»
+   rolou Percepção para ouvir quem conversava com o herói, e a falha foi
+   desmentida pela fala inteira na linha seguinte. Ouvir quem fala COM você é
+   conversa, não escuta: não rola. */
+export const OUVIR_QUEM_FALA = /\bouvir\b[^?.!]{0,40}\b(?:(?:me|nos) (?:contar|dizer|falar)|tem (?:pra|para|a) (?:me |nos )?(?:contar|dizer|falar))\b/;
+
+/* A REGRA DE SEGURANÇA. As linhas que dizem «não» pela AUSÊNCIA de um estado
+   (ninguém escreveu motivo para negar) não ganham do Mestre de hoje: se ele
+   rolaria e a cena não tem um estado positivo que explique o não, vale ele.
+   As outras linhas que calam têm o seu estado positivo (a pessoa disposta,
+   nada escondido que o mundo conheça, ninguém que note, a altura comum). */
+export const CALA_POR_AUSENCIA = Object.freeze(["falaSemOposicao"]);
+
 export const REGUA_DO_MOMENTO = Object.freeze([
   /* rodada 3: o que já ficou acertado, ou já foi tentado, não rola de novo
      (§8 nº 27, 37, 38) */
@@ -131,13 +224,15 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.social && x.op.inerte }),
   /* a conversa, dentro da régua */
   Object.freeze({ id: "pergunta", rola: false, diz: "pergunta não rola: quem quer responde, quem esconde desconversa",
-    quando: (x) => x.social && PERGUNTA_DA_ESCADA.includes(x.v.social && x.v.social.tamanho) && !x.op.opoe }),
+    quando: (x) => x.social && PERGUNTA_DA_ESCADA.includes(x.v.social && x.v.social.tamanho) && !x.op.opoe && !x.nega }),
   Object.freeze({ id: "medoCede", rola: false, diz: "quem já está com medo cede sem dado",
     quando: (x) => x.social && CEDE_COM_MEDO.includes(x.familia) && x.op.cede }),
   Object.freeze({ id: "dispostoCede", rola: false, diz: "com quem está disposto, a conversa resolve sem dado",
     quando: (x) => x.social && x.op.facilita }),
+  /* 19/11 (§17): o motivo também se lê no alvo da fala — o papel e o tamanho
+     do pedido (MOTIVO_PARA_NEGAR_DO_ALVO), e não só o estado escrito */
   Object.freeze({ id: "motivoParaNegar", rola: true, diz: "quem ouve tem motivo para negar",
-    quando: (x) => x.social && x.op.opoe }),
+    quando: (x) => x.social && (x.op.opoe || x.nega) }),
   /* M5: a fala que só a escuta ouviu (nenhum verbo de conversa na frase:
      «peço…», «vc solta e eu…») é a leitura mais fraca de uma tentativa.
      Ela rola pela regra mais forte do estudo — quem ouve tem motivo para
@@ -147,12 +242,14 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.social && x.v.escuta === "fala" && MOLDURAS_DE_RISCO.includes(x.moldura) && !x.op.facilita }),
   Object.freeze({ id: "falaSemOposicao", rola: false, diz: "ninguém tem motivo para negar: a conversa resolve",
     quando: (x) => x.social && x.v.escuta === "fala" }),
-  Object.freeze({ id: "conversaComEstranho", rola: true, diz: "um estranho que não te deve nada: a escada do pedido dá o número",
+  Object.freeze({ id: "conversaComEstranho", rola: true, diz: "um estranho que não deve nada a você: a escada do pedido dá o número",
     quando: (x) => x.social }),
   /* ler a pessoa: rola quando o jogador pede, e o pedido é a frase */
   Object.freeze({ id: "lerPessoa", rola: true, diz: "ler a pessoa rola quando o jogador pede",
     quando: (x) => x.familia === "ler_pessoa" }),
-  /* escutar */
+  /* escutar — 19/11 (§17): antes de tudo, quem fala COM você se ouve sem dado */
+  Object.freeze({ id: "ouvirQuemFala", rola: false, diz: "quem fala com você se ouve sem dado: é conversa",
+    quando: (x) => x.v.id === "escutar" && OUVIR_QUEM_FALA.test(semAcento(x.frase)) && x.cena.pessoas.some((p) => !p.estados.includes("do_grupo") && !tem(p, "inerte")) }),
   Object.freeze({ id: "somClaro", rola: false, diz: "dá para ouvir tudo daqui: o Mestre conta o que se ouve",
     quando: (x) => x.v.id === "escutar" && cenaRevela(x.cena) }),
   /* rodada 3: o som abafado — há o que ouvir, e custa (§8 nº 8) */
@@ -175,6 +272,9 @@ export const REGUA_DO_MOMENTO = Object.freeze([
   /* travessia */
   Object.freeze({ id: "travessiaArriscada", rola: true, diz: "o chão pune ou o tempo aperta",
     quando: (x) => x.familia === "travessia" && (x.custo.pune || x.custo.apressa) }),
+  /* 19/11 (§17): a queda de uma fortificação é o preço do próprio ato */
+  Object.freeze({ id: "riscoDoAto", rola: true, diz: "a queda daqui é o preço do próprio ato",
+    quando: (x) => x.familia === "travessia" && riscoDoAto(x) }),
   /* rodada 3: o herói mal (bêbado, ferido) faz do calmo um risco (nº 91) */
   Object.freeze({ id: "corpoQueFalha", rola: true, diz: "o corpo não obedece como devia",
     quando: (x) => ["travessia", "esgueirar", "rastrear"].includes(x.familia) && temMarca(x.cena, "penaliza") }),
@@ -202,7 +302,7 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.familia === "animal" && x.bicho.facilita }),
   /* M5: a mão leve só rola se alguém pode notar — do morto se tira e pronto */
   Object.freeze({ id: "maoLeveSemOlhos", rola: false, diz: "ninguém que possa notar: você pega e pronto",
-    quando: (x) => x.familia === "furtar" && !alguemPodeNotar(x.cena) }),
+    quando: (x) => x.familia === "furtar" && !alguemPodeNotar(x.cena) && !vitimaNaFrase(x) }),
   /* M5: o céu. Encoberto, orientar-se rola; à vista, o sol e as estrelas
      dizem a hora e o rumo — salvo se há perigo ou pressa */
   Object.freeze({ id: "ceuEncoberto", rola: true, diz: "nem sol nem estrela: o rumo é adivinhado",
@@ -330,6 +430,16 @@ export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
   return r;
 }
 
+/* o Mestre de hoje rolaria este veredito do catálogo? (porQueNaoChama) */
+function rolaHoje(v, c) {
+  try { return ROLA_HOJE.includes(porQueNaoChama(v, c)); } catch { return false; }
+}
+/* a vantagem do furto: o alvo dorme, ou está fora de si (A_VITIMA_DO_FURTO) */
+function vantagemDoFurto(x) {
+  const a = alvoDaAcao(x.cena, { sobre: "pessoa", quem: x.quem });
+  return a && a.estados.some((e) => A_VITIMA_DO_FURTO.vantagem.includes(e)) ? A_VITIMA_DO_FURTO.diz : "";
+}
+
 function decidir(vereditoDoCatalogo, lida, c) {
   let veredito = vereditoDoCatalogo;
   const pesos = pesosDe(lida, c);
@@ -372,14 +482,21 @@ function decidir(vereditoDoCatalogo, lida, c) {
     bicho: haOposicao(lida, { sobre: "criatura", quem }),
     coisa: haOposicao(lida, { sobre: "coisa" }),
     custo: custoDeFalhar(lida),
-    ctx: c, frase: typeof c.frase === "string" ? c.frase : "", moldura,
+    ctx: c, frase: typeof c.frase === "string" ? c.frase : "", moldura, quem,
   };
+  /* 19/11 (§17): o motivo para negar do alvo da fala, uma vez por frase */
+  try { x.nega = motivoParaNegarDoAlvo(x); } catch { x.nega = false; }
   for (const r of REGUA_DO_MOMENTO) {
     let vale = false;
     try { vale = !!r.quando(x); } catch { vale = false; }
     if (vale) {
       const resposta = r.id === "pergunta" ? respostaDaPergunta(lida, quem) : null;
-      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura, veredito: v });
+      /* a regra de segurança: o «não» que só tem ausência não ganha do Mestre de hoje */
+      if (!r.rola && CALA_POR_AUSENCIA.includes(r.id) && rolaHoje(vereditoDoCatalogo, c)) {
+        return Object.freeze({ rola: true, porque: "comoHoje", diz: "o Mestre de hoje rolaria, e a cena não diz por que não", pesos, resposta: null, ouviu, moldura, veredito: v });
+      }
+      const vantagem = r.rola && x.familia === "furtar" ? vantagemDoFurto(x) : "";
+      return Object.freeze({ rola: r.rola, porque: r.id, diz: r.diz, pesos, resposta: resposta ? resposta.id : null, ouviu, moldura, veredito: v, ...(vantagem ? { vantagem } : {}) });
     }
   }
   return Object.freeze({ rola: true, porque: "comoSempre", diz: "", pesos, resposta: null, ouviu, moldura, veredito: v });

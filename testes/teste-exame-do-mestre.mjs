@@ -142,9 +142,14 @@ const SITUACOES = JSON.parse(fs.readFileSync(new URL("./corpus-das-situacoes.jso
    O de hoje com o catálogo antigo (ebf0f64): A 75 · 11 · 53 · cat 47 · per 21
    · pares 1 · esp 4; B 75 · 15 · 46 · cat 46 · per 20 · pares 1 · esp 6. */
 const CATRACA_DO_EXAME = {
-  data: "2026-11-18 (treino da rodada 3)",
+  data: "2026-11-19 (o conserto do Mestre vivo; a B é a da rodada 3)",
   hoje: {
-    A: { rolaCerto: 226, pedeIndevido: 46, deixaDePedir: 109, categoria: 160, pericia: 83, paresQueSeparam: 3 },
+    /* MOVIDA em 19/11/2026 (o conserto do Mestre vivo, o-mestre-vivo.md §17),
+       e o motivo: 31 frases das duas sessões jogadas entraram na metade A
+       (origem «sessao-mv-1», rodada 4). O Mestre de hoje não mudou; a A é que
+       cresceu, e ele erra nas frases novas o que errava na sessão (3 pedidos
+       indevidos, 11 omissões). Era 226 · 46 · 109 · cat 160 · per 83 · pares 3. */
+    A: { rolaCerto: 243, pedeIndevido: 49, deixaDePedir: 120, categoria: 179, pericia: 90, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
   },
   regua: {
@@ -154,7 +159,11 @@ const CATRACA_DO_EXAME = {
        da nota (o-mestre-vivo.md §14). Era 326 · 5 · 50 · cat 255 · per 137 ·
        pares 85. A da B subiu com a segunda (e última) medida dela, o
        «depois»: era 143 · 7 · 46 · cat 99 · per 42 · pares 40. */
-    A: { rolaCerto: 346, pedeIndevido: 2, deixaDePedir: 33, categoria: 275, pericia: 152, paresQueSeparam: 97 },
+    /* SUBIU em 19/11/2026 (o conserto do Mestre vivo, §17), só para cima: as 31
+       frases da sessão mv-1 na A (31 de 31 certas) e uma barganha a mais da A
+       antiga («faz por 30?»). Nas 381 frases que já eram da A, 347 (era 346),
+       com o mesmo indevido 2. */
+    A: { rolaCerto: 378, pedeIndevido: 2, deixaDePedir: 32, categoria: 303, pericia: 171, paresQueSeparam: 97 },
     B: { rolaCerto: 158, pedeIndevido: 6, deixaDePedir: 32, categoria: 119, pericia: 53, paresQueSeparam: 54 },
   },
 };

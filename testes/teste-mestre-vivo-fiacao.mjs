@@ -20,7 +20,11 @@ import {
   MESTRE_VIVO, lerAChaveDoMestreVivo, retratoDosRefs, PORTAS_DO_MOMENTO, oQueOMomentoFaz,
   O_QUE_ACONTECE, vereditoDoQueAcontece, PAUTA_DO_MESTRE_VIVO, pautaDoMomento, O_DESTINO_NA_MESA,
   lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, MOTIVO_DO_ESPONTANEO, rolagemDoEspontaneo,
+  O_ESPONTANEO_NA_MESA, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, PEDIDOS_QUE_O_MESTRE_VIVO_CALA, oMestreVivoCalaOPedido,
+  SEM_FIO_NO_MOMENTO, semFioNoMomento, marcarDoMomento, O_QUE_ACONTECE_SEM_DADO, oQueAconteceSemDado,
 } from "../src/o-mestre-vivo-no-jogo.js";
+import { desfechoDaMargem, lerAcao } from "../src/desafios.js";
+import { PODA_DO_AUSENTE } from "../src/motor/poda-do-ausente.js";
 import { FORMA_DO_RETRATO, cenaDoJogo, chamadoDoMomento, chamadoQueOMundoProvoca, O_DADO_DO_MUNDO, O_CHAMADO_DA_CONVERSA } from "../src/a-cena-do-jogo.js";
 import { RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 import { periciaPorId } from "../src/pericias.js";
@@ -140,8 +144,10 @@ sec("5. O DESTINO NA MESA E O ESPONTÂNEO");
   t("nunca em luta", podeOMundoProvocar({ ...ok, emCombate: true }) === false);
   t("nunca com o pedido do encontro em aberto", podeOMundoProvocar({ ...ok, encontro: { pedido: { pericia: "percepcao" } } }) === false);
   t("nunca com teste, chamado, escolha ou o Narrador a falar", [{ rolagem: {} }, { chamado: {} }, { escolha: {} }, { carregando: true }].every((x) => podeOMundoProvocar({ ...ok, ...x }) === false));
-  const antes = { cidade: "Vila", jornada: true, relogios: [{ tipo: "cacada", segmentos: 4, cheios: 2 }] };
-  const depois = { ...antes, relogios: [{ tipo: "cacada", segmentos: 4, cheios: 3 }] };
+  /* MOVIDA em 19/11 (o-mestre-vivo.md §17): a caçada ganhou nome — o
+     espontâneo só é chamado quando o estado tem o que mostrar */
+  const antes = { cidade: "Vila", jornada: true, relogios: [{ tipo: "cacada", nome: "os cães do Barão", segmentos: 4, cheios: 2 }] };
+  const depois = { ...antes, relogios: [{ tipo: "cacada", nome: "os cães do Barão", segmentos: 4, cheios: 3 }] };
   const prov = chamadoQueOMundoProvoca(antes, depois);
   const r = rolagemDoEspontaneo(prov, periciaPorId(prov && prov.pericia));
   t("a caçada que fecha o cerco pede Percepção", !!prov && prov.pericia === "percepcao");
@@ -201,7 +207,11 @@ sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
      guarda e, em adjudicarAcao, os ramos do `m` (que só a guarda enche). */
   const NOVAS = ["retratoAgora", "momentoDaFrase", "momentoDaAdjudicacao", "acontecerSemDado", "destinoDoMomento",
     "chamadoDoMomento", "chamadoQueOMundoProvoca", "retratoDosRefs", "oQueOMomentoFaz", "vereditoDoQueAcontece",
-    "pautaDoMomento", "lanceDoDestino", "envelopeDoDestino", "podeOMundoProvocar", "rolagemDoEspontaneo"];
+    "pautaDoMomento", "lanceDoDestino", "envelopeDoDestino", "podeOMundoProvocar", "rolagemDoEspontaneo",
+    /* 19/11 (§17): as funções do conserto; semFioNoMomento fica de fora de
+       propósito — é lida no caminho de todo dado e devolve false para o
+       desafio que o momento não marcou (a prova está na secção 9) */
+    "ehDoMundo", "envelopeDoEspontaneo", "pautaDoEspontaneo", "oMestreVivoCalaOPedido", "marcarDoMomento", "oQueAconteceSemDado"];
   const regioes = [];
   for (const n of NOVAS) { const c = corpo(n); if (c) { const i = APP.indexOf(c); regioes.push([i, i + c.length]); } }
   for (let i = APP.indexOf("if (mestreVivoLigado()) {"); i >= 0; i = APP.indexOf("if (mestreVivoLigado()) {", i + 1)) regioes.push(bloco(APP, i));
@@ -235,7 +245,11 @@ sec("7. COM A CHAVE DESLIGADA, O CAMINHO DE HOJE");
   /* toda guarda está em try/catch com calou */
   const guardas = [];
   for (let i = APP.indexOf("if (mestreVivoLigado()) {"); i >= 0; i = APP.indexOf("if (mestreVivoLigado()) {", i + 1)) guardas.push(APP.slice(...bloco(APP, i)));
-  t("há as três guardas (o momento do turno, o destino e a resposta, a adjudicação)", guardas.length === 3, String(guardas.length));
+  /* MOVIDA em 19/11 (§17), e o motivo: o conserto pôs duas guardas novas — o
+     espontâneo que pousa no seu envelope (na resolução do dado) e a oferta da
+     chegada que o Mestre vivo cala. A intenção fica: cada caminho novo mora
+     numa guarda contável, em try e calou. */
+  t("há as cinco guardas (o momento do turno, o destino e a resposta, a adjudicação, o espontâneo que pousa, a chegada calada)", guardas.length === 5, String(guardas.length));
   t("toda guarda abre em try e cala em calou", guardas.every((g) => /^if \(mestreVivoLigado\(\)\) \{\s*try \{/.test(g) && /catch \(e\) \{ calou\("Mestre vivo · /.test(g)));
   t("o efeito do espontâneo também", /if \(carregando \|\| !mestreVivoLigado\(\)\) return;\n    try \{[\s\S]*?catch \(e\) \{ calou\("Mestre vivo · o espontâneo", e\); \}/.test(APP));
   t("o retrato cala o que estoura e devolve null", /catch \(e\) \{ calou\("Mestre vivo · o retrato", e\); return null; \}/.test(corpo("retratoAgora")));
@@ -252,6 +266,61 @@ sec("8. AS PEÇAS E O MESTRE VIVO NÃO ANDAM JUNTOS");
      quest que escuta (§5). Até lá, com as duas ligadas, ganha o Mestre vivo. */
   t("com as duas chaves ligadas, as peças ficam de fora", /return pecasLigadasRef\.current && !mestreVivoLigado\(\);/.test(corpo("pecasLigadas")));
   t("e o turno das peças continua a perguntar pelo interruptor como antes", /pecasLigadas\(\) && turnoDasPecas\(acao\)/.test(APP));
+}
+
+sec("9. O CONSERTO DEPOIS DA PRIMEIRA SESSÃO (19/11/2026, o-mestre-vivo.md §17)");
+{
+  /* 1. o espontâneo pousa no seu envelope: percebe, nunca age */
+  const antes = { cidade: "Vila", jornada: true, relogios: [{ tipo: "cacada", nome: "os cães do Barão", segmentos: 4, cheios: 2 }] };
+  const depois = { ...antes, relogios: [{ tipo: "cacada", nome: "os cães do Barão", segmentos: 4, cheios: 3 }] };
+  const prov = chamadoQueOMundoProvoca(antes, depois);
+  const r = rolagemDoEspontaneo(prov, periciaPorId("percepcao"));
+  t("o desafio do espontâneo leva a marca do mundo e o que ele mostra", !!r && ehDoMundo(r.desafio) && r.desafio.mostra.oQue === "os cães do Barão");
+  const semMostra = rolagemDoEspontaneo({ ...prov, mostra: null }, periciaPorId("percepcao"));
+  t("sem o que mostrar, não há rolagem", semMostra === null);
+  const envOk = envelopeDoEspontaneo(r && r.desafio, true), envMal = envelopeDoEspontaneo(r && r.desafio, false);
+  t("o envelope diz que o herói não fez nada, e o que ele percebe (passou) ou não (falhou)", /Eu não fiz nada/.test(envOk) && envOk.includes("os cães do Barão") && /percebo a tempo/.test(envOk)
+    && /não percebo a tempo/.test(envMal) && envMal.includes("os cães do Barão"), envMal);
+  t("nunca o molde da busca: nem revirar, nem remexer, nem achar", ![envOk, envMal].some((x) => /revir|remex|revist|achad|encontr/i.test(x)));
+  const busca = lerAcao("vasculho o baú", { personagem: { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 0 }, semente: "x", lugar: "Taverna", tentativas: {}, dia: 1 });
+  t("a busca do jogador não é do mundo (o envelope dela segue o de sempre)", !ehDoMundo(busca) && envelopeDoEspontaneo(busca, true) === "");
+  const pa = pautaDoEspontaneo(r && r.desafio, [{ nome: "Astrid", onde: "Sala das Cartas", morto: false }], PODA_DO_AUSENTE.linha);
+  t("a pauta do espontâneo veta o gesto não escrito e o ausente, pela linha da poda", !!pa && pa.naoPode.some((x) => /revistei/.test(x)) && pa.naoPode.includes(PODA_DO_AUSENTE.linha("Astrid", "Sala das Cartas", false)) && pa.acabou.length === 0, JSON.stringify(pa));
+  t("o envelope do espontâneo e a pauta em PT-BR (sem tu, teu, tua)", ![envOk, envMal, ...(pa ? pa.naoPode : [])].some((x) => /\b(tu|teu|tua|teus|tuas|sabes|queres)\b/i.test(x)));
+  t("o Mestre vivo cala a oferta da chegada, e só ela", oMestreVivoCalaOPedido("chegada") && !oMestreVivoCalaOPedido("intencao") && !oMestreVivoCalaOPedido("sinal") && !oMestreVivoCalaOPedido(null));
+  /* 2. falha nunca paga */
+  const des = { id: "buscar", alvoDoCusto: "busca", chave: "buscar|x" };
+  const antesDoConserto = desfechoDaMargem(des, { total: 11, dc: 13, comMeiaVerdade: true });
+  const doMomento = { ...des, doMomento: true };
+  const depoisDoConserto = desfechoDaMargem(doMomento, { total: 11, dc: 13, comMeiaVerdade: true, semMeio: semFioNoMomento(doMomento) });
+  t("a busca que falha por 2 pagava («por tão pouco o mundo negocia», o achado de 168 moedas); no momento, não paga",
+    !!antesDoConserto && antesDoConserto.porPouco === true && !!depoisDoConserto && depoisDoConserto.porPouco === false, JSON.stringify([antesDoConserto && antesDoConserto.faixa, depoisDoConserto && depoisDoConserto.faixa]));
+  t("sem a marca do momento, o desfecho é o de sempre (semMeio só morde o que o momento julgou)", semFioNoMomento(des) === false
+    && JSON.stringify(desfechoDaMargem(des, { total: 11, dc: 13, comMeiaVerdade: true, semMeio: semFioNoMomento(des) })) === JSON.stringify(antesDoConserto));
+  t("a força e o corpo mantêm o «sim, pago»", !semFioNoMomento({ alvoDoCusto: "tranca", doMomento: true }) && !semFioNoMomento({ alvoDoCusto: "escalada", doMomento: true }) && SEM_FIO_NO_MOMENTO.includes("escuta"));
+  const mv = marcarDoMomento({ id: "bater_carteira", tipo: "teste" }, { vantagem: "quem vai ser roubado não está atento" });
+  t("o veredito do momento vai ao dado marcado, com a vantagem da cena", mv.doMomento === true && mv.vantagemDoMomento === "quem vai ser roubado não está atento" && !("vantagemDoMomento" in marcarDoMomento({ id: "x" }, {})));
+  /* 4. sem dado, o sucesso aplicado pelo sistema */
+  const J = (x) => JSON.stringify(x);
+  const social = { tipo: "teste", id: "convencer", social: { tamanho: "favor" }, dc: 14 };
+  const sim = oQueAconteceSemDado(social, { porque: "dispostoCede" });
+  t("o sim de quem está disposto é sucesso, com o efeito social, e fecha no livro", sim.efeito === "social" && sim.desfecho === "sucesso" && sim.fecha === true && sim.conta === social.social);
+  /* visto no jogo (19/11): a fala ouvida pela escuta chegava com a conta da
+     frase-modelo («convencer o guarda» → «quebrar uma regra pequena»); o sim
+     refaz a conta pela frase do jogador */
+  const simDaFrase = oQueAconteceSemDado({ ...social, social: { tamanho: "risco" }, pessoa: { nome: "Wren", relacao: "aliado" }, quem: "o guarda" }, { porque: "dispostoCede" }, { frase: "peço à Wren que me arrume uma corda" });
+  t("o sim refaz a conta pela frase do jogador, para a pessoa que a frase nomeia", simDaFrase.quem === "Wren" && simDaFrase.conta && simDaFrase.conta.tamanho === "favor", J([simDaFrase.quem, simDaFrase.conta && simDaFrase.conta.tamanho]));
+  t("o curativo calmo é feito", oQueAconteceSemDado({ tipo: "teste", id: "estancar" }, { porque: "socorroCalmo" }).efeito === "socorro");
+  t("a busca sem nada escondido narra-se, e não rende", J(oQueAconteceSemDado({ tipo: "teste", id: "buscar" }, { porque: "buscaVazia" })) === J({ efeito: "nenhum", desfecho: "falha", fecha: false }));
+  t("as tabelas do conserto são congeladas", [O_ESPONTANEO_NA_MESA, PEDIDOS_QUE_O_MESTRE_VIVO_CALA, SEM_FIO_NO_MOMENTO, O_QUE_ACONTECE_SEM_DADO].every(Object.isFrozen));
+  /* no App */
+  const ac = corpo("acontecerSemDado");
+  t("no App, o que acontece sem dado pergunta ao módulo o que aplicar, e o sim social é o envelope social", /oQueAconteceSemDado\(v, m, \{ frase: acao/.test(ac) && /envelopeSocial\(conta, \{ passou: true/.test(ac) && /fecharTentativa\(v, true\)/.test(ac));
+  t("a resolução do dado tira o meio do desafio do momento", /comMeiaVerdade: true, semMeio: semFioNoMomento\(des\) \}/.test(APP));
+  t("o espontâneo pousa antes de qualquer custo do catálogo, e vai pela pauta de um turno", APP.indexOf("envelopeDoEspontaneo(des, percebeu)") > 0 && APP.indexOf("envelopeDoEspontaneo(des, percebeu)") < APP.indexOf("semMeio: semFioNoMomento(des)")
+    && /const pa = pautaDoEspontaneo\(des, aus, PODA_DO_AUSENTE\.linha\);\s*if \(pa\) porNaPautaDoTurno\(pa\);/.test(APP));
+  t("a oferta da chegada cala só dentro da guarda", /if \(mestreVivoLigado\(\)\) \{\s*try \{ if \(oMestreVivoCalaOPedido\(p\.id\)\) return; \}/.test(APP));
+  t("a vantagem do momento só vem do veredito marcado", /if \(v\.vantagemDoMomento && !vant && !desv\)/.test(corpo("rolarDesafio")));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

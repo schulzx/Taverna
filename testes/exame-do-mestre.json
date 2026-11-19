@@ -15,18 +15,19 @@
   "veio_da_b": "3: o item era da metade B até a rodada 2 e passou para a A na rodada 3"
  },
  "contagem": {
-  "itens": 678,
+  "itens": 709,
   "pares": 231,
   "espontaneos": 59,
-  "nao_rola": 321,
+  "nao_rola": 334,
   "situacoes_cobertas": 97,
   "situacoes_faltando": [],
-  "metade_A": 413,
+  "metade_A": 444,
   "metade_B": 265,
   "rodada_2": 118,
   "rodada_3": 265,
   "destino": 15,
-  "mesas_discordam": 27
+  "mesas_discordam": 27,
+  "rodada_4": 31
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
@@ -15552,6 +15553,700 @@
    "metade": "B",
    "mesas_discordam": true,
    "veredito_pt": "não rola: o disfarce basta"
+  },
+  {
+   "id": "E679",
+   "situacao": 13,
+   "cena": {
+    "lugar": "portão de forte de Bateria Alta",
+    "quem": [
+     "soldado de milícia",
+     "Aldric (companheiro)"
+    ]
+   },
+   "frase": "oi soldado, to procurando a Helga. sabe onde ela ta?",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola: quem quer responder responde",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E680",
+   "situacao": 13,
+   "cena": {
+    "lugar": "forte de Bateria Alta",
+    "quem": [
+     "artilheira",
+     "Aldric (companheiro)"
+    ]
+   },
+   "frase": "pergunto o que ta acontecendo nesse forte, to meio perdido",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola: quem quer responder responde",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E681",
+   "situacao": 22,
+   "cena": {
+    "lugar": "forte de Bateria Alta",
+    "quem": [
+     "artilheira"
+    ]
+   },
+   "frase": "minto que sou inspetor da coroa e mando liberar a passagem",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira a um estranho que tem motivo para negar rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E682",
+   "situacao": 53,
+   "cena": {
+    "lugar": "forte de Bateria Alta",
+    "quem": [
+     "artilheira",
+     "soldado de milícia"
+    ]
+   },
+   "frase": "vou tentar sair sem ninguem ver",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E683",
+   "situacao": 1,
+   "cena": {
+    "lugar": "forte de Bateria Alta",
+    "quem": [
+     "artilheira"
+    ],
+    "ha_algo_escondido": true,
+    "nota": "o paiol guarda o que a milícia esconde"
+   },
+   "frase": "olho em volta procurando algo escondido ou util",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao",
+     "investigacao"
+    ],
+    "porque": "busca rola se há algo escondido ou perigo",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E684",
+   "situacao": 19,
+   "cena": {
+    "lugar": "mercado da cidade",
+    "quem": [
+     "vendedor"
+    ]
+   },
+   "frase": "posso pedir um desconto pra quem vende por aqui?",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar: o dinheiro é dele",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E685",
+   "situacao": 21,
+   "cena": {
+    "lugar": "forte de Bateria Alta",
+    "quem": [
+     "soldado de milícia"
+    ]
+   },
+   "frase": "ameaco o primeiro que aparecer: me conta o que sabe ou vai se arrepender",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça a quem tem motivo para resistir rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E686",
+   "situacao": 49,
+   "cena": {
+    "lugar": "corredor do forte de Bateria Alta",
+    "trancado": true
+   },
+   "frase": "vou forcar a fechadura da primeira porta que encontrar",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento"
+    ],
+    "porque": "a tranca resiste: forçar rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E687",
+   "situacao": 15,
+   "cena": {
+    "lugar": "forte de Bateria Alta",
+    "quem": [
+     "Aldric (companheiro)"
+    ]
+   },
+   "frase": "converso com o Aldric sobre o que ele acha de tudo isso",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "conversa com quem está do seu lado não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E688",
+   "situacao": 64,
+   "cena": {
+    "lugar": "rua da cidade"
+   },
+   "frase": "vou ate o mercado ver o que tem pra comprar",
+   "esperado": {
+    "rola": false,
+    "categoria": "logistica",
+    "pericias": [],
+    "porque": "logística não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E689",
+   "situacao": 19,
+   "cena": {
+    "lugar": "Bigorna de Ferro",
+    "quem": [
+     "ferreiro anão"
+    ]
+   },
+   "frase": "pergunto ao anao da Bigorna de Ferro se ele faz um desconto",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar: o dinheiro é dele",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E690",
+   "situacao": 2,
+   "cena": {
+    "lugar": "atrás da banca do mercado",
+    "ha_algo_escondido": false
+   },
+   "frase": "reviro o lixo atras da banca atras de qualquer coisa",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E691",
+   "situacao": 44,
+   "cena": {
+    "lugar": "muro do forte de Bateria Alta",
+    "quem": [
+     "soldados de milícia no pátio"
+    ]
+   },
+   "frase": "eu vou escalar o muro do forte pra espiar de cima",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a travessia rola com perigo: cair da muralha é o preço do próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E692",
+   "situacao": 56,
+   "cena": {
+    "lugar": "pátio do forte de Bateria Alta",
+    "quem": [
+     "marinheiro bêbado",
+     "Aldric (companheiro)"
+    ]
+   },
+   "frase": "tento roubar uma bolsa de moedas do bolso de um bebado",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "a mão leve rola quando a vítima ou alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E693",
+   "situacao": 64,
+   "cena": {
+    "lugar": "portão da cidade"
+   },
+   "frase": "saio da cidade pela estrada",
+   "esperado": {
+    "rola": false,
+    "categoria": "logistica",
+    "pericias": [],
+    "porque": "logística não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E694",
+   "situacao": 19,
+   "cena": {
+    "lugar": "mercado da cidade",
+    "quem": [
+     "vendedor"
+    ]
+   },
+   "frase": "pergunto ao vendedor sobre Astrid o Andarilho e peco desconto",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar: o desconto é o dinheiro dele",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E695",
+   "situacao": 13,
+   "cena": {
+    "lugar": "estrada fora dos muros",
+    "quem": [
+     "Aldric (companheiro)"
+    ]
+   },
+   "frase": "vou seguindo a estrada, atento. alguem tem noticia de Astrid? pergunto pro Aldric o que ele sabe do caminho ate Ossuario Prata Podre",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta ao companheiro não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E696",
+   "situacao": 28,
+   "cena": {
+    "lugar": "Sala das Cartas",
+    "quem": [
+     "navegante aposentada",
+     "cartógrafa"
+    ]
+   },
+   "frase": "desculpa, foi sem querer! sento na cadeira e explico que a Helga me mandou e que quero um salvo-conduto, e prometo pagar bem",
+   "esperado": {
+    "rola": false,
+    "categoria": "outro",
+    "pericias": [],
+    "porque": "comprar o que se vende, dizendo a verdade, não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E697",
+   "situacao": 19,
+   "cena": {
+    "lugar": "Sala das Cartas",
+    "quem": [
+     "navegante aposentada"
+    ]
+   },
+   "frase": "antes de assinar, pergunto quanto custa e tento barganhar pela metade do preco",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "barganhar rola: quem vende tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E698",
+   "situacao": 15,
+   "cena": {
+    "lugar": "Sala das Cartas",
+    "quem": [
+     "cartógrafa"
+    ]
+   },
+   "frase": "pago as dez pecas e assino. depois digo que quero ouvir o que ela tem pra me contar",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "ouvir quem fala com você é conversa, não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E699",
+   "situacao": 14,
+   "cena": {
+    "lugar": "Sala das Cartas",
+    "quem": [
+     "cartógrafa"
+    ],
+    "esconde_algo": true
+   },
+   "frase": "aceito te levar. mas antes me conta a verdade: o que voce carrega na cabeca e quem quer te matar?",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola: quem esconde desconversa",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E700",
+   "situacao": 27,
+   "cena": {
+    "lugar": "Sala das Cartas",
+    "quem": [
+     "cartógrafa"
+    ],
+    "esconde_algo": true
+   },
+   "frase": "insisto: sem o nome de quem paga pela sua morte eu nao saio daqui, e se precisar eu seguro essa mesa e te encaro ate voce falar",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao",
+     "persuasao"
+    ],
+    "porque": "pressionar quem guarda um segredo rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E701",
+   "situacao": 64,
+   "cena": {
+    "lugar": "Sala das Cartas",
+    "quem": [
+     "cartógrafa"
+    ]
+   },
+   "frase": "te entrego nunca. vamos embora agora, partimos pela estrada rumo ao destino dela",
+   "esperado": {
+    "rola": false,
+    "categoria": "logistica",
+    "pericias": [],
+    "porque": "logística não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E702",
+   "situacao": 1,
+   "cena": {
+    "lugar": "estrada para o sul",
+    "quem": [
+     "Aldric (companheiro)",
+     "cartógrafa"
+    ],
+    "algo_se_aproxima": true,
+    "nota": "há quem pague pela cabeça da cartógrafa"
+   },
+   "frase": "vou na frente com cuidado, procurando sinais de emboscada na estrada",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "percepcao"
+    ],
+    "porque": "busca rola se há perigo",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E703",
+   "situacao": 2,
+   "cena": {
+    "lugar": "beira da estrada",
+    "ha_algo_escondido": false
+   },
+   "frase": "paro na beira da estrada e procuro com calma por qualquer coisa escondida entre as pedras, um bau, um esconderijo, o que tiver",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "busca sem nada escondido nem perigo: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E704",
+   "situacao": 13,
+   "cena": {
+    "lugar": "estrada",
+    "quem": [
+     "Aldric (companheiro)"
+    ]
+   },
+   "frase": "Aldric, o que voce sabe sobre essa Alma de Gellyn que quer a cabeca dela?",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta ao companheiro não rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E705",
+   "situacao": 22,
+   "cena": {
+    "lugar": "cais",
+    "quem": [
+     "barqueiro"
+    ]
+   },
+   "frase": "volto pra cidade com ela e procuro um barqueiro pra pedir passagem sem perguntas, e minto que ela e minha irma doente",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira a um estranho que tem motivo para negar rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E706",
+   "situacao": 19,
+   "cena": {
+    "lugar": "posto da estrada",
+    "quem": [
+     "tropeiro"
+    ]
+   },
+   "frase": "nao pago o dobro. digo pro tropeiro que a adaga de guarda vale mais que isso e que ele faz pelo preco normal ou eu vou procurar outro",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "barganhar rola: quem vende tem motivo para negar",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E707",
+   "situacao": 53,
+   "cena": {
+    "lugar": "posto da estrada",
+    "quem": [
+     "tropeiro",
+     "cartógrafa"
+    ]
+   },
+   "frase": "eu vou me esgueirar ate a carroca coberta sem o tropeiro ver e puxar a Astrid pra dentro do feno",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E708",
+   "situacao": 21,
+   "cena": {
+    "lugar": "posto da estrada",
+    "quem": [
+     "homem de capa salgada",
+     "mulher de mãos em trapos"
+    ]
+   },
+   "frase": "saio da carroca de supetao, seguro o homem que fala baixo pelo colarinho e ameaco ele: me conta o que sabe ou eu corto sua lingua",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça a quem tem motivo para resistir rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E709",
+   "situacao": 22,
+   "cena": {
+    "lugar": "posto da estrada",
+    "quem": [
+     "homem de capa salgada",
+     "mulher de mãos em trapos"
+    ],
+    "hostil": true
+   },
+   "frase": "largo o homem e peco desculpa, ofereco duas moedas pros dois pra me contarem o que sabem, e digo que sou so um viajante perdido",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao",
+     "persuasao"
+    ],
+    "porque": "a mentira a quem acabou de ser agarrado rola",
+    "base": "padrao"
+   },
+   "rodada": 4,
+   "metade": "A",
+   "origem": "sessao-mv-1"
   }
  ],
  "rodada_2": {
@@ -15588,5 +16283,9 @@
    "a carroça em movimento (nº 46): escrita como perigo_fisico com pressa"
   ],
   "estados_novos": "Treino da rodada 3 (18/11/2026): a tabela de src/cena-do-momento.js ganhou som_abafado, ja_testado, ja_resolvido, ja_convencida, moribunda, dormindo, selado, sem_resistencia, a_vista, rastro_fresco, rastro_velho, rastro_obvio, em_movimento, ameacado e os do herói (heroi_treinado, heroi_ja_sabe, heroi_tem_alavanca, heroi_penalizado, de dono «cena»). Os itens da A que diziam isto só pela nota ou pelo campo heroi ganharam o estado (marcados estado_da_rodada_3); nenhum item da B foi tocado."
+ },
+ "rodada_4": {
+  "data": "2026-11-19",
+  "o_que_mudou": "As frases das duas sessões jogadas do Mestre vivo (mente/lancamento/mestre-vivo-sessao.md, A e B, 19/11/2026) entraram na metade A, que afina: são frases de jogador de verdade, nossas (o agente que jogou escreveu-as livremente), com a cena em estados e o veredito que o jogador julgou na sessão (marcadas origem «sessao-mv-1»). Afinaram o conserto de o-mestre-vivo.md §17. A metade B não foi tocada."
  }
 }
