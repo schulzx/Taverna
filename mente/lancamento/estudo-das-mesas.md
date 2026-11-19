@@ -328,3 +328,259 @@ escrever as frases do jogador para cada uma, sem copiar estas descrições.
 | `C:\Users\clara\Taverna-bancada\recortador.mjs` · `amostrar.mjs` · `analisar.mjs` · `taz-para-json.mjs` | o método, refazível (semente fixa) |
 | `C:\Users\clara\Taverna-bancada\rotulos\` | os rótulos à mão, um arquivo por lote |
 | `C:\Users\clara\Taverna-bancada\crd3\` · `taz\` | os dados brutos |
+
+---
+
+## 10 · A mesa em português
+
+**18/11/2026 · complemento da M1.** A §7 dizia «não achada». Agora ela existe: **13 sessões jogadas de um
+podcast brasileiro** (conjunto público de transcrições automáticas, licença MIT; o conteúdo é de quem
+o produziu). São três cenários: **o de fantasia** (6 sessões), **o futurista** (3) e **o de horror**
+(4), cerca de 38 horas e 35 mil trechos de ~2,7 s. Três mestres diferentes, todos com sistemas de d20 e
+perícias, e termos de perícia em inglês misturados ao português. Como no resto deste arquivo, **não entra
+aqui nenhuma frase das transcrições, nenhum nome de participante, de personagem ou de cenário**: os
+exemplos da §10.4 e as situações da §10.5 foram escritos por nós, no nosso mundo.
+
+### 10.1 · O método, e onde ele mente mais do que nas outras duas
+
+O mesmo método da §2, com três adaptações:
+
+1. **O recortador** (`Taverna-bancada/nerdcast/recortador-pt.mjs`) não tem locutor. Cada candidato é um
+   trecho; a luta é marcada por densidade de vocabulário de luta (≥4 termos em ±15 trechos) ou pelos 60
+   trechos depois de «iniciativa». Fora da luta:
+   - **«sim»** — trecho com pedido ou menção de teste («rola», «teste de», «joga o dado», «d20»…). Os que
+     falam de salvaguarda ou sanidade (50) ficaram fora da amostra, como na §2.
+   - **«não»** — trecho com moldura de ação («eu vou», «vou tentar», «quero», «posso», «deixa eu», «dá
+     pra», «eu + verbo de ação no presente») sem nenhum vocabulário de dado nos 3 trechos antes e nos 22
+     depois (~1 minuto).
+   Saíram 337 «sim» e 636 «não».
+2. **A amostra** tem 9 «sim» e 9 «não» por sessão (menos onde não havia), em rodízio pelas categorias
+   automáticas, com semente fixa e peso amostral por sessão e tipo: 229 casos. Rotulei todos à mão, lendo a
+   janela (6 trechos antes e 9 depois para os «sim», 3 e 10 para os «não»), e decidi quem falava pelo
+   conteúdo.
+3. **Os mesmos campos e as mesmas marcas** da §2, mais duas razões de «não» que esta mesa pediu:
+   **«o mestre narra»**, quando ele resolve pela cena uma ação disputada, sem dado, e **«o mundo
+   decide»**, quando a ação é impossível ou a consequência já está posta (porta selada, carro sabotado,
+   armadilha que dispara). Para ações e pedidos rotulei também a **moldura** da declaração (§10.4).
+
+**Onde mente, e quanto confio:**
+
+| campo | confiança | por quê |
+|---|---|---|
+| válido ou não | **média** (~80%) | **69 de 229 inválidos (30%)**. «Rolar» em português também quer dizer *acontecer* e *rodar* («está rolando uma festa»): 25 dos 112 «sim» eram isso, ou teste dentro da ficção. Mais 14 de luta que escapou da janela. A mesa futurista é a pior: 25 de 54 inválidos. |
+| rolou ou não rolou | **alta** (~92%) | 3 dos 93 «não» válidos tinham dado (número dito sem a palavra «dado», «testes» no plural). Já foram corrigidos. |
+| categoria | **boa** (~80%) | Sem locutor, o que é ação do jogador e o que é descrição do mestre se decide pelo conteúdo. |
+| marcas da cena | **fraca a média** (~60%) | A janela de ~40 s é curta, a transcrição tem buracos e o viés circular da §2 continua lá. |
+| origem (espontâneo / após ação / pedido) | **média** (~70%) | Sem locutor, «posso rolar?» e «pode rolar» se distinguem pelo sentido, não pela voz. |
+| moldura | **boa** (~80%) para as formas, **fraca** para quem fala | As contagens do corpus inteiro (§10.4) incluem o mestre e os NPCs. |
+| resultado | **muito fraca** | Sucesso visto em 35 casos, falha em 7. |
+
+**A edição enviesa, e em direções que não se anulam.** As sessões vão ao ar editadas, sem boa parte da
+conversa de mesa. A edição corta o que é lento (logística, compras, o «rolem todos percepção» de rotina) e
+guarda o que é engraçado ou dramático. Por isso: (a) a taxa de «não» de encenação sai **inflada** (piada
+fica, logística sai, e as duas caem em «outro»); (b) dados de rotina somem, e a taxa geral sai
+**subestimada**; (c) o desfecho da falha vira corte de cena. Some-se que é um programa de humor com
+convidados: muita conversa em personagem é piada que o mestre deixa correr. **Use os números desta mesa
+para a direção, não para a calibragem.** A calibragem continua sendo a da §3.
+
+### 10.2 · A tabela comparada
+
+`n` = casos válidos desta mesa (quantos rolaram); taxas reponderadas. «Simétrica» aqui = só os casos em
+que houve declaração de ação com moldura (o mesmo filtro do lado «não»).
+
+| cena | n (rolou) | **PT · todas** | PT · simétrica | Critical Role (todas · sim.) | TAZ |
+|---|---:|---:|---:|---:|---:|
+| **todas as ações declaradas** | 155 (57) | **25%** | **15%** | 48% · 34% | 30% · 12% |
+| · cenário de fantasia | 75 (27) | 24% | 15% | | |
+| · cenário futurista | 29 (9) | 13% | 8% | | |
+| · cenário de horror | 51 (21) | 34% | 21% | | |
+| **pergunta a pessoa ou ao mestre** | 12 (0) | **0%** | 0% | 0% (41 de 41) | 0% (24 de 24) |
+| pergunta que toca perícia do herói («eu conheço…?», «tem alguma coisa nele?») | 5 (5) | 100% | 100% | (contada em «saber») | — |
+| **busca com algo escondido** | 16 (14) | **75%** | 36% (n=5) | 98% · 95% | 75% |
+| **busca sem nada escondido** | 9 (1) | **4%** | 4% | 37% · 23% | 25% |
+| lembrar / saber | 11 (11) | **100%** | 100% | 69% · 58% | nenhum caso |
+| **conversa com oposição ou segredo** | 15 (6) | **28%** | **18%** | 87% · 66% | 50% |
+| conversa sem oposição nem segredo | 3 (1) | 9% | 0% | 45% · 23% | |
+| **travessia/força com perigo ou pressa** | 16 (9) | **50%** | 40% | 84% · 76% | 82% |
+| travessia/força sem perigo nem pressa | 2 (0) | 0% | 0% | 51% · 45% | |
+| **esgueirar com alguém que possa notar** | 7 (3) | **32%** | 32% | 100% | |
+| furtar / mãos / máquina (fechadura, armadilha, invasão) | 9 (4) | 29% | 9% | 95% · 94% | |
+| magia, item, fé | 10 (2) | 14% | 14% | 73% (examinar magia) | |
+| animal | 2 (2) | (2 de 2) | — | 0% | |
+| rastrear | 1 (1) | (1 de 1) | — | 60% | |
+| socorrer | 3 (0) | 0% | 0% | 63% · 54% | |
+| encenação, logística, gesto | 37 (3) | **3%** | 3% | 1% · 0% | |
+| qualquer ação com testemunha | 24 (6) | 16% | 12% | 77% · 64% | |
+
+| medida | PT | Critical Role | TAZ |
+|---|---:|---:|---:|
+| pedidos espontâneos (entre os rolados) | **28%** (16 de 57) | 31% | 5% |
+| o jogador pediu o dado | **18%** (10 de 57) | 19% | 29% |
+| após ação declarada | 54% (31 de 57) | 50% | — |
+| espontâneos, por assunto | **busca/percepção 9**, saber 3, intuição 1, animal 1, rastrear 1, conversa 1 | procurar 18, esgueirar 11, lembrar 10… | |
+| **o mestre rola pelo mundo** (o objeto sobreviveu? qual arma restou? a viagem foi tranquila?) | **5 casos** | não medido | não medido |
+
+**As razões de não rolar** (98 «não» válidos, reponderados; entre parênteses, sem a encenação e a
+logística):
+
+| razão | PT | PT sem «outro» | Critical Role | TAZ |
+|---|---:|---:|---:|---:|
+| **encenação** | **32%** | 7% | 7% | — |
+| **sem obstáculo** | 19% | 17% | 19% | 17% |
+| **o mestre narra** (ação disputada resolvida pela cena) | **12%** | **20%** | — | — |
+| **informação livre** | 12% | 16% | 37% | 30% |
+| pessoa disposta | 8% | 13% | 18% | 28% |
+| magia, item ou regra própria | 8% | 13% | 17% | 4% |
+| **o mundo decide** (impossível, sabotado, armadilha já disparada) | 4% | 6% | — | — |
+| já resolvido (preparo ou vantagem ganha antes: senha roubada, documento bom, explosivo de verdade) | 3% | 6% | 1% | — |
+| o dado veio depois, fora da janela | 2% | 3% | 2% | — |
+
+**As marcas nos «sim» e nos «não»:** algo escondido **33% vs 3%**; perigo físico **28% vs 9%**; pressa
+**16% vs 3%**; oposição **18% vs 15%**; testemunha **11% vs 18%**; segredo 4% vs 4%. Sem marca nenhuma:
+25% dos «sim», 61% dos «não». **O sucesso visto** (35): informação 22, posição 8, acesso 5. **A falha
+vista** (7): posição 3, dano 2, alarme 1, meia-informação 1.
+
+**Célula a célula, o que esta mesa diz das perguntas da §6:**
+
+- **Pergunta nunca rola?** **Sim, de novo: 12 de 12.** Agora são 77 perguntas nas três mesas, e nenhum
+  dado. Há duas nuances: (a) quando a pergunta toca uma perícia que o herói tem («eu conheço esse
+  símbolo?», «o demônio carregava alguma coisa?»), ela **vira teste de saber ou de percepção**: 5 de 5. É a
+  mesma regra de «lembrar» da §3, só que dita em forma de pergunta; (b) numa pergunta a quem escondia
+  algo, o mestre **ofereceu** Intuição (1 caso), e a resposta veio falsa mesmo assim. Num caso o jogador
+  pediu o dado para uma pergunta («dá pra rolar percepção pra saber…?») e **o mestre negou e respondeu**.
+- **Busca com ou sem algo escondido:** a mesma direção, mais nítida: **75% vs 4%**. Revistar corpo,
+  procurar o banheiro, olhar pela janela: o mestre descreve.
+- **Conversa com ou sem motivo para negar:** **aqui as mesas discordam de verdade.** Com oposição, a mesa
+  em português rola **28%** (piso 18%), contra 87% e 50%. A conversa disputada se resolve pela
+  **alavanca** (o documento falso é bom, o explosivo é de verdade), pela **encenação** (a discussão
+  continua em personagem) ou pelo **mestre que narra** (a mentira cola porque a ideia foi boa). Quando
+  rola, é blefe ou diplomacia diante de autoridade hostil, ou intimidação nomeada pelo jogador. A oposição,
+  sozinha, quase não separa «sim» de «não» (18% vs 15%).
+- **Travessia com ou sem perigo:** com perigo, rola **50%** (contra 84% e 82%). A outra metade é
+  correr, saltar ou nadar no meio do caos, e o mestre narra. Sem perigo, 0 de 2.
+- **Esgueirar:** com alguém que possa notar, **32%** (contra 100%). O mestre decide muitas vezes pela cena
+  quem nota e quem não nota. Quando rola, quase sempre o jogador pediu («posso me esconder?») ou a ação
+  era aproximar-se de guardas para derrubá-los.
+- **Dado espontâneo:** **28%**, perto dos 31% da Critical Role e longe dos 5% da TAZ. E é o mesmo
+  dado: **Percepção de todos** quando algo se aproxima (9 de 16), saber quando um assunto aparece (3).
+  O que esta mesa tem a mais é **o dado do destino**: o mestre rola sem perícia para decidir o que o
+  mundo fez (5 casos).
+
+**O que as três mesas concordam** e por isso pesa mais: perguntar não rola; buscar o escondido rola e
+buscar à toa não; saber se oferece ou se responde pela perícia; o dado espontâneo é Percepção de grupo;
+magia e item resolvem pela regra deles; encenação e logística não rolam. **Onde a mesa em português
+discorda é estilo:** rola metade do que a Critical Role rola, e o que ela deixa de rolar é a ação
+**disputada** (conversa, esgueirar, travessia no caos), que o mestre resolve pela ficção. Para o nosso
+Mestre, que é código e não pode «achar» que a ideia foi boa, o que se aproveita é a parte que vira regra:
+**alavanca resolve** (§10.5, nº 73, 74 e 76), **impossível não rola** (nº 84, 85 e 97) e **o dado do
+destino existe** (nº 93).
+
+### 10.3 · O que surpreendeu
+
+1. **A moldura prevê o dado melhor que o verbo.** Entre as ações rotuladas, as que começam com
+   **«posso…?»** rolaram **8 de 9**; as com **«vou tentar»**, 4 de 7; as com **«eu vou + verbo»**, só
+   **3 de 54**; as no presente («eu pego»), 5 de 31; a fala em personagem sem moldura, 0 de 7. O jogador
+   brasileiro **pede licença quando sabe que a ação é arriscada** e **anuncia no futuro quando sabe que
+   ela simplesmente acontece**. Para o nosso juiz de frase é o sinal mais barato que existe.
+2. **O jogador sabe pedir o dado e o mestre sabe negá-lo.** 10 dos 57 dados foram pedidos pelo
+   jogador, a mesma proporção da Critical Role. Uma vez o mestre negou, porque a informação estava à vista.
+3. **O mestre rola pelo mundo.** Cinco vezes ele rolou um dado sem perícia para saber o que a sorte fez
+   (um objeto que sobreviveu, qual arma restou, como foi a viagem). Nas mesas de língua inglesa isso não
+   apareceu na amostra.
+4. **Ameaçar sem o verbo ameaçar** é a forma da intimidação aqui: um gesto, um objeto à mostra e uma
+   condicional. Nos dois casos rotulados ela funcionou **sem dado**, porque a alavanca era real.
+
+### 10.4 · Como o jogador brasileiro diz o que faz
+
+Contagens em **trechos fora da luta** do corpus inteiro (33.177 trechos; «/mil» = por mil trechos), que
+incluem também a fala do mestre e dos NPCs, e contagens **nos 155 casos rotulados**, em que quem fala
+foi decidido lendo. **Nenhuma frase é transcrita:** cada exemplo foi escrito por nós.
+
+| # | padrão | contagem | o que indica | exemplo nosso |
+|---|---|---|---|---|
+| 1 | **«(eu) vou + infinitivo»**, o futuro de perífrase | 1.272 trechos (38/mil), 732 com «eu»; **54 de 155 rotulados (35%)**, a moldura mais comum | ação anunciada, quase sempre logística ou encenação: **rolou 3 de 54** | «Vou até o balcão e peço o quarto dos fundos.» |
+| 2 | **presente de 1ª pessoa** («eu pego», «eu olho», «eu encosto») | 417 (12,6/mil); 31 rotulados (20%) | narração da própria ação, um passo de cada vez; rolou 5 de 31 | «Eu encosto o ouvido na porta da cripta.» |
+| 3 | **«aí eu…»** como conector | 133 (4/mil) | encadeia ações num turno só; o juiz deve partir a frase | «Aí eu pego a tocha e desço a escada.» |
+| 4 | **tentativa** («vou tentar», «tento», «tentando») | 255 (7,7/mil); 9 rotulados | o jogador já sinaliza incerteza: **rolou 4 de 9** | «Vou tentar pular pro telhado do celeiro.» |
+| 5 | **licença** («posso…?», «dá pra…?», «deixa eu…») | 133 + 77 + 51 = 261 (7,9/mil); 13 rotulados | o sinal mais forte de dado: **«posso…?» rolou 8 de 9**; «deixa eu» é mais declaração que pedido (0 de 3) | «Dá pra eu subir no muro sem os guardas verem?» |
+| 6 | **desejo** («eu quero», «eu queria») | 143 + 22 (5/mil); 5 rotulados | «queria» é o pedido cortês, muito usado para ler pessoas e perguntar; «quero» costuma vir antes de perícia («quero tentar escutar») | «Eu queria ver se o anão está escondendo alguma coisa.» |
+| 7 | **plural «a gente vai / a gente pode»** | 225 (6,8/mil); mais que o dobro na mesa futurista | decisão de grupo; quase sempre logística | «A gente vai pela estrada do moinho, não pela floresta.» |
+| 8 | **fala em personagem**, marcada («eu falo», «eu digo» + fala) ou crua | 68 marcadas (2/mil); 7 rotulados crus | conversa; com quem quer ajudar, nunca rolou (0 de 7) | «Eu digo: "Viemos a pedido do conselho, senhor."» |
+| 9 | **«eu vou chegar pro X e falar…»** | ~5 explícitas (o regex é estreito), recorrente na leitura | abre uma conversa com um alvo nomeado; o juiz deve tratar como conversa, não como deslocamento | «Vou chegar pro ferreiro e perguntar quem comprou a lâmina.» |
+| 10 | **pergunta de mundo** («tem algum…?», «eu vejo…?», «eu sei…?», «eu lembro…?», «eu conheço…?») | 272 (8,2/mil) | pergunta; só rola se toca uma perícia do herói (5 de 5); senão, resposta livre (12 de 12) | «Eu conheço esse brasão na capa dele?» |
+| 11 | **o jogador pede o dado** («posso rolar?», «preciso rolar alguma coisa?», «dá pra rolar X pra…?», «vou rolar um dado, não é possível?») | 33 explícitos (1/mil); **10 dos 57 dados** | pedido honrado quase sempre; uma vez negado com a resposta dada | «Preciso rolar alguma coisa pra abrir esse baú?» |
+| 12 | **o jogador nomeia a perícia**, muitas vezes em inglês («jogo um intimidante», «mando uma percepção», «meu stealth») | 58 trechos com termo de perícia em inglês (1,7/mil; quase 3/mil no horror); o verbo «jogo/mando/dou + perícia» saiu pouco no regex e várias vezes na leitura | a perícia vem dita: o juiz deve ler «jogo/mando/dou uma X» como pedido da perícia X | «Mando uma Intimidação nele.» |
+| 13 | **advérbio de modo como pedido de furtividade** («discretamente», «sorrateiramente», «devagar», «sem chamar atenção») | 4 nos casos rotulados | esgueirar dito sem o verbo «esconder» | «Vou devagarinho até a carroça, sem chamar atenção.» |
+| 14 | **«vou fazer o seguinte»** abrindo um plano | 12 (0,4/mil) | plano com várias ações; o juiz deve julgar a ação arriscada do plano, não a primeira | «Vou fazer o seguinte: distraio o guarda e vocês passam pela cozinha.» |
+| 15 | **barganha** («e se eu…», «pelo menos…», «me dá um…», «não dá pra…», «ganho bônus?») | 131 (3,9/mil) | o jogador negocia a dificuldade ou o resultado; uma vez o mestre deu bônus pela boa ideia | «E se eu oferecer metade do ouro, ele pelo menos me deixa passar?» |
+| 16 | **ameaça sem o verbo ameaçar**: gesto, objeto à mostra e condicional («se você não…», «senão…», «ou você…») | 35 condicionais explícitas (1/mil); 2 de 2 ameaças rotuladas eram assim, e as duas sem dado | intimidação com alavanca real | «Eu ergo o machado ainda sujo e digo que o último que mentiu pra mim está lá fora, no chão.» |
+| 17 | **tratamento** | «você» 2.987 (90/mil); **«tu» 2.252**, com 666 «tu + verbo na 3ª» («tu vê», «tu sabe») | dois dos três mestres usam «tu» com o verbo na 3ª pessoa; o futurista, «você». **A tela continua em «você» (lei da casa)**; o juiz tem de **aceitar** «tu vê» e «tu faz» na frase do jogador | (entrada do jogador) «Tu acha que dá pra eu subir?» |
+| 18 | **gíria e tique** | «cara» 2.076 (63/mil), palavrão 552, «tipo» 448, «beleza/show/massa» 260, «mano/véi/brother» 131 | ruído para o juiz; «beleza» é consentimento; «tipo assim» anuncia uma descrição | — |
+
+**O que falta ao nosso juiz de frase, em ordem de valor:** (1) ler a moldura antes do verbo: «posso/dá
+pra» empurra para o dado e «eu vou + verbo» empurra para «acontece»; (2) partir as frases encadeadas por
+«aí eu» e «vou fazer o seguinte»; (3) reconhecer o pedido de dado e a perícia nomeada, também em inglês;
+(4) aceitar «tu + verbo na 3ª»; (5) reconhecer a ameaça por gesto e condicional e a furtividade pelo
+advérbio; (6) tratar «e se eu…» como barganha (uma proposta, não uma ação).
+
+### 10.5 · Trinta e duas situações que esta mesa sustenta ou contradiz
+
+No formato da §8, com uma coluna a mais: o que a situação faz com as anteriores. Base: número (célula da
+§10.2), padrão (casos repetidos) ou fraco (um caso).
+
+| # | situação | veredito da mesa em português | base | contra a §8 |
+|---|---|---|---|---|
+| 66 | O grupo entra no salão do conselho; há fumaça vindo da ala fechada | **rola, espontâneo** (Percepção de todos); só quem passa nota | padrão | sustenta nº 6 |
+| 67 | O herói pergunta ao estalajadeiro se o mercador já chegou, e ele chegou | **não rola**: resposta em personagem | número | sustenta |
+| 68 | A mesma pergunta, mas a estalajadeira foi paga para esconder | **depende**: a resposta vem falsa; o mestre pode **oferecer** Intuição | fraco | matiza §5.2 (ali o jogador sempre pedia) |
+| 69 | O herói pergunta se os ossos do pântano têm poder mágico, e ele estudou o arcano | **rola** (saber); sem a perícia, responde-se o que todo mundo sabe | padrão | sustenta nº 7 |
+| 70 | Com os cavaleiros já à vista, o jogador pede Percepção para saber quantos são | **não rola**: o mestre dá a estimativa | fraco | nova |
+| 71 | O herói revista os bolsos dos bandidos mortos, sem pressa | **não rola**: lista-se o que há | padrão | sustenta nº 4 |
+| 72 | O herói vasculha um autômato à procura de um rastreador escondido | **rola** (o jogador pergunta se precisa) | padrão | sustenta nº 1 |
+| 73 | O herói abre o cofre do tesoureiro com a senha que roubou na cena anterior | **não rola**: o preparo resolve | fraco | nova |
+| 74 | O herói mostra ao guarda do portão um salvo-conduto bem falsificado | **não rola**: o documento convence | fraco | contradiz «conversa com oposição rola» |
+| 75 | O herói mostra uma carta de permissão a um oficial que despreza estrangeiros | **rola** (Diplomacia); a falha é a carta rasgada na frente dele | fraco | sustenta |
+| 76 | O herói ergue a cabeça do chefe dos bandidos diante do prisioneiro e diz que pode fazer o mesmo | **não rola**: o prisioneiro cede em parte | fraco | contradiz «intimidação rola» |
+| 77 | O herói mente ao estalajadeiro que a filha dele está em apuros lá fora, para esvaziar o balcão | **não rola**: funciona pela cena | fraco | contradiz |
+| 78 | Uma história bem armada para guardas que já desconfiam | **rola** (Enganação), com bônus pela boa ideia | fraco | sustenta |
+| 79 | O herói discute com o boticário, que quer fugir da cidade, e o segura pelo braço | **não rola**: discussão em personagem | padrão | nova |
+| 80 | O herói cumprimenta o abade que o convidou | **não rola** | número | sustenta |
+| 81 | O herói corre pela muralha até a torre durante o alarme | **não rola**: o mestre narra | padrão | matiza «pressa rola» |
+| 82 | O herói salta entre colunas enquanto o salão desaba | **rola** (Atletismo); a falha escorrega, agarra e repete o teste | padrão | sustenta |
+| 83 | O herói nada até a rocha carregando o companheiro desacordado | **rola** | padrão | sustenta |
+| 84 | O herói tenta arrombar com o ombro uma porta selada por magia | **não rola**: não abre; o mundo decide | fraco | nova |
+| 85 | O herói tenta pôr em marcha a carroça mecânica que alguém sabotou | **não rola**: não anda | fraco | nova |
+| 86 | O herói se aproxima discretamente da sacerdotisa no meio do cortejo | **não rola**: o mestre decide que ela nota | fraco | contradiz «esgueirar com testemunha rola» |
+| 87 | Com o gigante atirando pedras, o jogador pergunta se pode se esconder atrás da rocha | **rola** | padrão | sustenta |
+| 88 | O herói puxa o capuz para passar pelos soldados do inimigo sem ser reconhecido | **não rola** | fraco | nova |
+| 89 | O herói usa o anel para conjurar água e derreter a neve sobre o abrigo | **não rola**: o item decide | padrão | sustenta nº 61 |
+| 90 | O herói chama o martelo mágico que ficou do outro lado do salão | **rola**: um d20 contra o número da regra do item | fraco | nova (o item tem a sua rolagem) |
+| 91 | O herói tenta seguir a trilha depois de beber demais na festa | **rola**, com penalidade; a falha perde a trilha | fraco | sustenta nº 58 |
+| 92 | O herói assobia chamando a montaria enquanto o grupo foge pela janela | **rola** (Adestramento) | fraco | contradiz «animal 0%» da §3, sustenta nº 60 |
+| 93 | O barco virou: o frasco frágil que o herói levava sobreviveu? | **o mestre rola** um dado de sorte, sem perícia | padrão | nova (o dado do destino) |
+| 94 | O herói estanca o sangue do companheiro depois da luta, sem bolsa de curandeiro | **não rola**: efeito parcial, narrado | fraco | sustenta nº 62 |
+| 95 | O herói monta uma armadilha de alarme na entrada do túnel do acampamento | **rola** (ofício ou Ladinagem) | fraco | nova |
+| 96 | O jogador resolve o enigma do guardião da ponte com a própria cabeça | **não rola**: o enigma é do jogador | fraco | nova |
+| 97 | Impaciente, o herói abre a porta do meio sem desarmar a armadilha | **não rola**: a armadilha dispara | fraco | nova |
+
+### 10.6 · O que não se conseguiu
+
+- **Quem fala.** Sem locutor, origem e moldura são leitura minha. A coluna de molduras das contagens do
+  corpus inclui o mestre narrando («você vai…») e os NPCs.
+- **Resultado.** Falha vista em 7 casos: não dá distribuição. A edição corta o desfecho.
+- **Recall do recortador.** Ele perde o dado dito só como número e o teste no plural, e confunde
+  «rolar» com acontecer. A precisão do «sim» foi de 60% (67 de 112).
+- **Células finas.** Esgueirar sem ninguém, travessia sem perigo, animal, rastrear e socorrer têm de 0
+  a 3 casos: servem de pista, não de número.
+- **Sistemas.** Os três usam d20 com perícias. A mesa futurista é a mais caótica e a que mais vazou
+  luta; ela pesa pouco nas conclusões.
+
+### 10.7 · Os arquivos
+
+| onde | o quê |
+|---|---|
+| `C:\Users\clara\Taverna-bancada\nerdcast\casos.json` | os 229 casos rotulados, com a janela de trechos (**contém texto: nunca no repositório**) |
+| `C:\Users\clara\Taverna-bancada\nerdcast\rotulos-pt.txt` | os rótulos à mão |
+| `C:\Users\clara\Taverna-bancada\nerdcast\tabelas-pt.txt` | todas as contagens desta seção |
+| `C:\Users\clara\Taverna-bancada\nerdcast\extrair.mjs` · `recortador-pt.mjs` · `analisar-pt.mjs` · `molduras.mjs` | o método, refazível (semente fixa) |
+| `C:\Users\clara\Taverna-bancada\nerdcast\sessoes.json` · `lotes\` | as 13 sessões extraídas e a visão de leitura (**contêm texto**) |
