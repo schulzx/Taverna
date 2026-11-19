@@ -622,6 +622,9 @@ export function dadosDoMapaVivo(mapa, estado) {
         horasQueFaltam: total != null ? duas((total - feito) / 60) : null,
         horasTotais: total != null ? duas(total / 60) : null,
         estado: String(jornada.estado || "em_curso"),
+        /* conserto V7/V8 (19/11): a estrada andada até ao fim, pela mesma conta
+           da chegada (progressoDaViagem) — a carta oferece «Chegar a X» */
+        chegou: !!(prog && prog.chegou),
       },
     };
   } else if (noDaBoca) {

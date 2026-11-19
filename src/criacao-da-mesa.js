@@ -166,11 +166,25 @@ export function nomeSorteado(semente, generoId, sexo, vez = 0) {
   return String(nomePessoa(generoPorId(generoId).label, s, fio(semente, "nome", vez), null) || "").trim();
 }
 
+/* conserto V7/V8 (19/11): a sessão jogada leu «Ladina golias, acólita
+   Fugitiva» na crônica — a ordem e a caixa trocadas. A forma é a que o
+   comentário de NO_FEMININO sempre disse: «Humana ladina» (a raça primeiro,
+   o caminho depois, em minúscula), e o antecedente todo em minúscula, menos o
+   que vem depois de «da/do/das/dos» (a Guilda dos Dedos, a Estrada, a Forja:
+   nomes próprios). Vale para o herói que nasce agora; o conceito de quem já
+   nasceu está no save e fica como está. */
+const ARTIGO_DO_NOME_PROPRIO = Object.freeze(["da", "do", "das", "dos"]);
+function antecedenteEmMinuscula(nome) {
+  let proprio = false;
+  return String(nome || "").split(" ").map((p) => {
+    if (ARTIGO_DO_NOME_PROPRIO.includes(p.toLowerCase())) { proprio = true; return p.toLowerCase(); }
+    return proprio ? p : p.toLowerCase();
+  }).join(" ");
+}
 export function conceitoDoSistema({ classe, raca, sexo, antecedenteId } = {}) {
   const a = ANTECEDENTES.find((x) => x.id === antecedenteId) || ANTECEDENTES[0];
-  const quem = `${noSexo(classe, sexo)} ${noSexo(raca, sexo).toLowerCase()}`;
-  const deOnde = noSexo(a.nome, sexo);
-  return `${quem}, ${deOnde.charAt(0).toLowerCase()}${deOnde.slice(1)}`;
+  const quem = [noSexo(raca, sexo), String(noSexo(classe, sexo) || "").toLowerCase()].filter(Boolean).join(" ");
+  return `${quem}, ${antecedenteEmMinuscula(noSexo(a.nome, sexo))}`;
 }
 
 export function antecedenteDaMesa(id) {

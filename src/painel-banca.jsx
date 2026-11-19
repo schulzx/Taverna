@@ -22,8 +22,8 @@ import { T } from "./constantes.js";
 import { SOMBRA_DA_MESA, alfa } from "./estilo.js";
 import { ObjetoAberto, CasaDeItem, letraDaMesa, useJanela } from "./pecas-da-mesa.jsx";
 import { CASA, OBJETO_ABERTO, NOME_DA_FAMILIA, NOME_DA_RARIDADE, familiaDoItem, raridadeDe, vereditoDaCompra, vereditoDaVenda, fraseDoEfeito } from "./objetos-abertos.js";
-import { compararItem, encaixeDoItem, fraseDaTroca } from "./comparar-item.js";
-import { linhaDoPreco } from "./comercio.js";
+import { compararItem, encaixeDoItem, fraseDaTroca, fraseDaPenalidade } from "./comparar-item.js";
+import { linhaDoPreco, chancesDaPechincha, oQueAPracaSente } from "./comercio.js";
 import { ranksDoPersonagem } from "./classes.js";
 import { fichaDoItem, armasRecomendadas, armadurasRecomendadas } from "./itens.js";
 import { Retrato } from "./ui.jsx";
@@ -95,7 +95,7 @@ function PecaDoPano({ item, pers, moedas, escolhida, aoTocar, telefone }) {
 }
 
 /* O VEREDITO DA COMPRA — a peça, o que está no corpo, o que muda, o preço e o botão */
-function VereditoDaCompra({ pers, banca, item, moedas, aoComprar }) {
+function VereditoDaCompra({ pers, banca, item, moedas, aoComprar, praca }) {
   const v = vereditoDaCompra({ preco: item.preco, moedas, nome: item.nome });
   const { slot, cmp } = oQueMuda(pers, item);
   const treino = treinoDe(pers, item);
@@ -127,7 +127,11 @@ function VereditoDaCompra({ pers, banca, item, moedas, aoComprar }) {
           </div>
         )) : <div style={{ color: TINTA, ...letraDaMesa("servico"), fontWeight: 400 }}><span aria-hidden="true">= </span>{fraseDoEfeito(item, null, slot)}</div>}
         {cmp && cmp.dorme ? <Nota>Pede sintonia: o poder dorme até você se sintonizar com ela.</Nota> : null}
-        {treino === false ? <Nota cor={T.perigoNoPergaminho}>Sem treino: desvantagem ao usar, e magia travada se for armadura.</Nota> : null}
+        {/* conserto V7/V8 (19/11): o preço de usar o que não se sabe sai do motor
+            (avaliarEquipar, pela comparação) — o mesmo que o equipar aplica */}
+        {cmp && arr(cmp.penalidades).length ? cmp.penalidades.map((pen) => (
+          <div key={pen.texto} style={{ color: T.perigoNoPergaminho, ...letraDaMesa("servico"), fontWeight: 400 }}><span aria-hidden="true">▼ </span>{fraseDaPenalidade(pen)}</div>
+        )) : !cmp && treino === false ? <Nota cor={T.perigoNoPergaminho}>Sem treino: desvantagem ao usar, e magia travada se for armadura.</Nota> : null}
         {slot ? <Nota>{fraseDaTroca(slot)}</Nota> : null}
       </div>
       <div>
@@ -138,6 +142,7 @@ function VereditoDaCompra({ pers, banca, item, moedas, aoComprar }) {
         </div>
         {porque ? <Nota>{porque}.</Nota> : null}
         {banca && banca.barganha ? <Nota>{banca.barganha.texto}.</Nota> : null}
+        {praca ? <Nota cor={T.perigoNoPergaminho}><span aria-hidden="true">▲ </span>{praca.texto}</Nota> : null}
       </div>
       <BotaoDoVeredito pode={v.pode} rotulo={v.pode ? `${v.botao} · você fica com ${v.fica}` : v.botao} razao={v.pode ? "" : v.razao} aoTocar={aoComprar} />
     </div>
@@ -157,7 +162,7 @@ function BotaoDoVeredito({ pode, rotulo, razao, aoTocar }) {
   );
 }
 
-function VereditoDaVenda({ v, oferta, vestido, moedas, aoVender }) {
+function VereditoDaVenda({ v, oferta, vestido, moedas, aoVender, praca }) {
   const of = oferta || { valor: 0, quem: null, motivo: "" };
   const vv = vereditoDaVenda({ valor: of.valor, moedas, quem: of.quem, vestido, motivo: of.motivo });
   const porque = linhaDoPreco(of.porques);
@@ -180,6 +185,7 @@ function VereditoDaVenda({ v, oferta, vestido, moedas, aoVender }) {
       ) : null}
       {porque ? <Nota>{porque}.</Nota> : null}
       {of.quem ? <Nota>Quem compra é quem lida com aquilo, e paga do que tem na gaveta.</Nota> : null}
+      {of.quem && praca ? <Nota cor={T.perigoNoPergaminho}><span aria-hidden="true">▼ </span>{praca.texto}</Nota> : null}
       <BotaoDoVeredito pode={vv.pode} rotulo={vv.pode ? vv.botao : `Vender ${v.nome}`} razao={vv.pode ? "não tem volta" : vv.razao} aoTocar={aoVender} />
     </div>
   );
@@ -217,7 +223,8 @@ function Balcao({ balcao, moedas, aoComprar }) {
    personagem · bancas · cidade · balcao · ofertaPor(it) · onComprar(banca,
    nome) · onVender(nome, origem) · onPechinchar(banca) ·
    onComprarSuprimento(id, q) · aoPousar. */
-export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [], ofertaPor = null, onComprar, onVender, onPechinchar, onComprarSuprimento, aoPousar = null }) {
+export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [], ofertaPor = null, onComprar, onVender, onPechinchar, onComprarSuprimento, aoPousar = null,
+  avaliarPechincha = null, pressoes = null, dia = 1 }) {
   const pers = personagem || {};
   const lista = arr(bancas);
   const mant = arr(balcao);
@@ -228,6 +235,11 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
   const [bancaId, setBancaId] = React.useState(primeira);
   const [sel, setSel] = React.useState(null); /* { tipo: "compra", nome } | { tipo: "venda", nome, origem } */
   const [recibo, setRecibo] = React.useState("");
+  /* conserto V7/V8 (19/11): o pano tem dois lados — o que ele vende e o que
+     você vende aqui —, e em 1280 × 800 o segundo ficava abaixo da dobra. Os
+     dois são abas no topo do pano: nenhum se descobre rolando. */
+  const [lado, setLado] = React.useState("comprar");
+  const pracaDe = (item, vendendo) => { try { return oQueAPracaSente(item, { cidade, dia, pressoes, vendendo }); } catch (e) { return null; } };
   const ativa = bancaId === BALCAO ? null : lista.find((m) => m.id === bancaId) || lista[0] || null;
   const noBalcao = !ativa && mant.length > 0;
 
@@ -258,13 +270,13 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
   const estoque = ativa ? arr(ativa.estoque) : [];
   const itemSel = sel && sel.tipo === "compra" ? estoque.find((x) => x.nome === sel.nome) : null;
   const vendaSel = sel && sel.tipo === "venda" ? bolsa.find((v) => v.nome === sel.nome && v.origem === sel.origem) : null;
-  const itemVisto = itemSel || (!telefone && !vendaSel && !recibo ? estoque[0] : null) || null;
+  const itemVisto = itemSel || (!telefone && !vendaSel && !recibo && lado === "comprar" ? estoque[0] : null) || null;
   let veredito = null;
   if (vendaSel) {
     const of = ofertaDe(vendaSel.it);
-    veredito = <VereditoDaVenda v={vendaSel} oferta={of} vestido={vendaSel.origem === "equipamento" && vestidos.has(vendaSel.nome)} moedas={moedas} aoVender={() => vender(vendaSel, of || { valor: 0 })} />;
+    veredito = <VereditoDaVenda v={vendaSel} oferta={of} vestido={vendaSel.origem === "equipamento" && vestidos.has(vendaSel.nome)} moedas={moedas} aoVender={() => vender(vendaSel, of || { valor: 0 })} praca={pracaDe(vendaSel.it, true)} />;
   } else if (itemVisto) {
-    veredito = <VereditoDaCompra pers={pers} banca={ativa} item={itemVisto} moedas={moedas} aoComprar={() => comprar(itemVisto)} />;
+    veredito = <VereditoDaCompra pers={pers} banca={ativa} item={itemVisto} moedas={moedas} aoComprar={() => comprar(itemVisto)} praca={pracaDe(itemVisto, false)} />;
   }
   const nomeCidade = (cidade && cidade.nome) || "";
   const vazio = !lista.length && !mant.length;
@@ -275,6 +287,8 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
   ];
   const idAtivo = noBalcao ? BALCAO : ativa ? ativa.id : null;
 
+  let chances = null;
+  try { const av = ativa && avaliarPechincha ? avaliarPechincha(ativa.id) : null; chances = av ? chancesDaPechincha(av) : null; } catch (e) { chances = null; }
   const mercador = ativa ? (
     <div className="flex flex-col" style={{ gap: 10 }}>
       <div className={telefone ? "flex items-center" : "flex flex-col"} style={{ gap: 12 }}>
@@ -292,7 +306,16 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
         <button type="button" onClick={pechinchar} className="tv-anel-foco w-full flex flex-col items-start text-left"
           style={{ minHeight: 52, padding: "8px 12px", borderRadius: 4, background: T.ossoLume, border: `1px solid ${TINTA}`, color: TINTA, cursor: "pointer" }}>
           <span style={letraDaMesa("proposta")}>Pechinchar</span>
-          <span style={{ ...letraDaMesa("notaDoMestre"), color: TINTA_DIM }}>uma proposta por dia; se ele se ofender, o preço sobe</span>
+          {/* conserto V7/V8 (19/11): o dado, a chance e o preço de falhar antes
+              do clique — as chances saem da regra (chancesDaPechincha) */}
+          {chances ? (
+            <>
+              <span style={{ ...letraDaMesa("notaDoMestre"), color: TINTA }}>Persuasão · d20{chances.bonus >= 0 ? "+" : ""}{chances.bonus} contra {chances.dificuldade}</span>
+              <span style={{ ...letraDaMesa("notaDoMestre"), color: T.musgoNoPergaminho }}><span aria-hidden="true">✓ </span>{chances.baixa}% de ele baixar {chances.ganho}% ou mais</span>
+              <span style={{ ...letraDaMesa("notaDoMestre"), color: T.perigoNoPergaminho }}><span aria-hidden="true">✕ </span>{chances.ofende}% de ele se ofender: o preço sobe {chances.perda}%</span>
+              <span style={{ ...letraDaMesa("notaDoMestre"), color: TINTA_DIM }}>uma proposta por dia</span>
+            </>
+          ) : <span style={{ ...letraDaMesa("notaDoMestre"), color: TINTA_DIM }}>uma proposta por dia; se ele se ofender, o preço sobe</span>}
         </button>
       )}
     </div>
@@ -321,14 +344,24 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
 
   const pano = (
     <div className="flex flex-col" style={{ gap: 18 }}>
-      <div className="flex flex-wrap items-baseline justify-between" style={{ gap: 12 }}>
-        <Rotulo>{ativa ? `Sobre o pano · ${estoque.length} ${estoque.length === 1 ? "peça" : "peças"}` : "No balcão"}</Rotulo>
-        <span className="inline-flex items-center" style={{ gap: 8, color: TINTA_DIM, ...letraDaMesa("rotulo") }}>Na sua bolsa <Moeda n={moedas} /></span>
-      </div>
+      {/* conserto V7/V8 (19/11): «Na sua bolsa ◉ 15» caía sobre a lista do
+          vendedor e lia como se as peças fossem suas. São as suas moedas, numa
+          linha só delas, acima do pano */}
+      <div className="inline-flex items-center" style={{ gap: 8, color: TINTA_DIM, ...letraDaMesa("rotulo") }}>Suas moedas <Moeda n={moedas} /></div>
+      {ativa && bolsa.length ? (
+        <div role="tablist" aria-label="Os dois lados do pano" className="flex flex-wrap" style={{ gap: 8 }}>
+          {[{ id: "comprar", rotulo: `Sobre o pano · ${estoque.length} ${estoque.length === 1 ? "peça" : "peças"}` }, { id: "vender", rotulo: `O que você vende · ${bolsa.length}` }].map((a) => (
+            <button key={a.id} type="button" role="tab" aria-selected={lado === a.id ? "true" : "false"} onClick={() => { setLado(a.id); setSel(null); setRecibo(""); }}
+              className="tv-anel-foco" style={{ minHeight: 44, padding: "0 14px", borderRadius: 4, cursor: "pointer", background: lado === a.id ? T.ossoLume : "transparent", border: `1px solid ${lado === a.id ? TINTA : alfa(TINTA, 0.35)}`, color: TINTA, ...letraDaMesa("rotulo") }}>
+              {a.rotulo}
+            </button>
+          ))}
+        </div>
+      ) : <Rotulo>{ativa ? `Sobre o pano · ${estoque.length} ${estoque.length === 1 ? "peça" : "peças"}` : "No balcão"}</Rotulo>}
       {recibo ? <p role="status" style={{ margin: 0, color: T.musgoNoPergaminho, ...letraDaMesa("servico") }}><span aria-hidden="true">✓ </span>{recibo}</p> : null}
-      {ativa ? (
+      {ativa && (lado === "comprar" || !bolsa.length) ? (
         estoque.length ? (
-          <div className="grid" style={{ gridTemplateColumns: telefone ? "1fr" : "1fr 1fr", gap: telefone ? 12 : "20px 24px" }}>
+          <div className="grid" style={{ gridTemplateColumns: telefone ? "1fr" : "repeat(auto-fill, minmax(220px, 1fr))", gap: telefone ? 12 : "20px 24px" }}>
             {estoque.map((it) => (
               <PecaDoPano key={it.nome} item={it} pers={pers} moedas={moedas} telefone={telefone}
                 escolhida={!!itemVisto && itemVisto.nome === it.nome && !vendaSel}
@@ -338,7 +371,7 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
         ) : <Nota>Prateleiras vazias. Volte em outra semana.</Nota>
       ) : noBalcao ? <Balcao balcao={mant} moedas={moedas} aoComprar={comprarMantimento} /> : null}
       {!moedas && ativa ? <Nota>Sem moedas hoje. Você ainda pode olhar, pechinchar e vender.</Nota> : null}
-      {bolsa.length ? (
+      {bolsa.length && (!ativa || lado === "vender") ? (
         <section aria-label="O que você vende aqui">
           <Rotulo>O que pagam pelo que você leva</Rotulo>
           <div className="flex flex-wrap" style={{ gap: 10 }}>
@@ -375,11 +408,12 @@ export function PainelBanca({ personagem, bancas = [], cidade = null, balcao = [
     );
   } else {
     miolo = (
-      <div className="flex-1 min-h-0 overflow-y-auto tv-scroll relative" style={{ padding: `${OBJETO_ABERTO.conteudo}px ${OBJETO_ABERTO.conteudo + 8}px` }}>
-        <div className="grid items-start" style={{ gridTemplateColumns: "minmax(0, 210px) minmax(0, 1fr) minmax(0, 330px)", gap: 30 }}>
-          <div className="flex flex-col" style={{ gap: 22 }}>{mercador}{outras}</div>
-          {pano}
-          <aside aria-label="O veredito" style={{ ...folhaDoVeredito, position: "sticky", top: 0 }}>{veredito || semVeredito}</aside>
+      <div className="flex-1 min-h-0 relative" style={{ padding: `${OBJETO_ABERTO.conteudo}px ${OBJETO_ABERTO.conteudo + 8}px` }}>
+        {/* conserto V7/V8 (19/11): cada coluna rola por dentro, na altura do objeto */}
+        <div className="grid h-full" style={{ gridTemplateColumns: "minmax(0, 210px) minmax(0, 1fr) minmax(0, 330px)", gridTemplateRows: "minmax(0, 1fr)", gap: 30 }}>
+          <div className="min-h-0 overflow-y-auto tv-scroll flex flex-col" style={{ gap: 22, overflowX: "hidden" }}>{mercador}{outras}</div>
+          <div className="min-h-0 overflow-y-auto tv-scroll" style={{ overflowX: "hidden" }}>{pano}</div>
+          <div className="min-h-0 overflow-y-auto tv-scroll" style={{ overflowX: "hidden" }}><aside aria-label="O veredito" style={folhaDoVeredito}>{veredito || semVeredito}</aside></div>
         </div>
       </div>
     );

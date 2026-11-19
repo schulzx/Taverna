@@ -849,6 +849,15 @@ export function quemResponde(origem) {
 }
 
 /* ---------------- OS ENVELOPES ---------------- */
+/* O ÚLTIMO PASSO (conserto V7/V8, 19/11). Partir pela carta abre a estrada
+   pelo sinal (o Mestre já falou da saída), e uma ida de quatro horas anda
+   inteira no primeiro avanço: a jornada fica com «faltam 0 h» e a chegada
+   (talvezChegarSozinho, no prelúdio) só vinha com a frase seguinte. O toque
+   «Chegar a X» é a ação do jogador e não tem frase onde colar: é UMA chamada,
+   a do toque (QUEM_RESPONDE.toque), e o prelúdio registra a chegada nela. */
+export function envelopeDoUltimoPasso(destino) {
+  return `[O ÚLTIMO PASSO — PEDIDO PELO TOQUE] Eu ando o último pedaço da estrada até ${destino || "o destino"}. A chegada é do sistema, e ele a registra neste turno: narre o que ele disser, sem me pôr de volta na estrada.`;
+}
 /* 8.ª sessão (M35): a VOLTA à cidade de onde se veio parte de longe dela
    (a boca de uma masmorra) e tem a própria cidade por destino — o envelope
    de sempre diria "saí de Ponte Brumoso rumo a Ponte Brumoso… não me devolva

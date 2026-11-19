@@ -42,6 +42,23 @@
 import { falta } from "./plural.js";
 
 export const HORAS_MARCHA_POR_DIA = 8;
+
+/* ---------------- O NOME DO LUGAR NA TELA (conserto V7/V8, 19/11) ----------------
+   O banco de nomes do mundo (geografia.js, CIDADE_B) traz «clara», «valente»
+   e «escura» em minúscula, e o mundo nascia com «Porto clara» e «Monte
+   clara». O nome é guardado no save (mapa.cidades), e trocá-lo lá quebraria
+   a busca de quem já o tem; por isso o conserto é de APRESENTAÇÃO, e só da
+   forma que o banco faz: DUAS palavras, a primeira com maiúscula e a
+   segunda sem, e que não é partícula («Porto clara» → «Porto Clara»). Um
+   nome mais longo («O que sobrou de Gelo») é frase, e fica como está.
+   Comparar nomes continua a ser sem caixa (igualNome, semNome). */
+export const PARTICULAS_DO_NOME = Object.freeze(["de", "da", "do", "das", "dos", "e", "a", "o", "em", "na", "no"]);
+export function nomeDeLugar(nome) {
+  const n = String(nome == null ? "" : nome);
+  const p = n.split(" ");
+  if (p.length !== 2 || !/^[A-ZÀ-Ú]/.test(p[0]) || !/^[a-zà-ú]/.test(p[1]) || PARTICULAS_DO_NOME.includes(p[1])) return n;
+  return `${p[0]} ${p[1].charAt(0).toUpperCase()}${p[1].slice(1)}`;
+}
 export const MINUTOS_ESTRADA_POR_TURNO = 240;      // 4 h de marcha efetiva
 export const MINUTOS_RELOGIO_POR_TURNO = 720;      // meio dia de calendário
 /* Um dia de calendário tem três meios-dias de marcha (8 h de estrada em 24). */
@@ -329,7 +346,7 @@ export function origemDaViagem(jornada) {
   return primeiro && !igualNome(primeiro, jornada.para) ? primeiro : "";
 }
 function rotuloDaRota(jornada, forma) {
-  const de = origemDaViagem(jornada), para = String(jornada.para || "");
+  const de = nomeDeLugar(origemDaViagem(jornada)), para = nomeDeLugar(String(jornada.para || ""));
   return (de ? ROTULO_DA_ROTA[forma] : ROTULO_DA_ROTA.volta).replace("{de}", de).replace("{para}", para);
 }
 

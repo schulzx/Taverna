@@ -36,6 +36,7 @@ import { ObjetoAberto, letraDaMesa, useJanela } from "./pecas-da-mesa.jsx";
 import { OBJETO_ABERTO } from "./objetos-abertos.js";
 import { Retrato } from "./ui.jsx";
 import { vereditoDaPartida } from "./partida.js";
+import { nomeDeLugar } from "./viagem.js";
 import { alvoDoFeixe, modoDaLuz, fundoDaCarta, vizinhoNaSeta, textoDeHoras, quemEmTexto } from "./faixa-do-rumo.js";
 import { CAMINHOS_DO_GLIFO, glifoDoNo } from "./painel-mapa-vivo.jsx";
 import {
@@ -168,7 +169,7 @@ function Papel({ dados, desenho, selecionado, aoTocar, heroi, horasDaPilula, tel
       {desenho.rota ? <path d={desenho.rota} fill="none" stroke={TINTA} strokeWidth={C.traco.rota} strokeLinecap="round" /> : null}
       {/* os lugares: o alvo de toque é 44 */}
       {desenho.nos.map((n) => (
-        <g key={n.id} role="button" aria-label={`${n.nome}${estadoEmPalavras(n, dados.heroi) ? ", " + estadoEmPalavras(n, dados.heroi) : ""}`} onClick={() => aoTocar(n.id)} style={{ cursor: "pointer" }}>
+        <g key={n.id} role="button" aria-label={`${nomeDeLugar(n.nome)}${estadoEmPalavras(n, dados.heroi) ? ", " + estadoEmPalavras(n, dados.heroi) : ""}`} onClick={() => aoTocar(n.id)} style={{ cursor: "pointer" }}>
           <circle cx={n.x} cy={n.y} r={C.alvo / 2 + (telefone ? 4 : 0)} fill="transparent" />
           <Lugar no={n} escolhido={n.id === selecionado} dim={dim} />
         </g>
@@ -183,7 +184,7 @@ function Papel({ dados, desenho, selecionado, aoTocar, heroi, horasDaPilula, tel
         return (
           <g key={"r" + n.id} aria-hidden="true">
             <rect x={r.x} y={r.y} width={r.largura} height={r.altura} rx={2} fill={T.pergaminho} fillOpacity={0.82} />
-            <text x={r.x + r.largura / 2} y={r.y + r.altura - C.respiro - 3} textAnchor="middle" style={{ ...estilo, lineHeight: 1 }} fill={boato ? dim : TINTA}>{n.nome}</text>
+            <text x={r.x + r.largura / 2} y={r.y + r.altura - C.respiro - 3} textAnchor="middle" style={{ ...estilo, lineHeight: 1 }} fill={boato ? dim : TINTA}>{nomeDeLugar(n.nome)}</text>
           </g>
         );
       })}
@@ -278,7 +279,7 @@ function CartaoDoLugar({ dados, no, v, alvoId, chegada, suprimentos, bocas, aoPa
   const vizinhos = arr(no.vizinhos).map((x) => {
     const n = noPorId(dados, x.id);
     if (!n) return null;
-    return `${n.nome} · ${x.dias ? diasEmTexto(x.dias) : textoDeHoras(x.horas)}`;
+    return `${nomeDeLugar(n.nome)} · ${x.dias ? diasEmTexto(x.dias) : textoDeHoras(x.horas)}`;
   }).filter(Boolean);
   const idaEVolta = v && !dados.continente ? [`ida ${textoDeHoras(v.horas)}`, v.horasDeVolta != null ? `volta ${textoDeHoras(v.horasDeVolta)}` : ""].filter(Boolean).join(" · ") : "";
   return (
@@ -289,7 +290,7 @@ function CartaoDoLugar({ dados, no, v, alvoId, chegada, suprimentos, bocas, aoPa
           <Glifo no={no} cx={22} cy={22} tamanho={22} cor={boato ? TINTA_DIM : TINTA} />
         </svg>
         <div className="flex flex-col min-w-0">
-          <h3 style={{ color: TINTA, margin: 0, ...letraDaMesa("lugar") }}>{no.nome}</h3>
+          <h3 style={{ color: TINTA, margin: 0, ...letraDaMesa("lugar") }}>{nomeDeLugar(no.nome)}</h3>
           {subtituloNaCarta(dados, no) ? <span style={{ color: TINTA_DIM, ...letraDaMesa("notaDoMestre") }}>{subtituloNaCarta(dados, no)}</span> : null}
         </div>
       </div>
@@ -373,6 +374,10 @@ export function PainelCarta({ dados, estadoDaPartida = null, chegada = null, ini
   }, [dados, v, vHistoria, selecionado]);
   const horasDaPilula = v ? (dados.continente && v.dias ? `${String(Math.round(v.dias * 10) / 10).replace(".", ",")} d` : textoDeHoras(v.horas)) : "";
   const janela = React.useRef(null);
+  /* conserto V7/V8 (19/11): no celular a carta abre centrada no herói e o
+     resto fica fora da janela; a sessão jogada não soube que dava para
+     arrastar. Uma etiqueta diz, até o primeiro toque na carta. */
+  const [arrastou, setArrastou] = React.useState(false);
   /* no celular a carta abre centrada no herói (a janela arrasta com o dedo) */
   React.useEffect(() => {
     try {
@@ -382,7 +387,7 @@ export function PainelCarta({ dados, estadoDaPartida = null, chegada = null, ini
       el.scrollLeft = Math.max(0, p.x - el.clientWidth / 2);
       el.scrollTop = Math.max(0, p.y - el.clientHeight / 2);
     } catch (e) { /* sem rolagem, a carta abre no canto */ }
-  }, [telefone]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [telefone, !!desenho]); // eslint-disable-line react-hooks/exhaustive-deps
   const partir = (id, vv) => { try { if (aoPartir) aoPartir(id, vv); } catch (e) { /* nunca custa o turno */ } };
   const aoTeclar = (e) => {
     try {
@@ -402,8 +407,16 @@ export function PainelCarta({ dados, estadoDaPartida = null, chegada = null, ini
     return (
       <ObjetoAberto objeto="carta" titulo="A carta" aoPousar={aoPousar}>
         <div onKeyDown={aoTeclar}>
-          <div ref={janela} className="tv-sem-barra" style={{ height: Tf.altura, overflow: "auto", background: T.pergaminho, touchAction: "pan-x pan-y", borderBottom: `1px solid ${alfa(TINTA_DIM, 0.5)}` }}>
-            <div style={{ width: C.lado, height: C.lado }}>{papel}</div>
+          <div className="relative">
+            <div ref={janela} className="tv-sem-barra" onPointerDown={() => setArrastou(true)} onTouchStart={() => setArrastou(true)}
+              style={{ height: Tf.altura, overflow: "auto", background: T.pergaminho, touchAction: "pan-x pan-y", borderBottom: `1px solid ${alfa(TINTA_DIM, 0.5)}` }}>
+              <div style={{ width: C.lado, height: C.lado }}>{papel}</div>
+            </div>
+            {!arrastou ? (
+              <span aria-hidden="true" className="absolute pointer-events-none" style={{ left: "50%", bottom: 10, transform: "translateX(-50%)", whiteSpace: "nowrap", padding: "4px 12px", borderRadius: 14, background: alfa(T.ossoLume, 0.92), color: TINTA, boxShadow: SOMBRA_DA_MESA.peca, ...letraDaMesa("notaDoMestre") }}>
+                arraste: a carta continua
+              </span>
+            ) : null}
           </div>
           <div style={{ padding: "16px 12px 20px", background: T.pergaminho }}>
             <p style={{ margin: "0 0 4px", color: TINTA, ...letraDaMesa("servico") }}>{ondeEstaNaCarta(dados, chegada)}</p>

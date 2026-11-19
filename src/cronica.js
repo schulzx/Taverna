@@ -3,7 +3,7 @@
    app: herói, feitos, cicatrizes, companheiros, domínios, pessoas, números.
    Nada é resumido pela IA — é a memória de verdade, formatada. */
 
-import { dataTxt, mesDe, estacaoDe } from "./calendario.js";
+import { dataTxt, estacaoDe } from "./calendario.js";
 import { patamarFama, calcularFama } from "./fama.js";
 import { marcoDe } from "./vinculos.js";
 import { relacaoNPC } from "./npcs.js";
@@ -23,7 +23,9 @@ export function gerarCronica({ nomeCampanha, mundo, personagem: p, conquistasIds
   md += linha(`# 📜 A Crônica de ${p.nome}`);
   md += linha();
   md += linha(`*${nomeCampanha} · ${(mundo || {}).genero}*`);
-  md += linha(`*Registrada em ${dataTxt(dia)} de ${mesDe(dia)} — dia ${dia} da campanha, ${estacaoDe(dia).nome.toLowerCase()}*`);
+  /* conserto V7/V8 (19/11): `dataTxt` já diz o mês («1 de Brumal»); somar `mesDe`
+     dava «1 de Brumal de Brumal» */
+  md += linha(`*Registrada em ${dataTxt(dia)} — dia ${dia} da campanha, ${estacaoDe(dia).nome.toLowerCase()}*`);
   md += linha();
   md += linha(`---`);
   md += linha();

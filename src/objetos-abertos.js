@@ -373,3 +373,39 @@ export function feitosDoLivro(categorias, desbloqueadas, porId) {
     return { id: cat.id, rotulo: cat.rotulo, lugares, lacrados, total: lugares.length, conta: `${lacrados} de ${lugares.length}`, proximo };
   });
 }
+
+/* ---------------- A CRÔNICA NA PÁGINA (conserto V7/V8, 19/11) ----------------
+   `gerarCronica` (cronica.js) escreve Markdown, porque também vira arquivo.
+   Na página, o Markdown cru aparecia como sinal («*…*», «---», «**»): a
+   sessão jogada leu-o assim. Aqui o texto vira blocos que a página desenha
+   como forma — o título, o separador (um fio), a linha com os trechos em
+   itálico — e nenhum asterisco chega à tela.
+   → [{ tipo: "titulo", nivel, partes } | { tipo: "fio" } | { tipo: "linha", item, partes }]
+   onde `partes` = [{ texto, italico }]. A linha vazia não vira bloco. */
+function trechosDaLinha(l) {
+  const limpa = String(l || "").replace(/\*\*|__/g, "");
+  const partes = [];
+  const re = /\*([^*]+)\*/g;
+  let ultimo = 0, m;
+  while ((m = re.exec(limpa))) {
+    if (m.index > ultimo) partes.push({ texto: limpa.slice(ultimo, m.index), italico: false });
+    partes.push({ texto: m[1], italico: true });
+    ultimo = m.index + m[0].length;
+  }
+  if (ultimo < limpa.length) partes.push({ texto: limpa.slice(ultimo), italico: false });
+  return partes.map((p) => ({ ...p, texto: p.texto.replace(/\*/g, "") })).filter((p) => p.texto);
+}
+export function blocosDaCronica(md) {
+  const out = [];
+  for (const cru of String(md || "").split("\n")) {
+    const l = cru.replace(/\s+$/, "");
+    if (!l.trim()) continue;
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(l)) { if (out.length && out[out.length - 1].tipo !== "fio") out.push({ tipo: "fio" }); continue; }
+    const t = l.match(/^(#{1,6})\s*(.*)$/);
+    if (t) { out.push({ tipo: "titulo", nivel: t[1].length, partes: trechosDaLinha(t[2]) }); continue; }
+    const it = l.match(/^(\s*)[-*] (.*)$/);
+    if (it) { out.push({ tipo: "linha", item: it[1].length ? 2 : 1, partes: trechosDaLinha(it[2]) }); continue; }
+    out.push({ tipo: "linha", item: 0, partes: trechosDaLinha(l) });
+  }
+  return out;
+}

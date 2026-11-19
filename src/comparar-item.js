@@ -17,7 +17,8 @@
    (o pedido (a)); sem ele, deduz-se da família do item, como `fichaDoItem`
    já deduz a categoria — save antigo não pode ficar sem cara.
    ============================================================ */
-import { TROCA_DE_SLOT, fichaDoItem, danoDaArma, podeTrocarAgora, CAT_ARMA } from "./itens.js";
+import { TROCA_DE_SLOT, fichaDoItem, danoDaArma, podeTrocarAgora, CAT_ARMA, avaliarEquipar } from "./itens.js";
+import { ranksDoPersonagem } from "./classes.js";
 import { defesaDe } from "./combate.js";
 import { bonusEquip } from "./regras-jogo.js";
 import { ATRIBUTOS } from "./constantes.js";
@@ -139,7 +140,28 @@ export function compararItem(pers, item, slot, { emCombate = false } = {}) {
      livres de agora (MAX_SINTONIA menos os sintonizados do corpo de antes). */
   let vagas = MAX_SINTONIA;
   try { vagas = Math.max(0, MAX_SINTONIA - garantirSintonia(p).length); } catch (e) { vagas = MAX_SINTONIA; }
-  return { linhas, troca, atual, item: item || null, dorme, vagas };
+  /* O PREÇO DE USAR O QUE NÃO SE SABE (conserto V7/V8, 19/11). A gaveta dizia
+     «Dano 1d6 → 1d8, melhora» e só DEPOIS do clique o registro avisava «sem
+     treino: ataques com desvantagem». O veredito antes do clique mostra os
+     dois lados: as penalidades são as de `avaliarEquipar` (itens.js), a
+     mesma conta que o equipar do App aplica — nenhuma regra nova. */
+  let penalidades = [];
+  try {
+    if (item) {
+      let ranks = null;
+      try { ranks = ranksDoPersonagem(p); } catch (e) { ranks = null; }
+      const av = avaliarEquipar(p, item, ranks);
+      penalidades = (av && Array.isArray(av.penalidades) ? av.penalidades : []).filter((x) => x && x.texto).map((x) => ({ tipo: x.tipo, texto: x.texto }));
+    }
+  } catch (e) { penalidades = []; }
+  return { linhas, troca, atual, item: item || null, dorme, vagas, penalidades };
+}
+
+/* A penalidade em uma linha de tela: «Com desvantagem: você não tem treino em
+   arma marcial…». A primeira letra sobe; o resto é o texto do motor. */
+export function fraseDaPenalidade(pen) {
+  const t = String((pen && pen.texto) || "").trim();
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) + (/[.!]$/.test(t) ? "" : ".") : "";
 }
 
 /* O TEMPO DA TROCA, em palavras (§3: «trocar leva 1 minuto: a fivela é

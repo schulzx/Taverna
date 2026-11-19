@@ -20180,6 +20180,47 @@ pergaminho pede um tema de papel no `PainelDiario` inteiro — ficou por fazer.
 abertas de dia, à noite e na estrada (1280, 1440, 375), o arquipélago com veredito, sem estrada e
 reaberto (1280, 375), e a Torre na escada.
 
+### 11 · V7/V8: o conserto depois da sessão jogada (19/11/2026)
+
+A segunda sessão jogada (`mente/lancamento/mestre-vivo-sessao-2.md`, Parte 2) achou dez defeitos
+nas telas novas. O que mudou de forma, peça a peça (a prova: `testes/teste-conserto-v78.mjs`, que
+falha 11 vezes contra o código de antes; as capturas `V78c-*.png`):
+
+- **A estrada andada até ao fim tem verbo.** Com «faltam 0 h», o cartão do destino troca «Você já
+  está na estrada» por **«Chegar a X»** (âmbar, ligado; «A estrada acabou: só falta entrar»), o selo
+  diz «à vista» e a linha de onde se está diz «X está à vista: falta só chegar.» A fila da tela
+  ganha a mesma casa («Chegar a X · a estrada acabou»), onde antes o «Seguir para X» sumia e não
+  sobrava toque. Um toque, uma chamada (a do toque); a chegada é a de sempre, no prelúdio.
+- **O equipar diz os dois lados.** As penalidades de `avaliarEquipar` entram na comparação: linha
+  em perigo com ▼ («Você não tem treino em arma marcial…: ataques com desvantagem…») e o botão
+  âmbar leva «▼ com desvantagem» na razão. A banca mostra as mesmas linhas (a do motor, não a
+  heurística de vitrine).
+- **O objeto aberto cabe em 800.** Bolsa e banca rolam **por coluna** (`gridTemplateRows:
+  minmax(0, 1fr)`, cada coluna `overflow-y: auto`); o cartão do item tocado vem à vista
+  (`scrollIntoView`, `block: nearest`). Na bolsa os atributos passam a duas colunas (na coluna de
+  340 o terceiro sangrava, e com a rolagem por dentro o sangue virava corte).
+- **A banca tem dois lados no topo do pano:** abas «Sobre o pano · N peças» / «O que você vende ·
+  N» (alvo 44); as moedas numa linha só delas, «Suas moedas ◉ N» (era «Na sua bolsa», sobre a lista
+  do vendedor). As peças do pano em `repeat(auto-fill, minmax(220px, 1fr))`.
+- **Pechinchar com o veredito:** «Persuasão · d20+B contra CD», «✓ N% de ele baixar 12% ou mais»
+  (musgo), «✕ N% de ele se ofender: o preço sobe 8%» (perigo). As chances saem das vinte faces
+  passadas pela própria regra (`chancesDaPechincha`).
+- **A praça avisa:** a compra diz «▲ Depois desta compra, metal fica 6% mais caro aqui por uns
+  dias»; a venda, «▼ … paga 6% menos aqui, e comprar … fica 6% mais caro». É a regra da procura
+  (`apertarProcura`), que existia calada.
+- **A crônica é forma, não Markdown:** título, fio (o «---»), itálico de verdade, a lista com «·»
+  (`blocosDaCronica`). Nenhum asterisco na página.
+- **O livro tem as cinco fitas desde o primeiro minuto**; a página vazia diz o que virá («Nenhum
+  lacre ainda. A estrada, a luta e a gente que você conhece vão deixando a marca deles aqui.»). No
+  celular as cinco dividem a largura (grade de cinco), o rótulo quebra em duas linhas.
+- **A carta no celular** diz «arraste: a carta continua» (etiqueta de osso, sem dedo no papel) até o
+  primeiro toque; abre centrada no herói, como antes.
+- **O nome do lugar na tela** sobe a maiúscula da segunda palavra quando o banco a deu minúscula
+  («Porto clara» → «Porto Clara»; `nomeDeLugar`). Só apresentação: o save guarda o nome como nasceu.
+
+**Ficou por fazer:** a tela do companheiro na bolsa (ainda a antiga, verde-escura); «OFERENDAR · o
+altar aceita» em item sem nome; o «Caminho conhecido» para lugar só ouvido.
+
 ---
 
 ## A Mesa do Mestre · F6 · as cerimônias (`desenho`, 16/11/2026)

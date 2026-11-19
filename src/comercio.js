@@ -333,6 +333,53 @@ export function pechinchar({ bonus = 0, dificuldade = 12, sorte = sorteDaCasa } 
   return { ok: false, d20, total, ajuste: 1, texto: "não se mexeu" };
 }
 
+/* O VEREDITO ANTES DO CLIQUE (conserto V7/V8, 19/11). A banca dizia só «se
+   ele se ofender, o preço sobe», e o dado e a chance apareciam depois, no
+   registro. As chances saem da PRÓPRIA regra: as vinte faces do d20 passam
+   por `pechinchar`, uma a uma, e conta-se o que cada uma dá — sem segunda
+   conta que possa discordar da primeira. */
+export function chancesDaPechincha({ bonus = 0, dificuldade = 12 } = {}) {
+  let baixa = 0, ofende = 0;
+  for (let f = 1; f <= 20; f++) {
+    const r = pechinchar({ bonus, dificuldade, sorte: () => (f - 0.5) / 20 });
+    if (r.ok) baixa++;
+    else if (r.ajuste > 1) ofende++;
+  }
+  const pct = (n) => Math.round((n / 20) * 100);
+  return {
+    bonus, dificuldade, baixa: pct(baixa), ofende: pct(ofende), nada: pct(20 - baixa - ofende),
+    ganho: Math.round(PECHINCHA_GANHO * 100), perda: Math.round(PECHINCHA_PERDA * 100),
+    texto: `Persuasão: d20${bonus >= 0 ? "+" : ""}${bonus} contra ${dificuldade} · ${pct(baixa)}% de ele baixar ${Math.round(PECHINCHA_GANHO * 100)}% ou mais · ${pct(ofende)}% de ele se ofender, e o preço sobe ${Math.round(PECHINCHA_PERDA * 100)}%`,
+  };
+}
+
+/* O QUE A COMPRA (OU A VENDA) MEXE NA PRAÇA (conserto V7/V8, 19/11). A
+   sessão jogada viu a Armadura Rúnica ir de 324 a 344 depois de uma compra,
+   sem aviso: é a regra da procura (apertarProcura, +6% no gênero, naquela
+   cidade, e cede com os dias), e ela tem de estar no veredito. A conta é a
+   de `fatorDoLugar`, antes e depois de apertar. `null` quando nada muda
+   (sem gênero, ou a procura já no teto).
+   A venda aperta a MESMA procura (venderNoMercado): a próxima venda paga
+   menos e, pela mesma pressão, comprar fica mais caro — o veredito da venda
+   diz os dois lados, porque a regra faz os dois. */
+export function oQueAPracaSente(item, { cidade = null, dia = 1, pressoes = null, vendendo = false } = {}) {
+  const g = generoDoItem(item);
+  if (!g) return null;
+  const antes = pressaoAtual(pressoes, cidade, g, dia);
+  const depois = pressaoAtual(apertarProcura(pressoes, cidade, g, dia), cidade, g, dia);
+  const fator = (pr) => (vendendo ? 1 - Math.min(0.35, pr) : 1 + pr);
+  const pct = Math.round(Math.abs(fator(depois) / fator(antes) - 1) * 100);
+  const sobe = Math.round(((1 + depois) / (1 + antes) - 1) * 100);
+  if (!pct) return null;
+  const nome = (generoPorId(g) || {}).nome || g;
+  return {
+    genero: g, pct, sobe,
+    texto: vendendo
+      ? `Depois desta venda, ${nome} paga ${pct}% menos aqui${sobe ? `, e comprar ${nome} fica ${sobe}% mais caro` : ""}, por uns dias.`
+      : `Depois desta compra, ${nome} fica ${pct}% mais caro aqui por uns dias.`,
+  };
+}
+
 /* A dificuldade sai do lugar: numa metrópole ninguém precisa da sua moeda;
    numa aldeia o mercador precisa vender antes que o inverno chegue. */
 export function dificuldadeDaPechincha(cidade, mercador) {

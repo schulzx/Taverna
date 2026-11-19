@@ -21,7 +21,7 @@
 import React from "react";
 import { T, alfa, SOMBRA_DA_MESA } from "./estilo.js";
 import { ObjetoAberto, Lacre, letraDaMesa, useJanela } from "./pecas-da-mesa.jsx";
-import { FITAS_DO_LIVRO, FITA, OBJETO_ABERTO, fitaInicial, genteDoLivro, cartasDoBestiario, feitosDoLivro } from "./objetos-abertos.js";
+import { FITAS_DO_LIVRO, FITA, OBJETO_ABERTO, fitaInicial, genteDoLivro, cartasDoBestiario, feitosDoLivro, blocosDaCronica } from "./objetos-abertos.js";
 import { PainelDiario } from "./painel-diario.jsx";
 import { CATEGORIAS_CONQUISTA } from "./painel-codex.jsx";
 import { conquistaPorId } from "./conquistas.js";
@@ -71,19 +71,24 @@ function BotaoDePapel({ children, nota = "", aoTocar, desligado = false, razao =
 function Fitas({ fitas, aberta, aoAbrir, telefone }) {
   const largura = telefone ? FITA.telefone : FITA.largura;
   return (
-    <div role="tablist" aria-label="As fitas do livro" className={telefone ? "flex tv-sem-barra" : "flex"}
-      style={telefone ? { gap: 6, overflowX: "auto", paddingTop: FITA.sobe, marginBottom: -FITA.rabo } : { gap: FITA.passo - FITA.largura, paddingLeft: 60, alignItems: "flex-end", height: FITA.aberta + FITA.sobe }}>
+    /* conserto V7/V8 (19/11): no celular a faixa rolava de lado e a quinta fita
+       («A crônica») ficava cortada, sem dica de que havia mais. As cinco
+       dividem a largura (uma grade de cinco colunas), e o rótulo quebra em
+       duas linhas quando precisa: nenhuma fica de fora. */
+    <div role="tablist" aria-label="As fitas do livro" className={telefone ? "grid" : "flex"}
+      style={telefone ? { gap: 4, gridTemplateColumns: `repeat(${fitas.length}, minmax(0, 1fr))`, alignItems: "end", paddingTop: FITA.sobe, marginBottom: -FITA.rabo } : { gap: FITA.passo - FITA.largura, paddingLeft: 60, alignItems: "flex-end", height: FITA.aberta + FITA.sobe }}>
       {fitas.map((f) => {
         const viva = f.id === aberta;
         return (
           <button key={f.id} type="button" role="tab" aria-selected={viva ? "true" : "false"} onClick={() => aoAbrir(f.id)}
             className="tv-anel-foco shrink-0 flex items-center justify-center"
             style={{
-              width: largura, height: viva ? FITA.aberta : FITA.altura, border: 0, cursor: "pointer",
+              width: telefone ? "100%" : largura, height: viva ? FITA.aberta : FITA.altura, border: 0, cursor: "pointer",
               transform: viva ? `translateY(-${FITA.sobe}px)` : "none", transition: `transform ${OBJETO_ABERTO.movimento.fita}ms ease`,
               clipPath: `polygon(0 ${FITA.rabo}px, 50% 0, 100% ${FITA.rabo}px, 100% 100%, 0 100%)`,
               background: viva ? T.lacre : T.couroAlto, color: viva ? T.sobreLacre : T.ink, boxShadow: SOMBRA_DA_MESA.peca,
               paddingTop: FITA.rabo, ...letraDaMesa("rotulo", telefone),
+              ...(telefone ? { minWidth: 0, paddingLeft: 2, paddingRight: 2, letterSpacing: 0, whiteSpace: "normal", lineHeight: 1.1, textAlign: "center" } : {}),
             }}>
             {f.rotulo}
           </button>
@@ -276,6 +281,7 @@ function PaginaDosFeitos({ conquistas, tituloAtivo, escolherTitulo, telefone }) 
   const esquerda = (
     <>
       <Rotulo extra={`${lacrados} de ${todos.length}`}>Feitos</Rotulo>
+      {lacrados ? null : <Prosa italico cor={TINTA_DIM}>Nenhum lacre ainda. A estrada, a luta e a gente que você conhece vão deixando a marca deles aqui.</Prosa>}
       <Prosa italico cor={TINTA_DIM}>{tituloAtivo ? `Título em uso: ${tituloAtivo}` : "Nenhum título em uso. Cada feito lacrado dá um."}</Prosa>
       {familias.map((f) => (
         <div key={f.id} style={{ marginBottom: 18 }}>
@@ -321,8 +327,9 @@ function PaginaDosFeitos({ conquistas, tituloAtivo, escolherTitulo, telefone }) 
 }
 
 /* ---------------- A CRÔNICA ---------------- */
-function linhasDaCronica(md) {
-  return String(md || "").split("\n").map((l) => l.replace(/\*\*|__/g, "").replace(/^[-*] /, "· ")).filter((l, i, a) => l.trim() || (i > 0 && a[i - 1].trim()));
+/* os trechos de uma linha: o itálico vira itálico, nenhum asterisco chega à página */
+function Trechos({ partes }) {
+  return arr(partes).map((p, i) => (p.italico ? <em key={i} style={{ fontStyle: "italic" }}>{p.texto}</em> : <React.Fragment key={i}>{p.texto}</React.Fragment>));
 }
 function PaginaDaCronica({ dados, onExportarCronica, onExportarSave, aoGerarCronica, telefone }) {
   let md = "";
@@ -346,15 +353,18 @@ function PaginaDaCronica({ dados, onExportarCronica, onExportarSave, aoGerarCron
       </div>
     </>
   );
-  const linhas = linhasDaCronica(md);
-  const direita = linhas.length ? (
+  let blocos = [];
+  try { blocos = blocosDaCronica(md); } catch (e) { blocos = []; }
+  const direita = blocos.length ? (
     <div>
-      {linhas.map((l, i) => {
-        const titulo = /^#+\s/.test(l);
-        const t = l.replace(/^#+\s*/, "");
-        return titulo
-          ? <div key={i} style={{ color: TINTA, margin: "14px 0 8px", ...letraDaMesa(i === 0 ? "tituloObjeto" : "rotulo") }}>{t}</div>
-          : <p key={i} style={{ color: TINTA, margin: "0 0 6px", ...letraDaMesa("prosa", telefone) }}>{t || " "}</p>;
+      {blocos.map((b, i) => {
+        if (b.tipo === "fio") return <div key={i} aria-hidden="true" style={{ height: 1, background: alfa(TINTA_DIM, 0.45), margin: "14px 0" }} />;
+        if (b.tipo === "titulo") return <div key={i} role="heading" aria-level={Math.min(6, b.nivel + 2)} style={{ color: TINTA, margin: "14px 0 8px", ...letraDaMesa(b.nivel === 1 ? "tituloObjeto" : "rotulo") }}><Trechos partes={b.partes} /></div>;
+        return (
+          <p key={i} style={{ color: TINTA, margin: "0 0 6px", paddingLeft: b.item ? 14 * b.item : 0, textIndent: b.item ? -12 : 0, ...letraDaMesa("prosa", telefone) }}>
+            {b.item ? <span aria-hidden="true" style={{ color: TINTA_DIM }}>{"· "}</span> : null}<Trechos partes={b.partes} />
+          </p>
+        );
       })}
     </div>
   ) : <Prosa italico cor={TINTA_DIM}>A crônica começa quando a história começa.</Prosa>;
@@ -377,7 +387,12 @@ export function PainelLivro({ fita = "buscas", aoTrocarFita = null, comCodex = t
   conquistas = null, tituloAtivo = null, escolherTitulo = null, dadosDaCronica = null, onExportarCronica = null, onExportarSave = null, aoGerarCronica = null, aoPousar = null }) {
   const j = useJanela();
   const telefone = j.l < OBJETO_ABERTO.corteDoTelefone;
-  const fitas = comCodex ? FITAS_DO_LIVRO : FITAS_DO_LIVRO.filter((f) => f.id === "buscas");
+  /* conserto V7/V8 (19/11): as quatro fitas do Códex só apareciam depois da
+     primeira conquista, e o livro de uma fita só parecia quebrado. As cinco
+     existem desde o início; a página vazia diz numa linha o que virá ali.
+     `comCodex` fica aceite (o App de antes passa-o) e já não esconde nada. */
+  void comCodex;
+  const fitas = FITAS_DO_LIVRO;
   /* a fita pedida vale só ao abrir: trocar de fita troca a porta no App (e
      com ela o `fita` que chega), e o livro não pode voltar à fita da porta */
   const [aqui, setAqui] = React.useState(() => fitaInicial(fita));

@@ -27,7 +27,7 @@
 import { colocarRotulos, curvaDaAresta, pontoNaCurva, larguraDoTexto, textoDeHoras, rumoPorExtenso } from "./faixa-do-rumo.js";
 import { PORTES } from "./geografia.js";
 import { PERIGO_POR_NIVEL } from "./regiao.js";
-import { HORAS_MARCHA_POR_DIA } from "./viagem.js";
+import { HORAS_MARCHA_POR_DIA, nomeDeLugar, progressoDaViagem } from "./viagem.js";
 import { pontoDoHeroi } from "./rastro.js";
 import { consumoDiario, garantirSuprimentos } from "./ermos.js";
 import { horaTxt } from "./calendario.js";
@@ -100,9 +100,10 @@ const CONTRACAO = {
   de: { o: "do", a: "da", os: "dos", as: "das" },
   em: { o: "no", a: "na", os: "nos", as: "nas" },
   para: { o: "para o", a: "para a", os: "para os", as: "para as" },
+  a: { o: "ao", a: "à", os: "aos", as: "às" },
 };
 export function preposicao(p, nome) {
-  const n = String(nome || "");
+  const n = nomeDeLugar(String(nome || ""));
   const m = n.match(/^(O|A|Os|As) (.+)$/);
   const c = m && CONTRACAO[p] && CONTRACAO[p][m[1].toLowerCase()];
   return c ? `${c} ${m[2]}` : `${p} ${n}`;
@@ -191,11 +192,14 @@ export function dadosDaCartaDoContinente(mapa, estado) {
     const deN = nos.find((n) => norm(n.nome) === norm(jornada.de));
     const paraN = nos.find((n) => norm(n.nome) === norm(jornada.para));
     const k = deN && paraN ? [deN.id, paraN.id].sort().join("~") : null;
+    /* conserto V7/V8 (19/11): o continente também sabe quando a estrada acabou */
+    let prog = null;
+    try { prog = progressoDaViagem(jornada); } catch { prog = null; }
     heroi = {
       onde: "viagem", noId: null,
       x: pt && finito(pt.x) ? Math.max(0, Math.min(1, nx(pt.x))) : null,
       y: pt && finito(pt.y) ? Math.max(0, Math.min(1, ny(pt.y))) : null,
-      jornada: { de: String(jornada.de || ""), para: String(jornada.para || ""), deId: deN ? deN.id : null, paraId: paraN ? paraN.id : null, arestaId: k && vistos.has(k) ? k : null, fracao: null, horasQueFaltam: null },
+      jornada: { de: String(jornada.de || ""), para: String(jornada.para || ""), deId: deN ? deN.id : null, paraId: paraN ? paraN.id : null, arestaId: k && vistos.has(k) ? k : null, fracao: null, horasQueFaltam: null, chegou: !!(prog && prog.chegou), estado: String(jornada.estado || "em_curso") },
     };
   } else if (noAqui) {
     heroi = { onde: "povoado", noId: noAqui.id, x: noAqui.x, y: noAqui.y };
@@ -369,6 +373,20 @@ export function desenhoDaCarta(dados, opcoes) {
    AS PALAVRAS — o que a coluna escreve
    ============================================================ */
 
+/* A ESTRADA ANDADA ATÉ AO FIM (conserto V7/V8, 19/11). A sessão jogada viu
+   a carta dizer «faltam 0 h · a caminho» sem caminho nenhum para chegar: a
+   chegada só vinha com a frase seguinte. Andada a estrada inteira (o
+   `chegou` do mapa vivo, que é o de progressoDaViagem, ou as horas a zero),
+   o destino está à vista e o verbo do cartão passa a ser «Chegar a X». A
+   jornada parada por um encontro não chega: primeiro o encontro. */
+export function estradaNoFim(heroi) {
+  const h = obj(heroi) || {};
+  if (h.onde !== "viagem" || !obj(h.jornada)) return false;
+  const j = h.jornada;
+  if (j.estado === "pausada") return false;
+  return j.chegou === true || (finito(j.horasQueFaltam) && Number(j.horasQueFaltam) <= 0);
+}
+
 /* «Você está em Velha Valente.» — de onde o herói olha a carta. */
 export function ondeEstaNaCarta(dados, chegada = null) {
   const d = obj(dados);
@@ -378,6 +396,7 @@ export function ondeEstaNaCarta(dados, chegada = null) {
   if (h.onde === "viagem" && obj(h.jornada)) {
     const j = h.jornada;
     const para = (noPorId(d, j.paraId) || {}).nome || j.para;
+    if (estradaNoFim(h)) return `${nomeDeLugar(para)} está à vista: falta só chegar.`;
     const falta = finito(j.horasQueFaltam) ? `, faltam ${textoDeHoras(j.horasQueFaltam)}` : "";
     const quando = obj(chegada) && chegada.hora ? `; você chega às ${chegada.hora}${chegada.noite ? ", de noite" : ""}` : "";
     return `Na estrada ${preposicao("para", para)}${falta}${quando}.`;
@@ -406,7 +425,7 @@ export function estadoEmPalavras(no, heroi = null) {
   const n = obj(no);
   if (!n) return "";
   const h = obj(heroi) || {};
-  if (h.onde === "viagem" && obj(h.jornada) && h.jornada.paraId === n.id) return "a caminho";
+  if (h.onde === "viagem" && obj(h.jornada) && h.jornada.paraId === n.id) return estradaNoFim(h) ? "à vista" : "a caminho";
   return PALAVRA_DO_ESTADO[n.estado] || "";
 }
 
@@ -453,6 +472,11 @@ export function partidaNaCarta(dados, no, veredito, opcoes) {
   if (h.onde === "viagem") {
     const j = obj(h.jornada) || {};
     const ch = obj(o.chegada);
+    if (estradaNoFim(h)) {
+      const para = (noPorId(d, j.paraId) || {}).nome || j.para || "";
+      if (j.paraId === n.id || (!j.paraId && para && para === n.nome)) return { verbo: `Chegar ${preposicao("a", n.nome)}`, impedido: null, chegar: true, preco: "A estrada acabou: só falta entrar.", mantimentos: null, caminho: [], perigo: null };
+      return { verbo: "Você já está na estrada", impedido: para ? `chegue ${preposicao("a", para)} primeiro` : "termine a viagem antes de partir de novo", preco: "", mantimentos: null, caminho: [], perigo: null };
+    }
     return { verbo: "Você já está na estrada", impedido: [finito(j.horasQueFaltam) ? `faltam ${textoDeHoras(j.horasQueFaltam)}` : "", ch && ch.hora ? `você chega às ${ch.hora}` : ""].filter(Boolean).join(" · ") || "termine a viagem antes de partir de novo", preco: "", mantimentos: null, caminho: [], perigo: null };
   }
   if (h.onde === "masmorra") return { verbo: "Você está lá dentro", impedido: "saia primeiro para partir", preco: "", mantimentos: null, caminho: [], perigo: null };

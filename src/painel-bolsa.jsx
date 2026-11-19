@@ -20,7 +20,7 @@ import { ENCAIXE, SOMBRA_DA_MESA, PECAS_DA_MESA, VB_DA_MOLDURA, TAMANHOS_DA_MOLD
 import { ObjetoAberto, CasaDeItem, GlifoDeItem, PecaDeRecurso, letraDaMesa, useJanela } from "./pecas-da-mesa.jsx";
 import { CASA, CORPO_DA_BOLSA, ORDEM_DO_CORPO, OBJETO_ABERTO, NOME_DA_FAMILIA, NOME_DA_RARIDADE, casasDaMochila, ordemDaMochila, verbosDaLinha, familiaDoItem, raridadeDe } from "./objetos-abertos.js";
 import { RostoNaMoldura, caDoHeroi } from "./painel-equipamento.jsx";
-import { compararItem, encaixeDoItem, rotuloDoEquipar, fraseDaTroca } from "./comparar-item.js";
+import { compararItem, encaixeDoItem, rotuloDoEquipar, fraseDaTroca, fraseDaPenalidade } from "./comparar-item.js";
 import { discosDaFicha } from "./subida-de-nivel.js";
 import { contasAcesas } from "./mesa-do-mestre.js";
 
@@ -75,7 +75,10 @@ function Trilho({ atual, max }) {
 
 /* a ficha do que se escolheu: nome, família e raridade, o efeito, o verbo
    principal em âmbar, os outros, e «Largar» com o preço dito */
-function FichaDoItem({ escolha, personagem, aoEquipar, aoDesequipar, telefone }) {
+function FichaDoItem({ escolha, personagem, aoEquipar, aoDesequipar, telefone, toque = 0 }) {
+  /* conserto V7/V8 (19/11): em 1280 × 800 o cartão saía cortado embaixo da
+     coluna. A coluna rola por dentro, e o cartão escolhido vem à vista. */
+  const aoAparecer = React.useCallback((el) => { try { if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" }); } catch (e) { /* sem rolagem, segue */ } }, [toque]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!escolha) return null;
   const { nome, item, linha, slot, noCorpo } = escolha;
   const fam = familiaDoItem(item || nome);
@@ -92,13 +95,17 @@ function FichaDoItem({ escolha, personagem, aoEquipar, aoDesequipar, telefone })
     const pode = !cmp || cmp.troca.ok;
     principal = { rotulo: ENCAIXE.tirar[slot] || "Tirar", pode, razao: pode ? fraseDaTroca(slot) : `agora não: ${cmp.troca.motivo}`, fazer: () => aoDesequipar && aoDesequipar(slot) };
   } else if (slotDoItem && cmp) {
-    principal = { rotulo: rotuloDoEquipar(cmp.linhas), pode: !!cmp.troca.ok, razao: cmp.troca.ok ? fraseDaTroca(slotDoItem) : `agora não: ${cmp.troca.motivo}`, fazer: () => aoEquipar && aoEquipar(item, slotDoItem) };
+    /* conserto V7/V8 (19/11): o preço de usar o que não se sabe vai no botão,
+       antes do clique — «com desvantagem», e a razão na lista acima */
+    const pesa = arr(cmp.penalidades).length > 0;
+    principal = { rotulo: rotuloDoEquipar(cmp.linhas), pode: !!cmp.troca.ok, razao: cmp.troca.ok ? (pesa ? `▼ com desvantagem · ${fraseDaTroca(slotDoItem)}` : fraseDaTroca(slotDoItem)) : `agora não: ${cmp.troca.motivo}`, fazer: () => aoEquipar && aoEquipar(item, slotDoItem) };
   } else if (v.principal) {
     principal = { rotulo: v.principal.rotulo, pode: true, razao: v.principal.dica || "", fazer: v.principal.fazer };
   }
   const descricao = (linha && (linha.descricao || linha.nota)) || (item && typeof item === "object" ? item.descricao : "") || "";
+  const penalidades = !noCorpo && cmp ? arr(cmp.penalidades) : [];
   return (
-    <section aria-label={`O que é ${nome}`} style={{ background: T.ossoLume, borderRadius: 6, padding: telefone ? 16 : 18, boxShadow: SOMBRA_DA_MESA.erguido }}>
+    <section ref={aoAparecer} aria-label={`O que é ${nome}`} style={{ background: T.ossoLume, borderRadius: 6, padding: telefone ? 16 : 18, boxShadow: SOMBRA_DA_MESA.erguido }}>
       <div className="flex items-start" style={{ gap: 12 }}>
         <GlifoDeItem familia={fam} tamanho={28} />
         <div className="flex flex-col min-w-0">
@@ -116,6 +123,9 @@ function FichaDoItem({ escolha, personagem, aoEquipar, aoDesequipar, telefone })
           ))}
         </ul>
       ) : null}
+      {penalidades.map((pen) => (
+        <p key={pen.texto} style={{ margin: "8px 0 0", color: T.perigoNoPergaminho, ...letraDaMesa("servico"), fontWeight: 400 }}><span aria-hidden="true">▼ </span>{fraseDaPenalidade(pen)}</p>
+      ))}
       {cmp && cmp.dorme ? <p style={{ margin: "8px 0 0", color: T.tintaDoPergaminhoDim, ...letraDaMesa("notaDoMestre") }}>Pede sintonia: até lá serve de peça, e o poder dorme.</p> : null}
       <div className="flex flex-wrap items-center" style={{ gap: 12, marginTop: 14 }}>
         {principal ? (
@@ -164,7 +174,10 @@ export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDeseq
   const p = personagem || {};
   const j = useJanela();
   const telefone = j.l < OBJETO_ABERTO.corteDoTelefone;
-  const [sel, setSel] = React.useState(null); /* { tipo: "linha", chave } | { tipo: "corpo", slot } */
+  const [sel, setSelCru] = React.useState(null); /* { tipo: "linha", chave } | { tipo: "corpo", slot } */
+  /* cada toque numa peça conta (mesmo a mesma peça outra vez): é ele que traz o cartão à vista */
+  const [toque, setToque] = React.useState(0);
+  const setSel = (x) => { setSelCru(x); setToque((n) => n + 1); };
   const [verOficina, setVerOficina] = React.useState(false);
   const eq = p.equipados || {};
   const ordem = ordemDaMochila(linhas);
@@ -245,7 +258,7 @@ export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDeseq
   const atributos = discos.length ? (
     <section aria-label="Atributos">
       <Rotulo>Atributos</Rotulo>
-      <div className="grid" style={{ gridTemplateColumns: telefone ? "1fr 1fr" : "1fr 1fr 1fr", gap: "10px 12px" }}>
+      <div className="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: "10px 12px" }}>
         {discos.map((d) => {
           const sobe = d.aceita && aoSubirAtributo;
           const peca = (
@@ -296,7 +309,7 @@ export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDeseq
         </div>
       </section>
       {telefone && vazioDoCorpo ? vazioDoCorpo : null}
-      {escolha ? <FichaDoItem escolha={escolha} personagem={p} aoEquipar={aoEquipar} aoDesequipar={aoDesequipar} telefone={telefone} />
+      {escolha ? <FichaDoItem escolha={escolha} personagem={p} aoEquipar={aoEquipar} aoDesequipar={aoDesequipar} telefone={telefone} toque={toque} />
         : !telefone ? <p style={{ margin: 0, color: T.inkMeio, ...letraDaMesa("notaDoMestre") }}>Toque numa peça para ver o que ela é e o que faz.</p> : null}
       {m ? (
         <section aria-label="Mantimentos">
@@ -335,11 +348,13 @@ export function PainelBolsa({ personagem, linhas = [], aoEquipar = null, aoDeseq
           {heroi}{corpo}{carga}{atributos}{listaDeTalentos}
         </div>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto tv-scroll relative" style={{ padding: OBJETO_ABERTO.conteudo }}>
-          <div className="grid items-start" style={{ gridTemplateColumns: "minmax(0, 260px) minmax(0, 340px) minmax(0, 1fr)", gap: 36 }}>
-            {heroi}
-            <div className="flex flex-col" style={{ gap: 22 }}>{corpo}{atributos}{listaDeTalentos}</div>
-            {carga}
+        /* conserto V7/V8 (19/11): cada coluna rola por dentro, na altura do
+           objeto — em 800 de altura nada fica cortado embaixo da moldura */
+        <div className="flex-1 min-h-0 relative" style={{ padding: `${OBJETO_ABERTO.conteudo}px 0 ${OBJETO_ABERTO.conteudo}px ${OBJETO_ABERTO.conteudo}px` }}>
+          <div className="grid h-full" style={{ gridTemplateColumns: "minmax(0, 260px) minmax(0, 340px) minmax(0, 1fr)", gridTemplateRows: "minmax(0, 1fr)", gap: 36 }}>
+            <div className="min-h-0 overflow-y-auto tv-scroll" style={{ overflowX: "hidden", paddingBottom: 8 }}>{heroi}</div>
+            <div className="min-h-0 overflow-y-auto tv-scroll flex flex-col" style={{ overflowX: "hidden", gap: 22, paddingBottom: 8 }}>{corpo}{atributos}{listaDeTalentos}</div>
+            <div className="min-h-0 overflow-y-auto tv-scroll" style={{ overflowX: "hidden", paddingRight: OBJETO_ABERTO.conteudo, paddingBottom: 8 }}>{carga}</div>
           </div>
         </div>
       )}
