@@ -25,8 +25,9 @@
 import React from "react";
 import { T, ALVOS, TIPOS, alfa, SOMBRA_DA_MESA } from "./estilo.js";
 import { Glifo, Recibo } from "./ui.jsx";
-import { CERIMONIA_DA_VITORIA as CV, CARTA_DE_ACAO, ordemDoEspolio } from "./luta-na-mesa.js";
-import { NOME_DA_RARIDADE } from "./objetos-abertos.js";
+import { CERIMONIA_DA_VITORIA as CV, CARTA_DE_ACAO, ordemDoEspolio, CARTA_DO_ESPOLIO as CE, faceDoEspolio } from "./luta-na-mesa.js";
+import { CasaDeItem } from "./pecas-da-mesa.jsx";
+import { letraDaMesa } from "./mesa-do-mestre.js";
 
 /* As palavras dos desfechos são do `jogo` (A1); a forma é do `desenho`. Na
    fuga e na queda o recibo diz só a perda; a luta encerrada diz o que houver. */
@@ -57,15 +58,34 @@ function usarCerimoniaPosta(reduzido) {
 }
 
 /* UMA CARTA DO ESPÓLIO: pousa de verso e vira. Tocar recolhe (vai para a
-   bolsa); recolhida, fica com «na bolsa» e sem toque. */
+   bolsa); recolhida, fica com «na bolsa» e sem toque.
+   F4 §10 lacuna 3 (19/11): a face é a CARTA_DO_ESPOLIO do F6 a dois terços —
+   a palavra da raridade, a casa de item com o glifo do item, o nome, uma frase
+   do que ele faz e o pé (para onde vai). A raridade é moldura (borda, cantos
+   de latão, lacre), palavra e tempo; o verso é igual para todas, e a raridade
+   só se sabe ao virar. As medidas e a face moram em luta-na-mesa.js. */
+function CantosDeLatao({ largura, altura }) {
+  const c = CE.canto;
+  return (
+    <svg aria-hidden="true" width={largura} height={altura} viewBox={`0 0 ${largura} ${altura}`} style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+      {[[0, 0, 1, 1], [largura, 0, -1, 1], [0, altura, 1, -1], [largura, altura, -1, -1]].map(([x, y, sx, sy], i) => (
+        <path key={i} d={`M${x} ${y}h${sx * c}L${x} ${y + sy * c}z`} fill={T.latao} />
+      ))}
+    </svg>
+  );
+}
 function CartaDoEspolio({ coisa, recolhida, aoRecolher, telefone, posta }) {
-  const C = telefone ? CV.cartas.telefone : CV.cartas;
-  const W = C.largura, H = C.altura;
-  const rara = coisa.raridade && coisa.raridade !== "comum";
+  const G = telefone ? CE.celular : CE.mesa;
+  const W = G.largura, H = G.altura;
+  const face = faceDoEspolio(coisa);
+  const M = CE.moldura[face.moldura] || CE.moldura.comum;
+  const V = CE.verso;
   const anima = !posta;
+  const linhas = (n) => ({ display: "-webkit-box", WebkitLineClamp: n, WebkitBoxOrient: "vertical", overflow: "hidden" });
+  const texto = { position: "absolute", left: (W - G.texto) / 2, width: G.texto, textAlign: "center" };
   return (
     <button type="button" data-recolher={recolhida ? undefined : ""} onClick={recolhida ? undefined : aoRecolher} aria-disabled={recolhida || undefined}
-      aria-label={recolhida ? `${coisa.nome}, na bolsa` : `Recolher ${coisa.nome}`}
+      aria-label={recolhida ? `${coisa.nome}, ${CE.naBolsa}` : `Recolher ${coisa.nome}, ${face.palavra}${face.frase ? `: ${face.frase}` : ""}`}
       className={`tv-anel-foco shrink-0${anima ? " tv-carta-pousa" : ""}`}
       style={{ width: W, height: H, padding: 0, border: 0, background: "transparent", perspective: 600, cursor: recolhida ? "default" : "pointer",
         "--tv-pousa-ms": `${CV.cartas.viraMs}ms`, "--tv-pousa-em": `${coisa.pousaEm}ms` }}>
@@ -73,20 +93,30 @@ function CartaDoEspolio({ coisa, recolhida, aoRecolher, telefone, posta }) {
         style={{ position: "relative", display: "block", width: "100%", height: "100%", transformStyle: "preserve-3d",
           "--tv-vira-ms": `${CV.cartas.viraMs}ms`, "--tv-vira-em": `${coisa.viraEm}ms` }}>
         {/* a face */}
-        <span className="flex flex-col items-center justify-center"
-          style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", borderRadius: CARTA_DE_ACAO.raio, padding: 8, gap: 6, textAlign: "center",
-            background: T[CARTA_DE_ACAO.chao], border: `${rara ? 2 : 1}px solid ${rara ? T.lataoLume : T[CARTA_DE_ACAO.borda]}`,
-            boxShadow: SOMBRA_DA_MESA.pousado, opacity: recolhida ? 0.55 : 1 }}>
-          <Glifo nome="bolsa" tamanho={telefone ? 20 : 26} cor={T[CARTA_DE_ACAO.custo]} />
-          <span className="tv-display" style={{ fontSize: telefone ? 12 : 14, fontWeight: 700, lineHeight: 1.2, color: T[CARTA_DE_ACAO.letra] }}>{coisa.nome}</span>
-          <span className="tv-body" style={{ fontSize: TIPOS.piso, fontWeight: 600, color: T[CARTA_DE_ACAO.custo] }}>
-            {recolhida ? "na bolsa" : NOME_DA_RARIDADE[coisa.raridade] || "comum"}
+        <span data-face-do-espolio={face.moldura}
+          style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", borderRadius: CE.raio, overflow: "visible",
+            background: T[CE.chao], border: `${M.px}px solid ${T[M.borda]}`, boxShadow: SOMBRA_DA_MESA.peca, opacity: recolhida ? 0.55 : 1 }}>
+          {M.cantos && <CantosDeLatao largura={W - M.px * 2} altura={H - M.px * 2} />}
+          <span style={{ ...texto, top: G.yPalavra, ...letraDaMesa("rotulo"), color: face.brasa ? T.brasaNoPergaminho : T.tintaDoPergaminhoDim }}>{recolhida ? CE.naBolsa : face.palavra}</span>
+          <span style={{ position: "absolute", left: G.xCasa - M.px, top: G.yCasa - M.px }}>
+            <CasaDeItem item={coisa} lado={G.casa} sobre="papel" />
           </span>
+          <span style={{ ...texto, top: G.yNome, ...letraDaMesa("nome"), color: T.tintaDoPergaminho, ...linhas(G.linhasNome) }}>{coisa.nome}</span>
+          {!telefone && face.frase && <span style={{ ...texto, top: G.yFrase, ...letraDaMesa("servico"), textTransform: "none", color: T.tintaDoPergaminho, ...linhas(G.linhasFrase) }}>{face.frase}</span>}
+          {!telefone && <span style={{ ...texto, top: G.yPe, ...letraDaMesa("notaDoMestre"), color: T.tintaDoPergaminhoDim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{face.pe}</span>}
+          {M.lacre && !telefone && (
+            <span aria-hidden="true" style={{ position: "absolute", right: -CE.lacre / 3, top: -CE.lacre / 3, width: CE.lacre, height: CE.lacre, borderRadius: "50%",
+              background: `radial-gradient(circle at 35% 35%, ${T.lacreLume}, ${T.lacre} 60%, ${T.lacreSombra})`, boxShadow: SOMBRA_DA_MESA.peca }} />
+          )}
         </span>
-        {/* o verso: o verso de carta da fila do F4 — couro com o aro de latão */}
-        <span aria-hidden="true" className="flex items-center justify-center"
-          style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderRadius: CARTA_DE_ACAO.raio,
-            background: T.couro, border: `2px solid ${T.lataoSombra}`, boxShadow: SOMBRA_DA_MESA.pousado }}>
+        {/* o verso, igual para todas: couro, aro de latão, o fio a 8 px e o losango */}
+        <span aria-hidden="true"
+          style={{ position: "absolute", inset: 0, backfaceVisibility: "hidden", transform: "rotateY(180deg)", borderRadius: CE.raio,
+            background: T[V.chao], border: `${V.aroPx}px solid ${T[V.aro]}`, boxShadow: SOMBRA_DA_MESA.peca }}>
+          <span style={{ position: "absolute", inset: V.fio - V.aroPx, borderRadius: CE.raio - 2, border: `1px solid ${alfa(T[V.aro], V.fioAlfa)}` }} />
+          <svg width={V.losango * 1.5} height={V.losango * 1.5} viewBox={`0 0 ${V.losango * 1.5} ${V.losango * 1.5}`} style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}>
+            <rect x={V.losango * 0.75 - V.losango / 2} y={V.losango * 0.75 - V.losango / 2} width={V.losango} height={V.losango} transform={`rotate(45 ${V.losango * 0.75} ${V.losango * 0.75})`} fill="none" stroke={T[V.aro]} strokeWidth={V.losangoPx} />
+          </svg>
         </span>
       </span>
     </button>
@@ -139,10 +169,12 @@ export function FimDaLuta({ desfecho = "encerrada", recibo = [], chao = [], linh
           ))}
         </div>
       )}
-      {porRecolher.length > 1 && (
+      {/* F4c: com UMA carta também — na luta jogada a vitória com uma carta só não
+          dizia que a carta era o botão (ela diz «vai para a bolsa»; aqui, «Recolher») */}
+      {porRecolher.length >= 1 && (
         <button type="button" onClick={() => porRecolher.forEach(recolher)} className="tv-anel-foco tv-display"
           style={{ minHeight: ALVOS.piso, padding: "0 20px", borderRadius: CARTA_DE_ACAO.raio, background: T.panelSoft, border: `1px solid ${T.lineStrong}`, color: T.ink, fontSize: TIPOS.corpo, fontWeight: 600 }}>
-          Recolher tudo
+          {porRecolher.length > 1 ? CE.recolher.todas : CE.recolher.uma}
         </button>
       )}
     </div>

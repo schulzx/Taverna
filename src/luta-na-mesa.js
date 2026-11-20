@@ -17,7 +17,7 @@
    recibo-da-luta.js). Aqui só se conta, ordena e diz.
    ============================================================ */
 import { especieDe } from "./mesa-de-batalha.js";
-import { raridadeDe } from "./objetos-abertos.js";
+import { raridadeDe, molduraDaCasa, familiaDoItem, NOME_DA_RARIDADE } from "./objetos-abertos.js";
 import { resolverReacao } from "./reacoes.js";
 
 const obj = (x) => (x && typeof x === "object" ? x : null);
@@ -455,4 +455,39 @@ export function oQueFicaDaReacao(reacao, faixa) {
   const fica = (d) => { const x = resolverReacao(r, { pers: {}, dano: d }); return x ? x.danoFinal : d; };
   const lo = fica(min), hi = r.chance != null ? max : fica(max);
   return { min: Math.min(lo, hi), max: Math.max(lo, hi) };
+}
+
+/* ---------------- A CARTA DO ESPÓLIO NA VITÓRIA (§10 lacuna 3) ----------------
+   A CARTA_DO_ESPOLIO do F6 a dois terços: uma carta só para todo espólio.
+   Face 160 × 224 (raio 6, ossoLume, sombra peca): a palavra da raridade a y
+   10 · a casa de item de 64 com o glifo do item a (48, 32) · o nome a y 104
+   (até 2 linhas) · uma frase a y 140 (até 2) · o pé a y 196 (uma). Largura
+   de texto 144. Celular 104 × 146: palavra a y 6, casa de 48 a (28, 26), nome
+   a y 80 em até 3 linhas, largura 96, sem frase nem pé. A raridade é moldura,
+   palavra e tempo — nunca só cor. O verso é igual para todas. */
+export const CARTA_DO_ESPOLIO = Object.freeze({
+  mesa: Object.freeze({ largura: 160, altura: 224, yPalavra: 10, casa: 64, xCasa: 48, yCasa: 32, yNome: 104, linhasNome: 2, yFrase: 140, linhasFrase: 2, yPe: 196, texto: 144 }),
+  celular: Object.freeze({ largura: 104, altura: 146, yPalavra: 6, casa: 48, xCasa: 28, yCasa: 26, yNome: 80, linhasNome: 3, texto: 96 }),
+  raio: 6, chao: "ossoLume",
+  moldura: Object.freeze({
+    comum: Object.freeze({ borda: "ossoSombra", px: 1, cantos: false, lacre: false }),
+    incomum: Object.freeze({ borda: "latao", px: 2, cantos: false, lacre: false }),
+    rara: Object.freeze({ borda: "latao", px: 2, cantos: true, lacre: false }),
+    lendaria: Object.freeze({ borda: "latao", px: 2, cantos: true, lacre: true }),
+  }),
+  canto: 15, lacre: 36,
+  verso: Object.freeze({ chao: "couro", aro: "latao", aroPx: 2, fio: 8, fioAlfa: 0.55, losango: 32, losangoPx: 1.5 }),
+  pe: "vai para a bolsa", naBolsa: "na bolsa",
+  recolher: Object.freeze({ uma: "Recolher", todas: "Recolher tudo" }),
+});
+
+/* a face de uma carta do espólio: a moldura, a palavra, a família do glifo e
+   a frase (a primeira do que o item diz de si, quando diz) */
+export function faceDoEspolio(coisa) {
+  const c = obj(coisa) || {};
+  const r = raridadeDe(c);
+  const moldura = molduraDaCasa(c);
+  const desc = typeof c.desc === "string" ? c.desc.trim() : "";
+  const frase = desc ? (desc.match(/^[\s\S]*?[.!?…](?=\s|$)/) || [desc])[0].trim() : "";
+  return { raridade: r, moldura, palavra: NOME_DA_RARIDADE[r] || NOME_DA_RARIDADE.comum, familia: familiaDoItem(c.nome ? c : null), frase, pe: CARTA_DO_ESPOLIO.pe, brasa: moldura === "lendaria" };
 }

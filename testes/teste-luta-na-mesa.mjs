@@ -18,6 +18,7 @@ import {
   MAO_DE_ACOES, tamanhoDaCarta, porCento, linhaDoDado, A_JOGADA, vereditoDoAgir,
   MESA_DA_LUTA, linhasDeElesVao, O_QUE_RESTA_NA_VEZ, faixaDaRegua, ladoComARegua,
   REACAO_NA_MAO, alturaDaVela, larguraDaCartaDaReacao, oQueFicaDaReacao,
+  CARTA_DO_ESPOLIO, faceDoEspolio,
 } from "../src/luta-na-mesa.js";
 import { REACOES, resolverReacao } from "../src/reacoes.js";
 import { faceMinimaQueBasta, golpePorExtenso } from "../src/batalha-na-tela.js";
@@ -233,6 +234,23 @@ console.log("\n15. F4 §10 · a reação na mão, e RX-1 (o que chega e o que fi
   t("a caixa lê a faixa da intenção de quem acerta (o número rolado nunca: «o dano vir surpresa»)", /mesa\.intencaoDe\.get\(oferta\.inimigo\)/.test(REAx) && /oQueFicaDaReacao\(r, faixa\)/.test(REAx) && !/oferta\.dano/.test(REAx));
   t("a tela da luta dá à reação a intenção e a altura da caixa", /<ContextoDaReacaoNaMesa\.Provider value=\{contextoDaReacao\}>/.test(TELA) && /\{ intencaoDe, caixa: caixaDaMao, celular: false \}/.test(TELA));
   t("a vela está à vista desde que a janela abre (na luta jogada a reação fechava sem relógio à vista)", /const vela = temRelogioAgora && etapa !== "Resolvida" \?/.test(REAx));
+}
+
+console.log("\n16. F4 §10 lacuna 3 · a carta do espólio na vitória");
+{
+  const CE = CARTA_DO_ESPOLIO;
+  t("face 160 × 224: palavra a y 10, casa de 64 a (48, 32), nome a 104, frase a 140, pé a 196, texto 144", CE.mesa.largura === 160 && CE.mesa.altura === 224 && CE.mesa.yPalavra === 10 && CE.mesa.casa === 64 && CE.mesa.xCasa === 48 && CE.mesa.yCasa === 32 && CE.mesa.yNome === 104 && CE.mesa.yFrase === 140 && CE.mesa.yPe === 196 && CE.mesa.texto === 144);
+  t("celular 104 × 146 (5 : 7): casa de 48 a (28, 26), nome a 80 em até 3 linhas", CE.celular.largura === 104 && CE.celular.altura === 146 && CE.celular.casa === 48 && CE.celular.xCasa === 28 && CE.celular.yCasa === 26 && CE.celular.yNome === 80 && CE.celular.linhasNome === 3);
+  t("por raridade — moldura, nunca só cor: comum ossoSombra 1 · incomum latão 2 · rara + cantos · lendária + cantos + lacre", CE.moldura.comum.borda === "ossoSombra" && CE.moldura.comum.px === 1 && CE.moldura.incomum.px === 2 && !CE.moldura.incomum.cantos && CE.moldura.rara.cantos && !CE.moldura.rara.lacre && CE.moldura.lendaria.lacre && CE.canto === 15 && CE.lacre === 36);
+  t("o verso é igual para todas: couro, aro latão 2, fio a 8 (55 %), losango 32 de traço 1,5", CE.verso.chao === "couro" && CE.verso.aro === "latao" && CE.verso.aroPx === 2 && CE.verso.fio === 8 && CE.verso.fioAlfa === 0.55 && CE.verso.losango === 32 && CE.verso.losangoPx === 1.5);
+  const p = faceDoEspolio({ nome: "Poção de cura", desc: "Devolve 2d4+2 de vida. E arde na garganta." });
+  t("a face: a palavra, a família do glifo, a primeira frase do que o item diz e o pé", p.palavra === "comum" && p.familia === "pocao" && p.frase === "Devolve 2d4+2 de vida." && p.pe === "vai para a bolsa" && !p.brasa, J(p));
+  const l = faceDoEspolio({ nome: "Mordida-de-rato", raridade: "lendario" });
+  t("a lendária: moldura com lacre e a palavra em brasa; sem frase, sem linha", l.moldura === "lendaria" && l.palavra === "lendária" && l.brasa && l.frase === "");
+  t("a épica cai na moldura rara (as seis raridades em quatro molduras)", faceDoEspolio({ nome: "x", raridade: "epico" }).moldura === "rara" && faceDoEspolio(null).moldura === "comum");
+  const FIMx = ler("src/painel-fim-da-luta.jsx");
+  t("a carta usa a casa de item (o glifo do item, não mais a bolsa em toda carta)", /<CasaDeItem item=\{coisa\} lado=\{G\.casa\} sobre="papel" \/>/.test(FIMx) && !/<Glifo nome="bolsa"/.test(FIMx));
+  t("com UMA carta também há botão: «Recolher» (e «Recolher tudo» com mais)", /porRecolher\.length >= 1 &&/.test(FIMx) && /porRecolher\.length > 1 \? CE\.recolher\.todas : CE\.recolher\.uma/.test(FIMx));
 }
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);
