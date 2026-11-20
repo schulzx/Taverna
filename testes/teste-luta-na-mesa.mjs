@@ -185,7 +185,7 @@ console.log("\n12. F4 §10 · a mesa no texto das peças");
   t("as peças tocáveis não levam sombra de caixa inline (o anel de foco é a sombra de caixa)", !/<button[^>]*boxShadow/.test(PEC) && /filter: impedida \? undefined : SOMBRA_COMO_FILTRO/.test(PEC));
   t("com movimento reduzido a carta não desliza", /transition: reduzido \? "none"/.test(PEC) && /prefers-reduced-motion/.test(PEC));
   t("nenhum componente nasce dentro do render (todas as peças no módulo)", (PEC.match(/^export function [A-Z]/gm) || []).length >= 8);
-  t("as peças exportadas são lidas pela tela", ["MaoDeAcoes", "AJogada", "FalaDoMestreNoPapel", "ElesVaoNoPapel", "OAlvoNoPapel", "ColunaDoGrupoNaLuta", "PlaquetaDaRodada"].every((n) => TELA.includes("<" + n + " ")));
+  t("as peças exportadas são lidas pela tela", ["MaoDeAcoes", "AJogada", "FalaDoMestreNoPapel", "ElesVaoNoPapel", "OAlvoNoPapel", "ColunaDoGrupoNaLuta", "PlaquetaDaRodada", "AvisoDoSilencio"].every((n) => TELA.includes("<" + n + " ")));
 }
 
 console.log("\n13. F4 §10 lacuna 4 · a régua na faixa de 28 (casa ≥ 40) ou de 24");
@@ -199,6 +199,16 @@ console.log("\n13. F4 §10 lacuna 4 · a régua na faixa de 28 (casa ≥ 40) ou 
   t("o teto segura a casa", ladoComARegua({ largura: 5000, altura: 5000, colunas: 10, linhas: 10, borda: 18, piso: 32, teto: 64 }).lado === 64);
   const GR = ler("src/grade-de-batalha.jsx");
   t("o tapete usa a faixa da conta, e a vista ⤢ a do seu lado (nunca a calha de 22 fora do telefone)", /const calha = presa \? B3\.telefone\.calha : grande \? faixaDaRegua\(ladoEmPx\(true\)\) : FAIXA_DA_REGUA;/.test(GR));
+}
+
+console.log("\n14. F4c · o que a luta jogada achou (a lista do coordenador, 19/11)");
+{
+  const APPx = ler("src/App.jsx");
+  const TELA = ler("src/painel-batalha.jsx");
+  const PEC = ler("src/painel-luta-mesa.jsx");
+  t("(8) o Mestre que calou na luta: o App passa a falha e «tentar de novo» à tela da luta", /silencio=\{falha && !carregando \? \{ casa: falha\.casa \|\| "", linha: falha\.linha \|\| "", podeTentar: falha\.podeTentar !== false \} : null\}/.test(APPx) && /aoTentarDeNovo=\{\(\) => \{ try \{ retentar\(\); \} catch \(e\) \{ calou\("tentar de novo na luta", e\); \} \}\}/.test(APPx));
+  t("(8) e a tela diz o aviso nos dois arranjos, com o botão só quando insistir resolve", (TELA.match(/<AvisoDoSilencio silencio=\{p\.silencio \|\| null\} aoTentarDeNovo=\{p\.aoTentarDeNovo \|\| null\} \/>/g) || []).length === 2 && /silencio\.podeTentar && aoTentarDeNovo \?/.test(PEC) && /role="alert"/.test(PEC));
+  t("(5) o revide da reação e o golpe do companheiro deixam linha na rodada", /\{ quem: pers\.nome, alvo: alvo\.nome, diz: rr\.dano > 0 \? `revide/.test(APPx) && /\{ quem: ac\.companheiro, alvo: ac\.alvoNome, diz: ac\.r\.dano > 0/.test(APPx) && /calou\("a habilidade do companheiro na rodada", e\)/.test(APPx));
 }
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);

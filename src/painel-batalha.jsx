@@ -81,7 +81,7 @@ import { CARTA_DE_ACAO } from "./luta-na-mesa.js";
    são de luta-na-mesa.js; as peças, de painel-luta-mesa.jsx. */
 import { MAO_DE_ACOES, MESA_DA_LUTA, tamanhoDaCarta, linhaDoDado, vereditoDoAgir, linhasDeElesVao, porCento } from "./luta-na-mesa.js";
 import { faceMinimaQueBasta } from "./batalha-na-tela.js";
-import { MaoDeAcoes, AJogada, FalaDoMestreNoPapel, ElesVaoNoPapel, OAlvoNoPapel, ColunaDoGrupoNaLuta, PlaquetaDaRodada } from "./painel-luta-mesa.jsx";
+import { MaoDeAcoes, AJogada, FalaDoMestreNoPapel, ElesVaoNoPapel, OAlvoNoPapel, ColunaDoGrupoNaLuta, PlaquetaDaRodada, AvisoDoSilencio } from "./painel-luta-mesa.jsx";
 import { FimDaLuta, SaidaDaLuta } from "./painel-fim-da-luta.jsx";
 import { mecanicaDe } from "./condicoes.js";
 import { selosDaMecanica } from "./selo-de-estado.js";
@@ -2199,6 +2199,8 @@ export function TelaDeBatalha(props) {
   const acao = (
     <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
       {reacaoNaMao}
+      {/* F4c: o Mestre que calou — o cartão da página, também aqui */}
+      <AvisoDoSilencio silencio={p.silencio || null} aoTentarDeNovo={p.aoTentarDeNovo || null} />
       {/* CB 6 · O ÚLTIMO GOLPE É TEU: o véu cobre o campo (menos a casa dele),
           e o cartão do golpe final de sempre fica por baixo desta linha */}
       {esperando && p.ultimoGolpe && (
@@ -2542,6 +2544,7 @@ export function TelaDeBatalha(props) {
         </aside>
         <aside aria-label="A mesa do Mestre" className="flex flex-col min-h-0 shrink-0" style={{ order: 2, width: ML.direita.largura, gap: ML.direita.gap }}>
           <div className="flex flex-col min-h-0 overflow-y-auto tv-scroll tv-sem-barra" style={{ flex: "1 1 0", gap: ML.direita.gap, padding: "4px 4px 8px" }}>
+            <AvisoDoSilencio silencio={p.silencio || null} aoTentarDeNovo={p.aoTentarDeNovo || null} />
             <FalaDoMestreNoPapel texto={falaNoPapel} inteiro={falaInteira} carregando={p.carregando} apertada={elesVao.linhas.length >= 3} />
             <ElesVaoNoPapel linhas={elesVao.linhas} noHeroi={elesVao.noHeroi} inimigos={inimigos} realce={realce} aoRealcar={setRealce} />
             {contando || (!prevGolpe && !(empurrando && empAgora)) ? rastro : null}

@@ -9925,6 +9925,8 @@ export default function Taverna() {
         }
         pushMsgs([{ autor: "sistema", texto: rr.dano > 0 ? `${esc.icone} Revide em ${alvo.nome}: ${rr.dano} de dano (${pv}/${alvo.vidaMax})${pv <= 0 ? " ☠" : ""}` : `${esc.icone} Revide em ${alvo.nome}: errou` }]);
         notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoCorpo("revide", { dano: rr.dano, alvo: alvo.nome, pv, vidaMax: alvo.vidaMax });
+        /* F4c (19/11): o contra-ataque escolhido entra na linha da rodada, como o golpe */
+        try { registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: pers.nome, alvo: alvo.nome, diz: rr.dano > 0 ? `revide · ${rr.dano} de dano${pv <= 0 ? " · cai" : ""}` : "revide · errou", teu: true, feriu: false }]; } catch (e) { calou("o revide na rodada", e); }
       }
     }
     return res;
@@ -16485,6 +16487,7 @@ export default function Taverna() {
           combPos.inimigos = aflicaoDeCompanheiro(combPos.inimigos, ac, persAtual);
         }
         pushMsgs([{ autor: "sistema", texto: ac.r.dano > 0 ? `⚔ ${ac.companheiro} → ${ac.alvoNome}: ${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? (poupadoAgoraComp ? " (poupado)" : " ☠") : ""}` : `⚔ ${ac.companheiro} → ${ac.alvoNome}: errou` }]);
+        try { registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: ac.companheiro, alvo: ac.alvoNome, diz: ac.r.dano > 0 ? `${ac.r.critico ? "crítico · " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? " · cai" : ""}` : "errou", teu: true, feriu: false }]; } catch (e) { calou("o golpe do companheiro na rodada", e); }
         partesComp.push(linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined, generoDoAlvo(combPos.inimigos.find((e) => e.nome === ac.alvoNome) || { nome: ac.alvoNome }, npcsRef.current)) + (poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""));
       } else if (ac.tipo === "habilidade" && ac.r) {
         logDadoCombate(resumoDoAtaque(ac.r));
@@ -16515,6 +16518,7 @@ export default function Taverna() {
         }
         persAtual = gastarManaComp(persAtual, ac.companheiro, ac.custo);
         pushMsgs([{ autor: "sistema", texto: `✦ ${ac.companheiro} · ${ac.habilidade.nome} → ${ac.alvoNome}: ${ac.r.dano > 0 ? `${ac.r.critico ? "CRÍTICO! " : ""}${ac.r.dano} de dano${pvAlvo !== null && pvAlvo <= 0 ? (poupadoAgoraComp ? " (poupado)" : " ☠") : ""}` : "errou"}` }]);
+        try { registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: ac.companheiro, alvo: ac.alvoNome, diz: ac.r.dano > 0 ? `${ac.habilidade.nome} · ${ac.r.dano} de dano` : `${ac.habilidade.nome} · errou`, teu: true, feriu: false }]; } catch (e) { calou("a habilidade do companheiro na rodada", e); }
         partesComp.push(`${ac.companheiro} usou ${ac.habilidade.nome}: ${linhaParaMestre(ac.companheiro, ac.alvoNome, ac.r, (combPos.inimigos.find((e) => e.nome === ac.alvoNome) || {}).vidaMax || 1, ac.r.dano > 0 ? pvAlvo ?? undefined : undefined, generoDoAlvo(combPos.inimigos.find((e) => e.nome === ac.alvoNome) || { nome: ac.alvoNome }, npcsRef.current))}${poupadoAgoraComp ? " — mas foi poupado: cai desacordado, vivo, sem golpe fatal" : ""}`);
       } else if (ac.tipo === "cura") {
         const r2 = curarAliado(persAtual, ac.alvo, ac.valor);
@@ -29018,6 +29022,13 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
       quedas={quedasDoMeio.length ? quedasDoMeio : null}
       aoMudarQueda={mudarQueda}
       ultimoGolpe={golpeFinalPendente && Array.isArray(golpeFinalPendente.quedas) && golpeFinalPendente.quedas[0] ? golpeFinalPendente.quedas[0].nome : null}
+      /* F4c (19/11): o Mestre que calou no meio da luta. O cartão da falha só
+         existia na página, e a tela da luta toma a página inteira: na luta
+         jogada a mão ficava morta e o aviso só no registo. Agora a luta diz
+         o mesmo que a página — a frase e «Tentar de novo» quando insistir
+         resolve. */
+      silencio={falha && !carregando ? { casa: falha.casa || "", linha: falha.linha || "", podeTentar: falha.podeTentar !== false } : null}
+      aoTentarDeNovo={() => { try { retentar(); } catch (e) { calou("tentar de novo na luta", e); } }}
     />
   ) : null;
 

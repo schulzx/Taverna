@@ -396,3 +396,27 @@ export function PlaquetaDaRodada({ rodada = 1 }) {
   );
 }
 
+
+/* ============================================================
+   O MESTRE CALOU NO MEIO DA LUTA (F4c, 19/11) — o cartão da falha, que só
+   existia na página: a frase do silêncio, a linha do turno e «Tentar de
+   novo» quando insistir resolve. Sem ele, a luta jogada travava com a mão
+   morta e o aviso só no registo.
+   ============================================================ */
+export function AvisoDoSilencio({ silencio = null, aoTentarDeNovo = null }) {
+  if (!silencio) return null;
+  const P = ML.papel;
+  return (
+    <section role="alert" aria-label="O Mestre não contou" className="flex flex-col shrink-0 min-w-0"
+      style={{ width: "100%", padding: P.respiro, gap: 8, borderRadius: P.raio, background: T.ossoLume, border: `1px solid ${T.lacre}`, boxShadow: SOMBRA_DA_MESA[P.sombra] }}>
+      <span style={{ ...letraDaMesa("notaDoMestre"), color: T[P.perigo] }}>{silencio.casa || "O Mestre não contou o que você fez."}</span>
+      {silencio.linha ? <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: T[P.tinta] }}>{silencio.linha}</span> : null}
+      {silencio.podeTentar && aoTentarDeNovo ? (
+        <button type="button" onClick={aoTentarDeNovo} className="tv-anel-foco self-start"
+          style={{ minHeight: 44, padding: "0 16px", borderRadius: AJ.agir.raio, background: T.amber, color: T.onAccent, border: 0, filter: SOMBRA_COMO_FILTRO.peca, ...letraDaMesa("contagem") }}>
+          Tentar de novo
+        </button>
+      ) : null}
+    </section>
+  );
+}
