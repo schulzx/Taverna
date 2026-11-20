@@ -123,7 +123,7 @@ const TETO = {
   "src/acervo/planos-lote-5.js": 28,
   "src/acervo/planos-lote-4.js": 24,
   "src/nucleo.js": 23,
-  "src/saida-da-luta.js": 19,
+  "src/saida-da-luta.js": 0,  /* F4d (20/11): a ênclise europeia das falas do vencedor saiu toda */
   "src/condicoes-da-quest.js": 17,
   "src/sessao.js": 13,
   "src/facto-do-sucesso.js": 12,

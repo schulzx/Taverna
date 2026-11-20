@@ -710,8 +710,10 @@ sec("11. CB: todo ataque tem previsão, toda intenção tem glifo e texto, e nen
   const verbosDeAtaque = VERBOS_DE_COMBATE.filter((v) => v.id === "atacar");
   t("todo verbo de ataque tem a previsão no preço («Atacar · 78%»)",
     verbosDeAtaque.length === 1 && /chance=\{v\.id === "atacar" \? chanceDoAtaque : null\}/.test(TEL) && /chanceDoAtaque=\{chanceDoAtaque\}/.test(TEL));
+  /* F4d (20/11): depois do fim a grade recebe as intenções vazias (as etiquetas
+     saíam pela fresta das cartas do espólio) — a âncora aceita o ternário */
   t("a grade recebe a previsão, as intenções, o caminho e os golpes",
-    /previsaoDoGolpe=\{prevGolpe\} intencoes=\{intencoes\} caminho=\{p\.caminho \|\| null\} golpes=\{p\.golpes \|\| null\}/.test(TEL));
+    /previsaoDoGolpe=\{prevGolpe\} intencoes=\{p\.fim \? \[\] : intencoes\} caminho=\{p\.caminho \|\| null\} golpes=\{p\.golpes \|\| null\}/.test(TEL));
   t("a pílula da previsão pousa sob o alvo, 8 px abaixo da ficha",
     /<PilulaDaPrevisao previsao=\{previsaoDoGolpe\}/.test(GRADE_B1) && /PREVISAO_DO_GOLPE\.abaixoDaFicha/.test(GRADE_B1));
   t("o gesto no inimigo: no telefone o primeiro toque prevê, o segundo confirma",

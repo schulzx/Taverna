@@ -119,6 +119,25 @@ console.log("\n8. F4 §10 · a mão de oito cartas (MAO_DE_ACOES)");
   t("as oito de 102 com 10 entre elas medem 886 (a mão da prancha: x 196 → 1082)", 8 * m.mesa.largura + 7 * M.entre === 886);
   t("o tamanho: celular · baixa (< 720 úteis) · mesa (cabem as oito) · média", tamanhoDaCarta({ telefone: true }) === "celular" && tamanhoDaCarta({ larguraDaMao: 892, alturaUtil: 700 }) === "baixa"
     && tamanhoDaCarta({ larguraDaMao: 890, alturaUtil: 900 }) === "mesa" && tamanhoDaCarta({ larguraDaMao: 790, alturaUtil: 720 }) === "media" && tamanhoDaCarta({}) === "mesa");
+  /* F4d · B1: a mão oscilava a 1440 × 780–900 (a largura medida era a da janela
+     do tapete, que perde a barra de rolagem quando a carta encolhe). Dada uma
+     sequência de medidas em vai-e-vem perto do limiar, o degrau não troca. */
+  {
+    const precisa = MAO_DE_ACOES.ordem.length * MAO_DE_ACOES.tamanhos.mesa.largura + (MAO_DE_ACOES.ordem.length - 1) * MAO_DE_ACOES.entre;
+    const h = MAO_DE_ACOES.histerese;
+    const corre = (medidas, inicio = null) => { let d = inicio, trocas = 0; for (const m of medidas) { const n = tamanhoDaCarta({ ...m, anterior: d }); if (d && n !== d) trocas++; d = n; } return { d, trocas }; };
+    const vaiEVem = Array.from({ length: 40 }, (_, i) => ({ larguraDaMao: precisa + (i % 2 ? h - 1 : -(h - 1)), alturaUtil: 820 }));
+    const r1 = corre(vaiEVem, "mesa"), r2 = corre(vaiEVem, "media");
+    t("B1: largura em vai-e-vem dentro da folga — zero trocas, venha de onde vier", r1.trocas === 0 && r1.d === "mesa" && r2.trocas === 0 && r2.d === "media", J([r1, r2]));
+    const alturas = Array.from({ length: 40 }, (_, i) => ({ larguraDaMao: 892, alturaUtil: MAO_DE_ACOES.alturaUtilBaixa + (i % 2 ? h - 1 : -(h - 1)) }));
+    t("B1: altura em vai-e-vem no limiar da baixa — zero trocas", corre(alturas, "mesa").trocas === 0 && corre(alturas, "baixa").trocas === 0);
+    t("B1: passar o limiar com folga troca (uma vez)", corre([{ larguraDaMao: 892, alturaUtil: 900 }, { larguraDaMao: precisa - h - 1, alturaUtil: 900 }], "mesa").trocas === 1);
+    t("B1: a 1440 (coluna de 892) a mão é a de 102, mesmo vindo da média", tamanhoDaCarta({ larguraDaMao: 892, alturaUtil: 820, anterior: "media" }) === "mesa" && h < 892 - precisa);
+    const TELA0 = ler("src/painel-batalha.jsx");
+    t("B1: a tela mede a coluna do centro (e não a janela) e passa o degrau de antes", /setColunaDaMaoEl/.test(TELA0) && /anterior: degrauDaMaoRef.current/.test(TELA0) && !/larguraDaMao: larguraDaJanela/.test(TELA0));
+    t("B2: no celular Atacar arma (não dispara no primeiro toque)", /v.id === "atacar" && !mesaF4 && !noTelefone/.test(TELA0));
+    t("menor 2: com o Mestre calado o «Agir» diz e aponta", vereditoDoAgir({ armado: "atacar", alvo: "Goblin", silencio: true }).diz === A_JOGADA.razoes.silencio && /data-tentar-de-novo/.test(ler("src/painel-luta-mesa.jsx")));
+  }
 }
 
 console.log("\n9. F4 §10 · a linha do dado — e RX-2: a face e a chance de UMA fonte");

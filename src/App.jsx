@@ -17849,6 +17849,12 @@ export default function Taverna() {
       } catch (e) { calou("EM3 · o preço cobrado na bandeja", e); }
       aBandeja(lt);
     }
+    /* F4d (19/11): na luta, o teste rolado (Derrubar, Saltar, o que o Mestre
+       pedir) entra no registo da rodada, como o golpe — a sessão jogada viu
+       Empurrar, Derrubar e Saltar passarem sem linha nenhuma */
+    if (combateRef.current) {
+      try { registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: (personagemRef.current || personagem || {}).nome || "", alvo: "", diz: `${r.rotulo || r.motivo || "teste"} · ${resultado}`, teu: true, feriu: false }]; } catch (e) { calou("o teste na rodada", e); }
+    }
     pushMsgs([{ autor: "sistema", texto: `🎲 d20 → ${valor}${mod ? ` + ${mod}` : ""} = ${total}${dc != null ? ` vs dif. ${dc}` : ""} · ${resultado}${dadoAnterior != null ? ` ✧ (refeito — o primeiro deu ${dadoAnterior})` : ""}` }]);
     /* ---------------- O PREÇO DE FALHAR (v9.49) ----------------
        A terceira e última fonte de condição do jogo, agora que o Mestre
@@ -28896,6 +28902,8 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         }
       }
       pushMsgs(linhas);
+      /* F4d: o empurrão entra no registo da rodada, como o golpe */
+      try { const dizE = (() => { const d0 = String(desfecho || "").replace(/^um empurrão: /, ""); const n0 = String(persE.nome || "") + " "; return d0.startsWith(n0) ? d0.slice(n0.length) : d0; })(); registoDaVezRef.current = [...(registoDaVezRef.current || []), { quem: persE.nome, alvo: pl.alvo.nome, diz: dizE, teu: true, feriu: false }]; } catch (e) { calou("o empurrão na rodada", e); }
       const fechou = fecharSeTodosCairam(fichaViva() || personagem);
       /* o mesmo envelope do golpe (o combate resolvido pelo sistema, a narrar)
          — mas não a mesma porta: o envio do golpe continua um só, em

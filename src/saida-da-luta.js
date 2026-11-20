@@ -86,29 +86,29 @@ export const DESFECHOS_SEM_SAIDA = {
     id: "fuga", inimigoSai: true, levaMoedas: 0, presos: false, morrem: false,
     linha: "{quem}, ferido, foge e deixa vocês no chão.",
     linhaSo: "{quem}, ferido, foge e deixa você no chão.",
-    envelope: "{quem}, ferido, não quis ficar: foi-se embora e deixou-nos no chão.",
-    envelopeSo: "{quem}, ferido, não quis ficar: foi-se embora e deixou-me no chão.",
+    envelope: "{quem}, ferido, não quis ficar: foi embora e nos deixou no chão.",
+    envelopeSo: "{quem}, ferido, não quis ficar: foi embora e me deixou no chão.",
   },
   abandono: {
     id: "abandono", inimigoSai: true, levaMoedas: 0, presos: false, morrem: false,
     linha: "{quem} dá as costas e deixa vocês no chão.",
     linhaSo: "{quem} dá as costas e deixa você no chão.",
-    envelope: "{quem} deu-nos as costas e foi-se embora: quem já não se mexe não lhe interessa.",
-    envelopeSo: "{quem} deu-me as costas e foi-se embora: quem já não se mexe não lhe interessa.",
+    envelope: "{quem} nos deu as costas e foi embora: quem já não se mexe não interessa a ele.",
+    envelopeSo: "{quem} me deu as costas e foi embora: quem já não se mexe não interessa a ele.",
   },
   saque: {
     id: "saque", inimigoSai: true, levaMoedas: 1, presos: false, morrem: false,
-    linha: "{quem} revira o que vocês carregam, leva a bolsa e vai-se embora.",
-    linhaSo: "{quem} revira o que você carrega, leva a bolsa e vai-se embora.",
-    envelope: "{quem} revirou o que carregávamos, levou a bolsa e foi-se embora.",
-    envelopeSo: "{quem} revirou o que eu carregava, levou a bolsa e foi-se embora.",
+    linha: "{quem} revira o que vocês carregam, leva a bolsa e vai embora.",
+    linhaSo: "{quem} revira o que você carrega, leva a bolsa e vai embora.",
+    envelope: "{quem} revirou o que carregávamos, levou a bolsa e foi embora.",
+    envelopeSo: "{quem} revirou o que eu carregava, levou a bolsa e foi embora.",
   },
   prisioneiros: {
     id: "prisioneiros", inimigoSai: true, levaMoedas: 1, presos: true, morrem: false,
     linha: "{quem} amarra quem caiu e leva todos consigo.",
-    linhaSo: "{quem} ata-lhe as mãos e leva você consigo.",
-    envelope: "{quem} amarrou-nos, levou a bolsa e levou-nos consigo: acordamos presos, nas mãos dele.",
-    envelopeSo: "{quem} atou-me as mãos, levou a bolsa e levou-me consigo: acordo preso, nas mãos dele.",
+    linhaSo: "{quem} amarra suas mãos e leva você consigo.",
+    envelope: "{quem} nos amarrou, levou a bolsa e nos levou consigo: acordamos presos, nas mãos dele.",
+    envelopeSo: "{quem} me amarrou as mãos, levou a bolsa e me levou consigo: acordo preso, nas mãos dele.",
   },
   abate: {
     id: "abate", inimigoSai: true, levaMoedas: 0, presos: false, morrem: true,
@@ -119,8 +119,8 @@ export const DESFECHOS_SEM_SAIDA = {
   },
   retirada: {
     id: "retirada", inimigoSai: true, levaMoedas: 0, presos: false, morrem: false,
-    linha: "{quem} larga a luta e vai-se embora.",
-    envelope: "{quem} largou a luta e foi-se embora: ninguém conseguia chegar a ninguém.",
+    linha: "{quem} larga a luta e vai embora.",
+    envelope: "{quem} largou a luta e foi embora: ninguém conseguia chegar a ninguém.",
   },
   recuo: {
     id: "recuo", inimigoSai: true, levaMoedas: 0, presos: false, morrem: false,
@@ -243,12 +243,12 @@ export function rolarAteODesfecho(morte, rolar) {
     const res = testeDeMorte(rolar);
     rolagens.push({ rolo: res.rolo, tipo: res.tipo, texto: res.texto });
     const ap = aplicarTesteMorte(estado, res);
-    if (ap.desfecho !== "morrendo") return { desfecho: ap.desfecho, rolagens: rolagens.slice(-8) };
+    if (ap.desfecho !== "morrendo") return { desfecho: ap.desfecho, rolagens: rolagens.slice(-8), sucessos: ap.sucessos, falhas: ap.falhas };
     estado = { sucessos: ap.sucessos, falhas: ap.falhas };
   }
   /* o teto: quem não decidiu em doze dados fica estável — a falha aberta
      é a vida, nunca a morte por excesso de contas */
-  return { desfecho: "estavel", rolagens: rolagens.slice(-8) };
+  return { desfecho: "estavel", rolagens: rolagens.slice(-8), sucessos: estado.sucessos, falhas: estado.falhas };
 }
 
 const horasDe = (rolar) => {
@@ -281,7 +281,8 @@ export function aplicarSemSaida({ heroi = null, inimigos = null, decisao = null,
   let resto = null;
 
   if (caidosNossos && d.morrem) {
-    if (!h.morto) { h = { ...h, vida: 0, morrendo: false, morto: true, morte: { ...(h.morte || {}), sucessos: 0, falhas: 3 } }; morreu = true; }
+    /* F4d: os sucessos que os dados já deram ficam (eram apagados a 0 à mão) */
+    if (!h.morto) { h = { ...h, vida: 0, morrendo: false, morto: true, morte: { ...(h.morte || {}), sucessos: num(h.morte && h.morte.sucessos), falhas: 3 } }; morreu = true; }
     grupo = grupoAntes.filter((g) => { const cai = g && !dePe(g); if (cai) mortosDoGrupo.push(g.nome); return !cai; });
   } else if (caidosNossos) {
     /* quem estava a morrer: o captor estabiliza o prisioneiro; nos outros
@@ -290,7 +291,9 @@ export function aplicarSemSaida({ heroi = null, inimigos = null, decisao = null,
       const estavel = !!(h.morte && h.morte.estavel);
       if (!estavel && !d.presos) {
         resto = rolarAteODesfecho(h.morte, rolar);
-        if (resto.desfecho === "morto") { h = { ...h, morrendo: false, morto: true, morte: { sucessos: 0, falhas: 3, rolagens: resto.rolagens } }; morreu = true; }
+        /* F4d: a conta é a que os dados fizeram — a tela da derrota lia «0 sucessos»
+           ao lado de um 16 marcado «resiste», porque aqui se escrevia 0 à mão */
+        if (resto.desfecho === "morto") { h = { ...h, morrendo: false, morto: true, morte: { sucessos: num(resto.sucessos), falhas: Math.max(3, num(resto.falhas)), rolagens: resto.rolagens } }; morreu = true; }
       }
     }
     horas = horasDe(rolar);

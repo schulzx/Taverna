@@ -112,6 +112,17 @@ console.log("\n[5. O RESTO DOS TESTES, E OS OUTROS DESFECHOS]");
   const a = rolarAteODesfecho({ sucessos: 0, falhas: 0 }, rng(hashSemente("dado")));
   const b = rolarAteODesfecho({ sucessos: 0, falhas: 0 }, rng(hashSemente("dado")));
   ok(["estavel", "morto", "revive"].includes(a.desfecho) && a.desfecho === b.desfecho && a.rolagens.length === b.rolagens.length, `quem ficou a morrer rola até ao fim, preso à semente (${a.desfecho})`);
+  /* F4d: a conta que volta é a dos dados — a tela da derrota lia «0 sucessos»
+     ao lado de um 16 que «resiste» */
+  {
+    const cont = (r) => r.rolagens.reduce((acc, x) => ({ s: acc.s + (x.tipo === "sucesso" ? 1 : 0), f: acc.f + (x.tipo === "falha" ? 1 : x.tipo === "falha2" ? 2 : 0) }), { s: 0, f: 0 });
+    let viu = null;
+    for (let k = 0; k < 400 && !viu; k++) { const r = rolarAteODesfecho({ sucessos: 0, falhas: 0 }, rng(k)); if (r.desfecho === "morto" && cont(r).s > 0) viu = r; }
+    ok(!!viu && viu.sucessos === cont(viu).s && viu.falhas === cont(viu).f, `quem morre com um sucesso no meio leva a conta certa (${viu ? viu.sucessos + " · " + viu.falhas : "—"})`);
+    let morto = null;
+    for (let k = 0; k < 400 && !morto; k++) { const r = aplicarSemSaida({ heroi: { ...gaspar(), grupo: [], morte: { sucessos: 0, falhas: 0, rolagens: [] } }, inimigos: [{ nome: "Lobo", vida: 10, vidaMax: 10 }], decisao: { motivo: "caidos", desfecho: "saque", quem: "Lobo" }, rolar: rng(k) }); if (r && r.heroi.morto && cont({ rolagens: r.heroi.morte.rolagens }).s > 0) morto = r; }
+    ok(!!morto && morto.heroi.morte.sucessos === cont({ rolagens: morto.heroi.morte.rolagens }).s && morto.heroi.morte.sucessos > 0, "e a ficha do morto guarda os sucessos que os dados deram (era 0 escrito à mão)");
+  }
   ok(Number.isFinite(testeDeMorte(rng(1)).rolo) && testeDeMorte(rng(7)).rolo === testeDeMorte(rng(7)).rolo, "`testeDeMorte` aceita o gerador e continua a aceitar nada");
   const h = { ...gaspar(), moedas: 50 };
   const saque = aplicarSemSaida({ heroi: h, inimigos: [{ nome: "Bandido", vida: 10, vidaMax: 10 }], decisao: { motivo: "caidos", desfecho: "saque", quem: "Bandido" }, rolar: rng(3) });
@@ -122,7 +133,9 @@ console.log("\n[5. O RESTO DOS TESTES, E OS OUTROS DESFECHOS]");
   ok(!presos.heroi.morto && presos.heroi.vida === 1 && /de mãos atadas/.test(presos.envelope) && !/já não está aqui/.test(presos.envelope),
     "o captor estabiliza quem leva: o prisioneiro acorda de mãos atadas, nas mãos de quem venceu — que não 'se foi'");
   const so = aplicarSemSaida({ heroi: { ...gaspar(), grupo: [] }, inimigos: [{ nome: "Capitão", vida: 10, vidaMax: 10 }], decisao: { motivo: "caidos", desfecho: "prisioneiros", quem: "Capitão" }, rolar: rng(3) });
-  ok(/ata-lhe as mãos e leva você consigo/.test(so.linha) && /acordo preso/.test(so.envelope) && /leva todos consigo/.test(presos.linha), "sozinho, a frase é de um só; em grupo, de todos");
+  /* F4d (19/11): «ata-lhe as mãos» era ênclise europeia, e o jogador lê PT-BR
+     (ordem de 15/11) — a asserção segue a frase nova, a intenção é a mesma */
+  ok(/amarra suas mãos e leva você consigo/.test(so.linha) && /acordo preso/.test(so.envelope) && /leva todos consigo/.test(presos.linha), "sozinho, a frase é de um só; em grupo, de todos");
   const abate = aplicarSemSaida({ heroi: gaspar(), inimigos: [{ nome: "Lobo", vida: 10, vidaMax: 10 }], decisao: { motivo: "caidos", desfecho: "abate", quem: "Lobo" }, rolar: rng(3) });
   ok(abate.heroi.morto && abate.morreu && abate.heroi.grupo.length === 0 && abate.mortosDoGrupo.includes("Hakon Guarda-Portão"), "o abate acaba com quem estava no chão — o herói e o companheiro");
   const ret = aplicarSemSaida({ heroi: { ...gaspar(), vida: 9, morrendo: false }, inimigos: [dragao()], decisao: { motivo: "parada", desfecho: "retirada", quem: "Dragão Jovem" }, rolar: rng(3) });

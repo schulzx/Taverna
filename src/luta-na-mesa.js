@@ -216,6 +216,15 @@ export const MAO_DE_ACOES = Object.freeze({
     celular: Object.freeze({ largura: 85, altura: 80, glifo: 20, yGlifo: 5, yNome: 27, yDado: 44, yCusto: 60, colunas: 4, entre: 6 }),
   }),
   alturaUtilBaixa: 720,
+  /* a folga do degrau (F4d, 19/11): perto de um limiar a medida pode ir e vir
+     alguns píxeis (a barra de rolagem que aparece, o arredondamento do zoom);
+     dentro de ±histerese do limiar a mão fica no degrau em que estava (4 px:
+     a 1440 a coluna mede 892 e as oito pedem 886 — a folga tem de caber nos
+     6 px que sobram). É o cinto: o conserto é medir a coluna do centro
+     (painel-batalha.jsx, «F4d · B1»). A 1440 × 780–900 as oito cartas
+     trocavam de 102 para 90 várias vezes por segundo, e o clique em «Fugir»
+     caía em «Esperar». */
+  histerese: 4,
   /* a linha do dado: Spectral Bold 15 `tinta` (14,30 : 1 no ossoLume); no
      celular Bold 13 com o d20 de 13 a x 6 e o número a x 22 */
   linha: Object.freeze({ corpo: 15, d20: 16, xD20: 9, xNumero: 28, recuo: 9,
@@ -232,15 +241,27 @@ export const MAO_DE_ACOES = Object.freeze({
 });
 
 /* qual dos quatro tamanhos: o celular; a baixa abaixo de 720 de altura útil;
-   a mesa quando as oito de 102 cabem na largura da mão; senão a média */
-export function tamanhoDaCarta({ telefone = false, larguraDaMao = 0, alturaUtil = 0 } = {}) {
+   a mesa quando as oito de 102 cabem na largura da mão; senão a média.
+   `anterior`: o degrau em que a mão já estava. Com ele, uma medida dentro de
+   ±histerese de um limiar não troca de degrau — a mão só muda quando a
+   medida passa o limiar com folga (F4d · B1). A medida que decide a largura
+   tem de ser uma que a carta não altera: a largura da coluna do centro, e
+   nunca a da janela do tapete (que encolhe quando a carta cresce, porque a
+   casa é presa pela altura — era esse o laço). */
+export function tamanhoDaCarta({ telefone = false, larguraDaMao = 0, alturaUtil = 0, anterior = null } = {}) {
   const M = MAO_DE_ACOES;
   if (telefone) return "celular";
-  if (Number(alturaUtil) > 0 && Number(alturaUtil) < M.alturaUtilBaixa) return "baixa";
+  const h = M.histerese;
+  const tinha = typeof anterior === "string" && M.tamanhos[anterior] && anterior !== "celular" ? anterior : null;
+  /* acima do limiar? fora da folga decide a medida; dentro, o degrau de antes */
+  const acima = (valor, limiar, estavaAcima) => (valor >= limiar + h ? true : valor < limiar - h ? false : estavaAcima == null ? valor >= limiar : estavaAcima);
+  const alt = Number(alturaUtil);
+  if (alt > 0 && !acima(alt, M.alturaUtilBaixa, tinha ? tinha !== "baixa" : null)) return "baixa";
   const n = M.ordem.length;
   const precisa = n * M.tamanhos.mesa.largura + (n - 1) * M.entre;
-  if (!(Number(larguraDaMao) > 0) || Number(larguraDaMao) >= precisa) return "mesa";
-  return "media";
+  const larg = Number(larguraDaMao);
+  if (!(larg > 0)) return "mesa";
+  return acima(larg, precisa, tinha && tinha !== "baixa" ? tinha === "mesa" : null) ? "mesa" : "media";
 }
 
 /* «70 %»: a chance da previsão (0–1) em inteiro, com o espaço da prancha */
@@ -298,7 +319,10 @@ export const A_JOGADA = Object.freeze({
     pronta: Object.freeze({ chao: "amber", sombra: "peca", letra: "onAccent" }),
     impedida: Object.freeze({ tracejado: "4 4", borda: "inkMeio", px: 1.5, rotulo: "inkMeio", razao: "ink" }),
     desce: 1, transicaoMs: 160 }),
-  razoes: Object.freeze({ semCarta: "escolha uma carta", semAlvo: "toque no alvo", semCasa: "toque a casa", naoEAVez: "não é a sua vez", espera: "o Mestre fala", semFrase: "diga como" }),
+  razoes: Object.freeze({ semCarta: "escolha uma carta", semAlvo: "toque no alvo", semCasa: "toque a casa", naoEAVez: "não é a sua vez", espera: "o Mestre fala", semFrase: "diga como",
+    /* F4d: o Mestre calou e os dados já decidiram — o «Agir» não some em silêncio,
+       aponta para o aviso com «Tentar de novo» (que a tela traz ao foco) */
+    silencio: "falta o Mestre contar · tente de novo" }),
   tetoDaFrase: 40,
 });
 
@@ -307,11 +331,12 @@ export const A_JOGADA = Object.freeze({
    marcado), "empurrar" (o alvo do empurrão), "fugir", "caixa" (a frase da
    pena, com ou sem verbo armado) ou null (impedida: `diz` é a razão). */
 export function vereditoDoAgir({ armado = "", rotulo = "", alvo = "", chance = "", alvoDoEmpurrao = "", chanceDoEmpurrao = "", frase = "", custo = "",
-  contando = false, bloqueado = false, fim = false } = {}) {
+  contando = false, bloqueado = false, fim = false, silencio = false } = {}) {
   const R = A_JOGADA.razoes;
   const junta = (...xs) => xs.filter(Boolean).join(" · ");
   if (fim) return { pronta: false, diz: "", acao: null };
   if (contando) return { pronta: false, diz: R.naoEAVez, acao: null };
+  if (silencio) return { pronta: false, diz: R.silencio, acao: "silencio" };
   if (bloqueado) return { pronta: false, diz: R.espera, acao: null };
   const temFrase = !!String(frase || "").trim();
   if (armado === "atacar") return alvo ? { pronta: true, diz: junta(rotulo || "Atacar", alvo, chance), acao: "atacar" } : { pronta: false, diz: R.semAlvo, acao: null };

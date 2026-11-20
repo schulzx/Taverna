@@ -198,7 +198,10 @@ function LinhaDoDado({ linha, tam, celular, media = false, impedida, razao }) {
   const corpo = LL ? LL.corpo : L.corpo;
   const base = { position: "absolute", left: 0, right: 0, top: tam.yDado, height: corpo + 6, display: "flex", alignItems: "center" };
   if (impedida) {
-    return <span style={{ ...base, justifyContent: "center", ...letraDaMesa("servico"), textTransform: "none", color: T.ink, padding: "0 4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block", textAlign: "center" }}>{razao}</span>;
+    /* F4d: a prancha 10b («impedida · a razão») não tem custo — a razão usa o
+       lugar dele e quebra em duas linhas, em vez de «ninguém ao s…» */
+    return <span style={{ ...base, height: "auto", justifyContent: "center", ...letraDaMesa("servico"), textTransform: "none", color: T.ink, padding: "0 4px", textAlign: "center", lineHeight: 1.2,
+      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{razao}</span>;
   }
   if (!linha || linha.forma === "semDado") {
     return <span style={{ ...base, justifyContent: "center", ...letraDaMesa("servico"), textTransform: "none", color: T[L.corSemDado] }}>{(linha && linha.texto) || L.semDado}</span>;
@@ -230,6 +233,10 @@ function LinhaDoDado({ linha, tam, celular, media = false, impedida, razao }) {
   );
 }
 
+/* F4d: «até 9 m» quebrava entre o número e a unidade («até 9 / m»): o espaço
+   entre os dois vira o que não quebra */
+const semQuebraNaUnidade = (x) => String(x || "").replace(/(\d) (m|PM|PV)\b/g, "$1\u00a0$2");
+
 export function CartaDeAcao({ id, rotulo, tamanho = "mesa", armada = false, impedida = false, razao = "", linha = null, custo = "", aoTocar, aoApontar = null, reduzido = false }) {
   const tam = MA.tamanhos[tamanho] || MA.tamanhos.mesa;
   const celular = tamanho === "celular";
@@ -252,11 +259,11 @@ export function CartaDeAcao({ id, rotulo, tamanho = "mesa", armada = false, impe
           <Glifo nome={MA.glifo[id] || "dado"} tamanho={tam.glifo} cor={impedida ? T.inkMeio : TINTA_NO_OSSO} />
         </span>
       )}
-      <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: 4, right: 4, top: tam.yNome, ...letraDaMesa("nome"), ...(tamanho === "media" || celular ? { letterSpacing: 0 } : null), color: impedida ? T.ink : T.tintaDoPergaminho }}>{rotulo}</span>
+      <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: celular ? 2 : 4, right: celular ? 2 : 4, top: tam.yNome, ...letraDaMesa("nome"), ...(tamanho === "media" || celular ? { letterSpacing: 0 } : null), color: impedida ? T.ink : T.tintaDoPergaminho }}>{rotulo}</span>
       <span aria-hidden="true"><LinhaDoDado linha={linha} tam={tam} celular={celular} media={tamanho === "media"} impedida={impedida} razao={razao} /></span>
-      {custo && (
+      {custo && !impedida && (
         <span aria-hidden="true" style={{ position: "absolute", left: 4, right: 4, top: tam.yCusto, ...letraDaMesa("servico"), textTransform: "none", color: impedida ? T.inkMeio : T.brasaNoPergaminho,
-          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{custo}</span>
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{semQuebraNaUnidade(custo)}</span>
       )}
     </button>
   );
@@ -318,7 +325,10 @@ export function AJogada({ tamanho = "mesa", entrada = "", aoEscrever, veredito =
         transition: reduzido ? "none" : `background-color ${A.transicaoMs}ms ease, opacity ${A.transicaoMs}ms ease`, cursor: pronta ? "pointer" : "default" }}>
       <span style={{ ...letraDaMesa("contagem"), color: pronta ? T[A.pronta.letra] : T[A.impedida.rotulo] }}>{A.rotulo}</span>
       {veredito && veredito.diz ? (
-        <span className="truncate" style={{ maxWidth: "100%", ...letraDaMesa("servico"), textTransform: "none", color: pronta ? T[A.pronta.letra] : T[A.impedida.razao] }}>{veredito.diz}</span>
+        /* F4d · B2: no celular o «Agir» tem 124 de largo e o veredito («Atacar ·
+           Goblin · 55 %») perdia a chance nas reticências — quebra em duas linhas */
+        <span className={celular ? undefined : "truncate"} style={{ maxWidth: "100%", ...letraDaMesa("servico"), textTransform: "none", color: pronta ? T[A.pronta.letra] : T[A.impedida.razao],
+          ...(celular ? { textAlign: "center", lineHeight: 1.15, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } : null) }}>{veredito.diz}</span>
       ) : null}
     </button>
   );
@@ -412,7 +422,7 @@ export function AvisoDoSilencio({ silencio = null, aoTentarDeNovo = null }) {
       <span style={{ ...letraDaMesa("notaDoMestre"), color: T[P.perigo] }}>{silencio.casa || "O Mestre não contou o que você fez."}</span>
       {silencio.linha ? <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: T[P.tinta] }}>{silencio.linha}</span> : null}
       {silencio.podeTentar && aoTentarDeNovo ? (
-        <button type="button" onClick={aoTentarDeNovo} className="tv-anel-foco self-start"
+        <button type="button" data-tentar-de-novo="" onClick={aoTentarDeNovo} className="tv-anel-foco self-start"
           style={{ minHeight: 44, padding: "0 16px", borderRadius: AJ.agir.raio, background: T.amber, color: T.onAccent, border: 0, filter: SOMBRA_COMO_FILTRO.peca, ...letraDaMesa("contagem") }}>
           Tentar de novo
         </button>

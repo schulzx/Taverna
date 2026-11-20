@@ -76,6 +76,7 @@ import { metrosTxt, podeDarUmPasso, garantirGrade, nomeDoLugar } from "./grid.js
 import { custoEscrito } from "./mesa-de-batalha.js";
 /* V6 parte 2: a mão de ações em cartas de osso, com a linha do dado */
 import { CARTA_DE_ACAO } from "./luta-na-mesa.js";
+import { ESCUDO_DO_MESTRE, PECAS_DA_MESA } from "./estilo.js";
 /* F4 §10 (19/11): a mesa da prancha 10a — a mão de oito cartas com a linha do
    dado, a jogada, a coluna direita em papel e a coluna do grupo. As contas
    são de luta-na-mesa.js; as peças, de painel-luta-mesa.jsx. */
@@ -1535,6 +1536,29 @@ export function TelaDeBatalha(props) {
       return () => ro.disconnect();
     } catch (e) { console.warn("TelaDeBatalha: medir a sobra da coluna falhou", e); return undefined; }
   }, [sobraEl]);
+  /* F4d · B1 · A LARGURA DA MÃO, MEDIDA ONDE A CARTA NÃO MEXE. A mão decidia o
+     degrau (102 ou 90) pela largura da janela do tapete — e a janela encolhe
+     quando a carta cresce, porque a casa é presa pela altura que sobra: a
+     1440 × 780–900 a carta de 112 tirava altura, a casa descia, a janela
+     ficava abaixo dos 886 das oito cartas, a carta ia a 100, a casa subia, e
+     de novo — várias vezes por segundo. A coluna do centro tem a largura que
+     as colunas do lado lhe deixam (flex 1 1 0), e nada lá dentro a muda. */
+  const [colunaDaMaoEl, setColunaDaMaoEl] = React.useState(null);
+  const [larguraDaMao, setLarguraDaMao] = React.useState(0);
+  React.useEffect(() => {
+    if (!colunaDaMaoEl) return undefined;
+    try {
+      const mede = () => setLarguraDaMao(colunaDaMaoEl.clientWidth || 0);
+      mede();
+      if (typeof ResizeObserver === "undefined") return undefined;
+      const ro = new ResizeObserver(() => mede());
+      ro.observe(colunaDaMaoEl);
+      return () => ro.disconnect();
+    } catch (e) { console.warn("TelaDeBatalha: medir a coluna da mão falhou", e); return undefined; }
+  }, [colunaDaMaoEl]);
+  /* o degrau em que a mão já estava: tamanhoDaCarta só troca com folga
+     (MAO_DE_ACOES.histerese), e lê o de antes daqui */
+  const degrauDaMaoRef = React.useRef(null);
   /* o pé da arena: o tabuleiro escreve lá a área de movimento, o custo no
      terreno e as suas tarjas (passo, golpe livre, mira, ampliar), fora da
      janela que rola — no quadro, a legenda do alcance */
@@ -1606,6 +1630,8 @@ export function TelaDeBatalha(props) {
   const prevGolpe = p.previsaoDoGolpe && typeof p.previsaoDoGolpe === "object" ? p.previsaoDoGolpe : null;
   const alvoDaPrevisao = prevGolpe && prevGolpe.alvo ? String(prevGolpe.alvo) : "";
   const enteDoAlvo = alvoDaPrevisao ? inimigos.find((e) => e.nome === alvoDaPrevisao) || null : null;
+  /* F4d (menor 1): o primeiro alvo declarado pelo chip de «Escolha o alvo» */
+  const alvoDeclaradoAgora = (Array.isArray(p.alvosGolpe) ? p.alvosGolpe : []).find(Boolean) || "";
   const geo = (() => { try { return geometriaDaMesa({ largura: mesaMedida.largura, altura: mesaMedida.altura, grosso }); } catch { return { arranjo: "tres", coluna: B3.coluna }; } })();
   /* §CB 16: a altura dos alvos da barra sai do PONTEIRO (40 rato, 48 toque;
      48 no telefone), e o pip no verbo só com o centro ≥ 660 */
@@ -1667,7 +1693,7 @@ export function TelaDeBatalha(props) {
   const recusaDoEmpurrao = empurrando && p.empurrao && typeof p.empurrao === "object" && p.empurrao.recusa ? String(p.empurrao.recusa) : "";
   React.useEffect(() => { if (!empurrando && alvoDoEmpurrao) preverEmpurrao(null); }, [empurrando]); // eslint-disable-line react-hooks/exhaustive-deps
   /* F4 §10: na mesa, sair de cima de um inimigo devolve a previsão ao marcado */
-  const apontarInimigo = noTelefone ? null : (nome) => (empurrando ? preverEmpurrao(nome) : preverGolpe(mesaF4 ? nome || marcado || null : nome));
+  const apontarInimigo = noTelefone ? null : (nome) => (empurrando ? preverEmpurrao(nome) : preverGolpe(mesaF4 ? nome || marcado || alvoDeclaradoAgora || null : nome));
   const tocarInimigo = (nome) => {
     if (!nome) return;
     if (empurrando) {
@@ -1906,7 +1932,17 @@ export function TelaDeBatalha(props) {
     setRecusado("");
     /* F4 §10: na mesa, Atacar ARMA como as outras cartas (sem frase na pena) —
        quem age é o «Agir», o Enter ou o segundo toque no alvo marcado */
-    if (v.id === "atacar" && !mesaF4) { setArmado(""); if (p.aoAtacar) p.aoAtacar(); return; }
+    if (v.id === "atacar" && !mesaF4 && !noTelefone) { setArmado(""); if (p.aoAtacar) p.aoAtacar(); return; }
+    /* F4d · B2: no celular era aqui que Atacar DISPARAVA no primeiro toque (o
+       ramo de cima só olhava a mesa) — rolava sem veredito e sem «Agir». Agora
+       arma nos dois; e com UM inimigo ao alcance o toque que arma já o marca
+       (a carta e o «Agir» dizem a chance), porque não há escolha a fazer. */
+    if (v.id === "atacar" && armado !== "atacar" && !marcado) {
+      try {
+        const unicos = vd && Array.isArray(vd.aoAlcance) ? vd.aoAlcance.filter((x) => x && x.nome) : [];
+        if (unicos.length === 1) { setMarcado(unicos[0].nome); preverGolpe(unicos[0].nome); }
+      } catch (e) { console.warn("TelaDeBatalha: marcar o alvo único falhou", e); }
+    }
     /* SESSÃO 18 · defeito 3 (b, c): Empurrar com motor NÃO escreve a frase na
        caixa. A frase ia pelo «Agir →» ao texto livre — com alvo declarado o
        detector de ataque fazia dela um golpe, sem alvo o Narrador inventava o
@@ -2045,10 +2081,13 @@ export function TelaDeBatalha(props) {
   /* CB 2 · O CABEÇALHO DA MESA: o lugar e a rodada à esquerda, A FILA DA VEZ
      ao centro, e por baixo a fala do Mestre numa linha. No telefone, a fila
      e «A TUA VEZ · <nome>» no canto (a pílula da vez aposentou-se). */
+  /* F4d (menor 3): no celular o canto do escudo (fixo, em cima à direita)
+     tapava o fim do nome e o «SUA VEZ»: a faixa de cima reserva o lugar dele */
+  const reservaDoEscudo = noTelefone ? ESCUDO_DO_MESTRE.canto.telefone.direita + PECAS_DA_MESA.canto.telefone : 0;
   const cena = (
     <header className="flex flex-col shrink-0 min-w-0"
       style={{ padding: `${respiroDaCena.topo}px ${margem}px ${respiroDaCena.baixo}px`, gap: respiroDaCena.entre }}>
-      <div className="flex items-center justify-between min-w-0 shrink-0" style={{ gap: noTelefone ? M.chipLadoX : M.entreColunas, height: noTelefone ? B3.telefone.fila : B3.fila }}>
+      <div className="flex items-center justify-between min-w-0 shrink-0" style={{ gap: noTelefone ? M.chipLadoX : M.entreColunas, height: noTelefone ? B3.telefone.fila : B3.fila, paddingRight: reservaDoEscudo || undefined }}>
         {!noTelefone && (
           <div className="flex flex-col min-w-0" style={{ gap: 4, flex: "1 1 0" }}>
             {/* A1 (peça 93): a legenda de máquina por cima do título, com o
@@ -2062,8 +2101,9 @@ export function TelaDeBatalha(props) {
         {faixa}
         {noTelefone ? (
           <span className="flex flex-col items-end shrink-0" style={{ gap: 2 }}>
-            <span key={pulsoDaVez ? `pulso${pulsoDaVez}` : undefined} className={`tv-mono${pulsoDaVez && !contando ? " tv-pulse" : ""}`}
-              style={{ ...LEGENDA, color: contando || oHeroiCaido(personagem, grupo) ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : oHeroiCaido(personagem, grupo) ? oHeroiCaido(personagem, grupo).legenda : "Sua vez"}</span>
+            {/* F4d: depois do fim não há vez de ninguém — a legenda sai, o nome fica */}
+            {!p.fim && <span key={pulsoDaVez ? `pulso${pulsoDaVez}` : undefined} className={`tv-mono${pulsoDaVez && !contando ? " tv-pulse" : ""}`}
+              style={{ ...LEGENDA, color: contando || oHeroiCaido(personagem, grupo) ? T.danger : T.amber, fontWeight: 700, animationIterationCount: 1 }}>{contando ? "A vez deles" : oHeroiCaido(personagem, grupo) ? oHeroiCaido(personagem, grupo).legenda : "Sua vez"}</span>}
             <span className="tv-display truncate" style={{ fontSize: M.letra.nomeDoAliado, color: T.ink, maxWidth: 120 }}>{contando ? passoDeles.quem : personagem.nome}</span>
           </span>
         ) : (
@@ -2139,7 +2179,9 @@ export function TelaDeBatalha(props) {
           alturaDaJanela={noTelefone ? 0 : alturaDaJanela} tetoDoLado={noTelefone ? 0 : M.casaMaximaNoMonitor}
           aoMedirOLado={aoMedirOLado}
           pe={peDaArena} peCompacto={noTelefone} legendaCede={!!p.reacao}
-          previsaoDoGolpe={prevGolpe} intencoes={intencoes} caminho={p.caminho || null} golpes={p.golpes || null}
+          /* F4d: a luta acabou, ninguém «vai» mais nada — as etiquetas saíam pela
+             fresta das cartas do espólio, por baixo do véu */
+          previsaoDoGolpe={prevGolpe} intencoes={p.fim ? [] : intencoes} caminho={p.caminho || null} golpes={p.golpes || null}
           aoApontarInimigo={apontarInimigo} aoTocarInimigo={tocarInimigo} realce={realce} reguaPresa={noTelefone} heroiNome={nomeDoHeroi}
           quedas={p.quedas || null} aoMudarQueda={p.aoMudarQueda} veuDoUltimo={p.decisao && p.ultimoGolpe ? p.ultimoGolpe : null}
           /* CB 17: o d20 do herói no alvo, e o passo corrente do turno deles */
@@ -2189,7 +2231,16 @@ export function TelaDeBatalha(props) {
      por cima da faixa do herói — nunca do campo. */
   /* F4 §10: na mesa a caixa da reação sabe a altura da mão (a vela é a caixa
      − 28) e a intenção anunciada de quem acerta (a faixa do golpe, RX-1) */
-  const caixaDaMao = (() => { try { return MAO_DE_ACOES.tamanhos[tamanhoDaCarta({ telefone: noTelefone, larguraDaMao: larguraDaJanela, alturaUtil: mesaMedida.altura })].altura; } catch { return MAO_DE_ACOES.tamanhos.mesa.altura; } })();
+  /* antes da primeira medida da coluna, a conta da prancha (a mesa menos as margens
+     e as duas colunas do lado) — senão o primeiro quadro pinta 102 e troca para 90 */
+  const larguraDaMaoAgora = larguraDaMao > 0 ? larguraDaMao : (() => {
+    const ML = MESA_DA_LUTA, ap = larguraDaMesa < ML.apertada.abaixoDe;
+    const c = larguraDaMesa - (ap ? ML.apertada.margem : ML.grupo.margem) - (ap ? ML.apertada.margem : ML.direita.margem) - ML.grupo.largura - (ap ? ML.apertada.entreGrupo : ML.grupo.entre) - ML.direita.largura - (ap ? ML.apertada.entre : ML.direita.entre);
+    return c > 0 ? c : 0;
+  })();
+  const degrauDaMao = (() => { try { return tamanhoDaCarta({ telefone: noTelefone, larguraDaMao: larguraDaMaoAgora, alturaUtil: mesaMedida.altura, anterior: degrauDaMaoRef.current }); } catch { return noTelefone ? "celular" : "mesa"; } })();
+  React.useEffect(() => { degrauDaMaoRef.current = degrauDaMao; }, [degrauDaMao]);
+  const caixaDaMao = (MAO_DE_ACOES.tamanhos[degrauDaMao] || MAO_DE_ACOES.tamanhos.mesa).altura;
   const contextoDaReacao = mesaF4 ? { intencaoDe, caixa: caixaDaMao, celular: false } : noTelefone ? { intencaoDe, caixa: caixaDaMao, celular: true } : null;
   const reacaoNaMao = !esperando && p.reacao ? (
     <div data-reacao-na-mao="" style={{ position: "absolute", left: 0, right: 0, bottom: 0, minHeight: "100%", zIndex: 40, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
@@ -2351,9 +2402,10 @@ export function TelaDeBatalha(props) {
           style={{ padding: margem, paddingBottom: G.tiraDoHeroi + margem * 2, background: alfa(T.bg, VEU.leve) }}
           onClick={(e) => { if (e.target === e.currentTarget) setFichaAberta(false); }}>
           <div className="flex flex-col overflow-y-auto tv-scroll" style={{ gap: M.entrePaineis, maxHeight: "100%" }}>
+            {/* F4d (B3): o canto do escudo, fixo em cima à direita, tapava o «fechar» */}
             <button onClick={() => setFichaAberta(false)} aria-label="Fechar"
               className="tv-anel-foco tv-mono self-end flex items-center justify-center"
-              style={{ ...LEGENDA, minHeight: ALVOS.piso, minWidth: ALVOS.piso, padding: `0 ${M.chipLadoX}px`, borderRadius: M.raioControle, background: T.panel, border: `1px solid ${T.line}`, color: T.inkDim }}>
+              style={{ ...LEGENDA, minHeight: ALVOS.piso, minWidth: ALVOS.piso, marginRight: reservaDoEscudo || undefined, padding: `0 ${M.chipLadoX}px`, borderRadius: M.raioControle, background: T.panel, border: `1px solid ${T.line}`, color: T.inkDim }}>
               fechar
             </button>
             {consulta}
@@ -2425,13 +2477,13 @@ export function TelaDeBatalha(props) {
     const entreGrupo = apertada ? ML.apertada.entreGrupo : ML.grupo.entre;
     const entreDireita = apertada ? ML.apertada.entre : ML.direita.entre;
     const margemDireita = apertada ? ML.apertada.margem : ML.direita.margem;
-    /* a mão: os quatro tamanhos de MAO_DE_ACOES, medidos pela janela do tapete
-       (a largura da coluna do centro) e pela altura da mesa */
-    const tamanho = (() => { try { return tamanhoDaCarta({ telefone: noTelefone, larguraDaMao: larguraDaJanela, alturaUtil: mesaMedida.altura }); } catch { return "mesa"; } })();
+    /* a mão: os quatro tamanhos de MAO_DE_ACOES, medidos pela coluna do centro
+       (nunca pela janela do tapete: ver «F4d · B1») e pela altura da mesa */
+    const tamanho = degrauDaMao;
     const T_CARTA = MAO_DE_ACOES.tamanhos[tamanho] || MAO_DE_ACOES.tamanhos.mesa;
     const nCartas = MAO_DE_ACOES.ordem.length;
-    const entreCartas = larguraDaJanela > 0
-      ? Math.max(MAO_DE_ACOES.entreMinimo, Math.min(MAO_DE_ACOES.entre, Math.floor((larguraDaJanela - nCartas * T_CARTA.largura) / (nCartas - 1))))
+    const entreCartas = larguraDaMaoAgora > 0
+      ? Math.max(MAO_DE_ACOES.entreMinimo, Math.min(MAO_DE_ACOES.entre, Math.floor((larguraDaMaoAgora - nCartas * T_CARTA.largura) / (nCartas - 1))))
       : MAO_DE_ACOES.entre;
     const verbosPorId = new Map(verbos.map((v) => [v.id, v]));
     const faceMinima = (() => { try { return faceMinimaQueBasta(prevGolpe); } catch { return null; } })();
@@ -2440,7 +2492,7 @@ export function TelaDeBatalha(props) {
       try {
         if (id === "item") {
           const I = MAO_DE_ACOES.item;
-          return { id, rotulo: MAO_DE_ACOES.rotulo.item, armada: bolsaAberta, impedida: !nItens, razao: I.vazia,
+          return { id, rotulo: noTelefone ? MAO_DE_ACOES.rotulo.itemCurto : MAO_DE_ACOES.rotulo.item, armada: bolsaAberta, impedida: !nItens, razao: I.vazia,
             linha: linhaDoDado(id), custo: noTelefone ? `${I.tem} ${nItens}` : `${I.custo} · ${I.tem} ${nItens}` };
         }
         const v = verbosPorId.get(id);
@@ -2458,7 +2510,7 @@ export function TelaDeBatalha(props) {
       } catch (e) { console.warn("TelaDeBatalha: tocar a carta falhou", e); }
     };
     /* O VEREDITO DO «AGIR» (vereditoDoAgir, provado em Node) */
-    const alvoDeclarado = (p.alvosGolpe || []).find(Boolean) || "";
+    const alvoDeclarado = alvoDeclaradoAgora;
     const alvoDoAgir = marcado || alvoDeclarado;
     const vAgir = (() => {
       try {
@@ -2468,11 +2520,18 @@ export function TelaDeBatalha(props) {
           alvoDoEmpurrao, chanceDoEmpurrao: empAgora && empAgora.previsao ? porCento(empAgora.previsao.chance) : "",
           frase: p.entrada || "", custo: custoEscrito("fugir", null),
           contando, bloqueado: !!p.bloqueado, fim: !!p.fim,
+          silencio: !!(p.silencio && p.silencio.podeTentar && p.aoTentarDeNovo),
         });
       } catch { return { pronta: false, diz: "", acao: null }; }
     })();
     const agirNaMesa = () => {
       try {
+        if (vAgir.acao === "silencio") {
+          /* F4d (menor 2): o «Agir» não morre calado — leva ao «Tentar de novo» */
+          const b = typeof document !== "undefined" ? document.querySelector("[data-tentar-de-novo]") : null;
+          if (b) { try { b.scrollIntoView({ block: "nearest", behavior: movimentoParado() ? "auto" : "smooth" }); } catch { /* sem rolar */ } b.focus(); }
+          return;
+        }
         if (!vAgir.pronta) return;
         if (vAgir.acao === "atacar") {
           setArmado("");
@@ -2559,7 +2618,7 @@ export function TelaDeBatalha(props) {
         style={{ background: T.bg, padding: `${ML.topo}px ${margemDireita}px ${ML.baixo}px ${margemF4}px` }}>
         {/* o centro vem primeiro no DOM (a tabulação passa pelo tapete e pela
             mão antes das colunas); a ordem na tela é a da prancha */}
-        <div className="flex flex-col min-h-0 min-w-0" style={{ order: 1, flex: "1 1 0", marginLeft: entreGrupo, marginRight: entreDireita }}>
+        <div ref={setColunaDaMaoEl} className="flex flex-col min-h-0 min-w-0" style={{ order: 1, flex: "1 1 0", marginLeft: entreGrupo, marginRight: entreDireita }}>
           <header className="flex items-start shrink-0 min-w-0" style={{ order: 0, gap: 12, marginBottom: ML.entreFilaETapete }}>
             <PlaquetaDaRodada rodada={combate.rodada || 1} />
             <div className="flex-1 min-w-0 flex justify-center">
@@ -2587,7 +2646,9 @@ export function TelaDeBatalha(props) {
         <aside aria-label="A mesa do Mestre" className="flex flex-col min-h-0 shrink-0" style={{ order: 2, width: ML.direita.largura, gap: ML.direita.gap }}>
           <div className="flex flex-col min-h-0 overflow-y-auto tv-scroll tv-sem-barra" style={{ flex: "1 1 0", gap: ML.direita.gap, padding: "4px 4px 8px" }}>
             <AvisoDoSilencio silencio={p.silencio || null} aoTentarDeNovo={p.aoTentarDeNovo || null} />
-            <FalaDoMestreNoPapel texto={falaNoPapel} inteiro={falaInteira} carregando={p.carregando} apertada={elesVao.linhas.length >= 3} />
+            {/* F4d: com o Mestre calado o papel da fala ficava vazio, 128 px, e
+                empurrava «Escolha o alvo» para fora da coluna */}
+            {(falaNoPapel || p.carregando) && <FalaDoMestreNoPapel texto={falaNoPapel} inteiro={falaInteira} carregando={p.carregando} apertada={elesVao.linhas.length >= 3} />}
             <ElesVaoNoPapel linhas={elesVao.linhas} noHeroi={elesVao.noHeroi} inimigos={inimigos} realce={realce} aoRealcar={setRealce} />
             {contando || (!prevGolpe && !(empurrando && empAgora)) ? rastro : null}
             {empurrando && empAgora && <OEmpurraoPorExtenso empurrao={empAgora} alvo={enteDoEmpurrao} />}

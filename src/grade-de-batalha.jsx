@@ -2637,7 +2637,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
           </div>
           {(inimigos.length > 0 && heroi) && (
             <div className="tv-body text-[11px] mt-2 text-center" style={{ color: T.inkDim, maxWidth: "min(640px, 100%)" }}>
-              {inimigos.map((e) => `${e.nome} a ${Math.round(distanciaM(heroi, e))} m${ladoDe(e) > 1 ? ` (${tamanhoDe(e).nome.toLowerCase()}, alcança ${alcanceNatural(e)} m)` : ""}`).join(" · ")}
+              {inimigos.map((e) => `${e.nome} a ${metrosTxt(distanciaM(heroi, e))} m${ladoDe(e) > 1 ? ` (${tamanhoDe(e).nome.toLowerCase()}, alcança ${alcanceNatural(e)} m)` : ""}`).join(" · ")}
             </div>
           )}
           <button onClick={() => setAberto(false)} className="mt-3 rounded-xl px-5 py-2 tv-mono text-sm" style={{ background: T.amber, color: T.onAccent, fontWeight: 600 }}>
