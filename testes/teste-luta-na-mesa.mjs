@@ -17,7 +17,9 @@ import { T } from "../src/estilo.js";
 import {
   MAO_DE_ACOES, tamanhoDaCarta, porCento, linhaDoDado, A_JOGADA, vereditoDoAgir,
   MESA_DA_LUTA, linhasDeElesVao, O_QUE_RESTA_NA_VEZ, faixaDaRegua, ladoComARegua,
+  REACAO_NA_MAO, alturaDaVela, larguraDaCartaDaReacao, oQueFicaDaReacao,
 } from "../src/luta-na-mesa.js";
+import { REACOES, resolverReacao } from "../src/reacoes.js";
 import { faceMinimaQueBasta, golpePorExtenso } from "../src/batalha-na-tela.js";
 import { previsaoDoAtaque, facesQueAcertam } from "../src/previsao.js";
 import { VERBOS_DE_COMBATE } from "../src/golpe.js";
@@ -209,6 +211,28 @@ console.log("\n14. F4c · o que a luta jogada achou (a lista do coordenador, 19/
   t("(8) o Mestre que calou na luta: o App passa a falha e «tentar de novo» à tela da luta", /silencio=\{falha && !carregando \? \{ casa: falha\.casa \|\| "", linha: falha\.linha \|\| "", podeTentar: falha\.podeTentar !== false \} : null\}/.test(APPx) && /aoTentarDeNovo=\{\(\) => \{ try \{ retentar\(\); \} catch \(e\) \{ calou\("tentar de novo na luta", e\); \} \}\}/.test(APPx));
   t("(8) e a tela diz o aviso nos dois arranjos, com o botão só quando insistir resolve", (TELA.match(/<AvisoDoSilencio silencio=\{p\.silencio \|\| null\} aoTentarDeNovo=\{p\.aoTentarDeNovo \|\| null\} \/>/g) || []).length === 2 && /silencio\.podeTentar && aoTentarDeNovo \?/.test(PEC) && /role="alert"/.test(PEC));
   t("(5) o revide da reação e o golpe do companheiro deixam linha na rodada", /\{ quem: pers\.nome, alvo: alvo\.nome, diz: rr\.dano > 0 \? `revide/.test(APPx) && /\{ quem: ac\.companheiro, alvo: ac\.alvoNome, diz: ac\.r\.dano > 0/.test(APPx) && /calou\("a habilidade do companheiro na rodada", e\)/.test(APPx));
+}
+
+console.log("\n15. F4 §10 · a reação na mão, e RX-1 (o que chega e o que fica)");
+{
+  const RMx = REACAO_NA_MAO;
+  t("a caixa: couro, borda lataoSombra, raio 8; vela a x 28, bloco 256 a x 74; cartas de 104 a y 4, 8 entre", RMx.chao === "couro" && RMx.borda === "lataoSombra" && RMx.raio === 8 && RMx.xVela === 28 && RMx.bloco === 256 && RMx.xBloco === 74 && RMx.alturaDaCarta === 104 && RMx.topo === 4 && RMx.entre === 8);
+  t("a vela é a caixa − 28 (84 na de 112, 72 na de 100); 56 só no celular", alturaDaVela(112) === 84 && alturaDaVela(100) === 72 && alturaDaVela(112, true) === 56);
+  t("as cartas: 308 com uma ou duas, 202 com três, nunca abaixo de 200", larguraDaCartaDaReacao(1) === 308 && larguraDaCartaDaReacao(2) === 308 && larguraDaCartaDaReacao(3) === 202 && larguraDaCartaDaReacao(5) >= 200);
+  t("as cores da caixa existem em T; toda reação de sofrer dano tem glifo", [RMx.chao, RMx.borda].every((k) => typeof T[k] === "string") && REACOES.filter((r) => r.gatilho === "sofre_dano").every((r) => typeof RMx.glifo[r.id] === "string"));
+  const faixa = { min: 2, max: 10 };
+  const por = (id) => REACOES.find((r) => r.id === id);
+  t("RX-1 · deixar passar: fica o que vem («você leva de 2 a 10»)", J(oQueFicaDaReacao(null, faixa)) === J({ min: 2, max: 10 }));
+  t("RX-1 · aparar corta metade, pela conta de resolverReacao nos dois extremos", J(oQueFicaDaReacao(por("aparar"), faixa)) === J({ min: resolverReacao(por("aparar"), { pers: {}, dano: 2 }).danoFinal, max: resolverReacao(por("aparar"), { pers: {}, dano: 10 }).danoFinal }));
+  t("RX-1 · o escudo arcano tira 60 %: de 1 a 4", J(oQueFicaDaReacao(por("escudo_arcano"), faixa)) === J({ min: 1, max: 4 }));
+  t("RX-1 · a reação que anula: de 0 a 0", J(oQueFicaDaReacao(por("contramagia"), faixa)) === J({ min: 0, max: 0 }));
+  t("RX-1 · a esquiva (com chance) pode falhar: de 0 ao golpe inteiro", J(oQueFicaDaReacao(por("esquiva_agil"), faixa)) === J({ min: 0, max: 10 }));
+  t("RX-1 · sem faixa anunciada, null (a forma provisória: custo e efeito)", oQueFicaDaReacao(por("aparar"), null) === null && oQueFicaDaReacao(null, { min: 2 }) === null);
+  const REAx = ler("src/painel-reacao.jsx");
+  const TELA = ler("src/painel-batalha.jsx");
+  t("a caixa lê a faixa da intenção de quem acerta (o número rolado nunca: «o dano vir surpresa»)", /mesa\.intencaoDe\.get\(oferta\.inimigo\)/.test(REAx) && /oQueFicaDaReacao\(r, faixa\)/.test(REAx) && !/oferta\.dano/.test(REAx));
+  t("a tela da luta dá à reação a intenção e a altura da caixa", /<ContextoDaReacaoNaMesa\.Provider value=\{contextoDaReacao\}>/.test(TELA) && /\{ intencaoDe, caixa: caixaDaMao, celular: false \}/.test(TELA));
+  t("a vela está à vista desde que a janela abre (na luta jogada a reação fechava sem relógio à vista)", /const vela = temRelogioAgora && etapa !== "Resolvida" \?/.test(REAx));
 }
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);

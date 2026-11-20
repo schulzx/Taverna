@@ -83,6 +83,7 @@ import { MAO_DE_ACOES, MESA_DA_LUTA, tamanhoDaCarta, linhaDoDado, vereditoDoAgir
 import { faceMinimaQueBasta } from "./batalha-na-tela.js";
 import { MaoDeAcoes, AJogada, FalaDoMestreNoPapel, ElesVaoNoPapel, OAlvoNoPapel, ColunaDoGrupoNaLuta, PlaquetaDaRodada, AvisoDoSilencio } from "./painel-luta-mesa.jsx";
 import { FimDaLuta, SaidaDaLuta } from "./painel-fim-da-luta.jsx";
+import { ContextoDaReacaoNaMesa } from "./painel-reacao.jsx";
 import { mecanicaDe } from "./condicoes.js";
 import { selosDaMecanica } from "./selo-de-estado.js";
 import { tituloDe } from "./divindades.js";
@@ -2186,8 +2187,14 @@ export function TelaDeBatalha(props) {
      K3), e nenhuma casa fica tapada (eram ~3 filas, medidas no F4). No
      celular, quando a reação não cabe nos 170 da mão, ela cresce PARA CIMA,
      por cima da faixa do herói — nunca do campo. */
+  /* F4 §10: na mesa a caixa da reação sabe a altura da mão (a vela é a caixa
+     − 28) e a intenção anunciada de quem acerta (a faixa do golpe, RX-1) */
+  const caixaDaMao = (() => { try { return MAO_DE_ACOES.tamanhos[tamanhoDaCarta({ telefone: noTelefone, larguraDaMao: larguraDaJanela, alturaUtil: mesaMedida.altura })].altura; } catch { return MAO_DE_ACOES.tamanhos.mesa.altura; } })();
+  const contextoDaReacao = mesaF4 ? { intencaoDe, caixa: caixaDaMao, celular: false } : null;
   const reacaoNaMao = !esperando && p.reacao ? (
-    <div data-reacao-na-mao="" style={{ position: "absolute", left: 0, right: 0, bottom: 0, minHeight: "100%", zIndex: 40, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>{p.reacao}</div>
+    <div data-reacao-na-mao="" style={{ position: "absolute", left: 0, right: 0, bottom: 0, minHeight: "100%", zIndex: 40, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      <ContextoDaReacaoNaMesa.Provider value={contextoDaReacao}>{p.reacao}</ContextoDaReacaoNaMesa.Provider>
+    </div>
   ) : null;
   const recuosDaBarra = verbos.filter((v) => v.papel === "recuo");
   const acaoDoFim = fimComEspolio ? (

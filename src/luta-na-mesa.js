@@ -18,6 +18,7 @@
    ============================================================ */
 import { especieDe } from "./mesa-de-batalha.js";
 import { raridadeDe } from "./objetos-abertos.js";
+import { resolverReacao } from "./reacoes.js";
 
 const obj = (x) => (x && typeof x === "object" ? x : null);
 const fin = (x) => x != null && x !== "" && Number.isFinite(Number(x));
@@ -129,7 +130,7 @@ export const CARTA_DE_ACAO = Object.freeze({
    forma dela. A cera que resta = o trilho que falta. Sem relógio (o ritmo
    «parado», WCAG 2.2.1), não há vela. */
 export const VELA_DA_REACAO = Object.freeze({
-  prato: { largura: 48, altura: 11 }, vela: { largura: 16, altura: 84, curta: 56 },  /* curta: NÃO decidida — a caixa da mão mede 104, não os 112 do F4 (lacuna, formas.md §«V6 parte 2») */
+  prato: { largura: 48, altura: 11 }, vela: { largura: 16, altura: 84, curta: 56 },  /* F4 §10: a vela na mão é a caixa − 28 (alturaDaVela, abaixo); 56 só no celular */
   pavio: { largura: 8, altura: 12, folga: 14 },
   cera: "osso", contorno: "inkMeio", alfaDoContorno: 0.5, chama: "amber", chamaAperto: "danger", corDoPrato: "latao",
   /* na mesa as cartas da reação ficam lado a lado, nenhuma abaixo disto */
@@ -406,4 +407,52 @@ export function ladoComARegua({ largura = 0, altura = 0, colunas = 1, linhas = 1
   if (comLarga >= TAPETE.faixa.casaLarga) return { lado: comLarga, faixa: larga };
   const estreita = TAPETE.faixa.estreita;
   return { lado: lado(estreita), faixa: estreita };
+}
+
+/* ---------------- A REAÇÃO NA MÃO (§10 «a caixa da reação, por dentro», forma 2 e 3) ----------------
+   A caixa é a da mão (892 × 112 a 1440): couro, borda lataoSombra 1, raio 8.
+   A vela a x 28 com a altura da caixa − 28 (84 na de 112, 72 na de 100; 56 só
+   no celular); a x 74 o bloco de quem acerta (256); as cartas encostadas à
+   direita, a y 4, altura 104, 8 entre elas — 308 cada com uma ou duas, 202
+   com três, piso 200. «Deixar passar» é uma carta como as outras. */
+export const REACAO_NA_MAO = Object.freeze({
+  chao: "couro", borda: "lataoSombra", raio: 8,
+  xVela: 28, velaDaCaixa: 28, velaCelular: 56, xBloco: 74, bloco: 256,
+  topo: 4, alturaDaCarta: 104, entre: 8,
+  largura: Object.freeze({ ate2: 308, tres: 202, piso: 200 }),
+  carta: Object.freeze({ glifo: 22, xGlifo: 12, yGlifo: 11, xNome: 42, yCusto: 40, yResultado: 66, raio: 6 }),
+  glifo: Object.freeze({ escudo_arcano: "escudo", aparar: "espada", esquiva_agil: "fuga", contramagia: "ban", contratempo: "relogio", contra_ataque: "espadas", oportunidade: "raio", deixar: "recuo" }),
+  palavras: Object.freeze({ acerta: "acerta você", vem: "vêm de", tem: "você tem", semCusto: "sem custo", restam: "restam", leva: "você leva de", inteiro: "leva o golpe inteiro", deixar: "Deixar passar", a: "a" }),
+});
+
+/* a vela da reação na mão: a caixa − 28; no celular, 56 */
+export function alturaDaVela(caixa, celular = false) {
+  if (celular) return REACAO_NA_MAO.velaCelular;
+  const c = Number(caixa);
+  return c > REACAO_NA_MAO.velaDaCaixa ? c - REACAO_NA_MAO.velaDaCaixa : VELA_DA_REACAO.vela.altura;
+}
+
+/* quantas cartas cabem e com que largura: 1–2 → 308, 3 → 202, nunca abaixo de 200 */
+export function larguraDaCartaDaReacao(n) {
+  const L = REACAO_NA_MAO.largura;
+  return Number(n) <= 2 ? L.ate2 : Math.max(L.piso, L.tres);
+}
+
+/* RX-1 · O QUE FICA DEPOIS DA REAÇÃO, por faixa. `faixa`: { min, max } do
+   golpe que chega — a do anúncio do motor (a intenção de quem acerta), nunca
+   o número já rolado: «o dano vir surpresa» é decisão da pessoa (15/09,
+   ritmo-da-reacao.js «A OFERTA»). A conta é a de resolverReacao (reacoes.js),
+   chamada nos dois extremos — a tela não corta dano nenhum. A reação com
+   `chance` (a esquiva) pode falhar: o pior caso é o golpe inteiro. Sem faixa,
+   null (a carta fica na forma provisória: custo e efeito). */
+export function oQueFicaDaReacao(reacao, faixa) {
+  const f = obj(faixa);
+  if (!f || !fin(f.min) || !fin(f.max)) return null;
+  const min = Math.max(0, Number(f.min)), max = Math.max(min, Number(f.max));
+  if (!reacao) return { min, max };
+  const r = obj(reacao);
+  if (!r || r.gatilho !== "sofre_dano") return null;
+  const fica = (d) => { const x = resolverReacao(r, { pers: {}, dano: d }); return x ? x.danoFinal : d; };
+  const lo = fica(min), hi = r.chance != null ? max : fica(max);
+  return { min: Math.min(lo, hi), max: Math.max(lo, hi) };
 }

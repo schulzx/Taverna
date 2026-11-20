@@ -20,6 +20,37 @@ import { precoDoVerbo } from "./palavras-da-reacao.js";
 /* V6 parte 2 (F4 «REACAO_NA_MESA»): a vela que queima e a carta por reação */
 import { VELA_DA_REACAO, ceraDaVela, CARTA_DE_ACAO } from "./luta-na-mesa.js";
 import { SOMBRA_DA_MESA, alfa } from "./estilo.js";
+/* F4 §10 (19/11): a caixa da reação por dentro — a vela da altura da caixa, o
+   bloco de quem acerta, as cartas de 308/202 e «você leva de X a Y» (RX-1) */
+import { REACAO_NA_MAO as RM, alturaDaVela, larguraDaCartaDaReacao, oQueFicaDaReacao } from "./luta-na-mesa.js";
+import { Glifo } from "./ui.jsx";
+import { letraDaMesa } from "./mesa-do-mestre.js";
+
+/* O QUE A MESA SABE E O APP NÃO PASSA AO CARTÃO: a intenção anunciada de quem
+   acerta (a faixa do golpe) e a altura da caixa da mão. Quem dá é a tela da
+   luta (painel-batalha.jsx); sem ela, o cartão é o de sempre. */
+export const ContextoDaReacaoNaMesa = React.createContext(null);
+
+/* UMA CARTA DA REAÇÃO NA MÃO: glifo 22, nome (Mesa/Lugar), o custo numa linha
+   (brasa) e o resultado na outra — «você leva de 1 a 4» (Bold 20, perigo)
+   quando a faixa do golpe é sabida; senão a forma provisória (o efeito da
+   tabela, Bold 16 tinta). */
+function CartaDaReacao({ innerRef, glifo, nome, custo, fica, efeito, largura, onClick, comoMenuItem, focado, falado }) {
+  const C = RM.carta;
+  return (
+    <button ref={innerRef} type="button" role={comoMenuItem ? "menuitem" : undefined} tabIndex={comoMenuItem ? (focado ? 0 : -1) : undefined}
+      onClick={onClick} aria-label={falado} className="tv-anel-foco shrink-0"
+      style={{ position: "relative", width: largura, height: RM.alturaDaCarta, padding: 0, textAlign: "left", borderRadius: C.raio,
+        background: T[CARTA_DE_ACAO.chao], border: `1px solid ${T[CARTA_DE_ACAO.borda]}`, filter: `drop-shadow(0 2px 3px ${alfa(T.veuDaNoite, 0.5)})`, cursor: "pointer" }}>
+      <span aria-hidden="true" style={{ position: "absolute", left: C.xGlifo, top: C.yGlifo, lineHeight: 0 }}><Glifo nome={glifo} tamanho={C.glifo} cor={T.onAccent} /></span>
+      <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: C.xNome, right: 8, top: C.yGlifo, ...letraDaMesa("lugar"), color: T.tintaDoPergaminho }}>{nome}</span>
+      <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: C.xGlifo, right: 8, top: C.yCusto, ...letraDaMesa("servico"), textTransform: "none", color: T.brasaNoPergaminho }}>{custo}</span>
+      <span aria-hidden="true" className="tv-body truncate" style={{ position: "absolute", left: C.xGlifo, right: 8, top: C.yResultado, fontWeight: 700, lineHeight: 1.2,
+        fontSize: fica ? 20 : 16, color: fica ? T.perigoNoPergaminho : T.tintaDoPergaminho }}>{fica || efeito}</span>
+    </button>
+  );
+}
+const faixaEmPalavras = (f) => (f.min === f.max ? `${f.min}` : `${f.min} ${RM.palavras.a} ${f.max}`);
 
 /* A LARGURA MÁXIMA NO MONITOR (decisão do `desenho`, K3 §4). A região do
    veredito mede até 1400 px a 1536×816 (`mente/k3-jogo.md` §4.3), e o
@@ -97,12 +128,12 @@ function LinhaDoVerbo({ innerRef, reacao, onClick, disabled, comoMenuItem, focad
    trilho (a classe tv-janela-tempo, rodada a −90°: o que encolhia para a
    esquerda encolhe para baixo) — a duração continua a ser a da tabela, e
    com movimento reduzido a cera desce em degraus de 1 s (ceraDaVela). */
-function VelaDaReacao({ oferta, passou, reduzido, aperto, curta = false }) {
+function VelaDaReacao({ oferta, passou, reduzido, aperto, curta = false, altura = null }) {
   const V = VELA_DA_REACAO;
   const cera = ceraDaVela(oferta, passou, { reduzido });
   if (!cera.tem) return null;
   const chama = aperto ? T[V.chamaAperto] : T[V.chama];
-  const h = curta ? V.vela.curta : V.vela.altura, w = V.vela.largura, P = V.pavio;
+  const h = altura > 0 ? altura : curta ? V.vela.curta : V.vela.altura, w = V.vela.largura, P = V.pavio;
   const topoDaCera = reduzido ? h * (1 - cera.fracao) : 0;
   const formaDaChama = { position: "absolute", left: w / 2 - P.largura / 2, width: P.largura, height: P.altura, borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%", background: chama };
   return (
@@ -142,7 +173,10 @@ export function PainelReacao({
   aoSair,             // () => void               ·  o cartão cumpriu a vida; pode desmontar
   naMesa = false,     // V6 parte 2: no lugar da mão de ações (a largura da mão, as cartas lado a lado)
 }) {
-  const [aberto, setAberto] = React.useState(false);   // Chamando -> Escolhendo
+  /* F4 §10: na mesa as cartas estão todas à vista desde o primeiro quadro (o
+     leque já aberto); fora dela, o chamado e o leque de sempre */
+  const [aberto, setAberto] = React.useState(() => !!naMesa && !!(oferta && oferta.reacoes && oferta.reacoes.length > 1));   // Chamando -> Escolhendo
+  const mesa = React.useContext(ContextoDaReacaoNaMesa);
   const [focoIndex, setFocoIndex] = React.useState(0); // roving tabindex do leque
   const [, forcarNovoQuadro] = React.useReducer((x) => x + 1, 0); // só recalcula a leitura do relógio; não conta tique nenhum
 
@@ -290,8 +324,54 @@ export function PainelReacao({
   const trilho = trilhoVisivel && reduzido && (
     <div className="tv-mono" style={{ color: corDoTrilho, fontSize: 18, marginTop: 6 }} aria-hidden="true">{numeralContagem}</div>
   );
-  const vela = trilhoVisivel ? <VelaDaReacao oferta={oferta} passou={passou} reduzido={reduzido} aperto={noAperto} curta={naMesa} /> : null;
+  /* a vela está à vista desde que a janela abre (na luta jogada de d3fb53a a
+     reação fechava sozinha sem relógio nenhum à vista); na folga ela está inteira */
+  const vela = temRelogioAgora && etapa !== "Resolvida" ? <VelaDaReacao oferta={oferta} passou={passou} reduzido={reduzido} aperto={noAperto} curta={naMesa}
+    altura={naMesa && mesa ? alturaDaVela(mesa.caixa, !!mesa.celular) : null} /> : null;
   const cartasLadoALado = naMesa ? { display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(${VELA_DA_REACAO.cartaMinima}px, 1fr))`, gap: 6 } : null;
+
+  /* ============ F4 §10 · A CAIXA DA REAÇÃO NA MÃO ============ */
+  if (naMesa && mesa && etapa !== "Resolvida") {
+    const vista = mesa.intencaoDe && oferta ? mesa.intencaoDe.get(oferta.inimigo) : null;
+    const faixa = vista && vista.dano ? vista.dano : null;
+    const vem = oQueFicaDaReacao(null, faixa);
+    const P = RM.palavras;
+    const todas = [...reacoes.map((r) => ({ r })), { r: null }];
+    const largura = larguraDaCartaDaReacao(todas.length);
+    const saldo = Number(saldoPM) || 0;
+    return (
+      <div role={reacoes.length > 1 ? "menu" : undefined} onKeyDown={onKeyDownDoCartao} data-reacao-da-mesa="" className="tv-chamado-entra"
+        style={{ position: "relative", width: "100%", height: mesa.celular ? "auto" : mesa.caixa, minHeight: mesa.celular ? undefined : mesa.caixa, display: "flex", alignItems: mesa.celular ? "flex-start" : "center",
+          flexWrap: mesa.celular ? "wrap" : "nowrap", gap: RM.entre, padding: mesa.celular ? 8 : `${RM.topo}px ${RM.topo}px ${RM.topo}px ${RM.xVela - VELA_DA_REACAO.prato.largura / 2}px`,
+          boxSizing: "border-box", overflow: "hidden", borderRadius: RM.raio, background: T[RM.chao], border: `1px solid ${T[RM.borda]}` }}>
+        {vela}
+        <div className="flex flex-col min-w-0" style={{ marginLeft: mesa.celular ? 0 : RM.xBloco - RM.xVela - VELA_DA_REACAO.prato.largura / 2 - RM.entre, width: mesa.celular ? "auto" : undefined, flex: mesa.celular ? "1 1 0" : `0 1 ${RM.bloco}px`, gap: 2 }}>
+          <span className="truncate" style={{ ...letraDaMesa("nome"), color: T.ink }}>{oferta.inimigo}</span>
+          <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: T.inkMeio }}>{P.acerta}</span>
+          {vem && <span style={{ ...letraDaMesa("proposta"), color: T.ink }}>{P.vem} {faixaEmPalavras(vem)}</span>}
+          {mostrarSaldo && <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: T.inkMeio }}>{P.tem} {saldo} PM</span>}
+          {reduzido && trilhoVisivel && <span className="tv-mono" aria-hidden="true" style={{ color: corDoTrilho, fontSize: 18 }}>{numeralContagem}</span>}
+        </div>
+        <div className="flex" style={{ flexShrink: mesa.celular ? 1 : 0, marginLeft: "auto", gap: RM.entre, flexWrap: mesa.celular ? "wrap" : "nowrap", width: mesa.celular ? "100%" : undefined }}>
+          {todas.map(({ r }, i) => {
+            const fica = oQueFicaDaReacao(r, faixa);
+            const custo = r ? ((r.pm || 0) > 0 ? `${r.pm} PM · ${P.restam} ${Math.max(0, saldo - r.pm)}` : P.semCusto) : P.semCusto;
+            const efeito = r ? partesDoPreco(r).resto.replace(/^\d+ PM — /, "") : P.inteiro;
+            const ditoFica = fica ? `${P.leva} ${faixaEmPalavras(fica)}` : "";
+            const nome = r ? r.nome : P.deixar;
+            const ehRecuo = !r;
+            return (
+              <CartaDaReacao key={r ? r.id : "deixar"} glifo={RM.glifo[r ? r.id : "deixar"] || "escudo"} nome={nome} custo={custo} fica={ditoFica} efeito={efeito}
+                largura={mesa.celular ? "100%" : largura} comoMenuItem={reacoes.length > 1} focado={focoIndex === i}
+                falado={[nome, custo, ditoFica || efeito].filter(Boolean).join(", ")}
+                innerRef={ehRecuo ? (reacoes.length > 1 ? recuoDoLequeRef : recuoDiretoRef) : reacoes.length > 1 ? (el) => { itensDoLequeRef.current[i] = el; } : chamadoRef}
+                onClick={ehRecuo ? recusar : reacoes.length > 1 ? () => ativarDoLeque(r) : () => responder(r)} />
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
