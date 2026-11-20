@@ -344,8 +344,18 @@ export function cenaDoJogo(retrato) {
    tentativas fecha o mesmo pedido à mesma pessoa (EFEITOS_DA_FALHA:
    «fecha»). Nada mais é prometido — a relação que piora não é cobrada pelo
    jogo ainda, e o aviso não a diz. */
+/* 19/11 (o-mestre-vivo.md §19): o aviso é o fato da falha, na língua da
+   mesa. «Se falhar, a resposta é não, e pedir igual não muda nada» era o
+   livro de tentativas explicando-se ao jogador (sessão mv-3, texto de regra
+   na tela). O preço continua o mesmo — a mesma via fecha —, dito pelo que o
+   jogador vê: a resposta é não; a mentira não cola; a pessoa não se dobra.
+   `porPericia`: o aviso de cada perícia da conversa; sem linha, `aviso`. */
 export const O_CHAMADO_DA_CONVERSA = Object.freeze({
-  aviso: "Se falhar, a resposta é não, e pedir igual não muda nada.",
+  aviso: "Se falhar, a resposta é não.",
+  porPericia: Object.freeze({
+    enganacao: "Se falhar, a mentira não cola.",
+    intimidacao: "Se falhar, a pessoa não se dobra.",
+  }),
   efeito: "fecha",
 });
 
@@ -356,7 +366,7 @@ function chamadoDaConversa(v) {
   const dc = Number(v.dc);
   const situacoes = arr(v.situacoes);
   const porque = situacoes.map((s) => s && s.diz).filter(Boolean).join(" e ");
-  const aviso = O_CHAMADO_DA_CONVERSA.aviso;
+  const aviso = O_CHAMADO_DA_CONVERSA.porPericia[v.pericia] || O_CHAMADO_DA_CONVERSA.aviso;
   const linha = O_CHAMADO.molde
     .replace("{pericia}", periciaNome)
     .replace("{dc}", String(dc))

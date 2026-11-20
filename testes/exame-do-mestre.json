@@ -15,19 +15,20 @@
   "veio_da_b": "3: o item era da metade B até a rodada 2 e passou para a A na rodada 3"
  },
  "contagem": {
-  "itens": 709,
-  "pares": 231,
+  "itens": 741,
+  "pares": 233,
   "espontaneos": 59,
-  "nao_rola": 334,
+  "nao_rola": 344,
   "situacoes_cobertas": 97,
   "situacoes_faltando": [],
-  "metade_A": 444,
+  "metade_A": 476,
   "metade_B": 265,
   "rodada_2": 118,
   "rodada_3": 265,
   "destino": 15,
   "mesas_discordam": 27,
-  "rodada_4": 31
+  "rodada_4": 31,
+  "rodada_5": 32
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
@@ -16247,6 +16248,745 @@
    "rodada": 4,
    "metade": "A",
    "origem": "sessao-mv-1"
+  },
+  {
+   "id": "E710",
+   "situacao": 28,
+   "cena": {
+    "lugar": "praça do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "dou uma olhada geral na praça do cais",
+   "esperado": {
+    "rola": false,
+    "categoria": "outro",
+    "pericias": [],
+    "porque": "olhar em volta numa praça calma não rola: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E711",
+   "situacao": 22,
+   "cena": {
+    "lugar": "portão do cais",
+    "quem": [
+     "guarda do cais"
+    ]
+   },
+   "frase": "digo ao guarda que sou inspetor da coroa e que preciso passar",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira sobre quem se é tem oposição no próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E712",
+   "situacao": 22,
+   "cena": {
+    "lugar": "portão do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "nota": "o guarda existe, mas o painel não o tem"
+   },
+   "frase": "digo ao guarda que sou inspetor da coroa e que preciso passar",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira ao guarda é a mesma com ou sem ele no retrato; não cai na companheira",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E713",
+   "situacao": 21,
+   "cena": {
+    "lugar": "praça do cais",
+    "quem": [
+     "cambista"
+    ]
+   },
+   "frase": "ameaço o cambista: ou ele me conta quem comprou o mapa, ou vai nadar no porto",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça tem oposição no próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E714",
+   "situacao": 19,
+   "cena": {
+    "lugar": "banca da cartógrafa",
+    "quem": [
+     "cartógrafa"
+    ]
+   },
+   "frase": "peço pra ela me vender o mapa pela metade do preço",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "conversa rola quando quem ouve tem motivo para negar: o dinheiro é dele",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E715",
+   "situacao": 19,
+   "cena": {
+    "lugar": "banca da cartógrafa",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "nota": "a cartógrafa existe, mas o painel não a tem"
+   },
+   "frase": "peço pra ela me vender o mapa pela metade do preço",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "a barganha é com quem vende, nunca com a companheira de viagem",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E716",
+   "situacao": 19,
+   "cena": {
+    "lugar": "pátio das trocas",
+    "quem": [
+     "vendedor de frascos"
+    ]
+   },
+   "frase": "regateio o preço do frasco com o vendedor",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "regatear é barganha: o dinheiro é de quem vende",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E717",
+   "situacao": 56,
+   "cena": {
+    "lugar": "praça do cais",
+    "quem": [
+     "cambista"
+    ],
+    "com_testemunhas": true
+   },
+   "frase": "furto a bolsa do cambista enquanto ele conta as moedas",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "a mão leve rola: a vítima pode notar",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E718",
+   "situacao": 44,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "escalo a calha do armazém até o telhado, dois andares acima do cais",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a altura dita na frase é o perigo do próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E719",
+   "situacao": 53,
+   "cena": {
+    "lugar": "praça do cais",
+    "quem": [
+     "menino de recados"
+    ]
+   },
+   "frase": "sigo o menino de longe, sem ele me ver",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E720",
+   "situacao": 1,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "ha_algo_escondido": true,
+    "nota": "fundo falso na arca"
+   },
+   "frase": "procuro um compartimento escondido na arca",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "busca rola quando há o que achar",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3",
+   "par": "mv3-arca"
+  },
+  {
+   "id": "E721",
+   "situacao": 2,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "procuro um compartimento escondido na arca",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada escondido nem perigo: o mestre descreve o que há",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3",
+   "par": "mv3-arca"
+  },
+  {
+   "id": "E722",
+   "situacao": 64,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "peço pra Orla vigiar a porta do armazém",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "o favor a quem está do seu lado acontece sem dado",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E723",
+   "situacao": 49,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "trancado": true
+   },
+   "frase": "arrombo a arca sem ferramentas, no braço mesmo",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento",
+     "atletismo"
+    ],
+    "porque": "o que está trancado resiste: abrir à força rola",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E724",
+   "situacao": 44,
+   "cena": {
+    "lugar": "trapiches do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "salto o vão de três metros entre os trapiches, por cima da água",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "o vão e a água por baixo são o perigo do próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E725",
+   "situacao": 22,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "nota": "Orla viu quem pegou a chave"
+   },
+   "frase": "minto pra Orla que não fui eu que peguei a chave",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "mentir a quem viaja com você é mentir a quem sabe o que viu",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E726",
+   "situacao": 13,
+   "cena": {
+    "lugar": "armazém do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "pergunto pra Orla se ela conhece essa marca",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E727",
+   "situacao": 21,
+   "cena": {
+    "lugar": "oficina do cais",
+    "quem": [
+     "ferreiro"
+    ]
+   },
+   "frase": "ameaço o homem do martelo se ele não largar a ferramenta",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça tem oposição no próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E728",
+   "situacao": 15,
+   "cena": {
+    "lugar": "oficina do cais",
+    "quem": [
+     "ferreiro"
+    ]
+   },
+   "frase": "pergunto onde o Doran se meteu",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola: quem quer responder responde",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E729",
+   "situacao": 15,
+   "cena": {
+    "lugar": "pátio das trocas",
+    "quem": [
+     "mercador"
+    ]
+   },
+   "frase": "pergunto o caminho de volta pro cais",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta de caminho não rola",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E730",
+   "situacao": 22,
+   "cena": {
+    "lugar": "pátio das trocas",
+    "quem": [
+     "carregador"
+    ]
+   },
+   "frase": "digo pro carregador que sou fiscal do porto e preciso ver a carga",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira sobre quem se é tem oposição no próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E731",
+   "situacao": 56,
+   "cena": {
+    "lugar": "pátio das trocas",
+    "quem": [
+     "mercador"
+    ]
+   },
+   "frase": "reviro a barraca dele atrás do livro, com ele ali do lado",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao",
+     "furtividade"
+    ],
+    "porque": "mexer nas coisas de quem está ali é a mão leve contra ele",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E732",
+   "situacao": 21,
+   "cena": {
+    "lugar": "pátio das trocas",
+    "quem": [
+     "mercador"
+    ]
+   },
+   "frase": "levanto o Doran pela gola com a adaga na mão e mando ele falar",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça é Intimidação, com a arma na mão ou não",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E733",
+   "situacao": 64,
+   "cena": {
+    "lugar": "cais",
+    "quem": [
+     "marinheiro"
+    ]
+   },
+   "frase": "dou uma moeda pro marinheiro",
+   "esperado": {
+    "rola": false,
+    "categoria": "logistica",
+    "pericias": [],
+    "porque": "pagar não rola",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E734",
+   "situacao": 22,
+   "cena": {
+    "lugar": "cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "nota": "Bryna está ali, mas o painel não a tem"
+   },
+   "frase": "minto pra Bryna que só estou de passagem pela ilha",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira a quem não está no retrato é a mesma: não cai na companheira",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E735",
+   "situacao": 53,
+   "cena": {
+    "lugar": "cais",
+    "quem": [
+     "capangas"
+    ],
+    "com_testemunhas": true
+   },
+   "frase": "me escondo atrás da lona antes que eles me vejam",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "esgueirar rola se alguém pode notar",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E736",
+   "situacao": 64,
+   "cena": {
+    "lugar": "cais",
+    "quem": [
+     "Orla (companheiro)",
+     "capangas"
+    ]
+   },
+   "frase": "peço pra Orla distrair os homens do cais",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "o favor a quem está do seu lado acontece sem dado",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E737",
+   "situacao": 44,
+   "cena": {
+    "lugar": "cais",
+    "quem": [
+     "capanga armado"
+    ]
+   },
+   "frase": "pulo por cima dos barris e fujo do Orin, que vem atrás de mim com uma faca",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo",
+     "acrobacia"
+    ],
+    "porque": "a fuga é o perigo do próprio ato: alguém vem atrás",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E738",
+   "situacao": 49,
+   "cena": {
+    "lugar": "depósito do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "trancado": true
+   },
+   "frase": "arrombo a porta do depósito",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento",
+     "atletismo"
+    ],
+    "porque": "o que está trancado resiste",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
+  },
+  {
+   "id": "E739",
+   "situacao": 1,
+   "cena": {
+    "lugar": "depósito do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ],
+    "ha_algo_escondido": true,
+    "nota": "um cofre atrás da tela"
+   },
+   "frase": "afasto a tela pintada e procuro atrás dela",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "busca rola quando há o que achar",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3",
+   "par": "mv3-tela"
+  },
+  {
+   "id": "E740",
+   "situacao": 2,
+   "cena": {
+    "lugar": "depósito do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "afasto a tela pintada e procuro atrás dela",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada escondido nem perigo: o mestre descreve o que há",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3",
+   "par": "mv3-tela"
+  },
+  {
+   "id": "E741",
+   "situacao": 13,
+   "cena": {
+    "lugar": "depósito do cais",
+    "quem": [
+     "Orla (companheiro)"
+    ]
+   },
+   "frase": "pergunto pra Orla o que a gente faz agora",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta não rola",
+    "base": "padrao"
+   },
+   "rodada": 5,
+   "metade": "A",
+   "origem": "sessao-mv-3"
   }
  ],
  "rodada_2": {
@@ -16287,5 +17027,9 @@
  "rodada_4": {
   "data": "2026-11-19",
   "o_que_mudou": "As frases das duas sessões jogadas do Mestre vivo (mente/lancamento/mestre-vivo-sessao.md, A e B, 19/11/2026) entraram na metade A, que afina: são frases de jogador de verdade, nossas (o agente que jogou escreveu-as livremente), com a cena em estados e o veredito que o jogador julgou na sessão (marcadas origem «sessao-mv-1»). Afinaram o conserto de o-mestre-vivo.md §17. A metade B não foi tocada."
+ },
+ "rodada_5": {
+  "data": "2026-11-19",
+  "o_que_mudou": "Os turnos da terceira sessão jogada do Mestre vivo (mente/lancamento/mestre-vivo-sessao-3.md, 19/11/2026) entraram na metade A, que afina, como itens novos escritos por nós sobre cada turno (marcados origem «sessao-mv-3»; nenhuma frase da transcrição). Três trazem só a companheira em cena, porque no jogo a pessoa de quem se fala não estava no painel. A busca sem dono vira par (há o que achar / não há), como o resto do exame. Afinaram o conserto de o-mestre-vivo.md §19. A metade B não foi tocada."
  }
 }

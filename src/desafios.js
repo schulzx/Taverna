@@ -101,25 +101,25 @@ export const TIPOS_DE_ROLAGEM = [
    ============================================================ */
 export const VIAS_DE_TRANCA = [
   {
-    id: "ferramentas", nome: "com gazuas", rx: /gazua|grampo|ferramenta|arame|agulha|destranc|abrir a fechadura|palito|picar a fechadura|arrombar a fechadura/,
+    id: "ferramentas", nome: "com gazuas", comoSeDiz: "com gazuas", rx: /gazua|grampo|ferramenta|arame|agulha|destranc|abrir a fechadura|palito|picar a fechadura|arrombar a fechadura/,
     pericia: "prestidigitacao", ajuste: 0, minutos: 5, barulho: false,
     precisa: { tipo: "item", rx: /gazua|ferramenta de ladr|kit de arromb|gazuas/, comoSeChama: "ferramentas de ladrão" },
     falha: "a gazua escorrega e o pino volta ao lugar",
   },
   {
-    id: "forca", nome: "no braço", rx: /for[cç]a|ombro|chut|pontap|arromb|quebr|espatif|escancar|derrub|p[eé] na porta|no bra[cç]o/,
+    id: "forca", nome: "no braço", comoSeDiz: "à força, no ombro", rx: /for[cç]a|ombro|chut|pontap|arromb|quebr|espatif|escancar|derrub|p[eé] na porta|no bra[cç]o/,
     pericia: "arrombamento", ajuste: 2, minutos: 2, barulho: true,
     precisa: null,
     falha: "a madeira range e aguenta",
   },
   {
-    id: "magia", nome: "pela magia", rx: /magia|feiti[cç]|conjur|encant|palavra de abrir|abrir m[aá]gic|arcan/,
+    id: "magia", nome: "pela magia", comoSeDiz: "com uma magia de abrir", rx: /magia|feiti[cç]|conjur|encant|palavra de abrir|abrir m[aá]gic|arcan/,
     pericia: "arcanismo", ajuste: -2, minutos: 1, barulho: false,
     precisa: { tipo: "magia", rx: /abrir|destranc|passagem|chave|portal|telecin/, comoSeChama: "uma magia que abra o que está fechado" },
     falha: "o selo bebe a magia e não cede",
   },
   {
-    id: "chave", nome: "com a chave", rx: /\bchave\b/,
+    id: "chave", nome: "com a chave", comoSeDiz: "com a chave", rx: /\bchave\b/,
     pericia: null, ajuste: 0, minutos: 1, barulho: false,
     precisa: { tipo: "item", rx: /chave/, comoSeChama: "a chave" },
     falha: "",
@@ -153,9 +153,17 @@ export function viasAbertas(pers) {
 
 /* A via que a frase nomeia — ou nenhuma, quando o jogador só disse
    "tento abrir a porta" e cabe ao sistema escolher a que ele tem. */
+/* 19/11 (o-mestre-vivo.md §19): «arrombo a arca sem ferramentas» lia a via
+   das ferramentas e respondia «você não tem ferramentas de ladrão» — o
+   jogador tinha dito justamente que ia sem elas. A via dita depois de «sem»
+   não é a pedida. */
+const VIA_NEGADA = /\bsem (a |as |o |os |minhas? |meus? |nenhuma? )?$/;
 export function viaDeclarada(texto) {
   const t = norm(texto);
-  for (const v of VIAS_DE_TRANCA) if (v.rx.test(t)) return v;
+  for (const v of VIAS_DE_TRANCA) {
+    const m = v.rx.exec(t);
+    if (m && !VIA_NEGADA.test(t.slice(Math.max(0, m.index - 16), m.index))) return v;
+  }
   return null;
 }
 
@@ -771,7 +779,10 @@ export const DESAFIOS = [
        ela me levar», «com uma boa lábia». Pedir uma cerveja continua de
        fora (não há a quem nem o quê). Se quem ouve tem motivo para negar,
        quem decide é a régua do momento. */
-    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b)/,
+    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|regate(?:io|ar|amos|ando|ei)\b|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b)/,
+    /* 19/11 (o-mestre-vivo.md §19): e REGATEAR, o verbo da feira — «regateio o
+       frasco» caía em nada (sessão mv-3, T4 e T18), e a barganha só rolava
+       quando dita como «barganho» */
     pericia: "persuasao", alvo: "persuasao", minutos: 10, barulho: false,
     rotulo: "convencer", dcPadrao: DC("incomum"), social: true,
   },
@@ -869,9 +880,16 @@ export const DESAFIOS = [
        ("rendam-se!", "larguem as armas!") e não casava nada: ia ao Narrador
        sem dado. Só a ordem aos OUTROS — "me rendo" é o herói a render-se, e
        não entra. As duas formas, porque a ênclise chega desfeita. */
-    rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para|envergonh|humilh|rendam-se|renda-se|rende-te|te rende(?! (nada|mais|menos|muito|pouco|bem|dinheiro|lucro|moedas))|se rendam|te rendas|larguem as armas|larga a arma|largue a arma|baixem as armas|abaixem as armas)|\bencaro (o|a|os|as|ele|ela|eles|elas|aquele|aquela|esse|essa)\b[^.!?]{0,30}\b(nos olhos|sem piscar|at[eé] (ele|ela|eles|elas) (desviar|baixar|recuar|desistir|ceder)|de cima a baixo)|\bmando (ele |ela )?(falar|abrir o bico|desembuchar|confessar)\b|\b(encosto|ponho|aponto|colo) (a|o|minha|meu) (faca|lamina|adaga|punhal|espada)\b[^.!?]{0,25}\b(pescoco|garganta|cara|peito)/,
+    rx: /\b(intimid|amea[cç]o|meto medo|na marra|no grito|ponho a m[ãa]o na espada para|envergonh|humilh|rendam-se|renda-se|rende-te|te rende(?! (nada|mais|menos|muito|pouco|bem|dinheiro|lucro|moedas))|se rendam|te rendas|larguem as armas|larga a arma|largue a arma|baixem as armas|abaixem as armas)|\bencaro (o|a|os|as|ele|ela|eles|elas|aquele|aquela|esse|essa)\b[^.!?]{0,30}\b(nos olhos|sem piscar|at[eé] (ele|ela|eles|elas) (desviar|baixar|recuar|desistir|ceder)|de cima a baixo)|\bmando (ele |ela )?(falar|abrir o bico|desembuchar|confessar)\b|\b(encosto|ponho|aponto|colo) (a|o|minha|meu) (faca|lamina|adaga|punhal|espada)\b[^.!?]{0,25}\b(pescoco|garganta|cara|peito)|\b(mostro|exibo|aponto|brando) (a|o|minha|meu) (faca|lamina|adaga|punhal|espada|machado)\b(?=[^.!?]{0,30}\b(pra|para|pro|ao|aos|contra|na cara|no rosto|diante|na frente)\b)(?![^.!?]{0,40}\b(avali|examin|consert|afi|vend|compr|limp|embainh|guard|atac))|\b(seguro|agarro|levanto|empurro|prenso|imprenso|arrasto|encurralo|encosto) (o|a) \w+\b[^.!?]{0,40}\b(com|de) (a|o|minha|meu) (faca|lamina|adaga|punhal|espada) (na mao|em punho|em riste|no pescoco|na garganta|apontad\w*)/,
     /* M3 (18/11, o exame do Mestre, metade A): «encosto a faca no pescoço dele e mando falar» — a ameaça
        dita pelo gesto, sem a palavra «ameaço» */
+    /* 19/11 (o-mestre-vivo.md §19): e a arma à mostra diante de alguém
+       («levanto o Doran pela gola com a adaga na mão», «mostro a adaga»): na
+       sessão mv-3 (T22) a frase caiu no «vencer o peso» (forcar), rolou
+       Atletismo, e a falha fechou o lugar para a busca seguinte. A ameaça é
+       Intimidação, com a arma na mão ou não; mostrar a lâmina ao ferreiro
+       para avaliar não é ameaça, nem erguer a espada em saudação (só conta a
+       arma mostrada A alguém, ou na mão de quem agarra). Vem antes de forcar. */
     pericia: "intimidacao", alvo: "intimidacao", minutos: 5, barulho: true,
     rotulo: "intimidar", dcPadrao: DC("incomum"), social: true,
   },
@@ -1011,6 +1029,8 @@ export const DESAFIOS = [
       /\b(salto (o\b|a\b|para|por cima|sobre)|pulo (o\b|a\b|para|por cima|sobre|do\b)|dou um salto|me atir(o|ar) (para|sobre|por))/.source,
       /* CS (11/11, o corpus das situações): de um telhado para o outro, pra dentro da carroça, de pedra em pedra — o vão dito pelos dois lados («salto da cama» não tem o outro lado). Só o vão: «salto do balcão para o lustre» continua a acrobacia do improviso (MM4) */
       /\b(salto|pulo) (pra|pro)\b|\b(salto|pulo) (de|do|da) (um |uma )?(telhado|muro|galho|rocha|pedra|barco|varanda|sacada|ponte|beiral|margem|penhasco)\b[^.!?]{0,30}\b(para|pra|pro) (o|a|um|uma) (outro|outra|telhado|muro|galho|rocha|margem|barco|ponte|beiral|monte|varanda|sacada)\b|\b(salto|pulo) de (pedra|telhado|galho|rocha|tronco|barco|viga) em\b/.source,
+      /* 19/11 (o-mestre-vivo.md §19): o salto no gerúndio, que é como a fuga se diz — «atravesso o cais pulando por cima dos barcos» (sessão mv-2, T22) e «pulando de barco em barco» não casavam nada */
+      /\b(pulando|saltando) (por cima d\w*|por sobre|sobre (o|a|os|as)|de (pedra|telhado|galho|rocha|tronco|barco|viga|barril|caixote|mastro) em)\b/.source,
     ].join("|")),
     pericia: "atletismo", alvo: "salto", minutos: 0, barulho: false,
     rotulo: "saltar o vão", dcPadrao: DC("incomum"), corpo: true, queda: true,
@@ -1027,10 +1047,17 @@ export const DESAFIOS = [
        do improviso achou. O que se ergue com dois dedos não é peso; a lista é
        de coisas leves e de partes do próprio corpo, que é onde "levanto" e
        "arrasto" deixam de ser esforço e viram gesto. */
-    naoSe: /\b(levanto|arrasto|empurro) (a|o) (caneca|copo|taca|mao|maos|braco|cabeca|olhar|voz|sobrancelha|vela|lanterna|tocha|chapeu|capuz|garrafa|bandeira|punho|cadeira|banco|banquinho|cortina|manga|gola|saia|capa|pe)\b|\b(seguro|empurro) a porta (para|e entro|e saio|e passo|devagar|aberta)\b|\bempurro a porta\b(?![^.!?]{0,40}\b(emperrad\w*|trancad\w*|pres[ao]|travad\w*|pesad\w*|ombro|for[cç]a|n[aã]o (abre|cede)|resist\w*|enferrujad\w*|inchad\w*))/,
+    naoSe: /\b(levanto|arrasto|empurro) (a|o) (caneca|copo|taca|mao|maos|braco|cabeca|olhar|voz|sobrancelha|vela|lanterna|tocha|chapeu|capuz|garrafa|bandeira|punho|cadeira|banco|banquinho|cortina|manga|gola|saia|capa|pe|tela|lona|tapete|tapecaria|pano|quadro|lencol|cobertor|biombo|esteira)\b|\b(seguro|empurro) a porta (para|e entro|e saio|e passo|devagar|aberta)\b|\bempurro a porta\b(?![^.!?]{0,40}\b(emperrad\w*|trancad\w*|pres[ao]|travad\w*|pesad\w*|ombro|for[cç]a|n[aã]o (abre|cede)|resist\w*|enferrujad\w*|inchad\w*))/,
     /* EM1 (o corpus da mesa): «empurro a porta do Escudo Rachado e procuro
        a Berengária» é entrar. Empurrar uma porta só é peso quando ela
        resiste — emperrada, trancada, inchada, ao ombro. */
+    /* 19/11 (o-mestre-vivo.md §19): A TENTATIVA FECHA PELO OBJETO. A chave era
+       «lugar|peso»: um Atletismo falho contra uma pessoa (sessão mv-3, T22)
+       fechou, sete turnos depois, uma busca atrás de uma tela (T29 — «já
+       tentou vencer o peso aqui»). Uma tentativa é ação+alvo: a pedra que
+       não cedeu não fecha a grade do lado. E a tela, a lona, o tapete, o
+       quadro não são peso (o naoSe, acima): afastá-los é procurar atrás. */
+    objetoDaChaveDe: /\b(?:empurro|arrasto|levanto|movo|seguro|entorto|arranco)\s+((?:a|o|as|os|esse|essa|este|esta|aquele|aquela)\s+[^.!?;:,]{2,40})/,
     pericia: "atletismo", alvo: "peso", minutos: 5, barulho: true,
     rotulo: "vencer o peso", dcPadrao: DC("incomum"), corpo: true,
   },
@@ -2192,7 +2219,7 @@ export function lerAcao(texto, ctx = {}) {
       return {
         tipo: "impossivel",
         porque: `você não tem ${pedida.precisa.comoSeChama}`,
-        comoSeria: viasPossiveis.map((v) => v.nome),
+        comoSeria: viasPossiveis.map((v) => v.comoSeDiz || v.nome),
         rotulo: d.rotulo,
       };
     }
@@ -2379,7 +2406,8 @@ export function falaDoVeredicto(v) {
       ? `↺ Você já revistou isto assim, e tirou daqui o que os seus olhos alcançaram. Para achar o que passou despercebido, algo tem de mudar — ${v.comoReabrir.join(", ")}.`
       : `↺ Você já tentou ${v.rotulo} aqui, do mesmo jeito, e não deu. Insistir igual não muda nada — ${v.comoReabrir.join(", ")}.`;
   }
-  if (v.tipo === "impossivel") return `⛔ Assim não dá: ${v.porque}. O que abriria: ${v.comoSeria.join(", ")}.`;
+  /* 19/11 (§19): fala de mesa, não o mecanismo («O que abriria: no braço») */
+  if (v.tipo === "impossivel") return `⛔ Assim não dá: ${v.porque}. Outro jeito: ${v.comoSeria.join(", ")}.`;
   if (v.tipo === "foraDaConversa") return `⛔ Isso não é dificuldade, é outra categoria de coisa: ${v.porque}. O que um dia mudaria: ${v.comoSeria.join(", ")}.`;
   if (v.tipo === "livre") return `✓ ${v.porque} — sem dado.`;
   if (v.tipo === "naoSePede") {
@@ -3089,7 +3117,8 @@ export function desfechoDaMargem(v, { total = null, dc = null, critico = false, 
   const minutos = meio && c.minutosPorPouco != null ? c.minutosPorPouco : c.minutosExtra;
   return {
     porPouco: meio, faixa: f.id, margem, faltou: d - t, alvo: c.alvo,
-    diz: meio ? c.preco : c.seca,
+    /* 19/11 (§19): o preço que a cena sabe (secaDoMomento: quem vê) vence o genérico */
+    diz: meio ? c.preco : (typeof v.secaDoMomento === "string" && v.secaDoMomento.trim() ? v.secaDoMomento.trim() : c.seca),
     minutosExtra: Math.max(0, Number(minutos) || 0),
     barulhoExtra: !!c.barulhoExtra && meio,
     /* v9.66: o preço em PELE, e ele é diferente nos dois lados. Quem falha
@@ -3123,12 +3152,13 @@ function oQueFoiCobrado(des) {
 export function falaDoCusto(des) {
   if (!des) return "";
   if (des.meiaVerdade) return `⚖ Faltaram ${des.faltou} — e fica meio caminho: ${des.diz}.`;
-  if (des.porPouco && des.faixa === "mas") {
-    const quanto = des.margem > 0 ? `Passou por ${des.margem}` : "Na conta exata";
-    return `⚖ ${quanto} — e por um fio o mundo cobra: ${des.diz}.`;
-  }
+  /* 19/11 (o-mestre-vivo.md §19): fala de mesa, não o mecanismo. «Passou por
+     1 — e por um fio o mundo cobra» e «por tão pouco o mundo negocia» eram o
+     sistema explicando a margem (a sessão mv-3 listou a primeira como texto de
+     regra na tela). Fica o que aconteceu: por um fio, e o preço. */
+  if (des.porPouco && des.faixa === "mas") return `⚖ Por um fio: ${des.diz}.`;
   return des.porPouco
-    ? `⚖ Faltaram ${des.faltou} — e por tão pouco o mundo negocia: ${des.diz}.`
+    ? `⚖ Faltaram ${des.faltou}, e ainda assim: ${des.diz}.`
     : `↯ ${des.diz.charAt(0).toUpperCase()}${des.diz.slice(1)}.`;
 }
 
@@ -3144,7 +3174,8 @@ export function envelopeDoCusto(des, rotulo) {
     return `[CUSTO — DECIDIDO PELO SISTEMA] ${como} O que aconteceu: ${des.diz}. O sistema já cobrou o preço (${oQueFoiCobrado(des)}).
 REGRA DESTE ENVELOPE (obrigatória): narre o sucesso E o preço, os dois, na mesma cena — o preço não é enfeite, é o que eu paguei para ter isto. NÃO transforme em sucesso limpo e NÃO transforme em fracasso. E não invente um custo maior que este: o que custou está escrito aqui.`;
   }
-  return `[CUSTO — DECIDIDO PELO SISTEMA] Eu falhei no teste de ${rotulo || "perícia"}, e falhar aqui não é só não conseguir: ${des.diz}. O sistema já cobrou o tempo.
+  /* 19/11 (§19): «já cobrou o tempo» só quando houve tempo a cobrar (a furtividade não gasta minuto: o preço é ser visto) */
+  return `[CUSTO — DECIDIDO PELO SISTEMA] Eu falhei no teste de ${rotulo || "perícia"}, e falhar aqui não é só não conseguir: ${des.diz}.${des.minutosExtra ? " O sistema já cobrou o tempo." : ""}
 REGRA DESTE ENVELOPE (obrigatória): mostre a falha COM esta consequência, em uma ou duas frases — não como um "nada acontece". NÃO me dê o resultado por generosidade, NÃO ofereça meia-vitória e NÃO invente uma consequência pior que esta.`;
 }
 

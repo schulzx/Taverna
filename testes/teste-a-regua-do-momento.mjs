@@ -23,6 +23,7 @@ import {
   PERGUNTA_DO_DESTINO, FAIXAS_DO_DESTINO, oDadoDoDestino, ePerguntaDoDestino,
   RISCO_DO_ATO, MOTIVO_PARA_NEGAR_DO_ALVO, A_VITIMA_DO_FURTO, OUVIR_QUEM_FALA, CALA_POR_AUSENCIA,
   O_ALVO_DA_FALA, MENTIRA_E_AMEACA, quemAFraseNomeia, estranhoAQuemSeFala,
+  PERIGO_DECLARADO, O_ALVO_AUSENTE, nomeAusenteNaFrase, A_BUSCA_SOB_OLHOS,
 } from "../src/motor/a-regua-do-momento.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
@@ -391,6 +392,66 @@ sec("S18. o conserto depois da segunda sessão jogada (19/11/2026, o-mestre-vivo
   const pagarMenos = comFrase("pergunto pra Seraphina quanto ela quer pela mao de engenho e tento pagar bem menos", cenaDe({ pessoas: [N("Seraphina Pennington", "mestre do porto")] }));
   t("«tento pagar bem menos» é barganha, e rola (era sem leitura: T17)", pagarMenos.rola && pagarMenos.porque === "motivoParaNegar", pagarMenos.porque);
   t("e o preço do motivo para negar o ouve", MOTIVO_PARA_NEGAR_DO_ALVO.preco.test("tento pagar bem menos"));
+}
+
+sec("S19. o conserto depois da terceira sessão jogada (19/11/2026, o-mestre-vivo.md §19)");
+{
+  /* as frases são nossas, escritas sobre os turnos da sessão mv-3
+     (mestre-vivo-sessao-3.md): cada uma falhava antes e passa agora; os
+     controles provam que o calmo continua calmo */
+  const comFrase = (frase, cena, ctx) => valeRolagem(ler(frase), cena, { ...(ctx || {}), frase, leitura: CTX });
+  const G = (nome) => ({ nome, papel: "guerreira", estados: ["do_grupo"] });
+  const N = (nome, papel, ...estados) => ({ nome, papel, estados });
+  const soOrla = cenaDe({ pessoas: [G("Orla")] });
+  t("as tabelas novas são congeladas", [PERIGO_DECLARADO, PERIGO_DECLARADO.numeros, O_ALVO_AUSENTE, A_BUSCA_SOB_OLHOS, MENTIRA_E_AMEACA.contraOGrupo].every(Object.isFrozen));
+  /* 1. a mesma ação, o mesmo veredito: quem a frase nomeia e não está em cena */
+  const guarda = comFrase("digo ao guarda que sou inspetor da coroa e preciso passar", soOrla);
+  t("a mentira ao guarda que o painel não tem rola (caía na companheira: T2)", guarda.rola && guarda.porque === "mentiraOuAmeaca", guarda.porque);
+  const metade = comFrase("peço que ela me venda o mapa pela metade do preço", soOrla);
+  t("a barganha sem nome, só com o grupo em cena, é com quem vende, e rola (T5)", metade.rola && metade.porque === "motivoParaNegar", metade.porque);
+  const regateio = comFrase("regateio o preço do frasco", cenaDe({ pessoas: [N("Tobin", "mercador")] }));
+  t("regatear é barganha, e rola como a do T18 (era sem leitura: T4)", regateio.rola && regateio.porque === "motivoParaNegar" && MOTIVO_PARA_NEGAR_DO_ALVO.preco.test("regateio"), regateio.porque);
+  t("o nome próprio a quem se fala e que não está em cena é um estranho, mesmo com outros de fora",
+    nomeAusenteNaFrase("minto pra Bryna que estou de passagem", cenaDe({ pessoas: [N("Tobin", "marinheiro", "disposta")] })) === "Bryna"
+    && nomeAusenteNaFrase("minto pra Tobin que estou de passagem", cenaDe({ pessoas: [N("Tobin", "marinheiro")] })) === ""
+    && nomeAusenteNaFrase("vou pra ele e digo oi", soOrla) === "");
+  const bryna = comFrase("minto pra Bryna que estou só de passagem pela ilha", cenaDe({ pessoas: [G("Orla"), N("Tobin", "marinheiro", "disposta")] }));
+  t("a mentira a Bryna, ausente do painel, não cai no marinheiro disposto: rola (T24)", bryna.rola && bryna.porque === "mentiraOuAmeaca", bryna.porque);
+  const aOrla = comFrase("minto pra Orla que não fui eu que peguei a chave", soOrla);
+  t("mentir à companheira é mentir a quem sabe: rola (era dispostoCede: T13)", aOrla.rola && aOrla.porque === "mentiraAoGrupo", aOrla.porque);
+  const vigia = comFrase("peço a Orla que vigie a porta", soOrla);
+  t("o favor à companheira continua sem dado (T10)", !vigia.rola && vigia.porque === "dispostoCede", vigia.porque);
+  const mentiraAoAmigo = comFrase("digo pro guarda que venho a serviço do barão", cenaDe({ pessoas: [P("guarda do portão", "disposta")] }));
+  t("a mentira a quem já deixa passar, que não é do grupo, continua sem dado (E094)", !mentiraAoAmigo.rola, mentiraAoAmigo.porque);
+  /* a busca debaixo dos olhos do dono */
+  const doran = cenaDe({ pessoas: [G("Orla"), N("Doran", "mercador")] });
+  const barraca = comFrase("reviro a barraca dele procurando o livro", doran);
+  t("revirar a barraca do dono presente é a mão leve contra ele, e rola Prestidigitação (era buscaVazia: T21)",
+    barraca.rola && barraca.veredito && barraca.veredito.pericia === "prestidigitacao" && barraca.ouviu && barraca.ouviu.porta === "dono", JSON.stringify([barraca.porque, barraca.veredito && barraca.veredito.pericia]));
+  const peloNome = comFrase("reviro a barraca do Doran", doran);
+  t("e pelo nome, quando o «do» diz de quem é", peloNome.rola && peloNome.veredito.pericia === "prestidigitacao", peloNome.porque);
+  const procura = comFrase("procuro o Doran no meio do povo", doran);
+  t("procurar a pessoa não é mexer nas coisas dela", !procura.rola || procura.veredito.pericia !== "prestidigitacao", procura.porque);
+  const caido = comFrase("reviso os bolsos dele", cenaDe({ pessoas: [N("", "bandido caído")] }));
+  t("do caído, revistar continua a ser procurar (o exame, E018–E021)", !caido.rola && caido.porque === "buscaVazia", caido.porque);
+  const vazio = comFrase("procuro um compartimento escondido na arca", cenaDe({ pessoas: [G("Orla")] }));
+  t("a busca sem nada escondido e sem dono continua descrita (o exame, E002, E010, E703)", !vazio.rola && vazio.porque === "buscaVazia", vazio.porque);
+  /* 2. o corpo em risco que a frase declara */
+  const vao = comFrase("salto o vão de três metros entre os trapiches, por cima da água", cenaDe({}));
+  t("o vão de três metros sobre a água rola sem estado nenhum (era travessiaCalma: T12)", vao.rola && vao.porque === "riscoDoAto", vao.porque);
+  const fuga = comFrase("pulo por cima dos barris e fujo do Orin, que vem atrás de mim com uma faca", cenaDe({ pessoas: [N("Orin", "capanga")] }));
+  t("pular os barris fugindo de alguém rola (era travessiaCalma: T27)", fuga.rola && fuga.porque === "riscoDoAto", fuga.porque);
+  const barcos = comFrase("atravesso o cais pulando por cima dos barcos, fugindo", cenaDe({}));
+  t("e o salto no gerúndio em fuga (a sessão mv-2, T22, ficava de fora)", barcos.rola && barcos.porque === "riscoDoAto", barcos.porque);
+  const alto = comFrase("escalo a parede do armazém, uns cinco metros até a janela", cenaDe({}));
+  t("a altura dita em metros rola", alto.rola && alto.porque === "riscoDoAto", alto.porque);
+  for (const [f, id] of [["pulo na agua e vou nadando ate o bote", "E196"], ["dá pra eu subir no telhado pela calha?", "E365"], ["salto a cerca e sigo correndo", "E373"], ["pulo o muro", "E172"], ["escalo um muro de dois metros", "medida curta"]]) {
+    const r = comFrase(f, cenaDe({}));
+    t(`o calmo continua calmo: «${f}» (${id})`, !r.rola, r.porque);
+  }
+  /* 3. a ameaça com a arma é Intimidação */
+  const adaga = comFrase("levanto o Doran pela gola com a adaga na mão e mando ele falar", doran);
+  t("ameaçar com a adaga na mão é Intimidação, não Atletismo (T22)", adaga.rola && adaga.veredito.pericia === "intimidacao", JSON.stringify([adaga.porque, adaga.veredito && adaga.veredito.pericia]));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

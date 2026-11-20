@@ -149,7 +149,13 @@ const CATRACA_DO_EXAME = {
        (origem «sessao-mv-1», rodada 4). O Mestre de hoje não mudou; a A é que
        cresceu, e ele erra nas frases novas o que errava na sessão (3 pedidos
        indevidos, 11 omissões). Era 226 · 46 · 109 · cat 160 · per 83 · pares 3. */
-    A: { rolaCerto: 243, pedeIndevido: 49, deixaDePedir: 120, categoria: 179, pericia: 90, paresQueSeparam: 3 },
+    /* MOVIDA de novo em 19/11/2026 (o conserto depois da terceira sessão,
+       o-mestre-vivo.md §19), e o motivo: 32 itens escritos sobre os turnos da
+       sessão mv-3 entraram na A (origem «sessao-mv-3», rodada 5). O Mestre de
+       hoje erra neles o que errou na sessão (3 indevidos, 3 omissões); nas 444
+       frases que já eram da A ele não mudou. Era 243 · 49 · 120 · cat 179 ·
+       per 90 · pares 3. */
+    A: { rolaCerto: 269, pedeIndevido: 52, deixaDePedir: 123, categoria: 204, pericia: 108, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
   },
   regua: {
@@ -168,7 +174,11 @@ const CATRACA_DO_EXAME = {
        que vai responder» (E336) e pelo «aperto o cara até ele cuspir» (E308)
        — mesmo indevido 2. Era 378 · 2 · 32 · cat 303 · per 171 · pares 97. A B
        foi medida e ficou igual (158 · 6 · 32 · 119 · 53 · 54). */
-    A: { rolaCerto: 381, pedeIndevido: 2, deixaDePedir: 29, categoria: 309, pericia: 174, paresQueSeparam: 100 },
+    /* SUBIU em 19/11/2026 (o conserto depois da terceira sessão, §19), só a A
+       e só para cima: os 32 itens da sessão mv-3 (32 de 32 certos); nas 412
+       que já eram da A, 381 · 2 · 29 como antes. Era 381 · 2 · 29 · cat 309 ·
+       per 174 · pares 100. */
+    A: { rolaCerto: 413, pedeIndevido: 2, deixaDePedir: 29, categoria: 340, pericia: 196, paresQueSeparam: 102 },
     B: { rolaCerto: 158, pedeIndevido: 6, deixaDePedir: 32, categoria: 119, pericia: 53, paresQueSeparam: 54 },
   },
 };

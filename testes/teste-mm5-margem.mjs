@@ -247,9 +247,15 @@ sec("8. o envelope do teste nos três desfechos");
   t("gesto no meio: o que declarei ACONTECE, e paga", /O que eu declarei ACONTECE \(saltar do balcão\)/.test(gesto) && gesto.includes(custoPorAlvo("improviso_destreza").preco));
   t("e não manda revelar coisa nenhuma", !/Revele UMA coisa/.test(gesto));
   /* a fala e o envelope do custo sabem das duas metades */
-  t("a fala do 'mas' não diz 'Faltaram 0'", /Na conta exata/.test(falaDoCusto(mas)) && !/Faltaram/.test(falaDoCusto(mas)));
-  t("a fala do 'mas' por 1 diz por quanto passou", /Passou por 1/.test(falaDoCusto(mas1)));
-  t("a fala do 'quase' é a de sempre", falaDoCusto(quase) === `⚖ Faltaram 2 — e por tão pouco o mundo negocia: ${quase.diz}.`);
+  /* MOVIDAS em 19/11/2026 (o-mestre-vivo.md §19), e o motivo: «Passou por 1 —
+     e por um fio o mundo cobra» e «por tão pouco o mundo negocia» eram o
+     sistema explicando a margem na tela (a sessão mv-3 listou a primeira como
+     texto de regra). A fala do «mas» diz o que aconteceu sem a conta; a do
+     «quase» guarda quanto faltou (o jogador vê o dado) e perde o mundo que
+     negocia. Eram: /Na conta exata/, /Passou por 1/ e a frase do «negocia». */
+  t("a fala do 'mas' não diz 'Faltaram 0', nem a conta", /^⚖ Por um fio: /.test(falaDoCusto(mas)) && !/Faltaram|Passou|conta/.test(falaDoCusto(mas)));
+  t("a fala do 'mas' por 1 diz o preço, sem o mundo cobrando", falaDoCusto(mas1) === `⚖ Por um fio: ${mas1.diz}.` && !/mundo/.test(falaDoCusto(mas1)));
+  t("a fala do 'quase' diz quanto faltou e o preço", falaDoCusto(quase) === `⚖ Faltaram 2, e ainda assim: ${quase.diz}.`);
   const ec = envelopeDoCusto(mas, arm.rotulo);
   t("o envelope do custo do 'mas': passei por um fio, consigo mas pago", /passei no teste .* por um fio/.test(ec) && /EU CONSIGO — mas pago/.test(ec));
   t("e diz o que já foi cobrado, em número", new RegExp(`${mas.pele.dano} de vida`).test(ec) && /5 minutos no relógio/.test(ec));

@@ -93,7 +93,27 @@ sec("5. a porta trancada tem quatro caminhos — e o sistema sabe quais estão a
   t("sem gazua, é impossível — não teste difícil", imp && imp.tipo === "impossivel");
   t("e diz por quê", /ferramentas de ladrão/.test(imp.porque));
   t("e o que abriria", imp.comoSeria.length > 0);
-  t("a fala ao jogador lista as saídas", /O que abriria/.test(falaDoVeredicto(imp)));
+  /* MOVIDA em 19/11/2026 (o-mestre-vivo.md §19), e o motivo: «O que abriria:
+     no braço» era o mecanismo falando (a sessão mv-3 o listou como texto de
+     regra). A fala segue listando as saídas, agora como fala de mesa
+     («Outro jeito: à força, no ombro»). Era /O que abriria/. */
+  t("a fala ao jogador lista as saídas, como fala de mesa", /Outro jeito: /.test(falaDoVeredicto(imp)) && !/O que abriria/.test(falaDoVeredicto(imp)) && /à força/.test(falaDoVeredicto(imp)));
+  /* 19/11 (§19): «sem ferramentas» não é pedir as ferramentas */
+  const semFerr = lerAcao("arrombo a arca sem ferramentas", base);
+  t("«arrombo sem ferramentas» é a via da força, e não a das ferramentas que faltam", semFerr && semFerr.tipo === "teste" && semFerr.pericia === "arrombamento", semFerr && semFerr.tipo);
+  /* 19/11 (§19): o que a sessão mv-3 mostrou no catálogo (frases nossas) */
+  const reg = lerAcao("regateio o preço do frasco", base);
+  t("regatear é convencer", reg && reg.id === "convencer" && !!reg.social, reg && reg.id);
+  const comAdaga = lerAcao("levanto o Doran pela gola com a adaga na mão", base);
+  t("a ameaça com a adaga na mão é Intimidação, não «vencer o peso»", comAdaga && comAdaga.id === "intimidar", comAdaga && comAdaga.id);
+  const avaliar = lerAcao("mostro a adaga ao ferreiro pra ele avaliar", base);
+  t("mostrar a lâmina para avaliar não é ameaça no catálogo", !avaliar || avaliar.id !== "intimidar", avaliar && avaliar.id);
+  const pedra = lerAcao("empurro a pedra que tranca a passagem", base), grade = lerAcao("empurro a grade do esgoto", base);
+  t("a força fecha a tentativa pelo objeto: a pedra e a grade são chaves diferentes", pedra.id === "forcar" && grade.id === "forcar" && pedra.chave !== grade.chave, JSON.stringify([pedra.chave, grade.chave]));
+  const tela = lerAcao("empurro a tela e procuro atrás", base);
+  t("afastar a tela não é peso: é procurar atrás", tela && tela.id === "buscar", tela && tela.id);
+  const barcos = lerAcao("atravesso o cais pulando de barco em barco", base);
+  t("o salto no gerúndio é saltar", barcos && barcos.id === "saltar", barcos && barcos.id);
 
   const ok1 = lerAcao("tento abrir a porta com a gazua", { ...base, personagem: ladino });
   t("com a gazua na bolsa, vira teste", ok1 && ok1.tipo === "teste" && ok1.via === "ferramentas");

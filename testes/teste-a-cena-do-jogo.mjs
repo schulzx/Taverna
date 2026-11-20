@@ -381,5 +381,26 @@ sec("S18. o espontâneo depois da segunda sessão jogada (19/11/2026, o-mestre-v
   t("os textos do que o mundo mostra são PT-BR (sem tu, teu, tua)", Object.values(O_QUE_O_MUNDO_MOSTRA).every((m) => !/\b(tu|teu|tua|teus|tuas|contigo)\b/i.test(m.passou + " " + m.falhou)));
 }
 
+sec("S19. a terceira sessão jogada, pelo retrato do jogo (19/11/2026, o-mestre-vivo.md §19)");
+{
+  /* o painel do jogo perde gente (a pessoa de quem se fala não está em
+     `pessoas`); a mesma frase tem de dar o mesmo veredito com ela em cena ou
+     fora dela. Frases nossas, escritas sobre os turnos da sessão mv-3. */
+  const cais = (pessoas) => ({ cidade: "Ilha das Gaivotas", lugar: { nome: "Cais" }, minuto: 15 * 60, clima: "ensolarado", grupo: [{ nome: "Orla", papel: "guerreira", vida: 9, vidaMax: 9 }], pessoas });
+  for (const [frase, quem] of [["digo ao guarda que sou inspetor da coroa e preciso passar", { nome: "Guarda", papel: "guarda" }],
+    ["minto pra Bryna que estou só de passagem pela ilha", { nome: "Bryna", papel: "contrabandista" }],
+    ["peço que ela me venda o mapa pela metade do preço", { nome: "Mirela", papel: "cartógrafa" }]]) {
+    const dentro = chamadoDoMomento(frase, CTX, cais([quem]), {});
+    const fora = chamadoDoMomento(frase, CTX, cais([]), {});
+    t(`«${frase.slice(0, 32)}…» rola com a pessoa no painel e fora dele`, dentro.rola && fora.rola, J([dentro.porque, fora.porque]));
+  }
+  /* o preço da conversa, na língua da mesa */
+  const P = O_CHAMADO_DA_CONVERSA;
+  t("o aviso da conversa é o fato da falha, por perícia, sem o livro de tentativas falando",
+    Object.isFrozen(P.porPericia) && [P.aviso, ...Object.values(P.porPericia)].every((a) => a.length <= O_CHAMADO.tetoDoAviso && O_CHAMADO.condicional.test(a) && !/pedir igual|não muda nada|tentativa/.test(a)));
+  const mentira = chamadoDoMomento("minto pra Bryna que estou só de passagem pela ilha", CTX, cais([{ nome: "Bryna", papel: "contrabandista" }]), {});
+  t("a mentira avisa que a mentira não cola", !!mentira.chamado && mentira.chamado.aviso === P.porPericia.enganacao, mentira.chamado && mentira.chamado.aviso);
+}
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

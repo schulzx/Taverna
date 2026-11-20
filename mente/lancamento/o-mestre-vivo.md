@@ -1062,3 +1062,56 @@ estranho que o retrato não tem), e o exame descreve a cena com a pessoa sempre 
 **O que ficou de fora.** T22 (atravessar o cais pulando de barco em barco, em fuga): o catálogo não ouve «pulando
 por cima dos barcos», e a fuga não é estado da cena — família da travessia, fora deste pacote. As frases da sessão
 mv-2 não entraram no exame. Nada disto foi jogado: está provado nas suítes e no retrato montado à mão.
+
+## 19. O conserto depois da terceira sessão
+
+**19/11/2026.** A terceira sessão (`mestre-vivo-sessao-3.md`) não mostrou falta de dado: mostrou **a mesma ação com dois
+vereditos**. Cada turno foi reproduzido por `chamadoDoMomento` com o retrato montado pelo `retratoDosRefs`, com frases
+nossas; cada conserto tem caso nas suítes (S19 da régua, da cena do jogo e da fiação; `teste-desafios`).
+
+**1. A inconsistência era do alvo, não da ação.** Com a pessoa no painel, mentir ao guarda (T2), pedir metade do preço
+(T5) e mentir a Bryna (T24) já rolavam. No jogo a pessoa não estava no painel, e o alvo caía na Orla, que «aceita». Agora
+(`O_ALVO_AUSENTE`, `nomeAusenteNaFrase`) o nome próprio logo depois do verbo da fala que não está em cena vira um estranho,
+mesmo com outros de fora presentes; o nome ou papel que não casa com ninguém nunca cai no companheiro; a barganha sem nome,
+só com o grupo, é com quem vende. **Regatear** entrou no catálogo (convencer) e no preço do motivo para negar (T4, T18).
+**Mentir à companheira** rola (`mentiraAoGrupo`, T13): ela sabe o que viu. A mentira ao disposto de fora (E094) continua
+sem dado. **Revistar com o dono ali** (T21) é mão leve contra ele (`A_BUSCA_SOB_OLHOS`): Prestidigitação. A busca **sem dono
+e sem nada escondido** (T9, T29) continua descrita. É a regra do estudo e do exame (E002, E010, E383, E703): sem nada a achar
+não há incerteza nem preço. Se a pessoa julgar que ali devia rolar, a mudança é de regra, não de conserto.
+
+**2. O corpo em risco.** A régua só via perigo em estado, e o mundo não escreve vão, água nem perseguidor.
+`PERIGO_DECLARADO`: o vão, a água por baixo, a fuga, a altura em metros (≥ 3) ou andares (≥ 2) **ditos na frase** são
+perigo do ato (T12, T27, e o «pulando de barco em barco» da sessão 2, que o catálogo agora ouve no gerúndio). A palavra
+solta não conta: «subo no telhado pela calha» numa cena calma continua sem dado, como no exame (E365). Por isso o T7, como
+foi resumido, segue sem dado. Rola se a frase disser a altura.
+
+**3. A ameaça com a arma** caía em `forcar` («levanto o Doran pela gola…»): Atletismo. O catálogo ouve a arma mostrada a
+alguém, ou na mão de quem agarra, como Intimidação (T22).
+
+**4. O livro das tentativas.** A chave de `forcar` era `lugar|peso`, e o Atletismo falho do T22 fechou a busca do T29. Agora
+a tentativa fecha por ação e objeto (`objetoDaChaveDe`), e afastar tela, lona, tapete ou quadro deixou de ser peso. A causa
+estava em `desafios.js`, não no App.
+
+**5. Falha sem preço** (T25). A régua só rola o esgueirar porque alguém pode notar, e sabe quem. `marcarDoMomento` põe no
+veredito `secaDoMomento` («Orin me vê onde eu não devia estar…», `O_PRECO_NA_CENA`), e `desfechoDaMargem` usa esse texto
+na falha seca. O envelope da falha só diz «já cobrou o tempo» quando houve tempo a cobrar.
+
+**6. Texto de regra.** «Se falhar, a resposta é não, e pedir igual não muda nada» virou o fato da falha por perícia (a
+resposta é não; a mentira não cola; a pessoa não se dobra). «Passou por 1 — e por um fio o mundo cobra» virou «Por um
+fio: …», e «por tão pouco o mundo negocia» virou «Faltaram N, e ainda assim: …». «O que abriria: no braço» virou
+«Outro jeito: à força, no ombro». A via dita depois de «sem» já não é a pedida («arrombo sem ferramentas» rola
+Arrombamento). «o que você tentou, conseguiu» virou «um risco enfrentado, e vencido». As três primeiras e a quarta valem
+também no Mestre de hoje.
+
+**A medida.** Régua, metade A: 381 · 2 · 29 nas 412 antigas, **inalterada**; mais 32 itens novos da sessão mv-3
+(`origem: "sessao-mv-3"`), 32 de 32 certos: **413 · 2 · 29 · cat 340 · per 196 · pares 102**. Metade B (duas medidas, só o
+agregado): antes 158 · 6 · 32 · cat 119 · per 53 · pares 54. Depois, medida **antes dos últimos ajustes**: 157 · 7 ·
+pares 53. Os ajustes vieram depois, todos tirados da A e dos corpus, nunca da B: a arma mostrada passou a exigir alguém
+diante dela, porque «ergo a espada em saudação» virava ameaça no corpus do improviso; o nome ausente só conta depois do
+verbo da fala; a mentira à companheira ganhou a mesma guarda da mentira ao estranho; a altura passou a ser lida também em
+andares. A B não foi medida de novo, a catraca dela ficou onde estava e pode estar vermelha.
+
+**O que fica para o App.** (a) Com `secaDoMomento` no desafio, a pergunta da testemunha ao oráculo contradiz o fato: em
+`concluirRolagem`, `if (des && des.testemunha && !passou) {` → `if (des && des.testemunha && !passou && !des.secaDoMomento) {`.
+(b) A legenda do dado anterior colada na narração seguinte e o «72 moedas» solto não foram achados nos módulos: a busca
+deve começar pelo App.

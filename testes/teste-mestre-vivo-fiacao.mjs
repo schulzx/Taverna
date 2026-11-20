@@ -22,12 +22,12 @@ import {
   lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, MOTIVO_DO_ESPONTANEO, rolagemDoEspontaneo,
   O_ESPONTANEO_NA_MESA, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, PEDIDOS_QUE_O_MESTRE_VIVO_CALA, oMestreVivoCalaOPedido,
   SEM_FIO_NO_MOMENTO, semFioNoMomento, marcarDoMomento, O_QUE_ACONTECE_SEM_DADO, oQueAconteceSemDado,
-  O_SIM_SEM_DADO, envelopeDoSimSemDado,
+  O_SIM_SEM_DADO, envelopeDoSimSemDado, O_PRECO_NA_CENA,
 } from "../src/o-mestre-vivo-no-jogo.js";
 import { REGUA_DO_MOMENTO } from "../src/motor/a-regua-do-momento.js";
 import { QUANDO_O_MESTRE_CHAMA } from "../src/motor/o-mestre-chama.js";
 import { tamanhoPorId } from "../src/social.js";
-import { desfechoDaMargem, lerAcao } from "../src/desafios.js";
+import { desfechoDaMargem, lerAcao, envelopeDoCusto } from "../src/desafios.js";
 import { PODA_DO_AUSENTE } from "../src/motor/poda-do-ausente.js";
 import { FORMA_DO_RETRATO, cenaDoJogo, chamadoDoMomento, chamadoQueOMundoProvoca, O_DADO_DO_MUNDO, O_CHAMADO_DA_CONVERSA } from "../src/a-cena-do-jogo.js";
 import { RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
@@ -361,6 +361,33 @@ sec("S18. o que vai ao Narrador é fato de cena (19/11/2026, o-mestre-vivo.md §
   const simEnv = oQueAconteceSemDado({ tipo: "teste", id: "convencer", social: favor, dc: 14 }, { porque: "dispostoCede" }, { frase: "peço à Wren que me arrume uma corda" });
   t("o sim de oQueAconteceSemDado já traz o envelope (o App o prefere ao do teste social)", typeof simEnv.envelope === "string" && simEnv.envelope.includes("CONSEGUI"));
   t("a tabela do sim é congelada e PT-BR", Object.isFrozen(O_SIM_SEM_DADO) && !/\b(tu|teu|tua)\b/.test(O_SIM_SEM_DADO.envelope));
+}
+
+sec("S19. a falha cobra o que a cena sabe (19/11/2026, o-mestre-vivo.md §19)");
+{
+  /* a sessão mv-3 (T25): «me escondo atrás da lona» falhou, e a narração disse
+     que ninguém olhou — o envelope da falha dizia só que o corpo aparecia, e o
+     Narrador escolheu quem via. Frases nossas. */
+  const HEROI = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 10 };
+  const LEIT = { personagem: HEROI, semente: "s19", lugar: "Cais", tentativas: {}, dia: 1 };
+  const ret = retratoDosRefs({ cidade: "Ilha", lugar: { nome: "Cais" }, minuto: 900, clima: "ensolarado", grupo: [{ nome: "Orla", vida: 9, vidaMax: 9 }], presentes: [{ nome: "Orin", papel: "capanga" }] });
+  const m = chamadoDoMomento("me escondo atrás da lona", LEIT, ret, {});
+  const v = marcarDoMomento(m.veredito, m);
+  t("esgueirar com alguém que pode notar leva o preço da cena, com o nome de quem vê", m.rola && typeof v.secaDoMomento === "string" && v.secaDoMomento.startsWith("Orin "), v.secaDoMomento);
+  const des = desfechoDaMargem(v, { total: 5, dc: 15 });
+  t("a falha seca diz o fato (quem me vê), e não o genérico", !!des && des.diz === v.secaDoMomento, des && des.diz);
+  const env = envelopeDoCusto(des, "Furtividade");
+  t("o envelope da falha leva o fato e não promete um tempo que não se cobrou", env.includes(v.secaDoMomento) && !/cobrou o tempo/.test(env), env);
+  t("e o preço da cena não fala da regra", Object.values(O_PRECO_NA_CENA).every((s) => !O_QUE_ACONTECE.proibidas.test(s) && !/\b(tu|teu|tua)\b/.test(s)) && Object.isFrozen(O_PRECO_NA_CENA));
+  const quase = desfechoDaMargem(v, { total: 14, dc: 15 });
+  t("o «quase» continua o preço dele (passa, mas faz barulho)", !!quase && quase.porPouco && quase.diz !== v.secaDoMomento);
+  const furto = chamadoDoMomento("furto a bolsa do Orin", LEIT, ret, {});
+  const vf = marcarDoMomento(furto.veredito, furto);
+  t("a mão leve contra o dono presente: ele vê a mão", typeof vf.secaDoMomento === "string" && /^Orin vê a minha mão/.test(vf.secaDoMomento), vf.secaDoMomento);
+  const vazio = retratoDosRefs({ cidade: "Ilha", lugar: { nome: "Beco", dentroDe: "Cais" }, minuto: 120, clima: "ensolarado", grupo: [{ nome: "Orla", vida: 9, vidaMax: 9 }], presentes: [] });
+  const ninguem = chamadoDoMomento("me escondo atrás da lona", LEIT, vazio, {});
+  t("sem ninguém que note, não rola, e nada de preço da cena", !ninguem.rola && !("secaDoMomento" in marcarDoMomento(ninguem.veredito || { tipo: "teste", id: "furtar_se" }, ninguem)), ninguem.porque);
+  t("a busca não ganha preço de ser visto", !("secaDoMomento" in marcarDoMomento({ tipo: "teste", id: "buscar" }, m)));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

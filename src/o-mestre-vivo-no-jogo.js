@@ -24,7 +24,8 @@
    Puro: sem React, sem relógio, sem sorte. Lixo devolve null (ou o lado
    seguro) e nunca lança. */
 import { FORMA_DO_RETRATO, ONDE_DO_RETRATO, O_DADO_DO_MUNDO } from "./a-cena-do-jogo.js";
-import { RESPOSTAS_DA_PERGUNTA } from "./cena-do-momento.js";
+import { RESPOSTAS_DA_PERGUNTA, lerCena, estadoPorId, alguemPodeNotar } from "./cena-do-momento.js";
+import { familiaDaAcao } from "./motor/a-regua-do-momento.js";
 import { lancamento } from "./motor/a-bandeja.js";
 import { dificuldadeSocial } from "./social.js";
 
@@ -390,10 +391,41 @@ export function semFioNoMomento(des) {
 }
 /* o veredito que vai ao dado, marcado pelo momento: `doMomento` e a
    vantagem que a cena dá (a régua: quem vai ser roubado dorme) */
+/* 19/11 (o-mestre-vivo.md §19): A FALHA COBRA O QUE A CENA SABE. «Me escondo
+   atrás da lona» falhou (sessão mv-3, T25), e a narração disse que ninguém
+   olhou: o envelope da falha dizia só «o corpo aparece onde não devia», e o
+   Narrador escolheu quem via — ninguém. Mas a régua só rolou PORQUE alguém
+   podia notar, e sabe quem. Na falha seca de esgueirar e de mão leve, o preço
+   é o fato «quem está ali me vê» (`secaDoMomento`, lido por
+   desafios.js#desfechoDaMargem), com o nome de quem a cena tem; sem nome, as
+   testemunhas da rua, ou alguém por perto. Na primeira pessoa, como o
+   envelope; sem palavra de regra. */
+export const O_PRECO_NA_CENA = Object.freeze({
+  esgueirar: "{quem} me vê onde eu não devia estar, e não tira mais os olhos de mim",
+  furtar: "{quem} vê a minha mão onde ela não devia estar",
+  naRua: "alguém na rua",
+  alguem: "alguém por perto",
+});
+function quemVeNaCena(cena, quem) {
+  const c = lerCena(cena);
+  if (!c) return "";
+  const acordado = (p) => !p.estados.includes("do_grupo") && !p.estados.some((id) => (estadoPorId(id) || {}).inerte);
+  const q = txt(quem).toLowerCase();
+  const alvo = (q && c.pessoas.find((p) => acordado(p) && (txt(p.nome).toLowerCase() === q || txt(p.papel).toLowerCase() === q))) || c.pessoas.find(acordado);
+  if (alvo) return txt(alvo.nome) || (txt(alvo.papel) ? `o ${txt(alvo.papel)}` : O_PRECO_NA_CENA.alguem);
+  if (alguemPodeNotar(c)) return c.cena.estados.includes("com_testemunhas") ? O_PRECO_NA_CENA.naRua : O_PRECO_NA_CENA.alguem;
+  return "";
+}
 export function marcarDoMomento(v, m) {
   if (!obj(v)) return v;
   const vantagem = obj(m) ? txt(m.vantagem) : "";
-  return Object.freeze({ ...v, doMomento: true, ...(vantagem ? { vantagemDoMomento: vantagem } : {}) });
+  let seca = "";
+  try {
+    const molde = O_PRECO_NA_CENA[familiaDaAcao(v)];
+    const quem = molde && obj(m) ? quemVeNaCena(m.cena, txt(v.pessoa && v.pessoa.nome) || txt(v.quem)) : "";
+    if (molde && quem) seca = maiuscula(molde.replace("{quem}", quem));
+  } catch { seca = ""; }
+  return Object.freeze({ ...v, doMomento: true, ...(vantagem ? { vantagemDoMomento: vantagem } : {}), ...(seca ? { secaDoMomento: seca } : {}) });
 }
 
 /* 4. O QUE ACONTECE SEM DADO APLICA O QUE ACONTECEU. Sem dado é sucesso sem

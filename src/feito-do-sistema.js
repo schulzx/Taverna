@@ -89,7 +89,9 @@ export const FEITO_DO_SISTEMA = Object.freeze({
     passo: Object.freeze({ grau: "feito", de: "teste", porque: "o que o caminho escondia veio à luz" }),
     segredo: Object.freeze({ grau: "feito", de: "livro", porque: "um segredo arrancado ao lugar" }),
     cidade: Object.freeze({ grau: "feito", de: "livro", porque: "uma terra onde você nunca tinha posto o pé" }),
-    teste: Object.freeze({ grau: "pequeno", de: "teste", porque: "o que você tentou, conseguiu" }),
+    teste: Object.freeze({ grau: "pequeno", de: "teste", porque: "um risco enfrentado, e vencido" }),
+    /* 19/11 (o-mestre-vivo.md §19): era «o que você tentou, conseguiu» — a
+       sessão mv-3 o leu como o sistema contando o próprio resultado */
     lugar: Object.freeze({ grau: "pequeno", de: "livro", porque: "um lugar por onde você nunca tinha passado" }),
     conversa: Object.freeze({ grau: "pequeno", de: "livro", porque: "uma conversa que ficou" }),
   }),
