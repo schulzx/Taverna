@@ -19855,6 +19855,154 @@ ela mora, ou a forma da peça no celular):
 - **no celular**: o tapete de couro (a régua presa não tem borda — o F4 não diz como o couro fica
   na janela que rola), as cartas 85 × 80 em 2 × 4, a janela da reação a y 530–740.
 
+### 10 · As lacunas fechadas (`desenho`, 19/11/2026)
+
+Responde ao §9. Só Figma e este arquivo. Página `266:67`, à direita da fila do celular (y 48050).
+**Nenhuma variável nova**: tudo sai das da coleção «A Mesa do Mestre» e dos estilos `Mesa/*`. Onde
+este bloco contradiz os §2–4, **vale este**.
+
+| prancha | nó | imagem (`mente/figma/`) |
+|---|---|---|
+| 10a · a luta inteira, 1440 × 900 | `344:23480` | `F4-luta-a-mesa-inteira-1440.png` |
+| 10b · as peças (carta de ação, a jogada, a reação, o espólio, a régua) | `345:23647` | `F4-luta-as-pecas.png` |
+| 10c · celular 375 × 812 | `347:23683` | `F4-luta-celular-375.png` |
+| 10d · celular: a janela do tapete, no meio e no fim | `347:23896` | `F4-luta-celular-janela-do-tapete.png` |
+
+**Lacuna 1 — a mão e a jogada.**
+
+- **`MAO_DE_ACOES`**: uma fila só de **8 cartas 102 × 112**, x 196 → 1088, y 762, 10 entre elas. Ordem:
+  Atacar · Mover · Empurrar · Derrubar · Saltar · Usar item · **Esperar** · **Fugir** (as duas saem do
+  couro e entram na mão). Glifos: os oito do F4 (`espadas`, `mover`, `empurrar`, `derrubar`, `saltar`,
+  `bolsa`, `ampulheta`, `fugir` — os traços estão em `GL`, no nó `316:10007`), 22 px, traço 1,75.
+- **A carta, de cima para baixo** (substitui as posições do §2): glifo 22 a y 8 · nome `Mesa/Nome` a
+  y 33 · **a linha do dado** a y 53 · custo `Mesa/Serviço` a y 76 (uma linha; duas no máximo).
+- **A linha do dado** (Spectral Bold 15 `tinta`, 14,30 : 1 no `ossoLume`) tem quatro formas, e toda
+  carta tem uma:
+  1. *rola, com alvo marcado*: glifo d20 de 16 a x 9, «7+» a x 28, e a chance «70 %» encostada à
+     direita (x = largura − 9). O número é **a menor face que basta** contra o alvo marcado;
+  2. *rola, sem alvo*: «d20 + 5», sem chance;
+  3. *não rola*: «sem dado», `Mesa/Serviço` `tintaDim` (7,72), centrado;
+  4. *o custo é dano*: glifo `espadas` 14 + «3× 2–10», Bold 14 `perigoNaPagina` (7,76), centrado — é
+     a mesma escrita da etiqueta de intenção.
+- **Estados**: os do §2 (repouso, armada +8 px, impedida com a razão na linha do dado, foco com anel
+  `ambarSuave` 2 a 2 px). Armar: 120 ms `ease-out`; movimento reduzido: troca seca.
+- **Tamanhos**: 102 × 112 com altura útil ≥ 720 · 90 × 100 a 1280 × 720 (glifo 20 a 6, nome a 28,
+  dado a 47, custo a 68) · **baixa, 102 × 72**, com altura útil < 720 (sem glifo: nome a 7, dado a 26,
+  custo a 48) · celular 85 × 80 em 2 × 4 (glifo 20 a 5, nome a 27, dado em Bold 13 a 44 com o d20 de
+  13 a x 6 e o número a x 22, custo a 60; **armada não sobe**: osso + tinta 2 + sombra `erguido`).
+- **`A_JOGADA`** — o «como?» e o «Agir» moram juntos, **à direita da mão**, em (1100, 762), 228 × 112:
+  - *a linha da pena*, 228 × 48: `pergaminho`, borda `pergaminhoBorda` 1, raio 3, sombra `pousado`;
+    glifo `pena` 18 em `brasaNaPagina` a (12, 15); «diga como, se quiser…» em `Mesa/Nota do Mestre`
+    `tintaDim` (6,56) a x 38; a frase escrita em `tinta`, uma linha que corre para o lado; foco =
+    borda `tinta` 2. **Enter age.**
+  - 8 px, e *«Agir»*, 228 × 56, raio 6. **Impedida**: sem chão, tracejado `inkMeio` 1,5 `4 4`, «Agir»
+    em `inkMeio` e **a razão** em `ink` — «escolha uma carta», «toque no alvo», «não é a sua vez».
+    **Pronta**: chão `ambar`, sombra `peca`, «Agir» em `Mesa/Contagem` e o veredito em `Mesa/Serviço`,
+    os dois em `sobreAmbar` (8,68): «Atacar · Rato Gigante 1 · 70 %»; sem dado, o custo no lugar da
+    chance («Mover · até G7 · 4,5 de 9 m»). Pressionada: desce 1 px e perde a sombra. De impedida a
+    pronta: 160 ms de opacidade; reduzido, seco.
+  - **Três caminhos, uma ação**: «Agir», Enter na pena, ou o **segundo toque no alvo marcado**. Esc
+    desarma a carta. O botão «dizer» de 44 × 44 da tira **sai** (era a mesma ação com outra cara).
+  - Celular: a mesma dupla numa linha a y 744 — pena 233 × 60 em x 6, «Agir» 124 × 60 em x 245
+    («Atacar · 70 %»). **A folha que sobe de baixo («Atacar · Cancelar») aposenta-se.**
+  - A 1280: (964, 600), 220 × 100 — pena 44, 6, «Agir» 50.
+- **A coluna direita, em papel** (de cima para baixo, x 1100, largura 300): bandeja e vela (36) · a
+  **tira do Mestre 300 × 128** a y 250, **só a fala** (4 linhas) · «nesta rodada, eles vão» a y 398
+  (−1°) · **o alvo, papel 300 × 222** a y 530: «O ALVO», a carta 60 × 84 a (14, 34), nome, dez contas
+  de PV em `lacre` + «4 de 4», distância e defesa (`tintaDim`), fio a y 128, «SEU GOLPE», a chance em
+  Spectral Bold 24, «d20 + 5 contra a defesa 12», «7 ou mais no dado · o 20 é crítico», e «dano 4–9 ·
+  abate em 30 %» em Bold 14 `brasaNaPagina` (6,71). Com duas entradas em «eles vão», o alvo perde a
+  metade de baixo (fica 300 × 128: o veredito já está na carta e no «Agir»); com três, a tira cai
+  para duas linhas (88). O escudo fica em (1340, 792).
+- **`O_QUE_RESTA_NA_VEZ`** fica sob a carta de pé, como no §2, mas com **quatro** linhas de 24 (y 322
+  → 418): disco «ação», **triângulo «bônus»** (o §2 esqueceu-o; a tela de hoje tem), losango
+  «reação», casas «passo».
+- *Por que é melhor*: contra a captura `V6p2-tapete-1440` — a mão passa de 2 filas a 1; o dado e a
+  chance estão em 8 de 8 cartas (hoje 1 de 7); do «como?» ao «Agir» são 8 px (hoje ~290); a faixa
+  preta de ~190 px entre o tapete e a mão some; a casa vai de ~34 a **46 px** (+83 % de área). «Agir»
+  mede 228 × 56 (WCAG 2.2, 2.5.8 pede 24 × 24; Apple HIG, 44 pt).
+
+**Lacuna 2 — o tapete no celular** (10c, 10d). A janela é **364 × 412** em (6, 58), 7 × 8 casas de 48.
+
+- **A moldura é da janela e não rola**: couro `couroAlto`, borda `couroBaixo` 2, raio 10; a faixa de
+  cima e a da esquerda (28) levam a régua, presas (`position: sticky`), e o canto de 28 × 28 fica por
+  cima das duas; costura **só nesses dois lados** (a 4 px, `latao` a 55 %, 1 px, `5 4`); uma tacha de
+  8 a 9 px do canto.
+- **A borda é do tapete e rola com ele**: o conteúdo mede `28 + colunas × 48 + 14` por
+  `28 + filas × 48 + 14`; os 14 px da direita e de baixo são o couro do próprio tapete, com a costura
+  e as três tachas dele, e só aparecem **no fim**.
+- **Enquanto há tapete para lá da janela**, a borda de dentro desse lado leva uma sombra de 12 px
+  (`#000`, 0 → 42 %), sem toque; entra e sai em 120 ms (reduzido: seca).
+- A janela centra em quem age ao começar a vez: 240 ms `ease-out`; reduzido, salta. Régua: Cinzel 12
+  e Spectral Bold 12 em `inkMeio` (6,89).
+- Com um alvo marcado, a linha «eles vão» (363 × 40, y 476) passa a dizer o alvo: «Rato Gigante 1 ·
+  4 de 4 PV · dano 4–9 · abate 30 %» (não desenhado).
+- *Por que é melhor*: hoje o celular tem 0 px de couro e o chão é cortado na borda sem dizer se
+  continua (a coluna «I» em `V6p2-tapete-375`); agora dois lados levam sempre a régua e os outros
+  dois dizem se há mais. A folha de baixo tapava ~265 px da mesa; a jogada ocupa 60.
+
+**Lacuna 3 — a carta de espólio na vitória.** É a `CARTA_DO_ESPOLIO` do F6 a dois terços — uma
+carta só para todo espólio.
+
+- **Face, 160 × 224**, raio 6, chão `ossoLume`, sombra `peca`: a palavra da raridade (`Mesa/Rótulo`
+  `tintaDim`) a y 10 · **a casa de item de 64 com o glifo do item** (`A casa de item`, `326:13553`, e
+  os 42 `GLIFOS_DE_ITEM`) a (48, 32) · nome `Mesa/Nome` a y 104, até 2 linhas · uma frase
+  `Mesa/Serviço` a y 140, até 2 linhas · o pé em `Mesa/Nota do Mestre` `tintaDim` a y 196, **uma**
+  linha. Largura de texto 144.
+- **Por raridade** (moldura, palavra e tempo; nunca só cor): comum, borda `ossoSombra` 1 · incomum,
+  aro `latao` 2 · rara, aro + quatro cantos de latão de 15 · lendária, aro + cantos + lacre de 36 no
+  canto de cima à direita, e a palavra em `brasaNaPagina`.
+- **Verso, igual para todas**: `couro`, aro `latao` 2, fio de `latao` a 55 % a 8 px, losango de
+  latão (lado 32, traço 1,5) no centro. Sem palavra: a raridade só se sabe ao virar.
+- **Celular, 104 × 146** (5 : 7, como toda carta; o §3 dizia 150): palavra a y 6, casa de 48 a
+  (28, 26), nome a y 80 em até 3 linhas, largura 96. Sem frase e sem pé; a lendária leva só o lacre
+  da casa.
+- *Por que é melhor*: a face de hoje repete o glifo da bolsa em toda carta — o defeito que o F5 já
+  tinha fechado («o mesmo glifo para todo item») — e não diz o que o item faz. Agora a carta mostra o
+  quê (glifo), o que faz (frase) e para onde vai (pé) antes de «Recolher».
+
+**Lacuna 4 — a régua: faixa de 28 (casa ≥ 40) e de 24 (casa < 40).** A calha de 22 sai.
+
+- *Por medida*: entre a costura (a 5 px) e o chão, a letra de 12 tem 7,5 px livres de cada lado na
+  faixa de 28 e 4,5 na de 22; a tacha fica a 11 px do chão em vez de 5. E a calha **não compra casa
+  nenhuma**: 46, 36 e 39 px nas três plantas medidas (estrada a 1440, estrada a 1280, caverna), com
+  uma ou com outra.
+
+**As cinco formas do código.**
+
+| # | o que o código fez | veredito |
+|---|---|---|
+| 1 | carta de ação de 40 / 48 de altura | **redesenhada**: 112 (100 a 1280; 72 abaixo de 720 úteis; 85 × 80 no celular). A 40 não cabe a linha do dado, e sem ela não há veredito antes do clique |
+| 2 | vela de 56; no celular a reação cobre a faixa do herói | **vela = caixa − 28** (84 na de 112, 72 na de 100); 56 só no celular. **Cobrir a faixa: redesenhada** — o custo é em PM e o golpe é em PV, e os dois estão na faixa; vale o §4 (faixa a y 480, janela a y 530–740). A caixa passa a dizer «você tem N PM» |
+| 3 | «2 PM — corta o grosso» | **aprovada como provisória**, em duas linhas: custo (`Mesa/Serviço`, `brasaNaPagina`) e efeito (Spectral Bold 16 `tinta`). A forma certa é «você leva de 1 a 5» (Spectral Bold 20 `perigoNaPagina`) — pedido RX-1 em `pedidos-ao-sistema.md` |
+| 4 | face = glifo da bolsa + nome + raridade; verso liso | **redesenhada** (lacuna 3) |
+| 5 | recibo ≤ 560; carta de reação ≥ 250 | recibo **aprovado**, centrado sob «VITÓRIA», em `Mesa/Contagem` `ink` (hoje está à esquerda, fora do eixo das cartas); a barra de XP e as moedas do §3 voltam quando a coluna do grupo existir. Reação **redesenhada**: bloco de quem acerta 256; 1 ou 2 cartas, 308 cada; 3 cartas, 202 cada; piso 200 (três de 250 não cabem em 892) |
+
+**A caixa da reação, por dentro** (892 × 112, `couro`, borda `lataoSombra` 1, raio 8): a vela a x 28
+(contorno 16 × 84 tracejado `inkMeio`; cera `cera`/`ceraSombra`; prato 48 × 11 em `latao`); a x 74,
+quem acerta (`Mesa/Nome` `ink`), «acerta você», «vêm de 2 a 10» (`Mesa/Proposta` `ink`), «você tem 4
+PM» e «no fim da vela: a da borda» (`Mesa/Serviço` `inkMeio`, 8,73); as cartas a y 4, altura 104, 8
+entre elas, encostadas à direita. Carta: glifo 22 a (12, 11), nome `Mesa/Lugar` a x 42, custo a y 40,
+resultado a y 66; a que vale no fim da vela tem chão `osso` e borda `tinta` 2.
+
+**A ordem de construir.** (1) a coluna direita em papel e `A_JOGADA`, tirando do couro o «como?», o
+«Agir», Esperar e Fugir; (2) a mão de 8 cartas com a linha do dado — é o que devolve a altura ao
+tapete (156 → 750, casa de 46); (3) a coluna do grupo com `O_QUE_RESTA_NA_VEZ`; (4) a régua 28 / 24;
+(5) a reação; (6) o espólio; (7) o celular (moldura da janela, mão 2 × 4, pena + «Agir», a folha de
+baixo fora, a reação com a faixa à vista).
+
+**O que não ficou fechado.** As peças de 10b são quadros, não componentes (a mesma dívida do §7). Não
+desenhados: o triângulo do «bônus», a mão a 1280 e a carta baixa em tela, a reação com três cartas,
+a linha do alvo no celular, a vitória recomposta (o quadro `322:12949` ainda mostra as cartas
+antigas). Os números das pranchas são exemplo. **A conferir no jogo, não é da forma:** a captura
+`V6p2-tapete-1440` diz «60 %» ao lado de «acerta com 7 ou mais no dado» e de 14 faces acesas, que
+são 70 %. Nada disto foi jogado: o `jogo` não assinou.
+
+**A proposta ambiciosa — o dado sai da carta.** Ao «Agir», o d20 parte **da carta armada** (não da
+bandeja) e pousa ao lado do alvo; a carta jogada fica deitada de verso na mão até a vez seguinte. A
+mão vira o registro da vez — vê-se o que já foi jogado sem ler nada — e a carta deixa de ser botão
+para ser a coisa que se joga. Não toca o save; custa um voo de 320 ms e um estado «jogada».
+
 ---
 
 ## A Mesa do Mestre · F5 · os objetos e o mapa (`desenho`, 16/11/2026)
