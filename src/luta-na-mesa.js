@@ -32,10 +32,10 @@ export const TAPETE = Object.freeze({
   couro: "couroAlto", borda: "couroBaixo", bordaPx: 2, raio: 10,
   costura: { cor: "latao", alfa: 0.55, px: 1, tracejado: [5, 4], recuo: 4 },
   tacha: { cor: "latao", lume: "lataoLume", lado: 8, recuo: 9 },
-  /* a faixa onde vai a régua: 28 se a casa ≥ 40, senão 24 (F4) — HOJE a régua
-     continua na calha de 22 do tabuleiro (lacuna dita em formas.md §«V6 parte 2»);
-     as outras duas bordas têm 14, e essas estão no tapete */
+  /* a faixa onde vai a régua: 28 se a casa ≥ 40, senão 24 (F4 §10 lacuna 4 —
+     a calha de 22 saiu); as outras duas bordas têm 14, e essas estão no tapete */
   faixa: { larga: 28, estreita: 24, casaLarga: 40, resto: 14 },
+  /* (F4 §10 lacuna 4: a faixa de 28/24 já é a da régua — faixaDaRegua, abaixo) */
   regua: { cor: "inkMeio", realce: "amberSoft", corpo: 12 },
   /* a borda interna do chão, que separa o couro da pintura */
   bordaDoChao: { alfa: 0.55, px: 2 },
@@ -382,3 +382,28 @@ export const O_QUE_RESTA_NA_VEZ = Object.freeze({
   casas: 6, casa: 10,
 });
 
+
+/* ---------------- A RÉGUA (§10 lacuna 4) ----------------
+   A faixa da régua é 28 com a casa ≥ 40 e 24 abaixo; a calha de 22 sai.
+   Por medida (formas.md §10): entre a costura (a 5 px) e o chão a letra de 12
+   tem 7,5 px livres de cada lado na faixa de 28, e 4,5 na de 22. */
+export function faixaDaRegua(casa) {
+  return Number(casa) >= TAPETE.faixa.casaLarga ? TAPETE.faixa.larga : TAPETE.faixa.estreita;
+}
+
+/* O LADO DA CASA COM A FAIXA DA RÉGUA. A faixa depende da casa e a casa da
+   faixa: conta-se com a de 28; se a casa não chega a 40, conta-se de novo com
+   a de 24 (e a casa ganha os 4 px). `util`: a largura e a altura que a janela
+   dá; `borda`: o que o couro ocupa; `piso`/`teto`: os da tela. */
+export function ladoComARegua({ largura = 0, altura = 0, colunas = 1, linhas = 1, borda = 0, piso = 0, teto = 0 } = {}) {
+  const lado = (faixa) => {
+    const pl = largura > 0 ? Math.floor((largura - faixa - borda) / Math.max(1, colunas)) : Infinity;
+    const pa = altura > 0 ? Math.floor((altura - faixa - borda) / Math.max(1, linhas)) : Infinity;
+    return piso > 0 && largura > 0 ? Math.max(piso, Math.min(teto > 0 ? teto : Infinity, pl, pa)) : piso;
+  };
+  const larga = TAPETE.faixa.larga;
+  const comLarga = lado(larga);
+  if (comLarga >= TAPETE.faixa.casaLarga) return { lado: comLarga, faixa: larga };
+  const estreita = TAPETE.faixa.estreita;
+  return { lado: lado(estreita), faixa: estreita };
+}

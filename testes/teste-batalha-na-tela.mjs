@@ -316,10 +316,14 @@ sec("3 · 8. as peças: a pílula, a intenção, as casas marcadas, os rótulos"
      Movida no V6 parte 2 (19/11): era 51. O tapete de couro (F4 «TAPETE») tem
      borda de 2 px dos dois lados e a faixa de 14 sem régua, que saem da
      janela antes da conta da casa — (740 − 22 − 18) ÷ 14 = 50. A intenção (o
-     tracejado medido em píxeis de tela, convertido pela casa real) é a mesma. */
-  const CASA_NA_JANELA = 50;
-  const emCasas = (lista) => `stroke-dasharray="${lista.map((n) => n / CASA_NA_JANELA).join(" ")}"`;
-  const quantos = (s) => g.split(s).length - 1;
+     tracejado medido em píxeis de tela, convertido pela casa real) é a mesma.
+     Movida de novo no F4 §10 (19/11): a calha de 22 saiu e a régua mora na
+     faixa de 28 (a casa passa de 40) — (740 − 28 − 18) ÷ 14 = 49,6 → 49. */
+  const CASA_NA_JANELA = 49;
+  /* com a casa de 49 o tracejado sai de n × (1 ÷ 49) em umas peças e de n ÷ 49
+     noutras — os dois números de vírgula flutuante valem o mesmo píxel */
+  const emCasas = (lista) => [`stroke-dasharray="${lista.map((n) => n / CASA_NA_JANELA).join(" ")}"`, `stroke-dasharray="${lista.map((n) => n * (1 / CASA_NA_JANELA)).join(" ")}"`];
+  const quantos = (ss) => { const [a, b] = ss; return g.split(a).length - 1 + (a === b ? 0 : g.split(b).length - 1); };
   t("o alvo ganha o anel tracejado âmbar (6/4)", quantos(emCasas(PREVISAO_DO_GOLPE.anelDoAlvo.tracejado)) === 1);
   t("a seta do ataque, tracejada (5/4), do Bandido ao Bran", quantos(emCasas(INTENCAO_NA_MESA.seta.tracejado)) === 1);
   /* MOVIDA (V6, 16/11), E O MOTIVO: o F4 (formas.md, INTENCAO) funde os golpes
@@ -505,7 +509,8 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   /* --- o movimento reduzido --- */
   janela(1905, true);
   const pr = R.html(h(R.GridDeBatalha, { ...GRADE_1905, passo: { ...PASSOS[1], i: 1 }, agiram: ["Dragão Jovem"] }));
-  t("REDUZIDO: a ficha de quem age já está no destino (sem deslizar), e o caminho fica desenhado", /<circle cx="6\.5" cy="11\.5" r="0\.4"/.test(pr) && pr.includes(`transform:translate(6.5px, ${8.5 - 3 / 50}px)`));
+  t("REDUZIDO: a ficha de quem age já está no destino (sem deslizar), e o caminho fica desenhado", /<circle cx="6\.5" cy="11\.5" r="0\.4"/.test(pr) && [8.5 - 3 / 49, 8.5 - 3 * (1 / 49)].some((y) => pr.includes(`transform:translate(6.5px, ${y}px)`)));
+  /* Movida de novo no F4 §10 (19/11): a régua na faixa de 28 deixa a casa em 49 (era 50). */
   /* Movida no V6 parte 2 (19/11): era translate(6.5px, 8.5px). A peça de quem
      age SOBE 3 px (F4 «PECA_NO_TAPETE», estado aVez) — a casa de destino é a
      mesma (6,5 · 8,5), só a peça se ergue 3 ÷ 50 de casa. Sem deslizar, ainda. */

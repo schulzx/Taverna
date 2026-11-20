@@ -16,7 +16,7 @@ import {
 import { T } from "../src/estilo.js";
 import {
   MAO_DE_ACOES, tamanhoDaCarta, porCento, linhaDoDado, A_JOGADA, vereditoDoAgir,
-  MESA_DA_LUTA, linhasDeElesVao, O_QUE_RESTA_NA_VEZ,
+  MESA_DA_LUTA, linhasDeElesVao, O_QUE_RESTA_NA_VEZ, faixaDaRegua, ladoComARegua,
 } from "../src/luta-na-mesa.js";
 import { faceMinimaQueBasta, golpePorExtenso } from "../src/batalha-na-tela.js";
 import { previsaoDoAtaque, facesQueAcertam } from "../src/previsao.js";
@@ -186,6 +186,19 @@ console.log("\n12. F4 §10 · a mesa no texto das peças");
   t("com movimento reduzido a carta não desliza", /transition: reduzido \? "none"/.test(PEC) && /prefers-reduced-motion/.test(PEC));
   t("nenhum componente nasce dentro do render (todas as peças no módulo)", (PEC.match(/^export function [A-Z]/gm) || []).length >= 8);
   t("as peças exportadas são lidas pela tela", ["MaoDeAcoes", "AJogada", "FalaDoMestreNoPapel", "ElesVaoNoPapel", "OAlvoNoPapel", "ColunaDoGrupoNaLuta", "PlaquetaDaRodada"].every((n) => TELA.includes("<" + n + " ")));
+}
+
+console.log("\n13. F4 §10 lacuna 4 · a régua na faixa de 28 (casa ≥ 40) ou de 24");
+{
+  t("a faixa é 28 com a casa ≥ 40 e 24 abaixo (a calha de 22 saiu)", faixaDaRegua(46) === 28 && faixaDaRegua(40) === 28 && faixaDaRegua(39) === 24 && faixaDaRegua(32) === 24);
+  const a1440 = ladoComARegua({ largura: 890, altura: 597, colunas: 18, linhas: 12, borda: 18, piso: 32, teto: 64 });
+  t("a 1440 (janela 890 × 597, 18 × 12): casa 45 na faixa de 28", a1440.faixa === 28 && a1440.lado === 45, J(a1440));
+  const a1280 = ladoComARegua({ largura: 788, altura: 429, colunas: 18, linhas: 12, borda: 18, piso: 32, teto: 64 });
+  t("a 1280 × 720: a casa não chega a 40, a faixa desce a 24 e a casa ganha", a1280.faixa === 24 && a1280.lado === Math.max(32, Math.floor((429 - 24 - 18) / 12)), J(a1280));
+  t("o piso ganha sempre; sem janela medida, o piso", ladoComARegua({ largura: 300, altura: 200, colunas: 18, linhas: 12, borda: 18, piso: 32, teto: 64 }).lado === 32 && ladoComARegua({ piso: 48 }).lado === 48);
+  t("o teto segura a casa", ladoComARegua({ largura: 5000, altura: 5000, colunas: 10, linhas: 10, borda: 18, piso: 32, teto: 64 }).lado === 64);
+  const GR = ler("src/grade-de-batalha.jsx");
+  t("o tapete usa a faixa da conta, e a vista ⤢ a do seu lado (nunca a calha de 22 fora do telefone)", /const calha = presa \? B3\.telefone\.calha : grande \? faixaDaRegua\(ladoEmPx\(true\)\) : FAIXA_DA_REGUA;/.test(GR));
 }
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);

@@ -611,9 +611,12 @@ sec("10. B1: o quadro da pessoa, em tabela, e o que o motor não sabe fica desli
   t("a casa cabe na janela (largura E altura), com teto, e nunca abaixo do piso",
     /* MOVIDA (19/11, V6 parte 2): a borda do tapete de couro sai da janela
        junto com a calha, para o tapete inteiro caber como cabia o tabuleiro */
-    /const ladoPelaLargura = larguraDaJanela > 0 \? Math\.floor\(\(larguraDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE\) \/ g\.largura\) : Infinity;/.test(GRADE_B1)
-    && /const ladoPelaAltura = alturaDaJanela > 0 \? Math\.floor\(\(alturaDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE\) \/ g\.altura\) : Infinity;/.test(GRADE_B1)
-    && /Math\.max\(ladoFixo, Math\.min\(tetoDoLado > 0 \? tetoDoLado : Infinity, ladoPelaLargura, ladoPelaAltura\)\)/.test(GRADE_B1)
+    /* MOVIDA (19/11, F4 §10 lacuna 4): a calha de 22 saiu — a régua mora na
+       faixa de 28 (casa ≥ 40) ou de 24, e a faixa depende da casa. A conta
+       (largura E altura, teto por cima, piso por baixo) mudou-se para
+       ladoComARegua (luta-na-mesa.js, provada em Node), com a mesma forma. */
+    /return ladoComARegua\(\{ largura: larguraDaJanela, altura: alturaDaJanela, colunas: g\.largura, linhas: g\.altura, borda: BORDA_DO_TAPETE, piso: ladoFixo, teto: tetoDoLado \}\);/.test(GRADE_B1)
+    && /Math\.max\(piso, Math\.min\(teto > 0 \? teto : Infinity, pl, pa\)\)/.test(readFileSync(new URL("../src/luta-na-mesa.js", import.meta.url), "utf8"))
     && /larguraDaJanela=\{larguraDaJanela\}/.test(TEL) && /new ResizeObserver\(/.test(TEL));
   /* B1b · A MESA CABE NA JANELA. O monitor passa a altura e o teto; o
      telefone não passa nenhum dos dois (ali rolar é aceitável, e a conta de

@@ -84,7 +84,7 @@ import { intencoesPorAlvo, chaoDasRegioes, enderecoDoLadrilho, VEU_DO_LADRILHO }
 import { ETIQUETA_DA_INTENCAO } from "./estilo.js";
 /* V6 parte 2 (F4 «TAPETE» e «PECA_NO_TAPETE»): o couro com a costura e as
    tachas, a régua gravada na faixa, e a peça cujo aro é a vida */
-import { TAPETE, PECA_NO_TAPETE, estadoDaPeca, contasDosInimigos } from "./luta-na-mesa.js";
+import { TAPETE, PECA_NO_TAPETE, estadoDaPeca, contasDosInimigos, faixaDaRegua, ladoComARegua } from "./luta-na-mesa.js";
 import { SOMBRA_DA_MESA } from "./estilo.js";
 
 const K = (x, y) => `${x},${y}`;
@@ -1430,11 +1430,17 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
      14 nas duas bordas sem régua — sai da largura e da altura da casa, para o
      tapete inteiro caber na janela como cabia o tabuleiro nu */
   const BORDA_DO_TAPETE = reguaPresa ? 0 : TAPETE.faixa.resto + TAPETE.bordaPx * 2;
-  const ladoPelaLargura = larguraDaJanela > 0 ? Math.floor((larguraDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE) / g.largura) : Infinity;
-  const ladoPelaAltura = alturaDaJanela > 0 ? Math.floor((alturaDaJanela - CALHA_DA_REGUA - BORDA_DO_TAPETE) / g.altura) : Infinity;
-  const ladoNaJanela = ladoFixo > 0 && larguraDaJanela > 0
-    ? Math.max(ladoFixo, Math.min(tetoDoLado > 0 ? tetoDoLado : Infinity, ladoPelaLargura, ladoPelaAltura))
-    : ladoFixo;
+  /* F4 §10 lacuna 4 · A RÉGUA NA FAIXA DE 28 (casa ≥ 40) OU DE 24: a calha de
+     22 saiu. A faixa depende da casa e a casa da faixa — ladoComARegua conta
+     com a de 28 e, se a casa não chega a 40, de novo com a de 24. O telefone
+     (régua presa por cima das casas) fica como estava: é o passo 7. */
+  const { lado: ladoNaJanela, faixa: FAIXA_DA_REGUA } = (() => {
+    try {
+      if (reguaPresa) return { lado: ladoFixo, faixa: CALHA_DA_REGUA };
+      if (!(ladoFixo > 0 && larguraDaJanela > 0)) return { lado: ladoFixo, faixa: faixaDaRegua(ladoFixo > 0 ? ladoFixo : ALVOS.piso) };
+      return ladoComARegua({ largura: larguraDaJanela, altura: alturaDaJanela, colunas: g.largura, linhas: g.altura, borda: BORDA_DO_TAPETE, piso: ladoFixo, teto: tetoDoLado });
+    } catch { return { lado: ladoFixo, faixa: TAPETE.faixa.larga }; }
+  })();
   const ladoEmPx = (grande) => {
     try {
       if (!grande) return ladoFixo > 0 ? ladoNaJanela : Math.min(40, 380 / g.altura);
@@ -1460,7 +1466,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
        da janela, e a câmara mede a janela inteira. Na vista ⤢ a régua
        continua na calha de sempre. */
     const presa = reguaPresa && !grande;
-    const calha = presa ? B3.telefone.calha : CALHA_DA_REGUA;
+    const calha = presa ? B3.telefone.calha : grande ? faixaDaRegua(ladoEmPx(true)) : FAIXA_DA_REGUA;
     /* rotula uma a cada N; as outras levam só um traço. Na mesa (48 px)
        N = 1; no aperto máximo que existe — 18 colunas em 375 px, 18,8 px
        de lado — N = 2. A letra nunca precisa de sair. */
@@ -1531,7 +1537,7 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
          devolveria a casa ao tamanho do buraco — o defeito que E1 mediu. */
       width: !grande && ladoFixo > 0 ? larguraDoCampo + calha + extraDoCouro : "100%",
       flexShrink: 0,
-      maxWidth: grande ? `calc(${larguraDoCampo} + ${CALHA_DA_REGUA + extraDoCouro}px)` : larguraDoCampo + calha + extraDoCouro, margin: "0 auto", ...(comCouro ? {} : { background: T.bg }) }}>
+      maxWidth: grande ? `calc(${larguraDoCampo} + ${calha + extraDoCouro}px)` : larguraDoCampo + calha + extraDoCouro, margin: "0 auto", ...(comCouro ? {} : { background: T.bg }) }}>
       {comCouro && (
         /* a costura a 4 px da borda e as quatro tachas — decoração, sem toque */
         <>
