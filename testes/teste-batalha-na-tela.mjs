@@ -399,7 +399,11 @@ sec("7 · 8. a tela da batalha: as três colunas e o telefone");
   janela(375);
   const tel = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], previsaoDoGolpe: PREV, intencoes: INTENCOES, passoM: 6, passoTotal: 9 }));
   t("no telefone: «A tua vez · Bran» no canto, sem a coluna Eles", texto(tel).includes("Sua vez") && !/aria-label="Eles"/.test(tel));
-  t("A FOLHA DA PREVISÃO sobe: «Atacar · 78%», «Cancelar», e o segundo toque também confirma", /role="dialog" aria-label="Seu golpe contra Bandido"/.test(tel) && texto(tel).includes("Atacar · 78%") && texto(tel).includes("Cancelar") && texto(tel).includes("tocar de novo em Bandido também confirma"));
+  /* MOVIDA (19/11, F4 §10 passo 7): a folha que subia de baixo («Atacar ·
+     Cancelar») aposentou-se no celular — tapava ~265 px da mesa. O veredito
+     mora na carta (a face e a chance) e no «Agir» da última linha; o segundo
+     toque no alvo continua a confirmar. */
+  t("NO CELULAR, A FOLHA APOSENTOU-SE: a carta diz a chance e o «Agir» mora na última linha", !/role="dialog" aria-label="Seu golpe contra Bandido"/.test(tel) && /aria-label="Atacar, 6 ou mais no d20, 78 por cento/.test(tel) && /aria-label="Agir: escolha uma carta"/.test(tel));
   t("os três números grandes (Acerto, Dano, Abate)", texto(tel).includes("78%") && texto(tel).includes("6–13") && texto(tel).includes("40%"));
 }
 

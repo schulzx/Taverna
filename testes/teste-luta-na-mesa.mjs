@@ -181,7 +181,7 @@ console.log("\n12. F4 §10 · a mesa no texto das peças");
 {
   const PEC = ler("src/painel-luta-mesa.jsx");
   const TELA = ler("src/painel-batalha.jsx");
-  t("a mesa da prancha nasce no monitor largo, e o arranjo de antes fica abaixo dela", /const mesaF4 = !noTelefone && larguraDaMesa >= MESA_DA_LUTA\.minima;/.test(TELA) && /if \(mesaF4\) \{/.test(TELA));
+  t("a mesa da prancha nasce no monitor largo, e o arranjo de antes fica abaixo dela", /const mesaF4 = !noTelefone && larguraDaMesa >= MESA_DA_LUTA\.minima;/.test(TELA) && /if \(mesaF4 \|\| noTelefone\) \{/.test(TELA));
   t("a mão lê linhaDoDado com a previsão e faceMinimaQueBasta (uma fonte só)", /linhaDoDado\(id, \{ previsao: prevGolpe, empurrao: empAgora, faceMinima \}\)/.test(TELA) && /faceMinimaQueBasta\(prevGolpe\)/.test(TELA));
   t("o «Agir» é vereditoDoAgir, e o Enter na pena age só pronto", /vereditoDoAgir\(\{/.test(TELA) && /e\.key === "Enter" && pronta && aoAgir/.test(PEC));
   t("três caminhos: o segundo toque no alvo marcado age", /if \(marcado !== nome\) \{ setMarcado\(nome\); preverGolpe\(nome\); return; \}/.test(TELA));
@@ -210,7 +210,7 @@ console.log("\n14. F4c · o que a luta jogada achou (a lista do coordenador, 19/
   const TELA = ler("src/painel-batalha.jsx");
   const PEC = ler("src/painel-luta-mesa.jsx");
   t("(8) o Mestre que calou na luta: o App passa a falha e «tentar de novo» à tela da luta", /silencio=\{falha && !carregando \? \{ casa: falha\.casa \|\| "", linha: falha\.linha \|\| "", podeTentar: falha\.podeTentar !== false \} : null\}/.test(APPx) && /aoTentarDeNovo=\{\(\) => \{ try \{ retentar\(\); \} catch \(e\) \{ calou\("tentar de novo na luta", e\); \} \}\}/.test(APPx));
-  t("(8) e a tela diz o aviso nos dois arranjos, com o botão só quando insistir resolve", (TELA.match(/<AvisoDoSilencio silencio=\{p\.silencio \|\| null\} aoTentarDeNovo=\{p\.aoTentarDeNovo \|\| null\} \/>/g) || []).length === 2 && /silencio\.podeTentar && aoTentarDeNovo \?/.test(PEC) && /role="alert"/.test(PEC));
+  t("(8) e a tela diz o aviso nos dois arranjos, com o botão só quando insistir resolve", (TELA.match(/<AvisoDoSilencio silencio=\{p\.silencio \|\| null\} aoTentarDeNovo=\{p\.aoTentarDeNovo \|\| null\} \/>/g) || []).length === 3 && /silencio\.podeTentar && aoTentarDeNovo \?/.test(PEC) && /role="alert"/.test(PEC));
   t("(5) o revide da reação e o golpe do companheiro deixam linha na rodada", /\{ quem: pers\.nome, alvo: alvo\.nome, diz: rr\.dano > 0 \? `revide/.test(APPx) && /\{ quem: ac\.companheiro, alvo: ac\.alvoNome, diz: ac\.r\.dano > 0/.test(APPx) && /calou\("a habilidade do companheiro na rodada", e\)/.test(APPx));
 }
 
@@ -251,6 +251,16 @@ console.log("\n16. F4 §10 lacuna 3 · a carta do espólio na vitória");
   const FIMx = ler("src/painel-fim-da-luta.jsx");
   t("a carta usa a casa de item (o glifo do item, não mais a bolsa em toda carta)", /<CasaDeItem item=\{coisa\} lado=\{G\.casa\} sobre="papel" \/>/.test(FIMx) && !/<Glifo nome="bolsa"/.test(FIMx));
   t("com UMA carta também há botão: «Recolher» (e «Recolher tudo» com mais)", /porRecolher\.length >= 1 &&/.test(FIMx) && /porRecolher\.length > 1 \? CE\.recolher\.todas : CE\.recolher\.uma/.test(FIMx));
+}
+
+console.log("\n17. F4 §10 passo 7 · o celular");
+{
+  const TELA = ler("src/painel-batalha.jsx");
+  const REAx = ler("src/painel-reacao.jsx");
+  t("a mão de 2 × 4 de 85 × 80 e a jogada (pena + «Agir») na última linha", /<MaoDeAcoes cartas=\{cartas\} tamanho="celular" aoTocar=\{tocarCarta\} \/>/.test(TELA) && /<AJogada tamanho="celular"/.test(TELA));
+  t("a folha «Atacar · Cancelar» aposentou-se no celular (só o arranjo de antes, abaixo de 768, a teria)", /acaoDoFim \|\| acaoDoTelefone \|\| acao/.test(TELA));
+  t("a reação no celular toma o lugar da mão, no fluxo — nunca por cima da faixa do herói", /data-reacao-no-celular=""/.test(TELA) && /p\.reacao \? null : <MaoDeAcoes/.test(TELA) && /\{ intencaoDe, caixa: caixaDaMao, celular: true \}/.test(TELA));
+  t("a carta da reação no celular é compacta: o nome em duas linhas e «leva 1–4»", /if \(compacta\) \{/.test(REAx) && /P\.levaCurto/.test(REAx));
 }
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);

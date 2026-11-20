@@ -422,7 +422,7 @@ export const REACAO_NA_MAO = Object.freeze({
   largura: Object.freeze({ ate2: 308, tres: 202, piso: 200 }),
   carta: Object.freeze({ glifo: 22, xGlifo: 12, yGlifo: 11, xNome: 42, yCusto: 40, yResultado: 66, raio: 6 }),
   glifo: Object.freeze({ escudo_arcano: "escudo", aparar: "espada", esquiva_agil: "fuga", contramagia: "ban", contratempo: "relogio", contra_ataque: "espadas", oportunidade: "raio", deixar: "recuo" }),
-  palavras: Object.freeze({ acerta: "acerta você", vem: "vêm de", tem: "você tem", semCusto: "sem custo", restam: "restam", leva: "você leva de", inteiro: "leva o golpe inteiro", deixar: "Deixar passar", a: "a" }),
+  palavras: Object.freeze({ acerta: "acerta você", vem: "vêm de", tem: "você tem", semCusto: "sem custo", restam: "restam", leva: "você leva de", levaCurto: "leva", inteiro: "leva o golpe inteiro", deixar: "Deixar passar", a: "a" }),
 });
 
 /* a vela da reação na mão: a caixa − 28; no celular, 56 */

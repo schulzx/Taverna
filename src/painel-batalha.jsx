@@ -1677,7 +1677,7 @@ export function TelaDeBatalha(props) {
     }
     /* F4 §10: na mesa o primeiro toque MARCA (e não desarma a carta: Atacar
        armado espera o alvo), o segundo no mesmo alvo age */
-    if (mesaF4) {
+    if (mesaF4 || noTelefone) {
       setRecusado("");
       if (marcado !== nome) { setMarcado(nome); preverGolpe(nome); return; }
       setArmado(""); setMarcado(""); andarEAtacar(nome); return;
@@ -2109,7 +2109,7 @@ export function TelaDeBatalha(props) {
              pointerdown corre antes do clique e desarmava-o, e o clique ia atacar */
           const sobreInimigo = !!(e && e.target && e.target.closest && e.target.closest("[data-inimigo]"));
           /* F4 §10: na mesa, tocar o inimigo marca-o — e Atacar armado espera esse toque */
-          if ((empurrando || mesaF4) && sobreInimigo) return;
+          if ((empurrando || mesaF4 || noTelefone) && sobreInimigo) return;
           setArmado("");
         }}
         onPointerDownCapture={(e) => { if (!contando) { engolirCliqueRef.current = false; return; } e.stopPropagation(); engolirCliqueRef.current = true; saltarTurno(); }}
@@ -2190,7 +2190,7 @@ export function TelaDeBatalha(props) {
   /* F4 §10: na mesa a caixa da reação sabe a altura da mão (a vela é a caixa
      − 28) e a intenção anunciada de quem acerta (a faixa do golpe, RX-1) */
   const caixaDaMao = (() => { try { return MAO_DE_ACOES.tamanhos[tamanhoDaCarta({ telefone: noTelefone, larguraDaMao: larguraDaJanela, alturaUtil: mesaMedida.altura })].altura; } catch { return MAO_DE_ACOES.tamanhos.mesa.altura; } })();
-  const contextoDaReacao = mesaF4 ? { intencaoDe, caixa: caixaDaMao, celular: false } : null;
+  const contextoDaReacao = mesaF4 ? { intencaoDe, caixa: caixaDaMao, celular: false } : noTelefone ? { intencaoDe, caixa: caixaDaMao, celular: true } : null;
   const reacaoNaMao = !esperando && p.reacao ? (
     <div data-reacao-na-mao="" style={{ position: "absolute", left: 0, right: 0, bottom: 0, minHeight: "100%", zIndex: 40, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
       <ContextoDaReacaoNaMesa.Provider value={contextoDaReacao}>{p.reacao}</ContextoDaReacaoNaMesa.Provider>
@@ -2413,7 +2413,12 @@ export function TelaDeBatalha(props) {
      F4 §10 · A MESA DA PRANCHA 10a (1440 × 900) — o grupo à esquerda, o
      tapete com a mão ao centro, o papel à direita com a jogada ao pé
      ============================================================ */
-  if (mesaF4) {
+  /* F4 §10 · O CELULAR (10c): a mesma mão (2 × 4 de 85 × 80) e a mesma jogada
+     (pena + «Agir» na última linha); a folha que subia de baixo («Atacar ·
+     Cancelar») aposentou-se — o segundo toque no alvo, o «Agir» e o Enter
+     são os três caminhos, como na mesa */
+  let acaoDoTelefone = null;
+  if (mesaF4 || noTelefone) {
     const ML = MESA_DA_LUTA;
     const apertada = larguraDaMesa < ML.apertada.abaixoDe;
     const margemF4 = apertada ? ML.apertada.margem : ML.grupo.margem;
@@ -2422,7 +2427,7 @@ export function TelaDeBatalha(props) {
     const margemDireita = apertada ? ML.apertada.margem : ML.direita.margem;
     /* a mão: os quatro tamanhos de MAO_DE_ACOES, medidos pela janela do tapete
        (a largura da coluna do centro) e pela altura da mesa */
-    const tamanho = (() => { try { return tamanhoDaCarta({ larguraDaMao: larguraDaJanela, alturaUtil: mesaMedida.altura }); } catch { return "mesa"; } })();
+    const tamanho = (() => { try { return tamanhoDaCarta({ telefone: noTelefone, larguraDaMao: larguraDaJanela, alturaUtil: mesaMedida.altura }); } catch { return "mesa"; } })();
     const T_CARTA = MAO_DE_ACOES.tamanhos[tamanho] || MAO_DE_ACOES.tamanhos.mesa;
     const nCartas = MAO_DE_ACOES.ordem.length;
     const entreCartas = larguraDaJanela > 0
@@ -2436,7 +2441,7 @@ export function TelaDeBatalha(props) {
         if (id === "item") {
           const I = MAO_DE_ACOES.item;
           return { id, rotulo: MAO_DE_ACOES.rotulo.item, armada: bolsaAberta, impedida: !nItens, razao: I.vazia,
-            linha: linhaDoDado(id), custo: `${I.custo} · ${I.tem} ${nItens}` };
+            linha: linhaDoDado(id), custo: noTelefone ? `${I.tem} ${nItens}` : `${I.custo} · ${I.tem} ${nItens}` };
         }
         const v = verbosPorId.get(id);
         if (!v) return null;
@@ -2479,6 +2484,43 @@ export function TelaDeBatalha(props) {
         if (vAgir.acao === "caixa") agirPelaCaixa();
       } catch (e) { console.warn("TelaDeBatalha: agir na mesa falhou", e); }
     };
+    const gavetaDasHabilidades = !p.fim ? (
+      <button type="button" onClick={p.aoAbrirGaveta} aria-pressed={!!p.gavetaAberta} aria-label="Habilidades" title="Habilidades"
+        className="tv-anel-foco inline-flex items-center justify-center shrink-0"
+        style={{ width: 32, height: 32, borderRadius: 3, background: p.gavetaAberta ? T.tintaDoPergaminho : "transparent", border: `1px solid ${alfa(T.tintaDoPergaminho, 0.35)}` }}>
+        <Glifo nome="faisca" tamanho={16} cor={p.gavetaAberta ? T.pergaminho : T.brasaNoPergaminho} />
+      </button>
+    ) : null;
+    if (noTelefone) {
+      const mostraJogadaT = !p.fim && !esperando;
+      acaoDoTelefone = (
+        <section className="flex flex-col shrink-0 min-w-0 w-full" style={{ order: 3, gap: B3.telefone.entre, position: "relative" }}>
+          {/* a reação no celular toma o lugar da mão, no fluxo — nunca por cima da
+              faixa do herói (o custo é em PM e o golpe em PV, e os dois estão nela) */}
+          {!esperando && p.reacao ? (
+            <div data-reacao-na-mao="" data-reacao-no-celular=""><ContextoDaReacaoNaMesa.Provider value={contextoDaReacao}>{p.reacao}</ContextoDaReacaoNaMesa.Provider></div>
+          ) : null}
+          <AvisoDoSilencio silencio={p.silencio || null} aoTentarDeNovo={p.aoTentarDeNovo || null} />
+          {!esperando && !p.fim && empurrando && enteDoEmpurrao && (
+            <FolhaDoEmpurrao empurrao={empAgora} alvo={enteDoEmpurrao} aoConfirmar={() => empurrar(alvoDoEmpurrao)} aoCancelar={() => preverEmpurrao(null)} />
+          )}
+          {!p.decisao && bolsaAberta && <BolsaDeCombate pocoes={p.pocoes || []} bolsa={p.bolsa || []} aoUsar={p.aoUsarConsumivel} />}
+          {!p.decisao && p.gaveta}
+          {p.fim ? <RespirarFundo aoSair={p.aoSair} />
+            : p.decisao ? (
+              <div ref={decisaoRef} className="shrink min-h-0 overflow-y-auto tv-scroll" style={{ flex: "0 1 auto" }}>
+                {esperando && p.ultimoGolpe && <p className="tv-display text-center" style={{ fontSize: M.letra.foco + 6, color: T.ink, margin: 0, lineHeight: 1.2 }}>O último golpe é seu.</p>}
+                {p.decisao}
+              </div>
+            ) : p.dado ? <div className="shrink-0 min-w-0 flex items-center" style={{ minHeight: T_CARTA.altura }}>{p.dado}</div>
+              : p.reacao ? null : <MaoDeAcoes cartas={cartas} tamanho="celular" aoTocar={tocarCarta} />}
+          {mostraJogadaT && !p.reacao && (
+            <AJogada tamanho="celular" entrada={p.entrada || ""} aoEscrever={p.aoEscrever} veredito={vAgir} aoAgir={agirNaMesa}
+              desligada={!armado && !!p.bloqueado} gaveta={gavetaDasHabilidades} />
+          )}
+        </section>
+      );
+    } else {
     /* A COLUNA DIREITA: a fala, «eles vão», o alvo (no turno deles, a rodada
        que se conta), o aviso da área, os alvos declarados; a jogada ao pé */
     const elesVao = (() => { try { return linhasDeElesVao(intencoes.filter((i) => i && i.vista), { heroi: nomeDoHeroi }); } catch { return { linhas: [], noHeroi: null }; } })();
@@ -2493,13 +2535,6 @@ export function TelaDeBatalha(props) {
     ) : null;
     const selosDoHeroi = modificadores.length > 0 ? (
       <div className="flex items-center gap-1 flex-wrap">{modificadores.map((x) => <SeloDoModificador key={x.id} selo={x} />)}</div>
-    ) : null;
-    const gavetaDasHabilidades = !p.fim ? (
-      <button type="button" onClick={p.aoAbrirGaveta} aria-pressed={!!p.gavetaAberta} aria-label="Habilidades" title="Habilidades"
-        className="tv-anel-foco inline-flex items-center justify-center shrink-0"
-        style={{ width: 32, height: 32, borderRadius: 3, background: p.gavetaAberta ? T.tintaDoPergaminho : "transparent", border: `1px solid ${alfa(T.tintaDoPergaminho, 0.35)}` }}>
-        <Glifo nome="faisca" tamanho={16} cor={p.gavetaAberta ? T.pergaminho : T.brasaNoPergaminho} />
-      </button>
     ) : null;
     const mostraJogada = !p.fim && !esperando;
     /* o que mora no lugar da mão (a mesma precedência do arranjo de antes) */
@@ -2573,6 +2608,7 @@ export function TelaDeBatalha(props) {
         </aside>
       </div>
     );
+    }
   }
 
   return (
@@ -2588,7 +2624,7 @@ export function TelaDeBatalha(props) {
         {/* §CB 16.2: entre o campo e a barra, 8 em todos os patamares */}
         <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", order: 1, gap: B3.entreCampoEBarra }}>
           {campo}
-          {acaoDoFim || acao}
+          {acaoDoFim || acaoDoTelefone || acao}
         </div>
         {/* Tu vem depois no DOM (a tabulação passa pelo campo e pelos verbos
             primeiro) e fica à esquerda na tela, pela propriedade order */}

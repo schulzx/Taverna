@@ -35,18 +35,34 @@ export const ContextoDaReacaoNaMesa = React.createContext(null);
    (brasa) e o resultado na outra — «você leva de 1 a 4» (Bold 20, perigo)
    quando a faixa do golpe é sabida; senão a forma provisória (o efeito da
    tabela, Bold 16 tinta). */
-function CartaDaReacao({ innerRef, glifo, nome, custo, fica, efeito, largura, onClick, comoMenuItem, focado, falado }) {
+function CartaDaReacao({ innerRef, glifo, nome, custo, fica, efeito, largura, onClick, comoMenuItem, focado, falado, compacta = false }) {
   const C = RM.carta;
+  /* no celular (o §10 não desenhou a reação ali): a carta em fluxo — o nome em
+     até duas linhas, o custo e o resultado curto («leva 1–4»), para três
+     cartas caberem lado a lado nos 363 da janela sem cortar o número */
+  if (compacta) {
+    return (
+      <button ref={innerRef} type="button" role={comoMenuItem ? "menuitem" : undefined} tabIndex={comoMenuItem ? (focado ? 0 : -1) : undefined}
+        onClick={onClick} aria-label={falado} className="tv-anel-foco flex flex-col items-start"
+        style={{ flex: "1 1 0", minWidth: 0, minHeight: RM.alturaDaCarta, padding: 8, gap: 4, textAlign: "left", borderRadius: C.raio,
+          background: T[CARTA_DE_ACAO.chao], border: `1px solid ${T[CARTA_DE_ACAO.borda]}`, filter: `drop-shadow(0 2px 3px ${alfa(T.veuDaNoite, 0.5)})`, cursor: "pointer" }}>
+        <span aria-hidden="true" style={{ lineHeight: 0 }}><Glifo nome={glifo} tamanho={18} cor={T.onAccent} /></span>
+        <span aria-hidden="true" style={{ ...letraDaMesa("nome"), letterSpacing: 0, color: T.tintaDoPergaminho, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{nome}</span>
+        <span aria-hidden="true" style={{ ...letraDaMesa("servico"), textTransform: "none", color: T.brasaNoPergaminho }}>{custo}</span>
+        <span aria-hidden="true" className="tv-body" style={{ fontWeight: 700, lineHeight: 1.2, fontSize: 15, color: fica ? T.perigoNoPergaminho : T.tintaDoPergaminho }}>{fica || efeito}</span>
+      </button>
+    );
+  }
   return (
     <button ref={innerRef} type="button" role={comoMenuItem ? "menuitem" : undefined} tabIndex={comoMenuItem ? (focado ? 0 : -1) : undefined}
       onClick={onClick} aria-label={falado} className="tv-anel-foco shrink-0"
-      style={{ position: "relative", width: largura, height: RM.alturaDaCarta, padding: 0, textAlign: "left", borderRadius: C.raio,
+      style={{ position: "relative", width: largura || undefined, flex: largura ? undefined : "1 1 0", minWidth: 0, height: RM.alturaDaCarta, padding: 0, textAlign: "left", borderRadius: C.raio,
         background: T[CARTA_DE_ACAO.chao], border: `1px solid ${T[CARTA_DE_ACAO.borda]}`, filter: `drop-shadow(0 2px 3px ${alfa(T.veuDaNoite, 0.5)})`, cursor: "pointer" }}>
       <span aria-hidden="true" style={{ position: "absolute", left: C.xGlifo, top: C.yGlifo, lineHeight: 0 }}><Glifo nome={glifo} tamanho={C.glifo} cor={T.onAccent} /></span>
-      <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: C.xNome, right: 8, top: C.yGlifo, ...letraDaMesa("lugar"), color: T.tintaDoPergaminho }}>{nome}</span>
+      <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: C.xNome, right: 8, top: C.yGlifo, ...letraDaMesa(compacta ? "nome" : "lugar"), color: T.tintaDoPergaminho }}>{nome}</span>
       <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: C.xGlifo, right: 8, top: C.yCusto, ...letraDaMesa("servico"), textTransform: "none", color: T.brasaNoPergaminho }}>{custo}</span>
       <span aria-hidden="true" className="tv-body truncate" style={{ position: "absolute", left: C.xGlifo, right: 8, top: C.yResultado, fontWeight: 700, lineHeight: 1.2,
-        fontSize: fica ? 20 : 16, color: fica ? T.perigoNoPergaminho : T.tintaDoPergaminho }}>{fica || efeito}</span>
+        fontSize: fica ? (compacta ? 15 : 20) : (compacta ? 14 : 16), color: fica ? T.perigoNoPergaminho : T.tintaDoPergaminho }}>{fica || efeito}</span>
     </button>
   );
 }
@@ -352,17 +368,18 @@ export function PainelReacao({
           {mostrarSaldo && <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: T.inkMeio }}>{P.tem} {saldo} PM</span>}
           {reduzido && trilhoVisivel && <span className="tv-mono" aria-hidden="true" style={{ color: corDoTrilho, fontSize: 18 }}>{numeralContagem}</span>}
         </div>
-        <div className="flex" style={{ flexShrink: mesa.celular ? 1 : 0, marginLeft: "auto", gap: RM.entre, flexWrap: mesa.celular ? "wrap" : "nowrap", width: mesa.celular ? "100%" : undefined }}>
+        <div className="flex" style={{ flexShrink: mesa.celular ? 1 : 0, marginLeft: "auto", gap: RM.entre, flexWrap: "nowrap", width: mesa.celular ? "100%" : undefined }}>
           {todas.map(({ r }, i) => {
             const fica = oQueFicaDaReacao(r, faixa);
-            const custo = r ? ((r.pm || 0) > 0 ? `${r.pm} PM · ${P.restam} ${Math.max(0, saldo - r.pm)}` : P.semCusto) : P.semCusto;
+            const custo = r ? ((r.pm || 0) > 0 ? (mesa.celular ? `${r.pm} PM` : `${r.pm} PM · ${P.restam} ${Math.max(0, saldo - r.pm)}`) : P.semCusto) : P.semCusto;
             const efeito = r ? partesDoPreco(r).resto.replace(/^\d+ PM — /, "") : P.inteiro;
             const ditoFica = fica ? `${P.leva} ${faixaEmPalavras(fica)}` : "";
+            const curtoFica = fica ? `${P.levaCurto} ${fica.min === fica.max ? fica.min : `${fica.min}–${fica.max}`}` : "";
             const nome = r ? r.nome : P.deixar;
             const ehRecuo = !r;
             return (
-              <CartaDaReacao key={r ? r.id : "deixar"} glifo={RM.glifo[r ? r.id : "deixar"] || "escudo"} nome={nome} custo={custo} fica={ditoFica} efeito={efeito}
-                largura={mesa.celular ? "100%" : largura} comoMenuItem={reacoes.length > 1} focado={focoIndex === i}
+              <CartaDaReacao key={r ? r.id : "deixar"} glifo={RM.glifo[r ? r.id : "deixar"] || "escudo"} nome={nome} custo={custo} fica={mesa.celular ? curtoFica : ditoFica} efeito={efeito}
+                largura={mesa.celular ? null : largura} compacta={!!mesa.celular} comoMenuItem={reacoes.length > 1} focado={focoIndex === i}
                 falado={[nome, custo, ditoFica || efeito].filter(Boolean).join(", ")}
                 innerRef={ehRecuo ? (reacoes.length > 1 ? recuoDoLequeRef : recuoDiretoRef) : reacoes.length > 1 ? (el) => { itensDoLequeRef.current[i] = el; } : chamadoRef}
                 onClick={ehRecuo ? recusar : reacoes.length > 1 ? () => ativarDoLeque(r) : () => responder(r)} />

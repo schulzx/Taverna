@@ -20003,6 +20003,47 @@ bandeja) e pousa ao lado do alvo; a carta jogada fica deitada de verso na mão a
 mão vira o registro da vez — vê-se o que já foi jogado sem ler nada — e a carta deixa de ser botão
 para ser a coisa que se joga. Não toca o save; custa um voo de 320 ms e um estado «jogada».
 
+### 11 · O código do §10 (F4c, 19/11/2026)
+
+Só código; nenhum quadro do Figma tocado. Tabelas e contas em `src/luta-na-mesa.js` (MAO_DE_ACOES,
+A_JOGADA, MESA_DA_LUTA, O_QUE_RESTA_NA_VEZ, REACAO_NA_MAO, CARTA_DO_ESPOLIO, `linhaDoDado`,
+`vereditoDoAgir`, `ladoComARegua`, `oQueFicaDaReacao`, `faceDoEspolio`); peças em
+`src/painel-luta-mesa.jsx`; suíte `testes/teste-luta-na-mesa.mjs`; capturas `mente/lancamento/F4c-*.png`.
+
+**Medido na página de prova a 1440 × 900:** as oito cartas em x 196 → 1082, y 762, 102 × 112; o «Agir»
+em (1100, 818), 228 × 56; a casa 45,7 (era ~34); a faixa preta sumiu. A 1280 × 720: cartas 90 × 100 em
+y 594, a jogada em (964, 594), 220 × 100; a casa ~32 (presa pela altura). A mesa nasce a ≥ 1180 de
+largura; abaixo disso (e até ao celular) fica o arranjo de antes.
+
+**RX-2:** o «60 %» de `V6p2-tapete-1440` era dado inventado da página de prova (chance 0,6 com as 14
+faces de `facesQueAcertam(5, 12)`). No motor as duas saem da mesma conta; a menor face que basta tem
+uma fonte só (`faceMinimaQueBasta`, batalha-na-tela.js). **RX-1:** o motor sabe o dano rolado quando a
+janela abre, mas «o dano vir surpresa» (15/09) manda não o mostrar — a carta diz a FAIXA, a partir da
+intenção anunciada de quem acerta, cortada por `resolverReacao` nos dois extremos.
+
+**O que o código teve de escolher (para o `desenho` validar):**
+1. Os glifos `GL` do F4 (316:10007) não estão em `glifos.js`: Mover = `passo`, Empurrar = `recuo`,
+   Derrubar = `degrau`, Saltar = `ascensao`, Esperar = `ampulheta`, Fugir = `fuga`.
+2. «Usar item» diz «à mão · tem N» (a bolsa não gasta o turno; a prancha dizia «ação · tem 2»).
+   Esperar diz «passa a vez» (a tabela), não «guarda a ação».
+3. Fugir fica em «sem dado» (forma 3): o motor não expõe à tela os golpes livres da fuga em número.
+4. Empurrar com o alvo previsto diz «d20 · 55 %» sem face: a disputa é oposta, não há face que baste.
+5. O ✦ das habilidades (que a prancha não pôs) mora no canto direito da pena, 32 × 32.
+6. O Pé do campo (32 px sob o tapete) ficou: leva o controlo do turno deles, a linha da reação e os
+   chips do tabuleiro. Custa ~3 px de casa a 1440 e é por ele que a 1280 × 720 a casa fica em 32.
+7. «Escolha o alvo» (os alvos declarados) continua na coluna direita, abaixo do alvo.
+8. A linha «no fim da vela: a da borda» não foi escrita: a escolha do silêncio depende do dano rolado
+   e de um dado (`reacaoDoSilencio`) — marcá-la revelaria o dano.
+9. Com três cartas de reação o bloco de quem acerta cede de 256 para ~196, e o nome em `Mesa/Lugar`
+   trunca («ESCUDO AR…»). No celular a reação toma o lugar da mão (em fluxo, a faixa do herói à vista),
+   com cartas compactas («leva 1–4»).
+10. O recibo da vitória continua à esquerda do eixo (a peça `Recibo` mede a caixa para cortar chips).
+
+**Não construído:** a moldura de couro presa à janela no celular (a régua presa de 22, sem as faixas de
+28, a costura, a sombra de «há mais tapete» e a borda do fim); a fila da vez em cartas pintadas
+(continua em rostos redondos); a bandeja e a vela do dia no alto da coluna direita (a tela da luta não
+recebe a bandeja); o escudo (ESC) em (1340, 792); a carta baixa (102 × 72) não foi vista em tela.
+
 ---
 
 ## A Mesa do Mestre · F5 · os objetos e o mapa (`desenho`, 16/11/2026)

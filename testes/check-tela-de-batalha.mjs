@@ -132,7 +132,9 @@ sec("1. a inversão: o tabuleiro saiu de dentro do rolador do log");
     /* A1 (10/10): o fim ganhou o MOMENTO (`FimDaLuta`, com o espólio que o
        App passa), que toma a secção inteira — e a porta continua UMA só, o
        `Respirar fundo`, nas duas formas, e só quando a luta acabou */
-    && /const fimComEspolio = !!p\.fim && /.test(TEL) && /\{acaoDoFim \|\| acao\}/.test(TEL)
+    /* MOVIDA (19/11, F4 §10 passo 7): no celular a secção da ação é a mão de
+       2 × 4 com a jogada (acaoDoTelefone); o fim continua a tomar o lugar dela */
+    && /const fimComEspolio = !!p\.fim && /.test(TEL) && /\{acaoDoFim \|\| acaoDoTelefone \|\| acao\}/.test(TEL)
     /* MOVIDA (19/11, V6 parte 2): o momento do fim saiu para
        painel-fim-da-luta.jsx (a cerimônia sobre o tapete e a SaidaDaLuta onde
        estava a mão). A porta continua UMA só, nas duas formas: uma aqui (o fim
@@ -357,7 +359,7 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
     /* MOVIDA (19/11, F4 §10): na mesa da prancha 10a o toque no inimigo MARCA o
        alvo, e Atacar armado espera esse toque — desarmar ali apagava a carta
        que o «Agir» ia jogar. O toque no chão continua a desarmar. */
-    /onPointerDown=\{\(e\) => \{[\s\S]{0,500}?if \(\(empurrando \|\| mesaF4\) && sobreInimigo\) return;\s*setArmado\(""\);/.test(TEL)
+    /onPointerDown=\{\(e\) => \{[\s\S]{0,500}?if \(\(empurrando \|\| mesaF4 \|\| noTelefone\) && sobreInimigo\) return;\s*setArmado\(""\);/.test(TEL)
     && /const mover = \(destino\) => \{ setArmado\(""\);/.test(TEL));
   /* 19.ª sessão, defeito 15 (o Mover alterna): o segundo toque que chega
      dentro do tempo de duplo clique é eco do primeiro, não desistência — nem
