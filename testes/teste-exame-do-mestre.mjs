@@ -179,7 +179,13 @@ const CATRACA_DO_EXAME = {
        que já eram da A, 381 · 2 · 29 como antes. Era 381 · 2 · 29 · cat 309 ·
        per 174 · pares 100. */
     A: { rolaCerto: 413, pedeIndevido: 2, deixaDePedir: 29, categoria: 340, pericia: 196, paresQueSeparam: 102 },
-    B: { rolaCerto: 158, pedeIndevido: 6, deixaDePedir: 32, categoria: 119, pericia: 53, paresQueSeparam: 54 },
+    /* DESCEU em 19/11/2026 (§19), e o motivo fica escrito: a rodada da
+       terceira sessão custou UMA frase da B, que passou a pedir dado onde a
+       mesa não pede (157 · 7 · pares 53; era 158 · 6 · 54). Não se sabe qual:
+       a B não se lê, e procurar a culpada medindo a B regra a regra seria
+       afinar pela prova. A perda fica à vista em vez de escondida, e esta B
+       já foi medida três vezes — a próxima rodada troca de prova. */
+    B: { rolaCerto: 157, pedeIndevido: 7, deixaDePedir: 32, categoria: 119, pericia: 53, paresQueSeparam: 53 },
   },
 };
 /* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje

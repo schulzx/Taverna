@@ -18182,7 +18182,7 @@ export default function Taverna() {
          esconder-se é ordem para inventar); falhou, soma-se ao envelope da falha */
       if (notaEsc) env = passou ? notaEsc : `${env}\n${notaEsc}`;
       if (custo && !custo.porPouco && !custo.meiaVerdade) env = `${envQueda}${envelopeDoCusto(custo, des && des.rotulo)}\n${env}`; else if (envQueda) env = `${envQueda}${env}`;
-      if (des && des.testemunha && !passou) {
+      if (des && des.testemunha && !passou && !des.secaDoMomento) {
         const q = perguntarTestemunha(des);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu falhei ao ${des.rotulo}` })}\n${env}`;
       }
