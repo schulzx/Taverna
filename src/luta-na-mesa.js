@@ -181,3 +181,204 @@ export function ordemDoEspolio(coisas) {
     pousaEm: Math.min(C.pousa + k * C.entre, CERIMONIA_DA_VITORIA.teto - C.viraMs),
   }));
 }
+
+/* ============================================================
+   F4 §10 · AS LACUNAS FECHADAS (formas.md «10 · As lacunas fechadas»,
+   pranchas mente/figma/F4-luta-*.png) — a mão de 8 cartas com a linha do
+   dado, a jogada («como?» + «Agir»), a coluna direita em papel, a coluna
+   do grupo, a régua de 28/24, a reação por dentro e a carta do espólio.
+   Onde este bloco contradiz o de cima, vale este (a planta diz o mesmo).
+   ============================================================ */
+
+/* ---------------- A MÃO DE AÇÕES (§10 lacuna 1 «MAO_DE_ACOES») ----------------
+   Uma fila só de oito cartas: os sete verbos da tabela do motor e «Usar
+   item» (a bolsa, que deixa de ser gaveta e vira carta). `dado`: quem rola o
+   d20 — a forma da linha do dado de cada carta, nunca a regra (a chance e a
+   face vêm da previsão do motor). `glifo`: o glifo de cada carta. Os traços
+   do F4 (`GL`, Figma 316:10007) ainda não estão em glifos.js: até chegarem,
+   cada carta usa o glifo da casa mais próximo (dito em formas.md §F4 11). */
+export const MAO_DE_ACOES = Object.freeze({
+  ordem: Object.freeze(["atacar", "mover", "empurrar", "derrubar", "saltar", "item", "esperar", "fugir"]),
+  glifo: Object.freeze({ atacar: "espadas", mover: "passo", empurrar: "recuo", derrubar: "degrau", saltar: "ascensao", item: "bolsa", esperar: "ampulheta", fugir: "fuga" }),
+  rotulo: Object.freeze({ item: "Usar item", itemCurto: "Item" }),
+  item: Object.freeze({ vazia: "bolsa vazia", custo: "à mão", tem: "tem" }),
+  entreMinimo: 4,
+  dado: Object.freeze({ atacar: "d20", empurrar: "d20", derrubar: "d20", saltar: "d20" }),
+  entre: 10,
+  /* os quatro tamanhos (§10): a mesa (altura útil ≥ 720), a média (a 1280,
+     quando as oito de 102 não cabem), a baixa (altura útil < 720, sem
+     glifo) e o celular (2 × 4). y = o topo de cada linha dentro da carta. */
+  tamanhos: Object.freeze({
+    mesa:    Object.freeze({ largura: 102, altura: 112, glifo: 22, yGlifo: 8, yNome: 33, yDado: 53, yCusto: 76 }),
+    media:   Object.freeze({ largura: 90, altura: 100, glifo: 20, yGlifo: 6, yNome: 28, yDado: 47, yCusto: 68 }),
+    baixa:   Object.freeze({ largura: 102, altura: 72, glifo: 0, yGlifo: 0, yNome: 7, yDado: 26, yCusto: 48 }),
+    celular: Object.freeze({ largura: 85, altura: 80, glifo: 20, yGlifo: 5, yNome: 27, yDado: 44, yCusto: 60, colunas: 4, entre: 6 }),
+  }),
+  alturaUtilBaixa: 720,
+  /* a linha do dado: Spectral Bold 15 `tinta` (14,30 : 1 no ossoLume); no
+     celular Bold 13 com o d20 de 13 a x 6 e o número a x 22 */
+  linha: Object.freeze({ corpo: 15, d20: 16, xD20: 9, xNumero: 28, recuo: 9,
+    celular: Object.freeze({ corpo: 13, d20: 13, xD20: 6, xNumero: 22 }),
+    /* a 1280 (carta de 90) o §10 não deu a letra: a do celular cabe sem que
+       a face e a chance se encostem (medido na captura F4c-luta-1280) */
+    media: Object.freeze({ corpo: 13, d20: 14, xD20: 7, xNumero: 24 }),
+    semDado: "sem dado", corSemDado: "tintaDoPergaminhoDim",
+    dano: Object.freeze({ glifo: "espadas", glifoPx: 14, corpo: 14, cor: "perigoNoPergaminho" }) }),
+  /* armar: sobe 8 em 120 ms ease-out (seco com movimento reduzido); no
+     celular a armada NÃO sobe — osso, tinta 2 e a sombra `erguido` */
+  armar: Object.freeze({ sobe: 8, ms: 120 }),
+  foco: Object.freeze({ cor: "amberSoft", px: 2, folga: 2 }),
+});
+
+/* qual dos quatro tamanhos: o celular; a baixa abaixo de 720 de altura útil;
+   a mesa quando as oito de 102 cabem na largura da mão; senão a média */
+export function tamanhoDaCarta({ telefone = false, larguraDaMao = 0, alturaUtil = 0 } = {}) {
+  const M = MAO_DE_ACOES;
+  if (telefone) return "celular";
+  if (Number(alturaUtil) > 0 && Number(alturaUtil) < M.alturaUtilBaixa) return "baixa";
+  const n = M.ordem.length;
+  const precisa = n * M.tamanhos.mesa.largura + (n - 1) * M.entre;
+  if (!(Number(larguraDaMao) > 0) || Number(larguraDaMao) >= precisa) return "mesa";
+  return "media";
+}
+
+/* «70 %»: a chance da previsão (0–1) em inteiro, com o espaço da prancha */
+export const porCento = (p) => (fin(p) ? `${Math.round(Number(p) * 100)} %` : "");
+
+/* A LINHA DO DADO (§10 lacuna 1): toda carta tem uma das quatro formas.
+   `previsao`: a do motor para o alvo marcado (previsaoDoHeroi — a MESMA que
+   o bloco «seu golpe» lê). `faceMinima`: faceMinimaQueBasta(previsao), de
+   batalha-na-tela.js — a chance e a face saem da mesma previsão e de mais
+   lugar nenhum (o conserto de RX-2). `empurrao`: a previsão do empurrão sob
+   o alvo (golpe.js vereditoDoEmpurrao). `fuga`: { golpes, min, max } quando
+   o motor os diz; sem eles, «sem dado».
+     1. «chance»  — rola, com alvo: d20 · 7+ · 70 %
+     2. «bonus»   — rola, sem alvo: «d20» (e «+ 5» quando o bônus é sabido)
+     3. «semDado» — «sem dado»
+     4. «dano»    — o custo é dano: «3× 2–10» (a escrita da etiqueta de intenção) */
+export function linhaDoDado(id, { previsao = null, empurrao = null, fuga = null, faceMinima = null } = {}) {
+  const M = MAO_DE_ACOES;
+  const f = obj(fuga);
+  if (id === "fugir" && f && Number(f.golpes) > 0 && fin(f.min) && fin(f.max)) {
+    const faixa = Number(f.min) === Number(f.max) ? `${f.min}` : `${f.min}–${f.max}`;
+    return { forma: "dano", texto: `${f.golpes}× ${faixa}`, falado: `${f.golpes} golpes livres de ${String(faixa).replace("–", " a ")}` };
+  }
+  if (!M.dado[id]) return { forma: "semDado", texto: M.linha.semDado, falado: M.linha.semDado };
+  if (id === "atacar") {
+    const p = obj(previsao);
+    if (p && !p.impedido && !p.intocavel && fin(p.chance)) {
+      const face = fin(faceMinima) ? Number(faceMinima) : null;
+      return { forma: "chance", dado: "d20", faceMinima: face, chance: porCento(p.chance),
+        texto: `d20${face != null ? ` · ${face}+` : ""} · ${porCento(p.chance)}`,
+        falado: `${face != null ? `${face} ou mais no d20, ` : ""}${Math.round(Number(p.chance) * 100)} por cento` };
+    }
+    const b = p && fin(p.bonus) ? Number(p.bonus) : null;
+    return { forma: "bonus", dado: "d20", bonus: b, texto: b != null ? `d20 ${b >= 0 ? "+" : "−"} ${Math.abs(b)}` : "d20", falado: "rola o d20" };
+  }
+  if (id === "empurrar") {
+    const e = obj(empurrao) && obj(empurrao.previsao) ? empurrao.previsao : null;
+    /* a disputa é oposta: não há uma face que baste, só a chance */
+    if (e && fin(e.chance)) return { forma: "chance", dado: "d20", faceMinima: null, chance: porCento(e.chance), texto: `d20 · ${porCento(e.chance)}`, falado: `${Math.round(Number(e.chance) * 100)} por cento` };
+  }
+  return { forma: "bonus", dado: "d20", bonus: null, texto: "d20", falado: "rola o d20" };
+}
+
+/* ---------------- A JOGADA (§10 lacuna 1 «A_JOGADA») ----------------
+   O «como?» e o «Agir» juntos, à direita da mão. Três caminhos, uma ação:
+   «Agir», Enter na pena, ou o segundo toque no alvo marcado. Impedida diz o
+   que falta; pronta repete o veredito (o quê, em quem, a chance). */
+export const A_JOGADA = Object.freeze({
+  mesa: Object.freeze({ largura: 228, altura: 112, pena: 48, entre: 8, agir: 56 }),
+  media: Object.freeze({ largura: 220, altura: 100, pena: 44, entre: 6, agir: 50 }),
+  celular: Object.freeze({ pena: 233, agir: 124, altura: 60, entre: 8, margem: 6 }),
+  pena: Object.freeze({ chao: "pergaminho", borda: "pergaminhoBorda", raio: 3, sombra: "pousado", glifo: "pena", glifoPx: 18, corGlifo: "brasaNoPergaminho",
+    xGlifo: 12, xTexto: 38, convite: "diga como, se quiser…", conviteCurto: "diga como…", corConvite: "tintaDoPergaminhoDim", corTexto: "tintaDoPergaminho", foco: "tintaDoPergaminho", focoPx: 2 }),
+  agir: Object.freeze({ raio: 6, rotulo: "Agir",
+    pronta: Object.freeze({ chao: "amber", sombra: "peca", letra: "onAccent" }),
+    impedida: Object.freeze({ tracejado: "4 4", borda: "inkMeio", px: 1.5, rotulo: "inkMeio", razao: "ink" }),
+    desce: 1, transicaoMs: 160 }),
+  razoes: Object.freeze({ semCarta: "escolha uma carta", semAlvo: "toque no alvo", semCasa: "toque a casa", naoEAVez: "não é a sua vez", espera: "o Mestre fala", semFrase: "diga como" }),
+  tetoDaFrase: 40,
+});
+
+/* O VEREDITO DO «AGIR», numa conta só (a tela só pinta). Devolve
+   { pronta, diz, acao } — `acao` é o que o «Agir» faz: "atacar" (o alvo
+   marcado), "empurrar" (o alvo do empurrão), "fugir", "caixa" (a frase da
+   pena, com ou sem verbo armado) ou null (impedida: `diz` é a razão). */
+export function vereditoDoAgir({ armado = "", rotulo = "", alvo = "", chance = "", alvoDoEmpurrao = "", chanceDoEmpurrao = "", frase = "", custo = "",
+  contando = false, bloqueado = false, fim = false } = {}) {
+  const R = A_JOGADA.razoes;
+  const junta = (...xs) => xs.filter(Boolean).join(" · ");
+  if (fim) return { pronta: false, diz: "", acao: null };
+  if (contando) return { pronta: false, diz: R.naoEAVez, acao: null };
+  if (bloqueado) return { pronta: false, diz: R.espera, acao: null };
+  const temFrase = !!String(frase || "").trim();
+  if (armado === "atacar") return alvo ? { pronta: true, diz: junta(rotulo || "Atacar", alvo, chance), acao: "atacar" } : { pronta: false, diz: R.semAlvo, acao: null };
+  if (armado === "empurrar") return alvoDoEmpurrao ? { pronta: true, diz: junta(rotulo || "Empurrar", alvoDoEmpurrao, chanceDoEmpurrao), acao: "empurrar" } : { pronta: false, diz: R.semAlvo, acao: null };
+  if (armado === "mover") return { pronta: false, diz: R.semCasa, acao: null };
+  if (armado === "fugir") return { pronta: true, diz: junta(rotulo || "Fugir", custo), acao: "fugir" };
+  if (armado) return temFrase ? { pronta: true, diz: junta(rotulo, alvo), acao: "caixa" } : { pronta: false, diz: R.semFrase, acao: null };
+  if (temFrase) {
+    const f = String(frase).trim();
+    const T = A_JOGADA.tetoDaFrase;
+    return { pronta: true, diz: f.length > T ? `${f.slice(0, T - 1)}…` : f, acao: "caixa" };
+  }
+  return { pronta: false, diz: R.semCarta, acao: null };
+}
+
+/* ---------------- A MESA DA LUTA (§10 lacuna 1, a coluna direita e o grupo) ----------------
+   As três colunas da prancha 10a (1440 × 900): o grupo (140), o tapete com a
+   mão (o resto) e o papel (300). As margens: 28 · 28 | 12 · 40. */
+export const MESA_DA_LUTA = Object.freeze({
+  /* abaixo desta largura a mesa volta ao arranjo de antes (a mesma régua da
+     casca: abaixo de 1180 não cabem três zonas) */
+  minima: 1180,
+  grupo: Object.freeze({ largura: 140, margem: 28, entre: 28, rotulo: "O grupo" }),
+  direita: Object.freeze({ largura: 300, entre: 12, margem: 40, gap: 18 }),
+  topo: 18, baixo: 26, entreTapeteEMao: 14, entreFilaETapete: 12,
+  /* abaixo de 1400 de largura as margens apertam (a prancha 10a é a 1440) */
+  apertada: Object.freeze({ abaixoDe: 1400, margem: 16, entreGrupo: 6, entre: 12 }),
+  papel: Object.freeze({ chao: "pergaminho", borda: "pergaminhoBorda", raio: 3, sombra: "pousado", respiro: 14,
+    rotulo: "tintaDoPergaminhoDim", tinta: "tintaDoPergaminho", tintaDim: "tintaDoPergaminhoDim", brasa: "brasaNoPergaminho", perigo: "perigoNoPergaminho" }),
+  fala: Object.freeze({ altura: 128, linhas: 4, alturaApertada: 88, linhasApertadas: 2, rotulo: "O Mestre", charsPorLinha: 40 }),
+  elesVao: Object.freeze({ inclina: -1, rotulo: "Nesta rodada, eles vão", rosto: 30, sobrepoe: 12 }),
+  alvo: Object.freeze({ altura: 222, alturaCurta: 128, carta: Object.freeze({ largura: 60, altura: 84 }), contas: 10, chance: 24, rotulo: "O alvo", golpe: "Seu golpe" }),
+  rodada: Object.freeze({ chao: "latao", letra: "couroBaixo" }),
+});
+
+/* «NESTA RODADA, ELES VÃO»: as intenções agrupadas — os iguais que fazem o
+   mesmo ao mesmo alvo numa linha («3× Rato Gigante · 2–10 cada → Saoirse»),
+   e a soma do que chega ao herói se todos acertarem. Só soma o que o motor
+   já anunciou (o min e o max da intenção); não decide nada. */
+export function linhasDeElesVao(intencoes, { heroi = "" } = {}) {
+  const lista = arr(intencoes).filter((i) => i && i.inimigo && obj(i.vista));
+  const grupos = [];
+  for (const i of lista) {
+    const v = i.vista;
+    const esp = especieDe(i.inimigo);
+    const d = obj(v.dano);
+    const chave = [esp, v.tipo || "", v.alvo || "", d ? d.min : "", d ? d.max : ""].join("|");
+    const g = grupos.find((x) => x.chave === chave);
+    if (g) { g.quantos += 1; g.nomes.push(i.inimigo); }
+    else grupos.push({ chave, especie: esp, quantos: 1, nomes: [i.inimigo], tipo: v.tipo || "", alvo: v.alvo || "", dano: d && fin(d.min) && fin(d.max) ? { min: Number(d.min), max: Number(d.max) } : null, golpes: Math.max(1, Number(v.golpes) || 1) });
+  }
+  let min = 0, max = 0, n = 0;
+  for (const g of grupos) {
+    if (!heroi || g.alvo !== heroi || !g.dano) continue;
+    min += g.dano.min * g.quantos * g.golpes; max += g.dano.max * g.quantos * g.golpes; n += g.quantos;
+  }
+  return { linhas: grupos.map(({ chave, ...g }) => g), noHeroi: n > 1 ? { quantos: n, min, max } : null };
+}
+
+/* ---------------- O QUE RESTA NA VEZ (§10, sob a carta de pé) ----------------
+   Quatro linhas de 24: o disco «ação», o triângulo «bônus», o losango
+   «reação» e as casas do «passo». O estado vem da economia da vez
+   (vez-na-mesa.js economiaDaVez); aqui só a ordem e as palavras. */
+export const O_QUE_RESTA_NA_VEZ = Object.freeze({
+  linha: 24,
+  ordem: Object.freeze(["acao", "bonus", "reacao", "movimento"]),
+  palavra: Object.freeze({ acao: "ação", bonus: "bônus", reacao: "reação", movimento: "passo" }),
+  livre: "livre", gasta: "gasta",
+  casas: 6, casa: 10,
+});
+

@@ -14,6 +14,13 @@ import {
   CARTA_DE_ACAO, VELA_DA_REACAO, ceraDaVela, CERIMONIA_DA_VITORIA, ordemDoEspolio,
 } from "../src/luta-na-mesa.js";
 import { T } from "../src/estilo.js";
+import {
+  MAO_DE_ACOES, tamanhoDaCarta, porCento, linhaDoDado, A_JOGADA, vereditoDoAgir,
+  MESA_DA_LUTA, linhasDeElesVao, O_QUE_RESTA_NA_VEZ,
+} from "../src/luta-na-mesa.js";
+import { faceMinimaQueBasta, golpePorExtenso } from "../src/batalha-na-tela.js";
+import { previsaoDoAtaque, facesQueAcertam } from "../src/previsao.js";
+import { VERBOS_DE_COMBATE } from "../src/golpe.js";
 
 let bons = 0, maus = 0;
 const t = (nome, ok, extra = "") => { if (ok) { bons++; console.log("  ok  " + nome); } else { maus++; console.log("  XX  " + nome + (extra ? "\n      " + extra : "")); } };
@@ -95,6 +102,91 @@ const CSS = ler("src/estilo.js");
 const iMedia = CSS.lastIndexOf("@media (prefers-reduced-motion");
 t("as três classes novas existem e param com movimento reduzido", ["tv-chama-treme", "tv-carta-pousa", "tv-carta-vira"].every((c) => CSS.indexOf("." + c + " {") > 0) && /\.tv-chama-treme, \.tv-carta-pousa, \.tv-carta-vira \{ animation: none;/.test(CSS));
 t("a folha não guarda os tempos delas (chegam por variável)", /tvCartaVira var\(--tv-vira-ms, 0ms\)/.test(CSS) && /tvChamaTreme var\(--tv-treme-ms, 0ms\)/.test(CSS) && iMedia > 0);
+
+console.log("\n8. F4 §10 · a mão de oito cartas (MAO_DE_ACOES)");
+{
+  const M = MAO_DE_ACOES;
+  t("oito cartas, na ordem da prancha: Atacar … Usar item · Esperar · Fugir", J(M.ordem) === J(["atacar", "mover", "empurrar", "derrubar", "saltar", "item", "esperar", "fugir"]));
+  t("todo verbo da mão existe na tabela do motor (ou é recuo/bolsa)", M.ordem.every((id) => ["item", "esperar", "fugir"].includes(id) || VERBOS_DE_COMBATE.some((v) => v.id === id)));
+  t("cada carta tem glifo; o d20 só nas quatro que rolam", M.ordem.every((id) => typeof M.glifo[id] === "string") && J(Object.keys(M.dado).sort()) === J(["atacar", "derrubar", "empurrar", "saltar"]));
+  const m = M.tamanhos;
+  t("102 × 112 (glifo 22 a 8, nome 33, dado 53, custo 76)", m.mesa.largura === 102 && m.mesa.altura === 112 && m.mesa.glifo === 22 && m.mesa.yGlifo === 8 && m.mesa.yNome === 33 && m.mesa.yDado === 53 && m.mesa.yCusto === 76);
+  t("90 × 100 a 1280; baixa 102 × 72 sem glifo; celular 85 × 80 em 2 × 4", m.media.largura === 90 && m.media.altura === 100 && m.baixa.altura === 72 && m.baixa.glifo === 0 && m.celular.largura === 85 && m.celular.altura === 80 && m.celular.colunas === 4);
+  t("10 entre as cartas; armar sobe 8 em 120 ms", M.entre === 10 && M.armar.sobe === 8 && M.armar.ms === 120);
+  t("as oito de 102 com 10 entre elas medem 886 (a mão da prancha: x 196 → 1082)", 8 * m.mesa.largura + 7 * M.entre === 886);
+  t("o tamanho: celular · baixa (< 720 úteis) · mesa (cabem as oito) · média", tamanhoDaCarta({ telefone: true }) === "celular" && tamanhoDaCarta({ larguraDaMao: 892, alturaUtil: 700 }) === "baixa"
+    && tamanhoDaCarta({ larguraDaMao: 890, alturaUtil: 900 }) === "mesa" && tamanhoDaCarta({ larguraDaMao: 790, alturaUtil: 720 }) === "media" && tamanhoDaCarta({}) === "mesa");
+}
+
+console.log("\n9. F4 §10 · a linha do dado — e RX-2: a face e a chance de UMA fonte");
+{
+  /* RX-2 (19/11): a captura V6p2-tapete-1440 dizia «60 %» ao lado de «7 ou mais».
+     Apurado: a página de prova inventava chance 0,6 com as faces de
+     facesQueAcertam(5, 12) — 14 faces, 70 %. No motor as duas saem da mesma
+     conta (previsaoComDist, mesmo bónus, mesma defesa): sem vantagem nem
+     desvantagem, chance = faces ÷ 20. Prova-se aqui, no motor. */
+  const casos = [[5, 12], [3, 15], [8, 10], [0, 19], [2, 25]];
+  const iguais = casos.every(([b, d]) => {
+    const p = previsaoDoAtaque({ alvo: { nome: "Alvo", vida: 9, vidaMax: 9, defesa: d }, ehAtacanteInimigo: false, bonusAtaque: b, dano: { dado: 4, n: 1 }, criticoEm: 20 });
+    return p && Math.abs(p.chance - p.faces.length / 20) < 1e-9;
+  });
+  t("RX-2 · no motor, sem vantagem: chance = faces ÷ 20 (cinco bónus × defesas)", iguais);
+  const p = previsaoDoAtaque({ alvo: { nome: "Rato", vida: 4, vidaMax: 4, defesa: 12 }, ehAtacanteInimigo: false, bonusAtaque: 5, dano: { dado: 4, n: 1 }, criticoEm: 20 });
+  t("RX-2 · d20 + 5 contra 12: a menor face que basta é 7, e a chance 70 %", faceMinimaQueBasta(p) === 7 && porCento(p.chance) === "70\u00a0%");
+  t("RX-2 · a carta e o bloco «seu golpe» dizem a mesma face (faceMinimaQueBasta)", golpePorExtenso(p).faceMinima === 7 && golpePorExtenso(p).legenda.startsWith("você acerta com 7 ou mais") && linhaDoDado("atacar", { previsao: p, faceMinima: faceMinimaQueBasta(p) }).faceMinima === 7);
+  t("só o crítico acerta: a face que basta é a do crítico", faceMinimaQueBasta({ faces: [20], criticoEm: 20 }) === 20 && faceMinimaQueBasta({ faces: [19, 20], criticoEm: 19 }) === 19 && faceMinimaQueBasta({ faces: [] }) === null && faceMinimaQueBasta(null) === null);
+  const ch = linhaDoDado("atacar", { previsao: { chance: 0.7, faces: facesQueAcertam(5, 12, 20) }, faceMinima: 7 });
+  t("1 · rola, com alvo: «d20 · 7+ · 70 %»", ch.forma === "chance" && ch.texto === "d20 · 7+ · 70\u00a0%" && ch.falado === "7 ou mais no d20, 70 por cento", J(ch));
+  t("2 · rola, sem alvo: «d20» (e «d20 + 5» com o bónus sabido)", linhaDoDado("atacar").texto === "d20" && linhaDoDado("atacar", { previsao: { bonus: 5, impedido: true, chance: 0 } }).texto === "d20 + 5" && linhaDoDado("derrubar").forma === "bonus");
+  t("3 · não rola: «sem dado» (Mover, Esperar, Usar item, Fugir sem golpes)", ["mover", "esperar", "item", "fugir"].every((id) => linhaDoDado(id).forma === "semDado" && linhaDoDado(id).texto === "sem dado"));
+  t("4 · o custo é dano: «3× 2–10» (Fugir com golpes livres)", linhaDoDado("fugir", { fuga: { golpes: 3, min: 2, max: 10 } }).texto === "3× 2–10" && linhaDoDado("fugir", { fuga: { golpes: 3, min: 2, max: 10 } }).forma === "dano");
+  t("o empurrão (disputa oposta) diz só a chance, sem face", linhaDoDado("empurrar", { empurrao: { previsao: { chance: 0.55 } } }).texto === "d20 · 55\u00a0%");
+}
+
+console.log("\n10. F4 §10 · a jogada e o veredito do «Agir»");
+{
+  const A = A_JOGADA;
+  t("228 × 112: pena 48, 8, Agir 56; a 1280 220 × 100 (44, 6, 50); celular 233 + 124 × 60", A.mesa.largura === 228 && A.mesa.altura === 112 && A.mesa.pena === 48 && A.mesa.entre === 8 && A.mesa.agir === 56
+    && A.media.largura === 220 && A.media.pena === 44 && A.media.agir === 50 && A.celular.pena === 233 && A.celular.agir === 124 && A.celular.altura === 60);
+  t("as cores da jogada existem em T", [A.pena.chao, A.pena.borda, A.pena.corGlifo, A.pena.corConvite, A.pena.corTexto, A.agir.pronta.chao, A.agir.pronta.letra, A.agir.impedida.borda, A.agir.impedida.razao].every((k) => typeof T[k] === "string"));
+  const v = (o) => vereditoDoAgir(o);
+  t("impedida diz o que falta: «escolha uma carta», «toque no alvo», «não é a sua vez»", v({}).diz === "escolha uma carta" && !v({}).pronta && v({ armado: "atacar" }).diz === "toque no alvo" && v({ armado: "atacar", contando: true }).diz === "não é a sua vez");
+  const pr = v({ armado: "atacar", rotulo: "Atacar", alvo: "Rato Gigante 1", chance: "70\u00a0%" });
+  t("pronta repete o veredito: «Atacar · Rato Gigante 1 · 70 %», e o que ela faz", pr.pronta && pr.diz === "Atacar · Rato Gigante 1 · 70\u00a0%" && pr.acao === "atacar");
+  t("Mover pede a casa; Fugir age com o custo; a frase da pena age sozinha", v({ armado: "mover" }).diz === "toque a casa" && v({ armado: "fugir", rotulo: "Fugir", custo: "sai da luta" }).diz === "Fugir · sai da luta" && v({ frase: "por baixo da guarda" }).acao === "caixa");
+  t("Empurrar sem alvo pede o toque; com ele, diz em quem", v({ armado: "empurrar" }).diz === "toque no alvo" && v({ armado: "empurrar", rotulo: "Empurrar", alvoDoEmpurrao: "Goblin", chanceDoEmpurrao: "55\u00a0%" }).diz === "Empurrar · Goblin · 55\u00a0%");
+  t("o fim cala o «Agir»; esperando o Mestre, diz-se", v({ fim: true }).diz === "" && v({ bloqueado: true }).diz === "o Mestre fala");
+}
+
+console.log("\n11. F4 §10 · a coluna direita e o grupo (MESA_DA_LUTA)");
+{
+  const L = MESA_DA_LUTA;
+  t("as três colunas da prancha: 28 · grupo 140 · 28 | 12 · papel 300 · 40 (o centro dá 892 a 1440)", 1440 - L.grupo.margem - L.grupo.largura - L.grupo.entre - L.direita.entre - L.direita.largura - L.direita.margem === 892);
+  t("a fala 300 × 128 (4 linhas; 88 e 2 linhas apertada); o alvo 222 (128 curto), a carta 60 × 84", L.fala.altura === 128 && L.fala.linhas === 4 && L.fala.alturaApertada === 88 && L.alvo.altura === 222 && L.alvo.alturaCurta === 128 && L.alvo.carta.largura === 60 && L.alvo.carta.altura === 84);
+  t("o papel é pergaminho com a borda dele e a sombra «pousado»; «eles vão» a −1°", L.papel.chao === "pergaminho" && L.papel.borda === "pergaminhoBorda" && L.papel.sombra === "pousado" && L.elesVao.inclina === -1);
+  t("todas as tintas do papel existem em T", [L.papel.chao, L.papel.borda, L.papel.rotulo, L.papel.tinta, L.papel.tintaDim, L.papel.brasa, L.papel.perigo, L.rodada.chao, L.rodada.letra].every((k) => typeof T[k] === "string"));
+  t("abaixo de 1180 a mesa volta ao arranjo de antes", L.minima === 1180);
+  const ratos = ["Rato Gigante", "Rato Gigante 2", "Rato Gigante 3"].map((n) => ({ inimigo: n, vista: { tipo: "atacar", alvo: "Saoirse", golpes: 1, dano: { min: 2, max: 10 } } }));
+  const ev = linhasDeElesVao([...ratos, { inimigo: "Lobo", vista: { tipo: "atacar", alvo: "Nolan", golpes: 1, dano: { min: 3, max: 6 } } }], { heroi: "Saoirse" });
+  t("os iguais que fazem o mesmo ao mesmo alvo numa linha: «3× Rato Gigante · 2–10 → Saoirse»", ev.linhas.length === 2 && ev.linhas[0].quantos === 3 && ev.linhas[0].especie === "Rato Gigante" && ev.linhas[0].alvo === "Saoirse" && ev.linhas[1].especie === "Lobo", J(ev.linhas));
+  t("«se os três acertarem, de 6 a 30» — só soma o que chega ao herói", ev.noHeroi && ev.noHeroi.quantos === 3 && ev.noHeroi.min === 6 && ev.noHeroi.max === 30);
+  t("um só a bater no herói: sem a soma; lista suja não estoura", linhasDeElesVao([ratos[0]], { heroi: "Saoirse" }).noHeroi === null && linhasDeElesVao(null).linhas.length === 0);
+  t("o que resta na vez: quatro linhas de 24 (ação, bônus, reação, passo)", O_QUE_RESTA_NA_VEZ.linha === 24 && J(O_QUE_RESTA_NA_VEZ.ordem) === J(["acao", "bonus", "reacao", "movimento"]) && O_QUE_RESTA_NA_VEZ.palavra.bonus === "bônus");
+}
+
+console.log("\n12. F4 §10 · a mesa no texto das peças");
+{
+  const PEC = ler("src/painel-luta-mesa.jsx");
+  const TELA = ler("src/painel-batalha.jsx");
+  t("a mesa da prancha nasce no monitor largo, e o arranjo de antes fica abaixo dela", /const mesaF4 = !noTelefone && larguraDaMesa >= MESA_DA_LUTA\.minima;/.test(TELA) && /if \(mesaF4\) \{/.test(TELA));
+  t("a mão lê linhaDoDado com a previsão e faceMinimaQueBasta (uma fonte só)", /linhaDoDado\(id, \{ previsao: prevGolpe, empurrao: empAgora, faceMinima \}\)/.test(TELA) && /faceMinimaQueBasta\(prevGolpe\)/.test(TELA));
+  t("o «Agir» é vereditoDoAgir, e o Enter na pena age só pronto", /vereditoDoAgir\(\{/.test(TELA) && /e\.key === "Enter" && pronta && aoAgir/.test(PEC));
+  t("três caminhos: o segundo toque no alvo marcado age", /if \(marcado !== nome\) \{ setMarcado\(nome\); preverGolpe\(nome\); return; \}/.test(TELA));
+  t("as peças tocáveis não levam sombra de caixa inline (o anel de foco é a sombra de caixa)", !/<button[^>]*boxShadow/.test(PEC) && /filter: impedida \? undefined : SOMBRA_COMO_FILTRO/.test(PEC));
+  t("com movimento reduzido a carta não desliza", /transition: reduzido \? "none"/.test(PEC) && /prefers-reduced-motion/.test(PEC));
+  t("nenhum componente nasce dentro do render (todas as peças no módulo)", (PEC.match(/^export function [A-Z]/gm) || []).length >= 8);
+  t("as peças exportadas são lidas pela tela", ["MaoDeAcoes", "AJogada", "FalaDoMestreNoPapel", "ElesVaoNoPapel", "OAlvoNoPapel", "ColunaDoGrupoNaLuta", "PlaquetaDaRodada"].every((n) => TELA.includes("<" + n + " ")));
+}
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);
 process.exit(maus ? 1 : 0);

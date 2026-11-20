@@ -85,6 +85,23 @@ export function pilulaDaPrevisao(prev, o) {
    em «preciso de 6», não em «78%». As faces vêm do motor (`faces`, a lista
    de facesQueAcertam, e `criticoEm`); sem elas a fileira cala-se.
    ============================================================ */
+/* F4 §10 (RX-2, 19/11): A MENOR FACE QUE BASTA, numa fonte só. É ela que a
+   carta de ação escreve («d20 · 7+ · 70 %») e que o bloco «seu golpe» diz
+   («7 ou mais no dado»); as duas leem a MESMA previsão do motor (as `faces`
+   de facesQueAcertam e a `chance`, de previsaoComDist, com o mesmo bónus e a
+   mesma defesa). Sem vantagem nem desvantagem, chance = faces ÷ 20 — a suíte
+   prova-o no motor. O crítico não conta como «face que basta»: se só ele
+   acerta, devolve a face do crítico. Sem faces, null. */
+export function faceMinimaQueBasta(prev) {
+  const p = obj(prev);
+  if (!p || !Array.isArray(p.faces)) return null;
+  const lista = p.faces.map(Number).filter((n) => n >= 1 && n <= 20);
+  if (!lista.length) return null;
+  const criticoEm = fin(p.criticoEm) ? Math.max(2, Math.min(20, Number(p.criticoEm))) : 20;
+  const naoCriticas = lista.filter((n) => n < criticoEm);
+  return naoCriticas.length ? Math.min(...naoCriticas) : criticoEm;
+}
+
 export function golpePorExtenso(prev) {
   const p = obj(prev);
   if (!p || p.semVista === true) return null;
@@ -92,8 +109,9 @@ export function golpePorExtenso(prev) {
   const criticoEm = fin(p.criticoEm) ? Math.max(2, Math.min(20, Number(p.criticoEm))) : 20;
   const acertam = lista ? new Set(lista) : null;
   const faces = acertam ? Array.from({ length: 20 }, (_, i) => ({ n: i + 1, acerta: acertam.has(i + 1), critico: i + 1 >= criticoEm && acertam.has(i + 1) })) : null;
-  const naoCriticas = lista ? lista.filter((n) => n < criticoEm) : [];
-  const menor = naoCriticas.length ? Math.min(...naoCriticas) : null;
+  /* a face que basta sai de faceMinimaQueBasta (a mesma que a carta lê) */
+  const minima = faceMinimaQueBasta(p);
+  const menor = minima != null && minima < criticoEm ? minima : null;
   const legenda = !faces ? null
     : !lista.length ? "nenhuma face do dado acerta"
       : `${menor != null ? `você acerta com ${menor} ou mais no dado` : "só o crítico acerta"} · ${criticoEm >= 20 ? "o 20 é crítico" : `${criticoEm}–20 é crítico`}`;
@@ -104,7 +122,7 @@ export function golpePorExtenso(prev) {
     chance: pct(p.chance),
     bonus: fin(p.bonus) ? Number(p.bonus) : null,
     defesa: fin(p.defesa) ? Number(p.defesa) : null,
-    faces, legenda, criticoEm,
+    faces, legenda, criticoEm, faceMinima: minima,
     dano: obj(p.dano) ? { texto: intervalo(p.dano.min, p.dano.max), medio: decimal(p.dano.medio) } : null,
     abate: pct(fin(p.abateNoTurno) ? p.abateNoTurno : p.abate),
     critico: fin(p.chanceCritico) && Number(p.chanceCritico) > 0 ? { chance: pct(p.chanceCritico), dano: obj(p.danoCritico) ? intervalo(p.danoCritico.min, p.danoCritico.max) : null } : null,

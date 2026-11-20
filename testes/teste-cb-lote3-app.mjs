@@ -282,7 +282,9 @@ sec("C3. a tela: o verbo não escreve, o toque recusado não desarma, o Agir nã
 {
   const TELA = readFileSync(new URL("../src/painel-batalha.jsx", import.meta.url), "utf8").replace(/\r\n/g, "\n");
   t("Empurrar com motor arma sem escrever a frase na caixa",
-    TELA.includes('const semFrase = v.id === "empurrar" && !!p.aoEmpurrar && !!p.aoPreverEmpurrao;') && TELA.includes("if (semFrase) return;"));
+    /* MOVIDA (19/11, F4 §10): na mesa, Atacar também arma sem frase (quem age é
+       o «Agir»); o Empurrar com motor continua a não escrever na caixa */
+    TELA.includes('const semFrase = (v.id === "empurrar" && !!p.aoEmpurrar && !!p.aoPreverEmpurrao) || v.id === "atacar";') && TELA.includes("if (semFrase) return;"));
   t("a recusa devolvida pelo App fica na linha e o verbo armado",
     TELA.includes('const recusa = p.aoEmpurrar ? p.aoEmpurrar(nome, p.entrada || "") : "";') && TELA.includes('if (typeof recusa === "string" && recusa) { setRecusado(recusa); return; }'));
   t("a recusa da previsão aparece já no pairar (o veredito antes do clique)", TELA.includes("recusaDoVerbo: recusado || recusaDoEmpurrao,"));

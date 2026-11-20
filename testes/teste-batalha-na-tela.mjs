@@ -371,16 +371,27 @@ sec("7 · 8. a tela da batalha: as três colunas e o telefone");
 {
   janela(1905);
   const tela = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], previsaoDoGolpe: PREV, intencoes: INTENCOES, passoM: 6, passoTotal: 9, lugar: "Baixo da Fonte" }));
-  t("a coluna Tu: «A tua vez», o nome, a economia", texto(tela).includes("Sua vez") && texto(tela).includes("Bran") && /aria-label="ação livre, bônus livre, reação livre, 6 de 9 m de passo"/.test(tela));
-  t("O TEU GOLPE por extenso, com as faces e a legenda", /aria-label="Seu golpe contra Bandido"/.test(tela) && texto(tela).includes("você acerta com 6 ou mais no dado"));
+  /* MOVIDAS (19/11, F4 §10): a 1905 a tela é a mesa da prancha 10a — a coluna
+     Tu virou a coluna do grupo (a carta de pé e «o que resta na vez», que diz
+     a economia), e «O teu golpe» virou o alvo no papel, com a mesma previsão
+     (golpePorExtenso). O «Sua vez» saiu: a carta do herói acesa e o «Agir»
+     («não é a sua vez») dizem de quem é a vez. */
+  t("a coluna do grupo: o nome e «o que resta na vez» (a economia)", texto(tela).includes("Bran") && /aria-label="O grupo"/.test(tela) && /aria-label="ação livre, bônus livre, reação livre, passo 6 de 9 m"/.test(tela));
+  /* com duas entradas em «eles vão» (o Bandido e o Dragão) o alvo fica curto
+     (128): o veredito já está na carta e no «Agir» (§10) */
+  t("O ALVO no papel — curto com duas entradas em «eles vão»", /aria-label="O alvo: Bandido"[^>]*min-height:128px/.test(tela) && !texto(tela).includes("Seu golpe"));
   t("o aviso da área (o herói está dentro do sopro)", texto(tela).includes("Você está na área do sopro do Dragão Jovem (14–24)"));
   /* MOVIDA (V6, 16/11), E O MOTIVO: «vai atacar Bran» contava duas vezes — a
      pílula da coluna Eles e a do campo. O F4 tirou a do campo (o golpe vai na
      etiqueta do alvo, «→ Bran»); a coluna continua com a de cada um. */
-  t("a coluna Eles: «Nesta rodada, eles vão», com a intenção de cada um", /aria-label="Eles"/.test(tela) && texto(tela).includes("Nesta rodada, eles vão") && (tela.match(/vai atacar Bran/g) || []).length >= 1 && /→ Bran/.test(tela));
+  /* MOVIDA (19/11, F4 §10): a coluna Eles virou o papel da direita — «nesta
+     rodada, eles vão» com os iguais agrupados e o dano → o alvo */
+  t("a coluna da direita: «Nesta rodada, eles vão», com a intenção de cada um", /aria-label="A mesa do Mestre"/.test(tela) && texto(tela).includes("Nesta rodada, eles vão") && texto(tela).includes("7–12 → Bran") && /→ Bran/.test(tela));
   t("a fila da vez diz de quem é a vez a quem ouve («agora: Bran»)", /role="group" aria-label="agora: Bran"/.test(tela));
   t("a pílula «AGORA:» aposentou-se", !/>AGORA:|agora: Bran<\/span>/.test(tela));
-  t("o Atacar diz a chance («· 78%»)", texto(tela).includes("Atacar · 78%"));
+  /* MOVIDA (19/11, F4 §10): a carta de Atacar diz a face que basta e a chance
+     na linha do dado («d20 · 6+ · 78 %»), que se ouve inteira no nome */
+  t("a carta de Atacar diz a face e a chance («6 ou mais, 78 por cento»)", /aria-label="Atacar, 6 ou mais no d20, 78 por cento/.test(tela) && texto(tela).includes("6+") && texto(tela).includes("78 %"));
   janela(375);
   const tel = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], previsaoDoGolpe: PREV, intencoes: INTENCOES, passoM: 6, passoTotal: 9 }));
   t("no telefone: «A tua vez · Bran» no canto, sem a coluna Eles", texto(tel).includes("Sua vez") && !/aria-label="Eles"/.test(tel));
@@ -465,7 +476,9 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   /* --- o turno deles, passo a passo --- */
   janela(1905);
   const p1 = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1) }));
-  t("«A TUA VEZ» passa a «A VEZ DELES · Bandido» na coluna Tu", texto(p1).includes("A vez deles · Bandido") && !texto(p1).includes("Sua vez"));
+  /* MOVIDA (19/11, F4 §10): na mesa, a vez deles diz-se no «Agir» impedido
+     («não é a sua vez») e a carta do herói perde «o que resta na vez» */
+  t("no turno deles o «Agir» diz «não é a sua vez», e o que resta na vez sai", /aria-label="Agir: não é a sua vez"/.test(p1) && !/aria-label="ação livre/.test(p1));
   t("a fila diz a quem ouve que a vez é deles («agora: Bandido»)", /role="group" aria-label="agora: Bandido"/.test(p1));
   t("o Pé do campo leva a frase do passo («Bandido → Bran: vem 4,5 m e acerta, 5.»)", texto(p1).includes("Bandido → Bran: vem 4,5 m e acerta, 5."));
   t("os dois controlos no Pé: «2×» (interruptor, desligado) e «Saltar ›», a 32", /aria-pressed="false" aria-label="dobro da velocidade"/.test(p1) && texto(p1).includes("Saltar ›") && p1.includes(`height:${BATALHA_EM_TRES.pe}px;min-height:${BATALHA_EM_TRES.pe}px;border-radius:${BATALHA_EM_TRES.pe / 2}px`));
@@ -477,7 +490,9 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   const p1x2 = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1, true) }));
   t("com 2× o interruptor liga (aria-pressed, chão âmbar a 18 %)", /aria-pressed="true" aria-label="dobro da velocidade"/.test(p1x2));
   const fim = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(PASSOS.length) }));
-  t("NO FIM, A TUA VEZ: sem controlos, e a fila volta ao herói", texto(fim).includes("Sua vez") && !texto(fim).includes("Saltar ›") && /aria-label="agora: Bran"/.test(fim));
+  /* MOVIDA (19/11, F4 §10): «Sua vez» na coluna Tu → o «Agir» deixa de dizer
+     «não é a sua vez» e «o que resta na vez» volta */
+  t("NO FIM, A TUA VEZ: sem controlos, e a fila volta ao herói", !/não é a sua vez/.test(fim) && /aria-label="ação livre/.test(fim) && !texto(fim).includes("Saltar ›") && /aria-label="agora: Bran"/.test(fim));
   janela(375);
   const pt = R.html(h(R.TelaDeBatalha, { combate: COMBATE, personagem: HEROI, grupo: [], mensagens: [], intencoes: INTENCOES, passoM: 6, passoTotal: 9, turnoDeles: TURNO(1) }));
   t("no telefone: «A vez deles» e o nome no canto, 2× e Saltar a 44, e o ⤢ cala-se", texto(pt).includes("A vez deles") && pt.includes(`height:${BATALHA_EM_TRES.telefone.pe}px;min-height:${BATALHA_EM_TRES.telefone.pe}px`) && /display:none/.test(pt));
@@ -507,7 +522,8 @@ sec("10. CB 17: o dado no alvo e o turno deles");
   t(`A FILA SEGUE A ORDEM DO MOTOR (${ordem.join(" → ")}), e não a iniciativa`, posicoes.every((p, i) => p >= 0 && (i === 0 || p > posicoes[i - 1])), J(posicoes));
   t("a iniciativa aparece como número ao lado do nome («Bandido 12»)", texto(grupoDaFila).includes("Bandido 12") && texto(grupoDaFila).includes("Bran 15"));
   const eco = economiaDaVez(COMBATE, HEROI, { passoTotalM: 9 });
-  t("A ECONOMIA LÊ economiaDaVez: ação, bónus e reação como o motor os conta", eco.acao.resta === 1 && eco.bonus.tem && /aria-label="ação livre, bônus livre, reação livre, 6 de 9 m de passo"/.test(tela));
+  /* MOVIDA (19/11, F4 §10): a economia mora em «o que resta na vez» */
+  t("A ECONOMIA LÊ economiaDaVez: ação, bónus e reação como o motor os conta", eco.acao.resta === 1 && eco.bonus.tem && /aria-label="ação livre, bônus livre, reação livre, passo 6 de 9 m"/.test(tela));
   const gasto = R.html(h(R.Economia, { vez: economiaDaVez({ ...COMBATE, economia: { acao: 0, extra: 1 }, recursos: { reacao: false } }, HEROI, { passoTotalM: 9 }) }));
   t("e com a ação e a reação gastas, a peça di-lo (vinda só de `vez`)", /aria-label="ação gasta, bônus livre, reação gasta/.test(gasto), (gasto.match(/aria-label="[^"]*"/) || [""])[0]);
 }

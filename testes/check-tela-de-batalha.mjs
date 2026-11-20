@@ -354,7 +354,10 @@ sec("7. os verbos: a lista é do `jogo`, e o armado tem três saídas");
     /* movida em 10/11 (CB lote 3): o toque no campo continua a desarmar, mas
        o Empurrar sobre um inimigo é a exceção — o pointerdown corre antes do
        clique e desarmava-o, e o clique ia atacar em vez de empurrar */
-    /onPointerDown=\{\(e\) => \{[\s\S]{0,400}?if \(empurrando && sobreInimigo\) return;\s*setArmado\(""\);/.test(TEL)
+    /* MOVIDA (19/11, F4 §10): na mesa da prancha 10a o toque no inimigo MARCA o
+       alvo, e Atacar armado espera esse toque — desarmar ali apagava a carta
+       que o «Agir» ia jogar. O toque no chão continua a desarmar. */
+    /onPointerDown=\{\(e\) => \{[\s\S]{0,500}?if \(\(empurrando \|\| mesaF4\) && sobreInimigo\) return;\s*setArmado\(""\);/.test(TEL)
     && /const mover = \(destino\) => \{ setArmado\(""\);/.test(TEL));
   /* 19.ª sessão, defeito 15 (o Mover alterna): o segundo toque que chega
      dentro do tempo de duplo clique é eco do primeiro, não desistência — nem
