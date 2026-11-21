@@ -271,8 +271,24 @@ const PEGA = formas(T.pega), DA = formas(T.da), REVELA = formas(T.revela), EM_MA
 /* a cabeça pela forma (singular e plural) → { cabeca, plural } */
 const CABECAS = new Map();
 for (const c of Object.keys(T.objetos)) {
-  CABECAS.set(c, { cabeca: c, plural: false });
-  CABECAS.set(T.plurais[c] || c + "s", { cabeca: c, plural: true });
+  CABECAS.set(c, { cabeca: c, plural: false, artigo: T.objetos[c] });
+  CABECAS.set(T.plurais[c] || c + "s", { cabeca: c, plural: true, artigo: T.objetos[c] });
+}
+/* 21/11 (o-mestre-vivo.md §24): AS CABEÇAS DE QUEM CHAMA. O conferente da
+   prosa (motor/o-conferente-da-prosa.js) lê também o que só ele conta como
+   objeto que muda de mão (o cordão que o velho «entrega»): passa
+   `maisObjetos` ({ cabeça: artigo }), e só durante a chamada dele a régua o
+   conhece. Sem a opção, `CAB` é a tabela de sempre — a memória do
+   inventado não muda. Síncrono e sem sorte: a troca volta no finally. */
+let CAB = CABECAS;
+function comMaisObjetos(mais, f) {
+  const extra = mais && typeof mais === "object" ? Object.entries(mais).filter(([c, a]) => typeof c === "string" && c && (a === "o" || a === "a") && !CABECAS.has(c)) : [];
+  if (!extra.length) return f();
+  const m = new Map(CABECAS);
+  for (const [c, a] of extra) { m.set(c, { cabeca: c, plural: false, artigo: a }); m.set(c + "s", { cabeca: c, plural: true, artigo: a }); }
+  const antes = CAB;
+  CAB = m;
+  try { return f(); } finally { CAB = antes; }
 }
 const FAMILIA = new Map();
 for (const f of T.familias) for (const c of f) FAMILIA.set(c, [...new Set([...(FAMILIA.get(c) || [c]), ...f])]);
@@ -321,9 +337,9 @@ const negado = (ws, i) => [ws[i - 1], ws[i - 2]].some((w) => w && NEGA.has(w.bas
 function objetoEm(ws, j) {
   const w = ws[j];
   if (!w) return null;
-  let cab = CABECAS.get(w.base), ini = j, art = null, fim = j;
-  if (!cab && T.quantos[w.base] && ws[j + 1] && (ws[j + 1].base === "de") && ws[j + 2] && CABECAS.get(ws[j + 2].base)) {
-    cab = CABECAS.get(ws[j + 2].base); art = T.quantos[w.base]; fim = j + 2;
+  let cab = CAB.get(w.base), ini = j, art = null, fim = j;
+  if (!cab && T.quantos[w.base] && ws[j + 1] && (ws[j + 1].base === "de") && ws[j + 2] && CAB.get(ws[j + 2].base)) {
+    cab = CAB.get(ws[j + 2].base); art = T.quantos[w.base]; fim = j + 2;
   }
   if (!cab) return null;
   /* a coisa num lugar («na manga», «da porta») não é o objeto do verbo */
@@ -332,10 +348,10 @@ function objetoEm(ws, j) {
   const mods = [];
   for (let k = fim + 1; k < ws.length && mods.length < T.modificadores; k++) {
     const b = ws[k].base;
-    if (PREPS.has(b) || ARTIGOS.has(b) || FECHA.has(b) || HEROI.has(b) || POSSE.has(b) || /mente$/.test(b) || /^\d/.test(b) || CABECAS.has(b)) break;
+    if (PREPS.has(b) || ARTIGOS.has(b) || FECHA.has(b) || HEROI.has(b) || POSSE.has(b) || /mente$/.test(b) || /^\d/.test(b) || CAB.has(b)) break;
     mods.push(ws[k].o);
   }
-  const artigoSing = art || T.objetos[cab.cabeca];
+  const artigoSing = art || cab.artigo || T.objetos[cab.cabeca];
   const plural = art ? false : cab.plural;
   const artigo = plural ? artigoSing + "s" : artigoSing;
   const nome = [...ws.slice(ini, fim + 1).map((x) => x.o), ...mods].join(" ").toLowerCase();
@@ -387,6 +403,8 @@ function noCorpoDoHeroi(ws, heroiNaFrase) {
    ============================================================ */
 export function oInventadoDaProsa(narrativa, estado, opcoes) {
   if (typeof narrativa !== "string" || !narrativa.trim()) return [];
+  const mais = obj(opcoes).maisObjetos;
+  if (mais) { const { maisObjetos: _m, ...resto } = obj(opcoes); return comMaisObjetos(mais, () => oInventadoDaProsa(narrativa, estado, resto)); }
   const E = obj(estado), O = obj(opcoes);
   const achados = [];
   let heroiNaAnterior = false;

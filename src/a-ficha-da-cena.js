@@ -71,7 +71,20 @@ export const A_FICHA_DA_CENA = Object.freeze({
   quemAtende: "quem atende {banca}",
   doGrupo: "comigo",
   mao: "dar-me coisa, tirar-me moedas ou dizer preço além do que já foi registrado",
-  coisa: "Eu mexo em «{coisa}», e em nenhuma outra coisa.",
+  /* 21/11 (§24): A COISA VIROU VETO. Ia em ACABOU DE («Eu mexo em «…», e
+     em nenhuma outra coisa.»), prio 3 — e, medida contra as 158 pautas
+     gravadas fora da luta (registo-s5 e s6-s7), o teto a cortava em 69
+     (44%): o ONDE e a economia (2,49 e 2,5) passavam à frente. No NÃO PODE
+     (2 + 0,05 por linha) ela chega, e diz o mesmo em menos letras. */
+  coisa: "mexer em outra coisa que não «{coisa}»",
+  /* 21/11 (§24): QUEM RESPONDE. A frase falou com alguém (o alvo da régua,
+     `momento.alvo`): a resposta é dele. Na quinta sessão a mesma pessoa da
+     cena respondia pelo velho e recebia o furto feito a outro. */
+  alvo: "pôr outra pessoa para responder no lugar de {alvo}",
+  /* 21/11 (§24): QUEM FALOU HÁ POUCO. A pessoa da cena que tomou a palavra
+     nos últimos turnos (o conferente da prosa guarda quando), e a quem a
+     frase não se dirige, fica quieta neste. */
+  calados: "pôr {lista} para falar de novo, salvo se eu me dirigir a quem for",
   porque: "a prosa inventava quem vende, o que muda de mão e o preço; a ficha da cena é a lista do que existe, e o resto é veto",
 });
 
@@ -105,7 +118,9 @@ export function aCoisaDaFrase(frase, cena) {
 /* ---------------- A FICHA NA PAUTA ----------------
    `frase`: o que o jogador escreveu; `momento`: o de chamadoDoMomento (a
    cena e o veredito); `bancas`: as bancas da cena ({ nome }); `ausente`: o
-   de quemNaoEstaNaCena. Devolve { acabou, naoPode } ou null (sem cena). */
+   de quemNaoEstaNaCena; `calados` (§24): quem falou há pouco e fica
+   quieto (o-conferente-da-prosa.js#quemFicaCalado). Devolve { acabou,
+   naoPode } ou null (sem cena). */
 export function fichaDaCenaNaPauta(o) {
   try {
     const x = obj(o) ? o : {};
@@ -121,12 +136,17 @@ export function fichaDaCenaNaPauta(o) {
     const corte = lista.length > F.naLista ? [...lista.slice(0, F.naLista), "…"] : lista;
     naoPode.push(corte.length ? F.quem.replace("{lista}", corte.join(", ")) : F.ninguem);
     naoPode.push(F.mao);
-    /* a coisa: só quando a ação cai sobre uma coisa */
+    /* a coisa: só quando a ação cai sobre uma coisa (no NÃO PODE, §24) */
     const fam = familiaDaAcao(m.veredito);
     if (F.familiasDaCoisa.includes(fam)) {
       const c = aCoisaDaFrase(txt(x.frase), cena);
-      if (c) acabou.push(F.coisa.replace("{coisa}", c));
+      if (c) naoPode.push(F.coisa.replace("{coisa}", c));
     }
+    /* quem responde e quem fica quieto (§24): só quando quem chama os passa */
+    const alvo = txt(m.alvo);
+    if (alvo) naoPode.push(F.alvo.replace("{alvo}", alvo));
+    const calados = arr(x.calados).map(txt).filter(Boolean).filter((n) => !alvo || primeiro(n) !== primeiro(alvo));
+    if (calados.length) naoPode.push(F.calados.replace("{lista}", calados.slice(0, 2).join(" e ")));
     const a = obj(x.ausente) ? pautaDeQuemNaoEsta(x.ausente) : null;
     if (a) { acabou.push(...a.acabou); naoPode.push(...a.naoPode); }
     return Object.freeze({ acabou, naoPode });

@@ -222,7 +222,8 @@ import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA, compraSemQuemVenda, falaDaCompraSemQuemVenda, vetoDaCompraSemQuemVenda } from "./bolsa-da-frase.js";
-import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA } from "./a-ficha-da-cena.js";
+import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA, aCoisaDaFrase } from "./a-ficha-da-cena.js";
+import { conferirAProsa, quemFicaCalado } from "./motor/o-conferente-da-prosa.js";
 import { aCoisaAoToqueDaFrase, oQueOAchadoDa, telaDoAchadoNaCoisa, envelopeDoAchadoNaCoisa } from "./o-que-ha-nas-coisas.js";
 import { coisasQueAFraseNomeia } from "./cena-do-momento.js";
 import { oNomeChamado } from "./motor/a-regua-do-momento.js";
@@ -5916,6 +5917,14 @@ export default function Taverna() {
      que não fechou, o que ninguém vende, o meio que a ficha nega) — a memória
      do inventado não dá folga a isso. Só o Mestre vivo escreve; nunca no save. */
   const semFolgaDoTurnoRef = useRef([]);
+  /* 21/11 (o-mestre-vivo.md §24): O CONFERENTE DA PROSA — o que a ficha da
+     cena do turno sabe (a frase, a cena, o alvo, a coisa), para conferir a
+     resposta depois de escrita; a memória de quem falou (para a vez e a
+     repetição); e as moedas da última prosa (a bolsa mexeu neste turno?).
+     Só o Mestre vivo escreve; nada disto vai ao save (memória de sessão). */
+  const conferenteDoTurnoRef = useRef(null);
+  const falasDoConferenteRef = useRef({});
+  const moedasDaUltimaProsaRef = useRef(null);
   /* v9.135: o Interprete lido deste turno, e as falas que os atores
      devolveram. Os dois vivem entre `enviar` e a montagem da Pauta. */
   const interpreteRef = useRef(null);
@@ -11511,6 +11520,39 @@ export default function Taverna() {
           if (pd.vetos.length) vetosDoJuizRef.current = andarOsVetos(vetosDoJuizRef.current, pd.vetos, { turno: turnoDeRegistroRef.current + 1 });
         }
       } catch (e) { calou("S7b · a poda do ausente", e); }
+      /* 21/11 (o-mestre-vivo.md §24): O CONFERENTE DA PROSA
+         (src/motor/o-conferente-da-prosa.js). A quinta sessão viu o Narrador
+         ignorar a ficha da cena: vendeu a espada que o sistema não vendeu,
+         pôs na mão o que ninguém deu, usou a gazua que a ficha nega, deixou
+         uma pessoa responder pelo velho e repetir a mesma fala, e esqueceu a
+         escalada. Depois da resposta e antes da tela: a frase que afirma o
+         que o sistema não fez sai; a prosa que fica vazia ganha a linha do
+         sistema; a ação julgada que a prosa não narra ganha o resultado à
+         frente. Sem chamada nova. Só com o Mestre vivo, fora da luta, e só
+         no turno da frase que a ficha leu (a última frase do jogador). */
+      try {
+        const cf = conferenteDoTurnoRef.current;
+        if (mestreVivoLigado() && conferenteDoTurnoRef.current && !combateRef.current && resp && typeof resp.narrativa === "string" && resp.narrativa.trim()) {
+          conferenteDoTurnoRef.current = null;
+          const ultimaC = [...(mensagensRef.current || [])].reverse().find((x) => x && x.autor === "jogador");
+          if (ultimaC && String(ultimaC.texto || "").trim() === String(cf.frase || "").trim()) {
+            const pC = persAtual || personagemRef.current || personagem || {};
+            const moedasC = Number(pC.moedas), antesC = moedasDaUltimaProsaRef.current;
+            const cfr = conferirAProsa(resp.narrativa, {
+              frase: cf.frase, cena: cf.cena, alvo: cf.alvo, aoGrupo: cf.aoGrupo, coisa: cf.coisa,
+              negados: semFolgaDoTurnoRef.current || [], teste: testeDoTurnoRef.current,
+              posses: [...(Array.isArray(pC.inventario) ? pC.inventario : []), ...Object.values(pC.equipado || {})],
+              estado: { ...retratoDoLivro(), personagem: pC, missoes: missoesRef.current, quests: questsRef.current, abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo, baseMundo: baseMundoRef.current },
+              lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "", mundo: mundoDoLivro(),
+              pagou: Number.isFinite(antesC) && Number.isFinite(moedasC) ? moedasC < antesC : null,
+              heroi: pC.nome || "", turno: turnoDeRegistroRef.current + 1, falas: falasDoConferenteRef.current,
+            });
+            falasDoConferenteRef.current = cfr.falas;
+            if (cfr.narrativa !== resp.narrativa) resp = { ...resp, narrativa: cfr.narrativa };
+            if (cfr.podadas.length || cfr.frente) { try { console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), troca: !!cfr.troca, frente: !!cfr.frente })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
+          }
+        }
+      } catch (e) { calou("Mestre vivo · o conferente da prosa", e); }
       /* MEMÓRIA ENXUTA: no histórico vai SÓ a narrativa (dentro do molde JSON,
          para o modelo manter o formato). Antes ia o JSON completo com mudancas,
          sugestões e campos de combate — ~3× mais tokens por mensagem antiga,
@@ -11600,6 +11642,8 @@ export default function Taverna() {
           lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "",
         });
       } catch (e) { calou("NE8 · a memória do inventado", e); }
+      /* §24: as moedas depois do turno — o conferente do próximo sabe se a bolsa mexeu */
+      try { if (mestreVivoLigado()) moedasDaUltimaProsaRef.current = Number((pers || {}).moedas); } catch (e) { calou("Mestre vivo · as moedas da última prosa", e); }
       /* MISSÕES (v9.27): o conferente roda DEPOIS de tudo aplicado — só aí o
          estado do turno está completo (a cidade nova, o inimigo caído, o item
          na bolsa). Custa zero: é comparação com o que já está na mão.
@@ -14717,6 +14761,7 @@ export default function Taverna() {
        for a porta que a seguir ganhe, o recibo (ou o veto) já viaja. */
     naoPodeDoTurnoRef.current = [];
     semFolgaDoTurnoRef.current = [];
+    conferenteDoTurnoRef.current = null;
     fraseAnteriorRef.current = "";
     try { fraseAnteriorRef.current = fraseAnteriorDoJogador(mensagensRef.current); } catch (e) { calou("a frase anterior do jogador", e); }
     try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
@@ -18770,7 +18815,10 @@ export default function Taverna() {
     try { qn = quemNaoEstaNaCena(acao, m.cena, { ausentes: aus, conhecidos, protegidos }); } catch (e) { calou("Mestre vivo · quem não está", e); qn = null; }
     let bancas = [];
     try { bancas = bancasDaCena(); } catch (e) { calou("Mestre vivo · as bancas da ficha", e); }
-    const pa = fichaDaCenaNaPauta({ frase: acao, momento: m, bancas, ausente: qn });
+    /* §24: quem falou há pouco (a memória do conferente) e a frase não chama fica quieto */
+    let calados = [];
+    try { calados = quemFicaCalado(falasDoConferenteRef.current, turnoDeRegistroRef.current + 1, { frase: acao, alvo: m.alvo, pessoas: (m.cena && m.cena.pessoas) || [] }); } catch (e) { calou("Mestre vivo · quem fica calado", e); calados = []; }
+    const pa = fichaDaCenaNaPauta({ frase: acao, momento: m, bancas, ausente: qn, calados });
     if (pa) porNaPautaDoTurno(pa);
     /* 21/11 (o-mestre-vivo.md §25): quem deve a quem, como o jogador disse —
        uma linha da pauta do turno, para a prosa não inverter a dívida */
@@ -18780,10 +18828,17 @@ export default function Taverna() {
     try {
       const v = m.veredito;
       if (v && v.tipo === "impossivel") {
-        const mm = String(acao).toLowerCase().match(/\bcom (?:a|o|as|os|um|uma|minha|meu|minhas|meus)\s+([^\s.,;!?]{3,})/);
+        /* §24: «com a minha gazua» dava «minha» — o possessivo depois do artigo pula */
+        const mm = String(acao).toLowerCase().match(/\bcom (?:(?:a|o|as|os|um|uma)\s+)?(?:(?:minha|meu|minhas|meus)\s+)?([^\s.,;!?]{3,})/);
         if (mm) semFolgaDoTurnoRef.current = [...(semFolgaDoTurnoRef.current || []), mm[1]];
       }
     } catch (e) { calou("Mestre vivo · o meio negado", e); }
+    /* §24: o que o conferente da prosa lê depois da resposta (uma vez, neste turno) */
+    try {
+      let coisaC = "";
+      try { coisaC = aCoisaDaFrase(acao, m.cena); } catch { coisaC = ""; }
+      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC };
+    } catch (e) { calou("Mestre vivo · o conferente do turno", e); conferenteDoTurnoRef.current = null; }
   };
   const momentoDaFrase = (acao) => {
     if (rolagem || carregando) return null;

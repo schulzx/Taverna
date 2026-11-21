@@ -1539,6 +1539,81 @@ Revirar coisa a coisa num mercado e numa taverna (umas rolam, outras não, e o j
 na bolsa uma vez só; a calha e a treliça rolando, a escada não; a dona olhando fazendo rolar a revista vazia; o
 «está na…» da linha de quem não está; o regateio com o companheiro baixando o preço sem dado.
 
+## 24. O Mestre que conhece a cena — etapa 4: o conferente da prosa (o Narrador obedece à ficha)
+
+**21/11/2026.** A quinta sessão jogada (`mestre-vivo-sessao-5.md`, commit `0ce2cd3`, IA real) viu a ficha da cena
+(§22) chegar ao Narrador e ser ignorada: a tela disse «espada compra-se nas bancas» e a prosa vendeu e entregou a
+espada (moedas e mochila intactas); cordão, botões e moeda «entregues» não entraram na bolsa; a gazua e a lâmina que a
+ficha nega foram narradas em uso; uma pessoa da cena falou em ~35 de 41 turnos, respondeu pelo velho, recebeu o furto
+feito a outro e repetiu a mesma fala quatro vezes; e três ações do jogador não foram narradas. Tudo continua atrás da
+chave (`?mestre=1`). Peça nova: `src/motor/o-conferente-da-prosa.js`; suíte nova: `testes/teste-o-conferente-da-prosa.mjs`.
+
+**1. Primeiro a medida: por que o veto não pegava.** Não há gravação da pauta da quinta sessão; a medida usou as 158
+pautas reais gravadas fora da luta (`registo-s5-pauta.json`, `registo-s6-s7-pauta.json`), com as linhas da ficha
+postas onde a pauta do motor as põe (o canal de um turno, logo depois do crime):
+
+- o veto de quem está (NÃO PODE, prio 2,0) chegou ao texto em **157 de 158**; o «nada muda de mão» em **158 de 158**.
+  O corte não era o defeito: o Narrador leu os vetos e escreveu contra eles.
+- a linha da coisa («Eu mexo em «…», e em nenhuma outra coisa.», ACABOU DE, prio 3) foi **cortada em 69 de 158 (44%)**:
+  o ONDE e a economia (2,49 e 2,5) passam à frente. **Conserto de montagem:** ela vira veto, «mexer em outra coisa que
+  não «…»», no NÃO PODE — mais curta, e chega em 153 de 158.
+- a posição: a pauta é o primeiro bloco da mensagem do turno, e os vetos ficam a ~60% dela; depois vêm os envelopes e
+  o rodapé do estado, e a frase do jogador por último. O veto está longe do fim, e o rodapé tem a lista de gente da cena.
+- os vetos são genéricos: «dar-me coisa… além do que já foi registrado» não diz «a espada», e a lista «aqui estão só:
+  …» é também uma lista de elenco — a pessoa que tomava a cena estava nela. Faltava dizer QUEM responde.
+- instruções fixas que empurram a fala: «COMPANHEIROS VIVOS… agem sozinhos, opinam e discordam» (prompt.js) e a linha
+  de A GENTE que pinga um fio por turno da primeira pessoa em cena (`fioParaAPrincipal`). **Não foram mexidas:** o
+  prompt é provado byte a byte (pedido-dourado) e a chave não chega a ele; o que as contraria vai pela pauta do turno
+  (abaixo) e pelo conferente depois.
+
+Dois vetos novos na ficha, pelo mesmo canal (nenhum bloco estático): «pôr outra pessoa para responder no lugar de
+{alvo}» quando o veredito tem alvo, e «pôr {quem falou há pouco} para falar de novo, salvo se eu me dirigir a quem
+for» (`quemFicaCalado`, a memória do conferente). Nas 158 pautas, a ficha com os dois chega inteira em **156** e o
+texto nunca passa do TETO_DA_PAUTA.
+
+**2. O conferente depois da prosa** (`conferirAProsa`, no App logo depois da poda do ausente e antes do livro). Sem IA e
+**sem chamada nova**: o jogo não tem orçamento de retentativa de conteúdo (as duas tentativas de `chamarMestre` são da
+ligação que cai). **Pior caso: zero chamadas extras por turno.** Na ordem de preferência:
+
+- **poda** a frase (ou a linha de fala inteira, se a parte narrada dela ofende) que afirma:
+  · objeto que muda de mão para o herói e o sistema não deu — a régua da memória do inventado, com o que a frase PEDIU
+    ou comprou sem folga (pedir não é ter) e o cordão como cabeça só daqui (`maisObjetos`); e o dar com a coisa antes
+    do verbo («corta um palmo de cordão e entrega-lho») quando a coisa é a pedida;
+  · pagamento ou venda quando a bolsa não mexeu neste turno (moedas da última prosa contra as de agora; sem saber,
+    não morde);
+  · a arma ou ferramenta que a frase diz ser do herói («com a minha gazua», «saco a minha espada») e a ficha não tem,
+    com a família (a lâmina é espada);
+  · a fala de gente que a prosa inventou, e a de quem está em cena mas fala fora da vez (3);
+- **troca:** a prosa que a poda esvazia ganha a linha do sistema, por tabela («Nada passa para a sua mão.», «Nenhuma
+  moeda sai da sua bolsa.», «Você não tem isso com você.»…);
+- **deixa passar:** a espada à vista na banca, a lança do guarda, «você não tem gazua», o boato sobre alguém, falar DE
+  quem não está, a compra que fechou, a intervenção curta de quem não falou há pouco.
+
+**3. Quem responde.** Com alvo, a resposta é dele. Outra pessoa da cena que fala ou age (a régua da poda do ausente:
+sujeito de verbo de ação ou fala, a etiqueta, a fala colada) está fora da vez quando a frase não a nomeia e: o alvo não
+aparece na prosa (respondeu no lugar); ou falou nos últimos `vez` (3) turnos; ou repete a própria última fala (metade
+das palavras em comum); ou fala mais de 180 letras num turno que é de outro. A frase ao grupo deixa o grupo falar. A
+memória (quem, em que turno, o quê) é só de sessão (ref), nunca do save.
+
+**4. A ação não some.** Com o dado rolado (`testeDoTurnoRef`), se a prosa não diz o alvo, a coisa da frase nem uma raiz
+da família da ação (escalar → sub-, telhad-, alto…), o sistema põe à frente a linha do resultado («Você chega aonde
+queria.», «Não acreditam em você.»), em fala de mesa.
+
+**Com a chave desligada o jogo não muda:** o conferente só corre dentro de `mestreVivoLigado()`, fora da luta, e só
+quando a ficha da cena do turno o armou (`conferenteDoTurnoRef`, que só `fichaDaCenaNoTurno` escreve) e a última frase do
+jogador é a que ela leu; a ficha nova só é montada com a chave; a poda do ausente sem `limiar`/`semTravaDaFala` e a
+memória do inventado sem `maisObjetos` são as de sempre (provado na suíte, e as suítes delas seguem verdes sem mudança).
+
+### 24.1 O que não foi verificado
+
+- Nada disto foi jogado: está provado na suíte, com as prosas da quinta sessão parafraseadas por nós, e no build.
+- A reconstrução das pautas usa sessões antigas (s5–s7 do registo), não a quinta do Mestre vivo; a posição e o corte
+  podem diferir numa cena de mercado com mais gente.
+- A régua lê frases curtas e PT-BR; prosa muito longa e enrolada pode escapar (o portão morde só o necessário) ou, num
+  caso que a suíte não viu, podar uma frase certa.
+- A troca e a linha do resultado são neutras, mas podem soar secas ao lado da prosa; a sessão jogada deve olhar.
+- Os PT-PT da narração, os nomes que viram viagem e a perda de moedas do pagamento não são desta etapa.
+
 ## 25. O conserto depois da quinta sessão
 
 **21/11/2026.** A quinta sessão jogada (`mente/lancamento/mestre-vivo-sessao-5.md`, commit `0ce2cd3`, IA real: 36

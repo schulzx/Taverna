@@ -218,6 +218,11 @@ export function vetoDoAusente(a, turno) {
    opcoes: { frase (a do jogador), outros (nomes presentes, para o primeiro
    nome não casar com quem está), turno }. `recusou`: "" | "limiar" |
    "unica-fala" — a poda achou e não podou; os vetos vão na mesma.
+   21/11 (o-mestre-vivo.md §24): duas opções só do conferente da prosa
+   (motor/o-conferente-da-prosa.js), que decide sozinho o que pôr no lugar
+   quando a poda leva demais: `limiar` (a fração acima da qual não poda;
+   sem ela, a da tabela) e `semTravaDaFala` (não guarda a única fala de uma
+   pergunta). Quem não as passa tem a poda de sempre, byte a byte.
    ============================================================ */
 export function podarOAusente(narrativa, ausentes, opcoes) {
   const o = ehObj(opcoes) ? opcoes : {};
@@ -278,7 +283,8 @@ export function podarOAusente(narrativa, ausentes, opcoes) {
   const vetos = nomes.slice(0, T.porTurno).map((a) => vetoDoAusente(a, o.turno));
   const podado = novas.join("\n").replace(/\n{3,}/g, "\n\n").trim();
   const tirou = 1 - podado.length / texto.trim().length;
-  if (tirou > T.limiar || !podado) return { narrativa: texto, podadas, vetos, recusou: "limiar" };
-  if (ehPergunta(o.frase) && temFala(texto) && !temFala(podado)) return { narrativa: texto, podadas, vetos, recusou: "unica-fala" };
+  const limiar = typeof o.limiar === "number" && o.limiar > 0 && o.limiar <= 1 ? o.limiar : T.limiar;
+  if (tirou > limiar || (!podado && limiar < 1)) return { narrativa: texto, podadas, vetos, recusou: "limiar" };
+  if (o.semTravaDaFala !== true && ehPergunta(o.frase) && temFala(texto) && !temFala(podado)) return { narrativa: texto, podadas, vetos, recusou: "unica-fala" };
   return { narrativa: podado, podadas, vetos, recusou: "" };
 }

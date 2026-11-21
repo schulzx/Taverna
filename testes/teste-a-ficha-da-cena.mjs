@@ -64,10 +64,14 @@ sec("2. a ficha na pauta: quem está, nada muda de mão, a coisa");
   const pa = fichaDaCenaNaPauta({ frase: "Arrombo o cadeado da arca, sem ferramentas", momento: m, bancas: BANCAS });
   t("o veto de quem está leva os nomes da cena e quem atende a banca", !!pa && pa.naoPode[0].includes("Brisa (vendedora)") && pa.naoPode[0].includes("Tomé (comigo)") && pa.naoPode[0].includes("quem atende Feira do Cais"), pa && pa.naoPode[0]);
   t("e o veto de que nada muda de mão nem se diz preço", !!pa && pa.naoPode.includes(A_FICHA_DA_CENA.mao));
-  t("a arca não vira porta: a coisa em que mexo vai em ACABOU DE", !!pa && pa.acabou.some((l) => l.includes("«cadeado da arca»")), pa && pa.acabou.join(" | "));
+  /* 21/11 (§24): a coisa saiu de ACABOU DE para o NÃO PODE — medida contra as
+     158 pautas gravadas fora da luta, em ACABOU DE (prio 3) o teto a cortava
+     em 69; no NÃO PODE chega em 153. A intenção é a mesma: a arca não vira porta. */
+  t("a arca não vira porta: a coisa em que mexo vai no NÃO PODE", !!pa && pa.naoPode.some((l) => l.includes("«cadeado da arca»")), pa && pa.naoPode.join(" | "));
   const mc = chamadoDoMomento("Afano um cantil da banca de água", leitura, retrato, { bonus: 2 });
   const pc = fichaDaCenaNaPauta({ frase: "Afano um cantil da banca de água", momento: mc, bancas: BANCAS });
-  t("o cantil não vira corda: a coisa do furto, com o acento de quem escreveu", !!pc && pc.acabou.some((l) => l.includes("«cantil da banca de água»")), pc && pc.acabou.join(" | "));
+  /* 21/11 (§24): idem — a coisa vai no NÃO PODE */
+  t("o cantil não vira corda: a coisa do furto, com o acento de quem escreveu", !!pc && pc.naoPode.some((l) => l.includes("«cantil da banca de água»")), pc && pc.naoPode.join(" | "));
   const mf = chamadoDoMomento("Pergunto à Brisa onde fica o templo", leitura, retrato, { bonus: 2 });
   const pf = fichaDaCenaNaPauta({ frase: "Pergunto à Brisa onde fica o templo", momento: mf, bancas: [] });
   t("a conversa não ganha linha de coisa (só as famílias de uma coisa)", !!pf && pf.acabou.length === 0 && pf.naoPode.length === 2);
