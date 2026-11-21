@@ -61,7 +61,8 @@ sec("2. a venda que não pode acontecer diz por quê, e a ficha fica");
 
 sec("3. a fiação: a venda grava onde o turno lê, e é a única a dizer «Vendido»");
 {
-  const ini = app.indexOf("const venderNoMercado = (nomeItem, origem) => {");
+  /* 21/11 (a oitava sessão, T30): a porta ganhou a quantidade (a venda do que é de uso, que delega a venderOUso) — o corpo é o mesmo */
+  const ini = app.indexOf("const venderNoMercado = (nomeItem, origem, quantos) => {");
   const corpo = ini >= 0 ? app.slice(ini, app.indexOf("\n  };\n", ini)) : "";
   t("a venda existe no App", !!corpo);
   t("lê a ficha VIVA (o espelho que o resto do turno lê), não o estado do React", /fichaViva\(\)/.test(corpo) && !/\bpersonagem\.(inventario|equipamento|moedas|equipados)/.test(corpo));
@@ -69,7 +70,8 @@ sec("3. a fiação: a venda grava onde o turno lê, e é a única a dizer «Vend
   t("a conta e a linha saem de aVendaDaBolsa", /aVendaDaBolsa\(base,/.test(corpo) && /r\.linha/.test(corpo));
   t("no App não há outra linha «Vendido» escrita à mão", !app.includes("🛒 Vendido"));
   t("a venda da frase entra no turno pela mesma porta, também quando não pode (a porta diz por quê)",
-    /if \(lado\.venda && lado\.venda\.item\) venderNoMercado\(lado\.venda\.item, lado\.venda\.origem\);/.test(app));
+    /* 21/11: a mesma porta, com a quantidade do que é de uso (rações, água, tochas) */
+    /if \(lado\.venda && lado\.venda\.item\) venderNoMercado\(lado\.venda\.item, lado\.venda\.origem, lado\.venda\.quantos\);/.test(app));
   t("a fiação está protegida (calou)", /calou\("a venda da bolsa", e\)/.test(corpo));
 }
 

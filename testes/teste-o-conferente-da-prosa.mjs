@@ -440,7 +440,9 @@ sec("24. a fiação nova no App (a bolsa, as linhas do turno, o nome do achado, 
   const i = app.indexOf("conferirAProsa(resp.narrativa");
   const bloco = app.slice(i - 2500, i + 2500);
   t("o que entrou e as linhas do sistema do turno chegam à conferência", /entrouC = cf\.bolsa \? oQueEntrou\(cf\.bolsa, aBolsaAgora\(pC\)\)/.test(bloco) && /entrou: entrouC, doSistema: doSistemaC/.test(bloco));
-  t("o log do console leva, por corte, o motivo e 60 letras da frase (só no console)", /cortes: cfr\.podadas\.map\(\(x\) => \(\{ motivo: x\.motivo, frase: String\(x\.frase \|\| ""\)\.slice\(0, 60\) \}\)\)/.test(bloco));
+  /* 21/11 (a oitava sessão): a asserção mudou — o testador não conseguia julgar
+     os cortes 14 e 28 com 60 letras; o console guarda agora a frase cortada inteira */
+  t("o log do console leva, por corte, o motivo e a frase inteira (só no console)", /cortes: cfr\.podadas\.map\(\(x\) => \(\{ motivo: x\.motivo, frase: String\(x\.frase \|\| ""\) \}\)\)/.test(bloco));
   t("o nome do achado vai na linha que o anuncia, em calou", /nomesA = nomesDoAchado\(extras\)/.test(app) && /calou\("Mestre vivo · o nome do achado"/.test(app));
 }
 

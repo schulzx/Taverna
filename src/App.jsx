@@ -293,11 +293,13 @@ import { osAusentes, podarOAusente, PODA_DO_AUSENTE } from "./motor/poda-do-ause
 import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oChamadoDaPeca, ausentesDaPeca, foraDaCenaNaProsa, semAChegadaDaPeca } from "./pecas/no-jogo.js";
 import { oBatismo } from "./motor/o-batismo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
-import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
+import { oPagamentoDaFrase, aQuantiaDita } from "./motor/o-pagamento-da-frase.js";
 import { aVendaDaBolsa } from "./a-venda-da-bolsa.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
+/* 21/11 (a oitava sessão do Mestre vivo): a troca sai decidida antes do Narrador */
+import { oVereditoDaTroca, aIntencaoDaTroca, aVendaDoUso, nomeiaOItem, O_TEXTO_DA_VENDA_DE_USO, oSubornoDaFrase, aBuscaSemAchado } from "./o-veredito-da-troca.js";
 import { falta, contagem } from "./plural.js";
 import { Bandeja, momentoDoChamado } from "./painel-bandeja.jsx";
 import { oChamado, O_CHAMADO, saberDoHeroi, porQueNaoChama, saberComumDe, envelopeDoSaberComum, esperaDoChamado, chamadoDaRolagem } from "./motor/o-mestre-chama.js";
@@ -5985,6 +5987,7 @@ export default function Taverna() {
   /* 21/11: o que o cartão «Pagar» já tirou neste turno ({ frase, total }) — o ouro da conta social não cobra outra vez (oQueAContaAindaCobra) */
   const pagoNaPropostaRef = useRef(null);
   const ladoDaPropostaRef = useRef(null);   // marca do "atacar mesmo assim" — não pergunta duas vezes
+  const trocaDoTurnoRef = useRef(null);     // 21/11: o veredito da troca deste turno ({ frase, intencao, ctx, veredito }) — bilhete, nunca vai ao save
   const [crimeVereditoPendente, setCrimeVereditoPendente] = useState(null); // { texto, aoConfirmar, aoDeixar }
   const [npcs, setNpcs] = useState({});
   const npcTurnoRef = useRef(0);              // marca "visto por último" de cada NPC
@@ -11557,10 +11560,12 @@ export default function Taverna() {
               pagou: Number.isFinite(antesC) && Number.isFinite(moedasC) ? moedasC < antesC : null,
               heroi: pC.nome || "", turno: turnoDeRegistroRef.current + 1, falas: falasDoConferenteRef.current,
               entrou: entrouC, doSistema: doSistemaC,
+              /* 21/11 (a oitava sessão): o veredito da troca deste turno — aplicada, nada dela se corta; negada, corta-se o fecho inventado */
+              troca: (() => { try { const tr = trocaDoTurnoRef.current; return tr && tr.veredito && String(tr.frase || "").trim() === String(cf.frase || "").trim() ? tr.veredito : null; } catch (e) { calou("Mestre vivo · a troca para o conferente", e); return null; } })(),
             });
             falasDoConferenteRef.current = cfr.falas;
             if (cfr.narrativa !== resp.narrativa) resp = { ...resp, narrativa: cfr.narrativa };
-            if (cfr.podadas.length || cfr.frente) { try { /* 21/11 (sessão 7): por corte, o motivo e o começo da frase que saiu — só no console, para a próxima sessão jogada conferir */ console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), cortes: cfr.podadas.map((x) => ({ motivo: x.motivo, frase: String(x.frase || "").slice(0, 60) })), troca: !!cfr.troca, frente: !!cfr.frente, repostas: (cfr.repostas || []).length })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
+            if (cfr.podadas.length || cfr.frente) { try { /* 21/11 (sessão 7): por corte, o motivo e o começo da frase que saiu — só no console, para a próxima sessão jogada conferir */ console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), cortes: cfr.podadas.map((x) => ({ motivo: x.motivo, frase: String(x.frase || "") })), troca: !!cfr.troca, frente: !!cfr.frente, repostas: (cfr.repostas || []).length })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
           }
         }
       } catch (e) { calou("Mestre vivo · o conferente da prosa", e); }
@@ -14661,7 +14666,7 @@ export default function Taverna() {
         if (lado.pagar) pagoNaProposta = Number(lado.pagar.total) || 0;
         /* sétima sessão (T56–T58): a venda vai sempre pela mesma porta — a que
            aplica e diz; sem comprador, é ela que diz por quê */
-        if (lado.venda && lado.venda.item) venderNoMercado(lado.venda.item, lado.venda.origem);
+        if (lado.venda && lado.venda.item) venderNoMercado(lado.venda.item, lado.venda.origem, lado.venda.quantos);
       }
     } catch (e) { calou("o que a proposta paga ou vende", e); }
     pagoNaPropostaRef.current = { frase: acao, total: pagoNaProposta };
@@ -14775,6 +14780,7 @@ export default function Taverna() {
     naoPodeDoTurnoRef.current = [];
     semFolgaDoTurnoRef.current = [];
     conferenteDoTurnoRef.current = null;
+    trocaDoTurnoRef.current = null;
     fraseAnteriorRef.current = "";
     try { fraseAnteriorRef.current = fraseAnteriorDoJogador(mensagensRef.current); } catch (e) { calou("a frase anterior do jogador", e); }
     try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
@@ -14848,6 +14854,17 @@ export default function Taverna() {
          na prosa, a coisa em que a frase mexe; e quem a frase chama e o
          sistema sabe noutro lugar não está aqui (a linha na tela e na pauta). */
       try { fichaDaCenaNoTurno(acao, momentoDoTurnoRef.current); } catch (e) { calou("Mestre vivo · a ficha da cena", e); }
+      /* 21/11 (a oitava sessão; a ordem da pessoa: «tudo pelo sistema, o
+         narrador apenas recebe fatos»): O VEREDITO DA TROCA. A frase que pede
+         uma troca sai daqui aplicada ou negada — pegar e guardar, o pedido ao
+         companheiro, o fiado; o furto e o de graça esperam o dado —, e o
+         Narrador recebe o fato na pauta do turno (src/o-veredito-da-troca.js). */
+      try { vereditoDaTrocaAntes(acao, momentoDoTurnoRef.current); } catch (e) { calou("Mestre vivo · o veredito da troca", e); trocaDoTurnoRef.current = null; }
+      /* 21/11 (a oitava sessão, T18): a busca que não rola não acha — e a prosa não põe à vista o que se leve */
+      try {
+        const mB = momentoDoTurnoRef.current;
+        if (mB && mB.veredito && oQueOMomentoFaz(mB) !== "rola") { const bv = aBuscaSemAchado(mB.veredito, { achou: false }); if (bv) porNaPautaDoTurno(bv); }
+      } catch (e) { calou("Mestre vivo · a busca sem achado", e); }
     }
     ultimoDesfechoRef.current = null;
     testeDoTurnoRef.current = null;
@@ -18236,6 +18253,25 @@ export default function Taverna() {
             personagemRef.current = np; setPersonagem(np);
             pushMsgs([{ autor: "sistema", texto: `◉ ${pago} moedas mudaram de mão.` }]);
           }
+        } else if (passou) {
+          /* 21/11 (a oitava sessão, T48): O SUBORNO COBRA NO SIM. A moeda oferecida
+             para fingir, deixar passar ou fechar os olhos já não abre o cartão
+             «Pagar» (que cobrava antes do dado, e a prosa dizia que ninguém pegou):
+             é conversa com dado, e o dito sai da bolsa quando ele aceita — ainda
+             que pouco para pesar na conta. Falhou, a moeda fica com você. Vale
+             para todos, com ou sem o Mestre vivo. */
+          try {
+            const fraseS = r.frase || r.motivo || "";
+            const ditoS = oSubornoDaFrase(fraseS, moedaDoMundo()) ? aQuantiaDita(fraseS, moedaDoMundo()) : 0;
+            const base = personagemRef.current || personagem;
+            const pagoS = Math.min(base.moedas || 0, ditoS);
+            if (pagoS > 0) {
+              const np = { ...base, moedas: (base.moedas || 0) - pagoS };
+              personagemRef.current = np; setPersonagem(np);
+              pushMsgs([{ autor: "sistema", texto: `◉ ${pagoS} moedas mudaram de mão.` }]);
+              env = `${env}\nJá paguei ${pagoS} moedas por isto, e elas já saíram da minha bolsa.`;
+            }
+          } catch (e) { calou("o suborno cobra no sim", e); }
         }
         /* e a alavanca suja cobra em outra moeda: quem é ameaçado ou
            chantageado desce um degrau na escada da relação, tenha o teste
@@ -18355,6 +18391,21 @@ export default function Taverna() {
             if (pg.env) { persT = pg.pers; personagemRef.current = persT; setPersonagem(persT); env = `${pg.env}\n${env}`; }
           }
         } catch (e) { calou("Mestre vivo · o achado da mão leve", e); }
+      }
+      /* 21/11 (a oitava sessão, T33 e T15): O VEREDITO DA TROCA PELO DADO. O
+         furto que passou rende o que a semente e a vítima dizem (pode ser
+         nada); o pedido de graça que passou dá uma coisa pequena e real; o que
+         falhou não dá nada — e o Narrador recebe o fato. Só o Mestre vivo. */
+      if (des && mestreVivoLigado()) {
+        try {
+          /* a busca que falhou (ou passou sem nada escondido) não põe à vista o que se leve */
+          if (!(passou && (r.achado || facto))) { const bv = aBuscaSemAchado(des, { achou: false }); if (bv) porNaPautaDoTurno(bv); }
+          const vT = resolverATrocaDoDado(r.frase || "", passou, des, persT);
+          if (vT && vT.estado === "aplicada" && vT.ficha) {
+            persT = vT.ficha; personagemRef.current = persT; setPersonagem(persT);
+            try { salvar({ personagem: persT }); } catch (e2) { calou("Mestre vivo · gravar a troca do dado", e2); }
+          }
+        } catch (e) { calou("Mestre vivo · a troca do dado", e); }
       }
       /* ---------------- O BRILHO (v9.71) ----------------
          O outro lado do dado, e ele nunca existiu: 12 contra 11 e 25 contra
@@ -18859,6 +18910,73 @@ export default function Taverna() {
       try { bolsaC = aBolsaAgora(personagemRef.current || personagem); } catch (e) { calou("Mestre vivo · a bolsa antes da frase", e); bolsaC = null; }
       conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC, ausente: qn, bolsa: bolsaC };
     } catch (e) { calou("Mestre vivo · o conferente do turno", e); conferenteDoTurnoRef.current = null; }
+  };
+  /* ---------------- O VEREDITO DA TROCA (21/11, a oitava sessão) ----------------
+     A ficha muda pela porta do pagamento e da venda (mudarFicha: o espelho e o
+     estado de uma vez, b13b633), a linha vai à tela na forma que já existe, e
+     o fato e o veto vão à pauta de um turno (dentro do TETO_DA_PAUTA; nenhum
+     bloco estático). Cada leitura no seu calou: nunca custa o turno. */
+  const aplicarOVereditoDaTroca = (v) => {
+    if (!v || (v.estado !== "aplicada" && v.estado !== "negada")) return null;
+    let np = null;
+    if (v.estado === "aplicada" && v.ficha) {
+      np = mudarFicha(v.ficha);
+      try { salvar({ personagem: np }); } catch (e) { calou("o veredito da troca · gravar", e); }
+    }
+    if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
+    porNaPautaDoTurno({ acabou: v.fato ? [v.fato] : [], naoPode: v.veto || [] });
+    trocaDoTurnoRef.current = { ...(trocaDoTurnoRef.current || {}), veredito: v };
+    return np;
+  };
+  const vereditoDaTrocaAntes = (acao, m) => {
+    trocaDoTurnoRef.current = null;
+    if (!acao || acao.startsWith("/") || combateRef.current) return;
+    const f0 = fichaViva() || personagem;
+    if (!f0) return;
+    const it = aIntencaoDaTroca(acao, { grupo: f0.grupo || [], moeda: moedaDoMundo() });
+    /* a venda do que é de uso é do cartão «Vender» (o veredito antes do clique) */
+    if (!it || it.tipo === "vendaDeUso") return;
+    let pessoas = [];
+    try { pessoas = pessoasDaCena() || []; } catch (e) { calou("o veredito da troca · quem está", e); pessoas = []; }
+    const alvoNome = (m && (typeof m.alvo === "string" ? m.alvo : m.alvo && m.alvo.nome)) || "";
+    const alvo = (alvoNome && pessoas.find((p) => p && p.nome && semNome(p.nome) === semNome(alvoNome))) || (alvoNome ? { nome: alvoNome } : null);
+    let chao = [];
+    try { chao = pertoDaqui(chaoRef.current, null, RAIO_EXAME).map((x) => x && x.nome).filter(Boolean); } catch (e) { calou("o veredito da troca · o chão", e); chao = []; }
+    const lugarT = (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "";
+    let bancasT = [];
+    try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas", e); bancasT = []; }
+    const ctx = { ficha: f0, intencao: it, chao, presentes: pessoas.map((p) => p && p.nome).filter(Boolean), semente: sementeMundo(), lugar: lugarT, dia: diaRef.current, alvo, bancas: bancasT, moeda: moedaDoMundo() };
+    trocaDoTurnoRef.current = { frase: acao, intencao: it, ctx: { alvo, lugar: lugarT }, veredito: null };
+    if (it.tipo === "furto" || it.tipo === "deGraca") {
+      /* o dado decide: com teste, espera a rolagem (resolverATrocaDoDado); sem
+         risco (a régua diz que acontece), é sim; sem dado e sem acontecer, o
+         furto não houve e o de graça é não */
+      const porta = oQueOMomentoFaz(m);
+      let ehTeste = porta === "rola";
+      if (!ehTeste && porta !== "acontece") { try { const vA = veredictoDaAcao(acao); ehTeste = !!(vA && vA.tipo === "teste"); } catch (e) { calou("o veredito da troca · o teste", e); } }
+      if (ehTeste) return;
+      if (it.tipo === "furto" && porta !== "acontece") return;
+      ctx.dado = porta === "acontece" ? { acontece: true } : { passou: false, semDado: true };
+    }
+    aplicarOVereditoDaTroca(oVereditoDaTroca(acao, ctx));
+  };
+  /* o dado pousou: o furto e o de graça deste turno decidem-se pelo resultado.
+     Devolve o veredito (a ficha nova vai para quem chamou, que a manda ao
+     Narrador), ou null. */
+  const resolverATrocaDoDado = (frase, passou, des, pers) => {
+    const tr = trocaDoTurnoRef.current;
+    if (!tr || tr.veredito || !tr.intencao || String(tr.frase || "").trim() !== String(frase || "").trim()) return null;
+    const tipo = tr.intencao.tipo;
+    if (tipo === "furto" ? !(des && des.id === "bater_carteira") : tipo === "deGraca" ? !(des && des.social) : true) return null;
+    const alvo = des && des.pessoa && des.pessoa.nome ? des.pessoa : des && des.quem ? { nome: des.quem } : (tr.ctx && tr.ctx.alvo) || null;
+    let bancasT = [];
+    try { bancasT = bancasDaCena(); } catch (e) { calou("o veredito da troca · as bancas (dado)", e); bancasT = []; }
+    const v = oVereditoDaTroca(frase, { ficha: pers, intencao: tr.intencao, semente: sementeMundo(), lugar: (tr.ctx && tr.ctx.lugar) || "", dia: diaRef.current, alvo, bancas: bancasT, dado: { passou: !!passou }, moeda: moedaDoMundo() });
+    if (!v || (v.estado !== "aplicada" && v.estado !== "negada")) return null;
+    if (v.linha) pushMsgs([{ autor: "sistema", texto: v.linha }]);
+    porNaPautaDoTurno({ acabou: v.fato ? [v.fato] : [], naoPode: v.veto || [] });
+    trocaDoTurnoRef.current = { ...tr, veredito: v };
+    return v;
   };
   const momentoDaFrase = (acao) => {
     if (rolagem || carregando) return null;
@@ -24832,7 +24950,31 @@ export default function Taverna() {
     notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("pechincha", { vendedor: m.nome, desfecho: r.texto });
   };
 
-  const venderNoMercado = (nomeItem, origem) => {
+  /* 21/11 (a oitava sessão, T30): «vendo duas rações à vendedora de água» — a
+     prosa fechou a venda e as rações ficaram. O que é de uso vende-se ao
+     balcão pela revenda da tabela (aVendaDoUso), com a mesma linha e a mesma
+     porta de gravação da venda da bolsa. */
+  const venderOUso = (id, quantos) => {
+    try {
+      const base = fichaViva();
+      if (!base) return false;
+      const s0 = precoDoSuprimento(id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: true }) });
+      const of = s0 ? ofertaPor({ nome: s0.nome }) : null;
+      const r = aVendaDoUso(base, { id, quantos, preco: s0 ? s0.preco : 0, quem: of && of.quem, motivo: of && of.motivo });
+      if (!r.ok) { pushMsgs([{ autor: "sistema", texto: r.linha }]); return false; }
+      const gastos = { ...(mercadoRef.current.gastos || {}) };
+      gastos[of.quem.id] = { dia: diaRef.current, moedas: gastoHojeDe(of.quem.id) + r.valor };
+      mercadoRef.current = { ...mercadoRef.current, gastos };
+      setMercado(mercadoRef.current);
+      const p = mudarFicha(r.ficha);
+      pushMsgs([{ autor: "sistema", texto: r.linha }]);
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("venda", { item: s0.nome, valor: r.valor });
+      salvar({ personagem: p, mercado: mercadoRef.current });
+      return true;
+    } catch (e) { calou("a venda do que é de uso", e); return false; }
+  };
+  const venderNoMercado = (nomeItem, origem, quantos) => {
+    if (origem === "suprimentos") return venderOUso(nomeItem, quantos);
     /* A VENDA QUE DIZIA «VENDIDO» E NÃO VENDIA (sétima sessão do Mestre vivo,
        T56–T58). Este corpo lia `personagem` (o estado do React) e gravava só
        por setPersonagem. Pela frase, a venda corre DENTRO do turno
@@ -27332,12 +27474,35 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
         const p0 = personagemRef.current || personagem || {};
         const nomeDe = (raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "");
         const curto = (raw) => nomeDe(raw).replace(/\s*\(.*\)\s*$/, "");
-        const cands = [...(p0.inventario || []).map((r) => ({ r, origem: "inventario" })), ...(p0.equipamento || []).map((r) => ({ r, origem: "equipamento" }))]
+        /* 21/11 (a oitava sessão, T46 e a frase sem turno do martelo): o que o
+           herói traz vestido (o kit inicial mora só em «equipados») também se
+           nomeia — e diz por que não vai à banca —, e o nome encurtado pelo
+           jogador («o martelo de batalha») acha o «Rústico Martelo de Batalha» */
+        const vestidos = Object.values(p0.equipados || {}).filter((r) => r && nomeDe(r)).map((r) => ({ r, origem: "equipados" }));
+        const cands = [...(p0.inventario || []).map((r) => ({ r, origem: "inventario" })), ...(p0.equipamento || []).map((r) => ({ r, origem: "equipamento" })), ...vestidos]
           /* o nome sem o aposto entre parênteses: «Faca herdada (única lembrança…)» diz-se «a faca herdada» */
-          .filter((x) => { const n = semNome(nomeDe(x.r).replace(/\s*\(.*\)\s*$/, "")); return n.length >= 3 && tv.includes(n); })
+          .filter((x) => { const n = semNome(nomeDe(x.r).replace(/\s*\(.*\)\s*$/, "")); return (n.length >= 3 && tv.includes(n)) || nomeiaOItem(acao, nomeDe(x.r)); })
           .sort((x, y) => nomeDe(y.r).length - nomeDe(x.r).length);
+        /* o que está vestido e também na mochila de equipamento é o vestido */
+        const vestido = (c) => c && (c.origem === "equipados" || Object.values(p0.equipados || {}).some((e) => e && nomeDe(e) === nomeDe(c.r)));
         const c0 = cands[0];
-        if (c0) {
+        if (c0 && vestido(c0)) {
+          L.venda = { item: nomeDe(c0.r), rotulo: curto(c0.r), origem: "equipamento", motivo: O_TEXTO_DA_VENDA_DE_USO.emUso };
+        } else if (!c0) {
+          /* o que é de uso (rações, água, tochas): pelo balcão, com a revenda da tabela */
+          try {
+            const iu = aIntencaoDaTroca(acao, { grupo: p0.grupo || [] });
+            if (iu && iu.tipo === "vendaDeUso") {
+              const s0 = precoDoSuprimento(iu.id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: true }) });
+              const ofU = s0 ? ofertaPor({ nome: s0.nome }) : null;
+              const rU = aVendaDoUso(p0, { id: iu.id, quantos: iu.quantos, preco: s0 ? s0.preco : 0, quem: ofU && ofU.quem, motivo: s0 ? (ofU && ofU.motivo) : "" });
+              const rotulo = iu.quantos > 1 ? iu.quantos + " " + iu.nome : iu.nome;
+              L.venda = rU.ok
+                ? { item: iu.id, rotulo, origem: "suprimentos", quantos: iu.quantos, valor: rU.valor, quem: ofU.quem.nome, bolsa: p0.moedas || 0 }
+                : { item: iu.id, rotulo, origem: "suprimentos", quantos: iu.quantos, motivo: String(rU.linha || "").replace(/^⛔\s*/, "").replace(/\.$/, "") };
+            }
+          } catch (e) { calou("a proposta: a venda do que é de uso", e); }
+        } else if (c0) {
           const of = ofertaPor(c0.r);
           L.venda = of && of.quem
             ? { item: nomeDe(c0.r), rotulo: curto(c0.r), origem: c0.origem, valor: of.valor, quem: of.quem.nome, bolsa: p0.moedas || 0 }
