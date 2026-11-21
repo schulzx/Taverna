@@ -14,7 +14,7 @@
    ============================================================ */
 import fs from "node:fs";
 import path from "node:path";
-import { O_CONFERENTE, conferirAProsa, quemFicaCalado, linhaDoResultado, osMeiosNegados, CABECAS_DO_CONFERENTE } from "../src/motor/o-conferente-da-prosa.js";
+import { O_CONFERENTE, conferirAProsa, quemFicaCalado, linhaDoResultado, osMeiosNegados, CABECAS_DO_CONFERENTE, linhaDeReposicao, ehOrfa, contaOExito } from "../src/motor/o-conferente-da-prosa.js";
 import { A_FICHA_DA_CENA, fichaDaCenaNaPauta } from "../src/a-ficha-da-cena.js";
 import { podarOAusente, PODA_DO_AUSENTE } from "../src/motor/poda-do-ausente.js";
 import { oInventadoDaProsa, MEMORIA_DO_INVENTADO } from "../src/motor/memoria-do-inventado.js";
@@ -96,7 +96,11 @@ sec("4. a gazua e a lâmina que a ficha nega (T38, T36)");
   const gn = conferirAProsa("Você procura a gazua e não a tem; resta o ombro contra a tampa.", base({ frase: "Arrombo o cadeado de um caixote com a minha gazua" }));
   t("PAR: a gazua que a prosa diz que falta fica", gn.podadas.length === 0);
   const l = conferirAProsa("A lâmina encosta no pescoço do vendedor, fria. Ele engole em seco.", base({ frase: "Saco a minha espada e encosto a lâmina no pescoço do vendedor" }));
-  t("a lâmina que a heroína não tem sai", !l.narrativa.includes("lâmina") && l.narrativa.includes("engole em seco"), l.narrativa);
+  /* MOVIDA em 21/11 (sessão 6 do Mestre vivo, «a frase órfã»): «Ele engole em seco» vinha logo
+     depois da frase cortada, e o «ele» era o vendedor que só ela nomeava — sem ela, o pronome fica
+     sem ninguém. A asserção dizia que a vizinha ficava; agora a órfã sai junto, e o que fica é a
+     linha que diz o que vale (a lâmina não está com você). */
+  t("a lâmina que a heroína não tem sai, e a vizinha órfã vai junto", !l.narrativa.includes("lâmina") && !l.narrativa.includes("engole em seco") && O_CONFERENTE.reposicao.meio.includes(l.narrativa), l.narrativa);
   const lg = conferirAProsa("O guarda ergue a espada e manda você parar.", base({ frase: "Saco a minha espada e encosto a lâmina no pescoço do vendedor" }));
   t("PAR: a espada do guarda fica", lg.podadas.length === 0, JSON.stringify(lg.podadas));
   const tem = conferirAProsa("A lâmina encosta no pescoço do vendedor.", base({ frase: "Saco a minha espada", posses: [{ nome: "Espada longa" }] }));
@@ -241,6 +245,72 @@ sec("12. a fiação no App (atrás da chave)");
     && app.indexOf("conferenteDoTurnoRef.current = {") > app.indexOf("const fichaDaCenaNoTurno = (acao, m) => {"));
   t("e os calados vão à ficha pela memória do conferente", /calados = quemFicaCalado\(falasDoConferenteRef\.current/.test(app) && /fichaDaCenaNaPauta\(\{ frase: acao, momento: m, bancas, ausente: qn, calados \}\)/.test(app));
   t("nenhuma chamada nova ao Narrador no conferente", !/chamarMestre|chamarOAtor|chamarModelo/.test(app.slice(i - 1200, i + 3000)));
+  /* 21/11: quem a ficha diz que não está aqui chega ao conferente */
+  t("o ausente da ficha vai ao conferente do turno, e dele à conferência", /conferenteDoTurnoRef\.current = \{[^}]*ausente: qn/.test(app) && /ausente: cf\.ausente/.test(app.slice(i, i + 1500)));
+}
+
+sec("13. cortou, repõe (sessão 6: dez disparos, nenhuma linha no lugar)");
+{
+  const linhas = Object.values(O_CONFERENTE.reposicao).flat();
+  t("as linhas que repõem não falam de si, nem em PT-PT, e são curtas", linhas.every((x) => !PROIBIDAS.test(x) && x.length <= 60 && !/\b(ficha|pauta|envelope)\b/i.test(x)), linhas.filter((x) => PROIBIDAS.test(x)).join(" | "));
+  const frase = "compro uma espada curta";
+  const prosa = "O mercador alisa a barba e olha a sua bolsa.\nVocê conta as moedas sobre o balcão. Ele lhe entrega a espada curta, embrulhada num pano.\nO cheiro de peixe sobe do cais.";
+  const r = conferirAProsa(prosa, base({ frase, pagou: false }));
+  const lp = linhaDeReposicao("pagamento", frase + "|30"), lo = linhaDeReposicao("objeto", frase + "|30");
+  t("a venda cortada dá lugar à linha do pagamento e à do objeto, no lugar dela", r.repostas.includes(lp) && r.repostas.includes(lo) && r.narrativa.indexOf(lp) > r.narrativa.indexOf("alisa a barba") && r.narrativa.indexOf(lo) < r.narrativa.indexOf("cheiro de peixe"), r.narrativa);
+  t("as linhas saem da tabela", O_CONFERENTE.reposicao.pagamento.includes(lp) && O_CONFERENTE.reposicao.objeto.includes(lo));
+  t("mesma frase e mesmo turno, mesma linha (semente)", linhaDeReposicao("meio", "x|3") === linhaDeReposicao("meio", "x|3") && conferirAProsa(prosa, base({ frase, pagou: false })).narrativa === r.narrativa);
+  const g = conferirAProsa("Você enfia a gazua na fechadura e gira com cuidado. O aço range. O cadeado não cede.", base({ frase: "Arrombo o cadeado de um caixote com a minha gazua" }));
+  t("a gazua cortada dá lugar à linha do meio", O_CONFERENTE.reposicao.meio.some((x) => g.narrativa.startsWith(x)) && g.narrativa.endsWith("O cadeado não cede."), g.narrativa);
+  const ok = conferirAProsa(prosa, base({ frase, pagou: true, posses: ["Espada Curta"], estado: { personagem: { nome: "Quilla", inventario: [{ nome: "Espada Curta" }], equipado: {} } } }));
+  t("PAR: a troca que o sistema deu não ganha linha nenhuma", ok.narrativa === prosa && ok.repostas.length === 0);
+  const opina = conferirAProsa("Torvald torce o nariz. — Cinquenta moedas por isso? Roubo.", base({ frase: "pergunto a Torvald o que acha da espada", pagou: false }));
+  t("PAR: o companheiro que opina sobre o preço fica, sem linha", opina.podadas.length === 0 && opina.repostas.length === 0, JSON.stringify(opina.podadas));
+}
+
+sec("14. a frase órfã do que saiu (turnos 16, 54, 55)");
+{
+  t("o pronome, o «com ela», o «dele» e o gesto sem sujeito abrem órfã", ["Ela espera a resposta, imóvel.", "Com ela na mão, ele sorri.", "Os olhos dele varrem o salão.", "Não tira os olhos de você.", "Isso basta."].every(ehOrfa));
+  t("PAR: a frase com sujeito próprio não é órfã", !["A meio-orc espera a resposta.", "O sino toca.", "Você espera.", "Dagny sorri."].some(ehOrfa));
+  const r = conferirAProsa("A meio-orc se inclina sobre a banca. Você entrega duas moedas a ela. Ela espera a resposta, imóvel. O sino do cais toca.", base({ frase: "pago a meio-orc", pagou: false }));
+  t("a órfã logo depois do pagamento cortado sai, o resto fica", !r.narrativa.includes("Ela espera") && r.narrativa.includes("se inclina") && r.narrativa.endsWith("O sino do cais toca.") && r.podadas.some((p) => p.motivo === "orfa"), r.narrativa);
+  const f = conferirAProsa("Você olha em volta: barracas, redes, gaivotas. Torvald resmunga que o peixe fede. Não tira os olhos de você. A maré sobe.",
+    base({ frase: "olho em volta", turno: 40, falas: { torvald: { turno: 39, fala: "vigio a praça daqui, pode ir" } } }));
+  t("a órfã da fala cortada sai também", !f.narrativa.includes("Não tira") && f.narrativa.includes("A maré sobe."), f.narrativa);
+  const longe = conferirAProsa("Você entrega duas moedas a ela. O sino do cais toca. Ela espera a resposta, imóvel.", base({ frase: "pago a meio-orc", pagou: false }));
+  t("PAR: só a vizinha imediata — a que vem depois de outra frase fica", longe.narrativa.includes("Ela espera a resposta"), longe.narrativa);
+  const sem = conferirAProsa("A meio-orc conta as moedas. Ela espera a resposta, imóvel.", base({ frase: "olho a banca", pagou: false }));
+  t("PAR: sem corte, nenhuma órfã", sem.podadas.length === 0 && sem.narrativa.includes("Ela espera"));
+}
+
+sec("15. quem não está não fala (turnos 14, 26, 56)");
+{
+  const aus = { nome: "Neirin da Torre", onde: "Feira do Saque", morto: false };
+  const r = conferirAProsa("A porta range.\nNeirin da Torre se aproxima do balcão.\n— Fala, então — diz Neirin.", base({ frase: "Neirin, vem cá, preciso falar com você", ausente: aus }));
+  t("o ausente chamado que chega e fala sai, com a fala", r.narrativa === "A porta range." && r.podadas.every((p) => p.motivo === "ausente"), r.narrativa);
+  const u = conferirAProsa("Ulric da Torre se ergue atrás da banca de mapas.\n— Estou aqui — responde.\nO vento traz sal.", base({ frase: "Ulric, vem cá!", ausente: { nome: "Ulric da Torre", onde: "" } }));
+  t("o ausente que se ergue e responde sai", !u.narrativa.includes("Ulric") && !u.narrativa.includes("Estou aqui") && u.narrativa.includes("O vento traz sal."), u.narrativa);
+  const so = conferirAProsa("— Fala, então — diz Neirin.", base({ frase: "Neirin, vem cá", ausente: aus }));
+  t("a prosa que era só dele dá lugar à linha do chamado sem resposta", so.narrativa === O_CONFERENTE.troca.ausente && so.troca === O_CONFERENTE.troca.ausente, so.narrativa);
+  const sobre = conferirAProsa("A atendente dá de ombros.\n— Neirin? Foi para a feira cedo — diz ela.", base({ frase: "Neirin, vem cá", ausente: aus }));
+  t("PAR: falar DELE continua a valer", sobre.podadas.length === 0, JSON.stringify(sobre.podadas));
+  const rel = conferirAProsa("Dizem que Neirin da Torre passou a manhã na feira.", base({ frase: "Neirin, vem cá", ausente: aus }));
+  t("PAR: o relato sobre o ausente fica", rel.podadas.length === 0);
+}
+
+sec("16. o êxito na falha (turno 39)");
+{
+  const prosa = "Você corre entre as bancas e salta a primeira caixa. A mão segura, o pé assenta, e você está do outro lado, de pé. O guarda grita atrás.";
+  const r = conferirAProsa(prosa, base({ frase: "fujo do guarda armado de lança, correndo e pulando as caixas", teste: { sucesso: false, desafio: "escapar" } }));
+  t("a fuga que falhou e a prosa conta como certa: a frase do êxito sai e a falha entra no lugar", !r.narrativa.includes("do outro lado") && r.narrativa.includes(O_CONFERENTE.resultado.travessia.falha) && r.narrativa.startsWith("Você corre") && r.narrativa.endsWith("O guarda grita atrás.") && r.podadas.some((p) => p.motivo === "exito"), r.narrativa);
+  t("e a falha não vem duas vezes", r.narrativa.split(O_CONFERENTE.resultado.travessia.falha).length === 2 && r.frente === "");
+  const ok = conferirAProsa(prosa, base({ frase: "fujo do guarda", teste: { sucesso: true, desafio: "escapar" } }));
+  t("PAR: o dado que passou deixa o êxito", ok.narrativa === prosa && ok.podadas.length === 0);
+  t("PAR: a falha narrada fica (negação, «mas», «quase»)", !contaOExito("Você tenta saltar, mas o pé escorrega e você não chega do outro lado.") && !contaOExito("Você quase consegue.") && !contaOExito("Você não consegue."));
+  t("PAR: ver alguém do outro lado não é chegar lá", !contaOExito("Você corre e vê o guarda do outro lado da praça."));
+  t("PAR: o êxito de outro não é o seu", !contaOExito("O guarda chega do outro lado antes de você."));
+  const conv = conferirAProsa("Você consegue arrancar dele um meio sorriso, e só.", base({ frase: "tento convencer o guarda", teste: { sucesso: false, desafio: "convencer" } }));
+  t("PAR: fora da travessia a regra não morde", !conv.podadas.some((p) => p.motivo === "exito"));
 }
 
 console.log(falhas ? `\n${falhas} falha(s)` : "\ntudo verde");

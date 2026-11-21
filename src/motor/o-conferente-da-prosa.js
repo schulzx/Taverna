@@ -44,6 +44,17 @@
    (escalar → subir, telhado; furtar → mão, bolsa), o sistema põe à frente a
    linha do resultado, por tabela.
 
+   21/11 (sessão 6 do Mestre vivo, mestre-vivo-sessao-6.md): dez disparos e
+   nenhuma linha no lugar; a prosa ficou com «ela» sem ninguém antes. Agora:
+     · CORTOU, REPÕE — a primeira cortada de cada razão (objeto, pagamento,
+       meio) dá lugar a uma linha da tabela `reposicao`, pela semente do turno;
+     · A ÓRFÃ SAI — a frase logo depois de uma cortada que abre referindo o
+       que sumiu (`orfa`) vai junto;
+     · QUEM NÃO ESTÁ NÃO FALA — `ausente` (a ficha disse que não está aqui):
+       a fala e a ação com ele por sujeito saem;
+     · O ÊXITO NA FALHA — o dado falhou numa travessia e a frase diz que
+       você conseguiu (`exitoNaFalha`): sai, e a linha da falha entra.
+
    MENÇÃO NÃO É PRESENÇA (memory/portao-morde-so-o-necessario.md): falar DE
    alguém ausente pode, o ausente FALAR não; o jogador nomear uma espada não
    é a espada mudar de mão; «você não tem gazua» fica; a lança do guarda é
@@ -167,6 +178,43 @@ export const O_CONFERENTE = Object.freeze({
     meio: "Você não tem isso com você.",
     fala: "Ninguém responde por enquanto.",
     inventada: "Ninguém mais está aqui.",
+    ausente: "Ninguém responde ao chamado.",
+  }),
+  /* 21/11 (sessão 6 do Mestre vivo): CORTOU, REPÕE. O conferente disparou dez
+     vezes e só cortou: a venda, a entrega e o pagamento sumiam e nada dizia o
+     que de fato valia. Agora a primeira frase cortada de cada razão dá lugar a
+     uma linha destas, escolhida pela semente do turno (mesma frase, mesmo
+     turno, mesma linha). Voz do Mestre, sem nome de mecanismo. */
+  reposicao: Object.freeze({
+    objeto: Object.freeze(["Nada muda de mão.", "A coisa não chega à sua mão.", "Por ora, nada passa para você."]),
+    pagamento: Object.freeze(["As moedas seguem na sua bolsa.", "A troca não se fecha, e a sua bolsa continua como estava.", "Nenhuma moeda sai da sua bolsa."]),
+    meio: Object.freeze(["Você não tem isso com você.", "Sua mão procura e não acha a ferramenta.", "Isso não está com você."]),
+  }),
+  /* A FRASE ÓRFÃ: a que vem logo depois de uma cortada e abre referindo o que
+     sumiu — o pronome sujeito («Ela espera a resposta»), o «isso», o «com ela
+     na mão», o «os olhos dele», ou o gesto sem sujeito («Não tira os olhos de
+     você»). Só a vizinha imediata, só no começo da frase: o pronome no meio de
+     uma frase com antecedente próprio não é órfão. */
+  orfa: Object.freeze({
+    pronome: Object.freeze(["ela", "ele", "elas", "eles", "isso", "isto", "aquilo"]),
+    dono: Object.freeze(["dele", "dela", "deles", "delas"]),
+    antes: Object.freeze(["nao", "nem", "ainda", "ja", "so", "apenas"]),
+    gesto: Object.freeze(["tira", "desvia", "espera", "aguarda", "sorri", "acena", "encara", "cruza", "suspira", "bufa", "assente", "resmunga", "embolsa", "recolhe", "guarda", "observa"]),
+  }),
+  /* O ÊXITO NA FALHA: o dado falhou e a prosa conta que deu certo (sessão 6,
+     turno 39: a fuga falhou e o texto pôs a heroína «do outro lado, de pé»).
+     Estreito de propósito: só nas famílias abaixo, só com «você» por sujeito
+     até `perto` palavras antes do verbo, nunca com negação, «quase» ou um
+     «mas» na frase. O verbo de êxito basta; o de chegada só com o lugar
+     alcançado nas `janela` palavras seguintes. */
+  exitoNaFalha: Object.freeze({
+    familias: Object.freeze(["travessia"]),
+    perto: 3,
+    janela: 6,
+    verbos: Object.freeze(["consegue", "conseguiu", "escapa", "escapou", "despista", "despistou", "alcanca", "alcancou"]),
+    chegada: Object.freeze(["esta", "chega", "chegou", "pousa", "pousou", "aterrissa", "aterrissou", "passa", "passou", "atravessa", "atravessou"]),
+    lugares: Object.freeze(["do outro lado", "no topo", "em cima", "no alto", "a salvo", "fora do alcance", "longe dele", "longe deles"]),
+    trava: Object.freeze(["quase", "mas", "porem", "contudo", "entretanto"]),
   }),
   /* o desafio da régua → a família do resultado (o mesmo mapa da régua,
      FAMILIA_DO_DESAFIO, só para os ids que o teste do turno guarda) */
@@ -209,15 +257,17 @@ function pedacosDe(texto) {
   return out;
 }
 const tirarAspas = (s) => String(s).replace(/«[^»]*»/g, " ").replace(/“[^”]*”/g, " ").replace(/"[^"]*"/g, " ");
-function remontar(texto, pedacos, fora) {
+function remontar(texto, pedacos, fora, repoe) {
   const linhas = String(texto).split("\n");
   const porLinha = new Map();
   for (const p of pedacos) { if (!porLinha.has(p.li)) porLinha.set(p.li, []); porLinha.get(p.li).push(p); }
   const novas = [];
+  const R = repoe instanceof Map ? repoe : new Map();
   linhas.forEach((linha, li) => {
     const ps = porLinha.get(li);
     if (!ps) { novas.push(linha); return; }
-    const fica = ps.filter((p) => !fora.has(p)).map((p) => p.texto).join("");
+    /* a cortada que repõe dá lugar à linha, com o espaço que ela tinha */
+    const fica = ps.map((p) => (!fora.has(p) ? p.texto : R.has(p) ? R.get(p) + ((p.texto.match(/\s+$/) || [" "])[0]) : "")).join("");
     if (fica.trim()) novas.push(fica.replace(/\s+$/, ""));
   });
   return novas.join("\n").replace(/\n{3,}/g, "\n\n").trim();
@@ -330,6 +380,70 @@ function quemTomaAPalavra(texto, pessoas, heroi) {
   return out;
 }
 
+/* ---------------- a semente, a órfã e o êxito na falha (21/11, sessão 6) ---------------- */
+/* FNV-1a de 32 bits: a mesma frase no mesmo turno escolhe a mesma linha em qualquer máquina */
+function semente(s) {
+  let h = 0x811c9dc5;
+  for (const ch of String(s)) { h ^= ch.codePointAt(0); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+export function linhaDeReposicao(motivo, chave) {
+  const L = C.reposicao[motivo];
+  if (!L || !L.length) return "";
+  return L[semente(`${chave}|${motivo}`) % L.length];
+}
+const PRONOME_ORFAO = new Set(C.orfa.pronome), DONO_ORFAO = new Set(C.orfa.dono), ANTES_ORFAO = new Set(C.orfa.antes), GESTO_ORFAO = new Set(C.orfa.gesto);
+/* a frase abre referindo o que a cortada levou? (só o começo dela) */
+export function ehOrfa(frase) {
+  const w = ws(frase);
+  if (!w.length) return false;
+  if (PRONOME_ORFAO.has(w[0])) return true;
+  if (w[0] === "com" && PRONOME_ORFAO.has(w[1])) return true;
+  if (["o", "a", "os", "as"].includes(w[0]) && DONO_ORFAO.has(w[2])) return true;
+  const k = ANTES_ORFAO.has(w[0]) ? 1 : 0;
+  return GESTO_ORFAO.has(w[k]);
+}
+/* as frases do texto ORIGINAL que a prosa de agora ainda tem, na ordem; a que
+   ficou logo depois de uma que saiu e abre órfã sai também (e a seguinte, se
+   for órfã da órfã). Devolve a prosa sem elas e as frases tiradas. */
+function cortarOrfas(original, atual) {
+  const ps = pedacosDe(original);
+  let cursor = 0, saiu = false;
+  const tirar = [];
+  for (const p of ps) {
+    const k = p.texto.trim();
+    const i = k ? atual.indexOf(k, cursor) : -1;
+    if (i < 0) { saiu = true; continue; }
+    cursor = i + k.length;
+    if (saiu && !p.fala && ehOrfa(p.texto)) { tirar.push({ i, k }); continue; }
+    saiu = false;
+  }
+  if (!tirar.length) return { texto: atual, orfas: [] };
+  let s = atual;
+  /* a marca \u0001 diz «aqui havia texto»: a linha que fica só com ela sai inteira */
+  for (const { i, k } of [...tirar].reverse()) s = s.slice(0, i) + "\u0001" + s.slice(i + k.length);
+  s = s.split("\n").filter((l) => !/^[\s\u0001]+$/.test(l) || !l.includes("\u0001"))
+    .map((l) => l.replace(/\u0001/g, "").replace(/[ \t]{2,}/g, " ").trim()).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return { texto: s, orfas: tirar.map((x) => x.k) };
+}
+const VERBO_EXITO = new Set(C.exitoNaFalha.verbos), CHEGADA = new Set(C.exitoNaFalha.chegada), TRAVA_EXITO = new Set(C.exitoNaFalha.trava);
+/* a frase narra que o herói conseguiu? (para o veredito de falha) */
+export function contaOExito(nar) {
+  const w = ws(nar);
+  if (!w.length || negadoNa(w) || w.some((x) => TRAVA_EXITO.has(x))) return false;
+  const E = C.exitoNaFalha;
+  for (let i = 0; i < w.length; i++) {
+    const doHeroi = w.slice(Math.max(0, i - E.perto), i).some((x) => HEROI.has(x));
+    if (!doHeroi) continue;
+    if (VERBO_EXITO.has(w[i])) return true;
+    if (CHEGADA.has(w[i])) {
+      const depois = " " + w.slice(i + 1, i + 1 + E.janela).join(" ") + " ";
+      if (E.lugares.some((l) => depois.includes(" " + l + " "))) return true;
+    }
+  }
+  return false;
+}
+
 /* a família do resultado: a do desafio que rolou, senão a do veredito */
 export function linhaDoResultado(familia, sucesso, alvo) {
   const L = C.resultado[familia] || C.resultado.outro;
@@ -366,7 +480,7 @@ export function quemFicaCalado(falas, turno, ctx) {
 
 /* ============================================================
    conferirAProsa(narrativa, ctx) →
-     { narrativa, podadas: [{ motivo, frase }], troca, frente, falas }
+     { narrativa, podadas: [{ motivo, frase }], troca, frente, falas, repostas }
    ctx: {
      frase      — a do jogador, neste turno;
      cena       — a cena do momento ({ pessoas: [{ nome, papel, estados }] });
@@ -382,16 +496,19 @@ export function quemFicaCalado(falas, turno, ctx) {
      pagou      — a bolsa mexeu neste turno: true | false | null (não se sabe);
      heroi      — o nome do herói;
      turno      — o da pauta;
-     falas      — a memória de quem falou ({ [primeiro nome]: { turno, fala } })
+     falas      — a memória de quem falou ({ [primeiro nome]: { turno, fala } });
+     ausente    — quem a frase chamou e a ficha diz que não está aqui
+                  (quemNaoEstaNaCena: { nome, onde, morto }), ou null
    }
    `troca`: a linha que o sistema pôs no lugar da prosa (""), `frente`: a
    do resultado posta à frente (""). `falas`: a memória nova (objeto novo).
+   `repostas`: as linhas que entraram no lugar de uma cortada (21/11).
    ============================================================ */
 export function conferirAProsa(narrativa, ctx) {
   const texto = typeof narrativa === "string" ? narrativa : "";
   const c = obj(ctx) || {};
   const falas0 = obj(c.falas) || {};
-  const nada = { narrativa: texto, podadas: [], troca: "", frente: "", falas: falas0 };
+  const nada = { narrativa: texto, podadas: [], troca: "", frente: "", falas: falas0, repostas: [] };
   if (!texto.trim()) return nada;
   try {
     const frase = txt(c.frase);
@@ -410,10 +527,18 @@ export function conferirAProsa(narrativa, ctx) {
     const E = obj(c.estado) || {};
     const pedacos = pedacosDe(texto);
     const fora = new Set();
+    /* 21/11: a razão de cada cortada, para a linha que repõe */
+    const razao = new Map();
+    const familia = (c.teste && C.familiaDoDesafio[txt(c.teste.desafio)]) || txt(c.familia);
+    const julgou = !!(c.teste && typeof c.teste.sucesso === "boolean");
+    const linhaRes = julgou ? linhaDoResultado(familia, c.teste.sucesso, alvo) : "";
+    const exitoNaFalha = julgou && c.teste.sucesso === false && C.exitoNaFalha.familias.includes(familia);
     let anterior = "";
     for (const p of pedacos) {
       if (!p.nar.trim()) continue;
       const heroiAntes = /\b(voce|tu)\b/.test(sem(anterior));
+      /* o dado falhou e a frase conta que deu certo: sai, e o resultado entra no lugar */
+      if (exitoNaFalha && contaOExito(p.nar)) { fora.add(p); razao.set(p, "exito"); podadas.push({ motivo: "exito", frase: p.texto.trim() }); anterior = p.nar; continue; }
       /* o meio negado primeiro: a gazua «enfiada» é também objeto, e a razão é o meio */
       let motivo = meioNoPedaco(p.nar, meiosNegados) ? "meio" : "";
       if (!motivo) try {
@@ -428,11 +553,37 @@ export function conferirAProsa(narrativa, ctx) {
         if (ws(p.nar).some((x) => fam.has(x) && !temNaPosse(x, c.posses) && x.length >= 3)) motivo = "objeto";
       }
       if (!motivo && c.pagou === false && pagaNoPedaco(p.nar, heroiAntes)) motivo = "pagamento";
-      if (motivo) { fora.add(p); podadas.push({ motivo, frase: p.texto.trim() }); }
+      if (motivo) { fora.add(p); razao.set(p, motivo); podadas.push({ motivo, frase: p.texto.trim() }); }
       anterior = p.nar;
     }
-    let prosa = fora.size ? remontar(texto, pedacos, fora) : texto;
+    /* CORTOU, REPÕE: a primeira cortada de cada razão dá lugar à linha dela */
+    const repoe = new Map();
+    const repostas = [];
+    const chave = `${frase}|${turno == null ? "" : turno}`;
+    for (const p of pedacos) {
+      const m = razao.get(p);
+      if (!m) continue;
+      const linha = m === "exito" ? linhaRes : linhaDeReposicao(m, chave);
+      if (!linha || repostas.includes(linha)) continue;
+      repoe.set(p, linha);
+      repostas.push(linha);
+    }
+    let prosa = fora.size ? remontar(texto, pedacos, fora, repoe) : texto;
 
+    /* 21/11: QUEM NÃO ESTÁ NÃO FALA. A ficha disse que a pessoa chamada não
+       está aqui (quemNaoEstaNaCena); a fala e a ação que a prosa lhe dá saem.
+       Só com ela por sujeito ou na etiqueta da fala — a régua da poda do
+       ausente; falar DELA continua a valer. Antes da gente inventada: quem a
+       ficha conhece e diz ausente não é inventado. A frase não protege o
+       nome aqui (foi ele quem o chamou, e é por isso que a prosa o trouxe). */
+    const aus = obj(c.ausente) && txt(c.ausente.nome) ? [{ nome: txt(c.ausente.nome), onde: txt(c.ausente.onde), morto: !!c.ausente.morto }] : [];
+    if (aus.length && prosa.trim()) {
+      const pa = primeiro(aus[0].nome);
+      const outros = pessoas.map((p) => p.nome).filter((n) => n && primeiro(n) !== pa);
+      const r = podarOAusente(prosa, aus, { frase: "", outros: [...outros, heroi].filter(Boolean), limiar: 1, semTravaDaFala: true });
+      for (const p of r.podadas) podadas.push({ motivo: "ausente", frase: p.frase });
+      if (r.podadas.length) prosa = r.narrativa;
+    }
     /* b. quem fala: a gente inventada, e quem está fora da vez */
     const inventados = (() => {
       try { return aGenteInventadaDaProsa(prosa, E, { lugarDoTurno: txt(c.lugarDoTurno), mundo: c.mundo, conhecidos: pessoas.map((p) => p.nome).filter(Boolean) }).map((g) => g.nome); } catch { return []; }
@@ -462,12 +613,15 @@ export function conferirAProsa(narrativa, ctx) {
       for (const p of r.podadas) podadas.push({ motivo: inventados.includes(p.nome) ? "inventada" : "fala", frase: p.frase });
       if (r.podadas.length) prosa = r.narrativa;
     }
+    /* 21/11: a frase que ficou órfã do que saiu sai também */
+    if (podadas.length && prosa.trim()) {
+      const o = cortarOrfas(texto, prosa);
+      for (const f of o.orfas) podadas.push({ motivo: "orfa", frase: f });
+      prosa = o.texto;
+    }
 
     /* c. a troca e a frente */
     let troca = "", frente = "";
-    const familia = (c.teste && C.familiaDoDesafio[txt(c.teste.desafio)]) || txt(c.familia);
-    const julgou = !!(c.teste && typeof c.teste.sucesso === "boolean");
-    const linhaRes = julgou ? linhaDoResultado(familia, c.teste.sucesso, alvo) : "";
     if (podadas.length && prosa.replace(/\s+/g, " ").trim().length < C.minLetras) {
       prosa = "";
       if (!linhaRes) troca = C.troca[podadas[0].motivo] || C.troca.fala;
@@ -475,7 +629,7 @@ export function conferirAProsa(narrativa, ctx) {
     if (julgou) {
       const chaves = [...(alvo ? chavesDoAlvo(alvo, pessoas) : []), ...palavras(c.coisa).filter((x) => x.length >= 4 && !VAZIAS.has(x))];
       const raizes = C.trata[familia] || [];
-      const trata = !!prosa && (temAlguma(prosa, chaves) || (raizes.length > 0 && comecaCom(prosa, raizes)));
+      const trata = !!prosa && (prosa.includes(linhaRes) || temAlguma(prosa, chaves) || (raizes.length > 0 && comecaCom(prosa, raizes)));
       if (!trata) frente = linhaRes;
     }
     const final = [frente, troca, prosa].filter((x) => x && x.trim()).join("\n\n");
@@ -491,7 +645,7 @@ export function conferirAProsa(narrativa, ctx) {
       for (const k of chaves.slice(C.memoria)) delete falas[k];
     }
     if (!podadas.length && !frente) return { ...nada, falas };
-    return { narrativa: final || texto, podadas, troca, frente, falas };
+    return { narrativa: final || texto, podadas, troca, frente, falas, repostas: repostas.filter((l) => final.includes(l)) };
   } catch {
     return nada;
   }

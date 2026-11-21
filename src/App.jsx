@@ -11539,7 +11539,7 @@ export default function Taverna() {
             const pC = persAtual || personagemRef.current || personagem || {};
             const moedasC = Number(pC.moedas), antesC = moedasDaUltimaProsaRef.current;
             const cfr = conferirAProsa(resp.narrativa, {
-              frase: cf.frase, cena: cf.cena, alvo: cf.alvo, aoGrupo: cf.aoGrupo, coisa: cf.coisa,
+              frase: cf.frase, cena: cf.cena, alvo: cf.alvo, aoGrupo: cf.aoGrupo, coisa: cf.coisa, ausente: cf.ausente || null,
               negados: semFolgaDoTurnoRef.current || [], teste: testeDoTurnoRef.current,
               posses: [...(Array.isArray(pC.inventario) ? pC.inventario : []), ...Object.values(pC.equipado || {})],
               estado: { ...retratoDoLivro(), personagem: pC, missoes: missoesRef.current, quests: questsRef.current, abertura: aberturaMundoRef.current, nucleo: (nucleoCacheRef.current || {}).nucleo, baseMundo: baseMundoRef.current },
@@ -11549,7 +11549,7 @@ export default function Taverna() {
             });
             falasDoConferenteRef.current = cfr.falas;
             if (cfr.narrativa !== resp.narrativa) resp = { ...resp, narrativa: cfr.narrativa };
-            if (cfr.podadas.length || cfr.frente) { try { console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), troca: !!cfr.troca, frente: !!cfr.frente })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
+            if (cfr.podadas.length || cfr.frente) { try { console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), troca: !!cfr.troca, frente: !!cfr.frente, repostas: (cfr.repostas || []).length })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
           }
         }
       } catch (e) { calou("Mestre vivo · o conferente da prosa", e); }
@@ -18837,7 +18837,8 @@ export default function Taverna() {
     try {
       let coisaC = "";
       try { coisaC = aCoisaDaFrase(acao, m.cena); } catch { coisaC = ""; }
-      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC };
+      /* 21/11 (sessão 6): quem a ficha diz que não está aqui vai junto — a prosa que o pôs a falar é cortada */
+      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC, ausente: qn };
     } catch (e) { calou("Mestre vivo · o conferente do turno", e); conferenteDoTurnoRef.current = null; }
   };
   const momentoDaFrase = (acao) => {
