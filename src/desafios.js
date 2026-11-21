@@ -797,7 +797,13 @@ export const DESAFIOS = [
        ela me levar», «com uma boa lábia». Pedir uma cerveja continua de
        fora (não há a quem nem o quê). Se quem ouve tem motivo para negar,
        quem decide é a régua do momento. */
-    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|regate(?:io|ar|amos|ando|ei)\b|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b)/,
+    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|regate(?:io|ar|amos|ando|ei)\b|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b|\b(dou|damos|ofere[cç]o|oferecemos|pago|pagamos|passo|estendo|entrego|ponho|deslizo|pe[cç]o|pedimos)\b[^.!?]{0,40}\b(ao|a|aos|as) (?!(c[aã]o|c[aã]es|cachorros?|cadelas?|lobos?|cavalos?|[eé]guas?|mulas?|burros?|bichos?|feras?|bestas?|ursos?|gatos?)\b)[a-z]{3,}\b[^.!?]{0,60}\b(pra|para) (ele |ela |eles |elas )?((me|nos|a gente) deixar (entrar|passar|subir|ver|falar|sair|ficar)\b|fechar os olhos|fazer vista grossa|olhar (para|pro) (o )?outro lado)\b)/,
+    /* sétima sessão do Mestre vivo (21/11, T38 e T39): o suborno ao guarda —
+       «dou duas moedas ao sargento para ele me deixar entrar na sala do
+       capitão», «ofereço duas moedas ao sargento para fechar os olhos e me
+       deixar passar». O «deixa eu passar» já rolava; o «para ele me deixar
+       entrar», dito a alguém, e o «fechar os olhos» não: o 38 virou o passo
+       até à sala (o passo só cede a um teste) e o 39 passou sem dado. */
     /* 19/11 (o-mestre-vivo.md §19): e REGATEAR, o verbo da feira — «regateio o
        frasco» caía em nada (sessão mv-3, T4 e T18), e a barganha só rolava
        quando dita como «barganho» */
@@ -2262,6 +2268,20 @@ export function lerAcao(texto, ctx = {}) {
   if (pessoa && ctx.chaveFina === true && !ditoNaFrase(cru, pessoa.nome) && !(descrito && quemADescricaoAponta(cru, [pessoa]))) {
     const ouvinte = ouvinteDaChave(cru);
     if (ouvinte && !ditoNaFrase(ouvinte, `${pessoa.nome || ""} ${pessoa.papel || ""} ${pessoa.titulo || ""}`)) pessoa = null;
+  }
+  /* 21/11 (a sétima sessão do Mestre vivo, T29): «o que Brigid acha da mulher
+     de lenço? e regateio com o freguês dela: um frasco de graça» — o nome da
+     companheira estava na PERGUNTA, e o regateio, que vem depois dela, foi
+     com ela (o «está do meu lado» fechou sem dado). A pergunta é balcão; o ato
+     é o que vem depois do «?». Quando esse resto nomeia outro ouvinte e não a
+     pessoa achada, a conversa do ato é com ele. */
+  if (pessoa && ctx.chaveFina === true) {
+    const iP = String(cru || "").lastIndexOf("?");
+    const oAto = iP >= 0 ? String(cru).slice(iP + 1).trim() : "";
+    if (oAto && !ditoNaFrase(oAto, pessoa.nome)) {
+      const ouvinteDoAto = ouvinteDaChave(oAto);
+      if (ouvinteDoAto && !ditoNaFrase(ouvinteDoAto, `${pessoa.nome || ""} ${pessoa.papel || ""} ${pessoa.titulo || ""}`)) pessoa = null;
+    }
   }
   const quemDescrito = !pessoa && descrito ? descrito.descricao : "";
   /* MC1: quem se trata (`comQuem`) — lido da frase, nunca do elenco: com

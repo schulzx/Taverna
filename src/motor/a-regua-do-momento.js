@@ -864,11 +864,16 @@ function decidir(vereditoDoCatalogo, cenaInteira, c) {
   };
   if (!quem && frase) {
     let nomeado = null, estranho = "";
-    try { nomeado = quemAFraseNomeia(frase, lida); } catch { nomeado = null; }
+    /* 21/11 (a sétima sessão, T29): «o que Brigid acha da mulher de lenço? e
+       regateio com o freguês dela…» — a pergunta é balcão, e o ato é o que vem
+       depois do «?»: quem ele nomeia é o alvo, não quem a pergunta citou */
+    const iP = frase.lastIndexOf("?");
+    const fraseDoAto = (iP >= 0 ? frase.slice(iP + 1).trim() : "") || frase;
+    try { nomeado = quemAFraseNomeia(fraseDoAto, lida); } catch { nomeado = null; }
     if (nomeado) { quem = nomeado.nome || nomeado.papel; alvo = nomeado; }
     else {
       /* 19/11 (§19): o nome próprio que não está em cena vem antes */
-      try { estranho = nomeAusenteNaFrase(frase, lida) || estranhoAQuemSeFala(frase, lida); } catch { estranho = ""; }
+      try { estranho = nomeAusenteNaFrase(fraseDoAto, lida) || estranhoAQuemSeFala(fraseDoAto, lida); } catch { estranho = ""; }
       if (estranho) umEstranho(estranho);
     }
   }

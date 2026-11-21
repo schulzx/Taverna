@@ -172,7 +172,12 @@ sec("4. a catraca dos nossos corpus");
      sacada antes do ataque) foram apertadas até ele voltar a 31 e 9. */
   const CATRACA = {
     data: "2026-11-18 (rodada 3)",
-    "corpus-da-mesa": { ouveMin: 11, falsasMax: 31 },
+    /* MOVIDA (21/11, a sétima sessão do Mestre vivo, T38/T39), E O MOTIVO: o
+       catálogo passou a ouvir o suborno «para ele fechar os olhos e me deixar
+       falar…» (sessão 8). A escuta já o ouvia; agora ele nem chega a ela — o
+       catálogo perde 18 em vez de 19, e a escuta ouve 10 em vez de 11. Nada
+       que ela ouvia foi perdido: a frase só mudou de quem a ouve. */
+    "corpus-da-mesa": { ouveMin: 10, falsasMax: 31 },
     "corpus-das-situacoes": { ouveMin: 31, falsasMax: 9 },
   };
   for (const nome of ["corpus-da-mesa", "corpus-das-situacoes"]) {

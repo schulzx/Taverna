@@ -674,7 +674,12 @@ export function pontoDoHeroi({ cidadeAtual = "", jornada = null, mapa = null, lu
    "seguir" é avançar na estrada que já vai para lá; "ficar" é estar já à
    boca — nada a mover. `linhas` é o que vai à tela, como SISTEMA.
    ============================================================ */
-const IDA_VERBO = /\b(parto|partimos|sigo|seguimos|vou|vamos|viajo|viajamos|rumo|marcho|marchamos|caminho|caminhamos|ando|andamos|cavalgo|cavalgamos|galopo|volto|voltamos|regresso|regressamos|me dirijo|dirijo-?me|nos dirigimos|me encaminho|encaminho-?me|me ponho a caminho|tomo a estrada|pego a estrada|chego|chegamos|entro|entramos|adentro|desco|descemos|invado|penetro|me embrenho)\b/;
+/* sétima sessão do Mestre vivo (21/11, T40): «pergunto ao sargento qual é o
+   caminho até a Cripta dos Mil Bocas» abria a ida à masmorra. Sem acento, o
+   «é» vira «e», a oração parte-se ali, e o «caminho» que sobra («o caminho
+   até a Cripta») era lido como o verbo «eu caminho». Depois de artigo,
+   preposição contraída ou pronome, «caminho» e «rumo» são o nome, não a ida. */
+const IDA_VERBO = /\b(parto|partimos|sigo|seguimos|vou|vamos|viajo|viajamos|(?<!\b(?:o|um|do|no|ao|pelo|qual|que|esse|este|aquele|meu|seu|teu|nosso|mesmo|outro|bom|melhor|novo)\s)rumo|marcho|marchamos|(?<!\b(?:o|um|do|no|ao|pelo|qual|que|esse|este|aquele|meu|seu|teu|nosso|mesmo|outro|bom|melhor|novo)\s)caminho|caminhamos|ando|andamos|cavalgo|cavalgamos|galopo|volto|voltamos|regresso|regressamos|me dirijo|dirijo-?me|nos dirigimos|me encaminho|encaminho-?me|me ponho a caminho|tomo a estrada|pego a estrada|chego|chegamos|entro|entramos|adentro|desco|descemos|invado|penetro|me embrenho)\b/;
 /* à boca, estes são entrar — e quem abre é `detectarEntradaEmMasmorra` */
 const SO_ENTRADA = /\b(entro|entramos|adentro|desco|descemos|invado|penetro|me embrenho)\b/;
 const DE_ONDE_SE_SAI = /\b(saio|saimos|sair|saindo|deixo|deixamos|largo|largamos|abandono|abandonamos|fujo|fugimos|venho|vimos|vindo|vinda|volto|voltamos|regresso|regressamos|retorno)\s+(de|da|do|das|dos)\s*$|\b(deixo|deixamos|largo|largamos|abandono|abandonamos)\s+(a|o|as|os)\s*$|\bdesde\s+((a|o|as|os)\s+)?$/;

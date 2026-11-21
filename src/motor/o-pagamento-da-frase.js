@@ -33,7 +33,9 @@ const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 
 export const O_PAGAMENTO_DA_FRASE = Object.freeze({
   /* o herói é quem paga: a primeira pessoa (o «ele paga» da prosa não é meu) */
-  verbo: /\b(pago|pagamos|pagarei|ponho|pomos|deixo|deixamos|dou|damos|entrego|entregamos|pus|paguei)\b/,
+  /* «ofereço duas moedas ao sargento…» (sétima sessão do Mestre vivo, T39)
+     não abria o cartão do pagamento: a oferta com quantia é a mão que paga */
+  verbo: /\b(pago|pagamos|pagarei|ponho|pomos|deixo|deixamos|dou|damos|entrego|entregamos|pus|paguei|ofereco|oferecemos)\b/,
   /* o que não é pagar: a negação, a pergunta, o desejo */
   naoE: /\b(nao (pago|ponho|dou|deixo|entrego)|quanto (custa|e|fica)|posso pagar|vou pagar depois|pago depois)\b/,
   /* o quarto: pelo pouso da cidade */
