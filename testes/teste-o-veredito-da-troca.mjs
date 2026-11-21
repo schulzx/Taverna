@@ -204,6 +204,18 @@ sec("9. T9, T10, T12, T13: o companheiro dá o que tem — moeda à parte ele n�
   t("e a ficha de antes fica", comPocao.grupo[0].inventario.length === 1);
 }
 
+sec("9b. dar uma coisa da bolsa a quem está: sai da mochila (a prosa dava e a ficha guardava)");
+{
+  const comBussola = { ...QUILLA, inventario: ["Bússola empenada", { nome: "Poção de Cura" }] };
+  const v = oVereditoDaTroca("dou a bússola empenada a Freya", { ...ctxBase(), ficha: comBussola });
+  t("aplicada: a bússola sai da mochila, a linha diz de quem é agora", v && v.estado === "aplicada" && !v.ficha.inventario.includes("Bússola empenada") && v.linha.includes("Freya"), J(v && v.linha));
+  const vH = oVereditoDaTroca("entrego a poção de cura a Helga", { ...ctxBase(), ficha: comBussola });
+  t("à companheira: entra na bolsa dela", vH && vH.ficha.grupo[0].inventario.some((x) => x.nome === "Poção de Cura"));
+  t("a ficha de antes fica", comBussola.inventario.length === 2);
+  t("dar moeda é do pagamento, dar ração é da dádiva", oVereditoDaTroca("dou duas moedas a Freya", { ...ctxBase(), ficha: comBussola }) === null && oVereditoDaTroca("dou duas rações a Lucan", { ...ctxBase(), ficha: comBussola }) === null);
+  t("o que não está na mochila não é daqui (a mão da frase recusa)", oVereditoDaTroca("dou a espada longa a Freya", { ...ctxBase(), ficha: comBussola }) === null);
+}
+
 sec("10. a busca que não achou diz ao Narrador que ali não há o que se leve (T18)");
 {
   const b = aBuscaSemAchado({ id: "buscar" }, { achou: false });

@@ -84,6 +84,8 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   verboDePegar: /\b(?:pego|pegamos|apanho|apanhamos|guardo|guardamos|embolso|embolsamos|levo|tiro|recolho|cato|tomo|enfio|meto|ponho|coloco|jogo)\s+(?:(?:uma das|um dos|umas das|uns dos|o|a|os|as|um|uma|uns|umas|aquele|aquela|esse|essa|este|esta)\s+)?([a-z][a-z-]*(?:\s+[a-z][a-z-]*){0,5})/,
   fimDoQuePega: Object.freeze(["do", "dos", "das", "no", "na", "nos", "nas", "e", "para", "pra", "com", "que", "dentro", "atras", "debaixo", "sob", "sobre", "ao", "em", "num", "numa"]),
   naoECoisa: Object.freeze(["moeda", "moedas", "isso", "isto", "aquilo", "tudo", "nada", "caminho", "folego", "coragem", "distancia", "rumo", "ar"]),
+  /* DAR UMA COISA DA BOLSA a quem está (a moeda é do pagamento; o mantimento, da dádiva) */
+  dar: /\b(dou|damos|entrego|entregamos|ofereco|oferecemos|presenteio|passo|deixo com)\s+(?!um passo|uma olhada|uma volta)/,
   /* O COMPANHEIRO: o pedido que o põe a pagar, comprar, emprestar ou entregar */
   pedeAoCompanheiro: /\b(?:peco|pedimos|pergunto se|digo)\b|^\s*[a-z]+\s*,|\b(?:me empresta|me da|me de|me passa|me passe|me entrega|me entregue|me arruma)\b/,
   companheiroPaga: /\b(pague|pagar|paga|compre|comprar|compra|empreste|emprestar|empresta|bancar|banque)\b/,
@@ -140,6 +142,7 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     companheiroSemMoeda: "🤝 {Nome} não guarda moeda à parte: a bolsa do grupo é a que você carrega.",
     companheiroUso: "🤝 As {coisa} do grupo estão na sua mochila: {Nome} não carrega outras.",
     companheiroNaoTem: "🤝 {Nome} não tem isso consigo.",
+    dar: "🤝 {Coisa} agora é de {Quem}.",
     fiado: "🪙 Fiado não: aqui se paga na hora.",
     furto: "🤏 Da bolsa de {Alvo}: {Ganho} (bolsa: ◉ {B}).",
     furtoVazio: "🤏 A bolsa de {Alvo} estava quase vazia: nada que valha levar.",
@@ -155,6 +158,7 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
     pegarInventado: "Eu quis guardar «{coisa}», e não guardei: não há aqui tal coisa que se leve. Nada entrou na minha mochila.",
     companheiroDa: "{Nome} me passou {Coisa}; já está na minha mochila, e saiu da bolsa de {Nome}.",
     companheiroNega: "{Nome} não me passou nada: {motivo}. Nada mudou de mão.",
+    dar: "Dei {Coisa} a {Quem}; saiu da minha bolsa e está com {Quem}.",
     fiado: "Pedi fiado e não me deram: quem vende quer a moeda agora. Nada mudou de mão.",
     furto: "O furto deu certo: tirei de {Alvo} {Ganho}; já está comigo. Use exatamente isto.",
     furtoVazio: "O furto passou sem ser notado, mas a bolsa de {Alvo} estava quase vazia: nada entrou na minha bolsa.",
@@ -167,6 +171,7 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   veto: Object.freeze({
     pegar: "pôr «{coisa}» na minha mochila, no meu bolso ou na minha mão",
     companheiro: "fazer {Nome} pagar, comprar, emprestar ou entregar outra coisa a mim nesta resposta",
+    dar: "devolver-me {Coisa} ou pagar-me por isso nesta resposta",
     fiado: "entregar-me algo fiado, a crédito ou para pagar depois",
     furto: "dar-me do furto outra coisa ou outra quantia além do que está dito",
     deGraca: "pôr nas minhas mãos outra coisa dada de graça além do que está dito",
@@ -349,6 +354,10 @@ export function aIntencaoDaTroca(frase, ctx) {
         return { tipo: "vendaDeUso", id: u.id, quantos, nome: quantos > 1 ? u.varios : u.um };
       }
     }
+    /* dar uma coisa da bolsa: o veredito confere se ela está lá, e a quem vai */
+    if (V.dar.test(t) && !aCompraPorMoeda(frase, c.moeda) && !oSubornoDaFrase(frase, c.moeda) && quantiaNa(t, c.moeda) === 0 && !Object.keys(V.usos).some((u) => new RegExp(`\\b${u}\\b`).test(t))) {
+      return { tipo: "dar" };
+    }
     if (V.furto.test(t)) {
       const m = t.match(V.coisaDoFurto);
       return { tipo: "furto", coisa: m ? m[1] : "" };
@@ -465,6 +474,21 @@ export function oVereditoDaTroca(frase, ctx) {
     }
 
     if (it.tipo === "fiado") return negada("fiado", "fiado", T.fiado, F.fiado, X.fiado);
+
+    if (it.tipo === "dar") {
+      /* a coisa: só da mochila (o que está vestido não se dá numa frase), e a quem: alguém da cena ou do grupo */
+      const inv = arr(ficha.inventario);
+      const k = inv.map((raw, i) => ({ raw, i, n: nomeDe(raw) })).filter((x) => x.n && nomeiaOItem(frase, x.n)).sort((a, b) => b.n.length - a.n.length)[0];
+      if (!k) return null;
+      const t0 = sem(frase);
+      const grupo = arr(ficha.grupo).filter((g) => obj(g) && nomeDe(g));
+      const g = grupo.find((x) => primeiro(nomeDe(x)) && new RegExp(`\\b${primeiro(nomeDe(x))}\\b`).test(t0));
+      const quem = g ? nomeDe(g) : arr(c.presentes).map(str).find((p) => primeiro(p).length >= 3 && new RegExp(`\\b${primeiro(p)}\\b`).test(t0)) || "";
+      if (!quem) return null;
+      const Quem = quem.split(",")[0];
+      const nova = { ...ficha, inventario: inv.filter((_, i) => i !== k.i), ...(g ? { grupo: arr(ficha.grupo).map((x) => (x === g ? { ...g, inventario: [...arr(g.inventario), k.raw] } : x)) } : {}) };
+      return aplicada("dar", nova, [{ coisa: k.n, quantos: 1, de: "heroi", para: Quem }], tpl(T.dar, { Coisa: maiuscula(k.n), Quem }), tpl(F.dar, { Coisa: k.n, Quem }), tpl(X.dar, { Coisa: k.n }));
+    }
 
     if (it.tipo === "furto") {
       const Alvo = nomeDoAlvo(c.alvo);
