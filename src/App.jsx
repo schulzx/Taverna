@@ -450,7 +450,7 @@ import { REFS_DA_PAUTA, juntarNaPautaDeUmTurno } from "./motor/pauta-do-turno.js
 import { passosDoTurno, duracaoDosPassos, golpeDaHabilidade } from "./turno-contado.js";
 import { economiaDaVez, caminhoComProvocacoes, CUSTO_DOS_VERBOS, RECUSA_DO_VERBO } from "./vez-na-mesa.js";
 import { oPedidoDoTurno, oEstadoDoPedido, REFS_DO_PEDIDO } from "./motor/pedido-do-turno.js";
-import { oPreludioDoTurno, REFS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
+import { oPreludioDoTurno, PERGUNTA_DO_CAMINHO, REFS_DO_PRELUDIO } from "./motor/preludio-do-turno.js";
 import { osOrgaosDoDepois, REFS_DO_DEPOIS } from "./motor/depois-do-turno.js";
 import { oAbrigoDoGolpe, aConcentracaoDoGolpe, aQuebraDoHeroi, aFilaDoGolpeNoHeroi, aAflicaoDosGolpes } from "./motor/golpe-no-corpo.js";
 import { Relato } from "./painel-relato.jsx";
@@ -7038,6 +7038,9 @@ export default function Taverna() {
        andar — «escalo a calha da casa ao lado até o telhado» e «pergunto qual
        é o caminho para o posto» não são ida (lugar.js: aFraseMandaIr) */
     try { if (mestreVivoLigado() && !aFraseMandaIr(cru)) return null; } catch (e) { calou("Mestre vivo · a ida declarada", e); }
+    /* 21/11 (a oitava sessão, T21): perguntar o caminho não é ir — para todos; o
+       passo do envio (prelúdio) lê a mesma régua, e as duas portas não divergem */
+    try { if (PERGUNTA_DO_CAMINHO.test(semNome(cru))) return null; } catch (e) { calou("a pergunta do caminho", e); }
     /* MM16 nº 2: a masmorra que o herói conhece, nomeada como destino, não
        é passo a pé: sem isto "vou ao Templo Afogado de Sal" casava o templo
        da cidade pelo tipo, e o herói ia rezar em vez de ir à masmorra */

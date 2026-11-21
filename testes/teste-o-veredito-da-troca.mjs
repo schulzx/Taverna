@@ -23,6 +23,8 @@ import { aMaoDaFrase } from "../src/motor/a-mao-da-frase.js";
 import { oPagamentoDaFrase } from "../src/motor/o-pagamento-da-frase.js";
 import { lerAcao } from "../src/desafios.js";
 import { conferirAProsa, aBolsaAgora, oQueEntrou } from "../src/motor/o-conferente-da-prosa.js";
+import { PERGUNTA_DO_CAMINHO } from "../src/motor/preludio-do-turno.js";
+import { alavancasNaMesa } from "../src/social.js";
 
 let falhas = 0;
 const t = (nome, cond, extra) => { if (cond) console.log("  ok:", nome); else { falhas++; console.log("  FALHA:", nome, extra != null ? `→ ${extra}` : ""); } };
@@ -265,6 +267,20 @@ sec("12. a fiação: o veredito aplica antes do Narrador, pela porta da ficha vi
   t("a proposta da venda lê o que está vestido (o kit inicial mora só em «equipados»)", /const vestidos = Object\.values\(p0\.equipados \|\| \{\}\)/.test(app) && /motivo: O_TEXTO_DA_VENDA_DE_USO\.emUso/.test(app));
   t("o suborno cobra o dito no sim (e não antes do dado)", /oSubornoDaFrase\(fraseS, moedaDoMundo\(\)\) \? aQuantiaDita\(fraseS, moedaDoMundo\(\)\) : 0/.test(app));
   t("a busca sem achado chega à pauta (sem dado, e com o dado que não achou)", (app.match(/aBuscaSemAchado\(/g) || []).length >= 2);
+}
+
+sec("13. as sobras de leitura da sessão: T21 (a pergunta do caminho) e T49 (a linha da quantia)");
+{
+  const nrm = (x) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  t("T21: «qual é o caminho até o Pátio dos Restos» não é ida (o passo do envio movia a heroína)", PERGUNTA_DO_CAMINHO.test(nrm("pergunto à vendedora de água qual é o caminho até o Pátio dos Restos")));
+  t("T60: «como se chega ao Limiar de Ferro» também não", PERGUNTA_DO_CAMINHO.test(nrm("pergunto a Freya como se chega ao Limiar de Ferro daqui")));
+  t("«vou até o mercado e pergunto pelo ferreiro» continua a andar", !PERGUNTA_DO_CAMINHO.test(nrm("vou até o mercado e pergunto pelo ferreiro")));
+  t("«vou até o Pátio dos Restos» continua a andar", !PERGUNTA_DO_CAMINHO.test(nrm("vou até o Pátio dos Restos")));
+  const pre = fs.readFileSync(path.join("..", "src", "motor", "preludio-do-turno.js"), "utf8");
+  t("o passo do envio (prelúdio) lê a pergunta antes de andar", /if \(PERGUNTA_DO_CAMINHO\.test\(nP\)\) return null;[\s\S]{0,200}return lugarPedido\(cru, lugaresDaqui\(\)\);/.test(pre));
+  const { valem, vazias } = alavancasNaMesa("tento subornar Freya com algum dinheiro para ela me deixar passar pelo portal", { pers: { moedas: 20 }, pericia: "persuasao" });
+  const ouro = vazias.find((a) => a.id === "moeda");
+  t("T49: o ouro que não chega diz o número dos dois lados (era «você não tem essa quantia» com ◉ 20)", !valem.some((a) => a.id === "moeda") && ouro && /◉ \d+/.test(ouro.semIsso) && ouro.semIsso.includes("◉ 20"), ouro && ouro.semIsso);
 }
 
 console.log(falhas ? `\n${falhas} FALHA(S)` : "\nTudo passou");

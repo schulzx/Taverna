@@ -341,6 +341,10 @@ export const ALAVANCAS = [
     preco: { cortesia: 2, conversa: 10, favor: 30, risco: 120, traicao: 500 },
     confere: ({ pers, preco }) => (Number((pers || {}).moedas) || 0) >= preco,
     semIsso: "você não tem essa quantia na bolsa",
+    /* 21/11 (a oitava sessão, T49): «tento subornar Freya com algum dinheiro» mostrou
+       «Você não tem essa quantia na bolsa» com ◉ 20 na ficha — a quantia era a do
+       degrau (que a frase não disse). A linha diz agora o número dos dois lados. */
+    semIssoConta: "isso pede ◉ {P}, e a bolsa tem ◉ {B}",
     /* A QUANTIA DITA MANDA (21/11). «dou uma moeda ao vendedor de amêijoas e
        peço uma amêijoa» virou suborno de ◉ 30 (o degrau «favor»): o cartão
        cobrou ◉ 1 e o sim da conversa cobrou mais 30 (sessão mestre-vivo-5,
@@ -405,7 +409,7 @@ export function alavancasNaMesa(texto, { pessoa = null, pers = null, pericia = "
     let ok = true;
     try { ok = a.confere({ pessoa, pers, preco }); } catch { ok = false; }
     if (ok) valem.push({ ...a, preco });
-    else vazias.push({ ...a, preco });
+    else vazias.push({ ...a, preco, ...(a.semIssoConta ? { semIsso: a.semIssoConta.replace("{P}", String(preco)).replace("{B}", String(Math.max(0, Number((pers || {}).moedas) || 0))) } : {}) });
   }
   return { valem, vazias };
 }

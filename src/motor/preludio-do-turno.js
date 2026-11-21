@@ -99,6 +99,9 @@ import { atoDoTexto, paraPauta as interpreteParaPauta, jaMeViuAntes, marcarMovim
 import { invocacaoDe, invocacoesDe } from "../invocacoes.js";
 import { resumoLegadoPrompt } from "../legado.js";
 import { linhaDeLugar, lugarPedido } from "../lugar.js";
+/* 21/11 (a oitava sessão, T21): a pergunta do caminho não é ida — só as formas que perguntam o caminho
+   (o «pergunto» solto fica de fora: «vou até o mercado e pergunto pelo ferreiro» continua a andar) */
+export const PERGUNTA_DO_CAMINHO = /\b(qual (e|eh) o caminho|que caminho|como (eu )?(chego|se chega|faco pra chegar|faco para chegar)|onde fica|pergunt\w*[^.!?]{0,40}\b(o caminho|como (se )?chega|onde fica))\b/;
 import { temCaderno } from "../magias.js";
 import { cidadesDominadas, resumoDiplomacia, resumoMapaParaPrompt } from "../mapa.js";
 import { cenaNaMasmorra } from "../masmorra-sem-cidade.js";
@@ -599,6 +602,11 @@ export async function oPreludioDoTurno(estado, entrada, portas) {
        é passo a pé: sem isto "vou ao Templo Afogado de Sal" casava o templo
        da cidade pelo tipo, e o herói ia rezar em vez de ir à masmorra */
     try { if (idaAMasmorra(cru, ctxDoRastro())) return null; } catch (e) { calou("ida no passo", e); }
+    /* 21/11 (a oitava sessão do Mestre vivo, T21): «pergunto à vendedora de água qual é o
+       caminho até o Pátio dos Restos» punha a heroína no Pátio — o passo do App já não
+       lia a pergunta como ida (§25, aFraseMandaIr), e esta cópia, que corre no envio, lia.
+       Perguntar o caminho não é ir: vale para todos (PERGUNTA_DO_CAMINHO). */
+    try { const nP = String(cru).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); if (PERGUNTA_DO_CAMINHO.test(nP)) return null; } catch (e) { calou("a pergunta do caminho", e); }
     return lugarPedido(cru, lugaresDaqui());
   };
   /* Move de verdade: registra o lugar, cobra o tempo e entrega o fato pronto
