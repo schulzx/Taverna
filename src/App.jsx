@@ -18636,6 +18636,13 @@ export default function Taverna() {
         relogios: relogiosRef.current, condicoes: p0.condicoes || [],
         passos: vale("os passos", () => passosDasQuestsAgora(), []), onde: vale("o onde do passo", () => ondeDoPasso(), null),
         quest: {},
+        /* 21/11 (o-mestre-vivo.md §21): o que é do herói, o que está no chão
+           e o livro de tentativas — a cena escreve neles as marcas de UMA
+           coisa (do herói, comum, a que já cedeu), lidas só pela frase que a
+           nomeia */
+        inventario: vale("o inventário", () => [...(Array.isArray(p0.inventario) ? p0.inventario : []), ...Object.values(p0.equipado || {})], []),
+        chao: vale("o chão", () => chaoRef.current, null),
+        tentativas: vale("o livro de tentativas", () => tentativasRef.current, {}),
       });
     } catch (e) { calou("Mestre vivo · o retrato", e); return null; }
   };

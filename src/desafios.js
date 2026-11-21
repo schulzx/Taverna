@@ -2068,6 +2068,28 @@ function ouvinteDaChave(cru) {
   const d = t.match(O.verboDireto);
   return d && serve(d[1]) ? d[1] : "";
 }
+/* 21/11 (o-mestre-vivo.md §21): O ALVO NA CHAVE DE TODA FAMÍLIA. A §20 deu
+   objeto à chave do esconderijo e da mão leve; as outras famílias que caem
+   sobre UMA coisa ou UMA pessoa ainda chaveavam pelo lugar — a tranca da arca,
+   falha, fechava a porta («você já tentou isso aqui»); a escalada do muro
+   fechava a calha; ler a mentira de uma pessoa fechava a de outra. Com o
+   Mestre vivo ligado (`ctx.chaveFina`), a chave leva o alvo que a frase
+   nomeia; sem nenhum, a de sempre.
+     `ids`: as famílias de uma coisa — a chave leva o primeiro sintagma com
+       artigo da parte declarada da frase (`objeto`), cortado onde começa o
+       modo, o motivo ou o ato seguinte («arrombo o cadeado da arca, sem
+       ferramentas» → cadeado-arca);
+     `pessoa`: as de uma pessoa sem conversa (ler a intenção): a chave leva
+       a pessoa achada ou a que a frase descreve.
+   Fora daqui de propósito: a busca e a investigação (o «vasculhado» é do
+   lugar inteiro: chavear pela coisa deixaria revirar o lugar limpo de novo
+   e pagar o achado duas vezes), a escuta e o orientar-se (são do lugar). */
+export const CHAVE_FINA_PELO_ALVO = Object.freeze({
+  ids: Object.freeze(["tranca", "escalar", "saltar", "equilibrio", "arrebentar", "desarmar", "acalmar_bicho", "seguir_alguem", "nadar", "escapar",
+    "cavalgar", "fraqueza", "heraldica", "arcano", "falsificar", "diagnosticar"]),
+  objeto: /(?:^|\s)(?:o|a|os|as|no|na|nos|nas|pelo|pela|pelos|pelas|ao|aos|um|uma)\s+([a-z][^.!?;:,]{1,40}?)(?=\s+(?:com|sem|usando|pra|para|e|que|antes|enquanto|ate|ou|mas|depois|porque|se)\b|[.!?;:,]|$)/,
+  pessoa: Object.freeze(["mentira"]),
+});
 /* MC1: as palavras de conteúdo de um objeto ou de uma pessoa, para a chave
    do livro de tentativas — as mesmas vazias da chave do improviso */
 function palavrasDaChave(s) {
@@ -2226,7 +2248,10 @@ export function lerAcao(texto, ctx = {}) {
      contexto do desafio atrás da chave */
   const chaveFina = ctx.chaveFina === true;
   const rxDoObjeto = d.objetoDaChaveDe || (chaveFina ? d.objetoDaChaveFina : null);
-  const doObjeto = rxDoObjeto ? (daAcao.match(rxDoObjeto) || [])[1] || "" : "";
+  let doObjeto = rxDoObjeto ? (daAcao.match(rxDoObjeto) || [])[1] || "" : "";
+  /* 21/11 (§21): o alvo na chave de toda família (CHAVE_FINA_PELO_ALVO) */
+  if (!doObjeto && chaveFina && CHAVE_FINA_PELO_ALVO.pessoa.includes(d.id)) doObjeto = (pessoa && pessoa.nome) || quemDescrito || "";
+  if (!doObjeto && chaveFina && CHAVE_FINA_PELO_ALVO.ids.includes(d.id)) doObjeto = (declarada.match(CHAVE_FINA_PELO_ALVO.objeto) || [])[1] || "";
 
   /* ---------------- O QUE CONVERSA NENHUMA COMPRA ----------------
      Antes do livro de tentativas de propósito: pedir a alguém que se mate

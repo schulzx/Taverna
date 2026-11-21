@@ -72,8 +72,13 @@
    CENA, com o prefixo «heroi_» (a forma lida fica a mesma, e o save também).
    `efeito`: como o jogador sente o estado na narração — em PT-BR, sem o
    nome do mecanismo (lei «o sistema não fala de si mesmo»). */
-const E = (id, de, marcas, efeito, chama) => Object.freeze({
-  id, de,
+/* 21/11 (o-mestre-vivo.md §21): `tambem` — os donos em que um estado de
+   outro dono também pode estar. É o estado que a mesa lê como da cena
+   quando o exame o escreve na cena, e que o jogo só sabe escrever numa
+   coisa ou numa pessoa (a chave que abre ESTE portão). Na cena, vale para
+   tudo, como antes; numa coisa, só para a ação que a nomeia. */
+const E = (id, de, marcas, efeito, chama, tambem) => Object.freeze({
+  id, de, tambem: Object.freeze(Array.isArray(tambem) ? tambem : []),
   opoe: !!marcas.opoe, cede: !!marcas.cede, facilita: !!marcas.facilita, esconde: !!marcas.esconde,
   pune: !!marcas.pune, espalha: !!marcas.espalha, nota: !!marcas.nota, apressa: !!marcas.apressa,
   revela: !!marcas.revela, inerte: !!marcas.inerte, cobre: !!marcas.cobre, proprio: !!marcas.proprio,
@@ -150,7 +155,7 @@ export const ESTADOS_DA_CENA = Object.freeze([
   /* rodada 3: o herói (de dono «cena»; veja as marcas acima) */
   E("heroi_treinado", "cena", { treinado: true }, "você estudou isto, e o olho sabe onde procurar"),
   E("heroi_ja_sabe", "cena", { sabe: true }, "você já sabe isto: aprendeu antes"),
-  E("heroi_tem_alavanca", "cena", { alavanca: true }, "você traz o que abre esta porta: a senha, a chave, o papel certo"),
+  E("heroi_tem_alavanca", "cena", { alavanca: true }, "você traz o que abre esta porta: a senha, a chave, o papel certo", "", ["coisa", "pessoa"]),
   E("heroi_penalizado", "cena", { penaliza: true }, "a cabeça gira e o corpo não obedece como devia"),
 ]);
 
@@ -169,7 +174,7 @@ function estadosDe(lista, de) {
   const vistos = [];
   for (const id of lista) {
     const e = estadoPorId(id);
-    if (e && e.de === de && !vistos.includes(id)) vistos.push(id);
+    if (e && (e.de === de || e.tambem.includes(de)) && !vistos.includes(id)) vistos.push(id);
   }
   return Object.freeze(vistos);
 }
@@ -317,6 +322,49 @@ export function temMarca(cena, marca) {
   const c = lida(cena);
   if (!c || typeof marca !== "string") return false;
   return daCena(c, marca) || todos(c).some((x) => tem(x, marca));
+}
+
+/* ---------------- A MARCA NO ALVO (21/11/2026, o-mestre-vivo.md §21) ----------------
+   `temMarca` lê a cena INTEIRA: era por isso que o jogo não podia escrever
+   as marcas que são de UMA coisa ou de UMA pessoa (a arca já aberta, o
+   portão de que o herói tem a chave, a coisa que é dele) — escrita numa,
+   ela calaria a ação sobre outra. `temMarcaNoAlvo` lê a marca só onde a
+   ação cai:
+     - a cena e as criaturas, sempre (como antes);
+     - `coisas`: os nomes das coisas sobre que a ação cai — as que a frase
+       nomeia, ou, sem nenhuma, «a coisa» da ação (a primeira da cena, a
+       mesma de haOposicao); `null` é toda coisa, como antes;
+     - `pessoas`: os nomes das pessoas sobre quem a ação cai; `null` é
+       toda pessoa, como antes; `[]` é nenhuma.
+   `null` explícito em `alvo` é «sem alvo» (o `= {}` não o cobre). */
+export function temMarcaNoAlvo(cena, marca, alvo) {
+  const c = lida(cena);
+  if (!c || typeof marca !== "string") return false;
+  const a = obj(alvo) ? alvo : {};
+  const so = (lista, nomes) => (Array.isArray(nomes) ? lista.filter((x) => (!!x.nome && nomes.includes(x.nome)) || (!x.nome && !!x.papel && nomes.includes(x.papel))) : lista);
+  return daCena(c, marca) || c.criaturas.some((x) => tem(x, marca))
+    || so(c.coisas, a.coisas).some((x) => tem(x, marca)) || so(c.pessoas, a.pessoas).some((x) => tem(x, marca));
+}
+
+/* As coisas da cena que a frase nomeia, na ordem da cena (a porta vem
+   primeiro). Uma coisa é nomeada quando o núcleo do nome dela — a primeira
+   palavra de `MARCA_NO_ALVO.minimo` letras ou mais, fora das vazias —
+   aparece na frase como palavra inteira, no singular ou no plural («o
+   caixote» e «os caixotes»). Só o núcleo, e não qualquer palavra: o item
+   «Poção de Cura Pequena» não é nomeado por «a pequena arca» — se fosse, a
+   arca que não está em cena tiraria a porta trancada do lugar de «a coisa».
+   Sem frase, ou sem nenhuma, a lista vazia. */
+export const MARCA_NO_ALVO = Object.freeze({
+  minimo: 3,
+  vazias: Object.freeze(["uma", "uns", "dos", "das", "nos", "nas", "com", "sem", "por", "pra", "pro", "que", "seu", "sua", "meu", "teu", "tua", "para", "pelo", "pela", "pelos", "pelas", "sobre", "entre", "esse", "essa", "este", "esta", "aquele", "aquela", "muito", "pouco"]),
+});
+const palavrasDoNome = (nome) => nrm(nome).replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+  .map((w) => w.replace(/s$/, "")).filter((w) => w.length >= MARCA_NO_ALVO.minimo && !MARCA_NO_ALVO.vazias.includes(w)).slice(0, 1);
+export function coisasQueAFraseNomeia(frase, cena) {
+  const c = lida(cena);
+  if (!c || typeof frase !== "string" || !frase.trim()) return Object.freeze([]);
+  const t = " " + nrm(frase).replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ") + " ";
+  return Object.freeze(c.coisas.filter((x) => palavrasDoNome(x.nome).some((w) => t.includes(" " + w + " ") || t.includes(" " + w + "s "))).map((x) => x.nome));
 }
 
 /* Os estados que, ao aparecerem, chamam um teste — na ordem da tabela. */

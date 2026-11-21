@@ -42,6 +42,7 @@ import { QUANDO_O_MESTRE_CHAMA, porQueNaoChama, saberComumDe } from "./o-mestre-
 import {
   lerCena, haOposicao, haOQueAchar, haSegredo, haPerigo, alguemPodeNotar, haPlateia, cenaRevela,
   custoDeFalhar, respostaDaPergunta, estadosQueChamam, estadoPorId, temMarca, alvoDaAcao,
+  temMarcaNoAlvo, coisasQueAFraseNomeia,
 } from "../cena-do-momento.js";
 import { escutarComCena, molduraDe, atosDaFrase } from "./a-escuta-da-cena.js";
 import { lerAcao } from "../desafios.js";
@@ -450,20 +451,20 @@ export const REGUA_DO_MOMENTO = Object.freeze([
   /* rodada 3: o que já ficou acertado, ou já foi tentado, não rola de novo
      (§8 nº 27, 37, 38) */
   Object.freeze({ id: "jaResolvido", rola: false, diz: "isto já ficou acertado: não há o que rolar",
-    quando: (x) => temMarca(x.cena, "resolvido") && (!x.social || x.op.facilita || x.cena.cena.estados.includes("ja_resolvido")) }),
+    quando: (x) => x.noAlvo("resolvido") && (!x.social || x.op.facilita || x.cena.cena.estados.includes("ja_resolvido")) }),
   Object.freeze({ id: "jaTestado", rola: false, diz: "o teste de antes já cobre isto",
-    quando: (x) => temMarca(x.cena, "testado") }),
+    quando: (x) => x.noAlvo("testado") }),
   /* rodada 3: o mundo decide que não (selado por magia, sabotado — §10.5
      nº 84, 85): não há dado que abra */
   Object.freeze({ id: "impossivel", rola: false, diz: "não cede, e não vai ceder: o mundo decide",
-    quando: (x) => FAMILIAS_DO_IMPOSSIVEL.includes(x.familia) && temMarca(x.cena, "impossivel") }),
+    quando: (x) => FAMILIAS_DO_IMPOSSIVEL.includes(x.familia) && x.noAlvo("impossivel") }),
   /* rodada 3: o preparo do herói resolve (a senha, a chave, o documento
      bom — nº 73, 74, 76); contra quem é hostil, o papel não basta (nº 75) */
   Object.freeze({ id: "alavanca", rola: false, diz: "o seu preparo resolve: a senha, a chave, o papel certo",
-    quando: (x) => FAMILIAS_DA_ALAVANCA.includes(x.familia) && temMarca(x.cena, "alavanca") && !(x.social && x.op.estados.includes("hostil")) }),
+    quando: (x) => FAMILIAS_DA_ALAVANCA.includes(x.familia) && x.noAlvo("alavanca") && !(x.social && x.op.estados.includes("hostil")) }),
   /* rodada 3: o que está à vista (nº 70, 59) */
   Object.freeze({ id: "aVista", rola: false, diz: "está à vista: o Mestre conta o que se vê",
-    quando: (x) => FAMILIAS_DO_EVIDENTE.includes(x.familia) && temMarca(x.cena, "evidente") }),
+    quando: (x) => FAMILIAS_DO_EVIDENTE.includes(x.familia) && x.noAlvo("evidente") }),
   /* M5: quem não pode responder (o morto, o desacordado) não é convencido
      nem enganado: não há conversa, e não há dado */
   Object.freeze({ id: "semResposta", rola: false, diz: "quem ouviria não pode responder",
@@ -522,7 +523,7 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.v.id === "escutar" }),
   /* a busca (M5: e a coisa rara de achar, que custa procurar) */
   Object.freeze({ id: "buscaComAchado", rola: true, diz: "há o que achar, ou perigo no que se toca",
-    quando: (x) => x.familia === "procurar" && (haOQueAchar(x.cena) || haPerigo(x.cena) || temMarca(x.cena, "escasso")) }),
+    quando: (x) => x.familia === "procurar" && (haOQueAchar(x.cena) || haPerigo(x.cena) || x.noAlvo("escasso")) }),
   Object.freeze({ id: "buscaVazia", rola: false, diz: "nada escondido nem perigo: o Mestre descreve o que há",
     quando: (x) => x.familia === "procurar" }),
   /* esgueirar */
@@ -579,16 +580,16 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.familia === "saber" && x.v.id !== "lembrar" && !!saberComumDe({ ...x.v, id: "lembrar", sobre: x.v.sobre || x.frase }, x.ctx) }),
   /* M5: a coisa do próprio herói, e a de toda feira, não pedem dado de saber */
   Object.freeze({ id: "doProprioHeroi", rola: false, diz: "é seu: você conhece",
-    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && temMarca(x.cena, "proprio") }),
+    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && x.noAlvo("proprio") }),
   Object.freeze({ id: "coisaComum", rola: false, diz: "é coisa de toda feira: qualquer um sabe",
-    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && temMarca(x.cena, "comum") }),
+    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && x.noAlvo("comum") }),
   /* rodada 3: o que o herói já sabe, dito pela cena (o teste de antes, o
      passado dele) — a ficha nem sempre tem o assunto escrito */
   Object.freeze({ id: "heroiJaSabe", rola: false, diz: "você já sabe isto",
-    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && temMarca(x.cena, "sabe") }),
+    quando: (x) => FAMILIAS_DO_SABER.includes(x.familia) && x.noAlvo("sabe") }),
   /* rodada 3: a força contra o que não resiste (o portão entreaberto) */
   Object.freeze({ id: "semResistencia", rola: false, diz: "não há o que resista: basta um empurrão",
-    quando: (x) => x.familia === "forcar" && temMarca(x.cena, "livre") && !x.coisa.opoe }),
+    quando: (x) => x.familia === "forcar" && x.noAlvo("livre") && !x.coisa.opoe }),
   /* o resto: a ação tem oposição própria (o saber, o arcano, o rastro, a
      mão leve, a força), e rola como o Mestre de sempre a faria rolar */
   Object.freeze({ id: "comoSempre", rola: true, diz: "a ação tem a sua própria oposição",
@@ -800,11 +801,32 @@ function decidir(vereditoDoCatalogo, lida, c) {
       ouviu = Object.freeze({ id: vf.id, pericia: vf.pericia || "", chave: vf.chave || "", porta: "dono" });
     }
   }
+  /* 21/11 (o-mestre-vivo.md §21): A COISA QUE A FRASE NOMEIA. A oposição
+     da coisa era sempre a da primeira coisa da cena (a porta); agora é a da
+     coisa que a frase nomeia («arrombo a arca»), e só sem nenhuma, a de
+     antes. E as marcas que são de UMA coisa ou de UMA pessoa (o selado, a
+     alavanca, o que não resiste, o que é do herói, o já resolvido…) se leem
+     no alvo (`noAlvo`, temMarcaNoAlvo): a coisa nomeada (sem nenhuma, «a
+     coisa» da ação, a primeira da cena — a do exame, que só tem uma, como
+     antes; a do jogo, a porta ou o lugar); na conversa, a pessoa a quem se fala; fora dela, a
+     pessoa que a frase nomeia, e nenhuma quando não nomeia (o sim de uma
+     pessoa não cala a escalada do muro). */
+  let coisasDitas = [];
+  try { coisasDitas = frase ? coisasQueAFraseNomeia(frase, lida) : []; } catch { coisasDitas = []; }
+  const opDaPessoa = op || haOposicao(lida, { sobre: "pessoa", quem });
+  let pessoaDita = null;
+  if (!social && frase) { try { pessoaDita = quemAFraseNomeia(frase, lida); } catch { pessoaDita = null; } }
+  const coisaDaAcao = haOposicao(lida, { sobre: "coisa", quem: coisasDitas[0] || "" });
+  const alvoDasMarcas = Object.freeze({
+    coisas: coisasDitas.length ? coisasDitas : coisaDaAcao.quem ? [coisaDaAcao.quem] : [],
+    pessoas: social ? (opDaPessoa.quem ? [opDaPessoa.quem] : []) : pessoaDita ? [pessoaDita.nome || pessoaDita.papel] : [],
+  });
   const x = {
     v, familia, social, cena: lida,
-    op: op || haOposicao(lida, { sobre: "pessoa", quem }), alvo,
+    op: opDaPessoa, alvo,
     bicho: haOposicao(lida, { sobre: "criatura", quem }),
-    coisa: haOposicao(lida, { sobre: "coisa" }),
+    coisa: coisaDaAcao,
+    noAlvo: (marca) => temMarcaNoAlvo(lida, marca, alvoDasMarcas),
     custo: custoDeFalhar(lida),
     ctx: c, frase: typeof c.frase === "string" ? c.frase : "", moldura, quem,
   };

@@ -7,7 +7,7 @@ import {
   garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa,
   viasAbertas, viaDeclarada, viaPorId, trancaDe, naoPedeDado, oQueMudou, bonusDoQueMudou,
   desafioPorId, desafioPorPericia, DESAFIOS, VIAS_DE_TRANCA, TIPOS_DE_ROLAGEM, DESAFIOS_PROMPT,
-  ACOES_RAPIDAS, fraseDaAcaoRapida,
+  ACOES_RAPIDAS, fraseDaAcaoRapida, CHAVE_FINA_PELO_ALVO,
 } from "../src/desafios.js";
 import { PERICIAS, periciaPorId } from "../src/pericias.js";
 
@@ -609,6 +609,26 @@ sec("S20. o livro de tentativas fecha só a mesma coisa (21/11/2026, o-mestre-vi
   t("sem chaveFina, o esconderijo e a coisa furtada não entram na chave", lerAcao("me escondo atrás dos caixotes", no({}, false)).chave === chaveDaTentativa("Mercado de Cordas", "furtividade")
     && lerAcao("furto a bolsa do homem do caixote", no({}, false)).chave === chaveDaTentativa("Mercado de Cordas", "furto"));
   t("sem chaveFina, a conversa sem pessoa achada continua «quem quer que seja»", /quem quer que seja/.test(lerAcao("minto a Perrin: perdi as chaves", no({}, false)).chave));
+}
+
+sec("S21. o alvo na chave de toda família (21/11/2026, o-mestre-vivo.md §21)");
+{
+  const H = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 15 };
+  const no = (tent, fina = true) => ({ personagem: H, semente: "s21", lugar: "Depósito", tentativas: tent, dia: 1, chaveFina: fina });
+  const falhou = (frase, fina = true) => { const v = lerAcao(frase, no({}, fina)); return registrarTentativa({}, v.chave, { resultado: "falha", via: "forca", dia: 1 }); };
+  t("toda família da chave pelo alvo existe no catálogo, e nenhuma é a busca (o vasculhado é do lugar)",
+    CHAVE_FINA_PELO_ALVO.ids.every((id) => !!desafioPorId(id)) && CHAVE_FINA_PELO_ALVO.pessoa.every((id) => !!desafioPorId(id))
+    && !CHAVE_FINA_PELO_ALVO.ids.includes("buscar") && !CHAVE_FINA_PELO_ALVO.ids.includes("investigar"));
+  const arca = falhou("arrombo a arca com o ombro");
+  t("a tranca da arca, falha, não fecha a porta («já tentou» na ação errada)", lerAcao("arrombo a porta com o ombro", no(arca)).tipo === "teste");
+  t("e a mesma arca, do mesmo jeito, continua fechada", lerAcao("arrombo a arca com o ombro", no(arca)).tipo === "jaTentou");
+  t("sem chaveFina, a arca falha fecha a porta, como sempre (o Mestre de hoje não muda)", lerAcao("arrombo a porta com o ombro", no(falhou("arrombo a arca com o ombro", false), false)).tipo === "jaTentou");
+  const muro = falhou("escalo o muro de seis metros sem corda");
+  t("a escalada falha do muro não fecha a calha", lerAcao("subo pela calha do depósito", no(muro)).tipo === "teste");
+  t("a chave leva o primeiro sintagma, cortado onde começa o modo («o cadeado da arca, sem ferramentas»)",
+    lerAcao("arrombo o cadeado da arca, sem ferramentas", no({})).chave === chaveDaTentativa("Depósito", "tranca|cadeado-arca")
+    && lerAcao("arrombo a porta com o ombro", no({})).chave === chaveDaTentativa("Depósito", "tranca|porta"));
+  t("sem coisa dita, a chave do lugar", lerAcao("tento escalar", no({})).chave === chaveDaTentativa("Depósito", "escalada"));
 }
 
 console.log(`\ndesafios v9.67: ${ok} passaram, ${mal} falharam`);

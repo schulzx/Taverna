@@ -82,7 +82,15 @@
    e uma vez depois. Quem afina roda a suíte com EXAME_SEM_C=1: a C sai da
    medida (nem a linha dela nem o exame inteiro a contam) e só a forma dela é
    conferida. Sem a variável, como no npm test, a C é medida e tem catraca.
-   Nunca se imprime frase, cena nem id da C. */
+   Nunca se imprime frase, cena nem id da C.
+
+   RODADA 8 (21/11/2026) — OS PARES POR ALVO. A etapa 1 do «Mestre que conhece
+   a cena» (o-mestre-vivo.md §21): a régua passou a ler a marca de UMA coisa
+   ou de UMA pessoa no alvo da frase. 13 itens na A, que afina (origem
+   «etapa-1-alvo»): seis pares com a mesma frase e a mesma cena de duas
+   coisas, o estado ora na que a frase nomeia, ora na outra — a cena do
+   exame ganhou `estados_de` (cenaDoExame) —, e um item sem par. A B e a C
+   não foram tocadas; a C foi medida uma vez, no fim. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
@@ -172,7 +180,13 @@ const CATRACA_DO_EXAME = {
        hoje erra neles o que errou na sessão. Ele não mudou: os consertos da
        leitura ficaram na régua e na escuta, e o livro fino só vale com a chave
        ligada. Era 269 · 52 · 123 · cat 204 · per 108 · pares 3. */
-    A: { rolaCerto: 293, pedeIndevido: 55, deixaDePedir: 128, categoria: 229, pericia: 125, paresQueSeparam: 3 },
+    /* MOVIDA de novo em 21/11/2026 (a etapa 1 do «Mestre que conhece a
+       cena», o-mestre-vivo.md §21), e o motivo: 13 itens por alvo entraram
+       na A (origem «etapa-1-alvo», rodada 8), e o Mestre de hoje, que não lê
+       a cena, erra neles o que um Mestre sem cena erra (5 indevidos, 1
+       omissão). Nas 476 frases que já eram da A ele não mudou em nenhuma
+       (conferido item a item). Era 293 · 55 · 128 · cat 229 · per 125 · pares 3. */
+    A: { rolaCerto: 300, pedeIndevido: 60, deixaDePedir: 129, categoria: 240, pericia: 131, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
     /* NASCEU na rodada 6 (21/11/2026): a primeira medida da C, antes de
        qualquer conserto (o-mestre-vivo.md §20). */
@@ -203,7 +217,11 @@ const CATRACA_DO_EXAME = {
        eram certos antes do conserto); nas 444 que já eram da A, 413 · 2 · 29
        como antes. A B, que agora afina, ficou igual (157 · 7 · 32). Era
        413 · 2 · 29 · cat 340 · per 196 · pares 102. */
-    A: { rolaCerto: 445, pedeIndevido: 2, deixaDePedir: 29, categoria: 371, pericia: 219, paresQueSeparam: 103 },
+    /* SUBIU em 21/11/2026 (a etapa 1, §21), só para cima: os 13 itens por
+       alvo (13 de 13; com a régua de antes, 6 de 13 — ela lia a marca na
+       cena inteira). Nas 476 que já eram da A, nenhum item mudou. A B ficou
+       igual, item a item. Era 445 · 2 · 29 · cat 371 · per 219 · pares 103. */
+    A: { rolaCerto: 458, pedeIndevido: 2, deixaDePedir: 29, categoria: 384, pericia: 226, paresQueSeparam: 109 },
     /* DESCEU em 19/11/2026 (§19), e o motivo fica escrito: a rodada da
        terceira sessão custou UMA frase da B, que passou a pedir dado onde a
        mesa não pede (157 · 7 · pares 53; era 158 · 6 · 54). Não se sabe qual:
@@ -396,7 +414,20 @@ function cenaDoExame(c) {
     else if (e.de === "cena" && !daCena.includes(k)) daCena.push(k);
     else if (e.de === "criatura" && criaturas[0] && !criaturas[0].estados.includes(k)) criaturas[0].estados.push(k);
   }
-  return { pessoas, criaturas, coisas: [{ nome: c.lugar || "o lugar", estados: doLugar }], cena: { estados: daCena } };
+  /* rodada 8 (21/11/2026, o-mestre-vivo.md §21): `estados_de` — o estado de
+     UMA coisa ou de UMA pessoa, pelo nome. Quem está em `quem` recebe os
+     seus; o nome que não é de ninguém vira uma coisa da cena, depois do
+     lugar (que continua a ser a primeira coisa, a «coisa» da ação que não
+     nomeia nenhuma). É o que dá ao exame os pares por alvo: a mesma cena com
+     duas coisas, e o estado ora numa, ora na outra. */
+  const coisas = [{ nome: c.lugar || "o lugar", estados: doLugar }];
+  for (const [nome, lista] of Object.entries(c.estados_de && typeof c.estados_de === "object" ? c.estados_de : {})) {
+    const ser = [...pessoas, ...criaturas].find((x) => nrm(x.nome) === nrm(nome));
+    const estados = (Array.isArray(lista) ? lista : []).filter((k) => !!estadoPorId(k));
+    if (ser) ser.estados.push(...estados.filter((k) => !ser.estados.includes(k)));
+    else coisas.push({ nome, estados });
+  }
+  return { pessoas, criaturas, coisas, cena: { estados: daCena } };
 }
 
 /* ---------------- A LEITURA DO MESTRE DA RÉGUA ----------------

@@ -15,13 +15,13 @@
   "veio_da_b": "3: o item era da metade B até a rodada 2 e passou para a A na rodada 3"
  },
  "contagem": {
-  "itens": 903,
-  "pares": 259,
+  "itens": 916,
+  "pares": 265,
   "espontaneos": 65,
-  "nao_rola": 416,
+  "nao_rola": 422,
   "situacoes_cobertas": 97,
   "situacoes_faltando": [],
-  "metade_A": 508,
+  "metade_A": 521,
   "metade_B": 265,
   "rodada_2": 118,
   "rodada_3": 265,
@@ -31,7 +31,8 @@
   "rodada_5": 32,
   "metade_C": 130,
   "rodada_6": 130,
-  "rodada_7": 32
+  "rodada_7": 32,
+  "rodada_8": 13
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
@@ -20519,6 +20520,378 @@
    "rodada": 7,
    "metade": "A",
    "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E904",
+   "situacao": 49,
+   "cena": {
+    "lugar": "depósito do mercador",
+    "quem": [],
+    "estados_de": {
+     "baú": [
+      "trancado"
+     ],
+     "porta": [
+      "sem_resistencia"
+     ]
+    }
+   },
+   "frase": "arrombo o baú do canto",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento",
+     "atletismo",
+     "prestidigitacao"
+    ],
+    "porque": "o baú está trancado; o que já cedeu foi a porta",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A1"
+  },
+  {
+   "id": "E905",
+   "situacao": 49,
+   "cena": {
+    "lugar": "depósito do mercador",
+    "quem": [],
+    "estados_de": {
+     "baú": [
+      "sem_resistencia"
+     ],
+     "porta": [
+      "trancado"
+     ]
+    }
+   },
+   "frase": "arrombo o baú do canto",
+   "esperado": {
+    "rola": false,
+    "categoria": "forcar",
+    "pericias": [],
+    "porque": "o baú já cedeu antes: não há o que resistir; trancada é a porta, não ele",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A1"
+  },
+  {
+   "id": "E906",
+   "situacao": 49,
+   "cena": {
+    "lugar": "cripta do barão",
+    "quem": [],
+    "estados_de": {
+     "portão": [
+      "trancado"
+     ],
+     "porta": [
+      "selado"
+     ]
+    }
+   },
+   "frase": "arrombo o portão dos fundos",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento",
+     "atletismo",
+     "prestidigitacao"
+    ],
+    "porque": "o portão só está trancado; o selado é a porta",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A2"
+  },
+  {
+   "id": "E907",
+   "situacao": 49,
+   "cena": {
+    "lugar": "cripta do barão",
+    "quem": [],
+    "estados_de": {
+     "portão": [
+      "selado"
+     ],
+     "porta": [
+      "trancado"
+     ]
+    }
+   },
+   "frase": "arrombo o portão dos fundos",
+   "esperado": {
+    "rola": false,
+    "categoria": "forcar",
+    "pericias": [],
+    "porque": "o portão está selado: nenhum dado o abre; trancada é a porta",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A2"
+  },
+  {
+   "id": "E908",
+   "situacao": 49,
+   "cena": {
+    "lugar": "escritório da guilda",
+    "quem": [],
+    "estados_de": {
+     "cofre": [
+      "trancado"
+     ],
+     "porta": [
+      "trancado",
+      "heroi_tem_alavanca"
+     ]
+    }
+   },
+   "frase": "tento abrir o cofre",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento",
+     "atletismo",
+     "prestidigitacao"
+    ],
+    "porque": "a chave que o herói traz é a da porta; o cofre resiste",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A3"
+  },
+  {
+   "id": "E909",
+   "situacao": 49,
+   "cena": {
+    "lugar": "escritório da guilda",
+    "quem": [],
+    "estados_de": {
+     "cofre": [
+      "trancado",
+      "heroi_tem_alavanca"
+     ],
+     "porta": [
+      "trancado"
+     ]
+    }
+   },
+   "frase": "tento abrir o cofre",
+   "esperado": {
+    "rola": false,
+    "categoria": "forcar",
+    "pericias": [],
+    "porque": "o herói traz a chave do cofre: abre sem dado",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A3"
+  },
+  {
+   "id": "E910",
+   "situacao": 33,
+   "cena": {
+    "lugar": "acampamento na estrada",
+    "quem": [],
+    "estados_de": {
+     "mapa": [],
+     "pergaminho": [
+      "do_heroi"
+     ]
+    }
+   },
+   "frase": "o que eu lembro sobre esse mapa rasgado?",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes",
+     "investigacao"
+    ],
+    "porque": "o mapa não é dele (o dele é o pergaminho): lembrar o que se sabe rola",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A4"
+  },
+  {
+   "id": "E911",
+   "situacao": 33,
+   "cena": {
+    "lugar": "acampamento na estrada",
+    "quem": [],
+    "estados_de": {
+     "mapa": [
+      "do_heroi"
+     ],
+     "pergaminho": []
+    }
+   },
+   "frase": "o que eu lembro sobre esse mapa rasgado?",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "o mapa é do próprio herói: ele conhece, não há o que lembrar",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A4"
+  },
+  {
+   "id": "E912",
+   "situacao": 33,
+   "cena": {
+    "lugar": "banca de ferragens",
+    "quem": [],
+    "estados_de": {
+     "adaga": [],
+     "amuleto": [
+      "coisa_comum"
+     ]
+    }
+   },
+   "frase": "lembro o que sei sobre essa adaga curva",
+   "esperado": {
+    "rola": true,
+    "categoria": "saber",
+    "pericias": [
+     "saberes",
+     "investigacao"
+    ],
+    "porque": "comum é o amuleto; a adaga curva pode ter história, e lembrar rola",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A5"
+  },
+  {
+   "id": "E913",
+   "situacao": 33,
+   "cena": {
+    "lugar": "banca de ferragens",
+    "quem": [],
+    "estados_de": {
+     "adaga": [
+      "coisa_comum"
+     ],
+     "amuleto": []
+    }
+   },
+   "frase": "lembro o que sei sobre essa adaga curva",
+   "esperado": {
+    "rola": false,
+    "categoria": "saber",
+    "pericias": [],
+    "porque": "a adaga é coisa de toda feira: qualquer um sabe",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A5"
+  },
+  {
+   "id": "E914",
+   "situacao": 49,
+   "cena": {
+    "lugar": "biblioteca abandonada",
+    "quem": [],
+    "estados_de": {
+     "estante": [],
+     "porta": [
+      "sem_resistencia"
+     ]
+    }
+   },
+   "frase": "empurro a estante pra abrir passagem",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a estante é pesada e não se moveu ainda; o que cede é a porta",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A6"
+  },
+  {
+   "id": "E915",
+   "situacao": 49,
+   "cena": {
+    "lugar": "biblioteca abandonada",
+    "quem": [],
+    "estados_de": {
+     "estante": [
+      "sem_resistencia"
+     ],
+     "porta": [
+      "trancado"
+     ]
+    }
+   },
+   "frase": "empurro a estante pra abrir passagem",
+   "esperado": {
+    "rola": false,
+    "categoria": "forcar",
+    "pericias": [],
+    "porque": "a estante já foi movida e está solta: basta empurrar",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo",
+   "par": "P8A6"
+  },
+  {
+   "id": "E916",
+   "situacao": 44,
+   "cena": {
+    "lugar": "pátio do quartel",
+    "quem": [
+     "guarda"
+    ],
+    "ja_convencida": true
+   },
+   "frase": "escalo o muro de seis metros do pátio",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "o sim do guarda é dele; a queda de seis metros é do ato",
+    "base": "padrao"
+   },
+   "rodada": 8,
+   "metade": "A",
+   "origem": "etapa-1-alvo"
   }
  ],
  "rodada_2": {
@@ -20571,5 +20944,9 @@
  "rodada_7": {
   "data": "2026-11-21",
   "o_que_mudou": "Os turnos da quarta sessão jogada do Mestre vivo (mente/lancamento/mestre-vivo-sessao-4.md, 20/11/2026) entraram na metade A, que afina, como itens escritos por nós sobre cada turno (origem «sessao-mv-4»). A pessoa a quem se mente sem estar no painel fica fora do retrato, como no jogo. A metade C não foi tocada."
+ },
+ "rodada_8": {
+  "data": "2026-11-21",
+  "o_que_mudou": "A etapa 1 do «Mestre que conhece a cena» (o-mestre-vivo.md §21): 13 itens novos na metade A, que afina, com pares mínimos POR ALVO — a mesma frase, a mesma cena com duas coisas, e o estado de UMA coisa (o que já cedeu, o selado, a chave do herói, o que é dele, o que é comum) ora na coisa que a frase nomeia, ora na outra. A cena ganha `estados_de` (o estado de cada coisa ou pessoa pelo nome). E um item sem par: o sim de uma pessoa não cala a escalada do muro. Frases nossas, nenhuma de mesa real. B e C não foram tocadas."
  }
 }

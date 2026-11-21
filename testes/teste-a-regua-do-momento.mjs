@@ -500,5 +500,27 @@ sec("S20. a quarta sessão jogada (21/11/2026, o-mestre-vivo.md §20)");
   t("«grito pra todo mundo fugir» não é a fuga do herói", !comFrase("subo no barril e grito pra todo mundo fugir antes do anoitecer", cenaDe({ pessoas: [N("", "aldeões", "disposta")] })).rola);
 }
 
+sec("S21. a marca de UMA coisa ou de UMA pessoa, lida no alvo da frase (21/11/2026, o-mestre-vivo.md §21)");
+{
+  const H21 = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 10 };
+  const L21 = { personagem: H21, semente: "s21", lugar: "Depósito", tentativas: {}, dia: 1 };
+  const julga = (frase, cena) => valeRolagem(lerAcao(frase, L21), cena, { frase, leitura: L21 });
+  const duas = (arca, caixote) => ({ pessoas: [], criaturas: [], coisas: [{ nome: "o depósito", estados: [] }, { nome: "a arca", estados: arca }, { nome: "o caixote", estados: caixote }], cena: { estados: [] } });
+  /* a mesma cena: a arca trancada, o caixote que já cedeu */
+  const cena = duas(["trancado"], ["sem_resistencia"]);
+  const arca = julga("arrombo a arca", cena), caixote = julga("arrombo o caixote", cena);
+  t("arrombar a arca trancada rola; o caixote que já cedeu, na mesma cena, não", arca.rola && arca.porque === "trancado" && !caixote.rola && caixote.porque === "semTranca", JSON.stringify([arca.porque, caixote.porque]));
+  const cena2 = duas(["selado"], ["trancado"]);
+  const a2 = julga("arrombo a arca", cena2), c2 = julga("arrombo o caixote", cena2);
+  t("a arca selada não se força; o caixote só trancado rola", !a2.rola && a2.porque === "impossivel" && c2.rola, JSON.stringify([a2.porque, c2.porque]));
+  /* a frase sem coisa nomeada lê «a coisa» da ação (a primeira), como antes */
+  const muro = julga("escalo a parede do depósito", duas(["selado"], []));
+  t("a escalada que não nomeia a arca selada não é «impossível»", muro.porque !== "impossivel", muro.porque);
+  /* a pessoa: o sim de uma não cala a escalada do muro */
+  const gente = { pessoas: [{ nome: "Ana", papel: "padeira", estados: ["ja_convencida"] }, { nome: "Rui", papel: "guarda", estados: [] }], criaturas: [], coisas: [{ nome: "o pátio", estados: [] }], cena: { estados: [] } };
+  const esc = julga("escalo o muro de seis metros do pátio", gente);
+  t("o sim da padeira não cala a escalada de seis metros (era «já resolvido»)", esc.rola && esc.porque !== "jaResolvido", esc.porque);
+}
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

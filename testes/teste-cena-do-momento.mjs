@@ -8,7 +8,7 @@ import fs from "node:fs";
 import {
   ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, lerCena, alvoDaAcao, haOposicao, haOQueAchar, haSegredo,
   haPerigo, alguemPodeNotar, haPlateia, cenaRevela, custoDeFalhar, RESPOSTAS_DA_PERGUNTA, respostaDaPergunta,
-  estadosQueChamam, temMarca,
+  estadosQueChamam, temMarca, temMarcaNoAlvo, coisasQueAFraseNomeia, MARCA_NO_ALVO,
 } from "../src/cena-do-momento.js";
 import { PERICIAS } from "../src/pericias.js";
 
@@ -180,6 +180,29 @@ sec("R3. os estados que faltavam (rodada_3.estados_que_faltam do exame, 18/11/20
   t("temMarca acha o estado do herói na cena", temMarca(cenaDe({ cena: { estados: ["heroi_penalizado"] } }), "penaliza") && !temMarca(cenaDe({}), "penaliza"));
   t("todo estado novo tem efeito em PT-BR, sem o nome do mecanismo",
     Object.keys(NOVOS).every((id) => { const e = estadoPorId(id).efeito; return typeof e === "string" && e.length > 8 && !e.includes("_") && !/\b(tu|teu|tua)\b/.test(e); }));
+}
+
+sec("S21. a marca no alvo (21/11/2026, o-mestre-vivo.md §21)");
+{
+  const c = lerCena({
+    pessoas: [{ nome: "Ana", papel: "padeira", estados: ["ja_convencida"] }, { nome: "Rui", papel: "guarda", estados: [] }],
+    coisas: [{ nome: "porta", estados: ["trancado"] }, { nome: "a arca", estados: ["sem_resistencia"] }, { nome: "o caixote", estados: ["selado"] }],
+    cena: { estados: ["ja_testado"] },
+  });
+  t("a arca e o caixote têm estados diferentes na mesma cena", c.coisas[1].estados.includes("sem_resistencia") && c.coisas[2].estados.includes("selado"));
+  t("a frase nomeia a coisa pelo núcleo do nome, no singular ou no plural", igual(coisasQueAFraseNomeia("forço a arca", c), ["a arca"]) && igual(coisasQueAFraseNomeia("pulo os caixotes", c), ["o caixote"])
+    && igual(coisasQueAFraseNomeia("arrombo a porta e depois a arca", c), ["porta", "a arca"]) && coisasQueAFraseNomeia("escalo o muro", c).length === 0);
+  t("só o núcleo nomeia (o adjetivo do nome não é a coisa)", coisasQueAFraseNomeia("abro a pequena arca", lerCena({ coisas: [{ nome: "Poção de Cura Pequena", estados: [] }] })).length === 0
+    && MARCA_NO_ALVO.minimo >= 3 && MARCA_NO_ALVO.vazias.includes("para"));
+  t("a marca da arca só vale na arca; a do caixote, só no caixote", temMarcaNoAlvo(c, "livre", { coisas: ["a arca"] }) && !temMarcaNoAlvo(c, "livre", { coisas: ["o caixote"] })
+    && temMarcaNoAlvo(c, "impossivel", { coisas: ["o caixote"] }) && !temMarcaNoAlvo(c, "impossivel", { coisas: ["porta"] }));
+  t("sem alvo (null), a cena inteira, como temMarca", ["livre", "impossivel", "resolvido"].every((m) => temMarcaNoAlvo(c, m, null) === temMarca(c, m)));
+  t("a pessoa: só a dita; [] é nenhuma", temMarcaNoAlvo(c, "resolvido", { pessoas: ["Ana"] }) && !temMarcaNoAlvo(c, "resolvido", { pessoas: ["Rui"] }) && !temMarcaNoAlvo(c, "resolvido", { pessoas: [] }));
+  t("a marca da cena vale para qualquer alvo", temMarcaNoAlvo(c, "testado", { coisas: ["porta"], pessoas: [] }));
+  t("a chave do herói é da cena, e também pode estar numa coisa ou numa pessoa (tambem)", estadoPorId("heroi_tem_alavanca").de === "cena"
+    && igual([...estadoPorId("heroi_tem_alavanca").tambem], ["coisa", "pessoa"]) && lerCena({ coisas: [{ nome: "o portão", estados: ["heroi_tem_alavanca"] }] }).coisas[0].estados.includes("heroi_tem_alavanca")
+    && lerCena({ coisas: [{ nome: "x", estados: ["com_pressa"] }] }).coisas[0].estados.length === 0);
+  t("lixo não lança", temMarcaNoAlvo(null, "livre", null) === false && coisasQueAFraseNomeia(null, c).length === 0 && coisasQueAFraseNomeia("arca", null).length === 0);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

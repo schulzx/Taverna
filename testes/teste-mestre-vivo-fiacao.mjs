@@ -85,6 +85,13 @@ const crus = {
   t("não mexe no que entra", JSON.stringify(crus) === antes);
   t("o retrato vira cena (a cena do jogo o lê)", !!cenaDoJogo(r));
   t("o mesmo retrato dá a mesma cena", JSON.stringify(cenaDoJogo(retratoDosRefs(crus))) === JSON.stringify(cenaDoJogo(r)));
+  /* 21/11 (o-mestre-vivo.md §21): o que é do herói, o chão e o livro */
+  const r21 = retratoDosRefs({ ...crus, inventario: ["Gazua"], chao: { cena: "x", itens: [{ nome: "Adaga", raridade: "comum" }] }, tentativas: { "taverna do javali|tranca|bau": { resultado: "sucesso" } } });
+  const c21 = cenaDoJogo(r21);
+  t("o retrato leva o inventário, o chão e o livro, e a cena os lê (do herói, comum, sem resistência)",
+    r21.heroi.inventario[0] === "Gazua" && r21.chao.itens.length === 1 && !!r21.tentativas
+    && ["Gazua:do_heroi", "Adaga:coisa_comum", "bau:sem_resistencia"].every((p) => { const [n, e] = p.split(":"); const x = c21.coisas.find((y) => y.nome === n); return !!x && x.estados.includes(e); }));
+  t("sem eles, o retrato tem o vazio de cada um", r.heroi.inventario.length === 0 && r.chao === null && Object.keys(r.tentativas).length === 0);
 }
 
 sec("3. O MOMENTO: as quatro portas e as situações da prova");

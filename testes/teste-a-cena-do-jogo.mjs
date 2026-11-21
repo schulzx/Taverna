@@ -56,6 +56,8 @@ const estadosDe = (cena, onde, nome) => {
 const BASE = Object.freeze({ cidade: "Alto Negro", lugar: { nome: "Largo do Cereal" }, minuto: 14 * 60, clima: "ensolarado" });
 const com = (o) => ({ ...BASE, ...o });
 const MASMORRA = (sala, extra) => ({ nome: "Cripta", atual: 1, tochas: 3, salas: [{ id: 1, ...sala }], ...extra });
+/* 21/11 (§21): a sala de enigma ao lado do portão do chefe, com ou sem a chave */
+const PORTAO = (chave) => ({ nome: "Cripta", atual: 1, tochas: 3, chave, salas: [{ id: 1, tipo: "enigma", saidas: [2], resolvida: false }, { id: 2, tipo: "chefe", trancada: true, resolvida: false }] });
 
 sec("1. a tabela: cada estado da cena tem uma casa");
 {
@@ -66,8 +68,14 @@ sec("1. a tabela: cada estado da cena tem uma casa");
   t(`${derivados.length} derivados + ${semFonte.length} sem fonte = os ${daTabela.length} estados da cena, cada um uma vez`,
     casas.length === daTabela.length && new Set(casas).size === casas.length && daTabela.every((id) => casas.includes(id)),
     daTabela.filter((id) => !casas.includes(id)).join(",") + " | " + casas.filter((id, i) => casas.indexOf(id) !== i).join(","));
-  t("toda linha da derivação tem o dono do estado na tabela da cena, uma fonte escrita e uma regra",
-    DERIVACAO_DA_CENA.every((l) => estadoPorId(l.estado) && estadoPorId(l.estado).de === l.de && typeof l.fonte === "string" && l.fonte.length > 12 && typeof l.se === "function"));
+  /* MOVIDO em 21/11/2026 (o-mestre-vivo.md §21), e o motivo: era «o dono
+     do estado na tabela é o dono da linha». A chave do herói (heroi_tem_alavanca)
+     é da cena na tabela — o exame a escreve na cena, e ali vale para tudo —,
+     mas o jogo só a sabe escrever no portão que ela abre. A tabela da cena
+     ganhou «tambem» (os donos em que um estado também pode estar), e a linha
+     pode ser de um deles; a intenção (a linha não inventa dono) fica. */
+  t("toda linha da derivação tem o dono do estado na tabela da cena (ou um dos seus «também»), uma fonte escrita e uma regra",
+    DERIVACAO_DA_CENA.every((l) => estadoPorId(l.estado) && (estadoPorId(l.estado).de === l.de || estadoPorId(l.estado).tambem.includes(l.de)) && typeof l.fonte === "string" && l.fonte.length > 12 && typeof l.se === "function"));
   t("todo estado sem fonte diz o porquê", ESTADOS_SEM_FONTE.every((s) => typeof s.porque === "string" && s.porque.length > 20));
   t("as tabelas são congeladas", [DERIVACAO_DA_CENA, ESTADOS_SEM_FONTE, REGRAS_DA_CENA_DO_JOGO, FORMA_DO_RETRATO, O_CHAMADO_DA_CONVERSA, O_DADO_DO_MUNDO].every(Object.isFrozen)
     && DERIVACAO_DA_CENA.every(Object.isFrozen) && ESTADOS_SEM_FONTE.every(Object.isFrozen));
@@ -131,6 +139,12 @@ sec("2. cada linha da derivação, com um retrato que a acende e um que não");
     algo_se_aproxima: [com({ relogios: [{ tipo: "cacada", segmentos: 4, cheios: 3 }] }), com({ relogios: [{ tipo: "cacada", segmentos: 4, cheios: 1 }] }), "cena"],
     ceu_encoberto: [com({ clima: "nublado" }), com({ clima: "ensolarado" }), "cena"],
     heroi_penalizado: [com({ heroi: { condicoes: [{ id: "exausto" }] } }), com({ heroi: { condicoes: [{ id: "inspirado" }] } }), "cena"],
+    /* 21/11 (§21): as marcas de UMA coisa */
+    selado: [com({ masmorra: PORTAO(false) }), com({ masmorra: PORTAO(true) }), "coisas", "o portão"],
+    heroi_tem_alavanca: [com({ masmorra: PORTAO(true) }), com({ masmorra: PORTAO(false) }), "coisas", "o portão"],
+    sem_resistencia: [com({ tentativas: { "largo do cereal|tranca|bau": { resultado: "sucesso" } } }), com({ tentativas: { "largo do cereal|tranca|bau": { resultado: "falha" } } }), "coisas", "bau"],
+    do_heroi: [com({ heroi: { inventario: ["Gazua", { nome: "Corda de cânhamo" }] } }), com({ heroi: { inventario: [] } }), "coisas", "Gazua"],
+    coisa_comum: [com({ chao: { cena: "x", itens: [{ nome: "Adaga enferrujada", raridade: "comum" }] } }), com({ chao: { cena: "x", itens: [{ nome: "Adaga enferrujada", raridade: "raro" }] } }), "coisas", "Adaga enferrujada"],
   };
   t("toda linha da derivação tem a sua prova", DERIVACAO_DA_CENA.every((l) => PROVAS[l.estado]), DERIVACAO_DA_CENA.filter((l) => !PROVAS[l.estado]).map((l) => l.estado).join(","));
   for (const l of DERIVACAO_DA_CENA) {
@@ -428,6 +442,41 @@ sec("S20. a quarta sessão, em sequência e com o livro de tentativas (21/11/202
   t("o esconderijo novo rola, e o outro esconderijo novo também (era «já tentou»: T24, T31)", esc1.rola && esc2.rola, J([esc1.porque, esc2.porque]));
   const cestos = passo("revisto os cestos da banca de Isolde, com ela olhando", null, isolde);
   t("revistar os cestos com a dona olhando rola, mesmo depois de um furto falho (T22)", cestos.rola && cestos.veredito.pericia === "prestidigitacao", J([cestos.porque]));
+}
+
+sec("S21. o Mestre que conhece a cena: a marca de UMA coisa, no alvo da frase (21/11/2026, o-mestre-vivo.md §21)");
+{
+  /* pares mínimos por alvo: a mesma cena, duas coisas, o estado numa só — e
+     a frase que nomeia uma ou a outra. Frases nossas. */
+  const { registrarTentativa } = await import("../src/desafios.js");
+  const L = (tent) => ({ personagem: HEROI, semente: "s21", lugar: "Largo do Cereal", tentativas: tent || {}, dia: 1, chaveFina: true });
+  const ch = (frase, retrato, tent) => chamadoDoMomento(frase, L(tent), retrato, {});
+  /* 1. o portão do chefe: selado sem a chave, a chave abre; a porta da sala continua a rolar */
+  const sel = com({ masmorra: PORTAO(false) }), alav = com({ masmorra: PORTAO(true) });
+  const pSel = ch("arrombo o portão", sel), porta = ch("arrombo a porta", sel), pAlav = ch("arrombo o portão", alav);
+  t("o portão do chefe sem a chave não se força (o mundo decide); a porta da mesma sala rola", !pSel.rola && pSel.porque === "impossivel" && porta.rola && porta.porque === "trancado", J([pSel.porque, porta.porque]));
+  t("com a chave achada, o portão abre sem dado (a chave que abre ESTE portão)", !pAlav.rola && pAlav.porque === "alavanca", pAlav.porque);
+  const escala = ch("escalo a parede da sala até a viga", sel);
+  t("o selado do portão não cala a escalada da mesma sala (era o porquê de ficar sem fonte)", escala.porque !== "impossivel", escala.porque);
+  /* 2. o que já cedeu: o baú aberto antes não resiste; a porta, sim */
+  const t0 = registrarTentativa({}, lerAcao("arrombo o baú", L({})).chave, { resultado: "sucesso", via: "forca", dia: 1 });
+  const ret = com({ tentativas: t0 });
+  const bau = ch("arrombo o baú", ret, t0), porta2 = ch("arrombo a porta", ret, t0), bauSemLivro = ch("arrombo o baú", com({}), {});
+  t("o baú que já cedeu (o livro, com a coisa na chave) não rola; a porta da mesma cena rola", !bau.rola && bau.porque === "semTranca" && porta2.rola, J([bau.porque, porta2.porque]));
+  t("sem o livro, o baú cai na porta trancada e rola, como antes", bauSemLivro.rola && bauSemLivro.porque === "trancado", bauSemLivro.porque);
+  /* 3. o que é do herói, e o que é coisa de toda feira — só quando a frase os nomeia */
+  const inv = com({ heroi: { inventario: ["Amuleto de ônix"] } });
+  const meu = ch("lembro o que sei do amuleto de ônix", inv), brasao = ch("lembro o que sei do brasão da torre", inv);
+  t("o amuleto do herói não pede dado de saber; o brasão da torre, na mesma cena, pede", !meu.rola && meu.porque === "doProprioHeroi" && brasao.rola, J([meu.porque, brasao.porque]));
+  const chao = com({ chao: { cena: "x", itens: [{ nome: "Adaga enferrujada", raridade: "comum" }, { nome: "Anel de prata negra", raridade: "raro" }] } });
+  const adaga = ch("lembro o que sei dessa adaga", chao), anel = ch("lembro o que sei desse anel", chao);
+  t("a adaga comum do chão não pede dado; o anel raro do mesmo chão, pede", !adaga.rola && adaga.porque === "coisaComum" && anel.rola, J([adaga.porque, anel.porque]));
+  /* 4. o lugar está sempre em cena, e uma coisa do herói nunca é a primeira: a ação que não nomeia coisa não cai nela */
+  const c1 = cenaDoJogo(com({ heroi: { inventario: ["Gazua"] } })), c2 = cenaDoJogo(com({ masmorra: MASMORRA({ tipo: "combate" }, { tochas: 3 }), heroi: { inventario: ["Gazua"] } }));
+  t("o lugar vem logo depois da porta, e é a primeira coisa quando não há porta (nunca uma coisa do herói)",
+    c1.coisas[0].nome === "porta" && c1.coisas[1].nome === "o lugar" && c2.coisas[0].nome === "o lugar", J([c1.coisas.map((x) => x.nome), c2.coisas.map((x) => x.nome)]));
+  /* 5. sem retrato (a chave desligada não monta retrato), nada disto vale */
+  t("sem retrato, o chamado é o de hoje (sem cena)", chamadoDoMomento("arrombo o portão", L({}), null, {}).cena === null);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

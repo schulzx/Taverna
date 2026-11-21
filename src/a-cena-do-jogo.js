@@ -74,7 +74,18 @@ const mesmo = (a, b) => !!sem(a) && sem(a) === sem(b);
      (fechado fora do expediente, qualquer lugar vira território de alguém);
    `faltaParaAPressa`: quantos segmentos faltam num relógio para a cena
      sentir o aperto (`relogioDaPressa`: a ameaça, que enche sozinha;
-     `relogioQueSeAproxima`: a caçada, que fecha o cerco). */
+     `relogioQueSeAproxima`: a caçada, que fecha o cerco).
+   21/11 (o-mestre-vivo.md §21), as marcas de UMA coisa:
+   `oQueAbre`: as famílias do livro de tentativas (o `alvo` do desafio,
+     desafios.js) cujo sucesso deixa a coisa sem resistência — a tranca, o
+     peso que se moveu, a amarra arrebentada;
+   `raridadeComum`: a raridade (loot.js) do que é coisa de toda feira;
+   `portao`: o nome do portão do chefe da masmorra, na cena;
+   `coisaDaAcao`: a coisa que está sempre em cena — quando nenhuma linha a
+     escreve, entra logo depois da porta (ou primeiro, sem porta). As coisas
+     do herói, do chão e do livro vêm por último, e assim nunca são «a
+     coisa» da ação que não nomeia nenhuma: a marca delas só é lida pela
+     frase que as nomeia (cena-do-momento.js: temMarcaNoAlvo). */
 export const REGRAS_DA_CENA_DO_JOGO = Object.freeze({
   relacaoDisposta: Object.freeze(ESCADA_DA_RELACAO.slice(0, ESCADA_DA_RELACAO.indexOf("neutro"))),
   relacaoDesconfiada: Object.freeze(["rival"]),
@@ -89,6 +100,10 @@ export const REGRAS_DA_CENA_DO_JOGO = Object.freeze({
   faltaParaAPressa: 1,
   relogioDaPressa: Object.freeze(["ameaca"]),
   relogioQueSeAproxima: Object.freeze(["cacada"]),
+  oQueAbre: Object.freeze(["tranca", "peso", "arrebentar"]),
+  raridadeComum: "comum",
+  portao: "o portão",
+  coisaDaAcao: "o lugar",
 });
 const R_ = REGRAS_DA_CENA_DO_JOGO;
 
@@ -113,10 +128,12 @@ export const FORMA_DO_RETRATO = Object.freeze({
   segredos: "segredosGuardados(espinhaRef.current, mundoDaBase()) — o que a espinha guarda, e quem do lugar sabe",
   favorAqui: "o livro de fatos guarda `favor` no lugar atual (factosRef.current.lugares[id].favor)",
   relogios: "relogiosRef.current — { tipo, segmentos, cheios }",
-  heroi: "{ condicoes: (fichaViva() || personagem).condicoes }",
+  heroi: "{ condicoes, inventario: [...inventario, ...Object.values(equipado)] } da ficha viva (fichaViva() || personagem) — o inventário é o nome do que é do herói",
+  chao: "chaoRef.current ({ cena, itens: [{ nome, raridade }] }, chao.js) — o que está no chão da cena",
+  tentativas: "tentativasRef.current — o livro de tentativas (desafios.js: registrarTentativa), chaveado pelo lugar do contexto do desafio",
   passos: "passosDasQuestsAgora() — os passos ativos (a quest)",
   onde: "ondeDoPasso() — { lugar, dentroDe, cidade, foraDosMuros } (a quest)",
-  quest: "{ esconde: [nomes], trancado: [coisas], vigiado: [coisas] } — o que a etapa ativa declara (a quest; campo novo, que nenhuma etapa declara ainda)",
+  quest: "{ esconde: [nomes], trancado: [coisas], vigiado: [coisas], selado: [coisas] } — o que a etapa ativa declara (a quest; campo novo, que nenhuma etapa declara ainda)",
 });
 export const ONDE_DO_RETRATO = Object.freeze(["lugar", "cidade", "jornada", "masmorra", "encontro"]);
 /* os campos que são da quest: tirá-los do retrato nunca pode mudar o
@@ -154,6 +171,13 @@ function lerRetrato(s) {
     passos: arr(s.passos).filter(obj),
     onde: obj(s.onde) ? s.onde : null,
     quest: obj(s.quest) ? s.quest : {},
+    /* 21/11 (§21): o que é do herói, o que está no chão, e o livro de
+       tentativas deste lugar (a chave do livro começa pelo lugar do contexto
+       do desafio: o nome do lugar, ou a cidade, ou «ermo») */
+    inventario: arr(obj(s.heroi) ? s.heroi.inventario : null).map((x) => txt(obj(x) ? x.nome : x)).filter(Boolean),
+    chao: arr(obj(s.chao) ? s.chao.itens : null).filter((x) => obj(x) && txt(x.nome)),
+    tentativas: obj(s.tentativas) ? s.tentativas : {},
+    lugarDoLivro: sem((lugar && lugar.nome) || cidade || "ermo"),
   };
 }
 
@@ -208,6 +232,15 @@ const relogioPerto = (R, tipos) => R.relogios.some((r) => tipos.includes(r.tipo)
   && r.cheios < r.segmentos && r.segmentos - r.cheios <= R_.faltaParaAPressa);
 const salaDe = (R, tipo) => !!R.sala && R.sala.tipo === tipo && R.sala.resolvida !== true;
 const segredoDaSala = (R) => (R.sala && obj(R.sala.segredo) && !R.sala.segredo.revelado ? R.sala.segredo : null);
+/* 21/11 (§21): o portão do chefe ao lado da sala atual — a sala trancada
+   (masmorras.js: trancada) entre as saídas desta; null quando não há */
+const portaoAoLado = (R) => (R.mm && R.sala ? R.mm.salas.find((x) => obj(x) && x.trancada === true && x.resolvida !== true && arr(R.sala.saidas).includes(x.id)) || null : null);
+/* o que o livro de tentativas guarda NESTE lugar, por família e coisa:
+   [{ alvo, coisa, resultado }] — só as chaves com a coisa (a chave fina) */
+const doLivroAqui = (R) => Object.entries(R.tentativas).filter(([k, e]) => obj(e) && k.startsWith(R.lugarDoLivro + "|")).map(([k, e]) => {
+  const p = k.slice(R.lugarDoLivro.length + 1).split("|");
+  return p.length === 2 && p[1] ? { alvo: p[0], coisa: p[1].split("-").join(" "), resultado: e.resultado } : null;
+}).filter(Boolean);
 
 /* ---------------- A DERIVAÇÃO ----------------
    Uma linha por estado que o jogo sabe escrever: `estado`, `de` (o dono, o
@@ -259,6 +292,18 @@ export const DERIVACAO_DA_CENA = Object.freeze([
     (R) => (R.enc && R.enc.fase === "sinal" && obj(R.enc.sinal) && R.enc.sinal.tipo === "rasto" ? ["o rastro"] : [])),
   L("rastro_velho", "coisa", "o passo de rastro da quest, com o herói num lugar dele (a quest não guarda a idade: o rastro é de antes de o herói chegar)",
     (R) => (R.onde && R.passos.some((p) => p.especie === "rasto" && arr(p.lugares).some((l) => { try { return noLugarDoPasso(l, R.onde); } catch { return false; } })) ? ["o rastro"] : [])),
+  /* 21/11 (o-mestre-vivo.md §21): as marcas de UMA coisa. Desde que a régua
+     as lê na coisa que a frase nomeia (cena-do-momento.js: temMarcaNoAlvo),
+     escrevê-las não cala mais a ação sobre outra coisa da mesma cena. */
+  L("selado", "coisa", "na masmorra, o portão do chefe ao lado da sala, sem a chave (masmorras.js: trancada, mm.chave) — o jogo só o abre com a chave, nenhum dado o força; e o que a etapa da quest declara selado",
+    (R) => { const p = portaoAoLado(R); return [...(p && !R.mm.chave ? [R_.portao] : []), ...nomesDaQuest(R, "selado")]; }),
+  L("heroi_tem_alavanca", "coisa", "na masmorra, o portão do chefe ao lado da sala, com a chave já achada (mm.chave): a chave que abre ESTE portão",
+    (R) => (portaoAoLado(R) && R.mm.chave === true ? [R_.portao] : [])),
+  L("sem_resistencia", "coisa", "o livro de tentativas guarda, neste lugar, a tranca, o peso ou a amarra que já cedeu, sobre ESTA coisa (a chave fina do Mestre vivo: desafios.js, CHAVE_FINA_PELO_ALVO)",
+    (R) => doLivroAqui(R).filter((x) => R_.oQueAbre.includes(x.alvo) && x.resultado === "sucesso").map((x) => x.coisa)),
+  L("do_heroi", "coisa", "o inventário e o equipado da ficha (personagem.inventario, equipado): o nome de cada coisa do herói", (R) => R.inventario),
+  L("coisa_comum", "coisa", "o que está no chão da cena (chao.js) e tem a raridade comum (loot.js)",
+    (R) => R.chao.filter((x) => sem(x.raridade || R_.raridadeComum) === R_.raridadeComum).map((x) => txt(x.nome))),
   /* a cena */
   L("com_pressa", "cena", "um relógio de ameaça a um segmento de encher (relogios.js)", (R) => relogioPerto(R, R_.relogioDaPressa)),
   L("com_testemunhas", "cena", "dentro dos muros, de dia, na rua ou num lugar público aberto (elenco-do-lugar.js: abertoAgora)",
@@ -274,36 +319,34 @@ export const DERIVACAO_DA_CENA = Object.freeze([
 
 /* ---------------- O QUE O JOGO AINDA NÃO SABE ESCREVER ----------------
    Cada estado da tabela da cena sem linha acima, e o porquê. Três razões:
-   (1) não há fonte no jogo; (2) a fonte é de UMA coisa ou de UM assunto, e a
-   régua lê a marca na cena INTEIRA — escrita pela fonte, calaria dados que
-   nada têm a ver (o «já resolvido» de uma pessoa calaria a escalada do
-   muro); (3) o catálogo já faz o trabalho, e o estado o desfaria. */
+   (1) não há fonte no jogo; (2) a fonte existe, mas é mais grossa ou mais
+   fina que o estado — escrito por ela, ele calaria dados que nada têm a ver
+   (o sim a um pedido calaria o pedido maior à mesma pessoa); (3) o catálogo
+   já faz o trabalho, e o estado o desfaria. Até 21/11 havia uma quarta: a
+   régua lia a marca na cena INTEIRA. Desde a §21 ela a lê no alvo da frase
+   (cena-do-momento.js: temMarcaNoAlvo), e cinco estados ganharam fonte por
+   isso — selado, heroi_tem_alavanca, sem_resistencia, do_heroi, coisa_comum. */
 const S = (estado, porque) => Object.freeze({ estado, porque });
 export const ESTADOS_SEM_FONTE = Object.freeze([
   S("motivo_para_negar", "é da fala, não da pessoa: como estado, sem o tamanho do pedido, faria a pergunta de cortesia ao guarda rolar — desde 19/11 a régua o lê por frase, no alvo da fala, pelo papel e pelo tamanho do pedido (MOTIVO_PARA_NEGAR_DO_ALVO, motor/a-regua-do-momento.js)"),
-  S("ja_convencida", "o catálogo já devolve «isso você já conseguiu» pelo livro de tentativas; e a régua lê a marca na cena inteira (jaResolvido calaria toda ação de outra família)"),
+  S("ja_convencida", "o livro guarda o sim por pedido (esta pessoa, este tamanho), e o catálogo já devolve o «já conseguiu» do mesmo pedido — desde a §20 com a pessoa na chave; como estado da pessoa, o sim a um pedido calaria o pedido maior e a mentira nova à mesma pessoa (a régua o lê como «já resolvido»)"),
   S("faminta", "o bestiário e o encontro não guardam o apetite da criatura"),
   S("acuada", "nada no jogo guarda que a criatura está sem saída"),
   S("mansa", "nada no jogo guarda o bicho manso (a montaria, o cão da casa)"),
   S("fragil", "o mundo não guarda a firmeza do que se pisa ou se segura"),
   S("suspeito", "o mundo não marca a coisa que destoa; o achado já entra como «algo escondido»"),
-  S("do_heroi", "é da coisa que a frase nomeia; sem casar a frase com o inventário, a régua lê a marca na cena inteira e calaria todo saber"),
-  S("raro_de_achar", "é da coisa que a frase procura (a raridade do item); a régua lê a marca na cena inteira"),
-  S("coisa_comum", "é da coisa que a frase nomeia; a régua lê a marca na cena inteira e calaria todo saber"),
-  S("selado", "o portão do chefe da masmorra abre com a chave, não é impossível; e a régua lê a marca na cena inteira (calaria toda escalada da sala)"),
-  S("sem_resistencia", "é de uma coisa (a passagem que já cedeu); a régua lê a marca na cena inteira e calaria o baú da mesma sala"),
-  S("a_vista", "o jogo não guarda o que a narração já mostrou; e a régua lê a marca na cena inteira"),
-  S("rastro_obvio", "a quest e o encontro não guardam o quanto o rastro salta aos olhos; e a marca «à vista» é lida na cena inteira"),
+  S("raro_de_achar", "é da coisa que a frase PROCURA, e o que se procura não está em cena: a cena sai do retrato antes da frase. O mercado guarda o que a banca tem (mercado.js) — o que tem está à mão, não é raro de achar; nenhuma tabela diz o que falta num lugar"),
+  S("a_vista", "o jogo não guarda o que a narração já mostrou; a régua já leria a marca na coisa nomeada, mas falta quem a escreva"),
+  S("rastro_obvio", "a quest e o encontro não guardam o quanto o rastro salta aos olhos"),
   S("em_movimento", "a viagem anda por trechos resolvidos entre turnos: o herói não age com o veículo em marcha"),
   S("ameacado", "o motor da consequência ainda não escreve o tranco (o barco virou, a queda) como estado"),
   S("som_claro", "o jogo não guarda o que há entre o herói e a fonte do som"),
   S("som_abafado", "o jogo não guarda o que há entre o herói e a fonte do som"),
   S("assunto_raro", "o livro de fatos não marca o assunto que nem todo mundo reconhece"),
-  S("ja_testado", "o livro de tentativas já cala isto no catálogo (jaTentou, vasculhado); o estado calaria também a via nova que o catálogo reabre"),
-  S("ja_resolvido", "a etapa fechada é da quest inteira; a régua lê a marca na cena inteira e calaria todo dado da cena"),
+  S("ja_testado", "o livro de tentativas já cala isto no catálogo, por família e por via (jaTentou, vasculhado), e desde a §21 com a coisa na chave de toda família; o estado, sem família nem via, calaria a via nova que o catálogo reabre (oQueMudou) e as outras ações sobre a mesma coisa"),
+  S("ja_resolvido", "a etapa fechada sai do retrato (passosDasQuestsAgora traz só os passos ativos), e a sala limpa da masmorra já sai da cena pelos estados dela (salaDe); o que fechou com uma pessoa é do livro, por pedido (veja ja_convencida)"),
   S("heroi_treinado", "é por assunto (o campo que o herói estudou): a ficha guarda perícias, não assuntos — e a régua ainda não lê a marca"),
   S("heroi_ja_sabe", "o saber da ficha já entra por ctx.saber (saberComum, jaSabeOAssunto); o estado sem assunto calaria todo saber"),
-  S("heroi_tem_alavanca", "é de uma porta ou de uma pessoa (a chave que abre ISTO); a régua lê a marca na cena inteira"),
 ]);
 
 /* ---------------- A CENA DO JOGO ----------------
@@ -327,6 +370,8 @@ export function cenaDoJogo(retrato) {
         else coisas.push({ nome, estados: [l.estado] });
       }
     }
+    /* 21/11 (§21): o lugar está sempre em cena (sem linha que o escreva, logo depois da porta) */
+    if (!coisas.some((x) => mesmo(x.nome, R_.coisaDaAcao))) coisas.splice(coisas.length && mesmo(coisas[0].nome, "porta") ? 1 : 0, 0, { nome: R_.coisaDaAcao, estados: [] });
     const daCena = DERIVACAO_DA_CENA.filter((l) => l.de === "cena").filter((l) => { try { return !!l.se(R); } catch { return false; } }).map((l) => l.estado);
     return lerCena({
       pessoas: pessoas.map((p) => ({ nome: p.nome, papel: p.papel, estados: estadosDe(p, "pessoa") })),

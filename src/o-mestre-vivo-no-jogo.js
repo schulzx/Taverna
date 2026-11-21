@@ -73,7 +73,9 @@ export function lerAChaveDoMestreVivo(storage, busca) {
      npcs        — npcsRef.current (o registo, por nome),
      rotinas     — { [nome]: fichaDaPessoa(...).rotina.agora },
      grupo, inimigos, encontro, masmorra, achado (bool), segredos,
-     favorAqui (bool), relogios, condicoes (do herói), passos, onde, quest.
+     favorAqui (bool), relogios, condicoes (do herói), passos, onde, quest;
+     21/11 (o-mestre-vivo.md §21): inventario (os nomes do que é do herói:
+     o inventário e o equipado), chao (chaoRef) e tentativas (o livro).
    Devolve o retrato com as chaves de FORMA_DO_RETRATO (nenhuma outra), ou
    null quando nada diz onde o herói está (ONDE_DO_RETRATO). */
 const DE_ONDE_DO_POSTO = "sitio";
@@ -114,7 +116,9 @@ export function retratoDosRefs(v) {
       segredos: arr(v.segredos).filter(obj),
       favorAqui: v.favorAqui === true,
       relogios: arr(v.relogios).filter(obj),
-      heroi: { condicoes: arr(v.condicoes) },
+      heroi: { condicoes: arr(v.condicoes), inventario: arr(v.inventario) },
+      chao: obj(v.chao) ? v.chao : null,
+      tentativas: obj(v.tentativas) ? v.tentativas : {},
       passos: arr(v.passos).filter(obj),
       onde: obj(v.onde) ? v.onde : null,
       quest: obj(v.quest) ? v.quest : {},

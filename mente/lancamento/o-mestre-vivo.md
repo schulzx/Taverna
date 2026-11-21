@@ -1220,3 +1220,100 @@ A C subiu um item e não perdeu nenhum indevido: o conserto foi, quase todo, o l
 (a pessoa fora do painel, o companheiro), que o exame não mede — ele roda com o livro vazio e a pessoa sempre na cena.
 Nada disto foi jogado: está provado nas suítes e nas sequências montadas à mão. **O que fica para a próxima sessão
 jogada:** conferir na tela as falas da mesa e, na prosa, se o Narrador obedece à linha do alvo.
+
+## 21. O Mestre que conhece a cena — etapa 1: o estado é de UMA pessoa e de UMA coisa
+
+**21/11/2026.** A §15.2 deixou 24 estados sem fonte, e metade tinha o mesmo motivo: a régua lia a marca na cena
+**inteira** (`temMarca`). Escrever «já cedeu» na arca calaria o caixote; o selado do portão calaria a escalada da sala;
+o sim de uma pessoa calaria o dado de outra — ou o muro. Por isso a arca e o caixote não podiam ter estados diferentes.
+O Mestre vivo continua desligado em produção (`?mestre=1`).
+
+**1. A marca no alvo** (`cena-do-momento.js`). `temMarcaNoAlvo(cena, marca, { coisas, pessoas })` lê a marca só onde a
+ação cai: a cena e as criaturas sempre (como antes), as coisas e as pessoas dadas. `coisasQueAFraseNomeia(frase, cena)`
+casa a frase com as coisas da cena pelo **núcleo** do nome (a primeira palavra de 3+ letras fora das vazias,
+`MARCA_NO_ALVO`), no singular ou no plural — só o núcleo, para «a pequena arca» não nomear a «Poção de Cura Pequena» e
+tirar a porta trancada do lugar de «a coisa». A tabela ganhou `tambem`: a chave do herói (`heroi_tem_alavanca`) é da
+cena (o exame a escreve ali, e ali vale para tudo), mas pode também estar numa coisa ou numa pessoa (o portão que ela
+abre).
+
+**2. A régua** (`motor/a-regua-do-momento.js`). Dez linhas trocaram `temMarca` por `noAlvo`: `jaResolvido`,
+`jaTestado`, `impossivel`, `alavanca`, `aVista`, a busca da coisa rara, `doProprioHeroi`, `coisaComum`, `heroiJaSabe` e
+`semResistencia`. A oposição da coisa (`x.coisa`) passou a ser a da coisa que a frase nomeia («arrombo a arca»); sem
+nenhuma, a de antes. O alvo das marcas:
+
+- **coisa:** as que a frase nomeia; sem nenhuma, «a coisa» da ação (a primeira da cena — a única do exame, como antes);
+- **pessoa, na conversa:** a pessoa a quem se fala (a da régua, `op`), e só ela;
+- **pessoa, fora da conversa:** só a que a frase nomeia; sem nome, nenhuma — o sim da padeira não cala a escalada de
+  seis metros (era `jaResolvido`).
+
+**3. A cena do jogo** (`a-cena-do-jogo.js`). O retrato ganhou três campos lidos dos refs (`heroi.inventario`, `chao`,
+`tentativas`), e **«o lugar» está sempre em cena** (`coisaDaAcao`; sem linha que o escreva, entra logo depois da porta).
+As coisas do herói, do chão e do livro vêm por último: nunca são «a coisa» da ação que não nomeia nenhuma, e a marca
+delas só é lida pela frase que as nomeia. Sem isso, o amuleto no inventário calaria todo saber da cena.
+
+**4. O livro de tentativas** (`desafios.js`, `CHAVE_FINA_PELO_ALVO`). Com `ctx.chaveFina` (só o Mestre vivo), a chave
+de dezesseis famílias que caem sobre uma coisa leva o primeiro sintagma com artigo da parte declarada, cortado onde
+começa o modo ou o ato seguinte: «arrombo o cadeado da arca, sem ferramentas» → `tranca|cadeado-arca`. Era
+`lugar|tranca`: a arca falha fechava a porta («você já tentou isso aqui»), a escalada do muro fechava a calha. Ler a
+intenção (`mentira`) leva a pessoa achada ou descrita. **Ficam no lugar, de propósito:** a busca e a investigação (o
+«vasculhado» é do lugar inteiro: chavear pela coisa deixaria revirar o lugar limpo de novo e pagar o achado duas vezes),
+a escuta e o orientar-se. Sem objeto dito, a chave de sempre. Sem `chaveFina`, nada muda (provado na S21 de
+`teste-desafios`).
+
+**5. O App.** `retratoAgora` passa o inventário (com o equipado), o chão e o livro, cada um no seu `calou`. Só corre
+com a chave ligada.
+
+### 21.1 Os estados
+
+| ganhou fonte | de onde vem no jogo |
+|---|---|
+| `selado` | o portão do chefe ao lado da sala, sem a chave (`masmorras.js`: `trancada`, `mm.chave`) — o jogo só o abre com a chave; e o que a etapa declara selado |
+| `heroi_tem_alavanca` | o mesmo portão, com a chave achada: a chave que abre ESTE portão |
+| `sem_resistencia` | o livro guarda, neste lugar, a tranca, o peso ou a amarra que já cedeu sobre ESTA coisa (a chave fina) |
+| `do_heroi` | o inventário e o equipado da ficha |
+| `coisa_comum` | o que está no chão da cena (`chao.js`) com a raridade comum |
+
+**Continuam sem fonte (19 de 53), os que eram «da cena inteira», com o porquê novo:**
+
+- `ja_convencida` — o livro guarda o sim por pedido (pessoa e tamanho); como estado da pessoa, o sim a um pedido calaria
+  o pedido maior e a mentira nova à mesma pessoa. O catálogo já devolve o «já conseguiu» do mesmo pedido.
+- `ja_testado` — o livro já cala no catálogo, por família e por via; o estado, sem família nem via, calaria a via nova
+  (`oQueMudou`) e as outras ações sobre a mesma coisa.
+- `ja_resolvido` — a etapa fechada sai do retrato (só os passos ativos vêm) e a sala limpa já sai da cena pelos estados
+  dela; o que fechou com uma pessoa é do livro, por pedido.
+- `raro_de_achar` — o que se procura não está em cena (a cena sai do retrato antes da frase); o mercado guarda o que a
+  banca tem, e o que tem está à mão.
+- `a_vista`, `rastro_obvio` — ninguém guarda o que a narração mostrou nem o quanto o rastro salta aos olhos.
+- `heroi_treinado`, `heroi_ja_sabe`, `motivo_para_negar` — como na §15.2 (assunto, `ctx.saber`, a fala).
+- Sem fonte no jogo, como antes: `faminta`, `acuada`, `mansa`, `fragil`, `suspeito`, `em_movimento`, `ameacado`,
+  `som_claro`, `som_abafado`, `assunto_raro`. Não se inventou nenhum.
+
+### 21.2 A medida
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A (489, com 13 itens novos por alvo, rodada 8) | 445 · 2 · 29 · cat 371 · per 219 · pares 103 (das 476) | **458 · 2 · 29 · cat 384 · per 226 · pares 109** |
+| … só as 476 que já eram da A | 445 · 2 · 29 | **igual, item a item** |
+| régua, metade B | 157 · 7 · 32 · cat 119 · per 53 · pares 53 | **igual, item a item** |
+| hoje, metade A | 293 · 55 · 128 | 300 · 60 · 129 (só pelos 13 novos; nas 476 antigas, igual item a item) |
+| **régua, metade C (medida uma vez, no fim)** | 103 · 1 · 20 · cat 83 · per 37 · pares 18 | **igual** |
+| hoje, metade C | 72 · 19 · 33 | igual |
+
+Os 13 itens novos (origem `etapa-1-alvo`) são seis pares com a mesma frase e a mesma cena de duas coisas — o estado ora
+na coisa que a frase nomeia, ora na outra (`estados_de`, novo na cena do exame) — e um item sem par (o sim do guarda e o
+muro de seis metros). Com a régua de antes, 6 de 13. A C não mexeu: ela não tem cena de duas coisas, e o conserto não
+mudou nenhuma leitura da cena de uma coisa só — que é o que se queria provar.
+
+**Com a chave desligada o jogo não muda:** `retratoAgora` e a cena só correm com o Mestre vivo; o livro fino só com
+`ctx.chaveFina`; o Mestre de hoje do exame (que lê sem cena e sem `chaveFina`) ficou igual em todos os itens antigos de A
+e B, conferido item a item; a S21 de `teste-desafios` prova a chave de sempre sem `chaveFina`.
+
+### 21.3 O que a etapa 2 precisa saber
+
+- A cena já tem **coisas com nome** — a porta, o lugar, o portão, o que é do herói, o chão, o que já cedeu — e a régua
+  sabe qual delas a frase nomeia (`coisasQueAFraseNomeia`). É daí que sai o objeto em cena para prender o Narrador (a
+  arca que virou porta na sessão 4). As pessoas já tinham nome e papel.
+- O inventário entra na cena **por nome** (`do_heroi`); a gazua que a ficha nega (T16) é a ausência dela ali.
+- Nenhuma lista de coisas vai ao Narrador ainda: a cena é bastidor, e o teto do prompt não ganhou um caractere. Os
+  preços em cena (a corda de 31, o cantil) não estão na cena: são do mercado (`mercado.js`) e da pauta de preço.
+- Não foi jogado: está provado nas suítes e no exame.
