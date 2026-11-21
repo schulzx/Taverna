@@ -294,6 +294,7 @@ import { lerOInterruptor, oTurnoDaPeca, resolverNoJogo, oVereditoDaSolucao, oCha
 import { oBatismo } from "./motor/o-batismo.js";
 import { aEsperaDaFrase } from "./motor/a-espera-da-frase.js";
 import { oPagamentoDaFrase } from "./motor/o-pagamento-da-frase.js";
+import { aVendaDaBolsa } from "./a-venda-da-bolsa.js";
 import { PropostaDaFrase, momentoDaProposta } from "./painel-proposta.jsx";
 import { asPropostasDaAbertura, oRumoDaBusca } from "./propostas-da-abertura.js";
 import { aMaoDaFrase } from "./motor/a-mao-da-frase.js";
@@ -14658,7 +14659,9 @@ export default function Taverna() {
       if (lado && lado.frase === acao) {
         if (lado.pagar && !pagarDaProposta(lado.pagar)) return;
         if (lado.pagar) pagoNaProposta = Number(lado.pagar.total) || 0;
-        if (lado.venda && lado.venda.item && !lado.venda.motivo) venderNoMercado(lado.venda.item, lado.venda.origem);
+        /* sétima sessão (T56–T58): a venda vai sempre pela mesma porta — a que
+           aplica e diz; sem comprador, é ela que diz por quê */
+        if (lado.venda && lado.venda.item) venderNoMercado(lado.venda.item, lado.venda.origem);
       }
     } catch (e) { calou("o que a proposta paga ou vende", e); }
     pagoNaPropostaRef.current = { frase: acao, total: pagoNaProposta };
@@ -24830,39 +24833,41 @@ export default function Taverna() {
   };
 
   const venderNoMercado = (nomeItem, origem) => {
-    const lista = origem === "equipamento" ? (personagem.equipamento || []) : (personagem.inventario || []);
-    const idx = lista.findIndex((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
-    if (idx < 0) return;
-    const item = lista[idx];
-    /* o que está VESTIDO não vai para a banca por engano */
-    if (origem === "equipamento" && Object.values(personagem.equipados || {}).some((e) => e && e.nome === nomeItem)) {
-      pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeItem} está equipado — desequipe antes de vender.` }]); return;
-    }
-    /* v9.44: o Joalheiro sabe o que vale, o Ferreiro sabe o que forjou e o
-       Mercador conhece o comprador. O acréscimo é da PROFISSÃO e entra aqui,
-       no mesmo lugar onde a etiqueta da tela é calculada — se entrasse só num
-       dos dois, o botão prometeria um número e o cofre receberia outro. */
-    const of = ofertaPor(item);
-    if (!of.quem) { pushMsgs([{ autor: "sistema", texto: `⛔ ${nomeItem}: ${of.motivo}.` }]); return; }
-    const valor = of.valor;
-    const gastos = { ...(mercadoRef.current.gastos || {}) };
-    gastos[of.quem.id] = { dia: diaRef.current, moedas: gastoHojeDe(of.quem.id) + valor };
-    /* vender também mexe na praça, do outro lado: quem despeja dez adagas
-       na mesma vila recebe menos pela décima */
-    mercadoRef.current = {
-      ...mercadoRef.current, gastos,
-      pressoes: apertarProcura(mercadoRef.current.pressoes, cidadeMercado, generoDoItem(typeof item === "string" ? { nome: item } : item), diaRef.current, "venda"),
-    };
-    setMercado(mercadoRef.current);
-    const p = {
-      ...personagem,
-      moedas: (personagem.moedas || 0) + valor,
-      [origem]: lista.filter((_, i) => i !== idx),
-    };
-    setPersonagem(p);
-    pushMsgs([{ autor: "sistema", texto: `🛒 Vendido: ${nomeItem} a ${of.quem.nome} por ◉ ${valor} (bolsa: ◉ ${p.moedas}).${linhaDoPreco(of.porques) ? ` — ${linhaDoPreco(of.porques)}` : ""}` }]);
-    notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("venda", { item: nomeItem, valor });
-    salvar({ personagem: p });
+    /* A VENDA QUE DIZIA «VENDIDO» E NÃO VENDIA (sétima sessão do Mestre vivo,
+       T56–T58). Este corpo lia `personagem` (o estado do React) e gravava só
+       por setPersonagem. Pela frase, a venda corre DENTRO do turno
+       (agirInterno), e o resto do turno lê fichaViva() — o espelho, que ainda
+       tinha a ficha de antes: o Narrador recebia-a e aplicarResposta gravava-a
+       por cima. A linha saía; as moedas e a mochila voltavam. Agora a ficha é a
+       viva, a conta e a linha saem juntas de aVendaDaBolsa (uma fonte só), e a
+       gravação é por mudarFicha (o espelho e o estado de uma vez). */
+    try {
+      const base = fichaViva();
+      if (!base) return false;
+      const lista = origem === "equipamento" ? (base.equipamento || []) : (base.inventario || []);
+      const item = lista.find((raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "") === nomeItem);
+      /* v9.44: o acréscimo da PROFISSÃO entra em ofertaPor, o mesmo lugar onde
+         a etiqueta da tela é calculada — o botão e o cofre leem o mesmo número */
+      const of = item ? ofertaPor(item) : null;
+      const r = aVendaDaBolsa(base, { item: nomeItem, origem, oferta: of });
+      if (!r.ok) { pushMsgs([{ autor: "sistema", texto: r.linha }]); return false; }
+      const valor = r.valor;
+      const gastos = { ...(mercadoRef.current.gastos || {}) };
+      gastos[of.quem.id] = { dia: diaRef.current, moedas: gastoHojeDe(of.quem.id) + valor };
+      /* vender também mexe na praça, do outro lado: quem despeja dez adagas
+         na mesma vila recebe menos pela décima */
+      mercadoRef.current = {
+        ...mercadoRef.current, gastos,
+        pressoes: apertarProcura(mercadoRef.current.pressoes, cidadeMercado, generoDoItem(typeof item === "string" ? { nome: item } : item), diaRef.current, "venda"),
+      };
+      setMercado(mercadoRef.current);
+      const p = mudarFicha(r.ficha);
+      const porque = linhaDoPreco(of.porques);
+      pushMsgs([{ autor: "sistema", texto: `${r.linha}${porque ? ` — ${porque}` : ""}` }]);
+      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("venda", { item: nomeItem, valor });
+      salvar({ personagem: p });
+      return true;
+    } catch (e) { calou("a venda da bolsa", e); return false; }
   };
 
   const [marchaArmada, setMarchaArmada] = useState(false);

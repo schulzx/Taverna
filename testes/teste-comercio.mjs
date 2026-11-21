@@ -225,13 +225,17 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
   /* a etiqueta e o cofre saem da MESMA função — o que o texto promete, a
      bolsa entrega */
   /* RETIRADA (28/10, T2-B lote 2), E O MOTIVO: a asserção "o botão de vender lê a oferta" provava `const of = ofertaPor ? ofertaPor(v.it) :` — a mesma linha que teste-mercado.mjs exige ("o valor continua vindo de ofertaPor"). A intenção — a etiqueta e o cofre saem da MESMA função — fica pela metade do cofre aqui, abaixo, e pela do botão lá. */
-  t("e o cofre lê a mesma oferta", /const of = ofertaPor\(item\);/.test(APP));
+  /* MOVIDAS (21/11, a sétima sessão do Mestre vivo, T56–T58), E O MOTIVO: a venda passou a ler a
+     ficha viva e a sair de aVendaDaBolsa (src/a-venda-da-bolsa.js), que faz a conta e a linha juntas;
+     a oferta lê-se do item que está na bolsa, e a recusa é a linha que a conta devolve (r.ok falso).
+     A gaveta continua a descer por `valor` (agora o que a conta aplicou). A intenção fica a mesma. */
+  t("e o cofre lê a mesma oferta", /const of = item \? ofertaPor\(item\) : null;/.test(APP));
   /* MOVIDA (06/11, AR6), E O MOTIVO: a venda mudou-se para painel-mercado.jsx.
      A intenção fica: sem comprador, a peça da bolsa diz «não compra» e o
      verbo de vender vem impedido, em vez de prometer um número. */
   const PAINEL = semCom(readFileSync("../src/painel-mercado.jsx", "utf8"));
   t("sem comprador, o botão não mente", /paga \? <>paga <Moedas n=\{oferta\.valor\} \/><\/> : "não compra"/.test(PAINEL) && /impedido="ninguém aqui compra"/.test(PAINEL));
-  t("e a venda recusa em vez de inventar", /if \(!of\.quem\) \{ pushMsgs/.test(APP));
+  t("e a venda recusa em vez de inventar", /if \(!r\.ok\) \{ pushMsgs\(\[\{ autor: "sistema", texto: r\.linha \}\]\); return false; \}/.test(APP));
   /* a gaveta desce ao pagar */
   t("o que ele pagou sai da gaveta", /gastos\[of\.quem\.id\] = \{ dia: diaRef\.current, moedas: gastoHojeDe\(of\.quem\.id\) \+ valor \}/.test(APP));
   t("e o teto é o que ele ainda tem", /podePagar\(m, cidadeMercado, diaRef\.current, gastoHojeDe\(m\.id\)\) >= valor/.test(APP));
