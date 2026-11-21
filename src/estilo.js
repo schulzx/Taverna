@@ -5081,6 +5081,18 @@ export const MOVIMENTO_CSS = `
 .tv-chama-treme { animation: tvChamaTreme var(--tv-treme-ms, 0ms) ease-in-out infinite; transform-origin: 50% 100%; }
 .tv-carta-pousa { animation: tvCartaPousa var(--tv-pousa-ms, 0ms) ease-out var(--tv-pousa-em, 0ms) both; }
 .tv-carta-vira { animation: tvCartaVira var(--tv-vira-ms, 0ms) ease-out var(--tv-vira-em, 0ms) both; transform-style: preserve-3d; }
+/* F4 12 · a luta no celular: a linha nova entra na tira de baixo (8 px e
+   opacidade) e a folha troca em opacidade; a etiqueta de dano entra, sobe e
+   sai em tres caixas. Os tempos e as distancias chegam por variavel
+   (luta-na-mesa.js: TIRA_DA_RODADA, FOLHA_DA_RODADA, ETIQUETA_DE_DANO). */
+@keyframes tvTiraEntra { from { opacity: 0; transform: translateY(var(--tv-entra-px, 0px)); } to { opacity: 1; transform: none; } }
+@keyframes tvEtiquetaEntra { from { opacity: 0; transform: scale(var(--tv-escala, 1)); } to { opacity: 1; transform: none; } }
+@keyframes tvEtiquetaSobe { from { transform: translateY(var(--tv-sobe-px, 0px)); } to { transform: none; } }
+@keyframes tvEtiquetaSai { from { opacity: 1; } to { opacity: 0; } }
+.tv-tira-entra { animation: tvTiraEntra var(--tv-entra-ms, 0ms) ease-out both; }
+.tv-etiqueta-entra { animation: tvEtiquetaEntra var(--tv-entra-ms, 0ms) ease-out both; }
+.tv-etiqueta-sobe { animation: tvEtiquetaSobe var(--tv-sobe-ms, 0ms) ease-out both; }
+.tv-etiqueta-sai { animation: tvEtiquetaSai var(--tv-sai-ms, 0ms) linear var(--tv-sai-em, 0ms) both; }
 
 /* CB 18 · O CHAO QUE NASCE E A REACAO. Um chao novo entra em opacidade no
    tempo de SUPERFICIES_NO_CHAO.nasce. Na reacao, o clarao (so a primeira de
@@ -5273,6 +5285,11 @@ export const MOVIMENTO_CSS = `
   /* V6 parte 2 · a chama nao treme (a cera desce em degraus), e as cartas
      do espolio aparecem ja viradas, no lugar */
   .tv-chama-treme, .tv-carta-pousa, .tv-carta-vira { animation: none; opacity: 1; transform: none; }
+  /* F4 12 · trocas secas, os mesmos tempos de permanencia: a etiqueta
+     aparece no lugar, fica o tempo todo e some seca */
+  .tv-tira-entra, .tv-etiqueta-entra, .tv-etiqueta-sobe { animation: none; opacity: 1; transform: none; }
+  .tv-etiqueta-sai { animation: none; }
+  .tv-etiqueta-seca { animation: tvEtiquetaSai 0s linear var(--tv-total-ms, 0ms) both; }
   /* CB 18 · o chao novo e a onda cortam seco (o chao ja e o novo), e o
      clarao nao acende; o letreiro fica, porque e informacao */
   .tv-chao-nasce { animation: none; }

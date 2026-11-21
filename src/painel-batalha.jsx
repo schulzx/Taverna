@@ -81,9 +81,10 @@ import { ESCUDO_DO_MESTRE, PECAS_DA_MESA } from "./estilo.js";
    dado, a jogada, a coluna direita em papel e a coluna do grupo. As contas
    são de luta-na-mesa.js; as peças, de painel-luta-mesa.jsx. */
 import { MAO_DE_ACOES, MESA_DA_LUTA, tamanhoDaCarta, linhaDoDado, vereditoDoAgir, linhasDeElesVao, porCento } from "./luta-na-mesa.js";
+import { TIRA_DA_RODADA, resumoDoQueElesVao, linhasDaNota, fraseDoAlvo, oQueAZonaDiz, proximaFolha, juntaORegistro, linhasDaFolha, custoCurto, razaoCurta } from "./luta-na-mesa.js";
 import { faceMinimaQueBasta } from "./batalha-na-tela.js";
-import { MaoDeAcoes, AJogada, FalaDoMestreNoPapel, ElesVaoNoPapel, OAlvoNoPapel, ColunaDoGrupoNaLuta, PlaquetaDaRodada, AvisoDoSilencio } from "./painel-luta-mesa.jsx";
-import { FimDaLuta, SaidaDaLuta } from "./painel-fim-da-luta.jsx";
+import { MaoDeAcoes, AJogada, FalaDoMestreNoPapel, ElesVaoNoPapel, OAlvoNoPapel, ColunaDoGrupoNaLuta, PlaquetaDaRodada, AvisoDoSilencio, TiraDaRodada, FolhaDaRodada } from "./painel-luta-mesa.jsx";
+import { FimDaLuta, SaidaDaLuta, VitoriaNoCelular } from "./painel-fim-da-luta.jsx";
 import { ContextoDaReacaoNaMesa } from "./painel-reacao.jsx";
 import { mecanicaDe } from "./condicoes.js";
 import { selosDaMecanica } from "./selo-de-estado.js";
@@ -2053,6 +2054,90 @@ export function TelaDeBatalha(props) {
     return f ? { chave: `${i}:${x.quem}`, quem: f.quem, alvo: f.alvo, diz: f.diz, feriu, turno: true, nova: contando && i === indiceDoTurno } : null;
   }).filter(Boolean) : null;
 
+  /* ============================================================
+     F4 §12 · A TIRA DA RODADA E A FOLHA (só no celular; estado de TELA)
+     A folha (null | "registro" | "nota") toma o lugar da mão; o registro guarda
+     as rodadas (juntaORegistro), conta as linhas não lidas desde o último fecho
+     e anuncia na tira a linha que chega, por TIRA_DA_RODADA.anuncioMs. As
+     decisões são de luta-na-mesa.js; aqui só os relógios e os ouvintes.
+     ============================================================ */
+  const [folha, setFolha] = React.useState(null);
+  const [historicoDoRegistro, setHistoricoDoRegistro] = React.useState([]);
+  const [lidasDoRegistro, setLidasDoRegistro] = React.useState(0);
+  const [pontosDesde, setPontosDesde] = React.useState(Infinity);
+  const [anuncio, setAnuncio] = React.useState(null);
+  const folhaNaVezDelesRef = React.useRef(false);
+  const totalDoRegistroRef = React.useRef(0);
+  const relogioDoAnuncioRef = React.useRef(null);
+  const nossosNaLuta = [nomeDoHeroi, ...(Array.isArray(grupo) ? grupo : []).map((g0) => g0 && g0.nome)].filter(Boolean);
+  const linhasDoRegistoAgora = registoDoTurno && registoDoTurno.length ? registoDoTurno : Array.isArray(p.registo) ? p.registo : [];
+  const rodadaDoRegisto = Math.max(0, (combate.rodada || 1) - 1);
+  const chaveDoRegisto = (() => { try { return JSON.stringify(linhasDoRegistoAgora.map((l) => l && [l.quem, l.alvo, l.diz])); } catch { return ""; } })();
+  React.useEffect(() => {
+    if (!noTelefone) return;
+    try { setHistoricoDoRegistro((h) => juntaORegistro(h, rodadaDoRegisto, linhasDoRegistoAgora)); } catch (e) { console.warn("TelaDeBatalha: guardar o registro falhou", e); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveDoRegisto, rodadaDoRegisto, noTelefone]);
+  const folhaDoRegistro = (() => { try { return linhasDaFolha(historicoDoRegistro, { nossos: nossosNaLuta }); } catch { return { linhas: [], total: 0, rodada: null }; } })();
+  React.useEffect(() => {
+    if (!noTelefone) return undefined;
+    const total = folhaDoRegistro.total;
+    const antes = totalDoRegistroRef.current;
+    totalDoRegistroRef.current = total;
+    if (folha === "registro") { setLidasDoRegistro(total); return undefined; }
+    if (total > antes) {
+      /* a linha nova toma a tira; a segunda antes do fim substitui a primeira e o relógio recomeça */
+      const ultima = [...folhaDoRegistro.linhas].reverse().find((l) => l.tipo === "linha");
+      if (ultima) {
+        setAnuncio({ ...ultima, chave: ultima.indice });
+        if (relogioDoAnuncioRef.current) clearTimeout(relogioDoAnuncioRef.current);
+        relogioDoAnuncioRef.current = setTimeout(() => setAnuncio(null), TIRA_DA_RODADA.anuncioMs);
+      }
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folhaDoRegistro.total, noTelefone]);
+  React.useEffect(() => () => { if (relogioDoAnuncioRef.current) clearTimeout(relogioDoAnuncioRef.current); }, []);
+  const abrirOuFechar = (evento, o = {}) => {
+    try {
+      const nova = proximaFolha(folha, evento, o);
+      if (nova === folha) return;
+      if (nova === "registro") { setPontosDesde(lidasDoRegistro); setLidasDoRegistro(folhaDoRegistro.total); setAnuncio(null); }
+      if (folha === "registro" && nova !== "registro") setPontosDesde(Infinity);
+      folhaNaVezDelesRef.current = !!nova && contando;
+      setFolha(nova);
+    } catch (e) { console.warn("TelaDeBatalha: a folha da rodada falhou", e); }
+  };
+  /* fecha: a vez que vira sua (quando abriu na vez deles), a reação que abre, o fim */
+  React.useEffect(() => { if (!contando && folha && folhaNaVezDelesRef.current) abrirOuFechar("suaVez"); }, [contando]); // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(() => { if (p.reacao && folha) abrirOuFechar("reacao"); }, [!!p.reacao]); // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(() => { if ((p.fim || !noTelefone) && folha) setFolha(null); }, [!!p.fim, noTelefone]); // eslint-disable-line react-hooks/exhaustive-deps
+  /* o toque FORA da folha e da tira só fecha (não age no que estava por baixo); Esc fecha.
+     O clique que segue o toque é engolido por um ouvinte que vive mais que a folha:
+     fechar re-renderiza antes do clique chegar, e um ouvinte preso à folha aberta
+     já teria saído (jogado: o toque fora fechava e o herói andava para a casa) */
+  const engolirCliqueDaFolhaRef = React.useRef(false);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const clique = (e) => { if (!engolirCliqueDaFolhaRef.current) return; engolirCliqueDaFolhaRef.current = false; e.stopPropagation(); e.preventDefault(); };
+    /* cada toque novo recomeça (um toque que não virou clique não engole o seguinte) */
+    const zera = () => { engolirCliqueDaFolhaRef.current = false; };
+    window.addEventListener("pointerdown", zera, true);
+    window.addEventListener("click", clique, true);
+    return () => { window.removeEventListener("pointerdown", zera, true); window.removeEventListener("click", clique, true); };
+  }, []);
+  React.useEffect(() => {
+    if (!folha || typeof window === "undefined") return undefined;
+    const dentro = (e) => !!(e && e.target && e.target.closest && e.target.closest("[data-folha-da-rodada], [data-tira-da-rodada]"));
+    const toque = (e) => { if (dentro(e)) return; engolirCliqueDaFolhaRef.current = true; e.stopPropagation(); e.preventDefault(); abrirOuFechar("fora"); };
+    const tecla = (e) => { if (e.key === "Escape") abrirOuFechar("esc"); };
+    window.addEventListener("pointerdown", toque, true);
+    window.addEventListener("keydown", tecla);
+    return () => { window.removeEventListener("pointerdown", toque, true); window.removeEventListener("keydown", tecla); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [folha, lidasDoRegistro, folhaDoRegistro.total, contando]);
+  const naoLidas = folha === "registro" ? 0 : Math.max(0, folhaDoRegistro.total - lidasDoRegistro);
+
   const titulo = comMaiuscula(zonaDoHeroi);
   /* §CB 16.2: 6 no telefone (a janela fica com 361 de largo), 16 no
      estreito, e 24 (§CB 2, a conta das três colunas) no largo — era o 32 do
@@ -2201,7 +2286,8 @@ export function TelaDeBatalha(props) {
         controlo={contando ? <ControloDoTurnoDeles acelerado={!!td.acelerado} aoAcelerar={td.aoAcelerar} aoSaltar={saltarTurno} noTelefone={noTelefone} /> : null} />
       {/* V6 parte 2 (F4 «CERIMONIA_DA_VITORIA»): o tapete recua sob o véu, e o
           fim da luta acontece em cima dele */}
-      {fimComEspolio && (
+      {/* F4 §12 lacuna 3: no celular o tapete fica inteiro e sem véu (VitoriaNoCelular) */}
+      {fimComEspolio && !noTelefone && (
         <FimDaLuta desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao} linha={p.espolio.linha || ""}
           aoRecolher={p.aoRecolher} telefone={noTelefone} />
       )}
@@ -2248,7 +2334,8 @@ export function TelaDeBatalha(props) {
     </div>
   ) : null;
   const recuosDaBarra = verbos.filter((v) => v.papel === "recuo");
-  const acaoDoFim = fimComEspolio ? (
+  /* F4 §12 lacuna 3: no celular o fim mora na própria coluna (VitoriaNoCelular, em acaoDoTelefone) */
+  const acaoDoFim = fimComEspolio && !noTelefone ? (
     <section className="flex flex-col shrink-0 min-w-0 w-full" style={respiroDaAcao}>
       <SaidaDaLuta aoSair={p.aoSair} telefone={noTelefone}
         comChao={p.espolio.desfecho === "vitoria" && Array.isArray(p.espolio.noChao) && p.espolio.noChao.some((c) => c && !c.recolhido)} />
@@ -2409,7 +2496,8 @@ export function TelaDeBatalha(props) {
               fechar
             </button>
             {consulta}
-            {rastro}
+            {/* F4 §12 passo 7: as linhas do registro saíram daqui — moram na folha
+                da rodada (a aba da tira), para não haver duas caras da mesma coisa */}
           </div>
         </div>
       )}
@@ -2470,6 +2558,7 @@ export function TelaDeBatalha(props) {
      Cancelar») aposentou-se — o segundo toque no alvo, o «Agir» e o Enter
      são os três caminhos, como na mesa */
   let acaoDoTelefone = null;
+  let tiraDoTelefone = null;
   if (mesaF4 || noTelefone) {
     const ML = MESA_DA_LUTA;
     const apertada = larguraDaMesa < ML.apertada.abaixoDe;
@@ -2493,13 +2582,17 @@ export function TelaDeBatalha(props) {
         if (id === "item") {
           const I = MAO_DE_ACOES.item;
           return { id, rotulo: noTelefone ? MAO_DE_ACOES.rotulo.itemCurto : MAO_DE_ACOES.rotulo.item, armada: bolsaAberta, impedida: !nItens, razao: I.vazia,
-            linha: linhaDoDado(id), custo: noTelefone ? `${I.tem} ${nItens}` : `${I.custo} · ${I.tem} ${nItens}` };
+            linha: linhaDoDado(id), custo: noTelefone ? `${I.tem} ${nItens}` : `${I.custo} · ${I.tem} ${nItens}`,
+            /* F4 §12 lacuna 5: a carta estreita diz «tem 2» sem peça, e «bolsa vazia» */
+            ...(noTelefone ? { custoCurto: custoCurto(id, { nItens }), razaoCurta: razaoCurta(I.vazia) } : null) };
         }
         const v = verbosPorId.get(id);
         if (!v) return null;
         return { id, rotulo: v.rotulo, armada: armado === id, impedida: !!impedidos[id], razao: impedidos[id] || "",
           linha: linhaDoDado(id, { previsao: prevGolpe, empurrao: empAgora, faceMinima }),
-          custo: custoEscrito(id, (recursosDosVerbos || {})[id] || null, { passoM: p.passoM }) };
+          custo: custoEscrito(id, (recursosDosVerbos || {})[id] || null, { passoM: p.passoM }),
+          /* F4 §12 lacuna 5: no celular, a peça do recurso + a frase curta da tabela */
+          ...(noTelefone ? { custoCurto: custoCurto(id, { recurso: (recursosDosVerbos || {})[id] || null, passoM: p.passoM, passoTotal: p.passoTotal }), razaoCurta: razaoCurta(impedidos[id] || "") } : null) };
       } catch (e) { console.warn("TelaDeBatalha: a carta da mão falhou", e); return null; }
     }).filter(Boolean);
     const tocarCarta = (c) => {
@@ -2521,6 +2614,7 @@ export function TelaDeBatalha(props) {
           frase: p.entrada || "", custo: custoEscrito("fugir", null),
           contando, bloqueado: !!p.bloqueado, fim: !!p.fim,
           silencio: !!(p.silencio && p.silencio.podeTentar && p.aoTentarDeNovo),
+          curto: noTelefone,
         });
       } catch { return { pronta: false, diz: "", acao: null }; }
     })();
@@ -2552,7 +2646,51 @@ export function TelaDeBatalha(props) {
     ) : null;
     if (noTelefone) {
       const mostraJogadaT = !p.fim && !esperando;
-      acaoDoTelefone = (
+      /* F4 §12 · A TIRA DA RODADA: o que a zona diz (anúncio > alvo > eles vão) */
+      const intencoesVivas = intencoes.filter((i) => i && i.vista && inimigos.some((e) => e && e.nome === i.inimigo && !e.derrotado && Number(e.vida || 0) > 0));
+      const resumo = (() => { try { return resumoDoQueElesVao(intencoesVivas, nomeDoHeroi); } catch { return null; } })();
+      const enteMarcado = marcado ? inimigos.find((e) => e && e.nome === marcado) || null : null;
+      const alvoDaZona = (() => {
+        try {
+          if (!enteMarcado) return null;
+          const g0 = prevGolpe && prevGolpe.alvo === marcado ? golpePorExtenso(prevGolpe) : null;
+          return { nome: enteMarcado.nome, ...fraseDoAlvo({ nome: enteMarcado.nome, vida: enteMarcado.vida, vidaMax: enteMarcado.vidaMax, dano: g0 && g0.dano ? g0.dano.texto : "", abate: g0 ? g0.abate : null }) };
+        } catch { return null; }
+      })();
+      const diz = oQueAZonaDiz({ anuncio: !!anuncio, alvo: !!alvoDaZona, elesVao: !!resumo });
+      const rostoDe = (nome) => {
+        if (nome === nomeDoHeroi) return { ente: personagem, inimigo: false };
+        const i = inimigos.find((e) => e && e.nome === nome);
+        if (i) return { ente: i, inimigo: true };
+        const a = (Array.isArray(grupo) ? grupo : []).find((g0) => g0 && g0.nome === nome);
+        return a ? { ente: a, inimigo: false } : { ente: { nome }, inimigo: true };
+      };
+      const tocarZona = () => {
+        try {
+          if (diz === "anuncio") { abrirOuFechar("zona", { anunciando: true }); return; }
+          if (diz === "alvo") { setMarcado(""); preverGolpe(null); return; }
+          if (diz === "elesVao" && resumo) {
+            if (resumo.abre) { abrirOuFechar("zona", { abreNota: true }); return; }
+            /* um inimigo só: a tira já diz tudo, e o toque marca-o como alvo */
+            const nome = resumo.retratos[0];
+            if (nome) { setMarcado(nome); preverGolpe(nome); }
+          }
+        } catch (e) { console.warn("TelaDeBatalha: tocar a tira falhou", e); }
+      };
+      tiraDoTelefone = fimComEspolio ? null : (
+        <div style={{ order: 2 }} className="w-full shrink-0 min-w-0">
+          <TiraDaRodada diz={diz} resumo={resumo} alvo={alvoDaZona} anuncio={anuncio} folha={folha} naoLidas={naoLidas} rostoDe={rostoDe}
+            aoZona={tocarZona} aoAba={() => abrirOuFechar("aba")} reduzido={movimentoParado()} />
+        </div>
+      );
+      const folhaAberta = folha && !p.reacao && !p.decisao && !p.fim ? (
+        <FolhaDaRodada qual={folha} registro={folhaDoRegistro} pontosDesde={pontosDesde} nota={(() => { try { return linhasDaNota(intencoesVivas, nomeDoHeroi); } catch { return []; } })()}
+          rostoDe={rostoDe} reduzido={movimentoParado()} />
+      ) : null;
+      acaoDoTelefone = fimComEspolio ? (
+        <VitoriaNoCelular desfecho={p.espolio.desfecho} recibo={p.espolio.recibo} chao={p.espolio.noChao} linha={p.espolio.linha || ""}
+          aoRecolher={p.aoRecolher} aoSair={p.aoSair} />
+      ) : (
         <section className="flex flex-col shrink-0 min-w-0 w-full" style={{ order: 3, gap: B3.telefone.entre, position: "relative" }}>
           {/* a reação no celular toma o lugar da mão, no fluxo — nunca por cima da
               faixa do herói (o custo é em PM e o golpe em PV, e os dois estão nela) */}
@@ -2572,7 +2710,7 @@ export function TelaDeBatalha(props) {
                 {p.decisao}
               </div>
             ) : p.dado ? <div className="shrink-0 min-w-0 flex items-center" style={{ minHeight: T_CARTA.altura }}>{p.dado}</div>
-              : p.reacao ? null : <MaoDeAcoes cartas={cartas} tamanho="celular" aoTocar={tocarCarta} />}
+              : p.reacao ? null : folhaAberta || <MaoDeAcoes cartas={cartas} tamanho="celular" aoTocar={tocarCarta} />}
           {mostraJogadaT && !p.reacao && (
             <AJogada tamanho="celular" entrada={p.entrada || ""} aoEscrever={p.aoEscrever} veredito={vAgir} aoAgir={agirNaMesa}
               desligada={!armado && !!p.bloqueado} gaveta={gavetaDasHabilidades} />
@@ -2685,6 +2823,7 @@ export function TelaDeBatalha(props) {
         {/* §CB 16.2: entre o campo e a barra, 8 em todos os patamares */}
         <div className="flex-1 min-h-0 min-w-0 flex-col" style={{ display: noTelefone ? "contents" : "flex", order: 1, gap: B3.entreCampoEBarra }}>
           {campo}
+          {tiraDoTelefone}
           {acaoDoFim || acaoDoTelefone || acao}
         </div>
         {/* Tu vem depois no DOM (a tabulação passa pelo campo e pelos verbos

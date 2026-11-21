@@ -21,13 +21,14 @@
 import React from "react";
 import { T, alfa, SOMBRA_DA_MESA } from "./estilo.js";
 import { Glifo, PipDoRecurso, Retrato } from "./ui.jsx";
-import { CartaDePe } from "./pecas-da-mesa.jsx";
+import { CartaDePe, GlifoDeItem } from "./pecas-da-mesa.jsx";
 import { letraDaMesa } from "./mesa-do-mestre.js";
 import { retratoDe } from "./retratos.js";
 import { sementeDe, estadoDe } from "./semente.js";
 import { golpePorExtenso } from "./batalha-na-tela.js";
 import { metrosTxt } from "./grid.js";
-import { MAO_DE_ACOES as MA, A_JOGADA as AJ, MESA_DA_LUTA as ML, O_QUE_RESTA_NA_VEZ as OR } from "./luta-na-mesa.js";
+import { MAO_DE_ACOES as MA, A_JOGADA as AJ, MESA_DA_LUTA as ML, O_QUE_RESTA_NA_VEZ as OR,
+  TIRA_DA_RODADA as TR, FOLHA_DA_RODADA as FR, CUSTO_NA_CARTA_ESTREITA as CC, lacreDoRegistro } from "./luta-na-mesa.js";
 
 const movimentoParado = () => {
   try { return !!(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); }
@@ -237,9 +238,37 @@ function LinhaDoDado({ linha, tam, celular, media = false, impedida, razao }) {
    entre os dois vira o que não quebra */
 const semQuebraNaUnidade = (x) => String(x || "").replace(/(\d) (m|PM|PV)\b/g, "$1\u00a0$2");
 
-export function CartaDeAcao({ id, rotulo, tamanho = "mesa", armada = false, impedida = false, razao = "", linha = null, custo = "", aoTocar, aoApontar = null, reduzido = false }) {
+/* §12 lacuna 5 · A PEÇA DO CUSTO (12 px): as mesmas formas de «o que resta na
+   vez» (disco = ação, triângulo = bônus, losango = reação) e da faixa do
+   herói, mais as pegadas do passo e as espadas dos golpes que você leva — na
+   cor do texto do custo. Sem peça, nada (não gasta nada da vez). */
+function PecaDoCusto({ peca = null, cor = T.brasaNoPergaminho, tamanho = CC.peca }) {
+  if (!peca) return null;
+  const glifo = CC.glifoDaPeca[peca];
+  if (glifo) return <Glifo nome={glifo} tamanho={tamanho} cor={cor} />;
+  return <PipDoRecurso recurso={peca} estado="livre" tamanho={tamanho} cor={cor} />;
+}
+
+/* A LINHA DO CUSTO DA CARTA ESTREITA: peça + 4 + a frase curta, centrada,
+   numa linha só — nunca reticências, nunca duas linhas, nunca letra menor
+   (a frase sai da tabela, e a suíte mede o comprimento) */
+function CustoNaCartaEstreita({ custo, tam, impedida }) {
+  if (!custo || (!custo.peca && !custo.texto)) return null;
+  const cor = impedida ? T.inkMeio : custo.peca === "golpe" ? T.perigoNoPergaminho : T.brasaNoPergaminho;
+  return (
+    <span aria-hidden="true" style={{ position: "absolute", left: CC.margem, right: CC.margem, top: tam.yCusto, height: CC.altura, display: "flex", alignItems: "center", justifyContent: "center", gap: CC.entre, whiteSpace: "nowrap" }}>
+      <PecaDoCusto peca={custo.peca} cor={cor} />
+      {custo.texto ? <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: cor, whiteSpace: "nowrap" }}>{semQuebraNaUnidade(custo.texto)}</span> : null}
+    </span>
+  );
+}
+
+export function CartaDeAcao({ id, rotulo, tamanho = "mesa", armada = false, impedida = false, razao = "", linha = null, custo = "", custoCurto = null, razaoCurta = "", aoTocar, aoApontar = null, reduzido = false }) {
   const tam = MA.tamanhos[tamanho] || MA.tamanhos.mesa;
   const celular = tamanho === "celular";
+  /* §12 lacuna 5: no celular a carta impedida diz a razão de até 11 letras, numa
+     linha, e a linha do custo fica (em inkMeio); a razão por extenso vai no «Agir» */
+  const estreita = celular && !!custoCurto;
   const C = { chao: T.ossoLume, chaoArmada: T.osso, borda: T.tintaDoPergaminhoDim, bordaArmada: T.tintaDoPergaminho };
   const sobe = armada && !celular && !reduzido ? MA.armar.sobe : 0;
   const falado = [rotulo, impedida ? razao : linha ? linha.falado : "", custo].filter(Boolean).join(", ");
@@ -260,8 +289,11 @@ export function CartaDeAcao({ id, rotulo, tamanho = "mesa", armada = false, impe
         </span>
       )}
       <span aria-hidden="true" className="truncate" style={{ position: "absolute", left: celular ? 2 : 4, right: celular ? 2 : 4, top: tam.yNome, ...letraDaMesa("nome"), ...(tamanho === "media" || celular ? { letterSpacing: 0 } : null), color: impedida ? T.ink : T.tintaDoPergaminho }}>{rotulo}</span>
-      <span aria-hidden="true"><LinhaDoDado linha={linha} tam={tam} celular={celular} media={tamanho === "media"} impedida={impedida} razao={razao} /></span>
-      {custo && !impedida && (
+      {estreita && impedida ? (
+        <span aria-hidden="true" style={{ position: "absolute", left: CC.margem, right: CC.margem, top: tam.yDado, height: MA.linha.celular.corpo + 6, display: "flex", alignItems: "center", justifyContent: "center",
+          ...letraDaMesa("servico"), textTransform: "none", color: T.ink, whiteSpace: "nowrap" }}>{razaoCurta || razao}</span>
+      ) : <span aria-hidden="true"><LinhaDoDado linha={linha} tam={tam} celular={celular} media={tamanho === "media"} impedida={impedida} razao={razao} /></span>}
+      {estreita ? <CustoNaCartaEstreita custo={custoCurto} tam={tam} impedida={impedida} /> : custo && !impedida && (
         <span aria-hidden="true" style={{ position: "absolute", left: 4, right: 4, top: tam.yCusto, ...letraDaMesa("servico"), textTransform: "none", color: impedida ? T.inkMeio : T.brasaNoPergaminho,
           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{semQuebraNaUnidade(custo)}</span>
       )}
@@ -325,10 +357,11 @@ export function AJogada({ tamanho = "mesa", entrada = "", aoEscrever, veredito =
         transition: reduzido ? "none" : `background-color ${A.transicaoMs}ms ease, opacity ${A.transicaoMs}ms ease`, cursor: pronta ? "pointer" : "default" }}>
       <span style={{ ...letraDaMesa("contagem"), color: pronta ? T[A.pronta.letra] : T[A.impedida.rotulo] }}>{A.rotulo}</span>
       {veredito && veredito.diz ? (
-        /* F4d · B2: no celular o «Agir» tem 124 de largo e o veredito («Atacar ·
-           Goblin · 55 %») perdia a chance nas reticências — quebra em duas linhas */
-        <span className={celular ? undefined : "truncate"} style={{ maxWidth: "100%", ...letraDaMesa("servico"), textTransform: "none", color: pronta ? T[A.pronta.letra] : T[A.impedida.razao],
-          ...(celular ? { textAlign: "center", lineHeight: 1.15, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } : null) }}>{veredito.diz}</span>
+        /* F4d · B2 → §12 lacuna 5: no celular o veredito é «verbo · chance»
+           (vereditoDoAgir com `curto`: o nome do alvo mora na tira da rodada) e
+           cabe numa linha — a quebra em duas linhas de F4d aposentou-se */
+        <span className="truncate" style={{ maxWidth: "100%", ...letraDaMesa("servico"), textTransform: "none", color: pronta ? T[A.pronta.letra] : T[A.impedida.razao],
+          ...(celular ? { textAlign: "center" } : null) }}>{veredito.diz}</span>
       ) : null}
     </button>
   );
@@ -427,6 +460,198 @@ export function AvisoDoSilencio({ silencio = null, aoTentarDeNovo = null }) {
           Tentar de novo
         </button>
       ) : null}
+    </section>
+  );
+}
+
+
+/* ============================================================
+   F4 §12 · A TIRA DA RODADA E A FOLHA (formas.md «12 · A luta no celular»,
+   pranchas mente/figma/F4-luta-celular-12a.png e 12b.png). Só no celular.
+   A zona (313 × 44) diz o que eles vão fazer — ou a linha que acabou de
+   chegar, ou o alvo marcado; a aba (44 × 44) abre o registro. A folha
+   (363 × 166) toma o lugar da mão. O que a zona diz, para onde a folha vai e
+   o que o registro guarda são funções puras de luta-na-mesa.js; quem decide
+   o que cada toque faz é a tela (painel-batalha.jsx).
+   ============================================================ */
+const SOMBRA_DE_HA_MAIS = (para, a = FR.alfaDaSombra) => `linear-gradient(${para}, ${alfa(T.veuDaNoite, a)}, ${alfa(T.veuDaNoite, 0)})`;
+
+/* um rosto de 28 (ou 20) com o aro do lado: `rostoDe(nome)` → { ente, inimigo } */
+function RostoDaTira({ nome, rostoDe, tamanho = TR.retrato, aro = TR.aroDoRetrato }) {
+  const r = (() => { try { return rostoDe ? rostoDe(nome) : null; } catch { return null; } })() || { ente: { nome }, inimigo: true };
+  const ente = r.ente || { nome };
+  return (
+    <span style={{ display: "inline-flex", borderRadius: "50%", lineHeight: 0 }}>
+      <Retrato semente={sementeDe(ente)} ente={ente} inimigo={!!r.inimigo} tamanho={tamanho} anel={r.inimigo ? T.lacreLume : T.latao} semCarta
+        estado={estadoDe(ente.vida, ente.vidaMax, !!r.inimigo)} />
+    </span>
+  );
+}
+
+/* a seta da zona (12 px): para cima com a nota fechada, para baixo aberta */
+function SetaDaZona({ aberta = false }) {
+  const s = TR.seta;
+  return (
+    <svg aria-hidden="true" width={s} height={s} viewBox="0 0 12 12" style={{ position: "absolute", left: TR.xSeta, top: (TR.altura - s) / 2 }}>
+      <path d={aberta ? "M2 4l4 4 4-4" : "M2 8l4-4 4 4"} fill="none" stroke={T.tintaDoPergaminho} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* o resultado de uma linha do registro, nas três caras: em um dos nossos
+   (perigo), neles (tinta), errou ou o resto (a nota apagada) */
+function estiloDoResultado(cara, corpo) {
+  if (cara === "nos") return { fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: corpo, color: T.perigoNoPergaminho };
+  if (cara === "neles") return { fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: corpo, color: T.tintaDoPergaminho };
+  return { ...letraDaMesa("notaDoMestre"), color: T.tintaDoPergaminhoDim };
+}
+
+/* «quem → em quem»: se não couber, corta-se o nome de quem agiu, nunca o resultado */
+function QuemEmQuem({ quem, alvo, estilo }) {
+  return (
+    <span className="flex min-w-0" style={{ flex: "1 1 auto", whiteSpace: "nowrap", ...estilo }}>
+      <span className="truncate" style={{ minWidth: 0 }}>{quem}</span>
+      {/* o espaço antes da seta é o que não quebra (U+00A0): num item flex o comum some */}
+      {alvo ? <span className="shrink-0">{` → ${alvo}`}</span> : null}
+    </span>
+  );
+}
+
+/* A TIRA DA RODADA. `diz`: oQueAZonaDiz; `resumo`: resumoDoQueElesVao;
+   `alvo`: fraseDoAlvo (+ nome); `anuncio`: a linha que chegou ({ quem, alvo,
+   resultado, cara, chave }); `folha`: null | "registro" | "nota". */
+export function TiraDaRodada({ diz = null, resumo = null, alvo = null, anuncio = null, folha = null, naoLidas = 0, rostoDe = null, aoZona, aoAba, reduzido = false }) {
+  const P = TR.papel, A = TR.aberta;
+  const papel = (aberta) => ({ background: T[aberta ? A.chao : P.chao], border: aberta ? `${A.px}px solid ${T[A.borda]}` : `1px solid ${T[P.borda]}`,
+    borderRadius: P.raio, filter: SOMBRA_COMO_FILTRO[aberta ? A.sombra : P.sombra] });
+  const lacre = lacreDoRegistro(naoLidas);
+  const rotulo = { ...letraDaMesa("rotulo"), color: T.tintaDoPergaminhoDim, position: "absolute", top: TR.yRotulo, whiteSpace: "nowrap", overflow: "hidden" };
+  const frase = { fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: TR.frase, lineHeight: "20px", position: "absolute", top: TR.yFrase, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+  const entra = (ms, px) => (reduzido ? {} : { "--tv-entra-ms": `${ms}ms`, "--tv-entra-px": `${px}px` });
+  let conteudo = null, falado = "";
+  if (diz === "anuncio" && anuncio) {
+    const x = TR.xTexto.um;
+    falado = `${TR.palavras.aconteceu}: ${anuncio.quem}${anuncio.alvo ? ` em ${anuncio.alvo}` : ""}, ${anuncio.resultado}`;
+    conteudo = (
+      <span key={`an${anuncio.chave}`} className={reduzido ? undefined : "tv-tira-entra"} style={{ position: "absolute", inset: 0, ...entra(TR.entradaMs, TR.entradaPx) }}>
+        <span style={{ position: "absolute", left: TR.xRetrato, top: TR.yRetrato }}><RostoDaTira nome={anuncio.quem} rostoDe={rostoDe} /></span>
+        <span style={{ ...rotulo, left: x, right: TR.recuoDireita }}>{TR.palavras.aconteceu}</span>
+        <span className="flex items-baseline" style={{ ...frase, left: x, right: TR.recuoDireita, overflow: "visible", gap: TR.entreFrase }}>
+          <QuemEmQuem quem={anuncio.quem} alvo={anuncio.alvo} estilo={{ color: T.tintaDoPergaminho }} />
+          <span className="shrink-0" style={{ ...estiloDoResultado(anuncio.cara, TR.frase), ...(anuncio.cara === "nos" || anuncio.cara === "neles" ? {} : { fontSize: TR.frase }) }}>{anuncio.resultado}</span>
+        </span>
+      </span>
+    );
+  } else if (diz === "alvo" && alvo) {
+    const x = TR.xTexto.um;
+    falado = `${alvo.rotulo}: ${alvo.frase}`;
+    conteudo = (
+      <span key="alvo" className={reduzido ? undefined : "tv-tira-entra"} style={{ position: "absolute", inset: 0, ...entra(TR.voltaMs, 0) }}>
+        <span style={{ position: "absolute", left: TR.xRetrato, top: TR.yRetrato }}><RostoDaTira nome={alvo.nome} rostoDe={rostoDe} /></span>
+        <span style={{ ...rotulo, left: x, right: TR.recuoDireita, textOverflow: "ellipsis" }}>{alvo.rotulo}</span>
+        <span style={{ ...frase, left: x, right: TR.recuoDireita, color: T.tintaDoPergaminho }}>{alvo.frase}</span>
+      </span>
+    );
+  } else if (diz === "elesVao" && resumo) {
+    const x = TR.xTexto[resumo.xTexto] || TR.xTexto.um;
+    const comSeta = !!resumo.abre;
+    const direita = comSeta ? TR.zona - TR.xSeta + TR.folgaDaSeta : TR.recuoDireita;
+    falado = `${resumo.rotulo}: ${resumo.frase}${resumo.direita ? `, ${resumo.direita}` : ""}`;
+    conteudo = (
+      <span key="eles" className={reduzido ? undefined : "tv-tira-entra"} style={{ position: "absolute", inset: 0, ...entra(TR.voltaMs, 0) }}>
+        {resumo.retratos.map((n, k) => (
+          <span key={n} style={{ position: "absolute", left: TR.xRetrato + k * TR.passoDoRetrato, top: TR.yRetrato, zIndex: TR.retratosMax - k }}><RostoDaTira nome={n} rostoDe={rostoDe} /></span>
+        ))}
+        {resumo.mais > 0 && (
+          <span className="flex items-center justify-center" style={{ position: "absolute", left: TR.conta.x, top: TR.conta.y, width: TR.conta.largura, height: TR.conta.altura, zIndex: TR.retratosMax + 1,
+            borderRadius: TR.conta.altura / 2, background: T.osso, border: `1px solid ${T.tintaDoPergaminho}`, fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: TR.letraDoLacre, color: T.tintaDoPergaminho }}>+{resumo.mais}</span>
+        )}
+        <span style={{ ...rotulo, left: x, right: direita }}>{resumo.rotulo}</span>
+        <span className="flex items-baseline" style={{ ...frase, left: x, right: direita, overflow: "visible", gap: TR.entreFrase }}>
+          {/* a frase não se corta; quando a soma é maior que a da prancha, quem cede é a soma */}
+          <span className="shrink-0" style={{ whiteSpace: "nowrap", color: resumo.perigo ? T.perigoNoPergaminho : T.tintaDoPergaminho }}>{resumo.frase}</span>
+          {resumo.direita ? <span className="truncate" style={{ ...letraDaMesa("notaDoMestre"), color: T.tintaDoPergaminhoDim, minWidth: 0, marginLeft: "auto" }}>{resumo.direita}</span> : null}
+        </span>
+        {comSeta && <SetaDaZona aberta={folha === "nota"} />}
+      </span>
+    );
+  }
+  return (
+    <div data-tira-da-rodada="" className="flex w-full shrink-0" style={{ height: TR.altura, gap: TR.entre }}>
+      <button type="button" data-zona-da-tira="" onClick={aoZona} aria-live="polite" aria-expanded={diz === "elesVao" && resumo && resumo.abre ? folha === "nota" : undefined}
+        aria-label={falado || undefined} className="tv-anel-foco min-w-0"
+        style={{ position: "relative", flex: "1 1 0", height: TR.altura, padding: 0, textAlign: "left", overflow: "hidden", cursor: conteudo ? "pointer" : "default", ...papel(folha === "nota") }}>
+        {conteudo}
+      </button>
+      <button type="button" data-aba-do-registro="" onClick={aoAba} aria-pressed={folha === "registro"}
+        aria-label={`${TR.palavras.aba}${naoLidas > 0 ? `, ${naoLidas} ${naoLidas === 1 ? TR.palavras.nova : TR.palavras.novas}` : ""}`}
+        className="tv-anel-foco shrink-0" style={{ position: "relative", width: TR.aba, height: TR.altura, padding: 0, overflow: "visible", ...papel(folha === "registro") }}>
+        <span aria-hidden="true" style={{ position: "absolute", left: (TR.aba - TR.glifoDaAba) / 2 - (folha === "registro" ? A.px - 1 : 0), top: (TR.altura - TR.glifoDaAba) / 2 - (folha === "registro" ? A.px - 1 : 0), lineHeight: 0 }}>
+          <GlifoDeItem familia="pergaminho" tamanho={TR.glifoDaAba} cor={T.tintaDoPergaminho} />
+        </span>
+        {lacre && (
+          <span aria-hidden="true" className="flex items-center justify-center" style={{ position: "absolute", left: TR.lacreX, top: TR.lacreY, minWidth: TR.lacre, height: TR.lacre, padding: "0 3px",
+            borderRadius: TR.lacre / 2, background: T.lacre, border: `1px solid ${T.sobreLacre}`, color: T.sobreLacre, fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: TR.letraDoLacre, lineHeight: 1 }}>{lacre}</span>
+        )}
+      </button>
+    </div>
+  );
+}
+
+/* A FOLHA DA RODADA (363 × 166, no lugar da mão). `qual`: "registro" | "nota".
+   `registro`: linhasDaFolha; `pontosDesde`: o índice da primeira linha que
+   ainda não tinha sido lida quando a folha abriu (essas levam o ponto de
+   lacre); `nota`: linhasDaNota. Abre rolada até o fim (o registro); a borda
+   leva a sombra de 10 enquanto houver o que rolar. */
+export function FolhaDaRodada({ qual = "registro", registro = null, pontosDesde = Infinity, nota = [], rostoDe = null, reduzido = false }) {
+  const P = FR.papel;
+  const corpoRef = React.useRef(null);
+  const [haCima, setHaCima] = React.useState(false);
+  const [haBaixo, setHaBaixo] = React.useState(false);
+  const linhas = qual === "registro" ? (registro && Array.isArray(registro.linhas) ? registro.linhas : []) : [];
+  const medir = React.useCallback(() => {
+    try { const el = corpoRef.current; if (!el) return; setHaCima(el.scrollTop > 0); setHaBaixo(el.scrollTop + el.clientHeight < el.scrollHeight - 1); } catch { /* sem medida, sem sombra */ }
+  }, []);
+  React.useLayoutEffect(() => {
+    try { const el = corpoRef.current; if (el && qual === "registro") el.scrollTop = el.scrollHeight; } catch { /* sem rolar */ }
+    medir();
+  }, [qual, linhas.length, nota.length, medir]);
+  const cabecalho = qual === "registro"
+    ? `${FR.rotuloDoRegistro}${registro && registro.rodada != null ? ` ${registro.rodada}` : ""}`
+    : FR.rotuloDaNota;
+  const linhaDeTexto = { ...letraDaMesa("servico"), textTransform: "none", color: T.tintaDoPergaminho };
+  return (
+    <section data-folha-da-rodada={qual} aria-label={cabecalho} className={`flex flex-col w-full shrink-0${reduzido ? "" : " tv-tira-entra"}`}
+      style={{ height: FR.altura, borderRadius: P.raio, background: T[P.chao], border: `1px solid ${T[P.borda]}`, filter: SOMBRA_COMO_FILTRO[P.sombra], overflow: "hidden",
+        ...(reduzido ? {} : { "--tv-entra-ms": `${FR.trocaMs}ms`, "--tv-entra-px": "0px" }) }}>
+      <header className="flex items-start justify-between shrink-0" style={{ height: FR.cabecalho, padding: `${FR.yCabecalho}px ${FR.recuoDireita}px 0 ${FR.xCabecalho}px` }}>
+        <span style={{ ...letraDaMesa("rotulo"), color: T.tintaDoPergaminhoDim, whiteSpace: "nowrap" }}>{cabecalho}</span>
+        <span style={{ ...letraDaMesa("servico"), textTransform: "none", color: T.tintaDoPergaminhoDim, whiteSpace: "nowrap" }}>{FR.fechar}</span>
+      </header>
+      <div className="relative flex-1 min-h-0">
+        {haCima && <span aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, top: 0, height: FR.sombra, background: SOMBRA_DE_HA_MAIS("to bottom"), zIndex: 1, pointerEvents: "none" }} />}
+        {haBaixo && qual === "nota" && <span aria-hidden="true" style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: FR.sombra, background: SOMBRA_DE_HA_MAIS("to top"), zIndex: 1, pointerEvents: "none" }} />}
+        <div ref={corpoRef} onScroll={medir} role="list" className="h-full overflow-y-auto tv-scroll tv-sem-barra">
+          {qual === "registro" ? linhas.map((l) => (l.tipo === "rodada" ? (
+            <div key={`r${l.rodada}`} role="listitem" className="flex items-center" style={{ height: FR.linhaDoRegistro, paddingLeft: FR.xTexto, ...letraDaMesa("rotulo"), color: T.tintaDoPergaminhoDim }}>
+              {FR.rotuloDaRodada} {l.rodada}
+            </div>
+          ) : (
+            <div key={`l${l.indice}`} role="listitem" className={`relative flex items-center${!reduzido && l.indice >= pontosDesde ? " tv-tira-entra" : ""}`}
+              style={{ height: FR.linhaDoRegistro, padding: `0 ${FR.recuoDireita}px 0 ${FR.xTexto}px`, gap: 8 }}>
+              {l.indice >= pontosDesde && <span aria-hidden="true" style={{ position: "absolute", left: FR.xPonto, top: (FR.linhaDoRegistro - FR.ponto) / 2, width: FR.ponto, height: FR.ponto, borderRadius: "50%", background: T.lacre }} />}
+              <QuemEmQuem quem={l.quem} alvo={l.alvo} estilo={linhaDeTexto} />
+              <span className="shrink-0" style={{ whiteSpace: "nowrap", ...estiloDoResultado(l.cara, FR.resultado) }}>{l.resultado}</span>
+            </div>
+          ))) : nota.map((l) => (
+            <div key={l.nome} role="listitem" className="relative flex items-center" style={{ height: FR.linhaDaNota, paddingRight: FR.recuoDireita, gap: 8 }}>
+              <span style={{ position: "absolute", left: FR.xRetratoDaNota, top: (FR.linhaDaNota - FR.retratoDaNota) / 2, lineHeight: 0 }}><RostoDaTira nome={l.nome} rostoDe={rostoDe} tamanho={FR.retratoDaNota} /></span>
+              <span className="truncate" style={{ ...linhaDeTexto, marginLeft: FR.xNomeDaNota, flex: "1 1 auto", minWidth: 0 }}>{l.nome}</span>
+              <span className="shrink-0" style={{ fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: FR.resultado, whiteSpace: "nowrap", color: l.emVoce ? T.perigoNoPergaminho : T.tintaDoPergaminho }}>{l.texto}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

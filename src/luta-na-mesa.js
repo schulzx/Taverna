@@ -19,6 +19,7 @@
 import { especieDe } from "./mesa-de-batalha.js";
 import { raridadeDe, molduraDaCasa, familiaDoItem, NOME_DA_RARIDADE } from "./objetos-abertos.js";
 import { resolverReacao } from "./reacoes.js";
+import { RECUSAS_DO_VERBO } from "./tela-de-batalha.js";
 
 const obj = (x) => (x && typeof x === "object" ? x : null);
 const fin = (x) => x != null && x !== "" && Number.isFinite(Number(x));
@@ -329,9 +330,11 @@ export const A_JOGADA = Object.freeze({
 /* O VEREDITO DO «AGIR», numa conta só (a tela só pinta). Devolve
    { pronta, diz, acao } — `acao` é o que o «Agir» faz: "atacar" (o alvo
    marcado), "empurrar" (o alvo do empurrão), "fugir", "caixa" (a frase da
-   pena, com ou sem verbo armado) ou null (impedida: `diz` é a razão). */
+   pena, com ou sem verbo armado) ou null (impedida: `diz` é a razão).
+   `curto` (o celular, §12 lacuna 5): «verbo · chance» numa linha — o nome do
+   alvo sai dali (está na tira da rodada); sem chance, «verbo · alvo». */
 export function vereditoDoAgir({ armado = "", rotulo = "", alvo = "", chance = "", alvoDoEmpurrao = "", chanceDoEmpurrao = "", frase = "", custo = "",
-  contando = false, bloqueado = false, fim = false, silencio = false } = {}) {
+  contando = false, bloqueado = false, fim = false, silencio = false, curto = false } = {}) {
   const R = A_JOGADA.razoes;
   const junta = (...xs) => xs.filter(Boolean).join(" · ");
   if (fim) return { pronta: false, diz: "", acao: null };
@@ -339,11 +342,11 @@ export function vereditoDoAgir({ armado = "", rotulo = "", alvo = "", chance = "
   if (silencio) return { pronta: false, diz: R.silencio, acao: "silencio" };
   if (bloqueado) return { pronta: false, diz: R.espera, acao: null };
   const temFrase = !!String(frase || "").trim();
-  if (armado === "atacar") return alvo ? { pronta: true, diz: junta(rotulo || "Atacar", alvo, chance), acao: "atacar" } : { pronta: false, diz: R.semAlvo, acao: null };
-  if (armado === "empurrar") return alvoDoEmpurrao ? { pronta: true, diz: junta(rotulo || "Empurrar", alvoDoEmpurrao, chanceDoEmpurrao), acao: "empurrar" } : { pronta: false, diz: R.semAlvo, acao: null };
+  if (armado === "atacar") return alvo ? { pronta: true, diz: curto ? junta(rotulo || "Atacar", chance || alvo) : junta(rotulo || "Atacar", alvo, chance), acao: "atacar" } : { pronta: false, diz: R.semAlvo, acao: null };
+  if (armado === "empurrar") return alvoDoEmpurrao ? { pronta: true, diz: curto ? junta(rotulo || "Empurrar", chanceDoEmpurrao || alvoDoEmpurrao) : junta(rotulo || "Empurrar", alvoDoEmpurrao, chanceDoEmpurrao), acao: "empurrar" } : { pronta: false, diz: R.semAlvo, acao: null };
   if (armado === "mover") return { pronta: false, diz: R.semCasa, acao: null };
   if (armado === "fugir") return { pronta: true, diz: junta(rotulo || "Fugir", custo), acao: "fugir" };
-  if (armado) return temFrase ? { pronta: true, diz: junta(rotulo, alvo), acao: "caixa" } : { pronta: false, diz: R.semFrase, acao: null };
+  if (armado) return temFrase ? { pronta: true, diz: curto ? junta(rotulo, custo) : junta(rotulo, alvo), acao: "caixa" } : { pronta: false, diz: R.semFrase, acao: null };
   if (temFrase) {
     const f = String(frase).trim();
     const T = A_JOGADA.tetoDaFrase;
@@ -515,4 +518,331 @@ export function faceDoEspolio(coisa) {
   const desc = typeof c.desc === "string" ? c.desc.trim() : "";
   const frase = desc ? (desc.match(/^[\s\S]*?[.!?…](?=\s|$)/) || [desc])[0].trim() : "";
   return { raridade: r, moldura, palavra: NOME_DA_RARIDADE[r] || NOME_DA_RARIDADE.comum, familia: familiaDoItem(c.nome ? c : null), frase, pe: CARTA_DO_ESPOLIO.pe, brasa: moldura === "lendaria" };
+}
+
+/* ============================================================
+   F4 §12 · A LUTA NO CELULAR — AS CINCO LACUNAS (formas.md «12 · A luta no
+   celular», pranchas mente/figma/F4-luta-celular-12a…12e.png). Tudo aqui vale
+   SÓ no degrau `celular`; a mesa não muda. As medidas são as da prancha; as
+   decisões (o que a tira diz, para onde a folha vai, onde pousa a etiqueta,
+   quantas cartas do espólio centram) são funções puras, provadas em Node.
+   ============================================================ */
+
+/* ---------------- 1 · A TIRA DA RODADA (§12 lacuna 1 e 2) ----------------
+   A linha sob o tapete: a zona «eles vão» (313 × 44) e a aba do registro
+   (44 × 44), 6 entre as duas. Papel pergaminho, borda 1, raio 3. */
+export const TIRA_DA_RODADA = Object.freeze({
+  y: 474, altura: 44, zona: 313, aba: 44, entre: 6,
+  retrato: 28, passoDoRetrato: 15, xRetrato: 8, yRetrato: 8, retratosMax: 3, aroDoRetrato: 2,
+  xTexto: Object.freeze({ um: 44, tres: 76, comConta: 94 }),
+  yRotulo: 5, yFrase: 21, frase: 14, recuoDireita: 10,
+  seta: 12, xSeta: 289, folgaDaSeta: 2, entreFrase: 6,
+  conta: Object.freeze({ largura: 24, altura: 18, x: 62, y: 13 }),
+  glifoDaAba: 24,
+  anuncioMs: 2400, entradaMs: 180, entradaPx: 8, voltaMs: 120,
+  lacre: 18, lacreX: 31, lacreY: -5, tetoDoLacre: 9, letraDoLacre: 12,
+  papel: Object.freeze({ chao: "pergaminho", borda: "pergaminhoBorda", raio: 3, sombra: "pousado" }),
+  aberta: Object.freeze({ chao: "osso", borda: "tintaDoPergaminho", px: 2, sombra: "erguido" }),
+  palavras: Object.freeze({ eleVai: "Ele vai", elesVao: "Eles vão", aconteceu: "Aconteceu agora", alvo: "O alvo",
+    ataca: "ataca", atacam: "atacam", emVoce: "em você", nenhum: "nenhum em você",
+    aba: "registro da rodada", novas: "linhas novas", nova: "linha nova" }),
+});
+
+/* «2–10» (ou «4» quando o golpe não varia) */
+const faixaDoDano = (d) => (d ? (Number(d.min) === Number(d.max) ? `${d.min}` : `${d.min}–${d.max}`) : "");
+const danoDe = (v) => { const d = obj(v && v.dano); return d && fin(d.min) && fin(d.max) ? { min: Number(d.min), max: Number(d.max) } : null; };
+const golpesDe = (v) => Math.max(1, Number(v && v.golpes) || 1);
+const fraseDaIntencao = (v) => {
+  const d = danoDe(v), g = golpesDe(v);
+  return d ? `${g > 1 ? `${g}× ` : ""}${faixaDoDano(d)}${v.alvo ? ` → ${v.alvo}` : ""}` : [v.tipo, v.alvo].filter(Boolean).join(" → ");
+};
+
+/* O RESUMO DE «ELES VÃO» (§12 lacuna 2), numa linha de 44: os três casos da
+   prancha 12b. `intencoes`: [{ inimigo, vista: { tipo, alvo, golpes, dano } }]
+   (a mesma lista que linhasDeElesVao lê), na ordem da iniciativa. Devolve
+   { rotulo, frase, direita, perigo, retratos, mais, abre, xTexto } ou null.
+     1 inimigo        — «Ele vai» · «2–10 → Saoirse» · o nome dele à direita;
+                        sem nota (abre = false): o toque marca-o como alvo;
+     2–3, a mesma     — «Eles vão» · «3× 2–10 → Saoirse» · «de 6 a 30»;
+     4+ ou diferentes — «Eles vão» · «5 atacam · 3 em você» · «de 6 a 30»;
+                        nenhum em você: «5 atacam · nenhum em você», sem soma.
+   A soma é só do que pode vir EM VOCÊ, e só do que o motor já anunciou. */
+export function resumoDoQueElesVao(intencoes, heroi = "") {
+  const P = TIRA_DA_RODADA.palavras;
+  const lista = arr(intencoes).filter((i) => i && i.inimigo && obj(i.vista));
+  if (!lista.length) return null;
+  const n = lista.length;
+  const nomes = lista.map((i) => String(i.inimigo));
+  const retratos = nomes.slice(0, TIRA_DA_RODADA.retratosMax);
+  const mais = Math.max(0, n - TIRA_DA_RODADA.retratosMax);
+  const emVoce = heroi ? lista.filter((i) => i.vista.alvo === heroi && danoDe(i.vista)) : [];
+  let smin = 0, smax = 0;
+  for (const i of emVoce) { const d = danoDe(i.vista), g = golpesDe(i.vista); smin += d.min * g; smax += d.max * g; }
+  const soma = emVoce.length ? `de ${smin} a ${smax}` : "";
+  if (n === 1) {
+    const v = lista[0].vista;
+    return { rotulo: P.eleVai, frase: fraseDaIntencao(v), direita: nomes[0], perigo: !!heroi && v.alvo === heroi, retratos, mais: 0, abre: false, xTexto: "um" };
+  }
+  const v0 = lista[0].vista, d0 = danoDe(v0);
+  const chave = (v) => { const d = danoDe(v); return [v.tipo || "", v.alvo || "", d ? d.min : "", d ? d.max : "", golpesDe(v)].join("|"); };
+  const mesma = n <= TIRA_DA_RODADA.retratosMax && !!d0 && lista.every((i) => chave(i.vista) === chave(v0));
+  if (mesma) {
+    return { rotulo: P.elesVao, frase: `${n * golpesDe(v0)}× ${faixaDoDano(d0)}${v0.alvo ? ` → ${v0.alvo}` : ""}`, direita: soma,
+      perigo: !!heroi && v0.alvo === heroi, retratos, mais, abre: true, xTexto: "tres" };
+  }
+  const atacam = lista.filter((i) => danoDe(i.vista)).length;
+  const verbo = atacam === 1 ? P.ataca : P.atacam;
+  const frase = emVoce.length ? `${atacam} ${verbo} · ${emVoce.length} ${P.emVoce}` : `${atacam} ${verbo} · ${P.nenhum}`;
+  return { rotulo: P.elesVao, frase, direita: soma, perigo: emVoce.length > 0, retratos, mais, abre: true, xTexto: mais > 0 ? "comConta" : "tres" };
+}
+
+/* A NOTA ABERTA (§12 lacuna 2): uma linha por inimigo, na ordem da iniciativa
+   — o nome e «2–10 → Saoirse»; `emVoce` pinta de perigo (e está escrito). */
+export function linhasDaNota(intencoes, heroi = "") {
+  return arr(intencoes).filter((i) => i && i.inimigo && obj(i.vista)).map((i) => (
+    { nome: String(i.inimigo), texto: fraseDaIntencao(i.vista), emVoce: !!heroi && i.vista.alvo === heroi && !!danoDe(i.vista) }
+  ));
+}
+
+/* O ALVO MARCADO na zona: «O alvo · Rato Gigante 1» e «4 de 4 PV · dano 4–9 ·
+   abate 30 %» — os números da MESMA previsão que a carta e o «Agir» leem
+   (golpePorExtenso). */
+export function fraseDoAlvo({ nome = "", vida = null, vidaMax = null, dano = "", abate = null } = {}) {
+  const partes = [];
+  if (fin(vida) && fin(vidaMax)) partes.push(`${Math.max(0, Number(vida))} de ${Number(vidaMax)} PV`);
+  if (dano) partes.push(`dano ${dano}`);
+  if (fin(abate)) partes.push(`abate ${Math.round(Number(abate))} %`);
+  return { rotulo: nome ? `${TIRA_DA_RODADA.palavras.alvo} · ${nome}` : TIRA_DA_RODADA.palavras.alvo, frase: partes.join(" · ") };
+}
+
+/* QUEM FALA NA ZONA: a linha que acabou de chegar > o alvo marcado > «eles vão» */
+export function oQueAZonaDiz({ anuncio = false, alvo = false, elesVao = false } = {}) {
+  return anuncio ? "anuncio" : alvo ? "alvo" : elesVao ? "elesVao" : null;
+}
+
+/* O LACRE DA ABA: as linhas chegadas desde o último fecho; «9+» acima do teto */
+export function lacreDoRegistro(n) {
+  const k = Math.max(0, Math.floor(Number(n) || 0));
+  if (!k) return "";
+  return k > TIRA_DA_RODADA.tetoDoLacre ? `${TIRA_DA_RODADA.tetoDoLacre}+` : String(k);
+}
+
+/* ---------------- 2 · A FOLHA DA RODADA (§12 lacuna 1 e 2) ----------------
+   Toma o lugar da mão (363 × 166). Um estado só: null | "registro" | "nota". */
+export const FOLHA_DA_RODADA = Object.freeze({
+  x: 6, y: 568, largura: 363, altura: 166, cabecalho: 28,
+  linhaDoRegistro: 22, linhasDoRegistro: 6, linhaDaNota: 26, linhasDaNota: 5,
+  sombra: 10, alfaDaSombra: 0.2, trocaMs: 120,
+  xCabecalho: 12, yCabecalho: 8, xTexto: 16, recuoDireita: 12, ponto: 6, xPonto: 5,
+  retratoDaNota: 20, xRetratoDaNota: 10, xNomeDaNota: 38, resultado: 13,
+  rotuloDoRegistro: "A rodada", rotuloDaRodada: "Rodada", rotuloDaNota: "Nesta rodada, eles vão", fechar: "toque fora para fechar",
+  papel: Object.freeze({ chao: "pergaminho", borda: "pergaminhoBorda", raio: 3, sombra: "erguido" }),
+});
+
+/* PARA ONDE A FOLHA VAI. `evento`: "aba" · "zona" · "fora" · "esc" ·
+   "suaVez" · "reacao". A aba abre e fecha o registro; a zona abre a nota (ou
+   o registro, durante o anúncio de uma linha nova); só uma das duas fica
+   aberta, e tocar na outra troca. Fora, Esc, a vez que vira sua e a reação
+   que abre fecham. `abreNota`: false quando a zona não tem nota (1 inimigo). */
+export function proximaFolha(atual, evento, { anunciando = false, abreNota = true } = {}) {
+  const a = atual === "registro" || atual === "nota" ? atual : null;
+  if (evento === "aba") return a === "registro" ? null : "registro";
+  if (evento === "zona") {
+    if (anunciando) return "registro";
+    if (!abreNota) return a;
+    return a === "nota" ? null : "nota";
+  }
+  if (evento === "fora" || evento === "esc" || evento === "suaVez" || evento === "reacao") return null;
+  return a;
+}
+
+/* O REGISTRO GUARDA AS RODADAS. `historico`: [{ rodada, linhas }]; a rodada
+   que chega substitui a sua (a lista do turno deles cresce passo a passo e a
+   do fim da rodada é a mesma, inteira) e as outras ficam. Vazia não apaga. */
+export function juntaORegistro(historico, rodada, linhas) {
+  const h = arr(historico).filter((x) => x && fin(x.rodada));
+  const ls = arr(linhas).filter((l) => l && l.quem);
+  if (!fin(rodada) || !ls.length) return h;
+  const r = Number(rodada);
+  return [...h.filter((x) => Number(x.rodada) !== r), { rodada: r, linhas: ls }].sort((a, b) => a.rodada - b.rodada);
+}
+
+/* A CARA DO RESULTADO: dano em um dos nossos (perigo) · dano neles (tinta) ·
+   errou (a nota apagada) · o resto (aproximou-se, fugiu) também apagado */
+export function caraDaLinha(linha, nossos = []) {
+  const l = obj(linha) || {};
+  const diz = String(l.diz || "");
+  if (/\berr(ou|a)\b|\bfalh|\bimune\b/i.test(diz)) return "errou";
+  if (!/\d/.test(diz)) return "outro";
+  const n = new Set(arr(nossos).map(String));
+  return l.alvo && n.has(String(l.alvo)) ? "nos" : l.alvo ? "neles" : "outro";
+}
+
+/* AS LINHAS DA FOLHA, de cima para baixo: as rodadas antigas primeiro (com
+   o separador «Rodada N»), a de agora embaixo (o cabeçalho a nomeia).
+   `indice` conta só as linhas (0 = a mais antiga) — é com ele que se sabe
+   quais ainda não foram lidas. */
+export function linhasDaFolha(historico, { nossos = [] } = {}) {
+  const h = arr(historico).filter((x) => x && fin(x.rodada) && arr(x.linhas).length);
+  const out = [];
+  let i = 0;
+  h.forEach((x, k) => {
+    if (k < h.length - 1) out.push({ tipo: "rodada", rodada: Number(x.rodada) });
+    for (const l of arr(x.linhas)) {
+      if (!l || !l.quem) continue;
+      out.push({ tipo: "linha", indice: i++, quem: String(l.quem), alvo: l.alvo ? String(l.alvo) : "", resultado: String(l.diz || ""), cara: caraDaLinha(l, nossos) });
+    }
+  });
+  return { linhas: out, total: i, rodada: h.length ? Number(h[h.length - 1].rodada) : null };
+}
+
+/* ---------------- 3 · A VITÓRIA NO CELULAR (§12 lacuna 3) ----------------
+   Sem véu e sem cartas sobre o tapete: o título e o recibo na linha da tira,
+   as cartas no lugar da mão, os dois botões na última linha. */
+export const VITORIA_NO_CELULAR = Object.freeze({
+  titulo: Object.freeze({ x: 8, y: 479 }), recibo: Object.freeze({ direita: 367, y: 487, corpo: 14 }),
+  cartas: Object.freeze({ y: 568, largura: 104, altura: 146, entre: 8, passo: 112, xDaFila: 6, centraAte: 3, sombra: 12 }),
+  preco: Object.freeze({ y: 721 }),
+  recolher: Object.freeze({ x: 6, y: 744, largura: 150, altura: 60 }),
+  respirar: Object.freeze({ x: 162, y: 744, largura: 207, altura: 60, sozinho: 363 }),
+  tela: 375, margem: 6, alfaDaSombra: 0.42,
+  palavras: Object.freeze({ recolher: "Recolher tudo", respirar: "Respirar fundo →", nada: "nada ficou no chão" }),
+});
+
+/* AS CARTAS DO ESPÓLIO: 1 a 3 centradas (8 entre elas; uma só a x 136); 4 ou
+   mais em fila que corre a partir de x 6, passo 112 (três inteiras e 33 px da
+   quarta — o corte diz que há mais). */
+export function arranjoDoEspolio(n, tela = VITORIA_NO_CELULAR.tela) {
+  const C = VITORIA_NO_CELULAR.cartas;
+  const k = Math.max(0, Math.floor(Number(n) || 0));
+  if (!k) return { fila: false, x0: null, vazio: true };
+  if (k > C.centraAte) return { fila: true, x0: C.xDaFila, vazio: false };
+  const total = k * C.largura + (k - 1) * C.entre;
+  return { fila: false, x0: Math.round((Number(tela) - total) / 2), vazio: false };
+}
+
+/* A ÚLTIMA LINHA: «Recolher tudo» (150) + «Respirar fundo →» (207) enquanto há
+   o que recolher, com uma carta ou com nove; tudo recolhido, «Respirar fundo
+   →» toma a linha (363) e o preço perde a metade que já não vale. */
+export function ultimaLinhaDaVitoria(porRecolher) {
+  const V = VITORIA_NO_CELULAR;
+  const ha = Math.max(0, Number(porRecolher) || 0) > 0;
+  return { recolher: ha, larguraDoRespirar: ha ? V.respirar.largura : V.respirar.sozinho,
+    preco: ha ? CERIMONIA_DA_VITORIA.preco : CERIMONIA_DA_VITORIA.preco.split(" · ")[0] };
+}
+
+/* ---------------- 4 · A ETIQUETA DE DANO (§12 lacuna 4) ----------------
+   24 de altura (28 no crítico), 32 a 44 de largura (menor que a casa de 48),
+   sem toque, acima de tudo no tapete. 1100 ms; nada espera por ela. As
+   distâncias são as da casa de 48 da prancha, e escalam com a casa. */
+export const ETIQUETA_DE_DANO = Object.freeze({
+  altura: 24, alturaDoCritico: 28, larguraMinima: 32, larguraMaxima: 44, enchimento: 6, raio: 4,
+  casaDeReferencia: 48, emCima: 36, aoLado: 40, dentro: 12,
+  entraMs: 120, escalaInicial: 0.92, sobePx: 12, sobeMs: 240, ficaAteMs: 900, saiMs: 200, criticoMaisMs: 200,
+  letra: 16, entrelinha: 20, letraDoCritico: 18, entrelinhaDoCritico: 24, menos: "−",
+  caras: Object.freeze({
+    dano:    Object.freeze({ chao: "lacre", borda: "sobreLacre", px: 1, letra: "sobreLacre" }),
+    critico: Object.freeze({ chao: "lacre", borda: "amber", px: 2, letra: "sobreLacre" }),
+    errou:   Object.freeze({ chao: "ossoLume", borda: "tintaDoPergaminhoDim", px: 1, letra: "tintaDoPergaminhoDim" }),
+    cura:    Object.freeze({ chao: "musgoNoPergaminho", borda: "ossoLume", px: 1, letra: "ossoLume" }),
+  }),
+});
+
+/* ONDE POUSA (pela ordem): em cima — se a casa de cima existe, está na janela
+   (fora dela fica a régua presa) e não tem peça de pé; à direita, à esquerda
+   — se a casa existe, está na janela e não tem peça; senão dentro (a metade
+   de cima da própria peça: 44 × 24 cabe na casa de 48, não tapa vizinha
+   nenhuma por construção). Dano em mais de uma peça ao mesmo tempo: todas
+   dentro. Peça caída conta como casa livre (quem chama só manda as de pé).
+   `casa` {x, y}; `ocupadas` [{x, y}]; `janela` {x0, y0, x1, y1} (inclusiva). */
+export function ondePousaODano({ casa = null, ocupadas = [], janela = null, simultaneos = false } = {}) {
+  const c = obj(casa);
+  if (!c || !fin(c.x) || !fin(c.y) || simultaneos) return "dentro";
+  const J = obj(janela);
+  const naJanela = (x, y) => !J || (x >= J.x0 && x <= J.x1 && y >= J.y0 && y <= J.y1);
+  const tem = new Set(arr(ocupadas).filter((q) => q && fin(q.x) && fin(q.y)).map((q) => `${q.x},${q.y}`));
+  const livre = (x, y) => naJanela(x, y) && !tem.has(`${x},${y}`);
+  const x = Number(c.x), y = Number(c.y);
+  if (livre(x, y - 1)) return "cima";
+  if (livre(x + 1, y)) return "direita";
+  if (livre(x - 1, y)) return "esquerda";
+  return "dentro";
+}
+
+/* o centro da etiqueta a partir do centro da peça, em px, na casa de agora */
+export function deslocamentoDaEtiqueta(lugar, casaPx = ETIQUETA_DE_DANO.casaDeReferencia) {
+  const E = ETIQUETA_DE_DANO;
+  const k = (Number(casaPx) > 0 ? Number(casaPx) : E.casaDeReferencia) / E.casaDeReferencia;
+  if (lugar === "cima") return { dx: 0, dy: -E.emCima * k };
+  if (lugar === "direita") return { dx: E.aoLado * k, dy: 0 };
+  if (lugar === "esquerda") return { dx: -E.aoLado * k, dy: 0 };
+  return { dx: 0, dy: -E.dentro * k };
+}
+
+/* A CARA E O TEXTO, a partir da variação do golpe (variacaoDoGolpe):
+   «−7» (o menos verdadeiro, U+2212), «errou», «+6». O crítico fica 200 ms a mais. */
+export function etiquetaDoGolpe(variacao) {
+  const v = obj(variacao);
+  if (!v) return null;
+  const E = ETIQUETA_DE_DANO;
+  const t = String(v.texto || "");
+  const cara = v.tom === "erro" ? "errou" : v.tom === "cura" || /^\+/.test(t) ? "cura" : v.critico ? "critico" : "dano";
+  const texto = cara === "errou" ? t : t.replace(/^-/, E.menos);
+  const saiEm = E.ficaAteMs + (cara === "critico" ? E.criticoMaisMs : 0);
+  return { cara, texto, saiEm, dura: saiEm + E.saiMs, altura: cara === "critico" ? E.alturaDoCritico : E.altura };
+}
+
+/* ---------------- 5 · A CARTA ESTREITA, 85 × 80 (§12 lacuna 5) ----------------
+   A linha do custo = a peça do recurso (12 px) + 4 + uma frase curta; sem
+   peça = não gasta nada da vez. Nunca reticências, nunca duas linhas, nunca
+   letra menor: o que não cabe em 75 px não vai para a carta. */
+export const CUSTO_NA_CARTA_ESTREITA = Object.freeze({
+  peca: 12, entre: 4, larguraUtil: 75, margem: 5, altura: 18, tetoDeLetras: 11,
+  /* o recurso da vez → a peça (as quatro de O_QUE_RESTA_NA_VEZ, e as espadas
+     dos golpes que você leva) */
+  pecaDoRecurso: Object.freeze({ acao: "acao", bonus: "bonus", reacao: "reacao", movimento: "passo" }),
+  glifoDaPeca: Object.freeze({ passo: "passo", golpe: "espadas" }),
+  texto: Object.freeze({ acao: "ação", bonus: "bônus", reacao: "reação" }),
+  item: "tem", esperar: "passa a vez", fugir: "sai da luta", golpe: "golpe", golpes: "golpes", ate: "até", metros: "m",
+});
+
+/* as razões da carta impedida, de até 11 letras (a razão por extenso fica no
+   «Agir»). As chaves são as de RECUSAS_DO_VERBO (tela-de-batalha.js). */
+export const RAZAO_NA_CARTA_ESTREITA = Object.freeze({
+  semPasso: "sem passo", semSaida: "sem saída", semAlcance: "longe", semAlvo: "sem alvo",
+  fimDaLuta: "fim da luta", mestreFala: "espere", inconsciente: "caído", jaAgiu: "já agiu",
+  bolsaVazia: "bolsa vazia", outra: "impedida",
+});
+
+const metrosCurtos = (m) => String(Math.round(Number(m) * 10) / 10).replace(".", ",");
+
+/* O CUSTO CURTO de uma carta: { peca, texto }. `estado`: { recurso (o da
+   vez: acao · bonus · reacao · movimento), passoM (o que resta), passoTotal,
+   gastoM (o que o destino armado gasta), nItens, golpes (os golpes livres da
+   fuga, quando o motor os diz) }. */
+export function custoCurto(id, { recurso = null, passoM = null, passoTotal = null, gastoM = null, nItens = null, golpes = null } = {}) {
+  const C = CUSTO_NA_CARTA_ESTREITA;
+  if (id === "item") return { peca: null, texto: `${C.item} ${Math.max(0, Number(nItens) || 0)}` };
+  if (id === "esperar") return { peca: null, texto: C.esperar };
+  if (id === "fugir") {
+    const g = Math.max(0, Math.floor(Number(golpes) || 0));
+    return g > 0 ? { peca: "golpe", texto: `${g} ${g === 1 ? C.golpe : C.golpes}` } : { peca: null, texto: C.fugir };
+  }
+  if (recurso === "movimento") {
+    if (fin(gastoM) && fin(passoTotal)) return { peca: "passo", texto: `${metrosCurtos(gastoM)}/${metrosCurtos(passoTotal)} ${C.metros}` };
+    if (fin(passoM)) return { peca: "passo", texto: `${C.ate} ${metrosCurtos(passoM)} ${C.metros}` };
+    return { peca: "passo", texto: "" };
+  }
+  if (C.texto[recurso]) return { peca: C.pecaDoRecurso[recurso], texto: C.texto[recurso] };
+  return { peca: null, texto: "" };
+}
+
+/* A RAZÃO CURTA: a frase longa da regra → a de até 11 letras */
+export function razaoCurta(longa) {
+  const R = RAZAO_NA_CARTA_ESTREITA;
+  const s = String(longa || "");
+  if (!s) return "";
+  for (const [k, v] of Object.entries(RECUSAS_DO_VERBO)) if (v === s && R[k]) return R[k];
+  if (s === MAO_DE_ACOES.item.vazia) return R.bolsaVazia;
+  return s.length <= CUSTO_NA_CARTA_ESTREITA.tetoDeLetras ? s : R.outra;
 }

@@ -3284,11 +3284,13 @@ const FORMA_DO_PIP = {
   bonus: (E) => <polygon points={`12,${12 - E.bonus[1] / 2} ${12 + E.bonus[0] / 2},${12 + E.bonus[1] / 2} ${12 - E.bonus[0] / 2},${12 + E.bonus[1] / 2}`} />,
   reacao: (E) => <rect x={12 - E.reacao / 2} y={12 - E.reacao / 2} width={E.reacao} height={E.reacao} transform="rotate(45 12 12)" />,
 };
-export function PipDoRecurso({ recurso, estado = "livre", tamanho = ECONOMIA_DA_VEZ.lado }) {
+/* `cor` (F4 §12 lacuna 5): a mesma peça na linha do custo da carta estreita,
+   pintada na cor do texto do custo — uma fonte só para a carta e a faixa */
+export function PipDoRecurso({ recurso, estado = "livre", tamanho = ECONOMIA_DA_VEZ.lado, cor = null }) {
   const E = ECONOMIA_DA_VEZ;
   const forma = FORMA_DO_PIP[recurso];
   if (!forma) return null;
-  const pinta = estado === "livre" ? { fill: T.amber, stroke: T.amber, strokeWidth: 1 }
+  const pinta = cor ? { fill: cor, stroke: cor, strokeWidth: 1 } : estado === "livre" ? { fill: T.amber, stroke: T.amber, strokeWidth: 1 }
     : estado === "emJogo" ? { fill: alfa(T.amber, E.emJogo), stroke: T.amber, strokeWidth: 1.5, strokeDasharray: E.tracejado.join(" ") }
       : { fill: "none", stroke: T.lineStrong, strokeWidth: 1.5 };
   return (

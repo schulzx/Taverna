@@ -23,9 +23,10 @@
    luta sem o jogador ver o que ganhou (a regra de A1, que fica).
    ============================================================ */
 import React from "react";
-import { T, ALVOS, TIPOS, alfa, SOMBRA_DA_MESA } from "./estilo.js";
+import { T, ALVOS, TIPOS, alfa, SOMBRA_DA_MESA, BOTAO_DA_MESA } from "./estilo.js";
 import { Glifo, Recibo } from "./ui.jsx";
-import { CERIMONIA_DA_VITORIA as CV, CARTA_DE_ACAO, ordemDoEspolio, CARTA_DO_ESPOLIO as CE, faceDoEspolio } from "./luta-na-mesa.js";
+import { CERIMONIA_DA_VITORIA as CV, CARTA_DE_ACAO, ordemDoEspolio, CARTA_DO_ESPOLIO as CE, faceDoEspolio,
+  VITORIA_NO_CELULAR, TIRA_DA_RODADA, arranjoDoEspolio, ultimaLinhaDaVitoria } from "./luta-na-mesa.js";
 import { CasaDeItem } from "./pecas-da-mesa.jsx";
 import { letraDaMesa } from "./mesa-do-mestre.js";
 
@@ -194,5 +195,101 @@ export function SaidaDaLuta({ aoSair, telefone = false, comChao = false }) {
         {comChao ? CV.preco : CV.preco.split(" · ")[0]}
       </span>
     </div>
+  );
+}
+
+/* ============================================================
+   F4 §12 lacuna 3 · A VITÓRIA NO CELULAR (prancha
+   mente/figma/F4-luta-celular-12c.png): o tapete fica inteiro e sem véu. O
+   título e o recibo moram na linha da tira da rodada; as cartas (104 × 146)
+   no lugar da mão; «Recolher tudo» e «Respirar fundo →» fixos na última
+   linha, com uma carta ou com nove. Devolve DUAS peças irmãs, com `order` 2
+   e 3: a coluna do celular é `display: contents`, e a faixa do herói (order
+   2, depois no DOM) fica entre as duas — os PV com que se sai da luta.
+   As medidas e as contas moram em luta-na-mesa.js (VITORIA_NO_CELULAR,
+   arranjoDoEspolio, ultimaLinhaDaVitoria), provadas em Node.
+   ============================================================ */
+export function VitoriaNoCelular({ desfecho = "encerrada", recibo = [], chao = [], linha = "", aoRecolher, aoSair }) {
+  const V = VITORIA_NO_CELULAR;
+  const d = DESFECHOS_NA_MESA[desfecho] || DESFECHOS_NA_MESA.encerrada;
+  const reduzido = React.useMemo(parado, []);
+  const [posta, pular] = usarCerimoniaPosta(reduzido);
+  const tituloRef = React.useRef(null);
+  const filaRef = React.useRef(null);
+  const [haMais, setHaMais] = React.useState(false);
+  const [recolhidas, setRecolhidas] = React.useState([]);
+  React.useEffect(() => { try { if (tituloRef.current) tituloRef.current.focus(); } catch (e) { /* sem foco, a tela continua */ } }, []);
+  const chips = (Array.isArray(recibo) ? recibo : []).filter((c) => c && typeof c.texto === "string" && (d.recibo === "tudo" || Number(c.delta) < 0));
+  const coisas = (() => {
+    const vindas = (Array.isArray(chao) ? chao : []).filter((c) => c && c.id != null);
+    const ids = new Set(vindas.map((c) => String(c.id)));
+    return ordemDoEspolio([...vindas, ...recolhidas.filter((c) => !ids.has(String(c.id)))]);
+  })();
+  const recolhida = (c) => !!c.recolhido || recolhidas.some((r) => String(r.id) === String(c.id));
+  const recolher = (c) => {
+    try {
+      setRecolhidas((rs) => (rs.some((r) => String(r.id) === String(c.id)) ? rs : [...rs, { id: c.id, nome: c.nome, raridade: c.raridade }]));
+      if (aoRecolher) aoRecolher(c.id);
+    } catch (e) { console.warn("VitoriaNoCelular: recolher falhou", e); }
+  };
+  /* recolhida sai da fila (no celular a carta não fica a dizer «na bolsa»: a
+     prancha 12c tem «nada ficou no chão» quando tudo foi recolhido) */
+  const noChao = d.chao ? coisas.filter((c) => !recolhida(c)) : [];
+  const arranjo = arranjoDoEspolio(noChao.length);
+  const ultima = ultimaLinhaDaVitoria(noChao.length);
+  const medir = React.useCallback(() => {
+    try { const el = filaRef.current; setHaMais(!!el && el.scrollLeft + el.clientWidth < el.scrollWidth - 1); } catch { /* sem sombra */ }
+  }, []);
+  React.useLayoutEffect(() => { medir(); }, [noChao.length, arranjo.fila, medir]);
+  const C = V.cartas;
+  const botao = { height: V.recolher.altura, borderRadius: BOTAO_DA_MESA.principal.raio, cursor: "pointer" };
+  return (
+    <>
+      <div data-vitoria-titulo="" className="flex items-baseline justify-between min-w-0 w-full shrink-0" style={{ order: 2, minHeight: TIRA_DA_RODADA.altura, gap: 8, padding: `0 ${V.tela - V.recibo.direita - V.margem}px 0 ${V.titulo.x - V.margem}px` }}>
+        <h3 ref={tituloRef} tabIndex={-1} role="status" className="tv-fim-entra" style={{ ...letraDaMesa("titulo"), color: T.ink, margin: 0, whiteSpace: "nowrap" }}>{d.titulo}</h3>
+        {chips.length > 0 && (
+          <span aria-label={chips.map((c) => c.falado || c.texto).join(", ")} className="truncate"
+            style={{ fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: V.recibo.corpo, color: T.inkMeio, minWidth: 0 }}>{chips.map((c) => c.texto).join(" · ")}</span>
+        )}
+      </div>
+      <section data-vitoria-no-celular={desfecho} onPointerDown={posta ? undefined : pular} className="flex flex-col shrink-0 min-w-0 w-full" style={{ order: 3, gap: 6 }}>
+        <div className="relative w-full" style={{ height: C.altura }}>
+          {noChao.length > 0 ? (
+            <div ref={filaRef} onScroll={medir} className={`flex h-full w-full tv-sem-barra ${arranjo.fila ? "overflow-x-auto" : "justify-center overflow-hidden"}`}
+              style={{ gap: C.passo - C.largura, scrollSnapType: arranjo.fila ? "x mandatory" : undefined }}>
+              {noChao.map((c) => (
+                <span key={String(c.id)} className="shrink-0" style={{ scrollSnapAlign: arranjo.fila ? "start" : undefined }}>
+                  <CartaDoEspolio coisa={c} recolhida={false} telefone posta={posta || reduzido} aoRecolher={() => recolher(c)} />
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="flex items-center justify-center h-full m-0" style={{ ...letraDaMesa("notaDoMestre"), color: T.inkMeio, textAlign: "center" }}>
+              {d.chao ? V.palavras.nada : (typeof linha === "string" ? linha.trim() : "")}
+            </p>
+          )}
+          {arranjo.fila && haMais && (
+            <span aria-hidden="true" style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: C.sombra, pointerEvents: "none",
+              background: `linear-gradient(to left, ${alfa(T.veuDaNoite, V.alfaDaSombra)}, ${alfa(T.veuDaNoite, 0)})` }} />
+          )}
+        </div>
+        <span className="text-center" style={{ ...letraDaMesa("servico"), textTransform: "none", color: T.inkMeio }}>{ultima.preco}</span>
+        <div className="flex w-full" style={{ gap: V.respirar.x - V.recolher.x - V.recolher.largura }}>
+          {ultima.recolher && (
+            <button type="button" onClick={() => noChao.forEach(recolher)} className="tv-anel-foco shrink-0"
+              style={{ ...botao, width: V.recolher.largura, background: "transparent", border: `${BOTAO_DA_MESA.secundario.aro}px solid ${T.latao}`, color: T.ink,
+                fontFamily: "'Spectral', Georgia, serif", fontWeight: 500, fontSize: BOTAO_DA_MESA.secundario.letra }}>
+              {V.palavras.recolher}
+            </button>
+          )}
+          <button type="button" onClick={aoSair} className="tv-anel-foco min-w-0"
+            style={{ ...botao, flex: "1 1 0", maxWidth: ultima.larguraDoRespirar, marginLeft: ultima.recolher ? 0 : "auto", marginRight: ultima.recolher ? 0 : "auto", background: T.amber,
+              border: `${BOTAO_DA_MESA.principal.aro}px solid ${T.brasaNoPergaminho}`, color: T.onAccent,
+              fontFamily: "'Cinzel', Georgia, serif", fontWeight: 700, fontSize: BOTAO_DA_MESA.principal.letra, textTransform: "uppercase", letterSpacing: ".04em" }}>
+            {V.palavras.respirar}
+          </button>
+        </div>
+      </section>
+    </>
   );
 }

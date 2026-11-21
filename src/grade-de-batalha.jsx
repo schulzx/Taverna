@@ -84,8 +84,10 @@ import { intencoesPorAlvo, chaoDasRegioes, enderecoDoLadrilho, VEU_DO_LADRILHO }
 import { ETIQUETA_DA_INTENCAO } from "./estilo.js";
 /* V6 parte 2 (F4 «TAPETE» e «PECA_NO_TAPETE»): o couro com a costura e as
    tachas, a régua gravada na faixa, e a peça cujo aro é a vida */
-import { TAPETE, PECA_NO_TAPETE, estadoDaPeca, contasDosInimigos, faixaDaRegua, ladoComARegua } from "./luta-na-mesa.js";
+import { TAPETE, PECA_NO_TAPETE, estadoDaPeca, contasDosInimigos, faixaDaRegua, ladoComARegua,
+  ETIQUETA_DE_DANO, ondePousaODano, deslocamentoDaEtiqueta, etiquetaDoGolpe } from "./luta-na-mesa.js";
 import { SOMBRA_DA_MESA } from "./estilo.js";
+import { letraDaMesa } from "./mesa-do-mestre.js";
 
 const K = (x, y) => `${x},${y}`;
 
@@ -633,6 +635,34 @@ function NumeroDoGolpe({ variacao, reduzido = false }) {
         WebkitTextStroke: erro ? undefined : `${GOLPE_SENTIDO.numero.contorno / 2}px ${T.bg}`, paintOrder: "stroke fill" }}>
       {variacao.texto}
       {variacao.etiqueta && <span className="tv-mono" style={{ fontSize: TIPOS.piso, letterSpacing: 2, fontWeight: 700, color: T.amberSoft, WebkitTextStroke: "0" }}>{variacao.etiqueta}</span>}
+    </span>
+  );
+}
+
+/* F4 §12 lacuna 4 · A ETIQUETA DE DANO DO CELULAR (prancha
+   mente/figma/F4-luta-celular-12d.png): no celular o número do golpe vira uma
+   etiqueta de 24 (28 no crítico), 32 a 44 de largura — menor que a casa —, sem
+   toque e acima de tudo no tapete. Onde pousa é ondePousaODano (luta-na-mesa.js,
+   provado em Node); aqui só se pinta. Três caixas, três tempos: entra (opacidade
+   e escala), sobe 12 px, sai. Nada espera por ela. */
+function EtiquetaDeDano({ etiqueta, reduzido = false }) {
+  if (!etiqueta) return null;
+  const E = ETIQUETA_DE_DANO;
+  const C = E.caras[etiqueta.cara] || E.caras.dano;
+  const critico = etiqueta.cara === "critico", errou = etiqueta.cara === "errou";
+  const vars = { "--tv-entra-ms": `${E.entraMs}ms`, "--tv-escala": E.escalaInicial, "--tv-sobe-ms": `${E.sobeMs}ms`, "--tv-sobe-px": `${E.sobePx}px`,
+    "--tv-sai-em": `${etiqueta.saiEm}ms`, "--tv-sai-ms": `${E.saiMs}ms`, "--tv-total-ms": `${etiqueta.dura}ms` };
+  return (
+    <span aria-hidden="true" className={reduzido ? "tv-etiqueta-seca" : "tv-etiqueta-sai"} style={{ display: "inline-block", pointerEvents: "none", ...vars }}>
+      <span className={reduzido ? undefined : "tv-etiqueta-sobe"} style={{ display: "inline-block" }}>
+        <span className={`${reduzido ? "" : "tv-etiqueta-entra "}${errou ? "tv-body" : ""}`}
+          style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", height: etiqueta.altura, minWidth: E.larguraMinima, maxWidth: E.larguraMaxima,
+            padding: `0 ${E.enchimento}px`, borderRadius: E.raio, background: T[C.chao], border: `${C.px}px solid ${T[C.borda]}`, boxShadow: SOMBRA_DA_MESA.peca, whiteSpace: "nowrap", overflow: "hidden",
+            ...(errou ? { ...letraDaMesa("notaDoMestre"), color: T[C.letra] }
+              : { fontFamily: "'Spectral', Georgia, serif", fontWeight: 700, fontSize: critico ? E.letraDoCritico : E.letra, lineHeight: `${critico ? E.entrelinhaDoCritico : E.entrelinha}px`, color: T[C.letra] }) }}>
+          {etiqueta.texto}
+        </span>
+      </span>
     </span>
   );
 }
@@ -2475,7 +2505,35 @@ export function GridDeBatalha({ combate, grupo = [], heroiFicha = null, previsao
             </span>
           );
         })}
-        {golpesNaMesa.map((gq) => {
+        {/* F4 §12 lacuna 4: no celular, a etiqueta de dano — a mais nova de cada
+            peça (a nova substitui a velha, seca), e com mais de uma peça ferida ao
+            mesmo tempo todas pousam «dentro» */}
+        {presa && (() => {
+          try {
+            const heroiNomeAgora = (heroiFicha && heroiFicha.nome) || heroiNome;
+            const ultimas = [];
+            for (let i = golpesNaMesa.length - 1; i >= 0; i--) if (!ultimas.some((u) => u.alvo === golpesNaMesa[i].alvo)) ultimas.push(golpesNaMesa[i]);
+            const dePe = [heroi, ...aliados, ...inimigos].filter((e) => e && e.x != null && !(Number(e.vida) <= 0 && e !== heroi));
+            const janela = vista && Array.isArray(vista.janela)
+              ? { x0: vista.x0 || 0, y0: vista.y0 || 0, x1: Math.min(g.largura - 1, (vista.x0 || 0) + vista.janela[0] - 1), y1: Math.min(g.altura - 1, (vista.y0 || 0) + vista.janela[1] - 1) }
+              : { x0: 0, y0: 0, x1: g.largura - 1, y1: g.altura - 1 };
+            const ladoPx = Math.max(1, ladoEmPx(grande));
+            return ultimas.map((gq) => {
+              const ent = gq.alvo === heroiNomeAgora ? heroi : inimigos.find((x) => x.nome === gq.alvo) || aliados.find((x) => x.nome === gq.alvo) || caidosComCasa.find((x) => x.nome === gq.alvo);
+              if (!ent || ent.x == null) return null;
+              const n = ladoDe(ent);
+              const lugar = ondePousaODano({ casa: { x: ent.x, y: ent.y }, ocupadas: dePe.filter((e) => e !== ent).map((e) => ({ x: e.x, y: e.y })), janela, simultaneos: ultimas.length > 1 });
+              const d = deslocamentoDaEtiqueta(lugar, ladoPx);
+              return (
+                <span key={`et${gq.chave}`} data-etiqueta-de-dano={lugar} style={{ position: "absolute", zIndex: 6, pointerEvents: "none", left: `calc(${((ent.x + n / 2) / g.largura) * 100}% + ${d.dx}px)`,
+                  top: `calc(${((ent.y + n / 2) / g.altura) * 100}% + ${d.dy}px)`, transform: "translate(-50%, -50%)" }}>
+                  <EtiquetaDeDano etiqueta={etiquetaDoGolpe(gq)} reduzido={parado} />
+                </span>
+              );
+            });
+          } catch (e) { console.warn("GridDeBatalha: a etiqueta de dano não pousou", e); return null; }
+        })()}
+        {!presa && golpesNaMesa.map((gq) => {
           const ehHeroi = gq.alvo === ((heroiFicha && heroiFicha.nome) || heroiNome);
           const ent = ehHeroi ? heroi : inimigos.find((x) => x.nome === gq.alvo) || aliados.find((x) => x.nome === gq.alvo) || caidosComCasa.find((x) => x.nome === gq.alvo);
           if (!ent || ent.x == null) return null;

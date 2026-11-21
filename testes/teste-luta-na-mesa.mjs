@@ -19,7 +19,11 @@ import {
   MESA_DA_LUTA, linhasDeElesVao, O_QUE_RESTA_NA_VEZ, faixaDaRegua, ladoComARegua,
   REACAO_NA_MAO, alturaDaVela, larguraDaCartaDaReacao, oQueFicaDaReacao,
   CARTA_DO_ESPOLIO, faceDoEspolio,
+  TIRA_DA_RODADA, FOLHA_DA_RODADA, VITORIA_NO_CELULAR, ETIQUETA_DE_DANO, CUSTO_NA_CARTA_ESTREITA, RAZAO_NA_CARTA_ESTREITA,
+  resumoDoQueElesVao, linhasDaNota, fraseDoAlvo, oQueAZonaDiz, lacreDoRegistro, proximaFolha, juntaORegistro, caraDaLinha, linhasDaFolha,
+  arranjoDoEspolio, ultimaLinhaDaVitoria, ondePousaODano, deslocamentoDaEtiqueta, etiquetaDoGolpe, custoCurto, razaoCurta,
 } from "../src/luta-na-mesa.js";
+import { RECUSAS_DO_VERBO } from "../src/tela-de-batalha.js";
 import { REACOES, resolverReacao } from "../src/reacoes.js";
 import { faceMinimaQueBasta, golpePorExtenso } from "../src/batalha-na-tela.js";
 import { previsaoDoAtaque, facesQueAcertam } from "../src/previsao.js";
@@ -278,8 +282,96 @@ console.log("\n17. F4 §10 passo 7 · o celular");
   const REAx = ler("src/painel-reacao.jsx");
   t("a mão de 2 × 4 de 85 × 80 e a jogada (pena + «Agir») na última linha", /<MaoDeAcoes cartas=\{cartas\} tamanho="celular" aoTocar=\{tocarCarta\} \/>/.test(TELA) && /<AJogada tamanho="celular"/.test(TELA));
   t("a folha «Atacar · Cancelar» aposentou-se no celular (só o arranjo de antes, abaixo de 768, a teria)", /acaoDoFim \|\| acaoDoTelefone \|\| acao/.test(TELA));
-  t("a reação no celular toma o lugar da mão, no fluxo — nunca por cima da faixa do herói", /data-reacao-no-celular=""/.test(TELA) && /p\.reacao \? null : <MaoDeAcoes/.test(TELA) && /\{ intencaoDe, caixa: caixaDaMao, celular: true \}/.test(TELA));
+  /* F4 §12 (20/11): entre a reação e a mão entrou a folha da rodada — a reação
+     continua a ganhar (p.reacao vem antes), e a folha só existe sem ela */
+  t("a reação no celular toma o lugar da mão, no fluxo — nunca por cima da faixa do herói", /data-reacao-no-celular=""/.test(TELA) && /p\.reacao \? null : folhaAberta \|\| <MaoDeAcoes/.test(TELA) && /\{ intencaoDe, caixa: caixaDaMao, celular: true \}/.test(TELA));
   t("a carta da reação no celular é compacta: o nome em duas linhas e «leva 1–4»", /if \(compacta\) \{/.test(REAx) && /P\.levaCurto/.test(REAx));
+}
+
+console.log("\n18. F4 §12 · a luta no celular — as cinco lacunas (pranchas 12a–12e)");
+{
+  const TR = TIRA_DA_RODADA, FR = FOLHA_DA_RODADA, V = VITORIA_NO_CELULAR, E = ETIQUETA_DE_DANO, CC = CUSTO_NA_CARTA_ESTREITA;
+  /* lacuna 1 · a tira e a folha */
+  t("a tira: zona 313 + 6 + aba 44 = 363 (a coluna do celular), altura 44, em y 474", TR.zona + TR.entre + TR.aba === 363 && TR.altura === 44 && TR.y === 474);
+  t("o anúncio fica 2400 ms; entra em 180 ms de 8 px, volta em 120; lacre de 18 com teto 9", TR.anuncioMs === 2400 && TR.entradaMs === 180 && TR.entradaPx === 8 && TR.voltaMs === 120 && TR.lacre === 18 && TR.tetoDoLacre === 9);
+  t("a folha 363 × 166 em (6, 568): cabeçalho 28 + 6 linhas de 22 (registro) ou 5 de 26 (nota)", FR.largura === 363 && FR.altura === 166 && FR.x === 6 && FR.y === 568
+    && FR.cabecalho + FR.linhasDoRegistro * FR.linhaDoRegistro <= FR.altura && FR.cabecalho + FR.linhasDaNota * FR.linhaDaNota <= FR.altura && FR.sombra === 10 && FR.trocaMs === 120);
+  t("o lacre: vazio sem linhas, o número até 9, «9+» acima", lacreDoRegistro(0) === "" && lacreDoRegistro(2) === "2" && lacreDoRegistro(9) === "9" && lacreDoRegistro(12) === "9+");
+  t("a folha: a aba abre e fecha o registro; a zona abre a nota e troca", proximaFolha(null, "aba") === "registro" && proximaFolha("registro", "aba") === null
+    && proximaFolha(null, "zona") === "nota" && proximaFolha("nota", "zona") === null && proximaFolha("registro", "zona") === "nota" && proximaFolha("nota", "aba") === "registro");
+  t("a folha: durante o anúncio a zona abre o registro; sem nota (1 inimigo) a zona não abre nada", proximaFolha(null, "zona", { anunciando: true }) === "registro" && proximaFolha(null, "zona", { abreNota: false }) === null);
+  t("a folha: fora, Esc, a vez que vira sua e a reação fecham", ["fora", "esc", "suaVez", "reacao"].every((ev) => proximaFolha("registro", ev) === null && proximaFolha("nota", ev) === null));
+  const r1 = [{ quem: "Saoirse", alvo: "Rato Gigante 1", diz: "errou" }, { quem: "Rato Gigante 1", alvo: "Saoirse", diz: "4 de dano" }];
+  const h1 = juntaORegistro([], 1, r1);
+  const h2 = juntaORegistro(h1, 2, [{ quem: "Nolan", alvo: "Rato Gigante 2", diz: "7 de dano" }]);
+  const h3 = juntaORegistro(h2, 2, [{ quem: "Nolan", alvo: "Rato Gigante 2", diz: "7 de dano" }, { quem: "Rato Gigante 3", alvo: "Saoirse", diz: "6 de dano" }]);
+  t("o registro guarda as rodadas: a mesma rodada substitui-se (cresce passo a passo), vazia não apaga", h3.length === 2 && h3[1].linhas.length === 2 && juntaORegistro(h3, 2, []).length === 2 && juntaORegistro(h3, 3, null)[1].linhas.length === 2);
+  const lf = linhasDaFolha(h3, { nossos: ["Saoirse", "Nolan"] });
+  t("as linhas da folha: a rodada antiga em cima com o separador, a de agora embaixo, sem separador", lf.total === 4 && lf.rodada === 2 && lf.linhas[0].tipo === "rodada" && lf.linhas[0].rodada === 1
+    && lf.linhas.filter((l) => l.tipo === "rodada").length === 1 && lf.linhas[lf.linhas.length - 1].quem === "Rato Gigante 3", J(lf.linhas));
+  t("as três caras: dano em um dos nossos · dano neles · errou (e o resto apagado)", caraDaLinha(r1[1], ["Saoirse"]) === "nos" && caraDaLinha({ alvo: "Rato", diz: "5 de dano" }, ["Saoirse"]) === "neles"
+    && caraDaLinha(r1[0], ["Saoirse"]) === "errou" && caraDaLinha({ quem: "Lobo", alvo: "", diz: "aproximou-se" }, []) === "outro");
+  t("na zona: o anúncio ganha do alvo, o alvo ganha de «eles vão»", oQueAZonaDiz({ anuncio: true, alvo: true, elesVao: true }) === "anuncio" && oQueAZonaDiz({ alvo: true, elesVao: true }) === "alvo" && oQueAZonaDiz({ elesVao: true }) === "elesVao" && oQueAZonaDiz({}) === null);
+  /* lacuna 2 · «eles vão» com 1, 3 e 5 */
+  const rato = (n, alvo = "Saoirse") => ({ inimigo: `Rato Gigante ${n}`, vista: { tipo: "atacar", alvo, golpes: 1, dano: { min: 2, max: 10 } } });
+  const um = resumoDoQueElesVao([{ inimigo: "Rato Gigante", vista: { tipo: "atacar", alvo: "Saoirse", golpes: 1, dano: { min: 2, max: 10 } } }], "Saoirse");
+  t("1 inimigo: «Ele vai» · «2–10 → Saoirse» · o nome à direita · sem nota", um.rotulo === "Ele vai" && um.frase === "2–10 → Saoirse" && um.direita === "Rato Gigante" && !um.abre && um.perigo && um.xTexto === "um", J(um));
+  const tres = resumoDoQueElesVao([1, 2, 3].map((n) => rato(n)), "Saoirse");
+  t("3 iguais: «Eles vão» · «3× 2–10 → Saoirse» · «de 6 a 30» · com nota", tres.rotulo === "Eles vão" && tres.frase === "3× 2–10 → Saoirse" && tres.direita === "de 6 a 30" && tres.abre && tres.retratos.length === 3 && tres.mais === 0 && tres.xTexto === "tres", J(tres));
+  const cinco = resumoDoQueElesVao([rato(1), rato(2), rato(3), rato(4, "Nolan"), rato(5, "Nolan")], "Saoirse");
+  t("5 mistos: três retratos e «+2» · «5 atacam · 3 em você» · «de 6 a 30»", cinco.frase === "5 atacam · 3 em você" && cinco.direita === "de 6 a 30" && cinco.mais === 2 && cinco.retratos.length === 3 && cinco.xTexto === "comConta" && cinco.perigo, J(cinco));
+  const nenhum = resumoDoQueElesVao([rato(1, "Nolan"), rato(2, "Nolan"), rato(3, "Nolan"), rato(4, "Nolan")], "Saoirse");
+  t("nenhum em você: «4 atacam · nenhum em você», em tinta, sem a soma", nenhum.frase === "4 atacam · nenhum em você" && nenhum.direita === "" && !nenhum.perigo, J(nenhum));
+  t("sem intenção, sem resumo (lista suja não estoura)", resumoDoQueElesVao(null, "x") === null && resumoDoQueElesVao([null, {}], "x") === null);
+  const nota = linhasDaNota([rato(1), rato(4, "Nolan")], "Saoirse");
+  t("a nota: uma linha por inimigo, «em você» marcado (perigo) e o outro em tinta", nota.length === 2 && nota[0].texto === "2–10 → Saoirse" && nota[0].emVoce && !nota[1].emVoce && nota[1].texto === "2–10 → Nolan");
+  const fa = fraseDoAlvo({ nome: "Rato Gigante 1", vida: 4, vidaMax: 4, dano: "4–9", abate: 30 });
+  t("o alvo marcado: «O alvo · Rato Gigante 1» · «4 de 4 PV · dano 4–9 · abate 30 %»", fa.rotulo === "O alvo · Rato Gigante 1" && fa.frase === "4 de 4 PV · dano 4–9 · abate 30 %", J(fa));
+  /* lacuna 3 · a vitória */
+  t("as cartas 104 × 146 em y 568, passo 112; 1 a 3 centradas (uma só a x 136); 4+ em fila a partir de x 6", V.cartas.largura === 104 && V.cartas.altura === 146 && V.cartas.passo === 112 && V.cartas.y === 568
+    && arranjoDoEspolio(1).x0 === 136 && !arranjoDoEspolio(3).fila && arranjoDoEspolio(4).fila && arranjoDoEspolio(4).x0 === 6 && arranjoDoEspolio(0).vazio);
+  t("na fila de 4+: três inteiras e 33 px da quarta", V.tela - V.cartas.xDaFila - 3 * V.cartas.passo === 33);
+  t("a última linha: «Recolher tudo» 150 + «Respirar fundo →» 207 com uma carta ou nove; sem cartas, 363 e o preço curto",
+    ultimaLinhaDaVitoria(1).recolher && ultimaLinhaDaVitoria(9).larguraDoRespirar === 207 && !ultimaLinhaDaVitoria(0).recolher && ultimaLinhaDaVitoria(0).larguraDoRespirar === 363
+    && ultimaLinhaDaVitoria(0).preco === "volta à página" && V.recolher.largura + (V.respirar.x - V.recolher.x - V.recolher.largura) + V.respirar.largura === V.respirar.sozinho);
+  /* lacuna 4 · a etiqueta de dano */
+  t("a etiqueta: 24 (28 no crítico), 32 a 44 de largura (menor que a casa de 48), 1100 ms (+200 no crítico)", E.altura === 24 && E.alturaDoCritico === 28 && E.larguraMinima === 32 && E.larguraMaxima === 44 && E.larguraMaxima < E.casaDeReferencia
+    && E.ficaAteMs + E.saiMs === 1100 && E.criticoMaisMs === 200 && E.sobePx === 12 && E.sobeMs === 240 && E.entraMs === 120);
+  t("as quatro caras existem em T", Object.values(E.caras).every((c) => typeof T[c.chao] === "string" && typeof T[c.borda] === "string" && typeof T[c.letra] === "string"));
+  const janela = { x0: 0, y0: 0, x1: 9, y1: 9 };
+  t("12d · 1: a casa de cima está livre → em cima", ondePousaODano({ casa: { x: 4, y: 4 }, ocupadas: [{ x: 5, y: 4 }, { x: 3, y: 5 }], janela }) === "cima");
+  t("12d · 2: em cima há peça → a direita livre", ondePousaODano({ casa: { x: 4, y: 5 }, ocupadas: [{ x: 4, y: 4 }, { x: 3, y: 5 }], janela }) === "direita");
+  t("depois da direita, a esquerda", ondePousaODano({ casa: { x: 4, y: 5 }, ocupadas: [{ x: 4, y: 4 }, { x: 5, y: 5 }], janela }) === "esquerda");
+  t("12d · 3: cercada → dentro", ondePousaODano({ casa: { x: 4, y: 5 }, ocupadas: [{ x: 4, y: 4 }, { x: 5, y: 5 }, { x: 3, y: 5 }], janela }) === "dentro");
+  t("a área (dano em mais de uma peça ao mesmo tempo) → todas dentro", ondePousaODano({ casa: { x: 4, y: 4 }, ocupadas: [], janela, simultaneos: true }) === "dentro");
+  t("a casa de cima fora da janela (sob a régua presa) não vale; a borda da direita também não", ondePousaODano({ casa: { x: 9, y: 0 }, ocupadas: [], janela }) === "esquerda");
+  t("o deslocamento: cima −36, lados ±40, dentro −12 na casa de 48; escala com a casa", J(deslocamentoDaEtiqueta("cima", 48)) === J({ dx: 0, dy: -36 }) && deslocamentoDaEtiqueta("direita", 48).dx === 40
+    && deslocamentoDaEtiqueta("esquerda", 48).dx === -40 && deslocamentoDaEtiqueta("dentro", 48).dy === -12 && deslocamentoDaEtiqueta("cima", 24).dy === -18);
+  const et = etiquetaDoGolpe({ tom: "dano", texto: "-7" }), ec = etiquetaDoGolpe({ tom: "critico", critico: true, texto: "-14" }), ee = etiquetaDoGolpe({ tom: "erro", texto: "errou" });
+  t("a cara do golpe: «−7» com o menos verdadeiro; o crítico 28 e 200 ms a mais; «errou»", et.texto === "−7" && et.cara === "dano" && et.dura === 1100 && ec.cara === "critico" && ec.altura === 28 && ec.dura === 1300 && ee.cara === "errou" && ee.texto === "errou" && etiquetaDoGolpe(null) === null);
+  /* lacuna 5 · a carta estreita */
+  const curtas = [...Object.values(CC.texto), CC.esperar, CC.fugir, ...Object.values(RAZAO_NA_CARTA_ESTREITA)];
+  t("nenhuma frase das duas tabelas passa de 11 letras", curtas.every((x) => x.length <= CC.tetoDeLetras), J(curtas.filter((x) => x.length > CC.tetoDeLetras)));
+  t("custoCurto: passo de 12 m com 10,5 gastos → «10,5/12 m»; em repouso «até 9 m»", custoCurto("mover", { recurso: "movimento", gastoM: 10.5, passoTotal: 12 }).texto === "10,5/12 m" && J(custoCurto("mover", { recurso: "movimento", passoM: 9 })) === J({ peca: "passo", texto: "até 9 m" }));
+  t("custoCurto: ação com a peça; «tem 2» e «passa a vez» sem peça; Fugir com golpes leva as espadas", J(custoCurto("atacar", { recurso: "acao" })) === J({ peca: "acao", texto: "ação" }) && custoCurto("item", { nItens: 2 }).texto === "tem 2" && custoCurto("item").peca === null
+    && J(custoCurto("esperar")) === J({ peca: null, texto: "passa a vez" }) && J(custoCurto("fugir", { golpes: 3 })) === J({ peca: "golpe", texto: "3 golpes" }) && custoCurto("fugir").texto === "sai da luta");
+  t("razaoCurta: as recusas da regra viram as de até 11 letras", razaoCurta(RECUSAS_DO_VERBO.semPasso) === "sem passo" && razaoCurta(RECUSAS_DO_VERBO.semAlcance) === "longe" && razaoCurta("bolsa vazia") === "bolsa vazia"
+    && razaoCurta("uma razão muito comprida que não cabe") === RAZAO_NA_CARTA_ESTREITA.outra && razaoCurta("") === "");
+  t("a carta estreita: largura útil 75 = 85 − 2 × 5; peça 12 + 4", CC.larguraUtil === MAO_DE_ACOES.tamanhos.celular.largura - 2 * CC.margem && CC.peca === 12 && CC.entre === 4);
+  t("o «Agir» do celular: «Atacar · 55 %» (o alvo sai dali); sem chance, «verbo · alvo»", vereditoDoAgir({ armado: "atacar", rotulo: "Atacar", alvo: "Goblin", chance: "55 %", curto: true }).diz === "Atacar · 55 %"
+    && vereditoDoAgir({ armado: "atacar", rotulo: "Atacar", alvo: "Goblin", curto: true }).diz === "Atacar · Goblin" && vereditoDoAgir({ armado: "atacar", rotulo: "Atacar", alvo: "Goblin", chance: "55 %" }).diz === "Atacar · Goblin · 55 %");
+  /* o texto das peças */
+  const TELA = ler("src/painel-batalha.jsx"), PEC = ler("src/painel-luta-mesa.jsx"), FIMx = ler("src/painel-fim-da-luta.jsx"), GR = ler("src/grade-de-batalha.jsx"), UI = ler("src/ui.jsx");
+  t("a tela monta a tira e a folha só no celular, e a folha toma o lugar da mão", /<TiraDaRodada /.test(TELA) && /<FolhaDaRodada /.test(TELA) && /folhaAberta \|\| <MaoDeAcoes cartas=\{cartas\} tamanho="celular"/.test(TELA));
+  t("o toque fora só fecha (é engolido) e Esc fecha", /abrirOuFechar\("fora"\)/.test(TELA) && /abrirOuFechar\("esc"\)/.test(TELA) && /e\.stopPropagation\(\); e\.preventDefault\(\); abrirOuFechar\("fora"\)/.test(TELA));
+  t("as linhas do registro saíram da ficha do herói no celular", !/\{consulta\}\s*\{rastro\}/.test(TELA));
+  t("a vitória no celular: sem véu sobre o tapete, as cartas no lugar da mão", /fimComEspolio && !noTelefone && \(\s*<FimDaLuta/.test(TELA) && /<VitoriaNoCelular /.test(TELA) && /export function VitoriaNoCelular/.test(FIMx) && /order: 2/.test(FIMx) && /order: 3/.test(FIMx));
+  t("a etiqueta de dano: no celular, sem toque, pousada por ondePousaODano", /ondePousaODano\(\{ casa:/.test(GR) && /<EtiquetaDeDano etiqueta=\{etiquetaDoGolpe\(gq\)\}/.test(GR) && /pointerEvents: "none"/.test(GR) && /\{!presa && golpesNaMesa\.map/.test(GR));
+  t("a carta estreita: sem reticências nem duas linhas (nowrap), a peça do recurso de ui.jsx", /function CustoNaCartaEstreita/.test(PEC) && /<PipDoRecurso recurso=\{peca\} estado="livre" tamanho=\{tamanho\} cor=\{cor\} \/>/.test(PEC) && /cor = null \}\) \{/.test(UI));
+  t("a tira é uma região viva para o leitor de tela, e a aba diz as linhas novas", /aria-live="polite"/.test(PEC) && /TR\.palavras\.aba/.test(PEC));
+  const CSS2 = ler("src/estilo.js");
+  t("as classes da tira e da etiqueta existem e param com movimento reduzido", ["tv-tira-entra", "tv-etiqueta-entra", "tv-etiqueta-sobe", "tv-etiqueta-sai"].every((c) => CSS2.indexOf("." + c + " {") > 0)
+    && /\.tv-tira-entra, \.tv-etiqueta-entra, \.tv-etiqueta-sobe \{ animation: none;/.test(CSS2) && /\.tv-etiqueta-sai \{ animation: none; \}/.test(CSS2) && /\.tv-etiqueta-seca \{ animation: tvEtiquetaSai 0s/.test(CSS2));
 }
 
 console.log(`\na luta na mesa (V6 parte 2): ${bons} passaram, ${maus} falharam`);
