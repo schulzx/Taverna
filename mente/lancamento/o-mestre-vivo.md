@@ -1735,3 +1735,28 @@ até o cais» estando no cais deixou de abrir cartão de viagem. As 12 buscas va
 
 **Não verificado até a sétima sessão:** se o Narrador obedece ao prompt novo, e o achado entrando na
 bolsa com o jogo rodando.
+
+## 27. O conserto depois da sétima sessão (21/11/2026)
+
+A sétima sessão (53 de 58 certos no dado; trocas inventadas de 12 para 4; primeiro achado na bolsa)
+deixou 17 turnos de prosa contra a ficha e um defeito do jogo de todos.
+
+**A venda que dizia «Vendido» e não aplicava (`b13b633`).** No ar desde `651dc7e` (04/11), com a
+chave ligada ou não: a venda pela frase gravava só no estado do React, o resto do turno lia a ficha
+velha pelo espelho e gravava por cima. Agora a conta e a linha saem do mesmo módulo
+(`src/a-venda-da-bolsa.js`) e a ficha é gravada pela mesma porta do pagamento. Formato de save
+intocado.
+
+**O juiz (`2fe5a9f`).** Oferecer moeda a alguém para deixar passar é Persuasão com dado, com a
+quantia dita cobrada, e não é viagem; «qual é o caminho até X» deixou de ser lido como «eu caminho»;
+o alvo de um ato sai do que vem depois do «?». Réguas do exame iguais nas três metades.
+
+**O conferente (`cfff72d`).** A bolsa é fotografada na chegada da frase e comparada depois da
+resposta: só se corta quando se sabe que nada mudou de mão. Corta o companheiro que paga ou entrega
+por conta própria, o figurante que entrega o que não foi dado, o «enfia X na mochila» sem achado e o
+ausente que abre a frase agindo; deixa de cortar o achado que o sistema deu; a pauta do turno do
+achado leva o nome exato do que entrou; o console registra motivo e início de cada corte. De fora: a
+mentira que vaza para quem não a ouviu (causa provável: o histórico da conversa) e a frase solta que
+não é vizinha imediata do corte.
+
+**Não verificado até a oitava sessão:** tudo isso contra um Narrador real.
