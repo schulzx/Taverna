@@ -20044,6 +20044,277 @@ intenção anunciada de quem acerta, cortada por `resolverReacao` nos dois extre
 (continua em rostos redondos); a bandeja e a vela do dia no alto da coluna direita (a tela da luta não
 recebe a bandeja); o escudo (ESC) em (1340, 792); a carta baixa (102 × 72) não foi vista em tela.
 
+### 12 · A luta no celular — as cinco lacunas (`desenho`, 20/11/2026)
+
+Responde às capturas `mente/lancamento/F4d-*.png` e `F4c-*-375.png`. Só Figma e este arquivo; nenhum
+código tocado. Página `266:67`, à direita da 10d (x 7260 → 15205, y 48050). **Nenhuma variável e nenhum
+estilo novo**: tudo sai da coleção «A Mesa do Mestre» e dos estilos `Mesa/*`; as pranchas são clones da
+10c (`347:23683`) com a tira e a mão trocadas. Onde este bloco contradiz o §10, **vale este** (são três
+pontos: a tira passa de 363 × 40 a 313 × 44 + a aba; a vitória no celular sai de cima do tapete; a linha
+do custo da carta de 85 ganha a peça do recurso).
+
+| prancha | nó | imagem (`mente/figma/`) |
+|---|---|---|
+| 12a · o registro da rodada (fechado · a linha que chega · aberto) | `349:23676` | `F4-luta-celular-12a.png` |
+| 12b · «eles vão» (1 · 3 · 5 inimigos · a nota aberta · alvo marcado) | `349:24371` | `F4-luta-celular-12b.png` |
+| 12c · a vitória (4 cartas · 1 carta · tudo recolhido) | `350:23684` | `F4-luta-celular-12c.png` |
+| 12d · a etiqueta de dano (sobe · desvia · fica) e as quatro caras | `351:23748` | `F4-luta-celular-12d.png` |
+| 12e · a carta estreita 85 × 80 (as oito · os casos que apertam · a 3×) | `352:23748` | `F4-luta-celular-12e.png` |
+
+Os quadros de celular dentro delas: 12a `349:23678` · `349:23905` · `349:24128` (a folha `349:24352`);
+12b `349:24373` · `349:24594` · `349:24819` · `349:25062` (a folha `349:25304`) · `349:25322`; 12c
+`350:23686` · `350:23945` · `350:24189`; 12d, as três janelas `351:23750` · `351:23882` · `351:24014`.
+
+**A coluna do celular, de cima para baixo** (375 × 812; só mudam as linhas em negrito):
+iniciativa y 4–52 · a janela do tapete y 58–470 · **a tira da rodada y 474–518** · a faixa do herói
+y 522–562 · **o lugar da mão y 568–734** (2 × 4 cartas de 85 × 80, 6 entre elas) · a pena e o «Agir»
+y 744–804.
+
+**A ideia que fecha três das cinco: o lugar da mão é onde as coisas se abrem.** A reação já toma o
+lugar da mão (§10). Agora o registro, a nota «eles vão» e o espólio da vitória também. Nada mais sobe
+por cima do tapete no celular, e o jogador aprende um lugar só.
+
+#### Lacuna 1 — onde mora o registro da rodada (12a)
+
+- **Lugar.** A linha «eles vão» de 363 × 40 vira **a tira da rodada**: duas peças de papel em y 474,
+  altura **44** — a zona esquerda **313 × 44** em x 6 (o que eles vão fazer) e **a aba do registro
+  44 × 44** em x 325 (6 entre as duas). Papel `pergaminho`, borda `pergaminhoBorda` 1, raio 3, sombra
+  `pousado`. Na aba: o glifo `Glifo de item/pergaminho` (`326:13457`) de 24 em (10, 10).
+- **Abrir.** Um toque na aba. A **folha da rodada**, 363 × 166 em (6, 568), toma o lugar da mão (as
+  oito cartas saem; nada mais se mexe): `pergaminho`, borda 1, raio 3, sombra `erguido`. A aba aberta
+  fica como a carta armada do celular (chão `osso`, borda `tinta` 2, sombra `erguido`).
+- **Fechar** (quatro caminhos, uma ação): tocar na aba outra vez · tocar em qualquer ponto fora da
+  folha (o toque fora **só fecha**, não age no que estava por baixo) · Esc · a vez passar a ser sua
+  quando a folha foi aberta na vez deles. Fechar devolve a mão como estava: **a carta armada e o alvo
+  marcado não se perdem**.
+- **Quantas linhas.** Cabeçalho de 28 («A RODADA 2», `Mesa/Rótulo` `tintaDim`, em (12, 8)) + **6 linhas
+  de 22** (y 30 → 162). Cada linha: «quem → em quem» em `Mesa/Serviço` `tinta` a x 16, e o resultado
+  encostado à direita (x 351): dano **em um dos nossos** em Spectral Bold 13 `perigoNaPagina` (6,60 : 1
+  no `pergaminho`), dano **neles** em Bold 13 `tinta`, «errou» em `Mesa/Nota do Mestre` `tintaDim`
+  (6,56). A cor nunca vai sozinha: o nome de quem levou está sempre escrito. Uma linha só por
+  acontecimento; se o nome não couber, corta-se **o nome de quem agiu** com reticências, nunca o
+  resultado.
+- **Ordem e rolagem.** As mais novas embaixo; a folha abre rolada até o fim. O que passou rola para
+  cima, com uma linha de 22 «RODADA 1» (`Mesa/Rótulo`) a separar as rodadas; enquanto houver registro
+  acima, a borda de cima do corpo leva a sombra de 10 px (`sombra` 0 → 20 %), sem toque.
+- **Como a linha nova se anuncia** (três sinais, nenhum bloqueia):
+  1. *na tira*: a zona esquerda troca para a linha nova por **2400 ms** — rótulo «ACONTECEU AGORA», um
+     retrato de 28 de quem agiu, «Rato Gigante 3 → Saoirse» em Bold 14 `tinta` e «6 de dano» à direita
+     em Bold 14 `perigoNaPagina`. Entra de baixo, 8 px e opacidade, **180 ms** `ease-out`; ao fim volta
+     a «eles vão» em 120 ms. Duas linhas em menos de 2400 ms: a segunda substitui a primeira e o
+     relógio recomeça. Tocar na tira nesse intervalo abre **o registro** (não a nota);
+  2. *na aba*: **o lacre das linhas novas**, disco de 18 em (31, −5) da aba, chão `lacre`, borda
+     `sobreLacre` 1, o número em Spectral Bold 12 `sobreLacre` (6,63 : 1). Conta as linhas chegadas
+     desde a última vez que a folha esteve aberta; zera ao abrir; acima de 9 escreve «9+»;
+  3. *na folha*: as linhas ainda não lidas levam um ponto de `lacre` de 6 em x 5; com a folha aberta,
+     a linha que chega entra embaixo com a mesma entrada de 180 ms e o ponto fica 2400 ms.
+  Movimento reduzido: trocas secas, os mesmos tempos de permanência. Para leitor de tela, a tira é
+  uma região `aria-live="polite"` e a aba diz «registro da rodada, 2 linhas novas».
+- **Por que é melhor** — *medida*: hoje ler o que os inimigos fizeram custa abrir a ficha do herói,
+  que tapa o tapete inteiro (`F4d-registro-375.png`: a ficha cobre y 20–560); agora é **1 toque**, o
+  tapete fica 412 de 412 px à vista e a faixa do herói (os PV de que as linhas falam) também. *Estudo
+  citado*: a folha e a aba ficam na metade de baixo da tela, a zona do polegar — Steven Hoober, «How
+  Do Users Really Hold Mobile Devices?», UXmatters, 2013 (49 % seguram com uma mão só). Alvos de 44:
+  Apple Human Interface Guidelines (44 pt) e WCAG 2.2, 2.5.8 (mínimo 24 × 24).
+
+#### Lacuna 2 — «nesta rodada, eles vão» (12b)
+
+- **Lugar e tamanho.** A zona esquerda da tira: 313 × 44. Duas linhas dentro dela: o rótulo
+  (`Mesa/Rótulo` `tintaDim`) a y 5 e a frase (Spectral Bold 14, 20 de linha) a y 21. Retratos de 28 a
+  y 8, o primeiro a x 8, passo 15 (sobrepostos), borda `lacreLume` 2. O texto começa a x 44 com um
+  retrato, x 76 com três, x 94 quando há a conta «+N».
+- **1 inimigo**: um retrato · «ELE VAI» · «2–10 → Saoirse» em `perigoNaPagina` · à direita (x 303) o
+  nome dele em `Mesa/Nota do Mestre` `tintaDim`. **Sem seta e sem nota**: a tira já diz tudo, e um
+  toque nela marca esse inimigo como alvo.
+- **2 ou 3, mesma intenção**: os retratos · «ELES VÃO» · «3× 2–10 → Saoirse» · à direita «de 6 a 30»
+  (a soma do que pode vir **em você**) · a seta `glifo/cima` de 12 em (289, 16).
+- **4 ou mais, ou alvos diferentes**: três retratos e **a conta «+N»** (pílula 24 × 18 em (62, 13),
+  `osso`, borda `tinta` 1, Bold 12) · «5 atacam · 3 em você» · «de 6 a 30» · a seta. Quando nenhum vem
+  em você: «5 atacam · nenhum em você», em `tinta`, sem a soma.
+- **A nota aberta.** Um toque na zona esquerda abre **a mesma folha** do registro (363 × 166 em
+  (6, 568)), com outro conteúdo; só uma das duas fica aberta, e tocar na outra troca o conteúdo em
+  120 ms. Cabeçalho «NESTA RODADA, ELES VÃO»; **uma linha de 26 por inimigo** (y 30, 56, 82, 108, 134):
+  retrato de 20 a x 10, o nome em `Mesa/Serviço` `tinta` a x 38, e «2–10 → Saoirse» encostado a x 351
+  em Bold 13 — `perigoNaPagina` quando é em você, `tinta` quando é em outro. **Cabem 5 sem rolar**; com
+  6 ou mais a folha rola e a borda de baixo leva a sombra de 10. A ordem é a da iniciativa. A zona
+  aberta fica `osso` + `tinta` 2 e a seta vira `glifo/baixo`. As linhas não são botões (26 < 44).
+- **Com um alvo marcado** a zona troca para o alvo (o §10 dizia e não desenhou): rótulo «O ALVO · RATO
+  GIGANTE 1», frase «4 de 4 PV · dano 4–9 · abate 30 %» em `tinta`, um retrato, sem seta. Desmarcar
+  devolve «eles vão». A linha nova do registro (lacuna 1) tem prioridade sobre as duas por 2400 ms.
+- **Por que é melhor** — *medida*: a nota de hoje mora dentro da ficha, um cartão de ~85 px por
+  inimigo (`F4d-registro-375.png`: dois inimigos ocupam y 60–300); a folha mostra **5 em 130 px** e
+  não tapa nada do tapete. O resumo de 44 px responde à pergunta que decide a vez — quanto pode vir em
+  mim — sem abrir nada. *Estudo citado*: WCAG 2.2, 1.4.1 (a cor não é o único sinal: «em você» está
+  escrito).
+
+#### Lacuna 3 — a vitória sem tapar o tapete (12c)
+
+- **O espólio toma o lugar da mão; o tapete fica inteiro e sem véu.** No celular o véu de 45 % e as
+  cartas sobre o tapete **aposentam-se**. Os caídos ficam à vista no verso de osso (`A peça`,
+  `Lado=Deles, Estado=Caído`, `323:13439`, a 76 % — aro de 42).
+- **O título**: «Vitória» em `Mesa/Título` (Cinzel 28/34) `ink`, em (8, 479) — a linha da tira. O
+  recibo («+45 XP · +12 moedas») na mesma linha, Spectral Bold 14 `inkMeio`, encostado a x 367, y 487.
+  A faixa do herói continua em y 522 (os PV com que se sai da luta).
+- **As cartas**: `CARTA_DO_ESPOLIO` de celular, **104 × 146**, em y 568. Com **1 a 3**, centradas, 8
+  entre elas (uma só: x 136). Com **4 ou mais**, fila que corre para o lado a partir de x 6, **passo
+  112**: três inteiras e **33 px da quarta** (o corte diz que há mais), com a sombra de 12 px
+  (`sombra` 0 → 42 %) na borda direita enquanto houver carta para lá; `scroll-snap` no começo de cada
+  carta. Tocar numa carta recolhe só ela (a carta é o alvo: 104 × 146). A cerimônia de pousar e virar
+  do §3 é a mesma, no novo lugar.
+- **«Recolher tudo» nunca depende das cartas**: mora na última linha, onde estava a pena — `O botão da
+  mesa` secundário, **150 × 60** em (6, 744). «Respirar fundo →», principal, **207 × 60** em (162, 744).
+  O preço em `Mesa/Serviço` `inkMeio`, centrado, a y 721: «volta à página · o que ficar no chão, fica».
+- **Tudo recolhido**: no lugar das cartas, «nada ficou no chão» (`Mesa/Nota do Mestre` `inkMeio`,
+  centrado, y 631); «Recolher tudo» sai; «Respirar fundo →» passa a **363 × 60** em x 6; o preço fica
+  só «volta à página».
+- **Por que é melhor** — *medida*, contra `F4c-vitoria-375.png`: hoje o título e as quatro cartas
+  cobrem o tapete de y ~150 a ~590 (as linhas 3 a 12 da régua; nenhuma peça se vê) e «Recolher tudo»
+  cai fora do eixo; agora o tapete tapado é **0 px**, as cartas não perdem tamanho (104 × 146), e os
+  dois botões têm 60 de altura em lugar fixo, com 1 ou com 9 cartas.
+
+#### Lacuna 4 — a etiqueta de dano e as peças vizinhas (12d)
+
+- **A cara** (`ETIQUETA_DE_DANO`): altura **24**, largura = texto + 12, **mínimo 32, máximo 44** (menor
+  que a casa de 48), raio 4, sombra `peça`, sem toque (`pointer-events: none`), acima de tudo no tapete.
+  - *dano*: chão `lacre`, borda `sobreLacre` 1, «−7» (com o sinal de menos, U+2212) em Spectral Bold
+    16/20 `sobreLacre` — 6,63 : 1;
+  - *crítico*: altura 28, borda `ambar` 2, Bold 18/24; fica 200 ms a mais;
+  - *errou*: chão `ossoLume`, borda `tintaDim` 1, «errou» em `Mesa/Nota do Mestre` `tintaDim` (7,72);
+  - *cura*: chão `musgoNaPagina`, borda e letra `ossoLume` (7,69), «+6».
+  A mesma forma para o dano nos nossos e neles: quem levou é a peça que diz.
+- **Onde pousa** (`ondePousaODano`, pela ordem; cx, cy = o centro da peça; casa de 48, peça de 42):
+  1. **em cima** — centro em (cx, cy − 36): a metade de baixo da casa de cima, a 3 px da peça. Vale se
+     a casa de cima existe, não tem peça de pé e não está sob a régua presa;
+  2. **à direita**, depois **à esquerda** — centro em (cx ± 40, cy). Vale se a casa desse lado existe,
+     não tem peça e está dentro da janela;
+  3. **dentro** — centro em (cx, cy − 12): a metade de cima da própria peça. Como a largura máxima é
+     44 e a altura 24, a etiqueta fica inteira dentro da casa de 48 e **não pode tapar vizinha
+     nenhuma, por construção**.
+  Dano em mais de uma peça no mesmo instante (área): **todas «dentro»**, para duas etiquetas não
+  disputarem a mesma casa livre. Novo dano na mesma peça antes de a etiqueta sair: a nova substitui a
+  velha, seca. Peça caída conta como casa livre.
+- **O tempo** (1100 ms; a vez não espera por ela): entra em 0–120 ms (opacidade 0 → 1, escala
+  0,92 → 1) · sobe **12 px** em 0–240 ms `ease-out`, partindo de 12 px abaixo do lugar final · fica
+  até 900 ms · sai em 900–1100 ms (opacidade). Movimento reduzido: aparece no lugar, fica 1100 ms,
+  some seca. O aro de vida da peça encolhe ao mesmo tempo, nos mesmos 240 ms.
+- **Por que é melhor** — *medida*: entre duas peças vizinhas há 6 px (48 − 42); nenhuma etiqueta de
+  24 cabe ali, e a de hoje cai sobre a peça do lado (`F4d-mao-armada-375.png`, as duas etiquetas
+  sobre o grupo). Com a regra, a sobreposição com peça vizinha é **0 px nos três casos**, e no pior
+  (cercada) tapa-se só a metade de cima da peça ferida, cujo aro de baixo continua a mostrar a vida.
+
+#### Lacuna 5 — a carta estreita, 85 × 80 (12e)
+
+- **A anatomia não muda** (§10): glifo 20 a y 5 · nome `Mesa/Nome` a y 27 · a linha do dado a y 44
+  (Spectral Bold 13; d20 de 13 a x 6, a face a x 22, a chance encostada a x 79) · a linha do custo a
+  y 60, 18 de altura. Margem lateral 5 → **largura útil 75**.
+- **A linha do custo passa a ser «a peça do recurso + uma frase curta»**, centrada: a peça de **12**
+  (as mesmas quatro de `O_QUE_RESTA_NA_VEZ` e da faixa do herói: disco = ação, triângulo = bônus,
+  losango = reação, pegadas = passo; espadas = golpes que você leva), **4** de intervalo, e o texto em
+  `Mesa/Serviço` na cor do custo (`brasaNaPagina`; `perigoNaPagina` quando o custo é dano). A palavra
+  «passo ·» sai: a peça já a diz. **Sem peça = não gasta nada da vez** («tem 2», «passa a vez»).
+- **As frases, medidas no Figma** (peça + 4 + texto; tudo ≤ 75):
+
+  | carta | linha do dado | linha do custo | largura |
+  |---|---|---|---|
+  | Atacar, Empurrar, Derrubar | d20 · 7+ · 70 % | ● ação | 41 |
+  | Mover, em repouso | sem dado | pegadas · até 9 m | 58 |
+  | Mover, armada com destino | sem dado | pegadas · 4,5/9 m | 58 |
+  | Mover, o pior caso | sem dado | pegadas · 10,5/12 m | 71 |
+  | Saltar | d20 + 3 | pegadas · 3 m | 38 |
+  | Usar item | sem dado | tem 2 | 33 |
+  | Esperar | sem dado | passa a vez | 64 |
+  | Fugir | espadas · 3× 2–10 (ou «sem dado») | espadas · 3 golpes | 64 |
+
+  «4,5 de 9 m» com a peça mede exatamente 75 e «10,5 de 12 m» mede 88: por isso a forma da carta é
+  **«gasto/total m»**; a frase inteira («Mover · até G7 · 4,5 de 9 m») continua no «Agir».
+- **Impedida**: a razão toma a linha do dado, em `Mesa/Serviço` `ink`, e sai de uma tabela de frases
+  de **até 11 letras** — «sem passo», «sem alvo», «longe», «já agiu», «bolsa vazia»; a razão por
+  extenso fica no «Agir» («Agir · não é a sua vez»). A linha do custo fica, em `inkMeio`.
+- **Disputa sem face** (Empurrar com alvo): o d20 a x 6 e a chance a x 79, sem número no meio.
+- **A lei da carta estreita: nunca reticências, nunca duas linhas, nunca letra menor.** O que não cabe
+  em 75 px não vai para a carta — a frase curta sai da tabela, e a suíte mede o comprimento.
+- No «Agir» de 124 × 60 o veredito é **«verbo · chance»** («Atacar · 55 %»); o nome do alvo sai dali
+  (está na tira, lacuna 2). Hoje «Atacar · Goblin · 55 %» quebra em duas linhas.
+- **Por que é melhor** — *medida*: em `F4d-mao-armada-375.png`, 2 das 8 cartas cortam o custo («passo ·
+  até…», «2 inimigos te alcançam …»); com as frases acima, **0 de 8**, e a mais larga tem 4 px de
+  folga. A peça do recurso faz a carta e a faixa do herói falarem a mesma língua: a peça que a carta
+  mostra é a que se apaga na faixa.
+
+#### O que o código faz
+
+Tabelas sugeridas em `src/luta-na-mesa.js` (nomes, não valores novos de regra): `TIRA_DA_RODADA`,
+`FOLHA_DA_RODADA`, `VITORIA_NO_CELULAR`, `ETIQUETA_DE_DANO`, `CUSTO_NA_CARTA_ESTREITA`,
+`RAZAO_NA_CARTA_ESTREITA`. Tudo abaixo vale **só no degrau `celular`**; a mesa não muda.
+
+1. `TIRA_DA_RODADA = { y: 474, altura: 44, zona: 313, aba: 44, entre: 6, retrato: 28, passoDoRetrato:
+   15, xTexto: { um: 44, tres: 76, comConta: 94 }, anuncioMs: 2400, entradaMs: 180, entradaPx: 8,
+   voltaMs: 120, lacre: 18, tetoDoLacre: 9 }`. Trocar a linha «eles vão» de hoje por duas peças: a zona
+   (botão) e a aba (botão), com as cores e sombras ditas acima.
+2. Função pura `resumoDoQueElesVao(intencoes, heroiId)` → `{ rotulo, frase, soma, retratos, mais,
+   abre }`, com os três casos da lacuna 2 (1 · mesma intenção · 4+ ou alvos diferentes) e o caso
+   «nenhum em você». Teste: 1, 3 e 5 inimigos dão as frases das pranchas.
+3. Estado único `folhaAberta: null | "registro" | "nota"` no painel da luta. Com ele não nulo, a mão
+   não se desenha e a `FOLHA_DA_RODADA = { x: 6, y: 568, largura: 363, altura: 166, cabecalho: 28,
+   linhaDoRegistro: 22, linhasDoRegistro: 6, linhaDaNota: 26, linhasDaNota: 5, sombra: 10, trocaMs:
+   120 }` ocupa o lugar. Fecha por aba, toque fora (o toque não passa adiante), Esc e a vez que vira
+   sua. A carta armada e o alvo marcado ficam guardados.
+4. O registro: as linhas de hoje (as da ficha do herói), mais novas embaixo, rolado até o fim ao
+   abrir; separador «RODADA N»; resultado encostado à direita nas três caras (em nós · neles · errou).
+   Contar as não lidas desde o último fecho; ponto de 6 nas não lidas; lacre na aba; «9+» acima de 9.
+5. O anúncio: quando chega uma linha e a folha está fechada, a zona mostra «ACONTECEU AGORA» por
+   `anuncioMs`; a segunda linha reinicia o relógio; toque na zona nesse intervalo abre o registro. A
+   zona é `aria-live="polite"`. `prefers-reduced-motion`: sem o deslize, mesmos tempos.
+6. Alvo marcado: a zona mostra «O ALVO · NOME» e «PV · dano · abate» (os números da mesma previsão que
+   a carta e o «Agir» leem). Prioridade na zona: anúncio > alvo > eles vão.
+7. A ficha do herói deixa de ser o caminho para o registro no celular (as linhas saem de lá, para não
+   haver duas caras da mesma coisa); a mesa não muda.
+8. `VITORIA_NO_CELULAR = { titulo: { x: 8, y: 479 }, recibo: { direita: 367, y: 487 }, cartas: { y:
+   568, largura: 104, altura: 146, entre: 8, passo: 112, xDaFila: 6, centraAte: 3, sombra: 12 },
+   preco: { y: 721 }, recolher: { x: 6, y: 744, largura: 150, altura: 60 }, respirar: { x: 162, y: 744,
+   largura: 207, altura: 60, sozinho: 363 } }`. No celular: sem véu, sem cartas sobre o tapete; título
+   e recibo na linha da tira; as cartas no lugar da mão; os dois botões na última linha; o estado
+   «nada ficou no chão».
+9. `ETIQUETA_DE_DANO = { altura: 24, alturaDoCritico: 28, larguraMinima: 32, larguraMaxima: 44,
+   enchimento: 6, raio: 4, emCima: 36, aoLado: 40, dentro: 12, entraMs: 120, sobePx: 12, sobeMs: 240,
+   ficaAteMs: 900, saiMs: 200, criticoMaisMs: 200 }` e a função pura `ondePousaODano({ casa, ocupadas,
+   janela, simultaneos })` → `"cima" | "direita" | "esquerda" | "dentro"`, com a ordem e as exceções
+   da lacuna 4 (régua presa, fora da janela, área = dentro, caído = livre). Teste: os três casos da
+   prancha 12d e o de área. A etiqueta é um elemento sem toque, e nada espera o fim dela.
+10. `CUSTO_NA_CARTA_ESTREITA`: por carta, `{ peca: "acao" | "bonus" | "reacao" | "passo" | "golpe" |
+    null, texto }`, e o formatador `custoCurto(id, estado)` para os números («até 9 m», «4,5/9 m»,
+    «tem N», «N golpes»). `RAZAO_NA_CARTA_ESTREITA`: as razões de até 11 letras. Teste: nenhuma frase
+    das duas tabelas passa de 11 letras, e `custoCurto` com passo de 12 m e gasto de 10,5 devolve
+    «10,5/12 m». Na carta, sem `text-overflow` e sem quebra de linha.
+11. As peças do custo: as mesmas formas de `O_QUE_RESTA_NA_VEZ` (uma fonte só para a carta e para a
+    faixa do herói), a 12 px, na cor do texto do custo.
+12. `vereditoDoAgir` no celular: «verbo · chance» (ou «verbo · custo» quando não rola), uma linha.
+13. Capturas de prova a 375 × 812, com as mesmas situações das pranchas: registro fechado/aberto,
+    1/3/5 inimigos, vitória com 4, 1 e 0 cartas, dano nos três casos, a mão com «Mover» armada.
+
+#### O que não ficou fechado
+
+- **O `jogo` não assinou**: nada disto foi jogado. O ponto a conferir jogando é o toque fora da folha
+  que só fecha (um toque a mais para quem queria agir logo).
+- As peças novas (a tira, a aba, a folha, a etiqueta de dano, a linha do custo) são quadros, não
+  componentes — a mesma dívida do §7 e do §10.
+- Não desenhados: a folha com 6+ linhas a rolar, a segunda linha que chega durante o anúncio, o
+  crítico e a cura sobre o tapete (só as caras a 3×), a vitória com as cartas ainda de verso, e tudo
+  isto no modo Noite e Masmorra (as variáveis têm os três modos; as pranchas estão em Dia).
+- A reação (que também toma o lugar da mão) com a folha aberta: a reação ganha — a folha fecha
+  sozinha quando a janela da reação abre. Dito aqui, não desenhado.
+- As sombras de «há mais» usam `sombra` (#000) em degradê, sem variável ligada (o Figma não liga
+  variável a parada de degradê); os números são os deste bloco.
+- Os números das pranchas são exemplo; «abate 30 %» e «de 6 a 30» saem da previsão do motor.
+
+#### A proposta ambiciosa — o registro que se reencena
+
+Tocar numa linha do registro **faz o tapete repetir o golpe**: a janela centra em quem levou (240 ms),
+a seta de intenção acende de quem para quem, e a etiqueta de dano volta a subir (os mesmos 1100 ms).
+O registro deixa de ser lista para ser a memória da luta — é o «espera, o que foi que o goblin fez?»
+que numa mesa de verdade o Mestre responde apontando para as miniaturas. Não toca o save nem a regra
+(é só repetir um efeito que a tela já sabe fazer); custa as linhas passarem a 44 de altura (3 por
+folha em vez de 6, ou a folha crescer sobre a faixa do herói), e é por isso que fica para decidir.
+
 ---
 
 ## A Mesa do Mestre · F5 · os objetos e o mapa (`desenho`, 16/11/2026)
