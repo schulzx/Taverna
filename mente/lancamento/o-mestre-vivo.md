@@ -1709,3 +1709,29 @@ o item mediria o exame, não o juiz. Frases nossas, nenhuma de mesa real.
 - A linha de quem não está diz «está em Casa do Rumo» (sem artigo, `emOLugar`): também de `a-ficha-da-cena.js`.
 - «Entro numa taverna da cidade» sem nome não move o herói; as coisas da taverna só existem quando o lugar de agora
   é a taverna.
+
+## 26. O conserto depois da sexta sessão (21/11/2026)
+
+A sexta sessão (52 de 57 certos no dado) mostrou que vetar por turno e cortar depois não bastavam: o
+prompt fixo mandava os companheiros «agirem sozinhos», e o Narrador seguia isso contra a pauta. A
+pessoa autorizou mexer no prompt fixo, com a condição de não crescer.
+
+**O prompt fixo (`f2f6a56`).** Seis trocas, 49 caracteres a menos (74 610 → 74 561 no prompt
+inteiro). O companheiro opina, discorda e reage, mas não paga, compra, entrega, pega nem resolve pelo
+herói; moeda e objeto só mudam de mão pelo sistema, e sem envelope ou pauta do turno a troca não
+aconteceu; só fala quem a pauta põe aqui. Vale também para o jogo no ar, fora da chave.
+
+**O conferente (`7bfc9a6`).** Cortou, repõe (tabela `reposicao`, por semente); tira a frase órfã
+vizinha; cala a fala e a ação de quem a pauta diz que não está; e desfaz o êxito narrado quando o dado
+falhou, só na família travessia. De fora: o verbo de ação que a tabela não conhece («Neirin para no
+vão»), o êxito desmentido nas outras famílias, e o companheiro que paga por conta própria (esse ficou
+só no prompt).
+
+**O juiz (`20ba6da`).** Os dados que faltaram (turnos 28, 33, 35, 36) não eram da régua: o palpite
+de pessoa do App tratava «estivador», «ceifador» e «meio-orc» como a companheira, e uma chave fechada
+no livro de tentativas respondia por todos; a escuta relia pela frase-modelo uma fala já fechada. «Vou
+até o cais» estando no cais deixou de abrir cartão de viagem. As 12 buscas vazias eram azar plausível
+(cerca de 1 em 9 pela tabela); as chances não mudaram. Réguas do exame iguais nas três metades.
+
+**Não verificado até a sétima sessão:** se o Narrador obedece ao prompt novo, e o achado entrando na
+bolsa com o jogo rodando.
