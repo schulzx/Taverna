@@ -16,6 +16,7 @@
    `pouso.comum`/`pouso.bom`). A quantia dita ganha: é o que o herói pôs na
    mesa.
 
+     aQuantiaDita(frase, moeda) → número (0 = a frase não diz quanto)
      oPagamentoDaFrase(frase, { fator, pouso, moeda }) →
        null | { itens: [{ nome, quantos, preco }], total, dito }
        dito: true quando a quantia veio da frase («duas moedas»); então há um
@@ -53,22 +54,32 @@ function quantosAntes(t, idx) {
   return 1;
 }
 
+/* A QUANTIA DITA (21/11) — «duas moedas», «◉ 5», «10 pratas»: o que o herói
+   pôs na mesa, em número, ou 0 quando a frase não diz quanto. Sai daqui para
+   a conta social ler o MESMO número que a proposta cobra: «dou uma moeda ao
+   vendedor» era ◉ 1 no cartão e ◉ 30 na alavanca do ouro (social.js), que
+   cobrava o preço do degrau por cima (sessão mestre-vivo-5, T42: 34 → 3). */
+export function aQuantiaDita(frase, moeda) {
+  try {
+    const t = sem(frase);
+    let raiz = "";
+    try { raiz = sem(raizDaMoeda(str(moeda)) || ""); } catch { raiz = ""; }
+    /* raizDaMoeda já devolve a raiz com o plural («escamas?») */
+    const nomes = ["moedas?", "cobres?", "pratas?", "ouros?", "pecas?", raiz].filter(Boolean).join("|");
+    const ext = Object.keys(NUMERO_POR_EXTENSO).sort((a, b) => b.length - a.length).join("|");
+    const m = t.match(new RegExp("(?:◉\\s*(\\d{1,4})|\\b(\\d{1,4}|" + ext + ")\\s+(?:" + nomes + ")\\b)"));
+    if (!m) return 0;
+    return m[1] ? Number(m[1]) : /^\d+$/.test(m[2]) ? Number(m[2]) : NUMERO_POR_EXTENSO[m[2]] || 0;
+  } catch { return 0; }
+}
+
 export function oPagamentoDaFrase(frase, ctx) {
   const t = sem(frase);
   const P = O_PAGAMENTO_DA_FRASE;
   if (!t.trim() || t.trimStart().startsWith("[") || !P.verbo.test(t) || P.naoE.test(t)) return null;
   const c = ehObj(ctx) ? ctx : {};
   /* a quantia dita ganha: é o que o herói pôs na mesa */
-  let dito = 0;
-  try {
-    let raiz = "";
-    try { raiz = sem(raizDaMoeda(str(c.moeda)) || ""); } catch { raiz = ""; }
-    /* raizDaMoeda já devolve a raiz com o plural («escamas?») */
-    const nomes = ["moedas?", "cobres?", "pratas?", "ouros?", "pecas?", raiz].filter(Boolean).join("|");
-    const ext = Object.keys(NUMERO_POR_EXTENSO).sort((a, b) => b.length - a.length).join("|");
-    const m = t.match(new RegExp("(?:◉\\s*(\\d{1,4})|\\b(\\d{1,4}|" + ext + ")\\s+(?:" + nomes + ")\\b)"));
-    if (m) dito = m[1] ? Number(m[1]) : /^\d+$/.test(m[2]) ? Number(m[2]) : NUMERO_POR_EXTENSO[m[2]] || 0;
-  } catch { dito = 0; }
+  const dito = aQuantiaDita(frase, c.moeda);
   const itens = [];
   const pouso = ehObj(c.pouso) ? c.pouso : null;
   const mq = t.match(P.quarto);

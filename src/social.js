@@ -47,6 +47,7 @@
    ============================================================ */
 
 import { relacaoNPC } from "./npcs.js";
+import { aQuantiaDita } from "./motor/o-pagamento-da-frase.js";
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -340,6 +341,14 @@ export const ALAVANCAS = [
     preco: { cortesia: 2, conversa: 10, favor: 30, risco: 120, traicao: 500 },
     confere: ({ pers, preco }) => (Number((pers || {}).moedas) || 0) >= preco,
     semIsso: "você não tem essa quantia na bolsa",
+    /* A QUANTIA DITA MANDA (21/11). «dou uma moeda ao vendedor de amêijoas e
+       peço uma amêijoa» virou suborno de ◉ 30 (o degrau «favor»): o cartão
+       cobrou ◉ 1 e o sim da conversa cobrou mais 30 (sessão mestre-vivo-5,
+       T42: 34 → 3). Quando a frase diz quanto (aQuantiaDita, a mesma régua da
+       proposta), o preço é o dito; e o dito abaixo do degrau não compra a
+       alavanca: é pagar uma coisa, não comprar um favor. */
+    dita: true,
+    poucoParaIsso: "o que você pôs na mesa não paga o que está pedindo",
   },
   {
     id: "segredo", delta: -6, rotulo: "o que ela esconde",
@@ -389,7 +398,10 @@ export function alavancasNaMesa(texto, { pessoa = null, pers = null, pericia = "
   for (const a of ALAVANCAS) {
     if (!a.rx.test(t)) continue;
     if (a.so && a.so !== pericia) continue;
-    const preco = a.preco ? (a.preco[tamanho.id] || Number(tamanho.moedas) || 0) : 0;
+    const doDegrau = a.preco ? (a.preco[tamanho.id] || Number(tamanho.moedas) || 0) : 0;
+    const dito = a.dita ? aQuantiaDita(texto) : 0;
+    if (dito > 0 && dito < doDegrau) { vazias.push({ ...a, preco: dito, semIsso: a.poucoParaIsso || a.semIsso }); continue; }
+    const preco = dito > 0 ? dito : doDegrau;
     let ok = true;
     try { ok = a.confere({ pessoa, pers, preco }); } catch { ok = false; }
     if (ok) valem.push({ ...a, preco });
@@ -442,6 +454,20 @@ export function dificuldadeSocial({ texto = "", pessoa = null, pers = null, peri
     blefes: vazias.map((a) => ({ id: a.id, rotulo: a.rotulo, porque: a.semIsso })),
     custoEmMoedas: valem.reduce((s, a) => s + (a.preco || 0), 0),
   };
+}
+
+/* O QUE A CONTA AINDA COBRA (21/11). O ouro da alavanca e o cartão «Pagar» da
+   proposta leem a mesma quantia dita, e os dois tiravam-na da bolsa: «dou dez
+   moedas ao guarda…» saía ◉ 10 no cartão e mais ◉ 10 no sim. `pagoNaProposta`
+   ({ frase, total }) é o que o cartão já tirou NESTE turno; só conta quando é
+   da mesma frase. Devolve o que falta tirar (nunca negativo). O total da conta
+   não muda: o envelope «Já paguei N moedas» continua verdade. */
+export function oQueAContaAindaCobra(conta, frase, pagoNaProposta) {
+  const custo = Math.max(0, Number(conta && conta.custoEmMoedas) || 0);
+  const p = pagoNaProposta && typeof pagoNaProposta === "object" ? pagoNaProposta : null;
+  const f = String(frase == null ? "" : frase).trim();
+  const ja = p && f && String(p.frase == null ? "" : p.frase).trim() === f ? Math.max(0, Number(p.total) || 0) : 0;
+  return Math.max(0, custo - ja);
 }
 
 /* ============================================================

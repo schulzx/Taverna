@@ -175,7 +175,7 @@ import { criarTorneio, garantirTorneio, correrForaDeTela, minhaLuta, meuRival } 
    juiz. Codigo de ficha, selo, serie seca. Conta em duelo.js. */
 import { codigoDaFicha, fichaDoCodigo, resumoParaAviso, tipoDoDuelo, duelar, rivalDaCasa, heroiDoSave, cartaDaFicha, cartaDoSelo, lerCarta, souLadoA, sementeDaSala, versoesBatem } from "./duelo.js";
 import { garantirMesa, temperaturaDaMesa, pilarDoTexto, seguraOTeste, falaDaConcessao, envelopeDaConcessao, pilarFaminto, pilarRepetido, fioDaMemoria, marcarFio, envelopeDoFio, linhaDoFio, brilhoDoSucesso, falaDoBrilho, envelopeDoBrilho, avisarAntesDeMorder, marcarAvisado, envelopeDoAviso, linhaDoAviso } from "./mestria.js";
-import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante } from "./social.js";
+import { moverRelacao, envelopeSocial, falaDosBlefes, consultouInformante, oQueAContaAindaCobra } from "./social.js";
 import { custoDeVoltar, formasDeVoltar, aplicarVolta, heranca, nivelDoHerdeiro, envelopeDoHerdeiro, resumoLegadoPrompt, LEGADO_PROMPT } from "./legado.js";
 import { distanciaDoPasso as distanciaDoPassoNoMapa, alvoNoMapa, garantirMissoes, criarMissao, semearMissoes, encerrarLegado, ativas as missoesAtivas, ofertas as missoesOferecidas, etapaAtual, progresso as progressoMissao, textoDaEtapa, tipoDef as tipoMissao, aceitarProposta as ofertaDoMestre, responderOferta, recompensaDe, textoDaPaga, envelopeDeAceite, envelopeDeRecusa, envelopeDeFalhaPorTempo, relogioDaMissao, falharPorRelogio, temPrazo, textoDoPrazo, resumoMissoesPrompt, chegadaConfirmada } from "./missoes.js";
 import { identificarDivindadeAbatida, provaAtual, registrarProva, cancelarRito, ASCENSAO_SISTEMA_PROMPT } from "./ascensao.js";
@@ -5970,6 +5970,8 @@ export default function Taverna() {
   const crimeVistoNaPropostaRef = useRef(null);
   /* o que a proposta paga ou vende, à espera do turno: corre DEPOIS da foto do
      início, para o desfeito de um Mestre que cala devolver a moeda */
+  /* 21/11: o que o cartão «Pagar» já tirou neste turno ({ frase, total }) — o ouro da conta social não cobra outra vez (oQueAContaAindaCobra) */
+  const pagoNaPropostaRef = useRef(null);
   const ladoDaPropostaRef = useRef(null);   // marca do "atacar mesmo assim" — não pergunta duas vezes
   const [crimeVereditoPendente, setCrimeVereditoPendente] = useState(null); // { texto, aoConfirmar, aoDeixar }
   const [npcs, setNpcs] = useState({});
@@ -14597,6 +14599,7 @@ export default function Taverna() {
         if (lado.venda && lado.venda.item && !lado.venda.motivo) venderNoMercado(lado.venda.item, lado.venda.origem);
       }
     } catch (e) { calou("o que a proposta paga ou vende", e); }
+    pagoNaPropostaRef.current = { frase: acao, total: pagoNaProposta };
     /* QQ · Q3: O GESTO SEM DADO (plano-quadro §11, 6). A receita punha-o em
        adjudicarAcao, no «sem teste» — mas o despachante só chama
        adjudicarAcao quando HÁ teste, e o «pago a quem sabe» passa antes pela
@@ -18161,7 +18164,7 @@ export default function Taverna() {
            uma alavanca, é um desconto de graça na dificuldade */
         if (passou && des.social.custoEmMoedas > 0) {
           const base = personagemRef.current || personagem;
-          const pago = Math.min(base.moedas || 0, des.social.custoEmMoedas);
+          const pago = Math.min(base.moedas || 0, oQueAContaAindaCobra(des.social, r.frase || r.motivo || "", pagoNaPropostaRef.current));
           if (pago > 0) {
             const np = { ...base, moedas: (base.moedas || 0) - pago };
             personagemRef.current = np; setPersonagem(np);
@@ -18802,7 +18805,7 @@ export default function Taverna() {
         env = q.envelope || envelopeSocial(conta, { passou: true, quem: q.quem || "essa pessoa", oQueEuDisse: acao });
         if (conta.custoEmMoedas > 0) {
           const base = personagemRef.current || personagem;
-          const pago = Math.min(base.moedas || 0, conta.custoEmMoedas);
+          const pago = Math.min(base.moedas || 0, oQueAContaAindaCobra(conta, acao, pagoNaPropostaRef.current));
           if (pago > 0) {
             const np = { ...base, moedas: (base.moedas || 0) - pago };
             personagemRef.current = np; setPersonagem(np);

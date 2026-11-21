@@ -9,7 +9,9 @@ import {
   pesoDoPapel, alavancasNaMesa, dificuldadeSocial, moverRelacao,
   envelopeSocial, envelopeForaDaConversa, falaDosBlefes,
   PAPEIS_DE_INFORMANTE, ehInformante, PEDIDOS_QUE_SAO_CONSULTA, consultouInformante,
+  oQueAContaAindaCobra,
 } from "../src/social.js";
+import { aQuantiaDita } from "../src/motor/o-pagamento-da-frase.js";
 import { criarNPC, mesclarNPC, registrarConsulta, vezesQueUsouInformante } from "../src/npcs.js";
 import fs from "node:fs";
 import {
@@ -467,6 +469,48 @@ sec("12. QUEM VIVE DE CONTAR (R1) — o informante deixa traço");
        a consulta; o número só vai aparecer pelo efeito, quando R2 o ler. */
     t("nada disto vai à tela", !/pushMsgs|setAviso|notaRef/.test(bloco));
   }
+}
+
+sec("13. A QUANTIA DITA MANDA (21/11) — uma moeda não é suborno de trinta");
+{
+  /* Sessão mestre-vivo-5, T42: «dou uma moeda ao vendedor de amêijoas e peço
+     uma amêijoa». O cartão disse «Pagar ◉ 1 · a bolsa fica com ◉ 33» e cobrou
+     1; o sim sem dado refez a conta pela frase, achou a alavanca do ouro
+     («dou … moeda») e cobrou o preço do degrau «favor», ◉ 30: a bolsa caiu de
+     34 para 3. Em 0ce2cd3 o custo aqui era 30. */
+  const f42 = "dou uma moeda ao vendedor de amêijoas e peço uma amêijoa";
+  const c42 = dificuldadeSocial({ texto: f42, pers: { nivel: 3, moedas: 33 } });
+  t("T42: uma moeda dita não vira suborno de ◉ 30", c42.custoEmMoedas === 0);
+  t("e o ouro que não paga o pedido não baixa a dificuldade", !c42.alavancas.some((a) => a.id === "moeda"));
+  t("e diz por quê, na voz de sempre", c42.blefes.some((b) => b.id === "moeda" && /não paga/.test(b.porque)));
+
+  /* a quantia dita que cobre o degrau é o preço — nem o do degrau, nem mais */
+  const muito = ler("tento convencer o guarda a abrir o portão, ofereço 300 moedas", guarda);
+  t("ofereço 300 moedas: o preço é 300 (o dito), não o do degrau", muito.social.custoEmMoedas === 300);
+  const semDizer = ler("tento convencer o guarda a abrir o portão, ofereço ouro", guarda);
+  const doDegrau = ALAVANCAS.find((a) => a.id === "moeda").preco[semDizer.social.tamanho];
+  t("sem quantia dita, continua o preço do degrau", semDizer.social.custoEmMoedas === doDegrau && doDegrau > 0);
+  t("a régua da quantia é a mesma da proposta", aQuantiaDita(f42) === 1 && aQuantiaDita("ponho ◉ 5 no balcão") === 5 && aQuantiaDita("peço uma amêijoa") === 0);
+
+  /* o cartão «Pagar» e o sim leem o mesmo número: o que o cartão já tirou
+     por ESTA frase não sai da bolsa outra vez */
+  const conta = { custoEmMoedas: 30 };
+  const fr = "dou trinta moedas ao guarda e tento convencer o guarda a me deixar passar";
+  t("pago no cartão pela mesma frase: nada mais a cobrar", oQueAContaAindaCobra(conta, fr, { frase: fr, total: 30 }) === 0);
+  t("pago a menos: cobra só a diferença", oQueAContaAindaCobra(conta, fr, { frase: fr, total: 10 }) === 20);
+  t("pago noutra frase: não desconta", oQueAContaAindaCobra(conta, fr, { frase: "pago a sopa", total: 2 }) === 30);
+  t("sem cartão (null) cobra a conta inteira", oQueAContaAindaCobra(conta, fr, null) === 30);
+  t("nunca devolve negativo", oQueAContaAindaCobra({ custoEmMoedas: 1 }, fr, { frase: fr, total: 5 }) === 0);
+  t("conta nula não cobra nada", oQueAContaAindaCobra(null, fr, null) === 0);
+
+  /* a fiação: os dois lugares que tiram o ouro da conta social passam pela
+     função, e o turno guarda o que o cartão pagou antes de qualquer dado */
+  const APP = fs.readFileSync("../src/App.jsx", "utf8");
+  t("o sim do dado cobra pelo que falta", /Math\.min\(base\.moedas \|\| 0, oQueAContaAindaCobra\(des\.social, r\.frase/.test(APP));
+  t("o sim sem dado cobra pelo que falta", /Math\.min\(base\.moedas \|\| 0, oQueAContaAindaCobra\(conta, acao, pagoNaPropostaRef\.current\)\)/.test(APP));
+  t("nenhum lugar cobra o custoEmMoedas cru", !/Math\.min\(base\.moedas \|\| 0, (des\.social|conta)\.custoEmMoedas\)/.test(APP));
+  const iPago = APP.indexOf("pagoNaPropostaRef.current = { frase: acao, total: pagoNaProposta }");
+  t("o turno guarda o que o cartão pagou, logo depois de pagar", iPago > 0 && iPago > APP.indexOf("if (lado.pagar) pagoNaProposta ="));
 }
 
 console.log(`\nsocial + custo da falha + pele v9.69: ${ok} passaram, ${mal} falharam`);
