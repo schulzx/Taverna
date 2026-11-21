@@ -166,7 +166,13 @@ const CATRACA_DO_EXAME = {
        hoje erra neles o que errou na sessão (3 indevidos, 3 omissões); nas 444
        frases que já eram da A ele não mudou. Era 243 · 49 · 120 · cat 179 ·
        per 90 · pares 3. */
-    A: { rolaCerto: 269, pedeIndevido: 52, deixaDePedir: 123, categoria: 204, pericia: 108, paresQueSeparam: 3 },
+    /* MOVIDA de novo em 21/11/2026 (o conserto depois da quarta sessão,
+       o-mestre-vivo.md §20), e o motivo: 32 itens escritos sobre os turnos da
+       sessão mv-4 entraram na A (origem «sessao-mv-4», rodada 7), e o Mestre de
+       hoje erra neles o que errou na sessão. Ele não mudou: os consertos da
+       leitura ficaram na régua e na escuta, e o livro fino só vale com a chave
+       ligada. Era 269 · 52 · 123 · cat 204 · per 108 · pares 3. */
+    A: { rolaCerto: 293, pedeIndevido: 55, deixaDePedir: 128, categoria: 229, pericia: 125, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
     /* NASCEU na rodada 6 (21/11/2026): a primeira medida da C, antes de
        qualquer conserto (o-mestre-vivo.md §20). */
@@ -192,7 +198,12 @@ const CATRACA_DO_EXAME = {
        e só para cima: os 32 itens da sessão mv-3 (32 de 32 certos); nas 412
        que já eram da A, 381 · 2 · 29 como antes. Era 381 · 2 · 29 · cat 309 ·
        per 174 · pares 100. */
-    A: { rolaCerto: 413, pedeIndevido: 2, deixaDePedir: 29, categoria: 340, pericia: 196, paresQueSeparam: 102 },
+    /* SUBIU em 21/11/2026 (o conserto depois da quarta sessão, §20), só para
+       cima: os 32 itens da sessão mv-4 (32 de 32 no rola/não rola; 26 de 32
+       eram certos antes do conserto); nas 444 que já eram da A, 413 · 2 · 29
+       como antes. A B, que agora afina, ficou igual (157 · 7 · 32). Era
+       413 · 2 · 29 · cat 340 · per 196 · pares 102. */
+    A: { rolaCerto: 445, pedeIndevido: 2, deixaDePedir: 29, categoria: 371, pericia: 219, paresQueSeparam: 103 },
     /* DESCEU em 19/11/2026 (§19), e o motivo fica escrito: a rodada da
        terceira sessão custou UMA frase da B, que passou a pedir dado onde a
        mesa não pede (157 · 7 · pares 53; era 158 · 6 · 54). Não se sabe qual:
@@ -203,7 +214,10 @@ const CATRACA_DO_EXAME = {
     /* NASCEU na rodada 6 (21/11/2026): a primeira medida da C, antes de
        qualquer conserto (o-mestre-vivo.md §20). A C só se mede mais uma vez,
        no fim da rodada. */
-    C: { rolaCerto: 102, pedeIndevido: 1, deixaDePedir: 21, categoria: 82, pericia: 36, paresQueSeparam: 18 },
+    /* SUBIU em 21/11/2026 com a segunda (e última) medida da rodada, depois
+       do conserto (§20), só para cima. Era 102 · 1 · 21 · cat 82 · per 36 ·
+       pares 18. */
+    C: { rolaCerto: 103, pedeIndevido: 1, deixaDePedir: 20, categoria: 83, pericia: 37, paresQueSeparam: 18 },
   },
 };
 /* o que a M2 mediu, antes de tudo isto (o exame inteiro, o Mestre de hoje
@@ -643,12 +657,15 @@ for (const h of METADES_MEDIDAS) {
     b.rolaCerto > a.rolaCerto && b.pedeIndevido <= a.pedeIndevido);
 }
 
-sec("3. os erros da metade A (a régua; a metade B não se lê frase a frase)");
-{
+/* MOVIDO na rodada 6: só a A se lia frase a frase; a B deixou de ser prova
+   e passou a afinar, então os erros dela também se leem. A C nunca. */
+sec("3. os erros das metades que afinam, A e B (a régua; a C não se lê frase a frase)");
+for (const metadeQueAfina of ["A", "B"]) {
   const L = lido.regua;
   const rotulo = (rola, cat) => `${rola ? "rola" : "não rola"}/${cat}`;
   const resumo = (c) => Object.entries(c || {}).filter(([k, v]) => v === true || k === "nota").map(([k, v]) => (v === true ? k : v)).join(", ");
-  const daA = ITENS.filter((i) => i.metade === "A");
+  console.log(`     metade ${metadeQueAfina}:`);
+  const daA = ITENS.filter((i) => i.metade === metadeQueAfina);
   const erros = daA.filter((i) => L.get(i.id).pede !== i.esperado.rola || (!i.espontaneo && !categoriaCerta(i.esperado.categoria, categoriaObtida(L.get(i.id).rot))));
   /* os mais instrutivos primeiro: o par que a régua não separou, a base
      forte, o veredito errado antes da categoria errada; uma situação só por
@@ -657,7 +674,10 @@ sec("3. os erros da metade A (a régua; a metade B não se lê frase a frase)");
     + (L.get(i.id).pede !== i.esperado.rola ? 3 : 0);
   erros.sort((a, b) => peso(b) - peso(a) || a.situacao - b.situacao);
   const vistas = new Set(), lista = [];
-  for (const passo of [1, 2]) for (const i of erros) {
+  /* rodada 6: EXAME_LER=<origem> lê todos os erros de uma origem (a sessão
+     jogada que se afina), sem o corte de 25 */
+  if (process.env.EXAME_LER) lista.push(...erros.filter((i) => process.env.EXAME_LER === "*" || i.origem === process.env.EXAME_LER));
+  else for (const passo of [1, 2]) for (const i of erros) {
     if (lista.length >= 25 || lista.includes(i)) continue;
     if (passo === 1 && vistas.has(i.situacao)) continue;
     vistas.add(i.situacao); lista.push(i);

@@ -23,8 +23,9 @@ import {
   PERGUNTA_DO_DESTINO, FAIXAS_DO_DESTINO, oDadoDoDestino, ePerguntaDoDestino,
   RISCO_DO_ATO, MOTIVO_PARA_NEGAR_DO_ALVO, A_VITIMA_DO_FURTO, OUVIR_QUEM_FALA, CALA_POR_AUSENCIA,
   O_ALVO_DA_FALA, MENTIRA_E_AMEACA, quemAFraseNomeia, estranhoAQuemSeFala,
-  PERIGO_DECLARADO, O_ALVO_AUSENTE, nomeAusenteNaFrase, A_BUSCA_SOB_OLHOS,
+  PERIGO_DECLARADO, O_ALVO_AUSENTE, nomeAusenteNaFrase, A_BUSCA_SOB_OLHOS, O_FURTO_SEM_SER_VISTO,
 } from "../src/motor/a-regua-do-momento.js";
+import { registrarTentativa } from "../src/desafios.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
 let ok = 0, mal = 0;
@@ -452,6 +453,51 @@ sec("S19. o conserto depois da terceira sessão jogada (19/11/2026, o-mestre-viv
   /* 3. a ameaça com a arma é Intimidação */
   const adaga = comFrase("levanto o Doran pela gola com a adaga na mão e mando ele falar", doran);
   t("ameaçar com a adaga na mão é Intimidação, não Atletismo (T22)", adaga.rola && adaga.veredito.pericia === "intimidacao", JSON.stringify([adaga.porque, adaga.veredito && adaga.veredito.pericia]));
+}
+
+sec("S20. a quarta sessão jogada (21/11/2026, o-mestre-vivo.md §20)");
+{
+  const comFrase = (frase, cena, ctx, leitura) => valeRolagem(lerAcao(frase, leitura || CTX), cena, { ...(ctx || {}), frase, leitura: leitura || CTX });
+  const G = (nome) => ({ nome, papel: "ladino", estados: ["do_grupo"] });
+  const N = (nome, papel, ...estados) => ({ nome, papel, estados });
+  const soPerrin = cenaDe({ pessoas: [G("Perrin")] });
+  /* o regateio: um veredito para a mesma ação */
+  const comSimpatia = comFrase("regateio com a vendedora: só tenho 12 moedas", cenaDe({ pessoas: [G("Perrin"), N("", "vendedora de cordas", "disposta")] }));
+  t("regatear com a vendedora simpática rola: o desconto é dinheiro dela (era dispostoCede)", comSimpatia.rola && comSimpatia.porque === "precoComSimpatia", comSimpatia.porque);
+  const comFavor = comFrase("regateio com o ferreiro: só tenho 12 moedas", cenaDe({ pessoas: [N("", "ferreiro", "deve_favor")] }));
+  t("com quem deve um favor, o desconto sai sem dado", !comFavor.rola, comFavor.porque);
+  t("«fecha por 15» é preço", MOTIVO_PARA_NEGAR_DO_ALVO.preco.test("insisto: so tenho 15, fecha por 15") && Object.isFrozen(MOTIVO_PARA_NEGAR_DO_ALVO.precoContraASimpatia));
+  const insiste = comFrase("insisto: só tenho 15, fecha por 15", cenaDe({ pessoas: [G("Perrin"), N("", "vendedora de cordas")] }));
+  t("insistir no preço rola como regatear (era falaSemOposicao)", insiste.rola, insiste.porque);
+  /* a mentira à mulher que o painel não tem não cai no companheiro */
+  t("«mulher» não é infinitivo: a mentira à mulher da criança vai a uma estranha", estranhoAQuemSeFala("conto a mesma mentira pra mulher da criança", soPerrin) === "mulher" && O_ALVO_DA_FALA.naoEInfinitivo.includes("mulher"));
+  const aMulher = comFrase("conto a mesma mentira pra mulher da criança", soPerrin);
+  t("e rola como mentira ao estranho, com ela como alvo", aMulher.rola && aMulher.porque !== "mentiraAoGrupo" && aMulher.alvo === "mulher", JSON.stringify([aMulher.porque, aMulher.alvo]));
+  t("o veredito da conversa diz o alvo; o da escalada não", comFrase("minto pro Perrin que perdi as chaves", soPerrin).alvo === "Perrin" && !("alvo" in comFrase("escalo o muro de 6 m sem corda", soPerrin)));
+  /* a fuga de quem está armado */
+  const fuga = comFrase("fujo da vendedora armada pulando os caixotes", cenaDe({ pessoas: [G("Perrin"), N("", "vendedora de cordas")] }));
+  t("fugir de quem está armado, pulando os caixotes, rola (era naoETeste)", fuga.rola && fuga.porque === "riscoDoAto", fuga.porque);
+  const correndo = comFrase("saio correndo da vendedora, que está de faca na mão, pulando caixotes", cenaDe({ pessoas: [G("Perrin"), N("", "vendedora de cordas")] }));
+  t("e «saio correndo da vendedora, que está de faca na mão» também", correndo.rola, correndo.porque);
+  t("correr sem ninguém atrás, numa cena calma, continua narrado", !comFrase("passo pela feira pulando os caixotes", soPerrin).rola);
+  /* a busca debaixo dos olhos da dona, dita pelo papel, e o livro que não a fecha */
+  const vend = cenaDe({ pessoas: [G("Perrin"), N("", "vendedora de cordas")] });
+  const cestos = comFrase("reviro os cestos da banca da vendedora, com ela olhando", vend);
+  t("revirar os cestos da vendedora diante dela é a mão leve (pelo papel, sem nome)", cestos.rola && cestos.veredito && cestos.veredito.pericia === "prestidigitacao", cestos.porque);
+  const CTXF = { ...CTX, chaveFina: true };
+  const furtoFalho = registrarTentativa({}, lerAcao("afano um cantil da banca de água", CTXF).chave, { resultado: "falha", dia: 1 });
+  const depois = comFrase("reviro os cestos da banca da vendedora, com ela olhando", vend, null, { ...CTXF, tentativas: furtoFalho });
+  t("um furto falho de outra coisa não fecha a revista dos cestos (era buscaVazia)", depois.rola, depois.porque);
+  t("a frase-modelo leva a coisa revirada", /\{objeto\}/.test(A_BUSCA_SOB_OLHOS.comObjeto) && A_BUSCA_SOB_OLHOS.objeto.test("reviro os cestos da banca") && A_BUSCA_SOB_OLHOS.corte.test("a barraca dele procurando o livro"));
+  /* o furto «sem ser visto» é mão leve na régua (o catálogo de hoje lê esgueirar, e fica) */
+  const furto = comFrase("tento furtar a bolsa do homem do caixote sem ser visto", vend);
+  t("o furto «sem ser visto» rola a mão leve, não a Furtividade (T13)", furto.rola && furto.veredito.pericia === "prestidigitacao" && lerAcao("tento furtar a bolsa do homem do caixote sem ser visto", CTX).id === "furtar_se",
+    JSON.stringify([furto.porque, furto.veredito && furto.veredito.pericia]));
+  t("o «sem ser visto» sem furto continua esgueirar", comFrase("passo sem ser visto pela banca", vend).veredito.id === "furtar_se" && O_FURTO_SEM_SER_VISTO.modelo.includes("{coisa}"));
+  /* a escuta ouve o que o catálogo de hoje não ouve */
+  const mentira = comFrase("falo pro Perrin que perdi as chaves, mas elas estão no meu bolso", soPerrin);
+  t("a fala que a frase desmente é mentira, e ao companheiro rola", mentira.rola && mentira.porque === "mentiraAoGrupo" && !(lerAcao("falo pro Perrin que perdi as chaves, mas elas estão no meu bolso", CTX) || {}).id, mentira.porque);
+  t("«grito pra todo mundo fugir» não é a fuga do herói", !comFrase("subo no barril e grito pra todo mundo fugir antes do anoitecer", cenaDe({ pessoas: [N("", "aldeões", "disposta")] })).rola);
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

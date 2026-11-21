@@ -221,6 +221,20 @@ export const PAUTA_DO_MESTRE_VIVO = Object.freeze({
   /* o veto de todo turno que acontece sem dado (a porta «acontece»): o
      Narrador não explica a regra na boca de ninguém */
   semMecanica: "explicar por que deu certo ou por que não havia o que temer: ninguém na cena fala em sucesso, teste, dado, sorte, folga ou risco",
+  /* 21/11 (o-mestre-vivo.md §20): A NARRAÇÃO QUE DESMENTE O VEREDITO. A quarta
+     sessão viu a fala cair em quem estava mais perto (Perrin respondendo pelo
+     velho, Isolde pelo vendedor de água), a Intimidação que passou virar
+     «não levo ameaça a sério», e a gazua que a ficha nega girar na prosa. O
+     sistema sabia os três — a quem a frase falava, que o resultado manda, o
+     que o herói não tem —, e não os dizia ao Narrador. Agora vão pelo canal de
+     um turno: `alvo` (acabou) e `outraBoca`/`contraOResultado` (não pode),
+     em toda conversa com alvo; `semOQueNaoTem`, quando a ficha nega o meio.
+     `alvoSemNome`: o alvo que a frase disse pelo papel («velho»). */
+  alvo: "Eu falei com {alvo}, e é essa pessoa quem reage ao que eu disse.",
+  alvoSemNome: "quem eu chamei de «{alvo}»",
+  outraBoca: "pôr a reação na boca de outra pessoa que não {alvo}",
+  contraOResultado: "fazer essa pessoa reagir ao contrário do que ficou decidido (quem se dobrou não desdenha da ameaça, quem não acreditou não obedece)",
+  semOQueNaoTem: "fazer acontecer o que a minha ficha não permite ({porque}), nem pôr na minha mão o que falta",
 });
 export function pautaDoMomento(m) {
   try {
@@ -234,6 +248,17 @@ export function pautaDoMomento(m) {
       if (P.resposta.naoPode[m.resposta]) naoPode.push(P.resposta.naoPode[m.resposta]);
     }
     if (m.rola && /^encadeada:/.test(String(m.porque || ""))) acabou.push(P.encadeada);
+    /* 21/11 (§20): a conversa tem dono, e o resultado manda na reação dele */
+    const alvo = txt(m.alvo);
+    if (alvo) {
+      const dito = /^[A-ZÀ-Ý]/.test(alvo) ? alvo : P.alvoSemNome.replace("{alvo}", alvo);
+      acabou.push(P.alvo.replace("{alvo}", dito));
+      naoPode.push(P.outraBoca.replace("{alvo}", dito));
+      if (m.rola) naoPode.push(P.contraOResultado);
+    }
+    /* 21/11 (§20): o meio que a ficha nega não aparece na prosa */
+    const v = obj(m.veredito) ? m.veredito : null;
+    if (v && v.tipo === "impossivel" && txt(v.porque)) naoPode.push(P.semOQueNaoTem.replace("{porque}", txt(v.porque)));
     if (!m.rola && m.cena && !obj(m.destino)) naoPode.push(P.semMecanica);
     return acabou.length || naoPode.length ? Object.freeze({ acabou, naoPode }) : null;
   } catch {
@@ -486,11 +511,81 @@ export function oQueAconteceSemDado(v, m, o) {
     const pessoa = obj(v.pessoa) ? v.pessoa : null;
     let conta = v.social;
     try { if (txt(op.frase)) conta = dificuldadeSocial({ texto: txt(op.frase), pessoa, pers: obj(op.pers) ? op.pers : null, pericia: txt(v.pericia) }) || v.social; } catch { conta = v.social; }
-    const quem = (pessoa && txt(pessoa.nome)) || txt(v.quem) || "";
+    /* 21/11 (§20): sem a pessoa do elenco, quem a régua achou na frase */
+    const quem = (pessoa && txt(pessoa.nome)) || txt(v.quem) || txt(m.alvo) || "";
     /* `envelope`: o sim como fato de cena (O_SIM_SEM_DADO) — o App o prefere
        ao envelope do teste social */
     return Object.freeze({ efeito: "social", desfecho: "sucesso", fecha: true, conta, quem, envelope: envelopeDoSimSemDado(conta, { quem, oQueEuDisse: txt(op.frase) }) });
   }
   if (vale && O_QUE_ACONTECE_SEM_DADO.socorro.includes(porque)) return Object.freeze({ efeito: "socorro", desfecho: "sucesso", fecha: true });
   return Object.freeze({ efeito: "nenhum", desfecho: "falha", fecha: false });
+}
+
+/* ---------------- A FALA DA MESA ----------------
+   21/11 (o-mestre-vivo.md §20): o que a tela diz quando o Mestre vivo está
+   ligado, no lugar das linhas do Mestre de hoje que explicam o mecanismo. A
+   quarta sessão listou como texto de regra: «⚖ Faltaram 2, e ainda assim:»,
+   «⚖ Por um fio:», «⛔ Assim não dá: … Outro jeito: à força, no ombro», «↺ Você
+   já tentou … Insistir igual não muda nada — …», «✓ Isso você já conseguiu
+   aqui — sem dado», «🗣 Não contou: …» e o fragmento «🔊 no braço faz
+   barulho.». O sistema não fala de si: fica o que aconteceu, na voz de um
+   mestre de mesa, e o «sem dado» some (a narração conta). Com a chave
+   desligada nada disto é lido — o Mestre de hoje segue com as falas dele.
+   Uma função por linha de tela; "" quer dizer «nada na tela». */
+export const A_FALA_DA_MESA = Object.freeze({
+  jaTentou: "↺ Desse jeito você já tentou aqui, e não deu. Com ajuda, outra ferramenta ou bem mais tempo, talvez.",
+  jaRevistou: "↺ Isso você já revirou assim. Com ajuda, outra ferramenta ou bem mais tempo, talvez apareça o que escapou.",
+  vasculhado: "🔍 Aqui já foi revirado até o fundo: não sobrou nada.",
+  impossivel: "⛔ {porque}{talvez}.",
+  talvez: " — talvez {como}",
+  custo: "{glifo} {diz}.",
+  glifoDoCusto: Object.freeze({ porPouco: "⚖", falha: "↯" }),
+  barulho: "🔊 Isso fez barulho.",
+  blefe: "🗣 {porque}.",
+  /* o que nenhuma destas falas pode dizer: é a regra falando */
+  proibidas: /\b(dado|teste|sucesso|sorte|regra|mestre|b[oô]nus|per[ií]cia|faltaram|por um fio|insistir|outro jeito|n[aã]o contou|sem dado)\b/i,
+});
+/* o veredito do catálogo que não rola → a linha da tela, ou null para a do
+   Mestre de hoje (o que não é destes tipos fica como está) */
+export function falaDoVeredictoNaMesa(v) {
+  try {
+    if (!obj(v)) return null;
+    const F = A_FALA_DA_MESA;
+    if (v.tipo === "vasculhado") return F.vasculhado;
+    if (v.tipo === "jaTentou") return v.apósSucesso ? F.jaRevistou : F.jaTentou;
+    if (v.tipo === "livre") return "";
+    if (v.tipo === "impossivel" && txt(v.porque)) {
+      const como = arr(v.comoSeria).map(txt).filter(Boolean);
+      return F.impossivel.replace("{porque}", maiuscula(txt(v.porque))).replace("{talvez}", como.length ? F.talvez.replace("{como}", como.join(" ou ")) : "");
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+/* o desfecho da margem (desafios.js#desfechoDaMargem) → só o que aconteceu */
+export function falaDoCustoNaMesa(des) {
+  try {
+    if (!obj(des) || !txt(des.diz)) return null;
+    const F = A_FALA_DA_MESA;
+    const glifo = des.porPouco || des.meiaVerdade ? F.glifoDoCusto.porPouco : F.glifoDoCusto.falha;
+    return F.custo.replace("{glifo}", glifo).replace("{diz}", maiuscula(txt(des.diz).replace(/[.\s]+$/, "")));
+  } catch {
+    return null;
+  }
+}
+export function falaDoBarulhoNaMesa() {
+  return A_FALA_DA_MESA.barulho;
+}
+/* os blefes que a conta social não aceitou (social.js#falaDosBlefes) → o fato */
+export function falaDosBlefesNaMesa(conta) {
+  try {
+    const bs = obj(conta) ? arr(conta.blefes).filter(obj) : [];
+    if (!bs.length) return null;
+    const porque = bs.map((b) => txt(b.porque)).filter(Boolean);
+    if (!porque.length) return null;
+    return A_FALA_DA_MESA.blefe.replace("{porque}", maiuscula(porque.join("; ")));
+  } catch {
+    return null;
+  }
 }

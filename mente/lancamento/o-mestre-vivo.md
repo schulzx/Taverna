@@ -1133,3 +1133,90 @@ conserto e uma vez no fim.
 |---|---|---|---|---|---|---|
 | régua | **102 de 124** | 1 de 61 | 21 de 63 | 82 | 36 de 42 | 18 de 25 |
 | hoje | 72 de 124 | 19 de 61 | 33 de 63 | 61 | 26 de 30 | 0 de 25 |
+
+Cada turno da sessão foi reproduzido por `chamadoDoMomento` com o retrato do jogo **e com o livro de tentativas em
+sequência** (a mentira conseguida antes da seguinte, o furto falho antes do esconderijo). Foi o livro, e não a régua,
+que explicou metade da sessão. Cada conserto tem caso nas suítes (S20 de `teste-desafios`, da régua, da cena do jogo e
+da fiação), e os 32 turnos entraram na metade A como itens nossos (`origem: "sessao-mv-4"`, rodada 7).
+
+**1. O livro fechava a ação errada.** Duas chaves sem objeto. A da furtividade era `lugar|furtividade`: a Furtividade
+falha do furto (T13) fechou todo esconder-se da feira, e dois esconderijos novos (T24, T31) ouviram «você já tentou
+passar sem ser visto aqui». A da mão leve era `lugar|furto`: o cantil falho (T14) fechava qualquer outra mão leve no
+mercado. *Conserto* (`desafios.js`): `objetoDaChaveFina` no esgueirar (o esconderijo ou o caminho: «atrás dos
+caixotes», «pela viela») e na mão leve (a coisa e de quem: «a bolsa do homem do caixote»); sem objeto dito, fica a chave
+do lugar. **A chave fina só vale com `ctx.chaveFina`**, que o App põe no contexto do desafio quando o Mestre vivo está
+ligado: com a chave desligada o livro é o de sempre, e o jogo não muda. E o furto que diz «sem ser visto» (T13 rolou
+Furtividade) a régua troca pela mão leve (`O_FURTO_SEM_SER_VISTO`); o catálogo de hoje continua lendo esgueirar.
+
+**2. A mentira ao companheiro não chegava à régua.** A linha `mentiraAoGrupo` dispara (prova: «minto a Perrin» rola
+numa cena vazia). Quem calava era o livro: a chave da conversa é «este pedido a esta pessoa», mas quando o elenco não
+acha a pessoa (o velho fora do painel, o companheiro fora do registro) ela virava `quem quer que seja`. A mentira que
+passou com o velho (T4) fez da mentira a Perrin (T5) uma «coisa já conseguida» — `livre`, sem dado, sem custo — e o
+veto `naoETeste` cortava antes da régua. *Conserto*: a chave leva quem a frase nomeia (`ouvinteDaChave`: a palavra
+depois da preposição da fala, ou o objeto direto de «minto/ameaço/convenço»); sem ninguém dito, continua
+`quem quer que seja` (também só com `chaveFina`). «Mulher» deixou de passar por infinitivo, nas duas pontas: «conto a mesma mentira pra mulher da
+criança» caía em Perrin (régua, `O_ALVO_DA_FALA.naoEInfinitivo`) e fechava como `quem quer que seja` (livro).
+
+**3. O regateio, um veredito.** Três causas, e só uma era a régua: (a) com a vendedora **disposta**, a linha
+`dispostoCede` ganhava — nova linha `precoComSimpatia`: o desconto sai do bolso dela, goste ou não do herói; só o laço
+que deve (o favor, o companheiro, o sim já dado) dispensa o dado; (b) «fecha por 15» não era preço
+(`MOTIVO_PARA_NEGAR_DO_ALVO.preco`, da régua, ouve «fecha/deixa/vende por N»); (c) a mesma colisão de chave do ponto 2: o sim
+sem dado de uma conversa fechava como conseguida toda conversa `quem quer que seja` do mesmo tamanho.
+
+**4. As buscas.** Revistar os cestos com a dona olhando (T22) *já* era mão leve na régua; o que a calava era o livro:
+a frase-modelo da mão leve era sempre a mesma bolsa, com a chave `lugar|furto`, e o cantil falho (T14) a fechava —
+a régua caía na busca vazia. Agora a frase-modelo leva a coisa revirada (`A_BUSCA_SOB_OLHOS.objeto`/`comObjeto`), e o
+dono pode ser dito pelo papel («da vendedora»), não só pelo nome ou por «dele». As buscas por coisa escondida (T21
+«sob as telhas», T23 «atrás dos caixotes») continuam sem dado, pela régua do mestre real: procurar rola quando há o
+que achar ou quando ser visto custa, e ali o sistema **não sabe** se há algo. **O que falta ao sistema saber:** o
+achado só existe por lugar do mapa (`achadoDe` do sítio, o segredo da sala da masmorra) e pelo que a quest declara
+escondido; o telhado do depósito, os caixotes e os cestos não são lugares, e nenhuma tabela diz o que se esconde
+neles. Para a busca rolar ali, o mundo precisa de esconderijos por sítio (ou o passo da quest dizer «há algo nos
+caixotes») — é estado novo, e não foi inventado.
+
+**5. A fuga de quem está armado.** «Fujo de Isolde armada pulando caixotes» não casava nenhum verbo. A escuta da cena
+(só o Mestre vivo; `FORMAS_DO_ATO`) ouve a fuga em primeira pessoa («fujo», «saio correndo de», «tento fugir»; «grito
+pra todo mundo fugir» não é dele, E103), só com o corpo em jogo dito — o obstáculo pulado ou a arma de quem vem
+atrás («Fujo da aranha gigante» é movimento, diz o corpus das situações) — e «pulando os caixotes» como o salto; a régua já tinha a fuga como perigo do
+ato (`PERIGO_DECLARADO.fuga`), que agora ouve também «correndo da vendedora, que está de faca na mão». A mesma escuta
+ouve a fala que a frase desmente («falo pro Perrin que perdi as chaves, mas elas estão no meu bolso») como mentira.
+Uma primeira versão pôs a fuga e a mentira no catálogo: o corpus da mesa e o das situações acusaram dois falsos
+«pede dado» («corro pela porta do fundo», «Fujo da aranha gigante») e, pior, mudaria o Mestre de hoje — voltou atrás.
+
+**6. A narração que desmente.** O envelope do turno não dizia ao Narrador a quem a fala se dirigia — a régua sabia
+(`quem`) e jogava fora. Agora o veredito da régua e o do `chamadoDoMomento` levam `alvo` (aditivo), e a
+`pautaDoMomento` põe pelo canal de um turno: em ACABOU DE, «Eu falei com X, e é essa pessoa quem reage»; em NÃO PODE,
+«pôr a reação na boca de outra pessoa que não X» e, quando rola, «fazer essa pessoa reagir ao contrário do que ficou
+decidido» (a Intimidação que passou e «não leva a sério», T7). O meio que a ficha nega (a gazua, T16) vai como NÃO
+PODE («fazer acontecer o que a minha ficha não permite»). Nada de bloco estático. O sim sem dado social passa a dizer
+quem aceitou pelo alvo da régua quando o elenco não achou ninguém.
+
+**7. Texto de regra na tela.** Com a chave ligada, quatro linhas do App trocam a fala do mecanismo pela da mesa
+(`A_FALA_DA_MESA`, `falaDoVeredictoNaMesa`, `falaDoCustoNaMesa`, `falaDoBarulhoNaMesa`, `falaDosBlefesNaMesa`): «Por
+um fio: ela cede, mas cede errado» → «⚖ Ela cede, mas cede errado.»; «Faltaram 2, e ainda assim: …» → só o que
+aconteceu; «Assim não dá: … Outro jeito: à força, no ombro» → «⛔ Você não tem ferramentas de ladrão — talvez à força,
+no ombro.»; «Insistir igual não muda nada — …» → «↺ Desse jeito você já tentou aqui, e não deu. Com ajuda, outra
+ferramenta ou bem mais tempo, talvez.»; «✓ Isso você já conseguiu aqui — sem dado» some (a narração conta); «🗣 Não
+contou: o aço à vista — …» → «🗣 Você não tem uma arma à mão.»; «🔊 no braço faz barulho.» → «🔊 Isso fez barulho.».
+**Com a chave desligada o App chama as falas de hoje, byte a byte** (`falaDaMesaOu`). O «+17 XP · …», a «Sorte
+pequena» do halfling e o «Isolde está aqui — …» da procura ficaram como estão (fora deste pacote).
+
+**Fora do escopo, anotado.** O nome próprio virando viagem (T3, T26) e o PT-PT na prosa não cruzaram este caminho. O
+preço dito e não cobrado (T12) e o objeto narrado fora da bolsa também não. A legenda do dado anterior colada na
+página continua por achar no App.
+
+**A medida.**
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A (476, com os 32 da sessão mv-4) | 439 · 2 · 35 · cat 366 · per 212 · pares 103 | **445 · 2 · 29 · cat 371 · per 219 · pares 103** |
+| … só as 444 que já eram da A | 413 · 2 · 29 | **igual** |
+| régua, metade B (agora afina) | 157 · 7 · 32 · cat 119 · per 53 · pares 53 | **igual** |
+| hoje, metade A | 293 · 55 · 128 (com os 32 novos) | **igual** (o Mestre de hoje não mudou em item nenhum da A nem da B) |
+| **régua, metade C (a prova; segunda e última medida)** | 102 · 1 · 21 · cat 82 · per 36 · pares 18 | **103 · 1 · 20 · cat 83 · per 37 · pares 18** |
+| hoje, metade C | 72 · 19 · 33 | igual |
+
+A C subiu um item e não perdeu nenhum indevido: o conserto foi, quase todo, o livro de tentativas e o retrato do jogo
+(a pessoa fora do painel, o companheiro), que o exame não mede — ele roda com o livro vazio e a pessoa sempre na cena.
+Nada disto foi jogado: está provado nas suítes e nas sequências montadas à mão. **O que fica para a próxima sessão
+jogada:** conferir na tela as falas da mesa e, na prosa, se o Narrador obedece à linha do alvo.

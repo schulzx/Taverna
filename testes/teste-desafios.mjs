@@ -578,5 +578,38 @@ sec("22. O QUE NÃO SE ROLA cresceu junto com o catálogo");
   t("e 'assino' não engole 'falsifico'", lerAcao("falsifico a assinatura", ctx).id === "falsificar");
 }
 
+sec("S20. o livro de tentativas fecha só a mesma coisa (21/11/2026, o-mestre-vivo.md §20)");
+{
+  /* a quarta sessão do Mestre vivo: frases nossas, escritas sobre os turnos.
+     A chave fina só vale com ctx.chaveFina (o Mestre vivo ligado); sem ela o
+     livro é o de sempre, e o jogo com a chave desligada não muda. */
+  const H = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 15 };
+  const no = (tent, fina = true) => ({ personagem: H, semente: "s20", lugar: "Mercado de Cordas", tentativas: tent, dia: 1, chaveFina: fina });
+  const fechada = (frase, res) => { const v = lerAcao(frase, no({})); return registrarTentativa({}, v.chave, { resultado: res, dia: 1 }); };
+  /* 1. a furtividade falha num canto não fecha outro esconderijo */
+  const aposFurto = fechada("me esgueiro sem ser visto até o caixote", "falha");
+  const caixotes = lerAcao("me escondo atrás dos caixotes", no(aposFurto));
+  const banca = lerAcao("me escondo atrás da banca caída", no(registrarTentativa(aposFurto, caixotes.chave, { resultado: "falha", dia: 1 })));
+  t("a furtividade falha num canto não fecha o esconderijo atrás dos caixotes", caixotes.tipo === "teste" && /caixotes/.test(caixotes.chave));
+  t("e o esconderijo atrás dos caixotes, falho, não fecha a banca caída", banca.tipo === "teste" && /banca/.test(banca.chave));
+  t("o mesmo esconderijo, falho, continua fechado", lerAcao("me escondo atrás dos caixotes", no(registrarTentativa({}, caixotes.chave, { resultado: "falha", dia: 1 }))).tipo === "jaTentou");
+  /* 2. a chave da mão leve leva a coisa */
+  const bolsa = lerAcao("furto a bolsa do homem do caixote", no({}));
+  const cantil = lerAcao("afano um cantil da banca de água", no(registrarTentativa({}, bolsa.chave, { resultado: "falha", dia: 1 })));
+  t("a mão leve falha numa bolsa não fecha o cantil da outra banca", bolsa.id === "bater_carteira" && cantil.tipo === "teste" && cantil.chave !== bolsa.chave);
+  /* 3. a conversa sem pessoa achada: a chave leva quem a frase nomeia */
+  const aoVelho = fechada("minto ao velho que sou parente dele", "sucesso");
+  const aPerrin = lerAcao("minto a Perrin: perdi as chaves", no(aoVelho));
+  const aMulher = lerAcao("repito a mentira pra mulher da criança", no(aoVelho));
+  t("a mentira que passou com o velho não faz a mentira a Perrin «já conseguida»", aPerrin.tipo === "teste" && /perrin/.test(aPerrin.chave));
+  t("nem a mentira à mulher da criança («mulher» não é verbo)", aMulher.tipo === "teste" && /mulher/.test(aMulher.chave));
+  t("a mesma mentira ao mesmo velho continua conseguida", lerAcao("minto ao velho que sou parente dele", no(aoVelho)).tipo === "livre");
+  t("sem ninguém dito, a chave continua «quem quer que seja»", /quem quer que seja/.test(lerAcao("minto que sou do conselho", no({})).chave || ""));
+  /* 4. sem a chave fina, o livro de sempre (o Mestre de hoje não muda) */
+  t("sem chaveFina, o esconderijo e a coisa furtada não entram na chave", lerAcao("me escondo atrás dos caixotes", no({}, false)).chave === chaveDaTentativa("Mercado de Cordas", "furtividade")
+    && lerAcao("furto a bolsa do homem do caixote", no({}, false)).chave === chaveDaTentativa("Mercado de Cordas", "furto"));
+  t("sem chaveFina, a conversa sem pessoa achada continua «quem quer que seja»", /quem quer que seja/.test(lerAcao("minto a Perrin: perdi as chaves", no({}, false)).chave));
+}
+
 console.log(`\ndesafios v9.67: ${ok} passaram, ${mal} falharam`);
 process.exit(mal ? 1 : 0);

@@ -442,6 +442,8 @@ export function chamadoDoMomento(frase, leitura, retrato, ctx) {
     espontaneo: null, destino: r.destino || null, cena, veredito: vEf || null, pesos: r.pesos || null, ouviu: r.ouviu || null,
     /* 19/11 (§17): a vantagem que a cena dá (quem vai ser roubado dorme) */
     ...(r.vantagem ? { vantagem: r.vantagem } : {}),
+    /* 21/11 (§20): a quem a fala se dirige (a pauta do turno o diz ao Narrador) */
+    ...(r.alvo ? { alvo: r.alvo } : {}),
   });
 }
 

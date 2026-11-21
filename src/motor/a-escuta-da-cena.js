@@ -274,6 +274,18 @@ const OPOEM_A_FALA = Object.freeze(["motivo_para_negar", "hostil", "desconfiada"
    (opcional) é a condição da cena para a forma valer. A ordem decide: a
    memória antes do «vasculhar», o ouvido antes do olho. */
 export const FORMAS_DO_ATO = Object.freeze([
+  /* 21/11 (o-mestre-vivo.md §20): três atos da quarta sessão que o catálogo
+     não ouve, ouvidos só pela escuta (o Mestre vivo) para o jogo com a chave
+     desligada não mudar: a fala que a própria frase desmente («falo pro Perrin
+     que perdi as chaves, mas elas estão no meu bolso»); a fuga em primeira
+     pessoa («fujo da Isolde armada» — a régua decide o perigo pela fuga
+     declarada); e os obstáculos pulados no caminho («pulando os caixotes»).
+     «Grito pra todo mundo fugir» não é a fuga do herói (o exame, E103). */
+  Object.freeze({ id: "mentir", rx: /\b(digo|falo|conto|juro|garanto|explico)\b[^?.!]{0,60}\bmas (na verdade|e mentira|nao e verdade|el[ae]s? (esta|estao)|(esta|estao) (no|na|nos|nas) (meu|minha|meus|minhas))\b/ }),
+  /* a fuga só com o corpo em jogo dito (o obstáculo pulado, a arma de quem vem
+     atrás): «Fujo da aranha gigante» é movimento (o corpus das situações) */
+  Object.freeze({ id: "saltar", rx: /\b(fujo|tento fugir|saio correndo d[aeo]s?)\b[^?.!]{0,60}\b(pulando|saltando|armad[oa]s?|de (faca|espada|adaga|arco|besta)( na mao| em punho)?)\b/ }),
+  Object.freeze({ id: "saltar", rx: /\b(pulando|saltando) ((os|as|uns|umas) )?(caixotes|barris|cercas?|bancas|mesas|caixas|carrocas|muretas?|grades|obstaculos|barracas)\b/ }),
   Object.freeze({ id: "lembrar", sobre: true, rx: /\b(procuro na memoria|puxo pela memoria|vasculho a memoria|reviro a memoria|lembro (de )?(alguma coisa|algo))\b/ }),
   Object.freeze({ id: "escutar", rx: /\b(ouvir (o que|alguma|algo|se|a conversa|melhor)|escut(o|ar) (o que|atras|na|pela|a conversa)|apuro o ouvido|encosto o ouvido|colo o ouvido|ouvido (na|a|colado)|presto atencao (ao|aos|a|as|no|na) (som|sons|barulho|ruido|conversa|vozes)|fico quieto e escuto|paro e escuto|o que (se passa|dizem) (la|do outro lado|atras))\b/ }),
   /* as duas seguintes vêm do classificador do protótipo (mente/classificador-

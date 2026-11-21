@@ -125,7 +125,7 @@ import { fichasDaCena, marcasDaProsa, quemNoEnvio, bancasDoToque, garantirMemori
 import { garantirFactos } from "./livro-de-factos.js";
 import { idDoLugar } from "./livro-de-factos.js";
 import { chamadoDoMomento, chamadoQueOMundoProvoca } from "./a-cena-do-jogo.js";
-import { lerAChaveDoMestreVivo, retratoDosRefs, oQueOMomentoFaz, vereditoDoQueAcontece, pautaDoMomento, lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, rolagemDoEspontaneo, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, oMestreVivoCalaOPedido, semFioNoMomento, marcarDoMomento, oQueAconteceSemDado } from "./o-mestre-vivo-no-jogo.js";
+import { lerAChaveDoMestreVivo, retratoDosRefs, oQueOMomentoFaz, vereditoDoQueAcontece, pautaDoMomento, lanceDoDestino, envelopeDoDestino, podeOMundoProvocar, rolagemDoEspontaneo, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, oMestreVivoCalaOPedido, semFioNoMomento, marcarDoMomento, oQueAconteceSemDado, falaDoVeredictoNaMesa, falaDoCustoNaMesa, falaDoBarulhoNaMesa, falaDosBlefesNaMesa } from "./o-mestre-vivo-no-jogo.js";
 import { anotarOLivro, oQueACenaDaAoLivro } from "./motor/livro-do-turno.js";
 import { EmCena, VereditoDaFicha, juntarNomeNoCampo } from "./painel-fichas.jsx";
 import { soODeclarado } from "./peneira.js";
@@ -18022,7 +18022,7 @@ export default function Taverna() {
       try { testeDoTurnoRef.current = { pericia: (r && r.pericia) || "", sucesso: !!passou }; } catch (e) { calou("o teste do turno", e); }
       let envQueda = "";
       if (custo) {
-        pushMsgs([{ autor: "sistema", texto: falaDoCusto(custo) }]);
+        pushMsgs([{ autor: "sistema", texto: falaDaMesaOu(() => falaDoCustoNaMesa(custo), () => falaDoCusto(custo), "a fala do custo") }]);
         if (custo.minutosExtra && !combateRef.current) {
           const tx = avancarMinutos(custo.minutosExtra);
           if (tx) pushMsgs([{ autor: "sistema", texto: tx }]);
@@ -18195,7 +18195,7 @@ export default function Taverna() {
       if (des && (des.barulho || (custo && custo.barulhoExtra))) {
         const q = perguntarBarulho(des);
         pushMsgs([
-          { autor: "sistema", texto: `🔊 ${des.viaNome || "Assim"} faz barulho.` },
+          { autor: "sistema", texto: falaDaMesaOu(() => falaDoBarulhoNaMesa(), () => `🔊 ${des.viaNome || "Assim"} faz barulho.`, "a fala do barulho") },
         ]);
         env = `${envelopeDaPerguntaDoSistema(q, { oQue: `Eu fiz barulho ao ${des.rotulo}` })}\n${env}`;
       }
@@ -18536,6 +18536,10 @@ export default function Taverna() {
     lugar: (lugarRef.current && lugarRef.current.nome) || cidadeAtualRef.current || "ermo",
     emCombate: !!combateRef.current,
     tentativas: tentativasRef.current,
+    /* 21/11 (o-mestre-vivo.md §20): com o Mestre vivo ligado, o livro de
+       tentativas chaveia fino (o esconderijo, a coisa furtada, quem a frase
+       nomeia); desligado, a chave de sempre */
+    chaveFina: (() => { try { return !!mestreVivoLigado(); } catch (e) { calou("Mestre vivo · a chave fina do livro", e); return false; } })(),
     dia: diaRef.current,
     /* v9.130: o guarda de `buscar` pergunta ao elenco em vez de adivinhar
        pelo texto. Sem isto, todo nome proprio que o jogo conhece continua
@@ -18575,6 +18579,16 @@ export default function Taverna() {
      (a cena) além da frase, atrás de uma chave desligada por omissão
      (src/o-mestre-vivo-no-jogo.js). Desligada, nada daqui é chamado e o
      turno é o de hoje. Tudo em calou: qualquer falha devolve o Mestre de hoje. */
+  /* 21/11 (o-mestre-vivo.md §20): A FALA DA MESA. Com o Mestre vivo ligado, a
+     linha de tela que explicava o mecanismo («Faltaram 2, e ainda assim:»,
+     «Insistir igual não muda nada…») dá lugar ao que aconteceu, dito como um
+     mestre de mesa (o-mestre-vivo-no-jogo.js#A_FALA_DA_MESA). Desligado, ou se
+     a fala da mesa não tem linha (null), a de hoje — byte a byte. */
+  const falaDaMesaOu = (fazer, deHoje, nome) => {
+    if (!mestreVivoLigado()) return deHoje();
+    try { const x = fazer(); if (typeof x === "string") return x; } catch (e) { calou("Mestre vivo · " + nome, e); }
+    return deHoje();
+  };
   const mestreVivoLigado = () => {
     if (mestreVivoRef.current == null) {
       try { mestreVivoRef.current = lerAChaveDoMestreVivo(window.localStorage, window.location.search); } catch (e) { mestreVivoRef.current = false; }
@@ -19238,10 +19252,11 @@ export default function Taverna() {
       rolarDesafio(menteDoMundo ? { ...vDoDado, mente: menteDoMundo } : vDoDado, acao);
       return true;
     }
-    pushMsgs([
-      { autor: "jogador", texto: acao },
-      { autor: "sistema", texto: falaDoVeredicto(v) },
-    ]);
+    {
+      const fala = falaDaMesaOu(() => falaDoVeredictoNaMesa(v), () => falaDoVeredicto(v), "a fala do veredito");
+      /* com a chave, a fala vazia é «nada na tela» (o «✓ … — sem dado» some) */
+      pushMsgs(fala === "" && mestreVivoLigado() ? [{ autor: "jogador", texto: acao }] : [{ autor: "jogador", texto: acao }, { autor: "sistema", texto: fala }]);
+    }
     enviar(envelopeDeVeredicto(v, acao), fichaViva() || personagem);
     return true;
   };
@@ -19591,7 +19606,7 @@ export default function Taverna() {
        que não colou é a parte mais importante: prometer ouro que não se tem
        falhava em silêncio, e o jogador achava que a oferta tinha pesado. */
     if (v.social) {
-      const blefe = falaDosBlefes(v.social);
+      const blefe = falaDaMesaOu(() => falaDosBlefesNaMesa(v.social), () => falaDosBlefes(v.social), "a fala do blefe");
       if (blefe) linhasDoTeste.push({ autor: "sistema", texto: blefe });
     }
     /* ---------------- A PORTA VIGIADA (v9.64) ----------------

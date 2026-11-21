@@ -23,7 +23,10 @@ import {
   O_ESPONTANEO_NA_MESA, ehDoMundo, envelopeDoEspontaneo, pautaDoEspontaneo, PEDIDOS_QUE_O_MESTRE_VIVO_CALA, oMestreVivoCalaOPedido,
   SEM_FIO_NO_MOMENTO, semFioNoMomento, marcarDoMomento, O_QUE_ACONTECE_SEM_DADO, oQueAconteceSemDado,
   O_SIM_SEM_DADO, envelopeDoSimSemDado, O_PRECO_NA_CENA,
+  A_FALA_DA_MESA, falaDoVeredictoNaMesa, falaDoCustoNaMesa, falaDoBarulhoNaMesa, falaDosBlefesNaMesa,
 } from "../src/o-mestre-vivo-no-jogo.js";
+import { falaDoCusto, falaDoVeredicto, registrarTentativa } from "../src/desafios.js";
+import { falaDosBlefes } from "../src/social.js";
 import { REGUA_DO_MOMENTO } from "../src/motor/a-regua-do-momento.js";
 import { QUANDO_O_MESTRE_CHAMA } from "../src/motor/o-mestre-chama.js";
 import { tamanhoPorId } from "../src/social.js";
@@ -388,6 +391,53 @@ sec("S19. a falha cobra o que a cena sabe (19/11/2026, o-mestre-vivo.md §19)");
   const ninguem = chamadoDoMomento("me escondo atrás da lona", LEIT, vazio, {});
   t("sem ninguém que note, não rola, e nada de preço da cena", !ninguem.rola && !("secaDoMomento" in marcarDoMomento(ninguem.veredito || { tipo: "teste", id: "furtar_se" }, ninguem)), ninguem.porque);
   t("a busca não ganha preço de ser visto", !("secaDoMomento" in marcarDoMomento({ tipo: "teste", id: "buscar" }, m)));
+}
+
+sec("S20. a narração não desmente o veredito, e a tela não fala do mecanismo (21/11/2026, o-mestre-vivo.md §20)");
+{
+  const P = PAUTA_DO_MESTRE_VIVO;
+  const HS = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 15 };
+  const CS = { personagem: HS, semente: "s20", lugar: "Largo do Sal", tentativas: {}, dia: 1 };
+  const largo = (pessoas) => ({ cidade: "Andar 1", lugar: { nome: "Largo do Sal" }, minuto: 15 * 60, clima: "ensolarado", grupo: [{ nome: "Perrin", papel: "ladino", vida: 9, vidaMax: 9 }], pessoas });
+  /* o alvo da conversa vai ao Narrador */
+  const m = chamadoDoMomento("ameaço o velho: quebro a vara e a mão dele", CS, largo([{ nome: "Velho", papel: "velho que corta a vara" }]), {});
+  const pa = pautaDoMomento(m);
+  t("a ameaça ao velho rola e diz o alvo", m.rola && m.alvo === "Velho", JSON.stringify([m.porque, m.alvo]));
+  t("a pauta diz a quem falei e proíbe outra boca e a reação contrária ao resultado", !!pa && pa.acabou.some((l) => /Velho/.test(l))
+    && pa.naoPode.includes(P.outraBoca.replace("{alvo}", "Velho")) && pa.naoPode.includes(P.contraOResultado), JSON.stringify(pa));
+  const semNome = pautaDoMomento({ rola: true, porque: "mentiraOuAmeaca", alvo: "mulher", cena: {} });
+  t("o alvo dito pelo papel vai como «quem eu chamei de»", !!semNome && semNome.acabou.some((l) => l.includes("«mulher»")));
+  t("sem alvo (a escalada), nenhuma linha de alvo", pautaDoMomento({ rola: true, porque: "riscoDoAto", cena: {} }) === null);
+  /* o meio que a ficha nega */
+  const gazua = pautaDoMomento({ rola: false, porque: "naoETeste", cena: {}, veredito: { tipo: "impossivel", porque: "você não tem ferramentas de ladrão" } });
+  t("a gazua que a ficha nega vai como veto do turno", !!gazua && gazua.naoPode.some((l) => /ferramentas de ladrão/.test(l)));
+  t("as linhas novas da pauta são PT-BR (sem tu/teu/tua)", [P.alvo, P.alvoSemNome, P.outraBoca, P.contraOResultado, P.semOQueNaoTem].every((l) => !/\b(tu|teu|tua|contigo)\b/.test(l)));
+  /* a fala da mesa, com a chave: o que aconteceu, sem a regra */
+  const F = A_FALA_DA_MESA;
+  const desPorUm = { porPouco: true, faixa: "mas", diz: "ela cede, mas cede errado" };
+  const desFaltou = { porPouco: true, faltou: 2, diz: "a coisa vem para a sua mão, mas vem tilintando" };
+  const imposs = { tipo: "impossivel", porque: "você não tem ferramentas de ladrão", comoSeria: ["à força, no ombro"] };
+  const jaT = { tipo: "jaTentou", rotulo: "passar sem ser visto", comoReabrir: ["por outro caminho"] };
+  const falas = [falaDoCustoNaMesa(desPorUm), falaDoCustoNaMesa(desFaltou), falaDoVeredictoNaMesa(imposs), falaDoVeredictoNaMesa(jaT),
+    falaDoVeredictoNaMesa({ ...jaT, apósSucesso: true }), falaDoVeredictoNaMesa({ tipo: "vasculhado" }), falaDoBarulhoNaMesa(),
+    falaDosBlefesNaMesa({ blefes: [{ rotulo: "o aço à vista", porque: "você não tem uma arma à mão" }] })];
+  t("toda fala da mesa existe e nenhuma fala do mecanismo (faltaram, por um fio, insistir, outro jeito, não contou, sem dado…)",
+    falas.every((x) => typeof x === "string" && x.length > 3 && !F.proibidas.test(x)), JSON.stringify(falas));
+  t("as falas de hoje eram as que a sessão listou (a régua da troca)", F.proibidas.test(falaDoCusto(desPorUm)) && F.proibidas.test(falaDoCusto(desFaltou))
+    && F.proibidas.test(falaDoVeredicto(imposs)) && F.proibidas.test(falaDoVeredicto({ ...jaT, comoReabrir: ["por outro caminho"] }))
+    && F.proibidas.test(falaDosBlefes({ blefes: [{ rotulo: "o aço à vista", porque: "você não tem uma arma à mão" }] })));
+  t("o fato fica: o preço e o que falta continuam na tela", falas[0] === "⚖ Ela cede, mas cede errado." && /ferramentas de ladrão/.test(falas[2]) && /arma à mão/.test(falas[7]));
+  t("o «já conseguiu — sem dado» some da tela (string vazia); o resto do catálogo fica com a fala de hoje (null)",
+    falaDoVeredictoNaMesa({ tipo: "livre", porque: "Isso você já conseguiu aqui" }) === "" && falaDoVeredictoNaMesa({ tipo: "naoSePede" }) === null && falaDoVeredictoNaMesa(null) === null);
+  t("lixo não lança", falaDoCustoNaMesa(null) === null && falaDosBlefesNaMesa({}) === null && falaDosBlefesNaMesa(null) === null);
+  /* a fiação: atrás da chave, em calou, e com a de hoje como volta */
+  const app = fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "..", "src", "App.jsx"), "utf8");
+  t("o App usa as quatro falas da mesa só com a chave, e volta à de hoje", /const falaDaMesaOu = \(fazer, deHoje, nome\) => \{\s*if \(!mestreVivoLigado\(\)\) return deHoje\(\);/.test(app)
+    && ["falaDoCustoNaMesa(custo)", "falaDoBarulhoNaMesa()", "falaDoVeredictoNaMesa(v)", "falaDosBlefesNaMesa(v.social)"].every((x) => app.includes(x)));
+  t("o contexto do desafio leva a chave fina do livro só com o Mestre vivo ligado", app.includes("chaveFina: (() => { try { return !!mestreVivoLigado(); }"));
+  /* o sem-dado social leva o alvo da régua quando o elenco não achou ninguém */
+  const sd = oQueAconteceSemDado({ tipo: "teste", social: { tamanho: "favor" }, dc: 10, pericia: "persuasao" }, { porque: "dispostoCede", alvo: "Perrin" }, { frase: "peço ao Perrin que vigie a rua" });
+  t("o sim sem dado diz quem aceitou (o alvo da régua)", sd.quem === "Perrin", JSON.stringify(sd.quem));
 }
 
 console.log(`\n${bons} ok, ${maus} falha(s)`);

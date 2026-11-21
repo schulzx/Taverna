@@ -753,6 +753,17 @@ export const DESAFIOS = [
        quem já está escondido não rola de novo para continuar. */
     pericia: "furtividade", alvo: "furtividade", minutos: 5, barulho: false, testemunha: true,
     rotulo: "passar sem ser visto", dcPadrao: DC("incomum"),
+    /* 21/11 (o-mestre-vivo.md §20): A CHAVE LEVA O ESCONDERIJO. Na quarta
+       sessão do Mestre vivo a Furtividade falha de um furto fechou o livro em
+       «lugar|furtividade», e dois esconderijos novos, em outros cantos da
+       feira («atrás dos caixotes», «atrás da banca caída»), ouviram «você já
+       tentou passar sem ser visto aqui». A chave da furtividade era só o
+       lugar: toda tentativa no mesmo lugar era a mesma. Agora o esconderijo
+       ou o caminho que a frase diz entra na chave (como o objeto da busca e
+       do peso); sem esconderijo dito, fica a chave do lugar.
+       `objetoDaChaveFina`: só com `ctx.chaveFina` (o Mestre vivo ligado);
+       sem ela, o livro é o de sempre — o jogo com a chave desligada não muda. */
+    objetoDaChaveFina: /\b(?:atras|detras|por tras|debaixo|embaixo|dentro|entre|sob|ao lado|junto|perto|no meio|pel[oa]s?)\s+(?:d[aeo]s?\s+|de\s+)?([^.!?;:,]{2,40})/,
   },
   {
     id: "bater_carteira",
@@ -768,6 +779,13 @@ export const DESAFIOS = [
     ].join("|")),
     pericia: "prestidigitacao", alvo: "furto", minutos: 1, barulho: false, testemunha: true,
     rotulo: "mão leve", dcPadrao: DC("incomum"),
+    /* 21/11 (o-mestre-vivo.md §20): A CHAVE LEVA A COISA. A chave da mão leve
+       era só o lugar: o cantil que escorregou da banca de água fechava toda
+       mão leve da feira, e a revista dos cestos debaixo dos olhos da dona —
+       que a régua julga como mão leve — achava o livro fechado e caía na
+       busca vazia, sem dado. Agora a coisa (e de quem) entra na chave
+       (`objetoDaChaveFina`: só com `ctx.chaveFina`, como o esconderijo). */
+    objetoDaChaveFina: /\b(?:furto|furtar|roubo|roubar|afano|afanar|surrupio|surrupiar|alivio|aliviar|tiro|pego|empalmo|corto)\s+((?:a|o|as|os|um|uma|uns|umas)\s+[^.!?;:,]{2,40})/,
   },
   {
     id: "convencer",
@@ -2019,6 +2037,37 @@ export function escolhaDoTeste(v) {
   return { rolar: E.rolar, desistir: E.desistir, podeDesistir: true, risco, danoMax: Math.max(danoMax, danoDaQueda), cai, condicao, custaNoFio: !!fio };
 }
 
+/* 21/11 (o-mestre-vivo.md §20): A QUEM A CONVERSA SE DIRIGE, NA CHAVE. A
+   chave da conversa é «este pedido a esta pessoa»; quando o elenco não acha
+   a pessoa (o companheiro fora do registro, o velho que o painel não tem),
+   ela virava «quem quer que seja» — e todas as conversas do lugar sem pessoa
+   achada eram a mesma. Na quarta sessão do Mestre vivo, a mentira que passou
+   ao velho fez a mentira a Perrin e a mentira à mulher da criança ouvirem
+   «isso você já conseguiu aqui»: sem dado, sem custo, e a linha da régua que
+   rola a mentira ao companheiro nem chegou a ser lida. Agora a chave leva
+   quem a frase nomeia: a palavra depois da preposição da fala («pro Perrin»,
+   «ao velho», «com a Isolde»), ou o objeto direto do verbo da fala («minto a
+   Perrin», «ameaço o velho»). Sem ninguém dito, fica «quem quer que seja».
+   `preposicao`: a preposição da fala; `verboDireto`: o verbo e o artigo;
+   `naoEPessoa`: as palavras que vêm ali e não são gente; `naoEInfinitivo`:
+   os nomes de gente que acabam como verbo («mulher»). */
+const OUVINTE_DA_CHAVE = Object.freeze({
+  preposicao: /(?:^|[^a-z])(?:pro|pra|pros|pras|ao|aos|para o|para a|para os|para as|com o|com a|com os|com as)\s+(?:seu |sua |esse |essa |este |esta |aquele |aquela |tal )?([a-z][a-z'-]{2,})/g,
+  verboDireto: /\b(?:minto|digo|falo|conto|juro|explico|garanto|ameaco|convenco|engano|intimido|enrolo|suborno|persuado|pressiono|imploro|suplico)\s+(?:a|o|as|os)\s+([a-z][a-z'-]{2,})/,
+  naoEPessoa: Object.freeze(["ele", "ela", "eles", "elas", "mim", "voce", "voces", "gente", "dentro", "fora", "frente", "tras", "cima", "baixo", "lado",
+    "cidade", "rua", "porta", "casa", "chao", "mesa", "ali", "aqui", "onde", "quem", "isso", "isto", "aquilo", "todo", "toda", "todos", "todas",
+    "mais", "menos", "nada", "tudo", "outro", "outra", "meu", "minha", "nosso", "nossa", "verdade", "mentira", "historia", "mesma", "mesmo",
+    "vez", "preco", "metade", "dinheiro", "moeda", "moedas", "faca", "adaga", "espada", "mao", "bolsa"]),
+  naoEInfinitivo: Object.freeze(["mulher", "colher"]),
+});
+function ouvinteDaChave(cru) {
+  const t = norm(cru);
+  const O = OUVINTE_DA_CHAVE;
+  const serve = (w) => !!w && !O.naoEPessoa.includes(w) && (O.naoEInfinitivo.includes(w) || !/(ar|er|ir)$/.test(w));
+  for (const m of t.matchAll(O.preposicao)) if (serve(m[1])) return m[1];
+  const d = t.match(O.verboDireto);
+  return d && serve(d[1]) ? d[1] : "";
+}
 /* MC1: as palavras de conteúdo de um objeto ou de uma pessoa, para a chave
    do livro de tentativas — as mesmas vazias da chave do improviso */
 function palavrasDaChave(s) {
@@ -2172,7 +2221,12 @@ export function lerAcao(texto, ctx = {}) {
      uma só pessoa de fora na cena, `pessoaDe` devolveria ela, e quem sangra
      é a irmã do grupo */
   const quemCuidado = d.comQuem ? quemDoCuidado(cru) : "";
-  const doObjeto = d.objetoDaChaveDe ? (daAcao.match(d.objetoDaChaveDe) || [])[1] || "" : "";
+  /* 21/11 (§20): a chave fina (o esconderijo, a coisa furtada, quem a frase
+     nomeia) só com o Mestre vivo ligado — `ctx.chaveFina`, que o App põe no
+     contexto do desafio atrás da chave */
+  const chaveFina = ctx.chaveFina === true;
+  const rxDoObjeto = d.objetoDaChaveDe || (chaveFina ? d.objetoDaChaveFina : null);
+  const doObjeto = rxDoObjeto ? (daAcao.match(rxDoObjeto) || [])[1] || "" : "";
 
   /* ---------------- O QUE CONVERSA NENHUMA COMPRA ----------------
      Antes do livro de tentativas de propósito: pedir a alguém que se mate
@@ -2205,7 +2259,7 @@ export function lerAcao(texto, ctx = {}) {
 
   const reg = garantirTentativas(tentativas);
   const chave = chaveDaTentativa(lugar, conta
-    ? `${d.alvo}|${(pessoa && pessoa.nome) || "quem quer que seja"}|${conta.tamanho}`
+    ? `${d.alvo}|${(pessoa && pessoa.nome) || (chaveFina && ((quemDescrito && palavrasDaChave(quemDescrito)) || ouvinteDaChave(cru))) || "quem quer que seja"}|${conta.tamanho}`
     : quemCuidado ? `${d.alvo}|${palavrasDaChave(quemCuidado)}`
       : doObjeto ? `${d.alvo}|${palavrasDaChave(doObjeto)}` : d.alvo);
   const feito = reg[chave] || null;

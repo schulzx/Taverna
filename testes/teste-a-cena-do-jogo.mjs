@@ -402,5 +402,33 @@ sec("S19. a terceira sessão jogada, pelo retrato do jogo (19/11/2026, o-mestre-
   t("a mentira avisa que a mentira não cola", !!mentira.chamado && mentira.chamado.aviso === P.porPericia.enganacao, mentira.chamado && mentira.chamado.aviso);
 }
 
+sec("S20. a quarta sessão, em sequência e com o livro de tentativas (21/11/2026, o-mestre-vivo.md §20)");
+{
+  /* o livro que fechava a ação errada: a mentira conseguida com o velho
+     tornava «conseguida» a mentira a Perrin; a furtividade falha de um furto
+     fechava dois esconderijos novos. Frases nossas sobre os turnos. */
+  const { registrarTentativa } = await import("../src/desafios.js");
+  const HS = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 15 };
+  const largo = (pessoas) => ({ cidade: "Andar 1", lugar: { nome: "Mercado de Cordas" }, minuto: 15 * 60, clima: "ensolarado", grupo: [{ nome: "Perrin", papel: "ladino", vida: 9, vidaMax: 9 }], pessoas });
+  let tent = {};
+  const passo = (frase, resultado, pessoas) => {
+    const r = chamadoDoMomento(frase, { personagem: HS, semente: "s20", lugar: "Mercado de Cordas", tentativas: tent, dia: 1, chaveFina: true }, largo(pessoas || []), {});
+    if (resultado && r.veredito && r.veredito.chave) tent = registrarTentativa(tent, r.veredito.chave, { resultado, dia: 1 });
+    return r;
+  };
+  passo("minto ao velho que corta a vara que sou parente dele", "sucesso");
+  const aPerrin = passo("minto a Perrin: perdi as chaves");
+  t("depois da mentira conseguida com o velho, a mentira a Perrin rola (era «já conseguiu»: T5)", aPerrin.rola && aPerrin.porque === "mentiraAoGrupo", J([aPerrin.porque, aPerrin.veredito && aPerrin.veredito.tipo]));
+  tent = {};
+  const isolde = [{ nome: "Isolde", papel: "vendedora de cordas" }];
+  const furto = passo("tento furtar a bolsa do homem do caixote sem ser visto", "falha", isolde);
+  t("o furto «sem ser visto» rola a mão leve", furto.rola && furto.veredito.pericia === "prestidigitacao", J([furto.porque, furto.veredito && furto.veredito.pericia]));
+  const esc1 = passo("me escondo atrás dos caixotes", "falha", isolde);
+  const esc2 = passo("me escondo atrás da banca caída", null, isolde);
+  t("o esconderijo novo rola, e o outro esconderijo novo também (era «já tentou»: T24, T31)", esc1.rola && esc2.rola, J([esc1.porque, esc2.porque]));
+  const cestos = passo("revisto os cestos da banca de Isolde, com ela olhando", null, isolde);
+  t("revistar os cestos com a dona olhando rola, mesmo depois de um furto falho (T22)", cestos.rola && cestos.veredito.pericia === "prestidigitacao", J([cestos.porque]));
+}
+
 console.log(`\n${ok} ok, ${mal} falha(s)`);
 if (mal) process.exit(1);

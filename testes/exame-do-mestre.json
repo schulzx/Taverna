@@ -15,13 +15,13 @@
   "veio_da_b": "3: o item era da metade B até a rodada 2 e passou para a A na rodada 3"
  },
  "contagem": {
-  "itens": 871,
-  "pares": 258,
+  "itens": 903,
+  "pares": 259,
   "espontaneos": 65,
-  "nao_rola": 407,
+  "nao_rola": 416,
   "situacoes_cobertas": 97,
   "situacoes_faltando": [],
-  "metade_A": 476,
+  "metade_A": 508,
   "metade_B": 265,
   "rodada_2": 118,
   "rodada_3": 265,
@@ -30,7 +30,8 @@
   "rodada_4": 31,
   "rodada_5": 32,
   "metade_C": 130,
-  "rodada_6": 130
+  "rodada_6": 130,
+  "rodada_7": 32
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
@@ -19765,6 +19766,759 @@
    "espontaneo": true,
    "rodada": 6,
    "metade": "C"
+  },
+  {
+   "id": "E872",
+   "situacao": 2,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "olho em volta, as caras e as casas do largo",
+   "esperado": {
+    "rola": false,
+    "categoria": "outro",
+    "pericias": [],
+    "porque": "olhar em volta numa praça calma: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E873",
+   "situacao": 22,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "cobradora",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "minto à cobradora que sou emissária do conselho",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira sobre quem se é tem oposição no ato",
+    "base": "numero"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E874",
+   "situacao": 22,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "velho",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "minto pro velho que sou parente do anão Ulric",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "mentir ao estranho rola; o nome na frase é assunto, não viagem",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E875",
+   "situacao": 23,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "minto pro Perrin que perdi as chaves",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "o companheiro sabe o que viu: a mentira tem oposição",
+    "base": "fraco"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E876",
+   "situacao": 23,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "falo pro Perrin que perdi as chaves, mas elas estão no meu bolso",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a frase diz que é mentira: ao companheiro, rola como a outra",
+    "base": "fraco"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E877",
+   "situacao": 22,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "Perrin (companheiro)"
+    ],
+    "nota": "a mulher existe, mas o painel não a tem"
+   },
+   "frase": "conto a mesma mentira pra mulher da criança",
+   "esperado": {
+    "rola": true,
+    "categoria": "enganar",
+    "pericias": [
+     "enganacao"
+    ],
+    "porque": "a mentira à estranha não cai no companheiro",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E878",
+   "situacao": 21,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "velho",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "ameaço o velho: quebro a vara e a mão dele",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça tem oposição no ato",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E879",
+   "situacao": 21,
+   "cena": {
+    "lugar": "largo do sal",
+    "quem": [
+     "cobradora",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "ameaço a cobradora de contar pra todo mundo que ela falsifica o registro",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a ameaça tem oposição no ato",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E880",
+   "situacao": 13,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "pergunto à vendedora quanto custa a corda",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta de preço não rola",
+    "base": "numero"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E881",
+   "situacao": 19,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "regateio com a vendedora: só tenho 12 moedas",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "o desconto sai do bolso dela, disposta ou não",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E882",
+   "situacao": 19,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ],
+    "disposta": true
+   },
+   "frase": "regateio com a vendedora: só tenho 12 moedas",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "o desconto sai do bolso dela, disposta ou não",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E883",
+   "situacao": 19,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "insisto: só tenho 15, fecha por 15",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "regatear rola: a mesma ação, o mesmo veredito",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E884",
+   "situacao": 19,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedor de água",
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "regateio o cantil do vendedor de água: metade do preço",
+   "esperado": {
+    "rola": true,
+    "categoria": "convencer",
+    "pericias": [
+     "persuasao"
+    ],
+    "porque": "regatear rola; o alvo é o vendedor de água",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E885",
+   "situacao": 56,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "homem do caixote",
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ],
+    "com_testemunhas": true
+   },
+   "frase": "furto a bolsa do homem sentado no caixote",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "furtar de quem está acordado rola",
+    "base": "numero"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E886",
+   "situacao": 56,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "homem do caixote",
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ],
+    "com_testemunhas": true
+   },
+   "frase": "tento furtar a bolsa do homem do caixote sem ser visto",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "o «sem ser visto» é do furto: mão leve, não esgueirar",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E887",
+   "situacao": 50,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "trancado": true,
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "arrombo o cadeado da arca, sem ferramenta nenhuma",
+   "esperado": {
+    "rola": true,
+    "categoria": "forcar",
+    "pericias": [
+     "arrombamento",
+     "atletismo"
+    ],
+    "porque": "tranca e força: rola",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E888",
+   "situacao": 44,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "escalo o muro de 6 m sem corda",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a altura dita é perigo do ato",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E889",
+   "situacao": 82,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "salto o vão de 3 metros com a rua lá embaixo",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo",
+     "acrobacia"
+    ],
+    "porque": "o vão é perigo do ato",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E890",
+   "situacao": 45,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "fujo da vendedora armada pulando os caixotes",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo",
+     "acrobacia"
+    ],
+    "porque": "fugir de quem está armado, saltando, é disputa",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E891",
+   "situacao": 45,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "saio correndo da vendedora, que está de faca na mão, pulando caixotes",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo",
+     "acrobacia"
+    ],
+    "porque": "fugir de quem está armado, saltando, é disputa",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E892",
+   "situacao": 44,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "subo pela calha do depósito até o telhado",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "sem altura dita nem pressa: narrado",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E893",
+   "situacao": 1,
+   "cena": {
+    "lugar": "telhado do depósito",
+    "quem": [
+     "Perrin (companheiro)"
+    ],
+    "ha_algo_escondido": true
+   },
+   "frase": "procuro sob as telhas por um esconderijo",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "há o que achar: rola",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4",
+   "par": "S4-busca"
+  },
+  {
+   "id": "E894",
+   "situacao": 2,
+   "cena": {
+    "lugar": "telhado do depósito",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "procuro sob as telhas por um esconderijo",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada escondido: o mestre descreve",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4",
+   "par": "S4-busca"
+  },
+  {
+   "id": "E895",
+   "situacao": 57,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "reviro os cestos da banca da vendedora, com ela olhando",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "mexer nas coisas da dona diante dela é a mão leve contra ela",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E896",
+   "situacao": 2,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "procuro atrás dos caixotes",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nada escondido nem dono: descreve-se",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E897",
+   "situacao": 87,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "me escondo atrás dos caixotes",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "alguém pode notar",
+    "base": "fraco"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E898",
+   "situacao": 87,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "me escondo atrás da banca caída",
+   "esperado": {
+    "rola": true,
+    "categoria": "esgueirar",
+    "pericias": [
+     "furtividade"
+    ],
+    "porque": "alguém pode notar; outro esconderijo é outra tentativa",
+    "base": "fraco"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E899",
+   "situacao": 21,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "encosto a adaga do Perrin na garganta da vendedora",
+   "esperado": {
+    "rola": true,
+    "categoria": "intimidar",
+    "pericias": [
+     "intimidacao"
+    ],
+    "porque": "a lâmina mostrada é ameaça",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E900",
+   "situacao": 13,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedora de cordas",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "pergunto à vendedora o caminho mais curto pra sair da feira",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "pergunta de caminho não rola",
+    "base": "numero"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E901",
+   "situacao": 14,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "pergunto ao Perrin o que a gente faz agora",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "conversa entre aliados",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E902",
+   "situacao": 18,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "peço ao Perrin que fique de olho na rua",
+   "esperado": {
+    "rola": false,
+    "categoria": "convencer",
+    "pericias": [],
+    "porque": "pedido ao companheiro",
+    "base": "padrao"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
+  },
+  {
+   "id": "E903",
+   "situacao": 64,
+   "cena": {
+    "lugar": "mercado de cordas",
+    "quem": [
+     "vendedor de água",
+     "Perrin (companheiro)"
+    ]
+   },
+   "frase": "dou uma moeda ao vendedor de água e peço um gole",
+   "esperado": {
+    "rola": false,
+    "categoria": "logistica",
+    "pericias": [],
+    "porque": "pagar o preço não rola",
+    "base": "numero"
+   },
+   "rodada": 7,
+   "metade": "A",
+   "origem": "sessao-mv-4"
   }
  ],
  "rodada_2": {
@@ -19813,5 +20567,9 @@
  "rodada_6": {
   "data": "2026-11-21",
   "o_que_mudou": "A metade C: 130 itens novos, escritos às cegas (sem rodar o motor), julgados como um mestre de mesa experiente, equilibrando o que pede e o que não pede dado, com pares mínimos. Nenhuma frase das sessões jogadas nem de mesa real."
+ },
+ "rodada_7": {
+  "data": "2026-11-21",
+  "o_que_mudou": "Os turnos da quarta sessão jogada do Mestre vivo (mente/lancamento/mestre-vivo-sessao-4.md, 20/11/2026) entraram na metade A, que afina, como itens escritos por nós sobre cada turno (origem «sessao-mv-4»). A pessoa a quem se mente sem estar no painel fica fora do retrato, como no jogo. A metade C não foi tocada."
  }
 }
