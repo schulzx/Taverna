@@ -197,6 +197,8 @@ function frasesDaLinha(linha) {
   return out;
 }
 
+/* a frase tem fala: o travessão, as aspas, ou um verbo de dizer */
+const falaNaFrase = (t) => /[—–«»“”"]/.test(str(t)) || palavrasCom(t).some((x) => FALA.has(x.w));
 const ehPergunta = (frase) => {
   const f = sem(frase).trim();
   return /\?\s*$/.test(f) || /^(quem|que|qual|quais|onde|como|quando|por que|porque|ha|tem)\b/.test(f);
@@ -263,7 +265,10 @@ export function podarOAusente(narrativa, ausentes, opcoes) {
       const naFala = /^\s*[—–]/.test(f.texto) || ((linha.slice(0, f.ini).match(/[—–]/g) || []).length % 2) === 1;
       if (dela && naFala) { podadas.push({ ...dela, frase: f.texto.trim() }); ultimaPodada = true; continue; }
       dela = null;
-      const a = quemAgeNaFrase(f.texto, linha, f.ini, vivos);
+      let a = quemAgeNaFrase(f.texto, linha, f.ini, vivos);
+      /* 21/11 (a oitava sessão, T28): \`soFala\` — só a frase que FALA sai («Freya
+         deixa cair a tábua e espera» é gesto de quem está, não fala fora da vez) */
+      if (a && o.soFala === true && !falaNaFrase(f.texto)) a = null;
       if (a) {
         dela = { nome: a.nome, onde: a.onde, morto: a.morto };
         podadas.push({ ...dela, frase: f.texto.trim() });

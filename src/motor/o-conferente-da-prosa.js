@@ -234,7 +234,9 @@ export const O_CONFERENTE = Object.freeze({
      estende (`mao`: «estende a mão» não é dar coisa nenhuma). */
   companheiro: Object.freeze({
     verbos: Object.freeze(["paga", "pagou", "compra", "comprou", "entrega", "entregou", "estende", "estendeu", "joga", "jogou", "poe", "pos", "deixa", "deixou",
-      "larga", "largou", "atira", "atirou", "empurra", "empurrou", "passa", "passou", "enfia", "enfiou", "desliza", "deslizou", "deu"]),
+      "larga", "largou", "atira", "atirou", "empurra", "empurrou", "passa", "passou", "enfia", "enfiou", "desliza", "deslizou", "deu",
+      /* 21/11 (a oitava sessão, T9): «Helga traz até você e a deixa perto da sua mão» */
+      "traz", "trouxe"]),
     soPaga: Object.freeze(["paga", "pagou", "compra", "comprou"]),
     daCoisa: Object.freeze(["entrega", "entregou", "estende", "estendeu", "passa", "passou", "desliza", "deslizou"]),
     perto: 4,
@@ -253,6 +255,11 @@ export const O_CONFERENTE = Object.freeze({
      mochila»: o que a frase manda levar perde a folga quando nada entrou na
      bolsa — a prosa não pode pô-lo na mochila. Ver e ler no lugar continua. */
   levar: /\b(pego|apanho|guardo|levo|recolho|embolso|enfio|meto|coloco|ponho)\b(.*)$/,
+  /* 21/11 (a oitava sessão): com a troca negada, a frase que põe a coisa na mochila ou no bolso
+     («a lâmina cabe na mochila», «some no fundo da mochila», «desliza para o bolso») */
+  vaiAMochila: /\b(mochila|bolso|bolsa|alforje|sacola|algibeira|cinto|embolsa\w*|guarda\w*)\b/,
+  /* e o furto que não rendeu: a prosa que guarda ou conta moedas na mão */
+  guardaMoeda: /\b(moedas?|cobres?|pratas?|dinheiro)\b[^.!?]*\b(guarda\w*|embolsa\w*|palma|bolso|mao|maos|conta\w*|leva\w*)\b|\b(guarda\w*|embolsa\w*|leva\w*|conta\w*|mao|maos|palma)\b[^.!?]*\b(moedas?|cobres?|pratas?|dinheiro)\b|\b(guarda\w*|embolsa\w*)\b[^.!?]*\b(palma|bolso|algibeira)\b/,
   /* 21/11 (sessão 7, turno 51: «Sable sobe a escada devagar…» com a linha de
      que ela não está aqui): O AUSENTE PELA POSIÇÃO. O nome dele abrindo a
      frase e, logo depois, um destes verbos — de chegada e de gesto, alguns
@@ -750,10 +757,20 @@ export function conferirAProsa(narrativa, ctx) {
        sistema escreveu neste turno (o achado, a venda): o que elas nomeiam
        o sistema deu, e a prosa que o conta fica. */
     const bolsa = obj(c.entrou);
-    const transferiu = c.pagou === true || !!(bolsa && (bolsa.ganhou || arr(bolsa.entrou).length));
-    const sabeBolsa = c.pagou === true || c.pagou === false || !!(bolsa && bolsa.sabe);
+    /* 21/11 (a oitava sessão): O VEREDITO DA TROCA é o fato único do turno.
+       Aplicada: o que ela passou de mão fica na prosa (nada dela se corta).
+       Negada: sabe-se que nada mudou de mão por ela, e o fecho inventado sai. */
+    const tv = obj(c.troca);
+    const trocaAplicada = !!(tv && tv.estado === "aplicada");
+    const trocaNegada = !!(tv && tv.estado === "negada");
+    const transferiu = trocaAplicada || c.pagou === true || !!(bolsa && (bolsa.ganhou || arr(bolsa.entrou).length));
+    const sabeBolsa = trocaNegada || trocaAplicada || c.pagou === true || c.pagou === false || !!(bolsa && bolsa.sabe);
     const semTroca = sabeBolsa && !transferiu;
-    const doSistema = new Set([...ws(arr(c.doSistema).join(" ")), ...ws(arr(bolsa && bolsa.entrou).join(" "))].filter((x) => x.length >= 4).map(raiz));
+    const daTroca = trocaAplicada ? arr(tv.mudou).map((x) => txt(obj(x) ? x.coisa : x)) : [];
+    const doSistema = new Set([...ws(arr(c.doSistema).join(" ")), ...ws(arr(bolsa && bolsa.entrou).join(" ")), ...ws(daTroca.join(" "))].filter((x) => x.length >= 4).map(raiz));
+    /* a coisa que a troca negada quis guardar, e o furto que não rendeu: a frase que a põe na mochila ou no bolso */
+    const coisaNegada = trocaNegada && tv.tipo === "pegar" ? palavras(txt(tv.coisa)).filter((x) => x.length >= 4 && !VAZIAS.has(x)).map(raiz) : [];
+    const furtoNegado = trocaNegada && tv.tipo === "furto";
     /* a. as afirmações: o objeto, o pagamento, o meio */
     const meiosNegados = [...new Set([...osMeiosNegados(frase, c.posses), ...arr(c.negados).flatMap(palavras).filter((x) => MEIO.has(x) && !temNaPosse(x, c.posses))])];
     const pedidos = pedidosDaFrase(frase).filter((x) => !temNaPosse(x, c.posses));
@@ -819,6 +836,12 @@ export function conferirAProsa(narrativa, ctx) {
         if (ws(p.nar).some((x) => fam.has(x) && !temNaPosse(x, c.posses) && x.length >= 3)) motivo = "objeto";
       }
       if (!motivo && c.pagou === false && pagaNoPedaco(p.nar, heroiAntes)) motivo = "pagamento";
+      /* 21/11 (a oitava sessão, T19, T57, T58): «A lâmina cabe na mochila», «a corda curta some no fundo da mochila», «o espelho desliza para o bolso» */
+      if (!motivo && coisaNegada.length && C.vaiAMochila.test(sem(p.nar)) && ws(p.nar).some((x) => coisaNegada.includes(raiz(x)))) motivo = "objeto";
+      /* 21/11 (a oitava sessão, T37): sem troca nenhuma, alguém estende ao herói uma coisa («Fenna estende a você um alfinete de prata») */
+      if (!motivo && semTroca && !trocaAplicada && C.daAoHeroi.test(sem(p.nar)) && daACoisa(p.nar) && !negadoNa(ws(p.nar)) && ws(p.nar).some((x) => x.length >= 4 && ehCoisa(x) && !temNaPosse(x, c.posses))) motivo = "objeto";
+      /* 21/11 (a oitava sessão, T33): o furto que não rendeu e a prosa que guarda moedas */
+      if (!motivo && furtoNegado && C.guardaMoeda.test(sem(p.nar)) && !negadoNa(ws(p.nar))) motivo = "objeto";
       if (motivo) { fora.add(p); razao.set(p, motivo); podadas.push({ motivo, frase: p.texto.trim() }); }
       anterior = p.nar;
       /* o companheiro que abre esta frase segue sujeito da próxima */
@@ -834,6 +857,8 @@ export function conferirAProsa(narrativa, ctx) {
       if (!m) continue;
       /* a linha de fala que só abria com a entrega: fica o resto dela */
       if (restoDaFala.has(p)) { repoe.set(p, restoDaFala.get(p).replace(/\s+$/, "")); continue; }
+      /* com a troca negada, a linha dela já está na tela: a prosa não repete o sistema */
+      if (trocaNegada && txt(tv.linha) && m !== "exito") continue;
       const linha = m === "exito" ? linhaRes
         /* a fala que entrega só repõe quando nada mais repôs (o gesto ao lado já disse) */
         : m === "entrega" ? (repostas.length ? "" : linhaDeReposicao("objeto", chave))
@@ -888,11 +913,16 @@ export function conferirAProsa(narrativa, ctx) {
       const comprida = fala.length > C.curta && (!!alvo || !!c.teste);
       if (repete || noLugar || cedo || comprida) foraDaVez.push(p.nome);
     }
+    /* 21/11 (a oitava sessão, T28): a gente inventada sai inteira; quem está e
+       fala fora da vez perde só a FALA — o gesto dela fica («Freya deixa cair a
+       tábua e espera» foi cortado com motivo «fala») */
     const candidatos = [...inventados, ...foraDaVez].map((nome) => ({ nome, onde: "", morto: false }));
-    if (candidatos.length) {
+    for (const [lista, soFala] of [[inventados, false], [foraDaVez.filter((n) => !inventados.includes(n)), true]]) {
+      if (!lista.length || !prosa.trim()) continue;
+      const cand = lista.map((nome) => ({ nome, onde: "", morto: false }));
       const outros = pessoas.map((p) => p.nome).filter((n) => n && !candidatos.some((x) => x.nome === n));
-      const r = podarOAusente(prosa, candidatos, { frase, outros: [...outros, heroi].filter(Boolean), limiar: 1, semTravaDaFala: true });
-      for (const p of r.podadas) podadas.push({ motivo: inventados.includes(p.nome) ? "inventada" : "fala", frase: p.frase });
+      const r = podarOAusente(prosa, cand, { frase, outros: [...outros, heroi].filter(Boolean), limiar: 1, semTravaDaFala: true, soFala });
+      for (const p of r.podadas) podadas.push({ motivo: soFala ? "fala" : "inventada", frase: p.frase });
       if (r.podadas.length) prosa = r.narrativa;
     }
     /* 21/11: a frase que ficou órfã do que saiu sai também */
