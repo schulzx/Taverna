@@ -460,8 +460,18 @@ function oQueOSistemaNaoTem(achados, E, O) {
   const daFrase = ` ${palavrasDe(O.frase)} `;
   const doNarrador = arr(O.doNarrador).map(palavrasDe).filter(Boolean);
   const chaveDaMasmorra = !!obj(E.masmorra).chave;
+  /* 21/11 (o-mestre-vivo.md §22): O QUE O SISTEMA ACABOU DE NEGAR. Com o
+     Mestre vivo, o App passa `semFolga`: as coisas que, NESTE turno, o
+     sistema decidiu que não chegam à mão do herói (a compra que não fechou,
+     a coisa que ninguém aqui vende, o meio que a ficha nega — «a gazua de
+     Perrin»). Para essas não há folga nenhuma: nem a frase do jogador que a
+     nomeou, nem o grupo que a carrega — a prosa que a põe na mão dele
+     contradiz o veredito do próprio turno. Sem a chave a lista não vem, e a
+     régua é a de sempre. */
+  const semFolga = arr(O.semFolga).flatMap((n) => palavrasDe(n).split(" ")).filter((w) => w.length >= 3);
   const conhecido = (o) => {
     const fam = FAMILIA.get(o.cabeca) || [o.cabeca];
+    if (semFolga.length && formasDe(o.cabeca).some((f) => semFolga.includes(f))) return false;
     if (fam.some((c) => formasDe(c).some((f) => doHeroi.has(f)))) return true;
     if (formasDe(o.cabeca).some((f) => doEnredo.has(f))) return true;
     if (o.cabeca === "chave" && chaveDaMasmorra) return true;
@@ -650,15 +660,16 @@ function vetoDaPessoa(p, turno) {
    achou-o), mais os inventados desta narração. Anda pelo
    `andarOsVetos` do Juiz: o prazo, o teto do livro, o novo que
    substitui o velho com o mesmo alvo.
-   ctx: { turno, cidade, frase, saque, lugarDoTurno } — o turno é o da
-   pauta (o mesmo que o App passa ao Juiz).
+   ctx: { turno, cidade, frase, saque, lugarDoTurno, semFolga } — o turno
+   é o da pauta (o mesmo que o App passa ao Juiz); `semFolga` (só o Mestre
+   vivo, §22): o que o sistema negou neste turno.
    ============================================================ */
 export function lembrarOInventado(vivos, narrativa, estado, ctx) {
   const c = obj(ctx);
   const turno = Number.isFinite(Number(c.turno)) && c.turno !== null && c.turno !== "" ? Number(c.turno) : null;
   /* o que o Narrador já pôs em jogo (o livro): a frase do jogador não o desculpa */
   const doNarrador = arr(vivos).filter((x) => x && typeof x === "object" && x.especie === T.especie && typeof x.alvo === "string").map((x) => x.alvo.replace(/^objeto:/, ""));
-  const opc = { frase: c.frase, saque: c.saque, lugarDoTurno: c.lugarDoTurno, doNarrador };
+  const opc = { frase: c.frase, saque: c.saque, lugarDoTurno: c.lugarDoTurno, doNarrador, ...(Array.isArray(c.semFolga) && c.semFolga.length ? { semFolga: c.semFolga } : {}) };
   /* o objeto que deixou de ser inventado sai do livro */
   const ficam = arr(vivos).filter((x) => {
     /* S4d: a pessoa que o sistema entretanto passou a conhecer sai do livro */

@@ -237,7 +237,11 @@ sec("10. LIGADO AO JOGO, E SEM DOIS NÚMEROS PARA A MESMA COISA");
   t("e o teto é o que ele ainda tem", /podePagar\(m, cidadeMercado, diaRef\.current, gastoHojeDe\(m\.id\)\) >= valor/.test(APP));
   /* uma proposta por dia, e o preço da tela já é o preço com barganha */
   t("uma pechincha por mercador por dia", /if \(jah && jah\.dia === diaRef\.current\)/.test(APP));
-  t("a barganha entra no preço da etiqueta", /precoDeCompraPara\(personagem, it\.preco\) \* aj/.test(APP));
+  /* 21/11 (o-mestre-vivo.md §22): a conta da etiqueta saiu do map do estoque
+     para `precoNaBancaAgora` (uma conta só, que o regateio do Mestre vivo também
+     lê para dizer o número exato). A intenção é a mesma: o `aj` da barganha
+     entra na conta, e o estoque usa essa conta. */
+  t("a barganha entra no preço da etiqueta", /precoDeCompraPara\(personagem, precoCru\) \* aj/.test(APP) && /preco: precoNaBancaAgora\(it\.preco, aj\)/.test(APP));
   /* (v9.350 · o como chega) MM16 nº 5: a seção mudou de "onde" para
      "economia" — o mesmo rótulo ONDE na pauta (na cidade o Narrador lê o
      mesmo bloco), mas prio 2,5 e cede na luta, na masmorra e fora dos muros

@@ -269,6 +269,69 @@ export function compraNaBanca(frase, opcoes) {
   return { itens, total, declarado, jaTem: [], daBanca: [], fecha: !porque, porque, bolsa: moedas, lugar: "banca" };
 }
 
+/* ============================================================
+   A COMPRA SEM QUEM VENDA (21/11, o Mestre que conhece a cena, etapa 2 —
+   mente/lancamento/o-mestre-vivo.md §22)
+
+   "Compro um cantil do vendedor de água": nem o balcão nem as bancas da
+   cena têm cantil de vendedor nenhum, as duas compras acima devolvem null,
+   e a prosa vendia assim mesmo — a coisa não entrava na mochila e as moedas
+   não saíam. Quando a frase DECLARA a compra de uma coisa que ninguém aqui
+   vende, o veredito é esse: não há quem venda, e o Narrador não finge a
+   venda. Só com o Mestre vivo (o App decide).
+
+   O portão morde só o necessário: só "compro/quero comprar/adquiro" (o
+   "pago" é do pagamento da frase: a sopa, o quarto, a caneca); só a coisa dita
+   logo depois do verbo (o núcleo: «um cantil do vendedor» é o cantil); e NÃO morde o que o balcão ou uma banca daqui têm
+   (as compras acima fecham ou vetam), a mercadoria das bancas quando há
+   bancas (vira "compra-se nas bancas"), nem o que se come e bebe na rua
+   (`comuns`: os rx dos PRECOS_COMUNS, que o pagamento da frase cobra).
+   `opcoes`: { bancas, balcao, comuns: [RegExp] } → { coisa } | null.
+   ============================================================ */
+export const COMPRA_SEM_QUEM_VENDA = {
+  verbo: /\b(?:compro|comprei|comprarei|vou comprar|quero comprar|adquiro|arremato)\s+(?:(?:um|uma|uns|umas|o|a|os|as|dois|duas|tres|\d+)\s+)?([a-z][a-z-]{2,})/,
+  naoECoisa: ["isso", "isto", "aquilo", "tudo", "algo", "alguma", "algum", "nada", "mais", "outro", "outra", "comida", "bebida", "dele", "dela", "aqui", "logo", "agora"],
+};
+export function compraSemQuemVenda(frase, opcoes) {
+  const op = opcoes && typeof opcoes === "object" ? opcoes : {};
+  const f = String(frase == null ? "" : frase);
+  if (!f.trim() || f.trimStart().startsWith("[")) return null;
+  const t0 = norm(semConfusao(f));
+  if (RX_PERGUNTA_DE_PRECO.test(t0)) return null;
+  const bancas = (Array.isArray(op.bancas) ? op.bancas : []).filter((b) => b && Array.isArray(b.estoque));
+  const balcao = (Array.isArray(op.balcao) ? op.balcao : []).filter((b) => b && b.id);
+  const comuns = (Array.isArray(op.comuns) ? op.comuns : []).filter((r) => r instanceof RegExp);
+  for (const o of oracoes(semConfusao(f))) {
+    if (o.pergunta || RX_HIPOTESE.test(o.texto)) continue;
+    const m = o.texto.match(COMPRA_SEM_QUEM_VENDA.verbo);
+    if (!m) continue;
+    const coisa = m[1].trim();
+    if (COMPRA_SEM_QUEM_VENDA.naoECoisa.includes(coisa.split(/\s+/)[0])) continue;
+    /* o balcão daqui tem? (as compras acima cuidam) */
+    if (mantimentosDa(coisa).some((x) => balcao.some((b) => b.id === x.id))) continue;
+    /* uma banca daqui tem? */
+    if (bancas.some((b) => b.estoque.some((it) => it && it.nome && nomeiaACoisa(coisa, it.nome)))) continue;
+    /* é mercadoria de banca, e há bancas: "compra-se nas bancas" */
+    if (bancas.length && MERCADORIAS.some((mc) => new RegExp(mc.rx.source).test(coisa))) continue;
+    /* o que se come e bebe na rua: é do pagamento da frase */
+    if (comuns.some((r) => new RegExp(r.source).test(coisa))) continue;
+    /* a coisa com o acento que o jogador escreveu (o texto limpo tem o mesmo tamanho) */
+    const fn = f.normalize("NFC"), i = norm(fn).indexOf(coisa);
+    return { coisa: i >= 0 && norm(fn).length === fn.length ? fn.slice(i, i + coisa.length).toLowerCase() : coisa };
+  }
+  return null;
+}
+export const FALA_DA_COMPRA_SEM_QUEM_VENDA = {
+  tela: "🛒 Aqui ninguém vende {coisa}.",
+  veto: "fingir que alguém me vende ou entrega {coisa}: aqui não há quem venda isso",
+};
+export function falaDaCompraSemQuemVenda(c) {
+  return c && c.coisa ? FALA_DA_COMPRA_SEM_QUEM_VENDA.tela.replace("{coisa}", c.coisa) : "";
+}
+export function vetoDaCompraSemQuemVenda(c) {
+  return c && c.coisa ? [FALA_DA_COMPRA_SEM_QUEM_VENDA.veto.replace("{coisa}", c.coisa)] : [];
+}
+
 /* as palavras de cada lado: o balcão de mantimentos e a banca */
 export const PALAVRAS_DA_COMPRA = {
   balcao: { onde: "no balcão", preco: "ao preço do balcão", leva: "Os mantimentos já estão na minha mochila" },

@@ -263,7 +263,9 @@ sec("8. lixo");
   }
   t("(d) o golpe mecânico do fecho da luta TAMBÉM agrava (não passa por registrarMorteDeAlvo)", app.includes("agravarParaMorte no fecho da luta"));
 
-  t("(e) o preço do mercado sobe para quem é procurado", app.includes("precoDeCompraPara(personagem, it.preco) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current)"));
+  /* 21/11 (o-mestre-vivo.md §22): a conta da etiqueta mudou-se para
+     `precoNaBancaAgora` (o estoque a chama); a lei continua dentro dela. */
+  t("(e) o preço do mercado sobe para quem é procurado", app.includes("precoDeCompraPara(personagem, precoCru) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current)") && app.includes("preco: precoNaBancaAgora(it.preco, aj)"));
   t("(f) o pouso recusa a estalagem a quem é procurado, com a mesma forma do abrigo hostil", /servicoRecusado\(leiRef\.current, cidadeAtualRef\.current, diaRef\.current, "pouso"\)/.test(app) && /sitio = \{ \.\.\.sitio, tipo: "hostil"/.test(app));
   t("(g) a guarda pode vir ao virar o dia, só com o herói de fato na cidade", /if \(!jornadaRef\.current && cidadeAtualRef\.current\) \{\s*const vinda = guardaQueVem\(leiRef\.current,/.test(app));
   /* MOVIDA (28/10, T2-A, o acampamento): o texto do fim do descanso saiu para src/motor/envelopes-do-turno.js;

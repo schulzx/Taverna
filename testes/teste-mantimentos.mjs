@@ -165,7 +165,10 @@ sec("6. O GESTO COBRA O PREÇO DE AGORA");
   /* a tela pode estar velha — o dia virou, a estação mudou, a pressão da
      praça andou — e cobrar o número que ela mostra seria vender no preço
      de ontem */
-  t("o handler recalcula o preço", /const s = precoDoSuprimento\(id, cidadeMercado, \{ dia: diaRef\.current/.test(APP));
+  /* 21/11 (o-mestre-vivo.md §22): o preço recalculado chama-se `s0` e passa
+     pela pechincha do balcão de hoje (a mesma que a etiqueta mostra; sem ela,
+     o mesmo preço). A intenção é a mesma: o handler recalcula no instante. */
+  t("o handler recalcula o preço", /const s0 = precoDoSuprimento\(id, cidadeMercado, \{ dia: diaRef\.current/.test(APP) && /const s = s0 \? \(balcaoComPechincha\(\[s0\]/.test(APP));
   t("e não lê o da tela", !/comprarSuprimento = \(id, quantos = 1, preco/.test(APP));
   t("desconta da bolsa", /moedas: \(p\.moedas \|\| 0\) - custo/.test(APP));
   t("e soma no fardo", /\[id\]: \(sup\[id\] \|\| 0\) \+ q/.test(APP));

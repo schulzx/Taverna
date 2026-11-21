@@ -34,7 +34,7 @@ import { MESES, dataTxt, horaTxt, ehNoite, estacaoDe, festivalDe, rolarSonho, HO
 import { calcularFama, patamarFama, rumorDoDia } from "./fama.js";
 import { gerarHerdeiro, linhaDaHeranca, garantirVilao, avancarPlano, podeAvancar, escolherAlvo, levaForma, faseDe, linhaDoAvanco as linhaDoVilao, envelopeDoAvanco, podeCair, envelopeDaQueda, envelopeDaQuedaCedoDemais, linhaDaQueda, TOTAL_DE_PASSOS } from "./vilao.js";
 import { gerarCronica } from "./cronica.js";
-import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA } from "./economia.js";
+import { ECONOMIA_PROMPT, valorDeItem, PRECO_VENDA, FAIXA_COMPRA, PRECOS_COMUNS } from "./economia.js";
 import { rolarAflicao, aflicaoDe } from "./aflicoes.js";
 import { escolherReacao, resolverReacao, reacoesDe, revideNoCampo } from "./reacoes.js";
 /* ---------------- A JANELA DA REACAO (v9.259, Fase K - K3) ----------------
@@ -221,7 +221,8 @@ import { guildasDoMundo, podeMandar, crescerACasa, CRESCE, podeEntrarNaCasa, ent
 import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
-import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA } from "./bolsa-da-frase.js";
+import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA, compraSemQuemVenda, falaDaCompraSemQuemVenda, vetoDaCompraSemQuemVenda } from "./bolsa-da-frase.js";
+import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA } from "./a-ficha-da-cena.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
 import { garantirPrometido, guardarSementes, pagarSementes, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
@@ -5907,6 +5908,10 @@ export default function Taverna() {
      Vale um turno: limpo no começo de cada `agirInterno`, lido na pauta
      (secção naoPode). Não é save. */
   const naoPodeDoTurnoRef = useRef([]);
+  /* 21/11 (o-mestre-vivo.md §22): o que o sistema negou neste turno (a compra
+     que não fechou, o que ninguém vende, o meio que a ficha nega) — a memória
+     do inventado não dá folga a isso. Só o Mestre vivo escreve; nunca no save. */
+  const semFolgaDoTurnoRef = useRef([]);
   /* v9.135: o Interprete lido deste turno, e as falas que os atores
      devolveram. Os dois vivem entre `enviar` e a montagem da Pauta. */
   const interpreteRef = useRef(null);
@@ -11581,6 +11586,7 @@ export default function Taverna() {
           mundo: mundoDoLivro(), /* S4d: a gente da base do mundo não é inventada */
           cidade: fotoDoJuiz ? (fotoDoJuiz.cidadeAtual || "") : (cidadeAtualRef.current || ""),
           frase: pedidoDaBolsa, /* o que o jogador nomeou não morde */
+          ...((semFolgaDoTurnoRef.current || []).length ? { semFolga: semFolgaDoTurnoRef.current } : {}), /* §22: salvo o que o sistema negou neste turno (só o Mestre vivo escreve) */
           lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "",
         });
       } catch (e) { calou("NE8 · a memória do inventado", e); }
@@ -14697,6 +14703,7 @@ export default function Taverna() {
        onze cunhas… anão, viste Edric?") e a compra nunca fechou. Seja qual
        for a porta que a seguir ganhe, o recibo (ou o veto) já viaja. */
     naoPodeDoTurnoRef.current = [];
+    semFolgaDoTurnoRef.current = [];
     fraseAnteriorRef.current = "";
     try { fraseAnteriorRef.current = fraseAnteriorDoJogador(mensagensRef.current); } catch (e) { calou("a frase anterior do jogador", e); }
     try { registarABolsaDaFrase(acao); } catch (e) { calou("a bolsa da frase", e); }
@@ -14765,6 +14772,11 @@ export default function Taverna() {
         momentoDoTurnoRef.current = null; momentoAdjudicadoRef.current = null; chamadoDoMomentoRef.current = null;
         if (!acao.startsWith("/") && !combateRef.current && !escolhaPendenteRef.current && !encontroPendenteRef.current) momentoDoTurnoRef.current = momentoDaAdjudicacao(acao);
       } catch (e) { calou("Mestre vivo · o momento do turno", e); momentoDoTurnoRef.current = null; momentoAdjudicadoRef.current = null; }
+      /* 21/11 (o-mestre-vivo.md §22): A FICHA DA CENA chega ao Narrador, pelo
+         canal de um turno — quem está aqui (dentro do veto), nada muda de mão
+         na prosa, a coisa em que a frase mexe; e quem a frase chama e o
+         sistema sabe noutro lugar não está aqui (a linha na tela e na pauta). */
+      try { fichaDaCenaNoTurno(acao, momentoDoTurnoRef.current); } catch (e) { calou("Mestre vivo · a ficha da cena", e); }
     }
     ultimoDesfechoRef.current = null;
     testeDoTurnoRef.current = null;
@@ -17945,6 +17957,11 @@ export default function Taverna() {
          três aqui, juntos, porque são a mesma decisão vista de ângulos
          diferentes: a tentativa aconteceu no mundo e deixou marca nele. */
       if (des) { fecharTentativa(des, passou); cobrarTempoDoDesafio(des); }
+      /* 21/11 (o-mestre-vivo.md §22): O REGATEIO NA BANCA. Só o Mestre vivo. O
+         regateio que rolou aplica a pechincha de sempre com o dado que caiu,
+         na banca (ou no balcão) da coisa nomeada; o preço novo vai à tela e à
+         pauta, e a compra fecha quando o jogador paga. */
+      if (des && mestreVivoLigado() && !combateRef.current) { try { aplicarORegateio(r, valor, mod, dc); } catch (e) { calou("Mestre vivo · o regateio na banca", e); } }
       if (des) fecharArmadilhaDoTeste(des, passou); /* 13/10 (v9.461): o desarmar diz como a armadilha acabou */
       /* ---------------- MM9: A PALAVRA DOBRA O BANDO ----------------
          O teste já rolou (dado de verdade, CD de `vereditoDaPalavra`); aqui
@@ -18649,6 +18666,36 @@ export default function Taverna() {
   /* O MOMENTO DA FRASE: catálogo → cena → régua → chamado (chamadoDoMomento),
      com o mesmo contexto do chamado de hoje e o bônus pela perícia do
      veredito que a régua julgou. Com o teste já à espera, nada. */
+  /* 21/11 (§22): a ficha da cena do turno (a-ficha-da-cena.js). Só corre com
+     a cena lida (o Mestre vivo, fora da luta); cada leitura no seu calou. */
+  const fichaDaCenaNoTurno = (acao, m) => {
+    if (!m || !m.cena) return;
+    let aus = [], conhecidos = [], protegidos = [];
+    try {
+      const qA = quemAgora();
+      const pA = personagemRef.current || personagem || {};
+      const cidA = cidadeAtualRef.current || (jornadaRef.current && jornadaRef.current.de) || "";
+      const genteA = cidA ? ((oQueExisteAqui(sementeMundo(), mapaRef.current, cidA, baseMundoRef.current, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico) || {}).gente || []) : [];
+      protegidos = [divindadeRef.current && divindadeRef.current.nome].filter(Boolean);
+      aus = osAusentes(qA, { gente: genteA, npcs: npcsRef.current, heroi: pA, lugar: lugarRef.current, protegidos });
+      conhecidos = [...Object.keys(npcsRef.current || {}), ...genteA.map((g) => g && g.nome).filter(Boolean)];
+    } catch (e) { calou("Mestre vivo · quem o sistema sabe noutro lugar", e); }
+    let qn = null;
+    try { qn = quemNaoEstaNaCena(acao, m.cena, { ausentes: aus, conhecidos, protegidos }); } catch (e) { calou("Mestre vivo · quem não está", e); qn = null; }
+    let bancas = [];
+    try { bancas = bancasDaCena(); } catch (e) { calou("Mestre vivo · as bancas da ficha", e); }
+    const pa = fichaDaCenaNaPauta({ frase: acao, momento: m, bancas, ausente: qn });
+    if (pa) porNaPautaDoTurno(pa);
+    if (qn) pushMsgs([{ autor: "sistema", texto: falaDeQuemNaoEsta(qn) }]);
+    /* o meio que a ficha nega («com a gazua de Perrin»): sem folga na memória do inventado */
+    try {
+      const v = m.veredito;
+      if (v && v.tipo === "impossivel") {
+        const mm = String(acao).toLowerCase().match(/\bcom (?:a|o|as|os|um|uma|minha|meu|minhas|meus)\s+([^\s.,;!?]{3,})/);
+        if (mm) semFolgaDoTurnoRef.current = [...(semFolgaDoTurnoRef.current || []), mm[1]];
+      }
+    } catch (e) { calou("Mestre vivo · o meio negado", e); }
+  };
   const momentoDaFrase = (acao) => {
     if (rolagem || carregando) return null;
     const p = fichaViva() || personagem;
@@ -18785,6 +18832,9 @@ export default function Taverna() {
     }
     const nome = (pp && pp.nome) || nomeProcurado(acao, nomesConhecidos(), { perto: perto }) || (dm && dm.nome);
     if (!nome) return false;
+    /* 21/11 (o-mestre-vivo.md §22): «procuro nos cestos da banca de Isolde» é
+       procurar nos cestos, não procurar Isolde. Só o Mestre vivo. */
+    if (!pp && mestreVivoLigado()) { try { if (procuraNaCoisaDeAlguem(acao, nome)) return false; } catch (e) { calou("Mestre vivo · a procura na coisa de alguém", e); } }
     const r = procurarPessoa(nome, {
       porPapel: pp,
       daMemoria: dm,
@@ -24235,6 +24285,8 @@ export default function Taverna() {
   const emCenaRef = useRef(null);
   const [mercado, setMercado] = useState(mercadoRef.current);
   const cidadeMercado = cidadeDoMapa(cidadeAtualRef.current);
+  /* o preço da banca para ESTE herói hoje: a profissão, a pechincha (aj) e a lei — uma conta só */
+  const precoNaBancaAgora = (precoCru, aj) => Math.max(1, Math.round(precoDeCompraPara(personagem, precoCru) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current)));
   const mercadoAqui = (() => {
     const comprados = (mercado && mercado.comprados) || {};
     const semEstoqueGasto = (m) => ({ ...m, estoque: (m.estoque || []).filter((it) => !(comprados[m.id] || []).includes(it.nome)) });
@@ -24289,7 +24341,9 @@ export default function Taverna() {
         ...l,
         caixa: podePagar(l, cidadeMercado, diaRef.current, ((mercado && mercado.gastos && mercado.gastos[l.id] && mercado.gastos[l.id].dia === diaRef.current) ? mercado.gastos[l.id].moedas : 0)),
         barganha: (b && b.dia === diaRef.current) ? b : null,
-        estoque: (l.estoque || []).map((it) => ({ ...it, preco: Math.max(1, Math.round(precoDeCompraPara(personagem, it.preco) * aj * fatorDePreco(leiRef.current, cidadeMercado, diaRef.current))) })),
+        estoque: (l.estoque || []).map((it) => ({ ...it, preco: precoNaBancaAgora(it.preco, aj) })),
+        /* §22: o estoque antes do preço do herói, para o regateio dizer o número exato */
+        estoqueCru: l.estoque || [],
       };
     });
   })();
@@ -24311,11 +24365,35 @@ export default function Taverna() {
      praça andou) e cobrar o número antigo seria deixar o jogador
      comprar no preço de ontem. Quem decide o preço é sempre o mesmo
      lugar, no instante do gesto. */
-  const balcaoAqui = (cid = cidadeMercado) => balcaoDeMantimentos(cid, {
+  /* 21/11 (§22): e a pechincha do balcão de hoje, quando o regateio do Mestre
+     vivo a escreveu (sem ela, o mesmo balcão) — a etiqueta e a moeda, da mesma linha */
+  const pechinchaDoBalcao = () => ((mercadoRef.current || {}).pechinchas || {})[O_REGATEIO_NA_BANCA.idDoBalcao] || null;
+  const balcaoAqui = (cid = cidadeMercado) => balcaoComPechincha(balcaoDeMantimentos(cid, {
     dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {},
     extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }),
     temKit: garantirSuprimentos((personagemRef.current || personagem).suprimentos).kit,
-  });
+  }), pechinchaDoBalcao(), diaRef.current);
+  /* 21/11 (§22): O REGATEIO NA BANCA (a-ficha-da-cena.js#oRegateioNaBanca) — o
+     registro é o mesmo do botão de pechinchar (mercado.pechinchas, um por
+     banca por dia) */
+  const aplicarORegateio = (r, d20, bonus, dc) => {
+    const cid = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
+    const precoDepois = (banca, item, aj) => {
+      if (!banca || !item) return null;
+      const cru = (banca.estoqueCru || []).find((x) => x && x.nome === item.nome);
+      return cru ? precoNaBancaAgora(cru.preco, aj) : null;
+    };
+    const reg = oRegateioNaBanca((r && r.frase) || "", {
+      anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "",
+      d20, bonus, dc, bancas: bancasDaCena(), balcao: cid ? balcaoAqui(cid) : [],
+      pechinchas: (mercadoRef.current || {}).pechinchas || {}, dia: diaRef.current, precoDepois,
+    });
+    if (!reg) return;
+    mercadoRef.current = { ...(mercadoRef.current || {}), pechinchas: { ...((mercadoRef.current || {}).pechinchas || {}), [reg.id]: reg.registro } };
+    setMercado(mercadoRef.current); salvar({ mercado: mercadoRef.current });
+    pushMsgs([{ autor: "sistema", texto: reg.tela }]);
+    porNaPautaDoTurno(reg.pauta);
+  };
 
   /* o que se compra e vai ao CORPO (o equipamento), e não à mochila — o
      botão do painel e a frase que compra leem a mesma lista */
@@ -24331,6 +24409,9 @@ export default function Taverna() {
     if (!txt.trim() || txt.trimStart().startsWith("[") || txt.startsWith("/") || combateRef.current) return;
     const nota = (env) => { if (env) notaRef.current = `${notaRef.current ? notaRef.current + "\n" : ""}${env}`; };
     const vetar = (vs) => { if (vs && vs.length) naoPodeDoTurnoRef.current = [...(naoPodeDoTurnoRef.current || []), ...vs]; };
+    /* §22: a compra que a frase declarou e o sistema leu (fechando ou não) */
+    let houveCompra = false;
+    const negar = (c) => { try { if (mestreVivoLigado() && c && !c.fecha) semFolgaDoTurnoRef.current = [...(semFolgaDoTurnoRef.current || []), ...(c.itens || []).map((x) => x.nome), ...(c.daBanca || [])]; } catch (e) { calou("Mestre vivo · o que a compra negou", e); } };
     /* a compra: só numa cidade, que é onde há balcão */
     try {
       const cid = cidadeAtualRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
@@ -24339,6 +24420,7 @@ export default function Taverna() {
         const sup = garantirSuprimentos(p.suprimentos);
         const c = compraNaFrase(txt, { balcao: balcaoAqui(cid), bolsa: p.moedas || 0, temKit: sup.kit, anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "", bancas: bancasDaCena() });
         if (c) {
+          houveCompra = true; negar(c);
           if (c.fecha) {
             const novo = { ...sup };
             for (const x of c.itens) { if (x.id === "kit") novo.kit = true; else novo[x.id] = (novo[x.id] || 0) + x.quantos; }
@@ -24366,6 +24448,7 @@ export default function Taverna() {
         try { const ae = alvoDoEnvio(txt, emCenaRef.current); alvoDaCompra = ae.alvo; bancasDaCompra = bancasDoToque(alvoDaCompra, ae.lista, bancas); } catch (e) { calou("a banca da ficha tocada", e); alvoDaCompra = null; bancasDaCompra = bancas; }
         const c = compraNaBanca(txt, { bancas: bancasDaCompra, bolsa: p.moedas || 0 });
         if (c) {
+          houveCompra = true; negar(c);
           if (c.fecha) {
             let np = { ...p, moedas: (p.moedas || 0) - c.total };
             let merc = mercadoRef.current || {};
@@ -24398,6 +24481,21 @@ export default function Taverna() {
         }
       }
     } catch (e) { calou("a compra à banca da frase", e); }
+    /* 21/11 (o-mestre-vivo.md §22): A COMPRA SEM QUEM VENDA. Só o Mestre vivo.
+       A frase declara comprar uma coisa que nem o balcão nem as bancas daqui
+       têm: o veredito é «aqui ninguém vende isso», e a prosa não finge a venda
+       (bolsa-da-frase.js#compraSemQuemVenda). */
+    if (!houveCompra && mestreVivoLigado()) {
+      try {
+        const cid = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
+        const sq = compraSemQuemVenda(txt, { bancas: bancasDaCena(), balcao: cid ? balcaoAqui(cid) : [], comuns: (PRECOS_COMUNS || []).map((x) => x && x.rx).filter(Boolean) });
+        if (sq) {
+          vetar(vetoDaCompraSemQuemVenda(sq));
+          semFolgaDoTurnoRef.current = [...(semFolgaDoTurnoRef.current || []), sq.coisa];
+          pushMsgs([{ autor: "sistema", texto: falaDaCompraSemQuemVenda(sq) }]);
+        }
+      } catch (e) { calou("Mestre vivo · a compra sem quem venda", e); }
+    }
     /* a dádiva: a quem está na cena */
     try {
       const p = personagemRef.current || personagem;
@@ -24424,7 +24522,9 @@ export default function Taverna() {
 
   const comprarSuprimento = (id, quantos = 1) => {
     const p = personagemRef.current || personagem;
-    const s = precoDoSuprimento(id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }) });
+    const s0 = precoDoSuprimento(id, cidadeMercado, { dia: diaRef.current, pressoes: (mercadoRef.current || {}).pressoes || {}, extra: fatorDeMercado((posturaRef.current || {}).postura, { vendendo: false }) });
+    /* §22: a pechincha do balcão de hoje (sem ela, o mesmo preço) */
+    const s = s0 ? (balcaoComPechincha([s0], pechinchaDoBalcao(), diaRef.current)[0] || s0) : s0;
     if (!s) return;
     const q = id === "kit" ? 1 : Math.max(1, Math.round(Number(quantos) || 1));
     const custo = s.preco * q;

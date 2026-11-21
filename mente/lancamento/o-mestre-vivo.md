@@ -1317,3 +1317,119 @@ e B, conferido item a item; a S21 de `teste-desafios` prova a chave de sempre se
 - Nenhuma lista de coisas vai ao Narrador ainda: a cena é bastidor, e o teto do prompt não ganhou um caractere. Os
   preços em cena (a corda de 31, o cantil) não estão na cena: são do mercado (`mercado.js`) e da pauta de preço.
 - Não foi jogado: está provado nas suítes e no exame.
+
+## 22. O Mestre que conhece a cena — etapa 2: o Narrador preso à ficha, e a consequência escrita pelo sistema
+
+**21/11/2026.** As sessões 3 e 4 com a chave ligada viram a prosa inventar o que a ficha não tinha: gente que ninguém
+registrou falava e vendia, e respondia quem não fora chamado; a corda «comprada» não entrava na mochila e as moedas
+ficavam; a arca virava porta, o cantil virava corda, a gazua que a ficha negava girava nos dedos. A cena já sabia
+quem está e que coisas há (§21); faltava chegar ao Narrador, e faltava o sistema aplicar antes de ele narrar. Tudo
+continua atrás da chave (`?mestre=1`). Peça nova: `src/a-ficha-da-cena.js`; suíte nova: `testes/teste-a-ficha-da-cena.mjs`.
+
+**1. A ficha da cena na pauta** (`fichaDaCenaNaPauta`, chamada por `fichaDaCenaNoTurno` no App logo depois do momento
+do turno). Pelo canal de um turno (`porNaPautaDoTurno` → ACABOU DE / NÃO PODE), nenhum bloco estático:
+
+- NÃO PODE «pôr para falar, vender ou entregar quem não está aqui; aqui estão só: Isolde (vendedora de cordas), Perrin
+  (comigo), quem atende Feira do Setor 3» — as pessoas da cena (nome e as três primeiras palavras do papel; o grupo
+  como «comigo») e quem atende cada banca, até quatro e depois «…». Sem ninguém: «aqui não há ninguém além de mim».
+  A lista vai DENTRO do veto: o veto não cai, e a lista com ele.
+- NÃO PODE «dar-me coisa, tirar-me moedas ou dizer preço além do que já foi registrado».
+- ACABOU DE «Eu mexo em «cadeado da arca», e em nenhuma outra coisa.» — só nas famílias que caem sobre UMA coisa
+  (forçar, travessia, furtar): a coisa da cena que a frase nomeia (`coisasQueAFraseNomeia`, fora «o lugar») ou o
+  primeiro sintagma com artigo (o recorte da chave fina), com o acento de quem escreveu.
+
+**O custo, medido** (a suíte imprime): no pior caso que a suíte monta — seis pessoas de nome e papel compridos, a coisa
+de 40 letras, o ausente com onde — **548 caracteres** (39% do TETO_DA_PAUTA de 1400); somado o regateio, **759**. A
+cena da quarta sessão (Isolde, Perrin, uma banca, a arca): **330**; sem a coisa, ~260. O prompt não ganhou um
+caractere: tudo isto disputa o mesmo teto de 1400, e numa pauta cheia o que cede é a decoração (provado: a cauda do
+ONDE, a economia e o DAQUI saem, e os vetos da ficha chegam ao texto).
+
+**2. Compra, entrega e pagamento são do sistema.** O jogo já tinha quase tudo: a compra no balcão de mantimentos e à
+banca pela frase (`compraNaFrase`, `compraNaBanca`), a dádiva, o card «Pagar ◉ N» (`oPagamentoDaFrase`), a pechincha
+do painel (`pechincharCom`, `mercado.pechinchas`). Não se criou segundo comércio; ligaram-se dois buracos:
+
+- **Ninguém vende isso aqui** (`compraSemQuemVenda`, bolsa-da-frase.js). A frase declara comprar («compro/quero
+  comprar/adquiro», nunca «pago», que é do pagamento) uma coisa que nem o balcão nem as bancas daqui têm → na tela
+  «🛒 Aqui ninguém vende cantil.», no NÃO PODE «fingir que alguém me vende ou entrega cantil: aqui não há quem venda
+  isso». Morde só o necessário: não morde o que o balcão ou uma banca têm (as compras de sempre fecham ou vetam), a
+  mercadoria de banca quando há bancas (é o «compra-se nas bancas» de sempre), nem o que se come e bebe na rua
+  (`PRECOS_COMUNS`).
+- **O regateio aplica o desconto** (`oRegateioNaBanca`, no `concluirRolagem` depois do livro de tentativas). O
+  regateio que rolou é a pechincha de sempre com o dado que já caiu: `pechinchar` com o d20 do jogador, o bônus e o
+  número da régua — as quatro faixas e os mesmos `PECHINCHA_GANHO`/`PECHINCHA_PERDA`, uma por banca por dia, no MESMO
+  registro do botão (`mercado.pechinchas[id] = { dia, ajuste, texto, ok }` — chave nova num mapa que já existia, de
+  forma igual; a versão antiga a ignora). De quem: a banca da coisa nomeada; senão o balcão, se a frase nomeia um
+  mantimento (a corda é o kit); senão a frase anterior. Tela «🤝 Kit de viagem: ◉ 22 → ◉ 19.»; ACABOU DE «Regateei o
+  preço: quem vende aceitou baixar, e Kit de viagem sai agora a ◉ 19 (era ◉ 22). Nada muda de mão até eu dizer que
+  pago.»; NÃO PODE «dar a Kit de viagem outro preço que não ◉ 19». A compra fecha quando o jogador paga, pela compra da
+  frase de sempre, ao preço novo: o balcão (`balcaoAqui`) e a compra do painel (`comprarSuprimento`) leem a pechincha
+  do balcão (`balcaoComPechincha`), e a banca diz o número exato pela MESMA conta do mercado (`precoNaBancaAgora`, a
+  expressão que estava inline no `mercadoAqui`, agora num lugar só, e `estoqueCru` na banca).
+
+O T12 da sessão 4 («só tenho 15, feche por 15») fica assim: o regateio rola (§20), o preço baixa pela tabela (não
+para 15), e a corda só entra na mochila quando o jogador paga o que o sistema disse.
+
+**3. A pessoa certa responde.** O alvo já ia (§20). Faltava quem a frase chama e não está: `quemNaoEstaNaCena` usa o
+recorte da régua (`nomeAusenteNaFrase`: o nome logo depois do verbo da fala) e só afirma a ausência de quem o sistema
+**conhece** — o longe, a gente noutro local e o morto (`osAusentes`, com onde) ou o registrado fora da cena (sem
+onde). Tela «🧭 Doran não está aqui — está em Forja Velha.» (o 🧭 da procura «noutro lugar»); ACABOU DE «Chamei
+Doran, que não está aqui (está em Forja Velha): nem Doran nem outra pessoa responde no lugar.» O nome que ninguém registrou, o deus a quem se pede
+(`protegidos`) e o nome que é assunto («digo à Brisa que o Doran me mandou») não mordem.
+**O «está aqui» falso:** o «🔎 Isolde está aqui — Mercado de Cordas» da T22 era a procura de uma pessoa que ninguém
+procurou — «procuro nos cestos da banca de Isolde» lia Isolde como procurada. `procuraNaCoisaDeAlguem`: o nome logo
+depois de «de/da/do» com uma coisa antes é o dono; «sinais de», «notícias de», «o paradeiro de» continuam a procurar
+gente. Com a chave, essa frase deixa de ser procura e segue para a busca.
+
+**4. O portão de saída já existia, e ganhou uma régua.** Há três: o Juiz de fidelidade (mede preço inventado e
+gente nova; o preço contra a mesa vira veto), a poda do ausente (tira a frase em que quem está noutro lugar age) e a
+memória do inventado (NE8: o objeto que a prosa põe na mão do herói e o sistema não tem vira veto no turno seguinte).
+O preço dito fora da ficha já é do Juiz (e o preço do regateio, que vai na pauta, ele absolve por `oQueAPautaSabe`).
+O que faltava era a entrega: a memória do inventado dava folga ao que o jogador nomeou na frase e ao que o grupo
+carrega — exatamente a gazua de Perrin (T16). Agora, com a chave, o App passa `semFolga`: o que o sistema negou
+**neste turno** (a compra que não fechou, a coisa que ninguém vende, o meio que a ficha nega, «com a gazua de …») não
+tem folga nenhuma. Falso positivo custa um veto no turno seguinte, nunca uma chamada nem a cena. Sem a chave a lista
+não vem e a régua é a de sempre (provado na suíte, byte a byte).
+
+**Com a chave desligada o jogo não muda:** a ficha, a compra sem quem venda, o regateio, a procura na coisa e a
+lista sem folga só correm dentro de `mestreVivoLigado()` (a suíte lê a fiação); `balcaoComPechincha` devolve **a
+mesma lista** sem registro de hoje, e o registro do balcão só nasce do regateio com a chave; `precoNaBancaAgora` é a
+expressão de antes, letra a letra; `lembrarOInventado` sem `semFolga` é igual ao de antes (provado). Nenhum módulo
+da régua, do catálogo ou da pauta mudou: o exame (que não passa por nada disto) ficou onde estava.
+
+### 22.1 A medida
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A (489) | 458 · 2 · 29 · cat 384 · per 226 · pares 109 | **igual** |
+| régua, metade B (196) | 157 · 7 · 32 · cat 119 · per 53 · pares 53 | **igual** |
+| hoje, metade A | 300 · 60 · 129 | igual |
+| **régua, metade C (medida uma vez, no fim)** | 103 · 1 · 20 · cat 83 · per 37 · pares 18 | **igual** |
+| hoje, metade C | 72 · 19 · 33 | igual |
+
+O exame não mexeu, e não devia: nada da régua, do catálogo nem da cena mudou. Esta etapa é o que acontece depois do
+veredito (o que vai ao Narrador, o que o sistema aplica) — e o exame mede o veredito. A prova dela é a suíte nova
+(`teste-a-ficha-da-cena`, 10 secções) e as três suítes que liam a conta da etiqueta no App (`teste-comercio`,
+`teste-mantimentos`, `teste-mm10-crime`), cujas asserções mudaram de âncora com o motivo escrito ao lado.
+
+### 22.2 O que não foi verificado
+
+- Nada disto foi jogado: está provado na suíte e no build. Não se viu na tela a linha «👤 … não está aqui» nem o
+  «🤝 … → …», nem se o Narrador obedece à lista de quem está.
+- A corda é «cenário» na memória do inventado (o sistema a conta como kit): a prosa que entrega a corda não comprada
+  não vira veto depois — o veto da ficha (antes) é o que a segura.
+- A banca diz o preço exato pelo `precoDepois`; o balcão pela conta da própria `balcaoComPechincha`. Se o dia virar
+  entre o regateio e o pagamento, a pechincha de ontem não vale (como no botão).
+- O «vendedor de água» como pessoa: o sistema não o tem; a lista de quem está o exclui, e a compra dele vira «ninguém
+  vende». Se o lugar devesse tê-lo, é estado novo (a etapa 3).
+
+### 22.3 O que a etapa 3 precisa saber
+
+- A lista de quem está e das bancas vai à pauta em todo turno do Mestre vivo; uma quest que escreve uma pessoa ou uma
+  coisa na cena (o passo, o esconderijo) entra na lista sozinha se entrar no retrato (`pessoas`, `coisas`).
+- «O que há escondido» em lugares comuns não tem tabela: a busca nos cestos, nos caixotes e sob as telhas continua
+  sem dado porque o sistema não sabe se há algo (§20.4). A tabela pequena pode viver ao lado de `achadoDe`, por tipo
+  de sítio, e entrar na cena como estado de uma coisa (`raro_de_achar` ou um novo), lido por `coisasQueAFraseNomeia`.
+- A firmeza do que se escala (o muro, a calha) também não tem fonte: a régua lê `fragil`/`sem_resistencia`, e só o
+  livro de tentativas os escreve hoje.
+- O regateio sem dado (o laço que deve: o favor, o companheiro) não aplica desconto: só o que rolou. Se a etapa 3
+  quiser, `oRegateioNaBanca` aceita o d20 de uma faixa fixa.
