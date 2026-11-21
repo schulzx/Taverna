@@ -1115,3 +1115,21 @@ andares. A B não foi medida de novo, a catraca dela ficou onde estava e pode es
 `concluirRolagem`, `if (des && des.testemunha && !passou) {` → `if (des && des.testemunha && !passou && !des.secaDoMomento) {`.
 (b) A legenda do dado anterior colada na narração seguinte e o «72 moedas» solto não foram achados nos módulos: a busca
 deve começar pelo App.
+
+## 20. O conserto depois da quarta sessão
+
+**21/11/2026.** A quarta sessão (`mestre-vivo-sessao-4.md`, jogada em `eac20b5`) deu 21 de 31 certos, 7 «faltou dado»
+e nenhum dado indevido. Antes de mexer no motor, a prova mudou de mãos.
+
+**A metade C (rodada 6).** A B foi medida três vezes — a terceira depois de ajustes — e deixou de ser cega. Ela passa a
+afinar junto da A, só em número. A prova nova é a **metade C**: 130 itens (67 rolam, 63 não; 25 pares; 6 espontâneos),
+escritos sem rodar o catálogo, a escuta nem a régua, julgados como um mestre de mesa experiente, com **pares
+mínimos**: o dono olhando ou não, o alvo disposto ou não, o companheiro ou o estranho, o perigo dito ou não, há o que
+achar ou não. Nenhuma frase das sessões 3 e 4 nem de mesa real. Quem afina roda a suíte com `EXAME_SEM_C=1` (a C sai
+da medida e só a forma dela é conferida); o `npm test` mede a C e guarda a catraca. A C se mede uma vez antes do
+conserto e uma vez no fim.
+
+| C, primeira medida (antes de qualquer conserto) | rola certo | indevido | omitido | categoria | perícia | pares |
+|---|---|---|---|---|---|---|
+| régua | **102 de 124** | 1 de 61 | 21 de 63 | 82 | 36 de 42 | 18 de 25 |
+| hoje | 72 de 124 | 19 de 61 | 33 de 63 | 61 | 26 de 30 | 0 de 25 |
