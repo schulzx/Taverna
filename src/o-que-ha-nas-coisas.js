@@ -57,6 +57,33 @@ const sorteDe = (s) => fnv(s) / 0x100000000;
    cima, a sala dos fundos) e `ermo` (fora dos muros: a estrada, os arredores).
    Na masmorra, nenhum: a sala tem os seus segredos (masmorras.js). */
 export const TIPOS_SEM_SITIO = Object.freeze({ rua: "rua", interior: "interior", ermo: "ermo" });
+/* 21/11 (a quinta sessão jogada, o-mestre-vivo.md §25): O TIPO QUE O MUNDO
+   DEU AO LOCAL. O lugar de agora (lugar.js: garantirLugar) guarda só o nome;
+   o tipo morava no local da base (mundo-base.js: { nome, tipo }) e não
+   chegava aqui. Pelo nome, «Molhe Velho», «Pátio das Trocas» e «A Âncora
+   Torta» não dizem tipo nenhum, e a sessão inteira (um mundo do mar) caiu em
+   «rua»: os cestos, os sacos, a carroça, os barris e as mesas não existiam
+   para a frase, e só os caixotes eram julgados. O App passa agora o tipo do
+   local da base em `lugar.tipoDoLocal` (derivado, nunca guardado).
+   `O_TIPO_DO_LOCAL`: os tipos de local dos moldes (moldes.js: LOCAIS_MAR,
+   LOCAIS_TORRE, LOCAIS_ESTELAR) no tipo de lugar das coisas que lhes faz as
+   vezes — o cais é as docas, a taverna do porto é a taverna. O tipo que já é
+   um tipo das coisas vale por si; o que não tem par (o portal) fica pelo
+   nome, como antes. */
+export const O_TIPO_DO_LOCAL = Object.freeze({
+  "taverna do porto": "taverna", cais: "docas", "mercado de espólios": "mercado", estaleiro: "docas",
+  "capela do mar": "templo", forte: "quartel", "casa de cartas": "biblioteca", "poço das brigas": "arena",
+  descanso: "taverna", "feira do andar": "mercado", oficina: "forja", "capela do degrau": "templo",
+  arquivo: "biblioteca", cela: "cadeia", "arena do andar": "arena",
+  "doca de atracação": "docas", concourse: "mercado", "oficina de casco": "forja", enfermaria: "interior",
+  "capela do vácuo": "templo", "núcleo de dados": "biblioteca", "posto de segurança": "quartel", "poço de gravidade": "arena",
+});
+function tipoDoLocalDaBase(lugar) {
+  const t = obj(lugar) ? txt(lugar.tipoDoLocal) : "";
+  if (!t) return "";
+  if (Object.prototype.hasOwnProperty.call(AS_COISAS_AO_TOQUE, t)) return t;
+  return Object.prototype.hasOwnProperty.call(O_TIPO_DO_LOCAL, t) ? O_TIPO_DO_LOCAL[t] : "";
+}
 export function tipoParaAsCoisas(o) {
   try {
     const x = obj(o) ? o : {};
@@ -64,8 +91,8 @@ export function tipoParaAsCoisas(o) {
     const lugar = obj(x.lugar) && txt(x.lugar.nome) ? x.lugar : null;
     if (x.jornada === true || !txt(x.cidade) || (lugar && lugar.distancia === "arredores")) return TIPOS_SEM_SITIO.ermo;
     if (!lugar) return TIPOS_SEM_SITIO.rua;
-    let t = "";
-    try { t = tipoDoSitio(lugar); } catch { t = ""; }
+    let t = tipoDoLocalDaBase(lugar);
+    if (!t) { try { t = tipoDoSitio(lugar); } catch { t = ""; } }
     /* sem tipo: o cômodo de um prédio (dentroDe) é interior; o resto (o largo,
        a praça, o depósito que o mundo não sabe de quem é) é rua, como na cena
        do jogo, que o lê ao ar livre */
@@ -80,11 +107,16 @@ export function tipoParaAsCoisas(o) {
    coisasQueAFraseNomeia). Nenhum nome repete o núcleo de uma coisa que a
    cena já escreve por outra fonte (a porta, o lugar, o chão, a sala, o
    rastro, o portão). Pouco por lugar, de propósito: são as coisas que um
-   jogador revira numa cena dessas, e não um inventário do cenário. */
+   jogador revira numa cena dessas, e não um inventário do cenário.
+   21/11 (§25): a quinta sessão jogada nomeou, em oito buscas, coisas que a
+   tabela não tinha (as mesas e os bancos da taverna, os barris do mercado, as
+   tábuas e os cestos de peixe do cais) — e coisa que a frase nomeia e o lugar
+   não tem nunca guarda nada nem rola. O acervo cresce no mesmo formato, até
+   seis por lugar; a proporção por coisa não muda. */
 export const AS_COISAS_AO_TOQUE = Object.freeze({
-  mercado: Object.freeze(["os cestos", "os caixotes", "os sacos", "a carroça"]),
-  docas: Object.freeze(["os caixotes", "os barris", "as redes", "os fardos"]),
-  taverna: Object.freeze(["os barris", "o balcão", "a lareira", "as telhas"]),
+  mercado: Object.freeze(["os cestos", "os caixotes", "os sacos", "a carroça", "os barris"]),
+  docas: Object.freeze(["os caixotes", "os barris", "as redes", "os fardos", "as tábuas", "os cestos"]),
+  taverna: Object.freeze(["os barris", "o balcão", "a lareira", "as telhas", "as mesas", "os bancos"]),
   templo: Object.freeze(["os bancos", "o altar", "os nichos"]),
   forja: Object.freeze(["o carvão", "a bancada", "os baldes"]),
   quartel: Object.freeze(["os catres", "os fardos"]),
@@ -95,7 +127,7 @@ export const AS_COISAS_AO_TOQUE = Object.freeze({
   guilda: Object.freeze(["as prateleiras", "os arquivos"]),
   "casa de banhos": Object.freeze(["os cestos", "as toalhas"]),
   portao: Object.freeze(["os caixotes", "a guarita"]),
-  rua: Object.freeze(["os caixotes", "os telhados", "as telhas", "o poço"]),
+  rua: Object.freeze(["os caixotes", "os telhados", "as telhas", "o poço", "os cestos", "a carroça"]),
   interior: Object.freeze(["os caixotes", "as prateleiras", "os sacos", "a cama"]),
   ermo: Object.freeze(["as pedras", "o tronco oco", "os arbustos"]),
 });

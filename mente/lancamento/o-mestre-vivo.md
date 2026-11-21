@@ -1538,3 +1538,99 @@ dito pelo ofício fica anotado, não mexido.
 Revirar coisa a coisa num mercado e numa taverna (umas rolam, outras não, e o jogador não sabe antes); o achado entrar
 na bolsa uma vez só; a calha e a treliça rolando, a escada não; a dona olhando fazendo rolar a revista vazia; o
 «está na…» da linha de quem não está; o regateio com o companheiro baixando o preço sem dado.
+
+## 25. O conserto depois da quinta sessão
+
+**21/11/2026.** A quinta sessão jogada (`mente/lancamento/mestre-vivo-sessao-5.md`, commit `0ce2cd3`, IA real: 36
+de 45 certos) achou cinco lugares onde o juiz ainda errava. Tudo atrás da chave (`?mestre=1`); com ela desligada o
+jogo não muda (abaixo, a prova). Cada ponto com a causa achada e a prova dela.
+
+**1. As oito buscas vazias: fiação, não azar.** O lugar de agora (`lugar.js: garantirLugar`) guarda só o nome, e
+`tipoParaAsCoisas` tirava o tipo do nome (`tipoDoSitio`). Num mundo do mar os locais chamam-se «Molhe Velho»,
+«Pátio das Trocas», «A Âncora Torta» — nenhum nome diz tipo, e a sessão inteira caiu em «rua» (provado: dos onze
+nomes de `NOMES_LOCAL_MAR` do cais, do mercado de espólios e da taverna do porto, só «Cais Podre» e «Feira do Saque»
+saíam com tipo). A rua tem caixotes, telhados, telhas e poço: das oito frases, **só «reviro os caixotes» casava com
+uma coisa**; os cestos, os sacos, a carroça, os barris e as mesas não existiam para a frase, e coisa não nomeada
+nunca rola nem paga. A conta: com a fiação certa (quatro coisas distintas no mercado a 1 em 4, barris e mesas na
+taverna a 1 em 5; os cestos repetidos são a mesma coisa, a mesma semente) as oito vazias tinham **20%** de chance;
+como estava, com um caixote julgado a 0,15, tinham **85%** — sete das oito não podiam achar nada. *O conserto:* o App
+passa o tipo do local da base em `lugar.tipoDoLocal` (`lugarComOTipoDaBase`, derivado, nunca guardado) e
+`O_TIPO_DO_LOCAL` põe os tipos dos moldes no tipo das coisas (o cais e o estaleiro são as docas, o mercado de
+espólios é o mercado, a taverna do porto e o descanso são a taverna…). E o acervo cresceu no mesmo formato, porque a
+sessão nomeou coisas que a tabela não tinha: o mercado ganhou os barris; as docas, as tábuas e os cestos; a taverna,
+as mesas e os bancos; a rua, os cestos e a carroça (teto de quatro para seis por lugar, com o motivo na suíte). A
+proporção por coisa não mudou. *Não consertado:* «entro numa taverna da cidade» não moveu o herói (nenhum local com
+esse nome), e os barris e as mesas foram julgados na praça; isso é do passo na cidade, não das coisas.
+
+**2. A revista da banca com o dono olhando.** Duas causas, as duas na frase real. (a) O dono dito pelo ofício só
+fazia rolar quando alguém da cena tinha esse papel — e o vendedor de uma banca do mercado não é gente do retrato
+(provado: com «vendedor de mapas» em cena rola; só com a Morgane e o Torvald, busca vazia). (b) «Remexo os sacos da
+vendedora» nem chegava como busca: o catálogo recua diante de «vendedor» (a guarda contra «procuro o vendedor») —
+o recuo que a etapa 3 anotou. *O conserto, na régua (o catálogo não muda, para a chave desligada não mudar):*
+`A_BUSCA_SOB_OLHOS.oficio` e `.olhar` — o ofício depois do «de» com o olhar dito na frase («enquanto ele me olha»,
+«me encara», «na frente dela») põe o dono ali pela palavra do jogador (`olhando: true`, e a mão leve deixa de ser
+«sem olhos»); e a régua relê a frase sem o dono quando o catálogo recua, e se ela é busca, é busca. Sem o olhar
+dito, o ofício sozinho é só posse: a banca largada não rola. *O compartimento nas tábuas (T29)* não era falta de
+dado pela régua da casa (exame E720/E721: «busca rola quando há o que achar»): as tábuas não eram coisa ao toque do
+cais; agora são, e rolam quando a semente pôs algo nelas (1 em 4).
+
+**3. O nome próprio que virava viagem.** Três portas diferentes. (a) «chamo Magnus…» e «falo com Jora…» viraram o
+cartão «Ir até…» da proposta de quem não está (`aPessoaChamada`, a 2.ª leva de 04/11), que segura a frase longe do
+Narrador. Com a chave, essa proposta não nasce: a frase parte, e a ficha da cena diz «X não está aqui — está em…»
+(`quemNaoEstaNaCena`). Para isso `nomeAusenteNaFrase` passou a ler o nome chamado (`O_NOME_CHAMADO`): «chamo X»,
+«falo com X» e o vocativo depois de dois pontos ou aspas quando a frase fala a alguém («Magnus, vem cá») — antes,
+nenhuma das três frases da sessão tinha ouvinte. (b) «escalo a calha da casa ao lado até o telhado» e «pergunto…
+qual é o caminho para o posto» viraram passo a pé: o «até» sozinho e o «caminho» lido como verbo. Com a chave, só
+o verbo de ir manda andar (`lugar.js: aFraseMandaIr`, `A_IDA_DECLARADA`), e a pergunta de caminho nunca. (c) O grito
+«Magnus! Você está aí?» era pergunta fechada ao oráculo (`ehPerguntaAoMundo`); com a chave, a frase que chama alguém
+pelo nome (`oNomeChamado`) não é pergunta ao mundo.
+
+**4. O regateio com quem deve o favor.** A régua acertou (T31 não rolou: `dispostoCede`, o Torvald é do grupo), e o
+degrau sem dado foi chamado — mas `oRegateioNaBanca` devolveu nada, por duas razões que são regra e não defeito: o
+balcão já tinha sido regateado no mesmo dia (T16, as rações, «uma por banca por dia»), e a pechincha do balcão vale
+para tudo nele; e as tochas custam ◉ 1, que o degrau de 12% não baixa (`Math.max(1, …)`). O defeito é o silêncio:
+nenhuma linha disse que o preço ficava. Isso mora em `a-ficha-da-cena.js` (território do outro agente): **descrito,
+não mexido** — a linha «🤝 Tochas continua a ◉ 1» devia sair também quando o balcão já foi regateado hoje. A prosa
+que inverteu a dívida, essa sim: `aDividaDita` (`a-escuta-da-cena.js`) põe na pauta do turno, pela porta pública
+(`porNaPautaDoTurno`), uma linha curta — «Eu disse que Torvald me deve um favor: se a dívida aparecer, é de Torvald
+comigo — nunca minha com Torvald» — e o veto no `naoPode`. Só quando a frase diz «me deve»; nenhum bloco estático.
+
+**5. A legenda do dado anterior.** É a bandeja da coluna da direita: recolhida (o turno novo partiu), ela mostra o
+histórico e a legenda do último lance numa linha só, em caixa alta («PERSUASÃO · 15 + 3 = 18 · PRECISA DE 14»), e
+fica ali enquanto nenhum dado novo cair. Com a chave, a coluna (e a tira do telefone) só recebe a bandeja enquanto o
+lance é deste turno (`bandeja[0].n !== bandejaVista`, o mesmo estado que já a dizia «fresca»). A forma da bandeja
+não mudou; a gaveta do telefone, aberta à mão, continua com o histórico. *Preço:* na mesa larga, o histórico dos
+dados anteriores some da coluna entre um dado e outro.
+
+**Com a chave desligada o jogo não muda.** O catálogo (`desafios.js`) não foi tocado — o recuo diante de «vendedor»
+foi consertado na régua. `lugarPedido` não mudou (a ida declarada é uma função nova, lida só com a chave). As cinco
+fiações no App leem `mestreVivoLigado()`: o tipo do local entra só pela coisa ao toque (que é `null` sem a chave) e
+pelo retrato (que só corre com a chave); a ida declarada, a proposta de quem não está, o grito que não é oráculo e
+a bandeja, cada um com a chave na condição; a dívida dita mora na ficha da cena, que só corre com a cena lida. O
+Mestre de hoje do exame ficou igual nas 503 frases que já eram da A (307 · 67 · 129) e na B.
+
+### 25.1 A medida
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A (518, com 15 itens novos, rodada 10) | 472 · 2 · 29 · cat 398 · per 233 · pares 115 (das 503) | **487 · 2 · 29 · cat 413 · per 239 · pares 119** |
+| … só as 503 que já eram da A | 472 · 2 · 29 | **igual** |
+| régua, metade B | 157 · 7 · 32 | **igual** |
+| hoje, metade A | 307 · 67 · 129 | 315 · 71 · 132 (só pelos 15 novos) |
+| **régua, metade C (medida uma vez, no fim)** | 103 · 1 · 20 · cat 83 · per 37 · pares 18 | **igual** |
+
+Os 15 itens (origens `sessao-mv-5` e `sessao-mv-5-par`): a revista com o dono dito pelo ofício e olhando (três, um
+de cada forma), o par do vendedor na cena ou não, os pares das tábuas e dos barris (algo nesta coisa ou noutra), as
+mesas vazias, o nome chamado e o grito por quem não está, a pergunta de caminho e o par da calha da casa ao lado
+(frágil ou firme). Com a régua de antes do ponto 2, 12 de 15. O regateio com o companheiro ficou fora do exame: o
+exame dá a toda pessoa o nome «Fulana», e a régua lê a pessoa do catálogo como outra que não o Torvald da frase —
+o item mediria o exame, não o juiz. Frases nossas, nenhuma de mesa real.
+
+### 25.2 O que não foi verificado
+
+- Nada disto foi jogado. Não se viu na tela o achado num cesto do mercado de um mundo do mar, nem o «não está
+  aqui — está em…» de quem foi chamado, nem a bandeja saindo da coluna.
+- O silêncio do regateio repetido no mesmo balcão (ponto 4) ficou como está: é de `a-ficha-da-cena.js`.
+- A linha de quem não está diz «está em Casa do Rumo» (sem artigo, `emOLugar`): também de `a-ficha-da-cena.js`.
+- «Entro numa taverna da cidade» sem nome não move o herói; as coisas da taverna só existem quando o lugar de agora
+  é a taverna.

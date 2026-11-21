@@ -515,6 +515,34 @@ export const VOLTAR_A = Object.freeze({
   rx: /\b(volto|voltamos|regresso|regressamos|retorno|retornamos|torno|tornamos)\s+(a|ao|aos|as|para|pra)\b/,
   porque: "voltar a um sítio é ir a ele — o herói que «volta ao templo» sai daqui",
 });
+/* A IDA DECLARADA DO MESTRE VIVO (21/11, a quinta sessão jogada,
+   o-mestre-vivo.md §25). Com a chave do Mestre vivo, a frase só é ordem de
+   ir quando diz o verbo de ir (o de sempre, RX_VOU, a volta e a saída dos
+   muros, mais os de `verbos`) — e nunca quando pergunta o caminho. A sessão
+   viu «escalo a calha da casa ao lado até o telhado» virar «Ir até Casa do
+   Calafate» (o «até» sozinho e o pedaço «casa») e «pergunto ao vendedor qual
+   é o caminho para o posto da estrada» virar uma caminhada de 56 minutos (o
+   «caminho» lido como verbo). Um mestre real responde à pergunta e deixa a
+   escalada acontecer; quem anda é quem disse que vai. Sem a chave, nada
+   disto é lido: lugarPedido segue igual.
+   `pergunta`: a forma de perguntar o caminho (o «onde fica» de uma oração
+   relativa — «vou até a praça onde fica o mercado» — não é pergunta, por
+   isso o «onde» só conta com o ponto de interrogação, `interrogacao`). */
+export const A_IDA_DECLARADA = Object.freeze({
+  verbos: /\b(corro|corremos|viajo|viajamos|parto|partimos|saio para|saimos para|sigo para|seguimos para|vou-me|apresso-me|me apresso|disparo para)\b/,
+  pergunta: /\b(pergunt\w*|indag\w*|qual (e|eh) o caminho|que caminho (eu )?(pego|tomo|sigo)|como (eu )?(chego|se chega|faco pra chegar|faco para chegar)|(me )?(indica|indique|ensina|ensine|mostra|mostre|diz|diga|aponta|aponte) o caminho)\b/,
+  interrogacao: /\b(onde|aonde|como|qual)\b[^?]*\?/,
+});
+export function aFraseMandaIr(texto) {
+  try {
+    const cru = String(texto || "");
+    const t = soODeclarado(cru, NAO_E_IDA);
+    if (!t.trim()) return false;
+    const n = norm(cru);
+    if (A_IDA_DECLARADA.pergunta.test(n) || A_IDA_DECLARADA.interrogacao.test(n)) return false;
+    return SAIDA_DOS_MUROS.rx.test(t) || RX_VOU.test(t) || VOLTAR_A.rx.test(t) || A_IDA_DECLARADA.verbos.test(t);
+  } catch { return false; }
+}
 export function lugarPedido(texto, lugares = []) {
   /* MM14: só o que o herói declarou (ver `NAO_E_IDA`, acima) */
   const t = soODeclarado(texto, NAO_E_IDA);

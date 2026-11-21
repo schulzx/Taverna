@@ -15,13 +15,13 @@
   "veio_da_b": "3: o item era da metade B até a rodada 2 e passou para a A na rodada 3"
  },
  "contagem": {
-  "itens": 930,
-  "pares": 271,
+  "itens": 945,
+  "pares": 275,
   "espontaneos": 65,
-  "nao_rola": 429,
+  "nao_rola": 438,
   "situacoes_cobertas": 97,
   "situacoes_faltando": [],
-  "metade_A": 535,
+  "metade_A": 550,
   "metade_B": 265,
   "rodada_2": 118,
   "rodada_3": 265,
@@ -33,7 +33,8 @@
   "rodada_6": 130,
   "rodada_7": 32,
   "rodada_8": 13,
-  "rodada_9": 14
+  "rodada_9": 14,
+  "rodada_10": 15
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
@@ -21252,6 +21253,374 @@
    "rodada": 9,
    "metade": "A",
    "origem": "etapa-3-coisa"
+  },
+  {
+   "id": "E931",
+   "situacao": 57,
+   "cena": {
+    "lugar": "praça do mercado",
+    "quem": [],
+    "ao_toque": {
+     "cestos": []
+    }
+   },
+   "frase": "reviro os cestos da banca do vendedor de amêijoas enquanto ele me olha",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "o dono olha (a frase o diz): mexer no que é dele diante dele é a mão leve, haja ou não algo",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5"
+  },
+  {
+   "id": "E932",
+   "situacao": 57,
+   "cena": {
+    "lugar": "banca de grãos",
+    "quem": [],
+    "ao_toque": {
+     "sacos": []
+    }
+   },
+   "frase": "remexo os sacos da vendedora enquanto ela me vigia",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "a vendedora vigia (a frase o diz): é risco de ser vista, não busca",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5-par"
+  },
+  {
+   "id": "E933",
+   "situacao": 2,
+   "cena": {
+    "lugar": "banca de grãos",
+    "quem": [],
+    "ao_toque": {
+     "sacos": []
+    }
+   },
+   "frase": "remexo os sacos da vendedora, que foi buscar água no poço",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "a dona saiu e nos sacos não há nada: sem dado",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5-par"
+  },
+  {
+   "id": "E934",
+   "situacao": 57,
+   "cena": {
+    "lugar": "praça do mercado",
+    "quem": [
+     "vendedor de amêijoas"
+    ],
+    "ao_toque": {
+     "cestos": []
+    }
+   },
+   "frase": "reviro os cestos da banca do vendedor de amêijoas",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "o vendedor está ali: revirar a banca dele é a mão leve contra ele",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5-par",
+   "par": "P10A1"
+  },
+  {
+   "id": "E935",
+   "situacao": 2,
+   "cena": {
+    "lugar": "praça do mercado",
+    "quem": [],
+    "ao_toque": {
+     "cestos": []
+    }
+   },
+   "frase": "reviro os cestos da banca do vendedor de amêijoas",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "o vendedor não está e nos cestos não há nada: sem dado",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5-par",
+   "par": "P10A1"
+  },
+  {
+   "id": "E936",
+   "situacao": 1,
+   "cena": {
+    "lugar": "cais",
+    "quem": [],
+    "ao_toque": {
+     "tábuas": [
+      "ha_algo_escondido"
+     ],
+     "caixotes": []
+    }
+   },
+   "frase": "procuro um compartimento escondido nas tábuas do cais",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "há algo sob as tábuas: procurar onde há o que achar rola",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5",
+   "par": "P10A2"
+  },
+  {
+   "id": "E937",
+   "situacao": 2,
+   "cena": {
+    "lugar": "cais",
+    "quem": [],
+    "ao_toque": {
+     "tábuas": [],
+     "caixotes": [
+      "ha_algo_escondido"
+     ]
+    }
+   },
+   "frase": "procuro um compartimento escondido nas tábuas do cais",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nas tábuas não há nada: o mestre descreve o vazio",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5",
+   "par": "P10A2"
+  },
+  {
+   "id": "E938",
+   "situacao": 1,
+   "cena": {
+    "lugar": "salão da taverna",
+    "quem": [],
+    "ao_toque": {
+     "barris": [
+      "ha_algo_escondido"
+     ],
+     "mesas": []
+    }
+   },
+   "frase": "reviro os barris encostados no canto da taverna",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "há algo nos barris: rola",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5",
+   "par": "P10A3"
+  },
+  {
+   "id": "E939",
+   "situacao": 2,
+   "cena": {
+    "lugar": "salão da taverna",
+    "quem": [],
+    "ao_toque": {
+     "barris": [],
+     "mesas": [
+      "ha_algo_escondido"
+     ]
+    }
+   },
+   "frase": "reviro os barris encostados no canto da taverna",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nos barris não há nada, e ninguém mexeu nas mesas: sem dado",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5",
+   "par": "P10A3"
+  },
+  {
+   "id": "E940",
+   "situacao": 2,
+   "cena": {
+    "lugar": "salão da taverna",
+    "quem": [],
+    "ao_toque": {
+     "mesas": [],
+     "bancos": []
+    }
+   },
+   "frase": "olho debaixo das mesas e dos bancos da taverna procurando algo caído",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "debaixo das mesas e dos bancos não há nada: sem dado",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5"
+  },
+  {
+   "id": "E941",
+   "situacao": 2,
+   "cena": {
+    "lugar": "praça do mercado",
+    "quem": [
+     "mulher de negócios",
+     "Torvald (companheiro)"
+    ]
+   },
+   "frase": "chamo Magnus: Magnus, vem cá, preciso falar com você",
+   "esperado": {
+    "rola": false,
+    "categoria": "outro",
+    "pericias": [],
+    "porque": "chamar quem não está não arrisca nada: o mestre diz que ele não está aqui",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5"
+  },
+  {
+   "id": "E942",
+   "situacao": 2,
+   "cena": {
+    "lugar": "praça do mercado",
+    "quem": [
+     "mulher de negócios",
+     "Torvald (companheiro)"
+    ]
+   },
+   "frase": "grito pelo nome dela: Magnus! Magnus, você está aí?",
+   "esperado": {
+    "rola": false,
+    "categoria": "outro",
+    "pericias": [],
+    "porque": "gritar por alguém ausente não é pergunta à sorte: ele não está aqui",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5"
+  },
+  {
+   "id": "E943",
+   "situacao": 2,
+   "cena": {
+    "lugar": "praça do mercado",
+    "quem": [
+     "vendedor de amêijoas"
+    ]
+   },
+   "frase": "pergunto ao vendedor de amêijoas qual é o caminho para o posto da estrada",
+   "esperado": {
+    "rola": false,
+    "categoria": "perguntar",
+    "pericias": [],
+    "porque": "perguntar o caminho a quem não tem motivo para negar: ele responde",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5"
+  },
+  {
+   "id": "E944",
+   "situacao": 1,
+   "cena": {
+    "lugar": "rua do armazém",
+    "quem": [],
+    "ao_toque": {
+     "calha": [
+      "fragil"
+     ]
+    }
+   },
+   "frase": "escalo a calha da casa ao lado até o telhado",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a calha é velha e cede: escalar por ela arrisca a queda",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5",
+   "par": "P10A4"
+  },
+  {
+   "id": "E945",
+   "situacao": 2,
+   "cena": {
+    "lugar": "rua do armazém",
+    "quem": [],
+    "ao_toque": {
+     "calha": []
+    }
+   },
+   "frase": "escalo a calha da casa ao lado até o telhado",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "a calha aguenta e ninguém tem pressa: sobe",
+    "base": "padrao"
+   },
+   "rodada": 10,
+   "metade": "A",
+   "origem": "sessao-mv-5",
+   "par": "P10A4"
   }
  ],
  "rodada_2": {
@@ -21312,5 +21681,9 @@
  "rodada_9": {
   "data": "2026-11-21",
   "o_que_mudou": "A etapa 3 do «Mestre que conhece a cena» (o-mestre-vivo.md §23): 14 itens novos na metade A, que afina. A cena ganha `ao_toque` — as coisas comuns do lugar (o cesto, as telhas, os barris, a calha, a treliça), com o estado de cada uma, que a régua só lê quando a frase as nomeia. Seis pares mínimos (há algo nesta coisa ou noutra; o dono olhando ou longe; a coisa frágil ou firme) e dois itens sem par (a escada firme ao lado da calha frágil; a altura dita na calha firme). Frases nossas, nenhuma de mesa real. B e C não foram tocadas."
+ },
+ "rodada_10": {
+  "data": "2026-11-21",
+  "o_que_mudou": "A quinta sessão jogada do Mestre vivo (mente/lancamento/mestre-vivo-sessao-5.md; o conserto em o-mestre-vivo.md §25): 15 itens novos na metade A, que afina. As frases da sessão que o juiz errou (a revista da banca com o dono olhando, o compartimento nas tábuas, os barris e as mesas da taverna, o nome chamado de quem não está, a pergunta de caminho e a calha da casa ao lado) e pares mínimos do dono dito pelo ofício (olhando ou longe; na cena ou não). Frases nossas, nenhuma de mesa real. B e C não foram tocadas. O regateio com o companheiro que deve o favor ficou de fora: o exame dá a toda pessoa o nome «Fulana», e a régua lê a pessoa do catálogo como outra que não o Torvald da frase — o item mediria o exame, não o juiz."
  }
 }

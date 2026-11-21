@@ -347,8 +347,12 @@ sec("9. a fiação no App.jsx — o sinal passa as fichas");
      fichasDaMesa com o preço comum somado à ficha do mercado (o oráculo lê
      por chave, e "preco" não é uma das dele). A asserção move-se com o
      motivo e continua a provar a ligação: o sinal leva as fichas da mesa. */
+  /* MOVIDA em 21/11/2026 (o-mestre-vivo.md §25): o sinal ganhou, depois das
+     fichas, a trava do Mestre vivo («&& !(mestreVivoLigado() && …)» — o grito
+     por alguém não é pergunta ao mundo). A ligação que esta asserção prova é a
+     mesma: o sinal leva as fichas da mesa. */
   t("o App passa as fichas ao sinal: ehPerguntaAoMundo(acao, { fichas: () => fichasDoOraculo(acao) })",
-    /ehPerguntaAoMundo:\s*ler\(\(\)\s*=>\s*ehPerguntaAoMundo\(acao,\s*\{\s*fichas:\s*\(\)\s*=>\s*fichasDoOraculo\(acao\)\s*\}\)\)/.test(app));
+    /ehPerguntaAoMundo:\s*ler\(\(\)\s*=>\s*ehPerguntaAoMundo\(acao,\s*\{\s*fichas:\s*\(\)\s*=>\s*fichasDoOraculo\(acao\)\s*\}\)(?:\)|\s*&&\s*!\(mestreVivoLigado\(\)\s*&&\s*!!oNomeChamado\(acao\)\)\))/.test(app));
   t("e fichasDoOraculo parte de fichasDaMesa (a mesma mesa), com o preço na ficha do mercado",
     /const fichasDoOraculo = \(frase = ""\) => \{\n\s*const f = fichasDaMesa\(frase\);/.test(app) && app.includes("return { ...f, mercado: { pergunta: [...(mc.pergunta || []), ...pc.pergunta]"));
   t("e fichasDaMesa existe no App, como a função que junta as três fichas",

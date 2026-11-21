@@ -17,6 +17,7 @@
       perde, e quanto ela ouve onde o rótulo diz «sem teste». */
 import fs from "node:fs";
 import { lerAcao, comoSeDiz } from "../src/desafios.js";
+import { A_DIVIDA_DITA, aDividaDita } from "../src/motor/a-escuta-da-cena.js";
 import {
   MOLDURAS_DO_ATO, ATO_EM_SUBSTANTIVO, FORMAS_DA_FALA, FORMAS_DO_ATO, PERGUNTAS_QUE_SAO_GESTO, PLURAL_QUE_FICA,
   escutarComCena,
@@ -201,6 +202,17 @@ sec("S18. as formas da segunda sessão jogada (19/11/2026, o-mestre-vivo.md §18
   t("o furto por «tirar» e pelo cinto de alguém (T9)", idDe("enquanto ele se ajeita no banco eu tento tirar a bolsa de moedas do cinto dele sem ele sentir", gente) === "bater_carteira");
   t("a mentira dita direto, pelo parentesco (o exame, E330)", idDe("sou primo do barão, ele ta me esperando la dentro", gente) === "mentir");
   t("a barganha por «pagar bem menos» (T17)", idDe("pergunto quanto ela quer pela peça e tento pagar bem menos", gente) === "convencer");
+}
+
+sec("S25. a dívida dita (21/11/2026, o-mestre-vivo.md §25)");
+{
+  const d = aDividaDita("regateio com Torvald, que me deve um favor, o preço das tochas");
+  t("quem deve é quem a frase diz que deve, e a linha vai à pauta (acabou) com o veto (naoPode)",
+    !!d && /Torvald me deve um favor/.test(d.acabou[0]) && /nunca minha com Torvald/.test(d.acabou[0]) && /sou eu quem deve um favor a Torvald/.test(d.naoPode[0]));
+  t("o «ele me deve» sem nome usa a pessoa a quem se fala", /Doran me deve/.test((aDividaDita("ele me deve uma, pode baixar", "Doran") || { acabou: [""] }).acabou[0]));
+  t("sem «me deve», nada; eu devendo não é a dívida dele; lixo não lança",
+    aDividaDita("eu devo um favor ao Doran", "Doran") === null && aDividaDita("regateio o preço", "Doran") === null && aDividaDita(null) === null && aDividaDita(3, 4) === null);
+  t("a linha fala do herói em primeira pessoa e não nomeia o mecanismo", !/\b(sistema|dado|regra|mestre)\b/i.test(A_DIVIDA_DITA.linha + A_DIVIDA_DITA.veto));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

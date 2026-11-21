@@ -474,3 +474,33 @@ export function escutarComCena(frase, cena, leitura) {
   }
   return null;
 }
+
+/* ---------------- A DÍVIDA DITA (21/11/2026, o-mestre-vivo.md §25) ----------------
+   A quinta sessão jogada (T31): «regateio com Torvald, que me deve um favor,
+   o preço das tochas do balcão» — e a prosa respondeu «Já me deves um favor»,
+   com a dívida invertida. O Narrador não tinha, no turno, a direção da dívida
+   que o jogador disse. Uma linha curta na pauta do turno (o canal por turno,
+   nunca bloco estático) diz quem deve a quem, como o JOGADOR disse — o
+   sistema não afirma que a dívida existe, só não deixa a prosa virá-la.
+     aDividaDita(frase, quem) → null | { acabou: [linha], naoPode: [veto] }
+   `quem`: a pessoa a quem a frase se dirige (a régua a achou), para o
+   «ele me deve» sem nome. Sem «me deve» na frase, nada. */
+export const A_DIVIDA_DITA = Object.freeze({
+  deve: /\bme\s+(?:deve|devem|devia|deviam|esta devendo|ta devendo|estao devendo)\b/,
+  nome: "([A-ZÀ-Ý][a-zà-ÿ]{2,})\\s*,?\\s+(?:que\\s+)?(?:ainda\\s+)?me\\s+(?:deve|devem|devia|deviam|est[aá] devendo|t[aá] devendo)",
+  linha: "Eu disse que {quem} me deve um favor: se a dívida aparecer, é de {quem} comigo — nunca minha com {quem}.",
+  veto: "fazer {quem} dizer ou dar a entender que sou eu quem deve um favor a {quem}",
+});
+const RX_DO_DEVEDOR = new RegExp(A_DIVIDA_DITA.nome, "u");
+export function aDividaDita(frase, quem) {
+  try {
+    if (typeof frase !== "string" || !A_DIVIDA_DITA.deve.test(nrm(frase))) return null;
+    const m = frase.match(RX_DO_DEVEDOR);
+    const q = (m && m[1]) || (typeof quem === "string" ? quem.trim() : "");
+    if (!q) return null;
+    return Object.freeze({
+      acabou: Object.freeze([A_DIVIDA_DITA.linha.replaceAll("{quem}", q)]),
+      naoPode: Object.freeze([A_DIVIDA_DITA.veto.replaceAll("{quem}", q)]),
+    });
+  } catch { return null; }
+}

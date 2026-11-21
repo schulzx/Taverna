@@ -10,7 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   AS_COISAS_AO_TOQUE, O_ESCONDIDO_NAS_COISAS, A_FIRMEZA_DO_QUE_SE_ESCALA, TIPOS_SEM_SITIO,
-  tipoParaAsCoisas, firmezaDe, oQueHaNaCoisa, asCoisasAoToque, aCoisaAoToqueDaFrase,
+  O_TIPO_DO_LOCAL, tipoParaAsCoisas, firmezaDe, oQueHaNaCoisa, asCoisasAoToque, aCoisaAoToqueDaFrase,
   oQueOAchadoDa, telaDoAchadoNaCoisa, envelopeDoAchadoNaCoisa, O_ACHADO_NA_TELA,
 } from "../src/o-que-ha-nas-coisas.js";
 import { ELENCO_DO_LUGAR } from "../src/elenco-do-lugar.js";
@@ -34,8 +34,13 @@ sec("1. as tabelas");
 {
   t("todo tipo de lugar (os do elenco, mais rua, interior e ermo) tem coisas ao toque, e nenhuma tabela tem tipo que não existe",
     TIPOS.every((k) => Array.isArray(AS_COISAS_AO_TOQUE[k]) && AS_COISAS_AO_TOQUE[k].length >= 2) && Object.keys(AS_COISAS_AO_TOQUE).every((k) => TIPOS.includes(k)));
-  t("toda coisa ao toque tem artigo, e no máximo quatro por lugar (o que se revira, não o inventário)",
-    Object.values(AS_COISAS_AO_TOQUE).every((l) => l.length <= 4 && l.every((n) => /^(o|a|os|as) \S/.test(n))));
+  /* MOVIDA em 21/11 (§25, a quinta sessão jogada): o teto era quatro. A
+     sessão nomeou, em oito buscas, coisas que a tabela não tinha (as mesas da
+     taverna, os barris do mercado, as tábuas do cais), e coisa que o lugar
+     não tem nunca rola nem paga. O teto sobe para seis — ainda o que se
+     revira, e não o inventário; a proporção por coisa é a mesma. */
+  t("toda coisa ao toque tem artigo, e no máximo seis por lugar (o que se revira, não o inventário)",
+    Object.values(AS_COISAS_AO_TOQUE).every((l) => l.length <= 6 && l.every((n) => /^(o|a|os|as) \S/.test(n))));
   const RESERVADOS = ["porta", "lugar", "chao", "sala", "rastro", "portao"];
   t("nenhum núcleo de coisa ao toque é o de uma coisa que a cena escreve por outra fonte",
     [...Object.values(AS_COISAS_AO_TOQUE).flat(), ...A_FIRMEZA_DO_QUE_SE_ESCALA.frageis.map((f) => f.nome)].every((n) => !RESERVADOS.includes(nucleo(n))));
@@ -73,6 +78,18 @@ sec("2. o tipo do lugar, para as coisas");
     && tipoParaAsCoisas({ lugar: { nome: "Quarto de cima", dentroDe: "Casa do Ferreiro" }, cidade: "Vau" }) === "interior");
   t("na estrada, nos arredores e sem cidade, o ermo", tipoParaAsCoisas({ jornada: true, cidade: "Vau" }) === "ermo"
     && tipoParaAsCoisas({ lugar: { nome: "Moinho", distancia: "arredores" }, cidade: "Vau" }) === "ermo" && tipoParaAsCoisas({}) === "ermo");
+  /* §25: o tipo que o mundo deu ao local (lugar.tipoDoLocal, posto pelo App)
+     ganha do nome — a quinta sessão, num mundo do mar, caiu inteira em «rua» */
+  t("o tipo do local da base ganha do nome: o cais é as docas, o mercado de espólios é o mercado, a taverna do porto é a taverna",
+    tipoParaAsCoisas({ lugar: { nome: "Molhe Velho", tipoDoLocal: "cais" }, cidade: "Cabo" }) === "docas"
+    && tipoParaAsCoisas({ lugar: { nome: "Pátio das Trocas", tipoDoLocal: "mercado de espólios" }, cidade: "Cabo" }) === "mercado"
+    && tipoParaAsCoisas({ lugar: { nome: "A Âncora Torta", tipoDoLocal: "taverna do porto" }, cidade: "Cabo" }) === "taverna"
+    && tipoParaAsCoisas({ lugar: { nome: "O Javali Rouco", tipoDoLocal: "taverna" }, cidade: "Vau" }) === "taverna");
+  t("sem o tipo da base, o de sempre: pelo nome, e sem nome que diga, a rua",
+    tipoParaAsCoisas({ lugar: { nome: "Molhe Velho" }, cidade: "Cabo" }) === "rua"
+    && tipoParaAsCoisas({ lugar: { nome: "Arco Pálido", tipoDoLocal: "portal" }, cidade: "Torre" }) === "rua");
+  t("todo tipo de local para que O_TIPO_DO_LOCAL aponta é um tipo das coisas",
+    Object.values(O_TIPO_DO_LOCAL).every((k) => TIPOS.includes(k)));
   t("na masmorra, nenhum (a sala tem os seus segredos); lixo não lança", tipoParaAsCoisas({ cidade: "Vau", masmorra: { salas: [], atual: 1 } }) === ""
     && tipoParaAsCoisas(null) === "ermo" && tipoParaAsCoisas("x") === "ermo");
 }
@@ -216,6 +233,18 @@ sec("8. Q1 — a quest só escreve estado");
 sec("9. a fiação no App, atrás da chave");
 {
   const corpo = (nome) => { const i = app.indexOf(`const ${nome} = `); return i < 0 ? "" : app.slice(i, i + 1800); };
+  /* §25: o que a quinta sessão jogada mostrou — cada fiação atrás da chave */
+  t("o lugar da coisa ao toque e do retrato leva o tipo do local da base (só o Mestre vivo o lê)",
+    /lugar: lugarComOTipoDaBase\(\)/.test(corpo("aCoisaAoToqueAgora")) && /lugar: lugarComOTipoDaBase\(\), cidade: cid/.test(app)
+    && /tipoDoLocal: loc\.tipo/.test(corpo("lugarComOTipoDaBase")) && /calou\("Mestre vivo · o tipo do local"/.test(corpo("lugarComOTipoDaBase")));
+  t("só o verbo de ir manda andar, e só com a chave", /if \(mestreVivoLigado\(\) && !aFraseMandaIr\(cru\)\) return null;/.test(app));
+  t("quem não está não vira cartão com a chave; o grito por alguém não é pergunta ao mundo com a chave",
+    /if \(!s\.ehProcuraDeGente && cidadeAtualRef\.current && !mestreVivoLigado\(\)\) \{/.test(app)
+    && /ehPerguntaAoMundo\(acao, \{ fichas: \(\) => fichasDoOraculo\(acao\) \}\) && !\(mestreVivoLigado\(\) && !!oNomeChamado\(acao\)\)/.test(app));
+  t("a dívida dita vai à pauta do turno (na ficha da cena, que só corre com a chave), em calou",
+    /const dv = aDividaDita\(acao, [^;]+\); if \(dv\) porNaPautaDoTurno\(dv\); \} catch \(e\) \{ calou\("Mestre vivo · a dívida dita"/.test(app));
+  t("o dado de um turno passado sai da coluna só com a chave (a forma da bandeja não muda)",
+    (app.match(/bandeja\.length > 0 && \(!mestreVivoLigado\(\) \|\| \(bandeja\[0\] && bandeja\[0\]\.n !== bandejaVista\)\)/g) || []).length === 2);
   t("a coisa ao toque da frase só existe com o Mestre vivo (desligado, null)", /const aCoisaAoToqueAgora = \(frase\) => \{\s*try \{\s*if \(!mestreVivoLigado\(\)\) return null;/.test(app));
   t("o achado da busca passa pela coisa ao toque (que é null sem a chave) e depois pelo de sempre",
     /achadoDe: \(attr, frase\) =>/.test(app) && /const ct = aCoisaAoToqueAgora\(frase\);\s*if \(ct && ct\.achado\) return ct\.achado;\s*\}\s*return achavelAqui\(/.test(app));

@@ -26,6 +26,8 @@ import {
   PERIGO_DECLARADO, O_ALVO_AUSENTE, nomeAusenteNaFrase, A_BUSCA_SOB_OLHOS, O_FURTO_SEM_SER_VISTO,
 } from "../src/motor/a-regua-do-momento.js";
 import { registrarTentativa } from "../src/desafios.js";
+import { O_NOME_CHAMADO, oNomeChamado } from "../src/motor/a-regua-do-momento.js";
+import { A_IDA_DECLARADA, aFraseMandaIr } from "../src/lugar.js";
 import { ESTADOS_DA_CENA, LUGARES_DA_CENA, estadoPorId, RESPOSTAS_DA_PERGUNTA } from "../src/cena-do-momento.js";
 
 let ok = 0, mal = 0;
@@ -520,6 +522,38 @@ sec("S21. a marca de UMA coisa ou de UMA pessoa, lida no alvo da frase (21/11/20
   const gente = { pessoas: [{ nome: "Ana", papel: "padeira", estados: ["ja_convencida"] }, { nome: "Rui", papel: "guarda", estados: [] }], criaturas: [], coisas: [{ nome: "o pátio", estados: [] }], cena: { estados: [] } };
   const esc = julga("escalo o muro de seis metros do pátio", gente);
   t("o sim da padeira não cala a escalada de seis metros (era «já resolvido»)", esc.rola && esc.porque !== "jaResolvido", esc.porque);
+}
+
+sec("S25. o que a quinta sessão jogada mostrou (21/11/2026, o-mestre-vivo.md §25)");
+{
+  /* frases nossas, escritas sobre os turnos da sessão mv-5 */
+  const H25 = { nivel: 1, inventario: [], habilidades: [], equipado: {}, moedas: 10 };
+  const L25 = { personagem: H25, semente: "s25", lugar: "Praça", tentativas: {}, dia: 1 };
+  const julga = (frase, cena) => valeRolagem(lerAcao(frase, L25), cena, { frase, leitura: L25 });
+  const so = (o) => ({ pessoas: [], criaturas: [], coisas: [{ nome: "a praça", estados: [] }], cena: { estados: [] }, ...o });
+  const morgane = so({ pessoas: [{ nome: "Morgane", papel: "mulher de negócios", estados: [] }, { nome: "Torvald", papel: "ladino", estados: ["do_grupo"] }] });
+  t("o nome chamado: «chamo X», «falo com X» e o vocativo depois de dois pontos",
+    oNomeChamado("chamo Magnus: Magnus, vem cá, preciso falar com você") === "Magnus"
+    && oNomeChamado("falo com Jora Olho-de-Corvo: Jora, preciso da sua ajuda") === "Jora"
+    && oNomeChamado("grito pelo nome dela: Magnus! Magnus, você está aí?") === "Magnus");
+  t("o vocativo só conta quando a frase fala a alguém, e não abre com palavra que não é nome",
+    oNomeChamado("Depois, vou ao cais") === "" && oNomeChamado("Bom dia, você viu o barco?") === "" && O_NOME_CHAMADO.naoEChamado.includes("senhor"));
+  t("quem não está em cena sai como ausente; quem está, não", nomeAusenteNaFrase("chamo Magnus: Magnus, vem cá", morgane) === "Magnus"
+    && nomeAusenteNaFrase("Morgane, você viu o Magnus?", morgane) === "" && nomeAusenteNaFrase("falo com Torvald sobre o barco", morgane) === "");
+  t("o verbo da fala com a ligação continua a valer («digo ao Doran»)", nomeAusenteNaFrase("digo ao Doran que sou fiscal do porto", morgane) === "Doran");
+  /* o dono dito pelo ofício, com o olhar dito: ninguém do elenco tem o papel */
+  const cestos = so({ coisas: [{ nome: "a praça", estados: [] }, { nome: "os cestos", estados: [], toque: true }], pessoas: [{ nome: "Torvald", papel: "ladino", estados: ["do_grupo"] }] });
+  const olhando = julga("reviro os cestos da banca do vendedor de amêijoas enquanto ele me olha", cestos);
+  const longe = julga("reviro os cestos da banca do vendedor de amêijoas, que foi almoçar", cestos);
+  t("o vendedor dito pelo ofício, olhando: a mão leve rola (era a busca vazia, sem dado)", olhando.rola && familiaDaAcao(olhando.veredito) === "furtar", olhando.porque);
+  t("o mesmo ofício sem o olhar dito: a banca largada não rola", !longe.rola, longe.porque);
+  t("a vendedora que vigia: o «da vendedora» já não faz o catálogo recuar", julga("remexo os sacos da vendedora enquanto ela me vigia", so({ coisas: [{ nome: "a banca", estados: [] }, { nome: "os sacos", estados: [], toque: true }] })).rola);
+  t("o ofício e o olhar moram na tabela", A_BUSCA_SOB_OLHOS.oficio.test("os cestos do vendedor de ameijoas") && A_BUSCA_SOB_OLHOS.olhar.test("enquanto ele me encara"));
+  /* a ida declarada (lugar.js), que o App só lê com o Mestre vivo */
+  t("ir é dizer o verbo de ir; a relativa «onde fica» não é pergunta", aFraseMandaIr("vou até a praça onde fica o mercado") && aFraseMandaIr("entro numa taverna da cidade") && aFraseMandaIr("volto ao cais"));
+  t("a escalada com «até» e a pergunta de caminho não são ida", !aFraseMandaIr("escalo a calha da casa ao lado até o telhado")
+    && !aFraseMandaIr("pergunto ao vendedor de amêijoas qual é o caminho para o posto da estrada") && !aFraseMandaIr("onde fica o Forte Sal?"));
+  t("chamar alguém não é ida; lixo não lança", !aFraseMandaIr("chamo Magnus: Magnus, vem cá") && !aFraseMandaIr(null) && !aFraseMandaIr("") && A_IDA_DECLARADA.pergunta.test("como chego ao porto"));
 }
 
 console.log(`\n${ok} ok, ${mal} falha(s)`);

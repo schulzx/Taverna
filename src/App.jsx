@@ -187,7 +187,7 @@ import { celulaEm, celulaDaJornada, celulaDaCidade, celulasNaRota, linhaDaCelula
 /* v9.165: a LEI DA FORMA — o porteiro do molde. A trava antes da partida,
    a chave na morte do guardião, a cena criada pelo sistema quando abre. */
 import { garantirForma, travaDaPartida, chaveDaMorte, envelopeDaPassagem, envelopeDaTrava, falaDaTrava } from "./lei-da-forma.js";
-import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, contrair } from "./lugar.js";
+import { pontoDoLugar, tiposPedidos, garantirLugar, definirLugar, lugarPedido, ehAPropriaCidade, comEm, comDe, comA, linhaDeLugar, contrair, aFraseMandaIr } from "./lugar.js";
 import { comodosDoLocal, camaDoLocal, COMODOS_PROMPT } from "./comodos.js";
 import { naoPedeDado, lerAcao, falaDoVeredicto, envelopeDeVeredicto, envelopeDeBuscaVazia, envelopeSemOportunidade, envelopeDoBarulho, desfechoDaMargem, falaDoCusto, envelopeDoCusto, rolarQueda, dcDaQueda, garantirTentativas, registrarTentativa, marcarLimpo, chaveDaTentativa, fracassoEsquecido, viasAbertas, DESAFIOS_PROMPT } from "./desafios.js";
 /* ---------------- MM9: A LUTA SEM ESPADA ----------------
@@ -225,6 +225,8 @@ import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCom
 import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA } from "./a-ficha-da-cena.js";
 import { aCoisaAoToqueDaFrase, oQueOAchadoDa, telaDoAchadoNaCoisa, envelopeDoAchadoNaCoisa } from "./o-que-ha-nas-coisas.js";
 import { coisasQueAFraseNomeia } from "./cena-do-momento.js";
+import { oNomeChamado } from "./motor/a-regua-do-momento.js";
+import { aDividaDita } from "./motor/a-escuta-da-cena.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
 import { garantirPrometido, guardarSementes, pagarSementes, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
@@ -7019,6 +7021,10 @@ export default function Taverna() {
        pela frase abre a masmorra ANTES de a frase subir, então o passo
        que roda no envio já a encontra aberta */
     if (combateRef.current || acampadoRef.current || masmorraRef.current) return null;
+    /* 21/11 (o-mestre-vivo.md §25): com o Mestre vivo, só o verbo de ir manda
+       andar — «escalo a calha da casa ao lado até o telhado» e «pergunto qual
+       é o caminho para o posto» não são ida (lugar.js: aFraseMandaIr) */
+    try { if (mestreVivoLigado() && !aFraseMandaIr(cru)) return null; } catch (e) { calou("Mestre vivo · a ida declarada", e); }
     /* MM16 nº 2: a masmorra que o herói conhece, nomeada como destino, não
        é passo a pé: sem isto "vou ao Templo Afogado de Sal" casava o templo
        da cidade pelo tipo, e o herói ia rezar em vez de ir à masmorra */
@@ -14546,7 +14552,9 @@ export default function Taverna() {
          um desafio. Este sinal abre-a (turno.js) para a procura de gente que o
          jogo conhece, e `adjudicarAcao` corre a procura antes do catálogo. */
       ehProcuraDeGente: ler(() => procuraDeGente(acao, { nucleo: nucleoAgora(), nomes: nomesConhecidos(), perto: pessoasDaCena() })),
-      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao, { fichas: () => fichasDoOraculo(acao) })),
+      /* 21/11 (o-mestre-vivo.md §25): com o Mestre vivo, gritar por alguém
+         («Magnus! Você está aí?») é chamar, não perguntar à sorte */
+      ehPerguntaAoMundo: ler(() => ehPerguntaAoMundo(acao, { fichas: () => fichasDoOraculo(acao) }) && !(mestreVivoLigado() && !!oNomeChamado(acao))),
       temMilagreArmado: !!milagreSel,
       /* v9.79: OU o texto nomeou uma habilidade que eu TENHO. É a metade
          positiva da conferência da ficha: a v9.78 passou a recusar quando
@@ -18381,11 +18389,25 @@ export default function Taverna() {
   /* 21/11 (o-mestre-vivo.md §23): A COISA AO TOQUE DA FRASE. Só o Mestre vivo:
      a coisa comum do lugar que a frase nomeia (o-que-ha-nas-coisas.js), e o
      que a semente pôs nela. Desligado, null — e tudo segue como hoje. */
+  /* 21/11 (o-mestre-vivo.md §25): O TIPO QUE O MUNDO DEU AO LOCAL. O lugar de
+     agora guarda só o nome; o tipo mora no local da base. Sem ele, um mundo do
+     mar (o cais, o mercado de espólios, a taverna do porto) caía inteiro em
+     «rua» e as coisas ao toque do mercado e da taverna não existiam. Derivado
+     a cada leitura, nunca guardado; só o Mestre vivo o lê. */
+  const lugarComOTipoDaBase = () => {
+    const l = lugarRef.current;
+    try {
+      const cid = cidadeAtualRef.current || "";
+      if (!l || !l.nome || !cid) return l;
+      const loc = locaisDaCidade(sementeMundo(), cid, generoMundo(), moldeMundo(), (mundoAtual() || {}).lexico).find((x) => x && semNome(x.nome) === semNome(l.nome));
+      return loc && loc.tipo ? { ...l, tipoDoLocal: loc.tipo } : l;
+    } catch (e) { calou("Mestre vivo · o tipo do local", e); return l; }
+  };
   const aCoisaAoToqueAgora = (frase) => {
     try {
       if (!mestreVivoLigado()) return null;
       return aCoisaAoToqueDaFrase(String(frase || ""), {
-        semente: sementeMundo(), lugar: lugarRef.current, cidade: cidadeAtualRef.current || "", jornada: !!jornadaRef.current,
+        semente: sementeMundo(), lugar: lugarComOTipoDaBase(), cidade: cidadeAtualRef.current || "", jornada: !!jornadaRef.current,
         masmorra: masmorraRef.current, dia: diaRef.current, saqueados: ((baseMundoRef.current || {}).saqueados) || [],
       }, coisasQueAFraseNomeia);
     } catch (e) { calou("Mestre vivo · a coisa ao toque da frase", e); return null; }
@@ -18698,7 +18720,7 @@ export default function Taverna() {
       const cid = cidadeAtualRef.current || "";
       const ctxL = { cidade: cid, chaveDoLugar: (n, c) => chaveDoLugar(sementeMundo(), mapaRef.current, n, { genero: generoMundo(), molde: moldeMundo(), lex: (mundoAtual() || {}).lexico, cidade: c || cid }) };
       return retratoDosRefs({
-        lugar, cidade: cid, jornada: jornadaRef.current, minuto: minutoRef.current, clima: climaRef.current,
+        lugar: lugarComOTipoDaBase(), cidade: cid, jornada: jornadaRef.current, minuto: minutoRef.current, clima: climaRef.current,
         presentes, npcs: npcsRef.current, rotinas, grupo: p0.grupo || [],
         inimigos: (combateRef.current && combateRef.current.inimigos) || [],
         encontro: encontroPendenteRef.current, masmorra: masmorraRef.current,
@@ -18750,6 +18772,9 @@ export default function Taverna() {
     try { bancas = bancasDaCena(); } catch (e) { calou("Mestre vivo · as bancas da ficha", e); }
     const pa = fichaDaCenaNaPauta({ frase: acao, momento: m, bancas, ausente: qn });
     if (pa) porNaPautaDoTurno(pa);
+    /* 21/11 (o-mestre-vivo.md §25): quem deve a quem, como o jogador disse —
+       uma linha da pauta do turno, para a prosa não inverter a dívida */
+    try { const dv = aDividaDita(acao, typeof m.alvo === "string" ? m.alvo : ""); if (dv) porNaPautaDoTurno(dv); } catch (e) { calou("Mestre vivo · a dívida dita", e); }
     if (qn) pushMsgs([{ autor: "sistema", texto: falaDeQuemNaoEsta(qn) }]);
     /* o meio que a ficha nega («com a gazua de Perrin»): sem folga na memória do inventado */
     try {
@@ -27169,7 +27194,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
     } catch (e) { calou("a proposta: a habilidade", e); }
     /* quem a frase chama e não está à vista (a procura de gente é da porta dela) */
     try {
-      if (!s.ehProcuraDeGente && cidadeAtualRef.current) {
+      /* 21/11 (o-mestre-vivo.md §25): com o Mestre vivo, chamar quem não está
+         não vira cartão de ir até lá — a frase parte, e a ficha da cena diz
+         «X não está aqui — está na…» (quemNaoEstaNaCena), como um mestre diria */
+      if (!s.ehProcuraDeGente && cidadeAtualRef.current && !mestreVivoLigado()) {
         const est = estadoDoPedido();
         const conhecidos = new Set();
         for (const n of Object.values(npcsRef.current || {})) if (n && n.nome && !n.morto) conhecidos.add(n.nome);
@@ -29469,7 +29497,10 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
             ) : null}
             direita={dadosDaMesaCheia ? (
               <LimiteDasFichas key="v4-direita">
-                <ColunaDasPecas bandeja={bandeja.length > 0 ? <LimiteDasFichas key="bandeja"><Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
+                {/* 21/11 (o-mestre-vivo.md §25): com o Mestre vivo, o dado de um turno
+                    passado sai da coluna quando o turno novo não rola — a legenda
+                    dele ficava depois da prosa turnos a fio */}
+                <ColunaDasPecas bandeja={bandeja.length > 0 && (!mestreVivoLigado() || (bandeja[0] && bandeja[0].n !== bandejaVista)) ? <LimiteDasFichas key="bandeja"><Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /></LimiteDasFichas> : null}
                   fundoDaBandeja={dadosDaMesaCheia.luz.feltroFundo}
                   hora={(minuto || 0) / 60} falaDaHora={dadosDaMesaCheia.falaDaHora} prazo={dadosDaMesaCheia.prazo}
                   tempoAberto={tempoAberto} aoAbrirTempo={() => { try { setTempoAberto((v) => !v); } catch (e) { calou("V4 · a vela abre o tempo", e); } }}
@@ -30527,7 +30558,7 @@ ESCALA DE FATOS (não de vibes): gd 0 = mortal, mesmo lendário; gd 1 = herói c
                   aoAbrirFicha={abrirOHeroi} rotuloDoHeroi={rotuloDaCartaDoHeroi}
                   aoAbrirCompanheiro={abrirCompanheiro}
                   objetos={objetosDaTira()} mantimentos={mantimentosDaTira()}
-                  bandeja={bandeja.length > 0 ? <Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /> : null} />
+                  bandeja={bandeja.length > 0 && (!mestreVivoLigado() || (bandeja[0] && bandeja[0].n !== bandejaVista)) ? <Bandeja naColuna emVoo={!!lanceNoAr} lancamentos={bandeja} fresca={!!(bandeja[0] && bandeja[0].n !== bandejaVista)} /> : null} />
               </LimiteDasFichas>
             ) : null}
           </main>

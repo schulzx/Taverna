@@ -341,15 +341,54 @@ export const O_ALVO_AUSENTE = Object.freeze({
 });
 /* o verbo com a primeira letra nas duas caixas (a frase pode começar com ele) */
 const RX_DO_OUVINTE = new RegExp("(?:^|[^\\p{L}])(?:" + O_ALVO_AUSENTE.verbosDaFala.map((v) => "[" + v[0] + v[0].toUpperCase() + "]" + v.slice(1)).join("|") + ")" + O_ALVO_AUSENTE.ouvinte, "gu");
+/* 21/11 (§25, a quinta sessão jogada): O NOME CHAMADO. «chamo Magnus:
+   Magnus, vem cá», «falo com Jora Olho-de-Corvo: Jora, preciso da sua
+   ajuda» e «grito pelo nome dela: Magnus! Magnus, você está aí?» não tinham
+   ouvinte para a régua (o «chamo» não era verbo da fala, o «com» não era
+   ligação, e o nome solto depois de dois pontos não era lido) — e quem não
+   está em cena não saía como «não está aqui». Três formas, além do verbo da
+   fala com a ligação:
+     - `direto`: o verbo de chamar com o nome logo a seguir («chamo Magnus»);
+     - a ligação `com` («falo com Jora»), nos verbos da fala;
+     - `vocativo`: o nome com vírgula, exclamação ou interrogação, logo
+       depois de dois pontos, de aspas ou do começo, e só quando a frase fala
+       a alguém (`aAlguem`: «vem cá», «você», «preciso», «aparece») — o
+       «Depois, vou ao cais» não chama ninguém.
+   `naoEChamado`: as palavras que abrem um vocativo sem serem nome. */
+export const O_NOME_CHAMADO = Object.freeze({
+  direto: "(?:^|[^\\p{L}])(?:[Cc]hamo|[Cc]hamar|[Cc]hamamos|[Gg]rito por|[Gg]rito pelo|[Cc]lamo por)\\s+(?:o\\s+|a\\s+)?([A-ZÀ-Ý][a-zà-ÿ]{2,})(?![\\p{L}])",
+  com: "(?:^|[^\\p{L}])(?:[Ff]alo|[Cc]onverso|[Ff]alamos|[Cc]onversamos)\\s+com\\s+(?:o\\s+|a\\s+)?([A-ZÀ-Ý][a-zà-ÿ]{2,})(?![\\p{L}])",
+  vocativo: "(?:^|[:\"“«—]\\s*)([A-ZÀ-Ý][a-zà-ÿ]{2,})\\s*[,!?]",
+  aAlguem: /\b(vem|venha|vem ca|aparece|apareca|voce|vc|preciso|escuta|escute|ajuda|me ajuda|cade|esta ai|ta ai|responde|responda|espera|espere)\b/,
+  naoEChamado: Object.freeze(["senhor", "senhora", "moco", "moca", "amigo", "amiga", "ei", "ola", "oi", "bom", "boa", "depois", "entao", "sim", "nao", "claro", "certo", "pronto", "bem", "agora", "ali", "aqui", "olha", "escuta", "vamos"]),
+});
+const RX_CHAMADO_DIRETO = new RegExp(O_NOME_CHAMADO.direto, "gu");
+const RX_CHAMADO_COM = new RegExp(O_NOME_CHAMADO.com, "gu");
+const RX_VOCATIVO = new RegExp(O_NOME_CHAMADO.vocativo, "gu");
+/* os nomes que a frase chama, na ordem em que aparecem (sem a cena) */
+function nomesChamados(frase) {
+  const achados = [];
+  const poe = (m) => { if (m && m[1]) achados.push({ i: m.index, nome: m[1] }); };
+  for (const m of frase.matchAll(RX_DO_OUVINTE)) poe(m);
+  for (const m of frase.matchAll(RX_CHAMADO_DIRETO)) poe(m);
+  for (const m of frase.matchAll(RX_CHAMADO_COM)) poe(m);
+  if (O_NOME_CHAMADO.aAlguem.test(semAcento(frase))) for (const m of frase.matchAll(RX_VOCATIVO)) poe(m);
+  return achados.sort((a, b) => a.i - b.i).map((x) => x.nome)
+    .filter((n) => { const w = semAcento(n); return !O_ALVO_DA_FALA.naoEPessoa.includes(w) && !O_NOME_CHAMADO.naoEChamado.includes(w); });
+}
+/* o primeiro nome que a frase chama, haja cena ou não → o nome, ou "" (o App
+   o usa para que o grito por alguém não vire pergunta ao mundo) */
+export function oNomeChamado(frase) {
+  try { return typeof frase === "string" ? nomesChamados(frase)[0] || "" : ""; } catch { return ""; }
+}
 /* o nome próprio a quem a frase se dirige e que ninguém da cena tem → o nome, ou "" */
 export function nomeAusenteNaFrase(frase, cena) {
   const c = lerCena(cena);
   if (!c || typeof frase !== "string") return "";
   const nomes = c.pessoas.flatMap((p) => String(p.nome || "").split(/[\s,()]+/)).map(semAcento).filter(Boolean);
-  for (const m of frase.matchAll(RX_DO_OUVINTE)) {
-    const w = semAcento(m[1]);
-    if (O_ALVO_DA_FALA.naoEPessoa.includes(w) || nomes.includes(w)) continue;
-    return m[1];
+  for (const n of nomesChamados(frase)) {
+    if (nomes.includes(semAcento(n))) continue;
+    return n;
   }
   return "";
 }
@@ -394,6 +433,17 @@ export const A_BUSCA_SOB_OLHOS = Object.freeze({
   /* onde a coisa revirada acaba: o que vem depois já é outro ato ou o motivo */
   corte: /\s+(?:procurando|buscando|atras|para|pra|enquanto|com|e|que|ate|antes|sem)\b/,
   posse: /\b(dele|dela|deles|delas|do dono|da dona)\b/,
+  /* 21/11 (§25, a quinta sessão jogada): «reviro os cestos da banca do
+     vendedor de amêijoas enquanto ele me olha» passou duas vezes sem dado. O
+     dono dito pelo OFÍCIO só fazia rolar quando alguém da cena tinha esse
+     papel — e o vendedor de uma banca do mercado não é gente do retrato (a
+     banca é do sistema de comércio; quem está em cena é o elenco). Quando a
+     frase diz de quem é (o ofício, `oficio`) E diz que ele está olhando
+     (`olhar`), o dono está ali pela palavra do jogador: é a mão leve contra
+     ele, como com o nome. Sem o olhar dito, o ofício sozinho continua a ser
+     só a posse — a banca largada não rola. */
+  oficio: /\bd[aeo]s?\s+((?:vendedor|vendedora|mercador|mercadora|feirante|quitandeir[oa]|peixeir[oa]|comerciante|lojista|taverneir[oa]|estalajadeir[oa]|ferreir[oa]|receptador|receptadora|cambista|padeir[oa]|acougueir[oa]|dono da banca|dona da banca|dono da barraca|dona da barraca)(?:\s+d[aeo]s?\s+[a-z]+)?)\b/,
+  olhar: /\b(?:ele|ela|o dono|a dona)\s+(?:me\s+|nos\s+)?(?:olha|olhando|encara|encarando|observa|observando|vigia|vigiando|ve|vendo|fita|fitando|espia|espiando|mira|mirando)\b|\b(?:na frente|diante|debaixo do nariz|sob os olhos|na cara|a vista)\s+d(?:ele|ela)\b|\bcom (?:ele|ela) (?:ali|olhando|vendo|de olho)\b/,
   foraDeSi: /\b(caid[oa]s?|desmaiad[oa]s?|inconscientes?|desacordad[oa]s?|mort[oa]s?|cadaver|defunt[oa])\b/,
 });
 function donoDebaixoDosOlhos(frase, lida, nomeado) {
@@ -405,6 +455,9 @@ function donoDebaixoDosOlhos(frase, lida, nomeado) {
   if (nomeado && acordado(nomeado) && dele(nomeado)) return nomeado;
   const peloPapel = lida.pessoas.find((p) => acordado(p) && dele(p));
   if (peloPapel) return peloPapel;
+  /* §25: o dono dito pelo ofício e o olhar dito — ele está ali pela frase */
+  const oficio = A_BUSCA_SOB_OLHOS.olhar.test(t) ? (t.match(A_BUSCA_SOB_OLHOS.oficio) || [])[1] : "";
+  if (oficio) return Object.freeze({ nome: "", papel: oficio, estados: Object.freeze([]), olhando: true });
   if (!A_BUSCA_SOB_OLHOS.posse.test(t)) return null;
   return lida.pessoas.find(acordado) || null;
 }
@@ -565,7 +618,7 @@ export const REGUA_DO_MOMENTO = Object.freeze([
     quando: (x) => x.familia === "animal" && x.bicho.facilita }),
   /* M5: a mão leve só rola se alguém pode notar — do morto se tira e pronto */
   Object.freeze({ id: "maoLeveSemOlhos", rola: false, diz: "ninguém que possa notar: você pega e pronto",
-    quando: (x) => x.familia === "furtar" && !alguemPodeNotar(x.cena) && !vitimaNaFrase(x) }),
+    quando: (x) => x.familia === "furtar" && !alguemPodeNotar(x.cena) && !vitimaNaFrase(x) && !(x.alvo && x.alvo.olhando === true) }),
   /* M5: o céu. Encoberto, orientar-se rola; à vista, o sol e as estrelas
      dizem a hora e o rumo — salvo se há perigo ou pressa */
   Object.freeze({ id: "ceuEncoberto", rola: true, diz: "nem sol nem estrela: o rumo é adivinhado",
@@ -723,6 +776,21 @@ function decidir(vereditoDoCatalogo, cenaInteira, c) {
   if ((!veredito || veredito.tipo === "livre" || veredito.tipo === "naoSePede") && typeof c.frase === "string") {
     try { ouvido = escutarComCena(c.frase, lida, c.leitura); } catch { ouvido = null; }
     if (ouvido) veredito = ouvido;
+  }
+  /* 21/11 (§25, a quinta sessão jogada): A COISA DE ALGUÉM DITO PELO OFÍCIO.
+     «Remexo os sacos da vendedora» não chegava aqui como busca: o catálogo
+     recua diante de «vendedor» (a guarda contra «procuro o vendedor», que é
+     procurar gente), e a escuta também não a ouvia. A régua relê a frase sem
+     o dono («remexo os sacos») e, se o catálogo a lê como busca, é busca — o
+     dono, dito pelo ofício e olhando, faz dela a mão leve logo abaixo
+     (A_BUSCA_SOB_OLHOS). O catálogo não muda: só o Mestre vivo chega aqui. */
+  if ((!veredito || veredito.tipo !== "teste") && typeof c.frase === "string") {
+    const t0 = semAcento(c.frase);
+    if (A_BUSCA_SOB_OLHOS.objeto.test(t0) && A_BUSCA_SOB_OLHOS.oficio.test(t0)) {
+      let vb = null;
+      try { vb = lerAcao(t0.replace(A_BUSCA_SOB_OLHOS.oficio, " ").replace(/\s+/g, " ").trim(), obj(c.leitura) ? c.leitura : {}); } catch { vb = null; }
+      if (vb && vb.tipo === "teste" && vb.id === "buscar") { veredito = vb; ouvido = Object.freeze({ ...vb, escuta: "ato" }); }
+    }
   }
   /* M5: «esse desenho é de algum culto que eu conheça?» — o catálogo leu
      `lembrar` e não recortou o assunto; sem assunto, a régua do saber comum

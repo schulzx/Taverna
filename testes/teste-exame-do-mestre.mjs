@@ -97,7 +97,14 @@
    como coisas ao toque (`ao_toque`, cenaDoExame), lidas só pela frase que as
    nomeia. 14 itens na A (origem «etapa-3-coisa»): seis pares — há algo
    nesta coisa ou noutra, o dono olhando ou longe, frágil ou firme — e dois
-   sem par. A B e a C não foram tocadas. */
+   sem par. A B e a C não foram tocadas.
+
+   RODADA 10 (21/11/2026) — A QUINTA SESSÃO JOGADA. O conserto do que a
+   sessão mv-5 mostrou (o-mestre-vivo.md §25): 15 itens na A (origens
+   «sessao-mv-5» e «sessao-mv-5-par») — a revista da banca com o dono dito
+   pelo ofício e olhando, as tábuas, os barris e as mesas, o nome chamado de
+   quem não está, a pergunta de caminho e a calha da casa ao lado. A B e a C
+   não foram tocadas. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
@@ -200,7 +207,17 @@ const CATRACA_DO_EXAME = {
        nas metades «não há nada nesta coisa» e «firme» (7 indevidos). Nas 489
        frases que já eram da A ele não mudou (a fiação nova só corre com a
        chave). Era 300 · 60 · 129 · cat 240 · per 131 · pares 3. */
-    A: { rolaCerto: 307, pedeIndevido: 67, deixaDePedir: 129, categoria: 253, pericia: 137, paresQueSeparam: 3 },
+    /* MOVIDA de novo em 21/11/2026 (o conserto depois da quinta sessão,
+       o-mestre-vivo.md §25), e o motivo: 15 itens da sessão mv-5 entraram na
+       A (origens «sessao-mv-5» e «sessao-mv-5-par», rodada 10). O Mestre de
+       hoje não lê a cena nem o dono que olha: acerta 8 deles, rola 4 onde a
+       mesa não rolaria (as buscas vazias, a calha firme) e deixa de rolar 3
+       (a revista com o dono dito pelo ofício: o catálogo recua diante de
+       «vendedor», e o catálogo é o mesmo com a chave desligada — o conserto
+       mora na régua). O «pede indevido» e o «deixa de pedir» sobem por eles,
+       e só por eles: nas 503 frases que já eram da A, nenhuma mudou. Era
+       307 · 67 · 129 · cat 253 · per 137 · pares 3. */
+    A: { rolaCerto: 315, pedeIndevido: 71, deixaDePedir: 132, categoria: 263, pericia: 140, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
     /* NASCEU na rodada 6 (21/11/2026): a primeira medida da C, antes de
        qualquer conserto (o-mestre-vivo.md §20). */
@@ -239,7 +256,12 @@ const CATRACA_DO_EXAME = {
        coisas ao toque (14 de 14). Nas 489 que já eram da A, nenhum item mudou
        (o exame não tinha coisa ao toque, e a cena sem nenhuma passa pela régua
        igual). A B ficou igual. Era 458 · 2 · 29 · cat 384 · per 226 · pares 109. */
-    A: { rolaCerto: 472, pedeIndevido: 2, deixaDePedir: 29, categoria: 398, pericia: 233, paresQueSeparam: 115 },
+    /* SUBIU em 21/11/2026 (o conserto depois da quinta sessão, §25), só para
+       cima: os 15 itens da sessão mv-5 (15 de 15; antes do conserto, 12 — os
+       três do dono dito pelo ofício caíam na busca vazia ou na mão leve «sem
+       olhos»). Nas 503 que já eram da A, nenhum item mudou. A B ficou igual.
+       Era 472 · 2 · 29 · cat 398 · per 233 · pares 115. */
+    A: { rolaCerto: 487, pedeIndevido: 2, deixaDePedir: 29, categoria: 413, pericia: 239, paresQueSeparam: 119 },
     /* DESCEU em 19/11/2026 (§19), e o motivo fica escrito: a rodada da
        terceira sessão custou UMA frase da B, que passou a pedir dado onde a
        mesa não pede (157 · 7 · pares 53; era 158 · 6 · 54). Não se sabe qual:
