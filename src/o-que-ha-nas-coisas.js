@@ -305,7 +305,14 @@ export function aCoisaAoToqueDaFrase(frase, o, nomeia) {
     const coisas = asCoisasAoToque(x);
     if (!coisas.length) return null;
     const ditas = arr(nomeia(frase, { pessoas: [], criaturas: [], coisas, cena: { estados: [] } }));
-    const c = coisas.find((y) => ditas.includes(y.nome));
+    /* 21/11 (a sexta sessão, a prova das buscas): «olho debaixo das mesas e
+       dos bancos» nomeia duas coisas. A régua rola se QUALQUER uma guarda
+       algo (cena-do-momento.js: aCenaQueAFraseToca); o achado era sempre o da
+       primeira da tabela — as mesas vazias e os bancos com moedas davam um
+       dado sem nada a ganhar, e o achado dos bancos nunca saía. Entre as
+       coisas nomeadas, a que guarda algo; sem nenhuma, a primeira. */
+    const nomeadas = coisas.filter((y) => ditas.includes(y.nome));
+    const c = nomeadas.find((y) => y.estados.includes("ha_algo_escondido")) || nomeadas[0];
     if (!c) return null;
     const tipo = tipoParaAsCoisas(x);
     const lugar = (obj(x.lugar) && txt(x.lugar.nome)) || txt(x.cidade) || "ermo";

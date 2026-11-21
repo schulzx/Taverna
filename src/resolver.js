@@ -116,6 +116,11 @@ const PISTAS = [
   { id: "inimiga", rx: /\b(inimig\w*|hostil|do inimigo)\b/, casa: (c) => norm(c.relacao) === "inimiga" },
 ];
 
+/* 21/11 (a sexta sessão do Mestre vivo, T48): as pistas que também são um
+   ponto dentro da cidade onde o herói já está — «vou até o cais» num porto é
+   o cais daqui (resolverLugar, `ficaAqui`) */
+export const PISTAS_DE_AQUI = Object.freeze(["porto", "fortaleza", "capital"]);
+
 /* Direções cardeais: a pista mais comum de todas ("a cidade do norte"). */
 const CARDEAIS = [
   { id: "norte", rx: /\b(ao? norte|do norte|nortenh[ao]|setentrional)\b/, casa: (c, todas) => c.y <= media(todas, "y") - 8 },
@@ -166,6 +171,19 @@ export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
   if (onde.naoParte) return { tipo: "nada", naoParte: true, candidatos: [], conhecidas: alvo };
   if (!t.trim() || !alvo.length) return { tipo: "nada", candidatos: [], conhecidas: alvo };
 
+  /* 21/11 (a sexta sessão do Mestre vivo, T48): IR PARA ONDE JÁ SE ESTÁ NÃO
+     É VIAGEM. «Vou até o cais», no cais de Ponta do Sal, abriu «serve para 2
+     lugares que você conhece: Ilha das Ossadas, Recife Funda» — o «cais» é
+     pista de porto, a cidade de agora (excluída) também é porto, e sobraram
+     as outras. A cidade de agora entra na conta (só para comparar): se ela
+     responde à descrição tão bem quanto a melhor das outras, a frase fala
+     daqui, e a cascata segue (`naoParte`, `ficaAqui`) — o passo a pé, ou a
+     cena. Só o nome de outra cidade, ou uma pista que a de agora não tem,
+     leva à estrada. A cidade de agora só soma pelo nome e pelas pistas que
+     também são um ponto DENTRO dela (`PISTAS_DE_AQUI`: o cais, o forte, a
+     corte) — nunca pela direção, pelo «onde já estivemos» ou pela região,
+     que dizem estrada. */
+  const aqui = excluir ? todas.find((c) => norm(c.nome) === norm(excluir)) || null : null;
   const pontos = new Map();
   const porque = new Map();
   const soma = (c, n, razao) => {
@@ -173,7 +191,8 @@ export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
     if (razao) porque.set(c.nome, [...(porque.get(c.nome) || []), razao]);
   };
 
-  for (const c of alvo) {
+  const conta = aqui ? [...alvo, aqui] : alvo;
+  for (const c of conta) {
     const p = casaPeloNome(t, c.nome, onde.comVerbo);
     if (p) soma(c, p, "pelo nome");
   }
@@ -185,7 +204,7 @@ export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
   }
   for (const pista of [...PISTAS, ...CARDEAIS]) {
     if (!pista.rx.test(t)) continue;
-    for (const c of alvo) if (pista.casa(c, alvo)) soma(c, 2, pista.id);
+    for (const c of (PISTAS_DE_AQUI.includes(pista.id) ? conta : alvo)) if (pista.casa(c, alvo)) soma(c, 2, pista.id);
   }
   /* o que só quem chama sabe: cânone, códex, gente conhecida */
   const extraVale = !onde.comVerbo || DESTINO_NA_ORACAO.lugarDe.test(t);
@@ -205,6 +224,8 @@ export function resolverLugar(texto, mapa, { extra = [], excluir = "" } = {}) {
     .filter((x) => x.cidade)
     .sort((a, b) => b.pontos - a.pontos);
 
+  const deAqui = aqui ? pontos.get(aqui.nome) || 0 : 0;
+  if (deAqui > 0 && (!ordenados.length || deAqui >= ordenados[0].pontos)) return { tipo: "nada", naoParte: true, ficaAqui: true, candidatos: [], conhecidas: alvo };
   if (!ordenados.length) return { tipo: "nada", candidatos: [], conhecidas: alvo };
   /* um vencedor claro é quem tem MAIS pontos que o segundo. Empate no
      topo é ambiguidade de verdade, e ambiguidade não se resolve no

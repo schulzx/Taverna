@@ -2050,14 +2050,21 @@ export function escolhaDoTeste(v) {
    Perrin», «ameaço o velho»). Sem ninguém dito, fica «quem quer que seja».
    `preposicao`: a preposição da fala; `verboDireto`: o verbo e o artigo;
    `naoEPessoa`: as palavras que vêm ali e não são gente; `naoEInfinitivo`:
-   os nomes de gente que acabam como verbo («mulher»). */
+   os nomes de gente que acabam como verbo («mulher»).
+   21/11 (a sexta sessão): `pedidoA` — «peço à meio-orc da banca que me dê…»:
+   o «à» vira «a» sem acento, e o «a» sozinho não é preposição de fala
+   («vou a pé»). Só depois de um verbo de pedir ou de dar, e só quando a fala
+   vem logo a seguir (que, dois pontos, vírgula). E os lugares da cena entram
+   no que não é gente («pra taverna»). */
 const OUVINTE_DA_CHAVE = Object.freeze({
   preposicao: /(?:^|[^a-z])(?:pro|pra|pros|pras|ao|aos|para o|para a|para os|para as|com o|com a|com os|com as)\s+(?:seu |sua |esse |essa |este |esta |aquele |aquela |tal )?([a-z][a-z'-]{2,})/g,
   verboDireto: /\b(?:minto|digo|falo|conto|juro|explico|garanto|ameaco|convenco|engano|intimido|enrolo|suborno|persuado|pressiono|imploro|suplico)\s+(?:a|o|as|os)\s+([a-z][a-z'-]{2,})/,
+  pedidoA: /\b(?:peco|pedimos|pergunto|ofereco|dou|pago|entrego|mostro|devolvo|regateio|pechincho|negocio)\s+(?:a|as)\s+([a-z][a-z'-]{2,})(?:\s+d[aeo]s?\s+[a-z'-]+)?\s*(?:que\b|:|,)/,
   naoEPessoa: Object.freeze(["ele", "ela", "eles", "elas", "mim", "voce", "voces", "gente", "dentro", "fora", "frente", "tras", "cima", "baixo", "lado",
     "cidade", "rua", "porta", "casa", "chao", "mesa", "ali", "aqui", "onde", "quem", "isso", "isto", "aquilo", "todo", "toda", "todos", "todas",
     "mais", "menos", "nada", "tudo", "outro", "outra", "meu", "minha", "nosso", "nossa", "verdade", "mentira", "historia", "mesma", "mesmo",
-    "vez", "preco", "metade", "dinheiro", "moeda", "moedas", "faca", "adaga", "espada", "mao", "bolsa"]),
+    "vez", "preco", "metade", "dinheiro", "moeda", "moedas", "faca", "adaga", "espada", "mao", "bolsa",
+    "taverna", "feira", "praca", "mercado", "cais", "porto", "banca", "balcao", "estrada", "rio", "barco", "navio", "cama", "conta", "palavra"]),
   naoEInfinitivo: Object.freeze(["mulher", "colher"]),
 });
 function ouvinteDaChave(cru) {
@@ -2066,7 +2073,9 @@ function ouvinteDaChave(cru) {
   const serve = (w) => !!w && !O.naoEPessoa.includes(w) && (O.naoEInfinitivo.includes(w) || !/(ar|er|ir)$/.test(w));
   for (const m of t.matchAll(O.preposicao)) if (serve(m[1])) return m[1];
   const d = t.match(O.verboDireto);
-  return d && serve(d[1]) ? d[1] : "";
+  if (d && serve(d[1])) return d[1];
+  const p = t.match(O.pedidoA);
+  return p && serve(p[1]) ? p[1] : "";
 }
 /* 21/11 (o-mestre-vivo.md §21): O ALVO NA CHAVE DE TODA FAMÍLIA. A §20 deu
    objeto à chave do esconderijo e da mão leve; as outras famílias que caem
@@ -2237,7 +2246,23 @@ export function lerAcao(texto, ctx = {}) {
      Sem ninguém, a conta é a de quem não está no registo — a mesma de uma
      cena vazia —, e o teste chama-se pelo que a frase disse. */
   const descrito = (d.social || d.alvoNomeado) ? alvoDescrito(cru) : null;
-  const pessoa = achada && descrito && !ditoNaFrase(cru, achada.nome) && !quemADescricaoAponta(cru, [achada]) ? null : achada;
+  /* 21/11 (a sexta sessão do Mestre vivo, T8–T10, T28, T33–T37): O PALPITE
+     NÃO GANHA DE QUEM A FRASE NOMEIA. Sem nome dito, o App adivinha a pessoa
+     (a única viva da cena, ou a única de fora do grupo) — e na Feira a única
+     viva era a companheira. «Peço ao estivador…», «minto ao ceifador…»,
+     «regateio com a meio-orc…»: nenhum destes ofícios está na tabela do alvo
+     descrito (social.js), e todos viraram conversa com a Dagny — a mesma
+     chave no livro de tentativas. O sim sem dado do primeiro pedido fechou-a
+     como conseguida, e o regateio, a mentira e a ameaça seguintes ouviram
+     «isso você já conseguiu aqui», sem dado. Com o Mestre vivo, quando a
+     pessoa achada não foi dita e a frase nomeia OUTRO ouvinte (a palavra que
+     a chave da conversa já lê, `ouvinteDaChave`), o palpite cai: a conversa é
+     com quem a frase diz, e a chave leva esse ouvinte. Sem a chave, nada muda. */
+  let pessoa = achada && descrito && !ditoNaFrase(cru, achada.nome) && !quemADescricaoAponta(cru, [achada]) ? null : achada;
+  if (pessoa && ctx.chaveFina === true && !ditoNaFrase(cru, pessoa.nome) && !(descrito && quemADescricaoAponta(cru, [pessoa]))) {
+    const ouvinte = ouvinteDaChave(cru);
+    if (ouvinte && !ditoNaFrase(ouvinte, `${pessoa.nome || ""} ${pessoa.papel || ""} ${pessoa.titulo || ""}`)) pessoa = null;
+  }
   const quemDescrito = !pessoa && descrito ? descrito.descricao : "";
   /* MC1: quem se trata (`comQuem`) — lido da frase, nunca do elenco: com
      uma só pessoa de fora na cena, `pessoaDe` devolveria ela, e quem sangra

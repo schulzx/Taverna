@@ -271,6 +271,12 @@ export const O_ALVO_DA_FALA = Object.freeze({
      pra mulher da criança» caía no companheiro, porque «mulher» parecia
      «pra fazer» */
   naoEInfinitivo: Object.freeze(["mulher", "colher"]),
+  /* 21/11 (a sexta sessão, T9): «peço à meio-orc da banca que me dê um pedaço
+     de corda» — o «à» sem acento é «a», que sozinho não é preposição de fala
+     («vou a pé»), e o pedido caía na companheira (o sim de quem está do meu
+     lado). Depois de um verbo de pedir ou de dar, com a fala logo a seguir
+     (que, dois pontos, vírgula), o «a» diz o ouvinte. */
+  pedidoA: /\b(?:peco|pedimos|pergunto|ofereco|dou|pago|entrego|mostro|devolvo|regateio|pechincho|negocio|minto|ameaco|digo|juro|garanto|conto|explico)\s+(?:a|as)\s+([a-z][a-z'-]{2,})(?:\s+d[aeo]s?\s+[a-z'-]+)?\s*(?:que\b|:|,)/,
 });
 /* «-or» fica de fora de propósito: «cobrador», «vendedor», «senhor» são gente */
 const ehInfinitivo = (w) => /(ar|er|ir)$/.test(w) && !O_ALVO_DA_FALA.naoEInfinitivo.includes(w);
@@ -312,6 +318,10 @@ export function estranhoAQuemSeFala(frase, cena) {
     if (vivos.some((p) => semAcento(p.nome).split(/\s+/).includes(w) || raizDoPapel(p.papel || "") === raizDoPapel(w))) continue;
     return w;
   }
+  const a = t.match(O_ALVO_DA_FALA.pedidoA);
+  const w = a ? a[1] : "";
+  if (w && !O_ALVO_DA_FALA.naoEPessoa.includes(w) && !ehInfinitivo(w)
+    && !vivos.some((p) => semAcento(p.nome).split(/\s+/).includes(w) || raizDoPapel(p.papel || "") === raizDoPapel(w))) return w;
   return "";
 }
 
@@ -729,6 +739,13 @@ export function valeRolagem(vereditoDoCatalogo, cena, ctx) {
   }
   const r = decidir(vereditoDoCatalogo, lida, c);
   if (r.rola || typeof c.frase !== "string" || c.parte || r.aoGrupo) return r;
+  /* 21/11 (a sexta sessão): o que o livro de tentativas já respondeu para a
+     frase inteira («isso você já conseguiu aqui», «você já tentou assim») não
+     se reabre pelos pedaços — «regateio com a meio-orc: as rações pela
+     metade» relido como «as rações pela metade», sem ouvinte, era outro
+     pedido a outra pessoa, e rolava */
+  const v0 = vereditoDoCatalogo;
+  if (v0 && v0.chave && ["livre", "jaTentou", "vasculhado"].includes(v0.tipo)) return r;
   /* rodada 3: as ações encadeadas («aí eu…», «vou fazer o seguinte:») — a
      régua julga cada ato e fica com o primeiro que tem oposição na cena */
   let atos = [];
@@ -773,17 +790,20 @@ function decidir(vereditoDoCatalogo, cenaInteira, c) {
      estrutura da frase (`ctx.frase`, lida com `ctx.leitura`, o contexto de
      `lerAcao`). Sem frase, nada muda. */
   let ouvido = null;
-  if ((!veredito || veredito.tipo === "livre" || veredito.tipo === "naoSePede") && typeof c.frase === "string") {
-    try { ouvido = escutarComCena(c.frase, lida, c.leitura); } catch { ouvido = null; }
-    if (ouvido) veredito = ouvido;
-  }
   /* 21/11 (§25, a quinta sessão jogada): A COISA DE ALGUÉM DITO PELO OFÍCIO.
      «Remexo os sacos da vendedora» não chegava aqui como busca: o catálogo
      recua diante de «vendedor» (a guarda contra «procuro o vendedor», que é
      procurar gente), e a escuta também não a ouvia. A régua relê a frase sem
      o dono («remexo os sacos») e, se o catálogo a lê como busca, é busca — o
      dono, dito pelo ofício e olhando, faz dela a mão leve logo abaixo
-     (A_BUSCA_SOB_OLHOS). O catálogo não muda: só o Mestre vivo chega aqui. */
+     (A_BUSCA_SOB_OLHOS). O catálogo não muda: só o Mestre vivo chega aqui.
+     21/11 (a sexta sessão, a prova das buscas): ANTES da escuta. Depois dela,
+     «reviro os cestos do vendedor de peixe» já chegava como a busca da
+     frase-modelo do catálogo («reviro o quarto atrás de um esconderijo»): o
+     achado procurado era o do quarto (nenhum, embora os cestos guardassem
+     algo e a régua rolasse por eles) e a chave do livro era a do lugar
+     inteiro — falhar fechava a feira toda. Relida sem o dono, a frase é a do
+     jogador: o achado e a chave são os dos cestos. */
   if ((!veredito || veredito.tipo !== "teste") && typeof c.frase === "string") {
     const t0 = semAcento(c.frase);
     if (A_BUSCA_SOB_OLHOS.objeto.test(t0) && A_BUSCA_SOB_OLHOS.oficio.test(t0)) {
@@ -791,6 +811,17 @@ function decidir(vereditoDoCatalogo, cenaInteira, c) {
       try { vb = lerAcao(t0.replace(A_BUSCA_SOB_OLHOS.oficio, " ").replace(/\s+/g, " ").trim(), obj(c.leitura) ? c.leitura : {}); } catch { vb = null; }
       if (vb && vb.tipo === "teste" && vb.id === "buscar") { veredito = vb; ouvido = Object.freeze({ ...vb, escuta: "ato" }); }
     }
+  }
+  /* 21/11 (a sexta sessão, T28): o «livre» com chave é o livro de tentativas
+     respondendo («isso você já conseguiu aqui») — o catálogo OUVIU o ato, e a
+     escuta não o relê. Relia: a fala ia para a frase-modelo do catálogo
+     («tento convencer o guarda a me deixar passar»), rolava pela chave do
+     guarda, e a chave do guarda fechada depois calava o suborno ao guarda de
+     verdade (T33). */
+  const fechadoPeloLivro = !!(veredito && veredito.tipo === "livre" && veredito.chave);
+  if ((!veredito || (veredito.tipo === "livre" && !fechadoPeloLivro) || veredito.tipo === "naoSePede") && typeof c.frase === "string") {
+    try { ouvido = escutarComCena(c.frase, lida, c.leitura); } catch { ouvido = null; }
+    if (ouvido) veredito = ouvido;
   }
   /* M5: «esse desenho é de algum culto que eu conheça?» — o catálogo leu
      `lembrar` e não recortou o assunto; sem assunto, a régua do saber comum

@@ -444,7 +444,14 @@ export function escutarComCena(frase, cena, leitura) {
     const f = pelaForma(FORMAS_DA_FALA, corpo, c)
       || (direta ? pelaForma(FORMAS_DA_FALA.slice(-1).map((x) => ({ ...x, rx: /./ })), corpo, c) : null);
     if (f) {
-      const v = oCatalogoOuve(`${f.diz} ${frase}`, ctx) || oCatalogoOuve(comoSeDiz(f.id), ctx);
+      /* 21/11 (a sexta sessão, T28/T33): a fala que o catálogo ouve e o livro
+         de tentativas já fechou (o mesmo pedido à mesma pessoa) fica fechada —
+         a frase-modelo do catálogo («tento convencer o guarda…») não é outra
+         porta para o mesmo pedido, e a chave dela é a do guarda */
+      let lida = null;
+      try { lida = lerAcao(`${f.diz} ${frase}`, ctx); } catch { lida = null; }
+      if (lida && lida.tipo !== "teste" && lida.chave) return null;
+      const v = (lida && lida.tipo === "teste" ? lida : null) || oCatalogoOuve(comoSeDiz(f.id), ctx);
       if (v) return marca(v, "fala");
     }
   }

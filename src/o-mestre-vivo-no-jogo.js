@@ -474,6 +474,15 @@ export function marcarDoMomento(v, m) {
 export const O_QUE_ACONTECE_SEM_DADO = Object.freeze({
   social: Object.freeze(["dispostoCede", "medoCede", "falaSemOposicao", "alavanca"]),
   socorro: Object.freeze(["socorroCalmo"]),
+  /* 21/11 (a sexta sessão, T8 e T28): o sim que não fecha no livro. O sim de
+     quem «não perde nada com isso» é um não que só tem ausência (é por isso
+     que mora em CALA_POR_AUSENCIA, a-regua-do-momento.js): vale para ESTE
+     pedido, que não custa nada. Fechado no livro como «conseguido», ele
+     calava o pedido seguinte à mesma pessoa no mesmo degrau, que já custa —
+     o peixe seco dado de graça fazia o regateio do preço ouvir «isso você já
+     conseguiu aqui». Quem está do meu lado, com medo, ou comprado pela
+     alavanca continua assim, e o sim dele fecha. */
+  naoFecha: Object.freeze(["falaSemOposicao"]),
 });
 /* `o.frase` / `o.pers`: a frase do jogador e a ficha. A conta do sim social
    refaz-se pela FRASE do jogador (social.js#dificuldadeSocial): a fala que só
@@ -525,7 +534,7 @@ export function oQueAconteceSemDado(v, m, o) {
     const quem = (pessoa && txt(pessoa.nome)) || txt(v.quem) || txt(m.alvo) || "";
     /* `envelope`: o sim como fato de cena (O_SIM_SEM_DADO) — o App o prefere
        ao envelope do teste social */
-    return Object.freeze({ efeito: "social", desfecho: "sucesso", fecha: true, conta, quem, envelope: envelopeDoSimSemDado(conta, { quem, oQueEuDisse: txt(op.frase) }) });
+    return Object.freeze({ efeito: "social", desfecho: "sucesso", fecha: !O_QUE_ACONTECE_SEM_DADO.naoFecha.includes(porque), conta, quem, envelope: envelopeDoSimSemDado(conta, { quem, oQueEuDisse: txt(op.frase) }) });
   }
   if (vale && O_QUE_ACONTECE_SEM_DADO.socorro.includes(porque)) return Object.freeze({ efeito: "socorro", desfecho: "sucesso", fecha: true });
   return Object.freeze({ efeito: "nenhum", desfecho: "falha", fecha: false });
