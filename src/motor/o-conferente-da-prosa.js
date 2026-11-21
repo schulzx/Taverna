@@ -55,6 +55,17 @@
      · O ÊXITO NA FALHA — o dado falhou numa travessia e a frase diz que
        você conseguiu (`exitoNaFalha`): sai, e a linha da falha entra.
 
+   21/11 (sessão 7 do Mestre vivo, mestre-vivo-sessao-7.md): 17 turnos de
+   prosa contra a ficha. Agora, só quando se SABE que nada mudou de mão (a
+   bolsa antes e depois, `oQueEntrou`):
+     · O COMPANHEIRO NÃO PAGA NEM ENTREGA por você (`companheiro`);
+     · O FIGURANTE NÃO ENTREGA o que a frase pediu, nem por gesto nem por
+       fala («— Leva.», `entregaFalada`);
+     · O ACHADO FANTASMA — o que a frase manda levar perde a folga;
+   e sempre: o que a linha do sistema nomeou neste turno (o relicário do
+   achado) fica; o ausente que abre a frase com um verbo de chegada sai
+   (`posicao`); a fala colada à frase cortada vai com ela.
+
    MENÇÃO NÃO É PRESENÇA (memory/portao-morde-so-o-necessario.md): falar DE
    alguém ausente pode, o ausente FALAR não; o jogador nomear uma espada não
    é a espada mudar de mão; «você não tem gazua» fica; a lança do guarda é
@@ -93,7 +104,7 @@ export const O_CONFERENTE = Object.freeze({
   maisObjetos: Object.freeze({ cordao: "o", cordel: "o" }),
   /* o verbo de pedir ou comprar na frase: o que vem depois dele o jogador
      PEDIU, e pedir não é ter (a folga da frase não vale) */
-  pede: /\b(compro|comprar|compra|adquiro|adquirir|peco|pedir|pede|quero|me da|me de|me passa|me vende|me empresta|empresta|vende)\b(.*)$/,
+  pede: /\b(compro|comprar|compra|adquiro|adquirir|peco|pedir|pede|quero|me da|me de|me passa|me vende|me empresta|empresta|vende|regateio|regatear|pechincho|pechinchar|barganho)\b(.*)$/,
   /* a arma ou a ferramenta que a frase diz ser do herói: depois do possessivo
      ou do «com» instrumental (nunca «armado de lança», que é de outro) */
   meuMeio: /\b(minha|meu|minhas|meus|com a|com o|com as|com os|com uma|com um)\s+(?:(?:minha|meu|minhas|meus|velha|velho|pequena|pequeno|boa|bom)\s+)?([a-z]+)/g,
@@ -127,6 +138,9 @@ export const O_CONFERENTE = Object.freeze({
     Object.freeze(["corda", "cordao", "cordel", "fio", "barbante"]),
     Object.freeze(["moeda", "moedas", "cobre", "trocado"]),
     Object.freeze(["mapa", "carta", "bilhete"]),
+    /* 21/11 (sessão 7, turnos 29 e 59): o frasco pedido que virou «um vidro», e a tocha */
+    Object.freeze(["frasco", "vidro", "vidrinho", "garrafa", "ampola"]),
+    Object.freeze(["tocha", "archote"]),
   ]),
   heroi: Object.freeze(["voce", "tu"]),
   posse: Object.freeze(["sua", "seu", "suas", "seus"]),
@@ -179,6 +193,8 @@ export const O_CONFERENTE = Object.freeze({
     fala: "Ninguém responde por enquanto.",
     inventada: "Ninguém mais está aqui.",
     ausente: "Ninguém responde ao chamado.",
+    companheiro: "Ninguém paga nem entrega por você.",
+    entrega: "Nada passa para a sua mão.",
   }),
   /* 21/11 (sessão 6 do Mestre vivo): CORTOU, REPÕE. O conferente disparou dez
      vezes e só cortou: a venda, a entrega e o pagamento sumiam e nada dizia o
@@ -189,6 +205,8 @@ export const O_CONFERENTE = Object.freeze({
     objeto: Object.freeze(["Nada muda de mão.", "A coisa não chega à sua mão.", "Por ora, nada passa para você."]),
     pagamento: Object.freeze(["As moedas seguem na sua bolsa.", "A troca não se fecha, e a sua bolsa continua como estava.", "Nenhuma moeda sai da sua bolsa."]),
     meio: Object.freeze(["Você não tem isso com você.", "Sua mão procura e não acha a ferramenta.", "Isso não está com você."]),
+    /* 21/11 (sessão 7): o companheiro não paga nem entrega por você — {nome} é o primeiro nome dele */
+    companheiro: Object.freeze(["{nome} leva a mão à bolsa e para; a decisão é sua.", "{nome} não mexe na bolsa.", "{nome} hesita, e a bolsa fica fechada."]),
   }),
   /* A FRASE ÓRFÃ: a que vem logo depois de uma cortada e abre referindo o que
      sumiu — o pronome sujeito («Ela espera a resposta»), o «isso», o «com ela
@@ -199,7 +217,51 @@ export const O_CONFERENTE = Object.freeze({
     pronome: Object.freeze(["ela", "ele", "elas", "eles", "isso", "isto", "aquilo"]),
     dono: Object.freeze(["dele", "dela", "deles", "delas"]),
     antes: Object.freeze(["nao", "nem", "ainda", "ja", "so", "apenas"]),
-    gesto: Object.freeze(["tira", "desvia", "espera", "aguarda", "sorri", "acena", "encara", "cruza", "suspira", "bufa", "assente", "resmunga", "embolsa", "recolhe", "guarda", "observa"]),
+    gesto: Object.freeze(["tira", "desvia", "espera", "aguarda", "sorri", "acena", "encara", "cruza", "suspira", "bufa", "assente", "resmunga", "embolsa", "recolhe", "guarda", "observa",
+      /* 21/11 (sessão 7, turno 12: «Junta as mãos no avental e aproxima-se…» depois do corte do ausente) */
+      "junta", "aproxima-se", "levanta-se", "ergue-se", "vira-se", "inclina-se", "solta", "puxa"]),
+    /* 21/11 (sessão 7, turno 19: «… diz ele» sem ninguém antes): a etiqueta
+       da fala com pronome por sujeito, no começo da frase */
+    etiqueta: Object.freeze(["diz", "responde", "murmura", "resmunga", "completa", "sussurra", "pergunta", "acrescenta", "retruca"]),
+  }),
+  /* 21/11 (sessão 7, turnos 7, 29 e 59; sessão 6, «Dagny estende a moeda»):
+     O COMPANHEIRO QUE PAGA OU ENTREGA POR CONTA PRÓPRIA. O sujeito é alguém
+     do grupo (os nomes vêm da cena do turno, `do_grupo`) e o sistema não
+     registrou troca nenhuma neste turno (moeda não saiu nem entrou, nada
+     entrou na bolsa). `soPaga`: o verbo basta; os outros pedem moeda perto,
+     o herói por destino, ou (os de `daCoisa`) a coisa que a frase nomeia.
+     Fica: opinar, recusar, oferecer-se («posso pagar»), e a mão que só se
+     estende (`mao`: «estende a mão» não é dar coisa nenhuma). */
+  companheiro: Object.freeze({
+    verbos: Object.freeze(["paga", "pagou", "compra", "comprou", "entrega", "entregou", "estende", "estendeu", "joga", "jogou", "poe", "pos", "deixa", "deixou",
+      "larga", "largou", "atira", "atirou", "empurra", "empurrou", "passa", "passou", "enfia", "enfiou", "desliza", "deslizou", "deu"]),
+    soPaga: Object.freeze(["paga", "pagou", "compra", "comprou"]),
+    daCoisa: Object.freeze(["entrega", "entregou", "estende", "estendeu", "passa", "passou", "desliza", "deslizou"]),
+    perto: 4,
+    fecha: Object.freeze(["que", "quem", "mas", "enquanto", "quando", "porque", "voce", "tu"]),
+    mao: Object.freeze(["mao", "maos", "braco", "bracos", "dedo", "dedos"]),
+    /* a frase anterior com ele por sujeito (o primeiro nome abre a frase) leva o sujeito à seguinte, se ela abre com verbo ou pronome */
+    abreOutro: Object.freeze(["o", "a", "os", "as", "um", "uma", "voce", "tu"]),
+  }),
+  /* 21/11 (sessão 7, turnos 26 e 29): O FIGURANTE QUE ENTREGA o que o
+     sistema não deu. O gesto de dar com a coisa que a frase pediu (ou a
+     família dela), sem troca registrada; e a fala que só entrega («— Leva.»),
+     inteira, numa frase que pediu ou regateou. */
+  dar: /\b(entrega|entregou|estende|estendeu|desliza|deslizou|empurra|empurrou|passa|passou|atira|atirou|joga|jogou)\b/,
+  entregaFalada: Object.freeze(["leva", "pode levar", "e seu", "e sua", "e todo seu", "e toda sua", "toma", "tome", "fica com ele", "fica com ela", "aqui esta"]),
+  /* 21/11 (sessão 7, turno 36): O ACHADO FANTASMA. «Pego a carta e guardo na
+     mochila»: o que a frase manda levar perde a folga quando nada entrou na
+     bolsa — a prosa não pode pô-lo na mochila. Ver e ler no lugar continua. */
+  levar: /\b(pego|apanho|guardo|levo|recolho|embolso|enfio|meto|coloco|ponho)\b(.*)$/,
+  /* 21/11 (sessão 7, turno 51: «Sable sobe a escada devagar…» com a linha de
+     que ela não está aqui): O AUSENTE PELA POSIÇÃO. O nome dele abrindo a
+     frase e, logo depois, um destes verbos — de chegada e de gesto, alguns
+     ambíguos («para»), por isso só nesta posição, nunca soltos na tabela da
+     poda. «Para Neirin, isso…» e «fala para Neirin» ficam. */
+  posicao: Object.freeze({
+    abre: Object.freeze(["e", "entao", "logo"]),
+    verbos: Object.freeze(["sobe", "desce", "para", "volta", "vem", "corre", "sai", "passa", "some", "junta", "solta", "larga", "puxa", "tira", "desvia", "encosta",
+      "aproxima-se", "levanta-se", "ergue-se", "vira-se", "senta-se", "inclina-se", "adianta-se", "afasta-se"]),
   }),
   /* O ÊXITO NA FALHA: o dado falhou e a prosa conta que deu certo (sessão 6,
      turno 39: a fuga falhou e o texto pôs a heroína «do outro lado, de pé»).
@@ -245,18 +307,38 @@ function pedacosDe(texto) {
     if (!linha.trim()) return;
     if (/^\s*[—–]/.test(linha)) {
       const nar = linha.trim().split(/[—–]/).filter((_, i) => i >= 2 && i % 2 === 0).join(" ");
-      out.push({ li, texto: linha, nar: tirarAspas(nar), fala: true });
+      out.push({ li, texto: linha, nar: tirarAspas(nar), fala: true, linhaDeFala: true, citacao: false });
       return;
     }
     for (const m of linha.matchAll(/[^.!?…]+(?:[.!?…]+["»”']?|$)\s*/g)) {
       if (!m[0].trim()) continue;
-      const dentro = ((linha.slice(0, m.index).match(/[—–]/g) || []).length % 2) === 1;
-      out.push({ li, texto: m[0], nar: dentro ? "" : tirarAspas(m[0].replace(/[—–][^—–]*$/, "")), fala: dentro });
+      const antes = linha.slice(0, m.index);
+      const dentro = ((antes.match(/[—–]/g) || []).length % 2) === 1;
+      /* 21/11 (sessão 7, turnos 8 e 49): a fala entre aspas que a frase
+         partiu em duas — o pedaço que começa dentro de aspas abertas é fala,
+         não narração, e a aspa que abre sem fechar leva o resto dela */
+      const emAspas = aspasAbertas(antes);
+      const t0 = m[0].trim();
+      const nar = dentro ? "" : semCitacao(m[0].replace(/[—–][^—–]*$/, ""), emAspas);
+      out.push({ li, texto: m[0], nar, fala: dentro, emAspas, citacao: dentro || emAspas || /^[—–«“"]/.test(t0) || !/\p{L}/u.test(t0) });
     }
   });
   return out;
 }
 const tirarAspas = (s) => String(s).replace(/«[^»]*»/g, " ").replace(/“[^”]*”/g, " ").replace(/"[^"]*"/g, " ");
+/* há aspas abertas no fim deste trecho? («, “ sem fecho, ou um número ímpar de ") */
+function aspasAbertas(s) {
+  const t = String(s);
+  const n = (rx) => (t.match(rx) || []).length;
+  return n(/«/g) > n(/»/g) || n(/“/g) > n(/”/g) || n(/"/g) % 2 === 1;
+}
+/* a parte narrada de um pedaço: sem a fala que vinha aberta de trás, sem as
+   aspas fechadas e sem a aspa que abre e não fecha */
+function semCitacao(s, emAspas) {
+  let t = String(s);
+  if (emAspas) { const k = t.search(/[»”"]/); t = k < 0 ? "" : t.slice(k + 1); }
+  return tirarAspas(t).replace(/[«“"][^»”"]*$/, " ");
+}
 function remontar(texto, pedacos, fora, repoe) {
   const linhas = String(texto).split("\n");
   const porLinha = new Map();
@@ -400,9 +482,12 @@ export function ehOrfa(frase) {
   if (PRONOME_ORFAO.has(w[0])) return true;
   if (w[0] === "com" && PRONOME_ORFAO.has(w[1])) return true;
   if (["o", "a", "os", "as"].includes(w[0]) && DONO_ORFAO.has(w[2])) return true;
+  /* «… diz ele.»: a etiqueta com pronome, que só tinha dono na frase que saiu */
+  if (ETIQUETA_ORFA.has(w[0]) && ["ele", "ela", "eles", "elas"].includes(w[1])) return true;
   const k = ANTES_ORFAO.has(w[0]) ? 1 : 0;
   return GESTO_ORFAO.has(w[k]);
 }
+const ETIQUETA_ORFA = new Set(C.orfa.etiqueta);
 /* as frases do texto ORIGINAL que a prosa de agora ainda tem, na ordem; a que
    ficou logo depois de uma que saiu e abre órfã sai também (e a seguinte, se
    for órfã da órfã). Devolve a prosa sem elas e as frases tiradas. */
@@ -415,7 +500,10 @@ function cortarOrfas(original, atual) {
     const i = k ? atual.indexOf(k, cursor) : -1;
     if (i < 0) { saiu = true; continue; }
     cursor = i + k.length;
-    if (saiu && !p.fala && ehOrfa(p.texto)) { tirar.push({ i, k }); continue; }
+    /* 21/11 (sessão 7): a fala colada à frase que saiu (o travessão na mesma
+       linha, a aspa que ela abriu) é de quem saiu, e vai junto; a órfã logo
+       depois dela também (o «Ela solta o pergaminho» do turno 49) */
+    if (saiu && (p.citacao || (!p.fala && ehOrfa(p.texto)))) { tirar.push({ i, k }); continue; }
     saiu = false;
   }
   if (!tirar.length) return { texto: atual, orfas: [] };
@@ -442,6 +530,140 @@ export function contaOExito(nar) {
     }
   }
   return false;
+}
+
+/* ---------------- a bolsa antes e depois (21/11, sessão 7) ----------------
+   O conferente só diz «o sistema não deu» quando SABE: o retrato da bolsa
+   quando a frase chegou e o de agora. aBolsaAgora(personagem) → { moedas,
+   itens: [nome], usos: { racoes, agua, tochas } }; oQueEntrou(antes, agora)
+   → { sabe, ganhou, entrou: [nome] } — `entrou` é a diferença com repetição
+   (a segunda Erva Amarga conta), e o uso que subiu entra com o nome dele. */
+const USOS = Object.freeze(["racoes", "agua", "tochas"]);
+export function aBolsaAgora(personagem) {
+  const p = obj(personagem);
+  if (!p) return null;
+  const nomeDe = (x) => txt(obj(x) ? x.nome : x);
+  const sup = obj(p.suprimentos) || {};
+  const usos = {};
+  for (const u of USOS) if (Number.isFinite(Number(sup[u]))) usos[u] = Number(sup[u]);
+  return Object.freeze({
+    moedas: Number.isFinite(Number(p.moedas)) ? Number(p.moedas) : null,
+    itens: Object.freeze([...arr(p.inventario), ...Object.values(obj(p.equipado) || {})].map(nomeDe).filter(Boolean)),
+    usos: Object.freeze(usos),
+  });
+}
+export function oQueEntrou(antes, agora) {
+  const a = obj(antes), d = obj(agora);
+  if (!a || !d) return Object.freeze({ sabe: false, ganhou: false, entrou: Object.freeze([]) });
+  const resta = [...arr(a.itens)];
+  const entrou = [];
+  for (const n of arr(d.itens)) { const k = resta.indexOf(n); if (k >= 0) resta.splice(k, 1); else entrou.push(n); }
+  const ua = obj(a.usos) || {}, ud = obj(d.usos) || {};
+  for (const u of USOS) if (Number.isFinite(ua[u]) && Number.isFinite(ud[u]) && ud[u] > ua[u]) entrou.push(u);
+  const ganhou = Number.isFinite(a.moedas) && Number.isFinite(d.moedas) && d.moedas > a.moedas;
+  return Object.freeze({ sabe: true, ganhou, entrou: Object.freeze(entrou) });
+}
+
+/* ---------------- o companheiro que paga ou entrega (21/11, sessão 7) ----------------
+   → o nome dele (o de `comps`) quando a frase o põe a pagar ou a entregar,
+   ou "". `comps`: [{ nome, p }] (p = o primeiro nome sem acento); `antes`:
+   o companheiro que abriu a frase anterior (o sujeito que segue); `coisas`:
+   as palavras da frase do jogador (a coisa pedida). */
+const COMP = C.companheiro;
+const COMP_VERBO = new Set(COMP.verbos), COMP_SO_PAGA = new Set(COMP.soPaga), COMP_DA_COISA = new Set(COMP.daCoisa), COMP_FECHA = new Set(COMP.fecha), COMP_MAO = new Set(COMP.mao), COMP_ABRE_OUTRO = new Set(COMP.abreOutro);
+const raiz = (x) => x.replace(/s$/, "");
+function companheiroQueDa(nar, comps, antes, coisas, outros) {
+  const w = ws(nar);
+  if (!w.length || !comps.length || negadoNa(w)) return "";
+  const destino = C.daAoHeroi.test(sem(nar)) || /\b(a|para|ate) voce\b/.test(sem(nar));
+  const temMoeda = w.some((x) => MOEDA.has(x));
+  const temCoisa = w.some((x) => x.length >= 4 && coisas.has(raiz(x)) && ehCoisa(x));
+  for (let i = 0; i < w.length; i++) {
+    const base = w[i].split("-")[0];
+    if (!COMP_VERBO.has(base)) continue;
+    /* «estende a mão» não dá nada */
+    if (COMP_MAO.has(w[i + 1]) || (["a", "o", "as", "os"].includes(w[i + 1]) && COMP_MAO.has(w[i + 2]))) continue;
+    let quem = "";
+    for (let k = i - 1; k >= Math.max(0, i - 1 - COMP.perto); k--) {
+      if (COMP_FECHA.has(w[k]) || outros.has(w[k])) break;
+      const c = comps.find((x) => x.p === w[k]);
+      if (c) { quem = c.nome; break; }
+    }
+    if (!quem && antes && !COMP_ABRE_OUTRO.has(w[0]) && !outros.has(w[0]) && !w.slice(0, i).some((x) => HEROI.has(x))) quem = antes;
+    if (!quem) continue;
+    if (COMP_SO_PAGA.has(base) || temMoeda || destino || (COMP_DA_COISA.has(base) && temCoisa)) return quem;
+  }
+  return "";
+}
+
+/* o gesto de dar (`dar`) com uma coisa por objeto — «estende a mão» não é dar */
+function daACoisa(nar) {
+  const w = ws(nar);
+  return w.some((x, i) => C.dar.test(x) && !COMP_MAO.has(w[i + 1]) && !(["a", "o", "as", "os"].includes(w[i + 1]) && COMP_MAO.has(w[i + 2])));
+}
+
+/* a fala de um pedaço (o que está entre o travessão ou as aspas), ou "" */
+function falaDoPedaco(p) {
+  const t = String(p.texto).trim();
+  if (p.linhaDeFala) return t.split(/[—–]/)[1] || "";
+  if (/^[—–]/.test(t)) return t.slice(1).split(/[—–]/)[0];
+  if (p.fala) return t.split(/[—–]/)[0];
+  if (p.emAspas) return t.split(/[»”"]/)[0];
+  const m = t.match(/^[«“"]([^»”"]*)/);
+  return m ? m[1] : "";
+}
+const ENTREGA_FALADA = new Set(C.entregaFalada);
+/* a fala que só entrega: inteira (`tudo`), ou — na linha que é só de fala —
+   a primeira frase dela, e o resto da linha fica (`resto`). null sem. */
+function entregaNaFala(p) {
+  const f = falaDoPedaco(p);
+  if (ENTREGA_FALADA.has(palavras(f).join(" "))) return { tudo: true, resto: "" };
+  if (p.linhaDeFala) {
+    const m = f.match(/^\s*([^.!?…]+)[.!?…]+\s*\S/);
+    if (m && ENTREGA_FALADA.has(palavras(m[1]).join(" "))) return { tudo: false, resto: String(p.texto).replace(/^(\s*[—–]\s*)[^.!?…]+[.!?…]+\s*/, "$1") };
+  }
+  return null;
+}
+
+/* ---------------- o ausente pela posição (21/11, sessão 7, turno 51) ----------------
+   O nome do ausente abrindo a frase, com um verbo da tabela logo depois: a
+   frase sai, e a fala colada a ela (o travessão na mesma linha; a linha de
+   fala seguinte, se a frase fechava a linha) vai junto. → { texto, frases } */
+const POS_VERBO = new Set(C.posicao.verbos), POS_ABRE = new Set(C.posicao.abre);
+function oAusentePelaPosicao(texto, nome) {
+  const todo = palavras(String(nome || "").split(",")[0]);
+  if (!todo.length) return { texto, frases: [] };
+  const formas = [todo];
+  if (todo.length > 1 && todo[0].length >= 4) formas.push([todo[0]]);
+  const ps = pedacosDe(texto);
+  const fora = new Set();
+  let arrasta = false, ultimaLi = -1;
+  for (let j = 0; j < ps.length; j++) {
+    const p = ps[j];
+    if (p.li !== ultimaLi && p.linhaDeFala && arrasta) { fora.add(p); continue; }
+    if (p.li !== ultimaLi) arrasta = false;
+    ultimaLi = p.li;
+    if (p.linhaDeFala || p.citacao) continue;
+    const t = String(p.texto).trim();
+    const w = ws(t);
+    let k = POS_ABRE.has(w[0]) ? 1 : 0;
+    const f = formas.find((fm) => fm.every((x, n) => w[k + n] === x));
+    if (!f) continue;
+    /* o nome escreve-se com maiúscula, e nada entre ele e o verbo (nem vírgula, nem «?») */
+    const cru = t.split(/\s+/);
+    if (!/^\p{Lu}/u.test(cru[k] || "")) continue;
+    const depoisDoNome = cru.slice(k, k + f.length).join(" ");
+    if (/[,;:?!.…]$/.test(depoisDoNome)) continue;
+    if (!POS_VERBO.has(w[k + f.length])) continue;
+    fora.add(p);
+    /* a fala colada, na mesma linha */
+    let n = j + 1;
+    while (n < ps.length && ps[n].li === p.li && ps[n].citacao) { fora.add(ps[n]); n++; }
+    arrasta = n >= ps.length || ps[n].li !== p.li;
+    j = n - 1;
+  }
+  if (!fora.size) return { texto, frases: [] };
+  return { texto: remontar(texto, ps, fora, null), frases: ps.filter((p) => fora.has(p)).map((p) => p.texto.trim()) };
 }
 
 /* a família do resultado: a do desafio que rolou, senão a do veredito */
@@ -498,7 +720,10 @@ export function quemFicaCalado(falas, turno, ctx) {
      turno      — o da pauta;
      falas      — a memória de quem falou ({ [primeiro nome]: { turno, fala } });
      ausente    — quem a frase chamou e a ficha diz que não está aqui
-                  (quemNaoEstaNaCena: { nome, onde, morto }), ou null
+                  (quemNaoEstaNaCena: { nome, onde, morto }), ou null;
+     entrou     — (21/11, sessão 7) oQueEntrou(antes, agora): a bolsa quando
+                  a frase chegou e a de agora ({ sabe, ganhou, entrou }), ou null;
+     doSistema  — (21/11) as linhas que o sistema escreveu neste turno ([texto])
    }
    `troca`: a linha que o sistema pôs no lugar da prosa (""), `frente`: a
    do resultado posta à frente (""). `falas`: a memória nova (objeto novo).
@@ -519,10 +744,32 @@ export function conferirAProsa(narrativa, ctx) {
     const heroi = txt(c.heroi);
     const podadas = [];
 
+    /* 21/11 (sessão 7): o que o sistema de fato fez neste turno. `semTroca`
+       só quando se SABE (a bolsa mexeu ou não; o retrato antes e depois) e
+       nada mudou de mão; `doSistema` são as palavras das linhas que o
+       sistema escreveu neste turno (o achado, a venda): o que elas nomeiam
+       o sistema deu, e a prosa que o conta fica. */
+    const bolsa = obj(c.entrou);
+    const transferiu = c.pagou === true || !!(bolsa && (bolsa.ganhou || arr(bolsa.entrou).length));
+    const sabeBolsa = c.pagou === true || c.pagou === false || !!(bolsa && bolsa.sabe);
+    const semTroca = sabeBolsa && !transferiu;
+    const doSistema = new Set([...ws(arr(c.doSistema).join(" ")), ...ws(arr(bolsa && bolsa.entrou).join(" "))].filter((x) => x.length >= 4).map(raiz));
     /* a. as afirmações: o objeto, o pagamento, o meio */
     const meiosNegados = [...new Set([...osMeiosNegados(frase, c.posses), ...arr(c.negados).flatMap(palavras).filter((x) => MEIO.has(x) && !temNaPosse(x, c.posses))])];
     const pedidos = pedidosDaFrase(frase).filter((x) => !temNaPosse(x, c.posses));
-    const semFolga = [...new Set([...arr(c.negados).map(txt).filter(Boolean), ...pedidos, ...meiosNegados])];
+    /* o que a frase manda levar, sem nada ter entrado: sem folga (o achado fantasma) */
+    const levados = semTroca ? (() => { const m = sem(frase).match(C.levar); return m ? palavras(m[2]).filter((x) => ehCoisa(x) && !temNaPosse(x, c.posses)) : []; })() : [];
+    const semFolga = [...new Set([...arr(c.negados).map(txt).filter(Boolean), ...pedidos, ...meiosNegados, ...levados])];
+    /* o grupo, a coisa pedida e quem mais está na cena (para o sujeito do companheiro) */
+    /* só numa frase de troca (pagar, dar, pedir, comprar) ou que fala com ele: o
+       companheiro que paga a própria bebida numa frase de olhar em volta fica */
+    const fraseDeTroca = C.pede.test(sem(frase)) || /\b(pago|pagar|dou|dar|ofereco|oferecer|entrego|entregar)\b/.test(sem(frase));
+    const comps = pessoas.filter((p) => p.doGrupo && p.nome && !(heroi && primeiro(p.nome) === primeiro(heroi)))
+      .map((p) => ({ nome: p.nome, p: primeiro(p.nome) })).filter((k) => fraseDeTroca || naFrase.has(k.p));
+    const coisasDaFrase = new Set(palavras(frase).filter((x) => x.length >= 4 && !VAZIAS.has(x) && !comps.some((k) => k.p === x)).flatMap((x) => [raiz(x), ...(C.doPedido.find((f) => f.includes(x) || f.includes(raiz(x))) || []).map(raiz)]));
+    const outrosNomes = new Set(pessoas.filter((p) => p.nome && !p.doGrupo).map((p) => primeiro(p.nome)));
+    const pediu = C.pede.test(sem(frase)) || C.levar.test(sem(frase));
+    const quemPagou = new Map(), restoDaFala = new Map();
     const opc = { frase, lugarDoTurno: txt(c.lugarDoTurno), maisObjetos: C.maisObjetos, ...(semFolga.length ? { semFolga } : {}) };
     const E = obj(c.estado) || {};
     const pedacos = pedacosDe(texto);
@@ -533,21 +780,40 @@ export function conferirAProsa(narrativa, ctx) {
     const julgou = !!(c.teste && typeof c.teste.sucesso === "boolean");
     const linhaRes = julgou ? linhaDoResultado(familia, c.teste.sucesso, alvo) : "";
     const exitoNaFalha = julgou && c.teste.sucesso === false && C.exitoNaFalha.familias.includes(familia);
-    let anterior = "";
+    let anterior = "", compAntes = "";
     for (const p of pedacos) {
+      /* 21/11 (sessão 7, turnos 26 e 29): a fala que só entrega («— Leva.»)
+         sem troca nenhuma, numa frase que pediu ou regateou */
+      if (semTroca && pediu && (p.fala || p.citacao || p.linhaDeFala)) {
+        const e = entregaNaFala(p);
+        if (e) {
+          fora.add(p); razao.set(p, "entrega");
+          if (!e.tudo) restoDaFala.set(p, e.resto);
+          podadas.push({ motivo: "entrega", frase: e.tudo ? p.texto.trim() : String(falaDoPedaco(p)).trim() });
+          continue;
+        }
+      }
       if (!p.nar.trim()) continue;
       const heroiAntes = /\b(voce|tu)\b/.test(sem(anterior));
       /* o dado falhou e a frase conta que deu certo: sai, e o resultado entra no lugar */
-      if (exitoNaFalha && contaOExito(p.nar)) { fora.add(p); razao.set(p, "exito"); podadas.push({ motivo: "exito", frase: p.texto.trim() }); anterior = p.nar; continue; }
+      if (exitoNaFalha && contaOExito(p.nar)) { fora.add(p); razao.set(p, "exito"); podadas.push({ motivo: "exito", frase: p.texto.trim() }); anterior = p.nar; compAntes = ""; continue; }
       /* o meio negado primeiro: a gazua «enfiada» é também objeto, e a razão é o meio */
       let motivo = meioNoPedaco(p.nar, meiosNegados) ? "meio" : "";
+      /* 21/11 (sessão 7): o companheiro que paga ou entrega por você, sem troca */
+      if (!motivo && semTroca && comps.length) {
+        const q = companheiroQueDa(p.nar, comps, compAntes, coisasDaFrase, outrosNomes);
+        if (q) { motivo = "companheiro"; quemPagou.set(p, q); }
+      }
       if (!motivo) try {
         const antes = anterior ? oInventadoDaProsa(anterior, E, opc).map((o) => o.nome) : [];
         const agora = oInventadoDaProsa(`${anterior ? anterior.replace(/[.!?…\s]*$/, ". ") : ""}${p.nar}`, E, opc)
-          .filter((o) => ["pega", "recebe", "guarda"].includes(o.como) && !antes.includes(o.nome));
+          .filter((o) => ["pega", "recebe", "guarda"].includes(o.como) && !antes.includes(o.nome))
+          /* 21/11 (sessão 7): o que a linha do sistema nomeou neste turno (o relicário do achado) foi dado — fica */
+          .filter((o) => !ws(o.nome).some((x) => x.length >= 4 && doSistema.has(raiz(x))));
         if (agora.length) motivo = "objeto";
       } catch { /* a régua do objeto não abre: segue sem ela */ }
-      if (!motivo && pedidos.length && C.daAoHeroi.test(sem(p.nar)) && !negadoNa(ws(p.nar))) {
+      if (!motivo && pedidos.length && !(sabeBolsa && transferiu) && !negadoNa(ws(p.nar))
+        && (C.daAoHeroi.test(sem(p.nar)) || (semTroca && daACoisa(p.nar) && !ws(p.nar).slice(0, 4).some((x) => HEROI.has(x))))) {
         const coisas = pedidos.filter(ehCoisa);
         const fam = new Set(coisas.flatMap((x) => [x, ...(C.doPedido.find((f) => f.includes(x) || f.includes(x.replace(/s$/, ""))) || [])]));
         if (ws(p.nar).some((x) => fam.has(x) && !temNaPosse(x, c.posses) && x.length >= 3)) motivo = "objeto";
@@ -555,6 +821,9 @@ export function conferirAProsa(narrativa, ctx) {
       if (!motivo && c.pagou === false && pagaNoPedaco(p.nar, heroiAntes)) motivo = "pagamento";
       if (motivo) { fora.add(p); razao.set(p, motivo); podadas.push({ motivo, frase: p.texto.trim() }); }
       anterior = p.nar;
+      /* o companheiro que abre esta frase segue sujeito da próxima */
+      const w0 = ws(p.nar)[0] || "";
+      compAntes = (comps.find((k) => k.p === w0) || {}).nome || (["ela", "ele"].includes(w0) ? compAntes : "");
     }
     /* CORTOU, REPÕE: a primeira cortada de cada razão dá lugar à linha dela */
     const repoe = new Map();
@@ -563,7 +832,13 @@ export function conferirAProsa(narrativa, ctx) {
     for (const p of pedacos) {
       const m = razao.get(p);
       if (!m) continue;
-      const linha = m === "exito" ? linhaRes : linhaDeReposicao(m, chave);
+      /* a linha de fala que só abria com a entrega: fica o resto dela */
+      if (restoDaFala.has(p)) { repoe.set(p, restoDaFala.get(p).replace(/\s+$/, "")); continue; }
+      const linha = m === "exito" ? linhaRes
+        /* a fala que entrega só repõe quando nada mais repôs (o gesto ao lado já disse) */
+        : m === "entrega" ? (repostas.length ? "" : linhaDeReposicao("objeto", chave))
+        : m === "companheiro" ? linhaDeReposicao(m, chave).replace("{nome}", String(quemPagou.get(p) || "").split(/\s+/)[0])
+        : linhaDeReposicao(m, chave);
       if (!linha || repostas.includes(linha)) continue;
       repoe.set(p, linha);
       repostas.push(linha);
@@ -583,6 +858,13 @@ export function conferirAProsa(narrativa, ctx) {
       const r = podarOAusente(prosa, aus, { frase: "", outros: [...outros, heroi].filter(Boolean), limiar: 1, semTravaDaFala: true });
       for (const p of r.podadas) podadas.push({ motivo: "ausente", frase: p.frase });
       if (r.podadas.length) prosa = r.narrativa;
+      /* 21/11 (sessão 7, turno 51): o verbo que a poda não conhece
+         («Sable sobe a escada»), pela posição — o nome abrindo a frase */
+      if (prosa.trim()) {
+        const pp = oAusentePelaPosicao(prosa, aus[0].nome);
+        for (const f of pp.frases) podadas.push({ motivo: "ausente", frase: f });
+        if (pp.frases.length) prosa = pp.texto;
+      }
     }
     /* b. quem fala: a gente inventada, e quem está fora da vez */
     const inventados = (() => {

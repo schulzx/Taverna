@@ -305,6 +305,34 @@ export function balcaoComPechincha(balcao, registro, dia) {
   return b.map((x) => (obj(x) && num(Number(x.preco)) != null ? { ...x, preco: Math.max(1, Math.round(Number(x.preco) * registro.ajuste)) } : x));
 }
 
+/* ---------------- O NOME DO ACHADO (21/11/2026, sessão 7 do Mestre vivo) ----------------
+   O turno 47 da sétima sessão: o sistema pôs na bolsa «🌿 Erva Amarga, 🌿
+   Erva Amarga», e a linha que anunciava o achado ao Narrador dizia só «2
+   componente(s) de ofício» — a prosa contou «dois runas de mina». A linha do
+   achado leva agora o nome exato do que entrou, contado («2× Erva Amarga»),
+   no mesmo canal de um turno (nunca bloco estático). `extras`: os nomes
+   como a tela os mostra (com ou sem o ícone na frente). "" sem nenhum. */
+export const O_NOME_DO_ACHADO = Object.freeze({
+  linha: "Entrou na minha bolsa, com estes nomes: {lista}. Use estes nomes, e nenhum outro.",
+  vezes: "{n}× {nome}",
+  maximo: 6,
+});
+export function nomesDoAchado(extras) {
+  try {
+    const conta = new Map();
+    for (const x of arr(extras)) {
+      const n = txt(x).replace(/^[^\p{L}\p{N}]+/u, "").trim();
+      if (n) conta.set(n, (conta.get(n) || 0) + 1);
+    }
+    if (!conta.size) return "";
+    const N = O_NOME_DO_ACHADO;
+    const lista = [...conta].slice(0, N.maximo).map(([nome, n]) => (n > 1 ? N.vezes.replace("{n}", String(n)).replace("{nome}", nome) : nome));
+    return N.linha.replace("{lista}", lista.join(", "));
+  } catch {
+    return "";
+  }
+}
+
 /* ---------------- A PROCURA NA COISA DE ALGUÉM ----------------
    O nome logo depois de «de/da/do», com uma coisa antes («os cestos da banca
    de Isolde», «a bolsa do Doran»), é o dono, não quem se procura. Ficam as

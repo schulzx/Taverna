@@ -14,8 +14,8 @@
    ============================================================ */
 import fs from "node:fs";
 import path from "node:path";
-import { O_CONFERENTE, conferirAProsa, quemFicaCalado, linhaDoResultado, osMeiosNegados, CABECAS_DO_CONFERENTE, linhaDeReposicao, ehOrfa, contaOExito } from "../src/motor/o-conferente-da-prosa.js";
-import { A_FICHA_DA_CENA, fichaDaCenaNaPauta } from "../src/a-ficha-da-cena.js";
+import { O_CONFERENTE, conferirAProsa, quemFicaCalado, linhaDoResultado, osMeiosNegados, CABECAS_DO_CONFERENTE, linhaDeReposicao, ehOrfa, contaOExito, aBolsaAgora, oQueEntrou } from "../src/motor/o-conferente-da-prosa.js";
+import { A_FICHA_DA_CENA, fichaDaCenaNaPauta, nomesDoAchado, O_NOME_DO_ACHADO } from "../src/a-ficha-da-cena.js";
 import { podarOAusente, PODA_DO_AUSENTE } from "../src/motor/poda-do-ausente.js";
 import { oInventadoDaProsa, MEMORIA_DO_INVENTADO } from "../src/motor/memoria-do-inventado.js";
 import { textoDaPauta, porNaPauta, TETO_DA_PAUTA } from "../src/pauta.js";
@@ -239,7 +239,10 @@ sec("12. a fiação no App (atrás da chave)");
   const app = fs.readFileSync(path.join(dir, "..", "src", "App.jsx"), "utf8");
   const i = app.indexOf("conferirAProsa(resp.narrativa");
   t("o conferente corre no App, depois da poda do ausente e antes do livro", i > 0 && i > app.indexOf("const pd = podarOAusente(resp.narrativa") && i < app.indexOf("const narrativaDoLivro = String(resp.narrativa"));
-  const bloco = app.slice(Math.max(0, i - 1200), i);
+  /* MOVIDA em 21/11 (sessão 7 do Mestre vivo): a janela era de 1200 letras antes da chamada; a
+     bolsa antes/depois e as linhas do sistema do turno entraram entre a chave e a chamada, e a
+     chave ficou mais longe. A intenção é a mesma: o conferente só corre atrás da chave. */
+  const bloco = app.slice(Math.max(0, i - 2600), i);
   t("só com o Mestre vivo, fora da luta, em calou", /if \(mestreVivoLigado\(\) && conferenteDoTurnoRef\.current/.test(bloco) && /calou\("Mestre vivo · o conferente da prosa"/.test(app.slice(i, i + 3000)));
   t("o conferente do turno só nasce na ficha da cena (que só corre com a chave)", (app.match(/conferenteDoTurnoRef\.current = \{/g) || []).length === 1
     && app.indexOf("conferenteDoTurnoRef.current = {") > app.indexOf("const fichaDaCenaNoTurno = (acao, m) => {"));
@@ -311,6 +314,134 @@ sec("16. o êxito na falha (turno 39)");
   t("PAR: o êxito de outro não é o seu", !contaOExito("O guarda chega do outro lado antes de você."));
   const conv = conferirAProsa("Você consegue arrancar dele um meio sorriso, e só.", base({ frase: "tento convencer o guarda", teste: { sucesso: false, desafio: "convencer" } }));
   t("PAR: fora da travessia a regra não morde", !conv.podadas.some((p) => p.motivo === "exito"));
+}
+
+/* ============================================================
+   21/11 — a sétima sessão do Mestre vivo (mestre-vivo-sessao-7.md): as
+   situações ditas por nós, nos moldes do que a sessão viu. Cada regra só
+   morde quando se SABE que nada mudou de mão (a bolsa antes e depois).
+   ============================================================ */
+const CENA7 = { pessoas: [
+  { nome: "Brigid Cinza-Antiga", papel: "guerreira", estados: ["do_grupo"] },
+  { nome: "Hakon", papel: "moço da casa", estados: [] },
+  { nome: "Sable", papel: "vendedora de ervas", estados: [] },
+] };
+const P7 = { nome: "Kaelith Punho-de-Pedra", inventario: [{ nome: "Bússola empenada" }], equipado: {}, moedas: 15, suprimentos: { racoes: 10, agua: 10, tochas: 5 } };
+const NADA7 = oQueEntrou(aBolsaAgora(P7), aBolsaAgora(P7));
+const b7 = (x) => ({ cena: CENA7, heroi: P7.nome, turno: 7, posses: P7.inventario, estado: { personagem: P7 }, pagou: false, entrou: NADA7, falas: {}, ...x });
+
+sec("17. a bolsa antes e depois (o conferente só diz «não deu» quando sabe)");
+{
+  t("a mesma bolsa: sabe, e nada entrou", NADA7.sabe && !NADA7.ganhou && NADA7.entrou.length === 0);
+  const depois = aBolsaAgora({ ...P7, moedas: 83, inventario: [...P7.inventario, { nome: "Erva Amarga" }, { nome: "Erva Amarga" }], suprimentos: { ...P7.suprimentos, tochas: 6 } });
+  const e = oQueEntrou(aBolsaAgora(P7), depois);
+  t("as moedas que subiram, as duas ervas (com repetição) e a tocha a mais entram", e.ganhou && JSON.stringify(e.entrou) === JSON.stringify(["Erva Amarga", "Erva Amarga", "tochas"]), JSON.stringify(e));
+  t("PAR: sem retrato, não sabe (e as regras novas não mordem)", !oQueEntrou(null, depois).sabe && aBolsaAgora(null) === null);
+  const venda = oQueEntrou(aBolsaAgora(P7), aBolsaAgora({ ...P7, inventario: [] }));
+  t("PAR: o que saiu da bolsa não é o que entrou", venda.sabe && venda.entrou.length === 0 && !venda.ganhou);
+}
+
+sec("18. o companheiro que paga ou entrega por você (turnos 7, 59; sessão 6)");
+{
+  const r7 = conferirAProsa("Brigid se adianta, joga duas moedas no balcão e acena para Hakon. A cerveja desce diante de você.", b7({ frase: "peço a Brigid que pague uma caneca de cerveja para mim" }));
+  t("a companheira que joga as moedas no balcão sai, e a linha dela entra no lugar", !r7.narrativa.includes("duas moedas") && r7.podadas.some((p) => p.motivo === "companheiro")
+    && O_CONFERENTE.reposicao.companheiro.some((l) => r7.narrativa.startsWith(l.replace("{nome}", "Brigid"))) && r7.narrativa.endsWith("diante de você."), r7.narrativa);
+  const r59 = conferirAProsa("Brigid não hesita. Puxa uma tocha do cinturão e a estende. — Leva.\nO fogo da lareira estala.", b7({ frase: "peço a Brigid que me entregue uma das tochas dela" }));
+  t("a tocha que ela puxa e estende sai (o sujeito vem da frase de antes), e o «— Leva.» junto", !r59.narrativa.includes("tocha") && !r59.narrativa.includes("Leva") && r59.narrativa.startsWith("Brigid não hesita.") && r59.narrativa.endsWith("lareira estala."), r59.narrativa);
+  t("e a fala que só entregava não repõe uma segunda linha", r59.repostas.length === 1, JSON.stringify(r59.repostas));
+  const d = { pessoas: [{ nome: "Dagny", estados: ["do_grupo"] }, { nome: "Orsk", papel: "mercador", estados: [] }] };
+  const s6 = conferirAProsa("Dagny estende a moeda sem olhar. Orsk sorri.", b7({ frase: "peço a Dagny uma moeda", cena: d }));
+  const s6b = conferirAProsa("Dagny suspira. Enfia duas moedas na sua mão. A praça ferve.", b7({ frase: "pago o mercador", cena: d }));
+  t("«Dagny estende a moeda» e «enfia duas moedas na sua mão» (sessão 6) saem", !s6.narrativa.includes("estende a moeda") && !s6b.narrativa.includes("Enfia duas") && s6b.narrativa.endsWith("A praça ferve."), `${s6.narrativa} | ${s6b.narrativa}`);
+  t("a linha que repõe usa o primeiro nome dela, e sai da tabela", /^Dagny /.test(s6.narrativa) && O_CONFERENTE.reposicao.companheiro.some((l) => s6.narrativa.startsWith(l.replace("{nome}", "Dagny"))));
+  const fr = "peço a Brigid que pague uma caneca de cerveja para mim";
+  t("PAR: a recusa fica", conferirAProsa("Brigid cruza os braços. — Paga você. Hakon espera.", b7({ frase: fr })).podadas.length === 0);
+  t("PAR: oferecer-se fica («posso pagar, se você quiser»)", conferirAProsa("Brigid ergue a sobrancelha. — Posso pagar, se você quiser.", b7({ frase: fr })).podadas.length === 0);
+  t("PAR: a opinião sobre o preço fica", conferirAProsa("Brigid torce o nariz para o preço da caneca.", b7({ frase: fr })).podadas.length === 0);
+  t("PAR: «não paga» fica", conferirAProsa("Brigid não paga nada a ninguém.", b7({ frase: fr })).podadas.length === 0);
+  t("PAR: a transferência que o sistema fez fica", conferirAProsa("Brigid estende a moeda sem olhar.", b7({ frase: "peço a Brigid uma moeda", entrou: { sabe: true, ganhou: true, entrou: [] } })).podadas.length === 0);
+  t("PAR: sem saber da bolsa, nada morde", conferirAProsa("Brigid joga duas moedas no balcão.", b7({ frase: fr, pagou: null, entrou: null })).podadas.length === 0);
+  t("PAR: «estende a mão» não é dar a espada", conferirAProsa("Brigid estende a mão para o cabo da espada e balança a cabeça.", b7({ frase: "peço a Brigid que me entregue a espada dela" })).podadas.length === 0);
+  t("PAR: numa frase que não é troca nem fala com ela, a bebida dela é dela", conferirAProsa("Brigid joga duas moedas no balcão pela própria caneca.", b7({ frase: "olho as pessoas do salão" })).podadas.length === 0);
+  t("PAR: Hakon que estende a caneca não é a companheira", conferirAProsa("Hakon estende a caneca para Brigid.", b7({ frase: fr })).podadas.every((p) => p.motivo !== "companheiro"));
+}
+
+sec("19. o figurante que entrega o que o sistema não deu (turnos 26, 29)");
+{
+  const r26 = conferirAProsa("Sable amarra o maço de tomilho e alecrim com um fio.\n— Leva. Se eu não dormir, ninguém dorme.",
+    b7({ frase: "regateio com a vendedora de ervas: um maço pela metade do preço", teste: { sucesso: true, desafio: "convencer" }, alvo: "vendedora de ervas" }));
+  t("o «— Leva.» do regateio que só mexeu no preço sai, e o resto da fala fica", !/Leva/.test(r26.narrativa) && r26.narrativa.includes("— Se eu não dormir, ninguém dorme.") && r26.narrativa.includes("amarra o maço"), r26.narrativa);
+  const r29 = conferirAProsa("O homem desliza um vidro pelo balcão. — Leva. E não volte.", b7({ frase: "regateio com o freguês dela: um frasco de graça" }));
+  t("o frasco pedido que virou «um vidro» deslizado sai, com o «Leva»", !r29.narrativa.includes("vidro") && !r29.narrativa.includes("Leva") && r29.podadas.some((p) => p.motivo === "objeto"), r29.narrativa);
+  t("PAR: o maço que foi pago fica, com o «Leva»", conferirAProsa("Sable empurra o maço. — Leva.", b7({ frase: "dou duas moedas a Sable pelo tomilho", pagou: true })).podadas.length === 0);
+  t("PAR: «Leva o maço por seis» é preço, não entrega", conferirAProsa("Sable cruza os braços. — Leva o maço por seis.", b7({ frase: "regateio o maço" })).podadas.length === 0);
+  t("PAR: sem pedido na frase, o «Leva» de outra conversa fica", conferirAProsa("Sable ri para o freguês. — Leva.", b7({ frase: "olho a banca" })).podadas.length === 0);
+}
+
+sec("20. o achado fantasma (turnos 25, 35, 36)");
+{
+  const r36 = conferirAProsa("Você enfia a carta na mochila, entre a bússola e a capa.", b7({ frase: "pego a carta amarrada e guardo na mochila" }));
+  t("«enfia a carta na mochila» sem nada ter entrado sai, e a linha repõe", !r36.narrativa.includes("enfia a carta") && O_CONFERENTE.reposicao.objeto.includes(r36.narrativa), r36.narrativa);
+  t("PAR: ler a carta no lugar fica", conferirAProsa("Você desamarra a carta e lê as primeiras linhas, úmidas.", b7({ frase: "pego a carta amarrada e leio" })).podadas.length === 0);
+  t("PAR: a carta que entrou na bolsa fica", conferirAProsa("Você enfia a carta na mochila.", b7({ frase: "pego a carta e guardo na mochila", entrou: { sabe: true, ganhou: false, entrou: ["Carta amarrada"] } })).podadas.length === 0);
+  t("PAR: a chave pendurada no gancho é vista, não levada (menção não é presença)", conferirAProsa("E logo atrás, pendurada num gancho, uma chave de ferro com a alça quebrada.", b7({ frase: "reviro os cestos de peixe" })).podadas.length === 0);
+  /* o achado que o sistema deu: a linha do sistema nomeou o relicário, e a prosa que o conta fica */
+  const P47 = { ...P7, moedas: 79, inventario: [...P7.inventario, { nome: "Erva Amarga" }, { nome: "Erva Amarga" }] };
+  const prosa47 = "A gaveta cede. Você encontra um relicário de prata escondido sob papéis, com moedas e duas ervas secas.";
+  const c47 = { frase: "reviro as gavetas da mesa do capitão", posses: P47.inventario, estado: { personagem: P47 }, teste: { sucesso: true, desafio: "buscar" }, entrou: { sabe: true, ganhou: true, entrou: ["Erva Amarga", "Erva Amarga"] } };
+  const r47 = conferirAProsa(prosa47, b7({ ...c47, doSistema: ["📿 Achado: um relicário guardado longe dos olhos — ◉ 68 moedas · 🌿 Erva Amarga, 🌿 Erva Amarga"] }));
+  t("PAR: o relicário que a linha do achado nomeou fica (cortar o que o sistema deu apaga a recompensa)", r47.narrativa === prosa47 && r47.podadas.length === 0, r47.narrativa);
+  const r47s = conferirAProsa(prosa47, b7({ ...c47, doSistema: [] }));
+  t("(sem a linha do sistema, o relicário que ninguém deu continua a sair, como antes)", r47s.podadas.some((p) => p.motivo === "objeto"));
+}
+
+sec("21. o nome do achado na linha que o anuncia (turno 47)");
+{
+  const l = nomesDoAchado(["🌿 Erva Amarga", "🌿 Erva Amarga", "🗡 Adaga curta"]);
+  t("o nome exato, contado, sem o ícone", l.includes("2× Erva Amarga") && l.includes("Adaga curta") && !l.includes("🌿"), l);
+  t("a linha sai da tabela, e não fala de si", l.startsWith(O_NOME_DO_ACHADO.linha.split("{lista}")[0]) && !/\b(sistema|ficha|pauta|dado|regra)\b/i.test(l));
+  t("PAR: sem nada além das moedas, nenhuma linha", nomesDoAchado([]) === "" && nomesDoAchado(null) === "");
+}
+
+sec("22. o ausente que fala (turno 51; «Neirin para no vão da porta»)");
+{
+  const aus = { nome: "Sable", onde: "O Rossio dos Andarilhos", morto: false };
+  const c1 = { pessoas: [{ nome: "Brigid Cinza-Antiga", estados: ["do_grupo"] }] };
+  const r51 = conferirAProsa("Passos na escada.\nSable sobe a escada devagar… — Aqui em cima? … — Fala.\nBrigid encosta na parede.", b7({ frase: "Sable, venha cá! Preciso falar com você", ausente: aus, cena: c1 }));
+  t("a ausente que sobe a escada (verbo que a poda não conhecia) sai, com a fala colada", !r51.narrativa.includes("Sable") && !r51.narrativa.includes("Aqui em cima") && r51.narrativa === "Passos na escada.\nBrigid encosta na parede.", r51.narrativa);
+  const n = { nome: "Neirin da Torre", onde: "Feira do Saque", morto: false };
+  const rn = conferirAProsa("Neirin para no vão da porta.\n— O que foi?\nA chuva bate.", b7({ frase: "Neirin, vem cá", ausente: n }));
+  t("«Neirin para no vão» sai pela posição, e a linha de fala seguinte vai junto", rn.narrativa === "A chuva bate.", rn.narrativa);
+  t("PAR: «Para Neirin, isso…» e «fala para Neirin» ficam", conferirAProsa("A atendente dá de ombros. Para Neirin, isso é cedo demais. Ela fala para Neirin vir depois.", b7({ frase: "Neirin, vem cá", ausente: n })).podadas.length === 0);
+  t("PAR: «Neirin? Ninguém a viu.» fica (nada de verbo logo depois)", conferirAProsa("Neirin? Ninguém a viu hoje.", b7({ frase: "Neirin, vem cá", ausente: n })).podadas.length === 0);
+  t("PAR: «Neirin está na feira» fica (estar não é chegar)", conferirAProsa("Neirin está na feira desde cedo.", b7({ frase: "Neirin, vem cá", ausente: n })).podadas.length === 0);
+  t("PAR: sem ausente, «Sable sobe a escada» fica", conferirAProsa("Sable sobe a escada devagar.", b7({ frase: "olho a escada" })).podadas.length === 0);
+}
+
+sec("23. as frases órfãs (turnos 8, 12, 19, 49)");
+{
+  const r8 = conferirAProsa("Hakon olha a janela. Brigid tira uma moeda e põe na sua mão: \"Toma. Cerveja paga, agora me diz o que viu lá fora.\" A lareira estala.", b7({ frase: "peço à Brigid que me dê uma moeda do bolso dela" }));
+  t("a fala entre aspas que a frase cortada abriu vai junto (sem a aspa que fecha sozinha)", !r8.narrativa.includes("Cerveja paga") && !r8.narrativa.includes("\"") && r8.narrativa.startsWith("Hakon olha a janela.") && r8.narrativa.endsWith("A lareira estala."), r8.narrativa);
+  const r49 = conferirAProsa("Rolos, cotas, botas velhas. Brigid ergue um mapa: \"O capitão andou olhando para o mar. E tem pressa.\" Ela solta o pergaminho devagar. A sala esfria.", b7({ frase: "olho a estante de mapas", turno: 49, falas: { brigid: { turno: 48, fala: "nada aqui" } } }));
+  t("o resto da fala e o «Ela solta» sem dono saem com a fala cortada", r49.narrativa === "Rolos, cotas, botas velhas. A sala esfria.", r49.narrativa);
+  const r12 = conferirAProsa("Sua voz corta o salão. Cora Rompe-Escudos ergue a cabeça da mesa. Junta as mãos no avental e aproxima-se… — O que quer de mim?", b7({ frase: "Cora, venha aqui", ausente: { nome: "Cora Rompe-Escudos", onde: "Casa do Martelo Calada" } }));
+  t("«Junta as mãos… e aproxima-se» sem sujeito sai com a ausente, e a fala dela também", r12.narrativa === "Sua voz corta o salão.", r12.narrativa);
+  t("a etiqueta com pronome abre órfã («diz ele.»)", ehOrfa("diz ele.") && ehOrfa("Responde ela, seca."));
+  t("PAR: a etiqueta com nome não é órfã", !ehOrfa("diz Hakon.") && !ehOrfa("Diz que vem amanhã."));
+  const sem = conferirAProsa("Brigid ergue um mapa: \"O capitão andou olhando para o mar.\" A sala esfria.", b7({ frase: "olho a estante" }));
+  t("PAR: sem corte, a fala entre aspas fica inteira", sem.podadas.length === 0);
+}
+
+sec("24. a fiação nova no App (a bolsa, as linhas do turno, o nome do achado, o log)");
+{
+  const dir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"));
+  const app = fs.readFileSync(path.join(dir, "..", "src", "App.jsx"), "utf8");
+  t("o retrato da bolsa nasce com o conferente do turno, em calou", /bolsaC = aBolsaAgora\(/.test(app) && /calou\("Mestre vivo · a bolsa antes da frase"/.test(app) && /conferenteDoTurnoRef\.current = \{[^}]*bolsa: bolsaC/.test(app));
+  const i = app.indexOf("conferirAProsa(resp.narrativa");
+  const bloco = app.slice(i - 2500, i + 2500);
+  t("o que entrou e as linhas do sistema do turno chegam à conferência", /entrouC = cf\.bolsa \? oQueEntrou\(cf\.bolsa, aBolsaAgora\(pC\)\)/.test(bloco) && /entrou: entrouC, doSistema: doSistemaC/.test(bloco));
+  t("o log do console leva, por corte, o motivo e 60 letras da frase (só no console)", /cortes: cfr\.podadas\.map\(\(x\) => \(\{ motivo: x\.motivo, frase: String\(x\.frase \|\| ""\)\.slice\(0, 60\) \}\)\)/.test(bloco));
+  t("o nome do achado vai na linha que o anuncia, em calou", /nomesA = nomesDoAchado\(extras\)/.test(app) && /calou\("Mestre vivo · o nome do achado"/.test(app));
 }
 
 console.log(falhas ? `\n${falhas} falha(s)` : "\ntudo verde");

@@ -222,8 +222,8 @@ import { PainelGuilda } from "./painel-guilda.jsx";
 import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPessoa, envelopeDaProcura, linhaDaProcura, pedeDado as procuraPedeDado } from "./procura.js";
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA, compraSemQuemVenda, falaDaCompraSemQuemVenda, vetoDaCompraSemQuemVenda } from "./bolsa-da-frase.js";
-import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA, aCoisaDaFrase } from "./a-ficha-da-cena.js";
-import { conferirAProsa, quemFicaCalado } from "./motor/o-conferente-da-prosa.js";
+import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA, aCoisaDaFrase, nomesDoAchado } from "./a-ficha-da-cena.js";
+import { conferirAProsa, quemFicaCalado, aBolsaAgora, oQueEntrou } from "./motor/o-conferente-da-prosa.js";
 import { aCoisaAoToqueDaFrase, oQueOAchadoDa, telaDoAchadoNaCoisa, envelopeDoAchadoNaCoisa } from "./o-que-ha-nas-coisas.js";
 import { coisasQueAFraseNomeia } from "./cena-do-momento.js";
 import { oNomeChamado } from "./motor/a-regua-do-momento.js";
@@ -11538,6 +11538,15 @@ export default function Taverna() {
           if (ultimaC && String(ultimaC.texto || "").trim() === String(cf.frase || "").trim()) {
             const pC = persAtual || personagemRef.current || personagem || {};
             const moedasC = Number(pC.moedas), antesC = moedasDaUltimaProsaRef.current;
+            /* 21/11 (sessão 7): o que mudou de mão neste turno (a bolsa de quando a frase
+               chegou contra a de agora) e as linhas que o sistema escreveu desde a frase */
+            let entrouC = null, doSistemaC = [];
+            try { entrouC = cf.bolsa ? oQueEntrou(cf.bolsa, aBolsaAgora(pC)) : null; } catch (e) { calou("Mestre vivo · o que entrou na bolsa", e); entrouC = null; }
+            try {
+              const todasC = [...(mensagensRef.current || []), ...(seguraRef.current || [])];
+              const iC = todasC.lastIndexOf(ultimaC);
+              doSistemaC = (iC >= 0 ? todasC.slice(iC + 1) : []).filter((x) => x && x.autor === "sistema" && typeof x.texto === "string").map((x) => x.texto);
+            } catch (e) { calou("Mestre vivo · as linhas do sistema do turno", e); doSistemaC = []; }
             const cfr = conferirAProsa(resp.narrativa, {
               frase: cf.frase, cena: cf.cena, alvo: cf.alvo, aoGrupo: cf.aoGrupo, coisa: cf.coisa, ausente: cf.ausente || null,
               negados: semFolgaDoTurnoRef.current || [], teste: testeDoTurnoRef.current,
@@ -11546,10 +11555,11 @@ export default function Taverna() {
               lugarDoTurno: (lugarRef.current && lugarRef.current.nome) || "", mundo: mundoDoLivro(),
               pagou: Number.isFinite(antesC) && Number.isFinite(moedasC) ? moedasC < antesC : null,
               heroi: pC.nome || "", turno: turnoDeRegistroRef.current + 1, falas: falasDoConferenteRef.current,
+              entrou: entrouC, doSistema: doSistemaC,
             });
             falasDoConferenteRef.current = cfr.falas;
             if (cfr.narrativa !== resp.narrativa) resp = { ...resp, narrativa: cfr.narrativa };
-            if (cfr.podadas.length || cfr.frente) { try { console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), troca: !!cfr.troca, frente: !!cfr.frente, repostas: (cfr.repostas || []).length })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
+            if (cfr.podadas.length || cfr.frente) { try { /* 21/11 (sessão 7): por corte, o motivo e o começo da frase que saiu — só no console, para a próxima sessão jogada conferir */ console.info("[conferente] " + JSON.stringify({ podadas: cfr.podadas.map((x) => x.motivo), cortes: cfr.podadas.map((x) => ({ motivo: x.motivo, frase: String(x.frase || "").slice(0, 60) })), troca: !!cfr.troca, frente: !!cfr.frente, repostas: (cfr.repostas || []).length })); } catch (e) { calou("Mestre vivo · a medida do conferente", e); } }
           }
         }
       } catch (e) { calou("Mestre vivo · o conferente da prosa", e); }
@@ -18313,7 +18323,10 @@ export default function Taverna() {
         setPersonagem(persT);
         registrarSaque(r.achado.id);
         pushMsgs([{ autor: "sistema", texto: `${r.achado.icone || "🧰"} Achado: ${r.achado.o} — ◉ ${rec.moedas} moedas${extras.length ? ` · ${extras.join(", ")}` : ""}` }]);
-        env = `${envelopeDoAchado(r.achado, rec)}\n${env}`;
+        /* 21/11 (sessão 7, turno 47): o nome exato do que entrou vai na linha do achado — a prosa dizia «runas» por «Erva Amarga» */
+        let nomesA = "";
+        try { nomesA = nomesDoAchado(extras); } catch (e) { calou("Mestre vivo · o nome do achado", e); nomesA = ""; }
+        env = `${envelopeDoAchado(r.achado, rec)}${nomesA ? " " + nomesA : ""}\n${env}`;
         /* NE4 (13/11): O OBJETO DO CARTAZ. A etapa `achar` só fechava quando
            o Mestre mandava o objeto por `adicionar_itens`; agora a busca que
            acha o segredo no lugar dele entrega-o (ofertas.js#objetoDoCartaz),
@@ -18838,7 +18851,10 @@ export default function Taverna() {
       let coisaC = "";
       try { coisaC = aCoisaDaFrase(acao, m.cena); } catch { coisaC = ""; }
       /* 21/11 (sessão 6): quem a ficha diz que não está aqui vai junto — a prosa que o pôs a falar é cortada */
-      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC, ausente: qn };
+      /* 21/11 (sessão 7): o retrato da bolsa agora — o conferente compara com o de depois da resposta */
+      let bolsaC = null;
+      try { bolsaC = aBolsaAgora(personagemRef.current || personagem); } catch (e) { calou("Mestre vivo · a bolsa antes da frase", e); bolsaC = null; }
+      conferenteDoTurnoRef.current = { frase: acao, cena: m.cena, alvo: m.alvo || "", aoGrupo: !!m.aoGrupo, coisa: coisaC, ausente: qn, bolsa: bolsaC };
     } catch (e) { calou("Mestre vivo · o conferente do turno", e); conferenteDoTurnoRef.current = null; }
   };
   const momentoDaFrase = (acao) => {
