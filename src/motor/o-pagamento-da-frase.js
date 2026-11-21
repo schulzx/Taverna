@@ -26,6 +26,10 @@
    ============================================================ */
 import { NUMERO_POR_EXTENSO, raizDaMoeda } from "../cobranca.js";
 import { PRECOS_COMUNS, precoComum } from "../economia.js";
+/* 21/11 (a oitava sessão do Mestre vivo): a moeda dada pela coisa é compra, a
+   dada para fingir ou deixar passar é suborno (conversa com dado), e o fiado
+   não se paga hoje — nenhum dos três é o cartão «Pagar» */
+import { aCompraPorMoeda, oSubornoDaFrase, oFiadoDaFrase } from "../o-veredito-da-troca.js";
 
 const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 const sem = (x) => str(x).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -80,6 +84,14 @@ export function oPagamentoDaFrase(frase, ctx) {
   const P = O_PAGAMENTO_DA_FRASE;
   if (!t.trim() || t.trimStart().startsWith("[") || !P.verbo.test(t) || P.naoE.test(t)) return null;
   const c = ehObj(ctx) ? ctx : {};
+  /* 21/11 (a oitava sessão, T6, T48, T61 e o fiado sem turno): «dou três moedas
+     ao vendedor pelas ataduras» cobrava sem dar as ataduras; «ofereço duas moedas
+     a Freya para ela fingir…» cobrava sem dado; «pão fiado, pago amanhã» cobrava
+     hoje. A compra vai pela bolsa da frase (o cartão «Comprar»), o suborno pela
+     conversa com dado (que cobra só no sim), e o fiado não se paga hoje. O que
+     se pede numa taverna («duas moedas pela caneca») continua a ser daqui. */
+  if (oSubornoDaFrase(frase, c.moeda) || oFiadoDaFrase(frase)) return null;
+  const porMoeda = !!aCompraPorMoeda(frase, c.moeda);
   /* a quantia dita ganha: é o que o herói pôs na mesa */
   const dito = aQuantiaDita(frase, c.moeda);
   const itens = [];
@@ -99,6 +111,8 @@ export function oPagamentoDaFrase(frase, ctx) {
     const quantos = quantosAntes(t, m.index);
     itens.push({ nome: p.curto || p.nome, quantos, preco: preco * quantos });
   }
+  /* a moeda dada por uma coisa que não é de taverna nem o quarto é compra (a bolsa da frase) */
+  if (porMoeda && !itens.length) return null;
   /* a quantia dita ganha: é o que o herói pôs na mesa — e a coisa, quando a
      frase a diz, é pelo que paga («pela caneca») */
   if (dito > 0) return { itens: [{ nome: itens.map((x) => x.nome).join(", "), quantos: 1, preco: dito }], total: dito, dito: true };

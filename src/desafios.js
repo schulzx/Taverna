@@ -797,13 +797,20 @@ export const DESAFIOS = [
        ela me levar», «com uma boa lábia». Pedir uma cerveja continua de
        fora (não há a quem nem o quê). Se quem ouve tem motivo para negar,
        quem decide é a régua do momento. */
-    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|regate(?:io|ar|amos|ando|ei)\b|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b|\b(dou|damos|ofere[cç]o|oferecemos|pago|pagamos|passo|estendo|entrego|ponho|deslizo|pe[cç]o|pedimos)\b[^.!?]{0,40}\b(ao|a|aos|as) (?!(c[aã]o|c[aã]es|cachorros?|cadelas?|lobos?|cavalos?|[eé]guas?|mulas?|burros?|bichos?|feras?|bestas?|ursos?|gatos?)\b)[a-z]{3,}\b[^.!?]{0,60}\b(pra|para) (ele |ela |eles |elas )?((me|nos|a gente) deixar (entrar|passar|subir|ver|falar|sair|ficar)\b|fechar os olhos|fazer vista grossa|olhar (para|pro) (o )?outro lado)\b)/,
+    rx: /\b(tento convencer|conven[cç]o|persuad|nego[cç]io com|argument|insisto com|tento negociar|barganho|pechinch|regate(?:io|ar|amos|ando|ei)\b|deix(a|e) (a gente|eu|nos|me) (entrar|passar|falar|ver|subir|ficar|sair)\b|pe[cç]o (a|ao|pra|pro|para|para o|para a) [^.!?,]{1,25}?\b(pra|para|que) (me |nos |a gente )?(liber|deix|abr|solt|lev|apresent|ajud|empres|mostr|guard|esper|fa[cç])\w*|pe[cç]o (pra|para|a|ao) (ele|ela|eles|elas) (me|nos) \w+|l[aá]bia\b|\b(dou|damos|ofere[cç]o|oferecemos|pago|pagamos|passo|estendo|entrego|ponho|deslizo|pe[cç]o|pedimos)\b[^.!?]{0,40}\b(ao|a|aos|as) (?!(c[aã]o|c[aã]es|cachorros?|cadelas?|lobos?|cavalos?|[eé]guas?|mulas?|burros?|bichos?|feras?|bestas?|ursos?|gatos?)\b)[a-z]{3,}\b[^.!?]{0,60}\b(pra|para) (ele |ela |eles |elas )?((me|nos|a gente) deixar (entrar|passar|subir|ver|falar|sair|ficar)\b|fechar os olhos|fazer vista grossa|olhar (para|pro) (o )?outro lado|fingir (que )?(n[aã]o )?(me |nos )?(viu|v[eê]|ver|vi|conhece|notou)|esquecer (que|o que)|n[aã]o (me |nos )?ver)\b)|\bpe[cç]o\b[^.!?]{0,60}\b(de gra[cç]a|gr[aá]tis|amostra|de presente)\b/,
     /* sétima sessão do Mestre vivo (21/11, T38 e T39): o suborno ao guarda —
        «dou duas moedas ao sargento para ele me deixar entrar na sala do
        capitão», «ofereço duas moedas ao sargento para fechar os olhos e me
        deixar passar». O «deixa eu passar» já rolava; o «para ele me deixar
        entrar», dito a alguém, e o «fechar os olhos» não: o 38 virou o passo
        até à sala (o passo só cede a um teste) e o 39 passou sem dado. */
+    /* 21/11 (a oitava sessão do Mestre vivo, T48 e T15): «ofereço duas moedas a
+       Freya para ela fingir que não me viu passar pelo portal» virava o cartão
+       «Pagar» sem dado — o suborno que pede para fingir, esquecer ou não ver é
+       o mesmo de fechar os olhos; e «peço ao tiefling uma amostra do que ele
+       tem, de graça» passava sem dado e a prosa entregava — pedir de graça a
+       quem vende é conversa contra quem tem motivo para negar (o veredito da
+       troca dá a coisa só no sim, src/o-veredito-da-troca.js). */
     /* 19/11 (o-mestre-vivo.md §19): e REGATEAR, o verbo da feira — «regateio o
        frasco» caía em nada (sessão mv-3, T4 e T18), e a barganha só rolava
        quando dita como «barganho» */

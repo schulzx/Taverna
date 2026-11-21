@@ -30,6 +30,11 @@
    turno (o veto).
    ============================================================ */
 
+/* 21/11 (a oitava sessão do Mestre vivo): «dou duas moedas ao vendedor
+   pelos sais» é compra — a mão dá a moeda, não os sais; e o nome que o
+   jogador encurta («o martelo de batalha» do «Rústico Martelo de Batalha») */
+import { aCompraPorMoeda, nomeiaOItem } from "../o-veredito-da-troca.js";
+
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
 const txt = (x) => (typeof x === "string" ? x : "");
@@ -132,6 +137,9 @@ function indiceDoVerbo(palavras, verbos) {
 function coisasNomeadas(frase, nomes) {
   const inteiras = nomes.filter((n) => { const k = norma(curto(n)); return k.length >= M.palavraMinima - 1 && tem(frase, k); });
   if (inteiras.length) return inteiras;
+  /* 21/11: o fim do nome com corpo («martelo de batalha»), como o jogador o diz */
+  const pelaCauda = nomes.filter((n) => nomeiaOItem(frase, n));
+  if (pelaCauda.length) return pelaCauda;
   const porCabeca = nomes.filter((n) => { const c = palavrasDe(curto(n))[0]; return c && tem(frase, c); });
   return porCabeca;
 }
@@ -172,6 +180,8 @@ export function aMaoDaFrase(frase, contexto) {
       verbo, item,
       linha: M.recusa[verbo].replace("{item}", item.charAt(0).toUpperCase() + item.slice(1)) + (noChao ? M.recusa.noChao : ""),
     });
+    /* 21/11 (a oitava sessão): a moeda dada pela coisa é compra — não há o que recusar aqui */
+    if (aCompraPorMoeda(frase)) return out;
     const iV = indiceDoVerbo(palavras, M.vender);
     const ehVenda = iV >= 0
       && !M.naoEVenda.antes.includes(palavras[iV - 1])
@@ -190,7 +200,8 @@ export function aMaoDaFrase(frase, contexto) {
       if (!temNaMao && !deSuprimento) {
         const doChao = coisasNomeadas(toda, chao.map((x) => x.nome)).filter((n) => !pegos.has(n));
         const cabeca = M.coisas.find((w) => tem(resto, w)) || M.coisas.find((w) => tem(toda, w));
-        const pronomeSo = M.pronome.includes(palavras[i + 1]);
+        /* 21/11 (a oitava sessão, a frase sem turno): «vendo o martelo de batalha ao Eamon» — o «o» seguido de nome é artigo, não pronome */
+        const pronomeSo = M.pronome.includes(palavras[i + 1]) && (palavras[i + 2] == null || ["a", "ao", "aos", "as", "para", "pra", "por", "e"].includes(palavras[i + 2]));
         if (doChao.length) out.recusa = recusar(verbo, curto(doChao[0]), true);
         else if (cabeca) out.recusa = recusar(verbo, nomeNaFrase(frase, palavras, cabeca) || comArtigo(cabeca), false);
         else if (ehVenda && pronomeSo) out.recusa = recusar(verbo, M.recusa.semNome, false);

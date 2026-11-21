@@ -36,6 +36,9 @@ import { NUMERO_POR_EXTENSO, nomeDaMoeda } from "./cobranca.js";
 import { MERCADORIAS } from "./mercado.js";
 /* E1 (12/10): o acento que separa mora em economia.js (o círculo com mercado.js) */
 import { semConfusao, nomeiaACoisa } from "./economia.js";
+/* 21/11 (a oitava sessão do Mestre vivo): «dou duas moedas ao vendedor pelos
+   sais» é COMPRA — a moeda vai, a coisa vem (o-veredito-da-troca.js) */
+import { aCompraPorMoeda } from "./o-veredito-da-troca.js";
 
 const norm = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
@@ -155,6 +158,15 @@ function mantimentosDa(oracao) {
    ou declarou a compra — e a conta é a do balcão, como sempre: sete não
    paga trinta e sete. */
 const RX_PAGO_SO = /\b(pago|paguei|fechado|fecho negocio)\b/;
+/* A MÃO QUE PAGA PELA COISA (21/11, a oitava sessão do Mestre vivo). «dou
+   duas moedas ao vendedor pelos sais aromáticos» não tinha verbo de compra:
+   a mão da frase lia «entregar os sais» e recusava (três frases nem viraram
+   turno), o cartão «Pagar ◉ 3» cobrava as ataduras sem as dar (T6), e «dou
+   uma moeda a Lucan por um odre de água» punha o odre do herói na mão da
+   vendedora (T61, a dádiva ao contrário). A oração que põe a moeda e diz
+   «por/pelo X» é compra de X, com a quantia dita como teto. */
+const ehCompra = (texto) => RX_COMPRA.test(texto) || !!aCompraPorMoeda(texto);
+const quantiaDaCompra = (texto) => { const c = aCompraPorMoeda(texto); return c && c.quantia > 0 ? c.quantia : null; };
 function herdaDe(anterior) {
   const t = norm(semConfusao(anterior));
   if (!t.trim() || !(RX_PERGUNTA_DE_PRECO.test(t) || RX_COMPRA.test(t))) return [];
@@ -175,11 +187,12 @@ export function compraNaFrase(frase, opcoes) {
   frase = semConfusao(frase);
   if (RX_PERGUNTA_DE_PRECO.test(norm(frase))) return null;
   for (const o of oracoes(frase)) {
-    if (o.pergunta || !(RX_COMPRA.test(o.texto) || RX_PAGO_SO.test(o.texto)) || RX_HIPOTESE.test(o.texto)) continue;
+    if (o.pergunta || !(ehCompra(o.texto) || RX_PAGO_SO.test(o.texto)) || RX_HIPOTESE.test(o.texto)) continue;
     viu = true;
     /* a quantia dita: "pago as onze cunhas", "pago 11 moedas", "pago ◉ 11" */
     const d = o.texto.match(new RegExp(`\\b(?:pago|paguei)\\s+${QUANTIA_DITA}(?!\\s+(?:racao|racoes|tochas?|odres?|kits?|cordas?|archotes?))`));
     if (d && declarado == null) declarado = valor(d[1]) || null;
+    if (declarado == null) declarado = quantiaDaCompra(o.texto);
     const daqui = mantimentosDa(o.texto);
     if (!daqui.length && RX_PAGO_SO.test(o.texto)) pagouSemItem = true;
     for (const m of daqui) {
@@ -248,10 +261,11 @@ export function compraNaBanca(frase, opcoes) {
   const itens = [];
   let declarado = null, viu = false;
   for (const o of oracoes(f)) {
-    if (o.pergunta || !RX_COMPRA.test(o.texto) || RX_HIPOTESE.test(o.texto)) continue;
+    if (o.pergunta || !ehCompra(o.texto) || RX_HIPOTESE.test(o.texto)) continue;
     viu = true;
     const d = o.texto.match(new RegExp(`\\b(?:pago|paguei)\\s+${QUANTIA_DITA}`));
     if (d && declarado == null) declarado = valor(d[1]) || null;
+    if (declarado == null) declarado = quantiaDaCompra(o.texto);
     for (const b of bancas) {
       for (const it of b.estoque) {
         if (!it || !it.nome || itens.some((x) => x.nome === it.nome) || !nomeiaACoisa(o.texto, it.nome)) continue;
@@ -304,8 +318,10 @@ export function compraSemQuemVenda(frase, opcoes) {
   for (const o of oracoes(semConfusao(f))) {
     if (o.pergunta || RX_HIPOTESE.test(o.texto)) continue;
     const m = o.texto.match(COMPRA_SEM_QUEM_VENDA.verbo);
-    if (!m) continue;
-    const coisa = m[1].trim();
+    /* 21/11: e a mão que paga pela coisa («dou duas moedas ao tiefling por um dente») */
+    const pm = m ? null : aCompraPorMoeda(o.texto);
+    if (!m && !pm) continue;
+    const coisa = m ? m[1].trim() : pm.coisa.split(" ")[0];
     if (COMPRA_SEM_QUEM_VENDA.naoECoisa.includes(coisa.split(/\s+/)[0])) continue;
     /* o balcão daqui tem? (as compras acima cuidam) */
     if (mantimentosDa(coisa).some((x) => balcao.some((b) => b.id === x.id))) continue;
@@ -433,6 +449,8 @@ export function dadivaNaFrase(frase, { pessoas = [], suprimentos = null } = {}) 
   const sup = suprimentos && typeof suprimentos === "object" ? suprimentos : {};
   for (const o of oracoes(frase)) {
     if (o.pergunta || !RX_DAR.test(o.texto) || /\b(se|caso|talvez|nao)\b/.test(o.texto)) continue;
+    /* 21/11 (a oitava sessão, T61): «dou uma moeda a Lucan por um odre de água» é compra — o odre vem, não vai */
+    if (aCompraPorMoeda(o.texto)) continue;
     const itens = mantimentosDa(o.texto).filter((m) => O_QUE_SE_DA[m.id]).map((m) => ({ id: m.id, quantos: m.quantos }));
     if (!itens.length) continue;
     /* quem recebe: o nome dito (o mais perto depois do verbo), ou o

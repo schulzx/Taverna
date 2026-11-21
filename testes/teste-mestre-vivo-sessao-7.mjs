@@ -47,7 +47,12 @@ sec("1. o suborno ao sargento rola, e a quantia dita vai pelo pagamento (T38, T3
     const m = momento(f, BALUARTE);
     t(`T${n}: rola, contra o sargento`, m.rola === true && /sargento/.test(String(m.alvo)), `${m.porque} · ${m.alvo}`);
     const pg = oPagamentoDaFrase(f, { fator: 1, pouso: null, moeda: "moedas" });
-    t(`T${n}: o cartão do pagamento cobra as duas moedas ditas`, pg && pg.total === 2 && pg.dito === true && aQuantiaDita(f, "moedas") === 2, JSON.stringify(pg));
+    /* 21/11 (a oitava sessão, T48): a asserção mudou de lado. O cartão «Pagar»
+       cobrava o suborno ANTES do dado, e na oitava sessão a bolsa perdeu as moedas
+       com a prosa a dizer que ninguém as pegou. O suborno é conversa com dado, e a
+       quantia dita sai no sim (App, «o suborno cobra no sim»); o que fica provado
+       aqui é que o cartão NÃO abre, e que a quantia dita continua a ser lida (2). */
+    t(`T${n}: o cartão do pagamento não cobra antes do dado (a quantia dita, 2, sai no sim)`, pg === null && aQuantiaDita(f, "moedas") === 2, JSON.stringify(pg));
   }
   /* o que não é suborno continua de fora */
   for (const f of ["deito para fechar os olhos um pouco", "vou à praça para fechar os olhos um pouco", "espero a multidão me deixar passar"]) {
