@@ -42,7 +42,7 @@ import { QUANDO_O_MESTRE_CHAMA, porQueNaoChama, saberComumDe } from "./o-mestre-
 import {
   lerCena, haOposicao, haOQueAchar, haSegredo, haPerigo, alguemPodeNotar, haPlateia, cenaRevela,
   custoDeFalhar, respostaDaPergunta, estadosQueChamam, estadoPorId, temMarca, alvoDaAcao,
-  temMarcaNoAlvo, coisasQueAFraseNomeia,
+  temMarcaNoAlvo, coisasQueAFraseNomeia, aCenaQueAFraseToca,
 } from "../cena-do-momento.js";
 import { escutarComCena, molduraDe, atosDaFrase } from "./a-escuta-da-cena.js";
 import { lerAcao } from "../desafios.js";
@@ -703,7 +703,10 @@ function vantagemDoFurto(x) {
   return a && a.estados.some((e) => A_VITIMA_DO_FURTO.vantagem.includes(e)) ? A_VITIMA_DO_FURTO.diz : "";
 }
 
-function decidir(vereditoDoCatalogo, lida, c) {
+function decidir(vereditoDoCatalogo, cenaInteira, c) {
+  /* 21/11 (o-mestre-vivo.md §23): a cena que a frase toca — as coisas ao
+     toque (o cesto, a calha) só contam quando a frase as nomeia */
+  const lida = aCenaQueAFraseToca(cenaInteira, typeof c.frase === "string" ? c.frase : "") || cenaInteira;
   let veredito = vereditoDoCatalogo;
   const pesos = pesosDe(lida, c);
   const moldura = typeof c.frase === "string" ? molduraDe(c.frase) : "";

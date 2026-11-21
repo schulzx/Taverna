@@ -64,7 +64,11 @@ t("o achadoDe pergunta primeiro achadoDoPasso, e só depois achavelAqui", antes(
 t("na luta não há achado (a guarda de sempre fica à frente)", antes(achadoDe, "if (combateRef.current) return null", "achadoDoPasso("));
 t("os passos vêm do mesmo estado que a pauta lê, e o erro devolve []", /osPassosDasQuests\(\{[\s\S]*espinha: espinhaRef\.current[\s\S]*\}, \{ mundo: mundoDaBase\(\) \}\)[\s\S]*calou\("MC5 · os passos das quests", e\); return \[\];/.test(corpo("passosDasQuestsAgora")));
 const conc = corpo("concluirRolagem");
-t("o achado do passo não chama recompensaDoAchado nem registrarSaque", antes(conc, 'r.achado.especie === "passo"', "recompensaDoAchado(r.achado)") && /if \(passou && r\.achado && r\.achado\.especie === "passo"\) \{\s*\} else if \(passou && r\.achado\) \{/.test(conc));
+t("o achado do passo não chama recompensaDoAchado nem registrarSaque", antes(conc, 'r.achado.especie === "passo"', "recompensaDoAchado(r.achado)") && /if \(passou && r\.achado && r\.achado\.especie === "passo"\) \{\s*\} else if \(passou && r\.achado && r\.achado\.especie === "coisa"\) \{[\s\S]{0,600}?\} else if \(passou && r\.achado\) \{/.test(conc));
+/* MOVIDA em 21/11 (o-mestre-vivo.md §23), e o motivo: entre o ramo vazio do
+   passo e o do baú entrou o ramo da coisa ao toque (o achado pequeno da
+   tabela, o-que-ha-nas-coisas.js). A intenção fica: o passo continua sem
+   recompensa nem saque, e o baú continua depois dele. */
 t("oLivroDoAchado escreve «descobriu», dentro do calou", /try \{\s*if \(achado && achado\.especie === "passo"\)\s*factosRef\.current = oLivroDoAchado\(factosRef\.current, achado,[\s\S]*calou\("MC5 · o livro do achado do passo", e\)/.test(corpo("escreverODescobriu")));
 t("o livro é escrito no sucesso com dado e no sucesso sem dado", conc.includes("escreverODescobriu(") && APP.includes("escreverODescobriu(factoAuto && factoAuto.achado)"));
 const oraculo = corpo("perguntarOportunidade");

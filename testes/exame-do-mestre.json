@@ -5,7 +5,7 @@
  "origem": "O veredito de cada item (rola, qual teste, por quê) vem do estudo das mesas reais, mente/lancamento/estudo-das-mesas.md §6 (as regras) e §8 (65 situações com veredito) e, desde a rodada 3, §10 (a mesa em português: as situações 66 a 97 e os padrões de como o jogador brasileiro diz o que faz, §10.4). As frases foram escritas por nós, em PT-BR, sem abrir o catálogo nem os corpus do projeto, para não serem moldadas pelas regex. Nenhuma frase de mesa real está aqui: das sessões vêm só contagens e padrões descritos por nós.",
  "regra_da_rodada": "Frase usada para afinar o Mestre sai do exame e entra outra no lugar, com a rodada seguinte marcada. O exame mede o que o Mestre nunca viu; frase vista vira treino.",
  "campos": {
-  "cena": "estados da tabela fechada de src/cena-do-momento.js (ESTADOS_DA_CENA), escritos planos: os de pessoa (disposta, desconfiada, com_medo, hostil, esconde_algo, deve_favor, motivo_para_negar, do_grupo) valem para o primeiro de `quem`; os de coisa (trancado, vigiado, fragil, escuro, armadilhado, ha_algo_escondido, suspeito; e suspeita_de_armadilha, que é o suspeito) são do lugar; os de cena (com_pressa, com_testemunhas, territorio_de_alguem, perigo_fisico, som_claro, algo_se_aproxima, assunto_raro) são da cena. Mais lugar, hora, clima, heroi, nota. Desde a rodada 2, o que decide o veredito está em estado, não só na nota.",
+  "cena": "estados da tabela fechada de src/cena-do-momento.js (ESTADOS_DA_CENA), escritos planos: os de pessoa (disposta, desconfiada, com_medo, hostil, esconde_algo, deve_favor, motivo_para_negar, do_grupo) valem para o primeiro de `quem`; os de coisa (trancado, vigiado, fragil, escuro, armadilhado, ha_algo_escondido, suspeito; e suspeita_de_armadilha, que é o suspeito) são do lugar; os de cena (com_pressa, com_testemunhas, territorio_de_alguem, perigo_fisico, som_claro, algo_se_aproxima, assunto_raro) são da cena. Mais lugar, hora, clima, heroi, nota. Desde a rodada 2, o que decide o veredito está em estado, não só na nota. Desde a rodada 9, `ao_toque`: as coisas comuns do lugar, cada uma com os seus estados, lidas só pela frase que as nomeia.",
   "esperado": "rola, categoria, pericias (ids do projeto), porque (a regra de §6), base (numero/padrao/fraco)",
   "par": "a mesma frase em duas cenas com vereditos opostos",
   "espontaneo": "sem ação de teste declarada: o dado viria do estado da cena",
@@ -15,13 +15,13 @@
   "veio_da_b": "3: o item era da metade B até a rodada 2 e passou para a A na rodada 3"
  },
  "contagem": {
-  "itens": 916,
-  "pares": 265,
+  "itens": 930,
+  "pares": 271,
   "espontaneos": 65,
-  "nao_rola": 422,
+  "nao_rola": 429,
   "situacoes_cobertas": 97,
   "situacoes_faltando": [],
-  "metade_A": 521,
+  "metade_A": 535,
   "metade_B": 265,
   "rodada_2": 118,
   "rodada_3": 265,
@@ -32,7 +32,8 @@
   "metade_C": 130,
   "rodada_6": 130,
   "rodada_7": 32,
-  "rodada_8": 13
+  "rodada_8": 13,
+  "rodada_9": 14
  },
  "metades": {
   "semente": "exame-do-mestre|metades|2026-11-18",
@@ -20892,6 +20893,365 @@
    "rodada": 8,
    "metade": "A",
    "origem": "etapa-1-alvo"
+  },
+  {
+   "id": "E917",
+   "situacao": 1,
+   "cena": {
+    "lugar": "barraca de frutas do mercado",
+    "quem": [],
+    "ao_toque": {
+     "cestos": [
+      "ha_algo_escondido"
+     ],
+     "caixotes": []
+    }
+   },
+   "frase": "reviro os cestos procurando alguma coisa",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "há algo nos cestos: procurar onde há o que achar rola",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A1"
+  },
+  {
+   "id": "E918",
+   "situacao": 2,
+   "cena": {
+    "lugar": "barraca de frutas do mercado",
+    "quem": [],
+    "ao_toque": {
+     "cestos": [],
+     "caixotes": [
+      "ha_algo_escondido"
+     ]
+    }
+   },
+   "frase": "reviro os cestos procurando alguma coisa",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nos cestos não há nada; o que há está nos caixotes, e ninguém os tocou",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A1"
+  },
+  {
+   "id": "E919",
+   "situacao": 1,
+   "cena": {
+    "lugar": "telhado do armazém",
+    "quem": [],
+    "ao_toque": {
+     "telhas": [
+      "ha_algo_escondido"
+     ],
+     "caixotes": []
+    }
+   },
+   "frase": "procuro embaixo das telhas soltas",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "há algo sob as telhas: rola",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A2"
+  },
+  {
+   "id": "E920",
+   "situacao": 2,
+   "cena": {
+    "lugar": "telhado do armazém",
+    "quem": [],
+    "ao_toque": {
+     "telhas": [],
+     "caixotes": [
+      "ha_algo_escondido"
+     ]
+    }
+   },
+   "frase": "procuro embaixo das telhas soltas",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "sob as telhas não há nada: o mestre descreve o vazio",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A2"
+  },
+  {
+   "id": "E921",
+   "situacao": 1,
+   "cena": {
+    "lugar": "porão da taverna",
+    "quem": [],
+    "ao_toque": {
+     "barris": [
+      "ha_algo_escondido"
+     ]
+    }
+   },
+   "frase": "vasculho os barris do canto",
+   "esperado": {
+    "rola": true,
+    "categoria": "procurar",
+    "pericias": [
+     "investigacao",
+     "percepcao"
+    ],
+    "porque": "há algo nos barris: rola",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A3"
+  },
+  {
+   "id": "E922",
+   "situacao": 2,
+   "cena": {
+    "lugar": "porão da taverna",
+    "quem": [],
+    "ao_toque": {
+     "barris": []
+    }
+   },
+   "frase": "vasculho os barris do canto",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "nos barris não há nada: sem dado",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A3"
+  },
+  {
+   "id": "E923",
+   "situacao": 57,
+   "cena": {
+    "lugar": "banca de grãos",
+    "quem": [
+     "quitandeira"
+    ],
+    "ao_toque": {
+     "sacos": []
+    }
+   },
+   "frase": "remexo os sacos da quitandeira procurando alguma coisa",
+   "esperado": {
+    "rola": true,
+    "categoria": "furtar",
+    "pericias": [
+     "prestidigitacao"
+    ],
+    "porque": "mexer nas coisas da dona diante dela é risco, haja ou não algo nos sacos",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A4"
+  },
+  {
+   "id": "E924",
+   "situacao": 2,
+   "cena": {
+    "lugar": "banca de grãos",
+    "quem": [],
+    "ao_toque": {
+     "sacos": []
+    }
+   },
+   "frase": "remexo os sacos da quitandeira procurando alguma coisa",
+   "esperado": {
+    "rola": false,
+    "categoria": "procurar",
+    "pericias": [],
+    "porque": "a dona não está e nos sacos não há nada: sem dado",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A4"
+  },
+  {
+   "id": "E925",
+   "situacao": 44,
+   "cena": {
+    "lugar": "fundos da estalagem",
+    "quem": [],
+    "ao_toque": {
+     "calha": [
+      "fragil"
+     ]
+    }
+   },
+   "frase": "escalo a calha até a janela de cima",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a calha é velha e cede sob o peso: cair é o preço",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A5"
+  },
+  {
+   "id": "E926",
+   "situacao": 44,
+   "cena": {
+    "lugar": "fundos da estalagem",
+    "quem": [],
+    "ao_toque": {
+     "calha": []
+    }
+   },
+   "frase": "escalo a calha até a janela de cima",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "a calha é firme, sem altura dita nem pressa: narrado",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A5"
+  },
+  {
+   "id": "E927",
+   "situacao": 44,
+   "cena": {
+    "lugar": "pátio do templo",
+    "quem": [],
+    "ao_toque": {
+     "treliça": [
+      "fragil"
+     ]
+    }
+   },
+   "frase": "escalo a treliça até a sacada",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a treliça range e se curva: rola",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A6"
+  },
+  {
+   "id": "E928",
+   "situacao": 44,
+   "cena": {
+    "lugar": "pátio do templo",
+    "quem": [],
+    "ao_toque": {
+     "treliça": []
+    }
+   },
+   "frase": "escalo a treliça até a sacada",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "treliça firme, sem altura nem pressa: narrado",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa",
+   "par": "P9A6"
+  },
+  {
+   "id": "E929",
+   "situacao": 44,
+   "cena": {
+    "lugar": "fundos da estalagem",
+    "quem": [],
+    "ao_toque": {
+     "calha": [
+      "fragil"
+     ]
+    }
+   },
+   "frase": "subo pela escada dos fundos até o sótão",
+   "esperado": {
+    "rola": false,
+    "categoria": "travessia",
+    "pericias": [],
+    "porque": "a escada é firme; a calha frágil ninguém tocou",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa"
+  },
+  {
+   "id": "E930",
+   "situacao": 44,
+   "cena": {
+    "lugar": "fundos da estalagem",
+    "quem": [],
+    "ao_toque": {
+     "calha": []
+    }
+   },
+   "frase": "escalo a calha, uns seis metros, até o beiral",
+   "esperado": {
+    "rola": true,
+    "categoria": "travessia",
+    "pericias": [
+     "atletismo"
+    ],
+    "porque": "a altura dita na frase é o perigo do próprio ato",
+    "base": "padrao"
+   },
+   "rodada": 9,
+   "metade": "A",
+   "origem": "etapa-3-coisa"
   }
  ],
  "rodada_2": {
@@ -20948,5 +21308,9 @@
  "rodada_8": {
   "data": "2026-11-21",
   "o_que_mudou": "A etapa 1 do «Mestre que conhece a cena» (o-mestre-vivo.md §21): 13 itens novos na metade A, que afina, com pares mínimos POR ALVO — a mesma frase, a mesma cena com duas coisas, e o estado de UMA coisa (o que já cedeu, o selado, a chave do herói, o que é dele, o que é comum) ora na coisa que a frase nomeia, ora na outra. A cena ganha `estados_de` (o estado de cada coisa ou pessoa pelo nome). E um item sem par: o sim de uma pessoa não cala a escalada do muro. Frases nossas, nenhuma de mesa real. B e C não foram tocadas."
+ },
+ "rodada_9": {
+  "data": "2026-11-21",
+  "o_que_mudou": "A etapa 3 do «Mestre que conhece a cena» (o-mestre-vivo.md §23): 14 itens novos na metade A, que afina. A cena ganha `ao_toque` — as coisas comuns do lugar (o cesto, as telhas, os barris, a calha, a treliça), com o estado de cada uma, que a régua só lê quando a frase as nomeia. Seis pares mínimos (há algo nesta coisa ou noutra; o dono olhando ou longe; a coisa frágil ou firme) e dois itens sem par (a escada firme ao lado da calha frágil; a altura dita na calha firme). Frases nossas, nenhuma de mesa real. B e C não foram tocadas."
  }
 }

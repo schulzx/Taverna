@@ -179,12 +179,17 @@ function estadosDe(lista, de) {
   return Object.freeze(vistos);
 }
 
+/* 21/11 (o-mestre-vivo.md §23): `toque` — a coisa AO TOQUE (o cesto, a
+   calha: o-que-ha-nas-coisas.js), cujas marcas a régua só lê quando a frase
+   a nomeia (aCenaQueAFraseToca). Só a coisa o carrega, e só quando é true:
+   a cena que não tem nenhuma sai daqui igual, chave a chave. */
 function seres(lista, de) {
   if (!Array.isArray(lista)) return Object.freeze([]);
   return Object.freeze(lista.filter(obj).map((x) => Object.freeze({
     nome: typeof x.nome === "string" ? x.nome : "",
     papel: typeof x.papel === "string" ? x.papel : "",
     estados: estadosDe(x.estados, de),
+    ...(de === "coisa" && x.toque === true ? { toque: true } : {}),
   })));
 }
 
@@ -365,6 +370,21 @@ export function coisasQueAFraseNomeia(frase, cena) {
   if (!c || typeof frase !== "string" || !frase.trim()) return Object.freeze([]);
   const t = " " + nrm(frase).replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ") + " ";
   return Object.freeze(c.coisas.filter((x) => palavrasDoNome(x.nome).some((w) => t.includes(" " + w + " ") || t.includes(" " + w + "s "))).map((x) => x.nome));
+}
+
+/* ---------------- A CENA QUE A FRASE TOCA (21/11/2026, o-mestre-vivo.md §23) ----------------
+   As perguntas da cena inteira (há o que achar? há perigo? falhar custa o
+   quê?) não podem ler as coisas AO TOQUE que a frase não nomeia: a calha
+   frágil da rua faria rolar toda escalada, e o cesto com moedas toda busca.
+   A cena vista pela frase é a mesma cena sem as coisas ao toque que ela não
+   nomeia; a cena sem nenhuma coisa ao toque volta como veio (a mesma
+   referência). Sem frase, nenhuma coisa ao toque fica. */
+export function aCenaQueAFraseToca(cena, frase) {
+  const c = lida(cena);
+  if (!c) return null;
+  if (!c.coisas.some((x) => x.toque)) return c;
+  const ditas = typeof frase === "string" ? coisasQueAFraseNomeia(frase, c) : [];
+  return Object.freeze({ ...c, coisas: Object.freeze(c.coisas.filter((x) => !x.toque || ditas.includes(x.nome))) });
 }
 
 /* Os estados que, ao aparecerem, chamam um teste — na ordem da tabela. */

@@ -15,6 +15,7 @@ import path from "node:path";
 import {
   A_FICHA_DA_CENA, aCoisaDaFrase, fichaDaCenaNaPauta, QUEM_NAO_ESTA, quemNaoEstaNaCena, pautaDeQuemNaoEsta, falaDeQuemNaoEsta,
   O_REGATEIO_NA_BANCA, oRegateioNaBanca, balcaoComPechincha, A_PROCURA_NA_COISA, procuraNaCoisaDeAlguem,
+  emOLugar, CONTRACAO_DO_EM,
 } from "../src/a-ficha-da-cena.js";
 import { compraSemQuemVenda, falaDaCompraSemQuemVenda, vetoDaCompraSemQuemVenda, COMPRA_SEM_QUEM_VENDA, FALA_DA_COMPRA_SEM_QUEM_VENDA, compraNaFrase, compraNaBanca } from "../src/bolsa-da-frase.js";
 import { retratoDosRefs } from "../src/o-mestre-vivo-no-jogo.js";
@@ -94,9 +95,18 @@ sec("4. quem não está");
   const aus = [{ nome: "Doran Pé-de-Ferro", onde: "a Forja Velha", morto: false }, { nome: "Malva", onde: "", morto: true }];
   const d = quemNaoEstaNaCena("Pergunto ao Doran se a ponte caiu", cena, { ausentes: aus });
   t("quem o sistema sabe noutro lugar: o nome e onde", !!d && d.nome === "Doran Pé-de-Ferro" && d.onde === "a Forja Velha", JSON.stringify(d));
-  t("a linha na tela diz onde", falaDeQuemNaoEsta(d) === "🧭 Doran Pé-de-Ferro não está aqui — está em a Forja Velha.");
+  /* MOVIDA em 21/11 (o-mestre-vivo.md §23), e o motivo: a asserção guardava
+     «está em a Forja Velha», o defeito que a etapa 3 consertou — o «em» contrai
+     com o artigo do lugar (emOLugar). A intenção é a mesma: a linha diz onde. */
+  t("a linha na tela diz onde", falaDeQuemNaoEsta(d) === "🧭 Doran Pé-de-Ferro não está aqui — está na Forja Velha.", falaDeQuemNaoEsta(d));
   const pd = pautaDeQuemNaoEsta(d);
-  t("a pauta: ACABOU DE diz que não está, e que nem ele nem outro responde no lugar (uma linha só)", pd.acabou[0].includes("não está aqui (está em a Forja Velha)") && pd.acabou[0].includes("nem Doran Pé-de-Ferro nem outra pessoa responde") && pd.naoPode.length === 0);
+  t("a pauta: ACABOU DE diz que não está, e que nem ele nem outro responde no lugar (uma linha só)", pd.acabou[0].includes("não está aqui (está na Forja Velha)") /* MOVIDA em 21/11 (§23): a contração, como acima */ && pd.acabou[0].includes("nem Doran Pé-de-Ferro nem outra pessoa responde") && pd.naoPode.length === 0);
+  /* 21/11 (§23): a preposição contrai com o artigo do lugar, qualquer caixa */
+  t("emOLugar: a/o/os/as contraem, sem artigo fica «em»", emOLugar("a Forja Velha") === "na Forja Velha" && emOLugar("O Malho") === "no Malho"
+    && emOLugar("os Arcos") === "nos Arcos" && emOLugar("As Termas") === "nas Termas" && emOLugar("Vau") === "em Vau" && emOLugar("") === "" && emOLugar(null) === "");
+  t("emOLugar: «a» só é artigo quando é palavra («Alto Negro» não contrai)", emOLugar("Alto Negro") === "em Alto Negro" && emOLugar("Ostra Azul") === "em Ostra Azul");
+  t("a tabela da contração cobre os quatro artigos", Object.keys(CONTRACAO_DO_EM).join(",") === "o,a,os,as");
+  t("sem onde, sem «está»", falaDeQuemNaoEsta({ nome: "Rui", onde: "" }) === "🧭 Rui não está aqui.");
   const mo = quemNaoEstaNaCena("Digo a Malva que voltei", cena, { ausentes: aus });
   t("o morto: morreu, sem onde", !!mo && mo.morto && falaDeQuemNaoEsta(mo).includes("morreu"));
   t("quem está na cena nunca é ausente", quemNaoEstaNaCena("Pergunto à Brisa o preço", cena, { ausentes: aus, conhecidos: ["Brisa"] }) === null);
@@ -137,6 +147,13 @@ sec("6. o regateio na banca");
   t("8+2 contra 12: não se mexeu — o mesmo preço, e a frase diz que continua", !!igual && igual.preco === igual.antes && igual.pauta.acabou[0].includes("continua"));
   const banca = oRegateioNaBanca("Pechincho a espada curta", { ...base, d20: 20, precoDepois: (b, it, aj) => (b ? Math.round(it.preco * aj) - 1 : null) });
   t("a coisa da banca: a banca dela, e o número exato vem da conta do App (precoDepois)", !!banca && banca.id === "geral|1" && banca.preco === Math.round(40 * (1 - PECHINCHA_GANHO * 1.5)) - 1);
+  /* 21/11 (§23): O REGATEIO SEM DADO — o degrau fixo da pechincha */
+  const semDado = oRegateioNaBanca("Regateio a corda", { ...base, d20: null, dc: null, semDado: true });
+  t("sem dado (o favor, o companheiro): o degrau fixo «aceitou baixar», o ganho da tabela", !!semDado && semDado.registro.ajuste === 1 - PECHINCHA_GANHO && semDado.registro.ok === true
+    && semDado.registro.texto === O_REGATEIO_NA_BANCA.semDado.texto && semDado.preco === Math.max(1, Math.round(KIT.preco * (1 - PECHINCHA_GANHO))), JSON.stringify(semDado && semDado.registro));
+  t("sem dado e sem a marca, nada (o d20 continua obrigatório no regateio que rolou)", oRegateioNaBanca("Regateio a corda", { ...base, d20: null }) === null);
+  t("sem dado também é um por banca por dia", oRegateioNaBanca("Regateio a corda", { ...base, semDado: true, pechinchas: { balcao: { dia: 3, ajuste: 0.88 } } }) === null);
+  t("sem dado só onde a frase é de preço", oRegateioNaBanca("Peço a corda emprestada", { ...base, semDado: true }) === null);
   t("uma por banca por dia, como no botão", oRegateioNaBanca("Regateio a corda", { ...base, d20: 15, pechinchas: { balcao: { dia: 3, ajuste: 0.88 } } }) === null
     && !!oRegateioNaBanca("Regateio a corda", { ...base, d20: 15, pechinchas: { balcao: { dia: 2, ajuste: 0.88 } } }));
   t("sem coisa na frase, a da frase anterior (o preço perguntado antes)", (oRegateioNaBanca("Faz mais barato?", { ...base, d20: 15, anterior: "Quanto custa a corda?" }) || {}).id === "balcao");

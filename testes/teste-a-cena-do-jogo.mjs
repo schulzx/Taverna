@@ -144,6 +144,8 @@ sec("2. cada linha da derivação, com um retrato que a acende e um que não");
     heroi_tem_alavanca: [com({ masmorra: PORTAO(true) }), com({ masmorra: PORTAO(false) }), "coisas", "o portão"],
     sem_resistencia: [com({ tentativas: { "largo do cereal|tranca|bau": { resultado: "sucesso" } } }), com({ tentativas: { "largo do cereal|tranca|bau": { resultado: "falha" } } }), "coisas", "bau"],
     do_heroi: [com({ heroi: { inventario: ["Gazua", { nome: "Corda de cânhamo" }] } }), com({ heroi: { inventario: [] } }), "coisas", "Gazua"],
+    /* 21/11 (§23): a firmeza do que se escala (o-que-ha-nas-coisas.js) */
+    fragil: [com({ lugar: { nome: "Mercado de Cordas" } }), com({ masmorra: MASMORRA({ tipo: "combate" }) }), "coisas", "a calha"],
     coisa_comum: [com({ chao: { cena: "x", itens: [{ nome: "Adaga enferrujada", raridade: "comum" }] } }), com({ chao: { cena: "x", itens: [{ nome: "Adaga enferrujada", raridade: "raro" }] } }), "coisas", "Adaga enferrujada"],
   };
   t("toda linha da derivação tem a sua prova", DERIVACAO_DA_CENA.every((l) => PROVAS[l.estado]), DERIVACAO_DA_CENA.filter((l) => !PROVAS[l.estado]).map((l) => l.estado).join(","));

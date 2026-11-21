@@ -1433,3 +1433,108 @@ veredito (o que vai ao Narrador, o que o sistema aplica) — e o exame mede o ve
   livro de tentativas os escreve hoje.
 - O regateio sem dado (o laço que deve: o favor, o companheiro) não aplica desconto: só o que rolou. Se a etapa 3
   quiser, `oRegateioNaBanca` aceita o d20 de uma faixa fixa.
+
+## 23. O Mestre que conhece a cena — etapa 3: o que há nas coisas, o que aguenta o peso, e a quest que só declara
+
+**21/11/2026.** A última etapa antes de uma sessão jogada. A quarta sessão viu três buscas passarem sem dado («sob as
+telhas», «atrás dos caixotes», «nos cestos») e uma escalada da calha sem veredito, e a régua estava certa pelo que
+sabia: procurar rola onde há o que achar, escalar rola onde o corpo arrisca — e o sistema não sabia nem uma coisa nem
+outra. Tudo continua atrás da chave (`?mestre=1`). Peça nova: `src/o-que-ha-nas-coisas.js`; suíte nova:
+`testes/teste-o-que-ha-nas-coisas.mjs` (9 secções).
+
+**1. Q1 — a quest só escreve estado.** *O que já estava feito:* as peças (`src/pecas/`) são a única parte da quest que
+pedia dado, e desde 19/11 ficam de fora com o Mestre vivo ligado (`pecasLigadas()` devolve falso); o quadro da quest
+(`aCartaDoTeste`, `aCartaDoGesto`) só lê o resultado do turno; o passo planta o segredo (`achadoDoPasso`) sem CD
+própria. Nenhum pedido direto de rolagem nem veredito fora da régua sobrou na biblioteca. *O que faltava:* a forma de
+declarar existia (`retrato.quest`), mas o App mandava `quest: {}` — nenhuma etapa declarava nada. Agora os passos
+declaram sozinhos, sem campo novo na biblioteca (`oQueAQuestDeclara`, `O_QUE_A_QUEST_DECLARA`, em
+`a-cena-do-jogo.js`): a pessoa de quem a etapa manda «arrancar o que sabe» (o predicado `consultou`) ou que a quest
+descreve como quem esconde («quem esconde Fulano») vira `esconde_algo`, se estiver em cena; o item que a quest faz
+nascer num lugar (`nasce`, o `guarda` do passo) entra em cena com `ha_algo_escondido` quando o herói está lá —
+nomeável pela frase, e o achado é o do passo, que já respondia à busca. Trancado, vigiado e selado: nenhuma etapa da
+biblioteca os diz, e nada foi inventado. A trava do §5 continua (a mesma ação sem os campos da quest sai igual).
+**Q2** (a prova jogada de «O Que Desce ao Anoitecer» de ponta a ponta) não é pequena nem do mesmo tipo: é uma sessão
+jogada inteira contra o portão do §8, e fica para depois desta.
+
+**2. O que há escondido nas coisas comuns** (`O_ESCONDIDO_NAS_COISAS`, `AS_COISAS_AO_TOQUE`). Cada tipo de lugar
+(os de `elenco-do-lugar.js`, mais `rua`, `interior` e `ermo`) tem três ou quatro coisas que um jogador revira (o
+mercado: os cestos, os caixotes, os sacos, a carroça; a rua: os caixotes, os telhados, as telhas, o poço…). Se uma
+coisa guarda algo, e o quê, sai **por semente**: o mundo + o lugar + o dia + a coisa (FNV-1a), a mesma em qualquer
+máquina. O achado sai de tabelas que já existem — moedas (2 a 8) ou um consumível comum de `pocoes.js` (ataduras,
+tochas, antídoto, sais) —, entra na bolsa **pelo sistema** e a coisa fica saqueada na base do mundo (`saquear`, a lista
+que já existia: o mesmo tipo de id, nada de campo novo). A busca na coisa nomeada chaveia o livro de tentativas por ela
+(`ctx.coisaDaBusca`, só com `chaveFina`): revirada, fica revirada sozinha, e as outras coisas do lugar continuam por
+revirar. A mão leve debaixo dos olhos do dono (a régua do §19) que passa sobre uma coisa com algo também paga.
+
+**A proporção, e o motivo.** 1 em 4 no mercado e nas docas (a coisa passa de mão em mão o dia inteiro); 1 em 5 na
+taverna e no interior; 0,15 na rua e no ermo, onde pouco se larga; 1 em 10 no resto (os lugares guardados, de culto e
+de ofício). Com três ou quatro coisas por lugar, quem revira coisa a coisa acha em média uma coisa pequena por lugar e
+por dia, e cada coisa paga uma vez; o valor fica abaixo do baú do ermo (`achavelAqui`, dezenas de moedas). A suíte mede
+de volta (4000 sorteios por tipo: mercado 0,252, rua 0,152, padrão 0,104).
+
+**As coisas AO TOQUE.** Escritas na cena como as outras, mas marcadas `toque` (`lerCena` guarda a marca só nelas). A
+régua lê a cena **que a frase toca** (`aCenaQueAFraseToca`, cena-do-momento.js): as coisas ao toque que a frase não
+nomeia saem das perguntas da cena inteira (há o que achar? há perigo? falhar custa o quê?). Sem isso, a calha frágil da
+rua faria rolar toda escalada e o cesto com moedas toda busca. A cena sem nenhuma coisa ao toque passa igual (a mesma
+referência) — é por isso que o exame antigo não mexeu. A busca geral («procuro pistas pelo mercado») não lê o que está
+nos cestos: o lugar inteiro só rola pelo achado do lugar (o de sempre). Nada disto vai à tela nem ao Narrador como
+lista: o jogador só descobre se há algo procurando.
+
+**3. A firmeza do que se escala** (`A_FIRMEZA_DO_QUE_SE_ESCALA`, `firmezaDe`). A calha, a treliça, a corda velha, o
+galho, o telhado de palha e o toldo são frágeis onde existem (por tipo de lugar), e entram na cena como coisa ao toque
+com `fragil` (marca `pune`): «escalo a calha» sem altura dita rola (`travessiaArriscada`). O degrau, a escada, o muro
+baixo e a parede de pedra nunca são frágeis — sem perigo nem pressa, não rolam. A altura dita continua perigo por si
+(`PERIGO_DECLARADO`). `fragil` saiu de `ESTADOS_SEM_FONTE` com a fonte escrita na derivação. *Nota:* o exame tem
+«dá pra eu subir no telhado pela calha?» (E365) e «subo pela calha do depósito» (E892) sem dado — nas cenas deles não há
+calha frágil, e continuam certos; no jogo, a calha da rua é frágil e rola.
+
+**4. O miúdo da etapa 2.** «está em a Forja Velha» → «está na Forja Velha» (`emOLugar`, `CONTRACAO_DO_EM`, em
+`a-ficha-da-cena.js`: em + o/a/os/as, qualquer caixa; sem artigo, «em Vau»). O regateio sem dado (o favor, o
+companheiro, o sim já dado: `dispostoCede`) baixa o preço pelo degrau fixo que a tabela da pechincha já tem —
+«aceitou baixar», `PECHINCHA_GANHO` (`O_REGATEIO_NA_BANCA.semDado`) —, uma por banca por dia, como o regateio que rola.
+
+**Com a chave desligada o jogo não muda:** a coisa ao toque da frase (`aCoisaAoToqueAgora`) devolve `null` sem a chave,
+e é por ela que passam o achado da busca, a chave do livro e o pagamento da mão leve; o retrato e a cena só correm com
+a chave; `coisaDaBusca` só é lido com `chaveFina`; o pagamento `especie: "coisa"` só existe se a coisa ao toque deu o
+achado; o regateio sem dado mora no `acontecerSemDado`, onde só o Mestre vivo chega. O `achadoDe` recebe a frase como
+segundo argumento, que os de sempre ignoram (provado na suíte). O Mestre de hoje do exame ficou igual em todos os itens
+antigos de A e B.
+
+### 23.1 A medida
+
+| | antes | depois |
+|---|---|---|
+| régua, metade A (503, com 14 itens novos, rodada 9) | 458 · 2 · 29 · cat 384 · per 226 · pares 109 (das 489) | **472 · 2 · 29 · cat 398 · per 233 · pares 115** |
+| … só as 489 que já eram da A | 458 · 2 · 29 | **igual** |
+| régua, metade B | 157 · 7 · 32 · cat 119 · per 53 · pares 53 | **igual** |
+| hoje, metade A | 300 · 60 · 129 | 307 · 67 · 129 (só pelos 14 novos: o de hoje rola toda busca e toda escalada) |
+| **régua, metade C (medida uma vez, no fim)** | 103 · 1 · 20 · cat 83 · per 37 · pares 18 | **igual** |
+| hoje, metade C | 72 · 19 · 33 | igual |
+
+A C não mexeu, e era o que se esperava: ela não tem coisa ao toque, e a cena sem nenhuma passa pela régua igual. O
+ganho desta etapa está no jogo (a cena do jogo agora tem as coisas), que o exame não mede — por isso a sessão jogada.
+Uma suíte antiga mudou de âncora com o motivo escrito: `teste-mc-fiacao` (o ramo da coisa entre o do passo e o do baú);
+e duas asserções de `teste-a-ficha-da-cena` guardavam o defeito «está em a Forja Velha».
+
+Os 14 itens novos (origem `etapa-3-coisa`) são seis pares mínimos — há algo nesta coisa ou noutra (cestos/caixotes,
+telhas, barris), a dona olhando ou longe (os sacos da quitandeira), a calha e a treliça frágeis ou firmes — e dois sem
+par (a escada firme ao lado da calha frágil; a altura dita na calha firme). A cena do exame ganhou `ao_toque`. Frases
+nossas. *Achado de passagem:* «remexo os sacos da vendedora…» não chega ao catálogo — `buscar` recua diante de
+«vendedor» (é a guarda contra «procuro o vendedor») —, e o par usa «quitandeira»; o recuo do catálogo diante de um dono
+dito pelo ofício fica anotado, não mexido.
+
+### 23.2 O que não foi verificado
+
+- Nada disto foi jogado. Não se viu na tela o «🧺 … na sua bolsa», nem a calha rolando, nem a busca vazia narrada.
+- A busca vazia sem dado ainda gasta os minutos do desafio (como toda ação sem dado do Mestre vivo); «sem custo» aqui é
+  sem risco nem falha.
+- O achado da coisa usa o dia do mundo: a mesma coisa pode guardar algo de novo noutro dia (outro id). É de propósito
+  (o mercado muda), e a proporção é a de um dia.
+- O Narrador não recebe a lista das coisas ao toque; a frase que nomeia uma coisa que o lugar não tem («a calha» numa
+  forja) não acha nada e não rola.
+
+### 23.3 O que a sessão jogada deve olhar
+
+Revirar coisa a coisa num mercado e numa taverna (umas rolam, outras não, e o jogador não sabe antes); o achado entrar
+na bolsa uma vez só; a calha e a treliça rolando, a escada não; a dona olhando fazendo rolar a revista vazia; o
+«está na…» da linha de quem não está; o regateio com o companheiro baixando o preço sem dado.

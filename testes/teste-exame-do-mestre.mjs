@@ -90,7 +90,14 @@
    «etapa-1-alvo»): seis pares com a mesma frase e a mesma cena de duas
    coisas, o estado ora na que a frase nomeia, ora na outra — a cena do
    exame ganhou `estados_de` (cenaDoExame) —, e um item sem par. A B e a C
-   não foram tocadas; a C foi medida uma vez, no fim. */
+   não foram tocadas; a C foi medida uma vez, no fim.
+
+   RODADA 9 (21/11/2026) — AS COISAS AO TOQUE. A etapa 3 (o-mestre-vivo.md
+   §23): o cesto, as telhas, os barris, a calha e a treliça entram na cena
+   como coisas ao toque (`ao_toque`, cenaDoExame), lidas só pela frase que as
+   nomeia. 14 itens na A (origem «etapa-3-coisa»): seis pares — há algo
+   nesta coisa ou noutra, o dono olhando ou longe, frágil ou firme — e dois
+   sem par. A B e a C não foram tocadas. */
 import fs from "node:fs";
 import { lerAcao, DESAFIOS } from "../src/desafios.js";
 import { ehDeclaracaoDeAtaque } from "../src/agressao.js";
@@ -186,7 +193,14 @@ const CATRACA_DO_EXAME = {
        a cena, erra neles o que um Mestre sem cena erra (5 indevidos, 1
        omissão). Nas 476 frases que já eram da A ele não mudou em nenhuma
        (conferido item a item). Era 293 · 55 · 128 · cat 229 · per 125 · pares 3. */
-    A: { rolaCerto: 300, pedeIndevido: 60, deixaDePedir: 129, categoria: 240, pericia: 131, paresQueSeparam: 3 },
+    /* MOVIDA de novo em 21/11/2026 (a etapa 3 do «Mestre que conhece a
+       cena», o-mestre-vivo.md §23), e o motivo: 14 itens das coisas ao toque
+       entraram na A (origem «etapa-3-coisa», rodada 9). O Mestre de hoje não
+       lê a cena: rola toda busca e toda escalada que o catálogo ouve, e erra
+       nas metades «não há nada nesta coisa» e «firme» (7 indevidos). Nas 489
+       frases que já eram da A ele não mudou (a fiação nova só corre com a
+       chave). Era 300 · 60 · 129 · cat 240 · per 131 · pares 3. */
+    A: { rolaCerto: 307, pedeIndevido: 67, deixaDePedir: 129, categoria: 253, pericia: 137, paresQueSeparam: 3 },
     B: { rolaCerto: 101, pedeIndevido: 31, deixaDePedir: 64, categoria: 70, pericia: 26, paresQueSeparam: 1 },
     /* NASCEU na rodada 6 (21/11/2026): a primeira medida da C, antes de
        qualquer conserto (o-mestre-vivo.md §20). */
@@ -221,7 +235,11 @@ const CATRACA_DO_EXAME = {
        alvo (13 de 13; com a régua de antes, 6 de 13 — ela lia a marca na
        cena inteira). Nas 476 que já eram da A, nenhum item mudou. A B ficou
        igual, item a item. Era 445 · 2 · 29 · cat 371 · per 219 · pares 103. */
-    A: { rolaCerto: 458, pedeIndevido: 2, deixaDePedir: 29, categoria: 384, pericia: 226, paresQueSeparam: 109 },
+    /* SUBIU em 21/11/2026 (a etapa 3, §23), só para cima: os 14 itens das
+       coisas ao toque (14 de 14). Nas 489 que já eram da A, nenhum item mudou
+       (o exame não tinha coisa ao toque, e a cena sem nenhuma passa pela régua
+       igual). A B ficou igual. Era 458 · 2 · 29 · cat 384 · per 226 · pares 109. */
+    A: { rolaCerto: 472, pedeIndevido: 2, deixaDePedir: 29, categoria: 398, pericia: 233, paresQueSeparam: 115 },
     /* DESCEU em 19/11/2026 (§19), e o motivo fica escrito: a rodada da
        terceira sessão custou UMA frase da B, que passou a pedir dado onde a
        mesa não pede (157 · 7 · pares 53; era 158 · 6 · 54). Não se sabe qual:
@@ -426,6 +444,13 @@ function cenaDoExame(c) {
     const estados = (Array.isArray(lista) ? lista : []).filter((k) => !!estadoPorId(k));
     if (ser) ser.estados.push(...estados.filter((k) => !ser.estados.includes(k)));
     else coisas.push({ nome, estados });
+  }
+  /* rodada 9 (21/11/2026, o-mestre-vivo.md §23): `ao_toque` — as coisas
+     comuns do lugar (o cesto, a calha), com o estado de cada uma, que a régua
+     só lê quando a frase as nomeia (cena-do-momento.js: aCenaQueAFraseToca).
+     É a forma que a cena do jogo lhes dá (o-que-ha-nas-coisas.js). */
+  for (const [nome, lista] of Object.entries(c.ao_toque && typeof c.ao_toque === "object" ? c.ao_toque : {})) {
+    coisas.push({ nome, estados: (Array.isArray(lista) ? lista : []).filter((k) => !!estadoPorId(k)), toque: true });
   }
   return { pessoas, criaturas, coisas, cena: { estados: daCena } };
 }

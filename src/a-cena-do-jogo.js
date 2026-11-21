@@ -47,6 +47,7 @@ import { noLugarDoPasso } from "./a-quest-manda.js";
 import { QUEM_FALA } from "./encontro-na-estrada.js";
 import { DORMINDO } from "./gente-por-dentro.js";
 import { periciaPorId } from "./pericias.js";
+import { asCoisasAoToque } from "./o-que-ha-nas-coisas.js";
 
 const obj = (x) => !!x && typeof x === "object" && !Array.isArray(x);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -133,12 +134,58 @@ export const FORMA_DO_RETRATO = Object.freeze({
   tentativas: "tentativasRef.current — o livro de tentativas (desafios.js: registrarTentativa), chaveado pelo lugar do contexto do desafio",
   passos: "passosDasQuestsAgora() — os passos ativos (a quest)",
   onde: "ondeDoPasso() — { lugar, dentroDe, cidade, foraDosMuros } (a quest)",
-  quest: "{ esconde: [nomes], trancado: [coisas], vigiado: [coisas], selado: [coisas] } — o que a etapa ativa declara (a quest; campo novo, que nenhuma etapa declara ainda)",
+  quest: "{ esconde: [nomes], trancado: [coisas], vigiado: [coisas], selado: [coisas], escondido: [coisas] } — o que a etapa ativa declara além do que os passos já dizem (a quest; desde 21/11, §23, os passos declaram sozinhos quem esconde e o que se guarda: oQueAQuestDeclara)",
+  /* 21/11 (o-mestre-vivo.md §23): o árbitro das coisas ao toque (o-que-ha-nas-coisas.js) */
+  semente: "sementeMundo() — a semente do mundo: o que há escondido numa coisa é decidido por ela, pelo lugar, pelo dia e pela coisa",
+  dia: "diaRef.current — o dia do mundo",
+  saqueados: "baseMundoRef.current.saqueados — o que já se achou (mundo-base.js: saquear): a coisa revirada não guarda mais nada",
 });
 export const ONDE_DO_RETRATO = Object.freeze(["lugar", "cidade", "jornada", "masmorra", "encontro"]);
 /* os campos que são da quest: tirá-los do retrato nunca pode mudar o
    chamado quando a cena que sai é a mesma (a trava de §5) */
 export const CAMPOS_DA_QUEST = Object.freeze(["passos", "onde", "quest"]);
+
+/* ---------------- O QUE A QUEST DECLARA (21/11/2026, o-mestre-vivo.md §23 — Q1) ----------------
+   A quest só escreve estado, nunca pede dado. Até aqui a etapa podia
+   declarar (`retrato.quest`), mas nenhuma declarava: o campo vinha vazio do
+   App. Os passos ativos (a-quest-manda.js: oPassoDaQuest) já dizem o
+   bastante para duas declarações, e elas saem daqui, sem campo novo na
+   biblioteca:
+     `esconde`: a pessoa do passo de quem a etapa pede ARRANCAR o que sabe
+       (o predicado «consultou», condicoes-da-quest.js — «arrancar o que X
+       sabe») ou que a quest descreve como quem esconde («quem esconde
+       Fulano», o rótulo do papel). Vira `esconde_algo` na pessoa, se ela
+       estiver em cena;
+     `escondido`: o que a quest faz nascer num lugar do passo (`nasce`, o
+       `guarda` do passo), quando o herói está nesse lugar — a coisa entra
+       em cena com `ha_algo_escondido`, nomeável pela frase («procuro a
+       página arrancada»). O achado é o do passo (achadoDoPasso), que já
+       responde a busca.
+   Trancado, vigiado e selado: nenhuma etapa da biblioteca os diz hoje — a
+   forma continua aberta em `retrato.quest`, e nada é inventado. */
+export const O_QUE_A_QUEST_DECLARA = Object.freeze({
+  esconde: Object.freeze({ predicados: Object.freeze(["consultou"]), rotulo: /\bescond/ }),
+});
+export function oQueAQuestDeclara(passos, onde) {
+  const esconde = [], escondido = [];
+  try {
+    const D = O_QUE_A_QUEST_DECLARA;
+    const poe = (lista, n) => { const x = txt(n); if (x && !lista.some((y) => mesmo(y, x))) lista.push(x); };
+    for (const p of arr(passos)) {
+      if (!obj(p)) continue;
+      for (const c of arr(obj(p.candidatos) ? p.candidatos.pessoa : null)) {
+        if (obj(c) && (D.esconde.predicados.includes(c.predicado) || D.esconde.rotulo.test(sem(c.rotulo)))) poe(esconde, c.nome);
+      }
+      if (!obj(onde)) continue;
+      for (const l of arr(p.lugares)) {
+        let aqui = false;
+        try { aqui = obj(l) && !!txt(l.guarda) && noLugarDoPasso(l, onde); } catch { aqui = false; }
+        if (aqui) poe(escondido, l.guarda);
+      }
+    }
+  } catch { /* o que já se juntou */ }
+  return Object.freeze({ esconde: Object.freeze(esconde), escondido: Object.freeze(escondido) });
+}
 
 const idDoClima = (c) => sem(obj(c) ? (c.id || c.rotulo) : c);
 const idsDeCondicao = (lista) => arr(lista).map((c) => sem(typeof c === "string" ? c : obj(c) ? c.id : "")).filter(Boolean);
@@ -170,7 +217,15 @@ function lerRetrato(s) {
     heroi: obj(s.heroi) ? s.heroi : {},
     passos: arr(s.passos).filter(obj),
     onde: obj(s.onde) ? s.onde : null,
-    quest: obj(s.quest) ? s.quest : {},
+    /* 21/11 (§23, Q1): o que a etapa declara, somado ao que os passos dizem */
+    quest: (() => {
+      const q0 = obj(s.quest) ? s.quest : {};
+      const qd = oQueAQuestDeclara(arr(s.passos).filter(obj), obj(s.onde) ? s.onde : null);
+      return { ...q0, esconde: [...arr(q0.esconde), ...qd.esconde], escondido: [...arr(q0.escondido), ...qd.escondido] };
+    })(),
+    /* 21/11 (§23): as coisas ao toque do lugar (o cesto, a calha), com o que
+       guardam e o que é frágil — o-que-ha-nas-coisas.js */
+    aoToque: asCoisasAoToque({ semente: s.semente, lugar, cidade, jornada, masmorra: mm, dia: num(s.dia), saqueados: arr(s.saqueados) }),
     /* 21/11 (§21): o que é do herói, o que está no chão, e o livro de
        tentativas deste lugar (a chave do livro começa pelo lugar do contexto
        do desafio: o nome do lugar, ou a cidade, ou «ermo») */
@@ -283,8 +338,11 @@ export const DERIVACAO_DA_CENA = Object.freeze([
   L("vigiado", "coisa", "o que a etapa da quest declara vigiado (o mundo ainda não guarda a ronda)", (R) => nomesDaQuest(R, "vigiado")),
   L("armadilhado", "coisa", "a sala de armadilha da masmorra que não disparou, ou o segredo da sala que é perigo e não foi visto (masmorras.js)",
     (R) => ((R.sala && R.sala.tipo === "armadilha" && R.sala.resolvida !== true && !R.sala.disparou) || (segredoDaSala(R) && segredoDaSala(R).perigo) ? ["a sala"] : [])),
-  L("ha_algo_escondido", "coisa", "o achado do lugar ou do passo (achadoDe, a pergunta que o catálogo já faz), ou o segredo da sala da masmorra ainda não revelado",
-    (R) => (R.achado || (segredoDaSala(R) && !segredoDaSala(R).perigo) ? ["o lugar"] : [])),
+  L("ha_algo_escondido", "coisa", "o achado do lugar ou do passo (achadoDe, a pergunta que o catálogo já faz), ou o segredo da sala da masmorra ainda não revelado; o que a quest faz nascer no lugar onde o herói está (oQueAQuestDeclara: escondido); e, desde 21/11 (§23), a coisa ao toque que guarda algo, pela semente do mundo, do lugar, do dia e da coisa (o-que-ha-nas-coisas.js: O_ESCONDIDO_NAS_COISAS)",
+    (R) => [...(R.achado || (segredoDaSala(R) && !segredoDaSala(R).perigo) ? ["o lugar"] : []), ...nomesDaQuest(R, "escondido"),
+      ...R.aoToque.filter((c) => c.estados.includes("ha_algo_escondido")).map((c) => c.nome)]),
+  L("fragil", "coisa", "a coisa ao toque que range e cede sob o peso, por palavra e por tipo de lugar — a calha, a treliça, a corda velha, o galho, o telhado de palha, o toldo (o-que-ha-nas-coisas.js: A_FIRMEZA_DO_QUE_SE_ESCALA); o degrau, a escada e o muro baixo nunca",
+    (R) => R.aoToque.filter((c) => c.estados.includes("fragil")).map((c) => c.nome)),
   L("escuro", "coisa", "a masmorra sem tochas (masmorras.js: noEscuro), ou a noite ao ar livre (calendario.js: ehNoite)",
     (R) => ((R.mm ? noEscuro(R.mm) : R.aoArLivre && R.noite) ? ["o lugar"] : [])),
   L("escorregadio", "coisa", "o céu que molha (CLIMAS: chuva, tempestade, granizo), ao ar livre", (R) => (R.aoArLivre && R_.climaQueMolha.includes(R.clima) ? ["o chão"] : [])),
@@ -333,7 +391,6 @@ export const ESTADOS_SEM_FONTE = Object.freeze([
   S("faminta", "o bestiário e o encontro não guardam o apetite da criatura"),
   S("acuada", "nada no jogo guarda que a criatura está sem saída"),
   S("mansa", "nada no jogo guarda o bicho manso (a montaria, o cão da casa)"),
-  S("fragil", "o mundo não guarda a firmeza do que se pisa ou se segura"),
   S("suspeito", "o mundo não marca a coisa que destoa; o achado já entra como «algo escondido»"),
   S("raro_de_achar", "é da coisa que a frase PROCURA, e o que se procura não está em cena: a cena sai do retrato antes da frase. O mercado guarda o que a banca tem (mercado.js) — o que tem está à mão, não é raro de achar; nenhuma tabela diz o que falta num lugar"),
   S("a_vista", "o jogo não guarda o que a narração já mostrou; a régua já leria a marca na coisa nomeada, mas falta quem a escreva"),
@@ -369,6 +426,15 @@ export function cenaDoJogo(retrato) {
         if (c) { if (!c.estados.includes(l.estado)) c.estados.push(l.estado); }
         else coisas.push({ nome, estados: [l.estado] });
       }
+    }
+    /* 21/11 (§23): as coisas ao toque — todas em cena (as vazias também:
+       são nomeáveis, e a busca nelas devolve o vazio sem dado), marcadas
+       `toque`, por último; a régua só lê as marcas delas pela frase que as
+       nomeia (cena-do-momento.js: aCenaQueAFraseToca) */
+    for (const t of R.aoToque) {
+      const c = coisas.find((x) => mesmo(x.nome, t.nome));
+      if (c) c.toque = true;
+      else coisas.push({ nome: t.nome, estados: [], toque: true });
     }
     /* 21/11 (§21): o lugar está sempre em cena (sem linha que o escreva, logo depois da porta) */
     if (!coisas.some((x) => mesmo(x.nome, R_.coisaDaAcao))) coisas.splice(coisas.length && mesmo(coisas[0].nome, "porta") ? 1 : 0, 0, { nome: R_.coisaDaAcao, estados: [] });

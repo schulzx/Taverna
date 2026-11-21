@@ -37,7 +37,7 @@ import { lerCena, coisasQueAFraseNomeia } from "./cena-do-momento.js";
 import { REGRAS_DA_CENA_DO_JOGO } from "./a-cena-do-jogo.js";
 import { familiaDaAcao, nomeAusenteNaFrase, MOTIVO_PARA_NEGAR_DO_ALVO } from "./motor/a-regua-do-momento.js";
 import { CHAVE_FINA_PELO_ALVO } from "./desafios.js";
-import { pechinchar } from "./comercio.js";
+import { pechinchar, PECHINCHA_GANHO } from "./comercio.js";
 import { nomeiaACoisa } from "./economia.js";
 import { MANTIMENTO_NA_FRASE } from "./bolsa-da-frase.js";
 
@@ -148,13 +148,27 @@ export const QUEM_NAO_ESTA = Object.freeze({
   /* uma linha só, em ACABOU DE: o «ninguém responde no lugar» já é o veto (um
      NÃO PODE ao lado repetia-o e custava ~90 caracteres do teto) */
   acabou: "Chamei {nome}, que não está aqui{onde}: nem {nome} nem outra pessoa responde no lugar.",
-  onde: " (está em {onde})",
+  /* 21/11 (§23): «{emOnde}» é o lugar com a preposição contraída
+     (emOLugar: «na Forja Velha», «no Malho», «em Vau») — era «está em a
+     Forja Velha» */
+  onde: " (está {emOnde})",
   morto: " (morreu)",
   tela: "🧭 {nome} não está aqui{onde}.",
-  telaOnde: " — está em {onde}",
+  telaOnde: " — está {emOnde}",
   telaMorto: " — morreu",
 });
 const primeiro = (n) => limpo(n).split(/[\s,()]+/).filter(Boolean)[0] || "";
+/* ---------------- A PREPOSIÇÃO DO LUGAR (21/11/2026, §23) ----------------
+   «em» + o artigo do nome contrai: «a Forja Velha» → «na Forja Velha», «O
+   Malho» → «no Malho», «os Arcos» → «nos Arcos»; sem artigo, «em Vau». O
+   artigo é o do começo do nome, maiúsculo ou não; o resto fica como veio. */
+export const CONTRACAO_DO_EM = Object.freeze({ o: "no", a: "na", os: "nos", as: "nas" });
+export function emOLugar(nome) {
+  const n = txt(nome);
+  if (!n) return "";
+  const m = n.match(/^(o|a|os|as)\s+(\S.*)$/i);
+  return m ? `${CONTRACAO_DO_EM[m[1].toLowerCase()]} ${m[2]}` : `em ${n}`;
+}
 export function quemNaoEstaNaCena(frase, cena, ctx) {
   try {
     const c = obj(ctx) ? ctx : {};
@@ -173,7 +187,7 @@ export function quemNaoEstaNaCena(frase, cena, ctx) {
 export function pautaDeQuemNaoEsta(a) {
   if (!obj(a) || !txt(a.nome)) return null;
   const Q = QUEM_NAO_ESTA;
-  const onde = a.morto ? Q.morto : txt(a.onde) ? Q.onde.replace("{onde}", txt(a.onde)) : "";
+  const onde = a.morto ? Q.morto : txt(a.onde) ? Q.onde.replace("{emOnde}", emOLugar(a.onde)) : "";
   return Object.freeze({
     acabou: [Q.acabou.replaceAll("{nome}", txt(a.nome)).replace("{onde}", onde)],
     naoPode: [],
@@ -182,7 +196,7 @@ export function pautaDeQuemNaoEsta(a) {
 export function falaDeQuemNaoEsta(a) {
   if (!obj(a) || !txt(a.nome)) return "";
   const Q = QUEM_NAO_ESTA;
-  const onde = a.morto ? Q.telaMorto : txt(a.onde) ? Q.telaOnde.replace("{onde}", txt(a.onde)) : "";
+  const onde = a.morto ? Q.telaMorto : txt(a.onde) ? Q.telaOnde.replace("{emOnde}", emOLugar(a.onde)) : "";
   return Q.tela.replace("{nome}", txt(a.nome)).replace("{onde}", onde);
 }
 
@@ -206,6 +220,12 @@ export const O_REGATEIO_NA_BANCA = Object.freeze({
   naoPode: "dar a {coisa} outro preço que não ◉ {preco}",
   telaMudou: "🤝 {coisa}: ◉ {antes} → ◉ {preco}.",
   telaIgual: "🤝 {coisa} continua a ◉ {preco}.",
+  /* 21/11 (§23): O REGATEIO SEM DADO. Com quem deve ao herói (o favor, o
+     companheiro, o sim já dado), a régua não rola (dispostoCede) — e o
+     desconto não saía. Sai o degrau fixo que a tabela da pechincha já tem:
+     «aceitou baixar», PECHINCHA_GANHO (comercio.js). Nunca o «cedeu mais»,
+     que é do dado alto; nunca a ofensa, que é do dado baixo. */
+  semDado: Object.freeze({ ok: true, ajuste: 1 - PECHINCHA_GANHO, texto: "aceitou baixar" }),
 });
 function coisaDoRegateio(frase, bancas, balcao) {
   const t = limpo(frase);
@@ -227,7 +247,8 @@ export function oRegateioNaBanca(frase, opcoes) {
     const o = obj(opcoes) ? opcoes : {};
     if (typeof frase !== "string" || !MOTIVO_PARA_NEGAR_DO_ALVO.preco.test(limpo(frase))) return null;
     const d20 = num(o.d20), bonus = num(o.bonus) || 0, dc = num(o.dc);
-    if (d20 == null || d20 < 1 || d20 > 20 || dc == null) return null;
+    const semDado = o.semDado === true;
+    if (!semDado && (d20 == null || d20 < 1 || d20 > 20 || dc == null)) return null;
     const bancas = arr(o.bancas).filter((b) => obj(b) && txt(b.id));
     const balcao = arr(o.balcao).filter(obj);
     const alvo = coisaDoRegateio(frase, bancas, balcao) || coisaDoRegateio(txt(o.anterior), bancas, balcao);
@@ -235,7 +256,7 @@ export function oRegateioNaBanca(frase, opcoes) {
     const ja = obj(o.pechinchas) ? o.pechinchas[alvo.id] : null;
     if (obj(ja) && ja.dia === o.dia) return null;
     /* o d20 que já caiu: a sorte devolve a face dele */
-    const r = pechinchar({ bonus, dificuldade: dc, sorte: () => (d20 - 0.5) / 20 });
+    const r = semDado ? O_REGATEIO_NA_BANCA.semDado : pechinchar({ bonus, dificuldade: dc, sorte: () => (d20 - 0.5) / 20 });
     const antes = alvo.preco;
     let preco = Math.max(1, Math.round(antes * r.ajuste));
     if (typeof o.precoDepois === "function") { try { const p = num(o.precoDepois(alvo.banca, alvo.item, r.ajuste)); if (p != null) preco = p; } catch { /* a conta de sempre */ } }

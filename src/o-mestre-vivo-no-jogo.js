@@ -75,7 +75,9 @@ export function lerAChaveDoMestreVivo(storage, busca) {
      grupo, inimigos, encontro, masmorra, achado (bool), segredos,
      favorAqui (bool), relogios, condicoes (do herói), passos, onde, quest;
      21/11 (o-mestre-vivo.md §21): inventario (os nomes do que é do herói:
-     o inventário e o equipado), chao (chaoRef) e tentativas (o livro).
+     o inventário e o equipado), chao (chaoRef) e tentativas (o livro);
+     21/11 (§23): semente, dia e saqueados (a base do mundo) — o árbitro do
+     que há escondido nas coisas ao toque.
    Devolve o retrato com as chaves de FORMA_DO_RETRATO (nenhuma outra), ou
    null quando nada diz onde o herói está (ONDE_DO_RETRATO). */
 const DE_ONDE_DO_POSTO = "sitio";
@@ -122,6 +124,10 @@ export function retratoDosRefs(v) {
       passos: arr(v.passos).filter(obj),
       onde: obj(v.onde) ? v.onde : null,
       quest: obj(v.quest) ? v.quest : {},
+      /* 21/11 (o-mestre-vivo.md §23): o árbitro das coisas ao toque */
+      semente: txt(String(v.semente == null ? "" : v.semente)),
+      dia: num(v.dia),
+      saqueados: arr(v.saqueados).filter((x) => typeof x === "string"),
     };
     /* só as chaves da forma: o retrato não ganha campo que a cena não lê */
     for (const k of Object.keys(r)) if (!(k in FORMA_DO_RETRATO)) delete r[k];

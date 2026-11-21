@@ -223,6 +223,8 @@ import { ehProcura, procuraDeGente, nomeProcurado, papelProcurado, procurarPesso
 import { leituraDaPessoa, envelopeDaLeitura } from "./leitura-de-pessoa.js";
 import { compraNaFrase, compraNaBanca, falaDaCompra, envelopeDaCompra, vetoDaCompra, balcaoParaPauta, dadivaNaFrase, falaDaDadiva, envelopeDaDadiva, vetoDaDadiva, mochilaDepoisDaDadiva, MARCA_DA_DADIVA, compraSemQuemVenda, falaDaCompraSemQuemVenda, vetoDaCompraSemQuemVenda } from "./bolsa-da-frase.js";
 import { fichaDaCenaNaPauta, quemNaoEstaNaCena, falaDeQuemNaoEsta, oRegateioNaBanca, balcaoComPechincha, procuraNaCoisaDeAlguem, O_REGATEIO_NA_BANCA } from "./a-ficha-da-cena.js";
+import { aCoisaAoToqueDaFrase, oQueOAchadoDa, telaDoAchadoNaCoisa, envelopeDoAchadoNaCoisa } from "./o-que-ha-nas-coisas.js";
+import { coisasQueAFraseNomeia } from "./cena-do-momento.js";
 import { lerOPedido, fioDaHistoria, garantirEscuta } from "./escuta.js";
 /* a campanha que prende (11/10, v9.386–v9.392): as promessas do Narrador cobradas, o fecho variado e os fios das viagens */
 import { garantirPrometido, guardarSementes, pagarSementes, abertasParaOCronista, SECAO_DO_CRONISTA } from "./prometido.js";
@@ -18228,6 +18230,11 @@ export default function Taverna() {
          acontece e o esconderijo continua lá para a próxima tentativa. */
       if (passou && r.achado && r.achado.especie === "passo") {
         /* MC5: o segredo do passo não paga moedas nem saqueia a base — o facto já leva a pista */
+      } else if (passou && r.achado && r.achado.especie === "coisa") {
+        /* 21/11 (o-mestre-vivo.md §23): o achado de uma coisa ao toque — pequeno
+           e da tabela (o-que-ha-nas-coisas.js), nunca a conta do baú */
+        const pg = pagarOAchadoDaCoisa(r.achado, persT);
+        if (pg.env) { persT = pg.pers; personagemRef.current = persT; setPersonagem(persT); env = `${pg.env}\n${env}`; }
       } else if (passou && r.achado) {
         const rec = recompensaDoAchado(r.achado);
         const extras = [];
@@ -18264,6 +18271,18 @@ export default function Taverna() {
             env = `${env}\n[O QUE O CARTAZ PROCURAVA — ENTREGUE PELO SISTEMA] Entre o que achei está "${doCartaz.item}": já está na minha bolsa. Use exatamente esse nome.`;
           }
         } catch (e) { calou("NE4 · o objeto do cartaz", e); }
+      }
+      /* 21/11 (o-mestre-vivo.md §23): a mão leve que revirou, debaixo dos olhos
+         do dono, uma coisa ao toque que guardava algo — passou, e o achado é do
+         herói, pelo sistema. Só o Mestre vivo. */
+      if (passou && des && des.id === "bater_carteira" && !r.achado && mestreVivoLigado()) {
+        try {
+          const ct = aCoisaAoToqueAgora(r.frase || "");
+          if (ct && ct.achado) {
+            const pg = pagarOAchadoDaCoisa(ct.achado, persT);
+            if (pg.env) { persT = pg.pers; personagemRef.current = persT; setPersonagem(persT); env = `${pg.env}\n${env}`; }
+          }
+        } catch (e) { calou("Mestre vivo · o achado da mão leve", e); }
       }
       /* ---------------- O BRILHO (v9.71) ----------------
          O outro lado do dado, e ele nunca existiu: 12 contra 11 e 25 contra
@@ -18356,6 +18375,33 @@ export default function Taverna() {
     } catch (e) { calou("MC5 · os passos das quests", e); return []; }
   };
   const ondeDoPasso = () => ({ ...ondeSeProcura(), cidade: cidadeAtualRef.current || "" });
+  /* 21/11 (o-mestre-vivo.md §23): A COISA AO TOQUE DA FRASE. Só o Mestre vivo:
+     a coisa comum do lugar que a frase nomeia (o-que-ha-nas-coisas.js), e o
+     que a semente pôs nela. Desligado, null — e tudo segue como hoje. */
+  const aCoisaAoToqueAgora = (frase) => {
+    try {
+      if (!mestreVivoLigado()) return null;
+      return aCoisaAoToqueDaFrase(String(frase || ""), {
+        semente: sementeMundo(), lugar: lugarRef.current, cidade: cidadeAtualRef.current || "", jornada: !!jornadaRef.current,
+        masmorra: masmorraRef.current, dia: diaRef.current, saqueados: ((baseMundoRef.current || {}).saqueados) || [],
+      }, coisasQueAFraseNomeia);
+    } catch (e) { calou("Mestre vivo · a coisa ao toque da frase", e); return null; }
+  };
+  /* o achado da coisa entra na bolsa pelo sistema (nunca pela narração), e a
+     coisa fica revirada na base do mundo (saquear: não paga duas vezes).
+     → { pers, env } — a ficha nova e o envelope de um turno */
+  const pagarOAchadoDaCoisa = (achado, base) => {
+    try {
+      const g = oQueOAchadoDa(achado);
+      if (!g) return { pers: base, env: "" };
+      let p = base;
+      if (g.consumivel) p = { ...p, inventario: [...(p.inventario || []), itemConsumivel(g.consumivel)] };
+      if (g.moedas) p = { ...p, moedas: (p.moedas || 0) + g.moedas };
+      registrarSaque(achado.id);
+      pushMsgs([{ autor: "sistema", texto: telaDoAchadoNaCoisa(achado, g) }]);
+      return { pers: p, env: envelopeDoAchadoNaCoisa(achado, g) };
+    } catch (e) { calou("Mestre vivo · o achado da coisa", e); return { pers: base, env: "" }; }
+  };
   /* MC4 · O SUCESSO DÁ SEMPRE UM FACTO: a verdade que o sistema acha (o passo,
      o achado, o livro, o bestiário, o registo do lugar), com a fonte, para o
      envelope do teste. null = o de sempre, «revele UMA coisa». */
@@ -18564,16 +18610,26 @@ export default function Taverna() {
     ehPessoaConhecida: (txt) => { try { return !!nomeProcurado(txt, nomesConhecidos()); } catch { return false; } },
     /* MC9: preso, escapar e arrebentar têm a CD do captor (cdDaSaida, em lerAcao) */
     cativeiro: cativeiroRef.current,
-    achadoDe: (attr) => {
+    achadoDe: (attr, frase) => {
       try {
         if (combateRef.current) return null;
         /* MC5: no lugar de um passo «descobrir», o segredo é o do passo — com a
            vista e com a cabeça; sem passo aqui, o achado de sempre */
         const doPasso = achadoDoPasso(passosDasQuestsAgora(), ondeDoPasso());
         if (doPasso) return doPasso;
+        /* 21/11 (o-mestre-vivo.md §23): com o Mestre vivo, a busca numa coisa
+           ao toque (o cesto, as telhas) acha o que a semente pôs NELA; sem a
+           chave, ou sem coisa nomeada, o achado de sempre */
+        if (typeof frase === "string" && frase) {
+          const ct = aCoisaAoToqueAgora(frase);
+          if (ct && ct.achado) return ct.achado;
+        }
         return achavelAqui(sementeMundo(), mapaRef.current, cidadeAtualRef.current, baseMundoRef.current, generoMundo(), attr, moldeMundo(), (mundoAtual() || {}).lexico, ondeSeProcura());
       } catch { return null; }
     },
+    /* 21/11 (§23): a coisa ao toque que a busca nomeia vira a chave do livro
+       (desafios.js: só com chaveFina) — revirada, fica revirada sozinha */
+    coisaDaBusca: (frase) => { const ct = aCoisaAoToqueAgora(frase); return ct ? ct.nome : ""; },
     /* MM15 (4): o que a espinha ainda guarda — só o desafio `fazer_falar`
        (desafios.js) o lê, e só quando a frase nomeia um segredo. */
     segredos: () => { try { return segredosGuardados(espinhaRef.current, mundoDaBase()); } catch (e) { calou("segredosGuardados", e); return []; } },
@@ -18615,8 +18671,8 @@ export default function Taverna() {
   /* O RETRATO: só refs, campo a campo (FORMA_DO_RETRATO, a-cena-do-jogo.js);
      a montagem é de retratoDosRefs. Cada leitura no seu calou; o retrato que
      estoura é null, e o turno segue pelo Mestre de hoje. Nunca se guarda:
-     é derivado dos refs que já estão no save. A quest ainda não declara
-     nada (quest: {}) — fica para quando a biblioteca ganhar o campo. */
+     é derivado dos refs que já estão no save. A quest declara pelos passos
+     (quest: {} aqui; a-cena-do-jogo.js: oQueAQuestDeclara, §23). */
   const retratoAgora = () => {
     try {
       const vale = (rotulo, f, seNao) => { try { return f(); } catch (e) { calou("Mestre vivo · " + rotulo, e); return seNao; } };
@@ -18660,6 +18716,11 @@ export default function Taverna() {
         inventario: vale("o inventário", () => [...(Array.isArray(p0.inventario) ? p0.inventario : []), ...Object.values(p0.equipado || {})], []),
         chao: vale("o chão", () => chaoRef.current, null),
         tentativas: vale("o livro de tentativas", () => tentativasRef.current, {}),
+        /* 21/11 (o-mestre-vivo.md §23): a semente, o dia e o que já se achou —
+           o que há escondido nas coisas ao toque sai deles */
+        semente: vale("a semente", () => sementeMundo(), ""),
+        dia: diaRef.current,
+        saqueados: vale("os saqueados", () => ((baseMundoRef.current || {}).saqueados) || [], []),
       });
     } catch (e) { calou("Mestre vivo · o retrato", e); return null; }
   };
@@ -18750,6 +18811,9 @@ export default function Taverna() {
         }
       } catch (e) { calou("Mestre vivo · o sim da conversa", e); env = ""; }
     }
+    /* 21/11 (o-mestre-vivo.md §23): o regateio com quem deve ao herói não rola —
+       e baixa o preço pelo degrau fixo da pechincha (O_REGATEIO_NA_BANCA.semDado) */
+    if (q.efeito === "social" && !combateRef.current) { try { aplicarORegateio({ frase: acao }, null, 0, null, true); } catch (e) { calou("Mestre vivo · o regateio sem dado", e); } }
     let ls = "";
     if (q.efeito === "socorro") { try { ls = oSocorroDoTeste(v, true); } catch (e) { calou("Mestre vivo · o curativo feito", e); ls = ""; } }
     if (!env) { try { env = envelopeDeVeredicto(vereditoDoQueAcontece(v, m), acao); } catch (e) { calou("Mestre vivo · o envelope do que acontece", e); env = ""; } }
@@ -24376,7 +24440,7 @@ export default function Taverna() {
   /* 21/11 (§22): O REGATEIO NA BANCA (a-ficha-da-cena.js#oRegateioNaBanca) — o
      registro é o mesmo do botão de pechinchar (mercado.pechinchas, um por
      banca por dia) */
-  const aplicarORegateio = (r, d20, bonus, dc) => {
+  const aplicarORegateio = (r, d20, bonus, dc, semDado = false) => {
     const cid = cidadeAtualRef.current && !jornadaRef.current && !masmorraRef.current ? cidadeDoMapa(cidadeAtualRef.current) : null;
     const precoDepois = (banca, item, aj) => {
       if (!banca || !item) return null;
@@ -24385,7 +24449,7 @@ export default function Taverna() {
     };
     const reg = oRegateioNaBanca((r && r.frase) || "", {
       anterior: typeof fraseAnteriorRef.current === "string" ? fraseAnteriorRef.current : "",
-      d20, bonus, dc, bancas: bancasDaCena(), balcao: cid ? balcaoAqui(cid) : [],
+      d20, bonus, dc, semDado: semDado === true, bancas: bancasDaCena(), balcao: cid ? balcaoAqui(cid) : [],
       pechinchas: (mercadoRef.current || {}).pechinchas || {}, dia: diaRef.current, precoDepois,
     });
     if (!reg) return;

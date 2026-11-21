@@ -2252,6 +2252,15 @@ export function lerAcao(texto, ctx = {}) {
   /* 21/11 (§21): o alvo na chave de toda família (CHAVE_FINA_PELO_ALVO) */
   if (!doObjeto && chaveFina && CHAVE_FINA_PELO_ALVO.pessoa.includes(d.id)) doObjeto = (pessoa && pessoa.nome) || quemDescrito || "";
   if (!doObjeto && chaveFina && CHAVE_FINA_PELO_ALVO.ids.includes(d.id)) doObjeto = (declarada.match(CHAVE_FINA_PELO_ALVO.objeto) || [])[1] || "";
+  /* 21/11 (o-mestre-vivo.md §23): A BUSCA NUMA COISA AO TOQUE. A busca
+     continua a chavear pelo lugar (o «vasculhado» é do lugar inteiro) — salvo
+     quando a frase nomeia uma coisa ao toque da cena (o cesto, as telhas:
+     o-que-ha-nas-coisas.js), que guarda o seu próprio achado e fica revirada
+     sozinha: `ctx.coisaDaBusca(frase)` devolve o nome dela, e só o App com o
+     Mestre vivo o passa. Sem ele, a chave de sempre. */
+  if (!doObjeto && chaveFina && (d.alvo === "busca" || d.alvo === "investigacao") && typeof ctx.coisaDaBusca === "function") {
+    try { doObjeto = String(ctx.coisaDaBusca(cru) || ""); } catch { doObjeto = ""; }
+  }
 
   /* ---------------- O QUE CONVERSA NENHUMA COMPRA ----------------
      Antes do livro de tentativas de propósito: pedir a alguém que se mate
@@ -2365,8 +2374,10 @@ export function lerAcao(texto, ctx = {}) {
   const periciaDaVez = (via && via.pericia) || periciaDaPista(d, declarada) || d.pericia;
   /* o improviso diz o atributo pela família; o catálogo, pela perícia */
   const atributoDoDesafio = d.atributo || (periciaPorId(periciaDaVez) || {}).atributo || "percepcao";
+  /* 21/11 (§23): a frase vai junto — o achado de uma coisa ao toque é o da
+     coisa que ela nomeia; quem não lê o segundo argumento responde como antes */
   const achado = (typeof achadoDe === "function" && (d.alvo === "busca" || d.alvo === "investigacao"))
-    ? achadoDe(atributoDoDesafio) : null;
+    ? achadoDe(atributoDoDesafio, cru) : null;
   let dc, deOnde;
   const social = conta;
   if (social) {
