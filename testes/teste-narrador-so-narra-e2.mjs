@@ -116,7 +116,10 @@ sec("3. o que NÃO podia sair (§6 do relatório)");
     ["o espólio é do sistema", /ESPÓLIO DE COMBATE É DO SISTEMA/],
     /* E3, MOVIDA: o Narrador já não desconta; a guarda virou "só narre um
        pagamento que eu fiz ou aceitei" (a cena que paga, desce a bolsa) */
-    ["só se narra um pagamento feito ou aceite", /só narre um pagamento que eu fiz ou aceitei/],
+    /* MOVIDA em 21/11: a pessoa autorizou tirar do prompt fixo as trocas de moeda/objeto e a
+       jogada feita por companheiro (sessão 6 do Mestre vivo). A guarda continua, mais forte:
+       moeda e objeto só mudam de mão pelo sistema, e o negócio que ele não deu não aconteceu. */
+    ["só se narra a troca que o sistema deu", /Moeda e objeto só mudam de mão pelo sistema: se o envelope ou a pauta deste turno não deu a compra, a venda, o pagamento ou a entrega, ela NÃO aconteceu/],
   ];
   for (const [nome, rx] of FICA) t(`fica: ${nome}`, rx.test(pTodo));
 }

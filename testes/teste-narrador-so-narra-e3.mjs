@@ -135,7 +135,10 @@ sec("3. o que a E3 não podia tirar");
     ["o tempo do sistema", /TEMPO É DO SISTEMA/],
     /* E4 (12/10), MOVIDAS: o perigo, combate_iniciar e dano_ambiental
        saíram com a E4 (teste-narrador-so-narra-e4 prova quem os faz agora) */
-    ["só se narra um pagamento feito ou aceite", /só narre um pagamento que eu fiz ou aceitei/],
+    /* MOVIDA em 21/11: a pessoa autorizou tirar do prompt fixo as trocas de moeda/objeto e a
+       jogada feita por companheiro (sessão 6 do Mestre vivo). A guarda continua, mais forte:
+       moeda e objeto só mudam de mão pelo sistema, e o negócio que ele não deu não aconteceu. */
+    ["só se narra a troca que o sistema deu", /Moeda e objeto só mudam de mão pelo sistema: se o envelope ou a pauta deste turno não deu a compra, a venda, o pagamento ou a entrega, ela NÃO aconteceu/],
     ["a viagem: a cidade só chega quando o sistema regista", /Só me coloque numa cidade quando o sistema registrar a chegada/],
     /* MOVIDA em 13/11 (NE5): O CHAMADO saiu do prompt — a raid abre pela frase do herói
        (raids.js#chamadoNaFrase), não pelo sinal da IA */
