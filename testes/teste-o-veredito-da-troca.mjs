@@ -266,10 +266,10 @@ sec("12. a fiação: o veredito aplica antes do Narrador, pela porta da ficha vi
   t("a linha vai à tela pela forma de sempre (a linha do sistema)", /pushMsgs\(\[\{ autor: "sistema", texto: v\.linha \}\]\)/.test(ap));
   const iMV = app.indexOf("if (mestreVivoLigado()) {\n      try {\n        momentoDoTurnoRef.current = null;");
   const iFC = app.indexOf("fichaDaCenaNoTurno(acao, momentoDoTurnoRef.current)", iMV);
-  const iVT = app.indexOf("vereditoDaTrocaAntes(acao, momentoDoTurnoRef.current)", iMV);
+  const iVT = app.indexOf("vereditoDaTrocaAntes(acao, momentoDoTurnoRef.current, ", iMV);
   const iDesp = app.indexOf("const cascata = cascataDoTurno(sinais);", iMV);
   t("no turno: com o Mestre vivo, depois da ficha da cena e antes do despachante (logo antes do Narrador)", iMV > 0 && iFC > iMV && iVT > iFC && iDesp > iVT);
-  t("protegido por calou (nunca custa o turno)", /try \{ vereditoDaTrocaAntes\(acao, momentoDoTurnoRef\.current\); \} catch \(e\) \{ calou\("Mestre vivo · o veredito da troca", e\);/.test(app));
+  t("protegido por calou (nunca custa o turno)", /try \{ vereditoDaTrocaAntes\(acao, momentoDoTurnoRef\.current, oQueOMomentoFaz\(momentoDoTurnoRef\.current\)\); \} catch \(e\) \{ calou\("Mestre vivo · o veredito da troca", e\);/.test(app));
   const iDado = app.indexOf("const vT = resolverATrocaDoDado(r.frase || \"\", passou, des, persT);");
   const iEnv = app.indexOf("enviar(preRefazer + env, persT);", iDado);
   t("o dado pousou: o furto e o de graça decidem pelo resultado, ANTES do envio ao Narrador, e a ficha nova vai no envio", iDado > 0 && iEnv > iDado && /persT = vT\.ficha; personagemRef\.current = persT; setPersonagem\(persT\);/.test(app.slice(iDado, iEnv)));

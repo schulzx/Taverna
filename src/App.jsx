@@ -14862,7 +14862,7 @@ export default function Taverna() {
          uma troca sai daqui aplicada ou negada — pegar e guardar, o pedido ao
          companheiro, o fiado; o furto e o de graça esperam o dado —, e o
          Narrador recebe o fato na pauta do turno (src/o-veredito-da-troca.js). */
-      try { vereditoDaTrocaAntes(acao, momentoDoTurnoRef.current); } catch (e) { calou("Mestre vivo · o veredito da troca", e); trocaDoTurnoRef.current = null; }
+      try { vereditoDaTrocaAntes(acao, momentoDoTurnoRef.current, oQueOMomentoFaz(momentoDoTurnoRef.current)); } catch (e) { calou("Mestre vivo · o veredito da troca", e); trocaDoTurnoRef.current = null; }
       /* 21/11 (a oitava sessão, T18): a busca que não rola não acha — e a prosa não põe à vista o que se leve */
       try {
         const mB = momentoDoTurnoRef.current;
@@ -18931,7 +18931,8 @@ export default function Taverna() {
     trocaDoTurnoRef.current = { ...(trocaDoTurnoRef.current || {}), veredito: v };
     return np;
   };
-  const vereditoDaTrocaAntes = (acao, m) => {
+  /* \`porta\`: a do momento (oQueOMomentoFaz), lida por quem chama dentro da guarda da chave */
+  const vereditoDaTrocaAntes = (acao, m, porta) => {
     trocaDoTurnoRef.current = null;
     if (!acao || acao.startsWith("/") || combateRef.current) return;
     const f0 = fichaViva() || personagem;
@@ -18954,7 +18955,6 @@ export default function Taverna() {
       /* o dado decide: com teste, espera a rolagem (resolverATrocaDoDado); sem
          risco (a régua diz que acontece), é sim; sem dado e sem acontecer, o
          furto não houve e o de graça é não */
-      const porta = oQueOMomentoFaz(m);
       let ehTeste = porta === "rola";
       if (!ehTeste && porta !== "acontece") { try { const vA = veredictoDaAcao(acao); ehTeste = !!(vA && vA.tipo === "teste"); } catch (e) { calou("o veredito da troca · o teste", e); } }
       if (ehTeste) return;
@@ -24971,7 +24971,8 @@ export default function Taverna() {
       setMercado(mercadoRef.current);
       const p = mudarFicha(r.ficha);
       pushMsgs([{ autor: "sistema", texto: r.linha }]);
-      notaRef.current = (notaRef.current ? notaRef.current + "\n" : "") + oEnvelopeDoMercado("venda", { item: s0.nome, valor: r.valor });
+      /* a mesma nota da venda (o recorte dos envelopes prende a da venda da bolsa; esta é a do que é de uso) */
+      notaRef.current = [notaRef.current, oEnvelopeDoMercado("venda", { item: s0.nome, valor: r.valor })].filter(Boolean).join("\n");
       salvar({ personagem: p, mercado: mercadoRef.current });
       return true;
     } catch (e) { calou("a venda do que é de uso", e); return false; }
