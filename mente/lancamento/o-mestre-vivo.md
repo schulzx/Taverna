@@ -1929,3 +1929,37 @@ sai mais num suborno que passou.
 prova), a pista com zero caminhos, o furto cuja prosa repete a do furto anterior.
 
 **Não verificado até a décima terceira sessão:** nada disso foi jogado contra um Narrador real.
+
+## 33. O mundo fechado: nada muda de mão sem o sistema (23/11/2026)
+
+A décima terceira sessão (v9.671) não teve erro firme de dado, e as trocas não saíram do patamar: 13 de
+23, depois de 20/39, 30/41, 22/33 e 22/33. Cinco rodadas consertaram os casos da sessão anterior e a
+seguinte trouxe outros. O que sobrava tinha duas formas, e nenhuma se fecha enumerando intenções: frase
+de troca que nenhuma lista previa ficava sem veredito, e em turno que o sistema não via como troca a
+prosa entregava coisas (a chave, a tocha, a bolsa). A rodada (`50fc4d0`, `36c0a62`) mudou a estrutura.
+
+**O mundo fechado (só atrás da chave).** Em todo envio, frase ou clique, a mão está fechada por
+padrão. Sem troca aplicada, vai em `naoPode` a linha «dar, receber, achar ou perder moeda ou coisa:
+neste turno nada mudou de mão» (89 caracteres de 1400; medida em 138 pautas reais, não tira nenhum
+veto). Com troca, vale o FATO DESTE TURNO e só ele. Bolsa que mudou sem fato (preço de carta, espólio)
+vira fato. A rede segue o mesmo padrão: corta a frase que fecha uma mudança de mão que o sistema não
+fez, e deixa oferecer, mostrar e estender. Contra 439 frases de prosa citadas nas sessões 9 a 13, corta
+5, as 5 apontadas como invenção (o corpus são citações escolhidas, não a prosa inteira).
+
+**A porta final (só atrás da chave).** Frase com verbo de mudança de mão e alguém do outro lado, que
+nenhuma porta resolveu, não segue sem veredito: cai na porta mais próxima por regra escrita ou sai
+negada com uma linha de mesa que diz como pedir. Dado de mão leve que passa sempre aplica algo e diz o
+quê.
+
+**Os casos.** A moeda que saía sem linha era o gesto «pagar a quem sabe» cobrando a carta da quest sem
+checar presença (para todos). A venda negada com o vendedor à vista (duas sessões) foi reproduzida em
+teste: cada molde de mundo dá ao mercado um tipo próprio, e a lista só conhecia três. A carta só pega a
+frase cujo objeto é o dela; o texto da opção tem versão para o papel abatido (`seMorto`; uma catraca
+conta 44 lados do acervo ainda sem ele). O alvo é o complemento do verbo.
+
+**Sem conserto, e por quê:** a procura que diz «está aqui» de quem tem posto na cidade (mudar isso é
+mudar o modelo de presença, fixado por uma suíte antiga); o veto de lugar em todo turno; a rede nos
+turnos por clique; os mortos saem da tela mas não do EM CENA do Narrador.
+
+**Não verificado até a décima quarta sessão:** nada disso foi jogado contra um Narrador real. Se ela
+não sair do patamar, a fila para e a decisão volta à pessoa.
