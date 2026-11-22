@@ -38,6 +38,8 @@ export const A_REGRA_DO_IMPROVISO = Object.freeze({
   }),
   /* quem precisa de alguém do outro lado (sem ninguém na cena: não) */
   precisaDeAlguem: Object.freeze(["comprar", "vender", "pagar", "pedir", "furtar", "emprestar", "devolver", "subornar", "escambo", "cobrar"]),
+  /* o que se faz com uma banca sem gente em volta (a banca vende, compra e troca) */
+  comABanca: Object.freeze(["comprar", "vender", "escambo"]),
   /* quem entrega algo da ficha (o herói tem de ter) */
   entregaDaFicha: Object.freeze(["dar", "vender", "emprestar", "devolver", "escambo"]),
   /* quem tira algo de quem está à vista: o morto não se opõe */
@@ -96,6 +98,10 @@ export function aRespostaDoMestre(leitura, cena) {
     const moeda = Number(h.moeda) || 0;
     const companheiro = str(h.companheiro).trim();
     const presentes = [...pessoas.map((p) => p.nome), ...(companheiro ? [companheiro] : [])];
+    /* 23/11 (a décima sexta sessão): a banca vende e compra, e não é gente — entra como quem vende
+       (o estoque, o preço, «ninguém aqui») e nunca nas opções de «a quem». A cena de exame não traz bancas */
+    const bancas = arr(c.bancas).filter((b) => b && str(b.nome).trim());
+    const vendedores = [...pessoas, ...bancas];
     const sai = (veredito, motivo = null, pergunta = null) => Object.freeze({ veredito, motivo, pergunta: pergunta ? Object.freeze({ texto: pergunta.texto, opcoes: Object.freeze([...pergunta.opcoes]) }) : null });
     const tem = (coisa) => { const s = sem(coisa); return carrega.some((x) => sem(x) === s || sem(x).split(" ")[0] === s || sem(x).replace(/s$/, "") === s.replace(/s$/, "")); };
 
@@ -128,10 +134,14 @@ export function aRespostaDoMestre(leitura, cena) {
     }
     if (l.quemEstado === "longe") return sai("nao", "ausente");
     /* o companheiro não é o outro lado de uma troca com o mundo: sem ninguém dito e sem gente na cena, não */
-    if (!pessoas.length && !l.quem && !l.companheiro && R.precisaDeAlguem.includes(s)) return sai("nao", "ninguem_aqui");
+    if (!pessoas.length && !l.quem && !l.companheiro && R.precisaDeAlguem.includes(s) && !(bancas.length && R.comABanca.includes(s))) return sai("nao", "ninguem_aqui");
 
     const pessoa = l.quem ? pessoas.find((p) => p.nome === l.quem) || null : null;
-    const vendeQuem = (coisa) => pessoas.filter((p) => arr(p.vende).some((v) => sem(v.item) === sem(coisa) || sem(v.item).split(" ")[0] === sem(coisa).split(" ")[0]));
+    /* o pedido ao companheiro: ele dá o que leva (a ficha diz se leva) */
+    if (s === "pedir" && l.companheiro && !l.quem) return sai("sim");
+    /* o fiado: quem vende decide se fia — o dado */
+    if (l.fiado && ["comprar", "pagar", "pedir"].includes(s)) return sai("dado");
+    const vendeQuem = (coisa) => vendedores.filter((p) => arr(p.vende).some((v) => sem(v.item) === sem(coisa) || sem(v.item).split(" ")[0] === sem(coisa).split(" ")[0]));
     const precoDe = (p, coisa) => { const it = arr(p && p.vende).find((v) => sem(v.item) === sem(coisa) || sem(v.item).split(" ")[0] === sem(coisa).split(" ")[0]); return it ? Number(it.preco) || 0 : null; };
 
     /* falta quem: o pronome sem dono, o «que devo» sem credor */
@@ -143,11 +153,11 @@ export function aRespostaDoMestre(leitura, cena) {
       if (!l.coisa) {
         if (pessoa && arr(pessoa.vende).length > 1) return sai("pergunta", "falta_o_que", { texto: tpl(R.textos.faltaOQueDe, { verbo: V, Nome: pessoa.nome }), opcoes: pessoa.vende.map((v) => v.item) });
         if (pessoa && arr(pessoa.vende).length === 0) return sai("nao", "nao_vende");
-        if (!pessoa) return sai("pergunta", "falta_o_que", { texto: tpl(R.textos.faltaOQue, { verbo: V }), opcoes: pessoas.flatMap((p) => arr(p.vende).map((v) => v.item)) });
+        if (!pessoa) return sai("pergunta", "falta_o_que", { texto: tpl(R.textos.faltaOQue, { verbo: V }), opcoes: vendedores.flatMap((p) => arr(p.vende).map((v) => v.item)) });
       }
       const quem = pessoa ? [pessoa] : vendeQuem(l.coisa);
       if (pessoa && precoDe(pessoa, l.coisa) == null) return sai("nao", "nao_vende");
-      if (!quem.length) return sai("nao", pessoas.length ? "nao_vende" : "ninguem_aqui");
+      if (!quem.length) return sai("nao", vendedores.length ? "nao_vende" : "ninguem_aqui");
       const preco = precoDe(quem[0], l.coisa) || 0;
       /* a quantia é de coisas («duas poções») ou de dinheiro posto na mesa («pago cinco pelo reparo») */
       const deCoisas = l.quantiaDe === "coisa";
@@ -168,9 +178,11 @@ export function aRespostaDoMestre(leitura, cena) {
       if (!tem(l.coisa)) return sai("nao", "nao_tem");
       if (!pessoa) {
         const merc = pessoas.filter((p) => arr(p.vende).length);
-        if (merc.length !== 1 && pessoas.length !== 1) return sai("pergunta", "falta_quem", { texto: tpl(R.textos.faltaQuemCom, { verbo: V, coisa: Coisa }), opcoes: presentes });
+        /* com banca na cena, quem compra é o mercado (a oferta do sistema diz qual): não se pergunta */
+        if (merc.length !== 1 && pessoas.length !== 1 && !bancas.length) return sai("pergunta", "falta_quem", { texto: tpl(R.textos.faltaQuemCom, { verbo: V, coisa: Coisa }), opcoes: presentes });
       }
-      if (qtd > 0 || l.regateio) return sai("dado");
+      /* a quantia de coisas («vendo duas tochas») não é preço pedido: só o preço dito regateia */
+      if ((qtd > 0 && (l.quantiaDe !== "coisa" || !bancas.length)) || l.regateio) return sai("dado");
       return sai("sim_com_preco");
     }
     if (s === "pagar") {
@@ -208,6 +220,8 @@ export function aRespostaDoMestre(leitura, cena) {
         if (arr(pessoa.vende).length === 0 || (alvo.tipo === "dele" && alvo.dono && alvo.dono !== pessoa.nome && precoDe(pessoa, alvo.nome) == null) || (alvo.tipo !== "dele" && precoDe(pessoa, alvo.nome) == null)) return sai("nao", "nao_vende");
         return sai("sim_com_preco");
       }
+      /* a banca troca pelo estoque dela, como vende (a cena do jogo) */
+      if (!pessoa && alvo && alvo.tipo === "dele" && bancas.some((b) => b.nome === alvo.dono)) return sai("sim_com_preco");
       if (!pessoa && alvo && alvo.tipo === "dele") return sai("dado");
       if (!pessoa && !alvo) return sai("pergunta", "falta_o_que", { texto: tpl(R.textos.faltaOQue, { verbo: V }), opcoes: pessoas.flatMap((p) => arr(p.vende).map((v) => v.item)) });
       return sai("dado");

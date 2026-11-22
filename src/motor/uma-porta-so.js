@@ -1,0 +1,336 @@
+/* ============================================================
+   UMA PORTA SÓ (23/11/2026) — a frase digitada tem um leitor e uma resposta.
+
+   A décima sexta sessão jogada mediu a fiação do ouvido: 12 de 40 trocas em
+   que a linha na tela, a ficha e a prosa concordaram (30%). O leitor não era
+   o problema — a ligação era. Duas portas respondiam: a antiga (a mão da
+   frase, os cartões de pagar e vender, a bolsa da frase) rodava ANTES do
+   ouvido, e às vezes sozinha («O ela não está aqui para comprar»); noutras
+   as duas falavam e se contradiziam («Você recolhe: Poção» e logo «Não há
+   poção aqui que se leve»; o cartão «Pagar ◉2» junto da pergunta «A quem?»,
+   e o cartão cobrou). E o que o ouvido decidia nem sempre ia à ficha («passo
+   dez moedas pra Thaddeus»: lido certo, nada debitado).
+
+   Esta função decide, e o App só executa (a lei: conta se prova, tela se
+   olha). Recebe a frase, o retrato do estado e a pergunta pendente, e
+   devolve UM resultado:
+
+     caminho   — null (não é troca: as portas de hoje seguem) ·
+                 "falar" (não é troca, mas o sistema sabe um fato: o preço) ·
+                 "pergunta" (o turno para; a resposta completa a leitura) ·
+                 "nao" | "aplicado" | "desiste" (o veredito já decidido) ·
+                 "recolher" (o que está solto no chão, pelo caminho do botão) ·
+                 "dado" (o teste decide: o caminho do dado de hoje, ou adiado);
+     troca     — a frase é de troca: nenhuma porta antiga abre;
+     veredito  — na forma de oVereditoDaTroca (tipo, estado, ficha, mudou,
+                 linha, fato, veto): o que vai à ficha, à tela e à pauta;
+     intencao  — a do caminho do dado de hoje (furto, pedido, tomar, suborno);
+     adiado    — o dado sem caminho de hoje (aTrocaDoOuvido com a porta);
+     recolher  — os ids do chão;
+     pergunta  — { texto, linha, opcoes: [{ rotulo, valor }], pendente };
+     fato      — o fato do turno quando não é troca (o preço que o sistema sabe);
+     frase     — a frase que parte como turno (a da escolha, se houve).
+
+   Módulo puro, determinístico, sem React. Tudo o que é palavra mora em
+   UMA_PORTA_SO; o resto é da ponte (a-cena-do-ouvido.js), do ouvido e da
+   regra do improviso.
+   ============================================================ */
+import { aCenaDoOuvido, oOuvidoNaTroca, oVereditoDoOuvido, aTrocaDoOuvido, A_CENA_DO_OUVIDO } from "./a-cena-do-ouvido.js";
+import { ligarACena } from "../o-ouvido.js";
+
+export const UMA_PORTA_SO = Object.freeze({
+  /* o resultado lido na proposta da frase vale para o turno da mesma frase por este tempo (ms) */
+  guardadaMs: 15000,
+  tela: Object.freeze({
+    pergunta: "🤝 {texto} {lista}",
+    opcao: "{n}. {rotulo}",
+    separador: " · ",
+    desiste: "🤝 Fica assim: nada muda de mão.",
+    semTroco: "◉ Não há troco: nada foi pago aqui.",
+    naoHa: "✋ Não há {coisa} aqui que se leve.",
+    ausente: "🤝 {Nome} não está aqui.",
+    semCaminho: "🤝 Nada muda de mão.",
+  }),
+  fato: Object.freeze({
+    desiste: "Não respondi ao que o Mestre perguntou: a troca não aconteceu, e nada mudou de mão.",
+    semTroco: "Quis ficar com um troco, e não houve pagamento aqui que deixasse troco: nada mudou de mão.",
+    naoHa: "Quis pegar «{coisa}», e não há tal coisa aqui que se leve: nada entrou na minha mochila.",
+    ausente: "{Nome} não está aqui: não houve com quem trocar, e nada mudou de mão.",
+    semCaminho: "Quis {gesto}: nada mudou de mão.",
+    preco: "O preço é do sistema: {Coisa} custa ◉ {Preco} ({Quem}). É este o preço; não diga outro.",
+  }),
+  /* o rótulo de cada ação oferecida quando o verbo não se reconheceu */
+  acao: Object.freeze({
+    comprar: "Comprar", vender: "Vender", pagar: "Pagar", dar: "Dar", pedir: "Pedir", pegar: "Pegar", furtar: "Furtar",
+    emprestar: "Emprestar", devolver: "Devolver", subornar: "Subornar", escambo: "Trocar", cobrar: "Cobrar",
+  }),
+  /* o que o caminho do dado de hoje rola por si (oVereditoDaTroca espera a rolagem) */
+  dadoDeHoje: Object.freeze(["furto", "deGraca", "tomar", "suborno", "pegar"]),
+  /* a quem se entrega (o nome próprio depois da preposição) — para quem o sistema não conhece */
+  aQuem: /\b(?:a|ao|à|pra|pro|para)\s+((?:[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)(?:\s+(?:(?:de|da|do|dos|das)\s+)?[A-ZÀ-Ý][\p{Ll}\p{Lu}'-]+)*)/gu,
+  /* quem precisa de alguém do outro lado, para a negativa do nome desconhecido */
+  precisaDeQuem: Object.freeze(["dar", "pagar", "emprestar", "devolver", "vender", "subornar", "escambo", "cobrar", "pedir"]),
+});
+
+const str = (x) => (x == null ? "" : String(x));
+const arr = (x) => (Array.isArray(x) ? x : []);
+const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
+const sem = (s) => str(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+const tpl = (t, o) => str(t).replace(/\{(\w+)\}/g, (_, k) => (o[k] == null ? "" : String(o[k])));
+const nomeDe = (r) => (typeof r === "string" ? r : (r && r.nome) || "");
+const semAposto = (n) => str(n).split(",")[0].trim();
+const maiuscula = (s) => (str(s) ? str(s).charAt(0).toUpperCase() + str(s).slice(1) : "");
+const primeiroNome = (n) => sem(semAposto(n)).split(/\s+/)[0] || "";
+
+const negada = (motivo, linha, fato) => Object.freeze({
+  tipo: "ouvido", estado: "negada", ficha: null, mudou: Object.freeze([]), motivo, linha, fato, veto: Object.freeze([A_CENA_DO_OUVIDO.veto.nada]),
+});
+const oGesto = (l) => {
+  const s = (l && l.subtipo) || "";
+  const inf = A_CENA_DO_OUVIDO.infinitivo[s] || "trocar";
+  const coisa = l && l.coisaTipo === "moeda" ? (l.quantia ? `◉ ${l.quantia}` : "moedas") : str(l && l.coisa);
+  return coisa ? `${inf} ${coisa}` : inf;
+};
+
+/* ============================================================
+   oFocoDaConversa(anteriores, cena) → nome | null
+   A quem a frase anterior foi dita (a gente que ela nomeia, ou a banca de
+   quem ela comprou) e, sem ela, quem a última fala do Mestre pôs por último.
+   É o «ele/ela» de uma mesa: nunca um terceiro ao acaso.
+   anteriores: { jogador: "a frase anterior", mestre: "a última fala do Mestre" }
+   ============================================================ */
+export function oFocoDaConversa(anteriores, cena) {
+  try {
+    const a = obj(anteriores) || {};
+    const c = obj(cena) || {};
+    const gente = [...arr(c.pessoas).map(nomeDe), ...(obj(c.heroi) && c.heroi.companheiro ? [c.heroi.companheiro] : [])].filter(Boolean);
+    const j = str(a.jogador).trim();
+    if (j) {
+      const L = ligarACena(j, { ...c, foco: undefined });
+      const ditos = [...new Set(L.marcas.filter((m) => m.tipo === "PESSOA" && m.estado === "aqui" && m.nome).map((m) => m.nome))];
+      if (ditos.length === 1) return ditos[0];
+      if (ditos.length > 1) return null;
+      const dele = L.marcas.filter((m) => m.tipo === "COISA").flatMap((m) => m.leituras).find((x) => x && x.tipo === "dele" && x.dono);
+      if (dele) return dele.dono;
+    }
+    const m = str(a.mestre);
+    if (m && gente.length) {
+      let melhor = null, onde = -1;
+      for (const n of gente) {
+        const p = primeiroNome(n);
+        if (p.length < 3) continue;
+        const rx = new RegExp(`\\b${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "g");
+        let k; const t = sem(m);
+        while ((k = rx.exec(t))) if (k.index > onde) { onde = k.index; melhor = n; }
+      }
+      return melhor;
+    }
+    return null;
+  } catch { return null; }
+}
+
+/* a pergunta com as opções fechadas e válidas: { texto, linha, opcoes, pendente } | null (um só: sem pergunta) */
+function aPerguntaValida(o, cena, frase, vezes) {
+  const R = UMA_PORTA_SO;
+  const l = o.leitura, r = o.resposta;
+  const motivo = r.motivo;
+  const pessoas = arr(cena.pessoas).map(nomeDe);
+  const comp = obj(cena.heroi) ? str(cena.heroi.companheiro) : "";
+  let campo, valores;
+  if (motivo === "falta_quem" || motivo === "dois_com_o_nome") {
+    campo = "quem";
+    const bruto = motivo === "dois_com_o_nome" ? arr(r.pergunta.opcoes) : [...pessoas, ...(comp ? [comp] : [])];
+    /* só quem está (nunca a loja), sem quem a frase já nomeou, e o companheiro não recebe moeda (o dinheiro é do grupo) */
+    valores = bruto.filter((n) => n && (motivo === "dois_com_o_nome" || pessoas.includes(n) || n === comp))
+      .filter((n) => !(l.coisaTipo === "moeda" && n === comp && ["dar", "pagar", "emprestar", "devolver"].includes(l.subtipo)));
+  } else if (motivo === "falta_o_que" && !l.subtipo && l.familia === "trocar") {
+    campo = "subtipo";
+    valores = arr(r.pergunta.opcoes).filter((x) => R.acao[x]);
+  } else {
+    campo = "coisa";
+    valores = arr(r.pergunta.opcoes).filter(Boolean);
+  }
+  valores = [...new Set(valores.map(str))];
+  if (!valores.length) return { nenhum: true, campo };
+  if (valores.length === 1) return { um: valores[0], campo };
+  const rotulo = (v) => (campo === "subtipo" ? R.acao[v] : maiuscula(semAposto(v)));
+  const opcoes = valores.map((v) => Object.freeze({ rotulo: rotulo(v), valor: v }));
+  const lista = opcoes.map((x, i) => tpl(R.tela.opcao, { n: i + 1, rotulo: x.rotulo })).join(R.tela.separador);
+  return {
+    texto: r.pergunta.texto,
+    linha: tpl(R.tela.pergunta, { texto: r.pergunta.texto, lista }),
+    opcoes: Object.freeze(opcoes),
+    pendente: Object.freeze({ texto: r.pergunta.texto, campo, leitura: l, frase, vezes: vezes || 0 }),
+  };
+}
+
+/* a leitura completada pela escolha (a estrutura, nunca o texto) */
+function completar(l, campo, valor, cena) {
+  const comp = obj(cena.heroi) ? str(cena.heroi.companheiro) : "";
+  if (campo === "quem") {
+    if (valor === comp) return Object.freeze({ ...l, quem: null, companheiro: comp, quemEstado: "aqui", opcoesDeQuem: Object.freeze([]), quemPronomeSemDono: false, quemDito: true });
+    return Object.freeze({ ...l, quem: valor, companheiro: null, quemEstado: "aqui", opcoesDeQuem: Object.freeze([]), quemPronomeSemDono: false, quemDito: true });
+  }
+  if (campo === "subtipo") return Object.freeze({ ...l, familia: "trocar", subtipo: valor });
+  const carrega = arr(obj(cena.heroi) && cena.heroi.carrega);
+  const dele = [...arr(cena.pessoas), ...arr(cena.bancas)].flatMap((p) => arr(p.vende).map((v) => ({ ...v, dono: p.nome }))).find((v) => sem(v.item) === sem(valor));
+  if (carrega.some((x) => sem(x) === sem(valor))) return Object.freeze({ ...l, coisa: valor, coisaTipo: "minha", dono: null, preco: null });
+  if (dele) return Object.freeze({ ...l, coisa: valor, coisaTipo: "dele", dono: dele.dono, preco: dele.preco });
+  return Object.freeze({ ...l, coisa: valor, coisaTipo: "livre" });
+}
+
+/* a frase que parte como turno depois da escolha (o Narrador lê a intenção inteira) */
+function aFraseDaLeitura(l) {
+  const C = A_CENA_DO_OUVIDO;
+  const s = l.subtipo || "";
+  const quem = semAposto(l.quem || l.companheiro || "");
+  const coisa = l.coisaTipo === "moeda" ? (l.quantia ? `${l.quantia} moedas` : "moedas") : str(l.coisa);
+  const prep = C.vemDeOutro.includes(s) || l.direcao === "recebe" ? "de" : "a";
+  return [C.verbo[s] || "faço", coisa, quem ? `${prep} ${quem}` : ""].filter(Boolean).join(" ");
+}
+
+/* a resposta à pergunta pendente: o número, o nome inteiro ou o primeiro nome da opção */
+function aEscolha(pendente, opcoes, texto) {
+  const ops = arr(opcoes);
+  const t = sem(texto).replace(/[.!?]+$/, "").trim();
+  if (!ops.length || !t) return null;
+  if (/^\d+$/.test(t)) { const k = Number(t) - 1; return ops[k] ? ops[k].valor : null; }
+  const exato = ops.filter((o) => sem(o.rotulo) === t || sem(o.valor) === t);
+  if (exato.length === 1) return exato[0].valor;
+  const peloPrimeiro = ops.filter((o) => sem(o.rotulo).split(" ").includes(t) || (t.length >= 3 && sem(o.rotulo).startsWith(t)));
+  return peloPrimeiro.length === 1 ? peloPrimeiro[0].valor : null;
+}
+
+/* o nome próprio a quem a frase entrega e que a cena não tem (o desconhecido, o que só a quest nomeia) */
+function oNomeDeFora(frase, cena) {
+  const gente = [...arr(cena.pessoas).map(nomeDe), ...(obj(cena.heroi) && cena.heroi.companheiro ? [cena.heroi.companheiro] : [])];
+  const fora = [...arr(cena.bancas).map(nomeDe), str(cena.lugar), ...arr(cena.coisas)].map(sem);
+  for (const m of str(frase).matchAll(UMA_PORTA_SO.aQuem)) {
+    const nome = m[1].trim();
+    const p = sem(nome).split(/\s+/)[0];
+    if (p.length < 3 || gente.some((g) => primeiroNome(g) === p) || fora.some((x) => x && x.includes(sem(nome)))) continue;
+    return nome;
+  }
+  return "";
+}
+
+/* ============================================================
+   aPortaUnica(frase, retrato, ctx) → o resultado (veja o cabeçalho)
+   retrato: o de aCenaDoOuvido, mais
+     chao       — [{ id, nome }] (os ids vão ao «recolher»);
+     anteriores — { jogador, mestre } (o foco do pronome), ou foco já dito;
+     casa       — os pratos da casa (osPratosDaCasa).
+   ctx: {
+     pendente    — a pergunta pendente (a de um resultado «pergunta»), ou null;
+     ofertaDe    — (item) → { valor, quem } (quem compra aqui);
+     ofertaDoUso — (id, quantos) → { valor, quem } (a revenda do que é de uso);
+     vaiAoCorpo  — os tipos de item que entram no equipamento
+   }
+   ============================================================ */
+export function aPortaUnica(frase, retrato, ctx) {
+  const R = UMA_PORTA_SO;
+  const f = str(frase).trim();
+  const vazio = Object.freeze({ lido: false, troca: false, caminho: null, frase: f, leitura: null, resposta: null, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null });
+  try {
+    if (!f) return vazio;
+    const r0 = obj(retrato) || {};
+    const c = obj(ctx) || {};
+    /* o foco do pronome: o que o retrato já diz, ou o que a conversa diz */
+    let ret = r0;
+    if (!Object.prototype.hasOwnProperty.call(r0, "foco")) {
+      const semFoco = aCenaDoOuvido(r0);
+      ret = { ...r0, foco: oFocoDaConversa(r0.anteriores, semFoco) };
+    }
+    const cena = aCenaDoOuvido(ret);
+    const ficha = { ...(obj(r0.ficha) || {}), grupo: arr((obj(r0.ficha) || {}).grupo).length ? r0.ficha.grupo : arr(r0.grupo) };
+    /* as bancas para aplicar: as do retrato (com o estoque inteiro e o id) e a casa, como banca de quem a serve */
+    const quemServe = arr(cena.pessoas).find((p) => A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)));
+    const casaBanca = arr(r0.casa).length ? [{ nome: quemServe ? quemServe.nome : str(cena.lugar) || A_CENA_DO_OUVIDO.aCasa, estoque: arr(r0.casa).map((x) => ({ nome: x.nome, preco: x.preco, consumo: true })) }] : [];
+    const ctxT = { ficha, bancas: [...arr(r0.bancas), ...casaBanca], porta: "", vaiAoCorpo: arr(c.vaiAoCorpo), ofertaDe: c.ofertaDe, ofertaDoUso: c.ofertaDoUso };
+
+    /* 1. A PERGUNTA PENDENTE: a resposta completa a leitura (a estrutura), e não se cola ao texto */
+    const pend = obj(c.pendente) && obj(c.pendente.pendente) ? c.pendente.pendente : obj(c.pendente);
+    let o = null, fraseDoTurno = f, vezes = 0;
+    if (pend && obj(pend.leitura)) {
+      const ops = arr(obj(c.pendente) && c.pendente.opcoes);
+      const v = aEscolha(pend, ops, f);
+      if (v != null) {
+        const l2 = completar(pend.leitura, pend.campo, v, cena);
+        o = oVereditoDoOuvido(l2, cena, aFraseDaLeitura(l2));
+        fraseDoTurno = aFraseDaLeitura(l2);
+        vezes = (Number(pend.vezes) || 0) + 1;
+      }
+    }
+    if (!o) o = oOuvidoNaTroca(f, cena);
+    if (!o || !o.lido) return vazio;
+    const l = o.leitura;
+    const base = { lido: true, troca: l.familia === "trocar", frase: fraseDoTurno, leitura: l, resposta: o.resposta, veredito: null, intencao: null, adiado: false, recolher: null, pergunta: null, fato: null };
+    const sai = (x) => Object.freeze({ ...base, ...x });
+
+    /* não é troca: o preço que o sistema sabe vai ao Narrador como fato (frase 43) */
+    if (l.familia !== "trocar") {
+      if (l.familia === "falar" && l.coisaTipo === "dele" && Number(l.preco) > 0) {
+        return sai({ caminho: "falar", fato: tpl(R.fato.preco, { Coisa: maiuscula(l.coisa), Preco: Number(l.preco), Quem: semAposto(l.dono) || A_CENA_DO_OUVIDO.alguem }) });
+      }
+      return sai({ caminho: null, troca: false });
+    }
+
+    /* «fico com o troco»: sem pagamento que deixe troco, não há troco — nem pergunta de quem (frase 5) */
+    if (l.troco) return sai({ caminho: "nao", veredito: negada("semTroco", R.tela.semTroco, R.fato.semTroco) });
+    /* a mesma pergunta duas vezes seguidas: o Mestre desiste, e o turno segue (frases 14 a 16) */
+    const pendTexto = pend ? str(pend.texto) : "";
+    const desiste = () => sai({ caminho: "desiste", veredito: negada("desiste", R.tela.desiste, R.fato.desiste) });
+
+    /* o nome próprio que a cena não tem, a quem se entrega: está fora (frase 40) */
+    if (!l.quem && !l.companheiro && R.precisaDeQuem.includes(l.subtipo) && !l.quemPronomeSemDono) {
+      const fora = oNomeDeFora(f, cena);
+      if (fora) return sai({ caminho: "nao", veredito: negada("ausente", tpl(R.tela.ausente, { Nome: fora }), tpl(R.fato.ausente, { Nome: fora })) });
+    }
+
+    if (o.caminho === "pergunta") {
+      const pq = aPerguntaValida(o, cena, f, vezes);
+      if (pq.nenhum) return sai({ caminho: "nao", veredito: negada("ninguem_aqui", tpl(A_CENA_DO_OUVIDO.tela.nao.ninguem_aqui, {}), tpl(A_CENA_DO_OUVIDO.fato.nao.ninguem_aqui, { gesto: oGesto(l) })) });
+      if (pq.um) {
+        /* um candidato só: não há pergunta — a leitura completa-se com ele */
+        const l2 = completar(l, pq.campo, pq.um, cena);
+        const o2 = oVereditoDoOuvido(l2, cena, f);
+        if (o2.caminho === "pergunta") return desiste();
+        return decidir(o2, sai, ctxT, cena, r0, R);
+      }
+      if (pendTexto && sem(pq.texto) === sem(pendTexto)) return desiste();
+      return sai({ caminho: "pergunta", pergunta: Object.freeze({ texto: pq.texto, linha: pq.linha, opcoes: pq.opcoes, pendente: pq.pendente }) });
+    }
+    return decidir(o, sai, ctxT, cena, r0, R);
+  } catch {
+    return vazio;
+  }
+}
+
+/* o veredito de uma leitura já sem pergunta: nao, dado, recolher, aplicado */
+function decidir(o, sai, ctxT, cena, r0, R) {
+  const l = o.leitura;
+  if (o.caminho === "nao" && o.negada) return sai({ caminho: "nao", veredito: o.negada });
+  if (o.caminho !== "aplicar") return sai({ caminho: "nao", veredito: negada("semCaminho", R.tela.semCaminho, tpl(R.fato.semCaminho, { gesto: oGesto(l) })) });
+  const v = o.resposta.veredito;
+  const s = l.subtipo;
+  /* «fico com o troco»: sem pagamento que deixe troco, não há troco (frase 5) */
+  if (l.troco) return sai({ caminho: "nao", veredito: negada("semTroco", R.tela.semTroco, R.fato.semTroco) });
+  /* pegar sem dono: o que está solto no chão vai pelo caminho do botão; o que o sistema não tem, não há */
+  if (s === "pegar" && !l.quem && !l.companheiro && l.quemEstado !== "morto") {
+    const chao = arr(r0.chao).filter((x) => obj(x) && x.id && x.nome);
+    const achado = l.coisaTipo === "solta" ? chao.find((x) => sem(x.nome) === sem(l.coisa) || sem(x.nome).startsWith(sem(l.coisa))) : null;
+    if (achado) return sai({ caminho: "recolher", recolher: Object.freeze([achado.id]) });
+    if (l.coisaTipo !== "solta") return sai({ caminho: "nao", veredito: negada("naoHa", tpl(R.tela.naoHa, { coisa: str(l.coisa) || "isso" }), tpl(R.fato.naoHa, { coisa: str(l.coisa) || "isso" })) });
+  }
+  /* o dado: o caminho de hoje rola o furto, o pedido de graça, o tomar, o suborno e o pegar de alguém */
+  if (v === "dado") {
+    const it = l.tomar ? Object.freeze({ tipo: "tomar", coisa: str(l.coisa) }) : o.intencao;
+    if (it && R.dadoDeHoje.includes(it.tipo)) return sai({ caminho: "dado", intencao: it });
+    return sai({ caminho: "dado", adiado: true });
+  }
+  const t = aTrocaDoOuvido(o, ctxT);
+  if (t && t.estado === "aplicada") return sai({ caminho: "aplicado", veredito: t });
+  if (t && t.estado === "negada") return sai({ caminho: "nao", veredito: t });
+  /* sem caminho que aplique (nunca o silêncio, nunca item inventado): nada muda de mão */
+  return sai({ caminho: "nao", veredito: negada("semCaminho", R.tela.semCaminho, tpl(R.fato.semCaminho, { gesto: oGesto(l) })) });
+}

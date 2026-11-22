@@ -6595,6 +6595,150 @@
     "motivo": null
    },
    "armadilha": "fala_entre_aspas"
+  },
+  {
+   "id": "C-413",
+   "lote": 4,
+   "frase": "Gil, empresta a caneca um minuto? Eu devolvo já",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Gil",
+    "coisa": "caneca",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-414",
+   "lote": 4,
+   "frase": "Marta, me serve um ensopado. Fico devendo até amanhã",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "comprar",
+    "quem": "Marta Quint",
+    "coisa": "ensopado",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-415",
+   "lote": 4,
+   "frase": "dou três maçãs pro Gil",
+   "cena_de": "T-007",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "dar",
+    "quem": "Gil",
+    "coisa": "maçã",
+    "quantia": 3,
+    "veredito": "nao",
+    "motivo": "nao_tem"
+   },
+   "armadilha": "quantia_por_extenso"
+  },
+  {
+   "id": "C-416",
+   "lote": 4,
+   "frase": "Rato, ouça: essa adaga não é sua. Entregue ela a mim por bem",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Rato",
+    "coisa": null,
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-417",
+   "lote": 4,
+   "frase": "arranco a gazua da mão dele",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "furtar",
+    "quem": "Rato",
+    "coisa": "gazua",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-418",
+   "lote": 4,
+   "frase": "guardo o caixote dentro da mochila",
+   "cena_de": "T-014",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pegar",
+    "quem": null,
+    "coisa": "caixote",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-419",
+   "lote": 4,
+   "frase": "Hugo Pires, me devolve a minha corda",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "pedir",
+    "quem": "Hugo Pires",
+    "coisa": "corda",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-420",
+   "lote": 4,
+   "frase": "empresta o mapa, Dona Ruth? Já te devolvo",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "emprestar",
+    "quem": "Dona Ruth",
+    "coisa": "mapa",
+    "quantia": null,
+    "veredito": "dado",
+    "motivo": null
+   },
+   "armadilha": "verbo_raro"
+  },
+  {
+   "id": "C-421",
+   "lote": 4,
+   "frase": "troco a minha adaga pela ceia, Hugo Pires",
+   "cena_de": "T-010",
+   "resposta": {
+    "familia": "trocar",
+    "subtipo": "escambo",
+    "quem": "Hugo Pires",
+    "coisa": "adaga",
+    "quantia": null,
+    "veredito": "sim_com_preco",
+    "motivo": null
+   },
+   "armadilha": null
   }
  ]
 }

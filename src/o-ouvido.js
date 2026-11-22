@@ -95,7 +95,26 @@ export const O_OUVIDO = Object.freeze({
     ["bato a carteira", "trocar", "furtar"], ["meto a mao na bolsa", "trocar", "furtar"], ["meto a mao no bolso", "trocar", "furtar"], ["passo a mao", "trocar", "furtar"], ["molho a mao", "trocar", "subornar"], ["compro o silencio", "trocar", "subornar"], ["racho a conta", "trocar", "pagar"], ["acerto a conta", "trocar", "pagar"], ["acerto as contas", "trocar", "pagar"], ["fecho a conta", "trocar", "pagar"], ["quito a divida", "trocar", "pagar"],
   ]),
   /* o imperativo do pedido ao balcão («manda um ensopado aí»): compra do que se vende */
-  pedidoAoBalcao: Object.freeze(["manda", "traz", "traga", "desce", "bota", "solta", "mande"]),
+  pedidoAoBalcao: Object.freeze(["manda", "traz", "traga", "desce", "bota", "solta", "serve", "sirva", "sirvam", "mande"]),
+  /* O PEDIDO DIRIGIDO (23/11, a décima sexta sessão: «Mordecai, empresta a vassoura?», «Thaddeus,
+     me devolve o livro», «entregue ele a mim»). O herói narra na primeira pessoa («empresto»,
+     «devolvo», «dou»); o verbo de troca que não está nela (o imperativo ou a segunda pessoa:
+     «empresta», «devolve», «entregue», «dá») e se dirige a alguém (o vocativo, o «me», o «a mim»)
+     é o herói pedindo DELA. O subtipo do pedido, pelo lema do verbo dito: */
+  pedidoDirigido: Object.freeze({ emprestar: "emprestar", devolver: "pedir", dar: "pedir", vender: "comprar", pegar: "pedir" }),
+  /* a primeira pessoa do verbo (o herói fala de si): «-o», «-ei», «-i», «-ou», e os curtos */
+  primeiraPessoa: /(o|ei|i|ou)$/,
+  aMim: /\b(a mim|pra mim|para mim|pro mim)\b/,
+  /* o discurso que abre a fala e não é a ação («ouça», «escuta», «olha») */
+  marcaDeDiscurso: Object.freeze(["ouca", "oucam", "escuta", "escute", "olha", "olhe", "veja", "vem ca", "presta atencao", "repara"]),
+  /* tirar da mão de alguém é tomar (força contra quem segura: o dado) */
+  daMao: /\b(da|das) maos?\b/,
+  /* «fico devendo», «pendura», «fiado»: pagar depois é o fiado (o dado decide se fiam) */
+  fiado: /\b(fico devendo|ficar devendo|fica devendo|pendura|penduro|fiado|fiada|na conta|a credito|pago (amanha|depois|mais tarde|na volta))\b/,
+  /* «fico com o troco»: receber moeda de quem devia o troco */
+  troco: /\b(fico|ficar|guardo) com o troco\b/,
+  /* guardar na bolsa o que não é meu é pegá-lo */
+  naBolsa: /\b(na|dentro da|no|dentro do) (bolsa|mochila|alforje|bolso|sacola|saco|embornal)\b/,
   /* o Mestre chamado pelo nome: «mestre, …» é pergunta ao Mestre */
   oMestre: Object.freeze(["mestre", "narrador", "dm", "mestra", "gm"]),
   /* a pergunta em primeira pessoa é ao Mestre (o que eu tenho, o que eu sei, se eu consigo) */
@@ -107,7 +126,7 @@ export const O_OUVIDO = Object.freeze({
   /* o olhar de gíria: «dou uma geral», «dou uma conferida» */
   olharDeGiria: Object.freeze(["lida", "olhada", "espiada", "conferida", "checada", "vasculhada", "sondada", "bisbilhotada", "examinada", "investigada", "geral", "vistoria", "varrida", "sacada", "manjada", "boa olhada"]),
   /* o que tem forma de nome e não é coisa que muda de mão */
-  naoECoisa: Object.freeze(["conta", "divida", "preco", "silencio", "nome", "jeito", "papo", "pulo", "salto", "lida", "olhada", "espiada", "conferida", "coisa", "outra", "isso", "isto", "aquilo", "mao", "bico", "informacao", "novidade", "novidades", "volta", "tempo", "favor", "lealdade", "vista", "absurdo", "que", "tudo", "nada", "algo", "noite", "dia", "lugar", "vez", "pouco", "mais", "menos", "desconto", "chance", "sorte", "ideia", "caminho", "estrada", "trilha", "gente", "homem", "mulher", "cara", "moco", "moca", "senhor", "senhora", "porrada", "soco", "chute", "tapa", "murro", "golpe", "charme", "conversa", "ajuda", "resto", "frente", "lado", "cima", "baixo", "canto", "chao", "hora", "minuto", "missa", "manha", "tarde", "amanha", "hoje", "bolso", "cinto", "costas", "olho", "olhos", "ombro"]),
+  naoECoisa: Object.freeze(["conta", "divida", "preco", "silencio", "nome", "jeito", "papo", "pulo", "salto", "lida", "olhada", "espiada", "conferida", "coisa", "outra", "isso", "isto", "aquilo", "mao", "bico", "informacao", "novidade", "novidades", "volta", "tempo", "favor", "lealdade", "vista", "absurdo", "que", "tudo", "nada", "algo", "noite", "dia", "lugar", "vez", "pouco", "mais", "menos", "desconto", "chance", "sorte", "ideia", "caminho", "estrada", "trilha", "gente", "homem", "mulher", "cara", "moco", "moca", "senhor", "senhora", "porrada", "soco", "chute", "tapa", "murro", "golpe", "charme", "conversa", "ajuda", "resto", "frente", "lado", "cima", "baixo", "canto", "chao", "hora", "minuto", "missa", "manha", "tarde", "amanha", "hoje", "bolso", "cinto", "costas", "olho", "olhos", "ombro", "mim", "ti", "si", "bem"]),
   /* o fim de palavra que é verbo (o resto da palavra depois do radical) */
   terminacoes: Object.freeze(["io", "o", "a", "as", "e", "es", "ar", "er", "ir", "amos", "emos", "imos", "am", "em", "ei", "i", "ou", "eu", "iu", "ando", "endo", "indo", "ava", "ia", "aria", "eria", "iria", "asse", "esse", "isse"]),
   infinitivo: /(?:ar|er|ir|or)$/,
@@ -125,7 +144,7 @@ export const VERBOS_DO_OUVIDO = Object.freeze({
   vender: V("trocar", "vender", ["vend", "revend"]),
   pagar: V("trocar", "pagar", ["pag", "quit", "sald"], ["pague", "paguei"]),
   rachar: V("trocar", "pagar", ["rach", "divid"]),
-  dar: V("trocar", "dar", ["entreg", "deposit", "doa", "presente", "ofert", "estend", "repass"], ["dou", "dar", "damos", "dei", "doo", "dando", "deslizo", "deslizar", "ofereco", "oferecer", "oferece", "oferecemos", "ofereci"]),
+  dar: V("trocar", "dar", ["entreg", "deposit", "doa", "presente", "ofert", "estend", "repass"], ["dou", "dar", "damos", "dei", "doo", "dando", "deslizo", "deslizar", "ofereco", "oferecer", "oferece", "oferecemos", "ofereci", "entregue", "entreguem"]),
   pedir: V("trocar", "pedir", ["implor", "suplic", "solicit", "mendig", "rog"], ["peco", "pedir", "pede", "pedimos", "pedi", "pecam", "peca"]),
   pegar: V("trocar", "pegar", ["peg", "recolh", "apanh", "cat", "junt", "saque", "colet", "agarr", "embols", "arrecad", "colh"], ["pego", "pegar", "pegamos", "peguei"]),
   furtar: V("trocar", "furtar", ["furt", "roub", "surrupi", "rapin", "afan", "larapi", "subtrai", "gatun", "garf", "pung"], ["abafo", "bifo", "subtraio"]),
@@ -137,7 +156,7 @@ export const VERBOS_DO_OUVIDO = Object.freeze({
   usar: V("usar", null, ["us", "utiliz", "ench", "enrol", "segur", "ativ", "inger", "devor", "lustr", "poli", "unt", "engol", "prend", "acend", "beb", "equip", "empunh", "amarr", "pendur", "aplic", "guard", "calc", "consum", "mastig", "enfaix", "acion", "apag", "afi"], ["como", "comer", "comemos", "visto", "vestir", "veste", "saco", "sacar", "calco", "calcar", "tomo", "tomar", "ponho", "poe", "boto", "botar", "coloco", "colocar"]),
   olhar: V("olhar", null, ["olh", "observ", "examin", "investig", "vasculh", "revist", "procur", "busc", "escut", "espi", "repar", "inspecion", "analis", "folhe", "contempl", "farej", "vigi", "espreit", "chec", "confer", "estud", "sond", "rastre", "averigu", "fuc", "fuxic", "explor", "estud", "apalp", "cheir", "tate", "admir", "mir", "fit", "perscrut", "esquadrinh", "bisbilhot"], ["leio", "ler", "le", "lemos", "ouco", "ouvir", "ouve", "vejo", "ver", "vemos", "ve"]),
   mover: V("mover", null, ["camin", "entr", "and", "volt", "corr", "viaj", "atravess", "vaz", "avanc", "aproxim", "afast", "retorn", "rum", "cavalg", "naveg", "adentr", "recu", "march", "percorr", "desc", "sub", "atalh", "passe", "galop", "trot", "escap", "retir"], ["caminho", "caminhar", "caminhamos", "vou", "ir", "vamos", "fui", "sigo", "seguir", "segue", "seguimos", "saio", "sair", "sai", "saimos", "fujo", "fugir", "foge", "subo", "subir", "desco", "descer", "chego", "chegar", "parto", "partir", "dirijo", "mando", "sumo", "sumir"]),
-  agir: V("agir", null, ["acert", "escal", "esgueir", "escond", "arromb", "pul", "salt", "empurr", "abr", "fech", "quebr", "escav", "cav", "nad", "rastej", "trep", "forc", "destrav", "pux", "levant", "arrast", "mont", "consert", "equilibr", "gir", "tranc", "acocor", "agach", "abaix", "escor", "esfreg", "limp", "arrum", "constru", "cozinh", "pesc", "cac", "rabisc", "desenh", "escrev", "arremess", "desarm", "empilh", "rasg", "solt", "acord", "toc", "bat"], ["faco", "fazer", "faz", "abro", "abrir", "corto", "cortar", "monto", "trago", "trazer", "jogo", "jogar", "lanco", "lancar", "atiro", "atirar", "levo", "levar", "tiro", "tirar", "passo", "passar", "deixo", "deixar"]),
+  agir: V("agir", null, ["arranc", "arrebat", "acert", "escal", "esgueir", "escond", "arromb", "pul", "salt", "empurr", "abr", "fech", "quebr", "escav", "cav", "nad", "rastej", "trep", "forc", "destrav", "pux", "levant", "arrast", "mont", "consert", "equilibr", "gir", "tranc", "acocor", "agach", "abaix", "escor", "esfreg", "limp", "arrum", "constru", "cozinh", "pesc", "cac", "rabisc", "desenh", "escrev", "arremess", "desarm", "empilh", "rasg", "solt", "acord", "toc", "bat"], ["faco", "fazer", "faz", "abro", "abrir", "corto", "cortar", "monto", "trago", "trazer", "jogo", "jogar", "lanco", "lancar", "atiro", "atirar", "levo", "levar", "tiro", "tirar", "passo", "passar", "deixo", "deixar"]),
   lutar: V("lutar", null, ["atac", "soc", "dispar", "golpe", "chut", "esfaque", "lut", "apunhal", "flech", "mat", "invest", "espanc", "estrangul", "agred", "estoc", "desfer", "enfrent", "esmurr", "estap", "degol", "derrub", "arrebent", "mord", "trucid", "decapit", "apedrej", "espet", "perfur", "fustig", "chicote", "pisote", "aleij", "trespass", "estraçalh", "esgan", "sufoc"], ["firo", "ferir", "fere"]),
   esperar: V("esperar", null, ["medit", "descans", "esper", "aguard", "acamp", "pernoit", "rez", "cochil", "repous", "relax"], ["durmo", "dormir", "dorme", "dormimos", "oro", "orar", "deito", "armo", "fico", "ficar", "ficamos", "sento", "sentar", "sentamos", "sentado"]),
   convencer: V("convencer", null, ["convenc", "persuad", "intimid", "amea", "adul", "bajul", "engan", "blef", "seduz", "chantage", "pression", "lisonje", "ilud", "provoc", "negoci", "argument", "insist", "desenrol", "encar", "tranquiliz", "acalm", "ludibri", "encant", "lison", "xavec", "flert", "tape", "promet", "jur", "coag", "subjug", "aterroriz", "assust", "humilh", "embroma"], ["minto", "mentir", "mente", "convenco", "finjo", "fingir", "finge", "ameaco", "ameacar", "ameaca", "ameacamos"]),
@@ -161,7 +180,8 @@ const singular = (w) => {
   if (/aes$/i.test(s)) return s.replace(/aes$/i, "ao");
   if (/ns$/i.test(s)) return s.replace(/ns$/i, "m");
   if (/(r|z)es$/i.test(s)) return s.slice(0, -2);
-  if (/[aeiou]s$/i.test(s) && s.length > 3) return s.slice(0, -1);
+  /* a vogal com acento também («maçãs» → «maçã», a sessão 16) */
+  if (/[aeiouáéíóúâêôãõ]s$/i.test(s) && s.length > 3) return s.slice(0, -1);
   return s;
 };
 const dist1 = (a, b) => {
@@ -221,7 +241,20 @@ function arrumarCena(cena) {
   for (const n of carrega) catalogo.push({ nome: n, w: palavrasDoNome2(n), tipo: "minha", dono: null, preco: null });
   for (const p of pessoas) for (const v of p.vende) catalogo.push({ nome: v.item, w: palavrasDoNome2(v.item), tipo: "dele", dono: p.nome, preco: v.preco });
   for (const n of coisas) catalogo.push({ nome: n, w: palavrasDoNome2(n), tipo: "solta", dono: null, preco: null });
-  return { pessoas, companheiro, ausentes, mortos, carrega, coisas, moeda, catalogo, tipo: str(c.tipo), lugar: str(c.lugar) };
+  /* 23/11 (a décima sexta sessão): A BANCA VENDE E NÃO É GENTE. «A Âncora do Sul» e o «Balcão»
+     entravam como pessoas — nas opções de «a quem», e um «dela» virava a loja. A cena do jogo traz
+     as bancas à parte (`cena.bancas`): o estoque entra no catálogo como coisa DELE (o dono é a
+     banca), e a banca nunca é marcada como pessoa. A cena de exame não traz bancas: nada muda nela. */
+  const bancas = arr(c.bancas).filter((b) => b && str(b.nome).trim()).map((b) => ({ nome: str(b.nome), vende: arr(b.vende).filter((v) => v && str(v.item).trim()).map((v) => ({ item: str(v.item), preco: Number(v.preco) || 0 })) }));
+  for (const b of bancas) for (const v of b.vende) catalogo.push({ nome: v.item, w: palavrasDoNome2(v.item), tipo: "dele", dono: b.nome, preco: v.preco, banca: true });
+  /* O FOCO (23/11): a quem a frase anterior foi dita, ou quem falou por último — o «ele/ela» de uma
+     mesa. A cena do jogo sempre traz o campo (`foco`, nome ou null); a de exame não o traz, e lá o
+     pronome segue a regra de antes (o primeiro do gênero). Com o campo e sem foco, dois candidatos
+     não se adivinham: pergunta-se. */
+  const temFoco = Object.prototype.hasOwnProperty.call(c, "foco");
+  const foco = temFoco ? str(c.foco).trim() || null : null;
+  const doCompanheiro = arr(h.companheiroCarrega).map(str).filter(Boolean);
+  return { pessoas, companheiro, ausentes, mortos, carrega, coisas, moeda, catalogo, tipo: str(c.tipo), lugar: str(c.lugar), bancas, temFoco, foco, doCompanheiro };
 }
 const palavrasDoNome2 = (n) => sem(n).replace(/[^a-z0-9-]+/g, " ").trim().split(" ").filter(Boolean);
 
@@ -295,8 +328,11 @@ function coisasEm(toks, i, cn) {
       j++;
     }
     if (ok) { out.push({ j, nome: e.nome, tipo: e.tipo, dono: e.dono, preco: e.preco, inteira: true, n: e.w.length }); continue; }
-    /* pela cabeça: «o anel» é o «anel de cobre» que carrego */
-    if (e.w.length > 1 && mesmaPalavra(toks[i].s, e.w[0]) && toks[i].s.length >= 3) out.push({ j: i + 1, nome: e.nome, tipo: e.tipo, dono: e.dono, preco: e.preco, inteira: false, n: 1 });
+    /* pela cabeça: «o anel» é o «anel de cobre» que carrego. 23/11 (a décima sexta sessão, frase 24):
+       «ninguém aqui sai ferido» virou «Sais Aromáticos» do estoque de uma banca — a cabeça curta só
+       vale igual («sai» não é «sais»), e o verbo da frase nunca é a cabeça de uma coisa */
+    const cabecaOk = toks[i].s === e.w[0] || (toks[i].s.length >= 4 && e.w[0].length >= 4 && !verboDe(toks[i].s));
+    if (e.w.length > 1 && cabecaOk && mesmaPalavra(toks[i].s, e.w[0]) && toks[i].s.length >= 3) out.push({ j: i + 1, nome: e.nome, tipo: e.tipo, dono: e.dono, preco: e.preco, inteira: false, n: 1 });
   }
   return out;
 }
@@ -354,6 +390,10 @@ function escolherLeitura(m, prefere) {
   const ordem = prefere === "dele" ? ["dele", "solta", "minha"] : prefere === "minha" ? ["minha", "dele", "solta"] : ["minha", "dele", "solta"];
   const inteiras = ls.filter((l) => l.inteira);
   if (prefere === "minha") { const mi = ls.find((l) => l.tipo === "minha"); if (mi) return mi; }
+  /* 23/11 (a décima sexta sessão, frases 43 e 44): «compro uma ração» com rações na mochila e a
+     «Ração de viagem» no balcão lia a MINHA (a inteira) — e o balcão «não vendia ração». Quem compra,
+     pede ou pergunta o preço quer a coisa de quem vende, inteira ou pela cabeça */
+  if (prefere === "dele") { const de = inteiras.find((l) => l.tipo === "dele") || ls.find((l) => l.tipo === "dele"); if (de) return de; }
   const pool = inteiras.length ? inteiras : ls;
   for (const t of ordem) { const l = pool.find((x) => x.tipo === t); if (l) return l; }
   return pool[0];
@@ -382,6 +422,9 @@ function oracoesDe(toks) {
     const t = toks[k];
     if (t.s === '"') { aspas = !aspas; cur.push(k); continue; }
     if (!aspas && /^[,.;:!]$/.test(t.s)) { if (cur.length) out.push(cur); cur = []; continue; }
+    /* 23/11 (a décima sexta sessão, frase 14): «empresta a vassoura, Mordecai? Eu devolvo já» —
+       o «?» no meio fecha a oração (e fica nela); o do fim continua como sempre */
+    if (!aspas && t.s === "?" && k + 1 < toks.length) { cur.push(k); out.push(cur); cur = []; continue; }
     if (!aspas && (t.s === "e" || t.s === "mas" || t.s === "depois" || t.s === "entao") && cur.length && k + 1 < toks.length) {
       const prox = toks[k + 1].s;
       const prox2 = k + 2 < toks.length ? toks[k + 2].s : "";
@@ -433,7 +476,7 @@ function ler(L, frase) {
   let vocativo = null;
   const resto = [];
   for (const o of ors) { const v = soPessoa(o); if (v) { if (!vocativo) vocativo = v; } else resto.push(o); }
-  const saudacao = (o) => { const s = o.map((k) => toks[k].s).filter((w) => !/^["—]$/.test(w)).join(" "); return O_OUVIDO.saudacoes.some((x) => s === x || s.startsWith(x + " ")) ; };
+  const saudacao = (o) => { const s = o.map((k) => toks[k].s).filter((w) => !/^["—]$/.test(w)).join(" "); return O_OUVIDO.saudacoes.some((x) => s === x || s.startsWith(x + " ")) || O_OUVIDO.marcaDeDiscurso.includes(s); };
 
   const base = { marcada: L.marcada, fala, pergunta, negada: false, condicional: false, direcao: null, regateio: false, propostaDeEmTroca: null };
   const todasPessoas = marcas.filter((m) => m.tipo === "PESSOA");
@@ -447,6 +490,23 @@ function ler(L, frase) {
     const antes = marcas.find((m) => m.tipo === "PESSOA" && m.estado === "aqui" && m.i < pr.i);
     if (antes) return antes;
     if (coisaLeitura && coisaLeitura.tipo === "dele" && coisaLeitura.dono) return { tipo: "PESSOA", estado: "aqui", nome: coisaLeitura.dono, opcoes: [] };
+    /* 23/11 (a décima sexta sessão, frase 58): «peço a poção de volta pra ela» — quem tem a coisa
+       é quem o pronome retoma (a poção está na bolsa do companheiro) */
+    if (coisaLeitura && cn.companheiro && cn.doCompanheiro.some((n) => mesmaPalavra(sem(n).split(" ")[0], sem(coisaLeitura.nome).split(" ")[0]))) return { tipo: "PESSOA", estado: "aqui", nome: cn.companheiro, opcoes: [] };
+    /* o foco: a quem a frase anterior foi dita, ou quem falou por último (só a cena do jogo o traz) */
+    if (cn.temFoco) {
+      const presentes = [...cn.pessoas.map((p) => p.nome), ...(cn.companheiro ? [cn.companheiro] : [])];
+      if (cn.foco && presentes.some((n) => sem(n) === sem(cn.foco))) return { tipo: "PESSOA", estado: "aqui", nome: presentes.find((n) => sem(n) === sem(cn.foco)), opcoes: [] };
+      /* a banca de quem a frase anterior comprou («compro duas tochas do balcão… vendo o símbolo pra ela») */
+      if (cn.foco && cn.bancas.some((b) => sem(b.nome) === sem(cn.foco))) return { tipo: "PESSOA", estado: "aqui", nome: cn.bancas.find((b) => sem(b.nome) === sem(cn.foco)).nome, opcoes: [] };
+      /* o único do gênero dito não é adivinhar */
+      const fem0 = (n) => /a$/.test(palavrasDoNome(n).filter((w) => !TITULOS.includes(w))[0] || "");
+      const doGenero0 = cn.pessoas.filter((p) => (pr.genero === "f" ? fem0(p.nome) : pr.genero === "m" ? !fem0(p.nome) : false));
+      if (doGenero0.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: doGenero0[0].nome, opcoes: [] };
+      /* sem foco e com mais de um candidato, ninguém se adivinha (a frase 19 deu o símbolo ao Mordecai) */
+      if (cn.pessoas.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: cn.pessoas[0].nome, opcoes: [] };
+      return null;
+    }
     const gente = cn.pessoas;
     if (gente.length === 1) return { tipo: "PESSOA", estado: "aqui", nome: gente[0].nome, opcoes: [] };
     const fem = (n) => /a$/.test(palavrasDoNome(n).filter((w) => !TITULOS.includes(w))[0] || "");
@@ -490,6 +550,12 @@ function ler(L, frase) {
         const prox = m.j < toks.length ? marcaEm(m.j) : null;
         if (prox && prox.tipo === "COISA") { const l = escolherLeitura(prox, prefere); return { ...l, k: m.j }; }
         if (prox && prox.tipo === "MOEDA") return { nome: "moeda", tipo: "moeda", dono: null, preco: null, k: m.j };
+        /* 23/11 (a décima sexta sessão, frase 55): «dou três poções de mana» — a coisa contada que
+           o sistema não conhece é a coisa dita (e a regra responde «você não tem»), não uma pergunta */
+        if (!prox && livre && ks.includes(m.j) && m.j < toks.length) {
+          const w = toks[m.j].s;
+          if (w.length >= 3 && !O_OUVIDO.naoECoisa.includes(w) && !O_OUVIDO.naoECoisa.includes(sem(singular(w))) && !ehInfinitivo(w) && !verboDe(w) && !O_OUVIDO.artigos.includes(w) && !O_OUVIDO.entrega.includes(w) && !O_OUVIDO.tira.includes(w) && !O_OUVIDO.emTroca.includes(w) && !O_OUVIDO.antesDoOficio.includes(w) && !O_OUVIDO.recipientes.includes(w)) return { nome: singular(toks[m.j].o.toLowerCase()), tipo: "livre", dono: null, preco: null, k: m.j };
+        }
       }
     }
     return null;
@@ -558,6 +624,13 @@ function ler(L, frase) {
     const outra = afirmadas.find((o) => o !== primeiraOr && !saudacao(o) && o.some((k) => verboDe(toks[k].s) && !marcaEm(k)));
     if (outra) principal = outra; else { principal = primeiraOr; negada = true; }
   } else principal = primeiraOr;
+  /* 23/11 (a décima sexta sessão, frase 24): «esse livro não é seu. Entregue ele a mim» — a oração
+     sem verbo nenhum comenta, não age; a ação é a primeira seguinte que abre com verbo de troca */
+  if (principal && principal.length && !negada && !condicional && !principal.some((k) => verboDe(toks[k].s) && !marcaEm(k))) {
+    const abreComTroca = (o) => { let k = comeca(o); if (k < o.length && O_OUVIDO.clitico.includes(toks[o[k]].s)) k++; const vv = k < o.length ? verboDe(toks[o[k]].s) : null; return !!(vv && vv.fam === "trocar" && !marcaEm(o[k])); };
+    const outra = cand.find((o) => o !== principal && abreComTroca(o));
+    if (outra) principal = outra;
+  }
   if (!principal || !principal.length) principal = toks.map((_, k) => k);
   const todos = toks.map((_, k) => k);
   const ks = principal;
@@ -769,6 +842,10 @@ function ler(L, frase) {
     else if (["vou", "vamos", "ir"].includes(vs) && /^(pra|para) cima\b/.test(txtDps)) ctx("lutar");
     else if (["avanco", "avancar", "avancamos", "invisto", "investir"].includes(vs) && /^(contra|sobre|pra cima)\b/.test(txtDps)) ctx("lutar");
     else if (lema === "usar" && /^pendur/.test(vs) && clitico === "me") ctx("agir");
+    /* 23/11 (a décima sexta sessão, frase 23): «guardo o livro na bolsa» — guardar o que está solto
+       na cena, ou o que não é meu dentro da bolsa, é pegar (a regra e a ficha dizem se há o que pegar) */
+    else if (lema === "usar" && /^guard/.test(vs) && objDepois && objDepois.tipo === "solta") ctx("trocar", "pegar");
+    else if (lema === "usar" && /^guard/.test(vs) && objDepois && objDepois.tipo === "livre" && O_OUVIDO.naBolsa.test(txtDps)) ctx("trocar", "pegar");
     else if (lema === "usar" && /^guard/.test(vs) && objDepois && objDepois.tipo !== "minha" && objDepois.tipo !== "moeda") ctx("agir");
     else if (lema === "usar" && !["como", "comer", "comemos"].includes(vs) && objDepois && objDepois.tipo === "solta") ctx("agir");
     else if (lema === "usar" && ["como", "comer"].includes(vs) && !objDepois) { familia = null; subtipo = null; }
@@ -813,6 +890,29 @@ function ler(L, frase) {
     const od = coisaDe(depois, 0, "dele");
     ctx("trocar", od && od.tipo === "dele" ? "comprar" : "pedir");
   }
+  /* 23/11 (a décima sexta sessão, frase 48): «Charity, me serve uma sopa» — o pedido ao balcão sem
+     verbo da tabela, dito a alguém: compra do que se vende, pedido do resto */
+  if (!v && vk != null && O_OUVIDO.pedidoAoBalcao.includes(toks[vk].s) && (clitico === "me" || vocativo)) {
+    const od = coisaDe(depois, 0, "dele");
+    ctx("trocar", od && od.tipo === "dele" ? "comprar" : "pedir");
+  }
+  /* O PEDIDO DIRIGIDO (23/11, frases 14, 18, 24): o verbo de troca fora da primeira pessoa, dito a
+     alguém e sem outro destinatário, é o herói pedindo dela — e a pessoa do vocativo é o quem */
+  {
+    const dirigido = !!vocativo || clitico === "me" || O_OUVIDO.aMim.test(txtTudo);
+    const sub = lema ? O_OUVIDO.pedidoDirigido[lema] : null;
+    if (v && sub && familia === "trocar" && !modal && vk != null && dirigido && !O_OUVIDO.primeiraPessoa.test(vs) && !ehInfinitivo(vs) && !destino()) {
+      const od = coisaDe(depois, 0, "dele");
+      ctx("trocar", sub === "pedir" && lema !== "devolver" && od && od.tipo === "dele" ? "comprar" : sub);
+      if (sub === "emprestar") direcao = "recebe";
+      base.pedidoDirigido = true;
+    }
+  }
+  /* TOMAR (23/11, frase 22): «arranco o livro da mão dele» — tirar da mão de alguém é força contra
+     quem segura: vai ao dado, como o furto */
+  if (v && familia !== "lutar" && ["agir", "pegar", "usar"].includes(lema) && O_OUVIDO.daMao.test(txtDps) && (origem() || /\b(dele|dela)\b/.test(txtDps) || pessoaDepois)) { ctx("trocar", "furtar"); base.tomar = true; }
+  /* «fico com o troco»: receber de volta a moeda (sem troco devido, a regra da mesa diz que não há) */
+  if (O_OUVIDO.troco.test(txtTudo)) { ctx("trocar", "cobrar"); base.troco = true; }
 
   if (familia === "agir") {
     const kc = depois.find((k) => toks[k].s === "com");
@@ -847,6 +947,8 @@ function ler(L, frase) {
   if (familia === "trocar" && subtipo === "pegar" && /\b(sem (ele|ela|ninguem|que (ele|ela|ninguem)) (ver|perceber|notar)|escondid\w*|as escondidas|de fininho|na surdina)\b/.test(txtTudo)) ctx("trocar", "furtar");
   /* o regateio: «desconto», «por menos», «nem um a menos», preço dito na venda */
   if (familia === "trocar" && /\b(desconto|abatimento|mais barato|por menos|nem um a menos|nem uma a menos|pechinch\w*|regate\w*|chorar o preco)\b/.test(txtTudo)) regateio = true;
+  /* 23/11 (a décima sexta sessão, frase 48): «fico devendo até amanhã» — o fiado vai ao dado */
+  if (familia === "trocar" && ["comprar", "pagar", "pedir"].includes(subtipo) && O_OUVIDO.fiado.test(txtTudo)) base.fiado = true;
 
   /* sem verbo reconhecido: a estrutura decide */
   if (!familia) {
@@ -922,7 +1024,8 @@ function ler(L, frase) {
     m = quemOrdem.find(Boolean) || null;
     if (!m && depois.some((k) => { const x = marcaEm(k); return x && x.tipo === "PRONOME"; })) m = depois.map(marcaEm).find((x) => x && x.tipo === "PRONOME");
     if (m && m.tipo === "PRONOME") {
-      const r = resolverPronome(ks, coisa && coisa.tipo === "dele" ? coisa : null, ["pegar", "furtar"].includes(subtipo));
+      const vemDeOutro = ["pedir", "cobrar", "furtar", "pegar", "comprar"].includes(subtipo) || direcao === "recebe";
+      const r = resolverPronome(ks, coisa && (coisa.tipo === "dele" || vemDeOutro) ? coisa : null, ["pegar", "furtar"].includes(subtipo));
       m = r;
       if (!r) base.quemPronomeSemDono = true;
     }

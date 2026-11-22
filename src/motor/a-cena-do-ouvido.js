@@ -132,6 +132,29 @@ export const A_CENA_DO_OUVIDO = Object.freeze({
   }),
   /* quem não tem nome na frase: a palavra que a linha usa */
   alguem: "alguém",
+  /* quem serve a casa (o ofício, sem acento): a ela vão a sopa e a caneca */
+  quemServe: /(tavern|estalaj|pousad|cozinh|copeir|servent|garcon|garcom|hospedeir|dono da|dona da)/,
+  /* a casa sem quem a sirva leva o nome do lugar; sem lugar, este */
+  aCasa: "a casa",
+  /* o lugar que tem casa (o tipo ou o nome, sem acento) */
+  lugarDeCasa: /(tavern|estalag|pousad|hospedar|cervejar|botequim|bodeg)/,
+  /* as linhas da tabela de preços comuns que a casa serve (os ids do cenário) */
+  pratosDaCasa: Object.freeze(["caneca", "refeicao", "refeicaoBoa", "vinho", "rua"]),
+  /* 23/11 (a décima sexta sessão, frases 9 e 59): a troca recusada diz o que a pessoa não troca —
+     a coisa DELA —, nunca «não vende» a coisa que o herói ofereceu */
+  naoTroca: Object.freeze({
+    tela: "🤝 {Nome} não troca {outra}.",
+    fato: "{Nome} não troca {outra} por {coisa}: nada mudou de mão.",
+  }),
+  /* o companheiro que não leva o que se pede */
+  companheiroNaoLeva: Object.freeze({
+    tela: "🎒 {Nome} não leva {coisa}.",
+    fato: "Pedi {coisa} a {Nome}, e {Nome} não leva isso: nada mudou de mão.",
+  }),
+  pedirAoCompanheiro: Object.freeze({
+    tela: "🤝 {Nome} lhe passa {Coisa}.",
+    fato: "{Nome} me passou {Coisa}; saiu da bolsa de {Nome} e está comigo.",
+  }),
 });
 
 const str = (x) => (x == null ? "" : String(x));
@@ -145,6 +168,8 @@ const curto = (r) => nomeDe(r).replace(/\s*\(.*\)\s*$/, "").trim();
 const maiuscula = (s) => (str(s) ? str(s).charAt(0).toUpperCase() + str(s).slice(1) : "");
 const mesmaCoisa = (a, b) => { const x = sem(a), y = sem(b); return !!x && !!y && (x === y || x.replace(/s$/, "") === y.replace(/s$/, "")); };
 const primeiro = (n) => str(n).split(/[\s,]+/)[0];
+/* «Thaddeus Crane, a Coisa no Poço» diz-se «Thaddeus Crane» */
+const semAposto = (n) => str(n).split(",")[0].trim();
 
 /* ============================================================
    aCenaDoOuvido(retrato) → cena (o formato do exame)
@@ -164,25 +189,45 @@ export function aCenaDoOuvido(retrato) {
   const grupo = arr(r.grupo).map(nomeDe).filter(Boolean);
   const doGrupo = new Set(grupo.map(sem));
   const lugar = obj(r.lugar) ? r.lugar : { nome: str(r.lugar), tipo: "" };
+  const nomesDeBanca = new Set(arr(r.bancas).map(nomeDe).filter(Boolean).map(sem));
   const pessoas = [];
   const ja = new Set();
   for (const p of arr(r.pessoas)) {
     const nome = nomeDe(p).trim();
-    if (!nome || doGrupo.has(sem(nome)) || (obj(p) && p.ehCompanheiro) || ja.has(sem(nome))) continue;
+    /* a loja que alguma lista pôs entre a gente não é gente (a sessão 16: «A Âncora do Sul» nas opções de «a quem») */
+    if (!nome || doGrupo.has(sem(nome)) || (obj(p) && p.ehCompanheiro) || ja.has(sem(nome)) || (nomesDeBanca.has(sem(nome)) && !(obj(p) && p.papel))) continue;
     ja.add(sem(nome));
     pessoas.push({ nome, oficio: str(obj(p) ? p.papel || p.oficio : ""), vende: null });
   }
+  /* 23/11 (a décima sexta sessão): A BANCA VENDE E NÃO É GENTE. «A Âncora do Sul», «O Sino
+     Rachado» e o «Balcão» entravam como pessoas — nas opções de «a quem», e um «dela» virava a
+     loja. A banca vai à parte (`bancas`), com o estoque; a que tem o nome de quem está aqui
+     soma o estoque a essa pessoa, como antes. */
+  const bancas = [];
   for (const b of arr(r.bancas)) {
     const nome = nomeDe(b).trim();
     if (!nome) continue;
     const vende = arr(obj(b) ? b.estoque : null).filter((x) => nomeDe(x)).map((x) => ({ item: curto(x), preco: Math.max(0, Number(x && x.preco) || 0) }));
     const i = pessoas.findIndex((p) => sem(p.nome) === sem(nome));
     if (i >= 0) { pessoas[i] = { ...pessoas[i], vende: [...arr(pessoas[i].vende), ...vende] }; continue; }
-    ja.add(sem(nome));
-    pessoas.push({ nome, oficio: str(obj(b) ? b.oficio || b.tipo : ""), vende });
+    if (bancas.some((x) => sem(x.nome) === sem(nome))) continue;
+    bancas.push({ nome, vende });
+  }
+  /* A CASA (23/11, frases 48, 57, 59): o que a taverna serve (a sopa, a caneca) tem preço de tabela
+     (`retrato.casa`, de osPratosDaCasa); quem serve é quem tem o ofício da casa, e sem ele a casa
+     é uma banca com o nome do lugar */
+  const casa = arr(r.casa).filter((x) => obj(x) && str(x.nome).trim()).map((x) => ({ item: str(x.nome), preco: Math.max(0, Number(x.preco) || 0) }));
+  if (casa.length) {
+    const i = pessoas.findIndex((p) => A_CENA_DO_OUVIDO.quemServe.test(sem(p.oficio)));
+    if (i >= 0) pessoas[i] = { ...pessoas[i], vende: [...arr(pessoas[i].vende), ...casa] };
+    /* sem quem sirva, só onde há casa (a taverna, a estalagem): na capela não se vende sopa */
+    else if (A_CENA_DO_OUVIDO.lugarDeCasa.test(sem(`${str(lugar.tipo)} ${str(lugar.nome)}`))) bancas.push({ nome: str(lugar.nome) || A_CENA_DO_OUVIDO.aCasa, vende: casa });
   }
   const presentes = new Set([...pessoas.map((p) => sem(p.nome)), ...doGrupo]);
-  const longe = arr(r.ausentes).filter((a) => nomeDe(a) && !presentes.has(sem(nomeDe(a))));
+  /* quem o sistema conhece e não está à vista (o passo da quest, o registo) também é ausente:
+     «dou duas moedas pra Constance» é «ela não está aqui», não «a quem?» (frase 40) */
+  const conhecidos = arr(r.conhecidos).map(nomeDe).filter(Boolean).filter((n) => !arr(r.ausentes).some((a) => sem(nomeDe(a)) === sem(n))).map((nome) => ({ nome }));
+  const longe = [...arr(r.ausentes), ...conhecidos].filter((a) => nomeDe(a) && !presentes.has(sem(nomeDe(a))));
   const sup = obj(f.suprimentos) || {};
   const carrega = [];
   for (const raw of [...arr(f.inventario), ...arr(f.equipamento), ...Object.values(obj(f.equipados) || {})]) {
@@ -190,14 +235,43 @@ export function aCenaDoOuvido(retrato) {
     if (n && !carrega.some((x) => sem(x) === sem(n))) carrega.push(n);
   }
   for (const [id, n] of Object.entries(A_CENA_DO_OUVIDO.usos)) if ((Number(sup[id]) || 0) > 0 && !carrega.some((x) => mesmaCoisa(x, n))) carrega.push(n);
-  return {
+  /* o que o companheiro leva (o «ela» de «peço a poção de volta pra ela» é quem tem a poção) */
+  const comp0 = arr(r.grupo).find((g) => obj(g) && sem(nomeDe(g)) === sem(grupo[0] || "")) || arr(f.grupo).find((g) => obj(g) && sem(nomeDe(g)) === sem(grupo[0] || ""));
+  const companheiroCarrega = arr(comp0 && comp0.inventario).map(curto).filter(Boolean);
+  const cena = {
     lugar: str(lugar.nome), tipo: str(lugar.tipo),
     pessoas,
     ausentes: longe.filter((a) => !(obj(a) && a.morto)).map(nomeDe),
     mortos: longe.filter((a) => obj(a) && a.morto).map(nomeDe),
     coisas: arr(r.chao).map(curto).filter(Boolean),
-    heroi: { moeda: Math.max(0, Number(f.moedas) || 0), carrega, companheiro: grupo[0] || null },
+    heroi: { moeda: Math.max(0, Number(f.moedas) || 0), carrega, companheiro: grupo[0] || null, companheiroCarrega },
+    bancas,
   };
+  /* o foco da conversa só vai quando o retrato o traz (o jogo): sem ele, o pronome segue a regra de antes */
+  if (Object.prototype.hasOwnProperty.call(r, "foco")) cena.foco = str(r.foco).trim() || null;
+  return cena;
+}
+
+/* ============================================================
+   osPratosDaCasa(comuns) → [{ nome, preco }]
+   O que se pede numa taverna sai da tabela de preços comuns do cenário
+   (`PRECOS_COMUNS`: { rx, preco, nome }): cada palavra simples da regex
+   («sopas?», «caldos?», «canecas?») vira um prato com o preço da linha.
+   ============================================================ */
+export function osPratosDaCasa(comuns) {
+  const out = [];
+  for (const c of arr(comuns)) {
+    if (!obj(c) || (c.id && !A_CENA_DO_OUVIDO.pratosDaCasa.includes(c.id))) continue;
+    const preco = Math.max(0, Number(c.preco) || 0);
+    if (!preco) continue;
+    const fonte = c.rx instanceof RegExp ? c.rx.source : str(c.rx);
+    const corpo = fonte.replace(/^\\b\(/, "").replace(/\)\\b$/, "");
+    for (const alt of corpo.split("|")) {
+      const w = alt.replace(/s\?$/, "").replace(/\?$/, "");
+      if (/^[a-z]{3,}$/.test(w) && !out.some((x) => x.nome === w)) out.push({ nome: w, preco });
+    }
+  }
+  return out;
 }
 
 /* a frase completa que uma escolha reenvia */
@@ -257,6 +331,13 @@ function aNegativa(l, r, cena) {
   const coisa = str(l.coisa) || "isso";
   const chave = motivo === "nao_vende" && !Nome ? "nao_vendeNinguem" : motivo;
   const o = { Nome: Nome || R.alguem, Bolsa, coisa, gesto: oGesto(l) };
+  if (motivo === "nao_vende" && l.subtipo === "escambo" && Nome) {
+    const outra = str(obj(l.propostaDeEmTroca) && l.propostaDeEmTroca.nome) || "isso";
+    return Object.freeze({
+      tipo: "ouvido", estado: "negada", ficha: null, mudou: Object.freeze([]), motivo,
+      linha: tpl(R.naoTroca.tela, { ...o, Nome: semAposto(Nome), outra }), fato: tpl(R.naoTroca.fato, { ...o, Nome: semAposto(Nome), outra }), veto: Object.freeze([R.veto.nada]),
+    });
+  }
   return Object.freeze({
     tipo: "ouvido", estado: "negada", ficha: null, mudou: Object.freeze([]), motivo,
     linha: tpl(R.tela.nao[chave], o), fato: tpl(R.fato.nao[chave], o), veto: Object.freeze([R.veto.nada]),
@@ -285,6 +366,24 @@ export function oOuvidoNaTroca(frase, cena) {
        Medido: nenhuma frase do treino nem do corpus cai aqui (os números não mudam) */
     const semVerbo = !["trocar", "usar"].includes(lida.familia) && Number(lida.confianca) <= O_OUVIDO.confianca.semVerbo && R.gestoSemVerbo.includes(lida.coisaTipo);
     const leitura = semVerbo ? Object.freeze({ ...lida, familia: "trocar", subtipo: null }) : lida;
+    return oVereditoDoOuvido(leitura, cena, f);
+  } catch {
+    return vazio;
+  }
+}
+
+/* ============================================================
+   oVereditoDoOuvido(leitura, cena, frase?) → o mesmo de oOuvidoNaTroca
+   A resposta do Mestre a uma LEITURA (e não a uma frase): a porta única
+   (motor/uma-porta-so.js) completa a leitura pendente com a escolha do
+   jogador — a estrutura, não o texto — e pede o veredito outra vez aqui.
+   ============================================================ */
+export function oVereditoDoOuvido(leitura, cena, frase) {
+  const vazio = Object.freeze({ lido: false, leitura: null, resposta: null, caminho: null, intencao: null, negada: null, pergunta: null });
+  try {
+    const R = A_CENA_DO_OUVIDO;
+    if (!obj(leitura)) return vazio;
+    const f = str(frase).trim();
     const resposta = aRespostaDoMestre(leitura, cena);
     const base = { lido: true, leitura, resposta, caminho: null, intencao: null, negada: null, pergunta: null };
     if (!["trocar", "usar"].includes(leitura.familia) || !A_REGRA_DO_IMPROVISO.vereditos.includes(resposta.veredito)) return Object.freeze(base);
@@ -363,7 +462,7 @@ export function aTrocaDoOuvido(o, ctx) {
     const ficha = obj(c.ficha);
     if (!ficha) return null;
     const moedas = Math.max(0, Number(ficha.moedas) || 0);
-    const quemDoOutro = str(l.quem).trim();
+    const quemDoOutro = semAposto(str(l.quem).trim());
     const comp = str(l.companheiro).trim();
     const Quem = comp || quemDoOutro;
     const NomeCurto = primeiro(Quem) || R.alguem;
@@ -399,6 +498,20 @@ export function aTrocaDoOuvido(o, ctx) {
       return f0;
     };
     const aoCompanheiro = (f0, item) => ({ ...f0, grupo: arr(f0.grupo).map((g) => (obj(g) && sem(nomeDe(g)) === sem(comp) ? { ...g, inventario: [...arr(g.inventario), item] } : g)) });
+
+    /* 23/11 (a décima sexta sessão, frase 58): o pedido ao companheiro — o que ele leva passa à
+       mochila do herói; o que ele não leva, não (nunca item inventado) */
+    if (s === "pedir" && comp) {
+      const NomeC = primeiro(comp);
+      if (l.coisaTipo === "moeda") return negada("ouvido", "grupo", tpl(T.darMoedaAoGrupo, { Nome: NomeC }), tpl(F.darMoedaAoGrupo, { Nome: NomeC }));
+      const g = arr(ficha.grupo).find((x) => obj(x) && sem(nomeDe(x)) === sem(comp));
+      const inv = arr(g && g.inventario);
+      const i = inv.findIndex((x) => mesmaCoisa(curto(x), l.coisa) || sem(curto(x)).split(" ")[0] === sem(l.coisa).split(" ")[0]);
+      if (!g || i < 0) return negada("ouvido", "naoLeva", tpl(R.companheiroNaoLeva.tela, { Nome: NomeC, coisa: str(l.coisa) || "isso" }), tpl(R.companheiroNaoLeva.fato, { Nome: NomeC, coisa: str(l.coisa) || "isso" }));
+      const item = inv[i];
+      const nova = { ...ficha, inventario: [...arr(ficha.inventario), item], grupo: arr(ficha.grupo).map((x) => (x === g ? { ...g, inventario: inv.filter((_, j) => j !== i) } : x)) };
+      return aplicada("ouvido", nova, [{ coisa: curto(item), quantos: 1, de: comp, para: "heroi" }], tpl(R.pedirAoCompanheiro.tela, { Nome: NomeC, Coisa: maiuscula(curto(item)) }), tpl(R.pedirAoCompanheiro.fato, { Nome: NomeC, Coisa: curto(item) }));
+    }
 
     /* entregar: dar, emprestar, devolver (o que sai da ficha; ao companheiro, entra na bolsa dele) */
     if (s === "dar" || s === "emprestar" || s === "devolver") {
@@ -441,7 +554,7 @@ export function aTrocaDoOuvido(o, ctx) {
     /* o que vem de uma banca: o item inteiro do estoque (sem o preço), ou o uso do balcão */
     const doEstoque = (coisa, dono) => {
       for (const b of arr(c.bancas)) {
-        if (!obj(b) || (dono && sem(nomeDe(b)) !== sem(dono))) continue;
+        if (!obj(b) || (dono && sem(semAposto(nomeDe(b))) !== sem(semAposto(dono)))) continue;
         const it = arr(b.estoque).find((e) => mesmaCoisa(curto(e), coisa));
         if (it) return { banca: b, item: it };
       }
@@ -449,6 +562,8 @@ export function aTrocaDoOuvido(o, ctx) {
     };
     const entrar = (f0, achado, nomeItem, vezes) => {
       /* o balcão de mantimentos diz o uso pelo id (racoes, agua, tochas, kit) */
+      /* o que a casa serve (a sopa, a caneca) se consome à mesa: nada entra na mochila */
+      if (achado && obj(achado.item) && achado.item.consumo) return f0;
       const usoId = achado && obj(achado.item) ? str(achado.item.uso) : "";
       if (usoId) { const sp = obj(f0.suprimentos) || {}; return { ...f0, suprimentos: { ...sp, [usoId]: usoId === "kit" ? true : (Number(sp[usoId]) || 0) + vezes } }; }
       const uso = Object.entries(R.usos).find(([, n]) => mesmaCoisa(n, nomeItem));
@@ -472,20 +587,40 @@ export function aTrocaDoOuvido(o, ctx) {
       const nova = entrar({ ...ficha, moedas: B }, achado, l.coisa, vezes);
       const Coisa = (vezes > 1 ? `${vezes} × ` : "") + (achado ? curto(achado.item) : l.coisa);
       return aplicada("ouvido", nova, [{ coisa: l.coisa, quantos: vezes, de: l.dono, para: "heroi" }, { coisa: "moedas", quantos: Q, de: "heroi", para: l.dono }],
-        tpl(T.comprar, { Coisa: maiuscula(Coisa), Quem: l.dono, Q, B }), tpl(F.comprar, { Coisa, Quem: l.dono, Q, B }),
+        tpl(T.comprar, { Coisa: maiuscula(Coisa), Quem: semAposto(l.dono), Q, B }), tpl(F.comprar, { Coisa, Quem: semAposto(l.dono), Q, B }),
         achado && achado.banca.id ? { comprado: Object.freeze({ banca: achado.banca.id, nome: nomeDe(achado.item), vezes }) } : null);
     }
 
     if (s === "vender") {
       const k = achar(l.coisa);
-      if (!k || k.onde === "suprimentos") return null;
+      /* 23/11 (a décima sexta sessão, frase 51): o que é de uso (tochas, rações) vende-se pela
+         revenda da tabela (`ofertaDoUso`, o mesmo preço do cartão «Vender»), na quantia dita */
+      if (k && k.onde === "suprimentos") {
+        const vezes = l.quantiaDe === "coisa" && Number(l.quantia) > 1 ? Number(l.quantia) : 1;
+        const tem = Number((obj(ficha.suprimentos) || {})[k.id]) || 0;
+        if (vezes > tem) return null;
+        let ou = null;
+        try { ou = typeof c.ofertaDoUso === "function" ? c.ofertaDoUso(k.id, vezes) : null; } catch { ou = null; }
+        const compradorU = (obj(ou) && obj(ou.quem) && nomeDe(ou.quem)) || "";
+        const QU = obj(ou) ? Math.max(0, Math.floor(Number(ou.valor) || 0)) : 0;
+        if (!compradorU || !QU) return negada("ouvido", "semComprador", tpl(T.venderSemQuem, { coisa: k.nome }), tpl(F.venderSemQuem, { coisa: k.nome }));
+        const ParaU = quemDoOutro && !arr(c.bancas).some((b) => sem(nomeDe(b)) === sem(quemDoOutro)) ? semAposto(quemDoOutro) : compradorU;
+        const sp = obj(ficha.suprimentos) || {};
+        const BU = moedas + QU;
+        const novaU = { ...ficha, moedas: BU, suprimentos: { ...sp, [k.id]: tem - vezes } };
+        const CoisaU = (vezes > 1 ? `${vezes} × ` : "") + k.nome;
+        return aplicada("ouvido", novaU, [{ coisa: k.nome, quantos: vezes, de: "heroi", para: ParaU }, { coisa: "moedas", quantos: QU, de: ParaU, para: "heroi" }],
+          tpl(T.vender, { Q: QU, Quem: ParaU, Coisa: CoisaU, B: BU }), tpl(F.vender, { Q: QU, Quem: ParaU, Coisa: CoisaU, B: BU }), { vendido: Object.freeze({ banca: (ou.quem && ou.quem.id) || "", valor: QU, uso: k.id, vezes }) });
+      }
+      if (!k) return null;
       if (k.onde === "equipados") return negada("ouvido", "emUso", tpl(T.darEmUso, { Coisa: maiuscula(k.nome) }), tpl(F.darEmUso, { Coisa: k.nome }));
       let of = null;
       try { of = typeof c.ofertaDe === "function" ? c.ofertaDe(k.raw) : null; } catch { of = null; }
       const comprador = (obj(of) && obj(of.quem) && nomeDe(of.quem)) || "";
       const Q = obj(of) ? Math.max(0, Math.floor(Number(of.valor) || 0)) : 0;
       if (!comprador || !Q) return negada("ouvido", "semComprador", tpl(T.venderSemQuem, { coisa: k.nome }), tpl(F.venderSemQuem, { coisa: k.nome }));
-      const Para = quemDoOutro || comprador;
+      /* quem a frase nomeia compra, se é gente; a banca que o pronome retomou cede ao comprador do mercado */
+      const Para = quemDoOutro && !arr(c.bancas).some((b) => sem(nomeDe(b)) === sem(quemDoOutro)) ? semAposto(quemDoOutro) : comprador;
       const B = moedas + Q;
       const nova = { ...tirar(ficha, k), moedas: B };
       return aplicada("ouvido", nova, [{ coisa: k.nome, quantos: 1, de: "heroi", para: Para }, { coisa: "moedas", quantos: Q, de: Para, para: "heroi" }],
@@ -495,13 +630,17 @@ export function aTrocaDoOuvido(o, ctx) {
     if (s === "escambo") {
       const alvo = obj(l.propostaDeEmTroca);
       const k = achar(l.coisa);
-      if (!k || !alvo || !quemDoOutro || k.onde === "equipados" || k.onde === "suprimentos") return null;
-      const achado = doEstoque(alvo.nome, quemDoOutro);
+      /* 23/11 (a décima sexta sessão, frase 59): a tocha (de uso) também se troca, e a banca que
+         vende a coisa pedida é o outro lado quando a frase não nomeia ninguém */
+      const outroLado = quemDoOutro || str(alvo && alvo.dono);
+      if (!k || !alvo || !outroLado || k.onde === "equipados") return null;
+      const achado = doEstoque(alvo.nome, outroLado);
       if (!achado) return null;
       const nova = entrar(tirar(ficha, k), achado, alvo.nome, 1);
       const Outra = curto(achado.item);
-      return aplicada("ouvido", nova, [{ coisa: k.nome, quantos: 1, de: "heroi", para: quemDoOutro }, { coisa: Outra, quantos: 1, de: quemDoOutro, para: "heroi" }],
-        tpl(T.escambo, { Coisa: k.nome, Outra, Quem: quemDoOutro }), tpl(F.escambo, { Coisa: k.nome, Outra, Quem: quemDoOutro }),
+      const QuemE = semAposto(outroLado);
+      return aplicada("ouvido", nova, [{ coisa: k.nome, quantos: 1, de: "heroi", para: QuemE }, { coisa: Outra, quantos: 1, de: QuemE, para: "heroi" }],
+        tpl(T.escambo, { Coisa: k.nome, Outra, Quem: QuemE }), tpl(F.escambo, { Coisa: k.nome, Outra, Quem: QuemE }),
         achado.banca.id ? { comprado: Object.freeze({ banca: achado.banca.id, nome: nomeDe(achado.item), vezes: 1 }) } : null);
     }
 
