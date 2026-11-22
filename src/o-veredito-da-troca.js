@@ -45,6 +45,7 @@
    Provado em testes/teste-o-veredito-da-troca.mjs.
    ============================================================ */
 import { NUMERO_POR_EXTENSO } from "./cobranca.js";
+import { aQuem } from "./a-venda-da-bolsa.js";
 
 const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 const obj = (x) => (x != null && typeof x === "object" && !Array.isArray(x) ? x : null);
@@ -79,6 +80,8 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   /* O FATO NA PAUTA (a nona sessão, T21, T34, T55): a primeira linha que o
      Narrador lê, de ferro, e o veto que fecha a porta barata */
   fatoFecho: "Narre só isto; nada mais muda de mão.",
+  /* na ficha do ator (o Narrador ator, ficha-de-ator.js) não há ordem nem rótulo: o fecho é fato */
+  fatoFechoDoAtor: "Nada mais muda de mão.",
   vetoDoFato: "pôr, tirar ou trocar de mão qualquer coisa ou moeda além do FATO DESTE TURNO — nem a prosa dá o que o sistema negou, nem tira o que ele deu",
   /* «compro duas rações e pago dez moedas»: a moeda é da compra */
   compraDeclarada: /\b(compro|compramos|comprei)\b/,
@@ -154,9 +157,11 @@ export const O_VEREDITO_DA_TROCA = Object.freeze({
   /* O QUE A TELA DIZ (a voz da mesa: «você», nunca o nome do mecanismo) */
   tela: Object.freeze({
     pegarDono: "✋ Isso é {doDono}: levar sem pedir é furto.",
-    pegarInventado: Object.freeze(["✋ Nada disso vai para a sua mochila: não é coisa que valha levar.", "✋ Você deixa isso onde está: não é coisa que se leve."]),
+    /* a nona sessão (T25, T26, T28, T58): a mesma frase para um mapa molhado, um remo e um frasco «soava a erro» — a negativa diz a coisa */
+    pegarInventado: Object.freeze(["✋ Não há {coisa} aqui que se leve: fica onde está.", "✋ {Coisa} fica onde está: não é coisa de se levar."]),
     companheiroDa: "🤝 {Nome} passa a você: {Coisa}.",
-    companheiroSemMoeda: "🤝 {Nome} não guarda moeda à parte: a bolsa do grupo é a que você carrega.",
+    /* a nona sessão (T14, T15, T18): «não guarda moeda à parte» era regra de sistema na boca da mesa */
+    companheiroSemMoeda: "🤝 {Nome} abre as mãos vazias: o dinheiro do grupo está na sua bolsa.",
     companheiroUso: "🤝 As {coisa} do grupo estão na sua mochila: {Nome} não carrega outras.",
     companheiroNaoTem: "🤝 {Nome} não tem isso consigo.",
     companheiroEmUso: "🤝 {Nome} usa {Coisa} e não a tira de si para dar.",
@@ -645,7 +650,7 @@ export function oVereditoDaTroca(frase, ctx) {
       if (dono) {
         return Object.freeze({ ...negada("pegar", "dono", tpl(T.pegarDono, { Coisa: maiuscula(semDono), Dono: dono, doDono: deQuem(dono.charAt(0).toLowerCase() === dono.charAt(0) ? dono : (/^(O|A|Os|As) /.test(dono) ? dono.charAt(0).toLowerCase() + dono.slice(1) : dono)) }), tpl(F.pegarDono, { coisa: semDono, Dono: dono, doDono: deQuem(/^(O|A|Os|As) /.test(dono) ? dono.charAt(0).toLowerCase() + dono.slice(1) : dono) }), tpl(X.pegar, { coisa: semDono })), coisa: semDono });
       }
-      const L = T.pegarInventado[Math.floor(sorteDe(`${chave}|pegar`) * T.pegarInventado.length)];
+      const L = tpl(T.pegarInventado[Math.floor(sorteDe(`${chave}|pegar`) * T.pegarInventado.length)], { coisa: semDono, Coisa: maiuscula(semDono) });
       return Object.freeze({ ...negada("pegar", "inventado", L, tpl(F.pegarInventado, { coisa: semDono }), tpl(X.pegar, { coisa: semDono })), coisa: semDono });
     }
 
@@ -803,7 +808,7 @@ export function aBuscaSemAchado(desafio, r) {
    ({ nome }), ou null com `motivo`. A linha tem a forma da venda da bolsa.
    ============================================================ */
 export const O_TEXTO_DA_VENDA_DE_USO = Object.freeze({
-  vendido: "🛒 Vendido: {I} a {Q} por ◉ {V} (bolsa: ◉ {B}).",
+  vendido: "🛒 Vendido: {I} {Q} por ◉ {V} (bolsa: ◉ {B}).",
   falta: "⛔ Você só tem {N} {I}.",
   semComprador: "⛔ {I}: {M}.",
   motivoPadrao: "ninguém aqui compra isso",
@@ -825,5 +830,5 @@ export function aVendaDoUso(ficha, pedido) {
   if (!quem) return { ok: false, ficha, valor: 0, linha: tpl(T.semComprador, { I: maiuscula(nome), M: str(p.motivo).trim() || T.motivoPadrao }) };
   const valor = Math.max(1, Math.floor((Number(p.preco) || 0) * quantos * V.revenda));
   const nova = { ...f, moedas: (Number(f.moedas) || 0) + valor, suprimentos: { ...sup, [u.id]: tem - quantos } };
-  return { ok: true, ficha: nova, valor, linha: tpl(T.vendido, { I: nome, Q: quem, V: valor, B: nova.moedas }) };
+  return { ok: true, ficha: nova, valor, linha: tpl(T.vendido, { I: nome, Q: aQuem(quem), V: valor, B: nova.moedas }) };
 }

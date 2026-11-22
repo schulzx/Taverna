@@ -221,7 +221,10 @@ sec("4. O FERRO, na tabela");
      nomes de 36 letras, poupando — a pauta inteira cheia de linhas longas.
      O lugar fica, a primeira frase fica, todo fato e todo veto ficam. */
   let cheia = {};
-  for (const s of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(s.id)) cheia = porNaPauta(cheia, s.id, `${s.id} linha ` + "x".repeat(200), `${s.id} outra ` + "y".repeat(200));
+  /* 21/11 (a nona sessão do Mestre vivo): o FATO DESTE TURNO (a troca decidida) fica de fora da pauta cheia —
+     a troca só se decide fora da luta (vereditoDaTrocaAntes sai com combate aberto), e o golpe final é da luta;
+     os dois nunca estão na mesma pauta. A intenção fica: num turno de luta, o lugar, a frase e os vetos não saem. */
+  for (const s of SECOES) if (!["desfecho", "vetoDoDesfecho", "fato"].includes(s.id)) cheia = porNaPauta(cheia, s.id, `${s.id} linha ` + "x".repeat(200), `${s.id} outra ` + "y".repeat(200));
   const longa = ("desço a lâmina pela nuca dele e seguro-o antes de bater no chão ").repeat(6);
   const nome = "Vorgath, o Carrasco das Sete Colinas";
   const e1 = envelopeDoGolpeFinal({ alvo: aplicarEscolha({ nome, vida: 1 }, "nao_letal", { semente: 1 }), escolha: "nao_letal", heroi: "Ingrid Quebra-Escudos", comoFez: longa });

@@ -28,7 +28,9 @@
    ============================================================ */
 
 export const O_TEXTO_DA_VENDA = Object.freeze({
-  vendido: "🛒 Vendido: {I} a {Q} por ◉ {V} (bolsa: ◉ {B}).",
+  /* 21/11 (a nona sessão, T8 e T9): «Vendido: 2 rações a O Sino Amargo» — a quem, com a contração da tabela («ao Sino Amargo») */
+  vendido: "🛒 Vendido: {I} {Q} por ◉ {V} (bolsa: ◉ {B}).",
+  contracaoA: Object.freeze({ o: "ao", a: "à", os: "aos", as: "às" }),
   semItem: "⛔ {I}: não está na sua mochila.",
   equipado: "⛔ {I} está equipado — desequipe antes de vender.",
   semComprador: "⛔ {I}: {M}.",
@@ -39,6 +41,12 @@ export const O_TEXTO_DA_VENDA = Object.freeze({
 const str = (x) => (typeof x === "string" ? x : x == null ? "" : String(x));
 const ehObj = (x) => x != null && typeof x === "object" && !Array.isArray(x);
 const nomeDe = (raw) => (typeof raw === "string" ? raw : (raw && raw.nome) || "");
+/* «O Sino Amargo» → «ao Sino Amargo»; «Fenna» → «a Fenna» */
+export function aQuem(nome) {
+  const n = str(nome).trim();
+  const m = n.match(/^(O|A|Os|As)\s+(.+)$/);
+  return m ? O_TEXTO_DA_VENDA.contracaoA[m[1].toLowerCase()] + " " + m[2] : "a " + n;
+}
 const tpl = (s, m) => str(s).replace(/\{(\w)\}/g, (_, k) => str(m[k]));
 
 export function aVendaDaBolsa(ficha, pedido) {
@@ -59,5 +67,5 @@ export function aVendaDaBolsa(ficha, pedido) {
   const quem = ehObj(of.quem) ? str(of.quem.nome) : "";
   if (!quem) return { ok: false, ficha, linha: tpl(T.semComprador, { I: item, M: str(of.motivo).trim() || T.motivoPadrao }) };
   const nova = { ...ficha, moedas: (Number(ficha.moedas) || 0) + valor, [origem]: lista.filter((_, i) => i !== idx) };
-  return { ok: true, ficha: nova, valor, quem, linha: tpl(T.vendido, { I: item, Q: quem, V: valor, B: nova.moedas }) };
+  return { ok: true, ficha: nova, valor, quem, linha: tpl(T.vendido, { I: item, Q: aQuem(quem), V: valor, B: nova.moedas }) };
 }

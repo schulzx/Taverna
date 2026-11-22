@@ -126,7 +126,10 @@ sec("3. Nº 4 — a pauta cheia, e o preço dentro do teto");
      que o golpe é que enche) e cedida como numa luta (`cederNaCena`): a
      economia da cidade, a rua, a vizinhança e as potências não estão numa
      luta. Com elas, esta pauta "cheia" era uma luta que nenhum jogo monta. */
-  for (const s of SECOES) if (!["desfecho", "vetoDoDesfecho"].includes(s.id)) cheia = porNaPauta(cheia, s.id, `${s.id} linha ` + "x".repeat(110));
+  /* 21/11 (a nona sessão do Mestre vivo): o FATO DESTE TURNO (a troca decidida) fica de fora da pauta cheia —
+     a troca só se decide fora da luta (vereditoDaTrocaAntes sai com combate aberto), e o golpe final é da luta;
+     os dois nunca estão na mesma pauta. A intenção fica: num turno de luta, o lugar, a frase e os vetos não saem. */
+  for (const s of SECOES) if (!["desfecho", "vetoDoDesfecho", "fato"].includes(s.id)) cheia = porNaPauta(cheia, s.id, `${s.id} linha ` + "x".repeat(110));
   cheia = cederNaCena(cheia, { luta: true });
   const longa = ("desço a lâmina pela nuca dele e seguro-o antes de bater no chão ").repeat(6);
   for (const escolha of ["letal", "nao_letal"]) {

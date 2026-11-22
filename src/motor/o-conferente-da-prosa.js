@@ -76,6 +76,8 @@
    ============================================================ */
 import { oInventadoDaProsa, aGenteInventadaDaProsa, MEMORIA_DO_INVENTADO } from "./memoria-do-inventado.js";
 import { podarOAusente } from "./poda-do-ausente.js";
+/* 21/11 (a nona sessão, T34): a moeda do suborno que não saiu da bolsa — a leitura é a do veredito da troca */
+import { oSubornoDaFrase } from "../o-veredito-da-troca.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -91,6 +93,8 @@ export const O_CONFERENTE = Object.freeze({
   vez: 3,
   /* a fala de quem não foi chamado, num turno que é de outro: até estas letras */
   curta: 180,
+  /* a palavra que faz a fala ser do assunto da frase (a nona sessão, T46: «Recife Funda») */
+  palavraDoAssunto: 5,
   /* a mesma fala de novo: a fração de palavras em comum (de quatro letras ou mais) */
   parecido: 0.5,
   minPalavrasDaFala: 4,
@@ -258,6 +262,10 @@ export const O_CONFERENTE = Object.freeze({
   /* 21/11 (a oitava sessão): com a troca negada, a frase que põe a coisa na mochila ou no bolso
      («a lâmina cabe na mochila», «some no fundo da mochila», «desliza para o bolso») */
   vaiAMochila: /\b(mochila|bolso|bolsa|alforje|sacola|algibeira|cinto|embolsa\w*|guarda\w*)\b/,
+  /* a nona sessão (T34): o outro fica com a moeda do suborno («fechou os dedos em volta das cinco moedas e as guardou») */
+  ficaComAMoeda: /\b(moedas?|cobres?|pratas?|dinheiro)\b[^.!?]*\b(guard\w*|embols\w*|enfi\w*|aceit\w*)\b|\b(guard\w*|embols\w*|fech\w* os dedos|aceit\w*|recolh\w*|pega\w*)\b[^.!?]*\b(moedas?|cobres?|pratas?|dinheiro)\b/,
+  /* a nona sessão (T21, T17): o gesto que fecha a troca negada — solta a vela no balcão, tira o escudo das costas, estende */
+  fechaACoisa: /\b(solt(a|ou)|empurr(a|ou)|tir(a|ou)|estend(e|eu)|entreg(a|ou)|devolv(e|eu)|sac(a|ou)|ofere(ce|ceu)|pass(a|ou)) (a|o|as|os|um|uma|seu|sua)\b/,
   /* e o furto que não rendeu: a prosa que guarda ou conta moedas na mão */
   guardaMoeda: /\b(moedas?|cobres?|pratas?|dinheiro)\b[^.!?]*\b(guarda\w*|embolsa\w*|palma|bolso|mao|maos|conta\w*|leva\w*)\b|\b(guarda\w*|embolsa\w*|leva\w*|conta\w*|mao|maos|palma)\b[^.!?]*\b(moedas?|cobres?|pratas?|dinheiro)\b|\b(guarda\w*|embolsa\w*)\b[^.!?]*\b(palma|bolso|algibeira)\b/,
   /* 21/11 (sessão 7, turno 51: «Sable sobe a escada devagar…» com a linha de
@@ -769,8 +777,10 @@ export function conferirAProsa(narrativa, ctx) {
     const daTroca = trocaAplicada ? arr(tv.mudou).map((x) => txt(obj(x) ? x.coisa : x)) : [];
     const doSistema = new Set([...ws(arr(c.doSistema).join(" ")), ...ws(arr(bolsa && bolsa.entrou).join(" ")), ...ws(daTroca.join(" "))].filter((x) => x.length >= 4).map(raiz));
     /* a coisa que a troca negada quis guardar, e o furto que não rendeu: a frase que a põe na mochila ou no bolso */
-    const coisaNegada = trocaNegada && tv.tipo === "pegar" ? palavras(txt(tv.coisa)).filter((x) => x.length >= 4 && !VAZIAS.has(x)).map(raiz) : [];
+    /* 21/11 (a nona sessão, T21 a vela, T17 o escudo): toda negada que tem coisa (o de graça, o companheiro, o tomar), não só o pegar */
+    const coisaNegada = trocaNegada && txt(tv.coisa) ? palavras(txt(tv.coisa)).filter((x) => x.length >= 4 && !VAZIAS.has(x)).map(raiz) : [];
     const furtoNegado = trocaNegada && tv.tipo === "furto";
+    const subornoDaFrase = (() => { try { return oSubornoDaFrase(frase); } catch { return false; } })();
     /* a. as afirmações: o objeto, o pagamento, o meio */
     const meiosNegados = [...new Set([...osMeiosNegados(frase, c.posses), ...arr(c.negados).flatMap(palavras).filter((x) => MEIO.has(x) && !temNaPosse(x, c.posses))])];
     const pedidos = pedidosDaFrase(frase).filter((x) => !temNaPosse(x, c.posses));
@@ -797,7 +807,7 @@ export function conferirAProsa(narrativa, ctx) {
     const julgou = !!(c.teste && typeof c.teste.sucesso === "boolean");
     const linhaRes = julgou ? linhaDoResultado(familia, c.teste.sucesso, alvo) : "";
     const exitoNaFalha = julgou && c.teste.sucesso === false && C.exitoNaFalha.familias.includes(familia);
-    let anterior = "", compAntes = "";
+    let anterior = "", compAntes = "", cortouACoisa = false;
     for (const p of pedacos) {
       /* 21/11 (sessão 7, turnos 26 e 29): a fala que só entrega («— Leva.»)
          sem troca nenhuma, numa frase que pediu ou regateou */
@@ -838,11 +848,18 @@ export function conferirAProsa(narrativa, ctx) {
       if (!motivo && c.pagou === false && pagaNoPedaco(p.nar, heroiAntes)) motivo = "pagamento";
       /* 21/11 (a oitava sessão, T19, T57, T58): «A lâmina cabe na mochila», «a corda curta some no fundo da mochila», «o espelho desliza para o bolso» */
       if (!motivo && coisaNegada.length && C.vaiAMochila.test(sem(p.nar)) && ws(p.nar).some((x) => coisaNegada.includes(raiz(x)))) motivo = "objeto";
+      /* a nona sessão (T21: «soltou a vela sobre o balcão… Torvald guardou-a na trouxa»; T17: «tirou o escudo das costas»): com a troca negada, a frase que estende, solta, entrega ou guarda a coisa negada sai */
+      if (!motivo && coisaNegada.length && !negadoNa(ws(p.nar)) && (C.daAoHeroi.test(sem(p.nar)) || C.vaiAMochila.test(sem(p.nar)) || C.fechaACoisa.test(sem(p.nar))) && ws(p.nar).some((x) => coisaNegada.includes(raiz(x)))) motivo = "objeto";
+      /* a nona sessão (T34): o suborno que não saiu da bolsa e a prosa em que o outro guarda as moedas */
+      if (!motivo && c.pagou === false && subornoDaFrase && C.ficaComAMoeda.test(sem(p.nar)) && !negadoNa(ws(p.nar))) motivo = "pagamento";
+      /* a coisa negada que a frase seguinte guarda pelo pronome («Torvald guarda-a na trouxa») */
+      if (!motivo && coisaNegada.length && cortouACoisa && /\b\w+-(a|o|as|os)\b|\b(a|o) (guard\w*|pe\w*|recolh\w*|enfi\w*)\b/.test(sem(p.nar)) && C.vaiAMochila.test(sem(p.nar).replace(/-(a|o|as|os)\b/g, " ")) && !negadoNa(ws(p.nar))) motivo = "objeto";
       /* 21/11 (a oitava sessão, T37): sem troca nenhuma, alguém estende ao herói uma coisa («Fenna estende a você um alfinete de prata») */
       if (!motivo && semTroca && !trocaAplicada && C.daAoHeroi.test(sem(p.nar)) && daACoisa(p.nar) && !negadoNa(ws(p.nar)) && ws(p.nar).some((x) => x.length >= 4 && ehCoisa(x) && !temNaPosse(x, c.posses))) motivo = "objeto";
       /* 21/11 (a oitava sessão, T33): o furto que não rendeu e a prosa que guarda moedas */
       if (!motivo && furtoNegado && C.guardaMoeda.test(sem(p.nar)) && !negadoNa(ws(p.nar))) motivo = "objeto";
       if (motivo) { fora.add(p); razao.set(p, motivo); podadas.push({ motivo, frase: p.texto.trim() }); }
+      cortouACoisa = motivo === "objeto" && coisaNegada.length > 0;
       anterior = p.nar;
       /* o companheiro que abre esta frase segue sujeito da próxima */
       const w0 = ws(p.nar)[0] || "";
@@ -896,6 +913,10 @@ export function conferirAProsa(narrativa, ctx) {
       try { return aGenteInventadaDaProsa(prosa, E, { lugarDoTurno: txt(c.lugarDoTurno), mundo: c.mundo, conhecidos: pessoas.map((p) => p.nome).filter(Boolean) }).map((g) => g.nome); } catch { return []; }
     })();
     const tomam = quemTomaAPalavra(prosa, pessoas, heroi);
+    /* o assunto é o NOME que a frase diz (o lugar, a pessoa, a coisa com nome: «Recife Funda») — falar
+       do buraco que o herói revira não é assunto, é comentário (a oitava sessão, T28, continua a sair) */
+    const assuntoDaFrase = new Set(txt(frase).split(/\s+/).slice(1).filter((w) => /^\p{Lu}/u.test(w)).flatMap(palavras).filter((x) => x.length >= C.palavraDoAssunto && !VAZIAS.has(x)).map(raiz));
+    const naFraseAnterior = new Set(palavras(txt(c.fraseAnterior)));
     const foraDaVez = [];
     for (const p of pessoas) {
       if (!p.nome || (heroi && primeiro(p.nome) === primeiro(heroi))) continue;
@@ -909,9 +930,17 @@ export function conferirAProsa(narrativa, ctx) {
       const semEla = diz.reduce((s, f) => s.split(f).join(" "), prosa);
       const repete = !!m && txt(m.fala) && parecida(fala, m.fala);
       const noLugar = !!alvo && !temAlguma(semEla, chavesDoAlvo(alvo, pessoas));
-      const cedo = !!m && turno != null && Number.isFinite(m.turno) && turno - m.turno < C.vez && turno !== m.turno;
-      const comprida = fala.length > C.curta && (!!alvo || !!c.teste);
-      if (repete || noLugar || cedo || comprida) foraDaVez.push(p.nome);
+      /* 21/11 (a nona sessão, T46 e T47; a oitava, T14): a fala de quem está em
+         cena foi cortada como «fora da vez» quando era a resposta certa — Torvald
+         sobre Recife Funda (a frase perguntava por Recife Funda) e Kael, com quem
+         o herói falava no turno anterior. Quem fala DO ASSUNTO da frase, ou é o
+         interlocutor da frase anterior, não está fora da vez: só a cópia de si
+         mesmo e o tomar o lugar do alvo cortam. */
+      const doAssunto = palavras(fala).some((x) => x.length >= C.palavraDoAssunto && !VAZIAS.has(x) && assuntoDaFrase.has(raiz(x)));
+      const interlocutor = naFraseAnterior.has(primeiro(p.nome));
+      const cedo = !doAssunto && !interlocutor && !!m && turno != null && Number.isFinite(m.turno) && turno - m.turno < C.vez && turno !== m.turno;
+      const comprida = !doAssunto && !interlocutor && fala.length > C.curta && (!!alvo || !!c.teste);
+      if ((repete && !interlocutor) || noLugar || cedo || comprida) foraDaVez.push(p.nome);
     }
     /* 21/11 (a oitava sessão, T28): a gente inventada sai inteira; quem está e
        fala fora da vez perde só a FALA — o gesto dela fica («Freya deixa cair a

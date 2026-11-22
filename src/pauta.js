@@ -81,9 +81,10 @@ export const SECOES = [
      e a prosa desobedecia barato: dava a vela que o sistema negou, guardava as
      moedas do suborno que não saíram, devolvia o distintivo que a ficha não
      mexeu. O fato decidido pelo sistema é a PRIMEIRA linha que o Narrador lê e
-     nunca é cortado (ferro). Só existe no turno que tem troca — o canal de um
+     nunca é cortado (a 1.ª linha é de ferro; uma troca dá uma linha só, e o que viesse a mais
+     corta antes de tudo, para nunca tirar o lugar a um veto). Só existe no turno que tem troca — o canal de um
      turno (PAUTA_DE_UM_TURNO); nenhum bloco estático. */
-  { id: "fato", rotulo: "FATO DESTE TURNO:", prio: PRIO_DE_FERRO, ferro: 3, o: "a troca que o sistema decidiu e aplicou agora (o que mudou de mão, ou que nada mudou)" },
+  { id: "fato", rotulo: "FATO DESTE TURNO:", prio: 9, ferro: 1, o: "a troca que o sistema decidiu e aplicou agora (o que mudou de mão, ou que nada mudou)" },
   /* MM19 (a 5.ª sessão de prova): A CAUDA DO ONDE. A 1.ª linha (o lugar) é
      de ferro e a 2.ª (o endereço ⌖, ~30 caracteres) continua a prio 1,1. Da
      3.ª em diante é O LUGAR REPETIDO — o "comporta: correr, cercar, atirar

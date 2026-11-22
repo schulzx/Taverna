@@ -406,7 +406,9 @@ export function falaDaCompra(c) {
   if (c.porque === "sem_fundos") return `◉ Não chega: ${listaDe(c.itens)} custa ◉ ${c.total}, e a bolsa tem ◉ ${c.bolsa}.`;
   if (c.porque === "pouco") return `◉ ${listaDe(c.itens)} custa ◉ ${c.total} ${palavrasDe(c).onde} — ◉ ${c.declarado} não paga.`;
   if (c.porque === "ja_tem") return "🎒 A corda já vem no kit que você carrega.";
-  return `🛒 ${c.daBanca.join(", ")} compra-se nas bancas, com o preço de cada uma.`;
+  /* a nona sessão (T5): «espada compra-se nas bancas» — minúscula, o id e PT-PT; a voz da mesa diz onde */
+  const daBanca = c.daBanca.join(", ");
+  return `🛒 ${daBanca.charAt(0).toUpperCase() + daBanca.slice(1)} não se vende neste balcão: procure nas bancas, cada uma com o seu preço.`;
 }
 
 /* o envelope do turno: o fato pronto (fechou) — com a etiqueta que a
@@ -424,7 +426,7 @@ export function vetoDaCompra(c) {
   const pq = c.porque === "sem_fundos" ? `custa ◉ ${c.total} e eu tenho ◉ ${c.bolsa}`
     : c.porque === "pouco" ? `o preço é ◉ ${c.total}, e eu disse ◉ ${c.declarado}`
     : c.porque === "ja_tem" ? "já a carrego no kit"
-    : "isso vende-se nas bancas, a preço de banca, e eu não fechei";
+    : "isso se vende nas bancas, a preço de banca, e eu não fechei";
   return [`entregar-me ${o} ou receber moedas por isso: a compra não fechou (${pq}) — quem vende diz o preço certo e espera`];
 }
 

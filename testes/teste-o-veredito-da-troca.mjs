@@ -158,7 +158,7 @@ sec("7. T19, T57, T58: guardar o que só a prosa pôs na cena não entra; o que 
 {
   for (const [n, f] of [[19, "pego a lâmina de podão do barril e guardo na mochila"], [57, "pego a corda curta do caixote e guardo na mochila"], [58, "guardo o pedaço de espelho lascado no bolso"]]) {
     const v = oVereditoDaTroca(f, ctxBase());
-    t(`T${n}: negado, a linha da mesa e o fato com a coisa`, v && v.estado === "negada" && v.motivo === "inventado" && O_VEREDITO_DA_TROCA.tela.pegarInventado.includes(v.linha) && v.fato.includes("não guardei"), J(v && v.fato));
+    t(`T${n}: negado, a linha da mesa e o fato com a coisa`, v && v.estado === "negada" && v.motivo === "inventado" && /* 21/11 (a nona sessão, T25–T28): a linha deixou de ser a mesma para tudo e passou a dizer a coisa; a intenção fica: a linha da mesa (✋) e o fato com a coisa */ v.linha.startsWith("✋ ") && v.linha.toLowerCase().includes(v.coisa.split(" ")[0]) && v.fato.includes("não guardei"), J(v && v.fato));
   }
   const tabua = oVereditoDaTroca("pego uma das tábuas de Freya e guardo na mochila", ctxBase());
   t("T29: as tábuas de Freya são dela — levar sem pedir é furto", tabua && tabua.motivo === "dono" && tabua.linha.includes("Freya") && tabua.fato.includes("«tábuas»"), J(tabua && tabua.linha));

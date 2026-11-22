@@ -127,6 +127,8 @@
    O VERIFICADOR (`verificarAFicha`) é a catraca: nenhum rótulo de sistema,
    nenhuma ordem, nenhuma razão, nenhum número que não se diz em voz alta.
    ============================================================ */
+/* 21/11 (a nona sessão): o fato da troca — o fecho da pauta sai, o do ator entra */
+import { O_VEREDITO_DA_TROCA } from "../o-veredito-da-troca.js";
 import { SECOES } from "../pauta.js";
 import { aPessoaDoPasso, oQueOSitioEsconde, oSitioDoRegisto, osDoPasso, ondeOHeroiEsta } from "./a-pessoa-do-passo.js";
 import { oFigurante, O_FIGURANTE, O_FIGURANTE_VENDE, oQueALinhaVende, aBancaDoDia, oCaminhoQueSabe } from "./o-figurante.js";
@@ -1101,6 +1103,9 @@ export const TRADUCAO_DA_PAUTA = Object.freeze({
     /* MC10 (11/11): o caído do grupo (socorro.js, SOCORRO.linha), um ou vários */
     { de: /^(.+? está no chão, .+)$/, vai: "aconteceu", como: (m) => m[1].split(/;\s*/).map((x) => ponto(maiuscula(x.replace(/, a 0 PV,/, ",")))).join(" ") },
   ],
+  /* 21/11 (a nona sessão do Mestre vivo): O FATO DA TROCA — a troca que o sistema decidiu é a
+     primeira coisa de ACONTECEU, logo depois da frase, com o rótulo e o fecho («Narre só isto») */
+  "FATO DESTE TURNO:": [ { de: /^(.+)$/, vai: "fato", como: (m) => ponto(m[1].replace(O_VEREDITO_DA_TROCA.fatoFecho, "").trim()) } ], /* na voz do herói, como o ACABOU DE (a conversão do «me» ao nome entortava a frase) */
   "DESFECHO": [ { de: /^(.+)$/, vai: "aconteceu", como: (m) => ponto(m[1]) } ],
   "ACABOU DE": [ { de: /^(?:\[[^\]]+\]\s*)?(.+)$/, vai: "aconteceu", como: (m) => ponto(m[1]) } ],
   "QUEM": [ { de: /^na luta agora — (.+)$/, vai: "luta", como: (m) => m[1] } ],
@@ -1418,7 +1423,7 @@ export function aFichaDeAtor(entrada) {
   const { secoes, envelopes: envNota } = lerANota(ent.nota);
   const envelopes = [...daFrase.envelopes, ...envNota];
   const rastro = [];
-  const cena = [], cenaExtra = [], aconteceu = [], diz = [], tom = [], fronteira = [], longe = [];
+  const cena = [], cenaExtra = [], aconteceu = [], diz = [], tom = [], fronteira = [], longe = [], fatosDaTroca = [];
   const pessoas = new Map();
   let ultima = null, naoSabe = false, aponta = "", nomesAMao = [], venda = [], aposta = [], temLuta = false;
   const pessoa = (nome, base = {}) => {
@@ -1481,6 +1486,7 @@ export function aFichaDeAtor(entrada) {
       if (s.rotulo === "ONDE" && MECANISMO_NO_LUGAR.test(linha)) marca(s.rotulo, linha0, null, "mecanismo");
       if (r.vai === "cena") (r.extra ? cenaExtra : cena).push(crivado(s.rotulo, v));
       else if (r.vai === "aconteceu") aconteceu.push(crivado(s.rotulo, v));
+      else if (r.vai === "fato") fatosDaTroca.push(crivado(s.rotulo, v));
       else if (r.vai === "tom") tom.push(crivado(s.rotulo, v));
       else if (r.vai === "fronteira") { if (ehObj(v)) nomesAMao.push(...v.nomes.split(/\s*[·,]\s*/)); else longe.push(v); }
       else if (r.vai === "ultima") ultima = v;
@@ -1870,6 +1876,8 @@ export function aFichaDeAtor(entrada) {
     L.push("ACONTECEU");
     const F = frase.length > FICHA_DE_ATOR.fraseMax ? frase.slice(0, FICHA_DE_ATOR.fraseMax).replace(/\s+\S*$/, "") + "…" : frase;
     if (frase) L.push(porFazer.length ? tpl(A_INTENCAO_DITA.quer, { H, F }) : `${H}: «${F}»`);
+    /* na ficha do ator, sem rótulo nem ordem (o verificador não deixa): o fato vem primeiro, e fecha */
+    L.push(...fatosDaTroca.map((x) => `${ponto(x)} ${O_VEREDITO_DA_TROCA.fatoFechoDoAtor}`));
     L.push(...aconteceu.map(ponto));
     if (porFazer.length) {
       const I = A_INTENCAO_DITA;

@@ -36,7 +36,9 @@ sec("1. a cena da sessão: vender uma Erva Amarga no mercado");
   t("a venda acontece", r.ok === true);
   t("a bolsa vai de ◉ 76 a ◉ 80", r.ficha.moedas === 80, r.ficha.moedas);
   t("sai UMA erva da mochila, e a bússola fica", r.ficha.inventario.filter((x) => x === "Erva Amarga").length === 1 && r.ficha.inventario.includes("Bússola empenada"), JSON.stringify(r.ficha.inventario));
-  t("a linha diz o número que a ficha tem", r.linha.includes("◉ 80") && r.linha.includes("Erva Amarga") && r.linha.includes("A Raiz Amarga"), r.linha);
+  /* 21/11 (a nona sessão, T8): a quem se vende leva a contração da tabela («à Raiz Amarga», era «a A Raiz
+     Amarga»). A intenção que fica: a linha nomeia o comprador e o número que a ficha tem. */
+  t("a linha diz o número que a ficha tem", r.linha.includes("◉ 80") && r.linha.includes("Erva Amarga") && r.linha.includes("à Raiz Amarga"), r.linha);
   t("a ficha de antes não foi mexida (imutável)", KAELITH.moedas === 76 && KAELITH.inventario.length === 3);
   /* o turno seguinte da sessão (T57): vender a outra erva parte da ficha nova */
   const r2 = aVendaDaBolsa(r.ficha, { item: "Erva Amarga", origem: "inventario", oferta: RAIZ });

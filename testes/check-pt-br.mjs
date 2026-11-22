@@ -148,7 +148,7 @@ const TETO = {
   "src/npcs.js": 5,
   "src/prompt.js": 5,
   "src/agressao.js": 4,
-  "src/bolsa-da-frase.js": 4,
+  "src/bolsa-da-frase.js": 2,
   "src/espolios.js": 4,
   "src/grid.js": 4,
   "src/secundaria-planeada.js": 4,

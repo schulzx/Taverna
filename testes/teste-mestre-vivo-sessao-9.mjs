@@ -16,11 +16,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
-  O_VEREDITO_DA_TROCA, aPortaDaMoeda, quemDaFrase, deQuem, oVereditoDaTroca, aIntencaoDaTroca, oSubornoDaFrase, oItemDaFrase, oFatoDaTroca,
+  O_VEREDITO_DA_TROCA, aPortaDaMoeda, quemDaFrase, deQuem, oVereditoDaTroca, aIntencaoDaTroca, oSubornoDaFrase, oItemDaFrase, oFatoDaTroca, aVendaDoUso,
 } from "../src/o-veredito-da-troca.js";
-import { textoDaPauta, TETO_DA_PAUTA, SECOES, PRIO_DE_FERRO } from "../src/pauta.js";
+import { conferirAProsa } from "../src/motor/o-conferente-da-prosa.js";
+import { aFichaDeAtor, verificarAFicha } from "../src/motor/ficha-de-ator.js";
+import { aQuem } from "../src/a-venda-da-bolsa.js";
+import { textoDaPauta, TETO_DA_PAUTA, SECOES, PRIO_DE_FERRO, prioDaLinha } from "../src/pauta.js";
 import { PAUTA_DE_UM_TURNO } from "../src/motor/pauta-do-turno.js";
-import { compraNaFrase, compraNaBanca, compraSemQuemVenda, dadivaNaFrase } from "../src/bolsa-da-frase.js";
+import { compraNaFrase, compraNaBanca, compraSemQuemVenda, dadivaNaFrase, falaDaCompra } from "../src/bolsa-da-frase.js";
 import { aMaoDaFrase } from "../src/motor/a-mao-da-frase.js";
 import { aCartaDoGesto } from "../src/quadro-da-quest.js";
 import { FAIXAS_DA_MARGEM, lerAcao } from "../src/desafios.js";
@@ -279,9 +282,54 @@ sec("10. o fato chega ao Narrador como a primeira linha, de ferro, e fecha a por
   t("a primeira linha depois da cabeça é «FATO DESTE TURNO: …»", corpoP.startsWith("FATO DESTE TURNO: ") && corpoP.split("\n")[0].includes(O_VEREDITO_DA_TROCA.fatoFecho), corpoP.slice(0, 160));
   t("e cabe dentro do TETO_DA_PAUTA, com a gente de prio baixa cortada antes dele", txt.length <= TETO_DA_PAUTA + 200 && txt.includes(fp.fato[0]));
   const s0 = SECOES[0];
-  t("a secção é a primeira da leitura, de ferro, e só existe pelo canal de um turno (nenhum bloco estático)", s0.id === "fato" && s0.prio === PRIO_DE_FERRO && PAUTA_DE_UM_TURNO.secoes.includes("fato"));
+  t("a secção é a primeira da leitura, de ferro, e só existe pelo canal de um turno (nenhum bloco estático)", s0.id === "fato" && s0.ferro === 1 && prioDaLinha(s0, 0) === PRIO_DE_FERRO && PAUTA_DE_UM_TURNO.secoes.includes("fato"));
   t("a fiação: o veredito vai à pauta por oFatoDaTroca, antes e depois do dado", (app.match(/const fp = oFatoDaTroca\(v\); if \(fp\) porNaPautaDoTurno\(fp\);/g) || []).length === 2);
+  /* o Narrador ator lê a ficha (ficha-de-ator.js), não a pauta crua: lá o fato é a primeira linha de ACONTECEU */
+  const ficha = aFichaDeAtor({ nota: textoDaPauta({ onde: ["a praça do Ilhéu do Vento Sul"], acabou: ["outra coisa aconteceu"], fato: fa.fato }, { turno: 55 }), estado: { personagem: { nome: "Godfrey", grupo: [TORVALD] } } });
+  const linhasF = ficha.texto.split("\n");
+  const iA = linhasF.indexOf("ACONTECEU");
+  t("na ficha do ator: o fato é a primeira linha de ACONTECEU, na voz do herói (como o ACABOU DE), fechado por «Nada mais muda de mão.»", iA >= 0 && /Distintivo do antigo regimento/.test(linhasF[iA + 1]) && linhasF[iA + 1].endsWith(O_VEREDITO_DA_TROCA.fatoFechoDoAtor) && !/Narre/.test(ficha.texto), linhasF.slice(iA, iA + 3).join(" | "));
+  t("e a ficha passa no verificador (nenhum rótulo, nenhuma ordem)", verificarAFicha(ficha.texto).length === 0, J(verificarAFicha(ficha.texto)));
   t("src/prompt.js não muda (o teto é sagrado): nenhuma menção ao fato da troca lá", !/FATO DESTE TURNO/.test(fs.readFileSync(path.join("..", "src", "prompt.js"), "utf8")));
+}
+
+sec("11. a rede: quem está em cena não perde a fala certa; com a troca negada, o fecho dela sai");
+{
+  const cena = { pessoas: [{ nome: "Torvald Voz-Grave", papel: "guerreiro", estados: ["do_grupo"] }, { nome: "Kael Mão-Torta", papel: "calafate" }, { nome: "Kolvar", papel: "estivador" }, { nome: "Gwynn Mata-Lobos", papel: "caçadora" }, { nome: "Ulric", papel: "marinheiro" }] };
+  const conf = (frase, prosa, extra = {}) => conferirAProsa(prosa, { frase, cena, heroi: "Godfrey", posses: [], ...extra });
+  const f46 = "pergunto a Kael como se chega a Recife Funda";
+  const p46 = "Kael ergue os olhos do casco. \"Há navios que vão. Mas primeiro: o que você procura em Recife Funda?\" Torvald espera, imóvel, a voz baixa: \"Ninguém vai a Recife Funda sem motivo.\"";
+  const r46 = conf(f46, p46, { alvo: "Kael Mão-Torta", turno: 46, falas: { torvald: { turno: 45, fala: "A doca cheira a piche." } } });
+  t("T46: a fala do Torvald sobre Recife Funda (o assunto da frase) fica", /Ninguém vai a Recife Funda/.test(r46.narrativa) && !r46.podadas.some((p) => p.motivo === "fala"), J(r46.podadas));
+  const f47 = "vou até a Doca Seca";
+  const p47 = "A Doca Seca range sob seus passos. Kael ergue a cabeça do barco, limpa a mão na túnica e repete, mais devagar: \"Navios vão e vêm. Mas você ainda não me disse o que quer em Recife Funda.\" Torvald cruza os braços.";
+  const falas47 = { kael: { turno: 46, fala: "Há navios que vão. Mas primeiro: o que você procura em Recife Funda?" } };
+  const r47 = conf(f47, p47, { turno: 47, falas: falas47, fraseAnterior: f46 });
+  t("T47: o Kael, com quem o herói falava no turno anterior, continua a falar", /Navios vão e vêm/.test(r47.narrativa) && !r47.podadas.some((p) => p.motivo === "fala"), J(r47.podadas));
+  const r47sem = conf(f47, p47, { turno: 47, falas: falas47 });
+  t("PAR: sem a frase anterior (a regra de antes), a mesma fala saía — o corte indevido da sessão", r47sem.podadas.some((p) => p.motivo === "fala"), J(r47sem.podadas));
+  const r37 = conf("olho em volta", "Você olha em volta: barracas, redes, gaivotas. Torvald resmunga que o peixe fede.", { turno: 40, falas: { torvald: { turno: 39, fala: "vigio a praça daqui, pode ir" } } });
+  t("PAR: o comentário fora do assunto, de quem falou no turno passado, continua a sair", !/peixe fede/.test(r37.narrativa));
+  const v21 = oVereditoDaTroca("peço à vendedora, de graça, a vela que não derrete", ctx({ dado: { passou: true } }));
+  const r21 = conf("peço à vendedora, de graça, a vela que não derrete", "A vendedora suspira. Ela solta a vela sobre o balcão, sem palavra. Torvald guarda-a na trouxa.", { troca: v21, turno: 21 });
+  t("T21: a vela negada não é solta no balcão nem guardada na trouxa", !/solta a vela/.test(r21.narrativa) && !/trouxa/.test(r21.narrativa) && /suspira/.test(r21.narrativa), r21.narrativa);
+  const r34 = conf("ofereço 5 moedas à Gwynn para ela esquecer", "Gwynn olha as moedas. Gwynn fechou os dedos em volta das cinco moedas e as guardou no cinto. O vento sopra da doca.", { pagou: false, turno: 34 });
+  t("T34: o suborno que não saiu da bolsa não fica guardado no cinto dela", !/guardou no cinto/.test(r34.narrativa) && /vento sopra/.test(r34.narrativa), r34.narrativa);
+  t("a fiação: o App passa a frase anterior ao conferente", /fraseAnterior: typeof fraseAnteriorRef\.current === "string" \? fraseAnteriorRef\.current : ""/.test(app));
+}
+
+sec("12. as sobras: as negativas na voz da mesa, e a venda diz a quem com a contração certa");
+{
+  const T = O_VEREDITO_DA_TROCA.tela;
+  t("«não guarda moeda à parte» (regra de sistema) saiu da tela", !/moeda à parte/.test(T.companheiroSemMoeda) && /Torvald/.test(oVereditoDaTroca("Torvald, paga uma caneca de hidromel para mim na taberna", ctx()).linha));
+  const v25 = oVereditoDaTroca("pego o mapa da rota de Recife Funda e guardo na mochila", ctx());
+  t("T25: a negativa do pegar diz a coisa (era a mesma frase para mapa, remo e frasco)", v25 && /mapa da rota/i.test(v25.linha) && !/\{/.test(v25.linha), v25 && v25.linha);
+  const c5 = compraNaFrase("compro uma espada longa da vendedora", { balcao: BALCAO, bolsa: 10, temKit: true });
+  const l5 = c5 ? falaDaCompra(c5) : "";
+  t("T5: «Espada não se vende neste balcão: procure nas bancas…» (era «espada compra-se nas bancas», minúscula e PT-PT)", /^🛒 Espada/.test(l5) && !/compra-se/.test(l5), l5);
+  const venda = aVendaDoUso(GODFREY, { id: "racoes", quantos: 2, preco: 5, quem: { nome: "O Sino Amargo" } });
+  t("T8: «Vendido: 2 rações ao Sino Amargo» (era «a O Sino Amargo»)", venda.ok && venda.linha.includes("2 rações ao Sino Amargo"), venda.linha);
+  t("e a quem tem nome: «a Fenna»", aQuem("Fenna Olho-de-Corvo") === "a Fenna Olho-de-Corvo" && aQuem("A Raiz Amarga") === "à Raiz Amarga");
 }
 
 sec("T27: o frasco da banca é da banca (a negativa diz de quem)");
