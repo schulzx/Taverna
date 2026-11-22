@@ -235,7 +235,17 @@ export const O_CONFERENTE = Object.freeze({
   fraseComercial: /\b(compro|compramos|comprei|vendo|vendemos|vendi|pago|pagamos|paguei|dou|damos|ofereco|oferecemos|entrego)\b/,
   desfazATroca: /\bnao\s+(?:a\s+|o\s+|as\s+|os\s+|lhe\s+|te\s+)?(?:aceita|aceito|aceitamos|aceitam|compro|compra|compramos|compram|vendo|vende|vendemos|quero\s+(?:o\s+seu|a\s+sua|seu|sua|as\s+suas|suas)\s+(?:moedas?|dinheiro)|fecho\s+negocio|faco\s+negocio)\b|\brecus\w*\s+(?:(?:a|o|as|os|suas|seu|sua)\s+)?(?:moedas?|dinheiro|oferta|venda|compra|pagamento|troca)\b|\bmoedas\s+(?:voltam|volta|ficam|continuam|seguem)\s+(?:ao|no|na|em|com)\s+(?:seu|sua|voce)\b|\b(?:a|o|as|os)\s+devolve\w*\s+(?:a|ao|para|pra|no|na|sobre)\b|\bdevolve\w*\s+(?:a|o|as|os)\s+(?!troco)[a-z]+|\bempurra\w*\s+(?:a|o|as|os)\s+[a-z]+\s+de\s+volta\b/,
   /* a recusa de quem o sistema fez entregar (a décima sessão, T31) */
-  recusaDaEntrega: /\b(agora nao|ainda nao|nao (?:te |lhe |vou )?(?:dou|devolvo|entrego|passo|largo)|nao vou (?:dar|devolver|entregar)|fico com (?:ela|ele|isso|isto|a |o )|guardei|guardo eu|e minha|e meu)\b/,
+  /* 22/11 (a décima segunda sessão, T51): «Tônico? Já o dei a ti, Ingrid. Não tens memória…» — a recusa por «já dei» */
+  recusaDaEntrega: /\b(agora nao|ainda nao|nao (?:te |lhe |vou )?(?:dou|devolvo|entrego|passo|largo)|nao vou (?:dar|devolver|entregar)|fico com (?:ela|ele|isso|isto|a |o )|guardei|guardo eu|e minha|e meu|ja (?:(?:o|a|os|as|te|lhe|lho|lha|to|ta|voce)\s+){0,2}(?:dei|devolvi|entreguei|passei)|nao (?:tens|tem) memoria)\b/,
+  /* 22/11 (a décima segunda sessão, T50): a coisa que o herói DEU ao companheiro
+     não se gasta na prosa («vira de um gole») — o sistema só a passou à bolsa dele */
+  consomeODado: /\b(bebe|bebeu|vira|virou|engole|engoliu|toma|tomou|come|comeu|gasta|gastou|esvazia|esvaziou|destampa|destampou)\b/,
+  coisaQueSeGasta: /\b(gole|goles|trago|frasco|rolha|garrafa|odre|cantil)\b/,
+  /* 22/11 (a décima segunda sessão, T33): «— O mapa é seu.» com a compra que não fechou */
+  posseDada: /\b(e (?:seu|sua|teu|tua|todo seu|toda sua|de voce)|fica com voce|pode levar|leve(?:-o|-a)?|leva(?:-o|-a)?)\b/,
+  /* a linha que o sistema escreveu quando a compra da frase não fechou (bolsa-da-frase.js, falaDaCompra) */
+  linhaDeCompraNegada: /^(?:✋ Qual delas:|◉ Não chega:|◉ .+ custa ◉ \d+ .+ não paga|🛒 .+ não se vende neste balcão)/u,
+  coisaDaCompra: /\b(?:compro|compramos|comprar|levo|quero)\s+(?:(?:o|a|os|as|um|uma|uns|umas)\s+)?([a-z]{3,})/,
   /* A FRASE ÓRFÃ: a que vem logo depois de uma cortada e abre referindo o que
      sumiu — o pronome sujeito («Ela espera a resposta»), o «isso», o «com ela
      na mão», o «os olhos dele», ou o gesto sem sujeito («Não tira os olhos de
@@ -792,7 +802,11 @@ export function conferirAProsa(narrativa, ctx) {
     /* 21/11 (a oitava sessão): O VEREDITO DA TROCA é o fato único do turno.
        Aplicada: o que ela passou de mão fica na prosa (nada dela se corta).
        Negada: sabe-se que nada mudou de mão por ela, e o fecho inventado sai. */
-    const tv = obj(c.troca);
+    /* 22/11 (a décima segunda sessão, T33): a compra da frase que não fechou
+       («✋ Qual delas…») é troca negada, com a coisa que a frase quis comprar */
+    const linhaCN = !obj(c.troca) ? arr(c.doSistema).map(txt).find((l) => C.linhaDeCompraNegada.test(l)) : "";
+    const coisaCN = linhaCN ? ((sem(txt(c.frase)).match(C.coisaDaCompra) || [])[1] || "") : "";
+    const tv = obj(c.troca) || (linhaCN && coisaCN ? { tipo: "compra", estado: "negada", coisa: coisaCN, linha: linhaCN } : null);
     /* 22/11 (a décima sessão, T10): a linha de troca que o sistema escreveu neste turno (o cartão da venda) */
     const linhasDeTroca = arr(c.doSistema).map(txt).filter((l) => C.linhaDeTroca.test(l));
     const trocaAplicada = !!(tv && tv.estado === "aplicada") || linhasDeTroca.length > 0;
@@ -843,9 +857,22 @@ export function conferirAProsa(narrativa, ctx) {
     const entregouOComp = !!(tv && tv.estado === "aplicada" && tv.tipo === "companheiro");
     /* 22/11 (a décima primeira sessão, T33, T52): a troca aplicada numa frase de comprar, vender ou pagar não se desfaz na prosa */
     const naoDesfaz = trocaAplicada && !entregouOComp && C.fraseComercial.test(sem(frase));
+    /* 22/11 (a décima segunda sessão, T50): o herói deu uma coisa a quem anda com ele */
+    const deuAoComp = !!(tv && tv.estado === "aplicada" && tv.tipo === "dar" && pessoas.some((p) => p.doGrupo && arr(tv.mudou).some((x) => obj(x) && primeiro(txt(x.para)) === primeiro(p.nome))));
+    const coisaDada = deuAoComp ? arr(tv.mudou).flatMap((x) => palavras(txt(obj(x) ? x.coisa : ""))).filter((x) => x.length >= 4 && !VAZIAS.has(x)).map(raiz) : [];
     for (const p of pedacos) {
       if (entregouOComp && C.recusaDaEntrega.test(sem(p.texto)) && !C.daAoHeroi.test(sem(p.nar))) {
         fora.add(p); razao.set(p, "recusa"); podadas.push({ motivo: "recusa", frase: p.texto.trim() });
+        continue;
+      }
+      /* 22/11 (a décima segunda sessão, T50): o que o herói deu ao companheiro não se gasta na prosa */
+      if (deuAoComp && C.consomeODado.test(sem(p.texto)) && (C.coisaQueSeGasta.test(sem(p.texto)) || ws(p.texto).map(raiz).some((w) => coisaDada.includes(w)))) {
+        fora.add(p); razao.set(p, "consome"); podadas.push({ motivo: "consome", frase: p.texto.trim() });
+        continue;
+      }
+      /* 22/11 (a décima segunda sessão, T33): a compra que não fechou não passa a coisa por «é seu» */
+      if (trocaNegada && coisaNegada.length && C.posseDada.test(sem(p.texto)) && ws(p.texto).map(raiz).some((w) => coisaNegada.includes(w))) {
+        fora.add(p); razao.set(p, "objeto"); podadas.push({ motivo: "objeto", frase: p.texto.trim() });
         continue;
       }
       if (naoDesfaz && C.desfazATroca.test(sem(p.texto))) {
