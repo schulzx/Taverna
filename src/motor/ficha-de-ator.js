@@ -501,6 +501,11 @@ export const O_COMBINADO = Object.freeze({
 export const A_CONVERSA_DA_FRASE = Object.freeze({
   fala: /^\s*[—–"«“-]|\?|\b(pergunto|digo|falo|conto|pe[cç]o|respondo|cumprimento|agrade[cç]o|explico|aceito|recuso|prometo|juro|despe[cç]o-me|chamo)\b/u,
   nomeMin: 3,
+  /* 22/11 (a décima primeira sessão do Mestre vivo, T32): «pergunto ao ferreiro se
+     Yolanda Hartley está aqui» cumpriu «Ouvir Yolanda Hartley» — o nome dela na
+     frase contava como conversa com ela. Quando a frase diz a quem fala («pergunto
+     AO FERREIRO»), só ele conversa; quem é nomeado depois é o assunto. (sem acento) */
+  aQuem: /\b(?:pergunto|digo|falo|conto|peco|respondo|explico|prometo|juro|chamo)\s+(?:a|ao|aos|as|para o|para a|pro|pra|com o|com a)\s+([a-z][a-z-]{2,})/,
 });
 
 /* ---------------- o verificador ---------------- */
@@ -1813,9 +1818,12 @@ export function aFichaDeAtor(entrada) {
   const conversa = new Set();
   const falaSem = sem(frase);
   const comEscape = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  /* a quem a frase fala, quando o diz: quem não é ele (nem pelo nome nem pelo papel) é o assunto, não a conversa */
+  const aQuemFala = (falaSem.match(A_CONVERSA_DA_FRASE.aQuem) || [])[1] || "";
+  const ehOOuvinte = (p) => !aQuemFala || sem(p.nome).split(/[ ,]/)[0] === aQuemFala || sem(`${str(p.papel)} ${str(p.nome)}`).split(/[^a-z]+/).includes(aQuemFala);
   for (const p of lista) {
     const prim = sem(p.nome).split(/[ ,]/)[0];
-    if (prim.length >= A_CONVERSA_DA_FRASE.nomeMin && new RegExp(`(^|[^a-z])${comEscape(prim)}([^a-z]|$)`).test(falaSem)) conversa.add(p.nome);
+    if (prim.length >= A_CONVERSA_DA_FRASE.nomeMin && new RegExp(`(^|[^a-z])${comEscape(prim)}([^a-z]|$)`).test(falaSem) && ehOOuvinte(p)) conversa.add(p.nome);
   }
   if (!conversa.size && frase && A_CONVERSA_DA_FRASE.fala.test(frase.toLowerCase())) { const fora = lista.filter((p) => !p.comVoce); if (fora.length === 1) conversa.add(fora[0].nome); }
   for (const n of c.conversa) { const p = lista.find((x) => mesmo(x.nome, n)); if (p) conversa.add(p.nome); }

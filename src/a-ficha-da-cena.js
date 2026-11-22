@@ -232,6 +232,84 @@ export function pautaDeQuemNaoEsta(a) {
     naoPode: [Q.naoPode.replace("{nome}", txt(a.nome).split(/[\s,()]+/).filter(Boolean)[0] || txt(a.nome))],
   });
 }
+/* ---------------- O PREÇO PERGUNTADO (22/11/2026) ----------------
+   A décima primeira sessão (T2): «pergunto ao mercador do Martelo Dourado o que
+   ele tem à venda e quanto custa» — a prosa disse «Chave sem fechadura
+   conhecida, vinte», e o estoque dizia ◉ 39. O preço ia só na secção EM CENA,
+   de prioridade baixa, que encolhe com a cena cheia. Quando a frase pergunta o
+   preço (ou negocia) e nomeia uma banca da cena (pelo nome) ou uma coisa do
+   estoque, os preços dela vão em ACABOU DE, como fato, e o veto em NÃO PODE.
+   `bancas`: [{ nome, estoque: [{ nome, preco }] }] (o preço do herói, hoje).
+   → { acabou, naoPode } ou null. */
+export const O_PRECO_PERGUNTADO = Object.freeze({
+  pergunta: /\b(quanto (?:custa|custam|sai|saem|e|vale|valem|quer|pede|cobra)|que preco|qual (?:o |e o )?preco|precos?|tem a venda|esta a venda|o que (?:ele |ela |voces? |vc )?(?:tem|vende|vendem))\b/,
+  /* o regateio tem o fato dele (O_REGATEIO_NA_BANCA, com o preço novo): aqui é só a pergunta */
+  /* as palavras do nome da banca que não a distinguem */
+  vazias: Object.freeze(["o", "a", "os", "as", "do", "da", "de", "dos", "das", "e", "banca", "balcao", "loja", "tenda"]),
+  teto: 5,
+  acabou: "Perguntei o preço em {banca}: {lista}.",
+  item: "{nome} ◉ {preco}",
+  naoPode: "dizer, em {banca}, outro preço que não o perguntado ({lista})",
+});
+export function osPrecosDaPergunta(frase, bancas) {
+  try {
+    const P = O_PRECO_PERGUNTADO;
+    const t = limpo(frase).replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ");
+    if (!t || !P.pergunta.test(t)) return null;
+    const ws = ` ${t} `;
+    const lista = arr(bancas).filter((b) => obj(b) && txt(b.nome) && arr(b.estoque).length);
+    const pelaBanca = lista.find((b) => {
+      const pal = limpo(b.nome).replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length >= 3 && !P.vazias.includes(w));
+      return pal.length && pal.every((w) => ws.includes(` ${w} `));
+    });
+    const temNome = (it) => { const pal = limpo(txt(it.nome)).replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length >= 4); return pal.length && pal.some((w) => ws.includes(` ${w} `)); };
+    const b = pelaBanca || lista.find((x) => arr(x.estoque).some((it) => obj(it) && temNome(it)));
+    if (!b) return null;
+    const est = arr(b.estoque).filter((it) => obj(it) && txt(it.nome) && Number.isFinite(Number(it.preco)));
+    const pedidos = est.filter(temNome);
+    const mostra = (pedidos.length ? pedidos : est).slice(0, P.teto);
+    if (!mostra.length) return null;
+    const dito = mostra.map((it) => P.item.replace("{nome}", txt(it.nome)).replace("{preco}", String(Math.round(Number(it.preco))))).join(", ");
+    return Object.freeze({ acabou: [P.acabou.replace("{banca}", txt(b.nome)).replace("{lista}", dito)], naoPode: [P.naoPode.replace("{banca}", txt(b.nome)).replace("{lista}", dito)] });
+  } catch {
+    return null;
+  }
+}
+
+/* ---------------- QUEM DA HISTÓRIA ESTÁ NOUTRO LUGAR (22/11/2026) ----------------
+   A décima primeira sessão (T34, T47): Klaus, o rapaz das botas, que o sistema
+   punha na Casa do Pistão, estava «no canto» do Pêndulo na prosa da chegada; e
+   «Yolanda Hartley não se deixa convencer» num turno em que ninguém a chamou. O
+   veto do ausente só ia quando a frase o chamava. A gente da história (a que os
+   passos das quests e a abertura nomeiam) que o sistema sabe noutro lugar vai,
+   em todo turno com cena, numa linha curta de NÃO PODE — no máximo `teto`
+   nomes, pelo primeiro nome. `ausentes`: os de osAusentes ({ nome, onde });
+   `daHistoria`: os nomes; `fora`: quem já tem o veto dele neste turno. */
+export const A_GENTE_DA_HISTORIA_LONGE = Object.freeze({
+  naoPode: "{lista} aparecer ou falar aqui: está noutro lugar",
+  naoPodeVarios: "{lista} aparecerem ou falarem aqui: estão noutro lugar",
+  teto: 2,
+});
+export function pautaDosAusentesDaHistoria(ausentes, daHistoria, fora) {
+  try {
+    const G = A_GENTE_DA_HISTORIA_LONGE;
+    const nomes = new Set(arr(daHistoria).map((n) => primeiro(obj(n) ? n.nome : n)).filter((w) => w.length >= 3));
+    const jaVetado = new Set(arr(fora).map((n) => primeiro(obj(n) ? n.nome : n)).filter(Boolean));
+    const longe = [];
+    for (const a of arr(ausentes)) {
+      if (!obj(a) || a.morto || !txt(a.nome)) continue;
+      const p = primeiro(a.nome);
+      if (!nomes.has(p) || jaVetado.has(p) || longe.some((x) => primeiro(x) === p)) continue;
+      longe.push(txt(a.nome).split(/[\s,()]+/).filter(Boolean)[0] || txt(a.nome));
+    }
+    if (!longe.length) return null;
+    const lista = longe.slice(0, G.teto);
+    const dito = lista.length > 1 ? `${lista.slice(0, -1).join(", ")} e ${lista[lista.length - 1]}` : lista[0];
+    return Object.freeze({ acabou: [], naoPode: [(lista.length > 1 ? G.naoPodeVarios : G.naoPode).replace("{lista}", dito)] });
+  } catch {
+    return null;
+  }
+}
 export function falaDeQuemNaoEsta(a) {
   if (!obj(a) || !txt(a.nome)) return "";
   const Q = QUEM_NAO_ESTA;

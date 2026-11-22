@@ -2119,6 +2119,18 @@ export const CHAVE_FINA_PELO_ALVO = Object.freeze({
   objeto: /(?:^|\s)(?:o|a|os|as|no|na|nos|nas|pelo|pela|pelos|pelas|ao|aos|um|uma)\s+([a-z][^.!?;:,]{1,40}?)(?=\s+(?:com|sem|usando|pra|para|e|que|antes|enquanto|ate|ou|mas|depois|porque|se)\b|[.!?;:,]|$)/,
   pessoa: Object.freeze(["mentira"]),
 });
+/* 22/11 (a décima primeira sessão, T7 e T9): «o boticário do Martelo do Sul» e
+   «o boticário» são a mesma pessoa — o «do <Nome>» que diz de onde ela é (o
+   nome próprio, com maiúscula na frase do jogador) sai da chave. «O homem de
+   capa» continua «homem-capa». */
+function semOLugarDoQuem(desc, cru) {
+  const d = norm(desc);
+  const m = d.match(/\s+d[aeo]s?\s+([a-z]+)/);
+  if (!m) return desc;
+  const orig = norm(String(cru || "").replace(/\b(d[aeo]s?\s+)(\p{Lu})/gu, (_, de, L) => `${de}\u0001${L}`));
+  const maiuscula = orig.includes(`\u0001${m[1]}`);
+  return maiuscula ? d.slice(0, m.index) : desc;
+}
 /* MC1: as palavras de conteúdo de um objeto ou de uma pessoa, para a chave
    do livro de tentativas — as mesmas vazias da chave do improviso */
 function palavrasDaChave(s) {
@@ -2378,11 +2390,14 @@ export function lerAcao(texto, ctx = {}) {
   if (conta && chaveFina) {
     try {
       const itP = aIntencaoDaTroca(cru, { grupo: (personagem && Array.isArray(personagem.grupo)) ? personagem.grupo : [] });
-      if (itP && itP.tipo === "deGraca" && itP.coisa) coisaDoPedidoNaChave = `|${palavrasDaChave(itP.coisa)}`;
+      /* 22/11 (a décima primeira sessão, T7 e T9): «uma amostra do antídoto» e «uma
+         amostra» eram duas chaves — e o mesmo pedido com outras palavras rolou de
+         novo. A coisa entra pela palavra-cabeça (a primeira com corpo) */
+      if (itP && itP.tipo === "deGraca" && itP.coisa) coisaDoPedidoNaChave = `|${palavrasDaChave(itP.coisa).split("-")[0]}`;
     } catch { coisaDoPedidoNaChave = ""; }
   }
   const chave = chaveDaTentativa(lugar, conta
-    ? `${d.alvo}|${(pessoa && pessoa.nome) || (chaveFina && ((quemDescrito && palavrasDaChave(quemDescrito)) || ouvinteDaChave(cru))) || "quem quer que seja"}|${conta.tamanho}${coisaDoPedidoNaChave}`
+    ? `${d.alvo}|${(pessoa && pessoa.nome) || (chaveFina && ((quemDescrito && palavrasDaChave(semOLugarDoQuem(quemDescrito, cru))) || ouvinteDaChave(cru))) || "quem quer que seja"}|${conta.tamanho}${coisaDoPedidoNaChave}`
     : quemCuidado ? `${d.alvo}|${palavrasDaChave(quemCuidado)}`
       : doObjeto ? `${d.alvo}|${palavrasDaChave(doObjeto)}` : d.alvo);
   const feito = reg[chave] || null;
@@ -2616,6 +2631,12 @@ export function envelopeDeVeredicto(v, oQueEuDisse = "") {
   }
   if (v.tipo === "impossivel") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Do jeito que declarei, isto não é possível: ${v.porque}. Não houve rolagem porque não havia o que rolar. Narre a tentativa esbarrando no impossível em UMA ou DUAS frases. Você PODE deixar claro, pela cena, o que resolveria (${v.comoSeria.join(", ")}) — mas NÃO faça acontecer, NÃO me dê a ferramenta que falta e NÃO abra por outro caminho sem que eu peça.`;
+  }
+  /* 22/11 (a décima primeira sessão, T43 e T44): a troca que o sistema já negou
+     (o-mestre-vivo-no-jogo.js#oMomentoDaTrocaNegada) não «acontece» — o porquê é
+     o fato, e a cena fica como estava */
+  if (v.tipo === "livre" && v.negado) {
+    return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Isto não pede dado, e não acontece: ${String(v.porque || "").trim()} Em UMA ou DUAS frases, mostre a cena como ficou, sem fazer acontecer o que foi negado, e devolva a palavra para mim.`;
   }
   if (v.tipo === "livre") {
     return `[SEM TESTE — DECISÃO DO SISTEMA]${disse} Isto não pede dado: ${v.porque}. Narre acontecendo, com naturalidade e sem tensão falsa, e devolva a palavra para mim.`;

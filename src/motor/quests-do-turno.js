@@ -297,8 +297,15 @@ export const QUESTS_DO_TURNO = Object.freeze({
      partilham o começo — pelo menos `minimo` letras, e no máximo `folga`
      a menos do que a mais curta («pago» casa «pagar», «entrego» casa
      «entregar»); o verbo da carta (a primeira palavra) vale `verbo`; as
-     palavras curtas e as vazias não contam */
-  frase: Object.freeze({ minimo: 3, folga: 2, curta: 3, verbo: 2,
+     palavras curtas e as vazias não contam.
+     22/11 (a décima primeira sessão, T54, T56, T60): com a carta «Decidir o que
+     se faz a Klaus» aberta, «levo uma tocha… e pago amanhã, fiado» e «pergunto a
+     Ulysses se a igreja guarda algum registro de quem pagou as velas pelos da
+     estrada» viraram a carta «pagar a dívida…» — o «pago»/«pagou» de uma oração
+     do meio casava o verbo dela, e a frase sumiu sem resposta. O verbo da carta
+     tem de ser o da frase: uma das `cabeca` primeiras palavras dela («pago a
+     dívida», «decido entregar Klaus») */
+  frase: Object.freeze({ minimo: 3, folga: 2, curta: 3, verbo: 2, cabeca: 2,
     vazias: Object.freeze(["para", "com", "sem", "pela", "pelo", "pelas", "pelos", "numa", "num", "uma", "uns", "umas", "que", "quem", "onde", "como", "mais", "menos", "muito", "isto", "isso", "aquilo", "este", "esta", "esse", "essa", "dele", "dela", "seu", "sua", "meu", "minha", "teu", "tua", "frente", "todos", "fim", "até", "ate", "vou", "quero", "ainda", "mesma", "mesmo"]) }),
 });
 
@@ -1234,6 +1241,8 @@ export function aEscolhaDaFrase(frase, escolhas) {
       if (!obj(o) || typeof o.texto !== "string") continue;
       const ps = palavrasDe(o.texto);
       if (!ps.length) continue;
+      /* o verbo da carta é o da frase (uma das primeiras palavras), ou a carta não é esta frase */
+      if (!ws.slice(0, QUESTS_DO_TURNO.frase.cabeca).some((w) => casam(w, ps[0]))) continue;
       let pontos = 0;
       ps.forEach((p, i) => { if (ws.some((w) => casam(w, p))) pontos += i === 0 ? QUESTS_DO_TURNO.frase.verbo : 1; });
       if (pontos > 0) cand.push({ quest: e.quest, chave: e.chave, opcao: o.id, pontos });

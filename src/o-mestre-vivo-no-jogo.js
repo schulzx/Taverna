@@ -305,6 +305,38 @@ export function oMomentoSemOAusente(m, qn) {
   }
 }
 
+/* ---------------- A TROCA NEGADA NÃO ROLA NEM ACONTECE (22/11/2026) ----------------
+   A décima primeira sessão: «tomo a colher da mão de Cornelius» rolou Atletismo,
+   passou, e só depois a linha disse que não havia colher (T44); «peço de graça
+   uma tigela de sopa» repetida ouviu «Isso já lhe deram aqui», e o momento
+   mandou «narre acontecendo» — a prosa serviu a sopa de novo (T43). Quando o
+   veredito da troca já negou a frase antes do dado (o que não há na mão; o que
+   já foi dado aqui), o momento não rola, e o veredito dele é a negativa, com o
+   fato por porquê (`negado`: o envelope do catálogo diz «não acontece»,
+   desafios.js#envelopeDeVeredicto). `v`: o veredito da troca; sem negada destes
+   motivos, o momento como veio. */
+export const A_TROCA_NEGADA_NO_MOMENTO = Object.freeze({
+  porque: "trocaNegada",
+  /* o «já tentou e não deu» tem a linha e o envelope dele (o catálogo): fica como está */
+  motivos: Object.freeze(["naoHa", "repetidaFeita"]),
+  chave: "troca-negada",
+});
+export function oMomentoDaTrocaNegada(m, v) {
+  try {
+    if (!obj(m) || !obj(v) || v.estado !== "negada") return m;
+    const A = A_TROCA_NEGADA_NO_MOMENTO;
+    const motivo = v.motivo === "repetida" && v.feita ? "repetidaFeita" : txt(v.motivo);
+    if (!A.motivos.includes(motivo) || !txt(v.fato)) return m;
+    const { alvo, ...resto } = m;
+    return Object.freeze({
+      ...resto, rola: false, chamado: null, destino: null, resposta: null, porque: A.porque,
+      veredito: Object.freeze({ tipo: "livre", negado: true, chave: `${A.chave}|${txt(v.tipo)}|${motivo}`, porque: txt(v.fato) }),
+    });
+  } catch {
+    return m;
+  }
+}
+
 /* ---------------- O DADO DO DESTINO NA MESA ----------------
    O d6 cai na bandeja com a cor da sorte; o envelope diz ao Narrador só o
    resultado em palavras (o `diz`), como um envelope de sistema. */

@@ -33,7 +33,7 @@
 /* 21/11 (a oitava sessão do Mestre vivo): «dou duas moedas ao vendedor
    pelos sais» é compra — a mão dá a moeda, não os sais; e o nome que o
    jogador encurta («o martelo de batalha» do «Rústico Martelo de Batalha») */
-import { aCompraPorMoeda, nomeiaOItem } from "../o-veredito-da-troca.js";
+import { aCompraPorMoeda, nomeiaOItem, aMoedaPostaNaMesa } from "../o-veredito-da-troca.js";
 
 const obj = (x) => (x && typeof x === "object" && !Array.isArray(x) ? x : null);
 const arr = (x) => (Array.isArray(x) ? x : []);
@@ -178,10 +178,15 @@ export function aMaoDaFrase(frase, contexto) {
     /* 2 · VENDER ou DAR o que não se tem */
     const recusar = (verbo, item, noChao) => ({
       verbo, item,
-      linha: M.recusa[verbo].replace("{item}", item.charAt(0).toUpperCase() + item.slice(1)) + (noChao ? M.recusa.noChao : ""),
+      /* a décima primeira sessão (T18): «As botas … não está» — o plural concorda */
+      linha: M.recusa[verbo].replace("{item}", item.charAt(0).toUpperCase() + item.slice(1)).replace(/ não está /, /^(?:os|as)\s/i.test(item) ? " não estão " : " não está ") + (noChao ? M.recusa.noChao : ""),
     });
     /* 21/11 (a oitava sessão): a moeda dada pela coisa é compra — não há o que recusar aqui */
     if (aCompraPorMoeda(frase)) return out;
+    /* 22/11 (a décima primeira sessão, T18): «ofereço 5 moedas a Yolanda… para ela
+       me contar o que viu nas botas do assaltante» — o que se dá é a moeda, e as
+       botas são o assunto: nada a recusar aqui (o pagamento tem a porta dele) */
+    if (aMoedaPostaNaMesa(frase) > 0) return out;
     const iV = indiceDoVerbo(palavras, M.vender);
     const ehVenda = iV >= 0
       && !M.naoEVenda.antes.includes(palavras[iV - 1])
