@@ -27,6 +27,7 @@ import { oOuvido, ligarACena, O_OUVIDO, VERBOS_DO_OUVIDO } from "../src/o-ouvido
 import { aRespostaDoMestre, A_REGRA_DO_IMPROVISO } from "../src/a-regra-do-improviso.js";
 import { aIntencaoDaTroca, oVereditoDaTroca, aPortaFinalDaTroca } from "../src/o-veredito-da-troca.js";
 import { compraNaFrase, dadivaNaFrase } from "../src/bolsa-da-frase.js";
+import { oOuvidoNaTroca } from "../src/motor/a-cena-do-ouvido.js";
 
 let bons = 0, maus = 0;
 const t = (n, c, extra) => { if (c) { bons++; console.log("  ok  " + n); } else { maus++; console.log("  XX  " + n + (extra ? " — " + extra : "")); } };
@@ -196,7 +197,11 @@ function medir(itens) {
   const tp = { o: [0, 0, 0], h: [0, 0, 0] }; /* verdadeiro positivo, falso positivo, falso negativo */
   for (const it of itens) {
     const g = it.resposta, cena = it.cena;
-    const l = oOuvido(it.frase, cena), r = aRespostaDoMestre(l, cena), h = leitorDeHoje(it.frase, cena);
+    /* MOVIDA em 22/11 (a fiação do ouvido), e o motivo: a régua mede o leitor que o JOGO usa — o composto
+       final de motor/a-cena-do-ouvido.js (o ouvido sozinho, e o gesto sem verbo com coisa virando pergunta).
+       A intenção fica: medir a leitura que chega ao Mestre, contra as mesmas réguas e os mesmos pisos. */
+    const lc = oOuvidoNaTroca(it.frase, cena);
+    const l = lc.lido ? lc.leitura : oOuvido(it.frase, cena), r = aRespostaDoMestre(l, cena), h = leitorDeHoje(it.frase, cena);
     const gt = g.familia === "trocar";
     const ot = l.familia === "trocar";
     tp.o[0] += gt && ot; tp.o[1] += !gt && ot; tp.o[2] += gt && !ot;

@@ -210,8 +210,10 @@ sec("E2 · a porta final: frase de troca sem veredito não existe");
     ["compro uma ração de viagem de Hakon", "vendo o Elixir de Intelecto a Hakon", "dou 3 moedas a Corwin pelo que ele sabe", "ofereço 5 moedas a Hakon para ele esquecer"].every((f) => aPortaFinalDaTroca(f, { ficha: ONDINE, presentes: BALCAO }) === null));
   t("PAR: «pego a tocha e acendo» (ninguém do outro lado) não é troca", aPortaFinalDaTroca("pego a tocha e acendo", { ficha: ONDINE, presentes: BALCAO }) === null);
   const vd = corpo("const vereditoDaTrocaAntes = (acao, m, porta) => {");
+  /* MOVIDA em 22/11 (a fiação do ouvido), e o motivo: com a leitura do ouvido no turno, a porta final não fala por
+     cima dele (o «&& !ov»); sem ela, tudo como antes. A intenção fica: o dar que o veredito não fechou cai na porta final. */
   t("a fiação: sem leitura, a porta final; o dar que o veredito não fechou, também — só sem outro fato no turno",
-    /const pf = portaFinal\(\);\s*if \(pf && pf\.intencao\) it = pf\.intencao;/.test(vd) && /if \(!vF && it\.tipo === "dar"\)/.test(vd) && /pautaDeUmTurnoRef\.current\.fato\.length\) return null;/.test(vd));
+    /const pf = portaFinal\(\);\s*if \(pf && pf\.intencao\) it = pf\.intencao;/.test(vd) && /if \(!vF && it\.tipo === "dar"(?: && !ov)?\)/.test(vd) && /pautaDeUmTurnoRef\.current\.fato\.length\) return null;/.test(vd));
 }
 
 sec("1. T19: a moeda que sai tem linha, e a ausente não recebe");

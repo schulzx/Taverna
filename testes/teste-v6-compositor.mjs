@@ -120,7 +120,9 @@ sec("4. a fiação");
      Movida em 10/11 (sessão 18, defeito 3): cinco → seis. O empurrão leva o
      «como» da caixa ao Mestre (empurrarAgora), e por isso a gasta: a caixa e
      o rascunho limpam-se como em qualquer turno que parte. */
-  t("apaga-se quando o turno parte (os seis que mandam) e quando se apaga o campo", (APP.match(/setEntrada\(""\); apagarORascunho\(\);/g) || []).length === 6 && /if \(!e\.target\.value\.trim\(\)\) apagarORascunho\(\);/.test(COMP));
+  /* MOVIDA em 22/11 (a fiação do ouvido), e o motivo: a pergunta da troca (ouvirAFrase) é um sétimo que manda — a
+     frase sai do campo e o turno para na pergunta. A intenção fica: todo envio apaga o rascunho. */
+  t("apaga-se quando o turno parte (os sete que mandam) e quando se apaga o campo", (APP.match(/setEntrada\(""\); apagarORascunho\(\);/g) || []).length === 7 && /if \(!e\.target\.value\.trim\(\)\) apagarORascunho\(\);/.test(COMP));
   t("o campo abre-se com foco ou texto, também na espera", /const campoAberto = campoFocado \|\| !!entrada\.trim\(\);/.test(APP));
   t("a sala a dois: a faixa e a promessa de reescrever ficam", /O turno sai quando os dois escreverem\. Dá para reescrever a sua até lá\./.test(APP));
   t("e nada disto custa o turno", /calou\("guardar o rascunho", e\)/.test(ORG) && /calou\("o toque no dado", e\)/.test(ORG) && /calou\("devolver o rascunho", e\)/.test(ORG));

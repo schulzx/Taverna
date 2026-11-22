@@ -498,7 +498,11 @@ sec("1. NENHUM MÓDULO MUDO");
        troca de hoje). Credor: o `oficial`, na etapa seguinte do ouvido. A
        entrada sai quando o App a importar. `teste-o-ouvido.mjs` é o primeiro
        leitor. */
-    "a-regra-do-improviso.js": "o oficial, na fiação do ouvido no App.jsx (a etapa seguinte)",
+    /* e paga na etapa seguinte (22/11, oficial): `motor/a-cena-do-ouvido.js`
+       importa a regra e o ouvido, e o App.jsx importa a ponte, atrás da chave
+       do Mestre vivo (ouvirAFrase, oOuvidoFechaATroca). A entrada SAIU — a
+       catraca volta a vigiar a regra como a qualquer módulo ligado.
+       `teste-a-cena-do-ouvido.mjs` prova a fiação. */
   };
   const mudos = [];
   for (const f of arqs) {
