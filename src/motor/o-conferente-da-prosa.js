@@ -221,10 +221,19 @@ export const O_CONFERENTE = Object.freeze({
      linha que o sistema escreveu neste turno diz o que mudou de mão: com ela, a
      troca é aplicada, a moeda que a prosa conta é a dela, e nenhuma linha que
      negue a troca entra no lugar de uma cortada. */
-  linhaDeTroca: /^(?:🛒 Vendido:|🛒 .+ — ◉ \d+ \(restam ◉|◉ \d+ moedas? mudaram de mão|🤲 Da bolsa|🤲 Você recolhe|🎁 .+ lhe dá:|🤝 .+ passa a você:|🤝 .+ agora é de|✋ Você arranca)/u,
+  /* 22/11 (a décima primeira sessão, T20): o «◉ −3 moedas» do cartão «Pagar» também é troca feita */
+  linhaDeTroca: /^(?:🛒 Vendido:|🛒 .+ — ◉ \d+ \(restam ◉|◉ \d+ moedas? mudaram de mão|◉ −\d+ moedas?$|🤲 Da bolsa|🤲 Você recolhe|🎁 .+ lhe dá:|🤝 .+ passa a você:|🤝 .+ agora é de|✋ Você arranca)/u,
   moedaDaTroca: Object.freeze(["moeda", "moedas", "coroa", "coroas", "cobre", "cobres", "prata", "pratas", "ouro", "ouros", "tostao", "tostoes", "peca", "pecas", "dinheiro"]),
   /* as razões cuja linha de reposição nega que algo mudou de mão: nunca com a troca aplicada */
-  negamATroca: Object.freeze(["objeto", "pagamento", "entrega"]),
+  negamATroca: Object.freeze(["objeto", "pagamento", "entrega", "desfaz"]),
+  /* 22/11 (a décima primeira sessão, T33 e T52): A PROSA QUE DESFAZ A TROCA FEITA.
+     A compra e a venda já estavam aplicadas (a ficha mudou, a linha estava na
+     tela), e a prosa escreveu «Ele não aceita… O armazém é do outro lado da
+     praça», «Não compro hoje» e o ferreiro devolveu a brigantina ao balcão. Numa
+     frase de comprar, vender ou pagar com a troca aplicada, a frase (ou a fala)
+     que recusa, devolve ou põe as moedas de volta sai. O troco não é devolução. */
+  fraseComercial: /\b(compro|compramos|comprei|vendo|vendemos|vendi|pago|pagamos|paguei|dou|damos|ofereco|oferecemos|entrego)\b/,
+  desfazATroca: /\bnao\s+(?:a\s+|o\s+|as\s+|os\s+|lhe\s+|te\s+)?(?:aceita|aceito|aceitamos|aceitam|compro|compra|compramos|compram|vendo|vende|vendemos|quero\s+(?:o\s+seu|a\s+sua|seu|sua|as\s+suas|suas)\s+(?:moedas?|dinheiro)|fecho\s+negocio|faco\s+negocio)\b|\brecus\w*\s+(?:(?:a|o|as|os|suas|seu|sua)\s+)?(?:moedas?|dinheiro|oferta|venda|compra|pagamento|troca)\b|\bmoedas\s+(?:voltam|volta|ficam|continuam|seguem)\s+(?:ao|no|na|em|com)\s+(?:seu|sua|voce)\b|\b(?:a|o|as|os)\s+devolve\w*\s+(?:a|ao|para|pra|no|na|sobre)\b|\bdevolve\w*\s+(?:a|o|as|os)\s+(?!troco)[a-z]+|\bempurra\w*\s+(?:a|o|as|os)\s+[a-z]+\s+de\s+volta\b/,
   /* a recusa de quem o sistema fez entregar (a décima sessão, T31) */
   recusaDaEntrega: /\b(agora nao|ainda nao|nao (?:te |lhe |vou )?(?:dou|devolvo|entrego|passo|largo)|nao vou (?:dar|devolver|entregar)|fico com (?:ela|ele|isso|isto|a |o )|guardei|guardo eu|e minha|e meu)\b/,
   /* A FRASE ÓRFÃ: a que vem logo depois de uma cortada e abre referindo o que
@@ -832,9 +841,15 @@ export function conferirAProsa(narrativa, ctx) {
        recusar («Agora não… Pediste para guardar. Guardei»). O companheiro que o
        sistema fez entregar não recusa na prosa: a fala ou a frase que recusa sai. */
     const entregouOComp = !!(tv && tv.estado === "aplicada" && tv.tipo === "companheiro");
+    /* 22/11 (a décima primeira sessão, T33, T52): a troca aplicada numa frase de comprar, vender ou pagar não se desfaz na prosa */
+    const naoDesfaz = trocaAplicada && !entregouOComp && C.fraseComercial.test(sem(frase));
     for (const p of pedacos) {
       if (entregouOComp && C.recusaDaEntrega.test(sem(p.texto)) && !C.daAoHeroi.test(sem(p.nar))) {
         fora.add(p); razao.set(p, "recusa"); podadas.push({ motivo: "recusa", frase: p.texto.trim() });
+        continue;
+      }
+      if (naoDesfaz && C.desfazATroca.test(sem(p.texto))) {
+        fora.add(p); razao.set(p, "desfaz"); podadas.push({ motivo: "desfaz", frase: p.texto.trim() });
         continue;
       }
       /* 21/11 (sessão 7, turnos 26 e 29): a fala que só entrega («— Leva.»)
@@ -937,6 +952,19 @@ export function conferirAProsa(narrativa, ctx) {
         for (const f of pp.frases) podadas.push({ motivo: "ausente", frase: f });
         if (pp.frases.length) prosa = pp.texto;
       }
+    }
+    /* 22/11 (a décima primeira sessão, T34, T45, T47): QUEM O SISTEMA SABE NOUTRO
+       LUGAR NÃO FALA AQUI — nem chamado. Klaus, que a ficha punha na Casa do
+       Pistão, falou no Pêndulo; Yolanda, ausente, «não se deixa convencer».
+       `ausentes`: quem o sistema conhece e sabe fora desta cena (osAusentes); a
+       fala dele sai (falar DELE continua a valer). Quem está na cena não entra. */
+    const jaAus = aus.length ? primeiro(aus[0].nome) : "";
+    const ausentesOutros = arr(c.ausentes).map((a) => (obj(a) ? { nome: txt(a.nome), onde: txt(a.onde), morto: !!a.morto } : { nome: txt(a), onde: "", morto: false }))
+      .filter((a) => a.nome && primeiro(a.nome).length >= 3 && primeiro(a.nome) !== jaAus && !pessoas.some((p) => primeiro(p.nome) === primeiro(a.nome)) && !(heroi && primeiro(heroi) === primeiro(a.nome)));
+    if (ausentesOutros.length && prosa.trim()) {
+      const r = podarOAusente(prosa, ausentesOutros, { frase: "", outros: [...pessoas.map((p) => p.nome).filter(Boolean), heroi].filter(Boolean), limiar: 1, semTravaDaFala: true, soFala: true });
+      for (const p of r.podadas) podadas.push({ motivo: "ausente", frase: p.frase });
+      if (r.podadas.length) prosa = r.narrativa;
     }
     /* b. quem fala: a gente inventada, e quem está fora da vez */
     const inventados = (() => {
